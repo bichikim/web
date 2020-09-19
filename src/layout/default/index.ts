@@ -6,8 +6,8 @@ export default defineComponent({
     return () => {
       return (
         h('div', {}, [
-          h(RouterLink, {to: {name: 'Home'}}, 'home'),
-          h(RouterLink, {to: 'About'}, 'about'),
+          h(RouterLink, {to: {name: 'Home'}}, () => 'home'),
+          h(RouterLink, {to: 'About'}, () => 'about'),
           h(RouterView),
         ])
       )

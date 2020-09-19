@@ -1,5 +1,10 @@
 import {defineComponent, h, computed} from 'vue'
 import {state, setName, setDeepName} from '@/store'
+import styled from '@/lib/emotion/styled'
+
+const Foo = styled('div')({
+  color: 'red',
+})
 
 export default defineComponent({
   setup() {
@@ -11,6 +16,7 @@ export default defineComponent({
       // testing cache working ok!
       // todo need to use this for emotion
       console.log(cache)
+      console.log(context)
       return (
         h('div', {}, [
           h('div', [
@@ -25,6 +31,7 @@ export default defineComponent({
             h('button', {onclick: () => setName(name.value + 'A')}, 'add A'),
             h('button', {onclick: () => setDeepName(deepName.value + 'D')}, 'add deep D'),
           ]),
+          h(Foo, {}, () => 'foo'),
         ])
       )
     }
