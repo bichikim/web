@@ -106,7 +106,6 @@ export const styled = (tag: string = 'div', options: StyledOptions = {}): Styled
             // ...$parent.$evergarden,
           }
 
-          console.log(attrs)
           // const domProps = {
           //   value,
           // }
