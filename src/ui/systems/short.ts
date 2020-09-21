@@ -1,15 +1,16 @@
-import {ResponsiveValue, system} from 'styled-system'
+import {style} from '@/ui/systems/index'
+import {RequiredTheme, ResponsiveValue, system, Theme} from 'styled-system'
 import {Property} from 'csstype'
 
-export interface FontShortProps {
+export interface FontShortProps<T extends Theme = RequiredTheme> {
   /**
    * css fontSize
    */
-  fs?: ResponsiveValue<Property.FontSize>
+  fs?: ResponsiveValue<Property.FontSize, T>
   /**
    * css fontWeight
    */
-  fw?: ResponsiveValue<Property.FontWeight>
+  fw?: ResponsiveValue<Property.FontWeight, T>
 }
 
 export const fontShort = () => {
@@ -23,21 +24,9 @@ export const fontShort = () => {
   })
 }
 
-export interface TextShortProps {
-  td?: ResponsiveValue<Property.TextDecoration>
-}
-
-export const textShort = () => {
-  return system({
-    td: {
-      property: 'textDecoration',
-    },
-  })
-}
-
-export interface FlexShortProps {
-  fai?: ResponsiveValue<Property.AlignItems>
-  fji?: ResponsiveValue<Property.JustifyItems>
+export interface FlexShortProps<T extends Theme = RequiredTheme> {
+  fai?: ResponsiveValue<Property.AlignItems, T>
+  fji?: ResponsiveValue<Property.JustifyItems, T>
 }
 
 export const flexShort = () => {
@@ -51,21 +40,32 @@ export const flexShort = () => {
   })
 }
 
-export interface BorderShortProps {
-  bb?: ResponsiveValue<Property.BorderBottom>
-  bbw?: ResponsiveValue<Property.BorderBottomWidth>
-  bc?: ResponsiveValue<Property.BorderColor>
-  bl?: ResponsiveValue<Property.BorderLeft>
-  blw?: ResponsiveValue<Property.BorderLeftWidth>
-  br?: ResponsiveValue<Property.BorderRight>
-  brw?: ResponsiveValue<Property.BorderRightWidth>
-  bs?: ResponsiveValue<Property.BorderWidth>
-  bt?: ResponsiveValue<Property.BorderTop>
-  btw?: ResponsiveValue<Property.BorderTopWidth>
-  bx?: ResponsiveValue<Property.BorderLeft>
-  bxw?: ResponsiveValue<Property.BorderLeftWidth>
-  by?: ResponsiveValue<Property.BorderTop>
-  byw?: ResponsiveValue<Property.BorderTopWidth>
+export interface DisplayShortProps<T extends Theme = RequiredTheme> {
+  dp: ResponsiveValue<Property.Display, T>
+}
+
+export const displayShort = () => {
+  return style({
+    cssProperty: 'display',
+    prop: 'dp',
+  })
+}
+
+export interface BorderShortProps<T extends Theme = RequiredTheme> {
+  bb?: ResponsiveValue<Property.BorderBottom, T>
+  bbw?: ResponsiveValue<Property.BorderBottomWidth, T>
+  bc?: ResponsiveValue<Property.BorderColor, T>
+  bl?: ResponsiveValue<Property.BorderLeft, T>
+  blw?: ResponsiveValue<Property.BorderLeftWidth, T>
+  br?: ResponsiveValue<Property.BorderRight, T>
+  brw?: ResponsiveValue<Property.BorderRightWidth, T>
+  bs?: ResponsiveValue<Property.BorderWidth, T>
+  bt?: ResponsiveValue<Property.BorderTop, T>
+  btw?: ResponsiveValue<Property.BorderTopWidth, T>
+  bx?: ResponsiveValue<Property.BorderLeft, T>
+  bxw?: ResponsiveValue<Property.BorderLeftWidth, T>
+  by?: ResponsiveValue<Property.BorderTop, T>
+  byw?: ResponsiveValue<Property.BorderTopWidth, T>
 }
 
 export const borderShort = () => {

@@ -1,9 +1,9 @@
-import {ResponsiveValue, style} from 'styled-system'
+import {RequiredTheme, ResponsiveValue, style, Theme} from 'styled-system'
 import {Property} from 'csstype'
 
-export interface TextDecorationProps {
-  td?: ResponsiveValue<Property.TextDecoration>
-  textDecoration?: ResponsiveValue<Property.TextDecoration>
+export interface TextDecorationProps<T extends Theme = RequiredTheme> {
+  td?: ResponsiveValue<Property.TextDecoration, T>
+  textDecoration?: ResponsiveValue<Property.TextDecoration, T>
 }
 
 export const textDecoration = style({

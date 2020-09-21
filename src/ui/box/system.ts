@@ -1,42 +1,19 @@
-import {System, ASProps} from '../types'
 import {
-  borderShort,
-  BorderShortProps,
-  FlexWrapProps,
-  fontShort,
-  FontShortProps,
+  allSystem,
+  AllSystemProps,
+  ResponsiveValue,
+  ShadowProps,
   show,
   ShowProps,
   textDecoration,
-  TextDecorationProps,
-  border,
-  BorderProps,
-  color,
-  ColorProps,
-  compose,
-  flexbox,
-  FlexboxProps,
-  layout,
-  LayoutProps,
-  margin,
-  MarginProps,
-  padding,
-  PaddingProps,
-  position,
-  PositionProps,
-  ResponsiveValue,
-  shadow,
-  ShadowProps,
-  style,
   Theme,
-  typography,
-  TypographyProps,
 } from '@/ui/systems'
-import {variantComplex} from '../variant-complex'
 import fluid from 'fluid-system'
+import {ASProps, System} from '../types'
+import {variantComplex} from '../variant-complex'
 
-export interface TypographyVariantProps {
-  typography?: ResponsiveValue<string>
+export interface textSetVariantProps {
+  textSet?: ResponsiveValue<string>
 }
 
 export interface RefProps {
@@ -46,35 +23,18 @@ export interface RefProps {
 export type Props =
   & ASProps
   & RefProps
-  & FlexWrapProps
-  & FlexboxProps
-  & BorderProps
-  & ColorProps
-  & LayoutProps
-  & MarginProps
-  & PaddingProps
-  & PositionProps
   & ShadowProps
-  & TypographyProps
   & ShowProps
-  & FontShortProps
-  & BorderShortProps
-  & TypographyVariantProps
-  & TextDecorationProps
+  & textSetVariantProps
+  & AllSystemProps
 
-const display = style({
-  cssProperty: 'display',
-  prop: 'dp',
-})
 export const boxSystem: System<Props, Theme> = [
   {
     boxSizing: 'border-box',
     display: 'block',
   },
   textDecoration,
-  fluid(compose(layout, color, shadow, position, margin, typography, border, padding, display, flexbox)),
-  fontShort,
-  borderShort,
+  fluid(allSystem),
   show,
   variantComplex({
     prop: 'textSet',

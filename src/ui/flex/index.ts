@@ -1,4 +1,5 @@
 import styled from '@/lib/emotion/styled'
+import {responsiveType} from '@/lib/emotion/props'
 import {defineComponent, h, toRefs} from 'vue'
 import {cleanObject} from '../clean-object'
 import {slotToArray} from '../slot-to-array'
@@ -13,7 +14,12 @@ const FlexContainer = styled('div')(...flexContainerSystems)
 const FlexItem = styled('div')(...flexItemSystem)
 
 export const Flex = defineComponent({
-  props: ['rangeItems', 'column', 'division', 'reverse'],
+  props: {
+    rangeItems: responsiveType,
+    column: responsiveType,
+    division: responsiveType,
+    reverse: responsiveType,
+  },
   setup(props, {attrs, slots}) {
     const {bg, backgroundColor, ...rest} = attrs
     const {division, column, rangeItems, reverse} = toRefs(props)

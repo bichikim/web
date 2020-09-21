@@ -2,7 +2,6 @@ import {defineComponent, h, ref, toRef} from 'vue'
 import {boxSystem} from './system'
 import styled from '@/lib/emotion/styled'
 import shouldForwardProp from '@styled-system/should-forward-prop'
-import {paddingProps} from '../systems/props'
 
 const BoxComponent = styled('div', {shouldForwardProp})(...boxSystem)
 

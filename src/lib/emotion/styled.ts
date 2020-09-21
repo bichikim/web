@@ -2,13 +2,14 @@ import {getRegisteredStyles, insertStyles} from '@emotion/utils'
 import {serializeStyles} from '@emotion/serialize'
 import {defineComponent, h, ref, computed, inject, DefineComponent} from 'vue'
 import {themeSym} from './theme'
-import {Options} from '@emotion/cache'
+import {allProps} from './props'
 import {ILLEGAL_ESCAPE_SEQUENCE_ERROR, NO_TAG_ERROR} from './errors'
 
 export type StyledOptions = {
   label?: string,
   shouldForwardProp?: (arg: string) => boolean,
   target?: string
+  props?: string[] | {[key: string]: any},
 }
 
 const isError = (tag: string): boolean => {
@@ -78,7 +79,7 @@ type StyledResult = (...args: any[]) => DefineComponent
 export const styled = (tag: string = 'div', options: StyledOptions = {}): StyledResult => {
   isError(tag)
 
-  const {label, target} = options
+  const {label, target, props = {}} = options
   const {baseTag, isReal} = getTagContext(tag)
 
   return (...args: any[]) => {
@@ -89,6 +90,8 @@ export const styled = (tag: string = 'div', options: StyledOptions = {}): Styled
     return defineComponent({
       props: {
         as: String,
+        ...allProps,
+        ...props,
       },
       setup(props, {attrs, slots}) {
         const theme = inject(themeSym, {})
@@ -102,6 +105,7 @@ export const styled = (tag: string = 'div', options: StyledOptions = {}): Styled
           const classInterpolations: any[] = []
           const mergedProps = {
             ...attrs,
+            ...props,
             theme,
             // ...$parent.$evergarden,
           }
@@ -129,7 +133,7 @@ export const styled = (tag: string = 'div', options: StyledOptions = {}): Styled
           }
 
           return (
-            h(finalTag, {...attrs, ...restProps, class: className} as any, slots)
+            h(finalTag, {class: className} as any, slots)
           )
         }
       },
