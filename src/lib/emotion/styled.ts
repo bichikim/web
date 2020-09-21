@@ -105,7 +105,7 @@ export const styled = (tag: string = 'div', options: StyledOptions = {}): Styled
           const classInterpolations: any[] = []
           const mergedProps = {
             ...attrs,
-            ...props,
+            ...restProps,
             theme,
             // ...$parent.$evergarden,
           }
