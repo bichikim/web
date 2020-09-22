@@ -162,6 +162,7 @@ export const displayShortProps = {
 }
 
 export const borderShortProps = {
+  ba: responsiveType,
   bb: responsiveType,
   bbw: responsiveType,
   bc: responsiveType,

@@ -13,43 +13,37 @@ export interface FontShortProps<T extends Theme = RequiredTheme> {
   fw?: ResponsiveValue<Property.FontWeight, T>
 }
 
-export const fontShort = () => {
-  return system({
-    fs: {
-      property: 'fontSize',
-    },
-    fw: {
-      property: 'fontWeight',
-    },
-  })
-}
-
+export const fontShort = system({
+  fs: {
+    property: 'fontSize',
+  },
+  fw: {
+    property: 'fontWeight',
+  },
+})
 export interface FlexShortProps<T extends Theme = RequiredTheme> {
   fai?: ResponsiveValue<Property.AlignItems, T>
   fji?: ResponsiveValue<Property.JustifyItems, T>
 }
 
-export const flexShort = () => {
-  return system({
-    fai: {
-      property: 'alignItems',
-    },
-    fji: {
-      property: 'justifyItems',
-    },
-  })
-}
+export const flexShort = system({
+  fai: {
+    property: 'alignItems',
+  },
+  fji: {
+    property: 'justifyItems',
+  },
+})
 
 export interface DisplayShortProps<T extends Theme = RequiredTheme> {
   dp: ResponsiveValue<Property.Display, T>
 }
 
-export const displayShort = () => {
-  return style({
-    cssProperty: 'display',
-    prop: 'dp',
-  })
-}
+export const displayShort = system({
+  dp: {
+    property: 'display',
+  },
+})
 
 export interface BorderShortProps<T extends Theme = RequiredTheme> {
   bb?: ResponsiveValue<Property.BorderBottom, T>
@@ -66,51 +60,63 @@ export interface BorderShortProps<T extends Theme = RequiredTheme> {
   bxw?: ResponsiveValue<Property.BorderLeftWidth, T>
   by?: ResponsiveValue<Property.BorderTop, T>
   byw?: ResponsiveValue<Property.BorderTopWidth, T>
+  ba?: ResponsiveValue<Property.BorderRadius, T>
 }
 
-export const borderShort = () => {
-  return system({
-    bb: {
-      property: 'borderBottom',
-    },
-    bbw: {
-      property: 'borderBottomWidth',
-    },
-    bc: {
-      property: 'borderColor',
-    },
-    bl: {
-      property: 'borderLeft',
-    },
-    blw: {
-      property: 'borderLeftWidth',
-    },
-    br: {
-      property: 'borderRight',
-    },
-    brw: {
-      property: 'borderRightWidth',
-    },
-    bs: {
-      property: 'borderWidth',
-    },
-    bt: {
-      property: 'borderTop',
-    },
-    btw: {
-      property: 'borderTopWidth',
-    },
-    bx: {
-      properties: ['borderRight', 'borderLeft'],
-    },
-    bxw: {
-      properties: ['borderRightWidth', 'borderLeftWidth'],
-    },
-    by: {
-      properties: ['borderBottom', 'borderTop'],
-    },
-    byw: {
-      properties: ['borderBottomWidth', 'borderTopWidth'],
-    },
-  })
+export interface BoxShadowShortProps<T extends Theme = RequiredTheme> {
+  sdw: ResponsiveValue<Property.BoxShadow, T>
 }
+
+export const boxShadowShort = system({
+  sdw: {
+    property: 'boxShadow',
+  },
+})
+
+export const borderShort = system({
+  bra: {
+    property: 'borderRadius',
+  },
+  bb: {
+    property: 'borderBottom',
+  },
+  bbw: {
+    property: 'borderBottomWidth',
+  },
+  bc: {
+    property: 'borderColor',
+  },
+  bl: {
+    property: 'borderLeft',
+  },
+  blw: {
+    property: 'borderLeftWidth',
+  },
+  br: {
+    property: 'borderRight',
+  },
+  brw: {
+    property: 'borderRightWidth',
+  },
+  bs: {
+    property: 'borderWidth',
+  },
+  bt: {
+    property: 'borderTop',
+  },
+  btw: {
+    property: 'borderTopWidth',
+  },
+  bx: {
+    properties: ['borderRight', 'borderLeft'],
+  },
+  bxw: {
+    properties: ['borderRightWidth', 'borderLeftWidth'],
+  },
+  by: {
+    properties: ['borderBottom', 'borderTop'],
+  },
+  byw: {
+    properties: ['borderBottomWidth', 'borderTopWidth'],
+  },
+})

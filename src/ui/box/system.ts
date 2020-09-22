@@ -6,6 +6,7 @@ import {
   show,
   ShowProps,
   textDecoration,
+  borderShort,
   Theme,
 } from '@/ui/systems'
 import fluid from 'fluid-system'
@@ -34,7 +35,11 @@ export const boxSystem: System<Props, Theme> = [
     display: 'block',
   },
   textDecoration,
+  // ...allSystem.map((system) => {
+  //   return fluid(system)
+  // }),
   fluid(allSystem),
+  borderShort,
   show,
   variantComplex({
     prop: 'textSet',
