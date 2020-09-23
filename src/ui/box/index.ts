@@ -61,7 +61,8 @@ export const Box = defineComponent({
         animateAction.value.start(elStyler.set)
       }
     })
-    return (context) => {
+
+    return () => {
       return (
         h(BoxComponent, {...attrs, ...props, ref: root}, slots)
       )
