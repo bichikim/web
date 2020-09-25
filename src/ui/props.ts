@@ -1,4 +1,4 @@
-export const responsiveType = [String, Array, Number, Object]
+export const responsiveType = {required: false}
 
 export const paddingProps = {
   padding: responsiveType,

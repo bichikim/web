@@ -1,12 +1,10 @@
+import {CSSObject} from '@/types'
 import {serializeStyles} from '@emotion/serialize'
 import {insertStyles} from '@emotion/utils'
 import {styleFn} from 'styled-system'
 import {defineComponent, DefineComponent, h, inject} from 'vue'
-import isPropsValid from '@emotion/is-prop-valid'
 import {ILLEGAL_ESCAPE_SEQUENCE_ERROR} from './errors'
 import {themeSym} from './theme'
-import {CSSObject} from '@/types'
-import {omit, forEach} from 'lodash'
 
 export type StyledSystems = (CSSObject | styleFn)[]
 

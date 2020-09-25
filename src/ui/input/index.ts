@@ -28,9 +28,8 @@ export const InputComponent = defineComponent({
 
 const systems: Systems = [
   {
-    outline: 'none !important',
     border: 'none',
   },
 ]
 
-export const Input = styled(InputComponent)(...systems)
+export const Input = styled(InputComponent, {passThrough: true})(...systems)
