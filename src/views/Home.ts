@@ -39,7 +39,7 @@ export default defineComponent({
             h(Box, {range: range.value, bg: 'Silver'}, () => deepName.value),
           ]),
           h(Flex, {p: 10, bg: 'WhiteSmoke', color: 'white', gap: 10, width: 200}, () => [
-            h(Box, {range: 'space', bg: 'Silver'}, () => name.value),
+            h(Box, {range: 'space', bg: 'Silver', id: 'foo', onClick: () => (console.log('tick!'))}, () => name.value),
             h(Box, {range: range.value, bg: 'Silver'}, () => deepName.value),
           ]),
         ])

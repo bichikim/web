@@ -183,10 +183,6 @@ export const borderShortProps = {
   byw: responsiveType,
 }
 
-export const gapProps = {
-  gap: responsiveType,
-}
-
 export const allProps = {
   ...paddingProps,
   ...marginProps,
@@ -204,5 +200,4 @@ export const allProps = {
   ...displayShortProps,
   ...borderShortProps,
   ...showProps,
-  // ...gapProps,
 }

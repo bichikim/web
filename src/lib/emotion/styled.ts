@@ -96,6 +96,20 @@ interface passThrough {
   styles: any[]
 }
 
+const filterProps = (props: Record<string, any>, filter?: (arg: string) => boolean) => {
+  if (!filter) {
+    return {...props}
+  }
+  const newProps: Record<string, any> = {}
+  for (const key in props) {
+    if (filter(key)) {
+      newProps[key] = props[key]
+    }
+  }
+
+  return newProps
+}
+
 export const styled = (tag: any = 'div', options: StyledOptions = {}): StyledResult => {
   const {label, target, props = {}, passThrough = false, shouldForwardProp} = options
   const {baseTag, isReal} = getTagContext(tag)
@@ -158,8 +172,10 @@ export const styled = (tag: any = 'div', options: StyledOptions = {}): StyledRes
 
           const nextProps: any = typeof finalTag === 'string' ? {} : props
 
+          const newProps = filterProps({...restAttrs, ...nextProps}, shouldForwardProp)
+
           return (
-            h(finalTag, {...restAttrs, ...nextProps, value, class: className} as any, slots)
+            h(finalTag, {...newProps, value, class: className} as any, slots)
           )
         }
       },
