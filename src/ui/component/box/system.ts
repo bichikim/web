@@ -40,6 +40,7 @@ export const boxSystem: System<Props, Theme> = [
     margin: 0,
     backgroundColor: 'transparent',
     outline: 'none !important',
+    fontSize: '1rem',
     overflow: 'hidden',
   },
   textDecoration,
