@@ -1,7 +1,7 @@
 import css from '@styled-system/css'
-import {parallelProps} from '../parallel-props'
+import {parallelProps} from '@/ui/utils'
 import {ResponsiveValue} from 'styled-system'
-import {SystemFunc} from './types'
+import {SystemFunc} from '@/types'
 
 export type Range = number | 'space' | 'auto' | 'force-space'
 
@@ -24,7 +24,17 @@ export interface FlexColumnProps {
 
 const HUNDRED = 100
 
-export const getOffsetMargin = (column, reverse, offset) => {
+interface GetOffsetMarginReturnType {
+  marginBottom?: any
+  marginTop?: any
+  marginRight?: any
+  marginLeft?: any
+}
+
+export const getOffsetMargin = (
+  column: boolean,
+  reverse: boolean,
+  offset?: string | number): GetOffsetMarginReturnType => {
   if (typeof offset === 'undefined') {
     return {}
   }

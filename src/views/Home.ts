@@ -1,31 +1,22 @@
 import {defineComponent, h, computed, ref} from 'vue'
 import {state, setName, setDeepName} from '@/store'
-import styled from '@/lib/emotion/styled'
-import {Box, Flex} from '@/ui'
-
-const Foo = styled('div')({
-  color: 'red',
-})
+import {Box, Flex, Input} from '@/ui'
 
 export default defineComponent({
+  name: 'home',
   setup() {
     const name = computed(() => (state.name))
     const deepName = computed(() => (state.deep.name))
-    return (context: any) => {
-      const {$parent} = context
-      const cache = $parent.$emotionCache
-      const range = ref('fit')
-      const toggleRange = () => {
-        if (range.value === 'fit') {
-          range.value = 'space'
-        } else {
-          range.value = 'fit'
-        }
+    const range = ref('fit')
+    const toggleRange = () => {
+      if (range.value === 'fit') {
+        range.value = 'space'
+      } else {
+        range.value = 'fit'
       }
-      // testing cache working ok!
-      // todo need to use this for emotion
-      // console.log(cache)
-      // console.log(context)
+    }
+
+    return () => {
       return (
         h('div', {}, [
           h('div', [
@@ -42,11 +33,15 @@ export default defineComponent({
             h('button', {onClick: toggleRange}, 'space'),
           ]),
           h(Box, {p: 10, bg: 'tomato', color: 'white'}, () => 'foo'),
+          h(Input, {bg: 'Silver', color: 'white'}),
           h(Flex, {p: 10, bg: 'WhiteSmoke', color: 'white', gap: 10}, () => [
             h(Box, {range: 'space', bg: 'Silver'}, () => name.value),
             h(Box, {range: range.value, bg: 'Silver'}, () => deepName.value),
           ]),
-          h(Foo, {}, () => 'foo'),
+          h(Flex, {p: 10, bg: 'WhiteSmoke', color: 'white', gap: 10, width: 200}, () => [
+            h(Box, {range: 'space', bg: 'Silver'}, () => name.value),
+            h(Box, {range: range.value, bg: 'Silver'}, () => deepName.value),
+          ]),
         ])
       )
     }

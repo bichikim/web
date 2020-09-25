@@ -1,25 +1,21 @@
-import {getRegisteredStyles, insertStyles} from '@emotion/utils'
 import {serializeStyles} from '@emotion/serialize'
-import {defineComponent, h, ref, computed, inject, DefineComponent} from 'vue'
+import {insertStyles} from '@emotion/utils'
+import {styleFn} from 'styled-system'
+import {defineComponent, DefineComponent, h, inject} from 'vue'
+import isPropsValid from '@emotion/is-prop-valid'
+import {ILLEGAL_ESCAPE_SEQUENCE_ERROR} from './errors'
 import {themeSym} from './theme'
-import {allProps} from './props'
-import {ILLEGAL_ESCAPE_SEQUENCE_ERROR, NO_TAG_ERROR} from './errors'
+import {CSSObject} from '@/types'
+import {omit, forEach} from 'lodash'
+
+export type StyledSystems = (CSSObject | styleFn)[]
 
 export type StyledOptions = {
   label?: string,
   shouldForwardProp?: (arg: string) => boolean,
   target?: string
-  props?: string[] | {[key: string]: any},
-}
-
-const isError = (tag: string): boolean => {
-  if (process.env.NODE_ENV !== 'production') {
-    if (tag === undefined) {
-      throw new Error(NO_TAG_ERROR)
-    }
-  }
-
-  return true
+  props?: Record<string, any>
+  passThrough?: boolean
 }
 
 interface TagContext {
@@ -27,7 +23,7 @@ interface TagContext {
   baseTag?: string
 }
 
-interface GetStylesOptions extends TagContext{
+interface GetStylesOptions extends TagContext {
   label?: string
 }
 
@@ -76,10 +72,32 @@ const getStyles = (tag: any, options: GetStylesOptions, args: any[]) => {
 
 type StyledResult = (...args: any[]) => DefineComponent
 
-export const styled = (tag: string = 'div', options: StyledOptions = {}): StyledResult => {
-  isError(tag)
+interface CreateStyledOptions {
+  props?: Record<string, any>
+}
 
-  const {label, target, props = {}} = options
+export const createStyled = (options: CreateStyledOptions): ((tag?: any, options?: StyledOptions) => StyledResult) => {
+  const {props: defaultProps = {}} = options
+
+  return (tag: any = 'div', options: StyledOptions = {}) => {
+    const {props} = options
+    return styled(tag, {...options, props: {...defaultProps, ...props}})
+  }
+}
+
+const getClassName = (key: string, name: string, additionalClasses: any[] = []) => {
+  return [...additionalClasses.filter((value) => typeof value === 'string'), `${key}-${name}`].join(' ')
+}
+
+const PASS_THROUGH_NAME = '__passThough__'
+
+interface passThrough {
+  props: Record<string, any>
+  styles: any[]
+}
+
+export const styled = (tag: any = 'div', options: StyledOptions = {}): StyledResult => {
+  const {label, target, props = {}, passThrough = false, shouldForwardProp} = options
   const {baseTag, isReal} = getTagContext(tag)
 
   return (...args: any[]) => {
@@ -88,34 +106,44 @@ export const styled = (tag: string = 'div', options: StyledOptions = {}): Styled
     }, args)
 
     return defineComponent({
+      name: 'emotion',
       props: {
+        [PASS_THROUGH_NAME]: Object,
         as: String,
-        ...allProps,
         ...props,
       },
       setup(props, {attrs, slots}) {
         const theme = inject(themeSym, {})
         return (context: any) => {
-          const {$parent} = context
-          const cache = $parent.$emotionCache
-          // const {value, ...restAttrs} = attrs || {}
           const {as, ...restProps} = props
-          let className = ''
           const finalTag: any = as || baseTag || 'div'
-          const classInterpolations: any[] = []
-          const mergedProps = {
-            ...attrs,
-            ...restProps,
-            theme,
-            // ...$parent.$evergarden,
+          const through = props[PASS_THROUGH_NAME] || {props: {}, styles: []}
+
+          // passing through for serializeStyles
+          if (passThrough && typeof finalTag !== 'string') {
+            const newProps = {...attrs, ...props}
+            const newThrough: passThrough = {
+              props: {...through.props, ...newProps},
+              styles: [...styles, ...through.styles],
+            }
+            return (
+              h(finalTag, {[PASS_THROUGH_NAME]: newThrough}, slots)
+            )
           }
 
-          // const domProps = {
-          //   value,
-          // }
+          const {$parent} = context
+          const cache = $parent.$emotionCache
+          const {value, ...restAttrs} = attrs
+
+          const mergedProps = {
+            ...restAttrs,
+            ...restProps,
+            ...through.props,
+            theme,
+          }
 
           const serialized = serializeStyles(
-            styles.concat(classInterpolations),
+            styles.concat(through.styles),
             cache.registered,
             mergedProps,
           )
@@ -126,14 +154,12 @@ export const styled = (tag: string = 'div', options: StyledOptions = {}): Styled
             typeof finalTag === 'string',
           )
 
-          className += `${cache.key}-${serialized.name}`
+          const className = getClassName(cache.key, serialized.name, [target, attrs.class])
 
-          if (target !== undefined) {
-            className += ` ${target}`
-          }
+          const nextProps: any = typeof finalTag === 'string' ? {} : props
 
           return (
-            h(finalTag, {class: className} as any, slots)
+            h(finalTag, {...restAttrs, ...nextProps, value, class: className} as any, slots)
           )
         }
       },

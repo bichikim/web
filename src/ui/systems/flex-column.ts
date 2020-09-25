@@ -1,6 +1,7 @@
-import css from '@styled-system/css'
-import {parallelProps} from '../parallel-props'
+import css, {CssFunctionReturnType} from '@styled-system/css'
+import {parallelProps} from '@/ui/utils'
 import {ResponsiveValue} from 'styled-system'
+import {SystemFunc} from '@/types'
 
 export interface ColumnProps {
   column?: ResponsiveValue<boolean>
@@ -11,7 +12,7 @@ export interface ColumnProps {
   reverse?: boolean
 }
 
-export const column = (props: ColumnProps) => {
+export const column: SystemFunc<ColumnProps> = (props: ColumnProps): CssFunctionReturnType => {
   const {column, reverse} = props
   return css(parallelProps({column, reverse}, ({column, reverse}) => {
     const flexDirection = [column ? 'column' : 'row']

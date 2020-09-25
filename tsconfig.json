@@ -12,6 +12,7 @@
     "suppressImplicitAnyIndexErrors": true,
     "sourceMap": true,
     "baseUrl": ".",
+    "resolveJsonModule": true,
     "typeRoots": [
       "node_modules/@types",
       "types"
@@ -30,6 +31,7 @@
   },
   "include": [
     "src/**/*.ts",
+    "src/**/*.d.ts",
     "src/**/*.tsx",
     "src/**/*.vue",
     "tests/**/*.ts",

@@ -1,4 +1,3 @@
-import {style} from '@/ui/systems/index'
 import {RequiredTheme, ResponsiveValue, system, Theme} from 'styled-system'
 import {Property} from 'csstype'
 

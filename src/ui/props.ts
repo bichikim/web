@@ -135,6 +135,10 @@ export const borderProps = {
   borderRightStyle: responsiveType,
 }
 
+export const showProps = {
+  show: responsiveType,
+}
+
 export const colorProps = {
   color: responsiveType,
   backgroundColor: responsiveType,
@@ -179,6 +183,10 @@ export const borderShortProps = {
   byw: responsiveType,
 }
 
+export const gapProps = {
+  gap: responsiveType,
+}
+
 export const allProps = {
   ...paddingProps,
   ...marginProps,
@@ -195,4 +203,6 @@ export const allProps = {
   ...flexShortProps,
   ...displayShortProps,
   ...borderShortProps,
+  ...showProps,
+  // ...gapProps,
 }

@@ -1,7 +1,7 @@
-import {defineComponent, h, ref, toRefs, onMounted, computed} from 'vue'
-import {boxSystem} from './system'
-import styled from '@/lib/emotion/styled'
 import shouldForwardProp from '@styled-system/should-forward-prop'
+import {defineComponent, h, ref, toRefs, onMounted, computed} from 'vue'
+import {boxSystem} from '@/ui/component/box/system'
+import styled from '@/ui/styled'
 import {keyframes, easing, styler} from 'popmotion'
 import {castArray} from 'lodash'
 
@@ -30,6 +30,7 @@ const defaultStyle = {
 }
 
 export const Box = defineComponent({
+  name: 'box',
   props: ['transition', 'animate'],
   setup(props, {attrs, slots}) {
     const {transition, animate} = toRefs(props)

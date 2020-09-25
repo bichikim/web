@@ -1,5 +1,5 @@
 import css, {CSSObject} from '@styled-system/css'
-import {SystemFunc} from 'src/ui/systems/types'
+import {SystemFunc} from '@/types'
 
 export interface PositionSystemProps {
   reverseX?: boolean

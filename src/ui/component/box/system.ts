@@ -10,8 +10,8 @@ import {
   Theme,
 } from '@/ui/systems'
 import fluid from 'fluid-system'
-import {ASProps, System} from '../types'
-import {variantComplex} from '../variant-complex'
+import {ASProps, System} from '@/types'
+import {variantComplex} from '@/ui/utils'
 
 export interface textSetVariantProps {
   textSet?: ResponsiveValue<string>
@@ -33,11 +33,12 @@ export const boxSystem: System<Props, Theme> = [
   {
     boxSizing: 'border-box',
     display: 'block',
+    width: '100%',
+    height: '100%',
+    backgroundColor: 'transparent',
+    overflow: 'hidden',
   },
   textDecoration,
-  // ...allSystem.map((system) => {
-  //   return fluid(system)
-  // }),
   fluid(allSystem),
   borderShort,
   show,

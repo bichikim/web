@@ -5,6 +5,3 @@ export const ILLEGAL_ESCAPE_SEQUENCE_ERROR =
   ' You can read more about this here:\n' +
   'https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/' +
   'Template_literals#ES2018_revision_of_illegal_escape_sequences'
-export const NO_TAG_ERROR =
-  'You are trying to create a styled element with an undefined component.\n' +
-  'You may have forgotten to import it.'

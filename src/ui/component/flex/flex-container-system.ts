@@ -1,4 +1,4 @@
-import {WrapProps} from './types'
+import {WrapProps} from 'src/ui/component/flex/types'
 import {column, ColumnProps, createGap, flexWrap, FlexWrapProps, GapProps} from '@/ui/systems'
 import {
   color,

@@ -1,2 +1,3 @@
-export * from './box'
-export * from './flex'
+export * from './component/box'
+export * from './component/flex'
+export * from './input'
