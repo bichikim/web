@@ -9,10 +9,17 @@ const BoxComponent = styled('div', {shouldForwardProp})(...boxSystem)
 export const Box = defineComponent({
   name: 'box',
   props: ['mountAni', 'hoverAni', 'tapAni'],
-  setup(props, {attrs, slots}) {
+  emits: {
+    tap: null,
+    hover: null,
+  },
+  setup(props, {attrs, slots, emit}) {
     const {mountAni, hoverAni, tapAni} = toRefs(props)
     const root = ref()
-    useAnimate(root, {mountAni, hoverAni, tapAni})
+    const onTap = (event) => emit('tap', event)
+    const onHover = (event) => emit('hover', event)
+
+    useAnimate(root, {mountAni, hoverAni, tapAni, onTap, onHover})
 
     return () => {
       return (

@@ -17,6 +17,8 @@ export default defineComponent({
             mountAni: {scale: [2, 1]},
             hoverAni: {scale: [2, 1]},
             tapAni: {scale: [2, 1]},
+            onHover: () => (console.log('hover')),
+            onTap: () => (console.log('tap')),
           },
           () => 'click'),
         ])
