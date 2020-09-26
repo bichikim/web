@@ -1,6 +1,6 @@
 import {easing, keyframes, styler} from 'popmotion'
 import {KeyframesProps, Values} from 'popmotion/src/animations/keyframes/types'
-import {computed, onMounted, onUnmounted, Ref} from 'vue'
+import {computed, onMounted, onUnmounted, Ref, onBeforeUnmount} from 'vue'
 import {parallelArray} from '@/ui/utils'
 import interactjs from 'interactjs'
 
@@ -21,7 +21,7 @@ interface EventOptions {
   onDoubleTap?: (event) => any
   onMounted?: ($el) => any
   onHover?: (event) => any
-  onUnmount?: ($el) => any
+  onBeforeUnmounted?: ($el) => any
 }
 
 export interface AnimateOptions extends EventOptions {
@@ -73,8 +73,8 @@ const useAction = (keyframeAni: Ref<any>, defaults: Omit<KeyframesProps, 'values
 }
 
 export const useEvent = (root: Ref<any>, options: EventOptions = {}) => {
-  const {onHover, onMounted: _onMounted, onTap, onUnmount: _onUnmounted, onDoubleTap} = options
-  const interact = computed(() => (interactjs(root.value.$el)))
+  const {onHover, onMounted: _onMounted, onTap, onBeforeUnmounted: _onBeforeUnmounted, onDoubleTap} = options
+  const interact = computed(() => (interactjs(root.value?.$el)))
 
   const hover = (event) => {
     onHover && onHover(event)
@@ -89,7 +89,7 @@ export const useEvent = (root: Ref<any>, options: EventOptions = {}) => {
   }
 
   onMounted(() => {
-    _onMounted && _onMounted(root.value.$el)
+    _onMounted && _onMounted(root.value?.$el)
   })
 
   onMounted(() => {
@@ -98,11 +98,11 @@ export const useEvent = (root: Ref<any>, options: EventOptions = {}) => {
     interact.value.on('doubletap', doubleTap)
   })
 
-  onUnmounted(() => {
+  onBeforeUnmount(() => {
     root.value.$el.removeEventListener('mouseover', hover)
     interact.value.off('tap', tap)
     interact.value.off('doubletap', doubleTap)
-    _onUnmounted && _onUnmounted(root.value.$el)
+    _onBeforeUnmounted && _onBeforeUnmounted(root.value?.$el)
   })
 }
 
@@ -115,7 +115,7 @@ export const useAnimate = (root: Ref<any>, options: AnimateOptions) => {
   const tapAni: any = useEasyAni(options.tapAni)
   const tapAction: any = useAction(tapAni)
 
-  const elStyler = computed(() => (styler(root.value.$el)))
+  const elStyler = computed(() => (styler(root.value?.$el)))
 
   useEvent(root, {
     onMounted: () => {
