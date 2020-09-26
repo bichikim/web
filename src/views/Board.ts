@@ -8,7 +8,17 @@ export default defineComponent({
     return () => {
       return (
         h(Flex, {bg: 'WhiteSmoke', color: 'white', gap: 10}, () => [
-          h(Box, {bg: 'tomato', p: 10, bra: 10, range: 'auto', sdw: shadow, animate: [{scale: 2}, {scale: 1}]}, () => 'click'),
+          h(Box, {
+            bg: 'tomato',
+            p: 10,
+            bra: 10,
+            range: 'auto',
+            sdw: shadow,
+            mountAni: {scale: [2, 1]},
+            hoverAni: {scale: [2, 1]},
+            tapAni: {scale: [2, 1]},
+          },
+          () => 'click'),
         ])
       )
     }

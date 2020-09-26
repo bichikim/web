@@ -27,6 +27,23 @@ export const parallelProps = (
   return resultProps
 }
 
+export const parallelArray = (
+  props: Record<string, any[] | any>,
+): any[] => {
+  let max = 1
+  let i = 0
+  const resultProps: any[] = []
+
+  do {
+    const {maxIndex, result} = gatherObjectItems(props, i)
+    max = maxIndex
+    resultProps.push(result)
+    i += 1
+  } while (i <= max)
+
+  return resultProps
+}
+
 interface TravelResult {
   maxIndex: number
   result: Record<string, any>
