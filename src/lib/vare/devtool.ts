@@ -38,7 +38,6 @@ export function _triggerDevToolAction(storeName: string, name: string, args: any
 }
 
 export function _triggerDevToolMutation(storeName: string, name: string, args: any[], state: any): void {
-  console.log(storeName, name, args, state)
   if (process.env.NODE_ENV === 'development') {
     devtoolHook.emit(
       'vuex:mutation',

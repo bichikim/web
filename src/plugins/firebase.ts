@@ -1,9 +1,7 @@
 import * as firebase from 'firebase/app'
-import 'firebase/auth'
-import 'firebase/firestore'
-import 'firebase/messaging'
-import 'firebase/functions'
-import {App, Plugin} from 'vue'
+import {App as VueApp, Plugin} from 'vue'
+
+export type App = firebase.app.App
 
 interface FirebaseConfig {
   /**
@@ -42,14 +40,23 @@ interface FirebaseConfig {
 
 const createFirebase = (config: FirebaseConfig): Plugin => {
   return {
-    install(app: App) {
+    install(app: VueApp) {
+      if (!firebase) {
+        if (process.env.NODE_ENV !== 'production') {
+          console.warn('there is no firebase js')
+        }
+      }
       if (!config) {
         if (process.env.NODE_ENV !== 'production') {
           console.warn('there is no firebase config')
         }
         return
       }
+
       app.config.globalProperties.$firebase = firebase.initializeApp(config)
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('firebase initialize app')
+      }
     },
   }
 }

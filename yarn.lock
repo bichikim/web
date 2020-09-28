@@ -2266,6 +2266,13 @@
     "@types/qs" "*"
     "@types/serve-static" "*"
 
+"@types/firebase@^3.2.1":
+  version "3.2.1"
+  resolved "https://registry.yarnpkg.com/@types/firebase/-/firebase-3.2.1.tgz#17c1c8fee7485ab09668d2461e34540bdf44b3b1"
+  integrity sha512-G8XgHMu2jHlElfc2xVNaYP50F0qrqeTCjgeG1v5b4SRwWG4XKC4fCuEdVZuZaMRmVygcnbRZBAo9O7RsDvmkGQ==
+  dependencies:
+    firebase "*"
+
 "@types/glob-base@^0.3.0":
   version "0.3.0"
   resolved "https://registry.yarnpkg.com/@types/glob-base/-/glob-base-0.3.0.tgz#a581d688347e10e50dd7c17d6f2880a10354319d"
@@ -6942,7 +6949,7 @@ findup@^0.1.5:
     colors "~0.6.0-1"
     commander "~2.1.0"
 
-firebase@^7.21.1:
+firebase@*:
   version "7.21.1"
   resolved "https://registry.yarnpkg.com/firebase/-/firebase-7.21.1.tgz#45c92d6c53136a07d637e9da227726460e86e746"
   integrity sha512-ogqWUXIP2/1BTee112QJiAjgch/Ig7pzlAw2mfWOhl9E0IUX46OKv0hypLX62MBgaAKwPHfICIwsWOCxlQ9dZQ==
