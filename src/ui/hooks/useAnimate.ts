@@ -1,8 +1,9 @@
+import {parallelArray} from '@/ui/utils'
+import {ComputedRef} from '@vue/reactivity'
+import interactJs from 'interactjs'
 import {easing, keyframes, styler} from 'popmotion'
 import {KeyframesProps, Values} from 'popmotion/src/animations/keyframes/types'
-import {computed, onMounted, onUnmounted, Ref, onBeforeUnmount} from 'vue'
-import {parallelArray} from '@/ui/utils'
-import interactjs from 'interactjs'
+import {computed, onBeforeUnmount, onMounted, Ref} from 'vue'
 
 type AnimationKeys = Record<string, any | any[]>
 
@@ -30,7 +31,9 @@ export interface AnimateOptions extends EventOptions {
   mountAni?: Ref<Animation | AnimationKeys>
 }
 
-export const useEasyAni = (ani?: Ref<Animation | AnimationKeys>) => {
+export const useEasyAni = (
+  ani?: Ref<Animation | AnimationKeys>,
+): ComputedRef<KeyframesProps | undefined> => {
   return computed(() => {
     if (!ani?.value) {
       return
@@ -56,7 +59,10 @@ const defaultOptions: Omit<KeyframesProps, 'values'> = {
   ease: easing.easeInOut as any,
 }
 
-const useAction = (keyframeAni: Ref<any>, defaults: Omit<KeyframesProps, 'values'> = defaultOptions) => {
+const useAction = (
+  keyframeAni: Ref<any>,
+  defaults: Omit<KeyframesProps, 'values'> = defaultOptions,
+) => {
   return computed(() => {
     if (!keyframeAni?.value) {
       return
@@ -72,9 +78,16 @@ const useAction = (keyframeAni: Ref<any>, defaults: Omit<KeyframesProps, 'values
   })
 }
 
-export const useEvent = (root: Ref<any>, options: EventOptions = {}) => {
-  const {onHover, onMounted: _onMounted, onTap, onBeforeUnmounted: _onBeforeUnmounted, onDoubleTap} = options
-  const interact = computed(() => (interactjs(root.value?.$el)))
+export const useEvent = (root: Ref<any>, options: EventOptions = {}): void => {
+  const {
+    onHover,
+    onMounted: _onMounted,
+    onTap,
+    onBeforeUnmounted: _onBeforeUnmounted,
+    onDoubleTap,
+  } = options
+
+  const interact = computed(() => (interactJs(root.value?.$el)))
 
   const hover = (event) => {
     onHover && onHover(event)
@@ -106,7 +119,7 @@ export const useEvent = (root: Ref<any>, options: EventOptions = {}) => {
   })
 }
 
-export const useAnimate = (root: Ref<any>, options: AnimateOptions) => {
+export const useAnimate = (root: Ref<any>, options: AnimateOptions): void => {
   const {onHover, onTap} = options
   const mountAni: any = useEasyAni(options.mountAni)
   const mountAction = useAction(mountAni)
