@@ -10,6 +10,9 @@ const getUid = (id?: string) => {
   return id
 }
 
+/**
+ * Todo WIP
+ */
 export const InputComponent = defineComponent({
   name: 'b-input',
   props: {
@@ -34,7 +37,7 @@ export const InputComponent = defineComponent({
     const id = computed(() => getUid(idRef.value))
     return () => {
       return h(Box, {...attrs, ..._props, as: 'input', id: id.value}, () => {
-        console.log('render?')
+        // console.log('render?')
         return 'fo'
       },
       )
