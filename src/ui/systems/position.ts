@@ -1,4 +1,4 @@
-import css, {CSSObject} from '@styled-system/css'
+import css, {CssFunctionReturnType, CSSObject} from '@styled-system/css'
 import {SystemFunc} from '@/types'
 
 export interface PositionSystemProps {
@@ -16,7 +16,7 @@ export const positionSystem: SystemFunc<PositionSystemProps> = ({
   reverseY = false,
   x = 0,
   y = 0,
-}) => {
+}): CssFunctionReturnType => {
   const style: CSSObject = {}
 
   if (reverseX) {

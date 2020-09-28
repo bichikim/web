@@ -38,6 +38,7 @@ export const getOffsetMargin = (
   if (typeof offset === 'undefined') {
     return {}
   }
+
   if (column) {
     if (reverse) {
       return {
@@ -64,12 +65,14 @@ const getBasis = (division: number, range?: number) => {
   if (range) {
     return `${HUNDRED * (1 / division) * range}%`
   }
+
   return range
 }
 
 export const flexRange: SystemFunc<FlexRangeProps & FlexColumnProps> =
   (props) => {
     const {range, division, column, reverse, offset} = props
+
     return css(
       parallelProps(
         {column, division, offset, range, reverse},

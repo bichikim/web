@@ -14,6 +14,7 @@ export interface ColumnProps {
 
 export const column: SystemFunc<ColumnProps> = (props: ColumnProps): CssFunctionReturnType => {
   const {column, reverse} = props
+
   return css(parallelProps({column, reverse}, ({column, reverse}) => {
     const flexDirection = [column ? 'column' : 'row']
 
