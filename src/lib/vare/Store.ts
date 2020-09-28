@@ -25,6 +25,9 @@ export interface RegisterOptions {
   save?: boolean
 }
 
+/**
+ * Todo WIP
+ */
 export class Store<T extends AnyObject> {
   private _state: State<T>
   private readonly _subscribes: Map<SubscribeFunc, boolean> = new Map()
