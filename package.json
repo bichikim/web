@@ -5,8 +5,8 @@
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
-    "test:web": "vue-cli-service test:unit",
-    "test:function": "",
+    "test:web": "vue-cli-service test:unit src/**/*.spec.ts",
+    "test:function": "npm --prefix functions run test",
     "lint": "vue-cli-service lint",
     "icons": "gulp icons",
     "ui": "vue ui"

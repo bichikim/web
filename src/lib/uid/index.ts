@@ -25,19 +25,17 @@ const getCrypto = () => {
 const getRandomBytes = () => {
   const crypto = getCrypto()
 
-  if (typeof crypto === 'undefined') {
-    return
-  }
+  if (typeof crypto !== 'undefined') {
+    if (typeof crypto.randomBytes !== 'undefined') {
+      return crypto.randomBytes
+    }
 
-  if (typeof crypto.randomBytes !== 'undefined') {
-    return crypto.randomBytes
-  }
-
-  if (typeof crypto.getRandomValues !== 'undefined') {
-    return (num: number) => {
-      const bytes = new Uint8Array(num)
-      crypto.getRandomValues(bytes)
-      return bytes
+    if (typeof crypto.getRandomValues !== 'undefined') {
+      return (num: number) => {
+        const bytes = new Uint8Array(num)
+        crypto.getRandomValues(bytes)
+        return bytes
+      }
     }
   }
 
