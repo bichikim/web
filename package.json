@@ -7,7 +7,7 @@
     "build": "vue-cli-service build",
     "test:unit": "vue-cli-service test:unit",
     "lint": "vue-cli-service lint",
-    "icon": "gulp icons",
+    "icons": "gulp icons",
     "ui": "vue ui"
   },
   "dependencies": {

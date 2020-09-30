@@ -26,3 +26,13 @@ yarn test:unit
 ```
 yarn lint
 ```
+
+### generate icons
+```
+yarn icons
+```
+
+### Run vue cli ui
+```
+yarn ui
+```
