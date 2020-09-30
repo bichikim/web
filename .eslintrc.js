@@ -44,6 +44,12 @@ module.exports = {
       },
     },
     {
+      files: ['babel.config.js'],
+      rules: {
+        'no-template-curly-in-string': 'off',
+      },
+    },
+    {
       files: ['**/tests/**/*.js', '*.js'],
       rules: {
         '@typescript-eslint/no-var-requires': 'off',

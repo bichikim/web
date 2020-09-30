@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
-    "target": "esnext",
-    "module": "esnext",
+    "target": "ES2015",
+    "module": "CommonJS",
     "strict": true,
     "jsx": "preserve",
     "noImplicitAny": false,
