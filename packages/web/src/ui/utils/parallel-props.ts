@@ -11,7 +11,7 @@ import {ResponsiveValue} from 'styled-system'
 export const parallelProps = (
   props: Record<string, any[] | any>,
   execute?: (props: any) => Record<string, any>,
-) => {
+): Record<string, any[]> => {
   let max = 1
   let i = 0
   const resultProps = {}
@@ -98,7 +98,7 @@ export const parallelProp = <T, R>(value: ResponsiveValue<T>, mapper: ((value: T
   return mapper(value)
 }
 
-export const multiObjectKeyPush = (target: Record<string, any>, source: Record<string, any>) => {
+export const multiObjectKeyPush = (target: Record<string, any>, source: Record<string, any>): void => {
   const keys = Object.keys(source)
 
   for (const key of keys) {

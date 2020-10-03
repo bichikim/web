@@ -1,7 +1,7 @@
 import {createParser, get} from '@styled-system/core'
 import css from '@styled-system/css'
-import {Theme, VariantArgs} from 'styled-system'
 import {get as getProperty} from 'lodash'
+import {VariantArgs} from 'styled-system'
 
 export type Getter = (value: any, props: Record<string, any>) => string | string[]
 
@@ -50,8 +50,7 @@ const getNamespace = (getter: string | string[] | Getter | undefined, value, pro
  * variant with a theme properties
  * @param options
  */
-export const variantComplex = <
-  TStyle = Record<string, any>,
+export const variantComplex = <TStyle = Record<string, any>,
   K extends string = string,
   >(options: VariantArgs<TStyle, K> & VariantComplexOptions) => {
   const {

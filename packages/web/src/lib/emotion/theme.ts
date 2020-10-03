@@ -1,7 +1,5 @@
-import {App} from 'vue'
-import {} from '@emotion/stylis'
-import {CSSObject} from '@styled-system/css'
 import {Theme} from 'styled-system'
+import {App} from 'vue'
 
 export const themeSym = Symbol('theme')
 

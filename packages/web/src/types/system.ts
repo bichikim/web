@@ -4,16 +4,16 @@ import * as CSS from 'csstype'
 import {styleFn, Theme} from 'styled-system'
 
 export type PropsWithTheme<P, T extends Theme = Theme> = P & {
-  theme?: Theme
+  theme?: T
 }
 
 export type SystemFunc<P, T extends Theme = Theme> =
   (props: PropsWithTheme<P, T>) => CSSObject | CssFunctionReturnType
 
-export type PossibleSystemItem<P, T> = CSSObject | styleFn
+export type PossibleSystemItem = CSSObject | styleFn
 
-export type System<P, T = Theme> =
-  ReadonlyArray<PossibleSystemItem<P, T> | ReadonlyArray<PossibleSystemItem<P, T>>>
+export type System =
+  ReadonlyArray<PossibleSystemItem | ReadonlyArray<PossibleSystemItem>>
 
 export type FunctionCSSObject = (props: any) => any
 export type CSSInterpolation =

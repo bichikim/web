@@ -1,6 +1,6 @@
 import {castArray} from 'lodash'
 
-export const slotToArray = (slot) => {
+export const slotToArray = (slot?: () => any): any[] => {
   if (slot) {
     return castArray(slot())
   }

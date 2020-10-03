@@ -6,13 +6,13 @@ import del from 'del'
 
 export const createIcons = execa.task('vue-asset-generate -a icon.png -o public/img/icons')
 
-export const moveFavicon = () => {
+export const moveFavicon = (): ReturnType<typeof src> => {
   return src('public/img/icons/favicon.ico')
     .pipe(vinylPaths(del))
     .pipe(dest('public'))
 }
 
-export const moveManifest = () => {
+export const moveManifest = (): ReturnType<typeof src> => {
   return src('public/img/icons/manifest.json')
     .pipe(vinylPaths(del))
     .pipe(rename((path) => {

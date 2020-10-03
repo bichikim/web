@@ -29,8 +29,7 @@ const routes: Array<RouteRecordRaw> = [
     component: Default,
   },
   /**
-   * @see
-   * https://next.router.vuejs.org/guide/essentials/dynamic-matching.html#catch-all-404-not-found-route
+   * @see https://next.router.vuejs.org/guide/essentials/dynamic-matching.html#catch-all-404-not-found-route
    */
   {
     path: '/:pathMatch(.*)*',
