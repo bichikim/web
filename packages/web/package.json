@@ -44,6 +44,7 @@
     "@vue/cli-plugin-eslint": "~4.5.6",
     "@interactjs/types": "^1.9.22",
     "@vue/cli-plugin-pwa": "~4.5.6",
+    "webpack-bundle-analyzer": "^3.9.0",
     "@vue/cli-plugin-router": "~4.5.6",
     "@vue/cli-plugin-typescript": "~4.5.6",
     "@vue/cli-plugin-unit-jest": "~4.5.6",
