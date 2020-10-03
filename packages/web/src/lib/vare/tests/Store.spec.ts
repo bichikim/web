@@ -1,6 +1,7 @@
-import {createStore} from '../Store'
+import {createStore} from 'packages/web/src/lib/vare/Store'
 import {defineComponent, computed, h} from 'vue'
 import {expect} from 'chai'
+import {shallowMount} from '@vue/test-utils'
 
 const setup = () => {
   const store = createStore({
@@ -41,9 +42,9 @@ const setup = () => {
 
       return () => {
         return h('div', () => [
-          h('span', foo.value),
-          h('span', bar.value),
-          h('span', johnFoo.value),
+          h('span', {id: 'foo'}, foo.value),
+          h('span', {id: 'bar'}, bar.value),
+          h('span', {id: 'john-foo'}, johnFoo.value),
         ])
       }
     },
@@ -61,7 +62,9 @@ const setup = () => {
 
 describe('Store', function test() {
   it('should mutate', function test() {
-    const {state, setBar, setFoo, setJohnFoo} = setup()
+    const {state, setBar, setFoo, setJohnFoo, Component} = setup()
+    const wrapper = shallowMount(Component)
+    expect(wrapper.find('#foo').exists()).to.equal(true)
     setFoo('_foo')
     expect(state.foo).to.equal('_foo')
     setBar('_bar')

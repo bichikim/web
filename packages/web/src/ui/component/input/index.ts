@@ -1,4 +1,4 @@
-import {Box} from '@/ui/component/box'
+import {Box} from '@/ui'
 import {defineComponent, h, computed, ref, toRefs} from 'vue'
 import styled, {Systems} from '@/ui/styled'
 import uid from '@/lib/uid'

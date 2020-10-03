@@ -8,7 +8,7 @@ import {
   ResponsiveValue,
 } from '@/ui/systems'
 import {Property} from 'csstype'
-import {ASProps} from '../types'
+import {ASProps} from '@/types'
 
 export type Range = number | 'space' | 'auto' | 'force-space'
 

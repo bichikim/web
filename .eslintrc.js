@@ -44,6 +44,14 @@ module.exports = {
       },
     },
     {
+      files: [
+        '**/*.html',
+      ],
+      rules: {
+        'vue/comment-directive': 'off',
+      },
+    },
+    {
       files: ['babel.config.js'],
       rules: {
         'no-template-curly-in-string': 'off',

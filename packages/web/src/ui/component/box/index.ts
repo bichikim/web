@@ -1,5 +1,5 @@
-import {boxSystem} from '@/ui/component/box/system'
-import styled from '@/ui/styled'
+import {boxSystem} from '../box/system'
+import styled from '@/lib/emotion/styled'
 import shouldForwardProp from '@styled-system/should-forward-prop'
 import {defineComponent, h, ref, toRefs} from 'vue'
 import {useAnimate} from '@/ui/hooks/useAnimate'

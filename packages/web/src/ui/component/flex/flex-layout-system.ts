@@ -1,4 +1,4 @@
-import {show, ShowProps} from '@/ui/systems'
+import {show, ShowProps} from '../../systems'
 import fluid from 'fluid-system'
 import {border, BorderProps, compose, layout, LayoutProps, shadow, ShadowProps} from 'styled-system'
 

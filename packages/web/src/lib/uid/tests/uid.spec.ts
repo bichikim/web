@@ -1,5 +1,5 @@
 import {expect} from 'chai'
-import uid from '../index'
+import uid from 'packages/web/src/lib/uid/index'
 
 describe('uid', function test() {
   it('should return uid', function test() {

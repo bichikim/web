@@ -1,14 +1,16 @@
 import {createApp} from 'vue'
-import App from './App'
-import router from './router'
+import App from '@/App'
+import router from '@/router'
 import createEmotion from '@/lib/emotion'
 import createVare from '@/lib/vare'
 import createTheme from '@/lib/emotion/theme'
 import createFirebase from '@/plugins/firebase'
+import createWorkbox from '@/plugins/workbox'
 
 const theme = createTheme({})
 const emotion = createEmotion()
 const vare = createVare()
+const workbox = createWorkbox()
 const firebase = createFirebase({
   apiKey: 'AIzaSyBvS86fzrVOx3JDZvuwWfz8embqVWVYtas',
   authDomain: 'web-prod-bc72c.firebaseapp.com',
@@ -23,6 +25,7 @@ const firebase = createFirebase({
 createApp(App)
   .use(router)
   .use(emotion)
+  .use(workbox)
   .use(theme)
   .use(firebase)
   .use(vare)

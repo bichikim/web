@@ -1,4 +1,4 @@
-import {flexRange, FlexRangeProps, show, ShowProps} from '@/ui/systems'
+import {flexRange, FlexRangeProps, show, ShowProps} from '../../systems'
 import {system, typography, TypographyProps} from 'styled-system'
 export type FlexItemProps = FlexRangeProps & ShowProps & TypographyProps
 

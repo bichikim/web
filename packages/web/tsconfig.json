@@ -14,6 +14,7 @@
     "baseUrl": ".",
     "resolveJsonModule": true,
     "typeRoots": [
+      "../../node_modules/@types",
       "node_modules/@types",
       "types"
     ],
@@ -30,12 +31,12 @@
     ]
   },
   "include": [
-    "packages/**/src/**/*.ts",
-    "packages/**/src/**/*.d.ts",
-    "packages/**/src/**/*.tsx",
-    "packages/**/src/**/*.vue",
-    "packages/**/tests/**/*.spec.ts",
-    "packages/**/tests/**/*.spec.tsx"
+    "src/**/*.ts",
+    "src/**/*.d.ts",
+    "src/**/*.tsx",
+    "src/**/*.vue",
+    "tests/**/*.ts",
+    "tests/**/*.tsx"
   ],
   "exclude": [
     "node_modules"
