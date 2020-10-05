@@ -5,13 +5,11 @@ import {
   ShadowProps,
   show,
   ShowProps,
-  textDecoration,
-  borderShort,
   Theme,
 } from '@/ui/systems'
 import fluid from 'fluid-system'
 import {ASProps, System} from '@/types'
-import {variantComplex} from '@/ui/utils'
+import {variantComplex} from '@/utils'
 
 export interface textSetVariantProps {
   textSet?: ResponsiveValue<string>
@@ -34,6 +32,8 @@ export const boxSystem: System<Props, Theme> = [
     boxSizing: 'border-box',
     display: 'block',
     width: '100%',
+    color: 'inherit',
+    textDecoration: 'inherit',
     height: '100%',
     padding: '0',
     border: 0,
@@ -42,10 +42,11 @@ export const boxSystem: System<Props, Theme> = [
     outline: 'none !important',
     fontSize: '1rem',
     overflow: 'hidden',
+    '&:visited': {
+
+    },
   },
-  textDecoration,
   fluid(allSystem),
-  borderShort,
   show,
   variantComplex({
     prop: 'textSet',

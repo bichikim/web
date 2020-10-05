@@ -5,7 +5,7 @@ import {styleFn} from 'styled-system'
 import {defineComponent, DefineComponent, h, inject} from 'vue'
 import {ILLEGAL_ESCAPE_SEQUENCE_ERROR} from './errors'
 import {themeSym} from './theme'
-
+import {safeCastArray} from '@/utils'
 export type StyledSystems = (CSSObject | styleFn)[]
 
 export type StyledOptions = {
@@ -121,7 +121,7 @@ export const styled = (tag: any = 'div', options: StyledOptions = {}): StyledRes
       name: 'emotion',
       props: {
         [PASS_THROUGH_NAME]: Object,
-        as: String,
+        as: null,
         ...props,
       },
       setup(props, {attrs, slots}) {
@@ -146,7 +146,6 @@ export const styled = (tag: any = 'div', options: StyledOptions = {}): StyledRes
           const {$parent} = context
           const cache = $parent.$emotionCache
           const {value, ...restAttrs} = attrs
-
           const mergedProps = {
             ...restAttrs,
             ...restProps,
