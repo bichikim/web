@@ -1,6 +1,27 @@
+import {
+  PaddingProps,
+  MarginProps,
+  LayoutProps,
+  TypographyProps,
+  ShadowProps,
+  PositionProps,
+  GridProps,
+  FlexboxProps,
+  BorderProps,
+  ShowProps,
+  ColorProps,
+  FontShortProps,
+  TextDecorationProps,
+  FlexShortProps,
+  DisplayShortProps,
+  BorderShortProps,
+} from './systems'
+
 export const responsiveType = {required: false}
 
-export const paddingProps = {
+type PropsMember<K, V = typeof responsiveType> = Record<keyof K, V>
+
+export const paddingProps: PropsMember<PaddingProps> = {
   padding: responsiveType,
   paddingTop: responsiveType,
   paddingRight: responsiveType,
@@ -17,7 +38,7 @@ export const paddingProps = {
   py: responsiveType,
 }
 
-export const marginProps = {
+export const marginProps: PropsMember<MarginProps> = {
   m: responsiveType,
   ml: responsiveType,
   mr: responsiveType,
@@ -34,7 +55,7 @@ export const marginProps = {
   marginY: responsiveType,
 }
 
-export const layoutProps = {
+export const layoutProps: PropsMember<LayoutProps> = {
   width: responsiveType,
   height: responsiveType,
   minWidth: responsiveType,
@@ -49,7 +70,7 @@ export const layoutProps = {
   verticalAlign: responsiveType,
 }
 
-export const typographyProps = {
+export const typographyProps: PropsMember<TypographyProps> = {
   fontFamily: responsiveType,
   fontSize: responsiveType,
   fontWeight: responsiveType,
@@ -59,12 +80,12 @@ export const typographyProps = {
   fontStyle: responsiveType,
 }
 
-export const shadowProps = {
+export const shadowProps: PropsMember<ShadowProps> = {
   boxShadow: responsiveType,
   textShadow: responsiveType,
 }
 
-export const positionProps = {
+export const positionProps: PropsMember<PositionProps> = {
   position: responsiveType,
   zIndex: responsiveType,
   top: responsiveType,
@@ -73,7 +94,7 @@ export const positionProps = {
   left: responsiveType,
 }
 
-export const gridProps = {
+export const gridProps: PropsMember<GridProps> = {
   gridGap: responsiveType,
   gridColumnGap: responsiveType,
   gridRowGap: responsiveType,
@@ -88,7 +109,7 @@ export const gridProps = {
   gridArea: responsiveType,
 }
 
-export const flexboxProps = {
+export const flexboxProps: PropsMember<FlexboxProps> = {
   alignItems: responsiveType,
   alignContent: responsiveType,
   justifyItems: responsiveType,
@@ -105,7 +126,7 @@ export const flexboxProps = {
   order: responsiveType,
 }
 
-export const borderProps = {
+export const borderProps: PropsMember<BorderProps> = {
   border: responsiveType,
   borderWidth: responsiveType,
   borderStyle: responsiveType,
@@ -135,38 +156,39 @@ export const borderProps = {
   borderRightStyle: responsiveType,
 }
 
-export const showProps = {
+export const showProps: PropsMember<ShowProps> = {
   show: responsiveType,
 }
 
-export const colorProps = {
+export const colorProps: PropsMember<ColorProps> = {
   color: responsiveType,
   backgroundColor: responsiveType,
   bg: responsiveType,
   opacity: responsiveType,
 }
 
-export const fontShortProps = {
+export const fontShortProps: PropsMember<FontShortProps> = {
   fs: responsiveType,
   fw: responsiveType,
 }
 
-export const textDecorationProps = {
+export const textDecorationProps: PropsMember<TextDecorationProps> = {
   td: responsiveType,
   textDecoration: responsiveType,
 }
 
-export const flexShortProps = {
-  fai: responsiveType,
-  fji: responsiveType,
+export const flexShortProps: PropsMember<FlexShortProps> = {
+  fxa: responsiveType,
+  fxj: responsiveType,
+  fxd: responsiveType,
 }
 
-export const displayShortProps = {
+export const displayShortProps: PropsMember<DisplayShortProps> = {
   dp: responsiveType,
 }
 
-export const borderShortProps = {
-  ba: responsiveType,
+export const borderShortProps: PropsMember<BorderShortProps> = {
+  bra: responsiveType,
   bb: responsiveType,
   bbw: responsiveType,
   bc: responsiveType,
@@ -181,6 +203,10 @@ export const borderShortProps = {
   bxw: responsiveType,
   by: responsiveType,
   byw: responsiveType,
+}
+
+export const gapProps = {
+  gap: responsiveType,
 }
 
 export const allProps = {
@@ -200,4 +226,5 @@ export const allProps = {
   ...displayShortProps,
   ...borderShortProps,
   ...showProps,
+  ...gapProps,
 }

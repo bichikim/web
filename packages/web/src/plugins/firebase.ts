@@ -61,9 +61,18 @@ const createFirebase = (config: FirebaseConfig): Plugin => {
 
       _app = firebase.initializeApp(config)
 
-      getFirebase()
-
       app.config.globalProperties.$firebase = getFirebase
+
+      app.mixin({
+        mounted() {
+          if (this.$root === this) {
+            this.$root.$nextTick(() => {
+              // get firebase once after render
+              getFirebase()
+            })
+          }
+        },
+      })
 
       if (process.env.NODE_ENV !== 'production') {
         console.log('firebase initialize app')

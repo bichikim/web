@@ -1,47 +1,14 @@
-import {responsiveType} from '@/ui/props'
-import {column, createGap, flexWrap} from '@/ui/systems'
-import shouldForwardProp from '@styled-system/should-forward-prop'
-import fluid from 'fluid-system'
-import {color, compose, flexbox, padding, position} from 'styled-system'
-import {defineComponent, h, toRefs} from 'vue'
 import {Box} from '@/ui'
-import styled, {Systems} from '@/ui/styled'
-import {slotToArray} from '@/ui/utils'
+import {responsiveType} from '@/ui/props'
+import styled from '@/ui/styled'
+import {slotToArray} from '@/utils'
+import shouldForwardProp from '@styled-system/should-forward-prop'
+import {defineComponent, h, toRefs} from 'vue'
 import {flexItemSystem} from './flex-item-system'
+import {systems} from './systems'
 
 const props = {gap: responsiveType, range: responsiveType, show: responsiveType}
 const FlexItem = styled('div', {props, shouldForwardProp})(...flexItemSystem)
-
-const systems: Systems = [
-  {
-    display: 'flow-root',
-    position: 'relative',
-    padding: '0',
-    backgroundColor: 'transparent',
-    '.background': [
-      {
-        height: '100%',
-        left: 0,
-        position: 'absolute',
-        top: 0,
-        width: '100%',
-      },
-      fluid(color),
-    ],
-    '.container': [
-      {
-        boxSizing: 'border-box',
-        display: 'flex',
-        height: '100%',
-        position: 'relative',
-      },
-      flexWrap as any,
-      column,
-      createGap('100%'),
-      fluid(compose(position, flexbox, padding)),
-    ],
-  },
-]
 
 const BoxForFlex = styled(Box, {passThrough: true, props})(...systems)
 

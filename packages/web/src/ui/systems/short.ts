@@ -21,16 +21,20 @@ export const fontShort = system({
   },
 })
 export interface FlexShortProps<T extends Theme = RequiredTheme> {
-  fai?: ResponsiveValue<Property.AlignItems, T>
-  fji?: ResponsiveValue<Property.JustifyItems, T>
+  fxa?: ResponsiveValue<Property.AlignItems, T>
+  fxj?: ResponsiveValue<Property.JustifyContent, T>
+  fxd?: ResponsiveValue<Property.FlexDirection, T>
 }
 
 export const flexShort = system({
-  fai: {
+  fxa: {
     property: 'alignItems',
   },
-  fji: {
-    property: 'justifyItems',
+  fxj: {
+    property: 'justifyContent',
+  },
+  fxd: {
+    property: 'flexDirection',
   },
 })
 
@@ -59,7 +63,7 @@ export interface BorderShortProps<T extends Theme = RequiredTheme> {
   bxw?: ResponsiveValue<Property.BorderLeftWidth, T>
   by?: ResponsiveValue<Property.BorderTop, T>
   byw?: ResponsiveValue<Property.BorderTopWidth, T>
-  ba?: ResponsiveValue<Property.BorderRadius, T>
+  bra?: ResponsiveValue<Property.BorderRadius, T>
 }
 
 export interface BoxShadowShortProps<T extends Theme = RequiredTheme> {

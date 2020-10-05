@@ -1,5 +1,5 @@
 import css, {CssFunctionReturnType} from '@styled-system/css'
-import {parallelProps} from '@/ui/utils'
+import {parallelProps} from '@/utils'
 import {ResponsiveValue} from 'styled-system'
 import {SystemFunc} from '@/types'
 
