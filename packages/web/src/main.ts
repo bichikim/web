@@ -1,14 +1,13 @@
 import {createApp} from 'vue'
 import App from '@/App'
 import router from '@/router'
-import createEmotion from '@/lib/emotion'
-import createVare from '@/lib/vare'
-import createTheme from '@/lib/emotion/theme'
+import {createUI, createTheme} from '../ui'
+import createVare from '@/plugins/vare'
 import createFirebase from '@/plugins/firebase'
 import createWorkbox from '@/plugins/workbox'
 
 const theme = createTheme({})
-const emotion = createEmotion()
+const ui = createUI()
 const vare = createVare()
 const workbox = createWorkbox()
 const firebase = createFirebase({
@@ -24,7 +23,7 @@ const firebase = createFirebase({
 
 createApp(App)
   .use(router)
-  .use(emotion)
+  .use(ui)
   .use(workbox)
   .use(theme)
   .use(firebase)

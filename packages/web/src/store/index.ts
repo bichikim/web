@@ -1,4 +1,4 @@
-import {Store} from '@/lib/vare/Store'
+import {Store} from '@/plugins/vare/Store'
 
 const store = new Store({
   name: 'foo',
