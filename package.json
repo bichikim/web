@@ -1,5 +1,5 @@
 {
-  "name": "@innovirus/web",
+  "name": "@innovirus/web-app",
   "version": "0.0.1",
   "private": true,
   "workspaces": {
@@ -14,6 +14,7 @@
     "functions": "yarn workspace functions"
   },
   "dependencies": {
+    "@innovirus/ui": "1.0.0"
   },
   "devDependencies": {
     "@types/chai": "^4.2.12",

@@ -1,6 +1,5 @@
 import {get} from 'lodash'
 
-// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 export const castFeed = (feed: any, theme: Record<string, any> = {}) => {
   if (Array.isArray(feed)) {
     const props = {}

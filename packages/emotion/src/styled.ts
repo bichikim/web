@@ -1,11 +1,11 @@
-import {CSSObject} from 'web/types'
+import {CSSObject} from './types'
 import {serializeStyles} from '@emotion/serialize'
 import {insertStyles} from '@emotion/utils'
 import {styleFn} from 'styled-system'
 import {computed, DefineComponent, defineComponent, h} from 'vue'
-import {ILLEGAL_ESCAPE_SEQUENCE_ERROR} from 'packages/ui/emotion/errors'
-import {useCache} from 'packages/ui/emotion/index'
-import {useTheme} from 'packages/ui/emotion/theme'
+import {ILLEGAL_ESCAPE_SEQUENCE_ERROR} from './errors'
+import {useCache} from './emotion'
+import {useTheme} from './theme'
 
 export type StyledSystems = (CSSObject | styleFn)[]
 
@@ -76,7 +76,9 @@ interface CreateStyledOptions {
   props?: Record<string, any>
 }
 
-export const createStyled = (options: CreateStyledOptions): ((tag?: any, options?: StyledOptions) => StyledResult) => {
+export const createStyled = (
+  options: CreateStyledOptions,
+): ((tag?: any, options?: StyledOptions) => StyledResult) => {
   const {props: defaultProps = {}} = options
 
   return (tag: any = 'div', options: StyledOptions = {}) => {

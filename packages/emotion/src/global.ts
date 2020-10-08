@@ -1,7 +1,7 @@
 import {Interpolation, serializeStyles} from '@emotion/serialize'
 import {EmotionCache, SerializedStyles} from '@emotion/utils'
-import {defineComponent, Plugin, App} from 'vue'
-import {useCache} from 'packages/ui/emotion/emotion'
+import {Plugin, App} from 'vue'
+import {useCache} from './emotion'
 
 function insertWithoutScoping(cache: EmotionCache, serialized: SerializedStyles) {
   if (cache.inserted[serialized.name] === undefined) {
@@ -14,8 +14,22 @@ export const createGlobalStyle = (
 ): Plugin => {
   return {
     install(app: App) {
-      const serialized = serializeStyles(styles, cache.registered, mergedProps)
-      insertWithoutScoping(cache, serialized)
+      app.mixin({
+        setup() {
+          const cache = useCache()
+          return {
+            cache,
+          }
+        },
+        beforeMount() {
+          if (this.$root !== this) {
+            return
+          }
+          const {cache} = this
+          const serialized = serializeStyles(styles, cache.registered, {})
+          insertWithoutScoping(cache, serialized)
+        },
+      })
     },
   }
 }

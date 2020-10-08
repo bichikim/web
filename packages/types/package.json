@@ -1,6 +1,11 @@
 {
   "name": "@innovirus/types",
   "version": "1.0.0",
+  "main": "src/index.ts",
   "dependencies": {
+
+  },
+  "devDependencies": {
+    "@innovirus/types": "1.0.0"
   }
 }

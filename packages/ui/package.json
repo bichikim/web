@@ -1,7 +1,21 @@
 {
   "name": "@innovirus/ui",
   "version": "1.0.0",
+  "main": "src/index.ts",
+  "module": "dist/index.esm.js",
+  "unpkg": "dist/index.js",
+  "scripts": {
+    "build": "rimraf dist && rollup -c"
+  },
   "dependencies": {
-
+    "@innovirus/emotion": "1.0.0"
+  },
+  "devDependencies": {
+    "rimraf": "^3.0.2",
+    "typescript": "^4.0.3",
+    "rollup": "^2.29.0",
+    "@rollup/plugin-typescript": "^6.0.0",
+    "rollup-plugin-typescript2": "^0.27.3",
+    "rollup-plugin-babel-minify": "^10.0.0"
   }
 }

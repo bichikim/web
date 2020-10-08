@@ -1,4 +1,4 @@
-import {styled, createTheme, createStyled, createEmotion} from 'packages/ui/emotion'
+import {styled, createTheme, createStyled, createEmotion} from '@innovirus/emotion'
 
 export {styled, createEmotion, createStyled, createTheme}
 
