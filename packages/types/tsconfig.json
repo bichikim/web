@@ -8,11 +8,13 @@
     "noImplicitAny": false,
     "importHelpers": true,
     "moduleResolution": "node",
+    "skipLibCheck": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "suppressImplicitAnyIndexErrors": true,
     "sourceMap": true,
     "baseUrl": ".",
+    "declaration": true,
     "resolveJsonModule": true,
     "typeRoots": [
       "../../node_modules/@types",
