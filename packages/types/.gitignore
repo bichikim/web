@@ -1,11 +1,23 @@
-# Compiled JavaScript files
-**/*.js
-**/*.js.map
+.DS_Store
+node_modules
+/dist
+/lib
 
-# TypeScript v1 declaration files
-typings/
+# local env files
+.env.local
+.env.*.local
 
-# Node.js dependency directory
-../../functions/node_modules/
+# Log files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
 
-!.mocharc.js
+# Editor directories and files
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
