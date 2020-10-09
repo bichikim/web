@@ -1,9 +1,10 @@
 {
   "name": "@innovirus/types",
   "version": "1.0.0",
-  "main": "src/index.ts",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
   "scripts": {
-    "build": "rimraf dist && rollup -c",
+    "build": "rimraf lib && rollup -c",
     "dev": "ttsc --outDir ./lib -p tsconfig.json -w --assumeChangesOnlyAffectDirectDependencies"
   },
   "dependencies": {

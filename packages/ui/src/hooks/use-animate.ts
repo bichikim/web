@@ -1,4 +1,4 @@
-import {parallelArray} from 'packages/ui/utils'
+import {parallelArray} from 'src/utils'
 import {ComputedRef} from '@vue/reactivity'
 import interactJs from 'interactjs'
 import {easing, keyframes, styler} from 'popmotion'

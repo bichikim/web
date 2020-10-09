@@ -33,6 +33,8 @@ export type CSSInterpolation =
   | CSSObject[]
   | FunctionCSSObject
   | FunctionCSSObject[]
+  | styleFn
+  | styleFn[]
 export type CSSPseudosForCSSObject = { [K in CSS.Pseudos]?: CSSObject };
 
 export interface CSSOthersObjectForCSSObject {

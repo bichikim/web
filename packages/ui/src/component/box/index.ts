@@ -1,8 +1,8 @@
-import {boxSystem} from 'packages/ui/component/box/system'
-import styled from 'packages/ui/styled'
+import {boxSystem} from 'src/component/box/system'
+import styled from 'src/styled'
 import shouldForwardProp from '@styled-system/should-forward-prop'
 import {defineComponent, h, ref, toRefs} from 'vue'
-import {useAnimate} from 'packages/ui/hooks'
+import {useAnimate} from 'src/hooks'
 
 const BoxStyle = styled('div', {shouldForwardProp, name: 'box-style'})(...boxSystem)
 

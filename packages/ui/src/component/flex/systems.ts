@@ -1,7 +1,6 @@
-import {Systems} from 'packages/ui/styled'
-import {column, createGap, flexWrap} from 'packages/ui/systems'
+import {Systems} from 'src/styled'
+import {column, createGap, flexWrap} from 'src/systems'
 import {color, compose, flexbox, padding, position} from 'styled-system'
-import fluid from 'fluid-system'
 
 export const systems: Systems = [
   {
@@ -17,7 +16,7 @@ export const systems: Systems = [
         top: 0,
         width: '100%',
       },
-      fluid(color),
+      color as any,
     ],
     '.container': [
       {
@@ -29,7 +28,7 @@ export const systems: Systems = [
       flexWrap as any,
       column,
       createGap('100%'),
-      fluid(compose(position, flexbox, padding)),
+      compose(position, flexbox, padding),
     ],
   },
 ]

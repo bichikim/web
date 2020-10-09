@@ -9,9 +9,10 @@
     "importHelpers": true,
     "moduleResolution": "node",
     "esModuleInterop": true,
+    "declaration": true,
+    "skipLibCheck": true,
     "allowSyntheticDefaultImports": true,
     "suppressImplicitAnyIndexErrors": true,
-    "sourceMap": true,
     "baseUrl": ".",
     "resolveJsonModule": true,
     "typeRoots": [
@@ -30,7 +31,8 @@
       "dom",
       "dom.iterable",
       "scripthost"
-    ]
+    ],
+    "plugins": [{ "transform": "@zerollup/ts-transform-paths" }]
   },
   "include": [
     "src/**/*.ts",

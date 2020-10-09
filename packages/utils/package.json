@@ -1,19 +1,16 @@
 {
-  "name": "@innovirus/ui",
+  "name": "@innovirus/utils",
   "version": "1.0.0",
   "main": "src/index.ts",
-  "module": "dist/index.esm.js",
-  "unpkg": "dist/index.js",
+  "types": "lib/index.d.ts",
+  "module": "lib/index.esm.js",
+  "unpkg": "lib/index.js",
   "scripts": {
-    "build": "rimraf lib && rollup -c",
+    "build": "rimraf dist && rollup -c",
     "dev": "ttsc --outDir ./lib -p tsconfig.json -w --assumeChangesOnlyAffectDirectDependencies"
   },
   "dependencies": {
-    "@styled-system/core": "^5.1.2",
-    "@innovirus/emotion": "1.0.0",
-    "vue": "^3.0.0",
-    "popmotion": "^8.7.6",
-    "fluid-system": "^1.0.10"
+    "lodash": "^4.17.20"
   },
   "devDependencies": {
     "rimraf": "^3.0.2",

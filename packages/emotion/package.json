@@ -1,13 +1,13 @@
 {
   "name": "@innovirus/emotion",
   "version": "1.0.0",
-  "main": "src/index.ts",
+  "main": "lib/index.js",
   "types": "lib/index.d.ts",
-  "module": "lib/index.esm.js",
-  "unpkg": "lib/index.min.js",
+  "module": "lib/index.js",
+  "unpkg": "lib/index.iife.js",
   "scripts": {
-    "build": "rimraf dist && rollup -c",
-    "dev": "ttsc --outDir ./lib -p tsconfig.json -w --assumeChangesOnlyAffectDirectDependencies"
+    "build": "rimraf lib && rollup -c",
+    "dev": "ttsc --outDir ./lib -p tsconfig.json -w --assumeChangesOnlyAffectDirectDependencies --sourceMap"
   },
   "dependencies": {
     "lodash": "^4.17.20",

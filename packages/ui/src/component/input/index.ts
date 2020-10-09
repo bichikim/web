@@ -1,7 +1,7 @@
-import {Box} from 'packages/ui/index'
+import {Box} from 'src/component/box'
 import {defineComponent, h, computed, ref, toRefs} from 'vue'
-import styled, {Systems} from 'packages/ui/styled'
-import uid from 'packages/ui/utils/uid'
+import styled, {Systems} from 'src/styled'
+import uid from 'src/utils/uid'
 
 const getUid = (id?: string) => {
   if (typeof id === 'undefined') {

@@ -1,14 +1,19 @@
+import {Property} from 'csstype'
 import {
-  BorderShortProps, FlexColumnProps, FontShortProps, GapProps, ShowProps, BorderProps,
+  BorderProps,
+  BorderShortProps,
   ColorProps,
   FlexboxProps,
+  FlexColumnProps,
+  FontShortProps,
+  GapProps,
   LayoutProps,
   PaddingProps,
   PositionProps,
   ResponsiveValue,
-} from 'packages/ui/systems'
-import {Property} from 'csstype'
-import {ASProps} from 'web/types'
+  ShowProps,
+} from 'src/systems'
+import {ASProps} from 'src/types'
 
 export type Range = number | 'space' | 'auto' | 'force-space'
 

@@ -1,11 +1,11 @@
-import {Box} from 'packages/ui/index'
-import {responsiveType} from 'packages/ui/props'
-import styled from 'packages/ui/styled'
-import {slotToArray} from 'web/utils'
+import {Box} from 'src/component/box'
+import {responsiveType} from 'src/props'
+import styled from 'src/styled'
+import {slotToArray} from 'src/utils'
 import shouldForwardProp from '@styled-system/should-forward-prop'
 import {defineComponent, h, toRefs} from 'vue'
-import {flexItemSystem} from 'packages/ui/component/flex/flex-item-system'
-import {systems} from 'packages/ui/component/flex/systems'
+import {flexItemSystem} from './flex-item-system'
+import {systems} from './systems'
 
 const props = {gap: responsiveType, range: responsiveType, show: responsiveType}
 const FlexItem = styled('div', {props, shouldForwardProp})(...flexItemSystem)

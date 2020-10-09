@@ -3131,6 +3131,13 @@
   dependencies:
     csstype "^3.0.2"
 
+"@types/styled-system__core@^5.1.2":
+  version "5.1.2"
+  resolved "https://registry.yarnpkg.com/@types/styled-system__core/-/styled-system__core-5.1.2.tgz#7d443f19fb43ceb020d17caffe0a0ea0b058ae0b"
+  integrity sha512-WXM53he9Q/SKL69AdT48XljTNQjL0eN5JxJ35BifK0Tmy1C1g0emHjOiBnycADmERL7tpvBBV2Od0xEBzgInWw==
+  dependencies:
+    csstype "^3.0.2"
+
 "@types/styled-system__css@^5.0.13":
   version "5.0.14"
   resolved "https://registry.yarnpkg.com/@types/styled-system__css/-/styled-system__css-5.0.14.tgz#97559d823216d475f716fb5b8dd1766f2d3eeafa"
@@ -13418,6 +13425,19 @@ popmotion@^8.7.5:
   version "8.7.5"
   resolved "https://registry.yarnpkg.com/popmotion/-/popmotion-8.7.5.tgz#95e01b169697a060f6e73748c0f3e0e1e3ae06ed"
   integrity sha512-p85l/qrOuLTQZ+aGfyB8cqOzDRWgiSFN941jSrj9CsWeJzUn+jiGSWJ50sr59gWAZ8TKIvqdDowqFlScc0NEyw==
+  dependencies:
+    "@popmotion/easing" "^1.0.1"
+    "@popmotion/popcorn" "^0.4.4"
+    framesync "^4.0.0"
+    hey-listen "^1.0.5"
+    style-value-types "^3.1.7"
+    stylefire "^7.0.1"
+    tslib "^1.10.0"
+
+popmotion@^8.7.6:
+  version "8.7.6"
+  resolved "https://registry.yarnpkg.com/popmotion/-/popmotion-8.7.6.tgz#0f6aa461bdcbcdbf24cb70afb054e91cb39eccb3"
+  integrity sha512-gzU0mRAik8FIEOP4Nk5yqYptJIvHLoq/IRU+rANmKjDZ7tynAivYQ9cIJAxVaoS9h0zfXvN0cFBAg93ncmHHkA==
   dependencies:
     "@popmotion/easing" "^1.0.1"
     "@popmotion/popcorn" "^0.4.4"

@@ -6,10 +6,9 @@ import {
   show,
   ShowProps,
   Theme,
-} from 'packages/ui/systems'
-import fluid from 'fluid-system'
-import {ASProps, System} from 'web/types'
-import {variantComplex} from 'web/utils'
+} from 'src/systems'
+import {ASProps, System} from 'src/types'
+import {variantComplex} from 'src/utils'
 
 export interface textSetVariantProps {
   textSet?: ResponsiveValue<string>
@@ -46,7 +45,7 @@ export const boxSystem: System<Props, Theme> = [
 
     },
   },
-  fluid(allSystem),
+  allSystem,
   show,
   variantComplex({
     prop: 'textSet',

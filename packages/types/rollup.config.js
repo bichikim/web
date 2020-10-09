@@ -32,7 +32,7 @@ const getConfig = ({output, isMinify = false, format = 'esm'}) => {
 }
 
 export default [
-  getConfig({output: 'lib/index.esm.js', isMinify: true}),
-  getConfig({output: 'lib/index.min.js', isMinify: true, format: 'umd'}),
-  getConfig({output: 'lib/index.js', isMinify: false}),
+  getConfig({output: 'lib/index.esm.js', isMinify: false}),
+  getConfig({output: 'lib/index.min.js', isMinify: true, format: 'iife'}),
+  getConfig({output: 'lib/index.js', isMinify: true}),
 ]
