@@ -1,8 +1,8 @@
 import {createApp} from 'vue'
 import App from '@/App'
 import router from '@/router'
-import {createUI, createTheme} from '../ui'
-import createVare from '@/plugins/vare'
+import {createUI, createTheme} from '@innovirus/ui'
+import createVare from '@innovirus/vare'
 import createFirebase from '@/plugins/firebase'
 import createWorkbox from '@/plugins/workbox'
 

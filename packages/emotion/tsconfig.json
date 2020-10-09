@@ -31,8 +31,7 @@
       "dom",
       "dom.iterable",
       "scripthost"
-    ],
-    "plugins": [{ "transform": "@zerollup/ts-transform-paths" }]
+    ]
   },
   "include": [
     "src/**/*.ts",

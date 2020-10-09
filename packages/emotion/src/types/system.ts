@@ -1,5 +1,5 @@
 /* eslint-disable no-use-before-define */
-import {AnyObject} from '@innovirus/types'
+import {AnyObject} from '@innovirus/utils'
 import {CssFunctionReturnType, CSSProperties} from '@styled-system/css'
 import * as CSS from 'csstype'
 import {styleFn, Theme} from 'styled-system'

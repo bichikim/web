@@ -1,6 +1,6 @@
 import {defineComponent, h, computed, ref} from 'vue'
 import {state, setName, setDeepName} from '@/store'
-import {Box, Flex, Input} from '../ui'
+import {Box, Flex, Input} from '@innovirus/ui'
 
 export default defineComponent({
   name: 'home',

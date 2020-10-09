@@ -8,8 +8,8 @@
     "noImplicitAny": false,
     "importHelpers": true,
     "moduleResolution": "node",
-    "esModuleInterop": true,
     "declaration": true,
+    "esModuleInterop": true,
     "skipLibCheck": true,
     "allowSyntheticDefaultImports": true,
     "suppressImplicitAnyIndexErrors": true,
@@ -31,8 +31,7 @@
       "dom",
       "dom.iterable",
       "scripthost"
-    ],
-    "plugins": [{ "transform": "@zerollup/ts-transform-paths" }]
+    ]
   },
   "include": [
     "src/**/*.ts",

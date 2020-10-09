@@ -1,28 +1,11 @@
-import typescript from 'rollup-plugin-typescript2'
-import minify from 'rollup-plugin-babel-minify'
+import pkg from './package.json'
+import {snakeCase} from 'lodash'
+import {getConfig} from '../../rollup.config'
 
-const getConfig = ({output, isMinify = false, format = 'esm'}) => {
-  return {
-    input: 'src/index.ts',
-    output: {
-      file: output,
-      format,
-      sourcemap: true,
-    },
-    plugins: [
-      typescript({
-        module: 'esnext',
-      }),
-      ...(isMinify ? [
-        minify({
-          comments: false,
-        }),
-      ] : []),
-    ],
-  }
-}
+const name = snakeCase(pkg.name)
+const external = Object.keys(pkg.dependencies)
 
 export default [
-  getConfig({output: 'dist/index.esm.js', isMinify: true}),
-  getConfig({output: 'dist/index.js', isMinify: true, format: 'umd'}),
+  getConfig({output: 'lib/index.iife.js', name, format: 'iife', external, minify: true}),
+  getConfig({output: 'lib/index.js', name, external}),
 ]
