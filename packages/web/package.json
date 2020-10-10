@@ -4,7 +4,7 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "serve": "vue-cli-service serve",
+    "dev": "vue-cli-service serve",
     "build": "vue-cli-service build",
     "test:web": "vue-cli-service test:unit packages/web/src/**/*.spec.ts",
     "test:function": "npm --prefix functions run test",
