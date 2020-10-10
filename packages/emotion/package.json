@@ -9,6 +9,9 @@
     "build": "rimraf lib && rollup -c",
     "dev": "ttsc --outDir ./lib -p tsconfig.json -w --assumeChangesOnlyAffectDirectDependencies --sourceMap"
   },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/"
+  },
   "dependencies": {
     "lodash": "^4.17.20",
     "@emotion/utils": "^0.11.2",
