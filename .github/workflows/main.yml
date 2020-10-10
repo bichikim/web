@@ -40,9 +40,6 @@ jobs:
         uses: actions/download-artifact@master
         with:
           name: dist
-          path: |
-            packages/web/dist
-            packages/functions/lib
       - name: Deploy to Firebase
         uses: w9jds/firebase-action@master
         with:
