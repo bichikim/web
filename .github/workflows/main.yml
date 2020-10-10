@@ -22,13 +22,16 @@ jobs:
         run: yarn install
       - name: Build
         run: yarn run build
-      - name: Archive Production Artifact
+      - name: Archive Web Production Artifact
         uses: actions/upload-artifact@master
         with:
-          name: dist
-          path: |
-            packages/web/dist
-            packages/functions/lib
+          name: web-dist
+          path: packages/web/dist
+      - name: Archive Functions Production Artifact
+        uses: actions/upload-artifact@master
+        with:
+          name: functions-dist
+          path: packages/web/functions
   deploy:
     name: Deploy
     needs: build
@@ -36,10 +39,16 @@ jobs:
     steps:
       - name: Checkout Repo
         uses: actions/checkout@master
-      - name: Download Artifact
+      - name: Download Web Artifact
         uses: actions/download-artifact@master
         with:
-          name: dist
+          name: web-dist
+          path: packages/web/dist
+      - name: Download Functions Artifact
+        uses: actions/download-artifact@master
+        with:
+          name: functions-dist
+          path: packages/web/functions
       - name: Deploy to Firebase
         uses: w9jds/firebase-action@master
         with:
