@@ -1,3 +1,7 @@
+
+[![Actions Status](https://github.com/innovirus/web/workflows/Build%20and%20Deploy/badge.svg)](https://github.com/innovirus/web/actions)
+[![lerna](https://img.shields.io/badge/maintained%20with-lerna-cc00ff.svg)](https://lerna.js.org/)
+
 # web
 Web project MVP
 
