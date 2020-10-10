@@ -5,6 +5,7 @@
   "types": "lib/index.d.ts",
   "module": "lib/index.js",
   "unpkg": "lib/index.iife.js",
+  "license": "UNLICENSED",
   "scripts": {
     "build": "rimraf dist && rollup -c",
     "dev": "ttsc --outDir ./lib -p tsconfig.json -w --assumeChangesOnlyAffectDirectDependencies"
@@ -13,13 +14,14 @@
     "vue": "^3.0.0"
   },
   "devDependencies": {
-    "rimraf": "^3.0.2",
-    "typescript": "^4.0.3",
-    "ttypescript": "^1.5.10",
-    "rollup": "^2.29.0",
-    "@types/styled-system__core": "^5.1.2",
     "@rollup/plugin-typescript": "^6.0.0",
+    "@types/styled-system__core": "^5.1.2",
+    "rimraf": "^3.0.2",
+    "rollup": "^2.29.0",
+    "rollup-plugin-babel-minify": "^10.0.0",
     "rollup-plugin-typescript2": "^0.27.3",
-    "rollup-plugin-babel-minify": "^10.0.0"
-  }
+    "ttypescript": "^1.5.10",
+    "typescript": "^4.0.3"
+  },
+  "gitHead": "7a6e96543343520b8895ec575ebdc847e2c32e60"
 }

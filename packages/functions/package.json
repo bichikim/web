@@ -1,7 +1,8 @@
 {
   "name": "@innovirus/functions",
   "private": true,
-  "version": "0.0.1",
+  "version": "1.0.0",
+  "license": "UNLICENSED",
   "scripts": {
     "serve": "npm run build && firebase emulators:start --only functions",
     "build": "tsc",

@@ -5,6 +5,7 @@
   "types": "lib/index.d.ts",
   "module": "lib/index.js",
   "unpkg": "lib/index.iife.js",
+  "license": "UNLICENSED",
   "scripts": {
     "build": "rimraf lib && rollup -c",
     "dev": "ttsc --outDir ./lib -p tsconfig.json -w --assumeChangesOnlyAffectDirectDependencies --sourceMap"
@@ -13,16 +14,17 @@
     "registry": "https://npm.pkg.github.com/"
   },
   "dependencies": {
-    "lodash": "^4.17.20",
-    "@emotion/utils": "^0.11.2",
-    "@emotion/serialize": "^0.11.16",
     "@emotion/cache": "^10.0.29",
-    "vue": "^3.0.0",
-    "emotion": "^10.0.27"
+    "@emotion/serialize": "^0.11.16",
+    "@emotion/utils": "^0.11.2",
+    "emotion": "^10.0.27",
+    "lodash": "^4.17.20",
+    "vue": "^3.0.0"
   },
   "devDependencies": {
+    "@types/styled-system": "^5.1.10",
     "rimraf": "^3.0.2",
-    "rollup": "^2.29.0",
-    "@types/styled-system": "^5.1.10"
-  }
+    "rollup": "^2.29.0"
+  },
+  "gitHead": "7a6e96543343520b8895ec575ebdc847e2c32e60"
 }

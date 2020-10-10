@@ -1,7 +1,8 @@
 {
   "name": "@innovirus/web",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "private": true,
+  "license": "UNLICENSED",
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
