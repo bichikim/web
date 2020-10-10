@@ -1,5 +1,5 @@
 import {defineComponent, h} from 'vue'
-import {Box, Flex} from '../ui'
+import {Box, Flex} from '@innovirus/ui'
 
 const shadow = '0px 10px 1px #ddd, 0 10px 20px #ccc'
 

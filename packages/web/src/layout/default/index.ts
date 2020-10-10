@@ -1,6 +1,6 @@
 import {defineComponent, h} from 'vue'
 import {RouterView, RouterLink} from 'vue-router'
-import {Box} from '../ui'
+import {Box} from '@innovirus/ui'
 
 const buttons: Record<string, any> = {
   md: {

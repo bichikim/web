@@ -8,7 +8,8 @@
   },
   "scripts": {
     "serve": "yarn workspace web serve",
-    "build": "yarn workspace web build",
+    "build": "lerna run build",
+    "web": "yarn workspace @innovirus/web",
     "lint": "eslint --ext .ts \"src/**/*.{ts,tsx}\"",
     "functions": "yarn workspace functions"
   },
