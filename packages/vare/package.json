@@ -1,0 +1,31 @@
+{
+  "name": "@innovirus/vare",
+  "version": "1.0.1-alpha.3",
+  "private": true,
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "module": "lib/index.js",
+  "unpkg": "lib/index.iife.js",
+  "license": "UNLICENSED",
+  "scripts": {
+    "build": "rimraf dist && rollup -c",
+    "preversion": "yarn run build",
+    "dev": "ttsc --outDir ./lib -p tsconfig.json -w --assumeChangesOnlyAffectDirectDependencies"
+  },
+  "dependencies": {
+    "vue": "^3.0.0"
+  },
+  "devDependencies": {
+    "mocha": "^8.1.3",
+    "chai": "^4.2.0",
+    "@rollup/plugin-typescript": "^6.0.0",
+    "@types/styled-system__core": "^5.1.2",
+    "rimraf": "^3.0.2",
+    "rollup": "^2.29.0",
+    "rollup-plugin-babel-minify": "^10.0.0",
+    "rollup-plugin-typescript2": "^0.27.3",
+    "ttypescript": "^1.5.10",
+    "typescript": "^4.0.3"
+  },
+  "gitHead": "7a6e96543343520b8895ec575ebdc847e2c32e60"
+}

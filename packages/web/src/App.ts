@@ -6,10 +6,7 @@ export default defineComponent({
   setup() {
     return () => {
       return (
-        h('div', {id: 'app'}, [
-          h('div', 'top'),
-          h(RouterView),
-        ])
+        h(RouterView)
       )
     }
   },

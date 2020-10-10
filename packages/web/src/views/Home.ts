@@ -1,6 +1,6 @@
 import {defineComponent, h, computed, ref} from 'vue'
 import {state, setName, setDeepName} from '@/store'
-import {Box, Flex, Input} from '@/ui'
+import {Box, Flex, Input} from '@innovirus/ui'
 
 export default defineComponent({
   name: 'home',
@@ -45,7 +45,7 @@ export default defineComponent({
             }, () => 'space'),
           ]),
           h(Box, {p: 10, bg: 'tomato', color: 'white'}, () => 'foo'),
-          h(Input, {bg: 'Silver', color: 'white'}),
+          h(Input, {bg: 'Silver', color: 'white', value: 'foo'}),
           h(Flex, {p: 10, bg: 'WhiteSmoke', color: 'white', gap: 10}, () => [
             h(Box, {range: 'space', bg: 'Silver'}, () => name.value),
             h(Box, {range: range.value, bg: 'Silver'}, () => deepName.value),

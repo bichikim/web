@@ -1,6 +1,6 @@
 import {defineComponent, h} from 'vue'
 import {RouterView, RouterLink} from 'vue-router'
-import {Box} from '@/ui'
+import {Box} from '@innovirus/ui'
 
 const buttons: Record<string, any> = {
   md: {
@@ -20,6 +20,7 @@ const bgSet = {
 }
 
 const BoxRouterLink = defineComponent({
+  name: 'box-router-link',
   props: ['to'],
   setup(props, {attrs, slots}) {
     return () => {
