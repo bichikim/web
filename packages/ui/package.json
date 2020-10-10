@@ -11,8 +11,8 @@
     "dev": "ttsc --outDir ./lib -p tsconfig.json -w --assumeChangesOnlyAffectDirectDependencies"
   },
   "dependencies": {
-    "@innovirus/emotion": "^1.0.1-alpha.44+7a6e965",
-    "@innovirus/utils": "^1.0.1-alpha.44+7a6e965",
+    "@innovirus/emotion": "^1.0.1-alpha.0",
+    "@innovirus/utils": "^1.0.1-alpha.0",
     "@styled-system/core": "^5.1.2",
     "@styled-system/css": "^5.1.5",
     "@styled-system/should-forward-prop": "^5.1.5",

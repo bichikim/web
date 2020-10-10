@@ -1,6 +1,5 @@
 {
   "name": "@innovirus/web-app",
-  "version": "0.0.1",
   "private": true,
   "workspaces": {
     "packages": [
@@ -12,9 +11,6 @@
     "build": "yarn workspace web build",
     "lint": "eslint --ext .ts \"src/**/*.{ts,tsx}\"",
     "functions": "yarn workspace functions"
-  },
-  "dependencies": {
-    "@innovirus/ui": "1.0.0"
   },
   "devDependencies": {
     "@rollup/plugin-alias": "^3.1.1",
