@@ -1,6 +1,6 @@
 {
   "name": "@innovirus/web",
-  "version": "1.0.1-alpha.2",
+  "version": "1.0.1-alpha.3",
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
@@ -16,9 +16,9 @@
     "@emotion/cache": "^10.0.29",
     "@emotion/serialize": "^0.11.16",
     "@emotion/utils": "^0.11.2",
-    "@innovirus/ui": "^1.0.1-alpha.2",
-    "@innovirus/utils": "^1.0.1-alpha.2",
-    "@innovirus/vare": "^1.0.1-alpha.2",
+    "@innovirus/ui": "^1.0.1-alpha.3",
+    "@innovirus/utils": "^1.0.1-alpha.3",
+    "@innovirus/vare": "^1.0.1-alpha.3",
     "@styled-system/css": "^5.1.5",
     "@styled-system/should-forward-prop": "^5.1.5",
     "core-js": "^3.6.5",
