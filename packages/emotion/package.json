@@ -9,6 +9,7 @@
   "license": "UNLICENSED",
   "scripts": {
     "build": "rimraf lib && rollup -c",
+    "dev-all": "yarn run dev",
     "preversion": "yarn run build",
     "dev": "ttsc --outDir ./lib -p tsconfig.json -w --assumeChangesOnlyAffectDirectDependencies --sourceMap"
   },

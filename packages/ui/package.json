@@ -10,15 +10,20 @@
   "scripts": {
     "build": "rimraf lib && rollup -c",
     "preversion": "yarn run build",
-    "dev": "ttsc --outDir ./lib -p tsconfig.json -w --assumeChangesOnlyAffectDirectDependencies"
+    "dev": "ttsc --outDir ./lib -p tsconfig.json -w --assumeChangesOnlyAffectDirectDependencies",
+    "dev-all": "yarn run dev"
   },
   "dependencies": {
     "@innovirus/emotion": "^1.0.1-alpha.2",
+    "@emotion/cache": "^10.0.29",
+    "@emotion/serialize": "^0.11.16",
     "@innovirus/utils": "^1.0.1-alpha.3",
     "@styled-system/core": "^5.1.2",
     "@styled-system/css": "^5.1.5",
     "@styled-system/should-forward-prop": "^5.1.5",
     "fluid-system": "^1.0.10",
+    "flip-toolkit": "^7.0.11",
+    "html-element-attributes": "^2.2.1",
     "interactjs": "^1.10.0",
     "lodash": "^4.17.20",
     "popmotion": "^8.7.6",

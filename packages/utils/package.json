@@ -10,7 +10,8 @@
   "scripts": {
     "build": "rimraf dist && rollup -c",
     "preversion": "yarn run build",
-    "dev": "ttsc --outDir ./lib -p tsconfig.json -w --assumeChangesOnlyAffectDirectDependencies"
+    "dev": "ttsc --outDir ./lib -p tsconfig.json -w --assumeChangesOnlyAffectDirectDependencies",
+    "dev-all": "yarn run dev"
   },
   "dependencies": {
     "lodash": "^4.17.20"
