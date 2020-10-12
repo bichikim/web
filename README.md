@@ -12,8 +12,17 @@ yarn install
 ```
 
 ### Compiles and hot-reloads for development
+
+모두 개발 모드로 시작 한다. (상당히 많은 로그를 알아 볼 수 없이 진행된다. 추천하지 않는다.)
+run all
 ```
-yarn serve
+yarn dev
+```
+개발중에 web 빌드는 지속적으로 로그를 확인 하여야 함으로 web 은 독립적으로 실행 시킬 수 있다.
+run base / web
+```
+yarn dev:base
+yarn dev:web
 ```
 
 ### Compiles and minifies for production
@@ -21,24 +30,19 @@ yarn serve
 yarn build
 ```
 
-### Run your unit tests
+### Run your unit tests (WIP)
 ```
 yarn test:unit
 ```
 
-### Lints and fixes files
+### Lints and fixes files (WIP)
 ```
 yarn lint
 ```
 
 ### generate icons
 ```
-yarn icons
-```
-
-### Run vue cli ui
-```
-yarn ui
+yarn web icons
 ```
 
 ## URLS

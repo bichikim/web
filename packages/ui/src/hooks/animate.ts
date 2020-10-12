@@ -31,7 +31,7 @@ export interface AnimateOptions extends EventOptions {
   mountAni?: Ref<Animation | AnimationKeys>
 }
 
-export const useEasyAni = (
+export const easyAni = (
   ani?: Ref<Animation | AnimationKeys>,
 ): ComputedRef<KeyframesProps | undefined> => {
   return computed(() => {
@@ -59,7 +59,7 @@ const defaultOptions: Omit<KeyframesProps, 'values'> = {
   ease: easing.easeInOut as any,
 }
 
-const useAction = (
+const action = (
   keyframeAni: Ref<any>,
   defaults: Omit<KeyframesProps, 'values'> = defaultOptions,
 ) => {
@@ -87,7 +87,7 @@ const getEl = (ref: Ref) => {
   }
 }
 
-export const useEvent = (root: Ref<any>, options: EventOptions = {}): void => {
+export const events = (root: Ref<any>, options: EventOptions = {}): void => {
   const {
     onHover,
     onMounted: _onMounted,
@@ -139,14 +139,14 @@ export const useEvent = (root: Ref<any>, options: EventOptions = {}): void => {
   })
 }
 
-export const useAnimate = (root: Ref<any>, options: AnimateOptions): void => {
+export const animate = (root: Ref<any>, options: AnimateOptions): void => {
   const {onHover, onTap} = options
-  const mountAni: any = useEasyAni(options.mountAni)
-  const mountAction = useAction(mountAni)
-  const hoverAni: any = useEasyAni(options.hoverAni)
-  const hoverAction = useAction(hoverAni)
-  const tapAni: any = useEasyAni(options.tapAni)
-  const tapAction: any = useAction(tapAni)
+  const mountAni: any = easyAni(options.mountAni)
+  const mountAction = action(mountAni)
+  const hoverAni: any = easyAni(options.hoverAni)
+  const hoverAction = action(hoverAni)
+  const tapAni: any = easyAni(options.tapAni)
+  const tapAction: any = action(tapAni)
 
   const elStyler = computed(() => {
     const el = getEl(root)
@@ -155,7 +155,7 @@ export const useAnimate = (root: Ref<any>, options: AnimateOptions): void => {
     }
   })
 
-  useEvent(root, {
+  events(root, {
     onMounted: () => {
       if (mountAction?.value && elStyler.value) {
         mountAction.value.start(elStyler.value.set)

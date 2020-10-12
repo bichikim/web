@@ -7,8 +7,10 @@
     ]
   },
   "scripts": {
-    "serve": "yarn workspace web serve",
-    "build": "lerna run build",
+    "dev": "lerna run dev-all --parallel",
+    "dev:base": "lerna run dev --parallel",
+    "dev:web": "yarn workspace @innovirus/web serve",
+    "build": "lerna run build --stream",
     "web": "yarn workspace @innovirus/web",
     "lint": "eslint --ext .ts \"src/**/*.{ts,tsx}\"",
     "functions": "yarn workspace functions"
