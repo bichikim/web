@@ -15,17 +15,23 @@ export const Box = defineComponent({
   },
   setup(props, {attrs, slots, emit}) {
     const {mountAni, hoverAni, tapAni, kickSys} = toRefs(props)
-    const root = ref()
+    const root = ref(null)
     const onTap = (event) => emit('tap', event)
     const onHover = (event) => emit('hover', event)
 
-    animate(root, {mountAni, hoverAni, tapAni, onTap, onHover})
+    animate(root, {
+      mountAni: mountAni?.value,
+      hoverAni: hoverAni?.value,
+      tapAni: tapAni?.value,
+      onTap,
+      onHover,
+    })
 
     const newProps = kickSystem({...attrs, ...props}, kickSys?.value)
 
     return () => {
       return (
-        h(BoxStyle, {...newProps, ref: root}, slots)
+        h(BoxStyle, {...newProps.value, ref: root}, slots)
       )
     }
   },
