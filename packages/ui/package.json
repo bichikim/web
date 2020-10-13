@@ -21,6 +21,7 @@
     "@styled-system/core": "^5.1.2",
     "@styled-system/css": "^5.1.5",
     "@vueuse/core": "^4.0.0-beta.22",
+    "@emotion/memoize": "^0.7.4",
     "@styled-system/should-forward-prop": "^5.1.5",
     "fluid-system": "^1.0.10",
     "flip-toolkit": "^7.0.11",

@@ -141,7 +141,7 @@ export const styled = (tag: any = 'div', options: StyledOptions = {}): StyledRes
 
         if (passThrough && typeof finalTag.value !== 'string') {
           return () => {
-            const newProps = {...attrs, ...props}
+            const newProps = {...attrs, ...props, [PASS_THROUGH_NAME]: undefined}
             const newThrough: passThrough = {
               props: {...through.value.props, ...newProps},
               styles: [...styles, ...through.value.styles],
@@ -154,18 +154,24 @@ export const styled = (tag: any = 'div', options: StyledOptions = {}): StyledRes
 
         const mergedProps = computed(() => ({
           ...restAttrs,
-          ...{...props, as: undefined, feed: undefined},
+          ...props,
+          ...{as: undefined, feed: undefined},
           ...through.value.props,
           theme,
         }))
 
+
         const serialized = computed(() => {
           return serializeStyles(
-            styles.concat(through.value.styles),
+            [...styles, ...through.value.styles],
             cache.registered,
             mergedProps.value,
           )
         })
+
+        if (through.value.styles.length > 0) {
+          console.log(through.value, styles, mergedProps.value)
+        }
 
         return () => {
           insertStyles(

@@ -15,17 +15,16 @@ export const createGlobalStyle = (
   return {
     install(app: App) {
       app.mixin({
-        setup() {
-          const cache = useCache()
-          return {
-            cache,
-          }
-        },
-        beforeMount() {
+        mounted() {
           if (this.$root !== this) {
             return
           }
-          const {cache} = this
+          const cache = useCache()
+
+          if (!cache) {
+            return
+          }
+
           const serialized = serializeStyles(styles, cache.registered, {})
           insertWithoutScoping(cache, serialized)
         },
