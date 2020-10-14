@@ -1,46 +1,72 @@
+import {column, createGap, flexWrap} from '@/systems'
+import shouldForwardProp from '@styled-system/should-forward-prop'
 import {Box} from 'src/component/box'
-import {responsiveType} from 'src/props'
+import {kicks, kickSystem} from 'src/hooks'
+import {allProps, responsiveType} from 'src/props'
 import styled from 'src/styled'
 import {slotToArray} from 'src/utils'
-import shouldForwardProp from '@styled-system/should-forward-prop'
-import {defineComponent, h, toRefs} from 'vue'
+import {defineComponent, h, ref, toRefs} from 'vue'
 import {flexItemSystem} from './flex-item-system'
-import {systems} from './systems'
+
+const getBg = kicks.backgroundColor(true)
+const getPadding = kicks.padding(true, true)
 
 const props = {gap: responsiveType, range: responsiveType, show: responsiveType}
 const FlexItem = styled('div', {props, shouldForwardProp})(...flexItemSystem)
 
-const BoxForFlex = styled(Box, {passThrough: true, props})(...systems)
+const Container = styled(Box, {passThrough: true, name: 'container'})(
+  flexWrap as any,
+  column,
+  createGap('100%'),
+)
 
 export const Flex = defineComponent({
   name: 'Flex',
   props: {
+    ...allProps,
     rangeItems: responsiveType,
     column: responsiveType,
     division: responsiveType,
     reverse: responsiveType,
   },
-  setup(props, {attrs, slots}) {
+  setup(props, {slots}) {
     const {division, column, rangeItems, reverse} = toRefs(props)
+    const gap = ref(props.gap)
     return () => {
+      const bgProps = getBg(props)
+      const paddingProps = getPadding(props)
+      const layoutProps = kickSystem(props, ['padding'])
       const children = slotToArray(slots.default)
       return (
-        h(BoxForFlex, {...attrs}, () => [
-          h('div', {class: 'background'}),
-          h('div', {class: 'container'},
-            children.map((child) => {
-              const childProps = child.props || {}
-              const {range = rangeItems, basis, show = true, offset} = childProps
-              return h(FlexItem, {
-                basis,
-                column,
-                division,
-                offset,
-                range,
-                reverse,
-                show,
-              }, () => child)
-            }),
+        h(Box, {...layoutProps.value, position: 'relative'}, () => [
+          h(Box, {
+            ...bgProps,
+            position: 'absolute',
+            left: 0,
+            top: 0,
+            height: '100%',
+            width: '100%',
+          }),
+          h(Container, {
+            ...paddingProps,
+            position: 'relative',
+            height: '100%',
+            display: 'flex',
+            gap: gap.value,
+          },
+          () => children.map((child) => {
+            const childProps = child.props || {}
+            const {range = rangeItems, basis, show = true, offset} = childProps
+            return h(FlexItem, {
+              basis,
+              column,
+              division,
+              offset,
+              range,
+              reverse,
+              show,
+            }, () => child)
+          }),
           ),
         ])
       )

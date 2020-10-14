@@ -47,7 +47,7 @@ export default defineComponent({
           h(Box, {p: 10, bg: 'tomato', color: 'white'}, () => 'foo'),
           h(Input, {bg: 'Silver', color: 'white', value: 'foo'}),
           h(Flex, {p: 10, bg: 'WhiteSmoke', color: 'white', gap: 10}, () => [
-            h(Box, {range: 'space', bg: 'Silver'}, () => name.value),
+            h(Box, {p: 20, range: 'space', bg: 'Silver'}, () => name.value),
             h(Box, {range: range.value, bg: 'Silver'}, () => deepName.value),
           ]),
           h(Flex, {p: 10, bg: 'WhiteSmoke', color: 'white', gap: 10, width: 200}, () => [

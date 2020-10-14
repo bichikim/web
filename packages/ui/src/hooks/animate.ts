@@ -26,30 +26,30 @@ interface EventOptions {
 }
 
 export interface AnimateOptions extends EventOptions {
-  hoverAni?: Ref<Animation | AnimationKeys>
-  tapAni?: Ref<Animation | AnimationKeys>
-  mountAni?: Ref<Animation | AnimationKeys>
+  hoverAni?: Animation | AnimationKeys
+  tapAni?: Animation | AnimationKeys
+  mountAni?: Animation | AnimationKeys
 }
 
 export const easyAni = (
-  ani?: Ref<Animation | AnimationKeys>,
+  ani?: Animation | AnimationKeys,
 ): ComputedRef<KeyframesProps | undefined> => {
   return computed(() => {
-    if (!ani?.value) {
+    if (!ani) {
       return
     }
 
-    if (ani.value.values) {
-      const values = ani.value.values
+    if (ani.values) {
+      const values = ani.values
 
       return {
-        ...ani.value,
+        ...ani,
         values: parallelArray(values),
       }
     }
 
     return {
-      values: parallelArray(ani.value),
+      values: parallelArray(ani),
     }
   })
 }
@@ -139,7 +139,7 @@ export const events = (root: Ref<any>, options: EventOptions = {}): void => {
   })
 }
 
-export const animate = (root: Ref<any>, options: AnimateOptions): void => {
+export const animate = (root: Ref<HTMLElement | null>, options: AnimateOptions): void => {
   const {onHover, onTap} = options
   const mountAni: any = easyAni(options.mountAni)
   const mountAction = action(mountAni)

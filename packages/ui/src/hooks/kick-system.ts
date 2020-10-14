@@ -1,58 +1,76 @@
+import {PureObject, cleanObject} from '@innovirus/utils'
 import {BackgroundColorProps, PaddingProps, TextColorProps} from 'styled-system'
-import {watch, Ref, computed, toRefs, ToRefs} from 'vue'
-import {PureObject} from '@innovirus/utils'
+import {computed} from 'vue'
 
 type Un<T extends Record<string, any>> = Record<keyof T, undefined>
 
-const paddingProps: Un<PaddingProps> = {
-  p: undefined,
-  padding: undefined,
-  paddingBottom: undefined,
-  paddingLeft: undefined,
-  paddingRight: undefined,
-  paddingTop: undefined,
-  paddingX: undefined,
-  paddingY: undefined,
-  pb: undefined,
-  pl: undefined,
-  pr: undefined,
-  pt: undefined,
-  px: undefined,
-  py: undefined,
-}
+type KickFunc = (props: PureObject) => Record<string, any>
 
-const backgroundColorProps: Un<BackgroundColorProps> = {
-  backgroundColor: undefined,
-  bg: undefined,
-}
-
-const textColorProps: Un<TextColorProps> = {
-  color: undefined,
-}
-
-const createKick = (kickProps) => {
-  const myKick = {...kickProps}
-  return (props) => {
-    return {
-      ...props,
-      ...myKick,
+const createFilter = (pickFunc) => {
+  return (isGet: boolean = false, clean: boolean = false) => (props) => {
+    const [recode, rest] = pickFunc(props)
+    if (isGet) {
+      if (clean) {
+        return cleanObject(recode)
+      }
+      return recode
     }
+    return rest
   }
 }
 
-const kicks = {
-  backgroundColor: createKick(backgroundColorProps),
-  color: createKick(textColorProps),
-  padding: createKick(paddingProps),
+const padding = createFilter((props) => {
+  const {
+    p, padding, paddingBottom, paddingLeft, paddingRight, paddingTop, paddingX,
+    paddingY, pb, pl, pr, pt, px, py, ...rest
+  } = props
+  return [{
+    p,
+    padding,
+    paddingBottom,
+    paddingLeft,
+    paddingRight,
+    paddingTop,
+    paddingX,
+    paddingY,
+    pb,
+    pl,
+    pr,
+    pt,
+    px,
+    py,
+  }, rest]
+})
+
+const backgroundColor = createFilter((props) => {
+  const {bg, backgroundColor, ...rest} = props
+  return [{bg, backgroundColor}, rest]
+})
+
+const color = createFilter((props) => {
+  const {color, ...rest} = props
+  return [{color}, rest]
+})
+
+export const kicks = {
+  backgroundColor,
+  color,
+  padding,
 }
 
-type Kicks = typeof kicks
-
-export const kickSystem = (props: PureObject, kickSys: (keyof Kicks)[] = []) => {
+export const kickSystem = (props: PureObject, kickSys: (KickFunc | keyof typeof kicks)[] = []) => {
   return computed(() => {
     let newProps = {...props}
-    kickSys.forEach((kickName) => {
-      newProps = kicks[kickName](newProps)
+    kickSys.forEach((kick) => {
+      if (typeof kick === 'function') {
+        newProps = kick(newProps)
+        return
+      }
+      const kickFunc = kicks[kick]
+
+      if (kickFunc) {
+        newProps = kickFunc()(newProps)
+      }
     })
     return newProps
   })
