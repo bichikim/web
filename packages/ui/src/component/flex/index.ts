@@ -1,75 +1,117 @@
-import {column, createGap, flexWrap} from '@/systems'
-import shouldForwardProp from '@styled-system/should-forward-prop'
-import {Box} from 'src/component/box'
-import {kicks, kickSystem} from 'src/hooks'
+import {allSystemTrueMap, column, createGap, flexRange} from '@/systems'
+import {createBox} from 'src/component/box'
 import {allProps, responsiveType} from 'src/props'
-import styled from 'src/styled'
-import {slotToArray} from 'src/utils'
+import {slotToArray, tackRefs} from 'src/utils'
+import {system} from 'styled-system'
 import {defineComponent, h, ref, toRefs} from 'vue'
-import {flexItemSystem} from './flex-item-system'
 
-const getBg = kicks.backgroundColor(true)
-const getPadding = kicks.padding(true, true)
-
-const props = {gap: responsiveType, range: responsiveType, show: responsiveType}
-const FlexItem = styled('div', {props, shouldForwardProp})(...flexItemSystem)
-
-const Container = styled(Box, {passThrough: true, name: 'container'})(
-  flexWrap as any,
-  column,
-  createGap('100%'),
+const Background = createBox({backgroundColor: true}, {
+  additionalSystems: [
+    {
+      position: 'absolute',
+      left: 0,
+      top: 0,
+      height: '100%',
+      width: '100%',
+    },
+  ],
+  name: 'background',
+})
+const Layout = createBox({
+  ...allSystemTrueMap,
+  show: true,
+  // padding: false,
+  backgroundColor: false,
+},
+{
+  additionalSystems: [
+    {
+      display: 'flow-root',
+      position: 'relative',
+    },
+  ],
+  name: 'layout',
+},
 )
+const Container = createBox({}, {
+  additionalSystems: [
+    {
+      position: 'relative',
+      height: '100%',
+      display: 'flex',
+      width: 'auto',
+    },
+    column,
+    createGap('100%'),
+  ],
+  props: {
+    gap: null,
+  },
+  name: 'container',
+})
+const Item = createBox({show: true}, {
+  additionalSystems: [
+    {
+      boxSizing: 'border-box',
+      display: 'block',
+      flexBasis: 'auto',
+      flexGrow: 0,
+      flexShrink: 1,
+      maxWidth: '100%',
+      minWidth: 0,
+      whiteSpace: 'nowrap',
+      width: 'auto',
+      height: 'auto',
+    },
+    column,
+    flexRange,
+    system({
+      basis: {
+        property: 'flexBasis',
+      },
+    }),
+  ],
+  props: {
+    range: null,
+    basis: null,
+  },
+  name: 'item',
+})
 
 export const Flex = defineComponent({
   name: 'Flex',
   props: {
     ...allProps,
+    gap: responsiveType,
+    range: responsiveType,
+    show: responsiveType,
     rangeItems: responsiveType,
     column: responsiveType,
     division: responsiveType,
     reverse: responsiveType,
   },
   setup(props, {slots}) {
-    const {division, column, rangeItems, reverse} = toRefs(props)
+    const {division, column, rangeItems, reverse, ...rest} = toRefs(props)
     const gap = ref(props.gap)
     return () => {
-      const bgProps = getBg(props)
-      const paddingProps = getPadding(props)
-      const layoutProps = kickSystem(props, ['padding'])
-      const children = slotToArray(slots.default)
-      return (
-        h(Box, {...layoutProps.value, position: 'relative'}, () => [
-          h(Box, {
-            ...bgProps,
-            position: 'absolute',
-            left: 0,
-            top: 0,
-            height: '100%',
-            width: '100%',
-          }),
-          h(Container, {
-            ...paddingProps,
-            position: 'relative',
-            height: '100%',
-            display: 'flex',
-            gap: gap.value,
-          },
-          () => children.map((child) => {
+      return h(Layout, tackRefs(rest), () => [
+        h(Background, tackRefs(rest)),
+        h(Container, tackRefs({...rest, gap}),
+          () => slotToArray(slots.default).map((child) => {
             const childProps = child.props || {}
-            const {range = rangeItems, basis, show = true, offset} = childProps
-            return h(FlexItem, {
+            const {range = rangeItems?.value, basis, show = true, offset} = childProps
+            return h(Item, {
+              ...tackRefs({
+                division, column, reverse,
+              }),
               basis,
-              column,
-              division,
               offset,
               range,
-              reverse,
               show,
             }, () => child)
           }),
-          ),
-        ])
-      )
+        ),
+      ])
     }
   },
 })

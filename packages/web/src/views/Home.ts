@@ -19,14 +19,6 @@ export default defineComponent({
     return () => {
       return (
         h('div', {}, [
-          h('div', [
-            h('span', 'name'),
-            h('span', name.value),
-          ]),
-          h('div', [
-            h('span', 'deep name'),
-            h('span', deepName.value),
-          ]),
           h(Flex, {}, () => [
             h(Box, {
               as: 'button',
@@ -44,15 +36,15 @@ export default defineComponent({
               onClick: toggleRange,
             }, () => 'space'),
           ]),
-          h(Box, {p: 10, bg: 'tomato', color: 'white'}, () => 'foo'),
-          h(Input, {bg: 'Silver', color: 'white', value: 'foo'}),
+          h(Box, {p: 10, bg: 'Tomato', color: 'white'}, () => 'foo'),
+          // h(Input, {bg: 'Silver', color: 'white', value: 'foo'}),
           h(Flex, {p: 10, bg: 'WhiteSmoke', color: 'white', gap: 10}, () => [
-            h(Box, {p: 20, range: 'space', bg: 'Silver'}, () => name.value),
-            h(Box, {range: range.value, bg: 'Silver'}, () => deepName.value),
+            h(Box, {p: 10, range: 'space', bg: 'Silver', color: 'white'}, () => name.value),
+            h(Box, {range: range.value, bg: 'Tomato', color: 'white', p: 10}, () => deepName.value),
           ]),
           h(Flex, {p: 10, bg: 'WhiteSmoke', color: 'white', gap: 10, width: 200}, () => [
-            h(Box, {range: 'space', bg: 'Silver'}, () => name.value),
-            h(Box, {range: range.value, bg: 'Silver'}, () => deepName.value),
+            h(Box, {range: 'space', bg: 'Silver', color: 'white', p: 10}, () => name.value),
+            h(Box, {range: range.value, bg: 'Silver', color: 'white', p: 10}, () => deepName.value),
           ]),
         ])
       )

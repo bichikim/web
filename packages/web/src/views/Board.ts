@@ -12,6 +12,7 @@ export default defineComponent({
             bg: 'tomato',
             p: 10,
             bra: 10,
+            color: 'White',
             range: 'auto',
             sdw: shadow,
             mountAni: {scale: [2, 1]},

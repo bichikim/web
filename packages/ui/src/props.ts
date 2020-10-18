@@ -1,27 +1,25 @@
 import {
   PaddingProps,
   MarginProps,
-  LayoutProps,
-  TypographyProps,
+  FlexItemProps,
+  FlexProps,
+  TextProps,
+  SizeProps,
   ShadowProps,
   PositionProps,
   GridProps,
-  FlexboxProps,
   BorderProps,
   ShowProps,
   ColorProps,
-  FontShortProps,
-  TextDecorationProps,
-  FlexShortProps,
-  DisplayShortProps,
-  BorderShortProps,
+  BackgroundColorProps,
+  DisplayProps,
 } from '@/systems'
 
 export const responsiveType = {required: false}
 
 type PropsMember<K, V = typeof responsiveType> = Record<keyof K, V>
 
-export const paddingProps: PropsMember<PaddingProps> = {
+const paddingProps: PropsMember<PaddingProps> = {
   padding: responsiveType,
   paddingTop: responsiveType,
   paddingRight: responsiveType,
@@ -38,7 +36,7 @@ export const paddingProps: PropsMember<PaddingProps> = {
   py: responsiveType,
 }
 
-export const marginProps: PropsMember<MarginProps> = {
+const marginProps: PropsMember<MarginProps> = {
   m: responsiveType,
   ml: responsiveType,
   mr: responsiveType,
@@ -55,7 +53,7 @@ export const marginProps: PropsMember<MarginProps> = {
   marginY: responsiveType,
 }
 
-export const layoutProps: PropsMember<LayoutProps> = {
+const layoutProps: PropsMember<SizeProps> = {
   width: responsiveType,
   height: responsiveType,
   minWidth: responsiveType,
@@ -63,14 +61,14 @@ export const layoutProps: PropsMember<LayoutProps> = {
   maxWidth: responsiveType,
   maxHeight: responsiveType,
   size: responsiveType,
-  overflow: responsiveType,
-  overflowX: responsiveType,
-  overflowY: responsiveType,
-  display: responsiveType,
-  verticalAlign: responsiveType,
+  // overflow: responsiveType,
+  // overflowX: responsiveType,
+  // overflowY: responsiveType,
+  // display: responsiveType,
+  // verticalAlign: responsiveType,
 }
 
-export const typographyProps: PropsMember<TypographyProps> = {
+const textProps: PropsMember<TextProps> = {
   fontFamily: responsiveType,
   fontSize: responsiveType,
   fontWeight: responsiveType,
@@ -78,14 +76,30 @@ export const typographyProps: PropsMember<TypographyProps> = {
   letterSpacing: responsiveType,
   textAlign: responsiveType,
   fontStyle: responsiveType,
+  fs: responsiveType,
+  fw: responsiveType,
+  td: responsiveType,
+  textAlignLast: responsiveType,
+  textAnchor: responsiveType,
+  textDecoration: responsiveType,
+  textEmphasis: responsiveType,
+  textJustify: responsiveType,
+  textOverflow: responsiveType,
+  textShadow: responsiveType,
+  textTransform: responsiveType,
 }
 
-export const shadowProps: PropsMember<ShadowProps> = {
+const displayProps: PropsMember<DisplayProps> = {
+  display: responsiveType,
+  dp: responsiveType,
+}
+
+const shadowProps: PropsMember<ShadowProps> = {
   boxShadow: responsiveType,
   textShadow: responsiveType,
 }
 
-export const positionProps: PropsMember<PositionProps> = {
+const positionProps: PropsMember<PositionProps> = {
   position: responsiveType,
   zIndex: responsiveType,
   top: responsiveType,
@@ -94,7 +108,7 @@ export const positionProps: PropsMember<PositionProps> = {
   left: responsiveType,
 }
 
-export const gridProps: PropsMember<GridProps> = {
+const gridProps: PropsMember<GridProps> = {
   gridGap: responsiveType,
   gridColumnGap: responsiveType,
   gridRowGap: responsiveType,
@@ -109,24 +123,29 @@ export const gridProps: PropsMember<GridProps> = {
   gridArea: responsiveType,
 }
 
-export const flexboxProps: PropsMember<FlexboxProps> = {
+const flexProps: PropsMember<FlexProps> = {
   alignItems: responsiveType,
   alignContent: responsiveType,
   justifyItems: responsiveType,
   justifyContent: responsiveType,
   flexWrap: responsiveType,
   flexDirection: responsiveType,
-  // item
-  flex: responsiveType,
-  flexGrow: responsiveType,
-  flexShrink: responsiveType,
-  flexBasis: responsiveType,
-  justifySelf: responsiveType,
-  alignSelf: responsiveType,
   order: responsiveType,
+  fxa: responsiveType,
+  fxd: responsiveType,
+  fxj: responsiveType,
 }
 
-export const borderProps: PropsMember<BorderProps> = {
+const flexItemProps: PropsMember<FlexItemProps> = {
+  flexBasis: responsiveType,
+  flexGrow: responsiveType,
+  flexShrink: responsiveType,
+  alignSelf: responsiveType,
+  justifySelf: responsiveType,
+  flex: responsiveType,
+}
+
+const borderProps: PropsMember<BorderProps> = {
   border: responsiveType,
   borderWidth: responsiveType,
   borderStyle: responsiveType,
@@ -154,58 +173,40 @@ export const borderProps: PropsMember<BorderProps> = {
   borderRightWidth: responsiveType,
   borderRightColor: responsiveType,
   borderRightStyle: responsiveType,
-}
-
-export const showProps: PropsMember<ShowProps> = {
-  show: responsiveType,
-}
-
-export const colorProps: PropsMember<ColorProps> = {
-  color: responsiveType,
-  backgroundColor: responsiveType,
-  bg: responsiveType,
-  opacity: responsiveType,
-}
-
-export const fontShortProps: PropsMember<FontShortProps> = {
-  fs: responsiveType,
-  fw: responsiveType,
-}
-
-export const textDecorationProps: PropsMember<TextDecorationProps> = {
-  td: responsiveType,
-  textDecoration: responsiveType,
-}
-
-export const flexShortProps: PropsMember<FlexShortProps> = {
-  fxa: responsiveType,
-  fxj: responsiveType,
-  fxd: responsiveType,
-}
-
-export const displayShortProps: PropsMember<DisplayShortProps> = {
-  dp: responsiveType,
-}
-
-export const borderShortProps: PropsMember<BorderShortProps> = {
-  bra: responsiveType,
   bb: responsiveType,
   bbw: responsiveType,
   bc: responsiveType,
   bl: responsiveType,
   blw: responsiveType,
   br: responsiveType,
+  bra: responsiveType,
   brw: responsiveType,
   bs: responsiveType,
-  btw: responsiveType,
   bt: responsiveType,
+  btw: responsiveType,
   bx: responsiveType,
   bxw: responsiveType,
   by: responsiveType,
   byw: responsiveType,
 }
 
-export const gapProps = {
+const showProps: PropsMember<ShowProps> = {
+  show: responsiveType,
+}
+
+const colorProps: PropsMember<ColorProps> = {
+  color: responsiveType,
+  // backgroundColor: responsiveType,
+  // bg: responsiveType,
+  // opacity: responsiveType,
+}
+
+const backgroundColorProps: PropsMember<BackgroundColorProps> = {
+  backgroundColor: responsiveType,
+  bg: responsiveType,
+}
+
+const gapProps = {
   gap: responsiveType,
 }
 
@@ -213,18 +214,16 @@ export const allProps = {
   ...paddingProps,
   ...marginProps,
   ...layoutProps,
-  ...typographyProps,
+  ...backgroundColorProps,
   ...shadowProps,
   ...positionProps,
   ...gridProps,
-  ...flexboxProps,
   ...borderProps,
   ...colorProps,
-  ...fontShortProps,
-  ...textDecorationProps,
-  ...flexShortProps,
-  ...displayShortProps,
-  ...borderShortProps,
+  ...textProps,
+  ...displayProps,
+  ...flexItemProps,
+  ...flexProps,
   ...showProps,
   ...gapProps,
 }
