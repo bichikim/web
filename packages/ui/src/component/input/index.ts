@@ -45,7 +45,7 @@ export const InputComponent = defineComponent({
   },
 })
 
-const systems: Systems = [
+const systems: Systems<any> = [
   {
     border: 'none',
   },
