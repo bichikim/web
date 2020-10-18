@@ -11,8 +11,10 @@ export const createUI = (): Plugin => {
       const emotion = createEmotion()
       const global = createGlobalStyle({
         body: {
+          display: 'block',
           padding: 0,
           margin: 0,
+          color: 'black',
         },
       })
       emotion.install(app)

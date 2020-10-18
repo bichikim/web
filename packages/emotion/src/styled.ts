@@ -1,13 +1,9 @@
-import {CSSObject} from './types'
 import {serializeStyles} from '@emotion/serialize'
 import {insertStyles} from '@emotion/utils'
-import {styleFn} from 'styled-system'
 import {computed, DefineComponent, defineComponent, h} from 'vue'
 import {ILLEGAL_ESCAPE_SEQUENCE_ERROR} from './errors'
 import {useCache} from './emotion'
 import {useTheme} from './theme'
-
-export type StyledSystems = (CSSObject | styleFn)[]
 
 export type StyledOptions = {
   label?: string,
@@ -160,7 +156,6 @@ export const styled = (tag: any = 'div', options: StyledOptions = {}): StyledRes
           theme,
         }))
 
-
         const serialized = computed(() => {
           return serializeStyles(
             [...styles, ...through.value.styles],
@@ -168,10 +163,6 @@ export const styled = (tag: any = 'div', options: StyledOptions = {}): StyledRes
             mergedProps.value,
           )
         })
-
-        if (through.value.styles.length > 0) {
-          console.log(through.value, styles, mergedProps.value)
-        }
 
         return () => {
           insertStyles(

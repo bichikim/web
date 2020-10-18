@@ -1,7 +1,5 @@
-import {Ref, UnwrapRef, reactive} from '@vue/reactivity'
+import {Ref, UnwrapRef, reactive, App} from 'vue'
 import {_triggerDevToolAction, _triggerDevToolMutation} from './devtool'
-import {App} from 'vue'
-
 export type AnyFunc = (...args: any[]) => any
 export type SubscribeFunc = (name: string, args: any[], originalAction: AnyFunc, wrappedAction: AnyFunc) => any
 export type ActionFunc = (...args: any[]) => PromiseLike<any> | any

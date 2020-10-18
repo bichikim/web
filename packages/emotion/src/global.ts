@@ -1,7 +1,9 @@
-import {Interpolation, serializeStyles} from '@emotion/serialize'
+import {serializeStyles} from '@emotion/serialize'
 import {EmotionCache, SerializedStyles} from '@emotion/utils'
+import {PureObject} from '@innovirus/utils'
 import {Plugin, App} from 'vue'
 import {useCache} from './emotion'
+import {CSSObject} from '@/types'
 
 function insertWithoutScoping(cache: EmotionCache, serialized: SerializedStyles) {
   if (cache.inserted[serialized.name] === undefined) {
@@ -10,8 +12,8 @@ function insertWithoutScoping(cache: EmotionCache, serialized: SerializedStyles)
 }
 
 export const createGlobalStyle = (
-  ...styles: Array<TemplateStringsArray | Interpolation<any>>
-): Plugin => {
+  ...styles: (CSSObject<PureObject>)[]
+): Required<Plugin> => {
   return {
     install(app: App) {
       app.mixin({
@@ -25,7 +27,7 @@ export const createGlobalStyle = (
             return
           }
 
-          const serialized = serializeStyles(styles, cache.registered, {})
+          const serialized = serializeStyles(styles as any, cache.registered, {})
           insertWithoutScoping(cache, serialized)
         },
       })
