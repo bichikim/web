@@ -1,0 +1,22 @@
+{
+  "name": "@innovirue/web-snow",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "snowpack dev"
+  },
+  "dependencies": {
+    "vue": "^3.0.2"
+  },
+  "browserslist": [
+    "last 2 version",
+    "not dead"
+  ],
+  "devDependencies": {
+    "snowpack": "^2.15.1",
+    "@snowpack/plugin-typescript": "^1.0.2",
+    "@snowpack/plugin-vue": "^2.2.4",
+    "@snowpack/plugin-dotenv": "^2.0.4",
+    "@types/snowpack-env": "^2.3.0",
+    "typescript": "^4.0.5"
+  }
+}
