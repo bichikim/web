@@ -25,6 +25,11 @@ const routes: Array<RouteRecordRaw> = [
         name: 'Board',
         component: () => import(/* webpackChunkName: "board" */ '@/views/Board'),
       },
+      {
+        path: '/mock-up',
+        name: 'mock-up',
+        component: () => import('@/views/MockUp'),
+      },
     ],
     component: Default,
   },

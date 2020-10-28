@@ -5,6 +5,7 @@ module.exports = {
   },
   plugins: ['@snowpack/plugin-typescript', '@snowpack/plugin-vue', '@snowpack/plugin-dotenv'],
   install: [
+    'vue/dist/vue.esm-bundler.js',
     /* ... */
   ],
   installOptions: {
@@ -20,6 +21,6 @@ module.exports = {
     /* ... */
   },
   alias: {
-    /* ... */
+    vue$: 'vue/dist/vue.esm-bundler.js',
   },
 }

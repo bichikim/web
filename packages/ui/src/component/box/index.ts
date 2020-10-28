@@ -27,7 +27,7 @@ import {tackRefs} from '@/utils'
 import {CSSObject} from '@innovirus/emotion'
 import {defineComponent, DefineComponent, h, ref, toRefs} from 'vue'
 
-type BoxSystemsNames = 'show'
+type BoxSystemsNames = 'show' | 'animate'
 
 type BoxMap = Partial<SystemsMap> & Partial<Record<BoxSystemsNames, boolean>>
 
@@ -45,6 +45,12 @@ export interface BoxProps extends PaddingProps, DisplayProps, BackgroundColorPro
   // empty
 }
 
+export const allBoxTrueMap: BoxMap = {
+  ...allSystemTrueMap,
+  animate: true,
+  show: true,
+}
+
 export const createBox = <P extends PureObject>(map: BoxMap, options: CreateBoxOptions = {}): DefineComponent<P> => {
   const {additionalSystems = [], props = {}, name} = options
   const systems: any[] = [defaultStyle, ...additionalSystems]
@@ -57,31 +63,44 @@ export const createBox = <P extends PureObject>(map: BoxMap, options: CreateBoxO
 
   const styledBox = styled('div', {name: 'emotion', props})(...systems)
 
+  const actAnimate = map.animate
+
   return defineComponent({
-    name: name ?? 'box',
+    name: name ?? 'b-box',
     props: {
       ...props,
       ...allProps,
       mountAni: null,
       hoverAni: null,
       tapAni: null,
+      inputAni: null,
+      leaveAni: null,
     },
     emits: {
       tap: null,
       hover: null,
+      leave: null,
     },
     setup(props, {slots, emit}) {
-      const {mountAni, hoverAni, tapAni, ...rest} = toRefs(props)
+      const {mountAni, hoverAni, tapAni, inputAni, leaveAni, ...rest} = toRefs(props)
       const root = ref(null)
       const onTap = (event) => emit('tap', event)
       const onHover = (event) => emit('hover', event)
+      const onLeave = (event) => emit('leave', event)
 
-      animate(root, {
+      const animateOptions = actAnimate ? {
         mountAni: mountAni?.value,
         hoverAni: hoverAni?.value,
         tapAni: tapAni?.value,
+        inputAni: inputAni?.value,
+        leaveAni: leaveAni?.value,
+      } : {}
+
+      animate(root, {
+        ...animateOptions,
         onTap,
         onHover,
+        onLeave,
       })
 
       return () => {
@@ -93,4 +112,4 @@ export const createBox = <P extends PureObject>(map: BoxMap, options: CreateBoxO
   }) as any
 }
 
-export const Box = createBox<BoxProps>({...allSystemTrueMap, show: true})
+export const Box = createBox<BoxProps>({...allBoxTrueMap, show: true})

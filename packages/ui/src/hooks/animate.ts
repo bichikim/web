@@ -3,7 +3,8 @@ import {ComputedRef} from '@vue/reactivity'
 import interactJs from 'interactjs'
 import {easing, keyframes, styler} from 'popmotion'
 import {KeyframesProps, Values} from 'popmotion/src/animations/keyframes/types'
-import {computed, onBeforeUnmount, onMounted, Ref} from 'vue'
+import {computed, onBeforeUnmount, onMounted, Ref, ref} from 'vue'
+import {debounce} from 'lodash'
 
 type AnimationKeys = Record<string, any | any[]>
 
@@ -18,10 +19,13 @@ const defaultStyle = {
 }
 
 interface EventOptions {
+  wait?: number
   onTap?: (event) => any
   onDoubleTap?: (event) => any
   onMounted?: ($el) => any
   onHover?: (event) => any
+  onLeave?: (event) => any
+  onInput?: (event) => any
   onBeforeUnmounted?: ($el) => any
 }
 
@@ -29,6 +33,8 @@ export interface AnimateOptions extends EventOptions {
   hoverAni?: Animation | AnimationKeys
   tapAni?: Animation | AnimationKeys
   mountAni?: Animation | AnimationKeys
+  leaveAni?: Animation | AnimationKeys
+  inputAni?: Animation | AnimationKeys
 }
 
 export const easyAni = (
@@ -94,6 +100,9 @@ export const events = (root: Ref<any>, options: EventOptions = {}): void => {
     onTap,
     onBeforeUnmounted: _onBeforeUnmounted,
     onDoubleTap,
+    onLeave,
+    onInput,
+    wait = 75,
   } = options
 
   const interact = computed(() => {
@@ -103,34 +112,43 @@ export const events = (root: Ref<any>, options: EventOptions = {}): void => {
     }
   })
 
-  const hover = (event) => {
+  const hover = debounce((event) => {
     onHover && onHover(event)
-  }
+  }, wait)
 
-  const tap = (event) => {
+  const leave = debounce((event) => {
+    onLeave && onLeave(event)
+  }, wait)
+
+  const tap = debounce((event) => {
     onTap && onTap(event)
-  }
-
-  const doubleTap = (event) => {
-    onDoubleTap && onDoubleTap(event)
-  }
-
-  onMounted(() => {
-    _onMounted && _onMounted(root.value?.$el)
   })
+
+  const doubleTap = debounce((event) => {
+    onDoubleTap && onDoubleTap(event)
+  })
+
+  const input = debounce((event) => {
+    onInput && onInput(event)
+  }, wait)
 
   onMounted(() => {
     const el = getEl(root)
     el.addEventListener('mouseover', hover)
+    el.addEventListener('mouseout', leave)
+    el.addEventListener('input', input)
     if (interact.value) {
       interact.value.on('tap', tap)
       interact.value.on('doubletap', doubleTap)
     }
+    _onMounted && _onMounted(root.value?.$el)
   })
 
   onBeforeUnmount(() => {
     const el = getEl(root)
     el.removeEventListener('mouseover', hover)
+    el.removeEventListener('mouseout', leave)
+    el.removeEventListener('input', input)
     if (interact.value) {
       interact.value.off('tap', tap)
       interact.value.off('doubletap', doubleTap)
@@ -140,10 +158,17 @@ export const events = (root: Ref<any>, options: EventOptions = {}): void => {
 }
 
 export const animate = (root: Ref<HTMLElement | null>, options: AnimateOptions): void => {
-  const {onHover, onTap} = options
+  const {onHover, onTap, onLeave, onInput} = options
   const mountAni: any = easyAni(options.mountAni)
   const mountAction = action(mountAni)
   const hoverAni: any = easyAni(options.hoverAni)
+  const hoverAniPlayback: any = ref(null)
+  const leaveAni: any = easyAni(options.leaveAni)
+  const leaveActon = action(leaveAni)
+  const leaveAniPlayback: any = ref(null)
+  const inputAni: any = easyAni(options.inputAni)
+  const inputAction = action(inputAni)
+  const inputAniPlayback: any = ref(null)
   const hoverAction = action(hoverAni)
   const tapAni: any = easyAni(options.tapAni)
   const tapAction: any = action(tapAni)
@@ -158,7 +183,28 @@ export const animate = (root: Ref<HTMLElement | null>, options: AnimateOptions):
   events(root, {
     onMounted: () => {
       if (mountAction?.value && elStyler.value) {
-        mountAction.value.start(elStyler.value.set)
+        hoverAniPlayback.value = mountAction.value.start(elStyler.value.set)
+      }
+    },
+    onInput: (event) => {
+      onInput && onInput(event)
+      if (inputAniPlayback.value) {
+        inputAniPlayback.value?.stop?.()
+        inputAniPlayback.value = null
+      }
+      if (inputAction?.value && elStyler.value) {
+        inputAniPlayback.value = inputAction.value.start(elStyler.value.set)
+      }
+    },
+    onLeave: (event) => {
+      onLeave && onLeave(event)
+      // stop hover animation
+      if (hoverAniPlayback.value) {
+        hoverAniPlayback.value?.stop?.()
+        hoverAniPlayback.value = null
+      }
+      if (leaveActon?.value && elStyler.value) {
+        leaveAniPlayback.value = leaveActon.value.start(elStyler.value.set)
       }
     },
     onTap: (event) => {
@@ -171,6 +217,11 @@ export const animate = (root: Ref<HTMLElement | null>, options: AnimateOptions):
     },
     onHover: (event) => {
       onHover && onHover(event)
+      // stop leave animation
+      if (hoverAniPlayback.value) {
+        leaveAniPlayback.value?.stop?.()
+        leaveAniPlayback.value = null
+      }
       if (hoverAction?.value && elStyler.value) {
         hoverAction.value.start(elStyler.value.set)
       }

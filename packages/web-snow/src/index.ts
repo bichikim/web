@@ -1,5 +1,6 @@
 import {createApp} from 'vue'
-import App from './App.vue'
+import App from './App'
+import '@vue/runtime-dom'
 
 const app = createApp(App)
 app.mount('#app')

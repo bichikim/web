@@ -1,4 +1,4 @@
-import {allSystemTrueMap, column, createGap, flexRange} from '@/systems'
+import {allSystemTrueMap, column, createGap, flexRange, flexEasyWrap} from '@/systems'
 import {createBox} from 'src/component/box'
 import {allProps, responsiveType} from 'src/props'
 import {slotToArray, tackRefs} from 'src/utils'
@@ -41,6 +41,7 @@ const Container = createBox({}, {
       display: 'flex',
       width: 'auto',
     },
+    flexEasyWrap,
     column,
     createGap('100%'),
   ],
@@ -79,7 +80,7 @@ const Item = createBox({show: true}, {
 })
 
 export const Flex = defineComponent({
-  name: 'Flex',
+  name: 'b-flex',
   props: {
     ...allProps,
     gap: responsiveType,
@@ -89,6 +90,7 @@ export const Flex = defineComponent({
     column: responsiveType,
     division: responsiveType,
     reverse: responsiveType,
+    wrap: responsiveType,
   },
   setup(props, {slots}) {
     const {division, column, rangeItems, reverse, ...rest} = toRefs(props)
@@ -96,7 +98,7 @@ export const Flex = defineComponent({
     return () => {
       return h(Layout, tackRefs(rest), () => [
         h(Background, tackRefs(rest)),
-        h(Container, tackRefs({...rest, gap}),
+        h(Container, tackRefs({...rest, gap, column, reverse}),
           () => slotToArray(slots.default).map((child) => {
             const childProps = child.props || {}
             const {range = rangeItems?.value, basis, show = true, offset} = childProps
