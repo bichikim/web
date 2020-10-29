@@ -5,6 +5,7 @@ import {createUI, createTheme} from '@innovirus/ui'
 import createVare from '@innovirus/vare'
 import createFirebase from '@/plugins/firebase'
 import createWorkbox from '@/plugins/workbox'
+import '@vue/runtime-dom'
 
 const theme = createTheme({})
 const ui = createUI()

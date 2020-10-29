@@ -1,4 +1,4 @@
-import {Ref, UnwrapRef, reactive, App} from 'vue'
+import {Ref, UnwrapRef, reactive, App, Plugin} from 'vue'
 import {_triggerDevToolAction, _triggerDevToolMutation} from './devtool'
 export type AnyFunc = (...args: any[]) => any
 export type SubscribeFunc = (name: string, args: any[], originalAction: AnyFunc, wrappedAction: AnyFunc) => any
@@ -137,10 +137,10 @@ const setStore = <T>(storeInstance: Store<T>, name?: string) => {
   _storeTree.set(storeInstance, storeInstance)
 }
 
-export class Vare {
-  install(app: App): any {
-    app.config.globalProperties.$vare = _storeTree
+export const createVare = (): Plugin => {
+  return {
+    install(app: App): any {
+      // app.config.globalProperties.$vare = _storeTree
+    },
   }
 }
-
-export const createVare = (): Vare => new Vare()

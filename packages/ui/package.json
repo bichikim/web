@@ -30,7 +30,7 @@
     "lodash": "^4.17.20",
     "popmotion": "^8.7.6",
     "styled-system": "^5.1.5",
-    "vue": "^3.0.0"
+    "vue": "^3.0.2"
   },
   "devDependencies": {
     "@types/styled-system__core": "^5.1.2",

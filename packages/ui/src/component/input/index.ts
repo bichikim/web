@@ -1,7 +1,8 @@
 import {Box} from 'src/component/box'
-import {defineComponent, h, computed, ref, toRefs} from 'vue'
+import {defineComponent, h, computed, ref, toRefs, watch} from 'vue'
 import styled, {Systems} from 'src/styled'
 import uid from 'src/utils/uid'
+import {tackRefs} from 'src/utils'
 
 const getUid = (id?: string) => {
   if (typeof id === 'undefined') {
@@ -27,20 +28,30 @@ export const InputComponent = defineComponent({
   emits: {
     input: null,
     validated: null,
+    touch: null,
   },
-  setup(props, {attrs}) {
+  setup(props, {attrs, emit}) {
     const touched = ref(false)
-    const value = ref(props.value)
-    const previousValidateValue = ref(value.value)
-    const idRef = ref(props.id)
-    const _props = toRefs(props)
-    const id = computed(() => getUid(idRef.value))
+    const _value = ref<string>('')
+    const value = computed(() => props.value)
+    const {id, ...rest} = toRefs(props)
+    const _id = computed(() => getUid(id?.value))
+    watch(value, (current) => {
+      _value.value = current as any
+    }, {immediate: true})
+
+    const oninput = (event) => {
+      const value = event.target.value
+      _value.value = value
+      if (!touched.value) {
+        emit('touch')
+      }
+      touched.value = true
+      emit('input', value)
+    }
+
     return () => {
-      return h(Box, {...attrs, ..._props, as: 'input', id: id.value, value: value.value}, () => {
-        // console.log('render?')
-        return 'fo'
-      },
-      )
+      return h(Box, {...attrs, ...tackRefs(rest), as: 'input', id: _id.value, value: _value?.value, oninput})
     }
   },
 })
