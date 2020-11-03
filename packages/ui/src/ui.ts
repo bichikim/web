@@ -1,13 +1,17 @@
 import {styled, createTheme, createStyled, createEmotion, createGlobalStyle} from '@innovirus/emotion'
 import {Plugin} from 'vue'
+import {createTeleport} from '@/teleport'
+import {createImage, ImageContext} from '@/image'
 
 export {styled, createEmotion, createStyled, createTheme}
 
-const isWeb = () => typeof window === 'object'
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+interface UIOptions extends ImageContext {}
 
 export const createUI = (): Plugin => {
   return {
-    install(app) {
+    install(app, options: UIOptions = {}) {
+      const {baseUrl} = options
       const emotion = createEmotion()
       const global = createGlobalStyle({
         body: {
@@ -17,15 +21,12 @@ export const createUI = (): Plugin => {
           color: 'black',
         },
       })
+      const teleport = createTeleport()
+      const image = createImage()
       emotion.install(app)
       global.install(app)
-      if (isWeb()) {
-        const dom = window.document.createElement('div')
-        dom.style.position = 'fixed'
-        dom.style.top = '0'
-        dom.style.left = '0'
-        window.document.body.appendChild(dom)
-      }
+      teleport.install(app)
+      image.install(app, {baseUrl})
     },
   }
 }
