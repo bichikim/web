@@ -5,7 +5,8 @@ import {slotToArray, tackRefs} from 'src/utils'
 import {system} from 'styled-system'
 import {defineComponent, h, ref, toRefs} from 'vue'
 
-const Background = createBox({backgroundColor: true}, {
+const Background = createBox({
+  map: {backgroundColor: true},
   additionalSystems: [
     {
       position: 'absolute',
@@ -17,23 +18,25 @@ const Background = createBox({backgroundColor: true}, {
   ],
   name: 'background',
 })
-const Layout = createBox({
-  ...allSystemTrueMap,
-  show: true,
-  // padding: false,
-  backgroundColor: false,
-},
-{
-  additionalSystems: [
-    {
-      display: 'flow-root',
-      position: 'relative',
+const Layout = createBox(
+  {
+    map: {
+      ...allSystemTrueMap,
+      show: true,
+      // padding: false,
+      backgroundColor: false,
     },
-  ],
-  name: 'layout',
-},
+    additionalSystems: [
+      {
+        display: 'flow-root',
+        position: 'relative',
+      },
+    ],
+    name: 'layout',
+  },
 )
-const Container = createBox({}, {
+const Container = createBox({
+  map: {},
   additionalSystems: [
     {
       position: 'relative',
@@ -50,7 +53,8 @@ const Container = createBox({}, {
   },
   name: 'container',
 })
-const Item = createBox({show: true}, {
+const Item = createBox({
+  map: {show: true},
   additionalSystems: [
     {
       boxSizing: 'border-box',
