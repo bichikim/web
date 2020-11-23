@@ -35,6 +35,7 @@ export const InputComponent = defineComponent({
     const value = computed(() => props.value)
     const {id, ...rest} = toRefs(props)
     const _id = computed(() => getUid(id?.value))
+
     watch(value, (current) => {
       _value.value = current as any
     }, {immediate: true})
