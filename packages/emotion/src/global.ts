@@ -1,6 +1,6 @@
 import {serializeStyles} from '@emotion/serialize'
 import {EmotionCache, SerializedStyles} from '@emotion/utils'
-import {PureObject} from '@innovirus/utils'
+import {PureObject} from '@winter-love/utils'
 import {Plugin, App} from 'vue'
 import {useCache} from './emotion'
 import {CSSObject} from '@/types'

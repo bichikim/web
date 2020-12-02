@@ -4,8 +4,7 @@
   "version": "1.0.1-alpha.0",
   "license": "UNLICENSED",
   "scripts": {
-    "dev": "yarn run build && concurrently \"yarn run build -w --assumeChangesOnlyAffectDirectDependencies\" \"firebase emulators:start --only functions\"",
-    "dev-all": "yarn run dev",
+    "dev": "concurrently \"yarn run build -w --assumeChangesOnlyAffectDirectDependencies\" \"firebase emulators:start --only functions\"",
     "build": "tsc",
     "lint": "eslint --ext .ts \"src/**/*.{ts,tsx}\"",
     "deploy": "firebase deploy --only functions",

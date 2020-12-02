@@ -4,7 +4,7 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "dev-all": "yarn run serve",
+    "dev": "yarn run serve",
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
     "test:web": "vue-cli-service test:unit packages/web/src/**/*.spec.ts",
@@ -20,11 +20,14 @@
     "core-js": "^3.6.5",
     "emotion": "^10.0.27",
     "firebase": "^7.21.1",
+    "@vue/runtime-dom": "^3.0.2",
     "register-service-worker": "^1.7.1",
+    "workbox-window": "^6.0.0",
     "vue": "^3.0.2",
     "vue-router": "^4.0.0-rc.1"
   },
   "devDependencies": {
+    "@types/node": "^14.14.10",
     "@babel/core": "^7.12.3",
     "@interactjs/types": "^1.9.22",
     "@storybook/addon-docs": "^6.0.21",

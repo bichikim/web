@@ -1,4 +1,4 @@
-import {Store} from '@innovirus/vare'
+import {Store} from '@winter-love/vare'
 
 const store = new Store({
   name: 'foo',

@@ -1,4 +1,4 @@
-import {Box, Flex, Input} from '@innovirus/ui'
+import {Box, Flex, Input} from '@winter-love/ui'
 import {defineComponent, h, ref} from 'vue'
 
 export default defineComponent({

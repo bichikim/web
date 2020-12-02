@@ -13,12 +13,6 @@
     "sourceMap": true,
     "baseUrl": ".",
     "resolveJsonModule": true,
-    "typeRoots": [
-      "../../node_modules/@types",
-      "node_modules/@innovirus",
-      "node_modules/@types",
-      "types"
-    ],
     "paths": {
       "@/*": [
         "src/*"

@@ -1,9 +1,8 @@
 import {parallelArray} from 'src/utils'
-import {ComputedRef} from '@vue/reactivity'
 import interactJs from 'interactjs'
 import {easing, keyframes, styler} from 'popmotion'
 import {KeyframesProps, Values} from 'popmotion/src/animations/keyframes/types'
-import {computed, onBeforeUnmount, onMounted, Ref, ref} from 'vue'
+import {computed, onBeforeUnmount, onMounted, Ref, ref, ComputedRef} from 'vue'
 import {debounce} from 'lodash'
 
 type AnimationKeys = Record<string, any | any[]>

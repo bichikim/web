@@ -1,4 +1,4 @@
-import {AnyObject} from '@innovirus/utils'
+import {AnyObject} from '@winter-love/utils'
 import {CssFunctionReturnType, CSSProperties, CSSObject as _CSSObject} from '@styled-system/css'
 import {Theme, styleFn} from 'styled-system'
 
