@@ -7,9 +7,9 @@
     ]
   },
   "scripts": {
-    "dev": "pnpm run dev --filter=!@winter-love/web-snow --no-sort",
-    "build": "pnpm run build --filter ...@winter-love/web",
-    "web": "@innovirus/web",
+    "dev:depen:web": "pnpm recursive run dev --no-sort --filter @winter-love/web...",
+    "build": "pnpm recursive run build",
+    "dev:web": "pnpm recursive run dev --filter @winter-love/web",
     "lint": "eslint --ext .ts \"src/**/*.{ts,tsx}\"",
     "functions": "yarn workspace functions"
   },

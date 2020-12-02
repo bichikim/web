@@ -10,8 +10,7 @@
   "scripts": {
     "build": "rimraf lib && rollup -c",
     "preversion": "yarn run build",
-    "dev": "ttsc --outDir ./lib -p tsconfig.json -w --assumeChangesOnlyAffectDirectDependencies",
-    "dev-all": "yarn run dev"
+    "dev": "ttsc --outDir ./lib -p tsconfig.json -w --assumeChangesOnlyAffectDirectDependencies"
   },
   "dependencies": {
     "@winter-love/emotion": "^1.0.1-alpha.2",

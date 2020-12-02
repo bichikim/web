@@ -1,5 +1,5 @@
 {
-  "name": "@winter-love/web-snow",
+  "name": "@winter-love/snow",
   "version": "1.0.0",
   "scripts": {
     "start": "snowpack dev"
