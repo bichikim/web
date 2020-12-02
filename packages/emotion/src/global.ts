@@ -4,6 +4,7 @@ import {PureObject} from '@innovirus/utils'
 import {Plugin, App} from 'vue'
 import {useCache} from './emotion'
 import {CSSObject} from '@/types'
+import {createFirstRunMixin} from '@/create-first-run-mixin'
 
 function insertWithoutScoping(cache: EmotionCache, serialized: SerializedStyles) {
   if (cache.inserted[serialized.name] === undefined) {
@@ -16,21 +17,16 @@ export const createGlobalStyle = (
 ): Required<Plugin> => {
   return {
     install(app: App) {
-      app.mixin({
-        mounted() {
-          if (this.$root !== this) {
-            return
-          }
-          const cache = useCache()
+      app.mixin(createFirstRunMixin(() => {
+        const cache = useCache()
 
-          if (!cache) {
-            return
-          }
+        if (!cache) {
+          return
+        }
 
-          const serialized = serializeStyles(styles as any, cache.registered, {})
-          insertWithoutScoping(cache, serialized)
-        },
-      })
+        const serialized = serializeStyles(styles as any, cache.registered, {})
+        insertWithoutScoping(cache, serialized)
+      }))
     },
   }
 }
