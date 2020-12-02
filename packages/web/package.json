@@ -1,5 +1,5 @@
 {
-  "name": "@innovirus/web",
+  "name": "@winter-love/web",
   "version": "1.0.1-alpha.3",
   "private": true,
   "license": "UNLICENSED",
@@ -14,9 +14,9 @@
     "ui": "vue ui"
   },
   "dependencies": {
-    "@innovirus/ui": "^1.0.1-alpha.3",
-    "@innovirus/utils": "^1.0.1-alpha.3",
-    "@innovirus/vare": "^1.0.1-alpha.3",
+    "@winter-love/ui": "^1.0.1-alpha.3",
+    "@winter-love/utils": "^1.0.1-alpha.3",
+    "@winter-love/vare": "^1.0.1-alpha.3",
     "core-js": "^3.6.5",
     "emotion": "^10.0.27",
     "firebase": "^7.21.1",

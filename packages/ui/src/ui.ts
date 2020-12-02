@@ -1,4 +1,4 @@
-import {styled, createTheme, createStyled, createEmotion, createGlobalStyle} from '@innovirus/emotion'
+import {styled, createTheme, createStyled, createEmotion, createGlobalStyle} from '@winter-love/emotion'
 import {Plugin} from 'vue'
 
 export {styled, createEmotion, createStyled, createTheme}

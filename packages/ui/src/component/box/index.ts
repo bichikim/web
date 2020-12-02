@@ -24,7 +24,7 @@ import {
 } from '@/systems'
 import {PureObject} from '@/types'
 import {tackRefs} from '@/utils'
-import {CSSObject} from '@innovirus/emotion'
+import {CSSObject} from '@winter-love/emotion'
 import {defineComponent, DefineComponent, h, ref, toRefs} from 'vue'
 
 type BoxSystemsNames = 'show' | 'animate'

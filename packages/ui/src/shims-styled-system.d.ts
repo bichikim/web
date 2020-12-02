@@ -1,4 +1,4 @@
-import {PropsWithTheme} from '@innovirus/emotion'
+import {PropsWithTheme} from '@winter-love/emotion'
 import {AnyObject} from '@innovirus/utils'
 import {CssFunctionReturnType, CSSObject as _CSSObject} from '@styled-system/css'
 import {Theme} from 'styled-system'

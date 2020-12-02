@@ -1,5 +1,5 @@
 import {AllSystemProps, ResponsiveValue, ShowProps} from '@/systems'
-import {CSSObject} from '@innovirus/emotion'
+import {CSSObject} from '@winter-love/emotion'
 import {ASProps} from 'src/types'
 
 export interface textSetVariantProps {

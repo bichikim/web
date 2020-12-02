@@ -1,8 +1,7 @@
-import {Systems} from 'src/styled'
-import {column, createGap, flexWrap} from 'src/systems'
+import {column, createGap, flexEasyWrap} from 'src/systems'
 import {color, compose, flexbox, padding, position} from 'styled-system'
 
-export const systems: Systems = [
+export const systems = [
   {
     display: 'flow-root',
     position: 'relative',
@@ -25,7 +24,7 @@ export const systems: Systems = [
         height: '100%',
         position: 'relative',
       },
-      flexWrap as any,
+      flexEasyWrap as any,
       column,
       createGap('100%'),
       compose(position, flexbox, padding),

@@ -7,7 +7,7 @@ import {
   borderLeft,
 } from 'styled-system'
 import {Property} from 'csstype'
-import {SystemFunc} from '@innovirus/emotion'
+import {SystemFunc} from '@winter-love/emotion'
 
 export interface TextProps<T extends Theme = RequiredTheme> {
   // letterSpacing

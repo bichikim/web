@@ -1,4 +1,4 @@
-import {createStyled, StyledSystems} from '@innovirus/emotion'
+import {createStyled, StyledSystems} from '@winter-love/emotion'
 import {allProps} from './props'
 import {Theme} from 'styled-system'
 

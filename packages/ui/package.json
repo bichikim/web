@@ -1,5 +1,5 @@
 {
-  "name": "@innovirus/ui",
+  "name": "@winter-love/ui",
   "version": "1.0.1-alpha.3",
   "private": true,
   "main": "lib/index.js",
@@ -14,10 +14,10 @@
     "dev-all": "yarn run dev"
   },
   "dependencies": {
-    "@innovirus/emotion": "^1.0.1-alpha.2",
+    "@winter-love/emotion": "^1.0.1-alpha.2",
     "@emotion/cache": "^10.0.29",
     "@emotion/serialize": "^0.11.16",
-    "@innovirus/utils": "^1.0.1-alpha.3",
+    "@winter-love/utils": "^1.0.1-alpha.3",
     "@styled-system/core": "^5.1.2",
     "@styled-system/css": "^5.1.5",
     "@vueuse/core": "^4.0.0-beta.22",
@@ -33,6 +33,7 @@
     "vue": "^3.0.2"
   },
   "devDependencies": {
+    "csstype": "^3.0.5",
     "@types/styled-system__core": "^5.1.2",
     "@types/styled-system__css": "^5.0.14",
     "@types/styled-system__should-forward-prop": "^5.1.2",

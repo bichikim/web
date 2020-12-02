@@ -1,5 +1,5 @@
 {
-  "name": "@innovirus/web-app",
+  "name": "@winter-love/web-project",
   "private": true,
   "workspaces": {
     "packages": [
@@ -7,11 +7,9 @@
     ]
   },
   "scripts": {
-    "dev": "lerna run dev-all --parallel",
-    "dev:base": "lerna run dev --parallel",
-    "dev:web": "yarn workspace @innovirus/web serve",
-    "build": "lerna run build --stream",
-    "web": "yarn workspace @innovirus/web",
+    "dev": "pnpm run dev --filter=!@winter-love/web-snow --no-sort",
+    "build": "pnpm run build --filter ...@winter-love/web",
+    "web": "@innovirus/web",
     "lint": "eslint --ext .ts \"src/**/*.{ts,tsx}\"",
     "functions": "yarn workspace functions"
   },
