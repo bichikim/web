@@ -35,6 +35,8 @@ interface CreateBoxOptions {
   additionalSystems?: CSSObject<PureObject>[]
   props?: Record<string, any>,
   name?: string
+  as?: string
+  map?: BoxMap
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -51,8 +53,10 @@ export const allBoxTrueMap: BoxMap = {
   show: true,
 }
 
-export const createBox = <P extends PureObject>(map: BoxMap, options: CreateBoxOptions = {}): DefineComponent<P> => {
-  const {additionalSystems = [], props = {}, name} = options
+export const createBox = <P extends PureObject>(
+  options: CreateBoxOptions = {},
+): DefineComponent<P> => {
+  const {additionalSystems = [], props = {}, name, as = 'div', map = {...allBoxTrueMap}} = options
   const systems: any[] = [defaultStyle, ...additionalSystems]
 
   if (map.show) {
@@ -61,7 +65,7 @@ export const createBox = <P extends PureObject>(map: BoxMap, options: CreateBoxO
 
   systems.push(...getSystems(map))
 
-  const styledBox = styled('div', {name: 'emotion', props})(...systems)
+  const styledBox = styled(as, {name: 'emotion', props})(...systems)
 
   const actAnimate = map.animate
 
@@ -112,4 +116,4 @@ export const createBox = <P extends PureObject>(map: BoxMap, options: CreateBoxO
   }) as any
 }
 
-export const Box = createBox<BoxProps>({...allBoxTrueMap, show: true})
+export const Box = createBox<BoxProps>()
