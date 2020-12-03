@@ -43,6 +43,10 @@ export class Store<T extends AnyObject> {
     }
   }
 
+  /**
+   * mutations all in object
+   * @param mutationTree
+   */
   mutations<T extends Record<string, AnyFunc>>(mutationTree: T): T {
     return (
         Object.keys(mutationTree).reduce((tree: Record<string, any>, key) => {
@@ -77,6 +81,11 @@ export class Store<T extends AnyObject> {
     ) as any
   }
 
+  /**
+   * action
+   * @param action
+   * @param name
+   */
   action<T extends ActionFunc>(action: T, name: string = 'unknown'): T {
     const func = async (...args: any[]) => {
       _callAllSubscribes(this._actionSubscribes, name, args, action, func)

@@ -1,10 +1,10 @@
-import typescript from 'rollup-plugin-typescript2'
-import ttypescript from 'ttypescript'
 import {terser} from 'rollup-plugin-terser'
 import alias from '@rollup/plugin-alias'
+import esbuild from 'rollup-plugin-esbuild'
+import path from 'path'
 
 export const getConfig = (options = {}) => {
-  const {output, format = 'esm', name, external = [], minify = false} = options
+  const {output, format = 'esm', name, external = [], minify = false, projectRootDir} = options
   return {
     input: 'src/index.ts',
     output: {
@@ -32,19 +32,30 @@ export const getConfig = (options = {}) => {
     plugins: [
       alias({
         entries: [
-          {find: '@', replacement: 'src'},
+          {find: '@', replacement: path.resolve(projectRootDir, 'src')},
+          {find: 'src', replacement: path.resolve(projectRootDir, 'src')},
         ],
       }),
-      typescript({
-        typescript: ttypescript,
-        rollupCommonJSResolveHack: true,
-        module: 'esnext',
-        tsconfigDefaults: {
-          compilerOptions: {
-            plugins: [
-              {transform: '@zerollup/ts-transform-paths'},
-            ],
-          },
+      esbuild({
+        // All options are optional
+        // include: /\.[jt]sx?$/, // default, inferred from `loaders` option
+        // exclude: /node_modules/, // default
+        sourceMap: false, // default
+        minify,
+        target: 'es2017', // default, or 'es20XX', 'esnext'
+        jsxFactory: 'vueJsxCompat',
+        // jsxFragment: 'React.Fragment',
+        // Like @rollup/plugin-replace
+        define: {
+          __VERSION__: '"x.y.z"',
+        },
+        // Add extra loaders
+        loaders: {
+          // Add .json files support
+          // require @rollup/plugin-commonjs
+          '.json': 'json',
+          // Enable JSX in .js files too
+          '.js': 'jsx',
         },
       }),
     ],
