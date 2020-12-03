@@ -1,9 +1,9 @@
 const path = require('path')
 
 module.exports = (api, projectOptions) => {
-  const {semver, loadModule} = require('@vue/cli-shared-utils')
-  const vue = loadModule('vue', api.service.context)
-  const isVue3 = (vue && semver.major(vue.version) === 3)
+  // const {semver, loadModule} = require('@vue/cli-shared-utils')
+  // const vue = loadModule('vue', api.service.context)
+  // const isVue3 = (vue && semver.major(vue.version) === 3)
 
   api.chainWebpack((config) => {
     config.resolveLoader.modules.prepend(path.join(__dirname, 'node_modules'))
@@ -28,15 +28,15 @@ module.exports = (api, projectOptions) => {
       tsxRule.use(name).loader(loader).options(options)
     }
 
-    // addLoader({
-    //   name: 'cache-loader',
-    //   loader: require.resolve('cache-loader'),
-    //   options: api.genCacheConfig('swc-loader', {
-    //     'ts-loader': require('swc-loader/package.json').version,
-    //     typescript: require('typescript/package.json').version,
-    //     modern: !!process.env.VUE_CLI_MODERN_BUILD,
-    //   }, 'tsconfig.json'),
-    // })
+    addLoader({
+      name: 'cache-loader',
+      loader: require.resolve('cache-loader'),
+      options: api.genCacheConfig('swc-loader', {
+        'ts-loader': require('swc-loader/package.json').version,
+        typescript: require('typescript/package.json').version,
+        modern: !!process.env.VUE_CLI_MODERN_BUILD,
+      }, 'tsconfig.json'),
+    })
 
     addLoader({
       name: 'swc-loader',
