@@ -1,0 +1,19 @@
+{
+  "name": "@winter-love/vue-cli-plugin-swc",
+  "version": "1.0.0",
+  "main": "index.js",
+  "dependencies": {
+    "@swc/core": "^1.2.39",
+    "@types/webpack-env": "^1.15.2",
+    "@vue/cli-shared-utils": "^4.5.8",
+    "cache-loader": "^4.1.0",
+    "globby": "^9.2.0",
+    "thread-loader": "^3.0.0",
+    "swc-loader": "^0.1.12",
+    "webpack": "^5.0.0",
+    "yorkie": "^2.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^4.1.2"
+  }
+}

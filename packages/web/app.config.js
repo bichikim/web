@@ -1,5 +1,5 @@
 module.exports = {
-  name: 'Innovirus',
+  name: 'WinterLove',
   themeColor: '#4DBA87',
   msTitleColor: '#000000',
   appleMobileWebAppCapable: 'yes',
