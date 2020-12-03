@@ -1,5 +1,5 @@
 {
-  "name": "@winter-love/web-project",
+  "name": "web",
   "private": true,
   "workspaces": {
     "packages": [
@@ -7,9 +7,9 @@
     ]
   },
   "scripts": {
-    "dev:depen:web": "pnpm recursive run dev --no-sort --filter @winter-love/web...",
+    "dev:web": "pnpm recursive run dev --filter @winter-love/web... --filter @winter-love/functions --no-sort --workspace-concurrency 10",
+    "dev:web-snow": "pnpm recursive run dev --filter @winter-love/web-snow... --filter @winter-love/functions --no-sort --workspace-concurrency 10",
     "build": "pnpm recursive run build",
-    "dev:web": "pnpm recursive run dev --filter @winter-love/web",
     "lint": "eslint --ext .ts \"src/**/*.{ts,tsx}\"",
     "functions": "yarn workspace functions"
   },
