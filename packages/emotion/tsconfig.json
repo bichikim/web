@@ -1,23 +1,16 @@
 {
+  "extends": "../../tsconfig.json",
   "compilerOptions": {
     "target": "ESNext",
     "module": "ESNext",
-    "strict": true,
-    "outDir": "dest",
-    "jsx": "preserve",
-    "noImplicitAny": false,
-    "importHelpers": true,
-    "moduleResolution": "node",
-    "esModuleInterop": true,
+    "baseUrl": ".",
+    "outDir": "lib",
+    "emitDeclarationOnly": true,
     "declaration": true,
     "skipLibCheck": true,
-    "allowSyntheticDefaultImports": true,
-    "suppressImplicitAnyIndexErrors": true,
-    "baseUrl": ".",
-    "resolveJsonModule": true,
     "typeRoots": [
       "../../node_modules/@types",
-      "node_modules/@innovirus",
+      "node_modules/@winter-love",
       "node_modules/@types",
       "types"
     ],

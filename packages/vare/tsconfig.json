@@ -1,24 +1,16 @@
 {
+  "extends": "../../tsconfig.json",
   "compilerOptions": {
     "target": "ESNext",
     "module": "ESNext",
-    "strict": true,
     "outDir": "lib",
+    "baseUrl": ".",
     "emitDeclarationOnly": true,
-    "jsx": "preserve",
-    "noImplicitAny": false,
-    "importHelpers": true,
-    "moduleResolution": "node",
-    "esModuleInterop": true,
     "declaration": true,
     "skipLibCheck": true,
-    "allowSyntheticDefaultImports": true,
-    "suppressImplicitAnyIndexErrors": true,
-    "baseUrl": ".",
-    "resolveJsonModule": true,
     "typeRoots": [
       "../../node_modules/@types",
-      "node_modules/@innovirus",
+      "node_modules/@winter-love",
       "node_modules/@types",
       "types"
     ],
@@ -32,6 +24,9 @@
       "dom",
       "dom.iterable",
       "scripthost"
+    ],
+    "plugins": [
+      {"transform": "@zerollup/ts-transform-paths"}
     ]
   },
   "include": [

@@ -1,7 +1,14 @@
 import {terser} from 'rollup-plugin-terser'
 import alias from '@rollup/plugin-alias'
+import resolve from '@rollup/plugin-node-resolve'
 import esbuild from 'rollup-plugin-esbuild'
 import path from 'path'
+
+const customResolver = resolve({
+  extensions: ['.mjs', '.js', '.jsx', '.json', '.sass', '.scss', '.ts', '.tsx'],
+})
+
+const cwd = process.cwd()
 
 export const getConfig = (options = {}) => {
   const {output, format = 'esm', name, external = [], minify = false, projectRootDir} = options
@@ -30,11 +37,13 @@ export const getConfig = (options = {}) => {
     },
     external,
     plugins: [
+      customResolver,
       alias({
         entries: [
-          {find: '@', replacement: path.resolve(projectRootDir, 'src')},
-          {find: 'src', replacement: path.resolve(projectRootDir, 'src')},
+          {find: '@', replacement: path.resolve(cwd, 'src')},
+          {find: 'src', replacement: path.resolve(cwd, 'src')},
         ],
+        customResolver,
       }),
       esbuild({
         // All options are optional

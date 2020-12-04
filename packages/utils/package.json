@@ -8,10 +8,13 @@
   "unpkg": "lib/index.iife.js",
   "license": "UNLICENSED",
   "scripts": {
-    "build": "rimraf dist && rollup -c",
+    "dev": "concurrently \"pnpm run dev:js\" \"pnpm run dev:ts\" ",
+    "build": "concurrently \"pnpm run build:js\" \"pnpm run build:ts\" ",
+    "build:js": "rimraf lib && rollup -c",
+    "dev:js": "rimraf lib && rollup -c -w",
     "preversion": "yarn run build",
-    "dev": "ttsc --outDir ./lib -p tsconfig.json -w --assumeChangesOnlyAffectDirectDependencies",
-    "dev-all": "yarn run dev"
+    "build:ts": "ttsc --assumeChangesOnlyAffectDirectDependencies",
+    "dev:ts": "ttsc -w --assumeChangesOnlyAffectDirectDependencies"
   },
   "dependencies": {
     "lodash": "^4.17.20"

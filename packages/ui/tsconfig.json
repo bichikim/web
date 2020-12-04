@@ -3,7 +3,7 @@
     "target": "ESNext",
     "module": "ESNext",
     "strict": true,
-    "outDir": "dest",
+    "outDir": "lib",
     "jsx": "preserve",
     "noImplicitAny": false,
     "importHelpers": true,
@@ -17,7 +17,8 @@
     "resolveJsonModule": true,
     "typeRoots": [
       "../../node_modules/@types",
-      "node_modules/@innovirus",
+      "../../node_modules/@winter-love",
+      "node_modules/@winter-love",
       "node_modules/@types",
       "types"
     ],

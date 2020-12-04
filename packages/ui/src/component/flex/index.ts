@@ -1,7 +1,7 @@
 import {allSystemTrueMap, column, createGap, flexRange, flexEasyWrap} from '@/systems'
-import {createBox} from 'src/component/box'
-import {allProps, responsiveType} from 'src/props'
-import {slotToArray, tackRefs} from 'src/utils'
+import {createBox} from '@/component/box'
+import {allProps, responsiveType} from '@/props'
+import {slotToArray, tackRefs} from '@/utils'
 import {system} from 'styled-system'
 import {defineComponent, h, ref, toRefs} from 'vue'
 

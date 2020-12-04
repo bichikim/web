@@ -13,8 +13,8 @@
     "build:js": "rimraf lib && rollup -c",
     "dev:js": "rimraf lib && rollup -c -w",
     "preversion": "yarn run build",
-    "build:ts": "ttsc --outDir ./lib -p tsconfig.json --assumeChangesOnlyAffectDirectDependencies",
-    "dev:ts": "ttsc --outDir ./lib -p tsconfig.json -w --assumeChangesOnlyAffectDirectDependencies"
+    "build:ts": "ttsc --assumeChangesOnlyAffectDirectDependencies",
+    "dev:ts": "ttsc -w --assumeChangesOnlyAffectDirectDependencies"
   },
   "dependencies": {
     "vue": "^3.0.4"
