@@ -6,6 +6,7 @@
     "jsx": "preserve",
     "noImplicitAny": false,
     "importHelpers": true,
+    "isolatedModules": true,
     "moduleResolution": "node",
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
@@ -26,6 +27,7 @@
     ]
   },
   "include": [
+    "gulpfile.ts",
     "packages/**/src/**/*.ts",
     "packages/**/src/**/*.d.ts",
     "packages/**/src/**/*.tsx",

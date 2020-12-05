@@ -1,6 +1,9 @@
-import {defineComponent} from 'vue'
+import {defineComponent, h} from 'vue'
 
 export default defineComponent({
-  template: '<div>' +
-    '<slot></slot></div>',
+  setup() {
+    return () => (
+      h('div', () => h('div', 'hello'))
+    )
+  },
 })

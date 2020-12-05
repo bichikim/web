@@ -2,6 +2,7 @@ import {terser} from 'rollup-plugin-terser'
 import alias from '@rollup/plugin-alias'
 import resolve from '@rollup/plugin-node-resolve'
 import esbuild from 'rollup-plugin-esbuild'
+import cleanup from 'rollup-plugin-cleanup'
 import path from 'path'
 
 const customResolver = resolve({
@@ -67,6 +68,7 @@ export const getConfig = (options = {}) => {
           '.js': 'jsx',
         },
       }),
+      cleanup(),
     ],
   }
 }

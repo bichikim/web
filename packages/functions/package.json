@@ -4,8 +4,8 @@
   "version": "1.0.1-alpha.0",
   "license": "UNLICENSED",
   "scripts": {
-    "dev": "concurrently \"yarn run build -w --assumeChangesOnlyAffectDirectDependencies\" \"firebase emulators:start --only functions\"",
-    "build": "tsc",
+    "dev": "concurrently \"npm run build -w\" \"firebase emulators:start --only functions\"",
+    "build": "tsc --assumeChangesOnlyAffectDirectDependencies",
     "lint": "eslint --ext .ts \"src/**/*.{ts,tsx}\"",
     "deploy": "firebase deploy --only functions",
     "init": "npm install",
@@ -16,20 +16,19 @@
   },
   "main": "lib/index.js",
   "dependencies": {
-    "firebase-admin": "^8.10.0",
-    "firebase-functions": "^3.6.1",
-    "register-service-worker": "^1.7.1"
+    "firebase-admin": "^9.4.1",
+    "firebase-functions": "^3.12.0"
   },
   "devDependencies": {
     "concurrently": "^5.3.0",
     "chai": "^4.2.0",
-    "eslint": "^7.6.0",
-    "eslint-plugin-import": "^2.22.0",
-    "firebase-functions-test": "^0.2.0",
-    "mocha": "^8.1.3",
+    "eslint": "^7.15.0",
+    "eslint-plugin-import": "^2.22.1",
+    "firebase-functions-test": "^0.2.3",
+    "mocha": "^8.2.1",
     "node-mocks-http": "^1.9.0",
-    "typescript": "^4.0.3",
-    "ts-node": "^9.0.0"
+    "typescript": "^4.1.2",
+    "ts-node": "^9.1.0"
   },
   "engines": {
     "node": "12"

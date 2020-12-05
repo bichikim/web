@@ -1,8 +1,8 @@
 {
-  "name": "@winter-love/snow",
+  "name": "@winter-love/web-snow",
   "version": "1.0.0",
   "scripts": {
-    "start": "snowpack dev"
+    "dev": "snowpack dev"
   },
   "dependencies": {
     "vue": "^3.0.2",

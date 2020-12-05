@@ -41,9 +41,10 @@ export * from './gap'
 export * from './flex-wrap'
 export * from './text-decoration'
 export * from './color'
+export type {ShadowProps, Theme, ResponsiveValue, PaddingProps, MarginProps, PositionProps, GridProps} from 'styled-system'
 export {
-  system, ShadowProps, Theme, ResponsiveValue, PaddingProps, MarginProps,
-  padding, margin, PositionProps, grid, GridProps,
+  system,
+  padding, margin, grid,
 } from 'styled-system'
 
 const systems = {

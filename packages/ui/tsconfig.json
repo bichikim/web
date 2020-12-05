@@ -1,27 +1,12 @@
 {
+  "extends": "../../tsconfig.json",
   "compilerOptions": {
     "target": "ESNext",
-    "module": "ESNext",
-    "strict": true,
+    "module": "CommonJS",
     "outDir": "lib",
-    "jsx": "preserve",
-    "noImplicitAny": false,
-    "importHelpers": true,
-    "moduleResolution": "node",
-    "declaration": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "allowSyntheticDefaultImports": true,
-    "suppressImplicitAnyIndexErrors": true,
     "baseUrl": ".",
-    "resolveJsonModule": true,
-    "typeRoots": [
-      "../../node_modules/@types",
-      "../../node_modules/@winter-love",
-      "node_modules/@winter-love",
-      "node_modules/@types",
-      "types"
-    ],
+    "declaration": true,
+    "skipLibCheck": true,
     "paths": {
       "@/*": [
         "src/*"
