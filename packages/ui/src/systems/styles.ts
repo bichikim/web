@@ -35,6 +35,8 @@ export interface TextProps<T extends Theme = RequiredTheme> {
   fontStyle?: ResponsiveValue<Property.FontStyle, T>
   td?: ResponsiveValue<Property.TextDecoration, T>
   textDecoration?: ResponsiveValue<Property.TextDecoration, T>
+  wordBreak?: ResponsiveValue<Property.WordBreak, T>
+  whiteSpace?: ResponsiveValue<Property.WhiteSpace, T>
 }
 
 export const text = system<TextProps>({
@@ -92,6 +94,12 @@ export const text = system<TextProps>({
   td: {
     property: 'textDecoration',
   },
+  wordBreak: {
+    property: 'wordBreak',
+  },
+  whiteSpace: {
+    property: 'whiteSpace',
+  },
 })
 
 export interface FlexProps<T extends Theme = RequiredTheme> {
@@ -138,7 +146,6 @@ export const flex = system<FlexProps>({
   flexWrap: {
     property: 'flexWrap',
   },
-
 })
 
 export interface FlexItemProps<T extends Theme = RequiredTheme> {

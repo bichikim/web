@@ -28,7 +28,7 @@ const routes: Array<RouteRecordRaw> = [
       {
         path: '/mock-up',
         name: 'mock-up',
-        component: () => import('@/views/MockUp'),
+        component: () => import('@/views/mock-up/MockUp'),
       },
     ],
     component: Default,

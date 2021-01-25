@@ -84,7 +84,7 @@ export const flexRange: SystemFunc<FlexRangeProps & FlexColumnProps> =
                 ...padding,
                 flexBasis: 'auto',
                 flexGrow: 0,
-                flexShrink: 1,
+                flexShrink: 0,
               }
             case 'space':
               return {

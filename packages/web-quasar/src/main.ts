@@ -1,13 +1,11 @@
 import {createApp} from 'vue'
 import App from '@/App'
 import router from '@/router'
-import createVare from '@winter-love/vare'
 import createFirebase from '@/plugins/firebase'
 import createWorkbox from '@/plugins/workbox'
 import Quasar from 'quasar'
-import '@vue/runtime-dom'
+// import '@vue/runtime-dom'
 
-const vare = createVare()
 const workbox = createWorkbox()
 const firebase = createFirebase({
   apiKey: 'AIzaSyBvS86fzrVOx3JDZvuwWfz8embqVWVYtas',
@@ -24,6 +22,5 @@ createApp(App)
   .use(router)
   .use(workbox)
   .use(firebase)
-  .use(vare)
-  .use(Quasar)
+  .use(Quasar, {config: {}})
   .mount('#app')

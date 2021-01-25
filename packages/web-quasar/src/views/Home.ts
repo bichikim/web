@@ -5,7 +5,7 @@ export default defineComponent({
   setup() {
     return () => {
       return (
-        h('div', {}, () => [
+        h('div', {}, [
           h('div', 'hi?'),
         ])
       )

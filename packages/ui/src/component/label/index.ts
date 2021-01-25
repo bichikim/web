@@ -1,5 +1,6 @@
 import {useNamedForm} from '../form'
-import {inject, defineComponent, provide, ref, toRefs, computed, readonly} from 'vue'
+import {inject, defineComponent, provide, ref, toRefs, computed, readonly, h, renderSlot} from 'vue'
+import {createBox} from '../box'
 
 const labelContextSym = Symbol('label-context')
 
@@ -15,7 +16,7 @@ export const Label = defineComponent({
   emits: {
     input: null,
   },
-  setup(props, {emit}) {
+  setup(props, {emit, slots}) {
     const {value, name, error} = toRefs(props)
 
     const {value: _value, error: _error, onChange: _onChange} = useNamedForm(name?.value)
@@ -35,5 +36,13 @@ export const Label = defineComponent({
       error: errorRef,
       onChange,
     }))
+
+    return () => (
+      h(Container, {}, slots)
+    )
   },
+})
+
+const Container = createBox({
+  map: {},
 })

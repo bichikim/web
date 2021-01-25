@@ -2,14 +2,12 @@ import {createApp} from 'vue'
 import App from '@/App'
 import router from '@/router'
 import {createUI, createTheme} from '@winter-love/ui'
-import createVare from '@winter-love/vare'
 import createFirebase from '@/plugins/firebase'
 import createWorkbox from '@/plugins/workbox'
 import '@vue/runtime-dom'
 
 const theme = createTheme({})
 const ui = createUI()
-const vare = createVare()
 const workbox = createWorkbox()
 const firebase = createFirebase({
   apiKey: 'AIzaSyBvS86fzrVOx3JDZvuwWfz8embqVWVYtas',
@@ -28,5 +26,4 @@ createApp(App)
   .use(workbox)
   .use(theme)
   .use(firebase)
-  .use(vare)
   .mount('#app')

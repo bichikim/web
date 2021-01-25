@@ -116,4 +116,9 @@ export const createBox = <P extends PureObject>(
   }) as any
 }
 
-export const Box = createBox<BoxProps>()
+export const Box = createBox<BoxProps>({
+  additionalSystems: [{
+    wordBreak: 'break-word',
+    whiteSpace: 'normal',
+  }],
+})

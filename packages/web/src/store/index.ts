@@ -1,6 +1,6 @@
-import {Store} from '@winter-love/vare'
+import {createStore} from 'vare'
 
-const store = new Store({
+const store = createStore({
   name: 'foo',
   deep: {
     name: 'foo',
@@ -9,11 +9,11 @@ const store = new Store({
 
 export const state = store.state
 
-export const setName = store.mutation((name: string) => {
+export const setName = store.mutation((state, name: string) => {
   state.name = name
 })
 
-export const setDeepName = store.mutation((name: string) => {
+export const setDeepName = store.mutation((state, name: string) => {
   state.deep.name = name
 })
 
