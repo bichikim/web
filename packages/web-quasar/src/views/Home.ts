@@ -7,6 +7,7 @@ export default defineComponent({
       return (
         h('div', {}, [
           h('div', 'hi?'),
+          h('q-btn', '?'),
         ])
       )
     }

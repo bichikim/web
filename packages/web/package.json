@@ -4,26 +4,26 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "dev": "vue-cli-service serve",
     "build": "vue-cli-service build",
-    "test:web": "vue-cli-service test:unit packages/web/src/**/*.spec.ts",
-    "test:function": "npm --prefix functions run test",
-    "lint": "vue-cli-service lint",
+    "dev": "vue-cli-service serve",
     "icons": "gulp icons",
+    "lint": "vue-cli-service lint",
+    "test:function": "npm --prefix functions run test",
+    "test:web": "vue-cli-service test:unit packages/web/src/**/*.spec.ts",
     "ui": "vue ui"
   },
   "dependencies": {
-    "vare": "^0.1.1",
+    "@vue/runtime-dom": "^3.0.4",
     "@winter-love/ui": "^1.0.1-alpha.3",
     "@winter-love/utils": "^1.0.1-alpha.3",
     "core-js": "^3.8.0",
     "emotion": "^10.0.27",
     "firebase": "^8.1.1",
-    "@vue/runtime-dom": "^3.0.4",
     "register-service-worker": "^1.7.1",
-    "workbox-window": "^6.0.0",
+    "vare": "^0.2.0-alpha.2",
     "vue": "^3.0.4",
-    "vue-router": "^4.0.0-rc.6"
+    "vue-router": "^4.0.0-rc.6",
+    "workbox-window": "^6.0.0"
   },
   "devDependencies": {
     "@babel/core": "^7.12.3",

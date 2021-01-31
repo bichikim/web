@@ -39,6 +39,7 @@ module.exports = {
       allowShortCircuit: true,
     }],
     '@typescript-eslint/member-delimiter-style': 'off',
+    'import/no-absolute-path': 'off',
   },
   overrides: [
     {

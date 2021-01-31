@@ -1,5 +1,11 @@
+import { defineComponent } from 'vue'
+
 declare module '*.vue' {
-  import {defineComponent} from 'vue'
-  const component: ReturnType<typeof defineComponent>
-  export default component
+  const Component: ReturnType<typeof defineComponent>
+  export default Component
+}
+
+declare module '*.md' {
+  const Component: ReturnType<typeof defineComponent>
+  export default Component
 }

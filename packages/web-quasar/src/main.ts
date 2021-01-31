@@ -22,5 +22,8 @@ createApp(App)
   .use(router)
   .use(workbox)
   .use(firebase)
-  .use(Quasar, {config: {}})
+  .use(Quasar, {
+    config: {
+    },
+  })
   .mount('#app')
