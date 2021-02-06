@@ -1,5 +1,6 @@
 {
   "private": true,
+  "name": "@winter-love/vite",
   "scripts": {
     "dev": "vite --port 3000",
     "build": "cross-env NODE_ENV=production vite-ssg build --script async"
