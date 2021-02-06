@@ -1,50 +1,38 @@
-import {createRouter, createWebHistory, RouteRecordRaw} from 'vue-router'
-import Default from '@/layout/default'
-import Home from '@/views/Home'
+import {route} from 'quasar/wrappers'
+import {
+  createMemoryHistory,
+  createRouter,
+  createWebHashHistory,
+  createWebHistory,
+} from 'vue-router'
+import routes from './routes'
 
-const routes: Array<RouteRecordRaw> = [
-  {
-    path: '/',
-    name: 'default-layout',
-    children: [
-      {
-        path: '/',
-        name: 'Home',
-        component: Home,
-      },
-      // {
-      //   path: '/about',
-      //   name: 'About',
-      //   // route level code-splitting
-      //   // this generates a separate chunk (about.[hash].js) for this route
-      //   // which is lazy-loaded when the route is visited.
-      //   component: () => import(/* webpackChunkName: "about" */ '@/views/About'),
-      // },
-      // {
-      //   path: '/board',
-      //   name: 'Board',
-      //   component: () => import(/* webpackChunkName: "board" */ '@/views/Board'),
-      // },
-      // {
-      //   path: '/mock-up',
-      //   name: 'mock-up',
-      //   component: () => import('@/views/MockUp'),
-      // },
-    ],
-    component: Default,
-  },
-  /**
-   * @see https://next.router.vuejs.org/guide/essentials/dynamic-matching.html#catch-all-404-not-found-route
-   */
-  {
-    path: '/:pathMatch(.*)*',
-    component: () => import(/* webpackChunkName: "error404" */ '@/views/Error404'),
-  },
-]
+/*
+ * If not building with SSR mode, you can
+ * directly export the Router instantiation;
+ *
+ * The function below can be async too; either use
+ * async/await or return a Promise which resolves
+ * with the Router instance.
+ */
 
-const router = createRouter({
-  history: createWebHistory(process.env.BASE_URL),
-  routes,
+export default route(function (/* { store, ssrContext } */) {
+  const createHistory =
+    process.env.MODE === 'ssr'
+      ? createMemoryHistory
+      : process.env.VUE_ROUTER_MODE === 'history'
+        ? createWebHistory
+        : createWebHashHistory
+
+  return createRouter({
+    scrollBehavior: () => ({left: 0, top: 0}),
+    routes,
+
+    // Leave this as is and make changes in quasar.conf.js instead!
+    // quasar.conf.js -> build -> vueRouterMode
+    // quasar.conf.js -> build -> publicPath
+    history: createHistory(
+      process.env.MODE === 'ssr' ? undefined : process.env.VUE_ROUTER_BASE,
+    ),
+  })
 })
-
-export default router
