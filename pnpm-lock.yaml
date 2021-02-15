@@ -323,6 +323,7 @@ importers:
       '@quasar/extras': 1.9.16
       core-js: 3.8.3
       quasar: 2.0.0-beta.3
+      vare: 0.2.0-alpha.2
       vue: 3.0.5
       vue-i18n: 9.0.0-rc.4_vue@3.0.5
     devDependencies:
@@ -338,6 +339,7 @@ importers:
       core-js: ^3.6.5
       postcss-loader: 3.0.0
       quasar: ^2.0.0-beta.3
+      vare: ^0.2.0-alpha.2
       vue: ^3.0.5
       vue-i18n: ^9.0.0-beta.0
   packages/web-snow:
