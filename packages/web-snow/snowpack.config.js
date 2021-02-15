@@ -8,23 +8,17 @@ module.exports = {
     __VUE_PROD_DEVTOOLS__: true,
   },
   plugins: ['@snowpack/plugin-typescript', '@snowpack/plugin-vue', '@snowpack/plugin-dotenv'],
-  install: [
-    'vue/dist/vue.runtime.esm-bundler.js',
-    /* ... */
-  ],
-  installOptions: {
-    /* ... */
-  },
+  // install: [
+  //   'vue/dist/vue.runtime.esm-bundler.js',
+  //   /* ... */
+  // ],
   devOptions: {
     /* ... */
   },
   buildOptions: {
     /* ... */
   },
-  proxy: {
-    /* ... */
-  },
-  alias: {
-    vue: 'vue/dist/vue.runtime.esm-bundler.js',
-  },
+  // alias: {
+  //   vue: 'vue/dist/vue.runtime.esm-bundler.js',
+  // },
 }
