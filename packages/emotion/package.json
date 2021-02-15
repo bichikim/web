@@ -24,7 +24,6 @@
     "@types/styled-system": "^5.1.10",
     "concurrently": "^5.3.0",
     "gulp-execa": "^2.0.0",
-    "rimraf": "^3.0.2",
     "rollup": "^2.29.0",
     "ttypescript": "^1.5.10"
   },
