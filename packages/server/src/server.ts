@@ -1,6 +1,6 @@
 import express from 'express'
 import {graphqlHTTP} from 'express-graphql'
-import {buildSchema} from 'graphql'
+import {GraphQLSchema, GraphQLObjectType, GraphQLString} from 'graphql'
 import expressPlayground from 'graphql-playground-middleware-express'
 
 export interface CreateGraphqlHandlerOptions {
@@ -13,22 +13,27 @@ export interface CreateGraphqlHandlerOptions {
 export const createGraphqlHandler = (options: CreateGraphqlHandlerOptions) => {
   const {graphiql = false} = options
 
-  const schema = buildSchema(`
-  type Query {
-    hello: String
-  }
-`)
-
-  // the root provides a resolver function for each API endpoint
-  const rootValue = {
-    hello: () => {
-      return 'Hello world!'
-    },
-  }
+  const schema = new GraphQLSchema({
+    query: new GraphQLObjectType<any, any>({
+      name: 'Root',
+      fields: {
+        hello: {
+          args: {
+            name: {
+              type: GraphQLString,
+            },
+          },
+          type: GraphQLString,
+          resolve() {
+            return 'Hello world!'
+          },
+        },
+      },
+    }),
+  })
 
   return graphqlHTTP({
     schema,
-    rootValue,
     graphiql,
   })
 }
