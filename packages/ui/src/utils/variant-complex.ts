@@ -1,6 +1,6 @@
 import {createParser, get} from '@styled-system/core'
 import css from '@styled-system/css'
-import {get as getProperty} from 'lodash'
+import getProperty from 'lodash/get'
 import {VariantArgs} from 'styled-system'
 
 export type Getter = (value: any, props: Record<string, any>) => string | string[]

@@ -8,41 +8,49 @@ Web project MVP
 
 ## Project setup
 ```
-yarn install
+pnpm i
 ```
 
-### Compiles and hot-reloads for development
+### Compile and hot-reload all for development
 
 모두 개발 모드로 시작 한다. (상당히 많은 로그를 알아 볼 수 없이 진행된다. 추천하지 않는다.)
 run all
-```
-yarn dev
-```
-개발중에 web 빌드는 지속적으로 로그를 확인 하여야 함으로 web 은 독립적으로 실행 시킬 수 있다.
-run base / web
-```
-yarn dev:base
-yarn dev:web
+``` shell
+# @vue/cli
+pnpm run dev:web
+
+# snow-pack
+pnpm run dev:web-snow
+
+# quasar
+pnpm run dev:web-quasar
+
+# vite
+pnpm run dev:web-vite
+
+# server
+pnpm run server
+
 ```
 
 ### Compiles and minifies for production
 ```
-yarn build
+pnpm run build:web[-name]
 ```
 
 ### Run your unit tests (WIP)
 ```
-yarn test:unit
+pnpm run test:unit
 ```
 
 ### Lints and fixes files (WIP)
 ```
-yarn lint
+pnpm run lint
 ```
 
 ### generate icons
 ```
-yarn web icons
+pnpm run icons
 ```
 
 ## URLS

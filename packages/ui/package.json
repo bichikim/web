@@ -25,12 +25,14 @@
     "fluid-system": "^1.0.10",
     "html-element-attributes": "^2.2.1",
     "interactjs": "^1.10.0",
+    "ramda": "^0.27.1",
     "lodash": "^4.17.20",
     "popmotion": "^8.7.6",
     "styled-system": "^5.1.5",
     "vue": "^3.0.4"
   },
   "devDependencies": {
+    "@types/lodash": "^4.14.168",
     "@types/styled-system": "^5.1.10",
     "@types/styled-system__core": "^5.1.2",
     "@types/styled-system__css": "^5.0.14",

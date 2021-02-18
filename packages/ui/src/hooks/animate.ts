@@ -3,7 +3,7 @@ import interactJs from 'interactjs'
 import {easing, keyframes, styler} from 'popmotion'
 import {KeyframesProps, Values} from 'popmotion/src/animations/keyframes/types'
 import {computed, onBeforeUnmount, onMounted, Ref, ref, ComputedRef} from 'vue'
-import {debounce} from 'lodash'
+import debounce from 'lodash/debounce'
 
 type AnimationKeys = Record<string, any | any[]>
 
@@ -109,6 +109,7 @@ export const events = (root: Ref<any>, options: EventOptions = {}): void => {
     if (el) {
       return interactJs(el)
     }
+    return undefined
   })
 
   const hover = debounce((event) => {
@@ -177,6 +178,8 @@ export const animate = (root: Ref<HTMLElement | null>, options: AnimateOptions):
     if (el) {
       return styler(el)
     }
+
+    return undefined
   })
 
   events(root, {

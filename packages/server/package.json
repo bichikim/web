@@ -8,10 +8,12 @@
   "dependencies": {
     "graphql": "^15.5.0",
     "express": "^4.17.1",
+    "ramda": "^0.27.1",
     "express-graphql": "^0.12.0",
     "graphql-playground-middleware-express": "^1.7.22"
   },
   "devDependencies": {
+    "@types/ramda": "^0.27.38",
     "cross-env": "^7.0.3",
     "tsc-watch": "^4.2.9",
     "ttypescript": "^1.5.12"

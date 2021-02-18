@@ -1,4 +1,4 @@
-import {castArray} from 'lodash'
+import castArray from 'lodash/castArray'
 
 export const slotToArray = (slot?: () => any): any[] => {
   if (slot) {

@@ -1,5 +1,11 @@
 import {GraphQLOutputType, GraphQLScalarType, GraphQLString, GraphQLScalarTypeConfig, GraphQLBoolean, GraphQLInt} from 'graphql'
 
+/**
+ * functional graphql creator
+ * Experiment step
+ * @WIP
+ */
+
 export interface FieldOptions {
   name: string
 

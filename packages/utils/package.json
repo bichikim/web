@@ -12,7 +12,9 @@
     "dev": "gulp dev"
   },
   "dependencies": {
-    "lodash": "^4.17.20"
+    "lodash": "^4.17.20",
+    "micro-memoize": "^4.0.9",
+    "react-fast-compare": "^3.2.0"
   },
   "devDependencies": {
     "@types/styled-system__core": "^5.1.2",
