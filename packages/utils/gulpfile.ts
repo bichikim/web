@@ -4,4 +4,4 @@ import {parallel} from 'gulp'
 
 export const dev = devTS
 
-export const build = parallel(buildRollup, buildTs)
+export const build = buildTs

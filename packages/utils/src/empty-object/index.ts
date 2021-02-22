@@ -1,4 +1,4 @@
-import {freeze} from './freeze'
+import {freeze} from 'src/freeze'
 
 export const emptyArray: Readonly<unknown[]> = freeze([])
 

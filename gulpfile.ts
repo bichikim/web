@@ -32,6 +32,6 @@ export const createTS = (options: CreateTsOptions = {}) => {
 
 export const devTS = createTS({assumeChangesOnlyAffectDirectDependencies: true, watch: true})
 
-export const buildTs = createTS({assumeChangesOnlyAffectDirectDependencies: true, watch: false, emitDeclarationOnly: true})
+export const buildTs = createTS({assumeChangesOnlyAffectDirectDependencies: true, watch: false, emitDeclarationOnly: false})
 
 export const buildRollup = execa.task('rollup -c')
