@@ -25,7 +25,8 @@
     "dev:web-quasar": "pnpm run dev --filter @winter-love/web-quasar.. --parallel",
     "dev:web-vite": "pnpm run dev --filter @winter-love/web-vite... --parallel",
     "format:package.json": "sort-package-json \"package.json\" \"packages/*/package.json\" ",
-    "lint": "eslint --ext .ts \"src/**/*.{ts,tsx}\""
+    "lint": "eslint --ext .ts \"src/**/*.{ts,tsx}\"",
+    "test": "jest"
   },
   "devDependencies": {
     "@rollup/plugin-alias": "^3.1.2",
@@ -35,7 +36,9 @@
     "@types/gulp": "^4.0.8",
     "@types/mocha": "^8.2.1",
     "@types/through2": "^2.0.36",
+    "@vue/cli-plugin-unit-jest": "^5.0.0-alpha.5",
     "@typescript-eslint/eslint-plugin": "^4.15.1",
+    "@vue/test-utils": "^2.0.0-rc.2",
     "@typescript-eslint/parser": "^4.15.1",
     "@vue/cli-service": "^4.5.11",
     "@vue/eslint-config-standard": "^6.0.0",
@@ -52,6 +55,7 @@
     "eslint-plugin-vue": "^7.6.0",
     "gulp": "^4.0.2",
     "gulp-execa": "^2.0.0",
+    "vue-jest": "^3.0.7",
     "gulp-rename": "^2.0.0",
     "lerna": "^3.22.1",
     "rollup": "^2.39.0",

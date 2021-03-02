@@ -11,9 +11,8 @@ Web project MVP
 pnpm i
 ```
 
-### Compile and hot-reload all for development
+### Compile and hot-reload files for development
 
-모두 개발 모드로 시작 한다. (상당히 많은 로그를 알아 볼 수 없이 진행된다. 추천하지 않는다.)
 run all
 ``` shell
 # @vue/cli
@@ -33,7 +32,7 @@ pnpm run server
 
 ```
 
-### Compiles and minifies for production
+### Compile and minify files for production
 ```
 pnpm run build:web[-name]
 ```
@@ -48,7 +47,7 @@ pnpm run test:unit
 pnpm run lint
 ```
 
-### generate icons
+### generate icons (WIP)
 ```
 pnpm run icons
 ```

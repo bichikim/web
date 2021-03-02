@@ -21,9 +21,10 @@
     "firebase": "^8.1.1",
     "register-service-worker": "^1.7.1",
     "vare": "^0.2.0-alpha.2",
+    "vue-meta": "^3.0.0-alpha.2",
     "vue": "^3.0.4",
-    "vue-router": "^4.0.0-rc.6",
-    "workbox-window": "^6.0.0"
+    "vue-router": "^4.0.4",
+    "workbox-window": "^6.1.1"
   },
   "devDependencies": {
     "@babel/core": "^7.12.3",
@@ -48,7 +49,6 @@
     "@vue/eslint-config-standard": "^5.1.2",
     "@vue/eslint-config-typescript": "^5.1.0",
     "@vue/test-utils": "^2.0.0-beta.6",
-    "chai": "^4.2.0",
     "csstype": "^3.0.3",
     "del": "^6.0.0",
     "eslint": "^7.9.0",
