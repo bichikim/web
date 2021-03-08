@@ -29,6 +29,7 @@ module.exports = {
 
   projects: [
     '<rootDir>/packages/*/jest.config.js',
+    '<rootDir>/scripts/jest.config.js',
   ],
 
   testPathIgnorePatterns: [
