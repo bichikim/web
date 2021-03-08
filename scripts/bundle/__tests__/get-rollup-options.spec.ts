@@ -4,27 +4,11 @@ import typescript from 'rollup-plugin-typescript2'
 import ttypescript from 'ttypescript'
 import path from 'path'
 
-jest.mock('ttypescript', () => {
-  return jest.fn()
-})
+jest.mock('ttypescript')
 
-jest.mock('rollup-plugin-typescript2', () => {
-  const plugin = jest.fn()
-  return Object.assign(jest.fn(() => {
-    return plugin
-  }), {
-    plugin,
-  })
-})
+jest.mock('rollup-plugin-typescript2')
 
-jest.mock('rollup-plugin-ts-treeshaking', () => {
-  const plugin = jest.fn()
-  return Object.assign(jest.fn(() => {
-    return plugin
-  }), {
-    plugin,
-  })
-})
+jest.mock('rollup-plugin-ts-treeshaking')
 
 const tsTreeShakingMock: jest.Mock & {plugin: any} = tsTreeShaking as any
 const typescriptMock: jest.Mock & {plugin: any} = typescript as any
@@ -50,6 +34,9 @@ describe('getRollupOptions', function test() {
 
     const input = result.input as any
 
+    // make sure it is mocked
+    expect(typeof tsTreeShakingMock.plugin).toBe('function')
+
     expect(input.plugins).toContain(tsTreeShakingMock.plugin)
   })
 
@@ -57,6 +44,9 @@ describe('getRollupOptions', function test() {
     const result = genRollupOptions()
 
     const input = result.input as any
+
+    // make sure it is mocked
+    expect(typeof typescriptMock.plugin).toBe('function')
 
     expect(input.plugins).toContain(typescriptMock.plugin)
     // check if the typescript function is called once
