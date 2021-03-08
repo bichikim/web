@@ -29,7 +29,7 @@ describe('getRollupOptions', function test() {
     expect(input.input).toBe(path.join('src', 'index.ts'))
   })
 
-  it('should return options with treeshaking plugin', function test() {
+  it('should return input options with treeshaking plugin', function test() {
     const result = genRollupOptions()
 
     const input = result.input as any
@@ -40,7 +40,7 @@ describe('getRollupOptions', function test() {
     expect(input.plugins).toContain(tsTreeShakingMock.plugin)
   })
 
-  it('should return options with rollup-plugin-typescript2', function test() {
+  it('should return input options with rollup-plugin-typescript2', function test() {
     const result = genRollupOptions()
 
     const input = result.input as any
