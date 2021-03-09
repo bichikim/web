@@ -29,6 +29,8 @@ export const defSrc: string = 'src'
 
 export const defEntry: string = 'index.ts'
 
+export const defFile: string = 'index.js'
+
 export const defExtensions: string[] = ['.mjs', '.js', '.jsx', '.json', '.sass', '.scss', '.ts', '.tsx']
 
 export const defResolverOptions: RollupNodeResolveOptions = {
@@ -45,23 +47,34 @@ export const genRollupOptions = (options: GenRollupOptions = {}): BundleOptions 
     resolve: resolveOptions,
   } = options
 
-  const resolvePlugin = resolve(defaultsDeep(defResolverOptions, resolveOptions))
+  console.log(cwd)
+
+  const resolvePlugin = resolve(defaultsDeep(resolveOptions, defResolverOptions))
   const typescriptPlugin = typescript({
     typescript: ttypescript,
+    cwd,
     tsconfigOverride: {
       compilerOptions: {
+        paths: {
+          '@/*': [
+            `${src}/*`,
+          ],
+        },
         plugins: [
           {transform: '@zerollup/ts-transform-paths'},
         ],
       },
     },
   })
+
+  const terserPlugin = terser()
+
   const typescriptTreeShaking = tsTreeShaking()
 
   const packageJson = getPackage(cwd)
 
   const {
-    name = packageJson?.name,
+    name = packageJson.name,
   } = options
 
   const outputPart = {
@@ -70,7 +83,7 @@ export const genRollupOptions = (options: GenRollupOptions = {}): BundleOptions 
 
   return {
     input: {
-      input: path.join(src, entry),
+      input: path.resolve(cwd, src, entry),
       plugins: [
         resolvePlugin,
         typescriptPlugin,
@@ -85,8 +98,8 @@ export const genRollupOptions = (options: GenRollupOptions = {}): BundleOptions 
       return {
         ...outputPart,
         ...rest,
-        file: path.resolve(cwd, dist, value.file ?? 'index.js'),
-        plugins: minify ? [terser] : [],
+        file: path.resolve(cwd, dist, value.file ?? defFile),
+        plugins: minify ? [terserPlugin] : [],
       }
     }),
   }

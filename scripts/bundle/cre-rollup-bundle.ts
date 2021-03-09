@@ -13,7 +13,7 @@ export interface BundleOptions {
 }
 
 export const creRollupBundle = (options: BundleOptions = {}) => {
-  const inputOptions: PickRequired<RollupOptions, 'input'> = defaultsDeep(defInputConfig, options.input)
+  const inputOptions: PickRequired<RollupOptions, 'input'> = defaultsDeep(options.input, defInputConfig)
   const outputOptionsList: OutputOptions[] = options.output ?? defOutputOptions
 
   return () => rollup({
