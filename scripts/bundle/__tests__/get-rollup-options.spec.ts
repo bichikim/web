@@ -63,7 +63,7 @@ describe('getRollupOptions', function test() {
       expect(input.input).toBe(path.resolve(cwd, defSrc, entry))
     })
 
-    it('should return rollup input options with treeshaking plugin', function test() {
+    it('should return rollup input options with treeShaking plugin', function test() {
       const result = genRollupOptions()
 
       const input = result.input as any
