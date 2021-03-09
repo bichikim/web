@@ -7,7 +7,8 @@ describe('bundle/creBundle', function test() {
 
     await creBundle({
       cwd: path.resolve(__dirname, '../'),
-      src: '__src__',
+      src: '__tests__',
+      entry: 'test-file.ts',
       dist: '__lib__',
       name: 'tests',
       output: [{
