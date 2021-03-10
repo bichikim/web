@@ -47,8 +47,6 @@ export const genRollupOptions = (options: GenRollupOptions = {}): BundleOptions 
     resolve: resolveOptions,
   } = options
 
-  console.log(cwd)
-
   const resolvePlugin = resolve(defaultsDeep(resolveOptions, defResolverOptions))
   const typescriptPlugin = typescript({
     typescript: ttypescript,

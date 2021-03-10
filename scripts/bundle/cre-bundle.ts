@@ -1,6 +1,8 @@
 import {genRollupOptions, GenRollupOptions} from './gen-rollup-options'
 import {creRollupBundle} from './cre-rollup-bundle'
 
-export const creBundle = (options?: GenRollupOptions) => creRollupBundle(
+export type RollupOptions = GenRollupOptions
+
+export const creBundle = (options?: RollupOptions) => creRollupBundle(
   genRollupOptions(options),
 )
