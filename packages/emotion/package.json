@@ -4,8 +4,8 @@
   "private": true,
   "license": "UNLICENSED",
   "main": "lib/index.js",
-  "unpkg": "lib/index.iife.js",
-  "module": "lib/index.js",
+  "source": "src/index.ts",
+  "module": "lib/index.module.js",
   "types": "lib/index.d.ts",
   "scripts": {
     "build": "gulp build",
@@ -24,8 +24,8 @@
     "@vue/test-utils": "^2.0.0-rc.2",
     "@types/styled-system": "^5.1.10",
     "concurrently": "^5.3.0",
-    "gulp-execa": "^2.0.0",
     "rollup": "^2.29.0",
+    "gulp": "^4.0.2",
     "ttypescript": "^1.5.10"
   },
   "publishConfig": {

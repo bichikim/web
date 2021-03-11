@@ -4,8 +4,8 @@
   "private": true,
   "license": "UNLICENSED",
   "main": "lib/index.js",
-  "unpkg": "lib/index.iife.js",
-  "module": "lib/index.js",
+  "source": "src/index.ts",
+  "module": "lib/index.module.js",
   "types": "lib/index.d.ts",
   "scripts": {
     "build": "gulp build",
@@ -45,6 +45,7 @@
     "rollup-plugin-terser": "^7.0.2",
     "rollup-plugin-typescript2": "^0.27.3",
     "ttypescript": "^1.5.10",
+    "gulp": "^4.0.2",
     "typescript": "^4.0.3"
   },
   "gitHead": "7a6e96543343520b8895ec575ebdc847e2c32e60"

@@ -10,6 +10,7 @@ import typescript from 'rollup-plugin-typescript2'
 import ttypescript from 'ttypescript'
 import tsTreeShaking from 'rollup-plugin-ts-treeshaking'
 import externals from 'rollup-plugin-node-externals'
+import asset from 'rollup-plugin-smart-asset'
 
 export interface GenOutputOptions extends OutputOptions {
   minify?: boolean
@@ -55,6 +56,7 @@ export const genRollupOptions = (options: GenRollupOptions = {}): BundleOptions 
     cwd,
     tsconfigOverride: {
       compilerOptions: {
+        emitDeclarationOnly: false,
         target: 'ESNext',
         module: 'ESNext',
         paths: {
@@ -74,6 +76,8 @@ export const genRollupOptions = (options: GenRollupOptions = {}): BundleOptions 
 
   const terserPlugin = terser()
 
+  const assetPlugin = asset()
+
   const typescriptTreeShaking = tsTreeShaking()
 
   const packageJson = getPackage(cwd)
@@ -90,9 +94,18 @@ export const genRollupOptions = (options: GenRollupOptions = {}): BundleOptions 
     input: {
       input: path.resolve(cwd, src, entry),
       plugins: [
+        assetPlugin,
+        /**
+         * this externals plugin must be in front of the resolve plugin
+         * @see https://www.npmjs.com/package/rollup-plugin-node-externals
+         */
         externalsPlugin,
         resolvePlugin,
         typescriptPlugin,
+        /**
+         * this typescript tree shaking must be after the typescript plugin
+         * @see https://www.npmjs.com/package/rollup-plugin-ts-treeshaking
+         */
         typescriptTreeShaking,
       ],
     },

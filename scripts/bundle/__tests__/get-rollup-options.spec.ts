@@ -3,6 +3,7 @@ import tsTreeShaking from 'rollup-plugin-ts-treeshaking'
 import typescript from 'rollup-plugin-typescript2'
 import ttypescript from 'ttypescript'
 import path from 'path'
+// noinspection ES6PreferShortImport
 import {getPackage} from '../../utils'
 import {terser} from 'rollup-plugin-terser'
 
@@ -90,6 +91,7 @@ describe('getRollupOptions', function test() {
       expect(typescriptOptions.typescript).toBe(ttypescript)
       expect(typescriptOptions.tsconfigOverride).toEqual({
         compilerOptions: {
+          emitDeclarationOnly: false,
           target: 'ESNext',
           module: 'ESNext',
           paths: {
@@ -209,16 +211,6 @@ describe('getRollupOptions', function test() {
       const output = result.output as any
 
       expect(output[0].plugins).toContain(terserMock.plugin)
-    })
-
-    it('should return rollup output with options', function test() {
-      const result = genRollupOptions({
-        output: [
-          {
-            format: 'commonjs',
-          },
-        ],
-      })
     })
   })
 })

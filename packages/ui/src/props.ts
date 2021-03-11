@@ -87,6 +87,8 @@ const textProps: PropsMember<TextProps> = {
   textOverflow: responsiveType,
   textShadow: responsiveType,
   textTransform: responsiveType,
+  whiteSpace: responsiveType,
+  wordBreak: responsiveType,
 }
 
 const displayProps: PropsMember<DisplayProps> = {

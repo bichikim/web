@@ -1,4 +1,5 @@
-import {series, parallel} from 'gulp'
+import {series} from 'gulp'
+// noinspection ES6PreferShortImport
 import {creBundle, creWatchBundle, RollupOptions} from './scripts'
 
 const bundleOptions: RollupOptions = {
@@ -14,9 +15,7 @@ const bundleOptions: RollupOptions = {
   ],
 }
 
-export const dev = parallel(
-  creWatchBundle(bundleOptions),
-)
+export const dev = creWatchBundle(bundleOptions)
 
 export const build = series(
   creBundle(bundleOptions),

@@ -1,19 +1,10 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "target": "ESNext",
-    "module": "CommonJS",
-    "baseUrl": ".",
     "outDir": "lib",
-    "emitDeclarationOnly": true,
+    "baseUrl": ".",
     "declaration": true,
     "skipLibCheck": true,
-    "typeRoots": [
-      "../../node_modules/@types",
-      "node_modules/@winter-love",
-      "node_modules/@types",
-      "types"
-    ],
     "paths": {
       "@/*": [
         "src/*"
@@ -25,9 +16,6 @@
       "dom.iterable",
       "scripthost"
     ],
-    "plugins": [
-      {"transform": "@zerollup/ts-transform-paths"}
-    ]
   },
   "include": [
     "src/**/*.ts",

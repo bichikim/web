@@ -8,14 +8,16 @@ export const creBundle = (options?: RollupOptions) => creRollupBundle(
   genRollupOptions(options),
 )
 
-export const creWatchBundle = async (options: RollupOptions = {}) => {
+export const creWatchBundle = (options: RollupOptions = {}) => {
   const {src = 'src', ...rest} = options
 
   const rollup = creRollupBundle(
     genRollupOptions({src, ...rest}),
   )
 
-  await rollup()
+  return async () => {
+    await rollup()
 
-  return watch([`./${src}/**/*.ts`], rollup)
+    return watch([`./${src}/**/*.ts`], rollup)
+  }
 }
