@@ -3,6 +3,7 @@ import {BundleOptions} from './cre-rollup-bundle'
 import path from 'path'
 import {OutputOptions} from 'rollup'
 import {terser} from 'rollup-plugin-terser'
+// noinspection ES6PreferShortImport
 import {getPackage} from '../utils'
 import {defaultsDeep} from 'lodash'
 import typescript from 'rollup-plugin-typescript2'
