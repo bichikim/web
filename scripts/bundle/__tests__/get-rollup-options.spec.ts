@@ -90,6 +90,8 @@ describe('getRollupOptions', function test() {
       expect(typescriptOptions.typescript).toBe(ttypescript)
       expect(typescriptOptions.tsconfigOverride).toEqual({
         compilerOptions: {
+          target: 'ESNext',
+          module: 'ESNext',
           paths: {
             '@/*': [
               'src/*',

@@ -8,6 +8,7 @@ import {defaultsDeep} from 'lodash'
 import typescript from 'rollup-plugin-typescript2'
 import ttypescript from 'ttypescript'
 import tsTreeShaking from 'rollup-plugin-ts-treeshaking'
+import externals from 'rollup-plugin-node-externals'
 
 export interface GenOutputOptions extends OutputOptions {
   minify?: boolean
@@ -53,6 +54,8 @@ export const genRollupOptions = (options: GenRollupOptions = {}): BundleOptions 
     cwd,
     tsconfigOverride: {
       compilerOptions: {
+        target: 'ESNext',
+        module: 'ESNext',
         paths: {
           '@/*': [
             `${src}/*`,
@@ -63,6 +66,9 @@ export const genRollupOptions = (options: GenRollupOptions = {}): BundleOptions 
         ],
       },
     },
+  })
+  const externalsPlugin = externals({
+    deps: true,
   })
 
   const terserPlugin = terser()
@@ -83,6 +89,7 @@ export const genRollupOptions = (options: GenRollupOptions = {}): BundleOptions 
     input: {
       input: path.resolve(cwd, src, entry),
       plugins: [
+        externalsPlugin,
         resolvePlugin,
         typescriptPlugin,
         typescriptTreeShaking,

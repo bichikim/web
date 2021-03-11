@@ -1,37 +1,23 @@
 import {series, parallel} from 'gulp'
-import * as execa from 'gulp-execa'
+import {creBundle, creWatchBundle, RollupOptions} from './scripts'
 
-interface CreateTsOptions {
-  assumeChangesOnlyAffectDirectDependencies?: boolean
-  emitDeclarationOnly?: boolean
-  watch?: boolean
+const bundleOptions: RollupOptions = {
+  output: [
+    {
+      format: 'es',
+      file: 'index.module.js',
+    },
+    {
+      format: 'umd',
+      file: 'index.js',
+    },
+  ],
 }
 
-export const createTS = (options: CreateTsOptions = {}) => {
-  const {
-    assumeChangesOnlyAffectDirectDependencies,
-    emitDeclarationOnly,
-    watch,
-  } = options
-  const script = ['ttsc --module es2020']
+export const dev = parallel(
+  creWatchBundle(bundleOptions),
+)
 
-  if (watch) {
-    script.push('--watch')
-  }
-
-  if (emitDeclarationOnly) {
-    script.push('--emitDeclarationOnly')
-  }
-
-  if (assumeChangesOnlyAffectDirectDependencies) {
-    script.push('--assumeChangesOnlyAffectDirectDependencies')
-  }
-
-  return execa.task(script.join(' '))
-}
-
-export const devTS = createTS({assumeChangesOnlyAffectDirectDependencies: true, watch: true})
-
-export const buildTs = createTS({assumeChangesOnlyAffectDirectDependencies: true, watch: false, emitDeclarationOnly: false})
-
-export const buildRollup = execa.task('rollup -c')
+export const build = series(
+  creBundle(bundleOptions),
+)
