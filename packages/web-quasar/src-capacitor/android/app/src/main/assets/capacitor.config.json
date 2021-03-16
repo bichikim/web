@@ -1,0 +1,10 @@
+{
+  "appId": "kim.bichi.baco",
+  "appName": "Quasar App",
+  "bundledWebRuntime": false,
+  "npmClient": "yarn",
+  "webDir": "www",
+  "server": {
+    "url": "http://192.168.35.123:8080"
+  }
+}

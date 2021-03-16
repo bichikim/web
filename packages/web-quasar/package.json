@@ -7,6 +7,7 @@
   "private": true,
   "scripts": {
     "dev": "quasar dev -m pwa",
+    "dev:android": "quasar dev -m capacitor -T android",
     "clean": "rimraf node_modules",
     "build": "quasar build",
     "lint": "eslint --ext .js,.ts,.vue ./",
