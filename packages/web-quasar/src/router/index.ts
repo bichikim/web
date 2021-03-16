@@ -15,8 +15,8 @@ import routes from './routes'
  * async/await or return a Promise which resolves
  * with the Router instance.
  */
-
-export default route(function (/* { store, ssrContext } */) {
+// Temporary fix type error (quasar "route" type error)
+export default route((/* { store, ssrContext } */): any => {
   const createHistory =
     process.env.MODE === 'ssr'
       ? createMemoryHistory
