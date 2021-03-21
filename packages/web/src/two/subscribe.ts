@@ -1,5 +1,5 @@
 import {AnyFunction} from '@/types'
-import {watch, computed} from 'vue'
+import {watch, computed, WatchStopHandle} from 'vue'
 import {State} from './state'
 import {Mutation, MUTATION_IDENTIFIER} from './mutate'
 import {Action, ACTION_IDENTIFIER} from './act'
@@ -13,46 +13,78 @@ export interface Subscribe<Callback extends AnyFunction, Type> {
   clear(type?: Type): void
 }
 
-export const subscribeHolder = new WeakMap<Mutation<any> | Action<any> | Computation<any, any>, SubscribeHook<any[]>[]>()
+export const HOOKS = Symbol('hooks')
 
-export const setSubscribe = (target, hook) => {
-  let triggers = subscribeHolder.get(target)
+export type SubscribeTarget = Mutation<any> | Action<any> | Computation<any, any> | ComputationWritable<any, any>
 
-  if (!triggers) {
-    triggers = []
-    subscribeHolder.set(target, triggers)
+export const setSubscribe = (target: SubscribeTarget, hook: SubscribeHook<any>) => {
+  const hooks = target[HOOKS]
+
+  if (hooks) {
+    hooks.add(hook)
   }
-
-  triggers.push(hook)
 }
 
-export const fireSubscribe = (target, ...args: any[]) => {
+export const deleteSubscribe = (target: SubscribeTarget, hook: SubscribeHook<any>) => {
+  const hooks = target[HOOKS]
+
+  if (hooks) {
+    hooks.delete(hook)
+  }
+}
+
+export const fireSubscribe = (target: SubscribeTarget, ...args: any[]) => {
   Promise.resolve().then(() => {
-    const triggers = subscribeHolder.get(target)
+    const hooks = target[HOOKS]
 
-    if (!triggers) {
-      return
+    if (hooks) {
+      hooks.forEach((hook) => {
+        hook(...args)
+      })
     }
-
-    triggers.forEach((hook) => {
-      hook(...args)
-    })
   })
 }
 
-export function subscribe <Args extends any[]>(mutation: Mutation<Args>, hook: SubscribeHook<Args>): any
-export function subscribe <Args extends any[], Return = any>(action: Action<Args, Return>, hook: SubscribeHook<Args>): any
-export function subscribe <Args extends any[], Return = any>(computation: Computation<Args, Return>, hook: SubscribeHook<Args>): any
-export function subscribe <Args extends any[], Return = any>(computation: ComputationWritable<Args, Return>, hook: SubscribeHook<Args>): any
-export function subscribe <T>(state: State<T>, hook: SubscribeHook<[T]>): any
+export const watchHolder = new WeakMap<any, WatchStopHandle>()
+
+export const watchTarget = (target: any, hook: SubscribeHook<any>) => {
+  const stop = watch(computed(() => target), hook, {deep: true})
+  watchHolder.set(hook, stop)
+}
+
+export const stopWatchTarget = (hook: SubscribeHook<any>) => {
+  const stop = watchHolder.get(hook)
+
+  if (stop) {
+    stop()
+  }
+}
+
+export function subscribe <Args extends any[]>(mutation: Mutation<Args>, hook: SubscribeHook<Args>): void
+export function subscribe <Args extends any[], Return = any>(action: Action<Args, Return>, hook: SubscribeHook<Args>): void
+export function subscribe <Args extends any[], Return = any>(computation: Computation<Args, Return>, hook: SubscribeHook<Args>): void
+export function subscribe <Args extends any[], Return = any>(computation: ComputationWritable<Args, Return>, hook: SubscribeHook<Args>): void
+export function subscribe <T>(state: State<T>, hook: SubscribeHook<[T]>): void
 export function subscribe(
   target,
   hook,
 ) {
   if (target[MUTATION_IDENTIFIER] || target[ACTION_IDENTIFIER] || target[COMPUTATION_IDENTIFIER]) {
-    setSubscribe(target, (...args) => hook(...args))
+    setSubscribe(target, hook)
     return
   }
 
-  watch(computed(() => target), () => hook(), {deep: true})
+  watchTarget(target, hook)
+}
+
+export function unSubscribe <Args extends any[]>(mutation: Mutation<Args>, hook: SubscribeHook<Args>): void
+export function unSubscribe <Args extends any[], Return = any>(action: Action<Args, Return>, hook: SubscribeHook<Args>): void
+export function unSubscribe <Args extends any[], Return = any>(computation: Computation<Args, Return>, hook: SubscribeHook<Args>): void
+export function unSubscribe <Args extends any[], Return = any>(computation: ComputationWritable<Args, Return>, hook: SubscribeHook<Args>): void
+export function unSubscribe(target, hook) {
+  if (target[MUTATION_IDENTIFIER] || target[ACTION_IDENTIFIER] || target[COMPUTATION_IDENTIFIER]) {
+    deleteSubscribe(target, hook)
+    return
+  }
+  stopWatchTarget(hook)
 }

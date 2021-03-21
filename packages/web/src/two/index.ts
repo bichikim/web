@@ -7,12 +7,13 @@ export type {
   ComputationWritable,
   ComputationGetter,
   ComputationSetter,
+  DefaultComputation,
 } from './compute'
 export {state} from './state'
 export type {State} from './state'
 export {mutate, MUTATION_IDENTIFIER} from './mutate'
 export type {Mutation, MutationRecipe} from './mutate'
-export {subscribe, setSubscribe, fireSubscribe} from './subscribe'
-export type {Subscribe, SubscribeHook} from './subscribe'
+export {subscribe, setSubscribe, fireSubscribe, stopWatchTarget, watchTarget, HOOKS} from './subscribe'
+export type {Subscribe, SubscribeHook, SubscribeTarget} from './subscribe'
 export {act, ACTION_IDENTIFIER} from './act'
 export type {Action, ActionRecipe} from './act'

@@ -5,8 +5,8 @@
     "dev": "snowpack dev"
   },
   "dependencies": {
-    "vue": "^3.0.2",
-    "vue-router": "^4.0.0-rc.1"
+    "vue": "^3.0.7",
+    "vue-router": "^4.0.5"
   },
   "devDependencies": {
     "@snowpack/plugin-dotenv": "^2.0.5",

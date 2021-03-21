@@ -1,4 +1,4 @@
-import {fireSubscribe} from './subscribe'
+import {fireSubscribe, HOOKS, SubscribeHook} from './subscribe'
 
 export type MutationRecipe<Args extends any[], Return> = (...args: Args) => Return
 
@@ -6,6 +6,7 @@ export const MUTATION_IDENTIFIER = Symbol('mutate')
 
 export type Mutation<Args extends any[], Return = any> = (...args: Args) => Return & {
   [MUTATION_IDENTIFIER]: boolean
+  [HOOKS]: Set<SubscribeHook<Args>>
 }
 
 export const mutate = <Args extends any[], Return>(
@@ -18,5 +19,6 @@ export const mutate = <Args extends any[], Return>(
 
   return Object.assign(self, {
     [MUTATION_IDENTIFIER]: true,
+    [HOOKS]: new Set(),
   })
 }

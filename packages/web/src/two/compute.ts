@@ -1,4 +1,4 @@
-import {fireSubscribe} from './subscribe'
+import {fireSubscribe, HOOKS, SubscribeHook} from './subscribe'
 import {computed, watch} from 'vue'
 import {ComputedGetter, WritableComputedRef, ComputedRef} from '@vue/reactivity'
 
@@ -15,8 +15,14 @@ export interface ComputationRecipeOptions<Args extends any[], Return> {
 }
 
 export const COMPUTATION_IDENTIFIER = Symbol('compute')
-export type Computation<Args extends any[], T> = (...args: Args) => ComputedRef<T> & {[COMPUTATION_IDENTIFIER]: boolean}
-export type ComputationWritable<Args extends any[], T> = (...args: Args) => WritableComputedRef<T> & {[COMPUTATION_IDENTIFIER]: boolean}
+
+export interface DefaultComputation<T> {
+  [COMPUTATION_IDENTIFIER]: boolean
+  [HOOKS]: Set<SubscribeHook<[T]>>
+}
+
+export type Computation<Args extends any[], T> = (...args: Args) => ComputedRef<T> & DefaultComputation<T>
+export type ComputationWritable<Args extends any[], T> = (...args: Args) => WritableComputedRef<T> & DefaultComputation<T>
 
 export function compute<Args extends any[], T>(recipe: ComputationRecipe<T>): Computation<Args, T>
 export function compute<Args extends any[], T>(recipe: ComputationRecipeOptions<Args, T>): ComputationWritable<Args, T>
@@ -45,5 +51,6 @@ export function compute(recipe) {
   // mark ComputationIdentifier
   return Object.assign(self, {
     [COMPUTATION_IDENTIFIER]: true,
+    [HOOKS]: new Set(),
   })
 }

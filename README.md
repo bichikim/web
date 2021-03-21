@@ -57,3 +57,7 @@ pnpm run icons
 service [url](https://web-prod-bc72c.firebaseapp.com/) 
 
 
+## unknown issue
+
+packages 안에 vue 버전이 다르면 @vue/runtime-dom @vue/runtime-core 타입을 *.vue 에서 못 추적 하는 경우가 생김
+
