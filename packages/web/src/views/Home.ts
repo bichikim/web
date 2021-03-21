@@ -1,6 +1,22 @@
 import {setDeepName, setName, state} from '@/store'
 import {Box, Flex} from '@winter-love/ui'
 import {computed, defineComponent, h, ref} from 'vue'
+import * as two from '@/two'
+
+const foo = two.state({
+  foo: 'foo',
+  bar: 'bar',
+})
+
+two.subscribe(foo, () => console.log('yooh'))
+
+const fooOne = two.compute(() => foo.foo + '1')
+
+const changeBar = two.mutate((value: string) => (foo.bar = value))
+
+two.subscribe(fooOne, (value) => console.log('fooOne', value))
+
+two.subscribe(changeBar, (value) => console.log('changeBar', value))
 
 export default defineComponent({
   name: 'home',
@@ -8,6 +24,7 @@ export default defineComponent({
     const name = computed(() => (state.name))
     const deepName = computed(() => (state.deep.name))
     const range = ref('fit')
+    const toggle = ref(false)
     const toggleRange = () => {
       if (range.value === 'fit') {
         range.value = 'space'
@@ -15,6 +32,19 @@ export default defineComponent({
         range.value = 'fit'
       }
     }
+
+    const changeFoo = () => {
+      if (toggle.value) {
+        foo.foo = 'foo'
+      } else {
+        foo.foo = 'bar'
+      }
+      toggle.value = !toggle.value
+    }
+
+    const fooone = fooOne()
+
+    const bar = computed(() => foo.bar)
 
     return () => {
       return (
@@ -46,6 +76,14 @@ export default defineComponent({
             h(Box, {range: 'space', bg: 'Silver', color: 'white', p: 10}, () => name.value),
             h(Box, {range: range.value, bg: 'Silver', color: 'white', p: 10}, () => deepName.value),
           ]),
+          h(Box, {
+            onClick: changeFoo,
+          }, () => 'fooooooo'),
+          h(Box, {
+            onClick: () => changeBar(bar.value + '?'),
+          }, () => 'baaar'),
+          h(Box, () => fooone.value),
+          h(Box, () => bar.value),
         ])
       )
     }

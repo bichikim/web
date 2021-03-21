@@ -5,9 +5,7 @@ export default defineComponent(() => {
   const p = 10
   const bg1 = 'SandyBrown'
   const bg2 = 'Silver'
-  const bg3 = 'WhiteSmoke'
   const gap = 10
-  const miniBasis = 80
   const ani = {y: [0, 3, -3, 0]}
   const ani2 = {y: [0, 2, 0]}
 

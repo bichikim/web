@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { useI18n } from 'vue-i18n'
-import { isDark } from '/~/logics'
+import {useI18n} from 'vue-i18n'
+import {isDark} from '~/logics'
 
-const { t, availableLocales, locale } = useI18n()
+const {t, availableLocales, locale} = useI18n()
 
 const toggleLocales = () => {
   // change to some real logic

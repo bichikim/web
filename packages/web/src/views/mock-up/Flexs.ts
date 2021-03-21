@@ -1,5 +1,5 @@
-import {Box, Flex, Input} from '@winter-love/ui'
-import {defineComponent, h, ref} from 'vue'
+import {Box, Flex} from '@winter-love/ui'
+import {defineComponent, h} from 'vue'
 
 // eslint-disable-next-line quotes
 const longText = `보이는 사랑의 끓는 눈에 황금시대를 관현악이며, 것이다. 자신과 예가 노래하며 보이는 있으랴? 관현악이며, 위하여서 청춘은 투명하되 피다. 하였으며, 가치를 있는 너의 이상 밥을 뜨거운지라, 것이다. 있는 없으면, 생의 아니더면, 넣는 일월과 것이다. 피가 광야에서 끝에 품고 옷을 이상은 사는가 듣기만 보라. 길지 꽃 피에 품에 있는 사라지지 사막이다. 위하여서, 없으면, 예가 영락과 끝에 있는 때까지 청춘 열락의 때문이다. 사랑의 구하지 사라지지 커다란 속에서 가치를 속잎나고, 그들은 남는 쓸쓸하랴? 황금시대의 때에, 것은 가슴에 석가는 구할 위하여서.`

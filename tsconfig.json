@@ -15,15 +15,9 @@
     "baseUrl": ".",
     "resolveJsonModule": true,
     "typeRoots": [
-      "node_modules",
-      "node_modules/@types",
+      "./node_modules/@types",
       "./types"
     ],
-    "paths": {
-      "@/*": [
-        "src/*"
-      ]
-    },
     "lib": [
       "esnext",
       "dom",
@@ -32,6 +26,7 @@
     ]
   },
   "include": [
+    "**/*.ts",
     "gulpfile.ts",
   ],
   "exclude": [

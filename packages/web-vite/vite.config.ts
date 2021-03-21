@@ -1,17 +1,21 @@
 import path from 'path'
-import { UserConfig } from 'vite'
+import {defineConfig} from 'vite'
 import Vue from '@vitejs/plugin-vue'
 import Pages from 'vite-plugin-pages'
-import ViteIcons, { ViteIconsResolver } from 'vite-plugin-icons'
+import Layouts from 'vite-plugin-vue-layouts'
+import ViteIcons, {ViteIconsResolver} from 'vite-plugin-icons'
 import ViteComponents from 'vite-plugin-components'
 import Markdown from 'vite-plugin-md'
-import { VitePWA } from 'vite-plugin-pwa'
+import WindiCSS from 'vite-plugin-windicss'
+import {VitePWA} from 'vite-plugin-pwa'
 import VueI18n from '@intlify/vite-plugin-vue-i18n'
 import Prism from 'markdown-it-prism'
 
-const config: UserConfig = {
-  alias: {
-    '/~/': `${path.resolve(__dirname, 'src')}/`,
+export default defineConfig({
+  resolve: {
+    alias: {
+      '~/': `${path.resolve(__dirname, 'src')}/`,
+    },
   },
   plugins: [
     Vue({
@@ -23,9 +27,12 @@ const config: UserConfig = {
       extensions: ['vue', 'md'],
     }),
 
+    // https://github.com/JohnCampionJr/vite-plugin-vue-layouts
+    Layouts(),
+
     // https://github.com/antfu/vite-plugin-md
     Markdown({
-      wrapperClasses: 'prose prose-sm m-auto',
+      wrapperClasses: 'prose prose-sm m-auto text-left',
       headEnabled: true,
       markdownItSetup(md) {
         // https://prismjs.com/
@@ -54,6 +61,11 @@ const config: UserConfig = {
     // https://github.com/antfu/vite-plugin-icons
     ViteIcons(),
 
+    // https://github.com/antfu/vite-plugin-windicss
+    WindiCSS({
+      safelist: 'prose prose-sm m-auto text-left',
+    }),
+
     // https://github.com/antfu/vite-plugin-pwa
     VitePWA({
       manifest: {
@@ -71,6 +83,12 @@ const config: UserConfig = {
             sizes: '512x512',
             type: 'image/png',
           },
+          {
+            src: '/pwa-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'any maskable',
+          },
         ],
       },
     }),
@@ -80,6 +98,20 @@ const config: UserConfig = {
       include: [path.resolve(__dirname, 'locales/**')],
     }),
   ],
-}
+  // https://github.com/antfu/vite-ssg
+  ssgOptions: {
+    script: 'async',
+    formatting: 'minify',
+  },
 
-export default config
+  optimizeDeps: {
+    include: [
+      'vue',
+      'vue-router',
+      '@vueuse/core',
+    ],
+    exclude: [
+      'vue-demi',
+    ],
+  },
+})

@@ -9,7 +9,9 @@ export const creBundle = (options?: RollupOptions) => creRollupBundle(
 )
 
 export const creWatchBundle = (options: RollupOptions = {}) => {
-  const {src = 'src', ...rest} = options
+  const {src = 'src', cwd = process.cwd(), ...rest} = options
+
+  console.log(cwd)
 
   const rollup = creRollupBundle(
     genRollupOptions({src, ...rest}),

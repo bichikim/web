@@ -29,7 +29,7 @@ const getMinusResponsiveValue = (
     }, {})
   }
 
-  return getMinusValue(value)
+  return getMinusValue(value as any)
 }
 
 export interface GapProps {
@@ -78,7 +78,7 @@ export const getResponsiveTheme = (
     }, {})
   }
 
-  return getTheme(props, scale, defaultValue)
+  return getTheme(props, scale as any, defaultValue)
 }
 
 export const createGap = (height?: string) => {

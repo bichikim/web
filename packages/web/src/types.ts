@@ -1,7 +1,4 @@
-import {ViteSSGContext} from 'vite-ssg'
-import {Ref, UnwrapRef} from 'vue-demi'
-
-export type UserModule = (ctx: ViteSSGContext) => void
+import {Ref, UnwrapRef} from 'vue'
 
 export type AnyFunction<A extends any[] = any[], R = any> = (...args: A) => R
 export type OneAndAnyFunc<T, A extends any[] = any[], R = any> = (one: T, ...args: A) => R

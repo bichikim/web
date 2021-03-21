@@ -95,7 +95,7 @@ export const parallelProp = <T, R>(value: ResponsiveValue<T>, mapper: ((value: T
       return result
     }, {})
   }
-  return mapper(value)
+  return mapper(value as any)
 }
 
 export const multiObjectKeyPush = (target: Record<string, any>, source: Record<string, any>): void => {
