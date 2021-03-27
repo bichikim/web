@@ -1,7 +1,7 @@
 module.exports = {
   mount: {
-    public: '/',
-    src: '/_dist_',
+    public: {url: '/', static: true},
+    src: '/dist',
   },
   env: {
     __VUE_OPTIONS_API__: true,
