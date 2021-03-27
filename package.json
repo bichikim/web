@@ -22,7 +22,7 @@
     "dev:server": "pnpm run dev --filter @winter-love/server... --parallel",
     "dev:web": "pnpm run dev --filter @winter-love/web... --parallel",
     "dev:web-snow": "pnpm run dev --filter @winter-love/web-snow... --parallel",
-    "dev:web-quasar": "pnpm run dev --filter @winter-love/web-quasar.. --parallel",
+    "dev:web-quasar": "pnpm run dev --filter @winter-love/web-quasar... --parallel",
     "dev:web-vite": "pnpm run dev --filter @winter-love/web-vite... --parallel",
     "format:package.json": "sort-package-json \"package.json\" \"packages/*/package.json\" ",
     "lint": "eslint --ext .ts \"src/**/*.{ts,tsx}\"",
