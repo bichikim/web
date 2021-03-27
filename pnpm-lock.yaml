@@ -274,7 +274,7 @@ importers:
       emotion: 10.0.27
       firebase: 8.2.5
       register-service-worker: 1.7.2
-      vare: 0.2.0-alpha.2
+      vare: 1.0.0-beta.0_vue@3.0.7
       vue: 3.0.7
       vue-meta: 3.0.0-alpha.2_vue@3.0.7
       vue-router: 4.0.4_vue@3.0.7
@@ -364,7 +364,7 @@ importers:
       through2: ^4.0.2
       ts-node: ^9.0.0
       typescript: ~4.0.2
-      vare: ^0.2.0-alpha.2
+      vare: 1.0.0-beta.0
       vinyl-paths: ^3.0.1
       vue: ^3.0.7
       vue-meta: ^3.0.0-alpha.2
@@ -7960,7 +7960,7 @@ packages:
     dependencies:
       '@babel/core': 7.13.10
       '@babel/plugin-transform-modules-commonjs': 7.13.8_@babel+core@7.13.10
-      '@types/jest': 26.0.21
+      '@types/jest': 26.0.20
       '@vue/cli-service': 4.5.12_typescript@4.2.3
       '@vue/cli-shared-utils': 5.0.0-alpha.7
       babel-jest: 26.6.3_@babel+core@7.13.10
@@ -7969,8 +7969,8 @@ packages:
       jest-serializer-vue: 2.0.2
       jest-transform-stub: 2.0.0
       jest-watch-typeahead: 0.6.1_jest@26.6.3
-      ts-jest: 26.5.4_jest@26.6.3+typescript@4.2.3
-      vue-jest: 4.0.1_4607b2786d5d4a661a0bff03d2c745bb
+      ts-jest: 26.5.3_jest@26.6.3+typescript@4.2.3
+      vue-jest: 4.0.1_a621a94657cc8c16795e9b7739f54689
     dev: true
     peerDependencies:
       '@vue/cli-service': ^3.0.0 || ^4.0.0 || ^5.0.0-0
@@ -8504,7 +8504,7 @@ packages:
       '@typescript-eslint/parser': 4.18.0_eslint@7.22.0+typescript@4.2.3
       eslint: 7.22.0
       eslint-plugin-vue: 7.7.0_eslint@7.22.0
-      vue-eslint-parser: 7.6.0_eslint@7.22.0
+      vue-eslint-parser: 7.5.0_eslint@7.22.0
     dev: true
     engines:
       node: ^10.12.0 || >=12.0.0
@@ -8653,7 +8653,7 @@ packages:
   /@vueuse/core/4.0.11_vue@3.0.7:
     dependencies:
       '@vueuse/shared': 4.0.11_vue@3.0.7
-      vue-demi: 0.7.3_vue@3.0.7
+      vue-demi: 0.7.4_vue@3.0.7
     dev: false
     peerDependencies:
       vue: '*'
@@ -8662,7 +8662,7 @@ packages:
   /@vueuse/core/4.4.1_vue@3.0.7:
     dependencies:
       '@vueuse/shared': 4.4.1_vue@3.0.7
-      vue-demi: 0.7.3_vue@3.0.7
+      vue-demi: 0.7.4_vue@3.0.7
     dev: false
     peerDependencies:
       vue: '*'
@@ -8678,7 +8678,7 @@ packages:
       integrity: sha512-xt6qgtItb4z/7vp664opQc0c2+ZoU9itMfvpmg4+h0uJcEnhl7LYxO4V+G8H7EVki7SyXDIFMfoCiCFaJrArmg==
   /@vueuse/shared/4.0.11_vue@3.0.7:
     dependencies:
-      vue-demi: 0.7.3_vue@3.0.7
+      vue-demi: 0.7.4_vue@3.0.7
     dev: false
     peerDependencies:
       vue: '*'
@@ -8686,7 +8686,7 @@ packages:
       integrity: sha512-r6Hm35lsByliKtIr6/fuqo+kpbb6324nGEgu0KLMApeLfOutQKXYEAuGD81cnXAPKTHunRO0dNH8+GGRp5uPxg==
   /@vueuse/shared/4.4.1_vue@3.0.7:
     dependencies:
-      vue-demi: 0.7.3_vue@3.0.7
+      vue-demi: 0.7.4_vue@3.0.7
     dev: false
     peerDependencies:
       vue: '*'
@@ -8847,7 +8847,7 @@ packages:
       integrity: sha512-S9zN+y+i5yN/evfWquzSO3lubqPXIsPQf6p9OiPMpRxDx/0totPLF39XoRw48Dav5dSvbIE8D2eAPpXXJxvKwg==
   /@zerollup/ts-helpers/1.7.18_typescript@4.2.3:
     dependencies:
-      resolve: 1.20.0
+      resolve: 1.19.0
       typescript: 4.2.3
     dev: true
     peerDependencies:
@@ -9342,18 +9342,6 @@ packages:
       node: '>= 0.4'
     resolution:
       integrity: sha512-w2GspexNQpx+PutG3QpT437/BenZBj0M/MZGn5mzv/MofYqo0xmRHzn4lFsoDlWJ+THYsGJmFlW68WlDFx7VRw==
-  /array-includes/3.1.3:
-    dependencies:
-      call-bind: 1.0.2
-      define-properties: 1.1.3
-      es-abstract: 1.18.0
-      get-intrinsic: 1.1.1
-      is-string: 1.0.5
-    dev: true
-    engines:
-      node: '>= 0.4'
-    resolution:
-      integrity: sha512-gcem1KlBU7c9rB+Rq8/3PPKsK2kjqeEBa3bD5kkQo4nYlOHQCJqIJFqBXDEfwaRuYTT4E+FxA9xez7Gf/e3Q7A==
   /array-initial/1.1.0:
     dependencies:
       array-slice: 1.1.0
@@ -12922,7 +12910,7 @@ packages:
       array-find: 1.0.0
       debug: 2.6.9
       enhanced-resolve: 0.9.1
-      eslint-plugin-import: 2.22.1_eslint@7.22.0
+      eslint-plugin-import: 2.22.1_eslint@7.20.0
       find-root: 1.1.0
       has: 1.0.3
       interpret: 1.4.0
@@ -13079,7 +13067,7 @@ packages:
       integrity: sha512-8K7JjINHOpH64ozkAhpT3sd+FswIZTfMZTjdx052pnWrgRCVfp8op9tbjpAk3DdUeI/Ba4C8OjdC0r90erHEOw==
   /eslint-plugin-import/2.22.1_eslint@7.22.0:
     dependencies:
-      array-includes: 3.1.3
+      array-includes: 3.1.2
       array.prototype.flat: 1.2.4
       contains-path: 0.1.0
       debug: 2.6.9
@@ -13089,7 +13077,7 @@ packages:
       eslint-module-utils: 2.6.0
       has: 1.0.3
       minimatch: 3.0.4
-      object.values: 1.1.3
+      object.values: 1.1.2
       read-pkg-up: 2.0.0
       resolve: 1.20.0
       tsconfig-paths: 3.9.0
@@ -14338,7 +14326,7 @@ packages:
       integrity: sha512-3Z4XhFZ3992uIq0XOqb9AreonueSYphE6oYbpt5+3u06JWklbsPkNv3ZKkP9Bz/r+1MWCaMoSQ28P85+1Yc77w==
   /follow-redirects/1.13.3_debug@4.3.1:
     dependencies:
-      debug: 4.3.1
+      debug: 4.3.1_supports-color@6.1.0
     dev: true
     engines:
       node: '>=4.0'
@@ -16827,7 +16815,7 @@ packages:
       jest-validate: 26.6.2
       micromatch: 4.0.2
       pretty-format: 26.6.2
-      ts-node: 9.1.1_typescript@4.2.3
+      ts-node: 9.1.1_typescript@4.0.5
     dev: true
     engines:
       node: '>= 10.14.2'
@@ -22032,7 +22020,7 @@ packages:
       jest-worker: 26.6.2
       rollup: 2.42.1
       serialize-javascript: 4.0.0
-      terser: 5.6.1
+      terser: 5.5.1
     dev: true
     peerDependencies:
       rollup: ^2.0.0
@@ -23729,17 +23717,6 @@ packages:
     hasBin: true
     resolution:
       integrity: sha512-6VGWZNVP2KTUcltUQJ25TtNjx/XgdDsBDKGt8nN0MpydU36LmbPPcMBd2kmtZNNGVVDLg44k7GKeHHj+4zPIBQ==
-  /terser/5.6.1:
-    dependencies:
-      commander: 2.20.3
-      source-map: 0.7.3
-      source-map-support: 0.5.19
-    dev: true
-    engines:
-      node: '>=10'
-    hasBin: true
-    resolution:
-      integrity: sha512-yv9YLFQQ+3ZqgWCUk+pvNJwgUTdlIxUk1WTN+RnaFJe2L7ipG2csPT0ra2XRm7Cs8cxN7QXmK1rFzEwYEQkzXw==
   /test-exclude/6.0.0:
     dependencies:
       '@istanbuljs/schema': 0.1.3
@@ -24069,7 +24046,7 @@ packages:
       typescript: '>=3.8 <5.0'
     resolution:
       integrity: sha512-nBiiFGNvtujdLryU7MiMQh1iPmnZ/QvOskBbD2kURiI1MwqvxlxNnaAB/z9TbslMqCsSbu5BXvSSQPc5tvHGeA==
-  /ts-jest/26.5.4_jest@26.6.3+typescript@4.2.3:
+  /ts-jest/26.5.3_jest@26.6.3+typescript@4.2.3:
     dependencies:
       bs-logger: 0.2.6
       buffer-from: 1.1.1
@@ -24091,7 +24068,7 @@ packages:
       jest: '>=26 <27'
       typescript: '>=3.8 <5.0'
     resolution:
-      integrity: sha512-I5Qsddo+VTm94SukBJ4cPimOoFZsYTeElR2xy6H2TOVs+NsvgYglW8KuQgKoApOKuaU/Ix/vrF9ebFZlb5D2Pg==
+      integrity: sha512-nBiiFGNvtujdLryU7MiMQh1iPmnZ/QvOskBbD2kURiI1MwqvxlxNnaAB/z9TbslMqCsSbu5BXvSSQPc5tvHGeA==
   /ts-loader/6.2.2_typescript@4.0.5:
     dependencies:
       chalk: 2.4.2
@@ -24925,6 +24902,14 @@ packages:
       vue: 3.0.5
     resolution:
       integrity: sha512-GADOnfLSPVfNi2asq5YGmyXjQd3+6zvdmr/ejSJkeDjTBbSzhox5ODz3pr1te75yd+nxQomAjEcT1ak1SyTTGg==
+  /vare/1.0.0-beta.0_vue@3.0.7:
+    dependencies:
+      vue-demi: 0.6.0_vue@3.0.7
+    dev: false
+    peerDependencies:
+      vue: '*'
+    resolution:
+      integrity: sha512-rBZ2iE5ApniWkI1nYDO7UZpcoe890m6r6YymHZiR9CNt8H/ulI4V1MP5NM2yC3SeM9FD+BLZekJb0lB+E3lvIA==
   /vary/1.1.2:
     engines:
       node: '>= 0.8'
@@ -25147,7 +25132,17 @@ packages:
     requiresBuild: true
     resolution:
       integrity: sha512-8GEJa0mHJpYJeGeq5fD1pJct2kfdl30PHfmL1NaJ97mgKPyKojlIRt/3inGBK4Y0ylCI6T5vOo3chwpqDOq/Hw==
-  /vue-demi/0.7.3_vue@3.0.7:
+  /vue-demi/0.6.0_vue@3.0.7:
+    dependencies:
+      vue: 3.0.7
+    dev: false
+    hasBin: true
+    peerDependencies:
+      vue: ^2.6.0 || >=3.0.0-rc.1
+    requiresBuild: true
+    resolution:
+      integrity: sha512-8GEJa0mHJpYJeGeq5fD1pJct2kfdl30PHfmL1NaJ97mgKPyKojlIRt/3inGBK4Y0ylCI6T5vOo3chwpqDOq/Hw==
+  /vue-demi/0.7.4_vue@3.0.7:
     dependencies:
       vue: 3.0.7
     dev: false
@@ -25160,7 +25155,7 @@ packages:
         optional: true
     requiresBuild: true
     resolution:
-      integrity: sha512-vrzM26H4CZCXBf/eu4T8nks6o7qgziYM52myk8bg+atw4qYqpeWJf5c82W8VdmgGfSIdh9ulOOe9+GeLc3Z/8A==
+      integrity: sha512-PT0qzI9Rp8R8eUAsTPXADC+KAZdrMufmbZqEMMqvaiesWyjCpgyuuvS5Su8cvBjK9RevLT/YfFiKWxc8YB9/8g==
   /vue-eslint-parser/7.4.1_eslint@7.18.0:
     dependencies:
       debug: 4.3.1
@@ -25181,6 +25176,22 @@ packages:
     dependencies:
       debug: 4.3.1
       eslint: 7.20.0
+      eslint-scope: 5.1.1
+      eslint-visitor-keys: 1.3.0
+      espree: 6.2.1
+      esquery: 1.4.0
+      lodash: 4.17.20
+    dev: true
+    engines:
+      node: '>=8.10'
+    peerDependencies:
+      eslint: '>=5.0.0'
+    resolution:
+      integrity: sha512-6EHzl00hIpy4yWZo3qSbtvtVw1A1cTKOv1w95QSuAqGgk4113XtRjvNIiEGo49r0YWOPYsrmI4Dl64axL5Agrw==
+  /vue-eslint-parser/7.5.0_eslint@7.22.0:
+    dependencies:
+      debug: 4.3.1
+      eslint: 7.22.0
       eslint-scope: 5.1.1
       eslint-visitor-keys: 1.3.0
       espree: 6.2.1
@@ -25271,7 +25282,7 @@ packages:
         optional: true
     resolution:
       integrity: sha512-4jewjN8HVgpIW0ZdEwzCWz5vcRLIs1PxMs+5IqJ/6f9KRbEQ+DEqEKHUzIjoNzW2UJOUYBZzWpBnVHakpc/k5w==
-  /vue-jest/4.0.1_4607b2786d5d4a661a0bff03d2c745bb:
+  /vue-jest/4.0.1_a621a94657cc8c16795e9b7739f54689:
     dependencies:
       '@babel/core': 7.13.10
       '@babel/plugin-transform-modules-commonjs': 7.13.8_@babel+core@7.13.10
@@ -25281,7 +25292,7 @@ packages:
       extract-from-css: 0.4.4
       jest: 26.6.3_ts-node@9.1.1
       source-map: 0.5.6
-      ts-jest: 26.5.4_jest@26.6.3+typescript@4.2.3
+      ts-jest: 26.5.3_jest@26.6.3+typescript@4.2.3
     dev: true
     peerDependencies:
       '@babel/core': 7.x
