@@ -15,8 +15,8 @@ import routes from './routes'
  * async/await or return a Promise which resolves
  * with the Router instance.
  */
-// Temporary fix type error (quasar "route" type error)
-export default route((/* { store, ssrContext } */): any => {
+
+export default route((/* { store, ssrContext } */) => {
   const createHistory =
     process.env.MODE === 'ssr'
       ? createMemoryHistory
@@ -24,6 +24,7 @@ export default route((/* { store, ssrContext } */): any => {
         ? createWebHistory
         : createWebHashHistory
 
+  // type hot fix
   return createRouter({
     scrollBehavior: () => ({left: 0, top: 0}),
     routes,
@@ -34,5 +35,5 @@ export default route((/* { store, ssrContext } */): any => {
     history: createHistory(
       process.env.MODE === 'ssr' ? undefined : process.env.VUE_ROUTER_BASE,
     ),
-  })
+  }) as any
 })

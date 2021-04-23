@@ -10,7 +10,7 @@ const i18n = createI18n({
 
 export default boot(({app}) => {
   // Set i18n instance on app
-  // Temporary fix type error (quasar "app" type error)
+  // Temporary fix type error
   app.use(i18n as any)
 })
 
