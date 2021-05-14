@@ -1,0 +1,36 @@
+/* app global css */
+@import "../extensions/tailwindcss/tailwind.css";
+
+$glass-opacity : 0.8;
+$glass-blur : 2px;
+
+@mixin text-glass($color) {
+  color: rgba($color, $glass-opacity);
+  backdrop-filter: blur($glass-blur);
+}
+
+
+@mixin bg-glass($color) {
+  background: rgba($color, $glass-opacity);
+  backdrop-filter: blur($glass-blur);
+}
+
+@mixin glass($color, $name) {
+  .text-glass-#{$name} {
+    @include text-glass($color)
+  }
+  .bg-glass-#{$name} {
+    @include bg-glass($color)
+  }
+}
+
+@include glass($primary, primary);
+@include glass($secondary, secondary);
+@include glass($dark, dark);
+@include glass($accent, accent);
+@include glass($positive, positive);
+@include glass($negative, negative);
+@include glass($info, info);
+@include glass($warning, warning)
+
+// chartreuse

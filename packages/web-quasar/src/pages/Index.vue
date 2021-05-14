@@ -1,22 +1,36 @@
 <template>
-  <q-page class="row items-center justify-evenly">
+  <q-page class="row justify-evenly">
     <example-component
       title="Example component"
       active
       :todos="todos"
       :meta="meta"
     ></example-component>
+    <foo></foo>
+    <div class="absolute-top-left md:p-5">
+      <q-btn color="glass-primary">
+        Fooooooooooooooooooo
+      </q-btn>
+      <q-btn color="glass-secondary">
+        Fooooooooooooooooooo
+      </q-btn>
+      <q-btn color="glass-primary" flat>
+        Fooooooooooooooooooo
+      </q-btn>
+    </div>
+    <span>hello</span>
   </q-page>
 </template>
 
 <script lang="ts">
 import {Todo, Meta} from 'components/models'
 import ExampleComponent from 'components/CompositionComponent.vue'
+import {Foo} from './Foo'
 import {defineComponent, ref} from 'vue'
 
 export default defineComponent({
   name: 'PageIndex',
-  components: {ExampleComponent},
+  components: {ExampleComponent, Foo},
   setup() {
     const todos = ref<Todo[]>([
       {

@@ -1,24 +1,8 @@
 <template>
   <q-layout view="lHh Lpr lFf">
-    <q-header elevated>
-      <q-toolbar>
-        <q-btn
-          flat
-          dense
-          round
-          icon="menu"
-          aria-label="Menu"
-          @click="toggleLeftDrawer"
-        />
-
-        <q-toolbar-title>
-          Quasar App
-        </q-toolbar-title>
-
-        <div>Quasar v{{ $q.version }}</div>
-      </q-toolbar>
-    </q-header>
-
+    <q-footer class="bg-transparent">
+      <navigation></navigation>
+    </q-footer>
     <q-drawer
       v-model="leftDrawerOpen"
       show-if-above
@@ -49,8 +33,14 @@
 
 <script lang="ts">
 import EssentialLink from 'components/EssentialLink.vue'
+import {Navigation} from 'src/global'
 
 import {defineComponent, ref} from 'vue'
+
+interface LinkItem {
+  title: 'home'
+  icon: 'eva-home-outline'
+}
 
 const linksList = [
   {
@@ -102,6 +92,7 @@ export default defineComponent({
 
   components: {
     EssentialLink,
+    Navigation,
   },
 
   setup() {

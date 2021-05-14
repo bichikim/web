@@ -34,7 +34,7 @@ module.exports = configure(function (ctx) {
 
     // https://v2.quasar.dev/quasar-cli/quasar-conf-js#Property%3A-css
     css: [
-      'app.css',
+      'app.scss',
     ],
 
     // https://github.com/quasarframework/quasar/tree/dev/extras
@@ -49,6 +49,7 @@ module.exports = configure(function (ctx) {
 
       'roboto-font', // optional, you are not bound to it
       'material-icons', // optional, you are not bound to it
+      'eva-icons',
     ],
 
     // Full list of options: https://v2.quasar.dev/quasar-cli/quasar-conf-js#Property%3A-build
@@ -98,7 +99,7 @@ module.exports = configure(function (ctx) {
       //
       // components: [],
       // directives: [],
-
+      // cssAddon: true,
       // Quasar plugins
       plugins: [],
     },
