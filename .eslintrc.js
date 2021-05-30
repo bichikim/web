@@ -38,6 +38,7 @@ module.exports = {
       allowTernary: true,
       allowShortCircuit: true,
     }],
+    'no-use-before-define': 'off',
     '@typescript-eslint/member-delimiter-style': 'off',
     'import/no-absolute-path': 'off',
   },

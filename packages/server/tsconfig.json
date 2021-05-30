@@ -7,6 +7,9 @@
     "baseUrl": ".",
     "declaration": true,
     "skipLibCheck": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "strictPropertyInitialization": false,
     "paths": {
       "@/*": [
         "src/*"
@@ -14,8 +17,7 @@
     },
     "lib": [
       "esnext",
-      "dom",
-      "dom.iterable",
+      "esnext.asynciterable",
       "scripthost"
     ],
     "plugins": [
