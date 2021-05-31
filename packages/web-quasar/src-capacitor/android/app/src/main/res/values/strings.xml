@@ -2,6 +2,6 @@
 <resources>
     <string name="app_name">Quasar App</string>
     <string name="title_activity_main">Quasar App</string>
-    <string name="package_name">kim.bichi.baco</string>
-    <string name="custom_url_scheme">kim.bichi.baco</string>
+    <string name="package_name">io.qnext</string>
+    <string name="custom_url_scheme">io.qnext</string>
 </resources>
