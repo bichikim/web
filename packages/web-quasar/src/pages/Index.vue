@@ -7,17 +7,6 @@
       :meta="meta"
     ></example-component>
     <foo></foo>
-    <div class="absolute-top-left md:p-5">
-      <q-btn color="glass-primary">
-        Fooooooooooooooooooo
-      </q-btn>
-      <q-btn color="glass-secondary">
-        Fooooooooooooooooooo
-      </q-btn>
-      <q-btn color="glass-primary" flat>
-        Fooooooooooooooooooo
-      </q-btn>
-    </div>
     <span>hello</span>
   </q-page>
 </template>
