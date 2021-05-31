@@ -1,0 +1,21 @@
+{
+  "name": "@winter-love/use",
+  "version": "1.0.1-alpha.3",
+  "main": "lib/index.js",
+  "source": "src/index.ts",
+  "module": "lib/index.module.js",
+  "types": "lib/index.d.ts",
+  "scripts": {
+    "build": "gulp build",
+    "dev": "gulp dev"
+  },
+  "dependencies": {
+    "lodash": "^4.17.20",
+    "vue-demi": "^0.9.1",
+    "@winter-love/utils": "1.0.1-alpha.3"
+  },
+  "devDependencies": {
+    "@vue/test-utils": "2.0.0-rc.6",
+    "vue": "3.0.11"
+  }
+}

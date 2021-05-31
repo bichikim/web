@@ -1,11 +1,16 @@
 module.exports = {
-  purge: [],
+  purge: [
+    './src/**/*.html',
+    './src/**/*.vue',
+    './src/**/*.ts',
+    './src/**/*.tsx',
+  ],
   darkMode: false, // or 'media' or 'class'
   theme: {
     extend: {},
   },
 
-  prefix: 'tw-',
+  prefix: '-',
 
   variants: {},
   plugins: [],

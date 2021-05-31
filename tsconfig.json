@@ -6,6 +6,8 @@
     "jsx": "preserve",
     "noImplicitAny": false,
     "importHelpers": true,
+    "declaration": true,
+    "skipLibCheck": true,
     "isolatedModules": true,
     "moduleResolution": "node",
     "esModuleInterop": true,
