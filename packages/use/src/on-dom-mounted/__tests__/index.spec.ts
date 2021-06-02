@@ -1,6 +1,7 @@
 import {flushPromises, mount} from '@vue/test-utils'
 import {defineComponent, h, ref} from 'vue'
 import {onDomMounted} from '../index'
+import sinon from 'sinon'
 
 const setup = () => {
   const Component = defineComponent({
@@ -26,10 +27,7 @@ const setup = () => {
 
 describe('onDomMounted', () => {
   it('should wait calling the hook after the Dom loaded', async () => {
-    Object.defineProperty(document, 'readyState', {
-      configurable: true,
-      value: 'interactive',
-    })
+    sinon.replaceGetter(document, 'readyState', () => 'interactive' as const)
 
     let _handler: any
 
@@ -54,11 +52,7 @@ describe('onDomMounted', () => {
     expect(removeEventListener.mock.calls.length).toBe(1)
     expect(removeEventListener.mock.calls[0][0]).toBe('load')
 
-    Object.defineProperty(document, 'readyState', {
-      configurable: true,
-      value: 'complete',
-    })
-
+    sinon.restore()
     addEventListener.mockRestore()
     removeEventListener.mockRestore()
   })

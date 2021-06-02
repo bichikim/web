@@ -1,4 +1,4 @@
-import {onMounted, onUnmounted, ref, watch} from 'vue-demi'
+import {onUnmounted, ref, watch} from 'vue-demi'
 import {MayRef} from 'src/types'
 import {wrapRef} from 'src/wrap-ref'
 
@@ -72,9 +72,7 @@ export function useElementEvent <Key extends string>(
   })
 
   if (immediate) {
-    onMounted(() => {
-      active()
-    })
+    active()
   }
 
   onUnmounted(() => {

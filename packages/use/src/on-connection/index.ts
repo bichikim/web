@@ -1,12 +1,21 @@
+import {isSSR} from '@winter-love/utils'
 import {useElementEvent} from 'src/element-event'
 
-export type OnOfflineCallBack = () => any
-export type OnOnlineCallBack = () => any
+export type OnOfflineCallBack = (event: Event) => unknown
+export type OnOnlineCallBack = (event: Event) => unknown
 
-export const onOffline = (callback: OnOfflineCallBack) => {
-  useElementEvent(window, 'offline', callback, {capture: false})
+export const onOffline = (handler: OnOfflineCallBack) => {
+  if (isSSR()) {
+    return
+  }
+
+  useElementEvent(window, 'offline', handler, {capture: false, immediate: true})
 }
 
-export const onOnline = (callback: OnOnlineCallBack) => {
-  useElementEvent(window, 'online', callback, {capture: false})
+export const onOnline = (handler: OnOnlineCallBack) => {
+  if (isSSR()) {
+    return
+  }
+
+  useElementEvent(window, 'online', handler, {capture: false})
 }
