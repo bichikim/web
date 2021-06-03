@@ -113,7 +113,7 @@ importers:
 
   packages/library:
     specifiers:
-      '@winter-love/use': 1.0.3
+      '@winter-love/use': ^1.0.4
       '@winter-love/utils': 1.0.3
     dependencies:
       '@winter-love/use': link:../use
@@ -180,6 +180,20 @@ importers:
     devDependencies:
       gulp: 4.0.2
 
+  packages/vare:
+    specifiers:
+      '@vue/devtools-api': ^6.0.0-beta.12
+      vue: ^3.0.11
+      vue-demi: ^0.7.4
+    dependencies:
+      '@vue/devtools-api': 6.0.0-beta.12
+      vue-demi: 0.7.5_vue@3.0.11
+    devDependencies:
+      vue: 3.0.11
+
+  packages/vare-dev-tools:
+    specifiers: {}
+
   packages/web-quasar:
     specifiers:
       '@quasar/app': ^3.0.0-beta.15
@@ -190,7 +204,7 @@ importers:
       '@vue/eslint-config-standard': ^6.0.0
       '@vue/eslint-config-typescript': ^7.0.0
       '@vue/reactivity': ^3.0.11
-      '@winter-love/use': ^1.0.3
+      '@winter-love/use': ^1.0.4
       '@winter-love/utils': ^1.0.3
       autoprefixer: ^9.8.6
       babel-loader: ^8.2.2
@@ -217,7 +231,7 @@ importers:
       core-js: 3.11.0
       mitt: 2.1.0
       quasar: 2.0.0-beta.12
-      vare: 1.0.3_vue@3.0.11
+      vare: link:../vare
       vue: 3.0.11
       vue-i18n: 9.1.6_vue@3.0.11
       vue-router: 4.0.5_vue@3.0.11
@@ -4633,6 +4647,10 @@ packages:
     optionalDependencies:
       prettier: 1.19.1
     dev: true
+
+  /@vue/devtools-api/6.0.0-beta.12:
+    resolution: {integrity: sha512-PtHmAxFmCyCElV7uTWMrXj+fefwn4lCfTtPo9fPw0SK8/7e3UaFl8IL7lnugJmNFfeKQyuTkSoGvTq1uDaRF6Q==}
+    dev: false
 
   /@vue/devtools-api/6.0.0-beta.7:
     resolution: {integrity: sha512-mIfqX8ZF6s2ulelIzfxGk9sFoigpoeK/2/DlWrtBGWfvwaK3kR1P2bxNkZ0LbJeuKHfcRP6hGZtGist7nxUN9A==}
@@ -18134,16 +18152,6 @@ packages:
     resolution: {integrity: sha1-HCQ6ULWVwb5Up1S/7OhWO5/42BM=}
     engines: {node: '>= 0.10'}
     dev: true
-
-  /vare/1.0.3_vue@3.0.11:
-    resolution: {integrity: sha512-nQGBDvvRu9ZrRKoZIgfBclNYKi5yTr+CqMMebA5L2elK1KhrR25KZ++OcsC4GFiTXLfWrO66ysJmlcC7AqX1Fw==}
-    dependencies:
-      '@vue/devtools-api': 6.0.0-beta.7
-      vue-demi: 0.7.5_vue@3.0.11
-    transitivePeerDependencies:
-      - '@vue/composition-api'
-      - vue
-    dev: false
 
   /vary/1.1.2:
     resolution: {integrity: sha1-IpnwLG3tMNSllhsLn3RSShj2NPw=}

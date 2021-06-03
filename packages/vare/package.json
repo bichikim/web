@@ -1,0 +1,34 @@
+{
+  "name": "vare",
+  "version": "1.0.3",
+  "description": "share state for vue component ",
+  "author": "bichi@live.co.kr",
+  "repository": "git@github.com:winter-love/web.git",
+  "main": "lib/index.js",
+  "unpkg": "lib/index.global.js",
+  "module": "lib/index.module.js",
+  "source": "src/index.ts",
+  "types": "lib/index.d.ts",
+  "files": [
+    "lib/*"
+  ],
+  "keywords": [
+    "typescript",
+    "vuex",
+    "store",
+    "vue",
+    "vue3",
+    "vuejs",
+    "vuejs3",
+    "redux",
+    "reactive",
+    "mobx"
+  ],
+  "dependencies": {
+    "@vue/devtools-api": "^6.0.0-beta.12",
+    "vue-demi": "^0.7.4"
+  },
+  "devDependencies": {
+    "vue": "^3.0.11"
+  }
+}

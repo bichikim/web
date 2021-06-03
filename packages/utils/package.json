@@ -11,12 +11,15 @@
     "utils",
     "functional"
   ],
+  "files": [
+    "lib/*"
+  ],
   "repository": "git@github.com:winter-love/web.git",
   "license": "MIT",
   "scripts": {
     "build": "gulp build",
     "dev": "gulp dev",
-    "deploy": "npm run build && npm publish --access public"
+    "prepublish": "pnpm run build"
   },
   "dependencies": {
     "micro-memoize": "^4.0.9",

@@ -3,7 +3,15 @@ import {ref, Ref} from 'vue-demi'
 export type Recipe<Args extends any[], Data> = (...args: Args) => Promise<Data>
 
 export interface UsePromiseOptions<Args extends any[]> {
-  immediate?: boolean | Args
+  /**
+   * execute the promise right after initialization
+   */
+  immediate?: Args
+  /**
+   * Sets the dataRef to undefined before executing
+   * @default true
+   */
+  cleanOnExecute?: boolean
 }
 
 export interface UsePromiseReturnType<Data, Args extends any[], Error> {
@@ -19,7 +27,7 @@ export const usePromise = <Data, Args extends any[], Error = any>(
   recipe: Recipe<Args, Data>,
   options: UsePromiseOptions<Args> = {},
 ): UsePromiseReturnType<Data, Args, Error> => {
-  const {immediate} = options
+  const {immediate, cleanOnExecute = true} = options
   const dataRef = ref<Data | undefined>()
   const countRef = ref<number>(0)
   const fetchingRef = ref<boolean>(false)
@@ -27,8 +35,10 @@ export const usePromise = <Data, Args extends any[], Error = any>(
   const promiseRef = ref<Promise<Data> | undefined>()
 
   const execute = (...args: Args) => {
+    if (cleanOnExecute) {
+      dataRef.value = undefined
+    }
     fetchingRef.value = true
-    dataRef.value = undefined
     errorRef.value = undefined
     countRef.value += 1
 
@@ -48,15 +58,8 @@ export const usePromise = <Data, Args extends any[], Error = any>(
     return promise
   }
 
-  if (immediate) {
-    let args: any[]
-    if (typeof immediate === 'boolean') {
-      args = []
-    } else {
-      args = [...immediate]
-    }
-
-    promiseRef.value = execute(...args as any)
+  if (Array.isArray(immediate)) {
+    promiseRef.value = execute(...immediate)
   }
 
   return {
