@@ -1,6 +1,7 @@
 {
   "name": "@winter-love/server",
   "version": "1.0.2",
+  "private": true,
   "scripts": {
     "build": "ttsc",
     "dev": "cross-env NODE_ENV=development tsc-watch --compiler ttypescript/bin/tsc --onSuccess \"node ./lib/index.js\" "

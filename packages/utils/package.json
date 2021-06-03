@@ -1,7 +1,7 @@
 {
   "name": "@winter-love/utils",
   "version": "1.0.2",
-  "private": true,
+  "private": false,
   "license": "UNLICENSED",
   "main": "lib/index.js",
   "source": "src/index.ts",
