@@ -149,13 +149,11 @@ importers:
       '@types/sinon': ^10.0.2
       '@vue/test-utils': 2.0.0-rc.6
       '@winter-love/utils': ^1.0.2
-      lodash: ^4.17.20
       sinon: ^11.1.1
       vue: 3.0.11
       vue-demi: ^0.9.1
     dependencies:
       '@winter-love/utils': link:../utils
-      lodash: 4.17.21
       vue-demi: 0.9.1_vue@3.0.11
     devDependencies:
       '@types/sinon': 10.0.2
@@ -165,19 +163,13 @@ importers:
 
   packages/utils:
     specifiers:
-      '@types/styled-system__core': ^5.1.2
-      concurrently: ^5.3.0
       gulp: ^4.0.2
-      lodash: ^4.17.20
       micro-memoize: ^4.0.9
       react-fast-compare: ^3.2.0
     dependencies:
-      lodash: 4.17.21
       micro-memoize: 4.0.9
       react-fast-compare: 3.2.0
     devDependencies:
-      '@types/styled-system__core': 5.1.2
-      concurrently: 5.3.0
       gulp: 4.0.2
 
   packages/web-quasar:
@@ -3903,12 +3895,6 @@ packages:
     resolution: {integrity: sha512-RJJrrySY7A8havqpGObOB4W92QXKJo63/jFLLgpvOtsGUqbQZ9Sbgl35KMm1DjC6j7AvmmU2bIno+3IyEaemaw==}
     dev: true
 
-  /@types/styled-system__core/5.1.2:
-    resolution: {integrity: sha512-WXM53he9Q/SKL69AdT48XljTNQjL0eN5JxJ35BifK0Tmy1C1g0emHjOiBnycADmERL7tpvBBV2Od0xEBzgInWw==}
-    dependencies:
-      csstype: 3.0.8
-    dev: true
-
   /@types/tapable/1.0.7:
     resolution: {integrity: sha512-0VBprVqfgFD7Ehb2vd8Lh9TG3jP98gvr8rgehQqzztZNI7o8zS8Ad4jyZneKELphpuE212D8J70LnSNQSyO6bQ==}
     dev: true
@@ -7046,22 +7032,6 @@ packages:
       typedarray: 0.0.6
     dev: true
 
-  /concurrently/5.3.0:
-    resolution: {integrity: sha512-8MhqOB6PWlBfA2vJ8a0bSFKATOdWlHiQlk11IfmQBPaHVP8oP2gsh2MObE6UR3hqDHqvaIvLTyceNW6obVuFHQ==}
-    engines: {node: '>=6.0.0'}
-    hasBin: true
-    dependencies:
-      chalk: 2.4.2
-      date-fns: 2.21.1
-      lodash: 4.17.21
-      read-pkg: 4.0.1
-      rxjs: 6.6.7
-      spawn-command: 0.0.2-1
-      supports-color: 6.1.0
-      tree-kill: 1.2.2
-      yargs: 13.3.2
-    dev: true
-
   /condense-newlines/0.2.1:
     resolution: {integrity: sha1-PemFVTE5R10yUCyDsC9gaE0kxV8=}
     engines: {node: '>=0.10.0'}
@@ -7659,10 +7629,6 @@ packages:
   /csstype/2.6.17:
     resolution: {integrity: sha512-u1wmTI1jJGzCJzWndZo8mk4wnPTZd1eOIYTYvuEyOQGfmDl3TrabCCfKnOC86FZwW/9djqTl933UF/cS425i9A==}
 
-  /csstype/3.0.8:
-    resolution: {integrity: sha512-jXKhWqXPmlUeoQnF/EhTtTl4C9SnrxSH/jZUih3jmO6lBKr99rP3/+FmrMj4EFpOXzMtXHAZkd3x0E6h6Fgflw==}
-    dev: true
-
   /currently-unhandled/0.4.1:
     resolution: {integrity: sha1-mI3zP+qxke95mmE2nddsF635V+o=}
     engines: {node: '>=0.10.0'}
@@ -7702,11 +7668,6 @@ packages:
       abab: 2.0.5
       whatwg-mimetype: 2.3.0
       whatwg-url: 8.5.0
-    dev: true
-
-  /date-fns/2.21.1:
-    resolution: {integrity: sha512-m1WR0xGiC6j6jNFAyW4Nvh4WxAi4JF4w9jRJwSI8nBmNcyZXPcP9VUQG+6gHQXAmqaGEKDKhOqAtENDC941UkA==}
-    engines: {node: '>=0.11'}
     dev: true
 
   /dateformat/3.0.3:
@@ -12502,6 +12463,7 @@ packages:
 
   /lodash/4.17.21:
     resolution: {integrity: sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==}
+    dev: true
 
   /log-symbols/2.2.0:
     resolution: {integrity: sha512-VeIAFslyIerEJLXHziedo2basKbMKtTw3vfn5IzG0XTjhAVEJyNHnL2p7vc+wBDSdQuUpNw3M2u6xb9QsAY5Eg==}
@@ -15303,15 +15265,6 @@ packages:
       path-type: 3.0.0
     dev: true
 
-  /read-pkg/4.0.1:
-    resolution: {integrity: sha1-ljYlN48+HE1IyFhytabsfV0JMjc=}
-    engines: {node: '>=6'}
-    dependencies:
-      normalize-package-data: 2.5.0
-      parse-json: 4.0.0
-      pify: 3.0.0
-    dev: true
-
   /read-pkg/5.2.0:
     resolution: {integrity: sha512-Ug69mNOpfvKDAc2Q8DRpMjjzdtrnv9HcSMX+4VsZxD1aZ6ZzrIE7rlzXBtWTyhULSMKg076AW6WR5iZpD0JiOg==}
     engines: {node: '>=8'}
@@ -16527,10 +16480,6 @@ packages:
     engines: {node: '>= 0.10'}
     dev: true
 
-  /spawn-command/0.0.2-1:
-    resolution: {integrity: sha1-YvXpRmmBwbeW3Fkpk34RycaSG9A=}
-    dev: true
-
   /spdx-correct/3.1.1:
     resolution: {integrity: sha512-cOYcUWwhCuHCXi49RhFRCyJEK3iPj1Ziz9DpViV3tbZOwXD49QzIN3MpOLJNxh2qwq2lJJZaKMVw9qNi4jTC0w==}
     dependencies:
@@ -17502,6 +17451,7 @@ packages:
   /tree-kill/1.2.2:
     resolution: {integrity: sha512-L0Orpi8qGpRG//Nd+H90vFB+3iHnue1zSSGmNOOCh1GLJ7rUKVwV2HvijphGQS2UmhUZewS9VgvxYIdgr+fG1A==}
     hasBin: true
+    dev: false
 
   /trim-newlines/1.0.0:
     resolution: {integrity: sha1-WIeWa7WCpFA6QetST301ARgVphM=}

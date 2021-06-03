@@ -5,6 +5,19 @@
   "source": "src/index.ts",
   "module": "lib/index.module.js",
   "types": "lib/index.d.ts",
+  "description": "vue composable utils",
+  "keywords": [
+    "typescript",
+    "vue",
+    "vue3",
+    "vuejs",
+    "vuejs3",
+    "ref",
+    "hook",
+    "composable"
+  ],
+  "repository": "git@github.com:winter-love/web.git",
+  "license": "MIT",
   "scripts": {
     "build": "gulp build",
     "dev": "gulp dev",
@@ -12,7 +25,6 @@
   },
   "dependencies": {
     "@winter-love/utils": "^1.0.2",
-    "lodash": "^4.17.20",
     "vue-demi": "^0.9.1"
   },
   "devDependencies": {

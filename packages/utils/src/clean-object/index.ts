@@ -1,11 +1,17 @@
-import pickBy from 'lodash/fp/pickBy'
-import pipe from 'lodash/fp/pipe'
-import isUndefined from 'lodash/isUndefined'
-import {not} from 'src/functional-programming'
+import {AnyObject} from 'src/types'
 
 /**
  * clean undefined value
  * but don’t make a case to use this one
- * @param o
+ * @param value
  */
-export const cleanObject = pickBy(pipe(isUndefined, not))
+export const cleanObject = (value: AnyObject) => {
+  return Object.keys(value).reduce((result, key) => {
+    const _value = value[key]
+    if (typeof _value === 'undefined' || _value == null) {
+      return result
+    }
+    result[key] = _value
+    return result
+  }, {} as AnyObject)
+}

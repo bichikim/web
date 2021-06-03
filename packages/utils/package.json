@@ -2,24 +2,27 @@
   "name": "@winter-love/utils",
   "version": "1.0.2",
   "private": false,
-  "license": "UNLICENSED",
   "main": "lib/index.js",
   "source": "src/index.ts",
   "module": "lib/index.module.js",
   "types": "lib/index.d.ts",
+  "keywords": [
+    "typescript",
+    "utils",
+    "functional"
+  ],
+  "repository": "git@github.com:winter-love/web.git",
+  "license": "MIT",
   "scripts": {
     "build": "gulp build",
     "dev": "gulp dev",
     "deploy": "npm run build && npm publish --access public"
   },
   "dependencies": {
-    "lodash": "^4.17.20",
     "micro-memoize": "^4.0.9",
     "react-fast-compare": "^3.2.0"
   },
   "devDependencies": {
-    "@types/styled-system__core": "^5.1.2",
-    "concurrently": "^5.3.0",
     "gulp": "^4.0.2"
   },
   "gitHead": "7a6e96543343520b8895ec575ebdc847e2c32e60"
