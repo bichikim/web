@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/use",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "main": "lib/index.js",
   "source": "src/index.ts",
   "module": "lib/index.module.js",
@@ -11,14 +11,14 @@
     "deploy": "npm run build && npm publish --access public"
   },
   "dependencies": {
-    "@winter-love/utils": "^1.0.1",
+    "@winter-love/utils": "^1.0.2",
     "lodash": "^4.17.20",
     "vue-demi": "^0.9.1"
   },
   "devDependencies": {
+    "@types/sinon": "^10.0.2",
     "@vue/test-utils": "2.0.0-rc.6",
-    "vue": "3.0.11",
     "sinon": "^11.1.1",
-    "@types/sinon": "^10.0.2"
+    "vue": "3.0.11"
   }
 }
