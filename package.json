@@ -10,6 +10,7 @@
   "repository": "git@github.com:winter-love/web.git",
   "scripts": {
     "build:web": "pnpm run build --filter @winter-love/web... --stream",
+    "build:libraries": "pnpm install && pnpm run build --filter libraries... --stream",
     "clean": "rimraf node_modules && lerna clean -y",
     "dev:server": "pnpm run dev --filter @winter-love/server... --parallel",
     "deploy": "pnpm install && pnpm run deploy --filter @winter-love/* --parallel",

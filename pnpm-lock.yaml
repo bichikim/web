@@ -111,6 +111,14 @@ importers:
       vue-jest: 4.0.1
       vue-pwa-asset-generator: 1.6.0
 
+  packages/library:
+    specifiers:
+      '@winter-love/use': 1.0.3
+      '@winter-love/utils': 1.0.3
+    dependencies:
+      '@winter-love/use': link:../use
+      '@winter-love/utils': link:../utils
+
   packages/server:
     specifiers:
       '@types/ramda': ^0.27.38

@@ -1,18 +1,19 @@
-import {ref, watch, toRef, Ref} from 'vue'
+import {ref, watch, toRef, Ref} from 'vue-demi'
 
 export type IsEqual<Value> = (value: Value, oldValue: Value) => boolean
 
+export type ToMutRefReturnType<Props extends Record<string, any>, Key extends keyof Props> = Ref<Props[Key]>
 /**
- * toMutRef is not readonly unlike toRef in vue. The returned ref value is mutable.
+ * toMutRef 는 vue 에 toRef 와 달리 readonly 가 아닙니다 리턴된 ref 값은 변경 가능합니다
  * @param props
  * @param key
- * @param isEqual If this function is provided, the value is updated with a new value after checking through this function. If not provided, the value is always updated with the new value.
+ * @param isEqual 변경 할지 결정하는 함수가 있을 경우 확인 후 업데이트 합니다 이 함수를 제공하지 않으면 항상 업데이트 합니다
  */
 export const toMutRef = <Props extends Record<string, any>, Key extends keyof Props>(
   props: Props,
   key: Key,
   isEqual?: IsEqual<[Props[Key]]>,
-): Ref<Props[Key]> => {
+): ToMutRefReturnType<Props, Key> => {
   const valueRef = toRef(props, key)
   const valueMut = ref<Props[Key]>(valueRef.value)
 

@@ -1,4 +1,4 @@
-import {ref} from 'vue-demi'
+import {ref, Ref} from 'vue-demi'
 
 export type Recipe<Args extends any[], Data> = (...args: Args) => Promise<Data>
 
@@ -6,10 +6,19 @@ export interface UsePromiseOptions<Args extends any[]> {
   immediate?: boolean | Args
 }
 
+export interface UsePromiseReturnType<Data, Args extends any[], Error> {
+  count: Ref<number>
+  data: Ref<Data | undefined>
+  error: Ref<Error | undefined>
+  execute: (...args: Args) => Promise<Data>
+  fetching: Ref<boolean>
+  promise: Ref<Promise<Data>| undefined>
+}
+
 export const usePromise = <Data, Args extends any[], Error = any>(
   recipe: Recipe<Args, Data>,
   options: UsePromiseOptions<Args> = {},
-) => {
+): UsePromiseReturnType<Data, Args, Error> => {
   const {immediate} = options
   const dataRef = ref<Data | undefined>()
   const countRef = ref<number>(0)
