@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/utils",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "private": false,
   "main": "lib/index.js",
   "source": "src/index.ts",

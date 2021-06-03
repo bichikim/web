@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/use",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "main": "lib/index.js",
   "source": "src/index.ts",
   "module": "lib/index.module.js",
@@ -24,7 +24,7 @@
     "deploy": "npm run build && npm publish --access public"
   },
   "dependencies": {
-    "@winter-love/utils": "^1.0.2",
+    "@winter-love/utils": "^1.0.3",
     "vue-demi": "^0.9.1"
   },
   "devDependencies": {
