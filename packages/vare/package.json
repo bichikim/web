@@ -12,6 +12,11 @@
   "files": [
     "lib/*"
   ],
+  "scripts": {
+    "build": "gulp build",
+    "dev": "gulp dev",
+    "prepare": "pnpm run build"
+  },
   "keywords": [
     "typescript",
     "vuex",
@@ -26,6 +31,7 @@
   ],
   "dependencies": {
     "@vue/devtools-api": "^6.0.0-beta.12",
+    "@winter-love/utils": "1.0.6",
     "vue-demi": "^0.7.4"
   },
   "devDependencies": {
