@@ -1,12 +1,12 @@
 {
   "name": "libraries",
   "private": true,
-  "version": "1.0.5",
+  "version": "1.0.6",
   "scripts": {
     "build": "echo building for libraries"
   },
   "dependencies": {
-    "@winter-love/use": "^1.0.5",
-    "@winter-love/utils": "^1.0.5"
+    "@winter-love/use": "^1.0.6",
+    "@winter-love/utils": "^1.0.6"
   }
 }

@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/use",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "main": "lib/index.js",
   "source": "src/index.ts",
   "module": "lib/index.module.js",
@@ -27,7 +27,7 @@
     "prepare": "pnpm run build"
   },
   "dependencies": {
-    "@winter-love/utils": "^1.0.5",
+    "@winter-love/utils": "^1.0.6",
     "vue-demi": "^0.9.1"
   },
   "devDependencies": {

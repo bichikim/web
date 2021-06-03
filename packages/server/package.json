@@ -1,13 +1,13 @@
 {
   "name": "@winter-love/server",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "private": true,
   "scripts": {
     "build": "ttsc",
     "dev": "cross-env NODE_ENV=development tsc-watch --compiler ttypescript/bin/tsc --onSuccess \"node ./lib/index.js\" "
   },
   "dependencies": {
-    "@winter-love/utils": "^1.0.5",
+    "@winter-love/utils": "^1.0.6",
     "apollo-server": "^2.25.0",
     "class-validator": "^0.13.1",
     "express": "^4.17.1",
