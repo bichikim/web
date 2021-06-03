@@ -1,51 +1,50 @@
-import sinon, {SinonSpy} from 'sinon'
 import {onOffline, onOnline} from '../'
 
 describe('on-connection', () => {
   describe('onOffline', () => {
     it('should call onOffline handle', () => {
-      const myFake: SinonSpy = sinon.replace(window, 'addEventListener', sinon.fake()) as any
+      const myFake = jest.spyOn(window, 'addEventListener')
 
-      const fakeHandle = sinon.fake()
+      const fakeHandle = jest.fn()
 
       onOffline(fakeHandle)
 
-      expect(myFake.callCount).toBe(1)
+      expect(myFake.mock.calls.length).toBe(1)
 
-      expect(myFake.lastCall.firstArg).toBe('offline')
+      expect(myFake.mock.calls[0][0]).toBe('offline')
 
-      const handler = myFake.lastCall.args[1]
+      const handler: any = myFake.mock.calls[0][1]
 
-      expect(fakeHandle.callCount).toBe(0)
+      expect(fakeHandle.mock.calls.length).toBe(0)
 
       handler({})
 
-      expect(fakeHandle.callCount).toBe(1)
+      expect(fakeHandle.mock.calls.length).toBe(1)
 
-      sinon.restore()
+      myFake.mockRestore()
     })
   })
   describe('onOnline', () => {
     it('should call onOffline handle', () => {
-      const myFake: SinonSpy = sinon.replace(window, 'addEventListener', sinon.fake()) as any
+      const myFake = jest.spyOn(window, 'addEventListener')
 
-      const fakeHandle = sinon.fake()
+      const fakeHandle = jest.fn()
 
       onOnline(fakeHandle)
 
-      expect(myFake.callCount).toBe(1)
+      expect(myFake.mock.calls.length).toBe(1)
 
-      expect(myFake.lastCall.firstArg).toBe('online')
+      expect(myFake.mock.calls[0][0]).toBe('online')
 
-      const handler = myFake.lastCall.args[1]
+      const handler: any = myFake.mock.calls[0][1]
 
-      expect(fakeHandle.callCount).toBe(0)
+      expect(fakeHandle.mock.calls.length).toBe(0)
 
       handler({})
 
-      expect(fakeHandle.callCount).toBe(1)
+      expect(fakeHandle.mock.calls.length).toBe(1)
 
-      sinon.restore()
+      myFake.mockRestore()
     })
   })
 })

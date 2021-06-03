@@ -1,11 +1,11 @@
-import {onUnmounted, ref, watch} from 'vue-demi'
+import {onMounted, onUnmounted, ref, watch} from 'vue-demi'
 import {MayRef} from 'src/types'
 import {wrapRef} from 'src/wrap-ref'
 
 export type Listener<ElementEvent> = (event: ElementEvent) => any
 
 export interface UseElementEventOptions {
-  immediate?: boolean
+  immediate?: boolean | 'mounted'
   once?: boolean
   passive?: boolean
   capture?: boolean
@@ -71,7 +71,11 @@ export function useElementEvent <Key extends string>(
     }
   })
 
-  if (immediate) {
+  if (immediate === 'mounted') {
+    onMounted(() => {
+      active()
+    })
+  } else if (immediate) {
     active()
   }
 

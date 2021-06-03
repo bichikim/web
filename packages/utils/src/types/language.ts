@@ -9,11 +9,11 @@ export type PartialRequired<T, K extends keyof T> = {
   [P in Exclude<keyof T, K>]: T[P]
 }
 
-export type AnyObject = Record<string | symbol | number, any>
+export type AnyObject<Value = any> = Record<string | symbol | number, Value>
 
-export type PureObject = Record<string, any>
+export type PureObject<Value = any> = Record<string, Value>
 
-export type AnyFunction<A extends any[] = any[], R = any> = (...args: A) => R
+export type AnyFunction<Args extends any[] = any[], Return = any> = (...args: Args) => Return
 
 export type DropTuple<T extends any[]> = T extends [any, ...infer Rest] ? Rest : any[]
 
