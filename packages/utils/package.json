@@ -18,8 +18,7 @@
   "license": "MIT",
   "scripts": {
     "build": "gulp build",
-    "dev": "gulp dev",
-    "prepublish": "pnpm run build"
+    "dev": "gulp dev"
   },
   "dependencies": {
     "micro-memoize": "^4.0.9",

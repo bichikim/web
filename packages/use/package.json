@@ -24,7 +24,7 @@
   "scripts": {
     "build": "gulp build",
     "dev": "gulp dev",
-    "prepublish": "pnpm run build"
+    "prepare": "pnpm run build"
   },
   "dependencies": {
     "@winter-love/utils": "^1.0.5",
