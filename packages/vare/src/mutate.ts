@@ -1,4 +1,5 @@
-import {FunctionObject, DropFunctionObject} from 'src/types'
+import {DropFunctionObject} from 'src/types'
+import {FunctionObject} from '@winter-love/utils'
 import {ref} from 'vue-demi'
 import {devtools} from './devtool'
 import {info, getIdentifier} from './info'

@@ -3,21 +3,27 @@ export interface EmptyObject {
   // empty
 }
 
+export type FunctionObject<T extends Record<string, AnyFunction>> = {
+  [P in keyof T]: (...args: Parameters<T[P]>) => ReturnType<T[P]>
+}
+
 export type PartialRequired<T, K extends keyof T> = {
   [P in K]-?: T[P]
 } & {
   [P in Exclude<keyof T, K>]: T[P]
 }
 
-export type AnyObject<Value = any> = Record<string | symbol | number, Value>
+export type ObjectKey = string | symbol | number
+
+export type AnyObject<Value = any> = Record<ObjectKey, Value>
 
 export type PureObject<Value = any> = Record<string, Value>
 
 export type AnyFunction<Args extends any[] = any[], Return = any> = (...args: Args) => Return
 
-export type DropTuple<T extends any[]> = T extends [any, ...infer Rest] ? Rest : any[]
+export type DropTuple<T extends any[], S = any> = T extends [S, ...infer Rest] ? Rest : any[]
 
-export type DropParameters<T extends (...args: any) => any> = DropTuple<Parameters<T>>
+export type DropParameters<T extends (...args: any) => any, S = any> = DropTuple<Parameters<T>, S>
 
 export type DropParametersFunction<T extends (...args: any) => any> = AnyFunction<DropParameters<T>, ReturnType<T>>
 

@@ -1,5 +1,5 @@
 import {ref, Ref} from 'vue-demi'
-import {devFreeze} from 'src/utils'
+import {freeze} from '@winter-love/utils'
 
 export type AsyncRefRecipe<Args extends any[], Return> = (...args: Args) => Promise<Return> | Return
 
@@ -29,7 +29,7 @@ export const asyncRef = <Args extends any[], Return>(recipe: AsyncRefRecipe<Args
     }
   }
 
-  return devFreeze({
+  return freeze({
     execute,
     isInProgress,
     error,

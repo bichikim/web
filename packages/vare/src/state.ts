@@ -1,4 +1,5 @@
-import {AnyObject, UnwrapNestedRefs} from 'src/types'
+import {UnwrapNestedRefs} from 'src/types'
+import {AnyObject} from '@winter-love/utils'
 import {reactive} from 'vue-demi'
 import {createUuid} from './utils'
 import {info} from 'src/info'

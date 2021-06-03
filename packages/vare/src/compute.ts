@@ -1,6 +1,6 @@
 import {info, getIdentifier, getName, getRelates, AllKinds} from 'src/info'
 import {AnyStateGroup, relateState} from 'src/state'
-import {AnyFunction, DropParameters} from 'src/types'
+import {AnyFunction, DropParameters} from '@winter-love/utils'
 import {ComputedRef, WritableComputedRef} from '@vue/reactivity'
 import {computed} from 'vue-demi'
 import {createUuid} from './utils'

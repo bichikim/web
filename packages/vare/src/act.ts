@@ -1,5 +1,5 @@
 import {info, getIdentifier} from 'src/info'
-import {AnyFunction, FunctionObject} from 'src/types'
+import {AnyFunction, FunctionObject} from '@winter-love/utils'
 import {createUuid} from 'src/utils'
 import {ref} from 'vue-demi'
 import {devtools} from './devtool'
