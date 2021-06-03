@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/use",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "main": "lib/index.js",
   "source": "src/index.ts",
   "module": "lib/index.module.js",
