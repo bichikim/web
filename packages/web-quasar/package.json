@@ -1,20 +1,35 @@
 {
   "name": "@winter-love/web",
   "version": "1.0.6",
-  "description": "A Quasar Framework app",
-  "productName": "Quasar App",
-  "author": "Bichi Kim <bichi@live.co.kr>",
   "private": true,
+  "description": "Tag everywhere everything using Quasar Framework",
+  "author": "Bichi Kim <bichi@live.co.kr>",
   "scripts": {
-    "dev": "quasar dev -m ssr",
+    "dev": "quasar dev",
+    "dev:ssr": "quasar dev -m ssr",
     "dev:pwa": "quasar dev -m pwa",
     "dev:android": "quasar dev -m capacitor -T android",
+    "dev:ios": "echo WIP",
     "clean": "rimraf node_modules",
     "build": "quasar build",
+    "deploy:web": "echo WIP",
+    "deploy:ios": "echo WIP",
+    "depoly:android": "echo WIP",
     "lint": "eslint --ext .js,.ts,.vue ./",
     "lint:fix": "eslint --fix --ext .js,.ts,.vue ./",
-    "test": "echo \"No test specified\" && exit 0"
+    "test": "echo please use root test"
   },
+  "browserslist": [
+    "last 10 Chrome versions",
+    "last 10 Firefox versions",
+    "last 4 Edge versions",
+    "last 7 Safari versions",
+    "last 8 Android versions",
+    "last 8 ChromeAndroid versions",
+    "last 8 FirefoxAndroid versions",
+    "last 10 iOS versions",
+    "last 5 Opera versions"
+  ],
   "dependencies": {
     "@quasar/extras": "^1.10.4",
     "@vue/reactivity": "^3.0.11",
@@ -46,20 +61,10 @@
     "typescript": "~4.1.5",
     "workbox-webpack-plugin": "^5.0.0"
   },
-  "browserslist": [
-    "last 10 Chrome versions",
-    "last 10 Firefox versions",
-    "last 4 Edge versions",
-    "last 7 Safari versions",
-    "last 8 Android versions",
-    "last 8 ChromeAndroid versions",
-    "last 8 FirefoxAndroid versions",
-    "last 10 iOS versions",
-    "last 5 Opera versions"
-  ],
   "engines": {
     "node": ">= 10.18.1",
     "npm": ">= 6.13.4",
     "yarn": ">= 1.21.1"
-  }
+  },
+  "productName": "Quasar App"
 }

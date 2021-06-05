@@ -1,9 +1,21 @@
 {
   "name": "vare",
   "version": "1.0.5",
-  "description": "share state for vue component ",
-  "author": "bichi@live.co.kr",
+  "description": "share state for vue components",
+  "keywords": [
+    "typescript",
+    "vuex",
+    "store",
+    "vue",
+    "vue3",
+    "vuejs",
+    "vuejs3",
+    "redux",
+    "reactive",
+    "mobx"
+  ],
   "repository": "git@github.com:winter-love/web.git",
+  "author": "bichi@live.co.kr",
   "main": "lib/index.js",
   "unpkg": "lib/index.global.js",
   "module": "lib/index.module.js",
@@ -17,18 +29,6 @@
     "dev": "gulp dev",
     "prepare": "pnpm run build"
   },
-  "keywords": [
-    "typescript",
-    "vuex",
-    "store",
-    "vue",
-    "vue3",
-    "vuejs",
-    "vuejs3",
-    "redux",
-    "reactive",
-    "mobx"
-  ],
   "dependencies": {
     "@vue/devtools-api": "^6.0.0-beta.12",
     "@winter-love/utils": "1.0.6",

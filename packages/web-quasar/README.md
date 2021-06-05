@@ -1,6 +1,6 @@
-# Quasar App (web-quasar)
+# Unknown App Using Quasar
 
-A Quasar Framework app
+Tag everywhere everything
 
 ## Install the dependencies
 ```bash
@@ -28,5 +28,5 @@ See [Configuring quasar.conf.js](https://quasar.dev/quasar-cli/quasar-conf-js).
 
 ## Known Issue
 
-postcss-loader version should be fixed 3.0.0 version
-pnpm does not solve this
+~~postcss-loader version should be fixed 3.0.0 version
+pnpm does not solve this~~ (going to use emotion.js)

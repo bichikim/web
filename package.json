@@ -1,13 +1,13 @@
 {
   "name": "web",
   "private": true,
+  "repository": "git@github.com:winter-love/web.git",
+  "author": "bichi@live.co.kr",
   "workspaces": {
     "packages": [
       "packages/*"
     ]
   },
-  "author": "bichi@live.co.kr",
-  "repository": "git@github.com:winter-love/web.git",
   "scripts": {
     "build:web": "pnpm run build --filter @winter-love/web... --stream",
     "build:libraries": "pnpm install && pnpm run build --filter libraries... --stream",
@@ -29,6 +29,7 @@
     "@quasar/app": "^3.0.0-beta.15",
     "@rollup/plugin-alias": "^3.1.2",
     "@rollup/plugin-node-resolve": "^11.2.1",
+    "@testing-library/jest-dom": "^5.13.0",
     "@types/chai": "^4.2.16",
     "@types/gulp": "^4.0.8",
     "@types/jest": "^26.0.22",
@@ -49,7 +50,6 @@
     "@zerollup/ts-transform-paths": "^1.7.18",
     "del": "^6.0.0",
     "eslint": "^7.24.0",
-    "@testing-library/jest-dom": "^5.13.0",
     "eslint-plugin-import": "^2.22.1",
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-promise": "^4.3.1",

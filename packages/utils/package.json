@@ -1,21 +1,22 @@
 {
   "name": "@winter-love/utils",
   "version": "1.0.6",
+  "description": "useful javascript utils",
   "private": false,
-  "main": "lib/index.js",
-  "source": "src/index.ts",
-  "module": "lib/index.module.js",
-  "types": "lib/index.d.ts",
   "keywords": [
     "typescript",
     "utils",
     "functional"
   ],
+  "repository": "git@github.com:winter-love/web.git",
+  "license": "MIT",
+  "main": "lib/index.js",
+  "module": "lib/index.module.js",
+  "source": "src/index.ts",
+  "types": "lib/index.d.ts",
   "files": [
     "lib/*"
   ],
-  "repository": "git@github.com:winter-love/web.git",
-  "license": "MIT",
   "scripts": {
     "build": "gulp build",
     "dev": "gulp dev",
