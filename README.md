@@ -1,10 +1,8 @@
+# Web Project 
+(In fact, App, Web, Server and Libraries)
 
 [![Actions Status](https://github.com/innovirus/web/workflows/Build%20and%20Deploy/badge.svg)](https://github.com/innovirus/web/actions)
 [![lerna](https://img.shields.io/badge/maintained%20with-lerna-cc00ff.svg)](https://lerna.js.org/)
-
-# web
-Web project MVP
-
 
 ## Project setup
 ```
@@ -15,24 +13,19 @@ pnpm i
 
 run all
 ``` shell
-# @vue/cli
-pnpm run dev:web
-
-# snow-pack
-pnpm run dev:web-snow
-
-# quasar
-pnpm run dev:web-quasar
-
-# vite
-pnpm run dev:web-vite
+# app (web(spa), ios, android, pwa, ssr)
+pnpm run dev:spa
+pnpm run dev:pwa
+pnpm run dev:ios
+pnpm run dev:android
+pnpm run dev:ssr
 
 # server
-pnpm run server
+pnpm run dev:server
 
 ```
 
-### Compile and minify files for production
+### Compile and minify files for production (WIP)
 ```
 pnpm run build:web[-name]
 ```
@@ -54,10 +47,15 @@ pnpm run icons
 
 ## URLS
 
-service [url](https://web-prod-bc72c.firebaseapp.com/) 
+WIP
+
+## Do Not
+
+### root packages.json 에 version 을 적지 마세요.
+실수로 버전에 관련된 스크립트가 돌 수 있는 것을 방지 하기 위해 지웠습니다.
 
 
 ## unknown issue
 
-packages 안에 vue 버전이 다르면 @vue/runtime-dom @vue/runtime-core 타입을 *.vue 에서 못 추적 하는 경우가 생김
+packages 안에 vue 버전이 다르면 @vue/runtime-dom @vue/runtime-core 타입추적을 *.vue 에서 못하는 경우가 생깁니다.
 
