@@ -75,7 +75,7 @@ export type EmptyObject = {
   // empty
 }
 
-const toBeClassName = (value: any): ClassValue => {
+export const toBeClassName = (value: any): ClassValue => {
   if (typeof value === 'function') {
     return
   }
