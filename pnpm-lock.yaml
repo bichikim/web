@@ -134,10 +134,12 @@ importers:
 
   packages/library:
     specifiers:
+      '@winter-love/emotion': ^1.0.3
       '@winter-love/use': ^1.0.6
       '@winter-love/utils': ^1.0.6
       vare: 1.0.5
     dependencies:
+      '@winter-love/emotion': link:../emotion
       '@winter-love/use': link:../use
       '@winter-love/utils': link:../utils
       vare: link:../vare
