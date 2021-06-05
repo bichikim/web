@@ -6,7 +6,6 @@ module.exports = {
           'module-resolver',
           {
             alias: {
-              api: './api',
               src: './src',
             },
             cwd: 'packagejson',

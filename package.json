@@ -49,6 +49,7 @@
     "@zerollup/ts-transform-paths": "^1.7.18",
     "del": "^6.0.0",
     "eslint": "^7.24.0",
+    "@testing-library/jest-dom": "^5.13.0",
     "eslint-plugin-import": "^2.22.1",
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-promise": "^4.3.1",

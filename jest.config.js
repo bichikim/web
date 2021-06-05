@@ -1,5 +1,3 @@
-// const path = require('path')
-
 module.exports = {
   cacheDirectory: './.jest/cache',
   collectCoverageFrom: [
@@ -9,18 +7,18 @@ module.exports = {
     '!<rootDir>/**/__tests__/*.{ts,tsx}',
   ],
   maxWorkers: '70%',
-  // moduleFileExtensions: ['js', 'jsx', 'ts', 'tsx'],
-  //
-  // moduleNameMapper: {
-  //   '\\.(css|scss)$': 'identity-obj-proxy',
-  //
-  //   '\\.(jpg|jpeg|png)$': path.resolve('__mocks__/file.mock.ts'),
-  //   '\\.svg$': path.resolve('__mocks__/svg.mock.ts'),
-  // },
+  moduleFileExtensions: ['js', 'jsx', 'ts', 'tsx'],
 
-  // setupFilesAfterEnv: [
-  //   // path.resolve(__dirname, 'jest.setup.js'),
-  // ],
+  moduleNameMapper: {
+    '\\.(css|scss)$': 'identity-obj-proxy',
+
+    '\\.(jpg|jpeg|png|svg)$': '<rootDir>/__mocks__/file.mock.ts',
+    '\\.svg$': '<rootDir>/__mocks__/svg.mock.ts',
+  },
+
+  setupFilesAfterEnv: [
+    // path.resolve(__dirname, 'jest.setup.js'),
+  ],
 
   preset: '@vue/cli-plugin-unit-jest',
 
@@ -29,8 +27,11 @@ module.exports = {
   },
 
   projects: [
-    '<rootDir>/packages/*/jest.config.js',
-    '<rootDir>/scripts/jest.config.js',
+    {
+      displayName: 'test',
+      setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
+      testMatch: ['<rootDir>/packages/*/src/**/__tests__/*.spec.ts'],
+    },
   ],
 
   testPathIgnorePatterns: [

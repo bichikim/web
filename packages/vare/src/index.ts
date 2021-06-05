@@ -1,3 +1,4 @@
+import {plugin} from './plugin'
 export * from './utils'
 export * from './compute'
 export * from './state'
@@ -6,3 +7,5 @@ export * from './subscribe'
 export * from './act'
 export * from './info'
 export * from './async-ref'
+export * from './plugin'
+export default plugin

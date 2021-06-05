@@ -1,6 +1,7 @@
 import {onMounted, onUnmounted, ref, watch} from 'vue-demi'
 import {MayRef} from 'src/types'
 import {wrapRef} from 'src/wrap-ref'
+import {isInInstance} from 'src/is-in-instance'
 
 export type Listener<ElementEvent> = (event: ElementEvent) => any
 
@@ -35,6 +36,7 @@ export function useElementEvent <Key extends string>(
   options: UseElementEventOptions = {},
 ): UseElementEventReturnType {
   const {immediate = true, once = false, passive = true, capture = false} = options
+  const _isInInstance = isInInstance()
   const elementRef = wrapRef(element)
   const isActive = ref(false)
 
@@ -71,7 +73,7 @@ export function useElementEvent <Key extends string>(
     }
   })
 
-  if (immediate === 'mounted') {
+  if (immediate === 'mounted' && _isInInstance) {
     onMounted(() => {
       active()
     })
@@ -79,9 +81,11 @@ export function useElementEvent <Key extends string>(
     active()
   }
 
-  onUnmounted(() => {
-    inactive()
-  })
+  if (_isInInstance) {
+    onUnmounted(() => {
+      inactive()
+    })
+  }
 
   return {
     active,

@@ -30,6 +30,7 @@
   "include": [
     "**/*.ts",
     "gulpfile.ts",
+    "jest.setup.ts",
   ],
   "exclude": [
     "node_modules"

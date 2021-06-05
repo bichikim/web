@@ -1,0 +1,9 @@
+{
+  "name": "@winter-love/vue-svg-loader",
+  "main": "src/index.js",
+  "version": "1.0.0",
+  "dependencies": {
+    "svgo": "^2.3.0",
+    "loader-utils": "^2.0.0"
+  }
+}
