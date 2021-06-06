@@ -1,8 +1,10 @@
 // This middleware should execute as last one
 // since it captures everything and tries to
 // render the page with Vue
+import createInstance from '@emotion/server/create-instance'
+import {SsrMiddlewareCallback} from '@quasar/app'
 
-export default ({app, resolve, render, serve}) => {
+const render: SsrMiddlewareCallback = ({app, resolve, render, serve}) => {
   // we capture any other Express route and hand it
   // over to Vue and Vue Router to render our page
   app.get(resolve.urlPath('*'), (req, res) => {
@@ -50,3 +52,5 @@ export default ({app, resolve, render, serve}) => {
       })
   })
 }
+
+export default render

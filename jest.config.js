@@ -3,6 +3,7 @@ module.exports = {
   collectCoverageFrom: [
     '<rootDir>/packages/*/src/**/*.{ts,tsx}',
     '<rootDir>/scripts/**/*.{ts,tsx}',
+    '!<rootDir>/**/*.d.ts',
     '!<rootDir>/**/*.stories.{ts,tsx}',
     '!<rootDir>/**/__tests__/*.{ts,tsx}',
   ],

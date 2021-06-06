@@ -1,6 +1,11 @@
 {
   "name": "@winter-love/emotion",
   "version": "1.0.3",
+  "main": "lib/index.js",
+  "module": "lib/index.module.js",
+  "unpack": "lib/index.umd.js",
+  "source": "src/index.ts",
+  "types": "lib/index.d.ts",
   "scripts": {
     "build": "gulp build",
     "dev": "gulp dev",

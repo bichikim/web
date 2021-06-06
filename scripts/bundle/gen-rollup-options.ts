@@ -16,12 +16,15 @@ export interface GenOutputOptions extends OutputOptions {
   minify?: boolean
 }
 
+export type TsTarget = 'ES3' | 'ES5' | 'ES6' | 'ES2015' | 'ES2016' | 'ES2017' | 'ES2018' | 'ES2019' | 'ES2020' | 'ESNEXT'
+
 export interface GenRollupOptions {
   cwd?: string
   dist?: string
   src?: string
   entry?: string
   name?: string
+  target?: TsTarget
   resolve?: RollupNodeResolveOptions
   output?: GenOutputOptions[]
 }
@@ -46,6 +49,7 @@ export const genRollupOptions = (options: GenRollupOptions = {}): BundleOptions 
     dist = defDist,
     src = defSrc,
     entry = defEntry,
+    target: tsTarget = 'ESNext',
     output = [],
     resolve: resolveOptions,
   } = options
@@ -57,7 +61,7 @@ export const genRollupOptions = (options: GenRollupOptions = {}): BundleOptions 
     tsconfigOverride: {
       compilerOptions: {
         emitDeclarationOnly: false,
-        target: 'ESNext',
+        target: tsTarget,
         module: 'ESNext',
         paths: {
           '@/*': [

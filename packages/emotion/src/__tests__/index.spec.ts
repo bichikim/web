@@ -48,6 +48,21 @@ describe('emotion', () => {
       })
     })
 
+    it('should render VueComponent', () => {
+      const Component = defineComponent({
+        setup() {
+          return () => (
+            h('div', 'vue-component')
+          )
+        },
+      })
+      const {wrapper} = setup({element: Component})
+      expect(wrapper.get('div').element).toHaveStyle({
+        backgroundColor: 'red',
+      })
+      expect(wrapper.get('div').text()).toBe('vue-component')
+    })
+
     it('should render label', () => {
       const {wrapper} = setup({
         label: 'test',
