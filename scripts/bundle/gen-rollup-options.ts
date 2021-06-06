@@ -3,7 +3,7 @@ import {BundleOptions} from './cre-rollup-bundle'
 import path from 'path'
 import {OutputOptions} from 'rollup'
 import {terser} from 'rollup-plugin-terser'
-// noinspection ES6PreferShortImport
+import del from 'rollup-plugin-delete'
 import {getPackage} from '../utils'
 import {defaultsDeep} from 'lodash'
 import typescript from 'rollup-plugin-typescript2'
@@ -68,6 +68,12 @@ export const genRollupOptions = (options: GenRollupOptions = {}): BundleOptions 
           {transform: '@zerollup/ts-transform-paths'},
         ],
       },
+      exclude: [
+        'node_modules',
+        // exclude testing files
+        '__tests__/**/*',
+        '**/__tests__/**/*',
+      ],
     },
   })
   const externalsPlugin = externals({
@@ -81,6 +87,8 @@ export const genRollupOptions = (options: GenRollupOptions = {}): BundleOptions 
   const typescriptTreeShaking = tsTreeShaking()
 
   const packageJson = getPackage(cwd)
+
+  const deletePlugin = del({targets: dist})
 
   const {
     name = packageJson.name,
@@ -107,6 +115,7 @@ export const genRollupOptions = (options: GenRollupOptions = {}): BundleOptions 
          * @see https://www.npmjs.com/package/rollup-plugin-ts-treeshaking
          */
         typescriptTreeShaking,
+        deletePlugin,
       ],
     },
     output: output.map((value) => {
@@ -114,11 +123,18 @@ export const genRollupOptions = (options: GenRollupOptions = {}): BundleOptions 
         minify = false,
         ...rest
       } = value
+
+      const plugins: any[] = []
+
+      if (minify) {
+        plugins.push(terserPlugin)
+      }
+
       return {
         ...outputPart,
         ...rest,
         file: path.resolve(cwd, dist, value.file ?? defFile),
-        plugins: minify ? [terserPlugin] : [],
+        plugins,
       }
     }),
   }

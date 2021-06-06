@@ -169,33 +169,4 @@ describe('emotion', () => {
       })
     })
   })
-  describe('createDefaultProps', () => {
-    const setup = () => {
-      const withDefaultProps = createDefaultProps(['foo', 'bar'])
-      return {
-        withDefaultProps,
-      }
-    }
-
-    it('should return object type props with default props', () => {
-      const {withDefaultProps} = setup()
-
-      expect(withDefaultProps(['john', 'ham']))
-        .toEqual(['foo', 'bar', 'john', 'ham'])
-    })
-
-    it('should return array type props with default props', () => {
-      const {withDefaultProps} = setup()
-      expect(withDefaultProps({
-        ham: {default: 0, type: Number},
-        john: {type: String},
-      }))
-        .toEqual({
-          bar: null,
-          foo: null,
-          ham: {default: 0, type: Number},
-          john: {type: String},
-        })
-    })
-  })
 })

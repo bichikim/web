@@ -30,7 +30,10 @@ module.exports = {
     {
       displayName: 'test',
       setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
-      testMatch: ['<rootDir>/packages/*/src/**/__tests__/*.spec.ts'],
+      testMatch: [
+        '<rootDir>/packages/*/src/**/__tests__/*.spec.ts',
+        '<rootDir>/scripts/__tests__/*.spec.ts',
+      ],
     },
   ],
 

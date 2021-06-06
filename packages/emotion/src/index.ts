@@ -9,6 +9,7 @@ import {getRegisteredStyles, insertStyles} from '@emotion/utils'
 import clsx, {ClassValue} from 'clsx'
 import {Tags} from './tags'
 import {margeProps} from '@winter-love/use'
+import {isSSR} from '@winter-love/utils'
 import {
   FunctionalComponent,
   h,
@@ -21,6 +22,7 @@ import {
   ComponentObjectPropsOptions,
   ExtractPropTypes,
   computed,
+  Fragment,
 } from 'vue-demi'
 
 export interface Theme {
@@ -125,7 +127,7 @@ export const createStyled = (emotion: Emotion) => {
             allAttrs,
           )
 
-          insertStyles(
+          const rules = insertStyles(
             this.cache,
             serialized,
             this.isStringElement,
@@ -142,9 +144,26 @@ export const createStyled = (emotion: Emotion) => {
           // ssr code is needed
           const passingProps = this.isStringElement ? {} : this.$props
 
-          return (
-            h(this.element, {...this.$attrs, ...passingProps, class: className}, slot)
-          )
+          const vNode = h(this.element, {...this.$attrs, ...passingProps, class: className}, slot)
+
+          if (isSSR() && typeof rules !== 'undefined') {
+            let next = serialized.next
+            let dataEmotion = serialized.name
+
+            while (typeof next !== 'undefined') {
+              dataEmotion += ' ' + next.name
+              next = next.next
+            }
+
+            return (
+              h(Fragment, () => [
+                h('style', {'data-emotion': dataEmotion, nonce: this.cache.sheet.nonce}, rules),
+                vNode,
+              ])
+            )
+          }
+
+          return vNode
         },
         setup: (props: any) => {
           const asRef = toRef(props, 'as')
@@ -175,14 +194,15 @@ export interface EmotionExtend extends Emotion {
   styled: ReturnType<typeof createStyled>
 }
 
-export interface EmotionOptions extends OriginalEmotionOptions {
+export interface EmotionOptions extends Omit<OriginalEmotionOptions, 'key'> {
   theme?: Theme
+  key?: string
 }
 
-export const createEmotion = (options: EmotionOptions): Plugin & EmotionExtend => {
-  const {theme, ...restOptions} = options
+export const createEmotion = (options: EmotionOptions = {}): Plugin & EmotionExtend => {
+  const {theme, key = 'css', ...restOptions} = options
 
-  const emotion = createEmotionOriginal(restOptions)
+  const emotion = createEmotionOriginal({...restOptions, key})
 
   const styled = createStyled(emotion)
 

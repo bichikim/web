@@ -1,3 +1,7 @@
+/**
+ * @jest-environment node
+ */
+
 import {creBundle, RollupOptions} from '../bundle'
 import path from 'path'
 import fs from 'fs'

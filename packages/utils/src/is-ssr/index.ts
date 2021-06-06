@@ -1,1 +1,1 @@
-export const isSSR = () => typeof window !== 'object'
+export const isSSR = () => typeof document === 'undefined'

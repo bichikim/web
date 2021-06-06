@@ -7,11 +7,19 @@ export type FunctionObject<T extends Record<string, AnyFunction>> = {
   [P in keyof T]: (...args: Parameters<T[P]>) => ReturnType<T[P]>
 }
 
-export type PartialRequired<T, K extends keyof T> = {
+export type PatchRequired<T, K extends keyof T> = {
   [P in K]-?: T[P]
 } & {
   [P in Exclude<keyof T, K>]: T[P]
 }
+
+export type PatchOptional<T, K extends keyof T> = {
+  [P in K]?: T[P]
+} & {
+  [P in Exclude<keyof T, K>]: T[P]
+}
+
+export type MayArray<T> = T | Array<T>
 
 export type ObjectKey = string | symbol | number
 
