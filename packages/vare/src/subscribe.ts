@@ -1,6 +1,6 @@
 import {info, getIdentifier} from 'src/info'
 import {UnwrapNestedRefs} from 'src/types'
-import {computed, ComputedRef, watch, WatchCallback, WatchStopHandle} from 'vue-demi'
+import {ComputedRef, watch, WatchCallback, WatchStopHandle} from 'vue-demi'
 import {Action} from './act'
 import {Computation, ComputationWritable} from './compute'
 import {Mutation} from './mutate'
@@ -23,7 +23,7 @@ export const setSubscribe = (target: SubscribeTarget, hook: WatchCallback<any>):
 }
 
 export const watchTarget = (target: any, hook: SubscribeHookArgs<any>): WatchStopHandle => {
-  return watch(computed(() => target), hook, {deep: true})
+  return watch(target, hook, {deep: true})
 }
 
 /**

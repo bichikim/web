@@ -20,9 +20,8 @@ export const myState = state({
 })
 
 export const FooComponent = defineComponent(() => {
-  const name = computed(() => (myState.name))
   return () => {
-    return h('span', name.value)
+    return h('span', myState.name)
   }
 })
 
@@ -30,9 +29,10 @@ export const FooComponent = defineComponent(() => {
 
 ## State
 
+### An object initState
 ```typescript
 import {state} from './src/index'
-import {defineComponent, computed, h} from 'vue'
+import {defineComponent, h} from 'vue'
 
 const myState = state({
   name: 'foo',
@@ -40,13 +40,69 @@ const myState = state({
 
 // using state in a components
 export const FooComponent = defineComponent(() => {
-  const name = computed(() => (myState.name))
   return () => {
-    return h('span', name.value)
+    return h('span', myState.name)
+  }
+})
+```
+
+### A function initState
+```typescript
+import {state} from './src/index'
+import {defineComponent, h} from 'vue'
+
+const myState = state(() => ({
+  name: 'foo',
+}))
+
+// using state in a components
+export const FooComponent = defineComponent(() => {
+  return () => {
+    return h('span', myState.name)
+  }
+})
+```
+
+### A getter setter initState
+```typescript
+import {state} from './src/index'
+import {defineComponent, h} from 'vue'
+
+const nameSetSpy = jest.fn()
+const nameGetSpy = jest.fn()
+
+const myState = state(() => {
+  let _name = 'foo'
+  return {
+    get name(): string {
+      nameGetSpy(_name)
+      return _name
+    },
+    set name(value: string) {
+      nameSetSpy(value)
+      _name = value
+    },
+    deep: {
+      get name(): string {
+        return _name
+      },
+      set name(value: string) {
+        _name = value
+      }
+    }
   }
 })
 
 
+// using state in a components
+export const FooComponent = defineComponent(() => {
+  return () => {
+    return h('div', [
+      h('span', myState.name),
+      h('span', myState.deep.name),
+    ])
+  }
+})
 ```
 
 ## Mutation
@@ -66,10 +122,9 @@ const setName = mutate((name: string) => {
 
 // using state in a components
 export const FooComponent = defineComponent(() => {
-  const name = computed(() => (myState.name))
   return () => {
     return h('div', [
-      h('span', name.value),
+      h('span', myState.name),
       h('button', {onclick: () => setName('bar')}, 'click')
     ])
   }
@@ -162,7 +217,7 @@ export const FooComponent = defineComponent(() => {
 ## Subscribe
 
 ```typescript
-import {state, mutate, act, subscribe, unsubscribe} from './src/index'
+import {state, mutate, act, subscribe} from './src/index'
 import {h} from 'vue'
 
 const myState = state({
@@ -189,6 +244,8 @@ const hook = () => {
 
 const stopMyState = subscribe(myState, hook)
 
+const stopMyStateName = subscribe(myState.name, hook)
+
 const stopSetName = subscribe(setName, hook)
 
 const stopRequestName = subscribe(requestName, hook)
@@ -198,6 +255,7 @@ const stopGetDecoName = subscribe(getDecoName, hook)
 // unsubscribe
 stopMyState()
 stopSetName()
+stopMyStateName()
 stopRequestName()
 stopGetDecoName()
 
@@ -219,7 +277,7 @@ const setFooName = mutate((name: string) => {
 
 getName(foo) // foo
 getName(getFooName) // getFooName
-getName(setFooName) // getFooName
+getName(setFooName) // setFooName
 
 ```
 
@@ -266,6 +324,125 @@ getName(tree.updateAge) // 'updateAge'
 
 ```
 
+## Relating (for devtool)
+```typescript
+import {state, compute, mutate, getName, act} from './src/index'
+
+const foo = state({
+  age: 999
+})
+
+const bar = state({
+  name: 'bar'
+})
+
+// state = foo
+export const getAge = compute(foo, (state) => state.age)
+
+export const computations = compute(foo, {
+  // state = foo
+  getAge: (state) => (state.age)
+})
+
+// state = foo
+export const setAge = mutate(foo, (state) => (state.age = age))
+
+// state = foo
+export const mutations = mutate(foo, {
+  setAge: (state, age: number) => {
+    state.age = age
+  }
+})
+
+// _ = foo
+export const updateAge = act(foo, (_, age: number) => {
+  return Promise.resolve().then(() => {
+    setAge(age)
+  })
+})
+
+export const actions = act(foo, {
+  // _ = foo
+  updateAge: (_, age: number) => {
+    return Promise.resolve().then(() => {
+      mutations.setAge(age)
+    })
+  }
+})
+
+export const multiGetAge = compute([foo, bar], ([foo, bar]) => (`${bar.name} ${foo.age}`))
+
+export const multiComputations = compute([foo, bar], {
+  getAge: ([foo, bar]) => (`${bar.name} ${foo.age}`)
+})
+
+export const multiSetAge = mutate([foo, bar], ([foo], age: number) => (foo.age = age))
+
+export const multiMutations = mutate([foo, bar], {
+  setAge: ([foo], age: number) => {
+    foo.age = age
+  }
+})
+
+export const multiUpdateAge = act([foo, bar], (_, age: number) => {
+  return Promise.resolve().then(() => {
+    multiSetAge(age)
+  })
+})
+
+export const multiActions = act([foo, bar], {
+  updateAge: (_, age: number) => {
+    return Promise.resolve().then(() => {
+      multiSetAge(age)
+    })
+  }
+})
+
+```
+
+## Uses a state locally
+```typescript
+import {state, mutate} from './src/index'
+import {defineComponent, h} from 'vue'
+
+const useMyState = (name: string = 'foo') => {
+  const _state = state({
+    name,
+    deep: {
+      name,
+    }
+  })
+  
+  const setDeepName = (value: string) => {
+    _state.deep.name = value
+  }
+  
+  return {
+    state: _state,
+    setDeepName,
+    ...mutate({
+      setName: (value: string) => {
+        _state.name = value
+      }
+    })
+    // ... any thing you want
+  }
+}
+
+export const FooComponent = defineComponent(() => {
+  const myState = useMyState('bar')
+  return () => {
+    return (
+      h('div', [
+        h('span', myState.name),
+        h('span', myState.deep.name),
+        h('button', {onclick: () => myState.setName('foo')}, 'the name is foo')
+      ])
+    )
+  }
+})
+
+```
 
 ## Why 
 

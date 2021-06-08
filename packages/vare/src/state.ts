@@ -1,5 +1,5 @@
 import {UnwrapNestedRefs} from 'src/types'
-import {AnyObject} from '@winter-love/utils'
+import {AnyObject, mayFunctionValue} from '@winter-love/utils'
 import {reactive} from 'vue-demi'
 import {createUuid} from './utils'
 import {info} from 'src/info'
@@ -66,11 +66,13 @@ export const relateState = (state: AnyStateGroup, target: AllKinds) => {
   }
 }
 
+export type InitState<S> = S | (() => S)
+
 /**
  * state is the vue reactive
  */
-export const state = <S extends AnyObject>(initState: S, name?: string): State<S> => {
-  const state = reactive<S>(initState)
+export const state = <S extends AnyObject>(initState: InitState<S>, name?: string): State<S> => {
+  const state = reactive<S>(mayFunctionValue(initState))
 
   if (process.env.NODE_ENV === 'development') {
     info.set(state, {

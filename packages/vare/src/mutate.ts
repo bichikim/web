@@ -5,9 +5,7 @@ import {devtools} from './devtool'
 import {info, getIdentifier} from './info'
 import {AnyStateGroup, relateState} from './state'
 import {subscribe} from './subscribe'
-import {createUuid} from './utils'
-
-const mutationUuid = createUuid('unknown')
+import {createUuid, createGetAtomPrams} from './utils'
 
 export type MutationRecipe<Args extends any[] = any, Return = any> = (...args: Args) => Return
 export type MutationStateRecipe<S = any, Args extends any[] = any, Return = any> = (s: S, ...args: Args) => Return
@@ -26,28 +24,7 @@ export const isMutation = (value?: any): value is Mutation<any[]> => {
   return getIdentifier(value) === mutationName
 }
 
-const getMutatePrams = (unknown?, mayRecipe?: any, name?: string) => {
-  let recipe
-  let state
-  let _name
-  if (typeof mayRecipe === 'function') {
-    state = unknown
-    recipe = mayRecipe
-    _name = name
-  } else {
-    recipe = unknown
-    _name = mayRecipe
-  }
-
-  if (!_name) {
-    _name = mutationUuid()
-  }
-  return {
-    name: _name,
-    recipe,
-    state,
-  }
-}
+const getMutatePrams = createGetAtomPrams(createUuid('unknown'))
 
 /**
  * create new mutation
@@ -88,10 +65,7 @@ function _mutate(unknown, mayRecipe?: any, name?: string): Mutation<any> {
   return self
 }
 
-/**
- * create new tree mutation
- */
-function _treeMutate(mayState: any, mayTree?: any) {
+const getTreeMutatePrams = (mayState: any, mayTree: any) => {
   let tree
   let state
   if (mayTree) {
@@ -100,6 +74,17 @@ function _treeMutate(mayState: any, mayTree?: any) {
   } else {
     tree = mayState
   }
+
+  return {
+    tree,
+    state,
+  }
+}
+/**
+ * create new tree mutation
+ */
+function _treeMutate(mayState: any, mayTree?: any) {
+  const {tree, state} = getTreeMutatePrams(mayState, mayTree)
 
   return Object.keys(tree).reduce((result, name) => {
     const value = tree[name]
@@ -116,9 +101,9 @@ function _treeMutate(mayState: any, mayTree?: any) {
 /**
  * create new mutation or tree mutation
  */
-export function mutate<S extends AnyStateGroup, Args extends any[], Return = any> (
-  state: S,
-  recipe: RelatedMutationRecipe<S, Args, Return>,
+export function mutate<State extends AnyStateGroup, Args extends any[], Return = any> (
+  state: State,
+  recipe: RelatedMutationRecipe<State, Args, Return>,
   name?: string,
 ): Mutation<Args>
 export function mutate<Args extends any[], Return = any> (
@@ -128,10 +113,10 @@ export function mutate<Args extends any[], Return = any> (
 export function mutate<Func extends MutationRecipe, TreeOptions extends Record<string, Func>> (
   tree: TreeOptions,
 ): FunctionObject<TreeOptions>
-export function mutate<S extends AnyStateGroup, Func extends MutationStateRecipe<S>, TreeOptions extends Record<string, Func>> (
-  state: S,
+export function mutate<State extends AnyStateGroup, Func extends MutationStateRecipe<State>, TreeOptions extends Record<string, Func>> (
+  state: State,
   tree: TreeOptions,
-): DropFunctionObject<TreeOptions, S>
+): DropFunctionObject<TreeOptions, State>
 export function mutate(unknown, mayTree?, name?: string): any {
   if (typeof unknown === 'function' || typeof mayTree === 'function') {
     return _mutate(unknown, mayTree, name)

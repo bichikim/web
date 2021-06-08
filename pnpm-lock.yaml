@@ -212,14 +212,16 @@ importers:
   packages/vare:
     specifiers:
       '@vue/devtools-api': ^6.0.0-beta.12
+      '@winter-love/use': 1.0.6
       '@winter-love/utils': 1.0.6
       vue: ^3.0.11
-      vue-demi: ^0.7.4
+      vue-demi: ^0.9.1
     dependencies:
       '@vue/devtools-api': 6.0.0-beta.12
       '@winter-love/utils': link:../utils
-      vue-demi: 0.7.5_vue@3.0.11
+      vue-demi: 0.9.1_vue@3.0.11
     devDependencies:
+      '@winter-love/use': link:../use
       vue: 3.0.11
 
   packages/vue-svg-loader:
@@ -18585,20 +18587,6 @@ packages:
   /vm-browserify/1.1.2:
     resolution: {integrity: sha512-2ham8XPWTONajOR0ohOKOHXkm3+gaBmGut3SRuu75xLd/RRaY6vqgh8NBYYk7+RW3u5AtzPQZG8F10LHkl0lAQ==}
     dev: true
-
-  /vue-demi/0.7.5_vue@3.0.11:
-    resolution: {integrity: sha512-eFSQSvbQdY7C9ujOzvM6tn7XxwLjn0VQDXQsiYBLBwf28Na+2nTQR4BBBcomhmdP6mmHlBKAwarq6a0BPG87hQ==}
-    hasBin: true
-    requiresBuild: true
-    peerDependencies:
-      '@vue/composition-api': ^1.0.0-beta.1
-      vue: ^2.6.0 || >=3.0.0-rc.1
-    peerDependenciesMeta:
-      '@vue/composition-api':
-        optional: true
-    dependencies:
-      vue: 3.0.11
-    dev: false
 
   /vue-demi/0.9.1_vue@3.0.11:
     resolution: {integrity: sha512-7s1lufRD2l369eFWPjgLvhqCRk0XzGWJsQc7K4q+0mZtixyGIvsK1Cg88P4NcaRIEiBuuN4q1NN4SZKFKwQswA==}

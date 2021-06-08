@@ -1,6 +1,8 @@
 import {mutate, isMutation} from 'src/mutate'
 import {state} from 'src/state'
 import {getName, getRelates} from 'src/info'
+import {defineComponent, h} from 'vue'
+import {mount, flushPromises} from '@vue/test-utils'
 
 const setup = () => {
   const foo = state({
@@ -46,7 +48,21 @@ const setup = () => {
     },
   })
 
+  const Component = defineComponent(() => {
+    return () => (
+      h('div', [
+        h('div', {id: 'name'}, foo.name),
+        h('div', {id: 'age'}, foo.age),
+        h('div', {id: 'gender'}, foo.gender),
+        h('div', {id: 'money'}, bar.money),
+      ])
+    )
+  })
+
+  const wrapper = mount(Component)
+
   return {
+    wrapper,
     foo,
     bar,
     changeFooName,
@@ -64,18 +80,22 @@ describe('mutate', function test() {
     expect(isMutation(changeFooName)).toBeTruthy()
   })
 
-  it('should mutate state', function test() {
-    const {changeFooName, foo} = setup()
+  it('should mutate state', async () => {
+    const {changeFooName, foo, wrapper} = setup()
     expect(foo.name).toBe('foo')
     changeFooName('FOO')
     expect(foo.name).toBe('FOO')
+    await flushPromises()
+    expect(wrapper.get('#name').text()).toBe('FOO')
   })
 
-  it('should mutate state', () => {
-    const {relateChangeName, foo} = setup()
+  it('should mutate state with a relation', async () => {
+    const {relateChangeName, foo, wrapper} = setup()
     expect(foo.name).toBe('foo')
     relateChangeName('FOO')
     expect(foo.name).toBe('FOO')
+    await flushPromises()
+    expect(wrapper.get('#name').text()).toBe('FOO')
   })
 
   it('should have relation', () => {
@@ -122,4 +142,6 @@ describe('mutate', function test() {
     const {relateMutTree, foo} = setup()
     expect(getRelates(relateMutTree.changeAge)?.has(foo)).toBeTruthy()
   })
+
+  // use as action testing
 })
