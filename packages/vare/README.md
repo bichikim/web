@@ -647,8 +647,31 @@ const FooComponent = defineComponent(() => {
 })
 ```
 
-## Create the pack in easy way (WIP)
+## app.use(vare)
+It's not really necessary
+```typescript
+import {createApp} from 'vue'
+import vare, {state, useVare} from 'vare'
+const app = createApp(App)
+const foo = state({
+  name: 'foo',
+})
+const states = {
+  foo,
+}
+app.use(vare, {states, provide: true})
 
+// useVare
+{
+  const {foo} = useVare()
+  console.log(foo.name)
+}
+
+// we can use foo as below
+{
+  console.log(foo.name)
+}
+```
 
 ## Supporting Vue DevTool ?
 
