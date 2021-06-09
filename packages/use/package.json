@@ -28,7 +28,8 @@
   },
   "dependencies": {
     "@winter-love/utils": "^1.0.6",
-    "vue-demi": "^0.9.1"
+    "vue-demi": "^0.9.1",
+    "fast-json-stable-stringify": "^2.1.0"
   },
   "devDependencies": {
     "@types/sinon": "^10.0.2",
