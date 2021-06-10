@@ -92,7 +92,7 @@ describe('wrap-ref', () => {
     expect(wrapper.get('#hookCount').text()).toBe('2')
   })
 
-  it('should wrap computed', async () => {
+  it('should return wrapped ref from computed ref', async () => {
     const {wrapper} = setupComputed()
 
     expect(wrapper.get('#count').text()).toBe('0')
