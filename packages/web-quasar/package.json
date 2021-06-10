@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/web",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "private": true,
   "description": "Tag everywhere everything using Quasar Framework",
   "author": "Bichi Kim <bichi@live.co.kr>",
@@ -31,16 +31,16 @@
     "last 5 Opera versions"
   ],
   "dependencies": {
+    "@emotion/server": "^11.4.0",
     "@quasar/extras": "^1.10.4",
     "@vue/reactivity": "^3.0.11",
-    "@winter-love/use": "^1.0.6",
-    "@winter-love/utils": "^1.0.6",
-    "@emotion/server": "^11.4.0",
-    "@winter-love/emotion": "^1.0.3",
+    "@winter-love/emotion": "^1.0.7",
+    "@winter-love/use": "^1.0.7",
+    "@winter-love/utils": "^1.0.7",
     "core-js": "^3.6.5",
     "mitt": "^2.1.0",
     "quasar": "^2.0.0-beta.12",
-    "vare": "^1.0.5",
+    "vare": "^1.0.7",
     "vue": "3.0.11",
     "vue-i18n": "^9.0.0",
     "vue-router": "4.0.5"
