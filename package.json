@@ -16,6 +16,7 @@
     "dev:spa": "pnpm run dev --filter @winter-love/web... --parallel",
     "dev:pwa": "pnpm run dev:pwa --filter @winter-love/web... --parallel",
     "dev:ssr": "pnpm run dev:ssr --filter @winter-love/web... --parallel",
+    "version": "lerna version patch --yes",
     "publish": "pnpm publish --access public --filter @winter-love/* --filter vare",
     "version:next": "lerna version prerelease --preid next --yes",
     "publish:next": "pnpm publish --tag next --access public --filter @winter-love/* --filter vare",
