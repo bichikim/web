@@ -17,7 +17,7 @@ export const Navigation = defineComponent({
     )
   },
   setup() {
-    const {eventBus, comfortableBarRef} = useNavigation()
+    const {comfortableBarRef} = useNavigation()
 
     const buttonsRef = computed(() => {
       return comfortableBarRef.value.buttons

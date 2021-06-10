@@ -1,7 +1,7 @@
 // This middleware should execute as last one
 // since it captures everything and tries to
 // render the page with Vue
-import createInstance from '@emotion/server/create-instance'
+import {renderStylesToString} from '@emotion/server'
 import {SsrMiddlewareCallback} from '@quasar/app'
 
 const render: SsrMiddlewareCallback = ({app, resolve, render, serve}) => {
@@ -9,11 +9,10 @@ const render: SsrMiddlewareCallback = ({app, resolve, render, serve}) => {
   // over to Vue and Vue Router to render our page
   app.get(resolve.urlPath('*'), (req, res) => {
     res.setHeader('Content-Type', 'text/html')
-
     render({req, res})
-      .then(html => {
+      .then(appContent => {
         // now let's send the rendered html to the client
-        res.send(html)
+        res.send(renderStylesToString(appContent))
       })
       .catch(err => {
         // oops, we had an error while rendering the page

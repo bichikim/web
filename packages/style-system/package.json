@@ -1,0 +1,10 @@
+{
+  "name": "@winter-love/style-system",
+  "version": "1.0.0",
+  "dependencies": {
+    "styled-system": "^5.1.5"
+  },
+  "devDependencies": {
+    "@types/styled-system": "^5.1.11"
+  }
+}

@@ -1,4 +1,4 @@
-import {createEmotion} from '@winter-love/emotion'
+import {createEmotion, EmotionPlugin} from '@winter-love/emotion'
 import {BootCallback, BootFileParams} from '@quasar/app'
 import {EmptyObject} from '@winter-love/utils'
 
@@ -7,24 +7,32 @@ declare global {
   namespace Express {
     interface Request {
       // eslint-disable-next-line
-      __emotion_cache__: any
+      __emotionCache__: any
+    }
+
+    interface Response {
+      // eslint-disable-next-line
+      __emotionCache__: any
     }
   }
 }
 
-const emotionBoot: BootCallback<EmptyObject> = (context: BootFileParams<EmptyObject>) => {
-  const {ssrContext, app} = context
-  if (!ssrContext) {
-    return
-  }
+let emotion: EmotionPlugin
 
-  const emotion = createEmotion()
+export const _createEmotion = () => {
+  if (emotion) {
+    return emotion
+  }
+  emotion = createEmotion()
+  return emotion
+}
+
+const emotionBoot: BootCallback<EmptyObject> = (context: BootFileParams<EmptyObject>) => {
+  const {app} = context
+
+  const emotion = _createEmotion()
 
   app.use(emotion)
-
-  const {req} = ssrContext
-
-  req.__emotion_cache__ = emotion.cache
 }
 
 export default emotionBoot

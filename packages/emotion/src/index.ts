@@ -1,5 +1,5 @@
 import createEmotionOriginal, {
-  Emotion,
+  Emotion as _Emotion,
   EmotionCache,
   Options as OriginalEmotionOptions,
   CSSObject,
@@ -84,7 +84,7 @@ export const toBeClassName = (value: any): ClassValue => {
   return value
 }
 
-export const createStyled = (emotion: Emotion) => {
+export const createStyled = (emotion: _Emotion) => {
   function styled<PropsOptions extends ComponentObjectPropsOptions = EmptyObject>(
     element: Tags | any,
     options?: Readonly<StyledOptionWIthObject<PropsOptions>>,
@@ -190,7 +190,7 @@ export const createStyled = (emotion: Emotion) => {
   return styled
 }
 
-export interface EmotionExtend extends Emotion {
+export interface EmotionExtend extends _Emotion {
   styled: ReturnType<typeof createStyled>
 }
 
@@ -199,7 +199,9 @@ export interface EmotionOptions extends Omit<OriginalEmotionOptions, 'key'> {
   key?: string
 }
 
-export const createEmotion = (options: EmotionOptions = {}): Plugin & EmotionExtend => {
+export type EmotionPlugin = Plugin & EmotionExtend
+
+export const createEmotion = (options: EmotionOptions = {}): EmotionPlugin => {
   const {theme, key = 'css', ...restOptions} = options
 
   const emotion = createEmotionOriginal({...restOptions, key})

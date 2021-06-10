@@ -1,6 +1,15 @@
 {
   "extends": "@quasar/app/tsconfig-preset",
   "compilerOptions": {
+    "paths": {
+      "src/*": ["src/*"],
+      "app/*": ["*"],
+      "components/*": ["src/components/*"],
+      "layouts/*": ["src/layouts/*"],
+      "pages/*": ["src/pages/*"],
+      "assets/*": ["src/assets/*"],
+      "boot/*": ["src/boot/*"]
+    },
     "baseUrl": "."
   }
 }
