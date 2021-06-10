@@ -16,7 +16,7 @@
     "dev:spa": "pnpm run dev --filter @winter-love/web... --parallel",
     "dev:pwa": "pnpm run dev:pwa --filter @winter-love/web... --parallel",
     "dev:ssr": "pnpm run dev:ssr --filter @winter-love/web... --parallel",
-    "publish": "pnpm publish --tag next --filter @winter-love/*",
+    "publish": "pnpm publish --tag next --access public --filter @winter-love/* --filter vare",
     "format:package.json": "sort-package-json \"package.json\" \"packages/*/package.json\" ",
     "lint": "eslint --ext .ts \"src/**/*.{ts,tsx}\"",
     "test": "jest"
