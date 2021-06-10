@@ -27,7 +27,7 @@ pnpm run dev:server
 
 ### Compile and minify files for production (WIP)
 ```
-pnpm run build:web[-name]
+pnpm run build:web
 ```
 
 ### Run your unit tests (WIP)
@@ -56,6 +56,6 @@ WIP
 
 
 ## unknown issue
-
-packages 안에 vue 버전이 다르면 @vue/runtime-dom @vue/runtime-core 타입추적을 *.vue 에서 못하는 경우가 생깁니다.
+ - packages 안에 vue 버전이 다르면 @vue/runtime-dom @vue/runtime-core 타입추적을 *.vue 에서 못하는 경우가 생깁니다.
+ - pnpm 디펜던시 관리과 quasar 디펜던시 찾기가 상이 한 점이 있어 android ios app dev 모드에서 hot reload 가 되지 않습니다.
 
