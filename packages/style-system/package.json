@@ -1,6 +1,33 @@
 {
   "name": "@winter-love/style-system",
   "version": "1.0.7",
+  "repository": "git@github.com:winter-love/web.git",
+  "author": "bichi@live.co.kr",
+  "main": "lib/index.js",
+  "unpkg": "lib/index.global.js",
+  "module": "lib/index.module.js",
+  "source": "src/index.ts",
+  "types": "lib/index.d.ts",
+  "keywords": [
+    "typescript",
+    "style",
+    "style-system",
+    "ui",
+    "css",
+    "store",
+    "vue",
+    "vue3",
+    "vuejs",
+    "vuejs3"
+  ],
+  "files": [
+    "lib/*"
+  ],
+  "scripts": {
+    "build": "gulp build",
+    "dev": "gulp dev",
+    "prepare": "pnpm run build"
+  },
   "dependencies": {
     "styled-system": "^5.1.5"
   },
