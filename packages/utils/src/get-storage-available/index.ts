@@ -21,6 +21,7 @@ export const getStorageAvailable = (type: StorageType): Storage | undefined => {
   }
 
   const storage = getStorage(type)
+
   try {
     storage.setItem(TEST_KEY_VALUE, TEST_KEY_VALUE)
     storage.removeItem(TEST_KEY_VALUE)

@@ -28,6 +28,7 @@ const setItem = (storage: Storage, key: string, value: any) => {
 export const storageRef = <Data>(key: string, options: StorageRefOptions<Data> = {}) => {
   const {type = 'local', init} = options
   const valueRef = ref<Data | undefined>()
+  const freezeWatch = ref(false)
   const storage = getStorageAvailable(type)
   if (!storage) {
     return valueRef
@@ -38,7 +39,11 @@ export const storageRef = <Data>(key: string, options: StorageRefOptions<Data> =
     valueRef.value = value
   }
 
-  const updateValue = (init?: any) => {
+  const updateValue = (init?: any, freeze: boolean = false) => {
+    if (freeze) {
+      freezeWatch.value = true
+    }
+
     const result = getItem(storage, key)
 
     if (typeof result !== 'undefined') {
@@ -53,10 +58,14 @@ export const storageRef = <Data>(key: string, options: StorageRefOptions<Data> =
   updateValue(init)
 
   useElementEvent(window, 'storage', () => {
-    updateValue()
+    updateValue(undefined, true)
   })
 
   watch(valueRef, (value) => {
+    if (freezeWatch.value) {
+      freezeWatch.value = false
+      return
+    }
     setItem(storage, key, value)
   })
 
