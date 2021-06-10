@@ -72,7 +72,7 @@ const setupComputed = () => {
 }
 
 describe('wrap-ref', () => {
-  it('should wrap ref', async () => {
+  it('should return wrapped ref', async () => {
     const {wrapper} = setup()
 
     expect(wrapper.get('#count').text()).toBe('0')
