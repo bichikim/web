@@ -2,6 +2,9 @@
 
 Tag everywhere everything
 
+!!! hot-reload issue with pnpm !!!
+go to https://github.com/winter-love/client
+
 ## Install the dependencies
 ```bash
 yarn

@@ -10,8 +10,8 @@
   },
   "scripts": {
     "build:web": "pnpm run build --filter @winter-love/web... --stream",
-    "build:libraries": "pnpm install && pnpm run build --filter libraries... --stream",
-    "clean": "rimraf node_modules && lerna clean -y",
+    "build:libraries": "pnpm run build --filter libraries... --stream",
+    "clean": "lerna clean -y && rimraf node_modules",
     "dev:server": "pnpm run dev --filter @winter-love/server... --parallel",
     "dev:spa": "pnpm run dev --filter @winter-love/web... --parallel",
     "dev:pwa": "pnpm run dev:pwa --filter @winter-love/web... --parallel",
@@ -29,6 +29,7 @@
     "quasar": "^2.0.0-beta.12"
   },
   "devDependencies": {
+    "@babel/core": "^7.14.5",
     "@babel/preset-typescript": "^7.13.0",
     "@quasar/app": "^3.0.0-beta.15",
     "@rollup/plugin-alias": "^3.1.2",
@@ -69,7 +70,7 @@
     "ts-node": "^9.1.1",
     "tslib": "^2.2.0",
     "ttypescript": "^1.5.12",
-    "typescript": "^4.2.2",
+    "typescript": "^4.3.2",
     "vinyl-paths": "^3.0.1",
     "vue-jest": "^4.0.1",
     "vue-pwa-asset-generator": "^1.6.0"

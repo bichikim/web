@@ -3,9 +3,8 @@ import {QImg} from 'quasar'
 
 const {styled} = _createEmotion()
 
-export const TImg = styled(QImg)(
+export const TImg: any = styled(QImg)(
   {
-    backgroundColor: 'red',
     width: '100px',
     height: '100px',
   },

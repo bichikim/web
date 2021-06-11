@@ -1,6 +1,6 @@
 import {wrapRef} from '../wrap-ref'
 import {MayRef} from '../types'
-import {Ref} from 'vue'
+import {Ref} from 'vue-demi'
 
 export type ToggleRefReturnType = [() => unknown, Ref<boolean>]
 

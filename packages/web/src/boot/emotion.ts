@@ -1,6 +1,6 @@
 import {createEmotion, EmotionPlugin} from '@winter-love/emotion'
 import {BootCallback, BootFileParams} from '@quasar/app'
-import {EmptyObject} from '@winter-love/utils'
+// import {EmptyObject} from '@winter-love/utils'
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -27,12 +27,12 @@ export const _createEmotion = () => {
   return emotion
 }
 
-const emotionBoot: BootCallback<EmptyObject> = (context: BootFileParams<EmptyObject>) => {
+const emotionBoot: BootCallback<any> = (context: BootFileParams<any>) => {
   const {app} = context
 
   const emotion = _createEmotion()
 
-  app.use(emotion)
+  app.use(emotion as any)
 }
 
 export default emotionBoot

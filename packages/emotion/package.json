@@ -21,6 +21,7 @@
     "vue-demi": "^0.9.1"
   },
   "devDependencies": {
+    "@babel/core": "^7.14.5",
     "@emotion/server": "^11.4.0",
     "@vue/server-renderer": "^3.0.11",
     "vue": "^3.0.11"
