@@ -2,7 +2,7 @@ import {act} from 'src/act'
 import {mutate} from 'src/mutate'
 import {state} from 'src/state'
 import {subscribe} from 'src/subscribe'
-import {nextTick} from 'vue'
+import {nextTick} from 'vue-demi'
 import {compute} from 'src/compute'
 // process.env.NODE_ENV = 'development'
 

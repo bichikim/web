@@ -1,7 +1,7 @@
 import {createStyled, StyledOptions, createEmotion, EMOTION_CACHE_CONTEXT, EMOTION_THEME_CONTEXT} from 'src/index'
 import createEmotionOriginal from '@emotion/css/create-instance'
 import {mount} from '@vue/test-utils'
-import {defineComponent, h, createApp} from 'vue'
+import {defineComponent, h, createApp} from 'vue-demi'
 
 describe('emotion', () => {
   describe('createStyled', () => {
@@ -26,13 +26,15 @@ describe('emotion', () => {
         }
       })
 
-      const Component = defineComponent(() => {
-        return () => (
-          h(StyledComponent, () => slot)
-        )
+      const Component = defineComponent({
+        setup: (_, {slots}) => {
+          return () => (
+            h(StyledComponent, () => slots.default?.())
+          )
+        },
       })
 
-      const wrapper = mount(Component)
+      const wrapper = mount(Component, {slots: {default: () => slot}})
 
       return {
         Component,

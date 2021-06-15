@@ -1,10 +1,10 @@
-import {User} from '@/objects'
+import {User} from 'src/objects'
 import {Resolver, Query} from 'type-graphql'
 
 @Resolver()
 export class UserResolver {
   @Query(() => User)
-  async user() {
+  user() {
     return {
       id: '1',
       name: 'foo',

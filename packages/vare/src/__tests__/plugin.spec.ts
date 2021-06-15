@@ -1,5 +1,5 @@
 import {flushPromises} from '@vue/test-utils'
-import {createApp, defineComponent, h} from 'vue'
+import {createApp, defineComponent, h} from 'vue-demi'
 import {plugin, useVare} from '../plugin'
 import {state} from '../state'
 

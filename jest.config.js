@@ -1,6 +1,7 @@
 const path = require('path')
 
 module.exports = {
+  testEnvironment: 'jsdom',
   cacheDirectory: './.jest/cache',
   collectCoverageFrom: [
     '<rootDir>/packages/*/src/**/*.{ts,tsx}',

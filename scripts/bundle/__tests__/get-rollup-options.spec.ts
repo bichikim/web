@@ -1,7 +1,6 @@
 import {genRollupOptions, defEntry, defSrc, defFile, defDist} from '../gen-rollup-options'
 import tsTreeShaking from 'rollup-plugin-ts-treeshaking'
 import typescript from 'rollup-plugin-typescript2'
-import ttypescript from 'ttypescript'
 import path from 'path'
 // noinspection ES6PreferShortImport
 import {getPackage} from '../../utils'
@@ -88,7 +87,7 @@ describe('getRollupOptions', function test() {
       expect(typescriptMock.mock.calls.length).toBe(1)
       // check if the typescript function is called well
       const typescriptOptions = typescriptMock.mock.calls[0][0]
-      expect(typescriptOptions.typescript).toBe(ttypescript)
+      // expect(typescriptOptions.typescript).toBe(ttypescript)
       expect(typescriptOptions.tsconfigOverride).toEqual({
         compilerOptions: {
           emitDeclarationOnly: false,

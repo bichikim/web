@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/style-system",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "repository": "git@github.com:winter-love/web.git",
   "author": "bichi@live.co.kr",
   "main": "lib/index.js",

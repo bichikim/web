@@ -1,14 +1,15 @@
 {
   "name": "libraries",
-  "version": "1.0.8-next.1",
+  "version": "1.0.8",
   "private": true,
   "scripts": {
-    "build": "echo building for libraries"
+    "build": "echo building for libraries",
+    "dev": "echo building for libraries"
   },
   "dependencies": {
-    "@winter-love/emotion": "^1.0.8-next.1",
-    "@winter-love/use": "^1.0.8-next.1",
-    "@winter-love/utils": "^1.0.7",
-    "vare": "^1.0.8-next.1"
+    "@winter-love/emotion": "^1.0.8",
+    "@winter-love/use": "^1.0.8",
+    "@winter-love/utils": "^1.0.8",
+    "vare": "^1.0.8"
   }
 }

@@ -1,7 +1,7 @@
 import * as devtool from '@vue/devtools-api'
 import {startDevtool} from 'src/devtool'
 import {state} from 'src/state'
-import {createApp} from 'vue'
+import {createApp} from 'vue-demi'
 
 jest.mock('@vue/devtools-api', () => ({
   setupDevtoolsPlugin: jest.fn(),

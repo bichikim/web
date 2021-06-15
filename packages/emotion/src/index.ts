@@ -23,6 +23,7 @@ import {
   ExtractPropTypes,
   computed,
   Fragment,
+  DefineComponent,
 } from 'vue-demi'
 
 export interface Theme {
@@ -55,7 +56,7 @@ export const useTheme = () => {
 export interface StyledOptions {
   label?: string
   name?: string
-  target?: any
+  target?: string
 }
 
 export interface StyledOptionWIthObject<PropsOptions extends Readonly<ComponentObjectPropsOptions>> extends StyledOptions {
@@ -66,7 +67,7 @@ export interface StyledOptionWithArray<PropsOptions extends Readonly<any[]>> ext
   props?: PropsOptions
 }
 
-export type StyledResult<Props> = ((...args: (TemplateStringsArray | Interpolation<Props>)[]) => FunctionalComponent<Props & StyledProps>)
+export type StyledResult<Props> = ((...args: (TemplateStringsArray | Interpolation<Props>)[]) => DefineComponent<Props>)
 
 const defaultProps = {
   as: null,
@@ -95,8 +96,7 @@ export const createStyled = (emotion: _Emotion) => {
     element: Tags | any,
     options?: Readonly<StyledOptionWithArray<PropNames[]>>,
   ): StyledResult<ExtractPropTypes<PropsOptions>>
-
-  function styled(element: AnyComponent, options: any): any {
+  function styled(element: AnyComponent, options?: any): any {
     const {props, label, target, name} = options ?? {}
 
     return (...args: any[]) => {
@@ -169,7 +169,8 @@ export const createStyled = (emotion: _Emotion) => {
           const asRef = toRef(props, 'as')
           const {cache: masterCache} = emotion
           const theme = useTheme()
-          const cache = inject(EMOTION_CACHE_CONTEXT, masterCache)
+          const injectedCache = inject(EMOTION_CACHE_CONTEXT)
+          const cache = computed(() => (injectedCache ?? masterCache))
           const elementRef = computed(() => {
             return asRef.value ?? element
           })

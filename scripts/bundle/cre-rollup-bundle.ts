@@ -12,6 +12,12 @@ export interface BundleOptions {
   output?: OutputOptions[]
 }
 
+type PickRequired<Record, Keys extends keyof Record> = {
+  [Props in Keys]-?: Record[Props]
+} & {
+  [Props in Exclude<keyof Record, Keys>]: Record[Props]
+}
+
 export const creRollupBundle = (options: BundleOptions = {}) => {
   const inputOptions: PickRequired<RollupOptions, 'input'> = defaultsDeep(options.input, defInputConfig)
   const outputOptionsList: OutputOptions[] = options.output ?? defOutputOptions

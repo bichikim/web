@@ -2,7 +2,7 @@ import {compute, isComputation} from 'src/compute'
 import {state} from 'src/state'
 import {getName, getRelates} from 'src/info'
 import {shallowMount} from '@vue/test-utils'
-import {defineComponent, h, Ref, toRef} from 'vue'
+import {defineComponent, h, Ref, toRef} from 'vue-demi'
 
 const setup = () => {
   const foo = state({

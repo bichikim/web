@@ -8,6 +8,12 @@
       "src/*": ["src/*"]
     },
   },
+  "ts-node": {
+    "compilerOptions": {
+      "target": "ES2015",
+      "module": "CommonJS"
+    }
+  },
   "include": [
     "src/**/*.ts",
     "src/**/*.tsx"

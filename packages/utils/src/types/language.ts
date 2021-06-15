@@ -3,6 +3,8 @@ export interface EmptyObject {
   // empty
 }
 
+export type AnyFunction<Args extends any[] = any[], Return = any> = (...args: Args) => Return
+
 export type FunctionObject<T extends Record<string, AnyFunction>> = {
   [P in keyof T]: (...args: Parameters<T[P]>) => ReturnType<T[P]>
 }
@@ -26,8 +28,6 @@ export type ObjectKey = string | symbol | number
 export type AnyObject<Value = any> = Record<ObjectKey, Value>
 
 export type PureObject<Value = any> = Record<string, Value>
-
-export type AnyFunction<Args extends any[] = any[], Return = any> = (...args: Args) => Return
 
 export type DropTuple<T extends any[], S = any> = T extends [S, ...infer Rest] ? Rest : any[]
 

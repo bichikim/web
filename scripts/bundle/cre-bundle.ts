@@ -5,7 +5,7 @@ import {watch} from 'gulp'
 export type RollupOptions = GenRollupOptions
 
 export const creBundle = (options?: RollupOptions) => creRollupBundle(
-  genRollupOptions(options),
+  genRollupOptions({...options, clean: true}),
 )
 
 export const creWatchBundle = (options: RollupOptions = {}) => {

@@ -1,38 +1,45 @@
 {
   "compilerOptions": {
-    "target": "ES2015",
-    "module": "CommonJS",
-    "strict": true,
-    "jsx": "preserve",
+    "allowJs": true,
+    // `baseUrl` must be placed on the extending configuration in devland, or paths won't be recognized
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "node",
+    // Needed to address https://github.com/quasarframework/app-extension-typescript/issues/36
+    "noEmit": true,
+    "resolveJsonModule": true,
+
     "noImplicitAny": false,
     "importHelpers": true,
     "declaration": true,
     "skipLibCheck": true,
-    "isolatedModules": true,
-    "moduleResolution": "node",
-    "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "suppressImplicitAnyIndexErrors": true,
     "sourceMap": true,
-    "baseUrl": ".",
-    "resolveJsonModule": true,
+    "strict": true,
+    "target": "es6",
+    // Quasar-defined webpack aliases
+    "paths": {
+      "src/*": ["src/*"],
+      "app/*": ["*"],
+      "components/*": ["src/components/*"],
+      "layouts/*": ["src/layouts/*"],
+      "pages/*": ["src/pages/*"],
+      "assets/*": ["src/assets/*"],
+      "boot/*": ["src/boot/*"]
+    },
     "typeRoots": [
       "./node_modules/@types",
       "./types"
     ],
-    "lib": [
-      "esnext",
-      "dom",
-      "dom.iterable",
-      "scripthost"
-    ]
+    "baseUrl": "."
   },
-  "include": [
-    "**/*.ts",
-    "gulpfile.ts",
-    "jest.setup.ts",
-  ],
-  "exclude": [
-    "node_modules"
-  ]
+  "ts-node": {
+    "transpileOnly": true,
+    "compilerOptions": {
+      "target": "ES2015",
+      "module": "CommonJS"
+    }
+  },
+  "exclude": ["/dist", ".quasar", "node_modules", "packages/**/*"]
 }

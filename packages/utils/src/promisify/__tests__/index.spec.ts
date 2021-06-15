@@ -4,7 +4,7 @@ describe('promisify', function test() {
   it('should make a callback function to be a returning promise resolve function', async function test() {
     const callbackRunner = (a, callback) => {
       setTimeout(() => {
-        // eslint-disable-next-line node/no-callback-literal
+        // eslint-disable-next-line node/no-callback-literal,@typescript-eslint/restrict-plus-operands
         callback(null, a + 1)
       }, 1)
     }

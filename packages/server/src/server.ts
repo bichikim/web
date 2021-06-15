@@ -32,7 +32,7 @@ export const prepare = async (options: ServerPrePareOptions = {}) => {
   }
 }
 
-export const start = async (server: ApolloServer, options: ServerStartOptions = {}) => {
+export const start = (server: ApolloServer, options: ServerStartOptions = {}) => {
   const {
     port,
   } = options

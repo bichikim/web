@@ -1,0 +1,7 @@
+{
+  "appId": "kim.bichi.tagup",
+  "appName": "Tag Up",
+  "bundledWebRuntime": false,
+  "npmClient": "yarn",
+  "webDir": "www"
+}

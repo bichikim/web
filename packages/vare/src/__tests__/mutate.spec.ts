@@ -1,7 +1,7 @@
 import {mutate, isMutation} from 'src/mutate'
 import {state} from 'src/state'
 import {getName, getRelates} from 'src/info'
-import {defineComponent, h} from 'vue'
+import {defineComponent, h} from 'vue-demi'
 import {mount, flushPromises} from '@vue/test-utils'
 
 const setup = () => {

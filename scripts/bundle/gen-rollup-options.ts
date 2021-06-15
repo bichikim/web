@@ -7,7 +7,6 @@ import del from 'rollup-plugin-delete'
 import {getPackage} from '../utils'
 import {defaultsDeep} from 'lodash'
 import typescript from 'rollup-plugin-typescript2'
-import ttypescript from 'ttypescript'
 import tsTreeShaking from 'rollup-plugin-ts-treeshaking'
 import externals from 'rollup-plugin-node-externals'
 import asset from 'rollup-plugin-smart-asset'
@@ -27,6 +26,7 @@ export interface GenRollupOptions {
   target?: TsTarget
   resolve?: RollupNodeResolveOptions
   output?: GenOutputOptions[]
+  clean?: boolean
 }
 
 export const defDist: string = 'lib'
@@ -45,6 +45,7 @@ export const defResolverOptions: RollupNodeResolveOptions = {
 
 export const genRollupOptions = (options: GenRollupOptions = {}): BundleOptions => {
   const {
+    clean = false,
     cwd = process.cwd(),
     dist = defDist,
     src = defSrc,
@@ -56,7 +57,7 @@ export const genRollupOptions = (options: GenRollupOptions = {}): BundleOptions 
 
   const resolvePlugin = resolve(defaultsDeep(resolveOptions, defResolverOptions))
   const typescriptPlugin = typescript({
-    typescript: ttypescript,
+    // typescript: ttypescript,
     cwd,
     tsconfigOverride: {
       compilerOptions: {
@@ -68,9 +69,9 @@ export const genRollupOptions = (options: GenRollupOptions = {}): BundleOptions 
             `${src}/*`,
           ],
         },
-        plugins: [
-          {transform: '@zerollup/ts-transform-paths'},
-        ],
+        // plugins: [
+        //   {transform: '@zerollup/ts-transform-paths'},
+        // ],
       },
       exclude: [
         'node_modules',
@@ -92,7 +93,25 @@ export const genRollupOptions = (options: GenRollupOptions = {}): BundleOptions 
 
   const packageJson = getPackage(cwd)
 
-  const deletePlugin = del({targets: dist})
+  const inputPlugins = [
+    assetPlugin,
+    /**
+     * this externals plugin must be in front of the resolve plugin
+     * @see https://www.npmjs.com/package/rollup-plugin-node-externals
+     */
+    externalsPlugin,
+    resolvePlugin,
+    typescriptPlugin,
+    /**
+     * this typescript tree shaking must be after the typescript plugin
+     * @see https://www.npmjs.com/package/rollup-plugin-ts-treeshaking
+     */
+    typescriptTreeShaking,
+  ]
+
+  if (clean) {
+    inputPlugins.push(del({targets: dist}))
+  }
 
   const {
     name = packageJson.name,
@@ -105,22 +124,7 @@ export const genRollupOptions = (options: GenRollupOptions = {}): BundleOptions 
   return {
     input: {
       input: path.resolve(cwd, src, entry),
-      plugins: [
-        assetPlugin,
-        /**
-         * this externals plugin must be in front of the resolve plugin
-         * @see https://www.npmjs.com/package/rollup-plugin-node-externals
-         */
-        externalsPlugin,
-        resolvePlugin,
-        typescriptPlugin,
-        /**
-         * this typescript tree shaking must be after the typescript plugin
-         * @see https://www.npmjs.com/package/rollup-plugin-ts-treeshaking
-         */
-        typescriptTreeShaking,
-        deletePlugin,
-      ],
+      plugins: inputPlugins,
     },
     output: output.map((value) => {
       const {

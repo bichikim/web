@@ -9,7 +9,7 @@ describe('storageRef', () => {
     expect(localStorage.getItem('foo')).toBe('"bar"')
     localStorage.clear()
   })
-  it('should change localStorage by init', async () => {
+  it('should change localStorage by init', () => {
     const valueRef = storageRef('foo', {type: 'local', init: 'bar'})
     expect(valueRef.value).toBe('bar')
     expect(localStorage.getItem('foo')).toBe('"bar"')

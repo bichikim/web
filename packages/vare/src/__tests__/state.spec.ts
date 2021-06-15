@@ -1,5 +1,5 @@
 import {mount, flushPromises} from '@vue/test-utils'
-import {defineComponent, h} from 'vue'
+import {defineComponent, h} from 'vue-demi'
 import {state} from 'src/state'
 
 const foo = state({
