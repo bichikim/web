@@ -139,12 +139,12 @@ export const createStyled = (emotion: _Emotion) => {
 
           // no need to sue should forward props. vue props will work same as that
 
-          const slot = this.isStringElement ? this.$slots?.default?.() : () => this.$slots?.default?.()
+          // const slot = this.isStringElement ? this.$slots?.default?.() : () => this.$slots?.default?.()
 
           // ssr code is needed
           const passingProps = this.isStringElement ? {} : this.$props
 
-          const vNode = h(this.element, {...this.$attrs, ...passingProps, class: className}, slot)
+          const vNode = h(this.element, {...this.$attrs, ...passingProps, class: className}, this.$slots)
 
           if (isSSR() && typeof rules !== 'undefined') {
             let next = serialized.next

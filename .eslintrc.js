@@ -9,9 +9,9 @@ module.exports = {
     },
   },
   extends: [
-    'plugin:vue/vue3-essential',
+    'plugin:vue/vue3-recommended',
     'plugin:@typescript-eslint/recommended',
-    '@vue/standard',
+    'eslint:recommended',
     '@vue/typescript/recommended',
   ],
   parserOptions: {
@@ -40,6 +40,7 @@ module.exports = {
     }],
     'no-use-before-define': 'off',
     '@typescript-eslint/member-delimiter-style': 'off',
+    'vue/order-in-components': 'off',
     'import/no-absolute-path': 'off',
   },
   globals: {
@@ -57,15 +58,13 @@ module.exports = {
   overrides: [
     {
       files: [
-        '**/tests/**/*.spec.{j,t}s?(x)',
+        '**/*.spec.{j,t}s?(x)',
       ],
       env: {
         mocha: true,
       },
-    },
-    {
-      files: ['**/tests/**/*.js', '*.js'],
       rules: {
+        'vue/one-component-per-file': 'off',
         '@typescript-eslint/no-var-requires': 'off',
       },
     },

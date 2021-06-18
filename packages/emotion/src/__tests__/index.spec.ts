@@ -1,4 +1,4 @@
-import {createStyled, StyledOptions, createEmotion, EMOTION_CACHE_CONTEXT, EMOTION_THEME_CONTEXT} from 'src/index'
+import {createStyled, StyledOptions, createEmotion, EMOTION_CACHE_CONTEXT, EMOTION_THEME_CONTEXT} from '../'
 import createEmotionOriginal from '@emotion/css/create-instance'
 import {mount} from '@vue/test-utils'
 import {defineComponent, h, createApp} from 'vue-demi'
@@ -34,7 +34,7 @@ describe('emotion', () => {
         },
       })
 
-      const wrapper = mount(Component, {slots: {default: () => slot}})
+      const wrapper = mount(Component as any, {slots: {default: () => slot}})
 
       return {
         Component,
