@@ -8,10 +8,10 @@ import {compute} from 'src/compute'
 
 const setup = () => {
   const foo = state({
-    name: 'foo',
     deep: {
       name: 'bar',
     },
+    name: 'foo',
   })
 
   const mutation = mutate((name: string) => {
@@ -27,12 +27,12 @@ const setup = () => {
   const computation = compute(() => foo.name + '?')()
 
   return {
-    foo, mutation, action, computation,
+    action, computation, foo, mutation,
   }
 }
 
-describe('subscribe', function test() {
-  it('should subscribe state', async function test() {
+describe('subscribe', () => {
+  it('should subscribe state', async () => {
     const {foo} = setup()
 
     const stateHook = jest.fn()
@@ -74,7 +74,7 @@ describe('subscribe', function test() {
 
     expect(actHook.mock.calls.length).toBe(1)
     expect(actHook.mock.calls[0][0]).toEqual(['FOO'])
-    expect(actHook.mock.calls[0][1]).toEqual(null)
+    expect(actHook.mock.calls[0][1]).toEqual(undefined)
   })
 
   it('should subscribe mutation', async function test() {
@@ -93,11 +93,13 @@ describe('subscribe', function test() {
 
     expect(mutateHook.mock.calls.length).toBe(1)
     expect(mutateHook.mock.calls[0][0]).toEqual(['FOO'])
-    expect(mutateHook.mock.calls[0][1]).toEqual(null)
+    expect(mutateHook.mock.calls[0][1]).toEqual(undefined)
   })
 
   it('should subscribe computation', async function test() {
-    const {computation, foo} = setup()
+    const {
+      computation, foo,
+    } = setup()
 
     const computeHook = jest.fn()
 
@@ -184,7 +186,9 @@ describe('subscribe', function test() {
     })
 
     it('should unsubscribe computation', async function test() {
-      const {computation, foo} = setup()
+      const {
+        computation, foo,
+      } = setup()
 
       const computeHook = jest.fn()
 

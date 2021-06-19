@@ -30,5 +30,3 @@ export type ThemeValue<ThemeType, K extends keyof ThemeType, TValue = any> =
   ThemeType[K] extends TValue[] ? number :
     ThemeType[K] extends Record<infer E, TValue> ? E :
       ThemeType[K] extends ObjectOrArray<infer F> ? F : never
-
-

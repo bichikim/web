@@ -16,7 +16,6 @@ export interface StyleParse {
 export type ResponsiveValue<T,
   > = T | null | Array<T | null> | { [key in string | number]?: T };
 
-
 export interface StyleFunction<Key extends string = string,
   Scale extends PureObject = PureObject,
   Props extends PureObject = PureObject> {
@@ -43,5 +42,6 @@ export interface ConfigStyle<Theme extends AnyObject, Scale extends string | num
 }
 
 export interface Config<Theme extends PureObject = PureObject> {
-  [customStyleName: string]: ConfigStyle<Theme> | boolean | ((value: any, scale: any, props: any, index: number) => CSSObject)
+  [customStyleName: string]: ConfigStyle<Theme>
+    | boolean | ((value: any, scale: any, props: any, index: number) => CSSObject)
 }

@@ -2,7 +2,9 @@ import {asyncRef} from 'src/async-ref'
 
 describe('asyncRef', () => {
   it('should make function ref', async () => {
-    const {error, execute, value, isInProgress} = asyncRef((deco: string) => 'foo' + deco)
+    const {
+      error, execute, value, isInProgress,
+    } = asyncRef((deco: string) => 'foo' + deco)
     expect(isInProgress.value).toBe(false)
     expect(value.value).toBe(undefined)
     expect(error.value).toBe(undefined)
@@ -14,7 +16,9 @@ describe('asyncRef', () => {
     expect(error.value).toBe(undefined)
   })
   it('should make async function ref', async () => {
-    const {error, execute, value, isInProgress} = asyncRef((deco: string) => Promise.resolve('foo' + deco))
+    const {
+      error, execute, value, isInProgress,
+    } = asyncRef((deco: string) => Promise.resolve('foo' + deco))
     expect(isInProgress.value).toBe(false)
     expect(value.value).toBe(undefined)
     expect(error.value).toBe(undefined)
@@ -27,7 +31,9 @@ describe('asyncRef', () => {
   })
 
   it('should make error function ref', async () => {
-    const {error, execute, value, isInProgress} = asyncRef((deco: string) => {
+    const {
+      error, execute, value, isInProgress,
+    } = asyncRef((deco: string) => {
       throw new Error('foo' + deco)
     })
     expect(isInProgress.value).toBe(false)
@@ -41,7 +47,9 @@ describe('asyncRef', () => {
     expect(error.value).toEqual(new Error('foo--'))
   })
   it('should make async error function ref', async () => {
-    const {error, execute, value, isInProgress} = asyncRef((deco: string) => {
+    const {
+      error, execute, value, isInProgress,
+    } = asyncRef((deco: string) => {
       return Promise.reject(new Error('foo' + deco))
     })
     expect(isInProgress.value).toBe(false)

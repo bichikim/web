@@ -1,14 +1,14 @@
-import {mutate, isMutation} from 'src/mutate'
+import {isMutation, mutate} from 'src/mutate'
 import {state} from 'src/state'
 import {getName, getRelates} from 'src/info'
 import {defineComponent, h} from 'vue-demi'
-import {mount, flushPromises} from '@vue/test-utils'
+import {flushPromises, mount} from '@vue/test-utils'
 
 const setup = () => {
   const foo = state({
-    name: 'foo',
     age: 10,
     gender: 'man',
+    name: 'foo',
   })
 
   const bar = state({
@@ -41,7 +41,7 @@ const setup = () => {
     },
   })
 
-  const multiRelateMutTree = mutate({foo, bar}, {
+  const multiRelateMutTree = mutate({bar, foo}, {
     changeAgeAndMoney: ({foo, bar}, age: number, money: number) => {
       foo.age = age
       bar.money = money
@@ -62,14 +62,14 @@ const setup = () => {
   const wrapper = mount(Component)
 
   return {
-    wrapper,
-    foo,
     bar,
     changeFooName,
+    foo,
+    multiRelateMutTree,
+    mutTree,
     relateChangeName,
     relateMutTree,
-    mutTree,
-    multiRelateMutTree,
+    wrapper,
   }
 }
 

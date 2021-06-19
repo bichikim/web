@@ -12,19 +12,19 @@ describe('merge', () => {
 
     }, {
       foo: {
-        john: '',
         foo: {
           john: '',
         },
+        john: '',
       },
     })
     expect(result).toEqual({
       foo: {
         bar: '',
-        john: '',
         foo: {
           john: '',
         },
+        john: '',
       },
     })
   })

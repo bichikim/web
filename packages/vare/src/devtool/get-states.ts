@@ -14,10 +14,10 @@ export const createGetStates = (states: Record<string, State<any>>) => {
     cache = Object.keys(states).reduce<StateBases>((result, key: string) => {
       const value = states[key]
       result[key] = {
-        key,
-        value,
         editable: true,
+        key,
         objectType: 'reactive',
+        value,
       }
       return result
     }, {})

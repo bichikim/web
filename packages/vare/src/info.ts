@@ -17,11 +17,11 @@ export interface PlaygroundInfo {
 }
 
 export interface VareInfo {
-  playground?: PlaygroundInfo
-  identifier: Identifier
-  relates: Set<AllKinds>
-  name?: string
   description?: string
+  identifier: Identifier
+  name?: string
+  playground?: PlaygroundInfo
+  relates: Set<AllKinds>
   type?: string | undefined
   watchFlag?: Ref<any>
 }
@@ -30,11 +30,11 @@ export const createInfoMap = () => {
   const infoMap = new WeakMap<AllKinds, VareInfo>()
 
   return {
-    set: (target: AllKinds, info: VareInfo) => {
-      infoMap.set(target, info)
-    },
     get: (target: AllKinds): VareInfo | undefined => {
       return infoMap.get(target)
+    },
+    set: (target: AllKinds, info: VareInfo) => {
+      infoMap.set(target, info)
     },
   }
 }

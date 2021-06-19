@@ -48,21 +48,21 @@ export const relateState = (state: AnyStateGroup, target: AllKinds) => {
       console.warn('An array relation type has a type error. Please use an object type. sorry~')
     }
 
-    (state as State<any>[]).forEach((item) => {
+    for (const item of (state as State<any>[])) {
       if (isState(item)) {
         relate(item, target)
       }
-    })
+    }
     return
   }
 
   if (typeof state === 'object') {
-    Object.keys(state).forEach((key) => {
+    for (const key of Object.keys(state)) {
       const item: State<any> = state[key]
       if (isState(item)) {
         relate(item, target)
       }
-    })
+    }
   }
 }
 

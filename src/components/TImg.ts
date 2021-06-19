@@ -5,7 +5,7 @@ const {styled} = emotion()
 
 export const TImg: any = styled(QImg)(
   {
-    width: '100px',
     height: '100px',
+    width: '100px',
   },
 )

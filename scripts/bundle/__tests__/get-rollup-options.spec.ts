@@ -1,5 +1,7 @@
-import {genRollupOptions, defEntry, defSrc, defFile, defDist} from '../gen-rollup-options'
-import tsTreeShaking from 'rollup-plugin-ts-treeshaking'
+import {
+  defDist, defEntry, defFile, defSrc, genRollupOptions,
+} from '../gen-rollup-options'
+// import tsTreeShaking from 'rollup-plugin-ts-treeshaking'
 import typescript from 'rollup-plugin-typescript2'
 import path from 'path'
 // noinspection ES6PreferShortImport
@@ -14,13 +16,13 @@ jest.mock('rollup-plugin-ts-treeshaking')
 
 jest.mock('rollup-plugin-terser')
 
-const tsTreeShakingMock: jest.Mock & {plugin: any} = tsTreeShaking as any
+// const tsTreeShakingMock: jest.Mock & {plugin: any} = tsTreeShaking as any
 const typescriptMock: jest.Mock & {plugin: any} = typescript as any
 const terserMock: jest.Mock & {plugin: any} = terser as any
 
 describe('getRollupOptions', function test() {
   afterEach(() => {
-    tsTreeShakingMock.mockClear()
+    // tsTreeShakingMock.mockClear()
     typescriptMock.mockClear()
   })
 
@@ -63,16 +65,16 @@ describe('getRollupOptions', function test() {
       expect(input.input).toBe(path.resolve(cwd, defSrc, entry))
     })
 
-    it('should return rollup input options with treeShaking plugin', function test() {
-      const result = genRollupOptions()
-
-      const input = result.input as any
-
-      // make sure it is mocked
-      expect(typeof tsTreeShakingMock.plugin).toBe('function')
-
-      expect(input.plugins).toContain(tsTreeShakingMock.plugin)
-    })
+    // it('should return rollup input options with treeShaking plugin', function test() {
+    //   const result = genRollupOptions()
+    //
+    //   const input = result.input as any
+    //
+    //   // make sure it is mocked
+    //   expect(typeof tsTreeShakingMock.plugin).toBe('function')
+    //
+    //   expect(input.plugins).toContain(tsTreeShakingMock.plugin)
+    // })
 
     it('should return rollup input options with rollup-plugin-typescript2', function test() {
       const result = genRollupOptions()
@@ -91,7 +93,6 @@ describe('getRollupOptions', function test() {
       expect(typescriptOptions.tsconfigOverride).toEqual({
         compilerOptions: {
           emitDeclarationOnly: false,
-          target: 'ESNext',
           module: 'ESNext',
           paths: {
             '@/*': [
@@ -101,6 +102,7 @@ describe('getRollupOptions', function test() {
           plugins: [
             {transform: '@zerollup/ts-transform-paths'},
           ],
+          target: 'ESNext',
         },
       })
     })
@@ -156,8 +158,7 @@ describe('getRollupOptions', function test() {
 
       const result = genRollupOptions({
         dist,
-        output: [{
-        }],
+        output: [{}],
       })
 
       const cwd = process.cwd()

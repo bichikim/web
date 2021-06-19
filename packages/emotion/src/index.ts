@@ -59,7 +59,9 @@ export interface StyledOptions {
   target?: string
 }
 
-export interface StyledOptionWIthObject<PropsOptions extends Readonly<ComponentObjectPropsOptions>> extends StyledOptions {
+export interface StyledOptionWIthObject<
+  PropsOptions extends Readonly<ComponentObjectPropsOptions>
+  > extends StyledOptions {
   props?: PropsOptions
 }
 
@@ -69,10 +71,7 @@ export interface StyledOptionWithArray<PropsOptions extends Readonly<any[]>> ext
 
 export type StyledResult<Props> = ((...args: (TemplateStringsArray | Interpolation<Props>)[]) => DefineComponent<Props>)
 
-const defaultProps = {
-  as: null,
-  theme: null,
-}
+const defaultProps = {}
 
 export type EmptyObject = {
   // empty
@@ -180,8 +179,8 @@ export const createStyled = (emotion: _Emotion) => {
           return {
             cache,
             element: elementRef,
-            theme,
             isStringElement: isStringElementRef,
+            theme,
           }
         },
       })
@@ -196,8 +195,8 @@ export interface EmotionExtend extends _Emotion {
 }
 
 export interface EmotionOptions extends Omit<OriginalEmotionOptions, 'key'> {
-  theme?: Theme
   key?: string
+  theme?: Theme
 }
 
 export type EmotionPlugin = Plugin & EmotionExtend

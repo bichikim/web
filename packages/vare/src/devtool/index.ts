@@ -1,8 +1,12 @@
 import {State} from 'src/state'
 import {subscribe} from 'src/subscribe'
-import {isSSR, drop} from '@winter-love/utils'
-import {AllKinds, getIdentifier, getName, setName, setPlayground} from 'src/info'
-import {DevtoolsPluginApi, setupDevtoolsPlugin, StateBase, TimelineEvent} from '@vue/devtools-api'
+import {drop, isSSR} from '@winter-love/utils'
+import {
+  AllKinds, getIdentifier, getName, setName, setPlayground,
+} from 'src/info'
+import {
+  DevtoolsPluginApi, setupDevtoolsPlugin, StateBase, TimelineEvent,
+} from '@vue/devtools-api'
 import {App} from 'vue-demi'
 import {genInspectorTree} from './gen-inspector-tree'
 import {genNoneStateInfo} from './gen-none-state-info'
@@ -29,6 +33,7 @@ export const getNamedStates = (states: Record<string, State<any>>): Record<strin
 
 export type EventKind = 'action' | 'mutation'
 
+// eslint-disable-next-line max-lines-per-function
 export const getDevtool = (app: App, states: Record<string, State<any>>) => {
   if (isSSR()) {
     return
@@ -46,30 +51,31 @@ export const getDevtool = (app: App, states: Record<string, State<any>>) => {
 
   setupDevtoolsPlugin({
     app,
-    label: 'Vare',
     id: DEVTOOL_ID,
+    label: 'Vare',
     packageName: 'vare',
+    // eslint-disable-next-line max-lines-per-function
   }, (api) => {
     _api = api
 
     api.addInspector({
+      icon: 'mediation',
       id: inspectorId,
       label: 'Vare Structure',
-      icon: 'mediation',
-      treeFilterPlaceholder: 'Search for Vare',
       stateFilterPlaceholder: 'Search for state',
+      treeFilterPlaceholder: 'Search for Vare',
     })
 
     api.addTimelineLayer({
+      color: 0xF08D49,
       id: timelineIds.action,
       label: 'Vare Actions',
-      color: 0xf08d49,
     })
 
     api.addTimelineLayer({
+      color: 0x3EAF7C,
       id: timelineIds.mutation,
       label: 'Vare Mutation',
-      color: 0x3eaf7c,
     })
 
     api.on.getInspectorTree((payload) => {
@@ -139,15 +145,15 @@ export const getDevtool = (app: App, states: Record<string, State<any>>) => {
     const layerId = timelineIds[kind]
 
     _api?.addTimelineEvent({
-      layerId,
+      all,
       event: {
         ...event,
-        time: Date.now(),
         data: {
           type: kind,
         },
+        time: Date.now(),
       },
-      all,
+      layerId,
     })
   }
 
@@ -160,9 +166,9 @@ export const getDevtool = (app: App, states: Record<string, State<any>>) => {
   }
 
   return {
+    updateState,
     updateTimeline,
     updateTree,
-    updateState,
   }
 }
 
@@ -176,11 +182,11 @@ export const startDevtool = (app: App, states: Record<string, State<any>>) => {
     const {updateState} = tools
 
     // updating state
-    Object.keys(states).forEach((key) => {
+    for (const key of Object.keys(states)) {
       const state = states[key]
 
       subscribe(state, () => updateState())
-    })
+    }
 
     tools.updateTree()
   }

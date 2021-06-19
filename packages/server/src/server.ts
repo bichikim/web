@@ -22,8 +22,8 @@ export const prepare = async (options: ServerPrePareOptions = {}) => {
   })
 
   const server = new ApolloServer({
-    schema,
     playground,
+    schema,
   })
 
   return {

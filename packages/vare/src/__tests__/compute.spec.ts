@@ -2,7 +2,9 @@ import {compute, isComputation} from 'src/compute'
 import {state} from 'src/state'
 import {getName, getRelates} from 'src/info'
 import {shallowMount} from '@vue/test-utils'
-import {defineComponent, h, Ref, toRef} from 'vue-demi'
+import {
+  defineComponent, h, Ref, toRef,
+} from 'vue-demi'
 
 const setup = () => {
   const foo = state({
@@ -66,15 +68,18 @@ const setup = () => {
           h('div', {id: 'nameStaticDeco'}, nameStaticDecoRef.value),
           h('div', {id: 'nameReactiveDeco'}, nameReactiveDecoRef.value),
           h('a', {id: 'setDeco', onclick: () => handleNameDecoSetRef('change')}, nameDecoSetRef.value),
-          h('a', {id: 'setReactive', onClick: () => handleNameDecoReactiveSetRef('change')}, nameDecoReactiveSetRef.value),
+          h('a', {
+            id: 'setReactive',
+            onClick: () => handleNameDecoReactiveSetRef('change'),
+          }, nameDecoReactiveSetRef.value),
         ])
       )
     },
   })
 
   return {
-    foo,
     TestComponent,
+    foo,
     nameDecoSet,
     relateTree,
     tree,

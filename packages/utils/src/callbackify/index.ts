@@ -2,24 +2,24 @@ import {isPromise} from '../is-promise'
 
 export const callbackify = <S>(
   action: () => Promise<S> | S,
-  callback: (error: null, value: S | null) => any,
+  callback: (error: undefined | Error, value?: S | undefined) => any,
 ) => {
   let result
   try {
     result = action()
   } catch (error) {
-    callback(error, null)
+    callback(error)
     return
   }
 
   if (isPromise(result)) {
     return result.then((data: S) => {
-      callback(null, data)
+      callback(undefined, data)
     }).catch((error) => {
-      callback(error, null)
+      callback(error)
     })
   }
 
-  callback(null, result)
+  callback(undefined, result)
   return result
 }

@@ -4,14 +4,14 @@ export type Recipe<Args extends any[], Data> = (...args: Args) => Promise<Data>
 
 export interface UsePromiseOptions<Args extends any[]> {
   /**
-   * execute the promise right after initialization
-   */
-  immediate?: Args
-  /**
    * Sets the dataRef to undefined before executing
    * @default true
    */
   cleanOnExecute?: boolean
+  /**
+   * execute the promise right after initialization
+   */
+  immediate?: Args
 }
 
 export interface UsePromiseReturnType<Data, Args extends any[], Error> {
@@ -63,11 +63,11 @@ export const usePromise = <Data, Args extends any[], Error = any>(
   }
 
   return {
-    execute,
-    data: dataRef,
     count: countRef,
-    fetching: fetchingRef,
+    data: dataRef,
     error: errorRef,
+    execute,
+    fetching: fetchingRef,
     promise: promiseRef,
   }
 }

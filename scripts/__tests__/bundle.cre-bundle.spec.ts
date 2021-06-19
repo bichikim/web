@@ -9,14 +9,14 @@ describe('bundle/creBundle', function test() {
   const filePath = path.resolve(__dirname, '../', '__tests__', '__dist__.js')
   const options: RollupOptions = {
     cwd: path.resolve(__dirname, '../'),
-    src: '__tests__',
-    entry: 'test-file.ts',
     dist: '__tests__',
+    entry: 'test-file.ts',
     name: 'tests',
     output: [{
-      name: 'foo',
       file: '__dist__.js',
+      name: 'foo',
     }],
+    src: '__tests__',
   }
 
   it('should bundle a ts file', async function test() {

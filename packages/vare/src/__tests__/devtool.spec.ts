@@ -11,11 +11,11 @@ const setup = () => {
   const mockApi = {
     addInspector: jest.fn(),
     addTimelineLayer: jest.fn(),
-    getInspectorTree: jest.fn(),
-    getInspectorState: jest.fn(),
     editInspectorState: jest.fn(),
-    sendInspectorTree: jest.fn(),
+    getInspectorState: jest.fn(),
+    getInspectorTree: jest.fn(),
     sendInspectorState: jest.fn(),
+    sendInspectorTree: jest.fn(),
   }
 
   const foo = state({

@@ -4,8 +4,8 @@ import stringify from 'fast-json-stable-stringify'
 import {useElementEvent} from '../element-event'
 
 export interface StorageRefOptions<Data> {
-  type?: StorageType
   init?: Data
+  type?: StorageType
 }
 
 const getItem = (storage: Storage, key: string) => {

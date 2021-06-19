@@ -23,7 +23,10 @@ import {getScale} from './get-scale'
 
 const getValue = (key: any, scale: any) => getScale(scale, key, key)
 
-export const createStyleFunction = <Theme extends AnyObject, Scale extends string | number | symbol = keyof Theme>(options: ConfigStyle<Theme, Scale>) => {
+export const createStyleFunction = <
+  Theme extends AnyObject,
+  Scale extends string | number | symbol = keyof Theme
+  >(options: ConfigStyle<Theme, Scale>) => {
   const {defaultScale, properties, property, scale, transform = getValue} = options
   const _properties = properties || [property]
   const sx = (value: any, scale: any, _props: any) => {
@@ -43,7 +46,10 @@ export const createStyleFunction = <Theme extends AnyObject, Scale extends strin
   return sx
 }
 
-const fillProperty = <Theme extends AnyObject = AnyObject>(option: ConfigStyle<Theme>, key: string): ConfigStyle<Theme> => {
+const fillProperty = <Theme extends AnyObject = AnyObject>(
+  option: ConfigStyle<Theme>,
+  key: string,
+): ConfigStyle<Theme> => {
   const {property, properties, ...rest} = option
   let _properties: any[]
   if (property) {
@@ -60,7 +66,8 @@ const fillProperty = <Theme extends AnyObject = AnyObject>(option: ConfigStyle<T
 }
 
 export interface SystemOptions<Theme extends PureObject = PureObject>{
-  [customStyleName: string]: ConfigStyle<Theme> | boolean | ((value: any, scale: any, props: any, index: number) => CSSObject)
+  [customStyleName: string]: ConfigStyle<Theme> | boolean
+    | ((value: any, scale: any, props: any, index: number) => CSSObject)
 }
 
 export const system = <Theme extends AnyObject>(options: SystemOptions<Theme> = {}): StyleParse => {

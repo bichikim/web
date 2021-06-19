@@ -1,6 +1,13 @@
+/* eslint-disable max-params */
 import {deepMemoize} from '@winter-love/utils'
 
-export const rawGetScale = (theme: Record<string, any> | undefined, key: string | undefined, def?: Record<string, any> | undefined, props?: Record<string, any>, undef?: any) => {
+export const rawGetScale = (
+  theme: Record<string, any> | undefined,
+  key: string | undefined,
+  def?: Record<string, any> | undefined,
+  props?: Record<string, any>,
+  undef?: any,
+) => {
   const _key = (key && key.split) ? key.split('.') : [key]
   let _object = theme
 

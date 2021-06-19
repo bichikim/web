@@ -3,14 +3,15 @@ import {Plugin, inject, InjectionKey} from 'vue-demi'
 import {State} from './state'
 
 export interface VarePlugin {
-  states: Record<string, State<any>>
   /**
    * not recommended to use
    */
   provide?: boolean
+  states: Record<string, State<any>>
 }
 
-const errorMessage = process.env.NODE_ENV === 'development' ? 'Please use the Vare plugin with provide true. If you want to use the useVare' : ''
+const errorMessage = process.env.NODE_ENV === 'development' ?
+  'Please use the Vare plugin with provide true. If you want to use the useVare' : ''
 
 export interface UseVareReturnType {
   [key: string]: State<any>

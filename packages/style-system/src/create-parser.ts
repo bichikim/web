@@ -12,7 +12,7 @@ export const LG_BREAKPOINT = 64
 export const DEFAULT_BREAK_POINTS = [SM_BREAKPOINT, MD_BREAKPOINT, LG_BREAKPOINT]
 
 export const defaults = {
-  breakpoints: DEFAULT_BREAK_POINTS.map(n => n + 'em'),
+  breakpoints: DEFAULT_BREAK_POINTS.map(size => size + 'em'),
 }
 
 export const createParser = (config: Record<string, StyleFunction>) => {
@@ -48,7 +48,7 @@ export const createParser = (config: Record<string, StyleFunction>) => {
           return mergeStyle(result, parseResponsiveStyle(cache.media, sx, scale, raw, props))
         }
 
-        if(raw !== null) {
+        if (raw !== null) {
           shouldSort = true
           return mergeStyle(
             result,
@@ -72,7 +72,7 @@ export const createParser = (config: Record<string, StyleFunction>) => {
   parse.propNames = Object.keys(config)
   parse.cache = cache
 
-  const keys = Object.keys(config).filter(k => k !== 'config')
+  const keys = Object.keys(config).filter(key => key !== 'config')
 
   if (keys.length > 1) {
     const parses = keys.reduce((result, key) => {

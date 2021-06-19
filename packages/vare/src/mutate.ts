@@ -31,7 +31,7 @@ const getMutatePrams = createGetAtomPrams(createUuid('unknown'))
  */
 function _mutate(unknown, mayRecipe?: any, name?: string): Mutation<any> {
   const {state, recipe, name: _name} = getMutatePrams(unknown, mayRecipe, name)
-  const flag = ref<any[] | null>(null)
+  const flag = ref<any[] | null>()
 
   // create executor
   const self: any = (...args: any[]): any => {
@@ -43,8 +43,8 @@ function _mutate(unknown, mayRecipe?: any, name?: string): Mutation<any> {
 
   if (process.env.NODE_ENV === 'development') {
     info.set(self, {
-      name: _name,
       identifier: mutationName,
+      name: _name,
       relates: new Set(),
       watchFlag: flag,
     })
@@ -76,8 +76,8 @@ const getTreeMutatePrams = (mayState: any, mayTree: any) => {
   }
 
   return {
-    tree,
     state,
+    tree,
   }
 }
 /**
@@ -113,7 +113,11 @@ export function mutate<Args extends any[], Return = any> (
 export function mutate<Func extends MutationRecipe, TreeOptions extends Record<string, Func>> (
   tree: TreeOptions,
 ): FunctionObject<TreeOptions>
-export function mutate<State extends AnyStateGroup, Func extends MutationStateRecipe<State>, TreeOptions extends Record<string, Func>> (
+export function mutate<
+  State extends AnyStateGroup,
+  Func extends MutationStateRecipe<State>,
+  TreeOptions extends Record<string, Func>,
+  > (
   state: State,
   tree: TreeOptions,
 ): DropFunctionObject<TreeOptions, State>

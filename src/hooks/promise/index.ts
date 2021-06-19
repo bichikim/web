@@ -51,11 +51,11 @@ export const usePromise = <Data, Args extends any[], Error = any>(
   }
 
   return {
-    execute,
-    data: dataRef,
     count: countRef,
-    fetching: fetchingRef,
+    data: dataRef,
     error: errorRef,
+    execute,
+    fetching: fetchingRef,
     promise: promiseRef,
   }
 }

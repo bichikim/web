@@ -7,7 +7,7 @@ import del from 'rollup-plugin-delete'
 import {getPackage} from '../utils'
 import {defaultsDeep} from 'lodash'
 import typescript from 'rollup-plugin-typescript2'
-import tsTreeShaking from 'rollup-plugin-ts-treeshaking'
+// import tsTreeShaking from 'rollup-plugin-ts-treeshaking'
 import externals from 'rollup-plugin-node-externals'
 import asset from 'rollup-plugin-smart-asset'
 
@@ -15,18 +15,20 @@ export interface GenOutputOptions extends OutputOptions {
   minify?: boolean
 }
 
-export type TsTarget = 'ES3' | 'ES5' | 'ES6' | 'ES2015' | 'ES2016' | 'ES2017' | 'ES2018' | 'ES2019' | 'ES2020' | 'ESNEXT'
+export type TsTarget = 'ES3' | 'ES5' | 'ES6'
+  | 'ES2015' | 'ES2016' | 'ES2017' | 'ES2018'
+  | 'ES2019' | 'ES2020' | 'ESNEXT'
 
 export interface GenRollupOptions {
+  clean?: boolean
   cwd?: string
   dist?: string
-  src?: string
   entry?: string
   name?: string
-  target?: TsTarget
-  resolve?: RollupNodeResolveOptions
   output?: GenOutputOptions[]
-  clean?: boolean
+  resolve?: RollupNodeResolveOptions
+  src?: string
+  target?: TsTarget
 }
 
 export const defDist: string = 'lib'
@@ -43,6 +45,7 @@ export const defResolverOptions: RollupNodeResolveOptions = {
   extensions: defExtensions,
 }
 
+// eslint-disable-next-line max-lines-per-function
 export const genRollupOptions = (options: GenRollupOptions = {}): BundleOptions => {
   const {
     clean = false,
@@ -62,13 +65,13 @@ export const genRollupOptions = (options: GenRollupOptions = {}): BundleOptions 
     tsconfigOverride: {
       compilerOptions: {
         emitDeclarationOnly: false,
-        target: tsTarget,
         module: 'ESNext',
         paths: {
           '@/*': [
             `${src}/*`,
           ],
         },
+        target: tsTarget,
         // plugins: [
         //   {transform: '@zerollup/ts-transform-paths'},
         // ],
@@ -89,7 +92,7 @@ export const genRollupOptions = (options: GenRollupOptions = {}): BundleOptions 
 
   const assetPlugin = asset()
 
-  const typescriptTreeShaking = tsTreeShaking()
+  // const typescriptTreeShaking = tsTreeShaking()
 
   const packageJson = getPackage(cwd)
 
@@ -106,7 +109,7 @@ export const genRollupOptions = (options: GenRollupOptions = {}): BundleOptions 
      * this typescript tree shaking must be after the typescript plugin
      * @see https://www.npmjs.com/package/rollup-plugin-ts-treeshaking
      */
-    typescriptTreeShaking,
+    // typescriptTreeShaking,
   ]
 
   if (clean) {

@@ -4,10 +4,10 @@ import {QLayout, QFooter, QPageContainer} from 'quasar'
 import {RouterView} from 'vue-router'
 
 export const MainLayout = defineComponent({
-  name: 'MainLayout',
   components: {
     Navigation,
   },
+  name: 'MainLayout',
   render() {
     return (
       h(QLayout, {view: 'lHh Lpr lFf'}, () => [

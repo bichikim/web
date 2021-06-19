@@ -2,21 +2,21 @@
 import {creBundle, creWatchBundle, RollupOptions} from './scripts'
 
 const bundleOptions: RollupOptions = {
-  target: 'ES2019',
   output: [
     {
-      format: 'es',
       file: 'index.module.js',
+      format: 'es',
     },
     {
-      format: 'commonjs',
       file: 'index.js',
+      format: 'commonjs',
     },
     {
-      format: 'umd',
       file: 'index.umd.js',
+      format: 'umd',
     },
   ],
+  target: 'ES2019',
 }
 
 export const dev = creWatchBundle(bundleOptions)

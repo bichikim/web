@@ -43,12 +43,12 @@ const setup = () => {
   })
 
   return {
-    foo,
     changeFooName,
+    foo,
+    namedRequestFooName,
+    requestFooName,
     tree,
     treeRelate,
-    requestFooName,
-    namedRequestFooName,
   }
 }
 

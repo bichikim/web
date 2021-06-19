@@ -1,4 +1,6 @@
-import {setName, getName, getPlayground, setPlayground, getDescription, describe as setDescription} from 'src/info'
+import {
+  getDescription, getName, getPlayground, describe as setDescription, setName, setPlayground,
+} from 'src/info'
 import {state} from 'src/state'
 import {compute} from 'src/compute'
 

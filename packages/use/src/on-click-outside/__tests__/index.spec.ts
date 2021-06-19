@@ -24,8 +24,8 @@ const setup = () => {
   const wrapper = mount(Component)
 
   return {
-    wrapper,
     spy,
+    wrapper,
   }
 }
 
@@ -37,10 +37,10 @@ describe('onClickOutside', () => {
     expect(spy.mock.calls[0][0]).toBe('pointerdown')
     const listener: any = spy.mock.calls[0][1]
     const fakeEvent: any = {
-      target: window,
       composedPath: () => {
         return []
       },
+      target: window,
     }
 
     listener(fakeEvent)
@@ -57,10 +57,10 @@ describe('onClickOutside', () => {
     expect(spy.mock.calls[0][0]).toBe('pointerdown')
     const listener: any = spy.mock.calls[0][1]
     const fakeEvent: any = {
-      target: wrapper.get('#target').element,
       composedPath: () => {
         return []
       },
+      target: wrapper.get('#target').element,
     }
 
     listener(fakeEvent)
@@ -77,10 +77,10 @@ describe('onClickOutside', () => {
     expect(spy.mock.calls[0][0]).toBe('pointerdown')
     const listener: any = spy.mock.calls[0][1]
     const fakeEvent: any = {
-      target: wrapper.get('#count').element,
       composedPath: () => {
         return [wrapper.get('#target').element]
       },
+      target: wrapper.get('#count').element,
     }
 
     listener(fakeEvent)

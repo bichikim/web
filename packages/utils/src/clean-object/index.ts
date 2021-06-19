@@ -8,7 +8,7 @@ import {AnyObject} from 'src/types'
 export const cleanObject = (value: AnyObject) => {
   return Object.keys(value).reduce((result, key) => {
     const _value = value[key]
-    if (typeof _value === 'undefined' || _value == null) {
+    if (typeof _value === 'undefined' || _value === null) {
       return result
     }
     result[key] = _value

@@ -1,14 +1,15 @@
 import {defineComponent, h, ref} from 'vue'
-import {QBtn, QAvatar, QImg} from 'quasar'
+import {QAvatar, QBtn, QImg} from 'quasar'
 
 export const Hamburger = defineComponent({
   name: 'Hamburger',
   props: {
-    name: {type: String, default: 'Unknown'},
+    // eslint-disable-next-line vue/require-default-prop
     avatar: {type: String},
+    name: {default: 'Unknown', type: String},
   },
   render() {
-    return h(QBtn, {push: true, class: 'bg-primary', padding: 'none'}, () => [
+    return h(QBtn, {class: 'bg-primary', padding: 'none', push: true}, () => [
       h(QAvatar, {size: '42px'}, () => [
         h(QImg, {src: 'https://cdn.quasar.dev/img/avatar2.jpg'}),
       ]),

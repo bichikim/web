@@ -5,8 +5,8 @@ describe('getPackage', function test() {
   it('should return a package object', function test() {
     const result = getPackage(path.resolve(__dirname))
     expect(result).toEqual({
-      name: 'tests',
       dependencies: {},
+      name: 'tests',
       version: '1.0.0',
     })
   })

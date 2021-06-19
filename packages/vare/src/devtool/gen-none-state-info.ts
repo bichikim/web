@@ -1,6 +1,9 @@
-import {AllKinds, getDescription, getName, getIdentifier, getRelates, getPlayground} from 'src/info'
+import {
+  AllKinds, getDescription, getIdentifier, getName, getPlayground, getRelates,
+} from 'src/info'
 import {CustomInspectorState} from '@vue/devtools-api'
 
+// eslint-disable-next-line max-lines-per-function,max-statements
 export const genNoneStateInfo = (target: AllKinds): CustomInspectorState => {
   const relate = getRelates(target)
   const type = getIdentifier(target) ?? 'unknown'
@@ -11,22 +14,22 @@ export const genNoneStateInfo = (target: AllKinds): CustomInspectorState => {
   const result: CustomInspectorState = {
     info: [
       {
+        editable: false,
         key: 'name',
         value: {
           _custom: {
             display: name,
           },
         },
-        editable: false,
       },
       {
+        editable: false,
         key: 'type',
         value: {
           _custom: {
             display: type,
           },
         },
-        editable: false,
       },
     ],
   }
@@ -44,48 +47,48 @@ export const genNoneStateInfo = (target: AllKinds): CustomInspectorState => {
 
     result.playground = [
       {
+        editable: true,
         key: 'args',
         value: playground?.args,
-        editable: true,
       },
       {
+        editable: false,
         key: 'return',
         value: returnValue,
-        editable: false,
       },
     ]
   }
 
   if (description) {
     result.info.push({
+      editable: false,
       key: 'description',
+      raw,
       value: {
         _custom: {
           display: description ?? 'none',
-          type: 'function',
           tooltip: raw,
+          type: 'function',
         },
       },
-      editable: false,
-      raw,
     })
   }
 
   if (relate && relate.size > 0) {
     result.relation = []
 
-    relate.forEach((state) => {
+    for (const state of relate) {
       const name = getName(state) ?? 'unknown'
       result.relation.push({
-        key: name,
         editable: false,
+        key: name,
         value: {
           _custom: {
             display: 'state',
           },
         },
       })
-    })
+    }
   }
 
   return result

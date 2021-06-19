@@ -1,6 +1,8 @@
-import {info, getIdentifier} from 'src/info'
+import {getIdentifier, info} from 'src/info'
 import {UnwrapNestedRefs} from 'src/types'
-import {ComputedRef, watch, WatchCallback, WatchStopHandle} from 'vue-demi'
+import {
+  ComputedRef, watch, WatchCallback, WatchStopHandle,
+} from 'vue-demi'
 import {Action} from './act'
 import {Computation, ComputationWritable} from './compute'
 import {Mutation} from './mutate'
@@ -19,7 +21,7 @@ export const setSubscribe = (target: SubscribeTarget, hook: WatchCallback<any>):
   }
 
   /* istanbul ignore next [no need to test without development env] */
-  return () => null
+  return () => false
 }
 
 export const watchTarget = (target: any, hook: SubscribeHookArgs<any>): WatchStopHandle => {
@@ -32,9 +34,18 @@ export const watchTarget = (target: any, hook: SubscribeHookArgs<any>): WatchSto
  * @param hook
  */
 export function subscribe<Args extends any[]> (mutation: Mutation<Args>, hook: SubscribeHookArgs<Args>): WatchStopHandle
-export function subscribe<Args extends any[], Return = any> (action: Action<Args, Return>, hook: SubscribeHookArgs<Args>): WatchStopHandle
-export function subscribe<Args extends any[], Return = any> (computation: Computation<Args, Return>, hook: SubscribeHookArgs<Args>): WatchStopHandle
-export function subscribe<Args extends any[], Return = any> (computation: ComputationWritable<Args, Return>, hook: SubscribeHookArgs<Args>): WatchStopHandle
+export function subscribe<Args extends any[], Return = any> (
+  action: Action<Args, Return>,
+  hook: SubscribeHookArgs<Args>,
+  ): WatchStopHandle
+export function subscribe<Args extends any[], Return = any> (
+  computation: Computation<Args, Return>,
+  hook: SubscribeHookArgs<Args>,
+  ): WatchStopHandle
+export function subscribe<Args extends any[], Return = any> (
+  computation: ComputationWritable<Args, Return>,
+  hook: SubscribeHookArgs<Args>,
+  ): WatchStopHandle
 export function subscribe<T> (computed: ComputedRef<T>, hook: SubscribeHookValue<T>): WatchStopHandle
 export function subscribe<T> (state: UnwrapNestedRefs<T>, hook: SubscribeHookValue<T>): WatchStopHandle
 export function subscribe(

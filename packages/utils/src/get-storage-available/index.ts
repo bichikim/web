@@ -4,6 +4,7 @@ export type StorageType = 'local' | 'session'
 
 const getStorage = (type: StorageType): Storage => {
   switch (type) {
+    // eslint-disable-next-line indent
     case 'local':
       return localStorage
     case 'session':
@@ -27,6 +28,6 @@ export const getStorageAvailable = (type: StorageType): Storage | undefined => {
     storage.removeItem(TEST_KEY_VALUE)
     return storage
   } catch {
-    return undefined
+    // skip
   }
 }

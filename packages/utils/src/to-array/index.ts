@@ -9,7 +9,7 @@ export const toArray = <T>(value?: MayArray<T>): T[] => {
     return []
   }
 
-  if (value == null) {
+  if (value === null) {
     return []
   }
 

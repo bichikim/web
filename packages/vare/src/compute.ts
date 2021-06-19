@@ -1,4 +1,6 @@
-import {info, getIdentifier, getName, getRelates, AllKinds} from 'src/info'
+import {
+  AllKinds, getIdentifier, getName, getRelates, info,
+} from 'src/info'
 import {AnyStateGroup, relateState} from 'src/state'
 import {AnyFunction, DropParameters} from '@winter-love/utils'
 import {ComputedRef, WritableComputedRef} from '@vue/reactivity'
@@ -63,6 +65,7 @@ const isRecipeOption = (value?: any): value is ComputationRecipe => {
   return typeof value === 'object' && typeof value.get === 'function' && typeof value.set === 'function'
 }
 
+// eslint-disable-next-line max-statements
 const getComputePrams = (unknown: any, mayRecipe?: any, name?: string) => {
   let state
   let recipe
@@ -82,9 +85,9 @@ const getComputePrams = (unknown: any, mayRecipe?: any, name?: string) => {
   }
 
   return {
-    state,
-    recipe,
     name: _name,
+    recipe,
+    state,
   }
 }
 
@@ -113,9 +116,9 @@ function _compute(unknown: any, mayRecipe?: any, name?: string): any {
 
   if (process.env.NODE_ENV === 'development') {
     info.set(self, {
-      relates: new Set(),
-      name: _name,
       identifier: computationName,
+      name: _name,
+      relates: new Set(),
       type: typeof recipe === 'function' ? 'getter' : 'getter & setter',
     })
 
@@ -185,12 +188,20 @@ export function compute<S extends AnyStateGroup, Args extends any[], T> (
 export function compute<Func extends ComputationRecipe, TreeOptions extends Record<string, Func>> (
   tree: TreeOptions,
 ): ComputeTree<TreeOptions>
-export function compute<S extends AnyStateGroup, Func extends ComputationStateRecipe<S>, TreeOptions extends Record<string, Func>> (
+export function compute<
+  S extends AnyStateGroup,
+  Func extends ComputationStateRecipe<S>,
+  TreeOptions extends Record<string, Func>
+  > (
   state: S,
   tree: TreeOptions,
 ): ComputeTreeDrop<TreeOptions, S>
 export function compute(unknown: any, mayTree?, name?: string): any {
-  if (typeof unknown === 'function' || isRecipeOption(unknown) || typeof mayTree === 'function' || isRecipeOption(mayTree)) {
+  if (
+    typeof unknown === 'function'
+    || isRecipeOption(unknown)
+    || typeof mayTree === 'function'
+    || isRecipeOption(mayTree)) {
     return _compute(unknown, mayTree, name)
   }
   return _treeCompute(unknown, mayTree)
@@ -217,7 +228,11 @@ export function computeRef<S, T> (
 export function computeRef<Func extends ComputationRefRecipe, TreeOptions extends Record<string, Func>> (
   tree: TreeOptions,
 ): ComputeRefTree<TreeOptions>
-export function computeRef<S extends AnyStateGroup, Func extends ComputationStateRefRecipe<S>, TreeOptions extends Record<string, Func>> (
+export function computeRef<
+  S extends AnyStateGroup,
+  Func extends ComputationStateRefRecipe<S>,
+  TreeOptions extends Record<string, Func>
+  > (
   state: S,
   tree: TreeOptions,
 ): ComputeRefTree<TreeOptions>
@@ -239,9 +254,9 @@ export function computeRef(unknown: any, mayTree?, name?: string): any {
       /* istanbul ignore else [item must have the relates] */
       const relates = getRelates(item) ?? new Set<AllKinds>()
       info.set(ref, {
-        relates,
-        name: name,
         identifier: computationRefName,
+        name: name,
+        relates,
         type,
       })
     }

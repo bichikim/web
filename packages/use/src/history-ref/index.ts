@@ -3,8 +3,8 @@ import {MayRef} from 'src/types'
 import {wrapRef} from 'src/wrap-ref'
 
 export interface HistoryRefOptions {
-  sources?: MayRef<any>[]
   max?: number
+  sources?: MayRef<any>[]
 }
 
 export const historyRef = <Value>(value: MayRef<Value>, options: HistoryRefOptions = {}) => {

@@ -10,7 +10,7 @@ const setup = (props: any) => {
       const countRef = ref(0)
       const {inactive, active} = useElementEvent(elementRef, 'click', () => {
         countRef.value += 1
-      }, {once: props.once, immediate: props.immediate})
+      }, {immediate: props.immediate, once: props.once})
 
       return () => (
         h('div', [
@@ -82,7 +82,7 @@ describe('element-event', () => {
     expect(wrapper.get('#count').text()).toBe('1')
   })
   it('should not trigger event with the once and the mounted immediate', async () => {
-    const {wrapper} = setup({once: true, immediate: 'mounted'})
+    const {wrapper} = setup({immediate: 'mounted', once: true})
     expect(wrapper.get('#count').text()).toBe('0')
     await wrapper.get('#target').trigger('click')
     expect(wrapper.get('#count').text()).toBe('1')

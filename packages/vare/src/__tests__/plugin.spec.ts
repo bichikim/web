@@ -18,7 +18,7 @@ describe('plugin', () => {
 
     const element = document.createElement('div')
     element.id = 'app'
-    document.body.appendChild(element)
+    document.body.append(element)
     const app = createApp(App)
     const foo = state({
       foo: 'foo',
@@ -27,7 +27,7 @@ describe('plugin', () => {
       foo,
     }
 
-    app.use(plugin, {states, provide: true})
+    app.use(plugin, {provide: true, states})
 
     app.mount(element)
     expect(element.querySelector('#app')).toHaveTextContent('foo')
