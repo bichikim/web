@@ -34,7 +34,7 @@ describe('emotion', () => {
         },
       })
 
-      const wrapper = mount(Component as any, {slots: {default: () => slot}})
+      const wrapper = mount(Component, {slots: {default: () => slot}})
 
       return {
         Component,
@@ -69,7 +69,7 @@ describe('emotion', () => {
       const {wrapper} = setup({
         label: 'test',
       })
-      expect(wrapper.get('div').classes()[0]).toMatch(/test$/)
+      expect(wrapper.get('div').classes()[0]).toMatch(/test$/u)
     })
 
     it('should render props', async () => {

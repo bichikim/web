@@ -6,7 +6,7 @@ import {StyleParse} from './types'
 
 export interface ConfigStyle<Theme extends AnyObject, Scale extends string | number | symbol = keyof Theme> {
   /** A fallback scale object for when there isn't one defined in the `theme` object. */
-  defaultScale?: Scale
+  defaultScale?: Record<string, any>
   /**
    * An array of multiple properties (e.g. `['marginLeft', 'marginRight']`) to which this style's value will be
    * assigned (overrides `property` when present).
@@ -15,27 +15,28 @@ export interface ConfigStyle<Theme extends AnyObject, Scale extends string | num
   /** The CSS property to use in the returned style object (overridden by `properties` if present). */
   property?: keyof Properties
   /** A string referencing a key in the `theme` object. */
-  scale?: Scale
+  scale?: Scale | string
   /** A function to transform the raw value based on the scale. */
   transform?: (value: keyof Theme[Scale], scale?: Theme[Scale], props?: PureObject) => any
 }
 import {getScale} from './get-scale'
 
-const getValue = (n: any, scale: any) => getScale(scale, n, n)
+const getValue = (key: any, scale: any) => getScale(scale, key, key)
 
 export const createStyleFunction = <Theme extends AnyObject, Scale extends string | number | symbol = keyof Theme>(options: ConfigStyle<Theme, Scale>) => {
   const {defaultScale, properties, property, scale, transform = getValue} = options
   const _properties = properties || [property]
   const sx = (value: any, scale: any, _props: any) => {
-    const result: any = {}
-    const n = transform(value, scale, _props)
-    if (n === null) {
+    const style = transform(value, scale, _props)
+    if (style === null) {
       return
     }
-    _properties.forEach((prop: any) => {
-      result[prop] = n
-    })
-    return result
+    return _properties.reduce((result, prop) => {
+      if (prop) {
+        result[prop] = style
+      }
+      return result
+    }, {})
   }
   sx.scale = scale
   sx.defaults = defaultScale

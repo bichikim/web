@@ -1,12 +1,12 @@
 import {mount, flushPromises} from '@vue/test-utils'
-import {defineComponent, h} from 'vue-demi'
+import {defineComponent, h} from 'vue'
 import {state} from 'src/state'
 
 const foo = state({
-  name: 'foo',
   deep: {
     name: 'bar',
   },
+  name: 'foo',
 })
 
 const barNameSetSpy = jest.fn()
@@ -15,7 +15,6 @@ const barNameGetSpy = jest.fn()
 const bar = state(() => {
   let _name = 'bar'
   return {
-    name: 'bar',
     deep: {
       get name(): string {
         barNameGetSpy(_name)
@@ -26,6 +25,7 @@ const bar = state(() => {
         _name = value
       },
     },
+    name: 'bar',
   }
 })
 

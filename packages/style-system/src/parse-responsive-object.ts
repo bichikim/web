@@ -3,22 +3,17 @@ import {PureObject} from '@winter-love/utils'
 import {createMediaQuery} from './create-media-query'
 
 export const parseResponsiveObject = (breakpoints: ObjectOrArray<any>, sx: StyleFunction, scale: PureObject | undefined, raw: PureObject, _props: any) => {
-  const styles: any = {}
-  for (const key in raw) {
-    if (!Object.prototype.hasOwnProperty.call(raw, key)) {
-      continue
-    }
-    const breakpoint = breakpoints[key]
+  return Object.keys(raw).reduce((result, key) => {
     const value = raw[key]
-    const style = sx(value, scale, _props)
-    if (!breakpoint) {
-      Object.assign(styles, style)
-    } else {
+    const breakpoint = breakpoints[key]
+    const style = sx(value, scale, _props, key)
+
+    if (breakpoint) {
       const media = createMediaQuery(breakpoint)
-      Object.assign(styles, {
-        [media]: Object.assign({}, styles[media], style),
-      })
+      result[media] = {...result[media], ...style}
+      return result
     }
-  }
-  return styles
+    Object.assign(result, style)
+    return result
+  }, {})
 }

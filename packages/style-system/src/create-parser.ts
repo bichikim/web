@@ -16,65 +16,70 @@ export const defaults = {
 }
 
 export const createParser = (config: Record<string, StyleFunction>) => {
-  const _config = {...config}
   const cache: any = {}
   const parse: StyleParse & Record<any, any> = (props: Record<string, any>) => {
-    let styles = {}
+    // let styles = {}
     let shouldSort = false
     const isCacheDisabled = props.theme && props.theme.disableStyledSystemCache
 
-    for (const key in props) {
-      if (!Object.prototype.hasOwnProperty.call(props, key) || !_config[key]) {
-        continue
+    const theme = props.theme
+
+    const styles = Object.keys(props).reduce((result, key) => {
+      const value = key
+      if (!config[value]) {
+        return result
       }
-      const sx = _config[key]
-      const raw = props[key]
-      const scale = getScale(props.theme, sx.scale, sx.defaults)
+      const sx = config[value]
+      const raw = props[value]
+      const scale = getScale(theme, sx.scale, sx.defaults)
 
       if (typeof raw === 'object') {
         cache.breakpoints =
           (!isCacheDisabled && cache.breakpoints) ||
           getScale(props.theme, 'breakpoints', defaults.breakpoints)
+
         if (Array.isArray(raw)) {
           cache.media = (!isCacheDisabled && cache.media) || [
+            // eslint-disable-next-line unicorn/no-null
             null,
-            ...cache.breakpoints.map(createMediaQuery),
+            // eslint-disable-next-line unicorn/no-array-callback-reference
+            ...cache.breakpoints.map((size) => createMediaQuery(size)),
           ]
-          styles = mergeStyle(
-            styles,
-            parseResponsiveStyle(cache.media, sx, scale, raw, props),
-          )
-          continue
+          return mergeStyle(result, parseResponsiveStyle(cache.media, sx, scale, raw, props))
         }
-        if (raw !== null) {
-          styles = mergeStyle(
-            styles,
+
+        if(raw !== null) {
+          shouldSort = true
+          return mergeStyle(
+            result,
             parseResponsiveObject(cache.breakpoints, sx, scale, raw, props),
           )
-          shouldSort = true
         }
-        continue
+        return result
       }
 
-      Object.assign(styles, sx(raw, scale, props))
-    }
+      return Object.assign(result, sx(raw, scale, props))
+    }, {})
 
     // sort object-based responsive styles
     if (shouldSort) {
-      styles = sortStyle(styles)
+      return sortStyle(styles)
     }
 
     return styles
   }
-  parse.config = _config
-  parse.propNames = Object.keys(_config)
+  parse.config = config
+  parse.propNames = Object.keys(config)
   parse.cache = cache
 
-  const keys = Object.keys(_config).filter(k => k !== 'config')
+  const keys = Object.keys(config).filter(k => k !== 'config')
+
   if (keys.length > 1) {
-    keys.forEach(key => {
-      parse[key] = createParser({[key]: _config[key]})
-    })
+    const parses = keys.reduce((result, key) => {
+      result[key] = createParser({[key]: config[key]})
+      return result
+    }, {})
+    return Object.assign(parse, parses)
   }
 
   return parse

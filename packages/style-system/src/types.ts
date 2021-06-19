@@ -23,7 +23,7 @@ export interface StyleFunction<Key extends string = string,
   defaults?: Scale
   scale?: string
 
-  (value: Key, scale: Scale | undefined, props: Props, index?: number): any
+  (value: Key, scale: Scale | undefined, props: Props, index?: number | string): any
 }
 
 export interface ConfigStyle<Theme extends AnyObject, Scale extends string | number | symbol = keyof Theme> {
