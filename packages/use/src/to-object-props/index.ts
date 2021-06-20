@@ -1,6 +1,6 @@
 import {Props, PropsObject} from '../types'
 
-export const toObjectProps = <T, D = T>(props: Props<T, D>): PropsObject<T, D> => {
+export const toObjectProps = <T, D = T>(props: Props<T, D>): PropsObject<string, T, D> => {
   if (Array.isArray(props)) {
     return props.reduce((result: Record<any, any>, value: any) => {
       result[value] = null

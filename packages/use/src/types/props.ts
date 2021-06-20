@@ -1,4 +1,4 @@
-import {PropType} from 'vue-demi'
+import {Prop, PropType} from 'vue-demi'
 import {AnyObject, PureObject} from '@winter-love/utils'
 
 export type DefaultFactory<T> = (props: PureObject) => T | null | undefined
@@ -10,6 +10,6 @@ export interface PropOptions<T = any, D = T> {
 }
 
 export type PropsArray = string[]
-export type PropsObject<T = any, D = T> = Record<string, PropOptions<T, D> | null>
+export type PropsObject<Key extends string = string, T = any, D = T> = Record<Key, Prop<T, D> | null>
 
-export type Props<T = any, D = T> = PropsArray | PropsObject<T, D>
+export type Props<T = any, D = T> = PropsArray | PropsObject<string, T, D>

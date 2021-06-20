@@ -22,18 +22,18 @@ describe('system', () => {
     expect(styleFunction({foo: 'foo'})).toEqual({
       left: '200px',
     })
-
-    expect(styleFunction({foo: ['foo', '100px', '200px', '300px'], theme})).toEqual({
-      '@media screen and (min-width: 1200px)': {
-        left: '300px',
+  })
+  it('should return style with the true property', () => {
+    const styleFunction = system({
+      left: {
+        defaultScale: {
+          foo: '200px',
+        },
+        scale: 'foos',
       },
-      '@media screen and (min-width: 500px)': {
-        left: '100px',
-      },
-      '@media screen and (min-width: 750px)': {
-        left: '200px',
-      },
-      left: '300px',
+    })
+    expect(styleFunction({left: 'foo'})).toEqual({
+      left: '200px',
     })
   })
   it('should return responsive style', () => {

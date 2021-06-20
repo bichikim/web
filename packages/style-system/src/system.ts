@@ -4,6 +4,9 @@ import {createParser} from './create-parser'
 import {CSSObject} from '@emotion/css'
 import {StyleParse} from './types'
 
+export type NotUndefined<T> = T extends undefined ? never : T
+export type PropertyKeys = NotUndefined<keyof Properties>
+
 export interface ConfigStyle<Theme extends AnyObject, Scale extends string | number | symbol = keyof Theme> {
   /** A fallback scale object for when there isn't one defined in the `theme` object. */
   defaultScale?: Record<string, any>
@@ -11,14 +14,16 @@ export interface ConfigStyle<Theme extends AnyObject, Scale extends string | num
    * An array of multiple properties (e.g. `['marginLeft', 'marginRight']`) to which this style's value will be
    * assigned (overrides `property` when present).
    */
-  properties?: Array<keyof Properties>
+  properties?: Array<PropertyKeys>
   /** The CSS property to use in the returned style object (overridden by `properties` if present). */
-  property?: keyof Properties
+  property?: PropertyKeys
+
   /** A string referencing a key in the `theme` object. */
   scale?: Scale | string
   /** A function to transform the raw value based on the scale. */
   transform?: (value: keyof Theme[Scale], scale?: Theme[Scale], props?: PureObject) => any
 }
+
 import {getScale} from './get-scale'
 
 const getValue = (key: any, scale: any) => getScale(scale, key, key)
@@ -27,7 +32,9 @@ export const createStyleFunction = <
   Theme extends AnyObject,
   Scale extends string | number | symbol = keyof Theme
   >(options: ConfigStyle<Theme, Scale>) => {
-  const {defaultScale, properties, property, scale, transform = getValue} = options
+  const {
+    defaultScale, properties, property, scale, transform = getValue,
+  } = options
   const _properties = properties || [property]
   const sx = (value: any, scale: any, _props: any) => {
     const style = transform(value, scale, _props)
@@ -65,12 +72,21 @@ const fillProperty = <Theme extends AnyObject = AnyObject>(
   }
 }
 
-export interface SystemOptions<Theme extends PureObject = PureObject>{
-  [customStyleName: string]: ConfigStyle<Theme> | boolean
-    | ((value: any, scale: any, props: any, index: number) => CSSObject)
-}
+export type SystemConfig<Theme> = ConfigStyle<Theme> | boolean
+  | ((value: any, scale: any, props: any, index: number) => CSSObject)
 
-export const system = <Theme extends AnyObject>(options: SystemOptions<Theme> = {}): StyleParse => {
+export type SystemOptions<Theme extends PureObject = PureObject> =
+  Record<PropertyKeys | string, SystemConfig<Theme>>
+
+export const createSystemConfig = <Theme extends PureObject>(config: ConfigStyle<Theme>) =>
+  (configNext?: ConfigStyle<Theme>) => {
+    return {
+      ...config,
+      ...configNext,
+    }
+  }
+
+export const system = <Theme extends AnyObject>(options: SystemOptions<Theme> = {} as any): StyleParse => {
   const _options = {...options}
   const config = Object.keys(_options).reduce((config: Record<string, any>, key: string) => {
     const option: any = options[key]

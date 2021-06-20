@@ -1,7 +1,5 @@
-import {emotion} from 'src/boot/emotion'
+import {styled} from 'src/boot/emotion'
 import {QImg} from 'quasar'
-
-const {styled} = emotion()
 
 export const TImg: any = styled(QImg)(
   {

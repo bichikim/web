@@ -2,6 +2,7 @@ import {defineComponent, h} from 'vue'
 import {TImg} from 'components/TImg'
 
 export const Test = defineComponent({
+  name: 'Test',
   setup: () => {
     return () => (
       h('div', [

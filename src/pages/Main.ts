@@ -1,7 +1,7 @@
 import {defineComponent, h} from 'vue'
 
 export const IndexPage = defineComponent({
-  name: 'IndexPage',
+  name: 'Main',
   setup() {
     return () => (
       h('div', 'hello')

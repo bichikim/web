@@ -12,7 +12,7 @@ export const LG_BREAKPOINT = 64
 export const DEFAULT_BREAK_POINTS = [SM_BREAKPOINT, MD_BREAKPOINT, LG_BREAKPOINT]
 
 export const defaults = {
-  breakpoints: DEFAULT_BREAK_POINTS.map(size => size + 'em'),
+  breakpoints: DEFAULT_BREAK_POINTS.map((size) => `${size}em`),
 }
 
 export const createParser = (config: Record<string, StyleFunction>) => {
@@ -22,7 +22,7 @@ export const createParser = (config: Record<string, StyleFunction>) => {
     let shouldSort = false
     const isCacheDisabled = props.theme && props.theme.disableStyledSystemCache
 
-    const theme = props.theme
+    const {theme} = props
 
     const styles = Object.keys(props).reduce((result, key) => {
       const value = key
@@ -36,7 +36,7 @@ export const createParser = (config: Record<string, StyleFunction>) => {
       if (typeof raw === 'object') {
         cache.breakpoints =
           (!isCacheDisabled && cache.breakpoints) ||
-          getScale(props.theme, 'breakpoints', defaults.breakpoints)
+          getScale(theme, 'breakpoints', defaults.breakpoints)
 
         if (Array.isArray(raw)) {
           cache.media = (!isCacheDisabled && cache.media) || [
@@ -72,7 +72,7 @@ export const createParser = (config: Record<string, StyleFunction>) => {
   parse.propNames = Object.keys(config)
   parse.cache = cache
 
-  const keys = Object.keys(config).filter(key => key !== 'config')
+  const keys = Object.keys(config).filter((key) => key !== 'config')
 
   if (keys.length > 1) {
     const parses = keys.reduce((result, key) => {
