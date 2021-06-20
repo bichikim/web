@@ -1,5 +1,6 @@
 import {createEmotion, EmotionPlugin} from '@winter-love/emotion'
 import {BootCallback, BootFileParams} from '@quasar/app'
+import {theme} from 'src/theme'
 // import {EmptyObject} from '@winter-love/utils'
 
 let _emotion: EmotionPlugin
@@ -8,7 +9,7 @@ export const emotion = () => {
   if (_emotion) {
     return _emotion
   }
-  _emotion = createEmotion()
+  _emotion = createEmotion(theme)
   return _emotion
 }
 
