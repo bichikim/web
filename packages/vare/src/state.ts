@@ -2,8 +2,7 @@ import {UnwrapNestedRefs} from 'src/types'
 import {AnyObject, mayFunctionValue} from '@winter-love/utils'
 import {reactive} from 'vue-demi'
 import {createUuid} from './utils'
-import {info} from 'src/info'
-import {AllKinds} from './info'
+import {AllKinds, info} from './info'
 
 export const stateUuid = createUuid('unknown')
 

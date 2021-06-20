@@ -52,18 +52,18 @@ export type ComputationType = 'getter' | 'getter & setter'
 export type Computation<Args extends any[], T> = ((...args: Args) => ComputedRef<T>)
 export type ComputationWritable<Args extends any[], T> = ((...args: Args) => WritableComputedRef<T>)
 
-export const isComputation = (value?: any): value is Computation<any[], any> | ComputationWritable<any[], any> => {
-  return getIdentifier(value) === computationName
-}
+export const isComputation = (value?: any): value is Computation<any[], any> | ComputationWritable<any[], any> => (
+  getIdentifier(value) === computationName
+)
 
 export const getComputationType = (value: Computation<any, any>): ComputationType | string | undefined => {
   const valueInfo = info.get(value)
   return valueInfo?.type
 }
 
-const isRecipeOption = (value?: any): value is ComputationRecipe => {
-  return typeof value === 'object' && typeof value.get === 'function' && typeof value.set === 'function'
-}
+const isRecipeOption = (value?: any): value is ComputationRecipe => (
+  typeof value === 'object' && typeof value.get === 'function' && typeof value.set === 'function'
+)
 
 // eslint-disable-next-line max-statements
 const getComputePrams = (unknown: any, mayRecipe?: any, name?: string) => {
@@ -98,7 +98,7 @@ function _compute(unknown: any, mayRecipe?: any, name?: string): any {
     let computedValue
 
     const getArgs = state ? [state, ...args] : [...args]
-    const setArgs = (value) => state ? [state, value, ...args] : [value, ...args]
+    const setArgs = (value) => (state ? [state, value, ...args] : [value, ...args])
 
     // ComputationRecipe type
     if (typeof recipe === 'function') {

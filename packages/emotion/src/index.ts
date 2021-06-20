@@ -1,8 +1,9 @@
+/* eslint-disable prefer-destructuring */
 import createEmotionOriginal, {
   Emotion as _Emotion,
+  CSSObject,
   EmotionCache,
   Options as OriginalEmotionOptions,
-  CSSObject,
 } from '@emotion/css/create-instance'
 import {Interpolation, serializeStyles} from '@emotion/serialize'
 import {getRegisteredStyles, insertStyles} from '@emotion/utils'
@@ -11,19 +12,19 @@ import {Tags} from './tags'
 import {margeProps} from '@winter-love/use'
 import {isSSR} from '@winter-love/utils'
 import {
+  ComponentObjectPropsOptions,
+  computed,
+  DefineComponent,
+  defineComponent,
+  ExtractPropTypes,
+  Fragment,
   FunctionalComponent,
+  getCurrentInstance,
   h,
-  toRef,
   inject,
   InjectionKey,
   Plugin,
-  defineComponent,
-  getCurrentInstance,
-  ComponentObjectPropsOptions,
-  ExtractPropTypes,
-  computed,
-  Fragment,
-  DefineComponent,
+  toRef,
 } from 'vue-demi'
 
 export interface Theme {
@@ -96,7 +97,9 @@ export const createStyled = (emotion: _Emotion) => {
     options?: Readonly<StyledOptionWithArray<PropNames[]>>,
   ): StyledResult<ExtractPropTypes<PropsOptions>>
   function styled(element: AnyComponent, options?: any): any {
-    const {props, label, target, name} = options ?? {}
+    const {
+      props, label, target, name,
+    } = options ?? {}
 
     return (...args: any[]) => {
       const _args = [...args, {label}]
@@ -150,7 +153,7 @@ export const createStyled = (emotion: _Emotion) => {
             let dataEmotion = serialized.name
 
             while (typeof next !== 'undefined') {
-              dataEmotion += ' ' + next.name
+              dataEmotion += ` ${next.name}`
               next = next.next
             }
 

@@ -2,10 +2,10 @@ import {DropFunctionObject} from 'src/types'
 import {FunctionObject} from '@winter-love/utils'
 import {ref} from 'vue-demi'
 import {devtools} from './devtool'
-import {info, getIdentifier} from './info'
+import {getIdentifier, info} from './info'
 import {AnyStateGroup, relateState} from './state'
 import {subscribe} from './subscribe'
-import {createUuid, createGetAtomPrams} from './utils'
+import {createGetAtomPrams, createUuid} from './utils'
 
 export type MutationRecipe<Args extends any[] = any, Return = any> = (...args: Args) => Return
 export type MutationStateRecipe<S = any, Args extends any[] = any, Return = any> = (s: S, ...args: Args) => Return
@@ -20,9 +20,7 @@ export const mutationName: MutationIdentifierName = 'mutation'
  */
 export type Mutation<Args extends any[], Return = any> = ((...args: Args) => Return)
 
-export const isMutation = (value?: any): value is Mutation<any[]> => {
-  return getIdentifier(value) === mutationName
-}
+export const isMutation = (value?: any): value is Mutation<any[]> => getIdentifier(value) === mutationName
 
 const getMutatePrams = createGetAtomPrams(createUuid('unknown'))
 

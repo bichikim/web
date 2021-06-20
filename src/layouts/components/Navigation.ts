@@ -1,6 +1,6 @@
-import {defineComponent, h, PropType} from 'vue'
 import {QToolbar} from 'quasar'
-import {ComfortableBar, ButtonContext} from './ComfortableBar'
+import {defineComponent, h, PropType} from 'vue'
+import {ButtonContext, ComfortableBar} from './ComfortableBar'
 import {Hamburger} from './Hamburger'
 
 export const Navigation = defineComponent({

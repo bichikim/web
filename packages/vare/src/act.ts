@@ -33,9 +33,7 @@ export type Action<Args extends any[], Return = any> =
  * only work in development NODE_ENV
  * @param value
  */
-export const isAction = (value?: any): value is Action<any> => {
-  return getIdentifier(value) === actionName
-}
+export const isAction = (value?: any): value is Action<any> => (getIdentifier(value) === actionName)
 
 const getActPrams = createGetAtomPrams(createUuid('unknown'))
 

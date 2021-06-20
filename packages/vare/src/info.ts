@@ -30,9 +30,9 @@ export const createInfoMap = () => {
   const infoMap = new WeakMap<AllKinds, VareInfo>()
 
   return {
-    get: (target: AllKinds): VareInfo | undefined => {
-      return infoMap.get(target)
-    },
+    get: (target: AllKinds): VareInfo | undefined => (
+      infoMap.get(target)
+    ),
     set: (target: AllKinds, info: VareInfo) => {
       infoMap.set(target, info)
     },
@@ -97,9 +97,9 @@ export const setPlayground = (target: AllKinds, value: PlaygroundInfo): void => 
   }
 }
 
-export const getRelates = (target: AllKinds): Set<AllKinds> | undefined => {
-  return info.get(target)?.relates
-}
+export const getRelates = (target: AllKinds): Set<AllKinds> | undefined => (
+  info.get(target)?.relates
+)
 
 export const getDescription = (value?: AllKinds): undefined | string => {
   const valueInfo = info.get(value)

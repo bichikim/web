@@ -1,6 +1,6 @@
 import {Navigation} from './components'
-import {defineComponent, ref, h} from 'vue'
-import {QLayout, QFooter, QPageContainer} from 'quasar'
+import {defineComponent, h, ref} from 'vue'
+import {QFooter, QLayout, QPageContainer} from 'quasar'
 import {RouterView} from 'vue-router'
 
 export const MainLayout = defineComponent({

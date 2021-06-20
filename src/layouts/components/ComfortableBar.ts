@@ -1,5 +1,7 @@
 import {QBtn, QBtnGroup} from 'quasar'
-import {defineComponent, h, PropType, toRef} from 'vue'
+import {
+  defineComponent, h, PropType, toRef,
+} from 'vue'
 
 export interface ButtonContext {
   color?: string

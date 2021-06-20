@@ -15,7 +15,7 @@ export type SubscribeTarget = Mutation<any> | Action<any> | Computation<any, any
 export const setSubscribe = (target: SubscribeTarget, hook: WatchCallback<any>): WatchStopHandle => {
   const targetInfo = info.get(target)
   if (targetInfo?.watchFlag) {
-    const watchFlag = targetInfo.watchFlag
+    const {watchFlag} = targetInfo
 
     return watch(watchFlag, hook)
   }
@@ -24,9 +24,8 @@ export const setSubscribe = (target: SubscribeTarget, hook: WatchCallback<any>):
   return () => false
 }
 
-export const watchTarget = (target: any, hook: SubscribeHookArgs<any>): WatchStopHandle => {
-  return watch(target, hook, {deep: true})
-}
+export const watchTarget = (target: any, hook: SubscribeHookArgs<any>): WatchStopHandle =>
+  watch(target, hook, {deep: true})
 
 /**
  * start the subscription

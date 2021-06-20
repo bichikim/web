@@ -1,5 +1,5 @@
+import {inject, InjectionKey, Plugin} from 'vue-demi'
 import {startDevtool} from './devtool'
-import {Plugin, inject, InjectionKey} from 'vue-demi'
 import {State} from './state'
 
 export interface VarePlugin {
