@@ -25,13 +25,16 @@ export const createParser = (config: Record<string, StyleFunction>) => {
     const {theme} = props
 
     const styles = Object.keys(props).reduce((result, key) => {
-      const value = key
-      if (!config[value]) {
+      if (!config[key]) {
         return result
       }
-      const sx = config[value]
-      const raw = props[value]
+      const sx = config[key]
+      const raw = props[key]
       const scale = getScale(theme, sx.scale, sx.defaults)
+
+      if (typeof raw === 'undefined') {
+        return result
+      }
 
       if (typeof raw === 'object') {
         cache.breakpoints =

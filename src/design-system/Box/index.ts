@@ -1,14 +1,14 @@
 import {defineComponent, h} from 'vue'
-import {systems, systemProps} from '../system'
+import {Container, containerProps} from './Container'
 
 export const Box = defineComponent({
   name: 'Box',
   props: {
-    ...systemProps,
+    ...containerProps,
   },
-  setup() {
+  setup(props, {attrs, slots}) {
     return () => (
-      h('div')
+      h(Container, {...attrs, ...props}, slots)
     )
   },
 })

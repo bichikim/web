@@ -79,7 +79,7 @@ export type SystemOptions<Theme extends PureObject = PureObject> =
   Record<PropertyKeys | string, SystemConfig<Theme>>
 
 export const createSystemConfig = <Theme extends PureObject>(config: ConfigStyle<Theme>) =>
-  (configNext?: ConfigStyle<Theme>) => {
+  (configNext: ConfigStyle<Theme> = {}) => {
     return {
       ...config,
       ...configNext,

@@ -122,4 +122,38 @@ describe('system', () => {
       right: '200px',
     })
   })
+  it('should return responsive style with 2 properties', () => {
+    const styleFunction = system({
+      size: {
+        properties: ['width', 'height'],
+        scale: 'foos',
+      },
+    })
+
+    expect(styleFunction({
+      size: '300px',
+    })).toEqual({
+      height: '300px',
+      width: '300px',
+    })
+  })
+  it('should return responsive style with 2 properties and 1 property', () => {
+    const styleFunction = system({
+      size: {
+        properties: ['width', 'height'],
+        scale: 'foos',
+      },
+      width: {
+        property: 'width',
+        scale: 'foos',
+      },
+    })
+
+    expect(styleFunction({
+      size: undefined,
+      width: '300px',
+    })).toEqual({
+      width: '300px',
+    })
+  })
 })

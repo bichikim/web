@@ -158,7 +158,7 @@ export const createStyled = (emotion: _Emotion) => {
             }
 
             return (
-              h(Fragment, () => [
+              h(Fragment, [
                 h('style', {'data-emotion': dataEmotion, nonce: this.cache.sheet.nonce}, rules),
                 vNode,
               ])
@@ -171,8 +171,7 @@ export const createStyled = (emotion: _Emotion) => {
           const asRef = toRef(props, 'as')
           const {cache: masterCache} = emotion
           const theme = useTheme()
-          const injectedCache = inject(EMOTION_CACHE_CONTEXT)
-          const cache = computed(() => (injectedCache ?? masterCache))
+          const cache = inject(EMOTION_CACHE_CONTEXT, masterCache)
           const elementRef = computed(() => {
             return asRef.value ?? element
           })
