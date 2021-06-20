@@ -89,7 +89,7 @@
     "jest-transform-stub": "^2.0.0",
     "jest-watch-typeahead": "^0.6.4",
     "jsdom": "^16.6.0",
-    "lerna": "^4.0.0",
+    "lerna": "^3.22.1",
     "rollup": "^2.45.1",
     "rollup-plugin-delete": "^2.0.0",
     "rollup-plugin-node-externals": "^2.2.0",
