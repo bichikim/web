@@ -1,7 +1,9 @@
-import {createStyled, StyledOptions, createEmotion, EMOTION_CACHE_CONTEXT, EMOTION_THEME_CONTEXT} from '../'
+import {
+  createEmotion, createStyled, EMOTION_CACHE_CONTEXT, EMOTION_THEME_CONTEXT, StyledOptions,
+} from '../'
 import createEmotionOriginal from '@emotion/css/create-instance'
 import {mount} from '@vue/test-utils'
-import {defineComponent, h, createApp} from 'vue-demi'
+import {createApp, defineComponent, h} from 'vue-demi'
 
 describe('emotion', () => {
   describe('createStyled', () => {
@@ -153,10 +155,15 @@ describe('emotion', () => {
     const setup = (theme?: Record<any, any>) => {
       const emotion = createEmotion({key: 'css', theme})
       expect(typeof emotion.styled).toBe('function')
+      const Bar = emotion.styled('div')((props: any) => {
+        return {
+          width: props.theme?.sizes.md,
+        }
+      })
       const Component = defineComponent({
         setup() {
           return () => (
-            h('div', 'hello')
+            h(Bar, {id: 'text'}, () => 'hello')
           )
         },
       })
@@ -177,12 +184,18 @@ describe('emotion', () => {
     })
 
     describe('vue emotion plugin', () => {
-      it('should provide theme', () => {
+      it.only('should provide theme', () => {
         const {emotion, app} = setup({sizes: {md: '20px'}})
 
         expect(app._context.provides[EMOTION_THEME_CONTEXT as any]).toBe(undefined)
         app.use(emotion)
+        const element = document.createElement('div')
+        document.body.append(element)
+        app.mount(element)
         expect(typeof app._context.provides[EMOTION_THEME_CONTEXT as any]).toBe('object')
+        expect(element.querySelector('#text')).toHaveStyle({
+          width: '20px',
+        })
       })
     })
   })

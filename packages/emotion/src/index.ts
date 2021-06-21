@@ -47,6 +47,8 @@ export const useTheme = () => {
   const instance = getCurrentInstance()
   const props = instance?.props ?? {}
 
+  console.log(props.theme)
+
   if (props.theme) {
     return props.theme as Theme
   }
@@ -171,6 +173,7 @@ export const createStyled = (emotion: _Emotion) => {
           const asRef = toRef(props, 'as')
           const {cache: masterCache} = emotion
           const theme = useTheme()
+
           const cache = inject(EMOTION_CACHE_CONTEXT, masterCache)
           const elementRef = computed(() => {
             return asRef.value ?? element
