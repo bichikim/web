@@ -1,16 +1,16 @@
 {
   "name": "libraries",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "private": true,
   "scripts": {
     "build": "echo building for libraries",
     "dev": "echo building for libraries"
   },
   "dependencies": {
-    "@winter-love/emotion": "^1.0.10",
-    "@winter-love/style-system": "^1.0.10",
-    "@winter-love/use": "^1.0.10",
+    "@winter-love/emotion": "^1.0.11",
+    "@winter-love/style-system": "^1.0.11",
+    "@winter-love/use": "^1.0.11",
     "@winter-love/utils": "^1.0.9",
-    "vare": "^1.0.10"
+    "vare": "^1.0.11"
   }
 }
