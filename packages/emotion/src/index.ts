@@ -114,9 +114,9 @@ export const createStyled = (emotion: _Emotion) => {
         render() {
           const classInterpolations: string[] = []
           const allAttrs = {
-            theme: this.theme,
             ...this.$attrs as any,
             ...this.$props,
+            theme: this.theme,
           }
 
           let className = getRegisteredStyles(
