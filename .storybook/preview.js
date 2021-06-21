@@ -8,7 +8,7 @@ app.use(emotion)
 
 export const decorators = [
   (story) => ({
-    components: {story, IonApp, IonPage}, template: '<ion-app><story/></ion-app>',
+    components: {story}, template: '<ion-app><story/></ion-app>',
   })]
 export const parameters = {
   actions: {argTypesRegex: '^on[A-Z].*'}, controls: {

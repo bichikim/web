@@ -7,7 +7,7 @@ export const Test = defineComponent({
   setup: () => {
     return () => (
       h('div', [
-        'hello?~?',
+        'hello?',
         h(Box, {backgroundColor: 'red', height: '100px', width: '100px'}),
         h(TImg, {src: 'https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png'}),
       ])
