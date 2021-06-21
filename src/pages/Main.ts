@@ -1,6 +1,6 @@
 import {defineComponent, h} from 'vue'
 
-export const IndexPage = defineComponent({
+export const Main = defineComponent({
   name: 'Main',
   setup() {
     return () => (
@@ -8,3 +8,5 @@ export const IndexPage = defineComponent({
     )
   },
 })
+
+export default Main

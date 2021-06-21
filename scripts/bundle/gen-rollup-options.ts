@@ -24,6 +24,7 @@ export interface GenRollupOptions {
   cwd?: string
   dist?: string
   entry?: string
+  minify?: boolean
   name?: string
   output?: GenOutputOptions[]
   resolve?: RollupNodeResolveOptions
@@ -54,6 +55,7 @@ export const genRollupOptions = (options: GenRollupOptions = {}): BundleOptions 
     src = defSrc,
     entry = defEntry,
     target: tsTarget = 'ESNext',
+    minify: defaultMinify,
     output = [],
     resolve: resolveOptions,
   } = options
@@ -131,7 +133,7 @@ export const genRollupOptions = (options: GenRollupOptions = {}): BundleOptions 
     },
     output: output.map((value) => {
       const {
-        minify = false,
+        minify = defaultMinify,
         ...rest
       } = value
 

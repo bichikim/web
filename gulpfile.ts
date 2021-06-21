@@ -1,7 +1,9 @@
 // noinspection ES6PreferShortImport
-import {creBundle, creWatchBundle, RollupOptions} from './scripts'
+import {creBundle, creWatchBundle} from './scripts'
+import {parallel} from 'gulp'
 
-const bundleOptions: RollupOptions = {
+export const dev = creWatchBundle({
+  minify: false,
   output: [
     {
       file: 'index.module.js',
@@ -17,8 +19,37 @@ const bundleOptions: RollupOptions = {
     },
   ],
   target: 'ES2019',
-}
+})
 
-export const dev = creWatchBundle(bundleOptions)
-
-export const build = creBundle(bundleOptions)
+export const build = parallel(
+  creBundle({
+    // minify: true,
+    output: [
+      {
+        file: 'index.module.js',
+        format: 'es',
+      },
+    ],
+    target: 'ES2019',
+  }),
+  creBundle({
+    // minify: true,
+    output: [
+      {
+        file: 'index.umd.js',
+        format: 'umd',
+      },
+    ],
+    target: 'ES2015',
+  }),
+  creBundle({
+    // minify: true,
+    output: [
+      {
+        file: 'index.js',
+        format: 'commonjs',
+      },
+    ],
+    target: 'ES2015',
+  }),
+)

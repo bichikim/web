@@ -87,7 +87,7 @@ export const toBeClassName = (value: any): ClassValue => {
   return value
 }
 
-export const createStyled = (emotion: _Emotion) => {
+export const createStyled = (emotion: _Emotion & {theme?: any}) => {
   function styled<PropsOptions extends ComponentObjectPropsOptions = EmptyObject>(
     element: Tags | any,
     options?: Readonly<StyledOptionWIthObject<PropsOptions>>,
@@ -106,6 +106,7 @@ export const createStyled = (emotion: _Emotion) => {
     return (...args: any[]) => {
       const _args = [...args, {label}]
       const _target = target ? ` ${target}` : ''
+      const {cache: masterCache} = emotion
 
       // emotion component
       return defineComponent({
@@ -113,7 +114,6 @@ export const createStyled = (emotion: _Emotion) => {
         props: defaultProps,
         setup: (props: any, {attrs, slots}) => {
           const asRef = toRef(props, 'as')
-          const {cache: masterCache} = emotion
           const theme = useTheme()
 
           const cache = inject(EMOTION_CACHE_CONTEXT, masterCache)
@@ -125,14 +125,15 @@ export const createStyled = (emotion: _Emotion) => {
           })
           return () => {
             const classInterpolations: string[] = []
+            const {class: classes, ...restAttrs} = attrs
             const allAttrs = {
-              ...attrs,
+              ...restAttrs,
               theme,
             }
             let className = getRegisteredStyles(
               cache.registered,
               classInterpolations,
-              clsx(toBeClassName(attrs.class)),
+              clsx(toBeClassName(classes)),
             )
 
             const serialized = serializeStyles(
@@ -150,7 +151,7 @@ export const createStyled = (emotion: _Emotion) => {
 
             className += _target
 
-            const vNode = h(elementRef.value, {...attrs, class: className}, slots)
+            const vNode = h(elementRef.value, {...restAttrs, class: className}, slots)
 
             if (isSSR() && typeof rules !== 'undefined') {
               let next = serialized.next

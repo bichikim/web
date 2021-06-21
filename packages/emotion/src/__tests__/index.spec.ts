@@ -17,7 +17,7 @@ describe('emotion', () => {
       const styled = createStyled(createEmotionOriginal({key: 'css'}))
       const StyledComponent = styled(element, {
         props: {
-          color: {default: 'red', type: String},
+          color: {type: String},
         },
         ...rest,
       })({
@@ -37,7 +37,7 @@ describe('emotion', () => {
         },
       })
 
-      const wrapper = mount(Component, {slots: {default: () => slot}})
+      const wrapper = mount(Component, {props: {color: 'red'}, slots: {default: () => slot}})
 
       return {
         Component,
