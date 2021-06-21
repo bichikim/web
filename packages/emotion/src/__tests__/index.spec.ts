@@ -22,9 +22,10 @@ describe('emotion', () => {
         ...rest,
       })({
         backgroundColor: 'red',
-      }, ({color}) => {
+      }, (props) => {
+        console.log(props)
         return {
-          color,
+          color: props.color,
         }
       })
 

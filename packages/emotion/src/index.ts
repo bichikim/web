@@ -109,65 +109,7 @@ export const createStyled = (emotion: _Emotion) => {
       return defineComponent({
         name: name ?? label ?? 'emotion',
         props: margeProps(props, defaultProps),
-        render() {
-          const classInterpolations: string[] = []
-          const allAttrs = {
-            ...this.$attrs as any,
-            ...this.$props,
-            theme: this.theme,
-          }
-
-          let className = getRegisteredStyles(
-            this.cache.registered,
-            classInterpolations,
-            clsx(toBeClassName(this.$attrs.class)),
-          )
-
-          const serialized = serializeStyles(
-            _args,
-            this.cache.registered,
-            allAttrs,
-          )
-
-          const rules = insertStyles(
-            this.cache,
-            serialized,
-            this.isStringElement,
-          )
-
-          className += `${this.cache.key}-${serialized.name}`
-
-          className += _target
-
-          // no need to sue should forward props. vue props will work same as that
-
-          // const slot = this.isStringElement ? this.$slots?.default?.() : () => this.$slots?.default?.()
-
-          // ssr code is needed
-          const passingProps = this.isStringElement ? {} : this.$props
-
-          const vNode = h(this.element, {...this.$attrs, ...passingProps, class: className}, this.$slots)
-
-          if (isSSR() && typeof rules !== 'undefined') {
-            let next = serialized.next
-            let dataEmotion = serialized.name
-
-            while (typeof next !== 'undefined') {
-              dataEmotion += ` ${next.name}`
-              next = next.next
-            }
-
-            return (
-              h(Fragment, [
-                h('style', {'data-emotion': dataEmotion, nonce: this.cache.sheet.nonce}, rules),
-                vNode,
-              ])
-            )
-          }
-
-          return vNode
-        },
-        setup: (props: any) => {
+        setup: (props: any, {attrs, slots}) => {
           const asRef = toRef(props, 'as')
           const {cache: masterCache} = emotion
           const theme = useTheme()
@@ -179,11 +121,55 @@ export const createStyled = (emotion: _Emotion) => {
           const isStringElementRef = computed(() => {
             return typeof elementRef.value === 'string'
           })
-          return {
-            cache,
-            element: elementRef,
-            isStringElement: isStringElementRef,
-            theme,
+          return () => {
+            const classInterpolations: string[] = []
+            const allAttrs = {
+              ...props,
+              theme,
+            }
+            let className = getRegisteredStyles(
+              cache.registered,
+              classInterpolations,
+              clsx(toBeClassName(attrs.class)),
+            )
+
+            const serialized = serializeStyles(
+              _args,
+              cache.registered,
+              allAttrs,
+            )
+            const rules = insertStyles(
+              cache,
+              serialized,
+              isStringElementRef.value,
+            )
+
+            className += `${cache.key}-${serialized.name}`
+
+            className += _target
+
+            const passingProps = isStringElementRef.value ? {} : props
+
+            const vNode = h(elementRef.value, {...attrs, ...passingProps, class: className}, slots)
+
+            if (isSSR() && typeof rules !== 'undefined') {
+              let next = serialized.next
+              let dataEmotion = serialized.name
+
+              while (typeof next !== 'undefined') {
+                dataEmotion += ` ${next.name}`
+                next = next.next
+              }
+
+              return (
+                h(Fragment, [
+                  h('style', {'data-emotion': dataEmotion, nonce: cache.sheet.nonce}, rules),
+                  vNode,
+                ])
+              )
+            }
+
+            return vNode
           }
         },
       })
@@ -215,6 +201,10 @@ export const createEmotion = (options: EmotionOptions = {}): EmotionPlugin => {
     ...emotion,
     install: (app) => {
       app.provide(EMOTION_CACHE_CONTEXT, emotion.cache)
+
+      if (process.env.NODE_ENV === 'development') {
+        console.log('winter-love emotion version salmon')
+      }
       // provide theme if the options have it
       if (theme) {
         app.provide(EMOTION_THEME_CONTEXT, theme)

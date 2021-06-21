@@ -8,6 +8,7 @@ export const containerProps = {
 }
 
 export const Container = styled('div', {
+  name: 'Container',
   props: {
     ...containerProps,
   },
