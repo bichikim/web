@@ -18627,15 +18627,6 @@ value-or-function@^3.0.0:
   resolved "https://registry.yarnpkg.com/value-or-function/-/value-or-function-3.0.0.tgz#1c243a50b595c1be54a754bfece8563b9ff8d813"
   integrity sha1-HCQ6ULWVwb5Up1S/7OhWO5/42BM=
 
-vare@1.0.8:
-  version "1.0.8"
-  resolved "https://registry.yarnpkg.com/vare/-/vare-1.0.8.tgz#2d4adf0adb7a6bc79355cda2c01fa9b25763c41f"
-  integrity sha512-mxgKgyffHkd/GKx9rxwTWFaxHgy/Q496bmURh2jtZcXTL+ZKIXm2MwVDiDjzGTP1oXjP29Ls+Moo205zfnFIhQ==
-  dependencies:
-    "@vue/devtools-api" "^6.0.0-beta.12"
-    "@winter-love/utils" "^1.0.8"
-    vue-demi "^0.9.1"
-
 vary@^1, vary@~1.1.2:
   version "1.1.2"
   resolved "https://registry.yarnpkg.com/vary/-/vary-1.1.2.tgz#2299f02c6ded30d4a5961b0b9f74524a18f634fc"
