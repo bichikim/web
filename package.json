@@ -64,7 +64,6 @@
     "@storybook/addon-docs": "^6.3.0-rc.11",
     "@storybook/addon-essentials": "^6.3.0-rc.11",
     "@storybook/addon-links": "^6.3.0-rc.11",
-    "@storybook/addon-postcss": "^2.0.0",
     "@storybook/vue3": "^6.3.0-rc.11",
     "@types/gulp": "^4.0.8",
     "@types/jest": "^26.0.23",
