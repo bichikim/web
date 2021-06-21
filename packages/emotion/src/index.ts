@@ -100,8 +100,13 @@ export const createStyled = (emotion: _Emotion & {theme?: any}) => {
   ): StyledResult<ExtractPropTypes<PropsOptions>>
   function styled(element: AnyComponent, options?: any): any {
     const {
-      label, target, name,
+      label, target, name, props: styleProps = {},
     } = options ?? {}
+
+    const stylePropsFilter = Object.keys(styleProps).reduce((result, key) => {
+      result[key] = undefined
+      return result
+    }, {})
 
     return (...args: any[]) => {
       const _args = [...args, {label}]
@@ -110,6 +115,7 @@ export const createStyled = (emotion: _Emotion & {theme?: any}) => {
 
       // emotion component
       return defineComponent({
+        inheritAttrs: false,
         name: name ?? label ?? 'emotion',
         props: defaultProps,
         setup: (props: any, {attrs, slots}) => {
@@ -147,11 +153,11 @@ export const createStyled = (emotion: _Emotion & {theme?: any}) => {
               isStringElementRef.value,
             )
 
-            className += `${cache.key}-${serialized.name}`
+            className += `${cache.key}-${serialized.name} ${_target}`
 
-            className += _target
+            const nextAttrs = isStringElementRef.value ? Object.assign(restAttrs, stylePropsFilter) : restAttrs
 
-            const vNode = h(elementRef.value, {...restAttrs, class: className}, slots)
+            const vNode = h(elementRef.value, {...nextAttrs, class: className}, slots)
 
             if (isSSR() && typeof rules !== 'undefined') {
               let next = serialized.next

@@ -43,7 +43,7 @@
     "@emotion/server": "^11.4.0",
     "@quasar/extras": "^1.10.7",
     "@winter-love/emotion": "1.0.13-next.1",
-    "@winter-love/style-system": "^1.0.13-next.0",
+    "@winter-love/style-system": "^1.0.13-next.1",
     "@winter-love/use": "^1.0.10",
     "@winter-love/utils": "1.0.9",
     "core-js": "^3.6.5",
