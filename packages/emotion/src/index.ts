@@ -47,8 +47,6 @@ export const useTheme = () => {
   const instance = getCurrentInstance()
   const props = instance?.props ?? {}
 
-  console.log(props.theme)
-
   if (props.theme) {
     return props.theme as Theme
   }
