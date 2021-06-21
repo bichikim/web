@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/utils",
-  "version": "1.0.9-next.0",
+  "version": "1.0.9",
   "private": false,
   "description": "useful javascript utils",
   "keywords": [

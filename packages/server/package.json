@@ -1,13 +1,13 @@
 {
   "name": "@winter-love/server",
-  "version": "1.0.9-next.0",
+  "version": "1.0.9",
   "private": true,
   "scripts": {
     "build": "tsc && tsc-alias",
     "dev": "tsc -w & tsc-alias -w"
   },
   "dependencies": {
-    "@winter-love/utils": "^1.0.9-next.0",
+    "@winter-love/utils": "^1.0.9",
     "apollo-server": "^2.25.0",
     "class-validator": "^0.13.1",
     "express": "^4.17.1",
