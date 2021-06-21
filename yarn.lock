@@ -3595,14 +3595,6 @@
     "@webassemblyjs/ast" "1.11.0"
     "@xtuc/long" "4.2.2"
 
-"@winter-love/utils@^1.0.8":
-  version "1.0.8"
-  resolved "https://registry.yarnpkg.com/@winter-love/utils/-/utils-1.0.8.tgz#f95685041c7820b913c42a4fa548ecc239caf35b"
-  integrity sha512-Gs1G4tV7ZwkMFepsnhHUuUyBRxI0V469AHJm8ivbJah2p2XFgZoXwC1HMRlf+TDIjZSisZdBHeca7UAKd0DoAw==
-  dependencies:
-    micro-memoize "^4.0.9"
-    react-fast-compare "^3.2.0"
-
 "@wry/equality@^0.1.2":
   version "0.1.11"
   resolved "https://registry.yarnpkg.com/@wry/equality/-/equality-0.1.11.tgz#35cb156e4a96695aa81a9ecc4d03787bc17f1790"
