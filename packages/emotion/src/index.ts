@@ -9,7 +9,6 @@ import {Interpolation, serializeStyles} from '@emotion/serialize'
 import {getRegisteredStyles, insertStyles} from '@emotion/utils'
 import clsx, {ClassValue} from 'clsx'
 import {Tags} from './tags'
-import {margeProps} from '@winter-love/use'
 import {isSSR} from '@winter-love/utils'
 import {
   ComponentObjectPropsOptions,
@@ -72,7 +71,10 @@ export interface StyledOptionWithArray<PropsOptions extends Readonly<any[]>> ext
 
 export type StyledResult<Props> = ((...args: (TemplateStringsArray | Interpolation<Props>)[]) => DefineComponent<Props>)
 
-const defaultProps = {}
+const defaultProps = {
+  as: null,
+  theme: null,
+}
 
 export type EmptyObject = {
   // empty
@@ -98,7 +100,7 @@ export const createStyled = (emotion: _Emotion) => {
   ): StyledResult<ExtractPropTypes<PropsOptions>>
   function styled(element: AnyComponent, options?: any): any {
     const {
-      props, label, target, name,
+      label, target, name,
     } = options ?? {}
 
     return (...args: any[]) => {
@@ -108,7 +110,7 @@ export const createStyled = (emotion: _Emotion) => {
       // emotion component
       return defineComponent({
         name: name ?? label ?? 'emotion',
-        props: margeProps(props, defaultProps),
+        props: defaultProps,
         setup: (props: any, {attrs, slots}) => {
           const asRef = toRef(props, 'as')
           const {cache: masterCache} = emotion
@@ -124,7 +126,7 @@ export const createStyled = (emotion: _Emotion) => {
           return () => {
             const classInterpolations: string[] = []
             const allAttrs = {
-              ...props,
+              ...attrs,
               theme,
             }
             let className = getRegisteredStyles(
@@ -148,9 +150,7 @@ export const createStyled = (emotion: _Emotion) => {
 
             className += _target
 
-            const passingProps = isStringElementRef.value ? {} : props
-
-            const vNode = h(elementRef.value, {...attrs, ...passingProps, class: className}, slots)
+            const vNode = h(elementRef.value, {...attrs, class: className}, slots)
 
             if (isSSR() && typeof rules !== 'undefined') {
               let next = serialized.next
