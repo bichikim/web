@@ -1,6 +1,6 @@
 import {computed, defineComponent, h} from 'vue'
 import {Box} from 'src/design-system'
-import {QItem} from 'quasar'
+import {QImg, QItem} from 'quasar'
 
 export const Test1 = defineComponent({
   name: 'Test1',
