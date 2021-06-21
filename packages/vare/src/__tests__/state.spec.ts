@@ -1,4 +1,4 @@
-import {mount, flushPromises} from '@vue/test-utils'
+import {flushPromises, mount} from '@vue/test-utils'
 import {defineComponent, h} from 'vue'
 import {state} from 'src/state'
 
@@ -47,8 +47,8 @@ const BarTestComponent = defineComponent(() => {
   }
 })
 
-describe('state', function test() {
-  it('should reactive', async function test() {
+describe('state', () => {
+  it('should reactive', async () => {
     const wrapper = mount(FooTestComponent)
 
     expect(
@@ -105,7 +105,7 @@ describe('state', function test() {
     ).toBe('bar1')
     expect(
       barNameGetSpy.mock.calls.length,
-    ).toBe(3) // is it right?
+    ).toBe(3)
     expect(
       barNameSetSpy.mock.calls.length,
     ).toBe(1)
