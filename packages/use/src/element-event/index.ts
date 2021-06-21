@@ -44,7 +44,7 @@ export function useElementEvent <Key extends string>(
   const elementRef = wrapRef(element)
   const isActive = ref(false)
 
-  const handler = (event) => {
+  const handle = (event) => {
     listener(event)
     if (once) {
       inactive()
@@ -55,7 +55,7 @@ export function useElementEvent <Key extends string>(
     const element = elementRef.value
     if (element) {
       isActive.value = true
-      element.addEventListener(eventName, handler, {
+      element.addEventListener(eventName, handle, {
         capture,
         passive,
       })
@@ -66,7 +66,7 @@ export function useElementEvent <Key extends string>(
     const element = elementRef.value
     if (element) {
       isActive.value = false
-      element.removeEventListener(eventName, handler)
+      element.removeEventListener(eventName, handle)
     }
   }
 

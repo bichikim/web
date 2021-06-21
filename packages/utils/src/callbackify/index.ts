@@ -1,25 +1,27 @@
 import {isPromise} from '../is-promise'
 
+export type CallbackifyHandle<S> = (error: undefined | Error, value?: S | undefined) => any
+
 export const callbackify = <S>(
   action: () => Promise<S> | S,
-  callback: (error: undefined | Error, value?: S | undefined) => any,
+  handle: CallbackifyHandle<S>,
 ) => {
   let result
   try {
     result = action()
   } catch (error) {
-    callback(error)
+    handle(error)
     return
   }
 
   if (isPromise(result)) {
     return result.then((data: S) => {
-      callback(undefined, data)
+      handle(undefined, data)
     }).catch((error) => {
-      callback(error)
+      handle(error)
     })
   }
 
-  callback(undefined, result)
+  handle(undefined, result)
   return result
 }

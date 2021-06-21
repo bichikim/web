@@ -3,31 +3,41 @@ import {useElementEvent} from 'src/element-event'
 import {MayRef} from '../types'
 import {wrapRef} from '../wrap-ref'
 
-export type OnOfflineCallBack = (event: Event) => unknown
-export type OnOnlineCallBack = (event: Event) => unknown
+export type OnOfflineHandle = (event: Event) => unknown
+export type OnOnlineHandle = (event: Event) => unknown
 
 /**
  * @deprecated please use useConnection
- * @param handler
+ * @param handle
  */
-export const onOffline = (handler: OnOfflineCallBack) => {
+export const onOffline = (handle: OnOfflineHandle) => {
   if (isSSR()) {
     return
   }
 
-  useElementEvent(window, 'offline', handler, {capture: false, immediate: true, passive: true})
+  return useElementEvent(
+    window,
+    'offline',
+    handle,
+    {capture: false, immediate: true, passive: true},
+  )
 }
 
 /**
  * @deprecated please use useConnection
- * @param handler
+ * @param handle
  */
-export const onOnline = (handler: OnOnlineCallBack) => {
+export const onOnline = (handle: OnOnlineHandle) => {
   if (isSSR()) {
     return
   }
 
-  useElementEvent(window, 'online', handler, {capture: false, immediate: true, passive: true})
+  return useElementEvent(
+    window,
+    'online',
+    handle,
+    {capture: false, immediate: true, passive: true},
+  )
 }
 
 export const useConnection = (init: MayRef<boolean> = true) => {

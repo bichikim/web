@@ -1,11 +1,11 @@
 import {computed} from 'vue-demi'
-import {PossibleElement, MayRef} from '../types'
+import {MayRef, PossibleElement} from '../types'
 import {isSSR} from '@winter-love/utils'
 import {wrapRef} from '../wrap-ref'
 import {pickElement} from '../pick-element'
 import {useElementEvent} from '../element-event'
 
-export type OnClickOutsideHandler<Event extends keyof WindowEventMap> = (event: WindowEventMap[Event]) => unknown
+export type OnClickOutsideHandle<Event extends keyof WindowEventMap> = (event: WindowEventMap[Event]) => unknown
 
 export interface OnClickOutsideOptions<Event extends keyof WindowEventMap> {
   event?: Event
@@ -13,7 +13,7 @@ export interface OnClickOutsideOptions<Event extends keyof WindowEventMap> {
 
 export const onClickOutside = <Event extends keyof WindowEventMap = 'pointerdown'>(
   target: MayRef<PossibleElement>,
-  handler: OnClickOutsideHandler<Event>,
+  handle: OnClickOutsideHandle<Event>,
   options: OnClickOutsideOptions<Event> = {},
 ) => {
   if (isSSR()) {
@@ -38,7 +38,7 @@ export const onClickOutside = <Event extends keyof WindowEventMap = 'pointerdown
       return
     }
 
-    handler(event)
+    handle(event)
   }
 
   return useElementEvent<Event>(window, event as Event, listener, {passive: true})

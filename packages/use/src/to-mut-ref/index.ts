@@ -1,23 +1,33 @@
-import {ref, watch, toRef, Ref} from 'vue-demi'
+import {
+  Ref, ref, toRef, watch,
+} from 'vue'
 
-export type ShouldUpdate<Value> = (value: Value, oldValue: Value) => boolean
+export type IsEqual<Value> = (value: Value, oldValue: Value) => boolean
 
-export type ToMutRefReturnType<Props extends Record<string, any>, Key extends keyof Props> = Ref<Props[Key]>
+export interface ToMutRefProps<Props extends Record<string, any>, Key extends keyof Props> {
+  shouldUpdate?: IsEqual<[Props[Key]]>
+}
+
+export type ToMutRefHandle<Props extends Record<string, any>, Key extends keyof Props> = (data: Props[Key]) => any
+
 /**
  * toMutRef 는 vue 에 toRef 와 달리 readonly 가 아닙니다 리턴된 ref 값은 변경 가능합니다
  * @param props
  * @param key
- * @param shouldUpdate 변경 할지 결정하는 함수가 있을 경우 확인 후 업데이트 합니다 이 함수를 제공하지 않으면 항상 업데이트 합니다
+ * @param handle
+ * @param options
  */
 export const toMutRef = <Props extends Record<string, any>, Key extends keyof Props>(
   props: Props,
   key: Key,
-  shouldUpdate?: ShouldUpdate<[Props[Key]]>,
-): ToMutRefReturnType<Props, Key> => {
+  handle?: ToMutRefHandle<Props, Key>,
+  options: ToMutRefProps<Props, Key> = {},
+): Ref<Props[Key]> => {
+  const {shouldUpdate} = options
   const valueRef = toRef(props, key)
   const valueMut = ref<Props[Key]>(valueRef.value)
 
-  watch(valueRef, (value: [Props[Key]], oldValue: [Props[Key]]) => {
+  watch(valueRef, (value: Props[Key], oldValue: Props[Key]) => {
     if (shouldUpdate) {
       if (shouldUpdate(value, oldValue)) {
         valueMut.value = value
@@ -26,6 +36,10 @@ export const toMutRef = <Props extends Record<string, any>, Key extends keyof Pr
       return
     }
     valueMut.value = value
+  })
+
+  watch(valueMut, (value: Props[Key]) => {
+    handle?.(value)
   })
 
   return valueMut

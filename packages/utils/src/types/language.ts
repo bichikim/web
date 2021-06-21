@@ -3,6 +3,8 @@ export interface EmptyObject {
   // empty
 }
 
+export type NotUndefined<T> = T extends undefined ? never : T
+
 export type AnyFunction<Args extends any[] = any[], Return = any> = (...args: Args) => Return
 
 export type FunctionObject<T extends Record<string, AnyFunction>> = {

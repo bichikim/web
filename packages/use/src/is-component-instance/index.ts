@@ -4,6 +4,6 @@ export interface ComponentPublicInstanceHasElement extends ComponentPublicInstan
   $el: Element | undefined | null
 }
 
-export const isComponentInstance = (value: any): value is ComponentPublicInstanceHasElement => {
-  return Boolean(value?.$el)
-}
+export const isComponentInstance = (value: any): value is ComponentPublicInstanceHasElement => (
+  Boolean(value?.$el)
+)
