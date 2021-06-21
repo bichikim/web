@@ -20,7 +20,7 @@
     "publish:patch": "lerna publish from-package",
     "format:package.json": "sort-package-json \"package.json\" \"packages/*/package.json\" ",
     "version:next": "lerna version prerelease --preid next",
-    "publish:next": "lerna publish from-package --preid next",
+    "publish:next": "lerna publish from-package --preid next --dist-tag next",
     "lint:fix": "eslint --fix --ext .js,.ts,.vue ./",
     "storybook": "start-storybook -p 6006",
     "clean": "lerna clean --yes && rimraf node_modules",
