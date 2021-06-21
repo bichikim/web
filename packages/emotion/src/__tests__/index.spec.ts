@@ -184,7 +184,7 @@ describe('emotion', () => {
     })
 
     describe('vue emotion plugin', () => {
-      it.only('should provide theme', () => {
+      it('should provide theme', () => {
         const {emotion, app} = setup({sizes: {md: '20px'}})
 
         expect(app._context.provides[EMOTION_THEME_CONTEXT as any]).toBe(undefined)
