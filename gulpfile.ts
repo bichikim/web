@@ -1,6 +1,6 @@
 // noinspection ES6PreferShortImport
 import {creBundle, creWatchBundle} from './scripts'
-import {parallel} from 'gulp'
+import {series} from 'gulp'
 
 export const dev = creWatchBundle({
   minify: false,
@@ -21,7 +21,7 @@ export const dev = creWatchBundle({
   target: 'ES2019',
 })
 
-export const build = parallel(
+export const build = series(
   creBundle({
     // minify: true,
     output: [

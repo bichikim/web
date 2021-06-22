@@ -124,6 +124,8 @@ export const createStyled = (emotion: _Emotion & {theme?: any}) => {
       stylePortal,
     } = options ?? {}
 
+    const _target = target ? ` ${target}` : ''
+
     const stylePropsFilter = Object.keys(styleProps).reduce((result, key) => {
       result[key] = true
       return result
@@ -135,7 +137,7 @@ export const createStyled = (emotion: _Emotion & {theme?: any}) => {
 
     return (...args: any[]) => {
       const _args = [...args, {label}]
-      const _target = target ? ` ${target}` : ''
+
       const {cache: masterCache} = emotion
 
       // emotion component
@@ -190,7 +192,7 @@ export const createStyled = (emotion: _Emotion & {theme?: any}) => {
               isStringElementRef.value,
             )
 
-            const className = `${registeredClassName} ${cache.key}-${serialized.name} ${_target}`
+            const className = `${registeredClassName} ${cache.key}-${serialized.name}${_target}`
 
             const nextAttrs = isStringElementRef.value ? restProps : (
               nextStylePortal.value ? {...restProps, [nextStylePortal.value]: props} : {...restProps, ...props}
