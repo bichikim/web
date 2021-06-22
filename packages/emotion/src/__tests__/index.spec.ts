@@ -18,6 +18,8 @@ describe('emotion', () => {
       const StyledComponent = styled(element, {
         props: {
           color: {type: String},
+          height: {type: String},
+          width: null,
         },
         ...rest,
       })({
@@ -181,9 +183,9 @@ describe('emotion', () => {
       const styled = createStyled(createEmotionOriginal({key: 'css'}))
       const Component = styled('div', {
         props: {
-          css: {default: () => ({}), type: Object},
+          sx: {default: () => ({}), type: Object},
         },
-        stylePortal: 'css',
+        stylePortal: 'sx',
       })(
         ({color}: any) => {
           return {
@@ -198,19 +200,24 @@ describe('emotion', () => {
         },
         stylePortal: 'css',
       })(
-        {
-          backgroundColor: 'red',
+        ({backgroundColor}: any) => {
+          return {
+            backgroundColor,
+          }
         },
       )
 
       const wrapper = mount(Component2, {
         props: {
-          css: {color: 'red'},
+          css: {
+            backgroundColor: 'blue', color: 'red', height: '100px', left: '10px', width: '100px',
+          },
+          key: 'foo',
         },
       })
 
       expect(wrapper.element).toHaveStyle({
-        backgroundColor: 'red',
+        backgroundColor: 'blue',
         color: 'red',
       })
     })

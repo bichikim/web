@@ -81,12 +81,23 @@ export type EmptyObject = {
   // empty
 }
 
-const getProps = (props: Record<string, any>, stylePortal?: string) => {
+const getProps = (props: Record<string, any>, shouldForwardProps: Record<string, true>, stylePortal?: string) => {
   if (stylePortal) {
-    const styleProps = props[stylePortal]
-    return typeof styleProps === 'object' && !Array.isArray(styleProps) ? styleProps : {}
+    const {[stylePortal]: styleProps, ...rest} = props
+    const newProps = typeof styleProps === 'object' && !Array.isArray(styleProps) ? styleProps : {}
+    return {
+      props: newProps,
+      rest,
+    }
   }
-  return props
+  return Object.keys(props).reduce((result, key) => {
+    if (shouldForwardProps[key]) {
+      result.props[key] = props[key]
+      return result
+    }
+    result.rest[key] = props[key]
+    return result
+  }, {props: {}, rest: {}})
 }
 
 export const toBeClassName = (value: any): ClassValue => {
@@ -114,9 +125,13 @@ export const createStyled = (emotion: _Emotion & {theme?: any}) => {
     } = options ?? {}
 
     const stylePropsFilter = Object.keys(styleProps).reduce((result, key) => {
-      result[key] = undefined
+      result[key] = true
       return result
     }, {})
+
+    if (process.env.NODE_ENV === 'development' && defaultProps[stylePortal] === null) {
+      console.warn('stylePortal should not be as or theme')
+    }
 
     return (...args: any[]) => {
       const _args = [...args, {label}]
@@ -124,7 +139,7 @@ export const createStyled = (emotion: _Emotion & {theme?: any}) => {
       const {cache: masterCache} = emotion
 
       // emotion component
-      return defineComponent({
+      const component = defineComponent({
         inheritAttrs: false,
         name: name ?? label ?? 'emotion',
         props: defaultProps,
@@ -139,14 +154,25 @@ export const createStyled = (emotion: _Emotion & {theme?: any}) => {
           const isStringElementRef = computed(() => {
             return typeof elementRef.value === 'string'
           })
+
+          const nextStylePortal = computed(() => {
+            if (isStringElementRef.value) {
+              return
+            }
+            return elementRef.value.__stylePortal
+          })
+
           return () => {
             const classInterpolations: string[] = []
             const {class: classes, ...restAttrs} = attrs
+
+            const {props, rest: restProps} = getProps(restAttrs, stylePropsFilter, stylePortal)
+
             const allAttrs = {
-              ...getProps(restAttrs, stylePortal),
+              ...props,
               theme,
             }
-            let className = getRegisteredStyles(
+            const registeredClassName = getRegisteredStyles(
               cache.registered,
               classInterpolations,
               clsx(toBeClassName(classes)),
@@ -157,19 +183,18 @@ export const createStyled = (emotion: _Emotion & {theme?: any}) => {
               cache.registered,
               allAttrs,
             )
+
             const rules = insertStyles(
               cache,
               serialized,
               isStringElementRef.value,
             )
 
-            className += `${cache.key}-${serialized.name} ${_target}`
+            const className = `${registeredClassName} ${cache.key}-${serialized.name} ${_target}`
 
-            const nextAttrs = isStringElementRef.value ? (
-              stylePortal ?
-                Object.assign(restAttrs, {[stylePortal]: undefined}) :
-                Object.assign(restAttrs, stylePropsFilter)
-            ) : restAttrs
+            const nextAttrs = isStringElementRef.value ? restProps : (
+              nextStylePortal.value ? {...restProps, [nextStylePortal.value]: props} : {...restProps, ...props}
+            )
 
             const vNode = h(elementRef.value, {...nextAttrs, class: className}, slots)
 
@@ -194,6 +219,10 @@ export const createStyled = (emotion: _Emotion & {theme?: any}) => {
           }
         },
       })
+
+      component.__stylePortal = stylePortal
+
+      return component
     }
   }
 
