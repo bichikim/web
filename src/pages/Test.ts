@@ -6,6 +6,7 @@ import {Box} from 'src/design-system'
 
 const getList = (): Promise<any[]> => {
   return new Promise((resolve) => {
+    // eslint-disable-next-line no-magic-numbers
     const list = Array(1000).fill(null).map((_, index) => {
       return `foo ${index}`
     })
