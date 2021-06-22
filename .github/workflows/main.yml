@@ -41,8 +41,19 @@ jobs:
     steps:
       - name: Checkout Repo
         uses: actions/checkout@master
-#      - name: Build Libray
-#        run: yarn run build:libray
+      - name: Prepare Pnpm
+        uses: pnpm/action-setup@v2.0.1
+        with:
+          version: 6.7.6
+      - name: Use Cache
+        uses: actions/cache@v2
+        with:
+          path: '**/node_modules'
+          id: yarn-cache
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+      - name: Install Dependencies
+        if: steps.yarn-cache.outputs.cache-hit != 'true'
+        run: yarn install
       - name: Test
         run: yarn run test
 #  deploy:
