@@ -176,6 +176,44 @@ describe('emotion', () => {
         color: 'red',
       })
     })
+
+    it('should render nest components style', () => {
+      const styled = createStyled(createEmotionOriginal({key: 'css'}))
+      const Component = styled('div', {
+        props: {
+          css: {default: () => ({}), type: Object},
+        },
+        stylePortal: 'css',
+      })(
+        ({color}: any) => {
+          return {
+            color,
+          }
+        },
+      )
+
+      const Component2 = styled(Component, {
+        props: {
+          css: {default: () => ({}), type: Object},
+        },
+        stylePortal: 'css',
+      })(
+        {
+          backgroundColor: 'red',
+        },
+      )
+
+      const wrapper = mount(Component2, {
+        props: {
+          css: {color: 'red'},
+        },
+      })
+
+      expect(wrapper.element).toHaveStyle({
+        backgroundColor: 'red',
+        color: 'red',
+      })
+    })
   })
   describe('createElement', () => {
     const setup = (theme?: Record<any, any>) => {

@@ -153,7 +153,7 @@ export const createStyled = (emotion: _Emotion & {theme?: any}) => {
             )
 
             const serialized = serializeStyles(
-              _args,
+              [..._args, ...classInterpolations],
               cache.registered,
               allAttrs,
             )
