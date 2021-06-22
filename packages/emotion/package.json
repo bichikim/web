@@ -4,6 +4,9 @@
   "main": "lib/index.js",
   "module": "lib/index.module.js",
   "source": "src/index.ts",
+  "repository": "git@github.com:winter-love/web.git",
+  "description": "Emotion for vue",
+  "author": "bichi@live.co.kr",
   "types": "lib/index.d.ts",
   "files": [
     "lib/*"
