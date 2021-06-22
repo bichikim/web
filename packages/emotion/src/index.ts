@@ -56,6 +56,7 @@ export const useTheme = () => {
 export interface StyledOptions {
   label?: string
   name?: string
+  stylePortal?: string
   target?: string
 }
 
@@ -80,6 +81,14 @@ export type EmptyObject = {
   // empty
 }
 
+const getProps = (props: Record<string, any>, stylePortal?: string) => {
+  if (stylePortal) {
+    const styleProps = props[stylePortal]
+    return typeof styleProps === 'object' && !Array.isArray(styleProps) ? styleProps : {}
+  }
+  return props
+}
+
 export const toBeClassName = (value: any): ClassValue => {
   if (typeof value === 'function') {
     return
@@ -101,6 +110,7 @@ export const createStyled = (emotion: _Emotion & {theme?: any}) => {
   function styled(element: AnyComponent, options?: any): any {
     const {
       label, target, name, props: styleProps = {},
+      stylePortal,
     } = options ?? {}
 
     const stylePropsFilter = Object.keys(styleProps).reduce((result, key) => {
@@ -133,7 +143,7 @@ export const createStyled = (emotion: _Emotion & {theme?: any}) => {
             const classInterpolations: string[] = []
             const {class: classes, ...restAttrs} = attrs
             const allAttrs = {
-              ...restAttrs,
+              ...getProps(restAttrs, stylePortal),
               theme,
             }
             let className = getRegisteredStyles(
@@ -155,7 +165,11 @@ export const createStyled = (emotion: _Emotion & {theme?: any}) => {
 
             className += `${cache.key}-${serialized.name} ${_target}`
 
-            const nextAttrs = isStringElementRef.value ? Object.assign(restAttrs, stylePropsFilter) : restAttrs
+            const nextAttrs = isStringElementRef.value ? (
+              stylePortal ?
+                Object.assign(restAttrs, {[stylePortal]: undefined}) :
+                Object.assign(restAttrs, stylePropsFilter)
+            ) : restAttrs
 
             const vNode = h(elementRef.value, {...nextAttrs, class: className}, slots)
 

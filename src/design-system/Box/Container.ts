@@ -1,10 +1,9 @@
+import {SystemProps, systems} from 'src/design-system/system'
 import {styled} from 'src/emotion'
-import {commons, systemProps, systems} from 'src/design-system/system'
-import {createSystemConfig, system, SystemOptions} from '@winter-love/style-system'
-import {cleanObject} from '@winter-love/utils'
+import {PropType} from 'vue'
 
 export const containerProps = {
-  ...systemProps,
+  css: {default: () => ({}), type: Object as PropType<SystemProps>},
 }
 
 export const Container = styled('div', {
@@ -12,6 +11,7 @@ export const Container = styled('div', {
   props: {
     ...containerProps,
   },
+  stylePortal: 'css',
 })(
   systems,
 )
