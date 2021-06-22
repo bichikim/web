@@ -39,6 +39,8 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout Repo
+        uses: actions/checkout@master
 #      - name: Build Libray
 #        run: yarn run build:libray
       - name: Test
