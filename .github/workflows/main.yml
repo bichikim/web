@@ -11,6 +11,8 @@ jobs:
     steps:
       - name: Checkout Repo
         uses: actions/checkout@master
+      - name: Perpar Pnpm
+        run: npm i -g pnpm
       - name: Use Cache
         uses: actions/cache@v2
         with:
