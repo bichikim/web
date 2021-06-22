@@ -44,7 +44,7 @@ jobs:
         uses: pnpm/action-setup@v2.0.1
         with:
           version: 6.7.6
-      - name: Use Cache
+      - name: Use Yarn Cache
         uses: actions/cache@v2
         id: yarn-cache
         with:
@@ -75,11 +75,11 @@ jobs:
         uses: pnpm/action-setup@v2.0.1
         with:
           version: 6.7.6
-      - name: Use Cache
+      - name: Use Yarn Cache
         uses: actions/cache@v2
+        id: yarn-cache
         with:
           path: '**/node_modules'
-          id: yarn-cache
           key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
       - name: Use Libray Cache
         uses: actions/cache@v2
