@@ -3,6 +3,10 @@
 ## Styled 
 
 ```typescript
+import {createStyled} from '@winter-love/emotion'
+import createEmotionOriginal from '@emotion/css/create-instance'
+
+const styled = createStyled(createEmotionOriginal({key: 'css'}))
 // vue component
 const StyledComponent = styled(element, {
   props: {
@@ -18,4 +22,25 @@ const StyledComponent = styled(element, {
     }
   },
 )
+```
+
+## All of Emotion
+
+```typescript
+import {createEmotion} from '@winter-love/emotion'
+
+const {
+  styled,
+  css,
+  cx,
+  flush,
+  hydrate,
+  injectGlobal,
+  keyframes,
+  sheet,
+  cache,
+  marge,
+  getRegisteredStyles,
+} = createEmotion
+
 ```
