@@ -23,7 +23,6 @@ describe('emotion', () => {
       })({
         backgroundColor: 'red',
       }, (props) => {
-        console.log(props)
         return {
           color: props.color,
         }
@@ -150,6 +149,32 @@ describe('emotion', () => {
       })
 
       expect(wrapper.get('div').element).toHaveClass('foo')
+    })
+
+    it('should render style by stylePortal', () => {
+      const styled = createStyled(createEmotionOriginal({key: 'css'}))
+      const Component = styled('div', {
+        props: {
+          css: {default: () => ({}), type: Object},
+        },
+        stylePortal: 'css',
+      })(
+        ({color}: any) => {
+          return {
+            color,
+          }
+        },
+      )
+
+      const wrapper = mount(Component, {
+        props: {
+          css: {color: 'red'},
+        },
+      })
+
+      expect(wrapper.element).toHaveStyle({
+        color: 'red',
+      })
     })
   })
   describe('createElement', () => {
