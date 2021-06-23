@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/style-system",
-  "version": "1.0.15-next.0",
+  "version": "1.0.15-next.1",
   "keywords": [
     "typescript",
     "style",
@@ -35,7 +35,7 @@
     "@emotion/css": "^11.1.3",
     "@types/styled-system": "^5.1.11",
     "@types/styled-system__css": "^5.0.15",
-    "@winter-love/emotion": "^1.0.15-next.0",
+    "@winter-love/emotion": "^1.0.15-next.1",
     "csstype": "^3.0.8"
   }
 }
