@@ -7,7 +7,8 @@ import del from 'rollup-plugin-delete'
 import {getPackage} from '../utils'
 import {defaultsDeep} from 'lodash'
 import typescript from 'rollup-plugin-typescript2'
-// import tsTreeShaking from 'rollup-plugin-ts-treeshaking'
+import ttypescript from 'ttypescript'
+import tsTreeShaking from 'rollup-plugin-ts-treeshaking'
 import externals from 'rollup-plugin-node-externals'
 import asset from 'rollup-plugin-smart-asset'
 
@@ -62,7 +63,6 @@ export const genRollupOptions = (options: GenRollupOptions = {}): BundleOptions 
 
   const resolvePlugin = resolve(defaultsDeep(resolveOptions, defResolverOptions))
   const typescriptPlugin = typescript({
-    // typescript: ttypescript,
     cwd,
     tsconfigOverride: {
       compilerOptions: {
@@ -73,10 +73,10 @@ export const genRollupOptions = (options: GenRollupOptions = {}): BundleOptions 
             `${src}/*`,
           ],
         },
+        plugins: [
+          {transform: '@zerollup/ts-transform-paths'},
+        ],
         target: tsTarget,
-        // plugins: [
-        //   {transform: '@zerollup/ts-transform-paths'},
-        // ],
       },
       exclude: [
         'node_modules',
@@ -85,6 +85,7 @@ export const genRollupOptions = (options: GenRollupOptions = {}): BundleOptions 
         '**/__tests__/**/*',
       ],
     },
+    typescript: ttypescript,
   })
   const externalsPlugin = externals({
     deps: true,
@@ -94,7 +95,7 @@ export const genRollupOptions = (options: GenRollupOptions = {}): BundleOptions 
 
   const assetPlugin = asset()
 
-  // const typescriptTreeShaking = tsTreeShaking()
+  const typescriptTreeShaking = tsTreeShaking()
 
   const packageJson = getPackage(cwd)
 
@@ -111,7 +112,7 @@ export const genRollupOptions = (options: GenRollupOptions = {}): BundleOptions 
      * this typescript tree shaking must be after the typescript plugin
      * @see https://www.npmjs.com/package/rollup-plugin-ts-treeshaking
      */
-    // typescriptTreeShaking,
+    typescriptTreeShaking,
   ]
 
   if (clean) {
