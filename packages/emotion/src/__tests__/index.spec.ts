@@ -99,7 +99,7 @@ describe('emotion', () => {
       expect(StyledComponent.displayName).toBe('foo')
     })
 
-    it('should use label instead of name', () => {
+    it('should use a label instead of the name', () => {
       const {StyledComponent} = setup({
         label: 'bar',
       })
@@ -107,39 +107,26 @@ describe('emotion', () => {
       expect(StyledComponent.displayName).toBe('bar')
     })
 
-    it('should use name "emotion" if it has no name ', () => {
+    it('should use the name "emotion" if it does not have name and label ', () => {
       const {StyledComponent} = setup()
       // expect(StyledComponent.name).toBe('emotion')
       expect(StyledComponent.displayName).toBe('emotion')
     })
 
-    it('should render empty slot', () => {
+    it('should render an empty slot', () => {
       const {wrapper} = setup()
       expect(wrapper.get('div').text()).toBe('')
     })
 
-    it('should render slot', () => {
+    it('should render a slot', () => {
       const {wrapper} = setup({slot: 'foo'})
       expect(wrapper.get('div').text()).toBe('foo')
     })
 
-    it('should style a component', () => {
-      const MyComponent = defineComponent((_, {attrs}) => {
+    it('should style a component with a slot', () => {
+      const MyComponent = defineComponent((_, {slots}) => {
         return () => (
-          h('div', {...attrs})
-        )
-      })
-      const {wrapper} = setup({element: MyComponent})
-      expect(wrapper.get('div').text()).toBe('')
-      expect(wrapper.get('div').element).toHaveStyle({
-        backgroundColor: 'red',
-      })
-    })
-
-    it('should styled a component with slot', () => {
-      const MyComponent = defineComponent((_, {attrs, slots}) => {
-        return () => (
-          h('div', {...attrs}, slots?.default?.())
+          h('div', slots.default?.())
         )
       })
       const {wrapper} = setup({element: MyComponent, slot: 'foo'})
@@ -157,7 +144,7 @@ describe('emotion', () => {
       expect(wrapper.get('div').element).toHaveClass('foo')
     })
 
-    it('should render style by stylePortal', () => {
+    it('should style a component by a stylePortal', () => {
       const styled = createStyled(createEmotionOriginal({key: 'css'}))
       const Component = styled('div', {
         props: {
@@ -185,7 +172,7 @@ describe('emotion', () => {
       expect(wrapper.element).not.toHaveAttribute('css')
     })
 
-    it('should render nest components style', () => {
+    it('should style nested components', () => {
       const styled = createStyled(createEmotionOriginal({key: 'css'}))
       const Component = styled('div', {
         props: {
@@ -253,7 +240,7 @@ describe('emotion', () => {
         emotion,
       }
     }
-    it('should return emotion & vue emotion plugin', () => {
+    it('should return the emotion and a vue emotion plugin', () => {
       const {emotion, app} = setup()
       expect(typeof emotion.styled).toBe('function')
 
@@ -263,7 +250,7 @@ describe('emotion', () => {
     })
 
     describe('vue emotion plugin', () => {
-      it('should provide theme', () => {
+      it('should provide the theme', () => {
         const {emotion, app} = setup({sizes: {md: '20px'}})
 
         expect(app._context.provides[EMOTION_THEME_CONTEXT as any]).toBe(undefined)
