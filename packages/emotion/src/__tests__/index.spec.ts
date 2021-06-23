@@ -47,14 +47,14 @@ describe('emotion', () => {
       }
     }
 
-    it('should render css and an element', () => {
+    it('should render css and a string element', () => {
       const {wrapper} = setup()
       expect(wrapper.get('div').element).toHaveStyle({
         backgroundColor: 'red',
       })
     })
 
-    it('should render VueComponent', () => {
+    it('should render a Vue Component', () => {
       const Component = defineComponent({
         setup() {
           return () => (
@@ -88,6 +88,7 @@ describe('emotion', () => {
       expect(wrapper.get('div').element).toHaveStyle({
         color: 'blue',
       })
+      expect(wrapper.element).not.toHaveAttribute('color')
     })
 
     it('should have a name', () => {
@@ -156,7 +157,7 @@ describe('emotion', () => {
       expect(wrapper.get('div').element).toHaveClass('foo')
     })
 
-    it.only('should render style by stylePortal', () => {
+    it('should render style by stylePortal', () => {
       const styled = createStyled(createEmotionOriginal({key: 'css'}))
       const Component = styled('div', {
         props: {
@@ -225,6 +226,8 @@ describe('emotion', () => {
         backgroundColor: 'blue',
         color: 'red',
       })
+
+      expect(wrapper.element).not.toHaveAttribute('css')
     })
   })
   describe('createElement', () => {
