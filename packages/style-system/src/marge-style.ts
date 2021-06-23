@@ -1,9 +1,9 @@
-export const mergeStyle = (a: Record<string, any>, b: Record<any, any>) => {
-  return Object.keys(a).reduce((result, key) => {
-    if (!a[key] || typeof b[key] !== 'object') {
+export const mergeStyle = (first: Record<string, any>, second: Record<any, any>) => {
+  return Object.keys(first).reduce((result, key) => {
+    if (!first[key] || typeof second[key] !== 'object') {
       return result
     }
-    result[key] = {...a[key], ...b[key]}
+    result[key] = {...first[key], ...second[key]}
     return result
-  }, {...a, ...b})
+  }, {...first, ...second})
 }
