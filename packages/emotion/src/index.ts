@@ -208,6 +208,7 @@ export const createStyled = (emotion: _Emotion & {theme?: any}) => {
       }
 
       Emotion.__stylePortal = stylePortal
+      Emotion.inheritAttrs = false
       Emotion.displayName = name ?? label ?? 'emotion'
       Emotion.props = defaultProps
 

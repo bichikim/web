@@ -156,7 +156,7 @@ describe('emotion', () => {
       expect(wrapper.get('div').element).toHaveClass('foo')
     })
 
-    it('should render style by stylePortal', () => {
+    it.only('should render style by stylePortal', () => {
       const styled = createStyled(createEmotionOriginal({key: 'css'}))
       const Component = styled('div', {
         props: {
@@ -180,6 +180,8 @@ describe('emotion', () => {
       expect(wrapper.element).toHaveStyle({
         color: 'red',
       })
+
+      expect(wrapper.element).not.toHaveAttribute('css')
     })
 
     it('should render nest components style', () => {
