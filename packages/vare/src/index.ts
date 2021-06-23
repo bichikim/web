@@ -1,7 +1,6 @@
 import {plugin} from './plugin'
 export * from './devtool'
 export * from './act'
-export * from './async-ref'
 export * from './compute'
 export * from './info'
 export * from './mutate'

@@ -2,15 +2,15 @@ import {ref, watch} from 'vue'
 import {wrapRef} from '../wrap-ref'
 import {MayRef} from 'src/types'
 
-export type UseAnimationTickHook = () => any
+export type UseAnimationTickHandle = () => any
 
-export const useAnimationTick = (hook: UseAnimationTickHook, toggle?: MayRef<boolean | undefined>) => {
+export const animationRepeater = (handle: UseAnimationTickHandle, toggle?: MayRef<boolean | undefined>) => {
   const toggleRef = wrapRef(toggle, {initState: true})
   const cancelFlagRef = ref<number | undefined>()
 
   const tick = () => {
     if (toggleRef.value) {
-      hook()
+      handle()
       window.requestAnimationFrame(tick)
     }
   }

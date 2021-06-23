@@ -142,6 +142,10 @@ export const toBeClassName = (value: any): ClassValue => {
   return value
 }
 
+/**
+ * creates new Styled function
+ * @param emotion
+ */
 export const createStyled = (emotion: _Emotion & {theme?: any}) => {
   function styled<PropsOptions extends ComponentObjectPropsOptions = EmptyObject>(
     element: Tags | any,
@@ -261,6 +265,10 @@ export interface EmotionOptions extends Omit<OriginalEmotionOptions, 'key'> {
 
 export type EmotionPlugin = Plugin & EmotionExtend
 
+/**
+ * creates emotion members & the styled function
+ * @param options
+ */
 export const createEmotion = (options: EmotionOptions = {}): EmotionPlugin => {
   const {theme, key = 'css', ...restOptions} = options
 
