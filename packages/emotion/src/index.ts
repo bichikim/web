@@ -82,25 +82,59 @@ export interface StylePortalInfo {
   __stylePortal?: string
 }
 
-const getProps = (props: Record<string, any>, shouldForwardProps: Record<string, true>, stylePortal?: string) => {
-  if (stylePortal) {
-    const {[stylePortal]: styleProps, ...rest} = props
-    const newProps = typeof styleProps === 'object' && !Array.isArray(styleProps) ? styleProps : {}
+const setDefaults = (props: Record<string, any>, defaults: Record<string, string | number | (() => any)>) => {
+  const _props = {...props}
+
+  Object.keys(defaults).forEach((key) => {
+    if (typeof _props[key] !== 'undefined') {
+      return
+    }
+    const value = defaults[key]
+    if (typeof value === 'function') {
+      _props[key] = value()
+    }
+    _props[key] = value
+  })
+  return _props
+}
+
+const createGetProps = (propOptions: ComponentObjectPropsOptions | Readonly<string[]>, stylePortal?: string) => {
+  const propOptionsKeys = Array.isArray(propOptions) ? propOptions : Object.keys(propOptions)
+
+  const {shouldForwardProps, defaults} = propOptionsKeys.reduce((result, key) => {
+    const defaultValue = propOptions[key]?.default
+    if (defaultValue) {
+      result.defaults[key] = defaultValue
+    }
+    result.shouldForwardProps[key] = true
+    return result
+  }, {defaults: {}, shouldForwardProps: {}})
+
+  return (attrs: Record<string, any>) => {
+
+    if (stylePortal) {
+      const {[stylePortal]: styleProps, ...rest} = attrs
+      const newProps = typeof styleProps === 'object' && !Array.isArray(styleProps) ? styleProps : {}
+      return {
+        props: setDefaults(newProps, defaults),
+        rest,
+      }
+    }
+    const {props, rest} = Object.keys(attrs).reduce((result, key) => {
+      if (shouldForwardProps[key]) {
+        result.props[key] = attrs[key]
+        return result
+      }
+      result.rest[key] = attrs[key]
+      return result
+    }, {props: {}, rest: {}})
     return {
-      props: newProps,
+      props: setDefaults(props, defaults),
       rest,
     }
   }
-  return Object.keys(props).reduce((result, key) => {
-    if (shouldForwardProps[key]) {
-      result.props[key] = props[key]
-      return result
-    }
-    result.rest[key] = props[key]
-    return result
-  }, {props: {}, rest: {}})
-}
 
+}
 export const toBeClassName = (value: any): ClassValue => {
   if (typeof value === 'function') {
     return
@@ -121,16 +155,13 @@ export const createStyled = (emotion: _Emotion & {theme?: any}) => {
   ): StyledResult<ExtractPropTypes<PropsOptions>>
   function styled(element: AnyComponent, options?: any): any {
     const {
-      label, target, name, props: styleProps = {},
+      label, target, name, props: stylePropsOptions = {},
       stylePortal,
     } = options ?? {}
 
     const _target = target ? ` ${target}` : ''
 
-    const stylePropsFilter = Object.keys(styleProps).reduce((result, key) => {
-      result[key] = true
-      return result
-    }, {})
+    const getProps = createGetProps(stylePropsOptions, stylePortal)
 
     if (process.env.NODE_ENV === 'development' && defaultProps[stylePortal] === null) {
       console.warn('stylePortal should not be as or theme')
@@ -155,7 +186,7 @@ export const createStyled = (emotion: _Emotion & {theme?: any}) => {
         const classInterpolations: string[] = []
         const {class: classes, ...restAttrs} = attrs
 
-        const {props: styleProps, rest: restProps} = getProps(restAttrs, stylePropsFilter, stylePortal)
+        const {props: styleProps, rest: restProps} = getProps(restAttrs)
 
         const allAttrs = {
           ...styleProps,

@@ -77,7 +77,21 @@ describe('emotion', () => {
     })
 
     it('should render props', async () => {
-      const {wrapper} = setup()
+      const styled = createStyled(createEmotionOriginal({key: 'css'}))
+      const Component = styled('div', {
+        props: {
+          color: {default: 'red', type: String},
+        },
+      })(
+        ({color}: any) => {
+          return {
+            color,
+          }
+        },
+      )
+
+      const wrapper = mount(Component)
+
       expect(wrapper.get('div').element).toHaveStyle({
         color: 'red',
       })
@@ -175,9 +189,6 @@ describe('emotion', () => {
     it('should style nested components', () => {
       const styled = createStyled(createEmotionOriginal({key: 'css'}))
       const Component = styled('div', {
-        props: {
-          sx: {default: () => ({}), type: Object},
-        },
         stylePortal: 'sx',
       })(
         ({color}: any) => {
@@ -188,9 +199,6 @@ describe('emotion', () => {
       )
 
       const Component2 = styled(Component, {
-        props: {
-          css: {default: () => ({}), type: Object},
-        },
         stylePortal: 'css',
       })(
         ({backgroundColor}: any) => {
@@ -215,6 +223,37 @@ describe('emotion', () => {
       })
 
       expect(wrapper.element).not.toHaveAttribute('css')
+    })
+
+    it('should style with default props', () => {
+      const styled = createStyled(createEmotionOriginal({key: 'css'}))
+      const Component = styled('div', {
+        props: {
+          backgroundColor: {default: 'blue', type: String},
+          color: {default: 'red', type: String},
+        },
+        stylePortal: 'sx',
+      })(
+        ({color}: any) => {
+          return {
+            color,
+          }
+        },
+        ({backgroundColor}: any) => {
+          return {
+            backgroundColor,
+          }
+        },
+      )
+      const wrapper = mount(Component, {
+        props: {
+          sx: {backgroundColor: 'red'},
+        },
+      })
+      expect(wrapper.element).toHaveStyle({
+        backgroundColor: 'red',
+        color: 'red',
+      })
     })
   })
   describe('createElement', () => {
