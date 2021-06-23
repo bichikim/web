@@ -7,12 +7,10 @@ import createEmotionOriginal, {
 } from '@emotion/css/create-instance'
 import {Interpolation, serializeStyles} from '@emotion/serialize'
 import {getRegisteredStyles, insertStyles} from '@emotion/utils'
-import clsx, {ClassValue} from 'clsx'
-import {Tags} from './tags'
 import {isSSR} from '@winter-love/utils'
+import clsx, {ClassValue} from 'clsx'
 import {
   ComponentObjectPropsOptions,
-  computed,
   DefineComponent,
   defineComponent,
   ExtractPropTypes,
@@ -23,8 +21,8 @@ import {
   inject,
   InjectionKey,
   Plugin,
-  toRef,
 } from 'vue-demi'
+import {Tags} from './tags'
 
 export interface Theme {
   size?: any
@@ -42,7 +40,7 @@ export interface StyledProps {
   theme?: Theme
 }
 
-export const useTheme = () => {
+export const useTheme = (theme: Theme = {}) => {
   const instance = getCurrentInstance()
   const props = instance?.props ?? {}
 
@@ -50,7 +48,7 @@ export const useTheme = () => {
     return props.theme as Theme
   }
 
-  return inject(EMOTION_THEME_CONTEXT, {})
+  return inject(EMOTION_THEME_CONTEXT, theme)
 }
 
 export interface StyledOptions {
@@ -60,9 +58,8 @@ export interface StyledOptions {
   target?: string
 }
 
-export interface StyledOptionWIthObject<
-  PropsOptions extends Readonly<ComponentObjectPropsOptions>
-  > extends StyledOptions {
+export interface StyledOptionWIthObject<PropsOptions extends Readonly<ComponentObjectPropsOptions>>
+  extends StyledOptions {
   props?: PropsOptions
 }
 
@@ -79,6 +76,10 @@ const defaultProps = {
 
 export type EmptyObject = {
   // empty
+}
+
+export interface StylePortalInfo {
+  __stylePortal?: string
 }
 
 const getProps = (props: Record<string, any>, shouldForwardProps: Record<string, true>, stylePortal?: string) => {
@@ -138,93 +139,161 @@ export const createStyled = (emotion: _Emotion & {theme?: any}) => {
     return (...args: any[]) => {
       const _args = [...args, {label}]
 
-      const {cache: masterCache} = emotion
+      const {cache: masterCache, theme: masterTheme} = emotion
+
+      // eslint-disable-next-line max-statements
+      const Emotion: FunctionalComponent<Record<string, any>> & StylePortalInfo = (props, {attrs, slots}) => {
+        const {as} = props
+
+        const _element = as ?? element
+        const theme = useTheme(masterTheme)
+        const cache = inject(EMOTION_CACHE_CONTEXT, masterCache)
+        const isStringElement = typeof _element === 'string'
+
+        const nextStylePortal = isStringElement ? undefined : _element.__stylePortal
+
+        const classInterpolations: string[] = []
+        const {class: classes, ...restAttrs} = attrs
+
+        const {props: styleProps, rest: restProps} = getProps(restAttrs, stylePropsFilter, stylePortal)
+
+        const allAttrs = {
+          ...styleProps,
+          theme,
+        }
+        const registeredClassName = getRegisteredStyles(
+          cache.registered,
+          classInterpolations,
+          clsx(toBeClassName(classes)),
+        )
+
+        const serialized = serializeStyles(
+          [..._args, ...classInterpolations],
+          cache.registered,
+          allAttrs,
+        )
+
+        const rules = insertStyles(
+          cache,
+          serialized,
+          isStringElement,
+        )
+
+        const className = `${registeredClassName} ${cache.key}-${serialized.name}${_target}`
+
+        const nextAttrs = isStringElement ? restProps : (
+          nextStylePortal ? {...restProps, [nextStylePortal]: styleProps} : {...restProps, ...styleProps}
+        )
+
+        const vNode = h(_element, {...nextAttrs, class: className}, slots)
+
+        if (isSSR() && typeof rules !== 'undefined') {
+          let next = serialized.next
+          let dataEmotion = serialized.name
+
+          while (typeof next !== 'undefined') {
+            dataEmotion += ` ${next.name}`
+            next = next.next
+          }
+
+          return (
+            h(Fragment, [
+              h('style', {'data-emotion': dataEmotion, nonce: cache.sheet.nonce}, rules),
+              vNode,
+            ])
+          )
+        }
+
+        return vNode
+      }
 
       // emotion component
-      const component = defineComponent({
-        inheritAttrs: false,
-        name: name ?? label ?? 'emotion',
-        props: defaultProps,
-        setup: (props: any, {attrs, slots}) => {
-          const asRef = toRef(props, 'as')
-          const theme = useTheme()
+      // const component = defineComponent({
+      //   inheritAttrs: false,
+      //   name: name ?? label ?? 'emotion',
+      //   props: defaultProps,
+      //   setup: (props, {attrs, slots}) => {
+      //     const asRef = toRef(props, 'as')
+      //     const theme = useTheme()
+      //
+      //     const cache = inject(EMOTION_CACHE_CONTEXT, masterCache)
+      //     const elementRef = computed(() => {
+      //       return asRef.value ?? element
+      //     })
+      //     const isStringElementRef = computed(() => {
+      //       return typeof elementRef.value === 'string'
+      //     })
+      //
+      //     const nextStylePortal = computed(() => {
+      //       if (isStringElementRef.value) {
+      //         return
+      //       }
+      //       return elementRef.value.__stylePortal
+      //     })
+      //
+      //     return () => {
+      //       const classInterpolations: string[] = []
+      //       const {class: classes, ...restAttrs} = attrs
+      //
+      //       const {props, rest: restProps} = getProps(restAttrs, stylePropsFilter, stylePortal)
+      //
+      //       const allAttrs = {
+      //         ...props,
+      //         theme,
+      //       }
+      //       const registeredClassName = getRegisteredStyles(
+      //         cache.registered,
+      //         classInterpolations,
+      //         clsx(toBeClassName(classes)),
+      //       )
+      //
+      //       const serialized = serializeStyles(
+      //         [..._args, ...classInterpolations],
+      //         cache.registered,
+      //         allAttrs,
+      //       )
+      //
+      //       const rules = insertStyles(
+      //         cache,
+      //         serialized,
+      //         isStringElementRef.value,
+      //       )
+      //
+      //       const className = `${registeredClassName} ${cache.key}-${serialized.name}${_target}`
+      //
+      //       const nextAttrs = isStringElementRef.value ? restProps : (
+      //         nextStylePortal.value ? {...restProps, [nextStylePortal.value]: props} : {...restProps, ...props}
+      //       )
+      //
+      //       const vNode = h(elementRef.value, {...nextAttrs, class: className}, slots)
+      //
+      //       if (isSSR() && typeof rules !== 'undefined') {
+      //         let next = serialized.next
+      //         let dataEmotion = serialized.name
+      //
+      //         while (typeof next !== 'undefined') {
+      //           dataEmotion += ` ${next.name}`
+      //           next = next.next
+      //         }
+      //
+      //         return (
+      //           h(Fragment, [
+      //             h('style', {'data-emotion': dataEmotion, nonce: cache.sheet.nonce}, rules),
+      //             vNode,
+      //           ])
+      //         )
+      //       }
+      //
+      //       return vNode
+      //     }
+      //   },
+      // })
+      //
+      Emotion.__stylePortal = stylePortal
+      Emotion.displayName = name ?? label ?? 'emotion'
+      Emotion.props = defaultProps
 
-          const cache = inject(EMOTION_CACHE_CONTEXT, masterCache)
-          const elementRef = computed(() => {
-            return asRef.value ?? element
-          })
-          const isStringElementRef = computed(() => {
-            return typeof elementRef.value === 'string'
-          })
-
-          const nextStylePortal = computed(() => {
-            if (isStringElementRef.value) {
-              return
-            }
-            return elementRef.value.__stylePortal
-          })
-
-          return () => {
-            const classInterpolations: string[] = []
-            const {class: classes, ...restAttrs} = attrs
-
-            const {props, rest: restProps} = getProps(restAttrs, stylePropsFilter, stylePortal)
-
-            const allAttrs = {
-              ...props,
-              theme,
-            }
-            const registeredClassName = getRegisteredStyles(
-              cache.registered,
-              classInterpolations,
-              clsx(toBeClassName(classes)),
-            )
-
-            const serialized = serializeStyles(
-              [..._args, ...classInterpolations],
-              cache.registered,
-              allAttrs,
-            )
-
-            const rules = insertStyles(
-              cache,
-              serialized,
-              isStringElementRef.value,
-            )
-
-            const className = `${registeredClassName} ${cache.key}-${serialized.name}${_target}`
-
-            const nextAttrs = isStringElementRef.value ? restProps : (
-              nextStylePortal.value ? {...restProps, [nextStylePortal.value]: props} : {...restProps, ...props}
-            )
-
-            const vNode = h(elementRef.value, {...nextAttrs, class: className}, slots)
-
-            if (isSSR() && typeof rules !== 'undefined') {
-              let next = serialized.next
-              let dataEmotion = serialized.name
-
-              while (typeof next !== 'undefined') {
-                dataEmotion += ` ${next.name}`
-                next = next.next
-              }
-
-              return (
-                h(Fragment, [
-                  h('style', {'data-emotion': dataEmotion, nonce: cache.sheet.nonce}, rules),
-                  vNode,
-                ])
-              )
-            }
-
-            return vNode
-          }
-        },
-      })
-
-      component.__stylePortal = stylePortal
-
-      return component
+      return Emotion
     }
   }
 

@@ -94,19 +94,22 @@ describe('emotion', () => {
       const {StyledComponent} = setup({
         name: 'foo',
       })
-      expect(StyledComponent.name).toBe('foo')
+      // expect(StyledComponent.name).toBe('foo')
+      expect(StyledComponent.displayName).toBe('foo')
     })
 
     it('should use label instead of name', () => {
       const {StyledComponent} = setup({
         label: 'bar',
       })
-      expect(StyledComponent.name).toBe('bar')
+      // expect(StyledComponent.name).toBe('bar')
+      expect(StyledComponent.displayName).toBe('bar')
     })
 
     it('should use name "emotion" if it has no name ', () => {
       const {StyledComponent} = setup()
-      expect(StyledComponent.name).toBe('emotion')
+      // expect(StyledComponent.name).toBe('emotion')
+      expect(StyledComponent.displayName).toBe('emotion')
     })
 
     it('should render empty slot', () => {
