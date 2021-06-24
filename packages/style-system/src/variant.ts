@@ -12,7 +12,7 @@ const deepParse = (style: Record<string, any>, parse, theme) => {
   const {deeps, left} = Object.keys(style).reduce((result, key) => {
     const value = style[key]
     if (typeof value === 'object' && !Array.isArray(value)) {
-      result.deeps[key] = parse({...value, theme})
+      result.deeps[key] = deepParse(value, parse, theme)
       return result
     }
     result.left[key] = value

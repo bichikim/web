@@ -15,6 +15,9 @@ const themeVariants = {
   variants: {
     deep: {
       '&>div': {
+        '.foo': {
+          padding: 'sm',
+        },
         margin: 'sm',
       },
       margin: 'lg',
@@ -149,6 +152,9 @@ describe('variant', () => {
 
       expect(result).toEqual({
         '&>div': {
+          '.foo': {
+            padding: '5px',
+          },
           margin: '5px',
         },
         margin: '15px',
