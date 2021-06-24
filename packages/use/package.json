@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/use",
-  "version": "1.0.11",
+  "version": "1.0.15-next.6",
   "description": "vue composable utils",
   "keywords": [
     "typescript",
@@ -27,7 +27,7 @@
     "prepare": "pnpm run build"
   },
   "dependencies": {
-    "@winter-love/utils": "^1.0.9",
+    "@winter-love/utils": "^1.0.15-next.6",
     "fast-json-stable-stringify": "^2.1.0",
     "vue-demi": "^0.9.1"
   },

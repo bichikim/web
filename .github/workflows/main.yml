@@ -5,21 +5,94 @@ on:
       - master
 
 jobs:
-  build:
-    name: Build
+  build-libray:
+    name: Build Libray
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repo
         uses: actions/checkout@master
-      - name: Use Cache
+      - name: Prepare Pnpm
+        uses: pnpm/action-setup@v2.0.1
+        with:
+          version: 6.7.6
+      - name: Use Yarn Cache
         uses: actions/cache@v2
+        id: yarn-cache
         with:
           path: '**/node_modules'
-          id: yarn-cache
           key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+      - name: Use Libray Cache
+        uses: actions/cache@v2
+        id: libray-cache
+        with:
+          path: 'packages/*/lib'
+          key: ${{ runner.os }}-libray-${{ hashFiles('packages/**/*.ts') }}
       - name: Install Dependencies
         if: steps.yarn-cache.outputs.cache-hit != 'true'
         run: yarn install
+      - name: Build Libray
+        if: steps.libray-cache.outputs.cache-hit != 'true'
+        run: yarn run build:libray
+  test:
+    name: Test
+    needs: build-libray
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@master
+      - name: Prepare Pnpm
+        uses: pnpm/action-setup@v2.0.1
+        with:
+          version: 6.7.6
+      - name: Use Yarn Cache
+        uses: actions/cache@v2
+        id: yarn-cache
+        with:
+          path: '**/node_modules'
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+      - name: Use Libray Cache
+        uses: actions/cache@v2
+        id: libray-cache
+        with:
+          path: 'packages/*/lib'
+          key: ${{ runner.os }}-libray-${{ hashFiles('packages/**/*.ts') }}
+      - name: Install Dependencies
+        if: steps.yarn-cache.outputs.cache-hit != 'true'
+        run: yarn install
+      - name: Build Libray
+        if: steps.libray-cache.outputs.cache-hit != 'true'
+        run: yarn run build:libray
+      - name: Test
+        run: yarn run test
+  build:
+    name: Build
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@master
+      - name: Prepare Pnpm
+        uses: pnpm/action-setup@v2.0.1
+        with:
+          version: 6.7.6
+      - name: Use Yarn Cache
+        uses: actions/cache@v2
+        id: yarn-cache
+        with:
+          path: '**/node_modules'
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+      - name: Use Libray Cache
+        uses: actions/cache@v2
+        id: libray-cache
+        with:
+          path: 'packages/*/lib'
+          key: ${{ runner.os }}-libray-${{ hashFiles('packages/**/*.ts') }}
+      - name: Install Dependencies
+        if: steps.yarn-cache.outputs.cache-hit != 'true'
+        run: yarn install
+      - name: Build Libray
+        if: steps.libray-cache.outputs.cache-hit != 'true'
+        run: yarn run build:libray
       - name: Build
         run: yarn run build
       - name: Archive Production Artifact
@@ -27,23 +100,23 @@ jobs:
         with:
           name: dist
           path: |
-            packages/web/dist
-            packages/functions/lib
-  deploy:
-    name: Deploy
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repo
-        uses: actions/checkout@master
-      - name: Download Artifact
-        uses: actions/download-artifact@master
-        with:
-          name: dist
-          path: packages
-      - name: Deploy to Firebase
-        uses: w9jds/firebase-action@master
-        with:
-          args: deploy --only hosting
-        env:
-          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+            dist
+
+#  deploy:
+#    name: Deploy
+#    needs: build
+#    runs-on: ubuntu-latest
+#    steps:
+#      - name: Checkout Repo
+#        uses: actions/checkout@master
+#      - name: Download Artifact
+#        uses: actions/download-artifact@master
+#        with:
+#          name: dist
+#          path: packages
+#      - name: Deploy to Firebase
+#        uses: w9jds/firebase-action@master
+#        with:
+#          args: deploy --only hosting
+#        env:
+#          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}

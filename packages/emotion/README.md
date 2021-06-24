@@ -41,6 +41,6 @@ const {
   cache,
   marge,
   getRegisteredStyles,
-} = createEmotion
+} = createEmotion({key: 'css'})
 
 ```
