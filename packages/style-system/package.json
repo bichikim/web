@@ -29,8 +29,7 @@
     "prepare": "pnpm run build"
   },
   "dependencies": {
-    "@winter-love/utils": "^1.0.15-next.6",
-    "@styled-system/css": "^5.1.5"
+    "@winter-love/utils": "^1.0.15-next.6"
   },
   "devDependencies": {
     "@emotion/css": "^11.1.3",
