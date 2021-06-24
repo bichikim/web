@@ -13,6 +13,13 @@ const theme = {
 const themeVariants = {
   ...theme,
   variants: {
+    deep: {
+      '&>div': {
+        margin: 'sm',
+      },
+      margin: 'lg',
+      padding: 'md',
+    },
     lg: {
       margin: 'lg',
       padding: 'md',
@@ -124,6 +131,29 @@ describe('variant', () => {
       })
 
       expect(result).toEqual({})
+    }
+  })
+  it('should not return styles', () => {
+    const variant = setup()
+
+    const variantParse = variant({
+      prop: 'variant',
+      scale: 'variants',
+    })
+
+    {
+      const result = variantParse({
+        theme: themeVariants,
+        variant: 'deep',
+      })
+
+      expect(result).toEqual({
+        '&>div': {
+          margin: '5px',
+        },
+        margin: '15px',
+        padding: '10px',
+      })
     }
   })
 })
