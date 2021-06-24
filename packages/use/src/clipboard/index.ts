@@ -1,32 +1,51 @@
-import {} from 'vue'
 import {MayRef} from 'src/types'
 import {wrapRef} from 'src/wrap-ref'
+import {freeze, isSSR} from '@winter-love/utils'
+import {useElementEvent} from '../element-event'
 
-export interface UseClipboardOptions {
-  copyKey?: string
-  pasteKey?: string
-  // empty
+const isClipboardAble = () => {
+  if (isSSR()) {
+    return false
+  }
+
+  const {navigator} = window
+
+  return Boolean(navigator && navigator.clipboard)
 }
 
 export const useClipboard = (
   initState?: MayRef<string | undefined>,
-  options?: MayRef<UseClipboardOptions | undefined>,
 ) => {
   const valueRef = wrapRef(initState)
-  // const {copyKey, pasteKey} = options
+  const isSupported = isClipboardAble()
 
-  // eslint-disable-next-line unicorn/consistent-function-scoping
-  const copy = () => {
-    // empty
-  }
-
-  // eslint-disable-next-line unicorn/consistent-function-scoping
   const paste = () => {
-    // empty
+    if (!isSupported) {
+      return
+    }
+
+    return navigator.clipboard.readText().then((value) => {
+      valueRef.value = value
+      return value
+    })
   }
 
-  return {
-    copy,
-    paste,
+  if (isSupported) {
+    useElementEvent(window, 'copy' as any, paste)
+    useElementEvent(window, 'cut' as any, paste)
   }
+
+  const copy = () => {
+    const {value} = valueRef
+    if (isSupported && value) {
+      return navigator.clipboard.writeText(value)
+    }
+  }
+
+  return freeze({
+    copy,
+    isSupported,
+    paste,
+    value: valueRef,
+  })
 }

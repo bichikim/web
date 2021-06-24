@@ -1,5 +1,5 @@
 import {
-  computed, isRef, Ref, ref, UnwrapRef, isReadonly, watch,
+  computed, isReadonly, isRef, ref, Ref, UnwrapRef, watch,
 } from 'vue'
 import {MayRef} from 'src/types'
 import {NotUndefined} from '@winter-love/utils'
@@ -9,6 +9,8 @@ export type UnwrapRefWithInit<T extends MayRef<any>, P extends UnwrapRef<T>> =
 
 export interface WrapRefOptions<P> {
   /**
+   * Use with caution. The returned Ref will update the value Ref argument
+   * 주의 하여 사용 하세요. return Ref 는 value Ref argument 를 업데이트 할 것입니다
    * @default true
    */
   bindValue?: boolean

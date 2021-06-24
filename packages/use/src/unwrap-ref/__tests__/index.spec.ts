@@ -1,5 +1,5 @@
 import {unwrapRef} from '../'
-import {ref, computed} from 'vue'
+import {computed, ref} from 'vue'
 
 describe('unwrapRef', () => {
   it('should unwrap a ref', () => {

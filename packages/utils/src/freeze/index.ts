@@ -1,10 +1,10 @@
-import {AnyObject} from 'src/types'
-
 /**
  * Optimized freeze
  * @param record
  */
-export const freeze = <T extends AnyObject>(record: T): Readonly<T> => {
+export function freeze<T>(record: T[]): readonly T[]
+export function freeze<T>(record: T): Readonly<T>
+export function freeze(record: any) {
   if (process.env.NODE_ENV === 'development') {
     return Object.freeze(record)
   }

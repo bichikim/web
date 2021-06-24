@@ -1,4 +1,5 @@
 import {ref, Ref} from 'vue-demi'
+import {freeze} from '@winter-love/utils'
 
 export type Recipe<Args extends any[], Data> = (...args: Args) => Promise<Data>
 
@@ -62,12 +63,12 @@ export const usePromise = <Data, Args extends any[], Error = any>(
     promiseRef.value = execute(...immediate)
   }
 
-  return {
+  return freeze({
     count: countRef,
     data: dataRef,
     error: errorRef,
     execute,
     fetching: fetchingRef,
     promise: promiseRef,
-  }
+  })
 }

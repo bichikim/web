@@ -33,6 +33,7 @@ module.exports = {
         'max-lines-per-function': 'off',
         'max-statements': 'off',
         'no-magic-numbers': 'off',
+        'prefer-destructuring': 'off',
         'unicorn/consistent-function-scoping': 'off',
         'vue/one-component-per-file': 'off',
         'vue/require-prop-types': 'off',

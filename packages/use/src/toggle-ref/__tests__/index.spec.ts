@@ -6,7 +6,7 @@ const setup = () => {
   const Component = defineComponent({
     setup() {
       const valueRef = ref(false)
-      const [toggle, clonedValueRef] = toggleRef(valueRef)
+      const {toggle, value: clonedValueRef} = toggleRef(valueRef)
 
       return () => (
         h('div', [
@@ -28,7 +28,7 @@ const setup = () => {
 const setupNoneRef = () => {
   const Component = defineComponent({
     setup() {
-      const [toggle, valueRef] = toggleRef(false)
+      const {toggle, value: valueRef} = toggleRef(false)
 
       return () => (
         h('div', [

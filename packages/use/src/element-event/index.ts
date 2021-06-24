@@ -4,6 +4,7 @@ import {
 import {MayRef} from 'src/types'
 import {wrapRef} from 'src/wrap-ref'
 import {isInInstance} from 'src/is-in-instance'
+import {freeze} from '@winter-love/utils'
 
 export type Listener<ElementEvent> = (event: ElementEvent) => any
 
@@ -91,8 +92,8 @@ export function useElementEvent <Key extends string>(
     })
   }
 
-  return {
+  return freeze({
     active,
     inactive,
-  }
+  })
 }
