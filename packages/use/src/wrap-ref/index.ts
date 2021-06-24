@@ -1,5 +1,5 @@
 import {
-  computed, isRef, Ref, ref, UnwrapRef,
+  computed, isRef, Ref, ref, UnwrapRef, isReadonly, watch,
 } from 'vue'
 import {MayRef} from 'src/types'
 import {NotUndefined} from '@winter-love/utils'
@@ -25,7 +25,8 @@ export const wrapRef = <
   const {bindValue = true, initState} = options
 
   if (isRef(value)) {
-    if (bindValue) {
+    // to be bind & ref is not a readonly
+    if (bindValue && !isReadonly(value)) {
       return computed({
         get: () => {
           return value.value ?? initState
@@ -35,7 +36,11 @@ export const wrapRef = <
         },
       }) as any
     }
-    return ref(value.value ?? initState) as any
+    const innerRef = ref(value.value ?? initState)
+    watch(value, (value) => {
+      innerRef.value = value
+    })
+    return innerRef as any
   }
   return ref(value ?? initState) as any
 }
