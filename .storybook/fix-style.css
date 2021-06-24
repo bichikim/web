@@ -1,9 +1,3 @@
-.ion-page {
-    contain: unset;
-    position: relative;
-    height: auto;
-}
-
 body {
     position: relative;
     overflow-y: auto;
