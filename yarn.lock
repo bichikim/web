@@ -2735,7 +2735,7 @@
   resolved "https://registry.yarnpkg.com/@protobufjs/utf8/-/utf8-1.1.0.tgz#a777360b5b39a1a2e5106f8e858f2fd2d060c570"
   integrity sha1-p3c2C1s5oaLlEG+OhY8v0tBgxXA=
 
-"@quasar/app@^3.0.0-rc.3":
+"@quasar/app@^3.0.0":
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/@quasar/app/-/app-3.0.0.tgz#46ec2e31d8512de6845edd0b203df9f8374d158d"
   integrity sha512-EVr9NbCumDntvKOmn7c+3gTlte4yc0Rho9b+Vly0Rla35BO2aNtlUcjKzpppDtNKtO9bGciBmCQf2Br32uINvg==
@@ -15915,7 +15915,7 @@ qs@~6.5.2:
   resolved "https://registry.yarnpkg.com/qs/-/qs-6.5.2.tgz#cb3ae806e8740444584ef154ce8ee98d403f3e36"
   integrity sha512-N5ZAX4/LxJmF+7wN74pUD6qAh9/wnvdQcjq9TZjevvXzSUo7bfmw91saqMjzGS2xq91/odN2dW/WOl7qQHNDGA==
 
-quasar@^2.0.0-rc.3:
+quasar@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/quasar/-/quasar-2.0.0.tgz#818a22e498e6399ba4af4c930d3076fdf41a3bdc"
   integrity sha512-vnjonPbp2D8MHBjyA+oF9CRHWn1gYoKIJaonqEOAqMC/ccUoUFN8qLizngmLMY9JRcC9xAdZ/wXUC6cn/l3U5A==
@@ -19383,6 +19383,13 @@ vue-router@4.0.9:
   version "4.0.9"
   resolved "https://registry.yarnpkg.com/vue-router/-/vue-router-4.0.9.tgz#248496941b79c4c1010f6ebfcf235cd4267d85da"
   integrity sha512-i3IaZJ57YeMbRHQlqKyXdUMr5NzTCcJkn3f8u38TsZjYWtGcd3IX2zRd3389SCOwuRf11mgfHAyngR6FVDE9og==
+  dependencies:
+    "@vue/devtools-api" "^6.0.0-beta.14"
+
+vue-router@^4.0.10:
+  version "4.0.10"
+  resolved "https://registry.yarnpkg.com/vue-router/-/vue-router-4.0.10.tgz#ec8fda032949b2a31d3273170f8f376e86eb52ac"
+  integrity sha512-YbPf6QnZpyyWfnk7CUt2Bme+vo7TLfg1nGZNkvYqKYh4vLaFw6Gn8bPGdmt5m4qrGnKoXLqc4htAsd3dIukICA==
   dependencies:
     "@vue/devtools-api" "^6.0.0-beta.14"
 
