@@ -27,6 +27,7 @@
     "prepare": "pnpm run build"
   },
   "dependencies": {
+    "fast-json-stable-stringify": "^2.1.0",
     "@winter-love/utils": "^1.0.15",
     "vue-demi": "^0.9.1"
   },
