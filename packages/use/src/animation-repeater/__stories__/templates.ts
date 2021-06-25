@@ -1,9 +1,5 @@
-import {h, ref} from 'vue'
 import {animationRepeater} from '../'
-
-export default {
-  title: 'use/Animation Repeater',
-}
+import {h, ref} from 'vue'
 
 export const Default = () => ({
   setup() {

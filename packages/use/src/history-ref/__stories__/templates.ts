@@ -1,27 +1,21 @@
 import {historyRef} from '../'
 import {h, ref} from 'vue'
 
-export default {
-  title: 'use/historyRef',
-}
-
 export const Default = () => ({
   setup() {
     const valueRef = ref('')
     const maxRef = ref(1)
     const changeHistoryRef = historyRef(valueRef, maxRef)
-
-    const setValue = (event) => {
+    function setValue(event) {
       valueRef.value = event.target.value
     }
 
-    const changeMax = (changeValue: number) => {
+    function changeMax(changeValue) {
       if (maxRef.value === 1 && changeValue < 0) {
         return
       }
       maxRef.value += changeValue
     }
-
     return () => (
       h('div', [
         h('div', `max history: ${maxRef.value}`),

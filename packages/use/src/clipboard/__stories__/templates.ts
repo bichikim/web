@@ -1,9 +1,5 @@
-import {h, ref} from 'vue'
 import {useClipboard} from '../'
-
-export default {
-  title: 'use/clipboard',
-}
+import {h, ref} from 'vue'
 
 export const Default = () => ({
   setup() {

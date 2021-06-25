@@ -69,7 +69,7 @@ export const genRollupOptions = (options: GenRollupOptions = {}): BundleOptions 
         emitDeclarationOnly: false,
         module: 'ESNext',
         paths: {
-          '@/*': [
+          'src/*': [
             `${src}/*`,
           ],
         },
@@ -82,7 +82,11 @@ export const genRollupOptions = (options: GenRollupOptions = {}): BundleOptions 
         'node_modules',
         // exclude testing files
         '__tests__/**/*',
+        '__mocks__/**/*',
+        '__stories__/**/*',
         '**/__tests__/**/*',
+        '**/__mocks__/**/*',
+        '**/__stories__/**/*',
       ],
     },
     typescript: ttypescript,

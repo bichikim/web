@@ -1,4 +1,3 @@
-/* eslint-disable prefer-destructuring */
 import createEmotionOriginal, {
   Emotion as _Emotion,
   CSSObject,
@@ -223,11 +222,13 @@ export const createStyled = (emotion: _Emotion & {theme?: any}) => {
         const vNode = h(_element, {...nextAttrs, class: className}, slots)
 
         if (isSSR() && typeof rules !== 'undefined') {
+          // eslint-disable-next-line prefer-destructuring
           let next = serialized.next
           let dataEmotion = serialized.name
 
           while (typeof next !== 'undefined') {
             dataEmotion += ` ${next.name}`
+            // eslint-disable-next-line prefer-destructuring
             next = next.next
           }
 
