@@ -1,6 +1,6 @@
 {
   "name": "vare",
-  "version": "1.0.16-next.0",
+  "version": "1.0.16-next.1",
   "description": "share state for vue components",
   "keywords": [
     "typescript",
@@ -35,7 +35,7 @@
     "vue-demi": "^0.9.1"
   },
   "devDependencies": {
-    "@winter-love/use": "^1.0.16-next.0",
+    "@winter-love/use": "^1.0.16-next.1",
     "gulp": "^4.0.2",
     "vue": "^3.0.11"
   }
