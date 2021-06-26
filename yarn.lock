@@ -5087,6 +5087,35 @@
     "@webassemblyjs/wast-parser" "1.9.0"
     "@xtuc/long" "4.2.2"
 
+"@winter-love/emotion@^1.0.15":
+  version "1.0.15"
+  resolved "https://registry.yarnpkg.com/@winter-love/emotion/-/emotion-1.0.15.tgz#31eda4e6b6e5445ca0ce3358d8e9df895edf5c25"
+  integrity sha512-3nvQepogoBMq6SIBQ3ijE2hnSxmn23ThHlbuZJ1PpWK2dzQrvV+ygemBXtPhOr0dKqRgwjdtUlBYb+8qkB+H+A==
+  dependencies:
+    "@emotion/css" "^11.1.3"
+    "@emotion/serialize" "^1.0.2"
+    "@emotion/utils" "^1.0.0"
+    "@winter-love/use" "^1.0.15"
+    "@winter-love/utils" "^1.0.15"
+    clsx "^1.1.1"
+    vue-demi "^0.9.1"
+
+"@winter-love/style-system@^1.0.15":
+  version "1.0.15"
+  resolved "https://registry.yarnpkg.com/@winter-love/style-system/-/style-system-1.0.15.tgz#a87d54516d70f8d3b771f84ef3c50d620de79f48"
+  integrity sha512-Yt0FpDUMypOtQ2RjMA+QwOg3oUIQyiSGEwuwT1PqQ+fKdNlWMUovKlcl7N+qS3IiEVJxOsTFzvZOljl4Rs2a3Q==
+  dependencies:
+    "@winter-love/utils" "^1.0.15"
+
+"@winter-love/use@^1.0.15":
+  version "1.0.15"
+  resolved "https://registry.yarnpkg.com/@winter-love/use/-/use-1.0.15.tgz#8c75449fec13b77cf42b3dd11cb8fc6369aadeaa"
+  integrity sha512-QAYKcEMZp3rCsXb+Yj5d08cqByYcz2wsfeiS2aH9Jdq9P6FRLeBcX2+lqybmGeshWXcnkW2Kz2zQkQKF7SYk9g==
+  dependencies:
+    "@winter-love/utils" "^1.0.15"
+    fast-json-stable-stringify "^2.1.0"
+    vue-demi "^0.9.1"
+
 "@wry/equality@^0.1.2":
   version "0.1.11"
   resolved "https://registry.yarnpkg.com/@wry/equality/-/equality-0.1.11.tgz#35cb156e4a96695aa81a9ecc4d03787bc17f1790"
@@ -19197,6 +19226,15 @@ value-or-function@^3.0.0:
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/value-or-function/-/value-or-function-3.0.0.tgz#1c243a50b595c1be54a754bfece8563b9ff8d813"
   integrity sha1-HCQ6ULWVwb5Up1S/7OhWO5/42BM=
+
+vare@^1.0.15:
+  version "1.0.15"
+  resolved "https://registry.yarnpkg.com/vare/-/vare-1.0.15.tgz#edc5b8e7bead77da9f59f46de3ebd25d7da23298"
+  integrity sha512-KUFCA3lBnYPmgt1HhwSjI4xkkSvCGwS8X2rk/VLhT0y24AuZuAwsceavTq5eGFi97B1gxfsbWhasi/KgS6cxTg==
+  dependencies:
+    "@vue/devtools-api" "^6.0.0-beta.12"
+    "@winter-love/utils" "^1.0.15"
+    vue-demi "^0.9.1"
 
 vary@^1, vary@~1.1.2:
   version "1.1.2"

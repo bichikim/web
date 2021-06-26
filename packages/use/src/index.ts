@@ -1,4 +1,5 @@
 export * from './animation-repeater'
+export * from './clipboard'
 export * from './connection'
 export * from './element-event'
 export * from './history-ref'
