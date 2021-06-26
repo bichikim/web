@@ -14,7 +14,7 @@ export const Default = () => ({
         h('div', 'hello world'),
         h('div', valueRef.value),
         h('input', {onInput: (event) => setValue(event.target.value), value: valueRef.value}),
-        h('button', {onClick: copy}, 'copy'),
+        h('button', {onClick: () => copy(valueRef.value)}, 'copy'),
       ])
     )
   },
