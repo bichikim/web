@@ -5,6 +5,8 @@ export const setClipboard = (value: string) => {
 }
 
 export const Clipboard = {
-  read: jest.fn(() => Promise.resolve(_clipboard)),
-  write: jest.fn(),
+  read: jest.fn(() => Promise.resolve({value: _clipboard})),
+  write: jest.fn(({string}) => {
+    _clipboard = string
+  }),
 }
