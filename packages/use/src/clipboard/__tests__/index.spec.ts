@@ -66,17 +66,29 @@ describe('clipboard', () => {
     expect(value.value).toBe('bar')
   })
 
-  it('should copy value', async () => {
-    const {value, state, copy} = useClipboard()
+  it('should write value', async () => {
+    const {value, state, write} = useClipboard()
     await flushPromises()
     expect(state.value).toBe('idle')
     expect(value.value).toBe('init')
 
-    copy('foo')
+    write('foo')
     expect(state.value).toBe('writing')
     await flushPromises()
     expect(state.value).toBe('idle')
     expect(value.value).toBe('foo')
+  })
+  it('should not double write value', async () => {
+    const {value, state, write} = useClipboard()
+    await flushPromises()
+    expect(state.value).toBe('idle')
+    expect(value.value).toBe('init')
 
+    write('foo')
+    write('bar')
+    expect(state.value).toBe('writing')
+    await flushPromises()
+    expect(state.value).toBe('idle')
+    expect(value.value).toBe('foo')
   })
 })

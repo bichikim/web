@@ -53,7 +53,10 @@ module.exports = configure((ctx) => {
     },
 
     // Full list of options: https://v2.quasar.dev/quasar-cli/developing-capacitor-apps/configuring-capacitor
-    capacitor: {hideSplashscreen: true},
+    capacitor: {
+      appName: 'coong',
+      hideSplashscreen: true,
+    },
 
     // Full list of options: https://v2.quasar.dev/quasar-cli/developing-cordova-apps/configuring-cordova
     cordova: {

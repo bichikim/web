@@ -23,9 +23,9 @@ export const useClipboard = (
   const isSupported = isClipboardAble()
   const stateRef = ref('idle')
 
-  const paste = () => {
-    if (!isSupported) {
-      return
+  const read = () => {
+    if (!isSupported || stateRef.value !== 'idle') {
+      return valueRef.value
     }
 
     stateRef.value = 'reading'
@@ -37,28 +37,31 @@ export const useClipboard = (
   }
 
   if (isSupported) {
-    useElementEvent(window, 'copy' as any, paste)
-    useElementEvent(window, 'cut' as any, paste)
+    useElementEvent(window, 'copy' as any, read)
+    useElementEvent(window, 'cut' as any, read)
   }
 
-  const copy = (_value?: string) => {
+  const write = (_value?: string) => {
+    if (!isSupported || stateRef.value !== 'idle') {
+      return valueRef.value
+    }
     const {value} = valueRef
-    if (isSupported && value) {
+    if (value) {
       stateRef.value = 'writing'
       return navigator.clipboard.writeText(_value ?? value).then(() => {
         stateRef.value = 'idle'
-        paste()
+        read()
       })
     }
   }
 
-  paste()
+  read()
 
   return freeze({
-    copy,
     isSupported,
-    paste,
+    read,
     state: stateRef,
     value: valueRef,
+    write,
   })
 }

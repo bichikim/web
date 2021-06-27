@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Tag Up</string>
-    <string name="title_activity_main">Tag Up</string>
-    <string name="package_name">kim.bichi.tagup</string>
-    <string name="custom_url_scheme">kim.bichi.tagup</string>
+    <string name="app_name">coong</string>
+    <string name="title_activity_main">coong</string>
+    <string name="package_name">io.coong.app</string>
+    <string name="custom_url_scheme">io.coong.app</string>
 </resources>

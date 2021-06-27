@@ -1,10 +1,10 @@
 {
-  "appId": "kim.bichi.tagup",
-  "appName": "Tag Up",
-  "bundledWebRuntime": false,
-  "npmClient": "yarn",
-  "webDir": "www",
-  "server": {
-    "url": "http://192.168.0.150:8080"
-  }
+	"appId": "io.coong.app",
+	"appName": "coong",
+	"bundledWebRuntime": false,
+	"npmClient": "yarn",
+	"webDir": "www",
+	"server": {
+		"url": "http://192.168.0.150:8080"
+	}
 }

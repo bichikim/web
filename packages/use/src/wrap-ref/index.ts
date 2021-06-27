@@ -4,7 +4,7 @@ import {
 import {MayRef} from 'src/types'
 import {NotUndefined} from '@winter-love/utils'
 
-export type UnwrapRefWithInit<T extends MayRef<any>, P extends UnwrapRef<T>> =
+export type UnwrapRefWithInit<T extends MayRef<unknown>, P extends UnwrapRef<T>> =
   P extends undefined ? Ref<UnwrapRef<T>> : Ref<NotUndefined<UnwrapRef<T>>>
 
 export interface WrapRefOptions<P> {
@@ -18,7 +18,7 @@ export interface WrapRefOptions<P> {
 }
 
 export const wrapRef = <
-  T extends MayRef<any>,
+  T extends MayRef<unknown>,
   P extends UnwrapRef<T> = UnwrapRef<T>
   >(
     value?: T,
