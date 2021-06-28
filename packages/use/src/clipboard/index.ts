@@ -103,9 +103,13 @@ const legacyCopy = (value: string) => {
   input.style.display = 'block'
   input.value = value
   input.select()
-  document.execCommand('copy')
+  const result = document.execCommand('copy')
+  if (!result) {
+    return result
+  }
   blur()
   input.style.display = 'none'
+  return result
 }
 
 export const useLegacyClipboard = (
@@ -117,7 +121,10 @@ export const useLegacyClipboard = (
 
   const write = (value: string) => {
     stateRef.value = 'writing'
-    legacyCopy(value ?? valueRef.value)
+    const result = legacyCopy(value ?? valueRef.value)
+    if (!result) {
+      return Promise.reject(new Error('Cannot copy string (legacy)'))
+    }
     if (value) {
       valueRef.value = value
     }
