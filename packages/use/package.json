@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/use",
-  "version": "1.0.16-next.1",
+  "version": "1.0.16-next.2",
   "description": "vue composable utils",
   "keywords": [
     "typescript",
