@@ -16,7 +16,7 @@ yarn global add @storybook/vue3@next @storybook/addon-docs@next
 
 ### Start the app in development mode (hot-code reloading, error reporting, etc.)
 ```bash
-quasar dev
+quasar dev``
 ```
 
 ### Lint the files

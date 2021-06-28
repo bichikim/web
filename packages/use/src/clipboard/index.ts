@@ -1,7 +1,8 @@
 import {MayRef} from 'src/types'
 import {wrapRef} from 'src/wrap-ref'
 import {freeze, isSSR} from '@winter-love/utils'
-import {useElementEvent} from '../element-event'
+import {useElementEvent} from 'src/element-event'
+import {useBlur} from 'src/blur'
 import {ref} from 'vue'
 
 const isClipboardAble = () => {
@@ -21,19 +22,18 @@ export const useClipboard = (
 ) => {
   const valueRef = wrapRef(initState)
   const isSupported = isClipboardAble()
-  const stateRef = ref('idle')
+  const stateRef = ref<ClipboardState>('idle')
 
-  const read = () => {
+  const read = async () => {
     if (!isSupported || stateRef.value !== 'idle') {
       return valueRef.value
     }
 
     stateRef.value = 'reading'
-    return navigator.clipboard.readText().then((value) => {
-      valueRef.value = value
-      stateRef.value = 'idle'
-      return value
-    })
+    const value = await navigator.clipboard.readText()
+    valueRef.value = value
+    stateRef.value = 'idle'
+    return value
   }
 
   if (isSupported) {
@@ -41,17 +41,17 @@ export const useClipboard = (
     useElementEvent(window, 'cut' as any, read)
   }
 
-  const write = (_value?: string) => {
+  const write = async (_value?: string) => {
     if (!isSupported || stateRef.value !== 'idle') {
       return valueRef.value
     }
     const {value} = valueRef
     if (value) {
       stateRef.value = 'writing'
-      return navigator.clipboard.writeText(_value ?? value).then(() => {
-        stateRef.value = 'idle'
-        read()
-      })
+      await navigator.clipboard.writeText(_value ?? value)
+
+      stateRef.value = 'idle'
+      read()
     }
   }
 
@@ -64,4 +64,78 @@ export const useClipboard = (
     value: valueRef,
     write,
   })
+}
+
+let _legacyInput: HTMLInputElement
+
+const getLegacyInput = (): HTMLInputElement | undefined => {
+  if (_legacyInput) {
+    return _legacyInput
+  }
+  if (isSSR()) {
+    return
+  }
+  const _inputElement = document.querySelector('#__legacy_input__')
+
+  if (_inputElement) {
+    _legacyInput = _inputElement as HTMLInputElement
+    return _legacyInput
+  }
+
+  const inputElement = document.createElement('input')
+  inputElement.id = '__legacy_input__'
+  inputElement.setAttribute('type', 'text')
+  document.body.append(inputElement)
+  _legacyInput = inputElement
+  return inputElement
+}
+
+const blur = useBlur()
+
+const legacyCopy = (value: string) => {
+  const input = getLegacyInput()
+  if (!input) {
+    return
+  }
+
+  input.value = value
+  input.select()
+  document.execCommand('copy')
+  blur()
+}
+
+export const useLegacyClipboard = (
+  initState?: MayRef<string | undefined>,
+) => {
+  const isSupported = isClipboardAble()
+  const valueRef = wrapRef(initState)
+  const stateRef = ref<ClipboardState>('idle')
+
+  const write = (value: string) => {
+    stateRef.value = 'writing'
+    legacyCopy(value ?? valueRef.value)
+    if (value) {
+      valueRef.value = value
+    }
+    stateRef.value = 'idle'
+    return Promise.resolve(valueRef.value)
+  }
+
+  const read = async () => {
+    if (!isSupported || stateRef.value !== 'idle') {
+      return valueRef.value
+    }
+
+    stateRef.value = 'reading'
+    const value = await navigator.clipboard.readText()
+    valueRef.value = value
+    stateRef.value = 'idle'
+    return value
+  }
+
+  return {
+    read,
+    value: valueRef,
+    write,
+  }
 }

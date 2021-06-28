@@ -1,4 +1,5 @@
 export * from './animation-repeater'
+export * from './blur'
 export * from './clipboard'
 export * from './connection'
 export * from './element-event'
