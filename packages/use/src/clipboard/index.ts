@@ -19,6 +19,7 @@ export type ClipboardState = 'idle' | 'reading' | 'writing'
 
 export const useClipboard = (
   initState?: MayRef<string | undefined>,
+  updateOnEvent: boolean = false,
 ) => {
   const valueRef = wrapRef(initState)
   const isSupported = isClipboardAble()
@@ -36,7 +37,7 @@ export const useClipboard = (
     return value
   }
 
-  if (isSupported) {
+  if (updateOnEvent && isSupported) {
     useElementEvent(window, 'copy' as any, read)
     useElementEvent(window, 'cut' as any, read)
   }
