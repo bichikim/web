@@ -114,6 +114,7 @@ const legacyCopy = (value: string) => {
 
 export const useLegacyClipboard = (
   initState?: MayRef<string | undefined>,
+  updateOnEvent: boolean = false,
 ) => {
   const isSupported = isClipboardAble()
   const valueRef = wrapRef(initState)
@@ -144,7 +145,7 @@ export const useLegacyClipboard = (
     return value
   }
 
-  if (isSupported) {
+  if (updateOnEvent && isSupported) {
     useElementEvent(window, 'copy' as any, read)
     useElementEvent(window, 'cut' as any, read)
   }
