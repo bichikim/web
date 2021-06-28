@@ -84,6 +84,7 @@ const getLegacyInput = (): HTMLInputElement | undefined => {
 
   const inputElement = document.createElement('input')
   inputElement.id = '__legacy_input__'
+  inputElement.style.display = 'block'
   inputElement.setAttribute('type', 'text')
   document.body.append(inputElement)
   _legacyInput = inputElement
@@ -98,10 +99,12 @@ const legacyCopy = (value: string) => {
     return
   }
 
+  input.style.display = 'block'
   input.value = value
   input.select()
   document.execCommand('copy')
   blur()
+  input.style.display = 'none'
 }
 
 export const useLegacyClipboard = (
@@ -131,6 +134,11 @@ export const useLegacyClipboard = (
     valueRef.value = value
     stateRef.value = 'idle'
     return value
+  }
+
+  if (isSupported) {
+    useElementEvent(window, 'copy' as any, read)
+    useElementEvent(window, 'cut' as any, read)
   }
 
   return {
