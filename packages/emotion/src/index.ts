@@ -23,6 +23,13 @@ import {
 } from 'vue-demi'
 import {Tags} from './tags'
 
+export type StyledFunctionalComponent = FunctionalComponent & {
+  stylePortal?: string
+}
+
+export type SFC = StyledFunctionalComponent
+export type FC = FunctionalComponent
+
 export interface Theme {
   size?: any
 }
@@ -53,6 +60,7 @@ export const useTheme = (theme: Theme = {}) => {
 export interface StyledOptions {
   label?: string
   name?: string
+  nextStylePortal?: string
   stylePortal?: string
   target?: string
 }
@@ -147,19 +155,19 @@ export const toBeClassName = (value: any): ClassValue => {
  */
 export const createStyled = (emotion: _Emotion & {theme?: any}) => {
   function styled<PropsOptions extends ComponentObjectPropsOptions = EmptyObject>(
-    element: Tags | any,
+    element: Tags | SFC | any,
     options?: Readonly<StyledOptionWIthObject<PropsOptions>>,
   ): StyledResult<ExtractPropTypes<PropsOptions>>
   function styled<PropNames extends string,
     PropsOptions = { [key in PropNames]: any },
     >(
-    element: Tags | any,
+    element: Tags | SFC | any,
     options?: Readonly<StyledOptionWithArray<PropNames[]>>,
   ): StyledResult<ExtractPropTypes<PropsOptions>>
   function styled(element: AnyComponent, options?: any): any {
     const {
       label, target, name, props: stylePropsOptions = {},
-      stylePortal,
+      stylePortal, nextStylePortal,
     } = options ?? {}
 
     const _target = target ? ` ${target}` : ''
@@ -184,7 +192,9 @@ export const createStyled = (emotion: _Emotion & {theme?: any}) => {
         const cache = inject(EMOTION_CACHE_CONTEXT, masterCache)
         const isStringElement = typeof _element === 'string'
 
-        const nextStylePortal = isStringElement ? undefined : _element.__stylePortal
+        const _nextStylePortal = isStringElement
+          ? undefined
+          : (nextStylePortal ?? _element.stylePortal ?? _element.__stylePortal)
 
         const classInterpolations: string[] = []
         const {class: classes, ...restAttrs} = attrs
@@ -216,7 +226,7 @@ export const createStyled = (emotion: _Emotion & {theme?: any}) => {
         const className = `${registeredClassName} ${cache.key}-${serialized.name}${_target}`
 
         const nextAttrs = isStringElement ? restProps : (
-          nextStylePortal ? {...restProps, [nextStylePortal]: styleProps} : {...restProps, ...styleProps}
+          _nextStylePortal ? {...restProps, [_nextStylePortal]: styleProps} : {...restProps, ...styleProps}
         )
 
         const vNode = h(_element, {...nextAttrs, class: className}, slots)

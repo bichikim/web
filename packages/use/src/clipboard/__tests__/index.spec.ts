@@ -9,7 +9,6 @@ jest.mock('src/element-event', () => {
       listeners[key]?.(value)
     },
     useElementEvent: (target, key, listener: any) => {
-      console.log(target, key, listener)
       listeners[key] = listener
     },
   }
@@ -26,6 +25,7 @@ describe('clipboard', () => {
       configurable: true,
       value: {
         readText(): Promise<string> {
+          console.log(clipboardValue)
           return Promise.resolve(clipboardValue)
         },
         writeText(value) {
@@ -48,7 +48,7 @@ describe('clipboard', () => {
   })
 
   it('should update value ref with window copy event or cut event', async () => {
-    const {value, state} = useClipboard()
+    const {value, state} = useClipboard(undefined, true)
     expect(value.value).toBe(undefined)
     expect(state.value).toBe('reading')
     await flushPromises()

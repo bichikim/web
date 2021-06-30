@@ -1,9 +1,11 @@
 import {
-  createEmotion, createStyled, EMOTION_CACHE_CONTEXT, EMOTION_THEME_CONTEXT, StyledOptions,
+  createEmotion, createStyled, EMOTION_CACHE_CONTEXT, EMOTION_THEME_CONTEXT, StyledFunctionalComponent, StyledOptions,
 } from '../'
 import createEmotionOriginal from '@emotion/css/create-instance'
 import {mount} from '@vue/test-utils'
-import {createApp, defineComponent, h} from 'vue-demi'
+import {
+  createApp, defineComponent, h,
+} from 'vue-demi'
 
 describe('emotion', () => {
   describe('createStyled', () => {
@@ -62,10 +64,13 @@ describe('emotion', () => {
           )
         },
       })
+
       const {wrapper} = setup({element: Component})
+
       expect(wrapper.get('div').element).toHaveStyle({
         backgroundColor: 'red',
       })
+
       expect(wrapper.get('div').text()).toBe('vue-component')
     })
 
@@ -188,7 +193,15 @@ describe('emotion', () => {
 
     it('should style nested components', () => {
       const styled = createStyled(createEmotionOriginal({key: 'css'}))
-      const Component = styled('div', {
+      const ComponentZero = styled('div', {
+        stylePortal: 'zero',
+      })(
+        {
+          padding: '10px',
+        },
+      )
+
+      const Component = styled(ComponentZero, {
         stylePortal: 'sx',
       })(
         ({color}: any) => {
@@ -198,7 +211,13 @@ describe('emotion', () => {
         },
       )
 
-      const Component2 = styled(Component, {
+      const Component3: StyledFunctionalComponent = (_, {attrs}) => {
+        return h(Component, {sx: attrs.sys})
+      }
+
+      Component3.stylePortal = 'sys'
+
+      const Component2 = styled(Component3, {
         stylePortal: 'css',
       })(
         ({backgroundColor}: any) => {
@@ -211,7 +230,8 @@ describe('emotion', () => {
       const wrapper = mount(Component2, {
         props: {
           css: {
-            backgroundColor: 'blue', color: 'red', height: '100px', left: '10px', width: '100px',
+            backgroundColor: 'blue',
+            color: 'red', left: '10px',
           },
           key: 'foo',
         },
@@ -220,6 +240,7 @@ describe('emotion', () => {
       expect(wrapper.element).toHaveStyle({
         backgroundColor: 'blue',
         color: 'red',
+        padding: '10px',
       })
 
       expect(wrapper.element).not.toHaveAttribute('css')
