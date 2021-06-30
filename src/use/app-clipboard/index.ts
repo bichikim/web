@@ -1,5 +1,5 @@
 import {Clipboard} from '@capacitor/clipboard'
-import {ref} from 'vue'
+import {nextTick, ref} from 'vue'
 import {MayRef, wrapRef} from '@winter-love/use'
 
 export type AppClipboardState = 'idle' | 'writing' | 'reading'
@@ -22,16 +22,20 @@ export const useAppClipboard = (initState?: MayRef<string>) => {
     return value
   }
 
-  const write = async (value: string) => {
+  const write = (value?: string) => {
     if (stateRef.value !== 'idle') {
       return valueRef.value
     }
     stateRef.value = 'writing'
-    await Clipboard.write({
-      string: value ?? valueRef.value,
+    const _value = value ?? valueRef.value
+    return nextTick(async () => {
+      await Clipboard.write({
+        string: _value,
+      })
+      stateRef.value = 'idle'
+      valueRef.value = _value
     })
-    stateRef.value = 'idle'
-    return read()
+
   }
 
   return {

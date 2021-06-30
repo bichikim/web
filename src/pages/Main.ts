@@ -8,11 +8,11 @@ export const Main = defineComponent({
     const inputRef = ref('')
     const {write} = useAppClipboard(valueRef)
     return () => (
-      h('div', [
+      h('div', {style: {paddingTop: '100px'}}, [
         h('div', valueRef.value),
         h('div', inputRef.value),
         h('input', {onInput: (event) => (inputRef.value = event.target.value), value: inputRef.value}),
-        h('button', {onClick: () => write(valueRef.value)}, 'copy'),
+        h('button', {onClick: () => write(inputRef.value)}, 'copy'),
       ])
     )
   },
