@@ -1,0 +1,10 @@
+{
+	"appId": "io.coong.app",
+	"appName": "coong",
+	"bundledWebRuntime": false,
+	"npmClient": "yarn",
+	"webDir": "www",
+	"server": {
+		"url": "http://192.168.193.2:8080"
+	}
+}
