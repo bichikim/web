@@ -191,20 +191,17 @@ export const createStyled = (emotion: _Emotion & {theme?: any}) => {
         const theme = useTheme(masterTheme)
         const cache = inject(EMOTION_CACHE_CONTEXT, masterCache)
         const isStringElement = typeof _element === 'string'
-
         const _nextStylePortal = isStringElement
           ? undefined
           : (nextStylePortal ?? _element.stylePortal ?? _element.__stylePortal)
-
         const classInterpolations: string[] = []
         const {class: classes, ...restAttrs} = attrs
-
         const {props: styleProps, rest: restProps} = getProps(restAttrs)
-
         const allAttrs = {
           ...styleProps,
           theme,
         }
+
         const registeredClassName = getRegisteredStyles(
           cache.registered,
           classInterpolations,
@@ -255,6 +252,10 @@ export const createStyled = (emotion: _Emotion & {theme?: any}) => {
 
       Emotion.__stylePortal = stylePortal
       Emotion.inheritAttrs = false
+      /**
+       * dose not work for now
+       * https://github.com/vuejs/devtools/issues/1494
+       */
       Emotion.displayName = name ?? label ?? 'emotion'
       Emotion.props = defaultProps
 
