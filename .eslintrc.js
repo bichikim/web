@@ -31,6 +31,7 @@ module.exports = {
         '@typescript-eslint/no-var-requires': 'off',
         'max-len': 'off',
         'max-lines-per-function': 'off',
+        'max-nested-callbacks': 'off',
         'max-statements': 'off',
         'no-magic-numbers': 'off',
         'prefer-destructuring': 'off',

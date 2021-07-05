@@ -1,11 +1,11 @@
 import {
-  computed, isReadonly, isRef, ref, Ref, UnwrapRef, watch,
+  computed, isReadonly, isRef, ref, Ref, watch,
 } from 'vue'
 import {MayRef} from 'src/types'
 import {NotUndefined} from '@winter-love/utils'
 
-export type UnwrapRefWithInit<T extends MayRef<unknown>, P extends UnwrapRef<T>> =
-  P extends undefined ? Ref<UnwrapRef<T>> : Ref<NotUndefined<UnwrapRef<T>>>
+export type RefWithInit<T, P extends T> =
+  P extends undefined ? Ref<T> : Ref<NotUndefined<T>>
 
 export interface WrapRefOptions<P> {
   /**
@@ -18,12 +18,12 @@ export interface WrapRefOptions<P> {
 }
 
 export const wrapRef = <
-  T extends MayRef<unknown>,
-  P extends UnwrapRef<T> = UnwrapRef<T>
+  T,
+  P extends T = T
   >(
-    value?: T,
+    value?: MayRef<T>,
     options: WrapRefOptions<P> = {},
-  ): UnwrapRefWithInit<T, P> => {
+  ): RefWithInit<T, P> => {
   const {bindValue = true, initState} = options
 
   if (isRef(value)) {
@@ -34,12 +34,12 @@ export const wrapRef = <
           return value.value ?? initState
         },
         set: (_value) => {
-          value.value = _value
+          (value as any).value = _value
         },
       }) as any
     }
     const innerRef = ref(value.value ?? initState)
-    watch(value, (value) => {
+    watch(value, (value: any) => {
       innerRef.value = value
     })
     return innerRef as any
