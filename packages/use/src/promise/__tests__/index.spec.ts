@@ -1,9 +1,11 @@
 import {usePromise} from '../index'
 
-describe('promise-ref', function test() {
-  it('should resolve data', async function test() {
+describe('promise-ref', () => {
+  it('should resolve data', async () => {
     let resultValue = 'foo'
-    const {fetching, count, execute, data, promise, error} = usePromise(() => Promise.resolve(resultValue))
+    const {
+      fetching, count, execute, data, promise, error,
+    } = usePromise(() => Promise.resolve(resultValue))
 
     expect(fetching.value).toBe(false)
     expect(data.value).toBe(undefined)
@@ -37,8 +39,10 @@ describe('promise-ref', function test() {
     expect(error.value).toBe(undefined)
   })
 
-  it('should resolve with execute promise return', async function test() {
-    const {data, execute, fetching, count} = usePromise(() => Promise.resolve('foo'))
+  it('should resolve with execute promise return', async () => {
+    const {
+      data, execute, fetching, count,
+    } = usePromise(() => Promise.resolve('foo'))
 
     const wait = execute()
 
@@ -52,7 +56,9 @@ describe('promise-ref', function test() {
   })
 
   it('should resolve a rejection', async () => {
-    const {error, execute, fetching, count} = usePromise(() => Promise.reject(new Error('foo')))
+    const {
+      error, execute, fetching, count,
+    } = usePromise(() => Promise.reject(new Error('foo')))
     expect(count.value).toBe(0)
     expect(error.value).toBe(undefined)
 
@@ -64,5 +70,17 @@ describe('promise-ref', function test() {
     await expect(wait).rejects.toEqual(new Error('foo'))
     expect(error.value).toEqual(new Error('foo'))
     expect(fetching.value).toBe(false)
+  })
+
+  it('should resolve immediate', async () => {
+    const resultValue = 'foo'
+    const {
+      fetching, data, promise,
+    } = usePromise(() => Promise.resolve(resultValue), {immediate: []})
+
+    expect(fetching.value).toBe(true)
+    await promise
+    expect(fetching.value).toBe(false)
+    expect(data.value).toBe(resultValue)
   })
 })
