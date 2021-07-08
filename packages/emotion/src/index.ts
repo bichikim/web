@@ -270,9 +270,12 @@ export interface EmotionExtend extends _Emotion {
   styled: ReturnType<typeof createStyled>
 }
 
-export interface EmotionOptions extends Omit<OriginalEmotionOptions, 'key'> {
-  key?: string
+export interface EmotionPluginOptions {
   theme?: Theme
+}
+
+export interface EmotionOptions extends Omit<OriginalEmotionOptions, 'key'>, EmotionPluginOptions {
+  key?: string
 }
 
 export type EmotionPlugin = Plugin & EmotionExtend
@@ -290,15 +293,16 @@ export const createEmotion = (options: EmotionOptions = {}): EmotionPlugin => {
 
   return {
     ...emotion,
-    install: (app) => {
+    install: (app, options: EmotionPluginOptions = {}) => {
+      const {theme: _theme = theme} = options
       app.provide(EMOTION_CACHE_CONTEXT, emotion.cache)
 
       if (process.env.NODE_ENV === 'development') {
         console.log('winter-love emotion version salmon')
       }
       // provide theme if the options have it
-      if (theme) {
-        app.provide(EMOTION_THEME_CONTEXT, theme)
+      if (_theme) {
+        app.provide(EMOTION_THEME_CONTEXT, _theme)
       }
     },
     styled,

@@ -277,10 +277,9 @@ describe('emotion', () => {
       })
     })
   })
-  describe('createElement', () => {
+  describe('vue emotion plugin', () => {
     const setup = (theme?: Record<any, any>) => {
       const emotion = createEmotion({key: 'css', theme})
-      expect(typeof emotion.styled).toBe('function')
       const Bar = emotion.styled('div')((props: any) => {
         return {
           width: props.theme?.sizes.md,
@@ -308,20 +307,30 @@ describe('emotion', () => {
       app.use(emotion)
       expect(typeof app._context.provides[EMOTION_CACHE_CONTEXT as any]).toBe('object')
     })
-
-    describe('vue emotion plugin', () => {
-      it('should provide the theme', () => {
-        const {emotion, app} = setup({sizes: {md: '20px'}})
-
-        expect(app._context.provides[EMOTION_THEME_CONTEXT as any]).toBe(undefined)
-        app.use(emotion)
-        const element = document.createElement('div')
-        document.body.append(element)
-        app.mount(element)
-        expect(typeof app._context.provides[EMOTION_THEME_CONTEXT as any]).toBe('object')
-        expect(element.querySelector('#text')).toHaveStyle({
-          width: '20px',
-        })
+    it('should provide the theme', () => {
+      const {emotion, app} = setup({sizes: {md: '20px'}})
+      expect(typeof emotion.styled).toBe('function')
+      expect(app._context.provides[EMOTION_THEME_CONTEXT as any]).toBe(undefined)
+      app.use(emotion)
+      const element = document.createElement('div')
+      document.body.append(element)
+      app.mount(element)
+      expect(typeof app._context.provides[EMOTION_THEME_CONTEXT as any]).toBe('object')
+      expect(element.querySelector('#text')).toHaveStyle({
+        width: '20px',
+      })
+    })
+    it('should provide the theme by a plugin options', () => {
+      const {emotion, app} = setup()
+      expect(typeof emotion.styled).toBe('function')
+      expect(app._context.provides[EMOTION_THEME_CONTEXT as any]).toBe(undefined)
+      app.use(emotion, {theme: {sizes: {md: '20px'}}})
+      const element = document.createElement('div')
+      document.body.append(element)
+      app.mount(element)
+      expect(typeof app._context.provides[EMOTION_THEME_CONTEXT as any]).toBe('object')
+      expect(element.querySelector('#text')).toHaveStyle({
+        width: '20px',
       })
     })
   })
