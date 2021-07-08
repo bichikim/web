@@ -28,11 +28,6 @@
       "assets/*": ["src/assets/*"],
       "boot/*": ["src/boot/*"]
     },
-    "typeRoots": [
-      "./node_modules",
-      "./node_modules/@types",
-      "./types"
-    ],
     "baseUrl": "."
   },
   "ts-node": {
