@@ -156,4 +156,20 @@ describe('system', () => {
       width: '300px',
     })
   })
+  it('should return', () => {
+    const styleFunction = system({
+      foo: {
+        defaultScale: {
+          foo: '200px',
+        },
+        property: 'left',
+        scale: 'foos',
+      },
+    })
+
+    expect(styleFunction({foo: 'foo', right: '200px', theme: {__propStylePassThrough__: true}})).toEqual({
+      left: '200px',
+      right: '200px',
+    })
+  })
 })

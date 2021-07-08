@@ -1,3 +1,4 @@
+import * as console from 'console'
 import {createMediaQuery} from './create-media-query'
 import {getScale} from './get-scale'
 import {mergeStyle} from './marge-style'
@@ -22,19 +23,27 @@ export const createParser = (config: Record<string, StyleFunction>) => {
     let shouldSort = false
     const isCacheDisabled = props.theme && props.theme.disableStyledSystemCache
 
-    const {theme} = props
+    const {theme, ...rest} = props
 
-    const styles = Object.keys(props).reduce((result, key) => {
+    const {__propStylePassThrough__ = false} = theme ?? {}
+
+    console.log(__propStylePassThrough__)
+
+    const styles = Object.keys(rest).reduce((result, key) => {
+      const raw = props[key]
       if (!config[key]) {
+        if (__propStylePassThrough__) {
+          return Object.assign(result, {[key]: raw})
+        }
         return result
       }
-      const raw = props[key]
 
       if (typeof raw === 'undefined') {
         return result
       }
 
       const sx = config[key]
+
       const scale = getScale(theme, sx.scale, sx.defaults)
 
       if (typeof raw === 'object') {
