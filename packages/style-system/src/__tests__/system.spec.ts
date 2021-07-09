@@ -156,7 +156,7 @@ describe('system', () => {
       width: '300px',
     })
   })
-  it('should return', () => {
+  it('should return style with __propStylePassThrough__', () => {
     const styleFunction = system({
       foo: {
         defaultScale: {

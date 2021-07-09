@@ -289,7 +289,7 @@ export const createEmotion = (options: EmotionOptions = {}): EmotionPlugin => {
 
   const emotion = createEmotionOriginal({...restOptions, key})
 
-  const styled = createStyled(emotion)
+  const styled = createStyled({...emotion, theme})
 
   return {
     ...emotion,
@@ -297,9 +297,6 @@ export const createEmotion = (options: EmotionOptions = {}): EmotionPlugin => {
       const {theme: _theme = theme} = options
       app.provide(EMOTION_CACHE_CONTEXT, emotion.cache)
 
-      if (process.env.NODE_ENV === 'development') {
-        console.log('winter-love emotion version salmon')
-      }
       // provide theme if the options have it
       if (_theme) {
         app.provide(EMOTION_THEME_CONTEXT, _theme)
