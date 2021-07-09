@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/emotion",
-  "version": "1.0.16-next.8",
+  "version": "1.0.16-next.9",
   "main": "lib/index.js",
   "module": "lib/index.module.js",
   "source": "src/index.ts",
