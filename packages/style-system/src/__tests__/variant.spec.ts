@@ -1,7 +1,10 @@
 import {createVariant} from '../variant'
 import {system} from '../system'
+import {createEmotion, Theme} from '@winter-love/emotion'
+import {mount} from '@vue/test-utils'
+import {h} from 'vue'
 
-const theme = {
+const theme: Theme = {
   breakpoints: ['500px', '750px', '1200px'],
   space: {
     lg: '15px',
@@ -9,6 +12,8 @@ const theme = {
     sm: '5px',
   },
 }
+
+const emotion = createEmotion({theme})
 
 const themeVariants = {
   ...theme,
@@ -66,17 +71,20 @@ describe('variant', () => {
       },
     })
 
-    {
-      const result = variantParse({
-        theme: themeVariants,
-        variant: 'lg',
-      })
+    const Component = emotion.styled('div', {
+      stylePortal: 'css',
+    })(variantParse, () => {
+      return {}
+    })
 
-      expect(result).toEqual({
-        margin: '15px',
-        padding: '10px',
-      })
-    }
+    const wrapper = mount(Component, {
+      props: {css: {foo: 'bar', variant: 'lg'}},
+    })
+
+    expect(wrapper.element).toHaveStyle({
+      margin: '15px',
+      padding: '15px',
+    })
     {
       const result = variantParse({
         theme: themeVariants,
@@ -144,22 +152,38 @@ describe('variant', () => {
       scale: 'variants',
     })
 
-    {
-      const result = variantParse({
-        theme: themeVariants,
-        variant: 'deep',
-      })
+    const Component = emotion.styled('div', {
+      stylePortal: 'css',
+    })(
+      variantParse,
+      systems,
+    )
 
-      expect(result).toEqual({
-        '&>div': {
-          '.foo': {
-            padding: '5px',
-          },
-          margin: '5px',
-        },
-        margin: '15px',
-        padding: '10px',
-      })
+    const Component2 = (props) => {
+      return h(Component, props, () => [
+        h('div', {class: 'bar'}, [
+          h('div', {class: 'foo'}),
+        ]),
+      ])
     }
+
+    const wrapper = mount(Component2, {
+      props: {css: {margin: 'sm', variant: 'deep'}, theme: themeVariants},
+    })
+
+    expect(wrapper.element).toMatchSnapshot()
+
+    expect(wrapper.element).toHaveStyle({
+      margin: '5px',
+      padding: '10px',
+    })
+
+    expect(wrapper.get('.bar').element).toHaveStyle({
+      margin: '5px',
+    })
+
+    expect(wrapper.get('.foo').element).toHaveStyle({
+      padding: '5px',
+    })
   })
 })

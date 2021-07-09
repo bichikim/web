@@ -22,6 +22,10 @@ module.exports = {
     {
       displayName: 'test',
       setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
+      snapshotSerializers: [
+        'jest-serializer-vue',
+        '@emotion/jest/serializer',
+      ],
       testMatch: [
         '<rootDir>/packages/*/src/**/__tests__/*.spec.ts',
         '<rootDir>/scripts/__tests__/*.spec.ts',
@@ -35,6 +39,7 @@ module.exports = {
 
   snapshotSerializers: [
     'jest-serializer-vue',
+    '@emotion/jest/serializer',
   ],
 
   testEnvironment: 'jsdom',

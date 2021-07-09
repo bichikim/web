@@ -31,7 +31,7 @@ export type SFC = StyledFunctionalComponent
 export type FC = FunctionalComponent
 
 export interface Theme {
-  size?: any
+  [key: string]: any
 }
 
 export type {CSSObject}
