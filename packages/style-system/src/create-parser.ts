@@ -1,4 +1,3 @@
-import * as console from 'console'
 import {createMediaQuery} from './create-media-query'
 import {getScale} from './get-scale'
 import {mergeStyle} from './marge-style'
@@ -26,8 +25,6 @@ export const createParser = (config: Record<string, StyleFunction>) => {
     const {theme, ...rest} = props
 
     const {__propStylePassThrough__ = false} = theme ?? {}
-
-    console.log(__propStylePassThrough__)
 
     const styles = Object.keys(rest).reduce((result, key) => {
       const raw = props[key]
