@@ -126,6 +126,15 @@ describe('emotion', () => {
       expect(StyledComponent.displayName).toBe('bar')
     })
 
+    it('should use name for label with label = true', () => {
+      const {wrapper} = setup({
+        label: true,
+        name: 'bar',
+      })
+
+      expect(wrapper.classes()[0]).toMatch(/-bar$/u)
+    })
+
     it('should use the name "emotion" if it does not have name and label ', () => {
       const {StyledComponent} = setup()
       // expect(StyledComponent.name).toBe('emotion')
@@ -275,6 +284,71 @@ describe('emotion', () => {
         backgroundColor: 'red',
         color: 'red',
       })
+    })
+
+    it('should deep as', () => {
+      const styled = createStyled(createEmotionOriginal({key: 'css'}))
+
+      const Component1 = styled('div', {
+        name: 'Component1',
+        stylePortal: 'css',
+      })(
+        {
+          backgroundColor: 'red',
+          height: 50,
+          width: 50,
+        },
+      )
+      const Component2 = styled('div', {
+        name: 'Component2',
+        stylePortal: 'css',
+      })({
+        backgroundColor: 'blue',
+        height: 50,
+        width: 50,
+      })
+      const Component3 = styled('div', {
+        name: 'Component3',
+        stylePortal: 'css',
+      })({
+        backgroundColor: 'green',
+        height: 50,
+        width: 50,
+      })
+
+      const Component4 = defineComponent({
+        name: 'Component4',
+        setup() {
+          return () => h(Component3, () => [
+            h(Component2, () => [
+              h(Component1),
+            ]),
+          ])
+        },
+      })
+
+      const Component5 = styled(Component4, {
+        name: 'Component5',
+        passAs: true,
+        stylePortal: 'css',
+      })({
+        backgroundColor: 'yellow',
+        height: 50,
+        width: 50,
+      })
+
+      const Component6 = defineComponent({
+        name: 'Component6',
+        setup() {
+          return () => h(Component5)
+        },
+      })
+
+      const wrapper = mount(Component6, {
+        props: {as: 'button'},
+      })
+
+      expect(wrapper.element).toMatchSnapshot()
     })
   })
   describe('vue emotion plugin', () => {

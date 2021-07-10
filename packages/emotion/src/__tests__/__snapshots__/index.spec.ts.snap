@@ -1,0 +1,36 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`emotion createStyled should deep as 1`] = `
+.emotion-0 {
+  background-color: green;
+  height: 50px;
+  width: 50px;
+  background-color: yellow;
+  height: 50px;
+  width: 50px;
+}
+
+.emotion-1 {
+  background-color: blue;
+  height: 50px;
+  width: 50px;
+}
+
+.emotion-2 {
+  background-color: red;
+  height: 50px;
+  width: 50px;
+}
+
+<button
+  class=" emotion-0"
+>
+  <div
+    class="  emotion-1"
+  >
+    <div
+      class="  emotion-2"
+    />
+  </div>
+</button>
+`;
