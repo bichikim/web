@@ -22,6 +22,8 @@
     "format:package.json": "sort-package-json \"package.json\" \"packages/*/package.json\" ",
     "version:next": "lerna version prerelease --preid next",
     "publish:next": "lerna publish from-package --preid next --dist-tag next",
+    "version:beta": "lerna varsion prerelease --preid beta",
+    "publish:beta": "leana publish from-package --preid beta --dist-tag beta",
     "lint:fix": "eslint --fix --ext .js,.ts,.vue ./",
     "storybook": "start-storybook -p 6006",
     "clean": "lerna clean --yes && rimraf node_modules",
