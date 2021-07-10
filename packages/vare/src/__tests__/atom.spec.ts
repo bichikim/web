@@ -2,7 +2,7 @@ import {atom} from '../atom'
 import {flushPromises, mount} from '@vue/test-utils'
 import {
   defineComponent, ExtractPropTypes, FunctionalComponent, h,
-} from 'vue'
+} from 'vue-demi'
 
 describe('atom', () => {
   it('should ', () => {
