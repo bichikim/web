@@ -1,5 +1,5 @@
 import {getStorageAvailable, StorageType} from '@winter-love/utils'
-import {ref, watch} from 'vue'
+import {ref, watch} from 'vue-demi'
 import stringify from 'fast-json-stable-stringify'
 import {useElementEvent} from '../element-event'
 

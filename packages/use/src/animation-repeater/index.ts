@@ -1,4 +1,4 @@
-import {ref, watch} from 'vue'
+import {ref, watch} from 'vue-demi'
 import {wrapRef} from '../wrap-ref'
 import {MayRef} from 'src/types'
 

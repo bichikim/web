@@ -1,6 +1,6 @@
 import {
   computed, isReadonly, isRef, ref, Ref, watch,
-} from 'vue'
+} from 'vue-demi'
 import {MayRef} from 'src/types'
 import {NotUndefined} from '@winter-love/utils'
 

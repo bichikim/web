@@ -1,6 +1,6 @@
 import {wrapRef} from 'src/wrap-ref'
 import {MayRef} from 'src/types'
-import {onBeforeUnmount, ref, watch} from 'vue'
+import {onBeforeUnmount, ref, watch} from 'vue-demi'
 
 export const onIntersectionElement = <MyElement extends Element> (
   element: MayRef<MyElement | undefined>,

@@ -1,5 +1,5 @@
 import {toggleRef} from '../'
-import {defineComponent, h, ref} from 'vue'
+import {defineComponent, h, ref} from 'vue-demi'
 import {mount} from '@vue/test-utils'
 
 const setup = () => {

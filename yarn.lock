@@ -2785,10 +2785,10 @@
   resolved "https://registry.yarnpkg.com/@protobufjs/utf8/-/utf8-1.1.0.tgz#a777360b5b39a1a2e5106f8e858f2fd2d060c570"
   integrity sha1-p3c2C1s5oaLlEG+OhY8v0tBgxXA=
 
-"@quasar/app@^3.0.0":
-  version "3.0.1"
-  resolved "https://registry.yarnpkg.com/@quasar/app/-/app-3.0.1.tgz#59629edfd4c94732a5b0e17a7a111440a1a6f0dd"
-  integrity sha512-a1hm4miFkvc9setIqtVAKyILHhJ0ZD+Xw52gtGgwwSNGQfKL6UY04837bkjzVOXQ1ybcd5Kpjv3kWPhdTL3TZA==
+"@quasar/app@^3.0.2":
+  version "3.0.2"
+  resolved "https://registry.yarnpkg.com/@quasar/app/-/app-3.0.2.tgz#b138de28be40e14bd03e1bee68afd4dfa02d9689"
+  integrity sha512-4qFW3mzoW64ob2zipmcVvQhy5XMgZrgLYhwPyjN/i2agXbdgZuzNMXSqgXduoXrCJ/6a2dYPTR4i7xHESb+WXg==
   dependencies:
     "@quasar/babel-preset-app" "2.0.1"
     "@quasar/fastclick" "1.1.4"
@@ -2861,7 +2861,6 @@
     webpack-dev-server "4.0.0-beta.3"
     webpack-merge "5.8.0"
     webpack-node-externals "3.0.0"
-    zlib "1.0.5"
 
 "@quasar/babel-preset-app@2.0.1":
   version "2.0.1"
@@ -2889,7 +2888,7 @@
     core-js "^3.6.5"
     core-js-compat "^3.6.5"
 
-"@quasar/extras@^1.10.7":
+"@quasar/extras@^1.10.8":
   version "1.10.8"
   resolved "https://registry.yarnpkg.com/@quasar/extras/-/extras-1.10.8.tgz#250a0b4d75f8a8085318fc1059000c7d24bb813d"
   integrity sha512-s/uTQ/NVQIExOZjXJ0LnpPlqiiuGV0PFw5UKbXypWMhPpfQInnic/uU3SR8ZGtlNC3KHV5U+NTk9K9muTtoDpA==
@@ -15885,10 +15884,10 @@ qs@~6.5.2:
   resolved "https://registry.yarnpkg.com/qs/-/qs-6.5.2.tgz#cb3ae806e8740444584ef154ce8ee98d403f3e36"
   integrity sha512-N5ZAX4/LxJmF+7wN74pUD6qAh9/wnvdQcjq9TZjevvXzSUo7bfmw91saqMjzGS2xq91/odN2dW/WOl7qQHNDGA==
 
-quasar@^2.0.0:
-  version "2.0.1"
-  resolved "https://registry.yarnpkg.com/quasar/-/quasar-2.0.1.tgz#31119684cc7a1b918c28c34aa910cc05c2a05299"
-  integrity sha512-DDxcuEardFvebCTNeGeneS/3NazY9ZqNPII9o2VC/ujZn7/hIWDsB0ajYJG8l/pV8kkiaiaIBaE93EzoXfEXrA==
+quasar@^2.0.2:
+  version "2.0.2"
+  resolved "https://registry.yarnpkg.com/quasar/-/quasar-2.0.2.tgz#fbc82b82204e8f4af72037ddcab07f76b4340287"
+  integrity sha512-Z5ghL4LA8YxkM8HBqmzn3o4HOIbFEgWcwvWRbIcRbNX/NjchyeV7YlgzHyIdOClnAHrJ0szZSItl/2n86k43aw==
 
 query-string@^6.13.8:
   version "6.14.1"
@@ -20062,11 +20061,6 @@ zip-stream@^4.1.0:
     archiver-utils "^2.1.0"
     compress-commons "^4.1.0"
     readable-stream "^3.6.0"
-
-zlib@1.0.5:
-  version "1.0.5"
-  resolved "https://registry.yarnpkg.com/zlib/-/zlib-1.0.5.tgz#6e7c972fc371c645a6afb03ab14769def114fcc0"
-  integrity sha1-bnyXL8NxxkWmr7A6sUdp3vEU/MA=
 
 zwitch@^1.0.0:
   version "1.0.5"

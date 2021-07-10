@@ -3,7 +3,7 @@ import {wrapRef} from 'src/wrap-ref'
 import {freeze, isSSR} from '@winter-love/utils'
 import {useElementEvent} from 'src/element-event'
 import {useBlur} from 'src/blur'
-import {ref} from 'vue'
+import {ref} from 'vue-demi'
 
 const isClipboardAble = () => {
   if (isSSR()) {

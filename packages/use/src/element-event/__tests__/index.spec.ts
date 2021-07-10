@@ -1,6 +1,6 @@
+import {flushPromises, mount} from '@vue/test-utils'
+import {defineComponent, h, ref} from 'vue-demi'
 import {useElementEvent} from '../index'
-import {h, defineComponent, ref} from 'vue'
-import {mount, flushPromises} from '@vue/test-utils'
 
 const setup = (props: any) => {
   const Component = defineComponent({

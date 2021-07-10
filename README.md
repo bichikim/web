@@ -2,7 +2,7 @@
 
 [Coong.io](https://coong.io)
 
-Tag everywhere
+Coong everywhere
 
 ## Install the dependencies
 ```bash

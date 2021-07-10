@@ -1,6 +1,6 @@
 import {
   Ref, ref, toRef, watch,
-} from 'vue'
+} from 'vue-demi'
 
 export type IsEqual<Value> = (value: Value, oldValue: Value) => boolean
 

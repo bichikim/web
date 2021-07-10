@@ -1,4 +1,4 @@
-import {defineComponent, h} from 'vue'
+import {defineComponent, h} from 'vue-demi'
 import {isInInstance} from '../'
 import {mount} from '@vue/test-utils'
 

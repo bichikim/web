@@ -1,6 +1,6 @@
 import {onClickOutside} from '../'
-import {defineComponent, ref, h} from 'vue'
-import {mount, flushPromises} from '@vue/test-utils'
+import {defineComponent, h, ref} from 'vue-demi'
+import {flushPromises, mount} from '@vue/test-utils'
 
 const setup = () => {
   const spy = jest.spyOn(window, 'addEventListener')

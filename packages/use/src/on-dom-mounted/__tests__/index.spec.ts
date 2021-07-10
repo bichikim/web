@@ -1,5 +1,5 @@
 import {flushPromises, mount} from '@vue/test-utils'
-import {defineComponent, h, ref} from 'vue'
+import {defineComponent, h, ref} from 'vue-demi'
 import {onDomMounted} from '../index'
 import sinon from 'sinon'
 

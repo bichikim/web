@@ -1,5 +1,5 @@
 import {animationRepeater} from '../'
-import {h, ref} from 'vue'
+import {h, ref} from 'vue-demi'
 
 export const Default = () => ({
   setup() {

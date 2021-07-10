@@ -1,6 +1,6 @@
 import {toMutRef} from '../'
 import {mount} from '@vue/test-utils'
-import {defineComponent, h} from 'vue'
+import {defineComponent, h} from 'vue-demi'
 
 const setup = (foo: string) => {
   const Component = defineComponent({
@@ -30,8 +30,8 @@ const setup = (foo: string) => {
   }
 }
 
-describe('to-mut-ref', function test() {
-  it('should change ref', async function test() {
+describe('to-mut-ref', () => {
+  it('should change ref', async () => {
     const {wrapper} = setup('foo')
 
     expect(wrapper.get('#text').text()).toBe('foo')

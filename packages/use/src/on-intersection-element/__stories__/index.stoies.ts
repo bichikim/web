@@ -1,4 +1,4 @@
-import {h} from 'vue'
+import {h} from 'vue-demi'
 
 export default {
   title: 'use/on-intersection-element',

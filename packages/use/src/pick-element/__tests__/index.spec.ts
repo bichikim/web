@@ -1,6 +1,6 @@
 import {pickElement} from '../'
 import {mount} from '@vue/test-utils'
-import {defineComponent, h} from 'vue'
+import {defineComponent, h} from 'vue-demi'
 
 describe('pickElement', () => {
   it('should return a element with the element', () => {

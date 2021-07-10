@@ -2,7 +2,7 @@
 import {wrapRef} from '../index'
 import {
   computed, defineComponent, h, ref,
-} from 'vue'
+} from 'vue-demi'
 import {mount} from '@vue/test-utils'
 
 const setup = () => {

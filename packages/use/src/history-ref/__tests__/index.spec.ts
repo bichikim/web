@@ -1,5 +1,5 @@
 import {historyRef} from '../index'
-import {ref} from 'vue'
+import {ref} from 'vue-demi'
 import {flushPromises} from '@vue/test-utils'
 
 describe('history-ref', () => {

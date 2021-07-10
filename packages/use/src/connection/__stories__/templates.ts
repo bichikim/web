@@ -1,5 +1,5 @@
 import {useConnection} from '../'
-import {h} from 'vue'
+import {h} from 'vue-demi'
 
 export const Default = () => ({
   setup() {
