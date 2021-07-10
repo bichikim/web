@@ -8,6 +8,7 @@ import {
   DevtoolsPluginApi, setupDevtoolsPlugin, StateBase, TimelineEvent,
 } from '@vue/devtools-api'
 import {App} from 'vue-demi'
+import {Atom} from 'src/atom'
 import {genInspectorTree} from './gen-inspector-tree'
 import {genNoneStateInfo} from './gen-none-state-info'
 import {createGetStates} from './get-states'
@@ -175,7 +176,7 @@ export const getDevtool = (app: App, states: Record<string, State<any>>) => {
 
 export let devtools: undefined | ReturnType<typeof getDevtool>
 
-export const startDevtool = (app: App, states: Record<string, State<any>>) => {
+export const startDevtool = (app: App, states: Record<string, State<any> | Atom<any>>) => {
   const tools = getDevtool(app, states)
 
   if (tools) {

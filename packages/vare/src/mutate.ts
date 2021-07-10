@@ -4,7 +4,7 @@ import {shallowRef} from 'vue-demi'
 import {devtools} from './devtool'
 import {getIdentifier, info} from './info'
 import {AnyStateGroup, relateState} from './state'
-import {subscribe} from './subscribe'
+import {watchAction} from './subscribe'
 import {createGetAtomPrams, createUuid} from './utils'
 
 export type MutationRecipe<Args extends any[] = any, Return = any> = (...args: Args) => Return
@@ -49,7 +49,7 @@ function _mutate(unknown, mayRecipe?: any, name?: string): Mutation<any> {
     })
 
     // devtool
-    subscribe(self, () => {
+    watchAction(self, () => {
       devtools?.updateTimeline('mutation', {
         title: _name,
       })

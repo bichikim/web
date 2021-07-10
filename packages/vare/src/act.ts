@@ -10,7 +10,7 @@ import {
 } from 'src/utils'
 import {shallowRef} from 'vue-demi'
 import {devtools} from './devtool'
-import {subscribe} from './subscribe'
+import {watchAction} from './subscribe'
 import {
   AnyStateGroup, relateState,
 } from 'src/state'
@@ -65,7 +65,7 @@ const _act = <Args extends any[], Return> (
       watchFlag,
     })
 
-    subscribe(self, () => {
+    watchAction(self, () => {
       devtools?.updateTimeline('action', {
         title: _name,
       })
