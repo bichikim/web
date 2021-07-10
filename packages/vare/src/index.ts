@@ -1,4 +1,5 @@
 import {plugin} from './plugin'
+export * from './atom'
 export * from './devtool'
 export * from './act'
 export * from './compute'
