@@ -12,7 +12,7 @@ export type SubscribeHookValue<Value> = (current: Value, old: Value) => any
 
 export type SubscribeTarget = Mutation<any> | Action<any> | Computation<any, any> | ComputationWritable<any, any>
 
-export const setSubscribe = (target: SubscribeTarget, hook: WatchCallback<any>): WatchStopHandle => {
+export const watchAction = (target: SubscribeTarget, hook: WatchCallback<any>): WatchStopHandle => {
   const targetInfo = info.get(target)
   if (targetInfo?.watchFlag) {
     const {watchFlag} = targetInfo
@@ -54,7 +54,7 @@ export function subscribe(
   const type = getIdentifier(target)
   // when Mutation, Action or Computation
   if (type === 'mutation' || type === 'action') {
-    return setSubscribe(target, hook)
+    return watchAction(target, hook)
   }
 
   // state or any Ref

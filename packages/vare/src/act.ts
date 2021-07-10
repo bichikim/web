@@ -8,7 +8,7 @@ import {DropFunctionObject} from 'src/types'
 import {
   createGetAtomPrams, createUuid,
 } from 'src/utils'
-import {ref} from 'vue-demi'
+import {shallowRef} from 'vue-demi'
 import {devtools} from './devtool'
 import {subscribe} from './subscribe'
 import {
@@ -45,11 +45,15 @@ const _act = <Args extends any[], Return> (
   const {
     state, recipe, name: _name,
   } = getActPrams(unknown, mayRecipe, name)
-  const flag = ref<any[]>()
+  const watchFlag = shallowRef<any[]>()
 
   const self: any = (...args: Args): Return | Promise<Return> => {
     const newArgs = state ? [state, ...args] : args
-    flag.value = args
+
+    if (process.env.NODE_ENV === 'development') {
+      watchFlag.value = args
+    }
+
     return recipe(...newArgs)
   }
 
@@ -58,7 +62,7 @@ const _act = <Args extends any[], Return> (
       identifier: actionName,
       name: _name,
       relates: new Set(),
-      watchFlag: flag,
+      watchFlag,
     })
 
     subscribe(self, () => {

@@ -31,7 +31,7 @@ export const getNamedStates = (states: Record<string, State<any>>): Record<strin
   }, {})
 }
 
-export type EventKind = 'action' | 'mutation'
+export type EventKind = 'action' | 'mutation' | 'atomAction'
 
 // eslint-disable-next-line max-lines-per-function
 export const getDevtool = (app: App, states: Record<string, State<any>>) => {
@@ -43,7 +43,8 @@ export const getDevtool = (app: App, states: Record<string, State<any>>) => {
   const inspectorId = 'vare-structure'
   const timelineIds: Record<EventKind, string> = {
     action: 'vare-action',
-    mutation: 'var-mutation',
+    atomAction: 'vare-atom-action',
+    mutation: 'vare-mutation',
   }
   let relationMap: Map<string, AllKinds> = new Map<string, AllKinds>()
   const _states = getNamedStates(states)
@@ -121,7 +122,7 @@ export const getDevtool = (app: App, states: Record<string, State<any>>) => {
 
       if (state) {
         const path = drop(payload.path)
-        const value = payload.state.value
+        const {value} = payload.state
 
         payload.set(state, path, value)
 

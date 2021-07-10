@@ -1,6 +1,6 @@
 import {DropFunctionObject} from 'src/types'
 import {FunctionObject} from '@winter-love/utils'
-import {ref} from 'vue-demi'
+import {shallowRef} from 'vue-demi'
 import {devtools} from './devtool'
 import {getIdentifier, info} from './info'
 import {AnyStateGroup, relateState} from './state'
@@ -29,13 +29,14 @@ const getMutatePrams = createGetAtomPrams(createUuid('unknown'))
  */
 function _mutate(unknown, mayRecipe?: any, name?: string): Mutation<any> {
   const {state, recipe, name: _name} = getMutatePrams(unknown, mayRecipe, name)
-  const flag = ref<any[] | null>()
+  const watchFlag = shallowRef<any[] | null>()
 
   // create executor
   const self: any = (...args: any[]): any => {
     const newArgs = state ? [state, ...args] : args
-
-    flag.value = args
+    if (process.env.NODE_ENV === 'development') {
+      watchFlag.value = args
+    }
     return recipe(...newArgs)
   }
 
@@ -44,7 +45,7 @@ function _mutate(unknown, mayRecipe?: any, name?: string): Mutation<any> {
       identifier: mutationName,
       name: _name,
       relates: new Set(),
-      watchFlag: flag,
+      watchFlag,
     })
 
     // devtool

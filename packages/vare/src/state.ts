@@ -12,7 +12,7 @@ export type State<State> = UnwrapNestedRefs<State>
 
 export type AnyStateGroup = State<any> | State<any>[] | Record<string, State<any>>
 
-export const stateType: StateIdentifierName = 'state'
+export const stateName: StateIdentifierName = 'state'
 
 export const isState = (value: any): value is State<any> => {
   const valueInfo = info.get(value)
@@ -21,7 +21,7 @@ export const isState = (value: any): value is State<any> => {
     return false
   }
 
-  return valueInfo.identifier === stateType
+  return valueInfo.identifier === stateName
 }
 
 export const relate = (state: State<any>, target: AllKinds) => {
@@ -75,9 +75,8 @@ export const state = <S extends AnyObject>(initState: InitState<S>, name?: strin
 
   if (process.env.NODE_ENV === 'development') {
     info.set(state, {
-      identifier: stateType,
+      identifier: stateName,
       name,
-      relates: new Set(),
     })
   }
 

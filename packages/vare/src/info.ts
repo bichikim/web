@@ -2,15 +2,17 @@ import {Action, ActionIdentifierName} from 'src/act'
 import {Computation, ComputationIdentifierName, ComputationRefIdentifierName} from 'src/compute'
 import {Mutation, MutationIdentifierName} from 'src/mutate'
 import {State, StateIdentifierName} from 'src/state'
+import {Atom, AtomIdentifierName} from './atom'
 import {Ref} from 'vue-demi'
 
-export type AllKinds = State<any> | Mutation<any> | Computation<any, any> | Action<any>
+export type AllKinds = State<any> | Mutation<any> | Computation<any, any> | Action<any> | Atom<any>
 
 export type Identifier = MutationIdentifierName
   | StateIdentifierName
   | ComputationIdentifierName
   | ActionIdentifierName
   | ComputationRefIdentifierName
+  | AtomIdentifierName
 
 export interface PlaygroundInfo {
   args: any
@@ -26,6 +28,10 @@ export interface VareInfo {
   watchFlag?: Ref<any>
 }
 
+export interface VareInfoOptions extends Omit<VareInfo, 'relates'>{
+  relates?: Set<AllKinds>
+}
+
 export const createInfoMap = () => {
   const infoMap = new WeakMap<AllKinds, VareInfo>()
 
@@ -33,8 +39,9 @@ export const createInfoMap = () => {
     get: (target: AllKinds): VareInfo | undefined => (
       infoMap.get(target)
     ),
-    set: (target: AllKinds, info: VareInfo) => {
-      infoMap.set(target, info)
+    set: (target: AllKinds, info: VareInfoOptions) => {
+      const {relates = new Set(), ...rest} = info
+      infoMap.set(target, {...rest, relates})
     },
   }
 }
