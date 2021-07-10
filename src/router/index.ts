@@ -34,5 +34,6 @@ export default route((/* { store, ssrContext } */) => {
     routes,
 
     scrollBehavior: () => ({left: 0, top: 0}),
-  })
+    // quasar type error
+  }) as any
 })
