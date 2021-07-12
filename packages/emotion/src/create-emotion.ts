@@ -1,10 +1,10 @@
 import {Options as OriginalEmotionOptions} from '@emotion/cache'
 import createEmotionOriginal, {Emotion as _Emotion, CSSObject} from '@emotion/css/create-instance'
 import {Plugin} from 'vue-demi'
-import {EMOTION_THEME_CONTEXT, Theme} from './theme'
 import {EMOTION_CACHE_CONTEXT} from './cache'
 import {createStyled} from './create-styled'
 import {createDirective} from './directive'
+import {EMOTION_THEME_CONTEXT, Theme} from './theme'
 
 export interface EmotionExtend extends _Emotion {
   styled: ReturnType<typeof createStyled>
@@ -26,8 +26,12 @@ export type EmotionPlugin = Plugin & EmotionExtend
  * @param options
  */
 export const createEmotion = (options: EmotionOptions = {}): EmotionPlugin => {
-  // eslint-disable-next-line object-curly-newline
-  const {theme, key = 'css', system, ...restOptions} = options
+  const {
+    theme,
+    key = 'css',
+    system,
+    ...restOptions
+  } = options
 
   const emotion = createEmotionOriginal({...restOptions, key})
 

@@ -1,5 +1,5 @@
-import {Tags} from './tags'
 import {ComponentObjectPropsOptions, defineComponent, FunctionalComponent} from 'vue-demi'
+import {Tags} from './tags'
 
 export interface StylePortalInfo {
   __stylePortal?: string

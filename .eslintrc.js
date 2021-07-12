@@ -287,7 +287,8 @@ module.exports = {
     'no-with': 'error',
     'nonblock-statement-body-position': 'error',
     'object-curly-newline': ['warn', {
-      consistent: true, minProperties: 4, multiline: true,
+      consistent: true,
+      multiline: true,
     }],
     'object-curly-spacing': ['error', 'never'],
     'one-var': ['error', 'never'],

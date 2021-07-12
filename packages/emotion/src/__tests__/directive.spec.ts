@@ -1,7 +1,7 @@
-import {createDirective} from '../directive'
 import createEmotionOriginal from '@emotion/css/create-instance'
 import {mount} from '@vue/test-utils'
 import {h, withDirectives} from 'vue'
+import {createDirective} from '../directive'
 
 describe('directive', () => {
   it('should ', async () => {

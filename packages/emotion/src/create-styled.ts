@@ -12,17 +12,10 @@ import {
   h,
   inject,
 } from 'vue-demi'
+import {EMOTION_CACHE_CONTEXT} from './cache'
 import {Tags} from './tags'
 import {useTheme} from './theme'
-import {
-  AnyComponent,
-  EmptyObject,
-  SFC,
-  StyledOptionWithArray,
-  StyledOptionWIthObject,
-  StylePortalInfo,
-} from './types'
-import {EMOTION_CACHE_CONTEXT} from './cache'
+import {AnyComponent, EmptyObject, SFC, StyledOptionWithArray, StyledOptionWIthObject, StylePortalInfo} from './types'
 
 export type StyledResult<Props> = ((...args: (TemplateStringsArray | Interpolation<Props>)[]) => DefineComponent<Props>)
 
