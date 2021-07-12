@@ -5,24 +5,65 @@ import {h, withDirectives} from 'vue'
 
 describe('directive', () => {
   it('should ', async () => {
-    const directive = createDirective(createEmotionOriginal({key: 'css'}))
-
-    const Component = (props) => {
-      return withDirectives(h('div'), [
-        [directive, {width: props.width}],
-      ])
+    const theme = {
+      sizes: {
+        md: '50px',
+      },
     }
 
-    Component.props = ['width']
+    const directive = createDirective(createEmotionOriginal({key: 'css'}))
 
-    const wrapper = mount(Component)
+    directive.setTheme(theme)
+    directive.setSystem((props: any) => {
+      const {theme, width, ...rest} = props
 
-    await wrapper.setProps({
-      width: 50,
+      console.log(theme.sizes[width], width)
+
+      return {
+        ...rest,
+        width: theme.sizes[width] ?? width,
+      }
     })
 
-    expect(wrapper.element).toHaveStyle({
-      width: '50px',
-    })
+    {
+      const Component = (props) => {
+        return withDirectives(h('div'), [
+          [directive, {width: props.width}],
+        ])
+      }
+
+      Component.props = ['width']
+
+      const wrapper = mount(Component)
+
+      await wrapper.setProps({
+        width: 50,
+      })
+
+      expect(wrapper.element).toHaveStyle({
+        width: '50px',
+      })
+    }
+
+    {
+      const Component = (props) => {
+        return withDirectives(h('div'), [
+          [directive, {width: props.width}, 'system'],
+        ])
+      }
+
+      Component.props = ['width']
+
+      const wrapper = mount(Component)
+
+      await wrapper.setProps({
+        width: 'md',
+      })
+
+      expect(wrapper.element).toHaveStyle({
+        width: '50px',
+      })
+    }
+
   })
 })
