@@ -11,7 +11,7 @@ export interface EmotionExtend extends _Emotion {
 }
 
 export interface EmotionPluginOptions {
-  system?: (props: any) => any
+  directiveSystem?: (props: any) => any
   theme?: Theme
 }
 
@@ -29,7 +29,7 @@ export const createEmotion = (options: EmotionOptions = {}): EmotionPlugin => {
   const {
     theme,
     key = 'css',
-    system,
+    directiveSystem,
     ...restOptions
   } = options
 
@@ -40,19 +40,19 @@ export const createEmotion = (options: EmotionOptions = {}): EmotionPlugin => {
   const directive = createDirective(emotion)
 
   directive.setTheme(theme)
-  directive.setSystem(system)
+  directive.setSystem(directiveSystem)
 
   return {
     ...emotion,
     install: (app, options: EmotionPluginOptions = {}) => {
-      const {theme: _theme = theme, system} = options
+      const {theme: _theme = theme, directiveSystem} = options
       app.provide(EMOTION_CACHE_CONTEXT, emotion.cache)
 
       // provide theme if the options have it
       if (_theme) {
         app.provide(EMOTION_THEME_CONTEXT, _theme)
         directive.setTheme(_theme)
-        directive.setSystem(system)
+        directive.setSystem(directiveSystem)
         app.directive('emotion', directive)
       }
     },

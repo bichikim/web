@@ -1,5 +1,5 @@
 import {SystemProps, systems} from 'src/design-system/system'
-import {styled} from 'src/emotion'
+import {styled} from 'src/boot/emotion'
 import {PropType} from 'vue'
 
 export const containerProps = {
