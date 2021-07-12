@@ -25,7 +25,6 @@ describe('clipboard', () => {
       configurable: true,
       value: {
         readText(): Promise<string> {
-          console.log(clipboardValue)
           return Promise.resolve(clipboardValue)
         },
         writeText(value) {

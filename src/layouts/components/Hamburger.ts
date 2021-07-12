@@ -1,5 +1,32 @@
-import {defineComponent, h, ref} from 'vue'
-import {QAvatar, QBtn, QImg} from 'quasar'
+import {MayRef, wrapRef} from '@winter-love/use'
+import {kebabCase} from 'lodash'
+import {QBtn} from 'quasar'
+import {
+  computed, defineComponent, h, toRef,
+} from 'vue'
+
+const getInitail = (name) => {
+  if (name.length < 2) {
+    return name
+  }
+
+  const value = kebabCase(name).split('-').slice(0, 2)
+
+  console.log(value)
+
+  if (value.length === 1) {
+    return value[0].slice(0, 2)
+  }
+
+  return value
+}
+
+const useInitial = (name: MayRef<string>) => {
+  const nameRef = wrapRef(name)
+  return computed(() => {
+    return getInitail(nameRef.value)
+  })
+}
 
 export const Hamburger = defineComponent({
   name: 'Hamburger',
@@ -8,17 +35,13 @@ export const Hamburger = defineComponent({
     avatar: {type: String},
     name: {default: 'Unknown', type: String},
   },
-  render() {
-    return h(QBtn, {class: 'bg-primary', padding: 'none', push: true}, () => [
-      h(QAvatar, {size: '42px'}, () => [
-        h(QImg, {src: 'https://cdn.quasar.dev/img/avatar2.jpg'}),
-      ]),
-    ])
-  },
-  setup: () => {
-    const text = ref('foo')
-    return {
-      text,
-    }
+  setup: (props) => {
+
+    const nameRef = toRef(props, 'name')
+    const initailName = useInitial(nameRef)
+
+    return () => (
+      h(QBtn, {class: 'bg-primary', push: true}, () => initailName.value)
+    )
   },
 })
