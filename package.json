@@ -28,7 +28,8 @@
     "storybook": "start-storybook -p 6006",
     "clean": "lerna clean --yes && rimraf node_modules",
     "test": "jest",
-    "build-storybook": "build-storybook"
+    "build-storybook": "build-storybook",
+    "deploy-storybook": "storybook-to-ghpages"
   },
   "browserslist": [
     "last 10 Chrome versions",
