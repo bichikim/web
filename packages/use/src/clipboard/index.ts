@@ -48,8 +48,6 @@ export const useClipboard = (
     }
   }
 
-  read()
-
   return freeze({
     isSupported,
     read,
