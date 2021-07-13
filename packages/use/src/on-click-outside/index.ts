@@ -41,5 +41,5 @@ export const onClickOutside = <Event extends keyof WindowEventMap = 'pointerdown
     handle(event)
   }
 
-  return useElementEvent<Event>(window, event as Event, listener, {passive: true})
+  return useElementEvent<Event>(window, event as Event, listener, true, {passive: true})
 }

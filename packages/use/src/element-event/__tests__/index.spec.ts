@@ -8,15 +8,18 @@ const setup = (props: any) => {
     setup(props) {
       const elementRef = ref()
       const countRef = ref(0)
-      const {inactive, active} = useElementEvent(elementRef, 'click', () => {
+      const active = useElementEvent(elementRef, 'click', () => {
+        console.log('?')
         countRef.value += 1
-      }, {immediate: props.immediate, once: props.once})
+      }, props.immediate, {once: props.once})
+
+      console.log(active.value)
 
       return () => (
         h('div', [
           h('div', {id: 'count'}, countRef.value),
-          h('button', {id: 'inactive', onclick: inactive}, 'inactive'),
-          h('button', {id: 'active', onclick: active}, 'active'),
+          h('button', {id: 'inactive', onclick: () => (active.value = false)}, 'inactive'),
+          h('button', {id: 'active', onclick: () => (active.value = true)}, 'active'),
           h('button', {id: 'target', ref: elementRef}, 'target'),
         ])
       )
@@ -37,15 +40,13 @@ const setupWithWindow = (props: any) => {
     props: ['immediate'],
     setup(props) {
       const countRef = ref(0)
-      const {active} = useElementEvent(window, 'message', () => {
+      const active = useElementEvent(window, 'message', () => {
         countRef.value += 1
-      }, {
-        immediate: props.immediate,
-      })
+      }, props.immediate)
       return () => (
         h('div', [
           h('div', {id: 'count'}, countRef.value),
-          h('button', {id: 'active', onclick: active}, 'active'),
+          h('button', {id: 'active', onclick: () => (active.value = true)}, 'active'),
         ])
       )
     },
@@ -58,15 +59,18 @@ const setupWithWindow = (props: any) => {
 }
 
 describe('element-event', () => {
-  it('should trigger event with the mounted immediate', async () => {
-    const {wrapper} = setup({immediate: 'mounted'})
+  it('should trigger event with immediate', async () => {
+    const {wrapper} = setup({immediate: true})
+    await flushPromises()
     expect(wrapper.get('#count').text()).toBe('0')
     await wrapper.get('#target').trigger('click')
+    await flushPromises()
     expect(wrapper.get('#count').text()).toBe('1')
     await wrapper.get('#target').trigger('click')
     expect(wrapper.get('#count').text()).toBe('2')
     await wrapper.get('#inactive').trigger('click')
     await wrapper.get('#target').trigger('click')
+    await flushPromises()
     expect(wrapper.get('#count').text()).toBe('2')
     await wrapper.get('#active').trigger('click')
     await wrapper.get('#target').trigger('click')
@@ -82,7 +86,8 @@ describe('element-event', () => {
     expect(wrapper.get('#count').text()).toBe('1')
   })
   it('should not trigger event with the once and the mounted immediate', async () => {
-    const {wrapper} = setup({immediate: 'mounted', once: true})
+    const {wrapper} = setup({immediate: true, once: true})
+    await flushPromises()
     expect(wrapper.get('#count').text()).toBe('0')
     await wrapper.get('#target').trigger('click')
     expect(wrapper.get('#count').text()).toBe('1')

@@ -9,12 +9,10 @@ export const onDomMounted = (handle: OnDomMountedHandle) => {
     return
   }
 
-  const {active, inactive} = useElementEvent(window, 'load', () => {
+  const isActive = useElementEvent(window, 'load', () => {
     handle()
-    inactive()
-  }, {
-    immediate: false,
-  })
+    isActive.value = false
+  }, false)
 
   onMounted(() => {
     const isReady = document.readyState === 'complete'
@@ -23,6 +21,6 @@ export const onDomMounted = (handle: OnDomMountedHandle) => {
       return
     }
 
-    active()
+    isActive.value = true
   })
 }

@@ -32,6 +32,7 @@ const setup = () => {
 describe('onClickOutside', () => {
   it('should call handler with clicking outside', async () => {
     const {wrapper, spy} = setup()
+    await flushPromises()
     expect(wrapper.get('#count').text()).toBe('0')
     expect(spy.mock.calls.length).toBe(1)
     expect(spy.mock.calls[0][0]).toBe('pointerdown')
@@ -52,6 +53,7 @@ describe('onClickOutside', () => {
   })
   it('should not call handler with clicking target', async () => {
     const {wrapper, spy} = setup()
+    await flushPromises()
     expect(wrapper.get('#count').text()).toBe('0')
     expect(spy.mock.calls.length).toBe(1)
     expect(spy.mock.calls[0][0]).toBe('pointerdown')
@@ -72,6 +74,7 @@ describe('onClickOutside', () => {
   })
   it('should not call handler without clicking composed path including', async () => {
     const {wrapper, spy} = setup()
+    await flushPromises()
     expect(wrapper.get('#count').text()).toBe('0')
     expect(spy.mock.calls.length).toBe(1)
     expect(spy.mock.calls[0][0]).toBe('pointerdown')

@@ -1,9 +1,6 @@
-
-import {wrapRef} from '../index'
-import {
-  computed, defineComponent, h, ref,
-} from 'vue-demi'
 import {mount} from '@vue/test-utils'
+import {computed, defineComponent, h, ref} from 'vue-demi'
+import {wrapRef} from '../index'
 
 const setup = () => {
   const Component = defineComponent({
@@ -94,10 +91,12 @@ describe('wrap-ref', () => {
 
   it('should not update Original ref if it wrapped with a bind false option', async () => {
     const {wrapper} = setup()
+    expect(wrapper.get('#count').text()).toBe('0')
+    expect(wrapper.get('#clonedCount').text()).toBe('0')
+    expect(wrapper.get('#unbindClonedCount').text()).toBe('0')
     await wrapper.get('#increaseCount').trigger('click')
     expect(wrapper.get('#count').text()).toBe('1')
     expect(wrapper.get('#clonedCount').text()).toBe('1')
-    expect(wrapper.get('#unbindClonedCount').text()).toBe('1')
     expect(wrapper.get('#unbindClonedCount').text()).toBe('1')
     await wrapper.get('#increaseUnbindCount').trigger('click')
     expect(wrapper.get('#count').text()).toBe('1')

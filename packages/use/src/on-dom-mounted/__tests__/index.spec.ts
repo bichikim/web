@@ -41,6 +41,8 @@ describe('onDomMounted', () => {
 
     expect(wrapper.text()).toBe('0')
 
+    await flushPromises()
+
     expect(typeof _handler).toBe('function')
 
     _handler()

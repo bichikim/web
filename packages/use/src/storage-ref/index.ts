@@ -4,6 +4,7 @@ import stringify from 'fast-json-stable-stringify'
 import {useElementEvent} from '../element-event'
 
 export interface StorageRefOptions<Data> {
+  // todo 스팩 변경 해야하다 이 값이 옵션이 아니라 파라미터로 전달 되고 Ref 가 될수도 있게 변경
   init?: Data
   type?: StorageType
 }

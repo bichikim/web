@@ -19,7 +19,8 @@ export const onOffline = (handle: OnOfflineHandle) => {
     window,
     'offline',
     handle,
-    {capture: false, immediate: true, passive: true},
+    true,
+    {capture: false, passive: true},
   )
 }
 
@@ -36,7 +37,8 @@ export const onOnline = (handle: OnOnlineHandle) => {
     window,
     'online',
     handle,
-    {capture: false, immediate: true, passive: true},
+    true,
+    {capture: false, passive: true},
   )
 }
 
@@ -46,10 +48,10 @@ export const useConnection = (init: MayRef<boolean> = true) => {
   if (!isSSR()) {
     useElementEvent(window, 'offline', () => {
       value.value = false
-    }, {capture: false, immediate: true, passive: true})
+    }, true, {capture: false, passive: true})
     useElementEvent(window, 'online', () => {
       value.value = true
-    }, {capture: false, immediate: true, passive: true})
+    }, true, {capture: false, passive: true})
   }
 
   return value
