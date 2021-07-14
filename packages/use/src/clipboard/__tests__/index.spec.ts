@@ -4,6 +4,7 @@ import {flushPromises} from '@vue/test-utils'
 
 jest.mock('src/element-event', () => {
   const listeners = {}
+  // noinspection JSUnusedGlobalSymbols
   return {
     __trigger(key: string, value) {
       listeners[key]?.(value)
