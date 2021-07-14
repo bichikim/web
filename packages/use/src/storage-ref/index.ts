@@ -2,9 +2,14 @@ import {getStorageAvailable, StorageType} from '@winter-love/utils'
 import {ref, watch} from 'vue-demi'
 import stringify from 'fast-json-stable-stringify'
 import {useElementEvent} from '../element-event'
+import {MayRef} from 'src/types'
+import {wrapRef} from '../wrap-ref'
 
 export interface StorageRefOptions<Data> {
   // todo 스팩 변경 해야하다 이 값이 옵션이 아니라 파라미터로 전달 되고 Ref 가 될수도 있게 변경
+  /**
+   * @deprecated please use the value
+   */
   init?: Data
   type?: StorageType
 }
@@ -26,9 +31,12 @@ const setItem = (storage: Storage, key: string, value: any) => {
   storage.setItem(key, stringify(value))
 }
 
-export const storageRef = <Data>(key: string, options: StorageRefOptions<Data> = {}) => {
-  const {type = 'local', init} = options
-  const valueRef = ref<Data | undefined>()
+export const storageRef = <Data>(
+  key: string,
+  value?: MayRef<Data | undefined>,
+  options: StorageRefOptions<Data> = {}) => {
+  const {type = 'local'} = options
+  const valueRef = wrapRef<Data | undefined>(value)
   const freezeWatch = ref(false)
   const storage = getStorageAvailable(type)
   if (!storage) {
@@ -48,7 +56,7 @@ export const storageRef = <Data>(key: string, options: StorageRefOptions<Data> =
     const result = getItem(storage, key)
 
     if (typeof result !== 'undefined') {
-      valueRef.value = getItem(storage, key)
+      valueRef.value = result
       return
     }
     if (init) {
@@ -56,7 +64,7 @@ export const storageRef = <Data>(key: string, options: StorageRefOptions<Data> =
     }
   }
 
-  updateValue(init)
+  updateValue(valueRef.value)
 
   useElementEvent(window, 'storage', () => {
     updateValue(undefined, true)
