@@ -11,8 +11,8 @@ describe('emotion', () => {
   describe('createStyled', () => {
     interface Options extends StyledOptions {
       element?: any
-      slot?: any
       props?: any
+      slot?: any
     }
 
     const setup = (options: Options = {}) => {
@@ -62,6 +62,17 @@ describe('emotion', () => {
 
       expect(wrapper.get('div').element).toHaveStyle({
         backgroundColor: 'red',
+        color: 'red',
+      })
+      expect(wrapper.element).toHaveAttribute('id', 'foo')
+    })
+
+    it('should render attributes', () => {
+      const {wrapper} = setup({props: {css: {color: 'red'}, id: 'foo'}, stylePortal: 'css'})
+
+      expect(wrapper.get('div').element).toHaveStyle({
+        backgroundColor: 'red',
+        color: 'red',
       })
       expect(wrapper.element).toHaveAttribute('id', 'foo')
     })
