@@ -5,7 +5,9 @@
   "author": "Bichi Kim <bichi@live.co.kr>",
   "workspaces": {
     "packages": [
-      "packages/*"
+      "packages/*",
+      "src-capacitor",
+      "server"
     ]
   },
   "scripts": {
@@ -19,7 +21,7 @@
     "build:libray": "pnpm run build --filter libraries... --stream",
     "version:patch": "lerna version patch",
     "publish:patch": "lerna publish from-package",
-    "format:package.json": "sort-package-json \"package.json\" \"packages/*/package.json\" ",
+    "format:package.json": "sort-package-json \"package.json\" \"packages/*/package.json\" \"server/package.json\" ",
     "version:next": "lerna version prerelease --preid next",
     "publish:next": "lerna publish from-package --preid next --dist-tag next",
     "version:beta": "lerna varsion prerelease --preid beta",
@@ -61,20 +63,20 @@
     "vue-router": "4.0.9"
   },
   "devDependencies": {
-    "@emotion/jest": "^11.3.0",
     "@babel/core": "^7.14.6",
     "@babel/preset-typescript": "^7.13.0",
     "@capacitor/clipboard": "^1.0.2",
     "@capacitor/core": "^3.0.2",
+    "@emotion/jest": "^11.3.0",
     "@quasar/app": "^3.0.2",
     "@rollup/plugin-alias": "^3.1.2",
     "@rollup/plugin-node-resolve": "^11.2.1",
     "@storybook/addon-actions": "^6.3.0",
-    "@storybook/storybook-deployer": "^2.8.10",
     "@storybook/addon-essentials": "^6.3.0",
     "@storybook/addon-links": "^6.3.0",
     "@storybook/builder-webpack5": "^6.3.0",
     "@storybook/manager-webpack5": "^6.3.0",
+    "@storybook/storybook-deployer": "^2.8.10",
     "@storybook/vue3": "^6.3.0",
     "@testing-library/jest-dom": "^5.13.0",
     "@types/gulp": "^4.0.8",

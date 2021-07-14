@@ -1,5 +1,6 @@
 {
   "name": "coong",
+  "version": "1.0.0",
   "description": "coong web & app service",
   "author": "Bichi Kim <bichi@live.co.kr>",
   "private": true,
