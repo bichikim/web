@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "build": "tsc && tsc-alias",
-    "dev": "tsc -w & tsc-alias -w"
+    "dev": "tsc -w & tsc-alias -w",
+    "generate": "prisma generate --schema ./src/prisma/schema.prisma"
   },
   "dependencies": {
     "@prisma/client": "~2.27.0",
