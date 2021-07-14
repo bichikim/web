@@ -38,13 +38,16 @@ export const useClipboard = (
     if (!isSupported || stateRef.value !== 'idle') {
       return valueRef.value
     }
+
     const {value} = valueRef
-    if (value) {
+    const newValue = _value ?? value
+    if (newValue) {
       stateRef.value = 'writing'
-      await navigator.clipboard.writeText(_value ?? value)
+
+      await navigator.clipboard.writeText(newValue)
 
       stateRef.value = 'idle'
-      read()
+      valueRef.value = newValue
     }
   }
 

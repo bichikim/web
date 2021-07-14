@@ -12,10 +12,11 @@ describe('emotion', () => {
     interface Options extends StyledOptions {
       element?: any
       slot?: any
+      props?: any
     }
 
     const setup = (options: Options = {}) => {
-      const {slot, element = 'div', ...rest} = options
+      const {slot, element = 'div', props = {}, ...rest} = options
       const styled = createStyled(createEmotionOriginal({key: 'css'}))
       const StyledComponent = styled(element, {
         props: {
@@ -40,7 +41,7 @@ describe('emotion', () => {
         },
       })
 
-      const wrapper = mount(Component, {props: {color: 'red'}, slots: {default: () => slot}})
+      const wrapper = mount(Component, {props: {...props, color: 'red'}, slots: {default: () => slot}})
 
       return {
         Component,
@@ -54,6 +55,15 @@ describe('emotion', () => {
       expect(wrapper.get('div').element).toHaveStyle({
         backgroundColor: 'red',
       })
+    })
+
+    it('should render attributes', () => {
+      const {wrapper} = setup({props: {id: 'foo'}})
+
+      expect(wrapper.get('div').element).toHaveStyle({
+        backgroundColor: 'red',
+      })
+      expect(wrapper.element).toHaveAttribute('id', 'foo')
     })
 
     it('should render a Vue Component', () => {

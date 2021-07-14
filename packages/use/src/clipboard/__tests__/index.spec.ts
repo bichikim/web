@@ -48,11 +48,9 @@ describe('clipboard', () => {
 
   it('should update value ref with window copy event or cut event', async () => {
     const {value, state} = useClipboard(undefined, true)
-    expect(value.value).toBe(undefined)
-    expect(state.value).toBe('reading')
     await flushPromises()
     expect(state.value).toBe('idle')
-    expect(value.value).toBe('init')
+    expect(value.value).toBe(undefined)
 
     clipboardValue = 'foo'
     __trigger('copy')
@@ -69,7 +67,7 @@ describe('clipboard', () => {
     const {value, state, write} = useClipboard()
     await flushPromises()
     expect(state.value).toBe('idle')
-    expect(value.value).toBe('init')
+    expect(value.value).toBe(undefined)
 
     write('foo')
     expect(state.value).toBe('writing')
@@ -81,7 +79,7 @@ describe('clipboard', () => {
     const {value, state, write} = useClipboard()
     await flushPromises()
     expect(state.value).toBe('idle')
-    expect(value.value).toBe('init')
+    expect(value.value).toBe(undefined)
 
     write('foo')
     write('bar')
