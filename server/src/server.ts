@@ -1,7 +1,23 @@
-import {buildSchema, NonEmptyArray} from 'type-graphql'
+import {Authorized, buildSchema, NonEmptyArray} from 'type-graphql'
 import {ApolloServer} from 'apollo-server'
+import {Context} from 'apollo-server-core'
 import {AnyFunction} from '@winter-love/utils'
 import path from 'path'
+import {PrismaClient} from '@prisma/client'
+import {applyResolversEnhanceMap, ResolversEnhanceMap} from '@generated/type-graphql'
+
+/**
+ * @see https://github.com/MichalLytek/typegraphql-prisma
+ */
+const resolversEnhanceMap: ResolversEnhanceMap = {
+  User: {
+    updateUser: [Authorized()],
+  },
+}
+
+applyResolversEnhanceMap(resolversEnhanceMap)
+
+const prisma = new PrismaClient()
 
 export interface ServerStartOptions {
   port?: number
@@ -22,6 +38,7 @@ export const prepare = async (options: ServerPrePareOptions = {}) => {
   })
 
   const server = new ApolloServer({
+    context: (): Context => ({prisma}),
     playground,
     schema,
   })
