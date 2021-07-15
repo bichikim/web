@@ -4,3 +4,4 @@ import {
 
 export type ToRef<T> = [T] extends [Ref] ? T : Ref<UnwrapRef<T>>
 export type MayRef<T> = Ref<T> | ComputedRef<T> | T | WritableComputedRef<T>
+export type UnwrapNestedRefs<T> = T extends Ref ? T : UnwrapRef<T>
