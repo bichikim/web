@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/server",
-  "version": "1.0.15",
+  "version": "1.0.16-next.17",
   "private": true,
   "scripts": {
     "build": "tsc && tsc-alias",
