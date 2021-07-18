@@ -18,7 +18,7 @@ model User {
   email   String   @unique
   name    String?
   /// @TypeGraphQL.omit(output: true)
-  password String
+  password String?
   followers     User[]   @relation("UserFollows", fields: [followerIDs])
   followerIDs  String[] @db.Array(ObjectId)
   following      User[]   @relation("UserFollows", fields: [followingIDs])
