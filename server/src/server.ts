@@ -1,21 +1,9 @@
-import {Authorized, buildSchema, NonEmptyArray} from 'type-graphql'
+import {PrismaClient} from '@prisma/client'
 import {ApolloServer} from 'apollo-server'
 import {Context} from 'apollo-server-core'
-import {AnyFunction} from '@winter-love/utils'
-import path from 'path'
-import {PrismaClient} from '@prisma/client'
-import {applyResolversEnhanceMap, ResolversEnhanceMap} from '@generated/type-graphql'
-
-/**
- * @see https://github.com/MichalLytek/typegraphql-prisma
- */
-const resolversEnhanceMap: ResolversEnhanceMap = {
-  User: {
-    updateUser: [Authorized()],
-  },
-}
-
-applyResolversEnhanceMap(resolversEnhanceMap)
+import {buildSchema} from 'type-graphql'
+import {AuthChecker} from 'type-graphql/dist/interfaces'
+import {NonEmptyArray} from 'type-graphql/dist/interfaces/NonEmptyArray'
 
 const prisma = new PrismaClient()
 
@@ -24,16 +12,25 @@ export interface ServerStartOptions {
 }
 
 export interface ServerPrePareOptions {
+  authChecker?: AuthChecker
   playground?: boolean
-  resolvers?: NonEmptyArray<string> | NonEmptyArray<AnyFunction>
+  // eslint-disable-next-line @typescript-eslint/ban-types
+  resolvers?: NonEmptyArray<Function> | NonEmptyArray<string>
 }
 
 export const prepare = async (options: ServerPrePareOptions = {}) => {
   const {
     playground,
-    resolvers = [path.join(__dirname, 'resolvers/**/*.resolver.{ts,js}')],
+    resolvers,
+    authChecker,
   } = options
+
+  if (!resolvers) {
+    throw new Error('require resolvers')
+  }
+
   const schema = await buildSchema({
+    authChecker,
     resolvers,
   })
 

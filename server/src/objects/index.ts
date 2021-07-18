@@ -1,1 +1,1 @@
-export * from './User.object'
+export * from './Test.object'

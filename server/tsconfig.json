@@ -21,6 +21,9 @@
       "esnext.asynciterable",
       "scripthost"
     ],
+    "plugins": [
+      { "transform": "@zerollup/ts-transform-paths" }
+    ]
   },
   "ts-node": {
     "compilerOptions": {

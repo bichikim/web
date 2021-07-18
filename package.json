@@ -32,7 +32,9 @@
     "start:local-docker": "docker-compose up -d",
     "test": "jest",
     "build-storybook": "build-storybook",
-    "deploy-storybook": "storybook-to-ghpages"
+    "deploy-storybook": "storybook-to-ghpages",
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs"
   },
   "browserslist": [
     "last 10 Chrome versions",
@@ -64,6 +66,7 @@
     "vue-router": "4.0.9"
   },
   "devDependencies": {
+    "vitepress": "^0.15.6",
     "@babel/core": "^7.14.6",
     "@babel/preset-typescript": "^7.13.0",
     "@capacitor/clipboard": "^1.0.2",

@@ -21,6 +21,17 @@ export const dev = creWatchBundle({
   target: 'ES2019',
 })
 
+export const devServer = creWatchBundle({
+  minify: false,
+  output: [
+    {
+      file: 'index.js',
+      format: 'commonjs',
+    },
+  ],
+  target: 'ES2015',
+})
+
 export const build = series(
   creBundle({
     // minify: true,

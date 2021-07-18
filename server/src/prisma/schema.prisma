@@ -10,11 +10,27 @@ generator client {
 
 generator typegraphql {
   provider = "typegraphql-prisma"
-  output  = "../../node_modules/@generated/type-graphql"
+  output  = "../generated/type-graphql"
 }
 
 model User {
   id      String   @id @default(dbgenerated()) @map("_id") @db.ObjectId
   email   String   @unique
   name    String?
+  followers     User[]   @relation("UserFollows", fields: [followerIDs])
+  followerIDs  String[] @db.Array(ObjectId)
+  following      User[]   @relation("UserFollows", fields: [followingIDs])
+  followingIDs   String[] @db.Array(ObjectId)
+  likePosts Post[] @relation("Likes", fields: [likePostIDs])
+  likePostIDs String[] @db.Array(ObjectId)
+  posts Post[] @relation("Author")
+}
+
+model Post {
+  id String @id @default(dbgenerated()) @map("_id") @db.ObjectId
+  title String
+  author User @relation("Author", fields: [authorId], references: [id])
+  authorId    String   @db.ObjectId
+  likes User[] @relation("Likes", fields: [likeIDs])
+  likeIDs String[] @db.Array(ObjectId)
 }
