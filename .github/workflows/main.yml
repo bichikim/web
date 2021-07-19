@@ -64,8 +64,8 @@ jobs:
         run: yarn run build:libray
       - name: Test
         run: yarn run test
-  build:
-    name: Build
+  build-client:
+    name: Build Client
     needs: test
     runs-on: ubuntu-latest
     steps:
@@ -101,7 +101,74 @@ jobs:
           name: dist
           path: |
             dist
-
+  build-server:
+    name: Build Server
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@master
+      - name: Prepare Pnpm
+        uses: pnpm/action-setup@v2.0.1
+        with:
+          version: 6.7.6
+      - name: Use Yarn Cache
+        uses: actions/cache@v2
+        id: yarn-cache
+        with:
+          path: '**/node_modules'
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+      - name: Use Libray Cache
+        uses: actions/cache@v2
+        id: libray-cache
+        with:
+          path: 'packages/*/lib'
+          key: ${{ runner.os }}-libray-${{ hashFiles('packages/**/*.ts') }}
+      - name: Install Dependencies
+        if: steps.yarn-cache.outputs.cache-hit != 'true'
+        run: yarn install
+      - name: Build Libray
+        if: steps.libray-cache.outputs.cache-hit != 'true'
+        run: yarn run build:libray
+      - name: Build 
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: yarn run build:server
+      - name: Archive Production Artifact
+        uses: actions/upload-artifact@master
+        with:
+          name: dist-server
+          path: |
+            server/lib
+  deploy-server:
+    name: Deploy
+    needs: build-server
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@master
+      - name: Download Artifact
+        uses: actions/download-artifact@master
+        with:
+          name: dist-server
+      - name: Setup Cloud SDK
+        uses: google-github-actions/setup-gcloud@v0.2.1
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+      - name: Build & Publish Docker
+        run: |
+          gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
+          gcloud builds submit --tag gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_SERVICE_NAME }}
+          gcloud config set run/region asia-northeast3
+      - name: Deploy
+        run: |
+          gcloud run deploy ${{ secrets.GCP_APPLICATION }} --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_SERVICE_NAME }} \
+          --platform managed \
+          --allow-unauthenticated \
+          --max-instances 10\
+          --port 8080
+          --memory 512M
 #  deploy:
 #    name: Deploy
 #    needs: build

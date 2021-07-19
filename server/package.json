@@ -1,8 +1,9 @@
 {
-  "name": "@winter-love/server",
+  "name": "coong-server",
   "version": "1.0.16-next.17",
   "private": true,
   "scripts": {
+    "start": "node ./lib/index.js",
     "build": "yarn run generate && ttsc",
     "dev": "tsc-watch --compiler ttypescript/bin/tsc --onSuccess \"cross-env NODE_ENV=development node ./lib/index.js",
     "generate": "prisma generate --schema ./src/prisma/schema.prisma",

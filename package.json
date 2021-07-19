@@ -13,6 +13,7 @@
   "scripts": {
     "dev": "quasar dev",
     "build": "quasar build",
+    "build:server": "pnpm run build --filter coong-server",
     "lint": "eslint --ext .js,.ts,.vue ./",
     "dev:spa": "quasar dev -m spa",
     "dev:libray": "pnpm run dev --filter libraries... --parallel",
