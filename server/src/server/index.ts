@@ -1,11 +1,8 @@
-import {PrismaClient} from '@prisma/client'
 import {ApolloServer} from 'apollo-server'
-import {Context} from 'apollo-server-core'
+import {ContextFunction} from 'apollo-server-core'
 import {buildSchema} from 'type-graphql'
 import {AuthChecker} from 'type-graphql/dist/interfaces'
 import {NonEmptyArray} from 'type-graphql/dist/interfaces/NonEmptyArray'
-
-const prisma = new PrismaClient()
 
 export interface ServerStartOptions {
   port?: number
@@ -13,6 +10,7 @@ export interface ServerStartOptions {
 
 export interface ServerPrePareOptions {
   authChecker?: AuthChecker
+  context?: ContextFunction
   playground?: boolean
   // eslint-disable-next-line @typescript-eslint/ban-types
   resolvers?: NonEmptyArray<Function> | NonEmptyArray<string>
@@ -20,13 +18,13 @@ export interface ServerPrePareOptions {
 
 export const prepare = async (options: ServerPrePareOptions = {}) => {
   const {
-    playground,
     resolvers,
     authChecker,
+    context,
   } = options
 
   if (!resolvers) {
-    throw new Error('require resolvers')
+    return 'needs resolvers'
   }
 
   const schema = await buildSchema({
@@ -35,8 +33,7 @@ export const prepare = async (options: ServerPrePareOptions = {}) => {
   })
 
   const server = new ApolloServer({
-    context: (): Context => ({prisma}),
-    playground,
+    context,
     schema,
   })
 

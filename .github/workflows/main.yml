@@ -141,7 +141,7 @@ jobs:
           path: |
             server/lib
   deploy-server:
-    name: Deploy
+    name: Deploy Server
     needs: build-server
     runs-on: ubuntu-latest
     steps:

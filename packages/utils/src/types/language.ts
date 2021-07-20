@@ -23,6 +23,10 @@ export type PatchOptional<T, K extends keyof T> = {
   [P in Exclude<keyof T, K>]: T[P]
 }
 
+export type PromiseType<T> = T extends Promise<infer P> ? P : T
+
+export type PromiseReturnType<T extends AnyFunction> = PromiseType<ReturnType<T>>
+
 export type MayArray<T> = T | Array<T>
 
 export type ObjectKey = string | symbol | number
