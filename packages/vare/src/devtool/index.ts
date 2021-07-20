@@ -8,7 +8,7 @@ import {
   DevtoolsPluginApi, setupDevtoolsPlugin, StateBase, TimelineEvent,
 } from '@vue/devtools-api'
 import {App} from 'vue-demi'
-import {Atom} from 'src/atom'
+import {Atom, isAtom} from 'src/atom'
 import {genInspectorTree} from './gen-inspector-tree'
 import {genNoneStateInfo} from './gen-none-state-info'
 import {createGetStates} from './get-states'
@@ -102,6 +102,7 @@ export const getDevtool = (app: App, states: Record<string, State<any>>) => {
 
       // if user select the state
       if (state) {
+
         payload.state = {
           state: [state],
         }
@@ -187,7 +188,9 @@ export const startDevtool = (app: App, states: Record<string, State<any> | Atom<
     for (const key of Object.keys(states)) {
       const state = states[key]
 
-      subscribe(state, () => updateState())
+      const _state = isAtom(state) ? state.value : state
+
+      subscribe(_state, () => updateState())
     }
 
     tools.updateTree()

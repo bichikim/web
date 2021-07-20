@@ -99,7 +99,11 @@ module.exports = {
     'array-bracket-spacing': ['error', 'never'],
     'array-callback-return': 'error',
     'arrow-parens': ['error', 'always'],
-    'arrow-spacing': ['error', {after: true, before: true}],
+    'arrow-spacing': ['error',
+      {
+        after: true,
+        before: true,
+      }],
     'block-scoped-var': 'error',
     'block-spacing': ['error', 'never'],
     'brace-style': ['error', '1tbs', {allowSingleLine: true}],
@@ -135,21 +139,29 @@ module.exports = {
     'func-style': ['error', 'declaration', {allowArrowFunctions: true}],
     'function-call-argument-newline': ['error', 'consistent'],
     'function-paren-newline': ['error', 'consistent'],
-    'generator-star-spacing': ['error', {after: false, before: true}],
+    'generator-star-spacing': ['error',
+      {
+        after: false,
+        before: true,
+      }],
     'grouped-accessor-pairs': 'error',
     'id-length': ['error', {exceptions: ['_', 'x', 'y', 'z', 'p', 'm']}],
     'import/named': 'off',
     'import/no-absolute-path': 'off',
     'import/no-unresolved': 'off',
-    indent: ['error', 2, {
-      SwitchCase: 1,
-    }],
+    indent: [
+      'error', 2, {
+        SwitchCase: 1,
+      },
+    ],
     'jsx-quotes': ['error', 'prefer-single'],
-    'key-spacing': ['error', {
-      afterColon: true,
-      beforeColon: false,
-      mode: 'strict',
-    }],
+    'key-spacing': [
+      'error', {
+        afterColon: true,
+        beforeColon: false,
+        mode: 'strict',
+      },
+    ],
     'keyword-spacing': [
       'error', {
         after: true,
@@ -166,19 +178,24 @@ module.exports = {
     'line-comment-position': ['warn', {position: 'above'}],
     // 'linebreak-style': ['error', 'unix'],
     'max-classes-per-file': 'error',
+
     'max-depth': ['error', {max: 4}],
-    'max-len': ['error', {
-      code: 120,
-      ignoreComments: true,
-      ignoreTrailingComments: true,
-      ignoreUrls: true,
-    }],
+    'max-len': [
+      'error', {
+        code: 120,
+        ignoreComments: true,
+        ignoreTrailingComments: true,
+        ignoreUrls: true,
+      },
+    ],
     'max-lines': ['error', 600],
-    'max-lines-per-function': ['error', {
-      max: 100,
-      skipBlankLines: true,
-      skipComments: true,
-    }],
+    'max-lines-per-function': [
+      'error', {
+        max: 100,
+        skipBlankLines: true,
+        skipComments: true,
+      },
+    ],
     'max-nested-callbacks': ['error', {max: 3}],
     'max-params': ['error', {max: 4}],
     'max-statements': ['error', {max: 20}],
@@ -193,6 +210,7 @@ module.exports = {
     // typescript decoration error
     // 'new-cap': 'error',
     'no-confusing-arrow': 'warn',
+
     'no-console': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
     'no-constructor-return': 'error',
     'no-continue': 'error',
@@ -241,6 +259,7 @@ module.exports = {
     'no-negated-condition': 'error',
     // 'no-nested-ternary': 'error',
     'no-new': 'error',
+
     'no-new-func': 'error',
     'no-new-object': 'error',
     'no-new-require': 'error',
@@ -254,6 +273,7 @@ module.exports = {
     'no-restricted-globals': 'error',
     'no-restricted-properties': 'error',
     'no-return-assign': 'error',
+    'unicorn/no-abusive-eslint-disable': 'off',
     'no-return-await': 'error',
     'no-script-url': 'error',
     'no-self-compare': 'error',
@@ -286,10 +306,12 @@ module.exports = {
     'no-whitespace-before-property': 'error',
     'no-with': 'error',
     'nonblock-statement-body-position': 'error',
-    'object-curly-newline': ['warn', {
-      consistent: true,
-      multiline: true,
-    }],
+    'object-curly-newline': [
+      'warn', {
+        consistent: true,
+        multiline: true,
+      },
+    ],
     'object-curly-spacing': ['error', 'never'],
     'one-var': ['error', 'never'],
     'operator-assignment': ['warn', 'always'],
@@ -337,9 +359,11 @@ module.exports = {
     'space-in-parens': ['error', 'never'],
     'space-infix-ops': 'error',
     'space-unary-ops': 'error',
-    'switch-colon-spacing': ['error', {
-      after: false,
-    }],
+    'switch-colon-spacing': [
+      'error', {
+        after: false,
+      },
+    ],
     'template-curly-spacing': ['error', 'never'],
     'template-tag-spacing': ['error', 'never'],
     'typescript-sort-keys/interface': 'warn',

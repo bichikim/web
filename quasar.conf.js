@@ -27,8 +27,8 @@ module.exports = configure((ctx) => {
       'i18n',
       'emotion',
       'three',
+      'vare',
     ],
-
     // Full list of options: https://v2.quasar.dev/quasar-cli/quasar-conf-js#Property%3A-build
     build: {
       // available values: 'hash', 'history'
@@ -199,6 +199,10 @@ module.exports = configure((ctx) => {
       workboxOptions: {},
 
       workboxPluginMode: 'GenerateSW',
+    },
+
+    sourceFiles: {
+      store: 'src/store-ignore',
     },
 
     // https://v2.quasar.dev/quasar-cli/developing-ssr/configuring-ssr

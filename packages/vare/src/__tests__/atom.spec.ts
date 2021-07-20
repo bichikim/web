@@ -5,60 +5,116 @@ import {
 } from 'vue-demi'
 
 describe('atom', () => {
-  it('should ', () => {
-    const fooAtom = atom('foo')
+  it('should have value', () => {
+    const fooAtom = atom({
+      name: 'foo',
+    })
 
-    expect(fooAtom.value).toBe('foo')
-    fooAtom.value = 'bar'
-    expect(fooAtom.value).toBe('bar')
+    expect(fooAtom.value).toEqual({
+      name: 'foo',
+    })
+    fooAtom.value.name = 'bar'
+    expect(fooAtom.value).toEqual({
+      name: 'bar',
+    })
+  })
+  it('should bind value', () => {
+    const fooAtom = atom({
+      name: 'foo',
+    })
+
+    const barAtom = atom(fooAtom)
+
+    fooAtom.value.name = 'bar'
+    expect(barAtom.value).toEqual({
+      name: 'bar',
+    })
+
+    barAtom.value.name = 'john'
+
+    expect(fooAtom.value).toEqual({
+      name: 'john',
+    })
   })
   it('should act', () => {
-    const fooAtom = atom('foo', (value: string) => {
-      return `${value}??`
+    const fooAtom = atom({
+      name: 'foo',
+    }, (state, value: string) => {
+      state.name = `${value}??`
     })
 
-    expect(fooAtom.value).toBe('foo')
-    fooAtom.value = 'bar'
-    expect(fooAtom.value).toBe('bar')
+    expect(fooAtom.value).toEqual({
+      name: 'foo',
+    })
+    fooAtom.value.name = 'bar'
+    expect(fooAtom.value).toEqual({
+      name: 'bar',
+    })
     fooAtom.act('john')
-    expect(fooAtom.value).toBe('john??')
+    expect(fooAtom.value).toEqual({
+      name: 'john??',
+    })
   })
   it('should act as async', async () => {
-    const fooAtom = atom('foo', (value: string) => {
-      return Promise.resolve(`${value}??`)
+    const fooAtom = atom({
+      name: 'foo',
+    }, async (state, value: string) => {
+      await Promise.resolve(null)
+      state.name = `${value}??`
     })
 
-    expect(fooAtom.value).toBe('foo')
+    expect(fooAtom.value).toEqual({
+      name: 'foo',
+    })
     fooAtom.act('john')
-    expect(fooAtom.value).toBe('foo')
+    expect(fooAtom.value).toEqual({
+      name: 'foo',
+    })
     await flushPromises()
-    expect(fooAtom.value).toBe('john??')
+    expect(fooAtom.value).toEqual({
+      name: 'john??',
+    })
   })
   it('should handle act error', () => {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const fooAtom = atom('foo', (value: string) => {
+    const fooAtom = atom({
+      name: 'foo',
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    }, (state, value: string) => {
       throw new Error('just error')
     })
 
-    expect(fooAtom.value).toBe('foo')
+    expect(fooAtom.value).toEqual({
+      name: 'foo',
+    })
     const result = fooAtom.act('john')
     expect(result).toBe(false)
-    expect(fooAtom.value).toBe('foo')
+    expect(fooAtom.value).toEqual({
+      name: 'foo',
+    })
     expect(fooAtom.error).toEqual(new Error('just error'))
   })
   it('should handle act error as async', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const fooAtom = atom('foo', (value: string) => {
+
+    const fooAtom = atom({
+      name: 'foo',
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    }, (state, value: string) => {
       // eslint-disable-next-line prefer-promise-reject-errors
       return Promise.reject('just error')
     })
 
-    expect(fooAtom.value).toBe('foo')
+    expect(fooAtom.value).toEqual({
+      name: 'foo',
+    })
     const promise = fooAtom.act('john')
-    expect(fooAtom.value).toBe('foo')
+    expect(fooAtom.value).toEqual({
+      name: 'foo',
+    })
     expect(promise).resolves.toBe(false)
     await flushPromises()
-    expect(fooAtom.value).toBe('foo')
+    expect(fooAtom.value).toEqual({
+      name: 'foo',
+    })
     expect(fooAtom.error).toBe('just error')
   })
 
@@ -70,7 +126,8 @@ describe('atom', () => {
     })
 
     expect(fooAtom.value).toEqual({link: '', name: 'foo'})
-    fooAtom.value = {link: '', name: 'bar'}
+    fooAtom.value.link = ''
+    fooAtom.value.name = 'bar'
     expect(fooAtom.value).toEqual({link: '', name: 'bar'})
     fooAtom.value.link = 'https://foo.com'
     expect(fooAtom.value).toEqual({link: 'https://foo.com', name: 'bar'})

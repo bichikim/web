@@ -1,5 +1,6 @@
 import {State} from 'src/state'
 import {StateBase} from '@vue/devtools-api'
+import {isAtom} from 'src/atom'
 
 export type StateBases = Record<string, StateBase>
 
@@ -17,7 +18,7 @@ export const createGetStates = (states: Record<string, State<any>>) => {
         editable: true,
         key,
         objectType: 'reactive',
-        value,
+        value: isAtom(value) ? value.value : value,
       }
       return result
     }, {})

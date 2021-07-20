@@ -39,5 +39,5 @@
       "module": "CommonJS"
     }
   },
-  "exclude": ["/dist", ".quasar", "node_modules", "packages/**/*"]
+  "exclude": ["/dist", ".quasar", "node_modules", "packages/**/*", "server/**/*"]
 }

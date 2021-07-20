@@ -1,5 +1,6 @@
-import {defineComponent, h, ref} from 'vue'
+import {user} from 'src/store'
 import {useAppClipboard} from 'src/use'
+import {computed, defineComponent, h, ref} from 'vue'
 
 export const Main = defineComponent({
   name: 'Main',
@@ -7,6 +8,11 @@ export const Main = defineComponent({
     const valueRef = ref('')
     const inputRef = ref('')
     const {write, read, state} = useAppClipboard(valueRef)
+
+    const updateName = user.updateUserName.act
+    const name = computed(() => {
+      return user.state.value.name
+    })
 
     const readAndUpdateInput = async () => {
       const value = await read()
@@ -23,6 +29,8 @@ export const Main = defineComponent({
         h('input', {onInput: (event) => (inputRef.value = event.target.value), value: inputRef.value}),
         h('button', {onClick: () => write(inputRef.value)}, 'write'),
         h('button', {onClick: () => readAndUpdateInput()}, 'read'),
+        h('button', {onClick: () => updateName('bar')}, 'update name'),
+        h('div', name.value),
       ])
     )
   },

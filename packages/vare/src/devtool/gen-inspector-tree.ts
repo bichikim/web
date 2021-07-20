@@ -4,6 +4,7 @@ import {AllKinds, getIdentifier, getName, getRelates} from 'src/info'
 
 const textBackgroundColors = {
   action: 0x73ABFE,
+  atom: 0xC04AC2,
   computation: 0x42B983,
   multi: 0xFFC66D,
   mutation: 0xFF984F,
@@ -18,6 +19,7 @@ export const genInspectorTree = (states: Record<string, State<any>>) => {
   const nodes = Object.keys(states).map((key) => {
     const state = states[key]
     const children: any[] = []
+    const type = getIdentifier(state) ?? 'unknown'
 
     const relates = getRelates(state)
 
@@ -89,8 +91,8 @@ export const genInspectorTree = (states: Record<string, State<any>>) => {
       id: key,
       label: key,
       tags: [{
-        backgroundColor: textBackgroundColors.state,
-        label: 'state',
+        backgroundColor: textBackgroundColors[type],
+        label: type,
         textColor: 0x000000,
       }],
     }
