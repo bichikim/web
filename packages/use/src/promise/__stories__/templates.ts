@@ -5,10 +5,10 @@ import {setTimeoutPromise} from '@winter-love/utils'
 export const Default = () => ({
   setup() {
     const {execute, data} = usePromise2((context) => {
-      const {count} = context
+      const {previousCount} = context
       // eslint-disable-next-line no-magic-numbers
       return setTimeoutPromise(1000).then(() => {
-        return `foo ${count}`
+        return `foo ${previousCount}`
       })
     })
 

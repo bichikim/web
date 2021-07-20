@@ -82,8 +82,8 @@ export const usePromise = <Data, Args extends any[], Error = any>(
 }
 
 export interface RecipeContext<Data, Error> {
-  readonly count: number
-  previousData: Data | undefined
+  readonly previousCount: number
+  readonly previousData: Data | undefined
   readonly previousError: Error | undefined
   readonly previousFetching: boolean
   readonly previousPromise: Promise<Data> | undefined
@@ -109,17 +109,18 @@ export const usePromise2 = <Data, Args extends any[] = [], Error = any>(
     if (cleanOnExecute) {
       dataRef.value = undefined
     }
-    fetchingRef.value = true
-    errorRef.value = undefined
-    countRef.value += 1
 
     const context = freeze({
-      count: countRef.value,
+      previousCount: countRef.value,
       previousData: dataRef.value,
       previousError: errorRef.value,
       previousFetching: fetchingRef.value,
       previousPromise: promiseRef.value,
     })
+
+    fetchingRef.value = true
+    errorRef.value = undefined
+    countRef.value += 1
 
     const promise = recipe(context, ...args)
       .then((data) => {
