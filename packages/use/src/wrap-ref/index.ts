@@ -8,14 +8,19 @@ export type RefWithInit<T, P extends T> =
 
 export interface WrapRefOptions<P> {
   /**
-   * Use with caution. The returned Ref will update the value Ref argument
-   * 주의 하여 사용 하세요. return Ref 는 value Ref argument 를 업데이트 할 것입니다
+   * Use with caution. Updating the returned Ref updates the value of Ref argument
+   * 주의 하여 사용 하세요. return Ref 를 업데이트 하는 것은 value Ref argument 를 업데이트 할 것입니다
    * @default true
    */
   bindValue?: boolean
   initState?: P | undefined
 }
 
+/**
+ * Makes a ref value with a value, ref value, toRef value or computed value
+ * @param value
+ * @param options ref to WrapRefOptions
+ */
 export const wrapRef = <T,
   P extends T = T>(
     value?: MayRef<T>,
