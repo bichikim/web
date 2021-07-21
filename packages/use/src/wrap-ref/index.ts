@@ -1,4 +1,5 @@
 import {NotUndefined} from '@winter-love/utils'
+import {isToRef} from 'src/isToRef'
 import {MayRef} from 'src/types'
 import {isReadonly, isRef, ref, Ref, watch} from 'vue-demi'
 
@@ -27,7 +28,7 @@ export const wrapRef = <T,
 
     if (bindValue) {
       watch(innerRef, (_value) => {
-        if (isReadonly(value)) {
+        if (isReadonly(value) || isToRef(value)) {
           return
         }
         (value as any).value = _value

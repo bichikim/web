@@ -1,10 +1,17 @@
 import {mount} from '@vue/test-utils'
-import {computed, defineComponent, h, ref} from 'vue-demi'
+import {computed, defineComponent, h, ref, toRef} from 'vue-demi'
 import {wrapRef} from '../index'
 
 const setup = () => {
   const Component = defineComponent({
-    setup() {
+    props: {
+      count: {default: 0, type: Number},
+    },
+    setup(props) {
+      const countProp = toRef(props, 'count')
+
+      const clonedCountProp = wrapRef(countProp)
+
       const count = ref(0)
       const clonedCount = wrapRef(count)
       const unbindClonedCount = wrapRef(count, {
@@ -22,6 +29,10 @@ const setup = () => {
       const bindUndefinedCount = wrapRef(undefinedCount, {initState: 0})
       const undefinedWrappedCount = wrapRef<undefined | number>(undefined, {initState: 0})
       //
+
+      const increaseClonedCountProp = () => {
+        clonedCountProp.value += 1
+      }
       const increaseCount = () => {
         count.value += 1
       }
@@ -38,13 +49,13 @@ const setup = () => {
         }
         undefinedCount.value += 1
       }
-
       const increaseUnbindUndefinedCount = () => {
         unbindUndefinedCount.value += 1
       }
 
       return () => (
         h('div', [
+          h('div', {id: 'clonedCountProp'}, clonedCountProp.value),
           h('div', {id: 'count'}, count.value),
           h('div', {id: 'clonedCount'}, clonedCount.value),
           h('div', {id: 'unbindClonedCount'}, unbindClonedCount.value),
@@ -54,6 +65,7 @@ const setup = () => {
           h('div', {id: 'unbindUndefinedCount'}, unbindUndefinedCount.value),
           h('div', {id: 'undefinedWrappedCount'}, undefinedWrappedCount.value),
           h('div', {id: 'bindUndefinedCount'}, bindUndefinedCount.value),
+          h('button', {id: 'increaseClonedCountProp', onClick: increaseClonedCountProp}, 'increase cloned count prop'),
           h('button', {id: 'increaseCount', onclick: increaseCount}, 'increase count'),
           h('button', {id: 'increaseUnbindCount', onclick: increaseUnbindCount}, 'increase count'),
           h('button', {id: 'increaseClonedCompletedCount', onclick: increaseClonedCompletedCount}, 'increase count'),
@@ -72,7 +84,7 @@ const setup = () => {
 }
 
 describe('wrap-ref', () => {
-  it('should wrap ref', () => {
+  it('should wrap a ref', () => {
     const {wrapper} = setup()
 
     expect(wrapper.get('#count').text()).toBe('0')
@@ -80,7 +92,7 @@ describe('wrap-ref', () => {
     expect(wrapper.get('#unbindClonedCount').text()).toBe('0')
   })
 
-  it('should update wrapped ref', async () => {
+  it('should update a wrapped ref', async () => {
     const {wrapper} = setup()
 
     await wrapper.get('#increaseCount').trigger('click')
@@ -89,7 +101,7 @@ describe('wrap-ref', () => {
     expect(wrapper.get('#unbindClonedCount').text()).toBe('1')
   })
 
-  it('should not update Original ref if it wrapped with a bind false option', async () => {
+  it('should not update an Original ref if it wrapped with a bind false option', async () => {
     const {wrapper} = setup()
     expect(wrapper.get('#count').text()).toBe('0')
     expect(wrapper.get('#clonedCount').text()).toBe('0')
@@ -109,7 +121,7 @@ describe('wrap-ref', () => {
     expect(wrapper.get('#unbindClonedCount').text()).toBe('2')
   })
 
-  it('should not update Original computed ref', async () => {
+  it('should not update an Original computed ref', async () => {
     const {wrapper} = setup()
     await wrapper.get('#increaseCount').trigger('click')
     expect(wrapper.get('#count').text()).toBe('1')
@@ -130,6 +142,12 @@ describe('wrap-ref', () => {
     expect(wrapper.get('#unbindClonedCount').text()).toBe('2')
     expect(wrapper.get('#computedCount').text()).toBe('2')
     expect(wrapper.get('#clonedComputedCount').text()).toBe('2')
+  })
+  it('should not update an Original toRef', async () => {
+    const {wrapper} = setup()
+    await wrapper.get('#increaseClonedCountProp').trigger('click')
+
+    expect(wrapper.get('#clonedCountProp').text()).toBe('1')
   })
   it('should wrap ref with initState', async () => {
     const {wrapper} = setup()
