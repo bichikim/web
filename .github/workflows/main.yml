@@ -158,9 +158,6 @@ jobs:
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
           service_account_key: ${{ secrets.GCP_SA_KEY }}
-      - name: Configure Docker
-        run: |
-          gcloud auth configure-docker  
       - name: Build & Publish Docker
         run: |
           gcloud builds submit --tag gcr.io/${{ secrets.GCP_PROJECT_ID }}/$GCP_SERVICE_NAME:$GITHUB_SHA
