@@ -159,11 +159,11 @@ jobs:
       - name: Build & Publish Docker
         run: |
           gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
-          gcloud builds submit --tag gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_SERVICE_NAME }}:$BUILD_ID
+          gcloud builds submit --tag gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_SERVICE_NAME }}
           gcloud config set run/region asia-northeast3
       - name: Deploy
         run: |
-          gcloud run deploy ${{ secrets.GCP_SERVICE_NAME }} --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_SERVICE_NAME }}:$BUILD_ID \
+          gcloud beta run deploy ${{ secrets.GCP_SERVICE_NAME }} --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_SERVICE_NAME }} \
           --platform managed \
           --allow-unauthenticated \
           --max-instances 10\
