@@ -170,7 +170,7 @@ jobs:
       - name: Tag
         run: |
           docker tag \
-          gcr.io/${{ secrets.GCP_PROJECT_ID }}/$GCP_SERVICE_NAME:$GITHUB_SHA 
+          gcr.io/${{ secrets.GCP_PROJECT_ID }}/$GCP_SERVICE_NAME:$GITHUB_SHA \
           gcr.io/${{ secrets.GCP_PROJECT_ID }}/$GCP_SERVICE_NAME:latest
       - name: Push
         run: |
@@ -181,7 +181,7 @@ jobs:
           --platform managed \
           --region asia-northeast3 \
           --allow-unauthenticated \
-          --max-instances 10\
+          --max-instances 10 \
           --port 8080 \
           --memory 512M
 #  deploy:
