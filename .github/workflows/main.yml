@@ -166,6 +166,12 @@ jobs:
         run: |
           touch server/.env
           echo DATABASE_URL=${{ secrets.DATABASE_URL }} >> server/.env
+      - name: Isolate Dependencies
+        run: |
+          cd server
+          yarn install
+          yarn run generate
+          cd ..
       - name: Build
         run: |
           docker build \
