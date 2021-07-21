@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/emotion",
-  "version": "1.0.16-next.18",
+  "version": "1.0.16-next.19",
   "description": "Emotion for vue",
   "repository": "git@github.com:winter-love/web.git",
   "author": "bichi@live.co.kr",
@@ -20,8 +20,8 @@
     "@emotion/css": "^11.1.3",
     "@emotion/serialize": "^1.0.2",
     "@emotion/utils": "^1.0.0",
-    "@winter-love/use": "^1.0.16-next.18",
-    "@winter-love/utils": "^1.0.16-next.18",
+    "@winter-love/use": "^1.0.16-next.19",
+    "@winter-love/utils": "^1.0.16-next.19",
     "clsx": "^1.1.1",
     "vue-demi": "^0.9.1"
   },
