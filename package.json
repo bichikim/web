@@ -21,6 +21,7 @@
     "build:spa": "quasar build -m spa",
     "build:libray": "pnpm run build --filter libraries... --stream",
     "version:patch": "lerna version patch",
+    "version:patch-force": "lerna version patch --force-publish",
     "publish:patch": "lerna publish from-package",
     "format:package.json": "sort-package-json \"package.json\" \"packages/*/package.json\" \"server/package.json\" ",
     "version:next": "lerna version prerelease --preid next",
