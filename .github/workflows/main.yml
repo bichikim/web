@@ -163,7 +163,7 @@ jobs:
           gcloud config set run/region asia-northeast3
       - name: Deploy
         run: |
-          gcloud run deploy ${{ secrets.GCP_APPLICATION }} --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_SERVICE_NAME }} \
+          gcloud run deploy ${{ secrets.GCP_SERVICE_NAME }} --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_SERVICE_NAME }}:$BUILD_ID \
           --platform managed \
           --allow-unauthenticated \
           --max-instances 10\
