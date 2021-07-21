@@ -162,6 +162,10 @@ jobs:
       - name: Configure Docker
         run: |
           gcloud auth configure-docker
+      - name: Create Env File
+        run: |
+          touch server/.env
+          echo DATABASE_URL=${{ secrets.DATABASE_URL }} >> server/.env
       - name: Build
         run: |
           docker build \
@@ -180,7 +184,6 @@ jobs:
         run: |
           gcloud run deploy $GCP_SERVICE_NAME --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/$GCP_SERVICE_NAME:$GITHUB_SHA \
           --quiet \
-          --set-env-vars DATABASE_URL=${{ secrets.DATABASE_URL }} \
           --platform managed \
           --region asia-northeast3 \
           --allow-unauthenticated \
