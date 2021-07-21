@@ -32,6 +32,6 @@
     "gulp": "^4.0.2",
     "vue": "^3.0.11"
   },
-  "gitHead": "8ffb6482de0089c4a6b58a35d1996767d4948226",
+  "gitHead": "2fb93aea9a5a38a7778495106787001ffe0d25f6",
   "unpack": "lib/index.umd.js"
 }

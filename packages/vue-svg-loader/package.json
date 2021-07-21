@@ -9,5 +9,6 @@
   "dependencies": {
     "loader-utils": "^2.0.0",
     "svgo": "^2.3.0"
-  }
+  },
+  "gitHead": "2fb93aea9a5a38a7778495106787001ffe0d25f6"
 }
