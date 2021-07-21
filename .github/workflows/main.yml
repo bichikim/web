@@ -158,7 +158,7 @@ jobs:
           service_account_key: ${{ secrets.GCP_SA_KEY }}
       - name: Build & Publish Docker
         run: |
-          gcloud build -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_SERVICE_NAME }}
+          gcloud build -f server.Dockerfile -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_SERVICE_NAME }}
       - name: Deploy
         run: |
           gcloud beta run deploy ${{ secrets.GCP_SERVICE_NAME }} --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_SERVICE_NAME }} \
