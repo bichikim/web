@@ -1,10 +1,12 @@
-FROM node:14-slim
+FROM node:14
 
 WORKDIR /usr/src/app
 
 COPY ./server ./
 
 RUN ls -R
+RUN yarn install --production
+RUN yarn run generate
 
 EXPOSE 8080
 
