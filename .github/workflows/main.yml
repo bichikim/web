@@ -3,6 +3,8 @@ on:
   push:
     branches:
       - master
+      - staging
+      - dev
 
 jobs:
   build-libray:
@@ -144,8 +146,11 @@ jobs:
     name: Deploy Server
     needs: build-server
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master'
     env:
       GCP_SERVICE_NAME: coong-back-end
+      GCP_IAMGE_NAME: gcr.io/${{ secrets.GCP_PROJECT_ID }}/coong-back-end:$GITHUB_SHA
+      GCP_IAMGE_NAME_LATEST: gcr.io/${{ secrets.GCP_PROJECT_ID }}/coong-back-end:latest
     steps:
       - name: Checkout Repo
         uses: actions/checkout@master
@@ -170,24 +175,77 @@ jobs:
         run: |
           docker build \
           -f server.Dockerfile \
-          -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/$GCP_SERVICE_NAME:$GITHUB_SHA \
+          -t $GCP_IAMGE_NAME \
           .
       - name: Tag
         run: |
           docker tag \
-          gcr.io/${{ secrets.GCP_PROJECT_ID }}/$GCP_SERVICE_NAME:$GITHUB_SHA \
-          gcr.io/${{ secrets.GCP_PROJECT_ID }}/$GCP_SERVICE_NAME:latest
+          $GCP_IAMGE_NAME \
+          $GCP_IAMGE_NAME_LATEST
       - name: Push
         run: |
-          docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/$GCP_SERVICE_NAME:$GITHUB_SHA
+          docker push $GCP_IAMGE_NAME
       - name: Deploy
         run: |
-          gcloud run deploy $GCP_SERVICE_NAME --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/$GCP_SERVICE_NAME:$GITHUB_SHA \
+          gcloud run deploy $GCP_SERVICE_NAME --image $GCP_IAMGE_NAME \
           --quiet \
           --platform managed \
           --region asia-northeast3 \
           --allow-unauthenticated \
           --max-instances 10 \
+          --port 8080 \
+          --memory 512M
+  deploy-development-server:
+    name: Deploy Dev Server
+    needs: build-server
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/dev
+    env:
+      GCP_SERVICE_NAME: coong-back-end-dev
+      GCP_IAMGE_NAME: gcr.io/${{ secrets.GCP_PROJECT_ID }}/coong-back-end-dev:$GITHUB_SHA
+      GCP_IAMGE_NAME_LATEST: gcr.io/${{ secrets.GCP_PROJECT_ID }}/coong-back-end-dev:latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@master
+      - name: Download Artifact
+        uses: actions/download-artifact@master
+        with:
+          name: dist-server
+          path: server/lib
+      - name: Setup Cloud SDK
+        uses: google-github-actions/setup-gcloud@v0.2.1
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+      - name: Configure Docker
+        run: |
+          gcloud auth configure-docker
+      - name: Create Env File
+        run: |
+          touch server/.env
+          echo DATABASE_URL=${{ secrets.DATABASE_URL_DEV }} >> server/.env
+      - name: Build
+        run: |
+          docker build \
+          -f server.Dockerfile \
+          -t $GCP_IAMGE_NAME \
+          .
+      - name: Tag
+        run: |
+          docker tag \
+          $GCP_IAMGE_NAME \
+          $GCP_IAMGE_NAME_LATEST
+      - name: Push
+        run: |
+          docker push $GCP_IAMGE_NAME
+      - name: Deploy
+        run: |
+          gcloud run deploy $GCP_SERVICE_NAME --image $GCP_IAMGE_NAME \
+          --quiet \
+          --platform managed \
+          --region asia-northeast3 \
+          --allow-unauthenticated \
+          --max-instances 2 \
           --port 8080 \
           --memory 512M
 #  deploy:
