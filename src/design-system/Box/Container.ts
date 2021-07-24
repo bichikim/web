@@ -1,16 +1,8 @@
-import {SystemProps, systems} from 'src/design-system/system'
 import {styled} from 'src/boot/emotion'
-import {PropType} from 'vue'
-
-export const containerProps = {
-  css: {default: () => ({}), type: Object as PropType<SystemProps>},
-}
+import {systems} from 'src/design-system/system'
 
 export const Container = styled('div', {
   name: 'Container',
-  props: {
-    ...containerProps,
-  },
   stylePortal: 'css',
 })(
   systems,

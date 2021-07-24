@@ -1,4 +1,4 @@
-import {createSystemConfig, system} from '@winter-love/style-system'
+import {createSystemConfig, system} from 'src/style-system'
 import {Property} from 'csstype'
 import {getResponsiveProp} from 'src/lib/get-responsive-prop'
 import {Prop} from 'vue'
@@ -88,9 +88,7 @@ const systemOptions = {
   borderY: colors({
     properties: ['borderTop', 'borderBottom'],
   }),
-  bottom: true,
   color: colors(),
-  columnGap: true,
   corner: radii({
     property: 'borderRadius',
   }),
@@ -107,7 +105,6 @@ const systemOptions = {
     properties: ['borderTopRightRadius'],
   }),
   cursor: cursors(),
-  display: true,
   dp: {
     property: 'display' as const,
   },
@@ -116,23 +113,7 @@ const systemOptions = {
   fontSize: fontSizes(),
   fontStyles: true,
   fontWeight: fontWeights(),
-  grid: true,
-  gridAutoColumns: true,
-  gridAutoFlow: true,
-  gridAutoRows: true,
-  gridColumn: true,
-  gridColumnEnd: true,
-  gridColumnStart: true,
-  gridRow: true,
-  gridRowEnd: true,
-  gridRowStart: true,
-  gridTemplate: true,
-  gridTemplateAreas: true,
-  gridTemplateColumns: true,
-  gridTemplateRows: true,
   height: sizes(),
-  left: true,
-  letterSpacing: true,
   lineHeight: lineHeights(),
   m: space({
     property: 'margin',
@@ -173,9 +154,6 @@ const systemOptions = {
     property: 'marginTop',
   }),
   opacity: opacities(),
-  overflow: true,
-  overflowX: true,
-  overflowY: true,
   p: space({
     property: 'padding',
   }),
@@ -204,7 +182,6 @@ const systemOptions = {
   pl: space({
     property: 'paddingLeft',
   }),
-  position: true,
   pr: space({
     property: 'paddingRight',
   }),
@@ -217,19 +194,13 @@ const systemOptions = {
   py: space({
     properties: ['paddingTop', 'paddingBottom'],
   }),
-  right: true,
-  rowGap: true,
   size: sizes({
     properties: ['width', 'height'],
   }),
-  textAlign: true,
-  top: true,
-  verticalAlign: true,
-  whiteSpace: true,
   width: sizes(),
 }
 
-export const commons = system(systemOptions)
+export const commonSystems = system(systemOptions)
 
 export type CommonsPropKeys = keyof typeof systemOptions
 
@@ -248,39 +219,20 @@ export const commonProps: Record<CommonsPropKeys, Prop<any>> = {
   borderWidth: getResponsiveProp(),
   borderX: getResponsiveProp(),
   borderY: getResponsiveProp(),
-  bottom: getResponsiveProp<Property.Bottom>(),
   color: getResponsiveProp(),
-  columnGap: getResponsiveProp<Property.ColumnGap>(),
   corner: getResponsiveProp(),
   cornerBL: getResponsiveProp(),
   cornerBR: getResponsiveProp(),
   cornerTL: getResponsiveProp(),
   cornerTR: getResponsiveProp(),
   cursor: getResponsiveProp<Property.Cursor>(),
-  display: getResponsiveProp<Property.Display>(),
   dp: getResponsiveProp<Property.Display>(),
   filter: getResponsiveProp<Property.Filter>(),
   font: getResponsiveProp<Property.Font>(),
   fontSize: getResponsiveProp<Property.FontSize>(),
   fontStyles: getResponsiveProp(),
   fontWeight: getResponsiveProp<Property.FontWeight>(),
-  grid: getResponsiveProp<Property.Grid>(),
-  gridAutoColumns: getResponsiveProp<Property.GridAutoColumns>(),
-  gridAutoFlow: getResponsiveProp<Property.GridAutoFlow>(),
-  gridAutoRows: getResponsiveProp<Property.GridAutoRows>(),
-  gridColumn: getResponsiveProp<Property.GridColumn>(),
-  gridColumnEnd: getResponsiveProp<Property.GridColumnEnd>(),
-  gridColumnStart: getResponsiveProp<Property.GridColumnStart>(),
-  gridRow: getResponsiveProp<Property.GridRow>(),
-  gridRowEnd: getResponsiveProp<Property.GridRowEnd>(),
-  gridRowStart: getResponsiveProp<Property.GridRowStart>(),
-  gridTemplate: getResponsiveProp<Property.GridTemplate>(),
-  gridTemplateAreas: getResponsiveProp<Property.GridTemplateAreas>(),
-  gridTemplateColumns: getResponsiveProp<Property.GridAutoColumns>(),
-  gridTemplateRows: getResponsiveProp<Property.GridTemplateRows>(),
   height: getResponsiveProp(),
-  left: getResponsiveProp<Property.Left>(),
-  letterSpacing: getResponsiveProp(),
   lineHeight: getResponsiveProp<Property.LineHeight>(),
   m: getResponsiveProp<Property.Margin>(),
   margin: getResponsiveProp(),
@@ -299,9 +251,6 @@ export const commonProps: Record<CommonsPropKeys, Prop<any>> = {
   mr: getResponsiveProp(),
   mt: getResponsiveProp(),
   opacity: getResponsiveProp<Property.Opacity>(),
-  overflow: getResponsiveProp<Property.Overflow>(),
-  overflowX: getResponsiveProp<Property.OverflowX>(),
-  overflowY: getResponsiveProp<Property.OverflowY>(),
   p: getResponsiveProp(),
   padding: getResponsiveProp(),
   paddingBottom: getResponsiveProp(),
@@ -312,17 +261,10 @@ export const commonProps: Record<CommonsPropKeys, Prop<any>> = {
   paddingY: getResponsiveProp(),
   pb: getResponsiveProp(),
   pl: getResponsiveProp(),
-  position: getResponsiveProp<Property.Position>(),
   pr: getResponsiveProp(),
   pt: getResponsiveProp(),
   px: getResponsiveProp(),
   py: getResponsiveProp(),
-  right: getResponsiveProp<Property.Right>(),
-  rowGap: getResponsiveProp<Property.RowGap>(),
   size: getResponsiveProp<Property.Width>(),
-  textAlign: getResponsiveProp(),
-  top: getResponsiveProp<Property.Top>(),
-  verticalAlign: getResponsiveProp<Property.VerticalAlign>(),
-  whiteSpace: getResponsiveProp(),
   width: getResponsiveProp(),
 }

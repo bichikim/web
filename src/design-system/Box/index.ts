@@ -1,5 +1,12 @@
-import {ExtractPropTypes, FunctionalComponent, h} from 'vue'
-import {Container, containerProps} from './Container'
+import {ExtractPropTypes, FunctionalComponent, h, PropType} from 'vue'
+import {Container} from './Container'
+import {SystemProps} from 'src/design-system'
 
-export const Box: FunctionalComponent<ExtractPropTypes<typeof containerProps>> =
-  (Props, {slots}) => h(Container, {css: Props.css}, () => slots.default?.())
+export const boxPropOptions = {
+  css: {type: Object as PropType<SystemProps>},
+}
+
+export type BoxProps = Partial<ExtractPropTypes<typeof boxPropOptions>>
+
+export const Box: FunctionalComponent<BoxProps> =
+  (props, {slots}) => h(Container, props, () => slots.default?.())
