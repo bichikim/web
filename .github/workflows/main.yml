@@ -3,7 +3,6 @@ on:
   push:
     branches:
       - master
-      - staging
       - dev
 
 jobs:
@@ -195,7 +194,7 @@ jobs:
           --max-instances 10 \
           --port 8080 \
           --memory 512M
-  deploy-development-server:
+  deploy-dev-server:
     name: Deploy Dev Server
     needs: build-server
     runs-on: ubuntu-latest
