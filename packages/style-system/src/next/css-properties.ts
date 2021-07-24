@@ -1,4 +1,4 @@
-import {Property, StandardLonghandProperties, StandardShorthandProperties} from 'csstype'
+import {StandardLonghandProperties, StandardShorthandProperties} from 'csstype'
 
 export const cssShortProperties: Record<keyof StandardShorthandProperties, true> = {
   all: true,
