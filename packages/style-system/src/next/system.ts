@@ -168,12 +168,12 @@ const getStyle = <Theme extends PureObject>(options: GetStyleOptions<Theme>) => 
   }, {})
 }
 
-let _breakPoints: Record<string | number, string>
-
 export const createStyleSystemFunction = <Theme extends PureObject>(
   systemFunctions: Record<string, StyleFunctionRunner<Theme>[]>,
   allowCssProp: boolean = true,
 ) => {
+
+  let _breakPoints: Record<string | number, string>
   return Object.assign((props: PropsWithTheme<Theme>) => {
     if (!_breakPoints) {
       const {theme: {breakpoints} = {} as Record<string, any>} = props

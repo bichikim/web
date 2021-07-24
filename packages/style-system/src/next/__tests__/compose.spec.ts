@@ -32,7 +32,7 @@ const style2 = system({
 })
 
 describe('compost', () => {
-  it.only('should compose systems', () => {
+  it('should compose systems', () => {
     const styleFunction = compose(style1, style2)
 
     expect(styleFunction({
