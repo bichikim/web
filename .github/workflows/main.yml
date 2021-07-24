@@ -199,7 +199,7 @@ jobs:
     name: Deploy Dev Server
     needs: build-server
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/dev
+    if: github.ref == 'refs/heads/dev'
     env:
       GCP_SERVICE_NAME: coong-back-end-dev
       GCP_IAMGE_NAME: gcr.io/${{ secrets.GCP_PROJECT_ID }}/coong-back-end-dev:$GITHUB_SHA
