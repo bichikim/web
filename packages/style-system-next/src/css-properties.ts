@@ -409,8 +409,6 @@ export const cssProperties = {
   ...cssLongProperties,
 }
 
-export type CssProperties = StandardShorthandProperties & StandardLonghandProperties
-
 export const isCssProperties = (value: string) => {
   return Boolean(cssProperties[value])
 }

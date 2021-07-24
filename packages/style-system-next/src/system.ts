@@ -2,7 +2,7 @@ import {PureObject} from '@winter-love/utils'
 import mergeDeep from 'merge-deep'
 import {createMediaQuery} from './create-media-query'
 import {isCssProperties} from './css-properties'
-import {CssProperties, PropsWithTheme} from './types'
+import {CssPropertyKeys, PropsWithTheme} from './types'
 
 export interface StyleFunctionContext<Theme extends PureObject> {
   aliasValue: Record<string, any>
@@ -34,15 +34,15 @@ export interface ShardStyleOptions<Theme extends PureObject> {
 export type StyleFunctionOptions<Theme extends PureObject> = ShardStyleOptions<Theme>
 
 export interface StyleOptions<Theme extends PureObject> extends ShardStyleOptions<Theme> {
-  properties?: CssProperties[]
-  property?: CssProperties
+  properties?: CssPropertyKeys[]
+  property?: CssPropertyKeys
 }
 
 export interface MixinStyleOptions<Theme extends PureObject> extends StyleFunctionOptions<Theme>, StyleOptions<Theme> {
 }
 
 export type SystemOptions<Theme extends PureObject> =
-  Record<CssProperties | string, StyleOptions<Theme> | StyleFunctionOptions<Theme> | boolean>
+  Record<CssPropertyKeys | string, StyleOptions<Theme> | StyleFunctionOptions<Theme> | boolean>
 
 export type StyleSystemFunction<Theme extends PureObject> = {
   (props: PropsWithTheme<Theme>): PureObject
