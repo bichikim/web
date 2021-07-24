@@ -28,6 +28,8 @@
     "publish:next": "lerna publish from-package --preid next --dist-tag next",
     "version:beta": "lerna varsion prerelease --preid beta",
     "publish:beta": "leana publish from-package --preid beta --dist-tag beta",
+    "version:alpha": "leana version prerelease --preid alpha",
+    "publish:alpha": "lean publish from-package --preid alpha --dist-tag alpha",
     "lint:fix": "eslint --fix --ext .js,.ts,.vue ./",
     "storybook": "start-storybook -p 6006",
     "clean": "lerna clean --yes && rimraf node_modules",
