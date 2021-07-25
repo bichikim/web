@@ -1,4 +1,4 @@
-import {createSystemConfig, system} from 'src/style-system'
+import {createSystemConfig, system} from '@winter-love/style-system-next'
 import {Property} from 'csstype'
 import {getResponsiveProp} from 'src/lib/get-responsive-prop'
 import {Prop} from 'vue'

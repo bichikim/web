@@ -1,6 +1,6 @@
 import {commonProps, commonSystems} from './commons'
 import {ExtractPropTypes} from 'vue'
-import {compose, CssProperties} from 'src/style-system'
+import {compose, CssProperties} from '@winter-love/style-system-next'
 
 export * from './commons'
 
