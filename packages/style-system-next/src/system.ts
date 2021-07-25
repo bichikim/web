@@ -1,5 +1,5 @@
 import {PureObject} from '@winter-love/utils'
-import mergeDeep from 'merge-deep'
+import deepMerge from 'deepmerge'
 import {createMediaQuery} from './create-media-query'
 import {isCssProperties} from './css-properties'
 import {CssPropertyKeys, PropsWithTheme} from './types'
@@ -203,7 +203,7 @@ export const createStyleSystemFunction = <Theme extends PureObject>(
       }
 
       if (Array.isArray(prop)) {
-        return mergeDeep(result, prop.reduce((result, _prop, _key) => {
+        return deepMerge(result, prop.reduce((result, _prop, _key) => {
           const style = getStyle({aliasKey: _key, key, prop: _prop, props, styleFunctions})
           const media = _breakPoints[_key - 1]
           if (!media) {
@@ -217,7 +217,7 @@ export const createStyleSystemFunction = <Theme extends PureObject>(
         }, {}))
       }
 
-      return mergeDeep(result, getStyle({key, prop, props, styleFunctions}))
+      return deepMerge(result, getStyle({key, prop, props, styleFunctions}))
     }, {})
   }, {
     allowCssProp,

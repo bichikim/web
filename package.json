@@ -61,7 +61,6 @@
     "@winter-love/utils": "^1.0.16",
     "core-js": "^3.6.5",
     "lodash": "^4.17.21",
-    "merge-deep": "^3.0.3",
     "node-inject-html": "^0.0.5",
     "quasar": "^2.0.2",
     "three": "^0.130.1",
