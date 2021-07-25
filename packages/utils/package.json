@@ -20,7 +20,7 @@
   "scripts": {
     "build": "gulp build",
     "dev": "gulp dev",
-    "prepare": "pnpm run build"
+    "prepare": "gulp prepare"
   },
   "dependencies": {
     "micro-memoize": "^4.0.9",

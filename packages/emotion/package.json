@@ -14,7 +14,7 @@
   "scripts": {
     "build": "gulp build",
     "dev": "gulp dev",
-    "prepare": "pnpm run build"
+    "prepare": "gulp prepare"
   },
   "dependencies": {
     "@emotion/css": "^11.1.3",

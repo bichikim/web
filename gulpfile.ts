@@ -48,3 +48,22 @@ export const build = series(
     target: 'ES2015',
   }),
 )
+
+export const prepare = creBundle({
+  minify: false,
+  output: [
+    {
+      file: 'index.module.js',
+      format: 'es',
+    },
+    {
+      file: 'index.js',
+      format: 'commonjs',
+    },
+    {
+      file: 'index.umd.js',
+      format: 'umd',
+    },
+  ],
+  target: 'ES2019',
+})
