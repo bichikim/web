@@ -188,6 +188,7 @@ jobs:
           gcloud run deploy $GCP_SERVICE_NAME --image $GCP_IAMGE_NAME:$GITHUB_SHA \
           --quiet \
           --platform managed \
+          --set-env-vars NODE_ENV=production \
           --region asia-northeast3 \
           --allow-unauthenticated \
           --max-instances 10 \

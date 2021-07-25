@@ -1,6 +1,7 @@
 import {Emotion as _Emotion} from '@emotion/css/create-instance'
 import {Interpolation, serializeStyles} from '@emotion/serialize'
 import {getRegisteredStyles, insertStyles} from '@emotion/utils'
+import {ExtractPropTypesForUsing} from '@winter-love/use'
 import {isSSR} from '@winter-love/utils'
 import clsx, {ClassValue} from 'clsx'
 import {
@@ -17,7 +18,9 @@ import {Tags} from './tags'
 import {useTheme} from './theme'
 import {AnyComponent, EmptyObject, SFC, StyledOptionWithArray, StyledOptionWIthObject, StylePortalInfo} from './types'
 
-export type StyledResult<Props> = ((...args: (TemplateStringsArray | Interpolation<Props>)[]) => DefineComponent<Props>)
+export type StyledResult<PropsOptions> =
+  ((...args: (TemplateStringsArray | Interpolation<ExtractPropTypes<PropsOptions>>)[]) =>
+    DefineComponent<ExtractPropTypesForUsing<PropsOptions>>)
 
 const toBeClassName = (value: any): ClassValue => {
   if (typeof value === 'function') {
@@ -91,17 +94,18 @@ const createGetProps = (propOptions: ComponentObjectPropsOptions | Readonly<stri
  * creates new Styled function
  * @param emotion
  */
+// eslint-disable-next-line max-lines-per-function
 export const createStyled = (emotion: _Emotion & {theme?: any}) => {
   function styled<PropsOptions extends ComponentObjectPropsOptions = EmptyObject>(
     element: PossibleElement,
     options?: Readonly<StyledOptionWIthObject<PropsOptions>>,
-  ): StyledResult<ExtractPropTypes<PropsOptions>>
+  ): StyledResult<PropsOptions>
   function styled<PropNames extends string,
     PropsOptions = { [key in PropNames]: any },
     >(
     element: PossibleElement,
     options?: Readonly<StyledOptionWithArray<PropNames[]>>,
-  ): StyledResult<ExtractPropTypes<PropsOptions>>
+  ): StyledResult<PropsOptions>
   function styled(element: AnyComponent, options?: any): any {
     const {
       label: _label,
@@ -131,16 +135,12 @@ export const createStyled = (emotion: _Emotion & {theme?: any}) => {
       // eslint-disable-next-line max-statements
       const Emotion: FunctionalComponent<Record<string, any>> & StylePortalInfo = (props, {attrs, slots}) => {
         const {as} = props
-
         const _element = passAs ? element : (as ?? element)
-
-        if (name === 'Component5') {
-          console.log(_element)
-        }
-
         const theme = useTheme(masterTheme)
         const cache = inject(EMOTION_CACHE_CONTEXT, masterCache)
         const isStringElement = typeof _element === 'string'
+
+        // nextStylePortal 가져오기
         const _nextStylePortal = isStringElement
           ? undefined
           : (nextStylePortal ?? _element.stylePortal ?? _element.__stylePortal)
@@ -213,6 +213,18 @@ export const createStyled = (emotion: _Emotion & {theme?: any}) => {
        * https://github.com/vuejs/devtools/issues/1494
        */
       Emotion.displayName = name || label || 'emotion'
+
+      if (process.env.NODE_ENV !== 'production') {
+        try {
+          Reflect.defineProperty(Emotion, 'name', {
+            configurable: false,
+            value: Emotion.displayName,
+          })
+        } catch {
+          // skip
+        }
+      }
+
       Emotion.props = defaultProps
 
       return Emotion

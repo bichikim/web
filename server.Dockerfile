@@ -7,6 +7,7 @@ COPY ./server ./
 RUN ls -R
 RUN yarn install
 RUN yarn run generate
+RUN yarn install --production
 
 EXPOSE 8080
 

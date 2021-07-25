@@ -409,6 +409,11 @@ export const cssProperties = {
   ...cssLongProperties,
 }
 
+// eslint-disable-next-line @typescript-eslint/ban-types
+export interface CssProperties<TLength = (string & {}) | 0, TTime = string & {}> extends
+  StandardShorthandProperties<TLength, TTime>, StandardLonghandProperties<TLength, TTime>{
+}
+
 export const isCssProperties = (value: string) => {
   return Boolean(cssProperties[value])
 }

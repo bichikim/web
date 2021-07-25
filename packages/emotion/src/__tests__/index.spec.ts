@@ -135,7 +135,7 @@ describe('emotion', () => {
       const {StyledComponent} = setup({
         name: 'foo',
       })
-      // expect(StyledComponent.name).toBe('foo')
+      expect(StyledComponent.name).toBe('foo')
       expect(StyledComponent.displayName).toBe('foo')
     })
 
@@ -143,7 +143,7 @@ describe('emotion', () => {
       const {StyledComponent} = setup({
         label: 'bar',
       })
-      // expect(StyledComponent.name).toBe('bar')
+      expect(StyledComponent.name).toBe('bar')
       expect(StyledComponent.displayName).toBe('bar')
     })
 
