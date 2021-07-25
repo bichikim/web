@@ -151,12 +151,11 @@ jobs:
         if: steps.verify-changed-files.outputs.files_changed == 'true'
         run: |
           echo ::set-output name=run_job::true
-        
   deploy-server:
     name: Deploy Server
     needs: build-server
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/master' && needs.build-server.outputs.run_job == 'true'
     env:
       GCP_SERVICE_NAME: coong-back-end
       GCP_IAMGE_NAME: gcr.io/${{ secrets.GCP_PROJECT_ID }}/coong-back-end
@@ -221,12 +220,6 @@ jobs:
         with:
           name: dist-server
           path: server/lib
-      - name: Verify Changed files
-        uses: tj-actions/verify-changed-files@v7.1
-        id: verify-changed-files
-        with:
-          files: |
-            server
       - name: Setup Cloud SDK
         uses: google-github-actions/setup-gcloud@v0.2.1
         with:
@@ -240,24 +233,20 @@ jobs:
           touch server/.env
           echo DATABASE_URL=${{ secrets.DATABASE_URL_DEV }} >> server/.env
       - name: Build
-        if: steps.verify-changed-files.outputs.files_changed == 'true'
         run: |
           docker build \
           -f server.Dockerfile \
           -t $GCP_IAMGE_NAME:$GITHUB_SHA \
           .
       - name: Tag
-        if: steps.verify-changed-files.outputs.files_changed == 'true'
         run: |
           docker tag \
           $GCP_IAMGE_NAME:$GITHUB_SHA \
           $GCP_IAMGE_NAME:latest
       - name: Push
-        if: steps.verify-changed-files.outputs.files_changed == 'true'
         run: |
           docker push $GCP_IAMGE_NAME:$GITHUB_SHA
       - name: Deploy
-        if: steps.verify-changed-files.outputs.files_changed == 'true'
         run: |
           gcloud run deploy $GCP_SERVICE_NAME --image $GCP_IAMGE_NAME:$GITHUB_SHA \
           --quiet \
