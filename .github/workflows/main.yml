@@ -150,7 +150,7 @@ jobs:
       - name: Write Message
         if: steps.verify-changed-files.outputs.files_changed == 'true'
         run: |
-          echo ::set-output name=run_job::true
+          echo '::set-output name=run_job::true'
   deploy-server:
     name: Deploy Server
     needs: build-server
