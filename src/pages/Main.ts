@@ -1,12 +1,14 @@
 import {user} from 'src/store'
 import {useAppClipboard} from 'src/use'
 import {computed, defineComponent, h, ref} from 'vue'
+import {useRouter} from 'vue-router'
 
 export const Main = defineComponent({
   name: 'Main',
   setup() {
     const valueRef = ref('')
     const inputRef = ref('')
+    const router = useRouter()
     const {write, read, state} = useAppClipboard(valueRef)
 
     const updateName = user.updateUserName.act
@@ -30,6 +32,7 @@ export const Main = defineComponent({
         h('button', {onClick: () => write(inputRef.value)}, 'write'),
         h('button', {onClick: () => readAndUpdateInput()}, 'read'),
         h('button', {onClick: () => updateName('bar')}, 'update name'),
+        h('button', {onClick: () => (router.push('test'))}, 'go test1'),
         h('div', name.value),
       ])
     )
