@@ -1,6 +1,7 @@
 {
   "name": "coong",
   "private": true,
+  "version": "0.0.1",
   "description": "coong web & app service",
   "author": "Bichi Kim <bichi@live.co.kr>",
   "workspaces": {
