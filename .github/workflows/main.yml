@@ -152,12 +152,12 @@ jobs:
       - name: Write Message
         if: steps.changed-files.outputs.any_changed == 'true'
         run: |
-          echo '::set-output name=run_job::true'
+          echo "::set-output name=run_job::true"
   deploy-server:
     name: Deploy Server
     needs: build-server
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' && needs.build-server.outputs.run_job == 'true'
+    if: ${{ github.ref == 'refs/heads/master' && needs.build-server.outputs.run_job == 'true' }}
     env:
       GCP_SERVICE_NAME: coong-back-end
       GCP_IAMGE_NAME: gcr.io/${{ secrets.GCP_PROJECT_ID }}/coong-back-end
@@ -210,7 +210,7 @@ jobs:
     name: Deploy Dev Server
     needs: build-server
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/dev' && needs.build-server.outputs.run_job == 'true'
+    if: ${{ github.ref == 'refs/heads/dev' && needs.build-server.outputs.run_job == 'true' }}
     env:
       GCP_SERVICE_NAME: coong-back-end-dev
       GCP_IAMGE_NAME: gcr.io/${{ secrets.GCP_PROJECT_ID }}/coong-back-end-dev
