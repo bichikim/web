@@ -8,6 +8,8 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
+    outputs: 
+      run_job: ${{ steps.changed-files.outputs.any_changed }}
     steps:
       - name: Checkout Repo
         uses: actions/checkout@master
@@ -23,11 +25,6 @@ jobs:
         with:
           files: |
             server
-      - name: Write Message
-        if: steps.changed-files.outputs.any_changed == 'true'
-        run: |
-          echo "::set-output name=run_job::true"
-          echo ${{ github.ref }}
   next:
     name: Next
     needs: test
