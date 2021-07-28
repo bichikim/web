@@ -110,7 +110,7 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@master
         with:
-          fetch-depth: 2
+          fetch-depth: 0
       - name: Prepare Pnpm
         uses: pnpm/action-setup@v2.0.1
         with:
