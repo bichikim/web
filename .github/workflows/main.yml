@@ -145,6 +145,7 @@ jobs:
         uses: tj-actions/changed-files@v9
         id: changed-files
         with:
+          fetch-depth: 2
           files: |
             server
       - name: Write Message
