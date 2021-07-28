@@ -139,6 +139,25 @@ describe('emotion', () => {
       expect(StyledComponent.displayName).toBe('foo')
     })
 
+    it('should pass styleProps with a component element by default', () => {
+      const Component = defineComponent(() => {
+        return () => h('div')
+      })
+      const {wrapper} = setup({
+        element: Component,
+      })
+
+      expect(wrapper.get('div').attributes()).toEqual(expect.objectContaining({color: 'red'}))
+    })
+
+    it('should not pass styleProps with the inheritStyleProps false', () => {
+      const Component = defineComponent(() => {
+        return () => h('div')
+      })
+      const {wrapper} = setup({element: Component, inheritStyleProps: false})
+      expect(wrapper.get('div').attributes()).not.toEqual(expect.objectContaining({color: 'red'}))
+    })
+
     it('should use a label instead of the name', () => {
       const {StyledComponent} = setup({
         label: 'bar',

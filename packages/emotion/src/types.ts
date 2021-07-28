@@ -6,6 +6,10 @@ export interface StylePortalInfo {
 }
 
 export interface StyledOptions {
+  /**
+   * @default true
+   */
+  inheritStyleProps?: boolean
   label?: string | boolean
   name?: string
   nextStylePortal?: string

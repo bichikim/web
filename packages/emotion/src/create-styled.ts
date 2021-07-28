@@ -90,6 +90,45 @@ const createGetProps = (propOptions: ComponentObjectPropsOptions | Readonly<stri
 
 }
 
+interface GetNextPropsOptions {
+  /**
+   * @default false
+   */
+  inheritStyleProps?: boolean
+
+  /**
+   * @default false
+   */
+  isStringElement?: boolean
+
+  nextStylePortal?: string
+}
+
+const getNextProps = (styleProps, restProps, options: GetNextPropsOptions = {}) => {
+  const {
+    isStringElement = false,
+    nextStylePortal,
+    inheritStyleProps = false,
+  } = options
+  if (isStringElement) {
+    return restProps
+  }
+
+  const _styleProps = inheritStyleProps ? styleProps : {}
+
+  if (nextStylePortal) {
+    return {
+      ...restProps,
+      [nextStylePortal]: _styleProps,
+    }
+  }
+
+  return {
+    ...restProps,
+    ..._styleProps,
+  }
+}
+
 /**
  * creates new Styled function
  * @param emotion
@@ -115,6 +154,7 @@ export const createStyled = (emotion: _Emotion & {theme?: any}) => {
       stylePortal,
       nextStylePortal,
       passAs = false,
+      inheritStyleProps = true,
     } = options ?? {}
 
     const label = _label === true ? name : _label
@@ -178,9 +218,11 @@ export const createStyled = (emotion: _Emotion & {theme?: any}) => {
 
         const className = `${registeredClassName} ${cache.key}-${serialized.name}${_target}`
 
-        const nextAttrs = isStringElement ? restProps : (
-          _nextStylePortal ? {...restProps, [_nextStylePortal]: styleProps} : {...restProps, ...styleProps}
-        )
+        const nextAttrs = getNextProps(styleProps, restProps, {
+          inheritStyleProps,
+          isStringElement,
+          nextStylePortal: _nextStylePortal,
+        })
 
         const vNode = h(_element, {...nextAttrs, class: className}, slots)
 
