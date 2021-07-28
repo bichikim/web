@@ -105,6 +105,8 @@ jobs:
   build-server:
     name: Build Server
     needs: test
+    outputs: 
+      run_job: ${{ steps.changed-files.outputs.any_changed }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repo
@@ -149,10 +151,6 @@ jobs:
         with:
           files: |
             server
-      - name: Write Message
-        if: steps.changed-files.outputs.any_changed == 'true'
-        run: |
-          echo "::set-output name=run_job::true"
   deploy-server:
     name: Deploy Server
     needs: build-server
