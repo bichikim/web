@@ -29,7 +29,7 @@ jobs:
           echo "::set-output name=run_job::true"
   next:
     name: Next
-    needs: build-server
+    needs: test
     runs-on: ubuntu-latest
     if: ${{needs.build-server.outputs.run_job == 'true' }}
     steps:
