@@ -112,6 +112,7 @@ jobs:
       - name: Prepare Pnpm
         uses: pnpm/action-setup@v2.0.1
         with:
+          fetch-depth: 2
           version: 6.7.6
       - name: Use Yarn Cache
         uses: actions/cache@v2
@@ -145,7 +146,6 @@ jobs:
         uses: tj-actions/changed-files@v9
         id: changed-files
         with:
-          fetch-depth: 2
           files: |
             server
       - name: Write Message
