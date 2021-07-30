@@ -10,13 +10,14 @@ const defaultWait = 150
 export const useDebounce = <Args extends any[]>(
   handle?: UseDebounceHandle<Args>,
   wait: MayRef<number | boolean> = defaultWait,
-  immediate: boolean = false,
+  immediate: MayRef<boolean> = false,
 ) => {
   const onHandle = (...args: Args) => {
     return handle?.(...args)
   }
 
   const waitRef = wrapRef(wait)
+  const immediateRef = wrapRef(immediate)
 
   const numberWaitRef = computed(() => {
     const wait = waitRef.value
@@ -27,7 +28,7 @@ export const useDebounce = <Args extends any[]>(
   })
 
   const onCall = computed(() => {
-    return debounce(onHandle, numberWaitRef.value, immediate)
+    return debounce(onHandle, numberWaitRef.value, immediateRef.value)
   })
 
   onBeforeUnmount(() => {
