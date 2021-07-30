@@ -19,26 +19,24 @@ export const useDebounce = <Args extends any[]>(
   const waitRef = wrapRef(wait)
   const immediateRef = wrapRef(immediate)
 
-  const numberWaitRef = computed(() => {
-    const wait = waitRef.value
-    if (typeof wait === 'number') {
-      return wait
-    }
-    return defaultWait
-  })
-
   const onCall = computed(() => {
-    return debounce(onHandle, numberWaitRef.value, immediateRef.value)
+    const wait = waitRef.value
+    if (wait) {
+      const _wait = typeof wait === 'number' ? wait : defaultWait
+      return debounce(onHandle, _wait, immediateRef.value)
+    }
+    return Object.assign(onHandle, {
+      clear() {
+        // empty
+      },
+    })
   })
 
   onBeforeUnmount(() => {
-    onCall.value.clear()
+    onCall.value?.clear()
   })
 
   return (...args: Args) => {
-    if (!waitRef.value) {
-      onHandle(...args)
-    }
     onCall.value(...args)
   }
 }
