@@ -49,7 +49,7 @@ export const isVisible = () => {
   return document.visibilityState !== 'hidden'
 }
 
-const defaultDebounceWait = 1000
+const defaultDebounceWait = 500
 
 /**
  * @experimental
