@@ -53,8 +53,9 @@ describe('on-connection', () => {
       const spy = jest.spyOn(window, 'addEventListener')
       const result = useConnection()
       expect(spy.mock.calls.length).toBe(2)
-      expect(spy.mock.calls[0][0]).toBe('offline')
-      expect(spy.mock.calls[1][0]).toBe('online')
+
+      expect(spy.mock.calls[0][0]).toBe('online')
+      expect(spy.mock.calls[1][0]).toBe('offline')
       expect(result.value).toBe(true)
 
       const offlineHandler: any = spy.mock.calls[0][1]
@@ -62,11 +63,11 @@ describe('on-connection', () => {
 
       offlineHandler()
       await flushPromises()
-      expect(result.value).toBe(false)
+      expect(result.value).toBe(true)
 
       onlineHandler()
       await flushPromises()
-      expect(result.value).toBe(true)
+      expect(result.value).toBe(false)
 
       spy.mockRestore()
     })
