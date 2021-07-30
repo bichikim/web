@@ -1,24 +1,38 @@
-import {useElementEvent} from '../element-event'
 import {isSSR} from '@winter-love/utils'
-import {useConnection} from '../connection'
+import {useDebounce} from 'src/debounce'
 import {watch} from 'vue-demi'
-import {MayRef} from '../types'
+import {useConnection} from '../connection'
+import {useElementEvent} from '../element-event'
 import {useElementIntersection} from '../element-intersection'
+import {MayRef} from '../types'
 
 export type OnShouldUpdateHandle = () => unknown
 
 export interface OnShouldUpdateOptions {
   /**
+   * @default true
+   */
+  debounce?: number | boolean
+  /**
    * call handle if document is visible with first using
    * @default true
    */
   firstExecute?: boolean
+
   /**
    * call handle with changing online
    * @default true
    */
   online?: boolean
 
+  /**
+   * @default true
+   */
+  visibleDocument?: boolean
+
+  /**
+   * call handle if the element is visible
+   */
   visibleElement?: MayRef<HTMLElement>
 
   /**
@@ -35,6 +49,8 @@ export const isVisible = () => {
   return document.visibilityState !== 'hidden'
 }
 
+const defaultDebounceWait = 250
+
 /**
  * @experimental
  * @param handle
@@ -46,11 +62,35 @@ export const onShouldUpdate = (handle?: OnShouldUpdateHandle, options: OnShouldU
     windowFocus = true,
     visibleElement,
     online = true,
+    visibleDocument = true,
+    debounce = defaultDebounceWait,
   } = options
-  const onShouldUpdate = () => handle?.()
+
+  // noinspection SuspiciousTypeOfGuard
+  const debounceWait = typeof debounce === 'boolean' ? defaultDebounceWait : debounce
+
+  const onHandle = () => {
+    handle?.()
+  }
+
+  const onDebounceHandle = useDebounce(onHandle, debounceWait, true)
+
+  const onShouldUpdate = () => {
+    if (debounce) {
+      onDebounceHandle()
+      return
+    }
+    onHandle()
+  }
 
   const onFocus = () => {
     if (windowFocus) {
+      onShouldUpdate()
+    }
+  }
+
+  const onVisibleDocument = () => {
+    if (visibleDocument) {
       onShouldUpdate()
     }
   }
@@ -75,7 +115,7 @@ export const onShouldUpdate = (handle?: OnShouldUpdateHandle, options: OnShouldU
     }
   })
 
-  useElementEvent(document, 'visibilitychange', onShouldUpdate)
+  useElementEvent(document, 'visibilitychange', onVisibleDocument)
   useElementEvent(window, 'focus', onFocus)
 
   return onShouldUpdate

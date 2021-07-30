@@ -6,7 +6,6 @@ import {MayRef} from 'src/types'
 import {wrapRef} from '../wrap-ref'
 
 export interface StorageRefOptions<Data> {
-  // todo 스팩 변경 해야하다 이 값이 옵션이 아니라 파라미터로 전달 되고 Ref 가 될수도 있게 변경
   /**
    * @deprecated please use the value
    */
@@ -34,7 +33,8 @@ const setItem = (storage: Storage, key: string, value: any) => {
 export const storageRef = <Data>(
   key: string,
   value?: MayRef<Data | undefined>,
-  options: StorageRefOptions<Data> = {}) => {
+  options: StorageRefOptions<Data> = {},
+) => {
   const {type = 'local'} = options
   const valueRef = wrapRef<Data | undefined>(value)
   const freezeWatch = ref(false)
@@ -80,3 +80,4 @@ export const storageRef = <Data>(
 
   return valueRef
 }
+
