@@ -37,7 +37,7 @@
   "scripts": {
     "build": "gulp build",
     "dev": "gulp dev",
-    "prepare": "gulp prepare"
+    "prepare": "gulp build"
   },
   "dependencies": {
     "@winter-love/utils": "^1.0.17-alpha.0",

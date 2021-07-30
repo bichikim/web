@@ -28,7 +28,7 @@
   "scripts": {
     "build": "gulp build",
     "dev": "gulp dev",
-    "prepare": "gulp prepare"
+    "prepare": "gulp build"
   },
   "dependencies": {
     "@winter-love/utils": "^1.0.17-alpha.0",
@@ -42,5 +42,5 @@
     "@winter-love/emotion": "^1.0.17-alpha.1",
     "csstype": "^3.0.8"
   },
-  "gitHead": "75d7050e71f9b0ee8c071401055fca704ceda12b"
+  "gitHead": "d936ae3692769ad89043546cb1193eabd7ed236f"
 }
