@@ -9,7 +9,7 @@ const defaultWait = 150
 
 export const useDebounce = <Args extends any[]>(
   handle?: UseDebounceHandle<Args>,
-  wait: MayRef<number | boolean> = defaultWait,
+  wait?: MayRef<number | boolean | undefined>,
   immediate: MayRef<boolean> = false,
 ) => {
   const onHandle = (...args: Args) => {
