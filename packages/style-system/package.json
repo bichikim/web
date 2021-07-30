@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/style-system",
-  "version": "1.0.17-alpha.5",
+  "version": "1.0.17-alpha.6",
   "keywords": [
     "typescript",
     "style",
@@ -39,7 +39,7 @@
     "@types/merge-deep": "^3.0.0",
     "@types/styled-system": "^5.1.11",
     "@types/styled-system__css": "^5.0.15",
-    "@winter-love/emotion": "^1.0.17-alpha.5",
+    "@winter-love/emotion": "^1.0.17-alpha.6",
     "csstype": "^3.0.8"
   },
   "gitHead": "d936ae3692769ad89043546cb1193eabd7ed236f"
