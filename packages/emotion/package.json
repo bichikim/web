@@ -1,10 +1,27 @@
 {
   "name": "@winter-love/emotion",
   "version": "1.0.17-alpha.0",
-  "description": "Emotion for vue",
+  "description": "Emotion for Vue",
+  "keywords": [
+    "vue",
+    "vue3",
+    "composition-api",
+    "emotion",
+    "css-in-js"
+  ],
   "repository": "git@github.com:winter-love/web.git",
+  "license": "MIT",
   "author": "bichi@live.co.kr",
+  "exports": {
+    ".": {
+      "import": "./lib/index.module.js",
+      "require": "./lib/index.js"
+    },
+    "./*": "./*"
+  },
   "main": "lib/index.js",
+  "jsdelivr": "lib/index.iife.js",
+  "unpkg": "lib/index.iife.js",
   "module": "lib/index.module.js",
   "source": "src/index.ts",
   "types": "lib/index.d.ts",
@@ -32,6 +49,5 @@
     "gulp": "^4.0.2",
     "vue": "^3.1.5"
   },
-  "gitHead": "75d7050e71f9b0ee8c071401055fca704ceda12b",
-  "unpack": "lib/index.umd.js"
+  "gitHead": "75d7050e71f9b0ee8c071401055fca704ceda12b"
 }

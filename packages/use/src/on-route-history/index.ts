@@ -24,7 +24,7 @@ function onPopState(this: WindowEventHandlers, event: PopStateEvent) {
 window.onpopstate = onPopState
 
 /**
- * WIP
+ * @WIP
  * @param callback
  */
 export const onRouteHistory = (callback: (state: RouteHistory, location: Location) => unknown) => {

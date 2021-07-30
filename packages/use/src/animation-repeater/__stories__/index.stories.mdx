@@ -1,5 +1,6 @@
-import {Meta, Story} from '@storybook/addon-docs/blocks'
-import {Default} from './templates'
+import {Meta, Story, Canvas} from '@storybook/addon-docs/blocks'
+import {animationRepeater} from '../'
+import {h, ref} from 'vue-demi'
 
 <Meta title="use/Animation Repeater"/>
 
@@ -11,7 +12,31 @@ Call Handle Repeatedly with the requestAnimationFrame
 
 예제는 숫자를 1씩 올립니다.
 toggle count 를 클릭하면 중지하거나 제게할 수 있습니다.
-<Story name="Default">
-  {Default.bind({})}
-</Story>
 
+export const Template = () => ({
+  setup() {
+    const countRef = ref(0);
+    function increaseCount() {
+      countRef.value += 1
+    }
+    const toggleRef = animationRepeater(increaseCount)
+    function toggleCount() {
+      toggleRef.value = !toggleRef.value
+    }
+    return function () {
+      return (
+        h('div', [
+          h('div', countRef.value),
+          h('button', {onClick: toggleCount}, 'toggle count'),
+        ])
+      )
+    }
+  },
+})
+
+
+<Canvas>
+  <Story name="Default">
+    {Template.bind({})}
+  </Story>
+</Canvas>

@@ -1,5 +1,6 @@
-import {Meta, Story} from '@storybook/addon-docs/blocks'
-import {Default} from './templates'
+import {Meta, Story, Canvas} from '@storybook/addon-docs/blocks'
+import {h, onBeforeUnmount} from 'vue-demi'
+import {useBlur} from '../'
 
 <Meta title="use/Blur"/>
 
@@ -9,7 +10,29 @@ import {Default} from './templates'
 
 예제는 5초 마다 전역 블러를 실행 합니다.
 
-<Story name="Default">
-  {Default.bind({})}
-</Story>
+export const Template = () => {
+  return {
+    setup() {
+      const blur = useBlur()
+      const intervalHandel = setInterval(() => {
+        blur()
+        // eslint-disable-next-line no-magic-numbers
+      }, 5000)
+      onBeforeUnmount(() => {
+        clearInterval(intervalHandel)
+      })
+      return () => (
+        h('div', [
+          h('input'),
+        ])
+      )
+    },
+  }
+}
+
+<Canvas>
+  <Story name="Default">
+    {Template.bind({})}
+  </Story>
+</Canvas>
 

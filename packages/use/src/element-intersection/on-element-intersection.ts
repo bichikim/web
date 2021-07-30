@@ -2,10 +2,12 @@ import {wrapRef} from 'src/wrap-ref'
 import {MayRef} from 'src/types'
 import {onBeforeUnmount, ref, watch} from 'vue-demi'
 
-export const onIntersectionElement = <MyElement extends Element> (
+const defaultThreshold = 0.05
+
+export const onElementIntersection = <MyElement extends Element> (
   element: MayRef<MyElement | undefined>,
   handle?: IntersectionObserverCallback,
-  options?: IntersectionObserverInit,
+  options: IntersectionObserverInit = {},
 ) => {
   const elementRef = wrapRef(element)
 
@@ -13,7 +15,10 @@ export const onIntersectionElement = <MyElement extends Element> (
     handle?.(entries, observer)
   }
 
-  const observerRef = ref<IntersectionObserver>(new IntersectionObserver(updateState, options))
+  const observerRef = ref<IntersectionObserver>(new IntersectionObserver(updateState, {
+    threshold: defaultThreshold,
+    ...options,
+  }))
 
   watch(elementRef, (element: any) => {
     observerRef.value.disconnect()
@@ -28,3 +33,8 @@ export const onIntersectionElement = <MyElement extends Element> (
     observerRef.value.disconnect()
   })
 }
+
+/**
+ * @deprecated please use onElementIntersection
+ */
+export const onIntersectionElement = onElementIntersection

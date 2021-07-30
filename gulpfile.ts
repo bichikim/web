@@ -13,10 +13,6 @@ export const dev = creWatchBundle({
       file: 'index.js',
       format: 'commonjs',
     },
-    {
-      file: 'index.umd.js',
-      format: 'umd',
-    },
   ],
   target: 'ES2019',
 })
@@ -37,8 +33,8 @@ export const build = series(
     // minify: true,
     output: [
       {
-        file: 'index.umd.js',
-        format: 'umd',
+        file: 'index.iife.js',
+        format: 'iife',
       },
       {
         file: 'index.js',
@@ -61,8 +57,8 @@ export const prepare = creBundle({
       format: 'commonjs',
     },
     {
-      file: 'index.umd.js',
-      format: 'umd',
+      file: 'index.iife.js',
+      format: 'iife',
     },
   ],
   target: 'ES2019',

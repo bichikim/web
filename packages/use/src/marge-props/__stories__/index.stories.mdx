@@ -1,5 +1,5 @@
-import {Meta, Story} from '@storybook/addon-docs/blocks'
-import {Default} from './templates'
+import {Meta, Story, Canvas} from '@storybook/addon-docs/blocks'
+import {margeProps} from '../'
 
 <Meta title="use/Marge Props"/>
 
@@ -7,7 +7,25 @@ import {Default} from './templates'
 
 Marge Props Options no matter what props options `type` is
 
-<Story name="Default">
-  {Default.bind({})}
-</Story>
+export const Template = function () {
+  return {
+    setup() {
+      const result = margeProps(
+        {
+          bar: {default: 'foo', type: String},
+        },
+        ['foo', 'john'],
+      )
+      return {result}
+    },
+    template: '<div>{{result}}</div>',
+  }
+}
+
+
+<Canvas>
+  <Story name="Default">
+    {Template.bind({})}
+  </Story>
+</Canvas>
 

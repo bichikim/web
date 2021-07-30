@@ -14,9 +14,11 @@
     "vuejs3"
   ],
   "repository": "git@github.com:winter-love/web.git",
+  "license": "MIT",
   "author": "bichi@live.co.kr",
   "main": "lib/index.js",
-  "unpkg": "lib/index.global.js",
+  "jsdelivr": "lib/index.iife.js",
+  "unpkg": "lib/index.iife.js",
   "module": "lib/index.module.js",
   "source": "src/index.ts",
   "types": "lib/index.d.ts",

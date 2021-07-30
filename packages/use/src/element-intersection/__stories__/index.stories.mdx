@@ -1,0 +1,116 @@
+import {Meta, Story, Canvas} from '@storybook/addon-docs/blocks'
+import {h} from 'vue-demi'
+import {Component} from './Component'
+import {UseComponent} from './UseComponent'
+
+<Meta title="use/Element Intersection"/>
+
+# Element Intersection
+
+제공된 엘리먼트가 화면에 직접 보여 질때 호출합니다.
+
+좀더 쉽게 사용 하려면 Use Element Intersection 을 사용 하세요
+
+## On Element Intersection
+
+export const Template = function () {
+  return {
+    setup() {
+      return function () {
+        return h('div', {style: {height: '200px'}}, [
+          h(Component, () => [
+            h('div', {style: {height: '100%', width: '100%', backgroundColor: 'blue'}})
+          ]),
+          h(Component, () => [
+            h('div', {style: {height: '100%', width: '100%', backgroundColor: 'blue'}})
+          ]),
+          h(Component, () => [
+            h('div', {style: {height: '100%', width: '100%', backgroundColor: 'blue'}})
+          ]),
+          h(Component, () => [
+            h('div', {style: {height: '100%', width: '100%', backgroundColor: 'blue'}})
+          ]),
+          h(Component, () => [
+            h('div', {style: {height: '100%', width: '100%', backgroundColor: 'blue'}})
+          ]),
+          h(Component, () => [
+            h('div', {style: {height: '100%', width: '100%', backgroundColor: 'blue'}})
+          ]),
+          h(Component, () => [
+            h('div', {style: {height: '100%', width: '100%', backgroundColor: 'blue'}})
+          ]),
+          h(Component, () => [
+            h('div', {style: {height: '100%', width: '100%', backgroundColor: 'blue'}})
+          ]),
+          h(Component, () => [
+            h('div', {style: {height: '100%', width: '100%', backgroundColor: 'blue'}})
+          ]),
+          h(Component, () => [
+            h('div', {style: {height: '100%', width: '100%', backgroundColor: 'blue'}})
+          ]),
+          h(Component, () => [
+            h('div', {style: {height: '100%', width: '100%', backgroundColor: 'blue'}})
+          ]),
+          h(Component, () => [
+            h('div', {style: {height: '100%', width: '100%', backgroundColor: 'blue'}})
+          ]),
+          h(Component, () => [
+            h('div', {style: {height: '100%', width: '100%', backgroundColor: 'blue'}})
+          ]),
+          h(Component, () => [
+            h('div', {style: {height: '100%', width: '100%', backgroundColor: 'blue'}})
+          ]),
+        ])
+      }
+    },
+  }
+}
+
+<Canvas>
+  <Story name="Default">
+    {Template.bind({})}
+  </Story>
+</Canvas>
+
+## Use Element Intersection
+
+export const UseTemplate = function () {
+  return {
+    setup() {
+      return function () {
+        return h('div', {style: {height: '200px'}}, [
+          h(UseComponent, () => [
+            h('div', {style: {height: '100%', width: '100%', backgroundColor: 'blue'}})
+          ]),
+          h(UseComponent, () => [
+            h('div', {style: {height: '100%', width: '100%', backgroundColor: 'blue'}})
+          ]),
+          h(UseComponent, () => [
+            h('div', {style: {height: '100%', width: '100%', backgroundColor: 'blue'}})
+          ]),
+          h(UseComponent, () => [
+            h('div', {style: {height: '100%', width: '100%', backgroundColor: 'blue'}})
+          ]),
+          h(UseComponent, () => [
+            h('div', {style: {height: '100%', width: '100%', backgroundColor: 'blue'}})
+          ]),
+          h(UseComponent, () => [
+            h('div', {style: {height: '100%', width: '100%', backgroundColor: 'blue'}})
+          ]),
+          h(UseComponent, () => [
+            h('div', {style: {height: '100%', width: '100%', backgroundColor: 'blue'}})
+          ]),
+          h(UseComponent, () => [
+            h('div', {style: {height: '100%', width: '100%', backgroundColor: 'blue'}})
+          ]),
+        ])
+      }
+    },
+  }
+}
+
+<Canvas>
+  <Story name="Use">
+    {UseTemplate.bind({})}
+  </Story>
+</Canvas>

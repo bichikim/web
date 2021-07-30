@@ -1,9 +1,10 @@
 {
   "name": "@winter-love/use",
   "version": "1.0.17-alpha.0",
-  "description": "vue composable utils",
+  "description": "Vue utils",
   "keywords": [
     "typescript",
+    "composition-api",
     "vue",
     "vue3",
     "vuejs",
@@ -14,7 +15,17 @@
   ],
   "repository": "git@github.com:winter-love/web.git",
   "license": "MIT",
+  "author": "bichi@live.co.kr",
+  "exports": {
+    ".": {
+      "import": "./lib/index.module.js",
+      "require": "./lib/index.js"
+    },
+    "./*": "./*"
+  },
   "main": "lib/index.js",
+  "jsdelivr": "lib/index.iife.js",
+  "unpkg": "lib/index.iife.js",
   "module": "lib/index.module.js",
   "source": "src/index.ts",
   "types": "lib/index.d.ts",
