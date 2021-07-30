@@ -22,7 +22,7 @@ export const onElementIntersection = <MyElement extends Element> (
 
   watch(elementRef, (element: any) => {
     observerRef.value.disconnect()
-    const _element = element.$el ?? element
+    const _element = element?.$el ?? element
     if (_element) {
       // using any owing to typescript bug
       observerRef.value.observe(_element as any)
