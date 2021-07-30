@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/style-system-next",
-  "version": "1.0.17-alpha.1",
+  "version": "1.0.17-alpha.2",
   "description": "Ui style system",
   "private": true,
   "keywords": [
@@ -48,7 +48,7 @@
     "@types/deepmerge": "^2.2.0",
     "@types/styled-system": "^5.1.11",
     "@types/styled-system__css": "^5.0.15",
-    "@winter-love/emotion": "^1.0.17-alpha.1",
+    "@winter-love/emotion": "^1.0.17-alpha.2",
     "csstype": "^3.0.8"
   },
   "gitHead": "2fb93aea9a5a38a7778495106787001ffe0d25f6"
