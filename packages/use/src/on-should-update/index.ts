@@ -49,7 +49,7 @@ export const isVisible = () => {
   return document.visibilityState !== 'hidden'
 }
 
-const defaultDebounceWait = 250
+const defaultDebounceWait = 1000
 
 /**
  * @experimental
@@ -69,6 +69,8 @@ export const onShouldUpdate = (handle?: OnShouldUpdateHandle, options: OnShouldU
   // noinspection SuspiciousTypeOfGuard
   const debounceWait = typeof debounce === 'boolean' ? defaultDebounceWait : debounce
 
+  const thisDocument = isSSR() ? null : window.document
+
   const onHandle = () => {
     handle?.()
   }
@@ -76,6 +78,7 @@ export const onShouldUpdate = (handle?: OnShouldUpdateHandle, options: OnShouldU
   const onDebounceHandle = useDebounce(onHandle, debounceWait, true)
 
   const onShouldUpdate = () => {
+
     if (debounce) {
       onDebounceHandle()
       return
@@ -89,8 +92,8 @@ export const onShouldUpdate = (handle?: OnShouldUpdateHandle, options: OnShouldU
     }
   }
 
-  const onVisibleDocument = () => {
-    if (visibleDocument) {
+  const onVisibleDocument = (event) => {
+    if (visibleDocument && event.target === thisDocument && isVisible()) {
       onShouldUpdate()
     }
   }
