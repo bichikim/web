@@ -35,6 +35,8 @@ export interface OnShouldUpdateOptions {
    */
   visibleElement?: MayRef<HTMLElement>
 
+  watchValue?: MayRef<any>
+
   /**
    * call handle with window focus event
    * @default true
@@ -64,6 +66,7 @@ export const onShouldUpdate = (handle?: OnShouldUpdateHandle, options: OnShouldU
     online = true,
     visibleDocument = true,
     debounce = defaultDebounceWait,
+    watchValue,
   } = options
 
   // noinspection SuspiciousTypeOfGuard
@@ -116,6 +119,10 @@ export const onShouldUpdate = (handle?: OnShouldUpdateHandle, options: OnShouldU
     if (online && value) {
       onShouldUpdate()
     }
+  })
+
+  watch(watchValue, () => {
+    onShouldUpdate()
   })
 
   useElementEvent(document, 'visibilitychange', onVisibleDocument)
