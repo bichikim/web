@@ -17720,9 +17720,9 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
-"libraries@workspace:packages/library":
+"libraries@workspace:packages/libraries":
   version: 0.0.0-use.local
-  resolution: "libraries@workspace:packages/library"
+  resolution: "libraries@workspace:packages/libraries"
   dependencies:
     "@winter-love/emotion": ^1.0.17-alpha.7
     "@winter-love/style-system": ^1.0.17-alpha.7
@@ -25668,6 +25668,16 @@ fsevents@^1.2.7:
   version: 0.0.0
   resolution: "tty-browserify@npm:0.0.0"
   checksum: a06f746acc419cb2527ba19b6f3bd97b4a208c03823bfb37b2982629d2effe30ebd17eaed0d7e2fc741f3c4f2a0c43455bd5fb4194354b378e78cfb7ca687f59
+  languageName: node
+  linkType: hard
+
+"ttypescript@npm:*":
+  version: 2.5.2
+  resolution: "ttypescript@npm:2.5.2"
+  bin:
+    ttsc: ./bin/tsc
+    ttsserver: ./bin/tsserver
+  checksum: b7b705d408f543fc9a49264f60a82e15cf62a62faad460e9eed7d809713e279cbe99ea3e749610df90c290d78f7fbf40c89ac1b459bb5a6e5fcecc778686697d
   languageName: node
   linkType: hard
 
