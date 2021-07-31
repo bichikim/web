@@ -23,8 +23,10 @@ export const createWithHashPassword = (options: PasswordHashOptions) =>
     return async (expressContext: ExpressContext) => {
       return freeze({
         ...await contextFunction(expressContext),
-        comparePassword,
-        hashPassword,
+        passwordBcrypt: freeze({
+          compare: comparePassword,
+          hash: hashPassword,
+        }),
       })
     }
   }

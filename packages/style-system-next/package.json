@@ -1,8 +1,8 @@
 {
   "name": "@winter-love/style-system-next",
   "version": "1.0.17-alpha.7",
-  "description": "Ui style system",
   "private": true,
+  "description": "Ui style system",
   "keywords": [
     "typescript",
     "style",

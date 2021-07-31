@@ -43,7 +43,11 @@ export type DropParametersFunction<T extends (...args: any) => any> = AnyFunctio
 
 export type DropRightTuple<T extends any[]> = T extends [...infer Head, any] ? Head : any[]
 
+export type PickLastTuple<T extends any[]> = T extends [...any[], infer P] ? P : unknown
+
 export type DropRightParameters<T extends (...args: any) => any> = DropRightTuple<Parameters<T>>
+
+export type PickLastParameters<T extends (...args: any) => any> = PickLastTuple<Parameters<T>>
 
 export type DropRightParametersFunction<T extends (...args: any) => any> = AnyFunction<DropParameters<T>, ReturnType<T>>
 

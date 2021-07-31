@@ -6,7 +6,7 @@ import {SignInInput, SignUpInput} from './args'
 @Resolver(() => User)
 export class AuthResolver {
   @Mutation(() => User, {nullable: true})
-  async signIn(@Ctx() {prisma, comparePassword}: Context, @Arg('data') data: SignInInput) {
+  async signIn(@Ctx() {prisma, passwordBcrypt}: Context, @Arg('data') data: SignInInput) {
 
     const {email, password} = data
 
@@ -24,7 +24,7 @@ export class AuthResolver {
       return null
     }
 
-    if (await comparePassword(password, userPassword)) {
+    if (await passwordBcrypt.compare(password, userPassword)) {
       return user
     }
 
@@ -33,7 +33,7 @@ export class AuthResolver {
 
   @Mutation(() => User, {nullable: true})
   async signUp(@Ctx() context: Context, @Arg('data') data: SignUpInput) {
-    const {hashPassword, prisma} = context
+    const {passwordBcrypt, prisma} = context
     const {email, name, password} = data
 
     const user = await prisma.user.findUnique({
@@ -44,7 +44,7 @@ export class AuthResolver {
       return null
     }
 
-    const hashedPassword = await hashPassword(password)
+    const hashedPassword = await passwordBcrypt.hash(password)
 
     return prisma.user.create({
       data: {
