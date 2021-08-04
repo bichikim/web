@@ -33,7 +33,7 @@ jobs:
         run: yarn install
       - name: Build Libraies
         if: steps.libraies-cache.outputs.cache-hit != 'true'
-        run: yarn run build:libraies
+        run: yarn run build:libraries
   test:
     name: Test
     needs: build-libray
