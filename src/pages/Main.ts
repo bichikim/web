@@ -2,6 +2,7 @@ import {user} from 'src/store'
 import {useAppClipboard} from 'src/use'
 import {computed, defineComponent, h, ref} from 'vue'
 import {useRouter} from 'vue-router'
+import Style from 'src/design-system/Style.vue'
 
 export const Main = defineComponent({
   name: 'Main',
@@ -34,6 +35,12 @@ export const Main = defineComponent({
         h('button', {onClick: () => updateName('bar')}, 'update name'),
         h('button', {onClick: () => (router.push('test'))}, 'go test1'),
         h('div', name.value),
+        h(Style, {css: {color: 'red'}}, () => [
+          'style',
+          h(Style, {css: {bg: ['blue', 'green'], color: 'white'}}, () => [
+            'style',
+          ]),
+        ]),
       ])
     )
   },
