@@ -16,6 +16,8 @@ jobs:
         uses: pnpm/action-setup@v2.0.1
         with:
           version: 6.7.6
+      - name: Yarn Version 
+        run: yarn -v
       - name: Use Yarn Cache
         uses: actions/cache@v2
         id: yarn-cache
