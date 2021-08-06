@@ -3,7 +3,9 @@ export interface StyleCss {
   color?: number | string | (string | number)[]
 }
 
-export const toFillArray = (value: any, number: number = 3) => {
+const defaultArrayCount = 3
+
+export const toFillArray = (value: any, number: number = defaultArrayCount) => {
   if (Array.isArray(value)) {
     const more: number = number - value.length
     if (more > 0) {
