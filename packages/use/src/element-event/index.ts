@@ -50,7 +50,7 @@ export function useElementEvent<Key extends keyof HTMLElementEventMap>(
   options?: UseElementEventOptions,
 ): Ref<boolean>
 export function useElementEvent<Key extends string>(
-  element: MayRef<HTMLElement | Window | Document>,
+  element: MayRef<HTMLElement | Window | Document | undefined>,
   eventName: Key,
   listener: Listener<Event>,
   isActive?: MayRef<boolean | undefined>,

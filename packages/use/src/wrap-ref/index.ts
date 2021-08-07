@@ -2,6 +2,7 @@ import {NotUndefined} from '@winter-love/utils'
 import {isToRef} from 'src/isToRef'
 import {MayRef} from 'src/types'
 import {computed, isReadonly, isRef, Ref, ref, watch} from 'vue-demi'
+import {unwrapRef} from '../unwrap-ref'
 
 export type RefWithInit<T, P extends T> =
   P extends undefined ? Ref<T> : Ref<NotUndefined<T>>
@@ -28,7 +29,7 @@ export const wrapRef = <T,
     options: WrapRefOptions<P> = {},
   ): RefWithInit<T, P> => {
   const {bindValue = true, initState} = options
-  const valueRef = isRef(value) ? ref(value.value ?? initState) : ref(value ?? initState)
+  const valueRef = ref(unwrapRef(value) ?? initState)
 
   const _isRef = isRef(value)
 
