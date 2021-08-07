@@ -1,7 +1,7 @@
 import {NotUndefined} from '@winter-love/utils'
 import {isToRef} from 'src/isToRef'
 import {MayRef} from 'src/types'
-import {isReadonly, isRef, ref, Ref, watch} from 'vue-demi'
+import {computed, isReadonly, isRef, Ref, ref, watch} from 'vue-demi'
 
 export type RefWithInit<T, P extends T> =
   P extends undefined ? Ref<T> : Ref<NotUndefined<T>>
@@ -10,6 +10,7 @@ export interface WrapRefOptions<P> {
   /**
    * Use with caution. Updating the returned Ref updates the value of Ref argument
    * 주의 하여 사용 하세요. return Ref 를 업데이트 하는 것은 value Ref argument 를 업데이트 할 것입니다
+   * bind 하지 않기 위해서 wrapRef(computed(() => (value.value)) 도 좋은 방법 입니다.
    * @default true
    */
   bindValue?: boolean
@@ -27,25 +28,28 @@ export const wrapRef = <T,
     options: WrapRefOptions<P> = {},
   ): RefWithInit<T, P> => {
   const {bindValue = true, initState} = options
+  const valueRef = isRef(value) ? ref(value.value ?? initState) : ref(value ?? initState)
 
-  if (isRef(value)) {
-    const innerRef = ref<any>(value.value ?? initState)
+  const _isRef = isRef(value)
 
-    if (bindValue) {
-      watch(innerRef, (_value) => {
-        if (isReadonly(value) || isToRef(value)) {
-          return
-        }
-        (value as any).value = _value
-      })
-    }
+  const isReadonlyValue = !_isRef || isToRef(value) || isReadonly(value)
 
-    watch(value, (_value) => {
-      innerRef.value = _value
+  if (_isRef) {
+    watch(value as any, (value: any) => {
+      valueRef.value = value
     })
-
-    return innerRef as any
   }
 
-  return ref(value ?? initState) as any
+  return computed({
+    get: () => {
+      return valueRef.value
+    },
+    set: (_value: any) => {
+      valueRef.value = _value
+      if (!bindValue || isReadonlyValue) {
+        return
+      }
+      (value as any).value = _value
+    },
+  }) as any
 }
