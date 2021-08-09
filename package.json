@@ -145,5 +145,6 @@
     "node": ">= 10.18.1",
     "yarn": ">= 3"
   },
-  "productName": "Coong"
+  "productName": "Coong",
+  "packageManager": "yarn@3.0.0"
 }

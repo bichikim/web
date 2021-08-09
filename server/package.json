@@ -34,6 +34,7 @@
     "@zerollup/ts-transform-paths": "^1.7.18",
     "cross-env": "^7.0.3",
     "prisma": "~2.27.0",
+    "rimraf": "^3.0.2",
     "tsc-watch": "^4.2.9",
     "ttypescript": "^1.5.12",
     "typegraphql-prisma": "^0.14.7",

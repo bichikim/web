@@ -10600,6 +10600,7 @@ __metadata:
     prisma: ~2.27.0
     ramda: ^0.27.1
     reflect-metadata: ^0.1.13
+    rimraf: ^3.0.2
     tsc-watch: ^4.2.9
     tslib: ^2.3.0
     ttypescript: ^1.5.12
