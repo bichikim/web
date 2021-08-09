@@ -110,7 +110,7 @@
     "eslint-plugin-import": "^2.19.1",
     "eslint-plugin-node": "^11.0.0",
     "eslint-plugin-promise": "^4.2.1",
-    "eslint-plugin-sort-keys-fix": "^1.1.1",
+    "eslint-plugin-sort-keys-fix": "^1.1.2",
     "eslint-plugin-typescript-sort-keys": "^1.6.0",
     "eslint-plugin-unicorn": "^29.0.0",
     "eslint-plugin-vue": "^7.11.1",
@@ -139,7 +139,7 @@
     "vite-aliases": "^0.8.6",
     "vitepress": "^0.15.6",
     "vue-jest": "^4.0.1",
-    "vue-loader": "^16.2.0"
+    "vue-loader": "^16.5.0"
   },
   "engines": {
     "node": ">= 10.18.1",

@@ -1,10 +1,11 @@
 import {wrapRef} from 'src/wrap-ref'
-import {MayRef} from 'src/types'
+import {MayRef, PossibleElement} from 'src/types'
 import {onBeforeUnmount, ref, watch} from 'vue-demi'
+import {pickElement} from '../pick-element'
 
 const defaultThreshold = 0.05
 
-export const onElementIntersection = <MyElement extends Element> (
+export const onElementIntersection = <MyElement extends PossibleElement> (
   element: MayRef<MyElement | undefined>,
   handle?: IntersectionObserverCallback,
   options: IntersectionObserverInit = {},
@@ -15,14 +16,14 @@ export const onElementIntersection = <MyElement extends Element> (
     handle?.(entries, observer)
   }
 
-  const observerRef = ref<IntersectionObserver>(new IntersectionObserver(updateState, {
+  const observerRef = ref<IntersectionObserver>(new window.IntersectionObserver(updateState, {
     threshold: defaultThreshold,
     ...options,
   }))
 
-  watch(elementRef, (element: any) => {
+  watch(elementRef, (element: MyElement | undefined) => {
     observerRef.value.disconnect()
-    const _element = element?.$el ?? element
+    const _element = pickElement(element)
     if (_element) {
       // using any owing to typescript bug
       observerRef.value.observe(_element as any)

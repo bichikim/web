@@ -10660,7 +10660,7 @@ __metadata:
     eslint-plugin-import: ^2.19.1
     eslint-plugin-node: ^11.0.0
     eslint-plugin-promise: ^4.2.1
-    eslint-plugin-sort-keys-fix: ^1.1.1
+    eslint-plugin-sort-keys-fix: ^1.1.2
     eslint-plugin-typescript-sort-keys: ^1.6.0
     eslint-plugin-unicorn: ^29.0.0
     eslint-plugin-vue: ^7.11.1
@@ -10696,7 +10696,7 @@ __metadata:
     vitepress: ^0.15.6
     vue-i18n: ^9.0.0
     vue-jest: ^4.0.1
-    vue-loader: ^16.2.0
+    vue-loader: ^16.5.0
     vue-router: 4.0.9
   languageName: unknown
   linkType: soft
@@ -12753,12 +12753,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-sort-keys-fix@npm:^1.1.1":
-  version: 1.1.1
-  resolution: "eslint-plugin-sort-keys-fix@npm:1.1.1"
+"eslint-plugin-sort-keys-fix@npm:^1.1.2":
+  version: 1.1.2
+  resolution: "eslint-plugin-sort-keys-fix@npm:1.1.2"
   dependencies:
+    espree: ^6.1.2
+    esutils: ^2.0.2
+    natural-compare: ^1.4.0
     requireindex: ~1.2.0
-  checksum: 40547bf18f7faa73b8fa28c16d2d3de6d912f6e9c2f5cb2b21ab7907ebcaea13d71b60bd18a8c6817c164b62a161f88db50af82d4d11def43d68820676739201
+  checksum: d089e4ec4f8cea4ec239132f85c807ce71e500370e3ef778d684697da5011b413e625d6f5b9bf3b5b1cf7c4eafffc39d386bffca271b7c3e7983409fb0d7d2c6
   languageName: node
   linkType: hard
 
@@ -12940,7 +12943,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"espree@npm:^6.2.1":
+"espree@npm:^6.1.2, espree@npm:^6.2.1":
   version: 6.2.1
   resolution: "espree@npm:6.2.1"
   dependencies:
@@ -27134,9 +27137,9 @@ typescript@^4.3.4:
   languageName: node
   linkType: hard
 
-"vue-loader@npm:^16.2.0":
-  version: 16.3.3
-  resolution: "vue-loader@npm:16.3.3"
+"vue-loader@npm:^16.5.0":
+  version: 16.5.0
+  resolution: "vue-loader@npm:16.5.0"
   dependencies:
     chalk: ^4.1.0
     hash-sum: ^2.0.0
@@ -27147,7 +27150,7 @@ typescript@^4.3.4:
   peerDependenciesMeta:
     "@vue/compiler-sfc":
       optional: true
-  checksum: d5d76bff1b79d9c49c170d93051092b1ef9230437277598e324171507c9c2fa0fd528e2b0ad10eeaa82e2008250060776da5bfd5c63c70bad838bb3229a1322c
+  checksum: 24f0e704729a933f1bc7b8c6a1a7662f27602f66f1690856f57e840127b8f7a1064c290ee5f040bb7e72de7dfcef0befb9f0773307b19c475a9213380011e592
   languageName: node
   linkType: hard
 
