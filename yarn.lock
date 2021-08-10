@@ -4270,9 +4270,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@quasar/app@npm:^3.0.3":
-  version: 3.0.3
-  resolution: "@quasar/app@npm:3.0.3"
+"@quasar/app@npm:^3.0.4":
+  version: 3.0.4
+  resolution: "@quasar/app@npm:3.0.4"
   dependencies:
     "@quasar/babel-preset-app": 2.0.1
     "@quasar/fastclick": 1.1.4
@@ -4336,7 +4336,7 @@ __metadata:
     typescript: 4.2.2
     url-loader: 4.1.1
     vue: 3.1.5
-    vue-loader: 16.3.1
+    vue-loader: 16.4.1
     vue-router: 4.0.10
     vue-style-loader: 4.1.3
     webpack: ^5.35.0
@@ -4347,7 +4347,7 @@ __metadata:
     webpack-node-externals: 3.0.0
   bin:
     quasar: bin/quasar
-  checksum: 89a45f1a5c042e10a1000c301e93296490f3afaeab4cd3bb725ddeea2942d65255172eb0ac56c37466f36bdcb70d275e4dd1311d5edcbedf404ade6f29706b2f
+  checksum: 02d9af35397936d7d91892a46176b74b69985f6c1ff2103f12c90af1885ee6fc6ae1f5a874f931fa0717df3ec33a15f824bcdb80b4ff4fa7db63db9fcd55ec34
   languageName: node
   linkType: hard
 
@@ -4379,10 +4379,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@quasar/extras@npm:^1.10.9":
-  version: 1.10.9
-  resolution: "@quasar/extras@npm:1.10.9"
-  checksum: 329d260519a059987a282ba1a5a0c569c2159ac21f128c28e3e683656f029846d68591f1bd3673cf67e935005f7dde417100ad4adbae3c83608debb65d31785d
+"@quasar/extras@npm:^1.10.10":
+  version: 1.10.10
+  resolution: "@quasar/extras@npm:1.10.10"
+  checksum: c07f605aef3f32d1ae758f719cbb47aa60930ec14fb88e5c2874db0f2ad9dc9333a2c534bcb1e5ffeb249bb1cace874bb6c1a854dde33482bee6da35ab1f2de1
   languageName: node
   linkType: hard
 
@@ -10618,11 +10618,10 @@ __metadata:
     "@babel/preset-typescript": ^7.13.0
     "@capacitor/clipboard": ^1.0.2
     "@capacitor/core": ^3.0.2
-    "@emotion/css": ^11.1.3
     "@emotion/jest": ^11.3.0
     "@emotion/server": ^11.4.0
-    "@quasar/app": ^3.0.3
-    "@quasar/extras": ^1.10.9
+    "@quasar/app": ^3.0.4
+    "@quasar/extras": ^1.10.10
     "@rollup/plugin-alias": ^3.1.2
     "@rollup/plugin-node-resolve": ^11.2.1
     "@storybook/addon-actions": ^6.3.0
@@ -27110,18 +27109,7 @@ typescript@^4.3.4:
   languageName: node
   linkType: hard
 
-"vue-loader@npm:16.3.1":
-  version: 16.3.1
-  resolution: "vue-loader@npm:16.3.1"
-  dependencies:
-    chalk: ^4.1.0
-    hash-sum: ^2.0.0
-    loader-utils: ^2.0.0
-  checksum: 7cabe8c6a478303f4a97c642ce84e0b27133bc150472501941fc917c8336e8433e50fa9b0779ea3de29766dd1875f7f678fed30eeeb71823d33d8dc4dc019da3
-  languageName: node
-  linkType: hard
-
-"vue-loader@npm:^16.0.0":
+"vue-loader@npm:16.4.1, vue-loader@npm:^16.0.0":
   version: 16.4.1
   resolution: "vue-loader@npm:16.4.1"
   dependencies:

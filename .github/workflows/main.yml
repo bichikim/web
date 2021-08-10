@@ -104,7 +104,7 @@ jobs:
       - name: Archive Production Artifact
         uses: actions/upload-artifact@master
         with:
-          name: dist
+          name: dist-client
           path: |
             dist
   build-server:
@@ -261,6 +261,18 @@ jobs:
           --max-instances 2 \
           --port 8080 \
           --memory 512M
+  deploy-client:
+    name: Deploy Client
+    needs: build-client
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@master
+      - name: Download Artifact
+        uses: actions/download-artifact@master
+        with:
+          name: dist-client
+          path: dist
 #  deploy:
 #    name: Deploy
 #    needs: build
