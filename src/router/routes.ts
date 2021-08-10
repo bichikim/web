@@ -6,6 +6,7 @@ const routes: RouteRecordRaw[] = [
       {component: () => import('pages/Main'), path: ''},
       {component: () => import('pages/Test'), path: 'test'},
       {component: () => import('pages/Test1'), path: 'test1'},
+      {component: () => import('pages/Use'), path: 'use'},
     ],
     component: () => import('layouts/MainLayout'),
     path: '/',

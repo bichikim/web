@@ -29,7 +29,7 @@ export const useClipboard = (
     return value
   }
 
-  if (updateOnEvent && isSupported) {
+  if (isSupported && updateOnEvent && isSupported) {
     useElementEvent(window, 'copy' as any, read)
     useElementEvent(window, 'cut' as any, read)
   }

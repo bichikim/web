@@ -1,4 +1,5 @@
 import {ref, watch} from 'vue'
+import {isSSR} from '@winter-love/utils'
 
 export interface RouteHistory {
   back: string | null
@@ -9,9 +10,11 @@ export interface RouteHistory {
   scroll: {left: number; top: number}
 }
 
-const original: any = window.onpopstate
+const _isSSR = isSSR()
+
+const original: any = _isSSR ? undefined : window.onpopstate
 const stateRef = ref<RouteHistory>()
-const locationRef = ref<Location>(document.location)
+const locationRef = ref<Location | undefined>(_isSSR ? undefined : document.location)
 
 function onPopState(this: WindowEventHandlers, event: PopStateEvent) {
   if (typeof original === 'function') {
@@ -21,7 +24,9 @@ function onPopState(this: WindowEventHandlers, event: PopStateEvent) {
   locationRef.value = document.location
 }
 
-window.onpopstate = onPopState
+if (!_isSSR) {
+  window.onpopstate = onPopState
+}
 
 /**
  * @WIP
@@ -29,7 +34,7 @@ window.onpopstate = onPopState
  */
 export const onRouteHistory = (callback: (state: RouteHistory, location: Location) => unknown) => {
   watch([stateRef, locationRef], ([state, location]) => {
-    if (state) {
+    if (state && location) {
       callback(state, location)
     }
   })

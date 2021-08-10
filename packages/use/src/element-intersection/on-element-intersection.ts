@@ -1,3 +1,4 @@
+import {isSSR} from '@winter-love/utils'
 import {wrapRef} from 'src/wrap-ref'
 import {MayRef, PossibleElement} from 'src/types'
 import {onBeforeUnmount, ref, watch} from 'vue-demi'
@@ -10,13 +11,17 @@ export const onElementIntersection = <MyElement extends PossibleElement> (
   handle?: IntersectionObserverCallback,
   options: IntersectionObserverInit = {},
 ) => {
+  if (isSSR()) {
+    return
+  }
+
   const elementRef = wrapRef(element)
 
   const updateState: IntersectionObserverCallback = (entries, observer) => {
     handle?.(entries, observer)
   }
 
-  const observerRef = ref<IntersectionObserver>(new window.IntersectionObserver(updateState, {
+  const observerRef = ref<IntersectionObserver>(new IntersectionObserver(updateState, {
     threshold: defaultThreshold,
     ...options,
   }))

@@ -3,7 +3,6 @@ import {isInInstance} from 'src/is-in-instance'
 import {MayRef} from 'src/types'
 import {wrapRef} from 'src/wrap-ref'
 import {onMounted, onUnmounted, Ref, watch} from 'vue-demi'
-import {isSSR} from '@winter-love/utils'
 
 export type Listener<ElementEvent> = (event: ElementEvent) => any
 
@@ -29,14 +28,14 @@ export interface UseElementEventReturnType {
 }
 
 export function useElementEvent<Key extends keyof DocumentEventMap>(
-  document: MayRef<Document>,
+  document: MayRef<Document | undefined>,
   eventName: Key,
   listener: Listener<DocumentEventMap[Key]>,
   isActive?: MayRef<boolean | undefined>,
   options?: UseElementEventOptions,
 )
 export function useElementEvent<Key extends keyof WindowEventMap>(
-  window: MayRef<Window>,
+  window: MayRef<Window | undefined>,
   eventName: Key,
   listener: Listener<WindowEventMap[Key]>,
   isActive?: MayRef<boolean | undefined>,
@@ -71,12 +70,9 @@ export function useElementEvent<Key extends string>(
   }
 
   const active = () => {
-    if (isSSR()) {
-      return
-    }
-    isActiveRef.value = true
     const element = elementRef.value
     if (element) {
+      isActiveRef.value = true
       element.addEventListener(eventName, handle, {
         capture,
         passive,

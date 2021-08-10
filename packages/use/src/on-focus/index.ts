@@ -1,4 +1,5 @@
 import {useElementEvent} from '../element-event'
+import {isSSR} from '@winter-love/utils'
 
 export type FocusHandle = () => unknown
 
@@ -7,6 +8,10 @@ export type FocusHandle = () => unknown
  * @param handle
  */
 export const onFocus = (handle?: FocusHandle) => {
+  if (isSSR()) {
+    return
+  }
+
   const onFocus = () => handle?.()
 
   useElementEvent(window, 'focus', onFocus)

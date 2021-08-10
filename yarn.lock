@@ -7431,7 +7431,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@winter-love/use@^1.0.17-alpha.0, @winter-love/use@^1.0.17-alpha.7, @winter-love/use@workspace:packages/use":
+"@winter-love/use@^1.0.17-alpha.7, @winter-love/use@workspace:packages/use":
   version: 0.0.0-use.local
   resolution: "@winter-love/use@workspace:packages/use"
   dependencies:
@@ -10648,7 +10648,7 @@ __metadata:
     "@vue/test-utils": ^2.0.0-rc.6
     "@winter-love/emotion": ^1.0.17-alpha.0
     "@winter-love/style-system-next": ^1.0.17-alpha.0
-    "@winter-love/use": ^1.0.17-alpha.0
+    "@winter-love/use": ^1.0.17-alpha.7
     "@winter-love/utils": ^1.0.17-alpha.0
     "@zerollup/ts-transform-paths": ^1.7.18
     babel-jest: ^27.0.2

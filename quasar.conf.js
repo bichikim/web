@@ -26,7 +26,7 @@ module.exports = configure((ctx) => {
     boot: [
       'i18n',
       'emotion',
-      'three',
+      // 'three',
       'vare',
     ],
     // Full list of options: https://v2.quasar.dev/quasar-cli/quasar-conf-js#Property%3A-build
