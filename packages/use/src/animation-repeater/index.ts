@@ -5,6 +5,11 @@ import {isSSR} from '@winter-love/utils'
 
 export type UseAnimationTickHandle = () => any
 
+/**
+ * @deprecated please use onAnimationRepeater
+ * @param handle
+ * @param toggle
+ */
 export const animationRepeater = (handle: UseAnimationTickHandle, toggle?: MayRef<boolean | undefined>) => {
   const toggleRef = wrapRef(toggle, {initState: true})
   const cancelFlagRef = ref<number | undefined>()

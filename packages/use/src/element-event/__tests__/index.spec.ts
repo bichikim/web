@@ -61,16 +61,16 @@ const setupWithWindow = (props: any) => {
 describe('element-event', () => {
   it('should trigger event with immediate', async () => {
     const {wrapper} = setup({immediate: true})
-    await flushPromises()
+
     expect(wrapper.get('#count').text()).toBe('0')
     await wrapper.get('#target').trigger('click')
-    await flushPromises()
+
     expect(wrapper.get('#count').text()).toBe('1')
     await wrapper.get('#target').trigger('click')
     expect(wrapper.get('#count').text()).toBe('2')
     await wrapper.get('#inactive').trigger('click')
     await wrapper.get('#target').trigger('click')
-    await flushPromises()
+
     expect(wrapper.get('#count').text()).toBe('2')
     await wrapper.get('#active').trigger('click')
     await wrapper.get('#target').trigger('click')
@@ -87,7 +87,6 @@ describe('element-event', () => {
   })
   it('should not trigger event with the once and the mounted immediate', async () => {
     const {wrapper} = setup({immediate: true, once: true})
-    await flushPromises()
     expect(wrapper.get('#count').text()).toBe('0')
     await wrapper.get('#target').trigger('click')
     expect(wrapper.get('#count').text()).toBe('1')
@@ -115,7 +114,6 @@ describe('element-event', () => {
     const event = document.createEvent('MessageEvent')
     event.initEvent('message')
     window.dispatchEvent(event)
-    await flushPromises()
     expect(wrapper.get('#count').text()).toBe('0')
     await wrapper.get('#active').trigger('click')
     window.dispatchEvent(event)

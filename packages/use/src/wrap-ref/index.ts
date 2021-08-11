@@ -1,11 +1,11 @@
 import {NotUndefined} from '@winter-love/utils'
 import {isToRef} from 'src/isToRef'
 import {MayRef} from 'src/types'
-import {computed, isReadonly, isRef, Ref, ref, watch} from 'vue-demi'
+import {computed, isReadonly, isRef, Ref, ref, watchEffect} from 'vue-demi'
 import {unwrapRef} from '../unwrap-ref'
 
-export type RefWithInit<T, P extends T> =
-  P extends undefined ? Ref<T> : Ref<NotUndefined<T>>
+export type RefWithInit<T, P> =
+  P extends undefined ? Ref<T> : Ref<NotUndefined<T> | P>
 
 export interface WrapRefOptions<P> {
   /**
@@ -15,6 +15,10 @@ export interface WrapRefOptions<P> {
    * @default true
    */
   bindValue?: boolean
+  defaultValue?: P | undefined
+  /**
+   * @deprecated please use defaultValue
+   */
   initState?: P | undefined
 }
 
@@ -24,20 +28,22 @@ export interface WrapRefOptions<P> {
  * @param options ref to WrapRefOptions
  */
 export const wrapRef = <T,
-  P extends T = T>(
+  P = T>(
     value?: MayRef<T>,
     options: WrapRefOptions<P> = {},
   ): RefWithInit<T, P> => {
-  const {bindValue = true, initState} = options
-  const valueRef = ref(unwrapRef(value) ?? initState)
+  const {bindValue = true, initState, defaultValue} = options
+  const valueRef = ref<any>(unwrapRef(value) ?? defaultValue ?? initState)
 
   const _isRef = isRef(value)
 
   const isReadonlyValue = !_isRef || isToRef(value) || isReadonly(value)
 
   if (_isRef) {
-    watch(value as any, (value: any) => {
-      valueRef.value = value
+    watchEffect(() => {
+      valueRef.value = unwrapRef(value) ?? defaultValue ?? initState
+    }, {
+      flush: 'sync',
     })
   }
 

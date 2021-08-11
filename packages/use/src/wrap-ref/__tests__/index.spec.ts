@@ -1,6 +1,7 @@
 import {mount} from '@vue/test-utils'
-import {computed, defineComponent, h, ref, toRef} from 'vue-demi'
+import {computed, defineComponent, h, Ref, ref, toRef} from 'vue-demi'
 import {wrapRef} from '../index'
+import {expectType} from 'tsd'
 
 const setup = () => {
   const Component = defineComponent({
@@ -11,23 +12,32 @@ const setup = () => {
       const countProp = toRef(props, 'count')
 
       const clonedCountProp = wrapRef(countProp)
+      expectType<Ref<number>>(clonedCountProp)
 
       const count = ref(0)
       const clonedCount = wrapRef(count)
+      expectType<Ref<number>>(clonedCount)
       const unbindClonedCount = wrapRef(count, {
         bindValue: false,
       })
+      expectType<Ref<number>>(unbindClonedCount)
       //
       const computedCount = computed(() => {
         return count.value
       })
       const clonedComputedCount = wrapRef(computedCount)
+      expectType<Ref<number>>(clonedComputedCount)
 
       //
       const undefinedCount = ref<number | undefined>()
-      const unbindUndefinedCount = wrapRef(undefinedCount, {bindValue: false, initState: 0})
-      const bindUndefinedCount = wrapRef(undefinedCount, {initState: 0})
-      const undefinedWrappedCount = wrapRef<undefined | number>(undefined, {initState: 0})
+      const unbindUndefinedCount = wrapRef(undefinedCount, {bindValue: false, defaultValue: 0})
+      expectType<Ref<number>>(unbindUndefinedCount)
+      const bindUndefinedCount = wrapRef(undefinedCount, {defaultValue: 0})
+      expectType<Ref<number>>(bindUndefinedCount)
+      const undefinedWrappedCount = wrapRef(undefined, {defaultValue: 0})
+      expectType<Ref<number>>(undefinedWrappedCount)
+      const mixType = wrapRef(10, {defaultValue: '50'})
+      expectType<Ref<number | string>>(mixType)
       //
 
       const increaseClonedCountProp = () => {

@@ -1,5 +1,5 @@
 import {Meta, Story, Canvas} from '@storybook/addon-docs/blocks'
-import {animationRepeater} from '../'
+import {onAnimationRepeater} from '../'
 import {h, ref} from 'vue-demi'
 
 <Meta title="use/Animation Repeater"/>
@@ -19,7 +19,7 @@ export const Template = () => ({
     function increaseCount() {
       countRef.value += 1
     }
-    const toggleRef = animationRepeater(increaseCount)
+    const toggleRef = onAnimationRepeater(increaseCount)
     function toggleCount() {
       toggleRef.value = !toggleRef.value
     }
