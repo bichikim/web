@@ -9,11 +9,8 @@ const setup = (props: any) => {
       const elementRef = ref()
       const countRef = ref(0)
       const active = useElementEvent(elementRef, 'click', () => {
-        console.log('?')
         countRef.value += 1
       }, props.immediate, {once: props.once})
-
-      console.log(active.value)
 
       return () => (
         h('div', [

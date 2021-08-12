@@ -28,6 +28,7 @@ module.exports = {
         '**/*.spec.{j,t}s?(x)',
       ],
       rules: {
+        '@typescript-eslint/no-unused-vars': 'off',
         '@typescript-eslint/no-var-requires': 'off',
         'max-len': 'off',
         'max-lines-per-function': 'off',
@@ -273,7 +274,6 @@ module.exports = {
     'no-restricted-globals': 'error',
     'no-restricted-properties': 'error',
     'no-return-assign': 'error',
-    'unicorn/no-abusive-eslint-disable': 'off',
     'no-return-await': 'error',
     'no-script-url': 'error',
     'no-self-compare': 'error',
@@ -326,8 +326,8 @@ module.exports = {
     'prefer-regex-literals': 'error',
     'prefer-rest-params': 'error',
     'prefer-spread': 'error',
-
     'prefer-template': 'warn',
+
     'quote-props': ['error', 'as-needed'],
     quotes: ['error', 'single'],
     radix: 'error',
@@ -368,6 +368,7 @@ module.exports = {
     'template-tag-spacing': ['error', 'never'],
     'typescript-sort-keys/interface': 'warn',
     'typescript-sort-keys/string-enum': 'warn',
+    'unicorn/consistent-function-scoping': 'warn',
     'unicorn/filename-case': [
       'warn', {
         cases: {
@@ -377,6 +378,7 @@ module.exports = {
       },
     ],
     'unicorn/new-for-builtins': 'off',
+    'unicorn/no-abusive-eslint-disable': 'off',
     'unicorn/no-array-for-each': 'off',
     'unicorn/no-array-reduce': 'off',
     'unicorn/no-nested-ternary': 'off',

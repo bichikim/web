@@ -17,8 +17,6 @@ describe('directive', () => {
     directive.setSystem((props: any) => {
       const {theme, width, ...rest} = props
 
-      console.log(theme.sizes[width], width)
-
       return {
         ...rest,
         width: theme.sizes[width] ?? width,

@@ -38,6 +38,7 @@
     "clean": "lerna clean --yes && rimraf node_modules",
     "start:local-docker": "docker-compose up -d",
     "test": "jest",
+    "test:coverage": "jest --collect-coverage",
     "build-storybook": "build-storybook",
     "deploy-storybook": "storybook-to-ghpages",
     "docs:dev": "vitepress dev docs",

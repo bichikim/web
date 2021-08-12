@@ -26,7 +26,7 @@ export const onElementIntersection = <MyElement extends PossibleElement> (
     ...options,
   }))
 
-  watch(elementRef, (element: MyElement | undefined) => {
+  watch(elementRef, (element) => {
     observerRef.value.disconnect()
     const _element = pickElement(element)
     if (_element) {

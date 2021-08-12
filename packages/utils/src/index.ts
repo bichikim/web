@@ -1,13 +1,15 @@
+/* istanbul ignore file */
+
+// no need to test for exporting only file
+
 export * from './callbackify'
 export * from './clean-object'
 export * from './drop'
-export * from './empty-object'
 export * from './freeze'
-export * from './get-storage-available'
+export * from './get-storage'
 export * from './is-lestenable'
 export * from './is-promise'
 export * from './is-ssr'
-export * from './is-storage-avaliable'
 export * from './may-function-value'
 export * from './memoize'
 export * from './promisify'

@@ -66,8 +66,6 @@ describe('on-element-intersection', () => {
     })
 
     await flushPromises()
-
-    console.log(observe.mock.calls.length)
     expect(disconnect).toHaveBeenCalledTimes(1)
     expect(observe).toHaveBeenLastCalledWith(wrapper.element)
     expect(observerMock).toHaveBeenCalledTimes(1)

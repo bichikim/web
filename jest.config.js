@@ -8,6 +8,7 @@ module.exports = {
     '!<rootDir>/**/*.d.ts',
     '!<rootDir>/**/*.stories.{ts,tsx}',
     '!<rootDir>/**/__tests__/*.{ts,tsx}',
+    '!<rootDir>/**/types/**/*.{ts,tsx}',
   ],
   maxWorkers: '70%',
   moduleFileExtensions: ['js', 'jsx', 'ts', 'tsx', 'vue', 'json'],
