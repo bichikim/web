@@ -2,7 +2,7 @@ import * as process from 'process'
 import {freeze} from '../index'
 
 describe('freeze', () => {
-  it('should return freeze object', () => {
+  it('should return a frozen object', () => {
     const oldEnv = process.env.NODE_ENV
 
     process.env.NODE_ENV = 'development'

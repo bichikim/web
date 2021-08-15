@@ -2,7 +2,7 @@ import {promisify} from 'src/promisify'
 import {expectType} from 'tsd'
 
 describe('promisify', () => {
-  it('should make a callback function to be a returning promise resolve function', () => {
+  it('should create a returning promise function from a callback function', () => {
     const callbackRunner = (count: number, callback: (error: any, data: number) => any) => {
       setTimeout(() => {
         callback(null, count + 1)

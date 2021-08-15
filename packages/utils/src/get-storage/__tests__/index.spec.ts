@@ -1,12 +1,12 @@
 import {createGetStorage, getStorage} from '../'
 
 describe('get Storage', () => {
-  it('should return storage', () => {
+  it('should return a storage', () => {
     const storage = getStorage('session')
     expect(storage).toBe(sessionStorage)
   })
 
-  it('should not return storage with error', () => {
+  it('should return undefined with an error', () => {
     const getStorage = createGetStorage()
     const original = localStorage
     const setItem = jest.fn(() => {

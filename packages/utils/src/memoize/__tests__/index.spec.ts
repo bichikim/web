@@ -1,7 +1,7 @@
 import {deepMemoize, memoize} from '../'
 
 describe('memoize', () => {
-  it('should memo the result', () => {
+  it('should memo the result from comparing arguments', () => {
     const logic = jest.fn((foo: string) => `${foo}+`)
     const memoLogic = memoize()(logic)
 
@@ -15,7 +15,7 @@ describe('memoize', () => {
 })
 
 describe('deep memoize', () => {
-  it('should memo the result deeply', () => {
+  it('should memo the result from comparing arguments deeply', () => {
     const logic = jest.fn((context: {foo: string}) => `${context.foo}+`)
     const memoLogic = deepMemoize()(logic)
     expect(memoLogic({foo: 'foo'})).toBe('foo+')
