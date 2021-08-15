@@ -1,7 +1,7 @@
 /* istanbul ignore file */
 
 // no need to test for exporting only file
-
+export * from './browser'
 export * from './callbackify'
 export * from './clean-object'
 export * from './drop'

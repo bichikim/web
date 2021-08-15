@@ -1,8 +1,10 @@
-import {isSSR} from '@winter-love/utils'
+import {getDocument, getHTMLElement} from '@winter-love/utils'
 
 export const useBlur = () => {
   return () => {
-    if (isSSR()) {
+    const document = getDocument()
+    const HTMLElement = getHTMLElement()
+    if (!document || !HTMLElement) {
       return
     }
     if (document.activeElement instanceof HTMLElement) {

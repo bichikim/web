@@ -1,14 +1,15 @@
-import {isSSR} from '../is-ssr'
+import {getWindow} from 'src/browser'
 
 export type StorageType = 'local' | 'session'
 
-const _getStorage = (type: StorageType): Storage => {
+const _getStorage = (type: StorageType): Storage | undefined => {
+  const window = getWindow()
   switch (type) {
     // eslint-disable-next-line indent
     case 'local':
-      return localStorage
+      return window?.localStorage
     case 'session':
-      return sessionStorage
+      return window?.sessionStorage
   }
 }
 
@@ -18,11 +19,11 @@ export const createGetStorage = () => {
   let _testResult
 
   return (type: StorageType): Storage | undefined => {
-    if (isSSR()) {
+    const storage = _getStorage(type)
+
+    if (!storage) {
       return
     }
-
-    const storage = _getStorage(type)
 
     if (typeof _testResult === 'undefined') {
       try {

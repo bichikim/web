@@ -1,7 +1,7 @@
 import {ref, watch} from 'vue-demi'
 import {wrapRef} from '../wrap-ref'
 import {MayRef} from 'src/types'
-import {isSSR} from '@winter-love/utils'
+import {getWindow} from '@winter-love/utils'
 
 export type UseAnimationTickHandle = () => any
 
@@ -22,15 +22,21 @@ export const animationRepeater = (handle: UseAnimationTickHandle, toggle?: MayRe
   }
 
   const registerTick = (value: boolean) => {
-    if (isSSR()) {
+    const window = getWindow()
+
+    if (!window) {
       return
     }
+
+    const {requestAnimationFrame, cancelAnimationFrame} = window
+
     if (value) {
-      cancelFlagRef.value = window.requestAnimationFrame(tick)
+      cancelFlagRef.value = requestAnimationFrame(tick)
       return
     }
+
     if (cancelFlagRef.value) {
-      window.cancelAnimationFrame(cancelFlagRef.value)
+      cancelAnimationFrame(cancelFlagRef.value)
     }
   }
 

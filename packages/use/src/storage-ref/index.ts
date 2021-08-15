@@ -1,4 +1,4 @@
-import {getStorageAvailable, StorageType} from '@winter-love/utils'
+import {getStorage, StorageType} from '@winter-love/utils'
 import {ref, watch} from 'vue-demi'
 import stringify from 'fast-json-stable-stringify'
 import {useElementEvent} from '../element-event'
@@ -38,7 +38,7 @@ export const storageRef = <Data>(
   const {type = 'local'} = options
   const valueRef = wrapRef<Data | undefined>(value)
   const freezeWatch = ref(false)
-  const storage = getStorageAvailable(type)
+  const storage = getStorage(type)
   if (!storage) {
     return valueRef
   }
