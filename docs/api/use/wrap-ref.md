@@ -10,8 +10,9 @@ Wrap Ref or not Ref
 
 ## Demo
 
-<WrapRef />
+<wrap-ref></wrap-ref>
 
+<toggle-slide>
 <<< @/api/use/WrapRef.vue
-
+</toggle-slide>
 
