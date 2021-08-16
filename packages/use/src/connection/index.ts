@@ -1,7 +1,7 @@
 import {useElementEvent} from 'src/element-event'
 import {MayRef} from '../types'
 import {wrapRef} from '../wrap-ref'
-import {isSSR} from '@winter-love/utils'
+import {getWindow} from '@winter-love/utils'
 
 export type OnOfflineHandle = (event: Event) => unknown
 export type OnOnlineHandle = (event: Event) => unknown
@@ -10,8 +10,9 @@ export type OnOnlineHandle = (event: Event) => unknown
  * @param handle
  */
 export const onOffline = (handle: OnOfflineHandle) => {
+  const window = getWindow()
   return useElementEvent(
-    isSSR() ? undefined : window,
+    window,
     'offline',
     handle,
     true,
@@ -23,8 +24,9 @@ export const onOffline = (handle: OnOfflineHandle) => {
  * @param handle
  */
 export const onOnline = (handle: OnOnlineHandle) => {
+  const window = getWindow()
   return useElementEvent(
-    isSSR() ? undefined : window,
+    window,
     'online',
     handle,
     true,
