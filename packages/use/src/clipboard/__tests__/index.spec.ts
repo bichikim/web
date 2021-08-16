@@ -1,69 +1,85 @@
 import {useClipboard} from '../'
-import * as elementEvent from 'src/element-event'
+import {useElementEvent} from 'src/element-event'
+import {getNavigator} from '@winter-love/utils'
 import {flushPromises} from '@vue/test-utils'
 
 jest.mock('src/element-event', () => {
-  const listeners = {}
-  // noinspection JSUnusedGlobalSymbols
   return {
-    __trigger(key: string, value) {
+    ...jest.requireActual('src/element-event'),
+    useElementEvent: jest.fn(),
+  }
+})
+
+jest.mock('@winter-love/utils', () => {
+  return {
+    ...jest.requireActual('@winter-love/utils'),
+    getNavigator: jest.fn(),
+  }
+})
+
+const useElementEventMock: jest.Mock = useElementEvent as any
+const getNavigatorMock: jest.Mock = getNavigator as any
+
+const createUseElementEventMock = () => {
+  const listeners = {}
+  let _value = ''
+  return {
+    getNavigator: () => {
+      return {
+        clipboard: {
+          readText: () => {
+            return _value
+          },
+          writeText: (value: string) => {
+            _value = value
+          },
+        },
+      }
+    },
+    setValue: (value: string) => {
+      _value = value
+    },
+    trigger: (key: string, value?) => {
       listeners[key]?.(value)
     },
     useElementEvent: (target, key, listener: any) => {
       listeners[key] = listener
     },
   }
-})
+}
 
 describe('clipboard', () => {
-  const _elementEvent: any = elementEvent
-  const __trigger: jest.Mock = _elementEvent.__trigger
-  let clipboardValue = 'init'
-  const original = window.navigator.clipboard
-
-  beforeAll(() => {
-    Object.defineProperty(window.navigator, 'clipboard', {
-      configurable: true,
-      value: {
-        readText(): Promise<string> {
-          return Promise.resolve(clipboardValue)
-        },
-        writeText(value) {
-          clipboardValue = value
-          return Promise.resolve(value)
-        },
-      },
-    })
-  })
-
   afterEach(() => {
-    clipboardValue = 'init'
-  })
-
-  afterAll(() => {
-    Object.defineProperty(window.navigator, 'clipboard', {
-      configurable: true,
-      value: original,
-    })
+    useElementEventMock.mockRestore()
+    getNavigatorMock.mockRestore()
   })
 
   it('should update value ref with window copy event or cut event', async () => {
+    const mock = createUseElementEventMock()
+
+    useElementEventMock.mockImplementation(mock.useElementEvent)
+    getNavigatorMock.mockImplementation(mock.getNavigator)
+
     const {value, state} = useClipboard(undefined, true)
     expect(state.value).toBe('idle')
     expect(value.value).toBe(undefined)
 
-    clipboardValue = 'foo'
-    __trigger('copy')
+    mock.setValue('foo')
+    mock.trigger('copy')
     await flushPromises()
     expect(value.value).toBe('foo')
 
-    clipboardValue = 'bar'
-    __trigger('cut')
+    mock.setValue('bar')
+    mock.trigger('cut')
     await flushPromises()
     expect(value.value).toBe('bar')
   })
 
   it('should write value', async () => {
+    const mock = createUseElementEventMock()
+
+    useElementEventMock.mockImplementation(mock.useElementEvent)
+    getNavigatorMock.mockImplementation(mock.getNavigator)
     const {value, state, write} = useClipboard()
     expect(state.value).toBe('idle')
     expect(value.value).toBe(undefined)
@@ -73,8 +89,13 @@ describe('clipboard', () => {
     await flushPromises()
     expect(state.value).toBe('idle')
     expect(value.value).toBe('foo')
+    useElementEventMock.mockRestore()
   })
   it('should not double write value', async () => {
+    const mock = createUseElementEventMock()
+
+    useElementEventMock.mockImplementation(mock.useElementEvent)
+    getNavigatorMock.mockImplementation(mock.getNavigator)
     const {value, state, write} = useClipboard()
     expect(state.value).toBe('idle')
     expect(value.value).toBe(undefined)
@@ -85,5 +106,6 @@ describe('clipboard', () => {
     await flushPromises()
     expect(state.value).toBe('idle')
     expect(value.value).toBe('foo')
+    useElementEventMock.mockRestore()
   })
 })

@@ -12,3 +12,10 @@ export const getHTMLElement = (): typeof HTMLElement | undefined => {
     return HTMLElement
   }
 }
+
+export const getNavigator = (): Navigator | undefined => {
+  const window = getWindow()
+  if (window) {
+    return window.navigator
+  }
+}

@@ -1,9 +1,8 @@
-import {freeze} from '@winter-love/utils'
+import {freeze, getNavigator, getWindow} from '@winter-love/utils'
 import {useElementEvent} from 'src/element-event'
 import {MayRef} from 'src/types'
 import {wrapRef} from 'src/wrap-ref'
 import {ref} from 'vue-demi'
-import {isClipboardAble} from './is-clipboard-able'
 
 export * from './legacy'
 
@@ -14,28 +13,25 @@ export const useClipboard = (
   updateOnEvent: boolean = false,
 ) => {
   const valueRef = wrapRef(initState)
-  const isSupported = isClipboardAble()
+  const navigator = getNavigator()
+  const clipboard = navigator?.clipboard
+  const window = getWindow()
   const stateRef = ref<ClipboardState>('idle')
 
   const read = async () => {
-    if (!isSupported || stateRef.value !== 'idle') {
+    if (!clipboard || stateRef.value !== 'idle') {
       return valueRef.value
     }
 
     stateRef.value = 'reading'
-    const value = await navigator.clipboard.readText()
+    const value = await clipboard.readText()
     valueRef.value = value
     stateRef.value = 'idle'
     return value
   }
 
-  if (isSupported && updateOnEvent && isSupported) {
-    useElementEvent(window, 'copy' as any, read)
-    useElementEvent(window, 'cut' as any, read)
-  }
-
   const write = async (_value?: string) => {
-    if (!isSupported || stateRef.value !== 'idle') {
+    if (!clipboard || stateRef.value !== 'idle') {
       return valueRef.value
     }
 
@@ -44,15 +40,19 @@ export const useClipboard = (
     if (newValue) {
       stateRef.value = 'writing'
 
-      await navigator.clipboard.writeText(newValue)
+      await clipboard.writeText(newValue)
 
       stateRef.value = 'idle'
       valueRef.value = newValue
     }
   }
 
+  if (window && clipboard && updateOnEvent) {
+    useElementEvent(window, 'copy' as any, read)
+    useElementEvent(window, 'cut' as any, read)
+  }
+
   return freeze({
-    isSupported,
     read,
     state: stateRef,
     value: valueRef,
