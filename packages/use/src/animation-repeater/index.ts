@@ -13,17 +13,16 @@ export type UseAnimationTickHandle = () => any
 export const animationRepeater = (handle: UseAnimationTickHandle, toggle?: MayRef<boolean | undefined>) => {
   const toggleRef = wrapRef(toggle, {initState: true})
   const cancelFlagRef = ref<number | undefined>()
+  const window = getWindow()
 
   const tick = () => {
-    if (toggleRef.value) {
+    if (window && toggleRef.value) {
       handle()
       window.requestAnimationFrame(tick)
     }
   }
 
   const registerTick = (value: boolean) => {
-    const window = getWindow()
-
     if (!window) {
       return
     }

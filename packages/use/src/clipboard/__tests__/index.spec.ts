@@ -1,7 +1,9 @@
 import {useClipboard} from '../'
 import {useElementEvent} from 'src/element-event'
-import {getNavigator} from '@winter-love/utils'
+import {getNavigator, setTimeoutPromise} from '@winter-love/utils'
 import {flushPromises} from '@vue/test-utils'
+import {mountUse} from '@winter-love/test-use'
+import {useFakeTimers} from 'sinon'
 
 jest.mock('src/element-event', () => {
   return {
@@ -28,10 +30,11 @@ const createUseElementEventMock = () => {
       return {
         clipboard: {
           readText: () => {
-            return _value
+            return Promise.resolve(_value)
           },
           writeText: (value: string) => {
             _value = value
+            return setTimeoutPromise(100)
           },
         },
       }
@@ -60,52 +63,80 @@ describe('clipboard', () => {
     useElementEventMock.mockImplementation(mock.useElementEvent)
     getNavigatorMock.mockImplementation(mock.getNavigator)
 
-    const {value, state} = useClipboard(undefined, true)
-    expect(state.value).toBe('idle')
-    expect(value.value).toBe(undefined)
+    const {result} = mountUse(() => {
+      const {value, state} = useClipboard(undefined, true)
+      return {
+        state, value,
+      }
+    })
+    
+    expect(result.state).toBe('idle')
+    expect(result.value).toBe(undefined)
 
     mock.setValue('foo')
     mock.trigger('copy')
     await flushPromises()
-    expect(value.value).toBe('foo')
+    expect(result.value).toBe('foo')
 
     mock.setValue('bar')
     mock.trigger('cut')
     await flushPromises()
-    expect(value.value).toBe('bar')
+    expect(result.value).toBe('bar')
   })
 
   it('should write value', async () => {
+    const clock = useFakeTimers()
     const mock = createUseElementEventMock()
 
     useElementEventMock.mockImplementation(mock.useElementEvent)
     getNavigatorMock.mockImplementation(mock.getNavigator)
-    const {value, state, write} = useClipboard()
-    expect(state.value).toBe('idle')
-    expect(value.value).toBe(undefined)
+    
+    const {result} = mountUse(() => {
+      const {value, state, write} = useClipboard()
+      return {
+        value,
+        state,
+        write,
+      }
+    })
+    
+    expect(result.state).toBe('idle')
+    expect(result.value).toBe(undefined)
 
-    write('foo')
-    expect(state.value).toBe('writing')
+    await result.write('foo')
+    expect(result.state).toBe('writing')
+    clock.tick(200)
     await flushPromises()
-    expect(state.value).toBe('idle')
-    expect(value.value).toBe('foo')
+    expect(result.state).toBe('idle')
+    expect(result.value).toBe('foo')
     useElementEventMock.mockRestore()
+    clock.restore()
   })
   it('should not double write value', async () => {
+    const clock = useFakeTimers()
     const mock = createUseElementEventMock()
 
     useElementEventMock.mockImplementation(mock.useElementEvent)
     getNavigatorMock.mockImplementation(mock.getNavigator)
-    const {value, state, write} = useClipboard()
-    expect(state.value).toBe('idle')
-    expect(value.value).toBe(undefined)
+    
+    const {result} = mountUse(() => {
+      const {value, state, write} = useClipboard()
+      return {
+        value, state, write,
+      }
+    })
+    
+    expect(result.state).toBe('idle')
+    expect(result.value).toBe(undefined)
 
-    write('foo')
-    write('bar')
-    expect(state.value).toBe('writing')
+    result.write('foo')
+    await result.write('bar')
+    expect(result.state).toBe('writing')
+    clock.tick(200)
     await flushPromises()
-    expect(state.value).toBe('idle')
-    expect(value.value).toBe('foo')
+    expect(result.state).toBe('idle')
+    expect(result.value).toBe('foo')
     useElementEventMock.mockRestore()
+    clock.restore()
   })
 })

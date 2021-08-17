@@ -10,6 +10,7 @@
     "@winter-love/emotion": "^1.0.17-alpha.7",
     "@winter-love/style-system": "^1.0.17-alpha.7",
     "@winter-love/style-system-next": "^1.0.17-alpha.7",
+    "@winter-love/test-use": "1.0.17-alpha.0",
     "@winter-love/use": "^1.0.17-alpha.7",
     "@winter-love/utils": "^1.0.17-alpha.0",
     "vare": "^1.0.17-alpha.7"

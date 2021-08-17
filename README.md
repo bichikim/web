@@ -10,7 +10,7 @@ Are You looking for @winter-love/x ?
 [Winter Love packages document](https://winter-love.github.io/web/)
 
 
-## Install the dependencies
+## Install the dependencies (yarn 3.x)
 ```bash
 yarn
 ```
