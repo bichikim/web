@@ -1,8 +1,7 @@
 /* eslint-disable max-params */
-import {isInInstance} from 'src/is-in-instance'
 import {MayRef} from 'src/types'
 import {wrapRef} from 'src/wrap-ref'
-import {onMounted, onUnmounted, Ref, watch} from 'vue-demi'
+import {getCurrentInstance, onMounted, onUnmounted, Ref, watch} from 'vue-demi'
 
 export type Listener<ElementEvent> = (event: ElementEvent) => any
 
@@ -58,7 +57,8 @@ export function useElementEvent<Key extends string>(
   const {
     once = false, passive = true, capture = false,
   } = options
-  const _isInInstance = isInInstance()
+  const instance = getCurrentInstance()
+  const isInInstance = Boolean(instance)
   const elementRef = wrapRef(element, {bindValue: false})
   const isActiveRef = wrapRef(isActive, {initState: true})
 
@@ -104,7 +104,7 @@ export function useElementEvent<Key extends string>(
   })
 
   if (isActiveRef.value) {
-    if (_isInInstance) {
+    if (isInInstance) {
       onMounted(() => {
         active()
       })
@@ -112,7 +112,7 @@ export function useElementEvent<Key extends string>(
       active()
     }
   }
-  if (_isInInstance) {
+  if (isInInstance) {
     onUnmounted(() => {
       inactive()
     })
