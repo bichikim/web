@@ -1,5 +1,6 @@
 # Coong (@winter-love/web)
 
+![project](media/packages.svg)
 
 [Coong.io](https://coong.io)
 
