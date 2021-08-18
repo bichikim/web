@@ -1,0 +1,44 @@
+{
+  "name": "@winter-love/test-use",
+  "version": "1.0.17-alpha.0",
+  "description": "test composition api utils",
+  "keywords": [
+    "typescript",
+    "utils",
+    "functional"
+  ],
+  "repository": "git@github.com:winter-love/web.git",
+  "license": "MIT",
+  "author": "bichi@live.co.kr",
+  "exports": {
+    ".": {
+      "import": "./lib/index.module.js",
+      "require": "./lib/index.js"
+    },
+    "./*": "./*"
+  },
+  "main": "lib/index.js",
+  "jsdelivr": "lib/index.iife.js",
+  "unpkg": "lib/index.iife.js",
+  "module": "lib/index.module.js",
+  "source": "src/index.ts",
+  "types": "lib/index.d.ts",
+  "files": [
+    "lib/*"
+  ],
+  "scripts": {
+    "build": "gulp build",
+    "dev": "gulp dev",
+    "prepare": "gulp build"
+  },
+  "peerDependencies": {
+    "@vue/test-utils": "^2"
+  },
+  "devDependencies": {
+    "@vue/test-utils": "^2.0.0-rc.12",
+    "gulp": "^4.0.2",
+    "lodash": "^4.17.21",
+    "vue-demi": "^0.9.1"
+  },
+  "gitHead": "d936ae3692769ad89043546cb1193eabd7ed236f"
+}

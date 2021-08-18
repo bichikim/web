@@ -1,7 +1,8 @@
+import {flushPromises} from '@vue/test-utils'
+import {mountUse} from '@winter-love/test-use'
 import {getWindow} from '@winter-love/utils'
+import {ref} from 'vue'
 import {onAnimationRepeater} from '../'
-import {defineComponent, h, ref} from 'vue'
-import {flushPromises, mount} from '@vue/test-utils'
 
 jest.mock('@winter-love/utils', () => {
   return {
@@ -30,36 +31,24 @@ const setup = () => {
     return window
   })
 
-  const Target = defineComponent(() => null)
-
-  const Component = defineComponent({
-    setup() {
-      const countRef = ref(0)
-
-      const toggle = onAnimationRepeater(() => {
-        countRef.value += 1
-      })
-
-      const onToggle = () => {
-        toggle.value = !toggle.value
-      }
-
-      return () => (
-        h('div', [
-          h('div', {id: 'count'}, countRef.value),
-          h('div', {id: 'toggleValue'}, toggle.value),
-          h('button', {id: 'toggle', onClick: onToggle}, 'toggle'),
-        ])
-      )
-    },
+  const wrapper = mountUse(() => {
+    const countRef = ref(0)
+    const isRun = onAnimationRepeater(() => {
+      countRef.value += 1
+    })
+    const toggle = () => {
+      isRun.value = !isRun.value
+    }
+    return {
+      count: countRef,
+      isRun: isRun,
+      toggle,
+    }
   })
 
-  const wrapper = mount(Component)
-
   return {
-    Component,
+    ...wrapper,
     window,
-    wrapper,
   }
 }
 
@@ -70,41 +59,41 @@ describe('animation-repeater', () => {
   })
 
   it('should on', async () => {
-    const {wrapper, window} = setup()
+    const {result, window} = setup()
 
-    expect(wrapper.get('#count').text()).toBe('0')
-    expect(wrapper.get('#toggleValue').text()).toBe('true')
+    expect(result.count).toBe(0)
+    expect(result.isRun).toBe(true)
     window.trigger()
     await flushPromises()
-    expect(wrapper.get('#count').text()).toBe('1')
-    expect(wrapper.get('#toggleValue').text()).toBe('true')
+    expect(result.count).toBe(1)
+    expect(result.isRun).toBe(true)
 
-    await wrapper.get('#toggle').trigger('click')
+    await result.toggle()
     window.trigger()
     await flushPromises()
     expect(window.cancelAnimationFrame).toBeCalledTimes(1)
-    expect(wrapper.get('#count').text()).toBe('1')
-    expect(wrapper.get('#toggleValue').text()).toBe('false')
+    expect(result.count).toBe(1)
+    expect(result.isRun).toBe(false)
 
-    wrapper.get('#toggle').trigger('click')
+    result.toggle()
     window.trigger()
     await flushPromises()
 
-    expect(wrapper.get('#toggleValue').text()).toBe('true')
-    expect(wrapper.get('#count').text()).toBe('1')
+    expect(result.isRun).toBe(true)
+    expect(result.count).toBe(1)
 
-    wrapper.get('#toggle').trigger('click')
+    result.toggle()
     window.trigger()
     await flushPromises()
 
-    expect(wrapper.get('#toggleValue').text()).toBe('false')
-    expect(wrapper.get('#count').text()).toBe('1')
+    expect(result.isRun).toBe(false)
+    expect(result.count).toBe(1)
 
-    await wrapper.get('#toggle').trigger('click')
+    await result.toggle()
     window.trigger()
     await flushPromises()
 
-    expect(wrapper.get('#toggleValue').text()).toBe('true')
-    expect(wrapper.get('#count').text()).toBe('2')
+    expect(result.isRun).toBe(true)
+    expect(result.count).toBe(2)
   })
 })

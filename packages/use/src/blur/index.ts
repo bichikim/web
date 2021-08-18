@@ -1,9 +1,9 @@
 import {getDocument, getHTMLElement} from '@winter-love/utils'
 
 export const useBlur = () => {
+  const document = getDocument()
+  const HTMLElement = getHTMLElement()
   return () => {
-    const document = getDocument()
-    const HTMLElement = getHTMLElement()
     if (!document || !HTMLElement) {
       return
     }
