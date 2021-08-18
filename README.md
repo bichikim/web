@@ -72,3 +72,8 @@ quasar build
 
 ### Customize the configuration app (coong.io)
 See [Configuring quasar.conf.js](https://v2.quasar.dev/quasar-cli/quasar-conf-js).
+
+## 알고 있는 문제점
+
+### packages 내부 폴더에서 scripts 가 실행 안되는 문제
+최근 yarn 1 에서 yarn 3로 업데이트 하면서 문제가 생겼습니다. 해결 방법이 yarn 문서에 있으나 아직 적용 하지 않았습니다.
