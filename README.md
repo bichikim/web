@@ -28,7 +28,7 @@ emotion JS react 버전과 비슷한 구조의 vue emotion js 입니다.
 @winter-love/styled-system-next 로 재구성 중입니다.
 
 ### @winter-love/styled-system-next
-@winter-love/styled-system-next 로 재구성 패키지 입니.
+@winter-love/styled-system-next 로 재구성 패키지 입니다.
 
 ### @winter-love/test-use 
 [@testing-library/react-hooks](https://www.npmjs.com/package/@testing-library/react-hooks) 의 vue composition api 버전 입니다
