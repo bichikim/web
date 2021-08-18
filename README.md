@@ -1,4 +1,4 @@
-# Coong (@winter-love/web) / Winter Love packages
+# Coong / Winter Love packages
 
 ![project](media/packages.svg)
 
