@@ -15,15 +15,30 @@ module.exports = {
         activeMatch: '^/api/use'
       },
       {
+        text: 'Phrase',
+        link: '/phrase/',
+        activeMatch: '^/phrase',
+      },
+      {
         text: 'Support us',
       },
     ],
     sidebar: {
       '/guide/': getGuideSidebar(),
+      '/phrase/': getPhraseSidebar(),
       '/api/': getApiSidebar(),
       '/': getGuideSidebar(),
     },
   },
+}
+
+function getPhraseSidebar() {
+  return [
+    {
+      text: '소개',
+      link: '/phrase/',
+    }
+  ]
 }
 
 function getGuideSidebar() {
