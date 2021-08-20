@@ -1,5 +1,6 @@
 export * from './create-emotion'
 export * from './create-styled'
+export * from './directive'
 export * from './theme'
 export * from './cache'
 export * from './tags'

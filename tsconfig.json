@@ -8,7 +8,7 @@
     // Needed to address https://github.com/quasarframework/app-extension-typescript/issues/36
     "noEmit": true,
     "resolveJsonModule": true,
-
+    "jsx": "preserve",
     "noImplicitAny": false,
     "importHelpers": true,
     "declaration": true,
@@ -40,5 +40,5 @@
       "module": "CommonJS"
     }
   },
-  "exclude": ["/dist", ".quasar", "node_modules", "packages/**/*", "server/**/*"]
+
 }

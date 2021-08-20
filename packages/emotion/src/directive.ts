@@ -1,64 +1,65 @@
 import {Emotion as _Emotion, CSSObject} from '@emotion/css/create-instance'
-import {ObjectDirective} from 'vue-demi'
+import {DirectiveBinding, ObjectDirective} from 'vue-demi'
 
 export interface EmotionAddition {
   setSystem: (system?: ((props: any) => CSSObject)) => any
   setTheme: (theme?: any) => any
 }
 
-export const createDirective = (emotion: _Emotion): ObjectDirective & EmotionAddition => {
+export interface EmotionInfo {
+  previousClassName
+}
+
+export type EmotionElement = Element & {
+  __emotion__?: EmotionInfo
+}
+
+export interface CreateDirectiveOptions {
+  systems?: Record<string, (props: any) => CSSObject>
+  theme?: Record<string, any>
+}
+
+export const createDirective = (emotion: _Emotion, options: CreateDirectiveOptions = {}):
+  ObjectDirective => {
 
   const {css} = emotion
+  const {theme = {}, systems = (props: any) => props} = options
 
-  let _theme = {}
-  // eslint-disable-next-line unicorn/consistent-function-scoping
-  let _system: (props: any) => CSSObject = (props) => (props)
+  const getCss = (props: any, theme, systemName: string = 'default') => {
 
-  let previousClassName
-
-  const getCss = (props: any, theme, system, arg?: string) => {
-
-    if (arg === 'system') {
-      return css(system({...props, theme}))
+    const system = systems[systemName] ?? function defaultSystem(props) {
+      return {...props, theme: undefined}
     }
 
-    return css({...props, theme})
+    return css(system({...props, theme}))
+  }
+
+  const updateClassName = (el: EmotionElement, binding: DirectiveBinding<any>) => {
+    const {value, arg} = binding
+
+    if (typeof value !== 'object' || Array.isArray(value)) {
+      return
+    }
+
+    const className = getCss(value, theme, arg)
+
+    el.__emotion__ = {
+      previousClassName: className,
+    }
+
+    el.classList.add(className)
   }
 
   return {
-    beforeUpdate(el, binding) {
+    mounted(el: EmotionElement, binding) {
+      updateClassName(el, binding)
+    },
+    updated(el: EmotionElement, binding) {
+      const {previousClassName} = el.__emotion__ ?? {}
       if (previousClassName) {
         el.classList.remove(previousClassName)
       }
-      const {value, arg} = binding
-
-      if (typeof value !== 'object' || Array.isArray(value)) {
-        return
-      }
-
-      const className = getCss(value, _theme, _system, arg)
-
-      el.classList.add(className)
-    },
-    created(el: Element, binding) {
-      const {value, arg} = binding
-      if (typeof value !== 'object' || Array.isArray(value)) {
-        return
-      }
-
-      const className = getCss(value, _theme, _system, arg)
-
-      el.classList.add(className)
-    },
-    setSystem(system?: any) {
-      if (system) {
-        _system = system
-      }
-    },
-    setTheme(theme) {
-      if (theme) {
-        _theme = theme
-      }
+      updateClassName(el, binding)
     },
   }
 }

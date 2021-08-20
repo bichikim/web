@@ -1,2 +1,2 @@
 // noinspection ES6PreferShortImport
-export {build, devServer} from '../gulpfile'
+export {build} from '../gulpfile'

@@ -49,7 +49,8 @@
     "@types/styled-system": "^5.1.11",
     "@types/styled-system__css": "^5.0.15",
     "@winter-love/emotion": "^1.0.17-alpha.7",
-    "csstype": "^3.0.8"
+    "csstype": "^3.0.8",
+    "gulp": "^4.0.2"
   },
   "gitHead": "2fb93aea9a5a38a7778495106787001ffe0d25f6"
 }

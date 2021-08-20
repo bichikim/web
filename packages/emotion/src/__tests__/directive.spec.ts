@@ -11,18 +11,21 @@ describe('directive', () => {
       },
     }
 
-    const directive = createDirective(createEmotionOriginal({key: 'css'}))
-
-    directive.setTheme(theme)
-    directive.setSystem((props: any) => {
+    const system = (props: any) => {
       const {theme, width, ...rest} = props
 
       return {
         ...rest,
         width: theme.sizes[width] ?? width,
       }
-    })
+    }
 
+    const directive = createDirective(createEmotionOriginal({key: 'css'}), {
+      systems: {
+        system,
+      },
+      theme,
+    })
     {
       const Component = (props) => {
         return withDirectives(h('div'), [
@@ -44,8 +47,11 @@ describe('directive', () => {
     }
 
     {
+
+      const ComponentInside = () => h('div')
+
       const Component = (props) => {
-        return withDirectives(h('div'), [
+        return withDirectives(h(ComponentInside), [
           [directive, {width: props.width}, 'system'],
         ])
       }
