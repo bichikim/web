@@ -2,7 +2,7 @@ FROM node:14
 
 WORKDIR /usr/src/app
 
-COPY ./server ./
+COPY ./coong/server ./
 
 RUN ls -R
 RUN yarn install

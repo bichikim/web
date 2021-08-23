@@ -7,21 +7,21 @@
   "workspaces": {
     "packages": [
       "packages/*",
-      "server",
       "coong/*"
     ]
   },
   "scripts": {
     "build": "quasar build",
-    "build:server": "yarn workspaces foreach -tR --from coong-server run build ",
+    "build:server": "yarn workspaces foreach -tR --from @coong/server run build ",
     "build:spa": "quasar build -m spa",
     "build:ssr": "quasar build -m ssr",
     "build:libraries": "yarn workspaces foreach -tR --from libraries run build ",
     "build:with-libraries": "yarn workspaces foreach -tR run build",
     "dev": "quasar dev",
+    "dev:server": "yarn workspaces foreach -piR --from @coong/server run dev",
     "dev:spa": "quasar dev -m spa",
     "dev:ssr": "quasar dev -m ssr",
-    "dev:with-libraries": "yarn workspaces foreach -ptR run dev",
+    "dev:with-libraries": "yarn workspaces foreach -piR run dev",
     "dev:android": "quasar dev -m capacitor -T android",
     "lint": "eslint --ext .js,.ts,.vue ./",
     "version:patch": "lerna version patch",
@@ -70,7 +70,7 @@
     "three": "^0.130.1",
     "troisjs": "^0.3.2",
     "vare": "^1.0.17-alpha.0",
-    "vue": "3.2.1",
+    "vue": "^3.2.4",
     "vue-i18n": "^9.0.0",
     "vue-router": "4.0.9"
   },
@@ -104,7 +104,7 @@
     "@typescript-eslint/eslint-plugin": "^4.26.1",
     "@typescript-eslint/parser": "^4.26.1",
     "@vue/babel-plugin-transform-vue-jsx": "^1.2.1",
-    "@vue/compiler-sfc": "^3.2.1",
+    "@vue/compiler-sfc": "^3.2.4",
     "@vue/eslint-config-typescript": "^7.0.0",
     "@vue/test-utils": "^2.0.0-rc.6",
     "@winter-love/test-use": "1.0.17-alpha.0",

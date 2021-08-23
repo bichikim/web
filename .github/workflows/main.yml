@@ -118,10 +118,6 @@ jobs:
         uses: actions/checkout@master
         with:
           fetch-depth: 0
-      - name: Prepare Pnpm
-        uses: pnpm/action-setup@v2.0.1
-        with:
-          version: 6.7.6
       - name: Use Yarn Cache
         uses: actions/cache@v2
         id: yarn-cache
@@ -140,7 +136,7 @@ jobs:
       - name: Build Libraies
         if: steps.libraies-cache.outputs.cache-hit != 'true'
         run: yarn run build:libraies
-      - name: Build 
+      - name: Build Server
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: yarn run build:server
@@ -149,13 +145,13 @@ jobs:
         with:
           name: dist-server
           path: |
-            server/lib
+            coong/server/lib
       - name: Changed files
         uses: tj-actions/changed-files@v9
         id: changed-files
         with:
           files: |
-            server
+            coong/server
   deploy-server:
     name: Deploy Server
     needs: build-server
@@ -171,7 +167,7 @@ jobs:
         uses: actions/download-artifact@master
         with:
           name: dist-server
-          path: server/lib
+          path: coong/server/lib
       - name: Setup Cloud SDK
         uses: google-github-actions/setup-gcloud@v0.2.1
         with:
@@ -182,8 +178,8 @@ jobs:
           gcloud auth configure-docker
       - name: Create Env File
         run: |
-          touch server/.env
-          echo DATABASE_URL=${{ secrets.DATABASE_URL }} >> server/.env
+          touch coong/server/.env
+          echo DATABASE_URL=${{ secrets.DATABASE_URL }} >> coong/server/.env
       - name: Build
         run: |
           docker build \

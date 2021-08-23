@@ -19,7 +19,8 @@ export const dev = creWatchBundle({
 
 export const build = series(
   creBundle({
-    // minify: true,
+    clean: true,
+    minify: true,
     output: [
       {
         file: 'index.module.js',
@@ -30,7 +31,7 @@ export const build = series(
   }),
   creBundle({
     clean: false,
-    // minify: true,
+    minify: true,
     output: [
       {
         file: 'index.iife.js',

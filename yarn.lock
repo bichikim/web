@@ -4433,20 +4433,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@prisma/client@npm:~2.27.0":
-  version: 2.27.0
-  resolution: "@prisma/client@npm:2.27.0"
-  dependencies:
-    "@prisma/engines-version": 2.27.0-43.cdba6ec525e0213cce26f8e4bb23cf556d1479bb
-  peerDependencies:
-    prisma: "*"
-  peerDependenciesMeta:
-    prisma:
-      optional: true
-  checksum: dbb948644978bb84ce4b9de7a5bb1173ed35ecad089be433bb63af67a981c8a8b9b4a61c2410bed1ce8d5d581ea66b04690e1b0f9f07e106ab4355299da6d8fa
-  languageName: node
-  linkType: hard
-
 "@prisma/client@npm:~2.29.1":
   version: 2.29.1
   resolution: "@prisma/client@npm:2.29.1"
@@ -4458,26 +4444,6 @@ __metadata:
     prisma:
       optional: true
   checksum: 805874c44300747c35a01f270154e3be431067bcf6734f852ec039d6335c6cdfee446e938b87a03fe9b025fcf64fa5c0e4a41978dd8383d9ba2ea8a590a87f4a
-  languageName: node
-  linkType: hard
-
-"@prisma/debug@npm:2.26.0":
-  version: 2.26.0
-  resolution: "@prisma/debug@npm:2.26.0"
-  dependencies:
-    debug: 4.3.2
-    ms: ^2.1.3
-  checksum: 607574a814c2d934c4907e12f13fb47a5c55ac0ec1ec21f1aa4c1ad82fc652c258317d4f737b327e071edb780bee264cf548f2e26a64c621965938bef5424a63
-  languageName: node
-  linkType: hard
-
-"@prisma/debug@npm:2.27.0":
-  version: 2.27.0
-  resolution: "@prisma/debug@npm:2.27.0"
-  dependencies:
-    debug: 4.3.2
-    ms: ^2.1.3
-  checksum: b200a2dea68dc9faaf6c0b925005615874c5c68868c99795bf66aaacb68616b6516b3b05b94f5884edf2af464347c92459d9c11106e77c8e7077a6e08d548c49
   languageName: node
   linkType: hard
 
@@ -4502,26 +4468,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@prisma/engine-core@npm:2.27.0":
-  version: 2.27.0
-  resolution: "@prisma/engine-core@npm:2.27.0"
-  dependencies:
-    "@prisma/debug": 2.27.0
-    "@prisma/engines": 2.27.0-43.cdba6ec525e0213cce26f8e4bb23cf556d1479bb
-    "@prisma/generator-helper": 2.27.0
-    "@prisma/get-platform": 2.27.0-43.cdba6ec525e0213cce26f8e4bb23cf556d1479bb
-    chalk: ^4.0.0
-    execa: ^5.0.0
-    get-stream: ^6.0.0
-    indent-string: ^4.0.0
-    new-github-issue-url: ^0.2.1
-    p-retry: ^4.2.0
-    terminal-link: ^2.1.1
-    undici: 3.3.6
-  checksum: f7b5a2eed71ed92b0c664978bf47890cb26e34badd8045ad5f7281d33b259e8035cd00e5922ee858e4b9d431e19b5a75c96c8ae83cd75956c9039c0f5703175b
-  languageName: node
-  linkType: hard
-
 "@prisma/engine-core@npm:2.29.1":
   version: 2.29.1
   resolution: "@prisma/engine-core@npm:2.29.1"
@@ -4542,13 +4488,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@prisma/engines-version@npm:2.27.0-43.cdba6ec525e0213cce26f8e4bb23cf556d1479bb":
-  version: 2.27.0-43.cdba6ec525e0213cce26f8e4bb23cf556d1479bb
-  resolution: "@prisma/engines-version@npm:2.27.0-43.cdba6ec525e0213cce26f8e4bb23cf556d1479bb"
-  checksum: 37a7c99645cd9b7fba1743f26f96df5152f3918d7fc0dd9c37a6448419ab1bb91a286d9706f2eb7de64ded6e09df79a868e082e320e87abaacd8862797b401ad
-  languageName: node
-  linkType: hard
-
 "@prisma/engines-version@npm:2.29.0-34.1be4cd60b89afa04b192acb1ef47758a39810f3a":
   version: 2.29.0-34.1be4cd60b89afa04b192acb1ef47758a39810f3a
   resolution: "@prisma/engines-version@npm:2.29.0-34.1be4cd60b89afa04b192acb1ef47758a39810f3a"
@@ -4556,42 +4495,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@prisma/engines@npm:2.27.0-43.cdba6ec525e0213cce26f8e4bb23cf556d1479bb":
-  version: 2.27.0-43.cdba6ec525e0213cce26f8e4bb23cf556d1479bb
-  resolution: "@prisma/engines@npm:2.27.0-43.cdba6ec525e0213cce26f8e4bb23cf556d1479bb"
-  checksum: 829258cc9df7dd26dfc82162932fb7de1e6338969c8444b3b642db03a2af9f96fb3d97f68a4a5a72191fcd47dd7ee02bf1ed42ca4573feb427f9a2a8b4b4943e
-  languageName: node
-  linkType: hard
-
 "@prisma/engines@npm:2.29.0-34.1be4cd60b89afa04b192acb1ef47758a39810f3a":
   version: 2.29.0-34.1be4cd60b89afa04b192acb1ef47758a39810f3a
   resolution: "@prisma/engines@npm:2.29.0-34.1be4cd60b89afa04b192acb1ef47758a39810f3a"
   checksum: 09c0d3be5611a5a4cff4e91a45f339c121bb3f3460f2832727ca8c157ebec9fa17e36601d92ff00d55780a425e372bbfb6cf0b4d093e3b04400bfb2c69b5009f
-  languageName: node
-  linkType: hard
-
-"@prisma/fetch-engine@npm:2.27.0-43.cdba6ec525e0213cce26f8e4bb23cf556d1479bb":
-  version: 2.27.0-43.cdba6ec525e0213cce26f8e4bb23cf556d1479bb
-  resolution: "@prisma/fetch-engine@npm:2.27.0-43.cdba6ec525e0213cce26f8e4bb23cf556d1479bb"
-  dependencies:
-    "@prisma/debug": 2.26.0
-    "@prisma/get-platform": 2.27.0-43.cdba6ec525e0213cce26f8e4bb23cf556d1479bb
-    chalk: ^4.0.0
-    execa: ^5.0.0
-    find-cache-dir: ^3.3.1
-    hasha: ^5.2.0
-    http-proxy-agent: ^4.0.1
-    https-proxy-agent: ^5.0.0
-    make-dir: ^3.0.2
-    node-fetch: ^2.6.0
-    p-filter: ^2.1.0
-    p-map: ^4.0.0
-    p-retry: ^4.2.0
-    progress: ^2.0.3
-    rimraf: ^3.0.2
-    temp-dir: ^2.0.0
-    tempy: ^1.0.0
-  checksum: ff45768696f6aec2be6f219c9aad7d13ad877357a76212e99402c067a8fba78db2ead5fd2bd8a51205a51b845bc9dabc7274c469871c06be21ca84afe67e4e44
   languageName: node
   linkType: hard
 
@@ -4620,18 +4527,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@prisma/generator-helper@npm:2.27.0, @prisma/generator-helper@npm:~2.27.0":
-  version: 2.27.0
-  resolution: "@prisma/generator-helper@npm:2.27.0"
-  dependencies:
-    "@prisma/debug": 2.27.0
-    "@types/cross-spawn": ^6.0.1
-    chalk: ^4.0.0
-    cross-spawn: ^7.0.2
-  checksum: f6dc78932fbe8bf32c75fc4888a950ce51a6f913df05d2d7e9781f210fcdc4c7daf6cc3261e710890835dfb2b67f13789c6be017b710b90c2e1d085c9ab84440
-  languageName: node
-  linkType: hard
-
 "@prisma/generator-helper@npm:2.29.1, @prisma/generator-helper@npm:~2.29.0":
   version: 2.29.1
   resolution: "@prisma/generator-helper@npm:2.29.1"
@@ -4644,64 +4539,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@prisma/get-platform@npm:2.27.0-43.cdba6ec525e0213cce26f8e4bb23cf556d1479bb":
-  version: 2.27.0-43.cdba6ec525e0213cce26f8e4bb23cf556d1479bb
-  resolution: "@prisma/get-platform@npm:2.27.0-43.cdba6ec525e0213cce26f8e4bb23cf556d1479bb"
-  dependencies:
-    "@prisma/debug": 2.26.0
-  checksum: 1ee024c663fa992674e8fbe69dacebaeec3c38fd67c64202165781cc084de711545b5f9891a7c394dec0e267cea975794f04bc0acfedba2c96e4298a06719ed6
-  languageName: node
-  linkType: hard
-
 "@prisma/get-platform@npm:2.29.0-34.1be4cd60b89afa04b192acb1ef47758a39810f3a":
   version: 2.29.0-34.1be4cd60b89afa04b192acb1ef47758a39810f3a
   resolution: "@prisma/get-platform@npm:2.29.0-34.1be4cd60b89afa04b192acb1ef47758a39810f3a"
   dependencies:
     "@prisma/debug": 2.28.0
   checksum: b99b6e24b3863b6fd1f32e4575c793a99f1fe3410b683608cf3c4064cd58712cbef8fb35d88f8992d0a10409d7692221203ef81ab939ecb596f6b453a0d4f8bf
-  languageName: node
-  linkType: hard
-
-"@prisma/sdk@npm:~2.27.0":
-  version: 2.27.0
-  resolution: "@prisma/sdk@npm:2.27.0"
-  dependencies:
-    "@prisma/debug": 2.27.0
-    "@prisma/engine-core": 2.27.0
-    "@prisma/engines": 2.27.0-43.cdba6ec525e0213cce26f8e4bb23cf556d1479bb
-    "@prisma/fetch-engine": 2.27.0-43.cdba6ec525e0213cce26f8e4bb23cf556d1479bb
-    "@prisma/generator-helper": 2.27.0
-    "@prisma/get-platform": 2.27.0-43.cdba6ec525e0213cce26f8e4bb23cf556d1479bb
-    "@timsuchanek/copy": ^1.4.5
-    archiver: ^4.0.0
-    arg: ^5.0.0
-    chalk: 4.1.1
-    checkpoint-client: 1.1.20
-    cli-truncate: ^2.1.0
-    dotenv: ^10.0.0
-    execa: ^5.0.0
-    find-up: 5.0.0
-    global-dirs: ^3.0.0
-    globby: ^11.0.0
-    has-yarn: ^2.1.0
-    is-ci: ^3.0.0
-    make-dir: ^3.0.2
-    node-fetch: 2.6.1
-    p-map: ^4.0.0
-    read-pkg-up: ^7.0.1
-    resolve: ^1.2.0
-    rimraf: ^3.0.2
-    shell-quote: ^1.7.2
-    string-width: ^4.2.0
-    strip-ansi: 6.0.0
-    strip-indent: 3.0.0
-    tar: ^6.0.1
-    temp-dir: ^2.0.0
-    temp-write: ^4.0.0
-    tempy: ^1.0.0
-    terminal-link: ^2.1.1
-    tmp: 0.2.1
-  checksum: 2977d5e34eb2bc5748c36a2e158942390a353fb1941c366eb60a3ddaab94fd6797c9c6cd912e0ac414dfeb5e9fa2f9d7434405fad4160352ffa473c73aa8a6bb
   languageName: node
   linkType: hard
 
@@ -6292,7 +6135,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@timsuchanek/copy@npm:1.4.5, @timsuchanek/copy@npm:^1.4.5":
+"@timsuchanek/copy@npm:1.4.5":
   version: 1.4.5
   resolution: "@timsuchanek/copy@npm:1.4.5"
   dependencies:
@@ -6509,7 +6352,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/cross-spawn@npm:6.0.2, @types/cross-spawn@npm:^6.0.1":
+"@types/cross-spawn@npm:6.0.2":
   version: 6.0.2
   resolution: "@types/cross-spawn@npm:6.0.2"
   dependencies:
@@ -7569,19 +7412,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@vue/compiler-core@npm:3.2.1":
-  version: 3.2.1
-  resolution: "@vue/compiler-core@npm:3.2.1"
-  dependencies:
-    "@babel/parser": ^7.12.0
-    "@babel/types": ^7.12.0
-    "@vue/shared": 3.2.1
-    estree-walker: ^2.0.1
-    source-map: ^0.6.1
-  checksum: a6432c506b01abbd312788ce5d30d74645a8398a52d666289253c64922c60563baf6f02f75e8e0056e558b60cc8f0b550f5f534b93c91dc74685557c31225b82
-  languageName: node
-  linkType: hard
-
 "@vue/compiler-core@npm:3.2.4":
   version: 3.2.4
   resolution: "@vue/compiler-core@npm:3.2.4"
@@ -7602,16 +7432,6 @@ __metadata:
     "@vue/compiler-core": 3.1.5
     "@vue/shared": 3.1.5
   checksum: b47c74641a708ff7aab83cb37c05ac3ec65908ceb1f61dc2a1a1c0d1500143a14c136800302dcb09021c0f38620474feda1e7f01708a749bafab125b2e8b98a1
-  languageName: node
-  linkType: hard
-
-"@vue/compiler-dom@npm:3.2.1":
-  version: 3.2.1
-  resolution: "@vue/compiler-dom@npm:3.2.1"
-  dependencies:
-    "@vue/compiler-core": 3.2.1
-    "@vue/shared": 3.2.1
-  checksum: 19298b3e8d9741aa6def8265e078fd23ccf4bc8c91c44c45c262be7daf19b86c31dcd3f4606e06052ded2d2e7b17babf485adb4073aceaf1348cc35227b837fb
   languageName: node
   linkType: hard
 
@@ -7652,31 +7472,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@vue/compiler-sfc@npm:^3.2.1":
-  version: 3.2.1
-  resolution: "@vue/compiler-sfc@npm:3.2.1"
-  dependencies:
-    "@babel/parser": ^7.13.9
-    "@babel/types": ^7.13.0
-    "@types/estree": ^0.0.48
-    "@vue/compiler-core": 3.2.1
-    "@vue/compiler-dom": 3.2.1
-    "@vue/compiler-ssr": 3.2.1
-    "@vue/shared": 3.2.1
-    consolidate: ^0.16.0
-    estree-walker: ^2.0.1
-    hash-sum: ^2.0.0
-    lru-cache: ^5.1.1
-    magic-string: ^0.25.7
-    merge-source-map: ^1.1.0
-    postcss: ^8.1.10
-    postcss-modules: ^4.0.0
-    postcss-selector-parser: ^6.0.4
-    source-map: ^0.6.1
-  checksum: 4b376948649bfa7d9463447fa9c6e5f259a60825836d9688ae564ece0b144c1bcc539ee02687a41ab82eb89a0c584c552a428006076929669c77b7eee68c3071
-  languageName: node
-  linkType: hard
-
 "@vue/compiler-sfc@npm:^3.2.4":
   version: 3.2.4
   resolution: "@vue/compiler-sfc@npm:3.2.4"
@@ -7709,16 +7504,6 @@ __metadata:
     "@vue/compiler-dom": 3.1.5
     "@vue/shared": 3.1.5
   checksum: 6291f9b3771aa0197c75b93a0c7024d2febacd7403016b39c84a69dc966c5370627446b1eb3d21fb9a1d56ddd349e04cd20249651cb295058faf73eadcdeddea
-  languageName: node
-  linkType: hard
-
-"@vue/compiler-ssr@npm:3.2.1":
-  version: 3.2.1
-  resolution: "@vue/compiler-ssr@npm:3.2.1"
-  dependencies:
-    "@vue/compiler-dom": 3.2.1
-    "@vue/shared": 3.2.1
-  checksum: b1030bedc373fbdd59429fe868befc13a489c7812c32da6c5c006033e19007d37fe36f2143c9141d97e7071336f14e4ea4b39aa6b23f53bc81c50b80e8cb6b5f
   languageName: node
   linkType: hard
 
@@ -7782,15 +7567,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@vue/reactivity@npm:3.2.1":
-  version: 3.2.1
-  resolution: "@vue/reactivity@npm:3.2.1"
-  dependencies:
-    "@vue/shared": 3.2.1
-  checksum: abb32bb60a900c2d25f95f479394eeac5c98a98bf0605101bbc8ac7db177889066cddfeab10d1c74234e201a444d3d1c37d2fae23724303820bc56be30c24468
-  languageName: node
-  linkType: hard
-
 "@vue/reactivity@npm:3.2.4":
   version: 3.2.4
   resolution: "@vue/reactivity@npm:3.2.4"
@@ -7807,16 +7583,6 @@ __metadata:
     "@vue/reactivity": 3.1.5
     "@vue/shared": 3.1.5
   checksum: 106e1b9142c6c41a35e2b66cdc81e36b83cfb9e8624c5dffef2971154074ae123dbde6b1a35fdc76ee54eeae07c48f4912bc6f810724513fa76c8e2b58c77c59
-  languageName: node
-  linkType: hard
-
-"@vue/runtime-core@npm:3.2.1":
-  version: 3.2.1
-  resolution: "@vue/runtime-core@npm:3.2.1"
-  dependencies:
-    "@vue/reactivity": 3.2.1
-    "@vue/shared": 3.2.1
-  checksum: f51971049020f8715bb8bd0af4c8bf587d6f1734e3d3cd733a0380914e76ac028e89d4e310101f6f13db87e11d6718bca3d962a156e89b32c41b190480c97c8e
   languageName: node
   linkType: hard
 
@@ -7838,17 +7604,6 @@ __metadata:
     "@vue/shared": 3.1.5
     csstype: ^2.6.8
   checksum: 75bbf0d5aefc49f4e501384fa43289cabbbf79901e29f23df513e422478657dedd71963932211c5684c455de6d0069bf58866d1a9ada7ec35876ce4abdeb94e9
-  languageName: node
-  linkType: hard
-
-"@vue/runtime-dom@npm:3.2.1":
-  version: 3.2.1
-  resolution: "@vue/runtime-dom@npm:3.2.1"
-  dependencies:
-    "@vue/runtime-core": 3.2.1
-    "@vue/shared": 3.2.1
-    csstype: ^2.6.8
-  checksum: 09fa010b2ddf24bf2f00a9ea4a693b6cd47165e228ac50a62cd81ffba98ee757492a6c8aad6fcdd808297358b04feaa7f628a6bbb4f66facae20d80d89cfeba5
   languageName: node
   linkType: hard
 
@@ -7891,13 +7646,6 @@ __metadata:
   version: 3.1.5
   resolution: "@vue/shared@npm:3.1.5"
   checksum: a34b942e1aeed5d2b0fe887d0804061d2e799ef9a0d641aaae368c6fa9e2bf311e415f02883f26963bd35d90cac165433cfe74360f7ee88304fccaa144422d83
-  languageName: node
-  linkType: hard
-
-"@vue/shared@npm:3.2.1":
-  version: 3.2.1
-  resolution: "@vue/shared@npm:3.2.1"
-  checksum: 8bcd8f0b1cd48c4cdf9aeca407252d7d7caa5fefba88c46bcb5417b4492e3a8a409bc6e2af7a043292bb5d044c08e9bcab8aeb06ccac4e50986fa5d14d451feb
   languageName: node
   linkType: hard
 
@@ -8273,7 +8021,7 @@ __metadata:
     clsx: ^1.1.1
     gulp: ^4.0.2
     vue: ^3.2.4
-    vue-demi: ^0.11.2
+    vue-demi: ^0.11.3
   languageName: unknown
   linkType: soft
 
@@ -8316,7 +8064,8 @@ __metadata:
     "@vue/test-utils": ^2.0.0-rc.12
     gulp: ^4.0.2
     lodash: ^4.17.21
-    vue-demi: ^0.9.1
+    vue: ^3.2.4
+    vue-demi: ^0.11.3
   peerDependencies:
     "@vue/test-utils": ^2
   languageName: unknown
@@ -8334,8 +8083,8 @@ __metadata:
     fast-json-stable-stringify: ^2.1.0
     gulp: ^4.0.2
     sinon: ^11.1.1
-    vue: ^3.2.1
-    vue-demi: ^0.11.2
+    vue: ^3.2.4
+    vue-demi: ^0.11.3
   languageName: unknown
   linkType: soft
 
@@ -8988,7 +8737,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"archiver@npm:4.0.2, archiver@npm:^4.0.0":
+"archiver@npm:4.0.2":
   version: 4.0.2
   resolution: "archiver@npm:4.0.2"
   dependencies:
@@ -9035,7 +8784,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"arg@npm:5.0.0, arg@npm:^5.0.0":
+"arg@npm:5.0.0":
   version: 5.0.0
   resolution: "arg@npm:5.0.0"
   checksum: 6c8c1aa8f4ccfde92ae4f9aa427022c44e6d3eb0a7c23b1412312e46c419fdf576491705659b2ca2bbe95d3725b5fc7932f39ccc75273fb8368d1e1093b5770a
@@ -10819,7 +10568,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cli-truncate@npm:2.1.0, cli-truncate@npm:^2.1.0":
+"cli-truncate@npm:2.1.0":
   version: 2.1.0
   resolution: "cli-truncate@npm:2.1.0"
   dependencies:
@@ -11484,40 +11233,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"coong-server@workspace:server":
-  version: 0.0.0-use.local
-  resolution: "coong-server@workspace:server"
-  dependencies:
-    "@prisma/client": ~2.27.0
-    "@types/bcrypt": ^5.0.0
-    "@types/graphql-fields": ^1.3.4
-    "@types/jsonwebtoken": ^8.5.4
-    "@types/ramda": ^0.27.38
-    "@winter-love/utils": ^1.0.17-alpha.0
-    "@zerollup/ts-transform-paths": ^1.7.18
-    apollo-server: ^3.0.2
-    bcrypt: ^5.0.1
-    class-validator: ^0.13.1
-    cross-env: ^7.0.3
-    express: ^4.17.1
-    express-graphql: ^0.12.0
-    graphql: ^15.5.1
-    graphql-fields: ^2.0.3
-    graphql-scalars: ^1.10.0
-    jsonwebtoken: ^8.5.1
-    prisma: ~2.27.0
-    ramda: ^0.27.1
-    reflect-metadata: ^0.1.13
-    rimraf: ^3.0.2
-    tsc-watch: ^4.2.9
-    tslib: ^2.3.0
-    ttypescript: ^1.5.12
-    type-graphql: ^1.1.1
-    typegraphql-prisma: ^0.14.7
-    typescript: ^4.3.4
-  languageName: unknown
-  linkType: soft
-
 "coong@workspace:.":
   version: 0.0.0-use.local
   resolution: "coong@workspace:."
@@ -11553,7 +11268,7 @@ __metadata:
     "@typescript-eslint/eslint-plugin": ^4.26.1
     "@typescript-eslint/parser": ^4.26.1
     "@vue/babel-plugin-transform-vue-jsx": ^1.2.1
-    "@vue/compiler-sfc": ^3.2.1
+    "@vue/compiler-sfc": ^3.2.4
     "@vue/eslint-config-typescript": ^7.0.0
     "@vue/test-utils": ^2.0.0-rc.6
     "@winter-love/emotion": ^1.0.17-alpha.0
@@ -11606,7 +11321,7 @@ __metadata:
     vare: ^1.0.17-alpha.0
     vite-aliases: ^0.8.6
     vitepress: ^0.15.6
-    vue: 3.2.1
+    vue: ^3.2.4
     vue-i18n: ^9.0.0
     vue-jest: ^4.0.1
     vue-loader: ^16.5.0
@@ -12953,7 +12668,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dotenv@npm:10.0.0, dotenv@npm:^10.0.0":
+"dotenv@npm:10.0.0":
   version: 10.0.0
   resolution: "dotenv@npm:10.0.0"
   checksum: f412c5fe8c24fbe313d302d2500e247ba8a1946492db405a4de4d30dd0eb186a88a43f13c958c5a7de303938949c4231c56994f97d05c4bc1f22478d631b4005
@@ -15372,7 +15087,7 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
-"global-dirs@npm:3.0.0, global-dirs@npm:^3.0.0":
+"global-dirs@npm:3.0.0":
   version: 3.0.0
   resolution: "global-dirs@npm:3.0.0"
   dependencies:
@@ -15502,7 +15217,7 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
-"globby@npm:11.0.4, globby@npm:^11.0.0, globby@npm:^11.0.1, globby@npm:^11.0.2, globby@npm:^11.0.3":
+"globby@npm:11.0.4, globby@npm:^11.0.1, globby@npm:^11.0.2, globby@npm:^11.0.3":
   version: 11.0.4
   resolution: "globby@npm:11.0.4"
   dependencies:
@@ -15894,7 +15609,7 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
-"has-yarn@npm:2.1.0, has-yarn@npm:^2.1.0":
+"has-yarn@npm:2.1.0":
   version: 2.1.0
   resolution: "has-yarn@npm:2.1.0"
   checksum: 5eb1d0bb8518103d7da24532bdbc7124ffc6d367b5d3c10840b508116f2f1bcbcf10fd3ba843ff6e2e991bdf9969fd862d42b2ed58aade88343326c950b7e7f7
@@ -20470,7 +20185,7 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
-"new-github-issue-url@npm:0.2.1, new-github-issue-url@npm:^0.2.1":
+"new-github-issue-url@npm:0.2.1":
   version: 0.2.1
   resolution: "new-github-issue-url@npm:0.2.1"
   checksum: 123c34296521353883ac7c43109a01a565a56fbd6d8e876db86978a74c798a9e1703180a77196b6abb5f608fd54c9853dda97a1eb43148ebebe7b0c89269f46d
@@ -22794,18 +22509,6 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
-"prisma@npm:~2.27.0":
-  version: 2.27.0
-  resolution: "prisma@npm:2.27.0"
-  dependencies:
-    "@prisma/engines": 2.27.0-43.cdba6ec525e0213cce26f8e4bb23cf556d1479bb
-  bin:
-    prisma: build/index.js
-    prisma2: build/index.js
-  checksum: 58626d2d5c82b90680ecacd706819b2bb6bb4b5344d06de99030ca77e84933ca8e8679975004795d7cab54b006c33f01e385f89ffadee15b1a1f485ac32187de
-  languageName: node
-  linkType: hard
-
 "prisma@npm:~2.29.1":
   version: 2.29.1
   resolution: "prisma@npm:2.29.1"
@@ -24268,7 +23971,7 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
-"resolve@1.20.0, resolve@>=1.9.0, resolve@^1.1.6, resolve@^1.1.7, resolve@^1.10.0, resolve@^1.10.1, resolve@^1.12.0, resolve@^1.13.1, resolve@^1.14.2, resolve@^1.15.1, resolve@^1.17.0, resolve@^1.18.1, resolve@^1.19.0, resolve@^1.2.0, resolve@^1.20.0, resolve@^1.3.2, resolve@^1.4.0":
+"resolve@1.20.0, resolve@>=1.9.0, resolve@^1.1.6, resolve@^1.1.7, resolve@^1.10.0, resolve@^1.10.1, resolve@^1.12.0, resolve@^1.13.1, resolve@^1.14.2, resolve@^1.15.1, resolve@^1.17.0, resolve@^1.18.1, resolve@^1.19.0, resolve@^1.20.0, resolve@^1.3.2, resolve@^1.4.0":
   version: 1.20.0
   resolution: "resolve@npm:1.20.0"
   dependencies:
@@ -24278,7 +23981,7 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
-"resolve@patch:resolve@1.20.0#~builtin<compat/resolve>, resolve@patch:resolve@>=1.9.0#~builtin<compat/resolve>, resolve@patch:resolve@^1.1.6#~builtin<compat/resolve>, resolve@patch:resolve@^1.1.7#~builtin<compat/resolve>, resolve@patch:resolve@^1.10.0#~builtin<compat/resolve>, resolve@patch:resolve@^1.10.1#~builtin<compat/resolve>, resolve@patch:resolve@^1.12.0#~builtin<compat/resolve>, resolve@patch:resolve@^1.13.1#~builtin<compat/resolve>, resolve@patch:resolve@^1.14.2#~builtin<compat/resolve>, resolve@patch:resolve@^1.15.1#~builtin<compat/resolve>, resolve@patch:resolve@^1.17.0#~builtin<compat/resolve>, resolve@patch:resolve@^1.18.1#~builtin<compat/resolve>, resolve@patch:resolve@^1.19.0#~builtin<compat/resolve>, resolve@patch:resolve@^1.2.0#~builtin<compat/resolve>, resolve@patch:resolve@^1.20.0#~builtin<compat/resolve>, resolve@patch:resolve@^1.3.2#~builtin<compat/resolve>, resolve@patch:resolve@^1.4.0#~builtin<compat/resolve>":
+"resolve@patch:resolve@1.20.0#~builtin<compat/resolve>, resolve@patch:resolve@>=1.9.0#~builtin<compat/resolve>, resolve@patch:resolve@^1.1.6#~builtin<compat/resolve>, resolve@patch:resolve@^1.1.7#~builtin<compat/resolve>, resolve@patch:resolve@^1.10.0#~builtin<compat/resolve>, resolve@patch:resolve@^1.10.1#~builtin<compat/resolve>, resolve@patch:resolve@^1.12.0#~builtin<compat/resolve>, resolve@patch:resolve@^1.13.1#~builtin<compat/resolve>, resolve@patch:resolve@^1.14.2#~builtin<compat/resolve>, resolve@patch:resolve@^1.15.1#~builtin<compat/resolve>, resolve@patch:resolve@^1.17.0#~builtin<compat/resolve>, resolve@patch:resolve@^1.18.1#~builtin<compat/resolve>, resolve@patch:resolve@^1.19.0#~builtin<compat/resolve>, resolve@patch:resolve@^1.20.0#~builtin<compat/resolve>, resolve@patch:resolve@^1.3.2#~builtin<compat/resolve>, resolve@patch:resolve@^1.4.0#~builtin<compat/resolve>":
   version: 1.20.0
   resolution: "resolve@patch:resolve@npm%3A1.20.0#~builtin<compat/resolve>::version=1.20.0&hash=00b1ff"
   dependencies:
@@ -25058,7 +24761,7 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
-"shell-quote@npm:1.7.2, shell-quote@npm:^1.6.1, shell-quote@npm:^1.7.2":
+"shell-quote@npm:1.7.2, shell-quote@npm:^1.6.1":
   version: 1.7.2
   resolution: "shell-quote@npm:1.7.2"
   checksum: efad426fb25d8a54d06363f1f45774aa9e195f62f14fa696d542b44bfe418ab41206448b63af18d726c62e099e66d9a3f4f44858b9ea2ce4b794b41b802672d1
@@ -26242,7 +25945,7 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
-"tar@npm:^6.0.1, tar@npm:^6.0.2, tar@npm:^6.1.0":
+"tar@npm:^6.0.2, tar@npm:^6.1.0":
   version: 6.1.2
   resolution: "tar@npm:6.1.2"
   dependencies:
@@ -26340,7 +26043,7 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
-"terminal-link@npm:2.1.1, terminal-link@npm:^2.0.0, terminal-link@npm:^2.1.1":
+"terminal-link@npm:2.1.1, terminal-link@npm:^2.0.0":
   version: 2.1.1
   resolution: "terminal-link@npm:2.1.1"
   dependencies:
@@ -27199,30 +26902,6 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
-"typegraphql-prisma@npm:^0.14.7":
-  version: 0.14.7
-  resolution: "typegraphql-prisma@npm:0.14.7"
-  dependencies:
-    "@prisma/generator-helper": ~2.27.0
-    "@prisma/sdk": ~2.27.0
-    pluralize: ^8.0.0
-    semver: ^7.3.5
-    ts-morph: ^11.0.3
-    tslib: ^2.3.0
-  peerDependencies:
-    "@prisma/client": ~2.27.0
-    "@types/graphql-fields": ^1.3.4
-    "@types/node": "*"
-    graphql-fields: ^2.0.3
-    graphql-scalars: ^1.10.0
-    prisma: ~2.27.0
-    type-graphql: ^1.1.1
-  bin:
-    typegraphql-prisma: lib/generator.js
-  checksum: 6e271f542f9463e3b0ff117d88c1d578b87fe2c4ea90270bf3f06937d203465b9b84b2a39969afe35e36e228e49c53882a5f0ff3d86a4869e7be879160bb0618
-  languageName: node
-  linkType: hard
-
 "typegraphql-prisma@npm:^0.14.8":
   version: 0.14.8
   resolution: "typegraphql-prisma@npm:0.14.8"
@@ -27889,8 +27568,8 @@ typescript@4.2.2:
     "@winter-love/use": ^1.0.17-alpha.7
     "@winter-love/utils": ^1.0.17-alpha.0
     gulp: ^4.0.2
-    vue: ^3.2.1
-    vue-demi: ^0.11.2
+    vue: ^3.2.4
+    vue-demi: ^0.11.3
   languageName: unknown
   linkType: soft
 
@@ -28152,19 +27831,19 @@ typescript@4.2.2:
   languageName: node
   linkType: hard
 
-"vue-demi@npm:^0.11.2":
-  version: 0.11.2
-  resolution: "vue-demi@npm:0.11.2"
+"vue-demi@npm:^0.11.3":
+  version: 0.11.3
+  resolution: "vue-demi@npm:0.11.3"
   peerDependencies:
     "@vue/composition-api": ^1.0.0-rc.1
-    vue: ^3.0.0 || ^2.6.0
+    vue: ^3.0.0-0 || ^2.6.0
   peerDependenciesMeta:
     "@vue/composition-api":
       optional: true
   bin:
     vue-demi-fix: bin/vue-demi-fix.js
     vue-demi-switch: bin/vue-demi-switch.js
-  checksum: 0b88d46721cc799a46980e57035885e817f6aac6d155c46463211dadc7acdb55be10fc6b71c740ecb83cafe4243d3afa58bd96d89684dea66824bf2d199fb8bf
+  checksum: f579914ee5a3fa3db4a11068298859112dca4469e2622fe85d0a3bd98a195fac02910796640ba57186370d9570d1985a4e61c21b19752be95c5f2b3441f1004f
   languageName: node
   linkType: hard
 
@@ -28373,17 +28052,6 @@ typescript@4.2.2:
     "@vue/runtime-dom": 3.1.5
     "@vue/shared": 3.1.5
   checksum: ad82cd724555f87a75c94e4e79d5a8ecf71b417526982d92454b80011fabed4c796078fdcb2450cbe909944c7bacb88e189a9eefa088e452ddc8dc2d07acf384
-  languageName: node
-  linkType: hard
-
-"vue@npm:3.2.1, vue@npm:^3.2.1":
-  version: 3.2.1
-  resolution: "vue@npm:3.2.1"
-  dependencies:
-    "@vue/compiler-dom": 3.2.1
-    "@vue/runtime-dom": 3.2.1
-    "@vue/shared": 3.2.1
-  checksum: f99418e3025eb1d02eec7af841c5b1fc7851c8186536b58850f40c5cd2f3e80a443766b2e7ecfa6e58dc848495ae48b04c64f940b4899143f2150a86803d13da
   languageName: node
   linkType: hard
 

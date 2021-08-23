@@ -32,12 +32,12 @@
   "dependencies": {
     "@vue/devtools-api": "^6.0.0-beta.12",
     "@winter-love/utils": "^1.0.17-alpha.0",
-    "vue-demi": "^0.11.2"
+    "vue-demi": "^0.11.3"
   },
   "devDependencies": {
     "@winter-love/use": "^1.0.17-alpha.7",
     "gulp": "^4.0.2",
-    "vue": "^3.2.1"
+    "vue": "^3.2.4"
   },
   "gitHead": "d936ae3692769ad89043546cb1193eabd7ed236f"
 }
