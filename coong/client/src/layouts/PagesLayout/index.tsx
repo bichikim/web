@@ -1,4 +1,4 @@
-import {QLayout, QPageContainer} from 'src/quasar'
+import {QLayout, QPageContainer} from 'quasar'
 import {defineComponent} from 'vue'
 import {RouterView} from 'vue-router'
 import {Hamburger} from './components'

@@ -38,7 +38,7 @@
     "@vue/test-utils": "^2.0.0-rc.12",
     "gulp": "^4.0.2",
     "lodash": "^4.17.21",
-    "vue": "^3.2.4",
+    "vue": "^3.2.6",
     "vue-demi": "^0.11.3"
   },
   "gitHead": "d936ae3692769ad89043546cb1193eabd7ed236f"

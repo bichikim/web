@@ -35,6 +35,10 @@ export const createDirective = (emotion: _Emotion, options: CreateDirectiveOptio
   }
 
   const updateClassName = (el: EmotionElement, binding: DirectiveBinding<any>) => {
+    const {previousClassName} = el.__emotion__ ?? {}
+    if (previousClassName) {
+      el.classList.remove(previousClassName)
+    }
     const {value, arg} = binding
 
     if (typeof value !== 'object' || Array.isArray(value)) {
@@ -51,14 +55,13 @@ export const createDirective = (emotion: _Emotion, options: CreateDirectiveOptio
   }
 
   return {
+    created(el: EmotionElement, binding) {
+      updateClassName(el, binding)
+    },
     mounted(el: EmotionElement, binding) {
       updateClassName(el, binding)
     },
     updated(el: EmotionElement, binding) {
-      const {previousClassName} = el.__emotion__ ?? {}
-      if (previousClassName) {
-        el.classList.remove(previousClassName)
-      }
       updateClassName(el, binding)
     },
   }

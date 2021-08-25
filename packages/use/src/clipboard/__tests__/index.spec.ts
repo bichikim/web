@@ -69,7 +69,7 @@ describe('clipboard', () => {
         state, value,
       }
     })
-    
+
     expect(result.state).toBe('idle')
     expect(result.value).toBe(undefined)
 
@@ -90,16 +90,16 @@ describe('clipboard', () => {
 
     useElementEventMock.mockImplementation(mock.useElementEvent)
     getNavigatorMock.mockImplementation(mock.getNavigator)
-    
+
     const {result} = mountUse(() => {
       const {value, state, write} = useClipboard()
       return {
-        value,
         state,
+        value,
         write,
       }
     })
-    
+
     expect(result.state).toBe('idle')
     expect(result.value).toBe(undefined)
 
@@ -118,14 +118,14 @@ describe('clipboard', () => {
 
     useElementEventMock.mockImplementation(mock.useElementEvent)
     getNavigatorMock.mockImplementation(mock.getNavigator)
-    
+
     const {result} = mountUse(() => {
       const {value, state, write} = useClipboard()
       return {
-        value, state, write,
+        state, value, write,
       }
     })
-    
+
     expect(result.state).toBe('idle')
     expect(result.value).toBe(undefined)
 

@@ -1,10 +1,8 @@
-import {ComponentPublicInstance, FunctionalComponent} from 'vue'
 import './main.scss'
 import './quasar.variables.scss'
 import {
-  QBtn as _QBtn,
-  QLayout as _QLayout,
-  QPageContainer as _QPageContainer,
+  ClosePopup,
+  Dark,
   Dialog,
   Loading,
   LoadingBar,
@@ -12,17 +10,8 @@ import {
   Quasar,
 } from 'quasar'
 
-export type OtherQuasarKeys = '$d' | '$q' | '$n' | '$t' | '$i18n' | '$rt' | '$tc' | '$te' | '$tm'
-
-export type FixQuasarType<Component extends Record<string, any>, Omits extends string = ''> =
-  FunctionalComponent<Omit<Component, keyof ComponentPublicInstance | OtherQuasarKeys | Omits>>
-
-export const QBtn: FixQuasarType<_QBtn, 'click'> = _QBtn as any
-export const QLayout: FixQuasarType<_QLayout> = _QLayout as any
-export const QPageContainer: FixQuasarType<_QPageContainer> = _QPageContainer as any
-
-export function initQuasar(app) {
-  app.use(Quasar, {
+export const createQuasarPlugin = (ssrContext = {}) => (app, options = {}) => {
+  (Quasar.install as any)(app, {
     config: {
       brand: {
         darkBG: '#151515',
@@ -35,9 +24,13 @@ export function initQuasar(app) {
         bodyClasses: true,
       },
     },
+    directives: {
+      ClosePopup,
+    },
     importStrategy: 'auto',
     plugins: {
-      Dialog, Loading, LoadingBar, Notify,
+      Dark, Dialog, Loading, LoadingBar, Notify,
     },
-  })
+    ...options,
+  }, ssrContext)
 }

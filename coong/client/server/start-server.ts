@@ -1,7 +1,9 @@
 import express from 'express'
 import {useSsrVite} from './use-ssr-vite'
-import {promisify} from '@winter-love/utils'
 import {createPageRender} from './create-page-render'
+import {CreateApp} from 'src/create-app'
+import createEmotionServer from '@emotion/server/create-instance'
+import inject from 'node-inject-html'
 
 export interface StartServerOptions {
   dist?: string
@@ -12,6 +14,7 @@ export interface StartServerOptions {
   production?: boolean
   root: string
   src?: string
+  template?: () => string
 }
 
 const OK = 200
@@ -19,7 +22,14 @@ const OK = 200
 export const DEFAULT_PORT = 8080
 
 export const startServer = async (options: StartServerOptions) => {
-  const {root, production, port = DEFAULT_PORT, dist = 'dist', src = 'src'} = options
+  const {
+    root = process.cwd(),
+    production,
+    port = DEFAULT_PORT,
+    dist = 'dist',
+    src = 'src',
+    template,
+  } = options
   const app = express()
 
   const viteDevServer = await useSsrVite(app, {
@@ -28,27 +38,38 @@ export const startServer = async (options: StartServerOptions) => {
     root,
   })
 
-  const createApp = viteDevServer ? (await viteDevServer.ssrLoadModule(`${root}/${src}/create-app.ts`)).createApp :
+  const createApp: CreateApp = viteDevServer ?
+    (await viteDevServer.ssrLoadModule(`${root}/${src}/create-app.ts`)).createApp :
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     require(`${root}/${dist}/create-app.js`).createApp
 
-  const renderPage = createPageRender(createApp, {manifest: {}, template: ''})
-
   app.get('*', async (req, res) => {
     const url = req.originalUrl
-    const pageContext = {
-      url,
+
+    const {app: clientApp, router, emotion} = createApp(true, {req, res})
+
+    const renderPage = createPageRender(clientApp, {manifest: {}, router})
+
+    const rowTemplate = template?.() ?? ''
+
+    const _template = viteDevServer ? await viteDevServer.transformIndexHtml(url, rowTemplate) : rowTemplate
+
+    const appContent = await renderPage(url, _template)
+
+    if (emotion) {
+      const emotionServer = createEmotionServer(emotion.cache)
+      const {html, styles} = emotionServer.extractCriticalToChunks(appContent)
+      const stylesInHead = emotionServer.constructStyleTagsFromChunks({html, styles})
+      res.status(OK).set({'Content-Type': 'text/html'}).end(inject(html, {headEnd: stylesInHead}))
+      return
     }
 
-    const html = await renderPage(url, pageContext)
-    res.status(OK).set({'Content-Type': 'text/html'}).end(html)
+    res.status(OK).set({'Content-Type': 'text/html'}).end(appContent)
   })
 
-  const listen = promisify(app.listen)
-
-  return listen(port).then(() => {
-    return {
-      port,
-    }
+  return new Promise<{port: number}>((resolve) => {
+    app.listen(port, () => {
+      resolve({port})
+    })
   })
 }

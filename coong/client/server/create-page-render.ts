@@ -2,11 +2,6 @@ import {renderToString} from '@vue/server-renderer'
 import {App} from 'vue'
 import {Router} from 'vue-router'
 
-export type CreateApp = () => {
-  app: App
-  router: Router
-}
-
 export const renderPreloadLink = (file: string) => {
   if (file.endsWith('.js')) {
     return `<link rel="modulepreload" crossorigin href="${file}">`
@@ -47,22 +42,24 @@ export const renderPreloadLinks = (modules: string[], manifest: Record<string, a
 
 export interface CreatePageRenderOptions {
   manifest?: Record<string, any>
-  template?: string
+  router?: Router
 }
 
-export const createPageRender = (createApp: CreateApp, options: CreatePageRenderOptions) => {
-  const {manifest = {}, template: htmlTemplate = ''} = options
-  const {app, router} = createApp()
+export const createPageRender = (app: App, options: CreatePageRenderOptions) => {
+  const {manifest = {}, router} = options
 
-  return async (url: string, pageContext: Record<string, any>) => {
-    router.push(url)
-    await router.isReady()
+  return async (url: string, template: string) => {
+    if (router) {
+      // skip waiting push
+      router.push(url)
+      await router.isReady()
+    }
 
     const context: Record<string, any> = {}
     const appHtml = await renderToString(app, context)
-    const preloadLinks = renderPreloadLinks(context.modules, manifest)
+    const preloadLinks = renderPreloadLinks(context.modules ?? [], manifest)
 
-    return htmlTemplate
+    return template
       .replace('<!--preload-links-->', preloadLinks)
       .replace('<!--app-html-->', appHtml)
   }

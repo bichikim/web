@@ -1,11 +1,18 @@
-import {createApp as createSPAApp, createSSRApp} from 'vue'
+import {App, createApp as createSPAApp, createSSRApp} from 'vue'
+import {Router} from 'vue-router'
 import {createRouter} from './router'
 import Root from './Root'
-import {initQuasar} from './quasar'
-import createEmotion from './emotion'
+import {createQuasarPlugin} from './quasar'
+import createEmotion, {Emotion} from './emotion'
 
-export const createApp = () => {
-  const ssr = Boolean(import.meta.env.SSR)
+export type CreateApp = (isSSR?: boolean, ssrContext?: any) => {
+  app: App
+  emotion: Emotion
+  router: Router
+}
+
+export const createApp: CreateApp = (isSSR?: boolean, ssrContext = {}) => {
+  const ssr = isSSR ?? Boolean(import.meta.env.SSR)
   let app
   if (ssr) {
     app = createSSRApp(Root)
@@ -13,7 +20,9 @@ export const createApp = () => {
     app = createSPAApp(Root)
   }
 
-  app.use(initQuasar)
+  const quasarPlugin = createQuasarPlugin(ssrContext)
+
+  app.use(quasarPlugin)
 
   const router = createRouter()
 

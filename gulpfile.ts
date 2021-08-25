@@ -20,14 +20,14 @@ export const dev = creWatchBundle({
 export const build = series(
   creBundle({
     clean: true,
-    minify: true,
+    minify: false,
     output: [
       {
         file: 'index.module.js',
         format: 'es',
       },
     ],
-    target: 'ES2019',
+    target: 'ES2015',
   }),
   creBundle({
     clean: false,

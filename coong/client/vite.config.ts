@@ -16,11 +16,13 @@ export default defineConfig({
   optimizeDeps: {
     exclude: [
       'vue-demi',
+
       '@quasar/app',
       'quasar',
     ],
     include: [
       'vue',
+      '@emotion/css/create-instance',
       'vue-router',
     ],
   },

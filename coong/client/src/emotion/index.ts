@@ -2,6 +2,8 @@ import {createDirective} from '@winter-love/emotion'
 import createEmotion, {Emotion} from '@emotion/css/create-instance'
 import {Plugin} from 'vue'
 
+export type {Emotion}
+
 const createEmotionPlugin = (): Plugin & {emotion: Emotion} => {
   const emotion = createEmotion({key: 'css'})
   return {

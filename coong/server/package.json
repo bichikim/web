@@ -10,7 +10,7 @@
     "generate:watch": "prisma generate --schema ./src/prisma/schema.prisma --watch"
   },
   "dependencies": {
-    "@prisma/client": "~2.29.1",
+    "@prisma/client": "~2.30.0",
     "@winter-love/utils": "^1.0.17-alpha.0",
     "apollo-server": "^3.0.2",
     "bcrypt": "^5.0.1",
@@ -34,11 +34,11 @@
     "@types/ramda": "^0.27.38",
     "@zerollup/ts-transform-paths": "^1.7.18",
     "cross-env": "^7.0.3",
-    "prisma": "~2.29.1",
+    "prisma": "~2.30.0",
     "rimraf": "^3.0.2",
     "tsc-watch": "^4.2.9",
     "ttypescript": "^1.5.12",
-    "typegraphql-prisma": "^0.14.8",
+    "typegraphql-prisma": "^0.15.0",
     "typescript": "^4.3.4"
   }
 }
