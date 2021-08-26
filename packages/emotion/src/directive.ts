@@ -34,29 +34,36 @@ export const createDirective = (emotion: _Emotion, options: CreateDirectiveOptio
     return css(system({...props, theme}))
   }
 
-  const updateClassName = (el: EmotionElement, binding: DirectiveBinding<any>) => {
-    const {previousClassName} = el.__emotion__ ?? {}
-    if (previousClassName) {
-      el.classList.remove(previousClassName)
-    }
+  const getClassName = (binding: DirectiveBinding<any>) => {
     const {value, arg} = binding
 
     if (typeof value !== 'object' || Array.isArray(value)) {
       return
     }
+    return getCss(value, theme, arg)
+  }
 
-    const className = getCss(value, theme, arg)
+  const updateClassName = (el: EmotionElement, binding: DirectiveBinding<any>) => {
+    const {previousClassName} = el.__emotion__ ?? {}
+    if (previousClassName) {
+      el.classList.remove(previousClassName)
+    }
 
+    const className = getClassName(binding)
     el.__emotion__ = {
       previousClassName: className,
     }
 
-    el.classList.add(className)
+    if (className) {
+      el.classList.add(className)
+    }
   }
 
   return {
-    created(el: EmotionElement, binding) {
-      updateClassName(el, binding)
+    getSSRProps(binding) {
+      return {
+        class: getClassName(binding),
+      }
     },
     mounted(el: EmotionElement, binding) {
       updateClassName(el, binding)

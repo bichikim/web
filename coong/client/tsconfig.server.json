@@ -1,0 +1,24 @@
+{
+  "extends": "../../tsconfig.json",
+  "compileOnSave": false,
+  "compilerOptions": {
+    "outDir": "dist/server-run",
+    "noEmit": false,
+    "jsx": "preserve",
+    "target": "ES2015",
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "baseUrl": ".",
+    "lib": ["esnext", "dom"],
+    "types": ["vite/client", "node"],
+    "plugins": [
+      { "transform": "@zerollup/ts-transform-paths" }
+    ]
+  },
+  "exclude": [
+    "src/**/*"
+  ],
+  "include": [
+    "server/**/*.ts",
+  ]
+}

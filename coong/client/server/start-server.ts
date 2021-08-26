@@ -1,12 +1,13 @@
 import express from 'express'
 import {useSsrVite} from './use-ssr-vite'
 import {createPageRender} from './create-page-render'
-import {CreateApp} from 'src/create-app'
+// import {CreateApp} from '../src/create-app'
 import createEmotionServer from '@emotion/server/create-instance'
 import inject from 'node-inject-html'
 
 export interface StartServerOptions {
-  dist?: string
+  distClient?: string
+  distServer?: string
   /**
    * @default 8080
    */
@@ -26,22 +27,23 @@ export const startServer = async (options: StartServerOptions) => {
     root = process.cwd(),
     production,
     port = DEFAULT_PORT,
-    dist = 'dist',
+    distClient = 'dist/client',
+    distServer = 'dist/server',
     src = 'src',
     template,
   } = options
   const app = express()
 
   const viteDevServer = await useSsrVite(app, {
-    dist: `${root}/dist/client`,
+    dist: `${root}/${distClient}`,
     production,
     root,
   })
 
-  const createApp: CreateApp = viteDevServer ?
+  const createApp: any = viteDevServer ?
     (await viteDevServer.ssrLoadModule(`${root}/${src}/create-app.ts`)).createApp :
     // eslint-disable-next-line @typescript-eslint/no-var-requires
-    require(`${root}/${dist}/create-app.js`).createApp
+    require(`${root}/${distServer}/create-app.js`).createApp
 
   app.get('*', async (req, res) => {
     const url = req.originalUrl

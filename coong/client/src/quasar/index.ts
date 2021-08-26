@@ -1,5 +1,3 @@
-import './main.scss'
-import './quasar.variables.scss'
 import {
   ClosePopup,
   Dark,

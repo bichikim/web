@@ -23,9 +23,12 @@ export const renderPreloadLink = (file: string) => {
 
 }
 
-export const renderPreloadLinks = (modules: string[], manifest: Record<string, any>) => {
+export const renderPreloadLinks = (modules: Set<string> | undefined, manifest: Record<string, any>) => {
   let links = ''
   const seen = new Set()
+  if (!modules) {
+    return links
+  }
   modules.forEach((id) => {
     const files = manifest[id]
     if (files) {
@@ -57,7 +60,7 @@ export const createPageRender = (app: App, options: CreatePageRenderOptions) => 
 
     const context: Record<string, any> = {}
     const appHtml = await renderToString(app, context)
-    const preloadLinks = renderPreloadLinks(context.modules ?? [], manifest)
+    const preloadLinks = renderPreloadLinks(context.modules, manifest)
 
     return template
       .replace('<!--preload-links-->', preloadLinks)

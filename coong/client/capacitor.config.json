@@ -1,0 +1,7 @@
+{
+  "appId": "io.coong.app",
+  "appName": "coong",
+  "bundledWebRuntime": false,
+  "npmClient": "yarn",
+  "webDir": "www"
+}
