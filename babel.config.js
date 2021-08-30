@@ -25,14 +25,13 @@ module.exports = {
             },
           },
         ],
-        ['@babel/preset-typescript', {
+        [
+          '@babel/preset-typescript', {
           allExtensions: true,
           isTSX: true,
-        }],
+        }
+        ],
       ],
     },
-  },
-  presets: [
-    '@quasar/babel-preset-app',
-  ],
+  }
 }

@@ -9,6 +9,7 @@ import ViteComponents from 'vite-plugin-components'
 import {VitePWA} from 'vite-plugin-pwa'
 import VueI18n from '@intlify/vite-plugin-vue-i18n'
 import VueJsx from '@vitejs/plugin-vue-jsx'
+import { Quasar } from 'quasar'
 // import Prism from 'markdown-it-prism'
 // import LinkAttributes from 'markdown-it-link-attributes'
 
@@ -16,7 +17,6 @@ export default defineConfig({
   optimizeDeps: {
     exclude: [
       'vue-demi',
-
       '@quasar/app',
       'quasar',
     ],
@@ -25,6 +25,16 @@ export default defineConfig({
       '@emotion/css/create-instance',
       'vue-router',
     ],
+  },
+  define: {
+    __QUASAR_VERSION__: JSON.stringify(Quasar.version),
+    __QUASAR_SSR__: JSON.stringify('import.meta.env.SSR'),
+    // __QUASAR_SSR_SERVER__: false,
+    __QUASAR_SSR_SERVER__: JSON.stringify('import.meta.env.SSR'),
+    __QUASAR_SSR_CLIENT__: JSON.stringify('import.meta.env.SSR && window !== undefined'),
+    // __QUASAR_SSR_CLIENT__: false,
+    // __QUASAR_SSR_PWA__: false
+    __QUASAR_SSR_PWA__: JSON.stringify('navigator.standalone || window.matchMedia("(display-mode: standalone)").matches')
   },
   plugins: [
     Vue({
@@ -125,6 +135,10 @@ export default defineConfig({
       'store/': `${path.resolve(__dirname, 'src/store')}/`,
       '~/': `${path.resolve(__dirname, '')}/`,
     },
+  },
+  
+  build: {
+    chunkSizeWarningLimit: 600
   },
 
   server: {

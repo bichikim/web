@@ -43,4 +43,24 @@ describe('system', () => {
       right: '500px',
     })
   })
+  it('should return size style with auto number to string size', () => {
+    const styleFunction = system({
+      foo: {
+        defaultScale: {
+          bar: '400px',
+          foo: '200px',
+        },
+        property: 'left',
+        scale: 'foos',
+      },
+    })
+
+    expect(styleFunction({foo: ['foo', 'bar'], right: '500px', theme})).toEqual({
+      '@media screen and (min-width: 500px)': {
+        left: '400px',
+      },
+      left: '300px',
+      right: '500px',
+    })
+  })
 })

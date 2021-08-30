@@ -2,7 +2,7 @@ import {createVariant} from '../variant'
 import {system} from '../system'
 import {createEmotion, Theme} from '@winter-love/emotion'
 import {mount} from '@vue/test-utils'
-import {h} from 'vue'
+import {h} from 'vue-demi'
 
 const theme: Theme = {
   breakpoints: ['500px', '750px', '1200px'],

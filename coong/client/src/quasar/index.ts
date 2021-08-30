@@ -1,15 +1,13 @@
 import {
-  ClosePopup,
   Dark,
-  Dialog,
-  Loading,
-  LoadingBar,
-  Notify,
+  ClosePopup,
   Quasar,
-} from 'quasar'
+} from 'Quasar'
 
-export const createQuasarPlugin = (ssrContext = {}) => (app, options = {}) => {
-  (Quasar.install as any)(app, {
+const {install} = Quasar
+
+export const createQuasarPlugin = (ssrContext = {}) => (app) => {
+  (install as any)(app, {
     config: {
       brand: {
         darkBG: '#151515',
@@ -22,13 +20,13 @@ export const createQuasarPlugin = (ssrContext = {}) => (app, options = {}) => {
         bodyClasses: true,
       },
     },
+    components: {},
     directives: {
       ClosePopup,
     },
     importStrategy: 'auto',
     plugins: {
-      Dark, Dialog, Loading, LoadingBar, Notify,
+       Dark, // Dialog, Loading, LoadingBar, Notify,
     },
-    ...options,
   }, ssrContext)
 }

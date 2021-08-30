@@ -29,6 +29,7 @@ module.exports = {
       ],
       testMatch: [
         '<rootDir>/packages/*/src/**/__tests__/*.spec.ts',
+        '<rootDir>/coong/*/src/**/__tests__/*.spec.ts',
         '<rootDir>/scripts/__tests__/*.spec.ts',
       ],
     },

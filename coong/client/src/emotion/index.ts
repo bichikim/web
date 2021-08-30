@@ -1,18 +1,25 @@
 import {createDirective} from '@winter-love/emotion'
 import createEmotion, {Emotion} from '@emotion/css/create-instance'
-import {Plugin} from 'vue'
+import {App, resolveDirective, Directive} from 'vue'
+import {DesignSystemProperties} from 'src/design-system'
 
 export type {Emotion}
 
-const createEmotionPlugin = (): Plugin & {emotion: Emotion} => {
+export const DIRECTIVE_EMOTION_NAME = 'emotion'
+
+export type PluginInstallFunction = (app: App, ...options: any[]) => any
+
+const createEmotionPlugin = (): {emotion: Emotion, install: PluginInstallFunction} => {
   const emotion = createEmotion({key: 'css'})
   return {
     emotion,
     install: (app) => {
       const emotionDirective = createDirective(emotion, {})
-      app.directive('emotion', emotionDirective)
+      app.directive(DIRECTIVE_EMOTION_NAME, emotionDirective)
     },
   }
 }
+
+export const directiveEmotion = (): Directive<any, DesignSystemProperties> => resolveDirective(DIRECTIVE_EMOTION_NAME) ?? (() => null)
 
 export default createEmotionPlugin

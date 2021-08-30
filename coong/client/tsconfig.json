@@ -8,7 +8,7 @@
     "moduleResolution": "node",
     "baseUrl": ".",
     "lib": ["esnext", "dom"],
-    "types": ["vite/client", "node"],
+    "types": ["vite/client", "node", "quasar"],
     "paths": {
       "src/*": ["src/*"],
       "pages/*": ["src/pages/*"],
