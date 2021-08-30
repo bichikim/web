@@ -1,0 +1,23 @@
+{
+  "name": "@coong/image-server",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "rimraf ./lib && ttsc",
+    "dev": "rimraf ./lib && tsc-watch --compiler ttypescript/bin/tsc --onSuccess 'cross-env NODE_ENV=development yarn node ./lib/index.js' "
+  },
+  "dependencies": {
+    "aws-sdk": "^2.978.0",
+    "dotenv": "^10.0.0",
+    "express": "^4.17.1",
+    "express-sharp": "^4.2.34",
+    "got": "^11.8.2"
+  },
+  "devDependencies": {
+    "@types/dotenv": "^8.2.0",
+    "@types/node": "^16.7.7",
+    "cross-env": "^7.0.3",
+    "tsc-watch": "^4.2.9",
+    "ttypescript": "^1.5.12",
+    "typescript": "^4.3.4"
+  }
+}
