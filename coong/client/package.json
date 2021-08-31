@@ -4,11 +4,15 @@
   "scripts": {
     "dev": "vite --port 8080 --open",
     "dev:ssr": "ts-node server/index.ts",
-    "build:ssr": "yarn run build client && yarn run build:server && yarn run build:server-run",
-    "build:client": "vite build --ssrManifest --outDir dist/client",
-    "build:server": "vite build --ssr src/create-app.ts --outDir dist/server",
+    "build": "yarn run build:ssr",
+    "build:spa": "cross-env NODE_ENV=production vite build --outDir dist/spa",
+    "build:ssr": "yarn run build:client && yarn run build:server && yarn run build:server-run",
+    "build:client": "cross-env NODE_ENV=production vite build --ssrManifest --outDir dist/client",
+    "build:server": "cross-env NODE_ENV=production vite build --ssr src/create-app.ts --outDir dist/server",
     "build:server-run": "tsc --project tsconfig.server.json",
-    "run": "cross-env NODE_ENV=production node dist/server-run/index.js"
+    "start": "yarn run start:ssr",
+    "start:spa": "vite preview --host --https",
+    "start:ssr": "cross-env NODE_ENV=production node dist/server-run/index.js"
   },
   "dependencies": {
     "@capacitor/cli": "^3.2.0",

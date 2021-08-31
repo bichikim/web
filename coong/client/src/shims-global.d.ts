@@ -5,3 +5,4 @@ interface ImportMeta {
   }
 }
 
+declare const __DEV__: string | undefined

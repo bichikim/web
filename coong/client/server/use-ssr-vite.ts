@@ -19,10 +19,10 @@ export const useSsrVite = async (app: Express, options: UseViteOptions) => {
     root,
     server: {
       middlewareMode: 'ssr',
-      watch: {
-        interval: 100,
-        usePolling: true,
-      },
+      // watch: {
+      //   interval: 100,
+      //   usePolling: true,
+      // },
     },
   })
   app.use(devServer.middlewares)

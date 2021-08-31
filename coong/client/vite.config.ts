@@ -27,6 +27,7 @@ export default defineConfig({
     ],
   },
   define: {
+    __DEV__: JSON.stringify('import.meta.env.DEV'),
     __QUASAR_VERSION__: JSON.stringify(Quasar.version),
     __QUASAR_SSR__: JSON.stringify('import.meta.env.SSR'),
     // __QUASAR_SSR_SERVER__: false,
@@ -138,10 +139,12 @@ export default defineConfig({
   },
   
   build: {
-    chunkSizeWarningLimit: 600
+    chunkSizeWarningLimit: 600,
+    outDir: 'dist/spa'
   },
 
   server: {
+    // https: true,
     fs: {
       // allow: ['..', '../..'],
     },

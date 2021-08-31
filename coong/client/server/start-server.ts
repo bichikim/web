@@ -48,7 +48,7 @@ export const startServer = async (options: StartServerOptions) => {
   app.get('*', async (req, res) => {
     const url = req.originalUrl
 
-    const {app: clientApp, router, emotion} = createApp(true, {req, res})
+    const {app: clientApp, router, emotion} = createApp({req, res})
 
     const renderPage = createPageRender(clientApp, {manifest: {}, router})
 

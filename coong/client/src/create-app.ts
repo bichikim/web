@@ -5,16 +5,15 @@ import Root from './Root'
 import {createQuasarPlugin} from './quasar'
 import createEmotion, {Emotion} from './emotion'
 
-export type CreateApp = (isSSR?: boolean, ssrContext?: any) => {
+export type CreateApp = (ssrContext?: any) => {
   app: App
   emotion: Emotion
   router: Router
 }
 
-export const createApp: CreateApp = (isSSR?: boolean, ssrContext = {}) => {
-  const ssr = isSSR ?? Boolean(import.meta.env.SSR)
+export const createApp: CreateApp = (ssrContext = {}) => {
   let app
-  if (ssr) {
+  if (import.meta.env.SSR) {
     app = createSSRApp(Root)
   } else {
     app = createSPAApp(Root)

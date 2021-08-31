@@ -1,6 +1,6 @@
 import {createDirective} from '@winter-love/emotion'
 import createEmotion, {Emotion} from '@emotion/css/create-instance'
-import {App, resolveDirective, Directive} from 'vue'
+import {App, resolveDirective, Directive, h, withDirectives} from 'vue'
 import {DesignSystemProperties} from 'src/design-system'
 
 export type {Emotion}
@@ -20,6 +20,18 @@ const createEmotionPlugin = (): {emotion: Emotion, install: PluginInstallFunctio
   }
 }
 
-export const directiveEmotion = (): Directive<any, DesignSystemProperties> => resolveDirective(DIRECTIVE_EMOTION_NAME) ?? (() => null)
+export const useDirectiveEmotion = (): Directive<any, DesignSystemProperties> => resolveDirective(DIRECTIVE_EMOTION_NAME) ?? (() => null)
+
+export const useCreateEmotionNode = (): typeof h => {
+  const emotion = useDirectiveEmotion()
+
+  return (element, props, child?: any) => {
+    if (typeof props === 'object' && !Array.isArray(props) && props.$emotion) {
+      const {$emotion, ...newProps} = props
+      return withDirectives(h(element, newProps, child), [[emotion, $emotion]])
+    }
+    return h(element, props, child)
+  }
+}
 
 export default createEmotionPlugin
