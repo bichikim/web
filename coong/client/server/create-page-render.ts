@@ -54,7 +54,7 @@ export const createPageRender = (app: App, options: CreatePageRenderOptions) => 
   return async (url: string, template: string) => {
     if (router) {
       // skip waiting push
-      router.push(url)
+      await router.push(url)
       await router.isReady()
     }
 

@@ -129,6 +129,7 @@ export default defineConfig({
 
   resolve: {
     alias: {
+      'vue': 'vue/dist/vue.esm-bundler.js',
       'components/': `${path.resolve(__dirname, 'src/components')}/`,
       'layouts/': `${path.resolve(__dirname, 'src/layouts')}/`,
       'pages/': `${path.resolve(__dirname, 'src/pages')}/`,
