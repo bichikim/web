@@ -6,7 +6,6 @@
     "dev": "rimraf ./lib && tsc-watch --compiler ttypescript/bin/tsc --onSuccess 'cross-env NODE_ENV=development yarn node ./lib/index.js' "
   },
   "dependencies": {
-    "aws-sdk": "^2.978.0",
     "dotenv": "^10.0.0",
     "express": "^4.17.1",
     "express-sharp": "^4.2.34",
@@ -15,6 +14,7 @@
   "devDependencies": {
     "@types/dotenv": "^8.2.0",
     "@types/node": "^16.7.7",
+    "aws-sdk": "^2.978.0",
     "cross-env": "^7.0.3",
     "tsc-watch": "^4.2.9",
     "ttypescript": "^1.5.12",
