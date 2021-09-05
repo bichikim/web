@@ -10,6 +10,7 @@ import {VitePWA} from 'vite-plugin-pwa'
 import VueI18n from '@intlify/vite-plugin-vue-i18n'
 import VueJsx from '@vitejs/plugin-vue-jsx'
 import { Quasar } from 'quasar'
+import ssr from "vite-ssr-vue/plugin";
 // import Prism from 'markdown-it-prism'
 // import LinkAttributes from 'markdown-it-link-attributes'
 
@@ -38,6 +39,7 @@ export default defineConfig({
     __QUASAR_SSR_PWA__: JSON.stringify('navigator.standalone || window.matchMedia("(display-mode: standalone)").matches')
   },
   plugins: [
+    ssr(),
     Vue({
       include: [/\.vue$/u],
     }),

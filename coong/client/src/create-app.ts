@@ -2,7 +2,7 @@ import {App, createApp as createSPAApp, createSSRApp} from 'vue'
 import {Router} from 'vue-router'
 import {createRouter} from './router'
 import Root from './Root'
-import {createQuasarPlugin} from './quasar'
+// import {createQuasarPlugin} from './quasar'
 import createEmotion, {Emotion} from './emotion'
 
 export type CreateApp = (ssrContext?: any) => {
@@ -19,9 +19,9 @@ export const createApp: CreateApp = (ssrContext = {}) => {
     app = createSPAApp(Root)
   }
 
-  const quasarPlugin = createQuasarPlugin(ssrContext)
+  // const quasarPlugin = createQuasarPlugin(ssrContext)
 
-  app.use(quasarPlugin)
+  // app.use(quasarPlugin)
 
   const router = createRouter()
 

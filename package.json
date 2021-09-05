@@ -11,8 +11,8 @@
     ]
   },
   "scripts": {
-    "build": "yarn workspace @coong/client build",
-    "build:server": "yarn workspaces foreach -tR --from @coong/server run build ",
+    "build:@coong/client": "yarn workspace @coong/client build",
+    "build:@coong/server": "yarn workspaces foreach -tR --from @coong/server run build ",
     "build:spa": "quasar build -m spa",
     "build:ssr": "quasar build -m ssr",
     "build:libraries": "yarn workspaces foreach -tR --from libraries run build ",

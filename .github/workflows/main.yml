@@ -100,13 +100,13 @@ jobs:
         if: steps.libraies-cache.outputs.cache-hit != 'true'
         run: yarn run build:libraies
       - name: Build
-        run: yarn run build
+        run: yarn run build:@coong/client
       - name: Archive Production Artifact
         uses: actions/upload-artifact@master
         with:
           name: dist-client
           path: |
-            dist
+            coong/client/dist
   build-server:
     name: Build Server
     needs: test
