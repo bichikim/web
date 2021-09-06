@@ -2,7 +2,8 @@
   "name": "@coong/client",
   "version": "1.0.0",
   "scripts": {
-    "dev": "vite --port 8080 --open",
+    "dev": "vite",
+    "dev:s": "vite build --ssr",
     "dev:ssr": "ts-node server/index.ts",
     "build": "yarn run build:ssr",
     "build:spa": "cross-env NODE_ENV=production vite build --outDir dist/spa",

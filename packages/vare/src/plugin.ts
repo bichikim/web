@@ -2,12 +2,16 @@ import {inject, InjectionKey, Plugin} from 'vue-demi'
 import {startDevtool} from './devtool'
 import {State} from './state'
 
+export type States = Record<string, State<any>>
+
+export type FunctionStates = (initState: Partial<States>) => States
+
 export interface VarePlugin {
   /**
    * not recommended to use
    */
   provide?: boolean
-  states: Record<string, State<any>>
+  states: States | FunctionStates
 }
 
 const errorMessage = process.env.NODE_ENV === 'development' ?
@@ -33,11 +37,13 @@ export const plugin: Plugin = (app, options: VarePlugin) => {
   }
 
   if (isProvide) {
-    // app.config.globalProperties.$vare = states
     app.provide(vareInjectKey, states)
   }
 }
 
+/**
+ * we do not recommend to use this
+ */
 export const useVare = (): UseVareReturnType => {
   const vare = inject(vareInjectKey)
   if (!vare) {

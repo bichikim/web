@@ -28,6 +28,7 @@ export default defineConfig({
     ],
   },
   define: {
+    'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
     __DEV__: JSON.stringify('import.meta.env.DEV'),
     __QUASAR_VERSION__: JSON.stringify(Quasar.version),
     __QUASAR_SSR__: JSON.stringify('import.meta.env.SSR'),
