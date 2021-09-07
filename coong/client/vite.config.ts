@@ -1,15 +1,13 @@
 import path from 'path'
 import {defineConfig} from 'vite'
 import Vue from '@vitejs/plugin-vue'
-// import Pages from 'vite-plugin-pages'
-// import Layouts from 'vite-plugin-vue-layouts'
 import ViteIcons, {ViteIconsResolver} from 'vite-plugin-icons'
 import ViteComponents from 'vite-plugin-components'
 // import Markdown from 'vite-plugin-md'
 import {VitePWA} from 'vite-plugin-pwa'
 import VueI18n from '@intlify/vite-plugin-vue-i18n'
 import VueJsx from '@vitejs/plugin-vue-jsx'
-import { Quasar } from 'quasar'
+import {Quasar} from 'quasar'
 import ssr from "vite-ssr-vue/plugin";
 // import Prism from 'markdown-it-prism'
 // import LinkAttributes from 'markdown-it-link-attributes'
@@ -32,26 +30,18 @@ export default defineConfig({
     __DEV__: JSON.stringify('import.meta.env.DEV'),
     __QUASAR_VERSION__: JSON.stringify(Quasar.version),
     __QUASAR_SSR__: JSON.stringify('import.meta.env.SSR'),
-    // __QUASAR_SSR_SERVER__: false,
     __QUASAR_SSR_SERVER__: JSON.stringify('import.meta.env.SSR'),
     __QUASAR_SSR_CLIENT__: JSON.stringify('import.meta.env.SSR && window !== undefined'),
-    // __QUASAR_SSR_CLIENT__: false,
-    // __QUASAR_SSR_PWA__: false
     __QUASAR_SSR_PWA__: JSON.stringify('navigator.standalone || window.matchMedia("(display-mode: standalone)").matches')
   },
   plugins: [
-    ssr(),
+    process.env.MODE === 'ssr' ? ssr({
+      ssr: 'src/main-ssr.ts'
+    }) : undefined,
     Vue({
       include: [/\.vue$/u],
     }),
     VueJsx(),
-    // https://github.com/hannoeru/vite-plugin-pages
-    // Pages({
-    //   extensions: ['vue', 'md'],
-    // }),
-
-    // https://github.com/JohnCampionJr/vite-plugin-vue-layouts
-    // Layouts(),
 
     // https://github.com/antfu/vite-plugin-md
     // Markdown({
