@@ -15,7 +15,8 @@
     "build": "yarn run build:ssr",
     "start": "yarn run start:ssr",
     "start:spa": "vite preview --host --https",
-    "start:ssr": "cross-env NODE_ENV=production node dist/run-ssr/index.js"
+    "start:ssr": "cross-env NODE_ENV=production node dist/run-ssr/index.js",
+    "generator:favicon": "npx pwa-asset-generator"
   },
   "dependencies": {
     "@capacitor/android": "^3.2.0",
