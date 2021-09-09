@@ -2,7 +2,7 @@
   "extends": "../../tsconfig.json",
   "compileOnSave": false,
   "compilerOptions": {
-    "outDir": "dist/server-run",
+    "outDir": "dist/run-ssr",
     "noEmit": false,
     "jsx": "preserve",
     "target": "ES2015",
@@ -19,6 +19,6 @@
     "src/**/*"
   ],
   "include": [
-    "server/**/*.ts",
+    "run-ssr/**/*.ts",
   ]
 }
