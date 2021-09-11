@@ -1,0 +1,46 @@
+{
+  "name": "@winter-love/stitches",
+  "version": "1.0.17-alpha.7",
+  "description": "Stitches for Vue",
+  "keywords": [
+    "vue",
+    "vue3",
+    "composition-api",
+    "emotion",
+    "css-in-js"
+  ],
+  "repository": "git@github.com:winter-love/web.git",
+  "license": "MIT",
+  "author": "bichi@live.co.kr",
+  "exports": {
+    ".": {
+      "import": "./lib/index.module.js",
+      "require": "./lib/index.js"
+    },
+    "./*": "./*"
+  },
+  "main": "lib/index.js",
+  "jsdelivr": "lib/index.iife.js",
+  "unpkg": "lib/index.iife.js",
+  "module": "lib/index.module.js",
+  "source": "src/index.ts",
+  "types": "lib/index.d.ts",
+  "files": [
+    "lib/*"
+  ],
+  "scripts": {
+    "build": "gulp build",
+    "dev": "gulp dev",
+    "prepare": "gulp build"
+  },
+  "dependencies": {
+    "@stitches/core": "^1.1.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.14.5",
+    "@vue/server-renderer": "^3.1.5",
+    "gulp": "^4.0.2",
+    "vue": "^3.2.6"
+  },
+  "gitHead": "d936ae3692769ad89043546cb1193eabd7ed236f"
+}
