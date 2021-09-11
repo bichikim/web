@@ -1,6 +1,5 @@
 import {defineComponent} from 'vue'
 import {useCreateEmotionNode} from 'src/emotion'
-import {QBtn} from 'src/quasar'
 
 const IndexPage = defineComponent({
   setup() {
@@ -9,7 +8,6 @@ const IndexPage = defineComponent({
       return (
         h('div', {$emotion: {color: 'red'}}, [
           'hello',
-          h(QBtn, {})
         ])
       )
     }

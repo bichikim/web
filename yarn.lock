@@ -1910,6 +1910,7 @@ __metadata:
     "@vue/server-renderer": ^3.2.6
     "@vueuse/head": ^0.6.0
     "@winter-love/emotion": ^1.0.17-alpha.7
+    "@winter-love/stitches": ^1.0.17-alpha.7
     "@winter-love/style-system-next": ^1.0.17-alpha.7
     "@winter-love/utils": ^1.0.17-alpha.0
     "@zerollup/ts-transform-paths": ^1.7.18
@@ -7845,7 +7846,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@winter-love/stitches@workspace:packages/stitches":
+"@winter-love/stitches@^1.0.17-alpha.7, @winter-love/stitches@workspace:packages/stitches":
   version: 0.0.0-use.local
   resolution: "@winter-love/stitches@workspace:packages/stitches"
   dependencies:

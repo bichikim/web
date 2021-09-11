@@ -7,15 +7,15 @@ const PagesLayout = defineComponent({
   name: 'PagesLayout',
   setup() {
     const onHamburger = () => {
-      
+      console.log('ham')
     }
-    
+
     return () => (
       h(QLayout, {view: 'lHh Lpr lFf'}, () => [
         h(QPageContainer, () => [
           h(Hamburger, {onClick: onHamburger}),
-          h(RouterView)
-        ])
+          h(RouterView),
+        ]),
       ])
     )
   },

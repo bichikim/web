@@ -1,13 +1,13 @@
 import {Emotion as _Emotion, CSSObject} from '@emotion/css/create-instance'
 import {DirectiveBinding, ObjectDirective} from 'vue-demi'
 
-export interface EmotionAddition {
+export interface EmotionAdditionOptions {
   setSystem: (system?: ((props: any) => CSSObject)) => any
   setTheme: (theme?: any) => any
 }
 
 export interface EmotionInfo {
-  previousClassName
+  previousClassName?: string
 }
 
 export type EmotionElement = Element & {
