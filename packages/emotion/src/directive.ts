@@ -1,4 +1,4 @@
-import {Emotion as _Emotion, CSSObject} from '@emotion/css/create-instance'
+import {Emotion as _Emotion, CSSInterpolation, CSSObject} from '@emotion/css/create-instance'
 import {DirectiveBinding, ObjectDirective} from 'vue-demi'
 
 export interface EmotionAdditionOptions {
@@ -15,7 +15,7 @@ export type EmotionElement = Element & {
 }
 
 export interface CreateDirectiveOptions {
-  systems?: Record<string, (props: any) => CSSObject>
+  systems?: Record<string, ((props: any) => CSSObject | CSSInterpolation)[]>
   theme?: Record<string, any>
 }
 
@@ -27,11 +27,21 @@ export const createDirective = (emotion: _Emotion, options: CreateDirectiveOptio
 
   const getCss = (props: any, theme, systemName: string = 'default') => {
 
-    const system = systems[systemName] ?? function defaultSystem(props) {
-      return {...props, theme: undefined}
-    }
+    const {__system__, ...restProps} = props
 
-    return css(system({...props, theme}))
+    const system: ((props: any) => CSSObject | CSSInterpolation)[] =
+      __system__ ?? systems[systemName] ?? [function defaultSystem(props) {
+        return {...props, theme: undefined}
+      }]
+
+    const nextProps = {...restProps, theme}
+
+    return css(...system.map((value) => {
+      if (typeof value === 'function') {
+        return value(nextProps)
+      }
+      return value
+    }))
   }
 
   const getClassName = (binding: DirectiveBinding<any>) => {
