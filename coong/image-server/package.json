@@ -20,5 +20,6 @@
     "tsc-watch": "^4.2.9",
     "ttypescript": "^1.5.12",
     "typescript": "^4.3.4"
-  }
+  },
+  "gitHead": "5aa1e8493f474f75436be59c2e9b0df86550235e"
 }
