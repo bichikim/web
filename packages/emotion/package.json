@@ -47,7 +47,7 @@
     "@emotion/server": "^11.4.0",
     "@vue/server-renderer": "^3.1.5",
     "gulp": "^4.0.2",
-    "vue": "^3.2.6"
+    "vue": "^3.2.11"
   },
   "gitHead": "d936ae3692769ad89043546cb1193eabd7ed236f"
 }

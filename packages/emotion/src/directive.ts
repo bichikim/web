@@ -27,14 +27,19 @@ export const createDirective = (emotion: _Emotion, options: CreateDirectiveOptio
 
   const getCss = (props: any, theme, systemName: string = 'default') => {
 
-    const {__system__, ...restProps} = props
+    const {__system__, theme: _theme, ...restProps} = props
 
     const system: ((props: any) => CSSObject | CSSInterpolation)[] =
       __system__ ?? systems[systemName] ?? [function defaultSystem(props) {
+        // removes theme because the props become css style
         return {...props, theme: undefined}
       }]
 
-    const nextProps = {...restProps, theme}
+    const nextProps = {
+      ...restProps,
+      // uses theme in the props or uses theme in options
+      theme: _theme ?? theme,
+    }
 
     return css(...system.map((value) => {
       if (typeof value === 'function') {

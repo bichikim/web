@@ -13,6 +13,9 @@ const _getStorage = (type: StorageType): Storage | undefined => {
   }
 }
 
+/**
+ * a key for testing setItem
+ */
 const TEST_KEY_VALUE = '__storage_test__'
 
 export const createGetStorage = () => {
@@ -25,12 +28,15 @@ export const createGetStorage = () => {
       return
     }
 
+    // skip if it has test result
     if (typeof _testResult === 'undefined') {
+      // test setItem
       try {
         storage.setItem(TEST_KEY_VALUE, TEST_KEY_VALUE)
         storage.removeItem(TEST_KEY_VALUE)
         _testResult = true
       } catch {
+        // save test result
         _testResult = false
       }
     }

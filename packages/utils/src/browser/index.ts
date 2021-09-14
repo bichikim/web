@@ -3,13 +3,16 @@ export const getWindow = (): Window | undefined => {
 }
 
 export const getDocument = (): Document | undefined => {
-  return globalThis.window?.document
+  const window = getWindow()
+  if (window) {
+    return window.document
+  }
 }
 
 export const getHTMLElement = (): typeof HTMLElement | undefined => {
   const window = getWindow()
   if (window) {
-    return HTMLElement
+    return globalThis.HTMLElement
   }
 }
 

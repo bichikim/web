@@ -1,6 +1,6 @@
 import {isPromise} from '../is-promise'
 
-export type CallbackifyHandle<S> = (error: undefined | Error, value?: S | undefined) => any
+export type CallbackifyHandle<S> = (error: undefined | Error, value?: S | undefined) => unknown
 
 export const callbackify = <S>(
   action: () => Promise<S> | S,
@@ -9,7 +9,7 @@ export const callbackify = <S>(
   let result
   try {
     result = action()
-  } catch (error) {
+  } catch (error: any) {
     handle(error)
     return
   }

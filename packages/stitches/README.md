@@ -1,48 +1,61 @@
-# Emotion Styled for Vue3 / vue2 composition-api
+# Stitches for Vue3 / vue2 composition-api
 
 [Winter Love packages document](https://winter-love.github.io/web/)
 
-## Styled 
+## Directive 
 
 ```typescript
-import {createStyled} from '@winter-love/emotion'
-import createEmotionOriginal from '@emotion/css/create-instance'
+import {createDirective} from '@winter-love/stitches'
+import {createStitches} from '@stitches/core'
+import {defineComponent, h, withDirectives} from 'vue'
 
-const styled = createStyled(createEmotionOriginal({key: 'css'}))
-// vue component
-const StyledComponent = styled(element, {
-  props: {
-    color: {type: String},
+const stitches = createStitches({
+  media: {
+    bp1: '(min-width: 640px)',
+    bp2: '(min-width: 768px)',
+    bp3: '(min-width: 1024px)',
   },
-})(
-  {
-    backgroundColor: 'red',
+  theme: {
+    colors: {
+      red1: 'rgb(253,37,37)',
+    },
   },
-  (props) => {
-    return {
-      color: props.color,
-    }
-  },
-)
+})
+
+const directive = createDirective(stitches)
+
+const Box = defineComponent({
+  name: 'Box',
+  setup() {
+    return () => (
+      withDirectives(h('div'), [[directive, {color: '$red1'}]])
+    )
+  }
+})
 ```
 
-## All of Emotion
+## Styled
 
 ```typescript
-import {createEmotion} from '@winter-love/emotion'
+import {createStyled} from '@winter-love/stitches'
+import {createStitches} from '@stitches/core'
 
-const {
-  styled,
-  css,
-  cx,
-  flush,
-  hydrate,
-  injectGlobal,
-  keyframes,
-  sheet,
-  cache,
-  marge,
-  getRegisteredStyles,
-} = createEmotion({key: 'css'})
+const stitches = createStitches({
+  media: {
+    bp1: '(min-width: 640px)',
+    bp2: '(min-width: 768px)',
+    bp3: '(min-width: 1024px)',
+  },
+  theme: {
+    colors: {
+      red1: 'rgb(253,37,37)',
+    },
+  },
+})
 
+const styled = createStyled(stitches)
+
+const Box = styeld('div', {name: 'BoX'}, {
+  color: '$red1'
+})
 ```

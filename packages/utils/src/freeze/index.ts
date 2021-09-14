@@ -9,6 +9,8 @@ export function freeze(record: any) {
   if (process.env.NODE_ENV === 'development') {
     return Object.freeze(record)
   }
+
+  // in production no need to use freeze
   /* istanbul ignore next */
   return record
 }

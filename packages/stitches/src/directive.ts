@@ -2,9 +2,6 @@
 import {DirectiveBinding, ObjectDirective} from 'vue-demi'
 import Stitches from '@stitches/core/types/stitches'
 
-// export interface StitchesAdditionalOptions {
-// }
-
 export interface StitchesInfo {
   previousClassNames?: string[]
 }
