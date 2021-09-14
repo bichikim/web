@@ -25,6 +25,9 @@
   "files": [
     "lib/*"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "gulp build",
     "dev": "gulp dev",
