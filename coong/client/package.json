@@ -1,6 +1,6 @@
 {
   "name": "@coong/client",
-  "version": "1.0.0",
+  "version": "1.0.17-alpha.8",
   "scripts": {
     "sync:ios": "cap sync ios",
     "sync:android": "cap sync android",
@@ -28,10 +28,10 @@
     "@quasar/app": "^3.0.4",
     "@vue/server-renderer": "^3.2.6",
     "@vueuse/head": "^0.6.0",
-    "@winter-love/emotion": "^1.0.17-alpha.7",
-    "@winter-love/stitches": "^1.0.17-alpha.7",
-    "@winter-love/style-system-next": "^1.0.17-alpha.7",
-    "@winter-love/utils": "^1.0.17-alpha.0",
+    "@winter-love/emotion": "^1.0.17-alpha.8",
+    "@winter-love/stitches": "^1.0.17-alpha.8",
+    "@winter-love/style-system-next": "^1.0.17-alpha.8",
+    "@winter-love/utils": "^1.0.17-alpha.8",
     "express": "^4.17.1",
     "lodash": "^4.17.21",
     "node-html-parser": "^4.1.4",
