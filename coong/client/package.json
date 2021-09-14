@@ -1,6 +1,7 @@
 {
   "name": "@coong/client",
   "version": "1.0.17-alpha.8",
+  "private": true,
   "scripts": {
     "sync:ios": "cap sync ios",
     "sync:android": "cap sync android",
@@ -64,5 +65,5 @@
     "vite-plugin-icons": "^0.6.5",
     "vite-plugin-pwa": "^0.11.0"
   },
-  "gitHead": "5aa1e8493f474f75436be59c2e9b0df86550235e"
+  "gitHead": "49922aa2164ceefcebf5fcd3bd83dce16c67df21"
 }

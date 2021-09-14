@@ -1,6 +1,7 @@
 {
   "name": "@coong/image-server",
   "version": "1.0.17-alpha.8",
+  "private": true,
   "scripts": {
     "build": "rimraf ./lib && ttsc",
     "dev": "rimraf ./lib && tsc-watch --compiler ttypescript/bin/tsc --onSuccess 'cross-env NODE_ENV=development yarn node ./lib/index.js' "
@@ -21,5 +22,5 @@
     "ttypescript": "^1.5.12",
     "typescript": "^4.3.4"
   },
-  "gitHead": "5aa1e8493f474f75436be59c2e9b0df86550235e"
+  "gitHead": "49922aa2164ceefcebf5fcd3bd83dce16c67df21"
 }
