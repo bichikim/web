@@ -1,4 +1,3 @@
-
 import {DirectiveBinding, ObjectDirective} from 'vue-demi'
 import Stitches from '@stitches/core/types/stitches'
 import {CssComponent} from '@stitches/core/types/styled-component'
@@ -32,7 +31,7 @@ export const getCssList = (
 
 export const getClassName = (
   system: CssComponent,
-  binding: DirectiveBinding<any>,
+  binding: DirectiveBinding<DirectiveBindingValue>,
 ) => {
   const {value} = binding
 

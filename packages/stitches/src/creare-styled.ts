@@ -4,11 +4,12 @@ import {createDirective} from './directive'
 
 export interface StyledOptions {
   name?: string
+  target?: string
 }
 
 export const createStyled = <S extends Stitches>(stitches: S) => {
   return function styled(element, options: StyledOptions = {}, ...systems: Parameters<S['css']>) {
-    const {name} = options
+    const {name, target} = options
     const directive = createDirective(stitches as any, ...systems as any)
     return defineComponent({
       name,
@@ -25,7 +26,7 @@ export const createStyled = <S extends Stitches>(stitches: S) => {
         })
 
         return () => (
-          withDirectives(h(elementRef.value), [[directive, [props.css, props.variants]]])
+          withDirectives(h(elementRef.value, {class: target}), [[directive, [props.css, props.variants]]])
         )
       },
     })
