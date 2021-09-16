@@ -87,7 +87,7 @@
     "@vue/babel-plugin-transform-vue-jsx": "^1.2.1",
     "@vue/eslint-config-typescript": "^7.0.0",
     "@vue/test-utils": "^2.0.0-rc.14",
-    "@winter-love/test-use": "1.0.17-alpha.0",
+    "@winter-love/test-use": "1.0.17-alpha.8",
     "@zerollup/ts-transform-paths": "^1.7.18",
     "babel-jest": "^27.0.2",
     "babel-loader": "^8.2.2",
