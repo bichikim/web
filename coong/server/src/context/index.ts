@@ -1,6 +1,7 @@
 import {PromiseReturnType} from '@winter-love/utils'
 import {withPrisma} from './prisma'
 import {createWithHashPassword} from './hash-password'
+import {withAuth} from './auth'
 
 export const DEFAULT_SALT_FACTOR = 7
 
@@ -8,7 +9,7 @@ const withPasswordHash = createWithHashPassword({
   saltFactor: Number(process.env.PASSWORD_SALT_FACTOR ?? DEFAULT_SALT_FACTOR),
 })
 
-export const createContext = withPasswordHash(withPrisma(() => ({})))
+export const createContext = withAuth(withPasswordHash(withPrisma(() => ({}))))
 
 export default createContext
 

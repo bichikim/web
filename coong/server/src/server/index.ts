@@ -8,15 +8,15 @@ export interface ServerStartOptions {
   port?: number
 }
 
-export interface ServerPrePareOptions {
-  authChecker?: AuthChecker
+export interface ServerPrePareOptions<Context> {
+  authChecker?: AuthChecker<Context>
   context?: ContextFunction
   playground?: boolean
   // eslint-disable-next-line @typescript-eslint/ban-types
   resolvers?: NonEmptyArray<Function> | NonEmptyArray<string>
 }
 
-export const prepare = async (options: ServerPrePareOptions = {}) => {
+export const prepare = async <Context>(options: ServerPrePareOptions<Context> = {}) => {
   const {
     resolvers,
     authChecker,

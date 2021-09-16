@@ -13,7 +13,18 @@ const DEFAULT_PORT = 8080
  */
 const resolversEnhanceMap: ResolversEnhanceMap = {
   User: {
-    updateUser: [Authorized()],
+    user: [Authorized(['privateUser:read'])],
+    findFirstUser: [Authorized(['privateUser:read'])],
+    users: [Authorized(['privateUser:read'])],
+    createUser: [Authorized(['privateUser:create'])],
+    createManyUser: [Authorized(['privateUser:create'])],
+    deleteUser: [Authorized(['privateUser:delete'])],
+    updateUser: [Authorized(['privateUser:update'])],
+    deleteManyUser: [Authorized(['privateUser:delete'])],
+    updateManyUser: [Authorized(['privateUser:update'])],
+    upsertUser: [Authorized(['privateUser:update', 'privateUser:create'])],
+    aggregateUser: [Authorized(['privateUser:read'])],
+    groupByUser: [Authorized(['privateUser:read'])],
   },
 }
 
