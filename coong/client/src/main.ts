@@ -1,11 +1,11 @@
 import {createApp} from 'vue'
 import Root from './Root'
-import {useAppModule} from './use-app-module'
+import {useAppPlugins} from './app-plugins'
 
 const startApp = async () => {
   const app = createApp(Root)
 
-  const {router} = await useAppModule(app, {})
+  const {router} = await useAppPlugins(app, {})
 
   await router.isReady()
 
