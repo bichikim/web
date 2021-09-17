@@ -1,5 +1,5 @@
 {
-  "name": "coong",
+  "name": "@winter-love/coong",
   "version": "0.0.1",
   "private": true,
   "description": "coong web & app service",
@@ -18,7 +18,6 @@
     "dev:@coong/client": "yarn workspaces foreach -piR --from @coong/client run dev ",
     "dev:@coong/server": "yarn workspaces foreach -piR --from @coong/server run dev",
     "dev:with-libraries": "yarn workspaces foreach -piR run dev",
-    "dev:android": "quasar dev -m capacitor -T android",
     "lint": "eslint --ext .js,.ts,.vue ./",
     "version:patch": "lerna version patch",
     "version:patch-force": "lerna version patch --force-publish",
