@@ -1,6 +1,6 @@
 {
   "name": "@coong/server",
-  "version": "1.0.17-alpha.8",
+  "version": "1.0.17-alpha.9",
   "private": true,
   "scripts": {
     "start": "yarn node ./lib/index.js",

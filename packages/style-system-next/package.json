@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/style-system-next",
-  "version": "1.0.17-alpha.8",
+  "version": "1.0.17-alpha.9",
   "private": true,
   "description": "Ui style system",
   "keywords": [
@@ -51,7 +51,7 @@
     "@types/deepmerge": "^2.2.0",
     "@types/styled-system": "^5.1.11",
     "@types/styled-system__css": "^5.0.15",
-    "@winter-love/emotion": "^1.0.17-alpha.8",
+    "@winter-love/emotion": "^1.0.17-alpha.9",
     "csstype": "^3.0.8",
     "gulp": "^4.0.2"
   },
