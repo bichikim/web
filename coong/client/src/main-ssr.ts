@@ -11,7 +11,7 @@ export default createSsr(Root, {
       await router.isReady()
       const {renderToString}: any = await import('@vue/server-renderer')
 
-      let body: string = await renderToString(app, ssrContext)
+      const body: string = await renderToString(app, ssrContext)
       let headTags: string = ''
 
       if (stitches) {

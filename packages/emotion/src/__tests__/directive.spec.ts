@@ -22,7 +22,7 @@ describe('directive', () => {
 
     const directive = createDirective(createEmotionOriginal({key: 'css'}), {
       systems: {
-        system,
+        system: [system],
       },
       theme,
     })

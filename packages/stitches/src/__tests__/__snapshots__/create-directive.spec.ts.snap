@@ -1,0 +1,3 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`createDirective should create directive 1`] = `"--sxs{--sxs:0 t-cmZyyi}@media{:root,.t-cmZyyi{--colors-red1:#FD2525}}--sxs{--sxs:2 c-cezigA}@media{.c-cezigA{left:0}}--sxs{--sxs:5 c-cezigA-igmqXFB-css}@media{.c-cezigA-igmqXFB-css{color:red}}"`;

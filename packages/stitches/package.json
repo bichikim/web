@@ -38,6 +38,7 @@
   },
   "dependencies": {
     "@stitches/core": "^1.1.0",
+    "@winter-love/utils": "^1.0.17-alpha.8",
     "vue-demi": "^0.11.4"
   },
   "devDependencies": {

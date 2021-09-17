@@ -1,2 +1,3 @@
-export * from './directive'
-export * from './creare-styled'
+export * from './create-directive'
+export * from './create-styled'
+

@@ -1922,7 +1922,7 @@ __metadata:
     serve-static: ^1.14.1
     ts-node: ^10.2.1
     ttypescript: ^1.5.12
-    typescript: ^4.3.5
+    typescript: ^4.4.3
     vite: ^2.5.1
     vite-plugin-components: ^0.13.2
     vite-plugin-icons: ^0.6.5
@@ -11140,7 +11140,7 @@ __metadata:
     ts-node: ^10.0.0
     tsd: ^0.17.0
     ttypescript: ^1.5.12
-    typescript: ^4.3.4
+    typescript: ^4.4.3
     vitepress: ^0.15.6
     vue: ^3.2.11
     vue-jest: ^4.0.1
@@ -27065,7 +27065,7 @@ typescript@4.2.2:
   languageName: node
   linkType: hard
 
-"typescript@^4.3.4, typescript@^4.3.5":
+"typescript@^4.3.4, typescript@^4.4.3":
   version: 4.4.3
   resolution: "typescript@npm:4.4.3"
   bin:
@@ -27085,7 +27085,7 @@ typescript@4.2.2:
   languageName: node
   linkType: hard
 
-"typescript@patch:typescript@^4.3.4#~builtin<compat/typescript>, typescript@patch:typescript@^4.3.5#~builtin<compat/typescript>":
+"typescript@patch:typescript@^4.3.4#~builtin<compat/typescript>, typescript@patch:typescript@^4.4.3#~builtin<compat/typescript>":
   version: 4.4.3
   resolution: "typescript@patch:typescript@npm%3A4.4.3#~builtin<compat/typescript>::version=4.4.3&hash=d8b4e7"
   bin:

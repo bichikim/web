@@ -7,6 +7,7 @@
     "module": "ESNext",
     "moduleResolution": "node",
     "baseUrl": ".",
+    
     "lib": ["esnext", "dom"],
     "types": ["vite/client", "node", "quasar"],
     "paths": {
