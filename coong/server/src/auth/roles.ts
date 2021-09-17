@@ -1,35 +1,38 @@
 export const permissionRoles = {
   customer: {
-    'privateUser:self': true,
-    'publicUser:read': true,
-    'publicPost:self': true,
-    'publicPost:read': true,
-    'publicPost:write': true,
     'privatePost:self': true,
+    'privateUser:self': true,
+    'publicPost:read': true,
+    'publicPost:self': true,
+    'publicPost:write': true,
+    'publicUser:read': true,
   },
   master: {
-    'privateUser': true,
-    'public': true,
-    'privatePost': true,
-  }
+    privatePost: true,
+    privateUser: true,
+    public: true,
+  },
 }
 
 export const rolesActions = {
+
+  create: true,
+
+  delete: true,
+
+  read: true,
   /**
    * 본인 것을 read, edit, write, remove 있는지 여부
    */
   self: true,
-  read: true,
   update: true,
-  create: true,
-  delete: true,
 }
 
 export const rolesParts = {
-  privateUser: rolesActions,
-  publicUser: rolesActions,
-  publicPost: rolesActions,
   privatePost: rolesActions,
+  privateUser: rolesActions,
+  publicPost: rolesActions,
+  publicUser: rolesActions,
 }
 
 export const specialRoles = {

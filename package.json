@@ -11,15 +11,12 @@
     ]
   },
   "scripts": {
-    "build:@coong/client": "yarn workspace @coong/client build",
+    "build:@coong/client": "yarn workspaces foreach -tR --from @coong/client run build",
     "build:@coong/server": "yarn workspaces foreach -tR --from @coong/server run build ",
-    "build:spa": "quasar build -m spa",
-    "build:ssr": "quasar build -m ssr",
     "build:libraries": "yarn workspaces foreach -tR --from libraries run build ",
     "build:with-libraries": "yarn workspaces foreach -tR run build",
-    "dev": "quasar dev",
-    "dev:client": "yarn workspaces foreach -piR --from @coong/client run dev ",
-    "dev:server": "yarn workspaces foreach -piR --from @coong/server run dev",
+    "dev:@coong/client": "yarn workspaces foreach -piR --from @coong/client run dev ",
+    "dev:@coong/server": "yarn workspaces foreach -piR --from @coong/server run dev",
     "dev:with-libraries": "yarn workspaces foreach -piR run dev",
     "dev:android": "quasar dev -m capacitor -T android",
     "lint": "eslint --ext .js,.ts,.vue ./",
