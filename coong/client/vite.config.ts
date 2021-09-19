@@ -1,22 +1,37 @@
-import path from 'path'
-import {defineConfig} from 'vite'
+import VueI18n from '@intlify/vite-plugin-vue-i18n'
 import Vue from '@vitejs/plugin-vue'
-import ViteIcons, {ViteIconsResolver} from 'vite-plugin-icons'
+import VueJsx from '@vitejs/plugin-vue-jsx'
+import path from 'path'
+import {Quasar} from 'quasar'
+import {defineConfig} from 'vite'
 import ViteComponents from 'vite-plugin-components'
+import ViteIcons, {ViteIconsResolver} from 'vite-plugin-icons'
 // import Markdown from 'vite-plugin-md'
 import {VitePWA} from 'vite-plugin-pwa'
-import VueI18n from '@intlify/vite-plugin-vue-i18n'
-import VueJsx from '@vitejs/plugin-vue-jsx'
-import {Quasar} from 'quasar'
-import ssr from "vite-ssr-vue/plugin";
+import ssr from 'vite-ssr-vue/plugin'
 // import Prism from 'markdown-it-prism'
 // import LinkAttributes from 'markdown-it-link-attributes'
 
 export default defineConfig({
+  build: {
+    chunkSizeWarningLimit: 600,
+    outDir: 'dist/spa',
+  },
+  define: {
+    __DEV__: JSON.stringify('import.meta.env.DEV'),
+    __QUASAR_SSR_CLIENT__: JSON.stringify('import.meta.env.SSR && window !== undefined'),
+    __QUASAR_SSR_PWA__: JSON.stringify(
+      'navigator.standalone || window.matchMedia("(display-mode: standalone)").matches',
+    ),
+    __QUASAR_SSR_SERVER__: JSON.stringify('import.meta.env.SSR'),
+    __QUASAR_SSR__: JSON.stringify('import.meta.env.SSR'),
+    __QUASAR_VERSION__: JSON.stringify(Quasar.version),
+    'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
+  },
   optimizeDeps: {
     exclude: [
       'vue-demi',
-      '@quasar/app',
+      // '@quasar/app',
       'quasar',
     ],
     include: [
@@ -25,18 +40,10 @@ export default defineConfig({
       'vue-router',
     ],
   },
-  define: {
-    'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
-    __DEV__: JSON.stringify('import.meta.env.DEV'),
-    __QUASAR_VERSION__: JSON.stringify(Quasar.version),
-    __QUASAR_SSR__: JSON.stringify('import.meta.env.SSR'),
-    __QUASAR_SSR_SERVER__: JSON.stringify('import.meta.env.SSR'),
-    __QUASAR_SSR_CLIENT__: JSON.stringify('import.meta.env.SSR && window !== undefined'),
-    __QUASAR_SSR_PWA__: JSON.stringify('navigator.standalone || window.matchMedia("(display-mode: standalone)").matches')
-  },
+
   plugins: [
     process.env.MODE === 'ssr' ? ssr({
-      ssr: 'src/main-ssr.ts'
+      ssr: 'src/main-ssr.ts',
     }) : undefined,
     Vue({
       include: [/\.vue$/u],
@@ -122,19 +129,14 @@ export default defineConfig({
 
   resolve: {
     alias: {
-      'vue': 'vue/dist/vue.esm-bundler.js',
       'components/': `${path.resolve(__dirname, 'src/components')}/`,
       'layouts/': `${path.resolve(__dirname, 'src/layouts')}/`,
       'pages/': `${path.resolve(__dirname, 'src/pages')}/`,
       'src/': `${path.resolve(__dirname, 'src')}/`,
       'store/': `${path.resolve(__dirname, 'src/store')}/`,
+      vue: 'vue/dist/vue.esm-bundler.js',
       '~/': `${path.resolve(__dirname, '')}/`,
     },
-  },
-  
-  build: {
-    chunkSizeWarningLimit: 600,
-    outDir: 'dist/spa'
   },
 
   server: {

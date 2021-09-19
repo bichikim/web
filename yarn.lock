@@ -1899,6 +1899,7 @@ __metadata:
     "@iconify/json": ^1.1.395
     "@intlify/vite-plugin-vue-i18n": ^2.4.0
     "@quasar/app": ^3.0.4
+    "@quasar/extras": ^1.11.0
     "@rollup/plugin-replace": ^3.0.0
     "@types/lodash": ^4.14.172
     "@types/node": ^16.6.2
@@ -4495,6 +4496,13 @@ __metadata:
     core-js: ^3.6.5
     core-js-compat: ^3.6.5
   checksum: 0f6499db8a89b0b310a09265a99c6d77ec2995b3153b71ba4fe5a9ed96d1445d1d4bb0d8bb096420588e9d36acfd5eb86e883cb7c2d7c23c66e5d27e6f9527d7
+  languageName: node
+  linkType: hard
+
+"@quasar/extras@npm:^1.11.0":
+  version: 1.11.0
+  resolution: "@quasar/extras@npm:1.11.0"
+  checksum: a8cecf03bc19bbbd40131502e14ab3dab888a2de4c0165af548c0994a7323b61de6fbd78a20fc2027bf406fdc7d8ac1d76e7fa8f27bf85ac6a2e2710931faf03
   languageName: node
   linkType: hard
 

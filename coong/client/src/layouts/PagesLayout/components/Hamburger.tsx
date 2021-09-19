@@ -8,9 +8,7 @@ export const Hamburger = defineComponent({
     }
     return () => (
       <div>
-        <QBtn v-stitches={[{color: 'white', backgroundColor: '$red1'}]} onClick={onHamburger}>foo</QBtn>
-        <QBtn v-stitches={[{color: 'white', backgroundColor: 'blue'}]} onClick={onHamburger}>foo</QBtn>
-        <QBtn v-stitches={[{color: 'white', backgroundColor: 'yellow'}]} onClick={onHamburger}>foo</QBtn>
+        <QBtn v-stitches={[{color: 'white', backgroundColor: '$red1'}]} onClick={onHamburger} icon='ion-menu' />
       </div>
 
     )

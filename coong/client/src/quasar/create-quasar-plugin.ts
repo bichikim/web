@@ -3,6 +3,7 @@ export const createQuasarPlugin = async (ssrContext = {}) => {
 
   return (app) => {
     (Quasar.install as any)(app, {
+      components: {},
       config: {
         brand: {
           darkBG: '#151515',
@@ -15,7 +16,6 @@ export const createQuasarPlugin = async (ssrContext = {}) => {
           bodyClasses: true,
         },
       },
-      components: {},
       directives: {
         ClosePopup,
       },
