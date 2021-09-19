@@ -7764,6 +7764,82 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@winter-love/coong@workspace:.":
+  version: 0.0.0-use.local
+  resolution: "@winter-love/coong@workspace:."
+  dependencies:
+    "@babel/core": ^7.14.6
+    "@babel/preset-typescript": ^7.13.0
+    "@emotion/jest": ^11.3.0
+    "@rollup/plugin-alias": ^3.1.2
+    "@rollup/plugin-node-resolve": ^11.2.1
+    "@storybook/addon-actions": ^6.3.0
+    "@storybook/addon-essentials": ^6.3.0
+    "@storybook/addon-links": ^6.3.0
+    "@storybook/builder-webpack5": ^6.3.0
+    "@storybook/manager-webpack5": ^6.3.0
+    "@storybook/storybook-deployer": ^2.8.10
+    "@storybook/vue3": ^6.3.0
+    "@testing-library/jest-dom": ^5.13.0
+    "@testing-library/user-event": ^13.2.1
+    "@testing-library/vue": ^6.4.2
+    "@types/gulp": ^4.0.8
+    "@types/jest": ^26.0.23
+    "@types/lodash": ^4.14.170
+    "@types/merge-deep": ^3.0.0
+    "@types/node": ^16.0.1
+    "@types/sinon": ^10.0.2
+    "@types/styled-system": ^5.1.11
+    "@types/three": ^0.129.1
+    "@typescript-eslint/eslint-plugin": ^4.26.1
+    "@typescript-eslint/parser": ^4.26.1
+    "@vue/babel-plugin-transform-vue-jsx": ^1.2.1
+    "@vue/eslint-config-typescript": ^7.0.0
+    "@vue/test-utils": ^2.0.0-rc.14
+    "@winter-love/test-use": 1.0.17-alpha.8
+    "@zerollup/ts-transform-paths": ^1.7.18
+    babel-jest: ^27.0.2
+    babel-loader: ^8.2.2
+    eslint: ^7.28.0
+    eslint-config-standard: ^16.0.2
+    eslint-import-resolver-typescript: ^2.4.0
+    eslint-plugin-import: ^2.19.1
+    eslint-plugin-node: ^11.0.0
+    eslint-plugin-promise: ^4.2.1
+    eslint-plugin-sort-keys-fix: ^1.1.2
+    eslint-plugin-typescript-sort-keys: ^1.6.0
+    eslint-plugin-unicorn: ^29.0.0
+    eslint-plugin-vue: ^7.11.1
+    gulp: ^4.0.2
+    gulp-execa: ^2.0.0
+    gulp-rename: ^2.0.0
+    jest: ^26.6.3
+    jest-extended: ^0.11.5
+    jest-serializer-vue: ^2.0.2
+    jest-transform-stub: ^2.0.0
+    jest-watch-typeahead: ^0.6.4
+    jsdom: ^16.6.0
+    lerna: ^4.0.0
+    lodash: ^4.17.21
+    rollup: ^2.45.1
+    rollup-plugin-delete: ^2.0.0
+    rollup-plugin-node-externals: ^2.2.0
+    rollup-plugin-smart-asset: ^2.1.1
+    rollup-plugin-terser: ^7.0.2
+    rollup-plugin-ts-treeshaking: ^1.0.2
+    rollup-plugin-typescript2: ^0.30.0
+    sinon: ^11.1.2
+    sort-package-json: ^1.50.0
+    ts-node: ^10.0.0
+    tsd: ^0.17.0
+    ttypescript: ^1.5.12
+    typescript: ^4.4.3
+    vitepress: ^0.15.6
+    vue: ^3.2.11
+    vue-jest: ^4.0.1
+  languageName: unknown
+  linkType: soft
+
 "@winter-love/emotion@^1.0.17-alpha.9, @winter-love/emotion@workspace:packages/emotion":
   version: 0.0.0-use.local
   resolution: "@winter-love/emotion@workspace:packages/emotion"
@@ -11071,82 +11147,6 @@ __metadata:
   checksum: 760384ba0aef329c52523747e36a452b5e51bc49b34160363a6934e7b7df3f93fcc88b35e33450361535d40a92a96412da870e1816aba9aa6cc556a9fedd8492
   languageName: node
   linkType: hard
-
-"coong@workspace:.":
-  version: 0.0.0-use.local
-  resolution: "coong@workspace:."
-  dependencies:
-    "@babel/core": ^7.14.6
-    "@babel/preset-typescript": ^7.13.0
-    "@emotion/jest": ^11.3.0
-    "@rollup/plugin-alias": ^3.1.2
-    "@rollup/plugin-node-resolve": ^11.2.1
-    "@storybook/addon-actions": ^6.3.0
-    "@storybook/addon-essentials": ^6.3.0
-    "@storybook/addon-links": ^6.3.0
-    "@storybook/builder-webpack5": ^6.3.0
-    "@storybook/manager-webpack5": ^6.3.0
-    "@storybook/storybook-deployer": ^2.8.10
-    "@storybook/vue3": ^6.3.0
-    "@testing-library/jest-dom": ^5.13.0
-    "@testing-library/user-event": ^13.2.1
-    "@testing-library/vue": ^6.4.2
-    "@types/gulp": ^4.0.8
-    "@types/jest": ^26.0.23
-    "@types/lodash": ^4.14.170
-    "@types/merge-deep": ^3.0.0
-    "@types/node": ^16.0.1
-    "@types/sinon": ^10.0.2
-    "@types/styled-system": ^5.1.11
-    "@types/three": ^0.129.1
-    "@typescript-eslint/eslint-plugin": ^4.26.1
-    "@typescript-eslint/parser": ^4.26.1
-    "@vue/babel-plugin-transform-vue-jsx": ^1.2.1
-    "@vue/eslint-config-typescript": ^7.0.0
-    "@vue/test-utils": ^2.0.0-rc.14
-    "@winter-love/test-use": 1.0.17-alpha.8
-    "@zerollup/ts-transform-paths": ^1.7.18
-    babel-jest: ^27.0.2
-    babel-loader: ^8.2.2
-    eslint: ^7.28.0
-    eslint-config-standard: ^16.0.2
-    eslint-import-resolver-typescript: ^2.4.0
-    eslint-plugin-import: ^2.19.1
-    eslint-plugin-node: ^11.0.0
-    eslint-plugin-promise: ^4.2.1
-    eslint-plugin-sort-keys-fix: ^1.1.2
-    eslint-plugin-typescript-sort-keys: ^1.6.0
-    eslint-plugin-unicorn: ^29.0.0
-    eslint-plugin-vue: ^7.11.1
-    gulp: ^4.0.2
-    gulp-execa: ^2.0.0
-    gulp-rename: ^2.0.0
-    jest: ^26.6.3
-    jest-extended: ^0.11.5
-    jest-serializer-vue: ^2.0.2
-    jest-transform-stub: ^2.0.0
-    jest-watch-typeahead: ^0.6.4
-    jsdom: ^16.6.0
-    lerna: ^4.0.0
-    lodash: ^4.17.21
-    rollup: ^2.45.1
-    rollup-plugin-delete: ^2.0.0
-    rollup-plugin-node-externals: ^2.2.0
-    rollup-plugin-smart-asset: ^2.1.1
-    rollup-plugin-terser: ^7.0.2
-    rollup-plugin-ts-treeshaking: ^1.0.2
-    rollup-plugin-typescript2: ^0.30.0
-    sinon: ^11.1.2
-    sort-package-json: ^1.50.0
-    ts-node: ^10.0.0
-    tsd: ^0.17.0
-    ttypescript: ^1.5.12
-    typescript: ^4.4.3
-    vitepress: ^0.15.6
-    vue: ^3.2.11
-    vue-jest: ^4.0.1
-  languageName: unknown
-  linkType: soft
 
 "copy-concurrently@npm:^1.0.0":
   version: 1.0.5

@@ -1,11 +1,11 @@
-export const permissionRoles = {
+
+export const roles = {
   customer: {
-    'privatePost:self': true,
-    'privateUser:self': true,
-    'publicPost:read': true,
-    'publicPost:self': true,
-    'publicPost:write': true,
-    'publicUser:read': true,
+    'privatePost.self': true,
+    'privateUser.self': true,
+    'publicPost.create': true,
+    'publicPost.read': true,
+    'publicPost.self': true,
   },
   master: {
     privatePost: true,
@@ -14,7 +14,11 @@ export const permissionRoles = {
   },
 }
 
-export const rolesActions = {
+export type ActionKeys = 'create' | 'delete' | 'read' | 'self' | 'update' | 'all'
+
+export const actions: Actions<ActionKeys> = {
+
+  all: true,
 
   create: true,
 
@@ -23,22 +27,22 @@ export const rolesActions = {
   read: true,
   /**
    * 본인 것을 read, edit, write, remove 있는지 여부
+   * 이 것으로 통과한 경우 context.auth 에 checkAuthorId: xxx 가 적혀집니다.
    */
   self: true,
   update: true,
 }
 
-export const rolesParts = {
-  privatePost: rolesActions,
-  privateUser: rolesActions,
-  publicPost: rolesActions,
-  publicUser: rolesActions,
+export type Actions<K extends string> = Record<K, boolean>
+
+export type PermissionKeys = 'privatePost' | 'privateUser' | 'publicPost' | 'publicUser'
+
+export type Permissions<K extends string, A extends string> = Record<K, Record<keyof Actions<A>, boolean>>
+
+export const permissions: Permissions<PermissionKeys, ActionKeys> = {
+  privatePost: actions,
+  privateUser: actions,
+  publicPost: actions,
+  publicUser: actions,
 }
 
-export const specialRoles = {
-  /**
-   * 이 것으로 통과한 경우 context.auth 에 checkAuthorId: xxx 가 적혀집니다.
-   */
-  allowSelf: true,
-  notAllow: true,
-}

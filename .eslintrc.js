@@ -95,6 +95,14 @@ module.exports = {
         allowTernary: true,
       },
     ],
+    '@typescript-eslint/no-unused-vars': [
+      'warn',
+      {
+        args: 'after-used',
+        argsIgnorePattern: '^_+$',
+        ignoreRestSiblings: true,
+      },
+    ],
     'accessor-pairs': 'error',
     'array-bracket-newline': ['error', 'consistent'],
     'array-bracket-spacing': ['error', 'never'],

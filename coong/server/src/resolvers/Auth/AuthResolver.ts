@@ -1,11 +1,11 @@
-import {User} from 'src/generated/type-graphql/models/User'
-import {Arg, Ctx, Mutation, Resolver} from 'type-graphql'
+import {AuthUser} from 'src/objects'
+import {Arg, Ctx, FieldResolver, Mutation, Resolver, Root} from 'type-graphql'
 import {Context} from 'src/context'
 import {SignInInput, SignUpInput} from './args'
 
-@Resolver(() => User)
+@Resolver(() => AuthUser)
 export class AuthResolver {
-  @Mutation(() => User, {nullable: true})
+  @Mutation(() => AuthUser, {nullable: true})
   async signIn(@Ctx() {prisma, passwordBcrypt}: Context, @Arg('data') data: SignInInput) {
 
     const {email, password} = data
@@ -31,7 +31,7 @@ export class AuthResolver {
     return null
   }
 
-  @Mutation(() => User, {nullable: true})
+  @Mutation(() => AuthUser, {nullable: true})
   async signUp(@Ctx() context: Context, @Arg('data') data: SignUpInput) {
     const {passwordBcrypt, prisma} = context
     const {email, name, password} = data
@@ -52,6 +52,14 @@ export class AuthResolver {
         name,
         password: hashedPassword,
       },
+    })
+  }
+
+  @FieldResolver()
+  async token(@Root() user: AuthUser, @Ctx() {jwt}: Context) {
+    return jwt.sign({
+      id: user.id,
+      roles: user.roles,
     })
   }
 }

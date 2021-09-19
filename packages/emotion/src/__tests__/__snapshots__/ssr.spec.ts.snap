@@ -1,0 +1,15 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`server-side rendering should  1`] = `
+<style data-emotion="css tokvmb">
+  .css-tokvmb {
+    color: red;
+  }
+</style>
+`;
+
+exports[`server-side rendering should  2`] = `
+<div>
+  <div class="css-tokvmb">foo</div>
+</div>
+`;

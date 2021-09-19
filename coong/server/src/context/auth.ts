@@ -1,10 +1,14 @@
 import {ExpressContext} from 'apollo-server-express'
-import {compare, genSalt, hash} from 'bcrypt'
 import {ContextFunction} from './types'
 import {freeze} from '@winter-love/utils'
 
+export interface SelfUserData {
+  id: string
+}
+
 export interface AuthContext {
-  checkAuthorId?: string
+  self?: SelfUserData
+  token?: string
 }
 
 export const withAuth = <ReturnType extends Record<string, unknown>>(
@@ -12,10 +16,19 @@ export const withAuth = <ReturnType extends Record<string, unknown>>(
 ) => {
 
   return async (expressContext: ExpressContext) => {
+    const {
+      req,
+    } = expressContext
+
+    const {headers: {authorization}} = req
+
+    const token = (Array.isArray(authorization) ? authorization.join() : authorization)
+
     const auth: AuthContext = {
-      checkAuthorId: undefined
+      self: undefined,
+      token: token ? token.replace(/^Bearer /u, '') : token,
     }
-    
+
     return freeze({
       ...await contextFunction(expressContext),
       auth,

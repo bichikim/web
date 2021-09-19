@@ -4,11 +4,13 @@ import {freeze, PureObject} from '@winter-love/utils'
 import * as jwt from 'jsonwebtoken'
 
 export interface CreateWithJwtOptions {
+  algorithm?: jwt.Algorithm
+  expiresIn?: string | number
   key?: string
 }
 
 export const createWithJwt = (options: CreateWithJwtOptions = {}) => {
-  const {key} = options
+  const {key, algorithm = 'HS384', expiresIn = '2h'} = options
 
   const sign = (
     payload: PureObject | string | Buffer,
@@ -19,7 +21,11 @@ export const createWithJwt = (options: CreateWithJwtOptions = {}) => {
     }
 
     return new Promise((resolve, reject) => {
-      jwt.sign(payload, key, options, (error, encoded) => {
+      jwt.sign(payload, key, {
+        algorithm,
+        expiresIn,
+        ...options,
+      }, (error, encoded) => {
         if (error) {
           return reject(error)
         }
@@ -30,24 +36,25 @@ export const createWithJwt = (options: CreateWithJwtOptions = {}) => {
 
   const verify = (
     token: string,
-    secretOrPublicKey: jwt.Secret | jwt.GetPublicKeyOrSecret,
     options?: jwt.VerifyOptions,
   ): Promise<jwt.JwtPayload | null> => {
     if (!key) {
       return Promise.resolve(null)
     }
 
-    return new Promise((resolve, reject) => {
-      jwt.verify(token, secretOrPublicKey, options, (error, decoded) => {
+    return new Promise((resolve) => {
+      jwt.verify(token, key, {
+        ...options,
+      }, (error, decoded) => {
         if (error) {
-          return reject(error)
+          return resolve(null)
         }
         resolve(decoded ?? null)
       })
     })
   }
 
-  return async <ReturnType extends Record<string, unknown>>(contextFunction: ContextFunction<ReturnType>) => {
+  return <ReturnType extends Record<string, unknown>>(contextFunction: ContextFunction<ReturnType>) => {
 
     return async (expressContext: ExpressContext) => {
       return freeze({
