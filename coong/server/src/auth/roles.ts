@@ -3,7 +3,6 @@ export const roles = {
   customer: {
     'privatePost.self': true,
     'privateUser.self': true,
-    'publicPost.create': true,
     'publicPost.read': true,
     'publicPost.self': true,
   },

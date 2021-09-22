@@ -7,6 +7,7 @@ export interface SelfUserData {
 }
 
 export interface AuthContext {
+  isSelf: boolean
   self?: SelfUserData
   token?: string
 }
@@ -25,6 +26,7 @@ export const withAuth = <ReturnType extends Record<string, unknown>>(
     const token = (Array.isArray(authorization) ? authorization.join() : authorization)
 
     const auth: AuthContext = {
+      isSelf: false,
       self: undefined,
       token: token ? token.replace(/^Bearer /u, '') : token,
     }

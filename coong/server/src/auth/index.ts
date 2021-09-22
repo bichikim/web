@@ -44,11 +44,11 @@ export const auth: AuthChecker<Context> = async (resolverData, roles) => {
     return false
   }
 
-  if (isSelf(matchedPermission)) {
-    context.auth.self = {
-      id,
-    }
+  context.auth.self = {
+    id,
   }
+
+  context.auth.isSelf = isSelf(matchedPermission)
 
   return true
 }

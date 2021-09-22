@@ -1,14 +1,16 @@
 import {createMethodDecorator, ResolverData, UnauthorizedError} from 'type-graphql'
 import {isEqual} from 'lodash'
-
-export type PromiseOrNot<T> = Promise<T> | T
+import {MayPromise} from '@winter-love/utils'
 
 export type SelfIdGetter = (resolverData: ResolverData) =>
-  PromiseOrNot<Record<string, string> | undefined>
+  MayPromise<Record<string, string> | undefined>
 
-export const defaultFromAuthDataGetter = (resolverData: ResolverData<Record<string, any>>) => {
+export const defaultSelfDataGetter = (resolverData: ResolverData<Record<string, any>>) => {
   const {context} = resolverData
-  const {self} = context.auth ?? {}
+  const {self, isSelf = false} = context.auth ?? {}
+  if (!isSelf) {
+    return
+  }
   return self ? {...self} : self
 }
 
@@ -21,18 +23,18 @@ export interface SelfAuthorizedOptions {
    * @default
    * @param context
    */
-  fromAuthDataGetter?: (resolverData: ResolverData<Record<string, any>>) =>
-    PromiseOrNot<Record<string, string> | undefined>
+  selfDataGetter?: (resolverData: ResolverData<Record<string, any>>) =>
+    MayPromise<Record<string, string> | undefined>
 }
 
 export default function SelfAuthorized(selfIdGetter: SelfIdGetter, options: SelfAuthorizedOptions = {}): any {
   const {
     allowEmptyId = false,
-    fromAuthDataGetter = defaultFromAuthDataGetter,
+    selfDataGetter = defaultSelfDataGetter,
   } = options
   return createMethodDecorator(async (resolverData, next) => {
     const idMatcher = await selfIdGetter(resolverData)
-    const authIdData = await fromAuthDataGetter(resolverData)
+    const authIdData = await selfDataGetter(resolverData)
 
     if (!authIdData) {
       return next()
@@ -53,3 +55,4 @@ export default function SelfAuthorized(selfIdGetter: SelfIdGetter, options: Self
     throw new UnauthorizedError()
   })
 }
+
