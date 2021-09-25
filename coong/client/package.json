@@ -7,7 +7,7 @@
     "sync:android": "cap sync android",
     "dev:ios": "cap run ios -l --exrernal",
     "dev:android": "cap run android -l --exrernal",
-    "dev:spa": "vite",
+    "dev:spa": "vite --host",
     "dev:ssr": "cross-env MODE=ssr vite",
     "dev:run-ssr": "ts-node run-ssr/index.ts",
     "build:spa": "vite build --outDir dist/spa",

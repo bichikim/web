@@ -1,15 +1,23 @@
-import {defineComponent} from 'vue'
-import {Box} from 'src/components/Box'
+import {defineComponent, ref} from 'vue'
+import {QItem, QItemLabel, QItemSection, QList, QToggle} from 'src/quasar'
 
 const IndexPage = defineComponent({
   setup() {
+    const toggle = ref(false)
     return () => {
       return (
         <div>
-          <div v-stitches={[{color: '$red1'}]}>
-            hello
-          </div>
-          <Box>foo</Box>
+          <QList>
+            <QItem v-stitches={[{color: '$red1'}]}>
+              <QItemSection>
+                <QItemLabel>hello</QItemLabel>
+                <QItemLabel caption={true}>greeting</QItemLabel>
+              </QItemSection>
+              <QItemSection side={true}>
+                <QToggle v-model={toggle.value}/>
+              </QItemSection>
+            </QItem>
+          </QList>
         </div>
       )
     }

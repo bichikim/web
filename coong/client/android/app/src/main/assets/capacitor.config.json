@@ -1,6 +1,10 @@
 {
 	"appId": "io.coong.app",
 	"appName": "coong",
-	"webDir": "dist/spa",
-	"bundledWebRuntime": false
+	"bundledWebRuntime": false,
+	"server": {
+		"cleartext": true,
+		"url": "http://192.168.35.123:3000"
+	},
+	"webDir": "dist/spa"
 }
