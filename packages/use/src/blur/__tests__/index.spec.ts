@@ -1,3 +1,7 @@
+/**
+ * @jest-environment jsdom
+ */
+
 import {useBlur} from '../'
 import {getDocument, getHTMLElement} from '@winter-love/utils'
 import {mountUse} from '@winter-love/test-use'

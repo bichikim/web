@@ -1,3 +1,7 @@
+/**
+ * @jest-environment jsdom
+ */
+
 import {toMutRef} from '../'
 import {mount} from '@vue/test-utils'
 import {defineComponent, h} from 'vue-demi'

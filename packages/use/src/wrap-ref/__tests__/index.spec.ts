@@ -1,3 +1,7 @@
+/**
+ * @jest-environment jsdom
+ */
+
 import {mount} from '@vue/test-utils'
 import {computed, defineComponent, h, Ref, ref, toRef} from 'vue-demi'
 import {wrapRef} from '../index'

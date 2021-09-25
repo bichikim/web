@@ -30,9 +30,9 @@ export const auth: AuthChecker<Context> = async (resolverData, roles) => {
     return false
   }
 
-  const {roles: receivedRoles, id} = decodedData
+  const {roles: receivedRoles, id, email} = decodedData
 
-  if (!receivedRoles || !id) {
+  if (!receivedRoles || !id || !email) {
     return false
   }
 
@@ -45,6 +45,7 @@ export const auth: AuthChecker<Context> = async (resolverData, roles) => {
   }
 
   context.auth.self = {
+    email,
     id,
   }
 

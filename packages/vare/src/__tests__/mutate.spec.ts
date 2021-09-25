@@ -1,3 +1,7 @@
+/**
+ * @jest-environment jsdom
+ */
+
 import {isMutation, mutate} from 'src/mutate'
 import {state} from 'src/state'
 import {getName, getRelates} from 'src/info'

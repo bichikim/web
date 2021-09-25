@@ -1,3 +1,7 @@
+/**
+ * @jest-environment jsdom
+ */
+
 import {getDocument, getWindow} from '../'
 
 describe('browser', () => {

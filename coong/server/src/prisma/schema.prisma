@@ -33,8 +33,8 @@ model User {
 model Post {
   id String @id @default(dbgenerated()) @map("_id") @db.ObjectId
   title String
-  author User @relation("Author", fields: [authorId], references: [id])
-  authorId    String   @db.ObjectId
+  author User? @relation("Author", fields: [authorId], references: [id])
+  authorId String @db.ObjectId
   likes User[] @relation("Likes", fields: [likeIDs])
   likeIDs String[] @db.Array(ObjectId)
 }

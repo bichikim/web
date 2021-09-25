@@ -1,3 +1,7 @@
+/**
+ * @jest-environment jsdom
+ */
+
 import {atom} from '../atom'
 import {flushPromises, mount} from '@vue/test-utils'
 import {

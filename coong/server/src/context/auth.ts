@@ -3,6 +3,7 @@ import {ContextFunction} from './types'
 import {freeze} from '@winter-love/utils'
 
 export interface SelfUserData {
+  email: string
   id: string
 }
 

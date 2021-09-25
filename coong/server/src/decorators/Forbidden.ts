@@ -3,13 +3,13 @@ import {createMethodDecorator, ResolverData, UnauthorizedError} from 'type-graph
 export type ForbiddenResolver<Context extends Record<string, any>> =
   (resolverData: ResolverData<Context>, self: unknown | undefined) => Promise<boolean> | boolean
 
-export type SelfDataGetter<Self> = (resolverData: ResolverData) => Self
+export type ForbiddenSelfDataGetter<Self> = (resolverData: ResolverData) => Self
 
-export const defaultSelfDataGetter = ({context}) => context.auth.self
+export const forbiddenDefaultSelfDataGetter = ({context}) => context.auth.self
 
-export default function Forbidden<Context extends Record<string, any>, Self>(
+export function Forbidden<Context extends Record<string, any>, Self>(
   resolver?: ForbiddenResolver<Context>,
-  selfDataGetter: SelfDataGetter<Self> = defaultSelfDataGetter,
+  selfDataGetter: ForbiddenSelfDataGetter<Self> = forbiddenDefaultSelfDataGetter,
 ): any {
   return createMethodDecorator<Context>((resolverData, next) => {
     if (!resolver) {

@@ -1,3 +1,7 @@
+/**
+ * @jest-environment jsdom
+ */
+
 import {useClipboard} from '../'
 import {useElementEvent} from 'src/element-event'
 import {getNavigator, setTimeoutPromise} from '@winter-love/utils'

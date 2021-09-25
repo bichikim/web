@@ -58,6 +58,7 @@ export class AuthResolver {
   @FieldResolver()
   async token(@Root() user: AuthUser, @Ctx() {jwt}: Context) {
     return jwt.sign({
+      email: user.email,
       id: user.id,
       roles: user.roles,
     })

@@ -1,3 +1,6 @@
+/**
+ * @jest-environment jsdom
+ */
 import {flushPromises} from '@vue/test-utils'
 import {ref} from 'vue-demi'
 import {testUse} from './test-use'

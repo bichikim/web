@@ -1,3 +1,7 @@
+/**
+ * @jest-environment jsdom
+ */
+
 import {createGetStorage, getStorage} from '../'
 
 describe('get Storage', () => {

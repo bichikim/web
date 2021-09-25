@@ -1,3 +1,7 @@
+/**
+ * @jest-environment jsdom
+ */
+
 import createEmotionOriginal from '@emotion/css/create-instance'
 import {mount} from '@vue/test-utils'
 import {h, withDirectives} from 'vue-demi'

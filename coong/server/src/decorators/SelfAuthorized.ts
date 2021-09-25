@@ -1,17 +1,22 @@
 import {createMethodDecorator, ResolverData, UnauthorizedError} from 'type-graphql'
-import {isEqual} from 'lodash'
+import {isMatch} from 'lodash'
 import {MayPromise} from '@winter-love/utils'
 
-export type SelfIdGetter = (resolverData: ResolverData) =>
-  MayPromise<Record<string, string> | undefined>
+export interface SelfData {
+  data?: Record<string, string>
+  isSelf
+}
 
-export const defaultSelfDataGetter = (resolverData: ResolverData<Record<string, any>>) => {
+export type SelfAuthorizedSelfIdGetter<Context> = (resolverData: ResolverData<Context>) =>
+  MayPromise<Record<string, any> | Array<Record<string, any>> | undefined>
+
+const defaultSelfDataGetter = (resolverData: ResolverData<Record<string, any>>): SelfData => {
   const {context} = resolverData
   const {self, isSelf = false} = context.auth ?? {}
-  if (!isSelf) {
-    return
+  return {
+    data: self ? {...self} : self,
+    isSelf,
   }
-  return self ? {...self} : self
 }
 
 export interface SelfAuthorizedOptions {
@@ -24,20 +29,27 @@ export interface SelfAuthorizedOptions {
    * @param context
    */
   selfDataGetter?: (resolverData: ResolverData<Record<string, any>>) =>
-    MayPromise<Record<string, string> | undefined>
+    MayPromise<SelfData>
 }
 
-export default function SelfAuthorized(selfIdGetter: SelfIdGetter, options: SelfAuthorizedOptions = {}): any {
+export function SelfAuthorized<Context>(
+  selfIdGetter: SelfAuthorizedSelfIdGetter<Context>,
+  options: SelfAuthorizedOptions = {},
+): any {
   const {
     allowEmptyId = false,
     selfDataGetter = defaultSelfDataGetter,
   } = options
-  return createMethodDecorator(async (resolverData, next) => {
+  return createMethodDecorator<Context>(async (resolverData, next) => {
     const idMatcher = await selfIdGetter(resolverData)
-    const authIdData = await selfDataGetter(resolverData)
+    const {isSelf, data: authIdData} = await selfDataGetter(resolverData)
+
+    if (!isSelf) {
+      return next()
+    }
 
     if (!authIdData) {
-      return next()
+      return new UnauthorizedError()
     }
 
     if (allowEmptyId && !idMatcher) {
@@ -48,7 +60,17 @@ export default function SelfAuthorized(selfIdGetter: SelfIdGetter, options: Self
       throw new UnauthorizedError()
     }
 
-    if (isEqual(authIdData, idMatcher)) {
+    if (Array.isArray(idMatcher)) {
+      const result = idMatcher.every((matcher) => {
+        return isMatch(authIdData, matcher)
+      })
+      if (result) {
+        return next()
+      }
+      throw new UnauthorizedError()
+    }
+
+    if (isMatch(authIdData, idMatcher)) {
       return next()
     }
 

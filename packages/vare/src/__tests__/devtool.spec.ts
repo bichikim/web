@@ -1,3 +1,7 @@
+/**
+ * @jest-environment jsdom
+ */
+
 import * as devtool from '@vue/devtools-api'
 import {startDevtool} from 'src/devtool'
 import {state} from 'src/state'

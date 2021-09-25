@@ -1,3 +1,7 @@
+/**
+ * @jest-environment jsdom
+ */
+
 import {defineComponent, h, ref} from 'vue-demi'
 import {flushPromises, mount} from '@vue/test-utils'
 import {onElementIntersection} from '../on-element-intersection'

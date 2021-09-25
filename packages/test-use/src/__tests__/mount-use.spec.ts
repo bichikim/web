@@ -1,3 +1,7 @@
+/**
+ * @jest-environment jsdom
+ */
+
 import {flushPromises} from '@vue/test-utils'
 import {ref, toRef} from 'vue-demi'
 import {mountUse} from '../mount-use'

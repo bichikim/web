@@ -1,3 +1,7 @@
+/**
+ * @jest-environment jsdom
+ */
+
 import {compute, isComputation} from 'src/compute'
 import {state} from 'src/state'
 import {getName, getRelates} from 'src/info'
@@ -12,7 +16,7 @@ const setup = () => {
   })
 
   const nameDecoSet = compute({
-    get: () => foo.name + '--',
+    get: () => `${foo.name}--`,
     set: (name: string) => {
       foo.name = name
     },
@@ -26,7 +30,7 @@ const setup = () => {
   })
 
   const tree = compute(foo, {
-    nameDeco: (foo) => (foo.name + '-'),
+    nameDeco: (foo) => (`${foo.name}-`),
     nameStaticDeco: (foo, deco: string) => (foo.name + deco),
   })
 
@@ -86,8 +90,8 @@ const setup = () => {
   }
 }
 
-describe('compute', function test() {
-  it('should compute value', function test() {
+describe('compute', () => {
+  it('should compute value', () => {
     const {TestComponent} = setup()
 
     const wrapper = shallowMount(TestComponent)
@@ -101,7 +105,7 @@ describe('compute', function test() {
     expect(wrapper.get('#nameReactiveDeco').text()).toBe('foo?')
   })
 
-  it('should compute reactive args', async function test() {
+  it('should compute reactive args', async () => {
     const {TestComponent} = setup()
     const wrapper = shallowMount(TestComponent)
 
@@ -116,7 +120,7 @@ describe('compute', function test() {
     expect(wrapper.get('#nameReactiveDeco').text()).toBe('foo??')
   })
 
-  it('should set state', async function test() {
+  it('should set state', async () => {
     const {TestComponent} = setup()
     const wrapper = shallowMount(TestComponent)
 
@@ -127,7 +131,7 @@ describe('compute', function test() {
     expect(wrapper.get('#setDeco').text()).toBe('change--')
   })
 
-  it('should set state with reactive args', async function test() {
+  it('should set state with reactive args', async () => {
     const {TestComponent} = setup()
     const wrapper = shallowMount(TestComponent)
 
@@ -160,7 +164,7 @@ describe('compute', function test() {
     expect(getRelates(relateTree.nameReactiveDeco)?.has(foo)).toBeTruthy()
   })
 
-  it('should be computation', function test() {
+  it('should be computation', () => {
     const {nameDecoSet} = setup()
     expect(isComputation(nameDecoSet)).toBe(true)
   })
