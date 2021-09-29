@@ -1,4 +1,4 @@
-import {act, state, update} from 'vare'
+import {act, mutate, shallowUpdate, state} from 'vare'
 
 export interface UserState {
   email?: string
@@ -6,14 +6,24 @@ export interface UserState {
   token?: string
 }
 
+const fakeRequest = (result) => Promise.resolve(result)
+
 export const user = state<UserState>({
   // empty
 })
 
-export const setToken = act(user, (state, token) => {
+export const setToken = mutate(user, (state, token) => {
   state.token = token
 }, 'setToken')
 
-export const updateUserInfo = act(user, (state, info: Omit<UserState, 'token'>) => {
-  update(state, info)
+export const updateUserInfo = mutate(user, (state, info: Omit<UserState, 'token'>) => {
+  shallowUpdate(state, info)
 }, 'updateUserInfo')
+
+export const pullUpdateUserInfo = act(user, async () => {
+  const response = await fakeRequest({
+    email: 'foo@foo.net',
+    name: 'foo',
+  })
+  updateUserInfo(response)
+})

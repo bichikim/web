@@ -1,4 +1,4 @@
-import {plugin as varePlugin, State, update} from 'vare'
+import {plugin as varePlugin, State, shallowUpdate} from 'vare'
 import {Plugin} from 'vue'
 import {user, UserState} from './user'
 
@@ -7,7 +7,7 @@ export interface RootState {
 }
 
 export const createStore = (initialState: RootState = {}): Plugin => {
-  update(user, initialState.user)
+  shallowUpdate(user, initialState.user)
   return (app) => {
     app.use(varePlugin, {
       states: {

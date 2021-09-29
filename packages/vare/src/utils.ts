@@ -32,7 +32,7 @@ export const createGetAtomPrams = (getId: () => string) => (unknown?: any, mayRe
   }
 }
 
-export const update = (target: State<any>, source?: Record<string, any>) => {
+export const shallowUpdate = (target: State<any>, source?: Record<string, any>) => {
   if (!source) {
     return
   }
