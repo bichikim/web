@@ -1,9 +1,7 @@
-import {
-  AllKinds, getIdentifier, getName, getRelates, info,
-} from 'src/info'
-import {AnyStateGroup, relateState} from 'src/state'
-import {AnyFunction, DropParameters} from '@winter-love/utils'
 import {ComputedRef, WritableComputedRef} from '@vue/reactivity'
+import {AnyFunction, DropParameters} from '@winter-love/utils'
+import {getGlobalInfo, getIdentifier, getName, getRelates} from 'src/info'
+import {AnyStateGroup, relateState} from 'src/state'
 import {computed} from 'vue-demi'
 import {createUuid} from './utils'
 
@@ -57,7 +55,8 @@ export const isComputation = (value?: any): value is Computation<any[], any> | C
 )
 
 export const getComputationType = (value: Computation<any, any>): ComputationType | string | undefined => {
-  const valueInfo = info.get(value)
+  const info = getGlobalInfo()
+  const valueInfo = info?.get(value)
   return valueInfo?.type
 }
 
@@ -115,7 +114,8 @@ function _compute(unknown: any, mayRecipe?: any, name?: string): any {
   }
 
   if (process.env.NODE_ENV === 'development') {
-    info.set(self, {
+    const info = getGlobalInfo()
+    info?.set(self, {
       identifier: computationName,
       name: _name,
       relates: new Set(),
@@ -167,32 +167,30 @@ export type ComputeTreeDrop<T extends Record<string, AnyFunction>, S = any> = {
   [P in keyof T]: (...args: DropParameters<T[P], S>) => ComputedRef<ReturnType<T[P]>>
 }
 
-export function compute<Args extends any[], T> (
+export function compute<Args extends any[], T>(
   recipe: ComputationRecipe<Args, T>,
   name?: string,
 ): Computation<Args, T>
-export function compute<S extends AnyStateGroup, Args extends any[], T> (
+export function compute<S extends AnyStateGroup, Args extends any[], T>(
   state: S,
   recipe: ComputationRecipe<[S, ...Args], T>,
   name?: string,
 ): Computation<Args, T>
-export function compute<Args extends any[], T> (
+export function compute<Args extends any[], T>(
   recipe: ComputationRecipeOptions<Args, T>,
   name?: string,
 ): ComputationWritable<Args, T>
-export function compute<S extends AnyStateGroup, Args extends any[], T> (
+export function compute<S extends AnyStateGroup, Args extends any[], T>(
   state: S,
   recipe: ComputationRecipeOptionsWithState<S, Args, T>,
   name?: string,
 ): ComputationWritable<Args, T>
-export function compute<Func extends ComputationRecipe, TreeOptions extends Record<string, Func>> (
+export function compute<Func extends ComputationRecipe, TreeOptions extends Record<string, Func>>(
   tree: TreeOptions,
 ): ComputeTree<TreeOptions>
-export function compute<
-  S extends AnyStateGroup,
+export function compute<S extends AnyStateGroup,
   Func extends ComputationStateRecipe<S>,
-  TreeOptions extends Record<string, Func>
-  > (
+  TreeOptions extends Record<string, Func>>(
   state: S,
   tree: TreeOptions,
 ): ComputeTreeDrop<TreeOptions, S>
@@ -207,32 +205,30 @@ export function compute(unknown: any, mayTree?, name?: string): any {
   return _treeCompute(unknown, mayTree)
 }
 
-export function computeRef<T> (
+export function computeRef<T>(
   recipe: ComputationRefRecipe<T>,
   name?: string,
 ): ComputedRef<T>
-export function computeRef<S extends AnyStateGroup, T> (
+export function computeRef<S extends AnyStateGroup, T>(
   state: S,
   recipe: ComputationStateRefRecipe<S, T>,
   name?: string,
 ): ComputedRef<T>
-export function computeRef<T> (
+export function computeRef<T>(
   recipe: ComputationRecipeRefOptions<T>,
   name?: string,
 ): WritableComputedRef<T>
-export function computeRef<S, T> (
+export function computeRef<S, T>(
   state: S,
   recipe: ComputationStateRecipeRefOptions<S, T>,
   name?: string,
 ): WritableComputedRef<T>
-export function computeRef<Func extends ComputationRefRecipe, TreeOptions extends Record<string, Func>> (
+export function computeRef<Func extends ComputationRefRecipe, TreeOptions extends Record<string, Func>>(
   tree: TreeOptions,
 ): ComputeRefTree<TreeOptions>
-export function computeRef<
-  S extends AnyStateGroup,
+export function computeRef<S extends AnyStateGroup,
   Func extends ComputationStateRefRecipe<S>,
-  TreeOptions extends Record<string, Func>
-  > (
+  TreeOptions extends Record<string, Func>>(
   state: S,
   tree: TreeOptions,
 ): ComputeRefTree<TreeOptions>
@@ -249,11 +245,12 @@ export function computeRef(unknown: any, mayTree?, name?: string): any {
     const ref = item()
 
     if (process.env.NODE_ENV === 'development') {
-      const name = getName(item)
+      const info = getGlobalInfo()
+      const name = info ? getName(info, item) : undefined
       const type = getComputationType(item)
       /* istanbul ignore else [item must have the relates] */
-      const relates = getRelates(item) ?? new Set<AllKinds>()
-      info.set(ref, {
+      const relates = info ? getRelates(info, item) : undefined
+      info?.set(ref, {
         identifier: computationRefName,
         name: name,
         relates,

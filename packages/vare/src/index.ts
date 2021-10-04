@@ -1,13 +1,11 @@
 import {plugin} from './plugin'
 export * from './atom'
-export * from './devtool'
 export * from './act'
 export * from './compute'
 export * from './info'
 export * from './mutate'
 export * from './plugin'
 export * from './state'
-export * from './subscribe'
 export * from './types'
 export * from './utils'
 export default plugin

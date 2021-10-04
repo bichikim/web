@@ -1,4 +1,4 @@
-import {computeRef, getName, state} from 'src/index'
+import {computeRef, getName, state, setGlobalInfo, createInfoMap} from 'src/index'
 process.env.NODE_ENV = 'development'
 
 const setup = () => {
@@ -47,6 +47,8 @@ const setup = () => {
 
 describe('compute-ref', () => {
   it('should return ref(computed) value', () => {
+    const info = createInfoMap()
+    setGlobalInfo(info)
     const {
       foo, nameRef, relateNameRef, relateNameWritableRef, nameWritableRef, tree, relateTree,
     } = setup()
@@ -60,8 +62,8 @@ describe('compute-ref', () => {
     nameWritableRef.value = 'foo'
     expect(foo.name).toBe('foo')
     expect(tree.nameRef.value).toBe('foo')
-    expect(getName(tree.nameRef)).toBe('nameRef')
+    expect(getName(info, tree.nameRef)).toBe('nameRef')
     expect(relateTree.nameRef.value).toBe('foo')
-    expect(getName(relateTree.nameRef)).toBe('nameRef')
+    expect(getName(info, relateTree.nameRef)).toBe('nameRef')
   })
 })

@@ -1,5 +1,5 @@
 import {
-  getIdentifier, info,
+  getIdentifier, getGlobalInfo,
 } from 'src/info'
 import {
   AnyFunction, FunctionObject,
@@ -9,7 +9,6 @@ import {
   createGetAtomPrams, createUuid,
 } from 'src/utils'
 import {shallowRef} from 'vue-demi'
-import {devtools} from './devtool'
 import {watchAction} from './subscribe'
 import {
   AnyStateGroup, relateState,
@@ -58,17 +57,12 @@ const _act = <Args extends any[], Return> (
   }
 
   if (process.env.NODE_ENV === 'development') {
-    info.set(self, {
+    const info = getGlobalInfo()
+    info?.set(self, {
       identifier: actionName,
       name: _name,
       relates: new Set(),
-      watchFlag,
-    })
-
-    watchAction(self, () => {
-      devtools?.updateTimeline('action', {
-        title: _name,
-      })
+      trigger: watchFlag,
     })
 
     if (state) {

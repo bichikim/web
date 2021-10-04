@@ -1,10 +1,8 @@
-import {DropFunctionObject} from 'src/types'
 import {FunctionObject} from '@winter-love/utils'
+import {DropFunctionObject} from 'src/types'
 import {shallowRef} from 'vue-demi'
-import {devtools} from './devtool'
-import {getIdentifier, info} from './info'
+import {getGlobalInfo, getIdentifier} from './info'
 import {AnyStateGroup, relateState} from './state'
-import {watchAction} from './subscribe'
 import {createGetAtomPrams, createUuid} from './utils'
 
 export type MutationRecipe<Args extends any[] = any, Return = any> = (...args: Args) => Return
@@ -41,18 +39,12 @@ function _mutate(unknown, mayRecipe?: any, name?: string): Mutation<any> {
   }
 
   if (process.env.NODE_ENV === 'development') {
-    info.set(self, {
+    const info = getGlobalInfo()
+    info?.set(self, {
       identifier: mutationName,
       name: _name,
       relates: new Set(),
-      watchFlag,
-    })
-
-    // devtool
-    watchAction(self, () => {
-      devtools?.updateTimeline('mutation', {
-        title: _name,
-      })
+      trigger: watchFlag,
     })
 
     // register mutation to state
@@ -79,6 +71,7 @@ const getTreeMutatePrams = (mayState: any, mayTree: any) => {
     tree,
   }
 }
+
 /**
  * create new tree mutation
  */
@@ -100,23 +93,22 @@ function _treeMutate(mayState: any, mayTree?: any) {
 /**
  * create new mutation or tree mutation
  */
-export function mutate<State extends AnyStateGroup, Args extends any[], Return = any> (
+export function mutate<State extends AnyStateGroup, Args extends any[], Return = any>(
   state: State,
   recipe: RelatedMutationRecipe<State, Args, Return>,
   name?: string,
 ): Mutation<Args>
-export function mutate<Args extends any[], Return = any> (
+export function mutate<Args extends any[], Return = any>(
   recipe: MutationRecipe<Args, Return>,
   name?: string,
 ): Mutation<Args>
-export function mutate<Func extends MutationRecipe, TreeOptions extends Record<string, Func>> (
+export function mutate<Func extends MutationRecipe, TreeOptions extends Record<string, Func>>(
   tree: TreeOptions,
 ): FunctionObject<TreeOptions>
-export function mutate<
-  State extends AnyStateGroup,
+export function mutate<State extends AnyStateGroup,
   Func extends MutationStateRecipe<State>,
   TreeOptions extends Record<string, Func>,
-  > (
+  >(
   state: State,
   tree: TreeOptions,
 ): DropFunctionObject<TreeOptions, State>
