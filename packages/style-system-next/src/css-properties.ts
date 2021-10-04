@@ -51,6 +51,7 @@ export const cssShortProperties: Record<keyof StandardShorthandProperties, true>
 }
 
 export const cssLongProperties: Record<keyof StandardLonghandProperties, true> = {
+  accentColor: true,
   alignContent: true,
   alignItems: true,
   alignSelf: true,

@@ -8,6 +8,7 @@
     "noEmit": false,
     "declaration": true,
     "skipLibCheck": true,
+
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "strictPropertyInitialization": false,
