@@ -27,11 +27,11 @@ module.exports = {
         ],
         [
           '@babel/preset-typescript', {
-          allExtensions: true,
-          isTSX: true,
-        }
+            allExtensions: true,
+            isTSX: true,
+          },
         ],
       ],
     },
-  }
+  },
 }
