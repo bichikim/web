@@ -8,11 +8,14 @@ import resolvers from './resolvers'
 
 const DEFAULT_PORT = 8080
 
+const isPlayGround = process.env.NODE_ENV === 'development'
+const port = Number(process.env.PORT ?? DEFAULT_PORT)
+
 const bootstrap = async () => {
   const result = await prepare({
     authChecker,
     context,
-    playground: process.env.NODE_ENV === 'development',
+    playground: isPlayGround,
     resolvers: [...prismaResolvers, ...resolvers],
   })
 
@@ -23,7 +26,7 @@ const bootstrap = async () => {
   const {server} = result
 
   return start(server, {
-    port: Number(process.env.PORT ?? DEFAULT_PORT),
+    port,
   })
 }
 

@@ -15,8 +15,8 @@ const withJwt = createWithJwt({
   key: process.env.JWT_KEY ?? DEFAULT_JWT_KEY,
 })
 
-export const createContext = withAuth(withJwt(withPasswordHash(withPrisma(() => ({})))))
+const context = withAuth(withJwt(withPasswordHash(withPrisma(() => ({})))))
 
-export default createContext
+export default context
 
-export type Context = PromiseReturnType<typeof createContext>
+export type Context = PromiseReturnType<typeof context>

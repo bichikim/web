@@ -1,6 +1,5 @@
 import {ExpressContext} from 'apollo-server-express'
 import {ContextFunction} from './types'
-import {freeze} from '@winter-love/utils'
 
 export interface SelfUserData {
   email: string
@@ -11,6 +10,10 @@ export interface AuthContext {
   isSelf: boolean
   self?: SelfUserData
   token?: string
+}
+
+export const unwrapBearerToken = (token?: string) => {
+  return token ? token.replace(/^Bearer /u, '') : token
 }
 
 export const withAuth = <ReturnType extends Record<string, unknown>>(
@@ -29,10 +32,10 @@ export const withAuth = <ReturnType extends Record<string, unknown>>(
     const auth: AuthContext = {
       isSelf: false,
       self: undefined,
-      token: token ? token.replace(/^Bearer /u, '') : token,
+      token: unwrapBearerToken(token),
     }
 
-    return freeze({
+    return Object.freeze({
       ...await contextFunction(expressContext),
       auth,
     })
