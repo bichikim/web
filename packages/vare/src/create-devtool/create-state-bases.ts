@@ -1,23 +1,86 @@
-import {getGlobalInfo, getState} from 'src/info'
+import {getGlobalInfo, getRelates, getState} from 'src/info'
 import {StateBase} from '@vue/devtools-api'
+import {isRef} from 'vue-demi'
+import {isAtom} from 'src/atom'
+import {findAtom} from './find-atom'
 
-export const createStateBases = (targets: Record<string, any>): Record<string, StateBase> => {
+export const getValue = (value: any) => {
+  if (typeof value === 'function') {
+    return 'function'
+  }
+  if (isRef(value)) {
+    return value.value
+  }
+
+  return '??'
+}
+
+export const createStateBases = (targets: Record<string, any>): Record<string, Record<string, StateBase[]>> => {
   const info = getGlobalInfo()
 
   if (!info) {
     return {}
   }
 
-  return Object.keys(targets).reduce<Record<string, StateBase>>((result, key: string) => {
+  return Object.keys(targets).reduce<Record<string, Record<string, StateBase[]>>>((result, key: string) => {
     const value = targets[key]
     const state = getState(info, value) ?? value
+    const relates = getRelates(info, value)
 
     result[key] = {
-      editable: true,
-      key,
-      objectType: 'reactive',
-      value: state,
+      state: [
+        {
+          editable: true,
+          key,
+          objectType: 'reactive',
+          value: state,
+        },
+      ],
     }
+
+    if (relates) {
+      result[key].relates = [...relates.entries()].map(([key, value]) => {
+        const data: StateBase = {
+          editable: false,
+          key,
+          value: getValue(value),
+        }
+
+        if (isRef(value)) {
+          data.objectType = 'computed'
+        }
+
+        return data
+      })
+    }
+
+    if (isAtom(value)) {
+      if (!result[key].relates) {
+        result[key].relates = []
+      }
+
+      const rootRelates = result[key].relates
+
+      const atoms = findAtom(value)
+
+      atoms.forEach(([namespace, value]) => {
+        const relates = getRelates(info, value)
+        if (relates) {
+          [...relates.entries()].forEach(([key, value]) => {
+            const data: StateBase = {
+              editable: false,
+              key: `${namespace}.${key}`,
+              value: getValue(value),
+            }
+            if (isRef(value)) {
+              data.objectType = 'computed'
+            }
+            rootRelates.push(data)
+          })
+        }
+      })
+    }
+
     return result
   }, {})
 }

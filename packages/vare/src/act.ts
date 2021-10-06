@@ -60,7 +60,6 @@ const _act = <Args extends any[], Return> (
     info?.set(self, {
       identifier: actionName,
       name: _name,
-      relates: new Set(),
       trigger: watchFlag,
     })
 

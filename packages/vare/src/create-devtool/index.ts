@@ -75,23 +75,11 @@ export const createDevTool = (
         return
       }
 
-      console.log(payload)
-
       const state = stateBases[payload.nodeId]
-
-      console.log(state, stateBases)
 
       if (state) {
 
-        payload.state = {
-          state: [state],
-          action: [{
-            key: 'foo',
-            value: 'foo',
-            editable: false,
-            objectType: 'other',
-          }],
-        }
+        payload.state = state
       }
     })
 
