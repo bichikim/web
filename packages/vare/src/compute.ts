@@ -1,6 +1,6 @@
 import {ComputedRef, WritableComputedRef} from '@vue/reactivity'
 import {AnyFunction, DropParameters} from '@winter-love/utils'
-import {getGlobalInfo, getIdentifier, getName, getRelates} from 'src/info'
+import {getGlobalInfo, getIdentifier} from 'src/info'
 import {AnyStateGroup, relateState} from 'src/state'
 import {computed} from 'vue-demi'
 import {createUuid} from './utils'
@@ -90,10 +90,10 @@ const getComputePrams = (unknown: any, mayRecipe?: any, name?: string) => {
   }
 }
 
-function _compute(unknown: any, mayRecipe?: any, name?: string): any {
+function _compute(unknown: any, mayRecipe?: any, name?: string, ref: boolean = false): any {
   const {state, name: _name, recipe} = getComputePrams(unknown, mayRecipe, name)
 
-  const self = (...args: Readonly<any[]>): any => {
+  let self = (...args: Readonly<any[]>): any => {
     let computedValue
 
     const getArgs = state ? [state, ...args] : [...args]
@@ -113,6 +113,10 @@ function _compute(unknown: any, mayRecipe?: any, name?: string): any {
     return computedValue
   }
 
+  if (ref) {
+    self = self()
+  }
+
   if (process.env.NODE_ENV === 'development') {
     const info = getGlobalInfo()
     info?.set(self, {
@@ -129,7 +133,7 @@ function _compute(unknown: any, mayRecipe?: any, name?: string): any {
   return self
 }
 
-function _treeCompute(mayState: any, mayTree?) {
+function _treeCompute(mayState: any, mayTree?, ref: boolean = false) {
   let tree
   let state
   if (mayTree) {
@@ -142,9 +146,9 @@ function _treeCompute(mayState: any, mayTree?) {
   return Object.keys(tree).reduce((result, name) => {
     const value = tree[name]
     if (state) {
-      result[name] = _compute(state, value, name)
+      result[name] = _compute(state, value, name, ref)
     } else {
-      result[name] = _compute(value, name)
+      result[name] = _compute(value, name, undefined, ref)
     }
     return result
   }, {} as Record<any, any>)
@@ -164,6 +168,17 @@ export type ComputeRefWritableTree<T extends Record<string, AnyFunction>> = {
 
 export type ComputeTreeDrop<T extends Record<string, AnyFunction>, S = any> = {
   [P in keyof T]: (...args: DropParameters<T[P], S>) => ComputedRef<ReturnType<T[P]>>
+}
+
+export function __compute(unknown: any, mayTree?, name?: string, ref: boolean = false): any {
+  if (
+    typeof unknown === 'function'
+    || isRecipeOption(unknown)
+    || typeof mayTree === 'function'
+    || isRecipeOption(mayTree)) {
+    return _compute(unknown, mayTree, name, ref)
+  }
+  return _treeCompute(unknown, mayTree, ref)
 }
 
 export function compute<Args extends any[], T>(
@@ -194,14 +209,7 @@ export function compute<S extends AnyStateGroup,
   tree: TreeOptions,
 ): ComputeTreeDrop<TreeOptions, S>
 export function compute(unknown: any, mayTree?, name?: string): any {
-  if (
-    typeof unknown === 'function'
-    || isRecipeOption(unknown)
-    || typeof mayTree === 'function'
-    || isRecipeOption(mayTree)) {
-    return _compute(unknown, mayTree, name)
-  }
-  return _treeCompute(unknown, mayTree)
+  return __compute(unknown, mayTree, name, false)
 }
 
 export function computeRef<T>(
@@ -232,32 +240,5 @@ export function computeRef<S extends AnyStateGroup,
   tree: TreeOptions,
 ): ComputeRefTree<TreeOptions>
 export function computeRef(unknown: any, mayTree?, name?: string): any {
-  const result = compute(unknown, mayTree, name)
-
-  if (typeof result === 'function') {
-    return result()
-  }
-
-  return Object.keys(result).reduce((resultRef, key) => {
-    const item: () => any = result[key]
-
-    const ref = item()
-
-    if (process.env.NODE_ENV === 'development') {
-      const info = getGlobalInfo()
-      const name = info ? getName(info, item) : undefined
-      const type = getComputationType(item)
-      /* istanbul ignore else [item must have the relates] */
-      const relates = info ? getRelates(info, item) : undefined
-      info?.set(ref, {
-        identifier: computationRefName,
-        name: name,
-        relates,
-        type,
-      })
-    }
-
-    resultRef[key] = ref
-    return resultRef
-  }, {} as Record<string, any>)
+  return __compute(unknown, mayTree, name, true)
 }
