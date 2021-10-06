@@ -79,7 +79,7 @@ export const createDevTool = (
 
       if (state) {
 
-        payload.state = state
+        payload.state = state.refresh()
       }
     })
 
@@ -92,8 +92,9 @@ export const createDevTool = (
 
       if (state) {
         const path = drop(payload.path)
+        const _state = state.base
         const {value} = payload.state
-        payload.set(state.value, path, value)
+        payload.set(_state.value, path, value)
       }
     })
   })

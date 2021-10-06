@@ -32,4 +32,5 @@ export const posts = atom({
   },
   decoFooName: getter((state) => `${state.foo.name}??`),
   decoName: getter((state) => `${state.name}??`),
+  listCount: getter((state) => state.list.length),
 })

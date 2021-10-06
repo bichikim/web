@@ -16,19 +16,24 @@ export const getValue = (value: any) => {
   return '??'
 }
 
-export const createStateBases = (targets: Record<string, any>): Record<string, Record<string, StateBase[]>> => {
+export type StateBases = Record<string, {
+  base: Record<string, StateBase[]>
+  refresh: () => Record<string, StateBase[]>
+}>
+
+export const createStateBases = (targets: Record<string, any>): StateBases => {
   const info = getGlobalInfo()
 
   if (!info) {
     return {}
   }
 
-  return Object.keys(targets).reduce<Record<string, Record<string, StateBase[]>>>((result, key: string) => {
+  return Object.keys(targets).reduce<StateBases>((result, key: string) => {
     const value = targets[key]
     const state = getState(info, value) ?? value
     const relates = getRelates(info, value)
 
-    result[key] = {
+    const stateInfo: Record<string, StateBase[]> = {
       state: [
         {
           editable: true,
@@ -39,49 +44,59 @@ export const createStateBases = (targets: Record<string, any>): Record<string, R
       ],
     }
 
-    if (relates) {
-      result[key].relates = [...relates.entries()].map(([key, value]) => {
-        const data: StateBase = {
-          editable: false,
-          key,
-          value: getValue(value),
-        }
+    result[key] = {
+      base: stateInfo,
+      refresh: () => {
+        const updateInfo: Record<string, StateBase[]> = {}
 
-        if (isRef(value)) {
-          data.objectType = 'computed'
-        }
-
-        return data
-      })
-    }
-
-    if (isAtom(value)) {
-      if (!result[key].relates) {
-        result[key].relates = []
-      }
-
-      const rootRelates = result[key].relates
-
-      const atoms = findAtom(value)
-
-      atoms.forEach(([namespace, value]) => {
-        const relates = getRelates(info, value)
         if (relates) {
-          [...relates.entries()].forEach(([key, value]) => {
+          updateInfo.relates = [...relates.entries()].map(([key, value]) => {
             const data: StateBase = {
               editable: false,
-              key: `${namespace}.${key}`,
+              key,
               value: getValue(value),
             }
+
             if (isRef(value)) {
               data.objectType = 'computed'
             }
-            rootRelates.push(data)
+
+            return data
           })
         }
-      })
-    }
 
+        if (isAtom(value)) {
+          if (!updateInfo.relates) {
+            updateInfo.relates = []
+          }
+
+          const rootRelates = updateInfo.relates
+
+          const atoms = findAtom(value)
+
+          atoms.forEach(([namespace, value]) => {
+            const relates = getRelates(info, value)
+            if (relates) {
+              [...relates.entries()].forEach(([key, value]) => {
+                const data: StateBase = {
+                  editable: false,
+                  key: `${namespace}.${key}`,
+                  value: getValue(value),
+                }
+                if (isRef(value)) {
+                  data.objectType = 'computed'
+                }
+                rootRelates.push(data)
+              })
+            }
+          })
+        }
+        return {
+          ...stateInfo,
+          ...updateInfo,
+        }
+      },
+    }
     return result
   }, {})
 }

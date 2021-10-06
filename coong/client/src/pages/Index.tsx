@@ -16,6 +16,11 @@ const IndexPage = defineComponent({
       posts.$.addItem({id: `add ${postList.value.length}`})
     }
 
+    // eslint-disable-next-line unicorn/consistent-function-scoping
+    const addName = () => {
+      user.name += '1'
+    }
+
     const toggle = ref(false)
     return () => {
       return (
@@ -36,6 +41,7 @@ const IndexPage = defineComponent({
             return <div key={item.id}>{`id ${item.id}`}</div>
           })}
           <QBtn onClick={addItem}>add Item</QBtn>
+          <QBtn onClick={addName}>add Name</QBtn>
         </div>
       )
     }
