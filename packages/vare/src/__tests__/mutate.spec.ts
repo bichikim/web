@@ -4,7 +4,7 @@
 
 import {isMutation, mutate} from 'src/mutate'
 import {state} from 'src/state'
-import {createInfoMap, getName, getRelates, setGlobalInfo} from 'src/info'
+import {createInfoMap, getGlobalInfo, getName, getRelates, setGlobalInfo} from 'src/info'
 import {defineComponent, h} from 'vue-demi'
 import {flushPromises, mount} from '@vue/test-utils'
 
@@ -13,11 +13,11 @@ const setup = () => {
     age: 10,
     gender: 'man',
     name: 'foo',
-  })
+  }, 'foo')
 
   const bar = state({
     money: 100,
-  })
+  }, 'bar')
 
   const changeFooName = mutate((name: string) => {
     foo.name = name
@@ -25,7 +25,7 @@ const setup = () => {
 
   const relateChangeName = mutate(foo, (foo, name: string) => {
     foo.name = name
-  })
+  }, 'relateChangeName')
 
   const mutTree = mutate({
     changeAge: (age: number) => {
@@ -78,8 +78,7 @@ const setup = () => {
 }
 
 describe('mutate', () => {
-  const info = createInfoMap()
-  setGlobalInfo(info)
+  const info = getGlobalInfo()
   it.skip('should be mutation', () => {
     const info = createInfoMap()
     setGlobalInfo(info)
@@ -109,7 +108,10 @@ describe('mutate', () => {
   it('should have relation', () => {
     process.env.NODE_ENV = 'development'
     const {relateChangeName, foo} = setup()
-    expect(getRelates(info, relateChangeName)?.has(foo)).toBeTruthy()
+    const name = getName(info, foo) ?? 'unknown'
+
+    expect(name).toBe('foo')
+    expect(getRelates(info, relateChangeName)?.has(name)).toBeTruthy()
   })
 
   it('should mutate state in the tree 1', () => {
@@ -148,7 +150,10 @@ describe('mutate', () => {
   it('should have a relation in the tree', () => {
     process.env.NODE_ENV = 'development'
     const {relateMutTree, foo} = setup()
-    expect(getRelates(info, relateMutTree.changeAge)?.has(foo)).toBeTruthy()
+    const name = getName(info, foo) ?? 'unknown'
+
+    expect(name).toBe('foo')
+    expect(getRelates(info, relateMutTree.changeAge)?.has(name)).toBeTruthy()
   })
 
   // use as action testing

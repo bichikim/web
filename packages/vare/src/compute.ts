@@ -118,7 +118,6 @@ function _compute(unknown: any, mayRecipe?: any, name?: string): any {
     info?.set(self, {
       identifier: computationName,
       name: _name,
-      relates: new Set(),
       type: typeof recipe === 'function' ? 'getter' : 'getter & setter',
     })
 

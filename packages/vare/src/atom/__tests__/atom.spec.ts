@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 
-import {atom, getAtomActionWatchTarget} from '../'
+import {atom, getAtomActionWatchTarget, getter} from '../'
 import {flushPromises, mount} from '@vue/test-utils'
 import {
   defineComponent, ExtractPropTypes, FunctionalComponent, h,
@@ -15,6 +15,7 @@ describe('atom', () => {
       bar: atom({
         name: 'bar',
       }, {
+        decoName: getter((state) => `??${state.name}`),
         setName: (state, payload: string) => {
           state.name = payload
         },
@@ -28,6 +29,7 @@ describe('atom', () => {
     })
 
     expect(fooAtom.bar.name).toBe('bar')
+    expect(fooAtom.bar.$.decoName.value).toBe('??bar')
     fooAtom.bar.$.setName('john')
     expect(fooAtom.bar.name).toBe('john')
     fooAtom.$.setJohn('john2')
@@ -139,6 +141,29 @@ describe('atom', () => {
     await flushPromises()
 
     expect(callback).toHaveBeenCalled()
+  })
+  it('should return computed values with tree', () => {
+    const fooAtom = atom({
+      name: 'foo',
+    }, {
+      decoName: getter((state) => `??${state.name}`),
+      setName: (state, payload: string) => {
+        state.name = payload
+      },
+    })
+
+    const name = fooAtom.$.decoName
+    expect(name.value).toBe('??foo')
+    fooAtom.$.setName('bar')
+    expect(name.value).toBe('??bar')
+  })
+  it('should return computed values with function', () => {
+    const fooAtom = atom({
+      name: 'foo',
+    }, getter((state) => `??${state.name}`))
+
+    const decoName = fooAtom.$
+    expect(decoName.value).toBe('??foo')
   })
 
   it('should watch atom state with a tree action', async () => {

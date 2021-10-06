@@ -14,85 +14,97 @@ export const createInfoMap = <Identifier extends string>(): CreateInfoMapReturnT
       infoMap.get(target)
     ),
     set: (target: any, info: VareInfoOptions<Identifier | 'unknown'>) => {
-      const {relates = new Set(), identifier = 'unknown' as const, ...rest} = info
+      const {relates = new Map<string, any>(), identifier = 'unknown' as const, ...rest} = info
       infoMap.set(target, {...rest, identifier, relates})
     },
   }
 }
 
 export const getIdentifier = <Identifier extends string>(
-  info: CreateInfoMapReturnType<Identifier>,
+  info?: CreateInfoMapReturnType<Identifier>,
   target?: any,
 ) => {
-  const valueInfo = info.get(target)
+  const valueInfo = info?.get(target)
   return valueInfo?.identifier
 }
 
 export const getName = <Identifier extends string>(
-  info: CreateInfoMapReturnType<Identifier>,
+  info?: CreateInfoMapReturnType<Identifier>,
   target?: any,
 ) => {
-  const valueInfo = info.get(target)
+  const valueInfo = info?.get(target)
   return valueInfo?.name
 }
 
 export const setName = <Identifier extends string>(
-  info: CreateInfoMapReturnType<Identifier>,
+  info: CreateInfoMapReturnType<Identifier> | undefined,
   target: any,
   name: string,
 ) => {
-  const valueInfo = info.get(target)
+  const valueInfo = info?.get(target)
   if (valueInfo) {
     valueInfo.name = name
   }
 }
 
 export const getPlayground = <Identifier extends string>(
-  info: CreateInfoMapReturnType<Identifier>,
-  target: any,
+  info?: CreateInfoMapReturnType<Identifier>,
+  target?: any,
 ): any | undefined => {
-  const valueInfo = info.get(target)
+  const valueInfo = info?.get(target)
   return valueInfo?.playground
 }
 
 export const setPlayground = <Identifier extends string>(
-  info: CreateInfoMapReturnType<Identifier>,
+  info: CreateInfoMapReturnType<Identifier> | undefined,
   target: any,
   value: PlaygroundInfo,
 ): void => {
-  const valueInfo = info.get(target)
+  const valueInfo = info?.get(target)
   if (valueInfo) {
     valueInfo.playground = value
   }
 }
 
 export const getRelates = <Identifier extends string>(
-  info: CreateInfoMapReturnType<Identifier>,
+  info: CreateInfoMapReturnType<Identifier> | undefined,
   target: any,
-): Set<any> | undefined => {
-  return info.get(target)?.relates
+): Map<string, any> | undefined => {
+  return info?.get(target)?.relates
+}
+
+export const addRelate = <Identifier extends string>(
+  info: CreateInfoMapReturnType<Identifier> | undefined,
+  target: any,
+  name: string,
+  value: any,
+): void => {
+  const relates = info?.get(target)?.relates
+  if (relates) {
+    relates.set(name, value)
+  }
 }
 
 export const getDescription = <Identifier extends string>(
-  info: CreateInfoMapReturnType<Identifier>,
+  info: CreateInfoMapReturnType<Identifier> | undefined,
   target: any,
 ): undefined | string => {
-  const valueInfo = info.get(target)
+  const valueInfo = info?.get(target)
   return valueInfo?.description
 }
 
 export const getState = <Identifier extends string>(
-  info: CreateInfoMapReturnType<Identifier>,
+  info: CreateInfoMapReturnType<Identifier> | undefined,
   target: any,
 ): undefined | any => {
-  const valueInfo = info.get(target)
+  const valueInfo = info?.get(target)
   return valueInfo?.state
 }
 
 export const getTrigger = <Identifier extends string>(
-  info: CreateInfoMapReturnType<Identifier>,
+  info: CreateInfoMapReturnType<Identifier> | undefined,
   target: any,
 ): undefined | Ref<any> => {
-  const valueInfo = info.get(target)
+  const valueInfo = info?.get(target)
   return valueInfo?.trigger
 }

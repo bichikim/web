@@ -14,7 +14,7 @@ describe('info', () => {
         description: 'hello',
         identifier: 'unknown',
         name: 'foo',
-        relates: new Set(),
+        relates: new Map(),
       })
     })
   })
@@ -40,7 +40,7 @@ describe('info', () => {
   })
   describe('getRelates', () => {
     it('should get name', () => {
-      expect(getRelates(info, target)).toEqual(new Set())
+      expect(getRelates(info, target)).toEqual(new Map())
     })
   })
   describe('getPlayground', () => {

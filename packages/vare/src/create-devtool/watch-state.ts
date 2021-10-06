@@ -10,9 +10,9 @@ export const watchState = (targets: Record<string, any>, callback?: (info?: Vare
 
   Object.keys(targets).forEach((key) => {
     const value = targets[key]
-    const state = getState(info, value)
+    const state = getState(info, value) ?? value
 
-    if (!state) {
+    if (typeof state !== 'object') {
       return
     }
 

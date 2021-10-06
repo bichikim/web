@@ -10,11 +10,7 @@ export const createStateBases = (targets: Record<string, any>): Record<string, S
 
   return Object.keys(targets).reduce<Record<string, StateBase>>((result, key: string) => {
     const value = targets[key]
-    const state = getState(info, value)
-
-    if (!state) {
-      return result
-    }
+    const state = getState(info, value) ?? value
 
     result[key] = {
       editable: true,

@@ -1,8 +1,21 @@
-import {defineComponent, ref} from 'vue'
-import {QItem, QItemLabel, QItemSection, QList, QToggle} from 'src/quasar'
+import {computed, defineComponent, ref} from 'vue'
+import {QBtn, QItem, QItemLabel, QItemSection, QList, QToggle} from 'src/quasar'
+import {user} from 'src/store/user'
+import {posts} from 'src/store/posts'
 
 const IndexPage = defineComponent({
   setup() {
+    const userName = computed(() => {
+      return user.name
+    })
+    const postList = computed(() => {
+      return posts.list
+    })
+
+    const addItem = () => {
+      posts.$.addItem({id: `add ${postList.value.length}`})
+    }
+
     const toggle = ref(false)
     return () => {
       return (
@@ -18,6 +31,11 @@ const IndexPage = defineComponent({
               </QItemSection>
             </QItem>
           </QList>
+          <div>{userName.value}</div>
+          {postList.value.map((item) => {
+            return <div key={item.id}>{`id ${item.id}`}</div>
+          })}
+          <QBtn onClick={addItem}>add Item</QBtn>
         </div>
       )
     }

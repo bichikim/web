@@ -13,7 +13,7 @@
     "build:spa": "vite build --outDir dist/spa",
     "build:ssr": "cross-env MODE=ssr vite build",
     "build:run-ssr": "ttsc -p tsconfig.server.json ",
-    "build": "pnpm run build:ssr &&pnpm run build:run-ssr",
+    "build": "pnpm run build:ssr && pnpm run build:run-ssr",
     "start": "pnpm run start:ssr",
     "start:spa": "vite preview --host --https",
     "start:ssr": "cross-env NODE_ENV=production node dist/run-ssr/index.js",

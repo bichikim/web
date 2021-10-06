@@ -4,16 +4,18 @@
 
 import {compute, isComputation} from 'src/compute'
 import {state} from 'src/state'
-import {createInfoMap, getName, getRelates, setGlobalInfo} from 'src/info'
+import {createInfoMap, getName, getRelates, setGlobalInfo, getGlobalInfo} from 'src/info'
 import {shallowMount} from '@vue/test-utils'
 import {
   defineComponent, h, Ref, toRef,
 } from 'vue-demi'
 
+const info = getGlobalInfo()
+
 const setup = () => {
   const foo = state({
     name: 'foo',
-  })
+  }, 'foo')
 
   const nameDecoSet = compute({
     get: () => `${foo.name}--`,
@@ -91,8 +93,7 @@ const setup = () => {
 }
 
 describe('compute', () => {
-  const info = createInfoMap()
-  setGlobalInfo(info)
+
   it('should compute value', () => {
     const {TestComponent} = setup()
 
@@ -163,7 +164,9 @@ describe('compute', () => {
     process.env.NODE_ENV = 'development'
     const {relateTree, foo} = setup()
 
-    expect(getRelates(info, relateTree.nameReactiveDeco)?.has(foo)).toBeTruthy()
+    const name = getName(info, foo) ?? 'unknown'
+
+    expect(getRelates(info, relateTree.nameReactiveDeco)?.has(name)).toBeTruthy()
   })
 
   it.skip('should be computation', () => {

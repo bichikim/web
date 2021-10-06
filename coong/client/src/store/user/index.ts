@@ -9,7 +9,7 @@ export interface UserState {
 const fakeRequest = (result) => Promise.resolve(result)
 
 export const user = state<UserState>({
-  // empty
+  name: 'unknown',
 })
 
 export const setToken = mutate(user, (state, token) => {
@@ -26,4 +26,4 @@ export const pullUpdateUserInfo = act(user, async () => {
     name: 'foo',
   })
   updateUserInfo(response)
-})
+}, 'pullUpdateUserInfo')

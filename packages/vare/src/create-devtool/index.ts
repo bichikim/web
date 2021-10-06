@@ -1,5 +1,5 @@
 import {DevtoolsPluginApi, setupDevtoolsPlugin, TimelineEvent} from '@vue/devtools-api'
-import {isSSR} from '@winter-love/utils'
+import {drop, isSSR} from '@winter-love/utils'
 import {watchTrigger} from 'src/create-devtool/watch-trigger'
 import {VareInfo} from 'src/info'
 import {App} from 'vue-demi'
@@ -7,9 +7,11 @@ import {createStateBases} from './create-state-bases'
 import {ApiSetting, CreateDevToolOptions} from './types'
 import {watchState} from './watch-state'
 import {atomName} from 'src/atom'
+import {createInspectorTree} from './create-inspector-tree'
 
 export const DEVTOOL_ID = 'com.npmjs.packages.vare'
 
+// eslint-disable-next-line max-lines-per-function
 export const createDevTool = (
   app: App,
   targets: Record<string, any>,
@@ -58,17 +60,52 @@ export const createDevTool = (
       })
     })
 
+    api.on.getInspectorTree((payload) => {
+      if (payload.app !== app || payload.inspectorId !== inspectorId) {
+        return
+      }
+
+      const {nodes} = createInspectorTree(targets)
+      console.log(nodes)
+      payload.rootNodes = nodes
+    })
+
     api.on.getInspectorState((payload) => {
       if (payload.app !== app || payload.inspectorId !== inspectorId) {
         return
       }
+
+      console.log(payload)
+
       const state = stateBases[payload.nodeId]
+
+      console.log(state, stateBases)
 
       if (state) {
 
         payload.state = {
           state: [state],
+          action: [{
+            key: 'foo',
+            value: 'foo',
+            editable: false,
+            objectType: 'other',
+          }],
         }
+      }
+    })
+
+    api.on.editInspectorState((payload) => {
+      if (payload.app !== app || payload.inspectorId !== inspectorId) {
+        return
+      }
+
+      const state = stateBases[payload.nodeId]
+
+      if (state) {
+        const path = drop(payload.path)
+        const {value} = payload.state
+        payload.set(state.value, path, value)
       }
     })
   })

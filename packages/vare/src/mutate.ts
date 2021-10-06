@@ -25,12 +25,12 @@ const getMutatePrams = createGetAtomPrams(createUuid('unknown'))
 /**
  * create new mutation
  */
-function _mutate(unknown, mayRecipe?: any, name?: string): Mutation<any> {
+function createMutation(unknown, mayRecipe?: any, name?: string): Mutation<any> {
   const {state, recipe, name: _name} = getMutatePrams(unknown, mayRecipe, name)
   const watchFlag = shallowRef<any[] | null>()
 
   // create executor
-  const self: any = (...args: any[]): any => {
+  const mutate: any = (...args: any[]): any => {
     const newArgs = state ? [state, ...args] : args
     if (process.env.NODE_ENV === 'development') {
       watchFlag.value = args
@@ -40,20 +40,19 @@ function _mutate(unknown, mayRecipe?: any, name?: string): Mutation<any> {
 
   if (process.env.NODE_ENV === 'development') {
     const info = getGlobalInfo()
-    info?.set(self, {
+    info?.set(mutate, {
       identifier: mutationName,
       name: _name,
-      relates: new Set(),
       trigger: watchFlag,
     })
 
     // register mutation to state
     if (state) {
-      relateState(state, self)
+      relateState(state, mutate)
     }
   }
 
-  return self
+  return mutate
 }
 
 const getTreeMutatePrams = (mayState: any, mayTree: any) => {
@@ -75,15 +74,15 @@ const getTreeMutatePrams = (mayState: any, mayTree: any) => {
 /**
  * create new tree mutation
  */
-function _treeMutate(mayState: any, mayTree?: any) {
+function createTreeMutate(mayState: any, mayTree?: any) {
   const {tree, state} = getTreeMutatePrams(mayState, mayTree)
 
   return Object.keys(tree).reduce((result, name) => {
     const value = tree[name]
     if (state) {
-      result[name] = _mutate(state, value, name)
+      result[name] = createMutation(state, value, name)
     } else {
-      result[name] = _mutate(value, name)
+      result[name] = createMutation(value, name)
     }
 
     return result
@@ -114,8 +113,8 @@ export function mutate<State extends AnyStateGroup,
 ): DropFunctionObject<TreeOptions, State>
 export function mutate(unknown, mayTree?, name?: string): any {
   if (typeof unknown === 'function' || typeof mayTree === 'function') {
-    return _mutate(unknown, mayTree, name)
+    return createMutation(unknown, mayTree, name)
   }
 
-  return _treeMutate(unknown, mayTree)
+  return createTreeMutate(unknown, mayTree)
 }
