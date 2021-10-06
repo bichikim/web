@@ -1,7 +1,8 @@
-import {computed, defineComponent, ref} from 'vue'
 import {QBtn, QItem, QItemLabel, QItemSection, QList, QToggle} from 'src/quasar'
-import {user} from 'src/store/user'
+import {setName} from 'src/store/bucket'
 import {posts} from 'src/store/posts'
+import {user} from 'src/store/user'
+import {computed, defineComponent, ref} from 'vue'
 
 const IndexPage = defineComponent({
   setup() {
@@ -14,6 +15,11 @@ const IndexPage = defineComponent({
 
     const addItem = () => {
       posts.$.addItem({id: `add ${postList.value.length}`})
+    }
+
+    // eslint-disable-next-line unicorn/consistent-function-scoping
+    const setBucketName = () => {
+      setName.$('add')
     }
 
     // eslint-disable-next-line unicorn/consistent-function-scoping
@@ -32,7 +38,7 @@ const IndexPage = defineComponent({
                 <QItemLabel caption={true}>greeting</QItemLabel>
               </QItemSection>
               <QItemSection side={true}>
-                <QToggle v-model={toggle.value}/>
+                <QToggle v-model={toggle.value} />
               </QItemSection>
             </QItem>
           </QList>
@@ -42,6 +48,7 @@ const IndexPage = defineComponent({
           })}
           <QBtn onClick={addItem}>add Item</QBtn>
           <QBtn onClick={addName}>add Name</QBtn>
+          <QBtn onClick={setBucketName}>set Name</QBtn>
         </div>
       )
     }
