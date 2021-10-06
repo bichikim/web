@@ -5,11 +5,12 @@ import {isAtom} from 'src/atom'
 import {findAtom} from './find-atom'
 
 export const getValue = (value: any) => {
-  if (typeof value === 'function') {
-    return 'function'
-  }
   if (isRef(value)) {
     return value.value
+  }
+
+  if (typeof value === 'function') {
+    return 'function'
   }
 
   return '??'
