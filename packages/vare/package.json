@@ -1,6 +1,6 @@
 {
   "name": "vare",
-  "version": "1.0.17",
+  "version": "1.0.18",
   "description": "share state for vue components",
   "keywords": [
     "typescript",
