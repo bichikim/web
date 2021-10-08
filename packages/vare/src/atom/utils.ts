@@ -1,5 +1,6 @@
 import {UnwrapNestedRefs} from '@winter-love/use'
 import {isRef, reactive, Ref, unref} from 'vue-demi'
+import {mayFunctionValue} from '@winter-love/utils'
 import {
   ActionSymbol,
   Atom,
@@ -25,7 +26,13 @@ export const getAtomActionWatchTarget = (target: any) => {
 }
 
 export const wrapAtom = <T extends Record<string, any>>(value: MayAtomType<T>): UnwrapNestedRefs<T> => {
-  return reactive(isAtom(value) ? value : (isRef(value) ? unref(value) : value)) as any
+  const _value = mayFunctionValue(value)
+
+  if (isAtom(_value)) {
+    return _value
+  }
+
+  return reactive(isRef(_value) ? unref(_value) : _value) as any
 }
 
 export const getter = <Return>(recipe: GetterRecipe<Return>): GetterRecipeInside<Return> => {

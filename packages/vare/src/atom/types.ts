@@ -61,11 +61,15 @@ export type Atom<State> =
 
 export type AtomIdentifierName = 'atom'
 
-export type MayAtomType<State> =
+export type _MayAtomType<State> =
   | State
   | UnwrapNestedRefs<State>
   | AtomType<State>
   | AtomTypeWithRecipe<State, AtomRecipe<UnwrapNestedRefs<State>>
   | AtomGetterRecipe<UnwrapNestedRefs<State>, unknown>>
   | Ref<State>
+
+export type MayAtomType<State> =
+  | (() => _MayAtomType<State>)
+  | _MayAtomType<State>
 

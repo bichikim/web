@@ -90,7 +90,7 @@ const getComputePrams = (unknown: any, mayRecipe?: any, name?: string) => {
   }
 }
 
-function _compute(unknown: any, mayRecipe?: any, name?: string, ref: boolean = false): any {
+function createFunctionComputed(unknown: any, mayRecipe?: any, name?: string, ref: boolean = false): any {
   const {state, name: _name, recipe} = getComputePrams(unknown, mayRecipe, name)
 
   let self = (...args: Readonly<any[]>): any => {
@@ -133,7 +133,7 @@ function _compute(unknown: any, mayRecipe?: any, name?: string, ref: boolean = f
   return self
 }
 
-function _treeCompute(mayState: any, mayTree?, ref: boolean = false) {
+function createTreeCompute(mayState: any, mayTree?, ref: boolean = false) {
   let tree
   let state
   if (mayTree) {
@@ -146,9 +146,9 @@ function _treeCompute(mayState: any, mayTree?, ref: boolean = false) {
   return Object.keys(tree).reduce((result, name) => {
     const value = tree[name]
     if (state) {
-      result[name] = _compute(state, value, name, ref)
+      result[name] = createFunctionComputed(state, value, name, ref)
     } else {
-      result[name] = _compute(value, name, undefined, ref)
+      result[name] = createFunctionComputed(value, name, undefined, ref)
     }
     return result
   }, {} as Record<any, any>)
@@ -170,15 +170,15 @@ export type ComputeTreeDrop<T extends Record<string, AnyFunction>, S = any> = {
   [P in keyof T]: (...args: DropParameters<T[P], S>) => ComputedRef<ReturnType<T[P]>>
 }
 
-export function __compute(unknown: any, mayTree?, name?: string, ref: boolean = false): any {
+export function createComputed(unknown: any, mayTree?, name?: string, ref: boolean = false): any {
   if (
     typeof unknown === 'function'
     || isRecipeOption(unknown)
     || typeof mayTree === 'function'
     || isRecipeOption(mayTree)) {
-    return _compute(unknown, mayTree, name, ref)
+    return createFunctionComputed(unknown, mayTree, name, ref)
   }
-  return _treeCompute(unknown, mayTree, ref)
+  return createTreeCompute(unknown, mayTree, ref)
 }
 
 export function compute<Args extends any[], T>(
@@ -209,7 +209,7 @@ export function compute<S extends AnyStateGroup,
   tree: TreeOptions,
 ): ComputeTreeDrop<TreeOptions, S>
 export function compute(unknown: any, mayTree?, name?: string): any {
-  return __compute(unknown, mayTree, name, false)
+  return createComputed(unknown, mayTree, name, false)
 }
 
 export function computeRef<T>(
@@ -240,5 +240,5 @@ export function computeRef<S extends AnyStateGroup,
   tree: TreeOptions,
 ): ComputeRefTree<TreeOptions>
 export function computeRef(unknown: any, mayTree?, name?: string): any {
-  return __compute(unknown, mayTree, name, true)
+  return createComputed(unknown, mayTree, name, true)
 }

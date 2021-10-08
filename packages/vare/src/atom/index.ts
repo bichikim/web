@@ -1,6 +1,6 @@
 import {UnwrapNestedRefs} from '@winter-love/use'
 import {computed, shallowRef} from 'vue-demi'
-import {getGlobalInfo} from '../info'
+import {getGlobalInfo, getRelates} from '../info'
 import {
   ActionSymbol,
   AtomGetterRecipe,
@@ -20,7 +20,7 @@ export * from './utils'
 
 export const atomName: AtomIdentifierName = 'atom'
 
-export const createTreeAtom = (reactive, trigger, recipe) => {
+export const createTreeAtom = (reactive, trigger, recipe, relates?: Map<string, any>) => {
   const clonedRecipe = Object.keys(recipe).reduce((result, key) => {
     const value = recipe[key]
     if (value[GetterSymbol]) {
@@ -32,7 +32,9 @@ export const createTreeAtom = (reactive, trigger, recipe) => {
     return result
   }, {})
 
-  const relates = new Map<string, any>(Object.entries(clonedRecipe))
+  const _relates: Map<string, any> = relates ?? new Map<string, any>()
+
+  Object.entries(clonedRecipe).map(([key, value]) => _relates.set(key, value))
 
   const action = new Proxy({}, {
     get: (target, point) => {
@@ -58,30 +60,36 @@ export const createTreeAtom = (reactive, trigger, recipe) => {
         return Reflect.set(target, point, value, target)
       },
     }),
-    relates,
+    relates: _relates,
   }
 }
 
-export const createFunctionAtom = (reactive, trigger, recipe) => {
+export const createFunctionAtom = (reactive, trigger, recipe, relates?: Map<string, any>) => {
   const clonedRecipe = recipe[GetterSymbol] ? computed(() => recipe(reactive)) : recipe
-  const relates = new Map([['default', clonedRecipe]])
+
+  const _relates = relates ?? new Map<string, any>()
+
+  _relates.set('default', clonedRecipe)
+
+  const atom = new Proxy(reactive, {
+    get: (target, point) => {
+      switch (point) {
+        case '$':
+          return typeof clonedRecipe === 'function'
+            ? createAction(trigger, reactive, recipe)
+            : clonedRecipe
+        default:
+          return Reflect.get(target, point, target)
+      }
+    },
+    set: (target, point, value) => {
+      return Reflect.set(target, point, value, target)
+    },
+  })
+
   return {
-    atom: new Proxy(reactive, {
-      get: (target, point) => {
-        switch (point) {
-          case '$':
-            return typeof clonedRecipe === 'function'
-              ? createAction(trigger, reactive, recipe)
-              : clonedRecipe
-          default:
-            return Reflect.get(target, point, target)
-        }
-      },
-      set: (target, point, value) => {
-        return Reflect.set(target, point, value, target)
-      },
-    }),
-    relates,
+    atom,
+    relates: _relates,
   }
 }
 
@@ -109,26 +117,27 @@ export function atom<State,
   initState: MayAtomType<State>,
   recipe?: Recipe,
 ): AtomTypeWithRecipe<State, Recipe>
-export function atom<T extends Record<string, any>>(
-  initState: MayAtomType<T>,
+export function atom<State extends Record<string, any>>(
+  initState: MayAtomType<State>,
   recipe?: any,
   name?: string,
 ): any {
   const valueReactive = wrapAtom(initState)
   const trigger = shallowRef<any[]>()
-  let relates
+  const info = getGlobalInfo()
+  let relates = getRelates(info, valueReactive)
   let atom
 
   // recipe = function
   if (typeof recipe === 'function') {
-    const result = createFunctionAtom(valueReactive, trigger, recipe)
+    const result = createFunctionAtom(valueReactive, trigger, recipe, relates)
     // eslint-disable-next-line prefer-destructuring
     atom = result.atom
     // eslint-disable-next-line prefer-destructuring
     relates = result.relates
     // recipe tree
   } else if (typeof recipe === 'object' && !Array.isArray(recipe)) {
-    const result = createTreeAtom(valueReactive, trigger, recipe)
+    const result = createTreeAtom(valueReactive, trigger, recipe, relates)
     // eslint-disable-next-line prefer-destructuring
     atom = result.atom
     // eslint-disable-next-line prefer-destructuring
@@ -141,7 +150,6 @@ export function atom<T extends Record<string, any>>(
   // save information for devtool
   if (process.env.NODE_ENV === 'development') {
     const info = getGlobalInfo()
-
     info?.set(atom, {
       identifier: atomName,
       name,
