@@ -5,7 +5,7 @@ Vue Share State Library
 ## Use Vare with Vue (Vue 3.0 or Vue 2 with @vue/composition-api) 
 
 ```typescript
-import {state} from 'vare'
+import {atom} from 'vare'
 import {defineComponent, h} from 'vue'
 
 export const myState = atom({

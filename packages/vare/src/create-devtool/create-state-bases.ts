@@ -21,10 +21,10 @@ export type StateBases = Record<string, {
   refresh: () => Record<string, StateBase[]>
 }>
 
-export const createStateBases = (targets: Record<string, any>): StateBases => {
+export const createStateBases = (targets?: Record<string, any>): StateBases => {
   const info = getGlobalInfo()
 
-  if (!info) {
+  if (!info || !targets) {
     return {}
   }
 
