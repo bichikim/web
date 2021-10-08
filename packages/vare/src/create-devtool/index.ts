@@ -14,7 +14,7 @@ export const DEVTOOL_ID = 'com.npmjs.packages.vare'
 // eslint-disable-next-line max-lines-per-function
 export const createDevTool = (
   app: App,
-  targets: Record<string, any>,
+  targets: Record<string, any> = {},
   options: CreateDevToolOptions = {},
 ) => {
   if (isSSR()) {
