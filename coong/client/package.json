@@ -5,8 +5,8 @@
   "scripts": {
     "sync:ios": "cap sync ios",
     "sync:android": "cap sync android",
-    "dev:ios": "cap run ios -l --exrernal",
-    "dev:android": "cap run android -l --exrernal",
+    "dev:ios": "ionic cap run ios -l --exrernal",
+    "dev:android": "ionic cap run android -l --external --public-host=192.168.35.123",
     "dev:spa": "vite --host",
     "dev:ssr": "cross-env MODE=ssr vite --host",
     "dev:run-ssr": "ts-node run-ssr/index.ts",
@@ -15,15 +15,16 @@
     "build:run-ssr": "ttsc -p tsconfig.server.json ",
     "build": "pnpm run build:ssr && pnpm run build:run-ssr",
     "start": "pnpm run start:ssr",
+    "ionic:serve": "vite --host --port 8100",
+    "ionic:build": "vite  build --outDir dist/spa",
     "start:spa": "vite preview --host --https",
     "start:ssr": "cross-env NODE_ENV=production node dist/run-ssr/index.js",
     "generator:favicon": "npx pwa-asset-generator"
   },
   "dependencies": {
-    "@capacitor/android": "^3.2.0",
-    "@capacitor/cli": "^3.2.0",
-    "@capacitor/core": "^3.2.0",
-    "@capacitor/ios": "^3.2.0",
+    "@capacitor/android": "^3.2.4",
+    "@capacitor/core": "^3.2.4",
+    "@capacitor/ios": "^3.2.4",
     "@quasar/app": "^3.0.4",
     "@quasar/extras": "^1.11.0",
     "@vue/server-renderer": "^3.2.6",
@@ -43,6 +44,7 @@
     "vue-router": "^4.0.11"
   },
   "devDependencies": {
+    "@capacitor/cli": "^3.2.4",
     "@iconify/json": "^1.1.395",
     "@intlify/vite-plugin-vue-i18n": "^2.4.0",
     "@rollup/plugin-replace": "^3.0.0",
@@ -59,8 +61,8 @@
     "ttypescript": "^1.5.12",
     "typescript": "^4.4.3",
     "vite": "^2.5.1",
-    "vite-plugin-components": "^0.13.2",
-    "vite-plugin-icons": "^0.6.5",
+    "unplugin-vue-components": "^0.15.6",
+    "unplugin-icons": "^0.12.12",
     "vite-plugin-pwa": "^0.11.0"
   },
   "gitHead": "49922aa2164ceefcebf5fcd3bd83dce16c67df21"
