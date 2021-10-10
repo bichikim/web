@@ -10,32 +10,27 @@
   "repository": "git@github.com:winter-love/web.git",
   "license": "MIT",
   "author": "bichi@live.co.kr",
+  "type": "module",
   "exports": {
     ".": {
-      "import": "./lib/index.module.js",
-      "require": "./lib/index.js"
+      "import": "./lib/index.js",
+      "require": "./lib/index.cjs"
     },
     "./*": "./*"
   },
-  "publishConfig": {
-    "access": "public"
-  },
   "main": "lib/index.js",
-  "jsdelivr": "lib/index.iife.js",
-  "unpkg": "lib/index.iife.js",
-  "module": "lib/index.module.js",
+  "jsdelivr": "lib/index.global.js",
+  "unpkg": "lib/index.global.js",
+  "module": "lib/index.mjs",
   "source": "src/index.ts",
   "types": "lib/index.d.ts",
   "files": [
     "lib/*"
   ],
   "scripts": {
-    "build": "gulp build",
-    "dev": "gulp dev",
-    "prepare": "gulp build"
-  },
-  "peerDependencies": {
-    "@vue/test-utils": "^2"
+    "build": "tsup --dts",
+    "dev": "tsup --dts --watch",
+    "prepare": "tsup"
   },
   "devDependencies": {
     "@vue/test-utils": "^2.0.0-rc.12",
@@ -43,6 +38,9 @@
     "lodash": "^4.17.21",
     "vue": "^3.2.11",
     "vue-demi": "^0.11.3"
+  },
+  "peerDependencies": {
+    "@vue/test-utils": "^2"
   },
   "gitHead": "59f51d027f7a1535049ad888e1c3601d9eafd514"
 }

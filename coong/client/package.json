@@ -6,7 +6,7 @@
     "sync:ios": "cap sync ios",
     "sync:android": "cap sync android",
     "dev:ios": "ionic cap run ios -l --exrernal",
-    "dev:android": "ionic cap run android -l --external --public-host=192.168.35.123",
+    "dev:android": "ionic cap run android -l --external",
     "dev:spa": "vite --host",
     "dev:ssr": "cross-env MODE=ssr vite --host",
     "dev:run-ssr": "ts-node run-ssr/index.ts",
@@ -22,9 +22,11 @@
     "generator:favicon": "npx pwa-asset-generator"
   },
   "dependencies": {
-    "@capacitor/android": "^3.2.4",
+    "@capacitor/android": "3.2.4",
     "@capacitor/core": "^3.2.4",
-    "@capacitor/ios": "^3.2.4",
+    "@capacitor/ios": "3.2.4",
+    "@ionic/vue": "^6.0.0-rc.0",
+    "@ionic/vue-router": "6.0.0-rc.0",
     "@quasar/app": "^3.0.4",
     "@quasar/extras": "^1.11.0",
     "@vue/server-renderer": "^3.2.6",
@@ -60,9 +62,9 @@
     "ts-node": "^10.2.1",
     "ttypescript": "^1.5.12",
     "typescript": "^4.4.3",
-    "vite": "^2.5.1",
-    "unplugin-vue-components": "^0.15.6",
     "unplugin-icons": "^0.12.12",
+    "unplugin-vue-components": "^0.15.6",
+    "vite": "^2.5.1",
     "vite-plugin-pwa": "^0.11.0"
   },
   "gitHead": "49922aa2164ceefcebf5fcd3bd83dce16c67df21"

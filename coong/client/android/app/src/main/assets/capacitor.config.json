@@ -1,6 +1,0 @@
-{
-	"appId": "io.coong.app",
-	"appName": "coong",
-	"bundledWebRuntime": false,
-	"webDir": "dist/spa"
-}
