@@ -26,7 +26,7 @@ export default defineConfig({
     __QUASAR_SSR_SERVER__: JSON.stringify('import.meta.env.SSR'),
     __QUASAR_SSR__: JSON.stringify('import.meta.env.SSR'),
     __QUASAR_VERSION__: JSON.stringify(Quasar.version),
-    'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
+    'process.env.NODE_ENV': JSON.stringify('import.meta.env.MODE'),
   },
   optimizeDeps: {
     exclude: [

@@ -1,4 +1,4 @@
-import {act, mutate, shallowUpdate, state} from 'vare'
+import {act, mutate, shallowUpdate, state, computeRef} from 'vare'
 
 export interface UserState {
   email?: string
@@ -9,7 +9,7 @@ export interface UserState {
 const fakeRequest = (result) => Promise.resolve(result)
 
 export const user = state<UserState>({
-  // empty
+  name: 'unknown',
 })
 
 export const setToken = mutate(user, (state, token) => {
@@ -26,4 +26,8 @@ export const pullUpdateUserInfo = act(user, async () => {
     name: 'foo',
   })
   updateUserInfo(response)
-})
+}, 'pullUpdateUserInfo')
+
+export const decoName = computeRef(user, (state) => {
+  return `${state.name}??`
+}, 'decoName')

@@ -1,10 +1,10 @@
 import {getGlobalInfo, getTrigger, VareInfo} from 'src/info'
 import {watch} from 'vue-demi'
 
-export const watchTrigger = (targets: Record<string, any>, callback?: (info?: VareInfo<any>) => unknown) => {
+export const watchTrigger = (targets?: Record<string, any>, callback?: (info?: VareInfo<any>) => unknown) => {
   const info = getGlobalInfo()
 
-  if (!info) {
+  if (!info || !targets) {
     return
   }
 

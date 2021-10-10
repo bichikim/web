@@ -1,4 +1,4 @@
-import {computeRef, getName, state, setGlobalInfo, createInfoMap} from 'src/index'
+import {computeRef, createInfoMap, getName, setGlobalInfo, state} from 'src/index'
 process.env.NODE_ENV = 'development'
 
 const setup = () => {

@@ -1,5 +1,6 @@
 import {inject, InjectionKey, Plugin} from 'vue-demi'
 import {State} from './state'
+import {createDevTool} from './create-devtool'
 
 export type States = Record<string, State<any>>
 
@@ -32,7 +33,7 @@ export const vareInjectKey: InjectionKey<UseVareReturnType> = Symbol(vareInjectK
 export const plugin: Plugin = (app, options: VarePlugin) => {
   const {states, provide: isProvide = false} = options
   if (process.env.NODE_ENV === 'development') {
-    // startDevtool(app, states)
+    createDevTool(app, states)
   }
 
   if (isProvide) {

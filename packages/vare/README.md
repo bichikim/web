@@ -1,21 +1,14 @@
 # Vare
 
-Vue Share State for Vue components
-
-## What is this?
-
-Vare works like Vuex.
-
-However, Vare is less painful to create a Store than Vuex.
+Vue Share State Library
 
 ## Use Vare with Vue (Vue 3.0 or Vue 2 with @vue/composition-api) 
 
 ```typescript
-
-import {state} from './src/index'
+import {atom} from 'vare'
 import {defineComponent, h} from 'vue'
 
-export const myState = state({
+export const myState = atom({
   name: 'foo',
 })
 
@@ -27,7 +20,217 @@ export const FooComponent = defineComponent(() => {
 
 ```
 
-## State
+## Atom (Recommended)
+
+### Atom with an object initState
+```typescript
+import {atom} from 'vare'
+import {defineComponent, h} from 'vue'
+
+export const myState = atom({
+  myName: 'foo',
+})
+
+export const FooComponent = defineComponent(() => {
+  return () => {
+    return h('span', myState.myName)
+  }
+})
+```
+
+### Atom with a function initState
+```typescript
+import {atom} from 'vare'
+import {defineComponent, h} from 'vue'
+
+const myState = atom(() => ({
+  myName: 'foo',
+}))
+
+// using state in a components
+export const FooComponent = defineComponent(() => {
+  return () => {
+    return h('span', myState.myName)
+  }
+})
+```
+
+### Atom with a recipe
+```typescript
+import {atom} from 'vare'
+import {defineComponent, h} from 'vue'
+
+const myState = atom({
+  myName: 'foo',
+}, (state, payload: string) => {
+  state.myName = payload
+})
+
+// using state in a components
+export const FooComponent = defineComponent(() => {
+  
+  return () => {
+    return (
+      h('div', [
+        h('span', myState.myName),
+        h('button', {onClick: () => myState.$('new name')}, 'setNewName')
+      ])
+    )
+  }
+})
+```
+
+### Atom with a getter
+```typescript
+import {atom, getter} from 'vare'
+import {defineComponent, h} from 'vue'
+
+const myState = atom({
+  myName: 'foo',
+}, getter((state) => `--${state.myName}--`))
+
+// using state in a components
+export const FooComponent = defineComponent(() => {
+  
+  return () => {
+    return (
+      h('div', [
+        h('span', myState.myName),  // foo
+        h('span', myState.$.value), // --foo--
+      ])
+    )
+  }
+})
+```
+
+### Atom with a tree
+```typescript
+import {atom, getter} from 'vare'
+import {defineComponent, h} from 'vue'
+
+const myState = atom({
+  myName: 'foo',
+}, {
+  decoName: getter((state) => `--${state.myName}--`),
+  setName: (state, payload: string) => {
+    state.myName = payload
+  }
+})
+
+// using state in a components
+export const FooComponent = defineComponent(() => {
+  
+  return () => {
+    return (
+      h('div', [
+        h('span', myState.myName),  // foo
+        h('span', myState.$.decoName.value), // --foo--
+        h('button', {onClick: () => myState.$.setName('new name')}, 'setNewName') // change name with clicking
+      ])
+    )
+  }
+})
+```
+
+### Binding Atom
+```typescript
+import {atom, getter} from 'vare'
+import {defineComponent, h} from 'vue'
+
+const myState = atom({
+  myName: 'foo',
+}, {
+  decoName: getter((state) => `--${state.myName}--`),
+  setName: (state, payload: string) => {
+    state.myName = payload
+  },
+})
+
+const myState2 = atom(myState, (state, payload: string) => {
+  state.name = `?${payload}?`
+})
+
+// using state in a components
+export const FooComponent = defineComponent(() => {
+  
+  return () => {
+    return (
+      h('div', [
+        h('span', myState.myName),  // foo --click--> ?foo?
+        h('span', myState.$.decoName.value), // --foo-- --click--> --?foo?--
+        h('button', {onClick: () => myState2.$('new name')}, 'setNewName') // change name with clicking
+      ])
+    )
+  }
+})
+```
+
+### Nesting Atom
+```typescript
+import {atom, getter} from 'vare'
+import {defineComponent, h} from 'vue'
+
+const myState = atom({
+  myName: 'foo',
+  deep: atom({
+    name: 'deepName',
+  }, (state, payload: string) => {
+    // get RootName
+    const rootName = myState.$.decoName.value
+    state.name = `${rootName}/${payload}`
+  })
+}, {
+  decoName: getter((state) => `--${state.myName}--`),
+  setName: (state, payload: string) => {
+    state.myName = payload
+  }
+})
+
+// using state in a components
+export const FooComponent = defineComponent(() => {
+  
+  return () => {
+    return (
+      h('div', [
+        h('span', myState.myName),  // foo
+        h('span', myState.deep.name),  // deepName
+        h('button', {onClick: () => myState.deep.$('new Name')}, 'setNewName') // change name with clicking
+      ])
+    )
+  }
+})
+```
+
+
+## Supporting Vue DevTool ?
+
+Yes!
+
+```typescript
+import {atom, plugin as varePlugin} from 'vare'
+// vue app
+const posts = atom({})
+const user = atom({})
+const bucket = atom({})
+const app = createApp()
+
+// for using devtool
+app.use(varePlugin, {
+  states: {
+    posts,
+    user,
+    bucket,
+  },
+})
+```
+
+!!!! supporting timeline for recipe functions is WIP 
+
+![devtool](./media/devtool.PNG)
+
+# ------ old feature -----
+
+## State (Old)
 
 ### An object initState
 ```typescript
@@ -105,7 +308,7 @@ export const FooComponent = defineComponent(() => {
 })
 ```
 
-## Mutation
+## Mutation (Old)
 
 ```typescript
 import {state, mutate} from './src/index'
@@ -132,7 +335,7 @@ export const FooComponent = defineComponent(() => {
 
 ```
 
-## Action
+## Action (Old)
 
 store/profile.ts
 ```typescript
@@ -167,7 +370,7 @@ export const FooComponent = defineComponent(() => {
 })
 ```
 
-## Compute (Getter)
+## Compute (Old)
 
 store/profile.ts
 ```typescript
@@ -214,7 +417,7 @@ export const FooComponent = defineComponent(() => {
 })
 ```
 
-## Subscribe
+## Subscribe (Old)
 
 ```typescript
 import {state, mutate, act, subscribe} from './src/index'
@@ -261,7 +464,7 @@ stopGetDecoName()
 
 ```
 
-## Naming (for devtool)
+## Naming (Old)
 
 ```typescript
 import {state, compute, mutate, getName} from './src/index'
@@ -324,7 +527,7 @@ getName(tree.updateAge) // 'updateAge'
 
 ```
 
-## Relating (for devtool)
+## Relating (for devtool) (Old)
 ```typescript
 import {state, compute, mutate, getName, act} from './src/index'
 
@@ -400,7 +603,7 @@ export const multiActions = act([foo, bar], {
 
 ```
 
-## Uses a state locally
+## Uses a state locally 
 ```typescript
 import {state, mutate} from './src/index'
 import {defineComponent, h} from 'vue'
@@ -444,164 +647,6 @@ export const FooComponent = defineComponent(() => {
 
 ```
 
-## Why 
-
-Share state wherever you want
-
-Recoil x Vuex x Immer
-
-### Recoil
-
-
-```typescript
-function App() {
-  return (
-    h(RecoilRoot, null,
-      h(FooComponent),
-      h(BarComponent)
-    )
-  )
-}
-
-// ....
-
-const _state = atom({
-  key: '...',
-  default: {name: 'foo'}
-})
-
-const foo = selector({
-  key: '...',
-  get: ({get}) => {
-    return get(_state).name
-  },
-  set: ({set, get}, name) => {
-    set(_state, {
-      ...get(_state),
-      name,
-    })
-  }
-})
-
-function FooComponent() {
-  const state = useRecoilValue(_state)
-  
-  return (
-    h('div', null, state.foo)
-  )
-}
-
-function BarComponent() {
-  const setState = useSetRecoilState(foo)
-
-  return (
-    h('div', {onClick: () => setState('bar')})
-  )
-}
-
-```
-In the vare way
-```typescript
-// no need a context
-
-const myState = state({
-  name: 'foo',
-})
-
-
-const getName = compute(() => myState.name)
-
-const setName = mutate((name: string) => {
-  myState.foo = name
-})
-
-const App = defineComponent(() => {
-  return () => h('div', [
-    h(FooComponent),
-    h(BarComponent)
-  ])
-})
-
-const FooComponent = defineComponent(() => {
-  const name = getName()
-  
-  return () => (
-    h('div', name.value)
-  )
-})
-
-const BarComponent = defineComponent(() => {
-  return () => {
-    h('div', {onclick: () => setName('bar')})
-  }
-})
-
-```
-
-### Immer 
-
-```typescript
-const myState = {
-  foo: 'foo'
-}
-
-produce(myState, (draft) => {
-  draft.foo = 'bar'
-})
-
-```
-
-In the Vare way
-```typescript
-const myState = state({
-  foo: 'foo',
-})
-
-myState.foo = 'bar'
-```
-
-### Vuex
-
-```typescript
-import {createStore} from 'vuex'
-
-const store = createStore({
-  state () {
-    return {
-      count: 0
-    }
-  },
-  mutations: {
-    increment: (state) => {
-      state.count++
-    }
-  },
-  actions: {
-    request: () => {
-      store.commit('increment')
-    },
-  },
-  getters: {
-    getCount: (state) => {
-      return state.count
-    },
-  }
-})
-
-// need to setup
-app.use(store)
-
-const FooComponent = defineComponent(() => {
-  const store = useStore()
-
-  return () => (
-    h('div', [
-      h('div', store.state.count),
-      h('a', {onClick: () => store.commit('increment')}),
-    ])
-  )
-})
-```
 
 In the Vare way
 ```typescript
@@ -646,37 +691,3 @@ const FooComponent = defineComponent(() => {
   )
 })
 ```
-
-## app.use(vare)
-It's not really necessary
-```typescript
-import {createApp} from 'vue'
-import vare, {state, useVare} from 'vare'
-const app = createApp(App)
-const foo = state({
-  name: 'foo',
-})
-const states = {
-  foo,
-}
-app.use(vare, {states, provide: true})
-
-// useVare
-{
-  const {foo} = useVare()
-  console.log(foo.name)
-}
-
-// we can use foo as below
-{
-  console.log(foo.name)
-}
-```
-
-## Supporting Vue DevTool ?
-
-Yes!
-
-![devtool](./media/devtool.PNG)
-![devtool](./media/devtool1.PNG)
-![devtool](./media/devtool2.PNG)

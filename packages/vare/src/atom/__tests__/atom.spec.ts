@@ -2,19 +2,31 @@
  * @jest-environment jsdom
  */
 
-import {atom, getAtomActionWatchTarget} from '../'
+import {atom, getAtomActionWatchTarget, getter} from '../'
 import {flushPromises, mount} from '@vue/test-utils'
 import {
   defineComponent, ExtractPropTypes, FunctionalComponent, h,
   watch,
 } from 'vue-demi'
+import {getGlobalInfo} from 'src/info'
 
 describe('atom', () => {
+  const info = getGlobalInfo()
+
+  beforeEach(() => {
+    process.env.NODE_ENV = 'development'
+  })
+
+  afterEach(() => {
+    process.env.NODE_ENV = 'test'
+  })
+
   it('should be able to nesting atom', () => {
     const fooAtom = atom({
       bar: atom({
         name: 'bar',
       }, {
+        decoName: getter((state) => `??${state.name}`),
         setName: (state, payload: string) => {
           state.name = payload
         },
@@ -27,7 +39,12 @@ describe('atom', () => {
       },
     })
 
+    const atomInfo: any = info?.get(fooAtom)
+
+    expect([...atomInfo.relates.keys()]).toEqual(['setJohn'])
+    expect(atomInfo.identifier).toBe('atom')
     expect(fooAtom.bar.name).toBe('bar')
+    expect(fooAtom.bar.$.decoName.value).toBe('??bar')
     fooAtom.bar.$.setName('john')
     expect(fooAtom.bar.name).toBe('john')
     fooAtom.$.setJohn('john2')
@@ -42,12 +59,34 @@ describe('atom', () => {
     fooAtom.name = 'bar'
     expect(fooAtom.name).toBe('bar')
   })
+  it('should have value with a function source', () => {
+    const fooAtom = atom(() => ({
+      name: 'foo',
+    }))
+
+    expect(fooAtom.name).toBe('foo')
+    fooAtom.name = 'bar'
+    expect(fooAtom.name).toBe('bar')
+  })
   it('should bind value', () => {
     const fooAtom = atom({
       name: 'foo',
     })
 
-    const barAtom = atom(fooAtom)
+    const barAtom = atom(fooAtom, (state, payload: string) => {
+      state.name = payload
+    })
+
+    atom(fooAtom, {
+      decoName: getter((state) => `${state.name}??`),
+      setName: (state, payload: string) => {
+        state.name = payload
+      },
+    })
+
+    const atomInfo: any = info?.get(fooAtom)
+
+    expect([...atomInfo.relates.keys()]).toEqual(['default', 'decoName', 'setName'])
 
     fooAtom.name = 'bar'
     expect(barAtom.name).toBe('bar')
@@ -139,6 +178,29 @@ describe('atom', () => {
     await flushPromises()
 
     expect(callback).toHaveBeenCalled()
+  })
+  it('should return computed values with tree', () => {
+    const fooAtom = atom({
+      name: 'foo',
+    }, {
+      decoName: getter((state) => `??${state.name}`),
+      setName: (state, payload: string) => {
+        state.name = payload
+      },
+    })
+
+    const name = fooAtom.$.decoName
+    expect(name.value).toBe('??foo')
+    fooAtom.$.setName('bar')
+    expect(name.value).toBe('??bar')
+  })
+  it('should return computed values with function', () => {
+    const fooAtom = atom({
+      name: 'foo',
+    }, getter((state) => `??${state.name}`))
+
+    const decoName = fooAtom.$
+    expect(decoName.value).toBe('??foo')
   })
 
   it('should watch atom state with a tree action', async () => {

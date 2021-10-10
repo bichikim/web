@@ -1,5 +1,5 @@
 import {
-  getIdentifier, getGlobalInfo,
+  getGlobalInfo, getIdentifier,
 } from 'src/info'
 import {
   AnyFunction, FunctionObject,
@@ -9,7 +9,6 @@ import {
   createGetAtomPrams, createUuid,
 } from 'src/utils'
 import {shallowRef} from 'vue-demi'
-import {watchAction} from './subscribe'
 import {
   AnyStateGroup, relateState,
 } from 'src/state'
@@ -61,7 +60,6 @@ const _act = <Args extends any[], Return> (
     info?.set(self, {
       identifier: actionName,
       name: _name,
-      relates: new Set(),
       trigger: watchFlag,
     })
 

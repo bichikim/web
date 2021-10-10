@@ -31,8 +31,8 @@ export const relate = (state: State<any>, target: any) => {
   const targetInfo = info?.get(target)
 
   if (stateInfo && targetInfo) {
-    stateInfo.relates.add(target)
-    targetInfo.relates.add(state)
+    stateInfo.relates?.set?.(targetInfo.name ?? 'unknown', target)
+    targetInfo.relates?.set?.(stateInfo.name ?? 'unknown', state)
   }
 }
 
