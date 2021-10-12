@@ -226,7 +226,7 @@ app.use(varePlugin, {
 
 !!!! supporting timeline for recipe functions is WIP 
 
-![devtool](./media/devtool.PNG)
+![devtool](https://github.com/winter-love/web/blob/dev/packages/vare/media/devtool.png)
 
 # ------ old feature -----
 
