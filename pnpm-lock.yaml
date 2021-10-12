@@ -72,7 +72,7 @@ importers:
       typescript: ^4.4.3
       vite-babel-plugin: ^0.0.2
       vitepress: ^0.15.6
-      vue: ^3.2.19
+      vue: ^3.2.20
       vue-jest: ^5.0.0-alpha.10
       vue-loader: ^16.8.1
     dependencies:
@@ -190,7 +190,7 @@ importers:
       vite: ^2.5.1
       vite-plugin-pwa: ^0.11.0
       vite-ssr-vue: ^0.2.18
-      vue: ^3.2.11
+      vue: ^3.2.20
       vue-i18n: 9.1.7
       vue-router: ^4.0.11
     dependencies:
@@ -345,7 +345,7 @@ importers:
       '@winter-love/utils': ^1.0.17
       clsx: ^1.1.1
       gulp: ^4.0.2
-      vue: ^3.2.11
+      vue: ^3.2.20
       vue-demi: ^0.11.3
     dependencies:
       '@emotion/css': 11.1.3_@babel+core@7.15.8
@@ -389,7 +389,7 @@ importers:
       '@vue/server-renderer': ^3.1.5
       '@winter-love/utils': ^1.0.17
       gulp: ^4.0.2
-      vue: ^3.2.11
+      vue: ^3.2.20
       vue-demi: ^0.11.4
     dependencies:
       '@stitches/core': 1.2.5
@@ -413,7 +413,7 @@ importers:
       csstype: ^3.0.8
       gulp: ^4.0.2
       merge-deep: ^3.0.3
-      vue: ^3.2.11
+      vue: ^3.2.20
       vue-demi: ^0.11.4
     dependencies:
       '@winter-love/utils': link:../utils
@@ -458,7 +458,7 @@ importers:
       '@vue/test-utils': ^2.0.0-rc.12
       gulp: ^4.0.2
       lodash: ^4.17.21
-      vue: ^3.2.11
+      vue: ^3.2.20
       vue-demi: ^0.11.3
     devDependencies:
       '@vue/test-utils': 2.0.0-rc.15_vue@3.2.20
@@ -477,7 +477,7 @@ importers:
       fast-json-stable-stringify: ^2.1.0
       gulp: ^4.0.2
       sinon: ^11.1.1
-      vue: ^3.2.11
+      vue: ^3.2.20
       vue-demi: ^0.11.3
     dependencies:
       '@winter-love/utils': link:../utils
@@ -511,7 +511,7 @@ importers:
       '@winter-love/use': ^1.0.17
       '@winter-love/utils': ^1.0.17
       gulp: ^4.0.2
-      vue: ^3.2.11
+      vue: ^3.2.20
       vue-demi: ^0.11.4
     dependencies:
       '@vue/devtools-api': 6.0.0-beta.19
@@ -8994,6 +8994,7 @@ packages:
 
   /bindings/1.5.0:
     resolution: {integrity: sha512-p2q/t/mhvuOj/UeLlV6566GD/guowlr0hHxClI0W9m7MWYkL1F0hLo+0Aexs9HSPCtR1SXQ0TD3MMKrXZajbiQ==}
+    requiresBuild: true
     dependencies:
       file-uri-to-path: 1.0.0
     dev: true
@@ -12356,6 +12357,7 @@ packages:
 
   /file-uri-to-path/1.0.0:
     resolution: {integrity: sha512-0Zt+s3L7Vf1biwWZ29aARiVYLx7iMGnEUl9x33fbB/j3jR81u/O2LbqK+Bm1CDSNDKVtJ/YjwY7TUd5SkeLQLw==}
+    requiresBuild: true
     dev: true
     optional: true
 
@@ -16913,6 +16915,7 @@ packages:
 
   /nan/2.15.0:
     resolution: {integrity: sha512-8ZtvEnA2c5aYCZYd1cvgdnU6cqwixRoYg70xPLWUws5ORTa/lnw+u4amixRS/Ac5U5mQVgp9pnlSUnbNWFaWZQ==}
+    requiresBuild: true
     dev: true
     optional: true
 
