@@ -159,9 +159,10 @@ importers:
       '@intlify/vite-plugin-vue-i18n': ^2.4.0
       '@ionic/vue': ^6.0.0-rc.0
       '@ionic/vue-router': 6.0.0-rc.0
-      '@quasar/app': ^3.0.4
-      '@quasar/extras': ^1.11.0
+      '@quasar/app': ^3.1.3
+      '@quasar/extras': ^1.11.2
       '@rollup/plugin-replace': ^3.0.0
+      '@stitches/core': ^1.1.0
       '@types/lodash': ^4.14.172
       '@types/node': ^16.6.2
       '@vitejs/plugin-vue': ^1.4.0
@@ -178,7 +179,7 @@ importers:
       lodash: ^4.17.21
       node-html-parser: ^4.1.4
       node-inject-html: ^0.0.5
-      quasar: ^2.0.4
+      quasar: ^2.1.2
       rollup-plugin-analyzer: ^4.0.0
       serve-static: ^1.14.1
       ts-node: ^10.2.1
@@ -201,6 +202,7 @@ importers:
       '@ionic/vue-router': 6.0.0-rc.0
       '@quasar/app': 3.1.3
       '@quasar/extras': 1.11.2
+      '@stitches/core': 1.2.5
       '@vue/server-renderer': 3.2.20_vue@3.2.20
       '@vueuse/head': 0.6.0_vue@3.2.20
       '@winter-love/stitches': link:../../packages/stitches
@@ -209,7 +211,7 @@ importers:
       lodash: 4.17.21
       node-html-parser: 4.1.5
       node-inject-html: 0.0.5
-      quasar: 2.1.1
+      quasar: 2.1.2
       serve-static: 1.14.1
       vare: link:../../packages/vare
       vite-ssr-vue: 0.2.20_rollup@2.58.0+vue@3.2.20
@@ -19097,8 +19099,8 @@ packages:
     resolution: {integrity: sha512-VCdBRNFTX1fyE7Nb6FYoURo/SPe62QCaAyzJvUjwRaIsc+NePBEniHlvxFmmX56+HZphIGtV0XeCirBtpDrTyQ==}
     engines: {node: '>=0.6'}
 
-  /quasar/2.1.1:
-    resolution: {integrity: sha512-x7J1uAEPwVpm5UiL/T74jZoqQYQ5y77t+ymIII+xCZotU2el4mX5QTA/ptduyhxNumlpIzdVBXyPPizqcT2UGQ==}
+  /quasar/2.1.2:
+    resolution: {integrity: sha512-7ld4xwIjsTzKYRqFiyiKaAhB/VfOWw/+086SrIoCW8/S5PMINPrSET1LGBqoNMEtL75ISNjJx5n7h3H1VmrfuQ==}
     engines: {node: '>= 10.18.1', npm: '>= 6.13.4', yarn: '>= 1.21.1'}
     dev: false
 

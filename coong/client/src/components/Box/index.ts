@@ -1,9 +1,15 @@
-import {useCssVars, defineComponent} from 'vue'
+import {FunctionalComponent} from 'vue'
+import {styled} from 'src/stitches'
+import {ShortHeadProperties, StyleProperties} from 'src/design-system'
 
-export const Box = defineComponent({
-  setup: () => {
-    useCssVars(() => {
+export interface BoxProps {
+  as?: any
+  css?: ShortHeadProperties & StyleProperties
+  variants?: Record<string, any>
+}
 
-    })
-  }
-})
+export const Box: FunctionalComponent<BoxProps> = styled('div', {
+  name: 'box',
+  target: 'box',
+  // 타입 재정의
+}, {}) as any

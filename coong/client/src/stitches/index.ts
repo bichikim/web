@@ -12,6 +12,11 @@ const {createDirective, styled, ...stitches} = createStyled({
       red1: 'rgb(253,37,37)',
     },
   },
+  utils: {
+    bg: (value) => ({backgroundColor: value}),
+    m: (value) => ({margin: value}),
+    p: (value) => ({padding: value}),
+  },
 })
 
 export const createStitchesPlugin = (): {plugin: Plugin; stitches: any} => {
@@ -20,6 +25,7 @@ export const createStitchesPlugin = (): {plugin: Plugin; stitches: any} => {
   return {
     plugin: (app) => {
       app.directive('stitches', directive)
+      app.directive('css', directive)
     },
     stitches,
   }

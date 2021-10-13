@@ -3,6 +3,8 @@ import {setName} from 'src/store/bucket'
 import {posts} from 'src/store/posts'
 import {user} from 'src/store/user'
 import {computed, defineComponent, ref} from 'vue'
+import {Box} from 'src/components/Box'
+import {RouterLink} from 'vue-router'
 
 const IndexPage = defineComponent({
   setup() {
@@ -42,6 +44,14 @@ const IndexPage = defineComponent({
               </QItemSection>
             </QItem>
           </QList>
+          <Box css={{bg: 'green', color: 'red', m: 10, p: 10}}>
+            <Box>
+              index red
+            </Box>
+          </Box>
+          <RouterLink to={'/sec'}>
+            <QBtn>gogo</QBtn>
+          </RouterLink>
           <div>{userName.value}</div>
           {postList.value.map((item) => {
             return <div key={item.id}>{`id ${item.id}`}</div>

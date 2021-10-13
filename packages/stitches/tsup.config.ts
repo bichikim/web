@@ -7,4 +7,5 @@ export const tsup: Options = {
   outDir: 'lib',
   sourcemap: true,
   splitting: false,
+
 }
