@@ -1,3 +1,4 @@
+/* eslint-disable unicorn/prefer-module,unicorn/prefer-node-protocol */
 import VueI18n from '@intlify/vite-plugin-vue-i18n'
 import Vue from '@vitejs/plugin-vue'
 import VueJsx from '@vitejs/plugin-vue-jsx'
@@ -38,7 +39,6 @@ export default defineConfig({
     ],
     include: [
       'vue',
-      '@emotion/css/create-instance',
       'vue-router',
     ],
   },
