@@ -3,11 +3,11 @@
   "version": "1.0.17",
   "private": true,
   "scripts": {
-    "start": "node ./lib/index.js",
     "build": "rimraf ./lib && yarn run generate && ttsc",
-    "dev": "rimraf ./lib && tsc-watch --compiler ttypescript/bin/tsc --onSuccess 'cross-env NODE_ENV=development node ./lib/index.js' ",
+    "dev": "ts-node-dev --clear -r tsconfig-paths/register src/index.ts",
     "generate": "prisma generate --schema ./src/prisma/schema.prisma",
-    "generate:watch": "prisma generate --schema ./src/prisma/schema.prisma --watch"
+    "generate:watch": "prisma generate --schema ./src/prisma/schema.prisma --watch",
+    "start": "node ./lib/index.js"
   },
   "dependencies": {
     "@prisma/client": "~3.2.0",
@@ -38,7 +38,9 @@
     "cross-env": "^7.0.3",
     "prisma": "~3.2.0",
     "rimraf": "^3.0.2",
+    "ts-node-dev": "^1.1.8",
     "tsc-watch": "^4.2.9",
+    "tsconfig-paths": "^3.11.0",
     "ttypescript": "^1.5.12",
     "typegraphql-prisma": "~0.16.2",
     "typescript": "^4.3.4"

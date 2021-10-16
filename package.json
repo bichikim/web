@@ -20,7 +20,7 @@
     "dev:@coong/server": "pnpm run dev --filter @coong/server --parallel",
     "docs:build": "vitepress build docs",
     "docs:dev": "vitepress dev docs",
-    "format:package.json": "sort-package-json \"package.json\" \"packages/*/package.json\" \"server/package.json\" ",
+    "format:package.json": "sort-package-json \"package.json\" \"packages/*/package.json\" \"coong/*/package.json\" ",
     "lint": "eslint --ext .js,.ts,.tsx,.vue ./",
     "lint:fix": "eslint --fix --ext .js,.ts,.vue ./",
     "publish:alpha": "lerna publish from-package --preid alpha --dist-tag alpha",
