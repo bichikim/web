@@ -486,13 +486,13 @@ importers:
       gulp: ^4.0.2
       micro-memoize: ^4.0.9
       react-fast-compare: ^3.2.0
-      vue-demi: ^0.9.1
+      vue-demi: ^0.11.4
     dependencies:
       micro-memoize: 4.0.9
       react-fast-compare: 3.2.0
     devDependencies:
       gulp: 4.0.2
-      vue-demi: 0.9.1_vue@3.2.20
+      vue-demi: 0.11.4_vue@3.2.20
 
   packages/vare:
     specifiers:
@@ -22806,20 +22806,6 @@ packages:
         optional: true
     dependencies:
       vue: 3.2.20
-
-  /vue-demi/0.9.1_vue@3.2.20:
-    resolution: {integrity: sha512-7s1lufRD2l369eFWPjgLvhqCRk0XzGWJsQc7K4q+0mZtixyGIvsK1Cg88P4NcaRIEiBuuN4q1NN4SZKFKwQswA==}
-    hasBin: true
-    requiresBuild: true
-    peerDependencies:
-      '@vue/composition-api': ^1.0.0-beta.1
-      vue: ^2.6.0 || >=3.0.0-rc.1
-    peerDependenciesMeta:
-      '@vue/composition-api':
-        optional: true
-    dependencies:
-      vue: 3.2.20
-    dev: true
 
   /vue-docgen-api/4.41.2:
     resolution: {integrity: sha512-q3X96PRPbMQVaZjNueaPfP9W5dh5lg5OSaSex9Kdz7vLCUR4R8g3JzIVY5J0NDnU4uP69cFKuX/P1/kkJvlvIQ==}
