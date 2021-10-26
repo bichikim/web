@@ -20,17 +20,25 @@ export * from './utils'
 
 export const atomName: AtomIdentifierName = 'atom'
 
-export const createTreeAtom = (reactive, trigger, recipe, relates?: Map<string, any>) => {
-  const clonedRecipe = Object.keys(recipe).reduce((result, key) => {
+export const createTreeAtom = (reactive, trigger, recipe: Record<string, any>, relates?: Map<string, any>) => {
+  // const clonedRecipe = Object.keys(recipe).reduce((result, key) => {
+  //   const value = recipe[key]
+  //   if (value[GetterSymbol]) {
+  //     result[key] = computed(() => value(reactive))
+  //   } else {
+  //     result[key] = value
+  //   }
+  //
+  //   return result
+  // }, {})
+
+  const clonedRecipe = Object.fromEntries(Object.keys(recipe).map((key) => {
     const value = recipe[key]
     if (value[GetterSymbol]) {
-      result[key] = computed(() => value(reactive))
-    } else {
-      result[key] = value
+      return [key, computed(() => value(reactive))]
     }
-
-    return result
-  }, {})
+    return [key, value]
+  }))
 
   const _relates: Map<string, any> = relates ?? new Map<string, any>()
 
@@ -38,6 +46,9 @@ export const createTreeAtom = (reactive, trigger, recipe, relates?: Map<string, 
 
   const action = new Proxy({}, {
     get: (target, point) => {
+      if (typeof point !== 'string') {
+        return
+      }
       const recipe = clonedRecipe[point]
       if (typeof recipe === 'function') {
         return createAction(trigger, reactive, recipe)
@@ -129,14 +140,14 @@ export function atom<State extends Record<string, any>>(
 
   // recipe = function
   if (typeof recipe === 'function') {
-    const result = createFunctionAtom(valueReactive, watchTrigger, recipe, relates)
+    const result = createFunctionAtom(valueReactive, watchTrigger, recipe)
     // eslint-disable-next-line prefer-destructuring
     atom = result.atom
     // eslint-disable-next-line prefer-destructuring
     relates = result.relates
     // recipe tree
   } else if (typeof recipe === 'object' && !Array.isArray(recipe)) {
-    const result = createTreeAtom(valueReactive, watchTrigger, recipe, relates)
+    const result = createTreeAtom(valueReactive, watchTrigger, recipe)
     // eslint-disable-next-line prefer-destructuring
     atom = result.atom
     // eslint-disable-next-line prefer-destructuring
