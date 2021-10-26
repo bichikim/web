@@ -21,16 +21,6 @@ export * from './utils'
 export const atomName: AtomIdentifierName = 'atom'
 
 export const createTreeAtom = (reactive, trigger, recipe: Record<string, any>, relates?: Map<string, any>) => {
-  // const clonedRecipe = Object.keys(recipe).reduce((result, key) => {
-  //   const value = recipe[key]
-  //   if (value[GetterSymbol]) {
-  //     result[key] = computed(() => value(reactive))
-  //   } else {
-  //     result[key] = value
-  //   }
-  //
-  //   return result
-  // }, {})
 
   const clonedRecipe = Object.fromEntries(Object.keys(recipe).map((key) => {
     const value = recipe[key]
