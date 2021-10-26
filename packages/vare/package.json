@@ -28,7 +28,7 @@
   "main": "lib/index.js",
   "jsdelivr": "lib/index.global.js",
   "unpkg": "lib/index.global.js",
-  "module": "lib/index.mjs",
+  "module": "lib/index.js",
   "source": "src/index.ts",
   "types": "lib/index.d.ts",
   "files": [
@@ -40,7 +40,7 @@
     "prepare": "tsup"
   },
   "dependencies": {
-    "@vue/devtools-api": "^6.0.0-beta.12",
+    "@vue/devtools-api": "^6.0.0-beta.19",
     "@winter-love/utils": "^1.0.17",
     "vue-demi": "^0.11.4"
   },

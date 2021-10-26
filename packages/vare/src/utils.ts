@@ -1,4 +1,4 @@
-import {State} from './state'
+import {UnwrapNestedRefs} from './types'
 
 export const createUuid = (prefix: string = '') => {
   let count = 0
@@ -32,7 +32,7 @@ export const createGetAtomPrams = (getId: () => string) => (unknown?: any, mayRe
   }
 }
 
-export const shallowUpdate = (target: State<any>, source?: Record<string, any>) => {
+export const shallowUpdate = (target: UnwrapNestedRefs<any>, source?: Record<string, any>) => {
   if (!source) {
     return
   }

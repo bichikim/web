@@ -35,6 +35,7 @@ export default defineConfig({
       'vue-demi',
       // '@quasar/app',
       'quasar',
+      'vite',
     ],
     include: [
       'vue',

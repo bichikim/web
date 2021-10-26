@@ -1,16 +1,16 @@
-import {getGlobalInfo, getState, VareInfo} from 'src/info'
+import {Info, useInfo} from 'src/info'
 import {watch} from 'vue-demi'
 
-export const watchState = (targets?: Record<string, any>, callback?: (info?: VareInfo<any>) => unknown) => {
-  const info = getGlobalInfo()
+export const watchState = (targets?: Record<string, any>, callback?: (info?: Info) => unknown) => {
+  const info = useInfo()
 
-  if (!info || !targets) {
+  if (!targets) {
     return
   }
 
   Object.keys(targets).forEach((key) => {
     const value = targets[key]
-    const state = getState(info, value) ?? value
+    const state = value
 
     if (typeof state !== 'object') {
       return

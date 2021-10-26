@@ -12,6 +12,7 @@ export interface RootState {
 export const createStore = (initialState: RootState = {}): Plugin => {
   shallowUpdate(user, initialState.user)
   return (app) => {
+    console.log('dev-dev')
     app.use(varePlugin, {
       states: {
         posts,

@@ -27,14 +27,14 @@
   "main": "lib/index.js",
   "jsdelivr": "lib/index.global.js",
   "unpkg": "lib/index.global.js",
-  "module": "lib/index.mjs",
+  "module": "lib/index.js",
   "source": "src/index.ts",
   "types": "lib/index.d.ts",
   "files": [
     "lib/*"
   ],
   "scripts": {
-    "build": "tsup --dts",
+    "build": "tsup --dts-resolve",
     "dev": "tsup --dts --watch",
     "prepare": "tsup"
   },

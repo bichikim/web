@@ -8,11 +8,9 @@ import {
   defineComponent, ExtractPropTypes, FunctionalComponent, h,
   watch,
 } from 'vue-demi'
-import {getGlobalInfo} from 'src/info'
+import {useInfo} from 'src/info/InfoMap'
 
 describe('atom', () => {
-  const info = getGlobalInfo()
-
   beforeEach(() => {
     process.env.NODE_ENV = 'development'
   })
@@ -39,10 +37,10 @@ describe('atom', () => {
       },
     })
 
-    const atomInfo: any = info?.get(fooAtom)
+    const atomInfo: any = useInfo().get(fooAtom)
 
     expect([...atomInfo.relates.keys()]).toEqual(['setJohn'])
-    expect(atomInfo.identifier).toBe('atom')
+    expect(atomInfo.kind).toBe('atom')
     expect(fooAtom.bar.name).toBe('bar')
     expect(fooAtom.bar.$.decoName.value).toBe('??bar')
     fooAtom.bar.$.setName('john')
@@ -77,23 +75,31 @@ describe('atom', () => {
       state.name = payload
     })
 
-    atom(fooAtom, {
+    const johnAtom = atom(fooAtom, {
       decoName: getter((state) => `${state.name}??`),
       setName: (state, payload: string) => {
         state.name = payload
       },
     })
 
-    const atomInfo: any = info?.get(fooAtom)
+    const fooAtomInfo: any = useInfo().get(fooAtom)
+    const barAtomInfo: any = useInfo().get(barAtom)
+    const johnAtomInfo: any = useInfo().get(johnAtom)
 
-    expect([...atomInfo.relates.keys()]).toEqual(['default', 'decoName', 'setName'])
+    expect([...fooAtomInfo.relates.keys()]).toEqual(['default', 'decoName', 'setName'])
+    expect([...barAtomInfo.relates.keys()]).toEqual(['default', 'decoName', 'setName'])
+    expect([...johnAtomInfo.relates.keys()]).toEqual(['default', 'decoName', 'setName'])
 
     fooAtom.name = 'bar'
+    expect(fooAtom.name).toBe('bar')
     expect(barAtom.name).toBe('bar')
+    expect(johnAtom.name).toBe('bar')
 
     barAtom.name = 'john'
 
     expect(fooAtom.name).toBe('john')
+    expect(barAtom.name).toBe('john')
+    expect(johnAtom.name).toBe('john')
   })
   it('should act', () => {
     const fooAtom = atom({

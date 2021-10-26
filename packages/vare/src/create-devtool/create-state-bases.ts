@@ -1,8 +1,9 @@
-import {getGlobalInfo, getRelates, getState} from 'src/info'
+
 import {StateBase} from '@vue/devtools-api'
 import {isRef} from 'vue-demi'
 import {isAtom} from 'src/atom'
 import {findAtom} from './find-atom'
+import {useInfo} from 'src/info'
 
 export const getValue = (value: any) => {
   if (isRef(value)) {
@@ -22,16 +23,17 @@ export type StateBases = Record<string, {
 }>
 
 export const createStateBases = (targets?: Record<string, any>): StateBases => {
-  const info = getGlobalInfo()
-
-  if (!info || !targets) {
+  if (!targets) {
     return {}
   }
 
+  const info = useInfo()
+
   return Object.keys(targets).reduce<StateBases>((result, key: string) => {
     const value = targets[key]
-    const state = getState(info, value) ?? value
-    const relates = getRelates(info, value)
+    const targetInfo = info.get(value)
+    const state = value
+    const relates = targetInfo?.relates
 
     const stateInfo: Record<string, StateBase[]> = {
       state: [
@@ -75,7 +77,7 @@ export const createStateBases = (targets?: Record<string, any>): StateBases => {
           const atoms = findAtom(value)
 
           atoms.forEach(([namespace, value]) => {
-            const relates = getRelates(info, value)
+            const relates = info.get(value)?.relates
             if (relates) {
               [...relates.entries()].forEach(([key, value]) => {
                 const data: StateBase = {

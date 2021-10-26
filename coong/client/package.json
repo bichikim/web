@@ -43,6 +43,7 @@
     "vare": "^1.0.19-alpha.0",
     "vite-ssr-vue": "^0.2.18",
     "vue": "^3.2.20",
+    "vue-types": "^4.1.0",
     "vue-i18n": "9.1.7",
     "vue-router": "^4.0.11"
   },

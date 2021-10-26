@@ -1,6 +1,6 @@
 import {UnwrapNestedRefs} from '@winter-love/use'
 import {computed, shallowRef} from 'vue-demi'
-import {getGlobalInfo, getRelates} from '../info'
+import {useInfo} from 'src/info'
 import {
   ActionSymbol,
   AtomGetterRecipe,
@@ -123,21 +123,20 @@ export function atom<State extends Record<string, any>>(
   name?: string,
 ): any {
   const valueReactive = wrapAtom(initState)
-  const trigger = shallowRef<any[]>()
-  const info = getGlobalInfo()
-  let relates = getRelates(info, valueReactive)
+  const watchTrigger = shallowRef<any[]>()
+  let relates
   let atom
 
   // recipe = function
   if (typeof recipe === 'function') {
-    const result = createFunctionAtom(valueReactive, trigger, recipe, relates)
+    const result = createFunctionAtom(valueReactive, watchTrigger, recipe, relates)
     // eslint-disable-next-line prefer-destructuring
     atom = result.atom
     // eslint-disable-next-line prefer-destructuring
     relates = result.relates
     // recipe tree
   } else if (typeof recipe === 'object' && !Array.isArray(recipe)) {
-    const result = createTreeAtom(valueReactive, trigger, recipe, relates)
+    const result = createTreeAtom(valueReactive, watchTrigger, recipe, relates)
     // eslint-disable-next-line prefer-destructuring
     atom = result.atom
     // eslint-disable-next-line prefer-destructuring
@@ -149,19 +148,18 @@ export function atom<State extends Record<string, any>>(
 
   // save information for devtool
   if (process.env.NODE_ENV === 'development') {
-    const info = getGlobalInfo()
-    info?.set(atom, {
-      identifier: atomName,
+    const info = useInfo()
+    info.set(atom, {
+      kind: 'atom',
       name,
       relates,
-      state: valueReactive,
-      trigger,
-    })
+      watchTrigger,
+    }, valueReactive)
   }
 
   // symbol mark
   atom[AtomSymbol] = true
-  atom[ActionSymbol] = trigger
+  atom[ActionSymbol] = watchTrigger
 
   return atom
 }

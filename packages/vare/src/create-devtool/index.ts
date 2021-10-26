@@ -1,13 +1,13 @@
 import {DevtoolsPluginApi, setupDevtoolsPlugin, TimelineEvent} from '@vue/devtools-api'
 import {drop, isSSR} from '@winter-love/utils'
 import {watchTrigger} from 'src/create-devtool/watch-trigger'
-import {VareInfo} from 'src/info'
 import {App} from 'vue-demi'
 import {createStateBases} from './create-state-bases'
 import {ApiSetting, CreateDevToolOptions} from './types'
 import {watchState} from './watch-state'
 import {atomName} from 'src/atom'
 import {createInspectorTree} from './create-inspector-tree'
+import {Info} from 'src/info'
 
 export const DEVTOOL_ID = 'com.npmjs.packages.vare'
 
@@ -42,6 +42,8 @@ export const createDevTool = (
     packageName: 'vare',
   }, (api) => {
     _api = api
+
+    console.log('---?')
 
     api.addInspector({
       icon: 'mediation',
@@ -110,14 +112,14 @@ export const createDevTool = (
     })
   }
 
-  const updateTrigger = (info?: VareInfo<string>) => {
-    if (!info) {
+  const updateTrigger = (info?: Info) => {
+    if (!info || !info.kind) {
       return
     }
 
-    updateTimeline(info.identifier, {
+    updateTimeline(info.kind, {
       data: {
-        type: info.identifier,
+        type: info.kind,
       },
     })
   }
