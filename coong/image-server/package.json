@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "build": "rimraf ./lib && ttsc",
-    "dev": "rimraf ./lib && tsc-watch --compiler ttypescript/bin/tsc --onSuccess 'cross-env NODE_ENV=development yarn node ./lib/index.js' "
+    "dev": "ts-node-dev --clear -r tsconfig-paths/register src/index.ts"
   },
   "dependencies": {
     "dotenv": "^10.0.0",
@@ -13,13 +13,14 @@
     "got": "^11.8.2"
   },
   "devDependencies": {
-    "@types/node": "^16.7.7",
-    "aws-sdk": "^2.978.0",
+    "@types/node": "^16.11.0",
+    "aws-sdk": "^2.1009.0",
     "cross-env": "^7.0.3",
-    "ts-node": "^10.2.1",
-    "tsc-watch": "^4.2.9",
+    "ts-node": "^10.3.0",
+    "ts-node-dev": "^1.1.8",
     "ttypescript": "^1.5.12",
-    "typescript": "^4.3.4"
+    "tsconfig-paths": "^3.11.0",
+    "typescript": "^4.4.4"
   },
   "gitHead": "49922aa2164ceefcebf5fcd3bd83dce16c67df21"
 }
