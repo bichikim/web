@@ -45,18 +45,18 @@ Coong 은 모든 세상에 있는 것을 찍먹 해보자는 생각으로 만들
 server (/coong/server) 와 client (/coong/client) 가 함께 있습니다.
 
 ```bash
-yarn docs:dev
+pnpm rum docs:dev
 ```
 
 
-### Install the dependencies (yarn 3.x)
+### Install the dependencies (pnpm)
 ```bash
-yarn
+pnpm i
 ```
 
 ### Start the app in development mode (hot-code reloading, error reporting, etc.)
 ```bash
-quasar dev
+pnpm run dev
 ```
 
 ### Lint the files
@@ -66,7 +66,7 @@ yarn run lint
 
 ### Build the app (coong.io) for production
 ```bash
-quasar build
+pnpm run build
 ```
 
 ### Customize the configuration app (coong.io)
@@ -74,5 +74,4 @@ See [Configuring quasar.conf.js](https://v2.quasar.dev/quasar-cli/quasar-conf-js
 
 ## 알고 있는 문제점
 
-### quasar cli hot reload module 이 폴더 위치가 정해진 곳이 yarn 또는 npm 아니면 작동 안하는 문제
-vite 로 갈아 타기 시도 중
+### x
