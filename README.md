@@ -42,8 +42,7 @@ Coong everywhere
 
 Coong 은 모든 세상에 있는 것을 찍먹 해보자는 생각으로 만들었으나 아직 확실한 프로젝트 방향을 정하지 않았습니다.
 
-server (/server) 와 client (/src) 가 함께 있습니다. quasar 프레임워크 폴더 구조문제로 폴더 구조가 일관성이 없습니다.
-2021 년도 후반기 quasar 업데이트에 따라 폴더구조가 리펙터링 되리라 예상 됩니다.
+server (/coong/server) 와 client (/coong/client) 가 함께 있습니다.
 
 ```bash
 yarn docs:dev
