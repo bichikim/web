@@ -1,0 +1,39 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`find-state should return atoms 1`] = `
+Array [
+  Array [
+    "foo.john",
+    Object {
+      "name": "john",
+      Symbol(atom): true,
+      Symbol(atom action watch): undefined,
+    },
+  ],
+  Array [
+    "foo",
+    Object {
+      "bar": "bar",
+      "john": Object {
+        "name": "john",
+        Symbol(atom): true,
+        Symbol(atom action watch): undefined,
+      },
+      Symbol(atom): true,
+      Symbol(atom action watch): undefined,
+    },
+  ],
+]
+`;
+
+exports[`find-state should return state 1`] = `
+Array [
+  Array [
+    "foo",
+    Object {
+      "deep": "deep-foo",
+      Symbol(state): true,
+    },
+  ],
+]
+`;

@@ -3,6 +3,8 @@ import {computed, shallowRef} from 'vue-demi'
 import {useInfo} from 'src/info'
 import {
   ActionSymbol,
+  ActionWatchSymbol,
+  AtomComputedRefSymbol,
   AtomGetterRecipe,
   AtomIdentifierName,
   AtomRecipe,
@@ -14,20 +16,45 @@ import {
   MayAtomType,
 } from './types'
 import {createAction, wrapAtom} from './utils'
+import {getRawFunctionString} from 'src/utils'
 
 export * from './types'
 export * from './utils'
 
 export const atomName: AtomIdentifierName = 'atom'
+export const atomActionName = 'atom-action'
+
+export const isAtomComputedRef = (value: any) => Boolean(value?.[AtomComputedRefSymbol])
+
+export const isAction = (value: any) => Boolean(value?.[ActionSymbol])
+
+const createComputedAction = (reactive, recipe, name?: string) => {
+  const isGetter = recipe[GetterSymbol]
+  const clonedRecipe = isGetter ? computed(() => recipe(reactive)) : recipe
+
+  if (isGetter) {
+    clonedRecipe[AtomComputedRefSymbol] = true
+  } else {
+    clonedRecipe[ActionSymbol] = true
+  }
+
+  if (process.env.NODE_ENV === 'development') {
+    const info = useInfo()
+    info.set(clonedRecipe, {
+      kind: atomActionName,
+      name,
+      raw: getRawFunctionString(recipe),
+    })
+  }
+
+  return clonedRecipe
+}
 
 export const createTreeAtom = (reactive, trigger, recipe: Record<string, any>, relates?: Map<string, any>) => {
 
   const clonedRecipe = Object.fromEntries(Object.keys(recipe).map((key) => {
     const value = recipe[key]
-    if (value[GetterSymbol]) {
-      return [key, computed(() => value(reactive))]
-    }
-    return [key, value]
+    return [key, createComputedAction(reactive, value, key)]
   }))
 
   const _relates: Map<string, any> = relates ?? new Map<string, any>()
@@ -65,8 +92,9 @@ export const createTreeAtom = (reactive, trigger, recipe: Record<string, any>, r
   }
 }
 
-export const createFunctionAtom = (reactive, trigger, recipe, relates?: Map<string, any>) => {
-  const clonedRecipe = recipe[GetterSymbol] ? computed(() => recipe(reactive)) : recipe
+// eslint-disable-next-line max-params
+export const createFunctionAtom = (reactive, trigger, recipe, relates?: Map<string, any>, name?: string) => {
+  const clonedRecipe = createComputedAction(reactive, recipe, name)
 
   const _relates = relates ?? new Map<string, any>()
 
@@ -130,7 +158,7 @@ export function atom<State extends Record<string, any>>(
 
   // recipe = function
   if (typeof recipe === 'function') {
-    const result = createFunctionAtom(valueReactive, watchTrigger, recipe)
+    const result = createFunctionAtom(valueReactive, watchTrigger, recipe, undefined, name)
     // eslint-disable-next-line prefer-destructuring
     atom = result.atom
     // eslint-disable-next-line prefer-destructuring
@@ -160,7 +188,7 @@ export function atom<State extends Record<string, any>>(
 
   // symbol mark
   atom[AtomSymbol] = true
-  atom[ActionSymbol] = watchTrigger
+  atom[ActionWatchSymbol] = watchTrigger
 
   return atom
 }

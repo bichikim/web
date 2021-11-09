@@ -8,8 +8,10 @@ export type AtomRecipe<T extends UnwrapNestedRefs<any>, Args extends any[] = any
 export type AtomGetterRecipe<T extends UnwrapNestedRefs<any>, Return> = (state: T) => Return
 
 export const AtomSymbol = Symbol('atom')
-export const ActionSymbol = Symbol('atom action')
+export const ActionWatchSymbol = Symbol('atom action watch')
 export const GetterSymbol = Symbol('getter')
+export const AtomComputedRefSymbol = Symbol('atom computed ref')
+export const ActionSymbol = Symbol('action symbol')
 
 export type GetterRecipe<Return> = (state) => Return
 
@@ -18,7 +20,7 @@ export type GetterRecipeInside<Return> = GetterRecipe<Return> & {
 }
 
 export type AtomType<T> = UnwrapNestedRefs<T> & {
-  [ActionSymbol]: any
+  [ActionWatchSymbol]: any
   [AtomSymbol]: true
 }
 

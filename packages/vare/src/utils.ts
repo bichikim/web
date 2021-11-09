@@ -8,12 +8,15 @@ export const createUuid = (prefix: string = '') => {
   }
 }
 
-export const createGetAtomPrams = (getId: () => string) => (unknown?: any, mayRecipe?: any, name?: string) => {
+export const createGetAtomPrams = (
+  getId: () => string,
+  isRecipeOption: (value: any) => boolean = (value) => typeof value === 'function',
+) => (unknown?: any, mayRecipe?: any, name?: string) => {
   let recipe
   let state
   let _name
 
-  if (typeof mayRecipe === 'function') {
+  if (isRecipeOption(mayRecipe)) {
     state = unknown
     recipe = mayRecipe
     _name = name
@@ -22,14 +25,25 @@ export const createGetAtomPrams = (getId: () => string) => (unknown?: any, mayRe
     _name = mayRecipe
   }
 
-  if (!_name) {
-    _name = getId()
-  }
+  const id = getId()
+
   return {
-    name: _name,
+    id,
+    name: _name ?? id,
     recipe,
     state,
   }
+}
+
+const MAX_LENGTH = 50
+
+export const getRawFunctionString = (value: any, maxLength = MAX_LENGTH): string => {
+  if (typeof value === 'function') {
+    const stringValue = value.toString()
+    const deco = stringValue.length > maxLength ? '...' : ''
+    return stringValue.slice(0, maxLength) + deco
+  }
+  return ''
 }
 
 export const shallowUpdate = (target: UnwrapNestedRefs<any>, source?: Record<string, any>) => {

@@ -5,6 +5,7 @@ import {user} from 'src/store/user'
 import {computed, defineComponent, ref} from 'vue'
 import {Box} from 'src/components/Box'
 import {RouterLink} from 'vue-router'
+import notification from 'src/store/notification'
 
 const IndexPage = defineComponent({
   setup() {
@@ -14,6 +15,7 @@ const IndexPage = defineComponent({
     const postList = computed(() => {
       return posts.list
     })
+    const notificationCount = computed(() => (notification.state.count ?? 0))
 
     const addItem = () => {
       posts.$.addItem({id: `add ${postList.value.length}`})
@@ -27,6 +29,10 @@ const IndexPage = defineComponent({
     // eslint-disable-next-line unicorn/consistent-function-scoping
     const addName = () => {
       user.name += '1'
+    }
+
+    const increaseCount = () => {
+      notification.setCount(notificationCount.value + 1)
     }
 
     const toggle = ref(false)
@@ -53,12 +59,14 @@ const IndexPage = defineComponent({
             <QBtn>gogo</QBtn>
           </RouterLink>
           <div>{userName.value}</div>
+          <div>count {notificationCount.value}</div>
           {postList.value.map((item) => {
             return <div key={item.id}>{`id ${item.id}`}</div>
           })}
           <QBtn onClick={addItem}>add Item</QBtn>
           <QBtn onClick={addName}>add Name</QBtn>
           <QBtn onClick={setBucketName}>set Name</QBtn>
+          <QBtn onClick={increaseCount}>increase Count</QBtn>
         </div>
       )
     }

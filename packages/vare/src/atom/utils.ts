@@ -2,7 +2,7 @@ import {UnwrapNestedRefs} from '@winter-love/use'
 import {isRef, reactive, Ref, unref} from 'vue-demi'
 import {mayFunctionValue} from '@winter-love/utils'
 import {
-  ActionSymbol,
+  ActionWatchSymbol,
   Atom,
   AtomRecipe,
   AtomSymbol,
@@ -17,7 +17,7 @@ export const isAtom = (value: any): value is Atom<any> => {
 }
 
 export const getAtomActionWatchTarget = (target: any) => {
-  const trigger = target[ActionSymbol]
+  const trigger = target[ActionWatchSymbol]
   if (!trigger) {
     return {}
   }

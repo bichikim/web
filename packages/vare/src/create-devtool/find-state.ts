@@ -1,11 +1,12 @@
 import {isAtom} from 'src/atom'
-export const findAtom = (target: any, deeps: string[] = []) => {
+import {isState} from 'src/state'
+export const findState = (target: any, deeps: string[] = []) => {
   const atoms: any[] = []
 
   if (typeof target === 'object' && !Array.isArray(target)) {
     Object.keys(target).forEach((key) => {
       const value = target[key]
-      atoms.push(...findAtom(value, [...deeps, key]))
+      atoms.push(...findState(value, [...deeps, key]))
     })
   }
 
@@ -13,7 +14,7 @@ export const findAtom = (target: any, deeps: string[] = []) => {
     return atoms
   }
 
-  if (isAtom(target)) {
+  if (isAtom(target) || isState(target)) {
     atoms.push([deeps.join('.'), target])
     return atoms
   }

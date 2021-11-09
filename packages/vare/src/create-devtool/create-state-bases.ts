@@ -1,17 +1,15 @@
-
+import {compact, isNaN, trim} from 'lodash'
 import {StateBase} from '@vue/devtools-api'
-import {isRef} from 'vue-demi'
-import {isAtom} from 'src/atom'
-import {findAtom} from './find-atom'
+import {isRef, ref} from 'vue-demi'
+import {findState} from 'src/create-devtool/find-state'
 import {useInfo} from 'src/info'
+import {isMutate} from 'src/mutate'
+import {isCompute, isComputedRef} from 'src/compute'
+import {isAction, isAtomComputedRef} from 'src/atom'
 
 export const getValue = (value: any) => {
   if (isRef(value)) {
     return value.value
-  }
-
-  if (typeof value === 'function') {
-    return 'function'
   }
 
   return '??'
@@ -19,8 +17,103 @@ export const getValue = (value: any) => {
 
 export type StateBases = Record<string, {
   base: Record<string, StateBase[]>
-  refresh: () => Record<string, StateBase[]>
+  refresh: (updateState: () => any) => Record<string, StateBase[]>
 }>
+
+const MAX_LENGTH = 30
+
+const argsToString = (args: any[] = []) => {
+  return args.map((value) => {
+    if (typeof value === 'string') {
+      return `"${value}"`
+    }
+    return String(value)
+  }).join(', ')
+}
+
+const stringToArgs = (text: string) => {
+  return compact(text.split(',').map((value) => {
+    const _value = value.trim()
+    if (/^".+"$/u.test(_value)) {
+      return trim(_value, '"')
+    }
+    const number = Number(_value)
+    if (isNaN(number)) {
+      return null
+    }
+    return number
+  }))
+}
+
+// eslint-disable-next-line max-statements
+const getRelatesState = (key, value, updateState?: () => any) => {
+  const data: StateBase = {
+    editable: false,
+    key,
+    value: '??',
+  }
+
+  if (isComputedRef(value) || isAtomComputedRef(value)) {
+    data.objectType = 'computed'
+    data.value = getValue(value)
+    return data
+  }
+
+  if (isRef(value)) {
+    data.value = getValue(value)
+    return data
+  }
+
+  if (isCompute(value)) {
+    const info = useInfo().get(value)
+    const args = info?.args ?? []
+    let _value
+
+    try {
+      _value = value(...args)
+    } catch {
+      return data
+    }
+    data.value = {
+      _custom: {
+        actions: [
+          {
+            action() {
+              // eslint-disable-next-line
+              const data = prompt(`Edit ${key}`, argsToString(info?.args))
+              if (data && info) {
+                info.args = stringToArgs(data)
+              }
+              updateState?.()
+            },
+            icon: 'create',
+            tooltip: 'edit arguments',
+          },
+        ],
+        display: `${getValue(_value)} (${args.join(', ')}) => ...(computed)`,
+        fields: {
+          abstract: true,
+        },
+        readOnly: false,
+        type: 'computed',
+      },
+    }
+    return data
+  }
+
+  if (isMutate(value) || isAction(value)) {
+    const info = useInfo().get(value)
+    data.value = {
+      _custom: {
+        display: info?.raw ?? `${value.toString().slice(0, MAX_LENGTH)}...`,
+        type: 'function',
+      },
+    }
+    return data
+  }
+
+  return data
+}
 
 export const createStateBases = (targets?: Record<string, any>): StateBases => {
   if (!targets) {
@@ -29,8 +122,7 @@ export const createStateBases = (targets?: Record<string, any>): StateBases => {
 
   const info = useInfo()
 
-  return Object.keys(targets).reduce<StateBases>((result, key: string) => {
-    const value = targets[key]
+  return Object.fromEntries(Object.entries(targets).map(([key, value]) => {
     const targetInfo = info.get(value)
     const state = value
     const relates = targetInfo?.relates
@@ -46,59 +138,33 @@ export const createStateBases = (targets?: Record<string, any>): StateBases => {
       ],
     }
 
-    result[key] = {
+    return [key, {
       base: stateInfo,
-      refresh: () => {
+      refresh: (updateState?: () => any) => {
         const updateInfo: Record<string, StateBase[]> = {}
 
         if (relates) {
-          updateInfo.relates = [...relates.entries()].map(([key, value]) => {
-            const data: StateBase = {
-              editable: false,
-              key,
-              value: getValue(value),
-            }
-
-            if (isRef(value)) {
-              data.objectType = 'computed'
-            }
-
-            return data
-          })
+          updateInfo.relates = [...relates.entries()].map(([key, value]) => getRelatesState(key, value, updateState))
+        }
+        if (!updateInfo.relates) {
+          updateInfo.relates = []
         }
 
-        if (isAtom(value)) {
-          if (!updateInfo.relates) {
-            updateInfo.relates = []
+        const rootRelates = updateInfo.relates
+
+        const atoms = findState(value)
+
+        atoms.forEach(([namespace, value]) => {
+          const relates = info.get(value)?.relates
+          if (relates) {
+            rootRelates.push(...[...relates.entries()].map(([key, value]) => getRelatesState(key, value, updateState)))
           }
-
-          const rootRelates = updateInfo.relates
-
-          const atoms = findAtom(value)
-
-          atoms.forEach(([namespace, value]) => {
-            const relates = info.get(value)?.relates
-            if (relates) {
-              [...relates.entries()].forEach(([key, value]) => {
-                const data: StateBase = {
-                  editable: false,
-                  key: `${namespace}.${key}`,
-                  value: getValue(value),
-                }
-                if (isRef(value)) {
-                  data.objectType = 'computed'
-                }
-                rootRelates.push(data)
-              })
-            }
-          })
-        }
+        })
         return {
           ...stateInfo,
           ...updateInfo,
         }
       },
-    }
-    return result
-  }, {})
+    }]
+  }))
 }

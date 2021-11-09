@@ -5,4 +5,7 @@ export * from './info'
 export * from './plugin'
 export * from './types'
 export * from './utils'
+export * from './state'
+export * from './mutate'
+export * from './compute'
 export default plugin

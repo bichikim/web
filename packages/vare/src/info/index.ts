@@ -3,8 +3,10 @@ import {Ref} from 'vue-demi'
 export type StateKind = 'atom' | string
 
 export interface Info {
+  args?: any[]
   kind?: StateKind
   name?: string
+  raw?: string
   relates?: Map<string, any>
   /**
    * kind > type
@@ -42,19 +44,22 @@ export class InfoMap {
     const previousInfo = previousTarget ? this._infoMap.get(previousTarget) : previousTarget
 
     const {
-      kind = 'unknown',
+      kind,
       relates = new Map<string, any>(),
       ...rest
     } = info
 
     let newRelates = relates
+
     const previousRelates = previousInfo?.relates
+
+    const newKind = kind ?? previousInfo?.kind
 
     if (previousRelates) {
       newRelates = mergeRelates(relates, previousRelates)
     }
 
-    this._infoMap.set(target, {...rest, kind, relates: newRelates})
+    this._infoMap.set(target, {...rest, kind: newKind, relates: newRelates})
   }
 }
 

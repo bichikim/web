@@ -3,6 +3,7 @@ import {Plugin} from 'vue'
 import {posts, PostsState} from './posts'
 import {user, UserState} from './user'
 import {bucket} from './bucket'
+import notification from './notification'
 
 export interface RootState {
   posts?: PostsState
@@ -15,9 +16,10 @@ export const createStore = (initialState: RootState = {}): Plugin => {
     console.log('dev-dev')
     app.use(varePlugin, {
       states: {
+        bucket,
+        notification: notification.state,
         posts,
         user,
-        bucket,
       },
     })
   }

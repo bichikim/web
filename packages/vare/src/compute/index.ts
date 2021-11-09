@@ -4,7 +4,9 @@ import {useInfo} from 'src/info'
 import {computed, ComputedRef, WritableComputedRef} from 'vue-demi'
 import {UnwrapNestedRefs} from 'src/types'
 import {ComputedRefSymbol, ComputeSymbol} from './symbol'
-import {createUuid} from 'src/utils'
+import {createGetAtomPrams, createUuid} from 'src/utils'
+
+export {ComputeSymbol, ComputedRefSymbol}
 
 export type ComputationRefRecipe<Return = any> = () => Return
 export type ComputationStateRefRecipe<S, Return = any> = (state: S) => Return
@@ -38,17 +40,20 @@ export interface ComputationRecipeOptionsWithState<S, Args extends any[], Return
   set: ComputationSetterWithState<S, Args, Return>
 }
 
-export type ComputationIdentifierName = 'computation'
-export type ComputationRefIdentifierName = 'computation-ref'
+export type ComputeName = 'compute'
+export type ComputeRefName = 'compute-ref'
 
-export const computationName: ComputationIdentifierName = 'computation'
-export const computationRefName: ComputationRefIdentifierName = 'computation-ref'
-const computeUuid = createUuid('compute')
+export const computeName: ComputeName = 'compute'
+export const computeRefName: ComputeRefName = 'compute-ref'
 
 export type ComputationType = 'getter' | 'getter & setter'
 
-export type Compute<Args extends any[], T> = ((...args: Args) => ComputedRef<T>)
-export type ComputeWritable<Args extends any[], T> = ((...args: Args) => WritableComputedRef<T>)
+export type Compute<Args extends any[], T> = ((...args: Args) => ComputedRef<T>) & {
+  [ComputeSymbol]: boolean
+}
+export type ComputeWritable<Args extends any[], T> = ((...args: Args) => WritableComputedRef<T>) & {
+  [ComputeSymbol]: boolean
+}
 
 export const isCompute = (value?: any): value is Compute<any[], any> | ComputeWritable<any[], any> => (
   Boolean(value?.[ComputeSymbol])
@@ -59,33 +64,12 @@ export const isComputedRef = (value?: any): value is ComputedRef | WritableCompu
 )
 
 const isRecipeOption = (value?: any): value is ComputationRecipe => (
-  typeof value === 'object' && typeof value.get === 'function' && typeof value.set === 'function'
+  typeof value === 'function' ||
+  (typeof value === 'object' && typeof value.get === 'function' && typeof value.set === 'function')
 )
 
 // eslint-disable-next-line max-statements
-const getComputePrams = (unknown: any, mayRecipe?: any, name?: string) => {
-  let state
-  let recipe
-  let _name
-
-  if (typeof mayRecipe === 'function' || isRecipeOption(mayRecipe)) {
-    state = unknown
-    recipe = mayRecipe
-    _name = name
-  } else {
-    recipe = unknown
-    _name = mayRecipe
-  }
-
-  const id = computeUuid()
-
-  return {
-    id,
-    name: _name ?? id,
-    recipe,
-    state,
-  }
-}
+const getComputePrams = createGetAtomPrams(createUuid('compute'), isRecipeOption)
 
 function createFunctionComputed(unknown: any, mayRecipe?: any, name?: string, ref: boolean = false): any {
   const {state, name: _name, recipe} = getComputePrams(unknown, mayRecipe, name)
@@ -121,7 +105,7 @@ function createFunctionComputed(unknown: any, mayRecipe?: any, name?: string, re
   if (process.env.NODE_ENV === 'development') {
     const info = useInfo()
     info.set(self, {
-      kind: computationName,
+      kind: computeName,
       name: _name,
       type: typeof recipe === 'function' ? 'getter' : 'getter & setter',
     })

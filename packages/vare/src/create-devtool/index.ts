@@ -8,6 +8,7 @@ import {watchState} from './watch-state'
 import {atomName} from 'src/atom'
 import {createInspectorTree} from './create-inspector-tree'
 import {Info} from 'src/info'
+import {mutationName} from 'src/mutate'
 
 export const DEVTOOL_ID = 'com.npmjs.packages.vare'
 
@@ -27,13 +28,21 @@ export const createDevTool = (
     label = 'Vare',
     timeLines = {
       [atomName]: {
-        color: 0xF08D49,
+        color: 0xF0_8D_49,
         label: 'Vare Atom Actions',
+      },
+      [mutationName]: {
+        color: 0xF0_8D_49,
+        label: 'Vare Mutate',
       },
     },
   } = options
 
   let _api: DevtoolsPluginApi<ApiSetting>
+
+  const updateState = () => {
+    _api?.sendInspectorState(inspectorId)
+  }
 
   setupDevtoolsPlugin({
     app,
@@ -42,8 +51,6 @@ export const createDevTool = (
     packageName: 'vare',
   }, (api) => {
     _api = api
-
-    console.log('---?')
 
     api.addInspector({
       icon: 'mediation',
@@ -68,7 +75,6 @@ export const createDevTool = (
       }
 
       const {nodes} = createInspectorTree(targets)
-      console.log(nodes)
       payload.rootNodes = nodes
     })
 
@@ -81,7 +87,7 @@ export const createDevTool = (
 
       if (state) {
 
-        payload.state = state.refresh()
+        payload.state = state.refresh(updateState)
       }
     })
 
@@ -112,13 +118,14 @@ export const createDevTool = (
     })
   }
 
-  const updateTrigger = (info?: Info) => {
+  const updateTrigger = (args: any[], info?: Info) => {
     if (!info || !info.kind) {
       return
     }
 
     updateTimeline(info.kind, {
       data: {
+        args,
         type: info.kind,
       },
     })
@@ -126,10 +133,6 @@ export const createDevTool = (
 
   const updateTree = () => {
     _api?.sendInspectorTree(inspectorId)
-  }
-
-  const updateState = () => {
-    _api?.sendInspectorState(inspectorId)
   }
 
   watchState(targets, updateState)
