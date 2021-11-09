@@ -6,6 +6,10 @@ export interface Info {
   kind?: StateKind
   name?: string
   relates?: Map<string, any>
+  /**
+   * kind > type
+   */
+  type?: string
   watchTrigger?: Ref<any>
 }
 
@@ -33,9 +37,10 @@ export class InfoMap {
     return this._infoMap.get(target)
   }
 
-  set(target: InfoMapKey, info: Info, previousTarget: InfoMapKey): void {
+  set(target: InfoMapKey, info: Info, previousTarget?: InfoMapKey): void {
 
-    const previousInfo = this._infoMap.get(previousTarget)
+    const previousInfo = previousTarget ? this._infoMap.get(previousTarget) : previousTarget
+
     const {
       kind = 'unknown',
       relates = new Map<string, any>(),

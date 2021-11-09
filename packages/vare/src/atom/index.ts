@@ -151,7 +151,7 @@ export function atom<State extends Record<string, any>>(
   if (process.env.NODE_ENV === 'development') {
     const info = useInfo()
     info.set(atom, {
-      kind: 'atom',
+      kind: atomName,
       name,
       relates,
       watchTrigger,
