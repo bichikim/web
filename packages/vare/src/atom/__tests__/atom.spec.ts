@@ -8,7 +8,7 @@ import {
   defineComponent, ExtractPropTypes, FunctionalComponent, h,
   watch,
 } from 'vue-demi'
-import {useInfo} from 'src/info/InfoMap'
+import {useInfo} from 'src/info'
 
 describe('atom', () => {
   beforeEach(() => {
