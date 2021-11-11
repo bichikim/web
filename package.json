@@ -100,6 +100,7 @@
     "jsdom": "^17.0.0",
     "lerna": "^4.0.0",
     "parcel": "^2.0.1",
+    "rollup-plugin-smart-asset": "^2.1.2",
     "rollup-plugin-delete": "^2.0.0",
     "rollup-plugin-node-externals": "^2.2.0",
     "rollup-plugin-ts-treeshaking": "^1.0.2",

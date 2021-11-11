@@ -13,15 +13,16 @@ import {
 
 describe('emotion', () => {
   describe('createStyled', () => {
-    interface Options extends StyledOptions {
+    interface Options extends StyledOptions<any> {
       element?: any
       props?: any
       slot?: any
     }
 
+    const styled = createStyled(createEmotionOriginal({key: 'css'}))
+
     const setup = (options: Options = {}) => {
       const {slot, element = 'div', props = {}, ...rest} = options
-      const styled = createStyled(createEmotionOriginal({key: 'css'}))
       const StyledComponent = styled(element, {
         props: {
           color: {type: String},
@@ -45,7 +46,7 @@ describe('emotion', () => {
         },
       })
 
-      const wrapper = mount(Component, {props: {...props, color: 'red'}, slots: {default: () => slot}})
+      const wrapper = mount(Component, {props: {color: 'red', ...props}, slots: {default: () => slot}})
 
       return {
         Component,
@@ -69,6 +70,25 @@ describe('emotion', () => {
         color: 'red',
       })
       expect(wrapper.element).toHaveAttribute('id', 'foo')
+    })
+
+    it('should pass attributes for Component Children', () => {
+      const Children = styled('div', {
+        stylePortal: 'cssNext',
+      })((props) => {
+        return {
+          padding: props.padding,
+        }
+      })
+      const {wrapper} = setup({
+        element: Children,
+        props: {css: {color: 'yellow'}, cssNext: {padding: '5px'}},
+        stylePortal: 'css',
+      })
+      expect(wrapper.get('div').element).toHaveStyle({
+        color: 'yellow',
+        padding: '5px',
+      })
     })
 
     it('should render attributes', () => {
@@ -143,7 +163,7 @@ describe('emotion', () => {
       expect(StyledComponent.displayName).toBe('foo')
     })
 
-    it('should pass styleProps with a component element by default', () => {
+    it.skip('should pass styleProps with a component element by default', () => {
       const Component = defineComponent(() => {
         return () => h('div')
       })
@@ -158,7 +178,7 @@ describe('emotion', () => {
       const Component = defineComponent(() => {
         return () => h('div')
       })
-      const {wrapper} = setup({element: Component, inheritStyleProps: false})
+      const {wrapper} = setup({element: Component})
       expect(wrapper.get('div').attributes()).not.toEqual(expect.objectContaining({color: 'red'}))
     })
 
@@ -219,9 +239,6 @@ describe('emotion', () => {
     it('should style a component by a stylePortal', () => {
       const styled = createStyled(createEmotionOriginal({key: 'css'}))
       const Component = styled('div', {
-        props: {
-          css: {default: () => ({}), type: Object},
-        },
         stylePortal: 'css',
       })(
         ({color}: any) => {
@@ -284,9 +301,12 @@ describe('emotion', () => {
         props: {
           css: {
             backgroundColor: 'blue',
-            color: 'red', left: '10px',
+            left: '10px',
           },
           key: 'foo',
+          sys: {
+            color: 'red',
+          },
         },
       })
 
@@ -302,9 +322,9 @@ describe('emotion', () => {
     it('should style with default props', () => {
       const styled = createStyled(createEmotionOriginal({key: 'css'}))
       const Component = styled('div', {
-        styleDefaults: {
-          backgroundColor: 'blue',
-          color: 'red',
+        props: {
+          backgroundColor: {default: 'blue', type: String},
+          color: {default: 'red', type: String},
         },
         stylePortal: 'cssNext',
       })(
