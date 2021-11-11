@@ -1,4 +1,6 @@
-import createEmotionOriginal, {Emotion as _Emotion, CSSObject, Options as OriginalEmotionOptions} from '@emotion/css/create-instance'
+import createEmotionOriginal, {
+  Emotion as _Emotion, CSSObject, Options as OriginalEmotionOptions,
+} from '@emotion/css/create-instance'
 import {Plugin} from 'vue-demi'
 import {EMOTION_CACHE_CONTEXT} from './cache'
 import {createStyled} from './create-styled'
@@ -48,4 +50,4 @@ export const createEmotion = (options: EmotionOptions = {}): EmotionPlugin => {
   }
 }
 
-export {CSSObject}
+export type {CSSObject}

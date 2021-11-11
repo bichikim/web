@@ -392,6 +392,10 @@ module.exports = {
     'unicorn/no-array-reduce': 'off',
     'unicorn/no-nested-ternary': 'off',
     'unicorn/no-null': 'off',
+    // 적용 할 수 있도록 해야한다
+    'unicorn/prefer-module': 'off',
+    // 적용 할 수 있도록 해야한다
+    'unicorn/prefer-node-protocol': 'off',
     'unicorn/prefer-ternary': 'off',
     'unicorn/prevent-abbreviations': 'off',
     'vue/component-name-in-template-casing': ['warn', 'kebab-case'],
