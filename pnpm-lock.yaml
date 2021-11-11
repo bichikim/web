@@ -65,6 +65,7 @@ importers:
       parcel: ^2.0.1
       rollup-plugin-delete: ^2.0.0
       rollup-plugin-node-externals: ^2.2.0
+      rollup-plugin-smart-asset: ^2.1.2
       rollup-plugin-ts-treeshaking: ^1.0.2
       rollup-plugin-typescript2: ^0.30.0
       sinon: ^11.1.2
@@ -133,6 +134,7 @@ importers:
       parcel: 2.0.1
       rollup-plugin-delete: 2.0.0
       rollup-plugin-node-externals: 2.2.0
+      rollup-plugin-smart-asset: 2.1.2
       rollup-plugin-ts-treeshaking: 1.0.2
       rollup-plugin-typescript2: 0.30.0_typescript@4.4.4
       sinon: 11.1.2
@@ -345,7 +347,6 @@ importers:
       '@emotion/serialize': ^1.0.2
       '@emotion/server': ^11.4.0
       '@emotion/utils': ^1.0.0
-      '@types/node': ^16.11.7
       '@vue/server-renderer': ^3.1.5
       '@winter-love/use': ^1.0.19-beta.1
       '@winter-love/utils': ^1.0.19-beta.0
@@ -364,17 +365,16 @@ importers:
     devDependencies:
       '@babel/core': 7.15.8
       '@emotion/server': 11.4.0_@emotion+css@11.1.3
-      '@types/node': 16.11.7
       '@vue/server-renderer': 3.2.20_vue@3.2.20
       gulp: 4.0.2
       vue: 3.2.20
 
   packages/libraries:
     specifiers:
-      '@winter-love/emotion': ^1.0.19-beta.1
+      '@winter-love/emotion': ^1.0.19-beta.2
       '@winter-love/stitches': ^1.0.19-beta.0
-      '@winter-love/style-system': ^1.0.19-beta.1
-      '@winter-love/style-system-next': ^1.0.19-beta.1
+      '@winter-love/style-system': ^1.0.19-beta.2
+      '@winter-love/style-system-next': ^1.0.19-beta.2
       '@winter-love/test-use': ^1.0.19-beta.0
       '@winter-love/use': ^1.0.19-beta.1
       '@winter-love/utils': ^1.0.19-beta.0
@@ -432,7 +432,7 @@ importers:
       '@types/styled-system': ^5.1.11
       '@types/styled-system__css': ^5.0.15
       '@vue/test-utils': ^2.0.0-rc.14
-      '@winter-love/emotion': ^1.0.19-beta.1
+      '@winter-love/emotion': ^1.0.19-beta.2
       '@winter-love/utils': ^1.0.19-beta.0
       csstype: ^3.0.8
       gulp: ^4.0.2
@@ -459,7 +459,7 @@ importers:
       '@emotion/css': ^11.1.3
       '@types/styled-system': ^5.1.11
       '@types/styled-system__css': ^5.0.15
-      '@winter-love/emotion': ^1.0.19-beta.1
+      '@winter-love/emotion': ^1.0.19-beta.2
       '@winter-love/utils': ^1.0.19-beta.0
       csstype: ^3.0.8
       deepmerge: ^4.2.2
@@ -7902,10 +7902,6 @@ packages:
   /@types/node/16.11.6:
     resolution: {integrity: sha512-ua7PgUoeQFjmWPcoo9khiPum3Pd60k4/2ZGXt18sm2Slk0W0xZTqt5Y0Ny1NyBiN1EVQ/+FaF9NcY4Qe6rwk5w==}
 
-  /@types/node/16.11.7:
-    resolution: {integrity: sha512-QB5D2sqfSjCmTuWcBWyJ+/44bcjO7VbjSbOE0ucoVbAsSNQc4Lt6QkgkVXkTDwkL4z/beecZNDvVX15D4P8Jbw==}
-    dev: true
-
   /@types/normalize-package-data/2.4.1:
     resolution: {integrity: sha512-Gj7cI7z+98M282Tqmp2K5EIsoouUEzbBJhQQzDE3jSIRk6r9gsz0oUokqIUR4u1R3dMHo0pDHM7sNOHyhulypw==}
     dev: true
@@ -9977,6 +9973,10 @@ packages:
 
   /big.js/5.2.2:
     resolution: {integrity: sha512-vyL2OymJxmarO8gxMr0mhChsO9QGwhynfuu4+MHTAW6czfq9humCB7rKpUjDd9YUiDPU4mzpyupFSvOClAwbmQ==}
+
+  /big.js/6.1.1:
+    resolution: {integrity: sha512-1vObw81a8ylZO5ePrtMay0n018TcftpTA5HFKDaSuiUDBo8biRBtjIobw60OpwuvrGk+FsxKamqN4cnmj/eXdg==}
+    dev: true
 
   /binary-extensions/1.13.1:
     resolution: {integrity: sha512-Un7MIEDdUC5gNpcGDV97op1Ywk748MpHcFTHoYs6qnj1Z3j7I53VG3nwZhKzoBZmbdRNnb6WRdFlwl7tSDuZGw==}
@@ -22279,6 +22279,18 @@ packages:
     deprecated: This module has moved and is now available at @rollup/plugin-replace. Please update your dependencies. This version is no longer maintained.
     dependencies:
       magic-string: 0.25.7
+      rollup-pluginutils: 2.8.2
+    dev: true
+
+  /rollup-plugin-smart-asset/2.1.2:
+    resolution: {integrity: sha512-Y/gD3abliw3F20uY6ILpmH6sokXKntuTFKvDdLEJxHFcyQRsTb12u2KbsapqPZDa4JN/Nxx7BslYlZ/KmYAtPg==}
+    peerDependencies:
+      rollup: '>0.60'
+    dependencies:
+      big.js: 6.1.1
+      magic-string: 0.25.7
+      mime: 2.5.2
+      mkdirp: 1.0.4
       rollup-pluginutils: 2.8.2
     dev: true
 
