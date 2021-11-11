@@ -302,11 +302,11 @@ describe('emotion', () => {
     it('should style with default props', () => {
       const styled = createStyled(createEmotionOriginal({key: 'css'}))
       const Component = styled('div', {
-        props: {
-          backgroundColor: {default: 'blue', type: String},
-          color: {default: 'red', type: String},
+        styleDefaults: {
+          backgroundColor: 'blue',
+          color: 'red',
         },
-        stylePortal: 'sx',
+        stylePortal: 'cssNext',
       })(
         ({color}: any) => {
           return {
@@ -321,7 +321,7 @@ describe('emotion', () => {
       )
       const wrapper = mount(Component, {
         props: {
-          sx: {backgroundColor: 'red'},
+          'css-next': {backgroundColor: 'red'},
         },
       })
       expect(wrapper.element).toHaveStyle({

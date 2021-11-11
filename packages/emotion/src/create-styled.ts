@@ -1,7 +1,7 @@
 import {Emotion as _Emotion} from '@emotion/css/create-instance'
 import {Interpolation, serializeStyles} from '@emotion/serialize'
 import {getRegisteredStyles, insertStyles} from '@emotion/utils'
-import {ExtractPropTypesForUsing} from '@winter-love/use'
+import {ExtractPropTypesForUsing, margeProps} from '@winter-love/use'
 import {isSSR} from '@winter-love/utils'
 import clsx, {ClassValue} from 'clsx'
 import {
@@ -34,60 +34,6 @@ export type PossibleElement = Tags | FunctionalComponent | SFC | any
 const defaultProps = {
   as: null,
   theme: null,
-}
-
-const setDefaults = (props: Record<string, any>, defaults: Record<string, string | number | (() => any)>) => {
-  const _props = {...props}
-
-  Object.keys(defaults).forEach((key) => {
-    if (typeof _props[key] !== 'undefined') {
-      return
-    }
-    const value = defaults[key]
-    if (typeof value === 'function') {
-      _props[key] = value()
-    }
-    _props[key] = value
-  })
-  return _props
-}
-
-const createGetProps = (propOptions: ComponentObjectPropsOptions | Readonly<string[]>, stylePortal?: string) => {
-  const propOptionsKeys = Array.isArray(propOptions) ? propOptions : Object.keys(propOptions)
-
-  const {shouldForwardProps, defaults} = propOptionsKeys.reduce((result, key) => {
-    const defaultValue = propOptions[key]?.default
-    if (defaultValue) {
-      result.defaults[key] = defaultValue
-    }
-    result.shouldForwardProps[key] = true
-    return result
-  }, {defaults: {}, shouldForwardProps: {}})
-
-  return (attrs: Record<string, any>) => {
-
-    if (stylePortal) {
-      const {[stylePortal]: styleProps, ...rest} = attrs
-      const newProps = typeof styleProps === 'object' && !Array.isArray(styleProps) ? styleProps : {}
-      return {
-        props: setDefaults(newProps, defaults),
-        rest,
-      }
-    }
-    const {props, rest} = Object.keys(attrs).reduce((result, key) => {
-      if (shouldForwardProps[key]) {
-        result.props[key] = attrs[key]
-        return result
-      }
-      result.rest[key] = attrs[key]
-      return result
-    }, {props: {}, rest: {}})
-    return {
-      props: setDefaults(props, defaults),
-      rest,
-    }
-  }
-
 }
 
 interface GetNextPropsOptions {
@@ -151,6 +97,7 @@ export const createStyled = (emotion: _Emotion & {theme?: any}) => {
       target,
       name,
       props: stylePropsOptions = {},
+      styleDefaults = {},
       stylePortal,
       nextStylePortal,
       passAs = false,
@@ -161,7 +108,7 @@ export const createStyled = (emotion: _Emotion & {theme?: any}) => {
 
     const _target = target ? ` ${target}` : ''
 
-    const getProps = createGetProps(stylePropsOptions, stylePortal)
+    // const getProps = createGetProps(stylePropsOptions, stylePortal)
 
     if (process.env.NODE_ENV === 'development' && defaultProps[stylePortal] === null) {
       console.warn('stylePortal should not be as or theme')
@@ -174,7 +121,8 @@ export const createStyled = (emotion: _Emotion & {theme?: any}) => {
 
       // eslint-disable-next-line max-statements
       const Emotion: FunctionalComponent<Record<string, any>> & StylePortalInfo = (props, {attrs, slots}) => {
-        const {as} = props
+        const {as, theme: themeInProps, ...restProps} = props
+        const styleProps = {...styleDefaults, ...(stylePortal ? props[stylePortal] : restProps)}
         const _element = passAs ? element : (as ?? element)
         const theme = useTheme(masterTheme)
         const cache = inject(EMOTION_CACHE_CONTEXT, masterCache)
@@ -185,12 +133,12 @@ export const createStyled = (emotion: _Emotion & {theme?: any}) => {
           ? undefined
           : (nextStylePortal ?? _element.stylePortal ?? _element.__stylePortal)
         const classInterpolations: string[] = []
-        const {class: classes, ...restAttrs} = attrs
-        const {props: styleProps, rest: restProps} = getProps(restAttrs)
+        const {class: classes, ...restNextAttrs} = attrs
+        // const {props: styleProps, rest: restNextAttrs} = getProps(restAttrs)
 
         // 만약 as 를 다음으로 넘긴다면
         if (passAs) {
-          restProps.as = as
+          restNextAttrs.as = as
         }
 
         const allAttrs = {
@@ -218,7 +166,7 @@ export const createStyled = (emotion: _Emotion & {theme?: any}) => {
 
         const className = `${registeredClassName} ${cache.key}-${serialized.name}${_target}`
 
-        const nextAttrs = getNextProps(styleProps, restProps, {
+        const nextAttrs = getNextProps(styleProps, restNextAttrs, {
           inheritStyleProps,
           isStringElement,
           nextStylePortal: _nextStylePortal,
@@ -267,7 +215,7 @@ export const createStyled = (emotion: _Emotion & {theme?: any}) => {
         }
       }
 
-      Emotion.props = defaultProps
+      Emotion.props = margeProps({...stylePropsOptions, ...(stylePortal ? {[stylePortal]: null} : {})}, defaultProps)
 
       return Emotion
     }

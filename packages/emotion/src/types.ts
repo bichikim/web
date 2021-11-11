@@ -14,6 +14,7 @@ export interface StyledOptions {
   name?: string
   nextStylePortal?: string
   passAs?: boolean
+  styleDefaults?: Record<string, any>
   stylePortal?: string
   target?: string
 }

@@ -1,23 +1,6 @@
-import {createInfoMap, getDescription, getIdentifier, getName, getPlayground, getRelates, setName, setPlayground} from '../info'
+import {useInfo} from '../'
 
 describe('info', () => {
-  describe('createInfoMap', () => {
-    it('should return info', () => {
-      const info = createInfoMap()
-      const target = {}
-      info.set(target, {
-        description: 'hello',
-        identifier: 'unknown',
-        name: 'foo',
-      })
-      expect(info.get(target)).toEqual({
-        description: 'hello',
-        identifier: 'unknown',
-        name: 'foo',
-        relates: new Map(),
-      })
-    })
-  })
   const infoData = {
     description: 'hello',
     identifier: 'unknown',
@@ -25,7 +8,7 @@ describe('info', () => {
     playground: {args: ['foo']},
   }
 
-  const info = createInfoMap()
+  const info = useInfo()
   const target = {}
   info.set(target, {...infoData})
 
@@ -33,45 +16,7 @@ describe('info', () => {
     info.set(target, {...infoData})
   })
 
-  describe('getName', () => {
-    it('should get name', () => {
-      expect(getName(info, target)).toBe('foo')
-    })
-  })
-  describe('getRelates', () => {
-    it('should get name', () => {
-      expect(getRelates(info, target)).toEqual(new Map())
-    })
-  })
-  describe('getPlayground', () => {
-    it('should get name', () => {
-      expect(getPlayground(info, target)).toEqual({
-        args: ['foo'],
-      })
-    })
-  })
-  describe('getDescription', () => {
-    it('should get name', () => {
-      expect(getDescription(info, target)).toBe('hello')
-    })
-  })
-  describe('getIdentifier', () => {
-    it('should get name', () => {
-      expect(getIdentifier(info, target)).toBe('unknown')
-    })
-  })
-  describe('setName', () => {
-    it('should get name', () => {
-      setName(info, target, 'foo')
-      expect(getName(info, target)).toBe('foo')
-    })
-  })
-  describe('setPlayground', () => {
-    it('should get name', () => {
-      setPlayground(info, target, {args: ['bar']})
-      expect(getPlayground(info, target)).toEqual({
-        args: ['bar'],
-      })
-    })
+  it('should get name', () => {
+    expect(info.get(target)?.name).toBe('foo')
   })
 })
