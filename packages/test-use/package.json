@@ -10,27 +10,26 @@
   "repository": "git@github.com:winter-love/web.git",
   "license": "MIT",
   "author": "bichi@live.co.kr",
-  "type": "module",
   "exports": {
     ".": {
-      "import": "./lib/index.js",
-      "require": "./lib/index.cjs"
+      "import": "./lib/index.module.js",
+      "require": "./lib/index.js"
     },
     "./*": "./*"
   },
-  "main": "lib/index.cjs",
-  "jsdelivr": "lib/index.global.js",
-  "unpkg": "lib/index.global.js",
-  "module": "lib/index.js",
+  "main": "lib/index.js",
+  "jsdelivr": "lib/index.iife.js",
+  "unpkg": "lib/index.iife.js",
+  "module": "lib/index.module.js",
   "source": "src/index.ts",
   "types": "lib/index.d.ts",
   "files": [
     "lib/*"
   ],
   "scripts": {
-    "build": "tsup-node --dts",
-    "dev": "tsup-node --dts --watch",
-    "prepare": "tsup-node"
+    "build": "gulp build",
+    "dev": "gulp dev",
+    "prepare": "gulp build"
   },
   "devDependencies": {
     "@vue/test-utils": "^2.0.0-rc.12",
