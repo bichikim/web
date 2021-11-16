@@ -28,9 +28,9 @@
     "lib/*"
   ],
   "scripts": {
-    "build": "tsup --dts src/index.ts",
-    "dev": "tsup --dts --watch",
-    "prepare": "tsup"
+    "build": "tsup-node --dts",
+    "dev": "tsup-node --dts --watch",
+    "prepare": "tsup-node"
   },
   "dependencies": {
     "micro-memoize": "^4.0.9",

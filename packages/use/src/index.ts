@@ -1,5 +1,3 @@
-/* istanbul ignore file */
-// no need to test for exporting only file
 export * from './animation-repeater'
 export * from './blur'
 export * from './clipboard'

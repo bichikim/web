@@ -28,9 +28,9 @@
     "lib/*"
   ],
   "scripts": {
-    "build": "tsup --dts",
-    "dev": "tsup --dts --watch",
-    "prepare": "tsup"
+    "build": "tsup-node --dts",
+    "dev": "tsup-node --dts --watch",
+    "prepare": "tsup-node"
   },
   "devDependencies": {
     "@vue/test-utils": "^2.0.0-rc.12",

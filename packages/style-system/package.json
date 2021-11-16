@@ -34,9 +34,9 @@
     "lib/*"
   ],
   "scripts": {
-    "build": "tsup --dts-resolve",
-    "dev": "tsup --dts --watch",
-    "prepare": "tsup"
+    "build": "tsup-node --dts",
+    "dev": "tsup-node --dts --watch",
+    "prepare": "tsup-node"
   },
   "dependencies": {
     "@winter-love/utils": "^1.0.19-beta.0",

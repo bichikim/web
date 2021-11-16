@@ -30,9 +30,9 @@
     "lib/*"
   ],
   "scripts": {
-    "build": "tsup --dts",
-    "dev": "tsup --dts --watch",
-    "prepare": "tsup"
+    "build": "tsup-node --dts",
+    "dev": "tsup-node --dts --watch",
+    "prepare": "tsup-node"
   },
   "dependencies": {
     "@emotion/css": "^11.1.3",
