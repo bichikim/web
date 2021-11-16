@@ -30,7 +30,7 @@
     "@quasar/app": "^3.1.4",
     "@quasar/extras": "^1.11.2",
     "@stitches/core": "^1.2.5",
-    "@vue/server-renderer": "^3.2.20",
+    "@vue/server-renderer": "^3.2.22",
     "@vueuse/head": "^0.6.0",
     "@winter-love/stitches": "^1.0.19-beta.7",
     "@winter-love/utils": "^1.0.19-beta.7",
@@ -42,14 +42,14 @@
     "serve-static": "^1.14.1",
     "vare": "^1.0.19-beta.7",
     "vite-ssr-vue": "^0.2.20",
-    "vue": "^3.2.20",
-    "vue-i18n": "9.2.0-beta.12",
+    "vue": "^3.2.22",
+    "vue-i18n": "^9.1.9",
     "vue-router": "^4.0.12"
   },
   "devDependencies": {
     "@capacitor/cli": "^3.2.5",
     "@iconify/json": "^1.1.415",
-    "@intlify/vite-plugin-vue-i18n": "^2.4.0",
+    "@intlify/vite-plugin-vue-i18n": "^3.1.0",
     "@rollup/plugin-replace": "^3.0.0",
     "@types/lodash": "^4.14.175",
     "@types/node": "^16.11.0",
@@ -66,7 +66,8 @@
     "unplugin-icons": "^0.12.16",
     "unplugin-vue-components": "^0.15.6",
     "vite": "^2.6.7",
-    "vite-plugin-pwa": "^0.11.3"
+    "vite-plugin-pwa": "^0.11.3",
+    "rollup": "^2.60.0"
   },
   "gitHead": "49922aa2164ceefcebf5fcd3bd83dce16c67df21"
 }

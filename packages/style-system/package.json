@@ -50,7 +50,7 @@
     "@winter-love/emotion": "^1.0.19-beta.7",
     "csstype": "^3.0.8",
     "gulp": "^4.0.2",
-    "vue": "^3.2.20",
+    "vue": "^3.2.22",
     "vue-demi": "^0.11.4"
   },
   "gitHead": "7c6085ce15f0c5fb47fe4c263afb3c52febb04d7"

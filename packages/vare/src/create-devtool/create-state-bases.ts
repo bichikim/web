@@ -1,11 +1,12 @@
-import {compact, isNaN, trim} from 'lodash'
 import {StateBase} from '@vue/devtools-api'
-import {isRef, ref} from 'vue-demi'
+
+import {isAction, isAtomComputedRef} from 'src/atom'
+import {isCompute, isComputedRef} from 'src/compute'
 import {findState} from 'src/create-devtool/find-state'
 import {useInfo} from 'src/info'
 import {isMutate} from 'src/mutate'
-import {isCompute, isComputedRef} from 'src/compute'
-import {isAction, isAtomComputedRef} from 'src/atom'
+import {isRef} from 'vue-demi'
+import {stringToArgs} from './string-to-args'
 
 export const getValue = (value: any) => {
   if (isRef(value)) {
@@ -29,20 +30,6 @@ const argsToString = (args: any[] = []) => {
     }
     return String(value)
   }).join(', ')
-}
-
-const stringToArgs = (text: string) => {
-  return compact(text.split(',').map((value) => {
-    const _value = value.trim()
-    if (/^".+"$/u.test(_value)) {
-      return trim(_value, '"')
-    }
-    const number = Number(_value)
-    if (isNaN(number)) {
-      return null
-    }
-    return number
-  }))
 }
 
 // eslint-disable-next-line max-statements
@@ -154,7 +141,7 @@ export const createStateBases = (targets?: Record<string, any>): StateBases => {
 
         const atoms = findState(value)
 
-        atoms.forEach(([namespace, value]) => {
+        atoms.forEach(([_, value]) => {
           const relates = info.get(value)?.relates
           if (relates) {
             rootRelates.push(...[...relates.entries()].map(([key, value]) => getRelatesState(key, value, updateState)))
