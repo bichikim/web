@@ -18,7 +18,7 @@
     },
     "./*": "./*"
   },
-  "main": "lib/index.js",
+  "main": "lib/index.cjs",
   "jsdelivr": "lib/index.global.js",
   "unpkg": "lib/index.global.js",
   "module": "lib/index.js",
