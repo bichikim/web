@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/use",
-  "version": "1.0.19-beta.6",
+  "version": "1.0.19-beta.7",
   "description": "Vue utils",
   "keywords": [
     "typescript",
@@ -38,7 +38,7 @@
     "prepare": "gulp build"
   },
   "dependencies": {
-    "@winter-love/utils": "^1.0.19-beta.6",
+    "@winter-love/utils": "^1.0.19-beta.7",
     "debounce": "^1.2.1",
     "fast-json-stable-stringify": "^2.1.0",
     "vue-demi": "^0.11.3"
