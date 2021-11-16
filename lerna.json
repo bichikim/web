@@ -11,7 +11,6 @@
     },
     "publish": {
       "ignoreChanges": [
-        "package.json",
         "lerna.json",
         "ignored-file",
         "*.md"
