@@ -25,8 +25,6 @@ export const createInspectorTree = (targets: Record<string, any>) => {
     const children: any[] = []
     const targetInfo = info.get(target)
 
-    console.log(targetInfo)
-
     const kind = targetInfo?.kind ?? 'unknown'
     return {
       id: name,
