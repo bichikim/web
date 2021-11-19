@@ -25,19 +25,32 @@ export type StitchesElement = Element & {
   __stitches__?: StitchesInfo
 }
 
+export interface GetCssListPayload {
+  breakpoint?: string
+  css: Record<string, any>
+  system: CssComponent
+  variants?: Record<string, any>
+}
+
+export const applyTarget = (css: Record<string, any>, breakpoint?: string) => {
+  return breakpoint ? {
+    [`@${breakpoint}`]: css,
+  } : css
+}
+
 export const getCssList = (
-  system: CssComponent,
-  css: Record<string, any>,
-  variants: Record<string, any> = {},
+  payload: GetCssListPayload,
 ) => {
-  return system({...variants, css}).className.split(' ')
+  const {css, variants, system, breakpoint} = payload
+
+  return system({...variants, css: applyTarget(css, breakpoint)}).className.split(' ')
 }
 
 export const getClassName = (
   system: CssComponent,
   binding: DirectiveBinding<DirectiveBindingValue>,
 ) => {
-  const {value} = binding
+  const {value, arg} = binding
 
   if (typeof value !== 'object') {
     return
@@ -45,10 +58,15 @@ export const getClassName = (
 
   if (Array.isArray(value)) {
     const [css, variants] = value
-    return getCssList(system, css, variants)
+    return getCssList({breakpoint: arg, css, system, variants})
   }
 
-  return getCssList(system, value)
+  return getCssList({breakpoint: arg, css: value, system})
+}
+
+export const getSaveInfoKey = (binding: DirectiveBinding<DirectiveBindingValue>, name: string = '__stitches__') => {
+  const {arg: namespace = ''} = binding
+  return `${name}${namespace}`
 }
 
 const updateClassName = (
@@ -56,14 +74,15 @@ const updateClassName = (
   el: StitchesElement,
   binding: DirectiveBinding<DirectiveBindingValue>,
 ) => {
-  const {previousClassNames} = el.__stitches__ ?? {}
+  const infoKey = getSaveInfoKey(binding)
+  const {previousClassNames} = el[infoKey] ?? {}
   if (previousClassNames) {
     el.classList.remove(...previousClassNames)
   }
 
   const classNames = getClassName(system, binding)
 
-  el.__stitches__ = {
+  el[infoKey] = {
     previousClassNames: classNames,
   }
 

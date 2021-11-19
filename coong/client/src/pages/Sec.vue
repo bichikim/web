@@ -31,7 +31,7 @@
     >
       id {{ item.id }}
     </div>
-    <q-btn @click="addItem">
+    <q-btn @click="addItem" v-css="{bg: '$red1'}" v-css:bp2="{bg: 'green'}">
       add Item
     </q-btn>
     <q-btn @click="addName">

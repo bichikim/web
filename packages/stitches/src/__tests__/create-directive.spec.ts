@@ -21,6 +21,11 @@ describe('createDirective', () => {
         },
       },
     })
+
+    /**
+     * value = [css, variants] or css
+     * arg = string undefined
+     */
     const directive = createDirective({
       left: 0,
     })
@@ -28,7 +33,7 @@ describe('createDirective', () => {
     const app = createSSRApp({
       setup() {
         return () => (
-          withDirectives(h('div'), [[directive, {color: 'red'}]])
+          withDirectives(h('div'), [[directive, {color: 'red'}, 'foo']])
         )
       },
     })

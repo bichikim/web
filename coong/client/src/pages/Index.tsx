@@ -63,7 +63,7 @@ const IndexPage = defineComponent({
           {postList.value.map((item) => {
             return <div key={item.id}>{`id ${item.id}`}</div>
           })}
-          <QBtn onClick={addItem}>add Item</QBtn>
+          <QBtn onClick={addItem} v-stitches={[{bg: '$red1'}]}>add Item</QBtn>
           <QBtn onClick={addName}>add Name</QBtn>
           <QBtn onClick={setBucketName}>set Name</QBtn>
           <QBtn onClick={increaseCount}>increase Count</QBtn>
