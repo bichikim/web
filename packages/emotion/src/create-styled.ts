@@ -28,7 +28,7 @@ import {
 type KeyAndObject<Key extends string | undefined> = Key extends string ? {[P in Key]: null} : EmptyObject
 
 export type StyledResult<PropsOptions, StylePortal extends string | undefined> =
-  ((...args: (TemplateStringsArray | Interpolation<ExtractPropTypes<PropsOptions>>)[]) =>
+  ((...args: (TemplateStringsArray | Interpolation<ExtractPropTypes<PropsOptions> & {theme: Record<string, any>}>)[]) =>
     DefineComponent<ExtractPropTypesForUsing<PropsOptions & KeyAndObject<StylePortal>>>)
 
 const toBeClassName = (value: any): ClassValue => {

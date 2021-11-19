@@ -10,6 +10,7 @@ import {mount} from '@vue/test-utils'
 import {
   createApp, defineComponent, h,
 } from 'vue-demi'
+import {expectType} from 'tsd'
 
 describe('emotion', () => {
   describe('createStyled', () => {
@@ -33,8 +34,10 @@ describe('emotion', () => {
       })({
         backgroundColor: 'red',
       }, (props) => {
+        const {theme, color} = props
+        expectType<Record<string, any>>(theme)
         return {
-          color: props.color,
+          color,
         }
       })
 
