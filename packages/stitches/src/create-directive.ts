@@ -177,9 +177,11 @@ export const createCreateDirective = <
           class: getClassName(system, binding),
         }
       },
+      // no way to test with the stitches
       mounted(el: StitchesElement, binding) {
         updateClassName(system, el, binding)
       },
+      // no way to test with the stitches
       updated(el: StitchesElement, binding) {
         updateClassName(system, el, binding)
       },

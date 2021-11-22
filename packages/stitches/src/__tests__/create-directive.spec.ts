@@ -3,13 +3,13 @@
  */
 
 import {createCreateDirective} from '../create-directive'
-import {createSSRApp, h, withDirectives} from 'vue-demi'
+import {createSSRApp, h, ref, withDirectives} from 'vue-demi'
 import {renderToString} from '@vue/server-renderer'
 
 describe('createDirective', () => {
   it('should create directive', async () => {
 
-    const {createDirective, getCssText, toString} = createCreateDirective({
+    const {createDirective, toString} = createCreateDirective({
       media: {
         bp1: '(min-width: 640px)',
         bp2: '(min-width: 768px)',
@@ -30,15 +30,23 @@ describe('createDirective', () => {
       left: 0,
     })
 
+    const colorRef = ref('red')
+
     const app = createSSRApp({
       setup() {
         return () => (
-          withDirectives(h('div'), [[directive, {color: 'red'}, 'foo']])
+          withDirectives(h('div'), [[directive, {color: colorRef.value}, 'foo']])
         )
       },
     })
 
-    const appContent = await renderToString(app)
+    await renderToString(app)
+
+    expect(toString()).toMatchSnapshot()
+
+    colorRef.value = 'green'
+
+    await renderToString(app)
 
     expect(toString()).toMatchSnapshot()
   })

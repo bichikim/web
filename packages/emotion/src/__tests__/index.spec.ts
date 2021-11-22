@@ -163,7 +163,6 @@ describe('emotion', () => {
         name: 'foo',
       })
       expect(StyledComponent.name).toBe('foo')
-      expect(StyledComponent.displayName).toBe('foo')
     })
 
     it.skip('should pass styleProps with a component element by default', () => {
@@ -190,7 +189,7 @@ describe('emotion', () => {
         label: 'bar',
       })
       expect(StyledComponent.name).toBe('bar')
-      expect(StyledComponent.displayName).toBe('bar')
+      // expect(StyledComponent.displayName).toBe('bar')
     })
 
     it('should use name for label with label = true', () => {
@@ -204,8 +203,7 @@ describe('emotion', () => {
 
     it('should use the name "emotion" if it does not have name and label ', () => {
       const {StyledComponent} = setup()
-      // expect(StyledComponent.name).toBe('emotion')
-      expect(StyledComponent.displayName).toBe('emotion')
+      expect(StyledComponent.name).toBe('emotion')
     })
 
     it('should render an empty slot', () => {

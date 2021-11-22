@@ -1,3 +1,5 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`createDirective should create directive 1`] = `"--sxs{--sxs:0 t-cmZyyi}@media{:root,.t-cmZyyi{--colors-red1:#FD2525}}--sxs{--sxs:2 c-cezigA}@media{.c-cezigA{left:0}}--sxs{--sxs:5 c-cezigA-icpGkfP-css}@media{.c-cezigA-icpGkfP-css foo{color:red}}"`;
+exports[`createDirective should create directive 1`] = `"--sxs{--sxs:0 t-cmZyyi}@media{:root,.t-cmZyyi{--colors-red1:#FD2525}}--sxs{--sxs:2 c-cezigA}@media{.c-cezigA{left:0}}--sxs{--sxs:5 c-cezigA-iigVDwf-css}@media{@foo{.c-cezigA-iigVDwf-css{color:red}}}"`;
+
+exports[`createDirective should create directive 2`] = `"--sxs{--sxs:0 t-cmZyyi}@media{:root,.t-cmZyyi{--colors-red1:#FD2525}}--sxs{--sxs:2 c-cezigA}@media{.c-cezigA{left:0}}--sxs{--sxs:5 c-cezigA-iigVDwf-css c-cezigA-icaTIqL-css}@media{@foo{.c-cezigA-iigVDwf-css{color:red}}@foo{.c-cezigA-icaTIqL-css{color:green}}}"`;
