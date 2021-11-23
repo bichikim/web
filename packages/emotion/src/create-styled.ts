@@ -136,7 +136,11 @@ export const createStyled = (emotion: _Emotion & {theme?: any}) => {
               isStringElement,
             )
 
-            const className = `${registeredClassName} ${cache.key}-${serialized.name}${_target}`
+            let className = `${cache.key}-${serialized.name}${_target}`
+
+            if (registeredClassName) {
+              className = `${registeredClassName} ${className}`
+            }
 
             const vNode = h(_element, {...restNextAttrs, class: className, ref: 'root'}, slots)
 
