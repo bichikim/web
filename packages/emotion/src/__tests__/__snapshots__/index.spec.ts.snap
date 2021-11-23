@@ -32,10 +32,10 @@ exports[`emotion createStyled should deep as 1`] = `
   class="emotion-0 emotion-1"
 >
   <div
-    class="  emotion-2"
+    class=" emotion-2"
   >
     <div
-      class="  emotion-3"
+      class=" emotion-3"
     />
   </div>
 </button>
