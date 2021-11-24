@@ -1,5 +1,3 @@
-import {flow} from 'lodash'
-
 const trimUrlRegx = /^[\s/]+|[\s/]+$/ugi
 
 const protocolRegx = /^(?:https?|ftp):\/\//u
@@ -86,7 +84,7 @@ export const queryFromEntire = (key: string, value: string) => {
   return `${_key}=${encodeURIComponent(value)}`
 }
 
-export const resolveQuery = flow(
-  (record: Record<string, any>) => Object.entries(record).map(([key, value]) => queryFromEntire(key, value)),
-  (list) => joinQuery(...list),
-)
+export const resolveQuery = (record: Record<string, any>) => {
+  const list = Object.entries(record).map(([key, value]) => queryFromEntire(key, value))
+  return joinQuery(...list)
+}
