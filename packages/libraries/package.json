@@ -1,6 +1,6 @@
 {
   "name": "libraries",
-  "version": "1.0.19",
+  "version": "1.0.20",
   "private": true,
   "scripts": {
     "build": "echo building for libraries",
@@ -14,6 +14,6 @@
     "@winter-love/test-use": "^1.0.19",
     "@winter-love/use": "^1.0.19",
     "@winter-love/utils": "^1.0.19",
-    "vare": "^1.0.19"
+    "vare": "^1.0.20"
   }
 }
