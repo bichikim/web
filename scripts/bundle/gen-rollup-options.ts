@@ -11,7 +11,7 @@ import ttypescript from 'ttypescript'
 import tsTreeShaking from 'rollup-plugin-ts-treeshaking'
 import externals from 'rollup-plugin-node-externals'
 import asset from 'rollup-plugin-smart-asset'
-import {optimizeLodashImports} from '@optimize-lodash/rollup-plugin'
+// import {optimizeLodashImports} from '@optimize-lodash/rollup-plugin'
 
 export interface GenOutputOptions extends OutputOptions {
   minify?: boolean
@@ -116,7 +116,7 @@ export const genRollupOptions = (options: GenRollupOptions = {}): BundleOptions 
      * @see https://www.npmjs.com/package/rollup-plugin-ts-treeshaking
      */
     tsTreeShaking(),
-    optimizeLodashImports(),
+    // optimizeLodashImports(),
   ]
 
   if (clean) {
