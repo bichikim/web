@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/style-system",
-  "version": "1.0.21",
+  "version": "1.0.22",
   "keywords": [
     "typescript",
     "style",
@@ -38,7 +38,7 @@
     "prepare": "gulp build"
   },
   "dependencies": {
-    "@winter-love/utils": "^1.0.21",
+    "@winter-love/utils": "^1.0.22",
     "merge-deep": "^3.0.3"
   },
   "devDependencies": {
@@ -47,7 +47,7 @@
     "@types/styled-system": "^5.1.11",
     "@types/styled-system__css": "^5.0.15",
     "@vue/test-utils": "^2.0.0-rc.14",
-    "@winter-love/emotion": "^1.0.21",
+    "@winter-love/emotion": "^1.0.22",
     "csstype": "^3.0.8",
     "gulp": "^4.0.2",
     "vue": "^3.2.22",
