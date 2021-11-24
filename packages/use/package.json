@@ -41,7 +41,8 @@
     "@winter-love/utils": "^1.0.19-beta.7",
     "debounce": "^1.2.1",
     "fast-json-stable-stringify": "^2.1.0",
-    "vue-demi": "^0.11.3"
+    "vue-demi": "^0.11.3",
+    "lodash": "^4.17.21"
   },
   "devDependencies": {
     "@types/debounce": "^1.2.0",

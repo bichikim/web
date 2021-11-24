@@ -16,6 +16,7 @@ importers:
       '@babel/preset-typescript': ^7.16.0
       '@emotion/jest': ^11.6.0
       '@mdx-js/preact': ^1.6.22
+      '@optimize-lodash/rollup-plugin': ^2.1.0
       '@parcel/packager-ts': ^2.0.1
       '@parcel/transformer-typescript-types': ^2.0.1
       '@storybook/addon-actions': 6.4.0-beta.7
@@ -86,6 +87,7 @@ importers:
       '@babel/preset-typescript': 7.16.0_@babel+core@7.16.0
       '@emotion/jest': 11.6.0_@types+jest@26.0.24
       '@mdx-js/preact': 1.6.22
+      '@optimize-lodash/rollup-plugin': 2.1.0
       '@parcel/packager-ts': 2.0.1
       '@parcel/transformer-typescript-types': 2.0.1_typescript@4.4.4
       '@storybook/addon-actions': 6.4.0-beta.7
@@ -173,7 +175,7 @@ importers:
       '@vue/compiler-sfc': ^3.2.20
       '@vue/server-renderer': ^3.2.22
       '@vueuse/head': ^0.6.0
-      '@winter-love/stitches': ^1.0.19-beta.7
+      '@winter-love/stitches': ^1.0.19-beta.11
       '@winter-love/utils': ^1.0.19-beta.7
       '@zerollup/ts-transform-paths': ^1.7.18
       cross-env: ^7.0.3
@@ -191,7 +193,7 @@ importers:
       typescript: ^4.4.4
       unplugin-icons: ^0.12.16
       unplugin-vue-components: ^0.15.6
-      vare: ^1.0.19-beta.7
+      vare: ^1.0.19-beta.11
       vite: ^2.6.7
       vite-plugin-pwa: ^0.11.3
       vite-ssr-vue: ^0.2.20
@@ -352,7 +354,7 @@ importers:
       '@emotion/server': ^11.4.0
       '@emotion/utils': ^1.0.0
       '@vue/server-renderer': ^3.2.22
-      '@winter-love/use': ^1.0.19-beta.7
+      '@winter-love/use': ^1.0.19-beta.11
       '@winter-love/utils': ^1.0.19-beta.7
       clsx: ^1.1.1
       gulp: ^4.0.2
@@ -375,14 +377,14 @@ importers:
 
   packages/libraries:
     specifiers:
-      '@winter-love/emotion': ^1.0.19-beta.7
-      '@winter-love/stitches': ^1.0.19-beta.7
-      '@winter-love/style-system': ^1.0.19-beta.7
-      '@winter-love/style-system-next': ^1.0.19-beta.7
-      '@winter-love/test-use': ^1.0.19-beta.7
-      '@winter-love/use': ^1.0.19-beta.7
+      '@winter-love/emotion': ^1.0.19-beta.12
+      '@winter-love/stitches': ^1.0.19-beta.11
+      '@winter-love/style-system': ^1.0.19-beta.12
+      '@winter-love/style-system-next': ^1.0.19-beta.12
+      '@winter-love/test-use': ^1.0.19-beta.8
+      '@winter-love/use': ^1.0.19-beta.11
       '@winter-love/utils': ^1.0.19-beta.7
-      vare: ^1.0.19-beta.7
+      vare: ^1.0.19-beta.11
     dependencies:
       '@winter-love/emotion': link:../emotion
       '@winter-love/stitches': link:../stitches
@@ -396,7 +398,7 @@ importers:
   packages/parcel-build-test:
     specifiers:
       '@vue/devtools-api': ^6.0.0-beta.19
-      '@winter-love/use': ^1.0.19-beta.7
+      '@winter-love/use': ^1.0.19-beta.11
       '@winter-love/utils': ^1.0.19-beta.7
       gulp: ^4.0.2
       vue: ^3.2.20
@@ -436,7 +438,7 @@ importers:
       '@types/styled-system': ^5.1.11
       '@types/styled-system__css': ^5.0.15
       '@vue/test-utils': ^2.0.0-rc.14
-      '@winter-love/emotion': ^1.0.19-beta.7
+      '@winter-love/emotion': ^1.0.19-beta.12
       '@winter-love/utils': ^1.0.19-beta.7
       csstype: ^3.0.8
       gulp: ^4.0.2
@@ -463,7 +465,7 @@ importers:
       '@emotion/css': ^11.1.3
       '@types/styled-system': ^5.1.11
       '@types/styled-system__css': ^5.0.15
-      '@winter-love/emotion': ^1.0.19-beta.7
+      '@winter-love/emotion': ^1.0.19-beta.12
       '@winter-love/utils': ^1.0.19-beta.7
       csstype: ^3.0.8
       deepmerge: ^4.2.2
@@ -505,6 +507,7 @@ importers:
       debounce: ^1.2.1
       fast-json-stable-stringify: ^2.1.0
       gulp: ^4.0.2
+      lodash: ^4.17.21
       sinon: ^11.1.1
       vue: ^3.2.22
       vue-demi: ^0.11.3
@@ -512,6 +515,7 @@ importers:
       '@winter-love/utils': link:../utils
       debounce: 1.2.1
       fast-json-stable-stringify: 2.1.0
+      lodash: 4.17.21
       vue-demi: 0.11.4_vue@3.2.22
     devDependencies:
       '@types/debounce': 1.2.1
@@ -537,7 +541,7 @@ importers:
   packages/vare:
     specifiers:
       '@vue/devtools-api': ^6.0.0-beta.19
-      '@winter-love/use': ^1.0.19-beta.7
+      '@winter-love/use': ^1.0.19-beta.11
       '@winter-love/utils': ^1.0.19-beta.7
       gulp: ^4.0.2
       vue: ^3.2.22
@@ -3819,8 +3823,8 @@ packages:
       vue-i18n:
         optional: true
     dependencies:
-      '@intlify/message-compiler': 9.2.0-beta.19
-      '@intlify/shared': 9.2.0-beta.19
+      '@intlify/message-compiler': 9.2.0-beta.21
+      '@intlify/shared': 9.2.0-beta.21
       jsonc-eslint-parser: 1.4.1
       source-map: 0.6.1
       vue-i18n: 9.1.9_vue@3.2.22
@@ -3855,11 +3859,11 @@ packages:
       source-map: 0.6.1
     dev: false
 
-  /@intlify/message-compiler/9.2.0-beta.19:
-    resolution: {integrity: sha512-g/n7vsSL7TMHXfTy4BAQUttF7aC7Ab0Oi2T0jV4eQeMN8941R/0A5eawuuqcFRg6xDXAv4ioBDzAbIr+2osVVA==}
+  /@intlify/message-compiler/9.2.0-beta.21:
+    resolution: {integrity: sha512-Dk84bcd/REMxHCcS8PaWnoimGYZFVoxA5DE46Y4PaF7DSh6o9V2ckjHPE+O6/G9JPHlmH1Bmtl3G28xzP3tAXw==}
     engines: {node: '>= 12'}
     dependencies:
-      '@intlify/shared': 9.2.0-beta.19
+      '@intlify/shared': 9.2.0-beta.21
       source-map: 0.6.1
     dev: true
 
@@ -3882,8 +3886,8 @@ packages:
     engines: {node: '>= 10'}
     dev: false
 
-  /@intlify/shared/9.2.0-beta.19:
-    resolution: {integrity: sha512-15nA6Vc1cBa3A5tu+YEsQHqL0NHhdKriF93IFVY7zNIH/uA23RSSDwl5XlQk5PmKLZ7KU0vjR0wevzRBVpg5/Q==}
+  /@intlify/shared/9.2.0-beta.21:
+    resolution: {integrity: sha512-A4MgJqraJ30q6nb4FhkbEhSaRzPhBaXFyw31aBQEA2b3/pYKpuRopYB+ouPGKk6A1iL0WE1uZU4Emf+DtsU44w==}
     engines: {node: '>= 12'}
     dev: true
 
@@ -3901,7 +3905,7 @@ packages:
         optional: true
     dependencies:
       '@intlify/bundle-utils': 2.1.0_vue-i18n@9.1.9
-      '@intlify/shared': 9.2.0-beta.19
+      '@intlify/shared': 9.2.0-beta.21
       '@rollup/pluginutils': 4.1.1
       debug: 4.3.2
       fast-glob: 3.2.7
@@ -5263,6 +5267,24 @@ packages:
     resolution: {integrity: sha512-s1zLBjWhdEI2zwaoSgyOFoKSl109CUcVBCc7biPJ3aAf6LGLU6szDvi31JPU7bxfla2lqfhjbbg/5DdFNxOwHw==}
     dependencies:
       '@octokit/openapi-types': 11.2.0
+    dev: true
+
+  /@optimize-lodash/rollup-plugin/2.1.0:
+    resolution: {integrity: sha512-3ZT0D1OY9ZXEcjk9Q1AsRO8UNqlepMf08yNRulUX5qM+K+dnvpohy7pRxESmPkjAC2uXphoWOvfo8WpmE7btzQ==}
+    engines: {node: '>= 12'}
+    peerDependencies:
+      rollup: 2.x
+    dependencies:
+      '@optimize-lodash/transform': 2.1.0
+      '@rollup/pluginutils': 4.1.1
+    dev: true
+
+  /@optimize-lodash/transform/2.1.0:
+    resolution: {integrity: sha512-V5oGgmsF84r5wwO/uXwvGH3YpsS43oBZaosjEG9luJthuF66S69lg7fn8foYlFaWLqeAFUs+rp/5pVDQ5R3KNw==}
+    engines: {node: '>= 12'}
+    dependencies:
+      estree-walker: 2.0.2
+      magic-string: 0.25.7
     dev: true
 
   /@parcel/babel-ast-utils/2.0.1:

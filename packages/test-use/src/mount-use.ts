@@ -5,6 +5,10 @@ import {defineComponent, h, isRef} from 'vue-demi'
 
 export type TestSetup<Props extends Record<string, any>, Result extends Record<string, any>> = (props: Props) => Result
 
+const eventName = (value: string): string => {
+  return `on${upperFirst(value)}`
+}
+
 export const mountUse = <Props extends Record<string, any>, Result extends Record<string, any> = EmptyObject>(
   testSetup: TestSetup<Props, Result>,
   initProps?: Props,
@@ -13,10 +17,6 @@ export const mountUse = <Props extends Record<string, any>, Result extends Recor
   const Result = defineComponent(() => {
     return () => h('div')
   })
-
-  const eventName = (value: string): string => {
-    return `on${upperFirst(value)}`
-  }
 
   const Component = defineComponent({
     emits: ['onToggle'],
@@ -34,7 +34,7 @@ export const mountUse = <Props extends Record<string, any>, Result extends Recor
           }
           result.props[key] = isRef(value) ? value.value : value
           return result
-        }, {props: {}, handles: {}})
+        }, {handles: {}, props: {}})
 
         return h(Result, {...props, __handles: handles})
       }

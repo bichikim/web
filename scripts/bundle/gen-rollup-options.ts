@@ -11,6 +11,7 @@ import ttypescript from 'ttypescript'
 import tsTreeShaking from 'rollup-plugin-ts-treeshaking'
 import externals from 'rollup-plugin-node-externals'
 import asset from 'rollup-plugin-smart-asset'
+import {optimizeLodashImports} from '@optimize-lodash/rollup-plugin'
 
 export interface GenOutputOptions extends OutputOptions {
   minify?: boolean
@@ -99,14 +100,10 @@ export const genRollupOptions = (options: GenRollupOptions = {}): BundleOptions 
 
   const terserPlugin = terser()
 
-  const assetPlugin = asset()
-
-  const typescriptTreeShaking = tsTreeShaking()
-
   const packageJson = getPackage(cwd)
 
   const inputPlugins = [
-    assetPlugin,
+    asset(),
     /**
      * this externals plugin must be in front of the resolve plugin
      * @see https://www.npmjs.com/package/rollup-plugin-node-externals
@@ -118,7 +115,8 @@ export const genRollupOptions = (options: GenRollupOptions = {}): BundleOptions 
      * this typescript tree shaking must be after the typescript plugin
      * @see https://www.npmjs.com/package/rollup-plugin-ts-treeshaking
      */
-    typescriptTreeShaking,
+    tsTreeShaking(),
+    optimizeLodashImports(),
   ]
 
   if (clean) {

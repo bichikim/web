@@ -2,7 +2,8 @@ import {mount} from '@vue/test-utils'
 import {TriggerOptions} from '@vue/test-utils/dist/createDomEvent'
 import {EmptyObject} from '@winter-love/utils'
 import {TestSetup} from 'src/__tests__/test-ues.spec'
-import {defineComponent, h, isRef} from 'vue-demi'
+import {defineComponent, h} from 'vue-demi'
+import {unWrapRefs} from '../unwrap-refs'
 
 export const testUse = <Result extends Record<string, any> = EmptyObject>(
   testSetup: TestSetup<Result>,
@@ -17,11 +18,8 @@ export const testUse = <Result extends Record<string, any> = EmptyObject>(
     emits: ['onToggle'],
     setup: (props) => {
       const computedValue = testSetup(props)
-      return () => h(Result, Object.keys(computedValue).reduce((result, key) => {
-        const value = computedValue[key]
-        result[key] = isRef(value) ? value.value : value
-        return result
-      }, {}))
+
+      return () => h(Result, unWrapRefs(computedValue))
     },
   })
   const wrapper = mount(Component, {
