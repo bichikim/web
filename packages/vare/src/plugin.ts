@@ -31,9 +31,7 @@ export const vareInjectKey: InjectionKey<UseVareReturnType> = Symbol(vareInjectK
  */
 export const plugin: Plugin = (app, options: VarePlugin) => {
   const {states, provide: isProvide = false} = options
-  console.log('dev-go-go')
   if (process.env.NODE_ENV === 'development') {
-    console.log('dev-go')
     createDevTool(app, states)
   }
 
