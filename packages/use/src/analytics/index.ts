@@ -11,7 +11,7 @@ export const createGetDataLayer = () => {
   return (): AnalyticsDataLayer | undefined => {
     const {dataLayer} = getWindow() as any
 
-    if (!_init && !dataLayer && process.env.NODE_ENV === 'development') {
+    if (process.env.NODE_ENV === 'development' && !_init && !dataLayer) {
       console.warn('There is no datalayer')
     }
 
