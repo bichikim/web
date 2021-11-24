@@ -66,10 +66,15 @@ export const useTrack = <Payload extends Record<string, any>>(
   }
 }
 
-export const provideTrackPayload = (payload: Record<string, any> = {}) => {
+export const provideAnalytics = (payload: Record<string, any> = {}) => {
   const previousPayload = useTackPayload()
   provide(TRACK_PAYLOAD_KEY, {...previousPayload, ...payload})
 }
+
+/**
+ * @deprecated please use provideAnalytics
+ */
+export const provideTrackPayload = provideAnalytics
 
 export interface ElementTrackInfo {
   eventName: string
