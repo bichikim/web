@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/emotion",
-  "version": "1.0.19-beta.12",
+  "version": "1.0.19",
   "description": "Emotion for Vue",
   "keywords": [
     "vue",
@@ -37,8 +37,8 @@
     "@emotion/css": "^11.1.3",
     "@emotion/serialize": "^1.0.2",
     "@emotion/utils": "^1.0.0",
-    "@winter-love/use": "^1.0.19-beta.11",
-    "@winter-love/utils": "^1.0.19-beta.7",
+    "@winter-love/use": "^1.0.19",
+    "@winter-love/utils": "^1.0.19",
     "clsx": "^1.1.1",
     "vue-demi": "^0.11.3"
   },
