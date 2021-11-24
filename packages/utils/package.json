@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/utils",
-  "version": "1.0.22",
+  "version": "1.0.23-alpha.0",
   "description": "Useful javascript utils",
   "keywords": [
     "typescript",
