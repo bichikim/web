@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/style-system-next",
-  "version": "1.0.19",
+  "version": "1.0.21",
   "private": true,
   "description": "Ui style system",
   "keywords": [
@@ -40,14 +40,14 @@
     "prepare": "gulp build"
   },
   "dependencies": {
-    "@winter-love/utils": "^1.0.19",
+    "@winter-love/utils": "^1.0.21",
     "deepmerge": "^4.2.2"
   },
   "devDependencies": {
     "@emotion/css": "^11.1.3",
     "@types/styled-system": "^5.1.11",
     "@types/styled-system__css": "^5.0.15",
-    "@winter-love/emotion": "^1.0.19",
+    "@winter-love/emotion": "^1.0.21",
     "csstype": "^3.0.8",
     "gulp": "^4.0.2"
   },

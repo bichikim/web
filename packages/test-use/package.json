@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/test-use",
-  "version": "1.0.19",
+  "version": "1.0.21",
   "description": "test composition api utils",
   "keywords": [
     "typescript",
@@ -32,7 +32,7 @@
     "prepare": "gulp build"
   },
   "dependencies": {
-    "@winter-love/utils": "^1.0.19"
+    "@winter-love/utils": "^1.0.21"
   },
   "devDependencies": {
     "@vue/test-utils": "^2.0.0-rc.12",
