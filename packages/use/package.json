@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/use",
-  "version": "1.0.23-alpha.1",
+  "version": "1.0.23-alpha.2",
   "description": "Vue utils",
   "keywords": [
     "typescript",
@@ -38,7 +38,7 @@
     "prepare": "gulp build"
   },
   "dependencies": {
-    "@winter-love/utils": "^1.0.23-alpha.1",
+    "@winter-love/utils": "^1.0.23-alpha.2",
     "debounce": "^1.2.1",
     "fast-json-stable-stringify": "^2.1.0",
     "lodash": "^4.17.21",
