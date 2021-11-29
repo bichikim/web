@@ -5,6 +5,9 @@ node_modules
 
 .env
 
+# schema file
+.schema.gql
+
 # local env files
 .env.local
 .env.*.local

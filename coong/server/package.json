@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "build": "rimraf ./lib && yarn run generate && ttsc",
-    "dev": "ts-node-dev --clear -r tsconfig-paths/register src/index.ts",
+    "dev": "cross-env NODE_ENV=development ts-node-dev --clear -r tsconfig-paths/register src/index.ts",
     "generate": "prisma generate --schema ./src/prisma/schema.prisma",
     "generate:watch": "prisma generate --schema ./src/prisma/schema.prisma --watch",
     "start": "node ./lib/index.js"

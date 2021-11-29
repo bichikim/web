@@ -9,12 +9,14 @@ import resolvers from './resolvers'
 const DEFAULT_PORT = 8080
 
 const isPlayGround = process.env.NODE_ENV === 'development'
+const emitSchemaFile = process.env.NODE_ENV === 'development' ? '.schema.gql' : false
 const port = Number(process.env.PORT ?? DEFAULT_PORT)
 
 const bootstrap = async () => {
   const result = await prepare({
     authChecker,
     context,
+    emitSchemaFile,
     playground: isPlayGround,
     resolvers: [...prismaResolvers, ...resolvers],
   })
