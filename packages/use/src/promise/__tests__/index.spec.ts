@@ -125,6 +125,21 @@ describe('use promise 2', () => {
     expect(error.value).toBe(undefined)
   })
 
+  it('should resolve promise with an object', () => {
+    interface Foo {
+      age?: number
+      name?: string
+    }
+    const resultValue: Foo = {
+      name: 'foo',
+    }
+    const {
+      fetching, count, execute, data, promise, error,
+    } = usePromise2(() => Promise.resolve(resultValue))
+
+    expect(data.value?.name).toBe('foo')
+  })
+
   it('should resolve promise with a promise return from an execute function', async () => {
     const {
       data, execute, fetching, count,
