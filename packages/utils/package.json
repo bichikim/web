@@ -38,7 +38,7 @@
   },
   "devDependencies": {
     "gulp": "^4.0.2",
-    "vue-demi": "^0.11.4"
+    "vue-demi": "^0.12.1"
   },
   "gitHead": "5aa1e8493f474f75436be59c2e9b0df86550235e"
 }

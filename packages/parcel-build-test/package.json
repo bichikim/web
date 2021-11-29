@@ -42,7 +42,7 @@
   "dependencies": {
     "@vue/devtools-api": "^6.0.0-beta.19",
     "@winter-love/utils": "^1.0.23-alpha.1",
-    "vue-demi": "^0.11.4"
+    "vue-demi": "^0.12.1"
   },
   "devDependencies": {
     "@winter-love/use": "^1.0.23-alpha.1",

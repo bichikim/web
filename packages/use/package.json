@@ -42,7 +42,7 @@
     "debounce": "^1.2.1",
     "fast-json-stable-stringify": "^2.1.0",
     "lodash": "^4.17.21",
-    "vue-demi": "^0.11.3"
+    "vue-demi": "^0.12.1"
   },
   "devDependencies": {
     "@types/debounce": "^1.2.0",

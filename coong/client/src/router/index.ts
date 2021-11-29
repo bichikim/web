@@ -15,6 +15,10 @@ const routes: RouteRecordRaw[] = [{
       component: () => import('pages/Sec.vue'),
       path: 'sec',
     },
+    {
+      component: () => import('pages/Pure'),
+      path: 'pure',
+    },
   ],
   component: () => import('layouts/PagesLayout'),
   path: '/',
