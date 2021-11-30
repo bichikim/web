@@ -1,4 +1,5 @@
 import {toArray} from '../'
+import {expectType} from 'tsd'
 
 describe('to-array', () => {
   it('should return an array with an array argument', () => {
@@ -14,7 +15,8 @@ describe('to-array', () => {
     expect(result).toEqual([])
   })
   it('should return an array with null argument', () => {
-    const result = toArray(null)
+    const result = toArray<string>(null)
     expect(result).toEqual([])
+    expectType<string[]>(result)
   })
 })
