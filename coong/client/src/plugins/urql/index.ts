@@ -22,3 +22,5 @@ export const urql: Plugin = (app) => {
     url: getGraphqlApiUrl(),
   })
 }
+
+export default urql

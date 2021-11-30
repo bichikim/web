@@ -45,7 +45,7 @@
     "graphql-tag": "^2.12.6",
     "vare": "^1.0.23-alpha.3",
     "vite-ssr-vue": "^0.2.20",
-    "vue": "^3.2.22",
+    "vue": "^3.2.23",
     "@urql/vue": "^0.6.0",
     "vue-i18n": "^9.1.9",
     "vue-router": "^4.0.12"
@@ -76,7 +76,10 @@
     "unplugin-icons": "^0.12.16",
     "unplugin-vue-components": "^0.15.6",
     "vite": "^2.6.7",
-    "vite-plugin-pwa": "^0.11.3"
+    "vite-plugin-pwa": "^0.11.3",
+    "vite-plugin-md": "^0.11.4",
+    "markdown-it-prism": "^2.2.1",
+    "markdown-it-link-attributes": "^3.0.0"
   },
   "gitHead": "49922aa2164ceefcebf5fcd3bd83dce16c67df21"
 }

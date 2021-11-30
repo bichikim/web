@@ -8,12 +8,12 @@ import {defineConfig} from 'vite'
 import Components from 'unplugin-vue-components/vite'
 import {QuasarResolver} from 'unplugin-vue-components/resolvers'
 import Icons from 'unplugin-icons/vite'
-// import Markdown from 'vite-plugin-md'
+import Markdown from 'vite-plugin-md'
 import IconsResolver from 'unplugin-icons/resolver'
 import {VitePWA} from 'vite-plugin-pwa'
 import ssr from 'vite-ssr-vue/plugin'
-// import Prism from 'markdown-it-prism'
-// import LinkAttributes from 'markdown-it-link-attributes'
+import Prism from 'markdown-it-prism'
+import LinkAttributes from 'markdown-it-link-attributes'
 
 export default defineConfig({
   build: {
@@ -54,21 +54,21 @@ export default defineConfig({
     VueJsx(),
 
     // https://github.com/antfu/vite-plugin-md
-    // Markdown({
-    //   headEnabled: true,
-    //   markdownItSetup(md) {
-    //     // https://prismjs.com/
-    //     md.use(Prism)
-    //     md.use(LinkAttributes, {
-    //       attrs: {
-    //         rel: 'noopener',
-    //         target: '_blank',
-    //       },
-    //       pattern: /^https?:\/\//,
-    //     })
-    //   },
-    //   wrapperClasses: 'q-page q-mx-auto padding',
-    // }),
+    Markdown({
+      headEnabled: true,
+      markdownItSetup(md) {
+        // https://prismjs.com/
+        md.use(Prism)
+        md.use(LinkAttributes, {
+          attrs: {
+            rel: 'noopener',
+            target: '_blank',
+          },
+          pattern: /^https?:\/\//u,
+        })
+      },
+      wrapperClasses: 'q-page q-mx-auto padding',
+    }),
 
     // https://github.com/antfu/vite-plugin-components
     Components({
@@ -78,25 +78,6 @@ export default defineConfig({
       ],
     }),
     Icons(),
-    // ViteComponents({
-    //
-    //   // auto import icons
-    //   customComponentResolvers: [
-    //     // https://github.com/antfu/vite-plugin-icons
-    //     // ViteIconsResolver({
-    //     //   componentPrefix: '',
-    //     //   enabledCollections: ['carbon'],
-    //     // }),
-    //   ],
-    //
-    //   // allow auto import and register components used in markdown
-    //   // customLoaderMatcher: (id) => id.endsWith('.md'),
-    //
-    //   // allow auto load markdown components under `./src/components/`
-    //   extensions: ['vue'],
-    //
-    //   globalComponentsDeclaration: true,
-    // }),
 
     // https://github.com/antfu/vite-plugin-icons
     // ViteIcons(),

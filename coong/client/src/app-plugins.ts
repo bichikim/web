@@ -3,6 +3,7 @@ import {createQuasarPlugin} from './quasar/create-quasar-plugin'
 import {createRouter} from './router'
 import {createStore} from './store'
 import {createStitchesPlugin} from './stitches'
+import urql from 'src/plugins/urql'
 
 export const useAppPlugins = async (app: App, initialState, ssrContext = {}) => {
 
@@ -15,6 +16,7 @@ export const useAppPlugins = async (app: App, initialState, ssrContext = {}) => 
   app.use(stitchesPlugin)
   app.use(quasarPlugin)
   app.use(store)
+  app.use(urql)
 
   return {app, router, stitches}
 }
