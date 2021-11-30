@@ -38,6 +38,8 @@ export const auth: AuthChecker<Context> = async (resolverData, roles) => {
 
   const receivedPermissions = getPermissions(receivedRoles)
 
+  console.log(receivedPermissions, decodedData)
+
   const matchedPermission = getMatchedPermission(receivedPermissions, roles, ['create', 'update', 'read', 'delete'])
 
   if (!matchedPermission) {

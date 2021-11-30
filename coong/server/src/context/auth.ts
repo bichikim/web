@@ -27,7 +27,7 @@ export const withAuth = <ReturnType extends Record<string, unknown>>(
 
     const {headers: {authorization}} = req
 
-    const token = (Array.isArray(authorization) ? authorization.join() : authorization)
+    const token = (Array.isArray(authorization) ? authorization.join('') : authorization)
 
     const auth: AuthContext = {
       isSelf: false,

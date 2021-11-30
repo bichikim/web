@@ -1,0 +1,16 @@
+query getPosts($take: Int, $skip: Int, $cursor: PostWhereUniqueInput) {
+  posts(take: $take, skip: $skip, cursor: $cursor) {
+    id
+    title
+    authorId
+    author {
+      name
+    }
+    _count {
+      likes
+    }
+    likes {
+      id
+    }
+  }
+}

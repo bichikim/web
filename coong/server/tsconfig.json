@@ -5,6 +5,7 @@
     "module": "CommonJS",
     "outDir": "lib",
     "baseUrl": ".",
+    "declarationMap": true,
     "noEmit": false,
     "declaration": true,
     "skipLibCheck": true,
