@@ -1,7 +1,7 @@
 import {mount} from '@vue/test-utils'
 import {EmptyObject} from '@winter-love/utils'
 import {upperFirst} from 'lodash'
-import {defineComponent, h, isRef} from 'vue-demi'
+import {defineComponent, h, isRef} from 'vue'
 
 export type TestSetup<Props extends Record<string, any>, Result extends Record<string, any>> = (props: Props) => Result
 
