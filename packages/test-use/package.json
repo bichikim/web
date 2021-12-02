@@ -33,7 +33,7 @@
   },
   "dependencies": {
     "@winter-love/utils": "^1.0.23-alpha.4",
-    "@vue/test-utils": "^2.0.0-rc.17"
+    "@vue/test-utils": "^2.0.0-rc.15"
   },
   "devDependencies": {
 
