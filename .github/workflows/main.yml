@@ -198,7 +198,7 @@ jobs:
 
       - name: Build Libraies
         if: steps.libraies-cache.outputs.cache-hit != 'true'
-        run: yarn run build:libraies
+        run: pnpm run build:libraries
       - name: Build Server
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
