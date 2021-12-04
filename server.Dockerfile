@@ -5,10 +5,11 @@ WORKDIR /usr/src/app
 COPY ./coong/server ./
 
 RUN ls -R
-RUN npm install --production
+RUN npm i -g pnpm
+RUN pnpm install --prod --ignore-scripts
 
 EXPOSE 8080
 
-CMD npm run start
+CMD pnpm run start
 
 
