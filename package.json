@@ -10,8 +10,10 @@
   ],
   "scripts": {
     "build-storybook": "build-storybook",
-    "build:@coong/client": "pnpm run build --filter @coong/client... --stream",
-    "build:@coong/server": "pnpm run build --filter @coong/server... --stream",
+    "build:@coong/client": "pnpm run build --filter @coong/client",
+    "build:@coong/client-stream": "pnpm run build --filter @coong/client... --stream",
+    "build:@coong/server": "pnpm run build --filter @coong/server",
+    "build:@coong/server-stream": "pnpm run build --filter @coong/server... --stream",
     "build:libraries": "pnpm run build --filter libraries... --stream ",
     "clean": "lerna clean --yes && rimraf node_modules",
     "deploy-storybook": "storybook-to-ghpages",
