@@ -309,8 +309,8 @@ jobs:
 
       - name: Create Env File
         run: |
-          touch server/.env
-          echo DATABASE_URL=${{ secrets.DATABASE_URL_DEV }} >> server/.env
+          touch coong/server/.env
+          echo DATABASE_URL=${{ secrets.DATABASE_URL_DEV }} >> coong/server/.env
 
       - name: Build
         run: |
