@@ -3,11 +3,11 @@
   "version": "1.0.23-alpha.5",
   "private": true,
   "scripts": {
-    "build": "rimraf ./lib && yarn run generate && ttsc",
+    "build": "rimraf ./lib && ttsc",
     "dev": "cross-env NODE_ENV=development ts-node-dev --clear -r tsconfig-paths/register src/index.ts",
     "generate": "prisma generate --schema ./src/prisma/schema.prisma",
     "generate:watch": "prisma generate --schema ./src/prisma/schema.prisma --watch",
-    "start": "node ./lib/index.js"
+    "start": "node ./dist/index.js"
   },
   "dependencies": {
     "@prisma/client": "~3.2.0",

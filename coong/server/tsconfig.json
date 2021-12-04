@@ -3,7 +3,7 @@
   "compilerOptions": {
     "target": "ESNext",
     "module": "CommonJS",
-    "outDir": "lib",
+    "outDir": "dist",
     "baseUrl": ".",
     "declarationMap": true,
     "noEmit": false,

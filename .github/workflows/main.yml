@@ -6,108 +6,129 @@ on:
       - dev
 env:
   PNPM_VERSION: 6.23.2
+  NODE_VERSION: 16
 jobs:
-  build-libray:
+  # Build Library
+  build-library:
     name: Build libraries
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repo
         uses: actions/checkout@master
+
+      - name: Setup Node
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
       - name: Prepare Pnpm
         uses: pnpm/action-setup@v2.0.1
         with:
           version: ${{ env.PNPM_VERSION }}
-      - uses: actions/setup-node@v2
-        with:
-          node-version: '14'
-      - name: Yarn Version
-        run: yarn -v
-      - name: Use Yarn Cache
-        uses: actions/cache@v2
-        id: yarn-cache
-        with:
-          path: '**/node_modules'
-          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+
       - name: Use Libraies Cache
         uses: actions/cache@v2
         id: libraies-cache
         with:
           path: 'packages/*/lib'
           key: ${{ runner.os }}-libraies-${{ hashFiles('packages/**/*.ts') }}
+
       - name: Install Dependencies
         if: steps.yarn-cache.outputs.cache-hit != 'true'
-        run: yarn install
+        run: pnpm install
+
       - name: Build Libraies
         if: steps.libraies-cache.outputs.cache-hit != 'true'
-        run: yarn run build:libraries
+        run: pnpm run build:libraries
+  # Test Job
   test:
     name: Test
-    needs: build-libray
+    needs: build-library
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repo
         uses: actions/checkout@master
+
+      - name: Setup Node
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
       - name: Prepare Pnpm
         uses: pnpm/action-setup@v2.0.1
         with:
-          version: 6.7.6
-      - name: Use Yarn Cache
-        uses: actions/cache@v2
-        id: yarn-cache
-        with:
-          path: '**/node_modules'
-          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          version: ${{ env.PNPM_VERSION }}
+
       - name: Use Libraies Cache
         uses: actions/cache@v2
         id: libraies-cache
         with:
           path: 'packages/*/lib'
           key: ${{ runner.os }}-libraies-${{ hashFiles('packages/**/*.ts') }}
+
       - name: Install Dependencies
-        if: steps.yarn-cache.outputs.cache-hit != 'true'
-        run: yarn install
+        #if: steps.yarn-cache.outputs.cache-hit != 'true'
+        run: pnpm install
+
       - name: Build Libraies
         if: steps.libraies-cache.outputs.cache-hit != 'true'
-        run: yarn run build:libraries
+        run: pnpm run build:libraries
+
       - name: Test
-        run: yarn run test
+        run: pnpm run test
+
+  # Build Client
   build-client:
     name: Build Client
     needs: test
     runs-on: ubuntu-latest
+    outputs:
+      run_job: ${{ steps.changed-files.outputs.any_changed }}
     steps:
       - name: Checkout Repo
         uses: actions/checkout@master
+
+      - name: Setup Node
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
       - name: Prepare Pnpm
         uses: pnpm/action-setup@v2.0.1
         with:
-          version: 6.7.6
-      - name: Use Yarn Cache
-        uses: actions/cache@v2
-        id: yarn-cache
-        with:
-          path: '**/node_modules'
-          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          version: ${{ env.PNPM_VERSION }}
+
       - name: Use Libraies Cache
         uses: actions/cache@v2
         id: libraies-cache
         with:
           path: 'packages/*/lib'
           key: ${{ runner.os }}-libraies-${{ hashFiles('packages/**/*.ts') }}
+
       - name: Install Dependencies
-        if: steps.yarn-cache.outputs.cache-hit != 'true'
-        run: yarn install
+        #if: steps.yarn-cache.outputs.cache-hit != 'true'
+        run: pnpm install
+
       - name: Build Libraies
         if: steps.libraies-cache.outputs.cache-hit != 'true'
-        run: yarn run build:libraies
+        run: pnpm run build:libraies
+
       - name: Build
-        run: yarn run build:@coong/client
+        run: pnpm run build:@coong/client
+
       - name: Archive Production Artifact
         uses: actions/upload-artifact@master
         with:
           name: dist-client
           path: |
             coong/client/dist
+
+      - name: Changed files
+        uses: tj-actions/changed-files@v9
+        id: changed-files
+        with:
+          files: |
+            coong/client
   build-server:
     name: Build Server
     needs: test
@@ -119,34 +140,43 @@ jobs:
         uses: actions/checkout@master
         with:
           fetch-depth: 0
-      - name: Use Yarn Cache
-        uses: actions/cache@v2
-        id: yarn-cache
+
+      - name: Setup Node
+        uses: actions/setup-node@v2
         with:
-          path: '**/node_modules'
-          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Prepare Pnpm
+        uses: pnpm/action-setup@v2.0.1
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
       - name: Use Libraies Cache
         uses: actions/cache@v2
         id: libraies-cache
         with:
           path: 'packages/*/lib'
           key: ${{ runner.os }}-libraies-${{ hashFiles('packages/**/*.ts') }}
+
       - name: Install Dependencies
-        if: steps.yarn-cache.outputs.cache-hit != 'true'
-        run: yarn install
+        #if: steps.yarn-cache.outputs.cache-hit != 'true'
+        run: pnpm install
+
       - name: Build Libraies
         if: steps.libraies-cache.outputs.cache-hit != 'true'
         run: yarn run build:libraies
       - name: Build Server
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: yarn run build:server
+        run: yarn run build:@coong/server
+
       - name: Archive Production Artifact
         uses: actions/upload-artifact@master
         with:
           name: dist-server
           path: |
-            coong/server/lib
+            coong/server/dist
+
       - name: Changed files
         uses: tj-actions/changed-files@v9
         id: changed-files
@@ -157,6 +187,7 @@ jobs:
     name: Deploy Server
     needs: build-server
     runs-on: ubuntu-latest
+    # only master
     if: ${{ github.ref == 'refs/heads/master' && needs.build-server.outputs.run_job == 'true' }}
     env:
       GCP_SERVICE_NAME: coong-back-end
@@ -164,29 +195,35 @@ jobs:
     steps:
       - name: Checkout Repo
         uses: actions/checkout@master
+
       - name: Download Artifact
         uses: actions/download-artifact@master
         with:
           name: dist-server
-          path: coong/server/lib
+          path: coong/server/dist
+
       - name: Setup Cloud SDK
         uses: google-github-actions/setup-gcloud@v0.2.1
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
           service_account_key: ${{ secrets.GCP_SA_KEY }}
+
       - name: Configure Docker
         run: |
           gcloud auth configure-docker
+
       - name: Create Env File
         run: |
           touch coong/server/.env
           echo DATABASE_URL=${{ secrets.DATABASE_URL }} >> coong/server/.env
+
       - name: Build
         run: |
           docker build \
           -f server.Dockerfile \
           -t $GCP_IAMGE_NAME:$GITHUB_SHA \
           .
+
       - name: Tag
         run: |
           docker tag \
@@ -195,6 +232,7 @@ jobs:
       - name: Push
         run: |
           docker push $GCP_IAMGE_NAME:$GITHUB_SHA
+
       - name: Deploy
         run: |
           gcloud run deploy $GCP_SERVICE_NAME --image $GCP_IAMGE_NAME:$GITHUB_SHA \
@@ -210,6 +248,7 @@ jobs:
     name: Deploy Dev Server
     needs: build-server
     runs-on: ubuntu-latest
+    # only dev
     if: ${{ github.ref == 'refs/heads/dev' && needs.build-server.outputs.run_job == 'true' }}
     env:
       GCP_SERVICE_NAME: coong-back-end-dev
@@ -217,23 +256,28 @@ jobs:
     steps:
       - name: Checkout Repo
         uses: actions/checkout@master
+
       - name: Download Artifact
         uses: actions/download-artifact@master
         with:
           name: dist-server
-          path: server/lib
+          path: coong/server/dist
+
       - name: Setup Cloud SDK
         uses: google-github-actions/setup-gcloud@v0.2.1
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
           service_account_key: ${{ secrets.GCP_SA_KEY }}
+
       - name: Configure Docker
         run: |
           gcloud auth configure-docker
+
       - name: Create Env File
         run: |
           touch server/.env
           echo DATABASE_URL=${{ secrets.DATABASE_URL_DEV }} >> server/.env
+
       - name: Build
         run: |
           docker build \
@@ -245,9 +289,11 @@ jobs:
           docker tag \
           $GCP_IAMGE_NAME:$GITHUB_SHA \
           $GCP_IAMGE_NAME:latest
+
       - name: Push
         run: |
           docker push $GCP_IAMGE_NAME:$GITHUB_SHA
+
       - name: Deploy
         run: |
           gcloud run deploy $GCP_SERVICE_NAME --image $GCP_IAMGE_NAME:$GITHUB_SHA \
@@ -262,29 +308,58 @@ jobs:
     name: Deploy Client
     needs: build-client
     runs-on: ubuntu-latest
+    # only master
+    if: ${{ github.ref == 'refs/heads/master' && needs.build-client.outputs.run_job == 'true' }}
+    env:
+      GCP_SERVICE_NAME: coong
+      GCP_IAMGE_NAME: gcr.io/${{ secrets.GCP_PROJECT_ID }}/coong
     steps:
       - name: Checkout Repo
         uses: actions/checkout@master
+
       - name: Download Artifact
         uses: actions/download-artifact@master
         with:
           name: dist-client
-          path: dist
-#  deploy:
-#    name: Deploy
-#    needs: build
-#    runs-on: ubuntu-latest
-#    steps:
-#      - name: Checkout Repo
-#        uses: actions/checkout@master
-#      - name: Download Artifact
-#        uses: actions/download-artifact@master
-#        with:
-#          name: dist
-#          path: packages
-#      - name: Deploy to Firebase
-#        uses: w9jds/firebase-action@master
-#        with:
-#          args: deploy --only hosting
-#        env:
-#          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+          path: coong/client/dist
+
+      - name: Setup Cloud SDK
+        uses: google-github-actions/setup-gcloud@v0.2.1
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Configure Docker
+        run: |
+          gcloud auth configure-docker     
+
+      - name: Create Env File
+        run: |
+          touch server/.env 
+
+      - name: Build
+        run: |
+          docker build \
+          -f client.Dockerfile \
+          -t $GCP_IAMGE_NAME:$GITHUB_SHA \    
+
+      - name: Tag
+        run: |
+          docker tag \
+          $GCP_IAMGE_NAME:$GITHUB_SHA \
+          $GCP_IAMGE_NAME:latest    
+
+      - name: Push
+        run: |
+          docker push $GCP_IAMGE_NAME:$GITHUB_SHA   
+
+      - name: Deploy
+        run: |
+          gcloud run deploy $GCP_SERVICE_NAME --image $GCP_IAMGE_NAME:$GITHUB_SHA \
+          --quiet \
+          --platform managed \
+          --region asia-northeast3 \
+          --allow-unauthenticated \
+          --max-instances 2 \
+          --port 8080 \
+          --memory 512M
