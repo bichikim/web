@@ -21,10 +21,10 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-#      - name: Prepare Pnpm
-#        uses: pnpm/action-setup@v2.0.1
-#        with:
-#          version: ${{ env.PNPM_VERSION }}
+      - name: Prepare Pnpm
+        uses: pnpm/action-setup@v2.0.1
+        with:
+          version: ${{ env.PNPM_VERSION }}
 
       - name: Use Libraies Cache
         uses: actions/cache@v2
