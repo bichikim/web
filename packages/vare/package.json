@@ -46,7 +46,7 @@
   "devDependencies": {
     "@winter-love/use": "^1.0.23-alpha.5",
     "gulp": "^4.0.2",
-    "vue": "^3.2.22"
+    "vue": "^3.2.23"
   },
   "gitHead": "7c6085ce15f0c5fb47fe4c263afb3c52febb04d7"
 }

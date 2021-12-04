@@ -21,6 +21,14 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
+      - name: Cache pnpm modules
+        uses: actions/cache@v2
+        with:
+          path: ~/.pnpm-store
+          key: ${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-    
+
       - name: Prepare Pnpm
         uses: pnpm/action-setup@v2.0.1
         with:
@@ -35,7 +43,7 @@ jobs:
 
       - name: Install Dependencies
         if: steps.yarn-cache.outputs.cache-hit != 'true'
-        run: pnpm install
+        run: pnpm install --ignore-scripts
 
       - name: Build Libraies
         if: steps.libraies-cache.outputs.cache-hit != 'true'
@@ -54,6 +62,14 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
+      - name: Cache pnpm modules
+        uses: actions/cache@v2
+        with:
+          path: ~/.pnpm-store
+          key: ${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-    
+
       - name: Prepare Pnpm
         uses: pnpm/action-setup@v2.0.1
         with:
@@ -68,7 +84,7 @@ jobs:
 
       - name: Install Dependencies
         #if: steps.yarn-cache.outputs.cache-hit != 'true'
-        run: pnpm install
+        run: pnpm install --ignore-scripts
 
       - name: Build Libraies
         if: steps.libraies-cache.outputs.cache-hit != 'true'
@@ -93,6 +109,14 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
+      - name: Cache pnpm modules
+        uses: actions/cache@v2
+        with:
+          path: ~/.pnpm-store
+          key: ${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-    
+
       - name: Prepare Pnpm
         uses: pnpm/action-setup@v2.0.1
         with:
@@ -107,7 +131,7 @@ jobs:
 
       - name: Install Dependencies
         #if: steps.yarn-cache.outputs.cache-hit != 'true'
-        run: pnpm install
+        run: pnpm install --ignore-scripts
 
       - name: Build Libraies
         if: steps.libraies-cache.outputs.cache-hit != 'true'
@@ -146,6 +170,14 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
+      - name: Cache pnpm modules
+        uses: actions/cache@v2
+        with:
+          path: ~/.pnpm-store
+          key: ${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-    
+
       - name: Prepare Pnpm
         uses: pnpm/action-setup@v2.0.1
         with:
@@ -160,7 +192,7 @@ jobs:
 
       - name: Install Dependencies
         #if: steps.yarn-cache.outputs.cache-hit != 'true'
-        run: pnpm install
+        run: pnpm install --ignore-scripts
 
       - name: Build Libraies
         if: steps.libraies-cache.outputs.cache-hit != 'true'
