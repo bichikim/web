@@ -6,7 +6,7 @@ import { PostCreatelikeIDsInput } from "../inputs/PostCreatelikeIDsInput";
 import { UserCreateNestedManyWithoutLikePostsInput } from "../inputs/UserCreateNestedManyWithoutLikePostsInput";
 import { UserCreateNestedOneWithoutPostsInput } from "../inputs/UserCreateNestedOneWithoutPostsInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("PostCreateInput", {
   isAbstract: true
 })
 export class PostCreateInput {

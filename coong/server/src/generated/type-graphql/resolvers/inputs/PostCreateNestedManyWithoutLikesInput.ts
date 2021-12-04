@@ -6,7 +6,7 @@ import { PostCreateOrConnectWithoutLikesInput } from "../inputs/PostCreateOrConn
 import { PostCreateWithoutLikesInput } from "../inputs/PostCreateWithoutLikesInput";
 import { PostWhereUniqueInput } from "../inputs/PostWhereUniqueInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("PostCreateNestedManyWithoutLikesInput", {
   isAbstract: true
 })
 export class PostCreateNestedManyWithoutLikesInput {

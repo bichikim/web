@@ -12,7 +12,7 @@ import { UserUpdatefollowingIDsInput } from "../inputs/UserUpdatefollowingIDsInp
 import { UserUpdatelikePostIDsInput } from "../inputs/UserUpdatelikePostIDsInput";
 import { UserUpdaterolesInput } from "../inputs/UserUpdaterolesInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("UserUpdateWithoutLikePostsInput", {
   isAbstract: true
 })
 export class UserUpdateWithoutLikePostsInput {

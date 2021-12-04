@@ -8,7 +8,7 @@ import { StringNullableFilter } from "../inputs/StringNullableFilter";
 import { StringNullableListFilter } from "../inputs/StringNullableListFilter";
 import { UserListRelationFilter } from "../inputs/UserListRelationFilter";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("UserWhereInput", {
   isAbstract: true
 })
 export class UserWhereInput {

@@ -36,7 +36,7 @@
     "@types/ramda": "^0.27.38",
     "@zerollup/ts-transform-paths": "^1.7.18",
     "cross-env": "^7.0.3",
-    "prisma": "~3.2.0",
+    "prisma": "~3.6.0",
     "rimraf": "^3.0.2",
     "ts-node-dev": "^1.1.8",
     "tsconfig-paths": "^3.11.0",

@@ -7,7 +7,7 @@ import { StringNullableListFilter } from "../inputs/StringNullableListFilter";
 import { UserListRelationFilter } from "../inputs/UserListRelationFilter";
 import { UserRelationFilter } from "../inputs/UserRelationFilter";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("PostWhereInput", {
   isAbstract: true
 })
 export class PostWhereInput {

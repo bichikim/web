@@ -7,7 +7,7 @@ import { StringFieldUpdateOperationsInput } from "../inputs/StringFieldUpdateOpe
 import { UserUpdateManyWithoutLikePostsInput } from "../inputs/UserUpdateManyWithoutLikePostsInput";
 import { UserUpdateOneWithoutPostsInput } from "../inputs/UserUpdateOneWithoutPostsInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("PostUpdateInput", {
   isAbstract: true
 })
 export class PostUpdateInput {

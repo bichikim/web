@@ -10,7 +10,7 @@ import { UserUpdateWithWhereUniqueWithoutLikePostsInput } from "../inputs/UserUp
 import { UserUpsertWithWhereUniqueWithoutLikePostsInput } from "../inputs/UserUpsertWithWhereUniqueWithoutLikePostsInput";
 import { UserWhereUniqueInput } from "../inputs/UserWhereUniqueInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("UserUpdateManyWithoutLikePostsInput", {
   isAbstract: true
 })
 export class UserUpdateManyWithoutLikePostsInput {
@@ -32,11 +32,6 @@ export class UserUpdateManyWithoutLikePostsInput {
   @TypeGraphQL.Field(_type => [UserWhereUniqueInput], {
     nullable: true
   })
-  connect?: UserWhereUniqueInput[] | undefined;
-
-  @TypeGraphQL.Field(_type => [UserWhereUniqueInput], {
-    nullable: true
-  })
   set?: UserWhereUniqueInput[] | undefined;
 
   @TypeGraphQL.Field(_type => [UserWhereUniqueInput], {
@@ -48,6 +43,11 @@ export class UserUpdateManyWithoutLikePostsInput {
     nullable: true
   })
   delete?: UserWhereUniqueInput[] | undefined;
+
+  @TypeGraphQL.Field(_type => [UserWhereUniqueInput], {
+    nullable: true
+  })
+  connect?: UserWhereUniqueInput[] | undefined;
 
   @TypeGraphQL.Field(_type => [UserUpdateWithWhereUniqueWithoutLikePostsInput], {
     nullable: true

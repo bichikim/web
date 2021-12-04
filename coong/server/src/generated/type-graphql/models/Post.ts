@@ -5,7 +5,7 @@ import { DecimalJSScalar } from "../scalars";
 import { User } from "../models/User";
 import { PostCount } from "../resolvers/outputs/PostCount";
 
-@TypeGraphQL.ObjectType({
+@TypeGraphQL.ObjectType("Post", {
   isAbstract: true
 })
 export class Post {
@@ -34,7 +34,7 @@ export class Post {
   likeIDs!: string[];
 
   @TypeGraphQL.Field(_type => PostCount, {
-    nullable: true
+    nullable: false
   })
-  _count?: PostCount | null;
+  _count!: PostCount;
 }

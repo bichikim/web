@@ -5,7 +5,7 @@ import { DecimalJSScalar } from "../../scalars";
 import { StringNullableListFilter } from "../inputs/StringNullableListFilter";
 import { StringWithAggregatesFilter } from "../inputs/StringWithAggregatesFilter";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("PostScalarWhereWithAggregatesInput", {
   isAbstract: true
 })
 export class PostScalarWhereWithAggregatesInput {

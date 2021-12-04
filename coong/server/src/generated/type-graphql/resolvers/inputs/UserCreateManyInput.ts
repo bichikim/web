@@ -7,7 +7,7 @@ import { UserCreateManyfollowingIDsInput } from "../inputs/UserCreateManyfollowi
 import { UserCreateManylikePostIDsInput } from "../inputs/UserCreateManylikePostIDsInput";
 import { UserCreateManyrolesInput } from "../inputs/UserCreateManyrolesInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("UserCreateManyInput", {
   isAbstract: true
 })
 export class UserCreateManyInput {

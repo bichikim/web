@@ -5,7 +5,7 @@ import { DecimalJSScalar } from "../../scalars";
 import { PostCreatelikeIDsInput } from "../inputs/PostCreatelikeIDsInput";
 import { UserCreateNestedManyWithoutLikePostsInput } from "../inputs/UserCreateNestedManyWithoutLikePostsInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("PostCreateWithoutAuthorInput", {
   isAbstract: true
 })
 export class PostCreateWithoutAuthorInput {

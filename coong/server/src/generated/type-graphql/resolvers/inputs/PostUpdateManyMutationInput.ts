@@ -5,7 +5,7 @@ import { DecimalJSScalar } from "../../scalars";
 import { PostUpdatelikeIDsInput } from "../inputs/PostUpdatelikeIDsInput";
 import { StringFieldUpdateOperationsInput } from "../inputs/StringFieldUpdateOperationsInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("PostUpdateManyMutationInput", {
   isAbstract: true
 })
 export class PostUpdateManyMutationInput {

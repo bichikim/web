@@ -4,7 +4,7 @@ import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 import { PostCreateManylikeIDsInput } from "../inputs/PostCreateManylikeIDsInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("PostCreateManyInput", {
   isAbstract: true
 })
 export class PostCreateManyInput {

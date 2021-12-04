@@ -10,7 +10,7 @@ import { UserCreatefollowingIDsInput } from "../inputs/UserCreatefollowingIDsInp
 import { UserCreatelikePostIDsInput } from "../inputs/UserCreatelikePostIDsInput";
 import { UserCreaterolesInput } from "../inputs/UserCreaterolesInput";
 
-@TypeGraphQL.InputType({
+@TypeGraphQL.InputType("UserCreateWithoutLikePostsInput", {
   isAbstract: true
 })
 export class UserCreateWithoutLikePostsInput {
