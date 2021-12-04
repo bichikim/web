@@ -187,7 +187,7 @@ jobs:
 
       - name: Install Dependencies
         #if: steps.yarn-cache.outputs.cache-hit != 'true'
-        run: pnpm install --ignore-scripts
+        run: pnpm install
 
       - name: Use Libraies Cache
         uses: actions/cache@v2
