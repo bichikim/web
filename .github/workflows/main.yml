@@ -42,7 +42,7 @@ jobs:
           key: ${{ runner.os }}-libraies-${{ hashFiles('packages/**/*.ts') }}
 
       - name: Install Dependencies
-        if: steps.yarn-cache.outputs.cache-hit != 'true'
+        #if: steps.yarn-cache.outputs.cache-hit != 'true'
         run: pnpm install --ignore-scripts
 
       - name: Build Libraies
@@ -202,7 +202,7 @@ jobs:
       - name: Build Server
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: yarn run build:@coong/server
+        run: pnpm run build:@coong/server
 
       - name: Archive Production Artifact
         uses: actions/upload-artifact@master
