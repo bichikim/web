@@ -1,5 +1,5 @@
 import {App} from 'vue'
-import {createQuasarPlugin} from './quasar/create-quasar-plugin'
+import {createQuasarPlugin} from './quasar'
 import {createRouter} from './router'
 import {createStore} from './store'
 import {createStitchesPlugin} from './stitches'

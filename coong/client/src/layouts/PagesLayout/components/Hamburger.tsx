@@ -1,4 +1,4 @@
-import {QBtn} from 'src/quasar'
+import {QBtn} from 'quasar'
 import {defineComponent} from 'vue'
 
 export const Hamburger = defineComponent({

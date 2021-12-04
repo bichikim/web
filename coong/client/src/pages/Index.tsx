@@ -1,4 +1,4 @@
-import {QBtn, QItem, QItemLabel, QItemSection, QList, QToggle} from 'src/quasar'
+import {QBtn, QItem, QItemLabel, QItemSection, QList, QToggle} from 'quasar'
 import {setName} from 'src/store/bucket'
 import {posts} from 'src/store/posts'
 import {user} from 'src/store/user'
@@ -6,6 +6,8 @@ import {computed, defineComponent, ref} from 'vue'
 import {Box} from 'src/components/Box'
 import {RouterLink} from 'vue-router'
 import notification from 'src/store/notification'
+
+const _QToggle: any = QToggle
 
 const IndexPage = defineComponent({
   setup() {
@@ -46,7 +48,7 @@ const IndexPage = defineComponent({
                 <QItemLabel caption={true}>greeting</QItemLabel>
               </QItemSection>
               <QItemSection side={true}>
-                <QToggle v-model={toggle.value} />
+                <_QToggle v-model={toggle.value} />
               </QItemSection>
             </QItem>
           </QList>
