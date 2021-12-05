@@ -171,7 +171,6 @@ importers:
       '@ionic/vue-router': 6.0.0-rc.0
       '@quasar/app': ^3.2.4
       '@quasar/extras': ^1.12.1
-      '@quasar/vite-plugin': ^1.0.2
       '@rollup/plugin-replace': ^3.0.0
       '@stitches/core': ^1.2.5
       '@types/lodash': ^4.14.175
@@ -180,7 +179,6 @@ importers:
       '@vitejs/plugin-vue': ^1.9.3
       '@vitejs/plugin-vue-jsx': ^1.2.0
       '@vue/compiler-sfc': ^3.2.20
-      '@vue/devtools-api': ^6.0.0-beta.19
       '@vue/server-renderer': ^3.2.22
       '@vueuse/head': ^0.6.0
       '@winter-love/stitches': ^1.0.23-alpha.5
@@ -212,7 +210,6 @@ importers:
       vite-plugin-pwa: ^0.11.3
       vite-ssr-vue: ^0.3.7
       vue: ^3.2.23
-      vue-demi: ^0.12.1
       vue-i18n: ^9.1.9
       vue-router: ^4.0.12
     dependencies:
@@ -237,6 +234,7 @@ importers:
       node-inject-html: 0.0.5
       quasar: 2.3.3
       serve-static: 1.14.1
+      tslib: 2.3.1
       vare: link:../../packages/vare
       vite-ssr-vue: 0.3.7_rollup@2.60.0+vue@3.2.23
       vue: 3.2.23
@@ -251,14 +249,12 @@ importers:
       '@graphql-codegen/typescript-vue-urql': 2.2.1_a200a8b101ce12e4e050343b0b6fa1a4
       '@iconify/json': 1.1.415
       '@intlify/vite-plugin-vue-i18n': 3.1.0_vite@2.6.14+vue-i18n@9.1.9
-      '@quasar/vite-plugin': 1.0.2_583c02f4018b23de07e70b15d383fe87
       '@rollup/plugin-replace': 3.0.0_rollup@2.60.0
       '@types/lodash': 4.14.175
       '@types/node': 16.11.0
       '@vitejs/plugin-vue': 1.9.3_vite@2.6.14
       '@vitejs/plugin-vue-jsx': 1.2.0
       '@vue/compiler-sfc': 3.2.20
-      '@vue/devtools-api': 6.0.0-beta.19
       '@zerollup/ts-transform-paths': 1.7.18_typescript@4.4.4
       cross-env: 7.0.3
       csstype: 3.0.9
@@ -267,7 +263,6 @@ importers:
       rollup: 2.60.0
       rollup-plugin-analyzer: 4.0.0
       ts-node: 10.3.0_036181877a83ed913a2bbec8dcc74354
-      tslib: 2.3.1
       ttypescript: 1.5.12_ts-node@10.3.0+typescript@4.4.4
       typescript: 4.4.4
       unplugin-icons: 0.12.16_93c973903252e7f017f666e469c678d4
@@ -275,7 +270,6 @@ importers:
       vite: 2.6.14
       vite-plugin-md: 0.11.4_vite@2.6.14
       vite-plugin-pwa: 0.11.3_vite@2.6.14
-      vue-demi: 0.12.1_vue@3.2.23
 
   coong/client/dist/server:
     specifiers: {}
@@ -341,7 +335,7 @@ importers:
       ttypescript: ^1.5.12
       type-graphql: ^1.1.1
       typegraphql-prisma: ~0.18.1
-      typescript: ^4.4.4
+      typescript: ~4.4.4
     dependencies:
       '@prisma/client': 3.6.0_prisma@3.6.0
       '@winter-love/utils': link:../../packages/utils
@@ -6128,19 +6122,6 @@ packages:
       serialize-javascript: 5.0.1
     dev: false
 
-  /@quasar/vite-plugin/1.0.2_583c02f4018b23de07e70b15d383fe87:
-    resolution: {integrity: sha512-iIE2RfmXZW97Mx+QUoYwlrtraQARmeHAhEi0GVknFjo6J4keSv9jS6iHQo9mu8AalzKG6eGnltgZf9JIKc7lEA==}
-    engines: {node: '>=12'}
-    peerDependencies:
-      quasar: ^2.0.0
-      vite: ^2.0.0
-      vue: ^3.0.0
-    dependencies:
-      quasar: 2.3.3
-      vite: 2.6.14
-      vue: 3.2.23
-    dev: true
-
   /@reach/router/1.3.4:
     resolution: {integrity: sha512-+mtn9wjlB9NN2CNnnC/BRYtwdKBfSyyasPYraNAyvaV1occr/5NnB4CVzjEZipNHwYebQwcndGUmpFzxAUoqSA==}
     peerDependencies:
@@ -9477,6 +9458,7 @@ packages:
 
   /@vue/devtools-api/6.0.0-beta.19:
     resolution: {integrity: sha512-ObzQhgkoVeoyKv+e8+tB/jQBL2smtk/NmC9OmFK8UqdDpoOdv/Kf9pyDWL+IFyM7qLD2C75rszJujvGSPSpGlw==}
+    dev: false
 
   /@vue/eslint-config-typescript/8.0.0_788d4cc483c262e6dce7dcecd18c4f91:
     resolution: {integrity: sha512-8u8Qpg4qfjJoNeRMdHlxif9BcGy4iYSSK4YYW5AFPPRtkBJiCqtoyT72l4F3ZeZII09ax2N6yQeHbQ0CXQi1bA==}
