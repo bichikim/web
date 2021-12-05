@@ -13,3 +13,5 @@ const startApp = async () => {
 }
 
 startApp()
+
+export const deployFlag = 1
