@@ -4,11 +4,13 @@ WORKDIR /usr/src/app
 
 COPY ./ ./
 
-RUN ls -R
-RUN npm install --production
+RUN npm i -g pnpm
+RUN pnpm install
+RUN pnpm run build
+RUN pnpm install --prod
 
 EXPOSE 8080
 
-CMD npm run start
+CMD pnpm run start
 
 
