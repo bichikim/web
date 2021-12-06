@@ -2,14 +2,14 @@
 
 [Winter Love packages document](https://winter-love.github.io/web/)
 
-## Directive 
+## Plugin
 
 ```typescript
-import {createDirective} from '@winter-love/stitches'
-import {createStitches} from '@stitches/core'
-import {defineComponent, h, withDirectives} from 'vue'
+import {createStitchesPlugin} from '@winter-love/stitches'
+import {createApp} from 'vue'
+import App from './App.vue'
 
-const stitches = createStitches({
+const stitches = createStitchesPlugin({
   media: {
     bp1: '(min-width: 640px)',
     bp2: '(min-width: 768px)',
@@ -22,7 +22,34 @@ const stitches = createStitches({
   },
 })
 
-const directive = createDirective(stitches)
+const app = createApp(App)
+
+app.use(stitches)
+app.mount("#app")
+
+```
+
+
+## Directive 
+
+```typescript
+import {createCreateDirective} from '@winter-love/stitches'
+import {defineComponent, h, withDirectives} from 'vue'
+
+const createDirective = createCreateDirective({
+  media: {
+    bp1: '(min-width: 640px)',
+    bp2: '(min-width: 768px)',
+    bp3: '(min-width: 1024px)',
+  },
+  theme: {
+    colors: {
+      red1: 'rgb(253,37,37)',
+    },
+  },
+})
+
+const directive = createDirective()
 
 const Box = defineComponent({
   name: 'Box',
@@ -38,9 +65,8 @@ const Box = defineComponent({
 
 ```typescript
 import {createStyled} from '@winter-love/stitches'
-import {createStitches} from '@stitches/core'
 
-const stitches = createStitches({
+const {styled, createDirective} = createStyled({
   media: {
     bp1: '(min-width: 640px)',
     bp2: '(min-width: 768px)',
@@ -52,8 +78,6 @@ const stitches = createStitches({
     },
   },
 })
-
-const styled = createStyled(stitches)
 
 const Box = styeld('div', {name: 'BoX'}, {
   color: '$red1'
