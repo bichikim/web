@@ -1,0 +1,48 @@
+{
+  "name": "@winter-love/quasar-svg-syntax",
+  "version": "1.0.23-alpha.5",
+  "description": "Useful javascript utils",
+  "keywords": [
+    "typescript",
+    "utils",
+    "functional"
+  ],
+  "repository": "git@github.com:winter-love/web.git",
+  "license": "MIT",
+  "author": "bichi@live.co.kr",
+  "exports": {
+    ".": {
+      "import": "./lib/index.module.js",
+      "require": "./lib/index.js"
+    },
+    "./*": "./*"
+  },
+  "main": "lib/index.js",
+  "jsdelivr": "lib/index.iife.js",
+  "unpkg": "lib/index.iife.js",
+  "module": "lib/index.module.js",
+  "source": "src/index.ts",
+  "types": "lib/index.d.ts",
+  "files": [
+    "lib/*"
+  ],
+  "scripts": {
+    "build": "gulp build",
+    "dev": "ts-node src/index.ts --foo ba assets/**/*",
+    "prepare": "gulp build",
+    "start": "ts-node src/index.ts --foo ba hello "
+  },
+  "dependencies": {
+    "lodash": "^4.17.21",
+    "yargs": "^17.3.0",
+    "globby": "^12.0.2",
+    "fast-glob": "^3.2.7",
+    "node-html-parser": "^5.1.0",
+    "@winter-love/utils": "^1.0.22"
+  },
+  "devDependencies": {
+    "ts-node-dev": "^1.1.8",
+    "ts-node": "^10.4.0"
+  },
+  "gitHead": "5aa1e8493f474f75436be59c2e9b0df86550235e"
+}
