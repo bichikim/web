@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/quasar-svg-syntax",
-  "version": "1.0.23-alpha.5",
+  "version": "1.0.23-alpha.8",
   "description": "Useful javascript utils",
   "keywords": [
     "typescript",
@@ -35,20 +35,20 @@
     "start": "node bin/index.js assets/**/*.svg"
   },
   "dependencies": {
-    "lodash": "^4.17.21",
-    "yargs": "^17.3.0",
-    "globby": "^12.0.2",
+    "@winter-love/utils": "^1.0.22",
     "fast-glob": "^3.2.7",
+    "globby": "^12.0.2",
+    "lodash": "^4.17.21",
     "node-html-parser": "^5.1.0",
-    "@winter-love/utils": "^1.0.22"
+    "yargs": "^17.3.0"
   },
   "devDependencies": {
-    "@winter-love/quasar-svg-syntax": "^1.0.23-alpha.5",
-    "ts-node-dev": "^1.1.8",
-    "ts-node": "^10.4.0",
-    "quasar": "^2.3.4",
     "@quasar/extras": "^1.12.2",
     "@vue/test-utils": "^2.0.0-rc.17",
+    "@winter-love/quasar-svg-syntax": "^1.0.23-alpha.8",
+    "quasar": "^2.3.4",
+    "ts-node": "^10.4.0",
+    "ts-node-dev": "^1.1.8",
     "vue": "next"
   },
   "gitHead": "5aa1e8493f474f75436be59c2e9b0df86550235e"
