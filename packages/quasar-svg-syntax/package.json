@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/quasar-svg-syntax",
-  "version": "1.0.23-alpha.8",
+  "version": "1.0.23-alpha.9",
   "description": "Useful javascript utils",
   "keywords": [
     "typescript",
@@ -45,7 +45,7 @@
   "devDependencies": {
     "@quasar/extras": "^1.12.2",
     "@vue/test-utils": "^2.0.0-rc.17",
-    "@winter-love/quasar-svg-syntax": "^1.0.23-alpha.8",
+    "@winter-love/quasar-svg-syntax": "^1.0.23-alpha.9",
     "quasar": "^2.3.4",
     "ts-node": "^10.4.0",
     "ts-node-dev": "^1.1.8",
