@@ -35,7 +35,7 @@
     "start": "node bin/index.js assets/**/*.svg"
   },
   "dependencies": {
-    "@winter-love/utils": "^1.0.22",
+    "@winter-love/utils": "^1.0.23-alpha.5",
     "fast-glob": "^3.2.7",
     "globby": "^12.0.2",
     "lodash": "^4.17.21",
@@ -51,5 +51,5 @@
     "ts-node-dev": "^1.1.8",
     "vue": "next"
   },
-  "gitHead": "5aa1e8493f474f75436be59c2e9b0df86550235e"
+  "gitHead": "66c79bd0d5c23a437b8170f758ff58e4496afb58"
 }
