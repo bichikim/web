@@ -183,7 +183,7 @@ importers:
       '@vue/compiler-sfc': ^3.2.23
       '@vue/server-renderer': ^3.2.22
       '@vueuse/head': ^0.6.0
-      '@winter-love/stitches': ^1.0.23-alpha.8
+      '@winter-love/stitches': ^1.0.23-alpha.9
       '@winter-love/utils': ^1.0.23-alpha.5
       '@zerollup/ts-transform-paths': ^1.7.18
       cross-env: ^7.0.3
@@ -206,7 +206,7 @@ importers:
       typescript: ^4.4.4
       unplugin-icons: ^0.12.16
       unplugin-vue-components: ^0.15.6
-      vare: ^1.0.23-alpha.8
+      vare: ^1.0.23-alpha.9
       vite: ^2.6.14
       vite-plugin-md: ^0.11.4
       vite-plugin-pwa: ^0.11.3
@@ -394,7 +394,7 @@ importers:
       '@emotion/utils': ^1.0.0
       '@vue/server-renderer': ^3.2.22
       '@vue/test-utils': next
-      '@winter-love/use': ^1.0.23-alpha.8
+      '@winter-love/use': ^1.0.23-alpha.9
       '@winter-love/utils': ^1.0.23-alpha.5
       clsx: ^1.1.1
       gulp: ^4.0.2
@@ -418,14 +418,14 @@ importers:
 
   packages/libraries:
     specifiers:
-      '@winter-love/emotion': ^1.0.23-alpha.8
-      '@winter-love/stitches': ^1.0.23-alpha.8
-      '@winter-love/style-system': ^1.0.23-alpha.8
-      '@winter-love/style-system-next': ^1.0.23-alpha.8
-      '@winter-love/test-use': ^1.0.23-alpha.8
-      '@winter-love/use': ^1.0.23-alpha.8
+      '@winter-love/emotion': ^1.0.23-alpha.9
+      '@winter-love/stitches': ^1.0.23-alpha.9
+      '@winter-love/style-system': ^1.0.23-alpha.9
+      '@winter-love/style-system-next': ^1.0.23-alpha.9
+      '@winter-love/test-use': ^1.0.23-alpha.9
+      '@winter-love/use': ^1.0.23-alpha.9
       '@winter-love/utils': ^1.0.23-alpha.5
-      vare: ^1.0.23-alpha.8
+      vare: ^1.0.23-alpha.9
     dependencies:
       '@winter-love/emotion': link:../emotion
       '@winter-love/stitches': link:../stitches
@@ -439,7 +439,7 @@ importers:
   packages/parcel-build-test:
     specifiers:
       '@vue/devtools-api': ^6.0.0-beta.19
-      '@winter-love/use': ^1.0.23-alpha.8
+      '@winter-love/use': ^1.0.23-alpha.9
       '@winter-love/utils': ^1.0.23-alpha.5
       gulp: ^4.0.2
       vue: ^3.2.23
@@ -457,7 +457,6 @@ importers:
     specifiers:
       '@quasar/extras': ^1.12.2
       '@vue/test-utils': ^2.0.0-rc.17
-      '@winter-love/quasar-svg-syntax': ^1.0.23-alpha.8
       '@winter-love/utils': ^1.0.23-alpha.5
       fast-glob: ^3.2.7
       globby: ^12.0.2
@@ -478,7 +477,6 @@ importers:
     devDependencies:
       '@quasar/extras': 1.12.2
       '@vue/test-utils': 2.0.0-rc.17_vue@3.2.24
-      '@winter-love/quasar-svg-syntax': 'link:'
       quasar: 2.3.4
       ts-node: 10.4.0_ee928ac548ac44c173bf0d4654ae2c29
       ts-node-dev: 1.1.8_typescript@4.4.4
@@ -510,7 +508,7 @@ importers:
       '@types/styled-system': ^5.1.11
       '@types/styled-system__css': ^5.0.15
       '@vue/test-utils': ^2.0.0-rc.14
-      '@winter-love/emotion': ^1.0.23-alpha.8
+      '@winter-love/emotion': ^1.0.23-alpha.9
       '@winter-love/utils': ^1.0.23-alpha.5
       csstype: ^3.0.8
       gulp: ^4.0.2
@@ -537,7 +535,7 @@ importers:
       '@emotion/css': ^11.1.3
       '@types/styled-system': ^5.1.11
       '@types/styled-system__css': ^5.0.15
-      '@winter-love/emotion': ^1.0.23-alpha.8
+      '@winter-love/emotion': ^1.0.23-alpha.9
       '@winter-love/utils': ^1.0.23-alpha.5
       csstype: ^3.0.8
       deepmerge: ^4.2.2
@@ -613,7 +611,7 @@ importers:
   packages/vare:
     specifiers:
       '@vue/devtools-api': ^6.0.0-beta.19
-      '@winter-love/use': ^1.0.23-alpha.8
+      '@winter-love/use': ^1.0.23-alpha.9
       '@winter-love/utils': ^1.0.23-alpha.5
       gulp: ^4.0.2
       vue: next
