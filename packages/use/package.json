@@ -50,7 +50,7 @@
     "@vue/test-utils": "2.0.0-rc.6",
     "gulp": "^4.0.2",
     "sinon": "^11.1.1",
-    "vue": "^3.2.23"
+    "vue": "next"
   },
   "gitHead": "7c6085ce15f0c5fb47fe4c263afb3c52febb04d7"
 }

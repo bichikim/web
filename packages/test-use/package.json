@@ -32,9 +32,9 @@
     "prepare": "gulp build"
   },
   "dependencies": {
-    "@vue/test-utils": "^2.0.0-rc.15",
+    "@vue/test-utils": "next",
     "@winter-love/utils": "^1.0.23-alpha.5",
-    "vue": "^3.2.23"
+    "vue": "next"
   },
   "devDependencies": {
     "gulp": "^4.0.2",

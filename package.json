@@ -51,6 +51,7 @@
     "last 5 Opera versions"
   ],
   "devDependencies": {
+    "babel-plugin-search-and-replace": "^1.1.0",
     "@babel/core": "^7.16.0",
     "@babel/preset-typescript": "^7.16.0",
     "@emotion/jest": "^11.6.0",
@@ -67,7 +68,7 @@
     "@storybook/vue3": "6.4.0-beta.7",
     "@testing-library/jest-dom": "^5.15.0",
     "@testing-library/user-event": "^13.5.0",
-    "@testing-library/vue": "^6.5.0",
+    "@testing-library/vue": "next",
     "@types/gulp": "^4.0.9",
     "@types/jest": "^26.0.24",
     "@types/lodash": "^4.14.177",
@@ -80,7 +81,7 @@
     "@typescript-eslint/parser": "^5.4.0",
     "@vue/babel-plugin-transform-vue-jsx": "^1.2.1",
     "@vue/eslint-config-typescript": "^8.0.0",
-    "@vue/test-utils": "^2.0.0-rc.16",
+    "@vue/test-utils": "next",
     "@winter-love/test-use": "^1.0.17",
     "@zerollup/ts-transform-paths": "^1.7.18",
     "babel-jest": "^26.6.3",
@@ -118,7 +119,7 @@
     "typescript": "^4.4.4",
     "vite-babel-plugin": "^0.0.2",
     "vitepress": "^0.20.1",
-    "vue": "^3.2.23",
+    "vue": "next",
     "vue-jest": "^5.0.0-alpha.10",
     "vue-loader": "^16.8.3"
   },

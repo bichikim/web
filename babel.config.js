@@ -4,6 +4,17 @@ module.exports = {
     test: {
       plugins: [
         [
+          'search-and-replace',
+          {
+            rules: [
+              {
+                replace: 'false',
+                search: '__QUASAR_SSR_SERVER__',
+              },
+            ],
+          },
+        ],
+        [
           'module-resolver',
           {
             alias: {

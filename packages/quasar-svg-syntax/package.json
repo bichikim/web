@@ -17,6 +17,9 @@
     },
     "./*": "./*"
   },
+  "bin": {
+    "quasar-svg-syntax": "./bin/index.js"
+  },
   "main": "lib/index.js",
   "jsdelivr": "lib/index.iife.js",
   "unpkg": "lib/index.iife.js",
@@ -28,9 +31,8 @@
   ],
   "scripts": {
     "build": "gulp build",
-    "dev": "ts-node src/index.ts --foo ba assets/**/*",
     "prepare": "gulp build",
-    "start": "ts-node src/index.ts --foo ba hello "
+    "start": "node bin/index.js assets/**/*.svg"
   },
   "dependencies": {
     "lodash": "^4.17.21",
@@ -41,8 +43,13 @@
     "@winter-love/utils": "^1.0.22"
   },
   "devDependencies": {
+    "@winter-love/quasar-svg-syntax": "^1.0.23-alpha.5",
     "ts-node-dev": "^1.1.8",
-    "ts-node": "^10.4.0"
+    "ts-node": "^10.4.0",
+    "quasar": "^2.3.4",
+    "@quasar/extras": "^1.12.2",
+    "@vue/test-utils": "^2.0.0-rc.17",
+    "vue": "next"
   },
   "gitHead": "5aa1e8493f474f75436be59c2e9b0df86550235e"
 }

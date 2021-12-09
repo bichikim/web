@@ -46,8 +46,9 @@
     "@babel/core": "^7.14.5",
     "@emotion/server": "^11.4.0",
     "@vue/server-renderer": "^3.2.22",
+    "@vue/test-utils": "next",
     "gulp": "^4.0.2",
-    "vue": "^3.2.23"
+    "vue": "next"
   },
   "gitHead": "37d5ee817fda3ecd1f81d3b70dd00f130fa13239"
 }

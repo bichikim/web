@@ -23,9 +23,11 @@
     "sync:ios": "cap sync ios"
   },
   "dependencies": {
-    "vue": "3.2.23"
+    "vue": "next"
   },
   "devDependencies": {
-    "nuxt3": "latest"
+    "nuxt3": "latest",
+    "postcss": "8",
+    "rollup": "2"
   }
 }

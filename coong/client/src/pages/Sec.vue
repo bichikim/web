@@ -31,7 +31,12 @@
     >
       id {{ item.id }}
     </div>
-    <q-btn @click="addItem" v-css="{bg: '$red1'}" v-css:bp2="{bg: 'green'}">
+    <q-icon name="M240 424v-96c116.4 0 159.39 33.76 208 96 0-119.23-39.57-240-208-240V88L64 256z|0 0 512 512" />
+    <q-btn
+      v-css="{bg: '$red1'}"
+      v-css:bp2="{bg: 'green'}"
+      @click="addItem"
+    >
       add Item
     </q-btn>
     <q-btn @click="addName">

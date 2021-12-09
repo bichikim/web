@@ -22,6 +22,7 @@
     "sync:android": "cap sync android",
     "sync:ios": "cap sync ios"
   },
+  "web-types": "./web-types.json",
   "dependencies": {
     "@capacitor/android": "3.2.5",
     "@capacitor/core": "3.2.5",
@@ -47,7 +48,7 @@
     "tslib": "^2.3.1",
     "vare": "^1.0.23-alpha.5",
     "vite-ssr-vue": "^0.3.7",
-    "vue": "^3.2.23",
+    "vue": "next",
     "vue-i18n": "^9.1.9",
     "vue-router": "^4.0.12"
   },

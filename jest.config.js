@@ -14,9 +14,9 @@ module.exports = {
   moduleFileExtensions: ['js', 'jsx', 'ts', 'tsx', 'vue', 'json'],
   moduleNameMapper: {
     '\\.(css|scss)$': 'identity-obj-proxy',
-
     '\\.(jpg|jpeg|png|svg)$': '<rootDir>/__mocks__/file.mock.ts',
     '\\.svg$': '<rootDir>/__mocks__/svg.mock.ts',
+    quasar: 'quasar/dist/quasar.esm.prod',
   },
 
   projects: [
