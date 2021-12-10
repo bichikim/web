@@ -51,5 +51,5 @@ export class ImageTransform {
     quality: number = DEFAULT_QUALITY
 
   @IsIn(['heif', 'jpeg', 'jpg', 'png', 'raw', 'tiff', 'webp'])
-    format: any
+    format: any = 'jpeg'
 }
