@@ -4,17 +4,22 @@
   "private": true,
   "scripts": {
     "build": "rimraf ./lib && ttsc",
-    "dev": "ts-node-dev --clear -r tsconfig-paths/register src/index.ts"
+    "dev": "ts-node-dev --clear -r tsconfig-paths/register src/run.ts"
   },
   "dependencies": {
+    "@winter-love/utils": "^1.0.22",
     "dotenv": "^10.0.0",
     "express": "^4.17.1",
-    "express-sharp": "^4.2.34",
-    "got": "^11.8.2"
+    "sharp": "^0.29.3",
+    "got": "^11.8.2",
+    "reflect-metadata": "^0.1.13",
+    "class-validator": "^0.13.2",
+    "class-transformer": "^0.5.1"
   },
   "devDependencies": {
+    "@types/express": "^4.17.13",
     "@types/node": "^16.11.0",
-    "aws-sdk": "^2.1009.0",
+    "@types/sharp": "^0.29.4",
     "cross-env": "^7.0.3",
     "ts-node": "^10.3.0",
     "ts-node-dev": "^1.1.8",
