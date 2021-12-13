@@ -88,12 +88,6 @@ export const createStyled = (emotion: _Emotion & {theme?: any}) => {
             return this.$refs.root
           },
         },
-        created() {
-          const {root} = this.$refs
-          if (root) {
-            Object.assign(this, root)
-          }
-        },
         name: name || label || 'emotion',
         props: margeProps({...stylePropsOptions, ...(stylePortal ? {[stylePortal]: null} : {})}, defaultProps),
         setup(props, {attrs, slots}) {
