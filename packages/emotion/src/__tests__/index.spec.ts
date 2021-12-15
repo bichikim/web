@@ -58,6 +58,33 @@ describe('emotion', () => {
       }
     }
 
+    it('should render el value', () => {
+      const Component = defineComponent({
+        computed: {
+          foo: () => 'foo',
+        },
+        setup() {
+          return () => h('div', 'hello')
+        },
+      })
+
+      const StyledComponent = styled(Component, {
+        name: 'StyledComponent',
+      })(
+        {
+          color: 'red',
+        },
+      )
+
+      const wrapper = mount(StyledComponent)
+
+      const root: any = wrapper.vm.rootElement
+
+      console.log(root.foo)
+
+      expect(root.foo).toBe('foo')
+    })
+
     it('should render css and a string element', () => {
       const {wrapper} = setup()
       expect(wrapper.get('div').element).toHaveStyle({
