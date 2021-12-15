@@ -100,8 +100,6 @@ export const createStyled = (emotion: _Emotion & {theme?: any}) => {
             const _restProps = stylePortal ? {...restProps, [stylePortal]: undefined} : restProps
             const styleProps = {..._restProps, ...(stylePortal ? props[stylePortal] : _restProps)}
             const _element = passAs ? element : (as ?? element)
-            // const theme = useTheme(masterTheme)
-            // const cache = inject(EMOTION_CACHE_CONTEXT, masterCache)
 
             const isStringElement = typeof _element === 'string'
 

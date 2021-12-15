@@ -26,6 +26,7 @@ export const createParser = (config: Record<string, StyleFunction>) => {
 
     const {__propStylePassThrough__ = false} = theme ?? {}
 
+    // eslint-disable-next-line unicorn/prefer-object-from-entries
     const styles = Object.keys(rest).reduce((result, key) => {
       const raw = props[key]
       if (!config[key]) {
@@ -85,11 +86,7 @@ export const createParser = (config: Record<string, StyleFunction>) => {
   const keys = Object.keys(config).filter((key) => key !== 'config')
 
   if (keys.length > 1) {
-    const parses = keys.reduce((result, key) => {
-      result[key] = createParser({[key]: config[key]})
-      return result
-    }, {})
-    return Object.assign(parse, parses)
+    return Object.assign(parse, Object.fromEntries(keys.map((key) => [key, createParser({[key]: config[key]})])))
   }
 
   return parse

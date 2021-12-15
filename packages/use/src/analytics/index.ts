@@ -1,6 +1,8 @@
 import {defaultsDeep} from 'lodash'
 import {Directive, DirectiveBinding, inject, InjectionKey, provide} from 'vue-demi'
 import {getWindow} from '@winter-love/utils'
+import {useInstanceProvide} from '../instance-provide'
+
 export interface AnalyticsDataLayer {
   push: (payload: Record<string, any>) => void
 }
@@ -34,7 +36,7 @@ export const useInstanceInject = (key: string | symbol | InjectionKey<any>, inst
 export const useTackPayload = (instance?: any) => {
   const defaultValue = {}
   if (instance) {
-    return useInstanceInject(TRACK_PAYLOAD_KEY, instance, defaultValue)
+    return useInstanceProvide(TRACK_PAYLOAD_KEY, instance, defaultValue)
   }
   return inject(TRACK_PAYLOAD_KEY, defaultValue)
 }
