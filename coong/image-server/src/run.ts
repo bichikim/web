@@ -7,7 +7,7 @@ dotenv.config()
 
 const DEFAULT_PORT = 8080
 const port = process.env.PORT ?? DEFAULT_PORT
-const NotFound = 404
+const NOT_FOUND = 404
 
 const app = express()
 //
@@ -24,7 +24,7 @@ app.get('/:url(*)', (req, res) => {
     res.send(imageTransform.image)
     return
   }
-  res.status(NotFound).send('Not found')
+  res.status(NOT_FOUND).send('Not found')
 })
 
 app.listen(port, () => {

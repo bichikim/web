@@ -8,7 +8,6 @@ import {Transform} from 'class-transformer'
 
 const DEFAULT_QUALITY = 80
 const anyToNumber = (value) => {
-  console.log(value)
   return value ? Number(value) : value
 }
 
