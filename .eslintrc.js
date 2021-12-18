@@ -401,6 +401,7 @@ module.exports = {
     'vue/component-name-in-template-casing': ['warn', 'kebab-case'],
     'vue/order-in-components': 'off',
     'vue/require-default-prop': 'off',
+    'vue/return-in-computed-property': 'off',
     'wrap-iife': 'error',
     'yield-star-spacing': ['error', 'before'],
     yoda: 'error',
