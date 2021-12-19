@@ -5,7 +5,7 @@ import {lightKey} from './context'
 
 export const provideHemisphericLight = (
   name: string,
-  vector: Babylon.Vector3,
+  direction: Babylon.Vector3,
   scene: ShallowRef<Babylon.Scene | undefined>,
 ) => {
   const light = shallowRef()
@@ -13,7 +13,7 @@ export const provideHemisphericLight = (
   watchEffect(() => {
     const sceneValue = scene.value
     if (sceneValue) {
-      light.value = new Babylon.HemisphericLight(name, vector, sceneValue)
+      light.value = new Babylon.HemisphericLight(name, direction, sceneValue)
     }
   })
 
@@ -24,17 +24,17 @@ export const provideHemisphericLight = (
 export const HemisphericLight = defineComponent({
   name: 'HemisphericLight',
   props: {
+    direction: {default: () => (new Babylon.Vector3(0, 0, 0)), type: Object as PropType<Babylon.Vector3>},
     name: {default: 'light', type: String},
-    vector: {default: () => (new Babylon.Vector3(0, 0, 0)), type: Object as PropType<Babylon.Vector3>},
   },
   render() {
     const {$slots} = this
     return $slots.default?.()
   },
   setup(props) {
-    const {name, vector} = toRefs(props)
+    const {name, direction} = toRefs(props)
     const scene = useScene()
-    const light = provideHemisphericLight(name.value, vector.value, scene)
+    const light = provideHemisphericLight(name.value, direction.value, scene)
     return {
       light,
     }
