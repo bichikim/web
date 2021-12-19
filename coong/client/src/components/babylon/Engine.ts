@@ -1,39 +1,71 @@
-import Babylon from 'babylonjs'
-import {computed, ComputedRef, defineComponent, h, inject, InjectionKey, provide, ref, ShallowRef} from 'vue'
+import * as Babylon from 'babylonjs'
+import {
+  defineComponent,
+  h,
+  inject,
+  InjectionKey,
+  provide,
+  reactive,
+  ref,
+  ShallowRef,
+  shallowRef,
+  watchEffect,
+} from 'vue'
 
-export const BabylonEngineKey: InjectionKey<ComputedRef<Babylon.Engine>> = Symbol('babylon-engine')
+export interface EngineMeta {
+  engine?: Babylon.Engine
+}
 
-export const useEngine = (): ShallowRef<Babylon.Engine | undefined> => {
-  return inject(BabylonEngineKey, ref())
+export const engineKey: InjectionKey<EngineMeta> = Symbol('babylon-engine')
+
+export const useEngine = (): EngineMeta => {
+  return inject(engineKey, reactive({}))
 }
 
 export const provideEngine = (canvas: ShallowRef<HTMLCanvasElement | undefined>) => {
-  const engine = computed(() => {
+  const engine = shallowRef()
+
+  watchEffect(() => {
     const canvasValue = canvas.value
     if (canvasValue) {
-      return new Babylon.Engine(canvasValue, true)
+      engine.value = new Babylon.Engine(canvasValue, true)
     }
-    return null
   })
-  provide(BabylonEngineKey, engine)
-  return engine
+
+  const result = reactive({
+    engine,
+  })
+
+  provide(engineKey, result)
+  return result
 }
 
 export const Engine = defineComponent({
   name: 'Engine',
   props: {
-    antialias: {type: Boolean, default: true},
+    antialias: {default: true, type: Boolean},
   },
   render() {
+    const {$slots} = this
     return (
-      h('canvas', {ref: 'root'})
+      h('canvas', {ref: 'root'}, $slots.default?.())
     )
   },
   setup() {
     const root = ref()
-    const engine = provideEngine(root)
+    const engineMeta = provideEngine(root)
+
+    watchEffect(() => {
+      const engineValue = engineMeta.engine
+      if (engineValue) {
+        engineValue.runRenderLoop(() => {
+          engineValue.scenes.forEach((scene) => scene.render())
+        })
+      }
+    })
 
     return {
+      engineMeta,
       root,
     }
   },

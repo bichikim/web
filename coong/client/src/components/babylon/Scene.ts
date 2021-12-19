@@ -1,25 +1,22 @@
-import {
-  h,
-  defineComponent,
-  ShallowRef, computed, ComputedRef, provide, InjectionKey, inject, ref,
-  DeepReadonly,
-} from 'vue'
-import {useEngine} from './Engine'
-import Babylon from 'babylonjs'
+import * as Babylon from 'babylonjs'
+import {defineComponent, inject, InjectionKey, provide, ref, shallowRef, ShallowRef, watchEffect} from 'vue'
+import {EngineMeta, useEngine} from './Engine'
 
-export const sceneKey: InjectionKey<ComputedRef<Babylon.Scene>> = Symbol('scene')
+export const sceneKey: InjectionKey<ShallowRef<Babylon.Scene>> = Symbol('scene')
 
 export const useScene = (): ShallowRef<Babylon.Scene | undefined> => {
   return inject(sceneKey, ref())
 }
 
 export const provideScene = (
-  engine: ShallowRef<Babylon.Engine | undefined>,
-  ): ComputedRef<Babylon.Scene | undefined> => {
-  const scene = computed(() => {
-    const engineValue = engine.value
+  engineMeta: EngineMeta,
+): ShallowRef<Babylon.Scene | undefined> => {
+  const scene = shallowRef()
+
+  watchEffect(() => {
+    const engineValue: Babylon.Engine | undefined = engineMeta.engine
     if (engineValue) {
-      return new Babylon.Scene(engineValue)
+      scene.value = new Babylon.Scene(engineValue)
     }
   })
 
@@ -30,12 +27,16 @@ export const provideScene = (
 
 export const Scene = defineComponent({
   name: 'Scene',
+  render() {
+    const {$slots} = this
+    return $slots.default?.()
+  },
   setup() {
-    const engine = useEngine()
-    const scene = provideScene(engine)
+    const engineMeta = useEngine()
+    const scene = provideScene(engineMeta)
+
     return {
       scene,
     }
   },
-  render: () => null,
 })

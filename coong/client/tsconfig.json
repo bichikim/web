@@ -1,30 +1,21 @@
 {
   "extends": "../../tsconfig.json",
+  "compileOnSave": false,
   "compilerOptions": {
+    "jsx": "preserve",
     "target": "ESNext",
-    "module": "CommonJS",
-    "outDir": "lib",
+    "module": "ESNext",
+    "moduleResolution": "node",
     "baseUrl": ".",
-    "noEmit": false,
     "declaration": true,
-    "skipLibCheck": true,
-
-    "emitDecoratorMetadata": true,
-    "experimentalDecorators": true,
-    "strictPropertyInitialization": false,
+    "lib": ["esnext", "dom"],
+    "types": ["vite/client", "node", "quasar"],
     "paths": {
-      "src/*": [
-        "src/*"
-      ]
-    },
-    "lib": [
-      "esnext",
-      "esnext.asynciterable",
-      "scripthost"
-    ],
-    "plugins": [
-      { "transform": "@zerollup/ts-transform-paths" }
-    ]
+      "src/*": ["src/*"],
+      "pages/*": ["src/pages/*"],
+      "layouts/*": ["src/layouts/*"],
+      "components/*": ["src/components/*"]
+    }
   },
   "ts-node": {
     "compilerOptions": {
@@ -33,14 +24,9 @@
     }
   },
   "include": [
+    "server/**/*.ts",
+    "server/**/*.ts",
     "src/**/*.ts",
-    "src/**/*.d.ts",
-    "src/**/*.tsx",
-    "src/**/*.vue",
-    "tests/**/*.ts",
-    "tests/**/*.tsx"
-  ],
-  "exclude": [
-    "node_modules"
+    "src/**/*.tsx"
   ]
 }
