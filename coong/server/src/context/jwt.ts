@@ -12,6 +12,10 @@ export interface CreateWithJwtOptions {
 export const createWithJwt = (options: CreateWithJwtOptions = {}) => {
   const {key, algorithm = 'HS384', expiresIn = '2h'} = options
 
+  if (!key) {
+    console.warn('Jwt key is not provided')
+  }
+
   const sign = (
     payload: PureObject | string | Buffer,
     options: jwt.SignOptions = {},
