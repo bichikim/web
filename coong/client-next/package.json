@@ -27,7 +27,7 @@
   },
   "devDependencies": {
     "nuxt3": "latest",
-    "postcss": "8",
+    "postcss": "^8.4.5",
     "rollup": "2"
   }
 }
