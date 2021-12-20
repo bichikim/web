@@ -9,15 +9,20 @@ const firstQueryRegx = /^[?]/u
 
 const trimQueryRegx = /^[?&]/u
 
+const MAX_RESOLVE_URL = 200
+
+export const createResolveUrl = (max: number = MAX_RESOLVE_URL) => {
+  return (...urls: string[]): string => {
+    return urls.map((url) => {
+      return url.slice(0, max).replace(trimUrlRegx, '')
+    }).join('/')
+  }
+}
 /**
  * "/ /s" 를 각각 trim 하고 "/"로 연결 합니다
  * @param urls 주소 배열
  */
-export const resolveUrl = (...urls: string[]): string => {
-  return urls.map((url) => {
-    return url.replace(trimUrlRegx, '')
-  }).join('/')
-}
+export const resolveUrl = createResolveUrl()
 
 export interface ChunkedUrlResult {
   chunkedUrl: string[]
