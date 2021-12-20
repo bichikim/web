@@ -1,4 +1,4 @@
-import * as Babylon from 'babylonjs'
+import * as Babylon from '@babylonjs/core'
 import {defineComponent, inject, InjectionKey, provide, ref, ShallowRef, shallowRef, watchEffect} from 'vue'
 import {EngineMeta, useEngine} from './Engine'
 import {useBabylonDispose} from './use-babylon-dispose'

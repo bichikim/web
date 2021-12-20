@@ -1,4 +1,4 @@
-import * as Babylon from 'babylonjs'
+import * as Babylon from '@babylonjs/core'
 import {computed, defineComponent, PropType, provide, reactive, shallowRef, ShallowRef, toRefs, watchEffect} from 'vue'
 import {useEngine} from '../Engine'
 import {useScene} from '../Scene'

@@ -1,4 +1,4 @@
-import {Camera, Engine} from 'babylonjs'
+import {Camera, Engine} from '@babylonjs/core'
 import {useBabylonDispose} from '../use-babylon-dispose'
 import {computed, ComputedRef, UnwrapNestedRefs} from 'vue'
 import {watchUpdate} from '../watch-update'

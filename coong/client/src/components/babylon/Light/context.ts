@@ -1,4 +1,4 @@
-import * as Babylon from 'babylonjs'
+import * as Babylon from '@babylonjs/core'
 import {inject, InjectionKey, ref, ShallowRef} from 'vue'
 
 export const lightKey: InjectionKey<ShallowRef<Babylon.Light | undefined>> =

@@ -1,6 +1,6 @@
 import {defineComponent, ref} from 'vue'
 import {ArcRotateCamera, Box, Engine, HemisphericLight, Scene} from 'src/components/babylon'
-import {Vector3} from 'babylonjs'
+import {Vector3} from '@babylonjs/core'
 
 export const Babylon = defineComponent({
   components: {

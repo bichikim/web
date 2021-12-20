@@ -1,4 +1,4 @@
-import * as Babylon from 'babylonjs'
+import * as Babylon from '@babylonjs/core'
 import {defineComponent, shallowRef, watch} from 'vue'
 import {useScene} from './Scene'
 

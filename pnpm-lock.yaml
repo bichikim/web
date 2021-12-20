@@ -156,6 +156,7 @@ importers:
 
   coong/client:
     specifiers:
+      '@babylonjs/core': ^5.0.0-alpha.65
       '@capacitor/android': 3.2.5
       '@capacitor/cli': ^3.2.5
       '@capacitor/core': 3.2.5
@@ -184,7 +185,6 @@ importers:
       '@winter-love/stitches': ^1.0.23-alpha.9
       '@winter-love/utils': ^1.0.23-alpha.5
       '@zerollup/ts-transform-paths': ^1.7.18
-      babylonjs: ^4.2.0
       cross-env: ^7.0.3
       csstype: ^3.0.9
       express: ^4.17.1
@@ -214,6 +214,7 @@ importers:
       vue-i18n: ^9.1.9
       vue-router: ^4.0.12
     dependencies:
+      '@babylonjs/core': 5.0.0-alpha.65
       '@capacitor/android': 3.2.5_@capacitor+core@3.2.5
       '@capacitor/core': 3.2.5
       '@capacitor/ios': 3.2.5_@capacitor+core@3.2.5
@@ -227,7 +228,6 @@ importers:
       '@vueuse/head': 0.6.0_vue@3.2.26
       '@winter-love/stitches': link:../../packages/stitches
       '@winter-love/utils': link:../../packages/utils
-      babylonjs: 4.2.0
       express: 4.17.1
       graphql: 15.7.2
       graphql-tag: 2.12.6_graphql@15.7.2
@@ -3640,6 +3640,13 @@ packages:
     dependencies:
       '@babel/helper-validator-identifier': 7.15.7
       to-fast-properties: 2.0.0
+
+  /@babylonjs/core/5.0.0-alpha.65:
+    resolution: {integrity: sha512-L4b5cLVYVqR+TuSMZK5tt79JXIndUq/RtMKgMFgNZbIweoBxY7C9Xf+DaoWrpDpXeb4ReaHLQJeeJczyzJQV6g==}
+    engines: {node: '>=12.x'}
+    dependencies:
+      tslib: 2.3.1
+    dev: false
 
   /@base2/pretty-print-object/1.0.1:
     resolution: {integrity: sha512-4iri8i1AqYHJE2DstZYkyEprg6Pq6sKx3xn5FpySk9sNhH7qN2LLlHJCfDTZRILNwQNPD7mATWM0TBui7uC1pA==}
@@ -12975,10 +12982,6 @@ packages:
     dependencies:
       '@babel/types': 7.16.0
     dev: true
-
-  /babylonjs/4.2.0:
-    resolution: {integrity: sha512-4hniJzWRkV0tDTTYGEHPk1lnfWn0HIw7HOvNWPK0rpUIbJooyeD9E5uVyHnslDedt0mtrA7QZu4i2Cz1DEmSsA==}
-    dev: false
 
   /bach/1.2.0:
     resolution: {integrity: sha1-Szzpa/JxNPeaG0FKUcFONMO9mIA=}

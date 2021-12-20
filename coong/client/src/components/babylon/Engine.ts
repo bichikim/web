@@ -1,4 +1,4 @@
-import * as Babylon from 'babylonjs'
+import * as Babylon from '@babylonjs/core'
 import {
   computed,
   defineComponent,
@@ -25,14 +25,27 @@ export const useEngine = (): EngineMeta => {
   return inject(engineKey, reactive({}))
 }
 
-export const provideEngine = (canvas: ShallowRef<HTMLCanvasElement | undefined>) => {
+export const provideEngine = (
+  canvas: ShallowRef<HTMLCanvasElement | undefined>,
+  options?: Babylon.WebGPUEngineOptions,
+) => {
   const engine = shallowRef<undefined | Babylon.Engine>()
 
-  watchEffect(() => {
+  watchEffect(async () => {
     const canvasValue = canvas.value
-    if (canvasValue) {
-      engine.value = new Babylon.Engine(canvasValue, true)
+    if (!canvasValue) {
+      return
     }
+
+    const supported = await Babylon.WebGPUEngine.IsSupportedAsync
+
+    if (supported) {
+      engine.value = await Babylon.WebGPUEngine.CreateAsync(canvasValue, options)
+
+      return
+    }
+
+    engine.value = new Babylon.Engine(canvasValue, true)
   })
 
   const result = reactive({
