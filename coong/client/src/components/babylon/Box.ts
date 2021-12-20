@@ -1,5 +1,5 @@
 import * as Babylon from 'babylonjs'
-import {defineComponent, shallowRef, watchEffect} from 'vue'
+import {defineComponent, shallowRef, watch} from 'vue'
 import {useScene} from './Scene'
 
 export const Box = defineComponent({
@@ -10,13 +10,14 @@ export const Box = defineComponent({
   },
   setup() {
     const scene = useScene()
-    const box = shallowRef()
+    const box = shallowRef<undefined | Babylon.Mesh>()
 
-    watchEffect(() => {
-      const sceneValue = scene.value
-      if (sceneValue) {
-        box.value = Babylon.MeshBuilder.CreateBox('box', {}, sceneValue)
+    watch(scene, (scene) => {
+      const boxValue = box.value
+      if (boxValue) {
+        boxValue.dispose()
       }
+      box.value = Babylon.MeshBuilder.CreateBox('box', {}, scene)
     })
 
     return {

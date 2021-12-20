@@ -6,6 +6,7 @@ import {validate} from 'class-validator'
 import {ImageTransform} from './ImageTransform.dto'
 import {plainToInstance} from 'class-transformer'
 import {createProvideContext} from '../utils/context'
+import {useFormat} from './image-format'
 
 export interface ImageTransformContext {
   format: string
@@ -56,11 +57,13 @@ export const imageTransform = (options: ImageTransformOptions = {}): RequestHand
 
   return async (req, res, next) => {
     const {query} = req
-    const {w, h, c, q, f} = query
+    const {w, h, c, q} = query
+
+    const formatContext = useFormat(req)
 
     const options = plainToInstance(ImageTransform, {
       crop: query.crop ?? c,
-      format: query.format ?? f,
+      format: formatContext,
       height: query.height ?? h,
       quality: query.quality ?? q,
       width: query.width ?? w,

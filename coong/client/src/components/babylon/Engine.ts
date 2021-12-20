@@ -1,16 +1,19 @@
 import * as Babylon from 'babylonjs'
 import {
+  computed,
   defineComponent,
   h,
   inject,
   InjectionKey,
+  onBeforeUnmount,
   provide,
   reactive,
   ref,
-  ShallowRef,
   shallowRef,
+  ShallowRef,
   watchEffect,
 } from 'vue'
+import {watchUpdate} from './watch-update'
 
 export interface EngineMeta {
   engine?: Babylon.Engine
@@ -23,7 +26,7 @@ export const useEngine = (): EngineMeta => {
 }
 
 export const provideEngine = (canvas: ShallowRef<HTMLCanvasElement | undefined>) => {
-  const engine = shallowRef()
+  const engine = shallowRef<undefined | Babylon.Engine>()
 
   watchEffect(() => {
     const canvasValue = canvas.value
@@ -54,13 +57,20 @@ export const Engine = defineComponent({
   setup() {
     const root = ref()
     const engineMeta = provideEngine(root)
+    const engine = computed(() => {
+      return engineMeta.engine
+    })
 
-    watchEffect(() => {
-      const engineValue = engineMeta.engine
+    watchUpdate(engine, (engine) => {
+      engine.runRenderLoop(() => {
+        engine.scenes.forEach((scene) => scene.render())
+      })
+    })
+
+    onBeforeUnmount(() => {
+      const engineValue = engine.value
       if (engineValue) {
-        engineValue.runRenderLoop(() => {
-          engineValue.scenes.forEach((scene) => scene.render())
-        })
+        engineValue.stopRenderLoop()
       }
     })
 

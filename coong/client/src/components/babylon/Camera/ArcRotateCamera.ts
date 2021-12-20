@@ -1,8 +1,10 @@
 import * as Babylon from 'babylonjs'
-import {defineComponent, PropType, provide, shallowRef, ShallowRef, toRefs, watchEffect} from 'vue'
-import {useScene} from '../Scene'
+import {computed, defineComponent, PropType, provide, reactive, shallowRef, ShallowRef, toRefs, watchEffect} from 'vue'
 import {useEngine} from '../Engine'
+import {useScene} from '../Scene'
+import {watchUpdate} from '../watch-update'
 import {camaraKey} from './context'
+import {controlCamera} from './control-camera'
 
 export const provideArcRotateCamera = (
   name: string,
@@ -43,20 +45,32 @@ export const ArcRotateCamera = defineComponent({
     const {target, name, alpha, beta, radius, isControl, controlElement} = toRefs(props)
     const scene = useScene()
     const engineMeta = useEngine()
+    const engine = computed(() => engineMeta.engine)
     const camera = provideArcRotateCamera(name.value, scene, alpha.value, beta.value, radius.value, target.value)
 
-    watchEffect(() => {
-      const cameraValue = camera.value
-      const engineValue = engineMeta.engine
-      const isControlValue = isControl.value
-      if (cameraValue && engineValue) {
-        const handle = controlElement.value ?? engineValue.getRenderingCanvas()
-        if (isControlValue) {
-          cameraValue.attachControl(handle, true)
-        } else {
-          cameraValue.detachControl()
-        }
-      }
+    controlCamera(reactive({
+      camera,
+      controlElement,
+      engine,
+      isControl,
+    }))
+
+    watchUpdate(camera, (camera) => {
+      camera.target.copyFrom(target.value)
+    })
+
+    // alpha
+    watchUpdate(camera, (camera) => {
+      camera.alpha = alpha.value
+    })
+
+    // beta
+    watchUpdate(camera, (camera) => {
+      camera.beta = beta.value
+    })
+
+    watchUpdate(camera, (camera) => {
+      camera.beta = beta.value
     })
 
     return {

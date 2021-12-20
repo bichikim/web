@@ -1,8 +1,10 @@
 import * as Babylon from 'babylonjs'
-import {defineComponent, inject, InjectionKey, provide, ref, shallowRef, ShallowRef, watchEffect} from 'vue'
+import {defineComponent, inject, InjectionKey, provide, ref, ShallowRef, shallowRef, watchEffect} from 'vue'
 import {EngineMeta, useEngine} from './Engine'
+import {useBabylonDispose} from './use-babylon-dispose'
 
-export const sceneKey: InjectionKey<ShallowRef<Babylon.Scene>> = Symbol('scene')
+export const sceneKey: InjectionKey<ShallowRef<Babylon.Scene>> =
+  Symbol('scene')
 
 export const useScene = (): ShallowRef<Babylon.Scene | undefined> => {
   return inject(sceneKey, ref())
@@ -34,6 +36,8 @@ export const Scene = defineComponent({
   setup() {
     const engineMeta = useEngine()
     const scene = provideScene(engineMeta)
+
+    useBabylonDispose(scene)
 
     return {
       scene,

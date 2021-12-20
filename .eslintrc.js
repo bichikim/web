@@ -399,6 +399,7 @@ module.exports = {
     'unicorn/prefer-ternary': 'off',
     'unicorn/prevent-abbreviations': 'off',
     'vue/component-name-in-template-casing': ['warn', 'kebab-case'],
+    'vue/multi-word-component-names': 'off',
     'vue/order-in-components': 'off',
     'vue/require-default-prop': 'off',
     'vue/return-in-computed-property': 'off',
