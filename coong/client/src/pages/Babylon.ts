@@ -1,5 +1,5 @@
 import {defineComponent, ref} from 'vue'
-import {ArcRotateCamera, Box, Engine, HemisphericLight, Scene} from 'src/components/babylon'
+import {ArcRotateCamera, Box, Engine, HemisphericLight, Loader, Scene} from 'src/components/babylon'
 import {Vector3} from '@babylonjs/core'
 
 export const Babylon = defineComponent({
@@ -8,6 +8,7 @@ export const Babylon = defineComponent({
     Box,
     Engine,
     HemisphericLight,
+    Loader,
     Scene,
   },
   name: 'Babylon',
@@ -22,7 +23,7 @@ export const Babylon = defineComponent({
       <scene>
         <arc-rotate-camera />
         <hemispheric-light :direction="lightDirection" />
-        <box />
+        <loader />
       </scene>
     </engine>
   `,

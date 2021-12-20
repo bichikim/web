@@ -35,7 +35,10 @@ export const Camera = defineComponent({
     name: {default: 'camera', type: String},
     position: {default: () => (new Babylon.Vector3(0, 0, 0)), type: Object as PropType<Babylon.Vector3>},
   },
-  render: () => null,
+  render() {
+    const {$slots} = this
+    return $slots.default?.()
+  },
   setup(props) {
     const {position, name, isControl, controlElement} = toRefs(props)
     const engineMeta = useEngine()
