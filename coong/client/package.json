@@ -57,6 +57,7 @@
     "cross-env": "^7.0.3"
   },
   "devDependencies": {
+    "patch-vue-directive-ssr": "^0.0.1",
     "@capacitor/cli": "^3.2.5",
     "@graphql-codegen/add": "^3.1.0",
     "@graphql-codegen/cli": "^2.3.0",

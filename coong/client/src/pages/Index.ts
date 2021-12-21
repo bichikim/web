@@ -1,11 +1,9 @@
-import {ZText} from '@namchee/vue-ztext'
 import {QPage} from 'quasar'
 import {defineComponent, ref} from 'vue'
 
 const IndexPage = defineComponent({
   components: {
     QPage,
-    ZText,
   },
   setup() {
     const toggle = ref(false)
@@ -29,19 +27,22 @@ const IndexPage = defineComponent({
        left: '50%',
        transform: 'translate(-50%, -50%)',
        top: '50%',
+       zIndex: '-1000'
     }">
       <source src="/videos/intro.mp4" type="video/mp4">
     </video>
-    <z-text
-      eventRotation="10deg"
-      depth="60px"
-      fade
-      eventDirection="default"
-      event="pointer"
-      v-css="{fontSize: '10em', color: 'mistyrose'}"
+    <span
+      v-css="{
+        fontSize: '10em',
+        color: 'mistyrose',
+        position: 'absolute',
+        left: '50%',
+        top: '50%',
+        transform: 'translate(-50%, -50%)',
+      }"
     >
       Coong
-    </z-text>
+    </span>
     </q-page>
   `,
 })

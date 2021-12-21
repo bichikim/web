@@ -195,6 +195,7 @@ importers:
       markdown-it-prism: ^2.2.1
       node-html-parser: ^5.0.0
       node-inject-html: ^0.0.5
+      patch-vue-directive-ssr: ^0.0.1
       quasar: ^2.3.3
       rollup: ^2.60.0
       rollup-plugin-analyzer: ^4.0.0
@@ -264,6 +265,7 @@ importers:
       csstype: 3.0.9
       markdown-it-link-attributes: 3.0.0
       markdown-it-prism: 2.2.1
+      patch-vue-directive-ssr: 0.0.1
       rollup: 2.60.0
       rollup-plugin-analyzer: 4.0.0
       ts-node: 10.3.0_036181877a83ed913a2bbec8dcc74354
@@ -24107,6 +24109,11 @@ packages:
   /pascalcase/0.1.1:
     resolution: {integrity: sha1-s2PlXoAGym/iF4TS2yK9FdeRfxQ=}
     engines: {node: '>=0.10.0'}
+    dev: true
+
+  /patch-vue-directive-ssr/0.0.1:
+    resolution: {integrity: sha512-n84llktHah+EXUGo+RvmTJcAQJQVW0kHHHiJ34ZSLijzhHi32zCMjCc5VAFv4jmdC91bpaYGPk0cDW1D8hQ3GQ==}
+    requiresBuild: true
     dev: true
 
   /path-browserify/0.0.1:
