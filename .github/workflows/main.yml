@@ -380,7 +380,7 @@ jobs:
         run: |
           docker build \
           -t $GCP_IAMGE_NAME:$GITHUB_SHA \    
-          ./${{ env.PROJECT_PATH }}
+          ./coong/client
 
       - name: Tag
         run: |
@@ -442,7 +442,7 @@ jobs:
         run: |
           docker build \
           -t $GCP_IAMGE_NAME:$GITHUB_SHA \    
-          ./${{ env.PROJECT_PATH }}
+          ./coong/client
 
       - name: Tag
         run: |
