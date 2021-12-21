@@ -27,21 +27,12 @@ export const useEngine = (): EngineMeta => {
 
 export const provideEngine = (
   canvas: ShallowRef<HTMLCanvasElement | undefined>,
-  options?: Babylon.WebGPUEngineOptions,
 ) => {
   const engine = shallowRef<undefined | Babylon.Engine>()
 
   watchEffect(async () => {
     const canvasValue = canvas.value
     if (!canvasValue) {
-      return
-    }
-
-    const supported = await Babylon.WebGPUEngine.IsSupportedAsync
-
-    if (supported) {
-      engine.value = await Babylon.WebGPUEngine.CreateAsync(canvasValue, options)
-
       return
     }
 
