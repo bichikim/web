@@ -23,8 +23,8 @@
     }
   },
   "include": [
-    "server/**/*.ts",
-    "server/**/*.ts",
+    "run-ssr/**/*.ts",
+    "run-ssr/**/*.ts",
     "src/**/*.ts",
     "src/**/*.tsx"
   ]

@@ -16,7 +16,7 @@
     "generator:graphql": "graphql-codegen",
     "ionic:build": "vite  build --outDir dist/spa",
     "ionic:serve": "vite --host --port 8100",
-    "start": "NODE_ENV=production node dist/run-ssr/index.js",
+    "start": "cross-env NODE_ENV=production node dist/run-ssr/index.js",
     "start:spa": "vite preview --host --https",
     "start:ssr": "cross-env NODE_ENV=production node dist/run-ssr/index.js",
     "sync:android": "cap sync android",

@@ -23,10 +23,6 @@ const routes: RouteRecordRaw[] = [{
       component: () => import('pages/Graphql'),
       path: 'graphql',
     },
-    {
-      component: () => import('pages/Babylon'),
-      path: 'babylon',
-    },
   ],
   component: () => import('layouts/PagesLayout'),
   path: '/',

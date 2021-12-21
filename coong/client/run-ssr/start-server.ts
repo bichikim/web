@@ -1,19 +1,21 @@
+/* eslint-disable @typescript-eslint/no-var-requires */
 import express, {static as expressStatic} from 'express'
 
 export interface StartServerOptions {
   distClient?: string
   distServer?: string
+  entry?: string
   /**
    * @default 8080
    */
   port?: number
   root: string
-  entry?: string
 }
 
 const OK = 200
 
 export const DEFAULT_PORT = 8080
+const GET_METHOD = 'GET'
 
 export const startServer = async (options: StartServerOptions) => {
   const {
@@ -31,32 +33,31 @@ export const startServer = async (options: StartServerOptions) => {
 
   app.get('*', async (req, res, next) => {
     const url = req.originalUrl
-    const {headers} = req
-    
+    const {headers, socket, method} = req
+
     const context = {
-      hostname: headers.host,
-      protocol: 'http',
-      url,
       cookies: {},
-      statusCode: OK,
-      ip: req.socket.remoteAddress,
       headers,
-      responseHeaders: {'content-type': 'text:html; charset=utf-8'},
+      hostname: headers.host,
+      ip: socket.remoteAddress,
       memcache: null,
-      
-    }
-    
+      protocol: 'http',
+      responseHeaders: {'content-type': 'text:html; charset=utf-8'},
+      statusCode: OK,
+      url,
 
-    if(req.method !== "GET" || !url) {
-
-      return next();
     }
-    
-    const {html} = await render(url, {req, res, context})
+
+    if (method !== GET_METHOD || !url) {
+
+      return next()
+    }
+
+    const {html} = await render(url, {context, req, res})
 
     res.statusCode = context.statusCode
-    Object.keys(context.responseHeaders).map(key => res.setHeader(key, context.responseHeaders[key]));
-    
+    Object.keys(context.responseHeaders).map((key) => res.setHeader(key, context.responseHeaders[key]))
+
     res.status(OK).set({'Content-Type': 'text/html'}).end(html)
   })
 
