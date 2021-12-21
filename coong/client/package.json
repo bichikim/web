@@ -52,7 +52,9 @@
     "vite-ssr-vue": "^0.3.7",
     "vue": "next",
     "vue-i18n": "^9.1.9",
-    "vue-router": "^4.0.12"
+    "vue-router": "^4.0.12",
+    "@namchee/vue-ztext": "^1.0.0",
+    "cross-env": "^7.0.3"
   },
   "devDependencies": {
     "@capacitor/cli": "^3.2.5",
@@ -70,7 +72,6 @@
     "@vitejs/plugin-vue-jsx": "^1.2.0",
     "@vue/compiler-sfc": "^3.2.26",
     "@zerollup/ts-transform-paths": "^1.7.18",
-    "cross-env": "^7.0.3",
     "csstype": "^3.0.9",
     "markdown-it-link-attributes": "^3.0.0",
     "markdown-it-prism": "^2.2.1",

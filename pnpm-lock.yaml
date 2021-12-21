@@ -169,6 +169,7 @@ importers:
       '@intlify/vite-plugin-vue-i18n': ^3.1.0
       '@ionic/vue': 6.0.0-rc.0
       '@ionic/vue-router': 6.0.0-rc.0
+      '@namchee/vue-ztext': ^1.0.0
       '@quasar/app': ^3.2.4
       '@quasar/extras': ^1.12.1
       '@rollup/plugin-replace': ^3.0.0
@@ -220,6 +221,7 @@ importers:
       '@capacitor/ios': 3.2.5_@capacitor+core@3.2.5
       '@ionic/vue': 6.0.0-rc.0
       '@ionic/vue-router': 6.0.0-rc.0
+      '@namchee/vue-ztext': 1.0.0_vue@3.2.26
       '@quasar/app': 3.2.4_eslint@8.2.0
       '@quasar/extras': 1.12.1
       '@stitches/core': 1.2.5
@@ -228,6 +230,7 @@ importers:
       '@vueuse/head': 0.6.0_vue@3.2.26
       '@winter-love/stitches': link:../../packages/stitches
       '@winter-love/utils': link:../../packages/utils
+      cross-env: 7.0.3
       express: 4.17.1
       graphql: 15.7.2
       graphql-tag: 2.12.6_graphql@15.7.2
@@ -258,7 +261,6 @@ importers:
       '@vitejs/plugin-vue-jsx': 1.2.0
       '@vue/compiler-sfc': 3.2.26
       '@zerollup/ts-transform-paths': 1.7.18_typescript@4.4.4
-      cross-env: 7.0.3
       csstype: 3.0.9
       markdown-it-link-attributes: 3.0.0
       markdown-it-prism: 2.2.1
@@ -6100,6 +6102,14 @@ packages:
     dependencies:
       graphql: 15.7.2
     dev: true
+
+  /@namchee/vue-ztext/1.0.0_vue@3.2.26:
+    resolution: {integrity: sha512-rensiNYrDY9+fNes+jxUDTfM5//0qRFaO3g14Yw4EF2J3b/aT430Psq/8/fdtXEDfoBRZw7lp/SuVTjZEqDpKA==}
+    peerDependencies:
+      vue: ^3.0.0
+    dependencies:
+      vue: 3.2.26
+    dev: false
 
   /@netlify/functions/0.10.0:
     resolution: {integrity: sha512-NNFADTPnokuoMY1OUhaXlE/Jrzk5lHOl1uB4L/8pw1UJ/CaectZJACMExijbJnqaKIhOQG0WmbBQUh1lgnK/Qg==}
@@ -14683,7 +14693,6 @@ packages:
     hasBin: true
     dependencies:
       cross-spawn: 7.0.3
-    dev: true
 
   /cross-fetch/3.1.4:
     resolution: {integrity: sha512-1eAtFWdIubi6T4XPy6ei9iUFoKpUkIF971QLN8lIvvvwueI65+Nw5haMNKUwfJxabqlIIDODJKGrQ66gxC0PbQ==}

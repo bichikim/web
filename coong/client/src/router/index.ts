@@ -28,7 +28,7 @@ const routes: RouteRecordRaw[] = [{
       path: 'babylon',
     },
   ],
-  component: () => import('layouts/PagesLayout'),
+  component: () => import('pages/_layout'),
   path: '/',
 }]
 
