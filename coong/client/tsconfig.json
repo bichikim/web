@@ -1,5 +1,4 @@
 {
-  "extends": "../../tsconfig.json",
   "compileOnSave": false,
   "compilerOptions": {
     "jsx": "preserve",
@@ -14,7 +13,25 @@
       "pages/*": ["src/pages/*"],
       "layouts/*": ["src/layouts/*"],
       "components/*": ["src/components/*"]
-    }
+    },
+    "allowJs": true,
+    // `baseUrl` must be placed on the extending configuration in devland, or paths won't be recognized
+    "esModuleInterop": true,
+
+    // Needed to address https://github.com/quasarframework/app-extension-typescript/issues/36
+    "noEmit": true,
+    "resolveJsonModule": true,
+
+    "noImplicitAny": false,
+    "importHelpers": true,
+
+    "skipLibCheck": true,
+    // for 4.4.0
+    // "exactOptionalPropertyTypes": true,
+    "allowSyntheticDefaultImports": true,
+    "suppressImplicitAnyIndexErrors": true,
+    "sourceMap": true,
+    "strict": true,
   },
   "ts-node": {
     "compilerOptions": {
