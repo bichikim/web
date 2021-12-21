@@ -401,7 +401,7 @@ jobs:
           --region asia-northeast3 \
           --allow-unauthenticated \
           --max-instances 2 \
-          --port 3000 \
+          --port 8080 \
           --memory 512M
   deploy-dev-client:
     name: Deploy Dev Client
@@ -463,5 +463,5 @@ jobs:
           --region asia-northeast3 \
           --allow-unauthenticated \
           --max-instances 2 \
-          --port 3000 \
+          --port 8080 \
           --memory 512M
