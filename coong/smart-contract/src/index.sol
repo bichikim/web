@@ -7,7 +7,7 @@ contract Index {
     message = initialMessage;
   }
 
-  function setMessage(string message) public {
+  function setMessage(string newMessage) public {
     message = newMessage;
   }
 }
