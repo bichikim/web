@@ -412,7 +412,6 @@ jobs:
       GCP_SERVICE_NAME: coong-dev
       GCP_IAMGE_NAME: gcr.io/${{ secrets.GCP_PROJECT_ID }}/coong-dev
       BACK_END_URL: https://back-dev.coong.io
-      PROJECT_PATH: coong/client
     steps:
       - name: Checkout Repo
         uses: actions/checkout@master
@@ -421,7 +420,7 @@ jobs:
         uses: actions/download-artifact@master
         with:
           name: dist-client
-          path: ${{ env.PROJECT_PATH }}/dist
+          path: coong/client/dist
 
       - name: Setup Cloud SDK
         uses: google-github-actions/setup-gcloud@v0.2.1
@@ -435,8 +434,8 @@ jobs:
 
       - name: Create Env File
         run: |
-          touch ${{ env.PROJECT_PATH }}/.env
-          echo VITE_API_URL=$BACK_END_URL >> ${{ env.PROJECT_PATH }}/.env
+          touch coong/client/.env
+          echo VITE_API_URL=$BACK_END_URL >> coong/client/.env
 
       - name: Build
         run: |

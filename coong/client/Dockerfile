@@ -9,7 +9,7 @@ RUN pnpm install
 RUN pnpm run build
 RUN pnpm install --prod
 
-EXPOSE 8080
+EXPOSE 3000
 
 CMD pnpm run start
 
