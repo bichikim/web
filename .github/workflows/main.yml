@@ -359,7 +359,7 @@ jobs:
         uses: actions/download-artifact@master
         with:
           name: dist-client
-          path: ${{ env.PROJECT_PATH }}/dist
+          path: ${{ env.PROJECT_ROOT_PATH }}/dist
 
       - name: Setup Cloud SDK
         uses: google-github-actions/setup-gcloud@v0.2.1
@@ -422,7 +422,7 @@ jobs:
         uses: actions/download-artifact@master
         with:
           name: dist-client
-          path: ${{ env.PROJECT_PATH }}/dist
+          path: ${{ env.PROJECT_ROOT_PATH }}/dist
 
       - name: Setup Cloud SDK
         uses: google-github-actions/setup-gcloud@v0.2.1
