@@ -350,7 +350,7 @@ jobs:
       GCP_SERVICE_NAME: coong
       GCP_IAMGE_NAME: gcr.io/${{ secrets.GCP_PROJECT_ID }}/coong
       BACK_END_URL: https://back.coong.io
-      PROJECT_PATH: coong/client
+      PROJECT_ROOT_PATH: coong/client
     steps:
       - name: Checkout Repo
         uses: actions/checkout@master
@@ -373,14 +373,14 @@ jobs:
 
       - name: Create Env File
         run: |
-          touch ${{ env.PROJECT_PATH }}/.env
-          echo VITE_API_URL=$BACK_END_URL >> ${{ env.PROJECT_PATH }}/.env
+          touch ${{ env.PROJECT_ROOT_PATH }}/.env
+          echo VITE_API_URL=$BACK_END_URL >> ${{ env.PROJECT_ROOT_PATH }}/.env
 
       - name: Build
         run: |
           docker build \
-          -t $GCP_IAMGE_NAME:$GITHUB_SHA \    
-          ./coong/client
+          -t $GCP_IAMGE_NAME:$GITHUB_SHA \
+          ./${{ env.PROJECT_ROOT_PATH }}
 
       - name: Tag
         run: |
@@ -440,7 +440,7 @@ jobs:
       - name: Build
         run: |
           docker build \
-          -t $GCP_IAMGE_NAME:$GITHUB_SHA \    
+          -t $GCP_IAMGE_NAME:$GITHUB_SHA \
           ./coong/client
 
       - name: Tag
