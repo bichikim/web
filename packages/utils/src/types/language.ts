@@ -23,6 +23,8 @@ export type PatchOptional<T, K extends keyof T> = {
   [P in Exclude<keyof T, K>]: T[P]
 }
 
+export type MayPromise<T> = Promise<T> | T
+
 export type PromiseType<T> = T extends Promise<infer P> ? P : T
 
 export type PromiseReturnType<T extends AnyFunction> = PromiseType<ReturnType<T>>
@@ -43,7 +45,11 @@ export type DropParametersFunction<T extends (...args: any) => any> = AnyFunctio
 
 export type DropRightTuple<T extends any[]> = T extends [...infer Head, any] ? Head : any[]
 
+export type PickLastTuple<T extends any[]> = T extends [...any[], infer P] ? P : unknown
+
 export type DropRightParameters<T extends (...args: any) => any> = DropRightTuple<Parameters<T>>
+
+export type PickLastParameters<T extends (...args: any) => any> = PickLastTuple<Parameters<T>>
 
 export type DropRightParametersFunction<T extends (...args: any) => any> = AnyFunction<DropParameters<T>, ReturnType<T>>
 

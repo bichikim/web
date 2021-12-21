@@ -1,5 +1,6 @@
-import {Meta, Story} from '@storybook/addon-docs/blocks'
-import {Default} from './templates'
+import {Meta, Story, Canvas} from '@storybook/addon-docs/blocks'
+import {toggleRef} from '../'
+import {h} from 'vue-demi'
 
 <Meta title="use/Toggle"/>
 
@@ -7,7 +8,20 @@ import {Default} from './templates'
 
 토글 함수와 토글된 값을 리턴 합니다
 
-<Story name="Default">
-  {Default.bind({})}
-</Story>
+export const Default = () => ({
+  setup() {
+    const {value, toggle} = toggleRef(false)
+    return () => (
+      h('div', [
+        h('div', `value ${value.value}`),
+        h('button', {onClick: toggle}, 'toggle value'),
+      ])
+    )
+  },
+})
 
+<Canvas>
+  <Story name="Default">
+    {Default.bind({})}
+  </Story>
+</Canvas>

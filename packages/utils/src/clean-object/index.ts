@@ -1,9 +1,8 @@
-// eslint-disable-next-line import/no-unresolved
 import {AnyObject} from 'src/types'
 
 /**
- * clean undefined value
- * but don’t make a case to use this one
+ * remove keys which has undefined value
+ * but don’t make a case to use this
  * @param value
  */
 export const cleanObject = (value: AnyObject) => (

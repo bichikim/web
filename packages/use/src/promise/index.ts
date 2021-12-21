@@ -97,7 +97,7 @@ export const usePromise2 = <Data, Args extends any[] = [], Error = any>(
   recipe: Recipe2<Data, Args, Error>,
   initData?: MayRef<Data | undefined>,
   options: UsePromiseOptions<Args> = {},
-) => {
+): UsePromiseReturnType<Data, Args, Error> => {
   const {immediate, cleanOnExecute = true} = options
   const dataRef = wrapRef<Data | undefined>(initData)
   const countRef = ref<number>(0)

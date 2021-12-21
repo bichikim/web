@@ -4,7 +4,7 @@ import {isComponentInstance} from '../is-component-instance'
 
 export const pickElement = (value: PossibleElement): Element | undefined | null => {
   if (isComponentInstance(value)) {
-    return value.$el
+    return value?.$el
   }
   if (isElement(value)) {
     return value

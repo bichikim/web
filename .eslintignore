@@ -3,7 +3,7 @@
 /src-capacitor
 /src-cordova
 /.quasar
-/node_modules
+node_modules
+**/*.d.ts
 /src-ssr
 /lib
-

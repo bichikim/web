@@ -1,5 +1,5 @@
 import * as process from 'process'
-import {inject, InjectionKey, provide} from 'vue'
+import {inject, InjectionKey, provide} from 'vue-demi'
 import {freeze, MayFunction, mayFunctionValue, UnFunction} from '@winter-love/utils'
 
 export const createProvide = <T extends MayFunction<unknown>>(data: T, name?: string) => {

@@ -12,12 +12,6 @@
       ]
     }
   },
-  "ts-node": {
-    "compilerOptions": {
-      "target": "ES2015",
-      "module": "CommonJS"
-    }
-  },
   "include": [
     "src/**/*.ts",
     "src/**/*.d.ts",
@@ -26,5 +20,12 @@
   ],
   "exclude": [
     "node_modules"
-  ]
+  ],
+  "ts-node": {
+    "transpileOnly": true,
+    "compilerOptions": {
+      "target": "ES2015",
+      "module": "CommonJS"
+    }
+  }
 }

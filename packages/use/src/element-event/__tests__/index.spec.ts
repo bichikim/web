@@ -1,3 +1,7 @@
+/**
+ * @jest-environment jsdom
+ */
+
 import {flushPromises, mount} from '@vue/test-utils'
 import {defineComponent, h, ref} from 'vue-demi'
 import {useElementEvent} from '../index'
@@ -9,11 +13,8 @@ const setup = (props: any) => {
       const elementRef = ref()
       const countRef = ref(0)
       const active = useElementEvent(elementRef, 'click', () => {
-        console.log('?')
         countRef.value += 1
       }, props.immediate, {once: props.once})
-
-      console.log(active.value)
 
       return () => (
         h('div', [
@@ -61,16 +62,16 @@ const setupWithWindow = (props: any) => {
 describe('element-event', () => {
   it('should trigger event with immediate', async () => {
     const {wrapper} = setup({immediate: true})
-    await flushPromises()
+
     expect(wrapper.get('#count').text()).toBe('0')
     await wrapper.get('#target').trigger('click')
-    await flushPromises()
+
     expect(wrapper.get('#count').text()).toBe('1')
     await wrapper.get('#target').trigger('click')
     expect(wrapper.get('#count').text()).toBe('2')
     await wrapper.get('#inactive').trigger('click')
     await wrapper.get('#target').trigger('click')
-    await flushPromises()
+
     expect(wrapper.get('#count').text()).toBe('2')
     await wrapper.get('#active').trigger('click')
     await wrapper.get('#target').trigger('click')
@@ -87,7 +88,6 @@ describe('element-event', () => {
   })
   it('should not trigger event with the once and the mounted immediate', async () => {
     const {wrapper} = setup({immediate: true, once: true})
-    await flushPromises()
     expect(wrapper.get('#count').text()).toBe('0')
     await wrapper.get('#target').trigger('click')
     expect(wrapper.get('#count').text()).toBe('1')
@@ -115,7 +115,6 @@ describe('element-event', () => {
     const event = document.createEvent('MessageEvent')
     event.initEvent('message')
     window.dispatchEvent(event)
-    await flushPromises()
     expect(wrapper.get('#count').text()).toBe('0')
     await wrapper.get('#active').trigger('click')
     window.dispatchEvent(event)

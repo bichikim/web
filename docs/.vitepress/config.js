@@ -5,15 +5,40 @@ module.exports = {
   themeConfig: {
     nav: [
       {
+        text: 'Guide',
+        link: '/',
+        activeMatch: '^/$|^/guide/',
+      },
+      {
+        text: 'API Reference',
+        link: '/api/use/',
+        activeMatch: '^/api/use'
+      },
+      {
+        text: 'Phrase',
+        link: '/phrase/',
+        activeMatch: '^/phrase',
+      },
+      {
         text: 'Support us',
       },
     ],
     sidebar: {
       '/guide/': getGuideSidebar(),
-      '/Api/': getGuideSidebar(),
+      '/phrase/': getPhraseSidebar(),
+      '/api/': getApiSidebar(),
       '/': getGuideSidebar(),
     },
   },
+}
+
+function getPhraseSidebar() {
+  return [
+    {
+      text: '소개',
+      link: '/phrase/',
+    }
+  ]
 }
 
 function getGuideSidebar() {
@@ -36,16 +61,16 @@ function getApiSidebar() {
       text: 'Use',
       children: [
         {
-          text: 'Use 는 무엇인가요?',
-          link: '/api/use',
+          text: '소개',
+          link: '/api/use/'
         },
         {
-          text: 'wrap-ref',
+          text: 'WrapRef',
           link: '/api/use/wrap-ref',
         },
       ],
     },
-    {
+    {  
       text: 'Vare',
       children: [
         {

@@ -16,7 +16,7 @@ exports[`variant should not return styles 1`] = `
 }
 
 <div
-  class="  emotion-0"
+  class=" emotion-0"
 >
   <div
     class="bar"

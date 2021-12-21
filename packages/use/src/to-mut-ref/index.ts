@@ -14,13 +14,11 @@ export type ToMutRefHandle<Props extends Record<string, any>, Key extends keyof 
  * toMutRef 는 vue 에 toRef 와 달리 readonly 가 아닙니다 리턴된 ref 값은 변경 가능합니다
  * @param props
  * @param key
- * @param handle
  * @param options
  */
 export const toMutRef = <Props extends Record<string, any>, Key extends keyof Props>(
   props: Props,
   key: Key,
-  handle?: ToMutRefHandle<Props, Key>,
   options: ToMutRefProps<Props, Key> = {},
 ): Ref<Props[Key]> => {
   const {shouldUpdate} = options
@@ -36,10 +34,6 @@ export const toMutRef = <Props extends Record<string, any>, Key extends keyof Pr
       return
     }
     valueMut.value = value
-  })
-
-  watch(valueMut, (value: Props[Key]) => {
-    handle?.(value)
   })
 
   return valueMut

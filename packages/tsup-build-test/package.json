@@ -1,0 +1,62 @@
+{
+  "name": "@winter-love/tsup-build-test",
+  "version": "1.0.23-alpha.11",
+  "private": true,
+  "description": "share state for vue components",
+  "keywords": [
+    "typescript",
+    "vuex",
+    "store",
+    "vue",
+    "vue3",
+    "vuejs",
+    "vuejs3",
+    "redux",
+    "reactive",
+    "mobx"
+  ],
+  "homepage": "https://github.com/winter-love/web/tree/dev/packages/vare",
+  "repository": "git@github.com:winter-love/web.git",
+  "author": "bichi@live.co.kr",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./lib/index.js",
+      "require": "./lib/index.cjs"
+    },
+    "./*": "./*"
+  },
+  "main": "lib/index.js",
+  "jsdelivr": "lib/index.global.js",
+  "unpkg": "lib/index.global.js",
+  "module": "lib/module.js",
+  "source": "src/index.ts",
+  "types": "lib/index.d.ts",
+  "files": [
+    "lib/*"
+  ],
+  "scripts": {
+    "build:test": "tsup --dts",
+    "dev": "parcel watch"
+  },
+  "dependencies": {
+    "tsup": "^5.11.6",
+    "@vue/devtools-api": "^6.0.0-beta.19",
+    "@winter-love/utils": "^1.0.23-alpha.5",
+    "vue-demi": "^0.12.1"
+  },
+  "devDependencies": {
+    "@winter-love/use": "^1.0.23-alpha.11",
+    "gulp": "^4.0.2",
+    "vue": "^3.2.23"
+  },
+  "tsup": {
+    "entry": ["src/index.ts"],
+    "clean": true,
+    "format": ["cjs", "esm", "iife"],
+    "outDir": "lib",
+    "sourcemap": true,
+    "splitting": false
+  },
+  "gitHead": "7c6085ce15f0c5fb47fe4c263afb3c52febb04d7"
+}

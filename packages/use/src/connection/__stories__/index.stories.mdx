@@ -1,5 +1,6 @@
-import {Meta, Story} from '@storybook/addon-docs/blocks'
-import {Default} from './templates'
+import {Meta, Story, Canvas} from '@storybook/addon-docs/blocks'
+import {useConnection} from '../'
+import {h} from 'vue-demi'
 
 <Meta title="use/Connection"/>
 
@@ -9,8 +10,22 @@ import {Default} from './templates'
 State of network connection for browser or in app browser
 
 
-예제를 확인 하기 위해 실제로 offline 이 되세요
-<Story name="Default">
-  {Default.bind({})}
-</Story>
+🎯 예제를 확인 하기 위해 실제로 또는 디버그 툴을 이용해 offline 이 되세요
+
+export const Default = () => ({
+  setup() {
+    const valueRef = useConnection(true)
+    return () => (
+      h('div', [
+        h('div', valueRef.value),
+      ])
+    )
+  },
+})
+
+<Canvas>
+  <Story name="Default">
+    {Default.bind({})}
+  </Story>
+</Canvas>
 

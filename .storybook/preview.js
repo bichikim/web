@@ -1,10 +1,10 @@
-import {createEmotion} from '@winter-love/emotion'
-import {theme} from 'src/theme'
-import {app} from '@storybook/vue3'
-
-const emotion = createEmotion({theme})
-
-app.use(emotion)
+// import {createEmotion} from '@winter-love/emotion'
+// import {theme} from 'src/theme'
+// import {app} from '@storybook/vue3'
+//
+// const emotion = createEmotion({theme})
+//
+// app.use(emotion)
 
 export const decorators = [
   (story) => ({
@@ -16,4 +16,7 @@ export const parameters = {
       color: /(background|color)$/i, date: /Date$/,
     },
   },
+  docs: {
+  },
+  viewMode: 'docs',
 }

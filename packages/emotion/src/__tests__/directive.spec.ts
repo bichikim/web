@@ -1,6 +1,10 @@
+/**
+ * @jest-environment jsdom
+ */
+
 import createEmotionOriginal from '@emotion/css/create-instance'
 import {mount} from '@vue/test-utils'
-import {h, withDirectives} from 'vue'
+import {h, withDirectives} from 'vue-demi'
 import {createDirective} from '../directive'
 
 describe('directive', () => {
@@ -11,20 +15,21 @@ describe('directive', () => {
       },
     }
 
-    const directive = createDirective(createEmotionOriginal({key: 'css'}))
-
-    directive.setTheme(theme)
-    directive.setSystem((props: any) => {
+    const system = (props: any) => {
       const {theme, width, ...rest} = props
-
-      console.log(theme.sizes[width], width)
 
       return {
         ...rest,
         width: theme.sizes[width] ?? width,
       }
-    })
+    }
 
+    const directive = createDirective(createEmotionOriginal({key: 'css'}), {
+      systems: {
+        system: [system],
+      },
+      theme,
+    })
     {
       const Component = (props) => {
         return withDirectives(h('div'), [
@@ -46,8 +51,11 @@ describe('directive', () => {
     }
 
     {
+
+      const ComponentInside = () => h('div')
+
       const Component = (props) => {
-        return withDirectives(h('div'), [
+        return withDirectives(h(ComponentInside), [
           [directive, {width: props.width}, 'system'],
         ])
       }

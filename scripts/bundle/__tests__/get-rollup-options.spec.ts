@@ -20,14 +20,14 @@ jest.mock('rollup-plugin-terser')
 const typescriptMock: jest.Mock & {plugin: any} = typescript as any
 const terserMock: jest.Mock & {plugin: any} = terser as any
 
-describe('getRollupOptions', function test() {
+describe('getRollupOptions', () => {
   afterEach(() => {
     // tsTreeShakingMock.mockClear()
     typescriptMock.mockClear()
   })
 
-  describe('input', function test() {
-    it('should return rollup input options without options', function test() {
+  describe('input', () => {
+    it('should return rollup input options without options', () => {
       const result = genRollupOptions()
 
       expect(typeof result.input).toBe('object')
@@ -39,7 +39,7 @@ describe('getRollupOptions', function test() {
       expect(input.input).toBe(path.resolve(cwd, defSrc, defEntry))
     })
 
-    it('should return rollup input options with src', function test() {
+    it('should return rollup input options with src', () => {
       const src = 'foo'
       const result = genRollupOptions({
         src,
@@ -52,7 +52,7 @@ describe('getRollupOptions', function test() {
       expect(input.input).toBe(path.resolve(cwd, src, defEntry))
     })
 
-    it('should return rollup input options with entry', function test() {
+    it('should return rollup input options with entry', () => {
       const entry = 'foo.ts'
       const result = genRollupOptions({
         entry,
@@ -76,7 +76,7 @@ describe('getRollupOptions', function test() {
     //   expect(input.plugins).toContain(tsTreeShakingMock.plugin)
     // })
 
-    it('should return rollup input options with rollup-plugin-typescript2', function test() {
+    it('should return rollup input options with rollup-plugin-typescript2', () => {
       const result = genRollupOptions()
 
       const input = result.input as any
@@ -108,8 +108,8 @@ describe('getRollupOptions', function test() {
     })
   })
 
-  describe('output', function test() {
-    it('should return rollup output options without options', function test() {
+  describe('output', () => {
+    it('should return rollup output options without options', () => {
       const result = genRollupOptions()
 
       const output = result.output as any
@@ -117,7 +117,7 @@ describe('getRollupOptions', function test() {
       expect(output).toEqual([])
     })
 
-    it('should return rollup output options with output options', function test() {
+    it('should return rollup output options with output options', () => {
       const result = genRollupOptions({
         output: [
           {},
@@ -137,7 +137,7 @@ describe('getRollupOptions', function test() {
       ])
     })
 
-    it('should return rollup output options with a file', function test() {
+    it('should return rollup output options with a file', () => {
       const file = 'foo.js'
 
       const result = genRollupOptions({
@@ -153,7 +153,7 @@ describe('getRollupOptions', function test() {
       expect(output[0].file).toBe(path.resolve(cwd, defDist, file))
     })
 
-    it('should return rollup output options with a dist', function test() {
+    it('should return rollup output options with a dist', () => {
       const dist = 'dist'
 
       const result = genRollupOptions({
@@ -168,7 +168,7 @@ describe('getRollupOptions', function test() {
       expect(output[0].file).toBe(path.resolve(cwd, dist, defFile))
     })
 
-    it('should return rollup output options with a name', function test() {
+    it('should return rollup output options with a name', () => {
       const name = 'foo'
       const result = genRollupOptions({
         name,
@@ -182,7 +182,7 @@ describe('getRollupOptions', function test() {
       expect(output[0].name).toBe(name)
     })
 
-    it('should override output name over name', function test() {
+    it('should override output name over name', () => {
       const name = 'foo'
       const outputName = 'bar'
       const result = genRollupOptions({
@@ -199,7 +199,7 @@ describe('getRollupOptions', function test() {
       expect(output[0].name).toBe(outputName)
     })
 
-    it('should return rollup output with minify', function test() {
+    it('should return rollup output with minify', () => {
       const result = genRollupOptions({
         output: [
           {

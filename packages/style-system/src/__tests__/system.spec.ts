@@ -172,4 +172,20 @@ describe('system', () => {
       right: '200px',
     })
   })
+  it.skip('should return style with __allowSelector__', () => {
+    const styleFunction = system({
+      foo: {
+        defaultScale: {
+          foo: '200px',
+        },
+        property: 'left',
+        scale: 'foos',
+      },
+    })
+
+    expect(styleFunction({'&:hover': {foo: '200px'}, foo: 'foo', theme: {__allowSelector__: true}})).toEqual({
+      left: '200px',
+      right: '200px',
+    })
+  })
 })

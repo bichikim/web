@@ -1,0 +1,17 @@
+schema: ../server/.schema.gql
+documents:
+  - "./src/**/*.graphql"
+  - "./src/**/*.gql"
+generates:
+  ./src/graphql/index.ts:
+    plugins:
+      - typescript
+      - typescript-operations
+      - typescript-vue-urql
+      - add:
+          content:
+            - "/* eslint-disable */"
+            - "/* istanbul ignore file */"
+            - "// noinspection JSUnusedGlobalSymbols \n"
+            - "import {DocumentNode} from 'graphql';"
+            - "export type {DocumentNode};"

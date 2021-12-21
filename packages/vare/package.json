@@ -1,7 +1,8 @@
 {
   "name": "vare",
-  "version": "1.0.16",
+  "version": "1.0.23-alpha.11",
   "description": "share state for vue components",
+  "private": false,
   "keywords": [
     "typescript",
     "vuex",
@@ -14,10 +15,19 @@
     "reactive",
     "mobx"
   ],
+  "homepage": "https://github.com/winter-love/web/tree/dev/packages/vare",
   "repository": "git@github.com:winter-love/web.git",
   "author": "bichi@live.co.kr",
+  "exports": {
+    ".": {
+      "import": "./lib/index.module.js",
+      "require": "./lib/index.js"
+    },
+    "./*": "./*"
+  },
   "main": "lib/index.js",
-  "unpkg": "lib/index.global.js",
+  "jsdelivr": "lib/index.iife.js",
+  "unpkg": "lib/index.iife.js",
   "module": "lib/index.module.js",
   "source": "src/index.ts",
   "types": "lib/index.d.ts",
@@ -27,17 +37,17 @@
   "scripts": {
     "build": "gulp build",
     "dev": "gulp dev",
-    "prepare": "pnpm run build"
+    "prepare": "gulp build"
   },
   "dependencies": {
-    "@vue/devtools-api": "^6.0.0-beta.12",
-    "@winter-love/utils": "^1.0.16",
-    "vue-demi": "^0.9.1"
+    "@vue/devtools-api": "^6.0.0-beta.19",
+    "@winter-love/utils": "^1.0.23-alpha.5",
+    "vue-demi": "latest"
   },
   "devDependencies": {
-    "@winter-love/use": "^1.0.16",
+    "@winter-love/use": "^1.0.23-alpha.11",
     "gulp": "^4.0.2",
-    "vue": "^3.0.11"
+    "vue": "next"
   },
-  "gitHead": "2fb93aea9a5a38a7778495106787001ffe0d25f6"
+  "gitHead": "66c79bd0d5c23a437b8170f758ff58e4496afb58"
 }

@@ -1,7 +1,7 @@
 import {callbackify} from 'src/callbackify'
 
-describe('callbackify', function test() {
-  it('should call a callback function', function test(done) {
+describe('callbackify', () => {
+  it('should call a callback function', (done) => {
     const callback = (error, data) => {
       expect(error).toBe(undefined)
       expect(data).toBe('foo')
@@ -10,7 +10,7 @@ describe('callbackify', function test() {
     callbackify(() => Promise.resolve('foo'), callback)
   })
 
-  it('should call a callback function with an error', function test(done) {
+  it('should call a callback function with an error', (done) => {
     const callback = (error, data) => {
       expect(error).toEqual(new Error('foo'))
       expect(data).toBe(undefined)
@@ -19,7 +19,7 @@ describe('callbackify', function test() {
     callbackify(() => Promise.reject(new Error('foo')), callback)
   })
 
-  it('should call a callback with none promise', function test(done) {
+  it('should call a callback with none promise', (done) => {
     const callback = (error, data) => {
       expect(error).toBe(undefined)
       expect(data).toBe('foo')
@@ -28,7 +28,7 @@ describe('callbackify', function test() {
     callbackify(() => 'foo', callback)
   })
 
-  it('should call a callback with none promise', function test(done) {
+  it('should call a callback with none promise', (done) => {
     const callback = (error, data) => {
       expect(error).toEqual(new Error('foo'))
       expect(data).toBe(undefined)

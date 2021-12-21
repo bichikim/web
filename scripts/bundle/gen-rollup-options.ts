@@ -1,16 +1,17 @@
 import resolve, {RollupNodeResolveOptions} from '@rollup/plugin-node-resolve'
 import {BundleOptions} from './cre-rollup-bundle'
 import path from 'path'
-import {OutputOptions} from 'rollup'
+import {GlobalsOption, OutputOptions} from 'rollup'
 import {terser} from 'rollup-plugin-terser'
 import del from 'rollup-plugin-delete'
 import {getPackage} from '../utils'
-import {defaultsDeep} from 'lodash'
+import {camelCase, defaultsDeep} from 'lodash'
 import typescript from 'rollup-plugin-typescript2'
 import ttypescript from 'ttypescript'
 import tsTreeShaking from 'rollup-plugin-ts-treeshaking'
 import externals from 'rollup-plugin-node-externals'
 import asset from 'rollup-plugin-smart-asset'
+// import {optimizeLodashImports} from '@optimize-lodash/rollup-plugin'
 
 export interface GenOutputOptions extends OutputOptions {
   minify?: boolean
@@ -25,6 +26,7 @@ export interface GenRollupOptions {
   cwd?: string
   dist?: string
   entry?: string
+  globals?: GlobalsOption
   minify?: boolean
   name?: string
   output?: GenOutputOptions[]
@@ -58,6 +60,7 @@ export const genRollupOptions = (options: GenRollupOptions = {}): BundleOptions 
     target: tsTarget = 'ESNext',
     minify: defaultMinify,
     output = [],
+    globals,
     resolve: resolveOptions,
   } = options
 
@@ -97,14 +100,10 @@ export const genRollupOptions = (options: GenRollupOptions = {}): BundleOptions 
 
   const terserPlugin = terser()
 
-  const assetPlugin = asset()
-
-  const typescriptTreeShaking = tsTreeShaking()
-
   const packageJson = getPackage(cwd)
 
   const inputPlugins = [
-    assetPlugin,
+    asset(),
     /**
      * this externals plugin must be in front of the resolve plugin
      * @see https://www.npmjs.com/package/rollup-plugin-node-externals
@@ -116,7 +115,8 @@ export const genRollupOptions = (options: GenRollupOptions = {}): BundleOptions 
      * this typescript tree shaking must be after the typescript plugin
      * @see https://www.npmjs.com/package/rollup-plugin-ts-treeshaking
      */
-    typescriptTreeShaking,
+    tsTreeShaking(),
+    // optimizeLodashImports(),
   ]
 
   if (clean) {
@@ -124,10 +124,11 @@ export const genRollupOptions = (options: GenRollupOptions = {}): BundleOptions 
   }
 
   const {
-    name = packageJson.name,
+    name = camelCase(packageJson.name),
   } = options
 
   const outputPart = {
+    globals,
     name,
   }
 
@@ -152,6 +153,7 @@ export const genRollupOptions = (options: GenRollupOptions = {}): BundleOptions 
         ...outputPart,
         ...rest,
         file: path.resolve(cwd, dist, value.file ?? defFile),
+        globals,
         plugins,
       }
     }),

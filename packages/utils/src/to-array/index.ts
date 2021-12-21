@@ -1,6 +1,6 @@
 import {MayArray} from 'src/types'
 
-export const toArray = <T>(value?: MayArray<T>): T[] => {
+export const toArray = <T>(value?: MayArray<T> | null): T[] => {
   if (Array.isArray(value)) {
     return value
   }

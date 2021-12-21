@@ -2,7 +2,7 @@ import * as process from 'process'
 import {freeze} from '../index'
 
 describe('freeze', () => {
-  it('should return freeze object', () => {
+  it('should return a frozen object', () => {
     const oldEnv = process.env.NODE_ENV
 
     process.env.NODE_ENV = 'development'
@@ -11,9 +11,8 @@ describe('freeze', () => {
 
     const error = () => {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
       // noinspection JSConstantReassignment
-      foo.foo = ''
+      (foo as any).foo = ''
     }
 
     expect(foo).toEqual({foo: 'foo'})

@@ -1,28 +1,41 @@
 import {ref, watch} from 'vue-demi'
 import {wrapRef} from '../wrap-ref'
 import {MayRef} from 'src/types'
+import {getWindow} from '@winter-love/utils'
 
 export type UseAnimationTickHandle = () => any
 
+/**
+ * @deprecated please use onAnimationRepeater
+ * @param handle
+ * @param toggle
+ */
 export const animationRepeater = (handle: UseAnimationTickHandle, toggle?: MayRef<boolean | undefined>) => {
   const toggleRef = wrapRef(toggle, {initState: true})
   const cancelFlagRef = ref<number | undefined>()
+  const window = getWindow()
 
   const tick = () => {
-    if (toggleRef.value) {
+    if (window && toggleRef.value) {
       handle()
       window.requestAnimationFrame(tick)
     }
   }
 
   const registerTick = (value: boolean) => {
-
-    if (value) {
-      cancelFlagRef.value = window.requestAnimationFrame(tick)
+    if (!window) {
       return
     }
+
+    const {requestAnimationFrame, cancelAnimationFrame} = window
+
+    if (value) {
+      cancelFlagRef.value = requestAnimationFrame(tick)
+      return
+    }
+
     if (cancelFlagRef.value) {
-      window.cancelAnimationFrame(cancelFlagRef.value)
+      cancelAnimationFrame(cancelFlagRef.value)
     }
   }
 
@@ -34,3 +47,5 @@ export const animationRepeater = (handle: UseAnimationTickHandle, toggle?: MayRe
 
   return toggleRef
 }
+
+export const onAnimationRepeater = animationRepeater

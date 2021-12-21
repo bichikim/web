@@ -41,12 +41,8 @@ export const createStyleFunction = <
     if (style === null) {
       return
     }
-    return _properties.reduce((result, prop) => {
-      if (prop) {
-        result[prop] = style
-      }
-      return result
-    }, {})
+
+    return Object.fromEntries(_properties.filter(Boolean).map((key) => [key, style]))
   }
   sx.scale = scale
   sx.defaults = defaultScale

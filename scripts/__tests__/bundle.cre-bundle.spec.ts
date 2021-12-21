@@ -5,7 +5,7 @@
 import {creBundle, RollupOptions} from '../bundle'
 import path from 'path'
 import fs from 'fs'
-describe('bundle/creBundle', function test() {
+describe('bundle/creBundle', () => {
   const filePath = path.resolve(__dirname, '../', '__tests__', '__dist__.js')
   const options: RollupOptions = {
     cwd: path.resolve(__dirname, '../'),
@@ -19,7 +19,7 @@ describe('bundle/creBundle', function test() {
     src: '__tests__',
   }
 
-  it('should bundle a ts file', async function test() {
+  it('should bundle a ts file', async () => {
     await creBundle({
       ...options,
     })()
@@ -29,7 +29,7 @@ describe('bundle/creBundle', function test() {
     fs.unlinkSync(filePath)
   })
 
-  it('should not bundle without output', async function test() {
+  it('should not bundle without output', async () => {
     await creBundle({
       ...options,
       output: undefined,

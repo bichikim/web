@@ -1,24 +1,25 @@
-import {promisify} from '../index'
+import {promisify} from 'src/promisify'
+import {expectType} from 'tsd'
 
-describe('promisify', function test() {
-  it('should make a callback function to be a returning promise resolve function', async function test() {
-    const callbackRunner = (a, callback) => {
+describe('promisify', () => {
+  it('should create a returning promise function from a callback function', () => {
+    const callbackRunner = (count: number, callback: (error: any, data: number) => any) => {
       setTimeout(() => {
-        // eslint-disable-next-line node/no-callback-literal,@typescript-eslint/restrict-plus-operands
-        callback(null, a + 1)
+        callback(null, count + 1)
       }, 1)
     }
 
     const runner = promisify(callbackRunner)
 
+    expectType<(count: number) => Promise<number>>(runner)
+
     return expect(runner(1)).resolves.toEqual(2)
   })
 
-  it('should make a call function to be a returning promise reject function ', function test() {
-    const callbackRunner = (a, callback) => {
+  it('should make a call function to be a returning promise reject function ', () => {
+    const callbackRunner = (count: number, callback) => {
       setTimeout(() => {
-        // eslint-disable-next-line node/no-callback-literal
-        callback(a + 1)
+        callback(count + 1)
       }, 1)
     }
 

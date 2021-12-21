@@ -1,11 +1,10 @@
-import {isSSR} from '@winter-love/utils'
+import {getDocument, getNavigator, getWindow} from '@winter-love/utils'
 import {useBlur} from 'src/blur'
 import {ClipboardState} from 'src/clipboard/index'
 import {useElementEvent} from 'src/element-event'
 import {MayRef} from 'src/types'
 import {wrapRef} from 'src/wrap-ref'
 import {ref} from 'vue-demi'
-import {isClipboardAble} from './is-clipboard-able'
 
 let _legacyInput: HTMLInputElement
 
@@ -13,9 +12,13 @@ const getLegacyInput = (): HTMLInputElement | undefined => {
   if (_legacyInput) {
     return _legacyInput
   }
-  if (isSSR()) {
+
+  const document = getDocument()
+
+  if (!document) {
     return
   }
+
   const _inputElement = document.querySelector('#__legacy_input__')
 
   if (_inputElement) {
@@ -35,8 +38,9 @@ const getLegacyInput = (): HTMLInputElement | undefined => {
 const blur = useBlur()
 
 const legacyCopy = (value: string) => {
+  const document = getDocument()
   const input = getLegacyInput()
-  if (!input) {
+  if (!input || !document) {
     return
   }
 
@@ -56,7 +60,9 @@ export const useLegacyClipboard = (
   initState?: MayRef<string | undefined>,
   updateOnEvent: boolean = false,
 ) => {
-  const isSupported = isClipboardAble()
+  const window = getWindow()
+  const navigator = getNavigator()
+  const clipboard = navigator?.clipboard
   const valueRef = wrapRef(initState)
   const stateRef = ref<ClipboardState>('idle')
 
@@ -74,18 +80,18 @@ export const useLegacyClipboard = (
   }
 
   const read = async () => {
-    if (!isSupported || stateRef.value !== 'idle') {
+    if (!clipboard || stateRef.value !== 'idle') {
       return valueRef.value
     }
 
     stateRef.value = 'reading'
-    const value = await navigator.clipboard.readText()
+    const value = await clipboard.readText()
     valueRef.value = value
     stateRef.value = 'idle'
     return value
   }
 
-  if (updateOnEvent && isSupported) {
+  if (updateOnEvent && clipboard && window) {
     useElementEvent(window, 'copy' as any, read)
     useElementEvent(window, 'cut' as any, read)
   }

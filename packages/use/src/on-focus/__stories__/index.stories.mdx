@@ -1,0 +1,33 @@
+import {Meta, Story, Canvas} from '@storybook/addon-docs/blocks'
+import {h, ref} from 'vue-demi'
+import {onFocus} from '../'
+
+<Meta title="use/On focus"/>
+
+# On focus
+
+❌ deprecated
+
+export const Template = function () {
+  return {
+    setup() {
+      const countRef = ref(0)
+      onFocus(() => {
+        countRef.value += 1
+      })
+      return function () {
+        return h('div', [
+          h('div', countRef.value),
+        ])
+      }
+    },
+  }
+}
+
+<Canvas>
+  <Story name="Default">
+    {Template.bind({})}
+  </Story>
+</Canvas>
+
+

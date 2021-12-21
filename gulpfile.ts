@@ -13,49 +13,30 @@ export const dev = creWatchBundle({
       file: 'index.js',
       format: 'commonjs',
     },
-    {
-      file: 'index.umd.js',
-      format: 'umd',
-    },
   ],
   target: 'ES2019',
 })
 
-export const devServer = creWatchBundle({
-  minify: false,
-  output: [
-    {
-      file: 'index.js',
-      format: 'commonjs',
-    },
-  ],
-  target: 'ES2015',
-})
-
 export const build = series(
   creBundle({
-    // minify: true,
+    clean: true,
+    minify: false,
     output: [
       {
         file: 'index.module.js',
         format: 'es',
       },
     ],
-    target: 'ES2019',
-  }),
-  creBundle({
-    // minify: true,
-    output: [
-      {
-        file: 'index.umd.js',
-        format: 'umd',
-      },
-    ],
     target: 'ES2015',
   }),
   creBundle({
-    // minify: true,
+    clean: false,
+    minify: true,
     output: [
+      {
+        file: 'index.iife.js',
+        format: 'iife',
+      },
       {
         file: 'index.js',
         format: 'commonjs',
@@ -64,3 +45,22 @@ export const build = series(
     target: 'ES2015',
   }),
 )
+
+export const prepare = creBundle({
+  minify: false,
+  output: [
+    {
+      file: 'index.module.js',
+      format: 'es',
+    },
+    {
+      file: 'index.js',
+      format: 'commonjs',
+    },
+    {
+      file: 'index.iife.js',
+      format: 'iife',
+    },
+  ],
+  target: 'ES2019',
+})

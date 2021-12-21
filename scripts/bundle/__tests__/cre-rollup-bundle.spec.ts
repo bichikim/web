@@ -1,5 +1,5 @@
-describe('creRollupBundle', function test() {
-  it('should test', function test() {
+describe('creRollupBundle', () => {
+  it('should test', () => {
     expect('test').toBe('test')
   })
 })

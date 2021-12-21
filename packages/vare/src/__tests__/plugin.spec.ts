@@ -1,7 +1,11 @@
+/**
+ * @jest-environment jsdom
+ */
+
 import {flushPromises} from '@vue/test-utils'
 import {createApp, defineComponent, h} from 'vue-demi'
 import {plugin, useVare} from '../plugin'
-import {state} from '../state'
+import {atom} from 'src/atom'
 
 describe('plugin', () => {
   it('should use as vue plugin', async () => {
@@ -20,7 +24,7 @@ describe('plugin', () => {
     element.id = 'app'
     document.body.append(element)
     const app = createApp(App)
-    const foo = state({
+    const foo = atom({
       foo: 'foo',
     })
     const states = {

@@ -1,0 +1,55 @@
+{
+  "name": "@winter-love/quasar-svg-syntax",
+  "version": "1.0.23-alpha.10",
+  "description": "Useful javascript utils",
+  "private": false,
+  "keywords": [
+    "typescript",
+    "utils",
+    "functional"
+  ],
+  "repository": "git@github.com:winter-love/web.git",
+  "license": "MIT",
+  "author": "bichi@live.co.kr",
+  "exports": {
+    ".": {
+      "import": "./lib/index.module.js",
+      "require": "./lib/index.js"
+    },
+    "./*": "./*"
+  },
+  "bin": {
+    "quasar-svg-syntax": "./bin/index.js"
+  },
+  "main": "lib/index.js",
+  "jsdelivr": "lib/index.iife.js",
+  "unpkg": "lib/index.iife.js",
+  "module": "lib/index.module.js",
+  "source": "src/index.ts",
+  "types": "lib/index.d.ts",
+  "files": [
+    "lib/*"
+  ],
+  "scripts": {
+    "build": "gulp build",
+    "prepare": "gulp build",
+    "start": "node bin/index.js assets/**/*.svg"
+  },
+  "dependencies": {
+    "@winter-love/utils": "^1.0.23-alpha.5",
+    "fast-glob": "^3.2.7",
+    "globby": "^12.0.2",
+    "lodash": "^4.17.21",
+    "node-html-parser": "^5.1.0",
+    "yargs": "^17.3.0"
+  },
+  "devDependencies": {
+    "@quasar/extras": "^1.12.2",
+    "@vue/test-utils": "^2.0.0-rc.17",
+    "quasar": "^2.3.4",
+    "ts-node": "^10.4.0",
+    "ts-node-dev": "^1.1.8",
+    "vue": "next"
+  },
+  "gitHead": "66c79bd0d5c23a437b8170f758ff58e4496afb58"
+}

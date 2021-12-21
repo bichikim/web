@@ -1,2 +1,2 @@
 // noinspection ES6PreferShortImport
-export {build, dev} from '../../gulpfile'
+export {build, dev, prepare} from '../../gulpfile'

@@ -1,3 +1,7 @@
+/**
+ * @jest-environment jsdom
+ */
+
 import {storageRef} from '../'
 import {flushPromises} from '@vue/test-utils'
 import {ref} from 'vue'

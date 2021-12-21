@@ -1,5 +1,13 @@
-import {isSSR} from '../is-ssr'
+import {getDocument, getWindow} from '../browser'
 
 export const isListenable = (): boolean => {
-  return Boolean(!isSSR() && window.addEventListener && document.addEventListener)
+  const window = getWindow()
+  if (!window) {
+    return false
+  }
+  const document = getDocument()
+  if (!document) {
+    return false
+  }
+  return Boolean(document.addEventListener)
 }

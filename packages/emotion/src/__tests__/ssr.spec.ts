@@ -3,7 +3,7 @@
  */
 
 import {createEmotion} from '../index'
-import {createSSRApp, h} from 'vue'
+import {createSSRApp, h} from 'vue-demi'
 import {renderToString} from '@vue/server-renderer'
 import createEmotionServer from '@emotion/server/create-instance'
 

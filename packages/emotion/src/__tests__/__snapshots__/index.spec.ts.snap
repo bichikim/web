@@ -11,25 +11,31 @@ exports[`emotion createStyled should deep as 1`] = `
 }
 
 .emotion-1 {
-  background-color: blue;
+  background-color: yellow;
   height: 50px;
   width: 50px;
 }
 
 .emotion-2 {
+  background-color: blue;
+  height: 50px;
+  width: 50px;
+}
+
+.emotion-3 {
   background-color: red;
   height: 50px;
   width: 50px;
 }
 
 <button
-  class=" emotion-0"
+  class="emotion-0 emotion-1"
 >
   <div
-    class="  emotion-1"
+    class=" emotion-2"
   >
     <div
-      class="  emotion-2"
+      class=" emotion-3"
     />
   </div>
 </button>

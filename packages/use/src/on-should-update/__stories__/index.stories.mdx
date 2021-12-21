@@ -1,0 +1,47 @@
+import {Meta, Story, Canvas} from '@storybook/addon-docs/blocks'
+import {h, ref} from 'vue-demi'
+import {onShouldUpdate} from '../'
+
+<Meta title="use/On Should Update"/>
+
+# On Should Update
+
+업데이트가 필요한 시점에 호출됩니다. 업데이트는 데이터 fetch 화면 다시 그리기 등이 될 수 있습니다.
+
+옵션에서 어떤 상태를 보고 업데이트 할지 선택 할 수 있습니다.
+
+- 🎯 처음 실행시
+- 🎯 오프라인에서 온라인으로 전환시
+- 🎯 윈도우가 포커스 될경우
+- 🎯 문서가 다시 보일때 (탭간 전환 등에서)
+- 🎯 지정한 엘리먼트가 다시 보일때
+- 🎯 직접 반환 되는 함수를 실행 할때
+
+export const Template = function () {
+  return {
+    setup() {
+      const countRef = ref(0)
+      const watchCountRef = ref(0)
+      onShouldUpdate(() => {
+        countRef.value += 1
+      }, {
+        watchValue: watchCountRef,
+      })
+      return function () {
+        return h('div', [
+          h('div', watchCountRef.value),
+          h('button', {onClick : () => (watchCountRef.value += 1)}, 'increase watch'),
+          h('div', countRef.value),
+        ])
+      }
+    },
+  }
+}
+
+<Canvas>
+  <Story name="Default">
+    {Template.bind({})}
+  </Story>
+</Canvas>
+
+

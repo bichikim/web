@@ -4,6 +4,17 @@ module.exports = {
     test: {
       plugins: [
         [
+          'search-and-replace',
+          {
+            rules: [
+              {
+                replace: 'false',
+                search: '__QUASAR_SSR_SERVER__',
+              },
+            ],
+          },
+        ],
+        [
           'module-resolver',
           {
             alias: {
@@ -25,14 +36,13 @@ module.exports = {
             },
           },
         ],
-        ['@babel/preset-typescript', {
-          allExtensions: true,
-          isTSX: true,
-        }],
+        [
+          '@babel/preset-typescript', {
+            allExtensions: true,
+            isTSX: true,
+          },
+        ],
       ],
     },
   },
-  presets: [
-    '@quasar/babel-preset-app',
-  ],
 }

@@ -1,0 +1,42 @@
+import {Meta, Story, Canvas} from '@storybook/addon-docs/blocks'
+import {h, ref, onMounted} from 'vue-demi'
+import {onDomMounted} from '../'
+
+<Meta title="use/On Dom Mounted"/>
+
+# On Dom Mounted
+
+Mounted 되었지만 browser document 가 로드 되지 않은 경우 가 있습니다.
+
+On Dom Mounted 는 browser document 와 Mounted 가 모두 되었을 경우 핸들러를 호출 합니다.
+
+🎯 페이지를 새로 고침 하면 확인 됩니다.
+
+export const Template = function () {
+  return {
+    setup() {
+      const mountedRef = ref('')
+      const domMountedRef = ref('')
+      onDomMounted(() => {
+        domMountedRef.value = document.readyState
+      })
+      onMounted(() => {
+        mountedRef.value = document.readyState
+      })
+      return function () {
+        return h('div', [
+          h('div', `mounted: ${mountedRef.value}`),
+          h('div', `dom mounted: ${domMountedRef.value}`),
+        ])
+      }
+    },
+  }
+}
+
+<Canvas>
+  <Story name="Default">
+    {Template.bind({})}
+  </Story>
+</Canvas>
+
+

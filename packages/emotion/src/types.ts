@@ -2,24 +2,32 @@ import {ComponentObjectPropsOptions, defineComponent, FunctionalComponent} from 
 import {Tags} from './tags'
 
 export interface StylePortalInfo {
+  /**
+   * @deprecated
+   */
   __stylePortal?: string
 }
 
-export interface StyledOptions {
+export interface StyledOptions<StylePortal extends string | undefined> {
   label?: string | boolean
   name?: string
-  nextStylePortal?: string
   passAs?: boolean
-  stylePortal?: string
+  /**
+   * @default true
+   */
+  stylePortal?: StylePortal
   target?: string
 }
 
-export interface StyledOptionWIthObject<PropsOptions extends Readonly<ComponentObjectPropsOptions>>
-  extends StyledOptions {
+export interface StyledOptionWIthObject
+<PropsOptions extends Readonly<ComponentObjectPropsOptions>, StylePortal extends string | undefined>
+  extends StyledOptions<StylePortal> {
   props?: PropsOptions
 }
 
-export interface StyledOptionWithArray<PropsOptions extends Readonly<any[]>> extends StyledOptions {
+export interface StyledOptionWithArray
+<PropsOptions extends Readonly<any[]>, StylePortal extends string | undefined>
+  extends StyledOptions<StylePortal> {
   props?: PropsOptions
 }
 

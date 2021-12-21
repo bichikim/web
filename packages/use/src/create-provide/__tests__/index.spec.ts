@@ -1,3 +1,7 @@
+/**
+ * @jest-environment jsdom
+ */
+
 import {createProvide} from '../'
 import {defineComponent, h} from 'vue'
 import {mount} from '@vue/test-utils'
