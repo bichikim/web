@@ -7,6 +7,7 @@ const IndexPage = defineComponent({
   },
   setup() {
     const toggle = ref(false)
+
     return {
       toggle,
     }
@@ -17,6 +18,7 @@ const IndexPage = defineComponent({
       muted
       autoplay
       loop
+      playsinline
       v-css="{
        minHeight: '100%',
        maxWidth: '100%',
