@@ -1,7 +1,6 @@
 {
   "compilerOptions": {
     "allowJs": true,
-    "importsNotUsedAsValues": "error",
     // `baseUrl` must be placed on the extending configuration in devland, or paths won't be recognized
     "esModuleInterop": true,
     "module": "esnext",
