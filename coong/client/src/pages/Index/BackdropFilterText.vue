@@ -29,7 +29,6 @@ import {defineComponent} from 'vue'
 export default defineComponent({
   props: {
     dy: {default: '0.35em', type: String},
-    filter: {default: 'blur(5px)', type: String},
   },
   setup() {
     return {}
@@ -54,7 +53,7 @@ export default defineComponent({
       left: -9999px;
     }
     .root {
-      backdrop-filter: v-bind(filter);
+      backdrop-filter: var(--filter, blur(5px));
       background: var(--active-color, rgba(255, 255, 255, 0.2));
       color: transparent;
       clip-path: url(#lockup-headline-mask-path);

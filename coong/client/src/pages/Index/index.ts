@@ -78,7 +78,12 @@ const IndexPage = defineComponent({
       }"
     >
       <backdrop-filter-text 
-        v-css="{fontSize: '7rem', fontWeight: '900', '--active-color': 'rgba(255, 255, 255, 0.4)'}">
+        v-css="{
+          fontSize: '7rem',
+          fontWeight: '900', 
+          '--active-color': 'rgba(200, 200, 200, 0.1)',
+          '--filter': 'blur(5px) hue-rotate(80deg)'
+        }">
         Coong
       </backdrop-filter-text>
       <q-btn 
