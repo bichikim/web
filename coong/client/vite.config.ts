@@ -140,5 +140,11 @@ export default defineConfig(() => {
         // allow: ['..', '../..'],
       },
     },
+
+    ssr: {
+      noExternal: [
+        /^@quasar\/extras/u,
+      ],
+    },
   }
 })

@@ -83,7 +83,7 @@
     "typescript": "^4.4.4",
     "unplugin-icons": "^0.12.16",
     "unplugin-vue-components": "^0.15.6",
-    "vite": "^2.6.14",
+    "vite": "^2.7.6",
     "vite-plugin-md": "^0.11.4",
     "vite-plugin-pwa": "^0.11.3"
   },
