@@ -29,7 +29,7 @@ const IndexPage = defineComponent({
        top: '50%',
        zIndex: '-1000'
     }">
-      <source src="/videos/intro.mp4" type="video/mp4">
+      <source src="https://storage.googleapis.com/coong-static-production/coong-front/videos/intro.mp4" type="video/mp4">
     </video>
     <span
       v-css="{
