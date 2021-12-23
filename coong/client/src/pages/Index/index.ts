@@ -1,7 +1,7 @@
 import {QBtn, QPage} from 'quasar'
 import {computed, defineComponent, ref, watch} from 'vue'
 import {ionVolumeHighSharp, ionVolumeMuteSharp} from '@quasar/extras/ionicons-v6'
-import BackdropFilterText from './BackdropFilterText.vue'
+import {BackdropFilterText} from './BackdropFilterText'
 
 const IndexPage = defineComponent({
   components: {
@@ -87,14 +87,11 @@ const IndexPage = defineComponent({
         fontWeight: '900', 
       }"
     >
-      <backdrop-filter-text 
-        v-css="{
-          '--active-color': 'rgba(200, 200, 200, 0.1)',
-          '--filter': 'blur(5px) hue-rotate(80deg)'
-        }"
-      >
-        Coong
-      </backdrop-filter-text>
+      <backdrop-filter-text
+
+    >
+      Coong
+    </backdrop-filter-text>
       <q-btn 
         :icon="audioIcon"
         flat
