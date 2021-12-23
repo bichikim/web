@@ -38,12 +38,18 @@ export const applyTarget = (css: Record<string, any>, breakpoint?: string) => {
   } : css
 }
 
-export const getCssList = (
+export const getCssString = (
   payload: GetCssListPayload,
-) => {
+): string => {
   const {css, variants, system, breakpoint} = payload
 
-  return system({...variants, css: applyTarget(css, breakpoint)}).className.split(' ')
+  return system({...variants, css: applyTarget(css, breakpoint)}).className
+}
+
+export const getCssList = (
+  payload: GetCssListPayload,
+): string[] => {
+  return getCssString(payload).split(' ')
 }
 
 export const getClassName = (
@@ -58,10 +64,10 @@ export const getClassName = (
 
   if (Array.isArray(value)) {
     const [css, variants] = value
-    return getCssList({breakpoint: arg, css, system, variants})
+    return getCssString({breakpoint: arg, css, system, variants})
   }
 
-  return getCssList({breakpoint: arg, css: value, system})
+  return getCssString({breakpoint: arg, css: value, system})
 }
 
 export const getSaveInfoKey = (binding: DirectiveBinding<DirectiveBindingValue>, name: string = '__stitches__') => {
@@ -80,7 +86,8 @@ const updateClassName = (
     el.classList.remove(...previousClassNames)
   }
 
-  const classNames = getClassName(system, binding)
+  const className = getClassName(system, binding)
+  const classNames = className ? className.split(' ') : className
 
   el[infoKey] = {
     previousClassNames: classNames,
@@ -173,8 +180,9 @@ export const createCreateDirective = <
 
     return {
       getSSRProps(binding) {
+        const className = getClassName(system, binding)
         return {
-          class: getClassName(system, binding),
+          class: className,
         }
       },
       // no way to test with the stitches
