@@ -30,9 +30,6 @@ export default defineComponent({
   props: {
     dy: {default: '0.35em', type: String},
   },
-  setup() {
-    return {}
-  },
 })
 </script>
 

@@ -276,7 +276,7 @@ jobs:
           --set-env-vars NODE_ENV=production \
           --region asia-northeast3 \
           --allow-unauthenticated \
-          --max-instances 10 \
+          --max-instances 5 \
           --port 8080 \
           --memory 512M
   deploy-dev-server:
@@ -337,7 +337,7 @@ jobs:
           --platform managed \
           --region asia-northeast3 \
           --allow-unauthenticated \
-          --max-instances 2 \
+          --max-instances 3 \
           --port 8080 \
           --memory 512M
   deploy-client:
@@ -400,7 +400,7 @@ jobs:
           --platform managed \
           --region asia-northeast3 \
           --allow-unauthenticated \
-          --max-instances 2 \
+          --max-instances 3 \
           --port 8080 \
           --memory 512M
   deploy-dev-client:
@@ -462,6 +462,6 @@ jobs:
           --platform managed \
           --region asia-northeast3 \
           --allow-unauthenticated \
-          --max-instances 2 \
+          --max-instances 3 \
           --port 8080 \
           --memory 512M

@@ -67,6 +67,8 @@ const IndexPage = defineComponent({
     ></audio>
     <div
       v-css="{
+        fontSize: '3rem',
+        fontWeight: '900', 
         color: 'mistyrose',
         position: 'absolute',
         display: 'flex',
@@ -76,14 +78,21 @@ const IndexPage = defineComponent({
         bottom: '46%',
         transform: 'translate(-50%, +50%)',
       }"
+      v-css:bp2="{
+        fontSize: '5rem',
+        fontWeight: '900', 
+      }"
+      v-css:bp3="{
+        fontSize: '7rem',
+        fontWeight: '900', 
+      }"
     >
       <backdrop-filter-text 
         v-css="{
-          fontSize: '7rem',
-          fontWeight: '900', 
           '--active-color': 'rgba(200, 200, 200, 0.1)',
           '--filter': 'blur(5px) hue-rotate(80deg)'
-        }">
+        }"
+      >
         Coong
       </backdrop-filter-text>
       <q-btn 
@@ -92,10 +101,17 @@ const IndexPage = defineComponent({
         round
         @click="toggleAudio "
         v-css="{
+          fontSize: '0.7rem',
           position: 'absolute',
           right: 0,
           bottom: 0,
           transform: 'translateX(100%)',
+        }"
+        v-css:bp2="{
+          fontSize: '0.9rem',
+        }"
+        v-css:bp3="{
+          fontSize: '1rem',
         }"
       />
     </div>
