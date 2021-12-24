@@ -1,5 +1,16 @@
 import * as Babylon from '@babylonjs/core'
-import {defineComponent, inject, InjectionKey, provide, ref, ShallowRef, shallowRef, watchEffect} from 'vue'
+import {
+  defineComponent,
+  inject,
+  InjectionKey,
+  PropType,
+  provide,
+  ref,
+  ShallowRef,
+  shallowRef,
+  toRefs,
+  watchEffect,
+} from 'vue'
 import {EngineMeta, useEngine} from './Engine'
 import {useBabylonDispose} from './use-babylon-dispose'
 
@@ -29,18 +40,30 @@ export const provideScene = (
 
 export const Scene = defineComponent({
   name: 'Scene',
+  props: {
+    color: {type: Object as PropType<Babylon.Color4>},
+  },
   render() {
     const {$slots} = this
     return $slots.default?.()
   },
-  setup() {
+  setup(props) {
+    const {color: colorRef} = toRefs(props)
     const engineMeta = useEngine()
-    const scene = provideScene(engineMeta)
+    const sceneRef = provideScene(engineMeta)
 
-    useBabylonDispose(scene)
+    watchEffect(() => {
+      const scene = sceneRef.value
+      const color = colorRef.value
+      if (scene && color) {
+        scene.clearColor = color
+      }
+    })
+
+    useBabylonDispose(sceneRef)
 
     return {
-      scene,
+      scene: sceneRef,
     }
   },
 })

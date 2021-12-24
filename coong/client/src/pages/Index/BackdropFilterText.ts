@@ -29,12 +29,10 @@ const rootClass = css({
 
 export const BackdropFilterText = defineComponent({
   props: {
-    activeColor: {default: 'rgba(255, 255, 255, 0.2)', type: String},
     dy: {default: '0.35em', type: String},
-    filter: {default: 'blur(5px)', type: String},
   },
   render() {
-    const {activeColor, filter, $slots, dy} = this
+    const {$slots, dy} = this
     const {_: vNode} = this as any
     const {uid} = vNode
     const id = `clip-path-${uid}`
@@ -42,8 +40,6 @@ export const BackdropFilterText = defineComponent({
       h('div', {
         class: rootClass({
           css: {
-            $$activeColor: activeColor,
-            $$filter: filter,
             $$urlId: `url(#${id})`,
           },
         }).className,

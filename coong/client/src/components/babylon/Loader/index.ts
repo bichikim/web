@@ -1,5 +1,5 @@
 import {SceneLoader} from '@babylonjs/core'
-import '@babylonjs/loaders'
+import '@babylonjs/loaders/glTF'
 import {defineComponent, shallowRef} from 'vue'
 import {useScene} from '../Scene'
 import {watchUpdate} from '../watch-update'

@@ -144,6 +144,9 @@ export default defineConfig(() => {
     ssr: {
       noExternal: [
         /^@quasar\/extras/u,
+        // /^@babylonjs\/core/u,
+        // /^@babylonjs\/loaders/u,
+        // /^vite-ssr-vue/u,
       ],
     },
   }
