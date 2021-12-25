@@ -6,6 +6,7 @@ const rootClass = css({
   $$filter: 'blur(5px)',
   $$urlId: 'url(#lockup-headline-mask-pat)',
   '& .headline': {
+    display: 'none',
     fontSize: '1em',
     fontWeight: 'inherit',
     height: '150px',
@@ -17,6 +18,9 @@ const rootClass = css({
       background: '$$activeColor',
       clipPath: '$$urlId',
       color: 'transparent',
+    },
+    '& .headline': {
+      display: 'block',
     },
     '& .visually-hidden': {
       left: '-9999px',

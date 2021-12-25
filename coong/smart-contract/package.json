@@ -3,22 +3,11 @@
   "version": "1.0.23-alpha.8",
   "private": true,
   "scripts": {
-    "build": "rimraf ./lib && pnpm run generate && ttsc -p tsconfig.build.json",
-    "dev": "cross-env NODE_ENV=development ts-node-dev --clear -r tsconfig-paths/register src/index.ts",
-    "generate": "prisma generate --schema ./src/prisma/schema.prisma",
-    "generate:watch": "prisma generate --schema ./src/prisma/schema.prisma --watch",
-    "start": "node ./dist/index.js"
   },
   "dependencies": {
   },
   "devDependencies": {
     "ganache-cli": "^6.12.2",
-    "web3": "^1.6.1",
-    "@types/jsonwebtoken": "^8.5.4",
-    "@types/node": "^16.7.8",
-    "ts-node-dev": "^1.1.8",
-    "tsconfig-paths": "^3.11.0",
-    "ttypescript": "^1.5.12",
-    "typescript": "~4.4.4"
+    "web3": "^1.6.1"
   }
 }

@@ -82,7 +82,7 @@
     "rollup-plugin-analyzer": "^4.0.0",
     "ts-node": "^10.3.0",
     "ttypescript": "^1.5.12",
-    "typescript": "^4.4.4",
+    "typescript": "^4.5.4",
     "unplugin-icons": "^0.12.16",
     "unplugin-vue-components": "^0.15.6",
     "vite": "^2.7.6",
