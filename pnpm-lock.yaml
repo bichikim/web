@@ -406,20 +406,11 @@ importers:
       '@keystone-6/auth': ^1.0.1
       '@keystone-6/core': ^1.0.1
       '@keystone-6/fields-document': ^1.0.1
-      '@types/node': ^16.7.8
-      babel-plugin-module-resolver: ^4.1.0
-      cross-env: ^7.0.3
-      rimraf: ^3.0.2
       typescript: ^4.5.4
     dependencies:
       '@keystone-6/auth': 1.0.1_a6a2dd6b2df41e4408647b6b6eb75e90
       '@keystone-6/core': 1.0.1
       '@keystone-6/fields-document': 1.0.1_a6a2dd6b2df41e4408647b6b6eb75e90
-    devDependencies:
-      '@types/node': 16.11.7
-      babel-plugin-module-resolver: 4.1.0
-      cross-env: 7.0.3
-      rimraf: 3.0.2
       typescript: 4.5.4
 
   coong/smart-contract:
@@ -14252,6 +14243,7 @@ packages:
       pkg-up: 3.1.0
       reselect: 4.0.0
       resolve: 1.20.0
+    dev: false
 
   /babel-plugin-polyfill-corejs2/0.2.3_@babel+core@7.16.0:
     resolution: {integrity: sha512-NDZ0auNRzmAfE1oDDPW2JhzIMXUk+FFe2ICejmt5T4ocKgiQx3e0VCRx9NCAidcMtL2RUZaWtXnmjTCkx0tcbA==}
@@ -19243,6 +19235,7 @@ packages:
     dependencies:
       json5: 0.5.1
       path-exists: 3.0.0
+    dev: false
 
   /find-cache-dir/2.1.0:
     resolution: {integrity: sha512-Tq6PixE0w/VMFfCgbONnkiQIVol/JJL7nRMi20fqzA4NRs9AfeqMGeRdPi3wIhYkxjeBaWh2rxwapn5Tu3IqOQ==}
@@ -20869,7 +20862,7 @@ packages:
       lodash: 4.17.21
       pretty-error: 4.0.0
       tapable: 2.2.1
-      webpack: 5.64.1
+      webpack: 5.64.1_esbuild@0.13.14
     transitivePeerDependencies:
       - acorn
 
@@ -23016,6 +23009,7 @@ packages:
   /json5/0.5.1:
     resolution: {integrity: sha1-Hq3nrMASA0rYTiOWdn6tn6VJWCE=}
     hasBin: true
+    dev: false
 
   /json5/1.0.1:
     resolution: {integrity: sha512-aKS4WQjPenRxiQsC93MNfjx+nbF4PAdYzmd/1JIj8HYzqfbu86beTuNgXDzPknWk0n0uARlyewZo4s++ES36Ow==}
@@ -29003,6 +28997,7 @@ packages:
 
   /reselect/4.0.0:
     resolution: {integrity: sha512-qUgANli03jjAyGlnbYVAV5vvnOmJnODyABz51RdBN7M4WaVu8mecZWgyQNkG8Yqe3KRGRt0l4K4B3XVEULC4CA==}
+    dev: false
 
   /resolve-alpn/1.2.1:
     resolution: {integrity: sha512-0a1F4l73/ZFZOakJnQ3FvkJ2+gSTQWz/r2KE5OdDY0TxPm5h4GkqkWWfM47T7HsbnOtcJVEF4epCVy6u7Q3K+g==}
@@ -32160,7 +32155,6 @@ packages:
     resolution: {integrity: sha512-VgYs2A2QIRuGphtzFV7aQJduJ2gyfTljngLzjpfW9FoYZF6xuw1W0vW9ghCKLfcWrCFxK81CSGRAvS1pn4fIUg==}
     engines: {node: '>=4.2.0'}
     hasBin: true
-    dev: true
 
   /ua-parser-js/0.7.31:
     resolution: {integrity: sha512-qLK/Xe9E2uzmYI3qLeOmI0tEOt+TBBQyUIAh4aAgU05FVYzeZrKUdkAZfBNVGRaHVgV0TDkdEngJSw/SyQchkQ==}
