@@ -51,6 +51,7 @@
     "last 5 Opera versions"
   ],
   "devDependencies": {
+    "@happy-dom/jest-environment": "^2.25.1",
     "babel-plugin-search-and-replace": "^1.1.0",
     "@babel/core": "^7.16.0",
     "@babel/preset-typescript": "^7.16.0",

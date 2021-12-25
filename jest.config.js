@@ -52,7 +52,7 @@ module.exports = {
     '@emotion/jest/serializer',
   ],
 
-  testEnvironment: 'node',
+  testEnvironment: '@happy-dom/jest-environment',
 
   testPathIgnorePatterns: [
     '\\.snap$',
