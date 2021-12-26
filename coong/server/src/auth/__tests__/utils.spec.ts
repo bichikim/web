@@ -4,12 +4,13 @@ import {
   createPermissions,
   flattenRoles,
   getMatchedPermission,
+  getMatchedPermissionWithAll,
   getPermissionFromRoles,
   getTrueKeys,
   transformAllPermission,
 } from '../utils'
 
-describe('lodash', () => {
+describe('roles/utils', () => {
   const roles = {
     customer: {
       'privatePost.self': true,
@@ -97,7 +98,16 @@ describe('lodash', () => {
 
   describe('getMatchedPermission', () => {
     it('should return permission with all', () => {
-      const result = getMatchedPermission(['foo.all'], ['foo.create'], ['create', 'update', 'read', 'delete'])
+      const result = getMatchedPermission(['foo.update'], ['foo.create'])
+      expect(result).toBe(undefined)
+      const result2 = getMatchedPermission(['foo.update', 'foo.create'], ['foo.create'])
+      expect(result2).toBe('foo.create')
+    })
+  })
+
+  describe('getMatchedPermissionWithAll', () => {
+    it('should return permission with all', () => {
+      const result = getMatchedPermissionWithAll(['foo.all'], ['foo.create'], ['create', 'update', 'read', 'delete'])
       expect(result).toBe('foo.create')
     })
   })

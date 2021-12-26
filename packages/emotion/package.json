@@ -14,24 +14,24 @@
   "author": "bichi@live.co.kr",
   "exports": {
     ".": {
-      "import": "./lib/index.module.js",
+      "import": "./lib/esm/index.js",
       "require": "./lib/index.js"
     },
     "./*": "./*"
   },
   "main": "lib/index.js",
-  "jsdelivr": "lib/index.iife.js",
-  "unpkg": "lib/index.iife.js",
-  "module": "lib/index.module.js",
+  "jsdelivr": "lib/iife/index.js",
+  "unpkg": "lib/iife/index.js",
+  "module": "lib/esm/index.js",
   "source": "src/index.ts",
   "types": "lib/index.d.ts",
   "files": [
     "lib/*"
   ],
   "scripts": {
-    "build": "gulp build",
-    "dev": "gulp dev",
-    "prepare": "gulp build"
+    "build": "tsup --dts --legacy-output --minify",
+    "prepare": "tsup --dts --legacy-output",
+    "dev": "tsup --watch --legacy-output"
   },
   "dependencies": {
     "@emotion/css": "^11.1.3",
@@ -40,7 +40,7 @@
     "@winter-love/use": "^1.0.23-alpha.11",
     "@winter-love/utils": "^1.0.23-alpha.5",
     "clsx": "^1.1.1",
-    "vue-demi": "^0.12.1"
+    "vue-demi": "latest"
   },
   "devDependencies": {
     "@babel/core": "^7.14.5",
@@ -49,6 +49,14 @@
     "@vue/test-utils": "next",
     "gulp": "^4.0.2",
     "vue": "next"
+  },
+  "tsup": {
+    "entry": ["src/index.ts"],
+    "clean": true,
+    "format": ["cjs", "esm", "iife"],
+    "outDir": "lib",
+    "sourcemap": true,
+    "splitting": false
   },
   "gitHead": "66c79bd0d5c23a437b8170f758ff58e4496afb58"
 }

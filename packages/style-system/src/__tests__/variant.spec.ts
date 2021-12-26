@@ -1,7 +1,3 @@
-/**
- * @jest-environment jsdom
- */
-
 import {createVariant} from '../variant'
 import {system} from '../system'
 import {createEmotion, Theme} from '@winter-love/emotion'

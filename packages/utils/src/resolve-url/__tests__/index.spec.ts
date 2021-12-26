@@ -22,7 +22,6 @@ describe('resolveQuery', () => {
   })
   it('should with host and url', () => {
     const result = chunkUrl('foo.com/bar/john')
-    console.log(result)
     expect(result).toEqual({
       chunkedUrl: ['bar', 'john'],
       host: 'foo.com',

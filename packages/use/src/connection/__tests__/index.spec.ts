@@ -1,7 +1,3 @@
-/**
- * @jest-environment jsdom
- */
-
 import {onOffline, onOnline, useConnection} from '../'
 import {flushPromises} from '@vue/test-utils'
 

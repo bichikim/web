@@ -1,7 +1,3 @@
-/**
- * @jest-environment jsdom
- */
-
 import {isSSR} from '../'
 
 describe('isSSR in browser', () => {

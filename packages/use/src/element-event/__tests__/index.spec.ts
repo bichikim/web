@@ -1,7 +1,3 @@
-/**
- * @jest-environment jsdom
- */
-
 import {flushPromises, mount} from '@vue/test-utils'
 import {defineComponent, h, ref} from 'vue-demi'
 import {useElementEvent} from '../index'

@@ -1,7 +1,3 @@
-/**
- * @jest-environment jsdom
- */
-
 import {
   createEmotion, createStyled, EMOTION_CACHE_CONTEXT, EMOTION_THEME_CONTEXT, StyledFunctionalComponent, StyledOptions,
 } from '../'
@@ -79,8 +75,6 @@ describe('emotion', () => {
       const wrapper = mount(StyledComponent)
 
       const root: any = wrapper.vm.rootElement
-
-      console.log(root.foo)
 
       expect(root.foo).toBe('foo')
     })

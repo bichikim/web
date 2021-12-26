@@ -1,7 +1,3 @@
-/**
- * @jest-environment jsdom
- */
-
 import {flushPromises, mount} from '@vue/test-utils'
 import {defineComponent, h} from 'vue-demi'
 import {isState, state, stateName} from 'src/state'

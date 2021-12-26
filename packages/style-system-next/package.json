@@ -20,24 +20,24 @@
   "author": "bichi@live.co.kr",
   "exports": {
     ".": {
-      "import": "./lib/index.module.js",
+      "import": "./lib/esm/index.js",
       "require": "./lib/index.js"
     },
     "./*": "./*"
   },
   "main": "lib/index.js",
-  "jsdelivr": "lib/index.iife.js",
-  "unpkg": "lib/index.iife.js",
-  "module": "lib/index.module.js",
+  "jsdelivr": "lib/iife/index.js",
+  "unpkg": "lib/iife/index.js",
+  "module": "lib/esm/index.js",
   "source": "src/index.ts",
   "types": "lib/index.d.ts",
   "files": [
     "lib/*"
   ],
   "scripts": {
-    "build": "gulp build",
-    "dev": "gulp dev",
-    "prepare": "gulp build"
+    "build": "tsup --dts --legacy-output --minify",
+    "prepare": "tsup --dts --legacy-output",
+    "dev": "tsup --watch --legacy-output"
   },
   "dependencies": {
     "@winter-love/utils": "^1.0.23-alpha.5",
@@ -50,6 +50,14 @@
     "@winter-love/emotion": "^1.0.23-alpha.11",
     "csstype": "^3.0.8",
     "gulp": "^4.0.2"
+  },
+  "tsup": {
+    "entry": ["src/index.ts"],
+    "clean": true,
+    "format": ["cjs", "esm", "iife"],
+    "outDir": "lib",
+    "sourcemap": true,
+    "splitting": false
   },
   "gitHead": "2fb93aea9a5a38a7778495106787001ffe0d25f6"
 }

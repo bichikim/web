@@ -18,29 +18,28 @@
   "homepage": "https://github.com/winter-love/web/tree/dev/packages/vare",
   "repository": "git@github.com:winter-love/web.git",
   "author": "bichi@live.co.kr",
-  "type": "module",
   "exports": {
     ".": {
-      "import": "./lib/index.js",
-      "require": "./lib/index.cjs"
+      "import": "./lib/esm/index.js",
+      "require": "./lib/index.js"
     },
     "./*": "./*"
   },
   "main": "lib/index.js",
-  "jsdelivr": "lib/index.global.js",
-  "unpkg": "lib/index.global.js",
-  "module": "lib/module.js",
+  "jsdelivr": "lib/iife/index.js",
+  "unpkg": "lib/iife/index.js",
+  "module": "lib/esm/index.js",
   "source": "src/index.ts",
   "types": "lib/index.d.ts",
   "files": [
     "lib/*"
   ],
   "scripts": {
-    "build:test": "tsup --dts",
-    "dev": "parcel watch"
+    "build": "tsup --dts --legacy-output --minify",
+    "prepare": "tsup --dts --legacy-output",
+    "dev": "tsup --watch --legacy-output"
   },
   "dependencies": {
-    "tsup": "^5.11.6",
     "@vue/devtools-api": "^6.0.0-beta.19",
     "@winter-love/utils": "^1.0.23-alpha.5",
     "vue-demi": "^0.12.1"

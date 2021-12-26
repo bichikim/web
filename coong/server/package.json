@@ -19,12 +19,12 @@
     "express-graphql": "^0.12.0",
     "graphql": "^15.7.2",
     "graphql-fields": "^2.0.3",
-    "graphql-scalars": "^1.13.6",
+    "graphql-scalars": "^1.14.1",
     "jsonwebtoken": "^8.5.1",
     "lodash": "^4.17.21",
     "ramda": "^0.27.1",
     "reflect-metadata": "^0.1.13",
-    "tslib": "^2.3.0",
+    "tslib": "^2.3.1",
     "type-graphql": "^1.1.1"
   },
   "devDependencies": {
@@ -34,12 +34,12 @@
     "@types/node": "^16.7.8",
     "@zerollup/ts-transform-paths": "^1.7.18",
     "cross-env": "^7.0.3",
-    "prisma": "~3.6.0",
+    "prisma": "~3.7.0",
     "rimraf": "^3.0.2",
     "ts-node-dev": "^1.1.8",
     "tsconfig-paths": "^3.11.0",
     "ttypescript": "^1.5.13",
-    "typegraphql-prisma": "~0.18.1",
+    "typegraphql-prisma": "~0.18.3",
     "typescript": "~4.5.4"
   }
 }

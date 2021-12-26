@@ -1,7 +1,3 @@
-/**
- * @jest-environment jsdom
- */
-
 import {atom, getAtomActionWatchTarget, getter} from '../'
 import {flushPromises, mount} from '@vue/test-utils'
 import {

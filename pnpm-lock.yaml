@@ -76,7 +76,7 @@ importers:
       sort-package-json: ^1.53.1
       ts-node: 10.2.1
       tsd: ^0.18.0
-      tsup: ^5.7.0
+      tsup: ^5.11.9
       ttypescript: ^1.5.13
       typescript: ^4.5.4
       vitepress: ^0.20.9
@@ -147,7 +147,7 @@ importers:
       sort-package-json: 1.53.1
       ts-node: 10.2.1_eefad272baeacd5b28bb97fe86355678
       tsd: 0.18.0
-      tsup: 5.7.0_ts-node@10.2.1+typescript@4.5.4
+      tsup: 5.11.9_ts-node@10.2.1+typescript@4.5.4
       ttypescript: 1.5.13_ts-node@10.2.1+typescript@4.5.4
       typescript: 4.5.4
       vitepress: 0.20.9
@@ -355,22 +355,22 @@ importers:
       express-graphql: ^0.12.0
       graphql: ^15.7.2
       graphql-fields: ^2.0.3
-      graphql-scalars: ^1.13.6
+      graphql-scalars: ^1.14.1
       jsonwebtoken: ^8.5.1
       lodash: ^4.17.21
-      prisma: ~3.6.0
+      prisma: ~3.7.0
       ramda: ^0.27.1
       reflect-metadata: ^0.1.13
       rimraf: ^3.0.2
       ts-node-dev: ^1.1.8
       tsconfig-paths: ^3.11.0
-      tslib: ^2.3.0
+      tslib: ^2.3.1
       ttypescript: ^1.5.13
       type-graphql: ^1.1.1
-      typegraphql-prisma: ~0.18.1
+      typegraphql-prisma: ~0.18.3
       typescript: ~4.5.4
     dependencies:
-      '@prisma/client': 3.6.0_prisma@3.6.0
+      '@prisma/client': 3.6.0_prisma@3.7.0
       '@winter-love/utils': link:../../packages/utils
       apollo-server: 3.3.0_graphql@15.7.2
       bcrypt: 5.0.1
@@ -393,12 +393,12 @@ importers:
       '@types/node': 16.10.3
       '@zerollup/ts-transform-paths': 1.7.18_typescript@4.5.4
       cross-env: 7.0.3
-      prisma: 3.6.0
+      prisma: 3.7.0
       rimraf: 3.0.2
       ts-node-dev: 1.1.8_typescript@4.5.4
       tsconfig-paths: 3.11.0
       ttypescript: 1.5.13_ts-node@10.2.1+typescript@4.5.4
-      typegraphql-prisma: 0.18.1_65cc07ede1526c4b7020a9d7e2a94054
+      typegraphql-prisma: 0.18.3_b6d5325e563aa58a35cbe02f6b4f1a4e
       typescript: 4.5.4
 
   coong/server-next:
@@ -415,10 +415,16 @@ importers:
 
   coong/smart-contract:
     specifiers:
+      '@babel/core': ^7.16.5
+      '@babel/node': ^7.16.5
       ganache-cli: ^6.12.2
+      solc: ^0.8.11
       web3: ^1.6.1
     devDependencies:
+      '@babel/core': 7.16.5
+      '@babel/node': 7.16.5_@babel+core@7.16.5
       ganache-cli: 6.12.2
+      solc: 0.8.11
       web3: 1.6.1
 
   packages/emotion:
@@ -435,7 +441,7 @@ importers:
       clsx: ^1.1.1
       gulp: ^4.0.2
       vue: next
-      vue-demi: ^0.12.1
+      vue-demi: latest
     dependencies:
       '@emotion/css': 11.1.3_@babel+core@7.15.8
       '@emotion/serialize': 1.0.2
@@ -526,7 +532,7 @@ importers:
       '@winter-love/utils': ^1.0.23-alpha.5
       gulp: ^4.0.2
       vue: next
-      vue-demi: ^0.12.1
+      vue-demi: latest
     dependencies:
       '@stitches/core': 1.2.5
       '@winter-love/utils': link:../utils
@@ -550,7 +556,7 @@ importers:
       gulp: ^4.0.2
       merge-deep: ^3.0.3
       vue: next
-      vue-demi: ^0.12.1
+      vue-demi: latest
     dependencies:
       '@winter-love/utils': link:../utils
       merge-deep: 3.0.3
@@ -608,13 +614,11 @@ importers:
       '@winter-love/use': ^1.0.23-alpha.11
       '@winter-love/utils': ^1.0.23-alpha.5
       gulp: ^4.0.2
-      tsup: ^5.11.6
       vue: ^3.2.23
       vue-demi: ^0.12.1
     dependencies:
       '@vue/devtools-api': 6.0.0-beta.19
       '@winter-love/utils': link:../utils
-      tsup: 5.11.6_ts-node@10.2.1+typescript@4.5.4
       vue-demi: 0.12.1_vue@3.2.26
     devDependencies:
       '@winter-love/use': link:../use
@@ -633,7 +637,7 @@ importers:
       lodash: ^4.17.21
       sinon: ^11.1.1
       vue: next
-      vue-demi: ^0.12.1
+      vue-demi: latest
     dependencies:
       '@winter-love/utils': link:../utils
       debounce: 1.2.1
@@ -654,7 +658,7 @@ importers:
       lodash: ^4.17.21
       micro-memoize: ^4.0.9
       react-fast-compare: ^3.2.0
-      vue-demi: ^0.12.1
+      vue-demi: latest
     dependencies:
       lodash: 4.17.21
       micro-memoize: 4.0.9
@@ -1528,6 +1532,22 @@ packages:
       '@babel/helper-validator-identifier': 7.15.7
       chalk: 2.4.2
       js-tokens: 4.0.0
+
+  /@babel/node/7.16.5_@babel+core@7.16.5:
+    resolution: {integrity: sha512-NUzl2ILzKE7lu5yj4pFLeOmREwOq6//8bFBB3m7XXz73INCSI1rjQJbUYLwZrpZWlt6RY536nDJFqo2MnY43nA==}
+    engines: {node: '>=6.9.0'}
+    hasBin: true
+    peerDependencies:
+      '@babel/core': ^7.0.0-0
+    dependencies:
+      '@babel/core': 7.16.5
+      '@babel/register': 7.16.5_@babel+core@7.16.5
+      commander: 4.1.1
+      core-js: 3.19.1
+      node-environment-flags: 1.0.6
+      regenerator-runtime: 0.13.9
+      v8flags: 3.2.0
+    dev: true
 
   /@babel/parser/7.15.8:
     resolution: {integrity: sha512-BRYa3wcQnjS/nqI8Ac94pYYpJfojHVvVXJ97+IDCImX4Jc8W8Xv1+47enbruk+q1etOpsQNwnfFcNGw+gtPGxA==}
@@ -3618,6 +3638,20 @@ packages:
 
   /@babel/register/7.16.0_@babel+core@7.16.5:
     resolution: {integrity: sha512-lzl4yfs0zVXnooeLE0AAfYaT7F3SPA8yB2Bj4W1BiZwLbMS3MZH35ZvCWSRHvneUugwuM+Wsnrj7h0F7UmU3NQ==}
+    engines: {node: '>=6.9.0'}
+    peerDependencies:
+      '@babel/core': ^7.0.0-0
+    dependencies:
+      '@babel/core': 7.16.5
+      clone-deep: 4.0.1
+      find-cache-dir: 2.1.0
+      make-dir: 2.1.0
+      pirates: 4.0.1
+      source-map-support: 0.5.20
+    dev: true
+
+  /@babel/register/7.16.5_@babel+core@7.16.5:
+    resolution: {integrity: sha512-NpluD+cToBiZiDsG3y9rtIcqDyivsahpaM9csfyfiq1qQWduSmihUZ+ruIqqSDGjZKZMJfgAElo9x2YWlOQuRw==}
     engines: {node: '>=6.9.0'}
     peerDependencies:
       '@babel/core': ^7.0.0-0
@@ -8551,17 +8585,39 @@ packages:
       prisma: 3.6.0
     dev: false
 
+  /@prisma/client/3.6.0_prisma@3.7.0:
+    resolution: {integrity: sha512-ycSGY9EZGROtje0iCNsgC5Zqi/ttX2sO7BNMYaLsUMiTlf3F69ZPH+08pRo0hrDfkZzyimXYqeXJlaoYDH1w7A==}
+    engines: {node: '>=12.6'}
+    requiresBuild: true
+    peerDependencies:
+      prisma: '*'
+    peerDependenciesMeta:
+      prisma:
+        optional: true
+    dependencies:
+      '@prisma/engines-version': 3.6.0-24.dc520b92b1ebb2d28dc3161f9f82e875bd35d727
+      prisma: 3.7.0
+    dev: false
+
   /@prisma/debug/3.5.0:
     resolution: {integrity: sha512-JWBmzqxtbq6rJfMyIIQVL/QSAIsiCOp20ArTl5zUHtSYH/MrNmuQ69YAn9RuUQBOTIAQaVTIMII2xpN5kB5RRg==}
     dependencies:
       '@types/debug': 4.1.7
       ms: 2.1.3
+    dev: false
 
   /@prisma/debug/3.6.0:
     resolution: {integrity: sha512-THh5YjfDCpvbU5NOfeGx7mOQZl8EADOZ1z3C0sEDYmYUnpBjmCrnLNRSMjmD1d9kDo5GgwkrbK9pnwonHiH0JQ==}
     dependencies:
       '@types/debug': 4.1.7
       ms: 2.1.3
+
+  /@prisma/debug/3.7.0:
+    resolution: {integrity: sha512-3FdQRGUt2zSe1D+RnCh2wmbCiMmhX+BKNRnC6Ic8KHayXMbEuRR4Ofgt0AZHRCdEQBwVFvM2Yep9zN3hNnWssw==}
+    dependencies:
+      '@types/debug': 4.1.7
+      ms: 2.1.3
+    dev: true
 
   /@prisma/engine-core/3.6.0:
     resolution: {integrity: sha512-FkxUhjFfOuH6eeRU+Ilw6aZNxPS/3p/92FMCKbotTU/atAF/QrleDYrked7E+bphEZ66bYqTgUOnCQBrlwcovg==}
@@ -8578,6 +8634,24 @@ packages:
       p-retry: 4.6.1
       terminal-link: 2.1.1
       undici: 3.3.6
+    dev: false
+
+  /@prisma/engine-core/3.7.0:
+    resolution: {integrity: sha512-HYhB44nQ8wOuniyEs6Jl3OxzvyBcXsgSWbPvqRkcxqfR/StrCvHtqIFxjVs7BsSukDQVhVBqpwqF7lkISVcW/A==}
+    dependencies:
+      '@prisma/debug': 3.7.0
+      '@prisma/engines': 3.7.0-31.8746e055198f517658c08a0c426c7eec87f5a85f
+      '@prisma/generator-helper': 3.7.0
+      '@prisma/get-platform': 3.7.0-31.8746e055198f517658c08a0c426c7eec87f5a85f
+      chalk: 4.1.2
+      execa: 5.1.1
+      get-stream: 6.0.1
+      indent-string: 4.0.0
+      new-github-issue-url: 0.2.1
+      p-retry: 4.6.1
+      terminal-link: 2.1.1
+      undici: 3.3.6
+    dev: true
 
   /@prisma/engines-version/3.6.0-24.dc520b92b1ebb2d28dc3161f9f82e875bd35d727:
     resolution: {integrity: sha512-vtoO2ys6mSfc8ONTWdcYztKN3GBU1tcKBj0aXObyjzSuGwHFcM/pEA0xF+n1W4/0TAJgfoPX2khNEit6g0jtNA==}
@@ -8586,6 +8660,12 @@ packages:
   /@prisma/engines/3.6.0-24.dc520b92b1ebb2d28dc3161f9f82e875bd35d727:
     resolution: {integrity: sha512-dRClHS7DsTVchDKzeG72OaEyeDskCv91pnZ72Fftn0mp4BkUvX2LvWup65hCNzwwQm5IDd6A88APldKDnMiEMA==}
     requiresBuild: true
+    dev: false
+
+  /@prisma/engines/3.7.0-31.8746e055198f517658c08a0c426c7eec87f5a85f:
+    resolution: {integrity: sha512-W549ub5NlgexNhR8EFstA/UwAWq3Zq0w9aNkraqsozVCt2CsX+lK4TK7IW5OZVSnxHwRjrgEAt3r9yPy8nZQRg==}
+    requiresBuild: true
+    dev: true
 
   /@prisma/fetch-engine/3.6.0-24.dc520b92b1ebb2d28dc3161f9f82e875bd35d727:
     resolution: {integrity: sha512-aTtjXF3PNKe+UQXqOjamwqvMZtM7R4wMzUkwZq19zTbs8Bqe5IUOKjw6tdHMOpQD10TxS2/nlXIsWvwZeniyYg==}
@@ -8609,6 +8689,31 @@ packages:
       tempy: 1.0.1
     transitivePeerDependencies:
       - supports-color
+    dev: false
+
+  /@prisma/fetch-engine/3.7.0-31.8746e055198f517658c08a0c426c7eec87f5a85f:
+    resolution: {integrity: sha512-nMIHNLvzaNQ/++ug0aODYQ8CtcZJraS2gtZQypuqSLMOxXtyF5bCGH0n6Q4jWHHjgzuelPFzqzEPmL5WrRaO5A==}
+    dependencies:
+      '@prisma/debug': 3.6.0
+      '@prisma/get-platform': 3.7.0-31.8746e055198f517658c08a0c426c7eec87f5a85f
+      chalk: 4.1.2
+      execa: 5.1.1
+      find-cache-dir: 3.3.2
+      hasha: 5.2.2
+      http-proxy-agent: 5.0.0
+      https-proxy-agent: 5.0.0
+      make-dir: 3.1.0
+      node-fetch: 2.6.6
+      p-filter: 2.1.0
+      p-map: 4.0.0
+      p-retry: 4.6.1
+      progress: 2.0.3
+      rimraf: 3.0.2
+      temp-dir: 2.0.0
+      tempy: 1.0.1
+    transitivePeerDependencies:
+      - supports-color
+    dev: true
 
   /@prisma/generator-helper/3.6.0:
     resolution: {integrity: sha512-/mwQvnTbuiZjVmLtCBuOK+Tz2+HLYjqOCCvsEH0LMxHQBtzVSG4/LhVHMYxs/4du8TdgpnguMh4wtRWJ9Ow/DQ==}
@@ -8617,11 +8722,28 @@ packages:
       '@types/cross-spawn': 6.0.2
       chalk: 4.1.2
       cross-spawn: 7.0.3
+    dev: false
+
+  /@prisma/generator-helper/3.7.0:
+    resolution: {integrity: sha512-jH5Sd9vXO+ER7yZrx7ah1gcUGcBW7ljk31t+TMMET6J8Wd7LOKgVWJ6O5IkPfw7KGuuFp8SolcivvGTsH4gsSA==}
+    dependencies:
+      '@prisma/debug': 3.7.0
+      '@types/cross-spawn': 6.0.2
+      chalk: 4.1.2
+      cross-spawn: 7.0.3
+    dev: true
 
   /@prisma/get-platform/3.6.0-24.dc520b92b1ebb2d28dc3161f9f82e875bd35d727:
     resolution: {integrity: sha512-zvlddqvNU5rXnjTeT+0DOyMwH9E8NwV1a1F3tYN6lNWAjpWx26nGDGkIOO5Nid5mIjz+SDz5VM2NEZ+HXgDuMQ==}
     dependencies:
       '@prisma/debug': 3.5.0
+    dev: false
+
+  /@prisma/get-platform/3.7.0-31.8746e055198f517658c08a0c426c7eec87f5a85f:
+    resolution: {integrity: sha512-8vhq90O7Gs23VQmlfnVATXnIkSKruHTNa2NKkkkygDUMWPYgzbA9hsCMpeerK1pgUZeRWl8ucL6+WcPrVMIQhA==}
+    dependencies:
+      '@prisma/debug': 3.6.0
+    dev: true
 
   /@prisma/migrate/3.6.0_@prisma+sdk@3.6.0:
     resolution: {integrity: sha512-Y1Y5gv5ZZSHyNpPLdpVVa7XE4ME6b/vrh/Q7NpVjtwHNBH+nx4xWL9LtV8iXCiCXXAgWhKcyJOdCJW1hY0MrTA==}
@@ -8686,6 +8808,50 @@ packages:
       tmp: 0.2.1
     transitivePeerDependencies:
       - supports-color
+    dev: false
+
+  /@prisma/sdk/3.7.0:
+    resolution: {integrity: sha512-xpdQCCH/XQdhXN5ogmHNIKWhyYkAF9xsm7aCuVgAKv7cShgpq/OM68UOD58mN6d2tVjOny5oen7PFstNYTkCgQ==}
+    dependencies:
+      '@prisma/debug': 3.7.0
+      '@prisma/engine-core': 3.7.0
+      '@prisma/engines': 3.7.0-31.8746e055198f517658c08a0c426c7eec87f5a85f
+      '@prisma/fetch-engine': 3.7.0-31.8746e055198f517658c08a0c426c7eec87f5a85f
+      '@prisma/generator-helper': 3.7.0
+      '@prisma/get-platform': 3.7.0-31.8746e055198f517658c08a0c426c7eec87f5a85f
+      '@timsuchanek/copy': 1.4.5
+      archiver: 4.0.2
+      arg: 5.0.1
+      chalk: 4.1.2
+      checkpoint-client: 1.1.20
+      cli-truncate: 2.1.0
+      dotenv: 10.0.0
+      escape-string-regexp: 4.0.0
+      execa: 5.1.1
+      find-up: 5.0.0
+      global-dirs: 3.0.0
+      globby: 11.0.4
+      has-yarn: 2.1.0
+      is-ci: 3.0.1
+      make-dir: 3.1.0
+      node-fetch: 2.6.6
+      p-map: 4.0.0
+      read-pkg-up: 7.0.1
+      resolve: 1.20.0
+      rimraf: 3.0.2
+      shell-quote: 1.7.3
+      string-width: 4.2.3
+      strip-ansi: 6.0.1
+      strip-indent: 3.0.0
+      tar: 6.1.11
+      temp-dir: 2.0.0
+      temp-write: 4.0.0
+      tempy: 1.0.1
+      terminal-link: 2.1.1
+      tmp: 0.2.1
+    transitivePeerDependencies:
+      - supports-color
+    dev: true
 
   /@protobufjs/aspromise/1.1.2:
     resolution: {integrity: sha1-m4sMxmPWaafY9vXQiToU00jzD78=}
@@ -13309,6 +13475,7 @@ packages:
 
   /any-promise/1.3.0:
     resolution: {integrity: sha1-q8av7tzqUugJzcA3au0845Y10X8=}
+    dev: true
 
   /anymatch/2.0.0:
     resolution: {integrity: sha512-5teOsQWABXHHBFP9y3skS5P3d/WfWXpv3FUpy+LorMrNYaT9pI4oLMQX7jzQ2KklNpGpWHzdCXTDT2Y3XGlZBw==}
@@ -13454,7 +13621,7 @@ packages:
     resolution: {integrity: sha512-B32+RUOM4GUJAwnQqQE1mT1BG7+VfW3a0A87Bp3gv/q8iNnhY2BIWe74Qn03pX8n27g3EGVCt0kcBuHhjG5ltA==}
     engines: {node: '>=12.0'}
     dependencies:
-      node-fetch: 2.6.5
+      node-fetch: 2.6.6
     dev: false
 
   /apollo-server-env/4.2.0:
@@ -14909,13 +15076,13 @@ packages:
       semver: 7.3.5
     dev: true
 
-  /bundle-require/2.1.8_esbuild@0.14.5:
+  /bundle-require/2.1.8_esbuild@0.14.8:
     resolution: {integrity: sha512-oOEg3A0hy/YzvNWNowtKD0pmhZKseOFweCbgyMqTIih4gRY1nJWsvrOCT27L9NbIyL5jMjTFrAUpGxxpW68Puw==}
     peerDependencies:
       esbuild: '>=0.13'
     dependencies:
-      esbuild: 0.14.5
-    dev: false
+      esbuild: 0.14.8
+    dev: true
 
   /bundle-runner/0.0.1:
     resolution: {integrity: sha512-xevhXw77nJ7wjCRTyo1JYumUNUiZmD0CJEummyLUJbdhub4bZWuplS+Y7nlMq5V9sKJQW+dV/LZR/SlxS5f4LQ==}
@@ -14956,6 +15123,7 @@ packages:
   /cac/6.7.12:
     resolution: {integrity: sha512-rM7E2ygtMkJqD9c7WnFU6fruFcN3xe4FM5yUmgxhZzIKJk4uHl9U/fhwdajGFQbQuv43FAUo1Fe8gX/oIKDeSA==}
     engines: {node: '>=8'}
+    dev: true
 
   /cacache/12.0.4:
     resolution: {integrity: sha512-a0tMB40oefvuInr4Cwb3GerbL9xTj1D5yg0T5xrjGCGyfvbxseIXX7BAO/u/hIXdafzOI5JC3wDwHyf24buOAQ==}
@@ -15692,6 +15860,7 @@ packages:
   /commander/4.1.1:
     resolution: {integrity: sha512-NOKm8xhkzAjzFx8B2v5OAHT+u5pRQc2UCa2Vq9jYL/31o2wi9mxBA7LIFs3sV5VSC49z6pEhfbMULvShKj26WA==}
     engines: {node: '>= 6'}
+    dev: true
 
   /commander/6.2.1:
     resolution: {integrity: sha512-U7VdrJFnJgo4xjrHpTzu0yrHPGImdsmD95ZlgYSEajAn2JKzDhDTPG9kBTefmObL2w/ngeZnilk+OV9CG3d7UA==}
@@ -17724,14 +17893,6 @@ packages:
     dev: true
     optional: true
 
-  /esbuild-android-arm64/0.14.5:
-    resolution: {integrity: sha512-Sl6ysm7OAZZz+X3Mv3tOPhjMuSxNmztgoXH4ZZ3Yhbje5emEY6qiTnv3vBSljDlUl/yGaIjqC44qlj8s8G71xA==}
-    cpu: [arm64]
-    os: [android]
-    requiresBuild: true
-    dev: false
-    optional: true
-
   /esbuild-android-arm64/0.14.8:
     resolution: {integrity: sha512-tAEoSHnPBSH0cCAFa/aYs3LPsoTY4SwsP6wDKi4PaelbQYNJjqNpAeweyJ8l98g1D6ZkLyqsHbkYj+209sezkA==}
     cpu: [arm64]
@@ -17747,14 +17908,6 @@ packages:
     requiresBuild: true
     dev: true
 
-  /esbuild-darwin-64/0.14.5:
-    resolution: {integrity: sha512-VHZl23sM9BOZXcLxk1vTYls8TCAY+/3llw9vHKIWAHDHzBBOlVv26ORK8gnStNMqTjCSGSMoq4T5jOZf2WrJPQ==}
-    cpu: [x64]
-    os: [darwin]
-    requiresBuild: true
-    dev: false
-    optional: true
-
   /esbuild-darwin-64/0.14.8:
     resolution: {integrity: sha512-t7p7WzTb+ybiD/irkMt5j/NzB+jY+8yPTsrXk5zCOH1O7DdthRnAUJ7pJPwImdL7jAGRbLtYRxUPgCHs/0qUPw==}
     cpu: [x64]
@@ -17769,14 +17922,6 @@ packages:
     os: [darwin]
     requiresBuild: true
     dev: true
-    optional: true
-
-  /esbuild-darwin-arm64/0.14.5:
-    resolution: {integrity: sha512-ugPOLgEQPoPLSqAFBajaczt+lcbUZR+V2fby3572h5jf/kFV6UL8LAZ1Ze58hcbKwfvbh4C09kp0PhqPgXKwOg==}
-    cpu: [arm64]
-    os: [darwin]
-    requiresBuild: true
-    dev: false
     optional: true
 
   /esbuild-darwin-arm64/0.14.8:
@@ -17795,14 +17940,6 @@ packages:
     dev: true
     optional: true
 
-  /esbuild-freebsd-64/0.14.5:
-    resolution: {integrity: sha512-uP0yOixSHF505o/Kzq9e4bvZblCZp9GGx+a7enLOVSuvIvLmtj2yhZLRPGfbVNkPJXktTKNRAnNGkXHl53M6sw==}
-    cpu: [x64]
-    os: [freebsd]
-    requiresBuild: true
-    dev: false
-    optional: true
-
   /esbuild-freebsd-64/0.14.8:
     resolution: {integrity: sha512-pGHBLSf7ynfyDZXUtbq/GsA2VIwQlWXrUj1AMcE0id47mRdEUM8/1ZuqMGZx63hRnNgtK9zNJ8OIu2c7qq76Qw==}
     cpu: [x64]
@@ -17817,14 +17954,6 @@ packages:
     os: [freebsd]
     requiresBuild: true
     dev: true
-    optional: true
-
-  /esbuild-freebsd-arm64/0.14.5:
-    resolution: {integrity: sha512-M99NPu8hlirFo6Fgx0WfX6XxUFdGclUNv3MyyfDtTdNYbccMESwLSACGpE7HvJKWscdjaqajeMu2an9adGNfCw==}
-    cpu: [arm64]
-    os: [freebsd]
-    requiresBuild: true
-    dev: false
     optional: true
 
   /esbuild-freebsd-arm64/0.14.8:
@@ -17843,14 +17972,6 @@ packages:
     dev: true
     optional: true
 
-  /esbuild-linux-32/0.14.5:
-    resolution: {integrity: sha512-hfqln4yb/jf/vPvI/A6aCvpIzqF3PdDmrKiikTohEUuRtvEZz234krtNwEAw5ssCue4NX8BJqrMpCTAHOl3LQw==}
-    cpu: [ia32]
-    os: [linux]
-    requiresBuild: true
-    dev: false
-    optional: true
-
   /esbuild-linux-32/0.14.8:
     resolution: {integrity: sha512-wPfQJadF5vTzriw/B8Ide74PeAJlZW7czNx3NIUHkHlXb+En1SeIqNzl6jG9DuJUl57xD9Ucl9YJFEkFeX8eLg==}
     cpu: [ia32]
@@ -17865,14 +17986,6 @@ packages:
     os: [linux]
     requiresBuild: true
     dev: true
-    optional: true
-
-  /esbuild-linux-64/0.14.5:
-    resolution: {integrity: sha512-T+OuYPlhytjj5DsvjUXizNjbV+/IrZiaDc9SNUfqiUOXHu0URFqchjhPVbBiBnWykCMJFB6pqNap2Oxth4iuYw==}
-    cpu: [x64]
-    os: [linux]
-    requiresBuild: true
-    dev: false
     optional: true
 
   /esbuild-linux-64/0.14.8:
@@ -17891,14 +18004,6 @@ packages:
     dev: true
     optional: true
 
-  /esbuild-linux-arm/0.14.5:
-    resolution: {integrity: sha512-5b10jKJ3lU4BUchOw9TgRResu8UZJf8qVjAzV5muHedonCfBzClGTT4KCNuOcLTJomH3wz6gNVJt1AxMglXnJg==}
-    cpu: [arm]
-    os: [linux]
-    requiresBuild: true
-    dev: false
-    optional: true
-
   /esbuild-linux-arm/0.14.8:
     resolution: {integrity: sha512-HIct38SvUAIJbiTwV/PVQroimQo96TGtzRDAEZxTorB4vsAj1r8bd0keXExPU4RH7G0zIqC4loQQpWYL+nH4Vg==}
     cpu: [arm]
@@ -17913,14 +18018,6 @@ packages:
     os: [linux]
     requiresBuild: true
     dev: true
-    optional: true
-
-  /esbuild-linux-arm64/0.14.5:
-    resolution: {integrity: sha512-ANOzoaH4kfbhEZT0EGY9g1tsZhDA+I0FRwBsj7D8pCU900pXF/l8YAOy5jWFQIb3vjG5+orFc5SqSzAKCisvTQ==}
-    cpu: [arm64]
-    os: [linux]
-    requiresBuild: true
-    dev: false
     optional: true
 
   /esbuild-linux-arm64/0.14.8:
@@ -17939,14 +18036,6 @@ packages:
     dev: true
     optional: true
 
-  /esbuild-linux-mips64le/0.14.5:
-    resolution: {integrity: sha512-sSmGfOUNNB2Nd3tzp1RHSxiJmM5/RUIEP5aAtH+PpOP7FPp15Jcfwq7UNBJ82KLN3SJcwhUeEfcCaUFBzbTKxg==}
-    cpu: [mips64el]
-    os: [linux]
-    requiresBuild: true
-    dev: false
-    optional: true
-
   /esbuild-linux-mips64le/0.14.8:
     resolution: {integrity: sha512-0DxnCl9XTvaQtsX6Qa+Phr5i9b04INwwSv2RbQ2UWRLoQ/037iaFzbmuhgrcmaGOcRwPkCa+4Qo5EgI01MUgsQ==}
     cpu: [mips64el]
@@ -17961,14 +18050,6 @@ packages:
     os: [linux]
     requiresBuild: true
     dev: true
-    optional: true
-
-  /esbuild-linux-ppc64le/0.14.5:
-    resolution: {integrity: sha512-usfQrVVIQcpuc/U2NWc7/Ry+m622v+PjJ5eErNPdjWBPlcvD6kXaBTv94uQkVzZOHX3uYqprRrOjseed9ApSYA==}
-    cpu: [ppc64]
-    os: [linux]
-    requiresBuild: true
-    dev: false
     optional: true
 
   /esbuild-linux-ppc64le/0.14.8:
@@ -18009,14 +18090,6 @@ packages:
     dev: true
     optional: true
 
-  /esbuild-netbsd-64/0.14.5:
-    resolution: {integrity: sha512-Q5KpvPZcPnNEaTjrvuWqvEnlhI2jyi1wWwYunlEUAhx60spQOTy10sdYOA+s1M+LPb6kwvasrZZDmYyQlcVZeA==}
-    cpu: [x64]
-    os: [netbsd]
-    requiresBuild: true
-    dev: false
-    optional: true
-
   /esbuild-netbsd-64/0.14.8:
     resolution: {integrity: sha512-tjyDak2/pp0VUAhBW6/ueuReMd5qLHNlisXl5pq0Xn0z+kH9urA/t1igm0JassWbdMz123td5ZEQWoD9KbtOAw==}
     cpu: [x64]
@@ -18031,14 +18104,6 @@ packages:
     os: [openbsd]
     requiresBuild: true
     dev: true
-    optional: true
-
-  /esbuild-openbsd-64/0.14.5:
-    resolution: {integrity: sha512-RZzRUu1RYKextJgXkHhAsuhLDvm73YP/wogpUG9MaAGvKTxnKAKRuaw2zJfnbz8iBqBQB2no2PmpVBNbqUTQrw==}
-    cpu: [x64]
-    os: [openbsd]
-    requiresBuild: true
-    dev: false
     optional: true
 
   /esbuild-openbsd-64/0.14.8:
@@ -18057,14 +18122,6 @@ packages:
     dev: true
     optional: true
 
-  /esbuild-sunos-64/0.14.5:
-    resolution: {integrity: sha512-J2ffKsBBWscQlye+/giEgKsQCppwHHFqqt/sh+ojVF+DZy1ve6RpPGwXGcGF6IaZTAI9+Vk4eHleiQxb+PC9Yw==}
-    cpu: [x64]
-    os: [sunos]
-    requiresBuild: true
-    dev: false
-    optional: true
-
   /esbuild-sunos-64/0.14.8:
     resolution: {integrity: sha512-xV41Wa8imziM/2dbWZjLKQbIETRgo5dE0oc/uPsgaecJhsrdA0VkGa/V432LJSUYv967xHDQdoRRl5tr80+NnQ==}
     cpu: [x64]
@@ -18079,14 +18136,6 @@ packages:
     os: [win32]
     requiresBuild: true
     dev: true
-    optional: true
-
-  /esbuild-windows-32/0.14.5:
-    resolution: {integrity: sha512-OTZvuAc1JBnwmeT+hR1+Vmgz6LOD7DggpnwtKMAExruSLxUMl02Z3pyalJ7zKh3gJ/KBRM1JQZLSk4/mFWijeQ==}
-    cpu: [ia32]
-    os: [win32]
-    requiresBuild: true
-    dev: false
     optional: true
 
   /esbuild-windows-32/0.14.8:
@@ -18105,14 +18154,6 @@ packages:
     dev: true
     optional: true
 
-  /esbuild-windows-64/0.14.5:
-    resolution: {integrity: sha512-ZM9rlBDsPEeMVJ1wcpNMXUad9VzYOFeOBUXBi+16HZTvFPy2DkcC2ZWcrByP3IESToD5lvHdjSX/w8rxphjqig==}
-    cpu: [x64]
-    os: [win32]
-    requiresBuild: true
-    dev: false
-    optional: true
-
   /esbuild-windows-64/0.14.8:
     resolution: {integrity: sha512-/3pllNoy8mrz/E1rYalwiwwhzJBrYQhEapwAteHZbFVhGzYuB8F80e8x5eA8dhFHxDiZh1VzK+hREwwSt8UTQA==}
     cpu: [x64]
@@ -18127,14 +18168,6 @@ packages:
     os: [win32]
     requiresBuild: true
     dev: true
-    optional: true
-
-  /esbuild-windows-arm64/0.14.5:
-    resolution: {integrity: sha512-iK41mKG2LG0AKHE+9g/jDYU5ZQpJObt1uIPSGTiiiJKI5qbHdEck6Gaqq2tmBI933F2zB9yqZIX7IAdxwN/q4A==}
-    cpu: [arm64]
-    os: [win32]
-    requiresBuild: true
-    dev: false
     optional: true
 
   /esbuild-windows-arm64/0.14.8:
@@ -18168,30 +18201,6 @@ packages:
       esbuild-windows-64: 0.13.14
       esbuild-windows-arm64: 0.13.14
     dev: true
-
-  /esbuild/0.14.5:
-    resolution: {integrity: sha512-ofwgH4ITPXhkMo2AM39oXpSe5KIyWjxicdqYVy+tLa1lMgxzPCKwaepcrSRtYbgTUMXwquxB1C3xQYpUNaPAFA==}
-    hasBin: true
-    requiresBuild: true
-    optionalDependencies:
-      esbuild-android-arm64: 0.14.5
-      esbuild-darwin-64: 0.14.5
-      esbuild-darwin-arm64: 0.14.5
-      esbuild-freebsd-64: 0.14.5
-      esbuild-freebsd-arm64: 0.14.5
-      esbuild-linux-32: 0.14.5
-      esbuild-linux-64: 0.14.5
-      esbuild-linux-arm: 0.14.5
-      esbuild-linux-arm64: 0.14.5
-      esbuild-linux-mips64le: 0.14.5
-      esbuild-linux-ppc64le: 0.14.5
-      esbuild-netbsd-64: 0.14.5
-      esbuild-openbsd-64: 0.14.5
-      esbuild-sunos-64: 0.14.5
-      esbuild-windows-32: 0.14.5
-      esbuild-windows-64: 0.14.5
-      esbuild-windows-arm64: 0.14.5
-    dev: false
 
   /esbuild/0.14.8:
     resolution: {integrity: sha512-stMsCBmxwaMpeK8GC/49L/cRGIwsHwoEN7Twk5zDTHlm/63c0KXFKzDC8iM2Mi3fyCKwS002TAH6IlAvqR6t3g==}
@@ -19999,6 +20008,7 @@ packages:
       minimatch: 3.0.4
       once: 1.4.0
       path-is-absolute: 1.0.1
+    dev: true
 
   /glob/7.2.0:
     resolution: {integrity: sha512-lmLf6gtyrPq8tTjSmrO94wBeQbFR3HbLHbuyD69wuyQkImp2hWqMGB47OX65FBkPffO641IP9jWa1z4ivqG26Q==}
@@ -20862,7 +20872,7 @@ packages:
       lodash: 4.17.21
       pretty-error: 4.0.0
       tapable: 2.2.1
-      webpack: 5.64.1_esbuild@0.13.14
+      webpack: 5.64.1
     transitivePeerDependencies:
       - acorn
 
@@ -21205,6 +21215,7 @@ packages:
     engines: {node: '>=8'}
     dependencies:
       import-from: 3.0.0
+    dev: true
 
   /import-fresh/3.3.0:
     resolution: {integrity: sha512-veYYhQa+D1QBKznvhUHxb8faxlrwUnxseDAbAp457E0wLNio2bOSKnjYDhMj+YiAq61xrMGhQk9iXVk5FzgQMw==}
@@ -21218,6 +21229,7 @@ packages:
     engines: {node: '>=8'}
     dependencies:
       resolve-from: 5.0.0
+    dev: true
 
   /import-from/4.0.0:
     resolution: {integrity: sha512-P9J71vT5nLlDeV8FHs5nNxaLbrpfAV5cF5srvbZfpwpcJoM/xZR3hiv+q+SAnuSmuGbXMWud063iIMx/V/EWZQ==}
@@ -22746,6 +22758,7 @@ packages:
   /joycon/3.0.1:
     resolution: {integrity: sha512-SJcJNBg32dGgxhPtM0wQqxqV0ax9k/9TaUskGDSJkSFSQOEWWvQ3zzWdGQRIUry2j1zA5+ReH13t0Mf3StuVZA==}
     engines: {node: '>=10'}
+    dev: true
 
   /js-beautify/1.14.0:
     resolution: {integrity: sha512-yuck9KirNSCAwyNJbqW+BxJqJ0NLJ4PwBUzQQACl5O3qHMBXVkXb/rD0ilh/Lat/tn88zSZ+CAHOlk0DsY7GuQ==}
@@ -24112,6 +24125,11 @@ packages:
       errno: 0.1.8
       readable-stream: 2.3.7
 
+  /memorystream/0.3.1:
+    resolution: {integrity: sha1-htcJCzDORV1j+64S3aUaR93K+bI=}
+    engines: {node: '>= 0.10.0'}
+    dev: true
+
   /meow/8.1.2:
     resolution: {integrity: sha512-r85E3NdZ+mpYk1C6RjPFEMSE+s1iZMuHtsHAqY0DT3jZczl0diWUZ8g6oU7h0M9cD2EL+PzaYghhCLzR0ZNn5Q==}
     engines: {node: '>=10'}
@@ -24673,6 +24691,7 @@ packages:
       any-promise: 1.3.0
       object-assign: 4.1.1
       thenify-all: 1.6.0
+    dev: true
 
   /nan/2.15.0:
     resolution: {integrity: sha512-8ZtvEnA2c5aYCZYd1cvgdnU6cqwixRoYg70xPLWUws5ORTa/lnw+u4amixRS/Ac5U5mQVgp9pnlSUnbNWFaWZQ==}
@@ -24912,16 +24931,16 @@ packages:
       minimatch: 3.0.4
     dev: true
 
+  /node-environment-flags/1.0.6:
+    resolution: {integrity: sha512-5Evy2epuL+6TM0lCQGpFIj6KwiEsGh1SrHUhTbNX+sLbBtjidPZFAnVK9y5yU1+h//RitLbRHTIMyxQPtxMdHw==}
+    dependencies:
+      object.getownpropertydescriptors: 2.1.3
+      semver: 5.7.1
+    dev: true
+
   /node-fetch/2.6.1:
     resolution: {integrity: sha512-V4aYg89jEoVRxRb2fJdAg8FHvI7cEyYdVAh94HH0UIK8oJxUfkjlDQN9RbMx+bEjP7+ggMiFRprSti032Oipxw==}
     engines: {node: 4.x || >=6.0.0}
-
-  /node-fetch/2.6.5:
-    resolution: {integrity: sha512-mmlIVHJEu5rnIxgEgez6b9GgWXbkZj5YZ7fx+2r94a2E+Uirsp6HsPTPlomfdHtpt/B0cdKviwkoaM6pyvUOpQ==}
-    engines: {node: 4.x || >=6.0.0}
-    dependencies:
-      whatwg-url: 5.0.0
-    dev: false
 
   /node-fetch/2.6.6:
     resolution: {integrity: sha512-Z8/6vRlTUChSdIgMa51jxQ4lrw/Jy5SOW10ObaA47/RElsAN2c5Pn8bTgFGWn/ibwzXTE8qwr1Yzx28vsecXEA==}
@@ -26528,6 +26547,7 @@ packages:
       lilconfig: 2.0.4
       ts-node: 10.2.1_eefad272baeacd5b28bb97fe86355678
       yaml: 1.10.2
+    dev: true
 
   /postcss-loader/4.3.0_postcss@7.0.39+webpack@4.46.0:
     resolution: {integrity: sha512-M/dSoIiNDOo8Rk0mUqoj4kpGq91gcxCfb9PoyZVdZ76/AuhxylHDYZblNE8o+EQ9AMSASeMFEKxZf5aU6wlx1Q==}
@@ -27453,6 +27473,16 @@ packages:
     requiresBuild: true
     dependencies:
       '@prisma/engines': 3.6.0-24.dc520b92b1ebb2d28dc3161f9f82e875bd35d727
+    dev: false
+
+  /prisma/3.7.0:
+    resolution: {integrity: sha512-pzgc95msPLcCHqOli7Hnabu/GRfSGSUWl5s2P6N13T/rgMB+NNeKbxCmzQiZT2yLOeLEPivV6YrW1oeQIwJxcg==}
+    engines: {node: '>=12.6'}
+    hasBin: true
+    requiresBuild: true
+    dependencies:
+      '@prisma/engines': 3.7.0-31.8746e055198f517658c08a0c426c7eec87f5a85f
+    dev: true
 
   /prismjs/1.25.0:
     resolution: {integrity: sha512-WCjJHl1KEWbnkQom1+SzftbtXMKQoezOCYs5rECqMN+jP+apI7ftoflyqigqzopSO3hMhTEb0mFClA8lkolgEg==}
@@ -29025,6 +29055,7 @@ packages:
   /resolve-from/5.0.0:
     resolution: {integrity: sha512-qYg9KP24dD5qka9J47d0aVky0N+b4fTU89LN9iDnjB5waksiC49rvMB0PrUJQGoTmH50XPiqOvAjDfaijGxYZw==}
     engines: {node: '>=8'}
+    dev: true
 
   /resolve-options/1.1.0:
     resolution: {integrity: sha1-MrueOcBtZzONyTeMDW1gdFZq0TE=}
@@ -29278,6 +29309,7 @@ packages:
     hasBin: true
     optionalDependencies:
       fsevents: 2.3.2
+    dev: true
 
   /rsvp/4.8.5:
     resolution: {integrity: sha512-nfMOlASu9OnRJo1mbEk2cz0D56a1MBNrJ7orjRZQG10XDyuvwksKbuXNp6qa+kbn839HwjwhBzhFmdsaEAfauA==}
@@ -30015,6 +30047,24 @@ packages:
       smart-buffer: 4.2.0
     dev: true
 
+  /solc/0.8.11:
+    resolution: {integrity: sha512-CdK4pk6VZowmXv7l4lftbr/QUWsHEr+xcdcGHJVgynD08gRwFT4zAFCb3b/eR0FUVVszcHulpGJwEoKRKKrnKw==}
+    engines: {node: '>=8.0.0'}
+    hasBin: true
+    dependencies:
+      command-exists: 1.2.9
+      commander: 8.3.0
+      follow-redirects: 1.14.5
+      fs-extra: 0.30.0
+      js-sha3: 0.8.0
+      memorystream: 0.3.1
+      require-from-string: 2.0.2
+      semver: 5.7.1
+      tmp: 0.0.33
+    transitivePeerDependencies:
+      - debug
+    dev: true
+
   /sort-keys/2.0.0:
     resolution: {integrity: sha1-ZYU1WEhh7JfXMNbPQYIuH1ZoQSg=}
     engines: {node: '>=4'}
@@ -30717,6 +30767,7 @@ packages:
       mz: 2.7.0
       pirates: 4.0.1
       ts-interface-checker: 0.1.13
+    dev: true
 
   /superagent/6.1.0:
     resolution: {integrity: sha512-OUDHEssirmplo3F+1HWKUrUjvnQuA+nZI6i/JJBdXb5eq9IyEQwPyPpqND+SSsxf6TygpBEkUjISVRN4/VOpeg==}
@@ -31323,11 +31374,13 @@ packages:
     engines: {node: '>=0.8'}
     dependencies:
       thenify: 3.3.1
+    dev: true
 
   /thenify/3.3.1:
     resolution: {integrity: sha512-RVZSIV5IG10Hk3enotrhvz0T9em6cyHBLkH/YAZuKqd8hRkKhSfCGIcP2KUY0EPxndzANBmNllzWPwak+bheSw==}
     dependencies:
       any-promise: 1.3.0
+    dev: true
 
   /throat/5.0.0:
     resolution: {integrity: sha512-fcwX4mndzpLQKBS1DVYhGAcYaYt7vsHNIvQV+WXMvnow5cgjPphq5CaayLaGsjRdSCKZFNGt7/GYAuXaNOiYCA==}
@@ -31549,6 +31602,7 @@ packages:
   /tree-kill/1.2.2:
     resolution: {integrity: sha512-L0Orpi8qGpRG//Nd+H90vFB+3iHnue1zSSGmNOOCh1GLJ7rUKVwV2HvijphGQS2UmhUZewS9VgvxYIdgr+fG1A==}
     hasBin: true
+    dev: true
 
   /trim-newlines/3.0.1:
     resolution: {integrity: sha512-c1PTsA3tYrIsLGkJkzHF+w9F2EyxfXGo4UyJc4pFL++FMjnq0HJS69T3M7d//gKrFKwy429bouPescbjecU+Zw==}
@@ -31584,6 +31638,7 @@ packages:
 
   /ts-interface-checker/0.1.13:
     resolution: {integrity: sha512-Y/arvbn+rrz3JCKl9C4kVNfTfSm2/mEp5FSz5EsZSANGPSlQrpRI5M4PKF+mJnE52jOO90PnPSc3Ur3bTQw0gA==}
+    dev: true
 
   /ts-invariant/0.9.4:
     resolution: {integrity: sha512-63jtX/ZSwnUNi/WhXjnK8kz4cHHpYS60AnmA6ixz17l7E12a5puCWFlNpkne5Rl0J8TBPVHpGjsj4fxs8ObVLQ==}
@@ -31891,20 +31946,20 @@ packages:
   /tslib/2.3.1:
     resolution: {integrity: sha512-77EbyPPpMz+FRFRuAFlWMtmgUWGe9UOG2Z25NqCwiIjRhOf5iKGuzSe5P2w1laq+FkRy4p+PCuVkJSGkzTEKVw==}
 
-  /tsup/5.11.6_ts-node@10.2.1+typescript@4.5.4:
-    resolution: {integrity: sha512-mKhLdQ1N2KMV31dsX4MLO5l4FOORf2+FvyAOott3ZgiSnKisZiOoCXwxPc97iPqIk5aouyQBTaZcjXKJV+C4pg==}
+  /tsup/5.11.9_ts-node@10.2.1+typescript@4.5.4:
+    resolution: {integrity: sha512-APFcd9qKblMVO35O5OyIcfa4lwBrVNinwtifUojO78I6j0aDhS4fQ06gq6vF1b/+Z83pYDWNb0R2fmO9PX3IVQ==}
     hasBin: true
     peerDependencies:
-      typescript: ^4.2.3
+      typescript: ^4.1.0
     peerDependenciesMeta:
       typescript:
         optional: true
     dependencies:
-      bundle-require: 2.1.8_esbuild@0.14.5
+      bundle-require: 2.1.8_esbuild@0.14.8
       cac: 6.7.12
       chokidar: 3.5.2
       debug: 4.3.2
-      esbuild: 0.14.5
+      esbuild: 0.14.8
       execa: 5.1.1
       globby: 11.0.4
       joycon: 3.0.1
@@ -31912,34 +31967,6 @@ packages:
       resolve-from: 5.0.0
       rollup: 2.61.1
       source-map: 0.7.3
-      sucrase: 3.20.3
-      tree-kill: 1.2.2
-      typescript: 4.5.4
-    transitivePeerDependencies:
-      - supports-color
-      - ts-node
-    dev: false
-
-  /tsup/5.7.0_ts-node@10.2.1+typescript@4.5.4:
-    resolution: {integrity: sha512-Rt83NU4t3e0I2WyubR3doAAl/aijzNYVgWB8cZxem/6MfoutrOFssm6L8eMVIGvPPOYsDDVcAvXLwn+CUgeRAQ==}
-    hasBin: true
-    peerDependencies:
-      typescript: ^4.2.3
-    peerDependenciesMeta:
-      typescript:
-        optional: true
-    dependencies:
-      cac: 6.7.12
-      chalk: 4.1.2
-      chokidar: 3.5.2
-      debug: 4.3.2
-      esbuild: 0.13.14
-      execa: 5.1.1
-      globby: 11.0.4
-      joycon: 3.0.1
-      postcss-load-config: 3.1.0_ts-node@10.2.1
-      resolve-from: 5.0.0
-      rollup: 2.61.1
       sucrase: 3.20.3
       tree-kill: 1.2.2
       typescript: 4.5.4
@@ -32109,28 +32136,28 @@ packages:
     resolution: {integrity: sha1-hnrHTjhkGHsdPUfZlqeOxciDB3c=}
     dev: true
 
-  /typegraphql-prisma/0.18.1_65cc07ede1526c4b7020a9d7e2a94054:
-    resolution: {integrity: sha512-ZLPvmvbg9dE4tkbjcuZyM+MqL+yPTOeg5fzk8QX2wC/+46BhH16BHy3VfderDCtcT4aUyuRMg9mPwDaipYBAEA==}
+  /typegraphql-prisma/0.18.3_b6d5325e563aa58a35cbe02f6b4f1a4e:
+    resolution: {integrity: sha512-OHcAZJaKuANV1gp0+CV3QQf2LCNKONy/VybcgCd4J7UWzs14PIYmrc6uhhGhUmUKNnbsAMt6YB57ZN7hrMYgyw==}
     engines: {node: '>=12.4'}
     hasBin: true
     peerDependencies:
-      '@prisma/client': ~3.6.0
+      '@prisma/client': ~3.7.0
       '@types/graphql-fields': ^1.3.4
       '@types/node': '*'
       graphql-fields: ^2.0.3
-      graphql-scalars: ^1.13.6
-      prisma: ~3.6.0
+      graphql-scalars: ^1.14.1
+      prisma: ~3.7.0
       type-graphql: ^1.1.1
     dependencies:
-      '@prisma/client': 3.6.0_prisma@3.6.0
-      '@prisma/generator-helper': 3.6.0
-      '@prisma/sdk': 3.6.0
+      '@prisma/client': 3.6.0_prisma@3.7.0
+      '@prisma/generator-helper': 3.7.0
+      '@prisma/sdk': 3.7.0
       '@types/graphql-fields': 1.3.4
       '@types/node': 16.10.3
       graphql-fields: 2.0.3
       graphql-scalars: 1.14.1_graphql@15.7.2
       pluralize: 8.0.0
-      prisma: 3.6.0
+      prisma: 3.7.0
       semver: 7.3.5
       ts-morph: 13.0.2
       tslib: 2.3.1

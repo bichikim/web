@@ -1,6 +1,3 @@
-/**
- * @jest-environment jsdom
- */
 import {flushPromises} from '@vue/test-utils'
 import {mountUse} from '@winter-love/test-use'
 import {getWindow} from '@winter-love/utils'
