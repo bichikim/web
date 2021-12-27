@@ -3,16 +3,13 @@ import {ResolverData} from 'type-graphql'
 
 export type DefaultAction = 'allow' | 'disallow'
 
-export interface GlobalRole {
-  disallow?: string[]
-}
-
-export interface TargetRole extends GlobalRole {
+export interface TargetRole {
   /**
    * "xxx.self" 는 반드시 compareId 이 있어야 한다
    * a "xxx.self" role without this property will disallow its permission
    */
   compareId?: string
+  disallow?: string[]
 }
 
 export interface GateRole {
@@ -30,11 +27,11 @@ export interface GateRoles {
   /**
    * @default false
    */
-  input?: GlobalRole | boolean
+  input?: TargetRole | boolean
   /**
    * @default false
    */
-  output?: GlobalRole | boolean
+  output?: TargetRole | boolean
   /**
    * 특정 역할에 대한 행동
    * true = allow
@@ -61,7 +58,7 @@ const pickHeaderData = (data: ResolverData, header: string) => {
   }
 }
 
-const pickDataFromArray = (data: any[], track: string | string[]): any[] => {
+const pickDataFromArray = (data: any[], track: (string | number) | (string | number)[]): any[] => {
   return data.map((data) => {
     if (typeof data === 'object') {
       return get(data, track)
@@ -76,19 +73,31 @@ const pickData = (data: ResolverData, map: string) => {
   return pickDataFromArray(headerData, track)
 }
 
-const checkDisAllow = (
+const checkRole = (
   data: ResolverData,
-  role: GlobalRole | boolean | undefined,
+  id: string | number,
+  role: TargetRole | boolean | undefined,
   defaultRole: boolean = false,
 ): boolean => {
   if (typeof role === 'boolean') {
     return role
   }
-  if (typeof role === 'undefined' || !role.disallow || role.disallow.length === 0) {
+
+  if (typeof role === 'undefined') {
     return defaultRole
   }
 
-  return !role.disallow.some((value: string) => {
+  const {compareId, disallow} = role
+
+  if (compareId && pickData(data, compareId).every((_id) => id === _id)) {
+    return false
+  }
+
+  if (!disallow || disallow.length === 0) {
+    return defaultRole
+  }
+
+  return !disallow.some((value: string) => {
     return pickData(data, value).some((value: string) => Boolean(value))
   })
 }
@@ -99,26 +108,28 @@ export const createAuthInputGate = <ContextType = Record<string, any>>(
 
   const allowRoles = roles.roles ? Object.keys(roles.roles) : undefined
 
-  return (data: ResolverData<ContextType>, userRoles: string[]) => {
-    const isPass = checkDisAllow(data, roles.input)
+  return (data: ResolverData<ContextType>, userRoles: string[], id: string | number) => {
+    const isPass = checkRole(data, id, roles.input)
 
     if (!isPass || !allowRoles) {
       return false
     }
 
-    const matchedRole = allowRoles.find((allowRole) => userRoles.includes(allowRole))
+    return allowRoles.some((allowRole) => {
+      const hasRole = userRoles.includes(allowRole)
 
-    if (!matchedRole) {
-      return false
-    }
+      if (!hasRole) {
+        return false
+      }
 
-    const matchedRoleValue = roles.roles?.[matchedRole]
+      const matchedRoleValue = roles.roles?.[allowRole]
 
-    if (typeof matchedRoleValue === 'boolean') {
-      return matchedRoleValue
-    }
+      if (typeof matchedRoleValue === 'boolean') {
+        return matchedRoleValue
+      }
 
-    return checkDisAllow(data, matchedRoleValue?.input)
+      return checkRole(data, id, matchedRoleValue?.input)
+    })
   }
 }
 

@@ -21,13 +21,6 @@ module.exports = {
 
   projects: [
     {
-      displayName: 'coong/server',
-      setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
-      testMatch: [
-        '<rootDir>/coong/server/src/**/__tests__/*.spec.ts',
-      ],
-    },
-    {
       displayName: 'test',
       setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
       snapshotSerializers: [
@@ -37,7 +30,6 @@ module.exports = {
       testMatch: [
         '<rootDir>/packages/*/src/**/__tests__/*.spec.ts',
         '<rootDir>/coong/*/src/**/__tests__/*.spec.ts',
-        '!<rootDir>/coong/server/src/**/__tests__/*.spec.ts',
         '<rootDir>/scripts/__tests__/*.spec.ts',
       ],
     },

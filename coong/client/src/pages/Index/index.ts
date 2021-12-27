@@ -58,12 +58,12 @@ const IndexPage = defineComponent({
        zIndex: '-1000'
       }"
     >
-      <source src="https://storage.googleapis.com/coong-static-production/coong-front/videos/intro.mp4" type="video/mp4">
+      <source src="https://static.coong.io/coong-front/videos/intro.mp4" type="video/mp4">
     </video>
     <audio
       ref="audio"
       loop
-      src="https://storage.googleapis.com/coong-static-production/coong-front/audios/intro.mp3"
+      src="https://static.coong.io/coong-front/audios/intro.mp3"
     ></audio>
     <div
       v-css="{

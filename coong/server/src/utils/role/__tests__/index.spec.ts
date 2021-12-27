@@ -1,4 +1,5 @@
-import {GateRoles} from '../'
+import {createAuthInputGate, GateRoles} from '../'
+import {ResolverData} from 'type-graphql'
 
 describe('role', () => {
   it('should return true with read user', () => {
@@ -41,6 +42,23 @@ describe('role', () => {
         'publicUser.self',
       ],
     }
+
+    const data: ResolverData = {
+      args: {
+        data: {
+          where: {
+            id: 500,
+          },
+        },
+      },
+      context: {},
+      info: {} as any,
+      root: {},
+    }
+
+    const inputGate = createAuthInputGate(readRoles)
+
+    expect(inputGate(data, user.roles, user.id)).toBe(false)
   })
   it('should return true with read post', () => {
     const readRoles: GateRoles = {
