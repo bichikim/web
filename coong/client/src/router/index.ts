@@ -8,7 +8,7 @@ import {
 const routes: RouteRecordRaw[] = [{
   children: [
     {
-      component: () => import('pages/Index'),
+      component: () => import('pages/index'),
       path: '',
     },
     {

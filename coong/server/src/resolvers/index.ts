@@ -1,4 +1,4 @@
-import {TestResolver} from './TestResolver'
+import {TestResolver} from './test-resolver/TestResolver'
 import {AuthResolver} from './Auth/AuthResolver'
 import {NonEmptyArray} from 'type-graphql/dist/interfaces/NonEmptyArray'
 
