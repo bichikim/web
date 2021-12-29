@@ -82,9 +82,6 @@ export default defineConfig(() => {
         ],
       }),
       Icons(),
-
-      // https://github.com/antfu/vite-plugin-icons
-      // ViteIcons(),
       // https://github.com/antfu/vite-plugin-pwa
       VitePWA({
         includeAssets: ['favicon.svg', 'robots.txt', 'safari-pinned-tab.svg'],
@@ -107,9 +104,9 @@ export default defineConfig(() => {
               type: 'image/png',
             },
           ],
-          name: 'Vitesse',
+          name: 'Coong',
           // eslint-disable-next-line camelcase
-          short_name: 'Vitesse',
+          short_name: 'Coong',
           // eslint-disable-next-line camelcase
           theme_color: '#ffffff',
         },

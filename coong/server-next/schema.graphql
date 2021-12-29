@@ -4,7 +4,22 @@
 type Post {
   id: ID!
   author: User
+  children(
+    where: PostWhereInput! = {}
+    orderBy: [PostOrderByInput!]! = []
+    take: Int
+    skip: Int! = 0
+  ): [Post!]
+  childrenCount(where: PostWhereInput! = {}): Int
   content: Post_content_Document
+  likes(
+    where: UserWhereInput! = {}
+    orderBy: [UserOrderByInput!]! = []
+    take: Int
+    skip: Int! = 0
+  ): [User!]
+  likesCount(where: UserWhereInput! = {}): Int
+  parent: Post
   publishDate: DateTime
   status: String
   tags(
@@ -72,6 +87,9 @@ input PostWhereInput {
   NOT: [PostWhereInput!]
   id: IDFilter
   author: UserWhereInput
+  children: PostManyRelationFilter
+  likes: UserManyRelationFilter
+  parent: PostWhereInput
   publishDate: DateTimeNullableFilter
   status: StringNullableFilter
   tags: TagManyRelationFilter
@@ -87,6 +105,18 @@ input IDFilter {
   gt: ID
   gte: ID
   not: IDFilter
+}
+
+input PostManyRelationFilter {
+  every: PostWhereInput
+  some: PostWhereInput
+  none: PostWhereInput
+}
+
+input UserManyRelationFilter {
+  every: UserWhereInput
+  some: UserWhereInput
+  none: UserWhereInput
 }
 
 input DateTimeNullableFilter {
@@ -176,7 +206,10 @@ enum OrderDirection {
 
 input PostUpdateInput {
   author: UserRelateToOneForUpdateInput
+  children: PostRelateToManyForUpdateInput
   content: JSON
+  likes: UserRelateToManyForUpdateInput
+  parent: PostRelateToOneForUpdateInput
   publishDate: DateTime
   status: String
   tags: TagRelateToManyForUpdateInput
@@ -187,6 +220,26 @@ input PostUpdateInput {
 input UserRelateToOneForUpdateInput {
   create: UserCreateInput
   connect: UserWhereUniqueInput
+  disconnect: Boolean
+}
+
+input PostRelateToManyForUpdateInput {
+  disconnect: [PostWhereUniqueInput!]
+  set: [PostWhereUniqueInput!]
+  create: [PostCreateInput!]
+  connect: [PostWhereUniqueInput!]
+}
+
+input UserRelateToManyForUpdateInput {
+  disconnect: [UserWhereUniqueInput!]
+  set: [UserWhereUniqueInput!]
+  create: [UserCreateInput!]
+  connect: [UserWhereUniqueInput!]
+}
+
+input PostRelateToOneForUpdateInput {
+  create: PostCreateInput
+  connect: PostWhereUniqueInput
   disconnect: Boolean
 }
 
@@ -214,7 +267,10 @@ input PostUpdateArgs {
 
 input PostCreateInput {
   author: UserRelateToOneForCreateInput
+  children: PostRelateToManyForCreateInput
   content: JSON
+  likes: UserRelateToManyForCreateInput
+  parent: PostRelateToOneForCreateInput
   publishDate: DateTime
   status: String
   tags: TagRelateToManyForCreateInput
@@ -225,6 +281,21 @@ input PostCreateInput {
 input UserRelateToOneForCreateInput {
   create: UserCreateInput
   connect: UserWhereUniqueInput
+}
+
+input PostRelateToManyForCreateInput {
+  create: [PostCreateInput!]
+  connect: [PostWhereUniqueInput!]
+}
+
+input UserRelateToManyForCreateInput {
+  create: [UserCreateInput!]
+  connect: [UserWhereUniqueInput!]
+}
+
+input PostRelateToOneForCreateInput {
+  create: PostCreateInput
+  connect: PostWhereUniqueInput
 }
 
 input TagRelateToManyForCreateInput {
@@ -257,12 +328,6 @@ input TagWhereInput {
   posts: PostManyRelationFilter
 }
 
-input PostManyRelationFilter {
-  every: PostWhereInput
-  some: PostWhereInput
-  none: PostWhereInput
-}
-
 input TagOrderByInput {
   id: OrderDirection
   name: OrderDirection
@@ -271,13 +336,6 @@ input TagOrderByInput {
 input TagUpdateInput {
   name: String
   posts: PostRelateToManyForUpdateInput
-}
-
-input PostRelateToManyForUpdateInput {
-  disconnect: [PostWhereUniqueInput!]
-  set: [PostWhereUniqueInput!]
-  create: [PostCreateInput!]
-  connect: [PostWhereUniqueInput!]
 }
 
 input TagUpdateArgs {
@@ -290,16 +348,32 @@ input TagCreateInput {
   posts: PostRelateToManyForCreateInput
 }
 
-input PostRelateToManyForCreateInput {
-  create: [PostCreateInput!]
-  connect: [PostWhereUniqueInput!]
-}
-
 type User {
   id: ID!
   email: String
+  follower(
+    where: UserWhereInput! = {}
+    orderBy: [UserOrderByInput!]! = []
+    take: Int
+    skip: Int! = 0
+  ): [User!]
+  followerCount(where: UserWhereInput! = {}): Int
+  following(
+    where: UserWhereInput! = {}
+    orderBy: [UserOrderByInput!]! = []
+    take: Int
+    skip: Int! = 0
+  ): [User!]
+  followingCount(where: UserWhereInput! = {}): Int
   name: String
   password: PasswordState
+  postLikes(
+    where: PostWhereInput! = {}
+    orderBy: [PostOrderByInput!]! = []
+    take: Int
+    skip: Int! = 0
+  ): [Post!]
+  postLikesCount(where: PostWhereInput! = {}): Int
   posts(
     where: PostWhereInput! = {}
     orderBy: [PostOrderByInput!]! = []
@@ -324,7 +398,10 @@ input UserWhereInput {
   NOT: [UserWhereInput!]
   id: IDFilter
   email: StringFilter
+  follower: UserManyRelationFilter
+  following: UserManyRelationFilter
   name: StringFilter
+  postLikes: PostManyRelationFilter
   posts: PostManyRelationFilter
 }
 
@@ -336,8 +413,11 @@ input UserOrderByInput {
 
 input UserUpdateInput {
   email: String
+  follower: UserRelateToManyForUpdateInput
+  following: UserRelateToManyForUpdateInput
   name: String
   password: String
+  postLikes: PostRelateToManyForUpdateInput
   posts: PostRelateToManyForUpdateInput
 }
 
@@ -348,8 +428,11 @@ input UserUpdateArgs {
 
 input UserCreateInput {
   email: String
+  follower: UserRelateToManyForCreateInput
+  following: UserRelateToManyForCreateInput
   name: String
   password: String
+  postLikes: PostRelateToManyForCreateInput
   posts: PostRelateToManyForCreateInput
 }
 

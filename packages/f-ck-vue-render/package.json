@@ -1,0 +1,15 @@
+{
+  "name": "@winter-love/f-ck-vue-render",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "ts-node-dev src/index.ts"
+  },
+  "dependencies": {
+    "@typescript-eslint/typescript-estree": "^5.8.1",
+    "astring": "^1.8.1"
+  },
+  "devDependencies": {
+    "ts-node-dev": "^1.1.8"
+  }
+}

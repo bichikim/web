@@ -15,7 +15,11 @@ model Post {
   id                  String    @id @default(cuid())
   author              User?     @relation("Post_author", fields: [authorId], references: [id])
   authorId            String?   @map("author")
+  children            Post[]    @relation("Post_parent")
   content             String    @default("[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"}]}]")
+  likes               User[]    @relation("Post_likes")
+  parent              Post?     @relation("Post_parent", fields: [parentId], references: [id])
+  parentId            String?   @map("parent")
   publishDate         DateTime?
   status              String?   @default("draft")
   tags                Tag[]     @relation("Post_tags")
@@ -28,6 +32,7 @@ model Post {
   title               String    @default("")
 
   @@index([authorId])
+  @@index([parentId])
 }
 
 model Tag {
@@ -37,9 +42,12 @@ model Tag {
 }
 
 model User {
-  id       String @id @default(cuid())
-  email    String @unique @default("")
-  name     String @default("")
-  password String
-  posts    Post[] @relation("Post_author")
+  id        String @id @default(cuid())
+  email     String @unique @default("")
+  follower  User[] @relation("User_follower")
+  following User[] @relation("User_follower")
+  name      String @default("")
+  password  String
+  postLikes Post[] @relation("Post_likes")
+  posts     Post[] @relation("Post_author")
 }

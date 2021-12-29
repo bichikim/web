@@ -52,14 +52,11 @@ export const lists: Lists = {
       // We've configured its UI display quite a lot to make the experience of editing posts better.
       author: relationship({
         ref: 'User.posts',
-        ui: {
-          cardFields: ['name', 'email'],
-          displayMode: 'cards',
-          inlineConnect: true,
-          inlineCreate: {fields: ['name', 'email', 'password']},
-          inlineEdit: {fields: ['name', 'email']},
-          linkToItem: true,
-        },
+      }),
+
+      children: relationship({
+        many: true,
+        ref: 'Post.parent',
       }),
 
       // The document field can be used for making highly editable content. Check out our
@@ -76,6 +73,15 @@ export const lists: Lists = {
           [1, 2, 1],
         ],
         links: true,
+      }),
+
+      likes: relationship({
+        many: true,
+        ref: 'User.postLikes',
+      }),
+
+      parent: relationship({
+        ref: 'Post.children',
       }),
 
       publishDate: timestamp(),
@@ -137,9 +143,27 @@ export const lists: Lists = {
         isIndexed: 'unique',
         validation: {isRequired: true},
       }),
+
+      follower: relationship({
+        many: true,
+        ref: 'User.following',
+      }),
+
+      following: relationship({
+        many: true,
+        ref: 'User.follower',
+      }),
+
       name: text({validation: {isRequired: true}}),
+
       // The password field takes care of hiding details and hashing values
       password: password({validation: {isRequired: true}}),
+
+      postLikes: relationship({
+        many: true,
+        ref: 'Post.likes',
+      }),
+
       // Relationships allow us to reference other lists. In this case,
       // we want a user to have many posts, and we are saying that the user
       // should be referencable by the 'author' field of posts.
