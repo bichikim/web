@@ -18,7 +18,6 @@
       "scripthost"
     ],
     "allowJs": true,
-    // `baseUrl` must be placed on the extending configuration in devland, or paths won't be recognized
     "esModuleInterop": true,
 
     "moduleResolution": "node",
@@ -28,12 +27,15 @@
     "noImplicitAny": false,
     "importHelpers": true,
     // for 4.4.0
-    // "exactOptionalPropertyTypes": true,
+    "exactOptionalPropertyTypes": true,
     "allowSyntheticDefaultImports": true,
     "suppressImplicitAnyIndexErrors": true,
     "sourceMap": true,
-    "strict": true,
+    "strict": true
   },
+  "include": [
+    "**/*.ts"
+  ],
   "exclude": [
     "node_modules"
   ]

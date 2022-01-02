@@ -42,12 +42,20 @@ model Tag {
 }
 
 model User {
-  id        String @id @default(cuid())
-  email     String @unique @default("")
-  follower  User[] @relation("User_follower")
-  following User[] @relation("User_follower")
-  name      String @default("")
-  password  String
-  postLikes Post[] @relation("Post_likes")
-  posts     Post[] @relation("Post_author")
+  id                      String    @id @default(cuid())
+  email                   String    @unique @default("")
+  follower                User[]    @relation("User_follower")
+  following               User[]    @relation("User_follower")
+  isAdmin                 Boolean   @default(false)
+  name                    String    @default("")
+  password                String
+  postLikes               Post[]    @relation("Post_likes")
+  posts                   Post[]    @relation("Post_author")
+  roles                   String?   @default("\"[]\"")
+  passwordResetToken      String?
+  passwordResetIssuedAt   DateTime?
+  passwordResetRedeemedAt DateTime?
+  magicAuthToken          String?
+  magicAuthIssuedAt       DateTime?
+  magicAuthRedeemedAt     DateTime?
 }

@@ -2,3 +2,9 @@ node_modules
 .keystone/admin
 keystone.db
 *.log
+
+# local env
+.env.local
+
+# env
+.env

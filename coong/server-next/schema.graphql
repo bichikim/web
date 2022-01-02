@@ -365,6 +365,7 @@ type User {
     skip: Int! = 0
   ): [User!]
   followingCount(where: UserWhereInput! = {}): Int
+  isAdmin: Boolean
   name: String
   password: PasswordState
   postLikes(
@@ -381,6 +382,13 @@ type User {
     skip: Int! = 0
   ): [Post!]
   postsCount(where: PostWhereInput! = {}): Int
+  roles: JSON
+  passwordResetToken: PasswordState
+  passwordResetIssuedAt: DateTime
+  passwordResetRedeemedAt: DateTime
+  magicAuthToken: PasswordState
+  magicAuthIssuedAt: DateTime
+  magicAuthRedeemedAt: DateTime
 }
 
 type PasswordState {
@@ -400,25 +408,54 @@ input UserWhereInput {
   email: StringFilter
   follower: UserManyRelationFilter
   following: UserManyRelationFilter
+  isAdmin: BooleanFilter
   name: StringFilter
   postLikes: PostManyRelationFilter
   posts: PostManyRelationFilter
+  passwordResetToken: PasswordFilter
+  passwordResetIssuedAt: DateTimeNullableFilter
+  passwordResetRedeemedAt: DateTimeNullableFilter
+  magicAuthToken: PasswordFilter
+  magicAuthIssuedAt: DateTimeNullableFilter
+  magicAuthRedeemedAt: DateTimeNullableFilter
+}
+
+input BooleanFilter {
+  equals: Boolean
+  not: BooleanFilter
+}
+
+input PasswordFilter {
+  isSet: Boolean!
 }
 
 input UserOrderByInput {
   id: OrderDirection
   email: OrderDirection
+  isAdmin: OrderDirection
   name: OrderDirection
+  passwordResetIssuedAt: OrderDirection
+  passwordResetRedeemedAt: OrderDirection
+  magicAuthIssuedAt: OrderDirection
+  magicAuthRedeemedAt: OrderDirection
 }
 
 input UserUpdateInput {
   email: String
   follower: UserRelateToManyForUpdateInput
   following: UserRelateToManyForUpdateInput
+  isAdmin: Boolean
   name: String
   password: String
   postLikes: PostRelateToManyForUpdateInput
   posts: PostRelateToManyForUpdateInput
+  roles: JSON
+  passwordResetToken: String
+  passwordResetIssuedAt: DateTime
+  passwordResetRedeemedAt: DateTime
+  magicAuthToken: String
+  magicAuthIssuedAt: DateTime
+  magicAuthRedeemedAt: DateTime
 }
 
 input UserUpdateArgs {
@@ -430,10 +467,18 @@ input UserCreateInput {
   email: String
   follower: UserRelateToManyForCreateInput
   following: UserRelateToManyForCreateInput
+  isAdmin: Boolean
   name: String
   password: String
   postLikes: PostRelateToManyForCreateInput
   posts: PostRelateToManyForCreateInput
+  roles: JSON
+  passwordResetToken: String
+  passwordResetIssuedAt: DateTime
+  passwordResetRedeemedAt: DateTime
+  magicAuthToken: String
+  magicAuthIssuedAt: DateTime
+  magicAuthRedeemedAt: DateTime
 }
 
 """
@@ -471,6 +516,18 @@ type Mutation {
   createInitialUser(
     data: CreateInitialUserInput!
   ): UserAuthenticationWithPasswordSuccess!
+  sendUserPasswordResetLink(email: String!): Boolean!
+  redeemUserPasswordResetToken(
+    email: String!
+    token: String!
+    password: String!
+  ): RedeemUserPasswordResetTokenResult
+  sendUserMagicAuthLink(email: String!): Boolean!
+  redeemUserMagicAuthToken(
+    email: String!
+    token: String!
+  ): RedeemUserMagicAuthTokenResult!
+  signUp(input: SignUpInput!): SignUpResult
 }
 
 union UserAuthenticationWithPasswordResult =
@@ -490,6 +547,37 @@ input CreateInitialUserInput {
   email: String
   name: String
   password: String
+}
+
+type RedeemUserPasswordResetTokenResult {
+  code: PasswordResetRedemptionErrorCode!
+  message: String!
+}
+
+enum PasswordResetRedemptionErrorCode {
+  FAILURE
+  TOKEN_EXPIRED
+  TOKEN_REDEEMED
+}
+
+union RedeemUserMagicAuthTokenResult =
+    RedeemUserMagicAuthTokenSuccess
+  | RedeemUserMagicAuthTokenFailure
+
+type RedeemUserMagicAuthTokenSuccess {
+  token: String!
+  item: User!
+}
+
+type RedeemUserMagicAuthTokenFailure {
+  code: MagicLinkRedemptionErrorCode!
+  message: String!
+}
+
+enum MagicLinkRedemptionErrorCode {
+  FAILURE
+  TOKEN_EXPIRED
+  TOKEN_REDEEMED
 }
 
 type Query {
@@ -519,9 +607,19 @@ type Query {
   usersCount(where: UserWhereInput! = {}): Int
   keystone: KeystoneMeta!
   authenticatedItem: AuthenticatedItem
+  validateUserPasswordResetToken(
+    email: String!
+    token: String!
+  ): ValidateUserPasswordResetTokenResult
+  ok: Boolean!
 }
 
 union AuthenticatedItem = User
+
+type ValidateUserPasswordResetTokenResult {
+  code: PasswordResetRedemptionErrorCode!
+  message: String!
+}
 
 type KeystoneMeta {
   adminMeta: KeystoneAdminMeta!
@@ -608,4 +706,19 @@ type KeystoneAdminUISort {
 enum KeystoneAdminUISortDirection {
   ASC
   DESC
+}
+
+type SignUpResult {
+  id: String
+  name: String
+  email: String
+}
+
+"""
+Sign up input data
+"""
+input SignUpInput {
+  name: String
+  email: String
+  password: String
 }
