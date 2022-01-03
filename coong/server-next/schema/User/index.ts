@@ -5,7 +5,7 @@ import {checkbox, json, password, relationship, text} from '@keystone-6/core/fie
 import {AuthArgs, isAdmin, or} from '../../utils'
 import {Lists} from '.keystone/types'
 
-const isSelfField = (args: AuthArgs<Lists.User.Item>) => {
+const isSelfField = (args: AuthArgs<Lists.User.TypeInfo>) => {
   const {session, item} = args
   return item?.id === session.itemId
 }

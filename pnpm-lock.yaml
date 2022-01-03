@@ -404,6 +404,7 @@ importers:
       '@keystone-6/core': ^1.0.1
       '@keystone-6/fields-document': ^1.0.1
       '@prisma/generator-helper': ^3.7.0
+      '@prisma/sdk': ^3.6.0
       '@sendgrid/mail': ^7.6.0
       '@winter-love/utils': ^1.0.23-alpha.5
       graphql: ^15.8.0
@@ -424,6 +425,7 @@ importers:
       typescript: 4.5.4
     devDependencies:
       '@prisma/generator-helper': 3.7.0
+      '@prisma/sdk': 3.7.0
 
   coong/smart-contract:
     specifiers:
@@ -15583,9 +15585,6 @@ packages:
   /ci-info/3.1.1:
     resolution: {integrity: sha512-kdRWLBIJwdsYJWYJFtAFFYxybguqeF91qpZaggjG5Nf8QKdizFG2hjqvaTXbxFIcYbSaD74KpAXv6BSm17DHEQ==}
 
-  /ci-info/3.2.0:
-    resolution: {integrity: sha512-dVqRX7fLUm8J6FgHJ418XuIgDLZDkYcDFTeL6TA2gt5WlIZUQrrH6EZrNClwT/H0FateUsZkGIOPRrLbP+PR9A==}
-
   /ci-info/3.3.0:
     resolution: {integrity: sha512-riT/3vI5YpVH6/qomlDnJow6TBee2PBKSEpx3O32EGPYbWGIRsIlGRms3Sm74wYE1JMo8RnO04Hb12+v1J5ICw==}
 
@@ -21472,7 +21471,7 @@ packages:
     resolution: {integrity: sha512-ZYvCgrefwqoQ6yTyYUbQu64HsITZ3NfKX1lzaEYdkTDcfKzzCI/wthRRYKkdjHKFVgNiXKAKm65Zo1pk2as/QQ==}
     hasBin: true
     dependencies:
-      ci-info: 3.2.0
+      ci-info: 3.3.0
 
   /is-core-module/2.8.0:
     resolution: {integrity: sha512-vd15qHsaqrRL7dtH6QNuy0ndJmRDrS9HAM1CAiSifNUFv4x1a0CCVsj18hJ1mShxIG6T2i1sO78MkP56r0nYRw==}

@@ -1,16 +1,16 @@
 /* eslint-disable unicorn/prefer-module,unicorn/prefer-node-protocol */
-import VueI18n from '@intlify/vite-plugin-vue-i18n'
-import Vue from '@vitejs/plugin-vue'
-import VueJsx from '@vitejs/plugin-vue-jsx'
+import {vueI18n} from '@intlify/vite-plugin-vue-i18n'
+import vue from '@vitejs/plugin-vue'
+import vueJsx from '@vitejs/plugin-vue-jsx'
 import path from 'path'
 import {Quasar} from 'quasar'
 import {defineConfig} from 'vite'
-import Components from 'unplugin-vue-components/vite'
-import {QuasarResolver} from 'unplugin-vue-components/resolvers'
-import Icons from 'unplugin-icons/vite'
-import Markdown from 'vite-plugin-md'
-import IconsResolver from 'unplugin-icons/resolver'
-import {VitePWA} from 'vite-plugin-pwa'
+import components from 'unplugin-vue-components/vite'
+import {QuasarResolver as quasarResolver} from 'unplugin-vue-components/resolvers'
+import icons from 'unplugin-icons/vite'
+import markdown from 'vite-plugin-md'
+import iconsResolver from 'unplugin-icons/resolver'
+import {VitePWA as vitePWA} from 'vite-plugin-pwa'
 import ssr from 'vite-ssr-vue/plugin'
 import Prism from 'markdown-it-prism'
 import LinkAttributes from 'markdown-it-link-attributes'
@@ -51,14 +51,14 @@ export default defineConfig(() => {
       process.env.MODE === 'ssr' ? ssr({
         ssr: 'src/main-ssr.ts',
       }) : undefined,
-      Vue({
+      vue({
         include: [/\.vue$/u],
       }),
       // quasar() as any,
-      VueJsx(),
+      vueJsx(),
 
       // https://github.com/antfu/vite-plugin-md
-      Markdown({
+      markdown({
         headEnabled: true,
         markdownItSetup(md) {
           // https://prismjs.com/
@@ -75,15 +75,15 @@ export default defineConfig(() => {
       }),
 
       // https://github.com/antfu/vite-plugin-components
-      Components({
+      components({
         resolvers: [
-          QuasarResolver(),
-          IconsResolver(),
+          quasarResolver(),
+          iconsResolver(),
         ],
       }),
-      Icons(),
+      icons(),
       // https://github.com/antfu/vite-plugin-pwa
-      VitePWA({
+      vitePWA({
         includeAssets: ['favicon.svg', 'robots.txt', 'safari-pinned-tab.svg'],
         manifest: {
           icons: [
@@ -114,7 +114,7 @@ export default defineConfig(() => {
       }),
 
       // https://github.com/intlify/vite-plugin-vue-i18n
-      VueI18n({
+      vueI18n({
         include: [path.resolve(__dirname, 'locales/**')],
       }),
     ],

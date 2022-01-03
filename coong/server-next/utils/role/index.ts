@@ -15,15 +15,17 @@ export interface Session {
   listKey: string
 }
 
-export interface AuthArgs<Item = undefined> {
+export interface AuthArgs<ListTypeInfo extends BaseListTypeInfo = any> {
   fieldKey?: string
-  item?: Item
-  operation: string
+  item?: ListTypeInfo['item']
+  operation: string | 'delete'
   session: Session
 }
 
-export type AuthChecker<Item = undefined> = (args: AuthArgs<Item>) => MaybePromise<boolean>
-export type FilterAuthChecker<Item = undefined> = (args: AuthArgs<Item>) => MaybePromise<FilterOutput>
+export type AuthChecker<ListTypeInfo extends BaseListTypeInfo> =
+  (args: AuthArgs<ListTypeInfo>) => MaybePromise<boolean>
+export type FilterAuthChecker<ListTypeInfo extends BaseListTypeInfo> =
+  (args: AuthArgs<ListTypeInfo>) => MaybePromise<FilterOutput>
 
 export const Forbidden = () => {
   return false
@@ -52,10 +54,13 @@ export const isTest = (args: AuthArgs<any>) => {
   return true
 }
 
-export function or<Item = any>(list: FilterAuthChecker<Item>[], filter: true)
-export function or<Item = any>(list: AuthChecker<Item>[], filter: false)
-export function or<Item = any>(list: AuthChecker<Item>[])
-export function or<Item = any>(list: (AuthChecker<Item> | FilterAuthChecker<Item>)[], filter: boolean = false) {
+export function or<ListTypeInfo extends BaseListTypeInfo = any>(list: FilterAuthChecker<ListTypeInfo>[], filter: true)
+export function or<ListTypeInfo extends BaseListTypeInfo = any>(list: AuthChecker<ListTypeInfo>[], filter: false)
+export function or<ListTypeInfo extends BaseListTypeInfo = any>(list: AuthChecker<ListTypeInfo>[])
+export function or<ListTypeInfo extends BaseListTypeInfo = any>(
+  list: (AuthChecker<ListTypeInfo> | FilterAuthChecker<ListTypeInfo>)[],
+  filter: boolean = false,
+) {
   return async (args: AuthArgs<any>) => {
     const listAsyncIterable = {
       [Symbol.asyncIterator]() {
@@ -84,9 +89,12 @@ export function or<Item = any>(list: (AuthChecker<Item> | FilterAuthChecker<Item
   }
 }
 
-export function and(list: FilterAuthChecker[], filter: true)
-export function and(list: AuthChecker[], filter: false)
-export function and(list: (AuthChecker | FilterAuthChecker)[], filter: boolean = false) {
+export function and<ListTypeInfo extends BaseListTypeInfo = any>(list: FilterAuthChecker<ListTypeInfo>[], filter: true)
+export function and<ListTypeInfo extends BaseListTypeInfo = any>(list: AuthChecker<ListTypeInfo>[], filter: false)
+export function and<ListTypeInfo extends BaseListTypeInfo = any>(
+  list: (AuthChecker<ListTypeInfo> | FilterAuthChecker<ListTypeInfo>)[],
+  filter: boolean = false,
+) {
   return async (args: AuthArgs<any>) => {
     const listAsyncIterable = {
       [Symbol.asyncIterator]() {

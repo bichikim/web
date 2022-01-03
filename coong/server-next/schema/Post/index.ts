@@ -1,8 +1,35 @@
+// noinspection ES6PreferShortImport
+
 import {list} from '@keystone-6/core'
 import {image, relationship, select, text, timestamp} from '@keystone-6/core/fields'
 import {document} from '@keystone-6/fields-document'
+import {AuthArgs, isAdmin, or} from '../../utils'
+import {Lists} from '.keystone/types'
+
+const isSelfItem = (args: AuthArgs<Lists.Post.TypeInfo>) => {
+  const {item, session} = args
+  const {authorId} = item ?? {}
+
+  return authorId === session.itemId
+}
+
+const isSelfFilter = (args: AuthArgs) => {
+  const {session} = args
+
+  return {authorId: {equals: session.itemId}}
+}
 
 export const Post = list({
+  access: {
+    filter: {
+      delete: or([isAdmin, isSelfFilter], true),
+    },
+    item: {
+      create: or([isAdmin, isSelfItem]),
+      delete: or([isAdmin, isSelfItem]),
+      update: or([isAdmin, isSelfItem]),
+    },
+  },
   fields: {
 
     // Here is the link from post => author.
