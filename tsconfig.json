@@ -6,7 +6,7 @@
     "module": "esnext",
     "moduleResolution": "node",
     // Needed to address https://github.com/quasarframework/app-extension-typescript/issues/36
-    "emitDeclarationOnly": true,
+    "noEmit": true,
     "resolveJsonModule": true,
     "jsx": "preserve",
     "noImplicitAny": false,
