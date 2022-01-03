@@ -481,6 +481,27 @@ importers:
     devDependencies:
       ts-node-dev: 1.1.8_typescript@4.5.4
 
+  packages/hyper-components:
+    specifiers:
+      '@winter-love/stitches': ^1.0.23-alpha.9
+      '@winter-love/utils': ^1.0.23-alpha.5
+      color: ^4.1.0
+      csstype: ^3.0.8
+      gulp: ^4.0.2
+      quasar: ^2.4.2
+      vue: next
+      vue-demi: latest
+    dependencies:
+      '@winter-love/stitches': link:../stitches
+      '@winter-love/utils': link:../utils
+      color: 4.1.0
+      quasar: 2.4.2
+    devDependencies:
+      csstype: 3.0.10
+      gulp: 4.0.2
+      vue: 3.2.26
+      vue-demi: 0.12.1_vue@3.2.26
+
   packages/libraries:
     specifiers:
       '@winter-love/emotion': ^1.0.23-alpha.11
@@ -630,23 +651,6 @@ importers:
     devDependencies:
       gulp: 4.0.2
       lodash: 4.17.21
-
-  packages/tsup-build-test:
-    specifiers:
-      '@vue/devtools-api': ^6.0.0-beta.19
-      '@winter-love/use': ^1.0.23-alpha.11
-      '@winter-love/utils': ^1.0.23-alpha.5
-      gulp: ^4.0.2
-      vue: ^3.2.23
-      vue-demi: ^0.12.1
-    dependencies:
-      '@vue/devtools-api': 6.0.0-beta.19
-      '@winter-love/utils': link:../utils
-      vue-demi: 0.12.1_vue@3.2.26
-    devDependencies:
-      '@winter-love/use': link:../use
-      gulp: 4.0.2
-      vue: 3.2.26
 
   packages/use:
     specifiers:
@@ -27718,6 +27722,11 @@ packages:
     resolution: {integrity: sha512-VgqjuzlRqZU2t4gKDHQHc/gt9nKXi9y1VRM7xYO6VOuJcm48wgOzyBdTwl1vVseghWeEIEHRM9M+R629WWF9MQ==}
     engines: {node: '>= 10.18.1', npm: '>= 6.13.4', yarn: '>= 1.21.1'}
     dev: true
+
+  /quasar/2.4.2:
+    resolution: {integrity: sha512-5fnWKg8yc1cGWE7sTt5FxfOqCtdxcy52pmxvpVGNy4TFNG0pC0FBuGR9toY/P1p7VoI422e89M9Ab/wkXcrRkQ==}
+    engines: {node: '>= 10.18.1', npm: '>= 6.13.4', yarn: '>= 1.21.1'}
+    dev: false
 
   /query-string/5.1.1:
     resolution: {integrity: sha512-gjWOsm2SoGlgLEdAGt7a6slVOk9mGiXmPFMqrEhLQ68rhQuBnpfs3+EmlvqKyxnCo9/PPlF+9MtY02S1aFg+Jw==}

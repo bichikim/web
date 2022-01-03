@@ -1,22 +1,22 @@
 {
-  "name": "@winter-love/tsup-build-test",
-  "version": "1.0.23-alpha.11",
-  "private": true,
-  "description": "share state for vue components",
+  "name": "@winter-love/hyper-components",
+  "description": "hyper components base on quasar and stitches",
+  "version": "1.0.23-alpha.12",
   "keywords": [
     "typescript",
-    "vuex",
+    "style",
+    "style-system",
+    "component",
+    "ui",
+    "css",
     "store",
     "vue",
     "vue3",
     "vuejs",
-    "vuejs3",
-    "redux",
-    "reactive",
-    "mobx"
+    "vuejs3"
   ],
-  "homepage": "https://github.com/winter-love/web/tree/dev/packages/vare",
   "repository": "git@github.com:winter-love/web.git",
+  "license": "MIT",
   "author": "bichi@live.co.kr",
   "exports": {
     ".": {
@@ -35,19 +35,21 @@
     "lib/*"
   ],
   "scripts": {
-    "build": "tsup --dts --legacy-output --minify",
-    "prepare": "tsup --dts --legacy-output",
-    "dev": "tsup --watch --legacy-output"
+    "build": "tsup-node --dts --legacy-output --minify",
+    "prepare": "tsup-node --dts --legacy-output",
+    "dev": "tsup-node --watch --legacy-output"
   },
   "dependencies": {
-    "@vue/devtools-api": "^6.0.0-beta.19",
     "@winter-love/utils": "^1.0.23-alpha.5",
-    "vue-demi": "^0.12.1"
+    "@winter-love/stitches": "^1.0.23-alpha.9",
+    "color": "^4.1.0",
+    "quasar": "^2.4.2"
   },
   "devDependencies": {
-    "@winter-love/use": "^1.0.23-alpha.11",
+    "csstype": "^3.0.8",
     "gulp": "^4.0.2",
-    "vue": "^3.2.23"
+    "vue": "next",
+    "vue-demi": "latest"
   },
   "tsup": {
     "entry": ["src/index.ts"],
@@ -57,5 +59,5 @@
     "sourcemap": true,
     "splitting": false
   },
-  "gitHead": "7c6085ce15f0c5fb47fe4c263afb3c52febb04d7"
+  "gitHead": "66c79bd0d5c23a437b8170f758ff58e4496afb58"
 }

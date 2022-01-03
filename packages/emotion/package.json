@@ -29,9 +29,9 @@
     "lib/*"
   ],
   "scripts": {
-    "build": "tsup --dts --legacy-output --minify",
-    "prepare": "tsup --dts --legacy-output",
-    "dev": "tsup --watch --legacy-output"
+    "build": "tsup-node --dts --legacy-output --minify",
+    "prepare": "tsup-node --dts --legacy-output",
+    "dev": "tsup-node --watch --legacy-output"
   },
   "dependencies": {
     "@emotion/css": "^11.1.3",

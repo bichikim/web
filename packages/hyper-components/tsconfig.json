@@ -6,13 +6,10 @@
     "paths": {
       "src/*": [
         "src/*"
+      ],
+      "components/*": [
+        "src/components/*"
       ]
-    }
-  },
-  "ts-node": {
-    "compilerOptions": {
-      "target": "ES2015",
-      "module": "CommonJS"
     }
   },
   "include": [
@@ -20,10 +17,15 @@
     "src/**/*.d.ts",
     "src/**/*.tsx",
     "src/**/*.vue",
-    "tests/**/*.ts",
-    "tests/**/*.tsx"
   ],
   "exclude": [
     "node_modules"
-  ]
+  ],
+  "ts-node": {
+    "transpileOnly": true,
+    "compilerOptions": {
+      "target": "ES2015",
+      "module": "CommonJS"
+    }
+  }
 }

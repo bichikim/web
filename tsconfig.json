@@ -6,7 +6,7 @@
     "module": "esnext",
     "moduleResolution": "node",
     // Needed to address https://github.com/quasarframework/app-extension-typescript/issues/36
-    "noEmit": true,
+    "emitDeclarationOnly": true,
     "resolveJsonModule": true,
     "jsx": "preserve",
     "noImplicitAny": false,
@@ -21,7 +21,7 @@
     "strict": true,
     "target": "ES2020",
     // Quasar-defined webpack aliases
-    "baseUrl": ".",
+    "baseUrl": "."
   },
   "ts-node": {
     "transpileOnly": true,

@@ -29,9 +29,9 @@
     "lib/*"
   ],
   "scripts": {
-    "build": "tsup --dts --legacy-output --minify",
-    "prepare": "tsup --dts --legacy-output",
-    "dev": "tsup --watch --legacy-output"
+    "build": "tsup-node --dts --legacy-output --minify",
+    "prepare": "tsup-node --legacy-output",
+    "dev": "tsup-node --watch --legacy-output"
   },
   "dependencies": {
     "@stitches/core": "^1.1.0",
