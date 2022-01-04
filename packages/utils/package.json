@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/utils",
-  "version": "1.0.23-alpha.5",
+  "version": "1.0.23-alpha.13",
   "description": "Useful javascript utils",
   "keywords": [
     "typescript",
@@ -41,9 +41,15 @@
     "vue-demi": "latest"
   },
   "tsup": {
-    "entry": ["src/index.ts"],
+    "entry": [
+      "src/index.ts"
+    ],
     "clean": true,
-    "format": ["cjs", "esm", "iife"],
+    "format": [
+      "cjs",
+      "esm",
+      "iife"
+    ],
     "outDir": "lib",
     "sourcemap": true,
     "splitting": false

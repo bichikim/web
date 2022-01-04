@@ -1,6 +1,6 @@
 {
   "name": "vare",
-  "version": "1.0.23-alpha.11",
+  "version": "1.0.23-alpha.13",
   "description": "share state for vue components",
   "private": false,
   "keywords": [
@@ -41,18 +41,24 @@
   },
   "dependencies": {
     "@vue/devtools-api": "^6.0.0-beta.19",
-    "@winter-love/utils": "^1.0.23-alpha.5",
+    "@winter-love/utils": "^1.0.23-alpha.13",
     "vue-demi": "latest"
   },
   "devDependencies": {
-    "@winter-love/use": "^1.0.23-alpha.11",
+    "@winter-love/use": "^1.0.23-alpha.13",
     "gulp": "^4.0.2",
     "vue": "next"
   },
   "tsup": {
-    "entry": ["src/index.ts"],
+    "entry": [
+      "src/index.ts"
+    ],
     "clean": true,
-    "format": ["cjs", "esm", "iife"],
+    "format": [
+      "cjs",
+      "esm",
+      "iife"
+    ],
     "outDir": "lib",
     "sourcemap": true,
     "splitting": false

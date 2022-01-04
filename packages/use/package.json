@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/use",
-  "version": "1.0.23-alpha.11",
+  "version": "1.0.23-alpha.13",
   "description": "Vue utils",
   "keywords": [
     "typescript",
@@ -38,7 +38,7 @@
     "dev": "tsup-node --watch --legacy-output"
   },
   "dependencies": {
-    "@winter-love/utils": "^1.0.23-alpha.5",
+    "@winter-love/utils": "^1.0.23-alpha.13",
     "debounce": "^1.2.1",
     "fast-json-stable-stringify": "^2.1.0",
     "lodash": "^4.17.21",
@@ -53,9 +53,15 @@
     "vue": "next"
   },
   "tsup": {
-    "entry": ["src/index.ts"],
+    "entry": [
+      "src/index.ts"
+    ],
     "clean": true,
-    "format": ["cjs", "esm", "iife"],
+    "format": [
+      "cjs",
+      "esm",
+      "iife"
+    ],
     "outDir": "lib",
     "sourcemap": true,
     "splitting": false

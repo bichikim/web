@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/test-use",
-  "version": "1.0.23-alpha.9",
+  "version": "1.0.23-alpha.13",
   "description": "test composition api utils",
   "keywords": [
     "typescript",
@@ -33,7 +33,7 @@
   },
   "dependencies": {
     "@vue/test-utils": "next",
-    "@winter-love/utils": "^1.0.23-alpha.5",
+    "@winter-love/utils": "^1.0.23-alpha.13",
     "vue": "next"
   },
   "devDependencies": {
@@ -41,9 +41,15 @@
     "lodash": "^4.17.21"
   },
   "tsup": {
-    "entry": ["src/index.ts"],
+    "entry": [
+      "src/index.ts"
+    ],
     "clean": true,
-    "format": ["cjs", "esm", "iife"],
+    "format": [
+      "cjs",
+      "esm",
+      "iife"
+    ],
     "outDir": "lib",
     "sourcemap": true,
     "splitting": false

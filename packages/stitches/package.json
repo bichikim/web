@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/stitches",
-  "version": "1.0.23-alpha.9",
+  "version": "1.0.23-alpha.13",
   "description": "Stitches for Vue",
   "keywords": [
     "vue",
@@ -35,7 +35,7 @@
   },
   "dependencies": {
     "@stitches/core": "^1.1.0",
-    "@winter-love/utils": "^1.0.23-alpha.5",
+    "@winter-love/utils": "^1.0.23-alpha.13",
     "vue-demi": "latest"
   },
   "devDependencies": {
@@ -45,9 +45,15 @@
     "vue": "next"
   },
   "tsup": {
-    "entry": ["src/index.ts"],
+    "entry": [
+      "src/index.ts"
+    ],
     "clean": true,
-    "format": ["cjs", "esm", "iife"],
+    "format": [
+      "cjs",
+      "esm",
+      "iife"
+    ],
     "outDir": "lib",
     "sourcemap": true,
     "splitting": false
