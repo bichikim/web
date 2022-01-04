@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/use",
-  "version": "1.0.23-alpha.13",
+  "version": "1.0.23-alpha.14",
   "description": "Vue utils",
   "keywords": [
     "typescript",
@@ -38,7 +38,7 @@
     "dev": "tsup-node --watch --legacy-output"
   },
   "dependencies": {
-    "@winter-love/utils": "^1.0.23-alpha.13",
+    "@winter-love/utils": "^1.0.23-alpha.14",
     "debounce": "^1.2.1",
     "fast-json-stable-stringify": "^2.1.0",
     "lodash": "^4.17.21",

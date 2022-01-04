@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/quasar-svg-syntax",
-  "version": "1.0.23-alpha.13",
+  "version": "1.0.23-alpha.14",
   "description": "Useful javascript utils",
   "private": false,
   "keywords": [
@@ -37,7 +37,7 @@
     "dev": "tsup --watch --legacy-output"
   },
   "dependencies": {
-    "@winter-love/utils": "^1.0.23-alpha.13",
+    "@winter-love/utils": "^1.0.23-alpha.14",
     "fast-glob": "^3.2.7",
     "globby": "^12.0.2",
     "lodash": "^4.17.21",
