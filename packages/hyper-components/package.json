@@ -39,6 +39,9 @@
     "prepare": "tsup-node --dts --legacy-output",
     "dev": "tsup-node --watch --legacy-output"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {
     "@winter-love/stitches": "^1.0.23-alpha.13",
     "@winter-love/utils": "^1.0.23-alpha.13",
