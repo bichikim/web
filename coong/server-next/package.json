@@ -3,10 +3,10 @@
   "version": "1.0.23-alpha.14",
   "private": true,
   "scripts": {
-    "dev": "keystone dev",
-    "start": "keystone start",
     "build": "keystone build",
-    "postinstall": "keystone postinstall"
+    "dev": "keystone dev",
+    "postinstall": "keystone postinstall",
+    "start": "keystone start"
   },
   "dependencies": {
     "@keystone-6/auth": "^1.0.1",

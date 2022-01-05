@@ -4,16 +4,22 @@ export const getContrastColor = createGetContrastColor({
   memo: 1000,
 })
 
+const contrastColor = (value: any) => ({
+  color: getContrastColor(value),
+})
+
+const contrastBackgroundColor = (value: any) => ({
+  backgroundColor: getContrastColor(value),
+})
+
 export const stitchesUtils = {
   ai: (value: any) => ({alignItems: value}),
   basis: (value: any) => ({basis: value}),
   bg: (value: any) => ({backgroundColor: value}),
-  cc: (value: any) => ({
-    color: getContrastColor(value),
-  }),
-  contrastColor: (value: any) => ({
-    color: getContrastColor(value),
-  }),
+  cbg: contrastBackgroundColor,
+  cc: contrastColor,
+  contrastBackgroundColor,
+  contrastColor,
   dp: (value: any) => ({display: value}),
   fd: (value: any) => ({flexDirection: value}),
   grow: (value: any) => ({flexGrow: value}),

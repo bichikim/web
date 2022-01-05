@@ -3,8 +3,8 @@
   "version": "1.0.23-alpha.13",
   "private": true,
   "scripts": {
-    "test": "jest",
-    "compile": "babel-node ./scripts/compile.js"
+    "compile": "babel-node ./scripts/compile.js",
+    "test": "jest"
   },
   "devDependencies": {
     "@babel/core": "^7.16.5",

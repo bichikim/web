@@ -45,6 +45,7 @@ importers:
       '@vue/eslint-config-typescript': ^9.1.0
       '@vue/test-utils': next
       '@vue/vue3-jest': ^27.0.0-alpha.4
+      '@winter-love/hyper-components': ^1.0.23-alpha.14
       '@winter-love/test-use': ^1.0.17
       '@zerollup/ts-transform-paths': ^1.7.18
       babel-jest: ^26.6.3
@@ -116,6 +117,7 @@ importers:
       '@vue/eslint-config-typescript': 9.1.0_ec534aad2d7f140ee71c9af5e686abbf
       '@vue/test-utils': 2.0.0-rc.18_vue@3.2.26
       '@vue/vue3-jest': 27.0.0-alpha.4_3351e4c1895d14dad8c39384171632e9
+      '@winter-love/hyper-components': link:packages/hyper-components
       '@winter-love/test-use': 1.0.22_@vue+test-utils@2.0.0-rc.18
       '@zerollup/ts-transform-paths': 1.7.18_typescript@4.5.4
       babel-jest: 26.6.3_@babel+core@7.16.0
@@ -496,11 +498,11 @@ importers:
       '@winter-love/utils': link:../utils
       color: 4.1.0
       quasar: 2.4.2
+      vue-demi: 0.12.1_vue@3.2.26
     devDependencies:
       csstype: 3.0.10
       gulp: 4.0.2
       vue: 3.2.26
-      vue-demi: 0.12.1_vue@3.2.26
 
   packages/libraries:
     specifiers:

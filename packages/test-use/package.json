@@ -28,8 +28,8 @@
   ],
   "scripts": {
     "build": "tsup-node --dts --legacy-output --minify",
-    "prepare": "tsup-node --dts --legacy-output",
-    "dev": "tsup-node --watch --legacy-output"
+    "dev": "tsup-node --watch --legacy-output",
+    "prepare": "tsup-node --dts --legacy-output"
   },
   "dependencies": {
     "@vue/test-utils": "next",
@@ -40,6 +40,7 @@
     "gulp": "^4.0.2",
     "lodash": "^4.17.21"
   },
+  "gitHead": "66c79bd0d5c23a437b8170f758ff58e4496afb58",
   "tsup": {
     "entry": [
       "src/index.ts"
@@ -53,6 +54,5 @@
     "outDir": "lib",
     "sourcemap": true,
     "splitting": false
-  },
-  "gitHead": "66c79bd0d5c23a437b8170f758ff58e4496afb58"
+  }
 }

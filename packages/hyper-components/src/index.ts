@@ -2,7 +2,8 @@ import {Quasar, QuasarPluginOptions} from 'quasar'
 import {createStyled} from '@winter-love/stitches'
 import {Plugin} from 'vue'
 import {EmptyObject} from '@winter-love/utils'
-import {typography} from './variants'
+import {linearGradient, typography} from './variants'
+import {stitchesUtils} from './stitches-utils'
 
 import {ConfigType, CreateStitches} from '@stitches/core/types/config'
 export type stitchesOptions = Parameters<CreateStitches>[0]
@@ -23,7 +24,9 @@ export const createHyperComponents = (options: CreateHyperComponentsOptions) => 
     theme,
   })
   const directive = createDirective({
+    utils: stitchesUtils,
     variants: {
+      linearGradient,
       typography,
       ...variants,
     },

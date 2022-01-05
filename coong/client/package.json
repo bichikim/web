@@ -22,7 +22,6 @@
     "sync:android": "cap sync android",
     "sync:ios": "cap sync ios"
   },
-  "web-types": "./web-types.json",
   "dependencies": {
     "@babylonjs/core": "^4.2.0",
     "@babylonjs/loaders": "^4.2.0",
@@ -87,5 +86,6 @@
     "vite-plugin-md": "^0.11.4",
     "vite-plugin-pwa": "^0.11.3"
   },
-  "gitHead": "49922aa2164ceefcebf5fcd3bd83dce16c67df21"
+  "gitHead": "49922aa2164ceefcebf5fcd3bd83dce16c67df21",
+  "web-types": "./web-types.json"
 }

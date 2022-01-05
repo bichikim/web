@@ -34,8 +34,8 @@
   ],
   "scripts": {
     "build": "tsup-node --dts --legacy-output --minify",
-    "prepare": "tsup-node --dts --legacy-output",
-    "dev": "tsup-node --watch --legacy-output"
+    "dev": "tsup-node --watch --legacy-output",
+    "prepare": "tsup-node --dts --legacy-output"
   },
   "dependencies": {
     "@winter-love/utils": "^1.0.23-alpha.14",
@@ -52,6 +52,7 @@
     "sinon": "^11.1.1",
     "vue": "next"
   },
+  "gitHead": "66c79bd0d5c23a437b8170f758ff58e4496afb58",
   "tsup": {
     "entry": [
       "src/index.ts"
@@ -65,6 +66,5 @@
     "outDir": "lib",
     "sourcemap": true,
     "splitting": false
-  },
-  "gitHead": "66c79bd0d5c23a437b8170f758ff58e4496afb58"
+  }
 }
