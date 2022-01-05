@@ -1,6 +1,6 @@
 {
   "name": "@coong/server-next",
-  "version": "1.0.23-alpha.14",
+  "version": "1.0.23-alpha.15",
   "private": true,
   "scripts": {
     "build": "keystone build",
@@ -13,7 +13,7 @@
     "@keystone-6/core": "^1.0.1",
     "@keystone-6/fields-document": "^1.0.1",
     "@sendgrid/mail": "^7.6.0",
-    "@winter-love/utils": "^1.0.23-alpha.14",
+    "@winter-love/utils": "^1.0.23-alpha.15",
     "graphql": "^15.8.0",
     "nexus": "^1.1.0",
     "react": "^17.0.2",

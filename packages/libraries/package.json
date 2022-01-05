@@ -1,19 +1,19 @@
 {
   "name": "libraries",
-  "version": "1.0.23-alpha.14",
+  "version": "1.0.23-alpha.15",
   "private": true,
   "scripts": {
     "build": "echo building for libraries",
     "dev": "echo building for libraries"
   },
   "dependencies": {
-    "@winter-love/emotion": "^1.0.23-alpha.14",
-    "@winter-love/stitches": "^1.0.23-alpha.14",
-    "@winter-love/style-system": "^1.0.23-alpha.14",
-    "@winter-love/style-system-next": "^1.0.23-alpha.14",
-    "@winter-love/test-use": "^1.0.23-alpha.14",
-    "@winter-love/use": "^1.0.23-alpha.14",
-    "@winter-love/utils": "^1.0.23-alpha.14",
-    "vare": "^1.0.23-alpha.14"
+    "@winter-love/emotion": "^1.0.23-alpha.15",
+    "@winter-love/stitches": "^1.0.23-alpha.15",
+    "@winter-love/style-system": "^1.0.23-alpha.15",
+    "@winter-love/style-system-next": "^1.0.23-alpha.15",
+    "@winter-love/test-use": "^1.0.23-alpha.15",
+    "@winter-love/use": "^1.0.23-alpha.15",
+    "@winter-love/utils": "^1.0.23-alpha.15",
+    "vare": "^1.0.23-alpha.15"
   }
 }
