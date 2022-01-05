@@ -14,6 +14,7 @@ import {
   watchEffect,
 } from 'vue'
 import {watchUpdate} from './watch-update'
+import {QResizeObserver} from 'quasar'
 
 export interface EngineMeta {
   engine?: Babylon.Engine
@@ -53,34 +54,45 @@ export const Engine = defineComponent({
     antialias: {default: true, type: Boolean},
   },
   render() {
-    const {$slots} = this
+    const {$slots, onResize} = this
     return (
-      h('canvas', {ref: 'root'}, $slots.default?.())
+      h('div', [
+        h('canvas', {ref: 'canvas', style: {height: '100%', width: '100%'}}, $slots.default?.()),
+        h(QResizeObserver, {onResize}),
+      ])
     )
   },
   setup() {
-    const root = ref()
-    const engineMeta = provideEngine(root)
-    const engine = computed(() => {
+    const canvas = ref()
+    const engineMeta = provideEngine(canvas)
+    const engineRef = computed(() => {
       return engineMeta.engine
     })
 
-    watchUpdate(engine, (engine) => {
+    watchUpdate(engineRef, (engine) => {
       engine.runRenderLoop(() => {
         engine.scenes.forEach((scene) => scene.render())
       })
     })
 
     onBeforeUnmount(() => {
-      const engineValue = engine.value
-      if (engineValue) {
-        engineValue.stopRenderLoop()
+      const engine = engineRef.value
+      if (engine) {
+        engine.stopRenderLoop()
       }
     })
 
+    const onResize = () => {
+      const engine = engineRef.value
+      if (engine) {
+        engine.resize()
+      }
+    }
+
     return {
+      canvas,
       engineMeta,
-      root,
+      onResize,
     }
   },
 })

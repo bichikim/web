@@ -32,7 +32,7 @@ export const ArcRotateCamera = defineComponent({
     alpha: {default: 0, type: Number},
     beta: {default: 0, type: Number},
     controlElement: {type: Object},
-    isControl: {default: true, type: Boolean},
+    isControl: {default: false, type: Boolean},
     name: {default: 'camera', type: String},
     radius: {default: 3, type: Number},
     target: {default: () => (new Babylon.Vector3(0, 0, 0)), type: Object as PropType<Babylon.Vector3>},

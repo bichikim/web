@@ -1,7 +1,3 @@
-/**
- * @jest-environment jsdom
- */
-
 import {isMutate, mutate} from 'src/mutate'
 import {state} from 'src/state'
 import {useInfo} from 'src/info'

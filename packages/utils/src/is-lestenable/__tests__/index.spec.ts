@@ -1,7 +1,3 @@
-/**
- * @jest-environment jsdom
- */
-
 import {isListenable} from '../'
 
 describe('isListenable', () => {

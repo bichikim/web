@@ -1,7 +1,3 @@
-/**
- * @jest-environment jsdom
- */
-
 import {pickElement} from '../'
 import {mount} from '@vue/test-utils'
 import {defineComponent, h} from 'vue-demi'

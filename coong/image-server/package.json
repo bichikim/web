@@ -1,6 +1,6 @@
 {
   "name": "@coong/image-server",
-  "version": "1.0.23-alpha.11",
+  "version": "1.0.23-alpha.13",
   "private": true,
   "scripts": {
     "build": "rimraf ./lib && ttsc",

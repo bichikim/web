@@ -1,7 +1,7 @@
 import {createStyled} from '@winter-love/stitches'
 import {Plugin} from 'vue'
 
-const {createDirective, styled, ...stitches} = createStyled({
+const {createDirective, styled, css, globalCss, keyframes, ...stitches} = createStyled({
   media: {
     bp1: '(min-width: 640px)',
     bp2: '(min-width: 768px)',
@@ -31,4 +31,4 @@ export const createStitchesPlugin = (): {plugin: Plugin; stitches: any} => {
   }
 }
 
-export {styled}
+export {styled, css, globalCss, keyframes}

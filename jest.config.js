@@ -10,7 +10,7 @@ module.exports = {
     '!<rootDir>/**/__tests__/*.{ts,tsx}',
     '!<rootDir>/**/types/**/*.{ts,tsx}',
   ],
-  maxWorkers: '70%',
+  // maxWorkers: '70%',
   moduleFileExtensions: ['js', 'jsx', 'ts', 'tsx', 'vue', 'json'],
   moduleNameMapper: {
     '\\.(css|scss)$': 'identity-obj-proxy',
@@ -21,13 +21,6 @@ module.exports = {
 
   projects: [
     {
-      displayName: 'coong/server',
-      setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
-      testMatch: [
-        '<rootDir>/coong/server/src/**/__tests__/*.spec.ts',
-      ],
-    },
-    {
       displayName: 'test',
       setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
       snapshotSerializers: [
@@ -37,7 +30,6 @@ module.exports = {
       testMatch: [
         '<rootDir>/packages/*/src/**/__tests__/*.spec.ts',
         '<rootDir>/coong/*/src/**/__tests__/*.spec.ts',
-        '!<rootDir>/coong/server/src/**/__tests__/*.spec.ts',
         '<rootDir>/scripts/__tests__/*.spec.ts',
       ],
     },
@@ -52,7 +44,7 @@ module.exports = {
     '@emotion/jest/serializer',
   ],
 
-  testEnvironment: 'node',
+  testEnvironment: '@happy-dom/jest-environment',
 
   testPathIgnorePatterns: [
     '\\.snap$',
@@ -67,7 +59,7 @@ module.exports = {
     '.+\\.(css|styl|less|sass|scss|jpg|jpeg|png|svg|gif|eot|otf|webp|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$':
       require.resolve('jest-transform-stub'),
     '^.+\\.jsx?$': require.resolve('babel-jest'),
-    '^.+\\.vue$': 'vue-jest',
+    '^.+\\.vue$': '@vue/vue3-jest',
   },
 
   transformIgnorePatterns: ['/node_modules/'],

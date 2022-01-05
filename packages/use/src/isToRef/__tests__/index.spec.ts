@@ -1,7 +1,3 @@
-/**
- * @jest-environment jsdom
- */
-
 import {isToRef} from '../'
 import {computed, defineComponent, h, ref, toRef} from 'vue-demi'
 import {mount} from '@vue/test-utils'

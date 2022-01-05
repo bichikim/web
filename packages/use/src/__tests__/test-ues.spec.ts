@@ -1,6 +1,3 @@
-/**
- * @jest-environment jsdom
- */
 import {flushPromises} from '@vue/test-utils'
 import {ref} from 'vue-demi'
 import {testUse} from './test-use'
@@ -9,7 +6,7 @@ export type TestSetup<Result extends Record<string, any>> = (props) => Result
 
 describe('test-use', () => {
   it('should test', async () => {
-    const {trigger, result} = testUse((props) => {
+    const {trigger, result} = testUse(() => {
       const countRef = ref(0)
       return {
         count: countRef,

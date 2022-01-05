@@ -409,13 +409,14 @@ module.exports = {
   },
   settings: {
     'import/parsers': {'@typescript-eslint/parser': ['.ts', '.tsx', 'vue']},
-    // 'import/resolver': {
-    //   typescript: {
-    //     alwaysTryTypes: true,
-    //     project: [
-    //       'packages/*/tsconfig.json',
-    //     ],
-    //   },
-    // },
+    'import/resolver': {
+      typescript: {
+        alwaysTryTypes: true,
+        project: [
+          'tsconfig.json',
+          'packages/*/tsconfig.json',
+        ],
+      },
+    },
   },
 }

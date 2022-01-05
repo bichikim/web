@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/test-use",
-  "version": "1.0.23-alpha.9",
+  "version": "1.0.23-alpha.15",
   "description": "test composition api utils",
   "keywords": [
     "typescript",
@@ -12,33 +12,47 @@
   "author": "bichi@live.co.kr",
   "exports": {
     ".": {
-      "import": "./lib/index.module.js",
+      "import": "./lib/esm/index.js",
       "require": "./lib/index.js"
     },
     "./*": "./*"
   },
   "main": "lib/index.js",
-  "jsdelivr": "lib/index.iife.js",
-  "unpkg": "lib/index.iife.js",
-  "module": "lib/index.module.js",
+  "jsdelivr": "lib/iife/index.js",
+  "unpkg": "lib/iife/index.js",
+  "module": "lib/esm/index.js",
   "source": "src/index.ts",
   "types": "lib/index.d.ts",
   "files": [
     "lib/*"
   ],
   "scripts": {
-    "build": "gulp build",
-    "dev": "gulp dev",
-    "prepare": "gulp build"
+    "build": "tsup-node --dts --legacy-output --minify",
+    "dev": "tsup-node --watch --legacy-output",
+    "prepare": "tsup-node --dts --legacy-output"
   },
   "dependencies": {
     "@vue/test-utils": "next",
-    "@winter-love/utils": "^1.0.23-alpha.5",
+    "@winter-love/utils": "^1.0.23-alpha.15",
     "vue": "next"
   },
   "devDependencies": {
     "gulp": "^4.0.2",
     "lodash": "^4.17.21"
   },
-  "gitHead": "66c79bd0d5c23a437b8170f758ff58e4496afb58"
+  "gitHead": "66c79bd0d5c23a437b8170f758ff58e4496afb58",
+  "tsup": {
+    "entry": [
+      "src/index.ts"
+    ],
+    "clean": true,
+    "format": [
+      "cjs",
+      "esm",
+      "iife"
+    ],
+    "outDir": "lib",
+    "sourcemap": true,
+    "splitting": false
+  }
 }

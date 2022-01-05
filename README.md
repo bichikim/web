@@ -34,7 +34,7 @@ emotion JS react 버전과 비슷한 구조의 vue emotion js 입니다.
 [@testing-library/react-hooks](https://www.npmjs.com/package/@testing-library/react-hooks) 의 vue composition api 버전 입니다
 아직 실험 단계 입니다.
 
-## Coong
+## ☄ Coong
 
 [Coong.io](https://coong.io)
 

@@ -1,7 +1,3 @@
-/**
- * @jest-environment jsdom
- */
-
 import {computeRef} from '../'
 import {state} from 'src/state'
 import {useInfo} from 'src/info'

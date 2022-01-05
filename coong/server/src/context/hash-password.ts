@@ -1,5 +1,5 @@
 import {ExpressContext} from 'apollo-server-express'
-import {compare, genSalt, hash} from 'bcrypt'
+import {compare, genSalt, hash} from 'bcryptjs'
 import {ContextFunction} from './types'
 import {freeze} from '@winter-love/utils'
 

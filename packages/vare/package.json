@@ -1,8 +1,8 @@
 {
   "name": "vare",
-  "version": "1.0.23-alpha.11",
-  "description": "share state for vue components",
+  "version": "1.0.23-alpha.15",
   "private": false,
+  "description": "share state for vue components",
   "keywords": [
     "typescript",
     "vuex",
@@ -20,34 +20,48 @@
   "author": "bichi@live.co.kr",
   "exports": {
     ".": {
-      "import": "./lib/index.module.js",
+      "import": "./lib/esm/index.js",
       "require": "./lib/index.js"
     },
     "./*": "./*"
   },
   "main": "lib/index.js",
-  "jsdelivr": "lib/index.iife.js",
-  "unpkg": "lib/index.iife.js",
-  "module": "lib/index.module.js",
+  "jsdelivr": "lib/iife/index.js",
+  "unpkg": "lib/iife/index.js",
+  "module": "lib/esm/index.js",
   "source": "src/index.ts",
   "types": "lib/index.d.ts",
   "files": [
     "lib/*"
   ],
   "scripts": {
-    "build": "gulp build",
-    "dev": "gulp dev",
-    "prepare": "gulp build"
+    "build": "tsup-node --dts --legacy-output --minify",
+    "dev": "tsup-node --watch --legacy-output",
+    "prepare": "tsup-node --dts --legacy-output"
   },
   "dependencies": {
     "@vue/devtools-api": "^6.0.0-beta.19",
-    "@winter-love/utils": "^1.0.23-alpha.5",
+    "@winter-love/utils": "^1.0.23-alpha.15",
     "vue-demi": "latest"
   },
   "devDependencies": {
-    "@winter-love/use": "^1.0.23-alpha.11",
+    "@winter-love/use": "^1.0.23-alpha.15",
     "gulp": "^4.0.2",
     "vue": "next"
   },
-  "gitHead": "66c79bd0d5c23a437b8170f758ff58e4496afb58"
+  "gitHead": "66c79bd0d5c23a437b8170f758ff58e4496afb58",
+  "tsup": {
+    "entry": [
+      "src/index.ts"
+    ],
+    "clean": true,
+    "format": [
+      "cjs",
+      "esm",
+      "iife"
+    ],
+    "outDir": "lib",
+    "sourcemap": true,
+    "splitting": false
+  }
 }

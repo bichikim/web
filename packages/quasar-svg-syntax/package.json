@@ -1,42 +1,43 @@
 {
   "name": "@winter-love/quasar-svg-syntax",
-  "version": "1.0.23-alpha.10",
-  "description": "Useful javascript utils",
+  "version": "1.0.23-alpha.15",
   "private": false,
+  "description": "Useful javascript utils",
   "keywords": [
     "typescript",
     "utils",
-    "functional"
+    "functional",
+    "quasar",
+    "icon",
+    "svg",
+    "syntax"
   ],
   "repository": "git@github.com:winter-love/web.git",
   "license": "MIT",
   "author": "bichi@live.co.kr",
   "exports": {
     ".": {
-      "import": "./lib/index.module.js",
+      "import": "./lib/esm/index.js",
       "require": "./lib/index.js"
     },
     "./*": "./*"
   },
-  "bin": {
-    "quasar-svg-syntax": "./bin/index.js"
-  },
   "main": "lib/index.js",
-  "jsdelivr": "lib/index.iife.js",
-  "unpkg": "lib/index.iife.js",
-  "module": "lib/index.module.js",
+  "jsdelivr": "lib/iife/index.js",
+  "unpkg": "lib/iife/index.js",
+  "module": "lib/esm/index.js",
   "source": "src/index.ts",
   "types": "lib/index.d.ts",
   "files": [
     "lib/*"
   ],
   "scripts": {
-    "build": "gulp build",
-    "prepare": "gulp build",
-    "start": "node bin/index.js assets/**/*.svg"
+    "build": "tsup --dts --legacy-output --minify",
+    "dev": "tsup --watch --legacy-output",
+    "prepare": "tsup --dts --legacy-output"
   },
   "dependencies": {
-    "@winter-love/utils": "^1.0.23-alpha.5",
+    "@winter-love/utils": "^1.0.23-alpha.15",
     "fast-glob": "^3.2.7",
     "globby": "^12.0.2",
     "lodash": "^4.17.21",
@@ -51,5 +52,19 @@
     "ts-node-dev": "^1.1.8",
     "vue": "next"
   },
-  "gitHead": "66c79bd0d5c23a437b8170f758ff58e4496afb58"
+  "gitHead": "66c79bd0d5c23a437b8170f758ff58e4496afb58",
+  "tsup": {
+    "entry": [
+      "src/index.ts"
+    ],
+    "clean": true,
+    "format": [
+      "cjs",
+      "esm",
+      "iife"
+    ],
+    "outDir": "lib",
+    "sourcemap": true,
+    "splitting": false
+  }
 }

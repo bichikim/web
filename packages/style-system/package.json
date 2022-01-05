@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/style-system",
-  "version": "1.0.23-alpha.12",
+  "version": "1.0.23-alpha.15",
   "keywords": [
     "typescript",
     "style",
@@ -18,27 +18,27 @@
   "author": "bichi@live.co.kr",
   "exports": {
     ".": {
-      "import": "./lib/index.module.js",
+      "import": "./lib/esm/index.js",
       "require": "./lib/index.js"
     },
     "./*": "./*"
   },
   "main": "lib/index.js",
-  "jsdelivr": "lib/index.iife.js",
-  "unpkg": "lib/index.iife.js",
-  "module": "lib/index.module.js",
+  "jsdelivr": "lib/iife/index.js",
+  "unpkg": "lib/iife/index.js",
+  "module": "lib/esm/index.js",
   "source": "src/index.ts",
   "types": "lib/index.d.ts",
   "files": [
     "lib/*"
   ],
   "scripts": {
-    "build": "gulp build",
-    "dev": "gulp dev",
-    "prepare": "gulp build"
+    "build": "tsup-node --dts --legacy-output --minify",
+    "dev": "tsup-node --watch --legacy-output",
+    "prepare": "tsup-node --dts --legacy-output"
   },
   "dependencies": {
-    "@winter-love/utils": "^1.0.23-alpha.5",
+    "@winter-love/utils": "^1.0.23-alpha.15",
     "merge-deep": "^3.0.3"
   },
   "devDependencies": {
@@ -47,11 +47,25 @@
     "@types/styled-system": "^5.1.11",
     "@types/styled-system__css": "^5.0.15",
     "@vue/test-utils": "^2.0.0-rc.14",
-    "@winter-love/emotion": "^1.0.23-alpha.9",
+    "@winter-love/emotion": "^1.0.23-alpha.15",
     "csstype": "^3.0.8",
     "gulp": "^4.0.2",
     "vue": "next",
-    "vue-demi": "^0.12.1"
+    "vue-demi": "latest"
   },
-  "gitHead": "66c79bd0d5c23a437b8170f758ff58e4496afb58"
+  "gitHead": "66c79bd0d5c23a437b8170f758ff58e4496afb58",
+  "tsup": {
+    "entry": [
+      "src/index.ts"
+    ],
+    "clean": true,
+    "format": [
+      "cjs",
+      "esm",
+      "iife"
+    ],
+    "outDir": "lib",
+    "sourcemap": true,
+    "splitting": false
+  }
 }

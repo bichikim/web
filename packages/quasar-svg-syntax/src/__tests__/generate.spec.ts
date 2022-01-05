@@ -1,11 +1,4 @@
-/**
- * @jest-environment jsdom
- */
-
 import {generate} from '../generate'
-// import {defineComponent, h} from 'vue'
-// import {mount} from '@vue/test-utils'
-// import {QIcon, Quasar, useQuasar} from 'quasar'
 
 describe('quasar-svg-syntax', () => {
   it('should return quasar svg string', async () => {
