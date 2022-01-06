@@ -40,6 +40,9 @@ export const Default = () => ({
         h(HGlow, {}, () => [
           h('div', {style: {backgroundColor: 'white', height: '10px', width: '100px'}}),
         ]),
+        h(HGlow, {}, () => [
+          'hello',
+        ]),
       ])
     )
   },

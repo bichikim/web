@@ -1,11 +1,13 @@
-import {defineComponent, h, resolveDirective, withDirectives} from 'vue'
+import clsx from 'clsx'
+import {useSystem} from 'src'
+import {defineComponent} from 'vue'
 
 const style = {
-  '&>*': {
+  '&': {
     position: 'relative',
     zIndex: 0,
   },
-  '&>*:before': {
+  '&:before': {
     background: 'inherit',
     backgroundColor: 'inherit',
     backgroundSize: 'inherit',
@@ -21,7 +23,7 @@ const style = {
     transition: '0.5s !important',
     zIndex: -1,
   },
-  '&>*:hover::before': {
+  '&:hover::before': {
     animation: 'animate 8s linear infinite',
     bottom: '-5px',
     filter: 'blur(13px)',
@@ -34,12 +36,20 @@ const style = {
 
 export const HGlow = defineComponent({
   render() {
-    const directive = resolveDirective('css') ?? {}
-    return (
-      withDirectives(h('div', {}, this.$slots.default?.()), [[directive, style]])
-    )
-  },
-  setup() {
-    return {}
+    const {$slots} = this
+    const nodes = $slots.default?.()
+    const system = useSystem()
+
+    return nodes ? nodes.map((node) => {
+      const props = node?.props
+
+      if (!props) {
+        return node
+      }
+
+      Object.assign(props, {class: clsx(props.class, system({css: style}).className)})
+
+      return node
+    }) : nodes
   },
 })

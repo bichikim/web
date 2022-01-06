@@ -173,12 +173,12 @@ export const createCreateDirective = <
             : unknown
       }
       )
-  }): ObjectDirective<StitchesElement, DirectiveBindingValue> => {
+  }) => {
     const {css} = stitches
 
     const system = css(...systems as any)
 
-    return {
+    const directive: ObjectDirective = {
       getSSRProps(binding) {
         const className = getClassName(system, binding)
         return {
@@ -193,6 +193,11 @@ export const createCreateDirective = <
       updated(el: StitchesElement, binding) {
         updateClassName(system, el, binding)
       },
+    }
+
+    return {
+      directive,
+      system,
     }
   }
   return {

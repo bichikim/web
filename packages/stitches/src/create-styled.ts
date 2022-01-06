@@ -104,7 +104,7 @@ export const createStyled = <Prefix extends string = string,
     }
     ) => {
     const {name, target} = options
-    const directive = createDirective<Composers,
+    const {directive} = createDirective<Composers,
       CSS>(...systems)
     return defineComponent({
       name,
