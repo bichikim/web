@@ -1,8 +1,8 @@
 {
   "name": "vare",
-  "version": "1.0.23-alpha.11",
-  "description": "share state for vue components",
+  "version": "1.0.23-alpha.15",
   "private": false,
+  "description": "share state for vue components",
   "keywords": [
     "typescript",
     "vuex",
@@ -35,27 +35,33 @@
     "lib/*"
   ],
   "scripts": {
-    "build": "tsup --dts --legacy-output --minify",
-    "prepare": "tsup --dts --legacy-output",
-    "dev": "tsup --watch --legacy-output"
+    "build": "tsup-node --dts --legacy-output --minify",
+    "dev": "tsup-node --watch --legacy-output",
+    "prepare": "tsup-node --dts --legacy-output"
   },
   "dependencies": {
     "@vue/devtools-api": "^6.0.0-beta.19",
-    "@winter-love/utils": "^1.0.23-alpha.5",
+    "@winter-love/utils": "^1.0.23-alpha.15",
     "vue-demi": "latest"
   },
   "devDependencies": {
-    "@winter-love/use": "^1.0.23-alpha.11",
+    "@winter-love/use": "^1.0.23-alpha.15",
     "gulp": "^4.0.2",
     "vue": "next"
   },
+  "gitHead": "66c79bd0d5c23a437b8170f758ff58e4496afb58",
   "tsup": {
-    "entry": ["src/index.ts"],
+    "entry": [
+      "src/index.ts"
+    ],
     "clean": true,
-    "format": ["cjs", "esm", "iife"],
+    "format": [
+      "cjs",
+      "esm",
+      "iife"
+    ],
     "outDir": "lib",
     "sourcemap": true,
     "splitting": false
-  },
-  "gitHead": "66c79bd0d5c23a437b8170f758ff58e4496afb58"
+  }
 }

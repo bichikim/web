@@ -1,8 +1,5 @@
 /* eslint-disable max-params */
 import {deepMemoize} from '@winter-love/utils'
-import {MicroMemoize} from 'micro-memoize'
-
-export {MicroMemoize}
 
 export const rawGetScale = (
   theme: Record<string, any> | undefined,

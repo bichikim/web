@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/use",
-  "version": "1.0.23-alpha.11",
+  "version": "1.0.23-alpha.15",
   "description": "Vue utils",
   "keywords": [
     "typescript",
@@ -33,12 +33,12 @@
     "lib/*"
   ],
   "scripts": {
-    "build": "tsup --dts --legacy-output --minify",
-    "prepare": "tsup --dts --legacy-output",
-    "dev": "tsup --watch --legacy-output"
+    "build": "tsup-node --dts --legacy-output --minify",
+    "dev": "tsup-node --watch --legacy-output",
+    "prepare": "tsup-node --dts --legacy-output"
   },
   "dependencies": {
-    "@winter-love/utils": "^1.0.23-alpha.5",
+    "@winter-love/utils": "^1.0.23-alpha.15",
     "debounce": "^1.2.1",
     "fast-json-stable-stringify": "^2.1.0",
     "lodash": "^4.17.21",
@@ -52,13 +52,19 @@
     "sinon": "^11.1.1",
     "vue": "next"
   },
+  "gitHead": "66c79bd0d5c23a437b8170f758ff58e4496afb58",
   "tsup": {
-    "entry": ["src/index.ts"],
+    "entry": [
+      "src/index.ts"
+    ],
     "clean": true,
-    "format": ["cjs", "esm", "iife"],
+    "format": [
+      "cjs",
+      "esm",
+      "iife"
+    ],
     "outDir": "lib",
     "sourcemap": true,
     "splitting": false
-  },
-  "gitHead": "66c79bd0d5c23a437b8170f758ff58e4496afb58"
+  }
 }

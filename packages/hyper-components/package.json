@@ -1,16 +1,19 @@
 {
-  "name": "@winter-love/quasar-svg-syntax",
+  "name": "@winter-love/hyper-components",
   "version": "1.0.23-alpha.15",
-  "private": false,
-  "description": "Useful javascript utils",
+  "description": "hyper components base on quasar and stitches",
   "keywords": [
     "typescript",
-    "utils",
-    "functional",
-    "quasar",
-    "icon",
-    "svg",
-    "syntax"
+    "style",
+    "style-system",
+    "component",
+    "ui",
+    "css",
+    "store",
+    "vue",
+    "vue3",
+    "vuejs",
+    "vuejs3"
   ],
   "repository": "git@github.com:winter-love/web.git",
   "license": "MIT",
@@ -32,25 +35,24 @@
     "lib/*"
   ],
   "scripts": {
-    "build": "tsup --dts --legacy-output --minify",
-    "dev": "tsup --watch --legacy-output",
-    "prepare": "tsup --dts --legacy-output"
+    "build": "tsup-node --dts --legacy-output --minify",
+    "dev": "tsup-node --watch --legacy-output",
+    "prepare": "tsup-node --dts --legacy-output"
   },
   "dependencies": {
+    "@winter-love/stitches": "^1.0.23-alpha.15",
     "@winter-love/utils": "^1.0.23-alpha.15",
-    "fast-glob": "^3.2.7",
-    "globby": "^12.0.2",
-    "lodash": "^4.17.21",
-    "node-html-parser": "^5.1.0",
-    "yargs": "^17.3.0"
+    "color": "^4.1.0",
+    "quasar": "^2.4.2",
+    "vue-demi": "latest"
   },
   "devDependencies": {
-    "@quasar/extras": "^1.12.2",
-    "@vue/test-utils": "^2.0.0-rc.17",
-    "quasar": "^2.3.4",
-    "ts-node": "^10.4.0",
-    "ts-node-dev": "^1.1.8",
+    "csstype": "^3.0.8",
+    "gulp": "^4.0.2",
     "vue": "next"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "gitHead": "66c79bd0d5c23a437b8170f758ff58e4496afb58",
   "tsup": {
