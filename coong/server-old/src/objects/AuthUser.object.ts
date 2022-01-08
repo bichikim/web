@@ -6,5 +6,5 @@ import {User} from 'src/generated/type-graphql/models/User'
 })
 export class AuthUser extends User {
   @Field({description: 'jwt token'})
-  token: string
+    token: string
 }

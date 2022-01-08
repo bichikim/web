@@ -7,8 +7,8 @@ export const defaultAllActions = {
 }
 
 export enum Algorithm {
-  OR = 'OR',
   AND = 'AND',
+  OR = 'OR'
 }
 
 export interface IsMatchOptions<ActionNames extends string> {
