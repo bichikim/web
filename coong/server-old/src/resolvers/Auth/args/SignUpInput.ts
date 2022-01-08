@@ -7,5 +7,5 @@ export class SignUpInput extends SharedAuthInput {
   @Field({
     nullable: true,
   })
-  name: string
+    name: string
 }
