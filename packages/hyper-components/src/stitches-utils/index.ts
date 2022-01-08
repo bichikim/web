@@ -24,6 +24,16 @@ export const stitchesUtils = {
   fd: (value: any) => ({flexDirection: value}),
   grow: (value: any) => ({flexGrow: value}),
   jc: (value: any) => ({justifyContent: value}),
+  linearGradient: (value: any) => {
+    if (Array.isArray(value)) {
+      const [first = '#03a9f4', second = '#f441a5'] = value
+      return {
+        background: `linear-gradient(90deg, ${first}, ${second}, #ffeb3b, ${first})`,
+        backgroundSize: '400%',
+      }
+    }
+    return {}
+  },
   m: (value: any) => ({margin: value}),
   mb: (value: any) => ({marginBottom: value}),
   ml: (value: any) => ({marginLeft: value}),

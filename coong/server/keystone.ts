@@ -9,9 +9,11 @@ You can find all the config options in our docs here: https://keystonejs.com/doc
 */
 
 import {config} from '@keystone-6/core'
-import {mergeSchemas} from '@graphql-tools/schema'
-import {nexusSchema} from './exnted-schema'
-
+// import {mergeSchemas} from '@graphql-tools/schema'
+// import {nexusSchema} from './exnted-schema'
+const DEFAULT_PORT = 8080
+const {DB_URL} = process.env
+const PORT = process.env.PORT ?? DEFAULT_PORT
 // Look in the schema file for how we define our lists, and how users interact with them through graphql or the Admin UI
 import {lists} from './schema'
 
@@ -23,12 +25,11 @@ export default withAuth(
   config({
     // the db sets the database provider - we're using sqlite for the fastest startup experience
     db: {
-      provider: 'sqlite',
-      url: 'file:./keystone.db',
+      provider: 'postgresql',
+      url: DB_URL,
     },
 
-    extendGraphqlSchema: (keystoneSchema) => mergeSchemas({schemas: [keystoneSchema, nexusSchema as any]}),
-
+    // extendGraphqlSchema: (keystoneSchema) => mergeSchemas({schemas: [keystoneSchema, nexusSchema as any]}),
     images: {
       local: {
         baseUrl: '/images',
@@ -38,6 +39,10 @@ export default withAuth(
     },
 
     lists,
+
+    server: {
+      port: PORT,
+    },
 
     session,
     // This config allows us to set up features of the Admin UI https://keystonejs.com/docs/apis/config#ui

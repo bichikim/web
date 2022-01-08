@@ -39,7 +39,10 @@ const IndexPage = defineComponent({
     }
   },
   template: `
-    <q-page v-css="{width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center'}">
+    <q-page >
+    <div v-css="{width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center'}">
+      
+
     <video
       muted
       autoplay
@@ -114,6 +117,7 @@ const IndexPage = defineComponent({
           fontSize: '1rem',
         }"
       />
+    </div>
     </div>
     </q-page>
   `,

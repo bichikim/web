@@ -10,22 +10,14 @@
     "skipLibCheck": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
+    "forceConsistentCasingInFileNames": true,
     "strictPropertyInitialization": false,
-    "paths": {
-      "src/*": [
-        "src/*"
-      ]
-    },
     "lib": [
       "esnext",
       "esnext.asynciterable",
       "scripthost"
     ],
-    "plugins": [
-      { "transform": "@zerollup/ts-transform-paths" }
-    ],
     "allowJs": true,
-    // `baseUrl` must be placed on the extending configuration in devland, or paths won't be recognized
     "esModuleInterop": true,
 
     "moduleResolution": "node",
@@ -35,25 +27,14 @@
     "noImplicitAny": false,
     "importHelpers": true,
     // for 4.4.0
-    // "exactOptionalPropertyTypes": true,
+    "exactOptionalPropertyTypes": true,
     "allowSyntheticDefaultImports": true,
     "suppressImplicitAnyIndexErrors": true,
     "sourceMap": true,
-    "strict": true,
-  },
-  "ts-node": {
-    "compilerOptions": {
-      "target": "ES2015",
-      "module": "CommonJS"
-    }
+    "strict": true
   },
   "include": [
-    "src/**/*.ts",
-    "src/**/*.d.ts",
-    "src/**/*.tsx",
-    "src/**/*.vue",
-    "tests/**/*.ts",
-    "tests/**/*.tsx"
+    "**/*.ts"
   ],
   "exclude": [
     "node_modules"

@@ -34,6 +34,7 @@
     "strict": true,
   },
   "ts-node": {
+    "transpileOnly": true,
     "compilerOptions": {
       "target": "ES2015",
       "module": "CommonJS"

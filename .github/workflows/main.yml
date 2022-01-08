@@ -251,7 +251,9 @@ jobs:
         run: |
           touch coong/server/.env
           echo NODE_ENV=production >> coong/server/.env
-          echo DATABASE_URL=${{ secrets.DATABASE_URL }} >> coong/server/.env
+          echo DB_URL=${{ secrets.DB_URL }} >> coong/server/.env
+          echo SESSION_SECRET=${{ secrets.SESSION_SECRET }} >> coong/server/.env
+          echo EMAIL_API_KEY=${{ secrets.EMAIL_API_KEY }} >> coong/server/.env
 
       - name: Build
         run: |
@@ -312,7 +314,9 @@ jobs:
         run: |
           touch coong/server/.env
           echo NODE_ENV=development >> coong/server/.env
-          echo DATABASE_URL=${{ secrets.DATABASE_URL_DEV }} >> coong/server/.env
+          echo DB_URL=${{ secrets.DB_URL_DEV }} >> coong/server/.env
+          echo SESSION_SECRET=${{ secrets.SESSION_SECRET_DEV }} >> coong/server/.env
+          echo EMAIL_API_KEY=${{ secrets.EMAIL_API_KEY_DEV }} >> coong/server/.env
 
       - name: Build
         run: |

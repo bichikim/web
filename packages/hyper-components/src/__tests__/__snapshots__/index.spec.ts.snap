@@ -1,0 +1,160 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`hyper css linearGradient should has background 1`] = `<div class="c-hYQPJC c-hYQPJC-ikNMNba-css"></div>`;
+
+exports[`hyper css linearGradient should has background 2`] = `
+"--sxs{--sxs:2 c-hYQPJC}@media{.c-hYQPJC utils{align-items:value => {
+        var var(--_-c) = var(--_-wf)(1139);
+        return var(--_-w)(1139, 10, var(--_-c)), { alignItems: value };
+    };basis:value => {
+        var var(--_-c) = var(--_-wf)(1139);
+        return var(--_-w)(1139, 11, var(--_-c)), { basis: value };
+    };background-color:value => {
+        var var(--_-c) = var(--_-wf)(1139);
+        return var(--_-w)(1139, 12, var(--_-c)), { backgroundColor: value };
+    };background-color:#FFFFFF;color:#FFFFFF;background-color:#FFFFFF;color:#FFFFFF;display:value => {
+        var var(--_-c) = var(--_-wf)(1139);
+        return var(--_-w)(1139, 13, var(--_-c)), { display: value };
+    };flex-direction:value => {
+        var var(--_-c) = var(--_-wf)(1139);
+        return var(--_-w)(1139, 14, var(--_-c)), { flexDirection: value };
+    };flex-grow:value => {
+        var var(--_-c) = var(--_-wf)(1139);
+        return var(--_-w)(1139, 15, var(--_-c)), { flexGrow: value };
+    };justify-content:value => {
+        var var(--_-c) = var(--_-wf)(1139);
+        return var(--_-w)(1139, 16, var(--_-c)), { justifyContent: value };
+    };margin:value => {
+        var var(--_-c) = var(--_-wf)(1139);
+        return var(--_-w)(1139, 21, var(--_-c)), { margin: value };
+    };margin-bottom:value => {
+        var var(--_-c) = var(--_-wf)(1139);
+        return var(--_-w)(1139, 22, var(--_-c)), { marginBottom: value };
+    };margin-left:value => {
+        var var(--_-c) = var(--_-wf)(1139);
+        return var(--_-w)(1139, 23, var(--_-c)), { marginLeft: value };
+    };margin-right:value => {
+        var var(--_-c) = var(--_-wf)(1139);
+        return var(--_-w)(1139, 24, var(--_-c)), { marginRight: value };
+    };margin-top:value => {
+        var var(--_-c) = var(--_-wf)(1139);
+        return var(--_-w)(1139, 25, var(--_-c)), { marginTop: value };
+    };margin-left:value => {
+        var var(--_-c) = var(--_-wf)(1139);
+        return var(--_-w)(1139, 26, var(--_-c)), {
+            marginLeft: value,
+            marginRight: value
+        };
+    };margin-right:value => {
+        var var(--_-c) = var(--_-wf)(1139);
+        return var(--_-w)(1139, 26, var(--_-c)), {
+            marginLeft: value,
+            marginRight: value
+        };
+    };margin-bottom:value => {
+        var var(--_-c) = var(--_-wf)(1139);
+        return var(--_-w)(1139, 27, var(--_-c)), {
+            marginBottom: value,
+            marginTop: value
+        };
+    };margin-top:value => {
+        var var(--_-c) = var(--_-wf)(1139);
+        return var(--_-w)(1139, 27, var(--_-c)), {
+            marginBottom: value,
+            marginTop: value
+        };
+    };padding:value => {
+        var var(--_-c) = var(--_-wf)(1139);
+        return var(--_-w)(1139, 28, var(--_-c)), { padding: value };
+    };padding-bottom:value => {
+        var var(--_-c) = var(--_-wf)(1139);
+        return var(--_-w)(1139, 29, var(--_-c)), { paddingBottom: value };
+    };padding-left:value => {
+        var var(--_-c) = var(--_-wf)(1139);
+        return var(--_-w)(1139, 30, var(--_-c)), { paddingLeft: value };
+    };padding-right:value => {
+        var var(--_-c) = var(--_-wf)(1139);
+        return var(--_-w)(1139, 31, var(--_-c)), { paddingRight: value };
+    };padding-top:value => {
+        var var(--_-c) = var(--_-wf)(1139);
+        return var(--_-w)(1139, 32, var(--_-c)), { paddingTop: value };
+    };padding-left:value => {
+        var var(--_-c) = var(--_-wf)(1139);
+        return var(--_-w)(1139, 33, var(--_-c)), {
+            paddingLeft: value,
+            paddingRight: value
+        };
+    };padding-right:value => {
+        var var(--_-c) = var(--_-wf)(1139);
+        return var(--_-w)(1139, 33, var(--_-c)), {
+            paddingLeft: value,
+            paddingRight: value
+        };
+    };padding-bottom:value => {
+        var var(--_-c) = var(--_-wf)(1139);
+        return var(--_-w)(1139, 34, var(--_-c)), {
+            paddingBottom: value,
+            paddingTop: value
+        };
+    };padding-top:value => {
+        var var(--_-c) = var(--_-wf)(1139);
+        return var(--_-w)(1139, 34, var(--_-c)), {
+            paddingBottom: value,
+            paddingTop: value
+        };
+    };border-radius:value => {
+        var var(--_-c) = var(--_-wf)(1139);
+        return var(--_-w)(1139, 35, var(--_-c)), { borderRadius: value };
+    };border-bottom-left-radius:value => {
+        var var(--_-c) = var(--_-wf)(1139);
+        return var(--_-w)(1139, 36, var(--_-c)), {
+            borderBottomLeftRadius: value,
+            borderBottomRightRadius: value
+        };
+    };border-bottom-right-radius:value => {
+        var var(--_-c) = var(--_-wf)(1139);
+        return var(--_-w)(1139, 36, var(--_-c)), {
+            borderBottomLeftRadius: value,
+            borderBottomRightRadius: value
+        };
+    };border-bottom-radius:value => {
+        var var(--_-c) = var(--_-wf)(1139);
+        return var(--_-w)(1139, 37, var(--_-c)), { borderBottomRadius: value };
+    };border-bottom-right:value => {
+        var var(--_-c) = var(--_-wf)(1139);
+        return var(--_-w)(1139, 38, var(--_-c)), { borderBottomRight: value };
+    };border-top-left-radius:value => {
+        var var(--_-c) = var(--_-wf)(1139);
+        return var(--_-w)(1139, 39, var(--_-c)), {
+            borderTopLeftRadius: value,
+            borderTopRightRadius: value
+        };
+    };border-top-right-radius:value => {
+        var var(--_-c) = var(--_-wf)(1139);
+        return var(--_-w)(1139, 39, var(--_-c)), {
+            borderTopLeftRadius: value,
+            borderTopRightRadius: value
+        };
+    };border-bottom-left-radius:value => {
+        var var(--_-c) = var(--_-wf)(1139);
+        return var(--_-w)(1139, 40, var(--_-c)), { borderBottomLeftRadius: value };
+    };border-top-right-radius:value => {
+        var var(--_-c) = var(--_-wf)(1139);
+        return var(--_-w)(1139, 41, var(--_-c)), { borderTopRightRadius: value };
+    };flex-shrink:value => {
+        var var(--_-c) = var(--_-wf)(1139);
+        return var(--_-w)(1139, 42, var(--_-c)), { flexShrink: value };
+    };height:value => {
+        var var(--_-c) = var(--_-wf)(1139);
+        return var(--_-w)(1139, 43, var(--_-c)), {
+            height: value,
+            width: value
+        };
+    };width:value => {
+        var var(--_-c) = var(--_-wf)(1139);
+        return var(--_-w)(1139, 43, var(--_-c)), {
+            height: value,
+            width: value
+        };
+    }}}--sxs{--sxs:5 c-hYQPJC-ikNMNba-css}@media{.c-hYQPJC-ikNMNba-css{background:linear-gradient(90deg, #03a9f4, #f441a5, #ffeb3b, #03a9f4);background-size:400%}}"
+`;

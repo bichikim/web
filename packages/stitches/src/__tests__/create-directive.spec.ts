@@ -9,7 +9,7 @@ import {renderToString} from '@vue/server-renderer'
 describe('createDirective', () => {
   it('should create directive', async () => {
 
-    const {createDirective, toString} = createCreateDirective({
+    const {createDirective, getCssText} = createCreateDirective({
       media: {
         bp1: '(min-width: 640px)',
         bp2: '(min-width: 768px)',
@@ -26,7 +26,7 @@ describe('createDirective', () => {
      * value = [css, variants] or css
      * arg = string undefined
      */
-    const directive = createDirective({
+    const {directive} = createDirective({
       left: 0,
     })
 
@@ -42,12 +42,12 @@ describe('createDirective', () => {
 
     await renderToString(app)
 
-    expect(toString()).toMatchSnapshot()
+    expect(getCssText()).toMatchSnapshot()
 
     colorRef.value = 'green'
 
     await renderToString(app)
 
-    expect(toString()).toMatchSnapshot()
+    expect(getCssText()).toMatchSnapshot()
   })
 })

@@ -9,6 +9,7 @@
     "noEmit": true,
     "resolveJsonModule": true,
     "jsx": "preserve",
+    "declarationMap": true,
     "noImplicitAny": false,
     "importHelpers": true,
     "declaration": true,

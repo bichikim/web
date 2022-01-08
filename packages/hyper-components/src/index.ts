@@ -1,4 +1,3 @@
-import {Quasar, QuasarPluginOptions} from 'quasar'
 import {createStyled} from '@winter-love/stitches'
 import {CssComponent} from '@stitches/core/types/styled-component'
 import {inject, InjectionKey, Plugin} from 'vue'
@@ -27,15 +26,23 @@ export type stitchesOptions = Parameters<CreateStitches>[0]
 export type FunctionComposer = (...args) => any
 
 export interface CreateHyperComponentsOptions {
-  quasar?: QuasarPluginOptions
+  media?: Record<string, any>
   theme?: ConfigType.Theme
-  variants: Record<string, any>
+  utils?: Record<string, any>
+  variants?: Record<string, any>
 }
 
-export const createHyperComponents = (options: CreateHyperComponentsOptions) => {
-  const {theme, variants} = options
+export const createHyperComponents = (options: CreateHyperComponentsOptions = {}) => {
+  const {theme = {}, variants = {}, utils = {}, media = {}} = options
   const {createDirective, css, ...restStitches} = createStyled({
+    media: {
+      bp1: '(min-width: 640px)',
+      bp2: '(min-width: 768px)',
+      bp3: '(min-width: 1024px)',
+      ...media,
+    },
     theme,
+    utils: {...stitchesUtils, ...utils},
   })
 
   const {directive, system} = createDirective({
@@ -49,7 +56,6 @@ export const createHyperComponents = (options: CreateHyperComponentsOptions) => 
 
   const plugin: Plugin = (app) => {
     app.provide(SYSTEM_KEY, system)
-    app.use(Quasar)
     app.directive('css', directive)
   }
 

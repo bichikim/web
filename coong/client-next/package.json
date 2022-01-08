@@ -3,29 +3,15 @@
   "version": "1.0.23-alpha.13",
   "private": true,
   "scripts": {
-    "build": "pnpm run build:ssr && pnpm run build:run-ssr",
-    "build:run-ssr": "ttsc -p tsconfig.server.json ",
-    "build:spa": "vite build --outDir dist/spa",
-    "build:ssr": "cross-env MODE=ssr vite build",
-    "dev:android": "ionic cap run android -l --external",
-    "dev:ios": "ionic cap run ios -l --exrernal",
-    "dev:run-ssr": "ts-node run-ssr/index.ts",
-    "dev:spa": "nuxi dev --spa",
-    "dev:ssr": "nuxi dev",
-    "generator:favicon": "npx pwa-asset-generator",
-    "generator:graphql": "graphql-codegen",
-    "ionic:build": "vite  build --outDir dist/spa",
-    "ionic:serve": "vite --host --port 8100",
-    "start": "NODE_ENV=production node dist/run-ssr/index.js",
-    "start:spa": "vite preview --host --https",
-    "start:ssr": "cross-env NODE_ENV=production node dist/run-ssr/index.js",
-    "sync:android": "cap sync android",
-    "sync:ios": "cap sync ios"
+    "dev": "nuxi dev",
+    "build": "nuxi build"
   },
   "dependencies": {
-    "vue": "next"
+    "vue": "next",
+    "@winter-love/stitches": "^1.0.23-alpha.15"
   },
   "devDependencies": {
+    "patch-vue-directive-ssr": "^0.0.1",
     "nuxt3": "latest",
     "postcss": "^8.4.5",
     "rollup": "2"
