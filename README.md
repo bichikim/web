@@ -15,7 +15,6 @@
 
 ### @winter-love/use
 vue composition api hook 과 연관된 유틸리티 입니다.
-[vueuse](https://vueuse.org/) 와 달리 SSR 안정성이 보장 됩니다. 
 
 ### @winter-love/utils
 js 유틸리티 입니다.
@@ -61,7 +60,7 @@ pnpm run dev
 
 ### Lint the files
 ```bash
-yarn run lint
+pnpm run lint
 ```
 
 ### Build the app (coong.io) for production
