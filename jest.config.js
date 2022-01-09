@@ -27,10 +27,16 @@ module.exports = {
         'jest-serializer-vue',
         '@emotion/jest/serializer',
       ],
+      testEnvironment: '@happy-dom/jest-environment',
       testMatch: [
         '<rootDir>/packages/*/src/**/__tests__/*.spec.ts',
         '<rootDir>/coong/*/src/**/__tests__/*.spec.ts',
         '<rootDir>/scripts/__tests__/*.spec.ts',
+      ],
+      transformIgnorePatterns: ['/node_modules/'],
+      watchPlugins: [
+        require.resolve('jest-watch-typeahead/filename'),
+        require.resolve('jest-watch-typeahead/testname'),
       ],
     },
   ],
