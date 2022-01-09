@@ -1,4 +1,4 @@
-import urqlVue from '@urql/vue'
+import {createClient} from '@urql/vue'
 import {apiUrl} from 'src/environment'
 import {user} from 'src/store/user'
 import {Plugin} from 'vue'
@@ -8,19 +8,21 @@ const getToken = (): string | undefined => {
 }
 
 const getGraphqlApiUrl = () => {
-  return `${apiUrl()}/graphql`
+  return `${apiUrl()}/api/graphql`
 }
 
-export const urql: Plugin = (app) => {
-  app.use(urqlVue, {
-    fetchOptions: () => {
-      const token = getToken()
-      return {
-        headers: {authorization: token ? `Bearer ${token}` : ''},
-      }
-    },
-    url: getGraphqlApiUrl(),
-  })
+export const client = createClient({
+  fetchOptions: () => {
+    const token = getToken()
+    return {
+      headers: {authorization: token ? `Bearer ${token}` : ''},
+    }
+  },
+  url: getGraphqlApiUrl(),
+})
+
+const urql: Plugin = (app) => {
+  app.provide('$urql', client)
 }
 
 export default urql

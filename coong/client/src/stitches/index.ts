@@ -20,7 +20,7 @@ const {createDirective, styled, css, globalCss, keyframes, ...stitches} = create
 })
 
 export const createStitchesPlugin = (): {plugin: Plugin; stitches: any} => {
-  const directive = createDirective()
+  const {directive} = createDirective()
 
   return {
     plugin: (app) => {

@@ -53,6 +53,16 @@ export default defineConfig(() => {
       }) : undefined,
       vue({
         include: [/\.vue$/u],
+        template: {
+          compilerOptions: {
+            directiveTransforms: {
+              css: () => ({
+                needRuntime: true,
+                props: [],
+              }),
+            },
+          },
+        },
       }),
       // quasar() as any,
       vueJsx(),
