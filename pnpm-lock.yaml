@@ -186,6 +186,7 @@ importers:
       '@winter-love/stitches': ^1.0.23-alpha.16
       '@winter-love/utils': ^1.0.23-alpha.16
       '@zerollup/ts-transform-paths': ^1.7.18
+      compression: ^1.7.4
       cross-env: ^7.0.3
       csstype: ^3.0.9
       esbuild: 0.13.14
@@ -232,6 +233,7 @@ importers:
       '@winter-love/hyper-components': link:../../packages/hyper-components
       '@winter-love/stitches': link:../../packages/stitches
       '@winter-love/utils': link:../../packages/utils
+      compression: 1.7.4
       cross-env: 7.0.3
       express: 4.17.1
       graphql: 15.7.2
@@ -19267,7 +19269,7 @@ packages:
       lodash: 4.17.21
       pretty-error: 4.0.0
       tapable: 2.2.1
-      webpack: 5.64.1
+      webpack: 5.64.1_esbuild@0.13.14
     transitivePeerDependencies:
       - acorn
 

@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import express, {static as expressStatic} from 'express'
+import compression from 'compression'
 
 export interface StartServerOptions {
   distClient?: string
@@ -28,7 +29,7 @@ export const startServer = async (options: StartServerOptions) => {
   const app = express()
 
   const render: any = require(`${root}/${distServer}/${entry}.js`).default
-
+  app.use(compression())
   app.use(expressStatic(`${root}/${distClient}`, {index: false}))
 
   app.get('*', async (req, res, next) => {

@@ -40,6 +40,7 @@
     "@winter-love/utils": "^1.0.23-alpha.16",
     "cross-env": "^7.0.3",
     "express": "^4.17.1",
+    "compression": "^1.7.4",
     "graphql": "^15.6.1",
     "graphql-tag": "^2.12.6",
     "lodash": "^4.17.21",
