@@ -1,4 +1,4 @@
-schema: ../server/.schema.gql
+schema: ../server/schema.graphql
 documents:
   - "./src/**/*.graphql"
   - "./src/**/*.gql"
@@ -8,10 +8,11 @@ generates:
       - typescript
       - typescript-operations
       - typescript-vue-urql
+      - typescript-apollo-client-helpers
       - add:
           content:
             - "/* eslint-disable */"
             - "/* istanbul ignore file */"
-            - "// noinspection JSUnusedGlobalSymbols \n"
+            - "// noinspection JSUnusedGlobalSymbols ,JSUnnecessarySemicolon \n"
             - "import {DocumentNode} from 'graphql';"
             - "export type {DocumentNode};"

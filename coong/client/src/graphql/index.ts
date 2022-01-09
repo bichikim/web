@@ -1,10 +1,11 @@
 /* eslint-disable */
 /* istanbul ignore file */
-// noinspection JSUnusedGlobalSymbols 
+// noinspection JSUnusedGlobalSymbols ,JSUnnecessarySemicolon 
 
 import {DocumentNode} from 'graphql';
 import gql from 'graphql-tag';
 import * as Urql from '@urql/vue';
+import { FieldPolicy, FieldReadFunction, TypePolicies, TypePolicy } from '@apollo/client/cache';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
 export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
@@ -19,117 +20,237 @@ export type Scalars = {
   Boolean: boolean;
   Int: number;
   Float: number;
+  DateTime: any;
+  /** The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf). */
+  JSON: any;
+  /** The `Upload` scalar type represents a file upload. */
+  Upload: any;
 };
 
-export type AffectedRowsOutput = {
-  __typename?: 'AffectedRowsOutput';
-  count: Scalars['Int'];
+export type AuthenticatedItem = User;
+
+export type BooleanFilter = {
+  equals?: InputMaybe<Scalars['Boolean']>;
+  not?: InputMaybe<BooleanFilter>;
 };
 
-export type AggregatePost = {
-  __typename?: 'AggregatePost';
-  _count?: Maybe<PostCountAggregate>;
-  _max?: Maybe<PostMaxAggregate>;
-  _min?: Maybe<PostMinAggregate>;
+export type CloudImageFieldOutput = ImageFieldOutput & {
+  __typename?: 'CloudImageFieldOutput';
+  extension: ImageExtension;
+  filesize: Scalars['Int'];
+  height: Scalars['Int'];
+  id: Scalars['ID'];
+  ref: Scalars['String'];
+  url: Scalars['String'];
+  width: Scalars['Int'];
 };
 
-export type AggregateUser = {
-  __typename?: 'AggregateUser';
-  _count?: Maybe<UserCountAggregate>;
-  _max?: Maybe<UserMaxAggregate>;
-  _min?: Maybe<UserMinAggregate>;
+export type CreateInitialUserInput = {
+  email?: InputMaybe<Scalars['String']>;
+  name?: InputMaybe<Scalars['String']>;
+  password?: InputMaybe<Scalars['String']>;
 };
 
-/** user and auth token */
-export type AuthUser = {
-  __typename?: 'AuthUser';
-  _count?: Maybe<UserCount>;
-  email: Scalars['String'];
-  followerIDs: Array<Scalars['String']>;
-  followers: Array<User>;
-  following: Array<User>;
-  followingIDs: Array<Scalars['String']>;
-  id: Scalars['String'];
-  likePostIDs: Array<Scalars['String']>;
-  likePosts: Array<Post>;
-  name?: Maybe<Scalars['String']>;
-  posts: Array<Post>;
-  /** jwt token */
-  token: Scalars['String'];
+export type DateTimeNullableFilter = {
+  equals?: InputMaybe<Scalars['DateTime']>;
+  gt?: InputMaybe<Scalars['DateTime']>;
+  gte?: InputMaybe<Scalars['DateTime']>;
+  in?: InputMaybe<Array<Scalars['DateTime']>>;
+  lt?: InputMaybe<Scalars['DateTime']>;
+  lte?: InputMaybe<Scalars['DateTime']>;
+  not?: InputMaybe<DateTimeNullableFilter>;
+  notIn?: InputMaybe<Array<Scalars['DateTime']>>;
+};
+
+export type IdFilter = {
+  equals?: InputMaybe<Scalars['ID']>;
+  gt?: InputMaybe<Scalars['ID']>;
+  gte?: InputMaybe<Scalars['ID']>;
+  in?: InputMaybe<Array<Scalars['ID']>>;
+  lt?: InputMaybe<Scalars['ID']>;
+  lte?: InputMaybe<Scalars['ID']>;
+  not?: InputMaybe<IdFilter>;
+  notIn?: InputMaybe<Array<Scalars['ID']>>;
+};
+
+export enum ImageExtension {
+  Gif = 'gif',
+  Jpg = 'jpg',
+  Png = 'png',
+  Webp = 'webp'
+}
+
+export type ImageFieldInput = {
+  ref?: InputMaybe<Scalars['String']>;
+  upload?: InputMaybe<Scalars['Upload']>;
+};
+
+export type ImageFieldOutput = {
+  extension: ImageExtension;
+  filesize: Scalars['Int'];
+  height: Scalars['Int'];
+  id: Scalars['ID'];
+  ref: Scalars['String'];
+  url: Scalars['String'];
+  width: Scalars['Int'];
+};
+
+export type KeystoneAdminMeta = {
+  __typename?: 'KeystoneAdminMeta';
+  enableSessionItem: Scalars['Boolean'];
+  enableSignout: Scalars['Boolean'];
+  list?: Maybe<KeystoneAdminUiListMeta>;
+  lists: Array<KeystoneAdminUiListMeta>;
 };
 
 
-/** user and auth token */
-export type AuthUserFollowersArgs = {
-  cursor?: InputMaybe<UserWhereUniqueInput>;
-  distinct?: InputMaybe<Array<UserScalarFieldEnum>>;
-  orderBy?: InputMaybe<Array<UserOrderByWithRelationInput>>;
-  skip?: InputMaybe<Scalars['Int']>;
-  take?: InputMaybe<Scalars['Int']>;
-  where?: InputMaybe<UserWhereInput>;
+export type KeystoneAdminMetaListArgs = {
+  key: Scalars['String'];
+};
+
+export type KeystoneAdminUiFieldMeta = {
+  __typename?: 'KeystoneAdminUIFieldMeta';
+  createView: KeystoneAdminUiFieldMetaCreateView;
+  customViewsIndex?: Maybe<Scalars['Int']>;
+  fieldMeta?: Maybe<Scalars['JSON']>;
+  isFilterable: Scalars['Boolean'];
+  isOrderable: Scalars['Boolean'];
+  itemView?: Maybe<KeystoneAdminUiFieldMetaItemView>;
+  label: Scalars['String'];
+  listView: KeystoneAdminUiFieldMetaListView;
+  path: Scalars['String'];
+  search?: Maybe<QueryMode>;
+  viewsIndex: Scalars['Int'];
 };
 
 
-/** user and auth token */
-export type AuthUserFollowingArgs = {
-  cursor?: InputMaybe<UserWhereUniqueInput>;
-  distinct?: InputMaybe<Array<UserScalarFieldEnum>>;
-  orderBy?: InputMaybe<Array<UserOrderByWithRelationInput>>;
-  skip?: InputMaybe<Scalars['Int']>;
-  take?: InputMaybe<Scalars['Int']>;
-  where?: InputMaybe<UserWhereInput>;
+export type KeystoneAdminUiFieldMetaItemViewArgs = {
+  id?: InputMaybe<Scalars['ID']>;
 };
 
-
-/** user and auth token */
-export type AuthUserLikePostsArgs = {
-  cursor?: InputMaybe<PostWhereUniqueInput>;
-  distinct?: InputMaybe<Array<PostScalarFieldEnum>>;
-  orderBy?: InputMaybe<Array<PostOrderByWithRelationInput>>;
-  skip?: InputMaybe<Scalars['Int']>;
-  take?: InputMaybe<Scalars['Int']>;
-  where?: InputMaybe<PostWhereInput>;
+export type KeystoneAdminUiFieldMetaCreateView = {
+  __typename?: 'KeystoneAdminUIFieldMetaCreateView';
+  fieldMode: KeystoneAdminUiFieldMetaCreateViewFieldMode;
 };
 
+export enum KeystoneAdminUiFieldMetaCreateViewFieldMode {
+  Edit = 'edit',
+  Hidden = 'hidden'
+}
 
-/** user and auth token */
-export type AuthUserPostsArgs = {
-  cursor?: InputMaybe<PostWhereUniqueInput>;
-  distinct?: InputMaybe<Array<PostScalarFieldEnum>>;
-  orderBy?: InputMaybe<Array<PostOrderByWithRelationInput>>;
-  skip?: InputMaybe<Scalars['Int']>;
-  take?: InputMaybe<Scalars['Int']>;
-  where?: InputMaybe<PostWhereInput>;
+export type KeystoneAdminUiFieldMetaItemView = {
+  __typename?: 'KeystoneAdminUIFieldMetaItemView';
+  fieldMode?: Maybe<KeystoneAdminUiFieldMetaItemViewFieldMode>;
 };
+
+export enum KeystoneAdminUiFieldMetaItemViewFieldMode {
+  Edit = 'edit',
+  Hidden = 'hidden',
+  Read = 'read'
+}
+
+export type KeystoneAdminUiFieldMetaListView = {
+  __typename?: 'KeystoneAdminUIFieldMetaListView';
+  fieldMode: KeystoneAdminUiFieldMetaListViewFieldMode;
+};
+
+export enum KeystoneAdminUiFieldMetaListViewFieldMode {
+  Hidden = 'hidden',
+  Read = 'read'
+}
+
+export type KeystoneAdminUiListMeta = {
+  __typename?: 'KeystoneAdminUIListMeta';
+  description?: Maybe<Scalars['String']>;
+  fields: Array<KeystoneAdminUiFieldMeta>;
+  hideCreate: Scalars['Boolean'];
+  hideDelete: Scalars['Boolean'];
+  initialColumns: Array<Scalars['String']>;
+  initialSort?: Maybe<KeystoneAdminUiSort>;
+  isHidden: Scalars['Boolean'];
+  itemQueryName: Scalars['String'];
+  key: Scalars['String'];
+  label: Scalars['String'];
+  labelField: Scalars['String'];
+  listQueryName: Scalars['String'];
+  pageSize: Scalars['Int'];
+  path: Scalars['String'];
+  plural: Scalars['String'];
+  singular: Scalars['String'];
+};
+
+export type KeystoneAdminUiSort = {
+  __typename?: 'KeystoneAdminUISort';
+  direction: KeystoneAdminUiSortDirection;
+  field: Scalars['String'];
+};
+
+export enum KeystoneAdminUiSortDirection {
+  Asc = 'ASC',
+  Desc = 'DESC'
+}
+
+export type KeystoneMeta = {
+  __typename?: 'KeystoneMeta';
+  adminMeta: KeystoneAdminMeta;
+};
+
+export type LocalImageFieldOutput = ImageFieldOutput & {
+  __typename?: 'LocalImageFieldOutput';
+  extension: ImageExtension;
+  filesize: Scalars['Int'];
+  height: Scalars['Int'];
+  id: Scalars['ID'];
+  ref: Scalars['String'];
+  url: Scalars['String'];
+  width: Scalars['Int'];
+};
+
+export enum MagicLinkRedemptionErrorCode {
+  Failure = 'FAILURE',
+  TokenExpired = 'TOKEN_EXPIRED',
+  TokenRedeemed = 'TOKEN_REDEEMED'
+}
 
 export type Mutation = {
   __typename?: 'Mutation';
-  createManyPost: AffectedRowsOutput;
-  createManyUser: AffectedRowsOutput;
-  createPost: Post;
-  createUser: User;
-  deleteManyPost: AffectedRowsOutput;
-  deleteManyUser: AffectedRowsOutput;
+  authenticateUserWithPassword?: Maybe<UserAuthenticationWithPasswordResult>;
+  createInitialUser: UserAuthenticationWithPasswordSuccess;
+  createPost?: Maybe<Post>;
+  createPosts?: Maybe<Array<Maybe<Post>>>;
+  createTag?: Maybe<Tag>;
+  createTags?: Maybe<Array<Maybe<Tag>>>;
+  createUser?: Maybe<User>;
+  createUsers?: Maybe<Array<Maybe<User>>>;
   deletePost?: Maybe<Post>;
+  deletePosts?: Maybe<Array<Maybe<Post>>>;
+  deleteTag?: Maybe<Tag>;
+  deleteTags?: Maybe<Array<Maybe<Tag>>>;
   deleteUser?: Maybe<User>;
-  signIn?: Maybe<AuthUser>;
-  signUp?: Maybe<AuthUser>;
-  updateManyPost: AffectedRowsOutput;
-  updateManyUser: AffectedRowsOutput;
+  deleteUsers?: Maybe<Array<Maybe<User>>>;
+  endSession: Scalars['Boolean'];
+  redeemUserMagicAuthToken: RedeemUserMagicAuthTokenResult;
+  redeemUserPasswordResetToken?: Maybe<RedeemUserPasswordResetTokenResult>;
+  sendUserMagicAuthLink: Scalars['Boolean'];
+  sendUserPasswordResetLink: Scalars['Boolean'];
+  signUp?: Maybe<SignUpResult>;
   updatePost?: Maybe<Post>;
+  updatePosts?: Maybe<Array<Maybe<Post>>>;
+  updateTag?: Maybe<Tag>;
+  updateTags?: Maybe<Array<Maybe<Tag>>>;
   updateUser?: Maybe<User>;
-  upsertPost: Post;
-  upsertUser: User;
+  updateUsers?: Maybe<Array<Maybe<User>>>;
 };
 
 
-export type MutationCreateManyPostArgs = {
-  data: Array<PostCreateManyInput>;
+export type MutationAuthenticateUserWithPasswordArgs = {
+  email: Scalars['String'];
+  password: Scalars['String'];
 };
 
 
-export type MutationCreateManyUserArgs = {
-  data: Array<UserCreateManyInput>;
+export type MutationCreateInitialUserArgs = {
+  data: CreateInitialUserInput;
 };
 
 
@@ -138,18 +259,28 @@ export type MutationCreatePostArgs = {
 };
 
 
+export type MutationCreatePostsArgs = {
+  data: Array<PostCreateInput>;
+};
+
+
+export type MutationCreateTagArgs = {
+  data: TagCreateInput;
+};
+
+
+export type MutationCreateTagsArgs = {
+  data: Array<TagCreateInput>;
+};
+
+
 export type MutationCreateUserArgs = {
   data: UserCreateInput;
 };
 
 
-export type MutationDeleteManyPostArgs = {
-  where?: InputMaybe<PostWhereInput>;
-};
-
-
-export type MutationDeleteManyUserArgs = {
-  where?: InputMaybe<UserWhereInput>;
+export type MutationCreateUsersArgs = {
+  data: Array<UserCreateInput>;
 };
 
 
@@ -158,30 +289,56 @@ export type MutationDeletePostArgs = {
 };
 
 
+export type MutationDeletePostsArgs = {
+  where: Array<PostWhereUniqueInput>;
+};
+
+
+export type MutationDeleteTagArgs = {
+  where: TagWhereUniqueInput;
+};
+
+
+export type MutationDeleteTagsArgs = {
+  where: Array<TagWhereUniqueInput>;
+};
+
+
 export type MutationDeleteUserArgs = {
   where: UserWhereUniqueInput;
 };
 
 
-export type MutationSignInArgs = {
-  data: SignInInput;
+export type MutationDeleteUsersArgs = {
+  where: Array<UserWhereUniqueInput>;
+};
+
+
+export type MutationRedeemUserMagicAuthTokenArgs = {
+  email: Scalars['String'];
+  token: Scalars['String'];
+};
+
+
+export type MutationRedeemUserPasswordResetTokenArgs = {
+  email: Scalars['String'];
+  password: Scalars['String'];
+  token: Scalars['String'];
+};
+
+
+export type MutationSendUserMagicAuthLinkArgs = {
+  email: Scalars['String'];
+};
+
+
+export type MutationSendUserPasswordResetLinkArgs = {
+  email: Scalars['String'];
 };
 
 
 export type MutationSignUpArgs = {
-  data: SignUpInput;
-};
-
-
-export type MutationUpdateManyPostArgs = {
-  data: PostUpdateManyMutationInput;
-  where?: InputMaybe<PostWhereInput>;
-};
-
-
-export type MutationUpdateManyUserArgs = {
-  data: UserUpdateManyMutationInput;
-  where?: InputMaybe<UserWhereInput>;
+  input: SignUpInput;
 };
 
 
@@ -191,45 +348,30 @@ export type MutationUpdatePostArgs = {
 };
 
 
+export type MutationUpdatePostsArgs = {
+  data: Array<PostUpdateArgs>;
+};
+
+
+export type MutationUpdateTagArgs = {
+  data: TagUpdateInput;
+  where: TagWhereUniqueInput;
+};
+
+
+export type MutationUpdateTagsArgs = {
+  data: Array<TagUpdateArgs>;
+};
+
+
 export type MutationUpdateUserArgs = {
   data: UserUpdateInput;
   where: UserWhereUniqueInput;
 };
 
 
-export type MutationUpsertPostArgs = {
-  create: PostCreateInput;
-  update: PostUpdateInput;
-  where: PostWhereUniqueInput;
-};
-
-
-export type MutationUpsertUserArgs = {
-  create: UserCreateInput;
-  update: UserUpdateInput;
-  where: UserWhereUniqueInput;
-};
-
-export type NestedIntFilter = {
-  equals?: InputMaybe<Scalars['Int']>;
-  gt?: InputMaybe<Scalars['Int']>;
-  gte?: InputMaybe<Scalars['Int']>;
-  in?: InputMaybe<Array<Scalars['Int']>>;
-  lt?: InputMaybe<Scalars['Int']>;
-  lte?: InputMaybe<Scalars['Int']>;
-  not?: InputMaybe<NestedIntFilter>;
-  notIn?: InputMaybe<Array<Scalars['Int']>>;
-};
-
-export type NestedIntNullableFilter = {
-  equals?: InputMaybe<Scalars['Int']>;
-  gt?: InputMaybe<Scalars['Int']>;
-  gte?: InputMaybe<Scalars['Int']>;
-  in?: InputMaybe<Array<Scalars['Int']>>;
-  lt?: InputMaybe<Scalars['Int']>;
-  lte?: InputMaybe<Scalars['Int']>;
-  not?: InputMaybe<NestedIntNullableFilter>;
-  notIn?: InputMaybe<Array<Scalars['Int']>>;
+export type MutationUpdateUsersArgs = {
+  data: Array<UserUpdateArgs>;
 };
 
 export type NestedStringFilter = {
@@ -260,424 +402,194 @@ export type NestedStringNullableFilter = {
   startsWith?: InputMaybe<Scalars['String']>;
 };
 
-export type NestedStringNullableWithAggregatesFilter = {
-  _count?: InputMaybe<NestedIntNullableFilter>;
-  _max?: InputMaybe<NestedStringNullableFilter>;
-  _min?: InputMaybe<NestedStringNullableFilter>;
-  contains?: InputMaybe<Scalars['String']>;
-  endsWith?: InputMaybe<Scalars['String']>;
-  equals?: InputMaybe<Scalars['String']>;
-  gt?: InputMaybe<Scalars['String']>;
-  gte?: InputMaybe<Scalars['String']>;
-  in?: InputMaybe<Array<Scalars['String']>>;
-  lt?: InputMaybe<Scalars['String']>;
-  lte?: InputMaybe<Scalars['String']>;
-  not?: InputMaybe<NestedStringNullableWithAggregatesFilter>;
-  notIn?: InputMaybe<Array<Scalars['String']>>;
-  startsWith?: InputMaybe<Scalars['String']>;
+export enum OrderDirection {
+  Asc = 'asc',
+  Desc = 'desc'
+}
+
+export type PasswordFilter = {
+  isSet: Scalars['Boolean'];
 };
 
-export type NestedStringWithAggregatesFilter = {
-  _count?: InputMaybe<NestedIntFilter>;
-  _max?: InputMaybe<NestedStringFilter>;
-  _min?: InputMaybe<NestedStringFilter>;
-  contains?: InputMaybe<Scalars['String']>;
-  endsWith?: InputMaybe<Scalars['String']>;
-  equals?: InputMaybe<Scalars['String']>;
-  gt?: InputMaybe<Scalars['String']>;
-  gte?: InputMaybe<Scalars['String']>;
-  in?: InputMaybe<Array<Scalars['String']>>;
-  lt?: InputMaybe<Scalars['String']>;
-  lte?: InputMaybe<Scalars['String']>;
-  not?: InputMaybe<NestedStringWithAggregatesFilter>;
-  notIn?: InputMaybe<Array<Scalars['String']>>;
-  startsWith?: InputMaybe<Scalars['String']>;
-};
+export enum PasswordResetRedemptionErrorCode {
+  Failure = 'FAILURE',
+  TokenExpired = 'TOKEN_EXPIRED',
+  TokenRedeemed = 'TOKEN_REDEEMED'
+}
 
-export type NullableStringFieldUpdateOperationsInput = {
-  set?: InputMaybe<Scalars['String']>;
+export type PasswordState = {
+  __typename?: 'PasswordState';
+  isSet: Scalars['Boolean'];
 };
 
 export type Post = {
   __typename?: 'Post';
-  _count?: Maybe<PostCount>;
   author?: Maybe<User>;
-  authorId: Scalars['String'];
-  id: Scalars['String'];
-  likeIDs: Array<Scalars['String']>;
-  likes: Array<User>;
-  title: Scalars['String'];
+  children?: Maybe<Array<Post>>;
+  childrenCount?: Maybe<Scalars['Int']>;
+  content?: Maybe<Post_Content_Document>;
+  id: Scalars['ID'];
+  likes?: Maybe<Array<User>>;
+  likesCount?: Maybe<Scalars['Int']>;
+  parent?: Maybe<Post>;
+  publishDate?: Maybe<Scalars['DateTime']>;
+  status?: Maybe<Scalars['String']>;
+  tags?: Maybe<Array<Tag>>;
+  tagsCount?: Maybe<Scalars['Int']>;
+  thumbnail?: Maybe<ImageFieldOutput>;
+  title?: Maybe<Scalars['String']>;
+};
+
+
+export type PostChildrenArgs = {
+  orderBy?: Array<PostOrderByInput>;
+  skip?: Scalars['Int'];
+  take?: InputMaybe<Scalars['Int']>;
+  where?: PostWhereInput;
+};
+
+
+export type PostChildrenCountArgs = {
+  where?: PostWhereInput;
 };
 
 
 export type PostLikesArgs = {
-  cursor?: InputMaybe<UserWhereUniqueInput>;
-  distinct?: InputMaybe<Array<UserScalarFieldEnum>>;
-  orderBy?: InputMaybe<Array<UserOrderByWithRelationInput>>;
-  skip?: InputMaybe<Scalars['Int']>;
+  orderBy?: Array<UserOrderByInput>;
+  skip?: Scalars['Int'];
   take?: InputMaybe<Scalars['Int']>;
-  where?: InputMaybe<UserWhereInput>;
+  where?: UserWhereInput;
 };
 
-export type PostCount = {
-  __typename?: 'PostCount';
-  likes: Scalars['Int'];
+
+export type PostLikesCountArgs = {
+  where?: UserWhereInput;
 };
 
-export type PostCountAggregate = {
-  __typename?: 'PostCountAggregate';
-  _all: Scalars['Int'];
-  authorId: Scalars['Int'];
-  id: Scalars['Int'];
-  likeIDs: Scalars['Int'];
-  title: Scalars['Int'];
+
+export type PostTagsArgs = {
+  orderBy?: Array<TagOrderByInput>;
+  skip?: Scalars['Int'];
+  take?: InputMaybe<Scalars['Int']>;
+  where?: TagWhereInput;
 };
 
-export type PostCountOrderByAggregateInput = {
-  authorId?: InputMaybe<SortOrder>;
-  id?: InputMaybe<SortOrder>;
-  likeIDs?: InputMaybe<SortOrder>;
-  title?: InputMaybe<SortOrder>;
+
+export type PostTagsCountArgs = {
+  where?: TagWhereInput;
 };
 
 export type PostCreateInput = {
-  author?: InputMaybe<UserCreateNestedOneWithoutPostsInput>;
-  id?: InputMaybe<Scalars['String']>;
-  likeIDs?: InputMaybe<PostCreatelikeIDsInput>;
-  likes?: InputMaybe<UserCreateNestedManyWithoutLikePostsInput>;
-  title: Scalars['String'];
+  author?: InputMaybe<UserRelateToOneForCreateInput>;
+  children?: InputMaybe<PostRelateToManyForCreateInput>;
+  content?: InputMaybe<Scalars['JSON']>;
+  likes?: InputMaybe<UserRelateToManyForCreateInput>;
+  parent?: InputMaybe<PostRelateToOneForCreateInput>;
+  publishDate?: InputMaybe<Scalars['DateTime']>;
+  status?: InputMaybe<Scalars['String']>;
+  tags?: InputMaybe<TagRelateToManyForCreateInput>;
+  thumbnail?: InputMaybe<ImageFieldInput>;
+  title?: InputMaybe<Scalars['String']>;
 };
 
-export type PostCreateManyAuthorInput = {
-  id?: InputMaybe<Scalars['String']>;
-  likeIDs?: InputMaybe<PostCreateManylikeIDsInput>;
-  title: Scalars['String'];
-};
-
-export type PostCreateManyAuthorInputEnvelope = {
-  data: Array<PostCreateManyAuthorInput>;
-};
-
-export type PostCreateManyInput = {
-  authorId: Scalars['String'];
-  id?: InputMaybe<Scalars['String']>;
-  likeIDs?: InputMaybe<PostCreateManylikeIDsInput>;
-  title: Scalars['String'];
-};
-
-export type PostCreateManylikeIDsInput = {
-  set: Array<Scalars['String']>;
-};
-
-export type PostCreateNestedManyWithoutAuthorInput = {
-  connect?: InputMaybe<Array<PostWhereUniqueInput>>;
-  connectOrCreate?: InputMaybe<Array<PostCreateOrConnectWithoutAuthorInput>>;
-  create?: InputMaybe<Array<PostCreateWithoutAuthorInput>>;
-  createMany?: InputMaybe<PostCreateManyAuthorInputEnvelope>;
-};
-
-export type PostCreateNestedManyWithoutLikesInput = {
-  connect?: InputMaybe<Array<PostWhereUniqueInput>>;
-  connectOrCreate?: InputMaybe<Array<PostCreateOrConnectWithoutLikesInput>>;
-  create?: InputMaybe<Array<PostCreateWithoutLikesInput>>;
-};
-
-export type PostCreateOrConnectWithoutAuthorInput = {
-  create: PostCreateWithoutAuthorInput;
-  where: PostWhereUniqueInput;
-};
-
-export type PostCreateOrConnectWithoutLikesInput = {
-  create: PostCreateWithoutLikesInput;
-  where: PostWhereUniqueInput;
-};
-
-export type PostCreateWithoutAuthorInput = {
-  id?: InputMaybe<Scalars['String']>;
-  likeIDs?: InputMaybe<PostCreatelikeIDsInput>;
-  likes?: InputMaybe<UserCreateNestedManyWithoutLikePostsInput>;
-  title: Scalars['String'];
-};
-
-export type PostCreateWithoutLikesInput = {
-  author?: InputMaybe<UserCreateNestedOneWithoutPostsInput>;
-  id?: InputMaybe<Scalars['String']>;
-  likeIDs?: InputMaybe<PostCreatelikeIDsInput>;
-  title: Scalars['String'];
-};
-
-export type PostCreatelikeIDsInput = {
-  set: Array<Scalars['String']>;
-};
-
-export type PostGroupBy = {
-  __typename?: 'PostGroupBy';
-  _count?: Maybe<PostCountAggregate>;
-  _max?: Maybe<PostMaxAggregate>;
-  _min?: Maybe<PostMinAggregate>;
-  authorId: Scalars['String'];
-  id: Scalars['String'];
-  likeIDs?: Maybe<Array<Scalars['String']>>;
-  title: Scalars['String'];
-};
-
-export type PostListRelationFilter = {
+export type PostManyRelationFilter = {
   every?: InputMaybe<PostWhereInput>;
   none?: InputMaybe<PostWhereInput>;
   some?: InputMaybe<PostWhereInput>;
 };
 
-export type PostMaxAggregate = {
-  __typename?: 'PostMaxAggregate';
-  authorId?: Maybe<Scalars['String']>;
-  id?: Maybe<Scalars['String']>;
-  title?: Maybe<Scalars['String']>;
+export type PostOrderByInput = {
+  id?: InputMaybe<OrderDirection>;
+  publishDate?: InputMaybe<OrderDirection>;
+  status?: InputMaybe<OrderDirection>;
+  title?: InputMaybe<OrderDirection>;
 };
 
-export type PostMaxOrderByAggregateInput = {
-  authorId?: InputMaybe<SortOrder>;
-  id?: InputMaybe<SortOrder>;
-  title?: InputMaybe<SortOrder>;
+export type PostRelateToManyForCreateInput = {
+  connect?: InputMaybe<Array<PostWhereUniqueInput>>;
+  create?: InputMaybe<Array<PostCreateInput>>;
 };
 
-export type PostMinAggregate = {
-  __typename?: 'PostMinAggregate';
-  authorId?: Maybe<Scalars['String']>;
-  id?: Maybe<Scalars['String']>;
-  title?: Maybe<Scalars['String']>;
+export type PostRelateToManyForUpdateInput = {
+  connect?: InputMaybe<Array<PostWhereUniqueInput>>;
+  create?: InputMaybe<Array<PostCreateInput>>;
+  disconnect?: InputMaybe<Array<PostWhereUniqueInput>>;
+  set?: InputMaybe<Array<PostWhereUniqueInput>>;
 };
 
-export type PostMinOrderByAggregateInput = {
-  authorId?: InputMaybe<SortOrder>;
-  id?: InputMaybe<SortOrder>;
-  title?: InputMaybe<SortOrder>;
+export type PostRelateToOneForCreateInput = {
+  connect?: InputMaybe<PostWhereUniqueInput>;
+  create?: InputMaybe<PostCreateInput>;
 };
 
-export type PostOrderByRelationAggregateInput = {
-  _count?: InputMaybe<SortOrder>;
+export type PostRelateToOneForUpdateInput = {
+  connect?: InputMaybe<PostWhereUniqueInput>;
+  create?: InputMaybe<PostCreateInput>;
+  disconnect?: InputMaybe<Scalars['Boolean']>;
 };
 
-export type PostOrderByWithAggregationInput = {
-  _count?: InputMaybe<PostCountOrderByAggregateInput>;
-  _max?: InputMaybe<PostMaxOrderByAggregateInput>;
-  _min?: InputMaybe<PostMinOrderByAggregateInput>;
-  authorId?: InputMaybe<SortOrder>;
-  id?: InputMaybe<SortOrder>;
-  likeIDs?: InputMaybe<SortOrder>;
-  title?: InputMaybe<SortOrder>;
-};
-
-export type PostOrderByWithRelationInput = {
-  author?: InputMaybe<UserOrderByWithRelationInput>;
-  authorId?: InputMaybe<SortOrder>;
-  id?: InputMaybe<SortOrder>;
-  likeIDs?: InputMaybe<SortOrder>;
-  likes?: InputMaybe<UserOrderByRelationAggregateInput>;
-  title?: InputMaybe<SortOrder>;
-};
-
-export enum PostScalarFieldEnum {
-  AuthorId = 'authorId',
-  Id = 'id',
-  LikeIDs = 'likeIDs',
-  Title = 'title'
-}
-
-export type PostScalarWhereInput = {
-  AND?: InputMaybe<Array<PostScalarWhereInput>>;
-  NOT?: InputMaybe<Array<PostScalarWhereInput>>;
-  OR?: InputMaybe<Array<PostScalarWhereInput>>;
-  authorId?: InputMaybe<StringFilter>;
-  id?: InputMaybe<StringFilter>;
-  likeIDs?: InputMaybe<StringNullableListFilter>;
-  title?: InputMaybe<StringFilter>;
-};
-
-export type PostScalarWhereWithAggregatesInput = {
-  AND?: InputMaybe<Array<PostScalarWhereWithAggregatesInput>>;
-  NOT?: InputMaybe<Array<PostScalarWhereWithAggregatesInput>>;
-  OR?: InputMaybe<Array<PostScalarWhereWithAggregatesInput>>;
-  authorId?: InputMaybe<StringWithAggregatesFilter>;
-  id?: InputMaybe<StringWithAggregatesFilter>;
-  likeIDs?: InputMaybe<StringNullableListFilter>;
-  title?: InputMaybe<StringWithAggregatesFilter>;
+export type PostUpdateArgs = {
+  data: PostUpdateInput;
+  where: PostWhereUniqueInput;
 };
 
 export type PostUpdateInput = {
-  author?: InputMaybe<UserUpdateOneWithoutPostsInput>;
-  likeIDs?: InputMaybe<PostUpdatelikeIDsInput>;
-  likes?: InputMaybe<UserUpdateManyWithoutLikePostsInput>;
-  title?: InputMaybe<StringFieldUpdateOperationsInput>;
-};
-
-export type PostUpdateManyMutationInput = {
-  likeIDs?: InputMaybe<PostUpdatelikeIDsInput>;
-  title?: InputMaybe<StringFieldUpdateOperationsInput>;
-};
-
-export type PostUpdateManyWithWhereWithoutAuthorInput = {
-  data: PostUpdateManyMutationInput;
-  where: PostScalarWhereInput;
-};
-
-export type PostUpdateManyWithWhereWithoutLikesInput = {
-  data: PostUpdateManyMutationInput;
-  where: PostScalarWhereInput;
-};
-
-export type PostUpdateManyWithoutAuthorInput = {
-  connect?: InputMaybe<Array<PostWhereUniqueInput>>;
-  connectOrCreate?: InputMaybe<Array<PostCreateOrConnectWithoutAuthorInput>>;
-  create?: InputMaybe<Array<PostCreateWithoutAuthorInput>>;
-  createMany?: InputMaybe<PostCreateManyAuthorInputEnvelope>;
-  delete?: InputMaybe<Array<PostWhereUniqueInput>>;
-  deleteMany?: InputMaybe<Array<PostScalarWhereInput>>;
-  disconnect?: InputMaybe<Array<PostWhereUniqueInput>>;
-  set?: InputMaybe<Array<PostWhereUniqueInput>>;
-  update?: InputMaybe<Array<PostUpdateWithWhereUniqueWithoutAuthorInput>>;
-  updateMany?: InputMaybe<Array<PostUpdateManyWithWhereWithoutAuthorInput>>;
-  upsert?: InputMaybe<Array<PostUpsertWithWhereUniqueWithoutAuthorInput>>;
-};
-
-export type PostUpdateManyWithoutLikesInput = {
-  connect?: InputMaybe<Array<PostWhereUniqueInput>>;
-  connectOrCreate?: InputMaybe<Array<PostCreateOrConnectWithoutLikesInput>>;
-  create?: InputMaybe<Array<PostCreateWithoutLikesInput>>;
-  delete?: InputMaybe<Array<PostWhereUniqueInput>>;
-  deleteMany?: InputMaybe<Array<PostScalarWhereInput>>;
-  disconnect?: InputMaybe<Array<PostWhereUniqueInput>>;
-  set?: InputMaybe<Array<PostWhereUniqueInput>>;
-  update?: InputMaybe<Array<PostUpdateWithWhereUniqueWithoutLikesInput>>;
-  updateMany?: InputMaybe<Array<PostUpdateManyWithWhereWithoutLikesInput>>;
-  upsert?: InputMaybe<Array<PostUpsertWithWhereUniqueWithoutLikesInput>>;
-};
-
-export type PostUpdateWithWhereUniqueWithoutAuthorInput = {
-  data: PostUpdateWithoutAuthorInput;
-  where: PostWhereUniqueInput;
-};
-
-export type PostUpdateWithWhereUniqueWithoutLikesInput = {
-  data: PostUpdateWithoutLikesInput;
-  where: PostWhereUniqueInput;
-};
-
-export type PostUpdateWithoutAuthorInput = {
-  likeIDs?: InputMaybe<PostUpdatelikeIDsInput>;
-  likes?: InputMaybe<UserUpdateManyWithoutLikePostsInput>;
-  title?: InputMaybe<StringFieldUpdateOperationsInput>;
-};
-
-export type PostUpdateWithoutLikesInput = {
-  author?: InputMaybe<UserUpdateOneWithoutPostsInput>;
-  likeIDs?: InputMaybe<PostUpdatelikeIDsInput>;
-  title?: InputMaybe<StringFieldUpdateOperationsInput>;
-};
-
-export type PostUpdatelikeIDsInput = {
-  push?: InputMaybe<Array<Scalars['String']>>;
-  set?: InputMaybe<Array<Scalars['String']>>;
-};
-
-export type PostUpsertWithWhereUniqueWithoutAuthorInput = {
-  create: PostCreateWithoutAuthorInput;
-  update: PostUpdateWithoutAuthorInput;
-  where: PostWhereUniqueInput;
-};
-
-export type PostUpsertWithWhereUniqueWithoutLikesInput = {
-  create: PostCreateWithoutLikesInput;
-  update: PostUpdateWithoutLikesInput;
-  where: PostWhereUniqueInput;
+  author?: InputMaybe<UserRelateToOneForUpdateInput>;
+  children?: InputMaybe<PostRelateToManyForUpdateInput>;
+  content?: InputMaybe<Scalars['JSON']>;
+  likes?: InputMaybe<UserRelateToManyForUpdateInput>;
+  parent?: InputMaybe<PostRelateToOneForUpdateInput>;
+  publishDate?: InputMaybe<Scalars['DateTime']>;
+  status?: InputMaybe<Scalars['String']>;
+  tags?: InputMaybe<TagRelateToManyForUpdateInput>;
+  thumbnail?: InputMaybe<ImageFieldInput>;
+  title?: InputMaybe<Scalars['String']>;
 };
 
 export type PostWhereInput = {
   AND?: InputMaybe<Array<PostWhereInput>>;
   NOT?: InputMaybe<Array<PostWhereInput>>;
   OR?: InputMaybe<Array<PostWhereInput>>;
-  author?: InputMaybe<UserRelationFilter>;
-  authorId?: InputMaybe<StringFilter>;
-  id?: InputMaybe<StringFilter>;
-  likeIDs?: InputMaybe<StringNullableListFilter>;
-  likes?: InputMaybe<UserListRelationFilter>;
+  author?: InputMaybe<UserWhereInput>;
+  children?: InputMaybe<PostManyRelationFilter>;
+  id?: InputMaybe<IdFilter>;
+  likes?: InputMaybe<UserManyRelationFilter>;
+  parent?: InputMaybe<PostWhereInput>;
+  publishDate?: InputMaybe<DateTimeNullableFilter>;
+  status?: InputMaybe<StringNullableFilter>;
+  tags?: InputMaybe<TagManyRelationFilter>;
   title?: InputMaybe<StringFilter>;
 };
 
 export type PostWhereUniqueInput = {
-  id?: InputMaybe<Scalars['String']>;
+  id?: InputMaybe<Scalars['ID']>;
+};
+
+export type Post_Content_Document = {
+  __typename?: 'Post_content_Document';
+  document: Scalars['JSON'];
+};
+
+
+export type Post_Content_DocumentDocumentArgs = {
+  hydrateRelationships?: Scalars['Boolean'];
 };
 
 export type Query = {
   __typename?: 'Query';
-  aggregatePost: AggregatePost;
-  aggregateUser: AggregateUser;
-  findFirstPost?: Maybe<Post>;
-  findFirstUser?: Maybe<User>;
-  groupByPost: Array<PostGroupBy>;
-  groupByUser: Array<UserGroupBy>;
+  authenticatedItem?: Maybe<AuthenticatedItem>;
+  keystone: KeystoneMeta;
+  ok: Scalars['Boolean'];
   post?: Maybe<Post>;
-  posts: Array<Post>;
-  test: Test;
+  posts?: Maybe<Array<Post>>;
+  postsCount?: Maybe<Scalars['Int']>;
+  tag?: Maybe<Tag>;
+  tags?: Maybe<Array<Tag>>;
+  tagsCount?: Maybe<Scalars['Int']>;
   user?: Maybe<User>;
-  users: Array<User>;
-};
-
-
-export type QueryAggregatePostArgs = {
-  cursor?: InputMaybe<PostWhereUniqueInput>;
-  orderBy?: InputMaybe<Array<PostOrderByWithRelationInput>>;
-  skip?: InputMaybe<Scalars['Int']>;
-  take?: InputMaybe<Scalars['Int']>;
-  where?: InputMaybe<PostWhereInput>;
-};
-
-
-export type QueryAggregateUserArgs = {
-  cursor?: InputMaybe<UserWhereUniqueInput>;
-  orderBy?: InputMaybe<Array<UserOrderByWithRelationInput>>;
-  skip?: InputMaybe<Scalars['Int']>;
-  take?: InputMaybe<Scalars['Int']>;
-  where?: InputMaybe<UserWhereInput>;
-};
-
-
-export type QueryFindFirstPostArgs = {
-  cursor?: InputMaybe<PostWhereUniqueInput>;
-  distinct?: InputMaybe<Array<PostScalarFieldEnum>>;
-  orderBy?: InputMaybe<Array<PostOrderByWithRelationInput>>;
-  skip?: InputMaybe<Scalars['Int']>;
-  take?: InputMaybe<Scalars['Int']>;
-  where?: InputMaybe<PostWhereInput>;
-};
-
-
-export type QueryFindFirstUserArgs = {
-  cursor?: InputMaybe<UserWhereUniqueInput>;
-  distinct?: InputMaybe<Array<UserScalarFieldEnum>>;
-  orderBy?: InputMaybe<Array<UserOrderByWithRelationInput>>;
-  skip?: InputMaybe<Scalars['Int']>;
-  take?: InputMaybe<Scalars['Int']>;
-  where?: InputMaybe<UserWhereInput>;
-};
-
-
-export type QueryGroupByPostArgs = {
-  by: Array<PostScalarFieldEnum>;
-  having?: InputMaybe<PostScalarWhereWithAggregatesInput>;
-  orderBy?: InputMaybe<Array<PostOrderByWithAggregationInput>>;
-  skip?: InputMaybe<Scalars['Int']>;
-  take?: InputMaybe<Scalars['Int']>;
-  where?: InputMaybe<PostWhereInput>;
-};
-
-
-export type QueryGroupByUserArgs = {
-  by: Array<UserScalarFieldEnum>;
-  having?: InputMaybe<UserScalarWhereWithAggregatesInput>;
-  orderBy?: InputMaybe<Array<UserOrderByWithAggregationInput>>;
-  skip?: InputMaybe<Scalars['Int']>;
-  take?: InputMaybe<Scalars['Int']>;
-  where?: InputMaybe<UserWhereInput>;
+  users?: Maybe<Array<User>>;
+  usersCount?: Maybe<Scalars['Int']>;
+  validateUserPasswordResetToken?: Maybe<ValidateUserPasswordResetTokenResult>;
 };
 
 
@@ -687,12 +599,33 @@ export type QueryPostArgs = {
 
 
 export type QueryPostsArgs = {
-  cursor?: InputMaybe<PostWhereUniqueInput>;
-  distinct?: InputMaybe<Array<PostScalarFieldEnum>>;
-  orderBy?: InputMaybe<Array<PostOrderByWithRelationInput>>;
-  skip?: InputMaybe<Scalars['Int']>;
+  orderBy?: Array<PostOrderByInput>;
+  skip?: Scalars['Int'];
   take?: InputMaybe<Scalars['Int']>;
-  where?: InputMaybe<PostWhereInput>;
+  where?: PostWhereInput;
+};
+
+
+export type QueryPostsCountArgs = {
+  where?: PostWhereInput;
+};
+
+
+export type QueryTagArgs = {
+  where: TagWhereUniqueInput;
+};
+
+
+export type QueryTagsArgs = {
+  orderBy?: Array<TagOrderByInput>;
+  skip?: Scalars['Int'];
+  take?: InputMaybe<Scalars['Int']>;
+  where?: TagWhereInput;
+};
+
+
+export type QueryTagsCountArgs = {
+  where?: TagWhereInput;
 };
 
 
@@ -702,12 +635,21 @@ export type QueryUserArgs = {
 
 
 export type QueryUsersArgs = {
-  cursor?: InputMaybe<UserWhereUniqueInput>;
-  distinct?: InputMaybe<Array<UserScalarFieldEnum>>;
-  orderBy?: InputMaybe<Array<UserOrderByWithRelationInput>>;
-  skip?: InputMaybe<Scalars['Int']>;
+  orderBy?: Array<UserOrderByInput>;
+  skip?: Scalars['Int'];
   take?: InputMaybe<Scalars['Int']>;
-  where?: InputMaybe<UserWhereInput>;
+  where?: UserWhereInput;
+};
+
+
+export type QueryUsersCountArgs = {
+  where?: UserWhereInput;
+};
+
+
+export type QueryValidateUserPasswordResetTokenArgs = {
+  email: Scalars['String'];
+  token: Scalars['String'];
 };
 
 export enum QueryMode {
@@ -715,24 +657,38 @@ export enum QueryMode {
   Insensitive = 'insensitive'
 }
 
-export type SignInInput = {
-  email: Scalars['String'];
-  password: Scalars['String'];
+export type RedeemUserMagicAuthTokenFailure = {
+  __typename?: 'RedeemUserMagicAuthTokenFailure';
+  code: MagicLinkRedemptionErrorCode;
+  message: Scalars['String'];
 };
 
+export type RedeemUserMagicAuthTokenResult = RedeemUserMagicAuthTokenFailure | RedeemUserMagicAuthTokenSuccess;
+
+export type RedeemUserMagicAuthTokenSuccess = {
+  __typename?: 'RedeemUserMagicAuthTokenSuccess';
+  item: User;
+  token: Scalars['String'];
+};
+
+export type RedeemUserPasswordResetTokenResult = {
+  __typename?: 'RedeemUserPasswordResetTokenResult';
+  code: PasswordResetRedemptionErrorCode;
+  message: Scalars['String'];
+};
+
+/** Sign up input data */
 export type SignUpInput = {
-  email: Scalars['String'];
+  email?: InputMaybe<Scalars['String']>;
   name?: InputMaybe<Scalars['String']>;
-  password: Scalars['String'];
+  password?: InputMaybe<Scalars['String']>;
 };
 
-export enum SortOrder {
-  Asc = 'asc',
-  Desc = 'desc'
-}
-
-export type StringFieldUpdateOperationsInput = {
-  set?: InputMaybe<Scalars['String']>;
+export type SignUpResult = {
+  __typename?: 'SignUpResult';
+  email?: Maybe<Scalars['String']>;
+  id?: Maybe<Scalars['String']>;
+  name?: Maybe<Scalars['String']>;
 };
 
 export type StringFilter = {
@@ -765,627 +721,246 @@ export type StringNullableFilter = {
   startsWith?: InputMaybe<Scalars['String']>;
 };
 
-export type StringNullableListFilter = {
-  equals?: InputMaybe<Array<Scalars['String']>>;
-  has?: InputMaybe<Scalars['String']>;
-  hasEvery?: InputMaybe<Array<Scalars['String']>>;
-  hasSome?: InputMaybe<Array<Scalars['String']>>;
-  isEmpty?: InputMaybe<Scalars['Boolean']>;
-};
-
-export type StringNullableWithAggregatesFilter = {
-  _count?: InputMaybe<NestedIntNullableFilter>;
-  _max?: InputMaybe<NestedStringNullableFilter>;
-  _min?: InputMaybe<NestedStringNullableFilter>;
-  contains?: InputMaybe<Scalars['String']>;
-  endsWith?: InputMaybe<Scalars['String']>;
-  equals?: InputMaybe<Scalars['String']>;
-  gt?: InputMaybe<Scalars['String']>;
-  gte?: InputMaybe<Scalars['String']>;
-  in?: InputMaybe<Array<Scalars['String']>>;
-  lt?: InputMaybe<Scalars['String']>;
-  lte?: InputMaybe<Scalars['String']>;
-  mode?: InputMaybe<QueryMode>;
-  not?: InputMaybe<NestedStringNullableWithAggregatesFilter>;
-  notIn?: InputMaybe<Array<Scalars['String']>>;
-  startsWith?: InputMaybe<Scalars['String']>;
-};
-
-export type StringWithAggregatesFilter = {
-  _count?: InputMaybe<NestedIntFilter>;
-  _max?: InputMaybe<NestedStringFilter>;
-  _min?: InputMaybe<NestedStringFilter>;
-  contains?: InputMaybe<Scalars['String']>;
-  endsWith?: InputMaybe<Scalars['String']>;
-  equals?: InputMaybe<Scalars['String']>;
-  gt?: InputMaybe<Scalars['String']>;
-  gte?: InputMaybe<Scalars['String']>;
-  in?: InputMaybe<Array<Scalars['String']>>;
-  lt?: InputMaybe<Scalars['String']>;
-  lte?: InputMaybe<Scalars['String']>;
-  mode?: InputMaybe<QueryMode>;
-  not?: InputMaybe<NestedStringWithAggregatesFilter>;
-  notIn?: InputMaybe<Array<Scalars['String']>>;
-  startsWith?: InputMaybe<Scalars['String']>;
-};
-
-export type Test = {
-  __typename?: 'Test';
-  /** Database id */
+export type Tag = {
+  __typename?: 'Tag';
   id: Scalars['ID'];
-  /** User's real world name */
-  name: Scalars['String'];
+  name?: Maybe<Scalars['String']>;
+  posts?: Maybe<Array<Post>>;
+  postsCount?: Maybe<Scalars['Int']>;
+};
+
+
+export type TagPostsArgs = {
+  orderBy?: Array<PostOrderByInput>;
+  skip?: Scalars['Int'];
+  take?: InputMaybe<Scalars['Int']>;
+  where?: PostWhereInput;
+};
+
+
+export type TagPostsCountArgs = {
+  where?: PostWhereInput;
+};
+
+export type TagCreateInput = {
+  name?: InputMaybe<Scalars['String']>;
+  posts?: InputMaybe<PostRelateToManyForCreateInput>;
+};
+
+export type TagManyRelationFilter = {
+  every?: InputMaybe<TagWhereInput>;
+  none?: InputMaybe<TagWhereInput>;
+  some?: InputMaybe<TagWhereInput>;
+};
+
+export type TagOrderByInput = {
+  id?: InputMaybe<OrderDirection>;
+  name?: InputMaybe<OrderDirection>;
+};
+
+export type TagRelateToManyForCreateInput = {
+  connect?: InputMaybe<Array<TagWhereUniqueInput>>;
+  create?: InputMaybe<Array<TagCreateInput>>;
+};
+
+export type TagRelateToManyForUpdateInput = {
+  connect?: InputMaybe<Array<TagWhereUniqueInput>>;
+  create?: InputMaybe<Array<TagCreateInput>>;
+  disconnect?: InputMaybe<Array<TagWhereUniqueInput>>;
+  set?: InputMaybe<Array<TagWhereUniqueInput>>;
+};
+
+export type TagUpdateArgs = {
+  data: TagUpdateInput;
+  where: TagWhereUniqueInput;
+};
+
+export type TagUpdateInput = {
+  name?: InputMaybe<Scalars['String']>;
+  posts?: InputMaybe<PostRelateToManyForUpdateInput>;
+};
+
+export type TagWhereInput = {
+  AND?: InputMaybe<Array<TagWhereInput>>;
+  NOT?: InputMaybe<Array<TagWhereInput>>;
+  OR?: InputMaybe<Array<TagWhereInput>>;
+  id?: InputMaybe<IdFilter>;
+  name?: InputMaybe<StringFilter>;
+  posts?: InputMaybe<PostManyRelationFilter>;
+};
+
+export type TagWhereUniqueInput = {
+  id?: InputMaybe<Scalars['ID']>;
 };
 
 export type User = {
   __typename?: 'User';
-  _count?: Maybe<UserCount>;
-  email: Scalars['String'];
-  followerIDs: Array<Scalars['String']>;
-  followers: Array<User>;
-  following: Array<User>;
-  followingIDs: Array<Scalars['String']>;
-  id: Scalars['String'];
-  likePostIDs: Array<Scalars['String']>;
-  likePosts: Array<Post>;
+  email?: Maybe<Scalars['String']>;
+  follower?: Maybe<Array<User>>;
+  followerCount?: Maybe<Scalars['Int']>;
+  following?: Maybe<Array<User>>;
+  followingCount?: Maybe<Scalars['Int']>;
+  id: Scalars['ID'];
+  isAdmin?: Maybe<Scalars['Boolean']>;
+  magicAuthIssuedAt?: Maybe<Scalars['DateTime']>;
+  magicAuthRedeemedAt?: Maybe<Scalars['DateTime']>;
+  magicAuthToken?: Maybe<PasswordState>;
   name?: Maybe<Scalars['String']>;
-  posts: Array<Post>;
+  password?: Maybe<PasswordState>;
+  passwordResetIssuedAt?: Maybe<Scalars['DateTime']>;
+  passwordResetRedeemedAt?: Maybe<Scalars['DateTime']>;
+  passwordResetToken?: Maybe<PasswordState>;
+  postLikes?: Maybe<Array<Post>>;
+  postLikesCount?: Maybe<Scalars['Int']>;
+  posts?: Maybe<Array<Post>>;
+  postsCount?: Maybe<Scalars['Int']>;
+  roles?: Maybe<Scalars['JSON']>;
 };
 
 
-export type UserFollowersArgs = {
-  cursor?: InputMaybe<UserWhereUniqueInput>;
-  distinct?: InputMaybe<Array<UserScalarFieldEnum>>;
-  orderBy?: InputMaybe<Array<UserOrderByWithRelationInput>>;
-  skip?: InputMaybe<Scalars['Int']>;
+export type UserFollowerArgs = {
+  orderBy?: Array<UserOrderByInput>;
+  skip?: Scalars['Int'];
   take?: InputMaybe<Scalars['Int']>;
-  where?: InputMaybe<UserWhereInput>;
+  where?: UserWhereInput;
+};
+
+
+export type UserFollowerCountArgs = {
+  where?: UserWhereInput;
 };
 
 
 export type UserFollowingArgs = {
-  cursor?: InputMaybe<UserWhereUniqueInput>;
-  distinct?: InputMaybe<Array<UserScalarFieldEnum>>;
-  orderBy?: InputMaybe<Array<UserOrderByWithRelationInput>>;
-  skip?: InputMaybe<Scalars['Int']>;
+  orderBy?: Array<UserOrderByInput>;
+  skip?: Scalars['Int'];
   take?: InputMaybe<Scalars['Int']>;
-  where?: InputMaybe<UserWhereInput>;
+  where?: UserWhereInput;
 };
 
 
-export type UserLikePostsArgs = {
-  cursor?: InputMaybe<PostWhereUniqueInput>;
-  distinct?: InputMaybe<Array<PostScalarFieldEnum>>;
-  orderBy?: InputMaybe<Array<PostOrderByWithRelationInput>>;
-  skip?: InputMaybe<Scalars['Int']>;
+export type UserFollowingCountArgs = {
+  where?: UserWhereInput;
+};
+
+
+export type UserPostLikesArgs = {
+  orderBy?: Array<PostOrderByInput>;
+  skip?: Scalars['Int'];
   take?: InputMaybe<Scalars['Int']>;
-  where?: InputMaybe<PostWhereInput>;
+  where?: PostWhereInput;
+};
+
+
+export type UserPostLikesCountArgs = {
+  where?: PostWhereInput;
 };
 
 
 export type UserPostsArgs = {
-  cursor?: InputMaybe<PostWhereUniqueInput>;
-  distinct?: InputMaybe<Array<PostScalarFieldEnum>>;
-  orderBy?: InputMaybe<Array<PostOrderByWithRelationInput>>;
-  skip?: InputMaybe<Scalars['Int']>;
+  orderBy?: Array<PostOrderByInput>;
+  skip?: Scalars['Int'];
   take?: InputMaybe<Scalars['Int']>;
-  where?: InputMaybe<PostWhereInput>;
+  where?: PostWhereInput;
 };
 
-export type UserCount = {
-  __typename?: 'UserCount';
-  followers: Scalars['Int'];
-  following: Scalars['Int'];
-  likePosts: Scalars['Int'];
-  posts: Scalars['Int'];
+
+export type UserPostsCountArgs = {
+  where?: PostWhereInput;
 };
 
-export type UserCountAggregate = {
-  __typename?: 'UserCountAggregate';
-  _all: Scalars['Int'];
-  email: Scalars['Int'];
-  followerIDs: Scalars['Int'];
-  followingIDs: Scalars['Int'];
-  id: Scalars['Int'];
-  likePostIDs: Scalars['Int'];
-  name: Scalars['Int'];
-  password: Scalars['Int'];
-  roles: Scalars['Int'];
+export type UserAuthenticationWithPasswordFailure = {
+  __typename?: 'UserAuthenticationWithPasswordFailure';
+  message: Scalars['String'];
 };
 
-export type UserCountOrderByAggregateInput = {
-  email?: InputMaybe<SortOrder>;
-  followerIDs?: InputMaybe<SortOrder>;
-  followingIDs?: InputMaybe<SortOrder>;
-  id?: InputMaybe<SortOrder>;
-  likePostIDs?: InputMaybe<SortOrder>;
-  name?: InputMaybe<SortOrder>;
-  password?: InputMaybe<SortOrder>;
-  roles?: InputMaybe<SortOrder>;
+export type UserAuthenticationWithPasswordResult = UserAuthenticationWithPasswordFailure | UserAuthenticationWithPasswordSuccess;
+
+export type UserAuthenticationWithPasswordSuccess = {
+  __typename?: 'UserAuthenticationWithPasswordSuccess';
+  item: User;
+  sessionToken: Scalars['String'];
 };
 
 export type UserCreateInput = {
-  email: Scalars['String'];
-  followerIDs?: InputMaybe<UserCreatefollowerIDsInput>;
-  followers?: InputMaybe<UserCreateNestedManyWithoutFollowingInput>;
-  following?: InputMaybe<UserCreateNestedManyWithoutFollowersInput>;
-  followingIDs?: InputMaybe<UserCreatefollowingIDsInput>;
-  id?: InputMaybe<Scalars['String']>;
-  likePostIDs?: InputMaybe<UserCreatelikePostIDsInput>;
-  likePosts?: InputMaybe<PostCreateNestedManyWithoutLikesInput>;
+  email?: InputMaybe<Scalars['String']>;
+  follower?: InputMaybe<UserRelateToManyForCreateInput>;
+  following?: InputMaybe<UserRelateToManyForCreateInput>;
+  isAdmin?: InputMaybe<Scalars['Boolean']>;
+  magicAuthIssuedAt?: InputMaybe<Scalars['DateTime']>;
+  magicAuthRedeemedAt?: InputMaybe<Scalars['DateTime']>;
+  magicAuthToken?: InputMaybe<Scalars['String']>;
   name?: InputMaybe<Scalars['String']>;
   password?: InputMaybe<Scalars['String']>;
-  posts?: InputMaybe<PostCreateNestedManyWithoutAuthorInput>;
-  roles?: InputMaybe<UserCreaterolesInput>;
+  passwordResetIssuedAt?: InputMaybe<Scalars['DateTime']>;
+  passwordResetRedeemedAt?: InputMaybe<Scalars['DateTime']>;
+  passwordResetToken?: InputMaybe<Scalars['String']>;
+  postLikes?: InputMaybe<PostRelateToManyForCreateInput>;
+  posts?: InputMaybe<PostRelateToManyForCreateInput>;
+  roles?: InputMaybe<Scalars['JSON']>;
 };
 
-export type UserCreateManyInput = {
-  email: Scalars['String'];
-  followerIDs?: InputMaybe<UserCreateManyfollowerIDsInput>;
-  followingIDs?: InputMaybe<UserCreateManyfollowingIDsInput>;
-  id?: InputMaybe<Scalars['String']>;
-  likePostIDs?: InputMaybe<UserCreateManylikePostIDsInput>;
-  name?: InputMaybe<Scalars['String']>;
-  password?: InputMaybe<Scalars['String']>;
-  roles?: InputMaybe<UserCreateManyrolesInput>;
-};
-
-export type UserCreateManyfollowerIDsInput = {
-  set: Array<Scalars['String']>;
-};
-
-export type UserCreateManyfollowingIDsInput = {
-  set: Array<Scalars['String']>;
-};
-
-export type UserCreateManylikePostIDsInput = {
-  set: Array<Scalars['String']>;
-};
-
-export type UserCreateManyrolesInput = {
-  set: Array<Scalars['String']>;
-};
-
-export type UserCreateNestedManyWithoutFollowersInput = {
-  connect?: InputMaybe<Array<UserWhereUniqueInput>>;
-  connectOrCreate?: InputMaybe<Array<UserCreateOrConnectWithoutFollowersInput>>;
-  create?: InputMaybe<Array<UserCreateWithoutFollowersInput>>;
-};
-
-export type UserCreateNestedManyWithoutFollowingInput = {
-  connect?: InputMaybe<Array<UserWhereUniqueInput>>;
-  connectOrCreate?: InputMaybe<Array<UserCreateOrConnectWithoutFollowingInput>>;
-  create?: InputMaybe<Array<UserCreateWithoutFollowingInput>>;
-};
-
-export type UserCreateNestedManyWithoutLikePostsInput = {
-  connect?: InputMaybe<Array<UserWhereUniqueInput>>;
-  connectOrCreate?: InputMaybe<Array<UserCreateOrConnectWithoutLikePostsInput>>;
-  create?: InputMaybe<Array<UserCreateWithoutLikePostsInput>>;
-};
-
-export type UserCreateNestedOneWithoutPostsInput = {
-  connect?: InputMaybe<UserWhereUniqueInput>;
-  connectOrCreate?: InputMaybe<UserCreateOrConnectWithoutPostsInput>;
-  create?: InputMaybe<UserCreateWithoutPostsInput>;
-};
-
-export type UserCreateOrConnectWithoutFollowersInput = {
-  create: UserCreateWithoutFollowersInput;
-  where: UserWhereUniqueInput;
-};
-
-export type UserCreateOrConnectWithoutFollowingInput = {
-  create: UserCreateWithoutFollowingInput;
-  where: UserWhereUniqueInput;
-};
-
-export type UserCreateOrConnectWithoutLikePostsInput = {
-  create: UserCreateWithoutLikePostsInput;
-  where: UserWhereUniqueInput;
-};
-
-export type UserCreateOrConnectWithoutPostsInput = {
-  create: UserCreateWithoutPostsInput;
-  where: UserWhereUniqueInput;
-};
-
-export type UserCreateWithoutFollowersInput = {
-  email: Scalars['String'];
-  followerIDs?: InputMaybe<UserCreatefollowerIDsInput>;
-  following?: InputMaybe<UserCreateNestedManyWithoutFollowersInput>;
-  followingIDs?: InputMaybe<UserCreatefollowingIDsInput>;
-  id?: InputMaybe<Scalars['String']>;
-  likePostIDs?: InputMaybe<UserCreatelikePostIDsInput>;
-  likePosts?: InputMaybe<PostCreateNestedManyWithoutLikesInput>;
-  name?: InputMaybe<Scalars['String']>;
-  password?: InputMaybe<Scalars['String']>;
-  posts?: InputMaybe<PostCreateNestedManyWithoutAuthorInput>;
-  roles?: InputMaybe<UserCreaterolesInput>;
-};
-
-export type UserCreateWithoutFollowingInput = {
-  email: Scalars['String'];
-  followerIDs?: InputMaybe<UserCreatefollowerIDsInput>;
-  followers?: InputMaybe<UserCreateNestedManyWithoutFollowingInput>;
-  followingIDs?: InputMaybe<UserCreatefollowingIDsInput>;
-  id?: InputMaybe<Scalars['String']>;
-  likePostIDs?: InputMaybe<UserCreatelikePostIDsInput>;
-  likePosts?: InputMaybe<PostCreateNestedManyWithoutLikesInput>;
-  name?: InputMaybe<Scalars['String']>;
-  password?: InputMaybe<Scalars['String']>;
-  posts?: InputMaybe<PostCreateNestedManyWithoutAuthorInput>;
-  roles?: InputMaybe<UserCreaterolesInput>;
-};
-
-export type UserCreateWithoutLikePostsInput = {
-  email: Scalars['String'];
-  followerIDs?: InputMaybe<UserCreatefollowerIDsInput>;
-  followers?: InputMaybe<UserCreateNestedManyWithoutFollowingInput>;
-  following?: InputMaybe<UserCreateNestedManyWithoutFollowersInput>;
-  followingIDs?: InputMaybe<UserCreatefollowingIDsInput>;
-  id?: InputMaybe<Scalars['String']>;
-  likePostIDs?: InputMaybe<UserCreatelikePostIDsInput>;
-  name?: InputMaybe<Scalars['String']>;
-  password?: InputMaybe<Scalars['String']>;
-  posts?: InputMaybe<PostCreateNestedManyWithoutAuthorInput>;
-  roles?: InputMaybe<UserCreaterolesInput>;
-};
-
-export type UserCreateWithoutPostsInput = {
-  email: Scalars['String'];
-  followerIDs?: InputMaybe<UserCreatefollowerIDsInput>;
-  followers?: InputMaybe<UserCreateNestedManyWithoutFollowingInput>;
-  following?: InputMaybe<UserCreateNestedManyWithoutFollowersInput>;
-  followingIDs?: InputMaybe<UserCreatefollowingIDsInput>;
-  id?: InputMaybe<Scalars['String']>;
-  likePostIDs?: InputMaybe<UserCreatelikePostIDsInput>;
-  likePosts?: InputMaybe<PostCreateNestedManyWithoutLikesInput>;
-  name?: InputMaybe<Scalars['String']>;
-  password?: InputMaybe<Scalars['String']>;
-  roles?: InputMaybe<UserCreaterolesInput>;
-};
-
-export type UserCreatefollowerIDsInput = {
-  set: Array<Scalars['String']>;
-};
-
-export type UserCreatefollowingIDsInput = {
-  set: Array<Scalars['String']>;
-};
-
-export type UserCreatelikePostIDsInput = {
-  set: Array<Scalars['String']>;
-};
-
-export type UserCreaterolesInput = {
-  set: Array<Scalars['String']>;
-};
-
-export type UserGroupBy = {
-  __typename?: 'UserGroupBy';
-  _count?: Maybe<UserCountAggregate>;
-  _max?: Maybe<UserMaxAggregate>;
-  _min?: Maybe<UserMinAggregate>;
-  email: Scalars['String'];
-  followerIDs?: Maybe<Array<Scalars['String']>>;
-  followingIDs?: Maybe<Array<Scalars['String']>>;
-  id: Scalars['String'];
-  likePostIDs?: Maybe<Array<Scalars['String']>>;
-  name?: Maybe<Scalars['String']>;
-  password?: Maybe<Scalars['String']>;
-  roles?: Maybe<Array<Scalars['String']>>;
-};
-
-export type UserListRelationFilter = {
+export type UserManyRelationFilter = {
   every?: InputMaybe<UserWhereInput>;
   none?: InputMaybe<UserWhereInput>;
   some?: InputMaybe<UserWhereInput>;
 };
 
-export type UserMaxAggregate = {
-  __typename?: 'UserMaxAggregate';
-  email?: Maybe<Scalars['String']>;
-  id?: Maybe<Scalars['String']>;
-  name?: Maybe<Scalars['String']>;
-  password?: Maybe<Scalars['String']>;
+export type UserOrderByInput = {
+  email?: InputMaybe<OrderDirection>;
+  id?: InputMaybe<OrderDirection>;
+  isAdmin?: InputMaybe<OrderDirection>;
+  magicAuthIssuedAt?: InputMaybe<OrderDirection>;
+  magicAuthRedeemedAt?: InputMaybe<OrderDirection>;
+  name?: InputMaybe<OrderDirection>;
+  passwordResetIssuedAt?: InputMaybe<OrderDirection>;
+  passwordResetRedeemedAt?: InputMaybe<OrderDirection>;
 };
 
-export type UserMaxOrderByAggregateInput = {
-  email?: InputMaybe<SortOrder>;
-  id?: InputMaybe<SortOrder>;
-  name?: InputMaybe<SortOrder>;
-  password?: InputMaybe<SortOrder>;
+export type UserRelateToManyForCreateInput = {
+  connect?: InputMaybe<Array<UserWhereUniqueInput>>;
+  create?: InputMaybe<Array<UserCreateInput>>;
 };
 
-export type UserMinAggregate = {
-  __typename?: 'UserMinAggregate';
-  email?: Maybe<Scalars['String']>;
-  id?: Maybe<Scalars['String']>;
-  name?: Maybe<Scalars['String']>;
-  password?: Maybe<Scalars['String']>;
+export type UserRelateToManyForUpdateInput = {
+  connect?: InputMaybe<Array<UserWhereUniqueInput>>;
+  create?: InputMaybe<Array<UserCreateInput>>;
+  disconnect?: InputMaybe<Array<UserWhereUniqueInput>>;
+  set?: InputMaybe<Array<UserWhereUniqueInput>>;
 };
 
-export type UserMinOrderByAggregateInput = {
-  email?: InputMaybe<SortOrder>;
-  id?: InputMaybe<SortOrder>;
-  name?: InputMaybe<SortOrder>;
-  password?: InputMaybe<SortOrder>;
+export type UserRelateToOneForCreateInput = {
+  connect?: InputMaybe<UserWhereUniqueInput>;
+  create?: InputMaybe<UserCreateInput>;
 };
 
-export type UserOrderByRelationAggregateInput = {
-  _count?: InputMaybe<SortOrder>;
+export type UserRelateToOneForUpdateInput = {
+  connect?: InputMaybe<UserWhereUniqueInput>;
+  create?: InputMaybe<UserCreateInput>;
+  disconnect?: InputMaybe<Scalars['Boolean']>;
 };
 
-export type UserOrderByWithAggregationInput = {
-  _count?: InputMaybe<UserCountOrderByAggregateInput>;
-  _max?: InputMaybe<UserMaxOrderByAggregateInput>;
-  _min?: InputMaybe<UserMinOrderByAggregateInput>;
-  email?: InputMaybe<SortOrder>;
-  followerIDs?: InputMaybe<SortOrder>;
-  followingIDs?: InputMaybe<SortOrder>;
-  id?: InputMaybe<SortOrder>;
-  likePostIDs?: InputMaybe<SortOrder>;
-  name?: InputMaybe<SortOrder>;
-  password?: InputMaybe<SortOrder>;
-  roles?: InputMaybe<SortOrder>;
-};
-
-export type UserOrderByWithRelationInput = {
-  email?: InputMaybe<SortOrder>;
-  followerIDs?: InputMaybe<SortOrder>;
-  followers?: InputMaybe<UserOrderByRelationAggregateInput>;
-  following?: InputMaybe<UserOrderByRelationAggregateInput>;
-  followingIDs?: InputMaybe<SortOrder>;
-  id?: InputMaybe<SortOrder>;
-  likePostIDs?: InputMaybe<SortOrder>;
-  likePosts?: InputMaybe<PostOrderByRelationAggregateInput>;
-  name?: InputMaybe<SortOrder>;
-  password?: InputMaybe<SortOrder>;
-  posts?: InputMaybe<PostOrderByRelationAggregateInput>;
-  roles?: InputMaybe<SortOrder>;
-};
-
-export type UserRelationFilter = {
-  is?: InputMaybe<UserWhereInput>;
-  isNot?: InputMaybe<UserWhereInput>;
-};
-
-export enum UserScalarFieldEnum {
-  Email = 'email',
-  FollowerIDs = 'followerIDs',
-  FollowingIDs = 'followingIDs',
-  Id = 'id',
-  LikePostIDs = 'likePostIDs',
-  Name = 'name',
-  Password = 'password',
-  Roles = 'roles'
-}
-
-export type UserScalarWhereInput = {
-  AND?: InputMaybe<Array<UserScalarWhereInput>>;
-  NOT?: InputMaybe<Array<UserScalarWhereInput>>;
-  OR?: InputMaybe<Array<UserScalarWhereInput>>;
-  email?: InputMaybe<StringFilter>;
-  followerIDs?: InputMaybe<StringNullableListFilter>;
-  followingIDs?: InputMaybe<StringNullableListFilter>;
-  id?: InputMaybe<StringFilter>;
-  likePostIDs?: InputMaybe<StringNullableListFilter>;
-  name?: InputMaybe<StringNullableFilter>;
-  password?: InputMaybe<StringNullableFilter>;
-  roles?: InputMaybe<StringNullableListFilter>;
-};
-
-export type UserScalarWhereWithAggregatesInput = {
-  AND?: InputMaybe<Array<UserScalarWhereWithAggregatesInput>>;
-  NOT?: InputMaybe<Array<UserScalarWhereWithAggregatesInput>>;
-  OR?: InputMaybe<Array<UserScalarWhereWithAggregatesInput>>;
-  email?: InputMaybe<StringWithAggregatesFilter>;
-  followerIDs?: InputMaybe<StringNullableListFilter>;
-  followingIDs?: InputMaybe<StringNullableListFilter>;
-  id?: InputMaybe<StringWithAggregatesFilter>;
-  likePostIDs?: InputMaybe<StringNullableListFilter>;
-  name?: InputMaybe<StringNullableWithAggregatesFilter>;
-  password?: InputMaybe<StringNullableWithAggregatesFilter>;
-  roles?: InputMaybe<StringNullableListFilter>;
+export type UserUpdateArgs = {
+  data: UserUpdateInput;
+  where: UserWhereUniqueInput;
 };
 
 export type UserUpdateInput = {
-  email?: InputMaybe<StringFieldUpdateOperationsInput>;
-  followerIDs?: InputMaybe<UserUpdatefollowerIDsInput>;
-  followers?: InputMaybe<UserUpdateManyWithoutFollowingInput>;
-  following?: InputMaybe<UserUpdateManyWithoutFollowersInput>;
-  followingIDs?: InputMaybe<UserUpdatefollowingIDsInput>;
-  likePostIDs?: InputMaybe<UserUpdatelikePostIDsInput>;
-  likePosts?: InputMaybe<PostUpdateManyWithoutLikesInput>;
-  name?: InputMaybe<NullableStringFieldUpdateOperationsInput>;
-  password?: InputMaybe<NullableStringFieldUpdateOperationsInput>;
-  posts?: InputMaybe<PostUpdateManyWithoutAuthorInput>;
-  roles?: InputMaybe<UserUpdaterolesInput>;
-};
-
-export type UserUpdateManyMutationInput = {
-  email?: InputMaybe<StringFieldUpdateOperationsInput>;
-  followerIDs?: InputMaybe<UserUpdatefollowerIDsInput>;
-  followingIDs?: InputMaybe<UserUpdatefollowingIDsInput>;
-  likePostIDs?: InputMaybe<UserUpdatelikePostIDsInput>;
-  name?: InputMaybe<NullableStringFieldUpdateOperationsInput>;
-  password?: InputMaybe<NullableStringFieldUpdateOperationsInput>;
-  roles?: InputMaybe<UserUpdaterolesInput>;
-};
-
-export type UserUpdateManyWithWhereWithoutFollowersInput = {
-  data: UserUpdateManyMutationInput;
-  where: UserScalarWhereInput;
-};
-
-export type UserUpdateManyWithWhereWithoutFollowingInput = {
-  data: UserUpdateManyMutationInput;
-  where: UserScalarWhereInput;
-};
-
-export type UserUpdateManyWithWhereWithoutLikePostsInput = {
-  data: UserUpdateManyMutationInput;
-  where: UserScalarWhereInput;
-};
-
-export type UserUpdateManyWithoutFollowersInput = {
-  connect?: InputMaybe<Array<UserWhereUniqueInput>>;
-  connectOrCreate?: InputMaybe<Array<UserCreateOrConnectWithoutFollowersInput>>;
-  create?: InputMaybe<Array<UserCreateWithoutFollowersInput>>;
-  delete?: InputMaybe<Array<UserWhereUniqueInput>>;
-  deleteMany?: InputMaybe<Array<UserScalarWhereInput>>;
-  disconnect?: InputMaybe<Array<UserWhereUniqueInput>>;
-  set?: InputMaybe<Array<UserWhereUniqueInput>>;
-  update?: InputMaybe<Array<UserUpdateWithWhereUniqueWithoutFollowersInput>>;
-  updateMany?: InputMaybe<Array<UserUpdateManyWithWhereWithoutFollowersInput>>;
-  upsert?: InputMaybe<Array<UserUpsertWithWhereUniqueWithoutFollowersInput>>;
-};
-
-export type UserUpdateManyWithoutFollowingInput = {
-  connect?: InputMaybe<Array<UserWhereUniqueInput>>;
-  connectOrCreate?: InputMaybe<Array<UserCreateOrConnectWithoutFollowingInput>>;
-  create?: InputMaybe<Array<UserCreateWithoutFollowingInput>>;
-  delete?: InputMaybe<Array<UserWhereUniqueInput>>;
-  deleteMany?: InputMaybe<Array<UserScalarWhereInput>>;
-  disconnect?: InputMaybe<Array<UserWhereUniqueInput>>;
-  set?: InputMaybe<Array<UserWhereUniqueInput>>;
-  update?: InputMaybe<Array<UserUpdateWithWhereUniqueWithoutFollowingInput>>;
-  updateMany?: InputMaybe<Array<UserUpdateManyWithWhereWithoutFollowingInput>>;
-  upsert?: InputMaybe<Array<UserUpsertWithWhereUniqueWithoutFollowingInput>>;
-};
-
-export type UserUpdateManyWithoutLikePostsInput = {
-  connect?: InputMaybe<Array<UserWhereUniqueInput>>;
-  connectOrCreate?: InputMaybe<Array<UserCreateOrConnectWithoutLikePostsInput>>;
-  create?: InputMaybe<Array<UserCreateWithoutLikePostsInput>>;
-  delete?: InputMaybe<Array<UserWhereUniqueInput>>;
-  deleteMany?: InputMaybe<Array<UserScalarWhereInput>>;
-  disconnect?: InputMaybe<Array<UserWhereUniqueInput>>;
-  set?: InputMaybe<Array<UserWhereUniqueInput>>;
-  update?: InputMaybe<Array<UserUpdateWithWhereUniqueWithoutLikePostsInput>>;
-  updateMany?: InputMaybe<Array<UserUpdateManyWithWhereWithoutLikePostsInput>>;
-  upsert?: InputMaybe<Array<UserUpsertWithWhereUniqueWithoutLikePostsInput>>;
-};
-
-export type UserUpdateOneWithoutPostsInput = {
-  connect?: InputMaybe<UserWhereUniqueInput>;
-  connectOrCreate?: InputMaybe<UserCreateOrConnectWithoutPostsInput>;
-  create?: InputMaybe<UserCreateWithoutPostsInput>;
-  delete?: InputMaybe<Scalars['Boolean']>;
-  disconnect?: InputMaybe<Scalars['Boolean']>;
-  update?: InputMaybe<UserUpdateWithoutPostsInput>;
-  upsert?: InputMaybe<UserUpsertWithoutPostsInput>;
-};
-
-export type UserUpdateWithWhereUniqueWithoutFollowersInput = {
-  data: UserUpdateWithoutFollowersInput;
-  where: UserWhereUniqueInput;
-};
-
-export type UserUpdateWithWhereUniqueWithoutFollowingInput = {
-  data: UserUpdateWithoutFollowingInput;
-  where: UserWhereUniqueInput;
-};
-
-export type UserUpdateWithWhereUniqueWithoutLikePostsInput = {
-  data: UserUpdateWithoutLikePostsInput;
-  where: UserWhereUniqueInput;
-};
-
-export type UserUpdateWithoutFollowersInput = {
-  email?: InputMaybe<StringFieldUpdateOperationsInput>;
-  followerIDs?: InputMaybe<UserUpdatefollowerIDsInput>;
-  following?: InputMaybe<UserUpdateManyWithoutFollowersInput>;
-  followingIDs?: InputMaybe<UserUpdatefollowingIDsInput>;
-  likePostIDs?: InputMaybe<UserUpdatelikePostIDsInput>;
-  likePosts?: InputMaybe<PostUpdateManyWithoutLikesInput>;
-  name?: InputMaybe<NullableStringFieldUpdateOperationsInput>;
-  password?: InputMaybe<NullableStringFieldUpdateOperationsInput>;
-  posts?: InputMaybe<PostUpdateManyWithoutAuthorInput>;
-  roles?: InputMaybe<UserUpdaterolesInput>;
-};
-
-export type UserUpdateWithoutFollowingInput = {
-  email?: InputMaybe<StringFieldUpdateOperationsInput>;
-  followerIDs?: InputMaybe<UserUpdatefollowerIDsInput>;
-  followers?: InputMaybe<UserUpdateManyWithoutFollowingInput>;
-  followingIDs?: InputMaybe<UserUpdatefollowingIDsInput>;
-  likePostIDs?: InputMaybe<UserUpdatelikePostIDsInput>;
-  likePosts?: InputMaybe<PostUpdateManyWithoutLikesInput>;
-  name?: InputMaybe<NullableStringFieldUpdateOperationsInput>;
-  password?: InputMaybe<NullableStringFieldUpdateOperationsInput>;
-  posts?: InputMaybe<PostUpdateManyWithoutAuthorInput>;
-  roles?: InputMaybe<UserUpdaterolesInput>;
-};
-
-export type UserUpdateWithoutLikePostsInput = {
-  email?: InputMaybe<StringFieldUpdateOperationsInput>;
-  followerIDs?: InputMaybe<UserUpdatefollowerIDsInput>;
-  followers?: InputMaybe<UserUpdateManyWithoutFollowingInput>;
-  following?: InputMaybe<UserUpdateManyWithoutFollowersInput>;
-  followingIDs?: InputMaybe<UserUpdatefollowingIDsInput>;
-  likePostIDs?: InputMaybe<UserUpdatelikePostIDsInput>;
-  name?: InputMaybe<NullableStringFieldUpdateOperationsInput>;
-  password?: InputMaybe<NullableStringFieldUpdateOperationsInput>;
-  posts?: InputMaybe<PostUpdateManyWithoutAuthorInput>;
-  roles?: InputMaybe<UserUpdaterolesInput>;
-};
-
-export type UserUpdateWithoutPostsInput = {
-  email?: InputMaybe<StringFieldUpdateOperationsInput>;
-  followerIDs?: InputMaybe<UserUpdatefollowerIDsInput>;
-  followers?: InputMaybe<UserUpdateManyWithoutFollowingInput>;
-  following?: InputMaybe<UserUpdateManyWithoutFollowersInput>;
-  followingIDs?: InputMaybe<UserUpdatefollowingIDsInput>;
-  likePostIDs?: InputMaybe<UserUpdatelikePostIDsInput>;
-  likePosts?: InputMaybe<PostUpdateManyWithoutLikesInput>;
-  name?: InputMaybe<NullableStringFieldUpdateOperationsInput>;
-  password?: InputMaybe<NullableStringFieldUpdateOperationsInput>;
-  roles?: InputMaybe<UserUpdaterolesInput>;
-};
-
-export type UserUpdatefollowerIDsInput = {
-  push?: InputMaybe<Array<Scalars['String']>>;
-  set?: InputMaybe<Array<Scalars['String']>>;
-};
-
-export type UserUpdatefollowingIDsInput = {
-  push?: InputMaybe<Array<Scalars['String']>>;
-  set?: InputMaybe<Array<Scalars['String']>>;
-};
-
-export type UserUpdatelikePostIDsInput = {
-  push?: InputMaybe<Array<Scalars['String']>>;
-  set?: InputMaybe<Array<Scalars['String']>>;
-};
-
-export type UserUpdaterolesInput = {
-  push?: InputMaybe<Array<Scalars['String']>>;
-  set?: InputMaybe<Array<Scalars['String']>>;
-};
-
-export type UserUpsertWithWhereUniqueWithoutFollowersInput = {
-  create: UserCreateWithoutFollowersInput;
-  update: UserUpdateWithoutFollowersInput;
-  where: UserWhereUniqueInput;
-};
-
-export type UserUpsertWithWhereUniqueWithoutFollowingInput = {
-  create: UserCreateWithoutFollowingInput;
-  update: UserUpdateWithoutFollowingInput;
-  where: UserWhereUniqueInput;
-};
-
-export type UserUpsertWithWhereUniqueWithoutLikePostsInput = {
-  create: UserCreateWithoutLikePostsInput;
-  update: UserUpdateWithoutLikePostsInput;
-  where: UserWhereUniqueInput;
-};
-
-export type UserUpsertWithoutPostsInput = {
-  create: UserCreateWithoutPostsInput;
-  update: UserUpdateWithoutPostsInput;
+  email?: InputMaybe<Scalars['String']>;
+  follower?: InputMaybe<UserRelateToManyForUpdateInput>;
+  following?: InputMaybe<UserRelateToManyForUpdateInput>;
+  isAdmin?: InputMaybe<Scalars['Boolean']>;
+  magicAuthIssuedAt?: InputMaybe<Scalars['DateTime']>;
+  magicAuthRedeemedAt?: InputMaybe<Scalars['DateTime']>;
+  magicAuthToken?: InputMaybe<Scalars['String']>;
+  name?: InputMaybe<Scalars['String']>;
+  password?: InputMaybe<Scalars['String']>;
+  passwordResetIssuedAt?: InputMaybe<Scalars['DateTime']>;
+  passwordResetRedeemedAt?: InputMaybe<Scalars['DateTime']>;
+  passwordResetToken?: InputMaybe<Scalars['String']>;
+  postLikes?: InputMaybe<PostRelateToManyForUpdateInput>;
+  posts?: InputMaybe<PostRelateToManyForUpdateInput>;
+  roles?: InputMaybe<Scalars['JSON']>;
 };
 
 export type UserWhereInput = {
@@ -1393,53 +968,388 @@ export type UserWhereInput = {
   NOT?: InputMaybe<Array<UserWhereInput>>;
   OR?: InputMaybe<Array<UserWhereInput>>;
   email?: InputMaybe<StringFilter>;
-  followerIDs?: InputMaybe<StringNullableListFilter>;
-  followers?: InputMaybe<UserListRelationFilter>;
-  following?: InputMaybe<UserListRelationFilter>;
-  followingIDs?: InputMaybe<StringNullableListFilter>;
-  id?: InputMaybe<StringFilter>;
-  likePostIDs?: InputMaybe<StringNullableListFilter>;
-  likePosts?: InputMaybe<PostListRelationFilter>;
-  name?: InputMaybe<StringNullableFilter>;
-  password?: InputMaybe<StringNullableFilter>;
-  posts?: InputMaybe<PostListRelationFilter>;
-  roles?: InputMaybe<StringNullableListFilter>;
+  follower?: InputMaybe<UserManyRelationFilter>;
+  following?: InputMaybe<UserManyRelationFilter>;
+  id?: InputMaybe<IdFilter>;
+  isAdmin?: InputMaybe<BooleanFilter>;
+  magicAuthIssuedAt?: InputMaybe<DateTimeNullableFilter>;
+  magicAuthRedeemedAt?: InputMaybe<DateTimeNullableFilter>;
+  magicAuthToken?: InputMaybe<PasswordFilter>;
+  name?: InputMaybe<StringFilter>;
+  passwordResetIssuedAt?: InputMaybe<DateTimeNullableFilter>;
+  passwordResetRedeemedAt?: InputMaybe<DateTimeNullableFilter>;
+  passwordResetToken?: InputMaybe<PasswordFilter>;
+  postLikes?: InputMaybe<PostManyRelationFilter>;
+  posts?: InputMaybe<PostManyRelationFilter>;
 };
 
 export type UserWhereUniqueInput = {
   email?: InputMaybe<Scalars['String']>;
-  id?: InputMaybe<Scalars['String']>;
+  id?: InputMaybe<Scalars['ID']>;
 };
 
-export type GetPostsQueryVariables = Exact<{
-  take?: InputMaybe<Scalars['Int']>;
-  skip?: InputMaybe<Scalars['Int']>;
-  cursor?: InputMaybe<PostWhereUniqueInput>;
+export type ValidateUserPasswordResetTokenResult = {
+  __typename?: 'ValidateUserPasswordResetTokenResult';
+  code: PasswordResetRedemptionErrorCode;
+  message: Scalars['String'];
+};
+
+export type SignInMutationVariables = Exact<{
+  email: Scalars['String'];
+  password: Scalars['String'];
 }>;
 
 
-export type GetPostsQuery = { __typename?: 'Query', posts: Array<{ __typename?: 'Post', id: string, title: string, authorId: string, author?: { __typename?: 'User', name?: string | null | undefined } | null | undefined, _count?: { __typename?: 'PostCount', likes: number } | null | undefined, likes: Array<{ __typename?: 'User', id: string }> }> };
+export type SignInMutation = { __typename?: 'Mutation', authenticateUserWithPassword?: { __typename?: 'UserAuthenticationWithPasswordFailure', message: string } | { __typename?: 'UserAuthenticationWithPasswordSuccess', sessionToken: string, item: { __typename?: 'User', id: string, email?: string | null | undefined, name?: string | null | undefined } } | null | undefined };
 
 
-export const GetPostsDocument = gql`
-    query getPosts($take: Int, $skip: Int, $cursor: PostWhereUniqueInput) {
-  posts(take: $take, skip: $skip, cursor: $cursor) {
-    id
-    title
-    authorId
-    author {
-      name
+export const SignInDocument = gql`
+    mutation signIn($email: String!, $password: String!) {
+  authenticateUserWithPassword(email: $email, password: $password) {
+    ... on UserAuthenticationWithPasswordFailure {
+      message
     }
-    _count {
-      likes
-    }
-    likes {
-      id
+    ... on UserAuthenticationWithPasswordSuccess {
+      item {
+        id
+        email
+        name
+      }
+      sessionToken
     }
   }
 }
     `;
 
-export function useGetPostsQuery(options: Omit<Urql.UseQueryArgs<never, GetPostsQueryVariables>, 'query'> = {}) {
-  return Urql.useQuery<GetPostsQuery>({ query: GetPostsDocument, ...options });
+export function useSignInMutation() {
+  return Urql.useMutation<SignInMutation, SignInMutationVariables>(SignInDocument);
 };
+export type CloudImageFieldOutputKeySpecifier = ('extension' | 'filesize' | 'height' | 'id' | 'ref' | 'url' | 'width' | CloudImageFieldOutputKeySpecifier)[];
+export type CloudImageFieldOutputFieldPolicy = {
+	extension?: FieldPolicy<any> | FieldReadFunction<any>,
+	filesize?: FieldPolicy<any> | FieldReadFunction<any>,
+	height?: FieldPolicy<any> | FieldReadFunction<any>,
+	id?: FieldPolicy<any> | FieldReadFunction<any>,
+	ref?: FieldPolicy<any> | FieldReadFunction<any>,
+	url?: FieldPolicy<any> | FieldReadFunction<any>,
+	width?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type ImageFieldOutputKeySpecifier = ('extension' | 'filesize' | 'height' | 'id' | 'ref' | 'url' | 'width' | ImageFieldOutputKeySpecifier)[];
+export type ImageFieldOutputFieldPolicy = {
+	extension?: FieldPolicy<any> | FieldReadFunction<any>,
+	filesize?: FieldPolicy<any> | FieldReadFunction<any>,
+	height?: FieldPolicy<any> | FieldReadFunction<any>,
+	id?: FieldPolicy<any> | FieldReadFunction<any>,
+	ref?: FieldPolicy<any> | FieldReadFunction<any>,
+	url?: FieldPolicy<any> | FieldReadFunction<any>,
+	width?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type KeystoneAdminMetaKeySpecifier = ('enableSessionItem' | 'enableSignout' | 'list' | 'lists' | KeystoneAdminMetaKeySpecifier)[];
+export type KeystoneAdminMetaFieldPolicy = {
+	enableSessionItem?: FieldPolicy<any> | FieldReadFunction<any>,
+	enableSignout?: FieldPolicy<any> | FieldReadFunction<any>,
+	list?: FieldPolicy<any> | FieldReadFunction<any>,
+	lists?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type KeystoneAdminUIFieldMetaKeySpecifier = ('createView' | 'customViewsIndex' | 'fieldMeta' | 'isFilterable' | 'isOrderable' | 'itemView' | 'label' | 'listView' | 'path' | 'search' | 'viewsIndex' | KeystoneAdminUIFieldMetaKeySpecifier)[];
+export type KeystoneAdminUIFieldMetaFieldPolicy = {
+	createView?: FieldPolicy<any> | FieldReadFunction<any>,
+	customViewsIndex?: FieldPolicy<any> | FieldReadFunction<any>,
+	fieldMeta?: FieldPolicy<any> | FieldReadFunction<any>,
+	isFilterable?: FieldPolicy<any> | FieldReadFunction<any>,
+	isOrderable?: FieldPolicy<any> | FieldReadFunction<any>,
+	itemView?: FieldPolicy<any> | FieldReadFunction<any>,
+	label?: FieldPolicy<any> | FieldReadFunction<any>,
+	listView?: FieldPolicy<any> | FieldReadFunction<any>,
+	path?: FieldPolicy<any> | FieldReadFunction<any>,
+	search?: FieldPolicy<any> | FieldReadFunction<any>,
+	viewsIndex?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type KeystoneAdminUIFieldMetaCreateViewKeySpecifier = ('fieldMode' | KeystoneAdminUIFieldMetaCreateViewKeySpecifier)[];
+export type KeystoneAdminUIFieldMetaCreateViewFieldPolicy = {
+	fieldMode?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type KeystoneAdminUIFieldMetaItemViewKeySpecifier = ('fieldMode' | KeystoneAdminUIFieldMetaItemViewKeySpecifier)[];
+export type KeystoneAdminUIFieldMetaItemViewFieldPolicy = {
+	fieldMode?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type KeystoneAdminUIFieldMetaListViewKeySpecifier = ('fieldMode' | KeystoneAdminUIFieldMetaListViewKeySpecifier)[];
+export type KeystoneAdminUIFieldMetaListViewFieldPolicy = {
+	fieldMode?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type KeystoneAdminUIListMetaKeySpecifier = ('description' | 'fields' | 'hideCreate' | 'hideDelete' | 'initialColumns' | 'initialSort' | 'isHidden' | 'itemQueryName' | 'key' | 'label' | 'labelField' | 'listQueryName' | 'pageSize' | 'path' | 'plural' | 'singular' | KeystoneAdminUIListMetaKeySpecifier)[];
+export type KeystoneAdminUIListMetaFieldPolicy = {
+	description?: FieldPolicy<any> | FieldReadFunction<any>,
+	fields?: FieldPolicy<any> | FieldReadFunction<any>,
+	hideCreate?: FieldPolicy<any> | FieldReadFunction<any>,
+	hideDelete?: FieldPolicy<any> | FieldReadFunction<any>,
+	initialColumns?: FieldPolicy<any> | FieldReadFunction<any>,
+	initialSort?: FieldPolicy<any> | FieldReadFunction<any>,
+	isHidden?: FieldPolicy<any> | FieldReadFunction<any>,
+	itemQueryName?: FieldPolicy<any> | FieldReadFunction<any>,
+	key?: FieldPolicy<any> | FieldReadFunction<any>,
+	label?: FieldPolicy<any> | FieldReadFunction<any>,
+	labelField?: FieldPolicy<any> | FieldReadFunction<any>,
+	listQueryName?: FieldPolicy<any> | FieldReadFunction<any>,
+	pageSize?: FieldPolicy<any> | FieldReadFunction<any>,
+	path?: FieldPolicy<any> | FieldReadFunction<any>,
+	plural?: FieldPolicy<any> | FieldReadFunction<any>,
+	singular?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type KeystoneAdminUISortKeySpecifier = ('direction' | 'field' | KeystoneAdminUISortKeySpecifier)[];
+export type KeystoneAdminUISortFieldPolicy = {
+	direction?: FieldPolicy<any> | FieldReadFunction<any>,
+	field?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type KeystoneMetaKeySpecifier = ('adminMeta' | KeystoneMetaKeySpecifier)[];
+export type KeystoneMetaFieldPolicy = {
+	adminMeta?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type LocalImageFieldOutputKeySpecifier = ('extension' | 'filesize' | 'height' | 'id' | 'ref' | 'url' | 'width' | LocalImageFieldOutputKeySpecifier)[];
+export type LocalImageFieldOutputFieldPolicy = {
+	extension?: FieldPolicy<any> | FieldReadFunction<any>,
+	filesize?: FieldPolicy<any> | FieldReadFunction<any>,
+	height?: FieldPolicy<any> | FieldReadFunction<any>,
+	id?: FieldPolicy<any> | FieldReadFunction<any>,
+	ref?: FieldPolicy<any> | FieldReadFunction<any>,
+	url?: FieldPolicy<any> | FieldReadFunction<any>,
+	width?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type MutationKeySpecifier = ('authenticateUserWithPassword' | 'createInitialUser' | 'createPost' | 'createPosts' | 'createTag' | 'createTags' | 'createUser' | 'createUsers' | 'deletePost' | 'deletePosts' | 'deleteTag' | 'deleteTags' | 'deleteUser' | 'deleteUsers' | 'endSession' | 'redeemUserMagicAuthToken' | 'redeemUserPasswordResetToken' | 'sendUserMagicAuthLink' | 'sendUserPasswordResetLink' | 'signUp' | 'updatePost' | 'updatePosts' | 'updateTag' | 'updateTags' | 'updateUser' | 'updateUsers' | MutationKeySpecifier)[];
+export type MutationFieldPolicy = {
+	authenticateUserWithPassword?: FieldPolicy<any> | FieldReadFunction<any>,
+	createInitialUser?: FieldPolicy<any> | FieldReadFunction<any>,
+	createPost?: FieldPolicy<any> | FieldReadFunction<any>,
+	createPosts?: FieldPolicy<any> | FieldReadFunction<any>,
+	createTag?: FieldPolicy<any> | FieldReadFunction<any>,
+	createTags?: FieldPolicy<any> | FieldReadFunction<any>,
+	createUser?: FieldPolicy<any> | FieldReadFunction<any>,
+	createUsers?: FieldPolicy<any> | FieldReadFunction<any>,
+	deletePost?: FieldPolicy<any> | FieldReadFunction<any>,
+	deletePosts?: FieldPolicy<any> | FieldReadFunction<any>,
+	deleteTag?: FieldPolicy<any> | FieldReadFunction<any>,
+	deleteTags?: FieldPolicy<any> | FieldReadFunction<any>,
+	deleteUser?: FieldPolicy<any> | FieldReadFunction<any>,
+	deleteUsers?: FieldPolicy<any> | FieldReadFunction<any>,
+	endSession?: FieldPolicy<any> | FieldReadFunction<any>,
+	redeemUserMagicAuthToken?: FieldPolicy<any> | FieldReadFunction<any>,
+	redeemUserPasswordResetToken?: FieldPolicy<any> | FieldReadFunction<any>,
+	sendUserMagicAuthLink?: FieldPolicy<any> | FieldReadFunction<any>,
+	sendUserPasswordResetLink?: FieldPolicy<any> | FieldReadFunction<any>,
+	signUp?: FieldPolicy<any> | FieldReadFunction<any>,
+	updatePost?: FieldPolicy<any> | FieldReadFunction<any>,
+	updatePosts?: FieldPolicy<any> | FieldReadFunction<any>,
+	updateTag?: FieldPolicy<any> | FieldReadFunction<any>,
+	updateTags?: FieldPolicy<any> | FieldReadFunction<any>,
+	updateUser?: FieldPolicy<any> | FieldReadFunction<any>,
+	updateUsers?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type PasswordStateKeySpecifier = ('isSet' | PasswordStateKeySpecifier)[];
+export type PasswordStateFieldPolicy = {
+	isSet?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type PostKeySpecifier = ('author' | 'children' | 'childrenCount' | 'content' | 'id' | 'likes' | 'likesCount' | 'parent' | 'publishDate' | 'status' | 'tags' | 'tagsCount' | 'thumbnail' | 'title' | PostKeySpecifier)[];
+export type PostFieldPolicy = {
+	author?: FieldPolicy<any> | FieldReadFunction<any>,
+	children?: FieldPolicy<any> | FieldReadFunction<any>,
+	childrenCount?: FieldPolicy<any> | FieldReadFunction<any>,
+	content?: FieldPolicy<any> | FieldReadFunction<any>,
+	id?: FieldPolicy<any> | FieldReadFunction<any>,
+	likes?: FieldPolicy<any> | FieldReadFunction<any>,
+	likesCount?: FieldPolicy<any> | FieldReadFunction<any>,
+	parent?: FieldPolicy<any> | FieldReadFunction<any>,
+	publishDate?: FieldPolicy<any> | FieldReadFunction<any>,
+	status?: FieldPolicy<any> | FieldReadFunction<any>,
+	tags?: FieldPolicy<any> | FieldReadFunction<any>,
+	tagsCount?: FieldPolicy<any> | FieldReadFunction<any>,
+	thumbnail?: FieldPolicy<any> | FieldReadFunction<any>,
+	title?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type Post_content_DocumentKeySpecifier = ('document' | Post_content_DocumentKeySpecifier)[];
+export type Post_content_DocumentFieldPolicy = {
+	document?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type QueryKeySpecifier = ('authenticatedItem' | 'keystone' | 'ok' | 'post' | 'posts' | 'postsCount' | 'tag' | 'tags' | 'tagsCount' | 'user' | 'users' | 'usersCount' | 'validateUserPasswordResetToken' | QueryKeySpecifier)[];
+export type QueryFieldPolicy = {
+	authenticatedItem?: FieldPolicy<any> | FieldReadFunction<any>,
+	keystone?: FieldPolicy<any> | FieldReadFunction<any>,
+	ok?: FieldPolicy<any> | FieldReadFunction<any>,
+	post?: FieldPolicy<any> | FieldReadFunction<any>,
+	posts?: FieldPolicy<any> | FieldReadFunction<any>,
+	postsCount?: FieldPolicy<any> | FieldReadFunction<any>,
+	tag?: FieldPolicy<any> | FieldReadFunction<any>,
+	tags?: FieldPolicy<any> | FieldReadFunction<any>,
+	tagsCount?: FieldPolicy<any> | FieldReadFunction<any>,
+	user?: FieldPolicy<any> | FieldReadFunction<any>,
+	users?: FieldPolicy<any> | FieldReadFunction<any>,
+	usersCount?: FieldPolicy<any> | FieldReadFunction<any>,
+	validateUserPasswordResetToken?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type RedeemUserMagicAuthTokenFailureKeySpecifier = ('code' | 'message' | RedeemUserMagicAuthTokenFailureKeySpecifier)[];
+export type RedeemUserMagicAuthTokenFailureFieldPolicy = {
+	code?: FieldPolicy<any> | FieldReadFunction<any>,
+	message?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type RedeemUserMagicAuthTokenSuccessKeySpecifier = ('item' | 'token' | RedeemUserMagicAuthTokenSuccessKeySpecifier)[];
+export type RedeemUserMagicAuthTokenSuccessFieldPolicy = {
+	item?: FieldPolicy<any> | FieldReadFunction<any>,
+	token?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type RedeemUserPasswordResetTokenResultKeySpecifier = ('code' | 'message' | RedeemUserPasswordResetTokenResultKeySpecifier)[];
+export type RedeemUserPasswordResetTokenResultFieldPolicy = {
+	code?: FieldPolicy<any> | FieldReadFunction<any>,
+	message?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type SignUpResultKeySpecifier = ('email' | 'id' | 'name' | SignUpResultKeySpecifier)[];
+export type SignUpResultFieldPolicy = {
+	email?: FieldPolicy<any> | FieldReadFunction<any>,
+	id?: FieldPolicy<any> | FieldReadFunction<any>,
+	name?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type TagKeySpecifier = ('id' | 'name' | 'posts' | 'postsCount' | TagKeySpecifier)[];
+export type TagFieldPolicy = {
+	id?: FieldPolicy<any> | FieldReadFunction<any>,
+	name?: FieldPolicy<any> | FieldReadFunction<any>,
+	posts?: FieldPolicy<any> | FieldReadFunction<any>,
+	postsCount?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type UserKeySpecifier = ('email' | 'follower' | 'followerCount' | 'following' | 'followingCount' | 'id' | 'isAdmin' | 'magicAuthIssuedAt' | 'magicAuthRedeemedAt' | 'magicAuthToken' | 'name' | 'password' | 'passwordResetIssuedAt' | 'passwordResetRedeemedAt' | 'passwordResetToken' | 'postLikes' | 'postLikesCount' | 'posts' | 'postsCount' | 'roles' | UserKeySpecifier)[];
+export type UserFieldPolicy = {
+	email?: FieldPolicy<any> | FieldReadFunction<any>,
+	follower?: FieldPolicy<any> | FieldReadFunction<any>,
+	followerCount?: FieldPolicy<any> | FieldReadFunction<any>,
+	following?: FieldPolicy<any> | FieldReadFunction<any>,
+	followingCount?: FieldPolicy<any> | FieldReadFunction<any>,
+	id?: FieldPolicy<any> | FieldReadFunction<any>,
+	isAdmin?: FieldPolicy<any> | FieldReadFunction<any>,
+	magicAuthIssuedAt?: FieldPolicy<any> | FieldReadFunction<any>,
+	magicAuthRedeemedAt?: FieldPolicy<any> | FieldReadFunction<any>,
+	magicAuthToken?: FieldPolicy<any> | FieldReadFunction<any>,
+	name?: FieldPolicy<any> | FieldReadFunction<any>,
+	password?: FieldPolicy<any> | FieldReadFunction<any>,
+	passwordResetIssuedAt?: FieldPolicy<any> | FieldReadFunction<any>,
+	passwordResetRedeemedAt?: FieldPolicy<any> | FieldReadFunction<any>,
+	passwordResetToken?: FieldPolicy<any> | FieldReadFunction<any>,
+	postLikes?: FieldPolicy<any> | FieldReadFunction<any>,
+	postLikesCount?: FieldPolicy<any> | FieldReadFunction<any>,
+	posts?: FieldPolicy<any> | FieldReadFunction<any>,
+	postsCount?: FieldPolicy<any> | FieldReadFunction<any>,
+	roles?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type UserAuthenticationWithPasswordFailureKeySpecifier = ('message' | UserAuthenticationWithPasswordFailureKeySpecifier)[];
+export type UserAuthenticationWithPasswordFailureFieldPolicy = {
+	message?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type UserAuthenticationWithPasswordSuccessKeySpecifier = ('item' | 'sessionToken' | UserAuthenticationWithPasswordSuccessKeySpecifier)[];
+export type UserAuthenticationWithPasswordSuccessFieldPolicy = {
+	item?: FieldPolicy<any> | FieldReadFunction<any>,
+	sessionToken?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type ValidateUserPasswordResetTokenResultKeySpecifier = ('code' | 'message' | ValidateUserPasswordResetTokenResultKeySpecifier)[];
+export type ValidateUserPasswordResetTokenResultFieldPolicy = {
+	code?: FieldPolicy<any> | FieldReadFunction<any>,
+	message?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type StrictTypedTypePolicies = {
+	CloudImageFieldOutput?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | CloudImageFieldOutputKeySpecifier | (() => undefined | CloudImageFieldOutputKeySpecifier),
+		fields?: CloudImageFieldOutputFieldPolicy,
+	},
+	ImageFieldOutput?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | ImageFieldOutputKeySpecifier | (() => undefined | ImageFieldOutputKeySpecifier),
+		fields?: ImageFieldOutputFieldPolicy,
+	},
+	KeystoneAdminMeta?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | KeystoneAdminMetaKeySpecifier | (() => undefined | KeystoneAdminMetaKeySpecifier),
+		fields?: KeystoneAdminMetaFieldPolicy,
+	},
+	KeystoneAdminUIFieldMeta?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | KeystoneAdminUIFieldMetaKeySpecifier | (() => undefined | KeystoneAdminUIFieldMetaKeySpecifier),
+		fields?: KeystoneAdminUIFieldMetaFieldPolicy,
+	},
+	KeystoneAdminUIFieldMetaCreateView?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | KeystoneAdminUIFieldMetaCreateViewKeySpecifier | (() => undefined | KeystoneAdminUIFieldMetaCreateViewKeySpecifier),
+		fields?: KeystoneAdminUIFieldMetaCreateViewFieldPolicy,
+	},
+	KeystoneAdminUIFieldMetaItemView?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | KeystoneAdminUIFieldMetaItemViewKeySpecifier | (() => undefined | KeystoneAdminUIFieldMetaItemViewKeySpecifier),
+		fields?: KeystoneAdminUIFieldMetaItemViewFieldPolicy,
+	},
+	KeystoneAdminUIFieldMetaListView?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | KeystoneAdminUIFieldMetaListViewKeySpecifier | (() => undefined | KeystoneAdminUIFieldMetaListViewKeySpecifier),
+		fields?: KeystoneAdminUIFieldMetaListViewFieldPolicy,
+	},
+	KeystoneAdminUIListMeta?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | KeystoneAdminUIListMetaKeySpecifier | (() => undefined | KeystoneAdminUIListMetaKeySpecifier),
+		fields?: KeystoneAdminUIListMetaFieldPolicy,
+	},
+	KeystoneAdminUISort?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | KeystoneAdminUISortKeySpecifier | (() => undefined | KeystoneAdminUISortKeySpecifier),
+		fields?: KeystoneAdminUISortFieldPolicy,
+	},
+	KeystoneMeta?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | KeystoneMetaKeySpecifier | (() => undefined | KeystoneMetaKeySpecifier),
+		fields?: KeystoneMetaFieldPolicy,
+	},
+	LocalImageFieldOutput?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | LocalImageFieldOutputKeySpecifier | (() => undefined | LocalImageFieldOutputKeySpecifier),
+		fields?: LocalImageFieldOutputFieldPolicy,
+	},
+	Mutation?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | MutationKeySpecifier | (() => undefined | MutationKeySpecifier),
+		fields?: MutationFieldPolicy,
+	},
+	PasswordState?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | PasswordStateKeySpecifier | (() => undefined | PasswordStateKeySpecifier),
+		fields?: PasswordStateFieldPolicy,
+	},
+	Post?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | PostKeySpecifier | (() => undefined | PostKeySpecifier),
+		fields?: PostFieldPolicy,
+	},
+	Post_content_Document?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | Post_content_DocumentKeySpecifier | (() => undefined | Post_content_DocumentKeySpecifier),
+		fields?: Post_content_DocumentFieldPolicy,
+	},
+	Query?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | QueryKeySpecifier | (() => undefined | QueryKeySpecifier),
+		fields?: QueryFieldPolicy,
+	},
+	RedeemUserMagicAuthTokenFailure?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | RedeemUserMagicAuthTokenFailureKeySpecifier | (() => undefined | RedeemUserMagicAuthTokenFailureKeySpecifier),
+		fields?: RedeemUserMagicAuthTokenFailureFieldPolicy,
+	},
+	RedeemUserMagicAuthTokenSuccess?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | RedeemUserMagicAuthTokenSuccessKeySpecifier | (() => undefined | RedeemUserMagicAuthTokenSuccessKeySpecifier),
+		fields?: RedeemUserMagicAuthTokenSuccessFieldPolicy,
+	},
+	RedeemUserPasswordResetTokenResult?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | RedeemUserPasswordResetTokenResultKeySpecifier | (() => undefined | RedeemUserPasswordResetTokenResultKeySpecifier),
+		fields?: RedeemUserPasswordResetTokenResultFieldPolicy,
+	},
+	SignUpResult?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | SignUpResultKeySpecifier | (() => undefined | SignUpResultKeySpecifier),
+		fields?: SignUpResultFieldPolicy,
+	},
+	Tag?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | TagKeySpecifier | (() => undefined | TagKeySpecifier),
+		fields?: TagFieldPolicy,
+	},
+	User?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | UserKeySpecifier | (() => undefined | UserKeySpecifier),
+		fields?: UserFieldPolicy,
+	},
+	UserAuthenticationWithPasswordFailure?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | UserAuthenticationWithPasswordFailureKeySpecifier | (() => undefined | UserAuthenticationWithPasswordFailureKeySpecifier),
+		fields?: UserAuthenticationWithPasswordFailureFieldPolicy,
+	},
+	UserAuthenticationWithPasswordSuccess?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | UserAuthenticationWithPasswordSuccessKeySpecifier | (() => undefined | UserAuthenticationWithPasswordSuccessKeySpecifier),
+		fields?: UserAuthenticationWithPasswordSuccessFieldPolicy,
+	},
+	ValidateUserPasswordResetTokenResult?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | ValidateUserPasswordResetTokenResultKeySpecifier | (() => undefined | ValidateUserPasswordResetTokenResultKeySpecifier),
+		fields?: ValidateUserPasswordResetTokenResultFieldPolicy,
+	}
+};
+export type TypedTypePolicies = StrictTypedTypePolicies & TypePolicies;

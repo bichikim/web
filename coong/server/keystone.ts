@@ -1,3 +1,4 @@
+/* eslint-disable unicorn/consistent-destructuring */
 // noinspection ES6PreferShortImport
 
 /*
@@ -9,11 +10,12 @@ You can find all the config options in our docs here: https://keystonejs.com/doc
 */
 
 import {config} from '@keystone-6/core'
-// import {mergeSchemas} from '@graphql-tools/schema'
-// import {nexusSchema} from './exnted-schema'
+import {mergeSchemas} from '@graphql-tools/schema'
+import {nexusSchema} from './exnted-schema'
 const DEFAULT_PORT = 8080
 const {DB_URL} = process.env
 const PORT = process.env.PORT ?? DEFAULT_PORT
+const ORIGIN = process.env.NODE_ENV === 'production' ? ['https://coong.io', 'https://www.coong.io'] : '*'
 // Look in the schema file for how we define our lists, and how users interact with them through graphql or the Admin UI
 import {lists} from './schema'
 
@@ -29,7 +31,7 @@ export default withAuth(
       url: DB_URL,
     },
 
-    // extendGraphqlSchema: (keystoneSchema) => mergeSchemas({schemas: [keystoneSchema, nexusSchema as any]}),
+    extendGraphqlSchema: (keystoneSchema) => mergeSchemas({schemas: [keystoneSchema, nexusSchema as any]}),
     images: {
       local: {
         baseUrl: '/images',
@@ -41,6 +43,10 @@ export default withAuth(
     lists,
 
     server: {
+      cors: {
+        optionsSuccessStatus: 200,
+        origin: ORIGIN,
+      },
       port: PORT,
     },
 

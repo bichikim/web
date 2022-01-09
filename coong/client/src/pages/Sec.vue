@@ -45,6 +45,11 @@
     <q-btn @click="setBucketName">
       set Name
     </q-btn>
+    <q-input v-model="email" />
+    <q-input v-model="password" />
+    <q-btn @click="onSignIn">
+      sign in
+    </q-btn>
   </div>
 </template>
 <script lang="ts" setup>
@@ -69,4 +74,9 @@ const setBucketName = () => {
   setName.$('add')
 }
 const toggle = ref(false)
+const email = ref('')
+const password = ref('')
+const onSignIn = () => {
+  user.$.signIn(email.value, password.value)
+}
 </script>

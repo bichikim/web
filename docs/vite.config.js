@@ -4,15 +4,12 @@ import path from 'path'
 const projectRoot = path.resolve(__dirname, '..')
 
 export default defineConfig({
-  resolve: {
-    alias: [
-      {find: 'src', replacement: path.resolve(projectRoot, 'src')},
-      {find: '~use', replacement: path.resolve(projectRoot, 'packages', 'use')}
-    ],
-  },
-  plugins: [
-  ],
   optimizeDeps: {
+    exclude: [
+      'vue-demi',
+      'quasar',
+      '@quasar/app',
+    ],
     include: [
       'vue',
       '@winter-love/emotion',
@@ -25,10 +22,13 @@ export default defineConfig({
       'micro-memoize',
       'react-fast-compare',
     ],
-    exclude: [
-      'vue-demi',
-      'quasar',
-      '@quasar/app',
+  },
+  plugins: [
+  ],
+  resolve: {
+    alias: [
+      {find: 'src', replacement: path.resolve(projectRoot, 'src')},
+      {find: '~use', replacement: path.resolve(projectRoot, 'packages', 'use')},
     ],
   },
 })

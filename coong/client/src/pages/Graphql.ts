@@ -1,6 +1,5 @@
-import {computed, defineComponent} from 'vue'
+import {defineComponent} from 'vue'
 import {QBtn, QPage} from 'quasar'
-import {useGetPostsQuery} from 'src/graphql'
 
 export const Graphql = defineComponent({
   components: {
@@ -9,21 +8,8 @@ export const Graphql = defineComponent({
   },
   name: 'GraphqlPage',
   setup() {
-    const getPosts = useGetPostsQuery()
 
-    const isFetching = computed(() => {
-      return getPosts.fetching.value
-    })
-
-    const fetchPosts = () => {
-      getPosts.executeQuery()
-    }
-
-    return {
-      fetchPosts,
-      isFetching,
-      posts: getPosts.data,
-    }
+    return {}
   },
   template: `
     <q-page>

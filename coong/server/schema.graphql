@@ -534,6 +534,7 @@ type Mutation {
     email: String!
     token: String!
   ): RedeemUserMagicAuthTokenResult!
+  signUp(input: SignUpInput!): SignUpResult
 }
 
 union UserAuthenticationWithPasswordResult =
@@ -617,6 +618,7 @@ type Query {
     email: String!
     token: String!
   ): ValidateUserPasswordResetTokenResult
+  ok: Boolean!
 }
 
 union AuthenticatedItem = User
@@ -706,4 +708,19 @@ type KeystoneAdminUISort {
 enum KeystoneAdminUISortDirection {
   ASC
   DESC
+}
+
+type SignUpResult {
+  id: String
+  name: String
+  email: String
+}
+
+"""
+Sign up input data
+"""
+input SignUpInput {
+  name: String
+  email: String
+  password: String
 }

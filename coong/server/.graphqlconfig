@@ -1,10 +1,10 @@
 {
   "name": "Coong GraphQL Schema",
-  "schemaPath": ".schema.gql",
+  "schemaPath": "./schema.graphql",
   "extensions": {
     "endpoints": {
       "Default GraphQL Endpoint": {
-        "url": "http://localhost:8080/graphql",
+        "url": "http://localhost:8080/api/graphql",
         "headers": {
           "user-agent": "JS GraphQL"
         },

@@ -1,4 +1,8 @@
-import {atom, getter, shallowUpdate} from 'vare'
+import {atom, getter} from 'vare'
+import {SignInDocument} from 'src/graphql'
+import {client} from 'src/plugins/urql'
+import {createRequest} from '@urql/vue'
+import {pipe, take, toPromise} from 'wonka'
 
 export interface UserState {
   email?: string
@@ -6,26 +10,18 @@ export interface UserState {
   token?: string
 }
 
-const fakeRequest = (result) => Promise.resolve(result)
-
 export const user = atom({
   name: 'unknown',
 } as UserState, {
-  decoName: getter((state) => {
-    return `${state.name}??`
+  isSignIn: getter(() => {
+    return Boolean(user.token)
   }),
-  pullUpdateUserInfo: async () => {
-    const response = await fakeRequest({
-      email: 'foo@foo.net',
-      name: 'foo',
-    })
-    user.$.updateUserInfo(response)
-  },
-  setToken: (state, token: string) => {
-    state.token = token
-  },
-  updateUserInfo: (state, info: Omit<UserState, 'token'>) => {
-    shallowUpdate(state, info)
+  async signIn(user, email: string, password: string) {
+    const result = await pipe(
+      client.executeMutation(createRequest(SignInDocument, {email, password})),
+      take(1),
+      toPromise,
+    )
+    console.log(result)
   },
 })
-

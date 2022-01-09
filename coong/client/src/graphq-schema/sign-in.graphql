@@ -1,0 +1,15 @@
+mutation signIn($email: String!, $password: String!){
+  authenticateUserWithPassword(email: $email, password: $password) {
+    ... on UserAuthenticationWithPasswordFailure {
+      message
+    }
+    ... on UserAuthenticationWithPasswordSuccess {
+      item {
+        id
+        email
+        name
+      },
+      sessionToken
+    }
+  }
+}

@@ -41,9 +41,7 @@
     }
   },
   "include": [
-    "run-ssr/**/*.ts",
-    "run-ssr/**/*.ts",
-    "src/**/*.ts",
-    "src/**/*.tsx"
+    "run-ssr/**/*",
+    "src/**/*",
   ]
 }
