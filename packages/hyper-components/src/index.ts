@@ -32,6 +32,10 @@ export interface CreateHyperComponentsOptions {
   variants?: Record<string, any>
 }
 
+/**
+ * HyperComponents has stitches, components and preset styles
+ * @param options
+ */
 export const createHyperComponents = (options: CreateHyperComponentsOptions = {}) => {
   const {theme = {}, variants = {}, utils = {}, media = {}} = options
   const {createDirective, css, ...restStitches} = createStyled({
