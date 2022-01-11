@@ -1,5 +1,5 @@
 {
-  "name": "@coong/server",
+  "name": "@coong/server-old",
   "version": "1.0.23-alpha.16",
   "private": true,
   "scripts": {
