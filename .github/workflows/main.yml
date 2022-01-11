@@ -81,17 +81,6 @@ jobs:
       - name: Install Dependencies
         run: pnpm install
 
-      - name: Use Libraies Cache
-        uses: actions/cache@v2
-        id: libraies-cache
-        with:
-          path: 'packages/*/lib'
-          key: ${{ runner.os }}-libraies-${{ hashFiles('packages/**/*.ts') }}
-
-      - name: Build Libraies
-        if: steps.libraies-cache.outputs.cache-hit != 'true'
-        run: pnpm run build:libraies
-
       - name: Build
         run: pnpm run build:@coong/client
 
@@ -140,17 +129,6 @@ jobs:
 
       - name: Install Dependencies
         run: pnpm install
-
-      - name: Use Libraies Cache
-        uses: actions/cache@v2
-        id: libraies-cache
-        with:
-          path: 'packages/*/lib'
-          key: ${{ runner.os }}-libraies-${{ hashFiles('packages/**/*.ts') }}
-
-      - name: Build Libraies
-        if: steps.libraies-cache.outputs.cache-hit != 'true'
-        run: pnpm run build:libraries
 
       - name: Build Server
         env:
