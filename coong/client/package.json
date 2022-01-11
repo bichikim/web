@@ -53,7 +53,8 @@
     "vite-ssr-vue": "^0.3.7",
     "vue": "3.2.26",
     "vue-i18n": "^9.1.9",
-    "vue-router": "^4.0.12"
+    "vue-router": "^4.0.12",
+    "patch-vue-directive-ssr": "^0.0.1"
   },
   "devDependencies": {
     "@capacitor/cli": "^3.2.5",
