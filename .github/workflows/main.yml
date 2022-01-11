@@ -140,14 +140,14 @@ jobs:
         with:
           name: dist-server
           path: |
-            coong/server/dist
+            coong/server/.keystone
 
       - name: Changed files
         uses: tj-actions/changed-files@v9
         id: changed-files
         with:
           files: |
-            coong/server/.keystone
+            coong/server
   deploy-server:
     name: Deploy Server
     needs: build-server
@@ -165,7 +165,7 @@ jobs:
         uses: actions/download-artifact@master
         with:
           name: dist-server
-          path: coong/server/dist
+          path: coong/server/.keystone
 
       - name: Setup Cloud SDK
         uses: google-github-actions/setup-gcloud@v0.2.1
