@@ -135,12 +135,12 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: pnpm run build:@coong/server
 
-      - name: Archive Production Artifact
-        uses: actions/upload-artifact@master
-        with:
-          name: dist-server
-          path: |
-            coong/server/.keystone
+#      - name: Archive Production Artifact
+#        uses: actions/upload-artifact@master
+#        with:
+#          name: dist-server
+#          path: |
+#            coong/server/.keystone
 
       - name: Changed files
         uses: tj-actions/changed-files@v9
@@ -161,11 +161,11 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@master
 
-      - name: Download Artifact
-        uses: actions/download-artifact@master
-        with:
-          name: dist-server
-          path: coong/server/.keystone
+#      - name: Download Artifact
+#        uses: actions/download-artifact@master
+#        with:
+#          name: dist-server
+#          path: coong/server/.keystone
 
       - name: Setup Cloud SDK
         uses: google-github-actions/setup-gcloud@v0.2.1
