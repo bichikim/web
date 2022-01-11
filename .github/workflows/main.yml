@@ -8,50 +8,9 @@ env:
   PNPM_VERSION: latest
   NODE_VERSION: 16
 jobs:
-  # Build Library
-  build-library:
-    name: Build libraries
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repo
-        uses: actions/checkout@master
-
-      - name: Setup Node
-        uses: actions/setup-node@v2
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-
-      - name: Cache pnpm modules
-        uses: actions/cache@v2
-        with:
-          path: ~/.pnpm-store
-          key: ${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-    
-
-      - name: Prepare Pnpm
-        uses: pnpm/action-setup@v2.0.1
-        with:
-          version: ${{ env.PNPM_VERSION }}
-
-      - name: Use Libraies Cache
-        uses: actions/cache@v2
-        id: libraies-cache
-        with:
-          path: 'packages/*/lib'
-          key: ${{ runner.os }}-libraies-${{ hashFiles('packages/**/*.ts') }}
-
-      - name: Install Dependencies
-        #if: steps.yarn-cache.outputs.cache-hit != 'true'
-        run: pnpm install --ignore-scripts
-
-      - name: Build Libraies
-        if: steps.libraies-cache.outputs.cache-hit != 'true'
-        run: pnpm run build:libraries
   # Test Job
   test:
     name: Test
-    needs: build-library
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repo
@@ -70,11 +29,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-    
 
-      - name: Prepare Pnpm
-        uses: pnpm/action-setup@v2.0.1
-        with:
-          version: ${{ env.PNPM_VERSION }}
-
       - name: Use Libraies Cache
         uses: actions/cache@v2
         id: libraies-cache
@@ -82,9 +36,13 @@ jobs:
           path: 'packages/*/lib'
           key: ${{ runner.os }}-libraies-${{ hashFiles('packages/**/*.ts') }}
 
+      - name: Prepare Pnpm
+        uses: pnpm/action-setup@v2.0.1
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
       - name: Install Dependencies
-        #if: steps.yarn-cache.outputs.cache-hit != 'true'
-        run: pnpm install --ignore-scripts
+        run: pnpm install
 
       - name: Build Libraies
         if: steps.libraies-cache.outputs.cache-hit != 'true'
@@ -125,7 +83,7 @@ jobs:
           version: ${{ env.PNPM_VERSION }}
 
       - name: Install Dependencies
-        run: pnpm install --ignore-scripts
+        run: pnpm install
 
       - name: Use Libraies Cache
         uses: actions/cache@v2
@@ -185,7 +143,7 @@ jobs:
           version: ${{ env.PNPM_VERSION }}
 
       - name: Install Dependencies
-        run: pnpm install --ignore-scripts
+        run: pnpm install
 
       - name: Use Libraies Cache
         uses: actions/cache@v2
