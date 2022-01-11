@@ -9,7 +9,7 @@
     "start": "dotenv keystone start"
   },
   "dependencies": {
-    "@keystone-6/auth": "^1.0.1",
+    "@keystone-6/auth": "^1.0.2",
     "@keystone-6/core": "^1.0.1",
     "@keystone-6/fields-document": "^1.0.1",
     "@sendgrid/mail": "^7.6.0",
