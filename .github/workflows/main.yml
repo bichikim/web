@@ -44,10 +44,6 @@ jobs:
       - name: Install Dependencies
         run: pnpm install
 
-      - name: Build Libraies
-        if: steps.libraies-cache.outputs.cache-hit != 'true'
-        run: pnpm run build:libraries
-
       - name: Test
         run: pnpm run test
 
