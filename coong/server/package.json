@@ -3,7 +3,7 @@
   "version": "1.0.23-alpha.16",
   "private": true,
   "scripts": {
-    "build": "keystone build",
+    "build": "dotenv keystone build",
     "dev": "dotenv keystone dev",
     "postinstall": "keystone postinstall",
     "start": "dotenv keystone start"
