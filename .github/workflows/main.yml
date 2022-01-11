@@ -147,7 +147,7 @@ jobs:
         id: changed-files
         with:
           files: |
-            coong/server
+            coong/server/.keystone
   deploy-server:
     name: Deploy Server
     needs: build-server
