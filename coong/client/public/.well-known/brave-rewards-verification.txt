@@ -1,0 +1,4 @@
+This is a Brave Rewards publisher verification file.
+
+Domain: coong.io
+Token: 73ca4e67540a060fecc36e049f33e9247db6f802f692959af72f189cb967badb
