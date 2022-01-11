@@ -5,7 +5,7 @@ on:
       - master
       - dev
 env:
-  PNPM_VERSION: 6.23.2
+  PNPM_VERSION: latest
   NODE_VERSION: 16
 jobs:
   # Build Library
@@ -124,16 +124,15 @@ jobs:
         with:
           version: ${{ env.PNPM_VERSION }}
 
+      - name: Install Dependencies
+        run: pnpm install --ignore-scripts
+
       - name: Use Libraies Cache
         uses: actions/cache@v2
         id: libraies-cache
         with:
           path: 'packages/*/lib'
           key: ${{ runner.os }}-libraies-${{ hashFiles('packages/**/*.ts') }}
-
-      - name: Install Dependencies
-        #if: steps.yarn-cache.outputs.cache-hit != 'true'
-        run: pnpm install --ignore-scripts
 
       - name: Build Libraies
         if: steps.libraies-cache.outputs.cache-hit != 'true'
@@ -186,8 +185,7 @@ jobs:
           version: ${{ env.PNPM_VERSION }}
 
       - name: Install Dependencies
-        #if: steps.yarn-cache.outputs.cache-hit != 'true'
-        run: pnpm install
+        run: pnpm install --ignore-scripts
 
       - name: Use Libraies Cache
         uses: actions/cache@v2
