@@ -2,6 +2,7 @@ import {ionVolumeHighSharp, ionVolumeMuteSharp} from '@quasar/extras/ionicons-v6
 import {QBtn, QPage} from 'quasar'
 import {computed, defineComponent, ref, watch} from 'vue'
 import {BackdropFilterText} from './BackdropFilterText'
+import {useClassName} from '@winter-love/hyper-components'
 
 const IndexPage = defineComponent({
   components: {
@@ -12,6 +13,7 @@ const IndexPage = defineComponent({
   setup() {
     const playAudioRef = ref(false)
     const audioRef = ref<undefined | HTMLAudioElement>()
+    const className = useClassName()
 
     watch(playAudioRef, (state: boolean) => {
       const audio = audioRef.value
@@ -36,19 +38,18 @@ const IndexPage = defineComponent({
       audio: audioRef,
       audioIcon,
       toggleAudio,
+      className,
     }
   },
   template: `
     <q-page >
-    <div v-css="{width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center'}">
-      
-
+    <div :class="className({width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center'})">
     <video
       muted
       autoplay
       loop
       playsinline
-      v-css="{
+      :class="className({
        minHeight: '100%',
        maxWidth: '100%',
        width: '100%',
@@ -59,7 +60,7 @@ const IndexPage = defineComponent({
        transform: 'translate(-50%, -50%)',
        top: '50%',
        zIndex: '-1000'
-      }"
+      })"
     >
       <source src="https://static.coong.io/coong-front/videos/intro.mp4" type="video/mp4">
     </video>
@@ -69,7 +70,7 @@ const IndexPage = defineComponent({
       src="https://static.coong.io/coong-front/audios/intro.mp3"
     ></audio>
     <div
-      v-css="{
+      :class="className({
         fontSize: '3rem',
         fontWeight: '900', 
         color: 'mistyrose',
@@ -80,7 +81,7 @@ const IndexPage = defineComponent({
         left: '50%',
         bottom: '46%',
         transform: 'translate(-50%, +50%)',
-      }"
+      })"
       v-css:bp2="{
         fontSize: '5rem',
         fontWeight: '900', 
@@ -91,10 +92,10 @@ const IndexPage = defineComponent({
       }"
     >
       <backdrop-filter-text
-        v-css="{
+        :class="className({
           $$activeColor: 'rgba(200, 200, 200, 0.1)',
           $$filter: 'blur(5px) hue-rotate(80deg)',
-        }"
+        })"
       >
         Coong
       </backdrop-filter-text>
