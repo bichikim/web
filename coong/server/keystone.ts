@@ -14,6 +14,7 @@ import {mergeSchemas} from '@graphql-tools/schema'
 import {nexusSchema} from './exnted-schema'
 const DEFAULT_PORT = 8080
 const {DB_URL} = process.env
+console.log(DB_URL)
 const PORT = process.env.PORT ?? DEFAULT_PORT
 const ORIGIN = process.env.NODE_ENV === 'production' ? ['https://coong.io', 'https://www.coong.io'] : '*'
 // Look in the schema file for how we define our lists, and how users interact with them through graphql or the Admin UI
