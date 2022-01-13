@@ -8,3 +8,5 @@ keystone.db
 
 # env
 .env
+
+server-ca.pem
