@@ -245,14 +245,12 @@ jobs:
       - name: Create SSL pem
         run: |
           touch coong/server/server-ca.pem
-          echo ${{ secrets.DB_PEM_DEV }} >> coong/server/server-ca.pem
+          echo ${{ secrets.DB_PEM_DEV }} > coong/server/server-ca.pem
 
       - name: Create SSL p12
-        uses: timheuer/base64-to-file@v1.1
-        with:
-          fileName: 'client.p12'
-          fileDir: './coong/server/'
-          encodedString: ${{ secrets.DB_P12_DEV }}
+        run:
+          touch coong/server/client.p12
+          echo ${{ secrets.DB_P12_DEV }} | base64 -d > coong/server/client.p12
 
 
       - name: Build
