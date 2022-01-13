@@ -10,3 +10,4 @@ keystone.db
 .env
 
 server-ca.pem
+client.p12
