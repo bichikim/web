@@ -242,10 +242,18 @@ jobs:
           echo SESSION_SECRET=${{ secrets.SESSION_SECRET_DEV }} >> coong/server/.env
           echo EMAIL_API_KEY=${{ secrets.EMAIL_API_KEY_DEV }} >> coong/server/.env
 
-      - name: Create SSL
+      - name: Create SSL pem
         run: |
           touch coong/server/server-ca.pem
           echo ${{ secrets.DB_PEM_DEV }} >> coong/server/server-ca.pem
+
+      - name: Create SSL p12
+        uses: timheuer/base64-to-file@v1.1
+        with:
+          fileName: 'client.p12'
+          fileDir: './coong/server/'
+          encodedString: ${{ secrets.DB_P12_DEV }}
+
 
       - name: Build
         run: |
