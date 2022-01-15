@@ -222,7 +222,7 @@ jobs:
 #        uses: actions/download-artifact@master
 #        with:
 #          name: dist-server
-#          path: coong/server/dist
+#          path: coong/server/.keystone
 
       - name: Setup Cloud SDK
         uses: google-github-actions/setup-gcloud@v0.2.1
@@ -273,6 +273,7 @@ jobs:
         run: |
           gcloud run deploy $GCP_SERVICE_NAME --image $GCP_IAMGE_NAME:$GITHUB_SHA \
           --quiet \
+          --add-cloudsql-instances baco-5663c:us-west1:coong-dev \
           --platform managed \
           --region asia-northeast3 \
           --allow-unauthenticated \
