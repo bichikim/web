@@ -7,8 +7,16 @@ import {AuthArgs, isAdmin, or} from '../../utils'
 import {Lists} from '.keystone/types'
 
 const isSelfItem = (args: AuthArgs<Lists.Post.TypeInfo>) => {
-  const {item, session} = args
+  const {item, session, operation, inputData} = args
   const {authorId} = item ?? {}
+
+  if (operation === 'create') {
+    const id = inputData?.author?.connect?.id
+    if (typeof id === 'undefined') {
+      return false
+    }
+    return id === session.itemId
+  }
 
   return authorId === session.itemId
 }

@@ -1,6 +1,6 @@
 import clsx from 'clsx'
-import {useSystem} from 'src'
-import {defineComponent} from 'vue'
+import {useSystem} from '../'
+import {defineComponent} from 'vue-demi'
 
 const style = {
   '&': {

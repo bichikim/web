@@ -164,7 +164,7 @@ module.exports = {
         SwitchCase: 1,
       },
     ],
-    'jsx-quotes': ['error', 'prefer-single'],
+    'jsx-quotes': ['error', 'prefer-double'],
     'key-spacing': [
       'error', {
         afterColon: true,
@@ -336,7 +336,6 @@ module.exports = {
     'prefer-rest-params': 'error',
     'prefer-spread': 'error',
     'prefer-template': 'warn',
-
     'quote-props': ['error', 'as-needed'],
     quotes: ['error', 'single'],
     radix: 'error',

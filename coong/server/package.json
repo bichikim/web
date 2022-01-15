@@ -22,7 +22,8 @@
     "typescript": "^4.5.4"
   },
   "devDependencies": {
-    "@prisma/generator-helper": "^3.7.0"
+    "@prisma/generator-helper": "^3.7.0",
+    "graphql-tag": "^2.12.6"
   },
   "engines": {
     "node": "^14.15 || ^16.13"

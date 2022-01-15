@@ -7,6 +7,7 @@ import {pipe, take, toPromise} from 'wonka'
 export interface UserState {
   email?: string
   name?: string
+  test?: string
   token?: string
 }
 

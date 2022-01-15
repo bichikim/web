@@ -5,6 +5,9 @@ import {linearGradient, typography} from './variants'
 import {stitchesUtils} from './stitches-utils'
 import {ConfigType, CreateStitches} from '@stitches/core/types/config'
 
+export * from './h-glow'
+export * from './h-page'
+
 export const SYSTEM_KEY: InjectionKey<CssComponent> =
   process.env.NODE_ENV === 'development' ? '__system_key__' as any : Symbol('system-key')
 

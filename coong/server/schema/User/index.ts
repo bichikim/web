@@ -12,6 +12,7 @@ const isSelfField = (args: AuthArgs<Lists.User.TypeInfo>) => {
 
 const isSelfFilter = (args: AuthArgs) => {
   const {session, operation} = args
+  // todo fix logic
   if (operation === 'query') {
     return {id: {equals: session.itemId}}
   }

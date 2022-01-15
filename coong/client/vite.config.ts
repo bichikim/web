@@ -136,7 +136,7 @@ export default defineConfig(() => {
         'pages/': `${path.resolve(__dirname, 'src/pages')}/`,
         'src/': `${path.resolve(__dirname, 'src')}/`,
         'store/': `${path.resolve(__dirname, 'src/store')}/`,
-        vue: 'vue/dist/vue.esm-bundler.js',
+        vue: 'vue/dist/vue.runtime.esm-bundler.js',
         '~/': `${path.resolve(__dirname, '')}/`,
       },
     },

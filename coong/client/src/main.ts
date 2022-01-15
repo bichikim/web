@@ -1,5 +1,5 @@
 import {createApp} from 'vue'
-import Root from './Root'
+import Root from './pages/_root'
 import {useAppPlugins} from './app-plugins'
 import './global.css'
 

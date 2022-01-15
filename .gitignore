@@ -6,6 +6,7 @@ node_modules
 
 .parcel-cache
 /storybook-static
+/.keystone
 
 # Quasar core related directories
 .quasar

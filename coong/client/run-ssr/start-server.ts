@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import express, {static as expressStatic} from 'express'
 import compression from 'compression'
+import helmet, {contentSecurityPolicy} from 'helmet'
 
 export interface StartServerOptions {
   distClient?: string
@@ -29,6 +30,17 @@ export const startServer = async (options: StartServerOptions) => {
   const app = express()
 
   const render: any = require(`${root}/${distServer}/${entry}.js`).default
+  app.use(helmet({
+    contentSecurityPolicy: {
+      directives: {
+        ...contentSecurityPolicy.getDefaultDirectives(),
+        // eslint-disable-next-line quotes
+        'script-src': ["'self'", "*.coong.io", "'unsafe-inline'"],
+        // eslint-disable-next-line
+        'media-src': ["'self'", "*.coong.io"],
+      },
+    },
+  }))
   app.use(compression())
   app.use(expressStatic(`${root}/${distClient}`, {index: false}))
 

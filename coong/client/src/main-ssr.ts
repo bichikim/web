@@ -1,10 +1,10 @@
 import createSsr from 'vite-ssr-vue'
-import Root from './Root'
+import Root from './pages/_root'
 import {useAppPlugins} from './app-plugins'
 
 export default createSsr(Root, {
   created: async ({app, url, isClient, initialState, ...ssrContext}) => {
-    const {router, stitches} = await useAppPlugins(app, initialState, ssrContext)
+    const {router, stitches} = await useAppPlugins(app, initialState, ssrContext, isClient)
 
     if (!isClient && typeof url === 'string') {
       await router.push(url)
@@ -24,6 +24,9 @@ export default createSsr(Root, {
           headTags,
         },
         router,
+        store: {
+          foo: 'foo',
+        },
       }
     }
 

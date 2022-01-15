@@ -17,6 +17,7 @@ export interface Session {
 
 export interface AuthArgs<ListTypeInfo extends BaseListTypeInfo = any> {
   fieldKey?: string
+  inputData?: any
   item?: ListTypeInfo['item']
   operation: string | 'delete'
   session: Session
@@ -33,7 +34,12 @@ export const Forbidden = () => {
 
 export const isAdmin = (args: AuthArgs<any>) => {
   const {session} = args
-  return Boolean(session.data.isAdmin)
+  return Boolean(session?.data?.isAdmin)
+}
+
+export const isUser = (args: AuthArgs<any>) => {
+  const {session} = args
+  return Boolean(session?.itemId)
 }
 
 export const hasRole = (requiredRoles: string[], and: boolean = true) => (args: AuthArgs) => {

@@ -1,4 +1,4 @@
-/* eslint-disable unicorn/consistent-destructuring */
+/* eslint-disable unicorn/consistent-destructuring,prefer-destructuring */
 // noinspection ES6PreferShortImport
 
 /*
@@ -13,8 +13,8 @@ import {config} from '@keystone-6/core'
 import {mergeSchemas} from '@graphql-tools/schema'
 import {nexusSchema} from './exnted-schema'
 const DEFAULT_PORT = 8080
-const {DB_URL} = process.env
-console.log(DB_URL)
+const DB_URL = process.env.NODE_ENV === 'test' ? 'file:./keystone-test.db' : process.env.DB_URL
+const DB_PROVIDER = process.env.NODE_ENV === 'test' ? 'sqlite' : 'postgresql'
 const PORT = process.env.PORT ?? DEFAULT_PORT
 const ORIGIN = process.env.NODE_ENV === 'production' ? ['https://coong.io', 'https://www.coong.io'] : '*'
 // Look in the schema file for how we define our lists, and how users interact with them through graphql or the Admin UI
@@ -28,7 +28,7 @@ export default withAuth(
   config({
     // the db sets the database provider - we're using sqlite for the fastest startup experience
     db: {
-      provider: 'postgresql',
+      provider: DB_PROVIDER,
       url: DB_URL,
     },
 

@@ -1,4 +1,4 @@
-import {css} from 'src/stitches'
+import {css} from 'src/plugins/hyper-components'
 import {defineComponent, h} from 'vue'
 
 const rootClass = css({
@@ -32,6 +32,7 @@ const rootClass = css({
 })
 
 export const BackdropFilterText = defineComponent({
+  name: 'BackdropFilterText',
   props: {
     dy: {default: '0.35em', type: String},
   },

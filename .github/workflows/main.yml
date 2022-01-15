@@ -198,6 +198,7 @@ jobs:
         run: |
           gcloud run deploy $GCP_SERVICE_NAME --image $GCP_IAMGE_NAME:$GITHUB_SHA \
           --quiet \
+          --add-cloudsql-instances baco-5663c:asia-northeast3:coong \
           --platform managed \
           --set-env-vars NODE_ENV=production \
           --region asia-northeast3 \
@@ -241,17 +242,6 @@ jobs:
           echo DB_URL=${{ secrets.DB_URL_DEV }} >> coong/server/.env
           echo SESSION_SECRET=${{ secrets.SESSION_SECRET_DEV }} >> coong/server/.env
           echo EMAIL_API_KEY=${{ secrets.EMAIL_API_KEY_DEV }} >> coong/server/.env
-
-      - name: Create SSL pem
-        run: |
-          touch coong/server/server-ca.pem
-          echo "${{ secrets.DB_PEM_DEV }}" > coong/server/server-ca.pem
-
-      - name: Create SSL p12
-        run: |
-          touch coong/server/client.p12
-          echo "${{ secrets.DB_P12_DEV }}" | base64 -d > coong/server/client.p12
-
 
       - name: Build
         run: |

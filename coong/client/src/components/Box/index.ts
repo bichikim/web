@@ -1,5 +1,5 @@
 import {FunctionalComponent} from 'vue'
-import {styled} from 'src/stitches'
+import {styled} from 'src/plugins/hyper-components'
 import {ShortHeadProperties, StyleProperties} from 'src/design-system'
 
 export interface BoxProps {
