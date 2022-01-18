@@ -1,20 +1,19 @@
 // noinspection JSUnusedLocalSymbols
 
-import {setupTestRunner} from '@keystone-6/core/testing'
+import {setupTestRunner, TestArgs} from '@keystone-6/core/testing'
 import config from '../keystone'
 import {gql} from 'graphql-tag'
 
 const runner = setupTestRunner({config})
 
-describe('coong/server/user-query', () => {
-  it('should protect user data', runner(async ({context}) => {
+describe('coong/server/user-read', () => {
+
+  const generateData = async ({context}: TestArgs) => {
     // 유저 Foo 생성
     const userFoo = await context.query.User.createOne({
       data: {email: 'foo@foo.com', name: 'foo', password: 'super-secret'},
       query: 'id name password { isSet }',
     })
-
-    expect(userFoo.name).toBe('foo')
 
     // 유저 Bar 생성
     const userBar = await context.query.User.createOne({
@@ -23,7 +22,7 @@ describe('coong/server/user-query', () => {
     })
 
     // 유저 Foo Post 생성
-    const {data: postData, errors: postError} = await context.withSession({
+    const postFoo = await context.withSession({
       data: {
         //
       },
@@ -53,12 +52,22 @@ describe('coong/server/user-query', () => {
       },
     })
 
-    // console.log(postData)
-    // console.log(postError)
+    return {
+      postFoo,
+      userBar,
+      userFoo,
+    }
+  }
 
-    const postId = postData?.createPost?.id
+  it('should protect reading user data', runner(async (args) => {
+    const {userBar, userFoo, postFoo} = await generateData(args)
+    const {context} = args
 
-    //// 읽기 테스트
+    expect(userFoo.name).toBe('foo')
+
+    const postId = postFoo.data?.createPost?.id
+
+    //--> 읽기 테스트
 
     // 비인증 유저검색
     const {data, errors} = await context.graphql.raw({
@@ -66,21 +75,38 @@ describe('coong/server/user-query', () => {
         query ($id: ID!) {
           user(where: {id: $id}) {
             id
-            name,
             email
-            password {
-              isSet
-            }
             follower {
-              email
               id
+              email
+              isAdmin
               name
               password {
                 isSet
               }
               roles
             }
-            roles
+            following {
+              email
+            }
+            isAdmin
+            postLikes {
+              author {
+                id
+                email
+                name
+                isAdmin
+                password {
+                  isSet
+                }
+                roles
+              }
+            }
+            postLikesCount
+            name
+            password {
+              isSet
+            }
             posts {
               id
               author {
@@ -88,16 +114,18 @@ describe('coong/server/user-query', () => {
                 email
               }
             }
-            postLikesCount
+            postsCount
+            roles
+            magicAuthToken {
+              isSet
+            }
+            magicAuthRedeemedAt
+            magicAuthIssuedAt
           }
         }
       `,
       variables: {id: userFoo.id},
     })
-
-    // console.log(data?.user)
-    // console.log(data?.user?.posts)
-    // console.log(data?.user?.posts?.[0].author)
 
     expect(data?.user.id).toBe(userFoo.id)
     expect(data?.user.name).toBe(userFoo.name)
