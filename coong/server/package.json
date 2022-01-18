@@ -6,7 +6,8 @@
     "build": "dotenv keystone build",
     "dev": "dotenv keystone dev",
     "postinstall": "keystone postinstall",
-    "start": "dotenv keystone start"
+    "start": "dotenv keystone start",
+    "up:localdockers": "docker-compose up -d"
   },
   "dependencies": {
     "@keystone-6/auth": "^1.0.2",
