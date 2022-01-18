@@ -47,4 +47,7 @@ export const createGetStorage = () => {
   }
 }
 
+/**
+ * @deprecated use soft-storage
+ */
 export const getStorage = createGetStorage()

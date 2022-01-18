@@ -8,6 +8,11 @@ export * from './legacy'
 
 export type ClipboardState = 'idle' | 'reading' | 'writing'
 
+/**
+ * @useful ⭐⭐⭐
+ * @param initState
+ * @param updateOnEvent
+ */
 export const useClipboard = (
   initState?: MayRef<string | undefined>,
   updateOnEvent: boolean = false,

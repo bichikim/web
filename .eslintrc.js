@@ -37,6 +37,7 @@ module.exports = {
         'no-magic-numbers': 'off',
         'prefer-destructuring': 'off',
         'unicorn/consistent-function-scoping': 'off',
+        'unicorn/no-useless-undefined': 'off',
         'vue/one-component-per-file': 'off',
         'vue/require-prop-types': 'off',
       },
@@ -391,6 +392,9 @@ module.exports = {
     'unicorn/no-array-reduce': 'off',
     'unicorn/no-nested-ternary': 'off',
     'unicorn/no-null': 'off',
+
+    'unicorn/prefer-export-from': 'off',
+
     // 적용 할 수 있도록 해야한다
     'unicorn/prefer-module': 'off',
     // 적용 할 수 있도록 해야한다

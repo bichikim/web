@@ -34,7 +34,8 @@
   "dependencies": {
     "lodash": "^4.17.21",
     "micro-memoize": "^4.0.9",
-    "react-fast-compare": "^3.2.0"
+    "react-fast-compare": "^3.2.0",
+    "js-cookie": "^3.0.1"
   },
   "devDependencies": {
     "gulp": "^4.0.2",

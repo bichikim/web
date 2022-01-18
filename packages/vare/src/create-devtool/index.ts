@@ -99,7 +99,7 @@ export const createDevTool = (
       const state = stateBases[payload.nodeId]
 
       if (state) {
-        const path = drop(payload.path)
+        const path = drop(1)(payload.path)
         const _state = state.base
         const {value} = payload.state
         payload.set(_state.value, path, value)

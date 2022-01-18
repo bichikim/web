@@ -2,6 +2,10 @@ export type MayFunction<T> = T | ((...args: any) => T)
 export type ReturnFunction<T> = (...args: any[]) => T
 export type UnFunction<T> = T extends ReturnFunction<infer P> ? P : T
 
+/**
+ * @deprecated
+ * @param value
+ */
 export function mayFunctionValue<T>(value: T)
 export function mayFunctionValue<T>(value: () => T)
 export function mayFunctionValue<T, Args extends any[]>(value: (...args: Args) => T, args: Args)
@@ -11,3 +15,5 @@ export function mayFunctionValue<T>(value: T, args?: any): UnFunction<T> {
   }
   return value as any
 }
+
+export const getFunctionValue = mayFunctionValue
