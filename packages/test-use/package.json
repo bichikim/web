@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/test-use",
-  "version": "1.0.23-alpha.19",
+  "version": "1.0.23-alpha.20",
   "description": "test composition api utils",
   "keywords": [
     "typescript",
@@ -33,7 +33,7 @@
   },
   "dependencies": {
     "@vue/test-utils": "next",
-    "@winter-love/utils": "^1.0.23-alpha.19",
+    "@winter-love/utils": "^1.0.23-alpha.20",
     "vue": "next"
   },
   "devDependencies": {

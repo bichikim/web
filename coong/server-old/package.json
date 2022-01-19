@@ -1,6 +1,6 @@
 {
   "name": "@coong/server-old",
-  "version": "1.0.23-alpha.19",
+  "version": "1.0.23-alpha.20",
   "private": true,
   "scripts": {
     "build": "rimraf ./lib && pnpm run generate && ttsc -p tsconfig.build.json",
@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@prisma/client": "~3.7.0",
-    "@winter-love/utils": "^1.0.23-alpha.19",
+    "@winter-love/utils": "^1.0.23-alpha.20",
     "apollo-server": "^3.0.2",
     "bcryptjs": "^2.4.3",
     "class-validator": "^0.13.1",
