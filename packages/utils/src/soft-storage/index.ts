@@ -1,7 +1,7 @@
 import {isSSR} from '@winter-love/utils'
 import cookie, {CookieAttributes} from 'js-cookie'
 
-export type BrowserStorageKind = 'session' | 'local'
+export type BrowserStorageKind = 'session' | 'local' | 'cookie'
 
 export interface SoftStorage<Data, Options extends Record<string, any> | undefined = undefined> {
   getItem(name: string): Data | undefined
@@ -15,7 +15,13 @@ const getBrowserStorageModule = (kind: BrowserStorageKind): Storage => {
   return localStorage
 }
 
-export const createSoftBrowserStorage = <Data>(kind: BrowserStorageKind): SoftStorage<Data> => {
+export function createSoftBrowserStorage<Data>(kind: 'local'): SoftStorage<Data>
+export function createSoftBrowserStorage<Data>(kind: 'session'): SoftStorage<Data>
+export function createSoftBrowserStorage<Data>(kind: 'cookie'): SoftStorage<Data, CookieAttributes>
+export function createSoftBrowserStorage<Data>(kind: BrowserStorageKind): SoftStorage<Data> {
+  if (kind === 'cookie') {
+    return createCookieSoftStorage<Data>()
+  }
   return {
     getItem(name: string) {
       if (isSSR()) {
@@ -42,28 +48,30 @@ export const createSoftBrowserStorage = <Data>(kind: BrowserStorageKind): SoftSt
   }
 }
 
-export const cookieSoftStorage: SoftStorage<any, CookieAttributes> = {
-  getItem(name: string) {
-    if (isSSR()) {
-      return
-    }
-    try {
-      const result = cookie.get(name)
-      if (typeof result !== 'undefined') {
-        return JSON.parse(result)
+export const createCookieSoftStorage =
+  <Data>(): SoftStorage<Data, CookieAttributes> => ({
+    getItem(name: string) {
+      if (isSSR()) {
+        return
       }
-    } catch {
+      try {
+        const result = cookie.get(name)
+        if (typeof result !== 'undefined') {
+          return JSON.parse(result)
+        }
+      } catch {
       // ignore
-    }
-  },
-  setItem(name: string, value: any, options?) {
-    if (isSSR()) {
-      return
-    }
-    cookie.set(name, JSON.stringify(value), options)
-  },
-}
+      }
+    },
+    setItem(name: string, value: any, options?) {
+      if (isSSR()) {
+        return
+      }
+      cookie.set(name, JSON.stringify(value), options)
+    },
+  })
 
-export const localSoftStorage: SoftStorage<any> = createSoftBrowserStorage('local')
-export const sessionSoftStorage: SoftStorage<any> = createSoftBrowserStorage('session')
+export const localSoftStorage = createSoftBrowserStorage('local')
+export const sessionSoftStorage = createSoftBrowserStorage('session')
+export const cookieSoftStorage = createSoftBrowserStorage('cookie')
 
