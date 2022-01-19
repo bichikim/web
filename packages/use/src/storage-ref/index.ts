@@ -7,6 +7,10 @@ import {wrapRef} from '../wrap-ref'
 export interface StorageRefOptions<Data> {
   cookieOptions?: CookieStorageOptions
   /**
+   * watch deeply to update storage
+   */
+  deep?: boolean
+  /**
    * @deprecated please use the value
    */
   init?: Data
@@ -18,7 +22,7 @@ export const storageRef = <Data>(
   value?: MayRef<Data>,
   options: StorageRefOptions<Data> = {},
 ) => {
-  const {type = 'local', cookieOptions} = options
+  const {type = 'local', cookieOptions, deep} = options
   const valueRef = wrapRef<Data>(value)
   const freezeWatch = ref(false)
   const storage = createSoftBrowserStorage<Data | undefined>(type)
@@ -59,7 +63,7 @@ export const storageRef = <Data>(
       return
     }
     storage.setItem(key, value, cookieOptions)
-  })
+  }, {deep})
 
   return valueRef
 }
