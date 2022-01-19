@@ -1,13 +1,13 @@
 {
   "name": "@coong/client-next",
-  "version": "1.0.23-alpha.18",
+  "version": "1.0.23-alpha.19",
   "private": true,
   "scripts": {
     "dev": "nuxi dev",
     "build": "nuxi build"
   },
   "dependencies": {
-    "@winter-love/stitches": "^1.0.23-alpha.18",
+    "@winter-love/stitches": "^1.0.23-alpha.19",
     "vue": "next"
   },
   "devDependencies": {
