@@ -15,11 +15,11 @@ export interface StorageRefOptions<Data> {
 
 export const storageRef = <Data>(
   key: string,
-  value?: MayRef<Data | undefined>,
+  value?: MayRef<Data>,
   options: StorageRefOptions<Data> = {},
 ) => {
   const {type = 'local', cookieOptions} = options
-  const valueRef = wrapRef<Data | undefined>(value)
+  const valueRef = wrapRef<Data>(value)
   const freezeWatch = ref(false)
   const storage = createSoftBrowserStorage<Data | undefined>(type)
   if (!storage) {
