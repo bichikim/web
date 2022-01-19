@@ -1,7 +1,10 @@
 import {isSSR} from '@winter-love/utils'
 import cookie, {CookieAttributes} from 'js-cookie'
+import stringify from 'fast-json-stable-stringify'
 
 export type BrowserStorageKind = 'session' | 'local' | 'cookie'
+
+export type CookieStorageOptions = CookieAttributes
 
 export interface SoftStorage<Data, Options extends Record<string, any> | undefined = undefined> {
   getItem(name: string): Data | undefined
@@ -15,9 +18,10 @@ const getBrowserStorageModule = (kind: BrowserStorageKind): Storage => {
   return localStorage
 }
 
+export function createSoftBrowserStorage<Data>(kind: BrowserStorageKind): SoftStorage<Data>
 export function createSoftBrowserStorage<Data>(kind: 'local'): SoftStorage<Data>
 export function createSoftBrowserStorage<Data>(kind: 'session'): SoftStorage<Data>
-export function createSoftBrowserStorage<Data>(kind: 'cookie'): SoftStorage<Data, CookieAttributes>
+export function createSoftBrowserStorage<Data>(kind: 'cookie'): SoftStorage<Data, CookieStorageOptions>
 export function createSoftBrowserStorage<Data>(kind: BrowserStorageKind): SoftStorage<Data> {
   if (kind === 'cookie') {
     return createCookieSoftStorage<Data>()
@@ -42,14 +46,14 @@ export function createSoftBrowserStorage<Data>(kind: BrowserStorageKind): SoftSt
         return
       }
       const storage = getBrowserStorageModule(kind)
-      const data = JSON.stringify(value)
+      const data = stringify(value)
       storage.setItem(name, data)
     },
   }
 }
 
 export const createCookieSoftStorage =
-  <Data>(): SoftStorage<Data, CookieAttributes> => ({
+  <Data>(): SoftStorage<Data, CookieStorageOptions> => ({
     getItem(name: string) {
       if (isSSR()) {
         return
@@ -67,7 +71,7 @@ export const createCookieSoftStorage =
       if (isSSR()) {
         return
       }
-      cookie.set(name, JSON.stringify(value), options)
+      cookie.set(name, stringify(value), options)
     },
   })
 

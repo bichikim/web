@@ -1,33 +1,16 @@
-import {getStorage, StorageType} from '@winter-love/utils'
+import {BrowserStorageKind, CookieStorageOptions, createSoftBrowserStorage} from '@winter-love/utils'
 import {ref, watch} from 'vue-demi'
-import stringify from 'fast-json-stable-stringify'
 import {useElementEvent} from '../element-event'
 import {MayRef} from 'src/types'
 import {wrapRef} from '../wrap-ref'
 
 export interface StorageRefOptions<Data> {
+  cookieOptions?: CookieStorageOptions
   /**
    * @deprecated please use the value
    */
   init?: Data
-  type?: StorageType
-}
-
-const getItem = (storage: Storage, key: string) => {
-  let result
-  try {
-    const raw = storage.getItem(key)
-    if (raw) {
-      result = JSON.parse(raw)
-    }
-  } catch {
-    return
-  }
-  return result
-}
-
-const setItem = (storage: Storage, key: string, value: any) => {
-  storage.setItem(key, stringify(value))
+  type?: BrowserStorageKind
 }
 
 export const storageRef = <Data>(
@@ -35,16 +18,16 @@ export const storageRef = <Data>(
   value?: MayRef<Data | undefined>,
   options: StorageRefOptions<Data> = {},
 ) => {
-  const {type = 'local'} = options
+  const {type = 'local', cookieOptions} = options
   const valueRef = wrapRef<Data | undefined>(value)
   const freezeWatch = ref(false)
-  const storage = getStorage(type)
+  const storage = createSoftBrowserStorage<Data | undefined>(type)
   if (!storage) {
     return valueRef
   }
 
   const updateStorage = (value: any) => {
-    setItem(storage, key, value)
+    storage.setItem(key, value, cookieOptions)
     valueRef.value = value
   }
 
@@ -53,7 +36,7 @@ export const storageRef = <Data>(
       freezeWatch.value = true
     }
 
-    const result = getItem(storage, key)
+    const result = storage.getItem(key)
 
     if (typeof result !== 'undefined') {
       valueRef.value = result
@@ -75,7 +58,7 @@ export const storageRef = <Data>(
       freezeWatch.value = false
       return
     }
-    setItem(storage, key, value)
+    storage.setItem(key, value, cookieOptions)
   })
 
   return valueRef
