@@ -16,6 +16,20 @@ describe('storageRef', () => {
     expect(localStorage.getItem('foo')).toBe('"bar"')
     localStorage.clear()
   })
+  it('should not change localStorage by value', () => {
+    localStorage.setItem('foo', '"foo"')
+    const valueRef = storageRef('foo', 'bar')
+    expect(valueRef.value).toBe('foo')
+    expect(localStorage.getItem('foo')).toBe('"foo"')
+    localStorage.clear()
+  })
+  it('should change localStorage by value with rest', () => {
+    localStorage.setItem('foo', '"foo"')
+    const valueRef = storageRef('foo', 'bar', {reset: true})
+    expect(valueRef.value).toBe('bar')
+    expect(localStorage.getItem('foo')).toBe('"bar"')
+    localStorage.clear()
+  })
   it('should change localStorage by value deeply', async () => {
     const valueRef = storageRef<string[]>('foo', [], {deep: true})
     expect(valueRef.value).toEqual([])

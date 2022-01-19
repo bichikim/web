@@ -4,25 +4,25 @@ import {useElementEvent} from '../element-event'
 import {MayRef} from 'src/types'
 import {wrapRef} from '../wrap-ref'
 
-export interface StorageRefOptions<Data> {
+export interface StorageRefOptions {
   cookieOptions?: CookieStorageOptions
   /**
    * watch deeply to update storage
    */
   deep?: boolean
   /**
-   * @deprecated please use the value
+   * remove saved data on init
    */
-  init?: Data
+  reset?: boolean
   type?: BrowserStorageKind
 }
 
 export const storageRef = <Data>(
   key: string,
   value?: MayRef<Data>,
-  options: StorageRefOptions<Data> = {},
+  options: StorageRefOptions = {},
 ) => {
-  const {type = 'local', cookieOptions, deep} = options
+  const {type = 'local', cookieOptions, deep, reset} = options
   const valueRef = wrapRef<Data>(value)
   const freezeWatch = ref(false)
   const storage = createSoftBrowserStorage<Data | undefined>(type)
@@ -30,9 +30,12 @@ export const storageRef = <Data>(
     return valueRef
   }
 
-  const updateStorage = (value: any) => {
-    storage.setItem(key, value, cookieOptions)
-    valueRef.value = value
+  const initValue = storage.getItem(key)
+
+  if (!initValue || reset) {
+    storage.setItem(key, valueRef.value, cookieOptions)
+  } else {
+    valueRef.value = initValue
   }
 
   const updateValue = (init?: any, freeze: boolean = false) => {
@@ -44,10 +47,6 @@ export const storageRef = <Data>(
 
     if (typeof result !== 'undefined') {
       valueRef.value = result
-      return
-    }
-    if (init) {
-      updateStorage(init)
     }
   }
 
