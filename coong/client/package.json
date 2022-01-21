@@ -38,6 +38,7 @@
     "@winter-love/hyper-components": "^1.0.23-alpha.20",
     "@winter-love/stitches": "^1.0.23-alpha.20",
     "@winter-love/utils": "^1.0.23-alpha.20",
+    "@winter-love/use": "^1.0.23-alpha.23",
     "compression": "^1.7.4",
     "cross-env": "^7.0.3",
     "express": "^4.17.1",
@@ -52,8 +53,8 @@
     "serve-static": "^1.14.1",
     "tslib": "^2.3.1",
     "vare": "^1.0.23-alpha.23",
-    "vite-ssr-vue": "^0.3.7",
-    "vue": "3.2.26",
+    "vite-ssr-vue": "^0.4.4",
+    "vue": "next",
     "vue-i18n": "^9.1.9",
     "vue-router": "^4.0.12"
   },

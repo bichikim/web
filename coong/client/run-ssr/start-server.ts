@@ -40,9 +40,12 @@ export const startServer = async (options: StartServerOptions) => {
         'media-src': ["'self'", "*.coong.io"],
       },
     },
+    crossOriginResourcePolicy: {
+      policy: 'cross-origin',
+    },
   }))
   app.use(compression())
-  app.use(expressStatic(`${root}/${distClient}`, {index: false}))
+  app.use(expressStatic(`${root}/${distClient}`, {index: false, maxAge: '1m'}))
 
   app.get('*', async (req, res, next) => {
     const url = req.originalUrl
@@ -58,7 +61,6 @@ export const startServer = async (options: StartServerOptions) => {
       responseHeaders: {'content-type': 'text:html; charset=utf-8'},
       statusCode: OK,
       url,
-
     }
 
     if (method !== GET_METHOD || !url) {

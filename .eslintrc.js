@@ -9,12 +9,12 @@ module.exports = {
     '@vue/typescript/recommended',
   ],
   globals: {
-    Capacitor: true,
+    __QUASAR_SSR__: true,
     __QUASAR_SSR_CLIENT__: true,
     __QUASAR_SSR_PWA__: true,
     __QUASAR_SSR_SERVER__: true,
-    __QUASAR_SSR__: true,
     __statics: true,
+    Capacitor: true,
     chrome: true,
     // Google Analytics
     cordova: true,
@@ -350,7 +350,7 @@ module.exports = {
         ignoreDeclarationSort: true,
       },
     ],
-    'sort-keys-fix/sort-keys-fix': ['warn', 'asc', {natural: false}],
+    'sort-keys-fix/sort-keys-fix': ['warn', 'asc', {natural: true}],
     'space-before-blocks': [
       'error', {
         classes: 'always',
