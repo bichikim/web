@@ -198,7 +198,7 @@ jobs:
         run: |
           gcloud run deploy $GCP_SERVICE_NAME --image $GCP_IAMGE_NAME:$GITHUB_SHA \
           --quiet \
-          --add-cloudsql-instances baco-5663c:asia-northeast3:coong \
+          --add-cloudsql-instances ${{ secrets.DB_NAME }} \
           --platform managed \
           --set-env-vars NODE_ENV=production \
           --region asia-northeast3 \
@@ -263,7 +263,6 @@ jobs:
         run: |
           gcloud run deploy $GCP_SERVICE_NAME --image $GCP_IAMGE_NAME:$GITHUB_SHA \
           --quiet \
-          --add-cloudsql-instances ${{ secrets.DB_NAME_DEV }} \
           --platform managed \
           --region asia-northeast3 \
           --allow-unauthenticated \
