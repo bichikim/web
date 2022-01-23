@@ -3,6 +3,8 @@ import Root from './pages/_root'
 import {useAppPlugins} from './app-plugins'
 import './global.css'
 
+window.global = globalThis
+
 const startApp = async () => {
   const app = createApp(Root)
 

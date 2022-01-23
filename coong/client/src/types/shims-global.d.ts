@@ -8,3 +8,10 @@ interface ImportMeta {
 }
 
 declare const __DEV__: string | undefined
+
+interface Window {
+  solana?: any
+  solflare?: {
+    isSolflare: boolean
+  }
+}

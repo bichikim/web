@@ -48,6 +48,8 @@ const PASSWORD_RESET_TOKEN_MAX_AGE = 60 * 30
 // eslint-disable-next-line no-magic-numbers
 const MAGIC_AUTH_LINK_TOKEN_MAX_AGE = 60 * 5
 
+export const AUTH_LIST_KEY = 'User'
+
 // Here we define how auth relates to our schemas.
 // What we are saying here is that we want to use the list `User`, and to log in
 // we will need their email and password.
@@ -59,7 +61,7 @@ const {withAuth} = createAuth({
     fields: ['name', 'email', 'password'],
     itemData: {isAdmin: true},
   },
-  listKey: 'User',
+  listKey: AUTH_LIST_KEY,
   magicAuthLink: createMagicAuthLink({
     from: SUPPORT_EMAIL_ADDRESS,
     link: resolveUrl(WEB_URL, MAGIC_AUTH_LINK_PATH),

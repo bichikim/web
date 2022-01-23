@@ -1,11 +1,13 @@
 import {useClassName} from '@winter-love/hyper-components'
-import {QPage} from 'quasar'
+import {QBtn, QPage} from 'quasar'
 import {defineComponent, h} from 'vue'
 import {AudioButton, BackdropFilterText, SignInButton} from './_components'
+import {useSolana} from 'src/use/solana'
 
 const IndexPage = defineComponent({
   name: 'IndexPage',
   render() {
+    const {connect, sign} = this
     const className = useClassName()
 
     const container = className({
@@ -75,14 +77,28 @@ const IndexPage = defineComponent({
                 ]),
               ],
             ]),
+            h(QBtn, {onClick: connect}, 'solana'),
+            h(QBtn, {onClick: sign}, 'sign'),
           ]),
         ]),
       ])
     )
   },
   setup() {
+    const solana = useSolana()
+
+    const connect = () => {
+      return solana.connect()
+    }
+
+    const sign = () => {
+      return solana.sign('coong coong coong')
+    }
+
     return {
-      // empty
+      connect,
+      publicKey: solana.publicKey,
+      sign,
     }
   },
 })

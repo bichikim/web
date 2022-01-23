@@ -10,8 +10,8 @@ You can find all the config options in our docs here: https://keystonejs.com/doc
 */
 
 import {config} from '@keystone-6/core'
-import {mergeSchemas} from '@graphql-tools/schema'
-import {nexusSchema} from './exnted-schema'
+import {extendGraphqlSchema} from './exnted-schema'
+
 const DEFAULT_PORT = 8080
 const DB_URL = process.env.NODE_ENV === 'test' ? 'file:./keystone-test.db' : process.env.DB_URL
 const DB_PROVIDER = process.env.NODE_ENV === 'test' ? 'sqlite' : 'postgresql'
@@ -32,7 +32,7 @@ export default withAuth(
       url: DB_URL,
     },
 
-    extendGraphqlSchema: (keystoneSchema) => mergeSchemas({schemas: [keystoneSchema, nexusSchema as any]}),
+    extendGraphqlSchema,
     images: {
       local: {
         baseUrl: '/images',

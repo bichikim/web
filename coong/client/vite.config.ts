@@ -25,12 +25,12 @@ export default defineConfig(() => {
     },
     define: {
       __DEV__: JSON.stringify('import.meta.env.DEV'),
+      __QUASAR_SSR__: JSON.stringify('import.meta.env.SSR'),
       __QUASAR_SSR_CLIENT__: JSON.stringify('import.meta.env.SSR && window !== undefined'),
       __QUASAR_SSR_PWA__: JSON.stringify(
         'navigator.standalone || window.matchMedia("(display-mode: standalone)").matches',
       ),
       __QUASAR_SSR_SERVER__: JSON.stringify('import.meta.env.SSR'),
-      __QUASAR_SSR__: JSON.stringify('import.meta.env.SSR'),
       __QUASAR_VERSION__: JSON.stringify(Quasar.version),
       'process.env.NODE_ENV': JSON.stringify('import.meta.env.MODE'),
     },
@@ -131,13 +131,13 @@ export default defineConfig(() => {
 
     resolve: {
       alias: {
+        '~/': `${path.resolve(__dirname, '')}/`,
         'components/': `${path.resolve(__dirname, 'src/components')}/`,
         'layouts/': `${path.resolve(__dirname, 'src/layouts')}/`,
         'pages/': `${path.resolve(__dirname, 'src/pages')}/`,
         'src/': `${path.resolve(__dirname, 'src')}/`,
         'store/': `${path.resolve(__dirname, 'src/store')}/`,
         vue: 'vue/dist/vue.runtime.esm-bundler.js',
-        '~/': `${path.resolve(__dirname, '')}/`,
       },
     },
 
@@ -151,6 +151,7 @@ export default defineConfig(() => {
     ssr: {
       noExternal: [
         /^@quasar\/extras/u,
+        /^@project-serum\/sol-wallet-adapter/u,
         // /^@babylonjs\/core/u,
         // /^@babylonjs\/loaders/u,
         // /^vite-ssr-vue/u,

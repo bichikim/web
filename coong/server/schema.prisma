@@ -51,6 +51,7 @@ model User {
   password                String
   postLikes               Post[]    @relation("Post_likes")
   posts                   Post[]    @relation("Post_author")
+  publicKey               String    @unique @default("")
   roles                   Json?     @default("\"[]\"")
   passwordResetToken      String?
   passwordResetIssuedAt   DateTime?

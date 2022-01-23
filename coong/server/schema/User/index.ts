@@ -100,6 +100,15 @@ export const User = list({
       ref: 'Post.author',
     }),
 
+    publicKey: text({
+      access: {
+        read: or([isAdmin, isSelfField]),
+        update: or([isAdmin, isSelfField]),
+      },
+      isFilterable: true,
+      isIndexed: 'unique',
+    }),
+
     roles: json({
       access: {
         create: isAdmin,

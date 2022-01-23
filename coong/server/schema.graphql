@@ -389,6 +389,7 @@ type User {
     skip: Int! = 0
   ): [Post!]
   postsCount(where: PostWhereInput! = {}): Int
+  publicKey: String
   roles: JSON
   passwordResetToken: PasswordState
   passwordResetIssuedAt: DateTime
@@ -405,6 +406,7 @@ type PasswordState {
 input UserWhereUniqueInput {
   id: ID
   email: String
+  publicKey: String
 }
 
 input UserWhereInput {
@@ -419,6 +421,7 @@ input UserWhereInput {
   name: StringFilter
   postLikes: PostManyRelationFilter
   posts: PostManyRelationFilter
+  publicKey: StringFilter
   passwordResetToken: PasswordFilter
   passwordResetIssuedAt: DateTimeNullableFilter
   passwordResetRedeemedAt: DateTimeNullableFilter
@@ -441,6 +444,7 @@ input UserOrderByInput {
   email: OrderDirection
   isAdmin: OrderDirection
   name: OrderDirection
+  publicKey: OrderDirection
   passwordResetIssuedAt: OrderDirection
   passwordResetRedeemedAt: OrderDirection
   magicAuthIssuedAt: OrderDirection
@@ -456,6 +460,7 @@ input UserUpdateInput {
   password: String
   postLikes: PostRelateToManyForUpdateInput
   posts: PostRelateToManyForUpdateInput
+  publicKey: String
   roles: JSON
   passwordResetToken: String
   passwordResetIssuedAt: DateTime
@@ -479,6 +484,7 @@ input UserCreateInput {
   password: String
   postLikes: PostRelateToManyForCreateInput
   posts: PostRelateToManyForCreateInput
+  publicKey: String
   roles: JSON
   passwordResetToken: String
   passwordResetIssuedAt: DateTime
@@ -534,7 +540,33 @@ type Mutation {
     email: String!
     token: String!
   ): RedeemUserMagicAuthTokenResult!
-  signUp(input: SignUpInput!): SignUpResult
+  signUp(input: SignUpInput): SignUpResult
+  authenticateUserWithSolana(
+    input: AuthenticateUserWithSolanaInput!
+  ): AuthenticateUserWithSolanaResult
+}
+
+type SignUpResult {
+  email: String
+  id: String
+  name: String
+}
+
+input SignUpInput {
+  email: String
+  name: String
+  password: String
+}
+
+type AuthenticateUserWithSolanaResult {
+  item: User
+  sessionToken: String
+}
+
+input AuthenticateUserWithSolanaInput {
+  nonce: String!
+  publicKey: String!
+  signature: String!
 }
 
 union UserAuthenticationWithPasswordResult =
@@ -618,7 +650,11 @@ type Query {
     email: String!
     token: String!
   ): ValidateUserPasswordResetTokenResult
-  ok: Boolean!
+  authenticateUserNonce: GetAuthenticateUserNonceResultType
+}
+
+type GetAuthenticateUserNonceResultType {
+  nonce: String
 }
 
 union AuthenticatedItem = User
@@ -708,19 +744,4 @@ type KeystoneAdminUISort {
 enum KeystoneAdminUISortDirection {
   ASC
   DESC
-}
-
-type SignUpResult {
-  id: String
-  name: String
-  email: String
-}
-
-"""
-Sign up input data
-"""
-input SignUpInput {
-  name: String
-  email: String
-  password: String
 }
