@@ -33,7 +33,7 @@
     "@quasar/extras": "^1.12.1",
     "@stitches/core": "^1.2.5",
     "@urql/vue": "^0.6.1",
-    "@vue/server-renderer": "^3.2.26",
+    "@vue/server-renderer": "latest",
     "@vueuse/head": "^0.6.0",
     "@winter-love/hyper-components": "^1.0.23-alpha.20",
     "@winter-love/stitches": "^1.0.23-alpha.20",

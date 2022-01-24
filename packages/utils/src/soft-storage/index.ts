@@ -1,4 +1,4 @@
-import {isSSR} from '@winter-love/utils'
+import {isSSR} from '../'
 import cookie, {CookieAttributes} from 'js-cookie'
 import stringify from 'fast-json-stable-stringify'
 

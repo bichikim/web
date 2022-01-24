@@ -1,8 +1,13 @@
 import {useClassName} from '@winter-love/hyper-components'
 import {QBtn, QPage} from 'quasar'
-import {defineComponent, h} from 'vue'
+import {computed, defineComponent, h, ref} from 'vue'
 import {AudioButton, BackdropFilterText, SignInButton} from './_components'
-import {useSolana} from 'src/use/solana'
+import {getSolana, getSolflare, useSolana} from 'src/use/solana'
+
+const wallets = {
+  phantom: getSolana,
+  solflare: getSolflare,
+}
 
 const IndexPage = defineComponent({
   name: 'IndexPage',
@@ -10,7 +15,7 @@ const IndexPage = defineComponent({
     const {connect, sign} = this
     const className = useClassName()
 
-    const container = className({
+    const container = () => className({
       bottom: '46%',
       display: 'flex',
       flexDirection: 'column',
@@ -19,7 +24,7 @@ const IndexPage = defineComponent({
       transform: 'translate(-50%, +50%)',
     })
 
-    const media = [
+    const media = () => [
       className({
         alignItems: 'flex-end',
         color: 'mistyrose',
@@ -42,7 +47,7 @@ const IndexPage = defineComponent({
       }),
     ]
 
-    const signInContainer = className({
+    const signInContainer = () => className({
       bottom: '0',
       left: '50%',
       position: 'absolute',
@@ -56,10 +61,10 @@ const IndexPage = defineComponent({
         }, [
           //
           h('div', {
-            class: container,
+            class: container(),
           }, [
             h('div', {
-              class: media,
+              class: media(),
             }, [
               [
                 h(BackdropFilterText, {
@@ -72,20 +77,20 @@ const IndexPage = defineComponent({
                 ]),
                 ///
                 h(AudioButton),
-                h('div', {class: signInContainer}, [
+                h('div', {class: signInContainer()}, [
                   h(SignInButton),
                 ]),
               ],
             ]),
-            h(QBtn, {onClick: connect}, 'solana'),
-            h(QBtn, {onClick: sign}, 'sign'),
           ]),
         ]),
       ])
     )
   },
   setup() {
-    const solana = useSolana()
+    const walletKindRef = ref<keyof typeof wallets>('solflare')
+    const providerRef = computed(() => wallets[walletKindRef.value]())
+    const solana = useSolana(providerRef)
 
     const connect = () => {
       return solana.connect()
@@ -99,6 +104,7 @@ const IndexPage = defineComponent({
       connect,
       publicKey: solana.publicKey,
       sign,
+      walletKindRef,
     }
   },
 })
