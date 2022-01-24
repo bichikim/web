@@ -1,6 +1,6 @@
 /* eslint-disable max-nested-callbacks */
 import {computed, defineComponent, h, ref, Transition} from 'vue'
-import {QBtn, QCard, QInput, QTooltip} from 'quasar'
+import {QBtn, QCard, QTooltip} from 'quasar'
 import {HGlow, useClassName} from '@winter-love/hyper-components'
 import {ionChevronBackOutline, ionChevronForwardOutline} from '@quasar/extras/ionicons-v6'
 import {SignInInput, SignInKind} from './SignInInput'
