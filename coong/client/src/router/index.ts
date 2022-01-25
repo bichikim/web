@@ -12,10 +12,6 @@ const routes: RouteRecordRaw[] = [{
       path: '',
     },
     {
-      component: () => import('pages/Sec.vue'),
-      path: 'sec',
-    },
-    {
       component: () => import('pages/Pure'),
       path: 'pure',
     },
