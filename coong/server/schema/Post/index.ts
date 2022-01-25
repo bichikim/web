@@ -112,4 +112,7 @@ export const Post = list({
 
     title: text(),
   },
+  graphql: {
+    queryLimits: {maxResults: 50},
+  },
 })

@@ -7,30 +7,30 @@ interface SignUpResultType {
   name: string
 }
 
-export const signup = (): Extension => {
-  const SignUpResult = graphql.object<SignUpResultType>()({
+export const CreateAuthenticateUserWithEmail = (): Extension => {
+  const CreateAuthenticateUserWithEmailResult = graphql.object<SignUpResultType>()({
     fields: {
       email: graphql.field({type: graphql.String}),
       id: graphql.field({type: graphql.String}),
       name: graphql.field({type: graphql.String}),
     },
-    name: 'SignUpResult',
+    name: 'CreateAuthenticateUserWithEmailResult',
   })
 
-  const SignUpInput = graphql.inputObject({
+  const CreateAuthenticateUserWithEmail = graphql.inputObject({
     fields: {
       email: graphql.arg({type: graphql.String}),
       name: graphql.arg({type: graphql.String}),
       password: graphql.arg({type: graphql.String}),
     },
-    name: 'SignUpInput',
+    name: 'CreateAuthenticateUserWithEmailInput',
   })
 
   return {
     mutation: {
-      signUp: graphql.field({
+      createAuthenticateUserWithEmail: graphql.field({
         args: {
-          input: graphql.arg({type: SignUpInput}),
+          input: graphql.arg({type: CreateAuthenticateUserWithEmail}),
         },
         async resolve(root, args, context) {
           const {password, name, email} = args.input ?? {}
@@ -45,7 +45,7 @@ export const signup = (): Extension => {
             },
           })
         },
-        type: SignUpResult,
+        type: CreateAuthenticateUserWithEmailResult,
       }),
     },
   }

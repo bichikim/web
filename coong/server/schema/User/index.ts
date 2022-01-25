@@ -4,6 +4,7 @@ import {list} from '@keystone-6/core'
 import {checkbox, json, password, relationship, text} from '@keystone-6/core/fields'
 import {AuthArgs, isAdmin, or} from '../../utils'
 import {Lists} from '.keystone/types'
+import {v1 as uuid} from 'uuid'
 
 const isSelfField = (args: AuthArgs<Lists.User.TypeInfo>) => {
   const {session, item} = args
@@ -28,8 +29,7 @@ export const User = list({
       delete: isAdmin,
     },
   },
-  // Here are the fields that `User` will have. We want an email and password so they can log in
-  // a name so we can refer to them, and a way to connect users to posts.
+
   fields: {
     email: text({
       access: {
@@ -107,6 +107,7 @@ export const User = list({
       },
       isFilterable: true,
       isIndexed: 'unique',
+      validation: {isRequired: false},
     }),
 
     roles: json({
@@ -117,6 +118,21 @@ export const User = list({
       },
       defaultValue: '[]',
     }),
+  },
+  // Here are the fields that `User` will have. We want an email and password so they can log in
+  // a name so we can refer to them, and a way to connect users to posts.
+  hooks: {
+    // fill publicKey
+    resolveInput({resolvedData, operation}) {
+      if (operation === 'create') {
+        return {
+          ...resolvedData,
+          publicKey: resolvedData.publicKey === '' ? `unset:${uuid()}` : resolvedData.publicKey,
+        }
+      }
+
+      return resolvedData
+    },
   },
   // Here we can configure the Admin UI. We want to show a user's name and posts in the Admin UI
   ui: {

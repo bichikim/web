@@ -540,19 +540,21 @@ type Mutation {
     email: String!
     token: String!
   ): RedeemUserMagicAuthTokenResult!
-  signUp(input: SignUpInput): SignUpResult
+  createAuthenticateUserWithEmail(
+    input: CreateAuthenticateUserWithEmailInput
+  ): CreateAuthenticateUserWithEmailResult
   authenticateUserWithSolana(
     input: AuthenticateUserWithSolanaInput!
   ): AuthenticateUserWithSolanaResult
 }
 
-type SignUpResult {
+type CreateAuthenticateUserWithEmailResult {
   email: String
   id: String
   name: String
 }
 
-input SignUpInput {
+input CreateAuthenticateUserWithEmailInput {
   email: String
   name: String
   password: String
