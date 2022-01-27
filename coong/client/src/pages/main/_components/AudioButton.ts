@@ -1,12 +1,31 @@
 import {ionVolumeHighSharp, ionVolumeMuteSharp} from '@quasar/extras/ionicons-v6'
-import {useClassName} from '@winter-love/hyper-components'
 import {QBtn} from 'quasar'
 import {computed, defineComponent, Fragment, h, ref, watch} from 'vue'
+import {className} from 'src/plugins/hyper-components'
+
+const button = () => [
+  className({
+    position: 'absolute',
+    right: 0,
+    transform: 'translateX(100%)',
+  }),
+  className({
+    '@bp1': {
+      fontSize: '0.7rem',
+    },
+    '@bp2': {
+      fontSize: '0.9rem',
+    },
+    '@bp3': {
+      fontSize: '1rem',
+    },
+  }),
+]
 
 export const AudioButton = defineComponent({
+  name: 'AudioButton',
   render() {
     const {audioIcon, toggleAudio} = this
-    const className = useClassName()
     return (
       h(Fragment, [
         h('audio', {
@@ -15,19 +34,7 @@ export const AudioButton = defineComponent({
           src: 'https://static.coong.io/coong-front/audios/intro.mp3',
         }),
         h(QBtn, {
-          class: [
-            className({
-              '@bp1': {
-                fontSize: '0.7rem',
-              },
-              '@bp2': {
-                fontSize: '0.9rem',
-              },
-              '@bp3': {
-                fontSize: '1rem',
-              },
-            }),
-          ],
+          class: button(),
           flat: true,
           icon: audioIcon,
           onClick: toggleAudio,

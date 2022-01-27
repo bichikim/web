@@ -1,9 +1,10 @@
-import {createStyled} from '@winter-love/stitches'
+import {createStyled, CSS} from '@winter-love/stitches'
 import {CssComponent} from '@stitches/core/types/styled-component'
 import {inject, InjectionKey, Plugin} from 'vue'
 import {linearGradient, typography} from './variants'
 import {stitchesUtils} from './stitches-utils'
 import {ConfigType, CreateStitches} from '@stitches/core/types/config'
+import {theme} from 'src/theme'
 
 export * from './h-glow'
 export * from './h-page'
@@ -28,10 +29,14 @@ export type stitchesOptions = Parameters<CreateStitches>[0]
 
 export type FunctionComposer = (...args) => any
 
-export interface CreateHyperComponentsOptions {
-  media?: Record<string, any>
-  theme?: ConfigType.Theme
-  utils?: Record<string, any>
+export interface CreateHyperComponentsOptions<
+  Media = Record<string, any>,
+  Theme = ConfigType.Theme,
+  Utils = Record<string, any>,
+  > {
+  media?: Media
+  theme?: Theme
+  utils?: Utils
   variants?: Record<string, any>
 }
 
@@ -39,8 +44,12 @@ export interface CreateHyperComponentsOptions {
  * HyperComponents has stitches, components and preset styles
  * @param options
  */
-export const createHyperComponents = (options: CreateHyperComponentsOptions = {}) => {
-  const {theme = {}, variants = {}, utils = {}, media = {}} = options
+export const createHyperComponents = <
+  Media = Record<string, any>,
+  Theme = ConfigType.Theme,
+  Utils = Record<string, any>,
+  >(options: CreateHyperComponentsOptions<Media, Theme, Utils> = {}) => {
+  const {theme: _theme = {}, variants = {}, utils = {}, media = {}} = options
   const {createDirective, css, ...restStitches} = createStyled({
     media: {
       bp1: '(min-width: 640px)',
@@ -48,7 +57,10 @@ export const createHyperComponents = (options: CreateHyperComponentsOptions = {}
       bp3: '(min-width: 1024px)',
       ...media,
     },
-    theme,
+    theme: {
+      ...theme,
+      ..._theme,
+    },
     utils: {...stitchesUtils, ...utils},
   })
 
@@ -66,8 +78,13 @@ export const createHyperComponents = (options: CreateHyperComponentsOptions = {}
     app.directive('css', directive)
   }
 
+  const className = (css: CSS, variants?: Record<string, any>) => {
+    return system({...variants, css}).className
+  }
+
   return {
     ...restStitches,
+    className,
     css,
     plugin,
     system,

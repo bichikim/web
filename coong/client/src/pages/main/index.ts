@@ -1,8 +1,48 @@
-import {useClassName} from '@winter-love/hyper-components'
-import {QBtn, QPage} from 'quasar'
+import {QPage} from 'quasar'
 import {computed, defineComponent, h, ref} from 'vue'
 import {AudioButton, BackdropFilterText, SignInButton} from './_components'
 import {getSolana, getSolflare, useSolana} from 'src/use/solana'
+import {user} from 'src/store/user'
+import {className} from 'src/plugins/hyper-components'
+
+const container = () => className({
+  bottom: '46%',
+  display: 'flex',
+  flexDirection: 'column',
+  left: '50%',
+  position: 'absolute',
+  transform: 'translate(-50%, +50%)',
+})
+
+const media = () => [
+  className({
+    alignItems: 'flex-end',
+    color: 'mistyrose',
+    display: 'flex',
+    flexDirection: 'row',
+    fontSize: '3rem',
+    fontWeight: '900',
+    position: 'reactive',
+  }),
+  className({
+    '@bp1': {
+      fontSize: '3rem',
+    },
+    '@bp2': {
+      fontSize: '5rem',
+    },
+    '@bp3': {
+      fontSize: '7rem',
+    },
+  }),
+]
+
+const signInContainer = () => className({
+  bottom: '0',
+  left: '50%',
+  position: 'absolute',
+  transform: 'translate(-50%, 100%)',
+})
 
 const wallets = {
   phantom: getSolana,
@@ -12,47 +52,7 @@ const wallets = {
 const IndexPage = defineComponent({
   name: 'IndexPage',
   render() {
-    const {connect, sign} = this
-    const className = useClassName()
-
-    const container = () => className({
-      bottom: '46%',
-      display: 'flex',
-      flexDirection: 'column',
-      left: '50%',
-      position: 'absolute',
-      transform: 'translate(-50%, +50%)',
-    })
-
-    const media = () => [
-      className({
-        alignItems: 'flex-end',
-        color: 'mistyrose',
-        display: 'flex',
-        flexDirection: 'row',
-        fontSize: '3rem',
-        fontWeight: '900',
-        position: 'reactive',
-      }),
-      className({
-        '@bp1': {
-          fontSize: '3rem',
-        },
-        '@bp2': {
-          fontSize: '5rem',
-        },
-        '@bp3': {
-          fontSize: '7rem',
-        },
-      }),
-    ]
-
-    const signInContainer = () => className({
-      bottom: '0',
-      left: '50%',
-      position: 'absolute',
-      transform: 'translate(-50%, 100%)',
-    })
+    // const {connect, sign} = this
 
     return (
       h(QPage, () => [
@@ -69,7 +69,7 @@ const IndexPage = defineComponent({
               [
                 h(BackdropFilterText, {
                   class: className({
-                    $$activeColor: 'rgba(200, 200, 200, 0.1)',
+                    $$activeColor: 'rgba(200, 200, 200, 0.3)',
                     $$filter: 'blur(5px) hue-rotate(80deg)',
                   }),
                 }, () => [
@@ -102,6 +102,7 @@ const IndexPage = defineComponent({
 
     return {
       connect,
+      hasEmail: user.$.hasEmail,
       publicKey: solana.publicKey,
       sign,
       walletKindRef,

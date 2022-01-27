@@ -14,6 +14,9 @@ export interface UserState {
 export const user = atom({
   name: 'unknown',
 } as UserState, {
+  hasEmail: getter(() => {
+    return Boolean(user.email)
+  }),
   isSignIn: getter(() => {
     return Boolean(user.token)
   }),
