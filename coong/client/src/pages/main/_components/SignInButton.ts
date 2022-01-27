@@ -24,7 +24,6 @@ const cardStyle = () => className({
   height: 40,
   mb: 10,
   mt: 20,
-  pr: 10,
 }, {
   linearGradient: 'hyper',
 })
@@ -35,7 +34,6 @@ const signInButtonStyle = () => className({
   flexShrink: 0,
   fontSize: '$b1',
   whiteSpace: 'nowrap',
-  width: 75,
 })
 
 const showInputButtonStyle = () => className({
