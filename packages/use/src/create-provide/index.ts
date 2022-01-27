@@ -1,4 +1,3 @@
-import * as process from 'process'
 import {inject, InjectionKey, provide} from 'vue-demi'
 import {freeze, MayFunction, mayFunctionValue, UnFunction} from '@winter-love/utils'
 
