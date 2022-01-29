@@ -386,15 +386,14 @@ module.exports = {
         },
       },
     ],
+    'unicorn/import-style': 'off',
     'unicorn/new-for-builtins': 'off',
     'unicorn/no-abusive-eslint-disable': 'off',
     'unicorn/no-array-for-each': 'off',
     'unicorn/no-array-reduce': 'off',
     'unicorn/no-nested-ternary': 'off',
     'unicorn/no-null': 'off',
-
     'unicorn/prefer-export-from': 'off',
-
     // 적용 할 수 있도록 해야한다
     'unicorn/prefer-module': 'off',
     // 적용 할 수 있도록 해야한다

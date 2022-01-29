@@ -1,8 +1,7 @@
-/* eslint-disable unicorn/prefer-module,unicorn/prefer-node-protocol */
 import {vueI18n} from '@intlify/vite-plugin-vue-i18n'
 import vue from '@vitejs/plugin-vue'
 import vueJsx from '@vitejs/plugin-vue-jsx'
-import path from 'path'
+import * as path from 'path'
 import {Quasar} from 'quasar'
 import {defineConfig} from 'vite'
 import components from 'unplugin-vue-components/vite'
@@ -152,9 +151,6 @@ export default defineConfig(() => {
       noExternal: [
         /^@quasar\/extras/u,
         /^@project-serum\/sol-wallet-adapter/u,
-        // /^@babylonjs\/core/u,
-        // /^@babylonjs\/loaders/u,
-        // /^vite-ssr-vue/u,
       ],
     },
   }
