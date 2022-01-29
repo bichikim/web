@@ -13,6 +13,7 @@ import {VitePWA as vitePWA} from 'vite-plugin-pwa'
 import ssr from 'vite-ssr-vue/plugin'
 import Prism from 'markdown-it-prism'
 import LinkAttributes from 'markdown-it-link-attributes'
+import vitePluginImp from 'vite-plugin-imp'
 // import {quasar} from '@quasar/vite-plugin'
 
 // eslint-disable-next-line max-lines-per-function
@@ -65,7 +66,7 @@ export default defineConfig(() => {
       }),
       // quasar() as any,
       vueJsx(),
-
+      vitePluginImp(),
       // https://github.com/antfu/vite-plugin-md
       markdown({
         headEnabled: true,

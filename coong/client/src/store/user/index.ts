@@ -1,5 +1,5 @@
 import {atom, getter} from 'vare'
-import {SignInDocument} from 'src/graphql'
+import {EmailSignInDocument, SignInDocument, SignUpDocument} from 'src/graphql'
 import {client} from 'src/plugins/urql'
 import {createRequest} from '@urql/vue'
 import {pipe, take, toPromise} from 'wonka'
@@ -27,5 +27,19 @@ export const user = atom({
       toPromise,
     )
     console.log(result)
+  },
+  async signInWithEmailOnly(user, email: string) {
+    await pipe(
+      client.executeMutation(createRequest(SignUpDocument, {input: {email}})),
+      take(1),
+      toPromise,
+    )
+    const signInResponse = await pipe(
+      client.executeMutation(createRequest(EmailSignInDocument, {email})),
+      take(1),
+      toPromise,
+    )
+    user.email = email
+    return signInResponse.data.sendUserMagicAuthLink
   },
 })

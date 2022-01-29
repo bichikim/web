@@ -52,7 +52,9 @@ const wallets = {
 const IndexPage = defineComponent({
   name: 'IndexPage',
   render() {
-    // const {connect, sign} = this
+    const {
+      onSignIn,
+    } = this
 
     return (
       h(QPage, () => [
@@ -78,7 +80,7 @@ const IndexPage = defineComponent({
                 ///
                 h(AudioButton),
                 h('div', {class: signInContainer()}, [
-                  h(SignInButton),
+                  h(SignInButton, {onSignIn}),
                 ]),
               ],
             ]),
@@ -100,9 +102,14 @@ const IndexPage = defineComponent({
       return solana.sign('coong coong coong')
     }
 
+    const onSignIn = (email: string) => {
+      return user.$.signInWithEmailOnly(email)
+    }
+
     return {
       connect,
       hasEmail: user.$.hasEmail,
+      onSignIn,
       publicKey: solana.publicKey,
       sign,
       walletKindRef,

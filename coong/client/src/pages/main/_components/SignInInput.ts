@@ -75,12 +75,13 @@ export const SignInInput = defineComponent({
         h(QBtn, {
           class: menuButton(active === 'wallet'),
           dense: true,
+          disable: true,
           flat: true,
           icon: ionWalletSharp,
           noCaps: true,
           onClick: () => onChangeActive('wallet'),
         }, () => [
-          h(QTooltip, () => 'By wallet authentication'),
+          h(QTooltip, () => 'By wallet authentication (WIP)'),
         ]),
       ])
     )

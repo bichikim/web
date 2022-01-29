@@ -186,6 +186,7 @@ importers:
       '@stitches/core': ^1.2.5
       '@types/lodash': ^4.14.178
       '@types/node': ^17.0.13
+      '@types/validator': ^13.7.1
       '@urql/vue': ^0.6.1
       '@vitejs/plugin-vue': ^2.1.0
       '@vitejs/plugin-vue-jsx': ^1.3.3
@@ -223,8 +224,10 @@ importers:
       typescript: ^4.5.4
       unplugin-icons: ^0.13.0
       unplugin-vue-components: ^0.17.15
+      validator: ^13.7.0
       vare: ^1.0.23-alpha.24
       vite: latest
+      vite-plugin-imp: ^2.1.3
       vite-plugin-md: ^0.11.7
       vite-plugin-pwa: ^0.11.13
       vite-ssr-vue: ^0.4.4
@@ -263,6 +266,7 @@ importers:
       quasar: 2.4.13
       serve-static: 1.14.1
       tslib: 2.3.1
+      validator: 13.7.0
       vare: link:../../packages/vare
       vite-ssr-vue: 0.4.4_ed3931bd98922a1ead8184ff3c6c69dd
       vue: 3.2.29
@@ -281,6 +285,7 @@ importers:
       '@rollup/plugin-replace': 3.0.0_rollup@2.60.0
       '@types/lodash': 4.14.178
       '@types/node': 17.0.13
+      '@types/validator': 13.7.1
       '@vitejs/plugin-vue': 2.1.0_vite@2.7.13+vue@3.2.29
       '@vitejs/plugin-vue-jsx': 1.3.3
       '@vue/compiler-sfc': 3.2.26
@@ -299,6 +304,7 @@ importers:
       unplugin-icons: 0.13.0_867a78cfd2ae86b98ae7c3793893480e
       unplugin-vue-components: 0.17.15_56351dbd069e9ba6ce3adef8f8a92c65
       vite: 2.7.13
+      vite-plugin-imp: 2.1.3_vite@2.7.13
       vite-plugin-md: 0.11.7_vite@2.7.13
       vite-plugin-pwa: 0.11.13_vite@2.7.13
 
@@ -10179,6 +10185,10 @@ packages:
     resolution: {integrity: sha512-0LbEEx1zxrYB3pgpd1M5lEhLcXjKJnYghvhTRgaBeUivLHMDM1TzF3IJ6hXU2+8uA4Xz+5BA63mtZo5DjVT8iA==}
     dev: false
 
+  /@types/validator/13.7.1:
+    resolution: {integrity: sha512-I6OUIZ5cYRk5lp14xSOAiXjWrfVoMZVjDuevBYgQDYzZIjsf2CAISpEcXOkFAtpAHbmWIDLcZObejqny/9xq5Q==}
+    dev: true
+
   /@types/vinyl-fs/2.4.12:
     resolution: {integrity: sha512-LgBpYIWuuGsihnlF+OOWWz4ovwCYlT03gd3DuLwex50cYZLmX3yrW+sFF9ndtmh7zcZpS6Ri47PrIu+fV+sbXw==}
     dependencies:
@@ -10543,7 +10553,7 @@ packages:
   /@vue/compiler-core/3.2.26:
     resolution: {integrity: sha512-N5XNBobZbaASdzY9Lga2D9Lul5vdCIOXvUMd6ThcN8zgqQhPKfCV+wfAJNNJKQkSHudnYRO2gEB+lp0iN3g2Tw==}
     dependencies:
-      '@babel/parser': 7.16.8
+      '@babel/parser': 7.16.12
       '@vue/shared': 3.2.26
       estree-walker: 2.0.2
       source-map: 0.6.1
@@ -10636,7 +10646,7 @@ packages:
   /@vue/reactivity-transform/3.2.26:
     resolution: {integrity: sha512-XKMyuCmzNA7nvFlYhdKwD78rcnmPb7q46uoR00zkX6yZrUmcCQ5OikiwUEVbvNhL5hBJuvbSO95jB5zkUon+eQ==}
     dependencies:
-      '@babel/parser': 7.16.8
+      '@babel/parser': 7.16.12
       '@vue/compiler-core': 3.2.26
       '@vue/shared': 3.2.26
       estree-walker: 2.0.2
@@ -16558,7 +16568,7 @@ packages:
       semver: 7.3.5
       tapable: 1.1.3
       typescript: 4.5.5
-      webpack: 5.67.0
+      webpack: 5.67.0_esbuild@0.13.14
 
   /fork-ts-checker-webpack-plugin/6.5.0_876d8f8cfe37b6eca713571ed54e1e19:
     resolution: {integrity: sha512-cS178Y+xxtIjEUorcHddKS7yCMlrDPV31mt47blKKRfMd70Kxu5xruAFE2o9sDY6wVC5deuob/u/alD04YYHnw==}
@@ -17881,7 +17891,7 @@ packages:
       lodash: 4.17.21
       pretty-error: 4.0.0
       tapable: 2.2.1
-      webpack: 5.67.0
+      webpack: 5.67.0_esbuild@0.13.14
     transitivePeerDependencies:
       - acorn
 
@@ -24659,7 +24669,7 @@ packages:
       graphql: ^15.0.0
     dependencies:
       '@babel/core': 7.16.12
-      '@babel/generator': 7.16.5
+      '@babel/generator': 7.16.8
       '@babel/parser': 7.16.12
       '@babel/runtime': 7.16.7
       '@babel/traverse': 7.16.10
@@ -28725,6 +28735,23 @@ packages:
       cloneable-readable: 1.1.3
       remove-trailing-separator: 1.1.0
       replace-ext: 1.0.1
+    dev: true
+
+  /vite-plugin-imp/2.1.3_vite@2.7.13:
+    resolution: {integrity: sha512-6taY+NXMrOMa6+jDrZXE81xCiJnhrghfbQIBOdNYednjBOma/dDjsKzUg3OzOwETFzZBeNXaDD974dFIa0TCaw==}
+    peerDependencies:
+      vite: '>= 2.0.0-beta.5'
+    dependencies:
+      '@babel/core': 7.16.12
+      '@babel/generator': 7.16.8
+      '@babel/parser': 7.16.12
+      '@babel/traverse': 7.16.10
+      chalk: 4.1.2
+      param-case: 3.0.4
+      pascal-case: 3.1.2
+      vite: 2.7.13
+    transitivePeerDependencies:
+      - supports-color
     dev: true
 
   /vite-plugin-md/0.11.7_vite@2.7.13:

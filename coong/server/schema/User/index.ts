@@ -76,7 +76,7 @@ export const User = list({
         // 패스워드는 보호 됨으로 읽혀 저도 상관없다 읽는게 패스워드 값을 읽는게 아니라 패스워드가 있는지 여부만 알 수 있있다
         update: or([isAdmin, isSelfField]),
       },
-      validation: {isRequired: true},
+      validation: {isRequired: false},
     }),
 
     postLikes: relationship({

@@ -1,0 +1,11 @@
+mutation emailTokenSignIn($email: String!, $token: String!){
+  redeemUserMagicAuthToken(email: $email, token: $token) {
+    ...on RedeemUserMagicAuthTokenFailure {
+      code
+      message
+    }
+    ...on RedeemUserMagicAuthTokenSuccess {
+      token
+    }
+  }
+}

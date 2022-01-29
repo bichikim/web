@@ -19,7 +19,7 @@ export const CreateAuthenticateUserWithEmail = (): Extension => {
 
   const CreateAuthenticateUserWithEmail = graphql.inputObject({
     fields: {
-      email: graphql.arg({type: graphql.String}),
+      email: graphql.arg({type: graphql.nonNull(graphql.String)}),
       name: graphql.arg({type: graphql.String}),
       password: graphql.arg({type: graphql.String}),
     },
@@ -34,7 +34,7 @@ export const CreateAuthenticateUserWithEmail = (): Extension => {
         },
         async resolve(root, args, context) {
           const {password, name, email} = args.input ?? {}
-          if (!password || !name || !email) {
+          if (!email) {
             return null
           }
           return context.prisma.user.create({

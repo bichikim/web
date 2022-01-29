@@ -1,10 +1,19 @@
 /* eslint-disable max-nested-callbacks */
-import {computed, defineComponent, h, ref, toRefs, Transition} from 'vue'
+import {computed, defineComponent, h, ref, toRefs, Transition, watch} from 'vue'
 import {QBtn, QCard, QTooltip} from 'quasar'
 import {HGlow} from '@winter-love/hyper-components'
 import {ionChevronBackSharp, ionChevronForwardSharp} from '@quasar/extras/ionicons-v6'
 import {SignInInput, SignInKind} from './SignInInput'
 import {className} from 'src/plugins/hyper-components'
+import {debounce} from 'lodash'
+import isEmail from 'validator/lib/isEmail'
+
+const validateEmail = (value?: string) => {
+  if (!value) {
+    return true
+  }
+  return isEmail(value)
+}
 
 const containerStyle = () => className({
   alignItems: 'center',
@@ -21,7 +30,7 @@ const cardStyle = () => className({
   },
   borderRadius: 0,
   display: 'flex',
-  height: 40,
+  // height: 40,
   mb: 10,
   mt: 20,
 }, {
@@ -37,6 +46,7 @@ const signInButtonStyle = () => className({
 })
 
 const showInputButtonStyle = () => className({
+  bg: 'rgba(0, 0, 0, 0.2)',
   borderRadius: 0,
   color: 'white',
   flexShrink: 0,
@@ -50,9 +60,11 @@ const descriptionStyle = () => className({
 })
 
 export const SignInButton = defineComponent({
+  emits: ['signIn'],
   name: 'SignInButton',
   props: {
     email: {type: String},
+    validatorWait: {default: 500, type: Number},
   },
   render() {
     const {
@@ -64,6 +76,7 @@ export const SignInButton = defineComponent({
       activeMethod,
       description,
       onUpdateEmail,
+      onSignIn,
     } = this
 
     return (
@@ -85,9 +98,14 @@ export const SignInButton = defineComponent({
               icon: showInputIcon,
               onClick: onToggleShowInput,
             }),
-            h(QBtn, {class: signInButtonStyle(), flat: true, noCaps: true}, () => [
+            h(QBtn, {
+              class: signInButtonStyle(),
+              flat: true,
+              noCaps: true,
+              onClick: onSignIn,
+            }, () => [
               'Sign in/up',
-              h(QTooltip, () => `sign in with "${emailRef}"`),
+              emailRef && h(QTooltip, () => `sign in with "${emailRef}"`),
             ]),
           ]),
         ]),
@@ -95,11 +113,12 @@ export const SignInButton = defineComponent({
       ])
     )
   },
-  setup(props) {
-    const {email: emailProp} = toRefs(props)
+  setup(props, {emit}) {
+    const {email: emailProp, validatorWait} = toRefs(props)
     const showInput = ref(!emailProp.value)
-    const emailRef = ref<string | undefined>(emailProp.value)
+    const emailRef = ref<string>(emailProp.value ?? '')
     const activeMethod = ref<SignInKind>('email')
+    const isEmailRef = ref(validateEmail(emailRef.value))
 
     const showInputIcon = computed(() => {
       return showInput.value ? ionChevronForwardSharp : ionChevronBackSharp
@@ -108,12 +127,18 @@ export const SignInButton = defineComponent({
     const hasEmail = computed(() => Boolean(emailRef.value))
 
     const description = computed(() => {
-      const command = hasEmail.value ?
-        `Sign in/up with your "${emailRef.value}" by the ${activeMethod.value} authentication` :
-        'Type your email'
-
-      return `${command}`
+      const isEmail = isEmailRef.value
+      if (!isEmail) {
+        return `"${emailRef.value}" is not an email address`
+      }
+      return hasEmail.value ?
+        `Sign in/up as "${emailRef.value}" with ${activeMethod.value} authentication` :
+        'Please enter your email'
     })
+
+    watch(emailRef, debounce((value) => {
+      isEmailRef.value = validateEmail(value)
+    }, validatorWait.value))
 
     const onToggleShowInput = () => {
       showInput.value = !showInput.value
@@ -127,11 +152,14 @@ export const SignInButton = defineComponent({
       emailRef.value = email
     }
 
+    const onSignIn = () => emit('signIn', emailRef.value)
+
     return {
       activeMethod,
       description,
       emailRef,
       onChangeActiveMethod,
+      onSignIn,
       onToggleShowInput,
       onUpdateEmail,
       showInput,
