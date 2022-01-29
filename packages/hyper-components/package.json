@@ -43,7 +43,7 @@
     "@winter-love/stitches": "^1.0.23-alpha.24",
     "@winter-love/utils": "^1.0.23-alpha.24",
     "clsx": "^1.1.1",
-    "color": "^4.1.0",
+    "color": "^4.2.0",
     "quasar": "^2.4.2",
     "vue-demi": "latest"
   },
