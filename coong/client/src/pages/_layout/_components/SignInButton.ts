@@ -15,52 +15,6 @@ const validateEmail = (value?: string) => {
   return isEmail(value)
 }
 
-const containerStyle = () => className({
-  alignItems: 'center',
-  display: 'flex',
-  flexDirection: 'column',
-})
-
-const cardStyle = () => className({
-  '& .input-enter-from,.input-leave-to': {
-    width: '0 !important',
-  },
-  '& .input-leave-active,.input-enter-active': {
-    transition: 'width 0.5s ease',
-  },
-  borderRadius: 0,
-  display: 'flex',
-  mb: 10,
-  mt: 20,
-  position: 'relative',
-}, {
-  linearGradient: 'hyper',
-})
-
-const signInButtonStyle = () => className({
-  borderRadius: 0,
-  color: 'white',
-  flexShrink: 0,
-  fontSize: '$b1',
-  whiteSpace: 'nowrap',
-})
-
-const showInputButtonStyle = () => className({
-  bg: 'rgba(0, 0, 0, 0.2)',
-  borderRadius: 0,
-  color: 'white',
-  flexShrink: 0,
-})
-
-const descriptionStyle = () => className({
-  color: 'white',
-  fontSize: '$b2',
-  fontWeight: 200,
-  textAlign: 'center',
-  whiteSpace: 'wrap',
-  width: '100vw',
-})
-
 export const SignInButton = defineComponent({
   emits: ['signIn'],
   name: 'SignInButton',
@@ -171,4 +125,50 @@ export const SignInButton = defineComponent({
       showInputIcon,
     }
   },
+})
+
+const containerStyle = () => className({
+  alignItems: 'center',
+  display: 'flex',
+  flexDirection: 'column',
+})
+
+const cardStyle = () => className({
+  '& .input-enter-from,.input-leave-to': {
+    width: '0 !important',
+  },
+  '& .input-leave-active,.input-enter-active': {
+    transition: 'width 0.5s ease',
+  },
+  borderRadius: 0,
+  display: 'flex',
+  mb: 10,
+  mt: 20,
+  position: 'relative',
+}, {
+  linearGradient: 'hyper',
+})
+
+const signInButtonStyle = () => className({
+  borderRadius: 0,
+  color: 'white',
+  flexShrink: 0,
+  fontSize: '$b1',
+  whiteSpace: 'nowrap',
+})
+
+const showInputButtonStyle = () => className({
+  bg: 'rgba(0, 0, 0, 0.2)',
+  borderRadius: 0,
+  color: 'white',
+  flexShrink: 0,
+})
+
+const descriptionStyle = () => className({
+  color: 'white',
+  fontSize: '$b2',
+  fontWeight: 200,
+  textAlign: 'center',
+  whiteSpace: 'wrap',
+  width: '100vw',
 })

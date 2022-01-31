@@ -1,3 +1,4 @@
+import {onShouldUpdate} from '@winter-love/use'
 import {shallowUpdate, plugin as varePlugin} from 'vare'
 import {Plugin, reactive, watch} from 'vue'
 import {user, UserState} from './user'
@@ -20,14 +21,18 @@ export const createStore = (initialState: RootState = {}): {
   const isClient = typeof globalThis.window === 'object'
 
   if (isClient) {
-    const initialState = parseJson(window.__INITIAL_STATE__)
-    const storage = createSoftBrowserStorage<UserState>('local')
+    const initialState = parseJson(window.__INITIAL_STATE__, {})
+    const localStorage = createSoftBrowserStorage<UserState>('local')
     const userStorageName = '__user__'
     shallowUpdate(user, initialState.user)
-    shallowUpdate(user, storage.getItem(userStorageName))
+    shallowUpdate(user, localStorage.getItem(userStorageName))
     watch(user, (value) => {
-      storage.setItem(userStorageName, value)
+      localStorage.setItem(userStorageName, value)
     })
+    onShouldUpdate(() => {
+      shallowUpdate(user, localStorage.getItem(userStorageName))
+    }, {visibleDocument: true, windowFocus: true})
+
   } else {
     shallowUpdate(initialState, state)
   }

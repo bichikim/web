@@ -1,10 +1,10 @@
-import {inject, InjectionKey, provide, ref} from 'vue'
+import {inject, InjectionKey, provide, reactive, ref} from 'vue'
 
 export const createLayout = () => {
-  const showVideoBackground = ref(true)
-  return {
-    showVideoBackground,
-  }
+  return reactive({
+    isMagicAuthLink: false,
+    showVideoBackground: true,
+  })
 }
 
 export type LayoutContext = ReturnType<typeof createLayout>

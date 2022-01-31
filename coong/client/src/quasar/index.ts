@@ -1,5 +1,5 @@
 export const createQuasarPlugin = async (ssrContext = {}) => {
-  const {Quasar, Dark, ClosePopup} = await import('quasar')
+  const {Quasar, Dark, ClosePopup, Morph} = await import('quasar')
 
   return (app) => {
     (Quasar.install as any)(app, {
@@ -18,6 +18,7 @@ export const createQuasarPlugin = async (ssrContext = {}) => {
       },
       directives: {
         ClosePopup,
+        Morph,
       },
       importStrategy: 'auto',
       plugins: {

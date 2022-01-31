@@ -1038,13 +1038,20 @@ export type EmailTokenSignInMutationVariables = Exact<{
 
 export type EmailTokenSignInMutation = { __typename?: 'Mutation', redeemUserMagicAuthToken: { __typename?: 'RedeemUserMagicAuthTokenFailure', code: MagicLinkRedemptionErrorCode, message: string } | { __typename?: 'RedeemUserMagicAuthTokenSuccess', token: string } };
 
+export type GetUserQueryVariables = Exact<{
+  email: Scalars['String'];
+}>;
+
+
+export type GetUserQuery = { __typename?: 'Query', user?: { __typename?: 'User', id: string, name?: string | null | undefined, email?: string | null | undefined } | null | undefined };
+
 export type SignInMutationVariables = Exact<{
   email: Scalars['String'];
   password: Scalars['String'];
 }>;
 
 
-export type SignInMutation = { __typename?: 'Mutation', authenticateUserWithPassword?: { __typename?: 'UserAuthenticationWithPasswordFailure', message: string } | { __typename?: 'UserAuthenticationWithPasswordSuccess', sessionToken: string, item: { __typename?: 'User', id: string, email?: string | null | undefined, name?: string | null | undefined } } | null | undefined };
+export type SignInMutation = { __typename?: 'Mutation', authenticateUserWithPassword?: { __typename?: 'UserAuthenticationWithPasswordFailure', message: string } | { __typename?: 'UserAuthenticationWithPasswordSuccess', sessionToken: string } | null | undefined };
 
 export type SignUpMutationVariables = Exact<{
   input: CreateAuthenticateUserWithEmailInput;
@@ -1080,6 +1087,19 @@ export const EmailTokenSignInDocument = gql`
 export function useEmailTokenSignInMutation() {
   return Urql.useMutation<EmailTokenSignInMutation, EmailTokenSignInMutationVariables>(EmailTokenSignInDocument);
 };
+export const GetUserDocument = gql`
+    query getUser($email: String!) {
+  user(where: {email: $email}) {
+    id
+    name
+    email
+  }
+}
+    `;
+
+export function useGetUserQuery(options: Omit<Urql.UseQueryArgs<never, GetUserQueryVariables>, 'query'> = {}) {
+  return Urql.useQuery<GetUserQuery>({ query: GetUserDocument, ...options });
+};
 export const SignInDocument = gql`
     mutation signIn($email: String!, $password: String!) {
   authenticateUserWithPassword(email: $email, password: $password) {
@@ -1087,11 +1107,6 @@ export const SignInDocument = gql`
       message
     }
     ... on UserAuthenticationWithPasswordSuccess {
-      item {
-        id
-        email
-        name
-      }
       sessionToken
     }
   }

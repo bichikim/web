@@ -4,11 +4,6 @@ mutation signIn($email: String!, $password: String!){
       message
     }
     ... on UserAuthenticationWithPasswordSuccess {
-      item {
-        id
-        email
-        name
-      },
       sessionToken
     }
   }

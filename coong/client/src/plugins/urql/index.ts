@@ -15,6 +15,7 @@ export const client = createClient({
   fetchOptions: () => {
     const token = getToken()
     return {
+      credentials: 'same-origin',
       headers: {authorization: token ? `Bearer ${token}` : ''},
     }
   },

@@ -12,12 +12,8 @@ const routes: RouteRecordRaw[] = [{
       path: '',
     },
     {
-      component: () => import('pages/Pure'),
-      path: 'pure',
-    },
-    {
-      component: () => import('pages/Graphql'),
-      path: 'graphql',
+      component: () => import('pages/magic-auth-link'),
+      path: 'magic-auth-link',
     },
     {
       component: () => import('pages/Babylon'),
