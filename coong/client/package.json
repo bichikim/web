@@ -62,6 +62,7 @@
     "vue-router": "^4.0.12"
   },
   "devDependencies": {
+    "dotenv": "^15.0.0",
     "@capacitor/cli": "^3.4.0",
     "@graphql-codegen/add": "^3.1.0",
     "@graphql-codegen/cli": "^2.4.0",

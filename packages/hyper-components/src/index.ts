@@ -16,12 +16,16 @@ export const useSystem = () : CssComponent => {
   return inject(SYSTEM_KEY, (() => ({})) as any)
 }
 
-export type CSSClassComponent = (...args: Record<string, any>[]) => string
+const runCssClassComponent = (system: CssComponent, css: CSS, variants?: Record<string, any>) => {
+  return system({...variants, css}).className
+}
+
+export type CSSClassComponent = (css: CSS, variants?: Record<string, any>) => string
 
 export const useClassName = (): CSSClassComponent => {
   const system = inject(SYSTEM_KEY, (() => ({})) as any)
-  return (css: any) => {
-    return system({css}).className
+  return (css: CSS, variants?: Record<string, any>) => {
+    return runCssClassComponent(system, css, variants)
   }
 }
 
@@ -44,7 +48,7 @@ export interface CreateHyperComponentsOptions<
  * HyperComponents has stitches, components and preset styles
  * @param options
  */
-export const createHyperComponents = async <
+export const createHyperComponents = <
   Media = Record<string, any>,
   Theme = ConfigType.Theme,
   Utils = Record<string, any>,
@@ -78,13 +82,13 @@ export const createHyperComponents = async <
     },
   })
 
+  const className = (css: CSS, variants?: Record<string, any>) => {
+    return runCssClassComponent(system, css, variants)
+  }
+
   const plugin: Plugin = (app) => {
     app.provide(SYSTEM_KEY, system)
     app.directive('css', directive)
-  }
-
-  const className = (css: CSS, variants?: Record<string, any>) => {
-    return system({...variants, css}).className
   }
 
   return {

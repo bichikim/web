@@ -48,6 +48,7 @@ export default withAuth(
         optionsSuccessStatus: 200,
         origin: ORIGIN,
       },
+      healthCheck: true,
       port: PORT,
     },
 

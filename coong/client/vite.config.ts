@@ -14,7 +14,11 @@ import ssr from 'vite-ssr-vue/plugin'
 import Prism from 'markdown-it-prism'
 import LinkAttributes from 'markdown-it-link-attributes'
 import vitePluginImp from 'vite-plugin-imp'
+import * as dotenv from 'dotenv'
 // import {quasar} from '@quasar/vite-plugin'
+
+// eslint-disable-next-line import/no-named-as-default-member
+dotenv.config()
 
 // eslint-disable-next-line max-lines-per-function
 export default defineConfig(() => {
@@ -145,6 +149,14 @@ export default defineConfig(() => {
       // https: true,
       fs: {
         // allow: ['..', '../..'],
+      },
+
+      proxy: {
+        '/server': {
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/server/u, ''),
+          target: process.env.API_URL,
+        },
       },
     },
 

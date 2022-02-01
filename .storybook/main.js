@@ -1,13 +1,15 @@
 module.exports = {
-  "stories": [
-    "../packages/*/src/**/*.stories.@(js|jsx|ts|tsx|mdx)"
+  stories: [
+    '../packages/*/src/**/*.stories.@(js|jsx|ts|tsx|mdx)'
   ],
-  "addons": [
-    "@storybook/addon-links",
-    "@storybook/addon-essentials"
+  addons: [
+    '@storybook/addon-links',
+    '@storybook/addon-essentials',
+    '@storybook/addon-interactions'
   ],
   babel: async (options) => {
     // monorepo alias resolving
+    // noinspection SpellCheckingInspection
     options.plugins.push([
       'module-resolver',
       {
@@ -22,7 +24,10 @@ module.exports = {
       ...options,
     }
   },
-  "core": {
-    "builder": "webpack5"
+  features: {
+    interactionsDebugger: true,
+  },
+  core: {
+    builder: 'webpack5'
   }
 }
