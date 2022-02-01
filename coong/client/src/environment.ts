@@ -1,3 +1,3 @@
 export const apiUrl = () => {
-  return '/server'
+  return import.meta.env.VITE_API_URL ?? '/server'
 }
