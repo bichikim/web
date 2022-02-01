@@ -157,6 +157,11 @@ export default defineConfig(() => {
           rewrite: (path) => path.replace(/^\/server/u, ''),
           target: process.env.API_URL,
         },
+        '/static': {
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/static/u, ''),
+          target: 'http://localhost:3000',
+        },
       },
     },
 

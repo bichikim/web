@@ -1,20 +1,19 @@
-import {SignInButton} from 'pages/_layout/_components/SignInButton'
 import {QLayout, QPageContainer} from 'quasar'
 import {defineComponent, Fragment, h, Transition} from 'vue'
 import {RouterView} from 'vue-router'
 import introJPG from './_assets/intro.jpg'
 import {provideLayout} from './use-layout'
 import {className} from 'src/plugins/hyper-components'
-import {user} from 'src/store/user'
 import {SignIn} from './_components/SignIn'
 import {AudioButton} from './_components/AudioButton'
 import {BackdropFilterText} from './_components/BackdropFilterText'
+import {staticUrl} from 'src/environment'
+import {resolveUrl} from '@winter-love/utils'
 
 const PagesLayout = defineComponent({
   name: 'PagesLayout',
   setup() {
     const layout = provideLayout()
-    const {isSignIn} = user.$
     return () => (
       h(Fragment, [
         h(QLayout, {view: 'lHh Lpr lFf'}, () => [
@@ -32,7 +31,7 @@ const PagesLayout = defineComponent({
             poster: introJPG,
           }, [
             h('source', {
-              src: 'https://static.coong.io/coong-front/videos/intro.mp4',
+              src: resolveUrl(staticUrl(), '/videos/intro.mp4'),
               type: 'video/mp4',
             }),
           ]),

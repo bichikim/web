@@ -4,6 +4,7 @@ interface ImportMeta {
     MODE?: string
     SSR?: boolean
     VITE_API_URL?: string
+    VITE_STATIC_URL?: string
   }
 }
 

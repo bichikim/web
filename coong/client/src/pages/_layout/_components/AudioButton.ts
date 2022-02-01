@@ -2,6 +2,8 @@ import {ionVolumeHighSharp, ionVolumeMuteSharp} from '@quasar/extras/ionicons-v6
 import {QBtn} from 'quasar'
 import {computed, defineComponent, Fragment, h, ref, watch} from 'vue'
 import {className} from 'src/plugins/hyper-components'
+import {staticUrl} from 'src/environment'
+import {resolveUrl} from '@winter-love/utils'
 
 const button = () => [
   className({
@@ -31,7 +33,7 @@ export const AudioButton = defineComponent({
         h('audio', {
           loop: true,
           ref: 'audio',
-          src: 'https://static.coong.io/coong-front/audios/intro.mp3',
+          src: resolveUrl(staticUrl(), '/audios/intro.mp3'),
         }),
         h(QBtn, {
           class: button(),
