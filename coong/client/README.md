@@ -1,6 +1,6 @@
 # Coong Client
 
-<!-- version flag f -->
+<!-- version flag a -->
 ```
 <script src="three.r119.min.js"></script>
 <script src="vanta.fog.min.js"></script>
