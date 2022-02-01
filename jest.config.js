@@ -21,18 +21,23 @@ module.exports = {
 
   projects: [
     {
-      displayName: 'coong/server',
+      displayName: 'e2e-test',
       maxWorkers: 1,
       setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
       testEnvironment: 'node',
       testMatch: [
-        '<rootDir>/coong/server/**/__tests__/*.spec.ts',
+        '<rootDir>/coong/server/**/__tests__/*.e2e.ts',
+        '<rootDir>/coong/*/src/**/__tests__/*.e2e.ts',
       ],
       testTimeout: 60_000,
       transformIgnorePatterns: ['/node_modules/'],
+      watchPlugins: [
+        require.resolve('jest-watch-typeahead/filename'),
+        require.resolve('jest-watch-typeahead/testname'),
+      ],
     },
     {
-      displayName: 'test',
+      displayName: 'unit-test',
       setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
       snapshotSerializers: [
         'jest-serializer-vue',
@@ -40,8 +45,7 @@ module.exports = {
       ],
       testEnvironment: '@happy-dom/jest-environment',
       testMatch: [
-        '!<rootDir>/coong/server/src/**/__tests__/*.spec.ts',
-        '!<rootDir>/coong/server-old/src/**/__tests__/*.spec.ts',
+        '!<rootDir>/coong/*/src/**/__tests__/*.e2e.ts',
         '<rootDir>/packages/*/src/**/__tests__/*.spec.ts',
         '<rootDir>/coong/*/src/**/__tests__/*.spec.ts',
         '<rootDir>/scripts/__tests__/*.spec.ts',

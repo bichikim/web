@@ -6,9 +6,9 @@ import hyperComponents, {stitches} from 'src/plugins/hyper-components'
 import urql from 'src/plugins/urql'
 import {createHead} from '@vueuse/head'
 
-export const useAppPlugins = async (app: App, initialState, ssrContext = {}, isClient: boolean = false) => {
+export const useAppPlugins = async (app: App, initialState, ssrContext = {}) => {
   const head = createHead()
-  const store = createStore(initialState, isClient)
+  const store = createStore(initialState)
   const quasarPlugin = await createQuasarPlugin(ssrContext)
   const router = createRouter()
 

@@ -26,6 +26,7 @@ module.exports = {
       env: {jest: true},
       files: [
         '**/*.spec.{j,t}s?(x)',
+        '**/*.e2e.{j,t}s?(x)',
       ],
       rules: {
         '@typescript-eslint/no-unused-vars': 'off',

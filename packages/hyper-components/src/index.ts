@@ -44,12 +44,17 @@ export interface CreateHyperComponentsOptions<
  * HyperComponents has stitches, components and preset styles
  * @param options
  */
-export const createHyperComponents = <
+export const createHyperComponents = async <
   Media = Record<string, any>,
   Theme = ConfigType.Theme,
   Utils = Record<string, any>,
   >(options: CreateHyperComponentsOptions<Media, Theme, Utils> = {}) => {
-  const {theme: _theme = {}, variants = {}, utils = {}, media = {}} = options
+  const {
+    theme: _theme = {},
+    variants = {},
+    utils = {},
+    media = {},
+  } = options
   const {createDirective, css, ...restStitches} = createStyled({
     media: {
       bp1: '(min-width: 640px)',
@@ -86,6 +91,7 @@ export const createHyperComponents = <
     ...restStitches,
     className,
     css,
+    csx: className,
     plugin,
     system,
   }
