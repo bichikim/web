@@ -50,7 +50,7 @@ export const user = atom({
   hasEmail: getter(() => {
     return Boolean(user.email)
   }),
-  isSignIn: getter(() => {
+  isAuthenticated: getter(() => {
     return Boolean(user.token)
   }),
   async signIn(user, email: string, password: string) {

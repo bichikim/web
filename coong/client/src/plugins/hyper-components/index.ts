@@ -11,6 +11,6 @@ const plugin: Plugin = (app) => {
 }
 export default plugin
 
-const {css, styled, globalCss, keyframes, className} = stitches
+const {css, styled, globalCss, keyframes, className, csx} = stitches
 
-export {stitches, css, styled, globalCss, keyframes, className}
+export {stitches, css, styled, globalCss, keyframes, className, csx}

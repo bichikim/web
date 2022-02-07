@@ -157,7 +157,12 @@ module.exports = {
         before: true,
       }],
     'grouped-accessor-pairs': 'error',
-    'id-length': ['error', {exceptions: ['_', 'x', 'y', 'z', 'p', 'm', 'h']}],
+    'id-length': ['error', {
+      exceptions: [
+        '_', 'x', 'y', 'z', 'p', 'm', 'h', 'w',
+        'b', 't', 'l', 'r',
+      ],
+    }],
     'import/named': 'off',
     'import/no-absolute-path': 'off',
     'import/no-unresolved': 'off',

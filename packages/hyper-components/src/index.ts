@@ -20,6 +20,20 @@ const runCssClassComponent = (system: CssComponent, css: CSS, variants?: Record<
   return system({...variants, css}).className
 }
 
+export interface VariantAndCss {
+  [key: string]: CSS | undefined | null | string | number | boolean
+  css?: CSS
+}
+
+const runCsxClassComponent = (system: CssComponent, csx?: VariantAndCss) => {
+  const result = system(csx)
+  const {className, ...rest} = result.props as any
+  return {
+    ...rest,
+    class: className,
+  }
+}
+
 export type CSSClassComponent = (css: CSS, variants?: Record<string, any>) => string
 
 export const useClassName = (): CSSClassComponent => {
@@ -86,6 +100,10 @@ export const createHyperComponents = <
     return runCssClassComponent(system, css, variants)
   }
 
+  const csx = (csx?: VariantAndCss) => {
+    return runCsxClassComponent(system, csx)
+  }
+
   const plugin: Plugin = (app) => {
     app.provide(SYSTEM_KEY, system)
     app.directive('css', directive)
@@ -95,7 +113,7 @@ export const createHyperComponents = <
     ...restStitches,
     className,
     css,
-    csx: className,
+    csx,
     plugin,
     system,
   }
