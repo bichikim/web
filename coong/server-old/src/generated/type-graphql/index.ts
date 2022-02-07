@@ -20,4 +20,4 @@ export * from "./scalars";
 export const resolvers = [
   ...crudResolvers,
   ...relationResolvers,
-] as unknown as NonEmptyArray<Function>;
+] as NonEmptyArray<Function>;

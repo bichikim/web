@@ -1,6 +1,8 @@
+/* eslint-disable @typescript-eslint/ban-types */
 import 'reflect-metadata'
 import {resolvers as prismaResolvers} from 'src/generated/type-graphql'
 import {prepare, start} from 'src/server'
+import {NonEmptyArray} from 'type-graphql'
 import authChecker from './auth'
 import context from './context'
 import './prisma/enhance'
@@ -18,7 +20,7 @@ const bootstrap = async () => {
     context,
     emitSchemaFile,
     playground: isPlayGround,
-    resolvers: [...prismaResolvers, ...resolvers],
+    resolvers: [...prismaResolvers, ...resolvers] as NonEmptyArray<Function>,
   })
 
   if (typeof result === 'string') {
