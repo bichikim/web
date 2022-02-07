@@ -21,7 +21,7 @@ const runCssClassComponent = (system: CssComponent, css: CSS, variants?: Record<
 }
 
 export interface VariantAndCss {
-  [key: string]: CSS | undefined | null | string | number | boolean
+  [key: string]: CSS | undefined | null | string | number | boolean | ((...args: any[]) => unknown)
   css?: CSS
 }
 

@@ -126,7 +126,7 @@
     "typescript": "^4.5.5",
     "vite": "latest",
     "vitepress": "latest",
-    "vue": "next"
+    "vue": "latest"
   },
   "engines": {
     "node": ">= 10.18.1",

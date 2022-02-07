@@ -1,4 +1,4 @@
-import {defineComponent, h, PropType} from 'vue'
+import {defineComponent, h, PropType, toRefs} from 'vue'
 import {QBtn, QInput, QTooltip} from 'quasar'
 import {ionMailSharp, ionWalletSharp} from '@quasar/extras/ionicons-v6'
 import {className} from 'src/plugins/hyper-components'
@@ -49,21 +49,28 @@ export const SignInInput = defineComponent({
     active: {default: 'email', type: String as PropType<SignInKind>},
     email: {type: String},
   },
-  render() {
-    const {email, active, onChangeActive, onUpdateEmail} = this
+  setup(props, {emit}) {
+    const {email, active} = toRefs(props)
+    const onChangeActive = (kind: SignInKind) => {
+      emit('update:active', kind)
+    }
 
-    return (
+    const onUpdateEmail = (email: string) => {
+      emit('update:email', email)
+    }
+
+    return () => (
       h('div', {class: container()}, [
         h(QInput, {
           borderless: true,
           class: signInInput(),
           dense: true,
           label: 'Your Email',
-          modelValue: email,
+          modelValue: email.value,
           'onUpdate:modelValue': onUpdateEmail,
         }),
         h(QBtn, {
-          class: menuButton(active === 'email'),
+          class: menuButton(active.value === 'email'),
           dense: true,
           flat: true,
           icon: ionMailSharp,
@@ -74,7 +81,7 @@ export const SignInInput = defineComponent({
           h(QTooltip, () => 'By email authentication'),
         ]),
         h(QBtn, {
-          class: menuButton(active === 'wallet'),
+          class: menuButton(active.value === 'wallet'),
           dense: true,
           disable: true,
           flat: true,
@@ -87,20 +94,5 @@ export const SignInInput = defineComponent({
         ]),
       ])
     )
-  },
-  setup(props, {emit}) {
-
-    const onChangeActive = (kind: SignInKind) => {
-      emit('update:active', kind)
-    }
-
-    const onUpdateEmail = (email: string) => {
-      emit('update:email', email)
-    }
-
-    return {
-      onChangeActive,
-      onUpdateEmail,
-    }
   },
 })

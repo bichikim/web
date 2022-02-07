@@ -1,50 +1,11 @@
-import {ionVolumeHighSharp, ionVolumeMuteSharp} from '@quasar/extras/ionicons-v6'
-import {QBtn} from 'quasar'
-import {computed, defineComponent, Fragment, h, ref, watch} from 'vue'
-import {className} from 'src/plugins/hyper-components'
-import {staticUrl} from 'src/environment'
+import {ionVolumeHighSharp, ionVolumeMuteSharp} from '@quasar/extras/ionicons-v5'
 import {resolveUrl} from '@winter-love/utils'
-
-const button = () => [
-  className({
-    position: 'absolute',
-    right: 0,
-    transform: 'translateX(100%)',
-  }),
-  className({
-    '@bp1': {
-      fontSize: '0.7rem',
-    },
-    '@bp2': {
-      fontSize: '0.9rem',
-    },
-    '@bp3': {
-      fontSize: '1rem',
-    },
-  }),
-]
+import {QBtn} from 'quasar'
+import {staticUrl} from 'src/environment'
+import {computed, defineComponent, h, ref, watch} from 'vue'
 
 export const AudioButton = defineComponent({
   name: 'AudioButton',
-  render() {
-    const {audioIcon, toggleAudio} = this
-    return (
-      h(Fragment, [
-        h('audio', {
-          loop: true,
-          ref: 'audio',
-          src: resolveUrl(staticUrl(), '/audios/intro.mp3'),
-        }),
-        h(QBtn, {
-          class: button(),
-          flat: true,
-          icon: audioIcon,
-          onClick: toggleAudio,
-          round: true,
-        }),
-      ])
-    )
-  },
   setup() {
     const playAudioRef = ref(false)
     const audioRef = ref<undefined | HTMLAudioElement>()
@@ -62,14 +23,24 @@ export const AudioButton = defineComponent({
     const audioIcon = computed(() => {
       return playAudioRef.value ? ionVolumeHighSharp : ionVolumeMuteSharp
     })
-    const toggleAudio = () => {
+    const onToggleAudio = () => {
       playAudioRef.value = !playAudioRef.value
     }
-    return {
-      audio: audioRef,
-      audioIcon,
-      toggleAudio,
-    }
+
+    return () => (
+      h(QBtn, {
+        flat: true,
+        icon: audioIcon.value,
+        onClick: onToggleAudio,
+        round: true,
+      }, () => [
+        h('audio', {
+          loop: true,
+          ref: audioRef,
+          src: resolveUrl(staticUrl(), '/audios/intro.mp3'),
+        }),
+      ])
+    )
   },
 })
 

@@ -1,15 +1,25 @@
-import {QDialog, QLayout, QPageContainer} from 'quasar'
+import {QBtn, QDialog, QLayout, QPageContainer} from 'quasar'
 import {SignInPage} from 'src/pages/_layout/_components/SignInPage'
-import {computed, defineComponent, Fragment, h} from 'vue'
+import {csx} from 'src/plugins/hyper-components'
+import {user} from 'src/store/user'
+import {defineComponent, Fragment, h, ref} from 'vue'
 import {RouterView} from 'vue-router'
 import {provideLayout} from './use-layout'
-import {user} from 'src/store/user'
+import {ionCloseOutline} from '@quasar/extras/ionicons-v5'
 
 const PagesLayout = defineComponent({
   name: 'PagesLayout',
-  render() {
-    const {isAuthenticated} = this
-    return (
+  setup() {
+    const {isMagicAuthLink} = provideLayout()
+    const {isAuthenticated} = user.$
+
+    const isOpenAuth = ref(isAuthenticated.value)
+
+    const onCloseAuth = () => {
+      isOpenAuth.value = false
+    }
+
+    return () => (
       h(Fragment, [
         h(QLayout, {view: 'lHh Lpr lFf'}, () => [
           h(QPageContainer, () => [
@@ -18,21 +28,23 @@ const PagesLayout = defineComponent({
         ]),
         h(QDialog, {
           maximized: true,
-          modelValue: !isAuthenticated,
+          modelValue: !isOpenAuth.value,
           persistent: true,
           transitionHide: 'slide-up',
           transitionShow: 'slide-down',
         }, () => [
-          h(SignInPage),
+          h(SignInPage, {inProgress: isMagicAuthLink.value}),
+          h(QBtn, csx({
+            css: {bg: 'white', ps: 'absolute', tr: 0},
+            dense: true,
+            flat: true,
+            icon: ionCloseOutline,
+            onClick: onCloseAuth,
+            round: true,
+          })),
         ]),
       ])
     )
-  },
-  setup() {
-    const layout = provideLayout()
-    return {
-      isAuthenticated: user.$.isAuthenticated,
-    }
   },
 })
 

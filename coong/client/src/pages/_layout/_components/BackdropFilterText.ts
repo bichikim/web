@@ -70,7 +70,4 @@ export const BackdropFilterText = defineComponent({
       ])
     )
   },
-  setup() {
-    return {}
-  },
 })
