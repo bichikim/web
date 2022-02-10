@@ -7,6 +7,7 @@ import {SignInInput, SignInKind} from './SignInInput'
 import {className} from 'src/plugins/hyper-components'
 import {debounce} from 'lodash'
 import isEmail from 'validator/lib/isEmail'
+import {debug} from 'src/use/debug'
 
 const validateEmail = (value?: string) => {
   if (!value) {
@@ -73,6 +74,7 @@ export const SignInButton = defineComponent({
     )
   },
   setup(props, {emit}) {
+    debug({})
     const {email: emailProp, validatorWait} = toRefs(props)
     const showInput = ref(!emailProp.value)
     const emailRef = ref<string>(emailProp.value ?? '')

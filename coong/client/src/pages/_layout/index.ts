@@ -6,6 +6,7 @@ import {defineComponent, Fragment, h, ref} from 'vue'
 import {RouterView} from 'vue-router'
 import {provideLayout} from './use-layout'
 import {ionCloseOutline} from '@quasar/extras/ionicons-v5'
+import {debug} from 'src/use/debug'
 
 const PagesLayout = defineComponent({
   name: 'PagesLayout',
@@ -18,6 +19,10 @@ const PagesLayout = defineComponent({
     const onCloseAuth = () => {
       isOpenAuth.value = false
     }
+
+    debug({
+      isOpenAuth,
+    })
 
     return () => (
       h(Fragment, [

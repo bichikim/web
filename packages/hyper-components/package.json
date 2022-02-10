@@ -50,7 +50,7 @@
   "devDependencies": {
     "csstype": "^3.0.8",
     "gulp": "^4.0.2",
-    "vue": "next"
+    "vue": "^3.2.30"
   },
   "publishConfig": {
     "access": "public"

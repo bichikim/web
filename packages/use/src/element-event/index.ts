@@ -1,7 +1,7 @@
 /* eslint-disable max-params */
 import {MayRef} from 'src/types'
 import {wrapRef} from 'src/wrap-ref'
-import {getCurrentInstance, onMounted, onUnmounted, Ref, watch} from 'vue-demi'
+import {getCurrentInstance, onMounted, onScopeDispose, Ref, watch} from 'vue-demi'
 
 export type Listener<ElementEvent> = (event: ElementEvent) => any
 
@@ -9,21 +9,6 @@ export interface UseElementEventOptions {
   capture?: boolean
   once?: boolean
   passive?: boolean
-}
-
-export interface UseElementEventReturnType {
-  /**
-   * @deprecated use isActive
-   */
-  active: () => void
-  /**
-   * @deprecated use isActive
-   */
-  inactive: () => void
-  /**
-   * 이벤트 구독 활성화 여부
-   */
-  isActive: Ref<boolean>
 }
 
 export function useElementEvent<Key extends keyof DocumentEventMap>(
@@ -112,11 +97,9 @@ export function useElementEvent<Key extends string>(
       active()
     }
   }
-  if (isInInstance) {
-    onUnmounted(() => {
-      inactive()
-    })
-  }
+  onScopeDispose(() => {
+    inactive()
+  })
 
   return isActiveRef
 }

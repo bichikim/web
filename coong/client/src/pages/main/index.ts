@@ -12,7 +12,6 @@ const IndexPage = defineComponent({
     )
   },
   setup() {
-
     return {
       hasEmail: user.$.hasEmail,
       isSignIn: user.$.isSignIn,
