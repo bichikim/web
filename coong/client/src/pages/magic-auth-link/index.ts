@@ -66,7 +66,6 @@ const MagicAuthLink = defineComponent({
     const route = useRoute()
     const router = useRouter()
     const layout = useLayout()
-    layout.isMagicAuthLink = true
     const email = computed(() => user.email)
     const token = computed(() => route.query.token)
     const name = computed(() => user.name)

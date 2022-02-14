@@ -18,24 +18,24 @@ export const createStore = (initialState: RootState = {}): {
     user,
   })
 
-  const isClient = typeof globalThis.window === 'object'
-
-  if (isClient) {
-    const initialState = parseJson(window.__INITIAL_STATE__, {})
-    const localStorage = createSoftBrowserStorage<UserState>('local')
-    const userStorageName = '__user__'
-    shallowUpdate(user, initialState.user)
-    shallowUpdate(user, localStorage.getItem(userStorageName))
-    watch(user, (value) => {
-      localStorage.setItem(userStorageName, value)
-    })
-    onShouldUpdate(() => {
-      shallowUpdate(user, localStorage.getItem(userStorageName))
-    }, {visibleDocument: true, windowFocus: true})
-
-  } else {
-    shallowUpdate(initialState, state)
-  }
+  // const isClient = typeof window === 'object'
+  //
+  // if (isClient) {
+  //   const initialState = parseJson(window.__INITIAL_STATE__, {})
+  //   const localStorage = createSoftBrowserStorage<UserState>('local')
+  //   const userStorageName = '__user__'
+  //   shallowUpdate(user, initialState.user)
+  //   shallowUpdate(user, localStorage.getItem(userStorageName))
+  //   watch(user, (value) => {
+  //     localStorage.setItem(userStorageName, value)
+  //   })
+  //   onShouldUpdate(() => {
+  //     shallowUpdate(user, localStorage.getItem(userStorageName))
+  //   }, {visibleDocument: true, windowFocus: true})
+  //
+  // } else {
+  //   shallowUpdate(initialState, state)
+  // }
 
   return {
     install: (app) => {

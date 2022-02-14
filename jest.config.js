@@ -48,6 +48,7 @@ module.exports = {
         '!<rootDir>/coong/*/src/**/__tests__/*.e2e.ts',
         '<rootDir>/packages/*/src/**/__tests__/*.spec.ts',
         '<rootDir>/coong/*/src/**/__tests__/*.spec.ts',
+        '<rootDir>/coong/client/vvssr/**/__tests__/*.spec.ts',
         '<rootDir>/scripts/__tests__/*.spec.ts',
       ],
       transformIgnorePatterns: ['/node_modules/'],

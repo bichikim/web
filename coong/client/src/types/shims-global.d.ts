@@ -15,4 +15,5 @@ interface Window {
   solflare?: {
     isSolflare: boolean
   }
+  __LUGGAGE__: string
 }

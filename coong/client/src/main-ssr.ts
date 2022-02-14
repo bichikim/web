@@ -24,9 +24,6 @@ export default createSsr(Root, {
           headTags,
         },
         router,
-        // store: {
-        //   foo: 'foo',
-        // },
       }
     }
 

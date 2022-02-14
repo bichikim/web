@@ -27,8 +27,14 @@ export const toMutRef = <Props extends Record<string, any>, Key extends keyof Pr
   const valueRef = toRef(props, key)
   const valueMut = ref<Props[Key]>(valueRef.value)
 
+  const changeValue = (value) => {
+    valueMut.value = value
+  }
+
   watchEffect(() => {
-    valueMut.value = valueRef.value
+    changeValue(valueRef.value)
+  }, {
+    flush: 'sync',
   })
 
   return valueMut
