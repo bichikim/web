@@ -9,3 +9,5 @@ export const formatNumber = (
   const numberValue = toNumber(value)
   return new Intl.NumberFormat(locale, {...rest, style}).format(numberValue)
 }
+
+export const toFormattedNumber = formatNumber

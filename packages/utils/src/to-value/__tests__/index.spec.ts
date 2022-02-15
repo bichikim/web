@@ -1,7 +1,7 @@
 import {mayFunctionValue} from '../'
 import {expectType} from 'tsd'
 
-describe('may-function-value', () => {
+describe('to-value', () => {
   it('should return a value from function execution', () => {
     const result = mayFunctionValue(() => 'foo')
     expectType<string>(result)

@@ -1,6 +1,4 @@
-// no need to cover all
-/* istanbul ignore next */
 /**
- * @deprecated
+ * isSSr
  */
-export const isSSR = () => typeof globalThis.window?.document?.createElement === 'undefined'
+export const isSSR = () => typeof globalThis.window === 'undefined'
