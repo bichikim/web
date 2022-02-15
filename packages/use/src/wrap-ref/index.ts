@@ -29,7 +29,7 @@ export const wrapRef = <T,
     value?: MayRef<T>,
     options: WrapRefOptions<P> = {},
   ): RefWithInit<T, P> => {
-  const {bindValue = false, initState, defaultValue} = options
+  const {bindValue = true, initState, defaultValue} = options
   const valueRef = ref<any>(unref(value) ?? defaultValue ?? initState)
 
   const _isRef = isRef(value)

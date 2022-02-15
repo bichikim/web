@@ -10,7 +10,6 @@ describe('to-mut-ref', () => {
       props: ['foo'],
       setup(props) {
         const mutRef = toMutRef(props, 'foo')
-
         const setMut = () => {
           mutRef.value += '1'
         }
@@ -18,7 +17,7 @@ describe('to-mut-ref', () => {
         return () => (
           h('div', [
             h('div', {id: 'text'}, mutRef.value),
-            h('button', {id: 'button', onclick: setMut}, 'add'),
+            h('button', {id: 'button', onClick: setMut}, 'add'),
           ])
         )
       },
