@@ -5,8 +5,6 @@ import {MayRef} from 'src/types'
 
 export type UseDebounceHandle<Args extends any[], R> = (...args: Args) => R
 
-const DEFAULT_WAIT = 150
-
 interface DebounceFunction<Args extends any[], R> {
   (...args: Args) : R
   clear?: () => unknown
@@ -22,7 +20,7 @@ export const useDebounce = <Args extends any[], R>(
     return handle?.(...args)
   }
 
-  const waitRef = wrapRef(wait, {defaultValue: DEFAULT_WAIT})
+  const waitRef = wrapRef(wait)
   const immediateRef = wrapRef(immediate)
 
   const onCall = computed((): DebounceFunction<Args, R> => {
