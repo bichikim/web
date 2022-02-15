@@ -1,6 +1,6 @@
 {
   "name": "vare",
-  "version": "1.0.23-alpha.25",
+  "version": "1.0.23-alpha.26",
   "private": false,
   "description": "share state for vue components",
   "keywords": [
@@ -45,7 +45,7 @@
     "vue-demi": "latest"
   },
   "devDependencies": {
-    "@winter-love/use": "^1.0.23-alpha.25",
+    "@winter-love/use": "^1.0.23-alpha.26",
     "gulp": "^4.0.2",
     "vue": "^3.2.30"
   },
