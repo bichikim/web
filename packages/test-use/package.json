@@ -32,9 +32,9 @@
     "prepare": "tsup-node --dts --legacy-output"
   },
   "dependencies": {
-    "@vue/test-utils": "next",
+    "@vue/test-utils": "latest",
     "@winter-love/utils": "^1.0.23-alpha.25",
-    "vue": "^3.2.30"
+    "vue": "latest"
   },
   "devDependencies": {
     "gulp": "^4.0.2",

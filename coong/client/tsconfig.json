@@ -9,6 +9,7 @@
     "declaration": true,
     "lib": ["esnext", "dom"],
     "paths": {
+      "~/*": ["/*"],
       "src/*": ["src/*"],
       "pages/*": ["src/pages/*"],
       "layouts/*": ["src/layouts/*"],
@@ -42,7 +43,7 @@
   },
   "include": [
     "run-ssr/**/*",
-    "vvssr/**/*",
+    "vite-vue-ssr/**/*",
     "src/**/*",
   ]
 }

@@ -12,7 +12,7 @@ export const SignInPage = defineComponent({
   props: {
     inProgress: {default: false, type: Boolean},
   },
-  setup(props) {
+  setup(props, {slots}) {
     const {inProgress} = toRefs(props)
     const inProgressRef = ref(inProgress.value)
     const email = computed(() => user.email)
@@ -98,6 +98,7 @@ export const SignInPage = defineComponent({
             ]),
           ]),
         ]),
+        slots.default?.(),
       ])
     ))
   },

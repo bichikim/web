@@ -2,6 +2,9 @@ import {ConfigType} from '@stitches/core/types/config'
 import {radii} from './radii'
 
 export const theme: ConfigType.Theme = {
+  colors: {
+    'transparent-white': 'rgba(255,255,255,0.37)',
+  },
   fontSizes: {
     b1: '1rem',
     b2: '0.875rem',

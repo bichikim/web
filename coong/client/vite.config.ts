@@ -10,11 +10,12 @@ import icons from 'unplugin-icons/vite'
 import markdown from 'vite-plugin-md'
 import iconsResolver from 'unplugin-icons/resolver'
 import {VitePWA as vitePWA} from 'vite-plugin-pwa'
-import ssr from 'vite-ssr-vue/plugin'
+// import ssr from 'vite-ssr-vue/plugin'
 import Prism from 'markdown-it-prism'
 import LinkAttributes from 'markdown-it-link-attributes'
 import vitePluginImp from 'vite-plugin-imp'
 import * as dotenv from 'dotenv'
+import {plugin as ssr} from 'vite-plugin-ssr-vue'
 // import {quasar} from '@quasar/vite-plugin'
 
 // eslint-disable-next-line import/no-named-as-default-member
@@ -52,9 +53,9 @@ export default defineConfig(() => {
     },
 
     plugins: [
-      process.env.MODE === 'ssr' ? ssr({
-        ssr: 'src/main-ssr.ts',
-      }) : undefined,
+      // process.env.MODE === 'ssr' ? ssr({
+      //   ssr: 'src/main-ssr.ts',
+      // }) : undefined,
       vue({
         include: [/\.vue$/u],
         template: {
@@ -67,6 +68,9 @@ export default defineConfig(() => {
             },
           },
         },
+      }),
+      ssr({
+        enabled: process.env.MODE === 'ssr',
       }),
       // quasar() as any,
       vueJsx(),

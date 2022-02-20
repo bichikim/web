@@ -42,7 +42,7 @@
     "@babel/core": "^7.14.5",
     "@vue/server-renderer": "latest",
     "gulp": "^4.0.2",
-    "vue": "^3.2.30"
+    "vue": "latest"
   },
   "gitHead": "66c79bd0d5c23a437b8170f758ff58e4496afb58",
   "tsup": {

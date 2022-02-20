@@ -14,7 +14,7 @@ const PagesLayout = defineComponent({
     const {isMagicAuthLink} = provideLayout()
     const {isAuthenticated} = user.$
 
-    const isOpenAuth = ref(isAuthenticated.value)
+    const isOpenAuth = ref(!isAuthenticated.value)
 
     const onCloseAuth = () => {
       isOpenAuth.value = false
@@ -33,20 +33,28 @@ const PagesLayout = defineComponent({
         ]),
         h(QDialog, {
           maximized: true,
-          modelValue: !isOpenAuth.value,
+          modelValue: isOpenAuth.value,
           persistent: true,
           transitionHide: 'slide-up',
           transitionShow: 'slide-down',
         }, () => [
-          h(SignInPage, {inProgress: isMagicAuthLink.value}),
-          h(QBtn, csx({
-            css: {bg: 'white', ps: 'absolute', tr: 0},
-            dense: true,
-            flat: true,
-            icon: ionCloseOutline,
-            onClick: onCloseAuth,
-            round: true,
-          })),
+          h(SignInPage, {inProgress: isMagicAuthLink.value}, () => [
+            h('div', csx({
+              css: {
+                p: 10,
+                ps: 'absolute', tr: 0,
+              },
+            }), [
+              h(QBtn, csx({
+                css: {bg: '$transparent-white'},
+                dense: true,
+                flat: true,
+                icon: ionCloseOutline,
+                onClick: onCloseAuth,
+                round: true,
+              })),
+            ]),
+          ]),
         ]),
       ])
     )

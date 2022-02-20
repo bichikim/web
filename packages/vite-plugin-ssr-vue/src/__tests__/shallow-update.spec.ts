@@ -1,12 +1,12 @@
-import {computed, defineComponent, h, reactive} from 'vue'
+import {defineComponent, h, reactive, toRefs} from 'vue'
 import {mount} from '@vue/test-utils'
 import {shallowUpdate} from '../shallow-update'
 import {Data} from '../types'
 
 describe('shallowUpdate', () => {
   it('should update a reactive value', async () => {
-    const Component = defineComponent({
-      setup: (props) => {
+    const component = defineComponent({
+      setup: () => {
         const data = reactive({
           age: 100,
           name: 'foo',
@@ -16,19 +16,18 @@ describe('shallowUpdate', () => {
           shallowUpdate(data, payload)
         }
 
-        const age = computed(() => data.age)
-        const name = computed(() => data.name)
+        const {age, name} = toRefs(data)
 
-        return (
+        return () => (
           h('div', [
-            h('div', {id: 'name'}, age.value),
-            h('div', {id: 'age'}, name.value),
+            h('div', {id: 'name'}, name.value),
+            h('div', {id: 'age'}, age.value),
             h('button', {onClick: () => updateData({age: 1, name: 'bar'})}, 'update'),
           ])
         )
       },
     })
-    const wrapper = mount(Component)
+    const wrapper = mount(component)
 
     expect(wrapper.get('#name').text()).toBe('foo')
     expect(wrapper.get('#age').text()).toBe('100')

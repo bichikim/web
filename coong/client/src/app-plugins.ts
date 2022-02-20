@@ -11,13 +11,11 @@ export const useAppPlugins = async (app: App, initialState, ssrContext = {}) => 
   const store = createStore(initialState)
   const quasarPlugin = await createQuasarPlugin(ssrContext)
   const router = createRouter()
-
   app.use(router)
   app.use(hyperComponents)
   app.use(quasarPlugin)
   app.use(store.install)
   app.use(head)
   app.use(urql)
-
   return {app, head, router, stitches, store: store.state}
 }

@@ -15,7 +15,7 @@ export const HPage = defineComponent({
   name: 'HPage',
   render() {
     return (
-      h(QPage, {styleFn}, this.$slots)
+      h(QPage as any, {styleFn}, this.$slots)
     )
   },
   setup() {

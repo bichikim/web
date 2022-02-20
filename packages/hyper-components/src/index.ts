@@ -43,6 +43,13 @@ export const useClassName = (): CSSClassComponent => {
   }
 }
 
+export const useCsx = () => {
+  const system = inject(SYSTEM_KEY, (() => ({})) as any)
+  return (csx?: VariantAndCss) => {
+    return runCsxClassComponent(system, csx)
+  }
+}
+
 export type stitchesOptions = Parameters<CreateStitches>[0]
 
 export type FunctionComposer = (...args) => any

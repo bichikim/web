@@ -4,21 +4,24 @@ module.exports = {
   cacheDirectory: './.jest/cache',
   collectCoverageFrom: [
     '<rootDir>/packages/*/src/**/*.{ts,tsx}',
+    '<rootDir>/coong/*/src/**/*.{ts,tsx}',
     '<rootDir>/scripts/**/*.{ts,tsx}',
+    '<rootDir>/coong/client/vite-vue-ssr/**/__tests__/*.spec.ts',
     '!<rootDir>/**/*.d.ts',
     '!<rootDir>/**/*.stories.{ts,tsx}',
     '!<rootDir>/**/__tests__/*.{ts,tsx}',
     '!<rootDir>/**/types/**/*.{ts,tsx}',
   ],
+
   // maxWorkers: '70%',
   moduleFileExtensions: ['js', 'jsx', 'ts', 'tsx', 'vue', 'json'],
+
   moduleNameMapper: {
     '\\.(css|scss)$': 'identity-obj-proxy',
     '\\.(jpg|jpeg|png|svg)$': '<rootDir>/__mocks__/file.mock.ts',
     '\\.svg$': '<rootDir>/__mocks__/svg.mock.ts',
     quasar: 'quasar/dist/quasar.esm.prod',
   },
-
   projects: [
     {
       displayName: 'e2e-test',
@@ -38,7 +41,11 @@ module.exports = {
     },
     {
       displayName: 'unit-test',
+      globals: {
+        __DEV__: true,
+      },
       setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
+
       snapshotSerializers: [
         'jest-serializer-vue',
         '@emotion/jest/serializer',
@@ -48,7 +55,8 @@ module.exports = {
         '!<rootDir>/coong/*/src/**/__tests__/*.e2e.ts',
         '<rootDir>/packages/*/src/**/__tests__/*.spec.ts',
         '<rootDir>/coong/*/src/**/__tests__/*.spec.ts',
-        '<rootDir>/coong/client/vvssr/**/__tests__/*.spec.ts',
+        '<rootDir>/coong/client/vite-vue-ssr/**/__tests__/*.spec.ts',
+        '<rootDir>/coong/client/vite-vue-ssr/__tests__/*.spec.ts',
         '<rootDir>/scripts/__tests__/*.spec.ts',
       ],
       transformIgnorePatterns: ['/node_modules/'],
