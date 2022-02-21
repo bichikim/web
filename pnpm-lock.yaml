@@ -242,6 +242,7 @@ importers:
       vite-plugin-ssr-vue: ^1.0.23-alpha.25
       vite-ssr-vue: ^0.4.4
       vue: latest
+      vue-devtool-flash-updates: ^0.1.1
       vue-i18n: ^9.1.9
       vue-router: ^4.0.12
     dependencies:
@@ -281,6 +282,7 @@ importers:
       vite-plugin-ssr-vue: link:../../packages/vite-plugin-ssr-vue
       vite-ssr-vue: 0.4.4_a598ca42908ead1185581fd8ce0fa43b
       vue: 3.2.31
+      vue-devtool-flash-updates: 0.1.1
       vue-i18n: 9.1.9_vue@3.2.31
       vue-router: 4.0.12_vue@3.2.31
     devDependencies:
@@ -366,6 +368,8 @@ importers:
       react: ^18.0.0-rc.0
       react-dom: 18.0.0-rc.0
       react-router-dom: ^6.2.1
+      react-solid-state: ^0.27.3
+      reactivue: ^0.4.4
       rollup: ^2.60.0
       rollup-plugin-analyzer: ^4.0.0
       serve-static: ^1.14.1
@@ -374,6 +378,7 @@ importers:
       tslib: ^2.3.1
       ttypescript: ^1.5.12
       typescript: ^4.5.4
+      unplugin-auto-import: ^0.6.0
       unplugin-icons: ^0.13.0
       urql: ^2.1.3
       validator: ^13.7.0
@@ -408,6 +413,8 @@ importers:
       react: 18.0.0-rc.0-next-fe905f152-20220107
       react-dom: 18.0.0-rc.0_e32785dbcafa2fde92a71a8f50f52ce6
       react-router-dom: 6.2.1_1e607a027e39d8a5689b22c66af1d418
+      react-solid-state: 0.27.3_1e607a027e39d8a5689b22c66af1d418
+      reactivue: 0.4.4_e32785dbcafa2fde92a71a8f50f52ce6
       serve-static: 1.14.2
       tslib: 2.3.1
       urql: 2.1.3_5d05d3470d76ecba42eaf951f80f8f01
@@ -439,6 +446,7 @@ importers:
       ts-node-dev: 1.1.8_typescript@4.5.5
       ttypescript: 1.5.13_ts-node@10.4.0+typescript@4.5.5
       typescript: 4.5.5
+      unplugin-auto-import: 0.6.0_fb1b359d3bdf5d476d566a4c9dfc1f51
       unplugin-icons: 0.13.0_4428d802543a700837a129de1218b59e
       vite: 2.8.1
       vite-plugin-imp: 2.1.3_vite@2.8.1
@@ -1020,6 +1028,10 @@ packages:
     resolution: {integrity: sha512-gqkpvjkgFUu+s3kP+Ly33OKpo5zvVY3FDFhv5BIb98SncS3KD6DNxPfNDjwHIoyXbz1leWo1j8DtRLZ1D2Jv+Q==}
     dependencies:
       '@types/throttle-debounce': 2.1.0
+    dev: true
+
+  /@antfu/utils/0.5.0:
+    resolution: {integrity: sha512-MrAQ/MrPSxbh1bBrmwJjORfJymw4IqSHFBXqvxaga3ZdDM+/zokYF8DjyJpSjY2QmpmgQrajDUBJOWrYeARfzA==}
     dev: true
 
   /@apideck/better-ajv-errors/0.3.2_ajv@8.8.2:
@@ -26832,6 +26844,17 @@ packages:
       throttle-debounce: 3.0.1
     dev: true
 
+  /react-solid-state/0.27.3_1e607a027e39d8a5689b22c66af1d418:
+    resolution: {integrity: sha512-L+aF+MUqjeiaX+hFGXGtPHsV2TFWof/QTmPrMQ7CwdpoDQ1BHc3iluWgCncgg1H+zeq7TeIKRhH6ukBygUbrOQ==}
+    peerDependencies:
+      react: '*'
+      react-dom: '*'
+    dependencies:
+      react: 18.0.0-rc.0-next-fe905f152-20220107
+      react-dom: 18.0.0-rc.0_e32785dbcafa2fde92a71a8f50f52ce6
+      solid-js: 1.3.7
+    dev: false
+
   /react-style-singleton/2.1.1_b08e3c15324cbe90a6ff8fcd416c932c:
     resolution: {integrity: sha512-jNRp07Jza6CBqdRKNgGhT3u9umWvils1xsuMOjZlghBDH2MU0PL2WZor4PGYjXpnRCa9DQSlHMs/xnABWOwYbA==}
     engines: {node: '>=8.5.0'}
@@ -26938,6 +26961,18 @@ packages:
     dependencies:
       loose-envify: 1.4.0
       object-assign: 4.1.1
+    dev: false
+
+  /reactivue/0.4.4_e32785dbcafa2fde92a71a8f50f52ce6:
+    resolution: {integrity: sha512-CXPymV/OdYlO8m2Ik9qzhPsXU51/+tdCdcjPlyhqAe2lLoW3/9ySYbthQghwtdL214J8OBkhvEVtFYeF3jZcug==}
+    peerDependencies:
+      preact: ^10.5.9
+      react: '>=16'
+    dependencies:
+      '@vue/reactivity': 3.2.31
+      '@vue/runtime-core': 3.2.31
+      '@vue/shared': 3.2.31
+      react: 18.0.0-rc.0-next-fe905f152-20220107
     dev: false
 
   /read-cmd-shim/2.0.0:
@@ -28475,6 +28510,10 @@ packages:
     transitivePeerDependencies:
       - debug
     dev: true
+
+  /solid-js/1.3.7:
+    resolution: {integrity: sha512-YAz0NQhIZ8yCR2VZK8aMjNrWMU4gnmCgzqy7EpMF7WsyWV3PSoO3HvDs3kR75Ejk/a4ohfxQNiLhC9TOQltXSA==}
+    dev: false
 
   /sort-keys/2.0.0:
     resolution: {integrity: sha1-ZYU1WEhh7JfXMNbPQYIuH1ZoQSg=}
@@ -30905,6 +30944,28 @@ packages:
     resolution: {integrity: sha1-sr9O6FFKrmFltIF4KdIbLvSZBOw=}
     engines: {node: '>= 0.8'}
 
+  /unplugin-auto-import/0.6.0_fb1b359d3bdf5d476d566a4c9dfc1f51:
+    resolution: {integrity: sha512-joItLHCozByEsKawhFTfterlZOp8EYIAOpuWKx5xq0SdLOQtvbEcfkdhLxWIsMOH9yXNY5vnXYRONW0XxjVDlg==}
+    engines: {node: '>=14'}
+    peerDependencies:
+      '@vueuse/core': '*'
+    peerDependenciesMeta:
+      '@vueuse/core':
+        optional: true
+    dependencies:
+      '@antfu/utils': 0.5.0
+      '@rollup/pluginutils': 4.1.2
+      local-pkg: 0.4.1
+      magic-string: 0.25.7
+      resolve: 1.22.0
+      unplugin: 0.3.2_fb1b359d3bdf5d476d566a4c9dfc1f51
+    transitivePeerDependencies:
+      - esbuild
+      - rollup
+      - vite
+      - webpack
+    dev: true
+
   /unplugin-icons/0.13.0_4428d802543a700837a129de1218b59e:
     resolution: {integrity: sha512-CyAl0HV3bZUGT7ut9agpPRhEYXCvufr80Fh72yrkD57BVCTZ7ze10Rt63ZrvPXiJQpd+aI/Bizm2aqOf3WPSfg==}
     peerDependencies:
@@ -31058,6 +31119,29 @@ packages:
     dependencies:
       esbuild: 0.13.14
       rollup: 2.60.0
+      vite: 2.8.1
+      webpack-virtual-modules: 0.4.3
+    dev: true
+
+  /unplugin/0.3.2_fb1b359d3bdf5d476d566a4c9dfc1f51:
+    resolution: {integrity: sha512-5d0DMYNKZU+S9eZUiBfw6Co32eRg8myUgBPoWSqG/wDFCUE/WznfSsJnZWi1P9l69x4uLJqt2qVq1xW/AsXFrw==}
+    peerDependencies:
+      esbuild: '>=0.13'
+      rollup: ^2.50.0
+      vite: ^2.3.0
+      webpack: 4 || 5
+    peerDependenciesMeta:
+      esbuild:
+        optional: true
+      rollup:
+        optional: true
+      vite:
+        optional: true
+      webpack:
+        optional: true
+    dependencies:
+      esbuild: 0.13.14
+      rollup: 2.66.1
       vite: 2.8.1
       webpack-virtual-modules: 0.4.3
     dev: true
@@ -31695,6 +31779,10 @@ packages:
         optional: true
     dependencies:
       vue: 3.2.31
+
+  /vue-devtool-flash-updates/0.1.1:
+    resolution: {integrity: sha512-HIlHEbZMpCkcWYENURHYI+QBDR85KdFFoUsJvMf3zcBOHHsg2dnRzLbo/gmvQzeEaDTsnkrcs9/MO0AZ58NpLQ==}
+    dev: false
 
   /vue-docgen-api/4.44.15:
     resolution: {integrity: sha512-JBFe4EAUSmRqRHaNNHqDo1U+w1HRaHh00C0bYKE65HdN9QS6pCJCUBwi1blow0beDzLTAJYCa90xwG61WYBo4A==}

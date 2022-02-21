@@ -28,6 +28,7 @@
     "@capacitor/android": "3.4.0",
     "@capacitor/core": "3.4.0",
     "@capacitor/ios": "3.4.0",
+    "vue-devtool-flash-updates": "^0.1.1",
     "@namchee/vue-ztext": "^1.0.0",
     "@project-serum/sol-wallet-adapter": "^0.2.6",
     "@quasar/app": "^3.3.2",

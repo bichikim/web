@@ -10,6 +10,7 @@ import LinkAttributes from 'markdown-it-link-attributes'
 import vitePluginImp from 'vite-plugin-imp'
 import * as dotenv from 'dotenv'
 import react from '@vitejs/plugin-react'
+import autoImport from 'unplugin-auto-import/vite'
 // import {quasar} from '@quasar/vite-plugin'
 
 // eslint-disable-next-line import/no-named-as-default-member
@@ -48,6 +49,20 @@ export default defineConfig(() => {
 
     plugins: [
       react(),
+      autoImport({
+        imports: [
+          'react',
+          {
+            'react-solid-state': [
+              'useObserver',
+              'createSignal',
+              'createEffect',
+              'onCleanup',
+              'withSolid',
+            ],
+          },
+        ],
+      }),
       vitePluginImp(),
       // https://github.com/antfu/vite-plugin-md
       markdown({

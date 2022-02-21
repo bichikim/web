@@ -1,7 +1,7 @@
 {
   "compileOnSave": false,
   "compilerOptions": {
-    "jsx": "preserve",
+    "jsx": "react-jsx",
     "target": "ESNext",
     "module": "ESNext",
     "moduleResolution": "node",
@@ -41,8 +41,8 @@
     }
   },
   "include": [
-    "run-ssr/**/*",
-    "vvssr/**/*",
-    "src/**/*",
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "auto-imports.d.ts"
   ]
 }
