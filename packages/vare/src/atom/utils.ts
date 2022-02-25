@@ -35,7 +35,8 @@ export const wrapAtom = <T extends Record<string, any>>(value: MayAtomType<T>): 
   return reactive(isRef(_value) ? unref(_value) : _value) as any
 }
 
-export const getter = <Return>(recipe: GetterRecipe<Return>): GetterRecipeInside<Return> => {
+export const getter = <State = any, Return = unknown>(
+  recipe: GetterRecipe<State, Return>): GetterRecipeInside<State, Return> => {
   return Object.assign((state) => recipe(state), {
     [GetterSymbol]: true,
   }) as any

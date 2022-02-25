@@ -64,3 +64,8 @@ export type HasTail<T extends any[]> = T extends ([] | [any]) ? false : true
 export type UnShiftTuple<First, T extends any[]> = [First, ...T]
 
 export type PushTuple<T extends any[], Last> = [...T, Last]
+
+export type Keyof<R> = R extends Record<infer P, any> ? P : never
+export type TakeFlatKeys<R, K extends keyof R> = R extends Record<K, infer P> ? Keyof<P> : never
+export type FlatKeys<R> = TakeFlatKeys<R, keyof R>
+

@@ -18,9 +18,11 @@ export interface UserState {
   token?: string
 }
 
-export const user = atom({
+const state: UserState = {
   name: 'unknown',
-} as UserState, {
+}
+
+export const user = atom(state, {
   async getUser(user, token: string = user.token, email: string = user.email) {
     if (!email) {
       return
@@ -47,10 +49,10 @@ export const user = atom({
       user.name = name
     }
   },
-  hasEmail: getter(() => {
+  hasEmail: getter((user) => {
     return Boolean(user.email)
   }),
-  isAuthenticated: getter(() => {
+  isAuthenticated: getter((user) => {
     return Boolean(user.token)
   }),
   async signIn(user, email: string, password: string) {
@@ -93,3 +95,6 @@ export const user = atom({
     return {code, message, token}
   },
 })
+
+user.$.signIn('bichi', 'pass')
+

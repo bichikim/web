@@ -5,6 +5,7 @@ import {
   watch,
 } from 'vue-demi'
 import {useInfo} from 'src/info'
+import {expectNotType, expectType} from 'tsd'
 
 describe('atom', () => {
   beforeEach(() => {
@@ -17,6 +18,7 @@ describe('atom', () => {
 
   it('should be able to nesting atom', () => {
     const fooAtom = atom({
+      age: 5,
       bar: atom({
         name: 'bar',
       }, {
@@ -28,6 +30,9 @@ describe('atom', () => {
       foo: 'foo',
       john: 'john',
     }, {
+      setAge: (state, payload: number) => {
+        state.age = payload
+      },
       setJohn: (state, payload: string) => {
         state.john = payload
       },
@@ -43,6 +48,9 @@ describe('atom', () => {
     expect(fooAtom.bar.name).toBe('john')
     fooAtom.$.setJohn('john2')
     expect(fooAtom.john).toBe('john2')
+
+    expectType<((payload: string) => void)>(fooAtom.$.setJohn)
+    expectNotType<((state: any, payload: string) => void)>(fooAtom.$.setJohn)
   })
   it('should have value', () => {
     const fooAtom = atom({
@@ -143,7 +151,6 @@ describe('atom', () => {
     }, {
       setName: async (state, payload: string) => {
         state.name = payload
-        return Promise.resolve()
       },
     })
 

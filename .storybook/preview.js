@@ -1,5 +1,3 @@
-// import {createEmotion} from '@winter-love/emotion'
-// import {theme} from 'src/theme'
 import {app} from '@storybook/vue3'
 import {createHyperComponents} from '@winter-love/hyper-components'
 import {Quasar} from 'quasar'

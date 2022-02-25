@@ -30,8 +30,6 @@
     "@capacitor/ios": "3.4.0",
     "@namchee/vue-ztext": "^1.0.0",
     "@project-serum/sol-wallet-adapter": "^0.2.6",
-    "@quasar/app": "^3.3.2",
-    "@quasar/extras": "^1.12.5",
     "@solana/web3.js": "^1.32.0",
     "@stitches/core": "^1.2.5",
     "@winter-love/utils": "^1.0.23-alpha.25",

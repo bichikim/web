@@ -7,7 +7,10 @@
       "src/*": [
         "src/*"
       ]
-    }
+    },
+    "plugins": [
+      { "transform": "@zerollup/ts-transform-paths" }
+    ]
   },
   "ts-node": {
     "compilerOptions": {

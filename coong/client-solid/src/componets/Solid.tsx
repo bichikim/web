@@ -1,5 +1,10 @@
 const Counter: FC = (props) => {
-  return () => <div>{props.children}</div>
+  return (
+    <div>
+      <button onClick={() => props.onIncrease?.()}>foo</button>
+      {props.children}
+    </div>
+  )
 }
 
 export const Solid: FC = () => {
@@ -13,7 +18,7 @@ export const Solid: FC = () => {
     <div>
       <div>hello</div>
       <Counter>{count()}</Counter>
-      <Counter>{count2()}</Counter>
+      <Counter onIncrease={onIncrease2}>{count2()}</Counter>
       <button onClick={onIncrease} >increase</button>
       <button onClick={onIncrease2} >increase2</button>
     </div>

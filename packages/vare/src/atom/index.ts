@@ -1,6 +1,6 @@
-import {UnwrapNestedRefs} from '@winter-love/use'
-import {computed, shallowRef} from 'vue-demi'
 import {useInfo} from 'src/info'
+import {getRawFunctionString} from 'src/utils'
+import {computed, shallowRef} from 'vue-demi'
 import {
   ActionSymbol,
   ActionWatchSymbol,
@@ -14,9 +14,9 @@ import {
   AtomTypeWithRecipeTree,
   GetterSymbol,
   MayAtomType,
+  Recipe,
 } from './types'
 import {createAction, wrapAtom} from './utils'
-import {getRawFunctionString} from 'src/utils'
 
 export * from './types'
 export * from './utils'
@@ -135,13 +135,12 @@ export const createAtom = (reactive) => {
 
 export function atom<State>(initState: MayAtomType<State>): AtomType<State>
 export function atom<State extends Record<string, any>,
-  Recipe extends AtomRecipe<UnwrapNestedRefs<State>> | AtomGetterRecipe<UnwrapNestedRefs<State>, unknown>,
-  TreeOptions extends Record<string, Recipe>>(
+  TreeOptions extends Record<string, Recipe<State>>>(
   initState: MayAtomType<State>,
   recipeTree: TreeOptions,
-): AtomTypeWithRecipeTree<State, Recipe, TreeOptions>
+): AtomTypeWithRecipeTree<State, TreeOptions>
 export function atom<State,
-  Recipe extends AtomRecipe<UnwrapNestedRefs<State>> | AtomGetterRecipe<UnwrapNestedRefs<State>, unknown>,
+  Recipe extends AtomRecipe<State> | AtomGetterRecipe<State>,
   >(
   initState: MayAtomType<State>,
   recipe?: Recipe,
