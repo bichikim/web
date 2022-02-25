@@ -3,9 +3,12 @@ import {ref, useSetup} from 'reactivue'
 const Counter: FC = ({children}) => {
   return <div>{children}</div>
 }
-
+/**
+ * it
+ * @constructor
+ */
 export const Vue: FC = () => {
-  const {count, count2, onIncrease2, onIncrease} = useSetup(() => {
+  const state = useSetup(() => {
     const count = ref(1)
     const count2 = ref(1)
 
@@ -17,10 +20,10 @@ export const Vue: FC = () => {
   return (
     <div>
       <div>hello</div>
-      <Counter>{count}</Counter>
-      <Counter>{count2}</Counter>
-      <button onClick={onIncrease}>increase</button>
-      <button onClick={onIncrease2}>increase2</button>
+      <Counter>{state.count}</Counter>
+      <Counter>{state.count2}</Counter>
+      <button onClick={state.onIncrease}>increase</button>
+      <button onClick={state.onIncrease2}>increase2</button>
     </div>
   )
 }

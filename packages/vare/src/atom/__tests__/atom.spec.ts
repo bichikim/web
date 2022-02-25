@@ -40,7 +40,7 @@ describe('atom', () => {
 
     const atomInfo: any = useInfo().get(fooAtom)
 
-    expect([...atomInfo.relates.keys()]).toEqual(['setJohn'])
+    expect([...atomInfo.relates.keys()]).toEqual(['setAge', 'setJohn'])
     expect(atomInfo.kind).toBe('atom')
     expect(fooAtom.bar.name).toBe('bar')
     expect(fooAtom.bar.$.decoName.value).toBe('??bar')

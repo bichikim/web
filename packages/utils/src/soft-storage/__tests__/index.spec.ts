@@ -1,8 +1,13 @@
 /**
  * @jest-environment jsdom
  */
-import {cookieSoftStorage, localSoftStorage, sessionSoftStorage} from '..'
+import {cookieSoftStorage, cookieStorage, createBrowserStorage, localSoftStorage, localStorage, sessionSoftStorage, sessionStorage} from '..'
 import cookie from 'js-cookie'
+import {expectType} from 'tsd'
+interface Foo {
+  __isFoo?: never
+  name: string
+}
 describe('storage', () => {
   let originalLocalStorage: any
   let originalSessionStorage: any
@@ -75,7 +80,7 @@ describe('storage', () => {
       expect(result).toEqual({name: 'foo'})
     })
   })
-  describe('cookie', () => {
+  describe('cookieSoftStorage', () => {
     it('should set Data', () => {
 
       cookieSoftStorage.setItem('foo', {
@@ -87,6 +92,75 @@ describe('storage', () => {
     it('should get Data', () => {
       (cookie.get as any).mockImplementationOnce(() => '{"name":"foo"}')
       const result = cookieSoftStorage.getItem('foo')
+      expect(result).toEqual({name: 'foo'})
+    })
+  })
+
+  describe('localStorage', () => {
+    it('should set Data', () => {
+      localStorage<Foo>().setItem('foo', {
+        name: 'foo',
+      })
+
+      expectType<(name: string, value: Foo) => any>(localStorage<Foo>().setItem)
+
+      expect(mockLocalStorage.setItem).toBeCalledWith('foo', '{"name":"foo"}')
+    })
+    it('should get Data', () => {
+      mockLocalStorage.getItem.mockImplementationOnce(() => '{"name":"foo"}')
+      const result = localStorage<Foo>().getItem('foo')
+      expectType<Foo | undefined>(result)
+      expect(result).toEqual({name: 'foo'})
+    })
+  })
+  describe('sessionStorage', () => {
+    it('should set Data', () => {
+      sessionStorage<Foo>().setItem('foo', {
+        name: 'foo',
+      })
+      expectType<(name: string, value: Foo) => any>(sessionStorage<Foo>().setItem)
+      expect(mockSessionStorage.setItem).toBeCalledWith('foo', '{"name":"foo"}')
+    })
+    it('should get Data', () => {
+      mockSessionStorage.getItem.mockImplementationOnce(() => '{"name":"foo"}')
+      const result = sessionStorage<Foo>().getItem('foo')
+      expectType<Foo | undefined>(result)
+      expect(result).toEqual({name: 'foo'})
+    })
+  })
+  describe('cookieStorage', () => {
+    it('should set Data', () => {
+
+      cookieStorage<Foo>().setItem('foo', {
+        name: 'foo',
+      })
+      expectType<(name: string, value: Foo) => any>(cookieStorage<Foo>().setItem)
+      // eslint-disable-next-line unicorn/no-useless-undefined
+      expect(cookie.set).toBeCalledWith('foo', '{"name":"foo"}', {})
+    })
+    it('should get Data', () => {
+      (cookie.get as any).mockImplementationOnce(() => '{"name":"foo"}')
+      const result = cookieStorage<Foo>().getItem('foo')
+      expectType<Foo | undefined>(result)
+      expect(result).toEqual({name: 'foo'})
+    })
+  })
+  describe('createBrowserStorage', () => {
+    it('should set Data', () => {
+      const localStorage = createBrowserStorage<Foo>('local')
+      localStorage().setItem('foo', {
+        name: 'foo',
+      })
+
+      expectType<(name: string, value: Foo) => any>(localStorage<Foo>().setItem)
+
+      expect(mockLocalStorage.setItem).toBeCalledWith('foo', '{"name":"foo"}')
+    })
+    it('should get Data', () => {
+      const localStorage = createBrowserStorage<Foo>('local')
+      mockLocalStorage.getItem.mockImplementationOnce(() => '{"name":"foo"}')
+      const result = localStorage().getItem('foo')
+      expectType<Foo | undefined>(result)
       expect(result).toEqual({name: 'foo'})
     })
   })

@@ -1,4 +1,4 @@
-import {BrowserStorageKind, CookieStorageOptions, createSoftBrowserStorage} from '@winter-love/utils'
+import {BrowserStorageKind, CookieStorageOptions, createBrowserStorage} from '@winter-love/utils'
 import {ref, watch} from 'vue-demi'
 import {useElementEvent} from '../element-event'
 import {MayRef} from 'src/types'
@@ -22,18 +22,18 @@ export const storageRef = <Data>(
   value?: MayRef<Data>,
   options: StorageRefOptions = {},
 ) => {
-  const {type = 'local', cookieOptions, deep, reset} = options
+  const {type = 'local' as BrowserStorageKind, cookieOptions, deep, reset} = options
   const valueRef = wrapRef<Data>(value)
   const freezeWatch = ref(false)
-  const storage = createSoftBrowserStorage<Data | undefined>(type)
+  const storage = createBrowserStorage<Data | undefined>(type)
   if (!storage) {
     return valueRef
   }
 
-  const initValue = storage.getItem(key)
+  const initValue = storage().getItem(key)
 
   if (!initValue || reset) {
-    storage.setItem(key, valueRef.value, cookieOptions)
+    storage(cookieOptions).setItem(key, valueRef.value)
   } else {
     valueRef.value = initValue
   }
@@ -43,7 +43,7 @@ export const storageRef = <Data>(
       freezeWatch.value = true
     }
 
-    const result = storage.getItem(key)
+    const result = storage().getItem(key)
 
     if (typeof result !== 'undefined') {
       valueRef.value = result
@@ -61,7 +61,7 @@ export const storageRef = <Data>(
       freezeWatch.value = false
       return
     }
-    storage.setItem(key, value, cookieOptions)
+    storage(cookieOptions).setItem(key, value)
   }, {deep})
 
   return valueRef

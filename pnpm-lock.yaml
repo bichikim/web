@@ -338,8 +338,6 @@ importers:
       '@iconify/json': ^1.1.415
       '@namchee/vue-ztext': ^1.0.0
       '@project-serum/sol-wallet-adapter': ^0.2.6
-      '@quasar/app': ^3.3.2
-      '@quasar/extras': ^1.12.5
       '@rollup/plugin-replace': ^3.0.0
       '@solana/web3.js': ^1.32.0
       '@stitches/core': ^1.2.5
@@ -395,8 +393,6 @@ importers:
       '@capacitor/ios': 3.4.0_@capacitor+core@3.4.0
       '@namchee/vue-ztext': 1.0.0_vue@3.2.31
       '@project-serum/sol-wallet-adapter': 0.2.6_@solana+web3.js@1.32.0
-      '@quasar/app': 3.3.2_5d7142d6a344effbc1fea2f65693fd06
-      '@quasar/extras': 1.12.5
       '@solana/web3.js': 1.32.0
       '@stitches/core': 1.2.5
       '@winter-love/utils': link:../../packages/utils
@@ -467,10 +463,7 @@ importers:
       '@graphql-codegen/typescript-apollo-client-helpers': ^2.1.9
       '@graphql-codegen/typescript-operations': ^2.2.0
       '@iconify/json': ^1.1.415
-      '@namchee/vue-ztext': ^1.0.0
       '@project-serum/sol-wallet-adapter': ^0.2.6
-      '@quasar/app': ^3.3.2
-      '@quasar/extras': ^1.12.5
       '@rollup/plugin-replace': ^3.0.0
       '@solana/web3.js': ^1.32.0
       '@stitches/core': ^1.2.5
@@ -496,7 +489,6 @@ importers:
       node-inject-html: ^0.0.5
       quasar: ^2.5.3
       react-solid-state: ^0.27.3
-      reactivue: ^0.4.4
       rollup: ^2.60.0
       rollup-plugin-analyzer: ^4.0.0
       serve-static: ^1.14.1
@@ -508,7 +500,6 @@ importers:
       typescript: ^4.5.4
       unplugin-auto-import: ^0.6.1
       unplugin-icons: ^0.13.0
-      urql: ^2.1.3
       validator: ^13.7.0
       vite: ^2.8.1
       vite-plugin-imp: ^2.1.3
@@ -522,10 +513,7 @@ importers:
       '@capacitor/android': 3.4.0_@capacitor+core@3.4.0
       '@capacitor/core': 3.4.0
       '@capacitor/ios': 3.4.0_@capacitor+core@3.4.0
-      '@namchee/vue-ztext': 1.0.0_vue@3.2.31
       '@project-serum/sol-wallet-adapter': 0.2.6_@solana+web3.js@1.32.0
-      '@quasar/app': 3.3.2_5d7142d6a344effbc1fea2f65693fd06
-      '@quasar/extras': 1.12.5
       '@solana/web3.js': 1.32.0
       '@stitches/core': 1.2.5
       '@winter-love/utils': link:../../packages/utils
@@ -540,11 +528,9 @@ importers:
       node-inject-html: 0.0.5
       quasar: 2.5.5
       react-solid-state: 0.27.3
-      reactivue: 0.4.4
       serve-static: 1.14.2
       solid-js: 1.3.8
       tslib: 2.3.1
-      urql: 2.1.3_graphql@15.8.0
       validator: 13.7.0
       vue-i18n: 9.1.9_vue@3.2.31
     devDependencies:
@@ -955,6 +941,7 @@ importers:
 
   packages/utils:
     specifiers:
+      '@types/js-cookie': ^3.0.1
       fast-json-stable-stringify: ^2.1.0
       gulp: ^4.0.2
       js-cookie: ^3.0.1
@@ -969,6 +956,7 @@ importers:
       micro-memoize: 4.0.9
       react-fast-compare: 3.2.0
     devDependencies:
+      '@types/js-cookie': 3.0.1
       gulp: 4.0.2
       vue-demi: 0.12.1_vue@3.2.31
 
@@ -977,7 +965,9 @@ importers:
       '@vue/devtools-api': ^6.0.0-beta.19
       '@winter-love/use': ^1.0.23-alpha.26
       '@winter-love/utils': ^1.0.23-alpha.25
+      '@zerollup/ts-transform-paths': ^1.7.18
       gulp: ^4.0.2
+      ttypescript: ^1.5.13
       vue: latest
       vue-demi: latest
     dependencies:
@@ -986,7 +976,9 @@ importers:
       vue-demi: 0.12.1_vue@3.2.31
     devDependencies:
       '@winter-love/use': link:../use
+      '@zerollup/ts-transform-paths': 1.7.18_typescript@4.5.5
       gulp: 4.0.2
+      ttypescript: 1.5.13_ts-node@10.5.0+typescript@4.5.5
       vue: 3.2.31
 
   packages/vite-plugin-ssr-vue:
@@ -8824,105 +8816,6 @@ packages:
     resolution: {integrity: sha1-p3c2C1s5oaLlEG+OhY8v0tBgxXA=}
     dev: false
 
-  /@quasar/app/3.3.2_5d7142d6a344effbc1fea2f65693fd06:
-    resolution: {integrity: sha512-pX2Fu4hz1n8x+/wMiUE1fBd9okMI2aCRZUkPNY0/cZG4hy1LWRtyd7HjrZL9XSVZSPoO3XeXeKXi7D6ztH/iHg==}
-    engines: {node: '>= 12.22.1', npm: '>= 6.14.12', yarn: '>= 1.17.3'}
-    hasBin: true
-    peerDependencies:
-      electron-builder: ^22.0.0
-      electron-packager: ^15.0.0
-      vue: ^3.2.29
-      vue-router: ^4.0.12
-    peerDependenciesMeta:
-      electron-builder:
-        optional: true
-      electron-packager:
-        optional: true
-    dependencies:
-      '@quasar/babel-preset-app': 2.0.1_webpack@5.67.0
-      '@quasar/fastclick': 1.1.4
-      '@quasar/ssr-helpers': 2.1.1
-      '@types/cordova': 0.0.34
-      '@types/express': 4.17.13
-      '@types/webpack-bundle-analyzer': 4.4.1_esbuild@0.13.14
-      archiver: 5.3.0
-      autoprefixer: 10.4.2_postcss@8.4.5
-      browserslist: 4.19.1
-      chalk: 4.1.2
-      chokidar: 3.5.3
-      ci-info: 3.3.0
-      compression-webpack-plugin: 9.2.0_webpack@5.67.0
-      copy-webpack-plugin: 10.2.1_webpack@5.67.0
-      cross-spawn: 7.0.3
-      css-loader: 5.2.6_webpack@5.67.0
-      css-minimizer-webpack-plugin: 3.4.1_esbuild@0.13.14+webpack@5.67.0
-      cssnano: 5.0.16_postcss@8.4.5
-      dot-prop: 6.0.1
-      elementtree: 0.1.7
-      error-stack-parser: 2.0.6
-      express: 4.17.2
-      fast-glob: 3.2.11
-      file-loader: 6.2.0_webpack@5.67.0
-      fork-ts-checker-webpack-plugin: 6.5.0_8366d3d77ef53b3bd591a4bb2334c421
-      fs-extra: 10.0.0
-      hash-sum: 2.0.0
-      html-minifier: 4.0.0
-      html-webpack-plugin: 5.5.0_webpack@5.67.0
-      inquirer: 8.2.0
-      isbinaryfile: 4.0.8
-      launch-editor-middleware: 2.3.0
-      lodash.debounce: 4.0.8
-      lodash.template: 4.5.0
-      lodash.throttle: 4.1.1
-      log-update: 4.0.0
-      memory-fs: 0.5.0
-      mini-css-extract-plugin: 1.6.0_webpack@5.67.0
-      minimist: 1.2.5
-      node-loader: 2.0.0_webpack@5.67.0
-      null-loader: 4.0.1_webpack@5.67.0
-      open: 8.4.0
-      ouch: 2.0.0
-      postcss: 8.4.5
-      postcss-loader: 6.2.1_postcss@8.4.5+webpack@5.67.0
-      postcss-rtlcss: 3.5.1_postcss@8.4.5
-      pretty-error: 4.0.0
-      register-service-worker: 1.7.2
-      sass: 1.32.12
-      sass-loader: 12.4.0_sass@1.32.12+webpack@5.67.0
-      semver: 7.3.5
-      table: 6.8.0
-      terser-webpack-plugin: 5.3.0_esbuild@0.13.14+webpack@5.67.0
-      ts-loader: 9.2.6_typescript@4.5.5+webpack@5.67.0
-      typescript: 4.5.5
-      url-loader: 4.1.1_file-loader@6.2.0+webpack@5.67.0
-      vue: 3.2.31
-      vue-loader: 16.8.3_webpack@5.67.0
-      vue-style-loader: 4.1.3
-      webpack: 5.67.0_esbuild@0.13.14
-      webpack-bundle-analyzer: 4.5.0
-      webpack-chain: 6.5.1
-      webpack-dev-server: 4.7.3_webpack@5.67.0
-      webpack-merge: 5.8.0
-      webpack-node-externals: 3.0.0
-    transitivePeerDependencies:
-      - '@parcel/css'
-      - '@swc/core'
-      - acorn
-      - bufferutil
-      - clean-css
-      - csso
-      - debug
-      - esbuild
-      - eslint
-      - fibers
-      - node-sass
-      - supports-color
-      - uglify-js
-      - utf-8-validate
-      - vue-template-compiler
-      - webpack-cli
-    dev: false
-
   /@quasar/app/3.3.2_a57fbc22d45d7a5120afeae25a979227:
     resolution: {integrity: sha512-pX2Fu4hz1n8x+/wMiUE1fBd9okMI2aCRZUkPNY0/cZG4hy1LWRtyd7HjrZL9XSVZSPoO3XeXeKXi7D6ztH/iHg==}
     engines: {node: '>= 12.22.1', npm: '>= 6.14.12', yarn: '>= 1.17.3'}
@@ -11996,6 +11889,10 @@ packages:
     dependencies:
       jest-diff: 27.5.1
       pretty-format: 27.5.1
+    dev: true
+
+  /@types/js-cookie/3.0.1:
+    resolution: {integrity: sha512-7wg/8gfHltklehP+oyJnZrz9XBuX5ZPP4zB6UsI84utdlkRYLnOm2HfpLXazTwZA+fpGn0ir8tGNgVnMEleBGQ==}
     dev: true
 
   /@types/js-yaml/4.0.5:
@@ -27113,17 +27010,6 @@ packages:
       object-assign: 4.1.1
     dev: false
 
-  /reactivue/0.4.4:
-    resolution: {integrity: sha512-CXPymV/OdYlO8m2Ik9qzhPsXU51/+tdCdcjPlyhqAe2lLoW3/9ySYbthQghwtdL214J8OBkhvEVtFYeF3jZcug==}
-    peerDependencies:
-      preact: ^10.5.9
-      react: '>=16'
-    dependencies:
-      '@vue/reactivity': 3.2.31
-      '@vue/runtime-core': 3.2.31
-      '@vue/shared': 3.2.31
-    dev: false
-
   /reactivue/0.4.4_e32785dbcafa2fde92a71a8f50f52ce6:
     resolution: {integrity: sha512-CXPymV/OdYlO8m2Ik9qzhPsXU51/+tdCdcjPlyhqAe2lLoW3/9ySYbthQghwtdL214J8OBkhvEVtFYeF3jZcug==}
     peerDependencies:
@@ -31558,18 +31444,6 @@ packages:
       wonka: 4.0.15
     dev: false
 
-  /urql/2.1.3_graphql@15.8.0:
-    resolution: {integrity: sha512-S6GaKM7NJLed25L2qdZxaWFjWggXQHrneEVEe47+ZTQWxmfyV05STMl6DhtnZqb6n1wdT/KUljHkggz0kiE3NA==}
-    peerDependencies:
-      graphql: ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0 || ^16.0.0
-      react: '>= 16.8.0'
-    dependencies:
-      '@urql/core': 2.4.1_graphql@15.8.0
-      graphql: 15.8.0
-      use-sync-external-store: 1.0.0-rc.0
-      wonka: 4.0.15
-    dev: false
-
   /use-callback-ref/1.2.5_a0c521d4794c7ad97f5f4c1c4a7d5818:
     resolution: {integrity: sha512-gN3vgMISAgacF7sqsLPByqoePooY3n2emTH59Ur5d/M8eg4WTWu1xp8i8DHjohftIyEx0S08RiYxbffr4j8Peg==}
     engines: {node: '>=8.5.0'}
@@ -31682,12 +31556,6 @@ packages:
     dependencies:
       object-assign: 4.1.1
       react: 17.0.2
-    dev: false
-
-  /use-sync-external-store/1.0.0-rc.0:
-    resolution: {integrity: sha512-0U9Xlc2QDFzSGMB0DvcJQL0+DIdxDPJC7mnZlYFbl7wrSrPMcs89X5TVkNB6Dzg618m8lZop+U+J6ow3vq9RAQ==}
-    peerDependencies:
-      react: ^16.8.0 || ^17.0.0 || ^18.0.0-rc
     dev: false
 
   /use-sync-external-store/1.0.0-rc.0_e32785dbcafa2fde92a71a8f50f52ce6:
