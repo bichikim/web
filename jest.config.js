@@ -53,6 +53,7 @@ module.exports = {
       testEnvironment: '@happy-dom/jest-environment',
       testMatch: [
         '!<rootDir>/coong/*/src/**/__tests__/*.e2e.ts',
+        '!<rootDir>/coong/firebase/**/*.spec.ts',
         '<rootDir>/packages/*/src/**/__tests__/*.spec.ts',
         '<rootDir>/coong/*/src/**/__tests__/*.spec.ts',
         '<rootDir>/coong/client/vite-vue-ssr/**/__tests__/*.spec.ts',

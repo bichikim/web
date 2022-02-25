@@ -1,0 +1,14 @@
+{
+  "name": "@coong/client",
+  "version": "1.0.23-alpha.26",
+  "private": true,
+  "scripts": {
+    "test:firestore-rules": "firebase emulators:exec --only firestore 'jest --forceExit' "
+  },
+  "dependencies": {
+
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^2.0.2"
+  }
+}
