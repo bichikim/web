@@ -150,12 +150,5 @@ export default defineConfig(() => {
         },
       },
     },
-
-    ssr: {
-      noExternal: [
-        /^@quasar\/extras/u,
-        /^@project-serum\/sol-wallet-adapter/u,
-      ],
-    },
   }
 })

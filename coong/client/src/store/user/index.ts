@@ -61,7 +61,7 @@ export const user = atom(state, {
       take(1),
       toPromise,
     )
-    const {message, sessionToken} = signInResponse.data.authentiocateUserWithPassword
+    const {message, sessionToken} = signInResponse.data?.authentiocateUserWithPassword ?? {}
     if (sessionToken) {
       user.token = sessionToken
     }
@@ -88,13 +88,11 @@ export const user = atom(state, {
       toPromise,
     )
 
-    const {code, message, token} = signInResponse.data.redeemUserMagicAuthToken ?? {}
+    const {code, message, token} = signInResponse.data?.redeemUserMagicAuthToken ?? {}
     if (token) {
       user.token = token
     }
     return {code, message, token}
   },
 })
-
-user.$.signIn('bichi', 'pass')
 

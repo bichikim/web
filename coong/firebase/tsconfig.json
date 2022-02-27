@@ -1,0 +1,49 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "jsx": "preserve",
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "baseUrl": ".",
+    "declaration": true,
+    "lib": ["esnext", "dom"],
+    "paths": {
+      "~/*": ["/*"],
+      "src/*": ["src/*"],
+      "pages/*": ["src/pages/*"],
+      "layouts/*": ["src/layouts/*"],
+      "components/*": ["src/components/*"]
+    },
+    "allowJs": true,
+    // `baseUrl` must be placed on the extending configuration in devland, or paths won't be recognized
+    "esModuleInterop": true,
+
+    // Needed to address https://github.com/quasarframework/app-extension-typescript/issues/36
+    "noEmit": true,
+    "resolveJsonModule": true,
+
+    "noImplicitAny": false,
+    "importHelpers": true,
+
+    "skipLibCheck": true,
+    // for 4.4.0
+    // "exactOptionalPropertyTypes": true,
+    "allowSyntheticDefaultImports": true,
+    "suppressImplicitAnyIndexErrors": true,
+    "sourceMap": true,
+    "strict": true,
+  },
+  "ts-node": {
+    "transpileOnly": true,
+    "compilerOptions": {
+      "target": "ES2015",
+      "module": "CommonJS"
+    }
+  },
+  "include": [
+    "run-ssr/**/*",
+    "vite-vue-ssr/**/*",
+    "src/**/*",
+  ]
+}

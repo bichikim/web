@@ -9,8 +9,8 @@
   "devDependencies": {
     "@babel/core": "^7.16.5",
     "@babel/node": "^7.16.5",
-    "ganache-cli": "^6.12.2",
-    "solc": "^0.8.11",
+    "ganache": "^7.0.2",
+    "solc": "^0.8.12",
     "web3": "^1.7.0"
   }
 }

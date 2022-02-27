@@ -1,7 +1,6 @@
 import {DevtoolsPluginApi, setupDevtoolsPlugin, TimelineEvent} from '@vue/devtools-api'
 import {drop, isSSR} from '@winter-love/utils'
 import {watchTrigger} from 'src/create-devtool/watch-trigger'
-import {App} from 'vue-demi'
 import {createStateBases} from './create-state-bases'
 import {ApiSetting, CreateDevToolOptions} from './types'
 import {watchState} from './watch-state'
@@ -14,7 +13,8 @@ export const DEVTOOL_ID = 'com.npmjs.packages.vare'
 
 // eslint-disable-next-line max-lines-per-function
 export const createDevTool = (
-  app: App,
+  // fix type error
+  app: any,
   targets: Record<string, any> = {},
   options: CreateDevToolOptions = {},
 ) => {
