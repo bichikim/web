@@ -1,32 +1,29 @@
-import {BrowserStorageKind, CookieStorageOptions, createBrowserStorage} from '@winter-love/utils'
-import {ref, watch} from 'vue-demi'
-import {useElementEvent} from '../element-event'
+import {BrowserStorageKind, createBrowserStorage, isSSR} from '@winter-love/utils'
 import {MayRef} from 'src/types'
+import {ref, watch} from 'vue-demi'
+import {StorageRefOptions, useContextStorage} from '../context-storage'
+import {useElementEvent} from '../element-event'
 import {wrapRef} from '../wrap-ref'
-
-export interface StorageRefOptions {
-  cookieOptions?: CookieStorageOptions
-  /**
-   * watch deeply to update storage
-   */
-  deep?: boolean
-  /**
-   * remove saved data on init
-   */
-  reset?: boolean
-  type?: BrowserStorageKind
-}
 
 export const storageRef = <Data>(
   key: string,
   value?: MayRef<Data>,
   options: StorageRefOptions = {},
 ) => {
-  const {type = 'local' as BrowserStorageKind, cookieOptions, deep, reset} = options
+  const {
+    type = 'local' as BrowserStorageKind,
+    cookieOptions,
+    deep,
+    reset,
+  } = options
   const valueRef = wrapRef<Data>(value)
   const freezeWatch = ref(false)
   const storage = createBrowserStorage<Data | undefined>(type)
-  if (!storage) {
+  const serverStorage = useContextStorage(key)
+
+  // update server serverStorage
+  if (isSSR()) {
+    serverStorage.value = valueRef.value
     return valueRef
   }
 

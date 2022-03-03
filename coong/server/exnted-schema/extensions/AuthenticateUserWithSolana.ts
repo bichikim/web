@@ -1,5 +1,6 @@
 import {BaseSchemaMeta, Extension} from '@graphql-ts/extend'
 import {graphql} from '@keystone-6/core'
+import {camelCase} from 'lodash'
 import {AUTH_LIST_KEY} from '../../auth'
 import bs58 from 'bs58'
 import {sign} from 'tweetnacl'
@@ -42,8 +43,12 @@ export const authenticateUserWithSolana = (base: BaseSchemaMeta): Extension => {
         args: {
           input: graphql.arg({type: graphql.nonNull(AuthenticateUserWithSolanaInput)}),
         },
-        async resolve(root, args, context) {
-          const {nonce, publicKey, signature} = args.input ?? {}
+        async resolve(
+          root,
+          args,
+          context,
+        ) {
+          const {nonce, publicKey, signature} = args.input
           const message = getMessage(nonce)
           const messageBytes = new TextEncoder().encode(message)
           const publicKeyBytes = bs58.decode(publicKey)
@@ -54,7 +59,7 @@ export const authenticateUserWithSolana = (base: BaseSchemaMeta): Extension => {
             return null
           }
 
-          const result = await context.prisma.user.fineOne({
+          const result = await context.prisma[camelCase(AUTH_LIST_KEY)]?.findFirst({
             where: {publicKey: getPublicKey('solana', publicKey)},
           })
 

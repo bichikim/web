@@ -11,6 +11,7 @@ import {debug} from 'src/use/debug'
 const PagesLayout = defineComponent({
   name: 'PagesLayout',
   setup() {
+
     const {isMagicAuthLink} = provideLayout()
     const {isAuthenticated} = user.$
 
@@ -26,10 +27,12 @@ const PagesLayout = defineComponent({
 
     return () => (
       h(Fragment, [
+        // hydration error
         h(QLayout, {view: 'lHh Lpr lFf'}, () => [
           h(QPageContainer, () => [
             h(RouterView),
           ]),
+
         ]),
         h(QDialog, {
           maximized: true,
@@ -46,12 +49,11 @@ const PagesLayout = defineComponent({
               },
             }), [
               h(QBtn, csx({
-                css: {bg: '$transparent-white'},
+                css: {bg: '$transparent-white', radius: 0},
                 dense: true,
                 flat: true,
                 icon: ionCloseOutline,
                 onClick: onCloseAuth,
-                round: true,
               })),
             ]),
           ]),

@@ -16,6 +16,6 @@ export const withState = <Props = {},
   ) => {
   return defineComponent<Props, RawBindings>((props: Props, ctx: SetupContext) => {
     const stats = setup(props, ctx)
-    return () => h(component as any, {...reactive(stats)})
+    return () => h(component as any, {...reactive(stats)}, ctx.slots)
   })
 }

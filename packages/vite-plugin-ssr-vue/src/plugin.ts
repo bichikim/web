@@ -1,6 +1,6 @@
 import http from 'http'
 import {Connect, Plugin, UserConfig} from 'vite'
-import {createHandler, CreateHandlerOptions} from './ssr-handler'
+import {createServerHandler, CreateServerHandlerOptions} from './create-server-handler'
 
 export type NextFunction = (error?: any) => void
 export type NextHandleFunction = (
@@ -9,7 +9,7 @@ export type NextHandleFunction = (
   next: NextFunction,
 ) => void
 
-export interface ViteVueSsrOptions extends CreateHandlerOptions {
+export interface ViteVueSsrOptions extends CreateServerHandlerOptions {
   /**
    * enable vite vue ssr plugin
    * @default true
@@ -38,7 +38,7 @@ export const plugin = (options: ViteVueSsrOptions): Plugin => {
       },
 
       async configureServer(server) {
-        const handler = createHandler(server, options)
+        const handler = createServerHandler(server, options)
 
         return (): Connect.Server => {
           middlewares.forEach((handler) => {

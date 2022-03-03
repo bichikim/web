@@ -10,6 +10,8 @@ module.exports = {
     '!<rootDir>/**/*.d.ts',
     '!<rootDir>/**/*.stories.{ts,tsx}',
     '!<rootDir>/**/__tests__/*.{ts,tsx}',
+    '!<rootDir>/**/__stories__/*.{ts,tsx}',
+    '!<rootDir>/**/__mocks__/*.{ts,tsx}',
     '!<rootDir>/**/types/**/*.{ts,tsx}',
   ],
 

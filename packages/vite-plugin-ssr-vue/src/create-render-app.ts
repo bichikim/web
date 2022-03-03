@@ -2,6 +2,7 @@
 import {App, Component, ComponentPublicInstance, createApp, createSSRApp} from 'vue'
 import {renderToString} from '@vue/server-renderer'
 import {Data, Headers, SSRContext} from './types'
+import {isServerRendered} from './is-server-rendered'
 
 const serverSideRender = (input: App, context?: SSRContext): Promise<string> => {
   return renderToString(input, context)
@@ -13,14 +14,6 @@ const importServerSideModule = async () => {
     createApp: createSSRApp,
     render: serverSideRender,
   }
-}
-
-export const isServerRendered = () => {
-  const body = document.querySelector('body')
-  if (!body) {
-    return false
-  }
-  return body.hasAttribute(SERVER_RENDERED_KEY)
 }
 
 const clientSideRender = <HostElement = any>(
@@ -150,34 +143,51 @@ export interface RenderArg {
   rootProps?: Data
 }
 
+export const rendererServerApp = async (
+  rootComponent: Component,
+  factory: AppFactory,
+  arg: RenderArg,
+) => {
+  const {context, rootProps} = arg
+  if (!isSSRContext(context)) {
+    throw new ContextError('Context should have res and req')
+  }
+  const {app, render} = await createViteServerSideApp(rootComponent, rootProps)
+  const result = await factory({app, context, render: render as any})
+  if (!result) {
+    throw new RenderError('empty ssr render result')
+  }
+  return {
+    ...result,
+    html: {
+      ...result.html,
+      bodyAttrs: {
+        ...result.html.bodyAttrs,
+        [SERVER_RENDERED_KEY]: '',
+      },
+    },
+  }
+}
+
+export const rendererClientApp = async (
+  rootComponent: Component,
+  factory: AppFactory,
+  arg: RenderArg,
+) => {
+  const {rootProps} = arg
+  const {app, render} = await createViteClientSideApp(rootComponent, rootProps)
+  return factory({app, render: render as any, rootProps})
+}
+
 export const createRenderApp = (
   rootComponent: Component,
   factory: AppFactory,
 ) => {
   return async (arg: RenderArg = {}): Promise<SSRResult | void> => {
-    const {context, rootProps} = arg
     if (import.meta.env.SSR) {
-      if (!isSSRContext(context)) {
-        throw new ContextError('Context should have res and req')
-      }
-      const {app, render} = await createViteServerSideApp(rootComponent, rootProps)
-      const result = await factory({app, context, render: render as any})
-      if (!result) {
-        throw new RenderError('empty ssr render result')
-      }
-      return {
-        ...result,
-        html: {
-          ...result.html,
-          bodyAttrs: {
-            ...result.html.bodyAttrs,
-            [SERVER_RENDERED_KEY]: '',
-          },
-        },
-      }
+      return rendererServerApp(rootComponent, factory, arg)
     }
-    const {app, render} = await createViteClientSideApp(rootComponent, rootProps)
-    return factory({app, render: render as any, rootProps})
+    return rendererClientApp(rootComponent, factory, arg)
   }
 }
 

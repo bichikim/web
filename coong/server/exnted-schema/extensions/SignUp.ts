@@ -17,7 +17,7 @@ export const CreateAuthenticateUserWithEmail = (): Extension => {
     name: 'CreateAuthenticateUserWithEmailResult',
   })
 
-  const CreateAuthenticateUserWithEmail = graphql.inputObject({
+  const CreateAuthenticateUserWithEmailInput = graphql.inputObject({
     fields: {
       email: graphql.arg({type: graphql.nonNull(graphql.String)}),
       name: graphql.arg({type: graphql.String}),
@@ -30,7 +30,7 @@ export const CreateAuthenticateUserWithEmail = (): Extension => {
     mutation: {
       createAuthenticateUserWithEmail: graphql.field({
         args: {
-          input: graphql.arg({type: CreateAuthenticateUserWithEmail}),
+          input: graphql.arg({type: CreateAuthenticateUserWithEmailInput}),
         },
         async resolve(root, args, context) {
           const {password, name, email} = args.input ?? {}

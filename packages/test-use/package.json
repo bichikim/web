@@ -12,29 +12,29 @@
   "author": "bichi@live.co.kr",
   "exports": {
     ".": {
-      "import": "./lib/esm/index.js",
+      "import": "./lib/index.mjs",
       "require": "./lib/index.js"
     },
     "./*": "./*"
   },
   "main": "lib/index.js",
-  "jsdelivr": "lib/iife/index.js",
-  "unpkg": "lib/iife/index.js",
-  "module": "lib/esm/index.js",
+  "jsdelivr": "lib/index.global.js",
+  "unpkg": "lib/index.global.js",
+  "module": "lib/index.mjs",
   "source": "src/index.ts",
   "types": "lib/index.d.ts",
   "files": [
     "lib/*"
   ],
   "scripts": {
-    "build": "tsup-node --dts --legacy-output --minify",
-    "dev": "tsup-node --watch --legacy-output",
-    "prepare": "tsup-node --dts --legacy-output"
+    "build": "tsup-node --dts --minify",
+    "dev": "tsup-node --watch",
+    "prepare": "tsup-node --dts"
   },
   "dependencies": {
-    "@vue/test-utils": "latest",
+    "@vue/test-utils": "^2.0.0-rc.17",
     "@winter-love/utils": "^1.0.23-alpha.25",
-    "vue": "latest"
+    "vue": "^3.2.31"
   },
   "devDependencies": {
     "gulp": "^4.0.2",

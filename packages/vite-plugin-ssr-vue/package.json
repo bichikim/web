@@ -20,24 +20,29 @@
   "author": "bichi@live.co.kr",
   "exports": {
     ".": {
-      "import": "./lib/esm/index.js",
+      "import": "./lib/index.mjs",
       "require": "./lib/index.js"
     },
-    "./*": "./*"
+    "./*": "./*",
+    "./plugin": {
+      "import": "./lib/plugin.mjs",
+      "require": "./lib/plugin.js"
+    }
   },
   "main": "lib/index.js",
-  "jsdelivr": "lib/iife/index.js",
-  "unpkg": "lib/iife/index.js",
-  "module": "lib/esm/index.js",
+  "jsdelivr": "lib/index.global.js",
+  "unpkg": "lib/index.global.js",
+  "module": "lib/index.mjs",
   "source": "src/index.ts",
   "types": "lib/index.d.ts",
   "files": [
-    "lib/*"
+    "lib/*",
+    "*.d.ts"
   ],
   "scripts": {
-    "build": "tsup-node --dts --legacy-output --minify",
-    "dev": "tsup-node --watch --legacy-output",
-    "prepare": "tsup-node --dts --legacy-output"
+    "build": "tsup-node --dts --minify",
+    "dev": "tsup-node --watch",
+    "prepare": "tsup-node --dts"
   },
   "dependencies": {
     "@vue/server-renderer": "^3.2.31",
@@ -54,7 +59,8 @@
   "gitHead": "66c79bd0d5c23a437b8170f758ff58e4496afb58",
   "tsup": {
     "entry": [
-      "src/index.ts"
+      "src/index.ts",
+      "src/plugin.ts"
     ],
     "clean": true,
     "format": [

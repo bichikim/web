@@ -1,5 +1,6 @@
 import {ref, watch} from 'vue'
 import {isSSR} from '@winter-love/utils'
+import {useElementEvent} from '../element-event'
 
 export interface RouteHistory {
   back: string | null
@@ -25,7 +26,7 @@ function onPopState(this: WindowEventHandlers, event: PopStateEvent) {
 }
 
 if (!_isSSR) {
-  window.onpopstate = onPopState
+  useElementEvent(window, 'popstate', onPopState)
 }
 
 /**

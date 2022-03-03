@@ -1,8 +1,7 @@
 import {readFileSync} from 'fs'
 import {initializeTestEnvironment} from '@firebase/rules-unit-testing'
-import {setDoc} from 'firebase/firestore'
 
-export const setup = async (auth: string, data) => {
+export const setup = async (auth: string = 'test-user') => {
   // const projectId = `rules-spec-${Date.now()}`
   // const app = await initializeTestApp({
   //   auth,

@@ -1,7 +1,7 @@
 import {defineComponent, h, PropType, toRefs} from 'vue'
 import {QBtn, QInput, QTooltip} from 'quasar'
 import {ionMailSharp, ionWalletSharp} from '@quasar/extras/ionicons-v6'
-import {className} from 'src/plugins/hyper-components'
+import {className, csx} from 'src/plugins/hyper-components'
 
 export type SignInKind = 'email' | 'wallet'
 
@@ -25,13 +25,6 @@ const container = () => [
     '@bp3': {
       width: '300px !important',
     },
-  }),
-]
-
-const signInInput = () => [
-  className({
-    flexGrow: 1,
-    px: 10,
   }),
 ]
 
@@ -61,14 +54,17 @@ export const SignInInput = defineComponent({
 
     return () => (
       h('div', {class: container()}, [
-        h(QInput, {
+        h(QInput, csx({
           borderless: true,
-          class: signInInput(),
+          css: {
+            flexGrow: 1,
+            px: 10,
+          },
           dense: true,
           label: 'Your Email',
           modelValue: email.value,
           'onUpdate:modelValue': onUpdateEmail,
-        }),
+        })),
         h(QBtn, {
           class: menuButton(active.value === 'email'),
           dense: true,

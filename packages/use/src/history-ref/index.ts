@@ -1,7 +1,6 @@
-import {watch} from 'vue-demi'
+import {readonly, watch} from 'vue-demi'
 import {MayRef} from 'src/types'
 import {wrapRef} from 'src/wrap-ref'
-import {freeze} from '@winter-love/utils'
 
 export const historyRef = <Value>(value: MayRef<Value>, max: MayRef<number> = 1, sources: MayRef<any>[] = []) => {
   const valueRef = wrapRef(value)
@@ -17,5 +16,5 @@ export const historyRef = <Value>(value: MayRef<Value>, max: MayRef<number> = 1,
     historyRef.value.unshift(old)
   })
 
-  return freeze(historyRef)
+  return readonly(historyRef)
 }

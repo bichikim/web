@@ -10,12 +10,11 @@ import icons from 'unplugin-icons/vite'
 import markdown from 'vite-plugin-md'
 import iconsResolver from 'unplugin-icons/resolver'
 import {VitePWA as vitePWA} from 'vite-plugin-pwa'
-// import ssr from 'vite-ssr-vue/plugin'
 import Prism from 'markdown-it-prism'
 import LinkAttributes from 'markdown-it-link-attributes'
 import vitePluginImp from 'vite-plugin-imp'
 import * as dotenv from 'dotenv'
-import {plugin as ssr} from 'vite-plugin-ssr-vue'
+import {plugin as ssr} from 'vite-plugin-ssr-vue/plugin'
 // import {quasar} from '@quasar/vite-plugin'
 
 // eslint-disable-next-line import/no-named-as-default-member
@@ -35,7 +34,7 @@ export default defineConfig(() => {
       __QUASAR_SSR_PWA__: JSON.stringify(
         'navigator.standalone || window.matchMedia("(display-mode: standalone)").matches',
       ),
-      __QUASAR_SSR_SERVER__: JSON.stringify('import.meta.env.SSR'),
+      __QUASAR_SSR_SERVER__: JSON.stringify('import.meta.env.SSR R && window === undefined'),
       __QUASAR_VERSION__: JSON.stringify(Quasar.version),
       'process.env.NODE_ENV': JSON.stringify('import.meta.env.MODE'),
     },

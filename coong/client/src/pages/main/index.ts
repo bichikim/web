@@ -2,12 +2,15 @@ import {QPage} from 'quasar'
 import {user} from 'src/store/user'
 import {defineComponent, h, ref} from 'vue'
 import {csx} from 'src/plugins/hyper-components'
+import {Test} from './_component/Test'
+import {useWriteEl} from 'src/use/root-element'
 
 const IndexPage = defineComponent({
   name: 'IndexPage',
   render() {
     return (
       h(QPage, () => [
+        h(Test, {foo: 'foo'}),
         h('div', csx({css: {bg: '$transparent-white', color: 'green'}}), `hello ${this.name}`),
         h('div', this.count),
         h('div', this.count2),
@@ -17,6 +20,7 @@ const IndexPage = defineComponent({
     )
   },
   setup() {
+    useWriteEl()
     const name = ref('foo')
     const count = ref(1)
     const count2 = ref(1)

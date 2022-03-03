@@ -36,13 +36,13 @@
   ],
   "scripts": {
     "build": "tsup-node --dts --minify",
-    "dev": "tsup-node --watch --legacy-output",
-    "prepare": "tsup-node --dts --legacy-output"
+    "dev": "tsup-node --watch",
+    "prepare": "tsup-node --dts"
   },
   "dependencies": {
     "@vue/devtools-api": "^6.0.0-beta.19",
     "@winter-love/utils": "^1.0.23-alpha.25",
-    "vue-demi": "latest"
+    "vue-demi": "^0.12.1"
   },
   "devDependencies": {
     "@winter-love/use": "^1.0.23-alpha.26",

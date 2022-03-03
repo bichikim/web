@@ -19,7 +19,6 @@
     ],
     "allowJs": true,
     "esModuleInterop": true,
-
     "moduleResolution": "node",
     // Needed to address https://github.com/quasarframework/app-extension-typescript/issues/36
     "resolveJsonModule": true,

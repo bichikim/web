@@ -17,24 +17,24 @@
   "author": "bichi@live.co.kr",
   "exports": {
     ".": {
-      "import": "./lib/esm/index.js",
+      "import": "./lib/index.mjs",
       "require": "./lib/index.js"
     },
     "./*": "./*"
   },
   "main": "lib/index.js",
-  "jsdelivr": "lib/iife/index.js",
-  "unpkg": "lib/iife/index.js",
-  "module": "lib/esm/index.js",
+  "jsdelivr": "lib/index.global.js",
+  "unpkg": "lib/index.global.js",
+  "module": "lib/index.mjs",
   "source": "src/index.ts",
   "types": "lib/index.d.ts",
   "files": [
     "lib/*"
   ],
   "scripts": {
-    "build": "tsup --dts --legacy-output --minify",
-    "dev": "tsup --watch --legacy-output",
-    "prepare": "tsup --dts --legacy-output"
+    "build": "tsup-node --dts --minify",
+    "dev": "tsup-node --watch",
+    "prepare": "tsup-node --dts"
   },
   "dependencies": {
     "@winter-love/utils": "^1.0.23-alpha.25",

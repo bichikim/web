@@ -1,4 +1,4 @@
-import {setup, teardown} from './helpers'
+import {setup} from './helpers.'
 import {assertFails} from '@firebase/rules-unit-testing'
 
 describe('Default firestore rules', () => {
@@ -8,10 +8,6 @@ describe('Default firestore rules', () => {
   beforeAll(async () => {
     db = await setup()
     ref = db.collection('non-existsent-collection')
-  })
-
-  afterAll(async () => {
-    await teardown()
   })
 
   test('fail when trying to read from an unauthorised store', async () => {

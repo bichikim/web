@@ -1,4 +1,5 @@
 import http from 'http'
+import type {Ref} from 'vue'
 
 export type Data = Record<string, any>
 export type Headers = Record<string, string>
@@ -23,3 +24,5 @@ export interface SSRContext {
   teleports?: Record<string, string>
   url: string
 }
+
+export type MaybeRef<T> = Ref<T> | T

@@ -1,6 +1,6 @@
 import crypto from 'crypto'
 import {Extension} from '@graphql-ts/extend'
-import {graphql} from '@keystone-6/core'
+import {graphql} from '@graphql-ts/schema'
 
 const SIZE = 32
 

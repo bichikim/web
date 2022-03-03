@@ -654,10 +654,32 @@ type Query {
     token: String!
   ): ValidateUserPasswordResetTokenResult
   authenticateUserNonce: GetAuthenticateUserNonceResultType
+  webAuthChallenge(input: WebAuthChallengeInput!): WebAuthChallengeResult
 }
 
 type GetAuthenticateUserNonceResultType {
   nonce: String
+}
+
+type WebAuthChallengeResult {
+  challenge: String!
+  rp: RpEntity!
+  user: UserEntity!
+}
+
+type RpEntity {
+  id: String
+  name: String!
+}
+
+type UserEntity {
+  displayName: String
+  id: String!
+  name: String!
+}
+
+input WebAuthChallengeInput {
+  email: String!
 }
 
 union AuthenticatedItem = User

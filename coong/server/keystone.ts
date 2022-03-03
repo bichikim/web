@@ -8,9 +8,13 @@ It looks at the default export, and expects a Keystone config object.
 
 You can find all the config options in our docs here: https://keystonejs.com/docs/apis/config
 */
-
 import {config} from '@keystone-6/core'
+import {KeystoneContext} from '@keystone-6/core/types'
 import {extendGraphqlSchema} from './exnted-schema'
+
+export type Context = KeystoneContext & {
+  // webAuth
+}
 
 const DEFAULT_PORT = 8080
 const DB_URL = process.env.NODE_ENV === 'test' ? 'file:./keystone-test.db' : process.env.DB_URL
@@ -33,6 +37,18 @@ export default withAuth(
     },
 
     extendGraphqlSchema,
+
+    graphql: {
+      apolloConfig: {
+        context: (context) => {
+          console.log('context', context)
+          return {
+            foo: 'foo',
+          }
+        },
+      },
+    },
+
     images: {
       local: {
         baseUrl: '/images',
@@ -40,9 +56,7 @@ export default withAuth(
       },
       upload: 'local',
     },
-
     lists,
-
     server: {
       cors: {
         optionsSuccessStatus: 200,
