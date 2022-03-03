@@ -5,13 +5,7 @@ import {AnyObject} from 'src/types'
  * but don’t make a case to use this
  * @param value
  */
-export const cleanObject = (value: AnyObject) => (
-  Object.keys(value).reduce((result, key) => {
-    const _value = value[key]
-    if (typeof _value === 'undefined' || _value === null) {
-      return result
-    }
-    result[key] = _value
-    return result
-  }, {} as AnyObject)
-)
+export const cleanObject = (value: AnyObject) => {
+  const step = Object.entries(value).filter(([_, value]) => Boolean(value))
+  return Object.fromEntries(step)
+}
