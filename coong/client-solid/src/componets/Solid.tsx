@@ -1,8 +1,21 @@
+import {stitches} from '../stitches'
+
+const globalStyle = stitches.globalCss({
+  body: {
+    backgroundColor: 'blue',
+  },
+})
+
+const Foo = stitches.styled('foo', {
+  backgroundColor: 'green',
+})
 const Counter: FC = (props) => {
+  globalStyle()
   return (
     <div>
       <button onClick={() => props.onIncrease?.()}>foo</button>
       {props.children}
+      <Foo css={{color: 'red'}}>foo</Foo>
     </div>
   )
 }

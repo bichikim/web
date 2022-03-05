@@ -1,11 +1,11 @@
 {
-  "name": "@winter-love/stitches",
+  "name": "soild-stitches",
   "version": "1.0.23-alpha.25",
   "description": "Stitches for Vue",
+  "private": true,
   "keywords": [
-    "vue",
-    "vue3",
-    "composition-api",
+    "soild",
+    "soild-js",
     "stitches",
     "css-in-js"
   ],
@@ -36,27 +36,12 @@
   "dependencies": {
     "@stitches/core": "^1.2.7",
     "@winter-love/utils": "^1.0.23-alpha.25",
-    "vue-demi": "^0.12.1"
+    "solid-js": "^1.3.10"
   },
   "devDependencies": {
     "@babel/core": "^7.14.5",
-    "@vue/server-renderer": "latest",
-    "gulp": "^4.0.2",
-    "vue": "latest"
+    "esbuild-plugin-solid": "^0.4.2",
+    "gulp": "^4.0.2"
   },
-  "gitHead": "66c79bd0d5c23a437b8170f758ff58e4496afb58",
-  "tsup": {
-    "entry": [
-      "src/index.ts"
-    ],
-    "clean": true,
-    "format": [
-      "cjs",
-      "esm",
-      "iife"
-    ],
-    "outDir": "lib",
-    "sourcemap": true,
-    "splitting": false
-  }
+  "gitHead": "66c79bd0d5c23a437b8170f758ff58e4496afb58"
 }

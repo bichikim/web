@@ -15,7 +15,7 @@ export const createStitchesPlugin = (config: Parameters<typeof createStyled>[0])
 
       const directive = createDirective()
 
-      app.directive(directiveName, directive)
+      app.directive(directiveName, directive as any)
     },
   }
 }

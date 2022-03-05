@@ -49,6 +49,7 @@ module.exports = {
       setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
 
       snapshotSerializers: [
+        'jest-stitches',
         'jest-serializer-vue',
         '@emotion/jest/serializer',
       ],
@@ -75,6 +76,7 @@ module.exports = {
   ],
 
   snapshotSerializers: [
+    'jest-stitches',
     'jest-serializer-vue',
     '@emotion/jest/serializer',
   ],

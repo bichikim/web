@@ -9,6 +9,7 @@
     "declaration": true,
     "lib": ["esnext", "dom"],
     "paths": {
+      "~/*": ["/*"],
       "src/*": ["src/*"],
       "pages/*": ["src/pages/*"],
       "layouts/*": ["src/layouts/*"],
@@ -41,8 +42,7 @@
     }
   },
   "include": [
-    "src/**/*.ts",
-    "src/**/*.tsx",
-    "auto-imports.d.ts"
+    "auto-imports.d.ts",
+    "src/**/*",
   ]
 }
