@@ -8,8 +8,7 @@ import {getPackage} from '../utils'
 import {camelCase, defaultsDeep} from 'lodash'
 import typescript from 'rollup-plugin-typescript2'
 import ttypescript from 'ttypescript'
-import tsTreeShaking from 'rollup-plugin-ts-treeshaking'
-import externals from 'rollup-plugin-node-externals'
+// import externals from 'rollup-plugin-node-externals'
 import asset from 'rollup-plugin-smart-asset'
 
 export interface GenOutputOptions extends OutputOptions {
@@ -110,12 +109,6 @@ export const genRollupOptions = (options: GenRollupOptions = {}): BundleOptions 
     externalsPlugin,
     resolvePlugin,
     typescriptPlugin,
-    /**
-     * this typescript tree shaking must be after the typescript plugin
-     * @see https://www.npmjs.com/package/rollup-plugin-ts-treeshaking
-     */
-    tsTreeShaking(),
-    // optimizeLodashImports(),
   ]
 
   if (clean) {

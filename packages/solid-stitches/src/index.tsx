@@ -1,35 +1,18 @@
 /* eslint-disable max-lines-per-function */
-import {createStitches, CreateStitches} from '@stitches/core'
-import {CSS as CSS_} from '@stitches/core/types/css-util'
-import {
-  Function as Function_,
-  String as String_,
-  Widen as Widen_,
-  WideObject as WideObject_,
-} from '@stitches/core/types/util'
+import {createStitches} from '@stitches/core'
+import type {ConfigType, DefaultThemeMap} from '@stitches/core/types/config'
+import type * as CSSUtil from '@stitches/core/types/css-util'
+import type * as Util from '@stitches/core/types/util'
+import Stitches, {RemoveIndex} from '@stitches/core/types/stitches'
+import {CssComponent, StyledComponentProps} from '@stitches/core/types/styled-component'
+import {Component} from 'solid-js'
 import {Dynamic} from 'solid-js/web'
 import {EmptyObject} from './types'
-import {ConfigType, DefaultThemeMap as DefaultThemeMap_} from '@stitches/core/types/config'
-import {RemoveIndex as RemoveIndex_} from '@stitches/core/types/stitches'
-import {CssComponent as CssComponent_} from '@stitches/core/types/styled-component'
 
-export type CSS = CSS_
-export type RemoveIndex<T> = RemoveIndex_<T>
-export type Function = Function_
-export type String = Function_
-export type Widen<T> = Widen_<T>
-export type WideObject = WideObject_
-export type Media = ConfigType.Media
-export type Prefix = ConfigType.Prefix
-export type Theme = ConfigType.Theme
-export type ThemeMap = ConfigType.ThemeMap
-export type Utils = ConfigType.Utils
-export type DefaultThemeMap = DefaultThemeMap_
-export type CssComponent = CssComponent_
+export type CSSProperties = CSSUtil.CSSProperties
+//
 
-export type {EmptyObject, CreateStitches}
-
-export {createStitches}
+export type {EmptyObject, Component, Stitches, DefaultThemeMap}
 
 export type Directive = <T>(element: Element, accessor: () => T) => unknown
 
@@ -42,7 +25,7 @@ export type StitchesElement = Element & {
 }
 
 export const getClassName = (
-  system: CssComponent_,
+  system: CssComponent,
   styleProps: any,
 ) => {
 
@@ -53,7 +36,7 @@ export const getClassName = (
   return system(styleProps).className
 }
 
-const runCsxClassComponent = (system: CssComponent_, csx?: any) => {
+const runCsxClassComponent = (system: CssComponent, csx?: any) => {
   const result = system(csx)
   const {className, ...rest} = result.props as any
   return {
@@ -63,7 +46,7 @@ const runCsxClassComponent = (system: CssComponent_, csx?: any) => {
 }
 
 const updateClassName = (
-  system: CssComponent_,
+  system: CssComponent,
   el: StitchesElement,
   styleProps: any,
 ) => {
@@ -87,34 +70,88 @@ const updateClassName = (
 
 const _Dynamic: any = Dynamic
 
-export const createSolidStitches = <Prefix extends string = '',
-  Media extends EmptyObject = EmptyObject,
-  Theme extends EmptyObject = EmptyObject,
-  ThemeMap extends EmptyObject = DefaultThemeMap_,
-  Utils extends EmptyObject = EmptyObject,
-  >(
-    config?: {
-      media?: ConfigType.Media<Media>
-      prefix?: ConfigType.Prefix<Prefix>
-      theme?: ConfigType.Theme<Theme>
-      themeMap?: ConfigType.ThemeMap<ThemeMap>
-      utils?: ConfigType.Utils<Utils>
-  },
-  ) => {
-  const stitches = createStitches<Prefix, Media, Theme, ThemeMap, Utils>(config)
-  const createDirective = <Composers extends (
+export type Styled<Media, Theme, ThemeMap, Utils> = <
+  Composers extends (
     | string
-    |Function_
-    | {[name: string]: unknown}
+    | Util.Function
+    | { [name: string]: unknown }
     )[],
-    CSS = CSS_<Media, Theme, ThemeMap, Utils>>(
-      ...systems: {
+  CSS = CSSUtil.CSS<Media, Theme, ThemeMap, Utils>
+  >(
+    tag: string,
+    ...composers: {
+      [K in keyof Composers]: (
+        // Strings and Functions can be skipped over
+        Composers[K] extends string | Util.Function
+          ? Composers[K]
+          : RemoveIndex<CSS> & {
+          /** The **compoundVariants** property lets you to set a subclass of styles based on a combination of active variants.
+           *
+           * [Read Documentation](https://stitches.dev/docs/variants#compound-variants)
+           */
+          compoundVariants?: (
+            & (
+              'variants' extends keyof Composers[K]
+                ? {
+                  [Name in keyof Composers[K]['variants']]?: Util.Widen<keyof Composers[K]['variants'][Name]>
+                  | Util.String
+                }
+                : Util.WideObject
+              )
+            & {
+            css: CSS
+          }
+            )[]
+          /** The **defaultVariants** property allows you to predefine the active key-value pairs of variants.
+           *
+           * [Read Documentation](https://stitches.dev/docs/variants#default-variants)
+           */
+          defaultVariants?: (
+            'variants' extends keyof Composers[K]
+              ? {
+                [Name in keyof Composers[K]['variants']]?: Util.Widen<keyof Composers[K]['variants'][Name]>
+                | Util.String
+              }
+              : Util.WideObject
+            )
+          /** The **variants** property lets you set a subclass of styles based on a key-value pair.
+           *
+           * [Read Documentation](https://stitches.dev/docs/variants)
+           */
+          variants?: {
+            [Name in string]: {
+              [Pair in number | string]: CSS
+            }
+          }
+        } & CSS & {
+          [K2 in keyof Composers[K]]: K2 extends 'compoundVariants' | 'defaultVariants' | 'variants'
+            ? unknown
+            : K2 extends keyof CSS
+              ? CSS[K2]
+              : unknown
+        }
+        )
+    }
+    ) => Component<{css: CSS} & StyledComponentProps<Composers>>
+
+export interface SolidStitches<Prefix extends string, Media, Theme, ThemeMap, Utils> extends
+  Stitches<Prefix, Media, Theme, ThemeMap, Utils> {
+  createDirective: {
+    <
+      Composers extends (
+        | string
+        | Util.Function
+        | { [name: string]: unknown }
+        )[],
+      CSS = CSSUtil.CSS<Media, Theme, ThemeMap, Utils>
+      >(
+      ...composers: {
         [K in keyof Composers]: (
           // Strings and Functions can be skipped over
-          Composers[K] extends string | Function_
+          Composers[K] extends string | Util.Function
             ? Composers[K]
             : RemoveIndex<CSS> & {
-            /** The **variants** property lets you to set a subclass of styles based on a combination of active variants.
+            /** The **compoundVariants** property lets you to set a subclass of styles based on a combination of active variants.
              *
              * [Read Documentation](https://stitches.dev/docs/variants#compound-variants)
              */
@@ -122,10 +159,10 @@ export const createSolidStitches = <Prefix extends string = '',
               & (
                 'variants' extends keyof Composers[K]
                   ? {
-                  [Name in keyof Composers[K]['variants']]?: Widen<keyof Composers[K]['variants'][Name]>
-                  | String_
-                } & WideObject
-                  : WideObject
+                    [Name in keyof Composers[K]['variants']]?: Util.Widen<keyof Composers[K]['variants'][Name]>
+                    | Util.String
+                  }
+                  : Util.WideObject
                 )
               & {
               css: CSS
@@ -138,10 +175,10 @@ export const createSolidStitches = <Prefix extends string = '',
             defaultVariants?: (
               'variants' extends keyof Composers[K]
                 ? {
-                  [Name in keyof Composers[K]['variants']]?: Widen<keyof Composers[K]['variants'][Name]>
-                  | String_
+                  [Name in keyof Composers[K]['variants']]?: Util.Widen<keyof Composers[K]['variants'][Name]>
+                  | Util.String
                 }
-                : WideObject
+                : Util.WideObject
               )
             /** The **variants** property lets you set a subclass of styles based on a key-value pair.
              *
@@ -161,10 +198,106 @@ export const createSolidStitches = <Prefix extends string = '',
           }
           )
       }
-    ) => {
+    ): any
+  }
+  styled: {
+    <
+      Composers extends (
+        | string
+        | Util.Function
+        | { [name: string]: unknown }
+        )[],
+      CSS = CSSUtil.CSS<Media, Theme, ThemeMap, Utils>
+      >(
+      tag: string,
+      ...composers: {
+        [K in keyof Composers]: (
+          // Strings and Functions can be skipped over
+          Composers[K] extends string | Util.Function
+            ? Composers[K]
+            : RemoveIndex<CSS> & {
+            /** The **compoundVariants** property lets you to set a subclass of styles based on a combination of active variants.
+             *
+             * [Read Documentation](https://stitches.dev/docs/variants#compound-variants)
+             */
+            compoundVariants?: (
+              & (
+                'variants' extends keyof Composers[K]
+                  ? {
+                    [Name in keyof Composers[K]['variants']]?: Util.Widen<keyof Composers[K]['variants'][Name]>
+                    | Util.String
+                  }
+                  : Util.WideObject
+                )
+              & {
+              css: CSS
+            }
+              )[]
+            /** The **defaultVariants** property allows you to predefine the active key-value pairs of variants.
+             *
+             * [Read Documentation](https://stitches.dev/docs/variants#default-variants)
+             */
+            defaultVariants?: (
+              'variants' extends keyof Composers[K]
+                ? {
+                  [Name in keyof Composers[K]['variants']]?: Util.Widen<keyof Composers[K]['variants'][Name]>
+                  | Util.String
+                }
+                : Util.WideObject
+              )
+            /** The **variants** property lets you set a subclass of styles based on a key-value pair.
+             *
+             * [Read Documentation](https://stitches.dev/docs/variants)
+             */
+            variants?: {
+              [Name in string]: {
+                [Pair in number | string]: CSS
+              }
+            }
+          } & CSS & {
+            [K2 in keyof Composers[K]]: K2 extends 'compoundVariants' | 'defaultVariants' | 'variants'
+              ? unknown
+              : K2 extends keyof CSS
+                ? CSS[K2]
+                : unknown
+          }
+          )
+      }
+    ) : Component<{css: CSS} & StyledComponentProps<Composers>>
+  }
+}
+
+export interface StitchesConfig<
+  Prefix extends string = '',
+  Media extends EmptyObject = EmptyObject,
+  Theme extends EmptyObject = EmptyObject,
+  ThemeMap extends EmptyObject = DefaultThemeMap,
+  Utils extends EmptyObject = EmptyObject,
+  > {
+  media?: ConfigType.Media<Media>
+  prefix?: ConfigType.Prefix<Prefix>
+  theme?: ConfigType.Theme<Theme>
+  themeMap?: ConfigType.ThemeMap<ThemeMap>
+  utils?: ConfigType.Utils<Utils>
+}
+
+export const createSolidStitches = <
+  Prefix extends string = '',
+  Media extends EmptyObject = EmptyObject,
+  Theme extends EmptyObject = EmptyObject,
+  ThemeMap extends EmptyObject = DefaultThemeMap,
+  Utils extends EmptyObject = EmptyObject,
+  >(
+    config?: StitchesConfig<Prefix, Media, Theme, ThemeMap, Utils>,
+  ): SolidStitches<Prefix, Media, Theme, ThemeMap, Utils> => {
+  const stitches: Stitches<Prefix, Media, Theme, ThemeMap, Utils> = createStitches<
+    Prefix, Media, Theme, ThemeMap, Utils>(config)
+  const createDirective = (
+    ...composers: any[]
+  ) => {
     const {css} = stitches
 
-    const system = css(...systems as any)
+    const system = css(...composers as any)
 
     return (element: Element, accessor: () => any) => {
       const styleProps = accessor()
@@ -172,74 +305,17 @@ export const createSolidStitches = <Prefix extends string = '',
     }
   }
 
-  const styled = <Composers extends (
-    | string
-    | Function_
-    | {[name: string]: unknown}
-    )[],
-    CSS = CSS_<Media, Theme, ThemeMap, Utils>>(
-      tag: string,
-      ...systems: {
-        [K in keyof Composers]: (
-          // Strings and Functions can be skipped over
-          Composers[K] extends string | Function_
-            ? Composers[K]
-            : RemoveIndex<CSS> & {
-            /** The **variants** property lets you to set a subclass of styles based on a combination of active variants.
-             *
-             * [Read Documentation](https://stitches.dev/docs/variants#compound-variants)
-             */
-            compoundVariants?: (
-              & (
-                'variants' extends keyof Composers[K]
-                  ? {
-                  [Name in keyof Composers[K]['variants']]?: Widen<keyof Composers[K]['variants'][Name]>
-                  | String_
-                } & WideObject
-                  : WideObject
-                )
-              & {
-              css: CSS
-            }
-              )[]
-            /** The **defaultVariants** property allows you to predefine the active key-value pairs of variants.
-             *
-             * [Read Documentation](https://stitches.dev/docs/variants#default-variants)
-             */
-            defaultVariants?: (
-              'variants' extends keyof Composers[K]
-                ? {
-                  [Name in keyof Composers[K]['variants']]?: Widen<keyof Composers[K]['variants'][Name]>
-                  | String_
-                }
-                : WideObject
-              )
-            /** The **variants** property lets you set a subclass of styles based on a key-value pair.
-             *
-             * [Read Documentation](https://stitches.dev/docs/variants)
-             */
-            variants?: {
-              [Name in string]: {
-                [Pair in number | string]: CSS
-              }
-            }
-          } & CSS & {
-            [K2 in keyof Composers[K]]: K2 extends 'compoundVariants' | 'defaultVariants' | 'variants'
-              ? unknown
-              : K2 extends keyof CSS
-                ? CSS[K2]
-                : unknown
-          }
-          )
-      }
-    ): any => {
+  const styled = (
+    tag: string,
+    ...composers: any[]
+  ): Component<Record<string, any>> => {
     const {css} = stitches
-    const system = css(...systems as any)
+    const system = css(...composers as any)
 
     return (props) => {
       return (
         <_Dynamic component={tag} {...runCsxClassComponent(system, props)} />
-      )
+      ) as any
     }
   }
 
