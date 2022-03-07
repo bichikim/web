@@ -25,6 +25,9 @@
     },
     "./*": "./*"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "main": "lib/index.js",
   "jsdelivr": "lib/iife/index.js",
   "unpkg": "lib/iife/index.js",

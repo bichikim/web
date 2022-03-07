@@ -9,6 +9,9 @@
     "@typescript-eslint/typescript-estree": "^5.8.1",
     "astring": "^1.8.1"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "devDependencies": {
     "ts-node-dev": "^1.1.8"
   }

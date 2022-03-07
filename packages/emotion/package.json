@@ -42,6 +42,9 @@
     "clsx": "^1.1.1",
     "vue-demi": "^0.12.1"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "devDependencies": {
     "@babel/core": "^7.14.5",
     "@emotion/server": "^11.4.0",
