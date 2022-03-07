@@ -1,10 +1,10 @@
 {
-  "name": "soild-stitches",
+  "name": "solid-stitches",
   "version": "1.0.23",
   "description": "Stitches for Solid js",
   "keywords": [
-    "soild",
-    "soild-js",
+    "solid",
+    "solid-js",
     "stitches",
     "css-in-js"
   ],
