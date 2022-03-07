@@ -1,5 +1,9 @@
 # Stitches for Solid
 
+What is a Stitches js?
+
+Just ref to https://stitches.dev
+
 ## Styled
 ```typescript
 import {createSolidStitches} from 'soild-stitches'
