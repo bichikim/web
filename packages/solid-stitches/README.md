@@ -6,7 +6,7 @@ Just refer to https://stitches.dev
 
 ## Styled
 ```typescript
-import {createSolidStitches} from 'soild-stitches'
+import {createSolidStitches} from 'solid-stitches'
 
 export const stitches = createSolidStitches()
 ```
@@ -16,7 +16,7 @@ refer to https://stitches.dev/docs/styling
 ## Directive
 
 ```typescript
-import {createSolidStitches} from 'soild-stitches'
+import {createSolidStitches} from 'solid-stitches'
 
 export const stitches = createSolidStitches()
 
