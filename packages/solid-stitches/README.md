@@ -2,7 +2,7 @@
 
 What is a Stitches js?
 
-Just ref to https://stitches.dev
+Just refer to https://stitches.dev
 
 ## Styled
 ```typescript
