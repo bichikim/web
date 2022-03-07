@@ -1,18 +1,15 @@
 {
   "name": "@coong/firebase",
-  "version": "1.0.23-alpha.26",
+  "version": "1.0.23",
   "private": true,
   "scripts": {
     "test:firestore-rules": "jest --detectOpenHandles",
     "emulators": "firebase emulators:exec --only firestore jest"
   },
-  "dependencies": {
-
-  },
   "devDependencies": {
     "@firebase/rules-unit-testing": "^2.0.2",
+    "firebase": "^9.6.7",
     "jest": "^27.5.1",
-    "jest-environment-node": "^27.5.1",
-    "firebase": "^9.6.7"
+    "jest-environment-node": "^27.5.1"
   }
 }

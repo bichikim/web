@@ -1,6 +1,6 @@
 {
   "name": "@coong/client-react-18",
-  "version": "1.0.23-alpha.25",
+  "version": "1.0.23",
   "private": true,
   "scripts": {
     "build": "pnpm run build:ssr && pnpm run build:run-ssr",
@@ -31,7 +31,7 @@
     "@namchee/vue-ztext": "^1.0.0",
     "@project-serum/sol-wallet-adapter": "^0.2.6",
     "@stitches/core": "^1.2.5",
-    "@winter-love/utils": "^1.0.23-alpha.25",
+    "@winter-love/utils": "^1.0.23",
     "compression": "^1.7.4",
     "cross-env": "^7.0.3",
     "express": "^4.17.1",
