@@ -1,8 +1,7 @@
 {
   "name": "soild-stitches",
   "version": "1.0.23",
-  "description": "Stitches for Vue",
-  "private": true,
+  "description": "Stitches for Solid js",
   "keywords": [
     "soild",
     "soild-js",
