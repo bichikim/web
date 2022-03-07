@@ -1,5 +1,5 @@
 {
-  "name": "solid-stitches",
+  "name": "solid-stitches-js",
   "version": "1.0.23",
   "description": "Stitches for Solid js",
   "keywords": [
@@ -45,5 +45,5 @@
     "esbuild-plugin-solid": "^0.4.2",
     "gulp": "^4.0.2"
   },
-  "gitHead": "66c79bd0d5c23a437b8170f758ff58e4496afb58"
+  "gitHead": "d0d0964c0cfbd66a2c92db522823f9b7bd5c2590"
 }
