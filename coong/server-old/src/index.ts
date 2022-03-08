@@ -15,28 +15,25 @@ const emitSchemaFile = process.env.NODE_ENV === 'development' ? '.schema.gql' : 
 const port = Number(process.env.PORT ?? DEFAULT_PORT)
 
 const bootstrap = async () => {
-  const result = await prepare({
+  return prepare({
     authChecker,
     context,
     emitSchemaFile,
     playground: isPlayGround,
     resolvers: [...prismaResolvers, ...resolvers] as NonEmptyArray<Function>,
   })
-
-  if (typeof result === 'string') {
-    return result
-  }
-
-  const {server} = result
-
-  return start(server, {
-    port,
-  })
 }
-
 // eslint-disable-next-line @typescript-eslint/no-floating-promises
 bootstrap().then((result) => {
+
   if (typeof result === 'string') {
+    console.error(result)
+    return
+  }
+
+  return start(result.server, {port})
+}).then((result) => {
+  if (typeof result !== 'object') {
     console.error(result)
     return
   }
@@ -45,3 +42,10 @@ bootstrap().then((result) => {
 
   console.log(`Server is running, GraphQL Playground available at ${url}`)
 })
+// for vite node plugin but it doesn't work
+// export const viteNodeApp = import.meta.env.PROD ? {} : bootstrap().then((result) => {
+//   if (typeof result === 'string') {
+//     return
+//   }
+//   return result.server
+// })

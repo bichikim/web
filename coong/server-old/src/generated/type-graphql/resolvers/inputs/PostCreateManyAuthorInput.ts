@@ -2,7 +2,7 @@ import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
 import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
-import { PostCreateManylikeIDsInput } from "../inputs/PostCreateManylikeIDsInput";
+import { PostCreatelikeIDsInput } from "../inputs/PostCreatelikeIDsInput";
 
 @TypeGraphQL.InputType("PostCreateManyAuthorInput", {
   isAbstract: true
@@ -18,8 +18,8 @@ export class PostCreateManyAuthorInput {
   })
   title!: string;
 
-  @TypeGraphQL.Field(_type => PostCreateManylikeIDsInput, {
+  @TypeGraphQL.Field(_type => PostCreatelikeIDsInput, {
     nullable: true
   })
-  likeIDs?: PostCreateManylikeIDsInput | undefined;
+  likeIDs?: PostCreatelikeIDsInput | undefined;
 }

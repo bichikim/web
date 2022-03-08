@@ -34,15 +34,30 @@ export class UserCreateWithoutPostsInput {
   })
   password?: string | undefined;
 
+  @TypeGraphQL.Field(_type => UserCreateNestedManyWithoutFollowingInput, {
+    nullable: true
+  })
+  followers?: UserCreateNestedManyWithoutFollowingInput | undefined;
+
   @TypeGraphQL.Field(_type => UserCreatefollowerIDsInput, {
     nullable: true
   })
   followerIDs?: UserCreatefollowerIDsInput | undefined;
 
+  @TypeGraphQL.Field(_type => UserCreateNestedManyWithoutFollowersInput, {
+    nullable: true
+  })
+  following?: UserCreateNestedManyWithoutFollowersInput | undefined;
+
   @TypeGraphQL.Field(_type => UserCreatefollowingIDsInput, {
     nullable: true
   })
   followingIDs?: UserCreatefollowingIDsInput | undefined;
+
+  @TypeGraphQL.Field(_type => PostCreateNestedManyWithoutLikesInput, {
+    nullable: true
+  })
+  likePosts?: PostCreateNestedManyWithoutLikesInput | undefined;
 
   @TypeGraphQL.Field(_type => UserCreatelikePostIDsInput, {
     nullable: true
@@ -53,19 +68,4 @@ export class UserCreateWithoutPostsInput {
     nullable: true
   })
   roles?: UserCreaterolesInput | undefined;
-
-  @TypeGraphQL.Field(_type => UserCreateNestedManyWithoutFollowingInput, {
-    nullable: true
-  })
-  followers?: UserCreateNestedManyWithoutFollowingInput | undefined;
-
-  @TypeGraphQL.Field(_type => UserCreateNestedManyWithoutFollowersInput, {
-    nullable: true
-  })
-  following?: UserCreateNestedManyWithoutFollowersInput | undefined;
-
-  @TypeGraphQL.Field(_type => PostCreateNestedManyWithoutLikesInput, {
-    nullable: true
-  })
-  likePosts?: PostCreateNestedManyWithoutLikesInput | undefined;
 }

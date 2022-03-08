@@ -19,13 +19,13 @@ export class PostCreateWithoutAuthorInput {
   })
   title!: string;
 
-  @TypeGraphQL.Field(_type => PostCreatelikeIDsInput, {
-    nullable: true
-  })
-  likeIDs?: PostCreatelikeIDsInput | undefined;
-
   @TypeGraphQL.Field(_type => UserCreateNestedManyWithoutLikePostsInput, {
     nullable: true
   })
   likes?: UserCreateNestedManyWithoutLikePostsInput | undefined;
+
+  @TypeGraphQL.Field(_type => PostCreatelikeIDsInput, {
+    nullable: true
+  })
+  likeIDs?: PostCreatelikeIDsInput | undefined;
 }

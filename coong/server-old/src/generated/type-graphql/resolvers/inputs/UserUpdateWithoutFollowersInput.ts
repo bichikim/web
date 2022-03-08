@@ -36,33 +36,33 @@ export class UserUpdateWithoutFollowersInput {
   })
   followerIDs?: UserUpdatefollowerIDsInput | undefined;
 
-  @TypeGraphQL.Field(_type => UserUpdatefollowingIDsInput, {
-    nullable: true
-  })
-  followingIDs?: UserUpdatefollowingIDsInput | undefined;
-
-  @TypeGraphQL.Field(_type => UserUpdatelikePostIDsInput, {
-    nullable: true
-  })
-  likePostIDs?: UserUpdatelikePostIDsInput | undefined;
-
-  @TypeGraphQL.Field(_type => UserUpdaterolesInput, {
-    nullable: true
-  })
-  roles?: UserUpdaterolesInput | undefined;
-
   @TypeGraphQL.Field(_type => UserUpdateManyWithoutFollowersInput, {
     nullable: true
   })
   following?: UserUpdateManyWithoutFollowersInput | undefined;
+
+  @TypeGraphQL.Field(_type => UserUpdatefollowingIDsInput, {
+    nullable: true
+  })
+  followingIDs?: UserUpdatefollowingIDsInput | undefined;
 
   @TypeGraphQL.Field(_type => PostUpdateManyWithoutLikesInput, {
     nullable: true
   })
   likePosts?: PostUpdateManyWithoutLikesInput | undefined;
 
+  @TypeGraphQL.Field(_type => UserUpdatelikePostIDsInput, {
+    nullable: true
+  })
+  likePostIDs?: UserUpdatelikePostIDsInput | undefined;
+
   @TypeGraphQL.Field(_type => PostUpdateManyWithoutAuthorInput, {
     nullable: true
   })
   posts?: PostUpdateManyWithoutAuthorInput | undefined;
+
+  @TypeGraphQL.Field(_type => UserUpdaterolesInput, {
+    nullable: true
+  })
+  roles?: UserUpdaterolesInput | undefined;
 }

@@ -15,13 +15,13 @@ export class PostUpdateWithoutLikesInput {
   })
   title?: StringFieldUpdateOperationsInput | undefined;
 
-  @TypeGraphQL.Field(_type => PostUpdatelikeIDsInput, {
-    nullable: true
-  })
-  likeIDs?: PostUpdatelikeIDsInput | undefined;
-
   @TypeGraphQL.Field(_type => UserUpdateOneWithoutPostsInput, {
     nullable: true
   })
   author?: UserUpdateOneWithoutPostsInput | undefined;
+
+  @TypeGraphQL.Field(_type => PostUpdatelikeIDsInput, {
+    nullable: true
+  })
+  likeIDs?: PostUpdatelikeIDsInput | undefined;
 }

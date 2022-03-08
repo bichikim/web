@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "ESNext",
-    "module": "CommonJS",
+    "module": "system",
     "outDir": "dist",
     "baseUrl": ".",
     "declarationMap": true,

@@ -39,33 +39,33 @@ export class UserCreateWithoutFollowersInput {
   })
   followerIDs?: UserCreatefollowerIDsInput | undefined;
 
-  @TypeGraphQL.Field(_type => UserCreatefollowingIDsInput, {
-    nullable: true
-  })
-  followingIDs?: UserCreatefollowingIDsInput | undefined;
-
-  @TypeGraphQL.Field(_type => UserCreatelikePostIDsInput, {
-    nullable: true
-  })
-  likePostIDs?: UserCreatelikePostIDsInput | undefined;
-
-  @TypeGraphQL.Field(_type => UserCreaterolesInput, {
-    nullable: true
-  })
-  roles?: UserCreaterolesInput | undefined;
-
   @TypeGraphQL.Field(_type => UserCreateNestedManyWithoutFollowersInput, {
     nullable: true
   })
   following?: UserCreateNestedManyWithoutFollowersInput | undefined;
+
+  @TypeGraphQL.Field(_type => UserCreatefollowingIDsInput, {
+    nullable: true
+  })
+  followingIDs?: UserCreatefollowingIDsInput | undefined;
 
   @TypeGraphQL.Field(_type => PostCreateNestedManyWithoutLikesInput, {
     nullable: true
   })
   likePosts?: PostCreateNestedManyWithoutLikesInput | undefined;
 
+  @TypeGraphQL.Field(_type => UserCreatelikePostIDsInput, {
+    nullable: true
+  })
+  likePostIDs?: UserCreatelikePostIDsInput | undefined;
+
   @TypeGraphQL.Field(_type => PostCreateNestedManyWithoutAuthorInput, {
     nullable: true
   })
   posts?: PostCreateNestedManyWithoutAuthorInput | undefined;
+
+  @TypeGraphQL.Field(_type => UserCreaterolesInput, {
+    nullable: true
+  })
+  roles?: UserCreaterolesInput | undefined;
 }

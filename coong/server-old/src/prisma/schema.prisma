@@ -14,27 +14,27 @@ generator typegraphql {
 }
 
 model User {
-  id String   @id @default(dbgenerated()) @map("_id") @db.ObjectId
+  id String   @id @default(auto()) @map("_id") @db.ObjectId
   email String   @unique
   name String?
   /// @TypeGraphQL.omit(output: true)
   password String?
-  followers User[]   @relation("UserFollows", fields: [followerIDs])
-  followerIDs String[] @db.Array(ObjectId)
-  following User[]   @relation("UserFollows", fields: [followingIDs])
-  followingIDs String[] @db.Array(ObjectId)
-  likePosts Post[] @relation("Likes", fields: [likePostIDs])
-  likePostIDs String[] @db.Array(ObjectId)
+  followers User[]   @relation("UserFollows", fields: [followerIDs], references: [id])
+  followerIDs String[] @db.ObjectId()
+  following User[]   @relation("UserFollows", fields: [followingIDs], references: [id])
+  followingIDs String[] @db.ObjectId()
+  likePosts Post[] @relation("Likes", fields: [likePostIDs], references: [id])
+  likePostIDs String[] @db.ObjectId()
   posts Post[] @relation("Author")
   /// @TypeGraphQL.omit(output: true)
   roles String[]
 }
 
 model Post {
-  id String @id @default(dbgenerated()) @map("_id") @db.ObjectId
+  id String @id @default(auto()) @map("_id") @db.ObjectId
   title String
   author User? @relation("Author", fields: [authorId], references: [id])
   authorId String @db.ObjectId
-  likes User[] @relation("Likes", fields: [likeIDs])
-  likeIDs String[] @db.Array(ObjectId)
+  likes User[] @relation("Likes", fields: [likeIDs], references: [id])
+  likeIDs String[] @db.ObjectId()
 }

@@ -31,10 +31,20 @@ export class UserUpdateWithoutLikePostsInput {
   })
   password?: NullableStringFieldUpdateOperationsInput | undefined;
 
+  @TypeGraphQL.Field(_type => UserUpdateManyWithoutFollowingInput, {
+    nullable: true
+  })
+  followers?: UserUpdateManyWithoutFollowingInput | undefined;
+
   @TypeGraphQL.Field(_type => UserUpdatefollowerIDsInput, {
     nullable: true
   })
   followerIDs?: UserUpdatefollowerIDsInput | undefined;
+
+  @TypeGraphQL.Field(_type => UserUpdateManyWithoutFollowersInput, {
+    nullable: true
+  })
+  following?: UserUpdateManyWithoutFollowersInput | undefined;
 
   @TypeGraphQL.Field(_type => UserUpdatefollowingIDsInput, {
     nullable: true
@@ -46,23 +56,13 @@ export class UserUpdateWithoutLikePostsInput {
   })
   likePostIDs?: UserUpdatelikePostIDsInput | undefined;
 
-  @TypeGraphQL.Field(_type => UserUpdaterolesInput, {
-    nullable: true
-  })
-  roles?: UserUpdaterolesInput | undefined;
-
-  @TypeGraphQL.Field(_type => UserUpdateManyWithoutFollowingInput, {
-    nullable: true
-  })
-  followers?: UserUpdateManyWithoutFollowingInput | undefined;
-
-  @TypeGraphQL.Field(_type => UserUpdateManyWithoutFollowersInput, {
-    nullable: true
-  })
-  following?: UserUpdateManyWithoutFollowersInput | undefined;
-
   @TypeGraphQL.Field(_type => PostUpdateManyWithoutAuthorInput, {
     nullable: true
   })
   posts?: PostUpdateManyWithoutAuthorInput | undefined;
+
+  @TypeGraphQL.Field(_type => UserUpdaterolesInput, {
+    nullable: true
+  })
+  roles?: UserUpdaterolesInput | undefined;
 }

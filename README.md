@@ -13,25 +13,7 @@
 
 ## Winter Love packages
 
-### @winter-love/use
-vue composition api hook 과 연관된 유틸리티 입니다.
-
-### @winter-love/utils
-js 유틸리티 입니다.
-
-### @winter-love/emotion
-emotion JS react 버전과 비슷한 구조의 vue emotion js 입니다.
-
-### @winter-love/styled-system
-[styled-system](https://styled-system.com/) 메인테인이 되지않아 시작한 프로젝트 입니다.
-@winter-love/styled-system-next 로 재구성 중입니다.
-
-### @winter-love/styled-system-next
-@winter-love/styled-system-next 로 재구성 패키지 입니다.
-
-### @winter-love/test-use 
-[@testing-library/react-hooks](https://www.npmjs.com/package/@testing-library/react-hooks) 의 vue composition api 버전 입니다
-아직 실험 단계 입니다.
+packages/* 각 프로젝트 폴더 README.md 를 확인 하세요
 
 ## ☄ Coong
 

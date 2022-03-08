@@ -2,10 +2,10 @@ import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
 import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
-import { UserCreateManyfollowerIDsInput } from "../inputs/UserCreateManyfollowerIDsInput";
-import { UserCreateManyfollowingIDsInput } from "../inputs/UserCreateManyfollowingIDsInput";
-import { UserCreateManylikePostIDsInput } from "../inputs/UserCreateManylikePostIDsInput";
-import { UserCreateManyrolesInput } from "../inputs/UserCreateManyrolesInput";
+import { UserCreatefollowerIDsInput } from "../inputs/UserCreatefollowerIDsInput";
+import { UserCreatefollowingIDsInput } from "../inputs/UserCreatefollowingIDsInput";
+import { UserCreatelikePostIDsInput } from "../inputs/UserCreatelikePostIDsInput";
+import { UserCreaterolesInput } from "../inputs/UserCreaterolesInput";
 
 @TypeGraphQL.InputType("UserCreateManyInput", {
   isAbstract: true
@@ -31,23 +31,23 @@ export class UserCreateManyInput {
   })
   password?: string | undefined;
 
-  @TypeGraphQL.Field(_type => UserCreateManyfollowerIDsInput, {
+  @TypeGraphQL.Field(_type => UserCreatefollowerIDsInput, {
     nullable: true
   })
-  followerIDs?: UserCreateManyfollowerIDsInput | undefined;
+  followerIDs?: UserCreatefollowerIDsInput | undefined;
 
-  @TypeGraphQL.Field(_type => UserCreateManyfollowingIDsInput, {
+  @TypeGraphQL.Field(_type => UserCreatefollowingIDsInput, {
     nullable: true
   })
-  followingIDs?: UserCreateManyfollowingIDsInput | undefined;
+  followingIDs?: UserCreatefollowingIDsInput | undefined;
 
-  @TypeGraphQL.Field(_type => UserCreateManylikePostIDsInput, {
+  @TypeGraphQL.Field(_type => UserCreatelikePostIDsInput, {
     nullable: true
   })
-  likePostIDs?: UserCreateManylikePostIDsInput | undefined;
+  likePostIDs?: UserCreatelikePostIDsInput | undefined;
 
-  @TypeGraphQL.Field(_type => UserCreateManyrolesInput, {
+  @TypeGraphQL.Field(_type => UserCreaterolesInput, {
     nullable: true
   })
-  roles?: UserCreateManyrolesInput | undefined;
+  roles?: UserCreaterolesInput | undefined;
 }

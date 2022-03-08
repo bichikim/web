@@ -568,6 +568,7 @@ type AuthenticateUserWithSolanaResult {
 
 input AuthenticateUserWithSolanaInput {
   nonce: String!
+  nonceToken: String!
   publicKey: String!
   signature: String!
 }
@@ -653,12 +654,18 @@ type Query {
     email: String!
     token: String!
   ): ValidateUserPasswordResetTokenResult
-  authenticateUserNonce: GetAuthenticateUserNonceResultType
+  authenticateUserNonce(
+    input: AuthenticateUserNonceInput!
+  ): AuthenticateUserNonceResult
   webAuthChallenge(input: WebAuthChallengeInput!): WebAuthChallengeResult
 }
 
-type GetAuthenticateUserNonceResultType {
-  nonce: String
+type AuthenticateUserNonceResult {
+  nonceToken: String
+}
+
+input AuthenticateUserNonceInput {
+  email: String!
 }
 
 type WebAuthChallengeResult {

@@ -18,9 +18,9 @@ const getPublicKey = (kind: string, publicKey: string) => {
   return `${kind}:${publicKey}`
 }
 
-export const authenticateUserWithSolana = (base: BaseSchemaMeta): Extension => {
+export const authenticateUserWithBlockchainWallet = (base: BaseSchemaMeta): Extension => {
 
-  const AuthenticateUserWithSolanaResult = graphql.object<SignInWithSolanaResultType>()({
+  const result = graphql.object<SignInWithSolanaResultType>()({
     fields: {
       item: graphql.field({type: base.object(AUTH_LIST_KEY)}),
       sessionToken: graphql.field({type: graphql.String}),
@@ -28,20 +28,21 @@ export const authenticateUserWithSolana = (base: BaseSchemaMeta): Extension => {
     name: 'AuthenticateUserWithSolanaResult',
   })
 
-  const AuthenticateUserWithSolanaInput = graphql.inputObject({
+  const input = graphql.inputObject({
     fields: {
       nonce: graphql.arg({type: graphql.nonNull(graphql.String)}),
+      nonceToken: graphql.arg({type: graphql.nonNull(graphql.String)}),
       publicKey: graphql.arg({type: graphql.nonNull(graphql.String)}),
       signature: graphql.arg({type: graphql.nonNull(graphql.String)}),
     },
-    name: 'AuthenticateUserWithSolanaInput',
+    name: 'AuthenticateUserWithBlockchainWalletInput',
   })
 
   return {
     mutation: {
-      authenticateUserWithSolana: graphql.field({
+      authenticateUserWithBlockchainWallet: graphql.field({
         args: {
-          input: graphql.arg({type: graphql.nonNull(AuthenticateUserWithSolanaInput)}),
+          input: graphql.arg({type: graphql.nonNull(input)}),
         },
         async resolve(
           root,
@@ -49,6 +50,7 @@ export const authenticateUserWithSolana = (base: BaseSchemaMeta): Extension => {
           context,
         ) {
           const {nonce, publicKey, signature} = args.input
+          // todo nonceToken 을 JWT 검증하고 jwt 에 있는 nonce 와 input 에 있는 nonce 가 같은지 확인
           const message = getMessage(nonce)
           const messageBytes = new TextEncoder().encode(message)
           const publicKeyBytes = bs58.decode(publicKey)
@@ -59,6 +61,7 @@ export const authenticateUserWithSolana = (base: BaseSchemaMeta): Extension => {
             return null
           }
 
+          // todo jwt 에 있는 email 로 찾는 것으로 변경 (없다면 bye bye)
           const result = await context.prisma[camelCase(AUTH_LIST_KEY)]?.findFirst({
             where: {publicKey: getPublicKey('solana', publicKey)},
           })
@@ -81,7 +84,7 @@ export const authenticateUserWithSolana = (base: BaseSchemaMeta): Extension => {
             sessionToken,
           }
         },
-        type: AuthenticateUserWithSolanaResult,
+        type: result,
       }),
     },
   }
