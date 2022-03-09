@@ -1,6 +1,6 @@
 {
   "name": "solid-relay",
-  "version": "1.0.23",
+  "version": "1.0.24-alpha.0",
   "private": true,
   "description": "Stitches for Solid js",
   "keywords": [
@@ -37,8 +37,8 @@
     "prepare": "tsup-node --dts"
   },
   "dependencies": {
-    "relay-runtime": "^13.1.1",
     "@winter-love/utils": "^1.0.23",
+    "relay-runtime": "^13.1.1",
     "solid-js": "^1.3.10"
   },
   "devDependencies": {
