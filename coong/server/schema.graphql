@@ -389,7 +389,6 @@ type User {
     skip: Int! = 0
   ): [Post!]
   postsCount(where: PostWhereInput! = {}): Int
-  publicKey: String
   roles: JSON
   passwordResetToken: PasswordState
   passwordResetIssuedAt: DateTime
@@ -406,7 +405,6 @@ type PasswordState {
 input UserWhereUniqueInput {
   id: ID
   email: String
-  publicKey: String
 }
 
 input UserWhereInput {
@@ -422,7 +420,6 @@ input UserWhereInput {
   password: PasswordFilter
   postLikes: PostManyRelationFilter
   posts: PostManyRelationFilter
-  publicKey: StringFilter
   passwordResetToken: PasswordFilter
   passwordResetIssuedAt: DateTimeNullableFilter
   passwordResetRedeemedAt: DateTimeNullableFilter
@@ -445,7 +442,6 @@ input UserOrderByInput {
   email: OrderDirection
   isAdmin: OrderDirection
   name: OrderDirection
-  publicKey: OrderDirection
   passwordResetIssuedAt: OrderDirection
   passwordResetRedeemedAt: OrderDirection
   magicAuthIssuedAt: OrderDirection
@@ -461,7 +457,6 @@ input UserUpdateInput {
   password: String
   postLikes: PostRelateToManyForUpdateInput
   posts: PostRelateToManyForUpdateInput
-  publicKey: String
   roles: JSON
   passwordResetToken: String
   passwordResetIssuedAt: DateTime
@@ -485,7 +480,6 @@ input UserCreateInput {
   password: String
   postLikes: PostRelateToManyForCreateInput
   posts: PostRelateToManyForCreateInput
-  publicKey: String
   roles: JSON
   passwordResetToken: String
   passwordResetIssuedAt: DateTime
@@ -544,8 +538,8 @@ type Mutation {
   createAuthenticateUserWithEmail(
     input: CreateAuthenticateUserWithEmailInput
   ): CreateAuthenticateUserWithEmailResult
-  authenticateUserWithSolana(
-    input: AuthenticateUserWithSolanaInput!
+  authenticateUserWithBlockchainWallet(
+    input: AuthenticateUserWithBlockchainWalletInput!
   ): AuthenticateUserWithSolanaResult
 }
 
@@ -566,7 +560,7 @@ type AuthenticateUserWithSolanaResult {
   sessionToken: String
 }
 
-input AuthenticateUserWithSolanaInput {
+input AuthenticateUserWithBlockchainWalletInput {
   nonce: String!
   nonceToken: String!
   publicKey: String!

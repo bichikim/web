@@ -9,3 +9,4 @@ export * from './state'
 export * from './mutate'
 export * from './compute'
 export default plugin
+export * from './store'

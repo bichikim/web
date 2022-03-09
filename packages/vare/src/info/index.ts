@@ -65,6 +65,9 @@ export class InfoMap {
 
 let _infoMap: InfoMap | undefined
 
+/**
+ * @deprecated
+ */
 export const useInfo = () => {
   if (_infoMap) {
     return _infoMap

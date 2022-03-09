@@ -170,6 +170,7 @@ export function createComputed(unknown: any, mayTree?, name?: string, ref: boole
 
 /**
  * return (...args) => computedRef
+ * @deprecated
  * @param recipe
  * @param name
  */

@@ -20,10 +20,12 @@
   },
   "include": [
     "src/**/*.ts",
+    "dev/**/*.ts",
     "src/**/*.d.ts",
     "src/**/*.tsx",
     "tests/**/*.ts",
-    "tests/**/*.tsx"
+    "tests/**/*.tsx",
+    "../../coong/client-react-18/auto-imports.d.ts"
   ],
   "exclude": [
     "node_modules"

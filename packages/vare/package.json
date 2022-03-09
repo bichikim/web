@@ -38,6 +38,7 @@
     "lib/*"
   ],
   "scripts": {
+    "test-dev": "vite",
     "build": "tsup-node --dts --minify",
     "dev": "tsup-node --watch",
     "prepare": "tsup-node --dts"
@@ -50,6 +51,9 @@
   "devDependencies": {
     "@winter-love/use": "^1.0.23",
     "@zerollup/ts-transform-paths": "^1.7.18",
+    "@vitejs/plugin-vue": "^2.1.0",
+    "@vitejs/plugin-vue-jsx": "^1.3.3",
+    "vite": "^2.8.1",
     "gulp": "^4.0.2",
     "ttypescript": "^1.5.13",
     "vue": "latest"

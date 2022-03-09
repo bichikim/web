@@ -102,6 +102,7 @@ function createTreeMutate(mayState: any, mayTree?: any) {
 
 /**
  * create new mutation or tree mutation
+ * @deprecated
  */
 export function mutate<State extends UnwrapNestedRefs<any>, Args extends any[], Return = any>(
   state: State,

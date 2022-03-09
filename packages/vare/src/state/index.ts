@@ -22,6 +22,7 @@ export type InitState<S> = S | (() => S)
 
 /**
  * state is the vue reactive
+ * @deprecated
  */
 export const state = <S extends AnyObject>(initState: InitState<S>, name?: string): State<S> => {
   const state: State<S> = reactive<S>(mayFunctionValue(initState)) as any

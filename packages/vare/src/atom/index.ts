@@ -133,6 +133,10 @@ export const createAtom = (reactive) => {
   })
 }
 
+/**
+ * @deprecated
+ * @param initState
+ */
 export function atom<State>(initState: MayAtomType<State>): AtomType<State>
 export function atom<State extends Record<string, any>,
   TreeOptions extends Record<string, Recipe<State>>>(

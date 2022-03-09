@@ -11,6 +11,12 @@ import {mutationName} from 'src/mutate'
 
 export const DEVTOOL_ID = 'com.npmjs.packages.vare'
 
+/**
+ * @deprecated
+ * @param app
+ * @param targets
+ * @param options
+ */
 // eslint-disable-next-line max-lines-per-function
 export const createDevTool = (
   // fix type error

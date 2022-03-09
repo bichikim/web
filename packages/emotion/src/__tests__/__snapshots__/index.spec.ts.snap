@@ -1,6 +1,33 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`emotion createStyled should deep as 1`] = `
+.css-7cgcfz {
+  background-color: yellow;
+  height: 50px;
+  width: 50px;
+}
+
+.css-1kln77v {
+  background-color: green;
+  height: 50px;
+  width: 50px;
+  background-color: yellow;
+  height: 50px;
+  width: 50px;
+}
+
+.css-louhor {
+  background-color: blue;
+  height: 50px;
+  width: 50px;
+}
+
+.css-1bpaenm {
+  background-color: red;
+  height: 50px;
+  width: 50px;
+}
+
 .emotion-0 {
   background-color: green;
   height: 50px;
