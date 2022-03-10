@@ -1,3 +1,3 @@
 # 🐱‍🏍Hyper Components 
 
-Quasar based Component system with Stitches
+~~Quasar based Component system with Stitches~~

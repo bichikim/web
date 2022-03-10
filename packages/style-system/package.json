@@ -51,7 +51,6 @@
     "@types/styled-system__css": "^5.0.15",
     "@winter-love/emotion": "^1.0.24-alpha.0",
     "csstype": "^3.0.8",
-    "gulp": "^4.0.2",
     "vue": "latest",
     "vue-demi": "latest"
   },

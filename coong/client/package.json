@@ -86,7 +86,7 @@
     "esbuild": "^0.13.12",
     "esbuild-darwin-64": "^0.13.12",
     "markdown-it-link-attributes": "^4.0.0",
-    "markdown-it-prism": "^2.2.1",
+    "markdown-it-prism": "^2.2.3",
     "rollup": "^2.60.0",
     "rollup-plugin-analyzer": "^4.0.0",
     "ts-node": "^10.3.0",

@@ -49,7 +49,6 @@
   },
   "devDependencies": {
     "csstype": "^3.0.8",
-    "gulp": "^4.0.2",
     "vue": "latest"
   },
   "publishConfig": {

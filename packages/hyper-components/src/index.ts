@@ -73,7 +73,8 @@ export const createHyperComponents = <
   Media = Record<string, any>,
   Theme = ConfigType.Theme,
   Utils = Record<string, any>,
-  >(options: CreateHyperComponentsOptions<Media, Theme, Utils> = {}) => {
+  // todo fix types
+  >(options: CreateHyperComponentsOptions<Media, Theme, Utils> = {}): any => {
   const {
     theme: _theme = {},
     variants = {},

@@ -1,6 +1,6 @@
 import {ConfigType, DefaultThemeMap as DefaultThemeMap_} from '@stitches/core/types/config'
 import {CSS as CSS_} from '@stitches/core/types/css-util'
-import {RemoveIndex as RemoveIndex_} from '@stitches/core/types/stitches'
+import Stitches, {RemoveIndex as RemoveIndex_} from '@stitches/core/types/stitches'
 import {
   Function as Function_,
   String as String_,
@@ -8,7 +8,7 @@ import {
   WideObject as WideObject_,
 } from '@stitches/core/types/util'
 import {EmptyObject} from '@winter-love/utils'
-import {computed, defineComponent, h, toRef, withDirectives} from 'vue-demi'
+import {computed, DefineComponent, defineComponent, h, toRef, withDirectives} from 'vue-demi'
 import {createCreateDirective} from './create-directive'
 
 export type CSS = CSS_
@@ -29,27 +29,16 @@ export interface StyledOptions {
   target?: string
 }
 
-export const createStyled = <Prefix extends string = string,
-  Media extends EmptyObject = EmptyObject,
-  Theme extends EmptyObject = EmptyObject,
-  ThemeMap extends EmptyObject = DefaultThemeMap,
-  Utils extends EmptyObject = EmptyObject>(config?: {
-  media?: ConfigType.Media<Media>
-  prefix?: ConfigType.Prefix<Prefix>
-  theme?: ConfigType.Theme<Theme>
-  themeMap?: ConfigType.ThemeMap<ThemeMap>
-  utils?: ConfigType.Utils<Utils>
-}) => {
-
-  const {createDirective, ...stitches} = createCreateDirective(config)
-
-  const styled = <Composers extends (
+export interface VueStitches <Prefix extends string, Media, Theme, ThemeMap, Utils> extends
+  Stitches<Prefix, Media, Theme, ThemeMap, Utils> {
+  createDirective: any
+  styled: <Composers extends (
     | string
     | Function_
     | {[name: string]: unknown}
     )[],
     CSS = CSS_<Media, Theme, ThemeMap, Utils>>(
-      element, options: StyledOptions = {}, ...systems: {
+    element: any, options: StyledOptions, ...systems: {
       [K in keyof Composers]: (
         // Strings and Functions can be skipped over
         Composers[K] extends string | Function_
@@ -102,10 +91,26 @@ export const createStyled = <Prefix extends string = string,
         }
         )
     }
-    ) => {
+  ) => DefineComponent<{as: string; css: CSS; variants: any}>
+}
+
+export const createStyled = <Prefix extends string = string,
+  Media extends EmptyObject = EmptyObject,
+  Theme extends EmptyObject = EmptyObject,
+  ThemeMap extends EmptyObject = DefaultThemeMap,
+  Utils extends EmptyObject = EmptyObject>(config?: {
+  media?: ConfigType.Media<Media>
+  prefix?: ConfigType.Prefix<Prefix>
+  theme?: ConfigType.Theme<Theme>
+  themeMap?: ConfigType.ThemeMap<ThemeMap>
+  utils?: ConfigType.Utils<Utils>
+}): VueStitches<Prefix, Media, Theme, ThemeMap, Utils> => {
+
+  const {createDirective, ...stitches} = createCreateDirective(config)
+
+  const styled = (element: any, options: StyledOptions, ...systems: any[]) => {
     const {name, target} = options
-    const {directive} = createDirective<Composers,
-      CSS>(...systems)
+    const {directive} = createDirective(...systems)
     return defineComponent({
       name,
       props: {
@@ -124,7 +129,8 @@ export const createStyled = <Prefix extends string = string,
           withDirectives(h(elementRef.value, {class: target}, {...slots}), [[directive, [props.css, props.variants]]])
         )
       },
-    })
+      // todo fix type
+    }) as any
   }
 
   return {

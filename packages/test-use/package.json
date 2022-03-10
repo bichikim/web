@@ -40,7 +40,6 @@
     "vue": "^3.2.31"
   },
   "devDependencies": {
-    "gulp": "^4.0.2",
     "lodash": "^4.17.21"
   },
   "gitHead": "66c79bd0d5c23a437b8170f758ff58e4496afb58",

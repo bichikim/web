@@ -51,7 +51,6 @@
     "vue": "latest"
   },
   "devDependencies": {
-    "gulp": "^4.0.2"
   },
   "publishConfig": {
     "access": "public"

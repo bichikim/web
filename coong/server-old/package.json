@@ -12,7 +12,7 @@
   "dependencies": {
     "@prisma/client": "~3.10.0",
     "@winter-love/utils": "^1.0.23",
-    "apollo-server": "^3.0.2",
+    "apollo-server": "^3.6.3",
     "bcryptjs": "^2.4.3",
     "class-validator": "^0.13.1",
     "express": "^4.17.1",
