@@ -44,7 +44,7 @@
     "prepare": "tsup-node --dts"
   },
   "dependencies": {
-    "@vue/devtools-api": "^6.0.0-beta.19",
+    "@vue/devtools-api": "^6.0.13",
     "@winter-love/utils": "^1.0.23",
     "vue-demi": "^0.12.1"
   },
@@ -55,7 +55,7 @@
     "@zerollup/ts-transform-paths": "^1.7.18",
     "ttypescript": "^1.5.13",
     "vite": "^2.8.1",
-    "vue": "latest"
+    "vue": "^3.2.31"
   },
   "gitHead": "66c79bd0d5c23a437b8170f758ff58e4496afb58",
   "tsup": {

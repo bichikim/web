@@ -7,7 +7,8 @@ import {createJwt} from './jwt'
 export const extendGraphqlSchema = graphql.extend((base) => {
   const context: ExtendContext = {
     // todo set privateKey by .env
-    jwt: createJwt('foo-bar'),
+    jwt: createJwt(process.env.SESSION_SECRET ?? 'foo-bar'),
+    // web auth api
     webAuth: new WebAuth({
       rpOrigin: 'https://coong.io',
     }),

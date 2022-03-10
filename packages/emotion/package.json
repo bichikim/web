@@ -34,9 +34,9 @@
     "prepare": "tsup-node --dts"
   },
   "dependencies": {
-    "@emotion/css": "^11.1.3",
+    "@emotion/css": "^11.7.1",
     "@emotion/serialize": "^1.0.2",
-    "@emotion/utils": "^1.0.0",
+    "@emotion/utils": "^1.1.0",
     "@winter-love/use": "^1.0.23",
     "@winter-love/utils": "^1.0.23",
     "clsx": "^1.1.1",
@@ -49,7 +49,7 @@
     "@babel/core": "^7.14.5",
     "@emotion/server": "^11.4.0",
     "@vue/server-renderer": "latest",
-    "vue": "latest"
+    "vue": "^3.2.31"
   },
   "gitHead": "66c79bd0d5c23a437b8170f758ff58e4496afb58",
   "tsup": {

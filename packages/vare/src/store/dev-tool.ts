@@ -1,7 +1,7 @@
-import {CustomInspectorNode, DevtoolsPluginApi, setupDevtoolsPlugin, StateBase, TimelineEvent} from '@vue/devtools-api'
+import {App, CustomInspectorNode, DevtoolsPluginApi, setupDevtoolsPlugin, StateBase} from '@vue/devtools-api'
 import {drop} from '@winter-love/utils'
 import {ApiSetting} from 'src/create-devtool/types'
-import {App, UnwrapNestedRefs} from 'vue'
+import {UnwrapNestedRefs} from 'vue'
 
 export const createTree = (stateTree: UnwrapNestedRefs<any>): CustomInspectorNode[] => {
   return Object.keys(stateTree).map((key): CustomInspectorNode => {
