@@ -46,10 +46,10 @@
     "access": "public"
   },
   "devDependencies": {
-    "@babel/core": "^7.14.5",
-    "@emotion/server": "^11.4.0",
+    "@babel/core": "7.17.5",
+    "@emotion/server": "11.4.0",
     "@vue/server-renderer": "latest",
-    "vue": "^3.2.31"
+    "vue": "3.2.31"
   },
   "gitHead": "66c79bd0d5c23a437b8170f758ff58e4496afb58",
   "tsup": {

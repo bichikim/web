@@ -41,8 +41,8 @@
     "solid-js": "^1.3.10"
   },
   "devDependencies": {
-    "@babel/core": "^7.14.5",
-    "esbuild-plugin-solid": "^0.4.2"
+    "@babel/core": "7.17.5",
+    "esbuild-plugin-solid": "0.4.2"
   },
   "gitHead": "d0d0964c0cfbd66a2c92db522823f9b7bd5c2590"
 }
