@@ -413,10 +413,10 @@ importers:
 
   coong/client-solid:
     specifiers:
-      '@capacitor/android': 3.4.0
+      '@capacitor/android': 3.4.3
       '@capacitor/cli': 3.4.3
-      '@capacitor/core': 3.4.0
-      '@capacitor/ios': 3.4.0
+      '@capacitor/core': 3.4.3
+      '@capacitor/ios': 3.4.3
       '@graphql-codegen/add': 3.1.1
       '@graphql-codegen/cli': 2.6.2
       '@graphql-codegen/typescript': 2.4.7
@@ -462,9 +462,9 @@ importers:
       vite-plugin-pwa: 0.11.13
       vite-plugin-solid: 2.2.6
     dependencies:
-      '@capacitor/android': 3.4.0_@capacitor+core@3.4.0
-      '@capacitor/core': 3.4.0
-      '@capacitor/ios': 3.4.0_@capacitor+core@3.4.0
+      '@capacitor/android': 3.4.3_@capacitor+core@3.4.3
+      '@capacitor/core': 3.4.3
+      '@capacitor/ios': 3.4.3_@capacitor+core@3.4.3
       '@winter-love/utils': link:../../packages/utils
       compression: 1.7.4
       cross-env: 7.0.3
@@ -2711,14 +2711,6 @@ packages:
     deprecated: Potential XSS vulnerability patched in v6.0.0.
     dev: false
 
-  /@capacitor/android/3.4.0_@capacitor+core@3.4.0:
-    resolution: {integrity: sha512-O2hHGVzdTH2Lsmz58EI8zHY5byEFIWl9KrW60WSrO/tV6u9DpfaUq56FaejvfU27GFXDZkmoQNa33EvDYWp4wA==}
-    peerDependencies:
-      '@capacitor/core': ^3.4.0
-    dependencies:
-      '@capacitor/core': 3.4.0
-    dev: false
-
   /@capacitor/android/3.4.3_@capacitor+core@3.4.3:
     resolution: {integrity: sha512-G/6+mbOde9LMWl5KvA5rB/xEQF05sKrQFMBwo8y3C8pYF+axtcrS0Dgze9rOB7nCjH4NXv/bLw58E9+q8/sQUA==}
     peerDependencies:
@@ -2752,24 +2744,10 @@ packages:
       - supports-color
     dev: true
 
-  /@capacitor/core/3.4.0:
-    resolution: {integrity: sha512-utfMAYZyU8SL+JkVOcqanjmWarSBlvCyVDPL6AnXG/B//9VtleZ5NtorUXL0ggnK7t+Zbd8xGgA+LN7mn4+3Lw==}
-    dependencies:
-      tslib: 2.3.1
-    dev: false
-
   /@capacitor/core/3.4.3:
     resolution: {integrity: sha512-drfu0IiDMyeJtL4QALQgNFqdgN19DZJkbKh945eXyK44Sk2YkFXUs7Ewq1ZlVI30QF79mHGuM13oZeki0gv5Tw==}
     dependencies:
       tslib: 2.3.1
-    dev: false
-
-  /@capacitor/ios/3.4.0_@capacitor+core@3.4.0:
-    resolution: {integrity: sha512-S500W45rxLrcrrt+Vx4fJDhmt+07P6yaiE+l32ANV3SHcUvQMWOLXQ7JlKqwkec5er1xonmtor7PQhIt/5UKAA==}
-    peerDependencies:
-      '@capacitor/core': ^3.4.0
-    dependencies:
-      '@capacitor/core': 3.4.0
     dev: false
 
   /@capacitor/ios/3.4.3_@capacitor+core@3.4.3:

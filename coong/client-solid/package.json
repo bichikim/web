@@ -22,9 +22,9 @@
     "sync:ios": "cap sync ios"
   },
   "dependencies": {
-    "@capacitor/android": "3.4.0",
-    "@capacitor/core": "3.4.0",
-    "@capacitor/ios": "3.4.0",
+    "@capacitor/android": "3.4.3",
+    "@capacitor/core": "3.4.3",
+    "@capacitor/ios": "3.4.3",
     "@winter-love/utils": "^1.0.23",
     "compression": "1.7.4",
     "cross-env": "7.0.3",
