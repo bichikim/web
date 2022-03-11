@@ -215,7 +215,7 @@ importers:
       esbuild-darwin-64: ^0.13.12
       express: ^4.17.3
       graphql: ^16.3.0
-      graphql-tag: ^2.12.6
+      graphql-tag: 2.12.6
       helmet: ^5.0.2
       lodash: ^4.17.21
       markdown-it-link-attributes: ^4.0.0
@@ -336,7 +336,7 @@ importers:
       esbuild-darwin-64: ^0.14.14
       express: ^4.17.3
       graphql: ^16.3.0
-      graphql-tag: ^2.12.6
+      graphql-tag: 2.12.6
       helmet: ^5.0.2
       lodash: ^4.17.21
       markdown-it-link-attributes: ^4.0.0
@@ -437,7 +437,7 @@ importers:
       express: ^4.17.1
       firebase: ^9.6.7
       graphql: ^16.3.0
-      graphql-tag: ^2.12.6
+      graphql-tag: 2.12.6
       helmet: ^5.0.1
       lodash: ^4.17.21
       markdown-it-link-attributes: ^4.0.0
@@ -512,9 +512,6 @@ importers:
       vite-plugin-pwa: 0.11.13_vite@2.8.6
       vite-plugin-solid: 2.2.6
 
-  coong/client/dist/server:
-    specifiers: {}
-
   coong/firebase:
     specifiers:
       '@firebase/rules-unit-testing': ^2.0.2
@@ -577,7 +574,7 @@ importers:
       '@winter-love/utils': ^1.0.23
       bs58: ^5.0.0
       dotenv-cli: ^5.0.0
-      graphql-tag: ^2.12.6
+      graphql-tag: 2.12.6
       react: ^17.0.2
       react-dom: ^17.0.2
       tweetnacl: ^1.0.3
@@ -610,7 +607,7 @@ importers:
       '@types/node': ^17.0.21
       '@winter-love/utils': ^1.0.23
       '@zerollup/ts-transform-paths': ^1.7.18
-      apollo-server: ^3.6.3
+      apollo-server: 3.6.3
       bcryptjs: ^2.4.3
       class-validator: ^0.13.1
       cross-env: ^7.0.3
@@ -30647,7 +30644,7 @@ packages:
       typescript: '>=3.2.2'
     dependencies:
       resolve: 1.22.0
-      ts-node: 10.7.0_e79e62fe450383fd2d418267dc75e645
+      ts-node: 10.7.0_a72ac64c463d0935308ebc425b504aff
       typescript: 4.6.2
     dev: true
 
