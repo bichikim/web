@@ -7,9 +7,9 @@
     "emulators": "firebase emulators:exec --only firestore jest"
   },
   "devDependencies": {
-    "@firebase/rules-unit-testing": "^2.0.2",
-    "firebase": "^9.6.7",
-    "jest": "^27.5.1",
-    "jest-environment-node": "^27.5.1"
+    "@firebase/rules-unit-testing": "2.0.2",
+    "firebase": "9.6.8",
+    "jest": "27.5.1",
+    "jest-environment-node": "27.5.1"
   }
 }

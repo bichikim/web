@@ -7,10 +7,10 @@
     "test": "jest"
   },
   "devDependencies": {
-    "@babel/core": "^7.16.5",
-    "@babel/node": "^7.16.5",
-    "ganache": "^7.0.2",
-    "solc": "^0.8.12",
-    "web3": "^1.7.0"
+    "@babel/core": "7.17.5",
+    "@babel/node": "7.16.8",
+    "ganache": "7.0.3",
+    "solc": "0.8.12",
+    "web3": "1.7.1"
   }
 }
