@@ -12,7 +12,6 @@ export default defineConfig({
     ],
     include: [
       'vue',
-      '@winter-love/emotion',
       '@winter-love/use',
       '@winter-love/utils',
       '@winter-love/style-system',

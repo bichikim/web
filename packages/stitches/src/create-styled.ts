@@ -38,7 +38,7 @@ export interface VueStitches <Prefix extends string, Media, Theme, ThemeMap, Uti
     | {[name: string]: unknown}
     )[],
     CSS = CSS_<Media, Theme, ThemeMap, Utils>>(
-    element: any, options: StyledOptions, ...systems: {
+    element: any, options?: StyledOptions, ...systems: {
       [K in keyof Composers]: (
         // Strings and Functions can be skipped over
         Composers[K] extends string | Function_
@@ -108,8 +108,8 @@ export const createStyled = <Prefix extends string = string,
 
   const {createDirective, ...stitches} = createCreateDirective(config)
 
-  const styled = (element: any, options: StyledOptions, ...systems: any[]) => {
-    const {name, target} = options
+  const styled = (element: any, options?: StyledOptions, ...systems: any[]) => {
+    const {name, target} = options ?? {}
     const {directive} = createDirective(...systems)
     return defineComponent({
       name,

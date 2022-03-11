@@ -1,18 +1,20 @@
 import {App, CustomInspectorNode, DevtoolsPluginApi, setupDevtoolsPlugin, StateBase} from '@vue/devtools-api'
 import {drop} from '@winter-love/utils'
 import {ApiSetting} from 'src/create-devtool/types'
-import {UnwrapNestedRefs} from 'vue'
+import {UnwrapNestedRefs, watch} from 'vue'
 
 export const createTree = (stateTree: UnwrapNestedRefs<any>): CustomInspectorNode[] => {
   return Object.keys(stateTree).map((key): CustomInspectorNode => {
     return {
       id: key,
       label: key,
-      tags: [{
-        backgroundColor: 0x73_AB_FE,
-        label: 'state',
-        textColor: 0x00_00_00,
-      }],
+      tags: [
+        {
+          backgroundColor: 0x73_AB_FE,
+          label: 'state',
+          textColor: 0x00_00_00,
+        },
+      ],
     }
   })
 }
@@ -36,6 +38,7 @@ export const createStoreDevTool = (
 ) => {
   let _api: DevtoolsPluginApi<ApiSetting>
   const inspectId = 'vare-inspect'
+  const timeLineId = 'vare-event'
   const label = 'vare-store'
   setupDevtoolsPlugin({
     app,
@@ -48,6 +51,12 @@ export const createStoreDevTool = (
       icon: 'mediation',
       id: inspectId,
       label: `${label} Structure`,
+    })
+
+    api.addTimelineLayer({
+      color: 0xF0_8D_49,
+      id: timeLineId,
+      label: 'Vare Changing',
     })
 
     api.on.getInspectorTree((payload) => {
@@ -86,6 +95,18 @@ export const createStoreDevTool = (
         const {value} = payload.state
         payload.set(state, path, value)
       }
+    })
+
+    Object.keys(stateTree).forEach((name: string) => {
+      watch(stateTree[name], () => {
+        api.addTimelineEvent({
+          event: {
+            data: typeof stateTree[name] === 'object' ? {...stateTree[name]} : stateTree[name],
+            time: Date.now(),
+          },
+          layerId: timeLineId,
+        })
+      })
     })
   })
 }

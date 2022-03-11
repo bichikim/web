@@ -1,3 +1,4 @@
+import {computed, toRefs} from 'vue-demi'
 import {createStore, provideStoreManager, StoreManager, useStore} from '../'
 import {defineComponent, h, ref} from 'vue'
 import {mount} from '@vue/test-utils'
@@ -166,5 +167,154 @@ describe('store', () => {
     expect(wrapper.get('#foo').text()).toBe('foo')
     await wrapper.get('#button').trigger('click')
     expect(wrapper.get('#foo').text()).toBe('foo1')
+  })
+  it('should create store that has props', async () => {
+    const storeManager = new StoreManager()
+    const useMyStore = createStore({
+      name: 'foo',
+      props: {
+        name: {default: 'name', type: String},
+      },
+      setup: (props) => {
+        const {name} = toRefs(props)
+        const count = ref(0)
+        const fooName = computed(() => `foo-${name.value}${count.value}`)
+
+        const increase = () => {
+          count.value += 1
+        }
+
+        return {
+          fooName,
+          increase,
+          name,
+        }
+      },
+    })
+
+    const Component = defineComponent({
+      setup() {
+        const name = ref('bar')
+        const state = useMyStore({name})
+        const onChangeName = () => {
+          name.value = 'foo'
+        }
+        return () => (
+          h('div', [
+            h('div', {id: 'foo'}, state.name),
+            h('div', {id: 'fooName'}, state.fooName),
+            h('button', {id: 'button', onClick: state.increase}, 'increase'),
+            h('button', {id: 'change', onClick: onChangeName}, 'changeName'),
+          ])
+        )
+      },
+    })
+
+    const Root = defineComponent({
+      setup() {
+        provideStoreManager(storeManager)
+        return () => (
+          h('div', [
+            h(Component),
+          ])
+        )
+      },
+    })
+
+    const wrapper = mount(Root)
+    expect(wrapper.get('#foo').text()).toBe('bar')
+    expect(wrapper.get('#fooName').text()).toBe('foo-bar0')
+    await wrapper.get('#button').trigger('click')
+    expect(wrapper.get('#fooName').text()).toBe('foo-bar1')
+    await wrapper.get('#change').trigger('click')
+    expect(wrapper.get('#fooName').text()).toBe('foo-foo1')
+  })
+  it('should create store that can use root', async () => {
+    const storeManager = new StoreManager()
+    const useBar = createStore({
+      name: 'bar',
+      setup: () => {
+        const name = ref('bar')
+        return {
+          name,
+        }
+      },
+    })
+    const useMyStore = createStore({
+      name: 'foo',
+      props: {
+        name: {default: 'name', type: String},
+      },
+      setup: (props, root) => {
+        const barName = computed(() => root.bar?.name)
+        const {name} = toRefs(props)
+        const count = ref(0)
+        const fooName = computed(() => `foo-${name.value}${count.value}`)
+        const barNameCount = computed(() => `${barName.value}${count.value}`)
+
+        const increase = () => {
+          count.value += 1
+        }
+
+        return {
+          barNameCount,
+          fooName,
+          increase,
+          name,
+        }
+      },
+    })
+
+    const Outer = defineComponent({
+      name: 'Outer',
+      setup: (_, {slots}) => {
+        useBar()
+        return () => (
+          h('div', [slots.default?.()])
+        )
+      },
+    })
+
+    const Component = defineComponent({
+      setup() {
+        const name = ref('bar')
+
+        const state = useMyStore({name})
+        const onChangeName = () => {
+          name.value = 'foo'
+        }
+        return () => (
+          h('div', [
+            h('div', {id: 'foo'}, state.name),
+            h('div', {id: 'fooName'}, state.fooName),
+            h('div', {id: 'barNameCount'}, state.barNameCount),
+            h('button', {id: 'button', onClick: state.increase}, 'increase'),
+            h('button', {id: 'change', onClick: onChangeName}, 'changeName'),
+          ])
+        )
+      },
+    })
+
+    const Root = defineComponent({
+      setup() {
+        provideStoreManager(storeManager)
+        return () => (
+          h('div', [
+            h(Outer, () => [
+              h(Component),
+            ]),
+          ])
+        )
+      },
+    })
+    //
+    const wrapper = mount(Root)
+    expect(wrapper.get('#foo').text()).toBe('bar')
+    expect(wrapper.get('#fooName').text()).toBe('foo-bar0')
+    expect(wrapper.get('#barNameCount').text()).toBe('bar0')
+    await wrapper.get('#button').trigger('click')
+    expect(wrapper.get('#fooName').text()).toBe('foo-bar1')
+    await wrapper.get('#change').trigger('click')
+    expect(wrapper.get('#fooName').text()).toBe('foo-foo1')
   })
 })
