@@ -48,8 +48,8 @@
     "vue-demi": "^0.12.1"
   },
   "devDependencies": {
-    "@types/debounce": "^1.2.0",
-    "@types/sinon": "^10.0.2",
+    "@types/debounce": "1.2.1",
+    "@types/sinon": "10.0.11",
     "@vue/test-utils": "2.0.0-rc.17",
     "vue": "latest"
   },
