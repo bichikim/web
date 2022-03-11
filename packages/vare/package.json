@@ -54,7 +54,7 @@
     "@winter-love/use": "^1.0.23",
     "@zerollup/ts-transform-paths": "^1.7.18",
     "ttypescript": "^1.5.13",
-    "vite": "^2.8.1",
+    "vite": "^2.8.6",
     "vue": "^3.2.31"
   },
   "gitHead": "66c79bd0d5c23a437b8170f758ff58e4496afb58",
