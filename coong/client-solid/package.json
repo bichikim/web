@@ -58,7 +58,7 @@
     "csstype": "3.0.11",
     "dotenv": "16.0.0",
     "esbuild": "0.13.15",
-    "esbuild-darwin-64": "0.13.15",
+    "esbuild-darwin-64": "0.14.25",
     "markdown-it-link-attributes": "4.0.0",
     "markdown-it-prism": "2.2.3",
     "ts-node": "10.7.0",

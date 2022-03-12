@@ -435,7 +435,7 @@ importers:
       csstype: 3.0.11
       dotenv: 16.0.0
       esbuild: 0.13.15
-      esbuild-darwin-64: 0.13.15
+      esbuild-darwin-64: 0.14.25
       express: 4.17.3
       firebase: 9.6.8
       graphql: 16.3.0
@@ -499,7 +499,7 @@ importers:
       csstype: 3.0.11
       dotenv: 16.0.0
       esbuild: 0.13.15
-      esbuild-darwin-64: 0.13.15
+      esbuild-darwin-64: 0.14.25
       markdown-it-link-attributes: 4.0.0
       markdown-it-prism: 2.2.3
       ts-node: 10.7.0_e79e62fe450383fd2d418267dc75e645
@@ -513,9 +513,6 @@ importers:
       vite-plugin-md: 0.11.9_vite@2.8.6
       vite-plugin-pwa: 0.11.13_vite@2.8.6
       vite-plugin-solid: 2.2.6
-
-  coong/client/dist/server:
-    specifiers: {}
 
   coong/firebase:
     specifiers:
@@ -15023,7 +15020,9 @@ packages:
     resolution: {integrity: sha512-ihOQRGs2yyp7t5bArCwnvn2Atr6X4axqPpEdCFPVp7iUj4cVSdisgvEKdNR7yH3JDjW6aQDw40iQFoTqejqxvQ==}
     cpu: [x64]
     os: [darwin]
+    requiresBuild: true
     dev: true
+    optional: true
 
   /esbuild-darwin-64/0.14.25:
     resolution: {integrity: sha512-TGp8tuudIxOyWd1+8aYPxQmC1ZQyvij/AfNBa35RubixD0zJ1vkKHVAzo0Zao1zcG6pNqiSyzfPto8vmg0s7oA==}
