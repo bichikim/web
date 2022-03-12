@@ -94,7 +94,7 @@
     "babel-jest": "27.5.1",
     "babel-plugin-module-resolver": "4.1.0",
     "builtin-modules": "3.2.0",
-    "eslint": "8.10.0",
+    "eslint": "8.11.0",
     "eslint-import-resolver-typescript": "2.5.0",
     "eslint-plugin-import": "2.25.4",
     "eslint-plugin-node": "11.1.0",
