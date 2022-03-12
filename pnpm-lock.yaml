@@ -232,7 +232,7 @@ importers:
       ttypescript: 1.5.13
       typescript: 4.6.2
       unplugin-icons: 0.13.3
-      unplugin-vue-components: 0.17.21
+      unplugin-vue-components: 0.18.0
       validator: 13.7.0
       vare: ^1.0.24-alpha.0
       vite: 2.8.6
@@ -310,7 +310,7 @@ importers:
       ttypescript: 1.5.13_ts-node@10.7.0+typescript@4.6.2
       typescript: 4.6.2
       unplugin-icons: 0.13.3_e2a4ae34d6cd337df8b40257b8bd1180
-      unplugin-vue-components: 0.17.21_d7de904faf9d1a4bb657fe03c4009288
+      unplugin-vue-components: 0.18.0_d7de904faf9d1a4bb657fe03c4009288
       vite: 2.8.6
       vite-plugin-imp: 2.1.6_vite@2.8.6
       vite-plugin-md: 0.11.9_vite@2.8.6
@@ -1088,12 +1088,6 @@ packages:
 
   /@antfu/utils/0.3.0:
     resolution: {integrity: sha512-UU8TLr/EoXdg7OjMp0h9oDoIAVr+Z/oW9cpOxQQyrsz6Qzd2ms/1CdWx8fl2OQdFpxGmq5Vc4TwfLHId6nAZjA==}
-    dependencies:
-      '@types/throttle-debounce': 2.1.0
-    dev: true
-
-  /@antfu/utils/0.4.0:
-    resolution: {integrity: sha512-gqkpvjkgFUu+s3kP+Ly33OKpo5zvVY3FDFhv5BIb98SncS3KD6DNxPfNDjwHIoyXbz1leWo1j8DtRLZ1D2Jv+Q==}
     dependencies:
       '@types/throttle-debounce': 2.1.0
     dev: true
@@ -12317,6 +12311,12 @@ packages:
       balanced-match: 1.0.2
       concat-map: 0.0.1
 
+  /brace-expansion/2.0.1:
+    resolution: {integrity: sha512-XnAIvQ8eM+kC6aULx6wuQiwVsnzsi9d3WxzV3FpWTGA19F621kwdbsAcFKXgKUHZWsy+mY6iL1sHTxWEFCytDA==}
+    dependencies:
+      balanced-match: 1.0.2
+    dev: true
+
   /braces/2.3.2:
     resolution: {integrity: sha512-aNdbnj9P8PjdXU4ybaWLK2IF3jc/EoDYbC7AazW6to3TRsfXxscC9UXOB5iDiEQrkyIbWp2SLQda4+QAa7nc3w==}
     engines: {node: '>=0.10.0'}
@@ -20947,6 +20947,13 @@ packages:
       brace-expansion: 1.1.11
     dev: true
 
+  /minimatch/5.0.1:
+    resolution: {integrity: sha512-nLDxIFRyhDblz3qMuq+SoRZED4+miJ/G+tdDrjkkkRnjAsBexeGpgjLEQ0blJy7rHhR2b93rhQY4SvyWu9v03g==}
+    engines: {node: '>=10'}
+    dependencies:
+      brace-expansion: 2.0.1
+    dev: true
+
   /minimist-options/4.1.0:
     resolution: {integrity: sha512-Q4r8ghd80yhO/0j1O3B2BjweX3fiHg9cdOwjJd2J76Q135c+NDxGCqdYKQ1SKBuFfgWbAUzBfvYjPUEeNgqN1A==}
     engines: {node: '>= 6'}
@@ -27581,8 +27588,8 @@ packages:
       - webpack
     dev: true
 
-  /unplugin-vue-components/0.17.21_d7de904faf9d1a4bb657fe03c4009288:
-    resolution: {integrity: sha512-jkXksUF6zkNbzHQbw1DdrsQyVoMZGESRZDIGd9x7nUP+65nHdpBCY/JmlxSjKbuTrOwfMsk6FQFa0RpRueOCKg==}
+  /unplugin-vue-components/0.18.0_d7de904faf9d1a4bb657fe03c4009288:
+    resolution: {integrity: sha512-qk4AgtsydOw1RoGjVlC9toBnq9U8UD8gORRbZjZoNV14c1n5+ZZXV1Hjf7ne6SCt/SROBxpK6Kh3iqL0d8ijpw==}
     engines: {node: '>=14'}
     peerDependencies:
       '@babel/parser': ^7.15.8
@@ -27594,16 +27601,16 @@ packages:
       '@babel/traverse':
         optional: true
     dependencies:
-      '@antfu/utils': 0.4.0
+      '@antfu/utils': 0.5.0
       '@rollup/pluginutils': 4.2.0
       chokidar: 3.5.3
       debug: 4.3.3
       fast-glob: 3.2.11
       local-pkg: 0.4.1
-      magic-string: 0.25.9
-      minimatch: 3.1.2
+      magic-string: 0.26.1
+      minimatch: 5.0.1
       resolve: 1.22.0
-      unplugin: 0.3.3_9df4ede366a17b4d79a18d54b9029675
+      unplugin: 0.4.0_9df4ede366a17b4d79a18d54b9029675
       vue: 3.2.31
     transitivePeerDependencies:
       - esbuild
