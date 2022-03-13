@@ -31,7 +31,7 @@
     "url-loader": "4.1.1",
     "null-loader": "4.0.1",
     "postcss-loader": "6.2.1",
-    "css-loader": "5.2.6",
+    "css-loader": "5.2.7",
     "babel-loader": "8.2.3",
     "loader-utils": "2.0.2",
     "@quasar/app": "3.3.3",
