@@ -5,7 +5,7 @@ import {watchUpdate} from '../watch-update'
 
 export interface ControlCameraOptions {
   camera: ComputedRef<undefined | Camera>
-  controlElement: ComputedRef<undefined | any>
+  controlElement: ComputedRef<undefined>
   engine: ComputedRef<undefined | Engine>
   isControl: ComputedRef<undefined | boolean>
 }
