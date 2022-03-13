@@ -19,7 +19,7 @@
     "@project-serum/sol-wallet-adapter": "^0.2.6",
     "@winter-love/hyper-components": "^1.0.24-alpha.0",
     "@winter-love/utils": "^1.0.23",
-    "node-html-parser": "5.2.0",
+    "node-html-parser": "5.3.2",
     "lodash": "^4.17.21"
   },
   "devDependencies": {
