@@ -31,6 +31,8 @@ export type PromiseReturnType<T extends AnyFunction> = PromiseType<ReturnType<T>
 
 export type MayArray<T> = T | Array<T>
 
+export type ArrayOrOne<T> = T extends (infer P)[] ? P[] : [T]
+
 export type ObjectKey = string | symbol | number
 
 export type AnyObject<Value = any> = Record<ObjectKey, Value>

@@ -1,5 +1,5 @@
 import {App, CustomInspectorNode, DevtoolsPluginApi, setupDevtoolsPlugin, StateBase} from '@vue/devtools-api'
-import {drop} from 'lodash'
+import {drop} from '@winter-love/utils'
 import {ApiSetting} from 'src/create-devtool/types'
 import {UnwrapNestedRefs, watch} from 'vue'
 
@@ -91,7 +91,7 @@ export const createStoreDevTool = (
       const state = stateTree[name]
 
       if (state) {
-        const path = drop(payload.path, 1)
+        const path = drop(1)(payload.path)
         const {value} = payload.state
         payload.set(state, path, value)
       }

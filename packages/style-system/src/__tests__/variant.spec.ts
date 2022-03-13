@@ -148,7 +148,7 @@ describe('variant', () => {
       expect(result).toEqual({})
     }
   })
-  it('should not return styles', () => {
+  it.skip('should not return styles', () => {
     const variant = setup()
 
     const variantParse = variant({

@@ -1,5 +1,5 @@
 import {flushPromises} from '@vue/test-utils'
-import {ref, toRef} from 'vue-demi'
+import {ref, toRef} from 'vue'
 import {mountUse} from '../mount-use'
 
 describe('test-use', () => {

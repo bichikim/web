@@ -32,6 +32,7 @@
     "start:local-docker": "docker-compose up -d",
     "storybook": "start-storybook -p 6006",
     "test": "jest",
+    "install:no-scripts": "pnpm i --ignore-scripts",
     "test:coverage": "jest --collect-coverage",
     "version:alpha": "lerna version prerelease --preid alpha",
     "version:beta": "lerna version prerelease --preid beta",
@@ -51,6 +52,7 @@
     "last 5 Opera versions"
   ],
   "devDependencies": {
+    "tslib": "^2.3.1",
     "@babel/core": "7.17.5",
     "@babel/preset-env": "7.16.11",
     "@babel/preset-typescript": "7.16.7",

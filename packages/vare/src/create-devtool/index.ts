@@ -1,6 +1,5 @@
 import {DevtoolsPluginApi, setupDevtoolsPlugin, TimelineEvent} from '@vue/devtools-api'
-import {isSSR} from '@winter-love/utils'
-import {drop} from 'lodash'
+import {drop, isSSR} from '@winter-love/utils'
 import {watchTrigger} from 'src/create-devtool/watch-trigger'
 import {createStateBases} from './create-state-bases'
 import {ApiSetting, CreateDevToolOptions} from './types'
@@ -106,7 +105,7 @@ export const createDevTool = (
       const state = stateBases[payload.nodeId]
 
       if (state) {
-        const path = drop(payload.path, 1)
+        const path = drop(1)(payload.path)
         const _state = state.base
         const {value} = payload.state
         payload.set(_state.value, path, value)
