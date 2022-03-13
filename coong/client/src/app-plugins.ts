@@ -6,10 +6,10 @@ import urql from 'src/plugins/urql'
 import {createHead} from '@vueuse/head'
 import {createVareStore} from 'vare'
 
-export const useAppPlugins = async (app: App, initialState, ssrContext = {}) => {
+export const useAppPlugins = (app: App, initialState, ssrContext = {}) => {
   const head = createHead()
   const store = createVareStore()
-  const quasarPlugin = await createQuasarPlugin(ssrContext)
+  const quasarPlugin = createQuasarPlugin(ssrContext)
   const router = createRouter()
   app.use(router)
   app.use(hyperComponents)

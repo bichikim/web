@@ -1,5 +1,6 @@
 import {toNumber} from '../to-number'
-import {chunk, compact, flow, join, last, map, reverse} from '../functional'
+import {chunk, join, map, reverse} from '../functional'
+import {compact, flow, last} from 'lodash'
 
 const _numberNames = Object.freeze(['0', '일', '이', '삼', '사', '오', '육', '칠', '팔', '구'])
 const _numberUnitNames = Object.freeze(['', '만', '억', '조', '경', '해', '자', '양', '구', '간', '정'])

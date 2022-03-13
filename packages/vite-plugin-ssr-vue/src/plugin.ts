@@ -1,6 +1,10 @@
 import http from 'http'
 import {Connect, Plugin, UserConfig} from 'vite'
+import path from 'path'
+import fs from 'fs'
 import {createServerHandler, CreateServerHandlerOptions} from './create-server-handler'
+import {parse} from 'node-html-parser'
+import {entryFromTemplate} from './entry-from-template'
 
 export type NextFunction = (error?: any) => void
 export type NextHandleFunction = (
@@ -9,14 +13,18 @@ export type NextHandleFunction = (
   next: NextFunction,
 ) => void
 
+const htmlName = 'index.html'
+const defaultEntry = 'src/main.ts'
+
 export interface ViteVueSsrOptions extends CreateServerHandlerOptions {
+  cwd?: string
   /**
    * enable vite vue ssr plugin
    * @default true
    */
   enabled?: boolean
-  middlewares?: NextHandleFunction[]
 
+  middlewares?: NextHandleFunction[]
   /**
    * plugin name
    * @default 'vite-plugin-vue-ssr'
@@ -25,11 +33,24 @@ export interface ViteVueSsrOptions extends CreateServerHandlerOptions {
 }
 
 export const plugin = (options: ViteVueSsrOptions): Plugin => {
-  const {name = 'vite-plugin-ssr-vue', middlewares = [], enabled = true} = options
+  const {
+    name = 'vite-plugin-ssr-vue',
+    middlewares = [],
+    enabled = true,
+    cwd = process.cwd(),
+  } = options
   if (enabled) {
+    const htmlFile = path.join(cwd, htmlName)
     return {
-      config(): UserConfig {
+      config: async (): Promise<UserConfig> => {
+        const htmlTemplate = await fs.promises.readFile(htmlFile, 'utf8')
+        const htmlNode = parse(htmlTemplate)
+        const entry = entryFromTemplate(htmlNode) ?? defaultEntry
         return {
+          build: {
+            outDir: 'dist/ssr',
+            ssr: path.join(cwd, entry),
+          },
           ssr: {
             noExternal: [name],
           },

@@ -11,7 +11,7 @@ const parseAttrs = (value: string, max: number = MAX) => {
 }
 
 const renderApp = createRenderApp(Root, async ({app, context, render}) => {
-  const {router, stitches} = await useAppPlugins(app, {}, context)
+  const {router, stitches} = useAppPlugins(app, {}, context)
 
   // ssr
   if (import.meta.env.SSR) {

@@ -44,7 +44,6 @@
     "@winter-love/utils": "^1.0.23",
     "clsx": "^1.1.1",
     "color": "^4.2.0",
-    "quasar": "latest",
     "vue-demi": "^0.12.1"
   },
   "devDependencies": {

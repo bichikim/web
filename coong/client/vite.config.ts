@@ -26,6 +26,7 @@ export default defineConfig(() => {
     build: {
       chunkSizeWarningLimit: 600,
       outDir: 'dist/spa',
+      ssrManifest: true,
     },
     define: {
       __DEV__: JSON.stringify('import.meta.env.DEV'),

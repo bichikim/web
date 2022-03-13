@@ -56,7 +56,6 @@
     "validator": "13.7.0",
     "vare": "^1.0.24-alpha.0",
     "vite-plugin-ssr-vue": "^1.0.23",
-    "vite-ssr-vue": "0.4.4",
     "vue": "3.2.31",
     "vue-i18n": "9.1.9",
     "vue-router": "4.0.14"

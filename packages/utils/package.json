@@ -30,9 +30,9 @@
     "access": "public"
   },
   "scripts": {
-    "build": "tsup-node --dts --minify",
+    "build": "tsup --dts --minify",
     "dev": "tsup-node --watch",
-    "prepare": "tsup-node --dts"
+    "prepare": "tsup --dts"
   },
   "dependencies": {
     "fast-json-stable-stringify": "^2.1.0",

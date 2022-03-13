@@ -14,3 +14,16 @@ export default plugin
 const {css, styled, globalCss, keyframes, className, csx} = stitches
 
 export {stitches, css, styled, globalCss, keyframes, className, csx}
+
+// globalCss({
+//   body: {
+//     backgroundColor: 'blue',
+//     height: '100%',
+//   },
+// })()
+//
+// globalCss({
+//   body: {
+//     height: '-webkit-fill-available',
+//   },
+// })()

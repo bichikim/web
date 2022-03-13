@@ -1,19 +1,5 @@
-import chunk from 'lodash/fp/chunk'
-import last from 'lodash/fp/last'
-import compact from 'lodash/fp/compact'
-import flow from 'lodash/fp/flow'
-import reverse from 'lodash/fp/reverse'
-import join from 'lodash/fp/join'
-import drop from 'lodash/fp/drop'
-
 export * from './map'
-
-export {
-  chunk,
-  last,
-  compact,
-  flow,
-  reverse,
-  join,
-  drop,
-}
+import {chunk as _chunk} from 'lodash'
+export const reverse = <T>(list: T[]) => list.reverse()
+export const join = (separator: string) => (list: any[]) => list.join(separator)
+export const chunk = (size: number) => <T>(list: T[]) => _chunk(list, size)

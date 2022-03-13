@@ -1,10 +1,5 @@
-
-export const createQuasarPlugin = async (ssrContext = {}) => {
-  const {
-    Quasar,
-    Dark, ClosePopup, Morph,
-  } = await import('quasar')
-
+import {ClosePopup, Dark, Morph, Quasar} from 'quasar'
+export const createQuasarPlugin = (ssrContext = {}) => {
   return (app) => {
     (Quasar.install as any)(app, {
       components: {},
