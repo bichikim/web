@@ -567,9 +567,6 @@ importers:
       vite-plugin-pwa: 0.11.13_vite@2.8.6
       vite-plugin-solid: 2.2.6
 
-  coong/client/dist/server:
-    specifiers: {}
-
   coong/firebase:
     specifiers:
       '@firebase/rules-unit-testing': 2.0.2
@@ -598,7 +595,7 @@ importers:
       sharp: 0.30.2
       ts-node: 10.7.0
       ts-node-dev: 1.1.8
-      tsconfig-paths: 3.13.0
+      tsconfig-paths: 3.14.0
       ttypescript: 1.5.13
       typescript: 4.6.2
     dependencies:
@@ -617,7 +614,7 @@ importers:
       cross-env: 7.0.3
       ts-node: 10.7.0_e79e62fe450383fd2d418267dc75e645
       ts-node-dev: 1.1.8_typescript@4.6.2
-      tsconfig-paths: 3.13.0
+      tsconfig-paths: 3.14.0
       ttypescript: 1.5.13_ts-node@10.7.0+typescript@4.6.2
       typescript: 4.6.2
 
@@ -694,7 +691,7 @@ importers:
       reflect-metadata: 0.1.13
       rimraf: 3.0.2
       ts-node-dev: 1.1.8
-      tsconfig-paths: 3.13.0
+      tsconfig-paths: 3.14.0
       tslib: 2.3.1
       ttypescript: 1.5.13
       type-graphql: 1.1.1
@@ -728,7 +725,7 @@ importers:
       prisma: 3.10.0
       rimraf: 3.0.2
       ts-node-dev: 1.1.8_typescript@4.6.2
-      tsconfig-paths: 3.13.0
+      tsconfig-paths: 3.14.0
       ttypescript: 1.5.13_ts-node@10.7.0+typescript@4.6.2
       typegraphql-prisma: 0.19.1_ceb9262f836167ba0fa878fb7cfca9c8
       typescript: 4.6.2
@@ -27080,6 +27077,15 @@ packages:
 
   /tsconfig-paths/3.13.0:
     resolution: {integrity: sha512-nWuffZppoaYK0vQ1SQmkSsQzJoHA4s6uzdb2waRpD806x9yfq153AdVsWz4je2qZcW+pENrMQXbGQ3sMCkXuhw==}
+    dependencies:
+      '@types/json5': 0.0.29
+      json5: 1.0.1
+      minimist: 1.2.5
+      strip-bom: 3.0.0
+    dev: true
+
+  /tsconfig-paths/3.14.0:
+    resolution: {integrity: sha512-cg/1jAZoL57R39+wiw4u/SCC6Ic9Q5NqjBOb+9xISedOYurfog9ZNmKJSxAnb2m/5Bq4lE9lhUcau33Ml8DM0g==}
     dependencies:
       '@types/json5': 0.0.29
       json5: 1.0.1
