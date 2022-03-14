@@ -4,7 +4,7 @@ import {useAppPlugins} from './app-plugins'
 
 export default createSsr(Root, {
   created: async ({app, url, isClient, initialState, ...ssrContext}) => {
-    const {router, stitches} = await useAppPlugins(app, initialState, ssrContext)
+    const {router, stitches} = useAppPlugins(app, initialState, ssrContext)
 
     if (!isClient && typeof url === 'string') {
       await router.push(url)

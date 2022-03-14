@@ -1,9 +1,7 @@
-import {onShouldUpdate} from '@winter-love/use'
-import {shallowUpdate, plugin as varePlugin} from 'vare'
-import {Plugin, reactive, watch} from 'vue'
-import {user, UserState} from './user'
+import {plugin as varePlugin} from 'vare'
+import {Plugin, reactive} from 'vue'
 import {bucket} from './bucket'
-import {createSoftBrowserStorage, parseJson} from '@winter-love/utils'
+import {user, UserState} from './user'
 
 export interface RootState {
   user?: UserState

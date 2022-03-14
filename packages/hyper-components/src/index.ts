@@ -1,13 +1,15 @@
-import {createStyled, CSS} from '@winter-love/stitches'
+import {createStyled} from '@winter-love/stitches'
 import {CssComponent} from '@stitches/core/types/styled-component'
 import {inject, InjectionKey, Plugin} from 'vue'
 import {linearGradient, typography} from './variants'
 import {stitchesUtils} from './stitches-utils'
 import {ConfigType, CreateStitches} from '@stitches/core/types/config'
+import {CSS} from '@stitches/core/types'
 import {theme} from 'src/theme'
 
 export * from './h-glow'
-export * from './h-page'
+export * from './h-box'
+export * from './quasar-components'
 
 export const SYSTEM_KEY: InjectionKey<CssComponent> =
   process.env.NODE_ENV === 'development' ? '__system_key__' as any : Symbol('system-key')
@@ -125,4 +127,18 @@ export const createHyperComponents = <
     plugin,
     system,
   }
+}
+
+export type HyperProps = {
+  css?: CSS<{
+    media: {
+      dp1: string
+      dp2: string
+      dp3: string
+    }
+    theme: typeof theme & ConfigType.Theme
+    utils: typeof stitchesUtils
+  }>
+  linearGradient?: string & keyof typeof linearGradient
+  typography?: string & keyof typeof typography
 }

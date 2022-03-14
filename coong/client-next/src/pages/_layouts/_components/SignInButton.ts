@@ -7,7 +7,7 @@ import {SignInInput, SignInKind} from './SignInInput'
 import {className} from 'boot/hyper-components'
 import {debounce} from 'lodash'
 import isEmail from 'validator/lib/isEmail'
-import {debug} from 'src/use/debug'
+import {debug} from 'hooks/debug'
 
 const validateEmail = (value?: string) => {
   if (!value) {

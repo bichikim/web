@@ -9,6 +9,7 @@
 // https://v2.quasar.dev/quasar-cli-vite/quasar-config-js
 
 const {configure} = require('quasar/wrappers')
+const path = require('path')
 
 module.exports = configure((/* ctx */) => {
   return {
@@ -37,18 +38,23 @@ module.exports = configure((/* ctx */) => {
 
     // Full list of options: https://v2.quasar.dev/quasar-cli-vite/quasar-config-js#build
     build: {
+      extendViteConf(viteConf) {
+        Object.assign(viteConf.resolve.alias, {
+          hooks: path.join(__dirname, './src/hooks'),
+        })
+        Object.assign(viteConf.define, {
+          __DEV__: JSON.stringify('import.meta.env.DEV'),
+        })
+      },
       target: {
         browser: ['es2019', 'edge88', 'firefox78', 'chrome87', 'safari13.1'],
         node: 'node16',
       },
-      // available values: 'hash', 'history'
-      vueRouterMode: 'hash',
+
       // vueRouterBase,
       // vueDevtools,
       // vueOptionsAPI: false,
-
       // rebuildCache: true, // rebuilds Vite/linter/etc cache on startup
-
       // publicPath: '/',
       // analyze: true,
       // env: {},
@@ -57,13 +63,14 @@ module.exports = configure((/* ctx */) => {
       // minify: false,
       // polyfillModulePreload: true,
       // distDir
-
       // extendViteConf (viteConf) {},
       // viteVuePluginOptions: {},
+      vitePlugins: [
+        ['@vitejs/plugin-vue-jsx'],
+      ],
 
-      // vitePlugins: [
-      //   [ 'package-name', { ..options.. } ]
-      // ]
+      // available values: 'hash', 'history'
+      vueRouterMode: 'history',
     },
 
     // Full list of options: https://v2.quasar.dev/quasar-cli-vite/developing-capacitor-apps/configuring-capacitor

@@ -35,6 +35,7 @@ const style = {
 }
 
 export const HGlow = defineComponent({
+  name: 'HGlow',
   render() {
     const {$slots} = this
     const nodes = $slots.default?.()

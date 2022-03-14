@@ -1,6 +1,7 @@
 {
   "extends": "@quasar/app-vite/tsconfig-preset",
   "compilerOptions": {
+    "types": ["@types/jest"],
     "target": "ES2017",
     "baseUrl": ".",
     "skipLibCheck": true,
@@ -22,6 +23,9 @@
       ],
       "assets/*": [
         "src/assets/*"
+      ],
+      "hooks/*": [
+        "src/hooks/*"
       ],
       "boot/*": [
         "src/boot/*"

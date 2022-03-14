@@ -10,7 +10,7 @@ if (typeof window === 'object') {
 const startApp = async () => {
   const app = createApp(Root)
 
-  const {router} = await useAppPlugins(app, {})
+  const {router} = useAppPlugins(app, {})
 
   await router.isReady()
 

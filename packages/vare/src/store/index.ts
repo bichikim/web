@@ -48,7 +48,6 @@ export class StoreManager {
 
 export const STORE_CONTEXT: InjectionKey<StoreManager> = Symbol('store')
 export const STORE_LOCAL_CONTEXT: InjectionKey<StoreManager> = Symbol('store-local')
-export const STORE_EVENT = Symbol('store-meta')
 
 export const createVareStore = () => {
   const manager = new StoreManager()

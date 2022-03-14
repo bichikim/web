@@ -1,6 +1,6 @@
 import {defineComponent, getCurrentInstance, h, inject, InjectionKey, provide, Ref, ref, UnwrapRef} from 'vue'
 
-export const STORE_KEY: InjectionKey<Ref<any>> = Symbol('hydrate-store')
+export const STORE_KEY: InjectionKey<Ref> = Symbol('hydrate-store')
 
 const restoreHydrate = () => {
   //

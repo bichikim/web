@@ -40,6 +40,7 @@
     "prepare": "tsup-node --dts"
   },
   "dependencies": {
+    "quasar": "^2.6.0",
     "@stitches/core": "1.2.7",
     "@winter-love/stitches": "^1.0.24-alpha.0",
     "@winter-love/utils": "^1.0.23",
