@@ -1,7 +1,7 @@
-import {ExtractPropTypes} from '@vue/runtime-core'
 import {
   App,
   ComponentPropsOptions,
+  ExtractPropTypes,
   inject,
   InjectionKey,
   onScopeDispose,
