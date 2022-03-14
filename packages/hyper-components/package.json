@@ -40,6 +40,7 @@
     "prepare": "tsup-node --dts"
   },
   "dependencies": {
+    "@stitches/core": "1.2.7",
     "@winter-love/stitches": "^1.0.24-alpha.0",
     "@winter-love/utils": "^1.0.23",
     "clsx": "^1.1.1",

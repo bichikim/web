@@ -1,12 +1,10 @@
+/* eslint-disable no-magic-numbers */
 import {ssrMiddleware} from 'quasar/wrappers'
 import {parse} from 'node-html-parser'
 
 // This middleware should execute as last one
 // since it captures everything and tries to
 // render the page with Vue
-
-const NotThing = 404
-const Internal = 500
 
 export default ssrMiddleware(({app, resolve, render, serve}) => {
   // we capture any other Express route and hand it
@@ -17,30 +15,34 @@ export default ssrMiddleware(({app, resolve, render, serve}) => {
     render(/* the ssrContext: */ {req, res})
       .then((html) => {
         // now let's send the rendered html to the client
-        const htmlNode = parse(html)
-        const headNode = htmlNode.querySelector('head')
+
         const stitches = req.__stitches__
-        if (stitches && headNode) {
+        if (stitches) {
+          const htmlNode = parse(html)
+          const headNode = htmlNode.querySelector('head')
           headNode.insertAdjacentHTML('beforeend', `<style id="stitches">${stitches.getCssText()}</style>`)
+          res.send(htmlNode.toString())
+          return
         }
-        res.send(htmlNode.toString())
+        res.send(html)
       })
       .catch((error) => {
         // oops, we had an error while rendering the page
 
         // we were told to redirect to another URL
+        // noinspection IfStatementWithTooManyBranchesJS
         if (error.url) {
           if (error.code) {
             res.redirect(error.code, error.url)
           } else {
             res.redirect(error.url)
           }
-        } else if (error.code === NotThing) {
+        } else if (error.code === 404) {
           // hmm, Vue Router could not find the requested route
 
           // Should reach here only if no "catch-all" route
           // is defined in /src/routes
-          res.status(NotThing).send('404 | Page Not Found')
+          res.status(404).send('404 | Page Not Found')
         } else if (process.env.DEV) {
           // well, we treat any other code as error;
           // if we're in dev mode, then we can use Quasar CLI
@@ -57,7 +59,8 @@ export default ssrMiddleware(({app, resolve, render, serve}) => {
 
           // Render Error Page on production or
           // create a route (/src/routes) for an error page and redirect to it
-          res.status(Internal).send('500 | Internal Server Error')
+          res.status(500).send('500 | Internal Server Error')
+          // console.error(err.stack)
         }
       })
   })

@@ -4,7 +4,7 @@ import {defineComponent, h, ref} from 'vue'
 import {csx} from 'boot/hyper-components'
 import {useWriteEl} from 'src/use/root-element'
 
-const foo = () => Promise.resolve('foo')
+// const foo = () => Promise.resolve('foo')
 
 const IndexPage = defineComponent({
   name: 'IndexPage',
@@ -19,7 +19,7 @@ const IndexPage = defineComponent({
       ])
     )
   },
-  setup: async () => {
+  setup: () => {
     useWriteEl()
     const name = ref('foo')
     const count = ref(1)
@@ -33,7 +33,7 @@ const IndexPage = defineComponent({
       count2.value += 1
     }
 
-    const yeah = await foo()
+    // const yeah = await foo()
 
     return {
       count,
@@ -41,7 +41,7 @@ const IndexPage = defineComponent({
       name,
       onIncrease,
       onIncrease2,
-      yeah,
+      // yeah,
     }
   },
 })
