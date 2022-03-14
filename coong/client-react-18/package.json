@@ -31,7 +31,7 @@
     "graphql-tag": "2.12.6",
     "helmet": "5.0.2",
     "lodash": "4.17.21",
-    "node-html-parser": "5.3.2",
+    "node-html-parser": "5.3.3",
     "node-inject-html": "0.0.5",
     "react": "18.0.0-rc.2-next-b9de50d2f-20220308",
     "react-dom": "18.0.0-rc.2-next-b9de50d2f-20220308",
