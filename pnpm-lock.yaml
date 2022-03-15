@@ -322,7 +322,7 @@ importers:
       '@quasar/app-vite': ^1.0.0-beta.3
       '@quasar/extras': ^1.13.0
       '@types/jest': ^27.4.1
-      '@types/node': ^12.20.21
+      '@types/node': 16.11.26
       '@vitejs/plugin-vue-jsx': 1.3.8
       '@winter-love/hyper-components': ^1.0.24-alpha.0
       '@winter-love/utils': ^1.0.23
@@ -348,7 +348,7 @@ importers:
     devDependencies:
       '@quasar/app-vite': 1.0.0-beta.3_05408f3be6b2b6e5294abae399a82059
       '@types/jest': 27.4.1
-      '@types/node': 12.20.37
+      '@types/node': 16.11.26
       '@vitejs/plugin-vue-jsx': 1.3.8
       autoprefixer: 10.4.2
       typescript: 4.6.2
@@ -550,9 +550,6 @@ importers:
       vite-plugin-md: 0.11.9_vite@2.8.6
       vite-plugin-pwa: 0.11.13_vite@2.8.6
       vite-plugin-solid: 2.2.6
-
-  coong/client/dist/server:
-    specifiers: {}
 
   coong/firebase:
     specifiers:
@@ -11166,6 +11163,10 @@ packages:
     resolution: {integrity: sha512-q4jlIR71hUpWTnGhXWcakgkZeHa3CCjcQcnuzU8M891BAWA2jHiziiWEPEkdS5pFsz7H9HJiy8BrK7tBRNrY7A==}
     dev: true
 
+  /@types/node/16.11.26:
+    resolution: {integrity: sha512-GZ7bu5A6+4DtG7q9GsoHXy3ALcgeIHP4NnL0Vv2wu0uUB/yQex26v0tf6/na1mm0+bS9Uw+0DFex7aaKr2qawQ==}
+    dev: true
+
   /@types/node/17.0.21:
     resolution: {integrity: sha512-DBZCJbhII3r90XbQxI8Y9IjjiiOGlZ0Hr32omXIZvwwZ7p4DMMXGrKXVyPfuoBOri9XNtL0UK69jYIBIsRX3QQ==}
 
@@ -19580,7 +19581,7 @@ packages:
       lodash: 4.17.21
       pretty-error: 4.0.0
       tapable: 2.2.1
-      webpack: 5.70.0_esbuild@0.14.25
+      webpack: 5.70.0
 
   /htmlparser2/6.1.0:
     resolution: {integrity: sha512-gyyPk6rgonLFEDGoeRgQNaEUvdJ4ktTmmUh/h2t7s+M8oPpIPxgNACWa+6ESR57kXstwqPiCut0V8NRpcwgU7A==}
