@@ -113,7 +113,7 @@
     "jest-watch-typeahead": "1.0.0",
     "jsdom": "19.0.0",
     "lerna": "4.0.0",
-    "rollup": "2.70.0",
+    "rollup": "2.70.1",
     "rollup-plugin-delete": "2.0.0",
     "rollup-plugin-node-externals": "4.0.0",
     "rollup-plugin-smart-asset": "2.1.2",
