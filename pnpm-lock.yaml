@@ -319,7 +319,7 @@ importers:
   coong/client-next:
     specifiers:
       '@project-serum/sol-wallet-adapter': ^0.2.6
-      '@quasar/app-vite': ^1.0.0-beta.2
+      '@quasar/app-vite': ^1.0.0-beta.3
       '@quasar/extras': ^1.13.0
       '@types/jest': ^27.4.1
       '@types/node': ^12.20.21
@@ -346,7 +346,7 @@ importers:
       vue: 3.2.31
       vue-router: 4.0.14_vue@3.2.31
     devDependencies:
-      '@quasar/app-vite': 1.0.0-beta.2_05408f3be6b2b6e5294abae399a82059
+      '@quasar/app-vite': 1.0.0-beta.3_05408f3be6b2b6e5294abae399a82059
       '@types/jest': 27.4.1
       '@types/node': 12.20.37
       '@vitejs/plugin-vue-jsx': 1.3.8
@@ -550,6 +550,9 @@ importers:
       vite-plugin-md: 0.11.9_vite@2.8.6
       vite-plugin-pwa: 0.11.13_vite@2.8.6
       vite-plugin-solid: 2.2.6
+
+  coong/client/dist/server:
+    specifiers: {}
 
   coong/firebase:
     specifiers:
@@ -8071,9 +8074,9 @@ packages:
   /@protobufjs/utf8/1.1.0:
     resolution: {integrity: sha1-p3c2C1s5oaLlEG+OhY8v0tBgxXA=}
 
-  /@quasar/app-vite/1.0.0-beta.2_05408f3be6b2b6e5294abae399a82059:
-    resolution: {integrity: sha512-bKkHRHlIfXEk5VPZ5aXDh5KSljDgU8Z5fhB+cmGbADrWZmp6kYN2yWeaeFsQq/Dquod7a2iTW7QJ3+S3HlR+Jg==}
-    engines: {node: '>= 12.22.1', npm: '>= 6.14.12', yarn: '>= 1.17.3'}
+  /@quasar/app-vite/1.0.0-beta.3_05408f3be6b2b6e5294abae399a82059:
+    resolution: {integrity: sha512-KAzgh/z/37GNEYnDM06Gzaac4Po9ZuNJym32GlWNeXizhpCEOAJkbA7WOuvrSyjnmZ6Gmiv1t872rOYLdje8zA==}
+    engines: {node: ^18 || ^16 || ^14.19, npm: '>= 6.14.12', yarn: '>= 1.17.3'}
     hasBin: true
     peerDependencies:
       electron-builder: ^22.0.0
