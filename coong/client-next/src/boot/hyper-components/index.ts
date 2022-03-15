@@ -1,14 +1,9 @@
 import {createHyperComponents} from '@winter-love/hyper-components'
-import {Plugin} from 'vue'
 import {boot} from 'quasar/wrappers'
 
-const {plugin: _plugin, ...stitches} = createHyperComponents({
+const {plugin, ...stitches} = createHyperComponents({
   variants: {},
 })
-
-const plugin: Plugin = (app) => {
-  app.use(_plugin)
-}
 
 const {css, styled, globalCss, keyframes, className, csx} = stitches
 
