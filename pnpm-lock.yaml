@@ -604,7 +604,7 @@ importers:
 
   coong/server:
     specifiers:
-      '@graphql-ts/extend': 0.4.0
+      '@graphql-ts/extend': 0.4.1
       '@graphql-ts/schema': 0.5.0
       '@keystone-6/auth': 1.0.2
       '@keystone-6/core': 1.0.1
@@ -627,7 +627,7 @@ importers:
       typescript: 4.6.2
       uuid: 8.3.2
     dependencies:
-      '@graphql-ts/extend': 0.4.0_e20193b1cd88d9d42c260b3bff71885d
+      '@graphql-ts/extend': 0.4.1_e20193b1cd88d9d42c260b3bff71885d
       '@graphql-ts/schema': 0.5.0_graphql@15.8.0
       '@keystone-6/auth': 1.0.2_0d2f30f1ed96f88a85b2077d305e6165
       '@keystone-6/core': 1.0.1_@prisma+generator-helper@3.10.0
@@ -5415,6 +5415,17 @@ packages:
     peerDependencies:
       '@graphql-ts/schema': ^0.5.0
       graphql: ^15.0.0
+    dependencies:
+      '@babel/runtime': 7.17.2
+      '@graphql-ts/schema': 0.5.0_graphql@15.8.0
+      graphql: 15.8.0
+    dev: false
+
+  /@graphql-ts/extend/0.4.1_e20193b1cd88d9d42c260b3bff71885d:
+    resolution: {integrity: sha512-qMi1rFfEjdgQ9QjixIqPq5sCasJF1xEbRxjzxh6Z/6LhpFbQSoQlOxgGSM7PiPCgV/VsEIuPXebILLjRKmHyRA==}
+    peerDependencies:
+      '@graphql-ts/schema': ^0.5.0
+      graphql: 15 || 16
     dependencies:
       '@babel/runtime': 7.17.2
       '@graphql-ts/schema': 0.5.0_graphql@15.8.0
