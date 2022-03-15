@@ -41,6 +41,6 @@
     "typegraphql-prisma": "0.19.1",
     "typescript": "4.6.2",
     "vite": "2.8.6",
-    "vite-plugin-node": "0.0.17"
+    "vite-plugin-node": "0.0.18"
   }
 }

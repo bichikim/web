@@ -685,7 +685,7 @@ importers:
       typegraphql-prisma: 0.19.1
       typescript: 4.6.2
       vite: 2.8.6
-      vite-plugin-node: 0.0.17
+      vite-plugin-node: 0.0.18
     dependencies:
       '@prisma/client': 3.10.0_prisma@3.10.0
       '@winter-love/utils': link:../../packages/utils
@@ -717,7 +717,7 @@ importers:
       typegraphql-prisma: 0.19.1_ceb9262f836167ba0fa878fb7cfca9c8
       typescript: 4.6.2
       vite: 2.8.6
-      vite-plugin-node: 0.0.17_vite@2.8.6
+      vite-plugin-node: 0.0.18_vite@2.8.6
 
   coong/smart-contract:
     specifiers:
@@ -10571,142 +10571,6 @@ packages:
       json5: 2.2.0
       magic-string: 0.25.9
       string.prototype.matchall: 4.0.6
-    dev: true
-
-  /@swc/core-android-arm-eabi/1.2.151:
-    resolution: {integrity: sha512-Suk3IcHdha33K4hq9tfBCwkXJsENh7kjXCseLqL8Yvy8QobqkXjf1fcoJxX9BdCmPwsKmIw0ZgCBYR+Hl83M2w==}
-    engines: {node: '>=10'}
-    cpu: [arm]
-    os: [android]
-    requiresBuild: true
-    dev: true
-    optional: true
-
-  /@swc/core-android-arm64/1.2.151:
-    resolution: {integrity: sha512-HZVy69dVWT5RgrMJMRK5aiicPmhzkyCHAexApYAHYLgAIhsxL7uoAIPmuRKRkrKNJjrwsWL7H27bBH5bddRDvg==}
-    engines: {node: '>=10'}
-    cpu: [arm64]
-    os: [android]
-    requiresBuild: true
-    dev: true
-    optional: true
-
-  /@swc/core-darwin-arm64/1.2.151:
-    resolution: {integrity: sha512-Ql7rXMu+IC76TemRtkt+opl5iSpX2ApAXVSfvf6afNVTrfTKLpDwiR3ySRRlG0FnNIv6TfOCJpHf655xp01S/g==}
-    engines: {node: '>=10'}
-    cpu: [arm64]
-    os: [darwin]
-    requiresBuild: true
-    dev: true
-    optional: true
-
-  /@swc/core-darwin-x64/1.2.151:
-    resolution: {integrity: sha512-N1OBIB7xatR5eybLo91ZhvMJMxT0zxRQURV/a9I8o5CyP4iLd1k8gmrYvBbtj08ohS8F9z7k/dFjxk/9ve5Drw==}
-    engines: {node: '>=10'}
-    cpu: [x64]
-    os: [darwin]
-    requiresBuild: true
-    dev: true
-    optional: true
-
-  /@swc/core-freebsd-x64/1.2.151:
-    resolution: {integrity: sha512-WVIRiDzuz+/W7BMjVtg1Cmk1+zmDT18Qq+Ygr9J6aFQ1JQUkLEE1pvtkGD3JIEa6Jhz/VwM6AFHtY5o1CrZ21w==}
-    engines: {node: '>=10'}
-    cpu: [x64]
-    os: [freebsd]
-    requiresBuild: true
-    dev: true
-    optional: true
-
-  /@swc/core-linux-arm-gnueabihf/1.2.151:
-    resolution: {integrity: sha512-pfBrIUwu3cR/M7DzDCUJAw9jFKXvJ/Ge8auFk07lRb+JcDnPm0XxLyrLqGvNQWdcHgXeXfmnS4fMQxdb9GUN1w==}
-    engines: {node: '>=10'}
-    cpu: [arm]
-    os: [linux]
-    requiresBuild: true
-    dev: true
-    optional: true
-
-  /@swc/core-linux-arm64-gnu/1.2.151:
-    resolution: {integrity: sha512-M+BTkTdPY7gteM+0dYz9wrU/j9taL4ccqPEHkDEKP21lS24y99UtuKsvdBLzDm/6ShBVLFAkgIBPu5cEb7y6ig==}
-    engines: {node: '>=10'}
-    cpu: [arm64]
-    os: [linux]
-    requiresBuild: true
-    dev: true
-    optional: true
-
-  /@swc/core-linux-arm64-musl/1.2.151:
-    resolution: {integrity: sha512-7A+yTtSvPJVwO8X1cxUbD/PVCx8G9MKn83G9pH/r+9sQMBXqxyw6/NR0DG6nMMiyOmJkmYWgh5mO47BN7WC4dQ==}
-    engines: {node: '>=10'}
-    cpu: [arm64]
-    os: [linux]
-    requiresBuild: true
-    dev: true
-    optional: true
-
-  /@swc/core-linux-x64-gnu/1.2.151:
-    resolution: {integrity: sha512-ORlbN3wf1w0IQGjGToYYC/hV/Vwfcs88Ohfxc4X+IQaw/VxKG6/XT65c0btK640F2TVhvhH1MbYFJJlsycsW7g==}
-    engines: {node: '>=10'}
-    cpu: [x64]
-    os: [linux]
-    requiresBuild: true
-    dev: true
-    optional: true
-
-  /@swc/core-linux-x64-musl/1.2.151:
-    resolution: {integrity: sha512-r6odKE3+9+ReVdnNTZnICt5tscyFFtP4GFcmPQzBSlVoD9LZX6O4WeOlFXn77rVK/+205n2ag/KkKgZH+vdPuQ==}
-    engines: {node: '>=10'}
-    cpu: [x64]
-    os: [linux]
-    requiresBuild: true
-    dev: true
-    optional: true
-
-  /@swc/core-win32-arm64-msvc/1.2.151:
-    resolution: {integrity: sha512-jnjJTNHpLhBaPwRgiKv1TdrMljL88ePqMCdVMantyd7yl4lP0D2e5/xR9ysR9S4EGcUnOyo9w8WUYhx/TioMZw==}
-    engines: {node: '>=10'}
-    cpu: [arm64]
-    os: [win32]
-    requiresBuild: true
-    dev: true
-    optional: true
-
-  /@swc/core-win32-ia32-msvc/1.2.151:
-    resolution: {integrity: sha512-hSCxAiyDDXKvdUExj4jSIhzWFePqoqak1qdNUjlhEhEinDG8T8PTRCLalyW6fqZDcLf6Tqde7H79AqbfhRlYGQ==}
-    engines: {node: '>=10'}
-    cpu: [ia32]
-    os: [win32]
-    requiresBuild: true
-    dev: true
-    optional: true
-
-  /@swc/core-win32-x64-msvc/1.2.151:
-    resolution: {integrity: sha512-HOkqcJWCChps83Maj0M5kifPDuZ2sGPqpLM67poawspTFkBh0QJ9TMmxW1doQw+74cqsTpRi1ewr/KhsN18i5g==}
-    engines: {node: '>=10'}
-    cpu: [x64]
-    os: [win32]
-    requiresBuild: true
-    dev: true
-    optional: true
-
-  /@swc/core/1.2.151:
-    resolution: {integrity: sha512-oHgqKwK/Djv765zUHPiGqfMCaKIxXTgQyyCUBKLBQfAJwe/7FVobQ2fghBp4FsZA/NE1LZBmMPpRZNQwlGjeHw==}
-    engines: {node: '>=10'}
-    optionalDependencies:
-      '@swc/core-android-arm-eabi': 1.2.151
-      '@swc/core-android-arm64': 1.2.151
-      '@swc/core-darwin-arm64': 1.2.151
-      '@swc/core-darwin-x64': 1.2.151
-      '@swc/core-freebsd-x64': 1.2.151
-      '@swc/core-linux-arm-gnueabihf': 1.2.151
-      '@swc/core-linux-arm64-gnu': 1.2.151
-      '@swc/core-linux-arm64-musl': 1.2.151
-      '@swc/core-linux-x64-gnu': 1.2.151
-      '@swc/core-linux-x64-musl': 1.2.151
-      '@swc/core-win32-arm64-msvc': 1.2.151
-      '@swc/core-win32-ia32-msvc': 1.2.151
-      '@swc/core-win32-x64-msvc': 1.2.151
     dev: true
 
   /@szmarczak/http-timer/1.1.2:
@@ -30096,13 +29960,16 @@ packages:
       vite: 2.8.6
     dev: true
 
-  /vite-plugin-node/0.0.17_vite@2.8.6:
-    resolution: {integrity: sha512-DY/4P2HOqsuJg5ndTsUtrw6uSqFp2dOwUFiQum/t2aqZqWP4XT8BFkQKt/ZIZTs3c7EVPSAu48sizPkP5m5TmA==}
+  /vite-plugin-node/0.0.18_vite@2.8.6:
+    resolution: {integrity: sha512-75fXEYwxuNFI0WniX0AM7dZjprJo+mdqnloDnwucuTkZ2Qyh7yB2syHLncLSqVxvy2UJrjLGlLskCRl0atmU+g==}
     peerDependencies:
-      vite: ^2.8.0
+      '@swc/core': ^1.2.153
+      vite: ^2.8.6
+    peerDependenciesMeta:
+      '@swc/core':
+        optional: true
     dependencies:
       '@rollup/pluginutils': 4.2.0
-      '@swc/core': 1.2.151
       chalk: 4.1.2
       debug: 4.3.3
       vite: 2.8.6
