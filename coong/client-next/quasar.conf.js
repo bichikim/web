@@ -38,13 +38,17 @@ module.exports = configure((/* ctx */) => {
 
     // Full list of options: https://v2.quasar.dev/quasar-cli-vite/quasar-config-js#build
     build: {
-      extendViteConf(viteConf) {
+      extendViteConf(viteConf, {isClient, isServer}) {
         Object.assign(viteConf.resolve.alias, {
           hooks: path.join(__dirname, './src/hooks'),
         })
         Object.assign(viteConf.define, {
           __DEV__: JSON.stringify('import.meta.env.DEV'),
         })
+        if (isServer) {
+          viteConf.ssr.noExternal.push(/^@quasar\/extras/u)
+        }
+
       },
       target: {
         browser: ['es2019', 'edge88', 'firefox78', 'chrome87', 'safari13.1'],
