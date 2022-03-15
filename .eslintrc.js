@@ -23,6 +23,7 @@ module.exports = {
   },
   overrides: [
     {
+      // tests
       env: {jest: true},
       files: [
         '**/*.spec.{j,t}s?(x)',
@@ -44,6 +45,16 @@ module.exports = {
       },
     },
     {
+      // configs
+      files: [
+        '**/quasar.conf.js',
+      ],
+      rules: {
+        'max-lines-per-function': 'off',
+      },
+    },
+    {
+      // js
       files: [
         '**/*.js',
       ],

@@ -6,6 +6,10 @@
     {
       "matchLanguages": ["java"],
       "enabled": false
+    },
+    {
+      "matchPackageNames": ["graphql"],
+      "enabled": false
     }
   ]
 }
