@@ -35,6 +35,7 @@ module.exports = configure((/* ctx */) => {
     boot: [
       'hyper-components',
       'vare',
+      'urql',
     ],
 
     // Full list of options: https://v2.quasar.dev/quasar-cli-vite/quasar-config-js#build

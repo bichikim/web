@@ -647,11 +647,13 @@ type Query {
     email: String!
     token: String!
   ): ValidateUserPasswordResetTokenResult
-  authenticateCryptoSignMessage(input: AuthenticateUserNonceInput!): String
+  authenticateCryptoSignMessage(
+    input: AuthenticateCryptoSignMessageInput!
+  ): String
   webAuthChallenge(input: WebAuthChallengeInput!): WebAuthChallengeResult
 }
 
-input AuthenticateUserNonceInput {
+input AuthenticateCryptoSignMessageInput {
   email: String!
 }
 

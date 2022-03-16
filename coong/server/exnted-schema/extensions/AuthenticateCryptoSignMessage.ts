@@ -11,7 +11,7 @@ export const authenticateCryptoSignMessage = (_, extendContext: ExtendContext): 
     fields: {
       email: graphql.arg({type: graphql.nonNull(graphql.String)}),
     },
-    name: 'AuthenticateUserNonceInput',
+    name: 'AuthenticateCryptoSignMessageInput',
   })
 
   return {

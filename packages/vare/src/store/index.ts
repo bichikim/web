@@ -210,6 +210,17 @@ export function createStore<T extends Record<string, any>,
   }
 }
 
+export function defineStore<T extends Record<string, any>,
+  P extends ComponentPropsOptions = ComponentPropsOptions,
+  >(options: CreateStoreOptions<T, P>): UseStore<T, Readonly<ExtractPropTypes<P>>>
+export function defineStore<T extends Record<string, any>,
+  >(name: string, setup: Setup<T, EmptyObject>): UseStore<T, EmptyObject>
+export function defineStore(
+  arg1: any, arg2?: any,
+) {
+  return createStore(arg1, arg2)
+}
+
 export function useStore<T extends Record<string, any>,
   P extends Record<string, any>,
   >(options: CreateStoreOptions<T, P>)
