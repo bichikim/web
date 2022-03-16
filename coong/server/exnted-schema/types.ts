@@ -1,7 +1,9 @@
 import type WebAuth from '@webauthn-lib/server'
-import type {Jwt} from './jwt'
+import type {JwtContext} from './jwt'
+import type {Blockchain} from './blockchain'
 
 export interface ExtendContext {
-  jwt: Jwt
+  blockchain: Blockchain
+  jwt: JwtContext
   webAuth: WebAuth
 }

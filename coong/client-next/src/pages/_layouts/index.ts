@@ -15,7 +15,7 @@ const PagesLayout = defineComponent({
     const {isMagicAuthLink} = provideLayout()
     // const {isAuthenticated} = user.$
 
-    const isOpenAuth = ref(true)
+    const isOpenAuth = ref(false)
 
     const onCloseAuth = () => {
       isOpenAuth.value = false

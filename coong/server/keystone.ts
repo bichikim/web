@@ -38,17 +38,6 @@ export default withAuth(
 
     extendGraphqlSchema,
 
-    graphql: {
-      apolloConfig: {
-        context: (context) => {
-          console.log('context', context)
-          return {
-            foo: 'foo',
-          }
-        },
-      },
-    },
-
     images: {
       local: {
         baseUrl: '/images',

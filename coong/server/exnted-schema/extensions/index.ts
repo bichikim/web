@@ -1,4 +1,4 @@
 export * from './SignUp'
-export * from './AuthenticateUserNonce'
+export * from './AuthenticateCryptoSignMessage'
 export * from './AuthenticateUserWithSolana'
 export * from './WebAuthChallenge'
