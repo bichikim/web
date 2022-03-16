@@ -14,7 +14,7 @@
   "dependencies": {
     "@quasar/extras": "1.13.2",
     "core-js": "3.21.1",
-    "quasar": "2.6.0",
+    "quasar": "2.6.1",
     "vue": "3.2.31",
     "vue-router": "4.0.14",
     "@project-serum/sol-wallet-adapter": "0.2.6",
