@@ -18,7 +18,7 @@
     "vue": "3.2.31",
     "vue-router": "4.0.14",
     "@project-serum/sol-wallet-adapter": "0.2.6",
-    "@winter-love/hyper-components": "1.0.24-alpha.0",
+    "@winter-love/hyper-components": "^1.0.24-alpha.0",
     "@winter-love/utils": "1.0.23",
     "node-html-parser": "5.3.3",
     "validator": "13.7.0",
@@ -40,7 +40,7 @@
     "@types/node": "17.0.21",
     "@quasar/app-vite": "1.0.0-beta.4",
     "autoprefixer": "10.4.2",
-    "typescript": "^4.5.4",
+    "typescript": "4.6.2",
     "@types/jest": "27.4.1"
   },
   "browserslist": [
