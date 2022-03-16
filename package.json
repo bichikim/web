@@ -58,7 +58,7 @@
     "@babel/preset-env": "7.16.11",
     "@babel/preset-typescript": "7.16.7",
     "@emotion/jest": "11.8.0",
-    "@happy-dom/jest-environment": "2.47.1",
+    "@happy-dom/jest-environment": "2.49.0",
     "@storybook/addon-actions": "6.4.19",
     "@storybook/addon-essentials": "6.4.19",
     "@storybook/addon-interactions": "6.4.19",
