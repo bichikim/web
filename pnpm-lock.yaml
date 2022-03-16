@@ -575,6 +575,9 @@ importers:
       vite-plugin-pwa: 0.11.13_vite@2.8.6
       vite-plugin-solid: 2.2.6
 
+  coong/client/dist/server:
+    specifiers: {}
+
   coong/firebase:
     specifiers:
       '@firebase/rules-unit-testing': 2.0.2
@@ -1002,7 +1005,7 @@ importers:
       vite: 2.8.6
       vue: 3.2.31
       vue-demi: ^0.12.1
-      vue-router: ^4.0.14
+      vue-router: 4.0.14
     dependencies:
       '@vue/devtools-api': 6.0.13
       '@winter-love/utils': link:../utils
