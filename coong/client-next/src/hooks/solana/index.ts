@@ -7,17 +7,29 @@ const DEFAULT_PROVIDER_URL = 'https://solflare.com/provider'
 
 const MAIN_NET = 'mainnet'
 
+export interface ExtraWallet extends Wallet {
+  isConnected: boolean
+}
+
 export const useSolana = (providerUrl?: MayRef<unknown>) => {
   const providerUrlRef = wrapRef(providerUrl, {defaultValue: getSolflare() ?? getSolana() ?? DEFAULT_PROVIDER_URL})
   const messageSignature = ref<string | undefined>()
   const publicKeyRef = ref<string | undefined>()
   const connectedRef = ref(false)
-  const walletRef = ref<undefined | Wallet>()
+  const walletRef = ref<undefined | ExtraWallet>()
   const initPromise = ref<any>()
 
-  const connectCallback = (publicKey: any) => {
-    publicKeyRef.value = publicKey.toBase58()
-    connectedRef.value = true
+  const refresh = () => {
+    const wallet = walletRef.value
+    if (!wallet) {
+      return
+    }
+    publicKeyRef.value = wallet.publicKey?.toBase58()
+    connectedRef.value = wallet.isConnected
+  }
+
+  const connectCallback = () => {
+    refresh()
   }
 
   const disconnectCallback = () => {
@@ -48,7 +60,7 @@ export const useSolana = (providerUrl?: MayRef<unknown>) => {
     }
 
     if (typeof providerUrl !== 'string') {
-      walletRef.value = providerUrl as Wallet
+      walletRef.value = providerUrl as ExtraWallet
       return walletRef.value
     }
 
@@ -56,7 +68,7 @@ export const useSolana = (providerUrl?: MayRef<unknown>) => {
 
     const Wallet = WalletModule?.default ?? WalletModule
 
-    walletRef.value = new Wallet(providerUrl, MAIN_NET)
+    walletRef.value = (new Wallet(providerUrl, MAIN_NET)) as ExtraWallet
     return walletRef.value
   }
 
@@ -65,9 +77,6 @@ export const useSolana = (providerUrl?: MayRef<unknown>) => {
     await initPromise.value
     const wallet = walletRef.value
     if (wallet) {
-      if (connectedRef.value) {
-        await wallet.disconnect()
-      }
       return wallet.connect()
     }
   }

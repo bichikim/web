@@ -2,8 +2,11 @@ import {RouteRecordRaw} from 'vue-router'
 
 const routes: RouteRecordRaw[] = [
   {
-    children: [{component: () => import('pages/main'), path: ''}],
-    component: () => import('pages/_layouts/MainLayout.vue'),
+    children: [
+      {component: () => import('pages/main'), path: ''},
+      {component: () => import('pages/solana'), path: 'solana'},
+    ],
+    component: () => import('pages/_layouts'),
     path: '/',
   },
 

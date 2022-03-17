@@ -12,7 +12,7 @@ export * from './h-box'
 export * from './quasar-components'
 
 export const SYSTEM_KEY: InjectionKey<CssComponent> =
-  process.env.NODE_ENV === 'development' ? '__system_key__' as any : Symbol('system-key')
+  __DEV__ ? '__system_key__' as any : Symbol('system-key')
 
 export const useSystem = () : CssComponent => {
   return inject(SYSTEM_KEY, (() => ({})) as any)
@@ -29,6 +29,9 @@ export interface VariantAndCss {
 
 const runCsxClassComponent = (system: CssComponent, csx?: VariantAndCss) => {
   const result = system(csx)
+  if (!result.props) {
+    return {}
+  }
   const {className, ...rest} = result.props as any
   return {
     ...rest,

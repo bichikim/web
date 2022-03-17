@@ -2,6 +2,7 @@ import {
   App,
   ComponentPropsOptions,
   ExtractPropTypes,
+  getCurrentInstance,
   inject,
   InjectionKey,
   onScopeDispose,
@@ -13,11 +14,14 @@ import {
 
 export * from './dev-tool'
 
+export interface SetupContext<Root> {
+  root: UnwrapNestedRefs<Root>
+}
 export type Setup<T extends Record<string, any>,
   P extends Record<string, any>,
   Root extends Record<string, any> = Record<string, any>> = (
     props: UnwrapNestedRefs<P>,
-    root: UnwrapNestedRefs<Root>,
+    context: SetupContext<Root>,
     ) => T
 
 export interface CreateStoreOptions<T extends Record<string, any>,
@@ -179,24 +183,35 @@ export function createStore<T extends Record<string, any>,
   } = getOptions<T, P>(arg1, arg2)
 
   return (props?: UnwrapNestedRefs<P>): T => {
+    // running props validator
     if (__DEV__) {
       const result = propsValidator(props ?? {}, propsOptions)
       if (result !== true) {
         console.warn(result)
       }
     }
-    const uuid = getUuid()
-    const uuidName = `${name}-${uuid}`
+
     const storeManager = useStoreManager()
-    const resetStore = () => setup(reactive(props ?? {} as P), storeManager?.storeTree)
-    // skip save tree
+    const resetStore = () => setup(
+      // props
+      reactive(props ?? {} as P),
+      // setup context
+      {
+        root: storeManager?.storeTree,
+      },
+    )
+    // skip save tree for local state Store
     if (local) {
+      const instance = getCurrentInstance()
+      const uuid = instance ? instance.uid : getUuid()
+      const uuidName = `${name}/${uuid}`
       const localStoreManager = useLocalManager()
       const state = resetStore()
       if (localStoreManager) {
         localStoreManager.add(uuidName, state)
       }
 
+      // remove local state Store for global dev tool watching
       onScopeDispose(() => {
         localStoreManager?.remove(uuidName)
       })
@@ -208,6 +223,17 @@ export function createStore<T extends Record<string, any>,
     storeManager.add(name, state)
     return state
   }
+}
+
+export function defineStore<T extends Record<string, any>,
+  P extends ComponentPropsOptions = ComponentPropsOptions,
+  >(options: CreateStoreOptions<T, P>): UseStore<T, Readonly<ExtractPropTypes<P>>>
+export function defineStore<T extends Record<string, any>,
+  >(name: string, setup: Setup<T, EmptyObject>): UseStore<T, EmptyObject>
+export function defineStore(
+  arg1: any, arg2?: any,
+) {
+  return createStore(arg1, arg2)
 }
 
 export function useStore<T extends Record<string, any>,

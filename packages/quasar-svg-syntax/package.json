@@ -48,8 +48,8 @@
     "yargs": "^17.3.0"
   },
   "devDependencies": {
-    "@quasar/extras": "1.13.1",
-    "quasar": "2.5.5",
+    "@quasar/extras": "1.13.2",
+    "quasar": "2.6.1",
     "ts-node": "10.7.0",
     "ts-node-dev": "1.1.8",
     "vue": "latest"

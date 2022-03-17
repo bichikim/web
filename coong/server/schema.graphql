@@ -561,8 +561,7 @@ type AuthenticateUserWithSolanaResult {
 }
 
 input AuthenticateUserWithBlockchainWalletInput {
-  nonce: String!
-  nonceToken: String!
+  message: String!
   publicKey: String!
   signature: String!
 }
@@ -648,17 +647,13 @@ type Query {
     email: String!
     token: String!
   ): ValidateUserPasswordResetTokenResult
-  authenticateUserNonce(
-    input: AuthenticateUserNonceInput!
-  ): AuthenticateUserNonceResult
+  authenticateCryptoSignMessage(
+    input: AuthenticateCryptoSignMessageInput!
+  ): String
   webAuthChallenge(input: WebAuthChallengeInput!): WebAuthChallengeResult
 }
 
-type AuthenticateUserNonceResult {
-  nonceToken: String
-}
-
-input AuthenticateUserNonceInput {
+input AuthenticateCryptoSignMessageInput {
   email: String!
 }
 

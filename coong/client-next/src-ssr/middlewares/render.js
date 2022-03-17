@@ -17,7 +17,6 @@ export default ssrMiddleware(({app, resolve, render, serve}) => {
         // now let's send the rendered html to the client
 
         const stitches = req.__stitches__
-        console.log(stitches)
         if (stitches) {
           const htmlNode = parse(html)
           const headNode = htmlNode.querySelector('head')

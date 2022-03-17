@@ -7,13 +7,11 @@ const restoreHydrate = () => {
 }
 
 export const useWriteEl = () => {
-  console.log('foo')
   const instance = getCurrentInstance()
   if (!instance) {
     return
   }
   instance.attrs.foo = 'foo'
-  console.log(instance.attrs)
 }
 
 export const useHydrate = <T>(initValue?: T): Ref<UnwrapRef<T> | undefined> => {

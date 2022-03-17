@@ -1,5 +1,6 @@
 import {BaseSchemaMeta, Extension} from '@graphql-ts/extend'
 import {graphql} from '@keystone-6/core'
+import {ExtendContext} from 'exnted-schema/types'
 import {camelCase} from 'lodash'
 import {AUTH_LIST_KEY} from '../../auth'
 import bs58 from 'bs58'
@@ -18,7 +19,7 @@ const getPublicKey = (kind: string, publicKey: string) => {
   return `${kind}:${publicKey}`
 }
 
-export const authenticateUserWithBlockchainWallet = (base: BaseSchemaMeta): Extension => {
+export const authenticateUserWithBlockchainWallet = (base: BaseSchemaMeta, extendContext: ExtendContext): Extension => {
 
   const result = graphql.object<SignInWithSolanaResultType>()({
     fields: {
@@ -30,8 +31,7 @@ export const authenticateUserWithBlockchainWallet = (base: BaseSchemaMeta): Exte
 
   const input = graphql.inputObject({
     fields: {
-      nonce: graphql.arg({type: graphql.nonNull(graphql.String)}),
-      nonceToken: graphql.arg({type: graphql.nonNull(graphql.String)}),
+      message: graphql.arg({type: graphql.nonNull(graphql.String)}),
       publicKey: graphql.arg({type: graphql.nonNull(graphql.String)}),
       signature: graphql.arg({type: graphql.nonNull(graphql.String)}),
     },
@@ -49,12 +49,16 @@ export const authenticateUserWithBlockchainWallet = (base: BaseSchemaMeta): Exte
           args,
           context,
         ) {
-          const {nonce, publicKey, signature} = args.input
+          const {message, publicKey, signature} = args.input
           // todo nonceToken 을 JWT 검증하고 jwt 에 있는 nonce 와 input 에 있는 nonce 가 같은지 확인
-          const message = getMessage(nonce)
+          const nonceToken = getMessage(message)
           const messageBytes = new TextEncoder().encode(message)
           const publicKeyBytes = bs58.decode(publicKey)
           const signatureBytes = bs58.decode(signature)
+
+          const jwtValidated = await extendContext.jwt.verify(nonceToken)
+          console.log(jwtValidated)
+
           const validated = sign.detached.verify(messageBytes, signatureBytes, publicKeyBytes)
 
           if (!validated) {

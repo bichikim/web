@@ -27,24 +27,28 @@ module.exports = configure((/* ctx */) => {
       // extendBexManifestJson (json) {}
     },
 
-    // https://v2.quasar.dev/quasar-cli-vite/prefetch-feature
-    // preFetch: true,
     // app boot file (/src/boot)
     // --> boot files are part of "main.js"
     // https://v2.quasar.dev/quasar-cli-vite/boot-files
     boot: [
       'hyper-components',
+      'vare',
+      'urql',
     ],
 
     // Full list of options: https://v2.quasar.dev/quasar-cli-vite/quasar-config-js#build
     build: {
-      extendViteConf(viteConf) {
+      extendViteConf(viteConf, {isClient, isServer}) {
         Object.assign(viteConf.resolve.alias, {
           hooks: path.join(__dirname, './src/hooks'),
         })
         Object.assign(viteConf.define, {
           __DEV__: JSON.stringify('import.meta.env.DEV'),
         })
+        if (isServer) {
+          viteConf.ssr.noExternal.push(/^@quasar\/extras/u)
+        }
+
       },
       target: {
         browser: ['es2019', 'edge88', 'firefox78', 'chrome87', 'safari13.1'],
@@ -85,6 +89,7 @@ module.exports = configure((/* ctx */) => {
 
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-js#css
     css: [
+      // I dont use sass
       'app.scss',
     ],
 
@@ -168,6 +173,9 @@ module.exports = configure((/* ctx */) => {
       plugins: [],
     },
 
+    // https://v2.quasar.dev/quasar-cli-vite/prefetch-feature
+    preFetch: true,
+
     // https://v2.quasar.dev/quasar-cli-vite/developing-pwa/configuring-pwa
     pwa: {
       // or 'injectManifest'
@@ -196,6 +204,11 @@ module.exports = configure((/* ctx */) => {
     // https://v2.quasar.dev/quasar-cli-vite/developing-ssr/configuring-ssr
     ssr: {
 
+      // ssrPwaHtmlFilename: 'offline.html', // do NOT use index.html as name!
+      // will mess up SSR
+      // extendSSRWebserverConf(esbuildConf) {
+      // },
+
       // The default port that the production server should use
       // (gets superseded if process.env.PORT is specified at runtime)
       middlewares: [
@@ -207,9 +220,6 @@ module.exports = configure((/* ctx */) => {
       // manualPostHydrationTrigger: true,
       prodPort: 3000,
 
-      // ssrPwaHtmlFilename: 'offline.html', // do NOT use index.html as name!
-      // will mess up SSR
-      // extendSSRWebserverConf (esbuildConf) {},
       // extendPackageJson (json) {},
       pwa: false,
     },
