@@ -46,7 +46,7 @@
   "dependencies": {
     "@vue/devtools-api": "6.0.13",
     "@winter-love/utils": "1.0.23",
-    "vue-demi": "0.12.1"
+    "vue-demi": "0.12.4"
   },
   "devDependencies": {
     "vue-router": "4.0.14",
