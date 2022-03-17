@@ -5,10 +5,10 @@ WORKDIR /usr/src/app
 COPY dist ./dist
 COPY package.json ./
 
-RUN yarn install --prod
+RUN npm install --prod
 
 EXPOSE 3000
 
-CMD yarn run start:ssr
+CMD npm run start:ssr
 
 
