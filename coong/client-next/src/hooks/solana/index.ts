@@ -33,7 +33,6 @@ export const useSolana = (providerUrl?: MayRef<unknown>) => {
   }
 
   const disconnectCallback = () => {
-    console.log('disconnect')
     publicKeyRef.value = undefined
     connectedRef.value = false
   }

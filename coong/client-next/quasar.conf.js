@@ -27,8 +27,6 @@ module.exports = configure((/* ctx */) => {
       // extendBexManifestJson (json) {}
     },
 
-    // https://v2.quasar.dev/quasar-cli-vite/prefetch-feature
-    // preFetch: true,
     // app boot file (/src/boot)
     // --> boot files are part of "main.js"
     // https://v2.quasar.dev/quasar-cli-vite/boot-files
@@ -91,6 +89,7 @@ module.exports = configure((/* ctx */) => {
 
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-js#css
     css: [
+      // I dont use sass
       'app.scss',
     ],
 
@@ -174,6 +173,9 @@ module.exports = configure((/* ctx */) => {
       plugins: [],
     },
 
+    // https://v2.quasar.dev/quasar-cli-vite/prefetch-feature
+    preFetch: true,
+
     // https://v2.quasar.dev/quasar-cli-vite/developing-pwa/configuring-pwa
     pwa: {
       // or 'injectManifest'
@@ -202,6 +204,11 @@ module.exports = configure((/* ctx */) => {
     // https://v2.quasar.dev/quasar-cli-vite/developing-ssr/configuring-ssr
     ssr: {
 
+      // ssrPwaHtmlFilename: 'offline.html', // do NOT use index.html as name!
+      // will mess up SSR
+      // extendSSRWebserverConf(esbuildConf) {
+      // },
+
       // The default port that the production server should use
       // (gets superseded if process.env.PORT is specified at runtime)
       middlewares: [
@@ -213,9 +220,6 @@ module.exports = configure((/* ctx */) => {
       // manualPostHydrationTrigger: true,
       prodPort: 3000,
 
-      // ssrPwaHtmlFilename: 'offline.html', // do NOT use index.html as name!
-      // will mess up SSR
-      // extendSSRWebserverConf (esbuildConf) {},
       // extendPackageJson (json) {},
       pwa: false,
     },

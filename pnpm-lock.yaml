@@ -377,6 +377,46 @@ importers:
       autoprefixer: 10.4.2
       typescript: 4.6.2
 
+  coong/client-next/dist/ssr:
+    specifiers:
+      '@apollo/client': 3.5.10
+      '@project-serum/sol-wallet-adapter': 0.2.6
+      '@urql/vue': 0.6.1
+      '@winter-love/hyper-components': 1.0.24-alpha.0
+      '@winter-love/utils': 1.0.23
+      compression: ^1.7.4
+      core-js: 3.21.1
+      express: ^4.17.3
+      graphql: 16.3.0
+      graphql-tag: 2.12.6
+      lodash: 4.17.21
+      node-html-parser: 5.3.3
+      quasar: 2.6.1
+      serialize-javascript: ^6.0.0
+      validator: 13.7.0
+      vare: 1.0.24-alpha.0
+      vue: 3.2.31
+      vue-router: 4.0.14
+    dependencies:
+      '@apollo/client': 3.5.10_graphql@16.3.0
+      '@project-serum/sol-wallet-adapter': 0.2.6
+      '@urql/vue': 0.6.1_graphql@16.3.0+vue@3.2.31
+      '@winter-love/hyper-components': link:../../../../packages/hyper-components
+      '@winter-love/utils': link:../../../../packages/utils
+      compression: 1.7.4
+      core-js: 3.21.1
+      express: 4.17.3
+      graphql: 16.3.0
+      graphql-tag: 2.12.6_graphql@16.3.0
+      lodash: 4.17.21
+      node-html-parser: 5.3.3
+      quasar: 2.6.1
+      serialize-javascript: 6.0.0
+      validator: 13.7.0
+      vare: link:../../../../packages/vare
+      vue: 3.2.31
+      vue-router: 4.0.14_vue@3.2.31
+
   coong/client-react-18:
     specifiers:
       '@capacitor/cli': 3.4.3
@@ -19663,7 +19703,7 @@ packages:
       lodash: 4.17.21
       pretty-error: 4.0.0
       tapable: 2.2.1
-      webpack: 5.70.0_esbuild@0.14.25
+      webpack: 5.70.0
 
   /htmlparser2/6.1.0:
     resolution: {integrity: sha512-gyyPk6rgonLFEDGoeRgQNaEUvdJ4ktTmmUh/h2t7s+M8oPpIPxgNACWa+6ESR57kXstwqPiCut0V8NRpcwgU7A==}

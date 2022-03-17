@@ -38,9 +38,9 @@
     "lib/*"
   ],
   "scripts": {
-    "build": "tsup-node --dts --legacy-output --minify",
-    "dev": "tsup-node --watch --legacy-output",
-    "prepare": "tsup-node --dts --legacy-output"
+    "build": "tsup-node --dts --minify",
+    "dev": "tsup-node --watch",
+    "prepare": "tsup-node --dts"
   },
   "dependencies": {
     "@winter-love/utils": "^1.0.23",

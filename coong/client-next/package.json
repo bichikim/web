@@ -8,8 +8,10 @@
   "scripts": {
     "dev": "quasar dev",
     "dev:ssr": "quasar dev -m ssr",
+    "build:ssr": "quasar build -m ssr",
     "generator:graphql": "graphql-codegen",
-    "test": "echo \"No test specified\" && exit 0"
+    "test": "echo \"No test specified\" && exit 0",
+    "start:ssr": "node dist/ssr/index.js"
   },
   "dependencies": {
     "@quasar/extras": "1.13.2",

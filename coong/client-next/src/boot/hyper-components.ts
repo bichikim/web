@@ -14,6 +14,7 @@ export default boot(({app, ssrContext}: any) => {
   // plugin
   app.use(plugin)
   if (ssrContext) {
+    // passing stitches for render css to string
     ssrContext.req[reqStitchesKey] = stitches
   }
 })
