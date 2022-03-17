@@ -44,7 +44,7 @@
     "prepare": "tsup-node --dts"
   },
   "dependencies": {
-    "@vue/devtools-api": "6.0.13",
+    "@vue/devtools-api": "6.1.3",
     "@winter-love/utils": "1.0.23",
     "vue-demi": "0.12.1"
   },

@@ -575,9 +575,6 @@ importers:
       vite-plugin-pwa: 0.11.13_vite@2.8.6
       vite-plugin-solid: 2.2.6
 
-  coong/client/dist/server:
-    specifiers: {}
-
   coong/firebase:
     specifiers:
       '@firebase/rules-unit-testing': 2.0.2
@@ -997,7 +994,7 @@ importers:
     specifiers:
       '@vitejs/plugin-vue': 2.2.4
       '@vitejs/plugin-vue-jsx': 1.3.8
-      '@vue/devtools-api': 6.0.13
+      '@vue/devtools-api': 6.1.3
       '@winter-love/use': ^1.0.23
       '@winter-love/utils': 1.0.23
       '@zerollup/ts-transform-paths': 1.7.18
@@ -1007,7 +1004,7 @@ importers:
       vue-demi: 0.12.1
       vue-router: 4.0.14
     dependencies:
-      '@vue/devtools-api': 6.0.13
+      '@vue/devtools-api': 6.1.3
       '@winter-love/utils': link:../utils
       vue-demi: 0.12.1_vue@3.2.31
     devDependencies:
@@ -11848,6 +11845,10 @@ packages:
 
   /@vue/devtools-api/6.0.13:
     resolution: {integrity: sha512-T34EjcArVqzANedEZe2kXQ+AZsld2z1ptJlkOGm87+blk+s6udnP4ze/NYqV8lz1o9AIivimN0xxteLlWiWQdg==}
+    dev: false
+
+  /@vue/devtools-api/6.1.3:
+    resolution: {integrity: sha512-79InfO2xHv+WHIrH1bHXQUiQD/wMls9qBk6WVwGCbdwP7/3zINtvqPNMtmSHXsIKjvUAHc8L0ouOj6ZQQRmcXg==}
 
   /@vue/eslint-config-typescript/10.0.0_5e58415d4c9ab0c3da8935a9b8bb8c26:
     resolution: {integrity: sha512-F94cL8ug3FaYXlCfU5/wiGjk1qeadmoBpRGAOBq+qre3Smdupa59dd6ZJrsfRODpsMPyTG7330juMDsUvpZ3Rw==}
@@ -19663,7 +19664,7 @@ packages:
       lodash: 4.17.21
       pretty-error: 4.0.0
       tapable: 2.2.1
-      webpack: 5.70.0_esbuild@0.14.25
+      webpack: 5.70.0
 
   /htmlparser2/6.1.0:
     resolution: {integrity: sha512-gyyPk6rgonLFEDGoeRgQNaEUvdJ4ktTmmUh/h2t7s+M8oPpIPxgNACWa+6ESR57kXstwqPiCut0V8NRpcwgU7A==}
@@ -30354,7 +30355,7 @@ packages:
     peerDependencies:
       vue: ^3.2.0
     dependencies:
-      '@vue/devtools-api': 6.0.13
+      '@vue/devtools-api': 6.1.3
       vue: 3.2.31
 
   /vue-style-loader/4.1.3:
