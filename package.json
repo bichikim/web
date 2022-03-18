@@ -52,6 +52,7 @@
     "last 5 Opera versions"
   ],
   "devDependencies": {
+    "lodash": "4.17.21",
     "@types/jest": "^27.4.1",
     "tslib": "^2.3.1",
     "@babel/core": "7.17.7",

@@ -7,19 +7,11 @@ export default defineConfig({
   optimizeDeps: {
     exclude: [
       'vue-demi',
-      'quasar',
-      '@quasar/app',
     ],
     include: [
       'vue',
       '@winter-love/use',
       '@winter-love/utils',
-      '@winter-love/style-system',
-      'lodash',
-      'debounce',
-      'fast-json-stable-stringify',
-      'micro-memoize',
-      'react-fast-compare',
     ],
   },
   plugins: [
