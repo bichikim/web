@@ -68,7 +68,7 @@
     "@graphql-codegen/typescript-apollo-client-helpers": "2.1.15",
     "@graphql-codegen/typescript-operations": "2.3.5",
     "@graphql-codegen/typescript-vue-urql": "2.2.9",
-    "@iconify/json": "2.1.16",
+    "@iconify/json": "2.1.17",
     "@intlify/vite-plugin-vue-i18n": "3.3.1",
     "@types/lodash": "4.14.180",
     "@types/node": "17.0.21",
