@@ -14,6 +14,9 @@ export default defineConfig({
       '@winter-love/utils',
     ],
   },
+  define: {
+    __DEV__: false,
+  },
   plugins: [
   ],
   resolve: {

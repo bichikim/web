@@ -87,6 +87,7 @@ jobs:
       - name: Archive Production Artifact
         uses: actions/upload-artifact@master
         with:
+          retention-days: 1
           name: dist-client
           path: |
             coong/client/dist
