@@ -42,7 +42,7 @@
     "vue-demi": "^0.12.1"
   },
   "devDependencies": {
-    "@babel/core": "7.17.7",
+    "@babel/core": "7.17.8",
     "@vue/server-renderer": "latest",
     "vue": "latest"
   },
