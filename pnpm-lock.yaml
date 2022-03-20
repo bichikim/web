@@ -191,7 +191,7 @@ importers:
       '@graphql-codegen/typescript-apollo-client-helpers': 2.1.15
       '@graphql-codegen/typescript-operations': 2.3.5
       '@graphql-codegen/typescript-vue-urql': 2.2.9
-      '@iconify/json': 2.1.16
+      '@iconify/json': 2.1.17
       '@intlify/vite-plugin-vue-i18n': 3.3.1
       '@namchee/vue-ztext': 1.0.0
       '@project-serum/sol-wallet-adapter': 0.2.6
@@ -290,7 +290,7 @@ importers:
       '@graphql-codegen/typescript-apollo-client-helpers': 2.1.15_graphql@16.3.0
       '@graphql-codegen/typescript-operations': 2.3.5_graphql@16.3.0
       '@graphql-codegen/typescript-vue-urql': 2.2.9_e20029557891e0afb887c44ec7f516f8
-      '@iconify/json': 2.1.16
+      '@iconify/json': 2.1.17
       '@intlify/vite-plugin-vue-i18n': 3.3.1_vite@2.8.6+vue-i18n@9.1.9
       '@types/lodash': 4.14.180
       '@types/node': 17.0.21
@@ -383,7 +383,7 @@ importers:
       '@graphql-codegen/typescript': 2.4.8
       '@graphql-codegen/typescript-apollo-client-helpers': 2.1.15
       '@graphql-codegen/typescript-operations': 2.3.5
-      '@iconify/json': 2.1.16
+      '@iconify/json': 2.1.17
       '@types/lodash': 4.14.180
       '@types/node': 17.0.21
       '@types/validator': 13.7.1
@@ -449,7 +449,7 @@ importers:
       '@graphql-codegen/typescript': 2.4.8_graphql@16.3.0
       '@graphql-codegen/typescript-apollo-client-helpers': 2.1.15_graphql@16.3.0
       '@graphql-codegen/typescript-operations': 2.3.5_graphql@16.3.0
-      '@iconify/json': 2.1.16
+      '@iconify/json': 2.1.17
       '@types/lodash': 4.14.180
       '@types/node': 17.0.21
       '@types/validator': 13.7.1
@@ -481,7 +481,7 @@ importers:
       '@graphql-codegen/typescript': 2.4.8
       '@graphql-codegen/typescript-apollo-client-helpers': 2.1.15
       '@graphql-codegen/typescript-operations': 2.3.5
-      '@iconify/json': 2.1.16
+      '@iconify/json': 2.1.17
       '@types/lodash': 4.14.180
       '@types/node': 17.0.21
       '@types/validator': 13.7.1
@@ -546,7 +546,7 @@ importers:
       '@graphql-codegen/typescript': 2.4.8_graphql@16.3.0
       '@graphql-codegen/typescript-apollo-client-helpers': 2.1.15_graphql@16.3.0
       '@graphql-codegen/typescript-operations': 2.3.5_graphql@16.3.0
-      '@iconify/json': 2.1.16
+      '@iconify/json': 2.1.17
       '@types/lodash': 4.14.180
       '@types/node': 17.0.21
       '@types/validator': 13.7.1
@@ -5601,8 +5601,8 @@ packages:
     resolution: {integrity: sha512-trnsAYxU3xnS1gPHPyU961coFyLkh4gAD/0zQ5mymY4yOZ+CYvsPqUbOFSw0aDM4y0tV7tiFxL/1XfXPNC6IPg==}
     dev: true
 
-  /@iconify/json/2.1.16:
-    resolution: {integrity: sha512-Ccvu2pxPAJr7FSShnmkiS/nvBtczN6lV1/DkH7S7QrfryATp07x/DelrtKaU7yEaMfDHSpNlpJj8UgErQQUxsA==}
+  /@iconify/json/2.1.17:
+    resolution: {integrity: sha512-MAEQEXjsUq7swM7CHxNiHMlR7kRDR5fiUPtSJhpxaRJTg/EGfnNfYYAIb91qnEn0ztIcLugtJOheA3u6lvNfHg==}
     dependencies:
       '@iconify/types': 1.0.12
       pathe: 0.0.2
