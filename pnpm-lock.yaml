@@ -87,7 +87,7 @@ importers:
       rollup-plugin-typescript2: 0.31.2
       sinon: 13.0.1
       sort-package-json: 1.54.0
-      storybook-builder-vite: 0.1.20
+      storybook-builder-vite: 0.1.21
       ts-node: 10.7.0
       tsd: 0.19.1
       tslib: ^2.3.1
@@ -166,7 +166,7 @@ importers:
       rollup-plugin-typescript2: 0.31.2_b5a791c1b14c813df1531d2b3337e8b0
       sinon: 13.0.1
       sort-package-json: 1.54.0
-      storybook-builder-vite: 0.1.20_typescript@4.6.2+vite@2.8.6
+      storybook-builder-vite: 0.1.21_typescript@4.6.2+vite@2.8.6
       ts-node: 10.7.0_e79e62fe450383fd2d418267dc75e645
       tsd: 0.19.1
       tslib: 2.3.1
@@ -6037,7 +6037,7 @@ packages:
     resolution: {integrity: sha512-ipON6WtYgl/1329g5AIJVbUuEh0wZVbdpGwC99Jw4LwuoBNS95MVphU6zOeD9pDkon+LLbFL7lOQRapbB8SCHw==}
     engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
     dependencies:
-      '@babel/core': 7.17.5
+      '@babel/core': 7.17.7
       '@jest/types': 27.5.1
       babel-plugin-istanbul: 6.1.1
       chalk: 4.1.2
@@ -27859,8 +27859,8 @@ packages:
     resolution: {integrity: sha512-CMtO2Uneg3SAz/d6fZ/6qbqqQHi2ynq6/KzMD/26gTkiEShCcpqFfTHgOxsE0egAq6SX3FmN4CeSqn8BzXQkJg==}
     dev: true
 
-  /storybook-builder-vite/0.1.20_typescript@4.6.2+vite@2.8.6:
-    resolution: {integrity: sha512-UEiFcLX7z4h37nIeu8EBL7LdckoHRYwaxE6zZTM52zfeYDhhGdT9TBbSDhdPrWgyazzIe8UpgBdJD0T5PhcUmQ==}
+  /storybook-builder-vite/0.1.21_typescript@4.6.2+vite@2.8.6:
+    resolution: {integrity: sha512-yVlBUtb+YhBgHdUXacOJ6hmfRkN/+VoH7uGkWOnksl3NBGUeAw3tvhQ5FzOGjX9510VtiJCCvR0iQwKRmpoYlA==}
     peerDependencies:
       '@storybook/core-common': ^6.4.3
       vite: '>=2.6.7'
