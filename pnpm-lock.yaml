@@ -234,7 +234,7 @@ importers:
       ttypescript: 1.5.13
       typescript: 4.6.2
       unplugin-icons: 0.13.4
-      unplugin-vue-components: 0.18.0
+      unplugin-vue-components: 0.18.3
       validator: 13.7.0
       vare: ^1.0.24-alpha.0
       vite: 2.8.6
@@ -308,7 +308,7 @@ importers:
       ttypescript: 1.5.13_ts-node@10.7.0+typescript@4.6.2
       typescript: 4.6.2
       unplugin-icons: 0.13.4_ce2b23ead77c94d86e7f68ea87dc0060
-      unplugin-vue-components: 0.18.0_26815477f7e405a320731e3af21dbb19
+      unplugin-vue-components: 0.18.3_26815477f7e405a320731e3af21dbb19
       vite: 2.8.6
       vite-plugin-imp: 2.1.6_vite@2.8.6
       vite-plugin-md: 0.11.9_vite@2.8.6
@@ -29548,8 +29548,8 @@ packages:
       - webpack
     dev: true
 
-  /unplugin-vue-components/0.18.0_26815477f7e405a320731e3af21dbb19:
-    resolution: {integrity: sha512-qk4AgtsydOw1RoGjVlC9toBnq9U8UD8gORRbZjZoNV14c1n5+ZZXV1Hjf7ne6SCt/SROBxpK6Kh3iqL0d8ijpw==}
+  /unplugin-vue-components/0.18.3_26815477f7e405a320731e3af21dbb19:
+    resolution: {integrity: sha512-pi+BWPyN3f3AQ/Yqp6QemY8QXwIH4+ChmtcUtzcf3DD4a2926II41ZNinXp+KiN5UOSxk8fG0J6qbRpZBsD1Ew==}
     engines: {node: '>=14'}
     peerDependencies:
       '@babel/parser': ^7.15.8
