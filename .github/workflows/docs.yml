@@ -40,3 +40,11 @@ jobs:
 
       - name: Build
         run: pnpm run build:@coong/client
+
+      - name: Archive Production Artifact
+        uses: actions/upload-artifact@master
+        with:
+          retention-days: 1
+          name: dist
+          path: |
+            docs/.vitepress/dist

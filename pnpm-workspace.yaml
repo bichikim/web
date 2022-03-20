@@ -1,3 +1,4 @@
 pacakges:
   - 'packages/**'
   - 'coong/**'
+  - 'docs/**'

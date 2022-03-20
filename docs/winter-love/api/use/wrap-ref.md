@@ -12,7 +12,6 @@ Wrap Ref or not Ref
 
 <wrap-ref></wrap-ref>
 
-<toggle-slide>
 <<< @/api/use/WrapRef.vue
-</toggle-slide>
+
 

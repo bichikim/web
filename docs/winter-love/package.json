@@ -1,0 +1,20 @@
+{
+  "name": "@winter-love-docs/winter-love",
+  "privare": true,
+  "version": "1.0.0",
+  "scripts": {
+    "docs:build": "vitepress build",
+    "docs:dev": "vitepress dev"
+  },
+  "dependencies": {
+    "daisyui": "^2.11.0",
+    "vitepress": "^0.22.3",
+    "tailwindcss": "^3.0.23",
+    "postcss": "^8.4.12",
+    "autoprefixer": "^10.4.4",
+    "@winter-love/hyper-components": "workspace:^1.0.24-alpha.0",
+    "@winter-love/test-use": "workspace:^1.0.23",
+    "@winter-love/utils": "workspace:^1.0.23",
+    "@winter-love/use": "workspace:^1.0.23"
+  }
+}

@@ -6,7 +6,8 @@
   "author": "Bichi Kim <bichi@live.co.kr>",
   "workspaces": [
     "./packages/*",
-    "./coong/*"
+    "./coong/*",
+    "./docs/*"
   ],
   "scripts": {
     "build:@coong/client": "pnpm run build --filter @coong/client",
@@ -127,8 +128,6 @@
     "tsup": "5.12.1",
     "ttypescript": "1.5.13",
     "typescript": "4.6.2",
-    "vite": "2.8.6",
-    "vitepress": "0.22.3",
     "vue": "3.2.31"
   },
   "engines": {

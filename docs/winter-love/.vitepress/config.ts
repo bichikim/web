@@ -69,7 +69,7 @@ function getNav(override: Partial<DefaultTheme.NavItem>[] = [], prefix: string =
     {
       text: 'API Reference',
       link: `${prefix}api/use/`,
-      activeMatch: '^/api/use/'
+      activeMatch: `^${prefix}api/use/`
     },
     {
       text: 'Support us',
@@ -114,29 +114,11 @@ function getApiSidebar(override: Partial<DefaultTheme.SideBarItem>[] = [], prefi
   const data: DefaultTheme.SideBarItem[] = [
     {
       text: 'Use',
-      children: [
-        {
-          text: '소개',
-          link: '/api/use/'
-        },
-        {
-          text: 'WrapRef',
-          link: '/api/use/wrap-ref',
-        },
-      ],
+      link: `${prefix}api/use/`,
     },
     {
       text: 'Vare',
-      children: [
-        {
-          text: 'atom',
-          link: '/api/vare/',
-        },
-        {
-          text: 'atom',
-          link: '/api/vare/defineStore/',
-        },
-      ],
+      link: `${prefix}api/vare/`,
     },
   ]
   return defaultsDeep(override, data)
