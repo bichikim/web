@@ -30,7 +30,7 @@ importers:
       '@storybook/addon-jest': 6.4.19
       '@storybook/addon-links': 6.4.19
       '@storybook/builder-webpack5': 6.4.19
-      '@storybook/jest': 0.0.9
+      '@storybook/jest': 0.0.10
       '@storybook/manager-webpack5': 6.4.19
       '@storybook/storybook-deployer': 2.8.10
       '@storybook/testing-library': 0.0.9
@@ -109,7 +109,7 @@ importers:
       '@storybook/addon-jest': 6.4.19_@types+react@17.0.40
       '@storybook/addon-links': 6.4.19
       '@storybook/builder-webpack5': 6.4.19_864c49e6e3c5d08eb4b2e8ff38df6615
-      '@storybook/jest': 0.0.9
+      '@storybook/jest': 0.0.10
       '@storybook/manager-webpack5': 6.4.19_864c49e6e3c5d08eb4b2e8ff38df6615
       '@storybook/storybook-deployer': 2.8.10
       '@storybook/testing-library': 0.0.9
@@ -10090,8 +10090,8 @@ packages:
       - react-dom
     dev: true
 
-  /@storybook/jest/0.0.9:
-    resolution: {integrity: sha512-ilk9x+yem/w2VfvfCKtpJg+/4p53l4mu+sVDbEt0FOcUuEzcuzO+tJO6c98ccgGaiJ4Xq1pQK2BN3hQ62HJqog==}
+  /@storybook/jest/0.0.10:
+    resolution: {integrity: sha512-qeYLIplpcOUQXboJde5pRCjTvkGmF80jEszRUoNYCNcEPfC2sMK68Wq6Ct8EQj3CoEdJqsK54O2YYh+7D9S+ag==}
     dependencies:
       '@storybook/expect': 27.5.2-0
       '@storybook/instrumenter': 6.4.19
