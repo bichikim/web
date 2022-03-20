@@ -229,7 +229,7 @@ importers:
       tslib: 2.3.1
       ttypescript: 1.5.13
       typescript: 4.6.2
-      unplugin-icons: 0.13.4
+      unplugin-icons: 0.14.0
       unplugin-vue-components: 0.18.3
       validator: 13.7.0
       vare: ^1.0.24-alpha.0
@@ -303,7 +303,7 @@ importers:
       ts-node-dev: 1.1.8_typescript@4.6.2
       ttypescript: 1.5.13_ts-node@10.7.0+typescript@4.6.2
       typescript: 4.6.2
-      unplugin-icons: 0.13.4_ce2b23ead77c94d86e7f68ea87dc0060
+      unplugin-icons: 0.14.0_ce2b23ead77c94d86e7f68ea87dc0060
       unplugin-vue-components: 0.18.3_26815477f7e405a320731e3af21dbb19
       vite: 2.8.6
       vite-plugin-imp: 2.1.6_vite@2.8.6
@@ -371,46 +371,6 @@ importers:
       autoprefixer: 10.4.2
       typescript: 4.6.2
 
-  coong/client-next/dist/ssr:
-    specifiers:
-      '@apollo/client': 3.5.10
-      '@project-serum/sol-wallet-adapter': 0.2.6
-      '@urql/vue': 0.6.1
-      '@winter-love/hyper-components': 1.0.24-alpha.0
-      '@winter-love/utils': 1.0.23
-      compression: ^1.7.4
-      core-js: 3.21.1
-      express: ^4.17.3
-      graphql: 16.3.0
-      graphql-tag: 2.12.6
-      lodash: 4.17.21
-      node-html-parser: 5.3.3
-      quasar: 2.6.1
-      serialize-javascript: ^6.0.0
-      validator: 13.7.0
-      vare: 1.0.24-alpha.0
-      vue: 3.2.31
-      vue-router: 4.0.14
-    dependencies:
-      '@apollo/client': 3.5.10_graphql@16.3.0
-      '@project-serum/sol-wallet-adapter': 0.2.6
-      '@urql/vue': 0.6.1_graphql@16.3.0+vue@3.2.31
-      '@winter-love/hyper-components': link:../../../../packages/hyper-components
-      '@winter-love/utils': link:../../../../packages/utils
-      compression: 1.7.4
-      core-js: 3.21.1
-      express: 4.17.3
-      graphql: 16.3.0
-      graphql-tag: 2.12.6_graphql@16.3.0
-      lodash: 4.17.21
-      node-html-parser: 5.3.3
-      quasar: 2.6.1
-      serialize-javascript: 6.0.0
-      validator: 13.7.0
-      vare: link:../../../../packages/vare
-      vue: 3.2.31
-      vue-router: 4.0.14_vue@3.2.31
-
   coong/client-react-18:
     specifiers:
       '@capacitor/cli': 3.4.3
@@ -451,7 +411,7 @@ importers:
       ttypescript: 1.5.13
       typescript: 4.6.2
       unplugin-auto-import: 0.6.4
-      unplugin-icons: 0.13.4
+      unplugin-icons: 0.14.0
       urql: 2.2.0
       validator: 13.7.0
       vite: 2.8.6
@@ -500,7 +460,7 @@ importers:
       ttypescript: 1.5.13_ts-node@10.7.0+typescript@4.6.2
       typescript: 4.6.2
       unplugin-auto-import: 0.6.4_rollup@2.70.1+vite@2.8.6
-      unplugin-icons: 0.13.4_ce2b23ead77c94d86e7f68ea87dc0060
+      unplugin-icons: 0.14.0_ce2b23ead77c94d86e7f68ea87dc0060
       vite: 2.8.6
       vite-plugin-imp: 2.1.6_vite@2.8.6
       vite-plugin-md: 0.11.9_vite@2.8.6
@@ -547,7 +507,7 @@ importers:
       ttypescript: 1.5.13
       typescript: 4.6.2
       unplugin-auto-import: 0.6.4
-      unplugin-icons: 0.13.4
+      unplugin-icons: 0.14.0
       validator: 13.7.0
       vite: 2.8.6
       vite-plugin-imp: 2.1.6
@@ -596,15 +556,12 @@ importers:
       ttypescript: 1.5.13_ts-node@10.7.0+typescript@4.6.2
       typescript: 4.6.2
       unplugin-auto-import: 0.6.4_rollup@2.70.1+vite@2.8.6
-      unplugin-icons: 0.13.4_ce2b23ead77c94d86e7f68ea87dc0060
+      unplugin-icons: 0.14.0_ce2b23ead77c94d86e7f68ea87dc0060
       vite: 2.8.6
       vite-plugin-imp: 2.1.6_vite@2.8.6
       vite-plugin-md: 0.11.9_vite@2.8.6
       vite-plugin-pwa: 0.11.13_vite@2.8.6
       vite-plugin-solid: 2.2.6
-
-  coong/client/dist/server:
-    specifiers: {}
 
   coong/firebase:
     specifiers:
@@ -4844,7 +4801,7 @@ packages:
       '@babel/helper-split-export-declaration': 7.16.7
       '@babel/parser': 7.17.7
       '@babel/types': 7.17.0
-      debug: 4.3.3
+      debug: 4.3.4
       globals: 11.12.0
     transitivePeerDependencies:
       - supports-color
@@ -6339,7 +6296,7 @@ packages:
       '@types/json-stable-stringify': 1.0.33
       '@types/jsonwebtoken': 8.5.8
       chalk: 4.1.2
-      debug: 4.3.3
+      debug: 4.3.4
       dotenv: 10.0.0
       graphql: 16.3.0
       graphql-request: 3.6.1_graphql@16.3.0
@@ -6619,13 +6576,17 @@ packages:
     resolution: {integrity: sha512-6er6wSGF3hgc1JEZqiGpg21CTCjHBYOUwqLmb2Idzkjiw6ogalGP0ZMLVutCzah+0WB4yP+Zd2oVPN8jvJ+Ftg==}
     dev: true
 
-  /@iconify/utils/1.0.23:
-    resolution: {integrity: sha512-Ktdmpe4mkMXQAnnDUz3s6s5aY/BeVPwHC1d5IhG1bgrWVNWFQNUj8cQPMbHpNCSD9MRC5yGxm9/PGPpOWGJLAg==}
+  /@iconify/types/1.0.13:
+    resolution: {integrity: sha512-jrJJVPnRM1HsMDnuHRTzMfgiSG6Z1U/2IYI7s8spFu9c7n1q3jcXa+3/YQz4tJVNgAhzm1dbnMxfIAyLDpCaWg==}
+    dev: true
+
+  /@iconify/utils/1.0.26:
+    resolution: {integrity: sha512-Mz6l1fOGgdqLjoXNirmX6Zpc+DPcU4Xyns7oBWcHoTVRnZ2QuFbWMaGa9/FeYSoZwk5s14Vsl0wilmaToS9g9w==}
     dependencies:
       '@antfu/install-pkg': 0.1.0
       '@antfu/utils': 0.3.0
-      '@iconify/types': 1.0.12
-      debug: 4.3.3
+      '@iconify/types': 1.0.13
+      debug: 4.3.4
       kolorist: 1.5.1
       local-pkg: 0.4.1
     transitivePeerDependencies:
@@ -6751,7 +6712,7 @@ packages:
     engines: {node: '>=10.3.0'}
     dependencies:
       '@ionic/utils-terminal': 2.3.1
-      debug: 4.3.3
+      debug: 4.3.4
       tslib: 2.3.1
     transitivePeerDependencies:
       - supports-color
@@ -6761,7 +6722,7 @@ packages:
     resolution: {integrity: sha512-HD72a71IQVBmQckDwmA8RxNVMTbxnaLbgFOl+dO5tbvW9CkkSFCv41h6fUuNsSEVgngfkn0i98HDuZC8mk+lTA==}
     engines: {node: '>=10.3.0'}
     dependencies:
-      debug: 4.3.3
+      debug: 4.3.4
       tslib: 2.3.1
     transitivePeerDependencies:
       - supports-color
@@ -6771,7 +6732,7 @@ packages:
     resolution: {integrity: sha512-a41bY2dHqWSEQQ/80CpbXSs8McyiCFf2DnIWWLukrhYWf46h4qi6M/8dxcMKrofRiqI/3F+cL3S2mOm9Zz/o2Q==}
     engines: {node: '>=10.3.0'}
     dependencies:
-      debug: 4.3.3
+      debug: 4.3.4
       fs-extra: 9.1.0
       tslib: 2.3.1
     transitivePeerDependencies:
@@ -6782,7 +6743,7 @@ packages:
     resolution: {integrity: sha512-XnYNSwfewUqxq+yjER1hxTKggftpNjFLJH0s37jcrNDwbzmbpFTQTVAp4ikNK4rd9DOebX/jbeZb8jfD86IYxw==}
     engines: {node: '>=10.3.0'}
     dependencies:
-      debug: 4.3.3
+      debug: 4.3.4
       tslib: 2.3.1
     transitivePeerDependencies:
       - supports-color
@@ -6794,7 +6755,7 @@ packages:
     dependencies:
       '@ionic/utils-object': 2.1.5
       '@ionic/utils-terminal': 2.3.1
-      debug: 4.3.3
+      debug: 4.3.4
       signal-exit: 3.0.7
       tree-kill: 1.2.2
       tslib: 2.3.1
@@ -6806,7 +6767,7 @@ packages:
     resolution: {integrity: sha512-hkm46uHvEC05X/8PHgdJi4l4zv9VQDELZTM+Kz69odtO9zZYfnt8DkfXHJqJ+PxmtiE5mk/ehJWLnn/XAczTUw==}
     engines: {node: '>=10.3.0'}
     dependencies:
-      debug: 4.3.3
+      debug: 4.3.4
       tslib: 2.3.1
     transitivePeerDependencies:
       - supports-color
@@ -6822,7 +6783,7 @@ packages:
       '@ionic/utils-stream': 3.1.5
       '@ionic/utils-terminal': 2.3.1
       cross-spawn: 7.0.3
-      debug: 4.3.3
+      debug: 4.3.4
       tslib: 2.3.1
     transitivePeerDependencies:
       - supports-color
@@ -6832,7 +6793,7 @@ packages:
     resolution: {integrity: sha512-cglsSd2AckI3Ldtdfczeq64vIIDjtPspV5QJtky8f8uIdxkeOIGeRV7bCj1+BEf1hyo+ZuggQxLviHnbMZhiRw==}
     engines: {node: '>=10.3.0'}
     dependencies:
-      debug: 4.3.3
+      debug: 4.3.4
       signal-exit: 3.0.7
       slice-ansi: 4.0.0
       string-width: 4.2.3
@@ -16826,6 +16787,18 @@ packages:
     dependencies:
       ms: 2.1.2
 
+  /debug/4.3.4:
+    resolution: {integrity: sha512-PRWFHuSU3eDtQJPvnNY7Jcket1j0t5OuOsFzPPzsekD52Zl8qUfFIPEiswXqIvHWGVHOgX+7G/vCNNhehwxfkQ==}
+    engines: {node: '>=6.0'}
+    peerDependencies:
+      supports-color: '*'
+    peerDependenciesMeta:
+      supports-color:
+        optional: true
+    dependencies:
+      ms: 2.1.2
+    dev: true
+
   /debuglog/1.0.1:
     resolution: {integrity: sha1-qiT/uaw9+aI1GDfPstJ5NgzXhJI=}
     dev: true
@@ -24331,7 +24304,7 @@ packages:
       '@ionic/utils-fs': 3.1.5
       '@ionic/utils-terminal': 2.3.1
       bplist-parser: 0.3.0
-      debug: 4.3.3
+      debug: 4.3.4
       elementtree: 0.1.7
       ini: 1.3.8
       plist: 3.0.4
@@ -30664,8 +30637,8 @@ packages:
       - webpack
     dev: true
 
-  /unplugin-icons/0.13.4_ce2b23ead77c94d86e7f68ea87dc0060:
-    resolution: {integrity: sha512-gyp5H4WADnXEE1uk8+NW6gnnALOlSpU8M5GwzNCYbUgjM4QudjcFbacHKuuqETk4VeSJyzM9Z2ufbuZFMuxvuQ==}
+  /unplugin-icons/0.14.0_ce2b23ead77c94d86e7f68ea87dc0060:
+    resolution: {integrity: sha512-VznBG8Jl9D4jtsAIY8hycyQZEDB8KVjnk19MzMlifLLs4QoIUPx8TILDoy6U46yDeYViqZu4hvb5fYI5OarekQ==}
     peerDependencies:
       '@svgr/core': '>=5.5.0'
       '@vue/compiler-sfc': ^3.0.2
@@ -30683,12 +30656,12 @@ packages:
     dependencies:
       '@antfu/install-pkg': 0.1.0
       '@antfu/utils': 0.5.0
-      '@iconify/utils': 1.0.23
+      '@iconify/utils': 1.0.26
       '@vue/compiler-sfc': 3.2.31
-      debug: 4.3.3
+      debug: 4.3.4
       kolorist: 1.5.1
       local-pkg: 0.4.1
-      unplugin: 0.4.0_rollup@2.70.1+vite@2.8.6
+      unplugin: 0.5.2_rollup@2.70.1+vite@2.8.6
     transitivePeerDependencies:
       - esbuild
       - rollup
@@ -30749,6 +30722,30 @@ packages:
       chokidar: 3.5.3
       rollup: 2.70.1
       vite: 2.8.6
+      webpack-virtual-modules: 0.4.3
+    dev: true
+
+  /unplugin/0.5.2_rollup@2.70.1+vite@2.8.6:
+    resolution: {integrity: sha512-3SPYtus/56cxyD4jfjrnqCvb6jPxvdqJNaRXnEaG2BhNEMaoygu/39AG+LwKmiIUzj4XHyitcfZ7scGlWfEigA==}
+    peerDependencies:
+      esbuild: '>=0.13'
+      rollup: ^2.50.0
+      vite: ^2.3.0
+      webpack: 4 || 5
+    peerDependenciesMeta:
+      esbuild:
+        optional: true
+      rollup:
+        optional: true
+      vite:
+        optional: true
+      webpack:
+        optional: true
+    dependencies:
+      chokidar: 3.5.3
+      rollup: 2.70.1
+      vite: 2.8.6
+      webpack-sources: 3.2.3
       webpack-virtual-modules: 0.4.3
     dev: true
 
