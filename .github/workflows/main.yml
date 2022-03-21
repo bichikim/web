@@ -22,7 +22,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Cache pnpm modules
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ~/.pnpm-store
           key: ${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
@@ -30,7 +30,7 @@ jobs:
             ${{ runner.os }}-    
 
       - name: Use Libraies Cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         id: libraies-cache
         with:
           path: 'packages/*/lib'
@@ -66,7 +66,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Cache pnpm modules
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ~/.pnpm-store
           key: ${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
@@ -117,7 +117,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Cache pnpm modules
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ~/.pnpm-store
           key: ${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
