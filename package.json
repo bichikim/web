@@ -69,7 +69,7 @@
     "@storybook/builder-webpack5": "6.4.19",
     "@storybook/jest": "0.0.10",
     "@storybook/manager-webpack5": "6.4.19",
-    "@storybook/storybook-deployer": "2.8.10",
+    "@storybook/storybook-deployer": "2.8.11",
     "@storybook/testing-library": "0.0.9",
     "@storybook/vue3": "6.4.19",
     "@testing-library/dom": "8.11.3",

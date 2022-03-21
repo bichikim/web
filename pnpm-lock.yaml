@@ -32,7 +32,7 @@ importers:
       '@storybook/builder-webpack5': 6.4.19
       '@storybook/jest': 0.0.10
       '@storybook/manager-webpack5': 6.4.19
-      '@storybook/storybook-deployer': 2.8.10
+      '@storybook/storybook-deployer': 2.8.11
       '@storybook/testing-library': 0.0.9
       '@storybook/vue3': 6.4.19
       '@testing-library/dom': 8.11.3
@@ -109,7 +109,7 @@ importers:
       '@storybook/builder-webpack5': 6.4.19_864c49e6e3c5d08eb4b2e8ff38df6615
       '@storybook/jest': 0.0.10
       '@storybook/manager-webpack5': 6.4.19_864c49e6e3c5d08eb4b2e8ff38df6615
-      '@storybook/storybook-deployer': 2.8.10
+      '@storybook/storybook-deployer': 2.8.11
       '@storybook/testing-library': 0.0.9
       '@storybook/vue3': 6.4.19_14bd25ae920de283bd85d1980c9e5ad4
       '@testing-library/dom': 8.11.3
@@ -371,46 +371,6 @@ importers:
       autoprefixer: 10.4.2
       typescript: 4.6.2
 
-  coong/client-next/dist/ssr:
-    specifiers:
-      '@apollo/client': 3.5.10
-      '@project-serum/sol-wallet-adapter': 0.2.6
-      '@urql/vue': 0.6.1
-      '@winter-love/hyper-components': 1.0.24-alpha.0
-      '@winter-love/utils': 1.0.23
-      compression: ^1.7.4
-      core-js: 3.21.1
-      express: ^4.17.3
-      graphql: 16.3.0
-      graphql-tag: 2.12.6
-      lodash: 4.17.21
-      node-html-parser: 5.3.3
-      quasar: 2.6.1
-      serialize-javascript: ^6.0.0
-      validator: 13.7.0
-      vare: 1.0.24-alpha.0
-      vue: 3.2.31
-      vue-router: 4.0.14
-    dependencies:
-      '@apollo/client': 3.5.10_graphql@16.3.0
-      '@project-serum/sol-wallet-adapter': 0.2.6
-      '@urql/vue': 0.6.1_graphql@16.3.0+vue@3.2.31
-      '@winter-love/hyper-components': link:../../../../packages/hyper-components
-      '@winter-love/utils': link:../../../../packages/utils
-      compression: 1.7.4
-      core-js: 3.21.1
-      express: 4.17.3
-      graphql: 16.3.0
-      graphql-tag: 2.12.6_graphql@16.3.0
-      lodash: 4.17.21
-      node-html-parser: 5.3.3
-      quasar: 2.6.1
-      serialize-javascript: 6.0.0
-      validator: 13.7.0
-      vare: link:../../../../packages/vare
-      vue: 3.2.31
-      vue-router: 4.0.14_vue@3.2.31
-
   coong/client-react-18:
     specifiers:
       '@capacitor/cli': 3.4.3
@@ -602,9 +562,6 @@ importers:
       vite-plugin-md: 0.11.9_vite@2.8.6
       vite-plugin-pwa: 0.11.13_vite@2.8.6
       vite-plugin-solid: 2.2.6
-
-  coong/client/dist/server:
-    specifiers: {}
 
   coong/firebase:
     specifiers:
@@ -11445,8 +11402,8 @@ packages:
       util-deprecate: 1.0.2
     dev: true
 
-  /@storybook/storybook-deployer/2.8.10:
-    resolution: {integrity: sha512-2uleH0AFuI98sdTkbyHt1BgPa0kmLxhC3zwfwtacE8FB+2ffdRdqBlp6GYDZ7CZ+R4B4XuPYhsgUKWkB+zngyQ==}
+  /@storybook/storybook-deployer/2.8.11:
+    resolution: {integrity: sha512-0jaMvMzu1F0TwBSxWm+cpeybB/TSaeepHXDCf7eYilRw51Ijtq5XiwnOTNf1LoXmdeEMLkRnflfj2JWjeQYp/Q==}
     hasBin: true
     dependencies:
       git-url-parse: 11.6.0
