@@ -10,7 +10,6 @@
     "up:localdockers": "docker-compose up -d"
   },
   "dependencies": {
-    "graphql": "15.8.0",
     "@graphql-ts/extend": "0.4.1",
     "@keystone-6/auth": "1.0.2",
     "@keystone-6/core": "1.0.1",
@@ -21,12 +20,13 @@
     "@winter-love/utils": "^1.0.23",
     "bs58": "5.0.0",
     "dotenv-cli": "5.0.0",
+    "graphql": "15.8.0",
     "jsonwebtoken": "^8.5.1",
+    "lodash": "^4.17.21",
     "react": "17.0.2",
     "react-dom": "17.0.2",
     "tweetnacl": "1.0.3",
     "typescript": "4.6.2",
-    "lodash": "^4.17.21",
     "uuid": "8.3.2"
   },
   "devDependencies": {

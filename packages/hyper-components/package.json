@@ -37,20 +37,20 @@
   "scripts": {
     "build": "tsup-node --dts --minify",
     "dev": "tsup-node --watch",
-    "prepare": "tsup-node"
+    "prepare": "tsup-node --dts"
   },
   "dependencies": {
-    "quasar": "^2.6.0",
     "@stitches/core": "1.2.7",
     "@winter-love/stitches": "^1.0.24-alpha.0",
     "@winter-love/utils": "^1.0.23",
     "clsx": "^1.1.1",
     "color": "^4.2.0",
+    "quasar": "^2.6.0",
     "vue-demi": "^0.12.1"
   },
   "devDependencies": {
-    "csstype": "3.0.11",
     "@vue/server-renderer": "^3.2.31",
+    "csstype": "3.0.11",
     "vue": "latest"
   },
   "publishConfig": {

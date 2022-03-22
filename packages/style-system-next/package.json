@@ -25,9 +25,6 @@
     },
     "./*": "./*"
   },
-  "publishConfig": {
-    "access": "public"
-  },
   "main": "lib/index.js",
   "jsdelivr": "lib/iife/index.js",
   "unpkg": "lib/iife/index.js",
@@ -40,7 +37,7 @@
   "scripts": {
     "build": "tsup-node --dts --minify",
     "dev": "tsup-node --watch",
-    "prepare": "tsup-node"
+    "prepare": "tsup-node --dts"
   },
   "dependencies": {
     "@winter-love/utils": "^1.0.23",
@@ -52,6 +49,9 @@
     "@types/styled-system__css": "5.0.16",
     "@winter-love/emotion": "^1.0.24-alpha.0",
     "csstype": "3.0.11"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "gitHead": "2fb93aea9a5a38a7778495106787001ffe0d25f6",
   "tsup": {

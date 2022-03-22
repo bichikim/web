@@ -1,6 +1,6 @@
 import {computed, toRefs} from 'vue-demi'
 import {createStore, provideStoreManager, StoreManager, useStore} from '../'
-import {defineComponent, h, ref} from 'vue'
+import {defineComponent, h, ref} from 'vue-demi'
 import {mount} from '@vue/test-utils'
 
 describe('store', () => {
@@ -245,7 +245,7 @@ describe('store', () => {
       props: {
         name: {default: 'name', type: String},
       },
-      setup: (props, root) => {
+      setup: (props, {root}) => {
         const barName = computed(() => root.bar?.name)
         const {name} = toRefs(props)
         const count = ref(0)

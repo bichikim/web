@@ -1,7 +1,7 @@
 import {flushPromises} from '@vue/test-utils'
 import {mountUse} from '@winter-love/test-use'
 import {getWindow} from '@winter-love/utils'
-import {ref} from 'vue'
+import {ref} from 'vue-demi'
 import {onAnimationRepeater} from '../'
 
 jest.mock('@winter-love/utils', () => {

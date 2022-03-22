@@ -39,12 +39,12 @@ jobs:
         run: pnpm install
 
       - name: Build
-        run: pnpm run build:@coong/client
+        run: pnpm run build:docs
 
-      - name: Archive Production Artifact
-        uses: actions/upload-artifact@master
+      - name: deploy
+        uses: jsmrcaga/action-netlify-deploy@v1.1.0
         with:
-          retention-days: 1
-          name: dist
-          path: |
-            docs/.vitepress/dist
+          build_directory: docs/winter-love/.vitepress/dist
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+          NETLIFY_DEPLOY_TO_PROD: false

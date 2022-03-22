@@ -60,7 +60,7 @@ export const createVareStore = () => {
     install: (app: App) => {
       app.provide(STORE_CONTEXT, manager)
       // localManager only for the devtool
-      if (__DEV__) {
+      if (process.env.NODE_ENV !== 'production') {
         app.provide(STORE_LOCAL_CONTEXT, localManager)
       }
     },
@@ -71,7 +71,7 @@ export const createVareStore = () => {
 
 export const provideStoreManager = (manager?: StoreManager, localManager?: StoreManager) => {
   provide(STORE_CONTEXT, manager ?? new StoreManager())
-  if (__DEV__) {
+  if (process.env.NODE_ENV !== 'production') {
     provide(STORE_LOCAL_CONTEXT, localManager)
   }
 }
@@ -184,7 +184,7 @@ export function createStore<T extends Record<string, any>,
 
   return (props?: UnwrapNestedRefs<P>): T => {
     // running props validator
-    if (__DEV__) {
+    if (process.env.NODE_ENV !== 'production') {
       const result = propsValidator(props ?? {}, propsOptions)
       if (result !== true) {
         console.warn(result)

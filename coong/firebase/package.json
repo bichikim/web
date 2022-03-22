@@ -3,8 +3,8 @@
   "version": "1.0.23",
   "private": true,
   "scripts": {
-    "test:firestore-rules": "jest --detectOpenHandles",
-    "emulators": "firebase emulators:exec --only firestore jest"
+    "emulators": "firebase emulators:exec --only firestore jest",
+    "test:firestore-rules": "jest --detectOpenHandles"
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "2.0.2",

@@ -26,24 +26,24 @@
   "files": [
     "lib/*"
   ],
-  "publishConfig": {
-    "access": "public"
-  },
   "scripts": {
     "build": "tsup-node --dts --minify",
     "dev": "tsup-node --watch",
-    "prepare": "tsup-node"
+    "prepare": "tsup-node --dts"
   },
   "dependencies": {
+    "@types/lodash": "^4.14.179",
     "fast-json-stable-stringify": "^2.1.0",
     "js-cookie": "^3.0.1",
-    "@types/lodash": "^4.14.179",
     "micro-memoize": "^4.0.9",
     "react-fast-compare": "^3.2.0"
   },
   "devDependencies": {
     "@types/js-cookie": "3.0.1",
     "vue-demi": "latest"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "gitHead": "5aa1e8493f474f75436be59c2e9b0df86550235e",
   "tsup": {

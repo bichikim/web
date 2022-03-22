@@ -1,4 +1,4 @@
-import {ComponentPublicInstance, DirectiveBinding, InjectionKey} from 'vue'
+import {ComponentPublicInstance, DirectiveBinding, InjectionKey} from 'vue-demi'
 
 export const useInstanceProvide = <T>(
   key: string | symbol | InjectionKey<T>,

@@ -28,13 +28,10 @@
   "files": [
     "lib/*"
   ],
-  "publishConfig": {
-    "access": "public"
-  },
   "scripts": {
     "build": "tsup-node --dts --minify",
     "dev": "tsup-node --watch",
-    "prepare": "tsup-node"
+    "prepare": "tsup-node --dts"
   },
   "dependencies": {
     "@stitches/core": "^1.2.7",
@@ -45,6 +42,9 @@
     "@babel/core": "7.17.8",
     "@vue/server-renderer": "latest",
     "vue": "latest"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "gitHead": "66c79bd0d5c23a437b8170f758ff58e4496afb58",
   "tsup": {

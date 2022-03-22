@@ -27,13 +27,10 @@
   "files": [
     "lib/*"
   ],
-  "publishConfig": {
-    "access": "public"
-  },
   "scripts": {
     "build": "tsup-node --dts --minify",
     "dev": "tsup-node --watch",
-    "prepare": "tsup-node"
+    "prepare": "tsup-node --dts"
   },
   "dependencies": {
     "@stitches/core": "^1.2.7",
@@ -43,6 +40,9 @@
   "devDependencies": {
     "@babel/core": "7.17.8",
     "esbuild-plugin-solid": "0.4.2"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "gitHead": "d0d0964c0cfbd66a2c92db522823f9b7bd5c2590"
 }

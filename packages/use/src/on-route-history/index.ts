@@ -1,4 +1,4 @@
-import {ref, watch} from 'vue'
+import {ref, watch} from 'vue-demi'
 import {isSSR} from '@winter-love/utils'
 import {useElementEvent} from '../element-event'
 

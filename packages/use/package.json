@@ -23,9 +23,6 @@
     },
     "./*": "./*"
   },
-  "publishConfig": {
-    "access": "public"
-  },
   "main": "lib/index.js",
   "jsdelivr": "lib/index.global.js",
   "unpkg": "lib/index.global.js",
@@ -38,7 +35,7 @@
   "scripts": {
     "build": "tsup-node --dts --minify",
     "dev": "tsup-node --watch",
-    "prepare": "tsup-node"
+    "prepare": "tsup-node --dts"
   },
   "dependencies": {
     "@winter-love/utils": "^1.0.23",
@@ -50,9 +47,12 @@
   "devDependencies": {
     "@types/debounce": "1.2.1",
     "@types/sinon": "10.0.11",
-    "@vue/test-utils": "2.0.0-rc.17",
     "@vue/server-renderer": "^3.2.31",
+    "@vue/test-utils": "2.0.0-rc.17",
     "vue": "latest"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "gitHead": "66c79bd0d5c23a437b8170f758ff58e4496afb58",
   "tsup": {

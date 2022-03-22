@@ -1,4 +1,4 @@
-import {ref, watch} from 'vue'
+import {ref, watch} from 'vue-demi'
 import {flushPromises} from '@vue/test-utils'
 
 describe('vue ref', () => {

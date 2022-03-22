@@ -1,6 +1,6 @@
 import {storageRef} from '../'
 import {flushPromises} from '@vue/test-utils'
-import {ref} from 'vue'
+import {ref} from 'vue-demi'
 
 describe('storageRef', () => {
   it('should change localStorage by ref', async () => {

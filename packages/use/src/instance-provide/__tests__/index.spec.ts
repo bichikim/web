@@ -5,7 +5,7 @@ import {
   InjectionKey,
   provide,
   withDirectives,
-} from 'vue'
+} from 'vue-demi'
 import {useDirectiveProvide} from '../'
 import {mount} from '@vue/test-utils'
 

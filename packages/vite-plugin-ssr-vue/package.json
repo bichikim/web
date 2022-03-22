@@ -42,7 +42,7 @@
   "scripts": {
     "build": "tsup-node --dts --minify",
     "dev": "tsup-node --watch",
-    "prepare": "tsup-node"
+    "prepare": "tsup-node --dts"
   },
   "dependencies": {
     "@vue/server-renderer": "^3.2.31",
@@ -50,8 +50,7 @@
     "vite": "^2.8.4",
     "vue": "latest"
   },
-  "devDependencies": {
-  },
+  "devDependencies": {},
   "publishConfig": {
     "access": "public"
   },
