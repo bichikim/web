@@ -73,8 +73,6 @@ export const useSolana = (providerUrl?: MayRef<unknown>) => {
   }
 
   const connect = async () => {
-    initPromise.value = initWallet()
-    await initPromise.value
     const wallet = walletRef.value
     if (wallet) {
       return wallet.connect()
@@ -105,6 +103,7 @@ export const useSolana = (providerUrl?: MayRef<unknown>) => {
   }
 
   return {
+    init: initWallet,
     connect,
     connected: readonly(connectedRef),
     disconnect,

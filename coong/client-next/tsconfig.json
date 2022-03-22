@@ -1,6 +1,7 @@
 {
   "extends": "@quasar/app-vite/tsconfig-preset",
   "compilerOptions": {
+    "jsx": "preserve",
     "types": ["@types/jest"],
     "target": "ES2017",
     "baseUrl": ".",

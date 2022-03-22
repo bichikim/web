@@ -1,0 +1,14 @@
+mutation authenticateUserWithCryptoSignature($input: AuthenticateUserWithCryptoSignatureInput!) {
+  authenticateUserWithCryptoSignature(input: $input) {
+    item {
+      name
+      id
+      email
+      postsCount
+      postLikesCount
+      followingCount
+      followerCount
+    },
+    sessionToken
+  }
+}

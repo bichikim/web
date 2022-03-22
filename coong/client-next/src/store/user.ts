@@ -1,44 +1,32 @@
 import {createStore} from 'vare'
-import {useCryptoSignMessageQuery} from 'src/graphql'
-import {computed, reactive, ref, toRefs, UnwrapNestedRefs} from 'vue'
-
-interface UseCryptoProps {
-  email?: string | number | null
-}
-
-const useCrypto = (props: UnwrapNestedRefs<UseCryptoProps>) => {
-  const {email} = toRefs(props)
-  const cryptoSignMessageVariables = computed(() => {
-    return {
-      input: {
-        email: email?.value,
-      },
-    }
-  })
-  const cryptoSignMessage = useCryptoSignMessageQuery({
-    pause: true,
-    variables: cryptoSignMessageVariables as any,
-  })
-  const getCryptoSignMessage = () => {
-    return cryptoSignMessage.executeQuery({})
-  }
-
-  return {
-    cryptoSignMessage: cryptoSignMessage.data,
-    getCryptoSignMessage,
-  }
-}
+import {reactive, ref} from 'vue'
+import {useCryptoSign} from './modules/crypto-sign'
 
 export const useUser = createStore({
   name: 'user',
   setup() {
     const email = ref<string | number | null>()
-    const {cryptoSignMessage, getCryptoSignMessage} = useCrypto(reactive({email}))
+    const {signInWithWallet: _signInWithWallet} = useCryptoSign(reactive({email}))
+    const info = ref()
+    const sessionTokenRef = ref()
+
+    const signInWithWallet = async () => {
+      const result = await _signInWithWallet()
+      if (result) {
+        const {item, sessionToken} = result
+        if (item) {
+          info.value = item
+        }
+        if (sessionToken) {
+          sessionTokenRef.value = sessionToken
+        }
+      }
+    }
 
     return {
-      cryptoSignMessage,
       email,
-      getCryptoSignMessage,
+      sessionToken: sessionTokenRef,
+      signInWithWallet,
     }
   },
 })

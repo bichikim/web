@@ -19,14 +19,14 @@ const getPublicKey = (kind: string, publicKey: string) => {
   return `${kind}:${publicKey}`
 }
 
-export const authenticateUserWithBlockchainWallet = (base: BaseSchemaMeta, extendContext: ExtendContext): Extension => {
+export const authenticateUserWithCryptoSignature = (base: BaseSchemaMeta, extendContext: ExtendContext): Extension => {
 
   const result = graphql.object<SignInWithSolanaResultType>()({
     fields: {
       item: graphql.field({type: base.object(AUTH_LIST_KEY)}),
       sessionToken: graphql.field({type: graphql.String}),
     },
-    name: 'AuthenticateUserWithSolanaResult',
+    name: 'AuthenticateUserWithCryptoSignatureResult',
   })
 
   const input = graphql.inputObject({
@@ -35,12 +35,12 @@ export const authenticateUserWithBlockchainWallet = (base: BaseSchemaMeta, exten
       publicKey: graphql.arg({type: graphql.nonNull(graphql.String)}),
       signature: graphql.arg({type: graphql.nonNull(graphql.String)}),
     },
-    name: 'AuthenticateUserWithBlockchainWalletInput',
+    name: 'AuthenticateUserWithCryptoSignatureInput',
   })
 
   return {
     mutation: {
-      authenticateUserWithBlockchainWallet: graphql.field({
+      authenticateUserWithCryptoSignature: graphql.field({
         args: {
           input: graphql.arg({type: graphql.nonNull(input)}),
         },

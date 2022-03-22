@@ -538,9 +538,9 @@ type Mutation {
   createAuthenticateUserWithEmail(
     input: CreateAuthenticateUserWithEmailInput
   ): CreateAuthenticateUserWithEmailResult
-  authenticateUserWithBlockchainWallet(
-    input: AuthenticateUserWithBlockchainWalletInput!
-  ): AuthenticateUserWithSolanaResult
+  authenticateUserWithCryptoSignature(
+    input: AuthenticateUserWithCryptoSignatureInput!
+  ): AuthenticateUserWithCryptoSignatureResult
 }
 
 type CreateAuthenticateUserWithEmailResult {
@@ -555,12 +555,12 @@ input CreateAuthenticateUserWithEmailInput {
   password: String
 }
 
-type AuthenticateUserWithSolanaResult {
+type AuthenticateUserWithCryptoSignatureResult {
   item: User
   sessionToken: String
 }
 
-input AuthenticateUserWithBlockchainWalletInput {
+input AuthenticateUserWithCryptoSignatureInput {
   message: String!
   publicKey: String!
   signature: String!

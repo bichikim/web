@@ -31,14 +31,14 @@ export type AuthenticateCryptoSignMessageInput = {
   email: Scalars['String'];
 };
 
-export type AuthenticateUserWithBlockchainWalletInput = {
+export type AuthenticateUserWithCryptoSignatureInput = {
   message: Scalars['String'];
   publicKey: Scalars['String'];
   signature: Scalars['String'];
 };
 
-export type AuthenticateUserWithSolanaResult = {
-  __typename?: 'AuthenticateUserWithSolanaResult';
+export type AuthenticateUserWithCryptoSignatureResult = {
+  __typename?: 'AuthenticateUserWithCryptoSignatureResult';
   item?: Maybe<User>;
   sessionToken?: Maybe<Scalars['String']>;
 };
@@ -243,7 +243,7 @@ export enum MagicLinkRedemptionErrorCode {
 
 export type Mutation = {
   __typename?: 'Mutation';
-  authenticateUserWithBlockchainWallet?: Maybe<AuthenticateUserWithSolanaResult>;
+  authenticateUserWithCryptoSignature?: Maybe<AuthenticateUserWithCryptoSignatureResult>;
   authenticateUserWithPassword?: Maybe<UserAuthenticationWithPasswordResult>;
   createAuthenticateUserWithEmail?: Maybe<CreateAuthenticateUserWithEmailResult>;
   createInitialUser: UserAuthenticationWithPasswordSuccess;
@@ -273,8 +273,8 @@ export type Mutation = {
 };
 
 
-export type MutationAuthenticateUserWithBlockchainWalletArgs = {
-  input: AuthenticateUserWithBlockchainWalletInput;
+export type MutationAuthenticateUserWithCryptoSignatureArgs = {
+  input: AuthenticateUserWithCryptoSignatureInput;
 };
 
 
@@ -1051,6 +1051,13 @@ export type WebAuthChallengeResult = {
   user: UserEntity;
 };
 
+export type AuthenticateUserWithCryptoSignatureMutationVariables = Exact<{
+  input: AuthenticateUserWithCryptoSignatureInput;
+}>;
+
+
+export type AuthenticateUserWithCryptoSignatureMutation = { __typename?: 'Mutation', authenticateUserWithCryptoSignature?: { __typename?: 'AuthenticateUserWithCryptoSignatureResult', sessionToken?: string | null, item?: { __typename?: 'User', name?: string | null, id: string, email?: string | null, postsCount?: number | null, postLikesCount?: number | null, followingCount?: number | null, followerCount?: number | null } | null } | null };
+
 export type CryptoSignMessageQueryVariables = Exact<{
   input: AuthenticateCryptoSignMessageInput;
 }>;
@@ -1059,6 +1066,26 @@ export type CryptoSignMessageQueryVariables = Exact<{
 export type CryptoSignMessageQuery = { __typename?: 'Query', authenticateCryptoSignMessage?: string | null };
 
 
+export const AuthenticateUserWithCryptoSignatureDocument = gql`
+    mutation authenticateUserWithCryptoSignature($input: AuthenticateUserWithCryptoSignatureInput!) {
+  authenticateUserWithCryptoSignature(input: $input) {
+    item {
+      name
+      id
+      email
+      postsCount
+      postLikesCount
+      followingCount
+      followerCount
+    }
+    sessionToken
+  }
+}
+    `;
+
+export function useAuthenticateUserWithCryptoSignatureMutation() {
+  return Urql.useMutation<AuthenticateUserWithCryptoSignatureMutation, AuthenticateUserWithCryptoSignatureMutationVariables>(AuthenticateUserWithCryptoSignatureDocument);
+};
 export const CryptoSignMessageDocument = gql`
     query cryptoSignMessage($input: AuthenticateCryptoSignMessageInput!) {
   authenticateCryptoSignMessage(input: $input)
@@ -1068,8 +1095,8 @@ export const CryptoSignMessageDocument = gql`
 export function useCryptoSignMessageQuery(options: Omit<Urql.UseQueryArgs<never, CryptoSignMessageQueryVariables>, 'query'> = {}) {
   return Urql.useQuery<CryptoSignMessageQuery>({ query: CryptoSignMessageDocument, ...options });
 };
-export type AuthenticateUserWithSolanaResultKeySpecifier = ('item' | 'sessionToken' | AuthenticateUserWithSolanaResultKeySpecifier)[];
-export type AuthenticateUserWithSolanaResultFieldPolicy = {
+export type AuthenticateUserWithCryptoSignatureResultKeySpecifier = ('item' | 'sessionToken' | AuthenticateUserWithCryptoSignatureResultKeySpecifier)[];
+export type AuthenticateUserWithCryptoSignatureResultFieldPolicy = {
 	item?: FieldPolicy<any> | FieldReadFunction<any>,
 	sessionToken?: FieldPolicy<any> | FieldReadFunction<any>
 };
@@ -1170,9 +1197,9 @@ export type LocalImageFieldOutputFieldPolicy = {
 	url?: FieldPolicy<any> | FieldReadFunction<any>,
 	width?: FieldPolicy<any> | FieldReadFunction<any>
 };
-export type MutationKeySpecifier = ('authenticateUserWithBlockchainWallet' | 'authenticateUserWithPassword' | 'createAuthenticateUserWithEmail' | 'createInitialUser' | 'createPost' | 'createPosts' | 'createTag' | 'createTags' | 'createUser' | 'createUsers' | 'deletePost' | 'deletePosts' | 'deleteTag' | 'deleteTags' | 'deleteUser' | 'deleteUsers' | 'endSession' | 'redeemUserMagicAuthToken' | 'redeemUserPasswordResetToken' | 'sendUserMagicAuthLink' | 'sendUserPasswordResetLink' | 'updatePost' | 'updatePosts' | 'updateTag' | 'updateTags' | 'updateUser' | 'updateUsers' | MutationKeySpecifier)[];
+export type MutationKeySpecifier = ('authenticateUserWithCryptoSignature' | 'authenticateUserWithPassword' | 'createAuthenticateUserWithEmail' | 'createInitialUser' | 'createPost' | 'createPosts' | 'createTag' | 'createTags' | 'createUser' | 'createUsers' | 'deletePost' | 'deletePosts' | 'deleteTag' | 'deleteTags' | 'deleteUser' | 'deleteUsers' | 'endSession' | 'redeemUserMagicAuthToken' | 'redeemUserPasswordResetToken' | 'sendUserMagicAuthLink' | 'sendUserPasswordResetLink' | 'updatePost' | 'updatePosts' | 'updateTag' | 'updateTags' | 'updateUser' | 'updateUsers' | MutationKeySpecifier)[];
 export type MutationFieldPolicy = {
-	authenticateUserWithBlockchainWallet?: FieldPolicy<any> | FieldReadFunction<any>,
+	authenticateUserWithCryptoSignature?: FieldPolicy<any> | FieldReadFunction<any>,
 	authenticateUserWithPassword?: FieldPolicy<any> | FieldReadFunction<any>,
 	createAuthenticateUserWithEmail?: FieldPolicy<any> | FieldReadFunction<any>,
 	createInitialUser?: FieldPolicy<any> | FieldReadFunction<any>,
@@ -1319,9 +1346,9 @@ export type WebAuthChallengeResultFieldPolicy = {
 	user?: FieldPolicy<any> | FieldReadFunction<any>
 };
 export type StrictTypedTypePolicies = {
-	AuthenticateUserWithSolanaResult?: Omit<TypePolicy, "fields" | "keyFields"> & {
-		keyFields?: false | AuthenticateUserWithSolanaResultKeySpecifier | (() => undefined | AuthenticateUserWithSolanaResultKeySpecifier),
-		fields?: AuthenticateUserWithSolanaResultFieldPolicy,
+	AuthenticateUserWithCryptoSignatureResult?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | AuthenticateUserWithCryptoSignatureResultKeySpecifier | (() => undefined | AuthenticateUserWithCryptoSignatureResultKeySpecifier),
+		fields?: AuthenticateUserWithCryptoSignatureResultFieldPolicy,
 	},
 	CloudImageFieldOutput?: Omit<TypePolicy, "fields" | "keyFields"> & {
 		keyFields?: false | CloudImageFieldOutputKeySpecifier | (() => undefined | CloudImageFieldOutputKeySpecifier),
