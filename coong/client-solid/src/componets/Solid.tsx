@@ -2,7 +2,7 @@ import {stitches} from '../stitches'
 
 const globalStyle = stitches.globalCss({
   body: {
-    backgroundColor: 'blue',
+    // backgroundColor: 'blue',
   },
 })
 

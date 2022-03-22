@@ -2,6 +2,8 @@
   "extends": "../../tsconfig.json",
   "compileOnSave": false,
   "compilerOptions": {
+    "jsx": "preserve",
+    "jsxImportSource": "solid-js",
     "declaration": true,
     "outDir": "lib",
     "target": "es2015",

@@ -1,6 +1,4 @@
-import {vueI18n} from '@intlify/vite-plugin-vue-i18n'
 import * as path from 'path'
-import {Quasar} from 'quasar'
 import {defineConfig} from 'vite'
 import icons from 'unplugin-icons/vite'
 import markdown from 'vite-plugin-md'
@@ -25,25 +23,13 @@ export default defineConfig(() => {
     },
     define: {
       __DEV__: JSON.stringify('import.meta.env.DEV'),
-      __QUASAR_SSR__: JSON.stringify('import.meta.env.SSR'),
-      __QUASAR_SSR_CLIENT__: JSON.stringify('import.meta.env.SSR && window !== undefined'),
-      __QUASAR_SSR_PWA__: JSON.stringify(
-        'navigator.standalone || window.matchMedia("(display-mode: standalone)").matches',
-      ),
-      __QUASAR_SSR_SERVER__: JSON.stringify('import.meta.env.SSR'),
-      __QUASAR_VERSION__: JSON.stringify(Quasar.version),
       'process.env.NODE_ENV': JSON.stringify('import.meta.env.MODE'),
     },
     optimizeDeps: {
       exclude: [
-        'vue-demi',
-        '@quasar/app',
-        'quasar',
         'vite',
       ],
       include: [
-        'vue',
-        'vue-router',
       ],
     },
 
@@ -111,11 +97,6 @@ export default defineConfig(() => {
           theme_color: '#ffffff',
         },
         registerType: 'autoUpdate',
-      }),
-
-      // https://github.com/intlify/vite-plugin-vue-i18n
-      vueI18n({
-        include: [path.resolve(__dirname, 'locales/**')],
       }),
     ],
 
