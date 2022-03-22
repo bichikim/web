@@ -8,7 +8,7 @@ on:
 
 env:
   NODE_VERSION: 16
-
+  PNPM_VERSION: latest
 jobs:
   build-docs:
     name: Build Client
