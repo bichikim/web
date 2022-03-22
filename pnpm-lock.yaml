@@ -235,7 +235,7 @@ importers:
       vare: ^1.0.24-alpha.0
       vite: 2.8.6
       vite-plugin-imp: 2.1.6
-      vite-plugin-md: 0.11.9
+      vite-plugin-md: 0.12.0
       vite-plugin-pwa: 0.11.13
       vite-plugin-ssr-vue: ^1.0.23
       vue: 3.2.31
@@ -307,7 +307,7 @@ importers:
       unplugin-vue-components: 0.18.3_26815477f7e405a320731e3af21dbb19
       vite: 2.8.6
       vite-plugin-imp: 2.1.6_vite@2.8.6
-      vite-plugin-md: 0.11.9_vite@2.8.6
+      vite-plugin-md: 0.12.0_vite@2.8.6
       vite-plugin-pwa: 0.11.13_vite@2.8.6
 
   coong/client-next:
@@ -416,7 +416,7 @@ importers:
       validator: 13.7.0
       vite: 2.8.6
       vite-plugin-imp: 2.1.6
-      vite-plugin-md: 0.11.9
+      vite-plugin-md: 0.12.0
       vite-plugin-pwa: 0.11.13
     dependencies:
       '@winter-love/utils': link:../../packages/utils
@@ -463,7 +463,7 @@ importers:
       unplugin-icons: 0.14.0_ce2b23ead77c94d86e7f68ea87dc0060
       vite: 2.8.6
       vite-plugin-imp: 2.1.6_vite@2.8.6
-      vite-plugin-md: 0.11.9_vite@2.8.6
+      vite-plugin-md: 0.12.0_vite@2.8.6
       vite-plugin-pwa: 0.11.13_vite@2.8.6
 
   coong/client-solid:
@@ -511,7 +511,7 @@ importers:
       validator: 13.7.0
       vite: 2.8.6
       vite-plugin-imp: 2.1.6
-      vite-plugin-md: 0.11.9
+      vite-plugin-md: 0.12.0
       vite-plugin-pwa: 0.11.13
       vite-plugin-solid: 2.2.6
     dependencies:
@@ -559,7 +559,7 @@ importers:
       unplugin-icons: 0.14.0_ce2b23ead77c94d86e7f68ea87dc0060
       vite: 2.8.6
       vite-plugin-imp: 2.1.6_vite@2.8.6
-      vite-plugin-md: 0.11.9_vite@2.8.6
+      vite-plugin-md: 0.12.0_vite@2.8.6
       vite-plugin-pwa: 0.11.13_vite@2.8.6
       vite-plugin-solid: 2.2.6
 
@@ -19662,6 +19662,10 @@ packages:
     resolution: {integrity: sha512-OqlwJq1BdpB83BZXTqI+dNcA6uYk6qk4u9Cgnt64Y+XS7dwdbp/mobx8S2KXf2AXH+scNmA/UVK3SEFHR3vHZA==}
     dev: false
 
+  /fp-ts/2.11.9:
+    resolution: {integrity: sha512-GhYlNKkCOfdjp71ocdtyaQGoqCswEoWDJLRr+2jClnBBq2dnSOtd6QxmJdALq8UhfqCyZZ0f0lxadU4OhwY9nw==}
+    dev: true
+
   /fraction.js/4.2.0:
     resolution: {integrity: sha512-MhLuK+2gUcnZe8ZHlaaINnQLl0xRIGRfcGk2yl8xoQAfHrSsL3rYu6FCmBdkdbhc9EPlwyGHewaRsvwRMJtAlA==}
 
@@ -23567,6 +23571,7 @@ packages:
 
   /markdown-it/12.3.2:
     resolution: {integrity: sha512-TchMembfxfNVpHkbtriWltGWc+m3xszaRD0CZup7GFFhzIgQqxIfn3eGj1yZpfuflzPvfkt611B2Q/Bsk1YnGg==}
+    hasBin: true
     dependencies:
       argparse: 2.0.1
       entities: 2.1.0
@@ -31156,14 +31161,16 @@ packages:
       - supports-color
     dev: true
 
-  /vite-plugin-md/0.11.9_vite@2.8.6:
-    resolution: {integrity: sha512-0uD2BPIct3FbEA1hAm56hlrBByEn542HTsS/FoWf33lJIgijVBDDV6FE12ud0SHS6sculITKliF2ntog2kiHmQ==}
+  /vite-plugin-md/0.12.0_vite@2.8.6:
+    resolution: {integrity: sha512-4jvqIU7ZU7ymiyBQiORz6KkoCQZfgliEXQw+F4trfztUbPOE3ERGyCz4OjL9GHRuD7I2hLd9q3kPljCMmoBLxg==}
     peerDependencies:
       vite: ^2.0.0
     dependencies:
       '@antfu/utils': 0.5.0
       '@rollup/pluginutils': 4.2.0
       '@types/markdown-it': 12.2.3
+      '@vue/runtime-core': 3.2.31
+      fp-ts: 2.11.9
       gray-matter: 4.0.3
       markdown-it: 12.3.2
       vite: 2.8.6
