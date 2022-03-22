@@ -32,7 +32,7 @@
   "scripts": {
     "build": "tsup-node --dts --minify",
     "dev": "tsup-node --watch",
-    "prepare": "tsup-node --dts"
+    "prepare": "tsup-node"
   },
   "dependencies": {
     "fast-json-stable-stringify": "^2.1.0",

@@ -34,7 +34,7 @@
   "scripts": {
     "build": "tsup-node --dts --minify",
     "dev": "tsup-node --watch",
-    "prepare": "tsup-node --dts"
+    "prepare": "tsup-node"
   },
   "dependencies": {
     "@winter-love/utils": "^1.0.23",

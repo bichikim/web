@@ -41,7 +41,7 @@
     "test-dev": "vite",
     "build": "tsup-node --dts --minify",
     "dev": "tsup-node --watch",
-    "prepare": "tsup-node --dts"
+    "prepare": "tsup-node"
   },
   "dependencies": {
     "@vue/devtools-api": "6.1.3",

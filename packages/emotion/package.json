@@ -31,7 +31,7 @@
   "scripts": {
     "build": "tsup-node --dts --minify",
     "dev": "tsup-node --watch",
-    "prepare": "tsup-node --dts"
+    "prepare": "tsup-node"
   },
   "dependencies": {
     "@emotion/css": "^11.7.1",

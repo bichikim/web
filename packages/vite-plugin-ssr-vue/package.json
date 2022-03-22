@@ -42,7 +42,7 @@
   "scripts": {
     "build": "tsup-node --dts --minify",
     "dev": "tsup-node --watch",
-    "prepare": "tsup-node --dts"
+    "prepare": "tsup-node"
   },
   "dependencies": {
     "@vue/server-renderer": "^3.2.31",
