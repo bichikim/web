@@ -86,7 +86,7 @@ importers:
       rollup-plugin-smart-asset: 2.1.2
       rollup-plugin-typescript2: 0.31.2
       sinon: 13.0.1
-      sort-package-json: 1.54.0
+      sort-package-json: 1.55.0
       storybook-builder-vite: 0.1.21
       ts-node: 10.7.0
       tsd: 0.19.1
@@ -163,7 +163,7 @@ importers:
       rollup-plugin-smart-asset: 2.1.2_rollup@2.70.1
       rollup-plugin-typescript2: 0.31.2_b5a791c1b14c813df1531d2b3337e8b0
       sinon: 13.0.1
-      sort-package-json: 1.54.0
+      sort-package-json: 1.55.0
       storybook-builder-vite: 0.1.21_typescript@4.6.2
       ts-node: 10.7.0_e79e62fe450383fd2d418267dc75e645
       tsd: 0.19.1
@@ -28700,8 +28700,8 @@ packages:
     resolution: {integrity: sha512-855pvK+VkU7PaKYPc+Jjnmt4EzejQHyhhF33q31qG8x7maDzkeFhAAThdCYay11CISO+qAMwjOBP+fPZe0IPyg==}
     dev: true
 
-  /sort-package-json/1.54.0:
-    resolution: {integrity: sha512-MA0nRiSfZ4/CNM/9rz70Hwq4PpvtBc3v532tzQSmoaLSdeBB3cCd488xmNruLL0fb/ZdbKlcaDDudwnrObbjBw==}
+  /sort-package-json/1.55.0:
+    resolution: {integrity: sha512-xhKvRD8WGbALjXQkVuk4/93Z/2NIO+5IzKamdMjN5kn3L+N+M9YWQssmM6GXlQr9v1F7PGWsOJEo1gvXOhM7Mg==}
     hasBin: true
     dependencies:
       detect-indent: 6.1.0
