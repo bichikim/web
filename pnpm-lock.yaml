@@ -189,7 +189,7 @@ importers:
       '@graphql-codegen/typescript-apollo-client-helpers': 2.1.15
       '@graphql-codegen/typescript-operations': 2.3.5
       '@graphql-codegen/typescript-vue-urql': 2.2.9
-      '@iconify/json': 2.1.18
+      '@iconify/json': 2.1.19
       '@intlify/vite-plugin-vue-i18n': 3.3.1
       '@namchee/vue-ztext': 1.0.0
       '@project-serum/sol-wallet-adapter': 0.2.6
@@ -288,7 +288,7 @@ importers:
       '@graphql-codegen/typescript-apollo-client-helpers': 2.1.15_graphql@16.3.0
       '@graphql-codegen/typescript-operations': 2.3.5_graphql@16.3.0
       '@graphql-codegen/typescript-vue-urql': 2.2.9_e20029557891e0afb887c44ec7f516f8
-      '@iconify/json': 2.1.18
+      '@iconify/json': 2.1.19
       '@intlify/vite-plugin-vue-i18n': 3.3.1_vite@2.8.6+vue-i18n@9.1.9
       '@types/lodash': 4.14.180
       '@types/node': 17.0.21
@@ -379,48 +379,6 @@ importers:
       autoprefixer: 10.4.2
       typescript: 4.6.2
 
-  coong/client-next/dist/ssr:
-    specifiers:
-      '@apollo/client': 3.5.10
-      '@project-serum/sol-wallet-adapter': 0.2.6
-      '@quasar/extras': 1.13.3
-      '@urql/vue': 0.6.1
-      '@winter-love/hyper-components': 1.0.24-alpha.0
-      '@winter-love/utils': 1.0.23
-      compression: ^1.7.4
-      core-js: 3.21.1
-      express: ^4.17.3
-      graphql: 16.3.0
-      graphql-tag: 2.12.6
-      lodash: 4.17.21
-      node-html-parser: 5.3.3
-      quasar: 2.6.1
-      serialize-javascript: ^6.0.0
-      validator: 13.7.0
-      vare: 1.0.24-alpha.0
-      vue: 3.2.31
-      vue-router: 4.0.14
-    dependencies:
-      '@apollo/client': 3.5.10_graphql@16.3.0
-      '@project-serum/sol-wallet-adapter': 0.2.6
-      '@quasar/extras': 1.13.3
-      '@urql/vue': 0.6.1_graphql@16.3.0+vue@3.2.31
-      '@winter-love/hyper-components': link:../../../../packages/hyper-components
-      '@winter-love/utils': link:../../../../packages/utils
-      compression: 1.7.4
-      core-js: 3.21.1
-      express: 4.17.3
-      graphql: 16.3.0
-      graphql-tag: 2.12.6_graphql@16.3.0
-      lodash: 4.17.21
-      node-html-parser: 5.3.3
-      quasar: 2.6.1
-      serialize-javascript: 6.0.0
-      validator: 13.7.0
-      vare: link:../../../../packages/vare
-      vue: 3.2.31
-      vue-router: 4.0.14_vue@3.2.31
-
   coong/client-react-18:
     specifiers:
       '@capacitor/cli': 3.4.3
@@ -429,7 +387,7 @@ importers:
       '@graphql-codegen/typescript': 2.4.8
       '@graphql-codegen/typescript-apollo-client-helpers': 2.1.15
       '@graphql-codegen/typescript-operations': 2.3.5
-      '@iconify/json': 2.1.18
+      '@iconify/json': 2.1.19
       '@types/lodash': 4.14.180
       '@types/node': 17.0.21
       '@types/validator': 13.7.1
@@ -497,7 +455,7 @@ importers:
       '@graphql-codegen/typescript': 2.4.8_graphql@16.3.0
       '@graphql-codegen/typescript-apollo-client-helpers': 2.1.15_graphql@16.3.0
       '@graphql-codegen/typescript-operations': 2.3.5_graphql@16.3.0
-      '@iconify/json': 2.1.18
+      '@iconify/json': 2.1.19
       '@types/lodash': 4.14.180
       '@types/node': 17.0.21
       '@types/validator': 13.7.1
@@ -529,7 +487,7 @@ importers:
       '@graphql-codegen/typescript': 2.4.8
       '@graphql-codegen/typescript-apollo-client-helpers': 2.1.15
       '@graphql-codegen/typescript-operations': 2.3.5
-      '@iconify/json': 2.1.18
+      '@iconify/json': 2.1.19
       '@types/lodash': 4.14.180
       '@types/node': 17.0.21
       '@types/validator': 13.7.1
@@ -593,7 +551,7 @@ importers:
       '@graphql-codegen/typescript': 2.4.8_graphql@16.3.0
       '@graphql-codegen/typescript-apollo-client-helpers': 2.1.15_graphql@16.3.0
       '@graphql-codegen/typescript-operations': 2.3.5_graphql@16.3.0
-      '@iconify/json': 2.1.18
+      '@iconify/json': 2.1.19
       '@types/lodash': 4.14.180
       '@types/node': 17.0.21
       '@types/validator': 13.7.1
@@ -614,9 +572,6 @@ importers:
       vite-plugin-md: 0.12.0_vite@2.8.6
       vite-plugin-pwa: 0.11.13_vite@2.8.6
       vite-plugin-solid: 2.2.6
-
-  coong/client/dist/server:
-    specifiers: {}
 
   coong/firebase:
     specifiers:
@@ -6614,15 +6569,11 @@ packages:
     resolution: {integrity: sha512-trnsAYxU3xnS1gPHPyU961coFyLkh4gAD/0zQ5mymY4yOZ+CYvsPqUbOFSw0aDM4y0tV7tiFxL/1XfXPNC6IPg==}
     dev: true
 
-  /@iconify/json/2.1.18:
-    resolution: {integrity: sha512-TJaIa5Sm5C6f7Vi4WmLL0dgXQljNn5i78btOny5Z1Ye5Nk986oOq0VXiVdDPGexERLyYvYdNaY8KiFx7kG99Ng==}
+  /@iconify/json/2.1.19:
+    resolution: {integrity: sha512-JaArf0gt4RJSrGq8H0b/WPBVbT9+1oyb9p+yVc82xUJePf0zIuxgmZcoem8Ivgc+gl1Xf6qlL+epicQHNROWig==}
     dependencies:
-      '@iconify/types': 1.0.12
+      '@iconify/types': 1.0.13
       pathe: 0.0.2
-    dev: true
-
-  /@iconify/types/1.0.12:
-    resolution: {integrity: sha512-6er6wSGF3hgc1JEZqiGpg21CTCjHBYOUwqLmb2Idzkjiw6ogalGP0ZMLVutCzah+0WB4yP+Zd2oVPN8jvJ+Ftg==}
     dev: true
 
   /@iconify/types/1.0.13:
@@ -6654,8 +6605,8 @@ packages:
       vue-i18n:
         optional: true
     dependencies:
-      '@intlify/message-compiler': 9.2.0-beta.32
-      '@intlify/shared': 9.2.0-beta.32
+      '@intlify/message-compiler': 9.2.0-beta.33
+      '@intlify/shared': 9.2.0-beta.33
       jsonc-eslint-parser: 1.4.1
       source-map: 0.6.1
       vue-i18n: 9.1.9_vue@3.2.31
@@ -6690,11 +6641,11 @@ packages:
       source-map: 0.6.1
     dev: false
 
-  /@intlify/message-compiler/9.2.0-beta.32:
-    resolution: {integrity: sha512-7OOHIhOmOM4nqe3KfEuE65xLwawwBGg/pCFByzayf0jARoHkeaA7v/eKsUJVJMEakeF2pNstx06AvfecijgPzg==}
+  /@intlify/message-compiler/9.2.0-beta.33:
+    resolution: {integrity: sha512-+SICjFlnHSbRLZT+sNdBvOAQfcNX+fESyMmgPxC8HHWu4GLN2CoVQS4ACXb3QBZDKLVJBFhFGMnl+UXyJrno6g==}
     engines: {node: '>= 12'}
     dependencies:
-      '@intlify/shared': 9.2.0-beta.32
+      '@intlify/shared': 9.2.0-beta.33
       source-map: 0.6.1
     dev: true
 
@@ -6717,8 +6668,8 @@ packages:
     engines: {node: '>= 10'}
     dev: false
 
-  /@intlify/shared/9.2.0-beta.32:
-    resolution: {integrity: sha512-lVaHnKFNg16eWlfDLzDFLapurrf0WK7xLWEkz8DMYNIXJshRQOZCkH7sQaqtONPoOT0LqjyPo1+sV0Wq85/HRQ==}
+  /@intlify/shared/9.2.0-beta.33:
+    resolution: {integrity: sha512-HldlkV66vMt1vQsuUz4zjQ202C5KW6aHeIQhx7RxBO11i3E8V84dp5MG9epr9GZXVsrCAR56Ekj0HaTqksIRJA==}
     engines: {node: '>= 12'}
     dev: true
 
@@ -6736,7 +6687,7 @@ packages:
         optional: true
     dependencies:
       '@intlify/bundle-utils': 2.2.1_vue-i18n@9.1.9
-      '@intlify/shared': 9.2.0-beta.32
+      '@intlify/shared': 9.2.0-beta.33
       '@rollup/pluginutils': 4.2.0
       debug: 4.3.3
       fast-glob: 3.2.11
