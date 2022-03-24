@@ -42,7 +42,7 @@ jobs:
         run: pnpm run build:docs
 
       - name: deploy
-        uses: jsmrcaga/action-netlify-deploy@v1.1.0
+        uses: jsmrcaga/action-netlify-deploy@v1.7.2
         with:
           build_directory: docs/winter-love/.vitepress/dist
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
