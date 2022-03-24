@@ -23,7 +23,7 @@ importers:
       '@babel/preset-env': 7.16.11
       '@babel/preset-typescript': 7.16.7
       '@emotion/jest': 11.8.0
-      '@happy-dom/jest-environment': 2.49.2
+      '@happy-dom/jest-environment': 2.50.0
       '@storybook/addon-actions': 6.4.19
       '@storybook/addon-essentials': 6.4.19
       '@storybook/addon-interactions': 6.4.19
@@ -101,7 +101,7 @@ importers:
       '@babel/preset-env': 7.16.11_@babel+core@7.17.8
       '@babel/preset-typescript': 7.16.7_@babel+core@7.17.8
       '@emotion/jest': 11.8.0_@types+jest@27.4.1
-      '@happy-dom/jest-environment': 2.49.2
+      '@happy-dom/jest-environment': 2.50.0
       '@storybook/addon-actions': 6.4.19_@types+react@17.0.42
       '@storybook/addon-essentials': 6.4.19_17b3095f3dccd28f622aa7ac70acf58b
       '@storybook/addon-interactions': 6.4.19_2b41e942ff4cff16b2e93eb3d840ac02
@@ -6556,13 +6556,13 @@ packages:
       '@hapi/hoek': 9.2.1
     dev: false
 
-  /@happy-dom/jest-environment/2.49.2:
-    resolution: {integrity: sha512-ofjKjOm6aCHwOF6/0YWsWfNgrFfkrvQ7uLlIG4dSyMiQ8a2veW1F+67L8WCPMjPl8DlkO0C4maZXJuquyCTSEA==}
+  /@happy-dom/jest-environment/2.50.0:
+    resolution: {integrity: sha512-JOsBXGTVFMXqP6io2rbWaPOdazLb+r7J7F7soCFZydcgV9K+kqJAyXlSXe7B8D4xmw9yzwIyCQApgE7J7pIaGQ==}
     dependencies:
       '@jest/environment': 27.5.1
       '@jest/fake-timers': 27.5.1
       '@jest/types': 27.5.1
-      happy-dom: 2.49.2
+      happy-dom: 2.50.0
       jest-mock: 27.5.1
       jest-util: 27.5.1
     transitivePeerDependencies:
@@ -20555,16 +20555,16 @@ packages:
       uglify-js: 3.15.3
     dev: true
 
-  /happy-dom/2.49.2:
-    resolution: {integrity: sha512-mZX4ojwi0ejrZ96Gh0CVYmFyGwMidF4RsSR+l7hSw4TVtucCdDp9EF7JmHyufU8dXHVLHXtrqFG2aTUOaiM8nw==}
+  /happy-dom/2.50.0:
+    resolution: {integrity: sha512-3boJ9i4AbSMUvI4f6N4UEuDDOdKMTCXlnsjoB7KCyhkN1VD+vR9kQEmHLLDHrIPdLn65zA/XhhaFZhCkoWoLQQ==}
     dependencies:
       css.escape: 1.5.1
       he: 1.2.0
       node-fetch: 2.6.7
       sync-request: 6.1.0
       webidl-conversions: 7.0.0
-      whatwg-encoding: 1.0.5
-      whatwg-mimetype: 2.3.0
+      whatwg-encoding: 2.0.0
+      whatwg-mimetype: 3.0.0
     transitivePeerDependencies:
       - encoding
     dev: true
