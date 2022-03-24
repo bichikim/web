@@ -1,7 +1,7 @@
 {
   "name": "solid-utilities",
   "version": "1.0.24-alpha.0",
-  "private": false,
+  "private": true,
   "description": "utilities for solid",
   "keywords": [
     "utils",
