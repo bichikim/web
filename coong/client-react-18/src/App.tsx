@@ -1,6 +1,7 @@
 import {Solid} from './componets/Solid'
 import {Original} from './componets/Original'
 import {Vue} from './componets/Vue'
+import {PropsSyncText} from './componets/PropsSyncText'
 
 export const App: FC = withSolid(() => {
 
@@ -19,6 +20,9 @@ export const App: FC = withSolid(() => {
       <section>
         vue
         <Vue />
+      </section>
+      <section>
+        <PropsSyncText />
       </section>
     </div>
   )

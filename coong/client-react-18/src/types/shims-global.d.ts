@@ -8,4 +8,4 @@ interface ImportMeta {
 
 declare const __DEV__: string | undefined
 
-type FC = import('react').FC
+type FC<Props = {}> = import('react').FC<Props>
