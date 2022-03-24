@@ -130,7 +130,7 @@ importers:
       '@vue/babel-plugin-transform-vue-jsx': 1.2.1_@babel+core@7.17.8
       '@vue/compiler-sfc': 3.2.31
       '@vue/eslint-config-typescript': 10.0.0_5e58415d4c9ab0c3da8935a9b8bb8c26
-      '@vue/test-utils': 2.0.0-rc.17_vue@3.2.31
+      '@vue/test-utils': 2.0.0-rc.17
       '@vue/vue3-jest': 27.0.0-alpha.4_68105363bcc3d6b4e52d0424636335e5
       '@winter-love/hyper-components': link:packages/hyper-components
       '@winter-love/test-use': link:packages/test-use
@@ -495,7 +495,7 @@ importers:
       autoprefixer: 10.4.4
       compression: 1.7.4
       cross-env: 7.0.3
-      daisyui: 2.11.1
+      daisyui: 2.12.0
       dotenv: 16.0.0
       express: 4.17.3
       firebase: 9.6.9
@@ -556,7 +556,7 @@ importers:
       '@types/node': 17.0.21
       '@types/validator': 13.7.1
       autoprefixer: 10.4.4_postcss@8.4.12
-      daisyui: 2.11.1_bdaceb00f796c0c549cd3844d4c4fef2
+      daisyui: 2.12.0_bdaceb00f796c0c549cd3844d4c4fef2
       dotenv: 16.0.0
       markdown-it-link-attributes: 4.0.0
       markdown-it-prism: 2.2.3
@@ -572,9 +572,6 @@ importers:
       vite-plugin-md: 0.12.3_vite@2.8.6
       vite-plugin-pwa: 0.11.13_vite@2.8.6
       vite-plugin-solid: 2.2.6
-
-  coong/client/dist/server:
-    specifiers: {}
 
   coong/firebase:
     specifiers:
@@ -3717,8 +3714,8 @@ packages:
       - supports-color
     dev: true
 
-  /@babel/plugin-transform-modules-systemjs/7.16.7_@babel+core@7.17.5:
-    resolution: {integrity: sha512-DuK5E3k+QQmnOqBR9UkusByy5WZWGRxfzV529s9nPra1GE7olmxfqO2FHobEOYSPIjPBTr4p66YDcjQnt8cBmw==}
+  /@babel/plugin-transform-modules-systemjs/7.17.8_@babel+core@7.17.5:
+    resolution: {integrity: sha512-39reIkMTUVagzgA5x88zDYXPCMT6lcaRKs1+S9K6NKBPErbgO/w/kP8GlNQTC87b412ZTlmNgr3k2JrWgHH+Bw==}
     engines: {node: '>=6.9.0'}
     peerDependencies:
       '@babel/core': ^7.0.0-0
@@ -3733,8 +3730,8 @@ packages:
       - supports-color
     dev: false
 
-  /@babel/plugin-transform-modules-systemjs/7.16.7_@babel+core@7.17.7:
-    resolution: {integrity: sha512-DuK5E3k+QQmnOqBR9UkusByy5WZWGRxfzV529s9nPra1GE7olmxfqO2FHobEOYSPIjPBTr4p66YDcjQnt8cBmw==}
+  /@babel/plugin-transform-modules-systemjs/7.17.8_@babel+core@7.17.7:
+    resolution: {integrity: sha512-39reIkMTUVagzgA5x88zDYXPCMT6lcaRKs1+S9K6NKBPErbgO/w/kP8GlNQTC87b412ZTlmNgr3k2JrWgHH+Bw==}
     engines: {node: '>=6.9.0'}
     peerDependencies:
       '@babel/core': ^7.0.0-0
@@ -4441,7 +4438,7 @@ packages:
       '@babel/plugin-transform-member-expression-literals': 7.16.7_@babel+core@7.17.5
       '@babel/plugin-transform-modules-amd': 7.16.7_@babel+core@7.17.5
       '@babel/plugin-transform-modules-commonjs': 7.17.7_@babel+core@7.17.5
-      '@babel/plugin-transform-modules-systemjs': 7.16.7_@babel+core@7.17.5
+      '@babel/plugin-transform-modules-systemjs': 7.17.8_@babel+core@7.17.5
       '@babel/plugin-transform-modules-umd': 7.16.7_@babel+core@7.17.5
       '@babel/plugin-transform-named-capturing-groups-regex': 7.16.8_@babel+core@7.17.5
       '@babel/plugin-transform-new-target': 7.16.7_@babel+core@7.17.5
@@ -4526,7 +4523,7 @@ packages:
       '@babel/plugin-transform-member-expression-literals': 7.16.7_@babel+core@7.17.7
       '@babel/plugin-transform-modules-amd': 7.16.7_@babel+core@7.17.7
       '@babel/plugin-transform-modules-commonjs': 7.17.7_@babel+core@7.17.7
-      '@babel/plugin-transform-modules-systemjs': 7.16.7_@babel+core@7.17.7
+      '@babel/plugin-transform-modules-systemjs': 7.17.8_@babel+core@7.17.7
       '@babel/plugin-transform-modules-umd': 7.16.7_@babel+core@7.17.7
       '@babel/plugin-transform-named-capturing-groups-regex': 7.16.8_@babel+core@7.17.7
       '@babel/plugin-transform-new-target': 7.16.7_@babel+core@7.17.7
@@ -13012,14 +13009,6 @@ packages:
     dependencies:
       vue: 3.2.31
 
-  /@vue/test-utils/2.0.0-rc.17_vue@3.2.31:
-    resolution: {integrity: sha512-7LHZKsFRV/HqDoMVY+cJamFzgHgsrmQFalROHC5FMWrzPzd+utG5e11krj1tVsnxYufGA2ABShX4nlcHXED+zQ==}
-    peerDependencies:
-      vue: ^3.0.1
-    dependencies:
-      vue: 3.2.31
-    dev: true
-
   /@vue/test-utils/2.0.0-rc.18_vue@3.2.31:
     resolution: {integrity: sha512-aifolXjVdsogjaLmDoZ0FU8vN+R67aWmg9OuVeED4w5Ij5GFQLrlhM19uhWe/r5xXUL4fXMk3pX5wW6FJP1NcQ==}
     peerDependencies:
@@ -16741,8 +16730,8 @@ packages:
       - ts-node
     dev: false
 
-  /daisyui/2.11.1_bdaceb00f796c0c549cd3844d4c4fef2:
-    resolution: {integrity: sha512-99LD0kheC7v9U/S5jY+b4Nt7ekfpbPCK7fuDBxSxPpuxO1uq6PxEtTIa6DQwlh6/0Sh2CgqDmIQzfdMzdP5DMw==}
+  /daisyui/2.12.0_bdaceb00f796c0c549cd3844d4c4fef2:
+    resolution: {integrity: sha512-14FakYwC/2fxY7gDzilPn49YVR3e+KGMk/GHmEoEHtmRqfdUbQ0GeSzMDLVedayqadzKjr7mccH49k2pFbYG6Q==}
     peerDependencies:
       autoprefixer: ^10.0.2
       postcss: ^8.1.6
@@ -19398,7 +19387,7 @@ packages:
         optional: true
     dependencies:
       '@babel/code-frame': 7.16.7
-      '@types/json-schema': 7.0.9
+      '@types/json-schema': 7.0.10
       chalk: 4.1.2
       chokidar: 3.5.3
       cosmiconfig: 6.0.0
