@@ -231,7 +231,7 @@ importers:
       tslib: 2.3.1
       ttypescript: 1.5.13
       typescript: 4.6.2
-      unplugin-icons: 0.14.0
+      unplugin-icons: 0.14.1
       unplugin-vue-components: 0.18.3
       validator: 13.7.0
       vare: ^1.0.24-alpha.0
@@ -305,7 +305,7 @@ importers:
       ts-node-dev: 1.1.8_typescript@4.6.2
       ttypescript: 1.5.13_ts-node@10.7.0+typescript@4.6.2
       typescript: 4.6.2
-      unplugin-icons: 0.14.0_ce2b23ead77c94d86e7f68ea87dc0060
+      unplugin-icons: 0.14.1_ce2b23ead77c94d86e7f68ea87dc0060
       unplugin-vue-components: 0.18.3_26815477f7e405a320731e3af21dbb19
       vite: 2.8.6
       vite-plugin-imp: 2.1.6_vite@2.8.6
@@ -420,7 +420,7 @@ importers:
       ttypescript: 1.5.13
       typescript: 4.6.2
       unplugin-auto-import: 0.6.4
-      unplugin-icons: 0.14.0
+      unplugin-icons: 0.14.1
       urql: 2.2.0
       validator: 13.7.0
       vite: 2.8.6
@@ -470,7 +470,7 @@ importers:
       ttypescript: 1.5.13_ts-node@10.7.0+typescript@4.6.2
       typescript: 4.6.2
       unplugin-auto-import: 0.6.4_rollup@2.70.1+vite@2.8.6
-      unplugin-icons: 0.14.0_ce2b23ead77c94d86e7f68ea87dc0060
+      unplugin-icons: 0.14.1_ce2b23ead77c94d86e7f68ea87dc0060
       vite: 2.8.6
       vite-plugin-imp: 2.1.6_vite@2.8.6
       vite-plugin-md: 0.12.0_vite@2.8.6
@@ -517,7 +517,7 @@ importers:
       tslib: 2.3.1
       typescript: 4.6.2
       unplugin-auto-import: 0.6.4
-      unplugin-icons: 0.14.0
+      unplugin-icons: 0.14.1
       validator: 13.7.0
       vite: 2.8.6
       vite-plugin-imp: 2.1.6
@@ -566,7 +566,7 @@ importers:
       ts-node-dev: 1.1.8_typescript@4.6.2
       typescript: 4.6.2
       unplugin-auto-import: 0.6.4_rollup@2.70.1+vite@2.8.6
-      unplugin-icons: 0.14.0_ce2b23ead77c94d86e7f68ea87dc0060
+      unplugin-icons: 0.14.1_ce2b23ead77c94d86e7f68ea87dc0060
       vite: 2.8.6
       vite-plugin-imp: 2.1.6_vite@2.8.6
       vite-plugin-md: 0.12.0_vite@2.8.6
@@ -1201,12 +1201,6 @@ packages:
     dependencies:
       execa: 5.1.1
       find-up: 5.0.0
-    dev: true
-
-  /@antfu/utils/0.3.0:
-    resolution: {integrity: sha512-UU8TLr/EoXdg7OjMp0h9oDoIAVr+Z/oW9cpOxQQyrsz6Qzd2ms/1CdWx8fl2OQdFpxGmq5Vc4TwfLHId6nAZjA==}
-    dependencies:
-      '@types/throttle-debounce': 2.1.0
     dev: true
 
   /@antfu/utils/0.5.0:
@@ -6620,12 +6614,16 @@ packages:
     resolution: {integrity: sha512-jrJJVPnRM1HsMDnuHRTzMfgiSG6Z1U/2IYI7s8spFu9c7n1q3jcXa+3/YQz4tJVNgAhzm1dbnMxfIAyLDpCaWg==}
     dev: true
 
-  /@iconify/utils/1.0.26:
-    resolution: {integrity: sha512-Mz6l1fOGgdqLjoXNirmX6Zpc+DPcU4Xyns7oBWcHoTVRnZ2QuFbWMaGa9/FeYSoZwk5s14Vsl0wilmaToS9g9w==}
+  /@iconify/types/1.1.0:
+    resolution: {integrity: sha512-Jh0llaK2LRXQoYsorIH8maClebsnzTcve+7U3rQUSnC11X4jtPnFuyatqFLvMxZ8MLG8dB4zfHsbPfuvxluONw==}
+    dev: true
+
+  /@iconify/utils/1.0.30:
+    resolution: {integrity: sha512-Hmr5TWeWZLcLr5/r8pSga2d1OfN7LVlaQilb41kpgFmiEKS7+JRmNKGtgT4dI82hGiAzNpFEgLC1hKeqNF+pbA==}
     dependencies:
       '@antfu/install-pkg': 0.1.0
-      '@antfu/utils': 0.3.0
-      '@iconify/types': 1.0.13
+      '@antfu/utils': 0.5.0
+      '@iconify/types': 1.1.0
       debug: 4.3.4
       kolorist: 1.5.1
       local-pkg: 0.4.1
@@ -12548,10 +12546,6 @@ packages:
     resolution: {integrity: sha512-oKZe+Mf4ioWlMuzVBaXQ9WDnEm1+umLx0InILg+yvZVBBDmzV5KfZyLrCvadtWcx8+916jLmHafcmqqffl+iIw==}
     dependencies:
       '@types/jest': 27.4.1
-    dev: true
-
-  /@types/throttle-debounce/2.1.0:
-    resolution: {integrity: sha512-5eQEtSCoESnh2FsiLTxE121IiE60hnMqcb435fShf4bpLRjEu1Eoekht23y6zXS9Ts3l+Szu3TARnTsA0GkOkQ==}
     dev: true
 
   /@types/trusted-types/2.0.2:
@@ -30885,8 +30879,8 @@ packages:
       - webpack
     dev: true
 
-  /unplugin-icons/0.14.0_ce2b23ead77c94d86e7f68ea87dc0060:
-    resolution: {integrity: sha512-VznBG8Jl9D4jtsAIY8hycyQZEDB8KVjnk19MzMlifLLs4QoIUPx8TILDoy6U46yDeYViqZu4hvb5fYI5OarekQ==}
+  /unplugin-icons/0.14.1_ce2b23ead77c94d86e7f68ea87dc0060:
+    resolution: {integrity: sha512-drZFbMctvT3ZJPfdCgBv5+LKO8hGbZApRCoBRAUhQFRJQVNGUhGThrOKs+CvWq3XDBPptGNBmst8WyObbr4xiQ==}
     peerDependencies:
       '@svgr/core': '>=5.5.0'
       '@vue/compiler-sfc': ^3.0.2
@@ -30904,7 +30898,7 @@ packages:
     dependencies:
       '@antfu/install-pkg': 0.1.0
       '@antfu/utils': 0.5.0
-      '@iconify/utils': 1.0.26
+      '@iconify/utils': 1.0.30
       '@vue/compiler-sfc': 3.2.31
       debug: 4.3.4
       kolorist: 1.5.1
