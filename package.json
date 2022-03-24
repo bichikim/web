@@ -34,6 +34,7 @@
     "start:local-docker": "docker-compose up -d",
     "storybook": "start-storybook -p 6006",
     "test": "jest",
+    "test:unit": "jest --selectProjects unit-test",
     "test:coverage": "jest --collect-coverage",
     "version:alpha": "lerna version prerelease --preid alpha",
     "version:beta": "lerna version prerelease --preid beta",
