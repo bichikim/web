@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/hyper-components",
-  "version": "1.0.24-alpha.0",
+  "version": "1.0.24-alpha.1",
   "description": "hyper components base on quasar and stitches",
   "keywords": [
     "typescript",
@@ -41,8 +41,8 @@
   },
   "dependencies": {
     "@stitches/core": "1.2.7",
-    "@winter-love/stitches": "^1.0.24-alpha.0",
-    "@winter-love/utils": "^1.0.23",
+    "@winter-love/stitches": "^1.0.24-alpha.1",
+    "@winter-love/utils": "^1.0.24-alpha.1",
     "clsx": "^1.1.1",
     "color": "^4.2.0",
     "quasar": "^2.6.0",
