@@ -1,21 +1,20 @@
-import { defineConfig } from 'tsup'
-import textReplace from 'esbuild-plugin-text-replace'
+import {defineConfig} from 'tsup'
 
 export default defineConfig({
+  clean: true,
+  dts: {
+    resolve: false,
+  },
   entry: [
     'src/index.ts',
   ],
   format: [
     'cjs',
     'esm',
-    'iife'
+    'iife',
   ],
-  skipNodeModulesBundle: true,
-  dts: {
-    resolve: false,
-  },
-  clean: true,
   outDir: 'lib',
+  skipNodeModulesBundle: true,
   sourcemap: true,
   splitting: false,
 })

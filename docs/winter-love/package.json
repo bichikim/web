@@ -15,5 +15,6 @@
     "postcss": "^8.4.12",
     "tailwindcss": "^3.0.23",
     "vitepress": "^0.22.3"
-  }
+  },
+  "gitHead": "a00563d4b5288df4b4bbe713ce9b970e1844ca29"
 }
