@@ -185,7 +185,7 @@ importers:
       '@graphql-codegen/typescript-apollo-client-helpers': 2.1.15
       '@graphql-codegen/typescript-operations': 2.3.5
       '@graphql-codegen/typescript-vue-urql': 2.2.9
-      '@iconify/json': 2.1.19
+      '@iconify/json': 2.1.21
       '@intlify/vite-plugin-vue-i18n': 3.3.1
       '@namchee/vue-ztext': 1.0.0
       '@project-serum/sol-wallet-adapter': 0.2.6
@@ -284,7 +284,7 @@ importers:
       '@graphql-codegen/typescript-apollo-client-helpers': 2.1.15_graphql@16.3.0
       '@graphql-codegen/typescript-operations': 2.3.5_graphql@16.3.0
       '@graphql-codegen/typescript-vue-urql': 2.2.9_e20029557891e0afb887c44ec7f516f8
-      '@iconify/json': 2.1.19
+      '@iconify/json': 2.1.21
       '@intlify/vite-plugin-vue-i18n': 3.3.1_vite@2.8.6+vue-i18n@9.1.9
       '@types/lodash': 4.14.180
       '@types/node': 17.0.21
@@ -6362,15 +6362,11 @@ packages:
     resolution: {integrity: sha512-trnsAYxU3xnS1gPHPyU961coFyLkh4gAD/0zQ5mymY4yOZ+CYvsPqUbOFSw0aDM4y0tV7tiFxL/1XfXPNC6IPg==}
     dev: true
 
-  /@iconify/json/2.1.19:
-    resolution: {integrity: sha512-JaArf0gt4RJSrGq8H0b/WPBVbT9+1oyb9p+yVc82xUJePf0zIuxgmZcoem8Ivgc+gl1Xf6qlL+epicQHNROWig==}
+  /@iconify/json/2.1.21:
+    resolution: {integrity: sha512-xaf916kxsau+yQv7rnnAvGQEsCbx2+zHNL/13BAgIm6+SbMjGfvrRHpufdkfTV8GnEHjyl3vsFc3MPkZ1lI2Rw==}
     dependencies:
-      '@iconify/types': 1.0.13
-      pathe: 0.0.2
-    dev: true
-
-  /@iconify/types/1.0.13:
-    resolution: {integrity: sha512-jrJJVPnRM1HsMDnuHRTzMfgiSG6Z1U/2IYI7s8spFu9c7n1q3jcXa+3/YQz4tJVNgAhzm1dbnMxfIAyLDpCaWg==}
+      '@iconify/types': 1.1.0
+      pathe: 0.2.0
     dev: true
 
   /@iconify/types/1.1.0:
@@ -25075,8 +25071,8 @@ packages:
     resolution: {integrity: sha512-gDKb8aZMDeD/tZWs9P6+q0J9Mwkdl6xMV8TjnGP3qJVJ06bdMgkbBlLU8IdfOsIsFz2BW1rNVT3XuNEl8zPAvw==}
     engines: {node: '>=8'}
 
-  /pathe/0.0.2:
-    resolution: {integrity: sha512-mmK20YtPb4yXHlaPuOD/uPIpRu7iIK45GA/GiRSlNpIdfWDG5aEQmFT1HHtBmJB+t/6DvFOtOsEipsPA8Bx2cw==}
+  /pathe/0.2.0:
+    resolution: {integrity: sha512-sTitTPYnn23esFR3RlqYBWn4c45WGeLcsKzQiUpXJAyfcWkolvlYpV8FLo7JishK946oQwMFUCHXQ9AjGPKExw==}
     dev: true
 
   /pbkdf2/3.1.2:
