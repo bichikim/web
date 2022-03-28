@@ -95,6 +95,8 @@
     "@zerollup/ts-transform-paths": "1.7.18",
     "babel-jest": "27.5.1",
     "builtin-modules": "3.2.0",
+    "esbuild": "^0.14.2",
+    "esbuild-darwin-arm64": "^0.14.2",
     "eslint": "8.11.0",
     "eslint-import-resolver-typescript": "2.7.0",
     "eslint-plugin-import": "2.25.4",
