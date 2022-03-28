@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/style-system",
-  "version": "1.0.24-alpha.1",
+  "version": "1.0.24",
   "keywords": [
     "typescript",
     "style",
@@ -38,7 +38,7 @@
     "prepare": "tsup-node --dts"
   },
   "dependencies": {
-    "@winter-love/utils": "^1.0.24-alpha.1",
+    "@winter-love/utils": "^1.0.24",
     "merge-deep": "^3.0.3"
   },
   "devDependencies": {
@@ -46,7 +46,7 @@
     "@types/merge-deep": "3.0.0",
     "@types/styled-system": "5.1.15",
     "@types/styled-system__css": "5.0.16",
-    "@winter-love/emotion": "^1.0.24-alpha.1",
+    "@winter-love/emotion": "^1.0.24",
     "csstype": "3.0.11",
     "vue": "latest",
     "vue-demi": "latest"

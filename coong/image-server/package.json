@@ -1,13 +1,13 @@
 {
   "name": "@coong/image-server",
-  "version": "1.0.24-alpha.1",
+  "version": "1.0.24",
   "private": true,
   "scripts": {
     "build": "rimraf ./lib && ttsc",
     "dev": "ts-node-dev --clear -r tsconfig-paths/register src/run.ts"
   },
   "dependencies": {
-    "@winter-love/utils": "^1.0.24-alpha.1",
+    "@winter-love/utils": "^1.0.24",
     "class-transformer": "0.5.1",
     "class-validator": "0.13.2",
     "dotenv": "16.0.0",

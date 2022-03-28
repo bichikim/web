@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/stitches",
-  "version": "1.0.24-alpha.1",
+  "version": "1.0.24",
   "description": "Stitches for Vue",
   "keywords": [
     "vue",
@@ -35,7 +35,7 @@
   },
   "dependencies": {
     "@stitches/core": "^1.2.7",
-    "@winter-love/utils": "^1.0.24-alpha.1",
+    "@winter-love/utils": "^1.0.24",
     "vue-demi": "^0.12.1"
   },
   "devDependencies": {
