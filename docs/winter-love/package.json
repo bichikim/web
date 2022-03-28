@@ -12,8 +12,8 @@
     "tailwindcss": "^3.0.23",
     "postcss": "^8.4.12",
     "autoprefixer": "^10.4.4",
-    "@winter-love/test-use": "workspace:^1.0.23",
-    "@winter-love/utils": "workspace:^1.0.23",
-    "@winter-love/use": "workspace:^1.0.23"
+    "@winter-love/test-use": "^1.0.23",
+    "@winter-love/utils": "^1.0.23",
+    "@winter-love/use": "^1.0.23"
   }
 }
