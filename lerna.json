@@ -2,12 +2,12 @@
   "packages": [
     "packages/*"
   ],
-  "npmClient": "yarn",
+  "npmClient": "pnpm",
   "useWorkspaces": true,
   "version": "1.0.24-alpha.1",
   "command": {
     "run": {
-      "npmClient": "yarn"
+      "npmClient": "pnpm"
     },
     "publish": {
       "ignoreChanges": [
