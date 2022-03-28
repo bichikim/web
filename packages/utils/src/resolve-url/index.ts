@@ -37,9 +37,10 @@ export interface ChunkedUrlResult {
 export const chunkUrl = (url: string) => {
   const leftUrl: string = url.replace(protocolRegx, '')
 
-  const [protocol] = url.split(leftUrl)
+  const protocol = url.replace(leftUrl, '')
+  const [path, query] = leftUrl.split('?')
 
-  const [maybeHost, ...chunkedUrl] = leftUrl.split('/')
+  const [maybeHost, ...chunkedUrl] = path.split('/')
 
   const hasHost = hostRegx.test(maybeHost)
 
@@ -60,6 +61,15 @@ export const chunkUrl = (url: string) => {
   }
 
   return result
+}
+
+// todo support array & object
+export const parseQuery = (query: string) => {
+  const step1: string = query.replace(/^\?/u, '')
+  const step2 = step1.split('&').map((item: string) => {
+    return item.split('=', 2)
+  })
+  return Object.fromEntries(step2)
 }
 
 /**

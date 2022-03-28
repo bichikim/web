@@ -379,48 +379,6 @@ importers:
       autoprefixer: 10.4.2
       typescript: 4.6.2
 
-  coong/client-next/dist/ssr:
-    specifiers:
-      '@apollo/client': 3.5.10
-      '@project-serum/sol-wallet-adapter': 0.2.6
-      '@quasar/extras': 1.13.3
-      '@urql/vue': 0.6.1
-      '@winter-love/hyper-components': 1.0.24-alpha.0
-      '@winter-love/utils': 1.0.23
-      compression: ^1.7.4
-      core-js: 3.21.1
-      express: ^4.17.3
-      graphql: 16.3.0
-      graphql-tag: 2.12.6
-      lodash: 4.17.21
-      node-html-parser: 5.3.3
-      quasar: 2.6.1
-      serialize-javascript: ^6.0.0
-      validator: 13.7.0
-      vare: 1.0.24-alpha.0
-      vue: 3.2.31
-      vue-router: 4.0.14
-    dependencies:
-      '@apollo/client': 3.5.10_graphql@16.3.0
-      '@project-serum/sol-wallet-adapter': 0.2.6
-      '@quasar/extras': 1.13.3
-      '@urql/vue': 0.6.1_graphql@16.3.0+vue@3.2.31
-      '@winter-love/hyper-components': link:../../../../packages/hyper-components
-      '@winter-love/utils': link:../../../../packages/utils
-      compression: 1.7.4
-      core-js: 3.21.1
-      express: 4.17.3
-      graphql: 16.3.0
-      graphql-tag: 2.12.6_graphql@16.3.0
-      lodash: 4.17.21
-      node-html-parser: 5.3.3
-      quasar: 2.6.1
-      serialize-javascript: 6.0.0
-      validator: 13.7.0
-      vare: link:../../../../packages/vare
-      vue: 3.2.31
-      vue-router: 4.0.14_vue@3.2.31
-
   coong/client/dist/server:
     specifiers: {}
 
@@ -813,14 +771,12 @@ importers:
   packages/utils:
     specifiers:
       '@types/js-cookie': 3.0.1
-      '@types/lodash': ^4.14.179
       fast-json-stable-stringify: ^2.1.0
       js-cookie: ^3.0.1
       micro-memoize: ^4.0.9
       react-fast-compare: ^3.2.0
       vue-demi: latest
     dependencies:
-      '@types/lodash': 4.14.179
       fast-json-stable-stringify: 2.1.0
       js-cookie: 3.0.1
       micro-memoize: 4.0.9
