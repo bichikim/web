@@ -2,13 +2,17 @@ FROM node:16
 
 WORKDIR /usr/src/app
 
-COPY dist ./dist
+COPY dist ./coong/client/dist
+COPY package.json ./coong/client
 COPY package.json ./
+COPY ../../pnpm-lock.yaml ./
+COPY ../../pnpm-workspace.yaml ./
 
-RUN npm install --prod
+RUN npm i -g pnpm
+RUN pnpm install --prod
 
 EXPOSE 3000
 
-CMD npm run start:ssr
+CMD pnpm run start:@coong/client:ssr
 
 

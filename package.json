@@ -31,6 +31,7 @@
     "publish:alpha": "pnpm -r publish --tag alpha",
     "publish:beta": "pnpm -r publish --tag beta",
     "publish:patch": "pnpm -r publish",
+    "start:@coong/client:ssr": "node coong/client/dist/ssr/index.js",
     "start:local-docker": "docker-compose up -d",
     "storybook": "start-storybook -p 6006",
     "test": "jest",
