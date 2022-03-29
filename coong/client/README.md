@@ -1,24 +1,25 @@
-# Coong Client
-https://daisyui.com/
-<!-- version flag a -->
+# Client next (@coong/client-next)
+
+A Quasar Framework app
+
+```bash
+npm i -g @quasar/cli
 ```
-<script src="three.r119.min.js"></script>
-<script src="vanta.fog.min.js"></script>
-<script>
-VANTA.FOG({
-  el: "#your-element-selector",
-  mouseControls: true,
-  touchControls: true,
-  gyroControls: false,
-  minHeight: 200.00,
-  minWidth: 200.00,
-  highlightColor: 0x#7f58ff,
-  midtoneColor: 0x#cc78ff,
-  lowlightColor: 0x#f441a5,
-  baseColor: 0x#2e1159,
-  blurFactor: 0.54,
-  speed: 1.80,
-  zoom: 0.70
-})
-</script>
+
+## Install the dependencies
+```bash
+yarn
 ```
+
+### Start the app in development mode (hot-code reloading, error reporting, etc.)
+```bash
+quasar dev
+```
+
+### Build the app for production
+```bash
+quasar build
+```
+
+### Customize the configuration
+See [Configuring quasar.conf.js](https://quasar.dev/quasar-cli/quasar-conf-js).

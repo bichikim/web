@@ -1,0 +1,12 @@
+/dist
+/src-bex/www
+/src-capacitor
+/src-cordova
+/.quasar
+node_modules
+**/*.d.ts
+/src-ssr
+/lib
+/android
+/ios
+/prototyping

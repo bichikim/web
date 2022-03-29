@@ -10,8 +10,8 @@
     "./docs/*"
   ],
   "scripts": {
-    "build:@coong/client": "pnpm run build --filter @coong/client",
-    "build:@coong/client-stream": "pnpm run build --filter @coong/client... --stream",
+    "build:@coong/client": "pnpm run build --filter @coong/client... --stream",
+    "build:@coong/client:ssr": "pnpm run build:ssr --filter @coong/client... --stream",
     "build:@coong/server": "pnpm run build --filter @coong/server",
     "build:@coong/server-stream": "pnpm run build --filter @coong/server... --stream",
     "build:docs": "pnpm run build --filter @winter-love-docs/winter-love... --stream",
@@ -21,6 +21,7 @@
     "deploy:storybook": "storybook-to-ghpages",
     "dev:@coong/client": "pnpm run dev --filter @coong/client --parallel",
     "dev:@coong/client:android": "pnpm run dev:android --filter @coong/client --parallel",
+    "dev:@coong/client:ssr": "pnpm run dev:ssr --filter @coong/client --parallel",
     "dev:@coong/server": "pnpm run dev --filter @coong/server --parallel",
     "dev:docs": "pnpm run dev --filter @winter-love-docs/winter-love",
     "format:package.json": "sort-package-json \"package.json\" \"packages/*/package.json\" \"coong/*/package.json\" ",
@@ -33,8 +34,8 @@
     "start:local-docker": "docker-compose up -d",
     "storybook": "start-storybook -p 6006",
     "test": "jest",
-    "test:unit": "jest --selectProjects unit-test",
     "test:coverage": "jest --collect-coverage",
+    "test:unit": "jest --selectProjects unit-test",
     "version:alpha": "lerna version prerelease --preid alpha",
     "version:beta": "lerna version prerelease --preid beta",
     "version:next": "lerna version prerelease --preid next",

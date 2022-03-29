@@ -1,7 +1,6 @@
 {
   "name": "@winter-love/quasar-svg-syntax",
   "version": "1.0.24",
-  "private": false,
   "description": "Useful javascript utils",
   "keywords": [
     "typescript",

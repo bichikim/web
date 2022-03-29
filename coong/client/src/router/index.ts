@@ -1,38 +1,35 @@
+import {route} from 'quasar/wrappers'
 import {
-  createRouter as _createRouter,
   createMemoryHistory,
+  createRouter,
+  createWebHashHistory,
   createWebHistory,
-  RouteRecordRaw,
 } from 'vue-router'
 
-const routes: RouteRecordRaw[] = [
-  {
-    component: () => import('pages/Test'),
-    path: '/test',
-  },
-  {
-    children: [
-      {
-        component: () => import('pages/main'),
-        path: '',
-      },
-      {
-        component: () => import('pages/magic-auth-link'),
-        path: 'magic-auth-link',
-      },
-      {
-        component: () => import('pages/Babylon'),
-        path: 'babylon',
-      },
-    ],
-    component: () => import('pages/_layout'),
-    path: '/',
-  },
-]
+import routes from './routes'
 
-export const createRouter = () => {
-  return _createRouter({
-    history: import.meta.env.SSR ? createMemoryHistory() : createWebHistory(),
+/*
+ * If not building with SSR mode, you can
+ * directly export the Router instantiation;
+ *
+ * The function below can be async too; either use
+ * async/await or return a Promise which resolves
+ * with the Router instance.
+ */
+
+export default route((/* { store, ssrContext } */) => {
+  const createHistory = process.env.SERVER
+    ? createMemoryHistory
+    : (process.env.VUE_ROUTER_MODE === 'history' ? createWebHistory : createWebHashHistory)
+
+  return createRouter({
+    // Leave this as is and make changes in quasar.conf.js instead!
+    // quasar.conf.js -> build -> vueRouterMode
+    // quasar.conf.js -> build -> publicPath
+    history: createHistory(process.env.VUE_ROUTER_BASE),
+
     routes,
+
+    scrollBehavior: () => ({left: 0, top: 0}),
   })
-}
+})

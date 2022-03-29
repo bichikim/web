@@ -27,18 +27,14 @@ export type Scalars = {
   Upload: any;
 };
 
-export type AuthenticateCryptoSignMessageInput = {
-  email: Scalars['String'];
-};
-
-export type AuthenticateUserWithCryptoSignatureInput = {
-  message: Scalars['String'];
+export type AuthenticateUserWithSolanaInput = {
+  nonce: Scalars['String'];
   publicKey: Scalars['String'];
   signature: Scalars['String'];
 };
 
-export type AuthenticateUserWithCryptoSignatureResult = {
-  __typename?: 'AuthenticateUserWithCryptoSignatureResult';
+export type AuthenticateUserWithSolanaResult = {
+  __typename?: 'AuthenticateUserWithSolanaResult';
   item?: Maybe<User>;
   sessionToken?: Maybe<Scalars['String']>;
 };
@@ -89,6 +85,11 @@ export type DateTimeNullableFilter = {
   lte?: InputMaybe<Scalars['DateTime']>;
   not?: InputMaybe<DateTimeNullableFilter>;
   notIn?: InputMaybe<Array<Scalars['DateTime']>>;
+};
+
+export type GetAuthenticateUserNonceResultType = {
+  __typename?: 'GetAuthenticateUserNonceResultType';
+  nonce?: Maybe<Scalars['String']>;
 };
 
 export type IdFilter = {
@@ -243,8 +244,8 @@ export enum MagicLinkRedemptionErrorCode {
 
 export type Mutation = {
   __typename?: 'Mutation';
-  authenticateUserWithCryptoSignature?: Maybe<AuthenticateUserWithCryptoSignatureResult>;
   authenticateUserWithPassword?: Maybe<UserAuthenticationWithPasswordResult>;
+  authenticateUserWithSolana?: Maybe<AuthenticateUserWithSolanaResult>;
   createAuthenticateUserWithEmail?: Maybe<CreateAuthenticateUserWithEmailResult>;
   createInitialUser: UserAuthenticationWithPasswordSuccess;
   createPost?: Maybe<Post>;
@@ -273,14 +274,14 @@ export type Mutation = {
 };
 
 
-export type MutationAuthenticateUserWithCryptoSignatureArgs = {
-  input: AuthenticateUserWithCryptoSignatureInput;
-};
-
-
 export type MutationAuthenticateUserWithPasswordArgs = {
   email: Scalars['String'];
   password: Scalars['String'];
+};
+
+
+export type MutationAuthenticateUserWithSolanaArgs = {
+  input: AuthenticateUserWithSolanaInput;
 };
 
 
@@ -612,7 +613,7 @@ export type Post_Content_DocumentDocumentArgs = {
 
 export type Query = {
   __typename?: 'Query';
-  authenticateCryptoSignMessage?: Maybe<Scalars['String']>;
+  authenticateUserNonce?: Maybe<GetAuthenticateUserNonceResultType>;
   authenticatedItem?: Maybe<AuthenticatedItem>;
   keystone: KeystoneMeta;
   post?: Maybe<Post>;
@@ -625,12 +626,6 @@ export type Query = {
   users?: Maybe<Array<User>>;
   usersCount?: Maybe<Scalars['Int']>;
   validateUserPasswordResetToken?: Maybe<ValidateUserPasswordResetTokenResult>;
-  webAuthChallenge?: Maybe<WebAuthChallengeResult>;
-};
-
-
-export type QueryAuthenticateCryptoSignMessageArgs = {
-  input: AuthenticateCryptoSignMessageInput;
 };
 
 
@@ -693,11 +688,6 @@ export type QueryValidateUserPasswordResetTokenArgs = {
   token: Scalars['String'];
 };
 
-
-export type QueryWebAuthChallengeArgs = {
-  input: WebAuthChallengeInput;
-};
-
 export enum QueryMode {
   Default = 'default',
   Insensitive = 'insensitive'
@@ -721,12 +711,6 @@ export type RedeemUserPasswordResetTokenResult = {
   __typename?: 'RedeemUserPasswordResetTokenResult';
   code: PasswordResetRedemptionErrorCode;
   message: Scalars['String'];
-};
-
-export type RpEntity = {
-  __typename?: 'RpEntity';
-  id?: Maybe<Scalars['String']>;
-  name: Scalars['String'];
 };
 
 export type StringFilter = {
@@ -852,6 +836,7 @@ export type User = {
   postLikesCount?: Maybe<Scalars['Int']>;
   posts?: Maybe<Array<Post>>;
   postsCount?: Maybe<Scalars['Int']>;
+  publicKey?: Maybe<Scalars['String']>;
   roles?: Maybe<Scalars['JSON']>;
 };
 
@@ -935,14 +920,8 @@ export type UserCreateInput = {
   passwordResetToken?: InputMaybe<Scalars['String']>;
   postLikes?: InputMaybe<PostRelateToManyForCreateInput>;
   posts?: InputMaybe<PostRelateToManyForCreateInput>;
+  publicKey?: InputMaybe<Scalars['String']>;
   roles?: InputMaybe<Scalars['JSON']>;
-};
-
-export type UserEntity = {
-  __typename?: 'UserEntity';
-  displayName?: Maybe<Scalars['String']>;
-  id: Scalars['String'];
-  name: Scalars['String'];
 };
 
 export type UserManyRelationFilter = {
@@ -960,6 +939,7 @@ export type UserOrderByInput = {
   name?: InputMaybe<OrderDirection>;
   passwordResetIssuedAt?: InputMaybe<OrderDirection>;
   passwordResetRedeemedAt?: InputMaybe<OrderDirection>;
+  publicKey?: InputMaybe<OrderDirection>;
 };
 
 export type UserRelateToManyForCreateInput = {
@@ -1005,6 +985,7 @@ export type UserUpdateInput = {
   passwordResetToken?: InputMaybe<Scalars['String']>;
   postLikes?: InputMaybe<PostRelateToManyForUpdateInput>;
   posts?: InputMaybe<PostRelateToManyForUpdateInput>;
+  publicKey?: InputMaybe<Scalars['String']>;
   roles?: InputMaybe<Scalars['JSON']>;
 };
 
@@ -1027,11 +1008,13 @@ export type UserWhereInput = {
   passwordResetToken?: InputMaybe<PasswordFilter>;
   postLikes?: InputMaybe<PostManyRelationFilter>;
   posts?: InputMaybe<PostManyRelationFilter>;
+  publicKey?: InputMaybe<StringFilter>;
 };
 
 export type UserWhereUniqueInput = {
   email?: InputMaybe<Scalars['String']>;
   id?: InputMaybe<Scalars['ID']>;
+  publicKey?: InputMaybe<Scalars['String']>;
 };
 
 export type ValidateUserPasswordResetTokenResult = {
@@ -1040,63 +1023,112 @@ export type ValidateUserPasswordResetTokenResult = {
   message: Scalars['String'];
 };
 
-export type WebAuthChallengeInput = {
+export type EmailSignInMutationVariables = Exact<{
   email: Scalars['String'];
-};
-
-export type WebAuthChallengeResult = {
-  __typename?: 'WebAuthChallengeResult';
-  challenge: Scalars['String'];
-  rp: RpEntity;
-  user: UserEntity;
-};
-
-export type AuthenticateUserWithCryptoSignatureMutationVariables = Exact<{
-  input: AuthenticateUserWithCryptoSignatureInput;
 }>;
 
 
-export type AuthenticateUserWithCryptoSignatureMutation = { __typename?: 'Mutation', authenticateUserWithCryptoSignature?: { __typename?: 'AuthenticateUserWithCryptoSignatureResult', sessionToken?: string | null, item?: { __typename?: 'User', name?: string | null, id: string, email?: string | null, postsCount?: number | null, postLikesCount?: number | null, followingCount?: number | null, followerCount?: number | null } | null } | null };
+export type EmailSignInMutation = { __typename?: 'Mutation', sendUserMagicAuthLink: boolean };
 
-export type CryptoSignMessageQueryVariables = Exact<{
-  input: AuthenticateCryptoSignMessageInput;
+export type EmailTokenSignInMutationVariables = Exact<{
+  email: Scalars['String'];
+  token: Scalars['String'];
 }>;
 
 
-export type CryptoSignMessageQuery = { __typename?: 'Query', authenticateCryptoSignMessage?: string | null };
+export type EmailTokenSignInMutation = { __typename?: 'Mutation', redeemUserMagicAuthToken: { __typename?: 'RedeemUserMagicAuthTokenFailure', code: MagicLinkRedemptionErrorCode, message: string } | { __typename?: 'RedeemUserMagicAuthTokenSuccess', token: string } };
+
+export type GetUserQueryVariables = Exact<{
+  email: Scalars['String'];
+}>;
 
 
-export const AuthenticateUserWithCryptoSignatureDocument = gql`
-    mutation authenticateUserWithCryptoSignature($input: AuthenticateUserWithCryptoSignatureInput!) {
-  authenticateUserWithCryptoSignature(input: $input) {
-    item {
-      name
-      id
-      email
-      postsCount
-      postLikesCount
-      followingCount
-      followerCount
+export type GetUserQuery = { __typename?: 'Query', user?: { __typename?: 'User', id: string, name?: string | null | undefined, email?: string | null | undefined } | null | undefined };
+
+export type SignInMutationVariables = Exact<{
+  email: Scalars['String'];
+  password: Scalars['String'];
+}>;
+
+
+export type SignInMutation = { __typename?: 'Mutation', authenticateUserWithPassword?: { __typename?: 'UserAuthenticationWithPasswordFailure', message: string } | { __typename?: 'UserAuthenticationWithPasswordSuccess', sessionToken: string } | null | undefined };
+
+export type SignUpMutationVariables = Exact<{
+  input: CreateAuthenticateUserWithEmailInput;
+}>;
+
+
+export type SignUpMutation = { __typename?: 'Mutation', createAuthenticateUserWithEmail?: { __typename?: 'CreateAuthenticateUserWithEmailResult', id?: string | null | undefined } | null | undefined };
+
+
+export const EmailSignInDocument = gql`
+    mutation emailSignIn($email: String!) {
+  sendUserMagicAuthLink(email: $email)
+}
+    `;
+
+export function useEmailSignInMutation() {
+  return Urql.useMutation<EmailSignInMutation, EmailSignInMutationVariables>(EmailSignInDocument);
+};
+export const EmailTokenSignInDocument = gql`
+    mutation emailTokenSignIn($email: String!, $token: String!) {
+  redeemUserMagicAuthToken(email: $email, token: $token) {
+    ... on RedeemUserMagicAuthTokenFailure {
+      code
+      message
     }
-    sessionToken
+    ... on RedeemUserMagicAuthTokenSuccess {
+      token
+    }
   }
 }
     `;
 
-export function useAuthenticateUserWithCryptoSignatureMutation() {
-  return Urql.useMutation<AuthenticateUserWithCryptoSignatureMutation, AuthenticateUserWithCryptoSignatureMutationVariables>(AuthenticateUserWithCryptoSignatureDocument);
+export function useEmailTokenSignInMutation() {
+  return Urql.useMutation<EmailTokenSignInMutation, EmailTokenSignInMutationVariables>(EmailTokenSignInDocument);
 };
-export const CryptoSignMessageDocument = gql`
-    query cryptoSignMessage($input: AuthenticateCryptoSignMessageInput!) {
-  authenticateCryptoSignMessage(input: $input)
+export const GetUserDocument = gql`
+    query getUser($email: String!) {
+  user(where: {email: $email}) {
+    id
+    name
+    email
+  }
 }
     `;
 
-export function useCryptoSignMessageQuery(options: Omit<Urql.UseQueryArgs<never, CryptoSignMessageQueryVariables>, 'query'> = {}) {
-  return Urql.useQuery<CryptoSignMessageQuery>({ query: CryptoSignMessageDocument, ...options });
+export function useGetUserQuery(options: Omit<Urql.UseQueryArgs<never, GetUserQueryVariables>, 'query'> = {}) {
+  return Urql.useQuery<GetUserQuery>({ query: GetUserDocument, ...options });
 };
-export type AuthenticateUserWithCryptoSignatureResultKeySpecifier = ('item' | 'sessionToken' | AuthenticateUserWithCryptoSignatureResultKeySpecifier)[];
-export type AuthenticateUserWithCryptoSignatureResultFieldPolicy = {
+export const SignInDocument = gql`
+    mutation signIn($email: String!, $password: String!) {
+  authenticateUserWithPassword(email: $email, password: $password) {
+    ... on UserAuthenticationWithPasswordFailure {
+      message
+    }
+    ... on UserAuthenticationWithPasswordSuccess {
+      sessionToken
+    }
+  }
+}
+    `;
+
+export function useSignInMutation() {
+  return Urql.useMutation<SignInMutation, SignInMutationVariables>(SignInDocument);
+};
+export const SignUpDocument = gql`
+    mutation signUp($input: CreateAuthenticateUserWithEmailInput!) {
+  createAuthenticateUserWithEmail(input: $input) {
+    id
+  }
+}
+    `;
+
+export function useSignUpMutation() {
+  return Urql.useMutation<SignUpMutation, SignUpMutationVariables>(SignUpDocument);
+};
+export type AuthenticateUserWithSolanaResultKeySpecifier = ('item' | 'sessionToken' | AuthenticateUserWithSolanaResultKeySpecifier)[];
+export type AuthenticateUserWithSolanaResultFieldPolicy = {
 	item?: FieldPolicy<any> | FieldReadFunction<any>,
 	sessionToken?: FieldPolicy<any> | FieldReadFunction<any>
 };
@@ -1115,6 +1147,10 @@ export type CreateAuthenticateUserWithEmailResultFieldPolicy = {
 	email?: FieldPolicy<any> | FieldReadFunction<any>,
 	id?: FieldPolicy<any> | FieldReadFunction<any>,
 	name?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type GetAuthenticateUserNonceResultTypeKeySpecifier = ('nonce' | GetAuthenticateUserNonceResultTypeKeySpecifier)[];
+export type GetAuthenticateUserNonceResultTypeFieldPolicy = {
+	nonce?: FieldPolicy<any> | FieldReadFunction<any>
 };
 export type ImageFieldOutputKeySpecifier = ('extension' | 'filesize' | 'height' | 'id' | 'ref' | 'url' | 'width' | ImageFieldOutputKeySpecifier)[];
 export type ImageFieldOutputFieldPolicy = {
@@ -1197,10 +1233,10 @@ export type LocalImageFieldOutputFieldPolicy = {
 	url?: FieldPolicy<any> | FieldReadFunction<any>,
 	width?: FieldPolicy<any> | FieldReadFunction<any>
 };
-export type MutationKeySpecifier = ('authenticateUserWithCryptoSignature' | 'authenticateUserWithPassword' | 'createAuthenticateUserWithEmail' | 'createInitialUser' | 'createPost' | 'createPosts' | 'createTag' | 'createTags' | 'createUser' | 'createUsers' | 'deletePost' | 'deletePosts' | 'deleteTag' | 'deleteTags' | 'deleteUser' | 'deleteUsers' | 'endSession' | 'redeemUserMagicAuthToken' | 'redeemUserPasswordResetToken' | 'sendUserMagicAuthLink' | 'sendUserPasswordResetLink' | 'updatePost' | 'updatePosts' | 'updateTag' | 'updateTags' | 'updateUser' | 'updateUsers' | MutationKeySpecifier)[];
+export type MutationKeySpecifier = ('authenticateUserWithPassword' | 'authenticateUserWithSolana' | 'createAuthenticateUserWithEmail' | 'createInitialUser' | 'createPost' | 'createPosts' | 'createTag' | 'createTags' | 'createUser' | 'createUsers' | 'deletePost' | 'deletePosts' | 'deleteTag' | 'deleteTags' | 'deleteUser' | 'deleteUsers' | 'endSession' | 'redeemUserMagicAuthToken' | 'redeemUserPasswordResetToken' | 'sendUserMagicAuthLink' | 'sendUserPasswordResetLink' | 'updatePost' | 'updatePosts' | 'updateTag' | 'updateTags' | 'updateUser' | 'updateUsers' | MutationKeySpecifier)[];
 export type MutationFieldPolicy = {
-	authenticateUserWithCryptoSignature?: FieldPolicy<any> | FieldReadFunction<any>,
 	authenticateUserWithPassword?: FieldPolicy<any> | FieldReadFunction<any>,
+	authenticateUserWithSolana?: FieldPolicy<any> | FieldReadFunction<any>,
 	createAuthenticateUserWithEmail?: FieldPolicy<any> | FieldReadFunction<any>,
 	createInitialUser?: FieldPolicy<any> | FieldReadFunction<any>,
 	createPost?: FieldPolicy<any> | FieldReadFunction<any>,
@@ -1252,9 +1288,9 @@ export type Post_content_DocumentKeySpecifier = ('document' | Post_content_Docum
 export type Post_content_DocumentFieldPolicy = {
 	document?: FieldPolicy<any> | FieldReadFunction<any>
 };
-export type QueryKeySpecifier = ('authenticateCryptoSignMessage' | 'authenticatedItem' | 'keystone' | 'post' | 'posts' | 'postsCount' | 'tag' | 'tags' | 'tagsCount' | 'user' | 'users' | 'usersCount' | 'validateUserPasswordResetToken' | 'webAuthChallenge' | QueryKeySpecifier)[];
+export type QueryKeySpecifier = ('authenticateUserNonce' | 'authenticatedItem' | 'keystone' | 'post' | 'posts' | 'postsCount' | 'tag' | 'tags' | 'tagsCount' | 'user' | 'users' | 'usersCount' | 'validateUserPasswordResetToken' | QueryKeySpecifier)[];
 export type QueryFieldPolicy = {
-	authenticateCryptoSignMessage?: FieldPolicy<any> | FieldReadFunction<any>,
+	authenticateUserNonce?: FieldPolicy<any> | FieldReadFunction<any>,
 	authenticatedItem?: FieldPolicy<any> | FieldReadFunction<any>,
 	keystone?: FieldPolicy<any> | FieldReadFunction<any>,
 	post?: FieldPolicy<any> | FieldReadFunction<any>,
@@ -1266,8 +1302,7 @@ export type QueryFieldPolicy = {
 	user?: FieldPolicy<any> | FieldReadFunction<any>,
 	users?: FieldPolicy<any> | FieldReadFunction<any>,
 	usersCount?: FieldPolicy<any> | FieldReadFunction<any>,
-	validateUserPasswordResetToken?: FieldPolicy<any> | FieldReadFunction<any>,
-	webAuthChallenge?: FieldPolicy<any> | FieldReadFunction<any>
+	validateUserPasswordResetToken?: FieldPolicy<any> | FieldReadFunction<any>
 };
 export type RedeemUserMagicAuthTokenFailureKeySpecifier = ('code' | 'message' | RedeemUserMagicAuthTokenFailureKeySpecifier)[];
 export type RedeemUserMagicAuthTokenFailureFieldPolicy = {
@@ -1284,11 +1319,6 @@ export type RedeemUserPasswordResetTokenResultFieldPolicy = {
 	code?: FieldPolicy<any> | FieldReadFunction<any>,
 	message?: FieldPolicy<any> | FieldReadFunction<any>
 };
-export type RpEntityKeySpecifier = ('id' | 'name' | RpEntityKeySpecifier)[];
-export type RpEntityFieldPolicy = {
-	id?: FieldPolicy<any> | FieldReadFunction<any>,
-	name?: FieldPolicy<any> | FieldReadFunction<any>
-};
 export type TagKeySpecifier = ('id' | 'name' | 'posts' | 'postsCount' | TagKeySpecifier)[];
 export type TagFieldPolicy = {
 	id?: FieldPolicy<any> | FieldReadFunction<any>,
@@ -1296,7 +1326,7 @@ export type TagFieldPolicy = {
 	posts?: FieldPolicy<any> | FieldReadFunction<any>,
 	postsCount?: FieldPolicy<any> | FieldReadFunction<any>
 };
-export type UserKeySpecifier = ('email' | 'follower' | 'followerCount' | 'following' | 'followingCount' | 'id' | 'isAdmin' | 'magicAuthIssuedAt' | 'magicAuthRedeemedAt' | 'magicAuthToken' | 'name' | 'password' | 'passwordResetIssuedAt' | 'passwordResetRedeemedAt' | 'passwordResetToken' | 'postLikes' | 'postLikesCount' | 'posts' | 'postsCount' | 'roles' | UserKeySpecifier)[];
+export type UserKeySpecifier = ('email' | 'follower' | 'followerCount' | 'following' | 'followingCount' | 'id' | 'isAdmin' | 'magicAuthIssuedAt' | 'magicAuthRedeemedAt' | 'magicAuthToken' | 'name' | 'password' | 'passwordResetIssuedAt' | 'passwordResetRedeemedAt' | 'passwordResetToken' | 'postLikes' | 'postLikesCount' | 'posts' | 'postsCount' | 'publicKey' | 'roles' | UserKeySpecifier)[];
 export type UserFieldPolicy = {
 	email?: FieldPolicy<any> | FieldReadFunction<any>,
 	follower?: FieldPolicy<any> | FieldReadFunction<any>,
@@ -1317,6 +1347,7 @@ export type UserFieldPolicy = {
 	postLikesCount?: FieldPolicy<any> | FieldReadFunction<any>,
 	posts?: FieldPolicy<any> | FieldReadFunction<any>,
 	postsCount?: FieldPolicy<any> | FieldReadFunction<any>,
+	publicKey?: FieldPolicy<any> | FieldReadFunction<any>,
 	roles?: FieldPolicy<any> | FieldReadFunction<any>
 };
 export type UserAuthenticationWithPasswordFailureKeySpecifier = ('message' | UserAuthenticationWithPasswordFailureKeySpecifier)[];
@@ -1328,27 +1359,15 @@ export type UserAuthenticationWithPasswordSuccessFieldPolicy = {
 	item?: FieldPolicy<any> | FieldReadFunction<any>,
 	sessionToken?: FieldPolicy<any> | FieldReadFunction<any>
 };
-export type UserEntityKeySpecifier = ('displayName' | 'id' | 'name' | UserEntityKeySpecifier)[];
-export type UserEntityFieldPolicy = {
-	displayName?: FieldPolicy<any> | FieldReadFunction<any>,
-	id?: FieldPolicy<any> | FieldReadFunction<any>,
-	name?: FieldPolicy<any> | FieldReadFunction<any>
-};
 export type ValidateUserPasswordResetTokenResultKeySpecifier = ('code' | 'message' | ValidateUserPasswordResetTokenResultKeySpecifier)[];
 export type ValidateUserPasswordResetTokenResultFieldPolicy = {
 	code?: FieldPolicy<any> | FieldReadFunction<any>,
 	message?: FieldPolicy<any> | FieldReadFunction<any>
 };
-export type WebAuthChallengeResultKeySpecifier = ('challenge' | 'rp' | 'user' | WebAuthChallengeResultKeySpecifier)[];
-export type WebAuthChallengeResultFieldPolicy = {
-	challenge?: FieldPolicy<any> | FieldReadFunction<any>,
-	rp?: FieldPolicy<any> | FieldReadFunction<any>,
-	user?: FieldPolicy<any> | FieldReadFunction<any>
-};
 export type StrictTypedTypePolicies = {
-	AuthenticateUserWithCryptoSignatureResult?: Omit<TypePolicy, "fields" | "keyFields"> & {
-		keyFields?: false | AuthenticateUserWithCryptoSignatureResultKeySpecifier | (() => undefined | AuthenticateUserWithCryptoSignatureResultKeySpecifier),
-		fields?: AuthenticateUserWithCryptoSignatureResultFieldPolicy,
+	AuthenticateUserWithSolanaResult?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | AuthenticateUserWithSolanaResultKeySpecifier | (() => undefined | AuthenticateUserWithSolanaResultKeySpecifier),
+		fields?: AuthenticateUserWithSolanaResultFieldPolicy,
 	},
 	CloudImageFieldOutput?: Omit<TypePolicy, "fields" | "keyFields"> & {
 		keyFields?: false | CloudImageFieldOutputKeySpecifier | (() => undefined | CloudImageFieldOutputKeySpecifier),
@@ -1357,6 +1376,10 @@ export type StrictTypedTypePolicies = {
 	CreateAuthenticateUserWithEmailResult?: Omit<TypePolicy, "fields" | "keyFields"> & {
 		keyFields?: false | CreateAuthenticateUserWithEmailResultKeySpecifier | (() => undefined | CreateAuthenticateUserWithEmailResultKeySpecifier),
 		fields?: CreateAuthenticateUserWithEmailResultFieldPolicy,
+	},
+	GetAuthenticateUserNonceResultType?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | GetAuthenticateUserNonceResultTypeKeySpecifier | (() => undefined | GetAuthenticateUserNonceResultTypeKeySpecifier),
+		fields?: GetAuthenticateUserNonceResultTypeFieldPolicy,
 	},
 	ImageFieldOutput?: Omit<TypePolicy, "fields" | "keyFields"> & {
 		keyFields?: false | ImageFieldOutputKeySpecifier | (() => undefined | ImageFieldOutputKeySpecifier),
@@ -1430,10 +1453,6 @@ export type StrictTypedTypePolicies = {
 		keyFields?: false | RedeemUserPasswordResetTokenResultKeySpecifier | (() => undefined | RedeemUserPasswordResetTokenResultKeySpecifier),
 		fields?: RedeemUserPasswordResetTokenResultFieldPolicy,
 	},
-	RpEntity?: Omit<TypePolicy, "fields" | "keyFields"> & {
-		keyFields?: false | RpEntityKeySpecifier | (() => undefined | RpEntityKeySpecifier),
-		fields?: RpEntityFieldPolicy,
-	},
 	Tag?: Omit<TypePolicy, "fields" | "keyFields"> & {
 		keyFields?: false | TagKeySpecifier | (() => undefined | TagKeySpecifier),
 		fields?: TagFieldPolicy,
@@ -1450,17 +1469,9 @@ export type StrictTypedTypePolicies = {
 		keyFields?: false | UserAuthenticationWithPasswordSuccessKeySpecifier | (() => undefined | UserAuthenticationWithPasswordSuccessKeySpecifier),
 		fields?: UserAuthenticationWithPasswordSuccessFieldPolicy,
 	},
-	UserEntity?: Omit<TypePolicy, "fields" | "keyFields"> & {
-		keyFields?: false | UserEntityKeySpecifier | (() => undefined | UserEntityKeySpecifier),
-		fields?: UserEntityFieldPolicy,
-	},
 	ValidateUserPasswordResetTokenResult?: Omit<TypePolicy, "fields" | "keyFields"> & {
 		keyFields?: false | ValidateUserPasswordResetTokenResultKeySpecifier | (() => undefined | ValidateUserPasswordResetTokenResultKeySpecifier),
 		fields?: ValidateUserPasswordResetTokenResultFieldPolicy,
-	},
-	WebAuthChallengeResult?: Omit<TypePolicy, "fields" | "keyFields"> & {
-		keyFields?: false | WebAuthChallengeResultKeySpecifier | (() => undefined | WebAuthChallengeResultKeySpecifier),
-		fields?: WebAuthChallengeResultFieldPolicy,
 	}
 };
 export type TypedTypePolicies = StrictTypedTypePolicies & TypePolicies;

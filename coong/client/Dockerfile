@@ -2,15 +2,13 @@ FROM node:16
 
 WORKDIR /usr/src/app
 
-COPY ./ ./
+COPY dist ./dist
+COPY package.json ./
 
-RUN npm i -g pnpm
-RUN pnpm install
-RUN pnpm run build
-RUN pnpm install --prod
+RUN npm install --prod
 
-EXPOSE 8080
+EXPOSE 3000
 
-CMD pnpm run start
+CMD npm run start:ssr
 
 
