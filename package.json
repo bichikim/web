@@ -11,7 +11,8 @@
   ],
   "scripts": {
     "build:@coong/client": "pnpm run build --filter @coong/client... --stream",
-    "build:@coong/client:ssr": "pnpm run build:ssr --filter @coong/client... --stream",
+    "build:@coong/client:ssr:stream": "pnpm run build:ssr --filter @coong/client... --stream",
+    "build:@coong/client:ssr": "pnpm run build:ssr --filter @coong/client",
     "build:@coong/server": "pnpm run build --filter @coong/server",
     "build:@coong/server-stream": "pnpm run build --filter @coong/server... --stream",
     "build:docs": "pnpm run build --filter @winter-love-docs/winter-love... --stream",
