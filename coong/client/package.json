@@ -1,6 +1,6 @@
 {
   "name": "@coong/client",
-  "version": "1.0.24",
+  "version": "1.0.25-alpha.0",
   "private": true,
   "description": "A Quasar Framework app",
   "author": "Bichi Kim <bichi@live.co.kr>",
@@ -30,8 +30,8 @@
     "@project-serum/sol-wallet-adapter": "0.2.6",
     "@quasar/extras": "1.13.3",
     "@urql/vue": "0.6.1",
-    "@winter-love/hyper-components": "^1.0.24",
-    "@winter-love/utils": "^1.0.24",
+    "@winter-love/hyper-components": "^1.0.25-alpha.0",
+    "@winter-love/utils": "^1.0.25-alpha.0",
     "compression": "1.7.4",
     "core-js": "3.21.1",
     "express": "4.17.3",
@@ -42,7 +42,7 @@
     "quasar": "2.6.1",
     "serialize-javascript": "6.0.0",
     "validator": "13.7.0",
-    "vare": "^1.0.24",
+    "vare": "^1.0.25-alpha.0",
     "vue": "3.2.31",
     "vue-router": "4.0.14"
   },
