@@ -29,6 +29,7 @@ export const isSharpHex = (value: string) => {
 }
 
 export const getHex = (anyColor: string) => {
+  // eslint-disable-next-line functional/no-try-statement
   try {
     return Color(anyColor).hex()
   } catch {

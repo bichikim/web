@@ -79,15 +79,6 @@ function getNav(override: Partial<DefaultTheme.NavItem>[] = [], prefix: string =
   return defaultsDeep(override, data)
 }
 
-function getPhraseSidebar(override: Partial<DefaultTheme.SideBarItem>[] = [], prefix: string = '/') {
-  const data: DefaultTheme.SideBarItem[] =  [{
-    text: '소개',
-    link: '/phrase/',
-  }]
-
-  return defaultsDeep(override, data)
-}
-
 function getGuideSidebar(override: Partial<DefaultTheme.SideBarItem>[] = [], prefix: string = '/') {
   const data: DefaultTheme.SideBarItem[] = [
     {

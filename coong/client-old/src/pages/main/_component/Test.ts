@@ -1,5 +1,5 @@
 import {defineComponent, Fragment, h} from 'vue'
-import {useHydrate, HydrateStore} from 'src/use/root-element'
+import {HydrateStore, useHydrate} from 'src/use/root-element'
 
 export const Test = defineComponent({
   render() {

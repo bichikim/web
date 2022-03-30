@@ -1,5 +1,0 @@
-describe('variant', () => {
-  it('should ', () => {
-    
-  })
-})

@@ -25,6 +25,15 @@ module.exports = {
   },
   overrides: [
     {
+      // server codes
+      files: [
+        'coong/server-old/**/*',
+      ],
+      rules: {
+        'functional/no-class': 'off',
+      },
+    },
+    {
       // tests
       env: {jest: true},
       files: [
@@ -168,8 +177,8 @@ module.exports = {
     'func-style': ['error', 'declaration', {allowArrowFunctions: true}],
     'function-call-argument-newline': ['error', 'consistent'],
     'function-paren-newline': ['error', 'consistent'],
-    'functional/no-loop-statement': 'off',
     'functional/functional-parameters': ['warn', {
+      allowRestParameter: true,
       enforceParameterCount: false,
     }],
     'functional/immutable-data': 'off',
@@ -180,11 +189,13 @@ module.exports = {
     'functional/no-let': ['warn', {
       allowLocalMutation: true,
     }],
-    'functional/no-method-signature': ['warn', {
+    'functional/no-loop-statement': 'off',
+    'functional/no-method-signature': ['off', {
       ignoreIfReadonly: true,
     }],
     'functional/no-mixed-type': 'off',
     'functional/no-return-void': 'off',
+    'functional/no-this-expression': 'warn',
     'functional/prefer-readonly-type': 'off',
     'generator-star-spacing': ['error',
       {

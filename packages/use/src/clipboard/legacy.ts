@@ -6,6 +6,8 @@ import {MayRef} from 'src/types'
 import {wrapRef} from 'src/wrap-ref'
 import {ref} from 'vue-demi'
 
+// todo fix this
+// eslint-disable-next-line functional/no-let
 let _legacyInput: HTMLInputElement
 
 const getLegacyInput = (): HTMLInputElement | undefined => {

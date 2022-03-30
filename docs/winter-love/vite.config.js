@@ -4,6 +4,9 @@ import path from 'path'
 const projectRoot = path.resolve(__dirname, '..')
 
 export default defineConfig({
+  define: {
+    __DEV__: false,
+  },
   optimizeDeps: {
     exclude: [
       'vue-demi',
@@ -13,9 +16,6 @@ export default defineConfig({
       '@winter-love/use',
       '@winter-love/utils',
     ],
-  },
-  define: {
-    __DEV__: false,
   },
   plugins: [
   ],
