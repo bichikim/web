@@ -1,23 +1,36 @@
+/* eslint-disable functional/prefer-readonly-type */
 import {AnyObject, mayFunctionValue} from '@winter-love/utils'
 import {useInfo} from 'src/info'
 import {UnwrapNestedRefs} from 'src/types'
 import {reactive} from 'vue-demi'
 import {StateSymbol} from './symbol'
-
+/**
+ * @deprecated
+ */
 export const stateName: StateIdentifierName = 'state'
-
+/**
+ * @deprecated
+ */
 export type StateIdentifierName = 'state'
-
+/**
+ * @deprecated
+ */
 export type State<State> = UnwrapNestedRefs<State> & {
   [StateSymbol]: boolean
 }
-
+/**
+ * @deprecated
+ */
 export type AnyState = State<any> | State<any>[] | Record<string, State<any>>
-
+/**
+ * @deprecated
+ */
 export const isState = (value: any): value is State<any> => {
   return Boolean(value?.[StateSymbol])
 }
-
+/**
+ * @deprecated
+ */
 export type InitState<S> = S | (() => S)
 
 /**

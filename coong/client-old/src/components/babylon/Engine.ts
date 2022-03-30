@@ -54,6 +54,7 @@ export const Engine = defineComponent({
     antialias: {default: true, type: Boolean},
   },
   render() {
+    // eslint-disable-next-line functional/no-this-expression
     const {$slots, onResize} = this
     return (
       h('div', [

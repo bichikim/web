@@ -1,11 +1,10 @@
-import {computed, toRefs} from 'vue-demi'
-import {createStore, provideStoreManager, StoreManager, useStore} from '../'
-import {defineComponent, h, ref} from 'vue-demi'
+import {computed, defineComponent, h, ref, toRefs} from 'vue-demi'
+import {createManager, createStore, provideStoreManager, useStore} from '../'
 import {mount} from '@vue/test-utils'
 
 describe('store', () => {
   it('should create store with root store', async () => {
-    const storeManager = new StoreManager()
+    const storeManager = createManager()
     const useMyStore = createStore('foo', () => {
 
       const foo = ref('foo')
@@ -66,7 +65,7 @@ describe('store', () => {
     expect(storeManager.storeTree.foo.foo).toBe('foo1')
   })
   it('should create store with root store with useWithReset', async () => {
-    const storeManager = new StoreManager()
+    const storeManager = createManager()
     const useMyStore = createStore({
       name: 'foo',
       setup: () => {
@@ -131,7 +130,7 @@ describe('store', () => {
     expect(storeManager.storeTree.foo.foo).toBe('foo')
   })
   it('should return state', async () => {
-    const storeManager = new StoreManager()
+    const storeManager = createManager()
     const Component = defineComponent({
       setup() {
         const state = useStore('foo', () => {
@@ -169,7 +168,7 @@ describe('store', () => {
     expect(wrapper.get('#foo').text()).toBe('foo1')
   })
   it('should create store that has props', async () => {
-    const storeManager = new StoreManager()
+    const storeManager = createManager()
     const useMyStore = createStore({
       name: 'foo',
       props: {
@@ -230,7 +229,7 @@ describe('store', () => {
     expect(wrapper.get('#fooName').text()).toBe('foo-foo1')
   })
   it('should create store that can use root', async () => {
-    const storeManager = new StoreManager()
+    const storeManager = createManager()
     const useBar = createStore({
       name: 'bar',
       setup: () => {

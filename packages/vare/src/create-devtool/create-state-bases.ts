@@ -56,6 +56,7 @@ const getRelatesState = (key, value, updateState?: () => any) => {
     const args = info?.args ?? []
     let _value
 
+    // eslint-disable-next-line functional/no-try-statement
     try {
       _value = value(...args)
     } catch {

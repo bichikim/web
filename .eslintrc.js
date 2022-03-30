@@ -1,5 +1,5 @@
 module.exports = {
-  env: {node: true},
+  env: {es6: true, node: true},
   extends: [
     'plugin:vue/vue3-recommended',
     'plugin:unicorn/recommended',
@@ -7,7 +7,9 @@ module.exports = {
     'plugin:@typescript-eslint/recommended',
     'eslint:recommended',
     '@vue/typescript/recommended',
+    'plugin:functional/recommended',
   ],
+  // ignorePatterns: ['.eslintrc.js'],
   globals: {
     __QUASAR_SSR__: true,
     __QUASAR_SSR_CLIENT__: true,
@@ -32,6 +34,9 @@ module.exports = {
       rules: {
         '@typescript-eslint/no-unused-vars': 'off',
         '@typescript-eslint/no-var-requires': 'off',
+        'functional/functional-parameters': 'off',
+        'functional/no-throw-statement': 'off',
+        'functional/prefer-readonly-type': 'off',
         'max-len': 'off',
         'max-lines-per-function': 'off',
         'max-nested-callbacks': 'off',
@@ -85,6 +90,7 @@ module.exports = {
     'import',
     'sort-keys-fix',
     'typescript-sort-keys',
+    'functional',
   ],
   root: true,
   rules: {
@@ -162,6 +168,24 @@ module.exports = {
     'func-style': ['error', 'declaration', {allowArrowFunctions: true}],
     'function-call-argument-newline': ['error', 'consistent'],
     'function-paren-newline': ['error', 'consistent'],
+    'functional/no-loop-statement': 'off',
+    'functional/functional-parameters': ['warn', {
+      enforceParameterCount: false,
+    }],
+    'functional/immutable-data': 'off',
+    'functional/no-conditional-statement': ['off', {
+      allowReturningBranches: true,
+    }],
+    'functional/no-expression-statement': 'off',
+    'functional/no-let': ['warn', {
+      allowLocalMutation: true,
+    }],
+    'functional/no-method-signature': ['warn', {
+      ignoreIfReadonly: true,
+    }],
+    'functional/no-mixed-type': 'off',
+    'functional/no-return-void': 'off',
+    'functional/prefer-readonly-type': 'off',
     'generator-star-spacing': ['error',
       {
         after: false,

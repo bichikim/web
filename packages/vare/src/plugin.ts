@@ -1,16 +1,22 @@
 import {inject, InjectionKey, Plugin} from 'vue-demi'
 import {createDevTool} from './create-devtool'
-
+/**
+ * @deprecated
+ */
 export type States = Record<string, any>
-
+/**
+ * @deprecated
+ */
 export type FunctionStates = (initState: Partial<States>) => States
-
+/**
+ * @deprecated
+ */
 export interface VarePlugin {
   /**
    * not recommended to use
    */
-  provide?: boolean
-  states: States | FunctionStates
+  readonly provide?: boolean
+  readonly states: States | FunctionStates
 }
 
 const errorMessage = process.env.NODE_ENV === 'development' ?
@@ -22,10 +28,13 @@ export interface UseVareReturnType {
 
 const vareInjectKeySymbolName = process.env.NODE_ENV === 'development' ? 'vare-inject-key' : ''
 
+/**
+ * @deprecated
+ */
 export const vareInjectKey: InjectionKey<UseVareReturnType> = Symbol(vareInjectKeySymbolName)
 
 /**
- * using this plugin is not mandatory
+ * @deprecated
  * @param app
  * @param options
  */
@@ -41,11 +50,13 @@ export const plugin: Plugin = (app, options: VarePlugin) => {
 }
 
 /**
+ * @deprecated
  * we do not recommend to use this
  */
 export const useVare = (): UseVareReturnType => {
   const vare = inject(vareInjectKey)
   if (!vare) {
+    // eslint-disable-next-line functional/no-throw-statement
     throw new Error(errorMessage)
   }
   return vare

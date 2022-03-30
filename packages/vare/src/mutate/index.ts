@@ -16,12 +16,16 @@ export type MutationIdentifierName = 'mutation'
 export const mutationName: MutationIdentifierName = 'mutation'
 
 /**
+ * @deprecated
  * the mutation return type
  */
 export type Mutation<Args extends any[], Return = any> = ((...args: Args) => Return) & {
   [MutateSymbol]: boolean
 }
-
+/**
+ * @deprecated
+ * @param value
+ */
 export const isMutate = (value?: any): value is Mutation<any[]> => {
   return Boolean(value?.[MutateSymbol])
 }
@@ -29,6 +33,7 @@ export const isMutate = (value?: any): value is Mutation<any[]> => {
 const getMutatePrams = createGetAtomPrams(createUuid('mutate'))
 
 /**
+ * @deprecated
  * create new mutation
  */
 function createMutation(unknown, mayRecipe?: any, name?: string): Mutation<any> {

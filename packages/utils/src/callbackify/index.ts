@@ -7,6 +7,7 @@ export const callbackify = <S>(
   handle: CallbackifyHandle<S>,
 ) => {
   let result
+  // eslint-disable-next-line functional/no-try-statement
   try {
     result = action()
   } catch (error: any) {

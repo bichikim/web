@@ -19,11 +19,11 @@ export const storageRef = <Data>(
   const valueRef = wrapRef<Data>(value)
   const freezeWatch = ref(false)
   const storage = createBrowserStorage<Data | undefined>(type)
-  const serverStorage = useContextStorage(key)
+  const contextStorage = useContextStorage(key)
 
   // update server serverStorage
   if (isSSR()) {
-    serverStorage.value = valueRef.value
+    contextStorage.value = valueRef.value
     return valueRef
   }
 

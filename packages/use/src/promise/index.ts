@@ -60,6 +60,7 @@ export const usePromise = <Data, Args extends any[], Error = any>(
       .catch((error) => {
         errorRef.value = error
         fetchingRef.value = false
+        // eslint-disable-next-line functional/no-throw-statement
         throw error
       })
 
@@ -131,6 +132,7 @@ export const usePromise2 = <Data, Args extends any[] = [], Error = any>(
       .catch((error) => {
         errorRef.value = error
         fetchingRef.value = false
+        // eslint-disable-next-line functional/no-throw-statement
         throw error
       })
 

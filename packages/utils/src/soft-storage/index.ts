@@ -46,6 +46,7 @@ export function createSoftBrowserStorage<Data>(kind: BrowserStorageKind) {
         return
       }
       const storage = getBrowserStorageModule(kind)
+      // eslint-disable-next-line functional/no-try-statement
       try {
         const result = storage.getItem(name)
         if (result !== null) {
@@ -72,6 +73,7 @@ export const createCookieSoftStorage =
       if (isSSR()) {
         return
       }
+      // eslint-disable-next-line functional/no-try-statement
       try {
         const result = cookie.get(name)
         if (typeof result !== 'undefined') {
@@ -105,6 +107,7 @@ export function createBrowserStorage<Data>(kind: BrowserStorageKind) {
           return
         }
         const storage = getBrowserStorageModule(kind)
+        // eslint-disable-next-line functional/no-try-statement
         try {
           const result = storage.getItem(name)
           if (result !== null) {
@@ -135,6 +138,7 @@ export const createCookieStorage =
           if (isSSR()) {
             return
           }
+          // eslint-disable-next-line functional/no-try-statement
           try {
             const result = cookie.get(name)
             if (typeof result !== 'undefined') {

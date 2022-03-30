@@ -2,16 +2,16 @@ import {BrowserStorageKind, CookieStorageOptions} from '@winter-love/utils'
 import {computed, inject, InjectionKey, provide, reactive} from 'vue-demi'
 
 export interface StorageRefOptions {
-  cookieOptions?: CookieStorageOptions
+  readonly cookieOptions?: CookieStorageOptions
   /**
    * watch deeply to update storage
    */
-  deep?: boolean
+  readonly deep?: boolean
   /**
    * remove saved data on init
    */
-  reset?: boolean
-  type?: BrowserStorageKind
+  readonly reset?: boolean
+  readonly type?: BrowserStorageKind
 }
 
 export const CONTEXT_STORAGE_KEY: InjectionKey<Record<string, any>> = Symbol('server-storage')

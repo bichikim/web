@@ -31,6 +31,7 @@ export const createGetStorage = () => {
     // skip if it has test result
     if (typeof _testResult === 'undefined') {
       // test setItem
+      // eslint-disable-next-line functional/no-try-statement
       try {
         storage.setItem(TEST_KEY_VALUE, TEST_KEY_VALUE)
         storage.removeItem(TEST_KEY_VALUE)

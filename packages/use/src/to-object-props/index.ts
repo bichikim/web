@@ -6,5 +6,5 @@ export const toObjectProps = <T, D = T>(props: Props<T, D>): PropsObject<string,
       return [key, null]
     }))
   }
-  return props
+  return props as PropsObject<string, T, D>
 }

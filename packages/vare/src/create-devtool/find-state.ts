@@ -1,3 +1,4 @@
+/* eslint-disable functional/prefer-readonly-type */
 import {isAtom} from 'src/atom'
 import {isState} from 'src/state'
 export const findState = (target: any, deeps: string[] = []) => {

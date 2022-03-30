@@ -36,6 +36,7 @@ export const Camera = defineComponent({
     position: {default: () => (new Babylon.Vector3(0, 0, 0)), type: Object as PropType<Babylon.Vector3>},
   },
   render() {
+    // eslint-disable-next-line functional/no-this-expression
     const {$slots} = this
     return $slots.default?.()
   },

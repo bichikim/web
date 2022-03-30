@@ -4,7 +4,7 @@ import {getWindow} from '@winter-love/utils'
 import {useInstanceProvide} from '../instance-provide'
 
 export interface AnalyticsDataLayer {
-  push: (payload: Record<string, any>) => void
+  readonly push: (payload: Record<string, any>) => void
 }
 
 export const createGetDataLayer = () => {
@@ -79,8 +79,8 @@ export const provideAnalytics = (payload: Record<string, any> = {}) => {
 export const provideTrackPayload = provideAnalytics
 
 export interface ElementTrackInfo {
-  eventName: string
-  handle: (event: any) => unknown
+  readonly eventName: string
+  readonly handle: (event: any) => unknown
 }
 
 export const dropDirectiveBind = (element: any) => {

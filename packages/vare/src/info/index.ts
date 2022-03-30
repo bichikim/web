@@ -1,3 +1,4 @@
+/* eslint-disable */
 import {Ref} from 'vue-demi'
 
 export type StateKind = 'atom' | string
@@ -23,6 +24,11 @@ export type InfoMapObjectKey = string | symbol | number
 
 export type InfoMapKey = Record<InfoMapObjectKey, any>
 
+/**
+ * @deprecated
+ * @param relatesSource
+ * @param relatesTarget
+ */
 export const mergeRelates = (relatesSource: Map<string, any>, relatesTarget: Map<string, any>) => {
   relatesSource.forEach((value, key) => {
     relatesTarget.set(key, value)

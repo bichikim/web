@@ -17,7 +17,6 @@ export type ToMutRefHandle<Props extends Record<string, any>, Key extends keyof 
  * toMutRef 는 vue 에 toRef 와 달리 readonly 가 아닙니다 리턴된 ref 값은 변경 가능합니다
  * @param props
  * @param key
- * @param options
  * @useful ⭐⭐⭐⭐
  */
 export const toMutRef = <Props extends Record<string, any>, Key extends keyof Props>(

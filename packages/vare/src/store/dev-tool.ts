@@ -1,6 +1,6 @@
-import {App, CustomInspectorNode, DevtoolsPluginApi, setupDevtoolsPlugin, StateBase} from '@vue/devtools-api'
+/* eslint-disable functional/no-expression-statement,functional/immutable-data,functional/functional-parameters,functional/prefer-readonly-type,functional/no-conditional-statement */
+import {App, CustomInspectorNode, setupDevtoolsPlugin, StateBase} from '@vue/devtools-api'
 import {drop} from '@winter-love/utils'
-import {ApiSetting} from 'src/create-devtool/types'
 import {UnwrapNestedRefs, watch} from 'vue-demi'
 
 export const createTree = (stateTree: UnwrapNestedRefs<any>): CustomInspectorNode[] => {
@@ -36,7 +36,7 @@ export const createStoreDevTool = (
   app: App,
   stateTree: UnwrapNestedRefs<any>,
 ) => {
-  let _api: DevtoolsPluginApi<ApiSetting>
+  // let _api: DevtoolsPluginApi<ApiSetting>
   const inspectId = 'vare-inspect'
   const timeLineId = 'vare-event'
   const label = 'vare-store'
@@ -46,7 +46,7 @@ export const createStoreDevTool = (
     label: 'vare-store',
     packageName: 'vare',
   }, (api) => {
-    _api = api
+    // _api = api
     api.addInspector({
       icon: 'mediation',
       id: inspectId,
@@ -77,7 +77,6 @@ export const createStoreDevTool = (
       const state = stateTree[name]
 
       if (state) {
-
         payload.state = createInspect(name, state)
       }
     })

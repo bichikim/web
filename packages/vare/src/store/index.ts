@@ -15,7 +15,7 @@ import {
 export * from './dev-tool'
 
 export interface SetupContext<Root> {
-  root: UnwrapNestedRefs<Root>
+  readonly root: UnwrapNestedRefs<Root>
 }
 export type Setup<T extends Record<string, any>,
   P extends Record<string, any>,
@@ -33,29 +33,37 @@ export interface CreateStoreOptions<T extends Record<string, any>,
   setup: Setup<T, Readonly<ExtractPropTypes<P>>>
   useWithReset?: boolean
 }
-
-export class StoreManager {
-  storeTree: UnwrapNestedRefs<Record<string, any>> = reactive({})
-
-  add(name: string, store: UnwrapNestedRefs<Record<string, any>>) {
-    this.storeTree[name] = store
+export type StoreManager = Readonly<{
+  add(name: string, store: UnwrapNestedRefs<Record<string, any>>): void
+  get(name: string): any
+  remove(name: string): void
+  readonly storeTree: UnwrapNestedRefs<Record<string, any>>
+}>
+export const createManager = (): StoreManager => {
+  const storeTree: UnwrapNestedRefs<Record<string, any>> = reactive({})
+  const add = (name: string, store: UnwrapNestedRefs<Record<string, any>>) => {
+    storeTree[name] = store
   }
-
-  remove(name: string) {
-    this.storeTree[name] = undefined
+  const remove = (name: string) => {
+    storeTree[name] = undefined
   }
-
-  get(name: string) {
-    return this.storeTree[name]
+  const get = (name: string) => {
+    return storeTree[name]
+  }
+  return {
+    add,
+    get,
+    remove,
+    storeTree,
   }
 }
 
 export const STORE_CONTEXT: InjectionKey<StoreManager> = Symbol('store')
 export const STORE_LOCAL_CONTEXT: InjectionKey<StoreManager> = Symbol('store-local')
 
-export const createVareStore = () => {
-  const manager = new StoreManager()
-  const localManager = new StoreManager()
+export const createVare = () => {
+  const manager = createManager()
+  const localManager = createManager()
   return {
     install: (app: App) => {
       app.provide(STORE_CONTEXT, manager)
@@ -69,15 +77,18 @@ export const createVareStore = () => {
   }
 }
 
+export const createVareStore = createVare
+
 export const provideStoreManager = (manager?: StoreManager, localManager?: StoreManager) => {
-  provide(STORE_CONTEXT, manager ?? new StoreManager())
+  // eslint-disable-next-line functional/no-expression-statement
+  provide(STORE_CONTEXT, manager ?? createManager())
   if (process.env.NODE_ENV !== 'production') {
     provide(STORE_LOCAL_CONTEXT, localManager)
   }
 }
 
 const useStoreManager = () => {
-  return inject(STORE_CONTEXT) ?? new StoreManager()
+  return inject(STORE_CONTEXT) ?? createManager()
 }
 
 const useLocalManager = () => {
@@ -99,11 +110,12 @@ const getOptions = <T extends Record<string, any>,
   if (typeof arg1 === 'object' && typeof arg2 === 'undefined') {
     return arg1
   }
+  // eslint-disable-next-line functional/no-throw-statement
   throw new Error('params error')
 }
 
 export type Store<T> = UnwrapNestedRefs<T> & {
-  __store?: never
+  readonly __store?: never
 }
 
 const createUUid = () => {
