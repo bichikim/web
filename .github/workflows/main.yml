@@ -10,7 +10,7 @@ env:
 jobs:
   # Test Job
   test:
-    name: Test
+    name: Test And Build Libraies
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repo
@@ -42,7 +42,7 @@ jobs:
           version: ${{ env.PNPM_VERSION }}
 
       - name: Install Dependencies
-        run: pnpm install --ignore-scripts
+        run: pnpm install
 
       - name: Test
         run: pnpm run test
