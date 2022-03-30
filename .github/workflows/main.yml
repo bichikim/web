@@ -42,7 +42,7 @@ jobs:
           version: ${{ env.PNPM_VERSION }}
 
       - name: Install Dependencies
-        run: pnpm install
+        run: pnpm install --ignore-scripts
 
       - name: Test
         run: pnpm run test
@@ -78,11 +78,15 @@ jobs:
         with:
           version: ${{ env.PNPM_VERSION }}
 
-      - name: Install Dependencies
-        run: pnpm install
+      - name: Use Libraies Cache
+        uses: actions/cache@v3
+        id: libraies-cache
+        with:
+          path: 'packages/*/lib'
+          key: ${{ runner.os }}-libraies-${{ hashFiles('packages/**/*.ts') }}
 
-      - name: Build
-        run: pnpm run build:@coong/client
+      - name: Install Dependencies
+        run: pnpm install --ignore-scripts
 
       - name: Archive Production Artifact
         uses: actions/upload-artifact@master
@@ -340,7 +344,7 @@ jobs:
     needs: build-client
     runs-on: ubuntu-latest
     # only dev
-    if: ${{ github.ref == 'refs/heads/dev' && needs.build-client.outputs.run_job == 'true' }}
+#    if: ${{ github.ref == 'refs/heads/dev' && needs.build-client.outputs.run_job == 'true' }}
     env:
       GCP_SERVICE_NAME: coong-dev
       GCP_IAMGE_NAME: gcr.io/${{ secrets.GCP_PROJECT_ID }}/coong-dev
