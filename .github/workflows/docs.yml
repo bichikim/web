@@ -28,7 +28,7 @@ jobs:
           path: ~/.pnpm-store
           key: ${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
-            ${{ runner.os }}-  
+            ${{ runner.os }}-
 
       - name: Prepare Pnpm
         uses: pnpm/action-setup@v2.0.1
@@ -41,10 +41,10 @@ jobs:
       - name: Build
         run: pnpm run build:docs
 
-      - name: deploy
-        uses: jsmrcaga/action-netlify-deploy@v1.7.2
-        with:
-          build_directory: docs/winter-love/.vitepress/dist
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
-          NETLIFY_DEPLOY_TO_PROD: false
+#      - name: deploy
+#        uses: jsmrcaga/action-netlify-deploy@v1.7.2
+#        with:
+#          build_directory: docs/winter-love/.vitepress/dist
+#          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+#          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+#          NETLIFY_DEPLOY_TO_PROD: false

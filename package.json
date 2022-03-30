@@ -35,7 +35,7 @@
     "start:@coong/client:ssr": "node coong/client/dist/ssr/index.js",
     "start:local-docker": "docker-compose up -d",
     "storybook": "start-storybook -p 6006",
-    "test": "jest",
+    "test": "pnpm run test:unit",
     "test:coverage": "jest --collect-coverage",
     "test:unit": "jest --selectProjects unit-test",
     "version:alpha": "lerna version prerelease --preid alpha",
