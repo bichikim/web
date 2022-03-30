@@ -379,7 +379,7 @@ jobs:
       - name: Build
         run: |
           docker build \
-          -f ${{ env.PROJECT_ROOT_PATH }}/Dockerfile
+          -f ${{ env.PROJECT_ROOT_PATH }}/Dockerfile \
           -t $GCP_IAMGE_NAME:$GITHUB_SHA \
           .
 
