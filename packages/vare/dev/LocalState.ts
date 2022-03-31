@@ -1,6 +1,6 @@
 import {ref, h} from 'vue'
 import {defineComponent} from 'vue-demi'
-import {createStore} from '../src/store'
+import {createStore} from 'src/store'
 export interface List {
   id : string
   message: string

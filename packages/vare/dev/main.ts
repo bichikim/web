@@ -1,5 +1,5 @@
 import {createApp} from 'vue'
-import {createStoreDevTool, createVareStore} from '../src/store'
+import {createStoreDevTool, createVareStore} from 'src/store'
 import {Root} from './Root'
 
 const app = createApp(Root)

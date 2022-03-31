@@ -37,13 +37,14 @@ export default defineConfig(() => {
           },
         },
       }),
-      vueJsx(),
+      vueJsx() as any,
     ],
 
     resolve: {
       alias: {
         '~/': `${path.resolve(__dirname, '')}/`,
         'components/': `${path.resolve(__dirname, 'src/components')}/`,
+        'dev/': `${path.resolve(__dirname, 'dev')}/`,
         'layouts/': `${path.resolve(__dirname, 'src/layouts')}/`,
         'pages/': `${path.resolve(__dirname, 'src/pages')}/`,
         'src/': `${path.resolve(__dirname, 'src')}/`,

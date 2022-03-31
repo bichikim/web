@@ -6,7 +6,10 @@
     "baseUrl": ".",
     "paths": {
       "src/*": [
-        "src/*"
+        "src/*",
+      ],
+      "dev/*": [
+        "dev/*"
       ]
     },
     "plugins": [
