@@ -452,7 +452,7 @@ importers:
       cross-env: 7.0.3
       dotenv: 16.0.0
       express: 4.17.3
-      got: 12.0.2
+      got: 12.0.3
       reflect-metadata: 0.1.13
       sharp: 0.30.3
       ts-node: 10.7.0
@@ -466,7 +466,7 @@ importers:
       class-validator: 0.13.2
       dotenv: 16.0.0
       express: 4.17.3
-      got: 12.0.2
+      got: 12.0.3
       reflect-metadata: 0.1.13
       sharp: 0.30.3
     devDependencies:
@@ -17800,8 +17800,8 @@ packages:
       slash: 2.0.0
     dev: true
 
-  /got/12.0.2:
-    resolution: {integrity: sha512-Zi4yHiqCgaorUbknr/RHFBsC3XqjSodaw0F3qxlqAqyj+OGYZl37/uy01R0qz++KANKQYdY5FHJ0okXZpEzwWQ==}
+  /got/12.0.3:
+    resolution: {integrity: sha512-hmdcXi/S0gcAtDg4P8j/rM7+j3o1Aq6bXhjxkDhRY2ipe7PHpvx/14DgTY2czHOLaGeU8VRvRecidwfu9qdFug==}
     engines: {node: '>=14.16'}
     dependencies:
       '@sindresorhus/is': 4.6.0
