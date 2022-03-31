@@ -132,7 +132,7 @@
     "tslib": "^2.3.1",
     "tsup": "5.12.1",
     "ttypescript": "1.5.13",
-    "typescript": "4.6.2",
+    "typescript": "4.6.3",
     "vue": "3.2.31"
   },
   "engines": {
