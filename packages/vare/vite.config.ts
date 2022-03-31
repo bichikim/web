@@ -1,6 +1,7 @@
 import vue from '@vitejs/plugin-vue'
 import * as path from 'path'
 import {defineConfig} from 'vite'
+import vueJsx from '@vitejs/plugin-vue-jsx'
 
 export default defineConfig(() => {
   return {
@@ -36,6 +37,7 @@ export default defineConfig(() => {
           },
         },
       }),
+      vueJsx(),
     ],
 
     resolve: {

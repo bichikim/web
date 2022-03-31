@@ -10,6 +10,7 @@ import {
   reactive,
   Ref,
   UnwrapNestedRefs,
+  watch,
 } from 'vue-demi'
 
 export * from './dev-tool'
@@ -34,26 +35,43 @@ export interface CreateStoreOptions<T extends Record<string, any>,
   useWithReset?: boolean
 }
 export type StoreManager = Readonly<{
-  add(name: string, store: UnwrapNestedRefs<Record<string, any>>): void
   get(name: string): any
   remove(name: string): void
+  set(
+    name: string,
+    item: StoreManagerItem,
+  ): void
   readonly storeTree: UnwrapNestedRefs<Record<string, any>>
 }>
+
+export interface StoreManagerItem<T extends Record<string, any> = Record<string, any>> {
+  props: UnwrapNestedRefs<Record<string, any>>
+  store: UnwrapNestedRefs<T>
+}
 export const createManager = (): StoreManager => {
   const storeTree: UnwrapNestedRefs<Record<string, any>> = reactive({})
-  const add = (name: string, store: UnwrapNestedRefs<Record<string, any>>) => {
-    storeTree[name] = store
+  const storePropsMap = new Map<string, UnwrapNestedRefs<Record<string, any>>>()
+  const set = (
+    name: string,
+    item: StoreManagerItem,
+  ) => {
+    storeTree[name] = item.store
+    storePropsMap.set(name, item.props)
   }
   const remove = (name: string) => {
     storeTree[name] = undefined
+    storePropsMap.delete(name)
   }
-  const get = (name: string) => {
-    return storeTree[name]
+  const get = (name: string): StoreManagerItem => {
+    return {
+      props: storePropsMap.get(name) ?? {},
+      store: storeTree[name],
+    }
   }
   return {
-    add,
     get,
     remove,
+    set,
     storeTree,
   }
 }
@@ -194,6 +212,7 @@ export function createStore<T extends Record<string, any>,
     props: propsOptions,
   } = getOptions<T, P>(arg1, arg2)
 
+  // eslint-disable-next-line max-statements
   return (props?: UnwrapNestedRefs<P>): T => {
     // running props validator
     if (process.env.NODE_ENV !== 'production') {
@@ -204,23 +223,30 @@ export function createStore<T extends Record<string, any>,
     }
 
     const storeManager = useStoreManager()
-    const resetStore = () => setup(
-      // props
-      reactive(props ?? {} as P),
-      // setup context
-      {
-        root: storeManager?.storeTree,
-      },
-    )
+    const runSetup = <T extends Record<string, any>>(): StoreManagerItem<T> => {
+      const _props = reactive(props ?? {} as P)
+      return {
+        props: _props,
+        store: reactive(setup(
+          // props
+          _props,
+          // setup context
+          {
+            root: storeManager?.storeTree,
+          },
+        )) as any,
+      }
+    }
+
     // skip save tree for local state Store
     if (local) {
       const instance = getCurrentInstance()
       const uuid = instance ? instance.uid : getUuid()
       const uuidName = `${name}/${uuid}`
       const localStoreManager = useLocalManager()
-      const state = resetStore()
+      const storeInfo: StoreManagerItem<T> = runSetup()
       if (localStoreManager) {
-        localStoreManager.add(uuidName, state)
+        localStoreManager.set(uuidName, storeInfo)
       }
 
       // remove local state Store for global dev tool watching
@@ -228,12 +254,23 @@ export function createStore<T extends Record<string, any>,
         localStoreManager?.remove(uuidName)
       })
 
-      return state
+      return storeInfo.store
     }
-    const savedState = storeManager.get(name)
-    const state = (!useWithReset && savedState) ? savedState : reactive<T>(resetStore())
-    storeManager.add(name, state)
-    return state
+    const savedState: StoreManagerItem | undefined = storeManager.get(name)
+    // const innerState: StoreManagerItem = runSetup()
+    if (savedState) {
+      const savedProps = savedState.props
+      const currentProps = reactive(props ?? {})
+      watch(currentProps, (props) => {
+        Object.keys(props).forEach((key) => {
+          savedProps[key] = currentProps[key]
+        })
+      })
+    }
+
+    const state = (!useWithReset && savedState?.store) ? savedState : runSetup()
+    storeManager.set(name, state)
+    return state.store as any
   }
 }
 

@@ -58,6 +58,7 @@ module.exports = configure((ctx) => {
               'react-fast-compare',
               'fast-json-stable-stringify',
               'js-cookie',
+              'vue',
             )
           }
         }
@@ -143,15 +144,15 @@ module.exports = configure((ctx) => {
       },
     },
 
-    eslint: {
-
-      errors: true,
-      // fix: true,
-      // include = [],
-      // exclude = [],
-      // rawOptions = {},
-      warnings: true,
-    },
+    // eslint: {
+    //
+    //   errors: true,
+    //   // fix: true,
+    //   // include = [],
+    //   // exclude = [],
+    //   // rawOptions = {},
+    //   warnings: true,
+    // },
 
     // https://github.com/quasarframework/quasar/tree/dev/extras
     extras: [
