@@ -4,7 +4,6 @@ import {
   ExtractPropTypes,
   getCurrentInstance,
   inject,
-  InjectionKey,
   onScopeDispose,
   provide,
   reactive,
@@ -12,18 +11,20 @@ import {
   UnwrapNestedRefs,
   watch,
 } from 'vue-demi'
+import {STORE_CONTEXT, STORE_LOCAL_CONTEXT, STORE_TREE_KEY} from './symbols'
 
 export * from './dev-tool'
 
 export interface SetupContext<Root> {
   readonly root: UnwrapNestedRefs<Root>
 }
+
 export type Setup<T extends Record<string, any>,
   P extends Record<string, any>,
   Root extends Record<string, any> = Record<string, any>> = (
-    props: UnwrapNestedRefs<P>,
-    context: SetupContext<Root>,
-    ) => T
+  props: UnwrapNestedRefs<P>,
+  context: SetupContext<Root>,
+) => T
 
 export interface CreateStoreOptions<T extends Record<string, any>,
   P extends ComponentPropsOptions = ComponentPropsOptions,
@@ -36,6 +37,7 @@ export interface CreateStoreOptions<T extends Record<string, any>,
   props?: P
   setup: Setup<T, Readonly<ExtractPropTypes<P>>>
 }
+
 export type StoreManager = Readonly<{
   get(name: string): any
   remove(name: string): void
@@ -50,8 +52,21 @@ export interface StoreManagerItem<T extends Record<string, any> = Record<string,
   props: UnwrapNestedRefs<Record<string, any>>
   store: UnwrapNestedRefs<T>
 }
-export const createManager = (): StoreManager => {
-  const storeTree: UnwrapNestedRefs<Record<string, any>> = reactive({})
+
+export interface StoreTreeInfo {
+  kind: string
+}
+
+export interface StoreTree {
+  [key: string]: any
+
+  [STORE_TREE_KEY]?: StoreTreeInfo
+}
+
+export const createManager = (info?: StoreTreeInfo): StoreManager => {
+  const storeTree: UnwrapNestedRefs<StoreTree> = reactive({
+    [STORE_TREE_KEY]: info,
+  })
   const storePropsMap = new Map<string, UnwrapNestedRefs<Record<string, any>>>()
   const set = (
     name: string,
@@ -78,12 +93,13 @@ export const createManager = (): StoreManager => {
   }
 }
 
-export const STORE_CONTEXT: InjectionKey<StoreManager> = Symbol('store')
-export const STORE_LOCAL_CONTEXT: InjectionKey<StoreManager> = Symbol('store-local')
-
 export const createVare = () => {
-  const manager = createManager()
-  const localManager = createManager()
+  const manager = createManager({
+    kind: 'state',
+  })
+  const localManager = createManager({
+    kind: 'local-state',
+  })
   return {
     install: (app: App) => {
       app.provide(STORE_CONTEXT, manager)
@@ -192,12 +208,14 @@ export const propsValidator = (props: Record<string, any>, propsOptions?: Compon
     return true
   })
 }
+
 export interface UseStoreOptions {
   /**
    * reset saved store
    */
   reset?: boolean
 }
+
 export function createStore<T extends Record<string, any>,
   P extends ComponentPropsOptions = ComponentPropsOptions,
   >(options: CreateStoreOptions<T, P>): UseStore<T, Readonly<ExtractPropTypes<P>>>
@@ -245,8 +263,13 @@ export function createStore<T extends Record<string, any>,
     // skip save tree for local state Store
     if (local) {
       const instance = getCurrentInstance()
-      const uuid = instance ? instance.uid : getUuid()
-      const uuidName = `${name}/${uuid}`
+      const uid = instance ? instance.uid : getUuid()
+      const componentName = (instance as any)?.ctx?.$options?.name ?? 'Undefined Name'
+      const uuidName = process.env.NODE_ENV === 'production' ? `${uid}` : JSON.stringify({
+        componentName,
+        name,
+        uid,
+      })
       const localStoreManager = useLocalManager()
       const storeInfo: StoreManagerItem<T> = runSetup()
       if (localStoreManager) {

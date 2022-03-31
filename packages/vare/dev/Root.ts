@@ -1,6 +1,7 @@
 import {defineComponent, h, ref} from 'vue'
 import {Component} from './Component'
 import {PropsState} from './PropsState'
+import {LocalState} from './LocalState'
 export const Root = defineComponent({
   setup() {
     const name = ref('bar')
@@ -14,6 +15,8 @@ export const Root = defineComponent({
         h('div', name.value),
         h(PropsState),
         h(PropsState),
+        h(LocalState),
+        h(LocalState),
       ])
     )
   },

@@ -9,4 +9,4 @@ app.use(vareStore)
 
 app.mount('#app')
 
-createStoreDevTool(app, vareStore.manager.storeTree)
+createStoreDevTool(app, [vareStore.manager.storeTree, vareStore.localManager.storeTree])
