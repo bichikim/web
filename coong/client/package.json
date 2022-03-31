@@ -1,6 +1,6 @@
 {
   "name": "@coong/client",
-  "version": "1.0.25-alpha.1",
+  "version": "1.0.25-alpha.2",
   "private": true,
   "description": "A Quasar Framework app",
   "author": "Bichi Kim <bichi@live.co.kr>",
@@ -43,7 +43,7 @@
     "quasar": "2.6.2",
     "serialize-javascript": "6.0.0",
     "validator": "13.7.0",
-    "vare": "^1.0.25-alpha.1",
+    "vare": "^1.0.25-alpha.2",
     "vue": "3.2.31",
     "vue-router": "4.0.14"
   },
