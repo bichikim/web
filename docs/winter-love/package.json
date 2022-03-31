@@ -1,7 +1,7 @@
 {
   "name": "@winter-love-docs/winter-love",
   "private": true,
-  "version": "1.0.25-alpha.0",
+  "version": "1.0.25-alpha.1",
   "scripts": {
     "build": "vitepress build",
     "dev": "vitepress dev"
