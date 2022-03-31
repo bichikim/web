@@ -206,7 +206,7 @@ importers:
       serialize-javascript: 6.0.0
       typescript: 4.6.2
       validator: 13.7.0
-      vare: ^1.0.25-alpha.0
+      vare: ^1.0.25-alpha.1
       vue: 3.2.31
       vue-router: 4.0.14
     dependencies:
@@ -303,10 +303,10 @@ importers:
       unplugin-icons: 0.14.1
       unplugin-vue-components: 0.18.3
       validator: 13.7.0
-      vare: ^1.0.25-alpha.0
+      vare: ^1.0.25-alpha.1
       vite: 2.8.6
       vite-plugin-imp: 2.1.6
-      vite-plugin-md: 0.12.3
+      vite-plugin-md: 0.12.4
       vite-plugin-pwa: 0.11.13
       vite-plugin-ssr-vue: ^1.0.25-alpha.0
       vue: 3.2.31
@@ -378,50 +378,8 @@ importers:
       unplugin-vue-components: 0.18.3_26815477f7e405a320731e3af21dbb19
       vite: 2.8.6
       vite-plugin-imp: 2.1.6_vite@2.8.6
-      vite-plugin-md: 0.12.3_vite@2.8.6
+      vite-plugin-md: 0.12.4_vite@2.8.6
       vite-plugin-pwa: 0.11.13_vite@2.8.6
-
-  coong/client/dist/ssr:
-    specifiers:
-      '@apollo/client': 3.5.10
-      '@project-serum/sol-wallet-adapter': 0.2.6
-      '@quasar/extras': 1.13.4
-      '@urql/vue': 0.6.1
-      '@winter-love/hyper-components': 1.0.25-alpha.0
-      '@winter-love/utils': 1.0.25-alpha.0
-      compression: ^1.7.4
-      core-js: 3.21.1
-      express: ^4.17.3
-      graphql: 16.3.0
-      graphql-tag: 2.12.6
-      lodash: 4.17.21
-      node-html-parser: 5.3.3
-      quasar: 2.6.2
-      serialize-javascript: ^6.0.0
-      validator: 13.7.0
-      vare: 1.0.25-alpha.0
-      vue: 3.2.31
-      vue-router: 4.0.14
-    dependencies:
-      '@apollo/client': 3.5.10_graphql@16.3.0
-      '@project-serum/sol-wallet-adapter': 0.2.6
-      '@quasar/extras': 1.13.4
-      '@urql/vue': 0.6.1_graphql@16.3.0+vue@3.2.31
-      '@winter-love/hyper-components': link:../../../../packages/hyper-components
-      '@winter-love/utils': link:../../../../packages/utils
-      compression: 1.7.4
-      core-js: 3.21.1
-      express: 4.17.3
-      graphql: 16.3.0
-      graphql-tag: 2.12.6_graphql@16.3.0
-      lodash: 4.17.21
-      node-html-parser: 5.3.3
-      quasar: 2.6.2
-      serialize-javascript: 6.0.0
-      validator: 13.7.0
-      vare: link:../../../../packages/vare
-      vue: 3.2.31
-      vue-router: 4.0.14_vue@3.2.31
 
   coong/firebase:
     specifiers:
@@ -28533,8 +28491,8 @@ packages:
       - supports-color
     dev: true
 
-  /vite-plugin-md/0.12.3_vite@2.8.6:
-    resolution: {integrity: sha512-Iy8u01E5yQ0hSCT9QcmJvahJ3zLwQX5HLFgFqlbakCHpq9j3+xohkzuup2Bf9vMUuTilcJDEPAcLhzNIhzp1+A==}
+  /vite-plugin-md/0.12.4_vite@2.8.6:
+    resolution: {integrity: sha512-qtkzpHAvdp/Zo/2ntmCpfph2JD4F0+tOl1vK3QVAZztpWyoO7Yi8Y2Dqu7Urrnh/fPH7PnIWlrrQy1XV/D92Pg==}
     peerDependencies:
       vite: ^2.0.0
     dependencies:
