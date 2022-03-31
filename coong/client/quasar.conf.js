@@ -48,18 +48,18 @@ module.exports = configure((ctx) => {
         if (isServer) {
           viteConf.ssr.noExternal.push(/^@quasar\/extras/u)
           if (!ctx.dev) {
-            viteConf.ssr.noExternal.push(
-              'vue-demi',
-              '@stitches/core',
-              'color',
-              'clsx',
-              '@vue/devtools-api',
-              'micro-memoize',
-              'react-fast-compare',
-              'fast-json-stable-stringify',
-              'js-cookie',
-              'vue',
-            )
+            // viteConf.ssr.noExternal.push(
+            //   'vue-demi',
+            //   '@stitches/core',
+            //   'color',
+            //   'clsx',
+            //   '@vue/devtools-api',
+            //   'micro-memoize',
+            //   'react-fast-compare',
+            //   'fast-json-stable-stringify',
+            //   'js-cookie',
+            //   'vue',
+            // )
           }
         }
 

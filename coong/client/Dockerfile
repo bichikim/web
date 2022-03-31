@@ -4,7 +4,8 @@ WORKDIR /usr/src/app
 
 COPY ./ ./
 
-RUN yarn install --prod
+RUN npm i -g pnpm
+RUN pnpm install --prod
 
 EXPOSE 3000
 

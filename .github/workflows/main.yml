@@ -381,7 +381,7 @@ jobs:
           docker build \
           -f ${{ env.PROJECT_ROOT_PATH }}/Dockerfile \
           -t $GCP_IAMGE_NAME:$GITHUB_SHA \
-          .
+          ./${{ env.PROJECT_ROOT_PATH }}
 
       - name: Tag
         run: |

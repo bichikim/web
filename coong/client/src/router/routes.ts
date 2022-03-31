@@ -4,7 +4,6 @@ const routes: RouteRecordRaw[] = [
   {
     children: [
       {component: () => import('pages/main'), path: ''},
-      {component: () => import('pages/solana'), path: 'solana'},
     ],
     component: () => import('pages/_layouts'),
     path: '/',
