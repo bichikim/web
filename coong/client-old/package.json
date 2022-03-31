@@ -89,7 +89,7 @@
     "unplugin-vue-components": "0.18.3",
     "vite": "2.8.6",
     "vite-plugin-imp": "2.1.6",
-    "vite-plugin-md": "0.12.3",
+    "vite-plugin-md": "0.12.4",
     "vite-plugin-pwa": "0.11.13"
   },
   "gitHead": "49922aa2164ceefcebf5fcd3bd83dce16c67df21",
