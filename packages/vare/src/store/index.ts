@@ -28,11 +28,13 @@ export type Setup<T extends Record<string, any>,
 export interface CreateStoreOptions<T extends Record<string, any>,
   P extends ComponentPropsOptions = ComponentPropsOptions,
   > {
+  /**
+   * @experimental
+   */
   local?: boolean
   name: string
   props?: P
   setup: Setup<T, Readonly<ExtractPropTypes<P>>>
-  useWithReset?: boolean
 }
 export type StoreManager = Readonly<{
   get(name: string): any
@@ -85,10 +87,7 @@ export const createVare = () => {
   return {
     install: (app: App) => {
       app.provide(STORE_CONTEXT, manager)
-      // localManager only for the devtool
-      if (process.env.NODE_ENV !== 'production') {
-        app.provide(STORE_LOCAL_CONTEXT, localManager)
-      }
+      app.provide(STORE_LOCAL_CONTEXT, localManager)
     },
     localManager,
     manager,
@@ -193,7 +192,12 @@ export const propsValidator = (props: Record<string, any>, propsOptions?: Compon
     return true
   })
 }
-
+export interface UseStoreOptions {
+  /**
+   * reset saved store
+   */
+  reset?: boolean
+}
 export function createStore<T extends Record<string, any>,
   P extends ComponentPropsOptions = ComponentPropsOptions,
   >(options: CreateStoreOptions<T, P>): UseStore<T, Readonly<ExtractPropTypes<P>>>
@@ -207,13 +211,13 @@ export function createStore<T extends Record<string, any>,
   const {
     name,
     setup,
-    useWithReset = false,
     local,
     props: propsOptions,
   } = getOptions<T, P>(arg1, arg2)
 
   // eslint-disable-next-line max-statements
-  return (props?: UnwrapNestedRefs<P>): T => {
+  return (props?: UnwrapNestedRefs<P>, options: UseStoreOptions = {}): T => {
+    const {reset} = options
     // running props validator
     if (process.env.NODE_ENV !== 'production') {
       const result = propsValidator(props ?? {}, propsOptions)
@@ -268,7 +272,7 @@ export function createStore<T extends Record<string, any>,
       })
     }
 
-    const state = (!useWithReset && savedState?.store) ? savedState : runSetup()
+    const state = (!reset && savedState?.store) ? savedState : runSetup()
     storeManager.set(name, state)
     return state.store as any
   }
@@ -285,6 +289,10 @@ export function defineStore(
   return createStore(arg1, arg2)
 }
 
+/**
+ * @deprecated
+ * @param options
+ */
 export function useStore<T extends Record<string, any>,
   P extends Record<string, any>,
   >(options: CreateStoreOptions<T, P>)
