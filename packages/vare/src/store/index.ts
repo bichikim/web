@@ -165,7 +165,7 @@ export type ObjectWithRef<T extends Record<string, any>> = {
   [P in keyof T]: Ref<T[P]> | T[P]
 }
 
-export type UseStore<T, P> = (props?: ObjectWithRef<P>) => Store<T>
+export type UseStore<T, P> = (props?: ObjectWithRef<P>, options?: UseStoreOptions) => Store<T>
 
 // eslint-disable-next-line @typescript-eslint/ban-types
 export type EmptyObject = {}

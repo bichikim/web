@@ -1,5 +1,5 @@
 import {Ref, UnwrapRef} from 'vue-demi'
-import {AnyFunction, DropParameters} from '@winter-love/utils'
+import type {AnyFunction, DropParameters} from '@winter-love/utils'
 
 export type OneAndAnyFunc<T, A extends any[] = any[], R = any> = (one: T, ...args: A) => R
 export type UnwrapNestedRefs<T> = T extends Ref ? T : UnwrapRef<T>

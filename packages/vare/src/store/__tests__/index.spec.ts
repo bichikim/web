@@ -81,12 +81,11 @@ describe('store', () => {
           increase,
         }
       },
-      useWithReset: true,
     })
 
     const Component = defineComponent({
       setup() {
-        const myStore = useMyStore()
+        const myStore = useMyStore(undefined, {reset: true})
         return () => (
           h('div', [
             h('div', {id: 'foo'}, myStore.foo),
@@ -98,7 +97,7 @@ describe('store', () => {
 
     const Component1 = defineComponent({
       setup() {
-        const myStore = useMyStore()
+        const myStore = useMyStore(undefined, {reset: true})
         return () => (
           h('div', [
             h('div', {id: 'foo1'}, myStore.foo),
