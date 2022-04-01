@@ -1,52 +1,55 @@
+/* eslint-disable max-nested-callbacks */
+import {HBox} from '@winter-love/hyper-components'
+import {csx} from 'boot/hyper-components'
+import {defineComponent, h, ref, toRefs} from 'vue'
 import {AudioButton} from './AudioButton'
 import {BackdropFilterText} from './BackdropFilterText'
-// import {user} from 'src/store/user'
-import {computed, defineComponent, h, ref, toRefs} from 'vue'
 import {SignInButton} from './SignInButton'
-import {csx} from 'boot/hyper-components'
-import {VideoBackground} from './VideoBackground'
 import {SignInProgress} from './SignInProgress'
+import {VideoBackground} from './VideoBackground'
 
 export const SignInPage = defineComponent({
+  emits: ['sign-in', 'update:email'],
   name: 'SignInPage',
   props: {
+    email: {type: String},
     inProgress: {default: false, type: Boolean},
+    isWaiting: {type: Boolean},
   },
-  setup(props, {slots}) {
-    const {inProgress} = toRefs(props)
+  setup(props, {slots, emit}) {
+    const {inProgress, email, isWaiting} = toRefs(props)
     const inProgressRef = ref(inProgress.value)
-    // const email = computed(() => user.email)
-    const email = computed(() => '')
-    const isWaiting = ref(false)
     const onSignIn = (email: string) => {
-      isWaiting.value = true
-      // return user.$.signInWithEmailOnly(email)
+      emit('sign-in', email)
+    }
+    const onUpdateEmail = (email: string) => {
+      emit('update:email', email)
     }
 
     return () => ((
-      h('div', csx({
+      h(HBox, {
         css: {ps: 'relative', size: '100%'},
-      }), [
+      }, () => [
         h(VideoBackground),
         // absolute center
-        h('div', csx({
+        h(HBox, {
           css: {
             b: '46%', fd: 'column', l: '50%', ps: 'absolute',
             transform: 'translate(-50%, +50%)',
           },
-        }), [
-          h('div', csx({
+        }, () => [
+          h(HBox, {
             css: {
               ai: 'center', color: 'mistyrose',
               fd: 'column', fontSize: '3rem',
               fontWeight: 900, ps: 'relative',
             },
-          }), [
-            h('div', csx({
+          }, () => [
+            h(HBox, {
               css: {
                 ps: 'relative',
               },
-            }), [
+            }, () => [
               h(BackdropFilterText, csx({
                 css: {
                   $$activeColor: 'rgba(200, 200, 200, 0.3)',
@@ -66,10 +69,12 @@ export const SignInPage = defineComponent({
               ]),
               h(AudioButton, csx({
                 css: {
-                  bottom: 0,
-                  position: 'absolute',
-                  right: 0,
-                  transform: 'translateX(100%)',
+                  '&.q-btn': {
+                    bottom: 0,
+                    position: 'absolute',
+                    right: 0,
+                    transform: 'translateX(100%)',
+                  },
                   // eslint-disable-next-line sort-keys-fix/sort-keys-fix
                   '@bp1': {
                     fontSize: '0.7rem',
@@ -95,6 +100,7 @@ export const SignInPage = defineComponent({
                   email: email.value,
                   isWaiting: isWaiting.value,
                   onSignIn,
+                  'onUpdate:email': onUpdateEmail,
                 }),
             ]),
           ]),

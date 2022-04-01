@@ -1,8 +1,7 @@
-import {QBtn, QDialog, QLayout, QPageContainer} from 'quasar'
 import {SignInPage} from './_components/SignInPage'
-import {csx} from 'boot/hyper-components'
-// import {user} from 'src/store/user'
-import {defineComponent, Fragment, h, ref} from 'vue'
+import {HBox, HBtn, HDialog, HLayout, HPageContainer} from '@winter-love/hyper-components'
+import {useUser} from 'src/store'
+import {computed, defineComponent, Fragment, h, ref} from 'vue'
 import {RouterView} from 'vue-router'
 import {provideLayout} from './use-layout'
 import {ionCloseOutline} from '@quasar/extras/ionicons-v5'
@@ -11,50 +10,59 @@ import {debug} from 'hooks/debug'
 const PagesLayout = defineComponent({
   name: 'PagesLayout',
   setup() {
-
     const {isMagicAuthLink} = provideLayout()
-    // const {isAuthenticated} = user.$
-
-    const isOpenAuth = ref(false)
+    const user = useUser()
+    const isSignIn = computed<boolean>(() => user.isSignIn)
+    const isOpenAuth = ref(!isSignIn.value)
+    const email = computed(() => user.email)
 
     const onCloseAuth = () => {
       isOpenAuth.value = false
     }
 
+    const onUpdateEmail = (email: string) => {
+      user.email = email
+    }
+
     debug({
+      email,
       isOpenAuth,
     })
 
     return () => (
       h(Fragment, [
         // hydration error
-        h(QLayout, {view: 'lHh Lpr lFf'}, () => [
-          h(QPageContainer, () => [
+        h(HLayout, {view: 'lHh Lpr lFf'}, () => [
+          h(HPageContainer, () => [
             h(RouterView),
           ]),
 
         ]),
-        h(QDialog, {
+        h(HDialog, {
           maximized: true,
           modelValue: isOpenAuth.value,
           persistent: true,
           transitionHide: 'slide-up',
           transitionShow: 'slide-down',
         }, () => [
-          h(SignInPage, {inProgress: isMagicAuthLink.value}, () => [
-            h('div', csx({
+          h(SignInPage, {
+            email: email.value,
+            inProgress: isMagicAuthLink.value,
+            'onUpdate:email': onUpdateEmail,
+          }, () => [
+            h(HBox, {
               css: {
                 p: 10,
                 ps: 'absolute', tr: 0,
               },
-            }), [
-              h(QBtn, csx({
+            }, () => [
+              h(HBtn, {
                 css: {bg: '$transparent-white', radius: 0},
                 dense: true,
                 flat: true,
                 icon: ionCloseOutline,
                 onClick: onCloseAuth,
-              })),
+              }),
             ]),
           ]),
         ]),

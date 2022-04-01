@@ -5,7 +5,7 @@ export interface UseCryptoProps {
   email?: string | number | null
 }
 
-export const useCryptoSign = (props: UnwrapNestedRefs<UseCryptoProps>) => {
+export const useSolanaSign = (props: UnwrapNestedRefs<UseCryptoProps>) => {
   const {email} = toRefs(props)
   const cryptoSignMessageVariables = computed(() => {
     return {

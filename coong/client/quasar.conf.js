@@ -45,6 +45,19 @@ module.exports = configure((ctx) => {
         Object.assign(viteConf.define, {
           __DEV__: JSON.stringify('import.meta.env.DEV'),
         })
+        viteConf.server.proxy = {
+          '/server': {
+            changeOrigin: true,
+            rewrite: (path) => path.replace(/^\/server/u, ''),
+            target: process.env.API_URL,
+          },
+          '/static': {
+            changeOrigin: true,
+            rewrite: (path) => path.replace(/^\/static/u, ''),
+            target: 'http://localhost:9100',
+          },
+        }
+        console.log(viteConf.server)
         if (isServer) {
           viteConf.ssr.noExternal.push(/^@quasar\/extras/u)
           if (!ctx.dev) {

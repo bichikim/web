@@ -1,11 +1,11 @@
-import {createStyled} from '@winter-love/stitches'
-import {CssComponent} from '@stitches/core/types/styled-component'
-import {inject, InjectionKey, Plugin} from 'vue'
-import {linearGradient, typography} from './variants'
-import {stitchesUtils} from './stitches-utils'
-import {ConfigType, CreateStitches} from '@stitches/core/types/config'
 import {CSS} from '@stitches/core/types'
+import {ConfigType, CreateStitches} from '@stitches/core/types/config'
+import {CssComponent} from '@stitches/core/types/styled-component'
+import {createStyled} from '@winter-love/stitches'
 import {theme} from 'src/theme'
+import {inject, InjectionKey, Plugin} from 'vue'
+import {stitchesUtils} from './stitches-utils'
+import {linearGradient, typography} from './variants'
 
 export * from './h-glow'
 export * from './h-box'
@@ -14,7 +14,7 @@ export * from './quasar-components'
 export const SYSTEM_KEY: InjectionKey<CssComponent> =
   __DEV__ ? '__system_key__' as any : Symbol('system-key')
 
-export const useSystem = () : CssComponent => {
+export const useSystem = (): CssComponent => {
   return inject(SYSTEM_KEY, (() => ({})) as any)
 }
 
@@ -24,11 +24,36 @@ const runCssClassComponent = (system: CssComponent, css: CSS, variants?: Record<
 
 export interface VariantAndCss {
   [key: string]: CSS | undefined | null | string | number | boolean | ((...args: any[]) => unknown)
+
   css?: CSS
 }
 
-const runCsxClassComponent = (system: CssComponent, csx?: VariantAndCss) => {
-  const result = system(csx)
+const addClassScope = (css?: Record<string, any>, withClasses?: string) => {
+  if (!withClasses || !css) {
+    return css
+  }
+  const {left, baseCss} = Object.entries(css).reduce((result, [key, value]) => {
+    if (key.startsWith('&')) {
+      result.left.push([key, value])
+      return result
+    }
+    result.baseCss.push([key, value])
+    return result
+  }, {baseCss: [] as any[], left: [] as any[]})
+
+  return {
+    ...Object.fromEntries(left),
+    [`&${withClasses}`]: Object.fromEntries(baseCss),
+  }
+}
+
+const runCsxClassComponent = (system: CssComponent, csx?: VariantAndCss, withClasses?: string) => {
+  const {css, ...restCsx} = csx ?? {}
+  const _csx = {
+    ...restCsx,
+    css: addClassScope(css, withClasses),
+  }
+  const result = system(_csx)
   if (!result.props) {
     return {}
   }
@@ -50,8 +75,8 @@ export const useClassName = (): CSSClassComponent => {
 
 export const useCsx = () => {
   const system = inject(SYSTEM_KEY, (() => ({})) as any)
-  return (csx?: VariantAndCss) => {
-    return runCsxClassComponent(system, csx)
+  return (csx?: VariantAndCss, withClasses?: string) => {
+    return runCsxClassComponent(system, csx, withClasses)
   }
 }
 
@@ -59,14 +84,15 @@ export type stitchesOptions = Parameters<CreateStitches>[0]
 
 export type FunctionComposer = (...args) => any
 
-export interface CreateHyperComponentsOptions<
+export interface CreateHyperComponentsOptions<Prefix extends string = string,
   Media = Record<string, any>,
   Theme = ConfigType.Theme,
   Utils = Record<string, any>,
   > {
-  media?: Media
-  theme?: Theme
-  utils?: Utils
+  media?: ConfigType.Media<Media>
+  prefix?: ConfigType.Prefix<Prefix>
+  theme?: ConfigType.Theme<Theme>
+  utils?: ConfigType.Utils<Utils>
   variants?: Record<string, any>
 }
 
@@ -74,19 +100,20 @@ export interface CreateHyperComponentsOptions<
  * HyperComponents has stitches, components and preset styles
  * @param options
  */
-export const createHyperComponents = <
+export const createHyperComponents = <Prefix extends string = string,
   Media = Record<string, any>,
   Theme = ConfigType.Theme,
   Utils = Record<string, any>,
   // todo fix types
-  >(options: CreateHyperComponentsOptions<Media, Theme, Utils> = {}): any => {
+  >(options: CreateHyperComponentsOptions<Prefix, Media, Theme, Utils> = {}): any => {
   const {
     theme: _theme = {},
     variants = {},
     utils = {},
     media = {},
+    prefix,
   } = options
-  const {createDirective, css, ...restStitches} = createStyled({
+  const stitchesOptions: Record<string, any> = {
     media: {
       bp1: '(min-width: 640px)',
       bp2: '(min-width: 768px)',
@@ -98,7 +125,11 @@ export const createHyperComponents = <
       ..._theme,
     },
     utils: {...stitchesUtils, ...utils},
-  })
+  }
+  if (prefix) {
+    stitchesOptions.prefix = prefix
+  }
+  const {createDirective, css, ...restStitches} = createStyled(stitchesOptions)
 
   const {directive, system} = createDirective({
     utils: stitchesUtils,

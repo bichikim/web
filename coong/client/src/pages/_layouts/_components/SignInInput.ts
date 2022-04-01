@@ -1,7 +1,8 @@
-import {defineComponent, h, PropType, toRefs} from 'vue'
-import {QBtn, QInput, QTooltip} from 'quasar'
 import {ionMailSharp, ionWalletSharp} from '@quasar/extras/ionicons-v6'
-import {className, csx} from 'boot/hyper-components'
+import {HBtn, HInput} from '@winter-love/hyper-components'
+import {className} from 'boot/hyper-components'
+import {QTooltip} from 'quasar'
+import {defineComponent, h, PropType, toRefs} from 'vue'
 
 export type SignInKind = 'email' | 'wallet'
 
@@ -27,14 +28,6 @@ const container = () => [
     },
   }),
 ]
-
-const menuButton = (active: boolean) => className({
-  borderRadius: 0,
-  color: 'black',
-  flexShrink: 0,
-  opacity: active ? 1 : '0.5',
-})
-
 export const SignInInput = defineComponent({
   emits: ['update:active', 'update:email'],
   name: 'SignInInput',
@@ -48,13 +41,13 @@ export const SignInInput = defineComponent({
       emit('update:active', kind)
     }
 
-    const onUpdateEmail = (email: string) => {
+    const onUpdateEmail = (email: string | number | null) => {
       emit('update:email', email)
     }
 
     return () => (
       h('div', {class: container()}, [
-        h(QInput, csx({
+        h(HInput, {
           borderless: true,
           css: {
             flexGrow: 1,
@@ -64,9 +57,14 @@ export const SignInInput = defineComponent({
           label: 'Your Email',
           modelValue: email.value,
           'onUpdate:modelValue': onUpdateEmail,
-        })),
-        h(QBtn, {
-          class: menuButton(active.value === 'email'),
+        }),
+        h(HBtn, {
+          css: {
+            borderRadius: 0,
+            color: 'black',
+            flexShrink: 0,
+            opacity: active ? 1 : '0.5',
+          },
           dense: true,
           flat: true,
           icon: ionMailSharp,
@@ -76,8 +74,13 @@ export const SignInInput = defineComponent({
         }, () => [
           h(QTooltip, () => 'By email authentication'),
         ]),
-        h(QBtn, {
-          class: menuButton(active.value === 'wallet'),
+        h(HBtn, {
+          css: {
+            borderRadius: 0,
+            color: 'black',
+            flexShrink: 0,
+            opacity: active ? 1 : '0.5',
+          },
           dense: true,
           disable: true,
           flat: true,

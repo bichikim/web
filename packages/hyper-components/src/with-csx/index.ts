@@ -6,14 +6,19 @@ type EmptyObject = {}
 
 export const withCsx = <Props = EmptyObject,
   Emit extends EmitsOptions = EmptyObject,
-  >(component: Component<Props>, name: string = 'Cxs'): FunctionalComponent<Props & HyperProps, Emit> => {
+  >(
+    component: Component<Props>,
+    name?: string,
+    withClasses?: string,
+  ): FunctionalComponent<Props & HyperProps, Emit> => {
+  const _name = name ?? 'Cxs'
   const wrapper = {
-    [name]: (_, {attrs, slots}) => {
+    [_name]: (_, {attrs, slots}) => {
       const csx = useCsx()
       return (
-        h(component, csx(attrs as any), slots)
+        h(component, csx(attrs as any, withClasses), slots)
       )
     },
   }
-  return wrapper[name]
+  return wrapper[_name]
 }

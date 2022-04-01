@@ -1,6 +1,6 @@
 import {ionVolumeHighSharp, ionVolumeMuteSharp} from '@quasar/extras/ionicons-v5'
 import {resolveUrl} from '@winter-love/utils'
-import {QBtn} from 'quasar'
+import {HBtn} from '@winter-love/hyper-components'
 import {staticUrl} from 'src/environment'
 import {computed, defineComponent, h, ref, watch} from 'vue'
 
@@ -28,7 +28,7 @@ export const AudioButton = defineComponent({
     }
 
     return () => (
-      h(QBtn, {
+      h(HBtn, {
         flat: true,
         icon: audioIcon.value,
         onClick: onToggleAudio,

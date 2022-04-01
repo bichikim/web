@@ -1,13 +1,14 @@
-/* eslint-disable max-nested-callbacks */
-import {computed, defineComponent, h, ref, toRefs, Transition, watch} from 'vue'
-import {QBtn, QCard, QInnerLoading, QTooltip} from 'quasar'
-import {HGlow} from '@winter-love/hyper-components'
+/* eslint-disable max-nested-callbacks,max-lines-per-function */
 import {ionChevronBackSharp, ionChevronForwardSharp} from '@quasar/extras/ionicons-v6'
-import {SignInInput, SignInKind} from './SignInInput'
+import {HBox, HBtn, HCard, HGlow} from '@winter-love/hyper-components'
 import {className} from 'boot/hyper-components'
-import {debounce} from 'lodash'
-import isEmail from 'validator/lib/isEmail'
 import {debug} from 'hooks/debug'
+import {debounce} from 'lodash'
+import {QInnerLoading, QTooltip} from 'quasar'
+import isEmail from 'validator/lib/isEmail'
+import {computed, defineComponent, h, readonly, ref, toRefs, Transition, unref, watch} from 'vue'
+import {SignInInput, SignInKind} from './SignInInput'
+import {MayRef} from '@winter-love/use'
 
 const validateEmail = (value?: string) => {
   if (!value) {
@@ -15,91 +16,50 @@ const validateEmail = (value?: string) => {
   }
   return isEmail(value)
 }
+const DEFAULT_WAIT = 250
+const debounceRef = <T>(value: MayRef<T>, wait: number = DEFAULT_WAIT) => {
+  const valueRef = ref(unref(value))
+  const update = debounce((value: T) => {
+    valueRef.value = value
+  }, wait)
+  watch(value as any, (value) => {
+    update(value)
+  })
+
+  return readonly(valueRef)
+}
 
 export const SignInButton = defineComponent({
-  emits: ['signIn'],
+  emits: ['sign-in', 'update:email'],
   name: 'SignInButton',
   props: {
     email: {type: String},
     isWaiting: {default: false, type: Boolean},
-    validatorWait: {default: 500, type: Number},
-  },
-  render() {
-    const {
-      showInput,
-      showInputIcon,
-      onToggleShowInput,
-      emailRef,
-      onChangeActiveMethod,
-      activeMethod,
-      description,
-      onUpdateEmail,
-      onSignIn,
-      isWaiting,
-    } = this
-
-    return (
-      h('div', {class: containerStyle()}, [
-        h(HGlow, () => [
-          h(QCard, {class: cardStyle()}, () => [
-            h(Transition, {name: 'input'}, () => [
-              showInput && h(SignInInput, {
-                active: activeMethod,
-                email: emailRef,
-                'onUpdate:active': onChangeActiveMethod,
-                'onUpdate:email': onUpdateEmail,
-              }),
-            ]),
-            h(QBtn, {
-              class: showInputButtonStyle(),
-              dense: true,
-              flat: true,
-              icon: showInputIcon,
-              onClick: onToggleShowInput,
-            }),
-            h(QBtn, {
-              class: signInButtonStyle(),
-              flat: true,
-              noCaps: true,
-              onClick: onSignIn,
-            }, () => [
-              'Sign in/up',
-              emailRef && h(QTooltip, () => `sign in with "${emailRef}"`),
-            ]),
-            h(QInnerLoading, {showing: isWaiting}),
-          ]),
-        ]),
-        h('div', {class: descriptionStyle()}, description),
-      ])
-    )
+    validatorWait: {default: 1000, type: Number},
   },
   setup(props, {emit}) {
-    debug({})
-    const {email: emailProp, validatorWait} = toRefs(props)
-    const showInput = ref(!emailProp.value)
-    const emailRef = ref<string>(emailProp.value ?? '')
+    const {email, validatorWait} = toRefs(props)
+    const showInput = ref(!email.value)
     const activeMethod = ref<SignInKind>('email')
-    const isEmailRef = ref(validateEmail(emailRef.value))
-
+    const debounceEmail = debounceRef(email, validatorWait.value)
+    const isEmailRef = computed(() => {
+      return validateEmail(debounceEmail.value)
+    })
     const showInputIcon = computed(() => {
       return showInput.value ? ionChevronForwardSharp : ionChevronBackSharp
     })
 
-    const hasEmail = computed(() => Boolean(emailRef.value))
+    const hasEmail = computed(() => Boolean(email.value))
 
     const description = computed(() => {
       const isEmail = isEmailRef.value
       if (!isEmail) {
-        return `"${emailRef.value}" is not an email address`
+        return `"${debounceEmail.value}" is not an email address`
       }
       return hasEmail.value ?
-        `Sign in/up as "${emailRef.value}" with ${activeMethod.value} authentication` :
+        `Sign in/up as "${debounceEmail.value}" with ${activeMethod.value} authentication` :
         'Please enter your email'
     })
-
-    watch(emailRef, debounce((value) => {
-      isEmailRef.value = validateEmail(value)
-    }, validatorWait.value))
 
     const onToggleShowInput = () => {
       showInput.value = !showInput.value
@@ -110,60 +70,83 @@ export const SignInButton = defineComponent({
     }
 
     const onUpdateEmail = (email: string) => {
-      emailRef.value = email
+      emit('update:email', email)
     }
 
-    const onSignIn = () => emit('signIn', emailRef.value)
-
-    return {
-      activeMethod,
-      description,
-      emailRef,
-      onChangeActiveMethod,
-      onSignIn,
-      onToggleShowInput,
-      onUpdateEmail,
-      showInput,
-      showInputIcon,
-    }
+    const onSignIn = () => emit('sign-in')
+    debug({})
+    return () => (
+      h(HBox, {
+        css: {
+          alignItems: 'center',
+          display: 'flex',
+          flexDirection: 'column',
+        },
+      }, () => [
+        h(HGlow, () => [
+          h(HCard, {
+            css: {
+              '& .input-enter-from,.input-leave-to': {
+                width: '0 !important',
+              },
+              '& .input-leave-active,.input-enter-active': {
+                transition: 'width 0.5s ease',
+              },
+              borderRadius: 0,
+              display: 'flex',
+              mb: 10,
+              mt: 20,
+              position: 'relative',
+            },
+            linearGradient: 'hyper',
+          }, () => [
+            h(Transition, {name: 'input'}, () => [
+              showInput.value && h(SignInInput, {
+                active: activeMethod.value,
+                email: email.value,
+                'onUpdate:active': onChangeActiveMethod,
+                'onUpdate:email': onUpdateEmail,
+              }),
+            ]),
+            h(HBtn, {
+              css: {
+                '&.q-btn': {
+                  borderRadius: 0,
+                  color: 'white',
+                  flexShrink: 0,
+                  fontSize: '$b1',
+                  whiteSpace: 'nowrap',
+                },
+              },
+              dense: true,
+              flat: true,
+              icon: showInputIcon.value,
+              onClick: onToggleShowInput,
+            }),
+            h(HBtn, {
+              css: {
+                '&.q-btn': {
+                  borderRadius: 0,
+                  color: 'white',
+                  flexShrink: 0,
+                  fontSize: '$b1',
+                  whiteSpace: 'nowrap',
+                },
+              },
+              flat: true,
+              noCaps: true,
+              onClick: onSignIn,
+            }, () => [
+              'Sign in/up',
+              email.value && h(QTooltip, () => `sign in with "${email.value}"`),
+            ]),
+            h(QInnerLoading, {showing: props.isWaiting}),
+          ]),
+        ]),
+        h('div', {class: descriptionStyle()}, description.value),
+      ])
+    )
   },
-})
-
-const containerStyle = () => className({
-  alignItems: 'center',
-  display: 'flex',
-  flexDirection: 'column',
-})
-
-const cardStyle = () => className({
-  '& .input-enter-from,.input-leave-to': {
-    width: '0 !important',
-  },
-  '& .input-leave-active,.input-enter-active': {
-    transition: 'width 0.5s ease',
-  },
-  borderRadius: 0,
-  display: 'flex',
-  mb: 10,
-  mt: 20,
-  position: 'relative',
-}, {
-  linearGradient: 'hyper',
-})
-
-const signInButtonStyle = () => className({
-  borderRadius: 0,
-  color: 'white',
-  flexShrink: 0,
-  fontSize: '$b1',
-  whiteSpace: 'nowrap',
-})
-
-const showInputButtonStyle = () => className({
-  bg: 'rgba(0, 0, 0, 0.2)',
-  borderRadius: 0,
-  color: 'white',
-  flexShrink: 0,
 })
 
 const descriptionStyle = () => className({
