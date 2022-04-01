@@ -70,7 +70,7 @@
     "@graphql-codegen/typescript-vue-urql": "2.2.9",
     "@iconify/json": "2.1.21",
     "@intlify/vite-plugin-vue-i18n": "3.3.1",
-    "@types/lodash": "4.14.180",
+    "@types/lodash": "4.14.181",
     "@types/node": "17.0.21",
     "@types/validator": "13.7.2",
     "@vitejs/plugin-vue": "2.2.4",
