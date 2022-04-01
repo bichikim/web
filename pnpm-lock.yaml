@@ -23,7 +23,7 @@ importers:
       '@babel/preset-env': 7.16.11
       '@babel/preset-typescript': 7.16.7
       '@emotion/jest': 11.8.0
-      '@happy-dom/jest-environment': 2.50.0
+      '@happy-dom/jest-environment': 2.55.0
       '@storybook/addon-actions': 6.4.19
       '@storybook/addon-essentials': 6.4.19
       '@storybook/addon-interactions': 6.4.19
@@ -101,7 +101,7 @@ importers:
       '@babel/preset-env': 7.16.11_@babel+core@7.17.8
       '@babel/preset-typescript': 7.16.7_@babel+core@7.17.8
       '@emotion/jest': 11.8.0_@types+jest@27.4.1
-      '@happy-dom/jest-environment': 2.50.0
+      '@happy-dom/jest-environment': 2.55.0
       '@storybook/addon-actions': 6.4.19_@types+react@17.0.43
       '@storybook/addon-essentials': 6.4.19_85ee13d99d910f603bbe5b001c0a3dd1
       '@storybook/addon-interactions': 6.4.19_78d98fc2727b08a0c62a1f2084b6b0e8
@@ -4623,13 +4623,13 @@ packages:
       '@hapi/hoek': 9.2.1
     dev: false
 
-  /@happy-dom/jest-environment/2.50.0:
-    resolution: {integrity: sha512-JOsBXGTVFMXqP6io2rbWaPOdazLb+r7J7F7soCFZydcgV9K+kqJAyXlSXe7B8D4xmw9yzwIyCQApgE7J7pIaGQ==}
+  /@happy-dom/jest-environment/2.55.0:
+    resolution: {integrity: sha512-dS1x54n9ourKotMT0cR6eVCAJFUz4wKp3xH6lKgKxrFbYDTRLPGTdUpufWUaYi1JMQG3X8rMkcb0pWgX+4oK9w==}
     dependencies:
       '@jest/environment': 27.5.1
       '@jest/fake-timers': 27.5.1
       '@jest/types': 27.5.1
-      happy-dom: 2.50.0
+      happy-dom: 2.55.0
       jest-mock: 27.5.1
       jest-util: 27.5.1
     transitivePeerDependencies:
@@ -17984,8 +17984,8 @@ packages:
       uglify-js: 3.15.3
     dev: true
 
-  /happy-dom/2.50.0:
-    resolution: {integrity: sha512-3boJ9i4AbSMUvI4f6N4UEuDDOdKMTCXlnsjoB7KCyhkN1VD+vR9kQEmHLLDHrIPdLn65zA/XhhaFZhCkoWoLQQ==}
+  /happy-dom/2.55.0:
+    resolution: {integrity: sha512-CHDMBRau+l/yKQL+ANmexRAC8FRCuYbXRSpu/GbLVyfqkrlBzV7OSNd5C5HZ+pVFtFv1bFJYC5r+xrqgGQuq5w==}
     dependencies:
       css.escape: 1.5.1
       he: 1.2.0
