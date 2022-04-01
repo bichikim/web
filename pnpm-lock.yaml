@@ -260,7 +260,7 @@ importers:
       '@graphql-codegen/typescript-apollo-client-helpers': 2.1.15
       '@graphql-codegen/typescript-operations': 2.3.5
       '@graphql-codegen/typescript-vue-urql': 2.2.9
-      '@iconify/json': 2.1.21
+      '@iconify/json': 2.1.23
       '@intlify/vite-plugin-vue-i18n': 3.3.1
       '@namchee/vue-ztext': 1.0.0
       '@project-serum/sol-wallet-adapter': 0.2.6
@@ -359,7 +359,7 @@ importers:
       '@graphql-codegen/typescript-apollo-client-helpers': 2.1.15_graphql@16.3.0
       '@graphql-codegen/typescript-operations': 2.3.5_graphql@16.3.0
       '@graphql-codegen/typescript-vue-urql': 2.2.9_e20029557891e0afb887c44ec7f516f8
-      '@iconify/json': 2.1.21
+      '@iconify/json': 2.1.23
       '@intlify/vite-plugin-vue-i18n': 3.3.1_vite@2.9.1+vue-i18n@9.1.9
       '@types/lodash': 4.14.180
       '@types/node': 17.0.21
@@ -4660,8 +4660,8 @@ packages:
     resolution: {integrity: sha512-trnsAYxU3xnS1gPHPyU961coFyLkh4gAD/0zQ5mymY4yOZ+CYvsPqUbOFSw0aDM4y0tV7tiFxL/1XfXPNC6IPg==}
     dev: true
 
-  /@iconify/json/2.1.21:
-    resolution: {integrity: sha512-xaf916kxsau+yQv7rnnAvGQEsCbx2+zHNL/13BAgIm6+SbMjGfvrRHpufdkfTV8GnEHjyl3vsFc3MPkZ1lI2Rw==}
+  /@iconify/json/2.1.23:
+    resolution: {integrity: sha512-HwsCjNyppcr19VdzoA/PmNUdJ1mxn8WblAos+BBCzVXiW7T9iCjDsuIIKqSNpwLiau26M7Yvw0VSXchJoJVVBg==}
     dependencies:
       '@iconify/types': 1.1.0
       pathe: 0.2.0
@@ -4696,8 +4696,8 @@ packages:
       vue-i18n:
         optional: true
     dependencies:
-      '@intlify/message-compiler': 9.2.0-beta.33
-      '@intlify/shared': 9.2.0-beta.33
+      '@intlify/message-compiler': 9.2.0-beta.34
+      '@intlify/shared': 9.2.0-beta.34
       jsonc-eslint-parser: 1.4.1
       source-map: 0.6.1
       vue-i18n: 9.1.9_vue@3.2.31
@@ -4732,11 +4732,11 @@ packages:
       source-map: 0.6.1
     dev: false
 
-  /@intlify/message-compiler/9.2.0-beta.33:
-    resolution: {integrity: sha512-+SICjFlnHSbRLZT+sNdBvOAQfcNX+fESyMmgPxC8HHWu4GLN2CoVQS4ACXb3QBZDKLVJBFhFGMnl+UXyJrno6g==}
+  /@intlify/message-compiler/9.2.0-beta.34:
+    resolution: {integrity: sha512-l7JjkXJBW2l6cFZqPvI6oWU6QZn/i70agU6QB02W1O+6quFCFNpsiPswgYyQrmfHt4F4qYhLJUMZltIW/cqcbw==}
     engines: {node: '>= 12'}
     dependencies:
-      '@intlify/shared': 9.2.0-beta.33
+      '@intlify/shared': 9.2.0-beta.34
       source-map: 0.6.1
     dev: true
 
@@ -4759,8 +4759,8 @@ packages:
     engines: {node: '>= 10'}
     dev: false
 
-  /@intlify/shared/9.2.0-beta.33:
-    resolution: {integrity: sha512-HldlkV66vMt1vQsuUz4zjQ202C5KW6aHeIQhx7RxBO11i3E8V84dp5MG9epr9GZXVsrCAR56Ekj0HaTqksIRJA==}
+  /@intlify/shared/9.2.0-beta.34:
+    resolution: {integrity: sha512-hbUKcVbTOkLVpnlSeZE1OPgEI7FpvhuZF/gb84xECTjXEImIa3u0fIcJKUUffv3dlAx8fMOE5xKgDzngidm0tw==}
     engines: {node: '>= 12'}
     dev: true
 
@@ -4778,7 +4778,7 @@ packages:
         optional: true
     dependencies:
       '@intlify/bundle-utils': 2.2.1_vue-i18n@9.1.9
-      '@intlify/shared': 9.2.0-beta.33
+      '@intlify/shared': 9.2.0-beta.34
       '@rollup/pluginutils': 4.2.0
       debug: 4.3.4
       fast-glob: 3.2.11
