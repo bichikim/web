@@ -1,4 +1,4 @@
-import {asyncPipe} from '../async-pipe'
+import {asyncPipe} from '../'
 
 describe('async-pipe', () => {
   it('should call all async functions', async () => {

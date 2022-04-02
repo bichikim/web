@@ -33,7 +33,8 @@ module.exports = configure((ctx) => {
     boot: [
       'hyper-components',
       'vare',
-      'urql',
+      // 'urql',
+      'graphql-request',
     ],
 
     // Full list of options: https://v2.quasar.dev/quasar-cli-vite/quasar-config-js#build
@@ -57,7 +58,6 @@ module.exports = configure((ctx) => {
             target: 'http://localhost:9100',
           },
         }
-        console.log(viteConf.server)
         if (isServer) {
           viteConf.ssr.noExternal.push(/^@quasar\/extras/u)
           if (!ctx.dev) {

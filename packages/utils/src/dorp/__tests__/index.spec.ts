@@ -1,4 +1,4 @@
-import {drop} from '../drop'
+import {drop} from '../'
 
 describe('drop', () => {
   it('should drop array items', () => {

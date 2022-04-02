@@ -1,4 +1,4 @@
-import {chunk} from '../chunk'
+import {chunk} from '../'
 
 describe('chunk', () => {
   it('should return a chunked array', () => {

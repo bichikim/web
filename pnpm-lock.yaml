@@ -182,6 +182,7 @@ importers:
       '@graphql-codegen/cli': 2.6.2
       '@graphql-codegen/typescript': 2.4.8
       '@graphql-codegen/typescript-apollo-client-helpers': 2.1.15
+      '@graphql-codegen/typescript-graphql-request': 4.4.5
       '@graphql-codegen/typescript-operations': 2.3.5
       '@graphql-codegen/typescript-vue-urql': 2.2.9
       '@project-serum/sol-wallet-adapter': 0.2.6
@@ -200,6 +201,7 @@ importers:
       core-js: 3.21.1
       express: 4.17.3
       graphql: 16.3.0
+      graphql-request: 4.2.0
       graphql-tag: 2.12.6
       lodash: 4.17.21
       node-html-parser: 5.3.3
@@ -223,6 +225,7 @@ importers:
       core-js: 3.21.1
       express: 4.17.3
       graphql: 16.3.0
+      graphql-request: 4.2.0_graphql@16.3.0
       graphql-tag: 2.12.6_graphql@16.3.0
       lodash: 4.17.21
       node-html-parser: 5.3.3
@@ -237,6 +240,7 @@ importers:
       '@graphql-codegen/cli': 2.6.2_3eb73f8430c6e33b4db987976e30809d
       '@graphql-codegen/typescript': 2.4.8_graphql@16.3.0
       '@graphql-codegen/typescript-apollo-client-helpers': 2.1.15_graphql@16.3.0
+      '@graphql-codegen/typescript-graphql-request': 4.4.5_758f71d75c32a2babc872ec80acebbed
       '@graphql-codegen/typescript-operations': 2.3.5_graphql@16.3.0
       '@graphql-codegen/typescript-vue-urql': 2.2.9_e20029557891e0afb887c44ec7f516f8
       '@quasar/app-vite': 1.0.0-beta.10_3ce11cc3da828f2f587886f7c4d48cff
@@ -4162,6 +4166,25 @@ packages:
       - supports-color
     dev: true
 
+  /@graphql-codegen/typescript-graphql-request/4.4.5_758f71d75c32a2babc872ec80acebbed:
+    resolution: {integrity: sha512-D8ao8j43R8pStLqCMXVzdvGX9xc/x+IWd8ZacbKUVKbpWxlO7AEVAF89fgTpPv4FFTYG62BdkElf3ePcvgEWuw==}
+    peerDependencies:
+      graphql: ^0.8.0 || ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0 || ^16.0.0
+      graphql-request: ^3.4.0 || ^4.0.0
+      graphql-tag: ^2.0.0
+    dependencies:
+      '@graphql-codegen/plugin-helpers': 2.4.2_graphql@16.3.0
+      '@graphql-codegen/visitor-plugin-common': 2.7.4_graphql@16.3.0
+      auto-bind: 4.0.0
+      graphql: 16.3.0
+      graphql-request: 4.2.0_graphql@16.3.0
+      graphql-tag: 2.12.6_graphql@16.3.0
+      tslib: 2.3.1
+    transitivePeerDependencies:
+      - encoding
+      - supports-color
+    dev: true
+
   /@graphql-codegen/typescript-operations/2.3.5_graphql@16.3.0:
     resolution: {integrity: sha512-GCZQW+O+cIF62ioPkQMoSJGzjJhtr7ttZGJOAoN/Q/oolG8ph9jNFePKO67tSQ/POAs5HLqfat4kAlCK8OPV3Q==}
     peerDependencies:
@@ -4742,8 +4765,8 @@ packages:
       vue-i18n:
         optional: true
     dependencies:
-      '@intlify/message-compiler': 9.2.0-beta.33
-      '@intlify/shared': 9.2.0-beta.33
+      '@intlify/message-compiler': 9.2.0-beta.34
+      '@intlify/shared': 9.2.0-beta.34
       jsonc-eslint-parser: 1.4.1
       source-map: 0.6.1
       vue-i18n: 9.1.9_vue@3.2.31
@@ -4778,11 +4801,11 @@ packages:
       source-map: 0.6.1
     dev: false
 
-  /@intlify/message-compiler/9.2.0-beta.33:
-    resolution: {integrity: sha512-+SICjFlnHSbRLZT+sNdBvOAQfcNX+fESyMmgPxC8HHWu4GLN2CoVQS4ACXb3QBZDKLVJBFhFGMnl+UXyJrno6g==}
+  /@intlify/message-compiler/9.2.0-beta.34:
+    resolution: {integrity: sha512-l7JjkXJBW2l6cFZqPvI6oWU6QZn/i70agU6QB02W1O+6quFCFNpsiPswgYyQrmfHt4F4qYhLJUMZltIW/cqcbw==}
     engines: {node: '>= 12'}
     dependencies:
-      '@intlify/shared': 9.2.0-beta.33
+      '@intlify/shared': 9.2.0-beta.34
       source-map: 0.6.1
     dev: true
 
@@ -4805,8 +4828,8 @@ packages:
     engines: {node: '>= 10'}
     dev: false
 
-  /@intlify/shared/9.2.0-beta.33:
-    resolution: {integrity: sha512-HldlkV66vMt1vQsuUz4zjQ202C5KW6aHeIQhx7RxBO11i3E8V84dp5MG9epr9GZXVsrCAR56Ekj0HaTqksIRJA==}
+  /@intlify/shared/9.2.0-beta.34:
+    resolution: {integrity: sha512-hbUKcVbTOkLVpnlSeZE1OPgEI7FpvhuZF/gb84xECTjXEImIa3u0fIcJKUUffv3dlAx8fMOE5xKgDzngidm0tw==}
     engines: {node: '>= 12'}
     dev: true
 
@@ -4824,7 +4847,7 @@ packages:
         optional: true
     dependencies:
       '@intlify/bundle-utils': 2.2.1_vue-i18n@9.1.9
-      '@intlify/shared': 9.2.0-beta.33
+      '@intlify/shared': 9.2.0-beta.34
       '@rollup/pluginutils': 4.2.0
       debug: 4.3.4
       fast-glob: 3.2.11
@@ -16741,7 +16764,6 @@ packages:
   /extract-files/9.0.0:
     resolution: {integrity: sha512-CvdFfHkC95B4bBBk36hcEmvdR2awOdhhVUYH6S/zrVj3477zven/fJMYg7121h4T1xHZC+tetUpubpAhxwI7hQ==}
     engines: {node: ^10.17.0 || ^12.0.0 || >= 13.7.0}
-    dev: true
 
   /extract-from-css/0.4.4:
     resolution: {integrity: sha1-HqffLnx8brmSL6COitrqSG9vj5I=}
@@ -17910,6 +17932,19 @@ packages:
     transitivePeerDependencies:
       - encoding
     dev: true
+
+  /graphql-request/4.2.0_graphql@16.3.0:
+    resolution: {integrity: sha512-uFeMyhhl8ss4LFgjlfPeAn2pqYw+CJto+cjj71uaBYIMMK2jPIqgHm5KEFxUk0YDD41A8Bq31a2b4G2WJBlp2Q==}
+    peerDependencies:
+      graphql: 14 - 16
+    dependencies:
+      cross-fetch: 3.1.5
+      extract-files: 9.0.0
+      form-data: 3.0.1
+      graphql: 16.3.0
+    transitivePeerDependencies:
+      - encoding
+    dev: false
 
   /graphql-scalars/1.16.0_graphql@15.8.0:
     resolution: {integrity: sha512-vqL72Ehmb+q9b/dPlr31JqVRz89zvOMQTsVsQNQC0DUNV+bTlUtF7agNLFvGqy0HeOMBzSr+216n8/v4jPzmkw==}

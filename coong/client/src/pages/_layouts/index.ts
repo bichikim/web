@@ -1,6 +1,6 @@
 import {SignInPage} from './_components/SignInPage'
 import {HBox, HBtn, HDialog, HLayout, HPageContainer} from '@winter-love/hyper-components'
-import {useUser} from 'src/store'
+import {useUser} from 'src/store/user'
 import {computed, defineComponent, Fragment, h, ref} from 'vue'
 import {RouterView} from 'vue-router'
 import {provideLayout} from './use-layout'

@@ -1,4 +1,4 @@
-import {compact} from '../compact'
+import {compact} from '../'
 
 describe('compact', () => {
   it('should return a compacted array', () => {
