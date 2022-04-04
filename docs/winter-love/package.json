@@ -1,15 +1,15 @@
 {
   "name": "@winter-love-docs/winter-love",
   "private": true,
-  "version": "1.0.25-alpha.1",
+  "version": "1.0.25-alpha.3",
   "scripts": {
     "build": "vitepress build",
     "dev": "vitepress dev"
   },
   "dependencies": {
-    "@winter-love/test-use": "^1.0.25-alpha.0",
-    "@winter-love/use": "^1.0.25-alpha.0",
-    "@winter-love/utils": "^1.0.25-alpha.0",
+    "@winter-love/test-use": "^1.0.25-alpha.3",
+    "@winter-love/use": "^1.0.25-alpha.3",
+    "@winter-love/utils": "^1.0.25-alpha.3",
     "autoprefixer": "^10.4.4",
     "daisyui": "^2.11.0",
     "postcss": "^8.4.12",
