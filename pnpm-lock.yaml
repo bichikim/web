@@ -41,7 +41,7 @@ importers:
       '@testing-library/vue': 6.5.1
       '@types/gulp': 4.0.9
       '@types/jest': ^27.4.1
-      '@types/lodash': 4.14.180
+      '@types/lodash': 4.14.181
       '@types/merge-deep': 3.0.0
       '@types/node': 17.0.21
       '@types/react': 17.0.43
@@ -119,7 +119,7 @@ importers:
       '@testing-library/vue': 6.5.1_4f726de02e89ff745196f225ebb1bbcf
       '@types/gulp': 4.0.9
       '@types/jest': 27.4.1
-      '@types/lodash': 4.14.180
+      '@types/lodash': 4.14.181
       '@types/merge-deep': 3.0.0
       '@types/node': 17.0.21
       '@types/react': 17.0.43
@@ -271,7 +271,7 @@ importers:
       '@quasar/app': 3.3.3
       '@quasar/extras': 1.13.4
       '@solana/web3.js': 1.36.0
-      '@types/lodash': 4.14.180
+      '@types/lodash': 4.14.181
       '@types/node': 17.0.21
       '@types/validator': 13.7.2
       '@urql/vue': 0.6.1
@@ -365,7 +365,7 @@ importers:
       '@graphql-codegen/typescript-vue-urql': 2.2.9_e20029557891e0afb887c44ec7f516f8
       '@iconify/json': 2.1.21
       '@intlify/vite-plugin-vue-i18n': 3.3.1_vite@2.9.1+vue-i18n@9.1.9
-      '@types/lodash': 4.14.180
+      '@types/lodash': 4.14.181
       '@types/node': 17.0.21
       '@types/validator': 13.7.2
       '@vitejs/plugin-vue': 2.2.4
@@ -10289,6 +10289,11 @@ packages:
 
   /@types/lodash/4.14.180:
     resolution: {integrity: sha512-XOKXa1KIxtNXgASAnwj7cnttJxS4fksBRywK/9LzRV5YxrF80BXZIGeQSuoESQ/VkUj30Ae0+YcuHc15wJCB2g==}
+    dev: false
+
+  /@types/lodash/4.14.181:
+    resolution: {integrity: sha512-n3tyKthHJbkiWhDZs3DkhkCzt2MexYHXlX0td5iMplyfwketaOeKboEVBqzceH7juqvEg3q5oUoBFxSLu7zFag==}
+    dev: true
 
   /@types/long/4.0.1:
     resolution: {integrity: sha512-5tXH6Bx/kNGd3MgffdmP4dy2Z+G4eaXw0SE81Tq3BNadtnMR5/ySMzX4SLEzHJzSmPNn4HIdpQsBvXMUykr58w==}
