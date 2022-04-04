@@ -311,7 +311,7 @@ importers:
       validator: 13.7.0
       vare: ^1.0.25-alpha.2
       vite: 2.9.1
-      vite-plugin-imp: 2.1.6
+      vite-plugin-imp: 2.1.7
       vite-plugin-md: 0.12.4
       vite-plugin-pwa: 0.11.13
       vite-plugin-ssr-vue: ^1.0.25-alpha.0
@@ -383,7 +383,7 @@ importers:
       unplugin-icons: 0.14.1_e3ec52ff0fb9986f0db572f0b0e9e6e4
       unplugin-vue-components: 0.18.3_768d6f14d01891d8d7ed7d958d17ebca
       vite: 2.9.1
-      vite-plugin-imp: 2.1.6_vite@2.9.1
+      vite-plugin-imp: 2.1.7_vite@2.9.1
       vite-plugin-md: 0.12.4_vite@2.9.1
       vite-plugin-pwa: 0.11.13_vite@2.9.1
 
@@ -1294,12 +1294,12 @@ packages:
       '@babel/helper-compilation-targets': 7.17.7_@babel+core@7.17.5
       '@babel/helper-module-transforms': 7.17.7
       '@babel/helpers': 7.17.7
-      '@babel/parser': 7.17.7
+      '@babel/parser': 7.17.8
       '@babel/template': 7.16.7
       '@babel/traverse': 7.17.3
       '@babel/types': 7.17.0
       convert-source-map: 1.8.0
-      debug: 4.3.3
+      debug: 4.3.4
       gensync: 1.0.0-beta.2
       json5: 2.2.0
       semver: 6.3.0
@@ -1652,12 +1652,6 @@ packages:
 
   /@babel/parser/7.16.4:
     resolution: {integrity: sha512-6V0qdPUaiVHH3RtZeLIsc+6pDhbYzHR8ogA8w+f+Wc77DuXto19g2QUwveINoS34Uw+W8/hQDGJCx+i4n7xcng==}
-    engines: {node: '>=6.0.0'}
-    hasBin: true
-    dev: true
-
-  /@babel/parser/7.17.7:
-    resolution: {integrity: sha512-bm3AQf45vR4gKggRfvJdYJ0gFLoCbsPxiFLSH6hTVYABptNHY6l9NrhnucVjQ/X+SPtLANT9lc0fFhikj+VBRA==}
     engines: {node: '>=6.0.0'}
     hasBin: true
     dev: true
@@ -14629,6 +14623,7 @@ packages:
         optional: true
     dependencies:
       ms: 2.1.2
+    dev: false
 
   /debug/4.3.4:
     resolution: {integrity: sha512-PRWFHuSU3eDtQJPvnNY7Jcket1j0t5OuOsFzPPzsekD52Zl8qUfFIPEiswXqIvHWGVHOgX+7G/vCNNhehwxfkQ==}
@@ -28712,8 +28707,8 @@ packages:
       vfile-message: 2.0.4
     dev: true
 
-  /vite-plugin-imp/2.1.6_vite@2.9.1:
-    resolution: {integrity: sha512-aHBAw3Shs0DhwuRuXr67d2coc5HkN1YWk1eClQDn+T6dxs1fIRfDj0a/lBSd/rOMJ4dXSjUaWZ/ngpp1KjD43A==}
+  /vite-plugin-imp/2.1.7_vite@2.9.1:
+    resolution: {integrity: sha512-4VfVcmWPgS/IAoPlDP6YUpC2KYxNQJlxPUOg2m0VYjSHN+PdqvZfxBHrjqti+kUiAVZew+b1/c4ixEK+uyLYbw==}
     peerDependencies:
       vite: '>= 2.0.0-beta.5'
     dependencies:
