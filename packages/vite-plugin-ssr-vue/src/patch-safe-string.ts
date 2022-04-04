@@ -9,7 +9,10 @@ const ESCAPED_CHARS = {
 const escape = (unsafeChar: string) => {
   return ESCAPED_CHARS[unsafeChar as keyof typeof ESCAPED_CHARS]
 }
-
+/**
+ * @deprecated
+ * @param value
+ */
 export const patchSafeString = (value: string): string => {
   return value.replace(
     UNSAFE_CHARS_REGEXP,
