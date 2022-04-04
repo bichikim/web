@@ -187,7 +187,7 @@ importers:
       '@graphql-codegen/typescript-vue-urql': 2.2.9
       '@project-serum/sol-wallet-adapter': 0.2.6
       '@quasar/app-vite': 1.0.0-beta.13
-      '@quasar/extras': 1.13.4
+      '@quasar/extras': 1.13.5
       '@solana/web3.js': 1.37.0
       '@types/jest': 27.4.1
       '@types/node': 17.0.21
@@ -215,7 +215,7 @@ importers:
     dependencies:
       '@apollo/client': 3.5.10_graphql@16.3.0
       '@project-serum/sol-wallet-adapter': 0.2.6_@solana+web3.js@1.37.0
-      '@quasar/extras': 1.13.4
+      '@quasar/extras': 1.13.5
       '@solana/web3.js': 1.37.0
       '@urql/vue': 0.6.1_graphql@16.3.0+vue@3.2.31
       '@winter-love/hyper-components': link:../../packages/hyper-components
@@ -269,7 +269,7 @@ importers:
       '@namchee/vue-ztext': 1.0.0
       '@project-serum/sol-wallet-adapter': 0.2.6
       '@quasar/app': 3.3.3
-      '@quasar/extras': 1.13.4
+      '@quasar/extras': 1.13.5
       '@solana/web3.js': 1.36.0
       '@types/lodash': 4.14.181
       '@types/node': 17.0.21
@@ -327,7 +327,7 @@ importers:
       '@namchee/vue-ztext': 1.0.0_vue@3.2.31
       '@project-serum/sol-wallet-adapter': 0.2.6_@solana+web3.js@1.36.0
       '@quasar/app': 3.3.3_65a604e04217b075b2575d3dbb4dc9c2
-      '@quasar/extras': 1.13.4
+      '@quasar/extras': 1.13.5
       '@solana/web3.js': 1.36.0
       '@urql/vue': 0.6.1_graphql@16.3.0+vue@3.2.31
       '@vue/server-renderer': 3.2.31_vue@3.2.31
@@ -694,7 +694,7 @@ importers:
 
   packages/quasar-svg-syntax:
     specifiers:
-      '@quasar/extras': 1.13.3
+      '@quasar/extras': 1.13.5
       '@winter-love/utils': ^1.0.25-alpha.0
       fast-glob: ^3.2.7
       globby: ^13.1.1
@@ -713,7 +713,7 @@ importers:
       node-html-parser: 5.1.0
       yargs: 17.3.0
     devDependencies:
-      '@quasar/extras': 1.13.3
+      '@quasar/extras': 1.13.5
       quasar: 2.6.5
       ts-node: 10.7.0_f01b7c141b75a45db67b7d9ae4c261df
       ts-node-dev: 1.1.8_typescript@4.6.3
@@ -7459,10 +7459,10 @@ packages:
 
   /@quasar/extras/1.13.3:
     resolution: {integrity: sha512-8Tx+iUtg0e+UeSPu2+iJA4joIuIaMGPpV65gNv1/7kINqpAEKi6sXhu/Ahyy/IhZ5o4g1DU9ZGp8CpJKBNwdFA==}
-
-  /@quasar/extras/1.13.4:
-    resolution: {integrity: sha512-cM1Vc2ju5p9hShssyTgy0jWLvit0diUTvH1mTcuzEo6omDB/8GzIbt7N4aer8m4tSTyfjP6/ejyu4N17mVoeMQ==}
     dev: false
+
+  /@quasar/extras/1.13.5:
+    resolution: {integrity: sha512-H4X3jwqOJpDrn1Pof1mJIpoHdBrZQSR9ZpnQ7RCkJsJccpTyQzs8Q6ehVXfIZrco2kd3UPitRQqEiW7k45ckLg==}
 
   /@quasar/fastclick/1.1.4:
     resolution: {integrity: sha512-i9wbyV4iT+v4KhtHJynUFhH5LiEPvAEgSnwMqPN4hf/8uRe82nDl5qP5agrp2el1h0HzyBpbvHaW7NB0BPrtvA==}
