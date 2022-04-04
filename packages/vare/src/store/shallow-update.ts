@@ -10,6 +10,8 @@ export const oneDepthUpdate = (target: Record<string, any>, source: Record<strin
     const targetItem = target[key]
     if (typeof item === 'object' && typeof targetItem === 'object') {
       shallowUpdate(targetItem, item)
+      return
     }
+    target[key] = source[key]
   })
 }
