@@ -42,7 +42,7 @@
     "lodash": "4.17.21",
     "graphql-request": "4.2.0",
     "node-html-parser": "5.3.3",
-    "quasar": "2.6.2",
+    "quasar": "2.6.5",
     "serialize-javascript": "6.0.0",
     "validator": "13.7.0",
     "vare": "^1.0.25-alpha.2",
