@@ -1,4 +1,4 @@
-import {inject, reactive, UnwrapNestedRefs} from 'vue-demi'
+import {inject, reactive, UnwrapNestedRefs, toRaw} from 'vue-demi'
 import {oneDepthUpdate} from './shallow-update'
 import {STORE_CONTEXT, STORE_TREE_KEY} from './symbols'
 
@@ -29,6 +29,7 @@ export type StoreManager = Readonly<{
     item: StoreManagerItem,
   ): void
   readonly storeTree: UnwrapNestedRefs<Record<string, any>>
+  toRaw(): Record<string, any>
   update(source: Record<string, any>)
 }>
 export const createManager = (info?: StoreTreeInfo): StoreManager => {
@@ -56,11 +57,17 @@ export const createManager = (info?: StoreTreeInfo): StoreManager => {
   const update = (source: Record<string, any>) => {
     oneDepthUpdate(storeTree, source)
   }
+  const _toRaw = () => {
+    const data = toRaw(storeTree)
+    delete data[STORE_TREE_KEY]
+    return data
+  }
   return {
     get,
     remove,
     set,
     storeTree,
+    toRaw: _toRaw,
     update,
   }
 }
