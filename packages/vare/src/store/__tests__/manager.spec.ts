@@ -8,23 +8,16 @@ describe('manager', () => {
     const manager = createManager()
     manager.set('foo', {props: {}, store: {name: 'foo'}})
     manager.set('bar', {props: {}, store: {name: 'bar'}})
-    watch(manager.storeTree, watchFunction)
-    expect(manager.storeTree.foo).toEqual({name: 'foo'})
-    expect(manager.storeTree.bar).toEqual({name: 'bar'})
+    watch(manager.state.value, watchFunction)
+    expect(manager.state.value.foo).toEqual({name: 'foo'})
+    expect(manager.state.value.bar).toEqual({name: 'bar'})
     manager.update({
       bar: {name: 'bar1'},
       foo: {name: 'foo1'},
     })
     await flushPromises()
     expect(watchFunction).toBeCalledTimes(1)
-    expect(manager.storeTree.foo).toEqual({name: 'foo1'})
-    expect(manager.storeTree.bar).toEqual({name: 'bar1'})
-  })
-  it('should return a raw object', async () => {
-    const manager = createManager()
-    manager.set('foo', {props: {}, store: {name: 'foo'}})
-    manager.set('bar', {props: {}, store: {name: 'bar'}})
-    expect(manager.toRaw()).not.toBe(manager.storeTree)
-    expect(manager.toRaw()).toEqual(manager.storeTree)
+    expect(manager.state.value.foo).toEqual({name: 'foo1'})
+    expect(manager.state.value.bar).toEqual({name: 'bar1'})
   })
 })

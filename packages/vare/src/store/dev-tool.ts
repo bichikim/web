@@ -2,7 +2,7 @@
 import {App, CustomInspectorNode, setupDevtoolsPlugin, StateBase} from '@vue/devtools-api'
 import {drop, parseJson, toArray} from '@winter-love/utils'
 import {UnwrapNestedRefs, watch} from 'vue-demi'
-import {STORE_TREE_KEY} from './symbols'
+import {ManagerData} from './manager'
 
 const tagThemes = {
   'local-state': {
@@ -22,10 +22,10 @@ const tagThemes = {
   },
 }
 
-export const createTree = (stateTree: UnwrapNestedRefs<any>, index: number = 0): CustomInspectorNode[] => {
-  const info = stateTree[STORE_TREE_KEY]
+export const createTree = (store: ManagerData, index: number = 0): CustomInspectorNode[] => {
+  const {info, tree} = store
 
-  return Object.keys(stateTree).map((key): CustomInspectorNode => {
+  return Object.keys(tree).map((key): CustomInspectorNode => {
     const itemInfo = parseJson(key, key)
     const tag = typeof itemInfo === 'string' ? [] : [
       {
@@ -55,9 +55,9 @@ export const createTree = (stateTree: UnwrapNestedRefs<any>, index: number = 0):
   })
 }
 
-export const createTreeMultiple = (...stateTrees: UnwrapNestedRefs<any>[]) => {
-  return stateTrees.flatMap((stateTree, index) => {
-    return createTree(stateTree, index)
+export const createTreeMultiple = (...stores: ManagerData[]) => {
+  return stores.flatMap((store, index) => {
+    return createTree(store, index)
   })
 }
 
@@ -77,13 +77,13 @@ export const createInspect = (name, state: UnwrapNestedRefs<any>): Record<string
 
 export const createStoreDevTool = (
   app: App,
-  stateTree: UnwrapNestedRefs<any> | UnwrapNestedRefs<any>[],
+  stores: ManagerData | ManagerData[],
 ) => {
   // let _api: DevtoolsPluginApi<ApiSetting>
   const inspectId = 'vare-inspect'
   const timeLineId = 'vare-event'
   const label = 'vare-store'
-  const stateTrees = toArray(stateTree)
+  const _stores = toArray(stores)
   setupDevtoolsPlugin({
     app,
     id: 'vare-store',
@@ -108,7 +108,7 @@ export const createStoreDevTool = (
         return
       }
 
-      payload.rootNodes = createTreeMultiple(...stateTrees)
+      payload.rootNodes = createTreeMultiple(..._stores)
     })
 
     api.on.getInspectorState((payload) => {
@@ -119,7 +119,7 @@ export const createStoreDevTool = (
       const name = payload.nodeId
       const {key, index} = parseJson(name, {index: 0, key: name})
 
-      const state = stateTrees[index][key]
+      const state = _stores[index].tree[key]
 
       if (state) {
         payload.state = createInspect(key, state)
@@ -133,7 +133,7 @@ export const createStoreDevTool = (
       const name = payload.nodeId
       const {key, index} = parseJson(name, {index: 0, key: name})
 
-      const state = stateTrees[index][key]
+      const state = _stores[index].tree[key]
 
       if (state) {
         const path = drop(1)(payload.path)
@@ -142,11 +142,12 @@ export const createStoreDevTool = (
       }
     })
 
-    Object.keys(stateTree).forEach((name: string) => {
-      watch(stateTree[name], () => {
+    Object.keys(_stores).forEach((name: string) => {
+      const store = _stores[name]
+      watch(store.tree, () => {
         api.addTimelineEvent({
           event: {
-            data: typeof stateTree[name] === 'object' ? {...stateTree[name]} : stateTree[name],
+            data: typeof store.tree === 'object' ? {...store.tree} : store.tree,
             time: Date.now(),
           },
           layerId: timeLineId,

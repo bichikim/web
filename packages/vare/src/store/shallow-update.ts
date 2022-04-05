@@ -8,8 +8,11 @@ export const oneDepthUpdate = (target: Record<string, any>, source: Record<strin
   Object.keys(source).forEach((key) => {
     const item = source[key]
     const targetItem = target[key]
-    if (typeof item === 'object' && typeof targetItem === 'object') {
-      shallowUpdate(targetItem, item)
+    if (typeof item === 'object') {
+      if (typeof targetItem !== 'object') {
+        target[key] = {}
+      }
+      shallowUpdate(target[key], item)
       return
     }
     target[key] = source[key]

@@ -40,6 +40,7 @@ export interface UseStoreOptions {
 }
 
 export interface SetupContext<Root> {
+  readonly initState: Record<string, any>
   readonly root: UnwrapNestedRefs<Root>
 }
 
@@ -65,6 +66,7 @@ export interface CreateSetupArgs<
   T extends Record<string, any>,
   P extends Record<string, any> = EmptyObject,
   > {
+  name: string
   props?: P
   setup: Setup<T, P>
   storeManager: StoreManager
@@ -74,8 +76,10 @@ const createSetup = <
   T extends Record<string, any>,
   P extends Record<string, any> = EmptyObject,
   >(args: CreateSetupArgs<T, P>): StoreManagerItem<T> => {
-  const {setup, props, storeManager} = args
+  const {setup, props, storeManager, name} = args
   const _props = reactive(props ?? {} as P)
+  const _initState = storeManager.initState
+  const initState = typeof _initState[name] === 'object' ? _initState[name] : {}
   return {
     props: _props,
     store: reactive(setup(
@@ -83,7 +87,8 @@ const createSetup = <
       _props,
       // setup context
       {
-        root: storeManager.storeTree,
+        initState: freeze({...initState}),
+        root: storeManager.state.value,
       },
     )),
   }
@@ -102,6 +107,7 @@ const createLocalStore = <
   >(args: CreateLocalStoreArgs<T, P>): UnwrapNestedRefs<T> => {
   const {name, storeManager, setup, props} = args
   const item: StoreManagerItem<T> = createSetup<T, P>({
+    name,
     props,
     setup,
     storeManager,
@@ -157,6 +163,7 @@ const createGlobalStore = <
   const state = (!reset && savedState?.store)
     ? savedState
     : createSetup({
+      name,
       props,
       setup,
       storeManager,

@@ -28,6 +28,17 @@ export const useBar = createStore('bar', () => {
   }
 })
 
+export const useJohn = createStore('john', (_, {initState}) => {
+  const name = ref(initState.name ?? 'john1')
+  const changeName = () => {
+    name.value = `${name.value}1`
+  }
+  return {
+    changeName,
+    name,
+  }
+})
+
 export const usePropsState = createStore({
   name: 'props-state',
   props: {
