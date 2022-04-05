@@ -11,9 +11,7 @@ export * from './h-glow'
 export * from './h-box'
 export * from './quasar-components'
 
-export const SYSTEM_KEY: InjectionKey<CssComponent> =
-  // eslint-disable-next-line no-negated-condition
-  process.env.NODE_ENV !== 'production' ? '__system_key__' as any : Symbol('system-key')
+export const SYSTEM_KEY: InjectionKey<CssComponent> = '__system_key__' as any
 
 export const useSystem = (): CssComponent => {
   return inject(SYSTEM_KEY, (() => ({})) as any)
