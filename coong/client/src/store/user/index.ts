@@ -5,6 +5,7 @@ import {useWallet} from 'src/store/wallet'
 export const useUser = createStore({
   name: 'user',
   setup() {
+    const wallet = useWallet()
     const email = ref<string>()
     const info = ref()
     const sessionTokenRef = ref()
@@ -14,7 +15,7 @@ export const useUser = createStore({
     })
 
     const signInWithCrypto = async () => {
-      //
+      wallet.sign()
     }
 
     // const singIn = () => {

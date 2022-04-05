@@ -24,7 +24,7 @@ export const useWallet = defineStore({
       signMessageRef.value = data.authenticateCryptoSignMessage
     }
 
-    const sing = async () => {
+    const sign = async () => {
       await cryptoSignMessage()
       const signMessage = signMessageRef.value
       if (!signMessage) {
@@ -47,7 +47,7 @@ export const useWallet = defineStore({
     }
 
     return {
-      sing,
+      sign,
     }
   },
 })
