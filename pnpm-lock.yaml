@@ -35,7 +35,7 @@ importers:
       '@storybook/storybook-deployer': 2.8.11
       '@storybook/testing-library': 0.0.9
       '@storybook/vue3': 6.4.19
-      '@testing-library/dom': 8.12.0
+      '@testing-library/dom': 8.13.0
       '@testing-library/jest-dom': 5.16.3
       '@testing-library/user-event': 13.5.0
       '@testing-library/vue': 6.5.1
@@ -114,9 +114,9 @@ importers:
       '@storybook/storybook-deployer': 2.8.11
       '@storybook/testing-library': 0.0.9
       '@storybook/vue3': 6.4.19_6b1fe0009b5a100e2eedf9dddb82ed15
-      '@testing-library/dom': 8.12.0
+      '@testing-library/dom': 8.13.0
       '@testing-library/jest-dom': 5.16.3
-      '@testing-library/user-event': 13.5.0_@testing-library+dom@8.12.0
+      '@testing-library/user-event': 13.5.0_@testing-library+dom@8.13.0
       '@testing-library/vue': 6.5.1_4f726de02e89ff745196f225ebb1bbcf
       '@types/gulp': 4.0.9
       '@types/jest': 27.4.1
@@ -211,7 +211,7 @@ importers:
       serialize-javascript: 6.0.0
       typescript: 4.6.3
       validator: 13.7.0
-      vare: ^1.0.25-alpha.6
+      vare: ^1.0.25-alpha.7
       vue: 3.2.31
       vue-router: 4.0.14
     dependencies:
@@ -311,7 +311,7 @@ importers:
       unplugin-icons: 0.14.1
       unplugin-vue-components: 0.18.3
       validator: 13.7.0
-      vare: ^1.0.25-alpha.6
+      vare: ^1.0.25-alpha.7
       vite: 2.9.1
       vite-plugin-imp: 2.1.7
       vite-plugin-md: 0.12.4
@@ -4595,8 +4595,8 @@ packages:
       - supports-color
     dev: true
 
-  /@intlify/bundle-utils/2.2.1_vue-i18n@9.1.9:
-    resolution: {integrity: sha512-8n8zhYEKypS+KP22KUAC6BnQifJDDWUGcn3OVPqsThqMMucU22MShGvOuiKqQ4AeT7XQ5O4pudlJmxv3L91JrQ==}
+  /@intlify/bundle-utils/3.0.0_vue-i18n@9.1.9:
+    resolution: {integrity: sha512-y43Z5Q3ZJvxqtD8xUH6U3yrlZeay7ZTqkzv1GQ4b0mGQtk5uptOT9Ra4qvGuUv8QyPQsortrA/OHWUD5ax5ZNQ==}
     engines: {node: '>= 12'}
     peerDependencies:
       petite-vue-i18n: '*'
@@ -4688,7 +4688,7 @@ packages:
       vue-i18n:
         optional: true
     dependencies:
-      '@intlify/bundle-utils': 2.2.1_vue-i18n@9.1.9
+      '@intlify/bundle-utils': 3.0.0_vue-i18n@9.1.9
       '@intlify/shared': 9.2.0-beta.34
       '@rollup/pluginutils': 4.2.0
       debug: 4.3.4
@@ -9548,8 +9548,8 @@ packages:
     dependencies:
       '@storybook/client-logger': 6.4.20
       '@storybook/instrumenter': 6.4.20
-      '@testing-library/dom': 8.12.0
-      '@testing-library/user-event': 13.5.0_@testing-library+dom@8.12.0
+      '@testing-library/dom': 8.13.0
+      '@testing-library/user-event': 13.5.0_@testing-library+dom@8.13.0
       ts-dedent: 2.2.0
     transitivePeerDependencies:
       - react
@@ -9769,8 +9769,8 @@ packages:
     resolution: {integrity: sha512-d/keJiNKfpHo+GmSB8QcsAwBx8h+V1UbdozA5TD+eSLXprNY53JAYub47J9evsSKWDdNG5uVj0FiMozLKuzowQ==}
     dev: false
 
-  /@testing-library/dom/8.12.0:
-    resolution: {integrity: sha512-rBrJk5WjI02X1edtiUcZhgyhgBhiut96r5Jp8J5qktKdcvLcZpKDW8i2hkGMMItxrghjXuQ5AM6aE0imnFawaw==}
+  /@testing-library/dom/8.13.0:
+    resolution: {integrity: sha512-9VHgfIatKNXQNaZTtLnalIy0jNZzY35a4S3oi08YAt9Hv1VsfZ/DfA45lM8D/UhtHBGJ4/lGwp0PZkVndRkoOQ==}
     engines: {node: '>=12'}
     dependencies:
       '@babel/code-frame': 7.16.7
@@ -9798,14 +9798,14 @@ packages:
       redent: 3.0.0
     dev: true
 
-  /@testing-library/user-event/13.5.0_@testing-library+dom@8.12.0:
+  /@testing-library/user-event/13.5.0_@testing-library+dom@8.13.0:
     resolution: {integrity: sha512-5Kwtbo3Y/NowpkbRuSepbyMFkZmHgD+vPzYB/RJ4oxt5Gj/avFFBYjhw27cqSVPVw/3a67NK1PbiIr9k4Gwmdg==}
     engines: {node: '>=10', npm: '>=6'}
     peerDependencies:
       '@testing-library/dom': '>=7.21.4'
     dependencies:
       '@babel/runtime': 7.17.8
-      '@testing-library/dom': 8.12.0
+      '@testing-library/dom': 8.13.0
     dev: true
 
   /@testing-library/vue/6.5.1_4f726de02e89ff745196f225ebb1bbcf:
@@ -9816,7 +9816,7 @@ packages:
       vue: '>= 3'
     dependencies:
       '@babel/runtime': 7.17.8
-      '@testing-library/dom': 8.12.0
+      '@testing-library/dom': 8.13.0
       '@vue/compiler-sfc': 3.2.31
       '@vue/test-utils': 2.0.0-rc.18_vue@3.2.31
       vue: 3.2.31
