@@ -19,7 +19,7 @@
     "@webauthn-lib/server": "0.1.0",
     "@winter-love/utils": "^1.0.25-alpha.6",
     "bs58": "5.0.0",
-    "dotenv-cli": "5.0.0",
+    "dotenv-cli": "5.1.0",
     "graphql": "15.8.0",
     "jsonwebtoken": "^8.5.1",
     "lodash": "^4.17.21",
