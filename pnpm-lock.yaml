@@ -88,7 +88,7 @@ importers:
       rollup-plugin-typescript2: 0.31.2
       sinon: 13.0.1
       sort-package-json: 1.55.0
-      storybook-builder-vite: 0.1.22
+      storybook-builder-vite: 0.1.23
       ts-node: 10.7.0
       tsd: 0.19.1
       tslib: ^2.3.1
@@ -167,7 +167,7 @@ importers:
       rollup-plugin-typescript2: 0.31.2_2de95048914c2f8ec152df5fb6c7440a
       sinon: 13.0.1
       sort-package-json: 1.55.0
-      storybook-builder-vite: 0.1.22_typescript@4.6.3
+      storybook-builder-vite: 0.1.23_typescript@4.6.3
       ts-node: 10.7.0_f01b7c141b75a45db67b7d9ae4c261df
       tsd: 0.19.1
       tslib: 2.3.1
@@ -1762,7 +1762,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.12.9
-      '@babel/helper-plugin-utils': 7.10.4
+      '@babel/helper-plugin-utils': 7.16.7
       '@babel/plugin-syntax-object-rest-spread': 7.8.3_@babel+core@7.12.9
       '@babel/plugin-transform-parameters': 7.16.7_@babel+core@7.12.9
     dev: true
@@ -27036,8 +27036,8 @@ packages:
     resolution: {integrity: sha512-CMtO2Uneg3SAz/d6fZ/6qbqqQHi2ynq6/KzMD/26gTkiEShCcpqFfTHgOxsE0egAq6SX3FmN4CeSqn8BzXQkJg==}
     dev: true
 
-  /storybook-builder-vite/0.1.22_typescript@4.6.3:
-    resolution: {integrity: sha512-a4cjsuGX9JdrIJyO1IWrPKwLV2dCTk+TDvcf7cFpwyEdJylfWGpHk95WYP3/sQY0+8MZK8PzVQseSWU5qk72lw==}
+  /storybook-builder-vite/0.1.23_typescript@4.6.3:
+    resolution: {integrity: sha512-PmeeYKHaBNQgRVJEwhfyo4Psev1Y7Gj51nlYxUDIG3dpy1e1aGzFubDgsmg9W/BhyHKcLIKp98JBpa1DwL702A==}
     deprecated: storybook-builder-vite has been renamed to @storybook/builder-vite
     peerDependencies:
       '@storybook/core-common': ^6.4.3
