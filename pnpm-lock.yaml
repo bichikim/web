@@ -90,7 +90,7 @@ importers:
       sort-package-json: 1.55.0
       storybook-builder-vite: 0.1.23
       ts-node: 10.7.0
-      tsd: 0.19.1
+      tsd: 0.20.0
       tslib: ^2.3.1
       tsup: 5.12.4
       ttypescript: 1.5.13
@@ -169,7 +169,7 @@ importers:
       sort-package-json: 1.55.0
       storybook-builder-vite: 0.1.23_typescript@4.6.3
       ts-node: 10.7.0_f01b7c141b75a45db67b7d9ae4c261df
-      tsd: 0.19.1
+      tsd: 0.20.0
       tslib: 2.3.1
       tsup: 5.12.4_ts-node@10.7.0+typescript@4.6.3
       ttypescript: 1.5.13_ts-node@10.7.0+typescript@4.6.3
@@ -9880,8 +9880,8 @@ packages:
     resolution: {integrity: sha512-eZxlbI8GZscaGS7kkc/trHTT5xgrjH3/1n2JDwusC9iahPKWMRvRjJSAN5mCXviuTGQ/lHnhvv8Q1YTpnfz9gA==}
     dev: true
 
-  /@tsd/typescript/4.5.5:
-    resolution: {integrity: sha512-TxQ9QiUT94ZjKu++ta/iwTMVHsix4ApohnaHPTSd58WQuTjPIELP0tUYcW7lT6psz7yZiU4eRw+X4v/XV830Sw==}
+  /@tsd/typescript/4.6.3:
+    resolution: {integrity: sha512-WjipklCf6qWQL4Hkw+FSwOXMA5JqKv04ro/c1aviYSzLJFdcFMrR/FHjOGBIEAIq7pb8Bw74wd+G45dWfC/Jnw==}
     hasBin: true
     dev: true
 
@@ -28282,12 +28282,12 @@ packages:
       strip-json-comments: 2.0.1
     dev: true
 
-  /tsd/0.19.1:
-    resolution: {integrity: sha512-pSwchclr+ADdxlahRUQXUrdAIOjXx1T1PQV+fLfVLuo/S4z+T00YU84fH8iPlZxyA2pWgJjo42BG1p9SDb4NOw==}
+  /tsd/0.20.0:
+    resolution: {integrity: sha512-iba/JlyT3qtnA9t8VrX2Fipu3L31U48oRIf1PNs+lIwQ7n63GTkt9eQlB5bLtfb7nYfy9t8oZzs+K4QEoEIS8Q==}
     engines: {node: '>=12'}
     hasBin: true
     dependencies:
-      '@tsd/typescript': 4.5.5
+      '@tsd/typescript': 4.6.3
       eslint-formatter-pretty: 4.1.0
       globby: 11.1.0
       meow: 9.0.0
@@ -30344,7 +30344,7 @@ packages:
   /wide-align/1.1.5:
     resolution: {integrity: sha512-eDMORYaPNZ4sQIuuYPDHdQvf4gyCF9rEEV/yPxGfwPkRodwEgiMUUXTx/dex+Me0wxx53S+NgUHaP7y3MGlDmg==}
     dependencies:
-      string-width: 1.0.2
+      string-width: 4.2.3
 
   /widest-line/3.1.0:
     resolution: {integrity: sha512-NsmoXalsWVDMGupxZ5R08ka9flZjjiLvHVAWYOKtiKM8ujtZWr9cRffak+uSE48+Ob8ObalXpwyeUiyDD6QFgg==}
