@@ -10,6 +10,7 @@
   "repository": "git@github.com:winter-love/web.git",
   "license": "MIT",
   "author": "bichi@live.co.kr",
+  "sideEffects": false,
   "exports": {
     ".": {
       "import": "./lib/index.mjs",
@@ -31,7 +32,6 @@
     "dev": "tsup-node --watch",
     "prepare": "tsup-node --dts"
   },
-  "sideEffects": false,
   "dependencies": {
     "fast-json-stable-stringify": "^2.1.0",
     "js-cookie": "^3.0.1",

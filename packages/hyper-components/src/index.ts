@@ -11,7 +11,7 @@ export * from './h-glow'
 export * from './h-box'
 export * from './quasar-components'
 
-export const SYSTEM_KEY: InjectionKey<CssComponent> = '__system_key__' as any
+export const SYSTEM_KEY: InjectionKey<CssComponent> = '__hyper_component_system_key__' as any
 
 export const useSystem = (): CssComponent => {
   return inject(SYSTEM_KEY, (() => ({})) as any)
