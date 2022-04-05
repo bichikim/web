@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/quasar-svg-syntax",
-  "version": "1.0.25-alpha.4",
+  "version": "1.0.25-alpha.6",
   "description": "Useful javascript utils",
   "keywords": [
     "typescript",
@@ -36,7 +36,7 @@
     "prepare": "tsup-node --dts"
   },
   "dependencies": {
-    "@winter-love/utils": "^1.0.25-alpha.4",
+    "@winter-love/utils": "^1.0.25-alpha.6",
     "fast-glob": "^3.2.7",
     "globby": "^13.1.1",
     "lodash": "^4.17.21",

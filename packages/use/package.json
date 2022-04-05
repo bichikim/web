@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/use",
-  "version": "1.0.25-alpha.4",
+  "version": "1.0.25-alpha.6",
   "description": "Vue utils",
   "keywords": [
     "typescript",
@@ -38,7 +38,7 @@
     "prepare": "tsup-node --dts"
   },
   "dependencies": {
-    "@winter-love/utils": "^1.0.25-alpha.4",
+    "@winter-love/utils": "^1.0.25-alpha.6",
     "debounce": "^1.2.1",
     "fast-json-stable-stringify": "^2.1.0",
     "lodash": "^4.17.21",
