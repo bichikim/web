@@ -1,4 +1,4 @@
-import {STORE_LOCAL_CONTEXT} from 'src/store/symbols'
+import {STORE_LOCAL_CONTEXT} from './symbols'
 import {StoreManager, StoreManagerItem, useStoreManager} from './manager'
 import {
   ComponentPropsOptions,

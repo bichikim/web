@@ -1,6 +1,6 @@
 import {flushPromises} from '@vue/test-utils'
 import {watch} from 'vue-demi'
-import {createManager} from '../manager'
+import {createManager} from 'src/store/manager'
 
 describe('manager', () => {
   it('should update stateTree', async () => {
@@ -21,7 +21,6 @@ describe('manager', () => {
     expect(manager.storeTree.bar).toEqual({name: 'bar1'})
   })
   it('should return a raw object', async () => {
-    const watchFunction = jest.fn()
     const manager = createManager()
     manager.set('foo', {props: {}, store: {name: 'foo'}})
     manager.set('bar', {props: {}, store: {name: 'bar'}})

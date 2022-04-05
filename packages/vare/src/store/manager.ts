@@ -1,4 +1,4 @@
-import {inject, reactive, UnwrapNestedRefs, toRaw} from 'vue-demi'
+import {inject, reactive, toRaw, UnwrapNestedRefs} from 'vue-demi'
 import {oneDepthUpdate} from './shallow-update'
 import {STORE_CONTEXT, STORE_TREE_KEY} from './symbols'
 

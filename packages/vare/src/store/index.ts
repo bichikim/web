@@ -1,4 +1,4 @@
-import {App, ComponentPropsOptions, Plugin, Ref, UnwrapNestedRefs, provide} from 'vue-demi'
+import {App, Plugin, provide} from 'vue-demi'
 import {createManager, StoreManager} from './manager'
 import {STORE_CONTEXT, STORE_LOCAL_CONTEXT} from './symbols'
 
