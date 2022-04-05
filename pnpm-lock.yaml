@@ -52,7 +52,7 @@ importers:
       '@vue/babel-plugin-transform-vue-jsx': 1.2.1
       '@vue/compiler-sfc': 3.2.31
       '@vue/eslint-config-typescript': 10.0.0
-      '@vue/test-utils': 2.0.0-rc.17
+      '@vue/test-utils': 2.0.0-rc.19
       '@vue/vue3-jest': 27.0.0-alpha.4
       '@winter-love/hyper-components': ^1.0.25-alpha.4
       '@winter-love/test-use': ^1.0.25-alpha.4
@@ -131,7 +131,7 @@ importers:
       '@vue/babel-plugin-transform-vue-jsx': 1.2.1_@babel+core@7.17.8
       '@vue/compiler-sfc': 3.2.31
       '@vue/eslint-config-typescript': 10.0.0_67e26bb50fed2173443e3fe1262a69b2
-      '@vue/test-utils': 2.0.0-rc.17_vue@3.2.31
+      '@vue/test-utils': 2.0.0-rc.19_vue@3.2.31
       '@vue/vue3-jest': 27.0.0-alpha.4_f7dfdb6bb1ead89e579ee09d5f366832
       '@winter-love/hyper-components': link:packages/hyper-components
       '@winter-love/test-use': link:packages/test-use
@@ -757,7 +757,7 @@ importers:
       '@types/debounce': 1.2.1
       '@types/sinon': 10.0.11
       '@vue/server-renderer': ^3.2.31
-      '@vue/test-utils': 2.0.0-rc.17
+      '@vue/test-utils': 2.0.0-rc.19
       '@winter-love/utils': ^1.0.25-alpha.6
       debounce: ^1.2.1
       fast-json-stable-stringify: ^2.1.0
@@ -774,7 +774,7 @@ importers:
       '@types/debounce': 1.2.1
       '@types/sinon': 10.0.11
       '@vue/server-renderer': 3.2.31_vue@3.2.31
-      '@vue/test-utils': 2.0.0-rc.17_vue@3.2.31
+      '@vue/test-utils': 2.0.0-rc.19_vue@3.2.31
       vue: 3.2.31
 
   packages/utils:
@@ -9903,7 +9903,7 @@ packages:
       '@babel/runtime': 7.17.8
       '@testing-library/dom': 8.13.0
       '@vue/compiler-sfc': 3.2.31
-      '@vue/test-utils': 2.0.0-rc.18_vue@3.2.31
+      '@vue/test-utils': 2.0.0-rc.19_vue@3.2.31
       vue: 3.2.31
     dev: true
 
@@ -11183,9 +11183,10 @@ packages:
       vue: ^3.0.1
     dependencies:
       vue: 3.2.31
+    dev: false
 
-  /@vue/test-utils/2.0.0-rc.18_vue@3.2.31:
-    resolution: {integrity: sha512-aifolXjVdsogjaLmDoZ0FU8vN+R67aWmg9OuVeED4w5Ij5GFQLrlhM19uhWe/r5xXUL4fXMk3pX5wW6FJP1NcQ==}
+  /@vue/test-utils/2.0.0-rc.19_vue@3.2.31:
+    resolution: {integrity: sha512-vQ/34z9NH/pqJzl9YTWtTq/vrx5JzLbMojcBB0qydeb7FtGqxp11nLYCgVso+pa8ZOSn2j+OQfjc5aBnb32uzw==}
     peerDependencies:
       vue: ^3.0.1
     dependencies:
