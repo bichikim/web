@@ -29,7 +29,7 @@
     "@apollo/client": "3.5.10",
     "@project-serum/sol-wallet-adapter": "0.2.6",
     "@quasar/extras": "1.13.5",
-    "@solana/web3.js": "1.37.0",
+    "@solana/web3.js": "1.37.1",
     "@urql/vue": "0.6.1",
     "@winter-love/hyper-components": "^1.0.25-alpha.6",
     "@winter-love/use": "^1.0.25-alpha.6",
