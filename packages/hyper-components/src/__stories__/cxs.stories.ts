@@ -1,8 +1,8 @@
-import {useClassName} from '../'
+import {useCsx} from '../'
 import {computed, h, ref} from 'vue'
 
 export default {
-  title: 'HyperComponents/className(csx)',
+  title: 'HyperComponents/useCsx',
 }
 
 export const Default = () => ({
@@ -12,18 +12,14 @@ export const Default = () => ({
       onNextColor,
       variantColor,
       onToggleVariant,
+      // eslint-disable-next-line functional/no-this-expression
     } = this
-    const csx = useClassName()
-    const exampleStyle = (color: string, variantColor) => csx({
-      color,
-    }, {
-      linearGradient: variantColor,
-    })
+    const csx = useCsx()
     return (
       h('div', [
         h('button', {onClick: onNextColor}, 'next color'),
         h('button', {onClick: onToggleVariant}, 'toggle variant color'),
-        h('span', {class: exampleStyle(color, variantColor)}, 'colored text'),
+        h('span', csx({css: {color}, linearGradient: variantColor}), 'colored text'),
       ])
     )
   },

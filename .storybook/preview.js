@@ -2,11 +2,14 @@ import {app} from '@storybook/vue3'
 import {createHyperComponents} from '@winter-love/hyper-components'
 import {Quasar} from 'quasar'
 import 'quasar/dist/quasar.prod.css'
+import {createVare} from 'vare'
 
 const hyperComponents = createHyperComponents({
   variants: {},
 })
 
+const vare = createVare()
+app.use(vare)
 app.use(hyperComponents.plugin)
 app.use(Quasar, {
   config: {
