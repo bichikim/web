@@ -211,7 +211,7 @@ importers:
       serialize-javascript: 6.0.0
       typescript: 4.6.3
       validator: 13.7.0
-      vare: ^1.0.25-alpha.6
+      vare: ^1.0.25-alpha.7
       vue: 3.2.31
       vue-router: 4.0.14
     dependencies:
@@ -311,7 +311,7 @@ importers:
       unplugin-icons: 0.14.1
       unplugin-vue-components: 0.18.3
       validator: 13.7.0
-      vare: ^1.0.25-alpha.6
+      vare: ^1.0.25-alpha.7
       vite: 2.9.1
       vite-plugin-imp: 2.1.7
       vite-plugin-md: 0.12.4
@@ -388,6 +388,52 @@ importers:
       vite-plugin-imp: 2.1.7_vite@2.9.1
       vite-plugin-md: 0.12.4_vite@2.9.1
       vite-plugin-pwa: 0.11.13_vite@2.9.1
+
+  coong/client/dist/ssr:
+    specifiers:
+      '@apollo/client': 3.5.10
+      '@project-serum/sol-wallet-adapter': 0.2.6
+      '@quasar/extras': 1.13.4
+      '@solana/web3.js': 1.37.0
+      '@urql/vue': 0.6.1
+      '@winter-love/hyper-components': 1.0.25-alpha.0
+      '@winter-love/use': 1.0.25-alpha.0
+      '@winter-love/utils': 1.0.25-alpha.0
+      compression: ^1.7.4
+      core-js: 3.21.1
+      express: ^4.17.3
+      graphql: 16.3.0
+      graphql-tag: 2.12.6
+      lodash: 4.17.21
+      node-html-parser: 5.3.3
+      quasar: 2.6.2
+      serialize-javascript: ^6.0.0
+      validator: 13.7.0
+      vare: 1.0.25-alpha.2
+      vue: 3.2.31
+      vue-router: 4.0.14
+    dependencies:
+      '@apollo/client': 3.5.10_graphql@16.3.0
+      '@project-serum/sol-wallet-adapter': 0.2.6_@solana+web3.js@1.37.0
+      '@quasar/extras': 1.13.4
+      '@solana/web3.js': 1.37.0
+      '@urql/vue': 0.6.1_graphql@16.3.0+vue@3.2.31
+      '@winter-love/hyper-components': 1.0.25-alpha.0_vue@3.2.31
+      '@winter-love/use': 1.0.25-alpha.0_vue@3.2.31
+      '@winter-love/utils': 1.0.25-alpha.0
+      compression: 1.7.4
+      core-js: 3.21.1
+      express: 4.17.3
+      graphql: 16.3.0
+      graphql-tag: 2.12.6_graphql@16.3.0
+      lodash: 4.17.21
+      node-html-parser: 5.3.3
+      quasar: 2.6.2
+      serialize-javascript: 6.0.0
+      validator: 13.7.0
+      vare: 1.0.25-alpha.2_vue@3.2.31
+      vue: 3.2.31
+      vue-router: 4.0.14_vue@3.2.31
 
   coong/firebase:
     specifiers:
@@ -4595,8 +4641,8 @@ packages:
       - supports-color
     dev: true
 
-  /@intlify/bundle-utils/2.2.1_vue-i18n@9.1.9:
-    resolution: {integrity: sha512-8n8zhYEKypS+KP22KUAC6BnQifJDDWUGcn3OVPqsThqMMucU22MShGvOuiKqQ4AeT7XQ5O4pudlJmxv3L91JrQ==}
+  /@intlify/bundle-utils/3.0.0_vue-i18n@9.1.9:
+    resolution: {integrity: sha512-y43Z5Q3ZJvxqtD8xUH6U3yrlZeay7ZTqkzv1GQ4b0mGQtk5uptOT9Ra4qvGuUv8QyPQsortrA/OHWUD5ax5ZNQ==}
     engines: {node: '>= 12'}
     peerDependencies:
       petite-vue-i18n: '*'
@@ -4688,7 +4734,7 @@ packages:
       vue-i18n:
         optional: true
     dependencies:
-      '@intlify/bundle-utils': 2.2.1_vue-i18n@9.1.9
+      '@intlify/bundle-utils': 3.0.0_vue-i18n@9.1.9
       '@intlify/shared': 9.2.0-beta.34
       '@rollup/pluginutils': 4.2.0
       debug: 4.3.4
@@ -7054,6 +7100,17 @@ packages:
       - encoding
       - supports-color
 
+  /@project-serum/sol-wallet-adapter/0.2.6_@solana+web3.js@1.37.0:
+    resolution: {integrity: sha512-cpIb13aWPW8y4KzkZAPDgw+Kb+DXjCC6rZoH74MGm3I/6e/zKyGnfAuW5olb2zxonFqsYgnv7ev8MQnvSgJ3/g==}
+    engines: {node: '>=10'}
+    peerDependencies:
+      '@solana/web3.js': ^1.5.0
+    dependencies:
+      '@solana/web3.js': 1.37.0
+      bs58: 4.0.1
+      eventemitter3: 4.0.7
+    dev: false
+
   /@project-serum/sol-wallet-adapter/0.2.6_@solana+web3.js@1.37.1:
     resolution: {integrity: sha512-cpIb13aWPW8y4KzkZAPDgw+Kb+DXjCC6rZoH74MGm3I/6e/zKyGnfAuW5olb2zxonFqsYgnv7ev8MQnvSgJ3/g==}
     engines: {node: '>=10'}
@@ -7285,6 +7342,10 @@ packages:
       - webpack
     dev: false
 
+  /@quasar/extras/1.13.4:
+    resolution: {integrity: sha512-cM1Vc2ju5p9hShssyTgy0jWLvit0diUTvH1mTcuzEo6omDB/8GzIbt7N4aer8m4tSTyfjP6/ejyu4N17mVoeMQ==}
+    dev: false
+
   /@quasar/extras/1.13.5:
     resolution: {integrity: sha512-H4X3jwqOJpDrn1Pof1mJIpoHdBrZQSR9ZpnQ7RCkJsJccpTyQzs8Q6ehVXfIZrco2kd3UPitRQqEiW7k45ckLg==}
 
@@ -7482,6 +7543,30 @@ packages:
     engines: {node: '>=5.10'}
     dependencies:
       buffer: 6.0.3
+    dev: false
+
+  /@solana/web3.js/1.37.0:
+    resolution: {integrity: sha512-O2iCcgkGdi2FXwVLztPIZHcBuZXdhbVLavMsG+RdEyFGzFD0tQN1rOJ+Xb5eaexjqtgcqRN+Fyg3wAhLcHJbiA==}
+    engines: {node: '>=12.20.0'}
+    dependencies:
+      '@babel/runtime': 7.17.8
+      '@ethersproject/sha2': 5.5.0
+      '@solana/buffer-layout': 4.0.0
+      bn.js: 5.2.0
+      borsh: 0.7.0
+      bs58: 4.0.1
+      buffer: 6.0.1
+      cross-fetch: 3.1.5
+      jayson: 3.6.6
+      js-sha3: 0.8.0
+      rpc-websockets: 7.4.16
+      secp256k1: 4.0.2
+      superstruct: 0.14.2
+      tweetnacl: 1.0.3
+    transitivePeerDependencies:
+      - bufferutil
+      - encoding
+      - utf-8-validate
     dev: false
 
   /@solana/web3.js/1.37.1:
@@ -11374,6 +11459,63 @@ packages:
       eckles: 1.4.1
       is-url: 1.2.4
       rasha: 1.2.5
+    dev: false
+
+  /@winter-love/hyper-components/1.0.25-alpha.0_vue@3.2.31:
+    resolution: {integrity: sha512-pitC+qBmuMMtZQZfxAQZ1C5rKFc8eDj6AOILEDEVQoXVpphPm0VJtl/q7KlP6o53BQjzSsF7eDO6vQMkvKn+AQ==}
+    dependencies:
+      '@stitches/core': 1.2.7
+      '@winter-love/stitches': 1.0.25-alpha.6_vue@3.2.31
+      '@winter-love/utils': 1.0.25-alpha.0
+      clsx: 1.1.1
+      color: 4.2.1
+      quasar: 2.6.5
+      vue-demi: 0.12.5_vue@3.2.31
+    transitivePeerDependencies:
+      - '@vue/composition-api'
+      - vue
+    dev: false
+
+  /@winter-love/stitches/1.0.25-alpha.6_vue@3.2.31:
+    resolution: {integrity: sha512-SEC+Niv/lDIAyvaOtW3Qigd8nbqjI6hEKyAdEKHOJRhEvCNZFWiub8QmerjJaXv8XVWCl5wNeBw7bgpQPaG6Xg==}
+    dependencies:
+      '@stitches/core': 1.2.7
+      '@winter-love/utils': 1.0.25-alpha.6
+      vue-demi: 0.12.5_vue@3.2.31
+    transitivePeerDependencies:
+      - '@vue/composition-api'
+      - vue
+    dev: false
+
+  /@winter-love/use/1.0.25-alpha.0_vue@3.2.31:
+    resolution: {integrity: sha512-D/hcgnIq9VFqMKIayEumf44l47u4epsYTdsHkAWsmFLxopTcThYstaXATFzDL1XU6Mqp87d8Qz+yLF6+3RrCGQ==}
+    dependencies:
+      '@winter-love/utils': 1.0.25-alpha.0
+      debounce: 1.2.1
+      fast-json-stable-stringify: 2.1.0
+      lodash: 4.17.21
+      vue-demi: 0.12.5_vue@3.2.31
+    transitivePeerDependencies:
+      - '@vue/composition-api'
+      - vue
+    dev: false
+
+  /@winter-love/utils/1.0.25-alpha.0:
+    resolution: {integrity: sha512-jDTNPP1C5JXF/lKzf0LcUD0jZNa14bq+fclRa9tK0ft6cU5KKn0jm+leacE5kOWv97Zq1wx+PZHN/3idXOTgrQ==}
+    dependencies:
+      fast-json-stable-stringify: 2.1.0
+      js-cookie: 3.0.1
+      micro-memoize: 4.0.9
+      react-fast-compare: 3.2.0
+    dev: false
+
+  /@winter-love/utils/1.0.25-alpha.6:
+    resolution: {integrity: sha512-45qpS7MNH0+fU59UNzfuE3jXSd7E9afhSTn6IedegxrAYJMgVJv/zCmQP8cecD4OOEOmdolhx818WukAoQ7akA==}
+    dependencies:
+      fast-json-stable-stringify: 2.1.0
+      js-cookie: 3.0.1
+      micro-memoize: 4.0.9
+      react-fast-compare: 3.2.0
     dev: false
 
   /@wry/context/0.6.1:
@@ -22634,7 +22776,7 @@ packages:
   /node-html-parser/5.3.3:
     resolution: {integrity: sha512-ncg1033CaX9UexbyA7e1N0aAoAYRDiV8jkTvzEnfd1GDvzFdrsXLzR4p4ik8mwLgnaKP/jyUFWDy9q3jvRT2Jw==}
     dependencies:
-      css-select: 4.2.1
+      css-select: 4.3.0
       he: 1.2.0
     dev: false
 
@@ -24731,6 +24873,11 @@ packages:
 
   /quasar/2.6.0:
     resolution: {integrity: sha512-y1OfubP5Ch7F03/TaL2yvCN+qX3UOASmzRuUoc5x7wIPETX2q4XuT6YNTgQrtJXtMkiW2gDV4ycc98BOtP2kmA==}
+    engines: {node: '>= 10.18.1', npm: '>= 6.13.4', yarn: '>= 1.21.1'}
+    dev: false
+
+  /quasar/2.6.2:
+    resolution: {integrity: sha512-/MHiD4GwQ7g2yebAQhJo8JOu434tl0FB5+6QlCY8dua39ViGjJ6sNBLHMru+erWJWxGiRJuvr4VNlzh7Gs5qMQ==}
     engines: {node: '>= 10.18.1', npm: '>= 6.13.4', yarn: '>= 1.21.1'}
     dev: false
 
@@ -29194,6 +29341,17 @@ packages:
   /value-or-promise/1.0.11:
     resolution: {integrity: sha512-41BrgH+dIbCFXClcSapVs5M6GkENd3gQOJpEfPDNa71LsUGMXDL0jMWpI/Rh7WhX+Aalfz2TTS3Zt5pUsbnhLg==}
     engines: {node: '>=12'}
+
+  /vare/1.0.25-alpha.2_vue@3.2.31:
+    resolution: {integrity: sha512-k6ahZANktQDKBECj8rHAGgEtwqzaW9G963g1wF2jUxw7JlrfN/W6IXZ8tWUNN8AoC4yYhGuPsC9BspYJt0NE0g==}
+    dependencies:
+      '@vue/devtools-api': 6.1.3
+      '@winter-love/utils': 1.0.25-alpha.0
+      vue-demi: 0.12.5_vue@3.2.31
+    transitivePeerDependencies:
+      - '@vue/composition-api'
+      - vue
+    dev: false
 
   /varint/5.0.2:
     resolution: {integrity: sha512-lKxKYG6H03yCZUpAGOPOsMcGxd1RHCu1iKvEHYDPmTyq2HueGhD73ssNBqqQWfvYs04G9iUFRvmAVLW20Jw6ow==}

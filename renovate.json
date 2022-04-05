@@ -8,7 +8,7 @@
       "enabled": false
     },
     {
-      "matchPackageNames": ["graphql"],
+      "matchPackageNames": ["graphql", "apollo-server"],
       "enabled": false
     }
   ]
