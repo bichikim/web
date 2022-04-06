@@ -255,7 +255,7 @@ importers:
   coong/client-old:
     specifiers:
       '@babylonjs/core': 4.2.2
-      '@babylonjs/loaders': 4.2.2
+      '@babylonjs/loaders': 5.0.3
       '@capacitor/android': 3.4.3
       '@capacitor/cli': 3.4.3
       '@capacitor/core': 3.4.3
@@ -322,7 +322,7 @@ importers:
       vue-router: 4.0.14
     dependencies:
       '@babylonjs/core': 4.2.2
-      '@babylonjs/loaders': 4.2.2
+      '@babylonjs/loaders': 5.0.3
       '@capacitor/android': 3.4.3_@capacitor+core@3.4.3
       '@capacitor/core': 3.4.3
       '@capacitor/ios': 3.4.3_@capacitor+core@3.4.3
@@ -2752,11 +2752,17 @@ packages:
       tslib: 2.3.1
     dev: false
 
-  /@babylonjs/loaders/4.2.2:
-    resolution: {integrity: sha512-Qk8r4xp4eOznbX3AsNYv8HgwS+tzGu6TwSpDX4il3g0B+k1N5k6KE5ghrnwDytoxUDVjGZ/VKk2cQqiHsg/NLg==}
+  /@babylonjs/core/5.0.3:
+    resolution: {integrity: sha512-8ZZHOAWqm2WGPUWw94qDmXHfwsAImeVD+xJvo0bnBtoXTjeVhfarq/tA5mw9ONhPPaiHwv/V9QIOt4+njKEQ2A==}
     dependencies:
-      '@babylonjs/core': 4.2.2
-      babylonjs-gltf2interface: 4.2.2
+      tslib: 2.3.1
+    dev: false
+
+  /@babylonjs/loaders/5.0.3:
+    resolution: {integrity: sha512-o6hT9zNYcs/Zh1M+Qs3146ydCEiDQNnvy9Xlga9D7CYacb+Y3ucAqKT5qmsiYxdCUx4X8YWqRUFdlkmb8K9UIg==}
+    dependencies:
+      '@babylonjs/core': 5.0.3
+      babylonjs-gltf2interface: 5.0.3
       tslib: 2.3.1
     dev: false
 
@@ -12607,8 +12613,8 @@ packages:
       '@babel/types': 7.17.0
     dev: true
 
-  /babylonjs-gltf2interface/4.2.2:
-    resolution: {integrity: sha512-LCQgW1lM+EpKK4yWMiPEgi6ONwJ7W4JrSu3t9JixNRgvnic72OnN2f0bt91rE30EJr1ZaokvkXD/aEiBp/Juyg==}
+  /babylonjs-gltf2interface/5.0.3:
+    resolution: {integrity: sha512-O/hBz8bgCgJx0eFiPusXLEjzgTB1REQN8Rc+x9zR3HYuXGxqR4Psek0qY0rKPXAY+AFllxa58TfxyT69nHnsyg==}
     dev: false
 
   /backo2/1.0.2:
