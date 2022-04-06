@@ -1,7 +1,6 @@
-import {computed, ComputedRef, inject, reactive, UnwrapNestedRefs} from 'vue-demi'
-import {oneDepthUpdate} from './shallow-update'
-import {STORE_CONTEXT} from './symbols'
 import {freeze} from '@winter-love/utils'
+import {computed, ComputedRef, inject, reactive, UnwrapNestedRefs} from 'vue-demi'
+import {STORE_CONTEXT} from './symbols'
 
 export interface StoreManagerItem<T extends Record<string, any> = Record<string, any>> {
   props: UnwrapNestedRefs<Record<string, any>>
@@ -64,10 +63,14 @@ export const createManager = (info?: StoreTreeInfo): StoreManager => {
     storeTree[name] = undefined
     storePropsMap.delete(name)
   }
-  const get = (name: string): StoreManagerItem => {
+  const get = (name: string): StoreManagerItem | undefined => {
+    const store = storeTree[name]
+    if (!store) {
+      return
+    }
     return {
       props: storePropsMap.get(name) ?? {},
-      store: storeTree[name],
+      store,
     }
   }
   const setInitState = (state: Record<string, any> = {}) => {

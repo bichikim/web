@@ -166,6 +166,49 @@ describe('store', () => {
     await wrapper.get('#button').trigger('click')
     expect(wrapper.get('#foo').text()).toBe('foo1')
   })
+  it('should return state with initState', async () => {
+    const storeManager = createManager()
+    storeManager.setInitState({
+      foo: {
+        foo: 'foo1',
+      },
+    })
+    const Component = defineComponent({
+      setup() {
+        const state = useStore('foo', () => {
+          const foo = ref('foo')
+          const increase = () => {
+            foo.value += 1
+          }
+          return {
+            foo,
+            increase,
+          }
+        })
+        return () => (
+          h('div', [
+            h('div', {id: 'foo'}, state.foo),
+            h('button', {id: 'button', onClick: state.increase}, 'increase'),
+          ])
+        )
+      },
+    })
+
+    const Root = defineComponent({
+      setup() {
+        provideStoreManager(storeManager)
+        return () => (
+          h(Component)
+        )
+      },
+    })
+
+    const wrapper = mount(Root)
+    expect(storeManager.state.value.foo.foo).toBe('foo1')
+    expect(wrapper.get('#foo').text()).toBe('foo1')
+    await wrapper.get('#button').trigger('click')
+    expect(wrapper.get('#foo').text()).toBe('foo11')
+  })
   it('should create store that has props', async () => {
     const storeManager = createManager()
     const useMyStore = createStore({

@@ -11,6 +11,7 @@ import {
 import {freeze} from '@winter-love/utils'
 import {propsValidator} from './props-validator'
 import {createUuid} from './create-uuid'
+import {shallowUpdate} from './shallow-update'
 const getUuid = createUuid()
 // eslint-disable-next-line @typescript-eslint/ban-types
 export type EmptyObject = {}
@@ -40,7 +41,6 @@ export interface UseStoreOptions {
 }
 
 export interface SetupContext<Root> {
-  readonly initState: Record<string, any>
   readonly root: UnwrapNestedRefs<Root>
 }
 
@@ -66,7 +66,6 @@ export interface CreateSetupArgs<
   T extends Record<string, any>,
   P extends Record<string, any> = EmptyObject,
   > {
-  name: string
   props?: P
   setup: Setup<T, P>
   storeManager: StoreManager
@@ -76,10 +75,8 @@ const createSetup = <
   T extends Record<string, any>,
   P extends Record<string, any> = EmptyObject,
   >(args: CreateSetupArgs<T, P>): StoreManagerItem<T> => {
-  const {setup, props, storeManager, name} = args
+  const {setup, props, storeManager} = args
   const _props = reactive(props ?? {} as P)
-  const _initState = storeManager.initState
-  const initState = typeof _initState[name] === 'object' ? _initState[name] : {}
   return {
     props: _props,
     store: reactive(setup(
@@ -87,7 +84,6 @@ const createSetup = <
       _props,
       // setup context
       {
-        initState: freeze({...initState}),
         root: storeManager.state.value,
       },
     )),
@@ -107,7 +103,6 @@ const createLocalStore = <
   >(args: CreateLocalStoreArgs<T, P>): UnwrapNestedRefs<T> => {
   const {name, storeManager, setup, props} = args
   const item: StoreManagerItem<T> = createSetup<T, P>({
-    name,
     props,
     setup,
     storeManager,
@@ -160,16 +155,17 @@ const createGlobalStore = <
       })
     })
   }
-  const state = (!reset && savedState?.store)
-    ? savedState
-    : createSetup({
-      name,
-      props,
-      setup,
-      storeManager,
-    })
-  storeManager.set(name, state)
-  return state.store
+
+  if (savedState && !reset) {
+    return savedState.store
+  }
+  const initState = storeManager.initState[name] ?? {}
+  const newState = createSetup({
+    props, setup, storeManager,
+  })
+  shallowUpdate(newState.store, initState)
+  storeManager.set(name, newState)
+  return newState.store
 }
 
 export const useLocalManager = (): StoreManager | undefined => {
