@@ -196,7 +196,7 @@ importers:
       '@urql/vue': 0.6.1
       '@vitejs/plugin-vue-jsx': 1.3.9
       '@winter-love/hyper-components': ^1.0.25-alpha.6
-      '@winter-love/use': ^1.0.25-alpha.6
+      '@winter-love/use': ^1.0.25-alpha.8
       '@winter-love/utils': ^1.0.25-alpha.6
       autoprefixer: 10.4.2
       compression: 1.7.4
@@ -211,7 +211,7 @@ importers:
       serialize-javascript: 6.0.0
       typescript: 4.6.3
       validator: 13.7.0
-      vare: ^1.0.25-alpha.7
+      vare: ^1.0.25-alpha.9
       vue: 3.2.31
       vue-router: 4.0.14
     dependencies:
@@ -284,7 +284,7 @@ importers:
       '@vueuse/head': 0.7.5
       '@winter-love/hyper-components': ^1.0.25-alpha.6
       '@winter-love/stitches': ^1.0.25-alpha.6
-      '@winter-love/use': ^1.0.25-alpha.6
+      '@winter-love/use': ^1.0.25-alpha.8
       '@winter-love/utils': ^1.0.25-alpha.6
       '@zerollup/ts-transform-paths': 1.7.18
       compression: 1.7.4
@@ -311,7 +311,7 @@ importers:
       unplugin-icons: 0.14.1
       unplugin-vue-components: 0.18.3
       validator: 13.7.0
-      vare: ^1.0.25-alpha.7
+      vare: ^1.0.25-alpha.9
       vite: 2.9.1
       vite-plugin-imp: 2.1.7
       vite-plugin-md: 0.12.4
@@ -556,20 +556,20 @@ importers:
     specifiers:
       '@babel/core': 7.17.8
       '@babel/node': 7.16.8
-      ganache: 7.0.3
+      ganache: 7.0.4
       solc: 0.8.13
       web3: 1.7.1
     devDependencies:
       '@babel/core': 7.17.8
       '@babel/node': 7.16.8_@babel+core@7.17.8
-      ganache: 7.0.3
+      ganache: 7.0.4
       solc: 0.8.13
       web3: 1.7.1
 
   docs/winter-love:
     specifiers:
       '@winter-love/test-use': ^1.0.25-alpha.6
-      '@winter-love/use': ^1.0.25-alpha.6
+      '@winter-love/use': ^1.0.25-alpha.8
       '@winter-love/utils': ^1.0.25-alpha.6
       autoprefixer: ^10.4.4
       daisyui: ^2.11.0
@@ -594,7 +594,7 @@ importers:
       '@emotion/server': 11.4.0
       '@emotion/utils': ^1.1.0
       '@vue/server-renderer': latest
-      '@winter-love/use': ^1.0.25-alpha.6
+      '@winter-love/use': ^1.0.25-alpha.8
       '@winter-love/utils': ^1.0.25-alpha.6
       clsx: ^1.1.1
       vue: 3.2.31
@@ -17678,8 +17678,9 @@ packages:
     engines: {node: '>=6'}
     dev: true
 
-  /ganache/7.0.3:
-    resolution: {integrity: sha512-1O4V38YkAFd2B1YfBevauEepxEtoN0iTTK02SUJPUIcLOnxwrR49lSDq7liKpUWLkoZCOC2Bkrz/+XJAmEoNAQ==}
+  /ganache/7.0.4:
+    resolution: {integrity: sha512-/ur2WNQoCwmobZb/TcpMgJlJy4TLtCUMtnCIldChAn5LleeAETaHB80knGqOgGc3ZS+ksokSqmQHuHqMAmlRkg==}
+    hasBin: true
     dependencies:
       '@trufflesuite/bigint-buffer': 1.1.9
       emittery: 0.10.0
