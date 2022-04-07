@@ -24,7 +24,7 @@
   },
   "dependencies": {
     "@babylonjs/core": "4.2.2",
-    "@babylonjs/loaders": "5.0.3",
+    "@babylonjs/loaders": "5.1.0",
     "@capacitor/android": "3.4.3",
     "@capacitor/core": "3.4.3",
     "@capacitor/ios": "3.4.3",
