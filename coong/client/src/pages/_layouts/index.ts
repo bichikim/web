@@ -6,6 +6,7 @@ import {RouterView} from 'vue-router'
 import {provideLayout} from './use-layout'
 import {ionCloseOutline} from '@quasar/extras/ionicons-v5'
 import {debug} from 'hooks/debug'
+import {SignInMethod} from 'src/graphql'
 
 const PagesLayout = defineComponent({
   name: 'PagesLayout',
@@ -14,19 +15,41 @@ const PagesLayout = defineComponent({
     const user = useUser()
     const isSignIn = computed<boolean>(() => user.isSignIn)
     const isOpenAuth = ref(!isSignIn.value)
-    const email = computed(() => user.email)
+    const email = computed({
+      get(): string {
+        return user.email
+      },
+      set(value: string) {
+        user.email = value
+      },
+    })
+    const method = computed({
+      get() {
+        return user.method
+      },
+      set(value: SignInMethod) {
+        user.method = value
+      },
+    })
 
     const onCloseAuth = () => {
       isOpenAuth.value = false
     }
-
-    const onUpdateEmail = (email: string) => {
-      user.email = email
+    const onSignIn = () => {
+      user.singIn()
+    }
+    const onUpdateEmail = (value: string) => {
+      email.value = value
+    }
+    const onUpdateMethod = (value: SignInMethod) => {
+      method.value = value
     }
 
     debug({
       email,
       isOpenAuth,
+      method,
+      user,
     })
 
     return () => (
@@ -48,7 +71,10 @@ const PagesLayout = defineComponent({
           h(SignInPage, {
             email: email.value,
             inProgress: isMagicAuthLink.value,
+            method: method.value,
+            'onSign-in': onSignIn,
             'onUpdate:email': onUpdateEmail,
+            'onUpdate:method': onUpdateMethod,
           }, () => [
             h(HBox, {
               css: {

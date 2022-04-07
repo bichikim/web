@@ -288,7 +288,6 @@ jobs:
     env:
       GCP_SERVICE_NAME: coong
       GCP_IAMGE_NAME: gcr.io/${{ secrets.GCP_PROJECT_ID }}/coong
-      BACK_END_URL: https://back.coong.io
       PROJECT_ROOT_PATH: coong/client
     steps:
       - name: Checkout Repo
@@ -313,7 +312,6 @@ jobs:
       - name: Create Env File
         run: |
           touch ${{ env.PROJECT_ROOT_PATH }}/.env
-          echo VITE_API_URL=$BACK_END_URL >> ${{ env.PROJECT_ROOT_PATH }}/.env
 
       # \ 하고 띄어 쓰기 있는지 확인 있다면 오류남
       - name: Build
@@ -347,10 +345,11 @@ jobs:
     needs: build-client
     runs-on: ubuntu-latest
     # only dev
-#    if: ${{ github.ref == 'refs/heads/dev' && needs.build-client.outputs.run_job == 'true' }}
+    if: ${{ github.ref == 'refs/heads/dev' && needs.build-client.outputs.run_job == 'true' }}
     env:
       GCP_SERVICE_NAME: coong-dev
       GCP_IAMGE_NAME: gcr.io/${{ secrets.GCP_PROJECT_ID }}/coong-dev
+      BACK_END_URL: https://back.coong.io
       PROJECT_ROOT_PATH: coong/client
     steps:
       - name: Checkout Repo

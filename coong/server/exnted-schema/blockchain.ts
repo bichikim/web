@@ -6,7 +6,7 @@ export interface Blockchain {
 export const createBlockchain = (signMessage: string): Blockchain => {
   const splitKey = '>>>'
   const generateMessage = (nonce: string) => {
-    return `${signMessage} ${splitKey}${nonce}`
+    return `${signMessage} \n\n${splitKey}${nonce}`
   }
 
   const pickNonce = (massage: string) => {

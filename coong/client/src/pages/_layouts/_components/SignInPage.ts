@@ -1,29 +1,39 @@
 /* eslint-disable max-nested-callbacks */
 import {HBox} from '@winter-love/hyper-components'
 import {csx} from 'boot/hyper-components'
-import {defineComponent, h, ref, toRefs} from 'vue'
+import {defineComponent, h, PropType, ref, toRefs} from 'vue'
 import {AudioButton} from './AudioButton'
 import {BackdropFilterText} from './BackdropFilterText'
 import {SignInButton} from './SignInButton'
 import {SignInProgress} from './SignInProgress'
 import {VideoBackground} from './VideoBackground'
+import {SignInMethod} from 'src/graphql'
 
 export const SignInPage = defineComponent({
-  emits: ['sign-in', 'update:email'],
+  emits: ['sign-in', 'update:email', 'update:method'],
   name: 'SignInPage',
   props: {
     email: {type: String},
     inProgress: {default: false, type: Boolean},
     isWaiting: {type: Boolean},
+    method: {type: String as PropType<SignInMethod>},
   },
   setup(props, {slots, emit}) {
-    const {inProgress, email, isWaiting} = toRefs(props)
+    const {
+      inProgress,
+      email,
+      isWaiting,
+      method,
+    } = toRefs(props)
     const inProgressRef = ref(inProgress.value)
-    const onSignIn = (email: string) => {
-      emit('sign-in', email)
+    const onSignIn = () => {
+      emit('sign-in')
     }
     const onUpdateEmail = (email: string) => {
       emit('update:email', email)
+    }
+    const onUpdateMethod = (kind: SignInMethod) => {
+      emit('update:method', kind)
     }
 
     return () => ((
@@ -99,8 +109,10 @@ export const SignInPage = defineComponent({
                 h(SignInButton, {
                   email: email.value,
                   isWaiting: isWaiting.value,
+                  method: method.value,
                   onSignIn,
                   'onUpdate:email': onUpdateEmail,
+                  'onUpdate:method': onUpdateMethod,
                 }),
             ]),
           ]),

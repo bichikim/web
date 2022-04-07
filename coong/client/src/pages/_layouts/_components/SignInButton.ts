@@ -6,8 +6,9 @@ import {debug} from 'hooks/debug'
 import {debounce} from 'lodash'
 import {QInnerLoading, QTooltip} from 'quasar'
 import isEmail from 'validator/lib/isEmail'
-import {computed, defineComponent, h, readonly, ref, toRefs, Transition, unref, watch} from 'vue'
-import {SignInInput, SignInKind} from './SignInInput'
+import {computed, defineComponent, h, PropType, readonly, ref, toRefs, Transition, unref, watch} from 'vue'
+import {SignInInput} from './SignInInput'
+import {SignInMethod} from 'src/graphql'
 import {MayRef} from '@winter-love/use'
 
 const validateEmail = (value?: string) => {
@@ -30,17 +31,18 @@ const debounceRef = <T>(value: MayRef<T>, wait: number = DEFAULT_WAIT) => {
 }
 
 export const SignInButton = defineComponent({
-  emits: ['sign-in', 'update:email'],
+  emits: ['sign-in', 'update:email', 'update:method'],
   name: 'SignInButton',
   props: {
     email: {type: String},
     isWaiting: {default: false, type: Boolean},
+    method: {type: String as PropType<SignInMethod>},
     validatorWait: {default: 1000, type: Number},
   },
   setup(props, {emit}) {
-    const {email, validatorWait} = toRefs(props)
+    const {email, validatorWait, method} = toRefs(props)
     const showInput = ref(!email.value)
-    const activeMethod = ref<SignInKind>('email')
+    const activeMethod = ref<SignInMethod>('email')
     const debounceEmail = debounceRef(email, validatorWait.value)
     const isEmailRef = computed(() => {
       return validateEmail(debounceEmail.value)
@@ -65,8 +67,8 @@ export const SignInButton = defineComponent({
       showInput.value = !showInput.value
     }
 
-    const onChangeActiveMethod = (kind: SignInKind) => {
-      activeMethod.value = kind
+    const onUpdateMethod = (kind: SignInMethod) => {
+      emit('update:method', kind)
     }
 
     const onUpdateEmail = (email: string) => {
@@ -102,10 +104,10 @@ export const SignInButton = defineComponent({
           }, () => [
             h(Transition, {name: 'input'}, () => [
               showInput.value && h(SignInInput, {
-                active: activeMethod.value,
                 email: email.value,
-                'onUpdate:active': onChangeActiveMethod,
+                method: method.value,
                 'onUpdate:email': onUpdateEmail,
+                'onUpdate:method': onUpdateMethod,
               }),
             ]),
             h(HBtn, {

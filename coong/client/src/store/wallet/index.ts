@@ -7,6 +7,7 @@ export const useWallet = defineStore({
   name: 'wallet',
   props: {
     email: {type: String},
+    kind: {type: String},
   },
   setup(props) {
     const {email: emailRef} = toRefs(props)
@@ -43,7 +44,7 @@ export const useWallet = defineStore({
           signature,
         },
       })
-      console.log(data)
+      return data.authenticateUserWithCryptoSignature
     }
 
     return {

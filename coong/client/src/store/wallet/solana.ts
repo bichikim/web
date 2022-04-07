@@ -1,8 +1,8 @@
 import type Wallet from '@project-serum/sol-wallet-adapter'
 import {getWindow} from '@winter-love/utils'
-import {template} from 'lodash'
 import WalletModule from 'src/browser-modules/sol-wallet-adapter'
 import {computed, reactive, ref, toRefs, UnwrapNestedRefs, watch} from 'vue'
+import bs58 from 'bs58'
 
 const MAIN_NET = 'mainnet'
 const DEFAULT_PROVIDER_URL = 'https://solflare.com/provider'
@@ -18,7 +18,10 @@ export interface ExtraWallet extends Wallet {
 export const useSolana = (props: UnwrapNestedRefs<UseSolanaProps> = {}) => {
   const {providerUrl} = toRefs(props)
   const providerRef = computed(() => {
-    return providerUrl?.value ?? getSolflare() ?? getSolana() ?? DEFAULT_PROVIDER_URL
+    return providerUrl?.value
+      ?? getSolana()
+      ?? getSolflare()
+      ?? DEFAULT_PROVIDER_URL
   })
   const connectedRef = ref(false)
   const walletRef = ref<undefined | ExtraWallet>()
@@ -85,7 +88,7 @@ export const useSolana = (props: UnwrapNestedRefs<UseSolanaProps> = {}) => {
     const data = new TextEncoder().encode(message)
     const signMessage = wallet.sign ?? (wallet as any).signMessage
     const {signature} = await signMessage(data, 'utf8')
-    return signature.toString('utf8')
+    return bs58.encode(signature)
   }
 
   return reactive({

@@ -1,6 +1,6 @@
-import {defineComponent, h, PropType} from 'vue'
-import {QCard, QCardSection, QImg} from 'quasar'
-import {Media, MediaType} from './Media'
+import {HBox, HCard} from '@winter-love/hyper-components'
+import {defineComponent, PropType} from 'vue'
+import {MediaType} from './Media'
 
 export interface MediaProps {
   format?: string
@@ -17,13 +17,9 @@ export const Post = defineComponent({
   },
   setup: (props) => {
     return () => (
-      h(QCard, () => [
-        props.titleMedia ? h(Media, {...props.titleMedia}) : null,
-        h(QImg, {}),
-        h(QCardSection, () => [
-
-        ]),
-      ])
+      <HCard>
+        <HBox>{props.title}</HBox>
+      </HCard>
     )
   },
 })

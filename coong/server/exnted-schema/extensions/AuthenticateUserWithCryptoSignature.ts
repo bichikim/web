@@ -1,22 +1,14 @@
 import {BaseSchemaMeta, Extension} from '@graphql-ts/extend'
 import {graphql} from '@keystone-6/core'
+import bs58 from 'bs58'
 import {ExtendContext} from 'exnted-schema/types'
 import {camelCase} from 'lodash'
-import {AUTH_LIST_KEY} from '../../auth'
-import bs58 from 'bs58'
 import {sign} from 'tweetnacl'
+import {AUTH_LIST_KEY} from '../../auth'
 
 interface SignInWithSolanaResultType {
   item: any
   sessionToken: string
-}
-
-const getMessage = (nonce: string) => {
-  return `Sign In the Coong Site via your solana wallet for ${nonce}`
-}
-
-const getPublicKey = (kind: string, publicKey: string) => {
-  return `${kind}:${publicKey}`
 }
 
 export const authenticateUserWithCryptoSignature = (base: BaseSchemaMeta, extendContext: ExtendContext): Extension => {
@@ -49,25 +41,27 @@ export const authenticateUserWithCryptoSignature = (base: BaseSchemaMeta, extend
           args,
           context,
         ) {
+          const {jwt, blockchain} = extendContext
           const {message, publicKey, signature} = args.input
           // todo nonceToken 을 JWT 검증하고 jwt 에 있는 nonce 와 input 에 있는 nonce 가 같은지 확인
-          const nonceToken = getMessage(message)
+          const nonceToken = blockchain.pickNonce(message)
           const messageBytes = new TextEncoder().encode(message)
           const publicKeyBytes = bs58.decode(publicKey)
           const signatureBytes = bs58.decode(signature)
-
-          const jwtValidated = await extendContext.jwt.verify(nonceToken)
-          console.log(jwtValidated)
+          const jwtValidated = await jwt.verify(nonceToken)
 
           const validated = sign.detached.verify(messageBytes, signatureBytes, publicKeyBytes)
 
-          if (!validated) {
+          if (!validated || typeof jwtValidated !== 'object') {
+            return null
+          }
+          const {email} = jwtValidated as any
+          if (!email) {
             return null
           }
 
-          // todo jwt 에 있는 email 로 찾는 것으로 변경 (없다면 bye bye)
           const result = await context.prisma[camelCase(AUTH_LIST_KEY)]?.findFirst({
-            where: {publicKey: getPublicKey('solana', publicKey)},
+            where: {email},
           })
 
           if (!result) {

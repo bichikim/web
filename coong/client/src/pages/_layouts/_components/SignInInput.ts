@@ -3,8 +3,7 @@ import {HBtn, HInput} from '@winter-love/hyper-components'
 import {className} from 'boot/hyper-components'
 import {QTooltip} from 'quasar'
 import {defineComponent, h, PropType, toRefs} from 'vue'
-
-export type SignInKind = 'email' | 'wallet'
+import {SignInMethod} from 'src/graphql'
 
 const container = () => [
   className({
@@ -29,16 +28,16 @@ const container = () => [
   }),
 ]
 export const SignInInput = defineComponent({
-  emits: ['update:active', 'update:email'],
+  emits: ['update:method', 'update:email'],
   name: 'SignInInput',
   props: {
-    active: {default: 'email', type: String as PropType<SignInKind>},
     email: {type: String},
+    method: {default: 'email', type: String as PropType<SignInMethod>},
   },
   setup(props, {emit}) {
-    const {email, active} = toRefs(props)
-    const onChangeActive = (kind: SignInKind) => {
-      emit('update:active', kind)
+    const {email, method} = toRefs(props)
+    const onUpdateMethod = (kind: SignInMethod) => {
+      emit('update:method', kind)
     }
 
     const onUpdateEmail = (email: string | number | null) => {
@@ -63,13 +62,13 @@ export const SignInInput = defineComponent({
             borderRadius: 0,
             color: 'black',
             flexShrink: 0,
-            opacity: active ? 1 : '0.5',
+            opacity: method.value === 'email' ? 1 : '0.5',
           },
           dense: true,
           flat: true,
           icon: ionMailSharp,
           noCaps: true,
-          onClick: () => onChangeActive('email'),
+          onClick: () => onUpdateMethod('email'),
           size: 'sm',
         }, () => [
           h(QTooltip, () => 'By email authentication'),
@@ -79,14 +78,13 @@ export const SignInInput = defineComponent({
             borderRadius: 0,
             color: 'black',
             flexShrink: 0,
-            opacity: active ? 1 : '0.5',
+            opacity: method.value === 'wallet' ? 1 : '0.5',
           },
           dense: true,
-          disable: true,
           flat: true,
           icon: ionWalletSharp,
           noCaps: true,
-          onClick: () => onChangeActive('wallet'),
+          onClick: () => onUpdateMethod('wallet'),
           size: 'sm',
         }, () => [
           h(QTooltip, () => 'By wallet authentication (WIP)'),

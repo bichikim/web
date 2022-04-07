@@ -1,4 +1,6 @@
 import {
+  QAvatar,
+  QAvatarProps,
   QBtn,
   QBtnProps,
   QCard,
@@ -11,6 +13,8 @@ import {
   QHeaderProps,
   QImg,
   QImgProps,
+  QInnerLoading,
+  QInnerLoadingProps,
   QInput,
   QInputProps,
   QLayout,
@@ -23,12 +27,17 @@ import {
   QSkeletonProps,
   QToolbar,
   QToolbarProps,
+  QTooltip,
+  QTooltipProps,
   QVideo,
   QVideoProps,
 } from 'quasar'
 import {withCsx} from '../with-csx'
 
 export const HPage = withCsx<QPageProps>(QPage, 'HPage', '.q-page')
+export const HAvatar = withCsx<QAvatarProps>(QAvatar, 'HAvatar', '.q-avatar')
+export const HInnerLoading = withCsx<QInnerLoadingProps>(QInnerLoading, 'HInnerLoading', '.q-inner-loading')
+export const HTooltip = withCsx<QTooltipProps>(QTooltip, 'HTooltip', '.q-tooltip')
 export const HLayout = withCsx<QLayoutProps>(QLayout, 'HLayout', '.q-layout')
 export const HImg = withCsx<QImgProps>(QImg, 'HImg', '.q-img')
 export const HPageContainer =

@@ -1,7 +1,7 @@
 import {boot} from 'quasar/wrappers'
-import {createVareStore} from 'vare'
+import {createVare} from 'vare'
 
 export default boot(({app}) => {
-  const vare = createVareStore()
+  const vare = createVare()
   app.use(vare)
 })

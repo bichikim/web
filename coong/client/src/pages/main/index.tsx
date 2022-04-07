@@ -2,8 +2,6 @@ import {defineComponent, ref} from 'vue'
 import {HBox, HBtn, HGlow, HPage} from '@winter-love/hyper-components'
 import {debug} from 'hooks/debug'
 
-// const foo = () => Promise.resolve('foo')
-
 const IndexPage = defineComponent({
   name: 'IndexPage',
   setup: () => {

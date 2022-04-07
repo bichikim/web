@@ -10,6 +10,7 @@
 
 const {configure} = require('quasar/wrappers')
 const path = require('path')
+const {viteCommonjs} = require('@originjs/vite-plugin-commonjs')
 
 module.exports = configure((ctx) => {
   return {
@@ -50,14 +51,15 @@ module.exports = configure((ctx) => {
           '/server': {
             changeOrigin: true,
             rewrite: (path) => path.replace(/^\/server/u, ''),
-            target: process.env.API_URL,
+            target: 'http://localhost:8080',
           },
           '/static': {
             changeOrigin: true,
             rewrite: (path) => path.replace(/^\/static/u, ''),
-            target: 'http://localhost:9100',
+            target: 'http://localhost:9000',
           },
         }
+        viteConf.plugins.push(viteCommonjs())
         if (isServer) {
           viteConf.ssr.noExternal.push(/^@quasar\/extras/u)
           if (!ctx.dev) {
