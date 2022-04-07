@@ -3,10 +3,11 @@ import {join, last, map, reverse} from '../functional'
 import {chunk} from '../chunk'
 import {compact} from '../compact'
 import {flow} from '../flow'
+import {freeze} from '../freeze'
 
-const _numberNames = Object.freeze(['0', '일', '이', '삼', '사', '오', '육', '칠', '팔', '구'])
-const _numberUnitNames = Object.freeze(['', '만', '억', '조', '경', '해', '자', '양', '구', '간', '정'])
-const _smallNumberUnitNames = Object.freeze(['', '십', '백', '천'])
+const _numberNames = freeze(['0', '일', '이', '삼', '사', '오', '육', '칠', '팔', '구'])
+const _numberUnitNames = freeze(['', '만', '억', '조', '경', '해', '자', '양', '구', '간', '정'])
+const _smallNumberUnitNames = freeze(['', '십', '백', '천'])
 
 export type NumberToKoreanMode = 'all' | 'unit-number' | 'number'
 
@@ -16,13 +17,18 @@ export interface NumberToKoreanOptions {
    */
   firstOne?: boolean
   /**
-   * @default all
+   * which char do you want to join each number group
+   * @default ''
    */
   joinGroup?: string
   /**
+   * which char do you want to join each number
    * @default ''
    */
   joinString?: string
+  /**
+   * @default all
+   */
   mode?: NumberToKoreanMode
 }
 

@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@graphql-ts/extend": "0.4.1",
-    "@keystone-6/auth": "1.0.2",
+    "@keystone-6/auth": "2.0.0",
     "@keystone-6/core": "1.1.0",
     "@keystone-6/fields-document": "1.0.1",
     "@prisma/client": "^3.10.0",
