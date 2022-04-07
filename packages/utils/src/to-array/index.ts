@@ -1,7 +1,7 @@
 import {MayArray} from 'src/types'
 
 /**
- * @useful ⭐⭐⭐⭐⭐
+ * return an array always
  * @param value
  */
 export const toArray = <T>(value?: MayArray<T> | null): T[] => {
