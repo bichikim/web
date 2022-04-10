@@ -8,7 +8,7 @@ import {h, withDirectives} from 'vue-demi'
 import {createDirective} from '../directive'
 
 describe('directive', () => {
-  it('should ', async () => {
+  it.skip('should ', async () => {
     const theme = {
       sizes: {
         md: '50px',
@@ -72,6 +72,5 @@ describe('directive', () => {
         width: '50px',
       })
     }
-
   })
 })

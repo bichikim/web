@@ -27,7 +27,7 @@ export const useDebounce = <Args extends any[], R>(
 
   const onCall = computed((): DebounceFunction<Args, R> => {
     const wait = waitRef.value
-    if (wait) {
+    if (wait > 0) {
       return debounce(onHandle, wait, immediateRef.value)
     }
     return onHandle

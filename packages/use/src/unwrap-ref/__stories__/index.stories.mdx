@@ -1,5 +1,5 @@
-import {Meta, Story} from '@storybook/addon-docs/blocks'
-import {Default} from './templates'
+import {Meta, Story, Canvas} from '@storybook/addon-docs/blocks'
+import {Default} from './index.stories'
 
 <Meta title="use/Unwrap Ref"/>
 
@@ -7,7 +7,8 @@ import {Default} from './templates'
 
 Ref 또는 Ref 가 아닌 값을 가져옵니다
 
-<Story name="Default">
-  {Default.bind({})}
-</Story>
+<Canvas>
+  <Story story={Default}>
+  </Story>
+</Canvas>
 

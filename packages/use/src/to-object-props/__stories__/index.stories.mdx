@@ -1,5 +1,5 @@
-import {Meta, Story} from '@storybook/addon-docs/blocks'
-import {Default} from './templates'
+import {Meta, Story, Canvas} from '@storybook/addon-docs/blocks'
+import {Default} from './index.stories'
 
 <Meta title="use/To Object Props"/>
 
@@ -7,7 +7,7 @@ import {Default} from './templates'
 
 배열 Props 옵션을 오브젝트로 오브젝트 옵션은 그대로 리턴 합니다.
 
-<Story name="Default">
-  {Default.bind({})}
-</Story>
-
+<Canvas>
+  <Story story={Default}>
+  </Story>
+</Canvas>

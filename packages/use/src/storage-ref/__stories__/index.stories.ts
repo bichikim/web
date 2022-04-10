@@ -18,7 +18,7 @@ export const Default = () => ({
       h('div', [
         h('div', `originalFoo ${originalFooRef.value}`),
         h('div', `storageFoo ${storageFooRef.value}`),
-        h('button', {onClick: addDot}, 'toggle value'),
+        h('button', {onClick: addDot}, 'change value'),
         h('button', {onclick: reset}, 'reset value'),
       ])
     )

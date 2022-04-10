@@ -1,5 +1,5 @@
-import {Meta, Story} from '@storybook/addon-docs/blocks'
-import {Default} from './templates'
+import {Meta, Story, Canvas} from '@storybook/addon-docs/blocks'
+import {Default} from './index.stories'
 
 <Meta title="use/To Mut Ref"/>
 
@@ -7,7 +7,7 @@ import {Default} from './templates'
 
 toRef 의 변경 가능한 버전 입니다
 
-<Story name="Default">
-  {Default.bind({})}
-</Story>
-
+<Canvas>
+  <Story story={Default}>
+  </Story>
+</Canvas>

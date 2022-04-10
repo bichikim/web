@@ -3,8 +3,7 @@ import {computed, ComputedRef, inject, reactive, UnwrapNestedRefs} from 'vue-dem
 import {STORE_CONTEXT} from './symbols'
 
 export interface StoreManagerItem<T extends Record<string, any> = Record<string, any>> {
-  props: UnwrapNestedRefs<Record<string, any>>
-  store: UnwrapNestedRefs<T>
+  state: UnwrapNestedRefs<T>
 }
 
 export interface StoreTreeInfo {
@@ -21,7 +20,7 @@ export const useStoreManager = () => {
 
 export type StoreManager = Readonly<{
   get(name: string): any
-  readonly initState: Record<string, any>
+  readonly initState: Readonly<Record<string, any>>
   remove(name: string): void
   set(
     name: string,
@@ -56,21 +55,19 @@ export const createManager = (info?: StoreTreeInfo): StoreManager => {
     name: string,
     item: StoreManagerItem,
   ) => {
-    storeTree[name] = item.store
-    storePropsMap.set(name, item.props)
+    storeTree[name] = item.state
   }
   const remove = (name: string) => {
     storeTree[name] = undefined
     storePropsMap.delete(name)
   }
   const get = (name: string): StoreManagerItem | undefined => {
-    const store = storeTree[name]
-    if (!store) {
+    const state = storeTree[name]
+    if (!state) {
       return
     }
     return {
-      props: storePropsMap.get(name) ?? {},
-      store,
+      state,
     }
   }
   const setInitState = (state: Record<string, any> = {}) => {

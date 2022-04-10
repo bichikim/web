@@ -1,4 +1,4 @@
-import {FunctionalComponent, h, ref} from 'vue-demi'
+import {computed, FunctionalComponent, h, ref, toRefs} from 'vue-demi'
 import {withState} from '../'
 import {mount} from '@vue/test-utils'
 
@@ -13,23 +13,42 @@ describe('with-state', () => {
       )
     }
 
-    const Component = withState(Foo, () => {
-      const name = ref('foo')
-      const onIncrease = () => {
-        name.value += '1'
-      }
-      return {
-        name,
-        onIncrease,
-      }
+    const Component = withState(Foo, {
+      emits: ['hello'],
+      props: {
+        age: {type: Number},
+      },
+      setup: (props, {emit}) => {
+        const {age: argRef} = toRefs(props)
+        const name = ref('foo')
+        const onIncrease = () => {
+          name.value += '1'
+          emit('hello', name.value)
+        }
+        const ageAndName = computed(() => {
+          const arg = argRef?.value
+          if (!arg) {
+            return name.value
+          }
+          return `${name.value}-${arg}`
+        })
+        return {
+          name: ageAndName,
+          onIncrease,
+        }
+      },
     })
 
-    const wrapper = mount(Component)
+    const wrapper = mount(Component, {
+      props: {
+        age: 5,
+      },
+    })
 
-    expect(wrapper.get('div').text()).toBe('foo')
+    expect(wrapper.get('div').text()).toBe('foo-5')
 
     await wrapper.get('div').trigger('click')
 
-    expect(wrapper.get('div').text()).toBe('foo1')
+    expect(wrapper.get('div').text()).toBe('foo1-5')
   })
 })

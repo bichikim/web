@@ -126,7 +126,6 @@
     "rollup-plugin-typescript2": "0.31.2",
     "sinon": "13.0.1",
     "sort-package-json": "1.55.0",
-    "storybook-builder-vite": "0.1.23",
     "ts-node": "10.7.0",
     "tsd": "0.19.1",
     "tslib": "^2.3.1",

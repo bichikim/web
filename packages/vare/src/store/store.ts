@@ -1,24 +1,17 @@
-import {STORE_LOCAL_CONTEXT} from './symbols'
-import {StoreManager, StoreManagerItem, useStoreManager} from './manager'
-import {
-  ComponentPropsOptions,
-  ExtractPropTypes,
-  getCurrentInstance, inject,
-  onScopeDispose,
-  reactive, Ref,
-  UnwrapNestedRefs, watch,
-} from 'vue-demi'
 import {freeze} from '@winter-love/utils'
-import {propsValidator} from './props-validator'
+import {getCurrentInstance, inject, onScopeDispose, reactive, Ref, UnwrapNestedRefs} from 'vue-demi'
 import {createUuid} from './create-uuid'
-import {shallowUpdate} from './shallow-update'
+import {StoreManager, StoreManagerItem, useStoreManager} from './manager'
+import {STORE_LOCAL_CONTEXT} from './symbols'
+
 const getUuid = createUuid()
 // eslint-disable-next-line @typescript-eslint/ban-types
 export type EmptyObject = {}
 
-export interface UseStore<T, P> {
-  (props?: ObjectWithRef<P>, options?: UseStoreOptions): Store<T>
-  readonly local: (props?: ObjectWithRef<P>, options?: Omit<UseStoreOptions, 'local'>) => Store<T>
+export interface UseStore<T> {
+  readonly local: (options?: Omit<UseStoreOptions, 'local'>) => Store<T>
+
+  (options?: UseStoreOptions): Store<T>
 }
 
 export type ObjectWithRef<T extends Record<string, any>> = {
@@ -44,66 +37,52 @@ export interface SetupContext<Root> {
   readonly root: UnwrapNestedRefs<Root>
 }
 
-export type Setup<
-  T extends Record<string, any>,
-  P extends Record<string, any>,
+export type Setup<T extends Record<string, any>,
   Root extends Record<string, any> = Record<string, any>> = (
-  props: UnwrapNestedRefs<P>,
-  context: SetupContext<Root>,
+  initState: Partial<T>,
+  root: UnwrapNestedRefs<Root>,
 ) => T
+
 export interface CreateStoreOptions<T extends Record<string, any>,
-  P extends ComponentPropsOptions = ComponentPropsOptions,
   > {
   /**
    * @experimental use at using time
    */
   local?: boolean
   name: string
-  props?: P
-  setup: Setup<T, Readonly<ExtractPropTypes<P>>>
+  setup: Setup<T>
 }
-export interface CreateSetupArgs<
-  T extends Record<string, any>,
-  P extends Record<string, any> = EmptyObject,
+
+export interface CreateSetupArgs<T extends Record<string, any>,
   > {
-  props?: P
-  setup: Setup<T, P>
+  initState: Partial<T>
+  setup: Setup<T>
   storeManager: StoreManager
 }
 
-const createSetup = <
-  T extends Record<string, any>,
-  P extends Record<string, any> = EmptyObject,
-  >(args: CreateSetupArgs<T, P>): StoreManagerItem<T> => {
-  const {setup, props, storeManager} = args
-  const _props = reactive(props ?? {} as P)
+const createSetup = <T extends Record<string, any>,
+  >(args: CreateSetupArgs<T>): StoreManagerItem<T> => {
+  const {setup, storeManager, initState} = args
   return {
-    props: _props,
-    store: reactive(setup(
-      // props
-      _props,
-      // setup context
-      {
-        root: storeManager.state.value,
-      },
+    state: reactive(setup(
+      // initState
+      initState ?? {},
+      // root
+      storeManager.state.value,
     )),
   }
 }
 
-export interface CreateLocalStoreArgs<
-  T extends Record<string, any>,
-  P extends Record<string, any> = EmptyObject,
-  > extends CreateSetupArgs<T, P> {
+export interface CreateLocalStoreArgs<T extends Record<string, any>,
+  > extends Omit<CreateSetupArgs<T>, 'initState'> {
   name: string
 }
 
-const createLocalStore = <
-  T extends Record<string, any>,
-  P extends Record<string, any> = EmptyObject,
-  >(args: CreateLocalStoreArgs<T, P>): UnwrapNestedRefs<T> => {
-  const {name, storeManager, setup, props} = args
-  const item: StoreManagerItem<T> = createSetup<T, P>({
-    props,
+const createLocalStore = <T extends Record<string, any>,
+  >(args: CreateLocalStoreArgs<T>): UnwrapNestedRefs<T> => {
+  const {name, storeManager, setup} = args
+  const item: StoreManagerItem<T> = createSetup<T>({
+    initState: {},
     setup,
     storeManager,
   })
@@ -125,58 +104,42 @@ const createLocalStore = <
     localStoreManager?.remove(uuidName)
   })
 
-  return item.store
+  return item.state
 }
 
-export interface CreateGlobalStoreArgs<
-  T extends Record<string, any>,
-  P extends Record<string, any> = EmptyObject,
+export interface CreateGlobalStoreArgs<T extends Record<string, any>,
   > {
   name: string
   options: Omit<UseStoreOptions, 'local'>
-  props?: P
-  setup: Setup<T, P>
+  setup: Setup<T>
   storeManager: StoreManager
 }
 
-const createGlobalStore = <
-  T extends Record<string, any>,
-  P extends Record<string, any> = EmptyObject,
-  >(args: CreateGlobalStoreArgs<T, P>): UnwrapNestedRefs<T> => {
-  const {name, options, props, storeManager, setup} = args
+const createGlobalStore = <T extends Record<string, any>,
+  >(args: CreateGlobalStoreArgs<T>): UnwrapNestedRefs<T> => {
+  const {name, options, storeManager, setup} = args
   const {reset} = options
   const savedState: StoreManagerItem<T> | undefined = storeManager.get(name)
-  if (savedState) {
-    const savedProps = savedState.props
-    const currentProps = reactive(props ?? {})
-    watch(currentProps, (props) => {
-      Object.keys(props).forEach((key) => {
-        savedProps[key] = currentProps[key]
-      })
-    })
-  }
 
   if (savedState && !reset) {
-    return savedState.store
+    return savedState.state
   }
   const initState = storeManager.initState[name] ?? {}
   const newState = createSetup({
-    props, setup, storeManager,
+    initState, setup, storeManager,
   })
-  shallowUpdate(newState.store, initState)
   storeManager.set(name, newState)
-  return newState.store
+  return newState.state
 }
 
 export const useLocalManager = (): StoreManager | undefined => {
   return inject(STORE_LOCAL_CONTEXT)
 }
 const getOptions = <T extends Record<string, any>,
-  P extends ComponentPropsOptions = ComponentPropsOptions,
   >(
-    arg1: string | CreateStoreOptions<T, P>,
-    arg2?: Setup<T, Readonly<ExtractPropTypes<P>>>,
-  ): CreateStoreOptions<T, P> => {
+    arg1: string | CreateStoreOptions<T>,
+    arg2?: Setup<T>,
+  ): CreateStoreOptions<T> => {
   if (typeof arg1 === 'string' && typeof arg2 !== 'undefined') {
     return {
       name: arg1,
@@ -191,57 +154,45 @@ const getOptions = <T extends Record<string, any>,
 }
 
 export function defineStore<T extends Record<string, any>,
-  P extends ComponentPropsOptions = ComponentPropsOptions,
-  >(options: CreateStoreOptions<T, P>): UseStore<T, Readonly<ExtractPropTypes<P>>>
+  >(options: CreateStoreOptions<T>): UseStore<T>
 export function defineStore<T extends Record<string, any>,
-  >(name: string, setup: Setup<T, EmptyObject>): UseStore<T, EmptyObject>
+  >(name: string, setup: Setup<T, EmptyObject>): UseStore<T>
 export function defineStore<T extends Record<string, any>,
-  P extends Record<string, any> = EmptyObject,
   >(
-  arg1: string | CreateStoreOptions<T, P>, arg2?: Setup<T, Readonly<ExtractPropTypes<P>>>,
+  arg1: string | CreateStoreOptions<T>, arg2?: Setup<T>,
 ) {
   const {
     name,
     setup,
     local,
-    props: propsOptions,
-  } = getOptions<T, P>(arg1, arg2)
+  } = getOptions<T>(arg1, arg2)
 
   // eslint-disable-next-line max-statements
-  const hook = (props?: UnwrapNestedRefs<P>, options: UseStoreOptions = {}): T => {
+  const hook = (options: UseStoreOptions = {}): T => {
     const {local: innerLocal = local} = options
-    // running props validator
-    if (process.env.NODE_ENV !== 'production') {
-      const result = propsValidator(props ?? {}, propsOptions)
-      if (result !== true) {
-        console.warn(result)
-      }
-    }
 
     const storeManager = useStoreManager()
 
     if (innerLocal) {
-      return createLocalStore<T, P>({name, props, setup, storeManager})
+      return createLocalStore<T>({name, setup, storeManager})
     }
     return createGlobalStore({
       name,
       options,
-      props,
       setup,
       storeManager,
     })
   }
   return freeze(Object.assign(hook, {
-    local: (props?: UnwrapNestedRefs<P>, options: Omit<UseStoreOptions, 'local'> = {}) =>
-      hook(props, {...options, local: true}),
+    local: (options: Omit<UseStoreOptions, 'local'> = {}) =>
+      hook({...options, local: true}),
   }))
 }
 
 export function createStore<T extends Record<string, any>,
-  P extends ComponentPropsOptions = ComponentPropsOptions,
-  >(options: CreateStoreOptions<T, P>): UseStore<T, Readonly<ExtractPropTypes<P>>>
+  >(options: CreateStoreOptions<T>): UseStore<T>
 export function createStore<T extends Record<string, any>,
-  >(name: string, setup: Setup<T, EmptyObject>): UseStore<T, EmptyObject>
+  >(name: string, setup: Setup<T, EmptyObject>): UseStore<T>
 export function createStore(
   arg1: any, arg2?: any,
 ) {
@@ -253,11 +204,9 @@ export function createStore(
  * @param options
  */
 export function useStore<T extends Record<string, any>,
-  P extends Record<string, any>,
-  >(options: CreateStoreOptions<T, P>)
+  >(options: CreateStoreOptions<T>)
 export function useStore<T extends Record<string, any>,
-  P extends Record<string, any>,
-  >(name: string, setup: Setup<T, P>)
+  >(name: string, setup: Setup<T>)
 export function useStore(arg1: any, arg2?: any) {
   return createStore(arg1, arg2)()
 }

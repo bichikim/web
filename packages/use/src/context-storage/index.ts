@@ -1,5 +1,5 @@
 import {BrowserStorageKind, CookieStorageOptions} from '@winter-love/utils'
-import {computed, inject, InjectionKey, provide, reactive} from 'vue-demi'
+import {computed, getCurrentInstance, inject, InjectionKey, provide, reactive} from 'vue-demi'
 
 export interface StorageRefOptions {
   readonly cookieOptions?: CookieStorageOptions
@@ -28,7 +28,8 @@ export const createContextStorage = () => {
 }
 
 export const useContextStorage = <T>(key: string, value?: T) => {
-  const storage = inject(CONTEXT_STORAGE_KEY) ?? reactive({})
+  const instance = getCurrentInstance()
+  const storage = instance ? inject(CONTEXT_STORAGE_KEY) ?? reactive({}) : reactive({})
 
   if (value) {
     storage[key] = value

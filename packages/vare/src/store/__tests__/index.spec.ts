@@ -1,6 +1,6 @@
-import {computed, defineComponent, h, ref, toRefs} from 'vue-demi'
-import {createManager, createStore, provideStoreManager, useStore} from '../'
 import {mount} from '@vue/test-utils'
+import {computed, defineComponent, h, ref} from 'vue-demi'
+import {createManager, createStore, defineStore, provideStoreManager, useStore} from '../'
 
 describe('store', () => {
   it('should create store with root store', async () => {
@@ -85,7 +85,7 @@ describe('store', () => {
 
     const Component = defineComponent({
       setup() {
-        const myStore = useMyStore(undefined, {reset: true})
+        const myStore = useMyStore({reset: true})
         return () => (
           h('div', [
             h('div', {id: 'foo'}, myStore.foo),
@@ -97,7 +97,7 @@ describe('store', () => {
 
     const Component1 = defineComponent({
       setup() {
-        const myStore = useMyStore(undefined, {reset: true})
+        const myStore = useMyStore({reset: true})
         return () => (
           h('div', [
             h('div', {id: 'foo1'}, myStore.foo),
@@ -173,18 +173,19 @@ describe('store', () => {
         foo: 'foo1',
       },
     })
+    const useStore = defineStore('foo', (initState) => {
+      const foo = ref(initState.foo ?? '')
+      const increase = () => {
+        foo.value = `${foo.value}1`
+      }
+      return {
+        foo,
+        increase,
+      }
+    })
     const Component = defineComponent({
       setup() {
-        const state = useStore('foo', () => {
-          const foo = ref('foo')
-          const increase = () => {
-            foo.value += 1
-          }
-          return {
-            foo,
-            increase,
-          }
-        })
+        const state = useStore()
         return () => (
           h('div', [
             h('div', {id: 'foo'}, state.foo),
@@ -209,67 +210,6 @@ describe('store', () => {
     await wrapper.get('#button').trigger('click')
     expect(wrapper.get('#foo').text()).toBe('foo11')
   })
-  it('should create store that has props', async () => {
-    const storeManager = createManager()
-    const useMyStore = createStore({
-      name: 'foo',
-      props: {
-        name: {default: 'name', type: String},
-      },
-      setup: (props) => {
-        const {name} = toRefs(props)
-        const count = ref(0)
-        const fooName = computed(() => `foo-${name.value}${count.value}`)
-
-        const increase = () => {
-          count.value += 1
-        }
-
-        return {
-          fooName,
-          increase,
-          name,
-        }
-      },
-    })
-
-    const Component = defineComponent({
-      setup() {
-        const name = ref('bar')
-        const state = useMyStore({name})
-        const onChangeName = () => {
-          name.value = 'foo'
-        }
-        return () => (
-          h('div', [
-            h('div', {id: 'foo'}, state.name),
-            h('div', {id: 'fooName'}, state.fooName),
-            h('button', {id: 'button', onClick: state.increase}, 'increase'),
-            h('button', {id: 'change', onClick: onChangeName}, 'changeName'),
-          ])
-        )
-      },
-    })
-
-    const Root = defineComponent({
-      setup() {
-        provideStoreManager(storeManager)
-        return () => (
-          h('div', [
-            h(Component),
-          ])
-        )
-      },
-    })
-
-    const wrapper = mount(Root)
-    expect(wrapper.get('#foo').text()).toBe('bar')
-    expect(wrapper.get('#fooName').text()).toBe('foo-bar0')
-    await wrapper.get('#button').trigger('click')
-    expect(wrapper.get('#fooName').text()).toBe('foo-bar1')
-    await wrapper.get('#change').trigger('click')
-    expect(wrapper.get('#fooName').text()).toBe('foo-foo1')
-  })
   it('should create store that can use root', async () => {
     const storeManager = createManager()
     const useBar = createStore({
@@ -283,12 +223,9 @@ describe('store', () => {
     })
     const useMyStore = createStore({
       name: 'foo',
-      props: {
-        name: {default: 'name', type: String},
-      },
-      setup: (props, {root}) => {
+      setup: (_, root) => {
         const barName = computed(() => root.bar?.name)
-        const {name} = toRefs(props)
+        const name = ref('')
         const count = ref(0)
         const fooName = computed(() => `foo-${name.value}${count.value}`)
         const barNameCount = computed(() => `${barName.value}${count.value}`)
@@ -318,11 +255,10 @@ describe('store', () => {
 
     const Component = defineComponent({
       setup() {
-        const name = ref('bar')
-
-        const state = useMyStore({name})
+        const state = useMyStore()
+        state.name = 'bar'
         const onChangeName = () => {
-          name.value = 'foo'
+          state.name = 'foo'
         }
         return () => (
           h('div', [

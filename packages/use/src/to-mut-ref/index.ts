@@ -1,6 +1,4 @@
-import {
-  Ref, ref, toRef, watchEffect,
-} from 'vue-demi'
+import {computed, isReadonly, ref, watchEffect, WritableComputedRef} from 'vue-demi'
 
 export type IsEqual<Value> = (value: Value, oldValue: Value) => boolean
 
@@ -22,19 +20,27 @@ export type ToMutRefHandle<Props extends Record<string, any>, Key extends keyof 
 export const toMutRef = <Props extends Record<string, any>, Key extends keyof Props>(
   props: Props,
   key: Key,
-): Ref<Props[Key]> => {
-  const valueRef = toRef(props, key)
-  const valueMut = ref<Props[Key]>(valueRef.value)
+): WritableComputedRef<Props[Key]> => {
+  const valueMut = ref(props[key])
+  const _isReadonly = isReadonly(props[key]) || isReadonly(props)
 
   const changeValue = (value) => {
     valueMut.value = value
   }
 
   watchEffect(() => {
-    changeValue(valueRef.value)
-  }, {
-    flush: 'sync',
-  })
+    changeValue(props[key])
+  }, {flush: 'sync'})
 
-  return valueMut
+  return computed<Props[Key]>({
+    get() {
+      return valueMut.value
+    },
+    set(value) {
+      if (!_isReadonly) {
+        props[key] = value
+      }
+      valueMut.value = value
+    },
+  })
 }
