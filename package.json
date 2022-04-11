@@ -128,7 +128,7 @@
     "sort-package-json": "1.55.0",
     "storybook-builder-vite": "0.1.23",
     "ts-node": "10.7.0",
-    "tsd": "0.19.1",
+    "tsd": "0.20.0",
     "tslib": "^2.3.1",
     "tsup": "5.12.4",
     "ttypescript": "1.5.13",
