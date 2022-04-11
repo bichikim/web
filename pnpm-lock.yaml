@@ -558,13 +558,13 @@ importers:
     specifiers:
       '@babel/core': 7.17.8
       '@babel/node': 7.16.8
-      ganache: 7.0.3
+      ganache: 7.0.4
       solc: 0.8.13
       web3: 1.7.1
     devDependencies:
       '@babel/core': 7.17.8
       '@babel/node': 7.16.8_@babel+core@7.17.8
-      ganache: 7.0.3
+      ganache: 7.0.4
       solc: 0.8.13
       web3: 1.7.1
 
@@ -17690,8 +17690,9 @@ packages:
     engines: {node: '>=6'}
     dev: true
 
-  /ganache/7.0.3:
-    resolution: {integrity: sha512-1O4V38YkAFd2B1YfBevauEepxEtoN0iTTK02SUJPUIcLOnxwrR49lSDq7liKpUWLkoZCOC2Bkrz/+XJAmEoNAQ==}
+  /ganache/7.0.4:
+    resolution: {integrity: sha512-/ur2WNQoCwmobZb/TcpMgJlJy4TLtCUMtnCIldChAn5LleeAETaHB80knGqOgGc3ZS+ksokSqmQHuHqMAmlRkg==}
+    hasBin: true
     dependencies:
       '@trufflesuite/bigint-buffer': 1.1.9
       emittery: 0.10.0
