@@ -1,18 +1,17 @@
-import {createStore} from 'vare'
+import {useRequest} from 'boot/graphql-request'
+import {defineStore} from 'vare'
 import {computed, reactive, ref} from 'vue'
-import {useWallet} from 'src/store/wallet'
+import {useWallet} from 'src/hooks/wallet'
 import {SignInMethod} from 'src/graphql'
 import {toUndefined} from '@winter-love/utils'
 
-export const useUser = createStore({
+export const useUser = defineStore({
   name: 'user',
   setup() {
     const email = ref<string>('')
     const cryptoKind = ref('solana')
-    const wallet = useWallet(reactive({
-      email,
-      kind: cryptoKind,
-    }))
+    const request = useRequest()
+    const wallet = useWallet()
     const sessionTokenRef = ref<string | undefined>()
     const isSignIn = computed(() => {
       return Boolean(sessionTokenRef.value)
@@ -27,19 +26,9 @@ export const useUser = createStore({
 
     const signInWithCrypto = async () => {
       const response = await wallet.sign()
-      if (!response) {
-        return
-      }
-      const {sessionToken, item} = response
-      if (item) {
-        name.value = toUndefined(item.name)
-        id.value = toUndefined(item.id)
-        postsCount.value = toUndefined(item.postsCount)
-        postLikesCount.value = toUndefined(item.postLikesCount)
-        followingCount.value = toUndefined(item.followingCount)
-        followerCount.value = toUndefined(item.followerCount)
-      }
-      sessionTokenRef.value = toUndefined(sessionToken)
+      sessionTokenRef.value = response?.sessionToken
+      id.value = response?.id
+      name.value = response?.name
     }
 
     const signInWithEmail = () => {

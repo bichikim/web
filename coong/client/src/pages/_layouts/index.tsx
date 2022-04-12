@@ -51,49 +51,57 @@ const PagesLayout = defineComponent({
       method,
       user,
     })
-
     return () => (
-      h(Fragment, [
-        // hydration error
-        h(HLayout, {view: 'lHh Lpr lFf'}, () => [
-          h(HPageContainer, () => [
-            h(RouterView),
-          ]),
-
-        ]),
-        h(HDialog, {
-          maximized: true,
-          modelValue: isOpenAuth.value,
-          persistent: true,
-          transitionHide: 'slide-up',
-          transitionShow: 'slide-down',
-        }, () => [
-          h(SignInPage, {
-            email: email.value,
-            inProgress: isMagicAuthLink.value,
-            method: method.value,
-            'onSign-in': onSignIn,
-            'onUpdate:email': onUpdateEmail,
-            'onUpdate:method': onUpdateMethod,
-          }, () => [
-            h(HBox, {
-              css: {
-                p: 10,
-                ps: 'absolute', tr: 0,
-              },
-            }, () => [
-              h(HBtn, {
-                css: {bg: '$transparent-white', radius: 0},
-                dense: true,
-                flat: true,
-                icon: ionCloseOutline,
-                onClick: onCloseAuth,
-              }),
-            ]),
-          ]),
-        ]),
-      ])
+      <>
+        <HLayout>
+          <HPageContainer>
+            <RouterView />
+          </HPageContainer>
+        </HLayout>
+      </>
     )
+    // return () => (
+    //   h(Fragment, [
+    //     // hydration error
+    //     h(HLayout, {view: 'lHh Lpr lFf'}, () => [
+    //       h(HPageContainer, () => [
+    //         h(RouterView),
+    //       ]),
+    //
+    //     ]),
+    //     h(HDialog, {
+    //       maximized: true,
+    //       modelValue: isOpenAuth.value,
+    //       persistent: true,
+    //       transitionHide: 'slide-up',
+    //       transitionShow: 'slide-down',
+    //     }, () => [
+    //       h(SignInPage, {
+    //         email: email.value,
+    //         inProgress: isMagicAuthLink.value,
+    //         method: method.value,
+    //         'onSign-in': onSignIn,
+    //         'onUpdate:email': onUpdateEmail,
+    //         'onUpdate:method': onUpdateMethod,
+    //       }, () => [
+    //         h(HBox, {
+    //           css: {
+    //             p: 10,
+    //             ps: 'absolute', tr: 0,
+    //           },
+    //         }, () => [
+    //           h(HBtn, {
+    //             css: {bg: '$transparent-white', radius: 0},
+    //             dense: true,
+    //             flat: true,
+    //             icon: ionCloseOutline,
+    //             onClick: onCloseAuth,
+    //           }),
+    //         ]),
+    //       ]),
+    //     ]),
+    //   ])
+    // )
   },
 })
 

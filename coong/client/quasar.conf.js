@@ -40,6 +40,9 @@ module.exports = configure((ctx) => {
 
     // Full list of options: https://v2.quasar.dev/quasar-cli-vite/quasar-config-js#build
     build: {
+      alias: {
+        vue: 'vue/dist/vue.runtime.esm-bundler.js',
+      },
       extendViteConf(viteConf, {isServer}) {
         Object.assign(viteConf.resolve.alias, {
           hooks: path.join(__dirname, './src/hooks'),
@@ -84,6 +87,9 @@ module.exports = configure((ctx) => {
         node: 'node16',
       },
 
+      vitePlugins: [
+        ['@vitejs/plugin-vue-jsx'],
+      ],
       // vueRouterBase,
       // vueDevtools,
       // vueOptionsAPI: false,
@@ -97,10 +103,20 @@ module.exports = configure((ctx) => {
       // polyfillModulePreload: true,
       // distDir
       // extendViteConf (viteConf) {},
-      // viteVuePluginOptions: {},
-      vitePlugins: [
-        ['@vitejs/plugin-vue-jsx'],
-      ],
+      viteVuePluginOptions: {
+        include: [/\.vue$/u],
+        template: {
+          compilerOptions: {
+            directiveTransforms: {
+              // any directive in template
+              css: () => ({
+                needRuntime: true,
+                props: [],
+              }),
+            },
+          },
+        },
+      },
 
       // available values: 'hash', 'history'
       vueRouterMode: 'history',
