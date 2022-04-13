@@ -1,0 +1,68 @@
+{
+  "name": "@winter-love/wallet",
+  "version": "1.0.25-alpha.10",
+  "description": "share state for vue components",
+  "keywords": [
+    "typescript",
+    "vuex",
+    "store",
+    "vue",
+    "vue3",
+    "vuejs",
+    "vuejs3",
+    "composition",
+    "redux",
+    "reactive",
+    "mobx",
+    "vare",
+    "type",
+    "safe"
+  ],
+  "homepage": "https://github.com/winter-love/web/tree/dev/packages/vare",
+  "repository": "git@github.com:winter-love/web.git",
+  "author": "bichi@live.co.kr",
+  "exports": {
+    ".": {
+      "import": "./lib/index.mjs",
+      "require": "./lib/index.js"
+    },
+    "./*": "./*"
+  },
+  "main": "lib/index.js",
+  "jsdelivr": "lib/index.global.js",
+  "unpkg": "lib/index.global.js",
+  "module": "lib/index.mjs",
+  "source": "src/index.ts",
+  "types": "lib/index.d.ts",
+  "files": [
+    "lib/*"
+  ],
+  "scripts": {
+    "build": "tsup --minify",
+    "dev": "tsup --watch",
+    "prepare": "tsup",
+    "test-dev": "vite"
+  },
+  "dependencies": {
+    "@vue/devtools-api": "^6.1.3",
+    "@winter-love/utils": "^1.0.25-alpha.10",
+    "web3": "1.7.3",
+    "bip39": "3.0.4",
+    "ethers": "5.6.3",
+    "caver-js": "1.8.1",
+    "vue-demi": "^0.12.5"
+  },
+  "devDependencies": {
+    "@types/bip39": "3.0.0",
+    "@vitejs/plugin-vue": "2.3.1",
+    "@vitejs/plugin-vue-jsx": "1.3.9",
+    "ttypescript": "1.5.13",
+    "vite": "2.9.1",
+    "vue": "3.2.31",
+    "vue-router": "4.0.14"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "gitHead": "a00563d4b5288df4b4bbe713ce9b970e1844ca29"
+}
