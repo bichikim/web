@@ -50,7 +50,7 @@
     "lodash": "4.17.21",
     "node-html-parser": "5.3.3",
     "node-inject-html": "0.0.5",
-    "quasar": "2.6.5",
+    "quasar": "2.6.6",
     "serve-static": "1.15.0",
     "tslib": "2.3.1",
     "validator": "13.7.0",
