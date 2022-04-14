@@ -1,9 +1,16 @@
 import {Wallet as EthersWallet} from 'ethers'
 import type {Socket} from 'net'
-import {Account, OpenProps, Wallet} from './types'
+import {Account, Wallet} from './types'
+import {createEvents} from './events'
 
 export interface CreateEthereumWalletOptions {
   saveKey?: string
+}
+const getAccounts = (wallet: EthersWallet): Account => {
+  return {
+    address: wallet.address,
+    privateKey: wallet.privateKey,
+  }
 }
 
 export const createEthereumWallet = (
@@ -11,26 +18,27 @@ export const createEthereumWallet = (
   net?: Socket,
   options: CreateEthereumWalletOptions = {},
 ): Wallet => {
+  const events = createEvents()
   const {saveKey = 'winter-love--ethereum-wallet'} = options
   let wallet: EthersWallet | undefined
+
   const createAccount = () => {
     wallet = EthersWallet.createRandom()
-    console.log(wallet)
-    return {
-      address: wallet.address,
-      privateKey: wallet.privateKey,
-    }
+    const account: Account = getAccounts(wallet)
+    events.emit('update:wallet', account)
+    return account
   }
-  const saveAccount = async (password, progress?: (value: number) => any): Promise<boolean> => {
+  const saveAccount = async (password, progress?: (value: number) => any): Promise<Account | void> => {
     if (!wallet) {
-      return false
+      return
     }
     if (typeof globalThis.localStorage === 'object') {
       const jsonString = await wallet.encrypt(password, progress)
       globalThis.localStorage.setItem(saveKey, jsonString)
-      return true
+      const account: Account = getAccounts(wallet)
+      events.emit('saved', account)
+      return account
     }
-    return false
   }
   const loadAccount = async (password: string, progress?: (value: number) => any): Promise<Account | void> => {
     if (typeof globalThis.localStorage !== 'object') {
@@ -39,18 +47,14 @@ export const createEthereumWallet = (
     const jsonString = globalThis.localStorage.getItem(saveKey)
     if (typeof jsonString === 'string') {
       wallet = await EthersWallet.fromEncryptedJson(jsonString, password, progress)
-      return {
-        address: wallet.address,
-        privateKey: wallet.privateKey,
-      }
+      const account: Account = getAccounts(wallet)
+      events.emit('update:wallet', account)
+      return account
     }
   }
   const restoreAccount = (mnemonic: string): Account => {
     wallet = EthersWallet.fromMnemonic(mnemonic)
-    return {
-      address: wallet.address,
-      privateKey: wallet.privateKey,
-    }
+    return getAccounts(wallet)
   }
   const sign = (message: string): Promise<string | void> => {
     if (wallet) {
@@ -60,6 +64,7 @@ export const createEthereumWallet = (
   }
 
   return {
+    ...events,
     get accountAddress(): string | undefined {
       return wallet?.address
     },
@@ -68,6 +73,9 @@ export const createEthereumWallet = (
       return Boolean(wallet)
     },
     loadAccount,
+    get mnemonicPhrase(): string | undefined {
+      return wallet?.mnemonic?.phrase
+    },
     restoreAccount,
     saveAccount,
     sign,

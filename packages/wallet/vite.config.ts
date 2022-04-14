@@ -45,6 +45,9 @@ export default defineConfig(() => {
         '~/': `${path.resolve(__dirname, '')}/`,
         'components/': `${path.resolve(__dirname, 'src/components')}/`,
         'dev/': `${path.resolve(__dirname, 'dev')}/`,
+        // fix caver-js f*cking error
+        // http: 'http-browserify',
+        // https: 'https-browserify',
         'layouts/': `${path.resolve(__dirname, 'src/layouts')}/`,
         'pages/': `${path.resolve(__dirname, 'src/pages')}/`,
         'src/': `${path.resolve(__dirname, 'src')}/`,
