@@ -7,6 +7,10 @@ import {entropyToMnemonic, mnemonicToEntropy} from '@ethersproject/hdnode'
 export interface CreateKlaytnWalletOptions {
   saveKey?: string
 }
+
+// eslint-disable-next-line functional/no-class
+export class CaverModuleError extends Error {}
+
 export const createKlaytnWallet = (
   provider?: RequestProvider,
   net?: Socket,
@@ -14,10 +18,14 @@ export const createKlaytnWallet = (
 ): Wallet => {
   const events = createEvents()
   const {saveKey = 'winter-love--klaytn-wallet'} = options
-  const caver: Caver = typeof window === 'object' ? (window as any).caver : undefined
+  const caver: Caver | undefined = typeof window === 'object' ? (window as any).caver : undefined
   let wallet: CaverWallet | undefined
   let mnemonic: string | undefined
   const createAccount = (entropy?: string): Account => {
+    if (!caver) {
+      // eslint-disable-next-line functional/no-throw-statement
+      throw new CaverModuleError('omg')
+    }
     wallet = caver.klay.accounts.create(entropy)
     mnemonic = entropyToMnemonic(wallet.privateKey)
     return {
@@ -26,7 +34,7 @@ export const createKlaytnWallet = (
     }
   }
   const loadAccount = (password: string) => {
-    if (typeof globalThis.localStorage !== 'object') {
+    if (!caver || typeof globalThis.localStorage !== 'object') {
       return Promise.resolve()
     }
     const jsonString = globalThis.localStorage.getItem(saveKey)
@@ -42,6 +50,10 @@ export const createKlaytnWallet = (
     })
   }
   const restoreAccount = (mnemonic: string): Account => {
+    if (!caver) {
+      // eslint-disable-next-line functional/no-throw-statement
+      throw new CaverModuleError('omg')
+    }
     const privateKey = mnemonicToEntropy(mnemonic)
     wallet = caver.klay.accounts.privateKeyToAccount(privateKey)
     return {
@@ -50,7 +62,7 @@ export const createKlaytnWallet = (
     }
   }
   const saveAccount = (password: string): Promise<Account | void> => {
-    if (!wallet) {
+    if (!caver || !wallet) {
       return Promise.resolve()
     }
     if (typeof globalThis.localStorage === 'object') {
@@ -64,12 +76,14 @@ export const createKlaytnWallet = (
     return Promise.resolve()
   }
   const sign = (message: string) => {
-    if (wallet) {
-      const result = wallet.sign(message)
-      console.log(result)
+    if (!caver || !wallet) {
       return Promise.resolve()
     }
-    return Promise.resolve()
+
+    // type error
+    const result: any = wallet.sign(message)
+    // console.log(result)
+    return Promise.resolve(result?.signature)
   }
   return {
     ...events,
