@@ -33,7 +33,7 @@ export const createKlaytnWallet = (
       privateKey: wallet.privateKey,
     }
   }
-  const loadAccount = (password: string) => {
+  const loadAccount = (password: string, progress?: (value: number) => any) => {
     if (!caver || typeof globalThis.localStorage !== 'object') {
       return Promise.resolve()
     }
@@ -41,9 +41,11 @@ export const createKlaytnWallet = (
     if (typeof jsonString !== 'string') {
       return Promise.resolve()
     }
+    progress?.(0)
     const account = caver.klay.accounts.decrypt(parseJson(jsonString), password)
     wallet = caver.klay.accounts.privateKeyToAccount(account.privateKey)
     mnemonic = entropyToMnemonic(wallet.privateKey)
+    progress?.(1)
     return Promise.resolve({
       address: wallet.address,
       privateKey: wallet.privateKey,
@@ -61,13 +63,15 @@ export const createKlaytnWallet = (
       privateKey: wallet.privateKey,
     }
   }
-  const saveAccount = (password: string): Promise<Account | void> => {
+  const saveAccount = (password: string, progress?: (value: number) => any): Promise<Account | void> => {
     if (!caver || !wallet) {
       return Promise.resolve()
     }
     if (typeof globalThis.localStorage === 'object') {
+      progress?.(0)
       const jsonObject = wallet.encrypt(password)
       globalThis.localStorage.setItem(saveKey, stringifyJson(jsonObject))
+      progress?.(1)
       return Promise.resolve({
         address: wallet.address,
         privateKey: wallet.privateKey,
