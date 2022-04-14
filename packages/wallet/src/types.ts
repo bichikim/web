@@ -5,10 +5,6 @@ export interface Account {
   privateKey: string
 }
 
-export interface OpenNewReturn extends Account {
-  mnemonic: string
-}
-
 export type Event = 'update:wallet' | 'saved'
 
 export interface WalletEvent {
