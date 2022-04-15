@@ -10,11 +10,11 @@
     "@winter-love/test-use": "^1.0.25-alpha.10",
     "@winter-love/use": "^1.0.25-alpha.10",
     "@winter-love/utils": "^1.0.25-alpha.10",
-    "autoprefixer": "^10.4.4",
-    "daisyui": "^2.11.0",
-    "postcss": "^8.4.12",
-    "tailwindcss": "^3.0.23",
-    "vitepress": "^0.22.3"
+    "autoprefixer": "10.4.4",
+    "daisyui": "2.13.6",
+    "postcss": "8.4.12",
+    "tailwindcss": "3.0.24",
+    "vitepress": "0.22.3"
   },
   "gitHead": "a00563d4b5288df4b4bbe713ce9b970e1844ca29"
 }
