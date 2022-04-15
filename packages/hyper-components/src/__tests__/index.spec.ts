@@ -3,7 +3,7 @@
  */
 
 import {createHyperComponents, useClassName} from '../'
-import {createSSRApp, defineComponent, h} from 'vue'
+import {createSSRApp, defineComponent, h} from 'vue-demi'
 import {renderToString} from '@vue/server-renderer'
 
 const hyper = createHyperComponents()

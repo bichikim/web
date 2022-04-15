@@ -3,7 +3,7 @@ import {ConfigType, CreateStitches} from '@stitches/core/types/config'
 import {CssComponent} from '@stitches/core/types/styled-component'
 import {createStyled} from '@winter-love/stitches'
 import {theme} from 'src/theme'
-import {inject, InjectionKey, Plugin} from 'vue'
+import {inject, InjectionKey, Plugin} from 'vue-demi'
 import {stitchesUtils} from './stitches-utils'
 import {linearGradient, typography} from './variants'
 

@@ -1,13 +1,14 @@
 {
   "extends": "../../tsconfig.json",
-  "compileOnSave": false,
   "compilerOptions": {
-    "declaration": true,
+    "declaration":  true,
     "outDir": "lib",
     "baseUrl": ".",
     "paths": {
-      "src/*": ["src/*"]
-    },
+      "src/*": [
+        "src/*"
+      ]
+    }
   },
   "ts-node": {
     "compilerOptions": {
@@ -17,6 +18,10 @@
   },
   "include": [
     "src/**/*.ts",
-    "src/**/*.tsx"
+    "src/**/*.d.ts",
+    "src/**/*.tsx",
+  ],
+  "exclude": [
+    "node_modules"
   ]
 }

@@ -1,5 +1,5 @@
 import {useCsx} from '../'
-import {computed, h, ref} from 'vue'
+import {computed, h, ref} from 'vue-demi'
 
 export default {
   title: 'HyperComponents/useCsx',

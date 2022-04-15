@@ -1,4 +1,4 @@
-import {FunctionalComponent, h} from 'vue'
+import {FunctionalComponent, h} from 'vue-demi'
 import {withCsx} from '../with-csx'
 
 export interface BoxProps {

@@ -1,5 +1,5 @@
 import {QBtn} from 'quasar'
-import {h, resolveDirective, withDirectives} from 'vue'
+import {h, resolveDirective, withDirectives} from 'vue-demi'
 import {HGlow} from '../'
 
 export default {

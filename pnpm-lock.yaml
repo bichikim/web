@@ -684,7 +684,7 @@ importers:
       color: ^4.2.0
       csstype: 3.0.11
       quasar: ^2.6.0
-      vue: latest
+      vue: 3.2.33
       vue-demi: ^0.12.1
     dependencies:
       '@stitches/core': 1.2.7
