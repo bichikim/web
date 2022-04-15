@@ -1,83 +1,152 @@
-import {Wallet as EthersWallet} from 'ethers'
+import {TransactionResponse} from '@ethersproject/abstract-provider'
+import {BigNumberish} from '@ethersproject/bignumber'
+import {AccessListish} from '@ethersproject/transactions'
+import {computed, effect, reactive, ref, UnwrapNestedRefs} from '@vue/reactivity'
+import {Contract, Wallet as EthersWallet, providers} from 'ethers'
 import type {Socket} from 'net'
-import {Account, Wallet} from './types'
 import {createEvents} from './events'
+import {Account, BytesLike, Wallet, WalletItemTypes} from './types'
 
 export interface CreateEthereumWalletOptions {
   saveKey?: string
 }
-const getAccounts = (wallet: EthersWallet): Account => {
+
+const getAccounts = (wallet: EthersWallet): Account<any> => {
   return {
     address: wallet.address,
     privateKey: wallet.privateKey,
   }
 }
+export type TransactionRequest = {
+  accessList?: AccessListish
+  ccipReadEnabled?: boolean
+  chainId?: number
 
+  customData?: Record<string, any>
+  data?: BytesLike
+
+  from?: string
+  gasLimit?: BigNumberish
+  gasPrice?: BigNumberish
+
+  maxFeePerGas?: BigNumberish
+  maxPriorityFeePerGas?: BigNumberish
+
+  nonce?: BigNumberish
+  to?: string
+
+  type?: number
+  value?: BigNumberish
+}
+
+export interface EthereumWalletItemTypes extends WalletItemTypes {
+  privateKey: string
+  transaction: TransactionRequest
+  transactionResponse: TransactionResponse
+}
+
+// eslint-disable-next-line max-lines-per-function
 export const createEthereumWallet = (
   provider?: any,
   net?: Socket,
   options: CreateEthereumWalletOptions = {},
-): Wallet => {
+): UnwrapNestedRefs<Wallet<EthereumWalletItemTypes>> => {
   const events = createEvents()
   const {saveKey = 'winter-love--ethereum-wallet'} = options
-  let wallet: EthersWallet | undefined
-
+  const walletRef = ref<EthersWallet | undefined>()
   const createAccount = () => {
-    wallet = EthersWallet.createRandom()
-    const account: Account = getAccounts(wallet)
-    events.emit('update:wallet', account)
-    return account
+    const wallet = EthersWallet.createRandom()
+    walletRef.value = wallet
+    return getAccounts(wallet)
   }
-  const saveAccount = async (password, progress?: (value: number) => any): Promise<Account | void> => {
+  const saveAccount = async (password: string, progress?: (value: number) => any): Promise<Account<string> | void> => {
+    const wallet = walletRef.value
     if (!wallet) {
       return
     }
     if (typeof globalThis.localStorage === 'object') {
       const jsonString = await wallet.encrypt(password, progress)
       globalThis.localStorage.setItem(saveKey, jsonString)
-      const account: Account = getAccounts(wallet)
-      events.emit('saved', account)
-      return account
+      return getAccounts(wallet)
     }
   }
-  const loadAccount = async (password: string, progress?: (value: number) => any): Promise<Account | void> => {
+  const loadAccount = async (password: string, progress?: (value: number) => any): Promise<Account<string> | void> => {
     if (typeof globalThis.localStorage !== 'object') {
       return
     }
     const jsonString = globalThis.localStorage.getItem(saveKey)
     if (typeof jsonString === 'string') {
-      wallet = await EthersWallet.fromEncryptedJson(jsonString, password, progress)
-      const account: Account = getAccounts(wallet)
-      events.emit('update:wallet', account)
-      return account
+      const wallet = await EthersWallet.fromEncryptedJson(jsonString, password, progress)
+      walletRef.value = wallet
+      return getAccounts(wallet)
     }
   }
-  const restoreAccount = (mnemonic: string): Account => {
-    wallet = EthersWallet.fromMnemonic(mnemonic)
+  const restoreAccount = (mnemonic: string): Account<string> => {
+    const wallet = EthersWallet.fromMnemonic(mnemonic)
+    walletRef.value = wallet
     return getAccounts(wallet)
   }
   const sign = (message: string): Promise<string | void> => {
-    if (wallet) {
-      return wallet.signMessage(message)
+    const wallet = walletRef.value
+    if (!wallet) {
+      return Promise.resolve()
     }
-    return Promise.resolve()
+    return wallet.signMessage(message)
   }
+  const _connect = (provider?: any) => {
+    const wallet = walletRef.value
+    if (!wallet) {
+      return
+    }
+    wallet.connect(provider ?? wallet.provider ?? new providers.InfuraProvider('ropsten'))
+  }
+  const sendTransaction = (transaction: TransactionRequest): Promise<any> => {
+    const wallet = walletRef.value
+    if (!wallet) {
+      return Promise.resolve()
+    }
+    return wallet.sendTransaction(transaction)
+  }
+  const createContrast = (contractAddress: string, abi: any) => {
+    const wallet = walletRef.value
+    if (!wallet) {
+      return
+    }
+    return new Contract(contractAddress, abi, wallet)
+  }
+  const accountAddressRef = computed(() => {
+    return walletRef.value?.address
+  })
+  const providerRef = computed({
+    get: () => {
+      return walletRef.value?.address
+    },
+    set: (value) => {
+      _connect(value)
+    },
+  })
+  const mnemonicPhraseRef = computed(() => {
+    return walletRef.value?.mnemonic?.phrase
+  })
 
-  return {
+  effect(() => {
+    const wallet = walletRef.value
+    if (wallet) {
+      const account = getAccounts(wallet)
+      events.emit('update:wallet', account)
+    }
+  })
+  return reactive({
     ...events,
-    get accountAddress(): string | undefined {
-      return wallet?.address
-    },
+    accountAddress: accountAddressRef,
     createAccount,
-    get isOpen(): boolean {
-      return Boolean(wallet)
-    },
+    createContrast,
     loadAccount,
-    get mnemonicPhrase(): string | undefined {
-      return wallet?.mnemonic?.phrase
-    },
+    mnemonicPhrase: mnemonicPhraseRef,
+    provider: providerRef,
     restoreAccount,
     saveAccount,
+    sendTransaction,
     sign,
-  }
+  })
 }

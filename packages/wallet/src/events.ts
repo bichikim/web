@@ -1,9 +1,9 @@
 import {createNanoEvents, Unsubscribe} from 'nanoevents'
-import {Account, Event, WalletEvent} from './types'
+import {Event, WalletEvent} from './types'
 
 export const createEvents = (): WalletEvent => {
   const emitter = createNanoEvents()
-  const on = (event: Event, callback: (account: Account) => any): Unsubscribe => {
+  function on(event: Event, callback: (account: any) => any): Unsubscribe {
     return emitter.on(event, callback)
   }
   const once = (event: Event, callback: (...args: any[]) => any): Unsubscribe => {

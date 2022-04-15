@@ -8,7 +8,6 @@ export const Root = defineComponent({
     const klaytn = createKlaytnWallet('http://api.baobab.klaytn.net:8651')
     const createWallet = async () => {
       ethereum.createAccount()
-
     }
     const createKlaytn = async () => {
       klaytn.createAccount()

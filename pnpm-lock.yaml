@@ -212,7 +212,7 @@ importers:
       serialize-javascript: 6.0.0
       typescript: 4.6.3
       validator: 13.7.0
-      vare: ^1.0.25-alpha.12
+      vare: ^1.0.25-alpha.13
       vue: 3.2.31
       vue-router: 4.0.14
     dependencies:
@@ -313,7 +313,7 @@ importers:
       unplugin-icons: 0.14.1
       unplugin-vue-components: 0.18.3
       validator: 13.7.0
-      vare: ^1.0.25-alpha.12
+      vare: ^1.0.25-alpha.13
       vite: 2.9.1
       vite-plugin-imp: 2.1.7
       vite-plugin-md: 0.12.4
@@ -843,11 +843,12 @@ importers:
 
   packages/wallet:
     specifiers:
-      '@ethersproject/hdnode': 5.6.0
+      '@solana/web3.js': 1.37.2
       '@types/bip39': 3.0.0
       '@vitejs/plugin-vue': 2.3.1
       '@vitejs/plugin-vue-jsx': 1.3.9
       '@vue/devtools-api': ^6.1.3
+      '@vue/reactivity': 3.2.33
       '@winter-love/utils': ^1.0.25-alpha.11
       caver-js: ^1.8.1
       ethers: ^5.6.3
@@ -855,16 +856,15 @@ importers:
       ttypescript: 1.5.13
       vite: 2.9.1
       vue: 3.2.31
-      vue-demi: ^0.12.5
       vue-router: 4.0.14
     dependencies:
-      '@ethersproject/hdnode': 5.6.0
+      '@solana/web3.js': 1.37.2
       '@vue/devtools-api': 6.1.3
+      '@vue/reactivity': 3.2.33
       '@winter-love/utils': link:../utils
       caver-js: 1.8.1
       ethers: 5.6.3
       nanoevents: 6.0.2
-      vue-demi: 0.12.5_vue@3.2.31
     devDependencies:
       '@types/bip39': 3.0.0
       '@vitejs/plugin-vue': 2.3.1_vite@2.9.1+vue@3.2.31

@@ -1,26 +1,45 @@
 import type {Unsubscribe} from 'nanoevents'
 
-export interface Account {
+export interface Account<privateKey> {
   address: string
-  privateKey: string
+  privateKey: privateKey
 }
 
-export type Event = 'update:wallet' | 'saved'
+export type Bytes = ArrayLike<number>
+export type BytesLike = Bytes | string
+export type Event = 'update:wallet' | 'saved' | 'connected'
+
+export interface OnEvent {
+  (event: 'update:wallet', callback: (account: Account<any>) => any): Unsubscribe
+
+  (event: 'saved', callback: (account: Account<any>) => any): Unsubscribe
+}
 
 export interface WalletEvent {
   emit: (event: Event, ...args: any[]) => void
-  on: (event: Event, callback: (account: Account) => any) => Unsubscribe
-  once: (event: Event, callback: (account: Account) => any) => Unsubscribe
+  on: OnEvent
+  once: (event: Event, callback: (account: Account<any>) => any) => Unsubscribe
   stopAll: () => void
 }
 
-export interface Wallet extends WalletEvent {
-  accountAddress?: string
-  createAccount: (entropy?: string) => Account
-  isOpen: boolean
-  loadAccount: (password: string, progress?: (value: number) => any) => Promise<Account | void>
-  mnemonicPhrase: string | undefined
-  restoreAccount: (mnemonic: string) => Account
-  saveAccount: (password: string, progress?: (value: number) => any) => Promise<Account | void>
-  sign: (message: string) => Promise<string | void>
+export interface WalletItemTypes {
+  privateKey: any
+  transaction: any
+  transactionResponse: any
+}
+
+export interface Wallet<TransactionRequest extends WalletItemTypes> extends WalletEvent {
+  readonly accountAddress?: string
+  readonly createAccount: (entropy?: string) => Account<WalletItemTypes['privateKey']>
+  readonly createContrast: (contractAddress: string, abi: any) => any
+  readonly loadAccount: (password: string, progress?: (value: number) => any) =>
+    Promise<Account<WalletItemTypes['privateKey']> | void>
+  readonly mnemonicPhrase: string | undefined
+  provider: any | undefined
+  readonly restoreAccount: (mnemonic: string) => Account<WalletItemTypes['privateKey']>
+  readonly saveAccount: (password: string, progress?: (value: number) => any) =>
+    Promise<Account<WalletItemTypes['privateKey']> | void>
+  readonly sendTransaction: (transaction: TransactionRequest['transaction']) =>
+    Promise<WalletItemTypes['transactionResponse'] | undefined>
+  readonly sign: (message: string) => Promise<string | void>
 }
