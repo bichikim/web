@@ -196,9 +196,9 @@ importers:
       '@types/node': 17.0.21
       '@urql/vue': 0.6.1
       '@vitejs/plugin-vue-jsx': 1.3.9
-      '@winter-love/hyper-components': ^1.0.25-alpha.10
-      '@winter-love/use': ^1.0.25-alpha.10
-      '@winter-love/utils': ^1.0.25-alpha.10
+      '@winter-love/hyper-components': ^1.0.25-alpha.11
+      '@winter-love/use': ^1.0.25-alpha.11
+      '@winter-love/utils': ^1.0.25-alpha.11
       autoprefixer: 10.4.2
       compression: 1.7.4
       core-js: 3.21.1
@@ -212,7 +212,7 @@ importers:
       serialize-javascript: 6.0.0
       typescript: 4.6.3
       validator: 13.7.0
-      vare: ^1.0.25-alpha.10
+      vare: ^1.0.25-alpha.11
       vue: 3.2.31
       vue-router: 4.0.14
     dependencies:
@@ -284,10 +284,10 @@ importers:
       '@vue/compiler-sfc': 3.2.31
       '@vue/server-renderer': 3.2.31
       '@vueuse/head': 0.7.5
-      '@winter-love/hyper-components': ^1.0.25-alpha.10
-      '@winter-love/stitches': ^1.0.25-alpha.10
-      '@winter-love/use': ^1.0.25-alpha.10
-      '@winter-love/utils': ^1.0.25-alpha.10
+      '@winter-love/hyper-components': ^1.0.25-alpha.11
+      '@winter-love/stitches': ^1.0.25-alpha.11
+      '@winter-love/use': ^1.0.25-alpha.11
+      '@winter-love/utils': ^1.0.25-alpha.11
       '@zerollup/ts-transform-paths': 1.7.18
       compression: 1.7.4
       cookie-parser: 1.4.6
@@ -313,7 +313,7 @@ importers:
       unplugin-icons: 0.14.1
       unplugin-vue-components: 0.18.3
       validator: 13.7.0
-      vare: ^1.0.25-alpha.10
+      vare: ^1.0.25-alpha.11
       vite: 2.9.1
       vite-plugin-imp: 2.1.7
       vite-plugin-md: 0.12.4
@@ -456,7 +456,7 @@ importers:
       '@types/express': 4.17.13
       '@types/node': 17.0.21
       '@types/sharp': 0.30.1
-      '@winter-love/utils': ^1.0.25-alpha.10
+      '@winter-love/utils': ^1.0.25-alpha.11
       class-transformer: 0.5.1
       class-validator: 0.13.2
       cross-env: 7.0.3
@@ -500,7 +500,7 @@ importers:
       '@prisma/generator-helper': 3.12.0
       '@sendgrid/mail': 7.6.2
       '@webauthn-lib/server': 0.1.0
-      '@winter-love/utils': ^1.0.25-alpha.10
+      '@winter-love/utils': ^1.0.25-alpha.11
       bs58: 5.0.0
       dotenv-cli: 5.1.0
       graphql: 15.8.0
@@ -544,7 +544,7 @@ importers:
       '@types/graphql-fields': 1.3.4
       '@types/jsonwebtoken': 8.5.8
       '@types/node': 17.0.21
-      '@winter-love/utils': ^1.0.25-alpha.10
+      '@winter-love/utils': ^1.0.25-alpha.11
       '@zerollup/ts-transform-paths': 1.7.18
       apollo-server: 3.6.4
       bcryptjs: 2.4.3
@@ -618,9 +618,9 @@ importers:
 
   docs/winter-love:
     specifiers:
-      '@winter-love/test-use': ^1.0.25-alpha.10
-      '@winter-love/use': ^1.0.25-alpha.10
-      '@winter-love/utils': ^1.0.25-alpha.10
+      '@winter-love/test-use': ^1.0.25-alpha.11
+      '@winter-love/use': ^1.0.25-alpha.11
+      '@winter-love/utils': ^1.0.25-alpha.11
       autoprefixer: 10.4.4
       daisyui: 2.13.6
       postcss: 8.4.12
@@ -644,8 +644,8 @@ importers:
       '@emotion/server': 11.4.0
       '@emotion/utils': ^1.1.0
       '@vue/server-renderer': latest
-      '@winter-love/use': ^1.0.25-alpha.10
-      '@winter-love/utils': ^1.0.25-alpha.10
+      '@winter-love/use': ^1.0.25-alpha.11
+      '@winter-love/utils': ^1.0.25-alpha.11
       clsx: ^1.1.1
       vue: 3.2.31
       vue-demi: ^0.12.1
@@ -678,8 +678,8 @@ importers:
     specifiers:
       '@stitches/core': 1.2.7
       '@vue/server-renderer': 3.2.33
-      '@winter-love/stitches': ^1.0.25-alpha.10
-      '@winter-love/utils': ^1.0.25-alpha.10
+      '@winter-love/stitches': ^1.0.25-alpha.11
+      '@winter-love/utils': ^1.0.25-alpha.11
       clsx: ^1.1.1
       color: ^4.2.0
       csstype: 3.0.11
@@ -702,7 +702,7 @@ importers:
   packages/quasar-svg-syntax:
     specifiers:
       '@quasar/extras': 1.13.5
-      '@winter-love/utils': ^1.0.25-alpha.10
+      '@winter-love/utils': ^1.0.25-alpha.11
       fast-glob: ^3.2.7
       globby: ^13.1.1
       lodash: ^4.17.21
@@ -731,7 +731,7 @@ importers:
       '@babel/core': 7.17.8
       '@stitches/core': ^1.2.7
       '@vue/server-renderer': latest
-      '@winter-love/utils': ^1.0.25-alpha.10
+      '@winter-love/utils': ^1.0.25-alpha.11
       vue: latest
       vue-demi: ^0.12.1
     dependencies:
@@ -746,7 +746,7 @@ importers:
   packages/test-use:
     specifiers:
       '@vue/test-utils': ^2.0.0-rc.17
-      '@winter-love/utils': ^1.0.25-alpha.10
+      '@winter-love/utils': ^1.0.25-alpha.11
       lodash: 4.17.21
       vue: ^3.2.31
     dependencies:
@@ -762,7 +762,7 @@ importers:
       '@types/sinon': 10.0.11
       '@vue/server-renderer': 3.2.33
       '@vue/test-utils': 2.0.0-rc.19
-      '@winter-love/utils': ^1.0.25-alpha.10
+      '@winter-love/utils': ^1.0.25-alpha.11
       debounce: ^1.2.1
       fast-json-stable-stringify: ^2.1.0
       lodash: ^4.17.21
@@ -803,7 +803,7 @@ importers:
       '@vitejs/plugin-vue': 2.3.1
       '@vitejs/plugin-vue-jsx': 1.3.9
       '@vue/devtools-api': ^6.1.3
-      '@winter-love/utils': ^1.0.25-alpha.10
+      '@winter-love/utils': ^1.0.25-alpha.11
       ttypescript: 1.5.13
       vite: 2.9.1
       vue: 3.2.31
@@ -848,7 +848,7 @@ importers:
       '@vitejs/plugin-vue': 2.3.1
       '@vitejs/plugin-vue-jsx': 1.3.9
       '@vue/devtools-api': ^6.1.3
-      '@winter-love/utils': ^1.0.25-alpha.10
+      '@winter-love/utils': ^1.0.25-alpha.11
       caver-js: ^1.8.1
       ethers: ^5.6.3
       nanoevents: ^6.0.2
