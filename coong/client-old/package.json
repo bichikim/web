@@ -1,6 +1,6 @@
 {
   "name": "@coong/client-old",
-  "version": "1.0.25-alpha.12",
+  "version": "1.0.25-alpha.13",
   "private": true,
   "scripts": {
     "build": "pnpm run build:ssr && pnpm run build:run-ssr",
@@ -54,7 +54,7 @@
     "serve-static": "1.15.0",
     "tslib": "2.3.1",
     "validator": "13.7.0",
-    "vare": "^1.0.25-alpha.12",
+    "vare": "^1.0.25-alpha.13",
     "vite-plugin-ssr-vue": "^1.0.25-alpha.3",
     "vue": "3.2.31",
     "vue-i18n": "9.1.9",
