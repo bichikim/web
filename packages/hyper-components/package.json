@@ -49,7 +49,7 @@
     "vue-demi": "^0.12.1"
   },
   "devDependencies": {
-    "@vue/server-renderer": "^3.2.31",
+    "@vue/server-renderer": "3.2.33",
     "csstype": "3.0.11",
     "vue": "latest"
   },

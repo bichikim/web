@@ -14,15 +14,15 @@
     "@keystone-6/auth": "2.0.0",
     "@keystone-6/core": "1.1.0",
     "@keystone-6/fields-document": "1.0.1",
-    "@prisma/client": "^3.10.0",
+    "@prisma/client": "3.12.0",
     "@sendgrid/mail": "7.6.2",
     "@webauthn-lib/server": "0.1.0",
     "@winter-love/utils": "^1.0.25-alpha.10",
     "bs58": "5.0.0",
     "dotenv-cli": "5.1.0",
     "graphql": "15.8.0",
-    "jsonwebtoken": "^8.5.1",
-    "lodash": "^4.17.21",
+    "jsonwebtoken": "8.5.1",
+    "lodash": "4.17.21",
     "react": "17.0.2",
     "react-dom": "17.0.2",
     "tweetnacl": "1.0.3",
@@ -32,7 +32,7 @@
   "devDependencies": {
     "@prisma/generator-helper": "3.12.0",
     "graphql-tag": "2.12.6",
-    "prisma": "^3.10.0"
+    "prisma": "3.12.0"
   },
   "engines": {
     "node": "^14.15 || ^16.13"
