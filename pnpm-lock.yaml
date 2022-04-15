@@ -191,7 +191,7 @@ importers:
       '@project-serum/sol-wallet-adapter': 0.2.6
       '@quasar/app-vite': 1.0.0-beta.13
       '@quasar/extras': 1.13.5
-      '@solana/web3.js': 1.37.1
+      '@solana/web3.js': 1.37.2
       '@types/jest': 27.4.1
       '@types/node': 17.0.21
       '@urql/vue': 0.6.1
@@ -217,9 +217,9 @@ importers:
       vue-router: 4.0.14
     dependencies:
       '@apollo/client': 3.5.10_graphql@16.3.0
-      '@project-serum/sol-wallet-adapter': 0.2.6_@solana+web3.js@1.37.1
+      '@project-serum/sol-wallet-adapter': 0.2.6_@solana+web3.js@1.37.2
       '@quasar/extras': 1.13.5
-      '@solana/web3.js': 1.37.1
+      '@solana/web3.js': 1.37.2
       '@urql/vue': 0.6.1_graphql@16.3.0+vue@3.2.31
       '@winter-love/hyper-components': link:../../packages/hyper-components
       '@winter-love/use': link:../../packages/use
@@ -274,7 +274,7 @@ importers:
       '@project-serum/sol-wallet-adapter': 0.2.6
       '@quasar/app': 3.3.3
       '@quasar/extras': 1.13.5
-      '@solana/web3.js': 1.37.1
+      '@solana/web3.js': 1.37.2
       '@types/lodash': 4.14.181
       '@types/node': 17.0.21
       '@types/validator': 13.7.2
@@ -329,10 +329,10 @@ importers:
       '@capacitor/core': 3.4.3
       '@capacitor/ios': 3.4.3_@capacitor+core@3.4.3
       '@namchee/vue-ztext': 1.0.0_vue@3.2.31
-      '@project-serum/sol-wallet-adapter': 0.2.6_@solana+web3.js@1.37.1
+      '@project-serum/sol-wallet-adapter': 0.2.6_@solana+web3.js@1.37.2
       '@quasar/app': 3.3.3_69cf53cc8b8836963002eb07105011ae
       '@quasar/extras': 1.13.5
-      '@solana/web3.js': 1.37.1
+      '@solana/web3.js': 1.37.2
       '@urql/vue': 0.6.1_graphql@16.3.0+vue@3.2.31
       '@vue/server-renderer': 3.2.31_vue@3.2.31
       '@vueuse/head': 0.7.5_vue@3.2.31
@@ -3409,12 +3409,6 @@ packages:
       '@ethersproject/logger': 5.6.0
     dev: false
 
-  /@ethersproject/bytes/5.5.0:
-    resolution: {integrity: sha512-ABvc7BHWhZU9PNM/tANm/Qx4ostPGadAuQzWTr3doklZOhDlmcBqclrQe/ZXUIj3K8wC28oYeuRa+A37tX9kog==}
-    dependencies:
-      '@ethersproject/logger': 5.5.0
-    dev: false
-
   /@ethersproject/bytes/5.6.1:
     resolution: {integrity: sha512-NwQt7cKn5+ZE4uDn+X5RAXLp46E1chXoaMmrxAyA0rblpxz8t58lVkrHXoRIn0lz1joQElQ8410GqhTqMOwc6g==}
     dependencies:
@@ -3573,10 +3567,6 @@ packages:
     resolution: {integrity: sha512-xYdWGGQ9P2cxBayt64d8LC8aPFJk6yWCawQi/4eJ4+oJdMMjEBMrIcIMZ9AxhwpPVmnBPrsB10PcXGmGAqgUEQ==}
     dev: false
 
-  /@ethersproject/logger/5.5.0:
-    resolution: {integrity: sha512-rIY/6WPm7T8n3qS2vuHTUBPdXHl+rGxWxW5okDfo9J4Z0+gRRZT0msvUdIJkE4/HS29GUMziwGaaKO2bWONBrg==}
-    dev: false
-
   /@ethersproject/logger/5.6.0:
     resolution: {integrity: sha512-BiBWllUROH9w+P21RzoxJKzqoqpkyM1pRnEKG69bulE9TSQD8SAIvTQqIMZmmCO8pUNkgLP1wndX1gKghSpBmg==}
 
@@ -3702,14 +3692,6 @@ packages:
     dependencies:
       '@ethersproject/bytes': 5.6.1
       '@ethersproject/logger': 5.6.0
-      hash.js: 1.1.7
-    dev: false
-
-  /@ethersproject/sha2/5.5.0:
-    resolution: {integrity: sha512-B5UBoglbCiHamRVPLA110J+2uqsifpZaTmid2/7W5rbtYVz6gus6/hSDieIU/6gaKIDcOj12WnOdiymEUHIAOA==}
-    dependencies:
-      '@ethersproject/bytes': 5.5.0
-      '@ethersproject/logger': 5.5.0
       hash.js: 1.1.7
     dev: false
 
@@ -7501,13 +7483,13 @@ packages:
       - encoding
       - supports-color
 
-  /@project-serum/sol-wallet-adapter/0.2.6_@solana+web3.js@1.37.1:
+  /@project-serum/sol-wallet-adapter/0.2.6_@solana+web3.js@1.37.2:
     resolution: {integrity: sha512-cpIb13aWPW8y4KzkZAPDgw+Kb+DXjCC6rZoH74MGm3I/6e/zKyGnfAuW5olb2zxonFqsYgnv7ev8MQnvSgJ3/g==}
     engines: {node: '>=10'}
     peerDependencies:
       '@solana/web3.js': ^1.5.0
     dependencies:
-      '@solana/web3.js': 1.37.1
+      '@solana/web3.js': 1.37.2
       bs58: 4.0.1
       eventemitter3: 4.0.7
     dev: false
@@ -7930,12 +7912,12 @@ packages:
       buffer: 6.0.3
     dev: false
 
-  /@solana/web3.js/1.37.1:
-    resolution: {integrity: sha512-1zm1blRU6ANb8bOfONibKkNKoMyzE1e0Z88MagyRLF1AmfHc+18lFvqxSQKUdazLMHcioZ28h+GfyAaeCT63iA==}
+  /@solana/web3.js/1.37.2:
+    resolution: {integrity: sha512-rgPidynwPTu8iLmS++aQbDGiPPtwjRmu+uQxF9jTNT7v3ifKIlS4HccMdjj4WDcYx8h2mUtQX5xkdk6liSbdvg==}
     engines: {node: '>=12.20.0'}
     dependencies:
       '@babel/runtime': 7.17.8
-      '@ethersproject/sha2': 5.5.0
+      '@ethersproject/sha2': 5.6.0
       '@solana/buffer-layout': 4.0.0
       bn.js: 5.2.0
       borsh: 0.7.0
