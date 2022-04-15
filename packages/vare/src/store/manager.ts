@@ -1,6 +1,7 @@
 import {freeze} from '@winter-love/utils'
 import {computed, ComputedRef, inject, reactive, UnwrapNestedRefs} from 'vue-demi'
 import {STORE_CONTEXT} from './symbols'
+import {cloneState} from './clone-state'
 
 export interface StoreManagerItem<T extends Record<string, any> = Record<string, any>> {
   state: UnwrapNestedRefs<T>
@@ -42,7 +43,8 @@ export type Plugin = (state: ComputedRef<Record<string, any>>, info?: StoreTreeI
 
 export const createManager = (info?: StoreTreeInfo): StoreManager => {
   const storeTree: UnwrapNestedRefs<StoreTree> = reactive({})
-  const state = computed(() => storeTree)
+  const stateTree: UnwrapNestedRefs<StoreTree> = reactive({})
+  const state = computed(() => stateTree)
   const _info = freeze(info)
   const store: ManagerData = freeze({
     info: _info,
@@ -56,6 +58,7 @@ export const createManager = (info?: StoreTreeInfo): StoreManager => {
     item: StoreManagerItem,
   ) => {
     storeTree[name] = item.state
+    stateTree[name] = cloneState(item.state)
   }
   const remove = (name: string) => {
     storeTree[name] = undefined

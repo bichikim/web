@@ -28,7 +28,7 @@ export const useBar = createStore('bar', () => {
   }
 })
 
-export const useJohn = createStore('john', (_, {initState}) => {
+export const useJohn = createStore('john', (initState) => {
   const name = ref(initState.name ?? 'john1')
   const changeName = () => {
     name.value = `${name.value}1`
@@ -41,9 +41,6 @@ export const useJohn = createStore('john', (_, {initState}) => {
 
 export const usePropsState = createStore({
   name: 'props-state',
-  props: {
-    name: {type: String},
-  },
   setup(props) {
     const {name} = toRefs(props)
     const nameRef = ref(name?.value ?? '')

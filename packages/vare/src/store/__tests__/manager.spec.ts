@@ -1,20 +1,24 @@
 import {flushPromises} from '@vue/test-utils'
-import {watch} from 'vue-demi'
+import {reactive, watch} from 'vue-demi'
 import {createManager} from 'src/store/manager'
 
 describe('manager', () => {
-  it.skip('should update stateTree', async () => {
+  it('should update stateTree', async () => {
     const watchFunction = jest.fn()
     const manager = createManager()
-    manager.set('foo', {props: {}, store: {name: 'foo'}})
-    manager.set('bar', {props: {}, store: {name: 'bar'}})
-    watch(manager.state.value, watchFunction)
+    const foo = reactive({
+      inc: () => null, name: 'foo',
+    })
+    const bar = reactive({
+      name: 'bar',
+    })
+    manager.set('foo', {state: foo})
+    manager.set('bar', {state: bar})
+    watch(manager.state, watchFunction, {deep: true})
     expect(manager.state.value.foo).toEqual({name: 'foo'})
     expect(manager.state.value.bar).toEqual({name: 'bar'})
-    // manager.update({
-    //   bar: {name: 'bar1'},
-    //   foo: {name: 'foo1'},
-    // })
+    foo.name = 'foo1'
+    bar.name = 'bar1'
     await flushPromises()
     expect(watchFunction).toBeCalledTimes(1)
     expect(manager.state.value.foo).toEqual({name: 'foo1'})
