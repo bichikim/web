@@ -1,6 +1,4 @@
 import {ref} from '../'
-import {mount} from '@vue/test-utils'
-import {defineComponent, h} from 'vue'
 
 describe('ref', () => {
   it('should run well', () => {
@@ -12,14 +10,6 @@ describe('ref', () => {
     expect(`${value}`).toBe('bar')
     const numberValue = ref(1)
     expect(numberValue + 1).toBe(2)
-  })
-  it('should run with Component', () => {
-    const Component = defineComponent({
-      setup() {
-        return () => (
-          h('div')
-        )
-      },
-    })
+    expect(numberValue + numberValue).toBe(2)
   })
 })
