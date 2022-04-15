@@ -1,6 +1,6 @@
 {
   "name": "@coong/server",
-  "version": "1.0.25-alpha.10",
+  "version": "1.0.25-alpha.11",
   "private": true,
   "scripts": {
     "build": "dotenv keystone build",
@@ -17,7 +17,7 @@
     "@prisma/client": "3.12.0",
     "@sendgrid/mail": "7.6.2",
     "@webauthn-lib/server": "0.1.0",
-    "@winter-love/utils": "^1.0.25-alpha.10",
+    "@winter-love/utils": "^1.0.25-alpha.11",
     "bs58": "5.0.0",
     "dotenv-cli": "5.1.0",
     "graphql": "15.8.0",
