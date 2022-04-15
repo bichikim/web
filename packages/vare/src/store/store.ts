@@ -1,5 +1,5 @@
 import {freeze} from '@winter-love/utils'
-import {getCurrentInstance, inject, onScopeDispose, reactive, Ref, UnwrapNestedRefs} from 'vue-demi'
+import {getCurrentInstance, inject, onScopeDispose, reactive, Ref, toRaw, UnwrapNestedRefs} from 'vue-demi'
 import {createUuid} from './create-uuid'
 import {StoreManager, StoreManagerItem, useStoreManager} from './manager'
 import {STORE_LOCAL_CONTEXT} from './symbols'
@@ -124,7 +124,7 @@ const createGlobalStore = <T extends Record<string, any>,
   if (savedState && !reset) {
     return savedState.state
   }
-  const initState = storeManager.initState[name] ?? {}
+  const initState = toRaw(storeManager.initState[name] ?? {})
   const newState = createSetup({
     initState, setup, storeManager,
   })
