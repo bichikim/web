@@ -1,6 +1,6 @@
 {
   "name": "@coong/client",
-  "version": "1.0.25-alpha.11",
+  "version": "1.0.25-alpha.12",
   "private": true,
   "description": "A Quasar Framework app",
   "author": "Bichi Kim <bichi@live.co.kr>",
@@ -31,7 +31,7 @@
     "@quasar/extras": "1.13.5",
     "@solana/web3.js": "1.37.2",
     "@urql/vue": "0.6.1",
-    "@winter-love/hyper-components": "^1.0.25-alpha.11",
+    "@winter-love/hyper-components": "^1.0.25-alpha.12",
     "@winter-love/use": "^1.0.25-alpha.11",
     "@winter-love/utils": "^1.0.25-alpha.11",
     "compression": "1.7.4",
@@ -45,7 +45,7 @@
     "quasar": "2.6.6",
     "serialize-javascript": "6.0.0",
     "validator": "13.7.0",
-    "vare": "^1.0.25-alpha.11",
+    "vare": "^1.0.25-alpha.12",
     "vue": "3.2.31",
     "vue-router": "4.0.14"
   },

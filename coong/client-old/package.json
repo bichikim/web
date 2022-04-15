@@ -1,6 +1,6 @@
 {
   "name": "@coong/client-old",
-  "version": "1.0.25-alpha.11",
+  "version": "1.0.25-alpha.12",
   "private": true,
   "scripts": {
     "build": "pnpm run build:ssr && pnpm run build:run-ssr",
@@ -36,7 +36,7 @@
     "@urql/vue": "0.6.1",
     "@vue/server-renderer": "3.2.31",
     "@vueuse/head": "0.7.5",
-    "@winter-love/hyper-components": "^1.0.25-alpha.11",
+    "@winter-love/hyper-components": "^1.0.25-alpha.12",
     "@winter-love/stitches": "^1.0.25-alpha.11",
     "@winter-love/use": "^1.0.25-alpha.11",
     "@winter-love/utils": "^1.0.25-alpha.11",
@@ -54,7 +54,7 @@
     "serve-static": "1.15.0",
     "tslib": "2.3.1",
     "validator": "13.7.0",
-    "vare": "^1.0.25-alpha.11",
+    "vare": "^1.0.25-alpha.12",
     "vite-plugin-ssr-vue": "^1.0.25-alpha.3",
     "vue": "3.2.31",
     "vue-i18n": "9.1.9",

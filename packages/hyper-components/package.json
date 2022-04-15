@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/hyper-components",
-  "version": "1.0.25-alpha.11",
+  "version": "1.0.25-alpha.12",
   "description": "hyper components base on quasar and stitches",
   "keywords": [
     "typescript",
