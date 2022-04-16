@@ -1,4 +1,5 @@
 import {entropyToMnemonic, mnemonicToEntropy} from '@ethersproject/hdnode'
+import {computed, effect, reactive, ref, UnwrapNestedRefs} from '@vue/reactivity'
 import {parseJson, stringifyJson} from '@winter-love/utils'
 import type {
   AccountWithFunctions,
@@ -10,7 +11,6 @@ import type {
 import type {Socket} from 'net'
 import {createEvents} from './events'
 import {Account, Wallet, WalletItemTypes} from './types'
-import {computed, effect, reactive, ref, UnwrapNestedRefs} from '@vue/reactivity'
 
 export interface CreateKlaytnWalletOptions {
   saveKey?: string
@@ -26,6 +26,7 @@ export interface KlaytnWalletItemTypes extends WalletItemTypes {
 export class CaverModuleError extends Error {
   //
 }
+
 const getAccounts = (account: AccountWithFunctions): Account<string> => {
   return {
     address: account.address,
@@ -96,6 +97,7 @@ export const createKlaytnWallet = (
     }
     return Promise.resolve()
   }
+
   const sign = (message: string) => {
     const account = accountRef.value
     if (!caver || !account) {
@@ -106,6 +108,7 @@ export const createKlaytnWallet = (
     const result: any = account.sign(message)
     return Promise.resolve(result?.signature)
   }
+
   const sendTransaction = async (transaction: CreateTransactionObject) => {
     const account = accountRef.value
     if (caver && account) {
@@ -115,7 +118,8 @@ export const createKlaytnWallet = (
       return caver.rpc.klay.sendRawTransaction(rlpEncoded)
     }
   }
-  const createContrast = (contractAddress: string, abi: any) => {
+
+  const createContract = (contractAddress: string, abi: any) => {
     if (caver) {
       return caver.contract.create(abi, contractAddress)
     }
@@ -124,6 +128,7 @@ export const createKlaytnWallet = (
   const accountAddressRef = computed(() => {
     return accountRef.value?.address
   })
+
   const providerRef = computed({
     get: () => {
       if (caver) {
@@ -151,7 +156,7 @@ export const createKlaytnWallet = (
     ...events,
     accountAddress: accountAddressRef,
     createAccount,
-    createContrast,
+    createContract,
     loadAccount,
     mnemonicPhrase: mnemonicPhraseRef,
     provider: providerRef,

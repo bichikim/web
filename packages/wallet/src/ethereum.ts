@@ -2,7 +2,7 @@ import {TransactionResponse} from '@ethersproject/abstract-provider'
 import {BigNumberish} from '@ethersproject/bignumber'
 import {AccessListish} from '@ethersproject/transactions'
 import {computed, effect, reactive, ref, UnwrapNestedRefs} from '@vue/reactivity'
-import {Contract, Wallet as EthersWallet, providers} from 'ethers'
+import {Contract, providers, Wallet as EthersWallet} from 'ethers'
 import type {Socket} from 'net'
 import {createEvents} from './events'
 import {Account, BytesLike, Wallet, WalletItemTypes} from './types'
@@ -54,11 +54,13 @@ export const createEthereumWallet = (
   const events = createEvents()
   const {saveKey = 'winter-love--ethereum-wallet'} = options
   const walletRef = ref<EthersWallet | undefined>()
+
   const createAccount = () => {
     const wallet = EthersWallet.createRandom()
     walletRef.value = wallet
     return getAccounts(wallet)
   }
+
   const saveAccount = async (password: string, progress?: (value: number) => any): Promise<Account<string> | void> => {
     const wallet = walletRef.value
     if (!wallet) {
@@ -70,6 +72,7 @@ export const createEthereumWallet = (
       return getAccounts(wallet)
     }
   }
+
   const loadAccount = async (password: string, progress?: (value: number) => any): Promise<Account<string> | void> => {
     if (typeof globalThis.localStorage !== 'object') {
       return
@@ -81,11 +84,13 @@ export const createEthereumWallet = (
       return getAccounts(wallet)
     }
   }
+
   const restoreAccount = (mnemonic: string): Account<string> => {
     const wallet = EthersWallet.fromMnemonic(mnemonic)
     walletRef.value = wallet
     return getAccounts(wallet)
   }
+
   const sign = (message: string): Promise<string | void> => {
     const wallet = walletRef.value
     if (!wallet) {
@@ -93,6 +98,7 @@ export const createEthereumWallet = (
     }
     return wallet.signMessage(message)
   }
+
   const _connect = (provider?: any) => {
     const wallet = walletRef.value
     if (!wallet) {
@@ -100,6 +106,7 @@ export const createEthereumWallet = (
     }
     wallet.connect(provider ?? wallet.provider ?? new providers.InfuraProvider('ropsten'))
   }
+
   const sendTransaction = (transaction: TransactionRequest): Promise<any> => {
     const wallet = walletRef.value
     if (!wallet) {
@@ -107,16 +114,19 @@ export const createEthereumWallet = (
     }
     return wallet.sendTransaction(transaction)
   }
-  const createContrast = (contractAddress: string, abi: any) => {
+
+  const createContract = (contractAddress: string, abi: any) => {
     const wallet = walletRef.value
     if (!wallet) {
       return
     }
     return new Contract(contractAddress, abi, wallet)
   }
+
   const accountAddressRef = computed(() => {
     return walletRef.value?.address
   })
+
   const providerRef = computed({
     get: () => {
       return walletRef.value?.address
@@ -125,6 +135,7 @@ export const createEthereumWallet = (
       _connect(value)
     },
   })
+
   const mnemonicPhraseRef = computed(() => {
     return walletRef.value?.mnemonic?.phrase
   })
@@ -136,11 +147,12 @@ export const createEthereumWallet = (
       events.emit('update:wallet', account)
     }
   })
+
   return reactive({
     ...events,
     accountAddress: accountAddressRef,
     createAccount,
-    createContrast,
+    createContract,
     loadAccount,
     mnemonicPhrase: mnemonicPhraseRef,
     provider: providerRef,

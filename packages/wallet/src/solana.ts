@@ -63,8 +63,12 @@ export const createSolanaWallet = (
     return getAccounts(keypair)
   }
 
-  const createContrast = () => {
-    // todo createContrast
+  const createContract = () => {
+    console.warn('todo I need to code')
+    const keypair = keypairRef.value
+    if (!keypair) {
+      return Promise.resolve()
+    }
     const transaction = new Transaction()
   }
 
@@ -143,7 +147,7 @@ export const createSolanaWallet = (
     ...events,
     accountAddress: accountAddressRef,
     createAccount,
-    createContrast,
+    createContract,
     loadAccount,
     mnemonicPhrase: mnemonicPhraseRef,
     provider: providerRef,

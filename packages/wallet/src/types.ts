@@ -31,7 +31,7 @@ export interface WalletItemTypes {
 export interface Wallet<TransactionRequest extends WalletItemTypes> extends WalletEvent {
   readonly accountAddress?: string
   readonly createAccount: (entropy?: string) => Account<WalletItemTypes['privateKey']>
-  readonly createContrast: (contractAddress: string, abi: any) => any
+  readonly createContract: (contractAddress: string, abi: any) => any
   readonly loadAccount: (password: string, progress?: (value: number) => any) =>
     Promise<Account<WalletItemTypes['privateKey']> | void>
   readonly mnemonicPhrase: string | undefined
