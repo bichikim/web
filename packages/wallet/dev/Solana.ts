@@ -14,6 +14,10 @@ export const Solana = defineComponent({
       signature.value = await solana.sign('hello')
     }
 
+    const save = () => {
+      return solana.saveAccount('foo-bar', (progress) => console.log(progress))
+    }
+
     const createNewAccount = () => {
       solana.createAccount()
     }
@@ -22,6 +26,7 @@ export const Solana = defineComponent({
         h('span', {}, address.value),
         h('div', {}, signature.value),
         h('button', {onClick: sign}, 'sign'),
+        h('button', {onClick: save}, 'save'),
         h('button', {onClick: createNewAccount}, 'createNewAccount'),
       ])
     )

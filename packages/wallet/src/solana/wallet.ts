@@ -1,4 +1,4 @@
-import {decryptKeystore, encryptKeystore} from '@ethersproject/json-wallets'
+/* eslint-disable id-length,no-magic-numbers */
 import {
   Cluster,
   clusterApiUrl,
@@ -16,7 +16,8 @@ import {utils} from 'ethers'
 import {Socket} from 'net'
 import {Account, Wallet, WalletItemTypes} from 'src/types'
 import nacl from 'tweetnacl'
-import {createEvents} from './events'
+import {createEvents} from '../events'
+import {decryptKeypair, encryptKeypair} from './json-wallet'
 
 export interface CreateSolanaWalletOptions {
   saveKey?: string
@@ -79,14 +80,11 @@ export const createSolanaWallet = (
     }
     const jsonString = globalThis.localStorage.getItem(saveKey)
     if (typeof jsonString === 'string') {
-      const textEncoder = new TextEncoder()
-      const keyStore = await decryptKeystore(jsonString, password, progress)
-      const keypair = new Keypair({
-        publicKey: textEncoder.encode(keyStore.address),
-        secretKey: textEncoder.encode(keyStore.privateKey),
-      })
-      keypairRef.value = keypair
-      return getAccounts(keypair)
+      const keypair = await decryptKeypair(JSON.parse(jsonString), password, progress)
+      if (keypair) {
+        keypairRef.value = keypair
+        return getAccounts(keypair)
+      }
     }
   }
 
@@ -96,12 +94,8 @@ export const createSolanaWallet = (
       return
     }
     if (typeof globalThis.localStorage === 'object') {
-      const textDecoder = new TextDecoder()
-      const jsonString = await encryptKeystore({
-        address: keypair.publicKey.toString(),
-        privateKey: textDecoder.decode(keypair.secretKey),
-      }, password, undefined, progress)
-      globalThis.localStorage.setItem(saveKey, jsonString)
+      const data = await encryptKeypair(keypair, password, progress)
+      globalThis.localStorage.setItem(saveKey, JSON.stringify(data))
       return getAccounts(keypair)
     }
   }
