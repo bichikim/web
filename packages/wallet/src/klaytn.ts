@@ -11,6 +11,7 @@ import type {
 import type {Socket} from 'net'
 import {createEvents} from './events'
 import {Account, Wallet, WalletItemTypes} from './types'
+import {Buffer} from 'buffer'
 
 export interface CreateKlaytnWalletOptions {
   saveKey?: string
@@ -41,9 +42,14 @@ export const createKlaytnWallet = (
 ): UnwrapNestedRefs<Wallet<KlaytnWalletItemTypes>> => {
   const events = createEvents()
   const {saveKey = 'winter-love--klaytn-wallet'} = options
-  const caver: Caver | undefined = typeof window === 'object' ? (window as any).caver : undefined
+  const caver: Caver | undefined = typeof window === 'object' ? new window.Caver() : undefined
   const accountRef = ref<AccountWithFunctions | undefined>()
   const mnemonicPhraseRef = ref<string | undefined>()
+
+  if (typeof window === 'object') {
+    // polyfill buffer
+    window.Buffer = Buffer
+  }
 
   const createAccount = (entropy?: string): Account<string> => {
     if (!caver) {

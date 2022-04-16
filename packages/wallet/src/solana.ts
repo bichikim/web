@@ -1,4 +1,3 @@
-import {entropyToMnemonic, mnemonicToEntropy} from '@ethersproject/hdnode'
 import {decryptKeystore, encryptKeystore} from '@ethersproject/json-wallets'
 import {
   Cluster,
@@ -42,6 +41,7 @@ export const createSolanaWallet = (
   net?: Socket,
   options: CreateSolanaWalletOptions = {},
 ): UnwrapNestedRefs<Wallet<SolanaWalletItemTypes>> => {
+  const arraySize = 32
   const events = createEvents()
   const {saveKey = 'winter-love--solana-wallet'} = options
   const keypairRef = ref<Keypair | undefined>()
@@ -56,15 +56,16 @@ export const createSolanaWallet = (
   })
 
   const createAccount = () => {
-    const textDecoder = new TextDecoder()
-    const keypair = Keypair.generate()
-    mnemonicPhraseRef.value = entropyToMnemonic(textDecoder.decode(keypair.secretKey))
+    const randomBytes = utils.randomBytes(arraySize)
+    const mnemonic = utils.entropyToMnemonic(randomBytes)
+    const seed = utils.mnemonicToSeed(mnemonic, '')
+    const keypair = Keypair.fromSeed(utils.toUtf8Bytes(seed).slice(0, arraySize))
+    mnemonicPhraseRef.value = mnemonic
     keypairRef.value = keypair
     return getAccounts(keypair)
   }
 
   const createContract = () => {
-    console.warn('todo I need to code')
     const keypair = keypairRef.value
     if (!keypair) {
       return Promise.resolve()
@@ -125,16 +126,13 @@ export const createSolanaWallet = (
     }
     const messageBytes = utils.toUtf8Bytes(message)
 
-    const textDecoder = new TextDecoder()
-
     // eslint-disable-next-line import/no-named-as-default-member
-    return Promise.resolve(textDecoder.decode(nacl.sign.detached(messageBytes, keypair.secretKey)))
+    return Promise.resolve(utils.hexlify(nacl.sign.detached(messageBytes, keypair.secretKey)))
   }
 
   const restoreAccount = (mnemonic: string) => {
-    const textEncoder = new TextEncoder()
-    const secretKey = mnemonicToEntropy(mnemonic)
-    const keypair = Keypair.fromSecretKey(textEncoder.encode(secretKey))
+    const seed = utils.mnemonicToSeed(mnemonic, '')
+    const keypair = Keypair.fromSeed(utils.toUtf8Bytes(seed).slice(0, arraySize))
     keypairRef.value = keypair
     return getAccounts(keypair)
   }
