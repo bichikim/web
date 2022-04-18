@@ -1,11 +1,11 @@
 import {TransactionResponse} from '@ethersproject/abstract-provider'
 import {BigNumberish} from '@ethersproject/bignumber'
 import {AccessListish} from '@ethersproject/transactions'
-import {computed, effect, reactive, ref, UnwrapNestedRefs} from '@vue/reactivity'
-import {Contract, providers, Wallet as EthersWallet} from 'ethers'
+import {computed, reactive, ref, UnwrapNestedRefs} from '@vue/reactivity'
+import {Contract, Wallet as EthersWallet, providers} from 'ethers'
 import type {Socket} from 'net'
-import {createEvents} from './events'
-import {Account, BytesLike, Wallet, WalletItemTypes} from './types'
+import {Account, BytesLike, Wallet, WalletItemTypes} from '../types'
+import {EncryptOptions} from '@ethersproject/json-wallets'
 
 export interface CreateEthereumWalletOptions {
   saveKey?: string
@@ -40,6 +40,7 @@ export type TransactionRequest = {
 }
 
 export interface EthereumWalletItemTypes extends WalletItemTypes {
+  encrypt: EncryptOptions
   privateKey: string
   transaction: TransactionRequest
   transactionResponse: TransactionResponse
@@ -51,7 +52,6 @@ export const createEthereumWallet = (
   net?: Socket,
   options: CreateEthereumWalletOptions = {},
 ): UnwrapNestedRefs<Wallet<EthereumWalletItemTypes>> => {
-  const events = createEvents()
   const {saveKey = 'winter-love--ethereum-wallet'} = options
   const walletRef = ref<EthersWallet | undefined>()
 
@@ -61,19 +61,26 @@ export const createEthereumWallet = (
     return getAccounts(wallet)
   }
 
-  const saveAccount = async (password: string, progress?: (value: number) => any): Promise<Account<string> | void> => {
+  const saveAccount = async (
+    password: string,
+    progress?: (value: number) => any,
+    options?: EncryptOptions,
+  ): Promise<Account<string> | void> => {
     const wallet = walletRef.value
     if (!wallet) {
       return
     }
     if (typeof globalThis.localStorage === 'object') {
-      const jsonString = await wallet.encrypt(password, progress)
+      const jsonString = await wallet.encrypt(password, options, progress)
       globalThis.localStorage.setItem(saveKey, jsonString)
       return getAccounts(wallet)
     }
   }
 
-  const loadAccount = async (password: string, progress?: (value: number) => any): Promise<Account<string> | void> => {
+  const loadAccount = async (
+    password: string,
+    progress?: (value: number) => any,
+  ): Promise<Account<string> | void> => {
     if (typeof globalThis.localStorage !== 'object') {
       return
     }
@@ -140,16 +147,7 @@ export const createEthereumWallet = (
     return walletRef.value?.mnemonic?.phrase
   })
 
-  effect(() => {
-    const wallet = walletRef.value
-    if (wallet) {
-      const account = getAccounts(wallet)
-      events.emit('update:wallet', account)
-    }
-  })
-
   return reactive({
-    ...events,
     accountAddress: accountAddressRef,
     createAccount,
     createContract,

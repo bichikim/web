@@ -1,7 +1,7 @@
 
 import {toMutRef} from '../'
 import {mount} from '@vue/test-utils'
-import {defineComponent, h} from 'vue-demi'
+import {defineComponent, h, toRef, reactive} from 'vue-demi'
 
 describe('to-mut-ref', () => {
   it('should change ref', async () => {
@@ -51,5 +51,19 @@ describe('to-mut-ref', () => {
 
     await wrapper.get('#button').trigger('click')
     expect(wrapper.get('#text').text()).toBe('john11')
+  })
+})
+
+describe('to-ref', () => {
+  it('should change ref', () => {
+    const state = reactive({
+      bar: 'bar',
+      foo: 'foo',
+    })
+    const foo = toRef(state, 'foo')
+    expect(foo.value).toBe('foo')
+    foo.value = 'foo1'
+    expect(foo.value).toBe('foo1')
+    expect(state.foo).toBe('foo1')
   })
 })

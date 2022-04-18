@@ -40,7 +40,6 @@ export const createKlaytnWallet = (
   net?: Socket,
   options: CreateKlaytnWalletOptions = {},
 ): UnwrapNestedRefs<Wallet<KlaytnWalletItemTypes>> => {
-  const events = createEvents()
   const {saveKey = 'winter-love--klaytn-wallet'} = options
   const caver: Caver | undefined = typeof window === 'object' ? new window.Caver() : undefined
   const accountRef = ref<AccountWithFunctions | undefined>()
@@ -155,11 +154,9 @@ export const createKlaytnWallet = (
     }
     // caver 는 전역으로 keyring 이란걸 들고 있고 전송 요청등에서 사용 한다
     caver.wallet.add(caver.wallet.keyring.createFromPrivateKey(account.privateKey))
-    events.emit('update:wallet', getAccounts(account))
   })
 
   return reactive({
-    ...events,
     accountAddress: accountAddressRef,
     createAccount,
     createContract,

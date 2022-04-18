@@ -12,7 +12,7 @@ export interface ToMutRefProps<Props extends Record<string, any>, Key extends ke
 export type ToMutRefHandle<Props extends Record<string, any>, Key extends keyof Props> = (data: Props[Key]) => any
 
 /**
- * toMutRef 는 vue 에 toRef 와 달리 readonly 가 아닙니다 리턴된 ref 값은 변경 가능합니다
+ * toMutRef 는 vue 에 toRef 와 달리 readonly 를 안전하게 처리하고 값을 변경 할 수 있습니다  readonly 일경우 props 는 변경하지 않습니다
  * @param props
  * @param key
  * @useful ⭐⭐⭐⭐

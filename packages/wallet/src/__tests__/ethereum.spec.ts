@@ -11,7 +11,6 @@ describe('createEthereumWallet', () => {
       globalThis.setImmediate = keep
     })
     it('should create an account', () => {
-      console.log(typeof setImmediate, '_----------')
       const wallet = createEthereumWallet()
       const account = wallet.createAccount()
       console.log(account)

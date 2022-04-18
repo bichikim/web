@@ -16,7 +16,6 @@ import {utils} from 'ethers'
 import {Socket} from 'net'
 import {Account, Wallet, WalletItemTypes} from 'src/types'
 import nacl from 'tweetnacl'
-import {createEvents} from '../events'
 import {decryptKeypair, encryptKeypair} from './json-wallet'
 
 export interface CreateSolanaWalletOptions {
@@ -43,7 +42,6 @@ export const createSolanaWallet = (
   options: CreateSolanaWalletOptions = {},
 ): UnwrapNestedRefs<Wallet<SolanaWalletItemTypes>> => {
   const arraySize = 32
-  const events = createEvents()
   const {saveKey = 'winter-love--solana-wallet'} = options
   const keypairRef = ref<Keypair | undefined>()
   const mnemonicPhraseRef = ref<string | undefined>()
@@ -136,7 +134,6 @@ export const createSolanaWallet = (
   })
 
   return reactive({
-    ...events,
     accountAddress: accountAddressRef,
     createAccount,
     createContract,

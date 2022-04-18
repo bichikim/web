@@ -18,17 +18,18 @@ export interface OnEvent {
 export interface WalletEvent {
   emit: (event: Event, ...args: any[]) => void
   on: OnEvent
-  once: (event: Event, callback: (account: Account<any>) => any) => Unsubscribe
+  once: (event: Event, callback: (wallet: Wallet<any>) => any) => Unsubscribe
   stopAll: () => void
 }
 
 export interface WalletItemTypes {
+  encrypt: any
   privateKey: any
   transaction: any
   transactionResponse: any
 }
 
-export interface Wallet<TransactionRequest extends WalletItemTypes> extends WalletEvent {
+export interface Wallet<TransactionRequest extends WalletItemTypes> {
   readonly accountAddress?: string
   readonly createAccount: (entropy?: string) => Account<WalletItemTypes['privateKey']>
   readonly createContract: (contractAddress: string, abi: any) => any
@@ -37,7 +38,7 @@ export interface Wallet<TransactionRequest extends WalletItemTypes> extends Wall
   readonly mnemonicPhrase: string | undefined
   provider: any | undefined
   readonly restoreAccount: (mnemonic: string) => Account<WalletItemTypes['privateKey']>
-  readonly saveAccount: (password: string, progress?: (value: number) => any) =>
+  readonly saveAccount: (password: string, progress?: (value: number) => any, options?: WalletItemTypes['encrypt']) =>
     Promise<Account<WalletItemTypes['privateKey']> | void>
   readonly sendTransaction: (transaction: TransactionRequest['transaction']) =>
     Promise<WalletItemTypes['transactionResponse'] | undefined>
