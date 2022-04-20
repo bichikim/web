@@ -46,6 +46,10 @@ export const createSolanaWallet = (
   const keypairRef = ref<Keypair | undefined>()
   const mnemonicPhraseRef = ref<string | undefined>()
   const providerRef = ref(provider)
+
+  /**
+   * connection by provider
+   */
   const connectionRef = computed(() => {
     const provider = providerRef.value
     if (provider) {
@@ -65,6 +69,7 @@ export const createSolanaWallet = (
   }
 
   const createContract = () => {
+    // https://medium.com/@lianxiongdi/solana-development-7-how-to-interact-with-smart-contract-938c46433b43
     const keypair = keypairRef.value
     if (!keypair) {
       return Promise.resolve()
