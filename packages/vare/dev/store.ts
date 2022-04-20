@@ -29,7 +29,7 @@ export const useBar = createStore('bar', () => {
 })
 
 export const useJohn = createStore('john', (initState) => {
-  const name = ref(initState.name ?? 'john1')
+  const name = ref<string>(initState.name ?? 'john1')
   const changeName = () => {
     name.value = `${name.value}1`
   }

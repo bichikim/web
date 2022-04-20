@@ -3,7 +3,8 @@
   "compilerOptions": {
     "jsx": "preserve",
     "types": ["@types/jest"],
-    "target": "ES2017",
+    "target": "ESNext",
+    "module": "ESNext",
     "baseUrl": ".",
     "skipLibCheck": true,
     "paths": {
@@ -36,10 +37,5 @@
       ]
     }
   },
-  "include": [
-    "src/**/*.ts",
-    "src/**/*.d.ts",
-    "src/**/*.tsx",
-    "src/**/*.vue"
-  ]
+  "exclude": ["/dist", ".quasar", "node_modules"]
 }

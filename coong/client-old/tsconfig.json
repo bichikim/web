@@ -40,10 +40,5 @@
       "target": "ES2015",
       "module": "CommonJS"
     }
-  },
-  "include": [
-    "run-ssr/**/*",
-    "vite-vue-ssr/**/*",
-    "src/**/*",
-  ]
+  }
 }

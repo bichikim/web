@@ -3,9 +3,9 @@ import {usePropsState} from './store'
 
 export const PropsState = defineComponent({
   name: 'PropsState',
-  setup(props) {
+  setup() {
     const name = ref('foo')
-    const propsState = usePropsState({name})
+    const propsState = usePropsState()
     const nameRef = computed(() => propsState.name)
     const ageRef = computed(() => propsState.age)
     const onChange = () => {

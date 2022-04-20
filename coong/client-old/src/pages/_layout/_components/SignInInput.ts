@@ -1,7 +1,7 @@
-import {defineComponent, h, PropType, toRefs} from 'vue'
-import {QBtn, QInput, QTooltip} from 'quasar'
 import {ionMailSharp, ionWalletSharp} from '@quasar/extras/ionicons-v6'
+import {QBtn, QInput, QTooltip} from 'quasar'
 import {className, csx} from 'src/plugins/hyper-components'
+import {defineComponent, h, PropType, toRefs} from 'vue'
 
 export type SignInKind = 'email' | 'wallet'
 

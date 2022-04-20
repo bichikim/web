@@ -1,9 +1,8 @@
 import {useRequest} from 'boot/graphql-request'
-import {defineStore} from 'vare'
-import {computed, reactive, ref} from 'vue'
-import {useWallet} from 'src/hooks/wallet'
 import {SignInMethod} from 'src/graphql'
-import {toUndefined} from '@winter-love/utils'
+import {useWallet} from 'src/hooks/wallet'
+import {defineStore} from 'vare'
+import {computed, ref} from 'vue'
 
 export const useUser = defineStore({
   name: 'user',
