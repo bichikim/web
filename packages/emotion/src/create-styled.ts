@@ -90,7 +90,7 @@ export const createStyled = (emotion: _Emotion & {theme?: any}) => {
         },
         name: name || label || 'emotion',
         props: margeProps({...stylePropsOptions, ...(stylePortal ? {[stylePortal]: null} : {})}, defaultProps),
-        setup(props, {attrs, slots}) {
+        setup(props: any, {attrs, slots}) {
           const theme = useTheme(masterTheme)
           const cache = inject(EMOTION_CACHE_CONTEXT, masterCache)
 

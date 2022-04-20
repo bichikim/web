@@ -1,6 +1,6 @@
 import {defineComponent, h, withDirectives} from 'vue'
 import {mount} from '@vue/test-utils'
-import {provideTrackPayload, trackDirective, useTrack} from '../'
+import {provideAnalytics, trackDirective, useTrack} from '../'
 
 describe('analytics', () => {
   const _window: any = window
@@ -18,7 +18,7 @@ describe('analytics', () => {
       const dataLayer: any = _window.dataLayer
       const Root = defineComponent({
         setup: () => {
-          provideTrackPayload({
+          provideAnalytics({
             foo: 'foo',
           })
           return () => (
@@ -80,7 +80,7 @@ describe('analytics', () => {
       const dataLayer: any = _window.dataLayer
       const Root = defineComponent({
         setup: () => {
-          provideTrackPayload({provided: 'provided'})
+          provideAnalytics({provided: 'provided'})
           return () => (
             withDirectives(h(Component, {id: 'target'}, () => [
               'test',

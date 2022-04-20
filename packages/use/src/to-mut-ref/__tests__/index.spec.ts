@@ -1,7 +1,6 @@
-
-import {toMutRef} from '../'
 import {mount} from '@vue/test-utils'
-import {defineComponent, h, toRef, reactive} from 'vue-demi'
+import {defineComponent, h, reactive, toRef} from 'vue-demi'
+import {toMutRef} from '../'
 
 describe('to-mut-ref', () => {
   it('should change ref', async () => {

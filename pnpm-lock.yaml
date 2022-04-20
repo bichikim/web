@@ -748,11 +748,11 @@ importers:
       '@vue/test-utils': ^2.0.0-rc.17
       '@winter-love/utils': ^1.0.25-alpha.11
       lodash: 4.17.21
-      vue: ^3.2.31
+      vue: ^3.2.33
     dependencies:
-      '@vue/test-utils': 2.0.0-rc.17_vue@3.2.31
+      '@vue/test-utils': 2.0.0-rc.17_vue@3.2.33
       '@winter-love/utils': link:../utils
-      vue: 3.2.31
+      vue: 3.2.33
     devDependencies:
       lodash: 4.17.21
 
@@ -766,7 +766,7 @@ importers:
       debounce: ^1.2.1
       fast-json-stable-stringify: ^2.1.0
       lodash: ^4.17.21
-      vue: latest
+      vue: 3.2.33
       vue-demi: ^0.12.1
     dependencies:
       '@winter-love/utils': link:../utils
@@ -783,18 +783,22 @@ importers:
 
   packages/utils:
     specifiers:
+      '@types/debounce': 1.2.1
       '@types/js-cookie': 3.0.1
+      debounce: ^1.2.1
       fast-json-stable-stringify: ^2.1.0
       js-cookie: ^3.0.1
       micro-memoize: ^4.0.9
       react-fast-compare: ^3.2.0
       vue-demi: latest
     dependencies:
+      debounce: 1.2.1
       fast-json-stable-stringify: 2.1.0
       js-cookie: 3.0.1
       micro-memoize: 4.0.9
       react-fast-compare: 3.2.0
     devDependencies:
+      '@types/debounce': 1.2.1
       '@types/js-cookie': 3.0.1
       vue-demi: 0.12.5_vue@3.2.31
 
@@ -11665,12 +11669,12 @@ packages:
   /@vue/shared/3.2.33:
     resolution: {integrity: sha512-UBc1Pg1T3yZ97vsA2ueER0F6GbJebLHYlEi4ou1H5YL4KWvMOOWwpYo9/QpWq93wxKG6Wo13IY74Hcn/f7c7Bg==}
 
-  /@vue/test-utils/2.0.0-rc.17_vue@3.2.31:
+  /@vue/test-utils/2.0.0-rc.17_vue@3.2.33:
     resolution: {integrity: sha512-7LHZKsFRV/HqDoMVY+cJamFzgHgsrmQFalROHC5FMWrzPzd+utG5e11krj1tVsnxYufGA2ABShX4nlcHXED+zQ==}
     peerDependencies:
       vue: ^3.0.1
     dependencies:
-      vue: 3.2.31
+      vue: 3.2.33
     dev: false
 
   /@vue/test-utils/2.0.0-rc.19_vue@3.2.31:

@@ -2,6 +2,7 @@ import {debounce} from 'debounce'
 import {computed, onScopeDispose} from 'vue-demi'
 import {wrapRef} from 'src/wrap-ref'
 import {MayRef} from 'src/types'
+import {unwrapRef} from 'src/unwrap-ref'
 
 export type UseDebounceHandle<Args extends any[], R> = (...args: Args) => R
 
@@ -22,7 +23,9 @@ export const useDebounce = <Args extends any[], R>(
     return handle?.(...args)
   }
 
-  const waitRef = wrapRef(wait, {defaultValue: DEFAULT_WAIT})
+  const waitRef = computed<number>(() => {
+    return unwrapRef(wait) ?? DEFAULT_WAIT
+  })
   const immediateRef = wrapRef(immediate)
 
   const onCall = computed((): DebounceFunction<Args, R> => {

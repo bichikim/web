@@ -1,4 +1,4 @@
-import {FunctionalComponent, h, ref} from 'vue'
+import {FunctionalComponent, h, ref} from 'vue-demi'
 import {withState} from '../'
 
 export const Default = () => {

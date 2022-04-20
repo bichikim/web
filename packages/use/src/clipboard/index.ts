@@ -30,7 +30,9 @@ export const useClipboard = (
 
     stateRef.value = 'reading'
     const value = await clipboard.readText()
+    console.log(value)
     valueRef.value = value
+    console.log(valueRef.value)
     stateRef.value = 'idle'
     return value
   }

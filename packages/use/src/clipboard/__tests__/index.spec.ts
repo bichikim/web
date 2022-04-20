@@ -4,6 +4,7 @@ import {getNavigator, setTimeoutPromise} from '@winter-love/utils'
 import {flushPromises} from '@vue/test-utils'
 import {mountUse} from '@winter-love/test-use'
 import {useFakeTimers} from 'sinon'
+import {watch} from 'vue'
 
 jest.mock('src/element-event', () => {
   return {
@@ -75,6 +76,7 @@ describe('clipboard', () => {
 
     mock.setValue('foo')
     mock.trigger('copy')
+    await flushPromises()
     await flushPromises()
     expect(result.value).toBe('foo')
 

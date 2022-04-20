@@ -1,7 +1,8 @@
 /* eslint-disable max-params */
 import {MayRef} from 'src/types'
+import {unwrapRef} from 'src/unwrap-ref'
 import {wrapRef} from 'src/wrap-ref'
-import {getCurrentInstance, onMounted, onScopeDispose, Ref, watch} from 'vue-demi'
+import {computed, getCurrentInstance, onMounted, onScopeDispose, Ref, watch} from 'vue-demi'
 
 export type Listener<ElementEvent> = (event: ElementEvent) => any
 
@@ -44,8 +45,10 @@ export function useElementEvent<Key extends string>(
   } = options
   const instance = getCurrentInstance()
   const isInInstance = Boolean(instance)
-  const elementRef = wrapRef(element, {bindValue: false})
-  const isActiveRef = wrapRef(isActive, {initState: true})
+  const elementRef = computed(() => {
+    return unwrapRef(element)
+  })
+  const isActiveRef = wrapRef(isActive, {defaultValue: true})
 
   const handle = (event) => {
     listener(event)

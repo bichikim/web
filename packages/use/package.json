@@ -49,7 +49,7 @@
     "@types/sinon": "10.0.11",
     "@vue/server-renderer": "3.2.33",
     "@vue/test-utils": "2.0.0-rc.19",
-    "vue": "latest"
+    "vue": "3.2.33"
   },
   "publishConfig": {
     "access": "public"

@@ -1,5 +1,5 @@
-import {wrapRef, WrapRefOptions} from '../wrap-ref'
-import {MayRef} from '../types'
+import {wrapRef, WrapRefOptions} from 'src/wrap-ref'
+import {MayRef} from 'src/types'
 import {freeze} from '@winter-love/utils'
 
 /**
