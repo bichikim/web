@@ -1,4 +1,4 @@
-import {computed, isReadonly, ref, watchEffect, WritableComputedRef} from 'vue-demi'
+import {computed, isReadonly, ref, unref, watchEffect, WritableComputedRef} from 'vue-demi'
 
 export type IsEqual<Value> = (value: Value, oldValue: Value) => boolean
 
@@ -21,8 +21,8 @@ export const toMutRef = <Props extends Record<string, any>, Key extends keyof Pr
   props: Props,
   key: Key,
 ): WritableComputedRef<Props[Key]> => {
-  const valueMut = ref(props[key])
-  const _isReadonly = isReadonly(props[key]) || isReadonly(props)
+  const valueMut = ref(unref(props[key]))
+  const _isReadonly = isReadonly(props)
 
   const changeValue = (value) => {
     valueMut.value = value
