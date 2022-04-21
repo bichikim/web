@@ -3,7 +3,7 @@ import {HBox} from '@winter-love/hyper-components'
 import {csx} from 'boot/hyper-components'
 import {defineComponent, h, PropType, ref, toRefs} from 'vue'
 import {AudioButton} from './AudioButton'
-import {BackdropFilterText} from './BackdropFilterText'
+import {BackdropFilterText} from 'components/BackdropFilterText'
 import {SignInButton} from './SignInButton'
 import {SignInProgress} from './SignInProgress'
 import {VideoBackground} from './VideoBackground'
@@ -51,7 +51,7 @@ export const SignInPage = defineComponent({
           h(HBox, {
             css: {
               ai: 'center', color: 'mistyrose',
-              fd: 'column', fontSize: '3rem',
+              fd: 'column', fontSize: '4rem',
               fontWeight: 900, ps: 'relative',
             },
           }, () => [
@@ -65,13 +65,13 @@ export const SignInPage = defineComponent({
                   $$activeColor: 'rgba(200, 200, 200, 0.3)',
                   $$filter: 'blur(5px) hue-rotate(80deg)',
                   '@bp1': {
-                    fontSize: '3rem',
+                    fontSize: '4rem',
                   },
                   '@bp2': {
                     fontSize: '5rem',
                   },
                   '@bp3': {
-                    fontSize: '7rem',
+                    fontSize: '6rem',
                   },
                 },
               }), () => [

@@ -206,7 +206,7 @@ module.exports = {
     'id-length': ['error', {
       exceptions: [
         '_', 'x', 'y', 'z', 'p', 'm', 'h', 'w',
-        'b', 't', 'l', 'r',
+        'b', 't', 'l', 'r', 's', 'c',
       ],
     }],
     'import/named': 'off',

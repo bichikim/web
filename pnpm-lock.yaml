@@ -212,7 +212,7 @@ importers:
       serialize-javascript: 6.0.0
       typescript: 4.6.3
       validator: 13.7.0
-      vare: ^1.0.25-alpha.13
+      vare: workspace:*
       vue: 3.2.33
       vue-demi: '*'
       vue-router: 4.0.14

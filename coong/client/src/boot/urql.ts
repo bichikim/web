@@ -18,5 +18,5 @@ export const client = createClient({
 })
 
 export default boot(({app}) => {
-  install(app, client)
+  (install as any)(app, client)
 })

@@ -3,10 +3,6 @@ export interface SignResult {
   name?: string
   sessionToken: string
 }
-export interface UseWalletReturn {
-  sign: () => Promise<SignResult | undefined>
-  signature?: string
-}
 
 export interface UseWalletUnitReturn {
   connected: boolean

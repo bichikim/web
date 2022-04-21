@@ -6,7 +6,7 @@ const routes: RouteRecordRaw[] = [
       {component: () => import('pages/main'), path: ''},
       {component: () => import('pages/string-template'), path: 'string-template'},
     ],
-    component: () => import('pages/_layouts'),
+    component: () => import('layouts/DefaultLayout'),
     path: '/',
   },
 

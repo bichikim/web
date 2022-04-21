@@ -1,13 +1,11 @@
-import {useRequest} from 'boot/graphql-request'
-import {UseWalletReturn} from 'hooks/wallet/types'
-import {computed, reactive, ref, toRefs, UnwrapNestedRefs} from 'vue'
-import {useSolana} from './solana'
 import {toUndefined} from '@winter-love/utils'
+import {useRequest} from 'boot/graphql-request'
+import {computed, reactive, ref, toRefs} from 'vue'
+import {useSolana} from './solana'
 
 export type ProviderName = 'solana' | 'ethereum'
 
-export const useWallet = (): UnwrapNestedRefs<UseWalletReturn> => {
-  const emailRef = ref('')
+export const useWallet = () => {
   const request = useRequest()
   const solana = useSolana()
 
@@ -27,11 +25,7 @@ export const useWallet = (): UnwrapNestedRefs<UseWalletReturn> => {
     signature: signatureRef,
   } = toRefs(providerRef.value)
 
-  const requestCryptoSignMessage = async () => {
-    const email = emailRef?.value
-    if (!email) {
-      return
-    }
+  const requestCryptoSignMessage = async (email: string) => {
     const data = await request.cryptoSignMessage({input: {email}})
     signMessageRef.value = toUndefined(data.authenticateCryptoSignMessage)
   }
@@ -48,48 +42,19 @@ export const useWallet = (): UnwrapNestedRefs<UseWalletReturn> => {
     await provider.sign(signMessage)
   }
 
-  const requestAuthData = async () => {
-    const signMessage = signMessageRef.value
-    const walletAddress = walletAddressRef?.value
-    const signature = signatureRef?.value
-    const connected = connectedRef.value
-    if (!walletAddress || !signature || !connected || !signMessage) {
-      return
-    }
-    const data = await request.authenticateUserWithCryptoSignature({
-      input: {
-        message: signMessage,
-        publicKey: walletAddress,
-        signature,
-      },
-    })
-    const response = data.authenticateUserWithCryptoSignature
-    if (!response) {
-      return
-    }
-    const {sessionToken, item = {}} = response
-    if (!sessionToken) {
-      return
-    }
-    return {
-      ...item,
-      sessionToken,
-    }
-  }
-
-  const sign = async () => {
-    await requestCryptoSignMessage()
+  const sign = async (email: string) => {
+    await requestCryptoSignMessage(email)
     const signMessage = signMessageRef.value
     if (!signMessage) {
       return
     }
     await providerSign()
-    return requestAuthData()
   }
 
   return reactive({
     connected: connectedRef,
     sign,
+    signMessage: signMessageRef,
     signature: signatureRef,
     walletAddress: walletAddressRef,
   })

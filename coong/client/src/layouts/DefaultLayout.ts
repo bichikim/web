@@ -1,21 +1,26 @@
-import {SignInPage} from './_components/SignInPage'
-import {HBox, HBtn, HDialog, HLayout, HPageContainer} from '@winter-love/hyper-components'
-import {useUser} from 'src/store/user'
-import {computed, defineComponent, Fragment, h, ref, toRefs} from 'vue'
-import {RouterView} from 'vue-router'
-import {provideLayout} from './use-layout'
 import {ionCloseOutline} from '@quasar/extras/ionicons-v5'
+import {HBox, HBtn, HDialog, HLayout, HPageContainer} from '@winter-love/hyper-components'
 import {debug} from 'hooks/debug'
 import {SignInMethod} from 'src/graphql'
+import {useUser} from 'src/store/user'
+import {computed, defineComponent, Fragment, h, toRefs} from 'vue'
+import {RouterView} from 'vue-router'
+import {SignInPage} from './_components/SignInPage'
+import {provideDefaultLayout} from './use-default-layout'
 
 const PagesLayout = defineComponent({
   name: 'PagesLayout',
   setup() {
-    const {isMagicAuthLink} = provideLayout()
+    const layout = provideDefaultLayout()
+    const {isMagicAuthLink, isOpenAuth} = toRefs(layout)
     const user = useUser()
     const {email, method} = toRefs(user)
     const isSignIn = computed(() => user.isSignIn)
-    const isOpenAuth = ref(!isSignIn.value)
+    isOpenAuth.value = !isSignIn.value
+
+    const isOpenRef = computed(() => {
+      return isOpenAuth.value && !isSignIn.value
+    })
 
     const onCloseAuth = () => {
       isOpenAuth.value = false
@@ -43,11 +48,10 @@ const PagesLayout = defineComponent({
           h(HPageContainer, () => [
             h(RouterView),
           ]),
-
         ]),
         h(HDialog, {
           maximized: true,
-          modelValue: isOpenAuth.value,
+          modelValue: isOpenRef.value,
           persistent: true,
           transitionHide: 'slide-up',
           transitionShow: 'slide-down',

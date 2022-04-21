@@ -46,12 +46,17 @@ const addClassScope = (css?: Record<string, any>, withClasses?: string) => {
   }
 }
 
-const runCsxClassComponent = (system: CssComponent, csx?: VariantAndCss, withClasses?: string) => {
-  const {css, ...restCsx} = csx ?? {}
-  const _csx = {
+const addClassScopeWithVariant = (csx: VariantAndCss, withClasses?: string) => {
+  const {css, ...restCsx} = csx
+
+  return {
     ...restCsx,
     css: addClassScope(css, withClasses),
   }
+}
+
+const runCsxClassComponent = (system: CssComponent, csx?: VariantAndCss, withClasses?: string) => {
+  const _csx = addClassScopeWithVariant(csx ?? {}, withClasses)
   const result = system(_csx)
   if (!result.props) {
     return {}
@@ -80,8 +85,6 @@ export const useCsx = () => {
 }
 
 export type stitchesOptions = Parameters<CreateStitches>[0]
-
-export type FunctionComposer = (...args) => any
 
 export interface CreateHyperComponentsOptions<Prefix extends string = string,
   Media = Record<string, any>,

@@ -1,40 +1,65 @@
-import {HBox, HBtn, HGlow, HPage} from '@winter-love/hyper-components'
+/* eslint-disable sort-keys-fix/sort-keys-fix */
+import {HBox, HPage, useCsx} from '@winter-love/hyper-components'
+import {BackdropFilterText} from 'components/BackdropFilterText'
 import {debug} from 'hooks/debug'
-import {defineComponent, ref} from 'vue'
+import {useDefaultLayout} from 'layouts/use-default-layout'
+import {useUser} from 'src/store/user'
+import {defineComponent, toRefs} from 'vue'
+import {GradientBg} from './_component'
+
+const textShadow = '0 0 30px rgba(255,255,255,0.5), 0 0 15px rgba(255,255,255,0.5)'
 
 const IndexPage = defineComponent({
   name: 'IndexPage',
   setup: () => {
-    // useWriteEl()
-    const name = ref('foo')
-    const count = ref(1)
-    const count2 = ref(1)
+    const layout = useDefaultLayout()
+    const user = useUser()
+    const {isOpenAuth} = toRefs(layout)
+    const csx = useCsx()
 
-    const onIncrease = () => {
-      count.value += 1
+    const onOpenAuth = () => {
+      isOpenAuth.value = true
     }
 
-    const onIncrease2 = () => {
-      count2.value += 1
-    }
+    const {isSignIn} = toRefs(user)
 
-    // const yeah = await foo()
     debug({
-      count,
-      count2,
-      name,
+      //
+      isSignIn,
     })
 
     return () => (
-      <HPage css={{color: 'red'}}>
-        <HBox css={{bg: 'green'}}>{name.value}</HBox>
-        <HBox css={{bg: 'green'}}>{count.value}</HBox>
-        <HBox css={{bg: 'green'}}>{count2.value}</HBox>
-        <HBtn onClick={onIncrease}>onIncrease</HBtn>
-        <HBtn onClick={onIncrease2}>onIncrease2</HBtn>
-        <HBox css={{dp: 'flex', jc: 'center'}}>
-          <HGlow><HBox css={{bg: 'red', height: 50, width: 100}}>foo</HBox></HGlow>
-        </HBox>
+      <HPage css={{bg: 'black'}}>
+        <GradientBg css={{ai: 'center', fd: 'column', gap: 15, jc: 'center'}}>
+          <BackdropFilterText
+            {...csx({
+              css: {
+                $$activeColor: 'rgba(200, 200, 200, 0.3)',
+                $$filter: 'blur(5px)',
+                fontSize: '6rem',
+                fontWeight: 900,
+              },
+            })}
+          >
+            Coong
+          </BackdropFilterText>
+          <HBox
+            css={{
+              c: 'white',
+              s: '$h5',
+              textShadow,
+            }}
+          >
+            {
+              isSignIn.value
+                ? <HBox>We are under construction :)</HBox>
+                : <HBox
+                  as="button"
+                  onClick={onOpenAuth}
+                >Login</HBox>
+            }
+          </HBox>
+        </GradientBg>
       </HPage>
     )
   },

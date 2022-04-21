@@ -19,6 +19,7 @@ export const stitchesUtils = {
   bg: (value: any) => ({backgroundColor: value}),
   bl: (value: any) => ({bottom: value, left: value}),
   br: (value: any) => ({bottom: value, right: value}),
+  c: (value: any) => ({color: value}),
   cbg: contrastBackgroundColor,
   cc: contrastColor,
   contrastBackgroundColor,
@@ -33,16 +34,6 @@ export const stitchesUtils = {
   h: (value: any) => ({height: value}),
   jc: (value: any) => ({justifyContent: value}),
   l: (value: any) => ({left: value}),
-  linearGradient: (value: any) => {
-    if (Array.isArray(value)) {
-      const [first = '#03a9f4', second = '#f441a5'] = value
-      return {
-        background: `linear-gradient(90deg, ${first}, ${second}, #ffeb3b, ${first})`,
-        backgroundSize: '400%',
-      }
-    }
-    return {}
-  },
   m: (value: any) => ({margin: value}),
   maxH: (value: any) => ({maxHeight: value}),
   maxSize: (value: any) => ({
@@ -78,6 +69,7 @@ export const stitchesUtils = {
   rt: (value: any) => ({borderTopLeftRadius: value, borderTopRightRadius: value}),
   rtl: (value: any) => ({borderBottomLeftRadius: value}),
   rtr: (value: any) => ({borderTopRightRadius: value}),
+  s: (value: any) => ({fontSize: value}),
   shrink: (value: any) => ({flexShrink: value}),
   size: (value: any) => ({height: value, width: value}),
   t: (value: any) => ({top: value}),
