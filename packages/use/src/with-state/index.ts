@@ -43,6 +43,11 @@ export type RawBindings<Props extends Record<string, any>, Emit extends EmitsOpt
   [P in keyof Props]: Ref<Props[P]> | Props[P]
 } & Partial<EmitsToProps<Emit>>
 
+/**
+ * @experimental
+ * @param component
+ * @param options
+ */
 export const withState = <PropsOptions = {},
   ComponentProps extends object = {},
   Emit extends EmitsOptions = [],

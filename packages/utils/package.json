@@ -33,12 +33,14 @@
     "prepare": "tsup-node --dts"
   },
   "dependencies": {
+    "debounce": "^1.2.1",
     "fast-json-stable-stringify": "^2.1.0",
     "js-cookie": "^3.0.1",
     "micro-memoize": "^4.0.9",
     "react-fast-compare": "^3.2.0"
   },
   "devDependencies": {
+    "@types/debounce": "1.2.1",
     "@types/js-cookie": "3.0.1",
     "vue-demi": "latest"
   },

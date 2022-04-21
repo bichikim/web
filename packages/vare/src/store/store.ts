@@ -1,5 +1,5 @@
 import {freeze} from '@winter-love/utils'
-import {getCurrentInstance, inject, onScopeDispose, reactive, Ref, toRaw, UnwrapNestedRefs} from 'vue-demi'
+import {getCurrentInstance, inject, onScopeDispose, reactive, toRaw, UnwrapNestedRefs} from 'vue-demi'
 import {createUuid} from './create-uuid'
 import {StoreManager, StoreManagerItem, useStoreManager} from './manager'
 import {STORE_LOCAL_CONTEXT} from './symbols'
@@ -8,18 +8,9 @@ const getUuid = createUuid()
 // eslint-disable-next-line @typescript-eslint/ban-types
 export type EmptyObject = {}
 
-export interface UseStore<T> {
-  readonly local: (options?: Omit<UseStoreOptions, 'local'>) => Store<T>
-
-  (options?: UseStoreOptions): Store<T>
-}
-
-export type ObjectWithRef<T extends Record<string, any>> = {
-  [P in keyof T]: Ref<T[P]> | T[P]
-}
-
-export type Store<T> = UnwrapNestedRefs<T> & {
-  readonly __store?: never
+export type UseStore<T extends Record<string, any>> = ((options?: UseStoreOptions) => UnwrapNestedRefs<T>)
+ & {
+  readonly local: (options?: Omit<UseStoreOptions, 'local'>) => UnwrapNestedRefs<T>
 }
 
 export interface UseStoreOptions {
@@ -31,10 +22,6 @@ export interface UseStoreOptions {
    * reset saved store
    */
   reset?: boolean
-}
-
-export interface SetupContext<Root> {
-  readonly root: UnwrapNestedRefs<Root>
 }
 
 export type Setup<T extends Record<string, any>,

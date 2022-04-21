@@ -29,7 +29,7 @@ const Vue = defineComponent(() => {
       <div>
         <Count>{count.value}</Count>
         <Count>{count2.value}</Count>
-        <div>{parent.value}</div>
+        <Count>{parent.value}</Count>
         <button onClick={onIncrease}>increase</button>
         <button onClick={onIncrease2}>increase2</button>
         <button onClick={onParentIncrease}>parentIncrease</button>

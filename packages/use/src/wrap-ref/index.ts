@@ -1,22 +1,13 @@
 import {NotUndefined} from '@winter-love/utils'
-import {isToRef} from 'src/isToRef'
 import {MayRef} from 'src/types'
-import {computed, isReadonly, isRef, ref, Ref, unref, watchEffect} from 'vue-demi'
+import {unwrapRef} from 'src/unwrap-ref'
+import {computed, isReadonly, isRef, ref, Ref, watchEffect} from 'vue-demi'
 
 export type RefWithInit<T, P> =
   P extends undefined ? Ref<T> : Ref<NotUndefined<T> | P>
 
 export interface WrapRefOptions<P> {
-  /**
-   * use with caution. Updating the returned Ref is going to update the value of Ref argument
-   * @default true
-   */
-  bindValue?: boolean
   defaultValue?: P | undefined
-  /**
-   * @deprecated please use defaultValue
-   */
-  initState?: P | undefined
 }
 
 /**
@@ -29,31 +20,33 @@ export const wrapRef = <T,
     value?: MayRef<T>,
     options: WrapRefOptions<P> = {},
   ): RefWithInit<T, P> => {
-  const {bindValue = true, initState, defaultValue} = options
-  const valueRef = ref<any>(unref(value) ?? defaultValue ?? initState)
+  const {defaultValue} = options
+  const valueMut = ref<any>(unwrapRef(value))
+  const _isUpdateAble = !isReadonly(value) && isRef(value)
 
-  const _isRef = isRef(value)
+  const changeValue = (value) => {
+    valueMut.value = value
+  }
 
-  // todo check this logic
-  const isReadonlyValue = !_isRef || isReadonly(value) || isToRef(value)
-
-  if (_isRef) {
+  if (isRef(value)) {
     watchEffect(() => {
-      valueRef.value = unref(value) ?? defaultValue ?? initState
-    }, {
-      flush: 'sync',
-    })
+      changeValue(value.value)
+    }, {flush: 'sync'})
+  }
+
+  if (typeof valueMut.value === 'undefined') {
+    valueMut.value = defaultValue
   }
 
   return computed({
     get: () => {
-      return valueRef.value
+      return valueMut.value
     },
     set: (newValue: any) => {
-      valueRef.value = newValue
-      if (bindValue && !isReadonlyValue) {
+      if (_isUpdateAble) {
         (value as any).value = newValue
       }
+      valueMut.value = newValue
     },
   }) as any
 }

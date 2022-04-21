@@ -1,7 +1,7 @@
 import {UnwrapNestedRefs} from '@vue/reactivity'
 import {useElementEvent} from 'src/element-event'
 import {clone, EmptyObject, isSSR} from '@winter-love/utils'
-import {computed, isRef, readonly, ref, Ref, unref, UnwrapRef} from 'vue'
+import {computed, isRef, readonly, ref, Ref, unref, UnwrapRef} from 'vue-demi'
 
 export type RequestResult<R, P> = {
   cancel: () => void
@@ -57,6 +57,7 @@ export const useRequest = <R, P>(
     const {
       initialData, onSuccess,
       onError, startInCreated,
+      debounce,
     } = newOptions
     const refreshOnWindowFocusRef = computed(() => {
       return unref(innerOptions?.refreshOnWindowFocus) ??

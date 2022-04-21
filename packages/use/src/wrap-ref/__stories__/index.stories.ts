@@ -1,11 +1,12 @@
 import {computed, h, ref} from 'vue-demi'
 import {wrapRef} from '../'
+import {readonlyRef} from 'src/readonly-ref'
 
 export const Default = () => ({
   setup() {
     const fooRef = ref(0)
     const wrappedFooRef = wrapRef(fooRef)
-    const unbindWrappedFooRef = wrapRef(fooRef, {bindValue: false})
+    const unbindWrappedFooRef = wrapRef(readonlyRef(fooRef))
     const computedFoo = computed(() => {
       return fooRef.value * 2
     })

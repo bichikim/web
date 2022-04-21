@@ -1,13 +1,13 @@
 /* eslint-disable max-nested-callbacks */
-import {computed, defineComponent, h, ref, toRefs, Transition, watch} from 'vue'
-import {QBtn, QCard, QInnerLoading, QTooltip} from 'quasar'
-import {HGlow} from '@winter-love/hyper-components'
 import {ionChevronBackSharp, ionChevronForwardSharp} from '@quasar/extras/ionicons-v6'
-import {SignInInput, SignInKind} from './SignInInput'
-import {className} from 'src/plugins/hyper-components'
+import {HGlow} from '@winter-love/hyper-components'
 import {debounce} from 'lodash'
-import isEmail from 'validator/lib/isEmail'
+import {QBtn, QCard, QInnerLoading, QTooltip} from 'quasar'
+import {className} from 'src/plugins/hyper-components'
 import {debug} from 'src/use/debug'
+import isEmail from 'validator/lib/isEmail'
+import {computed, defineComponent, h, ref, toRefs, Transition, watch} from 'vue'
+import {SignInInput, SignInKind} from './SignInInput'
 
 const validateEmail = (value?: string) => {
   if (!value) {
@@ -24,57 +24,7 @@ export const SignInButton = defineComponent({
     isWaiting: {default: false, type: Boolean},
     validatorWait: {default: 500, type: Number},
   },
-  render() {
-    const {
-      showInput,
-      showInputIcon,
-      onToggleShowInput,
-      emailRef,
-      onChangeActiveMethod,
-      activeMethod,
-      description,
-      onUpdateEmail,
-      onSignIn,
-      isWaiting,
-    } = this
-
-    return (
-      h('div', {class: containerStyle()}, [
-        h(HGlow, () => [
-          h(QCard, {class: cardStyle()}, () => [
-            h(Transition, {name: 'input'}, () => [
-              showInput && h(SignInInput, {
-                active: activeMethod,
-                email: emailRef,
-                'onUpdate:active': onChangeActiveMethod,
-                'onUpdate:email': onUpdateEmail,
-              }),
-            ]),
-            h(QBtn, {
-              class: showInputButtonStyle(),
-              dense: true,
-              flat: true,
-              icon: showInputIcon,
-              onClick: onToggleShowInput,
-            }),
-            h(QBtn, {
-              class: signInButtonStyle(),
-              flat: true,
-              noCaps: true,
-              onClick: onSignIn,
-            }, () => [
-              'Sign in/up',
-              emailRef && h(QTooltip, () => `sign in with "${emailRef}"`),
-            ]),
-            h(QInnerLoading, {showing: isWaiting}),
-          ]),
-        ]),
-        h('div', {class: descriptionStyle()}, description),
-      ])
-    )
-  },
   setup(props, {emit}) {
-    debug({})
     const {email: emailProp, validatorWait} = toRefs(props)
     const showInput = ref(!emailProp.value)
     const emailRef = ref<string>(emailProp.value ?? '')
@@ -115,7 +65,7 @@ export const SignInButton = defineComponent({
 
     const onSignIn = () => emit('signIn', emailRef.value)
 
-    return {
+    debug({
       activeMethod,
       description,
       emailRef,
@@ -125,7 +75,42 @@ export const SignInButton = defineComponent({
       onUpdateEmail,
       showInput,
       showInputIcon,
-    }
+    })
+
+    return () => (
+      h('div', {class: containerStyle()}, [
+        h(HGlow, () => [
+          h(QCard, {class: cardStyle()}, () => [
+            h(Transition, {name: 'input'}, () => [
+              showInput.value && h(SignInInput, {
+                active: activeMethod.value,
+                email: emailRef.value,
+                'onUpdate:active': onChangeActiveMethod,
+                'onUpdate:email': onUpdateEmail,
+              }),
+            ]),
+            h(QBtn, {
+              class: showInputButtonStyle(),
+              dense: true,
+              flat: true,
+              icon: showInputIcon,
+              onClick: onToggleShowInput,
+            }),
+            h(QBtn, {
+              class: signInButtonStyle(),
+              flat: true,
+              noCaps: true,
+              onClick: onSignIn,
+            }, () => [
+              'Sign in/up',
+              emailRef.value && h(QTooltip, () => `sign in with "${emailRef.value}"`),
+            ]),
+            h(QInnerLoading, {showing: props.isWaiting}),
+          ]),
+        ]),
+        h('div', {class: descriptionStyle()}, description.value),
+      ])
+    )
   },
 })
 
