@@ -1,6 +1,5 @@
 /* eslint-disable max-nested-callbacks */
-import {HBox} from '@winter-love/hyper-components'
-import {csx} from 'boot/hyper-components'
+import {HBox, useCsx} from '@winter-love/hyper-components'
 import {defineComponent, h, PropType, ref, toRefs} from 'vue'
 import {AudioButton} from './AudioButton'
 import {BackdropFilterText} from 'components/BackdropFilterText'
@@ -18,6 +17,7 @@ export const SignInPage = defineComponent({
     isWaiting: {type: Boolean},
     method: {type: String as PropType<SignInMethod>},
   },
+  // eslint-disable-next-line max-lines-per-function
   setup(props, {slots, emit}) {
     const {
       inProgress,
@@ -25,6 +25,7 @@ export const SignInPage = defineComponent({
       isWaiting,
       method,
     } = toRefs(props)
+    const csx = useCsx()
     const inProgressRef = ref(inProgress.value)
     const onSignIn = () => {
       emit('sign-in')
@@ -38,7 +39,7 @@ export const SignInPage = defineComponent({
 
     return () => ((
       h(HBox, {
-        css: {ps: 'relative', size: '100%'},
+        css: {ps: 'relative', px: '10', size: '100%'},
       }, () => [
         h(VideoBackground),
         // absolute center
@@ -77,14 +78,12 @@ export const SignInPage = defineComponent({
               }), () => [
                 'Coong',
               ]),
-              h(AudioButton, csx({
+              h(AudioButton, {
                 css: {
-                  '&.q-btn': {
-                    bottom: 0,
-                    position: 'absolute',
-                    right: 0,
-                    transform: 'translateX(100%)',
-                  },
+                  bottom: 0,
+                  position: 'absolute',
+                  right: 0,
+                  transform: 'translateX(100%)',
                   // eslint-disable-next-line sort-keys-fix/sort-keys-fix
                   '@bp1': {
                     fontSize: '0.7rem',
@@ -96,11 +95,13 @@ export const SignInPage = defineComponent({
                     fontSize: '1rem',
                   },
                 },
-              })),
+              }),
             ]),
             h('div', csx({
-              b: 0, l: '50%', ps: 'absolute',
-              transform: 'translate(-50%, 100%)',
+              css: {
+                b: 0, l: '50%', ps: 'absolute',
+                transform: 'translate(-50%, 100%)',
+              },
             }), [
               inProgressRef.value ?
                 // inProgress

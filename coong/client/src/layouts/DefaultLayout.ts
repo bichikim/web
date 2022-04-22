@@ -14,7 +14,7 @@ const PagesLayout = defineComponent({
     const layout = provideDefaultLayout()
     const {isMagicAuthLink, isOpenAuth} = toRefs(layout)
     const user = useUser()
-    const {email, method} = toRefs(user)
+    const {email, method, loading} = toRefs(user)
     const isSignIn = computed(() => user.isSignIn)
     isOpenAuth.value = !isSignIn.value
 
@@ -59,6 +59,7 @@ const PagesLayout = defineComponent({
           h(SignInPage, {
             email: email.value,
             inProgress: isMagicAuthLink.value,
+            isWaiting: loading.value,
             method: method.value,
             'onSign-in': onSignIn,
             'onUpdate:email': onUpdateEmail,

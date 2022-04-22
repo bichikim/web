@@ -7,4 +7,10 @@ export default boot(({app}) => {
   if (process.env.CLIENT) {
     createStoreDevTool(app, vare.manager.store)
   }
+
+  // if (process.env.CLIENT) {
+  //   if (process.env.MODE === 'ssr') {
+  //     //
+  //   }
+  // }
 })

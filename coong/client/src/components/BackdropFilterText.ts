@@ -1,6 +1,6 @@
 /* eslint-disable functional/no-this-expression */
 import {css} from 'boot/hyper-components'
-import {defineComponent, h} from 'vue'
+import {defineComponent, getCurrentInstance, h} from 'vue'
 
 const rootClass = css({
   $$activeColor: 'rgba(255, 255, 255, 0.2)',
@@ -37,12 +37,10 @@ export const BackdropFilterText = defineComponent({
   props: {
     dy: {default: '0.35em', type: String},
   },
-  render() {
-    const {$slots, dy} = this
-    const {_: vNode} = this as any
-    const {uid} = vNode
-    const id = `clip-path-${uid}`
-    return (
+  setup: (props, {slots}) => {
+    const instance = getCurrentInstance()
+    const id = `clip-path-${instance?.uid ?? 'any'}`
+    return () => (
       h('div', {
         class: rootClass({
           css: {
@@ -50,7 +48,7 @@ export const BackdropFilterText = defineComponent({
           },
         }).className,
       }, [
-        h('span', $slots.default?.()),
+        h('span', slots.default?.()),
         // svg
         h('svg', {
           'aria-hidden': 'true',
@@ -59,12 +57,12 @@ export const BackdropFilterText = defineComponent({
           h('clipPath', {id}, [
             h('text', {
               'dominant-baseline': 'hanging',
-              dy,
+              dy: props.dy,
               'text-anchor': 'middle',
               x: '50%',
               y: '0em',
             }, [
-              $slots.default?.(),
+              slots.default?.(),
             ]),
           ]),
         ]),

@@ -1,7 +1,6 @@
 /* eslint-disable max-nested-callbacks,max-lines-per-function */
 import {ionChevronBackSharp, ionChevronForwardSharp} from '@quasar/extras/ionicons-v6'
 import {HBox, HBtn, HCard, HGlow} from '@winter-love/hyper-components'
-import {className} from 'boot/hyper-components'
 import {debug} from 'hooks/debug'
 import {debounce} from 'lodash'
 import {QInnerLoading, QTooltip} from 'quasar'
@@ -112,32 +111,33 @@ export const SignInButton = defineComponent({
             ]),
             h(HBtn, {
               css: {
-                '&.q-btn': {
-                  borderRadius: 0,
-                  color: 'white',
-                  flexShrink: 0,
-                  fontSize: '$b1',
-                  whiteSpace: 'nowrap',
-                },
+                borderRadius: 0,
+                color: 'white',
+                flexShrink: 0,
+                fontSize: '$b1',
+                pr: 0,
+                whiteSpace: 'nowrap',
               },
               dense: true,
               flat: true,
               icon: showInputIcon.value,
               onClick: onToggleShowInput,
+              title: 'zip-button',
             }),
             h(HBtn, {
               css: {
-                '&.q-btn': {
-                  borderRadius: 0,
-                  color: 'white',
-                  flexShrink: 0,
-                  fontSize: '$b1',
-                  whiteSpace: 'nowrap',
-                },
+                borderRadius: 0,
+                color: 'white',
+                flexShrink: 0,
+                fontSize: '$b1',
+                pl: 5,
+                pr: 15,
+                whiteSpace: 'nowrap',
               },
               flat: true,
               noCaps: true,
               onClick: onSignIn,
+              title: 'sign-in-button',
             }, () => [
               'Sign in/up',
               email.value && h(QTooltip, () => `sign in with "${email.value}"`),
@@ -145,17 +145,21 @@ export const SignInButton = defineComponent({
             h(QInnerLoading, {showing: props.isWaiting}),
           ]),
         ]),
-        h('div', {class: descriptionStyle()}, description.value),
+        h(
+          HBox,
+          {
+            css: {
+              color: 'white',
+              fontSize: '$b1',
+              fontWeight: 200,
+              textAlign: 'center',
+              whiteSpace: 'wrap',
+              width: '100vw',
+            },
+          },
+          description.value,
+        ),
       ])
     )
   },
-})
-
-const descriptionStyle = () => className({
-  color: 'white',
-  fontSize: '$b2',
-  fontWeight: 200,
-  textAlign: 'center',
-  whiteSpace: 'wrap',
-  width: '100vw',
 })

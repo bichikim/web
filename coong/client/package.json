@@ -42,12 +42,13 @@
     "graphql-tag": "2.12.6",
     "lodash": "4.17.21",
     "node-html-parser": "5.3.3",
+    "@nuxt/devalue": "2.0.0",
     "quasar": "2.6.6",
     "serialize-javascript": "6.0.0",
     "validator": "13.7.0",
-    "vue-demi": "*",
-    "vare": "workspace:*",
+    "vare": "^1.0.25-alpha.13",
     "vue": "3.2.33",
+    "vue-demi": "*",
     "vue-router": "4.0.14"
   },
   "devDependencies": {

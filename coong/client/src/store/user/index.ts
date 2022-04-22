@@ -1,6 +1,6 @@
 import {useRequest} from 'boot/graphql-request'
 import {AuthenticateUserWithCryptoSignatureMutation, SignInMethod} from 'src/graphql'
-import {useWallet} from 'src/hooks/wallet'
+import {useWallet, withWaitRef} from 'hooks'
 import {defineStore} from 'vare'
 import {toUndefined} from '@winter-love/utils'
 import {computed, reactive, ref, toRefs} from 'vue'
@@ -36,8 +36,13 @@ export const useUser = defineStore({
     const method = ref<SignInMethod>('wallet')
     const userInfo = reactive<UserInfo>({})
     const emailRef = ref<string | undefined>()
+    const loadingRef = ref(false)
+    const errorRef = ref<any>()
 
-    const signInWithCrypto = async () => {
+    const signInWithCrypto = withWaitRef({
+      error: errorRef,
+      wait: loadingRef,
+    }, async () => {
       const email = emailRef.value
       if (!email) {
         return
@@ -69,7 +74,7 @@ export const useUser = defineStore({
       }
       sessionTokenRef.value = sessionToken
       shallowUpdate(userInfo, Object.fromEntries(Object.entries(item).map(([key, value]) => [key, toUndefined(value)])))
-    }
+    })
 
     const signInWithEmail = () => {
       //
@@ -90,14 +95,21 @@ export const useUser = defineStore({
       }
     }
 
+    const signOut = () => {
+      sessionTokenRef.value = undefined
+    }
+
     return {
       ...toRefs(userInfo),
       cryptoKind,
       email: emailRef,
+      error: errorRef,
       isSignIn,
+      loading: loadingRef,
       method,
       sessionToken: sessionTokenRef,
       signInWithCrypto,
+      signOut,
       singIn,
     }
   },

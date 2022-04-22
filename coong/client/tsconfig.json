@@ -2,7 +2,6 @@
   "extends": "@quasar/app-vite/tsconfig-preset",
   "compilerOptions": {
     "jsx": "preserve",
-    "types": ["@types/jest"],
     "target": "ESNext",
     "module": "ESNext",
     "baseUrl": ".",
@@ -29,6 +28,9 @@
       "hooks/*": [
         "src/hooks/*"
       ],
+      "hooks": [
+        "src/hooks"
+      ],
       "boot/*": [
         "src/boot/*"
       ],
@@ -37,5 +39,5 @@
       ]
     }
   },
-  "exclude": ["/dist", ".quasar", "node_modules"]
+  "exclude": ["/dist", ".quasar"]
 }

@@ -12,6 +12,23 @@ const {configure} = require('quasar/wrappers')
 const path = require('path')
 const {viteCommonjs} = require('@originjs/vite-plugin-commonjs')
 
+/**
+ * get VUE NODE ENV
+ * @param _prefix {string}
+ * @returns {{[p: string]: string}}
+ */
+const absorbNodeEnv = (_prefix = 'VUE_') => {
+  const step1 = Object.entries(process.env).filter(([key]) => {
+    if (typeof key === 'string') {
+      return key.startsWith(_prefix)
+    }
+    return false
+  }).map(([key, value]) => {
+    return [key, JSON.stringify(value)]
+  })
+  return Object.fromEntries(step1)
+}
+
 module.exports = configure((ctx) => {
   return {
     // animations: 'all', // --- includes all animations
@@ -34,7 +51,6 @@ module.exports = configure((ctx) => {
     boot: [
       'hyper-components',
       'vare',
-      // 'urql',
       'graphql-request',
     ],
 
@@ -48,6 +64,7 @@ module.exports = configure((ctx) => {
           hooks: path.join(__dirname, './src/hooks'),
         })
         Object.assign(viteConf.define, {
+          ...absorbNodeEnv(),
           __DEV__: JSON.stringify('import.meta.env.DEV'),
         })
         viteConf.server.proxy = {
@@ -59,7 +76,7 @@ module.exports = configure((ctx) => {
           '/static': {
             changeOrigin: true,
             rewrite: (path) => path.replace(/^\/static/u, ''),
-            target: 'http://localhost:9000',
+            target: 'http://localhost:9100',
           },
         }
         viteConf.plugins.push(viteCommonjs())

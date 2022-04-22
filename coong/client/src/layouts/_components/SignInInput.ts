@@ -1,7 +1,6 @@
 import {ionMailSharp, ionWalletSharp} from '@quasar/extras/ionicons-v6'
-import {HBtn, HInput} from '@winter-love/hyper-components'
+import {HBtn, HInput, HTooltip} from '@winter-love/hyper-components'
 import {className} from 'boot/hyper-components'
-import {QTooltip} from 'quasar'
 import {defineComponent, h, PropType, toRefs} from 'vue'
 import {SignInMethod} from 'src/graphql'
 
@@ -51,6 +50,7 @@ export const SignInInput = defineComponent({
           css: {
             flexGrow: 1,
             px: 10,
+            s: '$b1',
           },
           dense: true,
           label: 'Your Email',
@@ -71,7 +71,7 @@ export const SignInInput = defineComponent({
           onClick: () => onUpdateMethod('email'),
           size: 'sm',
         }, () => [
-          h(QTooltip, () => 'By email authentication'),
+          h(HTooltip, () => 'By email authentication'),
         ]),
         h(HBtn, {
           css: {
@@ -87,7 +87,7 @@ export const SignInInput = defineComponent({
           onClick: () => onUpdateMethod('wallet'),
           size: 'sm',
         }, () => [
-          h(QTooltip, () => 'By wallet authentication (WIP)'),
+          h(HTooltip, () => 'By wallet authentication (WIP)'),
         ]),
       ])
     )

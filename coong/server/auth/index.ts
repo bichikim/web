@@ -16,6 +16,7 @@ import {createMagicAuthLink} from './magic-auth-link'
 // See https://keystonejs.com/docs/apis/session#session-api for the session docs
 import {statelessSessions} from '@keystone-6/core/session'
 
+// eslint-disable-next-line functional/no-let
 let SESSION_SECRET = process.env.SESSION_SECRET
 const SUPPORT_EMAIL_ADDRESS = process.env.SUPPORT_EMAIL_ADDRESS ?? 'support@coong.io'
 const WEB_URL = process.env.WEB_URL ?? 'https://coong.io'
@@ -32,6 +33,7 @@ const SESSION_MAX_AGE = 60 * 60 * 24 * 30
 // however it should always be there in production.
 if (!SESSION_SECRET) {
   if (process.env.NODE_ENV === 'production') {
+    // eslint-disable-next-line functional/no-throw-statement
     throw new Error(
       'The SESSION_SECRET environment variable must be set in production',
     )

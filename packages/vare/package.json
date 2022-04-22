@@ -48,18 +48,6 @@
     "@winter-love/utils": "^1.0.25-alpha.11",
     "vue-demi": "*"
   },
-  "peerDependencies": {
-    "@vue/composition-api": "^1.1.0",
-    "vue": "^2.0.0 || >=3.0.0"
-  },
-  "peerDependenciesMeta": {
-    "vue": {
-      "optional": true
-    },
-    "@vue/composition-api": {
-      "optional": true
-    }
-  },
   "devDependencies": {
     "@vitejs/plugin-vue": "^2.3.1",
     "@vitejs/plugin-vue-jsx": "^1.3.9",
@@ -67,6 +55,18 @@
     "vite": "^2.9.1",
     "vue": "^3.2.31",
     "vue-router": "^4.0.14"
+  },
+  "peerDependencies": {
+    "@vue/composition-api": "^1.1.0",
+    "vue": "^2.0.0 || >=3.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@vue/composition-api": {
+      "optional": true
+    },
+    "vue": {
+      "optional": true
+    }
   },
   "publishConfig": {
     "access": "public"
