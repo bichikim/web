@@ -28,18 +28,22 @@
     "lib/*"
   ],
   "scripts": {
-    "build": "tsup-node --dts --minify",
-    "dev": "tsup-node --watch",
-    "prepare": "tsup-node --dts"
+    "build": "tsup --dts --minify",
+    "dev": "tsup --watch",
+    "prepare": "tsup --dts"
   },
   "dependencies": {
-    "debounce": "^1.2.1",
     "fast-json-stable-stringify": "^2.1.0",
-    "js-cookie": "^3.0.1",
-    "micro-memoize": "^4.0.9",
     "react-fast-compare": "^3.2.0"
   },
   "devDependencies": {
+    "js-cookie": "^3.0.1",
+    "micro-memoize": "^4.0.9",
+    "debounce": "^1.2.1",
+    "@types/lodash": "^4.14.182",
+    "@types/lodash-es": "^4.14.182",
+    "lodash-es": "4.17.21",
+    "lodash": "^4.17.21",
     "@types/debounce": "1.2.1",
     "@types/js-cookie": "3.0.1",
     "vue-demi": "latest"

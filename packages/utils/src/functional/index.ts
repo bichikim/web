@@ -1,5 +1,4 @@
 export * from './last'
 export * from './map'
-export * from './pipe'
 export * from './reverse'
 export * from './join'

@@ -6,8 +6,9 @@ export type MemoizeOptions = MicroMemoize.Options
 
 export type Memoized<F extends AnyFunction> = MicroMemoize.Memoized<F>
 
-export const memoize = (options?: MemoizeOptions) =>
-  <F extends AnyFunction>(function_: F | MicroMemoize.Memoized<F>) => (microMemoize(function_, options))
+export const memoize = microMemoize
 
-export const deepMemoize = (options?: MemoizeOptions) =>
-  <F extends AnyFunction>(function_: F | MicroMemoize.Memoized<F>) => (microMemoize(function_, {isEqual, ...options}))
+export const deepMemoize = <F extends AnyFunction>(
+  function_: F | MicroMemoize.Memoized<F>,
+  options?: MemoizeOptions,
+) => microMemoize(function_, {isEqual, ...options})

@@ -1,6 +1,6 @@
 import {toNumber} from '../to-number'
-import {join, last, map, reverse} from '../functional'
-import {chunk} from '../chunk'
+import {join, last, map, reverse} from 'src/functional'
+import {chunk} from 'src/chunk'
 import {compact} from '../compact'
 import {flow} from '../flow'
 import {freeze} from '../freeze'

@@ -1,4 +1,4 @@
 
-export const times = <T>(times: number, callback: (index: number) => T) => {
-  return Array.of(times).map((_, index) => callback(index))
+export const times = <T>(times: number, callback: (index: number) => T): T[] => {
+  return Array(times).fill(null).map((_, index) => callback(index))
 }

@@ -46,7 +46,7 @@
     "@babel/core": "7.17.8",
     "@emotion/server": "11.4.0",
     "@vue/server-renderer": "latest",
-    "vue": "3.2.31"
+    "vue": "3.2.33"
   },
   "publishConfig": {
     "access": "public"

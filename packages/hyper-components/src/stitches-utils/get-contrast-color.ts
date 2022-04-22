@@ -60,9 +60,9 @@ export const createGetContrastColor = (options: CreateGetContrastColorOptions = 
   const func_ = (hexColor: string) => getContrastColor(hexColor, rest)
 
   if (memo) {
-    return memoize({
+    return memoize(func_, {
       maxSize: memo,
-    })(func_)
+    })
   }
 
   return func_

@@ -22,6 +22,8 @@ module.exports = {
     '\\.(css|scss)$': 'identity-obj-proxy',
     '\\.(jpg|jpeg|png|svg)$': '<rootDir>/__mocks__/file.mock.ts',
     '\\.svg$': '<rootDir>/__mocks__/svg.mock.ts',
+    '^lodash-es/(.*)$': 'lodash/$1',
+    '^lodash-es/curry$': 'lodash/curry',
     quasar: 'quasar/dist/quasar.esm.prod',
   },
   projects: [
@@ -30,8 +32,14 @@ module.exports = {
       globals: {
         __DEV__: true,
       },
-      setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
+      moduleNameMapper: {
+        '\\.(css|scss)$': 'identity-obj-proxy',
+        '\\.(jpg|jpeg|png|svg)$': '<rootDir>/__mocks__/file.mock.ts',
+        '\\.svg$': '<rootDir>/__mocks__/svg.mock.ts',
+        '^lodash-es/(.*)$': 'lodash/$1',
+      },
 
+      setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
       snapshotSerializers: [
         'jest-stitches',
         'jest-serializer-vue',
@@ -68,6 +76,7 @@ module.exports = {
   testPathIgnorePatterns: [
     '\\.snap$',
     '/node_modules/',
+    '!/node_modules/lodash-es',
     '(/__tests__/.*|(\\.|/)(test|spec))\\.d.ts$',
   ],
 
