@@ -92,7 +92,7 @@ importers:
       ts-node: 10.7.0
       tsd: 0.20.0
       tslib: 2.3.1
-      tsup: 5.12.4
+      tsup: 5.12.6
       ttypescript: 1.5.13
       typescript: 4.6.3
       vare: workspace:*
@@ -171,7 +171,7 @@ importers:
       ts-node: 10.7.0_f01b7c141b75a45db67b7d9ae4c261df
       tsd: 0.20.0
       tslib: 2.3.1
-      tsup: 5.12.4_ts-node@10.7.0+typescript@4.6.3
+      tsup: 5.12.6_ts-node@10.7.0+typescript@4.6.3
       ttypescript: 1.5.13_ts-node@10.7.0+typescript@4.6.3
       typescript: 4.6.3
       vare: link:packages/vare
@@ -793,6 +793,7 @@ importers:
       lodash-es: 4.17.21
       micro-memoize: ^4.0.9
       react-fast-compare: ^3.2.0
+      tsd: 0.20.0
       vue-demi: latest
     dependencies:
       fast-json-stable-stringify: 2.1.0
@@ -807,6 +808,7 @@ importers:
       lodash: 4.17.21
       lodash-es: 4.17.21
       micro-memoize: 4.0.9
+      tsd: 0.20.0
       vue-demi: 0.12.5_vue@3.2.33
 
   packages/vare:
@@ -29242,8 +29244,8 @@ packages:
   /tslib/2.3.1:
     resolution: {integrity: sha512-77EbyPPpMz+FRFRuAFlWMtmgUWGe9UOG2Z25NqCwiIjRhOf5iKGuzSe5P2w1laq+FkRy4p+PCuVkJSGkzTEKVw==}
 
-  /tsup/5.12.4_ts-node@10.7.0+typescript@4.6.3:
-    resolution: {integrity: sha512-uUraITfIj2h6rXAdeaVUYrZ2Is9joLFyEGZN5mGAke874JojCizb2MCUcE0wGdcERtyob5mbbFUKkMgal8SlFw==}
+  /tsup/5.12.6_ts-node@10.7.0+typescript@4.6.3:
+    resolution: {integrity: sha512-tpePOgdMRKRgazF+ujq9k1Fo44PUFUJJjRLtxq87pQrYW/Ub/fu1GpFGLzdUF9qjJ4FX1ykhf2d9mWCNy+jAtg==}
     hasBin: true
     peerDependencies:
       typescript: ^4.1.0

@@ -1,4 +1,10 @@
-export const removeItem = <T extends any[]>(
+/**
+ * remove fields from object
+ * @param value
+ * @param predicate
+ * @param clone
+ */
+export const removeField = <T extends any[]>(
   value: T,
   predicate: (value: any, index: number, array: any[]) => unknown,
   clone: boolean = false,
@@ -11,3 +17,8 @@ export const removeItem = <T extends any[]>(
   clonedValue.splice(index, 1)
   return clonedValue
 }
+
+/**
+ * @deprecated please use a removeField
+ */
+export const removeItem = removeField
