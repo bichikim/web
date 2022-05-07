@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/wallet",
-  "version": "1.0.25-alpha.11",
+  "version": "1.0.25-alpha.14",
   "description": "share state for vue components",
   "keywords": [
     "typescript",
@@ -46,7 +46,7 @@
   "dependencies": {
     "@solana/web3.js": "1.37.2",
     "@vue/reactivity": "3.2.33",
-    "@winter-love/utils": "^1.0.25-alpha.11",
+    "@winter-love/utils": "^1.0.25-alpha.14",
     "bip39": "3.0.4",
     "caver-js": "^1.8.1",
     "ethers": "^5.6.3",
