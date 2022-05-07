@@ -1,8 +1,8 @@
 import {QBtn, QDialog, QLayout, QPageContainer} from 'quasar'
 import {SignInPage} from 'src/pages/_layout/_components/SignInPage'
 import {csx} from 'src/plugins/hyper-components'
-import {user} from 'src/store/user'
-import {defineComponent, Fragment, h, ref} from 'vue'
+import {useUser} from 'src/store/user'
+import {defineComponent, Fragment, h, ref, toRefs} from 'vue'
 import {RouterView} from 'vue-router'
 import {provideLayout} from './use-layout'
 import {ionCloseOutline} from '@quasar/extras/ionicons-v5'
@@ -11,9 +11,9 @@ import {debug} from 'src/use/debug'
 const PagesLayout = defineComponent({
   name: 'PagesLayout',
   setup() {
-
+    const user = useUser()
     const {isMagicAuthLink} = provideLayout()
-    const {isAuthenticated} = user.$
+    const {isAuthenticated} = toRefs(user)
 
     const isOpenAuth = ref(!isAuthenticated.value)
 

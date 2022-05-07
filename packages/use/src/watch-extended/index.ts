@@ -1,5 +1,5 @@
 import {watch, WatchCallback, WatchOptions, WatchSource, WatchStopHandle} from 'vue-demi'
-import {debounce as createDebounce} from 'debounce'
+import {debounce as createDebounce} from '@winter-love/lodash'
 export type MapSources<T, Immediate> = {
   [K in keyof T]: T[K] extends WatchSource<infer V> ?
     Immediate extends true ?
@@ -70,8 +70,10 @@ export function watchExtended(sources, callback, options?: WatchExtendOptions): 
 
   if (debounce) {
     const oldCallback = _callback
-    const debounceFunction = createDebounce(oldCallback, debounce.interval, debounce.immediate)
-    beforeStop.push(debounceFunction.clear)
+    const debounceFunction = createDebounce(oldCallback, debounce.interval, {
+      trailing: options?.immediate,
+    })
+    beforeStop.push(debounceFunction.cancel)
     _callback = debounceFunction
   }
 

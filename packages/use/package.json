@@ -39,6 +39,7 @@
   },
   "dependencies": {
     "@winter-love/utils": "^1.0.25-alpha.11",
+    "@winter-love/lodash": "^1.0.25-alpha.11",
     "debounce": "^1.2.1",
     "fast-json-stable-stringify": "^2.1.0",
     "lodash": "^4.17.21",

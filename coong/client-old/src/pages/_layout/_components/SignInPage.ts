@@ -1,6 +1,6 @@
 import {AudioButton} from 'pages/_layout/_components/AudioButton'
 import {BackdropFilterText} from 'pages/_layout/_components/BackdropFilterText'
-import {user} from 'src/store/user'
+import {useUser} from 'src/store/user'
 import {computed, defineComponent, h, ref, toRefs} from 'vue'
 import {SignInButton} from './SignInButton'
 import {csx} from 'src/plugins/hyper-components'
@@ -13,13 +13,14 @@ export const SignInPage = defineComponent({
     inProgress: {default: false, type: Boolean},
   },
   setup(props, {slots}) {
+    const user = useUser()
     const {inProgress} = toRefs(props)
     const inProgressRef = ref(inProgress.value)
     const email = computed(() => user.email)
     const isWaiting = ref(false)
     const onSignIn = (email: string) => {
       isWaiting.value = true
-      return user.$.signInWithEmailOnly(email)
+      return user.signInWithEmailOnly(email)
     }
 
     return () => ((

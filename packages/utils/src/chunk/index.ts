@@ -1,4 +1,4 @@
-export const chunk = (size: number) => <T>(list: readonly T[]): T[][] => {
+export const chunk = <T>(list: readonly T[], size: number): T[][] => {
   const _list = [...list]
   // eslint-disable-next-line functional/prefer-readonly-type
   const result: T[][] = []
@@ -11,4 +11,8 @@ export const chunk = (size: number) => <T>(list: readonly T[]): T[][] => {
     result.push(_list)
   }
   return result
+}
+
+export const chunkFn = (size: number) => <T>(list: readonly T[]): T[][] => {
+  return chunk(list, size)
 }

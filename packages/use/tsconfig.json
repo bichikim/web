@@ -15,7 +15,8 @@
   "include": [
     "src/**/*.ts",
     "src/**/*.d.ts",
-    "src/**/*.tsx"
+    "src/**/*.tsx",
+    "../../coong/client/auto-imports.d.ts"
   ],
   "exclude": [
     "node_modules"

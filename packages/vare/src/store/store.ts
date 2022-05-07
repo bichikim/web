@@ -18,6 +18,12 @@ export interface UseStoreOptions {
    * use as a normal composition api function
    */
   local?: boolean
+
+  /**
+   * target manager
+   */
+  manager?: StoreManager
+
   /**
    * reset saved store
    */
@@ -53,7 +59,7 @@ const createSetup = <T extends Record<string, any>,
   return {
     state: reactive(setup(
       // initState
-      initState ?? {},
+      initState,
       // root
       storeManager.state.value,
     )),
@@ -94,18 +100,22 @@ const createLocalStore = <T extends Record<string, any>,
   return item.state
 }
 
-export interface CreateGlobalStoreArgs<T extends Record<string, any>,
-  > {
+export interface CreateGlobalStoreArgs<T extends Record<string, any>>
+  extends Omit<UseStoreOptions, 'local' | 'manager'> {
   name: string
-  options: Omit<UseStoreOptions, 'local'>
+
   setup: Setup<T>
   storeManager: StoreManager
 }
 
 const createGlobalStore = <T extends Record<string, any>,
   >(args: CreateGlobalStoreArgs<T>): UnwrapNestedRefs<T> => {
-  const {name, options, storeManager, setup} = args
-  const {reset} = options
+  const {
+    name,
+    reset,
+    storeManager,
+    setup,
+  } = args
   const savedState: StoreManagerItem<T> | undefined = storeManager.get(name)
 
   if (savedState && !reset) {
@@ -156,16 +166,20 @@ export function defineStore<T extends Record<string, any>,
 
   // eslint-disable-next-line max-statements
   const hook = (options: UseStoreOptions = {}): T => {
-    const {local: innerLocal = local} = options
+    const {
+      local: innerLocal = local,
+      reset,
+      manager,
+    } = options
 
-    const storeManager = useStoreManager()
+    const storeManager = manager ?? useStoreManager()
 
     if (innerLocal) {
       return createLocalStore<T>({name, setup, storeManager})
     }
     return createGlobalStore({
       name,
-      options,
+      reset,
       setup,
       storeManager,
     })

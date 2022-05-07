@@ -1,4 +1,4 @@
-import {atom, getter} from 'vare'
+import {defineStore} from 'vare'
 import {
   EmailSignInDocument,
   EmailTokenSignInDocument,
@@ -9,34 +9,33 @@ import {
 import {client} from 'src/plugins/urql'
 import {createRequest} from '@urql/vue'
 import {pipe, take, toPromise} from 'wonka'
+import {computed, ref} from 'vue'
 
-export interface UserState {
-  email?: string
-  hasCookieToken?: boolean
-  name?: string
-  test?: string
-  token?: string
-}
-
-const state: UserState = {
-  name: 'unknown',
-}
-
-export const user = atom(state, {
-  async getUser(user, token: string = user.token, email: string = user.email) {
-    if (!email) {
+export const useUser = defineStore('user', () => {
+  const hasCookieToken = ref(false)
+  const name = ref<string | undefined>()
+  const email = ref<string | undefined>()
+  const token = ref<string | undefined>()
+  const hasEmail = computed(() => {
+    return Boolean(email.value)
+  })
+  const isAuthenticated = computed(() => {
+    return Boolean(token.value)
+  })
+  async function getUser(token_: string | undefined = token.value, email_: string | undefined = email.value) {
+    if (!email_) {
       return
     }
 
     const headers: Record<string, any> = {}
 
-    if (token) {
-      headers.authorization = `Bearer ${token}`
+    if (token_) {
+      headers.authorization = `Bearer ${token_}`
     }
 
     const response = await pipe(
       client.executeQuery(
-        createRequest(GetUserDocument, {email}), {fetchOptions: {headers}},
+        createRequest(GetUserDocument, {email: email_}), {fetchOptions: {headers}},
       ),
       take(1),
       toPromise,
@@ -44,18 +43,13 @@ export const user = atom(state, {
 
     const {email: _email, name} = response.data.user ?? {}
 
-    user.hasCookieToken = email === _email
+    hasCookieToken.value = email_ === _email
     if (name) {
-      user.name = name
+      name.value = name
     }
-  },
-  hasEmail: getter((user) => {
-    return Boolean(user.email)
-  }),
-  isAuthenticated: getter((user) => {
-    return Boolean(user.token)
-  }),
-  async signIn(user, email: string, password: string) {
+  }
+
+  async function signIn(email: string, password: string) {
     const signInResponse = await pipe(
       client.executeMutation(createRequest(SignInDocument, {email, password})),
       take(1),
@@ -63,36 +57,50 @@ export const user = atom(state, {
     )
     const {message, sessionToken} = signInResponse.data?.authentiocateUserWithPassword ?? {}
     if (sessionToken) {
-      user.token = sessionToken
+      token.value = sessionToken
     }
     return {message, token: sessionToken}
-  },
-  async signInWithEmailOnly(user, email: string) {
+  }
+
+  async function signInWithEmailOnly(email_: string) {
     await pipe(
-      client.executeMutation(createRequest(SignUpDocument, {input: {email}})),
+      client.executeMutation(createRequest(SignUpDocument, {input: {email: email_}})),
       take(1),
       toPromise,
     )
     const signInResponse = await pipe(
-      client.executeMutation(createRequest(EmailSignInDocument, {email})),
+      client.executeMutation(createRequest(EmailSignInDocument, {email: email_})),
       take(1),
       toPromise,
     )
-    user.email = email
+    email.value = email_
     return signInResponse.data.sendUserMagicAuthLink
-  },
-  async signInWithEmailToken(user, email: string, _token: string) {
+  }
+
+  async function signInWithEmailToken(email: string, token_: string) {
     const signInResponse = await pipe(
-      client.executeMutation(createRequest(EmailTokenSignInDocument, {email, token: _token})),
+      client.executeMutation(createRequest(EmailTokenSignInDocument, {email, token: token_})),
       take(1),
       toPromise,
     )
 
-    const {code, message, token} = signInResponse.data?.redeemUserMagicAuthToken ?? {}
-    if (token) {
-      user.token = token
+    const {code, message, token: resultToken} = signInResponse.data?.redeemUserMagicAuthToken ?? {}
+    if (resultToken) {
+      token.value = resultToken
     }
     return {code, message, token}
-  },
+  }
+
+  return {
+    email,
+    getUser,
+    hasEmail,
+    isAuthenticated,
+    name,
+    signIn,
+    signInWithEmailOnly,
+    signInWithEmailToken,
+    token,
+  }
 })
 

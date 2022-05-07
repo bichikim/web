@@ -39,6 +39,13 @@ export const useJohn = createStore('john', (initState) => {
   }
 })
 
+export const useGlobal = createStore('global', () => {
+  const name = ref('foo')
+  return {
+    name,
+  }
+})
+
 export const usePropsState = createStore({
   name: 'props-state',
   setup(props) {

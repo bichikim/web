@@ -11,6 +11,9 @@
 const {configure} = require('quasar/wrappers')
 const path = require('path')
 const {viteCommonjs} = require('@originjs/vite-plugin-commonjs')
+const vitePluginImp = require('vite-plugin-imp').default
+const autoImport = require('unplugin-auto-import/vite')
+const babel = require('vite-plugin-babel').default
 
 /**
  * get VUE NODE ENV
@@ -79,7 +82,29 @@ module.exports = configure((ctx) => {
             target: 'http://localhost:9100',
           },
         }
-        viteConf.plugins.push(viteCommonjs())
+        viteConf.plugins.push(
+          autoImport({
+            imports: [
+              'vue',
+              {
+                'src/vue-extend': [
+                  'html',
+                ],
+              },
+            ],
+          }),
+          vitePluginImp(),
+          viteCommonjs(),
+          babel({
+            babelConfig: {
+              babelrc: false,
+              configFile: false,
+              plugins: [[
+                'babel-plugin-htm',
+              ]],
+            },
+          }),
+        )
         if (isServer) {
           viteConf.ssr.noExternal.push(/^@quasar\/extras/u)
           if (!ctx.dev) {

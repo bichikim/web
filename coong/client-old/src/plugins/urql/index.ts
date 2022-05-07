@@ -1,11 +1,11 @@
 import {createClient} from '@urql/vue'
 import {apiUrl} from 'src/environment'
-import {user} from 'src/store/user'
 import {Plugin} from 'vue'
 import {resolveUrl} from '@winter-love/utils'
 
 const getToken = (): string | undefined => {
-  return user.token
+  // return user.token
+  return ''
 }
 
 const getGraphqlApiUrl = () => {

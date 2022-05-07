@@ -45,6 +45,12 @@ const unObjectRef = <P extends Record<string, any>>(
   }
 }
 
+/**
+ * fetch composition api
+ * @experimental
+ * @param service
+ * @param options
+ */
 export const useRequest = <R, P>(
   service: Service<P, R>,
   options?: BaseOptions<R, P>,
@@ -57,7 +63,7 @@ export const useRequest = <R, P>(
     const {
       initialData, onSuccess,
       onError, startInCreated,
-      debounce,
+      // debounce,
     } = newOptions
     const refreshOnWindowFocusRef = computed(() => {
       return unref(innerOptions?.refreshOnWindowFocus) ??

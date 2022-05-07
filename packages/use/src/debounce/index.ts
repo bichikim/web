@@ -1,4 +1,4 @@
-import {debounce} from 'debounce'
+import {debounce} from '@winter-love/lodash'
 import {computed, onScopeDispose} from 'vue-demi'
 import {wrapRef} from 'src/wrap-ref'
 import {MayRef} from 'src/types'
@@ -10,8 +10,8 @@ const DEFAULT_WAIT = 150
 
 interface DebounceFunction<Args extends any[], R> {
   (...args: Args) : R
-  clear?: () => unknown
-  flush?: () => unknown
+  cancel?: () => any
+  flush?: () => any
 }
 
 export const useDebounce = <Args extends any[], R>(
@@ -31,13 +31,15 @@ export const useDebounce = <Args extends any[], R>(
   const onCall = computed((): DebounceFunction<Args, R> => {
     const wait = waitRef.value
     if (wait > 0) {
-      return debounce(onHandle, wait, immediateRef.value)
+      return debounce(onHandle, wait, {
+        trailing: immediateRef.value,
+      }) as any
     }
     return onHandle
   })
 
   onScopeDispose(() => {
-    onCall.value?.clear?.()
+    onCall.value?.cancel?.()
   })
 
   return (...args: Args): R => {

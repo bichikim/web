@@ -1,13 +1,9 @@
-import {
-  QCard,
-  QPage,
-  // QSpinner,
-} from 'quasar'
-import {useLayout} from 'src/pages/_layout/use-layout'
+import {QCard, QPage} from 'quasar'
+// import {useLayout} from 'src/pages/_layout/use-layout'
 import {className} from 'src/plugins/hyper-components'
-import {user} from 'src/store/user'
+import {useUser} from 'src/store/user'
 import {computed, defineComponent, h, onMounted, ref} from 'vue'
-import {useRoute, useRouter} from 'vue-router'
+import {useRouter} from 'vue-router'
 
 const pageStyle = () => className({
   alignItems: 'center',
@@ -67,9 +63,10 @@ const MagicAuthLink = defineComponent({
     )
   },
   setup() {
-    const route = useRoute()
+    const user = useUser()
+    // const route = useRoute()
     const router = useRouter()
-    const layout = useLayout()
+    // const layout = useLayout()
     // const email = computed(() => user.email)
     // const token = computed(() => route.query.token)
     const email = ref('')
@@ -77,9 +74,10 @@ const MagicAuthLink = defineComponent({
     const name = computed(() => user.name)
 
     onMounted(() => {
-      return user.$.signInWithEmailToken(email.value, token.value)
+      return user.signInWithEmailToken(email.value, token.value)
     })
 
+    // eslint-disable-next-line unicorn/consistent-function-scoping
     const onClose = () => {
       window.close()
     }

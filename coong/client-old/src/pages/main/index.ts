@@ -1,5 +1,6 @@
+/* eslint-disable functional/no-this-expression */
 import {QPage} from 'quasar'
-import {user} from 'src/store/user'
+import {useUser} from 'src/store/user'
 import {defineComponent, h, ref} from 'vue'
 import {csx} from 'src/plugins/hyper-components'
 import {useWriteEl} from 'src/use/root-element'
@@ -18,6 +19,7 @@ const IndexPage = defineComponent({
     )
   },
   setup() {
+    const user = useUser()
     useWriteEl()
     const name = ref('foo')
     const count = ref(1)
@@ -34,8 +36,8 @@ const IndexPage = defineComponent({
     return {
       count,
       count2,
-      hasEmail: user.$.hasEmail,
-      isSignIn: user.$.isAuthenticated,
+      hasEmail: user.hasEmail,
+      isSignIn: user.isAuthenticated,
       name,
       onIncrease,
       onIncrease2,

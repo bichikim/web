@@ -39,5 +39,9 @@
       ]
     }
   },
-  "exclude": ["/dist", ".quasar"]
+  "exclude": ["/dist", ".quasar"],
+  "include": [
+    "auto-imports.d.ts",
+    "src/**/*"
+  ]
 }

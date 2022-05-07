@@ -59,6 +59,14 @@ module.exports = {
       },
     },
     {
+      files: [
+        '**/*.stories.{j,t}s?(x)',
+      ],
+      rules: {
+        'vue/one-component-per-file': 'off',
+      },
+    },
+    {
       // configs
       files: [
         '**/quasar.conf.js',

@@ -1,6 +1,6 @@
 import {toNumber} from '../to-number'
-import {join, last, map, reverse} from 'src/functional'
-import {chunk} from 'src/chunk'
+import {joinFn, last, mapFn, reverse} from 'src/functional'
+import {chunkFn} from 'src/chunk'
 import {compact} from '../compact'
 import {flow} from '../flow'
 import {freeze} from '../freeze'
@@ -67,36 +67,30 @@ const addNumberUnit = (value: string[], index: number): string[] => {
   return value
 }
 
-const anyToStringArray = (value: any) => {
-  return [...toNumber(value).toString()]
-}
+const anyToStringArray = (value: any) => [...toNumber(value).toString()]
 
 const KoreanChunk = 4
 
-export const toKoreanNumber = (value?: any, options: NumberToKoreanOptions = {}) => {
-  const {mode = 'all', joinString = '', firstOne = false, joinGroup = ''} = options
+export const toKoreanNumberFn = (
+  {mode = 'all', joinString = '', firstOne = false, joinGroup = ''}: NumberToKoreanOptions = {},
+) => flow(
+  anyToStringArray,
+  mode === 'all' ?
+    mapFn((value) => _numberNames[Number(value)]) :
+    (value) => value,
+  reverse,
+  chunkFn(KoreanChunk),
+  mode === 'number' ?
+    mapFn(removeUselessZero) :
+    mapFn((value: string[], index: number, array: string[][]) =>
+      addSmallNumberUnit(value, !firstOne || (index < array.length - 1))),
+  mapFn((value: string[], index: number) => addNumberUnit(value, index)),
+  mapFn((value: string[]) => compact(value).reverse().join(joinString)),
+  reverse,
+  joinFn(joinGroup),
+)
 
-  return flow(
-    anyToStringArray,
-    map((value: string) => {
-      if (mode === 'all') {
-        return _numberNames[Number(value)]
-      }
-      return value
-    }),
-    reverse,
-    chunk(KoreanChunk),
-    map((value: string[], index: number, array: string[][]) => {
-      if (mode === 'number') {
-        return removeUselessZero(value)
-      }
-
-      return addSmallNumberUnit(value, !firstOne || (index < array.length - 1))
-    }),
-    map((value: string[], index: number) => addNumberUnit(value, index)),
-    map((value: string[]) => compact(value).reverse().join(joinString)),
-    reverse,
-    join(joinGroup),
-  )(value)
-}
-
+export const toKoreanNumber = (
+  value?: any,
+  options?: NumberToKoreanOptions,
+) => toKoreanNumberFn(options)(value)

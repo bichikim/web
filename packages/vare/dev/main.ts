@@ -1,11 +1,13 @@
 import {createApp, watch} from 'vue'
 import {createStoreDevTool, createVare} from 'src/store'
 import {Root} from './Root'
+import {useGlobal} from './store'
 
 const app = createApp(Root)
 
 const vare = createVare()
 app.use(vare, {
+  global: [useGlobal],
   initState: {
     john: {
       name: 'john',
@@ -21,7 +23,7 @@ app.use(vare, {
     },
   ],
 })
+createStoreDevTool(app, [vare.manager.store, vare.localManager.store])
 
 app.mount('#app')
 
-createStoreDevTool(app, [vare.manager.store, vare.localManager.store])

@@ -1,0 +1,58 @@
+{
+  "name": "@winter-love/lodash",
+  "version": "1.0.25-alpha.11",
+  "description": "Stitches for Vue",
+  "keywords": [
+    "lodash"
+  ],
+  "repository": "git@github.com:winter-love/web.git",
+  "license": "MIT",
+  "author": "bichi@live.co.kr",
+  "exports": {
+    ".": {
+      "import": "./lib/index.mjs",
+      "require": "./lib/index.js"
+    },
+    "./*": "./*"
+  },
+  "main": "lib/index.js",
+  "jsdelivr": "lib/index.global.js",
+  "unpkg": "lib/index.global.js",
+  "module": "lib/index.mjs",
+  "source": "src/index.ts",
+  "types": "lib/index.d.ts",
+  "files": [
+    "lib/*"
+  ],
+  "scripts": {
+    "build": "tsup --dts --minify",
+    "generate-lodash-es": "lodash modularize exports=es -d -s -o src/lodash",
+    "dev": "tsup --watch",
+    "prepare": "tsup --dts"
+  },
+  "dependencies": {
+    "@types/lodash-es": "4.17.2",
+    "@types/lodash": "4.14.182"
+  },
+  "devDependencies": {
+    "lodash-cli": "4.17.5"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "gitHead": "a00563d4b5288df4b4bbe713ce9b970e1844ca29",
+  "tsup": {
+    "entry": [
+      "src/index.ts"
+    ],
+    "clean": true,
+    "format": [
+      "cjs",
+      "esm",
+      "iife"
+    ],
+    "outDir": "lib",
+    "sourcemap": true,
+    "splitting": false
+  }
+}

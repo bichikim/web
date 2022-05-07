@@ -4,7 +4,7 @@ import {STORE_CONTEXT} from './symbols'
 import {cloneState} from './clone-state'
 
 export interface StoreManagerItem<T extends Record<string, any> = Record<string, any>> {
-  state: UnwrapNestedRefs<T>
+  readonly state: UnwrapNestedRefs<T>
 }
 
 export interface StoreTreeInfo {
@@ -19,7 +19,7 @@ export const useStoreManager = () => {
   return inject(STORE_CONTEXT) ?? createManager()
 }
 
-export type StoreManager = Readonly<{
+export interface StoreManager {
   get(name: string): any
   readonly initState: Readonly<Record<string, any>>
   remove(name: string): void
@@ -27,10 +27,10 @@ export type StoreManager = Readonly<{
     name: string,
     item: StoreManagerItem,
   ): void
-  setInitState: (state?: Record<string, any>) => void
-  state: ComputedRef<Record<string, any>>
+  readonly setInitState: (state?: Record<string, any>) => void
+  readonly state: ComputedRef<Record<string, any>>
   readonly store: ManagerData
-}>
+}
 
 export interface ManagerData {
   readonly info?: StoreTreeInfo

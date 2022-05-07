@@ -1,4 +1,6 @@
-import {App, markRaw, provide} from 'vue-demi'
+/* eslint-disable functional/no-this-expression */
+import {UseStore} from 'src/store/store'
+import {App, ComputedRef, markRaw, provide} from 'vue-demi'
 import {createManager, Plugin, StoreManager} from './manager'
 import {STORE_CONTEXT, STORE_LOCAL_CONTEXT} from './symbols'
 
@@ -8,14 +10,56 @@ export * from './symbols'
 export * from './store'
 
 export interface PluginOptions {
+  /**
+   * keep state
+   */
+  global?: UseStore<any>[]
+  /**
+   * pass initState
+   * @example
+   * const initState = {foo: {name: 'foo'}}
+   *
+   * const useFoo = defineStore('foo', (initState) => {
+   *   const name = ref(initState.name ?? 'defaultFoo')
+   *   return {
+   *     name
+   *   }
+   * }
+   */
   initState?: Record<string, any>
+  /**
+   * plugins called only once
+   * const vare = createVare()
+   * app.use(vare, {
+   *   plugins: [
+   *     (state) => {
+   *       watch(state, (value) => {
+   *         // save data
+   *         localhost.setItem('my-item', JSON.stringify(value))
+   *       })
+   *     }
+   *   ]
+   * })
+   */
   plugins?: Plugin[]
 }
 
 export interface Vare {
-  install: (app: App, options?: PluginOptions) => void
-  localManager: StoreManager
-  manager: StoreManager
+  install(app: App, options?: PluginOptions): void
+  readonly localManager: StoreManager
+  readonly manager: StoreManager
+  readonly state: ComputedRef<any>
+}
+
+const applyGlobalStore = (manager: StoreManager, global?: UseStore<any>[]) => {
+  if (!global) {
+    return
+  }
+  global.forEach((useX) => {
+    useX({
+      manager,
+    })
+  })
 }
 
 export const createVare = (): Vare => {
@@ -27,13 +71,18 @@ export const createVare = (): Vare => {
   })
   return markRaw({
     install: (app: App, options: PluginOptions = {}) => {
-      const {plugins = [], initState} = options
+      const {
+        plugins = [],
+        initState,
+        global,
+      } = options
       manager.setInitState(initState)
       plugins.forEach((plugin) => {
         plugin(manager.state, manager.store.info)
       })
       app.provide(STORE_CONTEXT, manager)
       app.provide(STORE_LOCAL_CONTEXT, localManager)
+      applyGlobalStore(manager, global)
     },
     localManager,
     manager,

@@ -1,6 +1,7 @@
 import microMemoize, {MicroMemoize} from 'micro-memoize'
 import {AnyFunction} from 'src/types'
 import isEqual from 'react-fast-compare'
+export type {MicroMemoize} from 'micro-memoize'
 
 export type MemoizeOptions = MicroMemoize.Options
 
