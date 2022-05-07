@@ -35,7 +35,7 @@
     "@solana/web3.js": "1.37.2",
     "@urql/vue": "0.6.1",
     "@vue/server-renderer": "3.2.31",
-    "@vueuse/head": "0.7.5",
+    "@vueuse/head": "0.7.6",
     "@winter-love/hyper-components": "^1.0.25-alpha.14",
     "@winter-love/stitches": "^1.0.25-alpha.14",
     "@winter-love/use": "^1.0.25-alpha.14",
