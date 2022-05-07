@@ -136,7 +136,7 @@ export const createStoreDevTool = (
       const state = _stores[index].tree[key]
 
       if (state) {
-        const path = drop(1)(payload.path)
+        const path = drop(payload.path, 1)
         const {value} = payload.state
         payload.set(state, path, value)
       }
