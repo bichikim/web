@@ -3,6 +3,7 @@ export type ReturnFunction<T> = (...args: any[]) => T
 export type UnFunction<T> = T extends ReturnFunction<infer P> ? P : T
 
 /**
+ * get value from () => value or not
  * @param value
  */
 export function toValue<T>(value: T)
@@ -14,15 +15,3 @@ export function toValue<T>(value: T, args?: any): UnFunction<T> {
   }
   return value as any
 }
-
-/**
- * @deprecated
- * @param value
- */
-export const getFunctionValue = toValue
-
-/**
- * @deprecated
- * @param value
- */
-export const mayFunctionValue = toValue

@@ -1,6 +1,9 @@
 import {ArrayOrOne, MayPromise} from 'src/types'
 import {toArray} from '../to-array'
 
+/**
+ * it can accept array result flow
+ */
 export function pipe<A extends any[], R1, R2, R3, R4, R5, R6, R7>(
   f1: (...args: A) => R1,
   f2: (...args: ArrayOrOne<R1>) => R2,

@@ -5,12 +5,13 @@ export * from './lodash/function'
 export * from './lodash/lang'
 export * from './lodash/math'
 export * from './lodash/number'
-import {reverse as wrapperReverse} from './lodash/seq'
+export * from './lodash/object'
+import {at as wrapperAt, reverse as wrapperReverse} from './lodash/seq'
 export {
   wrapperReverse,
+  wrapperAt,
 }
 export {
-  at,
   chain,
   commit,
   lodash,

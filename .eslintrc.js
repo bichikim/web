@@ -44,6 +44,7 @@ module.exports = {
         '@typescript-eslint/no-unused-vars': 'off',
         '@typescript-eslint/no-var-requires': 'off',
         'functional/functional-parameters': 'off',
+        'functional/no-class': 'off',
         'functional/no-throw-statement': 'off',
         'functional/prefer-readonly-type': 'off',
         'max-len': 'off',
@@ -63,6 +64,7 @@ module.exports = {
         '**/*.stories.{j,t}s?(x)',
       ],
       rules: {
+        'no-magic-numbers': 'off',
         'vue/one-component-per-file': 'off',
       },
     },

@@ -17,6 +17,7 @@ export * from './is-lestenable'
 export * from './is-object'
 export * from './is-promise'
 export * from './is-ssr'
+export * from './is-record'
 
 export * from './memoize'
 export * from './pipe'
@@ -36,3 +37,5 @@ export * from './to-number'
 export * from './to-undefined'
 export * from './to-value'
 export * from './types'
+export * from './vanilla'
+

@@ -1,6 +1,5 @@
-/* eslint-disable no-magic-numbers */
+/* eslint-disable no-magic-numbers,@typescript-eslint/no-empty-interface */
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface EmptyObject {
   // empty
 }
@@ -61,6 +60,9 @@ export type PopTuple<T extends any[]> = T extends [...any, infer Last] ? Last : 
 
 export type ShiftTuple<T extends any[]> = T extends [infer First, ...any] ? First : any
 
+/**
+ * @deprecated
+ */
 export type TailArray<A extends any[], S extends number> =
   S extends 0 ? (A extends [...infer TArgs] ? TArgs : never) :
     S extends 1 ? (A extends [any, ...infer TArgs] ? TArgs : never) :
@@ -71,6 +73,9 @@ export type TailArray<A extends any[], S extends number> =
               S extends 6 ? (A extends [any, any, any, any, any, any, ...infer TArgs] ? TArgs : never) :
                 never
 
+/**
+ * @deprecated
+ */
 export type TailArgs<F extends (...args: any[]) => any, S extends number> =
   TailArray<Parameters<F>, S>
 
@@ -89,6 +94,8 @@ export type UnShiftTuple<First, T extends any[]> = [First, ...T]
 export type PushTuple<T extends any[], Last> = [...T, Last]
 
 export type Keyof<R> = R extends Record<infer P, any> ? P : never
+
 export type TakeFlatKeys<R, K extends keyof R> = R extends Record<K, infer P> ? Keyof<P> : never
+
 export type FlatKeys<R> = TakeFlatKeys<R, keyof R>
 

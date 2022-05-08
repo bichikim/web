@@ -3,7 +3,7 @@ import {h, resolveDirective, withDirectives} from 'vue-demi'
 import {HGlow} from '../'
 
 export default {
-  title: 'HyperComponents/HGlow',
+  title: 'Hyper Components/HGlow',
 }
 
 export const Default = () => ({

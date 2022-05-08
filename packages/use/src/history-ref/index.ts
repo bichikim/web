@@ -3,6 +3,7 @@ import {MayRef} from 'src/types'
 import {wrapRef} from 'src/wrap-ref'
 
 /**
+ * deprecated
  * @deprecated
  * @param value
  * @param max

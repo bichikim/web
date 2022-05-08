@@ -1,6 +1,5 @@
 import {Meta, Story, Canvas} from '@storybook/addon-docs/blocks'
-import {historyRef} from '../'
-import {h, ref} from 'vue-demi'
+import {Default} from './index.stories'
 
 <Meta title="use/History Ref"/>
 
@@ -12,37 +11,7 @@ Remember ref changing history
 예제에 인풋에 입력하면 변경 내역 값을 저장 합니다.
 upMax 와 downMax 를 클릭하여 최대 저장 개수를 바꿀 수 있습니다.
 
-export const Default = () => ({
-  setup() {
-    const valueRef = ref('')
-    const maxRef = ref(1)
-    const changeHistoryRef = historyRef(valueRef, maxRef)
-    function setValue(event) {
-      valueRef.value = event.target.value
-    }
-    function changeMax(changeValue) {
-      if (maxRef.value === 1 && changeValue < 0) {
-        return
-      }
-      maxRef.value += changeValue
-    }
-    return () => (
-      h('div', [
-        h('div', `max history: ${maxRef.value}`),
-        h('div', valueRef.value),
-        changeHistoryRef.value.map((item, index) => {
-          return h('div', {key: item + index}, item)
-        }),
-        h('input', {onchange: setValue}),
-        h('button', {onclick: () => changeMax(1)}, 'upMax'),
-        h('button', {onclick: () => changeMax(-1)}, 'downMax'),
-      ])
-    )
-  },
-})
-
 <Canvas>
-  <Story name="Default">
-    {Default.bind({})}
+  <Story story={Default}>
   </Story>
 </Canvas>

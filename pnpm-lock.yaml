@@ -694,6 +694,7 @@ importers:
     specifiers:
       '@stitches/core': 1.2.7
       '@vue/server-renderer': 3.2.33
+      '@winter-love/lodash': ^1.0.25-alpha.14
       '@winter-love/stitches': ^1.0.25-alpha.14
       '@winter-love/utils': ^1.0.25-alpha.14
       clsx: ^1.1.1
@@ -704,6 +705,7 @@ importers:
       vue-demi: ^0.12.1
     dependencies:
       '@stitches/core': 1.2.7
+      '@winter-love/lodash': link:../lodash
       '@winter-love/stitches': link:../stitches
       '@winter-love/utils': link:../utils
       clsx: 1.1.1
@@ -795,14 +797,14 @@ importers:
       fast-json-stable-stringify: ^2.1.0
       lodash: ^4.17.21
       vue: 3.2.33
-      vue-demi: ^0.12.1
+      vue-demi: '*'
     dependencies:
       '@winter-love/lodash': link:../lodash
       '@winter-love/utils': link:../utils
       debounce: 1.2.1
       fast-json-stable-stringify: 2.1.0
       lodash: 4.17.21
-      vue-demi: 0.12.1_vue@3.2.33
+      vue-demi: 0.12.5_vue@3.2.33
     devDependencies:
       '@types/debounce': 1.2.1
       '@types/sinon': 10.0.11

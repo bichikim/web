@@ -3,15 +3,14 @@ import {ConfigType, CreateStitches} from '@stitches/core/types/config'
 import {CssComponent} from '@stitches/core/types/styled-component'
 import {createStyled} from '@winter-love/stitches'
 import {theme} from 'src/theme'
-import {inject, InjectionKey, Plugin} from 'vue-demi'
+import {inject, Plugin} from 'vue-demi'
+import {SYSTEM_KEY} from './keys'
 import {stitchesUtils} from './stitches-utils'
 import {linearGradient, typography} from './variants'
 
 export * from './h-glow'
 export * from './h-box'
 export * from './quasar-components'
-
-export const SYSTEM_KEY: InjectionKey<CssComponent> = '__hyper_component_system_key__' as any
 
 export const useSystem = (): CssComponent => {
   return inject(SYSTEM_KEY, (() => ({})) as any)

@@ -57,7 +57,10 @@ export function watchExtended(sources, callback, options?: WatchExtendOptions): 
   // eslint-disable-next-line unicorn/consistent-function-scoping
   const beforeStop: (() => void)[] = []
   const stop: () => void = () => {
-    beforeStop.forEach((fn) => fn())
+    beforeStop.forEach((fn) => {
+      console.log(fn)
+      fn()
+    })
   }
   let _callback = callback
   if (once) {
@@ -71,7 +74,7 @@ export function watchExtended(sources, callback, options?: WatchExtendOptions): 
   if (debounce) {
     const oldCallback = _callback
     const debounceFunction = createDebounce(oldCallback, debounce.interval, {
-      trailing: options?.immediate,
+      leading: options?.immediate,
     })
     beforeStop.push(debounceFunction.cancel)
     _callback = debounceFunction

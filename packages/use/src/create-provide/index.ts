@@ -1,5 +1,5 @@
 import {inject, InjectionKey, provide} from 'vue-demi'
-import {freeze, MayFunction, mayFunctionValue, UnFunction} from '@winter-love/utils'
+import {freeze, MayFunction, toValue, UnFunction} from '@winter-love/utils'
 
 export const createProvide = <T extends MayFunction<unknown>>(data: T, name?: string) => {
 
@@ -11,7 +11,7 @@ export const createProvide = <T extends MayFunction<unknown>>(data: T, name?: st
     },
     injectKey: key,
     provide: () => {
-      const _data = mayFunctionValue(data)
+      const _data = toValue(data)
       return provide(key, _data)
     },
   })
