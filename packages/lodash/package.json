@@ -26,8 +26,8 @@
   ],
   "scripts": {
     "build": "tsup --dts --minify",
-    "generate-lodash-es": "lodash modularize exports=es -d -s -o src/lodash",
     "dev": "tsup --watch",
+    "generate-lodash-es": "lodash modularize exports=es -d -s -o src/lodash",
     "prepare": "tsup --dts"
   },
   "dependencies": {

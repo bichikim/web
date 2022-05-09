@@ -54,9 +54,9 @@ export const Default = () => {
         <span>{{ isValid }}</span><br>
         <span>{{ errorMessage }}</span>
         <button @click="showInput = !showInput">toggle input</button><br>
-        <span>t-input</span><TInput v-if="showInput" ></TInput>
-        <span>t-use-input</span><TUseInput />
-        <span>input</span><input v-verify="() => false" />
+        <span>t-input max 4</span><TInput v-if="showInput" ></TInput>
+        <span>t-use-input max 2</span><TUseInput />
+        <span>input all ways ok</span><input v-verify="() => false" />
       </div>
     `,
   })
