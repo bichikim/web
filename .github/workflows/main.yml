@@ -21,15 +21,6 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Cache pnpm modules
-        uses: actions/cache@v3
-        with:
-          path: ~/.pnpm-store
-          # key: ${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
-          key: ${{ runner.os }}
-          restore-keys: |
-            ${{ runner.os }}-
-
       - name: Use Libraies Cache
         uses: actions/cache@v3
         id: libraies-cache
@@ -42,8 +33,18 @@ jobs:
         with:
           version: ${{ env.PNPM_VERSION }}
 
+      - name: Cache pnpm modules
+        uses: actions/cache@v3
+        with:
+          path: ~/.pnpm-store
+          # key: ${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          key: ${{ runner.os }}
+          restore-keys: |
+            ${{ runner.os }}-    
+
       - name: Install Dependencies
         run: pnpm install
+
 
       - name: Test
         run: pnpm run test
@@ -66,6 +67,11 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
+      - name: Prepare Pnpm
+        uses: pnpm/action-setup@v2.0.1
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
       - name: Cache pnpm modules
         uses: actions/cache@v3
         with:
@@ -74,11 +80,6 @@ jobs:
           key: ${{ runner.os }}
           restore-keys: |
             ${{ runner.os }}-
-
-      - name: Prepare Pnpm
-        uses: pnpm/action-setup@v2.0.1
-        with:
-          version: ${{ env.PNPM_VERSION }}
 
       - name: Use Libraies Cache
         uses: actions/cache@v3
