@@ -7,8 +7,8 @@
     "test": "jest"
   },
   "devDependencies": {
-    "@babel/core": "7.17.8",
-    "@babel/node": "7.16.8",
+    "@babel/core": "7.17.10",
+    "@babel/node": "7.17.10",
     "ganache": "7.0.4",
     "solc": "0.8.13",
     "web3": "1.7.3"

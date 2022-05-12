@@ -58,8 +58,8 @@
     "last 5 Opera versions"
   ],
   "devDependencies": {
-    "@babel/core": "7.17.8",
-    "@babel/preset-env": "7.16.11",
+    "@babel/core": "7.17.10",
+    "@babel/preset-env": "7.17.10",
     "@babel/preset-typescript": "7.16.7",
     "@emotion/jest": "11.9.1",
     "@happy-dom/jest-environment": "2.55.0",
