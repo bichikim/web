@@ -9,6 +9,7 @@ const runner = setupTestRunner({config})
 describe('coong/server/user-read', () => {
 
   const generateData = async ({context}: TestArgs) => {
+    const userCount = await context.query.User.count()
     // 유저 Foo 생성
     const userFoo = await context.query.User.createOne({
       data: {email: 'foo@foo.com', name: 'foo', password: 'super-secret'},
@@ -88,6 +89,12 @@ describe('coong/server/user-read', () => {
             }
             following {
               email
+            }
+            publicKeys {
+              author {
+                email
+              }
+              value
             }
             isAdmin
             postLikes {

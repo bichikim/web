@@ -39,6 +39,7 @@
     "test": "pnpm run test:unit",
     "test:coverage": "jest --collect-coverage",
     "test:unit": "jest --selectProjects unit-test",
+    "test:e2e": "jest --selectProjects e2e-test",
     "version:alpha": "lerna version prerelease --preid alpha",
     "version:beta": "lerna version prerelease --preid beta",
     "version:next": "lerna version prerelease --preid next",

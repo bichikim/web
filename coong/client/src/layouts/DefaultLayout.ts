@@ -19,8 +19,8 @@ const PagesLayout = defineComponent({
     isOpenAuth.value = !isSignIn.value
 
     const isOpenRef = computed(() => {
-      // return isOpenAuth.value && !isSignIn.value
-      return false
+      return isOpenAuth.value && !isSignIn.value
+      // return false
     })
 
     const onCloseAuth = () => {

@@ -79,7 +79,7 @@ module.exports = configure((ctx) => {
           '/static': {
             changeOrigin: true,
             rewrite: (path) => path.replace(/^\/static/u, ''),
-            target: 'http://localhost:9100',
+            target: 'http://localhost:9000',
           },
         }
         viteConf.plugins.push(

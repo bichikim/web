@@ -23,6 +23,7 @@ A field: The individual bits of data on your list, each with its own type.
 import {Post} from './Post'
 import {Tag} from './Tag'
 import {User} from './User'
+import {PublicKey} from './PublicKey'
 
 // We are using Typescript, and we want our types experience to be as strict as it can be.
 // By providing the Keystone generated `Lists` type to our lists object, we refine
@@ -34,10 +35,11 @@ import {Lists} from '.keystone/types'
 // Each property on the exported object will become the name of a list (a.k.a. the `listKey`),
 // with the value being the definition of the list, including the fields.
 export const lists: Lists = {
-
   // Our second list is the Posts list. We've got a few more fields here
   // so we have all the info we need for displaying posts.
   Post,
+
+  PublicKey,
 
   // Our final list is the tag list. This field is just a name and a relationship to posts
   Tag,

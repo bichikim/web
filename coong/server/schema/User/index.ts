@@ -2,14 +2,10 @@
 
 import {list} from '@keystone-6/core'
 import {checkbox, json, password, relationship, text} from '@keystone-6/core/fields'
-import {AuthArgs, isAdmin, or} from '../../utils'
+import {isSelfField as _isSelfField, AuthArgs, isAdmin, or} from '../../utils'
 import {Lists} from '.keystone/types'
-import {v1 as uuid} from 'uuid'
 
-const isSelfField = (args: AuthArgs<Lists.User.TypeInfo>) => {
-  const {session, item} = args
-  return item?.id === session.itemId
-}
+const isSelfField = _isSelfField<Lists.User.TypeInfo>((item) => item?.id)
 
 const isSelfFilter = (args: AuthArgs) => {
   const {session, operation} = args
@@ -72,10 +68,10 @@ export const User = list({
 
     // The password field takes care of hiding details and hashing values
     password: password({
-      access: {
-        // 패스워드는 보호 됨으로 읽혀 저도 상관없다 읽는게 패스워드 값을 읽는게 아니라 패스워드가 있는지 여부만 알 수 있있다
-        update: or([isAdmin, isSelfField]),
-      },
+      // access: {
+      //   // 패스워드는 보호 됨으로 읽혀 저도 상관없다 읽는게 패스워드 값을 읽는게 아니라 패스워드가 있는지 여부만 알 수 있있다
+      //   update: or([isAdmin, isSelfField]),
+      // },
       validation: {isRequired: false},
     }),
 
@@ -96,8 +92,21 @@ export const User = list({
       access: {
         create: isAdmin,
         update: isAdmin,
-      }, many: true,
+      },
+      many: true,
       ref: 'Post.author',
+    }),
+
+    /**
+     * wallet address or else
+     */
+    publicKeys: relationship({
+      access: {
+        create: isAdmin,
+        update: isAdmin,
+      },
+      many: true,
+      ref: 'PublicKey.author',
     }),
 
     roles: json({
@@ -108,21 +117,6 @@ export const User = list({
       },
       defaultValue: '[]',
     }),
-  },
-  // Here are the fields that `User` will have. We want an email and password so they can log in
-  // a name so we can refer to them, and a way to connect users to posts.
-  hooks: {
-    // fill publicKey
-    resolveInput({resolvedData, operation}) {
-      if (operation === 'create') {
-        return {
-          ...resolvedData,
-          publicKey: resolvedData.publicKey === '' ? `unset:${uuid()}` : resolvedData.publicKey,
-        }
-      }
-
-      return resolvedData
-    },
   },
   // Here we can configure the Admin UI. We want to show a user's name and posts in the Admin UI
   ui: {

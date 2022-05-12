@@ -1,6 +1,5 @@
-const path = require('path')
 const config = require('./jest.config.unit')
-config.projects.push(    {
+config.projects.push({
   displayName: 'e2e-test',
   maxWorkers: 1,
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],

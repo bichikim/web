@@ -6,6 +6,7 @@ module.exports = {
   collectCoverageFrom: [
     '<rootDir>/packages/*/src/**/*.{ts,tsx}',
     '<rootDir>/coong/*/src/**/*.{ts,tsx}',
+    '<rootDir>/coong/server/**/*.{ts,tsx}',
     '<rootDir>/scripts/**/*.{ts,tsx}',
     '!<rootDir>/**/*.d.ts',
     '!<rootDir>/**/*.stories.{ts,tsx}',
@@ -48,8 +49,8 @@ module.exports = {
       testEnvironment: '@happy-dom/jest-environment',
       testMatch: [
         '!<rootDir>/**/*.e2e.ts',
-        '!<rootDir>/coong/firebase/**/*.spec.ts',
         '<rootDir>/packages/*/src/**/__tests__/*.spec.{ts,tsx}',
+        '<rootDir>/coong/server/**/__tests__/*.spec.{ts,tsx}',
         '<rootDir>/coong/*/src/**/__tests__/*.spec.{ts,tsx}',
         '<rootDir>/scripts/__tests__/*.spec.ts',
       ],

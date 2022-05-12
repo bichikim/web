@@ -310,6 +310,45 @@ input TagRelateToManyForCreateInput {
   connect: [TagWhereUniqueInput!]
 }
 
+type PublicKey {
+  id: ID!
+  author: User
+  value: String
+}
+
+input PublicKeyWhereUniqueInput {
+  id: ID
+}
+
+input PublicKeyWhereInput {
+  AND: [PublicKeyWhereInput!]
+  OR: [PublicKeyWhereInput!]
+  NOT: [PublicKeyWhereInput!]
+  id: IDFilter
+  author: UserWhereInput
+  value: StringFilter
+}
+
+input PublicKeyOrderByInput {
+  id: OrderDirection
+  value: OrderDirection
+}
+
+input PublicKeyUpdateInput {
+  author: UserRelateToOneForUpdateInput
+  value: String
+}
+
+input PublicKeyUpdateArgs {
+  where: PublicKeyWhereUniqueInput!
+  data: PublicKeyUpdateInput!
+}
+
+input PublicKeyCreateInput {
+  author: UserRelateToOneForCreateInput
+  value: String
+}
+
 type Tag {
   id: ID!
   name: String
@@ -389,6 +428,13 @@ type User {
     skip: Int! = 0
   ): [Post!]
   postsCount(where: PostWhereInput! = {}): Int
+  publicKeys(
+    where: PublicKeyWhereInput! = {}
+    orderBy: [PublicKeyOrderByInput!]! = []
+    take: Int
+    skip: Int! = 0
+  ): [PublicKey!]
+  publicKeysCount(where: PublicKeyWhereInput! = {}): Int
   roles: JSON
   passwordResetToken: PasswordState
   passwordResetIssuedAt: DateTime
@@ -420,6 +466,7 @@ input UserWhereInput {
   password: PasswordFilter
   postLikes: PostManyRelationFilter
   posts: PostManyRelationFilter
+  publicKeys: PublicKeyManyRelationFilter
   passwordResetToken: PasswordFilter
   passwordResetIssuedAt: DateTimeNullableFilter
   passwordResetRedeemedAt: DateTimeNullableFilter
@@ -435,6 +482,12 @@ input BooleanFilter {
 
 input PasswordFilter {
   isSet: Boolean!
+}
+
+input PublicKeyManyRelationFilter {
+  every: PublicKeyWhereInput
+  some: PublicKeyWhereInput
+  none: PublicKeyWhereInput
 }
 
 input UserOrderByInput {
@@ -457,6 +510,7 @@ input UserUpdateInput {
   password: String
   postLikes: PostRelateToManyForUpdateInput
   posts: PostRelateToManyForUpdateInput
+  publicKeys: PublicKeyRelateToManyForUpdateInput
   roles: JSON
   passwordResetToken: String
   passwordResetIssuedAt: DateTime
@@ -464,6 +518,13 @@ input UserUpdateInput {
   magicAuthToken: String
   magicAuthIssuedAt: DateTime
   magicAuthRedeemedAt: DateTime
+}
+
+input PublicKeyRelateToManyForUpdateInput {
+  disconnect: [PublicKeyWhereUniqueInput!]
+  set: [PublicKeyWhereUniqueInput!]
+  create: [PublicKeyCreateInput!]
+  connect: [PublicKeyWhereUniqueInput!]
 }
 
 input UserUpdateArgs {
@@ -480,6 +541,7 @@ input UserCreateInput {
   password: String
   postLikes: PostRelateToManyForCreateInput
   posts: PostRelateToManyForCreateInput
+  publicKeys: PublicKeyRelateToManyForCreateInput
   roles: JSON
   passwordResetToken: String
   passwordResetIssuedAt: DateTime
@@ -487,6 +549,11 @@ input UserCreateInput {
   magicAuthToken: String
   magicAuthIssuedAt: DateTime
   magicAuthRedeemedAt: DateTime
+}
+
+input PublicKeyRelateToManyForCreateInput {
+  create: [PublicKeyCreateInput!]
+  connect: [PublicKeyWhereUniqueInput!]
 }
 
 """
@@ -504,6 +571,15 @@ type Mutation {
   updatePosts(data: [PostUpdateArgs!]!): [Post]
   deletePost(where: PostWhereUniqueInput!): Post
   deletePosts(where: [PostWhereUniqueInput!]!): [Post]
+  createPublicKey(data: PublicKeyCreateInput!): PublicKey
+  createPublicKeys(data: [PublicKeyCreateInput!]!): [PublicKey]
+  updatePublicKey(
+    where: PublicKeyWhereUniqueInput!
+    data: PublicKeyUpdateInput!
+  ): PublicKey
+  updatePublicKeys(data: [PublicKeyUpdateArgs!]!): [PublicKey]
+  deletePublicKey(where: PublicKeyWhereUniqueInput!): PublicKey
+  deletePublicKeys(where: [PublicKeyWhereUniqueInput!]!): [PublicKey]
   createTag(data: TagCreateInput!): Tag
   createTags(data: [TagCreateInput!]!): [Tag]
   updateTag(where: TagWhereUniqueInput!, data: TagUpdateInput!): Tag
@@ -625,6 +701,14 @@ type Query {
   ): [Post!]
   post(where: PostWhereUniqueInput!): Post
   postsCount(where: PostWhereInput! = {}): Int
+  publicKeys(
+    where: PublicKeyWhereInput! = {}
+    orderBy: [PublicKeyOrderByInput!]! = []
+    take: Int
+    skip: Int! = 0
+  ): [PublicKey!]
+  publicKey(where: PublicKeyWhereUniqueInput!): PublicKey
+  publicKeysCount(where: PublicKeyWhereInput! = {}): Int
   tags(
     where: TagWhereInput! = {}
     orderBy: [TagOrderByInput!]! = []

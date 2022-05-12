@@ -54,9 +54,13 @@ const IndexPage = defineComponent({
               isSignIn.value
                 ? <HBox>
                   <span>Welcome </span>
-                  <HBox as="button" onClick={user.signOut} css={{textDecoration: 'underline'}}>{user.email}</HBox><br/>
-                  <span>Web3 Project is under construction</span><br/>
-                  <span>Wait for it to open</span><br/>
+                  <HBox
+                    as="button"
+                    onClick={user.signOut}
+                    css={{textDecoration: 'underline'}}
+                  >{user.name ?? user.email}</HBox><br />
+                  <span>Web3 Project is under construction</span><br />
+                  <span>Wait for it to open</span><br />
                 </HBox>
                 : <HBox
                   as="button"
