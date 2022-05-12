@@ -6,6 +6,7 @@
   "author": "Bichi Kim <bichi@live.co.kr>",
   "scripts": {
     "build:docker": "docker build --tag client-next . ",
+    "build": "quasar build -m ssr",
     "build:ssr": "quasar build -m ssr",
     "build:start": "docker run --name client-next -d -p 3000:3000 client-next",
     "dev": "quasar dev",

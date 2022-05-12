@@ -92,7 +92,7 @@ jobs:
         run: pnpm install --ignore-scripts
 
       - name: Build
-        run: pnpm run build:@coong/client:ssr
+        run: pnpm run build:@coong/client
 
       - name: Archive Production Artifact
         uses: actions/upload-artifact@master
