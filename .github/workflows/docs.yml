@@ -3,8 +3,8 @@ name: Document Build and Deploy
 on:
   push:
     branches:
-      - dev
-      - master
+      # deploying docs is suspected
+      - docs
 
 env:
   NODE_VERSION: 16
