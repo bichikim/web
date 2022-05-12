@@ -10,7 +10,7 @@
     "./docs/*"
   ],
   "scripts": {
-    "build:@coong/client": "pnpm run build --filter @coong/client",
+    "build:@coong/client": "pnpm run build --filter @coong/client... --stream",
     "build:@coong/client:ssr:stream": "pnpm run build:ssr --filter @coong/client... --stream",
     "build:@coong/server": "pnpm run build -r --filter @coong/server",
     "build:@coong/server-stream": "pnpm run build --filter @coong/server... --stream",
