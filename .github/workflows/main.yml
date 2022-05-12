@@ -40,7 +40,7 @@ jobs:
           # key: ${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
           key: ${{ runner.os }}
           restore-keys: |
-            ${{ runner.os }}-    
+            ${{ runner.os }}    
 
       - name: Install Dependencies
         run: pnpm install
@@ -79,7 +79,7 @@ jobs:
           # key: ${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
           key: ${{ runner.os }}
           restore-keys: |
-            ${{ runner.os }}-
+            ${{ runner.os }}
 
       - name: Use Libraies Cache
         uses: actions/cache@v3
