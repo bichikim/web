@@ -2,15 +2,13 @@
 import {
   ComponentPropsOptions,
   ComputedOptions,
-  DefineComponent,
-  ExtractPropTypes,
-  MethodOptions,
-} from '@vue/runtime-core'
-import {
   defineComponent,
+  DefineComponent,
   EmitsOptions,
+  ExtractPropTypes,
   FunctionalComponent,
   h,
+  MethodOptions,
   ObjectEmitsOptions,
   reactive,
   Ref,
@@ -18,6 +16,7 @@ import {
 } from 'vue-demi'
 
 export type States = Record<string, any>;
+
 type EmitsToProps<T extends EmitsOptions> = T extends string[] ? {
   [K in string & `on${Capitalize<T[number]>}`]?: (...args: any[]) => any;
 } : T extends ObjectEmitsOptions ? {
