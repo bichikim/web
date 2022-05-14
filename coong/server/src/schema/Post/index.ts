@@ -3,7 +3,7 @@
 import {list} from '@keystone-6/core'
 import {image, relationship, select, text, timestamp} from '@keystone-6/core/fields'
 import {document} from '@keystone-6/fields-document'
-import {AuthArgs, isAdmin, or} from '../../utils'
+import {AuthArgs, isAdmin, or} from '#utils'
 import {Lists} from '.keystone/types'
 
 const isSelfItem = (args: AuthArgs<Lists.Post.TypeInfo>) => {

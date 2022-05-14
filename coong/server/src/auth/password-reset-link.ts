@@ -1,7 +1,7 @@
 // noinspection ES6PreferShortImport
 
 import {AuthTokenTypeConfig} from '@keystone-6/auth/dist/declarations/src/types'
-import {send} from '../mailer'
+import {sendMail} from '#src/utils/mailer'
 
 export interface CreatePasswordResetLinkOptions {
   from: string
@@ -26,7 +26,7 @@ export const createPasswordResetLink = (options: CreatePasswordResetLinkOptions)
     sendToken: async (args) => {
       const {token, identity} = args
 
-      await send(getPasswordResetEmailMessage(identity, token))
+      await sendMail(getPasswordResetEmailMessage(identity, token))
     },
     tokensValidForMins,
   }

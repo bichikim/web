@@ -1,7 +1,7 @@
 // noinspection ES6PreferShortImport
 
 import {AuthTokenTypeConfig} from '@keystone-6/auth/dist/declarations/src/types'
-import {send} from '../mailer'
+import {sendMail} from '#src/utils/mailer'
 
 export interface CreateMagicAuthLinkOptions {
   from : string
@@ -27,7 +27,7 @@ export const createMagicAuthLink = (options: CreateMagicAuthLinkOptions): AuthTo
   return {
     sendToken: async (args) => {
       const {identity, token} = args
-      await send(getMagicAuthLinkEmailMessage(identity, token))
+      await sendMail(getMagicAuthLinkEmailMessage(identity, token))
     },
     tokensValidForMins,
   }

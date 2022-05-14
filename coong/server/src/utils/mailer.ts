@@ -3,7 +3,7 @@ if (process.env.EMAIL_API_KEY) {
   email.setApiKey(process.env.EMAIL_API_KEY)
 }
 
-export const send = (messages: MailDataRequired | MailDataRequired[]) => {
+export const sendMail = (messages: MailDataRequired | MailDataRequired[]) => {
   if (!process.env.EMAIL_API_KEY) {
     return
   }

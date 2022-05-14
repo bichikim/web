@@ -17,6 +17,12 @@
       "esnext.asynciterable",
       "scripthost"
     ],
+    "paths": {
+      "#*": ["*"],
+      "#auth": ["src/auth/index.ts"],
+      "#utils": ["src/utils/index.ts"],
+      "#extended-schema": ["src/extended-schema/index.ts"]
+    },
     "allowJs": true,
     "esModuleInterop": true,
     "moduleResolution": "node",

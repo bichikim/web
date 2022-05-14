@@ -2,7 +2,7 @@
 
 import {list} from '@keystone-6/core'
 import {checkbox, json, password, relationship, text} from '@keystone-6/core/fields'
-import {isSelfField as _isSelfField, AuthArgs, isAdmin, or} from '../../utils'
+import {isSelfField as _isSelfField, AuthArgs, isAdmin, or} from '#utils'
 import {Lists} from '.keystone/types'
 
 const isSelfField = _isSelfField<Lists.User.TypeInfo>((item) => item?.id)

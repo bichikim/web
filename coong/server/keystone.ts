@@ -10,7 +10,9 @@ You can find all the config options in our docs here: https://keystonejs.com/doc
 */
 import {config} from '@keystone-6/core'
 import {KeystoneContext} from '@keystone-6/core/types'
-import {extendGraphqlSchema} from './exnted-schema'
+import {extendGraphqlSchema} from '#extended-schema'
+import {lists} from './src/schema'
+import {session, withAuth} from '#auth'
 
 export type Context = KeystoneContext & {
   // webAuth
@@ -22,10 +24,8 @@ const DB_PROVIDER = process.env.NODE_ENV === 'test' ? 'sqlite' : 'postgresql'
 const PORT = process.env.PORT ?? DEFAULT_PORT
 const ORIGIN = process.env.NODE_ENV === 'production' ? ['https://coong.io', 'https://www.coong.io'] : '*'
 // Look in the schema file for how we define our lists, and how users interact with them through graphql or the Admin UI
-import {lists} from './schema'
 
 // Keystone auth is configured separately - check out the basic auth setup we are importing from our auth file.
-import {session, withAuth} from './auth'
 
 export default withAuth(
   // Using the config function helps typescript guide you to the available options.

@@ -2,7 +2,7 @@ import WebAuth from '@webauthn-lib/server'
 import {RegistrationChallenge, RpEntity, UserEntity} from '@webauthn-lib/server/dist/typed/webauthn'
 import {BaseSchemaMeta, Extension} from '@graphql-ts/extend'
 import {graphql} from '@keystone-6/core'
-import {AUTH_LIST_KEY} from '../../auth'
+import {AUTH_LIST_KEY} from '#auth'
 import {ExtendContext} from '../types'
 import {camelCase} from 'lodash'
 

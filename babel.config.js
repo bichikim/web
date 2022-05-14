@@ -7,6 +7,13 @@ module.exports = {
           'module-resolver',
           {
             alias: {
+              // for coong/server
+              '#auth': './src/auth',
+              '#extended-schema': './src/extended-schema',
+              '#schema': './src/schema',
+              '#src': './src',
+              '#utils': './src/utils',
+              // shared alias
               src: './src',
             },
             cwd: 'packagejson',

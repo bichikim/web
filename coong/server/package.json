@@ -9,6 +9,14 @@
     "start": "dotenv keystone start",
     "up:localdockers": "docker-compose up -d"
   },
+  "imports": {
+    "#auth": "./src/auth/index.ts",
+    "#extended-schema": "./src/extended-schema/index.ts",
+    "#schema": "./src/schema/index.ts",
+    "#utils": "./src/utils/index.ts",
+    "#*": "./*.ts",
+    "#**/*": "./**/*.ts"
+  },
   "dependencies": {
     "@graphql-ts/extend": "0.4.1",
     "@keystone-6/auth": "2.0.0",

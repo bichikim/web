@@ -4,7 +4,7 @@ import bs58 from 'bs58'
 import {ExtendContext} from 'exnted-schema/types'
 import {camelCase} from 'lodash'
 import {sign} from 'tweetnacl'
-import {AUTH_LIST_KEY} from '../../auth'
+import {AUTH_LIST_KEY} from '#auth'
 
 interface SignInWithSolanaResultType {
   item: any
