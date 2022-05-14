@@ -224,7 +224,7 @@ jobs:
     needs: build-server
     runs-on: ubuntu-latest
     # only dev
-    if: ${{ github.ref == 'refs/heads/dev' && needs.build-server.outputs.run_job == 'true' }}
+#    if: ${{ github.ref == 'refs/heads/dev' && needs.build-server.outputs.run_job == 'true' }}
     env:
       GCP_SERVICE_NAME: coong-back-end-dev
       GCP_IAMGE_NAME: gcr.io/${{ secrets.GCP_PROJECT_ID }}/coong-back-end-dev
@@ -348,7 +348,7 @@ jobs:
     needs: build-client
     runs-on: ubuntu-latest
     # only dev
-    if: ${{ github.ref == 'refs/heads/dev' && needs.build-client.outputs.run_job == 'true' }}
+#    if: ${{ github.ref == 'refs/heads/dev' && needs.build-client.outputs.run_job == 'true' }}
     env:
       GCP_SERVICE_NAME: coong-dev
       GCP_IAMGE_NAME: gcr.io/${{ secrets.GCP_PROJECT_ID }}/coong-dev
