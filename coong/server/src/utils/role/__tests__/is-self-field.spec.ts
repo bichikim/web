@@ -1,5 +1,4 @@
-import {AuthArgs} from 'utils/role/types'
-import {isSelfField} from '../is-self-field'
+import {AuthArgs, isSelfField} from '#utils'
 
 describe('is-self-filter', () => {
   interface Item {

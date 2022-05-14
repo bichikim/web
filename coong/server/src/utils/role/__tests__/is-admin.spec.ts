@@ -1,4 +1,4 @@
-import {isAdmin} from '../is-admin'
+import {isAdmin} from '#utils'
 import {createFakeAuthArgs} from './create-fake-auth-args'
 
 describe('isAdmin', () => {

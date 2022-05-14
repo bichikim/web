@@ -1,4 +1,4 @@
-import {hasRole} from '../has-role'
+import {hasRole} from '#utils'
 import {createFakeAuthArgs} from './create-fake-auth-args'
 
 describe('has-roles', () => {

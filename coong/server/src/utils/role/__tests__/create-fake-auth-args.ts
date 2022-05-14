@@ -1,4 +1,4 @@
-import {AuthArgs} from '../types'
+import {AuthArgs} from '#utils'
 
 export const createFakeAuthArgs = (): AuthArgs => {
   return {
