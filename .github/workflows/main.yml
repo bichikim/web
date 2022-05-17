@@ -5,7 +5,7 @@ on:
       - master
       - dev
 env:
-  PNPM_VERSION: 6.32.3
+  PNPM_VERSION: 7.1.0
   NODE_VERSION: 16
 jobs:
   # Test Job

@@ -5,14 +5,17 @@ export const Default = () => {
   const TUseInput = defineComponent({
     setup: () => {
       const rootInput = ref()
-      useVerifyInput(rootInput, (value) => value.length > 2 && 'max length 2')
+      const verifyInput = useVerifyInput(rootInput, (value) => value.length < 2 && 'min length 2')
+      const {verify: verifyRootInput} = toRefs(verifyInput)
       return {
         rootInput,
+        verifyRootInput,
       }
     },
     template: `
       <div>
         <input ref="rootInput" />
+        <button @click="verifyRootInput">trigger verify</button>
       </div>
     `,
   })
@@ -38,11 +41,12 @@ export const Default = () => {
     setup() {
       const showInput = ref(true)
       const verifyInputs = useVerifyInputs()
-      const {isValid, errorMessage} = toRefs(verifyInputs)
+      const {isValid, errorMessage, verify: verifyAll} = toRefs(verifyInputs)
       return {
         errorMessage,
         isValid,
         showInput,
+        verifyAll,
       }
     },
     template: `
@@ -51,8 +55,9 @@ export const Default = () => {
         <span>{{ errorMessage }}</span>
         <button @click="showInput = !showInput">toggle input</button><br>
         <span>t-input max 4</span><TInput v-if="showInput" ></TInput>
-        <span>t-use-input max 2</span><TUseInput />
+        <span>t-use-input min 2</span><TUseInput />
         <span>input all ways ok</span><input v-verify="() => false" />
+        <button @click="verifyAll">verifyAll</button>
       </div>
     `,
   })
