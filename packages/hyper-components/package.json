@@ -47,7 +47,7 @@
     "clsx": "^1.1.1",
     "color": "^4.2.0",
     "quasar": "2.6.0",
-    "vue-demi": "^0.12.1"
+    "vue-demi": "*"
   },
   "devDependencies": {
     "@vue/server-renderer": "3.2.33",

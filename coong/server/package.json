@@ -18,6 +18,7 @@
     "#**/*": "./**/*.ts"
   },
   "dependencies": {
+    "@graphql-ts/schema": "^0.5.0",
     "@graphql-ts/extend": "0.4.1",
     "@keystone-6/auth": "2.0.0",
     "@keystone-6/core": "1.1.0",

@@ -2,7 +2,7 @@ import {Component, EmitsOptions, FunctionalComponent, h} from 'vue-demi'
 import {HyperProps, useCsx} from '../'
 
 // eslint-disable-next-line @typescript-eslint/ban-types
-type EmptyObject = {}
+export type EmptyObject = {}
 
 export const withCsx = <Props = EmptyObject,
   Emit extends EmitsOptions = EmptyObject,

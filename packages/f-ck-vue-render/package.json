@@ -10,7 +10,10 @@
     "astring": "1.8.1"
   },
   "devDependencies": {
-    "ts-node-dev": "1.1.8"
+    "@types/node": "^17.0.21",
+    "ts-node-dev": "1.1.8",
+    "ts-node": "*",
+    "typescript": "^4.6.3"
   },
   "publishConfig": {
     "access": "public"

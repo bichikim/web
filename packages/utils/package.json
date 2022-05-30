@@ -42,8 +42,7 @@
     "@types/js-cookie": "3.0.1",
     "js-cookie": "^3.0.1",
     "micro-memoize": "^4.0.9",
-    "tsd": "0.20.0",
-    "vue-demi": "latest"
+    "tsd": "0.20.0"
   },
   "publishConfig": {
     "access": "public"
