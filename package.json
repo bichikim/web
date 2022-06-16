@@ -90,7 +90,7 @@
     "@vue/babel-plugin-transform-vue-jsx": "1.2.1",
     "@vue/compiler-sfc": "3.2.31",
     "@vue/eslint-config-typescript": "10.0.0",
-    "@vue/test-utils": "2.0.0-rc.19",
+    "@vue/test-utils": "2.0.0",
     "@vue/vue3-jest": "27.0.0-alpha.4",
     "@winter-love/hyper-components": "^1.0.25-alpha.4",
     "@winter-love/test-use": "^1.0.25-alpha.4",
