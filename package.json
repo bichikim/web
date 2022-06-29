@@ -91,7 +91,7 @@
     "lerna": "^5.1.6",
     "lodash": "^4.17.21",
     "prettier": "^2.7.1",
-    "sinon": "13.0.1",
+    "sinon": "13.0.2",
     "sort-package-json": "1.55.0",
     "ts-node": "10.7.0",
     "tsd": "0.20.0",
