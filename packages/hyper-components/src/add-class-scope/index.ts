@@ -8,7 +8,10 @@ export const addClassScope = (css?: Record<string, any>, classScope?: string) =>
 
   const baseCss = entries(css).filter(([key]) => !key.startsWith('&'))
 
-  const newCss = omit(css, baseCss.map(([key]) => key))
+  const newCss = omit(
+    css,
+    baseCss.map(([key]) => key),
+  )
 
   newCss[`&${classScope}`] = fromEntries(baseCss)
 

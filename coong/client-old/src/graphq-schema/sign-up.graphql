@@ -1,5 +1,0 @@
-mutation signUp ($input: CreateAuthenticateUserWithEmailInput!) {
-  createAuthenticateUserWithEmail(input: $input) {
-    id
-  }
-}

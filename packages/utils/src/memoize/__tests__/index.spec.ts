@@ -1,7 +1,3 @@
-/**
- * @jest-environment jsdom
- */
-
 import {deepMemoize, memoize} from '../'
 
 describe('memoize', () => {

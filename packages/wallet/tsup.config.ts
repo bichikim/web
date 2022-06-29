@@ -5,14 +5,8 @@ export default defineConfig({
   dts: {
     resolve: false,
   },
-  entry: [
-    'src/index.ts',
-  ],
-  format: [
-    'cjs',
-    'esm',
-    'iife',
-  ],
+  entry: ['src/index.ts'],
+  format: ['cjs', 'esm', 'iife'],
   outDir: 'lib',
   skipNodeModulesBundle: true,
   sourcemap: true,

@@ -7,7 +7,10 @@ interface DebounceFunc<T extends (...args: any[]) => any> {
   flush: () => ReturnType<T> | undefined
 }
 
-export const promiseDebounce = <T extends (...args: any[]) => any>(fn: T, wait?: number): DebounceFunc<T> => {
+export const promiseDebounce = <T extends (...args: any[]) => any>(
+  fn: T,
+  wait?: number,
+): DebounceFunc<T> => {
   let callbacks: any = []
 
   const handle = (...args: Parameters<T>) => {

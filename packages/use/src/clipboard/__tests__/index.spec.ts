@@ -67,7 +67,8 @@ describe('clipboard', () => {
     const {result} = mountUse(() => {
       const {value, state} = useClipboard(undefined, true)
       return {
-        state, value,
+        state,
+        value,
       }
     })
 
@@ -124,7 +125,9 @@ describe('clipboard', () => {
     const {result} = mountUse(() => {
       const {value, state, write} = useClipboard()
       return {
-        state, value, write,
+        state,
+        value,
+        write,
       }
     })
 

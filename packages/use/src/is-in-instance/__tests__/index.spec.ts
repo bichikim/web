@@ -7,9 +7,7 @@ describe('isInInstance', () => {
     const Component = defineComponent({
       setup() {
         const result = isInInstance()
-        return () => (
-          h('div', result)
-        )
+        return () => h('div', result)
       },
     })
 

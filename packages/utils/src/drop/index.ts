@@ -1,4 +1,3 @@
-
 export const drop = <T>(list: T[], size: number = 1): T[] => {
   const _list = [...list]
   _list.splice(0, size)
@@ -9,7 +8,8 @@ export const drop = <T>(list: T[], size: number = 1): T[] => {
  * @example drop(1)([1, 2, 3]) // [2, 3]
  * @param size
  */
-export const dropFn = (size: number = 1) => <T>(list: T[]): T[] => {
-  return drop<T>(list, size)
-}
-
+export const dropFn =
+  (size: number = 1) =>
+  <T>(list: T[]): T[] => {
+    return drop<T>(list, size)
+  }

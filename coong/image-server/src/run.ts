@@ -1,7 +1,7 @@
 import 'reflect-metadata'
 import express, {json, urlencoded} from 'express'
 import * as dotenv from 'dotenv'
-import {imageFormat, imageRequest, imageTransform, useImageTransform} from './middleware'
+import {imageFormat, imageRequest, imageTransform, imageTransformContext} from './middleware'
 
 dotenv.config()
 
@@ -18,7 +18,7 @@ app.use(imageRequest())
 app.use(imageTransform())
 
 app.get('/:url(*)', (req, res) => {
-  const imageTransform = useImageTransform(req)
+  const imageTransform = imageTransformContext.use(req)
   if (imageTransform) {
     res.type(`image/${imageTransform.format}`)
     res.send(imageTransform.image)

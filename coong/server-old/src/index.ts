@@ -24,24 +24,25 @@ const bootstrap = async () => {
   })
 }
 // eslint-disable-next-line @typescript-eslint/no-floating-promises
-bootstrap().then((result) => {
+bootstrap()
+  .then((result) => {
+    if (typeof result === 'string') {
+      console.error(result)
+      return
+    }
 
-  if (typeof result === 'string') {
-    console.error(result)
-    return
-  }
+    return start(result.server, {port})
+  })
+  .then((result) => {
+    if (typeof result !== 'object') {
+      console.error(result)
+      return
+    }
 
-  return start(result.server, {port})
-}).then((result) => {
-  if (typeof result !== 'object') {
-    console.error(result)
-    return
-  }
+    const {url} = result
 
-  const {url} = result
-
-  console.log(`Server is running, GraphQL Playground available at ${url}`)
-})
+    console.log(`Server is running, GraphQL Playground available at ${url}`)
+  })
 // for vite node plugin but it doesn't work
 // export const viteNodeApp = import.meta.env.PROD ? {} : bootstrap().then((result) => {
 //   if (typeof result === 'string') {

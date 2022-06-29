@@ -11,13 +11,7 @@ export type OnOnlineHandle = (event: Event) => unknown
  */
 export const onOffline = (handle: OnOfflineHandle) => {
   const window = getWindow()
-  return useElementEvent(
-    window,
-    'offline',
-    handle,
-    true,
-    {capture: false, passive: true},
-  )
+  return useElementEvent(window, 'offline', handle, true, {capture: false, passive: true})
 }
 
 /**
@@ -25,13 +19,7 @@ export const onOffline = (handle: OnOfflineHandle) => {
  */
 export const onOnline = (handle: OnOnlineHandle) => {
   const window = getWindow()
-  return useElementEvent(
-    window,
-    'online',
-    handle,
-    true,
-    {capture: false, passive: true},
-  )
+  return useElementEvent(window, 'online', handle, true, {capture: false, passive: true})
 }
 
 export const useConnection = (init: MayRef<boolean> = true) => {

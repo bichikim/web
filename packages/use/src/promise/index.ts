@@ -23,7 +23,7 @@ export interface UsePromiseReturnType<Data, Args extends any[], Error> {
   error: Ref<Error | undefined>
   execute: (...args: Args) => Promise<Data>
   fetching: Ref<boolean>
-  promise: Ref<Promise<Data>| undefined>
+  promise: Ref<Promise<Data> | undefined>
 }
 
 /**

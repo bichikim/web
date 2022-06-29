@@ -12,7 +12,9 @@ export interface ExtraWallet extends Wallet {
 }
 
 export const useSolana = (providerUrl?: MayRef<unknown>) => {
-  const providerUrlRef = wrapRef(providerUrl, {defaultValue: getSolflare() ?? getSolana() ?? DEFAULT_PROVIDER_URL})
+  const providerUrlRef = wrapRef(providerUrl, {
+    defaultValue: getSolflare() ?? getSolana() ?? DEFAULT_PROVIDER_URL,
+  })
   const messageSignature = ref<string | undefined>()
   const publicKeyRef = ref<string | undefined>()
   const connectedRef = ref(false)
@@ -68,7 +70,7 @@ export const useSolana = (providerUrl?: MayRef<unknown>) => {
 
     const Wallet = WalletModule?.default ?? WalletModule
 
-    walletRef.value = (new Wallet(providerUrl, MAIN_NET)) as ExtraWallet
+    walletRef.value = new Wallet(providerUrl, MAIN_NET) as ExtraWallet
     return walletRef.value
   }
 

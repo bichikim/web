@@ -10,12 +10,7 @@ export const storageRef = <Data>(
   value?: MayRef<Data>,
   options: StorageRefOptions = {},
 ) => {
-  const {
-    type = 'local' as BrowserStorageKind,
-    cookieOptions,
-    deep,
-    reset,
-  } = options
+  const {type = 'local' as BrowserStorageKind, cookieOptions, deep, reset} = options
   const valueRef = wrapRef<Data>(value)
   const freezeWatch = ref(false)
   const storage = createBrowserStorage<Data | undefined>(type)
@@ -53,14 +48,17 @@ export const storageRef = <Data>(
     updateValue(undefined, true)
   })
 
-  watch(valueRef, (value) => {
-    if (freezeWatch.value) {
-      freezeWatch.value = false
-      return
-    }
-    storage(cookieOptions).setItem(key, value)
-  }, {deep})
+  watch(
+    valueRef,
+    (value) => {
+      if (freezeWatch.value) {
+        freezeWatch.value = false
+        return
+      }
+      storage(cookieOptions).setItem(key, value)
+    },
+    {deep},
+  )
 
   return valueRef
 }
-

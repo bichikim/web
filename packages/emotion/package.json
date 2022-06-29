@@ -14,19 +14,19 @@
   "author": "bichi@live.co.kr",
   "exports": {
     ".": {
-      "import": "./lib/index.mjs",
-      "require": "./lib/index.js"
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
     },
     "./*": "./*"
   },
-  "main": "lib/index.js",
-  "jsdelivr": "lib/index.global.js",
-  "unpkg": "lib/index.global.js",
-  "module": "lib/index.mjs",
+  "main": "dist/index.js",
+  "jsdelivr": "dist/index.global.js",
+  "unpkg": "dist/index.global.js",
+  "module": "dist/index.mjs",
   "source": "src/index.ts",
-  "types": "lib/index.d.ts",
+  "types": "dist/index.d.ts",
   "files": [
-    "lib/*"
+    "dist/*"
   ],
   "scripts": {
     "build": "tsup-node --dts --minify",
@@ -40,18 +40,19 @@
     "@winter-love/use": "^1.0.25-alpha.14",
     "@winter-love/utils": "^1.0.25-alpha.14",
     "clsx": "^1.1.1",
-    "vue-demi": "^0.12.1"
+    "vue-demi": "*"
   },
   "devDependencies": {
     "@babel/core": "^7.17.10",
     "@emotion/server": "^11.4.0",
-    "@vue/server-renderer": "^3.2.33",
-    "vue": "3.2.33"
+    "@vue/server-renderer": "^3.2",
+    "vue": "^3.2"
   },
   "publishConfig": {
     "access": "public"
   },
   "gitHead": "a00563d4b5288df4b4bbe713ce9b970e1844ca29",
+  "stage": "deprecated",
   "tsup": {
     "entry": [
       "src/index.ts"
@@ -62,7 +63,7 @@
       "esm",
       "iife"
     ],
-    "outDir": "lib",
+    "outDir": "dist",
     "sourcemap": true,
     "splitting": false
   }

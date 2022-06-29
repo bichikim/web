@@ -6,4 +6,3 @@ describe('isListenable', () => {
     expect(result).toBe(true)
   })
 })
-

@@ -20,42 +20,62 @@
   "author": "bichi@live.co.kr",
   "exports": {
     ".": {
-      "import": "./lib/index.mjs",
-      "require": "./lib/index.js"
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
     },
     "./*": "./*"
   },
-  "main": "lib/index.js",
-  "jsdelivr": "lib/index.global.js",
-  "unpkg": "lib/index.global.js",
-  "module": "lib/index.mjs",
+  "main": "dist/index.js",
+  "jsdelivr": "dist/index.global.js",
+  "unpkg": "dist/index.global.js",
+  "module": "dist/index.mjs",
   "source": "src/index.ts",
-  "types": "lib/index.d.ts",
+  "types": "dist/index.d.ts",
   "files": [
-    "lib/*"
+    "dist/*"
   ],
   "scripts": {
-    "build": "tsup-node --dts --minify",
-    "dev": "tsup-node --watch",
-    "prepare": "tsup-node --dts"
+    "build": "tsup --dts --minify",
+    "dev": "tsup --watch",
+    "prepare": "tsup --dts",
+    "fix": "vue-demi-fix"
   },
   "dependencies": {
-    "@stitches/core": "1.2.7",
-    "@winter-love/stitches": "^1.0.25-alpha.14",
-    "@winter-love/utils": "^1.0.25-alpha.14",
+    "@stitches/core": "^1.2.8",
     "@winter-love/lodash": "^1.0.25-alpha.14",
+    "@winter-love/stitches": "workspace:*",
+    "@winter-love/utils": "^1.0.25-alpha.14",
     "clsx": "^1.1.1",
     "color": "^4.2.0",
-    "quasar": "2.6.0",
+    "quasar": "^2.6",
     "vue-demi": "*"
   },
   "devDependencies": {
     "@vue/server-renderer": "3.2.33",
+    "typescript": "^4.7.4",
     "csstype": "3.0.11",
-    "vue": "3.2.33"
+    "tsup": "^6.1.2",
+    "vue": "^3.2"
   },
   "publishConfig": {
     "access": "public"
   },
-  "gitHead": "a00563d4b5288df4b4bbe713ce9b970e1844ca29"
+  "gitHead": "a00563d4b5288df4b4bbe713ce9b970e1844ca29",
+  "tsup": {
+    "entry": [
+      "src/index.ts"
+    ],
+    "dts": {
+      "resolve": false
+    },
+    "clean": true,
+    "format": [
+      "cjs",
+      "esm",
+      "iife"
+    ],
+    "outDir": "dist",
+    "sourcemap": true,
+    "splitting": false
+  }
 }

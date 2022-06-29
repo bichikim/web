@@ -9,7 +9,6 @@ const serverSideRender = (input: App, context?: SSRContext): Promise<string> => 
 }
 
 const importServerSideModule = async () => {
-
   return {
     createApp: createSSRApp,
     render: serverSideRender,
@@ -64,10 +63,7 @@ export interface ClientSideOptions extends SharedSideOptions {
 
 const SERVER_RENDERED_KEY = 'data-server-rendered'
 
-export const createViteClientSideApp = async (
-  rootComponent: Component,
-  rootProps: Data = {},
-) => {
+export const createViteClientSideApp = async (rootComponent: Component, rootProps: Data = {}) => {
   const {createApp, createSSRApp, render: appRender} = await importClientSideModule()
   let app
   const serverRendered = isServerRendered()
@@ -87,12 +83,9 @@ export const createViteClientSideApp = async (
   }
 }
 
-export type AfterRender<T extends Record<string, any>> = (factoryResponse: T) => (any | Promise<any>)
+export type AfterRender<T extends Record<string, any>> = (factoryResponse: T) => any | Promise<any>
 
-export const createViteServerSideApp = async (
-  rootComponent: Component,
-  rootProps: Data = {},
-) => {
+export const createViteServerSideApp = async (rootComponent: Component, rootProps: Data = {}) => {
   const {createApp, render: appRender} = await importServerSideModule()
   const app = createApp(rootComponent, rootProps)
 
@@ -109,8 +102,10 @@ export const createViteServerSideApp = async (
   }
 }
 
-export type Render = <T>(arg: T, app?: App) =>
-  T extends infer P ? (P extends string ? void : Promise<SSRHtmlResult>) : any
+export type Render = <T>(
+  arg: T,
+  app?: App,
+) => T extends infer P ? (P extends string ? void : Promise<SSRHtmlResult>) : any
 
 export interface FactoryArg {
   app: App
@@ -119,8 +114,7 @@ export interface FactoryArg {
   rootProps?: Data
 }
 
-export type AppFactory = (arg: FactoryArg) =>
-  SSRResult | void | Promise<SSRResult | void>
+export type AppFactory = (arg: FactoryArg) => SSRResult | void | Promise<SSRResult | void>
 
 export class RenderError extends Error {
   type: string = 'render error'
@@ -150,11 +144,13 @@ export const rendererServerApp = async (
 ) => {
   const {context, rootProps} = arg
   if (!isSSRContext(context)) {
+    // eslint-disable-next-line functional/no-throw-statement
     throw new ContextError('Context should have res and req')
   }
   const {app, render} = await createViteServerSideApp(rootComponent, rootProps)
   const result = await factory({app, context, render: render as any})
   if (!result) {
+    // eslint-disable-next-line functional/no-throw-statement
     throw new RenderError('empty ssr render result')
   }
   return {
@@ -179,10 +175,7 @@ export const rendererClientApp = async (
   return factory({app, render: render as any, rootProps})
 }
 
-export const createRenderApp = (
-  rootComponent: Component,
-  factory: AppFactory,
-) => {
+export const createRenderApp = (rootComponent: Component, factory: AppFactory) => {
   return async (arg: RenderArg = {}): Promise<SSRResult | void> => {
     if (import.meta.env.SSR) {
       return rendererServerApp(rootComponent, factory, arg)
@@ -190,4 +183,3 @@ export const createRenderApp = (
     return rendererClientApp(rootComponent, factory, arg)
   }
 }
-

@@ -10,9 +10,7 @@ describe('debug', () => {
         debug({
           name,
         })
-        return () => (
-          h('div', name.value)
-        )
+        return () => h('div', name.value)
       },
     })
     const wrapper = mount(Component)

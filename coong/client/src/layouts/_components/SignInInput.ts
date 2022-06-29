@@ -43,7 +43,7 @@ export const SignInInput = defineComponent({
       emit('update:email', email)
     }
 
-    return () => (
+    return () =>
       h('div', {class: container()}, [
         h(HInput, {
           borderless: true,
@@ -57,39 +57,42 @@ export const SignInInput = defineComponent({
           modelValue: email.value,
           'onUpdate:modelValue': onUpdateEmail,
         }),
-        h(HBtn, {
-          css: {
-            borderRadius: 0,
-            color: 'black',
-            flexShrink: 0,
-            opacity: method.value === 'email' ? 1 : '0.5',
+        h(
+          HBtn,
+          {
+            css: {
+              borderRadius: 0,
+              color: 'black',
+              flexShrink: 0,
+              opacity: method.value === 'email' ? 1 : '0.5',
+            },
+            dense: true,
+            flat: true,
+            icon: ionMailSharp,
+            noCaps: true,
+            onClick: () => onUpdateMethod('email'),
+            size: 'sm',
           },
-          dense: true,
-          flat: true,
-          icon: ionMailSharp,
-          noCaps: true,
-          onClick: () => onUpdateMethod('email'),
-          size: 'sm',
-        }, () => [
-          h(HTooltip, () => 'By email authentication'),
-        ]),
-        h(HBtn, {
-          css: {
-            borderRadius: 0,
-            color: 'black',
-            flexShrink: 0,
-            opacity: method.value === 'wallet' ? 1 : '0.5',
+          () => [h(HTooltip, () => 'By email authentication')],
+        ),
+        h(
+          HBtn,
+          {
+            css: {
+              borderRadius: 0,
+              color: 'black',
+              flexShrink: 0,
+              opacity: method.value === 'wallet' ? 1 : '0.5',
+            },
+            dense: true,
+            flat: true,
+            icon: ionWalletSharp,
+            noCaps: true,
+            onClick: () => onUpdateMethod('wallet'),
+            size: 'sm',
           },
-          dense: true,
-          flat: true,
-          icon: ionWalletSharp,
-          noCaps: true,
-          onClick: () => onUpdateMethod('wallet'),
-          size: 'sm',
-        }, () => [
-          h(HTooltip, () => 'By wallet authentication (WIP)'),
-        ]),
+          () => [h(HTooltip, () => 'By wallet authentication (WIP)')],
+        ),
       ])
-    )
   },
 })

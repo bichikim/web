@@ -11,4 +11,9 @@ export class NullableStringFieldUpdateOperationsInput {
     nullable: true
   })
   set?: string | undefined;
+
+  @TypeGraphQL.Field(_type => Boolean, {
+    nullable: true
+  })
+  unset?: boolean | undefined;
 }

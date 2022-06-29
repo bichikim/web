@@ -1,9 +1,15 @@
 {
-  "extends": "../../tsconfig.json",
   "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
     "declaration":  true,
-    "outDir": "lib",
+    "esModuleInterop": true,
+    "moduleResolution": "node",
+    "outDir": "dist",
     "baseUrl": ".",
+    "types": [
+      "@vue/runtime-core"
+    ],
     "paths": {
       "src/*": [
         "src/*"
@@ -22,6 +28,7 @@
     "src/**/*.tsx",
   ],
   "exclude": [
+    "dist",
     "node_modules"
   ]
 }

@@ -2,13 +2,12 @@
  * @jest-environment node
  */
 
-import {createCreateDirective} from '../create-directive'
-import {createSSRApp, h, ref, withDirectives} from 'vue-demi'
 import {renderToString} from '@vue/server-renderer'
+import {createSSRApp, h, ref, withDirectives} from 'vue-demi'
+import {createCreateDirective} from '../create-directive'
 
 describe('createDirective', () => {
   it('should create directive', async () => {
-
     const {createDirective, getCssText} = createCreateDirective({
       media: {
         bp1: '(min-width: 640px)',
@@ -34,9 +33,7 @@ describe('createDirective', () => {
 
     const app = createSSRApp({
       setup() {
-        return () => (
-          withDirectives(h('div'), [[directive, {color: colorRef.value}, 'foo']])
-        )
+        return () => withDirectives(h('div'), [[directive, {color: colorRef.value}, 'foo']])
       },
     })
 

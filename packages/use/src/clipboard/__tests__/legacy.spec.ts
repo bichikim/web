@@ -23,13 +23,12 @@ describe('legacy', () => {
           inputValue.value = legacyClipboard.read()
         }
 
-        return () => (
+        return () =>
           h('div', [
             h('div', {id: 'value'}, inputValue.value),
             h('button', {id: 'write', onClick: onWrite}, 'write'),
             h('button', {id: 'read', onClick: onRead}, 'read'),
           ])
-        )
       },
     })
 

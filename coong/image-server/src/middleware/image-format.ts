@@ -1,13 +1,10 @@
 import {RequestHandler} from 'express'
 import {createProvideContext} from '../utils/context'
 
-const formatContext = createProvideContext<string | undefined>()
-
-export const useFormat = formatContext.use
+export const formatContext = createProvideContext<string | undefined>()
 
 export const imageFormat = (): RequestHandler => {
   return (req, res, next) => {
-
     // eslint-disable-next-line id-length
     const {f} = req.query
 

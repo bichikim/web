@@ -14,34 +14,36 @@
   "author": "bichi@live.co.kr",
   "exports": {
     ".": {
-      "import": "./lib/index.mjs",
-      "require": "./lib/index.js"
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
     },
     "./*": "./*"
   },
-  "main": "lib/index.js",
-  "jsdelivr": "lib/index.global.js",
-  "unpkg": "lib/index.global.js",
-  "module": "lib/index.mjs",
+  "main": "dist/index.js",
+  "jsdelivr": "dist/index.global.js",
+  "unpkg": "dist/index.global.js",
+  "module": "dist/index.mjs",
   "source": "src/index.ts",
-  "types": "lib/index.d.ts",
+  "types": "dist/index.d.ts",
   "files": [
-    "lib/*"
+    "dist/*"
   ],
   "scripts": {
-    "build": "tsup-node --dts --minify",
-    "dev": "tsup-node --watch",
-    "prepare": "tsup-node --dts"
+    "build": "tsup --dts --minify",
+    "dev": "tsup --watch",
+    "prepare": "tsup --dts",
+    "fix": "vue-demi-fix"
   },
   "dependencies": {
-    "@stitches/core": "^1.2.7",
-    "@winter-love/utils": "^1.0.25-alpha.14",
-    "vue-demi": "^0.12.1"
+    "@stitches/core": "^1.2.8",
+    "@winter-love/utils": "workspace:*",
+    "vue-demi": "*"
   },
   "devDependencies": {
     "@babel/core": "7.17.10",
-    "@vue/server-renderer": "latest",
-    "vue": "latest"
+    "@vue/server-renderer": "^3.2",
+    "typescript": "^4.7.4",
+    "vue": "^3.2"
   },
   "publishConfig": {
     "access": "public"
@@ -57,7 +59,7 @@
       "esm",
       "iife"
     ],
-    "outDir": "lib",
+    "outDir": "dist",
     "sourcemap": true,
     "splitting": false
   }

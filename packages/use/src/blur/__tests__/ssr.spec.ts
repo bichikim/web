@@ -13,9 +13,7 @@ describe('blur', () => {
         const blur = useBlur()
 
         return () => {
-          return h('div', [
-            h('button', {onClick: blur}, 'blur'),
-          ])
+          return h('div', [h('button', {onClick: blur}, 'blur')])
         }
       },
     })

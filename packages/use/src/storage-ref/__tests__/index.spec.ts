@@ -31,7 +31,6 @@ describe('storageRef', () => {
       expect(localStorage.getItem('foo')).toBe('"foo"')
       localStorage.clear()
     })
-
   })
   it('should change localStorage by value with rest', () => {
     const scope = effectScope()

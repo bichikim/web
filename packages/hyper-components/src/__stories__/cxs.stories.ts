@@ -15,13 +15,11 @@ export const Default = () => ({
       // eslint-disable-next-line functional/no-this-expression
     } = this
     const csx = useCsx()
-    return (
-      h('div', [
-        h('button', {onClick: onNextColor}, 'next color'),
-        h('button', {onClick: onToggleVariant}, 'toggle variant color'),
-        h('span', csx({css: {color}, linearGradient: variantColor}), 'colored text'),
-      ])
-    )
+    return h('div', [
+      h('button', {onClick: onNextColor}, 'next color'),
+      h('button', {onClick: onToggleVariant}, 'toggle variant color'),
+      h('span', csx({css: {color}, linearGradient: variantColor}), 'colored text'),
+    ])
   },
   setup() {
     const colorTypes = {

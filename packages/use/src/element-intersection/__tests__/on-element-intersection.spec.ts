@@ -1,45 +1,56 @@
-import {defineComponent, h, ref} from 'vue-demi'
 import {flushPromises, mount} from '@vue/test-utils'
-import {onElementIntersection} from '../on-element-intersection'
+import {defineComponent, h, ref} from 'vue-demi'
+import {onElementIntersection} from 'src/element-intersection/on-element-intersection'
+
 const threshold = 0.05
 const TestComponent = defineComponent((props, {slots}) => {
   const elementRef = ref()
   const showRef = ref()
 
-  onElementIntersection(elementRef, (entries) => {
-    const shouldClose = entries.some((entry) => {
-      return entry.intersectionRatio < threshold
-    })
+  onElementIntersection(
+    elementRef,
+    (entries) => {
+      const shouldClose = entries.some((entry) => {
+        return entry.intersectionRatio < threshold
+      })
 
-    if (shouldClose) {
-      showRef.value = false
-      return
-    }
+      if (shouldClose) {
+        showRef.value = false
+        return
+      }
 
-    const shouldShow = entries.some((entry) => {
-      return entry.intersectionRatio >= threshold
-    })
+      const shouldShow = entries.some((entry) => {
+        return entry.intersectionRatio >= threshold
+      })
 
-    if (shouldShow) {
-      showRef.value = true
-    }
+      if (shouldShow) {
+        showRef.value = true
+      }
 
-    return () => (
-      h('div', {
+      return () =>
+        h(
+          'div',
+          {
+            ref: elementRef,
+            style: {backgroundColor: 'red', height: '100px', marginBottom: '10px', width: '100%'},
+          },
+          showRef.value ? slots.default?.() : undefined,
+        )
+    },
+    {
+      threshold,
+    },
+  )
+
+  return () =>
+    h(
+      'div',
+      {
         ref: elementRef,
         style: {backgroundColor: 'red', height: '100px', marginBottom: '10px', width: '100%'},
-      }, showRef.value ? slots.default?.() : undefined)
+      },
+      showRef.value ? slots.default?.() : undefined,
     )
-  }, {
-    threshold,
-  })
-
-  return () => (
-    h('div', {
-      ref: elementRef,
-      style: {backgroundColor: 'red', height: '100px', marginBottom: '10px', width: '100%'},
-    }, showRef.value ? slots.default?.() : undefined)
-  )
 })
 
 describe('on-element-intersection', () => {
@@ -56,8 +67,8 @@ describe('on-element-intersection', () => {
         observe,
       }
     })
-    const originalObserver = (window as any).IntersectionObserver;
-    (window as any).IntersectionObserver = observerMock
+    const originalObserver = (window as any).IntersectionObserver
+    ;(window as any).IntersectionObserver = observerMock
 
     const wrapper = mount(TestComponent, {
       slots: {
@@ -74,17 +85,21 @@ describe('on-element-intersection', () => {
 
     const handle: any = observerMock.mock.calls[0][0]
 
-    handle([{
-      intersectionRatio: 1,
-    }])
+    handle([
+      {
+        intersectionRatio: 1,
+      },
+    ])
 
     await flushPromises()
 
     expect(wrapper.text()).toBe('foo')
 
-    handle([{
-      intersectionRatio: 0,
-    }])
+    handle([
+      {
+        intersectionRatio: 0,
+      },
+    ])
 
     await flushPromises()
 

@@ -8,7 +8,7 @@ export const Default = () => ({
     const setValue = (value) => {
       valueRef.value = value
     }
-    return () => (
+    return () =>
       h('div', [
         h('div', 'hello world'),
         h('div', valueRef.value),
@@ -17,7 +17,6 @@ export const Default = () => ({
         h('button', {onClick: () => write(valueRef.value)}, 'copy'),
         h('button', {onClick: () => read()}, 'read'),
       ])
-    )
   },
 })
 
@@ -28,7 +27,7 @@ export const Legacy = () => ({
     const setValue = (value) => {
       valueRef.value = value
     }
-    return () => (
+    return () =>
       h('div', [
         h('div', 'hello world'),
         h('div', valueRef.value),
@@ -36,6 +35,5 @@ export const Legacy = () => ({
         h('button', {onClick: () => write(valueRef.value)}, 'copy'),
         h('button', {onClick: () => read()}, 'read'),
       ])
-    )
   },
 })

@@ -22,12 +22,7 @@ export interface ServerPrePareOptions<Context> {
 }
 
 export const prepare = async <Context>(options: ServerPrePareOptions<Context> = {}) => {
-  const {
-    resolvers,
-    authChecker,
-    context,
-    emitSchemaFile,
-  } = options
+  const {resolvers, authChecker, context, emitSchemaFile} = options
 
   if (!resolvers) {
     return 'needs resolvers'
@@ -51,9 +46,7 @@ export const prepare = async <Context>(options: ServerPrePareOptions<Context> = 
 }
 
 export const start = (server: ApolloServer, options: ServerStartOptions = {}) => {
-  const {
-    port,
-  } = options
+  const {port} = options
 
   return server.listen(port)
 }

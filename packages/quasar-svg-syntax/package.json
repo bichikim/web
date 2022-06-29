@@ -16,24 +16,24 @@
   "author": "bichi@live.co.kr",
   "exports": {
     ".": {
-      "import": "./lib/index.mjs",
-      "require": "./lib/index.js"
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
     },
     "./*": "./*"
   },
-  "main": "lib/index.js",
-  "jsdelivr": "lib/index.global.js",
-  "unpkg": "lib/index.global.js",
-  "module": "lib/index.mjs",
+  "main": "dist/index.js",
+  "jsdelivr": "dist/index.global.js",
+  "unpkg": "dist/index.global.js",
+  "module": "dist/index.mjs",
   "source": "src/index.ts",
-  "types": "lib/index.d.ts",
+  "types": "dist/index.d.ts",
   "files": [
-    "lib/*"
+    "dist/*"
   ],
   "scripts": {
-    "build": "tsup-node --dts --minify",
-    "dev": "tsup-node --watch",
-    "prepare": "tsup-node --dts"
+    "build": "tsup --dts --minify",
+    "dev": "tsup --watch",
+    "prepare": "tsup --dts"
   },
   "dependencies": {
     "@winter-love/utils": "^1.0.25-alpha.14",
@@ -46,6 +46,7 @@
   "devDependencies": {
     "@quasar/extras": "1.13.5",
     "quasar": "2.6.6",
+    "tsup": "^6.1.2",
     "vue": "latest"
   },
   "publishConfig": {
@@ -62,7 +63,7 @@
       "esm",
       "iife"
     ],
-    "outDir": "lib",
+    "outDir": "dist",
     "sourcemap": true,
     "splitting": false
   }

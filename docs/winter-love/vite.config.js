@@ -8,17 +8,10 @@ export default defineConfig({
     __DEV__: false,
   },
   optimizeDeps: {
-    exclude: [
-      'vue-demi',
-    ],
-    include: [
-      'vue',
-      '@winter-love/use',
-      '@winter-love/utils',
-    ],
+    exclude: ['vue-demi'],
+    include: ['vue', '@winter-love/use', '@winter-love/utils'],
   },
-  plugins: [
-  ],
+  plugins: [],
   resolve: {
     alias: [
       {find: 'src', replacement: path.resolve(projectRoot, 'src')},

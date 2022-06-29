@@ -34,9 +34,7 @@ export default {
 export const Default = () => ({
   setup() {
     return () => {
-      return (
-        h(StyledComponent, {}, () => 'styled-component')
-      )
+      return h(StyledComponent, {}, () => 'styled-component')
     }
   },
 })

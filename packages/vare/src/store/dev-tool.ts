@@ -6,17 +6,17 @@ import {ManagerData} from './manager'
 
 const tagThemes = {
   'local-state': {
-    backgroundColor: 0x73_AB_FE,
+    backgroundColor: 0x73_ab_fe,
     label: 'local state',
     textColor: 0x00_00_00,
   },
   state: {
-    backgroundColor: 0x06_05_FC,
+    backgroundColor: 0x06_05_fc,
     label: 'state',
     textColor: 0x00_00_00,
   },
   unknown: {
-    backgroundColor: 0xFF_B7_00,
+    backgroundColor: 0xff_b7_00,
     label: 'unknown',
     textColor: 0x00_00_00,
   },
@@ -27,18 +27,21 @@ export const createTree = (store: ManagerData, index: number = 0): CustomInspect
 
   return Object.keys(tree).map((key): CustomInspectorNode => {
     const itemInfo = parseJson(key, key)
-    const tag = typeof itemInfo === 'string' ? [] : [
-      {
-        backgroundColor: 0x99_99_99,
-        label: `for: ${itemInfo.componentName}`,
-        textColor: 0x00_00_00,
-      },
-      {
-        backgroundColor: 0x99_99_99,
-        label: itemInfo.uid,
-        textColor: 0x00_00_00,
-      },
-    ]
+    const tag =
+      typeof itemInfo === 'string'
+        ? []
+        : [
+            {
+              backgroundColor: 0x99_99_99,
+              label: `for: ${itemInfo.componentName}`,
+              textColor: 0x00_00_00,
+            },
+            {
+              backgroundColor: 0x99_99_99,
+              label: itemInfo.uid,
+              textColor: 0x00_00_00,
+            },
+          ]
     return {
       id: JSON.stringify({
         index: index,
@@ -75,84 +78,84 @@ export const createInspect = (name, state: UnwrapNestedRefs<any>): Record<string
   }
 }
 
-export const createStoreDevTool = (
-  app: App,
-  stores: ManagerData | ManagerData[],
-) => {
+export const createStoreDevTool = (app: App, stores: ManagerData | ManagerData[]) => {
   // let _api: DevtoolsPluginApi<ApiSetting>
   const inspectId = 'vare-inspect'
   const timeLineId = 'vare-event'
   const label = 'vare-store'
   const _stores = toArray(stores)
-  setupDevtoolsPlugin({
-    app,
-    id: 'vare-store',
-    label: 'vare-store',
-    packageName: 'vare',
-  }, (api) => {
-    // _api = api
-    api.addInspector({
-      icon: 'mediation',
-      id: inspectId,
-      label: `${label} Structure`,
-    })
+  setupDevtoolsPlugin(
+    {
+      app,
+      id: 'vare-store',
+      label: 'vare-store',
+      packageName: 'vare',
+    },
+    (api) => {
+      // _api = api
+      api.addInspector({
+        icon: 'mediation',
+        id: inspectId,
+        label: `${label} Structure`,
+      })
 
-    api.addTimelineLayer({
-      color: 0xF0_8D_49,
-      id: timeLineId,
-      label: 'Vare Changing',
-    })
+      api.addTimelineLayer({
+        color: 0xf0_8d_49,
+        id: timeLineId,
+        label: 'Vare Changing',
+      })
 
-    api.on.getInspectorTree((payload) => {
-      if (payload.app !== app || payload.inspectorId !== inspectId) {
-        return
-      }
+      api.on.getInspectorTree((payload) => {
+        if (payload.app !== app || payload.inspectorId !== inspectId) {
+          return
+        }
 
-      payload.rootNodes = createTreeMultiple(..._stores)
-    })
+        payload.rootNodes = createTreeMultiple(..._stores)
+      })
 
-    api.on.getInspectorState((payload) => {
-      if (payload.app !== app || payload.inspectorId !== inspectId) {
-        return
-      }
+      api.on.getInspectorState((payload) => {
+        if (payload.app !== app || payload.inspectorId !== inspectId) {
+          return
+        }
 
-      const name = payload.nodeId
-      const {key, index} = parseJson(name, {index: 0, key: name})
+        const name = payload.nodeId
+        const {key, index} = parseJson(name, {index: 0, key: name})
 
-      const state = _stores[index].tree[key]
+        const state = _stores[index].tree[key]
 
-      if (state) {
-        payload.state = createInspect(key, state)
-      }
-    })
-    api.on.editInspectorState((payload) => {
-      if (payload.app !== app || payload.inspectorId !== inspectId) {
-        return
-      }
+        if (state) {
+          payload.state = createInspect(key, state)
+        }
+      })
+      api.on.editInspectorState((payload) => {
+        if (payload.app !== app || payload.inspectorId !== inspectId) {
+          return
+        }
 
-      const name = payload.nodeId
-      const {key, index} = parseJson(name, {index: 0, key: name})
+        const name = payload.nodeId
+        const {key, index} = parseJson(name, {index: 0, key: name})
 
-      const state = _stores[index].tree[key]
+        const state = _stores[index].tree[key]
 
-      if (state) {
-        const path = drop(payload.path, 1)
-        const {value} = payload.state
-        payload.set(state, path, value)
-      }
-    })
+        if (state) {
+          const path = drop(payload.path, 1)
+          const {value} = payload.state
+          payload.set(state, path, value)
+        }
+      })
 
-    Object.keys(_stores).forEach((name: string) => {
-      const store = _stores[name]
-      watch(store.tree, () => {
-        api.addTimelineEvent({
-          event: {
-            data: typeof store.tree === 'object' ? {...store.tree} : store.tree,
-            time: Date.now(),
-          },
-          layerId: timeLineId,
+      Object.keys(_stores).forEach((name: string) => {
+        const store = _stores[name]
+        watch(store.tree, () => {
+          api.addTimelineEvent({
+            event: {
+              data: typeof store.tree === 'object' ? {...store.tree} : store.tree,
+              time: Date.now(),
+            },
+            layerId: timeLineId,
+          })
         })
       })
-    })
-  })
+    },
+  )
 }

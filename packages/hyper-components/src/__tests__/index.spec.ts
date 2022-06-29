@@ -16,11 +16,7 @@ describe('hyper css linearGradient', () => {
     const Component = defineComponent({
       render() {
         const css = useClassName()
-        return (
-          h('div', {class: css(componentStyles)}, () => [
-
-          ])
-        )
+        return h('div', {class: css(componentStyles)}, () => [])
       },
     })
 

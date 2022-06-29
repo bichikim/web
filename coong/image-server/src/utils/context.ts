@@ -1,6 +1,11 @@
 import {Request} from 'express'
 
-export const createProvideContext = <T>() => {
+export interface ProvideContext<T> {
+  provide(req: Request, data: T): void
+  use(req: Request): T | undefined
+}
+
+export const createProvideContext = <T>(): ProvideContext<T> => {
   const map = new WeakMap<Request, T>()
   return {
     provide: (req: Request, data: T) => {

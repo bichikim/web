@@ -4,22 +4,26 @@ import {useWallet, withWaitRef} from 'hooks'
 import {defineStore} from 'vare'
 import {toUndefined} from '@winter-love/utils'
 import {computed, reactive, ref, toRefs} from 'vue'
-export type AuthenticateUserWithCryptoSignatureResult
-  = AuthenticateUserWithCryptoSignatureMutation['authenticateUserWithCryptoSignature']
+export type AuthenticateUserWithCryptoSignatureResult =
+  AuthenticateUserWithCryptoSignatureMutation['authenticateUserWithCryptoSignature']
 
 export type Exist<T> = Exclude<T, null | undefined>
 
-export type NonNullableField<T> = { [P in keyof T]: NonNullable<T[P]> }
+export type NonNullableField<T> = {[P in keyof T]: NonNullable<T[P]>}
 
-export type UserInfo = Partial<NonNullableField<Exist<Exist<
-  AuthenticateUserWithCryptoSignatureMutation['authenticateUserWithCryptoSignature']>['item']>>>
+export type UserInfo = Partial<
+  NonNullableField<
+    Exist<
+      Exist<
+        AuthenticateUserWithCryptoSignatureMutation['authenticateUserWithCryptoSignature']
+      >['item']
+    >
+  >
+>
 
-const shallowUpdate = <T extends Record<any, any>>(
-  target: T,
-  source: Partial<T>,
-) => {
+const shallowUpdate = <T extends Record<any, any>>(target: T, source: Partial<T>) => {
   Object.keys(source).forEach((key) => {
-    (target as any)[key] = source[key]
+    ;(target as any)[key] = source[key]
   })
 }
 
@@ -39,42 +43,43 @@ export const useUser = defineStore({
     const loadingRef = ref(false)
     const errorRef = ref<any>()
 
-    const signInWithCrypto = withWaitRef({
-      error: errorRef,
-      wait: loadingRef,
-    }, async () => {
-      const email = emailRef.value
-      if (!email) {
-        return
-      }
-      await wallet.sign(email)
-      const {
-        signMessage,
-        connected,
-        signature,
-        walletAddress,
-      } = wallet
-      if (!walletAddress || !signature || !connected || !signMessage) {
-        return
-      }
-      const data = await request.authenticateUserWithCryptoSignature({
-        input: {
-          message: signMessage,
-          publicKey: walletAddress,
-          signature,
-        },
-      })
-      const response = data.authenticateUserWithCryptoSignature
-      if (!response) {
-        return
-      }
-      const {sessionToken, item} = response
-      if (!sessionToken || !item) {
-        return
-      }
-      sessionTokenRef.value = sessionToken
-      shallowUpdate(userInfo, Object.fromEntries(Object.entries(item).map(([key, value]) => [key, toUndefined(value)])))
-    })
+    const signInWithCrypto = withWaitRef(
+      {
+        error: errorRef,
+        wait: loadingRef,
+      },
+      async () => {
+        const email = emailRef.value
+        if (!email) {
+          return
+        }
+        await wallet.sign(email)
+        const {signMessage, connected, signature, walletAddress} = wallet
+        if (!walletAddress || !signature || !connected || !signMessage) {
+          return
+        }
+        const data = await request.authenticateUserWithCryptoSignature({
+          input: {
+            message: signMessage,
+            publicKey: walletAddress,
+            signature,
+          },
+        })
+        const response = data.authenticateUserWithCryptoSignature
+        if (!response) {
+          return
+        }
+        const {sessionToken, item} = response
+        if (!sessionToken || !item) {
+          return
+        }
+        sessionTokenRef.value = sessionToken
+        shallowUpdate(
+          userInfo,
+          Object.fromEntries(Object.entries(item).map(([key, value]) => [key, toUndefined(value)])),
+        )
+      },
+    )
 
     const signInWithEmail = () => {
       //

@@ -15,4 +15,3 @@ export const stringifyJson = (value: any) => {
     return '""'
   }
 }
-

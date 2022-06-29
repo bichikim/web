@@ -27,20 +27,22 @@ export const AudioButton = defineComponent({
       playAudioRef.value = !playAudioRef.value
     }
 
-    return () => (
-      h(HBtn, {
-        flat: true,
-        icon: audioIcon.value,
-        onClick: onToggleAudio,
-        round: true,
-      }, () => [
-        h('audio', {
-          loop: true,
-          ref: audioRef,
-          src: resolveUrl(staticUrl(), '/audios/intro.mp3'),
-        }),
-      ])
-    )
+    return () =>
+      h(
+        HBtn,
+        {
+          flat: true,
+          icon: audioIcon.value,
+          onClick: onToggleAudio,
+          round: true,
+        },
+        () => [
+          h('audio', {
+            loop: true,
+            ref: audioRef,
+            src: resolveUrl(staticUrl(), '/audios/intro.mp3'),
+          }),
+        ],
+      )
   },
 })
-

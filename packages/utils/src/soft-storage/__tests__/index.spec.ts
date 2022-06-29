@@ -1,7 +1,12 @@
-/**
- * @jest-environment jsdom
- */
-import {cookieSoftStorage, cookieStorage, createBrowserStorage, localSoftStorage, localStorage, sessionSoftStorage, sessionStorage} from '..'
+import {
+  cookieSoftStorage,
+  cookieStorage,
+  createBrowserStorage,
+  localSoftStorage,
+  localStorage,
+  sessionSoftStorage,
+  sessionStorage,
+} from '..'
 import cookie from 'js-cookie'
 import {expectType} from 'tsd'
 interface Foo {
@@ -82,7 +87,6 @@ describe('storage', () => {
   })
   describe('cookieSoftStorage', () => {
     it('should set Data', () => {
-
       cookieSoftStorage.setItem('foo', {
         name: 'foo',
       })
@@ -90,7 +94,7 @@ describe('storage', () => {
       expect(cookie.set).toBeCalledWith('foo', '{"name":"foo"}', undefined)
     })
     it('should get Data', () => {
-      (cookie.get as any).mockImplementationOnce(() => '{"name":"foo"}')
+      ;(cookie.get as any).mockImplementationOnce(() => '{"name":"foo"}')
       const result = cookieSoftStorage.getItem('foo')
       expect(result).toEqual({name: 'foo'})
     })
@@ -130,7 +134,6 @@ describe('storage', () => {
   })
   describe('cookieStorage', () => {
     it('should set Data', () => {
-
       cookieStorage<Foo>().setItem('foo', {
         name: 'foo',
       })
@@ -139,7 +142,7 @@ describe('storage', () => {
       expect(cookie.set).toBeCalledWith('foo', '{"name":"foo"}', {})
     })
     it('should get Data', () => {
-      (cookie.get as any).mockImplementationOnce(() => '{"name":"foo"}')
+      ;(cookie.get as any).mockImplementationOnce(() => '{"name":"foo"}')
       const result = cookieStorage<Foo>().getItem('foo')
       expectType<Foo | undefined>(result)
       expect(result).toEqual({name: 'foo'})

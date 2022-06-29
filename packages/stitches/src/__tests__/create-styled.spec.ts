@@ -1,7 +1,3 @@
-/**
- * @jest-environment jsdom
- */
-
 import {createStyled} from '../'
 import {renderToString} from '@vue/server-renderer'
 import {createSSRApp, h} from 'vue-demi'
@@ -16,9 +12,7 @@ describe('create-styled', () => {
 
     const app = createSSRApp({
       setup() {
-        return () => (
-          h(Component)
-        )
+        return () => h(Component)
       },
     })
 

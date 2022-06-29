@@ -4,7 +4,6 @@ import {mount} from '@vue/test-utils'
 import {expectType} from 'tsd'
 
 const setup = () => {
-
   const {provide, inject} = createProvide('foo')
 
   const Component2 = defineComponent({
@@ -13,18 +12,14 @@ const setup = () => {
 
       expectType<string | undefined>(value)
 
-      return () => (
-        h('div', value)
-      )
+      return () => h('div', value)
     },
   })
 
   const Component = defineComponent({
     setup() {
       provide()
-      return () => (
-        h(Component2)
-      )
+      return () => h(Component2)
     },
   })
 

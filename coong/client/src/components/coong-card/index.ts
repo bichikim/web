@@ -4,10 +4,6 @@ import {defineComponent, h} from 'vue'
 export const CoongCard = defineComponent({
   name: 'CoongCard',
   setup() {
-    return () => (
-      h(HCard, {}, () => [
-        'hello',
-      ])
-    )
+    return () => h(HCard, {}, () => ['hello'])
   },
 })

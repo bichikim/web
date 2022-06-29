@@ -1,7 +1,7 @@
 import {BaseListTypeInfo} from '@keystone-6/core/types'
 import {AuthArgs, AuthChecker, FilterAuthChecker} from './types'
 
-async function *asyncGenerator<ListTypeInfo extends BaseListTypeInfo = any>(
+async function* asyncGenerator<ListTypeInfo extends BaseListTypeInfo = any>(
   list: (AuthChecker<ListTypeInfo> | FilterAuthChecker<ListTypeInfo>)[],
   args: AuthArgs,
 ) {
@@ -12,14 +12,19 @@ async function *asyncGenerator<ListTypeInfo extends BaseListTypeInfo = any>(
   }
 }
 
-export function or<ListTypeInfo extends BaseListTypeInfo = any>(list: FilterAuthChecker<ListTypeInfo>[], filter: true)
-export function or<ListTypeInfo extends BaseListTypeInfo = any>(list: AuthChecker<ListTypeInfo>[], filter: false)
+export function or<ListTypeInfo extends BaseListTypeInfo = any>(
+  list: FilterAuthChecker<ListTypeInfo>[],
+  filter: true,
+)
+export function or<ListTypeInfo extends BaseListTypeInfo = any>(
+  list: AuthChecker<ListTypeInfo>[],
+  filter: false,
+)
 export function or<ListTypeInfo extends BaseListTypeInfo = any>(list: AuthChecker<ListTypeInfo>[])
 export function or<ListTypeInfo extends BaseListTypeInfo = any>(
   list: (AuthChecker<ListTypeInfo> | FilterAuthChecker<ListTypeInfo>)[],
   filter: boolean = false,
 ) {
-
   return async (args: AuthArgs) => {
     for await (const item of asyncGenerator(list, args)) {
       if (item) {
@@ -33,8 +38,14 @@ export function or<ListTypeInfo extends BaseListTypeInfo = any>(
   }
 }
 
-export function and<ListTypeInfo extends BaseListTypeInfo = any>(list: FilterAuthChecker<ListTypeInfo>[], filter: true)
-export function and<ListTypeInfo extends BaseListTypeInfo = any>(list: AuthChecker<ListTypeInfo>[], filter: false)
+export function and<ListTypeInfo extends BaseListTypeInfo = any>(
+  list: FilterAuthChecker<ListTypeInfo>[],
+  filter: true,
+)
+export function and<ListTypeInfo extends BaseListTypeInfo = any>(
+  list: AuthChecker<ListTypeInfo>[],
+  filter: false,
+)
 export function and<ListTypeInfo extends BaseListTypeInfo = any>(list: AuthChecker<ListTypeInfo>[])
 export function and<ListTypeInfo extends BaseListTypeInfo = any>(
   list: (AuthChecker<ListTypeInfo> | FilterAuthChecker<ListTypeInfo>)[],

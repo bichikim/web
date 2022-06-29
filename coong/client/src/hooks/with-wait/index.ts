@@ -35,16 +35,19 @@ export const withWaitRef = <Args extends any[], Result>(
   fn: (...args: Args) => Promise<Result>,
 ) => {
   const {error: handleError, wait} = options
-  return withWait({
-    error: (error) => {
-      if (handleError) {
-        handleError.value = error
-      }
+  return withWait(
+    {
+      error: (error) => {
+        if (handleError) {
+          handleError.value = error
+        }
+      },
+      wait: (value) => {
+        if (wait) {
+          wait.value = value
+        }
+      },
     },
-    wait: (value) => {
-      if (wait) {
-        wait.value = value
-      }
-    },
-  }, fn)
+    fn,
+  )
 }

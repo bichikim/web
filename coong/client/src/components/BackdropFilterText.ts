@@ -40,33 +40,42 @@ export const BackdropFilterText = defineComponent({
   setup: (props, {slots}) => {
     const instance = getCurrentInstance()
     const id = `clip-path-${instance?.uid ?? 'any'}`
-    return () => (
-      h('div', {
-        class: rootClass({
-          css: {
-            $$urlId: `url(#${id})`,
-          },
-        }).className,
-      }, [
-        h('span', slots.default?.()),
-        // svg
-        h('svg', {
-          'aria-hidden': 'true',
-          class: 'headline lockup-headline-mask visually-hidden',
-        }, [
-          h('clipPath', {id}, [
-            h('text', {
-              'dominant-baseline': 'hanging',
-              dy: props.dy,
-              'text-anchor': 'middle',
-              x: '50%',
-              y: '0em',
-            }, [
-              slots.default?.(),
-            ]),
-          ]),
-        ]),
-      ])
-    )
+    return () =>
+      h(
+        'div',
+        {
+          class: rootClass({
+            css: {
+              $$urlId: `url(#${id})`,
+            },
+          }).className,
+        },
+        [
+          h('span', slots.default?.()),
+          // svg
+          h(
+            'svg',
+            {
+              'aria-hidden': 'true',
+              class: 'headline lockup-headline-mask visually-hidden',
+            },
+            [
+              h('clipPath', {id}, [
+                h(
+                  'text',
+                  {
+                    'dominant-baseline': 'hanging',
+                    dy: props.dy,
+                    'text-anchor': 'middle',
+                    x: '50%',
+                    y: '0em',
+                  },
+                  [slots.default?.()],
+                ),
+              ]),
+            ],
+          ),
+        ],
+      )
   },
 })

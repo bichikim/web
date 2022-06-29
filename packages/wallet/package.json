@@ -47,8 +47,8 @@
     "@vue/reactivity": "3.2.33",
     "@winter-love/utils": "^1.0.25-alpha.14",
     "bip39": "3.0.4",
-    "caver-js": "^1.8.1",
     "ethers": "^5.6.5",
+    "tweetnacl": "^1.0.3",
     "nanoevents": "^6.0.2"
   },
   "devDependencies": {

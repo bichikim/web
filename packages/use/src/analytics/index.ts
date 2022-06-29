@@ -29,7 +29,11 @@ export const TRACK_PAYLOAD_KEY: InjectionKey<Record<string, any>> = Symbol('trac
 
 export type Track = (eventName: string, payload: any) => unknown
 
-export const useInstanceInject = (key: string | symbol | InjectionKey<any>, instance?: any, defaultValue?: any) => {
+export const useInstanceInject = (
+  key: string | symbol | InjectionKey<any>,
+  instance?: any,
+  defaultValue?: any,
+) => {
   return instance?.$?.provides?.[key as any] ?? defaultValue
 }
 
@@ -54,13 +58,11 @@ export const useTrack = <Payload extends Record<string, any>>(
   _payload?: Payload,
   instance?: any,
 ): Track => {
-
   const injectedPayload = useTackPayload(instance)
 
   const mergedPayload = defaultsDeep(_payload ?? {}, injectedPayload)
 
   return (eventName?: string | undefined, payload?: Record<string, any>) => {
-
     getDataLayer()?.push?.({
       ...defaultsDeep(payload, mergedPayload),
       event: getEventName(eventName),

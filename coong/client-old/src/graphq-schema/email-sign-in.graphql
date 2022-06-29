@@ -1,3 +1,0 @@
-mutation emailSignIn($email: String!) {
-  sendUserMagicAuthLink(email: $email)
-}

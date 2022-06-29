@@ -18,7 +18,10 @@ export const auth: AuthChecker<Context> = async (resolverData, roles) => {
     return false
   }
 
-  const {auth: {token}, jwt} = context
+  const {
+    auth: {token},
+    jwt,
+  } = context
 
   if (!token) {
     return false

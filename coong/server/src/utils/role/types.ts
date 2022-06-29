@@ -21,10 +21,13 @@ export interface AuthArgs<ListTypeInfo extends BaseListTypeInfo = any> {
 }
 
 export type FilterOutput<ListTypeInfo extends BaseListTypeInfo = BaseListTypeInfo> =
-  boolean | ListTypeInfo['inputs']['where']
+  | boolean
+  | ListTypeInfo['inputs']['where']
 
-export type AuthChecker<ListTypeInfo extends BaseListTypeInfo> =
-  (args: AuthArgs<ListTypeInfo>) => MaybePromise<boolean>
+export type AuthChecker<ListTypeInfo extends BaseListTypeInfo> = (
+  args: AuthArgs<ListTypeInfo>,
+) => MaybePromise<boolean>
 
-export type FilterAuthChecker<ListTypeInfo extends BaseListTypeInfo> =
-  (args: AuthArgs<ListTypeInfo>) => MaybePromise<FilterOutput>
+export type FilterAuthChecker<ListTypeInfo extends BaseListTypeInfo> = (
+  args: AuthArgs<ListTypeInfo>,
+) => MaybePromise<FilterOutput>

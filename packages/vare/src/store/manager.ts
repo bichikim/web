@@ -23,10 +23,7 @@ export interface StoreManager {
   get(name: string): any
   readonly initState: Readonly<Record<string, any>>
   remove(name: string): void
-  set(
-    name: string,
-    item: StoreManagerItem,
-  ): void
+  set(name: string, item: StoreManagerItem): void
   readonly setInitState: (state?: Record<string, any>) => void
   readonly state: ComputedRef<Record<string, any>>
   readonly store: ManagerData
@@ -53,10 +50,7 @@ export const createManager = (info?: StoreTreeInfo): StoreManager => {
   const initState: Record<string, any> = {}
 
   const storePropsMap = new Map<string, UnwrapNestedRefs<Record<string, any>>>()
-  const set = (
-    name: string,
-    item: StoreManagerItem,
-  ) => {
+  const set = (name: string, item: StoreManagerItem) => {
     storeTree[name] = item.state
     stateTree[name] = cloneState(item.state)
   }

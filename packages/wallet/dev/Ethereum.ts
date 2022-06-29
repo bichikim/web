@@ -21,7 +21,7 @@ export const Ethereum = defineComponent({
     const createNewAccount = () => {
       ethereum.createAccount()
     }
-    return () => (
+    return () =>
       h('div', [
         h('div', {}, address.value),
         h('div', {}, signature.value),
@@ -29,6 +29,5 @@ export const Ethereum = defineComponent({
         h('button', {onClick: save}, 'save'),
         h('button', {onClick: createNewAccount}, 'createNewAccount'),
       ])
-    )
   },
 })

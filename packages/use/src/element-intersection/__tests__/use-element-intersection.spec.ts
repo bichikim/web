@@ -1,7 +1,7 @@
 import {defineComponent, h, ref} from 'vue-demi'
 import {flushPromises, mount} from '@vue/test-utils'
-import {onElementIntersection} from '../on-element-intersection'
-import {useElementIntersection} from '../use-element-intersection'
+import {onElementIntersection} from 'src/element-intersection/on-element-intersection'
+import {useElementIntersection} from 'src/element-intersection'
 jest.mock('../on-element-intersection', () => ({
   onElementIntersection: jest.fn(),
 }))
@@ -15,12 +15,15 @@ const TestComponent = defineComponent({
       threshold,
     })
 
-    return () => (
-      h('div', {
-        ref: elementRef,
-        style: {backgroundColor: 'red', height: '100px', marginBottom: '10px', width: '100%'},
-      }, showRef.value ? slots.default?.() : undefined)
-    )
+    return () =>
+      h(
+        'div',
+        {
+          ref: elementRef,
+          style: {backgroundColor: 'red', height: '100px', marginBottom: '10px', width: '100%'},
+        },
+        showRef.value ? slots.default?.() : undefined,
+      )
   },
 })
 

@@ -18,10 +18,7 @@ export interface ExtraWallet extends Wallet {
 export const useSolana = (props: UnwrapNestedRefs<UseSolanaProps> = {}) => {
   const {providerUrl} = toRefs(props)
   const providerRef = computed(() => {
-    return providerUrl?.value
-      ?? getSolana()
-      ?? getSolflare()
-      ?? DEFAULT_PROVIDER_URL
+    return providerUrl?.value ?? getSolana() ?? getSolflare() ?? DEFAULT_PROVIDER_URL
   })
   const connectedRef = ref(false)
   const walletRef = ref<undefined | ExtraWallet>()

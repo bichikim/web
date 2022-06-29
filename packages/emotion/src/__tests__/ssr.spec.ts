@@ -12,19 +12,13 @@ describe('server-side rendering', () => {
     const emotion = createEmotion()
     const emotionServer = createEmotionServer(emotion.cache)
 
-    const Text = emotion.styled('div')(
-      {
-        color: 'red',
-      },
-    )
+    const Text = emotion.styled('div')({
+      color: 'red',
+    })
 
     const app = createSSRApp({
       setup() {
-        return () => (
-          h('div', [
-            h(Text, () => 'foo'),
-          ])
-        )
+        return () => h('div', [h(Text, () => 'foo')])
       },
     })
 

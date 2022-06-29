@@ -1,17 +1,9 @@
-import {
-  defineComponent,
-  Directive,
-  h,
-  InjectionKey,
-  provide,
-  withDirectives,
-} from 'vue-demi'
+import {defineComponent, Directive, h, InjectionKey, provide, withDirectives} from 'vue-demi'
 import {useDirectiveProvide} from '../'
 import {mount} from '@vue/test-utils'
 
 describe('useContextInDirective', () => {
   it('should ', () => {
-
     const InjectKey: InjectionKey<any> = Symbol()
 
     const directive: Directive = {
@@ -22,9 +14,7 @@ describe('useContextInDirective', () => {
 
     const Component = defineComponent({
       setup() {
-        return () => (
-          withDirectives(h('div'), [[directive, 'foo']])
-        )
+        return () => withDirectives(h('div'), [[directive, 'foo']])
       },
     })
 
@@ -32,9 +22,7 @@ describe('useContextInDirective', () => {
       setup() {
         provide(InjectKey, 'foo')
 
-        return () => (
-          h(Component)
-        )
+        return () => h(Component)
       },
     })
 

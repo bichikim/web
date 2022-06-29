@@ -1,4 +1,4 @@
-const UNSAFE_CHARS_REGEXP = /[<>/\u2028\u2029]/ug
+const UNSAFE_CHARS_REGEXP = /[<>/\u2028\u2029]/gu
 const ESCAPED_CHARS = {
   '/': '\\u002F',
   '<': '\\u003C',
@@ -14,8 +14,5 @@ const escape = (unsafeChar: string) => {
  * @param value
  */
 export const patchSafeString = (value: string): string => {
-  return value.replace(
-    UNSAFE_CHARS_REGEXP,
-    escape,
-  )
+  return value.replace(UNSAFE_CHARS_REGEXP, escape)
 }

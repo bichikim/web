@@ -29,83 +29,80 @@ export interface StyledOptions {
   target?: string
 }
 
-export interface VueStitches <Prefix extends string, Media, Theme, ThemeMap, Utils> extends
-  Stitches<Prefix, Media, Theme, ThemeMap, Utils> {
+export interface VueStitches<Prefix extends string, Media, Theme, ThemeMap, Utils>
+  extends Stitches<Prefix, Media, Theme, ThemeMap, Utils> {
   createDirective: any
-  styled: <Composers extends (
-    | string
-    | Function_
-    | {[name: string]: unknown}
-    )[],
-    CSS = CSS_<Media, Theme, ThemeMap, Utils>>(
-    element: any, options?: StyledOptions, ...systems: {
-      [K in keyof Composers]: (
-        // Strings and Functions can be skipped over
-        Composers[K] extends string | Function_
-          ? Composers[K]
-          : RemoveIndex<CSS> & {
-          /** The **variants** property lets you to set a subclass of styles based on a combination of active variants.
-           *
-           * [Read Documentation](https://stitches.dev/docs/variants#compound-variants)
-           */
-          compoundVariants?: (
-            & (
-              'variants' extends keyof Composers[K]
-                ? {
-                [Name in keyof Composers[K]['variants']]?: Widen<keyof Composers[K]['variants'][Name]>
-                | String_
-              } & WideObject
-                : WideObject
-              )
-            & {
-            css: CSS
-          }
-            )[]
-          /** The **defaultVariants** property allows you to predefine the active key-value pairs of variants.
-           *
-           * [Read Documentation](https://stitches.dev/docs/variants#default-variants)
-           */
-          defaultVariants?: (
-            'variants' extends keyof Composers[K]
+  styled: <
+    Composers extends (string | Function_ | {[name: string]: unknown})[],
+    CSS = CSS_<Media, Theme, ThemeMap, Utils>,
+  >(
+    element: any,
+    options?: StyledOptions,
+    ...systems: {
+      // Strings and Functions can be skipped over
+      [K in keyof Composers]: Composers[K] extends string | Function_
+        ? Composers[K]
+        : RemoveIndex<CSS> & {
+            /** The **variants** property lets you to set a subclass of styles based on a combination of active variants.
+             *
+             * [Read Documentation](https://stitches.dev/docs/variants#compound-variants)
+             */
+            compoundVariants?: (('variants' extends keyof Composers[K]
               ? {
-                [Name in keyof Composers[K]['variants']]?: Widen<keyof Composers[K]['variants'][Name]>
-                | String_
-              }
+                  [Name in keyof Composers[K]['variants']]?:
+                    | Widen<keyof Composers[K]['variants'][Name]>
+                    | String_
+                } & WideObject
+              : WideObject) & {
+              css: CSS
+            })[]
+            /** The **defaultVariants** property allows you to predefine the active key-value pairs of variants.
+             *
+             * [Read Documentation](https://stitches.dev/docs/variants#default-variants)
+             */
+            defaultVariants?: 'variants' extends keyof Composers[K]
+              ? {
+                  [Name in keyof Composers[K]['variants']]?:
+                    | Widen<keyof Composers[K]['variants'][Name]>
+                    | String_
+                }
               : WideObject
-            )
-          /** The **variants** property lets you set a subclass of styles based on a key-value pair.
-           *
-           * [Read Documentation](https://stitches.dev/docs/variants)
-           */
-          variants?: {
-            [Name in string]: {
-              [Pair in number | string]: CSS
+            /** The **variants** property lets you set a subclass of styles based on a key-value pair.
+             *
+             * [Read Documentation](https://stitches.dev/docs/variants)
+             */
+            variants?: {
+              [Name in string]: {
+                [Pair in number | string]: CSS
+              }
             }
-          }
-        } & CSS & {
-          [K2 in keyof Composers[K]]: K2 extends 'compoundVariants' | 'defaultVariants' | 'variants'
-            ? unknown
-            : K2 extends keyof CSS
-              ? CSS[K2]
-              : unknown
-        }
-        )
+          } & CSS & {
+              [K2 in keyof Composers[K]]: K2 extends
+                | 'compoundVariants'
+                | 'defaultVariants'
+                | 'variants'
+                ? unknown
+                : K2 extends keyof CSS
+                ? CSS[K2]
+                : unknown
+            }
     }
   ) => DefineComponent<{as: string; css: CSS; variants: any}>
 }
 
-export const createStyled = <Prefix extends string = string,
+export const createStyled = <
+  Prefix extends string = string,
   Media extends EmptyObject = EmptyObject,
   Theme extends EmptyObject = EmptyObject,
   ThemeMap extends EmptyObject = DefaultThemeMap,
-  Utils extends EmptyObject = EmptyObject>(config?: {
+  Utils extends EmptyObject = EmptyObject,
+>(config?: {
   media?: ConfigType.Media<Media>
   prefix?: ConfigType.Prefix<Prefix>
   theme?: ConfigType.Theme<Theme>
   themeMap?: ConfigType.ThemeMap<ThemeMap>
   utils?: ConfigType.Utils<Utils>
 }): VueStitches<Prefix, Media, Theme, ThemeMap, Utils> => {
-
   const {createDirective, ...stitches} = createCreateDirective(config)
 
   const styled = (element: any, options?: StyledOptions, ...systems: any[]) => {
@@ -125,9 +122,10 @@ export const createStyled = <Prefix extends string = string,
           return asRef.value ?? element
         })
 
-        return () => (
-          withDirectives(h(elementRef.value, {class: target}, {...slots}), [[directive, [props.css, props.variants]]])
-        )
+        return () =>
+          withDirectives(h(elementRef.value, {class: target}, {...slots}), [
+            [directive, [props.css, props.variants]],
+          ])
       },
       // todo fix type
     }) as any

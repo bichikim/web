@@ -10,4 +10,3 @@ describe('isListenable in SSR', () => {
     expect(result).toBeFalsy()
   })
 })
-

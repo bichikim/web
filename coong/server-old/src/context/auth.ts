@@ -19,15 +19,14 @@ export const unwrapBearerToken = (token?: string) => {
 export const withAuth = <ReturnType extends Record<string, unknown>>(
   contextFunction: ContextFunction<ReturnType>,
 ) => {
-
   return async (expressContext: ExpressContext) => {
+    const {req} = expressContext
+
     const {
-      req,
-    } = expressContext
+      headers: {authorization},
+    } = req
 
-    const {headers: {authorization}} = req
-
-    const token = (Array.isArray(authorization) ? authorization.join('') : authorization)
+    const token = Array.isArray(authorization) ? authorization.join('') : authorization
 
     const auth: AuthContext = {
       isSelf: false,
@@ -36,7 +35,7 @@ export const withAuth = <ReturnType extends Record<string, unknown>>(
     }
 
     return Object.freeze({
-      ...await contextFunction(expressContext),
+      ...(await contextFunction(expressContext)),
       auth,
     })
   }

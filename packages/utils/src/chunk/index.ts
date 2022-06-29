@@ -13,6 +13,12 @@ export const chunk = <T>(list: readonly T[], size: number): T[][] => {
   return result
 }
 
-export const chunkFn = (size: number) => <T>(list: readonly T[]): T[][] => {
-  return chunk(list, size)
-}
+/**
+ *
+ * @param size
+ */
+export const chunkFn =
+  (size: number) =>
+  <T>(list: readonly T[]): T[][] => {
+    return chunk(list, size)
+  }

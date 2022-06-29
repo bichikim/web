@@ -22,7 +22,8 @@ const DEFAULT_PORT = 8080
 const DB_URL = process.env.NODE_ENV === 'test' ? 'file:./keystone-test.db' : process.env.DB_URL
 const DB_PROVIDER = process.env.NODE_ENV === 'test' ? 'sqlite' : 'postgresql'
 const PORT = process.env.PORT ?? DEFAULT_PORT
-const ORIGIN = process.env.NODE_ENV === 'production' ? ['https://coong.io', 'https://www.coong.io'] : '*'
+const ORIGIN =
+  process.env.NODE_ENV === 'production' ? ['https://coong.io', 'https://www.coong.io'] : '*'
 // Look in the schema file for how we define our lists, and how users interact with them through graphql or the Admin UI
 
 // Keystone auth is configured separately - check out the basic auth setup we are importing from our auth file.

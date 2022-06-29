@@ -7,21 +7,14 @@ describe('unwrap-refs', () => {
     const Text = defineComponent({
       props: ['foo', 'bar'],
       setup: (props) => {
-        return () => (
-          h('div', [
-            h('div', {id: 'foo'}, props.foo),
-            h('div', {id: 'bar'}, props.bar),
-          ])
-        )
+        return () => h('div', [h('div', {id: 'foo'}, props.foo), h('div', {id: 'bar'}, props.bar)])
       },
     })
     const Component = defineComponent({
       setup() {
         const foo = ref('foo')
         const bar = ref('bar')
-        return () => (
-          h(Text, unWrapRefs({bar, foo}))
-        )
+        return () => h(Text, unWrapRefs({bar, foo}))
       },
     })
 

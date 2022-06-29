@@ -15,7 +15,6 @@ const mockGetHTMLElement: jest.Mock = getHTMLElement as any
 
 describe('blur', () => {
   it('should blur', () => {
-
     const _document = (() => {
       let _activeElement
       return {

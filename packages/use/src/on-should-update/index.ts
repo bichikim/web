@@ -59,7 +59,10 @@ const defaultDebounceWait = 500
  * @param handle
  * @param options
  */
-export const onShouldUpdate = (handle?: OnShouldUpdateHandle, options: OnShouldUpdateOptions = {}) => {
+export const onShouldUpdate = (
+  handle?: OnShouldUpdateHandle,
+  options: OnShouldUpdateOptions = {},
+) => {
   const {
     firstExecute = true,
     windowFocus = true,
@@ -82,7 +85,6 @@ export const onShouldUpdate = (handle?: OnShouldUpdateHandle, options: OnShouldU
   const onDebounceHandle = useDebounce(onHandle, debounceWait, true)
 
   const onShouldUpdate = () => {
-
     if (debounce) {
       onDebounceHandle()
       return

@@ -8,9 +8,7 @@ export const Default = () => ({
       countRef.value += 1
     })
     return () => {
-      return h('div', [
-        h('div', countRef.value),
-      ])
+      return h('div', [h('div', countRef.value)])
     }
   },
 })

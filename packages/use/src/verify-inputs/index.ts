@@ -61,7 +61,7 @@ const createContext = (): VerifyInputs => {
   })
 
   const isValid = computed(() => {
-    return !(errorItem.value)
+    return !errorItem.value
   })
 
   const errorMessage = computed(() => {
@@ -100,8 +100,8 @@ const createContext = (): VerifyInputs => {
     inputs.value.delete(el)
     const handle = handles.value.get(el)
     if (handle) {
-      (el as HTMLInputElement).removeEventListener('input', handle);
-      (el as HTMLInputElement).removeEventListener('change', handle)
+      ;(el as HTMLInputElement).removeEventListener('input', handle)
+      ;(el as HTMLInputElement).removeEventListener('change', handle)
     }
     handles.value.delete(el)
   }

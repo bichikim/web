@@ -42,33 +42,41 @@ export const BackdropFilterText = defineComponent({
     const {_: vNode} = this as any
     const {uid} = vNode
     const id = `clip-path-${uid}`
-    return (
-      h('div', {
+    return h(
+      'div',
+      {
         class: rootClass({
           css: {
             $$urlId: `url(#${id})`,
           },
         }).className,
-      }, [
+      },
+      [
         h('span', $slots.default?.()),
         // svg
-        h('svg', {
-          'aria-hidden': 'true',
-          class: 'headline lockup-headline-mask visually-hidden',
-        }, [
-          h('clipPath', {id}, [
-            h('text', {
-              'dominant-baseline': 'hanging',
-              dy,
-              'text-anchor': 'middle',
-              x: '50%',
-              y: '0em',
-            }, [
-              $slots.default?.(),
+        h(
+          'svg',
+          {
+            'aria-hidden': 'true',
+            class: 'headline lockup-headline-mask visually-hidden',
+          },
+          [
+            h('clipPath', {id}, [
+              h(
+                'text',
+                {
+                  'dominant-baseline': 'hanging',
+                  dy,
+                  'text-anchor': 'middle',
+                  x: '50%',
+                  y: '0em',
+                },
+                [$slots.default?.()],
+              ),
             ]),
-          ]),
-        ]),
-      ])
+          ],
+        ),
+      ],
     )
   },
 })

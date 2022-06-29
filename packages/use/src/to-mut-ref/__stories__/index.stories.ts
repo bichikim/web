@@ -7,10 +7,11 @@ const Foo = defineComponent({
   },
   setup(props) {
     const valueRef = toMutRef(props, 'value')
-    return () => h('div', [
-      h('div', valueRef.value),
-      h('button', {onClick: () => (valueRef.value += '.')}, 'add dot'),
-    ])
+    return () =>
+      h('div', [
+        h('div', valueRef.value),
+        h('button', {onClick: () => (valueRef.value += '.')}, 'add dot'),
+      ])
   },
 })
 
@@ -22,12 +23,11 @@ export const Default = () => ({
       valueRef.value = event.target.value
     }
 
-    return () => (
+    return () =>
       h('div', [
         h('div', `value ${valueRef.value}`),
         h('input', {onInput: updateInput, value: valueRef.value}),
         h(Foo, {value: valueRef.value}),
       ])
-    )
   },
 })

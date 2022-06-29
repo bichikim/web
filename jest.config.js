@@ -10,9 +10,5 @@ config.projects.push({
   ],
   testTimeout: 60_000,
   transformIgnorePatterns: ['/node_modules/'],
-  watchPlugins: [
-    require.resolve('jest-watch-typeahead/filename'),
-    require.resolve('jest-watch-typeahead/testname'),
-  ],
 })
 module.exports = config

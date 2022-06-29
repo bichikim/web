@@ -79,4 +79,3 @@ export const plugin = (options: ViteVueSsrOptions): Plugin => {
     name,
   }
 }
-

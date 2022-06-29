@@ -11,14 +11,14 @@ describe('shield', () => {
     privateUser: true,
   }
 
-  const complexRoles = {
-    privatePost: {
-      create: true,
-    },
-    publicPost: {
-      read: true,
-    },
-  }
+  // const complexRoles = {
+  //   privatePost: {
+  //     create: true,
+  //   },
+  //   publicPost: {
+  //     read: true,
+  //   },
+  // }
 
   it('should pass roles with self', () => {
     const privateUserSelf = {
@@ -27,18 +27,18 @@ describe('shield', () => {
       },
     }
 
-    const privateUserRead = {
-      privateUser: {
-        read: true,
-      },
-    }
+    // const privateUserRead = {
+    //   privateUser: {
+    //     read: true,
+    //   },
+    // }
 
-    const privateUserBoth = {
-      privateUser: {
-        read: true,
-        self: true,
-      },
-    }
+    // const privateUserBoth = {
+    //   privateUser: {
+    //     read: true,
+    //     self: true,
+    //   },
+    // }
 
     expect(isMatch(readSelfPrivateRoles, privateUserSelf)).toEqual({
       isSelf: true,
@@ -120,7 +120,6 @@ describe('shield', () => {
     })
   })
   it('should pass with true requiredRoles', () => {
-
     const privateUserRead = {
       privateUser: {
         read: true,

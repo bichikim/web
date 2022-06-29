@@ -6,11 +6,10 @@ export const Default = () => ({
     const arrayResult = toObjectProps(['foo', 'bar'])
     const objectResult = toObjectProps({bar: null, foo: null})
 
-    return () => (
+    return () =>
       h('div', [
         h('div', `array to object options ${JSON.stringify(arrayResult)}`),
         h('div', `object to object options ${JSON.stringify(objectResult)}`),
       ])
-    )
   },
 })

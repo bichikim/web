@@ -3,7 +3,9 @@ import {parse} from 'node-html-parser'
 
 describe('entryFromTemplate', () => {
   it('should return src from script ', () => {
-    const result = entryFromTemplate(parse(`
+    // noinspection HtmlUnknownTarget
+    const result = entryFromTemplate(
+      parse(`
       <html lang="kr">
         <head>
           <title>foo</title>
@@ -12,7 +14,8 @@ describe('entryFromTemplate', () => {
           <script type="module" src="/src/main.ts"></script>
         </body>
       </html>
-    `))
+    `),
+    )
     expect(result).toBe('/src/main.ts')
   })
 })

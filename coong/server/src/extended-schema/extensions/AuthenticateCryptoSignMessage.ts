@@ -6,7 +6,6 @@ import {ExtendContext} from '../types'
 const SIZE = 32
 
 export const authenticateCryptoSignMessage = (_, extendContext: ExtendContext): Extension => {
-
   const input = graphql.inputObject({
     fields: {
       email: graphql.arg({type: graphql.nonNull(graphql.String)}),
@@ -20,10 +19,7 @@ export const authenticateCryptoSignMessage = (_, extendContext: ExtendContext): 
         args: {
           input: graphql.arg({type: graphql.nonNull(input)}),
         },
-        async resolve(
-          root,
-          args,
-        ) {
+        async resolve(root, args) {
           const {jwt, blockchain} = extendContext
           const {email} = args.input
           // email 유저가 있는지 검사하지 않는다 유저가 없다면 로그인

@@ -8,8 +8,8 @@ import {SYSTEM_KEY} from './keys'
 import {stitchesUtils} from './stitches-utils'
 import {linearGradient, typography} from './variants'
 
-export * from './h-glow'
 export * from './h-box'
+export * from './h-glow'
 export * from './quasar-components'
 
 export const useSystem = (): CssComponent => {
@@ -30,14 +30,17 @@ const addClassScope = (css?: Record<string, any>, withClasses?: string) => {
   if (!withClasses || !css) {
     return css
   }
-  const {left, baseCss} = Object.entries(css).reduce((result, [key, value]) => {
-    if (key.startsWith('&')) {
-      result.left.push([key, value])
+  const {left, baseCss} = Object.entries(css).reduce(
+    (result, [key, value]) => {
+      if (key.startsWith('&')) {
+        result.left.push([key, value])
+        return result
+      }
+      result.baseCss.push([key, value])
       return result
-    }
-    result.baseCss.push([key, value])
-    return result
-  }, {baseCss: [] as any[], left: [] as any[]})
+    },
+    {baseCss: [] as any[], left: [] as any[]},
+  )
 
   return {
     ...Object.fromEntries(left),
@@ -85,11 +88,12 @@ export const useCsx = () => {
 
 export type stitchesOptions = Parameters<CreateStitches>[0]
 
-export interface CreateHyperComponentsOptions<Prefix extends string = string,
+export interface CreateHyperComponentsOptions<
+  Prefix extends string = string,
   Media = Record<string, any>,
   Theme = ConfigType.Theme,
   Utils = Record<string, any>,
-  > {
+> {
   media?: ConfigType.Media<Media>
   prefix?: ConfigType.Prefix<Prefix>
   theme?: ConfigType.Theme<Theme>
@@ -101,19 +105,16 @@ export interface CreateHyperComponentsOptions<Prefix extends string = string,
  * HyperComponents has stitches, components and preset styles
  * @param options
  */
-export const createHyperComponents = <Prefix extends string = string,
+export const createHyperComponents = <
+  Prefix extends string = string,
   Media = Record<string, any>,
   Theme = ConfigType.Theme,
   Utils = Record<string, any>,
   // todo fix types
-  >(options: CreateHyperComponentsOptions<Prefix, Media, Theme, Utils> = {}): any => {
-  const {
-    theme: _theme = {},
-    variants = {},
-    utils = {},
-    media = {},
-    prefix,
-  } = options
+>(
+  options: CreateHyperComponentsOptions<Prefix, Media, Theme, Utils> = {},
+): any => {
+  const {theme: _theme = {}, variants = {}, utils = {}, media = {}, prefix} = options
   const stitchesOptions: Record<string, any> = {
     media: {
       bp1: '(min-width: 640px)',

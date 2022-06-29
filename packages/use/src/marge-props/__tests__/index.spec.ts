@@ -44,13 +44,10 @@ describe('marge-props', () => {
   it('should marge props with an array props nad an object default props', () => {
     const foo2 = {default: '', type: String}
 
-    const result = margeProps(
-      ['foo', 'bar'],
-      {
-        foo: foo2,
-        john: null,
-      },
-    )
+    const result = margeProps(['foo', 'bar'], {
+      foo: foo2,
+      john: null,
+    })
 
     expect(result).toEqual({
       bar: null,

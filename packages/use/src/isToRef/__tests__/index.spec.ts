@@ -14,13 +14,12 @@ const Component = defineComponent({
     const refResult = isToRef(fooRef)
     const computedResult = isToRef(fooComputed)
 
-    return () => (
+    return () =>
       h('div', [
         h('div', {id: 'toRef'}, toRefResult),
         h('div', {id: 'ref'}, refResult),
         h('div', {id: 'computed'}, computedResult),
       ])
-    )
   },
 })
 

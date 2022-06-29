@@ -42,48 +42,56 @@ const PagesLayout = defineComponent({
       method,
       user,
     })
-    return () => (
+    return () =>
       h(Fragment, [
         // hydration error
-        h(HLayout, {view: 'lHh Lpr lFf'}, () => [
-          h(HPageContainer, () => [
-            h(RouterView),
-          ]),
-        ]),
-        h(HDialog, {
-          maximized: true,
-          modelValue: isOpenRef.value,
-          persistent: true,
-          transitionHide: 'slide-up',
-          transitionShow: 'slide-down',
-        }, () => [
-          h(SignInPage, {
-            email: email.value,
-            inProgress: isMagicAuthLink.value,
-            isWaiting: loading.value,
-            method: method.value,
-            'onSign-in': onSignIn,
-            'onUpdate:email': onUpdateEmail,
-            'onUpdate:method': onUpdateMethod,
-          }, () => [
-            h(HBox, {
-              css: {
-                p: 10,
-                ps: 'absolute', tr: 0,
+        h(HLayout, {view: 'lHh Lpr lFf'}, () => [h(HPageContainer, () => [h(RouterView)])]),
+        h(
+          HDialog,
+          {
+            maximized: true,
+            modelValue: isOpenRef.value,
+            persistent: true,
+            transitionHide: 'slide-up',
+            transitionShow: 'slide-down',
+          },
+          () => [
+            h(
+              SignInPage,
+              {
+                email: email.value,
+                inProgress: isMagicAuthLink.value,
+                isWaiting: loading.value,
+                method: method.value,
+                'onSign-in': onSignIn,
+                'onUpdate:email': onUpdateEmail,
+                'onUpdate:method': onUpdateMethod,
               },
-            }, () => [
-              h(HBtn, {
-                css: {bg: '$transparent-white', radius: 0},
-                dense: true,
-                flat: true,
-                icon: ionCloseOutline,
-                onClick: onCloseAuth,
-              }),
-            ]),
-          ]),
-        ]),
+              () => [
+                h(
+                  HBox,
+                  {
+                    css: {
+                      p: 10,
+                      ps: 'absolute',
+                      tr: 0,
+                    },
+                  },
+                  () => [
+                    h(HBtn, {
+                      css: {bg: '$transparent-white', radius: 0},
+                      dense: true,
+                      flat: true,
+                      icon: ionCloseOutline,
+                      onClick: onCloseAuth,
+                    }),
+                  ],
+                ),
+              ],
+            ),
+          ],
+        ),
       ])
-    )
   },
 })
 

@@ -53,7 +53,6 @@ const setup = () => {
 }
 
 describe('animation-repeater', () => {
-
   beforeEach(() => {
     mockGetWindow.mockRestore()
   })

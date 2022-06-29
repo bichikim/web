@@ -9,17 +9,20 @@ export interface CreatePasswordResetLinkOptions {
   tokensValidForMins: number
 }
 
-const createGetPasswordResetEmailMessage = (url: string, from: string) => (to: string, token: string) => {
-  const link = `${url}?token=${token}`
-  return {
-    from,
-    subject: 'Password reset email for Coong.io',
-    text: `Go link and reset your password: ${link}`,
-    to,
+const createGetPasswordResetEmailMessage =
+  (url: string, from: string) => (to: string, token: string) => {
+    const link = `${url}?token=${token}`
+    return {
+      from,
+      subject: 'Password reset email for Coong.io',
+      text: `Go link and reset your password: ${link}`,
+      to,
+    }
   }
-}
 
-export const createPasswordResetLink = (options: CreatePasswordResetLinkOptions): AuthTokenTypeConfig => {
+export const createPasswordResetLink = (
+  options: CreatePasswordResetLinkOptions,
+): AuthTokenTypeConfig => {
   const {link, tokensValidForMins, from} = options
   const getPasswordResetEmailMessage = createGetPasswordResetEmailMessage(link, from)
   return {

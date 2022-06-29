@@ -1,4 +1,3 @@
-
 export const roles = {
   customer: {
     'privatePost.self': true,
@@ -16,7 +15,6 @@ export const roles = {
 export type ActionKeys = 'create' | 'delete' | 'read' | 'self' | 'update' | 'all'
 
 export const actions: Actions<ActionKeys> = {
-
   all: true,
 
   create: true,
@@ -36,7 +34,10 @@ export type Actions<K extends string> = Record<K, boolean>
 
 export type PermissionKeys = 'privatePost' | 'privateUser' | 'publicPost' | 'publicUser'
 
-export type Permissions<K extends string, A extends string> = Record<K, Record<keyof Actions<A>, boolean>>
+export type Permissions<K extends string, A extends string> = Record<
+  K,
+  Record<keyof Actions<A>, boolean>
+>
 
 export const permissions: Permissions<PermissionKeys, ActionKeys> = {
   privatePost: actions,
@@ -44,4 +45,3 @@ export const permissions: Permissions<PermissionKeys, ActionKeys> = {
   publicPost: actions,
   publicUser: actions,
 }
-

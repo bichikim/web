@@ -34,9 +34,17 @@ describe('roles/utils', () => {
         jhon: ['j', 'h', 'o', 'n', '2'],
       }
 
-      expect(getPermissionFromRoles(role, map)).toEqual(
-        ['f', 'o', 'o', '1', 'j', 'h', 'o', 'n', '2'],
-      )
+      expect(getPermissionFromRoles(role, map)).toEqual([
+        'f',
+        'o',
+        'o',
+        '1',
+        'j',
+        'h',
+        'o',
+        'n',
+        '2',
+      ])
     })
   })
 
@@ -53,7 +61,6 @@ describe('roles/utils', () => {
 
   describe('flattenRoles', () => {
     it('should a', () => {
-
       const result = flattenRoles(roles)
       expect(result).toEqual({
         customer: [
@@ -64,11 +71,7 @@ describe('roles/utils', () => {
           'publicPost.write',
           'publicUser.read',
         ],
-        master: [
-          'privatePost',
-          'privateUser',
-          'public',
-        ],
+        master: ['privatePost', 'privateUser', 'public'],
       })
     })
   })
@@ -107,7 +110,11 @@ describe('roles/utils', () => {
 
   describe('getMatchedPermissionWithAll', () => {
     it('should return permission with all', () => {
-      const result = getMatchedPermissionWithAll(['foo.all'], ['foo.create'], ['create', 'update', 'read', 'delete'])
+      const result = getMatchedPermissionWithAll(
+        ['foo.all'],
+        ['foo.create'],
+        ['create', 'update', 'read', 'delete'],
+      )
       expect(result).toBe('foo.create')
     })
   })
@@ -115,13 +122,7 @@ describe('roles/utils', () => {
   describe('transformAllPermission', () => {
     it('should a', () => {
       const result = transformAllPermission(['foo', 'john.all', 'bar.create'], ['create', 'read'])
-      expect(result).toEqual([
-        'foo.create',
-        'foo.read',
-        'john.create',
-        'john.read',
-        'bar.create',
-      ])
+      expect(result).toEqual(['foo.create', 'foo.read', 'john.create', 'john.read', 'bar.create'])
     })
   })
 })
