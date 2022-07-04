@@ -49,8 +49,9 @@
     "@types/sinon": "10.0.11",
     "@vue/server-renderer": "^3.2",
     "@vue/test-utils": "^2.0.0",
+    "@winter-love/test-use": "workspace:*",
     "debounce": "^1.2.1",
-    "vue": "^3.2.33"
+    "vue": "^3.2"
   },
   "publishConfig": {
     "access": "public"

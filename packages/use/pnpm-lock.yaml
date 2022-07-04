@@ -6,11 +6,12 @@ specifiers:
   '@vue/server-renderer': ^3.2
   '@vue/test-utils': ^2.0.0
   '@winter-love/lodash': ^1.0.25-alpha.14
+  '@winter-love/test-use': workspace:*
   '@winter-love/utils': ^1.0.25-alpha.14
   debounce: ^1.2.1
   fast-json-stable-stringify: ^2.1.0
   lodash: ^4.17.21
-  vue: ^3.2.33
+  vue: ^3.2
   vue-demi: '*'
 
 dependencies:
@@ -25,6 +26,7 @@ devDependencies:
   '@types/sinon': 10.0.11
   '@vue/server-renderer': 3.2.37_vue@3.2.37
   '@vue/test-utils': 2.0.0_vue@3.2.37
+  '@winter-love/test-use': link:../test-use
   debounce: 1.2.1
   vue: 3.2.37
 

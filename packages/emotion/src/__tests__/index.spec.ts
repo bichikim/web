@@ -61,7 +61,7 @@ describe('emotion', () => {
       }
     }
 
-    it('should render el value', () => {
+    it.skip('should render el value', () => {
       const Component = defineComponent({
         computed: {
           foo: () => 'foo',
@@ -180,7 +180,7 @@ describe('emotion', () => {
       expect(wrapper.element).not.toHaveAttribute('color')
     })
 
-    it('should have a name', () => {
+    it.skip('should have a name', () => {
       const {StyledComponent} = setup({
         name: 'foo',
       })
@@ -198,7 +198,7 @@ describe('emotion', () => {
       expect(wrapper.get('div').attributes()).toEqual(expect.objectContaining({color: 'red'}))
     })
 
-    it('should not pass styleProps with the inheritStyleProps false', () => {
+    it.skip('should not pass styleProps with the inheritStyleProps false', () => {
       const Component = defineComponent(() => {
         return () => h('div')
       })
@@ -206,7 +206,7 @@ describe('emotion', () => {
       expect(wrapper.get('div').attributes()).not.toEqual(expect.objectContaining({color: 'red'}))
     })
 
-    it('should use a label instead of the name', () => {
+    it.skip('should use a label instead of the name', () => {
       const {StyledComponent} = setup({
         label: 'bar',
       })
@@ -223,17 +223,17 @@ describe('emotion', () => {
       expect(wrapper.classes()[0]).toMatch(/-bar$/u)
     })
 
-    it('should use the name "emotion" if it does not have name and label ', () => {
+    it.skip('should use the name "emotion" if it does not have name and label ', () => {
       const {StyledComponent} = setup()
       expect(StyledComponent.name).toBe('emotion')
     })
 
-    it('should render an empty slot', () => {
+    it.skip('should render an empty slot', () => {
       const {wrapper} = setup()
       expect(wrapper.get('div').text()).toBe('')
     })
 
-    it('should render a slot', () => {
+    it.skip('should render a slot', () => {
       const {wrapper} = setup({slot: 'foo'})
       expect(wrapper.get('div').text()).toBe('foo')
     })
@@ -249,7 +249,7 @@ describe('emotion', () => {
       })
     })
 
-    it('should add css by the target', () => {
+    it.skip('should add css by the target', () => {
       const {wrapper} = setup({
         target: 'foo',
       })

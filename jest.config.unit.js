@@ -15,10 +15,12 @@ module.exports = {
     '!<rootDir>/**/__mocks__/*.{ts,tsx}',
     '!<rootDir>/**/types/**/*.{ts,tsx}',
   ],
+  fakeTimers: {
+    legacyFakeTimers: true,
+  },
 
   // maxWorkers: '70%',
   moduleFileExtensions: ['js', 'jsx', 'ts', 'tsx', 'vue', 'json'],
-
   moduleNameMapper: {
     '\\.(css|scss)$': 'identity-obj-proxy',
     '\\.(jpg|jpeg|png|svg)$': '<rootDir>/__mocks__/file.mock.ts',
@@ -30,6 +32,9 @@ module.exports = {
   projects: [
     {
       displayName: 'unit-test',
+      fakeTimers: {
+        legacyFakeTimers: true,
+      },
       globals: {
         __DEV__: true,
       },
@@ -41,7 +46,7 @@ module.exports = {
       },
 
       setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
-      snapshotSerializers: ['jest-stitches', 'jest-serializer-vue', '@emotion/jest/serializer'],
+      snapshotSerializers: [],
       testEnvironment: '@happy-dom/jest-environment',
       testMatch: [
         '!<rootDir>/**/*.e2e.ts',
@@ -53,12 +58,16 @@ module.exports = {
       transformIgnorePatterns: ['/node_modules/'],
     },
   ],
-
   setupFilesAfterEnv: [path.resolve(__dirname, 'jest.setup.ts')],
 
-  snapshotSerializers: ['jest-stitches', 'jest-serializer-vue', '@emotion/jest/serializer'],
+  snapshotSerializers: [],
 
   testEnvironment: '@happy-dom/jest-environment',
+
+  // https://github.com/facebook/jest/issues/6766
+  testEnvironmentOptions: {
+    url: 'http://localhost/',
+  },
 
   testPathIgnorePatterns: [
     '\\.snap$',
@@ -67,12 +76,7 @@ module.exports = {
     '(/__tests__/.*|(\\.|/)(test|spec))\\.d.ts$',
   ],
 
-  // https://github.com/facebook/jest/issues/6766
-  testURL: 'http://localhost/',
-
   transform: {
-    '.+\\.(css|styl|less|sass|scss|jpg|jpeg|png|svg|gif|eot|otf|webp|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$':
-      require.resolve('jest-transform-stub'),
     '^.+\\.jsx?$': require.resolve('babel-jest'),
     '^.+\\.vue$': '@vue/vue3-jest',
   },

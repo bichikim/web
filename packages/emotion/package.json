@@ -29,16 +29,16 @@
     "dist/*"
   ],
   "scripts": {
-    "build": "tsup-node --dts --minify",
-    "dev": "tsup-node --watch",
-    "prepare": "tsup-node --dts"
+    "build": "tsup --dts --minify",
+    "dev": "tsup --watch",
+    "prepare": "tsup --dts"
   },
   "dependencies": {
     "@emotion/css": "^11.7.1",
     "@emotion/serialize": "^1.0.2",
     "@emotion/utils": "^1.1.0",
-    "@winter-love/use": "^1.0.25-alpha.14",
-    "@winter-love/utils": "^1.0.25-alpha.14",
+    "@winter-love/use": "workspace:*",
+    "@winter-love/utils": "workspace:*",
     "clsx": "^1.1.1",
     "vue-demi": "*"
   },

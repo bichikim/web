@@ -7,8 +7,8 @@ specifiers:
   '@emotion/server': ^11.4.0
   '@emotion/utils': ^1.1.0
   '@vue/server-renderer': ^3.2
-  '@winter-love/use': ^1.0.25-alpha.14
-  '@winter-love/utils': ^1.0.25-alpha.14
+  '@winter-love/use': workspace:*
+  '@winter-love/utils': workspace:*
   clsx: ^1.1.1
   vue: ^3.2
   vue-demi: '*'
@@ -82,9 +82,6 @@ packages:
     engines: {node: '>=6.9.0'}
     peerDependencies:
       '@babel/core': ^7.0.0
-    peerDependenciesMeta:
-      '@babel/core':
-        optional: true
     dependencies:
       '@babel/compat-data': 7.18.5
       '@babel/core': 7.18.5
@@ -184,9 +181,6 @@ packages:
     engines: {node: '>=6.9.0'}
     peerDependencies:
       '@babel/core': ^7.0.0-0
-    peerDependenciesMeta:
-      '@babel/core':
-        optional: true
     dependencies:
       '@babel/core': 7.18.5
       '@babel/helper-plugin-utils': 7.17.12

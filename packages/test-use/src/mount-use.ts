@@ -1,7 +1,7 @@
 import {mount} from '@vue/test-utils'
 import {EmptyObject} from '@winter-love/utils'
 import {upperFirst} from 'lodash'
-import {defineComponent, h, isRef} from 'vue'
+import {defineComponent, h, isRef} from 'vue-demi'
 
 export type TestSetup<Props extends Record<string, any>, Result extends Record<string, any>> = (
   props: Props,
@@ -11,6 +11,11 @@ const eventName = (value: string): string => {
   return `on${upperFirst(value)}`
 }
 
+/**
+ * @deprecated
+ * @param testSetup
+ * @param initProps
+ */
 export const mountUse = <
   Props extends Record<string, any>,
   Result extends Record<string, any> = EmptyObject,

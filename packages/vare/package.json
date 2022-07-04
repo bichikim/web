@@ -43,11 +43,11 @@
     "*.d.ts"
   ],
   "scripts": {
-    "build": "tsup-node --dts --minify",
-    "dev": "tsup-node --watch",
-    "prepare": "tsup-node --dts",
-    "test-dev": "vite",
-    "fix": "npx vue-demi-fix"
+    "build": "tsup --dts --minify",
+    "dev": "tsup --watch",
+    "fix": "npx vue-demi-fix",
+    "prepare": "tsup --dts",
+    "test-dev": "vite"
   },
   "dependencies": {
     "@vue/devtools-api": "^6.1.3",

@@ -33,11 +33,12 @@
   },
   "dependencies": {
     "@vue/test-utils": "^2.0.0",
-    "@winter-love/utils": "^1.0.25-alpha.14",
-    "vue": "^3.2"
+    "@winter-love/utils": "workspace:*",
+    "vue-demi": "*"
   },
   "devDependencies": {
-    "lodash": "4.17.21"
+    "lodash": "4.17.21",
+    "vue": "^3.2"
   },
   "publishConfig": {
     "access": "public"

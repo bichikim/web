@@ -1,3 +1,7 @@
+/**
+ * @jest-environment jsdom
+ */
+
 import {createStyled} from '../'
 import {renderToString} from '@vue/server-renderer'
 import {createSSRApp, h} from 'vue-demi'

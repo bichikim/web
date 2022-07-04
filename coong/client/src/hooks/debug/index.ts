@@ -1,4 +1,4 @@
-import {getCurrentInstance, reactive, UnwrapNestedRefs} from 'vue'
+import {getCurrentInstance, onMounted, reactive, UnwrapNestedRefs} from 'vue-demi'
 
 declare module 'vue' {
   interface ComponentInternalInstance {
@@ -11,6 +11,9 @@ export const debug =
   process.env.NODE_ENV !== 'production'
     ? (states: Record<string, any>) => {
         const instance = getCurrentInstance()
+        onMounted(() => {
+          console.log(instance)
+        })
         if (instance) {
           instance.setupState = reactive({...states, ...instance.setupState})
         }

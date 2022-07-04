@@ -31,8 +31,8 @@
   "scripts": {
     "build": "tsup --dts --minify",
     "dev": "tsup --watch",
-    "prepare": "tsup --dts",
-    "fix": "vue-demi-fix"
+    "fix": "vue-demi-fix",
+    "prepare": "tsup --dts"
   },
   "dependencies": {
     "@stitches/core": "^1.2.8",

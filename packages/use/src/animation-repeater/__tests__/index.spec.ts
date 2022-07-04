@@ -1,5 +1,5 @@
 import {flushPromises} from '@vue/test-utils'
-import {mountUse} from '@winter-love/test-use'
+import {mountComposition} from '@winter-love/test-use'
 import {getWindow} from '@winter-love/utils'
 import {ref} from 'vue-demi'
 import {onAnimationRepeater} from '../'
@@ -21,6 +21,7 @@ const setup = () => {
       }),
       requestAnimationFrame: jest.fn((handle) => {
         _handle = handle
+        console.log(handle)
         return 'cancel'
       }),
       trigger: () => _handle?.(),
@@ -31,7 +32,7 @@ const setup = () => {
     return window
   })
 
-  const wrapper = mountUse(() => {
+  const wrapper = mountComposition(() => {
     const countRef = ref(0)
     const isRun = onAnimationRepeater(() => {
       countRef.value += 1
@@ -58,41 +59,41 @@ describe('animation-repeater', () => {
   })
 
   it('should on', async () => {
-    const {result, window} = setup()
+    const {setupState, window} = setup()
 
-    expect(result.count).toBe(0)
-    expect(result.isRun).toBe(true)
+    expect(setupState.count).toBe(0)
+    expect(setupState.isRun).toBe(true)
     window.trigger()
     await flushPromises()
-    expect(result.count).toBe(1)
-    expect(result.isRun).toBe(true)
+    expect(setupState.count).toBe(1)
+    expect(setupState.isRun).toBe(true)
 
-    await result.toggle()
+    await setupState.toggle()
     window.trigger()
     await flushPromises()
     expect(window.cancelAnimationFrame).toBeCalledTimes(1)
-    expect(result.count).toBe(1)
-    expect(result.isRun).toBe(false)
+    expect(setupState.count).toBe(1)
+    expect(setupState.isRun).toBe(false)
 
-    result.toggle()
+    setupState.toggle()
     window.trigger()
     await flushPromises()
 
-    expect(result.isRun).toBe(true)
-    expect(result.count).toBe(1)
+    expect(setupState.isRun).toBe(true)
+    expect(setupState.count).toBe(1)
 
-    result.toggle()
+    setupState.toggle()
     window.trigger()
     await flushPromises()
 
-    expect(result.isRun).toBe(false)
-    expect(result.count).toBe(1)
+    expect(setupState.isRun).toBe(false)
+    expect(setupState.count).toBe(1)
 
-    await result.toggle()
+    await setupState.toggle()
     window.trigger()
     await flushPromises()
 
-    expect(result.isRun).toBe(true)
-    expect(result.count).toBe(2)
+    expect(setupState.isRun).toBe(true)
+    expect(setupState.count).toBe(2)
   })
 })

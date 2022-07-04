@@ -37,8 +37,8 @@
   "scripts": {
     "build": "tsup --dts --minify",
     "dev": "tsup --watch",
-    "prepare": "tsup --dts",
-    "fix": "vue-demi-fix"
+    "fix": "vue-demi-fix",
+    "prepare": "tsup --dts"
   },
   "dependencies": {
     "@stitches/core": "^1.2.8",
@@ -48,13 +48,13 @@
     "clsx": "^1.1.1",
     "color": "^4.2.0",
     "quasar": "^2.6",
-    "vue-demi": "*"
+    "vue-demi": "^0.13.1"
   },
   "devDependencies": {
-    "@vue/server-renderer": "3.2.33",
-    "typescript": "^4.7.4",
+    "@vue/server-renderer": "^3.2",
     "csstype": "3.0.11",
     "tsup": "^6.1.2",
+    "typescript": "^4.7.4",
     "vue": "^3.2"
   },
   "publishConfig": {
