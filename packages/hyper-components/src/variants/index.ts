@@ -1,2 +1,2 @@
-export * from './typography'
 export * from './llinear-gradient'
+export * from './typography'

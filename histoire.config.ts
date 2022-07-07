@@ -4,28 +4,31 @@ import babel from 'vite-plugin-babel'
 
 export default defineConfig({
   setupFile: 'histoire.setup.ts',
-
+  storyMatch: ['**/__stories__/*.story.vue'],
   vite: {
     plugins: [
-      babel({
-        babelConfig: {
-          babelrc: false,
-          configFile: false,
-          plugins: [
-            [
-              'module-resolver',
-              {
-                alias: {
-                  src: './src',
+      vue({}),
+      {
+        ...babel({
+          babelConfig: {
+            babelrc: false,
+            configFile: false,
+            plugins: [
+              [
+                'module-resolver',
+                {
+                  alias: {
+                    src: './src',
+                  },
+                  cwd: 'packagejson',
                 },
-                cwd: 'packagejson',
-                loglevel: 'info',
-              },
+              ],
             ],
-          ],
-        },
-      }),
-      vue(),
+          },
+          filter: /\.[jt]sx?$/u,
+        }),
+        enforce: 'post',
+      },
     ],
   },
 })

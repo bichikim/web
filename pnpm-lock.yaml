@@ -93,7 +93,7 @@ devDependencies:
   eslint-plugin-typescript-sort-keys: 2.1.0_xuuykav7urhdozug7htlfgar3u
   eslint-plugin-unicorn: 42.0.0_eslint@8.19.0
   eslint-plugin-vue: 9.1.1_eslint@8.19.0
-  histoire: 0.7.8_hcbhbela4dsabngu7n2naeo4la
+  histoire: 0.7.9_hcbhbela4dsabngu7n2naeo4la
   jest: 28.1.2_4hf7bxudrsp7hfzxo3chlrtwsy
   jest-environment-jsdom: 28.1.2
   jest-environment-node: 28.1.2
@@ -1374,33 +1374,33 @@ packages:
       - encoding
     dev: true
 
-  /@histoire/controls/0.7.8_vue@3.2.37:
-    resolution: {integrity: sha512-hFCH0QHotpcW1Z5qAQTRY9Uv9NZOBPLptOSnvr3Q1c6LPtvapy2TTcaVnyMT2cQVV9Ucm8hiRfIu/AQFbhWEWA==}
+  /@histoire/controls/0.7.9_vue@3.2.37:
+    resolution: {integrity: sha512-Kv7iF2uOVe5FsgQgK3KqmW3zlg/hlQGiy+E7VG/W0BHcVjRMvJn7K4ftEn1qwoR95810Jv7pohGhp9HVSxfSvQ==}
     dependencies:
       '@iconify/vue': 3.2.1_vue@3.2.37
-      '@vueuse/core': 8.7.5_vue@3.2.37
+      '@vueuse/core': 8.9.0_vue@3.2.37
       floating-vue: 2.0.0-beta.17_vue@3.2.37
     transitivePeerDependencies:
       - '@vue/composition-api'
       - vue
     dev: true
 
-  /@histoire/plugin-vue/0.7.8_histoire@0.7.8+vue@3.2.37:
-    resolution: {integrity: sha512-T+eve9vOQ4flgIZDRtXEZiOulXw9Oh2TBYBf8GHHYFCZs989d3jBYuOkxgo3SOIJM9C1vv9b5dgThD3Se3wPog==}
+  /@histoire/plugin-vue/0.7.9_histoire@0.7.9+vue@3.2.37:
+    resolution: {integrity: sha512-ykFkO3zb+lF6UrQXeafJiKRR+D4Myxpnk0k2l3GZoo5HeZW5XrO3pq4B8nIRwQ60KU8biDc4X+2da0fxg5T51w==}
     peerDependencies:
-      histoire: ^0.7.8
+      histoire: ^0.7.9
       vue: ^3.2.31
     dependencies:
-      '@histoire/controls': 0.7.8_vue@3.2.37
-      '@histoire/shared': 0.7.8
-      histoire: 0.7.8_hcbhbela4dsabngu7n2naeo4la
+      '@histoire/controls': 0.7.9_vue@3.2.37
+      '@histoire/shared': 0.7.9
+      histoire: 0.7.9_hcbhbela4dsabngu7n2naeo4la
       vue: 3.2.37
     transitivePeerDependencies:
       - '@vue/composition-api'
     dev: true
 
-  /@histoire/shared/0.7.8:
-    resolution: {integrity: sha512-suQBYwNknKPKlyDafWe95+dGZo5gcfbcMhnSSY+ymFc7KJfA+645mPIqBYZge0rekeeFp4R3jcc7gZtepVUqYg==}
+  /@histoire/shared/0.7.9:
+    resolution: {integrity: sha512-uEh2cX3SQZ70LE9044dKUeuq6Chrt6Re6rj82/ts6s0Pyk2bT8E0f9tNFBWujWyraO75jShbG/FYbbbY42NFTg==}
     dev: true
 
   /@humanwhocodes/config-array/0.9.5:
@@ -3453,8 +3453,8 @@ packages:
       - supports-color
     dev: true
 
-  /@vueuse/core/8.7.5_vue@3.2.37:
-    resolution: {integrity: sha512-tqgzeZGoZcXzoit4kOGLWJibDMLp0vdm6ZO41SSUQhkhtrPhAg6dbIEPiahhUu6sZAmSYvVrZgEr5aKD51nrLA==}
+  /@vueuse/core/8.9.0_vue@3.2.37:
+    resolution: {integrity: sha512-eKWehF6gsiLYxnYM/1xgDu16bKED7AWvkk56JIFNQes8OKgktr3Jc1wUy8UWIulrnwCXICUu9YUo+Wkq4r2JNw==}
     peerDependencies:
       '@vue/composition-api': ^1.1.0
       vue: ^2.6.0 || ^3.2.0
@@ -3465,18 +3465,18 @@ packages:
         optional: true
     dependencies:
       '@types/web-bluetooth': 0.0.14
-      '@vueuse/metadata': 8.7.5
-      '@vueuse/shared': 8.7.5_vue@3.2.37
+      '@vueuse/metadata': 8.9.0
+      '@vueuse/shared': 8.9.0_vue@3.2.37
       vue: 3.2.37
       vue-demi: 0.13.1_vue@3.2.37
     dev: true
 
-  /@vueuse/metadata/8.7.5:
-    resolution: {integrity: sha512-emJZKRQSaEnVqmlu39NpNp8iaW+bPC2kWykWoWOZMSlO/0QVEmO/rt8A5VhOEJTKLX3vwTevqbiRy9WJRwVOQg==}
+  /@vueuse/metadata/8.9.0:
+    resolution: {integrity: sha512-pjkIbQgJPRUrxK5/iXVKQFGC+OhJ+Vd6fhBsdwgj+NNJEHUotRliYymwdvhnEke/o+kkulT0xMvoK19nyPoiMw==}
     dev: true
 
-  /@vueuse/shared/8.7.5_vue@3.2.37:
-    resolution: {integrity: sha512-THXPvMBFmg6Gf6AwRn/EdTh2mhqwjGsB2Yfp374LNQSQVKRHtnJ0I42bsZTn7nuEliBxqUrGQm/lN6qUHmhJLw==}
+  /@vueuse/shared/8.9.0_vue@3.2.37:
+    resolution: {integrity: sha512-Pmu3Fopk/JJjN8b90uQuFrVCc/RPcSA/0zDFRTyn3YIhoB5ESna/1Sac5WZxK+n82g/ERXHHQTetGI9yxEdPfA==}
     peerDependencies:
       '@vue/composition-api': ^1.1.0
       vue: ^2.6.0 || ^3.2.0
@@ -6002,18 +6002,18 @@ packages:
     hasBin: true
     dev: true
 
-  /histoire/0.7.8_hcbhbela4dsabngu7n2naeo4la:
-    resolution: {integrity: sha512-Sj4bOSoykvttdtF/BdVi3qvwaY7PhE9nd3K0dnjumP8H4VA6ftPOlncviwdq8G2U9gtUb98t7Q+PkaxElil9qA==}
+  /histoire/0.7.9_hcbhbela4dsabngu7n2naeo4la:
+    resolution: {integrity: sha512-J9ZWHvfAD16UHNxLfaHNFu8YAPJb/CiXFp9i3j7+2g3KcukTDPmqpQv64hPSN0632QLSVj0gJ0x/Po2nb8aL7w==}
     hasBin: true
     peerDependencies:
       vite: ^2.9.0
     dependencies:
-      '@histoire/controls': 0.7.8_vue@3.2.37
-      '@histoire/plugin-vue': 0.7.8_histoire@0.7.8+vue@3.2.37
-      '@histoire/shared': 0.7.8
+      '@histoire/controls': 0.7.9_vue@3.2.37
+      '@histoire/plugin-vue': 0.7.9_histoire@0.7.9+vue@3.2.37
+      '@histoire/shared': 0.7.9
       '@iconify/vue': 3.2.1_vue@3.2.37
       '@types/markdown-it': 12.2.3
-      '@vueuse/core': 8.7.5_vue@3.2.37
+      '@vueuse/core': 8.9.0_vue@3.2.37
       birpc: 0.1.1
       case: 1.6.3
       chokidar: 3.5.3
@@ -6041,7 +6041,7 @@ packages:
       vite: 2.9.13
       vite-node: 0.12.1
       vue: 3.2.37
-      vue-router: 4.0.16_vue@3.2.37
+      vue-router: 4.1.1_vue@3.2.37
     transitivePeerDependencies:
       - '@vue/composition-api'
       - encoding
@@ -10055,8 +10055,8 @@ packages:
       vue: 3.2.37
     dev: true
 
-  /vue-router/4.0.16_vue@3.2.37:
-    resolution: {integrity: sha512-JcO7cb8QJLBWE+DfxGUL3xUDOae/8nhM1KVdnudadTAORbuxIC/xAydC5Zr/VLHUDQi1ppuTF5/rjBGzgzrJNA==}
+  /vue-router/4.1.1_vue@3.2.37:
+    resolution: {integrity: sha512-Wp1mEf2xCwT0ez7o9JvgpfBp9JGnVb+dPERzXDbugTatzJAJ60VWOhJKifQty85k+jOreoFHER4r5fu062PhPw==}
     peerDependencies:
       vue: ^3.2.0
     dependencies:
