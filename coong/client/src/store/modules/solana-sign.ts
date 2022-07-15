@@ -1,4 +1,7 @@
-import {useAuthenticateUserWithCryptoSignatureMutation, useCryptoSignMessageQuery} from 'src/graphql'
+import {
+  useAuthenticateUserWithCryptoSignatureMutation,
+  useCryptoSignMessageQuery,
+} from 'src/graphql'
 import {useSolana} from 'src/hooks'
 import {computed, toRefs, UnwrapNestedRefs} from 'vue'
 export interface UseCryptoProps {
@@ -19,7 +22,8 @@ export const useSolanaSign = (props: UnwrapNestedRefs<UseCryptoProps>) => {
     variables: cryptoSignMessageVariables as any,
   })
 
-  const authenticateUserWithCryptoSignatureMutation = useAuthenticateUserWithCryptoSignatureMutation()
+  const authenticateUserWithCryptoSignatureMutation =
+    useAuthenticateUserWithCryptoSignatureMutation()
 
   const solana = useSolana()
 
@@ -27,7 +31,9 @@ export const useSolanaSign = (props: UnwrapNestedRefs<UseCryptoProps>) => {
     return cryptoSignMessageQuery.executeQuery({})
   }
 
-  const cryptoSignMessage = computed(() => cryptoSignMessageQuery.data.value?.authenticateCryptoSignMessage)
+  const cryptoSignMessage = computed(
+    () => cryptoSignMessageQuery.data.value?.authenticateCryptoSignMessage,
+  )
 
   const signInWithSignature = () => {
     const signature = solana.messageSignature.value

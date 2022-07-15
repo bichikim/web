@@ -2,7 +2,7 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "jsx": "preserve",
-    "outDir": "lib",
+    "outDir": "dist",
     "baseUrl": ".",
     "paths": {
       "src/*": [
@@ -12,9 +12,6 @@
         "dev/*"
       ]
     },
-    "plugins": [
-      { "transform": "@zerollup/ts-transform-paths" }
-    ]
   },
   "ts-node": {
     "compilerOptions": {
@@ -29,7 +26,6 @@
     "src/**/*.tsx",
     "tests/**/*.ts",
     "tests/**/*.tsx",
-    "../../coong/client-react-18/auto-imports.d.ts"
   ],
   "exclude": [
     "node_modules"

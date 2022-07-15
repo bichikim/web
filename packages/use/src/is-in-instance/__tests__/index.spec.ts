@@ -1,4 +1,4 @@
-import {defineComponent, h} from 'vue-demi'
+import {defineComponent, h} from 'vue'
 import {isInInstance} from '../'
 import {mount} from '@vue/test-utils'
 
@@ -7,9 +7,7 @@ describe('isInInstance', () => {
     const Component = defineComponent({
       setup() {
         const result = isInInstance()
-        return () => (
-          h('div', result)
-        )
+        return () => h('div', result)
       },
     })
 

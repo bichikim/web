@@ -10,7 +10,10 @@ export type UseAnimationTickHandle = () => any
  * @param handle
  * @param toggle
  */
-export const animationRepeater = (handle: UseAnimationTickHandle, toggle?: MayRef<boolean | undefined>) => {
+export const animationRepeater = (
+  handle: UseAnimationTickHandle,
+  toggle?: MayRef<boolean | undefined>,
+) => {
   const toggleRef = wrapRef(toggle, {defaultValue: true})
   const cancelFlagRef = ref<number | undefined>()
   const window = getWindow()

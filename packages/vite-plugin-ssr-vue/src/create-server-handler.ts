@@ -1,3 +1,4 @@
+/* eslint-disable functional/no-throw-statement */
 import fs from 'fs'
 import {parse} from 'node-html-parser'
 import path from 'path'
@@ -38,23 +39,21 @@ export const createServerHandler = (
   server: ViteDevServer,
   options: CreateServerHandlerOptions = {},
 ): Connect.NextHandleFunction => {
-  const {
-    entry: ssrEntry,
-    appSelector = 'body #app',
-  } = options
+  const {entry: ssrEntry, appSelector = 'body #app'} = options
   // eslint-disable-next-line max-statements
   return async (req, res, next) => {
     if (req.method !== GET || !req.originalUrl) {
-
       return next()
     }
 
+    // eslint-disable-next-line functional/no-try-statement
     try {
       const htmlTemplate = await readHtmlTemplate(server, req.originalUrl)
       const htmlElement = parse(htmlTemplate)
       const entry = ssrEntry ?? entryFromTemplate(htmlElement)
       const url = req.originalUrl
       if (!entry) {
+        // noinspection ExceptionCaughtLocallyJS
         throw new Error('Entry point for ssr not found')
       }
       const render = await readDefaultModule(server, entry)
@@ -63,16 +62,7 @@ export const createServerHandler = (
       }
       const context = {req, res, url}
       const {
-        html: {
-          app,
-          afterApp,
-          appendHead,
-          prependHead,
-          htmlAttrs,
-          bodyAttrs,
-          beforeApp,
-          teleports,
-        },
+        html: {app, afterApp, appendHead, prependHead, htmlAttrs, bodyAttrs, beforeApp, teleports},
         response,
       }: SSRResult = await render({context})
 

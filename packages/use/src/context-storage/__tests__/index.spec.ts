@@ -12,18 +12,14 @@ describe('context-storage', () => {
         const onClick = () => {
           name.value += '1'
         }
-        return () => (
-          h('div', {onClick}, name.value)
-        )
+        return () => h('div', {onClick}, name.value)
       },
     })
 
     const Parent = defineComponent({
       setup() {
         contextStorage.provideStorage()
-        return () => (
-          h(Component)
-        )
+        return () => h(Component)
       },
     })
 

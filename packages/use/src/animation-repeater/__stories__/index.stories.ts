@@ -11,11 +11,7 @@ export const Default = () => ({
     function toggleCount() {
       toggleRef.value = !toggleRef.value
     }
-    return () => (
-      h('div', [
-        h('div', countRef.value),
-        h('button', {onClick: toggleCount}, 'toggle count'),
-      ])
-    )
+    return () =>
+      h('div', [h('div', countRef.value), h('button', {onClick: toggleCount}, 'toggle count')])
   },
 })

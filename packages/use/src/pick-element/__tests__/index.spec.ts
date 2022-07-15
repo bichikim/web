@@ -12,9 +12,7 @@ describe('pickElement', () => {
   it('should return a element with component', () => {
     const Component = defineComponent({
       setup() {
-        return () => (
-          h('div')
-        )
+        return () => h('div')
       },
     })
 

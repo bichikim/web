@@ -14,13 +14,9 @@ export const Media = defineComponent({
   setup: (props) => {
     return () => {
       if (props.type === 'video') {
-        return (
-          h(QVideo, {src: props.url})
-        )
+        return h(QVideo, {src: props.url})
       }
-      return (
-        h(QImg, {src: props.url})
-      )
+      return h(QImg, {src: props.url})
     }
   },
 })

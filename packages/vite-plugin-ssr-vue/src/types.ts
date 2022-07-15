@@ -14,7 +14,7 @@ export type SSRBufferItem = string | SSRBuffer | Promise<SSRBuffer>
 
 export type SSRBuffer = SSRBufferItem[] & {
   hasAsync?: boolean
-};
+}
 
 export interface SSRContext {
   [key: string]: any

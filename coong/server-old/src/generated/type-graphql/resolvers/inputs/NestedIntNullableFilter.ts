@@ -46,4 +46,9 @@ export class NestedIntNullableFilter {
     nullable: true
   })
   not?: NestedIntNullableFilter | undefined;
+
+  @TypeGraphQL.Field(_type => Boolean, {
+    nullable: true
+  })
+  isSet?: boolean | undefined;
 }

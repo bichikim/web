@@ -1,8 +1,10 @@
 import {createMethodDecorator, ResolverData} from 'type-graphql'
 import {forbiddenDefaultSelfDataGetter, ForbiddenSelfDataGetter} from './Forbidden'
 
-export type Injection<Context extends Record<string, any>, Self> =
-  (resolverData: ResolverData<Context>, self: Self) => unknown
+export type Injection<Context extends Record<string, any>, Self> = (
+  resolverData: ResolverData<Context>,
+  self: Self,
+) => unknown
 
 export const Author = <Context extends Record<string, any>, Self>(
   injection: Injection<Context, Self>,
@@ -14,4 +16,3 @@ export const Author = <Context extends Record<string, any>, Self>(
     return next()
   })
 }
-

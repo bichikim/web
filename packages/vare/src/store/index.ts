@@ -6,8 +6,8 @@ import {STORE_CONTEXT, STORE_LOCAL_CONTEXT} from './symbols'
 
 export * from './dev-tool'
 export * from './manager'
-export * from './symbols'
 export * from './store'
+export * from './symbols'
 
 export interface PluginOptions {
   /**
@@ -71,11 +71,7 @@ export const createVare = (): Vare => {
   })
   return markRaw({
     install: (app: App, options: PluginOptions = {}) => {
-      const {
-        plugins = [],
-        initState,
-        global,
-      } = options
+      const {plugins = [], initState, global} = options
       manager.setInitState(initState)
       plugins.forEach((plugin) => {
         plugin(manager.state, manager.store.info)
@@ -99,4 +95,3 @@ export const provideStoreManager = (manager?: StoreManager, localManager?: Store
     provide(STORE_LOCAL_CONTEXT, localManager)
   }
 }
-

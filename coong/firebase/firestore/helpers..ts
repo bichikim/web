@@ -1,5 +1,10 @@
 import {readFileSync} from 'fs'
-import {initializeTestEnvironment} from '@firebase/rules-unit-testing'
+import {
+  initializeTestEnvironment,
+  RulesTestContext,
+  RulesTestEnvironment,
+} from '@firebase/rules-unit-testing'
+import firebase from 'firebase/compat'
 
 export const setup = async (auth: string = 'test-user') => {
   // const projectId = `rules-spec-${Date.now()}`
@@ -27,20 +32,19 @@ export const setup = async (auth: string = 'test-user') => {
   // }
 
   // Apply rules
-  const testEnv = await initializeTestEnvironment({
+  const testEnv: RulesTestEnvironment = await initializeTestEnvironment({
     firestore: {
       rules: readFileSync('../firestore.rules', 'utf8'),
     },
     projectId: 'baco-5663c',
   })
 
-  const user = testEnv.authenticatedContext(auth)
+  const user: RulesTestContext = testEnv.authenticatedContext(auth)
 
-  const db = user.firestore()
+  const db: firebase.firestore.Firestore = user.firestore()
 
   return {
     db,
     testEnv,
   }
 }
-

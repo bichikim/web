@@ -1,21 +1,21 @@
 /* eslint-disable id-length,unicorn/consistent-destructuring */
 import {RequestHandler} from 'express'
-import {useImage} from './image-request'
+import {imageContext} from './image-request'
 import sharp from 'sharp'
 import {validate} from 'class-validator'
 import {ImageTransform} from './ImageTransform.dto'
 import {plainToInstance} from 'class-transformer'
 import {createProvideContext} from '../utils/context'
-import {useFormat} from './image-format'
+import {formatContext} from './image-format'
 
 export interface ImageTransformContext {
   format: string
   image: Buffer
 }
 
-const imageTransformContext = createProvideContext<ImageTransformContext>()
+export const imageTransformContext = createProvideContext<ImageTransformContext>()
 
-export const useImageTransform = imageTransformContext.use
+// export const useImageTransform = imageTransformContext.use
 
 export interface ImageTransformOptions {
   maxSize?: number
@@ -28,11 +28,7 @@ interface Size {
 
 const MAX_SIZE = 2000
 
-const getCropSize = (
-  width: number,
-  maxSize: number,
-  height?: number,
-): Size => {
+const getCropSize = (width: number, maxSize: number, height?: number): Size => {
   const _height = height ?? width
   if (width <= maxSize && _height <= maxSize) {
     return {height: _height, width}
@@ -59,11 +55,11 @@ export const imageTransform = (options: ImageTransformOptions = {}): RequestHand
     const {query} = req
     const {w, h, c, q} = query
 
-    const formatContext = useFormat(req)
+    const formatReqContext = formatContext.use(req)
 
     const options = plainToInstance(ImageTransform, {
       crop: query.crop ?? c,
-      format: formatContext,
+      format: formatReqContext,
       height: query.height ?? h,
       quality: query.quality ?? q,
       width: query.width ?? w,
@@ -72,7 +68,7 @@ export const imageTransform = (options: ImageTransformOptions = {}): RequestHand
     await validate(options)
     const {height, width, crop, position, quality, format} = options
 
-    const image = useImage(req)
+    const image = imageContext.use(req)
 
     if (!image) {
       return next()

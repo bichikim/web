@@ -1,3 +1,4 @@
+/* eslint-disable functional/no-throw-statement */
 import {createMethodDecorator, ResolverData, UnauthorizedError} from 'type-graphql'
 import {isMatch} from 'lodash'
 import {MayPromise} from '@winter-love/utils'
@@ -7,8 +8,9 @@ export interface SelfData {
   isSelf
 }
 
-export type SelfAuthorizedSelfIdGetter<Context> = (resolverData: ResolverData<Context>) =>
-  MayPromise<Record<string, any> | Array<Record<string, any>> | undefined>
+export type SelfAuthorizedSelfIdGetter<Context> = (
+  resolverData: ResolverData<Context>,
+) => MayPromise<Record<string, any> | Array<Record<string, any>> | undefined>
 
 const defaultSelfDataGetter = (resolverData: ResolverData<Record<string, any>>): SelfData => {
   const {context} = resolverData
@@ -28,18 +30,14 @@ export interface SelfAuthorizedOptions {
    * @default
    * @param context
    */
-  selfDataGetter?: (resolverData: ResolverData<Record<string, any>>) =>
-    MayPromise<SelfData>
+  selfDataGetter?: (resolverData: ResolverData<Record<string, any>>) => MayPromise<SelfData>
 }
 
 export function SelfAuthorized<Context>(
   selfIdGetter: SelfAuthorizedSelfIdGetter<Context>,
   options: SelfAuthorizedOptions = {},
 ): any {
-  const {
-    allowEmptyId = false,
-    selfDataGetter = defaultSelfDataGetter,
-  } = options
+  const {allowEmptyId = false, selfDataGetter = defaultSelfDataGetter} = options
   return createMethodDecorator<Context>(async (resolverData, next) => {
     const idMatcher = await selfIdGetter(resolverData)
     const {isSelf, data: authIdData} = await selfDataGetter(resolverData)
@@ -77,4 +75,3 @@ export function SelfAuthorized<Context>(
     throw new UnauthorizedError()
   })
 }
-

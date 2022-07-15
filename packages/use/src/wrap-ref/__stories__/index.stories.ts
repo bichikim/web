@@ -12,7 +12,7 @@ export const Default = () => ({
     })
     const computedFooWrappedRef = wrapRef(computedFoo)
 
-    return () => (
+    return () =>
       h('div', [
         h('div', `foo ${fooRef.value}`),
         h('div', `wrapped foo${wrappedFooRef.value}`),
@@ -21,9 +21,16 @@ export const Default = () => ({
         h('div', `computed wrapped foo${computedFooWrappedRef.value}`),
         h('button', {onClick: () => (fooRef.value += 1)}, 'increase foo'),
         h('button', {onClick: () => (wrappedFooRef.value += 1)}, 'increase wrapped foo'),
-        h('button', {onClick: () => (unbindWrappedFooRef.value += 1)}, 'increase unbind wrapped foo'),
-        h('button', {onClick: () => (computedFooWrappedRef.value += 1)}, 'increase computed wrapped foo'),
+        h(
+          'button',
+          {onClick: () => (unbindWrappedFooRef.value += 1)},
+          'increase unbind wrapped foo',
+        ),
+        h(
+          'button',
+          {onClick: () => (computedFooWrappedRef.value += 1)},
+          'increase computed wrapped foo',
+        ),
       ])
-    )
   },
 })

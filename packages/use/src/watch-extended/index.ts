@@ -1,9 +1,15 @@
 import {watch, WatchCallback, WatchOptions, WatchSource, WatchStopHandle} from 'vue-demi'
 import {debounce as createDebounce} from '@winter-love/lodash'
 export type MapSources<T, Immediate> = {
-  [K in keyof T]: T[K] extends WatchSource<infer V> ?
-    Immediate extends true ?
-      V | undefined : V : T[K] extends object ? Immediate extends true ? T[K] | undefined : T[K] : never;
+  [K in keyof T]: T[K] extends WatchSource<infer V>
+    ? Immediate extends true
+      ? V | undefined
+      : V
+    : T[K] extends object
+    ? Immediate extends true
+      ? T[K] | undefined
+      : T[K]
+    : never
 }
 export type MultiWatchSources = (WatchSource<unknown> | object)[]
 
@@ -17,36 +23,31 @@ export interface WatchExtendOptions<Immediate = boolean> extends WatchOptions<Im
   once?: boolean
 }
 
-export function watchExtended <
-  T extends MultiWatchSources, Immediate extends Readonly<boolean> = false
+export function watchExtended<
+  T extends MultiWatchSources,
+  Immediate extends Readonly<boolean> = false,
 >(
   sources: [...T],
   callback: WatchCallback<MapSources<T, false>, MapSources<T, Immediate>>,
   options?: WatchExtendOptions<Immediate>,
 ): WatchStopHandle
 
-export function watchExtended <
+export function watchExtended<
   T extends Readonly<MultiWatchSources>,
-  Immediate extends Readonly<boolean> = false
-  >(
+  Immediate extends Readonly<boolean> = false,
+>(
   sources: T,
   callback: WatchCallback<MapSources<T, false>, MapSources<T, Immediate>>,
   options?: WatchExtendOptions<Immediate>,
 ): WatchStopHandle
 
-export function watchExtended <
-  T,
-  Immediate extends Readonly<boolean> = false
-  >(
+export function watchExtended<T, Immediate extends Readonly<boolean> = false>(
   sources: WatchSource<T>,
   callback: WatchCallback<T, Immediate extends true ? T | undefined : T>,
   options?: WatchExtendOptions<Immediate>,
 ): WatchStopHandle
 
-export function watchExtended <
-  T extends object,
-  Immediate extends Readonly<boolean> = false
-  >(
+export function watchExtended<T extends object, Immediate extends Readonly<boolean> = false>(
   sources: T,
   callback: WatchCallback<T, Immediate extends true ? T | undefined : T>,
   options?: WatchExtendOptions<Immediate>,
@@ -58,7 +59,6 @@ export function watchExtended(sources, callback, options?: WatchExtendOptions): 
   const beforeStop: (() => void)[] = []
   const stop: () => void = () => {
     beforeStop.forEach((fn) => {
-      console.log(fn)
       fn()
     })
   }

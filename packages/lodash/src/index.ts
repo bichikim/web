@@ -7,10 +7,7 @@ export * from './lodash/math'
 export * from './lodash/number'
 export * from './lodash/object'
 import {at as wrapperAt, reverse as wrapperReverse} from './lodash/seq'
-export {
-  wrapperReverse,
-  wrapperAt,
-}
+export {wrapperReverse, wrapperAt}
 export {
   chain,
   commit,

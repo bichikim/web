@@ -19,15 +19,17 @@ export interface StyledOptions<StylePortal extends string | undefined> {
   target?: string
 }
 
-export interface StyledOptionWIthObject
-<PropsOptions extends Readonly<ComponentObjectPropsOptions>, StylePortal extends string | undefined>
-  extends StyledOptions<StylePortal> {
+export interface StyledOptionWIthObject<
+  PropsOptions extends Readonly<ComponentObjectPropsOptions>,
+  StylePortal extends string | undefined,
+> extends StyledOptions<StylePortal> {
   props?: PropsOptions
 }
 
-export interface StyledOptionWithArray
-<PropsOptions extends Readonly<any[]>, StylePortal extends string | undefined>
-  extends StyledOptions<StylePortal> {
+export interface StyledOptionWithArray<
+  PropsOptions extends Readonly<any[]>,
+  StylePortal extends string | undefined,
+> extends StyledOptions<StylePortal> {
   props?: PropsOptions
 }
 

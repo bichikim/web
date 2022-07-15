@@ -5,10 +5,10 @@ export class SharedAuthInput {
   @Field({
     nullable: false,
   })
-    email: string
+  email: string
 
   @Field({
     nullable: false,
   })
-    password: string
+  password: string
 }

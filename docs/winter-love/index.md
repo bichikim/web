@@ -1,4 +1,0 @@
-# Winter Love Packages
-
-Home
-

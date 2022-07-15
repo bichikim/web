@@ -34,9 +34,7 @@ const SESSION_MAX_AGE = 60 * 60 * 24 * 30
 if (!SESSION_SECRET) {
   if (process.env.NODE_ENV === 'production') {
     // eslint-disable-next-line functional/no-throw-statement
-    throw new Error(
-      'The SESSION_SECRET environment variable must be set in production',
-    )
+    throw new Error('The SESSION_SECRET environment variable must be set in production')
   } else {
     SESSION_SECRET = '-- DEV COOKIE SECRET; CHANGE ME --'
   }

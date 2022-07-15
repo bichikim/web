@@ -14,9 +14,11 @@ export const ref = <T>(_value: T): Ref<T> => {
     valueRef.value = value
   }
   // eslint-disable-next-line prefer-object-spread
-  return freeze(assign(runner, {
-    [Symbol.toPrimitive]() {
-      return runner()
-    },
-  })) as any
+  return freeze(
+    assign(runner, {
+      [Symbol.toPrimitive]() {
+        return runner()
+      },
+    }),
+  ) as any
 }

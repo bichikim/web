@@ -13,7 +13,10 @@ export type RequestResult<R, P> = {
   run: (payload: P) => Promise<UnwrapRef<R> | null>
 }
 
-export type Service<P = EmptyObject, R = any> = ((payload: P, signal: AbortSignal) => Promise<UnwrapRef<R>>)
+export type Service<P = EmptyObject, R = any> = (
+  payload: P,
+  signal: AbortSignal,
+) => Promise<UnwrapRef<R>>
 
 export type BaseOptions<R, P> = {
   /**
@@ -23,7 +26,7 @@ export type BaseOptions<R, P> = {
   // cacheKey?: string
   initialData?: R
   // onAfter?: (params: P) => void
-// onBefore?: (params: P) => void
+  // onBefore?: (params: P) => void
   onError?: (error: Error, payload: P) => void
   onSuccess?: (data: UnwrapRef<R>, payload: P) => void
   refreshOnVisibility?: boolean
@@ -32,7 +35,7 @@ export type BaseOptions<R, P> = {
   // queryKey?: (...args: P) => string
   // ready?: Ref<boolean>
   // refreshDeps?: WatchSource<any>[]
-};
+}
 
 const unObjectRef = <P extends Record<string, any>>(
   value: Ref<P> | UnwrapNestedRefs<P> | P | undefined,
@@ -51,27 +54,33 @@ const unObjectRef = <P extends Record<string, any>>(
  * @param service
  * @param options
  */
-export const useRequest = <R, P>(
-  service: Service<P, R>,
-  options?: BaseOptions<R, P>,
-  // eslint-disable-next-line max-statements
-) => (
+export const useRequest =
+  <R, P>(
+    service: Service<P, R>,
+    options?: BaseOptions<R, P>,
+    // eslint-disable-next-line max-statements
+  ) =>
+  (
     _payload?: Ref<P> | UnwrapNestedRefs<P> | P,
     innerOptions?: BaseOptions<R, P>,
   ): RequestResult<R, P> => {
     const newOptions = {...options, ...innerOptions}
     const {
-      initialData, onSuccess,
-      onError, startInCreated,
+      initialData,
+      onSuccess,
+      onError,
+      startInCreated,
       // debounce,
     } = newOptions
     const refreshOnWindowFocusRef = computed(() => {
-      return unref(innerOptions?.refreshOnWindowFocus) ??
-      unref(options?.refreshOnWindowFocus) ?? false
+      return (
+        unref(innerOptions?.refreshOnWindowFocus) ?? unref(options?.refreshOnWindowFocus) ?? false
+      )
     })
     const refreshOnVisibilityRef = computed(() => {
-      return unref(innerOptions?.refreshOnVisibility) ??
-      unref(options?.refreshOnVisibility) ?? false
+      return (
+        unref(innerOptions?.refreshOnVisibility) ?? unref(options?.refreshOnVisibility) ?? false
+      )
     })
     const loading = ref(false)
     const data: Ref<UnwrapRef<R> | undefined> = ref(initialData)
@@ -87,17 +96,19 @@ export const useRequest = <R, P>(
       }
       previousPayload.value = payload
       loading.value = true
-      return service(payload, signal).then((response) => {
-        data.value = clone(response)
-        onSuccess?.(response, payload)
-        loading.value = false
-        return response
-      }).catch((error_: Error) => {
-        error.value = error_
-        onError?.(error_, payload)
-        loading.value = false
-        return null
-      })
+      return service(payload, signal)
+        .then((response) => {
+          data.value = clone(response)
+          onSuccess?.(response, payload)
+          loading.value = false
+          return response
+        })
+        .catch((error_: Error) => {
+          error.value = error_
+          onError?.(error_, payload)
+          loading.value = false
+          return null
+        })
     }
 
     const retry = () => {
@@ -107,13 +118,13 @@ export const useRequest = <R, P>(
     if (!isSSR()) {
       useElementEvent(window, 'focus', () => {
         if (refreshOnWindowFocusRef.value) {
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+          // eslint-disable-next-line @typescript-eslint/no-floating-promises
           retry()
         }
       })
       useElementEvent(document, 'visibilitychange', () => {
         if (refreshOnVisibilityRef.value) {
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+          // eslint-disable-next-line @typescript-eslint/no-floating-promises
           retry()
         }
       })

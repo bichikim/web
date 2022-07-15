@@ -5,7 +5,6 @@ import {provideAnalytics, trackDirective, useTrack} from '../'
 describe('analytics', () => {
   const _window: any = window
   beforeEach(() => {
-
     _window.dataLayer = {
       push: jest.fn(),
     }
@@ -21,9 +20,7 @@ describe('analytics', () => {
           provideAnalytics({
             foo: 'foo',
           })
-          return () => (
-            h(Component)
-          )
+          return () => h(Component)
         },
       })
 
@@ -43,12 +40,11 @@ describe('analytics', () => {
             })
           }
 
-          return () => (
+          return () =>
             h('div', [
               h('button', {id: 'add-payload', onClick: onAddPayloadTrack}, 'add-payload'),
               h('button', {id: 'override-payload', onClick: onOverrideTrack}, 'override-payload'),
             ])
-          )
         },
       })
 
@@ -81,19 +77,17 @@ describe('analytics', () => {
       const Root = defineComponent({
         setup: () => {
           provideAnalytics({provided: 'provided'})
-          return () => (
-            withDirectives(h(Component, {id: 'target'}, () => [
-              'test',
-            ]), [[trackDirective, {custom: 'custom'}, 'click']])
-          )
+          return () =>
+            withDirectives(
+              h(Component, {id: 'target'}, () => ['test']),
+              [[trackDirective, {custom: 'custom'}, 'click']],
+            )
         },
       })
 
       const Component = defineComponent({
         setup: () => {
-          return () => (
-            h('img', {alt: 'myAlt'})
-          )
+          return () => h('img', {alt: 'myAlt'})
         },
       })
 

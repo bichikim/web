@@ -5,11 +5,14 @@ export const Default = () => ({
   setup() {
     const countRef = ref(0)
     const watchCountRef = ref(0)
-    onShouldUpdate(() => {
-      countRef.value += 1
-    }, {
-      watchValue: watchCountRef,
-    })
+    onShouldUpdate(
+      () => {
+        countRef.value += 1
+      },
+      {
+        watchValue: watchCountRef,
+      },
+    )
     return () => {
       return h('div', [
         h('div', watchCountRef.value),

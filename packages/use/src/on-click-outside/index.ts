@@ -5,7 +5,9 @@ import {MayRef, PossibleElement} from '../types'
 import {wrapRef} from '../wrap-ref'
 import {isSSR} from '@winter-love/utils'
 
-export type OnClickOutsideHandle<Event extends keyof WindowEventMap> = (event: WindowEventMap[Event]) => unknown
+export type OnClickOutsideHandle<Event extends keyof WindowEventMap> = (
+  event: WindowEventMap[Event],
+) => unknown
 
 export interface OnClickOutsideOptions<Event extends keyof WindowEventMap> {
   event?: Event
@@ -40,11 +42,7 @@ export const onClickOutside = <Event extends keyof WindowEventMap = 'pointerdown
     handle(event)
   }
 
-  return useElementEvent<Event>(
-    isSSR() ? undefined : window,
-    event as Event,
-    listener,
-    true,
-    {passive: true},
-  )
+  return useElementEvent<Event>(isSSR() ? undefined : window, event as Event, listener, true, {
+    passive: true,
+  })
 }

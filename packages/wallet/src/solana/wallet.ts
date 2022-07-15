@@ -110,9 +110,7 @@ export const createSolanaWallet = (
     }
     const connection = connectionRef.value
     const transaction = new Transaction()
-    transaction.add(
-      SystemProgram.transfer(transactionParams),
-    )
+    transaction.add(SystemProgram.transfer(transactionParams))
     return sendAndConfirmTransaction(connection, transaction, [keypair])
   }
 

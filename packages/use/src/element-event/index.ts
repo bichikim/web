@@ -40,9 +40,7 @@ export function useElementEvent<Key extends string>(
   isActive?: MayRef<boolean | undefined>,
   options: UseElementEventOptions = {},
 ): Ref<boolean> {
-  const {
-    once = false, passive = true, capture = false,
-  } = options
+  const {once = false, passive = true, capture = false} = options
   const instance = getCurrentInstance()
   const isInInstance = Boolean(instance)
   const elementRef = computed(() => {

@@ -1,3 +1,3 @@
 // resolving type for vite-plugin-ssr-vue/plugin
-export * from './lib/plugin'
-export {default} from './lib/plugin'
+export * from './dist/plugin'
+export {default} from './dist/plugin'

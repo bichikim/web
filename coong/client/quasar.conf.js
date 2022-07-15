@@ -21,14 +21,16 @@ const babel = require('vite-plugin-babel').default
  * @returns {{[p: string]: string}}
  */
 const absorbNodeEnv = (_prefix = 'VUE_') => {
-  const step1 = Object.entries(process.env).filter(([key]) => {
-    if (typeof key === 'string') {
-      return key.startsWith(_prefix)
-    }
-    return false
-  }).map(([key, value]) => {
-    return [key, JSON.stringify(value)]
-  })
+  const step1 = Object.entries(process.env)
+    .filter(([key]) => {
+      if (typeof key === 'string') {
+        return key.startsWith(_prefix)
+      }
+      return false
+    })
+    .map(([key, value]) => {
+      return [key, JSON.stringify(value)]
+    })
   return Object.fromEntries(step1)
 }
 
@@ -40,9 +42,7 @@ module.exports = configure((ctx) => {
 
     // Full list of options: https://v2.quasar.dev/quasar-cli-vite/developing-browser-extensions/configuring-bex
     bex: {
-      contentScripts: [
-        'my-content-script',
-      ],
+      contentScripts: ['my-content-script'],
 
       // extendBexScriptsConf (esbuildConf) {}
       // extendBexManifestJson (json) {}
@@ -51,11 +51,7 @@ module.exports = configure((ctx) => {
     // app boot file (/src/boot)
     // --> boot files are part of "main.js"
     // https://v2.quasar.dev/quasar-cli-vite/boot-files
-    boot: [
-      'hyper-components',
-      'vare',
-      'graphql-request',
-    ],
+    boot: ['hyper-components', 'vare', 'graphql-request'],
 
     // Full list of options: https://v2.quasar.dev/quasar-cli-vite/quasar-config-js#build
     build: {
@@ -87,9 +83,7 @@ module.exports = configure((ctx) => {
             imports: [
               'vue',
               {
-                'src/vue-extend': [
-                  'html',
-                ],
+                'src/vue-extend': ['html'],
               },
             ],
           }),
@@ -99,39 +93,34 @@ module.exports = configure((ctx) => {
             babelConfig: {
               babelrc: false,
               configFile: false,
-              plugins: [[
-                'babel-plugin-htm',
-              ]],
+              plugins: [['babel-plugin-htm']],
             },
           }),
         )
         if (isServer) {
           viteConf.ssr.noExternal.push(/^@quasar\/extras/u)
           if (!ctx.dev) {
-            // viteConf.ssr.noExternal.push(
-            //   'vue-demi',
-            //   '@stitches/core',
-            //   'color',
-            //   'clsx',
-            //   '@vue/devtools-api',
-            //   'micro-memoize',
-            //   'react-fast-compare',
-            //   'fast-json-stable-stringify',
-            //   'js-cookie',
-            //   'vue',
-            // )
+            viteConf.ssr.noExternal.push(
+              'vue-demi',
+              '@stitches/core',
+              'color',
+              'clsx',
+              '@vue/devtools-api',
+              'micro-memoize',
+              'react-fast-compare',
+              'fast-json-stable-stringify',
+              'js-cookie',
+              // 'vue',
+            )
           }
         }
-
       },
       target: {
         browser: ['es2019', 'edge88', 'firefox78', 'chrome87', 'safari13.1'],
         node: 'node16',
       },
 
-      vitePlugins: [
-        ['@vitejs/plugin-vue-jsx'],
-      ],
+      vitePlugins: [['@vitejs/plugin-vue-jsx']],
       // vueRouterBase,
       // vueDevtools,
       // vueOptionsAPI: false,
@@ -189,7 +178,6 @@ module.exports = configure((ctx) => {
 
     // Full list of options: https://v2.quasar.dev/quasar-cli-vite/developing-electron-apps/configuring-electron
     electron: {
-
       builder: {
         // https://www.electron.build/configuration/configuration
 
@@ -205,13 +193,11 @@ module.exports = configure((ctx) => {
       // 'packager' or 'builder'
       packager: {
         // https://github.com/electron-userland/electron-packager/blob/master/docs/api.md#options
-
         // OS X / Mac App Store
         // appBundleId: '',
         // appCategoryType: '',
         // osxSign: '',
         // protocol: 'myapp://path',
-
         // Windows only
         // win32metadata: { ... }
       },
@@ -290,7 +276,6 @@ module.exports = configure((ctx) => {
     // },
     // https://v2.quasar.dev/quasar-cli-vite/developing-ssr/configuring-ssr
     ssr: {
-
       // ssrPwaHtmlFilename: 'offline.html', // do NOT use index.html as name!
       // will mess up SSR
       // extendSSRWebserverConf(esbuildConf) {

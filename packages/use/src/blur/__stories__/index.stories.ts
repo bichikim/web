@@ -11,10 +11,6 @@ export const Default = () => ({
     onBeforeUnmount(() => {
       clearInterval(intervalHandel)
     })
-    return () => (
-      h('div', [
-        h('input'),
-      ])
-    )
+    return () => h('div', [h('input')])
   },
 })

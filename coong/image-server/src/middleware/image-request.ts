@@ -1,11 +1,11 @@
-import got from 'got'
+import {got} from 'got'
 import {RequestHandler} from 'express'
 import {createProvideContext} from '../utils/context'
 import {resolveUrl} from '@winter-love/utils'
 
-const imageContext = createProvideContext<Buffer>()
+export const imageContext = createProvideContext<Buffer>()
 
-export const useImage = imageContext.use
+// export const useImage = imageContext.use
 
 export interface ImageRequestOptions {
   defaultUrl?: string

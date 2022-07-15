@@ -30,17 +30,23 @@ export interface WalletItemTypes {
 }
 
 export interface Wallet<TransactionRequest extends WalletItemTypes> {
-  readonly accountAddress?: string
+  readonly accountAddress?: string | undefined
   readonly createAccount: (entropy?: string) => Account<WalletItemTypes['privateKey']>
   readonly createContract: (contractAddress: string, abi: any) => any
-  readonly loadAccount: (password: string, progress?: (value: number) => any) =>
-    Promise<Account<WalletItemTypes['privateKey']> | void>
+  readonly loadAccount: (
+    password: string,
+    progress?: (value: number) => any,
+  ) => Promise<Account<WalletItemTypes['privateKey']> | void>
   readonly mnemonicPhrase: string | undefined
   provider: any | undefined
   readonly restoreAccount: (mnemonic: string) => Account<WalletItemTypes['privateKey']>
-  readonly saveAccount: (password: string, progress?: (value: number) => any, options?: WalletItemTypes['encrypt']) =>
-    Promise<Account<WalletItemTypes['privateKey']> | void>
-  readonly sendTransaction: (transaction: TransactionRequest['transaction']) =>
-    Promise<WalletItemTypes['transactionResponse'] | undefined>
+  readonly saveAccount: (
+    password: string,
+    progress?: (value: number) => any,
+    options?: WalletItemTypes['encrypt'],
+  ) => Promise<Account<WalletItemTypes['privateKey']> | void>
+  readonly sendTransaction: (
+    transaction: TransactionRequest['transaction'],
+  ) => Promise<WalletItemTypes['transactionResponse'] | undefined>
   readonly sign: (message: string) => Promise<string | void>
 }

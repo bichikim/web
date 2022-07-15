@@ -6,7 +6,7 @@ interface SwitchProps {
   is: boolean
 }
 const Switch: FC<SwitchProps> = (props, {slots}) => {
-  return props.is ? slots.default?.() : (slots.else?.() ?? null)
+  return props.is ? slots.default?.() : slots.else?.() ?? null
 }
 
 Switch.props = {
@@ -23,9 +23,10 @@ const IndexPage = defineComponent({
           <${HBox} css="${{c: 'white', s: '$h5', textShadow}}">
             <${Switch} is="${isSignIn.value}">
               ${{
-    default: () => 'hello',
-    else: () => 'hell', isSignIn,
-  }}
+                default: () => 'hello',
+                else: () => 'hell',
+                isSignIn,
+              }}
             <//>
           <//>
         <//>

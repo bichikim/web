@@ -19,6 +19,7 @@ export const toggleRef = (
   })
 
   const toggle = () => {
+    console.log('toggle')
     valueRef.value = !valueRef.value
   }
 

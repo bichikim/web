@@ -12,7 +12,7 @@ describe('freeze', () => {
     const error = () => {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // noinspection JSConstantReassignment
-      (foo as any).foo = ''
+      ;(foo as any).foo = ''
     }
 
     expect(foo).toEqual({foo: 'foo'})

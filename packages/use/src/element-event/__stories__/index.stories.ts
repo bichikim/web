@@ -18,7 +18,7 @@ export const Default = () => ({
     const toggleClick = () => {
       click.value = !click.value
     }
-    return () => (
+    return () =>
       h('div', [
         h('div', {ref: elementRef}, 'click me'),
         h('div', {}, `resize ${resizeCountRef.value}`),
@@ -28,6 +28,5 @@ export const Default = () => ({
         h('button', {onclick: toggleResize}, 'toggle resize'),
         h('button', {onclick: toggleClick}, 'toggle click'),
       ])
-    )
   },
 })

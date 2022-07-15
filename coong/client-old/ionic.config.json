@@ -1,7 +1,0 @@
-{
-  "name": "coong",
-  "integrations": {
-    "capacitor": {}
-  },
-  "type": "vue"
-}

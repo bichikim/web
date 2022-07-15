@@ -1,9 +1,4 @@
-import {
-  IsIn,
-  IsInt,
-  IsOptional,
-  IsString,
-} from 'class-validator'
+import {IsIn, IsInt, IsOptional, IsString} from 'class-validator'
 import {Transform} from 'class-transformer'
 
 const DEFAULT_QUALITY = 80
@@ -14,17 +9,17 @@ const anyToNumber = (value) => {
 export class ImageTransform {
   @Transform(({value}) => anyToNumber(value))
   @IsInt()
-    width: number
+  width: number
 
   @Transform(({value}) => anyToNumber(value))
   @IsOptional()
   @IsInt()
-    height?: number
+  height?: number
 
   @IsOptional()
   @IsIn(['cover', 'contain', 'fill', 'inside', 'outside'])
   @IsString()
-    crop?: 'cover' | 'contain' | 'fill' | 'inside' | 'outside' = 'cover'
+  crop?: 'cover' | 'contain' | 'fill' | 'inside' | 'outside' = 'cover'
 
   @IsOptional()
   @IsInt()
@@ -44,12 +39,12 @@ export class ImageTransform {
     'southwest',
     'northwest',
   ])
-    position?: string | number
+  position?: string | number
 
   @IsOptional()
   @IsInt()
-    quality: number = DEFAULT_QUALITY
+  quality: number = DEFAULT_QUALITY
 
   @IsIn(['heif', 'jpeg', 'jpg', 'png', 'raw', 'tiff', 'webp'])
-    format: any = 'jpeg'
+  format: any = 'jpeg'
 }

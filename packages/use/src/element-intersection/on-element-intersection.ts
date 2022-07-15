@@ -6,7 +6,7 @@ import {pickElement} from '../pick-element'
 
 const defaultThreshold = 0.05
 
-export const onElementIntersection = <MyElement extends PossibleElement> (
+export const onElementIntersection = <MyElement extends PossibleElement>(
   element: MayRef<MyElement | undefined>,
   handle?: IntersectionObserverCallback,
   options: IntersectionObserverInit = {},
@@ -21,10 +21,12 @@ export const onElementIntersection = <MyElement extends PossibleElement> (
     handle?.(entries, observer)
   }
 
-  const observerRef = ref<IntersectionObserver>(new IntersectionObserver(updateState, {
-    threshold: defaultThreshold,
-    ...options,
-  }))
+  const observerRef = ref<IntersectionObserver>(
+    new IntersectionObserver(updateState, {
+      threshold: defaultThreshold,
+      ...options,
+    }),
+  )
 
   watch(elementRef, (element) => {
     observerRef.value.disconnect()

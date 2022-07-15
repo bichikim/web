@@ -7,10 +7,11 @@ export const Default = () => {
   }
 
   // eslint-disable-next-line unicorn/consistent-function-scoping
-  const FunctionalComponent: FunctionalComponent<FunctionalComponentProps, ['increase']> = (props, {emit}) => {
-    return (
-      h('div', {onClick: () => emit('increase')}, props.age)
-    )
+  const FunctionalComponent: FunctionalComponent<FunctionalComponentProps, ['increase']> = (
+    props,
+    {emit},
+  ) => {
+    return h('div', {onClick: () => emit('increase')}, props.age)
   }
   const Component = withState(FunctionalComponent, {
     setup: () => {
@@ -26,9 +27,7 @@ export const Default = () => {
   })
   return {
     setup() {
-      return () => (
-        h(Component)
-      )
+      return () => h(Component)
     },
   }
 }

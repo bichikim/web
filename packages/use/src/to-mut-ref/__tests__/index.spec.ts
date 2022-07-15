@@ -13,12 +13,11 @@ describe('to-mut-ref', () => {
           mutRef.value += '1'
         }
 
-        return () => (
+        return () =>
           h('div', [
             h('div', {id: 'text'}, mutRef.value),
             h('button', {id: 'button', onClick: setMut}, 'add'),
           ])
-        )
       },
     })
 

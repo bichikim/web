@@ -6,7 +6,6 @@ describe('store', () => {
   it('should create store with root store', async () => {
     const storeManager = createManager()
     const useMyStore = createStore('foo', () => {
-
       const foo = ref('foo')
 
       const increase = () => {
@@ -22,36 +21,29 @@ describe('store', () => {
     const Component = defineComponent({
       setup() {
         const myStore = useMyStore()
-        return () => (
+        return () =>
           h('div', [
             h('div', {id: 'foo'}, myStore.foo),
             h('button', {id: 'button', onClick: myStore.increase}, 'increase'),
           ])
-        )
       },
     })
 
     const Component1 = defineComponent({
       setup() {
         const myStore = useMyStore()
-        return () => (
+        return () =>
           h('div', [
             h('div', {id: 'foo1'}, myStore.foo),
             h('button', {id: 'button1', onClick: myStore.increase}, 'increase'),
           ])
-        )
       },
     })
 
     const Root = defineComponent({
       setup() {
         provideStoreManager(storeManager)
-        return () => (
-          h('div', [
-            h(Component),
-            h(Component1),
-          ])
-        )
+        return () => h('div', [h(Component), h(Component1)])
       },
     })
 
@@ -69,7 +61,6 @@ describe('store', () => {
     const useMyStore = createStore({
       name: 'foo',
       setup: () => {
-
         const foo = ref('foo')
 
         const increase = () => {
@@ -86,36 +77,29 @@ describe('store', () => {
     const Component = defineComponent({
       setup() {
         const myStore = useMyStore({reset: true})
-        return () => (
+        return () =>
           h('div', [
             h('div', {id: 'foo'}, myStore.foo),
             h('button', {id: 'button', onClick: myStore.increase}, 'increase'),
           ])
-        )
       },
     })
 
     const Component1 = defineComponent({
       setup() {
         const myStore = useMyStore({reset: true})
-        return () => (
+        return () =>
           h('div', [
             h('div', {id: 'foo1'}, myStore.foo),
             h('button', {id: 'button1', onClick: myStore.increase}, 'increase'),
           ])
-        )
       },
     })
 
     const Root = defineComponent({
       setup() {
         provideStoreManager(storeManager)
-        return () => (
-          h('div', [
-            h(Component),
-            h(Component1),
-          ])
-        )
+        return () => h('div', [h(Component), h(Component1)])
       },
     })
 
@@ -142,21 +126,18 @@ describe('store', () => {
             increase,
           }
         })
-        return () => (
+        return () =>
           h('div', [
             h('div', {id: 'foo'}, state.foo),
             h('button', {id: 'button', onClick: state.increase}, 'increase'),
           ])
-        )
       },
     })
 
     const Root = defineComponent({
       setup() {
         provideStoreManager(storeManager)
-        return () => (
-          h(Component)
-        )
+        return () => h(Component)
       },
     })
 
@@ -186,21 +167,18 @@ describe('store', () => {
     const Component = defineComponent({
       setup() {
         const state = useStore()
-        return () => (
+        return () =>
           h('div', [
             h('div', {id: 'foo'}, state.foo),
             h('button', {id: 'button', onClick: state.increase}, 'increase'),
           ])
-        )
       },
     })
 
     const Root = defineComponent({
       setup() {
         provideStoreManager(storeManager)
-        return () => (
-          h(Component)
-        )
+        return () => h(Component)
       },
     })
 
@@ -247,9 +225,7 @@ describe('store', () => {
       name: 'Outer',
       setup: (_, {slots}) => {
         useBar()
-        return () => (
-          h('div', [slots.default?.()])
-        )
+        return () => h('div', [slots.default?.()])
       },
     })
 
@@ -260,7 +236,7 @@ describe('store', () => {
         const onChangeName = () => {
           state.name = 'foo'
         }
-        return () => (
+        return () =>
           h('div', [
             h('div', {id: 'foo'}, state.name),
             h('div', {id: 'fooName'}, state.fooName),
@@ -268,20 +244,13 @@ describe('store', () => {
             h('button', {id: 'button', onClick: state.increase}, 'increase'),
             h('button', {id: 'change', onClick: onChangeName}, 'changeName'),
           ])
-        )
       },
     })
 
     const Root = defineComponent({
       setup() {
         provideStoreManager(storeManager)
-        return () => (
-          h('div', [
-            h(Outer, () => [
-              h(Component),
-            ]),
-          ])
-        )
+        return () => h('div', [h(Outer, () => [h(Component)])])
       },
     })
     //

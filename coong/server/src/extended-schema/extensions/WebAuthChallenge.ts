@@ -7,7 +7,6 @@ import {ExtendContext} from '../types'
 import {camelCase} from 'lodash'
 
 export const webAuthChallenge = (base: BaseSchemaMeta, extendContext: ExtendContext): Extension => {
-
   const RpEntity = graphql.object<RpEntity>()({
     fields: {
       id: graphql.field({type: graphql.String}),
@@ -51,11 +50,7 @@ export const webAuthChallenge = (base: BaseSchemaMeta, extendContext: ExtendCont
         args: {
           input: graphql.arg({type: graphql.nonNull(input)}),
         },
-        async resolve(
-          root,
-          args,
-          context,
-        ) {
+        async resolve(root, args, context) {
           const {webAuth} = extendContext
           const user = await context.prisma[camelCase(AUTH_LIST_KEY)]?.findFirst({
             where: {email: args.input.email},

@@ -19,14 +19,13 @@ export const Default = () => {
         return isComponentInstance(elementRef.value) ? 'componentInstance' : 'unknown'
       })
 
-      return () => (
+      return () =>
         h('div', [
           h('div', {ref: elementRef}, 'bar'),
           h(Foo, {ref: componentRef}),
           h('div', `this is ${thisKind.value} component`),
           h('div', `bar is ${barKind.value} component`),
         ])
-      )
     },
   }
 }

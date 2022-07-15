@@ -14,13 +14,12 @@ export const Default = () => ({
       storageFooRef.value = 'foo'
     }
 
-    return () => (
+    return () =>
       h('div', [
         h('div', `originalFoo ${originalFooRef.value}`),
         h('div', `storageFoo ${storageFooRef.value}`),
         h('button', {onClick: addDot}, 'change value'),
         h('button', {onclick: reset}, 'reset value'),
       ])
-    )
   },
 })

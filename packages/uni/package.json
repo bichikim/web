@@ -1,0 +1,56 @@
+{
+  "name": "@winter-love/uni",
+  "version": "1.0.0",
+  "description": "uni all in one package",
+  "license": "MIT",
+  "author": "bichi@live.co.kr",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./*": "./*"
+  },
+  "main": "dist/index.js",
+  "jsdelivr": "dist/index.global.js",
+  "unpkg": "dist/index.global.js",
+  "module": "dist/index.mjs",
+  "source": "src/index.ts",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/*"
+  ],
+  "scripts": {
+    "story:build": "histoire build",
+    "story:dev": "histoire dev",
+    "story:preview": "histoire preview"
+  },
+  "dependencies": {
+    "vue": "^3.2"
+  },
+  "devDependencies": {
+    "@vue/server-renderer": "^3.2",
+    "histoire": "^0.7.8",
+    "tsup": "^6.1.2"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "tsup": {
+    "entry": [
+      "src/index.ts"
+    ],
+    "dts": {
+      "resolve": false
+    },
+    "clean": true,
+    "format": [
+      "cjs",
+      "esm",
+      "iife"
+    ],
+    "outDir": "dist",
+    "sourcemap": true,
+    "splitting": false
+  }
+}

@@ -6,7 +6,6 @@ import {createJwt} from './jwt'
 import {createBlockchain} from './blockchain'
 export const extendGraphqlSchema = graphql.extend((base) => {
   const context: ExtendContext = {
-
     blockchain: createBlockchain('Sign In Coong web service'),
     // todo set privateKey by .env
     jwt: createJwt(process.env.SESSION_SECRET ?? '2AF9F388Bf85ae9Cc843aD'),

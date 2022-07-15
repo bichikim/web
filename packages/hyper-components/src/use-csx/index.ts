@@ -7,14 +7,17 @@ const addClassScope = (css?: Record<string, any>, withClasses?: string) => {
   if (!withClasses || !css) {
     return css
   }
-  const {left, baseCss} = Object.entries(css).reduce((result, [key, value]) => {
-    if (key.startsWith('&')) {
-      result.left.push([key, value])
+  const {left, baseCss} = Object.entries(css).reduce(
+    (result, [key, value]) => {
+      if (key.startsWith('&')) {
+        result.left.push([key, value])
+        return result
+      }
+      result.baseCss.push([key, value])
       return result
-    }
-    result.baseCss.push([key, value])
-    return result
-  }, {baseCss: [] as any[], left: [] as any[]})
+    },
+    {baseCss: [] as any[], left: [] as any[]},
+  )
 
   return {
     ...Object.fromEntries(left),

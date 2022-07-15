@@ -1,4 +1,5 @@
-const trimUrlRegx = /^[\s/]+|[\s/]+$/ugi
+/* eslint-disable @typescript-eslint/no-unused-vars */
+const trimUrlRegx = /^[\s/]+|[\s/]+$/giu
 
 const protocolRegx = /^(?:https?|ftp):\/\//u
 
@@ -13,9 +14,11 @@ const MAX_RESOLVE_URL = 200
 
 export const createResolveUrl = (max: number = MAX_RESOLVE_URL) => {
   return (...urls: string[]): string => {
-    return urls.map((url) => {
-      return url.slice(0, max).replace(trimUrlRegx, '')
-    }).join('/')
+    return urls
+      .map((url) => {
+        return url.slice(0, max).replace(trimUrlRegx, '')
+      })
+      .join('/')
   }
 }
 /**
@@ -38,6 +41,7 @@ export const chunkUrl = (url: string) => {
   const leftUrl: string = url.replace(protocolRegx, '')
 
   const protocol = url.replace(leftUrl, '')
+  // noinspection JSUnusedLocalSymbols
   const [path, query] = leftUrl.split('?')
 
   const [maybeHost, ...chunkedUrl] = path.split('/')
@@ -50,7 +54,6 @@ export const chunkUrl = (url: string) => {
 
   if (protocol) {
     result.protocol = protocol
-
   }
 
   if (hasHost) {

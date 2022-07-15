@@ -17,13 +17,24 @@ import {
 import {EMOTION_CACHE_CONTEXT} from './cache'
 import {Tags} from './tags'
 import {useTheme} from './theme'
-import {AnyComponent, EmptyObject, SFC, StyledOptionWithArray, StyledOptionWIthObject} from './types'
+import {
+  AnyComponent,
+  EmptyObject,
+  SFC,
+  StyledOptionWithArray,
+  StyledOptionWIthObject,
+} from './types'
 
-type KeyAndObject<Key extends string | undefined> = Key extends string ? { [P in Key]: null } : EmptyObject
+type KeyAndObject<Key extends string | undefined> = Key extends string
+  ? {[P in Key]: null}
+  : EmptyObject
 
-export type StyledResult<PropsOptions, StylePortal extends string | undefined> =
-  ((...args: (TemplateStringsArray | Interpolation<ExtractPropTypes<PropsOptions> & {theme: Record<string, any>}>)[]) =>
-    DefineComponent<ExtractPropTypesForUsing<PropsOptions & KeyAndObject<StylePortal>>>)
+export type StyledResult<PropsOptions, StylePortal extends string | undefined> = (
+  ...args: (
+    | TemplateStringsArray
+    | Interpolation<ExtractPropTypes<PropsOptions> & {theme: Record<string, any>}>
+  )[]
+) => DefineComponent<ExtractPropTypesForUsing<PropsOptions & KeyAndObject<StylePortal>>>
 
 const toBeClassName = (value: any): ClassValue => {
   if (typeof value === 'function') {
@@ -45,15 +56,18 @@ const defaultProps = {
  */
 // eslint-disable-next-line max-lines-per-function
 export const createStyled = (emotion: _Emotion & {theme?: any}) => {
-  function styled<PropsOptions extends ComponentObjectPropsOptions = Record<string, any>,
-    StylePortal extends string | undefined = undefined>
-  (
+  function styled<
+    PropsOptions extends ComponentObjectPropsOptions = Record<string, any>,
+    StylePortal extends string | undefined = undefined,
+  >(
     element: PossibleElement,
     options?: Readonly<StyledOptionWIthObject<PropsOptions, StylePortal>>,
   ): StyledResult<PropsOptions, StylePortal>
-  function styled<PropNames extends string, PropsOptions = { [key in PropNames]: any },
-    StylePortal extends string | undefined = undefined>
-  (
+  function styled<
+    PropNames extends string,
+    PropsOptions = {[key in PropNames]: any},
+    StylePortal extends string | undefined = undefined,
+  >(
     element: PossibleElement,
     options?: Readonly<StyledOptionWithArray<PropNames[], StylePortal>>,
   ): StyledResult<PropsOptions, StylePortal>
@@ -85,11 +99,15 @@ export const createStyled = (emotion: _Emotion & {theme?: any}) => {
       return defineComponent({
         computed: {
           rootElement() {
+            // eslint-disable-next-line functional/no-this-expression
             return this.$refs.root
           },
         },
         name: name || label || 'emotion',
-        props: margeProps({...stylePropsOptions, ...(stylePortal ? {[stylePortal]: null} : {})}, defaultProps),
+        props: margeProps(
+          {...stylePropsOptions, ...(stylePortal ? {[stylePortal]: null} : {})},
+          defaultProps,
+        ),
         setup(props: any, {attrs, slots}) {
           const theme = useTheme(masterTheme)
           const cache = inject(EMOTION_CACHE_CONTEXT, masterCache)
@@ -99,7 +117,7 @@ export const createStyled = (emotion: _Emotion & {theme?: any}) => {
             const {as, theme: themeInProps, ...restProps} = props
             const _restProps = stylePortal ? {...restProps, [stylePortal]: undefined} : restProps
             const styleProps = {..._restProps, ...(stylePortal ? props[stylePortal] : _restProps)}
-            const _element = passAs ? element : (as ?? element)
+            const _element = passAs ? element : as ?? element
 
             const isStringElement = typeof _element === 'string'
 
@@ -128,11 +146,7 @@ export const createStyled = (emotion: _Emotion & {theme?: any}) => {
               allAttrs,
             )
 
-            const rules = insertStyles(
-              cache,
-              serialized,
-              isStringElement,
-            )
+            const rules = insertStyles(cache, serialized, isStringElement)
 
             const className = `${registeredClassName}${cache.key}-${serialized.name}${_target}`
 
@@ -149,12 +163,10 @@ export const createStyled = (emotion: _Emotion & {theme?: any}) => {
                 next = next.next
               }
 
-              return (
-                h(Fragment, [
-                  h('style', {'data-emotion': dataEmotion, nonce: cache.sheet.nonce}, rules),
-                  vNode,
-                ])
-              )
+              return h(Fragment, [
+                h('style', {'data-emotion': dataEmotion, nonce: cache.sheet.nonce}, rules),
+                vNode,
+              ])
             }
 
             return vNode

@@ -21,7 +21,7 @@ export const Solana = defineComponent({
     const createNewAccount = () => {
       solana.createAccount()
     }
-    return () => (
+    return () =>
       h('div', [
         h('span', {}, address.value),
         h('div', {}, signature.value),
@@ -29,6 +29,5 @@ export const Solana = defineComponent({
         h('button', {onClick: save}, 'save'),
         h('button', {onClick: createNewAccount}, 'createNewAccount'),
       ])
-    )
   },
 })

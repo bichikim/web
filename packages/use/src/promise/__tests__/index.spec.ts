@@ -4,9 +4,9 @@ import {usePromise, usePromise2} from '../index'
 describe('use promise', () => {
   it('should resolve data', async () => {
     let resultValue = 'foo'
-    const {
-      fetching, count, execute, data, promise, error,
-    } = usePromise(() => Promise.resolve(resultValue))
+    const {fetching, count, execute, data, promise, error} = usePromise(() =>
+      Promise.resolve(resultValue),
+    )
 
     expect(fetching.value).toBe(false)
     expect(data.value).toBe(undefined)
@@ -41,9 +41,7 @@ describe('use promise', () => {
   })
 
   it('should resolve with execute promise return', async () => {
-    const {
-      data, execute, fetching, count,
-    } = usePromise(() => Promise.resolve('foo'))
+    const {data, execute, fetching, count} = usePromise(() => Promise.resolve('foo'))
 
     const wait = execute()
 
@@ -57,9 +55,7 @@ describe('use promise', () => {
   })
 
   it('should resolve a rejection', async () => {
-    const {
-      error, execute, fetching, count,
-    } = usePromise(() => Promise.reject(new Error('foo')))
+    const {error, execute, fetching, count} = usePromise(() => Promise.reject(new Error('foo')))
     expect(count.value).toBe(0)
     expect(error.value).toBe(undefined)
 
@@ -75,9 +71,9 @@ describe('use promise', () => {
 
   it('should resolve immediate', async () => {
     const resultValue = 'foo'
-    const {
-      fetching, data, promise,
-    } = usePromise(() => Promise.resolve(resultValue), {immediate: []})
+    const {fetching, data, promise} = usePromise(() => Promise.resolve(resultValue), {
+      immediate: [],
+    })
 
     expect(fetching.value).toBe(true)
     await promise
@@ -89,9 +85,9 @@ describe('use promise', () => {
 describe('use promise 2', () => {
   it('should resolve promise', async () => {
     let resultValue = 'foo'
-    const {
-      fetching, count, execute, data, promise, error,
-    } = usePromise2(() => Promise.resolve(resultValue))
+    const {fetching, count, execute, data, promise, error} = usePromise2(() =>
+      Promise.resolve(resultValue),
+    )
 
     expect(fetching.value).toBe(false)
     expect(data.value).toBe(undefined)
@@ -133,17 +129,13 @@ describe('use promise 2', () => {
     const resultValue: Foo = {
       name: 'foo',
     }
-    const {
-      execute, data,
-    } = usePromise2(() => Promise.resolve(resultValue))
+    const {execute, data} = usePromise2(() => Promise.resolve(resultValue))
     await execute()
     expect(data.value?.name).toBe('foo')
   })
 
   it('should resolve promise with a promise return from an execute function', async () => {
-    const {
-      data, execute, fetching, count,
-    } = usePromise2(() => Promise.resolve('foo'))
+    const {data, execute, fetching, count} = usePromise2(() => Promise.resolve('foo'))
 
     const wait = execute()
 
@@ -157,9 +149,7 @@ describe('use promise 2', () => {
   })
 
   it('should resolve a rejection', async () => {
-    const {
-      error, execute, fetching, count,
-    } = usePromise2(() => Promise.reject(new Error('foo')))
+    const {error, execute, fetching, count} = usePromise2(() => Promise.reject(new Error('foo')))
     expect(count.value).toBe(0)
     expect(error.value).toBe(undefined)
 
@@ -175,9 +165,9 @@ describe('use promise 2', () => {
 
   it('should resolve promise immediately', async () => {
     const resultValue = 'foo'
-    const {
-      fetching, data, promise,
-    } = usePromise2(() => Promise.resolve(resultValue), undefined, {immediate: []})
+    const {fetching, data, promise} = usePromise2(() => Promise.resolve(resultValue), undefined, {
+      immediate: [],
+    })
 
     expect(fetching.value).toBe(true)
     await promise
@@ -186,10 +176,9 @@ describe('use promise 2', () => {
   })
 
   it('should resolve promise with context', async () => {
-    const {
-      fetching, execute,
-    } = usePromise2((context) => {
-      const {previousCount, previousData, previousError, previousFetching, previousPromise} = context
+    const {fetching, execute} = usePromise2((context) => {
+      const {previousCount, previousData, previousError, previousFetching, previousPromise} =
+        context
       return Promise.resolve({
         previousCount,
         previousData,
@@ -233,9 +222,9 @@ describe('use promise 2', () => {
   })
 
   it('should resolve promise with args', async () => {
-    const {
-      fetching, data, execute,
-    } = usePromise2((_, name: string, age: number) => Promise.resolve({age, name}))
+    const {fetching, data, execute} = usePromise2((_, name: string, age: number) =>
+      Promise.resolve({age, name}),
+    )
 
     await execute('foo', 40)
     expect(fetching.value).toBe(false)
@@ -246,9 +235,11 @@ describe('use promise 2', () => {
   })
 
   it('should resolve promise with an arg and the immediate option', async () => {
-    const {
-      fetching, data, promise,
-    } = usePromise2((_, name: string) => Promise.resolve(name), undefined, {immediate: ['foo']})
+    const {fetching, data, promise} = usePromise2(
+      (_, name: string) => Promise.resolve(name),
+      undefined,
+      {immediate: ['foo']},
+    )
 
     expect(fetching.value).toBe(true)
     await promise

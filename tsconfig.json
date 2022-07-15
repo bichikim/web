@@ -14,13 +14,12 @@
     "declaration": true,
     "skipLibCheck": true,
     // for 4.4.0
-    // "exactOptionalPropertyTypes": true,
+//     "exactOptionalPropertyTypes": true,
     "allowSyntheticDefaultImports": true,
     "suppressImplicitAnyIndexErrors": true,
     "sourceMap": true,
     "strict": true,
     "target": "ES2020",
-    // Quasar-defined webpack aliases
     "baseUrl": "."
   },
   "ts-node": {
@@ -30,9 +29,11 @@
       "module": "CommonJS"
     }
   },
+  "include": [
+    "./jest.setup.ts"
+  ],
   "exclude": [
     "node_modules",
-    "**/dist",
-    "**/lib"
+    "dist",
   ]
 }

@@ -16,9 +16,7 @@ describe('create-styled', () => {
 
     const app = createSSRApp({
       setup() {
-        return () => (
-          h(Component)
-        )
+        return () => h(Component)
       },
     })
 

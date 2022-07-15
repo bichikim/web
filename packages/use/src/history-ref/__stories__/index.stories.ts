@@ -19,7 +19,7 @@ export const Default = () => {
         maxRef.value += changeValue
       }
 
-      return () => (
+      return () =>
         h('div', [
           h('div', `max history: ${maxRef.value}`),
           h('div', valueRef.value),
@@ -30,7 +30,6 @@ export const Default = () => {
           h('button', {onclick: () => changeMax(1)}, 'upMax'),
           h('button', {onclick: () => changeMax(-1)}, 'downMax'),
         ])
-      )
     },
   }
 }

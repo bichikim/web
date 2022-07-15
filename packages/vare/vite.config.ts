@@ -10,14 +10,8 @@ export default defineConfig(() => {
       'process.env.NODE_ENV': JSON.stringify('import.meta.env.MODE'),
     },
     optimizeDeps: {
-      exclude: [
-        'vue-demi',
-        'vite',
-      ],
-      include: [
-        'vue',
-        'vue-router',
-      ],
+      exclude: ['vue-demi', 'vite'],
+      include: ['vue', 'vue-router'],
     },
 
     plugins: [

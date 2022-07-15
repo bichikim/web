@@ -8,9 +8,7 @@ describe('with-state', () => {
       name: string
     }
     const Foo: FunctionalComponent<FooProps, ['increase']> = (props, ctx) => {
-      return (
-        h('div', {onClick: () => ctx.emit('increase')}, props.name)
-      )
+      return h('div', {onClick: () => ctx.emit('increase')}, props.name)
     }
 
     const Component = withState(Foo, {

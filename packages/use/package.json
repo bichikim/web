@@ -18,24 +18,27 @@
   "author": "bichi@live.co.kr",
   "exports": {
     ".": {
-      "import": "./lib/index.mjs",
-      "require": "./lib/index.js"
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
     },
     "./*": "./*"
   },
-  "main": "lib/index.js",
-  "jsdelivr": "lib/index.global.js",
-  "unpkg": "lib/index.global.js",
-  "module": "lib/index.mjs",
+  "main": "dist/index.js",
+  "jsdelivr": "dist/index.global.js",
+  "unpkg": "dist/index.global.js",
+  "module": "dist/index.mjs",
   "source": "src/index.ts",
-  "types": "lib/index.d.ts",
+  "types": "dist/index.d.ts",
   "files": [
-    "lib/*"
+    "dist/*"
   ],
   "scripts": {
-    "build": "tsup-node --dts --minify",
-    "dev": "tsup-node --watch",
-    "prepare": "tsup-node --dts"
+    "build": "tsup --dts --minify",
+    "dev": "tsup --watch",
+    "prepare": "tsup --dts",
+    "story:build": "histoire build",
+    "story:dev": "histoire dev",
+    "story:preview": "histoire preview"
   },
   "dependencies": {
     "@winter-love/lodash": "^1.0.25-alpha.14",
@@ -45,12 +48,13 @@
     "vue-demi": "*"
   },
   "devDependencies": {
-    "debounce": "^1.2.1",
     "@types/debounce": "1.2.1",
     "@types/sinon": "10.0.11",
-    "@vue/server-renderer": "3.2.33",
-    "@vue/test-utils": "2.0.0-rc.19",
-    "vue": "3.2.33"
+    "@vue/server-renderer": "^3.2",
+    "@vue/test-utils": "^2.0.0",
+    "@winter-love/test-use": "workspace:*",
+    "debounce": "^1.2.1",
+    "vue": "^3.2"
   },
   "publishConfig": {
     "access": "public"
@@ -66,7 +70,7 @@
       "esm",
       "iife"
     ],
-    "outDir": "lib",
+    "outDir": "dist",
     "sourcemap": true,
     "splitting": false
   }

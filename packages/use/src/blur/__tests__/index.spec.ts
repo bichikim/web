@@ -1,6 +1,6 @@
 import {useBlur} from '../'
 import {getDocument, getHTMLElement} from '@winter-love/utils'
-import {mountUse} from '@winter-love/test-use'
+import {mountComposition} from '@winter-love/test-use'
 
 jest.mock('@winter-love/utils', () => {
   return {
@@ -15,7 +15,6 @@ const mockGetHTMLElement: jest.Mock = getHTMLElement as any
 
 describe('blur', () => {
   it('should blur', () => {
-
     const _document = (() => {
       let _activeElement
       return {
@@ -30,7 +29,7 @@ describe('blur', () => {
     mockGetDocument.mockImplementation(() => _document)
     mockGetHTMLElement.mockImplementation(() => HTMLElement)
 
-    const {result} = mountUse(() => {
+    const {setupState} = mountComposition(() => {
       const blur = useBlur()
       return {
         blur,
@@ -43,7 +42,7 @@ describe('blur', () => {
 
     _document.setActiveElement(element)
 
-    result.blur()
+    setupState.blur()
 
     expect(element.blur).toBeCalledTimes(1)
 

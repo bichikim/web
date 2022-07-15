@@ -11,7 +11,8 @@ const comparePassword = (value: string, hash: string): Promise<boolean> => {
   return compare(value, hash)
 }
 
-export const createWithHashPassword = (options: PasswordHashOptions) =>
+export const createWithHashPassword =
+  (options: PasswordHashOptions) =>
   <ReturnType extends Record<string, unknown>>(contextFunction: ContextFunction<ReturnType>) => {
     const {saltFactor} = options
     const hashPassword = async (value: string): Promise<string> => {
@@ -22,7 +23,7 @@ export const createWithHashPassword = (options: PasswordHashOptions) =>
 
     return async (expressContext: ExpressContext) => {
       return freeze({
-        ...await contextFunction(expressContext),
+        ...(await contextFunction(expressContext)),
         passwordBcrypt: freeze({
           compare: comparePassword,
           hash: hashPassword,

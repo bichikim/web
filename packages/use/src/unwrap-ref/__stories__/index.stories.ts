@@ -8,11 +8,6 @@ export const Default = () => ({
     const noneRefValue = 'bar'
     const noneRefValueValue = unwrapRef(noneRefValue)
 
-    return () => (
-      h('div', [
-        h('div', refValueValue),
-        h('div', noneRefValueValue),
-      ])
-    )
+    return () => h('div', [h('div', refValueValue), h('div', noneRefValueValue)])
   },
 })

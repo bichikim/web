@@ -7,7 +7,8 @@ describe('manager', () => {
     const watchFunction = jest.fn()
     const manager = createManager()
     const foo = reactive({
-      inc: () => null, name: 'foo',
+      inc: () => null,
+      name: 'foo',
     })
     const bar = reactive({
       name: 'bar',

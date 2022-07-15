@@ -71,26 +71,27 @@ const anyToStringArray = (value: any) => [...toNumber(value).toString()]
 
 const KoreanChunk = 4
 
-export const toKoreanNumberFn = (
-  {mode = 'all', joinString = '', firstOne = false, joinGroup = ''}: NumberToKoreanOptions = {},
-) => flow(
-  anyToStringArray,
-  mode === 'all' ?
-    mapFn((value) => _numberNames[Number(value)]) :
-    (value) => value,
-  reverse,
-  chunkFn(KoreanChunk),
-  mode === 'number' ?
-    mapFn(removeUselessZero) :
-    mapFn((value: string[], index: number, array: string[][]) =>
-      addSmallNumberUnit(value, !firstOne || (index < array.length - 1))),
-  mapFn((value: string[], index: number) => addNumberUnit(value, index)),
-  mapFn((value: string[]) => compact(value).reverse().join(joinString)),
-  reverse,
-  joinFn(joinGroup),
-)
+export const toKoreanNumberFn = ({
+  mode = 'all',
+  joinString = '',
+  firstOne = false,
+  joinGroup = '',
+}: NumberToKoreanOptions = {}) =>
+  flow(
+    anyToStringArray,
+    mode === 'all' ? mapFn((value) => _numberNames[Number(value)]) : (value) => value,
+    reverse,
+    chunkFn(KoreanChunk),
+    mode === 'number'
+      ? mapFn(removeUselessZero)
+      : mapFn((value: string[], index: number, array: string[][]) =>
+          addSmallNumberUnit(value, !firstOne || index < array.length - 1),
+        ),
+    mapFn((value: string[], index: number) => addNumberUnit(value, index)),
+    mapFn((value: string[]) => compact(value).reverse().join(joinString)),
+    reverse,
+    joinFn(joinGroup),
+  )
 
-export const toKoreanNumber = (
-  value?: any,
-  options?: NumberToKoreanOptions,
-) => toKoreanNumberFn(options)(value)
+export const toKoreanNumber = (value?: any, options?: NumberToKoreanOptions) =>
+  toKoreanNumberFn(options)(value)

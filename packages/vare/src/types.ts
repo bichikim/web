@@ -3,4 +3,3 @@ export type OneAndAnyFunc<T, A extends any[] = any[], R = any> = (one: T, ...arg
 export type DropFunctionObject<T extends Record<string, AnyFunction>, S = any> = {
   [P in keyof T]: (...args: DropParameters<T[P], S>) => ReturnType<T[P]>
 }
-

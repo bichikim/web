@@ -12,9 +12,9 @@ export interface StitchesInfo {
 }
 
 export type DirectiveBindingValue =
-  Record<string, any> |
-  [Record<string, any>] |
-  [Record<string, any>, Record<string, any>]
+  | Record<string, any>
+  | [Record<string, any>]
+  | [Record<string, any>, Record<string, any>]
 
 export interface CreateDirectiveOptions {
   systems?: Record<string, (props: any) => unknown>
@@ -33,22 +33,20 @@ export interface GetCssListPayload {
 }
 
 export const applyTarget = (css: Record<string, any>, breakpoint?: string) => {
-  return breakpoint ? {
-    [`@${breakpoint}`]: css,
-  } : css
+  return breakpoint
+    ? {
+        [`@${breakpoint}`]: css,
+      }
+    : css
 }
 
-export const getCssString = (
-  payload: GetCssListPayload,
-): string => {
+export const getCssString = (payload: GetCssListPayload): string => {
   const {css, variants, system, breakpoint} = payload
 
   return system({...variants, css: applyTarget(css, breakpoint)}).className
 }
 
-export const getCssList = (
-  payload: GetCssListPayload,
-): string[] => {
+export const getCssList = (payload: GetCssListPayload): string[] => {
   return getCssString(payload).split(' ')
 }
 
@@ -70,7 +68,10 @@ export const getClassName = (
   return getCssString({breakpoint: arg, css: value, system})
 }
 
-export const getSaveInfoKey = (binding: DirectiveBinding<DirectiveBindingValue>, name: string = '__stitches__') => {
+export const getSaveInfoKey = (
+  binding: DirectiveBinding<DirectiveBindingValue>,
+  name: string = '__stitches__',
+) => {
   const {arg: namespace = ''} = binding
   return `${name}${namespace}`
 }
@@ -104,79 +105,72 @@ export const createCreateDirective = <
   Theme extends EmptyObject = EmptyObject,
   ThemeMap extends EmptyObject = DefaultThemeMap,
   Utils extends EmptyObject = EmptyObject,
-  >(
-    config?: {
-    media?: ConfigType.Media<Media>
-    prefix?: ConfigType.Prefix<Prefix>
-    theme?: ConfigType.Theme<Theme>
-    themeMap?: ConfigType.ThemeMap<ThemeMap>
-    utils?: ConfigType.Utils<Utils>
-  },
-  ) => {
+>(config?: {
+  media?: ConfigType.Media<Media>
+  prefix?: ConfigType.Prefix<Prefix>
+  theme?: ConfigType.Theme<Theme>
+  themeMap?: ConfigType.ThemeMap<ThemeMap>
+  utils?: ConfigType.Utils<Utils>
+}) => {
+  console.log(config)
   const stitches = createStitches(config)
   const createDirective = <
-    Composers extends(
-      | string
-      | Util.Function
-      | { [name: string]: unknown }
-      )[],
-    CSS = CSSUtil.CSS<Media, Theme, ThemeMap, Utils>
-    >(...systems: {
-    [K in keyof Composers]: (
+    Composers extends (string | Util.Function | {[name: string]: unknown})[],
+    CSS = CSSUtil.CSS<Media, Theme, ThemeMap, Utils>,
+  >(
+    ...systems: {
       // Strings and Functions can be skipped over
-      Composers[K] extends string | Util.Function
+      [K in keyof Composers]: Composers[K] extends string | Util.Function
         ? Composers[K]
         : RemoveIndex<CSS> & {
-        /** The **variants** property lets you to set a subclass of styles based on a combination of active variants.
-         *
-         * [Read Documentation](https://stitches.dev/docs/variants#compound-variants)
-         */
-        compoundVariants?: (
-          & (
-            'variants' extends keyof Composers[K]
+            /** The **variants** property lets you to set a subclass of styles based on a combination of active variants.
+             *
+             * [Read Documentation](https://stitches.dev/docs/variants#compound-variants)
+             */
+            compoundVariants?: (('variants' extends keyof Composers[K]
               ? {
-              [Name in keyof Composers[K]['variants']]?: Util.Widen<keyof Composers[K]['variants'][Name]>
-              | Util.String
-            } & Util.WideObject
+                  [Name in keyof Composers[K]['variants']]?:
+                    | Util.Widen<keyof Composers[K]['variants'][Name]>
+                    | Util.String
+                } & Util.WideObject
+              : Util.WideObject) & {
+              css: CSS
+            })[]
+            /** The **defaultVariants** property allows you to predefine the active key-value pairs of variants.
+             *
+             * [Read Documentation](https://stitches.dev/docs/variants#default-variants)
+             */
+            defaultVariants?: 'variants' extends keyof Composers[K]
+              ? {
+                  [Name in keyof Composers[K]['variants']]?:
+                    | Util.Widen<keyof Composers[K]['variants'][Name]>
+                    | Util.String
+                }
               : Util.WideObject
-            )
-          & {
-          css: CSS
-        }
-          )[]
-        /** The **defaultVariants** property allows you to predefine the active key-value pairs of variants.
-         *
-         * [Read Documentation](https://stitches.dev/docs/variants#default-variants)
-         */
-        defaultVariants?: (
-          'variants' extends keyof Composers[K]
-            ? {
-              [Name in keyof Composers[K]['variants']]?: Util.Widen<keyof Composers[K]['variants'][Name]>
-              | Util.String
+            /** The **variants** property lets you set a subclass of styles based on a key-value pair.
+             *
+             * [Read Documentation](https://stitches.dev/docs/variants)
+             */
+            variants?: {
+              [Name in string]: {
+                [Pair in number | string]: CSS
+              }
             }
-            : Util.WideObject
-          )
-        /** The **variants** property lets you set a subclass of styles based on a key-value pair.
-         *
-         * [Read Documentation](https://stitches.dev/docs/variants)
-         */
-        variants?: {
-          [Name in string]: {
-            [Pair in number | string]: CSS
-          }
-        }
-      } & CSS & {
-        [K2 in keyof Composers[K]]: K2 extends 'compoundVariants' | 'defaultVariants' | 'variants'
-          ? unknown
-          : K2 extends keyof CSS
-            ? CSS[K2]
-            : unknown
-      }
-      )
-  }) => {
+          } & CSS & {
+              [K2 in keyof Composers[K]]: K2 extends
+                | 'compoundVariants'
+                | 'defaultVariants'
+                | 'variants'
+                ? unknown
+                : K2 extends keyof CSS
+                ? CSS[K2]
+                : unknown
+            }
+    }
+  ) => {
     const {css} = stitches
 
-    const system = css(...systems as any)
+    const system = css(...(systems as any))
 
     const directive: ObjectDirective = {
       getSSRProps(binding) {

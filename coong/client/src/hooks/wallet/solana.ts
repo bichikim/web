@@ -1,9 +1,9 @@
 import type Wallet from '@project-serum/sol-wallet-adapter'
 import {getWindow} from '@winter-love/utils'
-import WalletModule from 'src/browser-modules/sol-wallet-adapter'
-import {computed, reactive, ref, toRefs, UnwrapNestedRefs, watch} from 'vue'
 import bs58 from 'bs58'
 import {UseWalletUnitReturn} from 'hooks/wallet/types'
+import WalletModule from 'src/browser-modules/sol-wallet-adapter'
+import {computed, reactive, ref, UnwrapNestedRefs, watch} from 'vue'
 
 const MAIN_NET = 'mainnet'
 const DEFAULT_PROVIDER_URL = 'https://solflare.com/provider'
@@ -19,15 +19,12 @@ export interface ExtraWallet extends Wallet {
 export const useSolana = (): UnwrapNestedRefs<UseWalletUnitReturn> => {
   const providerUrlRef = ref()
   const providerRef = computed(() => {
-    return providerUrlRef?.value
-      ?? getSolana()
-      ?? getSolflare()
-      ?? DEFAULT_PROVIDER_URL
+    return providerUrlRef?.value ?? getSolana() ?? getSolflare() ?? DEFAULT_PROVIDER_URL
   })
   const connectedRef = ref(false)
   const walletRef = ref<undefined | ExtraWallet>()
   const walletAddressRef = ref<string | undefined>()
-  const signatureRef = ref<string| undefined>()
+  const signatureRef = ref<string | undefined>()
 
   const refresh = () => {
     const wallet = walletRef.value

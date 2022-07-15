@@ -20,7 +20,7 @@ export interface GetContrastColorOptions {
   threshold?: number
 }
 
-export interface CreateGetContrastColorOptions extends GetContrastColorOptions{
+export interface CreateGetContrastColorOptions extends GetContrastColorOptions {
   memo?: number
 }
 
@@ -42,15 +42,12 @@ export const getContrast = (anyColor: string) => {
   const red = Number.parseInt(_hexColor.slice(0, 2), 16)
   const green = Number.parseInt(_hexColor.slice(2, 4), 16)
   const blue = Number.parseInt(_hexColor.slice(4, 6), 16)
+  // eslint-disable-next-line prettier/prettier
   return ((red * 299) + (green * 587) + (blue * 114)) / 1000
 }
 
 export const getContrastColor = (hexColor: string, options: GetContrastColorOptions = {}) => {
-  const {
-    dark = '#000000',
-    light = '#FFFFFF',
-    threshold = 150,
-  } = options
+  const {dark = '#000000', light = '#FFFFFF', threshold = 150} = options
   return getContrast(hexColor) >= threshold ? dark : light
 }
 

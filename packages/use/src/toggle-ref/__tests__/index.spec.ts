@@ -1,10 +1,6 @@
-/**
- * @jest-environment jsdom
- */
-
-import {toggleRef} from '../'
-import {defineComponent, h, ref} from 'vue-demi'
 import {mount} from '@vue/test-utils'
+import {defineComponent, h, ref} from 'vue-demi'
+import {toggleRef} from '../'
 
 const setup = () => {
   const Component = defineComponent({
@@ -12,13 +8,12 @@ const setup = () => {
       const valueRef = ref(false)
       const {toggle, value: clonedValueRef} = toggleRef(valueRef)
 
-      return () => (
+      return () =>
         h('div', [
           h('div', {id: 'value'}, valueRef.value),
           h('div', {id: 'clonedValue'}, clonedValueRef.value),
-          h('button', {id: 'toggle', onclick: toggle}, 'toggle'),
+          h('button', {id: 'toggle', onClick: toggle}, 'toggle'),
         ])
-      )
     },
   })
 
@@ -34,12 +29,11 @@ const setupNoneRef = () => {
     setup() {
       const {toggle, value: valueRef} = toggleRef(false)
 
-      return () => (
+      return () =>
         h('div', [
           h('div', {id: 'value'}, valueRef.value),
-          h('button', {id: 'toggle', onclick: toggle}, 'toggle'),
+          h('button', {id: 'toggle', onClick: toggle}, 'toggle'),
         ])
-      )
     },
   })
 
@@ -51,7 +45,7 @@ const setupNoneRef = () => {
 }
 
 describe('toggle', () => {
-  it('should ', async () => {
+  it('should change value', async () => {
     const {wrapper} = setup()
 
     expect(wrapper.get('#value').text()).toBe('false')

@@ -1,4 +1,3 @@
-
 export type Action = () => boolean
 
 export const thanksOrNot = (action: Action): 'thanks' | undefined => {

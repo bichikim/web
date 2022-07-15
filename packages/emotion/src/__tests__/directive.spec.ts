@@ -1,5 +1,5 @@
 /**
- * @jest-environment jsdom
+ * // @jest-environment jsdom
  */
 
 import createEmotionOriginal from '@emotion/css/create-instance'
@@ -32,9 +32,7 @@ describe('directive', () => {
     })
     {
       const Component = (props) => {
-        return withDirectives(h('div'), [
-          [directive, {width: props.width}],
-        ])
+        return withDirectives(h('div'), [[directive, {width: props.width}]])
       }
 
       Component.props = ['width']
@@ -51,13 +49,10 @@ describe('directive', () => {
     }
 
     {
-
       const ComponentInside = () => h('div')
 
       const Component = (props) => {
-        return withDirectives(h(ComponentInside), [
-          [directive, {width: props.width}, 'system'],
-        ])
+        return withDirectives(h(ComponentInside), [[directive, {width: props.width}, 'system']])
       }
 
       Component.props = ['width']

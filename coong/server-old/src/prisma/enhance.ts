@@ -32,7 +32,6 @@ const createMutationManySelfAuthorized = (target: string) =>
  */
 applyResolversEnhanceMap({
   Post: {
-
     createManyPost: [
       Authorized([publicPost.create, publicPost.self]),
       Forbidden(({args}, self) => {
@@ -48,13 +47,7 @@ applyResolversEnhanceMap({
        */
       Forbidden(({args}, self) => {
         const {author} = args.data
-        return Boolean(
-          self && (
-            !author ||
-              author.create ||
-              author.connectOrCreate
-          ),
-        )
+        return Boolean(self && (!author || author.create || author.connectOrCreate))
       }),
       SelfAuthorized(({args}) => args.data?.author?.connect),
     ],
@@ -84,13 +77,8 @@ applyResolversEnhanceMap({
     updateManyUser: [Authorized([privateUser.update])],
     updateUser: [Authorized([privateUser.update])],
     upsertUser: [Authorized([privateUser.update, privateUser.create])],
-    user: [
-      Authorized(privateUser.read, privateUser.self),
-      SelfAuthorized(({args}) => args.where),
-    ],
-    users: [
-      Authorized(privateUser.read, privateUser.self),
-    ],
+    user: [Authorized(privateUser.read, privateUser.self), SelfAuthorized(({args}) => args.where)],
+    users: [Authorized(privateUser.read, privateUser.self)],
   },
 })
 

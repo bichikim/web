@@ -33,18 +33,10 @@ export const withPromise = <F extends AnyPromiseFunction>(
   valueCallback: (value: boolean) => any,
   errorCallback?: (error: any) => any,
 ): F => {
-  return withError(
-    withWait(
-      target,
-      valueCallback,
-    ),
-    errorCallback,
-  )
+  return withError(withWait(target, valueCallback), errorCallback)
 }
 
-export const refToCallback = <Value>(
-  valueRef?: Ref<Value>,
-) => {
+export const refToCallback = <Value>(valueRef?: Ref<Value>) => {
   return (value: Value) => {
     if (valueRef) {
       valueRef.value = value
@@ -59,10 +51,7 @@ export const withWaitRef = <F extends AnyPromiseFunction>(
   return withWait(target, refToCallback(valueRef))
 }
 
-export const withErrorRef = <F extends AnyPromiseFunction>(
-  target: F,
-  errorRef?: Ref<any>,
-): F => {
+export const withErrorRef = <F extends AnyPromiseFunction>(target: F, errorRef?: Ref<any>): F => {
   return withError(target, refToCallback(errorRef))
 }
 

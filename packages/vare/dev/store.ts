@@ -3,7 +3,7 @@ import {computed, ref, toRefs, watch} from 'vue'
 
 export const useFoo = createStore('foo', () => {
   const foo = ref('foo')
-  const decoFoo = computed(() => (`${foo.value}xx`))
+  const decoFoo = computed(() => `${foo.value}xx`)
   const increase = () => {
     foo.value += 1
   }
@@ -17,7 +17,7 @@ export const useFoo = createStore('foo', () => {
 
 export const useBar = createStore('bar', () => {
   const name = ref('foo')
-  const decoFoo = computed(() => (`${name.value}xx`))
+  const decoFoo = computed(() => `${name.value}xx`)
   const increase = () => {
     name.value += 1
   }

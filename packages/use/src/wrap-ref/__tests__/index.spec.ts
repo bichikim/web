@@ -1,7 +1,3 @@
-/**
- * @jest-environment jsdom
- */
-
 import {flushPromises} from '@vue/test-utils'
 import {computed, readonly, ref} from 'vue-demi'
 import {wrapRef} from '../index'

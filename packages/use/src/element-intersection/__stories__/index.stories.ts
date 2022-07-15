@@ -8,82 +8,90 @@ export const Default = () => {
       const elementRef = ref()
       const showRef = ref(false)
 
-      onElementIntersection(elementRef, (entries) => {
-        const shouldClose = entries.some((entry) => {
-          return entry.intersectionRatio < threshold
-        })
+      onElementIntersection(
+        elementRef,
+        (entries) => {
+          const shouldClose = entries.some((entry) => {
+            return entry.intersectionRatio < threshold
+          })
 
-        if (shouldClose) {
-          showRef.value = false
-          return
-        }
+          if (shouldClose) {
+            showRef.value = false
+            return
+          }
 
-        const shouldShow = entries.some((entry) => {
-          return entry.intersectionRatio >= threshold
-        })
+          const shouldShow = entries.some((entry) => {
+            return entry.intersectionRatio >= threshold
+          })
 
-        if (shouldShow) {
-          showRef.value = true
-        }
-      }, {
-        threshold,
-      })
-
-      return () => (
-        h('div', {
-          ref: elementRef,
-          style: {backgroundColor: 'red', height: '100px', marginBottom: '10px', width: '100%'},
-        }, showRef.value ? slots.default?.() : undefined)
+          if (shouldShow) {
+            showRef.value = true
+          }
+        },
+        {
+          threshold,
+        },
       )
+
+      return () =>
+        h(
+          'div',
+          {
+            ref: elementRef,
+            style: {backgroundColor: 'red', height: '100px', marginBottom: '10px', width: '100%'},
+          },
+          showRef.value ? slots.default?.() : undefined,
+        )
     },
   })
 
   return {
     setup() {
-      return () => h('div', {style: {height: '200px'}}, [
-        h(Component, () => [
-          h('div', {style: {backgroundColor: 'blue', height: '100%', width: '100%'}}),
-        ]),
-        h(Component, () => [
-          h('div', {style: {backgroundColor: 'blue', height: '100%', width: '100%'}}),
-        ]),
-        h(Component, () => [
-          h('div', {style: {backgroundColor: 'blue', height: '100%', width: '100%'}}),
-        ]),
-        h(Component, () => [
-          h('div', {style: {backgroundColor: 'blue', height: '100%', width: '100%'}}),
-        ]),
-        h(Component, () => [
-          h('div', {style: {backgroundColor: 'blue', height: '100%', width: '100%'}}),
-        ]),
-        h(Component, () => [
-          h('div', {style: {backgroundColor: 'blue', height: '100%', width: '100%'}}),
-        ]),
-        h(Component, () => [
-          h('div', {style: {backgroundColor: 'blue', height: '100%', width: '100%'}}),
-        ]),
-        h(Component, () => [
-          h('div', {style: {backgroundColor: 'blue', height: '100%', width: '100%'}}),
-        ]),
-        h(Component, () => [
-          h('div', {style: {backgroundColor: 'blue', height: '100%', width: '100%'}}),
-        ]),
-        h(Component, () => [
-          h('div', {style: {backgroundColor: 'blue', height: '100%', width: '100%'}}),
-        ]),
-        h(Component, () => [
-          h('div', {style: {backgroundColor: 'blue', height: '100%', width: '100%'}}),
-        ]),
-        h(Component, () => [
-          h('div', {style: {backgroundColor: 'blue', height: '100%', width: '100%'}}),
-        ]),
-        h(Component, () => [
-          h('div', {style: {backgroundColor: 'blue', height: '100%', width: '100%'}}),
-        ]),
-        h(Component, () => [
-          h('div', {style: {backgroundColor: 'blue', height: '100%', width: '100%'}}),
-        ]),
-      ])
+      return () =>
+        h('div', {style: {height: '200px'}}, [
+          h(Component, () => [
+            h('div', {style: {backgroundColor: 'blue', height: '100%', width: '100%'}}),
+          ]),
+          h(Component, () => [
+            h('div', {style: {backgroundColor: 'blue', height: '100%', width: '100%'}}),
+          ]),
+          h(Component, () => [
+            h('div', {style: {backgroundColor: 'blue', height: '100%', width: '100%'}}),
+          ]),
+          h(Component, () => [
+            h('div', {style: {backgroundColor: 'blue', height: '100%', width: '100%'}}),
+          ]),
+          h(Component, () => [
+            h('div', {style: {backgroundColor: 'blue', height: '100%', width: '100%'}}),
+          ]),
+          h(Component, () => [
+            h('div', {style: {backgroundColor: 'blue', height: '100%', width: '100%'}}),
+          ]),
+          h(Component, () => [
+            h('div', {style: {backgroundColor: 'blue', height: '100%', width: '100%'}}),
+          ]),
+          h(Component, () => [
+            h('div', {style: {backgroundColor: 'blue', height: '100%', width: '100%'}}),
+          ]),
+          h(Component, () => [
+            h('div', {style: {backgroundColor: 'blue', height: '100%', width: '100%'}}),
+          ]),
+          h(Component, () => [
+            h('div', {style: {backgroundColor: 'blue', height: '100%', width: '100%'}}),
+          ]),
+          h(Component, () => [
+            h('div', {style: {backgroundColor: 'blue', height: '100%', width: '100%'}}),
+          ]),
+          h(Component, () => [
+            h('div', {style: {backgroundColor: 'blue', height: '100%', width: '100%'}}),
+          ]),
+          h(Component, () => [
+            h('div', {style: {backgroundColor: 'blue', height: '100%', width: '100%'}}),
+          ]),
+          h(Component, () => [
+            h('div', {style: {backgroundColor: 'blue', height: '100%', width: '100%'}}),
+          ]),
+        ])
     },
   }
 }
@@ -94,43 +102,47 @@ export const Use = () => {
       const elementRef = ref()
       const showRef = useElementIntersection(elementRef)
 
-      return () => (
-        h('div', {
-          ref: elementRef,
-          style: {backgroundColor: 'red', height: '100px', marginBottom: '10px', width: '100%'},
-        }, showRef.value ? slots.default?.() : undefined)
-      )
+      return () =>
+        h(
+          'div',
+          {
+            ref: elementRef,
+            style: {backgroundColor: 'red', height: '100px', marginBottom: '10px', width: '100%'},
+          },
+          showRef.value ? slots.default?.() : undefined,
+        )
     },
   })
 
   return {
     setup() {
-      return () => h('div', {style: {height: '200px'}}, [
-        h(UseComponent, () => [
-          h('div', {style: {backgroundColor: 'blue', height: '100%', width: '100%'}}),
-        ]),
-        h(UseComponent, () => [
-          h('div', {style: {backgroundColor: 'blue', height: '100%', width: '100%'}}),
-        ]),
-        h(UseComponent, () => [
-          h('div', {style: {backgroundColor: 'blue', height: '100%', width: '100%'}}),
-        ]),
-        h(UseComponent, () => [
-          h('div', {style: {backgroundColor: 'blue', height: '100%', width: '100%'}}),
-        ]),
-        h(UseComponent, () => [
-          h('div', {style: {backgroundColor: 'blue', height: '100%', width: '100%'}}),
-        ]),
-        h(UseComponent, () => [
-          h('div', {style: {backgroundColor: 'blue', height: '100%', width: '100%'}}),
-        ]),
-        h(UseComponent, () => [
-          h('div', {style: {backgroundColor: 'blue', height: '100%', width: '100%'}}),
-        ]),
-        h(UseComponent, () => [
-          h('div', {style: {backgroundColor: 'blue', height: '100%', width: '100%'}}),
-        ]),
-      ])
+      return () =>
+        h('div', {style: {height: '200px'}}, [
+          h(UseComponent, () => [
+            h('div', {style: {backgroundColor: 'blue', height: '100%', width: '100%'}}),
+          ]),
+          h(UseComponent, () => [
+            h('div', {style: {backgroundColor: 'blue', height: '100%', width: '100%'}}),
+          ]),
+          h(UseComponent, () => [
+            h('div', {style: {backgroundColor: 'blue', height: '100%', width: '100%'}}),
+          ]),
+          h(UseComponent, () => [
+            h('div', {style: {backgroundColor: 'blue', height: '100%', width: '100%'}}),
+          ]),
+          h(UseComponent, () => [
+            h('div', {style: {backgroundColor: 'blue', height: '100%', width: '100%'}}),
+          ]),
+          h(UseComponent, () => [
+            h('div', {style: {backgroundColor: 'blue', height: '100%', width: '100%'}}),
+          ]),
+          h(UseComponent, () => [
+            h('div', {style: {backgroundColor: 'blue', height: '100%', width: '100%'}}),
+          ]),
+          h(UseComponent, () => [
+            h('div', {style: {backgroundColor: 'blue', height: '100%', width: '100%'}}),
+          ]),
+        ])
     },
   }
 }

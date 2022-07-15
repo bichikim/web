@@ -6,12 +6,7 @@ export const Default = () => {
     // eslint-disable-next-line vue/require-prop-types
     props: ['foo', 'bar'],
     setup: (props) => {
-      return () => (
-        h('div', [
-          h('div', {id: 'foo'}, props.foo),
-          h('div', {id: 'bar'}, props.bar),
-        ])
-      )
+      return () => h('div', [h('div', {id: 'foo'}, props.foo), h('div', {id: 'bar'}, props.bar)])
     },
   })
   return {
@@ -19,11 +14,7 @@ export const Default = () => {
       const foo = ref('foo')
       const bar = ref('bar')
 
-      return () => (
-        h('div', [
-          h(Text, unWrapRefs({bar, foo})),
-        ])
-      )
+      return () => h('div', [h(Text, unWrapRefs({bar, foo}))])
     },
   }
 }

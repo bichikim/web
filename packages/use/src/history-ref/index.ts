@@ -14,7 +14,8 @@ export const historyRef = <Value>(
   max: MayRef<number> = 1,
   // todo fix this
   // eslint-disable-next-line functional/prefer-readonly-type
-  sources: MayRef<any>[] = []) => {
+  sources: MayRef<any>[] = [],
+) => {
   const valueRef = wrapRef(value)
   const maxRef = wrapRef(max)
   // todo fix this
