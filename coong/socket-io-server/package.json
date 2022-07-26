@@ -1,0 +1,71 @@
+{
+  "name": "@coong/socket-io-server",
+  "version": "1.0.25-alpha.14",
+  "description": "Vue utils",
+  "keywords": [
+    "typescript",
+    "composition-api",
+    "vue",
+    "vue3",
+    "vuejs",
+    "vuejs3",
+    "ref",
+    "hook",
+    "composable"
+  ],
+  "repository": "git@github.com:winter-love/web.git",
+  "license": "MIT",
+  "author": "bichi@live.co.kr",
+  "exports": {
+    ".": {
+      "import": "./lib/index.mjs",
+      "require": "./lib/index.js"
+    },
+    "./*": "./*"
+  },
+  "main": "dist/index.js",
+  "jsdelivr": "dist/index.global.js",
+  "unpkg": "dist/index.global.js",
+  "module": "dist/index.mjs",
+  "source": "src/index.ts",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/*"
+  ],
+  "scripts": {
+    "build": "tsup --dts --minify",
+    "dev": "tsup --watch"
+  },
+  "dependencies": {
+    "@winter-love/lodash": "^1.0.25-alpha.14",
+    "@winter-love/utils": "^1.0.25-alpha.14",
+    "socket.io": "^4.5.1"
+  },
+  "devDependencies": {
+    "debounce": "^1.2.1",
+    "@types/debounce": "1.2.1",
+    "@types/node": "18.0.4",
+    "@types/sinon": "10.0.11",
+    "@vue/server-renderer": "3.2.33",
+    "@vue/test-utils": "2.0.0-rc.19",
+    "vue": "3.2.33"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "gitHead": "a00563d4b5288df4b4bbe713ce9b970e1844ca29",
+  "tsup": {
+    "entry": [
+      "src/index.ts"
+    ],
+    "clean": true,
+    "format": [
+      "cjs",
+      "esm",
+      "iife"
+    ],
+    "outDir": "dist",
+    "sourcemap": true,
+    "splitting": false
+  }
+}
