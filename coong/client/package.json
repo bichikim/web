@@ -32,7 +32,7 @@
     "@project-serum/sol-wallet-adapter": "0.2.6",
     "@quasar/extras": "1.14.0",
     "@solana/web3.js": "1.37.2",
-    "@urql/vue": "0.6.1",
+    "@urql/vue": "0.6.4",
     "@winter-love/hyper-components": "workspace:*",
     "@winter-love/use": "workspace:*",
     "@winter-love/utils": "workspace:*",
