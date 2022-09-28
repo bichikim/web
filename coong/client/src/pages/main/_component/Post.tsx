@@ -1,4 +1,3 @@
-import {HBox, HCard} from '@winter-love/hyper-components'
 import {defineComponent, PropType} from 'vue'
 import {MediaType} from './Media'
 
@@ -17,9 +16,9 @@ export const Post = defineComponent({
   },
   setup: (props) => {
     return () => (
-      <HCard>
-        <HBox>{props.title}</HBox>
-      </HCard>
+      <div>
+        <div>{props.title}</div>
+      </div>
     )
   },
 })

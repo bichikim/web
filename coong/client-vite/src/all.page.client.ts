@@ -6,7 +6,7 @@ export const hydrate = async () => {
   const pageContext = await getPage()
   console.log(import.meta.env.SSR)
   const {Page} = pageContext
-  const {app, router} = await createSsrApp({Page})
+  const {app, router} = await createSsrApp({page: Page})
   await router.isReady()
   app.mount('#app')
 }

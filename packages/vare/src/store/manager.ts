@@ -1,5 +1,5 @@
 import {freeze} from '@winter-love/utils'
-import {computed, ComputedRef, inject, reactive, UnwrapNestedRefs} from 'vue-demi'
+import {computed, ComputedRef, inject, reactive, UnwrapNestedRefs} from 'vue'
 import {STORE_CONTEXT} from './symbols'
 import {cloneState} from './clone-state'
 

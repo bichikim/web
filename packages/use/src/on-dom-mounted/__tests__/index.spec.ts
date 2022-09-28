@@ -1,5 +1,8 @@
+/**
+ * @jest-environment jsdom
+ */
 import {flushPromises, mount} from '@vue/test-utils'
-import {defineComponent, h, ref} from 'vue-demi'
+import {defineComponent, h, ref} from 'vue'
 import {onDomMounted} from '../index'
 import {replaceGetter, restore} from 'sinon'
 
@@ -24,7 +27,7 @@ const setup = () => {
 }
 
 describe('onDomMounted', () => {
-  it.skip('should wait calling the hook after the Dom loaded', async () => {
+  it('should wait calling the hook after the Dom loaded', async () => {
     replaceGetter(document, 'readyState', () => 'interactive' as const)
 
     let _handler: any
@@ -59,7 +62,7 @@ describe('onDomMounted', () => {
     removeEventListener.mockRestore()
   })
 
-  it.skip('should call hook', async () => {
+  it('should call hook', async () => {
     const addEventListener = jest.spyOn(window, 'addEventListener')
     const {wrapper} = setup()
 

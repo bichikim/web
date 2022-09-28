@@ -1,4 +1,3 @@
-/* eslint-disable functional/no-try-statement,functional/no-throw-statement */
 import {Ref} from 'vue'
 
 export interface WithWaitOptions {

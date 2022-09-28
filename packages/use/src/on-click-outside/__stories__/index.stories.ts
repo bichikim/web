@@ -1,4 +1,4 @@
-import {h, ref} from 'vue-demi'
+import {h, ref} from 'vue'
 import {onClickOutside} from '../'
 
 export const Default = () => ({

@@ -1,6 +1,6 @@
-import {effectScope, ref, watch} from 'vue-demi'
+import {effectScope, ref, watch} from 'vue'
 import {isSSR} from '@winter-love/utils'
-import {useElementEvent} from '../element-event'
+import {useEvent} from 'src/use-event'
 
 export interface RouteHistory {
   back: string | null
@@ -28,7 +28,7 @@ function onPopState(this: WindowEventHandlers, event: PopStateEvent) {
 const scope = effectScope()
 scope.run(() => {
   if (!_isSSR) {
-    useElementEvent(window, 'popstate', onPopState)
+    useEvent(window, 'popstate', onPopState)
   }
 })
 

@@ -1,5 +1,5 @@
 import {mount} from '@vue/test-utils'
-import {defineComponent, h, ref} from 'vue-demi'
+import {defineComponent, h, ref} from 'vue'
 import {createManager, createStore, provideStoreManager} from '../'
 
 describe('local store', () => {

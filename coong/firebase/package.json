@@ -8,6 +8,7 @@
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "2.0.2",
+    "@types/node": "^18.7.21",
     "firebase": "9.6.11",
     "jest": "27.5.1",
     "jest-environment-node": "27.5.1"

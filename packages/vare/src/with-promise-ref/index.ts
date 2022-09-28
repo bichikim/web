@@ -19,7 +19,6 @@ export const withError = <F extends AnyPromiseFunction>(
   callback?: (error: any) => any,
 ): F => {
   return ((...args: any[]) => {
-    // eslint-disable-next-line functional/no-try-statement
     try {
       return target(...args)
     } catch (error: any) {

@@ -4,7 +4,6 @@ export type CallbackifyHandle<S> = (error: undefined | Error, value?: S | undefi
 
 export const callbackify = <S>(action: () => Promise<S> | S, handle: CallbackifyHandle<S>) => {
   let result
-  // eslint-disable-next-line functional/no-try-statement
   try {
     result = action()
   } catch (error: any) {

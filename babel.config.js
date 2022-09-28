@@ -7,17 +7,18 @@ module.exports = {
           'module-resolver',
           {
             alias: {
-              // for coong/server
-              '#auth': './src/auth',
-              '#extended-schema': './src/extended-schema',
-              '#schema': './src/schema',
-              '#src': './src',
-              '#utils': './src/utils',
-              // shared alias
               src: './src',
             },
             cwd: 'packagejson',
             loglevel: 'info',
+          },
+        ],
+        'babel-plugin-transform-typescript-metadata',
+        ['@babel/plugin-proposal-class-properties', {loose: true}],
+        [
+          '@babel/plugin-proposal-decorators',
+          {
+            legacy: true,
           },
         ],
         ['@vue/babel-plugin-transform-vue-jsx'],

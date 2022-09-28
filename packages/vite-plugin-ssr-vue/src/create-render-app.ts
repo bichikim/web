@@ -144,13 +144,11 @@ export const rendererServerApp = async (
 ) => {
   const {context, rootProps} = arg
   if (!isSSRContext(context)) {
-    // eslint-disable-next-line functional/no-throw-statement
     throw new ContextError('Context should have res and req')
   }
   const {app, render} = await createViteServerSideApp(rootComponent, rootProps)
   const result = await factory({app, context, render: render as any})
   if (!result) {
-    // eslint-disable-next-line functional/no-throw-statement
     throw new RenderError('empty ssr render result')
   }
   return {

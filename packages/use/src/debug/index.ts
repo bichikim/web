@@ -1,4 +1,4 @@
-import {getCurrentInstance, reactive, UnwrapNestedRefs} from 'vue-demi'
+import {getCurrentInstance, reactive, UnwrapNestedRefs} from 'vue'
 
 declare module 'vue' {
   interface ComponentInternalInstance {

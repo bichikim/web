@@ -1,7 +1,8 @@
-import {wrapRef} from 'src/wrap-ref'
-import {ref, Ref} from 'vue-demi'
+import {resolveRef} from 'src/resolve-ref'
+import {bindRef} from 'src/bind-ref'
+import {ref, Ref} from 'vue'
 import {freeze} from '@winter-love/utils'
-import {MayRef} from 'src/types'
+import {MaybeRef} from 'src/types'
 
 export type Recipe<Args extends any[], Data> = (...args: Args) => Promise<Data>
 
@@ -60,7 +61,6 @@ export const usePromise = <Data, Args extends any[], Error = any>(
       .catch((error) => {
         errorRef.value = error
         fetchingRef.value = false
-        // eslint-disable-next-line functional/no-throw-statement
         throw error
       })
 
@@ -96,11 +96,11 @@ export type Recipe2<Data, Args extends any[], Error> =
 
 export const usePromise2 = <Data, Args extends any[] = [], Error = any>(
   recipe: Recipe2<Data, Args, Error>,
-  initData?: MayRef<Data | undefined>,
+  initData?: MaybeRef<Data | undefined>,
   options: UsePromiseOptions<Args> = {},
 ): UsePromiseReturnType<Data, Args, Error> => {
   const {immediate, cleanOnExecute = true} = options
-  const dataRef = wrapRef<Data | undefined>(initData)
+  const dataRef = bindRef(resolveRef<Data | undefined>(initData))
   const countRef = ref<number>(0)
   const fetchingRef = ref<boolean>(false)
   const errorRef = ref<Error | undefined>()
@@ -132,7 +132,6 @@ export const usePromise2 = <Data, Args extends any[] = [], Error = any>(
       .catch((error) => {
         errorRef.value = error
         fetchingRef.value = false
-        // eslint-disable-next-line functional/no-throw-statement
         throw error
       })
 

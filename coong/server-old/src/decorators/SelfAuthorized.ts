@@ -1,4 +1,3 @@
-/* eslint-disable functional/no-throw-statement */
 import {createMethodDecorator, ResolverData, UnauthorizedError} from 'type-graphql'
 import {isMatch} from 'lodash'
 import {MayPromise} from '@winter-love/utils'

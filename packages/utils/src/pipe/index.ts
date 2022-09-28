@@ -1,4 +1,4 @@
-import {ArrayOrOne, MayPromise} from 'src/types'
+import {ArrayOrOne, MaybePromise} from 'src/types'
 import {toArray} from '../to-array'
 
 /**
@@ -39,22 +39,22 @@ export function pipe<A extends any[], R1, R2, R3, R4, R5>(
   f5: (...args: ArrayOrOne<R4>) => R5,
 ): (...args: A) => R5
 export function pipe<A extends any[], R1, R2, R3, R4>(
-  f1: (...args: A) => MayPromise<R1>,
+  f1: (...args: A) => MaybePromise<R1>,
   f2: (...args: ArrayOrOne<R1>) => R2,
   f3: (...args: ArrayOrOne<R2>) => R3,
   f4: (...args: ArrayOrOne<R3>) => R4,
 ): (...args: A) => Promise<R4>
 export function pipe<A extends any[], R1, R2, R3>(
-  f1: (...args: A) => MayPromise<R1>,
+  f1: (...args: A) => MaybePromise<R1>,
   f2: (...args: ArrayOrOne<R1>) => R2,
   f3: (...args: ArrayOrOne<R2>) => R3,
 ): (...args: A) => Promise<R3>
 export function pipe<A extends any[], R1, R2>(
-  f1: (...args: A) => MayPromise<R1>,
+  f1: (...args: A) => MaybePromise<R1>,
   f2: (...args: ArrayOrOne<R1>) => R2,
 ): (...args: A) => Promise<R2>
 export function pipe<A extends any[], R1>(
-  f1: (...args: A) => MayPromise<R1>,
+  f1: (...args: A) => MaybePromise<R1>,
 ): (...args: A) => Promise<R1>
 export function pipe(...functions: ((...args: any[]) => any)[]): (...args: any[]) => any {
   return (...args: any[]) => {

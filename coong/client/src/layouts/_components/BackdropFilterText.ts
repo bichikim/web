@@ -1,4 +1,3 @@
-/* eslint-disable functional/no-this-expression */
 import {css} from 'boot/hyper-components'
 import {defineComponent, h} from 'vue'
 

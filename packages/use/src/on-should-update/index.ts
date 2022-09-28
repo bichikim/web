@@ -1,10 +1,10 @@
 import {isSSR} from '@winter-love/utils'
 import {useDebounce} from 'src/debounce'
-import {watch} from 'vue-demi'
-import {useConnection} from '../connection'
-import {useElementEvent} from '../element-event'
-import {useElementIntersection} from '../element-intersection'
-import {MayRef} from '../types'
+import {watch} from 'vue'
+import {useConnection} from '../use-connection'
+import {useEvent} from '../use-event'
+import {useElementIntersection} from '../use-element-intersection'
+import {MaybeRef} from '../types'
 
 export type OnShouldUpdateHandle = () => unknown
 
@@ -33,9 +33,9 @@ export interface OnShouldUpdateOptions {
   /**
    * call handle if the element is visible
    */
-  visibleElement?: MayRef<HTMLElement>
+  visibleElement?: MaybeRef<HTMLElement>
 
-  watchValue?: MayRef<any>
+  watchValue?: MaybeRef<any>
 
   /**
    * call handle with window focus event
@@ -128,8 +128,8 @@ export const onShouldUpdate = (
     onShouldUpdate()
   })
 
-  useElementEvent(document, 'visibilitychange', onVisibleDocument)
-  useElementEvent(window, 'focus', onFocus)
+  useEvent(document, 'visibilitychange', onVisibleDocument)
+  useEvent(window, 'focus', onFocus)
 
   return onShouldUpdate
 }

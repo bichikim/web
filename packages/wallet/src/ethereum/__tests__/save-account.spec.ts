@@ -2,20 +2,6 @@
 import {createEthereumWallet} from '../'
 import {utils} from 'ethers'
 
-// jest.mock('scrypt-js', () => {
-//   const {randomBytes} = jest.requireActual('@ethersproject/random')
-//   let saved
-//   return {
-//     scrypt: () => {
-//       if (saved) {
-//         return saved
-//       }
-//       saved = Promise.resolve(randomBytes(64))
-//       return saved
-//     },
-//   }
-// })
-
 describe('save-account', () => {
   // fix ethers nextTick Error
   let keep: any
@@ -26,7 +12,7 @@ describe('save-account', () => {
   afterAll(() => {
     globalThis.setImmediate = keep
   })
-  it.skip('should save and load a account', async () => {
+  it('should save and load a account', async () => {
     const progress = jest.fn()
     const wallet = createEthereumWallet()
     // const account = wallet.createAccount()

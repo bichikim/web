@@ -1,5 +1,5 @@
-import {createApp, watch} from 'vue'
 import {createStoreDevTool, createVare} from 'src/simple-store'
+import {createApp} from 'vue'
 import {Root} from './Root'
 
 const app = createApp(Root)

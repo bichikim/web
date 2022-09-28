@@ -1,4 +1,4 @@
-import {AnyObject} from 'src/types'
+import {PureObject} from 'src/types'
 const {entries, fromEntries} = Object
 import {flow} from '../flow'
 
@@ -7,9 +7,8 @@ import {flow} from '../flow'
  * but don’t make a case to use this
  * @param value
  */
-
 export const cleanObject = flow(
-  (value: AnyObject) => entries(value),
+  (value: PureObject) => entries(value),
   (value) => value.filter(([_, value]) => Boolean(value)),
   fromEntries,
 )

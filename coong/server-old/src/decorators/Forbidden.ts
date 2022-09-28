@@ -15,12 +15,10 @@ export function Forbidden<Context extends Record<string, any>, Self>(
 ): any {
   return createMethodDecorator<Context>((resolverData, next) => {
     if (!resolver) {
-      // eslint-disable-next-line functional/no-throw-statement
       throw new UnauthorizedError()
     }
 
     if (resolver(resolverData, selfDataGetter(resolverData))) {
-      // eslint-disable-next-line functional/no-throw-statement
       throw new UnauthorizedError()
     }
 

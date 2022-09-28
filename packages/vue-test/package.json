@@ -1,0 +1,60 @@
+{
+  "name": "@winter-love/vue-test",
+  "version": "0.0.1",
+  "repository": "git@github.com:winter-love/web.git",
+  "author": "uni@meta-z.io",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./*": "./*"
+  },
+  "main": "dist/index.js",
+  "jsdelivr": "dist/index.global.js",
+  "unpkg": "dist/index.global.js",
+  "module": "dist/index.mjs",
+  "source": "src/index.ts",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/*"
+  ],
+  "scripts": {
+    "build": "tsup --dts --minify",
+    "dev": "tsup --watch",
+    "prepare": "tsup --dts",
+    "publish": "npm publish"
+  },
+  "dependencies": {
+    "@vue/runtime-core": "^3.2",
+    "@vue/test-utils": "^2.0.2",
+    "jest-mock": "^29.0.3",
+    "node-html-parser": "^5.4.2",
+    "vue": "^3.2.39"
+  },
+  "devDependencies": {
+    "@types/jest": "^28.1.8",
+    "@types/node": "^18.7.18",
+    "lodash": "^4.17.21",
+    "tsd": "^0.22.0",
+    "tsup": "^6.2.3",
+    "typescript": "^4.8.3"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
+  "tsup": {
+    "entry": [
+      "src/index.ts"
+    ],
+    "clean": true,
+    "format": [
+      "cjs",
+      "esm",
+      "iife"
+    ],
+    "outDir": "dist",
+    "sourcemap": true,
+    "splitting": false
+  }
+}

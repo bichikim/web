@@ -1,10 +1,10 @@
 <template>
-  <Story>
+  <story>
     <div>
       <div>{{ value }}</div>
       <button @click="toggle">toggle value</button>
     </div>
-  </Story>
+  </story>
 </template>
 <script setup>
 import {toggleRef} from '../'

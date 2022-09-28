@@ -35,26 +35,21 @@
   "scripts": {
     "build": "tsup --dts --minify",
     "dev": "tsup --watch",
-    "prepare": "tsup --dts",
-    "story:build": "histoire build",
-    "story:dev": "histoire dev",
-    "story:preview": "histoire preview"
+    "prepare": "tsup --dts"
   },
   "dependencies": {
-    "@winter-love/lodash": "^1.0.25-alpha.14",
-    "@winter-love/utils": "^1.0.25-alpha.14",
+    "@winter-love/lodash": "workspace:^1.0.25-alpha.14",
+    "@winter-love/utils": "workspace:^1.0.25-alpha.14",
     "fast-json-stable-stringify": "^2.1.0",
     "lodash": "^4.17.21",
-    "vue-demi": "*"
+    "vue": "^3.2.39"
   },
   "devDependencies": {
     "@types/debounce": "1.2.1",
     "@types/sinon": "10.0.11",
     "@vue/server-renderer": "^3.2",
     "@vue/test-utils": "^2.0.0",
-    "@winter-love/test-use": "workspace:*",
-    "debounce": "^1.2.1",
-    "vue": "^3.2"
+    "debounce": "^1.2.1"
   },
   "publishConfig": {
     "access": "public"

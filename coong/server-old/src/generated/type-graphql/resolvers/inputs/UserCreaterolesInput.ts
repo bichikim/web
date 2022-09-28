@@ -1,14 +1,14 @@
-import * as TypeGraphQL from "type-graphql";
-import * as GraphQLScalars from "graphql-scalars";
-import { Prisma } from "@prisma/client";
-import { DecimalJSScalar } from "../../scalars";
+import * as TypeGraphQL from 'type-graphql'
+import * as GraphQLScalars from 'graphql-scalars'
+import {Prisma} from '@prisma/client'
+import {DecimalJSScalar} from '../../scalars'
 
-@TypeGraphQL.InputType("UserCreaterolesInput", {
-  isAbstract: true
+@TypeGraphQL.InputType('UserCreaterolesInput', {
+  isAbstract: true,
 })
 export class UserCreaterolesInput {
-  @TypeGraphQL.Field(_type => [String], {
-    nullable: false
+  @TypeGraphQL.Field((_type) => [String], {
+    nullable: false,
   })
-  set!: string[];
+  set!: string[]
 }

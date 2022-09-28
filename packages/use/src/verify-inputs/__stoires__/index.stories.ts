@@ -1,4 +1,4 @@
-import {defineComponent, ref, toRefs} from 'vue-demi'
+import {defineComponent, ref, toRefs} from 'vue'
 import {useVerifyInput, useVerifyInputs, verifyDirective} from '../'
 
 export const Default = () => {

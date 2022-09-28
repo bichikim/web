@@ -1,6 +1,5 @@
-/* eslint-disable functional/no-this-expression */
 import {UseStore} from 'src/store/store'
-import {App, ComputedRef, markRaw, provide} from 'vue-demi'
+import {App, ComputedRef, markRaw, provide} from 'vue'
 import {createManager, Plugin, StoreManager} from './manager'
 import {STORE_CONTEXT, STORE_LOCAL_CONTEXT} from './symbols'
 
@@ -89,7 +88,6 @@ export const createVare = (): Vare => {
 export const createVareStore = createVare
 
 export const provideStoreManager = (manager?: StoreManager, localManager?: StoreManager): void => {
-  // eslint-disable-next-line functional/no-expression-statement
   provide(STORE_CONTEXT, manager ?? createManager())
   if (process.env.NODE_ENV !== 'production') {
     provide(STORE_LOCAL_CONTEXT, localManager)

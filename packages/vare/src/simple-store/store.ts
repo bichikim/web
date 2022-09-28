@@ -24,7 +24,6 @@ export const createStore = <T extends Record<string, any>, R extends Record<stri
   return (): UnwrapNestedRefs<R> => {
     const storeManager = manager ?? useManager()
     if (!storeManager) {
-      // eslint-disable-next-line functional/no-throw-statement
       throw new Error('no manager')
     }
     const savedData: any = storeManager.get(name)

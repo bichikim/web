@@ -1,4 +1,4 @@
-import {DropParameters} from '../'
+import {ArrayLength, DropParameters} from '../'
 import {expectType} from 'tsd'
 
 describe('language', () => {
@@ -12,6 +12,16 @@ describe('language', () => {
       // noinspection JSUnusedLocalSymbols
       expectType<[number]>(typeTest((foo: string, bar: number) => 'foo'))
       expect(true).toBeTruthy()
+    })
+  })
+  describe('ArrayLength', () => {
+    it('should type array length', () => {
+      const foo: [number, number] = [1, 2]
+      const typeTest = <List extends unknown[]>(args: List): ArrayLength<List> => {
+        return args as any
+      }
+
+      expectType<2>(typeTest(foo))
     })
   })
 })

@@ -1,25 +1,25 @@
-import * as TypeGraphQL from "type-graphql";
-import * as GraphQLScalars from "graphql-scalars";
-import { Prisma } from "@prisma/client";
-import { DecimalJSScalar } from "../../scalars";
-import { SortOrder } from "../../enums/SortOrder";
+import * as TypeGraphQL from 'type-graphql'
+import * as GraphQLScalars from 'graphql-scalars'
+import {Prisma} from '@prisma/client'
+import {DecimalJSScalar} from '../../scalars'
+import {SortOrder} from '../../enums/SortOrder'
 
-@TypeGraphQL.InputType("PostMinOrderByAggregateInput", {
-  isAbstract: true
+@TypeGraphQL.InputType('PostMinOrderByAggregateInput', {
+  isAbstract: true,
 })
 export class PostMinOrderByAggregateInput {
-  @TypeGraphQL.Field(_type => SortOrder, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => SortOrder, {
+    nullable: true,
   })
-  id?: "asc" | "desc" | undefined;
+  id?: 'asc' | 'desc' | undefined
 
-  @TypeGraphQL.Field(_type => SortOrder, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => SortOrder, {
+    nullable: true,
   })
-  title?: "asc" | "desc" | undefined;
+  title?: 'asc' | 'desc' | undefined
 
-  @TypeGraphQL.Field(_type => SortOrder, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => SortOrder, {
+    nullable: true,
   })
-  authorId?: "asc" | "desc" | undefined;
+  authorId?: 'asc' | 'desc' | undefined
 }

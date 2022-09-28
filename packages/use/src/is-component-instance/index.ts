@@ -1,4 +1,4 @@
-import {ComponentPublicInstance} from 'vue-demi'
+import {ComponentPublicInstance} from 'vue'
 
 export interface ComponentPublicInstanceHasElement extends ComponentPublicInstance {
   $el: Element | undefined | null

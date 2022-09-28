@@ -1,12 +1,5 @@
 import {freeze} from '@winter-love/utils'
-import {
-  getCurrentInstance,
-  inject,
-  onScopeDispose,
-  reactive,
-  toRaw,
-  UnwrapNestedRefs,
-} from 'vue-demi'
+import {getCurrentInstance, inject, onScopeDispose, reactive, toRaw, UnwrapNestedRefs} from 'vue'
 import {createUuid} from './create-uuid'
 import {StoreManager, StoreManagerItem, useStoreManager} from './manager'
 import {STORE_LOCAL_CONTEXT} from './symbols'
@@ -155,7 +148,6 @@ const getOptions = <T extends Record<string, any>>(
   if (typeof arg1 === 'object' && typeof arg2 === 'undefined') {
     return arg1
   }
-  // eslint-disable-next-line functional/no-throw-statement
   throw new Error('params error')
 }
 

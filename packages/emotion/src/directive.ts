@@ -1,5 +1,5 @@
 import {Emotion as _Emotion, CSSInterpolation, CSSObject} from '@emotion/css/create-instance'
-import {DirectiveBinding, ObjectDirective} from 'vue-demi'
+import {DirectiveBinding, ObjectDirective} from 'vue'
 
 export interface EmotionAdditionOptions {
   setSystem: (system?: (props: any) => CSSObject) => any
@@ -27,9 +27,9 @@ export const createDirective = (
   const {theme = {}, systems = (props: any) => props} = options
 
   const getCss = (props: any, theme, systemName: string = 'default') => {
-    const {__system__, theme: _theme, ...restProps} = props
+    const {__system__: __system, theme: _theme, ...restProps} = props
 
-    const system: ((props: any) => CSSObject | CSSInterpolation)[] = __system__ ??
+    const system: ((props: any) => CSSObject | CSSInterpolation)[] = __system ??
       systems[systemName] ?? [
         function defaultSystem(props) {
           // removes theme because the props become css style

@@ -20,8 +20,8 @@ import compression from 'compression'
  *
  * Should NOT be async!
  */
-export function create(
-  /* { ... } */) {
+export function create() {
+  /* { ... } */
   const app = express()
 
   // place here any middlewares that
@@ -67,9 +67,7 @@ export function close({listenResult}) {
   return listenResult.close()
 }
 
-const maxAge = process.env.DEV
-  ? 0
-  : 1000 * 60 * 60 * 24 * 30
+const maxAge = process.env.DEV ? 0 : 1000 * 60 * 60 * 24 * 30
 
 /**
  * Should return middleware that serves the indicated path

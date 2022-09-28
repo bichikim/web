@@ -1,7 +1,7 @@
-import {UnwrapNestedRefs} from '@vue/reactivity'
-import {useElementEvent} from 'src/element-event'
-import {clone, EmptyObject, isSSR} from '@winter-love/utils'
-import {computed, isRef, readonly, ref, Ref, unref, UnwrapRef} from 'vue-demi'
+import {useEvent} from 'src/use-event'
+import {EmptyObject, isSSR} from '@winter-love/utils'
+import {clone} from '@winter-love/lodash'
+import {computed, isRef, readonly, Ref, ref, unref, UnwrapNestedRefs, UnwrapRef} from 'vue'
 
 export type RequestResult<R, P> = {
   cancel: () => void
@@ -103,9 +103,9 @@ export const useRequest =
           loading.value = false
           return response
         })
-        .catch((error_: Error) => {
-          error.value = error_
-          onError?.(error_, payload)
+        .catch((_error: Error) => {
+          error.value = _error
+          onError?.(_error, payload)
           loading.value = false
           return null
         })
@@ -116,13 +116,13 @@ export const useRequest =
     }
 
     if (!isSSR()) {
-      useElementEvent(window, 'focus', () => {
+      useEvent(window, 'focus', () => {
         if (refreshOnWindowFocusRef.value) {
           // eslint-disable-next-line @typescript-eslint/no-floating-promises
           retry()
         }
       })
-      useElementEvent(document, 'visibilitychange', () => {
+      useEvent(document, 'visibilitychange', () => {
         if (refreshOnVisibilityRef.value) {
           // eslint-disable-next-line @typescript-eslint/no-floating-promises
           retry()

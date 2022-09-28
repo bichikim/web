@@ -1,5 +1,5 @@
 import {usePromise2} from '../'
-import {h} from 'vue-demi'
+import {h} from 'vue'
 import {setTimeoutPromise} from '@winter-love/utils'
 
 export const Default = () => ({

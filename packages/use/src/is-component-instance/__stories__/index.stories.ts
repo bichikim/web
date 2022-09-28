@@ -1,4 +1,4 @@
-import {computed, defineComponent, h, ref} from 'vue-demi'
+import {computed, defineComponent, h, ref} from 'vue'
 import {isComponentInstance} from '../'
 
 export const Default = () => {

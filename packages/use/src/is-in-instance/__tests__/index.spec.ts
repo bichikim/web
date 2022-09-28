@@ -1,3 +1,6 @@
+/**
+ * @jest-environment jsdom
+ */
 import {defineComponent, h} from 'vue'
 import {isInInstance} from '../'
 import {mount} from '@vue/test-utils'

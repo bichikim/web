@@ -1,7 +1,7 @@
 import {TransactionResponse} from '@ethersproject/abstract-provider'
 import {BigNumberish} from '@ethersproject/bignumber'
 import {AccessListish} from '@ethersproject/transactions'
-import {computed, reactive, ref, UnwrapNestedRefs} from '@vue/reactivity'
+import {computed, reactive, ref, UnwrapNestedRefs} from 'vue'
 import {Contract, Wallet as EthersWallet, providers} from 'ethers'
 import type {Socket} from 'net'
 import {Account, BytesLike, Wallet, WalletItemTypes} from '../types'

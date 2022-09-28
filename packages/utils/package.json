@@ -33,16 +33,15 @@
     "prepare": "tsup --dts"
   },
   "dependencies": {
-    "@winter-love/lodash": "^1.0.25-alpha.14",
-    "fast-json-stable-stringify": "^2.1.0",
-    "react-fast-compare": "^3.2.0"
+    "@winter-love/lodash": "workspace:^1.0.25-alpha.14",
+    "fast-json-stable-stringify": "^2.1.0"
   },
   "devDependencies": {
-    "@types/debounce": "1.2.1",
-    "@types/js-cookie": "3.0.1",
+    "@types/js-cookie": "^3.0.2",
     "js-cookie": "^3.0.1",
     "micro-memoize": "^4.0.9",
-    "tsd": "0.20.0"
+    "tsd": "^0.24.1",
+    "typescript": "^4.8.3"
   },
   "publishConfig": {
     "access": "public"

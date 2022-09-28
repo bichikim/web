@@ -1,9 +1,7 @@
-/dist
-/src-bex/www
-/src-capacitor
-/src-cordova
-/.quasar
+dist
+.quasar
 node_modules
 **/*.d.ts
-/src-ssr
-/lib
+lib
+/packages/lodash/src/lodash
+/coong/server-old/src/generated

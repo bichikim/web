@@ -1,12 +1,12 @@
-import * as TypeGraphQL from "type-graphql";
+import * as TypeGraphQL from 'type-graphql'
 
 export enum PostScalarFieldEnum {
-  id = "id",
-  title = "title",
-  authorId = "authorId",
-  likeIDs = "likeIDs"
+  authorId = 'authorId',
+  id = 'id',
+  likeIDs = 'likeIDs',
+  title = 'title',
 }
 TypeGraphQL.registerEnumType(PostScalarFieldEnum, {
-  name: "PostScalarFieldEnum",
   description: undefined,
-});
+  name: 'PostScalarFieldEnum',
+})

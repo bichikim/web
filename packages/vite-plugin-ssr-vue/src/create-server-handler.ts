@@ -1,4 +1,3 @@
-/* eslint-disable functional/no-throw-statement */
 import fs from 'fs'
 import {parse} from 'node-html-parser'
 import path from 'path'
@@ -46,7 +45,6 @@ export const createServerHandler = (
       return next()
     }
 
-    // eslint-disable-next-line functional/no-try-statement
     try {
       const htmlTemplate = await readHtmlTemplate(server, req.originalUrl)
       const htmlElement = parse(htmlTemplate)

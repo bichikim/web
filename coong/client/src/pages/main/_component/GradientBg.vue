@@ -1,11 +1,10 @@
 <template>
-  <h-box class="root">
+  <div class="root">
     <slot />
-  </h-box>
+  </div>
 </template>
 
 <script setup lang="ts">
-import {HBox} from '@winter-love/hyper-components'
 const props = defineProps({})
 const emit = defineEmits([])
 </script>

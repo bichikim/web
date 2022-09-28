@@ -1,5 +1,5 @@
 import {storageRef} from '../'
-import {h, ref} from 'vue-demi'
+import {h, ref} from 'vue'
 
 export const Default = () => ({
   setup() {

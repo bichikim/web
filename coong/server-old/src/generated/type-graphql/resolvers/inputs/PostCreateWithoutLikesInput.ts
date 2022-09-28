@@ -1,31 +1,31 @@
-import * as TypeGraphQL from "type-graphql";
-import * as GraphQLScalars from "graphql-scalars";
-import { Prisma } from "@prisma/client";
-import { DecimalJSScalar } from "../../scalars";
-import { PostCreatelikeIDsInput } from "../inputs/PostCreatelikeIDsInput";
-import { UserCreateNestedOneWithoutPostsInput } from "../inputs/UserCreateNestedOneWithoutPostsInput";
+import * as TypeGraphQL from 'type-graphql'
+import * as GraphQLScalars from 'graphql-scalars'
+import {Prisma} from '@prisma/client'
+import {DecimalJSScalar} from '../../scalars'
+import {PostCreatelikeIDsInput} from '../inputs/PostCreatelikeIDsInput'
+import {UserCreateNestedOneWithoutPostsInput} from '../inputs/UserCreateNestedOneWithoutPostsInput'
 
-@TypeGraphQL.InputType("PostCreateWithoutLikesInput", {
-  isAbstract: true
+@TypeGraphQL.InputType('PostCreateWithoutLikesInput', {
+  isAbstract: true,
 })
 export class PostCreateWithoutLikesInput {
-  @TypeGraphQL.Field(_type => String, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => String, {
+    nullable: true,
   })
-  id?: string | undefined;
+  id?: string | undefined
 
-  @TypeGraphQL.Field(_type => String, {
-    nullable: false
+  @TypeGraphQL.Field((_type) => String, {
+    nullable: false,
   })
-  title!: string;
+  title!: string
 
-  @TypeGraphQL.Field(_type => UserCreateNestedOneWithoutPostsInput, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => UserCreateNestedOneWithoutPostsInput, {
+    nullable: true,
   })
-  author?: UserCreateNestedOneWithoutPostsInput | undefined;
+  author?: UserCreateNestedOneWithoutPostsInput | undefined
 
-  @TypeGraphQL.Field(_type => PostCreatelikeIDsInput, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => PostCreatelikeIDsInput, {
+    nullable: true,
   })
-  likeIDs?: PostCreatelikeIDsInput | undefined;
+  likeIDs?: PostCreatelikeIDsInput | undefined
 }

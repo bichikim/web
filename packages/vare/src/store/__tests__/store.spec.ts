@@ -1,5 +1,8 @@
+/**
+ * @jest-environment jsdom
+ */
 import {mount} from '@vue/test-utils'
-import {computed, defineComponent, h, ref} from 'vue-demi'
+import {computed, defineComponent, h, ref} from 'vue'
 import {createManager, createStore, defineStore, provideStoreManager, useStore} from '../'
 
 describe('store', () => {

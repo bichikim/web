@@ -1,23 +1,23 @@
-import * as TypeGraphQL from "type-graphql";
-import * as GraphQLScalars from "graphql-scalars";
-import { PostCreateInput } from "../../../inputs/PostCreateInput";
-import { PostUpdateInput } from "../../../inputs/PostUpdateInput";
-import { PostWhereUniqueInput } from "../../../inputs/PostWhereUniqueInput";
+import * as TypeGraphQL from 'type-graphql'
+import * as GraphQLScalars from 'graphql-scalars'
+import {PostCreateInput} from '../../../inputs/PostCreateInput'
+import {PostUpdateInput} from '../../../inputs/PostUpdateInput'
+import {PostWhereUniqueInput} from '../../../inputs/PostWhereUniqueInput'
 
 @TypeGraphQL.ArgsType()
 export class UpsertPostArgs {
-  @TypeGraphQL.Field(_type => PostWhereUniqueInput, {
-    nullable: false
+  @TypeGraphQL.Field((_type) => PostWhereUniqueInput, {
+    nullable: false,
   })
-  where!: PostWhereUniqueInput;
+  where!: PostWhereUniqueInput
 
-  @TypeGraphQL.Field(_type => PostCreateInput, {
-    nullable: false
+  @TypeGraphQL.Field((_type) => PostCreateInput, {
+    nullable: false,
   })
-  create!: PostCreateInput;
+  create!: PostCreateInput
 
-  @TypeGraphQL.Field(_type => PostUpdateInput, {
-    nullable: false
+  @TypeGraphQL.Field((_type) => PostUpdateInput, {
+    nullable: false,
   })
-  update!: PostUpdateInput;
+  update!: PostUpdateInput
 }

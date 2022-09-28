@@ -1,6 +1,8 @@
-import {wrapRef, WrapRefOptions} from 'src/wrap-ref'
-import {MayRef} from 'src/types'
-import {freeze} from '@winter-love/utils'
+import {bindRef} from 'src/bind-ref'
+import {resolveRef} from 'src/resolve-ref'
+import {MaybeRef} from 'src/types'
+import {Ref} from 'vue'
+import {defaultRef} from 'src/default-ref'
 
 /**
  * @example
@@ -9,22 +11,12 @@ import {freeze} from '@winter-love/utils'
  * @param value
  * @param options
  */
-export const toggleRef = (
-  value?: MayRef<boolean>,
-  options?: Omit<WrapRefOptions<boolean>, 'defaultValue'>,
-) => {
-  const valueRef = wrapRef(value, {
-    ...options,
-    defaultValue: false,
-  })
+export const toggleRef = (value?: MaybeRef<boolean>): [Ref<boolean>, () => void] => {
+  const valueRef = bindRef(defaultRef(resolveRef(value), () => false))
 
   const toggle = () => {
-    console.log('toggle')
     valueRef.value = !valueRef.value
   }
 
-  return freeze({
-    toggle,
-    value: valueRef,
-  })
+  return [valueRef, toggle]
 }

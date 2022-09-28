@@ -1,5 +1,5 @@
 import {toggleRef} from '../'
-import {h} from 'vue-demi'
+import {h} from 'vue'
 
 export const Default = () => ({
   setup() {

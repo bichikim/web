@@ -1,7 +1,8 @@
 import {Emotion as _Emotion} from '@emotion/css/create-instance'
 import {Interpolation, serializeStyles} from '@emotion/serialize'
 import {getRegisteredStyles, insertStyles} from '@emotion/utils'
-import {ExtractPropTypesForUsing, margeProps} from '@winter-love/use'
+import {ExtractPropTypesForUsing} from '@winter-love/use'
+import {margeProps} from './marge-props'
 import {isSSR} from '@winter-love/utils'
 import clsx, {ClassValue} from 'clsx'
 import {
@@ -13,7 +14,7 @@ import {
   FunctionalComponent,
   h,
   inject,
-} from 'vue-demi'
+} from 'vue'
 import {EMOTION_CACHE_CONTEXT} from './cache'
 import {Tags} from './tags'
 import {useTheme} from './theme'
@@ -99,7 +100,6 @@ export const createStyled = (emotion: _Emotion & {theme?: any}) => {
       return defineComponent({
         computed: {
           rootElement() {
-            // eslint-disable-next-line functional/no-this-expression
             return this.$refs.root
           },
         },

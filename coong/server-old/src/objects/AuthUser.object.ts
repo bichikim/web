@@ -1,5 +1,5 @@
-import {Field, ObjectType} from 'type-graphql'
 import {User} from 'src/generated/type-graphql/models/User'
+import {Field, ObjectType} from 'type-graphql'
 
 @ObjectType({
   description: 'user and auth token',

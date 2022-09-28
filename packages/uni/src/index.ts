@@ -1,1 +1,2 @@
-export const hello = () => 'hello'
+export * from './components'
+export * from './style'

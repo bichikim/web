@@ -3,7 +3,7 @@ import {createRouter} from './routes'
 import {createStoreDevTool, createVare} from 'vare'
 
 export interface CreateAppOptions {
-  Page: Component
+  page: Component
 }
 
 const setup = (app: App) => {
@@ -29,14 +29,14 @@ const setup = (app: App) => {
   }
 }
 
-export const createSsrApp = async ({Page}: CreateAppOptions) => {
-  const app = createSSRApp(Page)
+export const createSsrApp = async ({page}: CreateAppOptions) => {
+  const app = createSSRApp(page)
   const {router} = setup(app)
   return {app, router}
 }
 
-export const createWepApp = async ({Page}: CreateAppOptions) => {
-  const app = createApp(Page)
+export const createWepApp = async ({page}: CreateAppOptions) => {
+  const app = createApp(page)
   const {router} = setup(app)
   return {app, router}
 }

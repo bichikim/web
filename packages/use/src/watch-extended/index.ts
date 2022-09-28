@@ -1,4 +1,4 @@
-import {watch, WatchCallback, WatchOptions, WatchSource, WatchStopHandle} from 'vue-demi'
+import {watch, WatchCallback, WatchOptions, WatchSource, WatchStopHandle} from 'vue'
 import {debounce as createDebounce} from '@winter-love/lodash'
 export type MapSources<T, Immediate> = {
   [K in keyof T]: T[K] extends WatchSource<infer V>

@@ -1,5 +1,5 @@
 import {flushPromises} from '@vue/test-utils'
-import {reactive, watch} from 'vue-demi'
+import {reactive, watch} from 'vue'
 import {createManager} from 'src/store/manager'
 
 describe('manager', () => {

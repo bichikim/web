@@ -1,11 +1,9 @@
-export const asyncTimeout = (time: number) => {
-  return new Promise((resolve) => {
-    setTimeout(resolve, time)
-  })
-}
-
 /**
  * use asyncTimeout
  * @deprecated
  */
-export const setTimeoutPromise = asyncTimeout
+export const setTimeoutPromise = (time: number) => {
+  return new Promise((resolve) => {
+    setTimeout(resolve, time)
+  })
+}

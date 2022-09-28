@@ -1,11 +1,12 @@
-import {Prop, PropType} from 'vue-demi'
-import {AnyObject, PureObject} from '@winter-love/utils'
+import {Prop, PropType} from 'vue'
+import {PureObject} from '@winter-love/utils'
 
 export type DefaultFactory<T> = (props: PureObject) => T | null | undefined
 export interface PropOptions<T = any, D = T> {
-  default?: D | DefaultFactory<D> | null | undefined | AnyObject
+  default?: D | DefaultFactory<D> | null | undefined | object
   required?: boolean
   type?: PropType<T> | true | null
+
   validator?(value: unknown): boolean
 }
 

@@ -2,7 +2,7 @@ import createEmotionOriginal, {
   Emotion as _Emotion,
   Options as OriginalEmotionOptions,
 } from '@emotion/css/create-instance'
-import {Plugin} from 'vue-demi'
+import {Plugin} from 'vue'
 import {EMOTION_CACHE_CONTEXT} from './cache'
 import {createStyled} from './create-styled'
 import {EMOTION_THEME_CONTEXT, Theme} from './theme'

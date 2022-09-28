@@ -1,6 +1,6 @@
 import {isSSR} from '@winter-love/utils'
-import {useElementEvent} from 'src/element-event'
-import {onMounted} from 'vue-demi'
+import {useEvent} from 'src/use-event'
+import {onMounted} from 'vue'
 
 export type OnDomMountedHandle = () => void
 
@@ -9,7 +9,7 @@ export const onDomMounted = (handle: OnDomMountedHandle) => {
     return
   }
 
-  const isActive = useElementEvent(
+  const isActive = useEvent(
     window,
     'load',
     () => {

@@ -1,5 +1,5 @@
 import {App, CustomInspectorNode, setupDevtoolsPlugin, StateBase} from '@vue/devtools-api'
-import {drop, parseJson, toArray} from '@winter-love/utils'
+import {drop, jsonParse, toArray} from '@winter-love/utils'
 import {UnwrapNestedRefs, watch} from 'vue'
 
 export interface StoreTreeInfo {
@@ -73,7 +73,7 @@ export const createTreeMultiple = (...stores: ManagerData[]) => {
 }
 
 export const createInspect = (name, state: UnwrapNestedRefs<any>): Record<string, StateBase[]> => {
-  const itemInfo = parseJson(name, name)
+  const itemInfo = jsonParse(name, name)
   return {
     state: [
       {
@@ -127,7 +127,7 @@ export const createStoreDevTool = (app: App, stores: ManagerData | ManagerData[]
         }
 
         const name = payload.nodeId
-        const {key, index} = parseJson(name, {index: 0, key: name})
+        const {key, index} = jsonParse(name, {index: 0, key: name})
 
         const state = _stores[index].store[key]
 
@@ -141,7 +141,7 @@ export const createStoreDevTool = (app: App, stores: ManagerData | ManagerData[]
         }
 
         const name = payload.nodeId
-        const {key, index} = parseJson(name, {index: 0, key: name})
+        const {key, index} = jsonParse(name, {index: 0, key: name})
 
         const state = _stores[index].store[key]
 

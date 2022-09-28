@@ -1,7 +1,6 @@
-/* eslint-disable functional/no-expression-statement,functional/immutable-data,functional/functional-parameters,functional/prefer-readonly-type,functional/no-conditional-statement */
 import {App, CustomInspectorNode, setupDevtoolsPlugin, StateBase} from '@vue/devtools-api'
-import {drop, parseJson, toArray} from '@winter-love/utils'
-import {UnwrapNestedRefs, watch} from 'vue-demi'
+import {drop, jsonParse, toArray} from '@winter-love/utils'
+import {UnwrapNestedRefs, watch} from 'vue'
 import {ManagerData} from './manager'
 
 const tagThemes = {
@@ -26,7 +25,7 @@ export const createTree = (store: ManagerData, index: number = 0): CustomInspect
   const {info, tree} = store
 
   return Object.keys(tree).map((key): CustomInspectorNode => {
-    const itemInfo = parseJson(key, key)
+    const itemInfo = jsonParse(key, key)
     const tag =
       typeof itemInfo === 'string'
         ? []
@@ -65,7 +64,7 @@ export const createTreeMultiple = (...stores: ManagerData[]) => {
 }
 
 export const createInspect = (name, state: UnwrapNestedRefs<any>): Record<string, StateBase[]> => {
-  const itemInfo = parseJson(name, name)
+  const itemInfo = jsonParse(name, name)
   return {
     state: [
       {
@@ -119,7 +118,7 @@ export const createStoreDevTool = (app: App, stores: ManagerData | ManagerData[]
         }
 
         const name = payload.nodeId
-        const {key, index} = parseJson(name, {index: 0, key: name})
+        const {key, index} = jsonParse(name, {index: 0, key: name})
 
         const state = _stores[index].tree[key]
 

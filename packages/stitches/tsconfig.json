@@ -3,7 +3,8 @@
   "compileOnSave": false,
   "compilerOptions": {
     "declaration": true,
-    "outDir": "lib",
+    "declarationMap": true,
+    "outDir": "dist",
     "target": "ESNext",
     "module": "ESNext",
     "baseUrl": ".",

@@ -1,4 +1,4 @@
-import {getDocument} from '../browser'
+import {getDocument} from '../get-document'
 
 export const isListenable = (): boolean => {
   const document = getDocument()

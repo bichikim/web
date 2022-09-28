@@ -1,8 +1,8 @@
 import type {Unsubscribe} from 'nanoevents'
 
-export interface Account<privateKey> {
+export interface Account<PrivateKey> {
   address: string
-  privateKey: privateKey
+  privateKey: PrivateKey
 }
 
 export type Bytes = ArrayLike<number>

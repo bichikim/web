@@ -1,13 +1,7 @@
-export const toNumber = (value?: any, defaultValue: number = 0): number => {
-  if (typeof value === 'number' || typeof value === 'string') {
-    const result = Number(value)
-    return Number.isNaN(result) ? defaultValue : result
-  }
+import {toNumber as _toNumber} from '@winter-love/lodash'
 
-  return defaultValue
+export const toNumber = (value?: any, failValue: number = 0): number => {
+  const number = _toNumber(value)
+
+  return Number.isNaN(number) ? failValue : number
 }
-
-/**
- * @deprecated
- */
-export const nanNumber = toNumber

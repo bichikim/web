@@ -1,4 +1,3 @@
-/* eslint-disable functional/no-this-expression */
 const {optimize} = require('svgo')
 const {getOptions} = require('loader-utils')
 

@@ -11,7 +11,7 @@ import {
   TransferParams,
   TransferWithSeedParams,
 } from '@solana/web3.js'
-import {computed, reactive, ref, UnwrapNestedRefs} from '@vue/reactivity'
+import {computed, reactive, ref, UnwrapNestedRefs} from 'vue'
 import {utils} from 'ethers'
 import {Socket} from 'net'
 import {Account, Wallet, WalletItemTypes} from 'src/types'

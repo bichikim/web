@@ -1,4 +1,4 @@
-import {h, onMounted, ref} from 'vue-demi'
+import {h, onMounted, ref} from 'vue'
 import {onDomMounted} from '../'
 
 export const Default = () => ({

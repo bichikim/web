@@ -1,21 +1,14 @@
 module.exports = {
-  env: {es6: true, node: true},
+  env: {jest: true, node: true},
   extends: [
     'plugin:vue/vue3-recommended',
     'plugin:unicorn/recommended',
-    'plugin:import/recommended',
     'plugin:@typescript-eslint/recommended',
     'eslint:recommended',
     '@vue/typescript/recommended',
-    'plugin:functional/recommended',
     'prettier',
   ],
-  // ignorePatterns: ['.eslintrc.js'],
   globals: {
-    __QUASAR_SSR__: true,
-    __QUASAR_SSR_CLIENT__: true,
-    __QUASAR_SSR_PWA__: true,
-    __QUASAR_SSR_SERVER__: true,
     __statics: true,
     Capacitor: true,
     chrome: true,
@@ -26,23 +19,37 @@ module.exports = {
   },
   overrides: [
     {
-      // server codes
-      files: ['coong/server-old/**/*'],
+      // mocks
+      env: {jest: true},
+      files: ['**/__mocks__/**/*.ts'],
       rules: {
-        'functional/no-class': 'off',
+        'max-classes-per-file': 'off',
+        'unicorn/consistent-function-scoping': 'off',
+        'unicorn/no-static-only-class': 'off',
+      },
+    },
+    {
+      files: ['**/*.story.{t,t}s?(x)'],
+      rules: {
+        'unicorn/consistent-function-scoping': 'off',
       },
     },
     {
       // tests
       env: {jest: true},
-      files: ['**/*.spec.{j,t}s?(x)', '**/*.e2e.{j,t}s?(x)'],
+      files: [
+        /* unit */
+        '**/*.spec.{j,t}s?(x)',
+        /* e2e */
+        '**/*.e2e.{j,t}s?(x)',
+        /* type test */
+        '**/*.tsd.{j,t}s?(x)',
+      ],
       rules: {
+        '@typescript-eslint/naming-convention': 'off',
         '@typescript-eslint/no-unused-vars': 'off',
         '@typescript-eslint/no-var-requires': 'off',
-        'functional/functional-parameters': 'off',
-        'functional/no-class': 'off',
-        'functional/no-throw-statement': 'off',
-        'functional/prefer-readonly-type': 'off',
+        'id-length': 'off',
         'max-len': 'off',
         'max-lines-per-function': 'off',
         'max-nested-callbacks': 'off',
@@ -53,20 +60,6 @@ module.exports = {
         'unicorn/no-useless-undefined': 'off',
         'vue/one-component-per-file': 'off',
         'vue/require-prop-types': 'off',
-      },
-    },
-    {
-      files: ['**/*.stories.{j,t}s?(x)'],
-      rules: {
-        'no-magic-numbers': 'off',
-        'vue/one-component-per-file': 'off',
-      },
-    },
-    {
-      // configs
-      files: ['**/quasar.conf.js'],
-      rules: {
-        'max-lines-per-function': 'off',
       },
     },
     {
@@ -82,6 +75,7 @@ module.exports = {
       rules: {'no-magic-numbers': 'off'},
     },
     {
+      // vue
       files: ['**/*.vue'],
       rules: {'@typescript-eslint/no-unused-vars': 'off'},
     },
@@ -93,17 +87,13 @@ module.exports = {
     sourceType: 'module',
     useJSXTextNode: true,
   },
-  plugins: [
-    'prettier',
-    'import',
-    'sort-keys-fix',
-    'typescript-sort-keys',
-    'functional',
-    'sort-export-all',
-  ],
+  plugins: ['prettier', 'import', 'sort-keys-fix', 'typescript-sort-keys', 'sort-export-all'],
   root: true,
   rules: {
+    // '@typescript-eslint/interface-name-prefix': 'off',
+    // '@typescript-eslint/explicit-function-return-type': 'off',
     '@typescript-eslint/explicit-module-boundary-types': 'off',
+    '@typescript-eslint/indent': 'off',
     '@typescript-eslint/member-delimiter-style': [
       'error',
       {
@@ -115,6 +105,71 @@ module.exports = {
           delimiter: 'semi',
           requireLast: false,
         },
+      },
+    ],
+    '@typescript-eslint/naming-convention': [
+      'error',
+      {
+        format: ['camelCase', 'PascalCase', 'UPPER_CASE'],
+        leadingUnderscore: 'allowSingleOrDouble',
+        selector: 'variable',
+        trailingUnderscore: 'allowSingleOrDouble',
+      },
+      {
+        format: ['camelCase', 'PascalCase'],
+        selector: 'function',
+      },
+      {
+        format: ['camelCase'],
+        leadingUnderscore: 'allow',
+        selector: 'parameter',
+      },
+      {
+        format: ['camelCase'],
+        leadingUnderscore: 'allowSingleOrDouble',
+        selector: 'classProperty',
+      },
+      {
+        format: ['camelCase', 'UPPER_CASE'],
+        leadingUnderscore: 'allowSingleOrDouble',
+        selector: 'typeProperty',
+        trailingUnderscore: 'allowSingleOrDouble',
+      },
+      {
+        format: ['camelCase'],
+        leadingUnderscore: 'allow',
+        selector: 'classMethod',
+      },
+      {
+        filter: {
+          match: false,
+          // kebab-case & abcDe:abcDe
+          regex: '^([a-z][a-zA-Z0-9]*)([-:][a-zA-Z0-9]+)*$',
+        },
+        format: ['camelCase'],
+        leadingUnderscore: 'allow',
+        selector: 'objectLiteralMethod',
+      },
+      {
+        format: ['PascalCase'],
+        leadingUnderscore: 'allow',
+        selector: 'class',
+      },
+      {
+        format: ['PascalCase'],
+        selector: 'interface',
+      },
+      {
+        format: ['PascalCase'],
+        selector: 'typeAlias',
+      },
+      {
+        format: ['PascalCase'],
+        selector: 'typeParameter',
+      },
+      {
+        format: ['PascalCase'],
+        selector: 'enum',
       },
     ],
     '@typescript-eslint/no-explicit-any': 'off',
@@ -138,6 +193,7 @@ module.exports = {
     'array-bracket-newline': ['error', 'consistent'],
     'array-bracket-spacing': ['error', 'never'],
     'array-callback-return': 'error',
+    'arrow-body-style': 'off',
     'arrow-parens': ['error', 'always'],
     'arrow-spacing': [
       'error',
@@ -181,40 +237,7 @@ module.exports = {
     'func-names': ['error', 'as-needed'],
     'func-style': ['error', 'declaration', {allowArrowFunctions: true}],
     'function-call-argument-newline': ['error', 'consistent'],
-    'function-paren-newline': ['off', 'consistent'],
-    'functional/functional-parameters': [
-      'warn',
-      {
-        allowRestParameter: true,
-        enforceParameterCount: false,
-      },
-    ],
-    'functional/immutable-data': 'off',
-    'functional/no-class': 'off',
-    'functional/no-conditional-statement': [
-      'off',
-      {
-        allowReturningBranches: true,
-      },
-    ],
-    'functional/no-expression-statement': 'off',
-    'functional/no-let': [
-      'warn',
-      {
-        allowLocalMutation: true,
-      },
-    ],
-    'functional/no-loop-statement': 'off',
-    'functional/no-method-signature': [
-      'off',
-      {
-        ignoreIfReadonly: true,
-      },
-    ],
-    'functional/no-mixed-type': 'off',
-    'functional/no-return-void': 'off',
-    'functional/no-this-expression': 'warn',
-    'functional/prefer-readonly-type': 'off',
+    'function-paren-newline': 'off',
     'generator-star-spacing': [
       'error',
       {
@@ -226,19 +249,13 @@ module.exports = {
     'id-length': [
       'error',
       {
-        exceptions: ['_', 'x', 'y', 'z', 'p', 'm', 'h', 'w', 'b', 't', 'l', 'r', 's', 'c'],
+        exceptions: ['_', 'x', 'y', 'z', 'p', 'm', 'h', 'w', 'b', 't', 'l', 'r'],
       },
     ],
     'import/named': 'off',
     'import/no-absolute-path': 'off',
     'import/no-unresolved': 'off',
-    // indent: [
-    //   'error',
-    //   2,
-    //   {
-    //     SwitchCase: 1,
-    //   },
-    // ],
+    indent: 'off',
     'jsx-quotes': ['error', 'prefer-double'],
     'key-spacing': [
       'error',
@@ -277,11 +294,12 @@ module.exports = {
         ignoreUrls: true,
       },
     ],
+
     'max-lines': ['error', 600],
     'max-lines-per-function': [
       'error',
       {
-        max: 100,
+        max: 150,
         skipBlankLines: true,
         skipComments: true,
       },
@@ -300,9 +318,7 @@ module.exports = {
     // typescript decoration error
     // 'new-cap': 'error',
     'no-confusing-arrow': 'warn',
-
     'no-console': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
-
     'no-constructor-return': 'error',
     'no-continue': 'error',
     'no-debugger': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
@@ -329,13 +345,14 @@ module.exports = {
     'no-loop-func': 'error',
     'no-loss-of-precision': 'error',
     'no-magic-numbers': [
-      'error',
+      'warn',
       {
         ignore: [1, -1, 0, 2],
         ignoreArrayIndexes: true,
       },
     ],
-    'no-mixed-operators': 'error',
+    // todo 프리터어 때문에 끔 (출동)
+    'no-mixed-operators': 'off',
     'no-mixed-spaces-and-tabs': 'error',
     'no-multi-assign': 'error',
     'no-multi-spaces': 'error',
@@ -350,9 +367,7 @@ module.exports = {
     'no-negated-condition': 'error',
     // 'no-nested-ternary': 'error',
     'no-new': 'error',
-
     'no-new-func': 'error',
-
     'no-new-object': 'error',
     'no-new-require': 'error',
     'no-new-wrappers': 'error',
@@ -389,7 +404,7 @@ module.exports = {
     'no-useless-call': 'error',
     'no-useless-computed-key': 'error',
     'no-useless-concat': 'error',
-    'no-useless-constructor': 'warn',
+    'no-useless-constructor': 'off',
     'no-useless-rename': 'warn',
     'no-useless-return': 'error',
     'no-var': 'error',
@@ -407,7 +422,7 @@ module.exports = {
     'object-curly-spacing': ['error', 'never'],
     'one-var': ['error', 'never'],
     'operator-assignment': ['warn', 'always'],
-    'prefer-arrow-callback': 'warn',
+    'prefer-arrow-callback': 'off',
     'prefer-const': 'error',
     'prefer-destructuring': 'warn',
     'prefer-exponentiation-operator': 'warn',
@@ -421,7 +436,7 @@ module.exports = {
     'prefer-template': 'warn',
     'prettier/prettier': 'error',
     'quote-props': ['error', 'as-needed'],
-    quotes: ['off', 'single'],
+
     radix: 'error',
     'require-unicode-regexp': 'error',
     'rest-spread-spacing': 'error',
@@ -481,6 +496,7 @@ module.exports = {
     'unicorn/no-array-reduce': 'off',
     'unicorn/no-nested-ternary': 'off',
     'unicorn/no-null': 'off',
+    'unicorn/no-unsafe-regex': 'error',
     'unicorn/prefer-export-from': 'off',
     // 적용 할 수 있도록 해야한다
     'unicorn/prefer-module': 'off',
@@ -492,6 +508,7 @@ module.exports = {
     'vue/multi-word-component-names': 'off',
     'vue/order-in-components': 'off',
     'vue/require-default-prop': 'off',
+    'vue/require-prop-types': 'off',
     'vue/return-in-computed-property': 'off',
     'wrap-iife': 'error',
     'yield-star-spacing': ['error', 'before'],

@@ -1,67 +1,67 @@
-import * as TypeGraphQL from "type-graphql";
-import * as GraphQLScalars from "graphql-scalars";
-import { Prisma } from "@prisma/client";
-import { DecimalJSScalar } from "../../scalars";
-import { StringFilter } from "../inputs/StringFilter";
-import { StringNullableFilter } from "../inputs/StringNullableFilter";
-import { StringNullableListFilter } from "../inputs/StringNullableListFilter";
+import * as TypeGraphQL from 'type-graphql'
+import * as GraphQLScalars from 'graphql-scalars'
+import {Prisma} from '@prisma/client'
+import {DecimalJSScalar} from '../../scalars'
+import {StringFilter} from '../inputs/StringFilter'
+import {StringNullableFilter} from '../inputs/StringNullableFilter'
+import {StringNullableListFilter} from '../inputs/StringNullableListFilter'
 
-@TypeGraphQL.InputType("UserScalarWhereInput", {
-  isAbstract: true
+@TypeGraphQL.InputType('UserScalarWhereInput', {
+  isAbstract: true,
 })
 export class UserScalarWhereInput {
-  @TypeGraphQL.Field(_type => [UserScalarWhereInput], {
-    nullable: true
+  @TypeGraphQL.Field((_type) => [UserScalarWhereInput], {
+    nullable: true,
   })
-  AND?: UserScalarWhereInput[] | undefined;
+  AND?: UserScalarWhereInput[] | undefined
 
-  @TypeGraphQL.Field(_type => [UserScalarWhereInput], {
-    nullable: true
+  @TypeGraphQL.Field((_type) => [UserScalarWhereInput], {
+    nullable: true,
   })
-  OR?: UserScalarWhereInput[] | undefined;
+  OR?: UserScalarWhereInput[] | undefined
 
-  @TypeGraphQL.Field(_type => [UserScalarWhereInput], {
-    nullable: true
+  @TypeGraphQL.Field((_type) => [UserScalarWhereInput], {
+    nullable: true,
   })
-  NOT?: UserScalarWhereInput[] | undefined;
+  NOT?: UserScalarWhereInput[] | undefined
 
-  @TypeGraphQL.Field(_type => StringFilter, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => StringFilter, {
+    nullable: true,
   })
-  id?: StringFilter | undefined;
+  id?: StringFilter | undefined
 
-  @TypeGraphQL.Field(_type => StringFilter, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => StringFilter, {
+    nullable: true,
   })
-  email?: StringFilter | undefined;
+  email?: StringFilter | undefined
 
-  @TypeGraphQL.Field(_type => StringNullableFilter, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => StringNullableFilter, {
+    nullable: true,
   })
-  name?: StringNullableFilter | undefined;
+  name?: StringNullableFilter | undefined
 
-  @TypeGraphQL.Field(_type => StringNullableFilter, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => StringNullableFilter, {
+    nullable: true,
   })
-  password?: StringNullableFilter | undefined;
+  password?: StringNullableFilter | undefined
 
-  @TypeGraphQL.Field(_type => StringNullableListFilter, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => StringNullableListFilter, {
+    nullable: true,
   })
-  followerIDs?: StringNullableListFilter | undefined;
+  followerIDs?: StringNullableListFilter | undefined
 
-  @TypeGraphQL.Field(_type => StringNullableListFilter, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => StringNullableListFilter, {
+    nullable: true,
   })
-  followingIDs?: StringNullableListFilter | undefined;
+  followingIDs?: StringNullableListFilter | undefined
 
-  @TypeGraphQL.Field(_type => StringNullableListFilter, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => StringNullableListFilter, {
+    nullable: true,
   })
-  likePostIDs?: StringNullableListFilter | undefined;
+  likePostIDs?: StringNullableListFilter | undefined
 
-  @TypeGraphQL.Field(_type => StringNullableListFilter, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => StringNullableListFilter, {
+    nullable: true,
   })
-  roles?: StringNullableListFilter | undefined;
+  roles?: StringNullableListFilter | undefined
 }

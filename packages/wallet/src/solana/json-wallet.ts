@@ -12,7 +12,7 @@ export const encryptKeypair = async (
   keypair: Keypair,
   password,
   progressCallback?: (value: number) => any,
-): Promise<jsonKeyPairData> => {
+): Promise<JsonKeyPairData> => {
   // eslint-disable-next-line no-magic-numbers
   const salt = utils.randomBytes(32)
   const iv = utils.randomBytes(16)
@@ -54,7 +54,8 @@ export const encryptKeypair = async (
   }
 }
 
-export interface jsonKeyPairData {
+export interface JsonKeyPairData {
+  // eslint-disable-next-line @typescript-eslint/naming-convention
   Crypto: {
     cipher: string
     cipherparams: {
@@ -78,7 +79,7 @@ export interface jsonKeyPairData {
 
 // eslint-disable-next-line max-statements
 export const decryptKeypair = async (
-  data: jsonKeyPairData,
+  data: JsonKeyPairData,
   password: string,
   progressCallback?: (value: number) => any,
 ): Promise<Keypair | undefined> => {

@@ -1,31 +1,54 @@
-import {BrowserStorageKind, createBrowserStorage, isSSR} from '@winter-love/utils'
-import {MayRef} from 'src/types'
-import {ref, watch} from 'vue-demi'
-import {StorageRefOptions, useContextStorage} from '../context-storage'
-import {useElementEvent} from '../element-event'
-import {wrapRef} from '../wrap-ref'
+import {CookieStorageOptions, createStorage} from '@winter-love/utils'
+import {MaybeRef} from 'src/types'
+import {computed, ref, watch} from 'vue'
+import {resolveRef} from '../resolve-ref'
+import {bindRef} from '../bind-ref'
+import {useEvent} from '../use-event'
 
-export const storageRef = <Data>(
+export type BrowserStorageKind = 'local' | 'session' | 'cookie'
+
+export interface StorageRefOptions {
+  reset?: boolean
+}
+
+export interface CookieStorageRefOptions extends StorageRefOptions, CookieStorageOptions {
+  //
+}
+
+export function storageRef<Data>(
+  type: 'local',
   key: string,
-  value?: MayRef<Data>,
-  options: StorageRefOptions = {},
-) => {
-  const {type = 'local' as BrowserStorageKind, cookieOptions, deep, reset} = options
-  const valueRef = wrapRef<Data>(value)
+  value?: MaybeRef<Data>,
+  options?: MaybeRef<StorageRefOptions>,
+)
+export function storageRef<Data>(
+  type: 'session',
+  key: string,
+  value?: MaybeRef<Data>,
+  options?: MaybeRef<StorageRefOptions>,
+)
+export function storageRef<Data>(
+  type: 'cookie',
+  key: string,
+  value?: MaybeRef<Data>,
+  options?: MaybeRef<CookieStorageRefOptions>,
+)
+export function storageRef<Data>(
+  type: any,
+  key: string,
+  value?: MaybeRef<Data>,
+  options?: MaybeRef<Record<string, any>>,
+) {
+  const valueRef = bindRef(resolveRef<Data>(value))
+  const optionsRef = resolveRef(options)
   const freezeWatch = ref(false)
-  const storage = createBrowserStorage<Data | undefined>(type)
-  const contextStorage = useContextStorage(key)
+  const storageRef = computed(() => createStorage(type, optionsRef.value))
+  const reset = computed(() => optionsRef.value?.rest ?? false)
 
-  // update server serverStorage
-  if (isSSR()) {
-    contextStorage.value = valueRef.value
-    return valueRef
-  }
+  const initValue = storageRef.value.get(key)
 
-  const initValue = storage().getItem(key)
-
-  if (!initValue || reset) {
-    storage(cookieOptions).setItem(key, valueRef.value)
+  if (reset.value || valueRef.value) {
+    storageRef.value.set(key, valueRef.value)
   } else {
     valueRef.value = initValue
   }
@@ -35,7 +58,7 @@ export const storageRef = <Data>(
       freezeWatch.value = true
     }
 
-    const result = storage().getItem(key)
+    const result = storageRef.value.get(key)
 
     if (typeof result !== 'undefined') {
       valueRef.value = result
@@ -44,21 +67,17 @@ export const storageRef = <Data>(
 
   updateValue(valueRef.value)
 
-  useElementEvent(window, 'storage', () => {
+  useEvent(window, 'storage', () => {
     updateValue(undefined, true)
   })
 
-  watch(
-    valueRef,
-    (value) => {
-      if (freezeWatch.value) {
-        freezeWatch.value = false
-        return
-      }
-      storage(cookieOptions).setItem(key, value)
-    },
-    {deep},
-  )
+  watch(valueRef, (value) => {
+    if (freezeWatch.value) {
+      freezeWatch.value = false
+      return
+    }
+    storageRef.value.set(key, value)
+  })
 
   return valueRef
 }

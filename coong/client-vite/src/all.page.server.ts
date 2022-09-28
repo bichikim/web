@@ -4,7 +4,7 @@ import {createSsrApp} from './app'
 
 export async function render(pageContext): Promise<any> {
   const {Page, url} = pageContext
-  const {app, router} = await createSsrApp({Page})
+  const {app, router} = await createSsrApp({page: Page})
 
   // set the router to the desired URL before rendering
   await router.push(url)

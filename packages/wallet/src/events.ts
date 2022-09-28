@@ -1,6 +1,6 @@
 import {createNanoEvents, Unsubscribe} from 'nanoevents'
 import {Event, Wallet, WalletEvent} from './types'
-import {effect} from '@vue/reactivity'
+import {effect} from 'vue'
 
 export const createEvents = <W extends Wallet<any>>(wallet: W): WalletEvent => {
   const emitter = createNanoEvents()

@@ -1,49 +1,49 @@
-import * as TypeGraphQL from "type-graphql";
-import * as GraphQLScalars from "graphql-scalars";
-import { Prisma } from "@prisma/client";
-import { DecimalJSScalar } from "../../scalars";
-import { UserCreateOrConnectWithoutPostsInput } from "../inputs/UserCreateOrConnectWithoutPostsInput";
-import { UserCreateWithoutPostsInput } from "../inputs/UserCreateWithoutPostsInput";
-import { UserUpdateWithoutPostsInput } from "../inputs/UserUpdateWithoutPostsInput";
-import { UserUpsertWithoutPostsInput } from "../inputs/UserUpsertWithoutPostsInput";
-import { UserWhereUniqueInput } from "../inputs/UserWhereUniqueInput";
+import * as TypeGraphQL from 'type-graphql'
+import * as GraphQLScalars from 'graphql-scalars'
+import {Prisma} from '@prisma/client'
+import {DecimalJSScalar} from '../../scalars'
+import {UserCreateOrConnectWithoutPostsInput} from '../inputs/UserCreateOrConnectWithoutPostsInput'
+import {UserCreateWithoutPostsInput} from '../inputs/UserCreateWithoutPostsInput'
+import {UserUpdateWithoutPostsInput} from '../inputs/UserUpdateWithoutPostsInput'
+import {UserUpsertWithoutPostsInput} from '../inputs/UserUpsertWithoutPostsInput'
+import {UserWhereUniqueInput} from '../inputs/UserWhereUniqueInput'
 
-@TypeGraphQL.InputType("UserUpdateOneWithoutPostsInput", {
-  isAbstract: true
+@TypeGraphQL.InputType('UserUpdateOneWithoutPostsInput', {
+  isAbstract: true,
 })
 export class UserUpdateOneWithoutPostsInput {
-  @TypeGraphQL.Field(_type => UserCreateWithoutPostsInput, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => UserCreateWithoutPostsInput, {
+    nullable: true,
   })
-  create?: UserCreateWithoutPostsInput | undefined;
+  create?: UserCreateWithoutPostsInput | undefined
 
-  @TypeGraphQL.Field(_type => UserCreateOrConnectWithoutPostsInput, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => UserCreateOrConnectWithoutPostsInput, {
+    nullable: true,
   })
-  connectOrCreate?: UserCreateOrConnectWithoutPostsInput | undefined;
+  connectOrCreate?: UserCreateOrConnectWithoutPostsInput | undefined
 
-  @TypeGraphQL.Field(_type => UserUpsertWithoutPostsInput, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => UserUpsertWithoutPostsInput, {
+    nullable: true,
   })
-  upsert?: UserUpsertWithoutPostsInput | undefined;
+  upsert?: UserUpsertWithoutPostsInput | undefined
 
-  @TypeGraphQL.Field(_type => Boolean, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => Boolean, {
+    nullable: true,
   })
-  disconnect?: boolean | undefined;
+  disconnect?: boolean | undefined
 
-  @TypeGraphQL.Field(_type => Boolean, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => Boolean, {
+    nullable: true,
   })
-  delete?: boolean | undefined;
+  delete?: boolean | undefined
 
-  @TypeGraphQL.Field(_type => UserWhereUniqueInput, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => UserWhereUniqueInput, {
+    nullable: true,
   })
-  connect?: UserWhereUniqueInput | undefined;
+  connect?: UserWhereUniqueInput | undefined
 
-  @TypeGraphQL.Field(_type => UserUpdateWithoutPostsInput, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => UserUpdateWithoutPostsInput, {
+    nullable: true,
   })
-  update?: UserUpdateWithoutPostsInput | undefined;
+  update?: UserUpdateWithoutPostsInput | undefined
 }

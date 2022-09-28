@@ -12,12 +12,12 @@ import {
   ref,
   toRefs,
   VNode,
-} from 'vue-demi'
+} from 'vue'
 import {AnyFunction} from '@winter-love/utils'
 import {debounce, first} from '@winter-love/lodash'
 
 export interface VerifyInputs {
-  errorItems: [any, (undefined | string | boolean)][]
+  errorItems: [any, undefined | string | boolean][]
   errorMessage: undefined | string | boolean
   isValid: boolean
   registerInput: (el: any, value: ContextObjectValue) => void
@@ -66,8 +66,8 @@ const createContext = (): VerifyInputs => {
   const inputContexts = new WeakMap<any, ContextObjectValue>()
 
   const inputsRef = computed(() => {
-    const inputs_ = inputs.value
-    return [...inputs_.entries()]
+    const _inputs = inputs.value
+    return [..._inputs.entries()]
   })
 
   const errorItems = computed(() => {
@@ -76,7 +76,7 @@ const createContext = (): VerifyInputs => {
   })
 
   const isValid = computed(() => {
-    return !(first(errorItems.value))
+    return !first(errorItems.value)
   })
 
   const errorMessage = computed(() => {
@@ -124,8 +124,8 @@ const createContext = (): VerifyInputs => {
     inputContexts.delete(el)
     const handle = handles.value.get(el)
     if (handle) {
-      (el as HTMLInputElement).removeEventListener('input', handle);
-      (el as HTMLInputElement).removeEventListener('change', handle)
+      ;(el as HTMLInputElement).removeEventListener('input', handle)
+      ;(el as HTMLInputElement).removeEventListener('change', handle)
     }
     handles.value.delete(el)
   }
@@ -153,19 +153,19 @@ export const useVerifyInput = (ref: Ref<any>, value: ObjectValue | Validator): V
     console.warn('use useVerifyInput after provide context by the useVerifyInputs')
   }
 
-  const context_ = context ?? createContext()
-  const {errorItems} = toRefs(context_)
+  const _context = context ?? createContext()
+  const {errorItems} = toRefs(_context)
   const objectValue = getObjectValue(value)
 
   onMounted(() => {
     if (!objectValue) {
       return
     }
-    context_.registerInput(ref.value, objectValue)
+    _context.registerInput(ref.value, objectValue)
   })
 
   onScopeDispose(() => {
-    context_.unRegisterInput(ref.value)
+    _context.unRegisterInput(ref.value)
   })
 
   const errorMessage = computed(() => {

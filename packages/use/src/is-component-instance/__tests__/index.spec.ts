@@ -1,6 +1,9 @@
+/**
+ * @jest-environment jsdom
+ */
 import {isComponentInstance} from '../'
 import {mount} from '@vue/test-utils'
-import {defineComponent, h} from 'vue-demi'
+import {defineComponent, h} from 'vue'
 
 describe('isComponentInstance', () => {
   it('should return true', () => {

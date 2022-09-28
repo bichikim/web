@@ -1,5 +1,4 @@
 import {ionMailSharp, ionWalletSharp} from '@quasar/extras/ionicons-v6'
-import {HBtn, HInput, HTooltip} from '@winter-love/hyper-components'
 import {className} from 'boot/hyper-components'
 import {defineComponent, h, PropType, toRefs} from 'vue'
 import {SignInMethod} from 'src/graphql'
@@ -50,6 +49,7 @@ export const SignInInput = defineComponent({
           css: {
             flexGrow: 1,
             px: 10,
+            // eslint-disable-next-line id-length
             s: '$b1',
           },
           dense: true,
