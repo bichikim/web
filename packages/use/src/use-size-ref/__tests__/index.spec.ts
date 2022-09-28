@@ -4,6 +4,8 @@
 import {useSizeRef} from '../index'
 import {ref} from 'vue'
 
+jest.mock('src/on-element-resize')
+
 describe('useSizeRef', () => {
   it('should return reactive ref ', () => {
     const elementSize = {

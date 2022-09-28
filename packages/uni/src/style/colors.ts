@@ -164,12 +164,14 @@ export const baseColors = {
 }
 
 export const colors = {
+  back: baseColors.neutral0,
   black: baseColors.neutral1000,
   primary: baseColors.amber500,
   white: baseColors.neutral0,
 }
 
 export const darkColors = {
+  back: baseColors.neutral1000,
   black: baseColors.neutral0,
   primary: baseColors.amber500,
   white: baseColors.neutral1000,

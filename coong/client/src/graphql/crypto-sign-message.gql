@@ -1,3 +1,0 @@
-query cryptoSignMessage($input: AuthenticateCryptoSignMessageInput!){
-  authenticateCryptoSignMessage(input: $input)
-}

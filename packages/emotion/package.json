@@ -40,12 +40,12 @@
     "@winter-love/use": "workspace:*",
     "@winter-love/utils": "workspace:*",
     "clsx": "^1.1.1",
-    "vue": "^3.2.39"
+    "vue": "^3.2.40"
   },
   "devDependencies": {
     "@babel/core": "^7.17.10",
     "@emotion/server": "^11.4.0",
-    "@vue/server-renderer": "^3.2"
+    "@vue/server-renderer": "^3.2.40"
   },
   "publishConfig": {
     "access": "public"

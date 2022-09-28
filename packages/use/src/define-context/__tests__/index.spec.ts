@@ -9,7 +9,7 @@ describe('defineContext', () => {
   it('should return context with defined context', () => {
     const name = ref('foo')
     const age = ref(10)
-    const [useContext, provideContext] = defineContext(reactive({age, name}))
+    const [useContext, provideContext, KEY] = defineContext(reactive({age, name}))
 
     const component = defineComponent({
       setup: () => {

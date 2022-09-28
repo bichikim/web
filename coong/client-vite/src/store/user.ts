@@ -1,23 +1,9 @@
-import {createStore} from 'vare'
+import {defineStore} from 'pinia'
+import {ref} from 'vue'
 
-export const useAge = createStore({
-  name: 'age',
-  setup: () => {
-    const age = ref(10)
-    return {
-      age,
-    }
-  },
-})
-
-export const useUser = createStore({
-  name: 'user',
-  setup: () => {
-    const {age} = toRefs(useAge())
-    const name = ref('foo')
-    return {
-      age,
-      name,
-    }
-  },
+export const useUser = defineStore('user', () => {
+  const name = ref()
+  return {
+    name,
+  }
 })

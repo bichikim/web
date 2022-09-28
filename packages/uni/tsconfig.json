@@ -5,7 +5,7 @@
     "jsx": "preserve",
     "declaration": true,
     "outDir": "dist",
-    "moduleResolution": "Node",
+    "moduleResolution": "NodeNext",
     "target": "ESNext",
     "module": "ESNext",
     "baseUrl": ".",

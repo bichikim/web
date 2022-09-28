@@ -1,4 +1,5 @@
 {
+  "compileOnSave": false,
   "compilerOptions": {
     "rootDir": ".",
     "sourceMap": true,
@@ -19,18 +20,8 @@
     "skipDefaultLibCheck": true,
     "baseUrl": "."
   },
-  "ts-node": {
-    "transpileOnly": true,
-    "compilerOptions": {
-      "target": "ES2015",
-      "module": "CommonJS"
-    }
-  },
   "include": [
     "**/*.ts",
-    "./jest.setup.ts"
-  ],
-  "exclude": [
-    "dist",
+    "auto-imports.d.ts"
   ]
 }

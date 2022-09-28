@@ -42,12 +42,12 @@
     "@winter-love/utils": "workspace:^1.0.25-alpha.14",
     "fast-json-stable-stringify": "^2.1.0",
     "lodash": "^4.17.21",
-    "vue": "^3.2.39"
+    "vue": "^3.2.40"
   },
   "devDependencies": {
     "@types/debounce": "1.2.1",
     "@types/sinon": "10.0.11",
-    "@vue/server-renderer": "^3.2",
+    "@vue/server-renderer": "^3.2.40",
     "@vue/test-utils": "^2.0.0",
     "debounce": "^1.2.1"
   },
