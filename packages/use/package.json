@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/use",
-  "version": "1.0.25-alpha.14",
+  "version": "1.0.25-alpha.15",
   "description": "Vue utils",
   "keywords": [
     "typescript",
@@ -38,8 +38,8 @@
     "prepare": "tsup --dts"
   },
   "dependencies": {
-    "@winter-love/lodash": "workspace:^1.0.25-alpha.14",
-    "@winter-love/utils": "workspace:^1.0.25-alpha.14",
+    "@winter-love/lodash": "workspace:^1.0.25-alpha.15",
+    "@winter-love/utils": "workspace:^1.0.25-alpha.15",
     "fast-json-stable-stringify": "^2.1.0",
     "lodash": "^4.17.21",
     "vue": "^3.2.40"

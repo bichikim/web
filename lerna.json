@@ -4,7 +4,7 @@
   ],
   "npmClient": "pnpm",
   "useWorkspaces": true,
-  "version": "1.0.25-alpha.14",
+  "version": "1.0.25-alpha.15",
   "command": {
     "run": {
       "npmClient": "pnpm"

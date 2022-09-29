@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/f-ck-vue-render",
-  "version": "1.0.25-alpha.14",
+  "version": "1.0.25-alpha.15",
   "private": true,
   "scripts": {
     "dev": "ts-node-dev src/index.ts"

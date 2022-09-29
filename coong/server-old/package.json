@@ -1,6 +1,6 @@
 {
   "name": "@coong/server-old",
-  "version": "1.0.25-alpha.14",
+  "version": "1.0.25-alpha.15",
   "private": true,
   "scripts": {
     "build": "rimraf ./lib && pnpm run generate && ttsc -p tsconfig.build.json",
@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@prisma/client": "3.15.2",
-    "@winter-love/utils": "^1.0.25-alpha.14",
+    "@winter-love/utils": "^1.0.25-alpha.15",
     "apollo-server": "3.6.4",
     "apollo-server-core": "^3.9.0",
     "apollo-server-express": "^3.9.0",
