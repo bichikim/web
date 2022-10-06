@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "ESNext",
-    "module": "CommonJS",
+    "module": "ESNext",
     "outDir": "dist",
     "baseUrl": ".",
     "declarationMap": true,
@@ -10,38 +10,49 @@
     "skipLibCheck": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "forceConsistentCasingInFileNames": true,
     "strictPropertyInitialization": false,
+    "paths": {
+      "src/*": [
+        "src/*"
+      ]
+    },
     "lib": [
       "esnext",
       "esnext.asynciterable",
       "scripthost"
     ],
-    "paths": {
-      "#*": ["*"],
-      "#auth": ["src/auth/index.ts"],
-      "#utils": ["src/utils/index.ts"],
-      "#extended-schema": ["src/extended-schema/index.ts"]
-    },
+    "plugins": [
+      { "transform": "@zerollup/ts-transform-paths" }
+    ],
     "allowJs": true,
+    // `baseUrl` must be placed on the extending configuration in devland, or paths won't be recognized
     "esModuleInterop": true,
-    "moduleResolution": "node",
+
+    "moduleResolution": "Node",
     // Needed to address https://github.com/quasarframework/app-extension-typescript/issues/36
     "resolveJsonModule": true,
     "jsx": "preserve",
     "noImplicitAny": false,
     "importHelpers": true,
     // for 4.4.0
-    "exactOptionalPropertyTypes": true,
+    // "exactOptionalPropertyTypes": true,
     "allowSyntheticDefaultImports": true,
     "suppressImplicitAnyIndexErrors": true,
     "sourceMap": true,
-    "strict": true
+    "strict": true,
+  },
+  "ts-node": {
+    "compilerOptions": {
+      "target": "ES2015",
+      "module": "CommonJS"
+    }
   },
   "include": [
-    "**/*.ts"
+    "src/**/*.ts",
+    "src/**/*.d.ts",
+    "src/**/*.tsx",
+    "src/**/*.vue",
+    "tests/**/*.ts",
+    "tests/**/*.tsx"
   ],
-  "exclude": [
-    "node_modules"
-  ]
 }

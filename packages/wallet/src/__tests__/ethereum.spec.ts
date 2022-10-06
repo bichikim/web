@@ -13,7 +13,6 @@ describe('createEthereumWallet', () => {
     it('should create an account', () => {
       const wallet = createEthereumWallet()
       const account = wallet.createAccount()
-      console.log(account)
       expect(typeof account.address).toBe('string')
       expect(typeof account.privateKey).toBe('string')
     })

@@ -17,6 +17,7 @@ const indicatorBySide = (side: DialogPosition) => {
 }
 
 export const UDialogCard = defineComponent({
+  name: 'UDialogCard',
   props: {
     bg: {type: String},
     for: null,

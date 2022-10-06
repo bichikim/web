@@ -113,9 +113,6 @@ export const useSticky = (
     const horizontalSize = getPosition(xPosition, targetSize, elementSize)
     const verticalSize = getPosition(yPosition, targetSize, elementSize)
 
-    console.log(horizontalSize, side, hasTargetRef.value)
-    console.log(verticalSize, side, hasTargetRef.value)
-
     if (!hasTargetRef.value) {
       return {
         side,

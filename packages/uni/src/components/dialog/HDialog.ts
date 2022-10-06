@@ -1,7 +1,7 @@
-import {createAsElement, useSizeRef, useSticky} from '@winter-love/use'
-import {computed, defineComponent, h, PropType, reactive, ref, Teleport, toRef, toRefs} from 'vue'
+import {createAsElement, useSticky} from '@winter-love/use'
+import {RelativePosition} from '@winter-love/utils'
+import {computed, defineComponent, h, PropType, reactive, ref, Teleport, toRef} from 'vue'
 import {provideControlDialog} from './use-dialog'
-import {getPosition, RelativePosition} from '@winter-love/utils'
 
 export type DialogPosition = 'left' | 'right' | 'top' | 'bottom'
 
@@ -16,9 +16,7 @@ export const HDialog = defineComponent({
     for: null,
     modelValue: {default: false, type: Boolean},
     position: {default: 'bottom', type: String as PropType<DialogPosition>},
-    x: {default: 0, type: Number},
     xPosition: {default: 'start', type: String as PropType<RelativePosition>},
-    y: {default: 0, type: Number},
     yPosition: {default: 'start', type: String as PropType<RelativePosition>},
   },
   setup: (props, {slots, attrs, emit}) => {
@@ -26,12 +24,14 @@ export const HDialog = defineComponent({
     const positionRef = toRef(props, 'position')
     const elementRef = ref(null)
     const targetRef = toRef(props, 'for')
-    const xRef = toRef(props, 'x')
-    const yRef = toRef(props, 'y')
     const xPosition = toRef(props, 'xPosition')
     const yPosition = toRef(props, 'yPosition')
 
-    const stickySizeRef = useSticky(elementRef, targetRef, reactive({xPosition, yPosition}))
+    const stickySizeRef = useSticky(
+      elementRef,
+      targetRef,
+      reactive({defaultPosition: positionRef, xPosition, yPosition}),
+    )
     const modalPositionRef = computed(() => {
       const {x, y, side} = stickySizeRef.value
       return {

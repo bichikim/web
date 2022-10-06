@@ -2,6 +2,3 @@ dist
 .quasar
 node_modules
 **/*.d.ts
-lib
-/packages/lodash/src/lodash
-/coong/server-old/src/generated

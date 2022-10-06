@@ -36,7 +36,6 @@ export const onAnimationRepeater = (
       return
     }
 
-    console.log(cancelFlagRef.value)
     if (cancelFlagRef.value) {
       window?.cancelAnimationFrame(cancelFlagRef.value)
     }

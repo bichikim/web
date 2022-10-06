@@ -1,4 +1,5 @@
-import {ArrayLength, DropParameters} from '../'
+/* eslint-disable @typescript-eslint/ban-types */
+import {ArrayLength, ClassFunction, DropParameters} from '../'
 import {expectType} from 'tsd'
 
 describe('language', () => {
@@ -22,6 +23,12 @@ describe('language', () => {
       }
 
       expectType<2>(typeTest(foo))
+    })
+  })
+  describe('ClassFunction', () => {
+    it('should type class function', () => {
+      const foo: Function = 'foo' as any
+      expectType<ClassFunction>(foo)
     })
   })
 })

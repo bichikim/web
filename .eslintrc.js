@@ -87,9 +87,17 @@ module.exports = {
     sourceType: 'module',
     useJSXTextNode: true,
   },
-  plugins: ['prettier', 'import', 'sort-keys-fix', 'typescript-sort-keys', 'sort-export-all'],
+  plugins: [
+    'prettier',
+    'import',
+    'sort-keys-fix',
+    'typescript-sort-keys',
+    'sort-export-all',
+    '@ts-gql',
+  ],
   root: true,
   rules: {
+    "@ts-gql/ts-gql": "warn",
     // '@typescript-eslint/interface-name-prefix': 'off',
     // '@typescript-eslint/explicit-function-return-type': 'off',
     '@typescript-eslint/explicit-module-boundary-types': 'off',

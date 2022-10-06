@@ -28,28 +28,34 @@ export default defineConfig({
       autoImport({
         imports: ['vue'],
       }),
-      {
-        ...babel({
-          apply: 'serve',
-          babelConfig: {
-            babelrc: false,
-            configFile: false,
-            plugins: [
-              [
-                'module-resolver',
-                {
-                  alias: {
-                    src: './src',
-                  },
-                  cwd: 'packagejson',
+      babel({
+        apply: 'serve',
+        babelConfig: {
+          babelrc: false,
+          configFile: false,
+          plugins: [
+            [
+              'module-resolver',
+              {
+                alias: {
+                  src: './src',
                 },
-              ],
+                cwd: 'packagejson',
+              },
             ],
-          },
-          filter: /\.[jt]sx?$/u,
-        }),
-        enforce: 'post',
-      },
+          ],
+          presets: [
+            [
+              '@babel/preset-typescript',
+              {
+                allExtensions: true,
+                isTSX: true,
+              },
+            ],
+          ],
+        },
+        filter: /\.[jt]sx?$/u,
+      }),
     ],
     resolve: {
       alias: [

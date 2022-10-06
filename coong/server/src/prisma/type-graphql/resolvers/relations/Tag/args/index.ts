@@ -1,0 +1,1 @@
+export { TagPostsArgs } from "./TagPostsArgs";

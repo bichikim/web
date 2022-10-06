@@ -1,8 +1,6 @@
 import {defineConfig} from 'vite'
 import icons from 'unplugin-icons/vite'
 import {VitePWA as vitePWA} from 'vite-plugin-pwa'
-import Prism from 'markdown-it-prism'
-import LinkAttributes from 'markdown-it-link-attributes'
 import vitePluginImp from 'vite-plugin-imp'
 import * as dotenv from 'dotenv'
 import vue from '@vitejs/plugin-vue'
@@ -12,6 +10,9 @@ import tsconfigPaths from 'vite-tsconfig-paths'
 import vueJsx from '@vitejs/plugin-vue-jsx'
 import iconsResolver from 'unplugin-icons/resolver'
 import components from 'unplugin-vue-components/vite'
+// import {getBabelOutputPlugin} from '@rollup/plugin-babel'
+import babel from 'vite-plugin-babel'
+import {extname} from 'path'
 
 // eslint-disable-next-line import/no-named-as-default-member
 dotenv.config()
@@ -72,6 +73,28 @@ export default defineConfig(() => {
           theme_color: '#ffffff',
         },
         registerType: 'autoUpdate',
+      }),
+      babel({
+        babelConfig: {
+          babelrc: false,
+          configFile: false,
+          plugins: ['@ts-gql/babel-plugin'],
+          presets: [
+            [
+              '@babel/preset-typescript',
+              {
+                allExtensions: true,
+                isTSX: true,
+              },
+            ],
+          ],
+        },
+        filter: /\.[jt]sx?$/u,
+        loader: (path) => {
+          if (extname(path) === '.jsx') {
+            return 'jsx'
+          }
+        },
       }),
     ],
 

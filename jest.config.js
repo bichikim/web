@@ -4,9 +4,8 @@ process.env.TZ = 'Europe/London'
 module.exports = {
   collectCoverageFrom: [
     '<rootDir>/packages/*/src/**/*.{ts,tsx}',
-    '<rootDir>/apps/*/src/**/*.{ts,tsx}',
+    '<rootDir>/coong/*/src/**/*.{ts,tsx}',
     '<rootDir>/scripts/**/*.{ts,tsx}',
-    '!<rootDir>/apps/api-server/src/**/*.{ts,tsx}',
     '!<rootDir>/**/*.d.ts',
     '!<rootDir>/**/*.stories.{ts,tsx}',
     '!<rootDir>/**/__tests__/*',
@@ -41,10 +40,8 @@ module.exports = {
       },
       testMatch: [
         '!<rootDir>/**/*.e2e.ts',
-        // skip server
-        '!<rootDir>/apps/api-server/src/**/*.spec.ts',
         '<rootDir>/packages/*/src/**/__tests__/*.spec.{ts,tsx}',
-        '<rootDir>/apps/*/src/**/__tests__/*.spec.{ts,tsx}',
+        '<rootDir>/coong/*/src/**/__tests__/*.spec.{ts,tsx}',
         '<rootDir>/scripts/**/__tests__/*.spec.{ts,tsx}',
         '<rootDir>/scripts/__tests__/*.spec.{ts,tsx}',
       ],
@@ -53,11 +50,6 @@ module.exports = {
   ],
 
   setupFilesAfterEnv: [path.resolve(__dirname, 'jest.setup.ts')],
-
-  // not working
-  // snapshotSerializers: ['jest-stitches'],
-
-  // testEnvironment: '@happy-dom/jest-environment',
   testEnvironment: 'jest-environment-node',
 
   testEnvironmentOptions: {

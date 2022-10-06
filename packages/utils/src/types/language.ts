@@ -88,3 +88,6 @@ export type DropRightParametersFunction<T extends (...args: any) => any> = AnyFu
 export type Keyof<R> = R extends Record<infer P, any> ? P : never
 
 export type FlatKeys<R> = TakeFlatKeys<R, keyof R>
+
+// eslint-disable-next-line @typescript-eslint/ban-types
+export type ClassFunction = Function
