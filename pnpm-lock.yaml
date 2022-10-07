@@ -560,6 +560,21 @@ importers:
       tsup: 6.2.3
       vue: 3.2.40
 
+  packages/signal-as-ref:
+    specifiers:
+      '@preact/signals': ^1.1.1
+      '@preact/signals-core': ^1.2.1
+      '@types/sinon': 10.0.11
+      preact: ^10.11.1
+      vue: ^3.2.40
+    dependencies:
+      '@preact/signals': 1.1.1_preact@10.11.1
+      '@preact/signals-core': 1.2.1
+      vue: 3.2.40
+    devDependencies:
+      '@types/sinon': 10.0.11
+      preact: 10.11.1
+
   packages/stitches:
     specifiers:
       '@stitches/core': ^1.2.8
@@ -624,29 +639,25 @@ importers:
 
   packages/use:
     specifiers:
-      '@types/debounce': 1.2.1
+      '@types/debounce': ^1.2.1
       '@types/sinon': 10.0.11
       '@vue/server-renderer': ^3.2.40
-      '@vue/test-utils': ^2.0.0
-      '@winter-love/lodash': workspace:^1.0.25-alpha.15
-      '@winter-love/utils': workspace:^1.0.25-alpha.15
+      '@winter-love/lodash': workspace:*
+      '@winter-love/utils': workspace:*
       debounce: ^1.2.1
       fast-json-stable-stringify: ^2.1.0
       immer: ^9.0.15
-      lodash: ^4.17.21
       vue: ^3.2.40
     dependencies:
       '@winter-love/lodash': link:../lodash
       '@winter-love/utils': link:../utils
       fast-json-stable-stringify: 2.1.0
       immer: 9.0.15
-      lodash: 4.17.21
       vue: 3.2.40
     devDependencies:
       '@types/debounce': 1.2.1
       '@types/sinon': 10.0.11
       '@vue/server-renderer': 3.2.40_vue@3.2.40
-      '@vue/test-utils': 2.1.0_vue@3.2.40
       debounce: 1.2.1
 
   packages/utils:
@@ -17506,7 +17517,6 @@ packages:
 
   /preact/10.11.1:
     resolution: {integrity: sha512-1Wz5PCRm6Fg+6BTXWJHhX4wRK9MZbZBHuwBqfZlOdVm2NqPe8/rjYpufvYCwJSGb9layyzB2jTTXfpCTynLqFQ==}
-    dev: false
 
   /prebuild-install/7.1.1:
     resolution: {integrity: sha512-jAXscXWMcCK8GgCoHOfIr0ODh5ai8mj63L2nWrjuAgXE6tDyYGnx4/8o/rCgU+B4JSyZBKbeZqzhtwtC3ovxjw==}
