@@ -9,31 +9,30 @@ import {isWritableRef} from 'src/is-writable-ref'
  * @param updateOrigin value 가 ref 일경우 업데이트 할지 여부 입니다
  */
 export function resolveRef<T>(value: MaybeRef<T>, updateOrigin: boolean = false): Ref<T> {
-  const get = () => {
-    let _value
+  const createGet = () => {
     if (isRef(value)) {
-      _value = value.value
-    } else {
-      _value = value
+      return () => {
+        return value.value
+      }
     }
-    return _value
+    return () => {
+      return value
+    }
   }
 
-  const isWritableValue = isWritableRef(value)
-
-  if (updateOrigin && isWritableValue) {
-    return computed({
-      get,
-      set: (_value: T) => {
+  const createSet = () => {
+    if (updateOrigin && isWritableRef(value)) {
+      return (_value: T) => {
         ;(value as any).value = _value
-      },
-    })
+      }
+    }
+    return () => {
+      // empty skip write
+    }
   }
 
   return computed({
-    get,
-    set: () => {
-      // empty
-    },
+    get: createGet(),
+    set: createSet(),
   })
 }

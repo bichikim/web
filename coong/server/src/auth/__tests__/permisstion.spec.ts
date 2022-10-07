@@ -1,4 +1,4 @@
-import {validate, createValidate, role} from '../permission'
+import {createValidate, role, validate} from '../permission'
 
 describe('validate', () => {
   it('should validate any with mixed validator and or logic', () => {
@@ -32,6 +32,6 @@ describe('createValidate', () => {
 describe('role', () => {
   it('should return result', async () => {
     const validate = role(['foo', 'bar'])
-    expect(validate({roles: ['foo']} as any, {} as any)).toBe(true)
+    expect(await validate({roles: ['foo']} as any, {} as any)).toBe(true)
   })
 })

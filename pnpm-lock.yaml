@@ -632,12 +632,14 @@ importers:
       '@winter-love/utils': workspace:^1.0.25-alpha.15
       debounce: ^1.2.1
       fast-json-stable-stringify: ^2.1.0
+      immer: ^9.0.15
       lodash: ^4.17.21
       vue: ^3.2.40
     dependencies:
       '@winter-love/lodash': link:../lodash
       '@winter-love/utils': link:../utils
       fast-json-stable-stringify: 2.1.0
+      immer: 9.0.15
       lodash: 4.17.21
       vue: 3.2.40
     devDependencies:
@@ -13161,6 +13163,10 @@ packages:
   /immediate/3.0.6:
     resolution: {integrity: sha512-XXOFtyqDjNDAQxVfYxuF7g9Il/IbWmmlQg2MYKOH8ExIT1qg6xc4zyS3HaEEATgs1btfzxq15ciUiY7gjSXRGQ==}
     dev: true
+
+  /immer/9.0.15:
+    resolution: {integrity: sha512-2eB/sswms9AEUSkOm4SbV5Y7Vmt/bKRwByd52jfLkW4OLYeaTP3EEiJ9agqU0O/tq6Dk62Zfj+TJSqfm1rLVGQ==}
+    dev: false
 
   /immutable/3.7.6:
     resolution: {integrity: sha512-AizQPcaofEtO11RZhPPHBOJRdo/20MKQF9mBLnVkBoyHi1/zXK8fzVdnEpSV9gxqtnh6Qomfp3F0xT5qP/vThw==}

@@ -1,5 +1,5 @@
 import {expectType} from 'tsd'
-import {computed, ref, WritableComputedRef} from 'vue'
+import {computed, ref, Ref} from 'vue'
 import {resolveRef} from '../'
 
 describe('resolveRef', () => {
@@ -22,7 +22,7 @@ describe('resolveRef', () => {
 
     value.value = 'bar'
     expect(result.value).toBe('bar')
-    expectType<WritableComputedRef<string>>(result)
+    expectType<Ref<string>>(result)
   })
   it('should resolve a undefined ref and detect changes with null', () => {
     const value = ref()
@@ -31,11 +31,11 @@ describe('resolveRef', () => {
 
     value.value = null
     expect(result.value).toEqual(null)
-    expectType<WritableComputedRef<string>>(result)
+    expectType<Ref<string>>(result)
 
     value.value = 'bar'
     expect(result.value).toEqual('bar')
-    expectType<WritableComputedRef<string>>(result)
+    expectType<Ref<string>>(result)
   })
   it('should update readonly ref', () => {
     const value = ref('foo')
