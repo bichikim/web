@@ -3,9 +3,6 @@
 
 interface ImportMetaEnv {
   readonly VITE_API_URL: string
-  readonly VITE_PRIMARY_COLOR: string
-  readonly VITE_SUPABASE_API: string
-  readonly VITE_SUPABASE_URL: string
 }
 
 declare namespace NodeJS {

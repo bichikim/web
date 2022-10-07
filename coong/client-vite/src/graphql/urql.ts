@@ -1,5 +1,5 @@
 import {createClient} from '@urql/vue'
-import {getApiUrl} from 'src/env'
+import {env} from 'src/env'
 
 const getToken = (): string | undefined => ''
 
@@ -12,5 +12,5 @@ export const client = createClient({
       },
     }
   },
-  url: getApiUrl(),
+  url: env.apiUrl,
 })
