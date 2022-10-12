@@ -38,9 +38,9 @@
     "dist/*"
   ],
   "scripts": {
-    "build": "tsup --minify",
+    "build": "tsup --dts --minify",
     "dev": "tsup --watch",
-    "test-dev": "vite"
+    "prepare": "tsup --dts"
   },
   "dependencies": {
     "@ethersproject/abstract-provider": "^5.7.0",

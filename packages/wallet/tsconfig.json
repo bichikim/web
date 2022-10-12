@@ -1,20 +1,15 @@
 {
   "extends": "../../tsconfig.json",
+  "compileOnSave": false,
   "compilerOptions": {
-    "jsx": "preserve",
-    "outDir": "lib",
+    "declaration":  true,
+    "outDir": "dist",
     "baseUrl": ".",
     "paths": {
       "src/*": [
-        "src/*",
-      ],
-      "dev/*": [
-        "dev/*"
+        "src/*"
       ]
-    },
-    "plugins": [
-      { "transform": "@zerollup/ts-transform-paths" }
-    ]
+    }
   },
   "ts-node": {
     "compilerOptions": {
@@ -24,14 +19,6 @@
   },
   "include": [
     "src/**/*.ts",
-    "dev/**/*.ts",
-    "src/**/*.d.ts",
-    "src/**/*.tsx",
-    "tests/**/*.ts",
-    "tests/**/*.tsx",
-    "../../coong/client-react-18/auto-imports.d.ts"
-  ],
-  "exclude": [
-    "node_modules"
+    "src/**/*.tsx"
   ]
 }

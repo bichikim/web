@@ -17,3 +17,8 @@ declare module '~icons/*' {
   const icon: any
   export default icon
 }
+
+declare module '*.mp3' {
+  const Sound: any
+  export default Sound
+}
