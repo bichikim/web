@@ -78,6 +78,7 @@ export const PianoButton = styled(
     },
     backgroundColor: 'red',
     height: '100%',
+    pointerEvents: 'auto',
     touchAction: 'none',
     width: '50px',
   },

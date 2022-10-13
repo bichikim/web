@@ -22,6 +22,7 @@ export const PianoSharp = styled(HPianoSharp, {
   gap: 20,
   height: 300,
   pl: 35,
+  pointerEvents: 'none',
   position: 'relative',
   width: '100%',
 })
