@@ -14,35 +14,35 @@ export interface UseElementEventOptions {
 }
 
 export function useEvent<Key extends keyof WindowEventMap>(
-  window: MaybeRef<Window | undefined>,
+  window: MaybeRef<Window | undefined | null>,
   eventName: Key,
   listener: Listener<WindowEventMap[Key]>,
   isActive?: MaybeRef<boolean | undefined>,
   options?: UseElementEventOptions,
 ): Ref<boolean>
 export function useEvent<Key extends keyof HTMLElementEventMap>(
-  element: MaybeRef<HTMLElement>,
+  element: MaybeRef<HTMLElement | undefined | null>,
   eventName: Key,
   listener: Listener<HTMLElementEventMap[Key]>,
   isActive?: MaybeRef<boolean | undefined>,
   options?: UseElementEventOptions,
 ): Ref<boolean>
 export function useEvent<Key extends keyof HTMLElementEventMap & keyof WindowEventMap>(
-  element: MaybeRef<HTMLElement | Window>,
+  element: MaybeRef<HTMLElement | Window | undefined | null>,
   eventName: Key,
   listener: Listener<HTMLElementEventMap[Key] | WindowEventMap[Key]>,
   isActive?: MaybeRef<boolean | undefined>,
   options?: UseElementEventOptions,
 ): Ref<boolean>
 export function useEvent<Key extends keyof DocumentEventMap>(
-  document: MaybeRef<Document | undefined>,
+  document: MaybeRef<Document | undefined | null>,
   eventName: Key,
   listener: Listener<DocumentEventMap[Key]>,
   isActive?: MaybeRef<boolean | undefined>,
   options?: UseElementEventOptions,
 )
 export function useEvent<Key extends string>(
-  element: MaybeRef<HTMLElement | Window | Document | undefined>,
+  element: MaybeRef<HTMLElement | Window | Document | undefined | null>,
   eventName: Key,
   listener: Listener<Event>,
   isActive?: MaybeRef<boolean | undefined>,

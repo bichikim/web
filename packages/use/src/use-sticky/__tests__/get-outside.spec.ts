@@ -1,4 +1,4 @@
-import {getOutside} from '../'
+import {getOutside} from '../get-outside'
 
 describe('getOutside', () => {
   it('should return position over left', () => {

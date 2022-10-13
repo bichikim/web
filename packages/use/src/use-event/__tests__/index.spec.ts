@@ -5,15 +5,24 @@ import {flushPromises, mount} from '@vue/test-utils'
 import {defineComponent, h, ref} from 'vue'
 import {useEvent} from '../index'
 
-const setup = (props: any) => {
+interface SetupOptions {
+  eventName?: string
+  immediate?: boolean
+  once?: boolean
+  target?: any
+}
+
+const setup = (options: SetupOptions) => {
+  const {immediate, once, target, eventName = 'click'} = options
+
   const Component = defineComponent({
     props: ['once', 'immediate'],
     setup(props) {
       const elementRef = ref()
       const countRef = ref(0)
       const active = useEvent(
-        elementRef,
-        'click',
+        target ? target : elementRef,
+        eventName as any,
         () => {
           countRef.value += 1
         },
@@ -32,35 +41,11 @@ const setup = (props: any) => {
   })
 
   const wrapper = mount(Component, {
-    props,
-  })
-
-  return {
-    wrapper,
-  }
-}
-
-const setupWithWindow = (props: any) => {
-  const Component = defineComponent({
-    props: ['immediate'],
-    setup(props) {
-      const countRef = ref(0)
-      const active = useEvent(
-        window,
-        'message',
-        () => {
-          countRef.value += 1
-        },
-        props.immediate,
-      )
-      return () =>
-        h('div', [
-          h('div', {id: 'count'}, countRef.value),
-          h('button', {id: 'active', onClick: () => (active.value = true)}, 'active'),
-        ])
+    props: {
+      immediate,
+      once,
     },
   })
-  const wrapper = mount(Component, {props})
 
   return {
     wrapper,
@@ -103,8 +88,8 @@ describe('use-event', () => {
     expect(wrapper.get('#count').text()).toBe('1')
   })
   it('should trigger with the window target', async () => {
-    const {wrapper} = setupWithWindow({})
     const removeEventListenerSpy = jest.spyOn(window, 'removeEventListener')
+    const {wrapper} = setup({eventName: 'message', target: window})
     expect(wrapper.get('#count').text()).toBe('0')
     const event = document.createEvent('MessageEvent')
     event.initEvent('message')
@@ -113,12 +98,12 @@ describe('use-event', () => {
     expect(wrapper.get('#count').text()).toBe('1')
 
     wrapper.unmount()
-    expect(removeEventListenerSpy.mock.calls.length).toBe(1)
+    expect(removeEventListenerSpy).toBeCalledTimes(1)
     removeEventListenerSpy.mockRestore()
   })
   it('should trigger with the window target & false immediate', async () => {
-    const {wrapper} = setupWithWindow({immediate: false})
     const removeEventListenerSpy = jest.spyOn(window, 'removeEventListener')
+    const {wrapper} = setup({eventName: 'message', immediate: false, target: window})
     expect(wrapper.get('#count').text()).toBe('0')
     const event = document.createEvent('MessageEvent')
     event.initEvent('message')
@@ -144,5 +129,11 @@ describe('use-event', () => {
     window.dispatchEvent(event)
 
     expect(callback).toHaveBeenCalledTimes(1)
+  })
+  it('should init the use-event with null', () => {
+    const {wrapper} = setup({
+      target: null,
+    })
+    expect(wrapper.get('#count').text()).toBe('0')
   })
 })

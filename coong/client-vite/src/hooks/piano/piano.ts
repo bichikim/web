@@ -13,10 +13,8 @@ export interface ReturnedValue {
   stop: (id?: number) => void
 }
 
-export const usePiano = (): Record<keyof typeof indexKeys, ReturnedValue> => {
-  return Object.fromEntries(
-    Object.entries(indexKeys).map(([key, value]) => {
-      return [key, useSound(value)]
-    }),
-  ) as any
+export type PianoKeys = keyof typeof indexKeys
+
+export const usePiano = (key: PianoKeys): ReturnedValue => {
+  return useSound(indexKeys[key])
 }

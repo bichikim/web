@@ -1,4 +1,4 @@
-import {Position, Rect} from 'src/types'
+import {Position, Rect} from '@winter-love/utils'
 
 export const getOutside = (rect: Rect, screen: Rect): Position => {
   const position: Position = {

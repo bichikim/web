@@ -1,19 +1,26 @@
-import {usePiano} from 'src/hooks/piano'
 import {defineComponent, h} from 'vue'
 import {PianoButton} from './PianoButton'
+import {styled} from '@winter-love/uni'
+import {PianoFlat} from './PianoFlat'
+import {PianoSharp} from './PianoSharp'
 
-export const Piano = defineComponent({
+export const HPiano = defineComponent({
   setup: () => {
-    const piano = usePiano()
     return () =>
       h('div', [
         //
-        h(PianoButton, {onClick: piano['1c'].play}),
-        h(PianoButton, {onClick: piano['1d'].play}),
-        h(PianoButton, {onClick: piano['1e'].play}),
-        h(PianoButton, {onClick: piano['1f'].play}),
-        h(PianoButton, {onClick: piano['1g'].play}),
-        h(PianoButton, {onClick: piano['2a'].play}),
+        h(PianoFlat, {class: 'flat'}),
+        h(PianoSharp, {class: 'sharp'}),
       ])
   },
+})
+
+export const Piano = styled(HPiano, {
+  '& .sharp': {
+    position: 'absolute',
+    top: 0,
+  },
+  height: '500px',
+  position: 'relative',
+  width: '100%',
 })

@@ -1,4 +1,5 @@
-import {getOutside, getPosition} from '@winter-love/utils'
+import {getPosition} from './get-position'
+import {getOutside} from './get-outside'
 import {resolveRef} from 'src/resolve-ref'
 import {defaultRef} from 'src/default-ref'
 import {MaybeRef} from 'src/types'

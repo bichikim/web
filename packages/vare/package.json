@@ -61,7 +61,6 @@
     "vue-router": "^4.0.14"
   },
   "peerDependencies": {
-    "@vue/composition-api": "^1.1.0",
     "vue": "^2.0.0 || >=3.0.0"
   },
   "peerDependenciesMeta": {
