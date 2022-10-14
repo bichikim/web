@@ -1,6 +1,6 @@
 import {createOnce, getElementSize, Position, Rect} from '@winter-love/utils'
 import {effectScope, Ref, ref, watch} from 'vue'
-import {useEvent} from '@winter-love/use'
+import {MaybeRef, resolveRef, useEvent} from '@winter-love/use'
 import {useGlobalTouchMove} from './use-global-touch-move'
 
 const isInside = (rect: Rect, position: Position) => {
@@ -12,28 +12,34 @@ const isInside = (rect: Rect, position: Position) => {
   )
 }
 
-export const useHoverTouchDown = (element: Ref<HTMLElement>, isActive: Ref<boolean>) => {
+export const useHoverTouchDown = (
+  element: MaybeRef<HTMLElement>,
+  isActive: MaybeRef<boolean>,
+  extract?: MaybeRef<HTMLElement | string>,
+) => {
+  const isActiveRef = resolveRef(isActive)
+  const elementRef = resolveRef(element)
   const isInsideRef = ref(false)
   const touchMove = useGlobalTouchMove()
 
-  useEvent(element, 'touchstart', (event: TouchEvent) => {
+  useEvent(elementRef, 'touchstart', (event: TouchEvent) => {
     // eslint-disable-next-line prefer-destructuring
     const touch = event.changedTouches[0]
-    isInsideRef.value = isInside(getElementSize(element.value), {
+    isInsideRef.value = isInside(getElementSize(elementRef.value), {
       x: touch.clientX,
       y: touch.clientY,
     })
   })
 
-  useEvent(element, 'touchend', (event: TouchEvent) => {
+  useEvent(elementRef, 'touchend', () => {
     isInsideRef.value = false
   })
 
   watch(touchMove, (touch: Touch) => {
-    if (!isActive.value) {
+    if (!isActiveRef.value) {
       return
     }
-    isInsideRef.value = isInside(getElementSize(element.value), {
+    isInsideRef.value = isInside(getElementSize(elementRef.value), {
       x: touch.clientX,
       y: touch.clientY,
     })

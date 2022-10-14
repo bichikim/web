@@ -1,6 +1,6 @@
 import {PureObject} from 'src/types'
 const {entries, fromEntries} = Object
-import {flow} from '../flow'
+import {flow} from 'src/functional/flow'
 
 /**
  * remove keys which has undefined value

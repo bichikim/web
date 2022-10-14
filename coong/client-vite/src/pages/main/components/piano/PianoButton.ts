@@ -31,15 +31,15 @@ export const HPianoButton = defineComponent({
       piano.play()
     }
 
-    const onMouseout = () => {
-      isKeyDown.value = false
-    }
-
     const hoverPlay = () => {
       if (isGlobalPointDown.value) {
         isKeyDown.value = true
         piano.play()
       }
+    }
+
+    const mouseout = () => {
+      isKeyDown.value = false
     }
 
     watch(isGlobalPointDown, (value) => {
@@ -62,7 +62,7 @@ export const HPianoButton = defineComponent({
           down: isKeyDown.value,
         }),
         onMousedown: downPlay,
-        onMouseout,
+        onMouseout: mouseout,
         onMouseover: hoverPlay,
         onPointerupCapture,
         ref: buttonRef,
