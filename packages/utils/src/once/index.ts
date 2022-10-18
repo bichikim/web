@@ -1,9 +1,12 @@
-export const createOnce = (runner: () => any) => {
+export const createOnce = <T>(runner: () => T): (() => T) => {
   let isRun = false
+  let returnValue
   return () => {
     if (!isRun) {
-      runner()
+      returnValue = runner()
       isRun = true
+      return returnValue
     }
+    return returnValue
   }
 }

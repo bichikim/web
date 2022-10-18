@@ -1,9 +1,6 @@
 import {toNumber} from '../to-number'
 import {compact, flow, last, reverse} from '@winter-love/lodash'
-import {fnMap} from '../fn-map'
-import {fnJoin} from '../fn-join'
-import {fnChunk} from '../fn-chunk'
-import {freeze} from '../freeze'
+import {mapFn, joinFn, chunkFn, freeze} from 'src/functional'
 
 const _numberNames = freeze(['0', '일', '이', '삼', '사', '오', '육', '칠', '팔', '구'])
 const _numberUnitNames = freeze(['', '만', '억', '조', '경', '해', '자', '양', '구', '간', '정'])
@@ -79,18 +76,18 @@ export const toKoreanNumberFn = ({
 }: NumberToKoreanOptions = {}) =>
   flow(
     anyToStringArray,
-    mode === 'all' ? fnMap((value) => _numberNames[Number(value)]) : (value) => value,
+    mode === 'all' ? mapFn((value) => _numberNames[Number(value)]) : (value) => value,
     reverse,
-    fnChunk(KoreanChunk),
+    chunkFn(KoreanChunk),
     mode === 'number'
-      ? fnMap(removeUselessZero)
-      : fnMap((value: string[], index: number, array: string[][]) =>
+      ? mapFn(removeUselessZero)
+      : mapFn((value: string[], index: number, array: string[][]) =>
           addSmallNumberUnit(value, !firstOne || index < array.length - 1),
         ),
-    fnMap((value: string[], index: number) => addNumberUnit(value, index)),
-    fnMap((value: string[]) => compact(value).reverse().join(joinString)),
+    mapFn((value: string[], index: number) => addNumberUnit(value, index)),
+    mapFn((value: string[]) => compact(value).reverse().join(joinString)),
     reverse,
-    fnJoin(joinGroup),
+    joinFn(joinGroup),
   )
 
 export const toKoreanNumber = (value?: any, options?: NumberToKoreanOptions) =>

@@ -1,6 +1,6 @@
 import {toNumber} from '../to-number'
 
-export const toFormattedNumber = (
+export const formatNumber = (
   value?: any,
   locale: string = 'ko-KR',
   options: Partial<Intl.NumberFormatOptions> = {},
