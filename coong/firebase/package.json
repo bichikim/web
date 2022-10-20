@@ -1,6 +1,6 @@
 {
   "name": "@coong/firebase",
-  "version": "1.0.25-alpha.15",
+  "version": "1.0.25-alpha.16",
   "private": true,
   "scripts": {
     "emulators": "firebase emulators:exec --only firestore jest",

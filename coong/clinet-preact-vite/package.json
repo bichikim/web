@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/client-preact-vite",
-  "version": "1.0.25-alpha.15",
+  "version": "1.0.25-alpha.16",
   "private": true,
   "description": "",
   "scripts": {
@@ -18,7 +18,7 @@
     "@ts-gql/compiler": "^0.15.3",
     "@ts-gql/tag": "^0.7.0",
     "@urql/preact": "^3.0.2",
-    "@winter-love/lodash": "^1.0.25-alpha.15",
+    "@winter-love/lodash": "^1.0.25-alpha.16",
     "express": "^4.18.1",
     "graphql": "16.3.0",
     "graphql-tag": "^2.12.6",
