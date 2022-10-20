@@ -12,6 +12,14 @@ export const HPianoFlat = defineComponent({
         h(PianoButton, {pianoKey: '1f'}),
         h(PianoButton, {pianoKey: '1g'}),
         h(PianoButton, {pianoKey: '2a'}),
+        h(PianoButton, {pianoKey: '2b'}),
+        h(PianoButton, {pianoKey: '2c'}),
+        h(PianoButton, {pianoKey: '2d'}),
+        h(PianoButton, {pianoKey: '2e'}),
+        h(PianoButton, {pianoKey: '2f'}),
+        h(PianoButton, {pianoKey: '2g'}),
+        h(PianoButton, {pianoKey: '3a'}),
+        h(PianoButton, {pianoKey: '3b'}),
       ])
   },
 })
@@ -19,5 +27,6 @@ export const HPianoFlat = defineComponent({
 export const PianoFlat = styled(HPianoFlat, {
   height: 500,
   position: 'relative',
+  whiteSpace: 'nowrap',
   width: '100%',
 })

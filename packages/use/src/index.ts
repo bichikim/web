@@ -1,6 +1,6 @@
 export * from './bind-ref'
 export * from './create-as-element'
-export * from './debounce'
+export * from './use-debounce'
 export * from './debug'
 export * from './deep-bind-ref'
 export * from './default-ref'

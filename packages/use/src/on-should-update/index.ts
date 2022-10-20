@@ -1,5 +1,5 @@
 import {isSSR} from '@winter-love/utils'
-import {useDebounce} from 'src/debounce'
+import {useDebounce} from 'src/use-debounce'
 import {watch} from 'vue'
 import {useConnection} from '../use-connection'
 import {useEvent} from '../use-event'

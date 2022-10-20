@@ -1,5 +1,5 @@
 export * from '@types/lodash-es'
-export {
+export type {
   AnyKindOfDictionary,
   ArrayIterator,
   AssignCustomizer,

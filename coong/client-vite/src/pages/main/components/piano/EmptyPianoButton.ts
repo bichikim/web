@@ -1,5 +1,6 @@
 import {defineComponent, h} from 'vue'
 import {styled} from '@winter-love/uni'
+import {typeVariants} from './type-variants'
 
 export const HEmptyPianoButton = defineComponent({
   name: 'HEmptyPianoButton',
@@ -11,20 +12,9 @@ export const HEmptyPianoButton = defineComponent({
 export const EmptyPianoButton = styled(
   HEmptyPianoButton,
   {
+    display: 'inline-block',
     height: '100%',
     pointerEvents: 'none',
-    width: 50,
   },
-  {
-    variants: {
-      type: {
-        flat: {
-          width: '50px',
-        },
-        sharp: {
-          width: '30px',
-        },
-      },
-    },
-  },
+  typeVariants,
 )

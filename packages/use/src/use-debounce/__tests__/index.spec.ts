@@ -35,19 +35,21 @@ describe('useDebounce', () => {
   })
   it('should call immediate with waiting 0 and chaining waiting', async () => {
     const scope = effectScope()
+    const clock = useFakeTimers()
     const callback = jest.fn(() => 'foo')
     const wait = ref(0)
-    const func = scope.run(() => {
+    const debounceFunc = scope.run(() => {
       return useDebounce(callback, wait)
     })
-    expectType<() => string>(func)
-    func()
+    expectType<() => string>(debounceFunc)
+    debounceFunc()
+
     expect(callback).toBeCalledTimes(1)
-    const clock = useFakeTimers()
+
     wait.value = 100
     await flushPromises()
     expect(callback).toBeCalledTimes(1)
-    func()
+    debounceFunc()
     expect(callback).toBeCalledTimes(1)
     clock.tick(100)
     expect(callback).toBeCalledTimes(2)
@@ -55,29 +57,30 @@ describe('useDebounce', () => {
     scope.stop()
   })
   it('should call cancel', async () => {
+    const clock = useFakeTimers()
     const scope = effectScope()
     let call
-    const cancel = jest.fn()
-    _debounce.mockImplementation(((handle) => {
-      call = handle
-      return Object.assign(
-        () => {
-          call()
-        },
-        {
-          cancel,
-        },
-      )
-    }) as any)
     const callback = jest.fn(() => 'foo')
     const wait = ref(100)
     const func = scope.run(() => {
       return useDebounce(callback, wait)
     })
     expectType<() => string>(func)
+
     func()
+    clock.tick(100)
     expect(callback).toBeCalledTimes(1)
+
+    func()
+    func.cancel()
+    clock.tick(100)
+    expect(callback).toBeCalledTimes(1)
+
+    func()
     scope.stop()
-    expect(cancel).toBeCalledTimes(1)
+    clock.tick(100)
+    expect(callback).toBeCalledTimes(1)
+
+    clock.restore()
   })
 })

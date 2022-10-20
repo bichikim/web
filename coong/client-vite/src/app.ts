@@ -1,6 +1,7 @@
 import {App, Component, createApp, createSSRApp} from 'vue'
 import {createRouter} from './routes'
 import {createPinia} from 'pinia'
+import {disableContextMenu} from 'src/plugins/disable-context-menu'
 
 export interface CreateAppOptions {
   root: Component
@@ -12,6 +13,8 @@ const setup = (app: App) => {
 
   const router = createRouter()
   app.use(router)
+
+  app.use(disableContextMenu)
 
   return {
     router,

@@ -4,6 +4,7 @@ import {defineComponent, h, PropType, ref, toRef, watch} from 'vue'
 import {getDataBooleanAttrs} from './get-data-boolean-attrs'
 import {useGlobalPointDown} from './use-global-pointer-down'
 import {useHoverTouchDown} from './use-hover-touch-down'
+import {typeVariants} from './type-variants'
 
 const onPointerupCapture = (event: PointerEvent) => {
   event.preventDefault()
@@ -49,7 +50,6 @@ export const HPianoButton = defineComponent({
     })
 
     watch(isHoverDown, (value) => {
-      isKeyDown.value = value
       if (value) {
         piano.play()
       }
@@ -77,21 +77,12 @@ export const PianoButton = styled(
       backgroundColor: 'blue',
     },
     backgroundColor: 'red',
+    display: 'inline-block',
+    flexShrink: 0,
     height: '100%',
     pointerEvents: 'auto',
     touchAction: 'none',
     width: '50px',
   },
-  {
-    variants: {
-      type: {
-        flat: {
-          width: '50px',
-        },
-        sharp: {
-          width: '30px',
-        },
-      },
-    },
-  },
+  typeVariants,
 )
