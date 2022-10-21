@@ -20,19 +20,16 @@ export const HPianoButton = defineComponent({
     const pianoKey = toRef(props, 'pianoKey')
     const piano = usePiano(pianoKey.value)
     const isKeyDown = ref(false)
-    // const isPlayed = ref(false)
 
     const isHoverDown = useHoverTouchDown(buttonRef)
 
-    const downPlay = (event: MouseEvent & {sourceCapabilities: any}) => {
-      if (event.sourceCapabilities.firesTouchEvents) {
-        return
-      }
+    const downPlay = () => {
       isKeyDown.value = true
       piano.play()
     }
 
     const hoverPlay = () => {
+      // console.log('hover')
       if (isGlobalPointDown.value) {
         isKeyDown.value = true
         piano.play()
@@ -40,13 +37,13 @@ export const HPianoButton = defineComponent({
     }
 
     const mouseout = () => {
-      // isKeyDown.value = false
+      isKeyDown.value = false
     }
 
     watch(isGlobalPointDown, (value) => {
-      // if (!value) {
-      //   isKeyDown.value = false
-      // }
+      if (!value) {
+        isKeyDown.value = false
+      }
     })
 
     watch(isHoverDown, (value) => {
