@@ -13,6 +13,15 @@ describe('isComponent', () => {
       ),
     ).toBe(true)
   })
+  it('should return true for a component (render)', () => {
+    expect(
+      isComponent(
+        defineComponent({
+          render: () => null,
+        }),
+      ),
+    ).toBe(true)
+  })
   it('should return true for a functional component', () => {
     expect(isComponent(() => null)).toBe(true)
   })
@@ -29,7 +38,7 @@ describe('isComponent', () => {
     expect(isComponent('div')).toBe(false)
   })
   it('should return false with none component null', () => {
-    expect(isComponent('div')).toBe(false)
+    expect(isComponent(null)).toBe(false)
   })
   it('should return false with none component undefined', () => {
     expect(isComponent(undefined)).toBe(false)

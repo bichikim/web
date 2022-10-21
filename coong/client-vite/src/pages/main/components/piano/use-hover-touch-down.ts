@@ -2,38 +2,29 @@ import {MaybeRef, resolveRef, useEvent} from '@winter-love/use'
 import {ref, watch} from 'vue'
 import {useGlobalTouchMove} from './use-global-touch-move'
 
-export const useHoverTouchDown = (element: MaybeRef<HTMLElement>, isActive: MaybeRef<boolean>) => {
+export const useHoverTouchDown = (
+  element: MaybeRef<HTMLElement>,
+  isActive: MaybeRef<boolean> = true,
+) => {
   const isActiveRef = resolveRef(isActive)
   const elementRef = resolveRef(element)
   const isInsideRef = ref(false)
   const touchMove = useGlobalTouchMove()
   const identifier = ref(-1)
 
-  const updateInside = (
-    touches: TouchList,
-    value: boolean,
-    validate: (touch: Touch) => boolean,
-  ) => {
-    // TouchList 는 list 가 아니다
-    // eslint-disable-next-line unicorn/no-for-loop
-    for (let index = 0; index < touches.length; index += 1) {
-      const touch = touches[index]
-      const isInside = document.elementFromPoint(touch.clientX, touch.clientY) === elementRef.value
-      if (isInside && validate(touch)) {
-        isInsideRef.value = isInside && value
-        identifier.value = touch.identifier
-      }
-    }
-  }
-
   useEvent(elementRef, 'touchstart', (event: TouchEvent) => {
+    if (identifier.value >= 0) {
+      return
+    }
     const touches = event.changedTouches
     // eslint-disable-next-line unicorn/no-for-loop
     for (let index = 0; index < touches.length; index += 1) {
       const touch = touches[index]
-      isInsideRef.value =
-        document.elementFromPoint(touch.clientX, touch.clientY) === elementRef.value
-      identifier.value = touch.identifier
+      const isInside = document.elementFromPoint(touch.clientX, touch.clientY) === elementRef.value
+      if (isInside) {
+        isInsideRef.value = true
+        identifier.value = touch.identifier
+      }
     }
   })
 
@@ -42,8 +33,11 @@ export const useHoverTouchDown = (element: MaybeRef<HTMLElement>, isActive: Mayb
     // eslint-disable-next-line unicorn/no-for-loop
     for (let index = 0; index < touches.length; index += 1) {
       const touch = touches[index]
-      const isInside = document.elementFromPoint(touch.clientX, touch.clientY) === elementRef.value
-      if (isInside) {
+
+      if (
+        identifier.value === touch.identifier &&
+        document.elementFromPoint(touch.clientX, touch.clientY) === elementRef.value
+      ) {
         isInsideRef.value = false
         identifier.value = -1
       }
@@ -51,7 +45,7 @@ export const useHoverTouchDown = (element: MaybeRef<HTMLElement>, isActive: Mayb
   })
 
   watch(touchMove, (touches: TouchList) => {
-    if (!isActiveRef.value) {
+    if (identifier.value >= 0) {
       return
     }
 
@@ -66,10 +60,6 @@ export const useHoverTouchDown = (element: MaybeRef<HTMLElement>, isActive: Mayb
       } else if (identifier.value === touch.identifier) {
         isInsideRef.value = false
         identifier.value = -1
-      }
-      if (isInside) {
-        // no more check
-        return
       }
     }
   })

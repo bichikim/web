@@ -1,4 +1,4 @@
-import {useDebounce, useEvent} from '@winter-love/use'
+import {useEvent, useThrottle} from '@winter-love/use'
 import {createOnce} from '@winter-love/utils'
 import {effectScope, ref, Ref} from 'vue'
 
@@ -9,11 +9,12 @@ let touchmove: Ref<TouchList>
 const initEvent = createOnce(() => {
   touchmove = scope.run(() => {
     const touchmove = ref(null)
-    const updateTouch = useDebounce((event: TouchEvent) => {
-      console.log('hoo')
+
+    const update = (event: TouchEvent) => {
       touchmove.value = event.changedTouches
-    })
-    useEvent(window, 'touchmove', updateTouch)
+    }
+
+    useEvent(window, 'touchmove', update)
 
     return touchmove
   })

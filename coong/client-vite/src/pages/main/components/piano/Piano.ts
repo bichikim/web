@@ -1,5 +1,4 @@
 import {defineComponent, h} from 'vue'
-import {PianoButton} from './PianoButton'
 import {styled} from '@winter-love/uni'
 import {PianoFlat} from './PianoFlat'
 import {PianoSharp} from './PianoSharp'
@@ -7,7 +6,7 @@ import {PianoSharp} from './PianoSharp'
 export const HPiano = defineComponent({
   setup: () => {
     return () =>
-      h('div', [
+      h('section', [
         //
         h(PianoFlat, {class: 'flat'}),
         h(PianoSharp, {class: 'sharp'}),

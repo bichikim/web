@@ -52,7 +52,7 @@
   "dependencies": {
     "@vue/devtools-api": "^6.1.3",
     "@winter-love/utils": "^1.0.25-alpha.16",
-    "vue": "^3.2.40"
+    "vue": "^3.2.41"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^2.3.1",
@@ -74,7 +74,7 @@
   "publishConfig": {
     "access": "public"
   },
-  "gitHead": "8e317dee75aded4e8a6d9d1f2556a5a7ab3bdb93",
+  "gitHead": "162bc0badb2b0932df3c9dc51cc1ff7af3587140",
   "tsup": {
     "entry": [
       "src/index.ts",

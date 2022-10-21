@@ -1,4 +1,4 @@
-const {stringify} = JSON
+import {stringify} from 'safe-stable-stringify'
 
 /**
  * stringify 시 data 에 문제가 있더라도 에러를 던지지 않고 defaultValue 를 리턴 합니다

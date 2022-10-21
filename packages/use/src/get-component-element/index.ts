@@ -1,12 +1,10 @@
-import {ComponentPublicInstance} from 'vue'
+import {MaybeElement} from 'src/types'
 
 /**
  * (element | component) ref 에서 element 를 가져옵니다
  * @param maybeElement
  */
-export const getComponentElement = (
-  maybeElement?: ComponentPublicInstance | HTMLElement,
-): HTMLElement | null => {
+export const getComponentElement = (maybeElement?: MaybeElement): HTMLElement | null => {
   if (maybeElement instanceof HTMLElement) {
     return maybeElement
   }

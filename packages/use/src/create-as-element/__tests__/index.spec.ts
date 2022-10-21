@@ -49,17 +49,26 @@ describe('createAsElement', () => {
 
     await expect(wrapper.get('div').text()).toBe('bar')
   })
-  it('should render with warning (original h)', async () => {
+  it('should render with warning (original h) (check original case)', async () => {
+    let _data
+    jest.spyOn(console, 'warn').mockImplementationOnce((...data: any): any => {
+      _data = data
+    })
     const name = ref('foo')
+
+    const MyComponent = defineComponent((_, {slots}) => {
+      return () => h('div', {style: 'color:red'}, slots.defauil?.())
+    })
 
     const component = defineComponent({
       setup: () => {
-        return () => h('div', {style: 'color:red'}, () => name.value)
+        return () => h(MyComponent, {}, name.value)
       },
     })
 
     const wrapper = mount(component)
 
     await expect(wrapper.get('div').text()).toBe('')
+    expect(_data[0]).toEqual(expect.any(String))
   })
 })

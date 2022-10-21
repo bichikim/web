@@ -7,13 +7,13 @@
     "build:spa": "vite build --outDir dist/spa",
     "dev:spa": "vite --host",
     "fix": "npx vue-demi-fix",
-    "generate-pwa-icons": "pnpx pwa-asset-generator public/favicon.svg public/images/pwa --manifest resource/manifest.json --path-override /images/pwa",
+    "generate-pwa-icons": "pnpx pwa-asset-generator public/favicon.svg public/images/pwa --path-override /images/pwa",
+    "g": "pnpx capacitor-resources ",
     "generator:graphql": "graphql-codegen",
     "postinstall": "ts-gql build"
   },
   "dependencies": {
     "@apollo/client": "^3.7.0",
-    "@supabase/supabase-js": "^1.35.4",
     "@ts-gql/compiler": "^0.15.3",
     "@ts-gql/tag": "^0.7.0",
     "@urql/vue": "^1.0.2",
@@ -27,7 +27,7 @@
     "howler": "^2.2.3",
     "pinia": "^2.0.22",
     "vexflow": "^4.0.3",
-    "vue": "3.2.40",
+    "vue": "3.2.41",
     "vue-query": "^2.0.0-beta.12",
     "vue-router": "^4.0.15"
   },

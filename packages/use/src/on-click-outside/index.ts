@@ -1,9 +1,9 @@
-import {computed, Ref} from 'vue'
-import {useEvent} from 'src/use-event'
-import {pickElement} from 'src/pick-element'
-import {PossibleElement} from 'src/types'
-import {bindRef} from 'src/bind-ref'
 import {isSSR} from '@winter-love/utils'
+import {bindRef} from 'src/bind-ref'
+import {getComponentElement} from 'src/get-component-element'
+import {MaybeElement} from 'src/types'
+import {useEvent} from 'src/use-event'
+import {computed, Ref} from 'vue'
 
 export type OnClickOutsideHandle<Event extends keyof WindowEventMap> = (
   event: WindowEventMap[Event],
@@ -17,7 +17,7 @@ export interface OnClickOutsideOptions<Event extends keyof WindowEventMap> {
  * @useful ⭐⭐⭐⭐
  */
 export const onClickOutside = <Event extends keyof WindowEventMap = 'pointerdown'>(
-  target: Ref<PossibleElement>,
+  target: Ref<MaybeElement>,
   handle: OnClickOutsideHandle<Event>,
   options: OnClickOutsideOptions<Event> = {},
 ) => {
@@ -26,7 +26,7 @@ export const onClickOutside = <Event extends keyof WindowEventMap = 'pointerdown
   const targetRef = bindRef(target)
 
   const elementRef = computed(() => {
-    return pickElement(targetRef.value)
+    return getComponentElement(targetRef.value)
   })
 
   const listener = (event: WindowEventMap[Event]) => {

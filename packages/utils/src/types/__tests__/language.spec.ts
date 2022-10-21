@@ -12,7 +12,6 @@ describe('language', () => {
 
       // noinspection JSUnusedLocalSymbols
       expectType<[number]>(typeTest((foo: string, bar: number) => 'foo'))
-      expect(true).toBeTruthy()
     })
   })
   describe('ArrayLength', () => {

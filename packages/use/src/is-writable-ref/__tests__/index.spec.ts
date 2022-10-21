@@ -1,7 +1,7 @@
 /**
  * @jest-environment jsdom
  */
-import {computed, mountComposition, ref, toRefs} from '@winter-love/vue-test'
+import {computed, mountComposition, ref, toRef, toRefs} from '@winter-love/vue-test'
 import {isWritableRef} from '../'
 
 describe('isWritableRef', () => {
@@ -37,6 +37,23 @@ describe('isWritableRef', () => {
       (props) => {
         // const name = toRef(props, 'foo')
         const {foo} = toRefs(props)
+        return {
+          isWritable: isWritableRef(foo),
+        }
+      },
+      {
+        props: {
+          foo: 'bar',
+        },
+      },
+    )
+
+    expect(wrapper.setupState.isWritable).toBe(false)
+  })
+  it('should return false with toRef of props', () => {
+    const wrapper = mountComposition(
+      (props) => {
+        const foo = toRef(props, 'foo')
         return {
           isWritable: isWritableRef(foo),
         }

@@ -4,13 +4,13 @@
 }
 
 * {
-    user-select: none;
+    -ms-user-select: none; /* Internet Explorer/Edge */
     -webkit-touch-callout: none; /* Safari */
     -webkit-user-select: none; /* Chrome */
     -moz-user-select: none; /* Firefox */
-    -ms-user-select: none; /* Internet Explorer/Edge */
+    user-select: none;
 }
 
-* {
+{
     touch-action: none
 }

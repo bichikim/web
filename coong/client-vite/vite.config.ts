@@ -17,9 +17,6 @@ import {extname} from 'path'
 // eslint-disable-next-line import/no-named-as-default-member
 dotenv.config()
 
-const appName = 'vue web app'
-const shortName = 'vue app'
-
 // eslint-disable-next-line max-lines-per-function
 export default defineConfig(() => {
   return {
@@ -65,10 +62,26 @@ export default defineConfig(() => {
       vitePWA({
         includeAssets: ['favicon.svg', 'robots.txt', 'safari-pinned-tab.svg'],
         manifest: {
+          icons: [
+            {
+              purpose: 'any maskable',
+              sizes: '192x192',
+              src: 'images/pwa/manifest-icon-192.maskable.png',
+              type: 'image/png',
+            },
+            {
+              purpose: 'any maskable',
+              sizes: '512x512',
+              src: 'images/pwa/manifest-icon-512.maskable.png',
+              type: 'image/png',
+            },
+          ],
+
           // ...manifest,
-          name: appName,
+          name: 'coong',
+
           // eslint-disable-next-line camelcase
-          short_name: shortName,
+          short_name: 'coong',
           // eslint-disable-next-line camelcase
           theme_color: '#ffffff',
         },

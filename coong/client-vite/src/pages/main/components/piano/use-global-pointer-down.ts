@@ -11,11 +11,11 @@ const initEvent = createOnce(() => {
     const mousedown = ref(false)
     const thisDocument = getDocument()
 
-    useEvent(getWindow(), 'pointerdown', () => {
+    useEvent(getWindow(), 'mousedown', () => {
       mousedown.value = true
     })
 
-    useEvent(getWindow(), 'pointerup', () => {
+    useEvent(getWindow(), 'mouseup', () => {
       mousedown.value = false
     })
 

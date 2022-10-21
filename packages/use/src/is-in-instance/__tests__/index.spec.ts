@@ -6,7 +6,7 @@ import {isInInstance} from '../'
 import {mount} from '@vue/test-utils'
 
 describe('isInInstance', () => {
-  it('should return ture if it is in a vue component instance', () => {
+  it('should return ture if the hook is in a vue component instance', () => {
     const Component = defineComponent({
       setup() {
         const result = isInInstance()
@@ -18,7 +18,7 @@ describe('isInInstance', () => {
 
     expect(wrapper.get('div').text()).toBe('true')
   })
-  it('should return false if it is not in a vue component instance', () => {
+  it('should return false if the hook is not in a vue component instance', () => {
     const result = isInInstance()
 
     expect(result).toBe(false)

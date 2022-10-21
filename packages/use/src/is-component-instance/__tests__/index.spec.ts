@@ -3,19 +3,56 @@
  */
 import {isComponentInstance} from '../'
 import {mount} from '@vue/test-utils'
-import {defineComponent, h} from 'vue'
+import {defineComponent, h, ref, watch} from 'vue'
 
 describe('isComponentInstance', () => {
-  it('should return true', () => {
+  it('should return true with a component', async () => {
+    let _isComponentInstance
     const Component = defineComponent({
       setup() {
         return () => h('div')
       },
     })
 
-    const wrapper = mount(Component)
+    const Root = defineComponent({
+      setup() {
+        const element = ref(null)
 
-    expect(isComponentInstance(wrapper.vm)).toBe(true)
+        watch(element, (element) => {
+          _isComponentInstance = isComponentInstance(element)
+        })
+
+        return () => h(Component, {ref: element})
+      },
+    })
+
+    const wrapper = await mount(Root)
+
+    expect(_isComponentInstance).toBe(true)
+    expect(isComponentInstance(wrapper.element)).toBe(false)
+  })
+  it('should return true with functional component', async () => {
+    let _isComponentInstance
+    let _isElement
+    const Component = () => h('div')
+
+    const Root = defineComponent({
+      setup() {
+        const element = ref(null)
+
+        watch(element, (element) => {
+          _isElement = element instanceof HTMLElement
+          _isComponentInstance = isComponentInstance(element)
+        })
+
+        return () => h(Component, {ref: element})
+      },
+    })
+
+    const wrapper = await mount(Root)
+
+    expect(_isComponentInstance).toBe(false)
+    expect(_isElement).toBe(true)
     expect(isComponentInstance(wrapper.element)).toBe(false)
   })
 })
