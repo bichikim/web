@@ -13,6 +13,7 @@ export const EmptyPianoButton = styled(
   HEmptyPianoButton,
   {
     display: 'inline-block',
+    flexShrink: 0,
     height: '100%',
     pointerEvents: 'none',
   },

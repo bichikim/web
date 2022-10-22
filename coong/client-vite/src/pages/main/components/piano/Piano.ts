@@ -4,6 +4,7 @@ import {PianoFlat} from './PianoFlat'
 import {PianoSharp} from './PianoSharp'
 
 export const HPiano = defineComponent({
+  name: 'Piano',
   setup: () => {
     return () =>
       h('section', [

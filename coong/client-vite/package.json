@@ -6,6 +6,7 @@
   "scripts": {
     "build:spa": "vite build --outDir dist/spa",
     "dev:spa": "vite --host",
+    "dev:preview": "vite preview",
     "fix": "npx vue-demi-fix",
     "generate-pwa-icons": "pnpx pwa-asset-generator public/favicon.svg public/images/pwa --path-override /images/pwa",
     "g": "pnpx capacitor-resources ",

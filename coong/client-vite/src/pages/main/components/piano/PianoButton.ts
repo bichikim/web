@@ -11,6 +11,7 @@ const onPointerupCapture = (event: PointerEvent) => {
 }
 
 export const HPianoButton = defineComponent({
+  name: 'PianoButton',
   props: {
     pianoKey: {default: '1c', type: String as PropType<PianoKeys>},
   },
@@ -29,7 +30,6 @@ export const HPianoButton = defineComponent({
     }
 
     const hoverPlay = () => {
-      // console.log('hover')
       if (isGlobalPointDown.value) {
         isKeyDown.value = true
         piano.play()
@@ -71,14 +71,18 @@ export const HPianoButton = defineComponent({
 export const PianoButton = styled(
   HPianoButton,
   {
-    '&[data-down]': {
-      backgroundColor: 'blue',
-    },
-    backgroundColor: 'red',
-    display: 'inline-block',
+    border: '1px solid #ccc',
+    borderRadius: '0 0 3px 3px',
+    boxShadow:
+      'inset 0 1px 0px #fff, inset 0 -1px 0px #fff, inset 1px 0px 0px #fff,' +
+      ' inset -1px 0px 0px #fff, 0 4px 3px rgb(0 0 0 / 70%)',
+    display: 'inline-flex',
     flexShrink: 0,
     height: '100%',
+    overflow: 'hidden',
+    p: 0,
     pointerEvents: 'auto',
+    position: 'relative',
     touchAction: 'none',
     width: '50px',
   },

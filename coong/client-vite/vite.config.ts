@@ -18,7 +18,8 @@ import {extname} from 'path'
 dotenv.config()
 
 // eslint-disable-next-line max-lines-per-function
-export default defineConfig(() => {
+export default defineConfig(({mode}) => {
+  console.log(mode)
   return {
     build: {
       chunkSizeWarningLimit: 600,
@@ -26,7 +27,10 @@ export default defineConfig(() => {
     },
     define: {
       __DEV__: JSON.stringify('import.meta.env.DEV'),
-      'process.env.NODE_ENV': JSON.stringify('import.meta.env.MODE'),
+      'process.env.NODE_ENV': JSON.stringify(mode),
+    },
+    esbuild: {
+      legalComments: 'none',
     },
     optimizeDeps: {
       exclude: ['vite'],

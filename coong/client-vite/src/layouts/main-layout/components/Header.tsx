@@ -13,6 +13,6 @@ export const Header = defineComponent({
     navList: {type: Array as PropType<NavMenuType[]>},
   },
   setup: () => {
-    return () => <div>header</div>
+    return () => <div>Piano</div>
   },
 })

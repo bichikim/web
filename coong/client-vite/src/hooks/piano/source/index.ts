@@ -1,3 +1,10 @@
+import p21 from './21.mp3'
+import p22 from './22.mp3'
+import p23 from './23.mp3'
+import p24 from './24.mp3'
+import p25 from './25.mp3'
+import p26 from './26.mp3'
+import p27 from './27.mp3'
 import p28 from './28.mp3'
 import p29 from './29.mp3'
 import p30 from './30.mp3'
@@ -36,6 +43,13 @@ import p62 from './62.mp3'
 import p63 from './63.mp3'
 
 export const indexKeys = {
+  '0f': p21,
+  '0fis': p22,
+  '0g': p23,
+  '0gis': p24,
+  '1a': p25,
+  '1ais': p26,
+  '1b': p27,
   '1c': p28,
   '1cis': p29,
   '1d': p30,
@@ -47,7 +61,6 @@ export const indexKeys = {
   '1gis': p36,
   '2a': p37,
   '2ais': p38,
-
   '2b': p39,
   '2c': p40,
   '2cis': p41,
