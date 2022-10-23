@@ -9,8 +9,12 @@ const routes: RouteRecordRaw[] = [
   {
     children: [
       {
-        component: () => import('src/pages/main/Index'),
+        component: () => import('src/pages/main'),
         path: '',
+      },
+      {
+        component: () => import('src/pages/test'),
+        path: 'test',
       },
     ],
     component: () => import('src/layouts/main-layout/Index'),

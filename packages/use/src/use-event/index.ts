@@ -65,7 +65,7 @@ export function useEvent<Key extends string>(
     const element = elementRef.value
     if (element) {
       isActiveRef.value = true
-      element.addEventListener(eventName, handle, {
+      element.addEventListener?.(eventName, handle, {
         capture,
         passive,
       })
@@ -76,7 +76,7 @@ export function useEvent<Key extends string>(
     isActiveRef.value = false
     const element = elementRef.value
     if (element) {
-      element.removeEventListener(eventName, handle)
+      element.removeEventListener?.(eventName, handle)
     }
   }
 

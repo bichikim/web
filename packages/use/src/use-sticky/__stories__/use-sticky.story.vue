@@ -19,11 +19,11 @@ const container = ref(null)
 const position = ref<UseStickyPosition>('bottom')
 const value = useSticky(modal, root, reactive({container}))
 watch(value, (value) => {
-  if (!modal.value) {
-    return
+  if (modal.value && modal.value.style) {
+    modal.value.style.top = `${value.y}px`
+    modal.value.style.left = `${value.x}px`
+    modal.value.style.minWidth = value.width ? `${value.width}px` : null
   }
-  modal.value.style.top = `${value.y}px`
-  modal.value.style.left = `${value.x}px`
 })
 </script>
 

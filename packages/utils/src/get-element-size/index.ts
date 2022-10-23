@@ -24,11 +24,17 @@ export const getElementSize = (
       y: 0,
     }
   }
-  const rect = (element as any).getBoundingClientRect()
+  const rect = (element as any).getBoundingClientRect?.()
+  if (rect) {
+    return {
+      height: rect.height,
+      width: rect.width,
+      x: rect.x,
+      y: rect.y,
+    }
+  }
+
   return {
-    height: rect.height,
-    width: rect.width,
-    x: rect.x,
-    y: rect.y,
+    ...defaultRect,
   }
 }

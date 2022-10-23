@@ -381,7 +381,8 @@ export const createVueStitches = <
         process.env.NODE_ENV === 'production'
           ? ['as', ...props]
           : {
-              ...Object.fromEntries(props.map((key) => [key, String])),
+              // for histoire props inspector
+              ...Object.fromEntries(props.map((key) => [key, null])),
               as: null,
             },
       setup: (props, {attrs, slots}) => {
@@ -395,6 +396,7 @@ export const createVueStitches = <
         })
 
         const nextAsProp = computed(() => {
+          // only none Component element (string) use as
           if (typeof element !== 'string') {
             return asRef.value
           }

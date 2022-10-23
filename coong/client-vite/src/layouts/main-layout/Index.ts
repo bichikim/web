@@ -8,7 +8,6 @@ export const MainLayout = defineComponent({
     return () =>
       h('div', [
         //
-        h(Header),
         h(RouterView),
         h(Footer),
       ])

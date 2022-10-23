@@ -1,8 +1,9 @@
 import {defineComponent, h} from 'vue'
 import {Piano} from './components'
+import {styled} from '@winter-love/uni'
 
-export const Main = defineComponent({
-  name: 'MainPage',
+export const HMainPage = defineComponent({
+  name: 'HMainPage',
   setup() {
     return () =>
       h('main', [
@@ -12,4 +13,6 @@ export const Main = defineComponent({
   },
 })
 
-export default Main
+export const MainPage = styled(HMainPage, {
+  pb: 10,
+})

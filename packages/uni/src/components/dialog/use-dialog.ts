@@ -1,4 +1,4 @@
-import {bindDeep, MaybeRef, resolveRef} from '@winter-love/use'
+import {toDeepRef, MaybeRef, resolveRef} from '@winter-love/use'
 import {uid} from '@winter-love/utils'
 import {
   ComponentPublicInstance,
@@ -77,13 +77,13 @@ export const useLocalDialog = (
     return context.dialogs[idRef.value]
   })
 
-  const message = bindDeep(itemRef, ['message'])
+  const message = toDeepRef(itemRef, ['message'])
 
-  const isOpen = bindDeep(itemRef, ['isOpen'])
+  const isOpen = toDeepRef(itemRef, ['isOpen'])
 
-  const element = bindDeep(itemRef, ['element'])
+  const element = toDeepRef(itemRef, ['element'])
 
-  const props = bindDeep(itemRef, ['props'])
+  const props = toDeepRef(itemRef, ['props'])
 
   const open = (value: boolean) => {
     isOpen.value = value

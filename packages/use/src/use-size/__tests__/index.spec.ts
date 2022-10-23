@@ -1,7 +1,7 @@
 /**
  * @jest-environment jsdom
  */
-import {useSizeRef} from '../index'
+import {useSize} from '../index'
 import {ref} from 'vue'
 
 jest.mock('src/on-element-resize')
@@ -30,7 +30,7 @@ describe('useSizeRef', () => {
         y: 0,
       }),
     })
-    const sizeRef = useSizeRef(fakeElement as any, fakeContainer as any)
+    const sizeRef = useSize(fakeElement as any, fakeContainer as any)
     expect(scrollCallback).toEqual(expect.any(Function))
     expect(sizeRef.value).toEqual(elementSize)
     elementSize.x = 50

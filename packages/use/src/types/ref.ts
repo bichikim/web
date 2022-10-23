@@ -1,6 +1,8 @@
 import {
   ComponentOptionsBase,
   ComputedRef,
+  EmitsOptions,
+  ObjectEmitsOptions,
   PropType,
   Ref,
   UnwrapRef,

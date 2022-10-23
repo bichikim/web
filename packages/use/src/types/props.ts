@@ -1,4 +1,4 @@
-import {Prop, PropType} from 'vue'
+import {EmitsOptions, ObjectEmitsOptions, Prop, PropType} from 'vue'
 import {PureObject} from '@winter-love/utils'
 
 export type DefaultFactory<T> = (props: PureObject) => T | null | undefined
@@ -79,3 +79,18 @@ export type ExtractPropTypesForUsing<O> = O extends object
   : {
       [K in string]: any
     }
+
+export type EmitsToProps<T extends EmitsOptions> = T extends string[]
+  ? {
+      [K in string & `on${Capitalize<T[number]>}`]?: (...args: any[]) => any
+    }
+  : T extends ObjectEmitsOptions
+  ? {
+      [K in string & `on${Capitalize<string & keyof T>}`]?: K extends `on${infer C}`
+        ? T[Uncapitalize<C>] extends null
+          ? (...args: any[]) => any
+          : (...args: T[Uncapitalize<C>] extends (...args: infer P) => any ? P : never) => any
+        : never
+    }
+  : // eslint-disable-next-line @typescript-eslint/ban-types
+    {}

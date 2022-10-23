@@ -9,14 +9,12 @@
         <div ref="containerRef" class="container">
           <div
             ref="itemRef"
-            class="item"
             :style="{width: `${widthRef}px`, height: `${heightRef}px`}"
+            class="item"
           />
         </div>
       </div>
       <div>{{ size }}</div>
-      <div>{{ widthRef }}</div>
-      <div>{{ heightRef }}</div>
     </variant>
     <template #controls>
       <hst-slider v-model="widthRef" :min="0" :max="200" title="width" />
@@ -29,11 +27,11 @@
 
 <script setup lang="ts">
 import {ref} from 'vue'
-import {useSizeRef} from '../index'
+import {useSize} from '../index'
 
 const itemRef = ref(null)
 const scrollRef = ref(null)
-const size = useSizeRef(itemRef, scrollRef)
+const size = useSize(itemRef, scrollRef)
 const widthRef = ref(100)
 const heightRef = ref(100)
 const containerWidthRef = ref(400)
@@ -57,8 +55,8 @@ const containerHeightRef = ref(400)
 }
 .item {
   position: absolute;
-  left: 200px;
-  top: 200px;
+  left: 400px;
+  top: 400px;
   width: 50px;
   height: 50px;
   background: red;

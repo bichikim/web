@@ -35,6 +35,10 @@ describe('onElementResize', () => {
     globalThis.ResizeObserver = ResizeObserver as any
   })
 
+  afterEach(() => {
+    globalThis.ResizeObserver = nativeResizeObserver
+  })
+
   it('should call callback when element size is changed', () => {
     _isElement.mockReturnValue(true)
     const callback = jest.fn()

@@ -25,37 +25,34 @@ export default defineConfig({
   vite: {
     plugins: [
       vue(),
-      autoImport({
-        imports: ['vue'],
-      }),
-      babel({
-        apply: 'serve',
-        babelConfig: {
-          babelrc: false,
-          configFile: false,
-          plugins: [
-            [
-              'module-resolver',
-              {
-                alias: {
-                  src: './src',
-                },
-                cwd: 'packagejson',
-              },
-            ],
-          ],
-          presets: [
-            [
-              '@babel/preset-typescript',
-              {
-                allExtensions: true,
-                isTSX: true,
-              },
-            ],
-          ],
-        },
-        filter: /\.[jt]sx?$/u,
-      }),
+      // babel({
+      //   apply: 'serve',
+      //   babelConfig: {
+      //     babelrc: false,
+      //     configFile: false,
+      //     plugins: [
+      //       [
+      //         'module-resolver',
+      //         {
+      //           alias: {
+      //             src: './src',
+      //           },
+      //           cwd: 'packagejson',
+      //         },
+      //       ],
+      //     ],
+      //     presets: [
+      //       [
+      //         '@babel/preset-typescript',
+      //         {
+      //           allExtensions: true,
+      //           isTSX: true,
+      //         },
+      //       ],
+      //     ],
+      //   },
+      //   filter: /\.[jt]sx?$/u,
+      // }),
     ],
     resolve: {
       alias: [

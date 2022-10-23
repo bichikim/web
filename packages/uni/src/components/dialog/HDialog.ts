@@ -1,5 +1,4 @@
-import {createAsElement, useSticky} from '@winter-love/use'
-import {RelativePosition} from '@winter-love/utils'
+import {createAsElement, useSticky, UseStickyRelativePosition} from '@winter-love/use'
 import {computed, defineComponent, h, PropType, reactive, ref, Teleport, toRef} from 'vue'
 import {provideControlDialog} from './use-dialog'
 
@@ -16,8 +15,8 @@ export const HDialog = defineComponent({
     for: null,
     modelValue: {default: false, type: Boolean},
     position: {default: 'bottom', type: String as PropType<DialogPosition>},
-    xPosition: {default: 'start', type: String as PropType<RelativePosition>},
-    yPosition: {default: 'start', type: String as PropType<RelativePosition>},
+    xPosition: {default: 'start', type: String as PropType<UseStickyRelativePosition>},
+    yPosition: {default: 'start', type: String as PropType<UseStickyRelativePosition>},
   },
   setup: (props, {slots, attrs, emit}) => {
     const isOpenRef = toRef(props, 'modelValue')
