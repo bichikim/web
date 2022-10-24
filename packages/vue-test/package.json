@@ -26,19 +26,19 @@
     "publish": "npm publish"
   },
   "dependencies": {
-    "@vue/runtime-core": "^3.2",
-    "@vue/test-utils": "^2.0.2",
-    "jest-mock": "^29.0.3",
+    "@vue/runtime-core": "^3.2.41",
+    "@vue/test-utils": "^2.2.0",
+    "jest-mock": "^29.2.1",
     "node-html-parser": "^5.4.2",
     "vue": "^3.2.41"
   },
   "devDependencies": {
     "@types/jest": "^28.1.8",
-    "@types/node": "^18.7.18",
+    "@types/node": "^18.11.4",
     "lodash": "^4.17.21",
     "tsd": "^0.22.0",
-    "tsup": "^6.2.3",
-    "typescript": "^4.8.3"
+    "tsup": "^6.3.0",
+    "typescript": "^4.8.4"
   },
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"

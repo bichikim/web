@@ -4,12 +4,11 @@ import {defineConfig} from 'histoire'
 import babel from 'vite-plugin-babel'
 import {histoireTree} from './scripts/histoire-tree'
 import {viteAlias} from './scripts/vite-alias'
-import autoImport from 'unplugin-auto-import/vite'
 
 export default defineConfig({
   plugins: [HstVue()],
   setupFile: 'histoire.setup.ts',
-  storyMatch: ['**/__stories__/*.story.vue'],
+  storyMatch: ['**/*.story.vue'],
   tree: {
     file: ({title, path}) => {
       const pathTree = histoireTree(path, {
@@ -25,34 +24,34 @@ export default defineConfig({
   vite: {
     plugins: [
       vue(),
-      // babel({
-      //   apply: 'serve',
-      //   babelConfig: {
-      //     babelrc: false,
-      //     configFile: false,
-      //     plugins: [
-      //       [
-      //         'module-resolver',
-      //         {
-      //           alias: {
-      //             src: './src',
-      //           },
-      //           cwd: 'packagejson',
-      //         },
-      //       ],
-      //     ],
-      //     presets: [
-      //       [
-      //         '@babel/preset-typescript',
-      //         {
-      //           allExtensions: true,
-      //           isTSX: true,
-      //         },
-      //       ],
-      //     ],
-      //   },
-      //   filter: /\.[jt]sx?$/u,
-      // }),
+      babel({
+        apply: 'serve',
+        babelConfig: {
+          babelrc: false,
+          configFile: false,
+          plugins: [
+            [
+              'module-resolver',
+              {
+                alias: {
+                  src: './src',
+                },
+                cwd: 'packagejson',
+              },
+            ],
+          ],
+          presets: [
+            [
+              '@babel/preset-typescript',
+              {
+                allExtensions: true,
+                isTSX: true,
+              },
+            ],
+          ],
+        },
+        filter: /\.[jt]sx?$/u,
+      }),
     ],
     resolve: {
       alias: [

@@ -7,7 +7,7 @@
     "dev": "ts-node-dev --clear -r tsconfig-paths/register src/run.ts"
   },
   "dependencies": {
-    "@winter-love/utils": "^1.0.25-alpha.16",
+    "@winter-love/utils": "workspace:^1.0.25-alpha.16",
     "class-transformer": "0.5.1",
     "class-validator": "0.13.2",
     "dotenv": "16.0.0",

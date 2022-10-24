@@ -36,17 +36,17 @@
     "prepare": "tsup --dts"
   },
   "dependencies": {
-    "@winter-love/utils": "^1.0.25-alpha.16",
-    "fast-glob": "^3.2.7",
-    "globby": "^13.1.1",
+    "@winter-love/utils": "workspace:^1.0.25-alpha.16",
+    "fast-glob": "^3.2.12",
+    "globby": "^13.1.2",
     "lodash": "^4.17.21",
-    "node-html-parser": "^5.1.0",
-    "yargs": "^17.3.0"
+    "node-html-parser": "^5.4.2",
+    "yargs": "^17.6.0"
   },
   "devDependencies": {
     "@quasar/extras": "1.13.5",
     "quasar": "2.6.6",
-    "tsup": "^6.1.2",
+    "tsup": "^6.3.0",
     "vue": "latest"
   },
   "publishConfig": {

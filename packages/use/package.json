@@ -38,9 +38,9 @@
     "prepare": "tsup --dts"
   },
   "dependencies": {
-    "@winter-love/lodash": "workspace:*",
-    "@winter-love/utils": "workspace:*",
-    "immer": "^9.0.15",
+    "@winter-love/lodash": "workspace:1.0.25-alpha.16",
+    "@winter-love/utils": "workspace:1.0.25-alpha.16",
+    "immer": "^9.0.16",
     "vue": "^3.2.41"
   },
   "devDependencies": {

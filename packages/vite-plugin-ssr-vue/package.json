@@ -45,9 +45,9 @@
     "prepare": "tsup --dts"
   },
   "dependencies": {
-    "@vue/server-renderer": "^3.2",
-    "node-html-parser": "^5.2.0",
-    "vue": "^3.2"
+    "@vue/server-renderer": "^3.2.41",
+    "node-html-parser": "^5.4.2",
+    "vue": "^3.2.41"
   },
   "publishConfig": {
     "access": "public"

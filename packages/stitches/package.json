@@ -27,18 +27,18 @@
   },
   "dependencies": {
     "@stitches/core": "^1.2.8",
-    "@vue/runtime-core": "^3.2.39",
-    "@winter-love/lodash": "workspace:*",
+    "@vue/runtime-core": "^3.2.41",
+    "@winter-love/lodash": "workspace:1.0.25-alpha.16",
     "vue": "^3.2.41"
   },
   "devDependencies": {
-    "@types/node": "^18.7.18",
-    "@vue/server-renderer": "^3.2.39",
+    "@types/node": "^18.11.4",
+    "@vue/server-renderer": "^3.2.41",
     "lodash": "^4.17.21",
     "tsd": "^0.22.0",
     "tslib": "^2.4.0",
-    "tsup": "^6.2.3",
-    "typescript": "^4.8.3"
+    "tsup": "^6.3.0",
+    "typescript": "^4.8.4"
   },
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"

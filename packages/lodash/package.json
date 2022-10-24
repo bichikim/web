@@ -35,7 +35,7 @@
   },
   "devDependencies": {
     "lodash-cli": "4.17.5",
-    "tsup": "^6.1.2"
+    "tsup": "^6.3.0"
   },
   "publishConfig": {
     "access": "public"

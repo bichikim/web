@@ -37,9 +37,9 @@
     "dev": "tsup --watch"
   },
   "dependencies": {
-    "@winter-love/lodash": "^1.0.25-alpha.16",
-    "@winter-love/utils": "^1.0.25-alpha.16",
-    "socket.io": "^4.5.1"
+    "@winter-love/lodash": "workspace:^1.0.25-alpha.16",
+    "@winter-love/utils": "workspace:^1.0.25-alpha.16",
+    "socket.io": "^4.5.3"
   },
   "devDependencies": {
     "@types/debounce": "1.2.1",
