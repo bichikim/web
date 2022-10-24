@@ -2,8 +2,7 @@ name: Build and Deploy
 on:
   push:
     branches:
-      - master
-      - dev
+      - freeze
 env:
   PNPM_VERSION: 7.1.0
   NODE_VERSION: 16

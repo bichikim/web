@@ -2,6 +2,7 @@ import {App, Component, createApp, createSSRApp} from 'vue'
 import {createRouter} from './routes'
 import {createPinia} from 'pinia'
 import {disableContextMenu} from 'src/plugins/disable-context-menu'
+import {updateScreenHeight} from 'src/plugins/update-screen-height'
 
 export interface CreateAppOptions {
   root: Component
@@ -15,6 +16,7 @@ const setup = (app: App) => {
   app.use(router)
 
   app.use(disableContextMenu)
+  app.use(updateScreenHeight)
 
   return {
     router,

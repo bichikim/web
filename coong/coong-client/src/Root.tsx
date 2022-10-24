@@ -2,8 +2,9 @@ import {provideClient} from '@urql/vue'
 import {client} from 'src/graphql'
 import {defineComponent} from 'vue'
 import {RouterView} from 'vue-router'
+import {styled} from '@winter-love/uni'
 
-export const Root = defineComponent({
+export const HRoot = defineComponent({
   setup: () => {
     provideClient(client)
     return () => (
@@ -14,4 +15,6 @@ export const Root = defineComponent({
   },
 })
 
-export default Root
+export const Root = styled(HRoot, {
+  height: '100%',
+})

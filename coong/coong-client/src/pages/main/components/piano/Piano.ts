@@ -20,7 +20,7 @@ export const Piano = styled(HPiano, {
     position: 'absolute',
     top: 0,
   },
-  height: '500px',
+  height: '100%',
   position: 'relative',
   width: '100%',
 })

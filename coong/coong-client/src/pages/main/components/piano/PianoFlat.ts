@@ -41,7 +41,7 @@ export const PianoFlat = styled(HPianoFlat, {
   '&>button': {
     background: 'linear-gradient(-30deg,#f5f5f5,#fff)',
   },
-  height: 500,
+  height: '100%',
   position: 'relative',
   whiteSpace: 'nowrap',
   width: '100%',

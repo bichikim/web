@@ -1,5 +1,5 @@
 {
-  "name": "@winter-love/client-vite",
+  "name": "@winter-love/coong-client",
   "version": "1.0.25-alpha.16",
   "private": true,
   "description": "",
@@ -28,10 +28,12 @@
     "pinia": "^2.0.23",
     "vexflow": "^4.0.3",
     "vue": "3.2.41",
+    "web-vitals": "^3.0.4",
     "vue-query": "^2.0.0-beta.12",
     "vue-router": "^4.1.5"
   },
   "devDependencies": {
+    "node-html-parser": "^6.1.1",
     "@babel/preset-typescript": "^7.18.6",
     "@graphql-codegen/add": "3.2.1",
     "@graphql-codegen/cli": "2.13.1",

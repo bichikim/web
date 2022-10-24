@@ -1,5 +1,5 @@
 import {defineComponent, h, ref} from 'vue'
-import {useSizeRef} from '@winter-love/use'
+import {useSize} from '@winter-love/use'
 import {styled} from '@winter-love/uni'
 
 export const HTestPage = defineComponent({
@@ -7,7 +7,7 @@ export const HTestPage = defineComponent({
     const itemRef = ref(null)
     const scrollRef = ref(null)
 
-    const sizeRef = useSizeRef(itemRef, scrollRef)
+    const sizeRef = useSize(itemRef, scrollRef)
 
     return () =>
       h('div', [

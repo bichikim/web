@@ -40,7 +40,7 @@ export const PianoSharp = styled(HPianoSharp, {
   display: 'flex',
   flexWrap: 'nowrap',
   gap: 20,
-  height: 300,
+  height: '60%',
   overflow: 'visible',
   pl: 45,
   pointerEvents: 'none',
