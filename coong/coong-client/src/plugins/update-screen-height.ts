@@ -1,4 +1,4 @@
-import {getWindow} from '@winter-love/utils'
+import {getDocument, getWindow} from '@winter-love/utils'
 import {globalCss} from '@winter-love/uni'
 
 const SCREEN_HEIGHT_PROPERTY = '--screen-height'
@@ -15,14 +15,19 @@ export const updateScreenHeight = () => {
   if (!window) {
     return
   }
+  const document = getDocument()
+  if (!document) {
+    return
+  }
+  // todo fix scroll
   window.addEventListener('DOMContentLoaded', () => {
-    const {innerHeight} = window
+    const {clientHeight, style} = document.documentElement
 
-    document.documentElement.style.setProperty(SCREEN_HEIGHT_PROPERTY, `${innerHeight}px`)
+    style.setProperty(SCREEN_HEIGHT_PROPERTY, `${clientHeight}px`)
   })
 
   window.addEventListener('resize', () => {
-    const {innerHeight} = window
-    document.documentElement.style.setProperty(SCREEN_HEIGHT_PROPERTY, `${innerHeight}px`)
+    const {clientHeight, style} = document.documentElement
+    style.setProperty(SCREEN_HEIGHT_PROPERTY, `${clientHeight}px`)
   })
 }
