@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/coong-client",
-  "version": "1.0.25-alpha.18",
+  "version": "1.0.25-alpha.19",
   "private": true,
   "description": "",
   "scripts": {
@@ -18,9 +18,9 @@
     "@ts-gql/tag": "^0.7.0",
     "@urql/vue": "^1.0.2",
     "@vueuse/sound": "^1.1.7",
-    "@winter-love/lodash": "workspace:1.0.25-alpha.18",
-    "@winter-love/uni": "workspace:1.0.25-alpha.18",
-    "@winter-love/use": "workspace:1.0.25-alpha.18",
+    "@winter-love/lodash": "workspace:1.0.25-alpha.19",
+    "@winter-love/uni": "workspace:1.0.25-alpha.19",
+    "@winter-love/use": "workspace:1.0.25-alpha.19",
     "express": "^4.18.2",
     "graphql": "^16.6.0",
     "graphql-tag": "^2.12.6",
