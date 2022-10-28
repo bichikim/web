@@ -2,6 +2,10 @@
 
 [Winter Love packages document](https://winter-love.github.io/web/)
 
+## warning 
+이 라이브러리는 시간 제약으로 인해 관리 되고 있지 않습니다 
+지금은 @winter-love/stitches 를 관리 하고 있습니다
+
 ## Styled 
 
 ```typescript

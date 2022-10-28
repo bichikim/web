@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/emotion",
-  "version": "1.0.23-alpha.15",
+  "version": "1.0.25-alpha.16",
   "description": "Emotion for Vue",
   "keywords": [
     "vue",
@@ -14,43 +14,44 @@
   "author": "bichi@live.co.kr",
   "exports": {
     ".": {
-      "import": "./lib/esm/index.js",
-      "require": "./lib/index.js"
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
     },
     "./*": "./*"
   },
-  "main": "lib/index.js",
-  "jsdelivr": "lib/iife/index.js",
-  "unpkg": "lib/iife/index.js",
-  "module": "lib/esm/index.js",
+  "main": "dist/index.js",
+  "jsdelivr": "dist/index.global.js",
+  "unpkg": "dist/index.global.js",
+  "module": "dist/index.mjs",
   "source": "src/index.ts",
-  "types": "lib/index.d.ts",
+  "types": "dist/index.d.ts",
   "files": [
-    "lib/*"
+    "dist/*"
   ],
   "scripts": {
-    "build": "tsup-node --dts --legacy-output --minify",
-    "dev": "tsup-node --watch --legacy-output",
-    "prepare": "tsup-node --dts --legacy-output"
+    "build": "tsup --dts --minify",
+    "dev": "tsup --watch",
+    "prepare": "tsup --dts"
   },
   "dependencies": {
-    "@emotion/css": "^11.1.3",
-    "@emotion/serialize": "^1.0.2",
-    "@emotion/utils": "^1.0.0",
-    "@winter-love/use": "^1.0.23-alpha.15",
-    "@winter-love/utils": "^1.0.23-alpha.15",
-    "clsx": "^1.1.1",
-    "vue-demi": "latest"
+    "@emotion/css": "^11.10.0",
+    "@emotion/serialize": "^1.1.0",
+    "@emotion/utils": "^1.2.0",
+    "@winter-love/use": "workspace:1.0.25-alpha.16",
+    "@winter-love/utils": "workspace:1.0.25-alpha.16",
+    "clsx": "^1.2.1",
+    "vue": "^3.2.41"
   },
   "devDependencies": {
-    "@babel/core": "^7.14.5",
-    "@emotion/server": "^11.4.0",
-    "@vue/server-renderer": "latest",
-    "@vue/test-utils": "next",
-    "gulp": "^4.0.2",
-    "vue": "next"
+    "@babel/core": "^7.19.6",
+    "@emotion/server": "^11.10.0",
+    "@vue/server-renderer": "^3.2.41"
   },
-  "gitHead": "66c79bd0d5c23a437b8170f758ff58e4496afb58",
+  "publishConfig": {
+    "access": "public"
+  },
+  "gitHead": "162bc0badb2b0932df3c9dc51cc1ff7af3587140",
+  "stage": "deprecated",
   "tsup": {
     "entry": [
       "src/index.ts"
@@ -61,7 +62,7 @@
       "esm",
       "iife"
     ],
-    "outDir": "lib",
+    "outDir": "dist",
     "sourcemap": true,
     "splitting": false
   }

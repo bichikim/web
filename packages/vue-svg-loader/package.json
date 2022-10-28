@@ -1,14 +1,14 @@
 {
   "name": "@winter-love/vue-svg-loader",
-  "version": "1.0.23-alpha.1",
+  "version": "1.0.25-alpha.16",
   "main": "src/index.js",
   "scripts": {
     "build": "echo doing notting",
     "dev": "echo doing notting"
   },
   "dependencies": {
-    "loader-utils": "^2.0.0",
-    "svgo": "^2.3.0"
+    "loader-utils": "^3.2.0",
+    "svgo": "^2.8.0"
   },
-  "gitHead": "2fb93aea9a5a38a7778495106787001ffe0d25f6"
+  "gitHead": "162bc0badb2b0932df3c9dc51cc1ff7af3587140"
 }

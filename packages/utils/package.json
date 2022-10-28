@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/utils",
-  "version": "1.0.23-alpha.15",
+  "version": "1.0.25-alpha.16",
   "description": "Useful javascript utils",
   "keywords": [
     "typescript",
@@ -10,37 +10,43 @@
   "repository": "git@github.com:winter-love/web.git",
   "license": "MIT",
   "author": "bichi@live.co.kr",
+  "sideEffects": false,
   "exports": {
     ".": {
-      "import": "./lib/esm/index.js",
-      "require": "./lib/index.js"
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
     },
     "./*": "./*"
   },
-  "main": "lib/index.js",
-  "jsdelivr": "lib/iife/index.js",
-  "unpkg": "lib/iife/index.js",
-  "module": "lib/esm/index.js",
+  "main": "dist/index.js",
+  "jsdelivr": "dist/index.global.js",
+  "unpkg": "dist/index.global.js",
+  "module": "dist/index.mjs",
   "source": "src/index.ts",
-  "types": "lib/index.d.ts",
+  "types": "dist/index.d.ts",
   "files": [
-    "lib/*"
+    "dist/*"
   ],
   "scripts": {
-    "build": "tsup-node --dts --legacy-output --minify",
-    "dev": "tsup-node --watch --legacy-output",
-    "prepare": "tsup-node --dts --legacy-output"
+    "build": "tsup --dts --minify",
+    "dev": "tsup --watch",
+    "prepare": "tsup --dts"
   },
   "dependencies": {
-    "lodash": "^4.17.21",
-    "micro-memoize": "^4.0.9",
-    "react-fast-compare": "^3.2.0"
+    "@winter-love/lodash": "workspace:^1.0.25-alpha.16",
+    "safe-stable-stringify": "^2.4.1"
   },
   "devDependencies": {
-    "gulp": "^4.0.2",
-    "vue-demi": "latest"
+    "@types/js-cookie": "^3.0.2",
+    "js-cookie": "^3.0.1",
+    "micro-memoize": "^4.0.11",
+    "tsd": "^0.24.1",
+    "typescript": "^4.8.4"
   },
-  "gitHead": "5aa1e8493f474f75436be59c2e9b0df86550235e",
+  "publishConfig": {
+    "access": "public"
+  },
+  "gitHead": "162bc0badb2b0932df3c9dc51cc1ff7af3587140",
   "tsup": {
     "entry": [
       "src/index.ts"
@@ -51,7 +57,7 @@
       "esm",
       "iife"
     ],
-    "outDir": "lib",
+    "outDir": "dist",
     "sourcemap": true,
     "splitting": false
   }

@@ -1,22 +1,18 @@
 import {createMethodDecorator, ResolverData, UnauthorizedError} from 'type-graphql'
+import {ValidateMode} from 'src/auth'
+import {Context} from 'src/context'
 
-export type ForbiddenResolver<Context extends Record<string, any>> =
-  (resolverData: ResolverData<Context>, self: unknown | undefined) => Promise<boolean> | boolean
+export type ForbiddenResolver<Context extends Record<string, any>> = (
+  resolverData: ResolverData<Context>,
+) => Promise<boolean> | boolean
 
-export type ForbiddenSelfDataGetter<Self> = (resolverData: ResolverData) => Self
-
-export const forbiddenDefaultSelfDataGetter = ({context}) => context.auth.self
-
-export function Forbidden<Context extends Record<string, any>, Self>(
-  resolver?: ForbiddenResolver<Context>,
-  selfDataGetter: ForbiddenSelfDataGetter<Self> = forbiddenDefaultSelfDataGetter,
-): any {
+export function Forbidden(resolver?: ForbiddenResolver<Context>): any {
   return createMethodDecorator<Context>((resolverData, next) => {
     if (!resolver) {
       throw new UnauthorizedError()
     }
 
-    if (resolver(resolverData, selfDataGetter(resolverData))) {
+    if (resolver(resolverData)) {
       throw new UnauthorizedError()
     }
 

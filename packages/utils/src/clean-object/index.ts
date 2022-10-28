@@ -1,17 +1,14 @@
-import {AnyObject} from 'src/types'
+import {PureObject} from 'src/types'
+const {entries, fromEntries} = Object
+import {flow} from 'src/functional/flow'
 
 /**
  * remove keys which has undefined value
  * but don’t make a case to use this
  * @param value
  */
-export const cleanObject = (value: AnyObject) => (
-  Object.keys(value).reduce((result, key) => {
-    const _value = value[key]
-    if (typeof _value === 'undefined' || _value === null) {
-      return result
-    }
-    result[key] = _value
-    return result
-  }, {} as AnyObject)
+export const cleanObject = flow(
+  (value: PureObject) => entries(value),
+  (value) => value.filter(([_, value]) => Boolean(value)),
+  fromEntries,
 )

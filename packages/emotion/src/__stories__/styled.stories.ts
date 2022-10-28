@@ -7,7 +7,7 @@ const styled = createStyled(createEmotionOriginal({key: 'css'}))
 const StyledComponent = styled('div', {
   name: 'foo',
   props: {
-    color: {required: true, type: String},
+    color: {type: String},
     height: {default: '100px', type: String},
     width: {type: String},
   },
@@ -34,9 +34,7 @@ export default {
 export const Default = () => ({
   setup() {
     return () => {
-      return (
-        h(StyledComponent, {}, () => 'styled-component')
-      )
+      return h(StyledComponent, {}, () => 'styled-component')
     }
   },
 })

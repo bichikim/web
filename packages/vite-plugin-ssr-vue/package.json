@@ -1,0 +1,72 @@
+{
+  "name": "vite-plugin-ssr-vue",
+  "version": "1.0.25-alpha.16",
+  "description": "hyper components base on quasar and stitches",
+  "keywords": [
+    "typescript",
+    "style",
+    "style-system",
+    "component",
+    "ui",
+    "css",
+    "store",
+    "vue",
+    "vue3",
+    "vuejs",
+    "vuejs3"
+  ],
+  "repository": "git@github.com:winter-love/web.git",
+  "license": "MIT",
+  "author": "bichi@live.co.kr",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./*": "./*",
+    "./plugin": {
+      "import": "./dist/plugin.mjs",
+      "require": "./dist/plugin.js"
+    }
+  },
+  "main": "dist/index.js",
+  "jsdelivr": "dist/index.global.js",
+  "unpkg": "dist/index.global.js",
+  "module": "dist/index.mjs",
+  "source": "src/index.ts",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/*",
+    "*.d.ts"
+  ],
+  "scripts": {
+    "build": "tsup --dts --minify",
+    "dev": "tsup --watch",
+    "prepare": "tsup --dts"
+  },
+  "dependencies": {
+    "@vue/server-renderer": "^3.2.41",
+    "node-html-parser": "^5.4.2",
+    "vue": "^3.2.41"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "gitHead": "162bc0badb2b0932df3c9dc51cc1ff7af3587140",
+  "stage": "alpha",
+  "tsup": {
+    "entry": [
+      "src/index.ts",
+      "src/plugin.ts"
+    ],
+    "clean": true,
+    "format": [
+      "cjs",
+      "esm",
+      "iife"
+    ],
+    "outDir": "dist",
+    "sourcemap": true,
+    "splitting": false
+  }
+}

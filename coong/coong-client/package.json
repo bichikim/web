@@ -1,0 +1,81 @@
+{
+  "name": "@winter-love/coong-client",
+  "version": "1.0.25-alpha.16",
+  "private": true,
+  "description": "",
+  "scripts": {
+    "build:spa": "vite build --outDir dist/spa",
+    "dev:spa": "vite --host",
+    "dev:preview": "vite preview",
+    "fix": "npx vue-demi-fix",
+    "generate-pwa-icons": "pnpx pwa-asset-generator public/favicon.svg public/images/pwa --path-override /images/pwa",
+    "generator:graphql": "graphql-codegen",
+    "postinstall": "ts-gql build"
+  },
+  "dependencies": {
+    "@apollo/client": "^3.7.0",
+    "@ts-gql/compiler": "^0.15.3",
+    "@ts-gql/tag": "^0.7.0",
+    "@urql/vue": "^1.0.2",
+    "@vueuse/sound": "^1.1.7",
+    "@winter-love/lodash": "workspace:1.0.25-alpha.16",
+    "@winter-love/uni": "workspace:1.0.25-alpha.16",
+    "@winter-love/use": "workspace:1.0.25-alpha.16",
+    "express": "^4.18.2",
+    "graphql": "^16.6.0",
+    "graphql-tag": "^2.12.6",
+    "howler": "^2.2.3",
+    "pinia": "^2.0.23",
+    "vexflow": "^4.0.3",
+    "vue": "3.2.41",
+    "web-vitals": "^3.0.4",
+    "vue-query": "^2.0.0-beta.12",
+    "vue-router": "^4.1.5"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.19.6",
+    "node-html-parser": "^6.1.1",
+    "@babel/preset-typescript": "^7.18.6",
+    "@graphql-codegen/add": "3.2.1",
+    "@graphql-codegen/cli": "2.13.8",
+    "@graphql-codegen/typescript": "2.8.0",
+    "@graphql-codegen/typescript-operations": "2.5.5",
+    "@graphql-codegen/typescript-vue-urql": "2.3.5",
+    "@iconify/json": "^2.1.127",
+    "@ts-gql/babel-plugin": "^0.1.0",
+    "@types/node": "^18.11.4",
+    "@vitejs/plugin-vue": "^3.1.2",
+    "@vitejs/plugin-vue-jsx": "^2.0.1",
+    "@vue/server-renderer": "^3.2.41",
+    "autoprefixer": "^10.4.12",
+    "cross-env": "^7.0.3",
+    "dotenv": "^16.0.3",
+    "postcss": "^8.4.18",
+    "tailwindcss": "^3.2.1",
+    "ts-node": "^10.9.1",
+    "typescript": "^4.8.4",
+    "unplugin-auto-import": "^0.11.2",
+    "unplugin-icons": "^0.14.12",
+    "unplugin-vue-components": "^0.22.8",
+    "vite": "^3.1.8",
+    "vite-plugin-babel": "1.1.2",
+    "vite-plugin-babel-compiler": "^0.3.0",
+    "vite-plugin-imp": "^2.3.0",
+    "vite-plugin-pwa": "^0.13.1",
+    "vite-tsconfig-paths": "^3.5.2",
+    "workbox-build": "^6.5.4",
+    "workbox-window": "^6.5.4"
+  },
+  "ts-gql": {
+    "schema": "../server/schema.graphql"
+  },
+  "tsup": {
+    "clean": true,
+    "format": [
+      "cjs"
+    ],
+    "outDir": "dist",
+    "sourcemap": true,
+    "splitting": false
+  }
+}

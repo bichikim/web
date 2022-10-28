@@ -22,21 +22,24 @@ export const getTrueKeys = flow([
 ])
 
 export const getRoles = (roles: string[], permissionsKeys: string[]) =>
-  roles.reduce((result, role) => {
-    if (permissionsKeys.includes(role)) {
-      result.roles.push(role)
-    } else {
-      result.permissions.push(role)
-    }
-    return result
-  }, {
-    permissions: [] as string[],
-    roles: [] as string[],
-  })
+  roles.reduce(
+    (result, role) => {
+      if (permissionsKeys.includes(role)) {
+        result.roles.push(role)
+      } else {
+        result.permissions.push(role)
+      }
+      return result
+    },
+    {
+      permissions: [] as string[],
+      roles: [] as string[],
+    },
+  )
 
 export const getPermissionFromRoles = flow([
   (roles: string[], roleMap: FlatRoles) => pick(roleMap, roles),
-  curryRight(filter)((role) => Boolean(role)),
+  curryRight(filter)(Boolean),
   flatten,
 ])
 
@@ -46,16 +49,19 @@ export const flattenRoles = flow(
   (entries): FlatRoles => Object.fromEntries(entries),
 )
 
-export const createGetPermissions = <R extends Roles>(
-  options: CreateGetRolesOptions<R>,
-) => (receivedData: string[]): string[] => {
+export const createGetPermissions =
+  <R extends Roles>(options: CreateGetRolesOptions<R>) =>
+  (receivedData: string[]): string[] => {
     const {roles} = options
 
     const flatRoles = flattenRoles(roles)
 
     const rolesKeys = getTrueKeys(roles)
 
-    const {permissions: receivedPermissions, roles: receivedRoles} = getRoles(receivedData, rolesKeys)
+    const {permissions: receivedPermissions, roles: receivedRoles} = getRoles(
+      receivedData,
+      rolesKeys,
+    )
 
     return [...getPermissionFromRoles(receivedRoles, flatRoles), ...receivedPermissions]
   }
@@ -74,24 +80,27 @@ export const createPermissions = <P extends string, A extends string>(
 }
 
 export const transformAllPermission = (permissions: string[], allActions: string[]) => {
-  const complexPermissions = (permissions.map((permission) => {
+  const complexPermissions = permissions.map((permission) => {
     const [name, postFix] = permission.split('.')
     if (!postFix || Object.is(postFix, 'all')) {
       return [...allActions.map((action) => `${name}.${action}`)]
     }
     return permission
-  }))
+  })
 
   return flatten(complexPermissions)
 }
 
-export const getMatchedPermissionWithAll = (receivedPermissions: string[], roles: string[], allActions: string[]) => {
+export const getMatchedPermissionWithAll = (
+  receivedPermissions: string[],
+  roles: string[],
+  allActions: string[],
+) => {
   const verbosePermission = transformAllPermission(receivedPermissions, allActions)
 
   return roles.find((role) => verbosePermission.includes(role))
 }
 
 export const getMatchedPermission = (receivedPermissions: string[], roles: string[]) => {
-
   return roles.find((role) => receivedPermissions.includes(role))
 }

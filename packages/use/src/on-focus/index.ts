@@ -1,4 +1,4 @@
-import {useElementEvent} from '../element-event'
+import {useEvent} from '../use-event'
 import {isSSR} from '@winter-love/utils'
 
 export type FocusHandle = () => unknown
@@ -14,6 +14,6 @@ export const onFocus = (handle?: FocusHandle) => {
 
   const onFocus = () => handle?.()
 
-  useElementEvent(window, 'focus', onFocus)
-  useElementEvent(document, 'visibilitychange', onFocus)
+  useEvent(window, 'focus', onFocus)
+  useEvent(document, 'visibilitychange', onFocus)
 }

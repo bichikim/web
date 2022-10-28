@@ -1,5 +1,8 @@
+/**
+ * @jest-environment jsdom
+ */
 import {flushPromises, mount} from '@vue/test-utils'
-import {defineComponent, h, ref} from 'vue-demi'
+import {defineComponent, h, ref} from 'vue'
 import {onDomMounted} from '../index'
 import {replaceGetter, restore} from 'sinon'
 
@@ -12,9 +15,7 @@ const setup = () => {
         domMounted.value += 1
       })
 
-      return () => (
-        h('div', domMounted.value)
-      )
+      return () => h('div', domMounted.value)
     },
   })
 
@@ -31,9 +32,11 @@ describe('onDomMounted', () => {
 
     let _handler: any
 
-    const addEventListener = jest.spyOn(window, 'addEventListener').mockImplementationOnce((event, handler) => {
-      _handler = handler
-    })
+    const addEventListener = jest
+      .spyOn(window, 'addEventListener')
+      .mockImplementationOnce((event, handler) => {
+        _handler = handler
+      })
 
     const removeEventListener = jest.spyOn(window, 'removeEventListener')
 

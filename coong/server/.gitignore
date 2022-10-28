@@ -5,9 +5,6 @@ node_modules
 
 .env
 
-# generated type-graphql
-src/generated
-
 # schema file
 .schema.gql
 

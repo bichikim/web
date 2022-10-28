@@ -6,7 +6,7 @@ module.exports = function vueSvgLoader(svg) {
 
   if (svgoConfig !== false) {
     // eslint-disable-next-line no-param-reassign
-    ({data: svg} = optimize(svg, {
+    ;({data: svg} = optimize(svg, {
       path: this.resourcePath,
       ...svgoConfig,
     }))

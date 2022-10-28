@@ -1,5 +1,5 @@
-import {Meta, Story} from '@storybook/addon-docs/blocks'
-import {Default} from './templates'
+import {Meta, Story, Canvas} from '@storybook/addon-docs/blocks'
+import {Default} from './index.stories'
 
 <Meta title="use/Storage Ref"/>
 
@@ -7,7 +7,11 @@ import {Default} from './templates'
 
 ref 값을 저장 합니다.
 
-<Story name="Default">
-  {Default.bind({})}
-</Story>
+ssr 을 위해 createContextStorage 를 사용하거나 [vare](https://www.npmjs.com/package/vare) 을 사용하세요
+
+<Canvas>
+  <Story story={Default}>
+  </Story>
+</Canvas>
+
 

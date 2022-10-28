@@ -1,8 +1,8 @@
 import {Emotion as _Emotion, CSSInterpolation, CSSObject} from '@emotion/css/create-instance'
-import {DirectiveBinding, ObjectDirective} from 'vue-demi'
+import {DirectiveBinding, ObjectDirective} from 'vue'
 
 export interface EmotionAdditionOptions {
-  setSystem: (system?: ((props: any) => CSSObject)) => any
+  setSystem: (system?: (props: any) => CSSObject) => any
   setTheme: (theme?: any) => any
 }
 
@@ -19,21 +19,23 @@ export interface CreateDirectiveOptions {
   theme?: Record<string, any>
 }
 
-export const createDirective = (emotion: _Emotion, options: CreateDirectiveOptions = {}):
-  ObjectDirective => {
-
+export const createDirective = (
+  emotion: _Emotion,
+  options: CreateDirectiveOptions = {},
+): ObjectDirective => {
   const {css} = emotion
   const {theme = {}, systems = (props: any) => props} = options
 
   const getCss = (props: any, theme, systemName: string = 'default') => {
+    const {__system__: __system, theme: _theme, ...restProps} = props
 
-    const {__system__, theme: _theme, ...restProps} = props
-
-    const system: ((props: any) => CSSObject | CSSInterpolation)[] =
-      __system__ ?? systems[systemName] ?? [function defaultSystem(props) {
-        // removes theme because the props become css style
-        return {...props, theme: undefined}
-      }]
+    const system: ((props: any) => CSSObject | CSSInterpolation)[] = __system ??
+      systems[systemName] ?? [
+        function defaultSystem(props) {
+          // removes theme because the props become css style
+          return {...props, theme: undefined}
+        },
+      ]
 
     const nextProps = {
       ...restProps,
@@ -41,12 +43,14 @@ export const createDirective = (emotion: _Emotion, options: CreateDirectiveOptio
       theme: _theme ?? theme,
     }
 
-    return css(...system.map((value) => {
-      if (typeof value === 'function') {
-        return value(nextProps)
-      }
-      return value
-    }))
+    return css(
+      ...system.map((value) => {
+        if (typeof value === 'function') {
+          return value(nextProps)
+        }
+        return value
+      }),
+    )
   }
 
   const getClassName = (binding: DirectiveBinding<any>) => {

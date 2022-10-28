@@ -1,27 +1,32 @@
-import {computed} from 'vue-demi'
-import {useElementEvent} from '../element-event'
-import {pickElement} from '../pick-element'
-import {MayRef, PossibleElement} from '../types'
-import {wrapRef} from '../wrap-ref'
 import {isSSR} from '@winter-love/utils'
+import {bindRef} from 'src/bind-ref'
+import {getComponentElement} from 'src/get-component-element'
+import {MaybeElement} from 'src/types'
+import {useEvent} from 'src/use-event'
+import {computed, Ref} from 'vue'
 
-export type OnClickOutsideHandle<Event extends keyof WindowEventMap> = (event: WindowEventMap[Event]) => unknown
+export type OnClickOutsideHandle<Event extends keyof WindowEventMap> = (
+  event: WindowEventMap[Event],
+) => unknown
 
 export interface OnClickOutsideOptions<Event extends keyof WindowEventMap> {
   event?: Event
 }
 
+/**
+ * @useful ⭐⭐⭐⭐
+ */
 export const onClickOutside = <Event extends keyof WindowEventMap = 'pointerdown'>(
-  target: MayRef<PossibleElement>,
+  target: Ref<MaybeElement>,
   handle: OnClickOutsideHandle<Event>,
   options: OnClickOutsideOptions<Event> = {},
 ) => {
   const {event = 'pointerdown'} = options
 
-  const targetRef = wrapRef(target)
+  const targetRef = bindRef(target)
 
   const elementRef = computed(() => {
-    return pickElement(targetRef.value)
+    return getComponentElement(targetRef.value)
   })
 
   const listener = (event: WindowEventMap[Event]) => {
@@ -37,11 +42,7 @@ export const onClickOutside = <Event extends keyof WindowEventMap = 'pointerdown
     handle(event)
   }
 
-  return useElementEvent<Event>(
-    isSSR() ? undefined : window,
-    event as Event,
-    listener,
-    true,
-    {passive: true},
-  )
+  return useEvent<Event>(isSSR() ? undefined : window, event as Event, listener, true, {
+    passive: true,
+  })
 }

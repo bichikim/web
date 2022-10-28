@@ -6,4 +6,4 @@
 /node_modules
 /src-ssr
 /lib
-/src/generated
+/src/prisma/type-graphql

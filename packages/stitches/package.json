@@ -1,50 +1,49 @@
 {
   "name": "@winter-love/stitches",
-  "version": "1.0.23-alpha.15",
-  "description": "Stitches for Vue",
-  "keywords": [
-    "vue",
-    "vue3",
-    "composition-api",
-    "stitches",
-    "css-in-js"
-  ],
+  "version": "1.0.25-alpha.16",
   "repository": "git@github.com:winter-love/web.git",
-  "license": "MIT",
   "author": "bichi@live.co.kr",
   "exports": {
     ".": {
-      "import": "./lib/esm/index.js",
-      "require": "./lib/index.js"
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
     },
     "./*": "./*"
   },
-  "main": "lib/index.js",
-  "jsdelivr": "lib/iife/index.js",
-  "unpkg": "lib/iife/index.js",
-  "module": "lib/esm/index.js",
+  "main": "dist/index.js",
+  "jsdelivr": "dist/index.global.js",
+  "unpkg": "dist/index.global.js",
+  "module": "dist/index.mjs",
   "source": "src/index.ts",
-  "types": "lib/index.d.ts",
+  "types": "dist/index.d.ts",
   "files": [
-    "lib/*"
+    "dist/*"
   ],
   "scripts": {
-    "build": "tsup-node --dts --legacy-output --minify",
-    "dev": "tsup-node --watch --legacy-output",
-    "prepare": "tsup-node --legacy-output"
+    "build": "tsup --dts --minify",
+    "dev": "tsup --watch",
+    "prepare": "tsup --dts",
+    "publish": "npm publish"
   },
   "dependencies": {
-    "@stitches/core": "^1.1.0",
-    "@winter-love/utils": "^1.0.23-alpha.15",
-    "vue-demi": "latest"
+    "@stitches/core": "^1.2.8",
+    "@vue/runtime-core": "^3.2.41",
+    "@winter-love/lodash": "workspace:1.0.25-alpha.16",
+    "vue": "^3.2.41"
   },
   "devDependencies": {
-    "@babel/core": "^7.14.5",
-    "@vue/server-renderer": "latest",
-    "gulp": "^4.0.2",
-    "vue": "next"
+    "@types/node": "^18.11.4",
+    "@vue/server-renderer": "^3.2.41",
+    "lodash": "^4.17.21",
+    "tsd": "^0.22.0",
+    "tslib": "^2.4.0",
+    "tsup": "^6.3.0",
+    "typescript": "^4.8.4"
   },
-  "gitHead": "66c79bd0d5c23a437b8170f758ff58e4496afb58",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
+  "gitHead": "162bc0badb2b0932df3c9dc51cc1ff7af3587140",
   "tsup": {
     "entry": [
       "src/index.ts"
@@ -55,7 +54,7 @@
       "esm",
       "iife"
     ],
-    "outDir": "lib",
+    "outDir": "dist",
     "sourcemap": true,
     "splitting": false
   }

@@ -1,13 +1,17 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "outDir": "lib",
+    "jsx": "preserve",
+    "outDir": "dist",
     "baseUrl": ".",
     "paths": {
       "src/*": [
-        "src/*"
+        "src/*",
+      ],
+      "dev/*": [
+        "dev/*"
       ]
-    }
+    },
   },
   "ts-node": {
     "compilerOptions": {
@@ -17,10 +21,11 @@
   },
   "include": [
     "src/**/*.ts",
+    "dev/**/*.ts",
     "src/**/*.d.ts",
     "src/**/*.tsx",
     "tests/**/*.ts",
-    "tests/**/*.tsx"
+    "tests/**/*.tsx",
   ],
   "exclude": [
     "node_modules"

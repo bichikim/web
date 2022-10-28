@@ -1,32 +1,29 @@
-import {ExpressContext} from 'apollo-server-express'
 import {compare, genSalt, hash} from 'bcryptjs'
-import {ContextFunction} from './types'
-import {freeze} from '@winter-love/utils'
 
 export interface PasswordHashOptions {
   saltFactor: number
+}
+
+export interface HashPasswordContext {
+  compare: (value: string, hash: string) => Promise<boolean>
+  hash: (value: string) => Promise<string>
 }
 
 const comparePassword = (value: string, hash: string): Promise<boolean> => {
   return compare(value, hash)
 }
 
-export const createWithHashPassword = (options: PasswordHashOptions) =>
-  <ReturnType extends Record<string, unknown>>(contextFunction: ContextFunction<ReturnType>) => {
-    const {saltFactor} = options
-    const hashPassword = async (value: string): Promise<string> => {
-      const slat = await genSalt(saltFactor)
+export const preparePasswordBcrypt = (
+  options: PasswordHashOptions,
+): (() => HashPasswordContext) => {
+  const {saltFactor} = options
+  const hashPassword = async (value: string): Promise<string> => {
+    const slat = await genSalt(saltFactor)
 
-      return hash(value, slat)
-    }
-
-    return async (expressContext: ExpressContext) => {
-      return freeze({
-        ...await contextFunction(expressContext),
-        passwordBcrypt: freeze({
-          compare: comparePassword,
-          hash: hashPassword,
-        }),
-      })
-    }
+    return hash(value, slat)
   }
+  return () => ({
+    compare: comparePassword,
+    hash: hashPassword,
+  })
+}

@@ -1,35 +1,22 @@
 {
-  "compileOnSave": false,
+  "extends": "../../tsconfig.json",
   "compilerOptions": {
     "jsx": "preserve",
     "target": "ESNext",
     "module": "ESNext",
-    "moduleResolution": "node",
+    "outDir": "dist",
+    "moduleResolution": "Node16",
     "baseUrl": ".",
-    "declaration": true,
-    "lib": ["esnext", "dom"],
-    "types": ["vite/client", "node", "quasar"],
     "paths": {
       "src/*": ["src/*"],
-      "pages/*": ["src/pages/*"],
+      "app/*": ["*"],
+      "components/*": ["src/components/*"],
       "layouts/*": ["src/layouts/*"],
-      "components/*": ["src/components/*"]
+      "pages/*": ["src/pages/*"],
+      "assets/*": ["src/assets/*"],
+      "boot/*": ["src/boot/*"],
+      "stores/*": ["src/stores/*"]
     },
-    "allowJs": true,
-    // `baseUrl` must be placed on the extending configuration in devland, or paths won't be recognized
-    "esModuleInterop": true,
-    // Needed to address https://github.com/quasarframework/app-extension-typescript/issues/36
-    "noEmit": true,
-    "resolveJsonModule": true,
-    "noImplicitAny": false,
-    "importHelpers": true,
-    "skipLibCheck": true,
-    // for 4.4.0
-    // "exactOptionalPropertyTypes": true,
-    "allowSyntheticDefaultImports": true,
-    "suppressImplicitAnyIndexErrors": true,
-    "sourceMap": true,
-    "strict": true,
   },
   "ts-node": {
     "compilerOptions": {
@@ -38,9 +25,15 @@
     }
   },
   "include": [
-    "server/**/*.ts",
-    "server/**/*.ts",
     "src/**/*.ts",
-    "src/**/*.tsx"
+    "src-ssr/**/*.ts",
+    "src/**/*.tsx",
+    "src-ssr/**/*.tsx",
+    "auto-imports.d.ts",
+    "components.d.ts",
+  ],
+  "exclude": [
+    "node_modules"
   ]
+
 }

@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "ESNext",
-    "module": "CommonJS",
+    "module": "ESNext",
     "outDir": "dist",
     "baseUrl": ".",
     "declarationMap": true,
@@ -28,7 +28,7 @@
     // `baseUrl` must be placed on the extending configuration in devland, or paths won't be recognized
     "esModuleInterop": true,
 
-    "moduleResolution": "node",
+    "moduleResolution": "Node",
     // Needed to address https://github.com/quasarframework/app-extension-typescript/issues/36
     "resolveJsonModule": true,
     "jsx": "preserve",
@@ -55,7 +55,4 @@
     "tests/**/*.ts",
     "tests/**/*.tsx"
   ],
-  "exclude": [
-    "node_modules"
-  ]
 }

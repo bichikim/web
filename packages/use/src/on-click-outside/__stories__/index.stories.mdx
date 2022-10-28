@@ -1,6 +1,5 @@
 import {Meta, Story, Canvas} from '@storybook/addon-docs/blocks'
-import {h, ref} from 'vue-demi'
-import {onClickOutside} from '../'
+import {Default} from './index.stories'
 
 <Meta title="use/On Click Outside"/>
 
@@ -8,34 +7,8 @@ import {onClickOutside} from '../'
 
 타켓 엘리먼트를 클릭 하지 않으면 실행 됩니다.
 
-export const Template = function () {
-  return {
-    setup() {
-      const countRef = ref(0)
-      const targetRef = ref()
-      
-      onClickOutside(targetRef, () => {
-        countRef.value += 1
-      })
-      
-      return function () {
-        return h('div', [
-          h('span', countRef.value),
-          h('button', {
-            ref: targetRef,
-            style: {backgroundColor: 'blue'}
-          }, 'toggle value'),
-        ])
-      }
-    },
-  }
-}
-
-
 <Canvas>
-  <Story name="Default">
-    {Template.bind({})}
+  <Story story={Default}>
   </Story>
 </Canvas>
-
 

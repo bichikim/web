@@ -1,0 +1,50 @@
+name: Document Build and Deploy
+
+on:
+  push:
+    branches:
+      # deploying docs is suspected
+      - docs
+
+env:
+  NODE_VERSION: 16
+  PNPM_VERSION: latest
+jobs:
+  build-docs:
+    name: Build Client
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@master
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Cache pnpm modules
+        uses: actions/cache@v3
+        with:
+          path: ~/.pnpm-store
+          key: ${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-
+
+      - name: Prepare Pnpm
+        uses: pnpm/action-setup@v2.0.1
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Install Dependencies
+        run: pnpm install
+
+      - name: Build
+        run: pnpm run build:docs
+
+#      - name: deploy
+#        uses: jsmrcaga/action-netlify-deploy@v1.7.2
+#        with:
+#          build_directory: docs/winter-love/.vitepress/dist
+#          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+#          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+#          NETLIFY_DEPLOY_TO_PROD: false

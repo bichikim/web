@@ -1,51 +1,56 @@
-import {getStorage, StorageType} from '@winter-love/utils'
-import {ref, watch} from 'vue-demi'
-import stringify from 'fast-json-stable-stringify'
-import {useElementEvent} from '../element-event'
-import {MayRef} from 'src/types'
-import {wrapRef} from '../wrap-ref'
+import {CookieStorageOptions, createStorage} from '@winter-love/utils'
+import {MaybeRef} from 'src/types'
+import {computed, ref, watch} from 'vue'
+import {resolveRef} from '../resolve-ref'
+import {bindRef} from '../bind-ref'
+import {useEvent} from '../use-event'
 
-export interface StorageRefOptions<Data> {
-  /**
-   * @deprecated please use the value
-   */
-  init?: Data
-  type?: StorageType
+export type BrowserStorageKind = 'local' | 'session' | 'cookie'
+
+export interface StorageRefOptions {
+  reset?: boolean
 }
 
-const getItem = (storage: Storage, key: string) => {
-  let result
-  try {
-    const raw = storage.getItem(key)
-    if (raw) {
-      result = JSON.parse(raw)
-    }
-  } catch {
-    return
-  }
-  return result
+export interface CookieStorageRefOptions extends StorageRefOptions, CookieStorageOptions {
+  //
 }
 
-const setItem = (storage: Storage, key: string, value: any) => {
-  storage.setItem(key, stringify(value))
-}
-
-export const storageRef = <Data>(
+export function storageRef<Data>(
+  type: 'local',
   key: string,
-  value?: MayRef<Data | undefined>,
-  options: StorageRefOptions<Data> = {},
-) => {
-  const {type = 'local'} = options
-  const valueRef = wrapRef<Data | undefined>(value)
+  value?: MaybeRef<Data>,
+  options?: MaybeRef<StorageRefOptions>,
+)
+export function storageRef<Data>(
+  type: 'session',
+  key: string,
+  value?: MaybeRef<Data>,
+  options?: MaybeRef<StorageRefOptions>,
+)
+export function storageRef<Data>(
+  type: 'cookie',
+  key: string,
+  value?: MaybeRef<Data>,
+  options?: MaybeRef<CookieStorageRefOptions>,
+)
+export function storageRef<Data>(
+  type: any,
+  key: string,
+  value?: MaybeRef<Data>,
+  options?: MaybeRef<Record<string, any>>,
+) {
+  const valueRef = bindRef(resolveRef<Data>(value))
+  const optionsRef = resolveRef(options)
   const freezeWatch = ref(false)
-  const storage = getStorage(type)
-  if (!storage) {
-    return valueRef
-  }
+  const storageRef = computed(() => createStorage(type, optionsRef.value))
+  const reset = computed(() => optionsRef.value?.rest ?? false)
 
-  const updateStorage = (value: any) => {
-    setItem(storage, key, value)
-    valueRef.value = value
+  const initValue = storageRef.value.get(key)
+
+  if (reset.value || valueRef.value) {
+    storageRef.value.set(key, valueRef.value)
+  } else {
+    valueRef.value = initValue
   }
 
   const updateValue = (init?: any, freeze: boolean = false) => {
@@ -53,20 +58,16 @@ export const storageRef = <Data>(
       freezeWatch.value = true
     }
 
-    const result = getItem(storage, key)
+    const result = storageRef.value.get(key)
 
     if (typeof result !== 'undefined') {
       valueRef.value = result
-      return
-    }
-    if (init) {
-      updateStorage(init)
     }
   }
 
   updateValue(valueRef.value)
 
-  useElementEvent(window, 'storage', () => {
+  useEvent(window, 'storage', () => {
     updateValue(undefined, true)
   })
 
@@ -75,9 +76,8 @@ export const storageRef = <Data>(
       freezeWatch.value = false
       return
     }
-    setItem(storage, key, value)
+    storageRef.value.set(key, value)
   })
 
   return valueRef
 }
-

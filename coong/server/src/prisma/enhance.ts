@@ -1,111 +1,83 @@
-import {permissions} from 'src/auth'
-import {Forbidden, SelfAuthorized} from 'src/decorators'
-import {applyModelsEnhanceMap, applyResolversEnhanceMap} from 'src/generated/type-graphql'
+import {applyModelsEnhanceMap, applyResolversEnhanceMap} from './type-graphql/enhance'
 import {Authorized} from 'type-graphql'
-import {Context} from 'src/context'
+import {forbidden, hasSome, role, user} from 'src/auth'
 
-const {privateUser, publicPost} = permissions
+const getPostAuthorConnect = (data) => {
+  const {id, email} = data?.author?.connect ?? {}
+  return {email, id}
+}
 
-const createMutationManySelfAuthorized = (target: string) =>
-  SelfAuthorized<Context>(async ({args, context}) => {
-    const {prisma} = context
-
-    const posts = await prisma[target].findMany({
-      include: {
-        author: {
-          select: {
-            email: true,
-            id: true,
-          },
-        },
-      },
-      where: args.where,
-    })
-
-    return posts.map(({author}) => {
-      return author
-    })
-  })
+const getPostForbiddenData = (data) => ({
+  authorConnectOrCreate: data?.author?.connectOrCreate,
+  authorCreate: data?.author?.create,
+  likeIDs: data?.likeIDs,
+  likes: data?.likes,
+})
 
 /**
  * @see https://github.com/MichalLytek/typegraphql-prisma
  */
 applyResolversEnhanceMap({
   Post: {
-
+    aggregatePost: [Authorized([role('admin')])],
     createManyPost: [
-      Authorized([publicPost.create, publicPost.self]),
-      Forbidden(({args}, self) => {
-        return Boolean(self && args.data.some(({linkIDs}) => Boolean(linkIDs)))
-      }),
-      SelfAuthorized(({args}) => args.data.map(({authorId}) => ({id: authorId}))),
+      Authorized([
+        //
+        role('admin'),
+        user(
+          ({args}) => args.data.map((data) => getPostAuthorConnect(data)),
+          forbidden(({args: {data}}) => hasSome(data.map((data) => getPostForbiddenData(data)))),
+        ),
+      ]),
     ],
-    // createManyPost: [Authorized([publicPost.create])],
-    createPost: [
-      Authorized([publicPost.create, publicPost.self]),
-      /**
-       * forbidden using author create and connectOrCreate
-       */
-      Forbidden(({args}, self) => {
-        const {author} = args.data
-        return Boolean(
-          self && (
-            !author ||
-              author.create ||
-              author.connectOrCreate
-          ),
-        )
-      }),
-      SelfAuthorized(({args}) => args.data?.author?.connect),
+    createOnePost: [
+      Authorized([
+        //
+        role('admin'),
+        user(
+          ({args}) => getPostAuthorConnect(args.data),
+          forbidden(({args: {data}}) => hasSome(getPostForbiddenData(data))),
+        ),
+      ]),
     ],
-    deleteManyPost: [
-      Authorized([publicPost.delete, publicPost.self]),
-      createMutationManySelfAuthorized('post'),
-    ],
-    deletePost: [Authorized([publicPost.delete, publicPost.self])],
-    // findFirstPost: [Authorized([publicPost.read])],
-    // post: [Authorized([publicPost.read])],
-    // posts: [Authorized([publicPost.read])],
-    // updateManyPost: [Authorized([publicPost.update])],
-    // updatePost: [
-    //   Authorized([publicPost.update, publicPost.self]),
-    //   SelfForbiddenAuthor,
-    // ],
-    // upsertPost: [Authorized([publicPost.update])],
+    deleteManyPost: [Authorized([role('admin')])],
+    deleteOnePost: [Authorized([role('admin')])],
+    findFirstPost: [Authorized([role('admin')])],
+    groupByPost: [Authorized([role('admin')])],
+    post: [],
+    posts: [],
+    updateManyPost: [Authorized([role('admin')])],
+    updateOnePost: [Authorized([role('admin')])],
+    upsertOnePost: [Authorized([role('admin')])],
   },
   User: {
-    aggregateUser: [Authorized([privateUser.read, privateUser.self])],
-    createManyUser: [Authorized([privateUser.create])],
-    createUser: [Authorized([privateUser.create])],
-    deleteManyUser: [Authorized([privateUser.delete])],
-    deleteUser: [Authorized([privateUser.delete])],
-    findFirstUser: [Authorized([privateUser.read])],
-    groupByUser: [Authorized([privateUser.read])],
-    updateManyUser: [Authorized([privateUser.update])],
-    updateUser: [Authorized([privateUser.update])],
-    upsertUser: [Authorized([privateUser.update, privateUser.create])],
-    user: [
-      Authorized(privateUser.read, privateUser.self),
-      SelfAuthorized(({args}) => args.where),
-    ],
-    users: [
-      Authorized(privateUser.read, privateUser.self),
-    ],
+    // aggregateUser: [Authorized([privateUser.read, privateUser.self])],
+    // createManyUser: [Authorized([privateUser.create])],
+    // // createUser: [Authorized([privateUser.create])],
+    // deleteManyUser: [Authorized([privateUser.delete])],
+    // // deleteUser: [Authorized([privateUser.delete])],
+    // findFirstUser: [Authorized([privateUser.read])],
+    // groupByUser: [Authorized([privateUser.read])],
+    // updateManyUser: [Authorized([privateUser.update])],
+    // // updateUser: [Authorized([privateUser.update])],
+    // // upsertUser: [Authorized([privateUser.update, privateUser.create])],
+    // user: [Authorized(privateUser.read, privateUser.self), SelfAuthorized(({args}) => args.where)],
+    // users: [Authorized(privateUser.read, privateUser.self)],
   },
 })
 
-const PostSelfAuthorized = SelfAuthorized(({root}) => ({id: root.authorId}))
-const UserSelfAuthorized = SelfAuthorized(({root}) => ({id: root.id}))
+// const PostSelfAuthorized = SelfAuthorized(({root}) => ({id: root.authorId}))
+// const UserSelfAuthorized = SelfAuthorized(({root}) => ({id: root.id}))
 
 applyModelsEnhanceMap({
   Post: {
     fields: {
-      _all: [PostSelfAuthorized],
+      _all: [],
     },
   },
   User: {
     fields: {
-      _all: [UserSelfAuthorized],
+      _all: [],
     },
   },
 })

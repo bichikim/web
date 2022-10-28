@@ -1,4 +1,4 @@
-import {getCurrentInstance, inject, InjectionKey} from 'vue-demi'
+import {getCurrentInstance, inject, InjectionKey} from 'vue'
 
 export interface Theme {
   [key: string]: any

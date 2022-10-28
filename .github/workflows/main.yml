@@ -2,93 +2,48 @@ name: Build and Deploy
 on:
   push:
     branches:
-      - master
-      - dev
+      - freeze
 env:
-  PNPM_VERSION: 6.23.2
+  PNPM_VERSION: 7.1.0
   NODE_VERSION: 16
 jobs:
-  # Build Library
-  build-library:
-    name: Build libraries
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repo
-        uses: actions/checkout@master
-
-      - name: Setup Node
-        uses: actions/setup-node@v2
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-
-      - name: Cache pnpm modules
-        uses: actions/cache@v2
-        with:
-          path: ~/.pnpm-store
-          key: ${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-    
-
-      - name: Prepare Pnpm
-        uses: pnpm/action-setup@v2.0.1
-        with:
-          version: ${{ env.PNPM_VERSION }}
-
-      - name: Use Libraies Cache
-        uses: actions/cache@v2
-        id: libraies-cache
-        with:
-          path: 'packages/*/lib'
-          key: ${{ runner.os }}-libraies-${{ hashFiles('packages/**/*.ts') }}
-
-      - name: Install Dependencies
-        #if: steps.yarn-cache.outputs.cache-hit != 'true'
-        run: pnpm install --ignore-scripts
-
-      - name: Build Libraies
-        if: steps.libraies-cache.outputs.cache-hit != 'true'
-        run: pnpm run build:libraries
   # Test Job
   test:
-    name: Test
-    needs: build-library
+    name: Build Libraies And Test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repo
         uses: actions/checkout@master
 
       - name: Setup Node
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Cache pnpm modules
-        uses: actions/cache@v2
+      - name: Use Libraies Cache
+        uses: actions/cache@v3
+        id: libraies-cache
         with:
-          path: ~/.pnpm-store
-          key: ${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-    
+          path: 'packages/*/lib'
+          key: ${{ runner.os }}-libraies-${{ hashFiles('packages/**/*.ts') }}
 
       - name: Prepare Pnpm
         uses: pnpm/action-setup@v2.0.1
         with:
           version: ${{ env.PNPM_VERSION }}
 
-      - name: Use Libraies Cache
-        uses: actions/cache@v2
-        id: libraies-cache
+      - name: Cache pnpm modules
+        uses: actions/cache@v3
         with:
-          path: 'packages/*/lib'
-          key: ${{ runner.os }}-libraies-${{ hashFiles('packages/**/*.ts') }}
+          path: ~/.pnpm-store
+          # key: ${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          key: ${{ runner.os }}
+          restore-keys: |
+            ${{ runner.os }}    
 
       - name: Install Dependencies
-        #if: steps.yarn-cache.outputs.cache-hit != 'true'
-        run: pnpm install --ignore-scripts
+        run: pnpm install
 
-      - name: Build Libraies
-        if: steps.libraies-cache.outputs.cache-hit != 'true'
-        run: pnpm run build:libraries
 
       - name: Test
         run: pnpm run test
@@ -107,37 +62,33 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Node
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
           node-version: ${{ env.NODE_VERSION }}
-
-      - name: Cache pnpm modules
-        uses: actions/cache@v2
-        with:
-          path: ~/.pnpm-store
-          key: ${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-    
 
       - name: Prepare Pnpm
         uses: pnpm/action-setup@v2.0.1
         with:
           version: ${{ env.PNPM_VERSION }}
 
+      - name: Cache pnpm modules
+        uses: actions/cache@v3
+        with:
+          path: ~/.pnpm-store
+          # key: ${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          key: ${{ runner.os }}
+          restore-keys: |
+            ${{ runner.os }}
+
       - name: Use Libraies Cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         id: libraies-cache
         with:
           path: 'packages/*/lib'
           key: ${{ runner.os }}-libraies-${{ hashFiles('packages/**/*.ts') }}
 
       - name: Install Dependencies
-        #if: steps.yarn-cache.outputs.cache-hit != 'true'
         run: pnpm install --ignore-scripts
-
-      - name: Build Libraies
-        if: steps.libraies-cache.outputs.cache-hit != 'true'
-        run: pnpm run build:libraies
 
       - name: Build
         run: pnpm run build:@coong/client
@@ -145,16 +96,18 @@ jobs:
       - name: Archive Production Artifact
         uses: actions/upload-artifact@master
         with:
+          retention-days: 1
           name: dist-client
           path: |
             coong/client/dist
 
       - name: Changed files
-        uses: tj-actions/changed-files@v9
+        uses: tj-actions/changed-files@v18
         id: changed-files
         with:
           files: |
             coong/client
+
   build-server:
     name: Build Server
     needs: test
@@ -168,17 +121,17 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Node
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Cache pnpm modules
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ~/.pnpm-store
           key: ${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
-            ${{ runner.os }}-    
+            ${{ runner.os }}-
 
       - name: Prepare Pnpm
         uses: pnpm/action-setup@v2.0.1
@@ -186,38 +139,27 @@ jobs:
           version: ${{ env.PNPM_VERSION }}
 
       - name: Install Dependencies
-        #if: steps.yarn-cache.outputs.cache-hit != 'true'
         run: pnpm install
-
-      - name: Use Libraies Cache
-        uses: actions/cache@v2
-        id: libraies-cache
-        with:
-          path: 'packages/*/lib'
-          key: ${{ runner.os }}-libraies-${{ hashFiles('packages/**/*.ts') }}
-
-      - name: Build Libraies
-        if: steps.libraies-cache.outputs.cache-hit != 'true'
-        run: pnpm run build:libraries
 
       - name: Build Server
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: pnpm run build:@coong/server
 
-      - name: Archive Production Artifact
-        uses: actions/upload-artifact@master
-        with:
-          name: dist-server
-          path: |
-            coong/server/dist
+#      - name: Archive Production Artifact
+#        uses: actions/upload-artifact@master
+#        with:
+#          name: dist-server
+#          path: |
+#            coong/server/.keystone
 
       - name: Changed files
-        uses: tj-actions/changed-files@v9
+        uses: tj-actions/changed-files@v18
         id: changed-files
         with:
           files: |
             coong/server
+
   deploy-server:
     name: Deploy Server
     needs: build-server
@@ -230,12 +172,6 @@ jobs:
     steps:
       - name: Checkout Repo
         uses: actions/checkout@master
-
-      - name: Download Artifact
-        uses: actions/download-artifact@master
-        with:
-          name: dist-server
-          path: coong/server/dist
 
       - name: Setup Cloud SDK
         uses: google-github-actions/setup-gcloud@v0.2.1
@@ -251,7 +187,9 @@ jobs:
         run: |
           touch coong/server/.env
           echo NODE_ENV=production >> coong/server/.env
-          echo DATABASE_URL=${{ secrets.DATABASE_URL }} >> coong/server/.env
+          echo DB_URL=${{ secrets.DB_URL }} >> coong/server/.env
+          echo SESSION_SECRET=${{ secrets.SESSION_SECRET }} >> coong/server/.env
+          echo EMAIL_API_KEY=${{ secrets.EMAIL_API_KEY }} >> coong/server/.env
 
       - name: Build
         run: |
@@ -272,6 +210,7 @@ jobs:
         run: |
           gcloud run deploy $GCP_SERVICE_NAME --image $GCP_IAMGE_NAME:$GITHUB_SHA \
           --quiet \
+          --add-cloudsql-instances ${{ secrets.DB_NAME }} \
           --platform managed \
           --set-env-vars NODE_ENV=production \
           --region asia-northeast3 \
@@ -284,7 +223,7 @@ jobs:
     needs: build-server
     runs-on: ubuntu-latest
     # only dev
-    if: ${{ github.ref == 'refs/heads/dev' && needs.build-server.outputs.run_job == 'true' }}
+#    if: ${{ github.ref == 'refs/heads/dev' && needs.build-server.outputs.run_job == 'true' }}
     env:
       GCP_SERVICE_NAME: coong-back-end-dev
       GCP_IAMGE_NAME: gcr.io/${{ secrets.GCP_PROJECT_ID }}/coong-back-end-dev
@@ -292,11 +231,11 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@master
 
-      - name: Download Artifact
-        uses: actions/download-artifact@master
-        with:
-          name: dist-server
-          path: coong/server/dist
+#      - name: Download Artifact
+#        uses: actions/download-artifact@master
+#        with:
+#          name: dist-server
+#          path: coong/server/.keystone
 
       - name: Setup Cloud SDK
         uses: google-github-actions/setup-gcloud@v0.2.1
@@ -312,7 +251,9 @@ jobs:
         run: |
           touch coong/server/.env
           echo NODE_ENV=development >> coong/server/.env
-          echo DATABASE_URL=${{ secrets.DATABASE_URL_DEV }} >> coong/server/.env
+          echo DB_URL=${{ secrets.DB_URL_DEV }} >> coong/server/.env
+          echo SESSION_SECRET=${{ secrets.SESSION_SECRET_DEV }} >> coong/server/.env
+          echo EMAIL_API_KEY=${{ secrets.EMAIL_API_KEY_DEV }} >> coong/server/.env
 
       - name: Build
         run: |
@@ -349,6 +290,67 @@ jobs:
     env:
       GCP_SERVICE_NAME: coong
       GCP_IAMGE_NAME: gcr.io/${{ secrets.GCP_PROJECT_ID }}/coong
+      PROJECT_ROOT_PATH: coong/client
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@master
+
+      - name: Download Artifact
+        uses: actions/download-artifact@master
+        with:
+          name: dist-client
+          path: ${{ env.PROJECT_ROOT_PATH }}/dist
+
+      - name: Setup Cloud SDK
+        uses: google-github-actions/setup-gcloud@v0.2.1
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Configure Docker
+        run: |
+          gcloud auth configure-docker
+
+      - name: Create Env File
+        run: |
+          touch ${{ env.PROJECT_ROOT_PATH }}/.env
+
+      # \ 하고 띄어 쓰기 있는지 확인 있다면 오류남
+      - name: Build
+        run: |
+          docker build \
+          -t $GCP_IAMGE_NAME:$GITHUB_SHA \
+          ./${{ env.PROJECT_ROOT_PATH }}
+
+      - name: Tag
+        run: |
+          docker tag \
+          $GCP_IAMGE_NAME:$GITHUB_SHA \
+          $GCP_IAMGE_NAME:latest
+
+      - name: Push
+        run: |
+          docker push $GCP_IAMGE_NAME:$GITHUB_SHA
+
+      - name: Deploy
+        run: |
+          gcloud run deploy $GCP_SERVICE_NAME --image $GCP_IAMGE_NAME:$GITHUB_SHA \
+          --quiet \
+          --platform managed \
+          --region asia-northeast3 \
+          --allow-unauthenticated \
+          --max-instances 3 \
+          --port 8080 \
+          --memory 512M
+  deploy-dev-client:
+    name: Deploy Dev Client
+    needs: build-client
+    runs-on: ubuntu-latest
+    # only dev
+#    if: ${{ github.ref == 'refs/heads/dev' && needs.build-client.outputs.run_job == 'true' }}
+    env:
+      GCP_SERVICE_NAME: coong-dev
+      GCP_IAMGE_NAME: gcr.io/${{ secrets.GCP_PROJECT_ID }}/coong-dev
       BACK_END_URL: https://back.coong.io
       PROJECT_ROOT_PATH: coong/client
     steps:
@@ -369,17 +371,16 @@ jobs:
 
       - name: Configure Docker
         run: |
-          gcloud auth configure-docker     
+          gcloud auth configure-docker
 
       - name: Create Env File
         run: |
           touch ${{ env.PROJECT_ROOT_PATH }}/.env
-          echo VITE_API_URL=$BACK_END_URL >> ${{ env.PROJECT_ROOT_PATH }}/.env
 
-      # \ 하고 띄어 쓰기 있는지 확인 있다면 오류남
       - name: Build
         run: |
           docker build \
+          -f ${{ env.PROJECT_ROOT_PATH }}/Dockerfile \
           -t $GCP_IAMGE_NAME:$GITHUB_SHA \
           ./${{ env.PROJECT_ROOT_PATH }}
 
@@ -387,73 +388,11 @@ jobs:
         run: |
           docker tag \
           $GCP_IAMGE_NAME:$GITHUB_SHA \
-          $GCP_IAMGE_NAME:latest    
+          $GCP_IAMGE_NAME:latest
 
       - name: Push
         run: |
-          docker push $GCP_IAMGE_NAME:$GITHUB_SHA   
-
-      - name: Deploy
-        run: |
-          gcloud run deploy $GCP_SERVICE_NAME --image $GCP_IAMGE_NAME:$GITHUB_SHA \
-          --quiet \
-          --platform managed \
-          --region asia-northeast3 \
-          --allow-unauthenticated \
-          --max-instances 3 \
-          --port 8080 \
-          --memory 512M
-  deploy-dev-client:
-    name: Deploy Dev Client
-    needs: build-client
-    runs-on: ubuntu-latest
-    # only dev
-    if: ${{ github.ref == 'refs/heads/dev' && needs.build-client.outputs.run_job == 'true' }}
-    env:
-      GCP_SERVICE_NAME: coong-dev
-      GCP_IAMGE_NAME: gcr.io/${{ secrets.GCP_PROJECT_ID }}/coong-dev
-      BACK_END_URL: https://back-dev.coong.io
-      PROJECT_ROOT_PATH: coong/client
-    steps:
-      - name: Checkout Repo
-        uses: actions/checkout@master
-
-      - name: Download Artifact
-        uses: actions/download-artifact@master
-        with:
-          name: dist-client
-          path: ${{ env.PROJECT_ROOT_PATH }}/dist
-
-      - name: Setup Cloud SDK
-        uses: google-github-actions/setup-gcloud@v0.2.1
-        with:
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
-          service_account_key: ${{ secrets.GCP_SA_KEY }}
-
-      - name: Configure Docker
-        run: |
-          gcloud auth configure-docker     
-
-      - name: Create Env File
-        run: |
-          touch ${{ env.PROJECT_ROOT_PATH }}/.env
-          echo VITE_API_URL=$BACK_END_URL >> ${{ env.PROJECT_ROOT_PATH }}/.env
-
-      - name: Build
-        run: |
-          docker build \
-          -t $GCP_IAMGE_NAME:$GITHUB_SHA \
-          ./${{ env.PROJECT_ROOT_PATH }}
-
-      - name: Tag
-        run: |
-          docker tag \
-          $GCP_IAMGE_NAME:$GITHUB_SHA \
-          $GCP_IAMGE_NAME:latest    
-
-      - name: Push
-        run: |
-          docker push $GCP_IAMGE_NAME:$GITHUB_SHA   
+          docker push $GCP_IAMGE_NAME:$GITHUB_SHA
 
       - name: Deploy
         run: |

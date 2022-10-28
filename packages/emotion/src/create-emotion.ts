@@ -1,10 +1,12 @@
 import createEmotionOriginal, {
-  Emotion as _Emotion, CSSObject, Options as OriginalEmotionOptions,
+  Emotion as _Emotion,
+  Options as OriginalEmotionOptions,
 } from '@emotion/css/create-instance'
-import {Plugin} from 'vue-demi'
+import {Plugin} from 'vue'
 import {EMOTION_CACHE_CONTEXT} from './cache'
 import {createStyled} from './create-styled'
 import {EMOTION_THEME_CONTEXT, Theme} from './theme'
+export {CSSObject} from '@emotion/css/create-instance'
 
 export interface EmotionExtend extends _Emotion {
   styled: ReturnType<typeof createStyled>
@@ -25,11 +27,7 @@ export type EmotionPlugin = Plugin & EmotionExtend
  * @param options
  */
 export const createEmotion = (options: EmotionOptions = {}): EmotionPlugin => {
-  const {
-    theme,
-    key = 'css',
-    ...restOptions
-  } = options
+  const {theme, key = 'css', ...restOptions} = options
 
   const emotion = createEmotionOriginal({...restOptions, key})
 
@@ -49,5 +47,3 @@ export const createEmotion = (options: EmotionOptions = {}): EmotionPlugin => {
     styled,
   }
 }
-
-export type {CSSObject}

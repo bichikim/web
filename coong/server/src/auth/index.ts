@@ -1,24 +1,20 @@
+import {Context, UserData} from 'src/context'
 import {AuthChecker} from 'type-graphql'
-import {Context} from 'src/context'
-import {createGetPermissions, createPermissions, getMatchedPermission} from './utils'
-import {permissions as rawPermissions, roles} from './roles'
+import {Role} from './permission'
 
-const getPermissions = createGetPermissions({
-  roles,
-})
+export * from './permission'
 
-export const permissions = createPermissions(rawPermissions)
-
-const isSelf = (permission: string) => Object.is(permission.split('.')[1], 'self')
-
-export const auth: AuthChecker<Context> = async (resolverData, roles) => {
+export const auth: AuthChecker<Context, Role> = async (resolverData, roles) => {
   const {context} = resolverData
 
   if (roles.length === 0) {
     return false
   }
 
-  const {auth: {token}, jwt} = context
+  const {
+    auth: {token},
+    jwt,
+  } = context
 
   if (!token) {
     return false
@@ -36,22 +32,15 @@ export const auth: AuthChecker<Context> = async (resolverData, roles) => {
     return false
   }
 
-  const receivedPermissions = getPermissions(receivedRoles)
-
-  const matchedPermission = getMatchedPermission(receivedPermissions, roles)
-
-  if (!matchedPermission) {
-    return false
-  }
-
-  context.auth.self = {
+  const user: UserData = {
     email,
     id,
+    roles: receivedRoles,
   }
 
-  context.auth.isSelf = isSelf(matchedPermission)
-
-  return true
+  return Promise.all(roles.map((role) => role(user, resolverData))).then((result) => {
+    return result.some(Boolean)
+  })
 }
 
 export default auth

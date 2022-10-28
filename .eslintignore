@@ -1,9 +1,4 @@
-/dist
-/src-bex/www
-/src-capacitor
-/src-cordova
-/.quasar
+dist
+.quasar
 node_modules
 **/*.d.ts
-/src-ssr
-/lib

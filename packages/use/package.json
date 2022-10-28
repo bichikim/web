@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/use",
-  "version": "1.0.23-alpha.15",
+  "version": "1.0.25-alpha.16",
   "description": "Vue utils",
   "keywords": [
     "typescript",
@@ -18,41 +18,40 @@
   "author": "bichi@live.co.kr",
   "exports": {
     ".": {
-      "import": "./lib/esm/index.js",
-      "require": "./lib/index.js"
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
     },
     "./*": "./*"
   },
-  "main": "lib/index.js",
-  "jsdelivr": "lib/iife/index.js",
-  "unpkg": "lib/iife/index.js",
-  "module": "lib/esm/index.js",
+  "main": "dist/index.js",
+  "jsdelivr": "dist/index.global.js",
+  "unpkg": "dist/index.global.js",
+  "module": "dist/index.mjs",
   "source": "src/index.ts",
-  "types": "lib/index.d.ts",
+  "types": "dist/index.d.ts",
   "files": [
-    "lib/*"
+    "dist/*"
   ],
   "scripts": {
-    "build": "tsup-node --dts --legacy-output --minify",
-    "dev": "tsup-node --watch --legacy-output",
-    "prepare": "tsup-node --dts --legacy-output"
+    "build": "tsup --dts --minify",
+    "dev": "tsup --watch",
+    "prepare": "tsup --dts"
   },
   "dependencies": {
-    "@winter-love/utils": "^1.0.23-alpha.15",
-    "debounce": "^1.2.1",
-    "fast-json-stable-stringify": "^2.1.0",
-    "lodash": "^4.17.21",
-    "vue-demi": "latest"
+    "@winter-love/lodash": "workspace:1.0.25-alpha.16",
+    "@winter-love/utils": "workspace:1.0.25-alpha.16",
+    "immer": "^9.0.16",
+    "vue": "^3.2.41"
   },
   "devDependencies": {
-    "@types/debounce": "^1.2.0",
-    "@types/sinon": "^10.0.2",
-    "@vue/test-utils": "2.0.0-rc.6",
-    "gulp": "^4.0.2",
-    "sinon": "^11.1.1",
-    "vue": "next"
+    "@types/debounce": "^1.2.1",
+    "@types/sinon": "10.0.13",
+    "@vue/server-renderer": "^3.2.41"
   },
-  "gitHead": "66c79bd0d5c23a437b8170f758ff58e4496afb58",
+  "publishConfig": {
+    "access": "public"
+  },
+  "gitHead": "162bc0badb2b0932df3c9dc51cc1ff7af3587140",
   "tsup": {
     "entry": [
       "src/index.ts"
@@ -63,7 +62,7 @@
       "esm",
       "iife"
     ],
-    "outDir": "lib",
+    "outDir": "dist",
     "sourcemap": true,
     "splitting": false
   }

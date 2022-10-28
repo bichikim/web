@@ -1,6 +1,5 @@
 import {Meta, Story, Canvas} from '@storybook/addon-docs/blocks'
-import {h, ref} from 'vue-demi'
-import {onShouldUpdate} from '../'
+import {Default} from './index.stories'
 
 <Meta title="use/On Should Update"/>
 
@@ -17,30 +16,8 @@ import {onShouldUpdate} from '../'
 - 🎯 지정한 엘리먼트가 다시 보일때
 - 🎯 직접 반환 되는 함수를 실행 할때
 
-export const Template = function () {
-  return {
-    setup() {
-      const countRef = ref(0)
-      const watchCountRef = ref(0)
-      onShouldUpdate(() => {
-        countRef.value += 1
-      }, {
-        watchValue: watchCountRef,
-      })
-      return function () {
-        return h('div', [
-          h('div', watchCountRef.value),
-          h('button', {onClick : () => (watchCountRef.value += 1)}, 'increase watch'),
-          h('div', countRef.value),
-        ])
-      }
-    },
-  }
-}
-
 <Canvas>
-  <Story name="Default">
-    {Template.bind({})}
+  <Story story={Default}>
   </Story>
 </Canvas>
 

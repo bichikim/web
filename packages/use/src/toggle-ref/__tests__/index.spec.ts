@@ -1,69 +1,48 @@
+/**
+ * @jest-environment jsdom
+ */
+import {flushPromises, mount, mountComposition} from '@winter-love/vue-test'
+import {defineComponent, h, ref} from 'vue'
 import {toggleRef} from '../'
-import {defineComponent, h, ref} from 'vue-demi'
-import {mount} from '@vue/test-utils'
-
-const setup = () => {
-  const Component = defineComponent({
-    setup() {
-      const valueRef = ref(false)
-      const {toggle, value: clonedValueRef} = toggleRef(valueRef)
-
-      return () => (
-        h('div', [
-          h('div', {id: 'value'}, valueRef.value),
-          h('div', {id: 'clonedValue'}, clonedValueRef.value),
-          h('button', {id: 'toggle', onclick: toggle}, 'toggle'),
-        ])
-      )
-    },
-  })
-
-  const wrapper = mount(Component)
-
-  return {
-    wrapper,
-  }
-}
-
-const setupNoneRef = () => {
-  const Component = defineComponent({
-    setup() {
-      const {toggle, value: valueRef} = toggleRef(false)
-
-      return () => (
-        h('div', [
-          h('div', {id: 'value'}, valueRef.value),
-          h('button', {id: 'toggle', onclick: toggle}, 'toggle'),
-        ])
-      )
-    },
-  })
-
-  const wrapper = mount(Component)
-
-  return {
-    wrapper,
-  }
-}
 
 describe('toggle', () => {
-  it('should ', async () => {
-    const {wrapper} = setup()
+  it('should change value', async () => {
+    const wrapper = mountComposition(() => {
+      const original = ref(false)
+      const [value, toggle] = toggleRef(original)
+      return {
+        original,
+        toggle,
+        value,
+      }
+    })
 
-    expect(wrapper.get('#value').text()).toBe('false')
-    expect(wrapper.get('#clonedValue').text()).toBe('false')
-    await wrapper.get('#toggle').trigger('click')
-    expect(wrapper.get('#value').text()).toBe('true')
-    expect(wrapper.get('#clonedValue').text()).toBe('true')
+    expect(wrapper.setupState.value).toBe(false)
+    wrapper.setupState.toggle()
+    await flushPromises()
+    expect(wrapper.setupState.value).toBe(true)
+    wrapper.setupState.toggle()
+    await flushPromises()
+    expect(wrapper.setupState.value).toBe(false)
+    wrapper.setupState.original = true
+    await flushPromises()
+    expect(wrapper.setupState.value).toBe(true)
   })
 })
 
 describe('toggle', () => {
   it('should ', async () => {
-    const {wrapper} = setupNoneRef()
+    const wrapper = mountComposition(() => {
+      const [value, toggle] = toggleRef()
+      return {
+        toggle,
+        value,
+      }
+    })
 
-    expect(wrapper.get('#value').text()).toBe('false')
-    await wrapper.get('#toggle').trigger('click')
-    expect(wrapper.get('#value').text()).toBe('true')
+    expect(wrapper.setupState.value).toBe(false)
+    wrapper.setupState.toggle()
+    await flushPromises()
+    expect(wrapper.setupState.value).toBe(true)
   })
 })

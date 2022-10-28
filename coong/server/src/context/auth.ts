@@ -1,43 +1,42 @@
 import {ExpressContext} from 'apollo-server-express'
-import {ContextFunction} from './types'
 
-export interface SelfUserData {
+export interface UserData {
   email: string
   id: string
+  roles?: string[]
 }
 
 export interface AuthContext {
-  isSelf: boolean
-  self?: SelfUserData
+  roles?: string[]
   token?: string
+  user?: UserData
 }
+
+const bearerRegex = /^Bearer /u
 
 export const unwrapBearerToken = (token?: string) => {
-  return token ? token.replace(/^Bearer /u, '') : token
+  if (!token) {
+    return
+  }
+
+  if (!bearerRegex.test(token)) {
+    return
+  }
+
+  return token.replace(bearerRegex, '')
 }
 
-export const withAuth = <ReturnType extends Record<string, unknown>>(
-  contextFunction: ContextFunction<ReturnType>,
-) => {
+export const useAuth = (expressContext: ExpressContext): AuthContext => {
+  const {req} = expressContext
 
-  return async (expressContext: ExpressContext) => {
-    const {
-      req,
-    } = expressContext
+  const {
+    headers: {authorization},
+  } = req
 
-    const {headers: {authorization}} = req
+  const token = Array.isArray(authorization) ? authorization.join('') : authorization
 
-    const token = (Array.isArray(authorization) ? authorization.join('') : authorization)
-
-    const auth: AuthContext = {
-      isSelf: false,
-      self: undefined,
-      token: unwrapBearerToken(token),
-    }
-
-    return Object.freeze({
-      ...await contextFunction(expressContext),
-      auth,
-    })
+  return {
+    token: unwrapBearerToken(token),
+    user: undefined,
   }
 }

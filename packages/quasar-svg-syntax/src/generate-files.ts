@@ -20,14 +20,18 @@ export const generateFiles = async (options: GenerateOptions) => {
   //
   const paths = await fg(directory)
 
-  const svgStrings = await Promise.all(paths.map(async (item) => {
-    const data: string = await asyncReadFile(path.resolve(cwd, item), 'utf8')
-    const code = await generate(data)
-    return {
-      code,
-      name: camelCase(namePrefix + last(item.replace(/\..{3}$/u, '').split('/'))),
-    }
-  }))
+  const svgStrings = await Promise.all(
+    paths.map(async (item) => {
+      const data: string = await asyncReadFile(path.resolve(cwd, item), 'utf8')
+      const code = await generate(data)
+      return {
+        code,
+        name: camelCase(namePrefix + last(item.replace(/\..{3}$/u, '').split('/'))),
+      }
+    }),
+  )
 
-  return `/* eslint-disable */ \n export default {${svgStrings.map(({name, code}) => `${name}: '${code}'`).join(',')}}`
+  return `/* eslint-disable */ \n export default {${svgStrings
+    .map(({name, code}) => `${name}: '${code}'`)
+    .join(',')}}`
 }

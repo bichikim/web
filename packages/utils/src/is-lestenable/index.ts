@@ -1,10 +1,6 @@
-import {getDocument, getWindow} from '../browser'
+import {getDocument} from '../get-document'
 
 export const isListenable = (): boolean => {
-  const window = getWindow()
-  if (!window) {
-    return false
-  }
   const document = getDocument()
   if (!document) {
     return false

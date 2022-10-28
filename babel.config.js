@@ -4,17 +4,6 @@ module.exports = {
     test: {
       plugins: [
         [
-          'search-and-replace',
-          {
-            rules: [
-              {
-                replace: 'false',
-                search: '__QUASAR_SSR_SERVER__',
-              },
-            ],
-          },
-        ],
-        [
           'module-resolver',
           {
             alias: {
@@ -22,6 +11,14 @@ module.exports = {
             },
             cwd: 'packagejson',
             loglevel: 'info',
+          },
+        ],
+        'babel-plugin-transform-typescript-metadata',
+        ['@babel/plugin-proposal-class-properties', {loose: true}],
+        [
+          '@babel/plugin-proposal-decorators',
+          {
+            legacy: true,
           },
         ],
         ['@vue/babel-plugin-transform-vue-jsx'],
@@ -37,7 +34,8 @@ module.exports = {
           },
         ],
         [
-          '@babel/preset-typescript', {
+          '@babel/preset-typescript',
+          {
             allExtensions: true,
             isTSX: true,
           },

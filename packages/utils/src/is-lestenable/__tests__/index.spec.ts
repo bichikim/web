@@ -1,3 +1,6 @@
+/**
+ * @jest-environment jsdom
+ */
 import {isListenable} from '../'
 
 describe('isListenable', () => {
@@ -6,4 +9,3 @@ describe('isListenable', () => {
     expect(result).toBe(true)
   })
 })
-

@@ -1,6 +1,9 @@
 import {GraphQLResolveInfo} from 'graphql'
 import graphqlFields from 'graphql-fields'
-import {transformCountFieldIntoSelectRelationsCount, transformFields} from 'src/generated/type-graphql/helpers'
+import {
+  transformCountFieldIntoSelectRelationsCount,
+  transformFields,
+} from 'src/prisma/type-graphql/helpers'
 
 export const getIncludes = (info: GraphQLResolveInfo) => {
   const {_count} = transformFields(graphqlFields(info))

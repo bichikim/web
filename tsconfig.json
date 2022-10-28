@@ -1,33 +1,27 @@
 {
+  "compileOnSave": false,
   "compilerOptions": {
-    "allowJs": true,
-    // `baseUrl` must be placed on the extending configuration in devland, or paths won't be recognized
+    "rootDir": ".",
+    "sourceMap": true,
     "esModuleInterop": true,
-    "module": "esnext",
-    "moduleResolution": "node",
-    // Needed to address https://github.com/quasarframework/app-extension-typescript/issues/36
-    "noEmit": true,
     "resolveJsonModule": true,
-    "jsx": "preserve",
-    "noImplicitAny": false,
-    "importHelpers": true,
     "declaration": true,
-    "skipLibCheck": true,
-    // for 4.4.0
-    // "exactOptionalPropertyTypes": true,
+    "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
     "suppressImplicitAnyIndexErrors": true,
-    "sourceMap": true,
-    "strict": true,
-    "target": "ES2020",
-    // Quasar-defined webpack aliases
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "importHelpers": true,
+    "target": "ESNext",
+    "noImplicitAny": false,
+    "module": "ESNext",
+    "lib": ["ESNext", "dom"],
+    "skipLibCheck": true,
+    "skipDefaultLibCheck": true,
     "baseUrl": "."
   },
-  "ts-node": {
-    "transpileOnly": true,
-    "compilerOptions": {
-      "target": "ES2015",
-      "module": "CommonJS"
-    }
-  },
+  "include": [
+    "**/*.ts",
+    "auto-imports.d.ts"
+  ]
 }

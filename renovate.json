@@ -1,0 +1,15 @@
+{
+  "extends": [
+    "config:base"
+  ],
+  "packageRules": [
+    {
+      "matchLanguages": ["java"],
+      "enabled": false
+    },
+    {
+      "matchPackageNames": ["graphql", "apollo-server"],
+      "enabled": false
+    }
+  ]
+}

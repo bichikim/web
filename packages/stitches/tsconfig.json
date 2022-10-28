@@ -3,8 +3,10 @@
   "compileOnSave": false,
   "compilerOptions": {
     "declaration": true,
-    "outDir": "lib",
-    "target": "es2015",
+    "declarationMap": true,
+    "outDir": "dist",
+    "target": "ESNext",
+    "module": "ESNext",
     "baseUrl": ".",
     "paths": {
       "src/*": ["src/*"]

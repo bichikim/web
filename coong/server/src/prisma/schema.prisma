@@ -1,40 +1,60 @@
 datasource db {
   provider = "mongodb"
-  url = env("DATABASE_URL")
+  url      = env("DATABASE_URL")
 }
 
 generator client {
   provider = "prisma-client-js"
-  previewFeatures = ["mongoDb"]
 }
 
 generator typegraphql {
   provider = "typegraphql-prisma"
-  output  = "../generated/type-graphql"
+  output   = "./type-graphql"
 }
 
 model User {
-  id String   @id @default(dbgenerated()) @map("_id") @db.ObjectId
-  email String   @unique
-  name String?
+  id           String    @id @default(auto()) @map("_id") @db.ObjectId
+  email        String    @unique
+  name         String?
   /// @TypeGraphQL.omit(output: true)
-  password String?
-  followers User[]   @relation("UserFollows", fields: [followerIDs])
-  followerIDs String[] @db.Array(ObjectId)
-  following User[]   @relation("UserFollows", fields: [followingIDs])
-  followingIDs String[] @db.Array(ObjectId)
-  likePosts Post[] @relation("Likes", fields: [likePostIDs])
-  likePostIDs String[] @db.Array(ObjectId)
-  posts Post[] @relation("Author")
+  password     String?
+  followers    User[]    @relation("UserFollows", fields: [followerIDs], references: [id])
+  followerIDs  String[]  @db.ObjectId()
+  following    User[]    @relation("UserFollows", fields: [followingIDs], references: [id])
+  followingIDs String[]  @db.ObjectId()
+  likePosts    Post[]    @relation("Likes", fields: [likePostIDs], references: [id])
+  likePostIDs  String[]  @db.ObjectId()
+  posts        Post[]    @relation("PostAuthor")
+  comments     Comment[] @relation("CommentAuthor")
   /// @TypeGraphQL.omit(output: true)
-  roles String[]
+  roles        String[]
 }
 
 model Post {
-  id String @id @default(dbgenerated()) @map("_id") @db.ObjectId
-  title String
-  author User? @relation("Author", fields: [authorId], references: [id])
+  id       String    @id @default(auto()) @map("_id") @db.ObjectId
+  title    String
+  message  String?
+  author   User      @relation("PostAuthor", fields: [authorId], references: [id])
+  authorId String    @db.ObjectId
+  likes    User[]    @relation("Likes", fields: [likeIDs], references: [id])
+  likeIDs  String[]  @db.ObjectId()
+  tags     Tag[]     @relation("Tags", references: [id], fields: [tagIDs])
+  tagIDs   String[]  @db.ObjectId()
+  comments Comment[] @relation("Comments")
+}
+
+model Comment {
+  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  message  String
+  port     Post   @relation("Comments", references: [id], fields: [postId])
+  postId   String @db.ObjectId
+  author   User   @relation("CommentAuthor", fields: [authorId], references: [id])
   authorId String @db.ObjectId
-  likes User[] @relation("Likes", fields: [likeIDs])
-  likeIDs String[] @db.Array(ObjectId)
+}
+
+model Tag {
+  id      String   @id @default(auto()) @map("_id") @db.ObjectId
+  name    String
+  posts   Post[]   @relation("Tags", references: [id], fields: [postIDs])
+  postIDs String[] @db.ObjectId()
 }

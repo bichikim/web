@@ -9,8 +9,15 @@ export const withPrisma = <ReturnType extends Record<string, unknown>>(
   const prisma: PrismaClient = new PrismaClient()
   return async (expressContext: ExpressContext) => {
     return freeze({
-      ...await contextFunction(expressContext),
+      ...(await contextFunction(expressContext)),
       prisma,
     })
   }
+}
+
+export type PrismaContext = PrismaClient
+
+export const preparePrisma = () => {
+  const prisma: PrismaClient = new PrismaClient()
+  return () => prisma
 }

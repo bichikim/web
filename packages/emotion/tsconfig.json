@@ -2,7 +2,8 @@
   "extends": "../../tsconfig.json",
   "compileOnSave": false,
   "compilerOptions": {
-    "target": "es2015",
+    "target": "ESNext",
+    "module": "ESNext",
     "baseUrl": ".",
     "paths": {
       "src/*": ["src/*"]

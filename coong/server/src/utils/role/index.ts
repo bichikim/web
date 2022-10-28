@@ -98,14 +98,11 @@ const checkRole = (
   }
 
   return !disallow.some((value: string) => {
-    return pickData(data, value).some((value: string) => Boolean(value))
+    return pickData(data, value).some(Boolean)
   })
 }
 
-export const createAuthInputGate = <ContextType = Record<string, any>>(
-  roles: GateRoles,
-) => {
-
+export const createAuthInputGate = <ContextType = Record<string, any>>(roles: GateRoles) => {
   const allowRoles = roles.roles ? Object.keys(roles.roles) : undefined
 
   return (data: ResolverData<ContextType>, userRoles: string[], id: string | number) => {
@@ -132,4 +129,3 @@ export const createAuthInputGate = <ContextType = Record<string, any>>(
     })
   }
 }
-
