@@ -13,5 +13,7 @@ describe('setItem', () => {
     expect(data).toEqual({info: {age: 10, name: 'bar'}, message: 'hello'})
     setItem(data, ['some', 'where', 'far', 'a go'], 'hello')
     expect(data).toEqual({info: {age: 10, name: 'bar'}, message: 'hello'})
+    setItem(data, ['info', 'age', 'foo'], 'hello')
+    expect(data).toEqual({info: {age: 10, name: 'bar'}, message: 'hello'})
   })
 })

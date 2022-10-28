@@ -165,6 +165,28 @@ importers:
       typescript: 4.8.4
       vite: 2.9.15
 
+  coong/client-next/dist/ssr:
+    specifiers:
+      '@quasar/extras': 1.15.5
+      '@vueuse/core': 9.3.1
+      compression: ^1.7.4
+      express: ^4.17.3
+      pinia: 2.0.23
+      quasar: 2.10.0
+      serialize-javascript: ^6.0.0
+      vue: 3.2.41
+      vue-router: 4.1.5
+    dependencies:
+      '@quasar/extras': 1.15.5
+      '@vueuse/core': 9.3.1_vue@3.2.41
+      compression: 1.7.4
+      express: 4.18.2
+      pinia: 2.0.23_vue@3.2.41
+      quasar: 2.10.0
+      serialize-javascript: 6.0.0
+      vue: 3.2.41
+      vue-router: 4.1.5_vue@3.2.41
+
   coong/clinet-preact-vite:
     specifiers:
       '@apollo/client': ^3.7.0
@@ -17089,6 +17111,23 @@ packages:
       vue: 3.2.41
       vue-demi: 0.13.11_vue@3.2.41
 
+  /pinia/2.0.23_vue@3.2.41:
+    resolution: {integrity: sha512-N15hFf4o5STrxpNrib1IEb1GOArvPYf1zPvQVRGOO1G1d74Ak0J0lVyalX/SmrzdT4Q0nlEFjbURsmBmIGUR5Q==}
+    peerDependencies:
+      '@vue/composition-api': ^1.4.0
+      typescript: '>=4.4.4'
+      vue: ^2.6.14 || ^3.2.0
+    peerDependenciesMeta:
+      '@vue/composition-api':
+        optional: true
+      typescript:
+        optional: true
+    dependencies:
+      '@vue/devtools-api': 6.4.5
+      vue: 3.2.41
+      vue-demi: 0.13.11_vue@3.2.41
+    dev: false
+
   /pirates/4.0.5:
     resolution: {integrity: sha512-8V9+HQPupnaXMA23c5hvl69zXvTwTzyAYasnkb0Tts4XvO4CliqONMOnvlq26rkhLC3nWDFBJf73LU1e1VZLaQ==}
     engines: {node: '>= 6'}
@@ -18224,7 +18263,6 @@ packages:
     resolution: {integrity: sha512-Qr3TosvguFt8ePWqsvRfrKyQXIiW+nGbYpy8XK24NQHE83caxWt+mIymTT19DGFbNWNLfEwsrkSmN64lVWB9ag==}
     dependencies:
       randombytes: 2.1.0
-    dev: true
 
   /serve-static/1.14.2:
     resolution: {integrity: sha512-+TMNA9AFxUEGuC0z2mevogSnn9MXKb4fa7ngeRMJaaGv8vTwnIEkKi+QGvPt33HSnf8pRS+WGM0EbMtCJLKMBQ==}
