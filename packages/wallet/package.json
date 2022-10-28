@@ -2,6 +2,7 @@
   "name": "@winter-love/wallet",
   "version": "1.0.27-alpha.0",
   "description": "share state for vue components",
+  "private": true,
   "keywords": [
     "typescript",
     "vuex",
@@ -67,7 +68,7 @@
   "publishConfig": {
     "access": "public"
   },
-  "gitHead": "e5b196de1a3989ec89a9b80279bec801e83ad4f1",
+  "gitHead": "cace853a74de291e423dc79447ce0db596fdf60d",
   "tsup": {
     "entry": [
       "src/index.ts"

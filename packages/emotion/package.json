@@ -1,6 +1,7 @@
 {
   "name": "@winter-love/emotion",
   "version": "1.0.27-alpha.0",
+  "private": true,
   "description": "Emotion for Vue",
   "keywords": [
     "vue",
@@ -50,7 +51,7 @@
   "publishConfig": {
     "access": "public"
   },
-  "gitHead": "e5b196de1a3989ec89a9b80279bec801e83ad4f1",
+  "gitHead": "cace853a74de291e423dc79447ce0db596fdf60d",
   "stage": "deprecated",
   "tsup": {
     "entry": [
