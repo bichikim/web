@@ -1,3 +1,6 @@
+/**
+ * @jest-environment jsdom
+ */
 import {isSupportPassive} from '../'
 
 describe('isSupportPassive', () => {
