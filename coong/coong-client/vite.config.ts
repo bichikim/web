@@ -6,11 +6,9 @@ import * as dotenv from 'dotenv'
 import vue from '@vitejs/plugin-vue'
 import autoImport from 'unplugin-auto-import/vite'
 import tsconfigPaths from 'vite-tsconfig-paths'
-// import manifest from './resource/manifest.json'
 import vueJsx from '@vitejs/plugin-vue-jsx'
 import iconsResolver from 'unplugin-icons/resolver'
 import components from 'unplugin-vue-components/vite'
-// import {getBabelOutputPlugin} from '@rollup/plugin-babel'
 import babel from 'vite-plugin-babel'
 import {extname} from 'path'
 
@@ -19,7 +17,6 @@ dotenv.config()
 
 // eslint-disable-next-line max-lines-per-function
 export default defineConfig(({mode}) => {
-  console.log(mode)
   return {
     build: {
       chunkSizeWarningLimit: 600,

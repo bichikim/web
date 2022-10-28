@@ -26,6 +26,7 @@
     "preact-router": "^4.1.0"
   },
   "devDependencies": {
+    "@babel/core": "^7.19.6",
     "@babel/preset-typescript": "^7.18.6",
     "@graphql-codegen/add": "3.2.1",
     "@graphql-codegen/cli": "2.13.1",

@@ -1,7 +1,7 @@
 {
-  "version": "ts-gql-document-validator@v1,schema@7d0049e2068bfb20169f0fc121ed8e63",
-  "integrity": "__TS_GQL_INTEGRITY_08ea4f509cd81b8d7270e51e6438e4bf_TS_GQL_INTEGRITY__",
+  "version": "ts-gql-document-validator@v1,schema@18fa533797e91ea93bd29b070bfba257",
+  "integrity": "__TS_GQL_INTEGRITY_28c6057d944b5ddde6c57cc4ae09b7bb_TS_GQL_INTEGRITY__",
   "cache": {
-    "bd7e0c79abd4b53e494165c8bbbd0641": []
+    "da9048998b4092945e6204398893706f": []
   }
 }
