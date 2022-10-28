@@ -2,6 +2,7 @@
   "name": "vare",
   "version": "1.0.25-alpha.18",
   "description": "share state for vue components",
+  "private": true,
   "keywords": [
     "typescript",
     "vuex",
@@ -71,10 +72,7 @@
       "optional": true
     }
   },
-  "publishConfig": {
-    "access": "public"
-  },
-  "gitHead": "162bc0badb2b0932df3c9dc51cc1ff7af3587140",
+  "gitHead": "0f9585327d3bbfd468f48073be6977aeb17c9e78",
   "tsup": {
     "entry": [
       "src/index.ts",
