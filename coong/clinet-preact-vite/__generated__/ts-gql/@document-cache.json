@@ -1,19 +1,19 @@
 {
   "version": "ts-gql-document-extractor@v3,@babel/parser@7.19.6",
-  "integrity": "__TS_GQL_INTEGRITY_bd08d131b1c12907092ecf4c04502515_TS_GQL_INTEGRITY__",
+  "integrity": "__TS_GQL_INTEGRITY_343949e528d22142e05637f9820d026f_TS_GQL_INTEGRITY__",
   "cache": {
     "C:/apps/web/coong/clinet-preact-vite/vite.config.ts": {
       "hash": "a7ada2f74fd803d4a6918f861361b5be",
       "errors": [],
       "documents": []
     },
-    "C:/apps/web/coong/clinet-preact-vite/src/main.tsx": {
-      "hash": "f18e94027040174ddae3f07988a51f42",
+    "C:/apps/web/coong/clinet-preact-vite/src/env.ts": {
+      "hash": "2d0ae1a82ab99d16cdf6c78f23f0f77f",
       "errors": [],
       "documents": []
     },
-    "C:/apps/web/coong/clinet-preact-vite/src/env.ts": {
-      "hash": "2d0ae1a82ab99d16cdf6c78f23f0f77f",
+    "C:/apps/web/coong/clinet-preact-vite/src/main.tsx": {
+      "hash": "f18e94027040174ddae3f07988a51f42",
       "errors": [],
       "documents": []
     },
@@ -27,18 +27,13 @@
       "errors": [],
       "documents": []
     },
-    "C:/apps/web/coong/clinet-preact-vite/src/graphql/index.ts": {
-      "hash": "54a6bfd453783a9b912587f99bd81a9b",
-      "errors": [],
-      "documents": []
-    },
-    "C:/apps/web/coong/clinet-preact-vite/src/types/preact.ts": {
-      "hash": "9fef8091f04785696b0fec9c4328484c",
-      "errors": [],
-      "documents": []
-    },
     "C:/apps/web/coong/clinet-preact-vite/src/graphql/urql.ts": {
       "hash": "2b427d7f490abc788e1b1a2d31c66061",
+      "errors": [],
+      "documents": []
+    },
+    "C:/apps/web/coong/clinet-preact-vite/src/graphql/index.ts": {
+      "hash": "54a6bfd453783a9b912587f99bd81a9b",
       "errors": [],
       "documents": []
     },
@@ -47,18 +42,13 @@
       "errors": [],
       "documents": []
     },
-    "C:/apps/web/coong/clinet-preact-vite/src/pages/main/Counter.tsx": {
-      "hash": "1c14feeee7c01f5d00e8162c12c7bb32",
+    "C:/apps/web/coong/clinet-preact-vite/src/types/preact.ts": {
+      "hash": "9fef8091f04785696b0fec9c4328484c",
       "errors": [],
       "documents": []
     },
     "C:/apps/web/coong/clinet-preact-vite/__generated__/ts-gql/getPosts.ts": {
       "hash": "2228d11d2e62a17b82a5650f6fd4cfbe",
-      "errors": [],
-      "documents": []
-    },
-    "C:/apps/web/coong/clinet-preact-vite/src/pages/main/index.tsx": {
-      "hash": "a512e121ffb251bf8f893911e265f86e",
       "errors": [],
       "documents": []
     },
@@ -83,13 +73,23 @@
         }
       ]
     },
-    "C:/apps/web/coong/clinet-preact-vite/__generated__/ts-gql/@introspection.ts": {
-      "hash": "c2c708f344553982124f3a1f05078822",
+    "C:/apps/web/coong/clinet-preact-vite/src/pages/main/Counter.tsx": {
+      "hash": "1c14feeee7c01f5d00e8162c12c7bb32",
+      "errors": [],
+      "documents": []
+    },
+    "C:/apps/web/coong/clinet-preact-vite/src/pages/main/index.tsx": {
+      "hash": "a512e121ffb251bf8f893911e265f86e",
       "errors": [],
       "documents": []
     },
     "C:/apps/web/coong/clinet-preact-vite/src/pages/main/Number.tsx": {
       "hash": "e8f7a11a62486c7d09ecdc70cf46fd02",
+      "errors": [],
+      "documents": []
+    },
+    "C:/apps/web/coong/clinet-preact-vite/__generated__/ts-gql/@introspection.ts": {
+      "hash": "c2c708f344553982124f3a1f05078822",
       "errors": [],
       "documents": []
     },
