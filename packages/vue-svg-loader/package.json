@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/vue-svg-loader",
-  "version": "1.0.25-alpha.17",
+  "version": "1.0.25-alpha.18",
   "main": "src/index.js",
   "scripts": {
     "build": "echo doing notting",
