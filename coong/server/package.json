@@ -3,7 +3,7 @@
   "version": "1.0.25",
   "private": true,
   "scripts": {
-    "build": "rimraf ./lib && pnpm run generate && ttsc -p tsconfig.build.json",
+    "build": "rimraf ./lib && pnpm run prisma:generate && ttsc -p tsconfig.build.json",
     "dev": "cross-env NODE_ENV=development ts-node-dev --transpile-only --clear -r tsconfig-paths/register src/index.ts",
     "prisma:format": "prisma format --schema ./src/prisma/schema.prisma",
     "prisma:generate": "prisma generate --schema ./src/prisma/schema.prisma",

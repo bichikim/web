@@ -3,7 +3,6 @@
   "version": "1.0.25-alpha.18",
   "name": "@winter-love/client-next",
   "scripts": {
-    "build": "quasar build",
     "build:ssr": "quasar build -m ssr",
     "dev:ssr": "quasar dev -m ssr",
     "dev": "quasar dev",
