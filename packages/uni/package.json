@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/uni",
-  "version": "1.0.25",
+  "version": "1.0.26-alpha.0",
   "repository": "git@github.com:winter-love/web.git",
   "author": "bichi@live.co.kr",
   "exports": {
@@ -32,9 +32,9 @@
     "@vue/runtime-core": "^3.2.41",
     "@vue/test-utils": "^2.2.0",
     "@vueuse/core": "^9.3.1",
-    "@winter-love/stitches": "^1.0.25",
-    "@winter-love/use": "^1.0.25",
-    "@winter-love/utils": "^1.0.25",
+    "@winter-love/stitches": "^1.0.26-alpha.0",
+    "@winter-love/use": "^1.0.26-alpha.0",
+    "@winter-love/utils": "^1.0.26-alpha.0",
     "jest-mock": "^29.2.1",
     "node-html-parser": "^5.4.2",
     "vue": "^3.2.41"

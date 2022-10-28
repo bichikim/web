@@ -1,6 +1,6 @@
 {
   "private": true,
-  "version": "1.0.25-alpha.18",
+  "version": "1.0.26-alpha.0",
   "name": "@winter-love/client-next",
   "scripts": {
     "build:ssr": "quasar build -m ssr",

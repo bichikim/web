@@ -1,6 +1,6 @@
 {
   "name": "vare",
-  "version": "1.0.25",
+  "version": "1.0.26-alpha.0",
   "description": "share state for vue components",
   "private": true,
   "keywords": [
@@ -52,7 +52,7 @@
   },
   "dependencies": {
     "@vue/devtools-api": "^6.4.5",
-    "@winter-love/utils": "workspace:^1.0.25",
+    "@winter-love/utils": "workspace:^1.0.26-alpha.0",
     "vue": "^3.2.41"
   },
   "devDependencies": {
