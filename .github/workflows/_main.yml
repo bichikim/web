@@ -6,6 +6,9 @@ on:
 env:
   PNPM_VERSION: 7.1.0
   NODE_VERSION: 16
+  GCP_SERVICE_NAME: coong
+  PROJECT_CLIENT_PATH: coong/coong-client
+  ARTIFACT_CLIENT_NAME: dist-client
 jobs:
   build-client:
     name: Build Client
@@ -38,3 +41,40 @@ jobs:
 
       - name: Build
         run: pnpm run build:coong-client
+
+      - name: Archive Production Artifact
+        uses: actions/upload-artifact@master
+        with:
+          retention-days: 1
+          name: ${{ env.ARTIFACT_CLIENT_NAME }}
+          path: |
+            ${{ env.PROJECT_CLIENT_PATH }}/dist
+
+  deploy-client:
+    name: Deploy Client
+    needs: build-client
+    runs-on: ubuntu-latest
+    # only master
+    if: ${{ github.ref == 'refs/heads/master' && needs.build-client.outputs.run_job == 'true' }}
+    env:
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@master
+
+      - name: Download Artifact
+        uses: actions/download-artifact@master
+        with:
+          name: ${{ env.ARTIFACT_CLIENT_NAME }}
+          path: ${{ env.PROJECT_CLIENT_PATH }}/dist
+
+      - id: auth
+        name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v0
+        with:
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+
+      - id: upload-file
+        uses: google-github-actions/upload-cloud-storage@v0
+        with:
+          path: ${{ env.PROJECT_CLIENT_PATH }}/dist
+          destination: ${{ env.coong-static-production }}/file
