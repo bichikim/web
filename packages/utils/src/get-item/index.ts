@@ -1,8 +1,12 @@
 export const getItem = <T>(target: T, paths: string[]): any => {
-  let result = target
+  let result: any = target
+
+  if (typeof result !== 'object') {
+    return
+  }
 
   for (const path of paths) {
-    result = result[path]
+    result = Reflect.get(result, path)
     if (typeof result !== 'object') {
       return result
     }
