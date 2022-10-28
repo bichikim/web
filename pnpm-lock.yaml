@@ -519,7 +519,7 @@ importers:
     specifiers:
       '@types/debounce': 1.2.1
       '@types/node': 18.0.4
-      '@types/sinon': 10.0.11
+      '@types/sinon': 10.0.13
       '@vue/server-renderer': 3.2.33
       '@vue/test-utils': 2.0.0-rc.19
       '@winter-love/lodash': workspace:^1.0.25-alpha.16
@@ -534,7 +534,7 @@ importers:
     devDependencies:
       '@types/debounce': 1.2.1
       '@types/node': 18.0.4
-      '@types/sinon': 10.0.11
+      '@types/sinon': 10.0.13
       '@vue/server-renderer': 3.2.33_vue@3.2.33
       '@vue/test-utils': 2.0.0-rc.19_vue@3.2.33
       debounce: 1.2.1
@@ -683,7 +683,7 @@ importers:
   packages/use:
     specifiers:
       '@types/debounce': ^1.2.1
-      '@types/sinon': 10.0.11
+      '@types/sinon': 10.0.13
       '@vue/server-renderer': ^3.2.41
       '@winter-love/lodash': workspace:1.0.25-alpha.16
       '@winter-love/utils': workspace:1.0.25-alpha.16
@@ -696,7 +696,7 @@ importers:
       vue: 3.2.41
     devDependencies:
       '@types/debounce': 1.2.1
-      '@types/sinon': 10.0.11
+      '@types/sinon': 10.0.13
       '@vue/server-renderer': 3.2.41_vue@3.2.41
 
   packages/utils:
@@ -7493,12 +7493,6 @@ packages:
     resolution: {integrity: sha512-6oJEzKt7wZeS7e+6x9QFEOWGs0T/6of00+0onZGN1zSmcSjcTDZKgIGZ6YWJnHowpaKUCFBPH52mYljWqU32Eg==}
     dependencies:
       '@types/node': 18.11.4
-    dev: true
-
-  /@types/sinon/10.0.11:
-    resolution: {integrity: sha512-dmZsHlBsKUtBpHriNjlK0ndlvEh8dcb9uV9Afsbt89QIyydpC7NcR+nWlAhASfy3GHnxTl4FX/aKE7XZUt/B4g==}
-    dependencies:
-      '@types/sinonjs__fake-timers': 8.1.2
     dev: true
 
   /@types/sinon/10.0.13:
