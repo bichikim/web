@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - dev
+      - master
 env:
   PNPM_VERSION: 7.1.0
   NODE_VERSION: 16
