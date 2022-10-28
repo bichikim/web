@@ -1,14 +1,14 @@
 {
   "version": "ts-gql-document-extractor@v3,@babel/parser@7.19.6",
-  "integrity": "__TS_GQL_INTEGRITY_03b6b6f5fe8db370fa660d969ef873fd_TS_GQL_INTEGRITY__",
+  "integrity": "__TS_GQL_INTEGRITY_c7f67bfdc26f2cae00906dc8fcf6df4c_TS_GQL_INTEGRITY__",
   "cache": {
-    "C:/apps/web/coong/coong-client/vite.config.ts": {
-      "hash": "3c77fb19e1cb06785cc7633aceabf22e",
+    "C:/apps/web/coong/coong-client/src/app.ts": {
+      "hash": "d80b1bfc2a049eca80b43d8c151245f9",
       "errors": [],
       "documents": []
     },
-    "C:/apps/web/coong/coong-client/src/app.ts": {
-      "hash": "d80b1bfc2a049eca80b43d8c151245f9",
+    "C:/apps/web/coong/coong-client/vite.config.ts": {
+      "hash": "3c77fb19e1cb06785cc7633aceabf22e",
       "errors": [],
       "documents": []
     },
@@ -22,11 +22,6 @@
       "errors": [],
       "documents": []
     },
-    "C:/apps/web/coong/coong-client/src/Root.tsx": {
-      "hash": "a360bb9bbb91af0b589d911df03acffb",
-      "errors": [],
-      "documents": []
-    },
     "C:/apps/web/coong/coong-client/src/report-web-vitals.ts": {
       "hash": "fd4860439d9d7a3ab730e088c866a181",
       "errors": [],
@@ -37,8 +32,8 @@
       "errors": [],
       "documents": []
     },
-    "C:/apps/web/coong/coong-client/src/graphql/codegen.ts": {
-      "hash": "054ca08c62aa6d36d08203d98b5c9531",
+    "C:/apps/web/coong/coong-client/src/Root.tsx": {
+      "hash": "a360bb9bbb91af0b589d911df03acffb",
       "errors": [],
       "documents": []
     },
@@ -63,11 +58,6 @@
         }
       ]
     },
-    "C:/apps/web/coong/coong-client/src/graphql/index.ts": {
-      "hash": "7ef102ceaa49f4700e53331e57a48aa1",
-      "errors": [],
-      "documents": []
-    },
     "C:/apps/web/coong/coong-client/__generated__/ts-gql/@introspection.ts": {
       "hash": "9060b284bbc779cfffabc3bca5feb958",
       "errors": [],
@@ -78,8 +68,18 @@
       "errors": [],
       "documents": []
     },
+    "C:/apps/web/coong/coong-client/src/graphql/index.ts": {
+      "hash": "7ef102ceaa49f4700e53331e57a48aa1",
+      "errors": [],
+      "documents": []
+    },
     "C:/apps/web/coong/coong-client/src/plugins/disable-context-menu.ts": {
       "hash": "5e2ae3f8928ec9f27ead2a252364a49e",
+      "errors": [],
+      "documents": []
+    },
+    "C:/apps/web/coong/coong-client/src/graphql/codegen.ts": {
+      "hash": "054ca08c62aa6d36d08203d98b5c9531",
       "errors": [],
       "documents": []
     },
@@ -93,18 +93,13 @@
       "errors": [],
       "documents": []
     },
-    "C:/apps/web/coong/coong-client/src/store/user.ts": {
-      "hash": "af7b19a45ce3c7da8e5e8620edb13b17",
-      "errors": [],
-      "documents": []
-    },
-    "C:/apps/web/coong/coong-client/src/hooks/piano/piano.ts": {
-      "hash": "c9af2959fbe31cc6e436fae5014f6859",
-      "errors": [],
-      "documents": []
-    },
     "C:/apps/web/coong/coong-client/src/plugins/index.ts": {
       "hash": "d41d8cd98f00b204e9800998ecf8427e",
+      "errors": [],
+      "documents": []
+    },
+    "C:/apps/web/coong/coong-client/src/store/user.ts": {
+      "hash": "af7b19a45ce3c7da8e5e8620edb13b17",
       "errors": [],
       "documents": []
     },
@@ -118,13 +113,18 @@
       "errors": [],
       "documents": []
     },
-    "C:/apps/web/coong/coong-client/src/pages/main/index.ts": {
-      "hash": "a592d0f2658914b0f2703678f5077c97",
+    "C:/apps/web/coong/coong-client/src/pages/main/MainPage.ts": {
+      "hash": "578290a6f165f865b3d552136d1e7d09",
       "errors": [],
       "documents": []
     },
-    "C:/apps/web/coong/coong-client/src/pages/main/MainPage.ts": {
-      "hash": "578290a6f165f865b3d552136d1e7d09",
+    "C:/apps/web/coong/coong-client/src/hooks/piano/piano.ts": {
+      "hash": "c9af2959fbe31cc6e436fae5014f6859",
+      "errors": [],
+      "documents": []
+    },
+    "C:/apps/web/coong/coong-client/src/pages/main/index.ts": {
+      "hash": "a592d0f2658914b0f2703678f5077c97",
       "errors": [],
       "documents": []
     },
@@ -138,18 +138,8 @@
       "errors": [],
       "documents": []
     },
-    "C:/apps/web/coong/coong-client/src/pages/main/components/index.ts": {
-      "hash": "5cfeba48179540001b892b603b4d17d4",
-      "errors": [],
-      "documents": []
-    },
-    "C:/apps/web/coong/coong-client/src/layouts/main-layout/components/Footer.ts": {
-      "hash": "1e25d482b4486933968ec552efcac901",
-      "errors": [],
-      "documents": []
-    },
-    "C:/apps/web/coong/coong-client/src/layouts/main-layout/components/Logo.ts": {
-      "hash": "cd6f03960020636b607940a1e5b38565",
+    "C:/apps/web/coong/coong-client/src/layouts/main-layout/components/Header.tsx": {
+      "hash": "608080a095c1d9d3eee779fc41ceccac",
       "errors": [],
       "documents": []
     },
@@ -158,13 +148,23 @@
       "errors": [],
       "documents": []
     },
-    "C:/apps/web/coong/coong-client/src/layouts/main-layout/components/Header.tsx": {
-      "hash": "608080a095c1d9d3eee779fc41ceccac",
+    "C:/apps/web/coong/coong-client/src/layouts/main-layout/components/Footer.ts": {
+      "hash": "1e25d482b4486933968ec552efcac901",
       "errors": [],
       "documents": []
     },
     "C:/apps/web/coong/coong-client/src/layouts/main-layout/components/NavBar.ts": {
       "hash": "1a7ef972dff3ec0415aa4acc9cf37208",
+      "errors": [],
+      "documents": []
+    },
+    "C:/apps/web/coong/coong-client/src/layouts/main-layout/components/Logo.ts": {
+      "hash": "cd6f03960020636b607940a1e5b38565",
+      "errors": [],
+      "documents": []
+    },
+    "C:/apps/web/coong/coong-client/src/layouts/main-layout/components/NavMenuEndItem.ts": {
+      "hash": "e1192deb7bcee331610b21a9da97a2ff",
       "errors": [],
       "documents": []
     },
@@ -178,18 +178,13 @@
       "errors": [],
       "documents": []
     },
-    "C:/apps/web/coong/coong-client/src/layouts/main-layout/components/NavMenuEndItem.ts": {
-      "hash": "e1192deb7bcee331610b21a9da97a2ff",
-      "errors": [],
-      "documents": []
-    },
-    "C:/apps/web/coong/coong-client/src/pages/main/components/piano/EmptyPianoButton.ts": {
-      "hash": "068b3d27557cf9d301aaf435bedf0096",
-      "errors": [],
-      "documents": []
-    },
     "C:/apps/web/coong/coong-client/src/pages/main/components/piano/get-data-boolean-attrs.ts": {
       "hash": "1de6f4e27423d9503abe0ab90629be29",
+      "errors": [],
+      "documents": []
+    },
+    "C:/apps/web/coong/coong-client/src/pages/main/components/index.ts": {
+      "hash": "5cfeba48179540001b892b603b4d17d4",
       "errors": [],
       "documents": []
     },
@@ -198,13 +193,23 @@
       "errors": [],
       "documents": []
     },
-    "C:/apps/web/coong/coong-client/src/pages/main/components/piano/Piano.ts": {
-      "hash": "ab74a58476eb90319db29a5eca440c2d",
+    "C:/apps/web/coong/coong-client/src/pages/main/components/piano/EmptyPianoButton.ts": {
+      "hash": "068b3d27557cf9d301aaf435bedf0096",
       "errors": [],
       "documents": []
     },
     "C:/apps/web/coong/coong-client/src/pages/main/components/piano/PianoButton.ts": {
       "hash": "7cc618d740dfe212bec42070520749fc",
+      "errors": [],
+      "documents": []
+    },
+    "C:/apps/web/coong/coong-client/src/pages/main/components/piano/Piano.ts": {
+      "hash": "ab74a58476eb90319db29a5eca440c2d",
+      "errors": [],
+      "documents": []
+    },
+    "C:/apps/web/coong/coong-client/src/pages/main/components/piano/type-variants.ts": {
+      "hash": "3d7159e7c41bdc88ab18e2d6b9dc3704",
       "errors": [],
       "documents": []
     },
@@ -218,11 +223,6 @@
       "errors": [],
       "documents": []
     },
-    "C:/apps/web/coong/coong-client/src/pages/main/components/piano/type-variants.ts": {
-      "hash": "3d7159e7c41bdc88ab18e2d6b9dc3704",
-      "errors": [],
-      "documents": []
-    },
     "C:/apps/web/coong/coong-client/src/pages/main/components/piano/use-global-touch-move.ts": {
       "hash": "35d2d362caa4fe71579f785cbffd672d",
       "errors": [],
@@ -233,13 +233,13 @@
       "errors": [],
       "documents": []
     },
-    "C:/apps/web/coong/coong-client/src/pages/main/components/piano/use-hover-touch-down.ts": {
-      "hash": "bdf7555e77f68c3d466f8519aa8eb392",
+    "C:/apps/web/coong/coong-client/src/pages/main/components/piano/use-pointer-down.ts": {
+      "hash": "256ab4cf3dd12f0b1294ded68cd0557e",
       "errors": [],
       "documents": []
     },
-    "C:/apps/web/coong/coong-client/src/pages/main/components/piano/use-pointer-down.ts": {
-      "hash": "256ab4cf3dd12f0b1294ded68cd0557e",
+    "C:/apps/web/coong/coong-client/src/pages/main/components/piano/use-hover-touch-down.ts": {
+      "hash": "bdf7555e77f68c3d466f8519aa8eb392",
       "errors": [],
       "documents": []
     },
