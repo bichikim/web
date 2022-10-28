@@ -1,6 +1,6 @@
 {
   "name": "vite-plugin-ssr-vue",
-  "version": "1.0.25-alpha.18",
+  "version": "1.0.25",
   "description": "hyper components base on quasar and stitches",
   "keywords": [
     "typescript",

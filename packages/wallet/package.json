@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/wallet",
-  "version": "1.0.25-alpha.19",
+  "version": "1.0.25",
   "description": "share state for vue components",
   "keywords": [
     "typescript",
@@ -52,7 +52,7 @@
     "@ethersproject/transactions": "^5.7.0",
     "@solana/web3.js": "^1.66.2",
     "@vue/reactivity": "^3.2.41",
-    "@winter-love/utils": "workspace:^1.0.25-alpha.19",
+    "@winter-love/utils": "workspace:^1.0.25",
     "aes-js": "^3.1.2",
     "bip39": "3.0.4",
     "ethers": "^5.7.2",

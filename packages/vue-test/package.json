@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/vue-test",
-  "version": "1.0.25-alpha.19",
+  "version": "1.0.25",
   "repository": "git@github.com:winter-love/web.git",
   "author": "bichi@live.co.kr",
   "exports": {
