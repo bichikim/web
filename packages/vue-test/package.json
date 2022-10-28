@@ -41,7 +41,7 @@
     "typescript": "^4.8.4"
   },
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
+    "access": "public"
   },
   "gitHead": "0f9585327d3bbfd468f48073be6977aeb17c9e78",
   "tsup": {

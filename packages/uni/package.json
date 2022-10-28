@@ -19,6 +19,9 @@
   "files": [
     "dist/*"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsup --dts --minify",
     "dev": "tsup --watch",
@@ -43,9 +46,6 @@
     "tsd": "^0.22.0",
     "tsup": "^6.3.0",
     "typescript": "^4.8.4"
-  },
-  "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
   },
   "gitHead": "0f9585327d3bbfd468f48073be6977aeb17c9e78",
   "tsup": {
