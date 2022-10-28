@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/coong-client",
-  "version": "1.0.25-alpha.16",
+  "version": "1.0.25-alpha.17",
   "private": true,
   "description": "",
   "scripts": {
@@ -18,9 +18,9 @@
     "@ts-gql/tag": "^0.7.0",
     "@urql/vue": "^1.0.2",
     "@vueuse/sound": "^1.1.7",
-    "@winter-love/lodash": "workspace:1.0.25-alpha.16",
-    "@winter-love/uni": "workspace:1.0.25-alpha.16",
-    "@winter-love/use": "workspace:1.0.25-alpha.16",
+    "@winter-love/lodash": "workspace:1.0.25-alpha.17",
+    "@winter-love/uni": "workspace:1.0.25-alpha.17",
+    "@winter-love/use": "workspace:1.0.25-alpha.17",
     "express": "^4.18.2",
     "graphql": "^16.6.0",
     "graphql-tag": "^2.12.6",
@@ -28,13 +28,12 @@
     "pinia": "^2.0.23",
     "vexflow": "^4.0.3",
     "vue": "3.2.41",
-    "web-vitals": "^3.0.4",
     "vue-query": "^2.0.0-beta.12",
-    "vue-router": "^4.1.5"
+    "vue-router": "^4.1.5",
+    "web-vitals": "^3.0.4"
   },
   "devDependencies": {
     "@babel/core": "^7.19.6",
-    "node-html-parser": "^6.1.1",
     "@babel/preset-typescript": "^7.18.6",
     "@graphql-codegen/add": "3.2.1",
     "@graphql-codegen/cli": "2.13.8",
@@ -50,6 +49,7 @@
     "autoprefixer": "^10.4.12",
     "cross-env": "^7.0.3",
     "dotenv": "^16.0.3",
+    "node-html-parser": "^6.1.1",
     "postcss": "^8.4.18",
     "tailwindcss": "^3.2.1",
     "ts-node": "^10.9.1",
