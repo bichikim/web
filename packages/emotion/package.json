@@ -50,7 +50,7 @@
   "publishConfig": {
     "access": "public"
   },
-  "gitHead": "d5d062389391c8bf3669f7d8577b2651dd267362",
+  "gitHead": "e5b196de1a3989ec89a9b80279bec801e83ad4f1",
   "stage": "deprecated",
   "tsup": {
     "entry": [
