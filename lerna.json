@@ -2,7 +2,7 @@
   "packages": ["packages/*"],
   "npmClient": "pnpm",
   "useWorkspaces": true,
-  "version": "1.0.27-alpha.6",
+  "version": "1.0.27-alpha.7",
   "command": {
     "run": {
       "npmClient": "pnpm"

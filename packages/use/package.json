@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/use",
-  "version": "1.0.27-alpha.6",
+  "version": "1.0.27-alpha.7",
   "description": "Vue utils",
   "keywords": [
     "typescript",
@@ -39,7 +39,7 @@
   },
   "dependencies": {
     "@winter-love/lodash": "^1.0.27-alpha.5",
-    "@winter-love/utils": "^1.0.27-alpha.6",
+    "@winter-love/utils": "^1.0.27-alpha.7",
     "immer": "^9.0.16",
     "vue": "^3.2.41"
   },
