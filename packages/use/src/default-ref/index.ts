@@ -1,11 +1,12 @@
-import {defaultValue as _defaultValue, MaybeFunction, NotFunction} from '@winter-love/utils'
+import {defaultValue as _defaultValue} from '@winter-love/utils'
 import {computed, Ref} from 'vue'
 
-export const defaultRef = <T extends NotFunction>(
+export function defaultRef<T>(
   value: Ref<T>,
-  defaultValue?: MaybeFunction<T>,
+  defaultValue?: () => T,
   defaultValueOnce?: boolean,
-): Ref<T> => {
+): Ref<T>
+export function defaultRef<T>(value: Ref<T>, defaultValue?: T, defaultValueOnce?: boolean): Ref<T> {
   let first = true
 
   return computed({

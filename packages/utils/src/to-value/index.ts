@@ -1,20 +1,12 @@
-import {MaybeFunction, MaybeFunctionParams} from 'src/types'
-export type FunctionReturnType<T> = (...args: any[]) => T
-export type UnFunction<T> = T extends FunctionReturnType<infer P> ? P : T
-
-/**
- * get value from () => value or not
- * @param value
- */
-export function toValue<T>(value: T): UnFunction<T>
-export function toValue<T>(value: () => T): UnFunction<T>
-export function toValue<T extends MaybeFunction<any>>(
+export function toValue<T extends () => any>(value: T): ReturnType<T>
+export function toValue<T extends (...args: any) => any>(
   value: T,
-  args: MaybeFunctionParams<T>,
-): UnFunction<T>
-export function toValue<T>(value: T, args?: any): UnFunction<T> {
+  args: Parameters<T>,
+): ReturnType<T>
+export function toValue<T>(value: T): T
+export function toValue(value, args?) {
   if (typeof value === 'function') {
-    return value(...(args ?? []))
+    return (value as any)(...(args ?? []))
   }
   return value as any
 }
