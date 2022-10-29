@@ -10,6 +10,7 @@
     },
     "./*": "./*"
   },
+  "private": true,
   "main": "dist/index.js",
   "jsdelivr": "dist/index.global.js",
   "unpkg": "dist/index.global.js",
