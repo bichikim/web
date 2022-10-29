@@ -5,6 +5,7 @@ export type MaybeReturnType<T> = T extends (...args: any) => any ? ReturnType<T>
 
 export function toValue<T>(value: () => T): T
 export function toValue<T, Args extends any[] = any[]>(value: MaybeFunction<T>, args: Args): T
+export function toValue<T>(value: MaybeFunction<T>): T
 export function toValue<T>(value: T): T
 export function toValue(value, args?) {
   if (typeof value === 'function') {
