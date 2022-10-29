@@ -21,7 +21,8 @@ describe('to-value', () => {
   })
   it('should return the value with args (maybe function)', () => {
     const value: MaybeFunction<string> = (foo: string, bar: string) => `${foo}, ${bar}`
-    const result = toValue(value, ['foo', 'bar'])
+
+    const result = toValue<string, [string, string]>(value, ['foo', 'bar'])
     expectType<string>(result)
     expect(result).toBe('foo, bar')
   })
