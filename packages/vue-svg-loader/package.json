@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/vue-svg-loader",
-  "version": "1.0.27-alpha.4",
+  "version": "1.0.27-alpha.5",
   "main": "src/index.js",
   "private": true,
   "scripts": {

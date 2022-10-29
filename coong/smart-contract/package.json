@@ -1,6 +1,6 @@
 {
   "name": "@coong/smart-contract",
-  "version": "1.0.27-alpha.4",
+  "version": "1.0.27-alpha.5",
   "private": true,
   "scripts": {
     "compile": "babel-node ./scripts/compile.js",
