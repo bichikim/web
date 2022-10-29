@@ -2,6 +2,7 @@
 export type MaybePromise<T> = Promise<T> | T
 export type MaybeArray<T> = T | Array<T>
 export type MaybeFunction<T, Args extends any[] = any[]> = T | ((...args: Args) => T)
+export type MaybeFunctionParams<T> = T extends (...args: infer P) => any ? P : []
 // ============================================
 
 // object =====================================
