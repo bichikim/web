@@ -16,6 +16,12 @@ export const encodeQueryRecord = (key: string, value: any) => {
   return `${encodeQueryKey(key)}=${encodeURIComponent(value)}`
 }
 
-export const toQueryString = (record: Record<string, any>) => {
-  return joinQuery(Object.entries(record).map(([key, value]) => encodeQueryRecord(key, value)))
+export const toQueryString = (record: Record<string, any>, sort?: (aKey, bKey) => number) => {
+  let entries = Object.entries(record)
+
+  if (sort) {
+    entries = entries.sort(sort)
+  }
+
+  return joinQuery(entries.map(([key, value]) => encodeQueryRecord(key, value)))
 }
