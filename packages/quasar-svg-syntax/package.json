@@ -44,7 +44,7 @@
     "yargs": "^17.6.0"
   },
   "devDependencies": {
-    "@quasar/extras": "1.13.5",
+    "@quasar/extras": "1.15.5",
     "quasar": "2.6.6",
     "tsup": "^6.3.0",
     "vue": "latest"
