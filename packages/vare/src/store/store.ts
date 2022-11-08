@@ -170,8 +170,6 @@ export function defineStore<T extends Record<string, any>>(
 
     const storeManager = manager ?? useStoreManager()
 
-    console.log(storeManager.state.value)
-
     if (innerLocal) {
       return createLocalStore<T>({name, setup, storeManager})
     }

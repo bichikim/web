@@ -23,6 +23,7 @@ export interface InjectContext<T> {
 export type DefineContextResult<T> = [InjectContext<T>, ProvideContext<T>, string | symbol]
 
 export function defineContext<T>(props?: () => T, key?: string | symbol): DefineContextResult<T>
+export function defineContext<T>(props?: T, key?: string | symbol): DefineContextResult<T>
 export function defineContext<T>(props?: T, key?: string | symbol): DefineContextResult<T> {
   const _props = props
   const _key = key ?? Symbol()

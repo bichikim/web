@@ -17,4 +17,16 @@ describe('defaultValueFn', () => {
     expect(run(undefined)).toBe('foo')
     expect(run(null)).toBe(null)
   })
+  it('should return value ', () => {
+    const run = defaultValueFn(
+      () => 'foo',
+      (value) => {
+        return value === null || typeof value === 'undefined'
+      },
+    )
+    expect(run('foo')).toBe('foo')
+    expect(run(undefined)).toBe('foo')
+    expect(run(undefined)).toBe('foo')
+    expect(run(null)).toBe('foo')
+  })
 })
