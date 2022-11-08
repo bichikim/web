@@ -15,7 +15,7 @@
     "@apollo/client": "^3.7.0",
     "@preact/signals": "^1.1.2",
     "@supabase/supabase-js": "^1.35.7",
-    "@ts-gql/compiler": "^0.15.3",
+    "@ts-gql/compiler": "^0.16.0",
     "@ts-gql/tag": "^0.7.0",
     "@urql/preact": "^3.0.2",
     "@winter-love/lodash": "workspace:^1.0.27-alpha.5",
