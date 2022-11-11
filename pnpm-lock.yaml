@@ -182,7 +182,7 @@ importers:
       '@rollup/plugin-babel': ^5.3.1
       '@supabase/supabase-js': ^1.35.7
       '@ts-gql/babel-plugin': ^0.1.0
-      '@ts-gql/compiler': ^0.15.3
+      '@ts-gql/compiler': ^0.16.0
       '@ts-gql/tag': ^0.7.0
       '@types/node': ^18.11.4
       '@urql/preact': ^3.0.2
@@ -212,7 +212,7 @@ importers:
       '@apollo/client': 3.7.0_graphql@16.3.0
       '@preact/signals': 1.1.2_preact@10.11.2
       '@supabase/supabase-js': 1.35.7
-      '@ts-gql/compiler': 0.15.3_graphql@16.3.0
+      '@ts-gql/compiler': 0.16.1_graphql@16.3.0
       '@ts-gql/tag': 0.7.0_graphql@16.3.0
       '@urql/preact': 3.0.2_gbv3355bigfe3jtaxvbpcsa7gy
       '@winter-love/lodash': link:../../packages/lodash
@@ -264,7 +264,7 @@ importers:
       '@graphql-codegen/typescript-vue-urql': 2.3.5
       '@iconify/json': ^2.1.127
       '@ts-gql/babel-plugin': ^0.1.0
-      '@ts-gql/compiler': ^0.15.3
+      '@ts-gql/compiler': ^0.16.0
       '@ts-gql/tag': ^0.7.0
       '@types/node': ^18.11.4
       '@urql/vue': ^1.0.2
@@ -306,7 +306,7 @@ importers:
       workbox-window: ^6.5.4
     dependencies:
       '@apollo/client': 3.7.0_graphql@16.6.0
-      '@ts-gql/compiler': 0.15.3_graphql@16.6.0
+      '@ts-gql/compiler': 0.16.1_graphql@16.6.0
       '@ts-gql/tag': 0.7.0_graphql@16.6.0
       '@urql/vue': 1.0.2_graphql@16.6.0+vue@3.2.41
       '@vueuse/sound': 1.1.7_vue@3.2.41
@@ -6956,8 +6956,8 @@ packages:
       '@babel/runtime': 7.19.4
     dev: true
 
-  /@ts-gql/compiler/0.15.3_graphql@16.3.0:
-    resolution: {integrity: sha512-PkPT8y6YLrZBA/p9Q4DQFwNhTwGl1q6uVTvoJJn8mmnGrdkbuS+6IzWUhWreC9N58uwacmdx4iuQfbot22obnw==}
+  /@ts-gql/compiler/0.16.1_graphql@16.3.0:
+    resolution: {integrity: sha512-qraJXLxxf2N5AdBugB2XKy+IuodJ6BPFQyDN22CrIGsmnRef+auI3nV1qE80rpwHNV3OBzSgyK6iATyihxHbww==}
     hasBin: true
     peerDependencies:
       graphql: ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || 14 || 15 || 16
@@ -6967,7 +6967,6 @@ packages:
       '@babel/runtime': 7.19.4
       '@babel/types': 7.19.4
       '@graphql-codegen/plugin-helpers': 2.7.1_graphql@16.3.0
-      '@graphql-codegen/typescript': 2.8.0_graphql@16.3.0
       '@graphql-codegen/typescript-operations': 2.5.5_graphql@16.3.0
       '@nodelib/fs.walk': 1.2.8
       '@ts-gql/config': 0.9.1_graphql@16.3.0
@@ -6987,8 +6986,8 @@ packages:
       - supports-color
     dev: false
 
-  /@ts-gql/compiler/0.15.3_graphql@16.6.0:
-    resolution: {integrity: sha512-PkPT8y6YLrZBA/p9Q4DQFwNhTwGl1q6uVTvoJJn8mmnGrdkbuS+6IzWUhWreC9N58uwacmdx4iuQfbot22obnw==}
+  /@ts-gql/compiler/0.16.1_graphql@16.6.0:
+    resolution: {integrity: sha512-qraJXLxxf2N5AdBugB2XKy+IuodJ6BPFQyDN22CrIGsmnRef+auI3nV1qE80rpwHNV3OBzSgyK6iATyihxHbww==}
     hasBin: true
     peerDependencies:
       graphql: ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || 14 || 15 || 16
@@ -6998,7 +6997,6 @@ packages:
       '@babel/runtime': 7.19.4
       '@babel/types': 7.19.4
       '@graphql-codegen/plugin-helpers': 2.7.1_graphql@16.6.0
-      '@graphql-codegen/typescript': 2.8.0_graphql@16.6.0
       '@graphql-codegen/typescript-operations': 2.5.5_graphql@16.6.0
       '@nodelib/fs.walk': 1.2.8
       '@ts-gql/config': 0.9.1_graphql@16.6.0
