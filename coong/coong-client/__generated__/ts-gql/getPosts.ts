@@ -1,8 +1,8 @@
-// ts-gql-integrity:b1b5d81209436eac571d70016c887aa5
+// ts-gql-integrity:09c0cfe5c11f11d71ce051673333a5a5
 /*
 ts-gql-meta-begin
 {
-  "hash": "da9048998b4092945e6204398893706f"
+  "hash": "2a107de9cad27334f022021fafa196dc"
 }
 ts-gql-meta-end
 */
@@ -21,7 +21,7 @@ type getPostsQueryVariables = SchemaTypes.Exact<{
 type getPostsQuery = { readonly __typename: 'Query', readonly posts: ReadonlyArray<{ readonly __typename: 'Post', readonly id: string, readonly title: string, readonly message: string | null }> };
 
 
-      
+
 export type type = TypedDocumentNode<{
   type: "query";
   result: getPostsQuery;
