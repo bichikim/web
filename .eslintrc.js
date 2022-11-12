@@ -62,6 +62,20 @@ module.exports = {
         'vue/require-prop-types': 'off',
       },
     },
+    // histoire
+    {
+      files: ['**/*.story.vue'],
+      rules: {
+        'no-magic-numbers': 'off',
+      },
+    },
+    // vite auto component
+    {
+      files: ['**/components.d.ts'],
+      rules: {
+        '@typescript-eslint/naming-convention': 'off',
+      },
+    },
     {
       // js
       files: ['**/*.js'],
@@ -97,7 +111,7 @@ module.exports = {
   ],
   root: true,
   rules: {
-    "@ts-gql/ts-gql": "warn",
+    '@ts-gql/ts-gql': 'warn',
     // '@typescript-eslint/interface-name-prefix': 'off',
     // '@typescript-eslint/explicit-function-return-type': 'off',
     '@typescript-eslint/explicit-module-boundary-types': 'off',

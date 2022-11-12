@@ -1,6 +1,9 @@
 import {RenderError} from '@quasar/app-vite'
 import {ssrMiddleware} from 'quasar/wrappers'
 
+const NOT_FOUND = 404
+const INTERNAL_SERVER_ERROR = 500
+
 // This middleware should execute as last one
 // since it captures everything and tries to
 // render the page with Vue
@@ -26,12 +29,12 @@ export default ssrMiddleware(({app, resolve, render, serve}) => {
           } else {
             res.redirect(error.url)
           }
-        } else if (error.code === 404) {
+        } else if (error.code === NOT_FOUND) {
           // hmm, Vue Router could not find the requested route
 
           // Should reach here only if no "catch-all" route
           // is defined in /src/routes
-          res.status(404).send('404 | Page Not Found')
+          res.status(NOT_FOUND).send('404 | Page Not Found')
         } else if (process.env.DEV) {
           // well, we treat any other code as error;
           // if we're in dev mode, then we can use Quasar CLI
@@ -48,7 +51,7 @@ export default ssrMiddleware(({app, resolve, render, serve}) => {
 
           // Render Error Page on production or
           // create a route (/src/routes) for an error page and redirect to it
-          res.status(500).send('500 | Internal Server Error')
+          res.status(INTERNAL_SERVER_ERROR).send('500 | Internal Server Error')
           // console.error(err.stack)
         }
       })

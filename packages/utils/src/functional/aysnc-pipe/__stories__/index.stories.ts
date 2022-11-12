@@ -4,7 +4,7 @@ import {asyncPipe} from '../'
 export const Default = () => {
   const deco = asyncPipe(
     (name: string) => Promise.resolve([`${name}-foo`, name]),
-    (name: string, nextName: string) => Promise.resolve(`${name}-bar-${nextName}`),
+    ([name, nextName]) => Promise.resolve(`${name}-bar-${nextName}`),
   )
 
   return {

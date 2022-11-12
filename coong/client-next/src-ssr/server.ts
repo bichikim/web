@@ -76,6 +76,7 @@ export const close = ssrClose(({listenResult}) => {
   return listenResult.close()
 })
 
+// eslint-disable-next-line no-magic-numbers
 const maxAge = process.env.DEV ? 0 : 1000 * 60 * 60 * 24 * 30
 
 /**

@@ -3,7 +3,7 @@
   "version": "1.0.27-alpha.10",
   "private": true,
   "scripts": {
-    "build": "rimraf ./lib && ttsc",
+    "build": "rimraf ./dist && ttsc",
     "dev": "ts-node-dev --clear -r tsconfig-paths/register src/run.ts"
   },
   "dependencies": {

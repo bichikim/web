@@ -1,4 +1,4 @@
-import {useEvent, useThrottle} from '@winter-love/use'
+import {useEvent} from '@winter-love/use'
 import {createOnce} from '@winter-love/utils'
 import {effectScope, ref, Ref} from 'vue'
 

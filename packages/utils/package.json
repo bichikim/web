@@ -30,7 +30,8 @@
   "scripts": {
     "build": "tsup --dts --minify",
     "dev": "tsup --watch",
-    "prepare": "tsup --dts"
+    "prepare": "tsup --dts",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@winter-love/lodash": "^1.0.27-alpha.5",

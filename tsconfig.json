@@ -1,6 +1,7 @@
 {
   "compileOnSave": false,
   "compilerOptions": {
+    "noEmit": true,
     "rootDir": ".",
     "sourceMap": true,
     "esModuleInterop": true,
