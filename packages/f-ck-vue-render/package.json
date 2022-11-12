@@ -6,7 +6,7 @@
     "dev": "ts-node-dev src/index.ts"
   },
   "dependencies": {
-    "@typescript-eslint/typescript-estree": "5.18.0",
+    "@typescript-eslint/typescript-estree": "5.42.1",
     "astring": "1.8.1"
   },
   "devDependencies": {

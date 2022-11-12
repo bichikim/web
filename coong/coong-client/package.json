@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@apollo/client": "^3.7.0",
-    "@ts-gql/compiler": "^0.15.3",
+    "@ts-gql/compiler": "^0.16.0",
     "@ts-gql/tag": "^0.7.0",
     "@urql/vue": "^1.0.2",
     "@vueuse/sound": "^1.1.7",

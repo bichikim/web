@@ -47,7 +47,7 @@
     "@types/node": "18.0.4",
     "@types/sinon": "10.0.13",
     "@vue/server-renderer": "3.2.33",
-    "@vue/test-utils": "2.0.0-rc.19",
+    "@vue/test-utils": "2.2.1",
     "debounce": "^1.2.1",
     "vue": "3.2.33"
   },
