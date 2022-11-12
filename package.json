@@ -140,5 +140,8 @@
       "browserslist@<4.16.5": "4.16.5"
     }
   },
+  "web-types": [
+    "./web-types.json"
+  ],
   "productName": "Coong"
 }

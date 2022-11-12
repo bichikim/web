@@ -48,6 +48,9 @@
     "tsup": "^6.3.0",
     "typescript": "^4.8.4"
   },
+  "web-types": [
+    "../../web-types.json"
+  ],
   "gitHead": "cace853a74de291e423dc79447ce0db596fdf60d",
   "tsup": {
     "entry": [

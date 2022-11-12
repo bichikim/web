@@ -1,0 +1,25 @@
+{
+  "$schema": "https://raw.githubusercontent.com/JetBrains/web-types/master/schema/web-types.json",
+  "name": "histoire",
+  "version": "0.0.1",
+  "contributions": {
+    "html": {
+      "elements": [
+        {
+          "name": "variant",
+          "attributes": [
+            {
+              "name": "title",
+              "value": {
+                "type": "string"
+              }
+            }
+          ]
+        },
+        {
+          "name": "story"
+        }
+      ]
+    }
+  }
+}
