@@ -1,17 +1,11 @@
 import {resolveRef} from 'src/resolve-ref'
 import {bindRef} from 'src/bind-ref'
 import {onMounted, Ref, ref, toRef} from 'vue'
-import {createCancelPromise, freeze, toArray} from '@winter-love/utils'
+import {freeze, toArray} from '@winter-love/utils'
 import {MaybeRef} from 'src/types'
 import {isInInstance} from 'src/is-in-instance'
 
 export interface UsePromiseOptions<Data> {
-  /**
-   * todo
-   * cancel 전에 호출 AbortController 사용등
-   */
-  beforeCancel?: () => void
-
   /**
    * todo
    * 반복 호출 시 케시 사용
@@ -19,7 +13,6 @@ export interface UsePromiseOptions<Data> {
   cache?: boolean | ((key: any) => Data)
 
   /**
-   * todo
    * 이미 진행 중인 Promise 를 취소하고 execute 할지 여부
    */
   cancelPrevPromise?: boolean
@@ -80,6 +73,7 @@ export const usePromise = <Data, Args extends any[] = any, Error = any>(
   options: UsePromiseOptions<Data> = {},
 ): UsePromiseReturnType<Data, Args, Error> => {
   const {immediate, initData} = options
+  const cancelPrevPromise = toRef(options, 'cancelPrevPromise', false)
   const cleanOnExecuteRef = toRef(options, 'cleanOnExecute', true)
   const dataRef = bindRef(resolveRef<Data | undefined>(initData))
   const argsRef = resolveRef(args)
@@ -90,6 +84,9 @@ export const usePromise = <Data, Args extends any[] = any, Error = any>(
   const abortController = new AbortController()
 
   const execute = (...args: Args) => {
+    if (cancelPrevPromise.value) {
+      cancel()
+    }
     if (cleanOnExecuteRef.value) {
       dataRef.value = undefined
     }

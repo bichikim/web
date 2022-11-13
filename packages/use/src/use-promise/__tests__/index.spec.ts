@@ -164,4 +164,6 @@ describe('use promise', () => {
     expect(waiting.value).toBe(false)
     expect(data.value).toBe('foo')
   })
+
+  it.todo('should execute with cancel')
 })

@@ -83,6 +83,7 @@ const getSide = (position: Position, defaultPosition: UseStickyPosition): UseSti
   return defaultPosition
 }
 
+
 export const useSticky = (
   element: MaybeRef<HTMLElement>,
   target?: MaybeRef<HTMLElement | Window | undefined>,
@@ -179,3 +180,8 @@ export const useSticky = (
     }
   })
 }
+
+/**
+ * useSticky 의 새 이름
+ */
+export const useElementSticky = useSticky
