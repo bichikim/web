@@ -1,5 +1,5 @@
-import baseFunctions from './_baseFunctions.js';
-import keys from './keys.js';
+import baseFunctions from './_baseFunctions.js'
+import keys from './keys.js'
 
 /**
  * Creates an array of function property names from own enumerable properties
@@ -25,7 +25,7 @@ import keys from './keys.js';
  * // => ['a', 'b']
  */
 function functions(object) {
-  return object == null ? [] : baseFunctions(object, keys(object));
+  return object == null ? [] : baseFunctions(object, keys(object))
 }
 
-export default functions;
+export default functions

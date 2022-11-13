@@ -1,31 +1,31 @@
-import assignInWith from './assignInWith.js';
-import attempt from './attempt.js';
-import baseValues from './_baseValues.js';
-import customDefaultsAssignIn from './_customDefaultsAssignIn.js';
-import escapeStringChar from './_escapeStringChar.js';
-import isError from './isError.js';
-import isIterateeCall from './_isIterateeCall.js';
-import keys from './keys.js';
-import reInterpolate from './_reInterpolate.js';
-import templateSettings from './templateSettings.js';
-import toString from './toString.js';
+import assignInWith from './assignInWith.js'
+import attempt from './attempt.js'
+import baseValues from './_baseValues.js'
+import customDefaultsAssignIn from './_customDefaultsAssignIn.js'
+import escapeStringChar from './_escapeStringChar.js'
+import isError from './isError.js'
+import isIterateeCall from './_isIterateeCall.js'
+import keys from './keys.js'
+import reInterpolate from './_reInterpolate.js'
+import templateSettings from './templateSettings.js'
+import toString from './toString.js'
 
 /** Used to match empty string literals in compiled template source. */
-var reEmptyStringLeading = /\b__p \+= '';/g,
-    reEmptyStringMiddle = /\b(__p \+=) '' \+/g,
-    reEmptyStringTrailing = /(__e\(.*?\)|\b__t\)) \+\n'';/g;
+var reEmptyStringLeading = /\b__p \+= '';/g;
+    var reEmptyStringMiddle = /\b(__p \+=) '' \+/g;
+    var reEmptyStringTrailing = /(__e\(.*?\)|\b__t\)) \+\n'';/g
 
 /**
  * Used to match
  * [ES template delimiters](http://ecma-international.org/ecma-262/7.0/#sec-template-literal-lexical-components).
  */
-var reEsTemplate = /\$\{([^\\}]*(?:\\.[^\\}]*)*)\}/g;
+var reEsTemplate = /\${([^\\}]*(?:\\.[^\\}]*)*)}/g;
 
 /** Used to ensure capturing order of template delimiters. */
-var reNoMatch = /($^)/;
+let reNoMatch = /($^)/
 
 /** Used to match unescaped characters in compiled string literals. */
-var reUnescapedString = /['\n\r\u2028\u2029\\]/g;
+var reUnescapedString = /[\n\r'\\\u2028\u2029]/g;
 
 /**
  * Creates a compiled template function that can interpolate data properties
@@ -135,104 +135,102 @@ function template(string, options, guard) {
   // Based on John Resig's `tmpl` implementation
   // (http://ejohn.org/blog/javascript-micro-templating/)
   // and Laura Doktorova's doT.js (https://github.com/olado/doT).
-  var settings = templateSettings.imports._.templateSettings || templateSettings;
+  let settings = templateSettings.imports._.templateSettings || templateSettings
 
   if (guard && isIterateeCall(string, options, guard)) {
-    options = undefined;
+    options = undefined
   }
-  string = toString(string);
-  options = assignInWith({}, options, settings, customDefaultsAssignIn);
+  string = toString(string)
+  options = assignInWith({}, options, settings, customDefaultsAssignIn)
 
-  var imports = assignInWith({}, options.imports, settings.imports, customDefaultsAssignIn),
-      importsKeys = keys(imports),
-      importsValues = baseValues(imports, importsKeys);
+  var imports = assignInWith({}, options.imports, settings.imports, customDefaultsAssignIn);
+      var importsKeys = keys(imports);
+      var importsValues = baseValues(imports, importsKeys)
 
-  var isEscaping,
-      isEvaluating,
-      index = 0,
-      interpolate = options.interpolate || reNoMatch,
-      source = "__p += '";
+  var isEscaping;
+      var isEvaluating;
+      var index = 0;
+      var interpolate = options.interpolate || reNoMatch;
+      var source = "__p += '"
 
   // Compile the regexp to match each delimiter.
   var reDelimiters = RegExp(
-    (options.escape || reNoMatch).source + '|' +
-    interpolate.source + '|' +
-    (interpolate === reInterpolate ? reEsTemplate : reNoMatch).source + '|' +
-    (options.evaluate || reNoMatch).source + '|$'
-  , 'g');
+    `${(options.escape || reNoMatch).source  }|${ 
+    interpolate.source  }|${ 
+    (interpolate === reInterpolate ? reEsTemplate : reNoMatch).source  }|${ 
+    (options.evaluate || reNoMatch).source  }|$`
+    'g',
+  )
 
   // Use a sourceURL for easier debugging.
-  var sourceURL = 'sourceURL' in options ? '//# sourceURL=' + options.sourceURL + '\n' : '';
+  let sourceURL = 'sourceURL' in options ? `//# sourceURL=${  options.sourceURL  }\n` : ''
 
-  string.replace(reDelimiters, function(match, escapeValue, interpolateValue, esTemplateValue, evaluateValue, offset) {
-    interpolateValue || (interpolateValue = esTemplateValue);
+  string.replace(
+    reDelimiters,
+    function (match, escapeValue, interpolateValue, esTemplateValue, evaluateValue, offset) {
+      interpolateValue || (interpolateValue = esTemplateValue)
 
-    // Escape characters that can't be included in string literals.
-    source += string.slice(index, offset).replace(reUnescapedString, escapeStringChar);
+      // Escape characters that can't be included in string literals.
+      source += string.slice(index, offset).replace(reUnescapedString, escapeStringChar)
 
-    // Replace delimiters with snippets.
-    if (escapeValue) {
-      isEscaping = true;
-      source += "' +\n__e(" + escapeValue + ") +\n'";
-    }
-    if (evaluateValue) {
-      isEvaluating = true;
-      source += "';\n" + evaluateValue + ";\n__p += '";
-    }
-    if (interpolateValue) {
-      source += "' +\n((__t = (" + interpolateValue + ")) == null ? '' : __t) +\n'";
-    }
-    index = offset + match.length;
+      // Replace delimiters with snippets.
+      if (escapeValue) {
+        isEscaping = true
+        source += "' +\n__e(" + escapeValue + ") +\n'"
+      }
+      if (evaluateValue) {
+        isEvaluating = true
+        source += "';\n" + evaluateValue + ";\n__p += '"
+      }
+      if (interpolateValue) {
+        source += "' +\n((__t = (" + interpolateValue + ")) == null ? '' : __t) +\n'"
+      }
+      index = offset + match.length
 
-    // The JS engine embedded in Adobe products needs `match` returned in
-    // order to produce the correct `offset` value.
-    return match;
-  });
+      // The JS engine embedded in Adobe products needs `match` returned in
+      // order to produce the correct `offset` value.
+      return match
+    },
+  )
 
-  source += "';\n";
+  source += "';\n"
 
   // If `variable` is not specified wrap a with-statement around the generated
   // code to add the data object to the top of the scope chain.
-  var variable = options.variable;
+  var {variable} = options;
   if (!variable) {
-    source = 'with (obj) {\n' + source + '\n}\n';
+    source = `with (obj) {\n${  source  }\n}\n`;
   }
   // Cleanup code by stripping empty strings.
   source = (isEvaluating ? source.replace(reEmptyStringLeading, '') : source)
     .replace(reEmptyStringMiddle, '$1')
-    .replace(reEmptyStringTrailing, '$1;');
+    .replace(reEmptyStringTrailing, '$1;')
 
   // Frame code as the function body.
-  source = 'function(' + (variable || 'obj') + ') {\n' +
-    (variable
-      ? ''
-      : 'obj || (obj = {});\n'
-    ) +
+  source =
+    'function(' +
+    (variable || 'obj') +
+    ') {\n' +
+    (variable ? '' : 'obj || (obj = {});\n') +
     "var __t, __p = ''" +
-    (isEscaping
-       ? ', __e = _.escape'
-       : ''
-    ) +
+    (isEscaping ? ', __e = _.escape' : '') +
     (isEvaluating
-      ? ', __j = Array.prototype.join;\n' +
-        "function print() { __p += __j.call(arguments, '') }\n"
-      : ';\n'
-    ) +
+      ? ', __j = Array.prototype.join;\n' + "function print() { __p += __j.call(arguments, '') }\n"
+      : ';\n') +
     source +
-    'return __p\n}';
+    'return __p\n}'
 
-  var result = attempt(function() {
-    return Function(importsKeys, sourceURL + 'return ' + source)
-      .apply(undefined, importsValues);
-  });
+  var result = attempt(function () {
+    return Function(importsKeys, `${sourceURL  }return ${  source}`).apply(undefined, importsValues)
+  })
 
   // Provide the compiled function's source by its `toString` method or
   // the `source` property as a convenience for inlining compiled templates.
-  result.source = source;
+  result.source = source
   if (isError(result)) {
-    throw result;
+    throw result
   }
-  return result;
+  return result
 }
 
-export default template;
+export default template

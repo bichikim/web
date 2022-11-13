@@ -1,4 +1,4 @@
-import toArray from './toArray.js';
+import toArray from './toArray.js'
 
 /**
  * Gets the next value on a wrapped object following the
@@ -24,12 +24,12 @@ import toArray from './toArray.js';
  */
 function wrapperNext() {
   if (this.__values__ === undefined) {
-    this.__values__ = toArray(this.value());
+    this.__values__ = toArray(this.value())
   }
-  var done = this.__index__ >= this.__values__.length,
-      value = done ? undefined : this.__values__[this.__index__++];
+  const done = this.__index__ >= this.__values__.length
+  const value = done ? undefined : this.__values__[this.__index__++]
 
-  return { 'done': done, 'value': value };
+  return {done: done, value: value}
 }
 
-export default wrapperNext;
+export default wrapperNext

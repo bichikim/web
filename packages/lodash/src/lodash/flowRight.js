@@ -1,4 +1,4 @@
-import createFlow from './_createFlow.js';
+import createFlow from './_createFlow.js'
 
 /**
  * This method is like `_.flow` except that it creates a function that
@@ -21,6 +21,6 @@ import createFlow from './_createFlow.js';
  * addSquare(1, 2);
  * // => 9
  */
-var flowRight = createFlow(true);
+const flowRight = createFlow(true)
 
-export default flowRight;
+export default flowRight

@@ -1,15 +1,15 @@
-import assignValue from './_assignValue.js';
-import copyObject from './_copyObject.js';
-import createAssigner from './_createAssigner.js';
-import isArrayLike from './isArrayLike.js';
-import isPrototype from './_isPrototype.js';
-import keys from './keys.js';
+import assignValue from './_assignValue.js'
+import copyObject from './_copyObject.js'
+import createAssigner from './_createAssigner.js'
+import isArrayLike from './isArrayLike.js'
+import isPrototype from './_isPrototype.js'
+import keys from './keys.js'
 
 /** Used for built-in method references. */
-var objectProto = Object.prototype;
+const objectProto = Object.prototype
 
 /** Used to check objects for own properties. */
-var hasOwnProperty = objectProto.hasOwnProperty;
+const {hasOwnProperty} = objectProto
 
 /**
  * Assigns own enumerable string keyed properties of source objects to the
@@ -43,16 +43,16 @@ var hasOwnProperty = objectProto.hasOwnProperty;
  * _.assign({ 'a': 0 }, new Foo, new Bar);
  * // => { 'a': 1, 'c': 3 }
  */
-var assign = createAssigner(function(object, source) {
+const assign = createAssigner(function (object, source) {
   if (isPrototype(source) || isArrayLike(source)) {
-    copyObject(source, keys(source), object);
-    return;
+    copyObject(source, keys(source), object)
+    return
   }
-  for (var key in source) {
+  for (const key in source) {
     if (hasOwnProperty.call(source, key)) {
-      assignValue(object, key, source[key]);
+      assignValue(object, key, source[key])
     }
   }
-});
+})
 
-export default assign;
+export default assign

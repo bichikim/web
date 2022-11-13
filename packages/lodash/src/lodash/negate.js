@@ -1,5 +1,5 @@
 /** Error message constants. */
-var FUNC_ERROR_TEXT = 'Expected a function';
+const FUNC_ERROR_TEXT = 'Expected a function'
 
 /**
  * Creates a function that negates the result of the predicate `func`. The
@@ -23,18 +23,22 @@ var FUNC_ERROR_TEXT = 'Expected a function';
  */
 function negate(predicate) {
   if (typeof predicate != 'function') {
-    throw new TypeError(FUNC_ERROR_TEXT);
+    throw new TypeError(FUNC_ERROR_TEXT)
   }
-  return function() {
-    var args = arguments;
+  return function () {
+    const args = arguments
     switch (args.length) {
-      case 0: return !predicate.call(this);
-      case 1: return !predicate.call(this, args[0]);
-      case 2: return !predicate.call(this, args[0], args[1]);
-      case 3: return !predicate.call(this, args[0], args[1], args[2]);
+      case 0:
+        return !predicate.call(this)
+      case 1:
+        return !predicate.call(this, args[0])
+      case 2:
+        return !predicate.call(this, args[0], args[1])
+      case 3:
+        return !predicate.call(this, args[0], args[1], args[2])
     }
-    return !predicate.apply(this, args);
-  };
+    return !predicate.apply(this, args)
+  }
 }
 
-export default negate;
+export default negate

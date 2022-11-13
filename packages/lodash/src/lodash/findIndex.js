@@ -1,9 +1,9 @@
-import baseFindIndex from './_baseFindIndex.js';
-import baseIteratee from './_baseIteratee.js';
-import toInteger from './toInteger.js';
+import baseFindIndex from './_baseFindIndex.js'
+import baseIteratee from './_baseIteratee.js'
+import toInteger from './toInteger.js'
 
 /* Built-in method references for those with the same name as other `lodash` methods. */
-var nativeMax = Math.max;
+const nativeMax = Math.max
 
 /**
  * This method is like `_.find` except that it returns the index of the first
@@ -41,15 +41,15 @@ var nativeMax = Math.max;
  * // => 2
  */
 function findIndex(array, predicate, fromIndex) {
-  var length = array == null ? 0 : array.length;
+  const length = array == null ? 0 : array.length
   if (!length) {
-    return -1;
+    return -1
   }
-  var index = fromIndex == null ? 0 : toInteger(fromIndex);
+  let index = fromIndex == null ? 0 : toInteger(fromIndex)
   if (index < 0) {
-    index = nativeMax(length + index, 0);
+    index = nativeMax(length + index, 0)
   }
-  return baseFindIndex(array, baseIteratee(predicate, 3), index);
+  return baseFindIndex(array, baseIteratee(predicate, 3), index)
 }
 
-export default findIndex;
+export default findIndex

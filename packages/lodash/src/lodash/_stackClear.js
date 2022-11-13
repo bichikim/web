@@ -1,4 +1,4 @@
-import ListCache from './_ListCache.js';
+import ListCache from './_ListCache.js'
 
 /**
  * Removes all key-value entries from the stack.
@@ -8,8 +8,8 @@ import ListCache from './_ListCache.js';
  * @memberOf Stack
  */
 function stackClear() {
-  this.__data__ = new ListCache;
-  this.size = 0;
+  this.__data__ = new ListCache()
+  this.size = 0
 }
 
-export default stackClear;
+export default stackClear

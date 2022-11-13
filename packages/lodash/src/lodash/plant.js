@@ -1,5 +1,5 @@
-import baseLodash from './_baseLodash.js';
-import wrapperClone from './_wrapperClone.js';
+import baseLodash from './_baseLodash.js'
+import wrapperClone from './_wrapperClone.js'
 
 /**
  * Creates a clone of the chain sequence planting `value` as the wrapped value.
@@ -26,23 +26,23 @@ import wrapperClone from './_wrapperClone.js';
  * // => [1, 4]
  */
 function wrapperPlant(value) {
-  var result,
-      parent = this;
+  let result
+  let parent = this
 
   while (parent instanceof baseLodash) {
-    var clone = wrapperClone(parent);
-    clone.__index__ = 0;
-    clone.__values__ = undefined;
+    const clone = wrapperClone(parent)
+    clone.__index__ = 0
+    clone.__values__ = undefined
     if (result) {
-      previous.__wrapped__ = clone;
+      previous.__wrapped__ = clone
     } else {
-      result = clone;
+      result = clone
     }
-    var previous = clone;
-    parent = parent.__wrapped__;
+    var previous = clone
+    parent = parent.__wrapped__
   }
-  previous.__wrapped__ = value;
-  return result;
+  previous.__wrapped__ = value
+  return result
 }
 
-export default wrapperPlant;
+export default wrapperPlant

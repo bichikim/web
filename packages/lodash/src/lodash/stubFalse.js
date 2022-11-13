@@ -12,7 +12,7 @@
  * // => [false, false]
  */
 function stubFalse() {
-  return false;
+  return false
 }
 
-export default stubFalse;
+export default stubFalse

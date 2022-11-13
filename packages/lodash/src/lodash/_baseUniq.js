@@ -1,12 +1,12 @@
-import SetCache from './_SetCache.js';
-import arrayIncludes from './_arrayIncludes.js';
-import arrayIncludesWith from './_arrayIncludesWith.js';
-import cacheHas from './_cacheHas.js';
-import createSet from './_createSet.js';
-import setToArray from './_setToArray.js';
+import SetCache from './_SetCache.js'
+import arrayIncludes from './_arrayIncludes.js'
+import arrayIncludesWith from './_arrayIncludesWith.js'
+import cacheHas from './_cacheHas.js'
+import createSet from './_createSet.js'
+import setToArray from './_setToArray.js'
 
 /** Used as the size to enable large array optimizations. */
-var LARGE_ARRAY_SIZE = 200;
+const LARGE_ARRAY_SIZE = 200
 
 /**
  * The base implementation of `_.uniqBy` without support for iteratee shorthands.
@@ -18,55 +18,51 @@ var LARGE_ARRAY_SIZE = 200;
  * @returns {Array} Returns the new duplicate free array.
  */
 function baseUniq(array, iteratee, comparator) {
-  var index = -1,
-      includes = arrayIncludes,
-      length = array.length,
-      isCommon = true,
-      result = [],
-      seen = result;
+  let index = -1
+  let includes = arrayIncludes
+  const {length} = array
+  let isCommon = true
+  const result = []
+  let seen = result
 
   if (comparator) {
-    isCommon = false;
-    includes = arrayIncludesWith;
-  }
-  else if (length >= LARGE_ARRAY_SIZE) {
-    var set = iteratee ? null : createSet(array);
+    isCommon = false
+    includes = arrayIncludesWith
+  } else if (length >= LARGE_ARRAY_SIZE) {
+    const set = iteratee ? null : createSet(array)
     if (set) {
-      return setToArray(set);
+      return setToArray(set)
     }
-    isCommon = false;
-    includes = cacheHas;
-    seen = new SetCache;
+    isCommon = false
+    includes = cacheHas
+    seen = new SetCache()
+  } else {
+    seen = iteratee ? [] : result
   }
-  else {
-    seen = iteratee ? [] : result;
-  }
-  outer:
-  while (++index < length) {
-    var value = array[index],
-        computed = iteratee ? iteratee(value) : value;
+  outer: while (++index < length) {
+    let value = array[index]
+    const computed = iteratee ? iteratee(value) : value
 
-    value = (comparator || value !== 0) ? value : 0;
+    value = comparator || value !== 0 ? value : 0
     if (isCommon && computed === computed) {
-      var seenIndex = seen.length;
+      let seenIndex = seen.length
       while (seenIndex--) {
         if (seen[seenIndex] === computed) {
-          continue outer;
+          continue outer
         }
       }
       if (iteratee) {
-        seen.push(computed);
+        seen.push(computed)
       }
-      result.push(value);
-    }
-    else if (!includes(seen, computed, comparator)) {
+      result.push(value)
+    } else if (!includes(seen, computed, comparator)) {
       if (seen !== result) {
-        seen.push(computed);
+        seen.push(computed)
       }
-      result.push(value);
+      result.push(value)
     }
   }
-  return result;
+  return result
 }
 
-export default baseUniq;
+export default baseUniq

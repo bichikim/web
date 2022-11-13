@@ -17,7 +17,7 @@
  * // => false
  */
 function stubObject() {
-  return {};
+  return {}
 }
 
-export default stubObject;
+export default stubObject

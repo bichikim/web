@@ -1,18 +1,18 @@
-import assignMergeValue from './_assignMergeValue.js';
-import cloneBuffer from './_cloneBuffer.js';
-import cloneTypedArray from './_cloneTypedArray.js';
-import copyArray from './_copyArray.js';
-import initCloneObject from './_initCloneObject.js';
-import isArguments from './isArguments.js';
-import isArray from './isArray.js';
-import isArrayLikeObject from './isArrayLikeObject.js';
-import isBuffer from './isBuffer.js';
-import isFunction from './isFunction.js';
-import isObject from './isObject.js';
-import isPlainObject from './isPlainObject.js';
-import isTypedArray from './isTypedArray.js';
-import safeGet from './_safeGet.js';
-import toPlainObject from './toPlainObject.js';
+import assignMergeValue from './_assignMergeValue.js'
+import cloneBuffer from './_cloneBuffer.js'
+import cloneTypedArray from './_cloneTypedArray.js'
+import copyArray from './_copyArray.js'
+import initCloneObject from './_initCloneObject.js'
+import isArguments from './isArguments.js'
+import isArray from './isArray.js'
+import isArrayLikeObject from './isArrayLikeObject.js'
+import isBuffer from './isBuffer.js'
+import isFunction from './isFunction.js'
+import isObject from './isObject.js'
+import isPlainObject from './isPlainObject.js'
+import isTypedArray from './isTypedArray.js'
+import safeGet from './_safeGet.js'
+import toPlainObject from './toPlainObject.js'
 
 /**
  * A specialized version of `baseMerge` for arrays and objects which performs
@@ -30,65 +30,58 @@ import toPlainObject from './toPlainObject.js';
  *  counterparts.
  */
 function baseMergeDeep(object, source, key, srcIndex, mergeFunc, customizer, stack) {
-  var objValue = safeGet(object, key),
-      srcValue = safeGet(source, key),
-      stacked = stack.get(srcValue);
+  const objValue = safeGet(object, key)
+  const srcValue = safeGet(source, key)
+  const stacked = stack.get(srcValue)
 
   if (stacked) {
-    assignMergeValue(object, key, stacked);
-    return;
+    assignMergeValue(object, key, stacked)
+    return
   }
-  var newValue = customizer
-    ? customizer(objValue, srcValue, (key + ''), object, source, stack)
-    : undefined;
+  let newValue = customizer
+    ? customizer(objValue, srcValue, `${key}`, object, source, stack)
+    : undefined
 
-  var isCommon = newValue === undefined;
+  let isCommon = newValue === undefined
 
   if (isCommon) {
-    var isArr = isArray(srcValue),
-        isBuff = !isArr && isBuffer(srcValue),
-        isTyped = !isArr && !isBuff && isTypedArray(srcValue);
+    const isArr = isArray(srcValue)
+    const isBuff = !isArr && isBuffer(srcValue)
+    const isTyped = !isArr && !isBuff && isTypedArray(srcValue)
 
-    newValue = srcValue;
+    newValue = srcValue
     if (isArr || isBuff || isTyped) {
       if (isArray(objValue)) {
-        newValue = objValue;
+        newValue = objValue
+      } else if (isArrayLikeObject(objValue)) {
+        newValue = copyArray(objValue)
+      } else if (isBuff) {
+        isCommon = false
+        newValue = cloneBuffer(srcValue, true)
+      } else if (isTyped) {
+        isCommon = false
+        newValue = cloneTypedArray(srcValue, true)
+      } else {
+        newValue = []
       }
-      else if (isArrayLikeObject(objValue)) {
-        newValue = copyArray(objValue);
-      }
-      else if (isBuff) {
-        isCommon = false;
-        newValue = cloneBuffer(srcValue, true);
-      }
-      else if (isTyped) {
-        isCommon = false;
-        newValue = cloneTypedArray(srcValue, true);
-      }
-      else {
-        newValue = [];
-      }
-    }
-    else if (isPlainObject(srcValue) || isArguments(srcValue)) {
-      newValue = objValue;
+    } else if (isPlainObject(srcValue) || isArguments(srcValue)) {
+      newValue = objValue
       if (isArguments(objValue)) {
-        newValue = toPlainObject(objValue);
+        newValue = toPlainObject(objValue)
+      } else if (!isObject(objValue) || (srcIndex && isFunction(objValue))) {
+        newValue = initCloneObject(srcValue)
       }
-      else if (!isObject(objValue) || (srcIndex && isFunction(objValue))) {
-        newValue = initCloneObject(srcValue);
-      }
-    }
-    else {
-      isCommon = false;
+    } else {
+      isCommon = false
     }
   }
   if (isCommon) {
     // Recursively merge objects and arrays (susceptible to call stack limits).
-    stack.set(srcValue, newValue);
-    mergeFunc(newValue, srcValue, srcIndex, customizer, stack);
-    stack['delete'](srcValue);
+    stack.set(srcValue, newValue)
+    mergeFunc(newValue, srcValue, srcIndex, customizer, stack)
+    stack.delete(srcValue)
   }
-  assignMergeValue(object, key, newValue);
+  assignMergeValue(object, key, newValue)
 }
 
-export default baseMergeDeep;
+export default baseMergeDeep

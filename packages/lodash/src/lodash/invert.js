@@ -1,16 +1,16 @@
-import constant from './constant.js';
-import createInverter from './_createInverter.js';
-import identity from './identity.js';
+import constant from './constant.js'
+import createInverter from './_createInverter.js'
+import identity from './identity.js'
 
 /** Used for built-in method references. */
-var objectProto = Object.prototype;
+const objectProto = Object.prototype
 
 /**
  * Used to resolve the
  * [`toStringTag`](http://ecma-international.org/ecma-262/7.0/#sec-object.prototype.tostring)
  * of values.
  */
-var nativeObjectToString = objectProto.toString;
+const nativeObjectToString = objectProto.toString
 
 /**
  * Creates an object composed of the inverted keys and values of `object`.
@@ -30,13 +30,12 @@ var nativeObjectToString = objectProto.toString;
  * _.invert(object);
  * // => { '1': 'c', '2': 'b' }
  */
-var invert = createInverter(function(result, value, key) {
-  if (value != null &&
-      typeof value.toString != 'function') {
-    value = nativeObjectToString.call(value);
+const invert = createInverter(function (result, value, key) {
+  if (value != null && typeof value.toString != 'function') {
+    value = nativeObjectToString.call(value)
   }
 
-  result[value] = key;
-}, constant(identity));
+  result[value] = key
+}, constant(identity))
 
-export default invert;
+export default invert

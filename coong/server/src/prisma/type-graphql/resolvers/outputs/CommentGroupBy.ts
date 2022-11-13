@@ -1,47 +1,47 @@
-import * as TypeGraphQL from "type-graphql";
-import * as GraphQLScalars from "graphql-scalars";
-import { Prisma } from "@prisma/client";
-import { DecimalJSScalar } from "../../scalars";
-import { CommentCountAggregate } from "../outputs/CommentCountAggregate";
-import { CommentMaxAggregate } from "../outputs/CommentMaxAggregate";
-import { CommentMinAggregate } from "../outputs/CommentMinAggregate";
+import * as TypeGraphQL from 'type-graphql'
+import * as GraphQLScalars from 'graphql-scalars'
+import {Prisma} from '@prisma/client'
+import {DecimalJSScalar} from '../../scalars'
+import {CommentCountAggregate} from '../outputs/CommentCountAggregate'
+import {CommentMaxAggregate} from '../outputs/CommentMaxAggregate'
+import {CommentMinAggregate} from '../outputs/CommentMinAggregate'
 
-@TypeGraphQL.ObjectType("CommentGroupBy", {
-  isAbstract: true
+@TypeGraphQL.ObjectType('CommentGroupBy', {
+  isAbstract: true,
 })
 export class CommentGroupBy {
-  @TypeGraphQL.Field(_type => String, {
-    nullable: false
+  @TypeGraphQL.Field((_type) => String, {
+    nullable: false,
   })
-  id!: string;
+  id!: string
 
-  @TypeGraphQL.Field(_type => String, {
-    nullable: false
+  @TypeGraphQL.Field((_type) => String, {
+    nullable: false,
   })
-  message!: string;
+  message!: string
 
-  @TypeGraphQL.Field(_type => String, {
-    nullable: false
+  @TypeGraphQL.Field((_type) => String, {
+    nullable: false,
   })
-  postId!: string;
+  postId!: string
 
-  @TypeGraphQL.Field(_type => String, {
-    nullable: false
+  @TypeGraphQL.Field((_type) => String, {
+    nullable: false,
   })
-  authorId!: string;
+  authorId!: string
 
-  @TypeGraphQL.Field(_type => CommentCountAggregate, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => CommentCountAggregate, {
+    nullable: true,
   })
-  _count!: CommentCountAggregate | null;
+  _count!: CommentCountAggregate | null
 
-  @TypeGraphQL.Field(_type => CommentMinAggregate, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => CommentMinAggregate, {
+    nullable: true,
   })
-  _min!: CommentMinAggregate | null;
+  _min!: CommentMinAggregate | null
 
-  @TypeGraphQL.Field(_type => CommentMaxAggregate, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => CommentMaxAggregate, {
+    nullable: true,
   })
-  _max!: CommentMaxAggregate | null;
+  _max!: CommentMaxAggregate | null
 }

@@ -1,4 +1,4 @@
-import get from './get.js';
+import get from './get.js'
 
 /**
  * The base implementation of `_.at` without support for individual paths.
@@ -9,15 +9,15 @@ import get from './get.js';
  * @returns {Array} Returns the picked elements.
  */
 function baseAt(object, paths) {
-  var index = -1,
-      length = paths.length,
-      result = Array(length),
-      skip = object == null;
+  let index = -1
+  const {length} = paths
+  const result = Array(length)
+  const skip = object == null
 
   while (++index < length) {
-    result[index] = skip ? undefined : get(object, paths[index]);
+    result[index] = skip ? undefined : get(object, paths[index])
   }
-  return result;
+  return result
 }
 
-export default baseAt;
+export default baseAt

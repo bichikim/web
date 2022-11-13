@@ -1,19 +1,19 @@
-import * as TypeGraphQL from "type-graphql";
-import * as GraphQLScalars from "graphql-scalars";
-import { Prisma } from "@prisma/client";
-import { DecimalJSScalar } from "../../scalars";
+import * as TypeGraphQL from 'type-graphql'
+import * as GraphQLScalars from 'graphql-scalars'
+import {Prisma} from '@prisma/client'
+import {DecimalJSScalar} from '../../scalars'
 
-@TypeGraphQL.InputType("TagUpdatepostIDsInput", {
-  isAbstract: true
+@TypeGraphQL.InputType('TagUpdatepostIDsInput', {
+  isAbstract: true,
 })
 export class TagUpdatepostIDsInput {
-  @TypeGraphQL.Field(_type => [String], {
-    nullable: true
+  @TypeGraphQL.Field((_type) => [String], {
+    nullable: true,
   })
-  set?: string[] | undefined;
+  set?: string[] | undefined
 
-  @TypeGraphQL.Field(_type => [String], {
-    nullable: true
+  @TypeGraphQL.Field((_type) => [String], {
+    nullable: true,
   })
-  push?: string[] | undefined;
+  push?: string[] | undefined
 }

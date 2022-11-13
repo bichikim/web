@@ -1,11 +1,11 @@
-import baseRest from './_baseRest.js';
-import createWrap from './_createWrap.js';
-import getHolder from './_getHolder.js';
-import replaceHolders from './_replaceHolders.js';
+import baseRest from './_baseRest.js'
+import createWrap from './_createWrap.js'
+import getHolder from './_getHolder.js'
+import replaceHolders from './_replaceHolders.js'
 
 /** Used to compose bitmasks for function metadata. */
-var WRAP_BIND_FLAG = 1,
-    WRAP_PARTIAL_FLAG = 32;
+const WRAP_BIND_FLAG = 1
+const WRAP_PARTIAL_FLAG = 32
 
 /**
  * Creates a function that invokes `func` with the `this` binding of `thisArg`
@@ -42,16 +42,16 @@ var WRAP_BIND_FLAG = 1,
  * bound('hi');
  * // => 'hi fred!'
  */
-var bind = baseRest(function(func, thisArg, partials) {
-  var bitmask = WRAP_BIND_FLAG;
-  if (partials.length) {
-    var holders = replaceHolders(partials, getHolder(bind));
-    bitmask |= WRAP_PARTIAL_FLAG;
+var bind = baseRest(function (func, thisArg, partials) {
+  let bitmask = WRAP_BIND_FLAG
+  if (partials.length > 0) {
+    var holders = replaceHolders(partials, getHolder(bind))
+    bitmask |= WRAP_PARTIAL_FLAG
   }
-  return createWrap(func, bitmask, thisArg, partials, holders);
-});
+  return createWrap(func, bitmask, thisArg, partials, holders)
+})
 
 // Assign default placeholders.
-bind.placeholder = {};
+bind.placeholder = {}
 
-export default bind;
+export default bind

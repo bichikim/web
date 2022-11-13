@@ -1,81 +1,81 @@
-import * as TypeGraphQL from "type-graphql";
-import * as GraphQLScalars from "graphql-scalars";
-import { Prisma } from "@prisma/client";
-import { DecimalJSScalar } from "../../scalars";
-import { CommentListRelationFilter } from "../inputs/CommentListRelationFilter";
-import { StringFilter } from "../inputs/StringFilter";
-import { StringNullableFilter } from "../inputs/StringNullableFilter";
-import { StringNullableListFilter } from "../inputs/StringNullableListFilter";
-import { TagListRelationFilter } from "../inputs/TagListRelationFilter";
-import { UserListRelationFilter } from "../inputs/UserListRelationFilter";
-import { UserRelationFilter } from "../inputs/UserRelationFilter";
+import * as TypeGraphQL from 'type-graphql'
+import * as GraphQLScalars from 'graphql-scalars'
+import {Prisma} from '@prisma/client'
+import {DecimalJSScalar} from '../../scalars'
+import {CommentListRelationFilter} from '../inputs/CommentListRelationFilter'
+import {StringFilter} from '../inputs/StringFilter'
+import {StringNullableFilter} from '../inputs/StringNullableFilter'
+import {StringNullableListFilter} from '../inputs/StringNullableListFilter'
+import {TagListRelationFilter} from '../inputs/TagListRelationFilter'
+import {UserListRelationFilter} from '../inputs/UserListRelationFilter'
+import {UserRelationFilter} from '../inputs/UserRelationFilter'
 
-@TypeGraphQL.InputType("PostWhereInput", {
-  isAbstract: true
+@TypeGraphQL.InputType('PostWhereInput', {
+  isAbstract: true,
 })
 export class PostWhereInput {
-  @TypeGraphQL.Field(_type => [PostWhereInput], {
-    nullable: true
+  @TypeGraphQL.Field((_type) => [PostWhereInput], {
+    nullable: true,
   })
-  AND?: PostWhereInput[] | undefined;
+  AND?: PostWhereInput[] | undefined
 
-  @TypeGraphQL.Field(_type => [PostWhereInput], {
-    nullable: true
+  @TypeGraphQL.Field((_type) => [PostWhereInput], {
+    nullable: true,
   })
-  OR?: PostWhereInput[] | undefined;
+  OR?: PostWhereInput[] | undefined
 
-  @TypeGraphQL.Field(_type => [PostWhereInput], {
-    nullable: true
+  @TypeGraphQL.Field((_type) => [PostWhereInput], {
+    nullable: true,
   })
-  NOT?: PostWhereInput[] | undefined;
+  NOT?: PostWhereInput[] | undefined
 
-  @TypeGraphQL.Field(_type => StringFilter, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => StringFilter, {
+    nullable: true,
   })
-  id?: StringFilter | undefined;
+  id?: StringFilter | undefined
 
-  @TypeGraphQL.Field(_type => StringFilter, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => StringFilter, {
+    nullable: true,
   })
-  title?: StringFilter | undefined;
+  title?: StringFilter | undefined
 
-  @TypeGraphQL.Field(_type => StringNullableFilter, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => StringNullableFilter, {
+    nullable: true,
   })
-  message?: StringNullableFilter | undefined;
+  message?: StringNullableFilter | undefined
 
-  @TypeGraphQL.Field(_type => UserRelationFilter, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => UserRelationFilter, {
+    nullable: true,
   })
-  author?: UserRelationFilter | undefined;
+  author?: UserRelationFilter | undefined
 
-  @TypeGraphQL.Field(_type => StringFilter, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => StringFilter, {
+    nullable: true,
   })
-  authorId?: StringFilter | undefined;
+  authorId?: StringFilter | undefined
 
-  @TypeGraphQL.Field(_type => UserListRelationFilter, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => UserListRelationFilter, {
+    nullable: true,
   })
-  likes?: UserListRelationFilter | undefined;
+  likes?: UserListRelationFilter | undefined
 
-  @TypeGraphQL.Field(_type => StringNullableListFilter, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => StringNullableListFilter, {
+    nullable: true,
   })
-  likeIDs?: StringNullableListFilter | undefined;
+  likeIDs?: StringNullableListFilter | undefined
 
-  @TypeGraphQL.Field(_type => TagListRelationFilter, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => TagListRelationFilter, {
+    nullable: true,
   })
-  tags?: TagListRelationFilter | undefined;
+  tags?: TagListRelationFilter | undefined
 
-  @TypeGraphQL.Field(_type => StringNullableListFilter, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => StringNullableListFilter, {
+    nullable: true,
   })
-  tagIDs?: StringNullableListFilter | undefined;
+  tagIDs?: StringNullableListFilter | undefined
 
-  @TypeGraphQL.Field(_type => CommentListRelationFilter, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => CommentListRelationFilter, {
+    nullable: true,
   })
-  comments?: CommentListRelationFilter | undefined;
+  comments?: CommentListRelationFilter | undefined
 }

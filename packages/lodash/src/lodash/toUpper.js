@@ -1,4 +1,4 @@
-import toString from './toString.js';
+import toString from './toString.js'
 
 /**
  * Converts `string`, as a whole, to upper case just like
@@ -22,7 +22,7 @@ import toString from './toString.js';
  * // => '__FOO_BAR__'
  */
 function toUpper(value) {
-  return toString(value).toUpperCase();
+  return toString(value).toUpperCase()
 }
 
-export default toUpper;
+export default toUpper

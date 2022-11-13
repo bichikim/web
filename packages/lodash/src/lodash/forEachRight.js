@@ -1,7 +1,7 @@
-import arrayEachRight from './_arrayEachRight.js';
-import baseEachRight from './_baseEachRight.js';
-import castFunction from './_castFunction.js';
-import isArray from './isArray.js';
+import arrayEachRight from './_arrayEachRight.js'
+import baseEachRight from './_baseEachRight.js'
+import castFunction from './_castFunction.js'
+import isArray from './isArray.js'
 
 /**
  * This method is like `_.forEach` except that it iterates over elements of
@@ -24,8 +24,8 @@ import isArray from './isArray.js';
  * // => Logs `2` then `1`.
  */
 function forEachRight(collection, iteratee) {
-  var func = isArray(collection) ? arrayEachRight : baseEachRight;
-  return func(collection, castFunction(iteratee));
+  const func = isArray(collection) ? arrayEachRight : baseEachRight
+  return func(collection, castFunction(iteratee))
 }
 
-export default forEachRight;
+export default forEachRight

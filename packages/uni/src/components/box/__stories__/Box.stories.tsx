@@ -1,5 +1,5 @@
 import {UBox} from '../'
-
+import {h} from 'vue'
 import {Meta, StoryFn} from '@storybook/vue3'
 
 export default {
@@ -9,6 +9,6 @@ export default {
 
 export const Default: StoryFn<typeof UBox> = () => ({
   render() {
-    return <UBox>hello</UBox>
+    return h(UBox, 'hello')
   },
 })

@@ -1,7 +1,7 @@
-import arrayMap from './_arrayMap.js';
-import baseIteratee from './_baseIteratee.js';
-import baseMap from './_baseMap.js';
-import isArray from './isArray.js';
+import arrayMap from './_arrayMap.js'
+import baseIteratee from './_baseIteratee.js'
+import baseMap from './_baseMap.js'
+import isArray from './isArray.js'
 
 /**
  * Creates an array of values by running each element in `collection` thru
@@ -46,8 +46,8 @@ import isArray from './isArray.js';
  * // => ['barney', 'fred']
  */
 function map(collection, iteratee) {
-  var func = isArray(collection) ? arrayMap : baseMap;
-  return func(collection, baseIteratee(iteratee, 3));
+  const func = isArray(collection) ? arrayMap : baseMap
+  return func(collection, baseIteratee(iteratee, 3))
 }
 
-export default map;
+export default map

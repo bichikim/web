@@ -1,23 +1,23 @@
-import deburrLetter from './_deburrLetter.js';
-import toString from './toString.js';
+import deburrLetter from './_deburrLetter.js'
+import toString from './toString.js'
 
 /** Used to match Latin Unicode letters (excluding mathematical operators). */
-var reLatin = /[\xc0-\xd6\xd8-\xf6\xf8-\xff\u0100-\u017f]/g;
+const reLatin = /[\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u017F]/g
 
 /** Used to compose unicode character classes. */
-var rsComboMarksRange = '\\u0300-\\u036f',
-    reComboHalfMarksRange = '\\ufe20-\\ufe2f',
-    rsComboSymbolsRange = '\\u20d0-\\u20ff',
-    rsComboRange = rsComboMarksRange + reComboHalfMarksRange + rsComboSymbolsRange;
+const rsComboMarksRange = '\\u0300-\\u036f'
+const reComboHalfMarksRange = '\\ufe20-\\ufe2f'
+const rsComboSymbolsRange = '\\u20d0-\\u20ff'
+const rsComboRange = rsComboMarksRange + reComboHalfMarksRange + rsComboSymbolsRange
 
 /** Used to compose unicode capture groups. */
-var rsCombo = '[' + rsComboRange + ']';
+const rsCombo = `[${rsComboRange}]`
 
 /**
  * Used to match [combining diacritical marks](https://en.wikipedia.org/wiki/Combining_Diacritical_Marks) and
  * [combining diacritical marks for symbols](https://en.wikipedia.org/wiki/Combining_Diacritical_Marks_for_Symbols).
  */
-var reComboMark = RegExp(rsCombo, 'g');
+const reComboMark = RegExp(rsCombo, 'g')
 
 /**
  * Deburrs `string` by converting
@@ -38,8 +38,8 @@ var reComboMark = RegExp(rsCombo, 'g');
  * // => 'deja vu'
  */
 function deburr(string) {
-  string = toString(string);
-  return string && string.replace(reLatin, deburrLetter).replace(reComboMark, '');
+  string = toString(string)
+  return string && string.replace(reLatin, deburrLetter).replace(reComboMark, '')
 }
 
-export default deburr;
+export default deburr

@@ -1,6 +1,6 @@
-import baseExtremum from './_baseExtremum.js';
-import baseIteratee from './_baseIteratee.js';
-import baseLt from './_baseLt.js';
+import baseExtremum from './_baseExtremum.js'
+import baseIteratee from './_baseIteratee.js'
+import baseLt from './_baseLt.js'
 
 /**
  * This method is like `_.min` except that it accepts `iteratee` which is
@@ -26,9 +26,9 @@ import baseLt from './_baseLt.js';
  * // => { 'n': 1 }
  */
 function minBy(array, iteratee) {
-  return (array && array.length)
+  return array && array.length > 0
     ? baseExtremum(array, baseIteratee(iteratee, 2), baseLt)
-    : undefined;
+    : undefined
 }
 
-export default minBy;
+export default minBy

@@ -1,6 +1,6 @@
-import castPath from './_castPath.js';
-import isFunction from './isFunction.js';
-import toKey from './_toKey.js';
+import castPath from './_castPath.js'
+import isFunction from './isFunction.js'
+import toKey from './_toKey.js'
 
 /**
  * This method is like `_.get` except that if the resolved value is a
@@ -32,25 +32,25 @@ import toKey from './_toKey.js';
  * // => 'default'
  */
 function result(object, path, defaultValue) {
-  path = castPath(path, object);
+  path = castPath(path, object)
 
-  var index = -1,
-      length = path.length;
+  let index = -1
+  let {length} = path
 
   // Ensure the loop is entered when path is empty.
   if (!length) {
-    length = 1;
-    object = undefined;
+    length = 1
+    object = undefined
   }
   while (++index < length) {
-    var value = object == null ? undefined : object[toKey(path[index])];
+    let value = object == null ? undefined : object[toKey(path[index])]
     if (value === undefined) {
-      index = length;
-      value = defaultValue;
+      index = length
+      value = defaultValue
     }
-    object = isFunction(value) ? value.call(object) : value;
+    object = isFunction(value) ? value.call(object) : value
   }
-  return object;
+  return object
 }
 
-export default result;
+export default result

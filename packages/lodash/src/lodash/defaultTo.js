@@ -19,7 +19,7 @@
  * // => 10
  */
 function defaultTo(value, defaultValue) {
-  return (value == null || value !== value) ? defaultValue : value;
+  return value == null || value !== value ? defaultValue : value
 }
 
-export default defaultTo;
+export default defaultTo

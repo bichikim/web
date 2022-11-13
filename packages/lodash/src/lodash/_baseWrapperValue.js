@@ -1,6 +1,6 @@
-import LazyWrapper from './_LazyWrapper.js';
-import arrayPush from './_arrayPush.js';
-import arrayReduce from './_arrayReduce.js';
+import LazyWrapper from './_LazyWrapper.js'
+import arrayPush from './_arrayPush.js'
+import arrayReduce from './_arrayReduce.js'
 
 /**
  * The base implementation of `wrapperValue` which returns the result of
@@ -13,13 +13,17 @@ import arrayReduce from './_arrayReduce.js';
  * @returns {*} Returns the resolved value.
  */
 function baseWrapperValue(value, actions) {
-  var result = value;
+  let result = value
   if (result instanceof LazyWrapper) {
-    result = result.value();
+    result = result.value()
   }
-  return arrayReduce(actions, function(result, action) {
-    return action.func.apply(action.thisArg, arrayPush([result], action.args));
-  }, result);
+  return arrayReduce(
+    actions,
+    function (result, action) {
+      return action.func.apply(action.thisArg, arrayPush([result], action.args))
+    },
+    result,
+  )
 }
 
-export default baseWrapperValue;
+export default baseWrapperValue

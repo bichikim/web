@@ -1,4 +1,4 @@
-import isArrayLike from './isArrayLike.js';
+import isArrayLike from './isArrayLike.js'
 
 /**
  * Creates a `baseEach` or `baseEachRight` function.
@@ -9,24 +9,24 @@ import isArrayLike from './isArrayLike.js';
  * @returns {Function} Returns the new base function.
  */
 function createBaseEach(eachFunc, fromRight) {
-  return function(collection, iteratee) {
+  return function (collection, iteratee) {
     if (collection == null) {
-      return collection;
+      return collection
     }
     if (!isArrayLike(collection)) {
-      return eachFunc(collection, iteratee);
+      return eachFunc(collection, iteratee)
     }
-    var length = collection.length,
-        index = fromRight ? length : -1,
-        iterable = Object(collection);
+    const {length} = collection
+    let index = fromRight ? length : -1
+    const iterable = Object(collection)
 
-    while ((fromRight ? index-- : ++index < length)) {
+    while (fromRight ? index-- : ++index < length) {
       if (iteratee(iterable[index], index, iterable) === false) {
-        break;
+        break
       }
     }
-    return collection;
-  };
+    return collection
+  }
 }
 
-export default createBaseEach;
+export default createBaseEach

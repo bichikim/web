@@ -12,7 +12,7 @@
  * // => [true, true]
  */
 function stubTrue() {
-  return true;
+  return true
 }
 
-export default stubTrue;
+export default stubTrue

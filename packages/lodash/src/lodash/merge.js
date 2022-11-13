@@ -1,5 +1,5 @@
-import baseMerge from './_baseMerge.js';
-import createAssigner from './_createAssigner.js';
+import baseMerge from './_baseMerge.js'
+import createAssigner from './_createAssigner.js'
 
 /**
  * This method is like `_.assign` except that it recursively merges own and
@@ -32,8 +32,8 @@ import createAssigner from './_createAssigner.js';
  * _.merge(object, other);
  * // => { 'a': [{ 'b': 2, 'c': 3 }, { 'd': 4, 'e': 5 }] }
  */
-var merge = createAssigner(function(object, source, srcIndex) {
-  baseMerge(object, source, srcIndex);
-});
+const merge = createAssigner(function (object, source, srcIndex) {
+  baseMerge(object, source, srcIndex)
+})
 
-export default merge;
+export default merge

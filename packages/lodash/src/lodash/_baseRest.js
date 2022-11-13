@@ -1,6 +1,6 @@
-import identity from './identity.js';
-import overRest from './_overRest.js';
-import setToString from './_setToString.js';
+import identity from './identity.js'
+import overRest from './_overRest.js'
+import setToString from './_setToString.js'
 
 /**
  * The base implementation of `_.rest` which doesn't validate or coerce arguments.
@@ -11,7 +11,7 @@ import setToString from './_setToString.js';
  * @returns {Function} Returns the new function.
  */
 function baseRest(func, start) {
-  return setToString(overRest(func, start, identity), func + '');
+  return setToString(overRest(func, start, identity), `${func}`)
 }
 
-export default baseRest;
+export default baseRest

@@ -1,8 +1,8 @@
 /** Used as references for various `Number` constants. */
-var MAX_SAFE_INTEGER = 9007199254740991;
+let MAX_SAFE_INTEGER = 9_007_199_254_740_991;
 
 /** Used to detect unsigned integer values. */
-var reIsUint = /^(?:0|[1-9]\d*)$/;
+let reIsUint = /^(?:0|[1-9]\d*)$/
 
 /**
  * Checks if `value` is a valid array-like index.
@@ -13,13 +13,15 @@ var reIsUint = /^(?:0|[1-9]\d*)$/;
  * @returns {boolean} Returns `true` if `value` is a valid index, else `false`.
  */
 function isIndex(value, length) {
-  var type = typeof value;
-  length = length == null ? MAX_SAFE_INTEGER : length;
+  let type = typeof value
+  length = length == null ? MAX_SAFE_INTEGER : length
 
-  return !!length &&
-    (type == 'number' ||
-      (type != 'symbol' && reIsUint.test(value))) &&
-        (value > -1 && value % 1 == 0 && value < length);
+  return Boolean(length) &&
+    (type == 'number' || (type != 'symbol' && reIsUint.test(value))) &&
+    value > -1 &&
+    value % 1 == 0 &&
+    value < length
+  )
 }
 
-export default isIndex;
+export default isIndex

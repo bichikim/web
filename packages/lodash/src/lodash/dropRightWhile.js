@@ -1,5 +1,5 @@
-import baseIteratee from './_baseIteratee.js';
-import baseWhile from './_baseWhile.js';
+import baseIteratee from './_baseIteratee.js'
+import baseWhile from './_baseWhile.js'
 
 /**
  * Creates a slice of `array` excluding elements dropped from the end.
@@ -37,9 +37,7 @@ import baseWhile from './_baseWhile.js';
  * // => objects for ['barney', 'fred', 'pebbles']
  */
 function dropRightWhile(array, predicate) {
-  return (array && array.length)
-    ? baseWhile(array, baseIteratee(predicate, 3), true, true)
-    : [];
+  return array && array.length > 0 ? baseWhile(array, baseIteratee(predicate, 3), true, true) : []
 }
 
-export default dropRightWhile;
+export default dropRightWhile

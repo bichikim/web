@@ -8,13 +8,13 @@
  * @returns {Array} Returns the array of property names.
  */
 function nativeKeysIn(object) {
-  var result = [];
+  const result = []
   if (object != null) {
-    for (var key in Object(object)) {
-      result.push(key);
+    for (const key in Object(object)) {
+      result.push(key)
     }
   }
-  return result;
+  return result
 }
 
-export default nativeKeysIn;
+export default nativeKeysIn

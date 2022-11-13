@@ -1,8 +1,8 @@
-import assignValue from './_assignValue.js';
-import castPath from './_castPath.js';
-import isIndex from './_isIndex.js';
-import isObject from './isObject.js';
-import toKey from './_toKey.js';
+import assignValue from './_assignValue.js'
+import castPath from './_castPath.js'
+import isIndex from './_isIndex.js'
+import isObject from './isObject.js'
+import toKey from './_toKey.js'
 
 /**
  * The base implementation of `_.set`.
@@ -16,32 +16,30 @@ import toKey from './_toKey.js';
  */
 function baseSet(object, path, value, customizer) {
   if (!isObject(object)) {
-    return object;
+    return object
   }
-  path = castPath(path, object);
+  path = castPath(path, object)
 
-  var index = -1,
-      length = path.length,
-      lastIndex = length - 1,
-      nested = object;
+  let index = -1
+  const {length} = path
+  const lastIndex = length - 1
+  let nested = object
 
   while (nested != null && ++index < length) {
-    var key = toKey(path[index]),
-        newValue = value;
+    const key = toKey(path[index])
+    let newValue = value
 
     if (index != lastIndex) {
-      var objValue = nested[key];
-      newValue = customizer ? customizer(objValue, key, nested) : undefined;
+      const objValue = nested[key]
+      newValue = customizer ? customizer(objValue, key, nested) : undefined
       if (newValue === undefined) {
-        newValue = isObject(objValue)
-          ? objValue
-          : (isIndex(path[index + 1]) ? [] : {});
+        newValue = isObject(objValue) ? objValue : isIndex(path[index + 1]) ? [] : {}
       }
     }
-    assignValue(nested, key, newValue);
-    nested = nested[key];
+    assignValue(nested, key, newValue)
+    nested = nested[key]
   }
-  return object;
+  return object
 }
 
-export default baseSet;
+export default baseSet

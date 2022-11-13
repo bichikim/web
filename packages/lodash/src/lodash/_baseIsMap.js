@@ -1,8 +1,8 @@
-import getTag from './_getTag.js';
-import isObjectLike from './isObjectLike.js';
+import getTag from './_getTag.js'
+import isObjectLike from './isObjectLike.js'
 
 /** `Object#toString` result references. */
-var mapTag = '[object Map]';
+const mapTag = '[object Map]'
 
 /**
  * The base implementation of `_.isMap` without Node.js optimizations.
@@ -12,7 +12,7 @@ var mapTag = '[object Map]';
  * @returns {boolean} Returns `true` if `value` is a map, else `false`.
  */
 function baseIsMap(value) {
-  return isObjectLike(value) && getTag(value) == mapTag;
+  return isObjectLike(value) && getTag(value) == mapTag
 }
 
-export default baseIsMap;
+export default baseIsMap

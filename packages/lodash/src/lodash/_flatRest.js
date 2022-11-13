@@ -1,6 +1,6 @@
-import flatten from './flatten.js';
-import overRest from './_overRest.js';
-import setToString from './_setToString.js';
+import flatten from './flatten.js'
+import overRest from './_overRest.js'
+import setToString from './_setToString.js'
 
 /**
  * A specialized version of `baseRest` which flattens the rest array.
@@ -10,7 +10,7 @@ import setToString from './_setToString.js';
  * @returns {Function} Returns the new function.
  */
 function flatRest(func) {
-  return setToString(overRest(func, undefined, flatten), func + '');
+  return setToString(overRest(func, undefined, flatten), `${func}`)
 }
 
-export default flatRest;
+export default flatRest

@@ -1,15 +1,15 @@
-import baseTimes from './_baseTimes.js';
-import castFunction from './_castFunction.js';
-import toInteger from './toInteger.js';
+import baseTimes from './_baseTimes.js'
+import castFunction from './_castFunction.js'
+import toInteger from './toInteger.js'
 
 /** Used as references for various `Number` constants. */
-var MAX_SAFE_INTEGER = 9007199254740991;
+const MAX_SAFE_INTEGER = 9_007_199_254_740_991
 
 /** Used as references for the maximum length and index of an array. */
-var MAX_ARRAY_LENGTH = 4294967295;
+const MAX_ARRAY_LENGTH = 4_294_967_295
 
 /* Built-in method references for those with the same name as other `lodash` methods. */
-var nativeMin = Math.min;
+const nativeMin = Math.min
 
 /**
  * Invokes the iteratee `n` times, returning an array of the results of
@@ -31,21 +31,21 @@ var nativeMin = Math.min;
  * // => [0, 0, 0, 0]
  */
 function times(n, iteratee) {
-  n = toInteger(n);
+  n = toInteger(n)
   if (n < 1 || n > MAX_SAFE_INTEGER) {
-    return [];
+    return []
   }
-  var index = MAX_ARRAY_LENGTH,
-      length = nativeMin(n, MAX_ARRAY_LENGTH);
+  let index = MAX_ARRAY_LENGTH
+  const length = nativeMin(n, MAX_ARRAY_LENGTH)
 
-  iteratee = castFunction(iteratee);
-  n -= MAX_ARRAY_LENGTH;
+  iteratee = castFunction(iteratee)
+  n -= MAX_ARRAY_LENGTH
 
-  var result = baseTimes(length, iteratee);
+  const result = baseTimes(length, iteratee)
   while (++index < n) {
-    iteratee(index);
+    iteratee(index)
   }
-  return result;
+  return result
 }
 
-export default times;
+export default times

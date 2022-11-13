@@ -1,8 +1,8 @@
-import getTag from './_getTag.js';
-import isObjectLike from './isObjectLike.js';
+import getTag from './_getTag.js'
+import isObjectLike from './isObjectLike.js'
 
 /** `Object#toString` result references. */
-var setTag = '[object Set]';
+const setTag = '[object Set]'
 
 /**
  * The base implementation of `_.isSet` without Node.js optimizations.
@@ -12,7 +12,7 @@ var setTag = '[object Set]';
  * @returns {boolean} Returns `true` if `value` is a set, else `false`.
  */
 function baseIsSet(value) {
-  return isObjectLike(value) && getTag(value) == setTag;
+  return isObjectLike(value) && getTag(value) == setTag
 }
 
-export default baseIsSet;
+export default baseIsSet

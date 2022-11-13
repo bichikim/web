@@ -1,21 +1,21 @@
-import baseKeys from './_baseKeys.js';
-import getTag from './_getTag.js';
-import isArguments from './isArguments.js';
-import isArray from './isArray.js';
-import isArrayLike from './isArrayLike.js';
-import isBuffer from './isBuffer.js';
-import isPrototype from './_isPrototype.js';
-import isTypedArray from './isTypedArray.js';
+import baseKeys from './_baseKeys.js'
+import getTag from './_getTag.js'
+import isArguments from './isArguments.js'
+import isArray from './isArray.js'
+import isArrayLike from './isArrayLike.js'
+import isBuffer from './isBuffer.js'
+import isPrototype from './_isPrototype.js'
+import isTypedArray from './isTypedArray.js'
 
 /** `Object#toString` result references. */
-var mapTag = '[object Map]',
-    setTag = '[object Set]';
+const mapTag = '[object Map]'
+const setTag = '[object Set]'
 
 /** Used for built-in method references. */
-var objectProto = Object.prototype;
+const objectProto = Object.prototype
 
 /** Used to check objects for own properties. */
-var hasOwnProperty = objectProto.hasOwnProperty;
+const {hasOwnProperty} = objectProto
 
 /**
  * Checks if `value` is an empty object, collection, map, or set.
@@ -52,26 +52,32 @@ var hasOwnProperty = objectProto.hasOwnProperty;
  */
 function isEmpty(value) {
   if (value == null) {
-    return true;
+    return true
   }
-  if (isArrayLike(value) &&
-      (isArray(value) || typeof value == 'string' || typeof value.splice == 'function' ||
-        isBuffer(value) || isTypedArray(value) || isArguments(value))) {
-    return !value.length;
+  if (
+    isArrayLike(value) &&
+    (isArray(value) ||
+      typeof value == 'string' ||
+      typeof value.splice == 'function' ||
+      isBuffer(value) ||
+      isTypedArray(value) ||
+      isArguments(value))
+  ) {
+    return value.length === 0
   }
-  var tag = getTag(value);
+  const tag = getTag(value)
   if (tag == mapTag || tag == setTag) {
-    return !value.size;
+    return value.size === 0
   }
   if (isPrototype(value)) {
-    return !baseKeys(value).length;
+    return baseKeys(value).length === 0
   }
-  for (var key in value) {
+  for (const key in value) {
     if (hasOwnProperty.call(value, key)) {
-      return false;
+      return false
     }
   }
-  return true;
+  return true
 }
 
-export default isEmpty;
+export default isEmpty

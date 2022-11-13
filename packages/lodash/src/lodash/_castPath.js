@@ -1,7 +1,7 @@
-import isArray from './isArray.js';
-import isKey from './_isKey.js';
-import stringToPath from './_stringToPath.js';
-import toString from './toString.js';
+import isArray from './isArray.js'
+import isKey from './_isKey.js'
+import stringToPath from './_stringToPath.js'
+import toString from './toString.js'
 
 /**
  * Casts `value` to a path array if it's not one.
@@ -13,9 +13,9 @@ import toString from './toString.js';
  */
 function castPath(value, object) {
   if (isArray(value)) {
-    return value;
+    return value
   }
-  return isKey(value, object) ? [value] : stringToPath(toString(value));
+  return isKey(value, object) ? [value] : stringToPath(toString(value))
 }
 
-export default castPath;
+export default castPath

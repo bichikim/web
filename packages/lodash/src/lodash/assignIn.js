@@ -1,6 +1,6 @@
-import copyObject from './_copyObject.js';
-import createAssigner from './_createAssigner.js';
-import keysIn from './keysIn.js';
+import copyObject from './_copyObject.js'
+import createAssigner from './_createAssigner.js'
+import keysIn from './keysIn.js'
 
 /**
  * This method is like `_.assign` except that it iterates over own and
@@ -33,8 +33,8 @@ import keysIn from './keysIn.js';
  * _.assignIn({ 'a': 0 }, new Foo, new Bar);
  * // => { 'a': 1, 'b': 2, 'c': 3, 'd': 4 }
  */
-var assignIn = createAssigner(function(object, source) {
-  copyObject(source, keysIn(source), object);
-});
+const assignIn = createAssigner(function (object, source) {
+  copyObject(source, keysIn(source), object)
+})
 
-export default assignIn;
+export default assignIn

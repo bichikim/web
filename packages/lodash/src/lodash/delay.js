@@ -1,6 +1,6 @@
-import baseDelay from './_baseDelay.js';
-import baseRest from './_baseRest.js';
-import toNumber from './toNumber.js';
+import baseDelay from './_baseDelay.js'
+import baseRest from './_baseRest.js'
+import toNumber from './toNumber.js'
 
 /**
  * Invokes `func` after `wait` milliseconds. Any additional arguments are
@@ -21,8 +21,8 @@ import toNumber from './toNumber.js';
  * }, 1000, 'later');
  * // => Logs 'later' after one second.
  */
-var delay = baseRest(function(func, wait, args) {
-  return baseDelay(func, toNumber(wait) || 0, args);
-});
+const delay = baseRest(function (func, wait, args) {
+  return baseDelay(func, toNumber(wait) || 0, args)
+})
 
-export default delay;
+export default delay

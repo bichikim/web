@@ -1,4 +1,4 @@
-import toInteger from './toInteger.js';
+import toInteger from './toInteger.js'
 
 /**
  * Checks if `value` is an integer.
@@ -27,7 +27,7 @@ import toInteger from './toInteger.js';
  * // => false
  */
 function isInteger(value) {
-  return typeof value == 'number' && value == toInteger(value);
+  return typeof value == 'number' && value == toInteger(value)
 }
 
-export default isInteger;
+export default isInteger

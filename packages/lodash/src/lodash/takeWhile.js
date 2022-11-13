@@ -1,5 +1,5 @@
-import baseIteratee from './_baseIteratee.js';
-import baseWhile from './_baseWhile.js';
+import baseIteratee from './_baseIteratee.js'
+import baseWhile from './_baseWhile.js'
 
 /**
  * Creates a slice of `array` with elements taken from the beginning. Elements
@@ -37,9 +37,7 @@ import baseWhile from './_baseWhile.js';
  * // => []
  */
 function takeWhile(array, predicate) {
-  return (array && array.length)
-    ? baseWhile(array, baseIteratee(predicate, 3))
-    : [];
+  return array && array.length > 0 ? baseWhile(array, baseIteratee(predicate, 3)) : []
 }
 
-export default takeWhile;
+export default takeWhile

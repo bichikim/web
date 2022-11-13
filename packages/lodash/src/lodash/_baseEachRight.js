@@ -1,5 +1,5 @@
-import baseForOwnRight from './_baseForOwnRight.js';
-import createBaseEach from './_createBaseEach.js';
+import baseForOwnRight from './_baseForOwnRight.js'
+import createBaseEach from './_createBaseEach.js'
 
 /**
  * The base implementation of `_.forEachRight` without support for iteratee shorthands.
@@ -9,6 +9,6 @@ import createBaseEach from './_createBaseEach.js';
  * @param {Function} iteratee The function invoked per iteration.
  * @returns {Array|Object} Returns `collection`.
  */
-var baseEachRight = createBaseEach(baseForOwnRight, true);
+const baseEachRight = createBaseEach(baseForOwnRight, true)
 
-export default baseEachRight;
+export default baseEachRight

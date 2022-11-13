@@ -8,13 +8,12 @@
  * @returns {Function} Returns the new spec function.
  */
 function matchesStrictComparable(key, srcValue) {
-  return function(object) {
+  return function (object) {
     if (object == null) {
-      return false;
+      return false
     }
-    return object[key] === srcValue &&
-      (srcValue !== undefined || (key in Object(object)));
-  };
+    return object[key] === srcValue && (srcValue !== undefined || key in Object(object))
+  }
 }
 
-export default matchesStrictComparable;
+export default matchesStrictComparable

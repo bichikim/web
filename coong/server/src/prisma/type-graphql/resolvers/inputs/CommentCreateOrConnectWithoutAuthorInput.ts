@@ -1,21 +1,21 @@
-import * as TypeGraphQL from "type-graphql";
-import * as GraphQLScalars from "graphql-scalars";
-import { Prisma } from "@prisma/client";
-import { DecimalJSScalar } from "../../scalars";
-import { CommentCreateWithoutAuthorInput } from "../inputs/CommentCreateWithoutAuthorInput";
-import { CommentWhereUniqueInput } from "../inputs/CommentWhereUniqueInput";
+import * as TypeGraphQL from 'type-graphql'
+import * as GraphQLScalars from 'graphql-scalars'
+import {Prisma} from '@prisma/client'
+import {DecimalJSScalar} from '../../scalars'
+import {CommentCreateWithoutAuthorInput} from '../inputs/CommentCreateWithoutAuthorInput'
+import {CommentWhereUniqueInput} from '../inputs/CommentWhereUniqueInput'
 
-@TypeGraphQL.InputType("CommentCreateOrConnectWithoutAuthorInput", {
-  isAbstract: true
+@TypeGraphQL.InputType('CommentCreateOrConnectWithoutAuthorInput', {
+  isAbstract: true,
 })
 export class CommentCreateOrConnectWithoutAuthorInput {
-  @TypeGraphQL.Field(_type => CommentWhereUniqueInput, {
-    nullable: false
+  @TypeGraphQL.Field((_type) => CommentWhereUniqueInput, {
+    nullable: false,
   })
-  where!: CommentWhereUniqueInput;
+  where!: CommentWhereUniqueInput
 
-  @TypeGraphQL.Field(_type => CommentCreateWithoutAuthorInput, {
-    nullable: false
+  @TypeGraphQL.Field((_type) => CommentCreateWithoutAuthorInput, {
+    nullable: false,
   })
-  create!: CommentCreateWithoutAuthorInput;
+  create!: CommentCreateWithoutAuthorInput
 }

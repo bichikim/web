@@ -1,4 +1,4 @@
 /** Used to match template delimiters. */
-var reEvaluate = /<%([\s\S]+?)%>/g;
+const reEvaluate = /<%([\S\s]+?)%>/g
 
-export default reEvaluate;
+export default reEvaluate

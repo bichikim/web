@@ -1,7 +1,7 @@
-import toInteger from './toInteger.js';
+import toInteger from './toInteger.js'
 
 /** Error message constants. */
-var FUNC_ERROR_TEXT = 'Expected a function';
+const FUNC_ERROR_TEXT = 'Expected a function'
 
 /**
  * Creates a function that invokes `func`, with the `this` binding and arguments
@@ -21,20 +21,20 @@ var FUNC_ERROR_TEXT = 'Expected a function';
  * // => Allows adding up to 4 contacts to the list.
  */
 function before(n, func) {
-  var result;
+  let result
   if (typeof func != 'function') {
-    throw new TypeError(FUNC_ERROR_TEXT);
+    throw new TypeError(FUNC_ERROR_TEXT)
   }
-  n = toInteger(n);
-  return function() {
+  n = toInteger(n)
+  return function () {
     if (--n > 0) {
-      result = func.apply(this, arguments);
+      result = Reflect.apply(func, this, arguments)
     }
     if (n <= 1) {
-      func = undefined;
+      func = undefined
     }
-    return result;
-  };
+    return result
+  }
 }
 
-export default before;
+export default before

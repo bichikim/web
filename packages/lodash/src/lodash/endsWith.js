@@ -1,7 +1,7 @@
-import baseClamp from './_baseClamp.js';
-import baseToString from './_baseToString.js';
-import toInteger from './toInteger.js';
-import toString from './toString.js';
+import baseClamp from './_baseClamp.js'
+import baseToString from './_baseToString.js'
+import toInteger from './toInteger.js'
+import toString from './toString.js'
 
 /**
  * Checks if `string` ends with the given target string.
@@ -27,17 +27,15 @@ import toString from './toString.js';
  * // => true
  */
 function endsWith(string, target, position) {
-  string = toString(string);
-  target = baseToString(target);
+  string = toString(string)
+  target = baseToString(target)
 
-  var length = string.length;
-  position = position === undefined
-    ? length
-    : baseClamp(toInteger(position), 0, length);
+  const {length} = string
+  position = position === undefined ? length : baseClamp(toInteger(position), 0, length)
 
-  var end = position;
-  position -= target.length;
-  return position >= 0 && string.slice(position, end) == target;
+  const end = position
+  position -= target.length
+  return position >= 0 && string.slice(position, end) == target
 }
 
-export default endsWith;
+export default endsWith

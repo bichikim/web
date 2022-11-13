@@ -1,8 +1,8 @@
-import getTag from './_getTag.js';
-import isObjectLike from './isObjectLike.js';
+import getTag from './_getTag.js'
+import isObjectLike from './isObjectLike.js'
 
 /** `Object#toString` result references. */
-var weakMapTag = '[object WeakMap]';
+const weakMapTag = '[object WeakMap]'
 
 /**
  * Checks if `value` is classified as a `WeakMap` object.
@@ -22,7 +22,7 @@ var weakMapTag = '[object WeakMap]';
  * // => false
  */
 function isWeakMap(value) {
-  return isObjectLike(value) && getTag(value) == weakMapTag;
+  return isObjectLike(value) && getTag(value) == weakMapTag
 }
 
-export default isWeakMap;
+export default isWeakMap

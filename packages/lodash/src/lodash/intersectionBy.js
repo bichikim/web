@@ -1,9 +1,9 @@
-import arrayMap from './_arrayMap.js';
-import baseIntersection from './_baseIntersection.js';
-import baseIteratee from './_baseIteratee.js';
-import baseRest from './_baseRest.js';
-import castArrayLikeObject from './_castArrayLikeObject.js';
-import last from './last.js';
+import arrayMap from './_arrayMap.js'
+import baseIntersection from './_baseIntersection.js'
+import baseIteratee from './_baseIteratee.js'
+import baseRest from './_baseRest.js'
+import castArrayLikeObject from './_castArrayLikeObject.js'
+import last from './last.js'
 
 /**
  * This method is like `_.intersection` except that it accepts `iteratee`
@@ -28,18 +28,18 @@ import last from './last.js';
  * _.intersectionBy([{ 'x': 1 }], [{ 'x': 2 }, { 'x': 1 }], 'x');
  * // => [{ 'x': 1 }]
  */
-var intersectionBy = baseRest(function(arrays) {
-  var iteratee = last(arrays),
-      mapped = arrayMap(arrays, castArrayLikeObject);
+const intersectionBy = baseRest(function (arrays) {
+  let iteratee = last(arrays)
+  const mapped = arrayMap(arrays, castArrayLikeObject)
 
   if (iteratee === last(mapped)) {
-    iteratee = undefined;
+    iteratee = undefined
   } else {
-    mapped.pop();
+    mapped.pop()
   }
-  return (mapped.length && mapped[0] === arrays[0])
+  return mapped.length > 0 && mapped[0] === arrays[0]
     ? baseIntersection(mapped, baseIteratee(iteratee, 2))
-    : [];
-});
+    : []
+})
 
-export default intersectionBy;
+export default intersectionBy

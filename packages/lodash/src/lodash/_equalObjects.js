@@ -1,13 +1,13 @@
-import getAllKeys from './_getAllKeys.js';
+import getAllKeys from './_getAllKeys.js'
 
 /** Used to compose bitmasks for value comparisons. */
-var COMPARE_PARTIAL_FLAG = 1;
+const COMPARE_PARTIAL_FLAG = 1
 
 /** Used for built-in method references. */
-var objectProto = Object.prototype;
+const objectProto = Object.prototype
 
 /** Used to check objects for own properties. */
-var hasOwnProperty = objectProto.hasOwnProperty;
+const {hasOwnProperty} = objectProto
 
 /**
  * A specialized version of `baseIsEqualDeep` for objects with support for
@@ -23,67 +23,75 @@ var hasOwnProperty = objectProto.hasOwnProperty;
  * @returns {boolean} Returns `true` if the objects are equivalent, else `false`.
  */
 function equalObjects(object, other, bitmask, customizer, equalFunc, stack) {
-  var isPartial = bitmask & COMPARE_PARTIAL_FLAG,
-      objProps = getAllKeys(object),
-      objLength = objProps.length,
-      othProps = getAllKeys(other),
-      othLength = othProps.length;
+  const isPartial = bitmask & COMPARE_PARTIAL_FLAG
+  const objProps = getAllKeys(object)
+  const objLength = objProps.length
+  const othProps = getAllKeys(other)
+  const othLength = othProps.length
 
   if (objLength != othLength && !isPartial) {
-    return false;
+    return false
   }
-  var index = objLength;
+  let index = objLength
   while (index--) {
-    var key = objProps[index];
+    var key = objProps[index]
     if (!(isPartial ? key in other : hasOwnProperty.call(other, key))) {
-      return false;
+      return false
     }
   }
   // Assume cyclic values are equal.
-  var stacked = stack.get(object);
+  const stacked = stack.get(object)
   if (stacked && stack.get(other)) {
-    return stacked == other;
+    return stacked == other
   }
-  var result = true;
-  stack.set(object, other);
-  stack.set(other, object);
+  let result = true
+  stack.set(object, other)
+  stack.set(other, object)
 
-  var skipCtor = isPartial;
+  let skipCtor = isPartial
   while (++index < objLength) {
-    key = objProps[index];
-    var objValue = object[key],
-        othValue = other[key];
+    key = objProps[index]
+    const objValue = object[key]
+    const othValue = other[key]
 
     if (customizer) {
       var compared = isPartial
         ? customizer(othValue, objValue, key, other, object, stack)
-        : customizer(objValue, othValue, key, object, other, stack);
+        : customizer(objValue, othValue, key, object, other, stack)
     }
     // Recursively compare objects (susceptible to call stack limits).
-    if (!(compared === undefined
-          ? (objValue === othValue || equalFunc(objValue, othValue, bitmask, customizer, stack))
-          : compared
-        )) {
-      result = false;
-      break;
+    if (
+      !(compared === undefined
+        ? objValue === othValue || equalFunc(objValue, othValue, bitmask, customizer, stack)
+        : compared)
+    ) {
+      result = false
+      break
     }
-    skipCtor || (skipCtor = key == 'constructor');
+    skipCtor || (skipCtor = key == 'constructor')
   }
   if (result && !skipCtor) {
-    var objCtor = object.constructor,
-        othCtor = other.constructor;
+    const objCtor = object.constructor
+    const othCtor = other.constructor
 
     // Non `Object` object instances with different constructors are not equal.
-    if (objCtor != othCtor &&
-        ('constructor' in object && 'constructor' in other) &&
-        !(typeof objCtor == 'function' && objCtor instanceof objCtor &&
-          typeof othCtor == 'function' && othCtor instanceof othCtor)) {
-      result = false;
+    if (
+      objCtor != othCtor &&
+      'constructor' in object &&
+      'constructor' in other &&
+      !(
+        typeof objCtor == 'function' &&
+        objCtor instanceof objCtor &&
+        typeof othCtor == 'function' &&
+        othCtor instanceof othCtor
+      )
+    ) {
+      result = false
     }
   }
-  stack['delete'](object);
-  stack['delete'](other);
-  return result;
+  stack.delete(object)
+  stack.delete(other)
+  return result
 }
 
-export default equalObjects;
+export default equalObjects

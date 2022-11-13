@@ -1,6 +1,6 @@
-import baseDifference from './_baseDifference.js';
-import baseRest from './_baseRest.js';
-import isArrayLikeObject from './isArrayLikeObject.js';
+import baseDifference from './_baseDifference.js'
+import baseRest from './_baseRest.js'
+import isArrayLikeObject from './isArrayLikeObject.js'
 
 /**
  * Creates an array excluding all given values using
@@ -22,10 +22,8 @@ import isArrayLikeObject from './isArrayLikeObject.js';
  * _.without([2, 1, 2, 3], 1, 2);
  * // => [3]
  */
-var without = baseRest(function(array, values) {
-  return isArrayLikeObject(array)
-    ? baseDifference(array, values)
-    : [];
-});
+const without = baseRest(function (array, values) {
+  return isArrayLikeObject(array) ? baseDifference(array, values) : []
+})
 
-export default without;
+export default without

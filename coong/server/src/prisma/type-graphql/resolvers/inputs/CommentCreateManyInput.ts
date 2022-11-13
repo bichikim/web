@@ -1,29 +1,29 @@
-import * as TypeGraphQL from "type-graphql";
-import * as GraphQLScalars from "graphql-scalars";
-import { Prisma } from "@prisma/client";
-import { DecimalJSScalar } from "../../scalars";
+import * as TypeGraphQL from 'type-graphql'
+import * as GraphQLScalars from 'graphql-scalars'
+import {Prisma} from '@prisma/client'
+import {DecimalJSScalar} from '../../scalars'
 
-@TypeGraphQL.InputType("CommentCreateManyInput", {
-  isAbstract: true
+@TypeGraphQL.InputType('CommentCreateManyInput', {
+  isAbstract: true,
 })
 export class CommentCreateManyInput {
-  @TypeGraphQL.Field(_type => String, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => String, {
+    nullable: true,
   })
-  id?: string | undefined;
+  id?: string | undefined
 
-  @TypeGraphQL.Field(_type => String, {
-    nullable: false
+  @TypeGraphQL.Field((_type) => String, {
+    nullable: false,
   })
-  message!: string;
+  message!: string
 
-  @TypeGraphQL.Field(_type => String, {
-    nullable: false
+  @TypeGraphQL.Field((_type) => String, {
+    nullable: false,
   })
-  postId!: string;
+  postId!: string
 
-  @TypeGraphQL.Field(_type => String, {
-    nullable: false
+  @TypeGraphQL.Field((_type) => String, {
+    nullable: false,
   })
-  authorId!: string;
+  authorId!: string
 }

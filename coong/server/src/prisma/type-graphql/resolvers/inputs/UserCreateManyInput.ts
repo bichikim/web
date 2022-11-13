@@ -1,53 +1,53 @@
-import * as TypeGraphQL from "type-graphql";
-import * as GraphQLScalars from "graphql-scalars";
-import { Prisma } from "@prisma/client";
-import { DecimalJSScalar } from "../../scalars";
-import { UserCreatefollowerIDsInput } from "../inputs/UserCreatefollowerIDsInput";
-import { UserCreatefollowingIDsInput } from "../inputs/UserCreatefollowingIDsInput";
-import { UserCreatelikePostIDsInput } from "../inputs/UserCreatelikePostIDsInput";
-import { UserCreaterolesInput } from "../inputs/UserCreaterolesInput";
+import * as TypeGraphQL from 'type-graphql'
+import * as GraphQLScalars from 'graphql-scalars'
+import {Prisma} from '@prisma/client'
+import {DecimalJSScalar} from '../../scalars'
+import {UserCreatefollowerIDsInput} from '../inputs/UserCreatefollowerIDsInput'
+import {UserCreatefollowingIDsInput} from '../inputs/UserCreatefollowingIDsInput'
+import {UserCreatelikePostIDsInput} from '../inputs/UserCreatelikePostIDsInput'
+import {UserCreaterolesInput} from '../inputs/UserCreaterolesInput'
 
-@TypeGraphQL.InputType("UserCreateManyInput", {
-  isAbstract: true
+@TypeGraphQL.InputType('UserCreateManyInput', {
+  isAbstract: true,
 })
 export class UserCreateManyInput {
-  @TypeGraphQL.Field(_type => String, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => String, {
+    nullable: true,
   })
-  id?: string | undefined;
+  id?: string | undefined
 
-  @TypeGraphQL.Field(_type => String, {
-    nullable: false
+  @TypeGraphQL.Field((_type) => String, {
+    nullable: false,
   })
-  email!: string;
+  email!: string
 
-  @TypeGraphQL.Field(_type => String, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => String, {
+    nullable: true,
   })
-  name?: string | undefined;
+  name?: string | undefined
 
-  @TypeGraphQL.Field(_type => String, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => String, {
+    nullable: true,
   })
-  password?: string | undefined;
+  password?: string | undefined
 
-  @TypeGraphQL.Field(_type => UserCreatefollowerIDsInput, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => UserCreatefollowerIDsInput, {
+    nullable: true,
   })
-  followerIDs?: UserCreatefollowerIDsInput | undefined;
+  followerIDs?: UserCreatefollowerIDsInput | undefined
 
-  @TypeGraphQL.Field(_type => UserCreatefollowingIDsInput, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => UserCreatefollowingIDsInput, {
+    nullable: true,
   })
-  followingIDs?: UserCreatefollowingIDsInput | undefined;
+  followingIDs?: UserCreatefollowingIDsInput | undefined
 
-  @TypeGraphQL.Field(_type => UserCreatelikePostIDsInput, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => UserCreatelikePostIDsInput, {
+    nullable: true,
   })
-  likePostIDs?: UserCreatelikePostIDsInput | undefined;
+  likePostIDs?: UserCreatelikePostIDsInput | undefined
 
-  @TypeGraphQL.Field(_type => UserCreaterolesInput, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => UserCreaterolesInput, {
+    nullable: true,
   })
-  roles?: UserCreaterolesInput | undefined;
+  roles?: UserCreaterolesInput | undefined
 }

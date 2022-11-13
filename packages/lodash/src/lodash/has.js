@@ -1,5 +1,5 @@
-import baseHas from './_baseHas.js';
-import hasPath from './_hasPath.js';
+import baseHas from './_baseHas.js'
+import hasPath from './_hasPath.js'
 
 /**
  * Checks if `path` is a direct property of `object`.
@@ -29,7 +29,7 @@ import hasPath from './_hasPath.js';
  * // => false
  */
 function has(object, path) {
-  return object != null && hasPath(object, path, baseHas);
+  return object != null && hasPath(object, path, baseHas)
 }
 
-export default has;
+export default has

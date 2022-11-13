@@ -1,11 +1,11 @@
-import baseToString from './_baseToString.js';
-import castSlice from './_castSlice.js';
-import charsStartIndex from './_charsStartIndex.js';
-import stringToArray from './_stringToArray.js';
-import toString from './toString.js';
+import baseToString from './_baseToString.js'
+import castSlice from './_castSlice.js'
+import charsStartIndex from './_charsStartIndex.js'
+import stringToArray from './_stringToArray.js'
+import toString from './toString.js'
 
 /** Used to match leading and trailing whitespace. */
-var reTrimStart = /^\s+/;
+const reTrimStart = /^\s+/
 
 /**
  * Removes leading whitespace or specified characters from `string`.
@@ -27,17 +27,17 @@ var reTrimStart = /^\s+/;
  * // => 'abc-_-'
  */
 function trimStart(string, chars, guard) {
-  string = toString(string);
+  string = toString(string)
   if (string && (guard || chars === undefined)) {
-    return string.replace(reTrimStart, '');
+    return string.replace(reTrimStart, '')
   }
   if (!string || !(chars = baseToString(chars))) {
-    return string;
+    return string
   }
-  var strSymbols = stringToArray(string),
-      start = charsStartIndex(strSymbols, stringToArray(chars));
+  const strSymbols = stringToArray(string)
+  const start = charsStartIndex(strSymbols, stringToArray(chars))
 
-  return castSlice(strSymbols, start).join('');
+  return castSlice(strSymbols, start).join('')
 }
 
-export default trimStart;
+export default trimStart

@@ -1,61 +1,61 @@
-import * as TypeGraphQL from "type-graphql";
-import * as GraphQLScalars from "graphql-scalars";
-import { Prisma } from "@prisma/client";
-import { DecimalJSScalar } from "../scalars";
-import { Comment } from "../models/Comment";
-import { Post } from "../models/Post";
-import { UserCount } from "../resolvers/outputs/UserCount";
+import * as TypeGraphQL from 'type-graphql'
+import * as GraphQLScalars from 'graphql-scalars'
+import {Prisma} from '@prisma/client'
+import {DecimalJSScalar} from '../scalars'
+import {Comment} from '../models/Comment'
+import {Post} from '../models/Post'
+import {UserCount} from '../resolvers/outputs/UserCount'
 
-@TypeGraphQL.ObjectType("User", {
-  isAbstract: true
+@TypeGraphQL.ObjectType('User', {
+  isAbstract: true,
 })
 export class User {
-  @TypeGraphQL.Field(_type => String, {
-    nullable: false
+  @TypeGraphQL.Field((_type) => String, {
+    nullable: false,
   })
-  id!: string;
+  id!: string
 
-  @TypeGraphQL.Field(_type => String, {
-    nullable: false
+  @TypeGraphQL.Field((_type) => String, {
+    nullable: false,
   })
-  email!: string;
+  email!: string
 
-  @TypeGraphQL.Field(_type => String, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => String, {
+    nullable: true,
   })
-  name?: string | null;
+  name?: string | null
 
-  password?: string | null;
+  password?: string | null
 
-  followers?: User[];
+  followers?: User[]
 
-  @TypeGraphQL.Field(_type => [String], {
-    nullable: false
+  @TypeGraphQL.Field((_type) => [String], {
+    nullable: false,
   })
-  followerIDs!: string[];
+  followerIDs!: string[]
 
-  following?: User[];
+  following?: User[]
 
-  @TypeGraphQL.Field(_type => [String], {
-    nullable: false
+  @TypeGraphQL.Field((_type) => [String], {
+    nullable: false,
   })
-  followingIDs!: string[];
+  followingIDs!: string[]
 
-  likePosts?: Post[];
+  likePosts?: Post[]
 
-  @TypeGraphQL.Field(_type => [String], {
-    nullable: false
+  @TypeGraphQL.Field((_type) => [String], {
+    nullable: false,
   })
-  likePostIDs!: string[];
+  likePostIDs!: string[]
 
-  posts?: Post[];
+  posts?: Post[]
 
-  comments?: Comment[];
+  comments?: Comment[]
 
-  roles?: string[];
+  roles?: string[]
 
-  @TypeGraphQL.Field(_type => UserCount, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => UserCount, {
+    nullable: true,
   })
-  _count?: UserCount | null;
+  _count?: UserCount | null
 }

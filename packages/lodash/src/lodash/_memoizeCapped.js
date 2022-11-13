@@ -1,7 +1,7 @@
-import memoize from './memoize.js';
+import memoize from './memoize.js'
 
 /** Used as the maximum memoize cache size. */
-var MAX_MEMOIZE_SIZE = 500;
+const MAX_MEMOIZE_SIZE = 500
 
 /**
  * A specialized version of `_.memoize` which clears the memoized function's
@@ -12,15 +12,15 @@ var MAX_MEMOIZE_SIZE = 500;
  * @returns {Function} Returns the new memoized function.
  */
 function memoizeCapped(func) {
-  var result = memoize(func, function(key) {
+  const result = memoize(func, function (key) {
     if (cache.size === MAX_MEMOIZE_SIZE) {
-      cache.clear();
+      cache.clear()
     }
-    return key;
-  });
+    return key
+  })
 
-  var cache = result.cache;
-  return result;
+  var {cache} = result
+  return result
 }
 
-export default memoizeCapped;
+export default memoizeCapped

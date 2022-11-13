@@ -1,11 +1,11 @@
-import * as TypeGraphQL from "type-graphql";
-import * as GraphQLScalars from "graphql-scalars";
-import { TagCreateManyInput } from "../../../inputs/TagCreateManyInput";
+import * as TypeGraphQL from 'type-graphql'
+import * as GraphQLScalars from 'graphql-scalars'
+import {TagCreateManyInput} from '../../../inputs/TagCreateManyInput'
 
 @TypeGraphQL.ArgsType()
 export class CreateManyTagArgs {
-  @TypeGraphQL.Field(_type => [TagCreateManyInput], {
-    nullable: false
+  @TypeGraphQL.Field((_type) => [TagCreateManyInput], {
+    nullable: false,
   })
-  data!: TagCreateManyInput[];
+  data!: TagCreateManyInput[]
 }

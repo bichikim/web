@@ -1,45 +1,45 @@
-import * as TypeGraphQL from "type-graphql";
-import * as GraphQLScalars from "graphql-scalars";
-import { Prisma } from "@prisma/client";
-import { DecimalJSScalar } from "../../scalars";
-import { StringFilter } from "../inputs/StringFilter";
+import * as TypeGraphQL from 'type-graphql'
+import * as GraphQLScalars from 'graphql-scalars'
+import {Prisma} from '@prisma/client'
+import {DecimalJSScalar} from '../../scalars'
+import {StringFilter} from '../inputs/StringFilter'
 
-@TypeGraphQL.InputType("CommentScalarWhereInput", {
-  isAbstract: true
+@TypeGraphQL.InputType('CommentScalarWhereInput', {
+  isAbstract: true,
 })
 export class CommentScalarWhereInput {
-  @TypeGraphQL.Field(_type => [CommentScalarWhereInput], {
-    nullable: true
+  @TypeGraphQL.Field((_type) => [CommentScalarWhereInput], {
+    nullable: true,
   })
-  AND?: CommentScalarWhereInput[] | undefined;
+  AND?: CommentScalarWhereInput[] | undefined
 
-  @TypeGraphQL.Field(_type => [CommentScalarWhereInput], {
-    nullable: true
+  @TypeGraphQL.Field((_type) => [CommentScalarWhereInput], {
+    nullable: true,
   })
-  OR?: CommentScalarWhereInput[] | undefined;
+  OR?: CommentScalarWhereInput[] | undefined
 
-  @TypeGraphQL.Field(_type => [CommentScalarWhereInput], {
-    nullable: true
+  @TypeGraphQL.Field((_type) => [CommentScalarWhereInput], {
+    nullable: true,
   })
-  NOT?: CommentScalarWhereInput[] | undefined;
+  NOT?: CommentScalarWhereInput[] | undefined
 
-  @TypeGraphQL.Field(_type => StringFilter, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => StringFilter, {
+    nullable: true,
   })
-  id?: StringFilter | undefined;
+  id?: StringFilter | undefined
 
-  @TypeGraphQL.Field(_type => StringFilter, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => StringFilter, {
+    nullable: true,
   })
-  message?: StringFilter | undefined;
+  message?: StringFilter | undefined
 
-  @TypeGraphQL.Field(_type => StringFilter, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => StringFilter, {
+    nullable: true,
   })
-  postId?: StringFilter | undefined;
+  postId?: StringFilter | undefined
 
-  @TypeGraphQL.Field(_type => StringFilter, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => StringFilter, {
+    nullable: true,
   })
-  authorId?: StringFilter | undefined;
+  authorId?: StringFilter | undefined
 }

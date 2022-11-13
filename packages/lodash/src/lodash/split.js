@@ -1,13 +1,13 @@
-import baseToString from './_baseToString.js';
-import castSlice from './_castSlice.js';
-import hasUnicode from './_hasUnicode.js';
-import isIterateeCall from './_isIterateeCall.js';
-import isRegExp from './isRegExp.js';
-import stringToArray from './_stringToArray.js';
-import toString from './toString.js';
+import baseToString from './_baseToString.js'
+import castSlice from './_castSlice.js'
+import hasUnicode from './_hasUnicode.js'
+import isIterateeCall from './_isIterateeCall.js'
+import isRegExp from './isRegExp.js'
+import stringToArray from './_stringToArray.js'
+import toString from './toString.js'
 
 /** Used as references for the maximum length and index of an array. */
-var MAX_ARRAY_LENGTH = 4294967295;
+const MAX_ARRAY_LENGTH = 4_294_967_295
 
 /**
  * Splits `string` by `separator`.
@@ -30,23 +30,20 @@ var MAX_ARRAY_LENGTH = 4294967295;
  */
 function split(string, separator, limit) {
   if (limit && typeof limit != 'number' && isIterateeCall(string, separator, limit)) {
-    separator = limit = undefined;
+    separator = limit = undefined
   }
-  limit = limit === undefined ? MAX_ARRAY_LENGTH : limit >>> 0;
+  limit = limit === undefined ? MAX_ARRAY_LENGTH : limit >>> 0
   if (!limit) {
-    return [];
+    return []
   }
-  string = toString(string);
-  if (string && (
-        typeof separator == 'string' ||
-        (separator != null && !isRegExp(separator))
-      )) {
-    separator = baseToString(separator);
+  string = toString(string)
+  if (string && (typeof separator == 'string' || (separator != null && !isRegExp(separator)))) {
+    separator = baseToString(separator)
     if (!separator && hasUnicode(string)) {
-      return castSlice(stringToArray(string), 0, limit);
+      return castSlice(stringToArray(string), 0, limit)
     }
   }
-  return string.split(separator, limit);
+  return string.split(separator, limit)
 }
 
-export default split;
+export default split

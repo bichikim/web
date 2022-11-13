@@ -17,7 +17,7 @@
  * // => [1, 2]
  */
 function wrapperToIterator() {
-  return this;
+  return this
 }
 
-export default wrapperToIterator;
+export default wrapperToIterator

@@ -1,7 +1,7 @@
-import castSlice from './_castSlice.js';
-import hasUnicode from './_hasUnicode.js';
-import stringToArray from './_stringToArray.js';
-import toString from './toString.js';
+import castSlice from './_castSlice.js'
+import hasUnicode from './_hasUnicode.js'
+import stringToArray from './_stringToArray.js'
+import toString from './toString.js'
 
 /**
  * Creates a function like `_.lowerFirst`.
@@ -11,23 +11,17 @@ import toString from './toString.js';
  * @returns {Function} Returns the new case function.
  */
 function createCaseFirst(methodName) {
-  return function(string) {
-    string = toString(string);
+  return function (string) {
+    string = toString(string)
 
-    var strSymbols = hasUnicode(string)
-      ? stringToArray(string)
-      : undefined;
+    const strSymbols = hasUnicode(string) ? stringToArray(string) : undefined
 
-    var chr = strSymbols
-      ? strSymbols[0]
-      : string.charAt(0);
+    const chr = strSymbols ? strSymbols[0] : string.charAt(0)
 
-    var trailing = strSymbols
-      ? castSlice(strSymbols, 1).join('')
-      : string.slice(1);
+    const trailing = strSymbols ? castSlice(strSymbols, 1).join('') : string.slice(1)
 
-    return chr[methodName]() + trailing;
-  };
+    return chr[methodName]() + trailing
+  }
 }
 
-export default createCaseFirst;
+export default createCaseFirst

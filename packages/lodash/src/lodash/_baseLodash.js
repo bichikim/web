@@ -7,4 +7,4 @@ function baseLodash() {
   // No operation performed.
 }
 
-export default baseLodash;
+export default baseLodash

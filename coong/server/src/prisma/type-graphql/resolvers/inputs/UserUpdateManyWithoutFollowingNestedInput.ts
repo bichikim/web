@@ -1,66 +1,66 @@
-import * as TypeGraphQL from "type-graphql";
-import * as GraphQLScalars from "graphql-scalars";
-import { Prisma } from "@prisma/client";
-import { DecimalJSScalar } from "../../scalars";
-import { UserCreateOrConnectWithoutFollowingInput } from "../inputs/UserCreateOrConnectWithoutFollowingInput";
-import { UserCreateWithoutFollowingInput } from "../inputs/UserCreateWithoutFollowingInput";
-import { UserScalarWhereInput } from "../inputs/UserScalarWhereInput";
-import { UserUpdateManyWithWhereWithoutFollowingInput } from "../inputs/UserUpdateManyWithWhereWithoutFollowingInput";
-import { UserUpdateWithWhereUniqueWithoutFollowingInput } from "../inputs/UserUpdateWithWhereUniqueWithoutFollowingInput";
-import { UserUpsertWithWhereUniqueWithoutFollowingInput } from "../inputs/UserUpsertWithWhereUniqueWithoutFollowingInput";
-import { UserWhereUniqueInput } from "../inputs/UserWhereUniqueInput";
+import * as TypeGraphQL from 'type-graphql'
+import * as GraphQLScalars from 'graphql-scalars'
+import {Prisma} from '@prisma/client'
+import {DecimalJSScalar} from '../../scalars'
+import {UserCreateOrConnectWithoutFollowingInput} from '../inputs/UserCreateOrConnectWithoutFollowingInput'
+import {UserCreateWithoutFollowingInput} from '../inputs/UserCreateWithoutFollowingInput'
+import {UserScalarWhereInput} from '../inputs/UserScalarWhereInput'
+import {UserUpdateManyWithWhereWithoutFollowingInput} from '../inputs/UserUpdateManyWithWhereWithoutFollowingInput'
+import {UserUpdateWithWhereUniqueWithoutFollowingInput} from '../inputs/UserUpdateWithWhereUniqueWithoutFollowingInput'
+import {UserUpsertWithWhereUniqueWithoutFollowingInput} from '../inputs/UserUpsertWithWhereUniqueWithoutFollowingInput'
+import {UserWhereUniqueInput} from '../inputs/UserWhereUniqueInput'
 
-@TypeGraphQL.InputType("UserUpdateManyWithoutFollowingNestedInput", {
-  isAbstract: true
+@TypeGraphQL.InputType('UserUpdateManyWithoutFollowingNestedInput', {
+  isAbstract: true,
 })
 export class UserUpdateManyWithoutFollowingNestedInput {
-  @TypeGraphQL.Field(_type => [UserCreateWithoutFollowingInput], {
-    nullable: true
+  @TypeGraphQL.Field((_type) => [UserCreateWithoutFollowingInput], {
+    nullable: true,
   })
-  create?: UserCreateWithoutFollowingInput[] | undefined;
+  create?: UserCreateWithoutFollowingInput[] | undefined
 
-  @TypeGraphQL.Field(_type => [UserCreateOrConnectWithoutFollowingInput], {
-    nullable: true
+  @TypeGraphQL.Field((_type) => [UserCreateOrConnectWithoutFollowingInput], {
+    nullable: true,
   })
-  connectOrCreate?: UserCreateOrConnectWithoutFollowingInput[] | undefined;
+  connectOrCreate?: UserCreateOrConnectWithoutFollowingInput[] | undefined
 
-  @TypeGraphQL.Field(_type => [UserUpsertWithWhereUniqueWithoutFollowingInput], {
-    nullable: true
+  @TypeGraphQL.Field((_type) => [UserUpsertWithWhereUniqueWithoutFollowingInput], {
+    nullable: true,
   })
-  upsert?: UserUpsertWithWhereUniqueWithoutFollowingInput[] | undefined;
+  upsert?: UserUpsertWithWhereUniqueWithoutFollowingInput[] | undefined
 
-  @TypeGraphQL.Field(_type => [UserWhereUniqueInput], {
-    nullable: true
+  @TypeGraphQL.Field((_type) => [UserWhereUniqueInput], {
+    nullable: true,
   })
-  set?: UserWhereUniqueInput[] | undefined;
+  set?: UserWhereUniqueInput[] | undefined
 
-  @TypeGraphQL.Field(_type => [UserWhereUniqueInput], {
-    nullable: true
+  @TypeGraphQL.Field((_type) => [UserWhereUniqueInput], {
+    nullable: true,
   })
-  disconnect?: UserWhereUniqueInput[] | undefined;
+  disconnect?: UserWhereUniqueInput[] | undefined
 
-  @TypeGraphQL.Field(_type => [UserWhereUniqueInput], {
-    nullable: true
+  @TypeGraphQL.Field((_type) => [UserWhereUniqueInput], {
+    nullable: true,
   })
-  delete?: UserWhereUniqueInput[] | undefined;
+  delete?: UserWhereUniqueInput[] | undefined
 
-  @TypeGraphQL.Field(_type => [UserWhereUniqueInput], {
-    nullable: true
+  @TypeGraphQL.Field((_type) => [UserWhereUniqueInput], {
+    nullable: true,
   })
-  connect?: UserWhereUniqueInput[] | undefined;
+  connect?: UserWhereUniqueInput[] | undefined
 
-  @TypeGraphQL.Field(_type => [UserUpdateWithWhereUniqueWithoutFollowingInput], {
-    nullable: true
+  @TypeGraphQL.Field((_type) => [UserUpdateWithWhereUniqueWithoutFollowingInput], {
+    nullable: true,
   })
-  update?: UserUpdateWithWhereUniqueWithoutFollowingInput[] | undefined;
+  update?: UserUpdateWithWhereUniqueWithoutFollowingInput[] | undefined
 
-  @TypeGraphQL.Field(_type => [UserUpdateManyWithWhereWithoutFollowingInput], {
-    nullable: true
+  @TypeGraphQL.Field((_type) => [UserUpdateManyWithWhereWithoutFollowingInput], {
+    nullable: true,
   })
-  updateMany?: UserUpdateManyWithWhereWithoutFollowingInput[] | undefined;
+  updateMany?: UserUpdateManyWithWhereWithoutFollowingInput[] | undefined
 
-  @TypeGraphQL.Field(_type => [UserScalarWhereInput], {
-    nullable: true
+  @TypeGraphQL.Field((_type) => [UserScalarWhereInput], {
+    nullable: true,
   })
-  deleteMany?: UserScalarWhereInput[] | undefined;
+  deleteMany?: UserScalarWhereInput[] | undefined
 }

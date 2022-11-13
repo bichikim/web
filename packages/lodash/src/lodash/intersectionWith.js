@@ -1,8 +1,8 @@
-import arrayMap from './_arrayMap.js';
-import baseIntersection from './_baseIntersection.js';
-import baseRest from './_baseRest.js';
-import castArrayLikeObject from './_castArrayLikeObject.js';
-import last from './last.js';
+import arrayMap from './_arrayMap.js'
+import baseIntersection from './_baseIntersection.js'
+import baseRest from './_baseRest.js'
+import castArrayLikeObject from './_castArrayLikeObject.js'
+import last from './last.js'
 
 /**
  * This method is like `_.intersection` except that it accepts `comparator`
@@ -25,17 +25,17 @@ import last from './last.js';
  * _.intersectionWith(objects, others, _.isEqual);
  * // => [{ 'x': 1, 'y': 2 }]
  */
-var intersectionWith = baseRest(function(arrays) {
-  var comparator = last(arrays),
-      mapped = arrayMap(arrays, castArrayLikeObject);
+const intersectionWith = baseRest(function (arrays) {
+  let comparator = last(arrays)
+  const mapped = arrayMap(arrays, castArrayLikeObject)
 
-  comparator = typeof comparator == 'function' ? comparator : undefined;
+  comparator = typeof comparator == 'function' ? comparator : undefined
   if (comparator) {
-    mapped.pop();
+    mapped.pop()
   }
-  return (mapped.length && mapped[0] === arrays[0])
+  return mapped.length > 0 && mapped[0] === arrays[0]
     ? baseIntersection(mapped, undefined, comparator)
-    : [];
-});
+    : []
+})
 
-export default intersectionWith;
+export default intersectionWith

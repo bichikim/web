@@ -1,5 +1,5 @@
-import baseGet from './_baseGet.js';
-import baseSet from './_baseSet.js';
+import baseGet from './_baseGet.js'
+import baseSet from './_baseSet.js'
 
 /**
  * The base implementation of `_.update`.
@@ -12,7 +12,7 @@ import baseSet from './_baseSet.js';
  * @returns {Object} Returns `object`.
  */
 function baseUpdate(object, path, updater, customizer) {
-  return baseSet(object, path, updater(baseGet(object, path)), customizer);
+  return baseSet(object, path, updater(baseGet(object, path)), customizer)
 }
 
-export default baseUpdate;
+export default baseUpdate

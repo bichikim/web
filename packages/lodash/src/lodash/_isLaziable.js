@@ -1,7 +1,7 @@
-import LazyWrapper from './_LazyWrapper.js';
-import getData from './_getData.js';
-import getFuncName from './_getFuncName.js';
-import lodash from './wrapperLodash.js';
+import LazyWrapper from './_LazyWrapper.js'
+import getData from './_getData.js'
+import getFuncName from './_getFuncName.js'
+import lodash from './wrapperLodash.js'
 
 /**
  * Checks if `func` has a lazy counterpart.
@@ -12,17 +12,17 @@ import lodash from './wrapperLodash.js';
  *  else `false`.
  */
 function isLaziable(func) {
-  var funcName = getFuncName(func),
-      other = lodash[funcName];
+  const funcName = getFuncName(func)
+  const other = lodash[funcName]
 
   if (typeof other != 'function' || !(funcName in LazyWrapper.prototype)) {
-    return false;
+    return false
   }
   if (func === other) {
-    return true;
+    return true
   }
-  var data = getData(other);
-  return !!data && func === data[0];
+  const data = getData(other)
+  return Boolean(data) && func === data[0]
 }
 
-export default isLaziable;
+export default isLaziable

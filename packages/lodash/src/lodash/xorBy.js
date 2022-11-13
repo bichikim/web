@@ -1,9 +1,9 @@
-import arrayFilter from './_arrayFilter.js';
-import baseIteratee from './_baseIteratee.js';
-import baseRest from './_baseRest.js';
-import baseXor from './_baseXor.js';
-import isArrayLikeObject from './isArrayLikeObject.js';
-import last from './last.js';
+import arrayFilter from './_arrayFilter.js'
+import baseIteratee from './_baseIteratee.js'
+import baseRest from './_baseRest.js'
+import baseXor from './_baseXor.js'
+import isArrayLikeObject from './isArrayLikeObject.js'
+import last from './last.js'
 
 /**
  * This method is like `_.xor` except that it accepts `iteratee` which is
@@ -28,12 +28,12 @@ import last from './last.js';
  * _.xorBy([{ 'x': 1 }], [{ 'x': 2 }, { 'x': 1 }], 'x');
  * // => [{ 'x': 2 }]
  */
-var xorBy = baseRest(function(arrays) {
-  var iteratee = last(arrays);
+const xorBy = baseRest(function (arrays) {
+  let iteratee = last(arrays)
   if (isArrayLikeObject(iteratee)) {
-    iteratee = undefined;
+    iteratee = undefined
   }
-  return baseXor(arrayFilter(arrays, isArrayLikeObject), baseIteratee(iteratee, 2));
-});
+  return baseXor(arrayFilter(arrays, isArrayLikeObject), baseIteratee(iteratee, 2))
+})
 
-export default xorBy;
+export default xorBy

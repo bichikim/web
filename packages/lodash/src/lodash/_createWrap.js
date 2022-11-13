@@ -1,27 +1,27 @@
-import baseSetData from './_baseSetData.js';
-import createBind from './_createBind.js';
-import createCurry from './_createCurry.js';
-import createHybrid from './_createHybrid.js';
-import createPartial from './_createPartial.js';
-import getData from './_getData.js';
-import mergeData from './_mergeData.js';
-import setData from './_setData.js';
-import setWrapToString from './_setWrapToString.js';
-import toInteger from './toInteger.js';
+import baseSetData from './_baseSetData.js'
+import createBind from './_createBind.js'
+import createCurry from './_createCurry.js'
+import createHybrid from './_createHybrid.js'
+import createPartial from './_createPartial.js'
+import getData from './_getData.js'
+import mergeData from './_mergeData.js'
+import setData from './_setData.js'
+import setWrapToString from './_setWrapToString.js'
+import toInteger from './toInteger.js'
 
 /** Error message constants. */
-var FUNC_ERROR_TEXT = 'Expected a function';
+const FUNC_ERROR_TEXT = 'Expected a function'
 
 /** Used to compose bitmasks for function metadata. */
-var WRAP_BIND_FLAG = 1,
-    WRAP_BIND_KEY_FLAG = 2,
-    WRAP_CURRY_FLAG = 8,
-    WRAP_CURRY_RIGHT_FLAG = 16,
-    WRAP_PARTIAL_FLAG = 32,
-    WRAP_PARTIAL_RIGHT_FLAG = 64;
+const WRAP_BIND_FLAG = 1
+const WRAP_BIND_KEY_FLAG = 2
+const WRAP_CURRY_FLAG = 8
+const WRAP_CURRY_RIGHT_FLAG = 16
+const WRAP_PARTIAL_FLAG = 32
+const WRAP_PARTIAL_RIGHT_FLAG = 64
 
 /* Built-in method references for those with the same name as other `lodash` methods. */
-var nativeMax = Math.max;
+const nativeMax = Math.max
 
 /**
  * Creates a function that either curries or invokes `func` with optional
@@ -49,58 +49,68 @@ var nativeMax = Math.max;
  * @returns {Function} Returns the new wrapped function.
  */
 function createWrap(func, bitmask, thisArg, partials, holders, argPos, ary, arity) {
-  var isBindKey = bitmask & WRAP_BIND_KEY_FLAG;
+  const isBindKey = bitmask & WRAP_BIND_KEY_FLAG
   if (!isBindKey && typeof func != 'function') {
-    throw new TypeError(FUNC_ERROR_TEXT);
+    throw new TypeError(FUNC_ERROR_TEXT)
   }
-  var length = partials ? partials.length : 0;
+  let length = partials ? partials.length : 0
   if (!length) {
-    bitmask &= ~(WRAP_PARTIAL_FLAG | WRAP_PARTIAL_RIGHT_FLAG);
-    partials = holders = undefined;
+    bitmask &= ~(WRAP_PARTIAL_FLAG | WRAP_PARTIAL_RIGHT_FLAG)
+    partials = holders = undefined
   }
-  ary = ary === undefined ? ary : nativeMax(toInteger(ary), 0);
-  arity = arity === undefined ? arity : toInteger(arity);
-  length -= holders ? holders.length : 0;
+  ary = ary === undefined ? ary : nativeMax(toInteger(ary), 0)
+  arity = arity === undefined ? arity : toInteger(arity)
+  length -= holders ? holders.length : 0
 
   if (bitmask & WRAP_PARTIAL_RIGHT_FLAG) {
-    var partialsRight = partials,
-        holdersRight = holders;
+    var partialsRight = partials
+    var holdersRight = holders
 
-    partials = holders = undefined;
+    partials = holders = undefined
   }
-  var data = isBindKey ? undefined : getData(func);
+  const data = isBindKey ? undefined : getData(func)
 
-  var newData = [
-    func, bitmask, thisArg, partials, holders, partialsRight, holdersRight,
-    argPos, ary, arity
-  ];
+  const newData = [
+    func,
+    bitmask,
+    thisArg,
+    partials,
+    holders,
+    partialsRight,
+    holdersRight,
+    argPos,
+    ary,
+    arity,
+  ]
 
   if (data) {
-    mergeData(newData, data);
+    mergeData(newData, data)
   }
-  func = newData[0];
-  bitmask = newData[1];
-  thisArg = newData[2];
-  partials = newData[3];
-  holders = newData[4];
-  arity = newData[9] = newData[9] === undefined
-    ? (isBindKey ? 0 : func.length)
-    : nativeMax(newData[9] - length, 0);
+  func = newData[0]
+  bitmask = newData[1]
+  thisArg = newData[2]
+  partials = newData[3]
+  holders = newData[4]
+  arity = newData[9] =
+    newData[9] === undefined ? (isBindKey ? 0 : func.length) : nativeMax(newData[9] - length, 0)
 
   if (!arity && bitmask & (WRAP_CURRY_FLAG | WRAP_CURRY_RIGHT_FLAG)) {
-    bitmask &= ~(WRAP_CURRY_FLAG | WRAP_CURRY_RIGHT_FLAG);
+    bitmask &= ~(WRAP_CURRY_FLAG | WRAP_CURRY_RIGHT_FLAG)
   }
   if (!bitmask || bitmask == WRAP_BIND_FLAG) {
-    var result = createBind(func, bitmask, thisArg);
+    var result = createBind(func, bitmask, thisArg)
   } else if (bitmask == WRAP_CURRY_FLAG || bitmask == WRAP_CURRY_RIGHT_FLAG) {
-    result = createCurry(func, bitmask, arity);
-  } else if ((bitmask == WRAP_PARTIAL_FLAG || bitmask == (WRAP_BIND_FLAG | WRAP_PARTIAL_FLAG)) && !holders.length) {
-    result = createPartial(func, bitmask, thisArg, partials);
+    result = createCurry(func, bitmask, arity)
+  } else if (
+    (bitmask == WRAP_PARTIAL_FLAG || bitmask == (WRAP_BIND_FLAG | WRAP_PARTIAL_FLAG)) &&
+    holders.length === 0
+  ) {
+    result = createPartial(func, bitmask, thisArg, partials)
   } else {
-    result = createHybrid.apply(undefined, newData);
+    result = createHybrid.apply(undefined, newData)
   }
-  var setter = data ? baseSetData : setData;
-  return setWrapToString(setter(result, newData), func, bitmask);
+  const setter = data ? baseSetData : setData
+  return setWrapToString(setter(result, newData), func, bitmask)
 }
 
-export default createWrap;
+export default createWrap

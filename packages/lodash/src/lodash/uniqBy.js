@@ -1,5 +1,5 @@
-import baseIteratee from './_baseIteratee.js';
-import baseUniq from './_baseUniq.js';
+import baseIteratee from './_baseIteratee.js'
+import baseUniq from './_baseUniq.js'
 
 /**
  * This method is like `_.uniq` except that it accepts `iteratee` which is
@@ -25,7 +25,7 @@ import baseUniq from './_baseUniq.js';
  * // => [{ 'x': 1 }, { 'x': 2 }]
  */
 function uniqBy(array, iteratee) {
-  return (array && array.length) ? baseUniq(array, baseIteratee(iteratee, 2)) : [];
+  return array && array.length > 0 ? baseUniq(array, baseIteratee(iteratee, 2)) : []
 }
 
-export default uniqBy;
+export default uniqBy

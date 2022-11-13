@@ -1,5 +1,5 @@
-import baseIteratee from './_baseIteratee.js';
-import baseMean from './_baseMean.js';
+import baseIteratee from './_baseIteratee.js'
+import baseMean from './_baseMean.js'
 
 /**
  * This method is like `_.mean` except that it accepts `iteratee` which is
@@ -25,7 +25,7 @@ import baseMean from './_baseMean.js';
  * // => 5
  */
 function meanBy(array, iteratee) {
-  return baseMean(array, baseIteratee(iteratee, 2));
+  return baseMean(array, baseIteratee(iteratee, 2))
 }
 
-export default meanBy;
+export default meanBy

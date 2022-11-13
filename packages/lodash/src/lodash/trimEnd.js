@@ -1,11 +1,11 @@
-import baseToString from './_baseToString.js';
-import castSlice from './_castSlice.js';
-import charsEndIndex from './_charsEndIndex.js';
-import stringToArray from './_stringToArray.js';
-import toString from './toString.js';
+import baseToString from './_baseToString.js'
+import castSlice from './_castSlice.js'
+import charsEndIndex from './_charsEndIndex.js'
+import stringToArray from './_stringToArray.js'
+import toString from './toString.js'
 
 /** Used to match leading and trailing whitespace. */
-var reTrimEnd = /\s+$/;
+const reTrimEnd = /\s+$/
 
 /**
  * Removes trailing whitespace or specified characters from `string`.
@@ -27,17 +27,17 @@ var reTrimEnd = /\s+$/;
  * // => '-_-abc'
  */
 function trimEnd(string, chars, guard) {
-  string = toString(string);
+  string = toString(string)
   if (string && (guard || chars === undefined)) {
-    return string.replace(reTrimEnd, '');
+    return string.replace(reTrimEnd, '')
   }
   if (!string || !(chars = baseToString(chars))) {
-    return string;
+    return string
   }
-  var strSymbols = stringToArray(string),
-      end = charsEndIndex(strSymbols, stringToArray(chars)) + 1;
+  const strSymbols = stringToArray(string)
+  const end = charsEndIndex(strSymbols, stringToArray(chars)) + 1
 
-  return castSlice(strSymbols, 0, end).join('');
+  return castSlice(strSymbols, 0, end).join('')
 }
 
-export default trimEnd;
+export default trimEnd

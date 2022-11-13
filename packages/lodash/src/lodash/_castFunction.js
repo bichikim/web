@@ -1,4 +1,4 @@
-import identity from './identity.js';
+import identity from './identity.js'
 
 /**
  * Casts `value` to `identity` if it's not a function.
@@ -8,7 +8,7 @@ import identity from './identity.js';
  * @returns {Function} Returns cast function.
  */
 function castFunction(value) {
-  return typeof value == 'function' ? value : identity;
+  return typeof value == 'function' ? value : identity
 }
 
-export default castFunction;
+export default castFunction

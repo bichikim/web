@@ -1,4 +1,4 @@
-import {toDeepRef, MaybeRef, resolveRef} from '@winter-love/use'
+import {MaybeRef, resolveRef, toDeepRef} from '@winter-love/use'
 import {uid} from '@winter-love/utils'
 import {
   ComponentPublicInstance,

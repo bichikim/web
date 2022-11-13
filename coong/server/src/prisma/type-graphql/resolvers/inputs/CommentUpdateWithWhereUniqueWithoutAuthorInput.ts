@@ -1,21 +1,21 @@
-import * as TypeGraphQL from "type-graphql";
-import * as GraphQLScalars from "graphql-scalars";
-import { Prisma } from "@prisma/client";
-import { DecimalJSScalar } from "../../scalars";
-import { CommentUpdateWithoutAuthorInput } from "../inputs/CommentUpdateWithoutAuthorInput";
-import { CommentWhereUniqueInput } from "../inputs/CommentWhereUniqueInput";
+import * as TypeGraphQL from 'type-graphql'
+import * as GraphQLScalars from 'graphql-scalars'
+import {Prisma} from '@prisma/client'
+import {DecimalJSScalar} from '../../scalars'
+import {CommentUpdateWithoutAuthorInput} from '../inputs/CommentUpdateWithoutAuthorInput'
+import {CommentWhereUniqueInput} from '../inputs/CommentWhereUniqueInput'
 
-@TypeGraphQL.InputType("CommentUpdateWithWhereUniqueWithoutAuthorInput", {
-  isAbstract: true
+@TypeGraphQL.InputType('CommentUpdateWithWhereUniqueWithoutAuthorInput', {
+  isAbstract: true,
 })
 export class CommentUpdateWithWhereUniqueWithoutAuthorInput {
-  @TypeGraphQL.Field(_type => CommentWhereUniqueInput, {
-    nullable: false
+  @TypeGraphQL.Field((_type) => CommentWhereUniqueInput, {
+    nullable: false,
   })
-  where!: CommentWhereUniqueInput;
+  where!: CommentWhereUniqueInput
 
-  @TypeGraphQL.Field(_type => CommentUpdateWithoutAuthorInput, {
-    nullable: false
+  @TypeGraphQL.Field((_type) => CommentUpdateWithoutAuthorInput, {
+    nullable: false,
   })
-  data!: CommentUpdateWithoutAuthorInput;
+  data!: CommentUpdateWithoutAuthorInput
 }

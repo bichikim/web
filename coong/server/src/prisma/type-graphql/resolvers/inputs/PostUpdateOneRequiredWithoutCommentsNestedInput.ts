@@ -1,39 +1,39 @@
-import * as TypeGraphQL from "type-graphql";
-import * as GraphQLScalars from "graphql-scalars";
-import { Prisma } from "@prisma/client";
-import { DecimalJSScalar } from "../../scalars";
-import { PostCreateOrConnectWithoutCommentsInput } from "../inputs/PostCreateOrConnectWithoutCommentsInput";
-import { PostCreateWithoutCommentsInput } from "../inputs/PostCreateWithoutCommentsInput";
-import { PostUpdateWithoutCommentsInput } from "../inputs/PostUpdateWithoutCommentsInput";
-import { PostUpsertWithoutCommentsInput } from "../inputs/PostUpsertWithoutCommentsInput";
-import { PostWhereUniqueInput } from "../inputs/PostWhereUniqueInput";
+import * as TypeGraphQL from 'type-graphql'
+import * as GraphQLScalars from 'graphql-scalars'
+import {Prisma} from '@prisma/client'
+import {DecimalJSScalar} from '../../scalars'
+import {PostCreateOrConnectWithoutCommentsInput} from '../inputs/PostCreateOrConnectWithoutCommentsInput'
+import {PostCreateWithoutCommentsInput} from '../inputs/PostCreateWithoutCommentsInput'
+import {PostUpdateWithoutCommentsInput} from '../inputs/PostUpdateWithoutCommentsInput'
+import {PostUpsertWithoutCommentsInput} from '../inputs/PostUpsertWithoutCommentsInput'
+import {PostWhereUniqueInput} from '../inputs/PostWhereUniqueInput'
 
-@TypeGraphQL.InputType("PostUpdateOneRequiredWithoutCommentsNestedInput", {
-  isAbstract: true
+@TypeGraphQL.InputType('PostUpdateOneRequiredWithoutCommentsNestedInput', {
+  isAbstract: true,
 })
 export class PostUpdateOneRequiredWithoutCommentsNestedInput {
-  @TypeGraphQL.Field(_type => PostCreateWithoutCommentsInput, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => PostCreateWithoutCommentsInput, {
+    nullable: true,
   })
-  create?: PostCreateWithoutCommentsInput | undefined;
+  create?: PostCreateWithoutCommentsInput | undefined
 
-  @TypeGraphQL.Field(_type => PostCreateOrConnectWithoutCommentsInput, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => PostCreateOrConnectWithoutCommentsInput, {
+    nullable: true,
   })
-  connectOrCreate?: PostCreateOrConnectWithoutCommentsInput | undefined;
+  connectOrCreate?: PostCreateOrConnectWithoutCommentsInput | undefined
 
-  @TypeGraphQL.Field(_type => PostUpsertWithoutCommentsInput, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => PostUpsertWithoutCommentsInput, {
+    nullable: true,
   })
-  upsert?: PostUpsertWithoutCommentsInput | undefined;
+  upsert?: PostUpsertWithoutCommentsInput | undefined
 
-  @TypeGraphQL.Field(_type => PostWhereUniqueInput, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => PostWhereUniqueInput, {
+    nullable: true,
   })
-  connect?: PostWhereUniqueInput | undefined;
+  connect?: PostWhereUniqueInput | undefined
 
-  @TypeGraphQL.Field(_type => PostUpdateWithoutCommentsInput, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => PostUpdateWithoutCommentsInput, {
+    nullable: true,
   })
-  update?: PostUpdateWithoutCommentsInput | undefined;
+  update?: PostUpdateWithoutCommentsInput | undefined
 }

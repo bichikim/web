@@ -12,7 +12,7 @@
  * // => ['', '']
  */
 function stubString() {
-  return '';
+  return ''
 }
 
-export default stubString;
+export default stubString

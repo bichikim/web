@@ -1,9 +1,9 @@
-import baseGetTag from './_baseGetTag.js';
-import isArray from './isArray.js';
-import isObjectLike from './isObjectLike.js';
+import baseGetTag from './_baseGetTag.js'
+import isArray from './isArray.js'
+import isObjectLike from './isObjectLike.js'
 
 /** `Object#toString` result references. */
-var stringTag = '[object String]';
+var stringTag = '[object String]'
 
 /**
  * Checks if `value` is classified as a `String` primitive or object.
@@ -23,8 +23,9 @@ var stringTag = '[object String]';
  * // => false
  */
 function isString(value) {
-  return typeof value == 'string' ||
-    (!isArray(value) && isObjectLike(value) && baseGetTag(value) == stringTag);
+  return (
+    typeof value == 'string' ||
+    (!isArray(value) && isObjectLike(value) && baseGetTag(value) == stringTag)
 }
 
-export default isString;
+export default isString

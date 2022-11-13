@@ -1,5 +1,5 @@
-import createToPairs from './_createToPairs.js';
-import keys from './keys.js';
+import createToPairs from './_createToPairs.js'
+import keys from './keys.js'
 
 /**
  * Creates an array of own enumerable string keyed-value pairs for `object`
@@ -25,6 +25,6 @@ import keys from './keys.js';
  * _.toPairs(new Foo);
  * // => [['a', 1], ['b', 2]] (iteration order is not guaranteed)
  */
-var toPairs = createToPairs(keys);
+const toPairs = createToPairs(keys)
 
-export default toPairs;
+export default toPairs

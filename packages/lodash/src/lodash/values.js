@@ -1,5 +1,5 @@
-import baseValues from './_baseValues.js';
-import keys from './keys.js';
+import baseValues from './_baseValues.js'
+import keys from './keys.js'
 
 /**
  * Creates an array of the own enumerable string keyed property values of `object`.
@@ -28,7 +28,7 @@ import keys from './keys.js';
  * // => ['h', 'i']
  */
 function values(object) {
-  return object == null ? [] : baseValues(object, keys(object));
+  return object == null ? [] : baseValues(object, keys(object))
 }
 
-export default values;
+export default values

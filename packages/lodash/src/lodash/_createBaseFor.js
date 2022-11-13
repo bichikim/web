@@ -6,20 +6,20 @@
  * @returns {Function} Returns the new base function.
  */
 function createBaseFor(fromRight) {
-  return function(object, iteratee, keysFunc) {
-    var index = -1,
-        iterable = Object(object),
-        props = keysFunc(object),
-        length = props.length;
+  return function (object, iteratee, keysFunc) {
+    let index = -1
+    const iterable = Object(object)
+    const props = keysFunc(object)
+    let {length} = props
 
     while (length--) {
-      var key = props[fromRight ? length : ++index];
+      const key = props[fromRight ? length : ++index]
       if (iteratee(iterable[key], key, iterable) === false) {
-        break;
+        break
       }
     }
-    return object;
-  };
+    return object
+  }
 }
 
-export default createBaseFor;
+export default createBaseFor

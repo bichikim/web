@@ -1,7 +1,7 @@
-import root from './_root.js';
+import root from './_root.js'
 
 /* Built-in method references for those with the same name as other `lodash` methods. */
-var nativeIsFinite = root.isFinite;
+const nativeIsFinite = root.isFinite
 
 /**
  * Checks if `value` is a finite primitive number.
@@ -30,7 +30,7 @@ var nativeIsFinite = root.isFinite;
  * // => false
  */
 function isFinite(value) {
-  return typeof value == 'number' && nativeIsFinite(value);
+  return typeof value == 'number' && nativeIsFinite(value)
 }
 
-export default isFinite;
+export default isFinite

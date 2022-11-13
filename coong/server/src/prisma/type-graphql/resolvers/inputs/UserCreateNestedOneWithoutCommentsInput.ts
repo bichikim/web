@@ -1,27 +1,27 @@
-import * as TypeGraphQL from "type-graphql";
-import * as GraphQLScalars from "graphql-scalars";
-import { Prisma } from "@prisma/client";
-import { DecimalJSScalar } from "../../scalars";
-import { UserCreateOrConnectWithoutCommentsInput } from "../inputs/UserCreateOrConnectWithoutCommentsInput";
-import { UserCreateWithoutCommentsInput } from "../inputs/UserCreateWithoutCommentsInput";
-import { UserWhereUniqueInput } from "../inputs/UserWhereUniqueInput";
+import * as TypeGraphQL from 'type-graphql'
+import * as GraphQLScalars from 'graphql-scalars'
+import {Prisma} from '@prisma/client'
+import {DecimalJSScalar} from '../../scalars'
+import {UserCreateOrConnectWithoutCommentsInput} from '../inputs/UserCreateOrConnectWithoutCommentsInput'
+import {UserCreateWithoutCommentsInput} from '../inputs/UserCreateWithoutCommentsInput'
+import {UserWhereUniqueInput} from '../inputs/UserWhereUniqueInput'
 
-@TypeGraphQL.InputType("UserCreateNestedOneWithoutCommentsInput", {
-  isAbstract: true
+@TypeGraphQL.InputType('UserCreateNestedOneWithoutCommentsInput', {
+  isAbstract: true,
 })
 export class UserCreateNestedOneWithoutCommentsInput {
-  @TypeGraphQL.Field(_type => UserCreateWithoutCommentsInput, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => UserCreateWithoutCommentsInput, {
+    nullable: true,
   })
-  create?: UserCreateWithoutCommentsInput | undefined;
+  create?: UserCreateWithoutCommentsInput | undefined
 
-  @TypeGraphQL.Field(_type => UserCreateOrConnectWithoutCommentsInput, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => UserCreateOrConnectWithoutCommentsInput, {
+    nullable: true,
   })
-  connectOrCreate?: UserCreateOrConnectWithoutCommentsInput | undefined;
+  connectOrCreate?: UserCreateOrConnectWithoutCommentsInput | undefined
 
-  @TypeGraphQL.Field(_type => UserWhereUniqueInput, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => UserWhereUniqueInput, {
+    nullable: true,
   })
-  connect?: UserWhereUniqueInput | undefined;
+  connect?: UserWhereUniqueInput | undefined
 }

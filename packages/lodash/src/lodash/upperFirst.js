@@ -1,4 +1,4 @@
-import createCaseFirst from './_createCaseFirst.js';
+import createCaseFirst from './_createCaseFirst.js'
 
 /**
  * Converts the first character of `string` to upper case.
@@ -17,6 +17,6 @@ import createCaseFirst from './_createCaseFirst.js';
  * _.upperFirst('FRED');
  * // => 'FRED'
  */
-var upperFirst = createCaseFirst('toUpperCase');
+const upperFirst = createCaseFirst('toUpperCase')
 
-export default upperFirst;
+export default upperFirst

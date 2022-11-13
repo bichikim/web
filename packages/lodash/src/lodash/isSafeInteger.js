@@ -1,7 +1,7 @@
-import isInteger from './isInteger.js';
+import isInteger from './isInteger.js'
 
 /** Used as references for various `Number` constants. */
-var MAX_SAFE_INTEGER = 9007199254740991;
+const MAX_SAFE_INTEGER = 9_007_199_254_740_991
 
 /**
  * Checks if `value` is a safe integer. An integer is safe if it's an IEEE-754
@@ -31,7 +31,7 @@ var MAX_SAFE_INTEGER = 9007199254740991;
  * // => false
  */
 function isSafeInteger(value) {
-  return isInteger(value) && value >= -MAX_SAFE_INTEGER && value <= MAX_SAFE_INTEGER;
+  return isInteger(value) && value >= -MAX_SAFE_INTEGER && value <= MAX_SAFE_INTEGER
 }
 
-export default isSafeInteger;
+export default isSafeInteger

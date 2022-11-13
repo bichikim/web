@@ -1,5 +1,5 @@
-import identity from './identity.js';
-import metaMap from './_metaMap.js';
+import identity from './identity.js'
+import metaMap from './_metaMap.js'
 
 /**
  * The base implementation of `setData` without support for hot loop shorting.
@@ -9,9 +9,11 @@ import metaMap from './_metaMap.js';
  * @param {*} data The metadata.
  * @returns {Function} Returns `func`.
  */
-var baseSetData = !metaMap ? identity : function(func, data) {
-  metaMap.set(func, data);
-  return func;
-};
+const baseSetData = !metaMap
+  ? identity
+  : function (func, data) {
+      metaMap.set(func, data)
+      return func
+    }
 
-export default baseSetData;
+export default baseSetData

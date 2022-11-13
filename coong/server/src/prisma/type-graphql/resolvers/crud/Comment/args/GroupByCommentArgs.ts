@@ -1,39 +1,39 @@
-import * as TypeGraphQL from "type-graphql";
-import * as GraphQLScalars from "graphql-scalars";
-import { CommentOrderByWithAggregationInput } from "../../../inputs/CommentOrderByWithAggregationInput";
-import { CommentScalarWhereWithAggregatesInput } from "../../../inputs/CommentScalarWhereWithAggregatesInput";
-import { CommentWhereInput } from "../../../inputs/CommentWhereInput";
-import { CommentScalarFieldEnum } from "../../../../enums/CommentScalarFieldEnum";
+import * as TypeGraphQL from 'type-graphql'
+import * as GraphQLScalars from 'graphql-scalars'
+import {CommentOrderByWithAggregationInput} from '../../../inputs/CommentOrderByWithAggregationInput'
+import {CommentScalarWhereWithAggregatesInput} from '../../../inputs/CommentScalarWhereWithAggregatesInput'
+import {CommentWhereInput} from '../../../inputs/CommentWhereInput'
+import {CommentScalarFieldEnum} from '../../../../enums/CommentScalarFieldEnum'
 
 @TypeGraphQL.ArgsType()
 export class GroupByCommentArgs {
-  @TypeGraphQL.Field(_type => CommentWhereInput, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => CommentWhereInput, {
+    nullable: true,
   })
-  where?: CommentWhereInput | undefined;
+  where?: CommentWhereInput | undefined
 
-  @TypeGraphQL.Field(_type => [CommentOrderByWithAggregationInput], {
-    nullable: true
+  @TypeGraphQL.Field((_type) => [CommentOrderByWithAggregationInput], {
+    nullable: true,
   })
-  orderBy?: CommentOrderByWithAggregationInput[] | undefined;
+  orderBy?: CommentOrderByWithAggregationInput[] | undefined
 
-  @TypeGraphQL.Field(_type => [CommentScalarFieldEnum], {
-    nullable: false
+  @TypeGraphQL.Field((_type) => [CommentScalarFieldEnum], {
+    nullable: false,
   })
-  by!: Array<"id" | "message" | "postId" | "authorId">;
+  by!: Array<'id' | 'message' | 'postId' | 'authorId'>
 
-  @TypeGraphQL.Field(_type => CommentScalarWhereWithAggregatesInput, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => CommentScalarWhereWithAggregatesInput, {
+    nullable: true,
   })
-  having?: CommentScalarWhereWithAggregatesInput | undefined;
+  having?: CommentScalarWhereWithAggregatesInput | undefined
 
-  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => TypeGraphQL.Int, {
+    nullable: true,
   })
-  take?: number | undefined;
+  take?: number | undefined
 
-  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => TypeGraphQL.Int, {
+    nullable: true,
   })
-  skip?: number | undefined;
+  skip?: number | undefined
 }

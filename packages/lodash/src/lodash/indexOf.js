@@ -1,8 +1,8 @@
-import baseIndexOf from './_baseIndexOf.js';
-import toInteger from './toInteger.js';
+import baseIndexOf from './_baseIndexOf.js'
+import toInteger from './toInteger.js'
 
 /* Built-in method references for those with the same name as other `lodash` methods. */
-var nativeMax = Math.max;
+const nativeMax = Math.max
 
 /**
  * Gets the index at which the first occurrence of `value` is found in `array`
@@ -28,15 +28,15 @@ var nativeMax = Math.max;
  * // => 3
  */
 function indexOf(array, value, fromIndex) {
-  var length = array == null ? 0 : array.length;
+  const length = array == null ? 0 : array.length
   if (!length) {
-    return -1;
+    return -1
   }
-  var index = fromIndex == null ? 0 : toInteger(fromIndex);
+  let index = fromIndex == null ? 0 : toInteger(fromIndex)
   if (index < 0) {
-    index = nativeMax(length + index, 0);
+    index = nativeMax(length + index, 0)
   }
-  return baseIndexOf(array, value, index);
+  return baseIndexOf(array, value, index)
 }
 
-export default indexOf;
+export default indexOf

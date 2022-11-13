@@ -1,8 +1,8 @@
-import baseFlatten from './_baseFlatten.js';
-import map from './map.js';
+import baseFlatten from './_baseFlatten.js'
+import map from './map.js'
 
 /** Used as references for various `Number` constants. */
-var INFINITY = 1 / 0;
+const INFINITY = 1 / 0
 
 /**
  * This method is like `_.flatMap` except that it recursively flattens the
@@ -25,7 +25,7 @@ var INFINITY = 1 / 0;
  * // => [1, 1, 2, 2]
  */
 function flatMapDeep(collection, iteratee) {
-  return baseFlatten(map(collection, iteratee), INFINITY);
+  return baseFlatten(map(collection, iteratee), INFINITY)
 }
 
-export default flatMapDeep;
+export default flatMapDeep

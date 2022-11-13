@@ -1,10 +1,10 @@
-import Stack from './_Stack.js';
-import assignMergeValue from './_assignMergeValue.js';
-import baseFor from './_baseFor.js';
-import baseMergeDeep from './_baseMergeDeep.js';
-import isObject from './isObject.js';
-import keysIn from './keysIn.js';
-import safeGet from './_safeGet.js';
+import Stack from './_Stack.js'
+import assignMergeValue from './_assignMergeValue.js'
+import baseFor from './_baseFor.js'
+import baseMergeDeep from './_baseMergeDeep.js'
+import isObject from './isObject.js'
+import keysIn from './keysIn.js'
+import safeGet from './_safeGet.js'
 
 /**
  * The base implementation of `_.merge` without support for multiple sources.
@@ -19,24 +19,27 @@ import safeGet from './_safeGet.js';
  */
 function baseMerge(object, source, srcIndex, customizer, stack) {
   if (object === source) {
-    return;
+    return
   }
-  baseFor(source, function(srcValue, key) {
-    if (isObject(srcValue)) {
-      stack || (stack = new Stack);
-      baseMergeDeep(object, source, key, srcIndex, baseMerge, customizer, stack);
-    }
-    else {
-      var newValue = customizer
-        ? customizer(safeGet(object, key), srcValue, (key + ''), object, source, stack)
-        : undefined;
+  baseFor(
+    source,
+    function (srcValue, key) {
+      if (isObject(srcValue)) {
+        stack || (stack = new Stack())
+        baseMergeDeep(object, source, key, srcIndex, baseMerge, customizer, stack)
+      } else {
+        let newValue = customizer
+          ? customizer(safeGet(object, key), srcValue, `${key}`, object, source, stack)
+          : undefined
 
-      if (newValue === undefined) {
-        newValue = srcValue;
+        if (newValue === undefined) {
+          newValue = srcValue
+        }
+        assignMergeValue(object, key, newValue)
       }
-      assignMergeValue(object, key, newValue);
-    }
-  }, keysIn);
+    },
+    keysIn,
+  )
 }
 
-export default baseMerge;
+export default baseMerge

@@ -1,5 +1,5 @@
-import createFind from './_createFind.js';
-import findLastIndex from './findLastIndex.js';
+import createFind from './_createFind.js'
+import findLastIndex from './findLastIndex.js'
 
 /**
  * This method is like `_.find` except that it iterates over elements of
@@ -20,6 +20,6 @@ import findLastIndex from './findLastIndex.js';
  * });
  * // => 3
  */
-var findLast = createFind(findLastIndex);
+const findLast = createFind(findLastIndex)
 
-export default findLast;
+export default findLast

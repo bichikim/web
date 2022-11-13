@@ -1,5 +1,5 @@
-import baseHasIn from './_baseHasIn.js';
-import hasPath from './_hasPath.js';
+import baseHasIn from './_baseHasIn.js'
+import hasPath from './_hasPath.js'
 
 /**
  * Checks if `path` is a direct or inherited property of `object`.
@@ -28,7 +28,7 @@ import hasPath from './_hasPath.js';
  * // => false
  */
 function hasIn(object, path) {
-  return object != null && hasPath(object, path, baseHasIn);
+  return object != null && hasPath(object, path, baseHasIn)
 }
 
-export default hasIn;
+export default hasIn

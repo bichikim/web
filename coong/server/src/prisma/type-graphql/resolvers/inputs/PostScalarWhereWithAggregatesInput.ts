@@ -1,57 +1,57 @@
-import * as TypeGraphQL from "type-graphql";
-import * as GraphQLScalars from "graphql-scalars";
-import { Prisma } from "@prisma/client";
-import { DecimalJSScalar } from "../../scalars";
-import { StringNullableListFilter } from "../inputs/StringNullableListFilter";
-import { StringNullableWithAggregatesFilter } from "../inputs/StringNullableWithAggregatesFilter";
-import { StringWithAggregatesFilter } from "../inputs/StringWithAggregatesFilter";
+import * as TypeGraphQL from 'type-graphql'
+import * as GraphQLScalars from 'graphql-scalars'
+import {Prisma} from '@prisma/client'
+import {DecimalJSScalar} from '../../scalars'
+import {StringNullableListFilter} from '../inputs/StringNullableListFilter'
+import {StringNullableWithAggregatesFilter} from '../inputs/StringNullableWithAggregatesFilter'
+import {StringWithAggregatesFilter} from '../inputs/StringWithAggregatesFilter'
 
-@TypeGraphQL.InputType("PostScalarWhereWithAggregatesInput", {
-  isAbstract: true
+@TypeGraphQL.InputType('PostScalarWhereWithAggregatesInput', {
+  isAbstract: true,
 })
 export class PostScalarWhereWithAggregatesInput {
-  @TypeGraphQL.Field(_type => [PostScalarWhereWithAggregatesInput], {
-    nullable: true
+  @TypeGraphQL.Field((_type) => [PostScalarWhereWithAggregatesInput], {
+    nullable: true,
   })
-  AND?: PostScalarWhereWithAggregatesInput[] | undefined;
+  AND?: PostScalarWhereWithAggregatesInput[] | undefined
 
-  @TypeGraphQL.Field(_type => [PostScalarWhereWithAggregatesInput], {
-    nullable: true
+  @TypeGraphQL.Field((_type) => [PostScalarWhereWithAggregatesInput], {
+    nullable: true,
   })
-  OR?: PostScalarWhereWithAggregatesInput[] | undefined;
+  OR?: PostScalarWhereWithAggregatesInput[] | undefined
 
-  @TypeGraphQL.Field(_type => [PostScalarWhereWithAggregatesInput], {
-    nullable: true
+  @TypeGraphQL.Field((_type) => [PostScalarWhereWithAggregatesInput], {
+    nullable: true,
   })
-  NOT?: PostScalarWhereWithAggregatesInput[] | undefined;
+  NOT?: PostScalarWhereWithAggregatesInput[] | undefined
 
-  @TypeGraphQL.Field(_type => StringWithAggregatesFilter, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => StringWithAggregatesFilter, {
+    nullable: true,
   })
-  id?: StringWithAggregatesFilter | undefined;
+  id?: StringWithAggregatesFilter | undefined
 
-  @TypeGraphQL.Field(_type => StringWithAggregatesFilter, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => StringWithAggregatesFilter, {
+    nullable: true,
   })
-  title?: StringWithAggregatesFilter | undefined;
+  title?: StringWithAggregatesFilter | undefined
 
-  @TypeGraphQL.Field(_type => StringNullableWithAggregatesFilter, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => StringNullableWithAggregatesFilter, {
+    nullable: true,
   })
-  message?: StringNullableWithAggregatesFilter | undefined;
+  message?: StringNullableWithAggregatesFilter | undefined
 
-  @TypeGraphQL.Field(_type => StringWithAggregatesFilter, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => StringWithAggregatesFilter, {
+    nullable: true,
   })
-  authorId?: StringWithAggregatesFilter | undefined;
+  authorId?: StringWithAggregatesFilter | undefined
 
-  @TypeGraphQL.Field(_type => StringNullableListFilter, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => StringNullableListFilter, {
+    nullable: true,
   })
-  likeIDs?: StringNullableListFilter | undefined;
+  likeIDs?: StringNullableListFilter | undefined
 
-  @TypeGraphQL.Field(_type => StringNullableListFilter, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => StringNullableListFilter, {
+    nullable: true,
   })
-  tagIDs?: StringNullableListFilter | undefined;
+  tagIDs?: StringNullableListFilter | undefined
 }

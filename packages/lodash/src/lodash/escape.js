@@ -1,9 +1,9 @@
-import escapeHtmlChar from './_escapeHtmlChar.js';
-import toString from './toString.js';
+import escapeHtmlChar from './_escapeHtmlChar.js'
+import toString from './toString.js'
 
 /** Used to match HTML entities and HTML characters. */
-var reUnescapedHtml = /[&<>"']/g,
-    reHasUnescapedHtml = RegExp(reUnescapedHtml.source);
+const reUnescapedHtml = /["&'<>]/g
+const reHasUnescapedHtml = RegExp(reUnescapedHtml.source)
 
 /**
  * Converts the characters "&", "<", ">", '"', and "'" in `string` to their
@@ -34,10 +34,10 @@ var reUnescapedHtml = /[&<>"']/g,
  * // => 'fred, barney, &amp; pebbles'
  */
 function escape(string) {
-  string = toString(string);
-  return (string && reHasUnescapedHtml.test(string))
+  string = toString(string)
+  return string && reHasUnescapedHtml.test(string)
     ? string.replace(reUnescapedHtml, escapeHtmlChar)
-    : string;
+    : string
 }
 
-export default escape;
+export default escape

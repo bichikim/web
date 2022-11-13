@@ -1,21 +1,21 @@
-import * as TypeGraphQL from "type-graphql";
-import * as GraphQLScalars from "graphql-scalars";
-import { Prisma } from "@prisma/client";
-import { DecimalJSScalar } from "../../scalars";
-import { CommentScalarWhereInput } from "../inputs/CommentScalarWhereInput";
-import { CommentUpdateManyMutationInput } from "../inputs/CommentUpdateManyMutationInput";
+import * as TypeGraphQL from 'type-graphql'
+import * as GraphQLScalars from 'graphql-scalars'
+import {Prisma} from '@prisma/client'
+import {DecimalJSScalar} from '../../scalars'
+import {CommentScalarWhereInput} from '../inputs/CommentScalarWhereInput'
+import {CommentUpdateManyMutationInput} from '../inputs/CommentUpdateManyMutationInput'
 
-@TypeGraphQL.InputType("CommentUpdateManyWithWhereWithoutPortInput", {
-  isAbstract: true
+@TypeGraphQL.InputType('CommentUpdateManyWithWhereWithoutPortInput', {
+  isAbstract: true,
 })
 export class CommentUpdateManyWithWhereWithoutPortInput {
-  @TypeGraphQL.Field(_type => CommentScalarWhereInput, {
-    nullable: false
+  @TypeGraphQL.Field((_type) => CommentScalarWhereInput, {
+    nullable: false,
   })
-  where!: CommentScalarWhereInput;
+  where!: CommentScalarWhereInput
 
-  @TypeGraphQL.Field(_type => CommentUpdateManyMutationInput, {
-    nullable: false
+  @TypeGraphQL.Field((_type) => CommentUpdateManyMutationInput, {
+    nullable: false,
   })
-  data!: CommentUpdateManyMutationInput;
+  data!: CommentUpdateManyMutationInput
 }

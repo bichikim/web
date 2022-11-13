@@ -1,12 +1,12 @@
-import isObject from './isObject.js';
-import isPrototype from './_isPrototype.js';
-import nativeKeysIn from './_nativeKeysIn.js';
+import isObject from './isObject.js'
+import isPrototype from './_isPrototype.js'
+import nativeKeysIn from './_nativeKeysIn.js'
 
 /** Used for built-in method references. */
-var objectProto = Object.prototype;
+const objectProto = Object.prototype
 
 /** Used to check objects for own properties. */
-var hasOwnProperty = objectProto.hasOwnProperty;
+const {hasOwnProperty} = objectProto
 
 /**
  * The base implementation of `_.keysIn` which doesn't treat sparse arrays as dense.
@@ -17,17 +17,17 @@ var hasOwnProperty = objectProto.hasOwnProperty;
  */
 function baseKeysIn(object) {
   if (!isObject(object)) {
-    return nativeKeysIn(object);
+    return nativeKeysIn(object)
   }
-  var isProto = isPrototype(object),
-      result = [];
+  const isProto = isPrototype(object)
+  const result = []
 
-  for (var key in object) {
+  for (const key in object) {
     if (!(key == 'constructor' && (isProto || !hasOwnProperty.call(object, key)))) {
-      result.push(key);
+      result.push(key)
     }
   }
-  return result;
+  return result
 }
 
-export default baseKeysIn;
+export default baseKeysIn

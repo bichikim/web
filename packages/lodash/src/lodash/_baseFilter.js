@@ -1,4 +1,4 @@
-import baseEach from './_baseEach.js';
+import baseEach from './_baseEach.js'
 
 /**
  * The base implementation of `_.filter` without support for iteratee shorthands.
@@ -9,13 +9,13 @@ import baseEach from './_baseEach.js';
  * @returns {Array} Returns the new filtered array.
  */
 function baseFilter(collection, predicate) {
-  var result = [];
-  baseEach(collection, function(value, index, collection) {
+  const result = []
+  baseEach(collection, function (value, index, collection) {
     if (predicate(value, index, collection)) {
-      result.push(value);
+      result.push(value)
     }
-  });
-  return result;
+  })
+  return result
 }
 
-export default baseFilter;
+export default baseFilter

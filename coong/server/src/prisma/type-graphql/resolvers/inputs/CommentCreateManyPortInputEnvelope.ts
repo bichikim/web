@@ -1,15 +1,15 @@
-import * as TypeGraphQL from "type-graphql";
-import * as GraphQLScalars from "graphql-scalars";
-import { Prisma } from "@prisma/client";
-import { DecimalJSScalar } from "../../scalars";
-import { CommentCreateManyPortInput } from "../inputs/CommentCreateManyPortInput";
+import * as TypeGraphQL from 'type-graphql'
+import * as GraphQLScalars from 'graphql-scalars'
+import {Prisma} from '@prisma/client'
+import {DecimalJSScalar} from '../../scalars'
+import {CommentCreateManyPortInput} from '../inputs/CommentCreateManyPortInput'
 
-@TypeGraphQL.InputType("CommentCreateManyPortInputEnvelope", {
-  isAbstract: true
+@TypeGraphQL.InputType('CommentCreateManyPortInputEnvelope', {
+  isAbstract: true,
 })
 export class CommentCreateManyPortInputEnvelope {
-  @TypeGraphQL.Field(_type => [CommentCreateManyPortInput], {
-    nullable: false
+  @TypeGraphQL.Field((_type) => [CommentCreateManyPortInput], {
+    nullable: false,
   })
-  data!: CommentCreateManyPortInput[];
+  data!: CommentCreateManyPortInput[]
 }

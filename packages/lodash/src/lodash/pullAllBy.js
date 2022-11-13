@@ -1,5 +1,5 @@
-import baseIteratee from './_baseIteratee.js';
-import basePullAll from './_basePullAll.js';
+import baseIteratee from './_baseIteratee.js'
+import basePullAll from './_basePullAll.js'
 
 /**
  * This method is like `_.pullAll` except that it accepts `iteratee` which is
@@ -25,9 +25,9 @@ import basePullAll from './_basePullAll.js';
  * // => [{ 'x': 2 }]
  */
 function pullAllBy(array, values, iteratee) {
-  return (array && array.length && values && values.length)
+  return array && array.length > 0 && values && values.length > 0
     ? basePullAll(array, values, baseIteratee(iteratee, 2))
-    : array;
+    : array
 }
 
-export default pullAllBy;
+export default pullAllBy

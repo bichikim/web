@@ -1,21 +1,21 @@
-import * as TypeGraphQL from "type-graphql";
-import * as GraphQLScalars from "graphql-scalars";
-import { Prisma } from "@prisma/client";
-import { DecimalJSScalar } from "../../scalars";
-import { StringFieldUpdateOperationsInput } from "../inputs/StringFieldUpdateOperationsInput";
-import { TagUpdatepostIDsInput } from "../inputs/TagUpdatepostIDsInput";
+import * as TypeGraphQL from 'type-graphql'
+import * as GraphQLScalars from 'graphql-scalars'
+import {Prisma} from '@prisma/client'
+import {DecimalJSScalar} from '../../scalars'
+import {StringFieldUpdateOperationsInput} from '../inputs/StringFieldUpdateOperationsInput'
+import {TagUpdatepostIDsInput} from '../inputs/TagUpdatepostIDsInput'
 
-@TypeGraphQL.InputType("TagUpdateManyMutationInput", {
-  isAbstract: true
+@TypeGraphQL.InputType('TagUpdateManyMutationInput', {
+  isAbstract: true,
 })
 export class TagUpdateManyMutationInput {
-  @TypeGraphQL.Field(_type => StringFieldUpdateOperationsInput, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => StringFieldUpdateOperationsInput, {
+    nullable: true,
   })
-  name?: StringFieldUpdateOperationsInput | undefined;
+  name?: StringFieldUpdateOperationsInput | undefined
 
-  @TypeGraphQL.Field(_type => TagUpdatepostIDsInput, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => TagUpdatepostIDsInput, {
+    nullable: true,
   })
-  postIDs?: TagUpdatepostIDsInput | undefined;
+  postIDs?: TagUpdatepostIDsInput | undefined
 }

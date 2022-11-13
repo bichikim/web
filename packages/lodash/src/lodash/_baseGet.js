@@ -1,5 +1,5 @@
-import castPath from './_castPath.js';
-import toKey from './_toKey.js';
+import castPath from './_castPath.js'
+import toKey from './_toKey.js'
 
 /**
  * The base implementation of `_.get` without support for default values.
@@ -10,15 +10,15 @@ import toKey from './_toKey.js';
  * @returns {*} Returns the resolved value.
  */
 function baseGet(object, path) {
-  path = castPath(path, object);
+  path = castPath(path, object)
 
-  var index = 0,
-      length = path.length;
+  let index = 0
+  const {length} = path
 
   while (object != null && index < length) {
-    object = object[toKey(path[index++])];
+    object = object[toKey(path[index++])]
   }
-  return (index && index == length) ? object : undefined;
+  return index && index == length ? object : undefined
 }
 
-export default baseGet;
+export default baseGet

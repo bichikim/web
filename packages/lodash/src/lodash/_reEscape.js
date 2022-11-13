@@ -1,4 +1,4 @@
 /** Used to match template delimiters. */
-var reEscape = /<%-([\s\S]+?)%>/g;
+const reEscape = /<%-([\S\s]+?)%>/g
 
-export default reEscape;
+export default reEscape

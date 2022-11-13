@@ -1,6 +1,6 @@
-import MapCache from './_MapCache.js';
-import setCacheAdd from './_setCacheAdd.js';
-import setCacheHas from './_setCacheHas.js';
+import MapCache from './_MapCache.js'
+import setCacheAdd from './_setCacheAdd.js'
+import setCacheHas from './_setCacheHas.js'
 
 /**
  *
@@ -11,17 +11,17 @@ import setCacheHas from './_setCacheHas.js';
  * @param {Array} [values] The values to cache.
  */
 function SetCache(values) {
-  var index = -1,
-      length = values == null ? 0 : values.length;
+  let index = -1
+  const length = values == null ? 0 : values.length
 
-  this.__data__ = new MapCache;
+  this.__data__ = new MapCache()
   while (++index < length) {
-    this.add(values[index]);
+    this.add(values[index])
   }
 }
 
 // Add methods to `SetCache`.
-SetCache.prototype.add = SetCache.prototype.push = setCacheAdd;
-SetCache.prototype.has = setCacheHas;
+SetCache.prototype.add = SetCache.prototype.push = setCacheAdd
+SetCache.prototype.has = setCacheHas
 
-export default SetCache;
+export default SetCache

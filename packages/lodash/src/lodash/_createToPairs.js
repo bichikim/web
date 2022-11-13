@@ -1,11 +1,11 @@
-import baseToPairs from './_baseToPairs.js';
-import getTag from './_getTag.js';
-import mapToArray from './_mapToArray.js';
-import setToPairs from './_setToPairs.js';
+import baseToPairs from './_baseToPairs.js'
+import getTag from './_getTag.js'
+import mapToArray from './_mapToArray.js'
+import setToPairs from './_setToPairs.js'
 
 /** `Object#toString` result references. */
-var mapTag = '[object Map]',
-    setTag = '[object Set]';
+const mapTag = '[object Map]'
+const setTag = '[object Set]'
 
 /**
  * Creates a `_.toPairs` or `_.toPairsIn` function.
@@ -15,16 +15,16 @@ var mapTag = '[object Map]',
  * @returns {Function} Returns the new pairs function.
  */
 function createToPairs(keysFunc) {
-  return function(object) {
-    var tag = getTag(object);
+  return function (object) {
+    const tag = getTag(object)
     if (tag == mapTag) {
-      return mapToArray(object);
+      return mapToArray(object)
     }
     if (tag == setTag) {
-      return setToPairs(object);
+      return setToPairs(object)
     }
-    return baseToPairs(object, keysFunc(object));
-  };
+    return baseToPairs(object, keysFunc(object))
+  }
 }
 
-export default createToPairs;
+export default createToPairs

@@ -1,10 +1,10 @@
-import nativeCreate from './_nativeCreate.js';
+import nativeCreate from './_nativeCreate.js'
 
 /** Used for built-in method references. */
-var objectProto = Object.prototype;
+const objectProto = Object.prototype
 
 /** Used to check objects for own properties. */
-var hasOwnProperty = objectProto.hasOwnProperty;
+const {hasOwnProperty} = objectProto
 
 /**
  * Checks if a hash value for `key` exists.
@@ -16,8 +16,8 @@ var hasOwnProperty = objectProto.hasOwnProperty;
  * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
  */
 function hashHas(key) {
-  var data = this.__data__;
-  return nativeCreate ? (data[key] !== undefined) : hasOwnProperty.call(data, key);
+  const data = this.__data__
+  return nativeCreate ? data[key] !== undefined : hasOwnProperty.call(data, key)
 }
 
-export default hashHas;
+export default hashHas

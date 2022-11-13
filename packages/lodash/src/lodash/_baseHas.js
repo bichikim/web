@@ -1,8 +1,8 @@
 /** Used for built-in method references. */
-var objectProto = Object.prototype;
+const objectProto = Object.prototype
 
 /** Used to check objects for own properties. */
-var hasOwnProperty = objectProto.hasOwnProperty;
+const {hasOwnProperty} = objectProto
 
 /**
  * The base implementation of `_.has` without support for deep paths.
@@ -13,7 +13,7 @@ var hasOwnProperty = objectProto.hasOwnProperty;
  * @returns {boolean} Returns `true` if `key` exists, else `false`.
  */
 function baseHas(object, key) {
-  return object != null && hasOwnProperty.call(object, key);
+  return object != null && hasOwnProperty.call(object, key)
 }
 
-export default baseHas;
+export default baseHas

@@ -1,6 +1,6 @@
-import asciiToArray from './_asciiToArray.js';
-import hasUnicode from './_hasUnicode.js';
-import unicodeToArray from './_unicodeToArray.js';
+import asciiToArray from './_asciiToArray.js'
+import hasUnicode from './_hasUnicode.js'
+import unicodeToArray from './_unicodeToArray.js'
 
 /**
  * Converts `string` to an array.
@@ -10,9 +10,7 @@ import unicodeToArray from './_unicodeToArray.js';
  * @returns {Array} Returns the converted array.
  */
 function stringToArray(string) {
-  return hasUnicode(string)
-    ? unicodeToArray(string)
-    : asciiToArray(string);
+  return hasUnicode(string) ? unicodeToArray(string) : asciiToArray(string)
 }
 
-export default stringToArray;
+export default stringToArray

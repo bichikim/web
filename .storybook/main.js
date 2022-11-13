@@ -1,18 +1,34 @@
 module.exports = {
-  "stories": [
-    "../src/**/*.stories.mdx",
-    "../src/**/*.stories.@(js|jsx|ts|tsx)"
+  stories: [
+    '../packages/*/src/**/*.stories.@(js|jsx|ts|tsx|mdx)'
   ],
-  "addons": [
-    "@storybook/addon-links",
-    "@storybook/addon-essentials",
-    "@storybook/addon-interactions"
+  addons: [
+    '@storybook/addon-links',
+    '@storybook/addon-essentials',
+    '@storybook/addon-interactions'
   ],
-  "framework": "@storybook/vue3",
+  babel: async (options) => {
+    // monorepo alias resolving
+    // noinspection SpellCheckingInspection
+    options.plugins.push([
+      'module-resolver',
+      {
+        alias: {
+          src: './src',
+        },
+        cwd: 'packagejson',
+        loglevel: 'info',
+      },
+    ])
+    return {
+      ...options,
+    }
+  },
+  features: {
+    interactionsDebugger: true,
+    "storyStoreV7": true
+  },
   "core": {
     "builder": "@storybook/builder-vite"
   },
-  "features": {
-    "storyStoreV7": true
-  }
 }

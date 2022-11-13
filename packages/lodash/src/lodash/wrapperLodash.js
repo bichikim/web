@@ -1,15 +1,15 @@
-import LazyWrapper from './_LazyWrapper.js';
-import LodashWrapper from './_LodashWrapper.js';
-import baseLodash from './_baseLodash.js';
-import isArray from './isArray.js';
-import isObjectLike from './isObjectLike.js';
-import wrapperClone from './_wrapperClone.js';
+import LazyWrapper from './_LazyWrapper.js'
+import LodashWrapper from './_LodashWrapper.js'
+import baseLodash from './_baseLodash.js'
+import isArray from './isArray.js'
+import isObjectLike from './isObjectLike.js'
+import wrapperClone from './_wrapperClone.js'
 
 /** Used for built-in method references. */
-var objectProto = Object.prototype;
+const objectProto = Object.prototype
 
 /** Used to check objects for own properties. */
-var hasOwnProperty = objectProto.hasOwnProperty;
+const {hasOwnProperty} = objectProto
 
 /**
  * Creates a `lodash` object which wraps `value` to enable implicit method
@@ -131,17 +131,17 @@ var hasOwnProperty = objectProto.hasOwnProperty;
 function lodash(value) {
   if (isObjectLike(value) && !isArray(value) && !(value instanceof LazyWrapper)) {
     if (value instanceof LodashWrapper) {
-      return value;
+      return value
     }
     if (hasOwnProperty.call(value, '__wrapped__')) {
-      return wrapperClone(value);
+      return wrapperClone(value)
     }
   }
-  return new LodashWrapper(value);
+  return new LodashWrapper(value)
 }
 
 // Ensure wrappers are instances of `baseLodash`.
-lodash.prototype = baseLodash.prototype;
-lodash.prototype.constructor = lodash;
+lodash.prototype = baseLodash.prototype
+lodash.prototype.constructor = lodash
 
-export default lodash;
+export default lodash

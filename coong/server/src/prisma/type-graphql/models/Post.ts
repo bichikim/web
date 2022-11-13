@@ -1,56 +1,56 @@
-import * as TypeGraphQL from "type-graphql";
-import * as GraphQLScalars from "graphql-scalars";
-import { Prisma } from "@prisma/client";
-import { DecimalJSScalar } from "../scalars";
-import { Comment } from "../models/Comment";
-import { Tag } from "../models/Tag";
-import { User } from "../models/User";
-import { PostCount } from "../resolvers/outputs/PostCount";
+import * as TypeGraphQL from 'type-graphql'
+import * as GraphQLScalars from 'graphql-scalars'
+import {Prisma} from '@prisma/client'
+import {DecimalJSScalar} from '../scalars'
+import {Comment} from '../models/Comment'
+import {Tag} from '../models/Tag'
+import {User} from '../models/User'
+import {PostCount} from '../resolvers/outputs/PostCount'
 
-@TypeGraphQL.ObjectType("Post", {
-  isAbstract: true
+@TypeGraphQL.ObjectType('Post', {
+  isAbstract: true,
 })
 export class Post {
-  @TypeGraphQL.Field(_type => String, {
-    nullable: false
+  @TypeGraphQL.Field((_type) => String, {
+    nullable: false,
   })
-  id!: string;
+  id!: string
 
-  @TypeGraphQL.Field(_type => String, {
-    nullable: false
+  @TypeGraphQL.Field((_type) => String, {
+    nullable: false,
   })
-  title!: string;
+  title!: string
 
-  @TypeGraphQL.Field(_type => String, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => String, {
+    nullable: true,
   })
-  message?: string | null;
+  message?: string | null
 
-  author?: User;
+  author?: User
 
-  @TypeGraphQL.Field(_type => String, {
-    nullable: false
+  @TypeGraphQL.Field((_type) => String, {
+    nullable: false,
   })
-  authorId!: string;
+  authorId!: string
 
-  likes?: User[];
+  likes?: User[]
 
-  @TypeGraphQL.Field(_type => [String], {
-    nullable: false
+  @TypeGraphQL.Field((_type) => [String], {
+    nullable: false,
   })
-  likeIDs!: string[];
+  likeIDs!: string[]
 
-  tags?: Tag[];
+  tags?: Tag[]
 
-  @TypeGraphQL.Field(_type => [String], {
-    nullable: false
+  @TypeGraphQL.Field((_type) => [String], {
+    nullable: false,
   })
-  tagIDs!: string[];
+  tagIDs!: string[]
 
-  comments?: Comment[];
+  comments?: Comment[]
 
-  @TypeGraphQL.Field(_type => PostCount, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => PostCount, {
+    nullable: true,
   })
-  _count?: PostCount | null;
+  _count?: PostCount | null
 }

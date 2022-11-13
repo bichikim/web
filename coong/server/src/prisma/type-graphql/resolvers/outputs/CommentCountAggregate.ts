@@ -1,34 +1,34 @@
-import * as TypeGraphQL from "type-graphql";
-import * as GraphQLScalars from "graphql-scalars";
-import { Prisma } from "@prisma/client";
-import { DecimalJSScalar } from "../../scalars";
+import * as TypeGraphQL from 'type-graphql'
+import * as GraphQLScalars from 'graphql-scalars'
+import {Prisma} from '@prisma/client'
+import {DecimalJSScalar} from '../../scalars'
 
-@TypeGraphQL.ObjectType("CommentCountAggregate", {
-  isAbstract: true
+@TypeGraphQL.ObjectType('CommentCountAggregate', {
+  isAbstract: true,
 })
 export class CommentCountAggregate {
-  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
-    nullable: false
+  @TypeGraphQL.Field((_type) => TypeGraphQL.Int, {
+    nullable: false,
   })
-  id!: number;
+  id!: number
 
-  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
-    nullable: false
+  @TypeGraphQL.Field((_type) => TypeGraphQL.Int, {
+    nullable: false,
   })
-  message!: number;
+  message!: number
 
-  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
-    nullable: false
+  @TypeGraphQL.Field((_type) => TypeGraphQL.Int, {
+    nullable: false,
   })
-  postId!: number;
+  postId!: number
 
-  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
-    nullable: false
+  @TypeGraphQL.Field((_type) => TypeGraphQL.Int, {
+    nullable: false,
   })
-  authorId!: number;
+  authorId!: number
 
-  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
-    nullable: false
+  @TypeGraphQL.Field((_type) => TypeGraphQL.Int, {
+    nullable: false,
   })
-  _all!: number;
+  _all!: number
 }

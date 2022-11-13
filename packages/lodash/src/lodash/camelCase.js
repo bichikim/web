@@ -1,5 +1,5 @@
-import capitalize from './capitalize.js';
-import createCompounder from './_createCompounder.js';
+import capitalize from './capitalize.js'
+import createCompounder from './_createCompounder.js'
 
 /**
  * Converts `string` to [camel case](https://en.wikipedia.org/wiki/CamelCase).
@@ -21,9 +21,9 @@ import createCompounder from './_createCompounder.js';
  * _.camelCase('__FOO_BAR__');
  * // => 'fooBar'
  */
-var camelCase = createCompounder(function(result, word, index) {
-  word = word.toLowerCase();
-  return result + (index ? capitalize(word) : word);
-});
+const camelCase = createCompounder(function (result, word, index) {
+  word = word.toLowerCase()
+  return result + (index ? capitalize(word) : word)
+})
 
-export default camelCase;
+export default camelCase

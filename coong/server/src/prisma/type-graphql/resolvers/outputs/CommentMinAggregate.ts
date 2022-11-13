@@ -1,29 +1,29 @@
-import * as TypeGraphQL from "type-graphql";
-import * as GraphQLScalars from "graphql-scalars";
-import { Prisma } from "@prisma/client";
-import { DecimalJSScalar } from "../../scalars";
+import * as TypeGraphQL from 'type-graphql'
+import * as GraphQLScalars from 'graphql-scalars'
+import {Prisma} from '@prisma/client'
+import {DecimalJSScalar} from '../../scalars'
 
-@TypeGraphQL.ObjectType("CommentMinAggregate", {
-  isAbstract: true
+@TypeGraphQL.ObjectType('CommentMinAggregate', {
+  isAbstract: true,
 })
 export class CommentMinAggregate {
-  @TypeGraphQL.Field(_type => String, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => String, {
+    nullable: true,
   })
-  id!: string | null;
+  id!: string | null
 
-  @TypeGraphQL.Field(_type => String, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => String, {
+    nullable: true,
   })
-  message!: string | null;
+  message!: string | null
 
-  @TypeGraphQL.Field(_type => String, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => String, {
+    nullable: true,
   })
-  postId!: string | null;
+  postId!: string | null
 
-  @TypeGraphQL.Field(_type => String, {
-    nullable: true
+  @TypeGraphQL.Field((_type) => String, {
+    nullable: true,
   })
-  authorId!: string | null;
+  authorId!: string | null
 }

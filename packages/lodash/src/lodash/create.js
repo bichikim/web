@@ -1,5 +1,5 @@
-import baseAssign from './_baseAssign.js';
-import baseCreate from './_baseCreate.js';
+import baseAssign from './_baseAssign.js'
+import baseCreate from './_baseCreate.js'
 
 /**
  * Creates an object that inherits from the `prototype` object. If a
@@ -36,8 +36,8 @@ import baseCreate from './_baseCreate.js';
  * // => true
  */
 function create(prototype, properties) {
-  var result = baseCreate(prototype);
-  return properties == null ? result : baseAssign(result, properties);
+  const result = baseCreate(prototype)
+  return properties == null ? result : baseAssign(result, properties)
 }
 
-export default create;
+export default create

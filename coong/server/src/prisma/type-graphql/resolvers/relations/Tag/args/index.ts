@@ -1,1 +1,1 @@
-export { TagPostsArgs } from "./TagPostsArgs";
+export {TagPostsArgs} from './TagPostsArgs'

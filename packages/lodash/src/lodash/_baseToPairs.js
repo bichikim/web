@@ -1,4 +1,4 @@
-import arrayMap from './_arrayMap.js';
+import arrayMap from './_arrayMap.js'
 
 /**
  * The base implementation of `_.toPairs` and `_.toPairsIn` which creates an array
@@ -10,9 +10,9 @@ import arrayMap from './_arrayMap.js';
  * @returns {Object} Returns the key-value pairs.
  */
 function baseToPairs(object, props) {
-  return arrayMap(props, function(key) {
-    return [key, object[key]];
-  });
+  return arrayMap(props, function (key) {
+    return [key, object[key]]
+  })
 }
 
-export default baseToPairs;
+export default baseToPairs

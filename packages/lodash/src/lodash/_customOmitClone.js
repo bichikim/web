@@ -1,4 +1,4 @@
-import isPlainObject from './isPlainObject.js';
+import isPlainObject from './isPlainObject.js'
 
 /**
  * Used by `_.omit` to customize its `_.cloneDeep` use to only clone plain
@@ -10,7 +10,7 @@ import isPlainObject from './isPlainObject.js';
  * @returns {*} Returns the uncloned value or `undefined` to defer cloning to `_.cloneDeep`.
  */
 function customOmitClone(value) {
-  return isPlainObject(value) ? undefined : value;
+  return isPlainObject(value) ? undefined : value
 }
 
-export default customOmitClone;
+export default customOmitClone

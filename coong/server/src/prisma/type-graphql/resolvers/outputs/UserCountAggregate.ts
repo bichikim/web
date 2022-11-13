@@ -1,54 +1,54 @@
-import * as TypeGraphQL from "type-graphql";
-import * as GraphQLScalars from "graphql-scalars";
-import { Prisma } from "@prisma/client";
-import { DecimalJSScalar } from "../../scalars";
+import * as TypeGraphQL from 'type-graphql'
+import * as GraphQLScalars from 'graphql-scalars'
+import {Prisma} from '@prisma/client'
+import {DecimalJSScalar} from '../../scalars'
 
-@TypeGraphQL.ObjectType("UserCountAggregate", {
-  isAbstract: true
+@TypeGraphQL.ObjectType('UserCountAggregate', {
+  isAbstract: true,
 })
 export class UserCountAggregate {
-  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
-    nullable: false
+  @TypeGraphQL.Field((_type) => TypeGraphQL.Int, {
+    nullable: false,
   })
-  id!: number;
+  id!: number
 
-  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
-    nullable: false
+  @TypeGraphQL.Field((_type) => TypeGraphQL.Int, {
+    nullable: false,
   })
-  email!: number;
+  email!: number
 
-  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
-    nullable: false
+  @TypeGraphQL.Field((_type) => TypeGraphQL.Int, {
+    nullable: false,
   })
-  name!: number;
+  name!: number
 
-  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
-    nullable: false
+  @TypeGraphQL.Field((_type) => TypeGraphQL.Int, {
+    nullable: false,
   })
-  password!: number;
+  password!: number
 
-  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
-    nullable: false
+  @TypeGraphQL.Field((_type) => TypeGraphQL.Int, {
+    nullable: false,
   })
-  followerIDs!: number;
+  followerIDs!: number
 
-  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
-    nullable: false
+  @TypeGraphQL.Field((_type) => TypeGraphQL.Int, {
+    nullable: false,
   })
-  followingIDs!: number;
+  followingIDs!: number
 
-  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
-    nullable: false
+  @TypeGraphQL.Field((_type) => TypeGraphQL.Int, {
+    nullable: false,
   })
-  likePostIDs!: number;
+  likePostIDs!: number
 
-  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
-    nullable: false
+  @TypeGraphQL.Field((_type) => TypeGraphQL.Int, {
+    nullable: false,
   })
-  roles!: number;
+  roles!: number
 
-  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
-    nullable: false
+  @TypeGraphQL.Field((_type) => TypeGraphQL.Int, {
+    nullable: false,
   })
-  _all!: number;
+  _all!: number
 }

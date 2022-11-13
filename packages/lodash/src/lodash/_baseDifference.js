@@ -1,12 +1,12 @@
-import SetCache from './_SetCache.js';
-import arrayIncludes from './_arrayIncludes.js';
-import arrayIncludesWith from './_arrayIncludesWith.js';
-import arrayMap from './_arrayMap.js';
-import baseUnary from './_baseUnary.js';
-import cacheHas from './_cacheHas.js';
+import SetCache from './_SetCache.js'
+import arrayIncludes from './_arrayIncludes.js'
+import arrayIncludesWith from './_arrayIncludesWith.js'
+import arrayMap from './_arrayMap.js'
+import baseUnary from './_baseUnary.js'
+import cacheHas from './_cacheHas.js'
 
 /** Used as the size to enable large array optimizations. */
-var LARGE_ARRAY_SIZE = 200;
+const LARGE_ARRAY_SIZE = 200
 
 /**
  * The base implementation of methods like `_.difference` without support
@@ -20,48 +20,45 @@ var LARGE_ARRAY_SIZE = 200;
  * @returns {Array} Returns the new array of filtered values.
  */
 function baseDifference(array, values, iteratee, comparator) {
-  var index = -1,
-      includes = arrayIncludes,
-      isCommon = true,
-      length = array.length,
-      result = [],
-      valuesLength = values.length;
+  let index = -1
+  let includes = arrayIncludes
+  let isCommon = true
+  const {length} = array
+  const result = []
+  const valuesLength = values.length
 
   if (!length) {
-    return result;
+    return result
   }
   if (iteratee) {
-    values = arrayMap(values, baseUnary(iteratee));
+    values = arrayMap(values, baseUnary(iteratee))
   }
   if (comparator) {
-    includes = arrayIncludesWith;
-    isCommon = false;
+    includes = arrayIncludesWith
+    isCommon = false
+  } else if (values.length >= LARGE_ARRAY_SIZE) {
+    includes = cacheHas
+    isCommon = false
+    values = new SetCache(values)
   }
-  else if (values.length >= LARGE_ARRAY_SIZE) {
-    includes = cacheHas;
-    isCommon = false;
-    values = new SetCache(values);
-  }
-  outer:
-  while (++index < length) {
-    var value = array[index],
-        computed = iteratee == null ? value : iteratee(value);
+  outer: while (++index < length) {
+    let value = array[index]
+    const computed = iteratee == null ? value : iteratee(value)
 
-    value = (comparator || value !== 0) ? value : 0;
+    value = comparator || value !== 0 ? value : 0
     if (isCommon && computed === computed) {
-      var valuesIndex = valuesLength;
+      let valuesIndex = valuesLength
       while (valuesIndex--) {
         if (values[valuesIndex] === computed) {
-          continue outer;
+          continue outer
         }
       }
-      result.push(value);
-    }
-    else if (!includes(values, computed, comparator)) {
-      result.push(value);
+      result.push(value)
+    } else if (!includes(values, computed, comparator)) {
+      result.push(value)
     }
   }
-  return result;
+  return result
 }
 
-export default baseDifference;
+export default baseDifference

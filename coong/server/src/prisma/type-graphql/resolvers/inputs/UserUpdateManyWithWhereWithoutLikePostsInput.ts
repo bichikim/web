@@ -1,21 +1,21 @@
-import * as TypeGraphQL from "type-graphql";
-import * as GraphQLScalars from "graphql-scalars";
-import { Prisma } from "@prisma/client";
-import { DecimalJSScalar } from "../../scalars";
-import { UserScalarWhereInput } from "../inputs/UserScalarWhereInput";
-import { UserUpdateManyMutationInput } from "../inputs/UserUpdateManyMutationInput";
+import * as TypeGraphQL from 'type-graphql'
+import * as GraphQLScalars from 'graphql-scalars'
+import {Prisma} from '@prisma/client'
+import {DecimalJSScalar} from '../../scalars'
+import {UserScalarWhereInput} from '../inputs/UserScalarWhereInput'
+import {UserUpdateManyMutationInput} from '../inputs/UserUpdateManyMutationInput'
 
-@TypeGraphQL.InputType("UserUpdateManyWithWhereWithoutLikePostsInput", {
-  isAbstract: true
+@TypeGraphQL.InputType('UserUpdateManyWithWhereWithoutLikePostsInput', {
+  isAbstract: true,
 })
 export class UserUpdateManyWithWhereWithoutLikePostsInput {
-  @TypeGraphQL.Field(_type => UserScalarWhereInput, {
-    nullable: false
+  @TypeGraphQL.Field((_type) => UserScalarWhereInput, {
+    nullable: false,
   })
-  where!: UserScalarWhereInput;
+  where!: UserScalarWhereInput
 
-  @TypeGraphQL.Field(_type => UserUpdateManyMutationInput, {
-    nullable: false
+  @TypeGraphQL.Field((_type) => UserUpdateManyMutationInput, {
+    nullable: false,
   })
-  data!: UserUpdateManyMutationInput;
+  data!: UserUpdateManyMutationInput
 }

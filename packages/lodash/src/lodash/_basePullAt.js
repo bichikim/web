@@ -1,11 +1,11 @@
-import baseUnset from './_baseUnset.js';
-import isIndex from './_isIndex.js';
+import baseUnset from './_baseUnset.js'
+import isIndex from './_isIndex.js'
 
 /** Used for built-in method references. */
-var arrayProto = Array.prototype;
+const arrayProto = Array.prototype
 
 /** Built-in value references. */
-var splice = arrayProto.splice;
+const {splice} = arrayProto
 
 /**
  * The base implementation of `_.pullAt` without support for individual
@@ -17,21 +17,21 @@ var splice = arrayProto.splice;
  * @returns {Array} Returns `array`.
  */
 function basePullAt(array, indexes) {
-  var length = array ? indexes.length : 0,
-      lastIndex = length - 1;
+  let length = array ? indexes.length : 0
+  const lastIndex = length - 1
 
   while (length--) {
-    var index = indexes[length];
+    const index = indexes[length]
     if (length == lastIndex || index !== previous) {
-      var previous = index;
+      var previous = index
       if (isIndex(index)) {
-        splice.call(array, index, 1);
+        splice.call(array, index, 1)
       } else {
-        baseUnset(array, index);
+        baseUnset(array, index)
       }
     }
   }
-  return array;
+  return array
 }
 
-export default basePullAt;
+export default basePullAt

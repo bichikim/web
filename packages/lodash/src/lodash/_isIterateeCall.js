@@ -1,7 +1,7 @@
-import eq from './eq.js';
-import isArrayLike from './isArrayLike.js';
-import isIndex from './_isIndex.js';
-import isObject from './isObject.js';
+import eq from './eq.js'
+import isArrayLike from './isArrayLike.js'
+import isIndex from './_isIndex.js'
+import isObject from './isObject.js'
 
 /**
  * Checks if the given arguments are from an iteratee call.
@@ -15,16 +15,17 @@ import isObject from './isObject.js';
  */
 function isIterateeCall(value, index, object) {
   if (!isObject(object)) {
-    return false;
+    return false
   }
-  var type = typeof index;
-  if (type == 'number'
-        ? (isArrayLike(object) && isIndex(index, object.length))
-        : (type == 'string' && index in object)
-      ) {
-    return eq(object[index], value);
+  const type = typeof index
+  if (
+    type == 'number'
+      ? isArrayLike(object) && isIndex(index, object.length)
+      : type == 'string' && index in object
+  ) {
+    return eq(object[index], value)
   }
-  return false;
+  return false
 }
 
-export default isIterateeCall;
+export default isIterateeCall

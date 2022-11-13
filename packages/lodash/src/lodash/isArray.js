@@ -21,6 +21,6 @@
  * _.isArray(_.noop);
  * // => false
  */
-var isArray = Array.isArray;
+const {isArray} = Array
 
-export default isArray;
+export default isArray

@@ -1,9 +1,9 @@
-import baseIsSet from './_baseIsSet.js';
-import baseUnary from './_baseUnary.js';
-import nodeUtil from './_nodeUtil.js';
+import baseIsSet from './_baseIsSet.js'
+import baseUnary from './_baseUnary.js'
+import nodeUtil from './_nodeUtil.js'
 
 /* Node.js helper references. */
-var nodeIsSet = nodeUtil && nodeUtil.isSet;
+const nodeIsSet = nodeUtil && nodeUtil.isSet
 
 /**
  * Checks if `value` is classified as a `Set` object.
@@ -22,6 +22,6 @@ var nodeIsSet = nodeUtil && nodeUtil.isSet;
  * _.isSet(new WeakSet);
  * // => false
  */
-var isSet = nodeIsSet ? baseUnary(nodeIsSet) : baseIsSet;
+const isSet = nodeIsSet ? baseUnary(nodeIsSet) : baseIsSet
 
-export default isSet;
+export default isSet

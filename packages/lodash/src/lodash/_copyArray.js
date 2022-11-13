@@ -7,14 +7,14 @@
  * @returns {Array} Returns `array`.
  */
 function copyArray(source, array) {
-  var index = -1,
-      length = source.length;
+  let index = -1
+  const {length} = source
 
-  array || (array = Array(length));
+  array || (array = Array(length))
   while (++index < length) {
-    array[index] = source[index];
+    array[index] = source[index]
   }
-  return array;
+  return array
 }
 
-export default copyArray;
+export default copyArray
