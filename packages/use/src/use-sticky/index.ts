@@ -83,7 +83,6 @@ const getSide = (position: Position, defaultPosition: UseStickyPosition): UseSti
   return defaultPosition
 }
 
-
 export const useSticky = (
   element: MaybeRef<HTMLElement>,
   target?: MaybeRef<HTMLElement | Window | undefined>,
