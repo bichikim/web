@@ -574,11 +574,11 @@ importers:
 
   packages/lodash:
     specifiers:
-      '@types/lodash-es': 4.17.2
+      '@types/lodash-es': 4.17.6
       lodash-cli: 4.17.5
       tsup: ^6.3.0
     dependencies:
-      '@types/lodash-es': 4.17.2
+      '@types/lodash-es': 4.17.6
     devDependencies:
       lodash-cli: 4.17.5
       tsup: 6.3.0
@@ -1179,7 +1179,7 @@ packages:
     resolution: {integrity: sha512-oHGRUQeoX1QrKeJIKVe0hwjGqNnVYsM5Nep5zo0uE0m42sLH+Fsd2pStJ5sRM1bNyTUUoz0pe2lTeMJrb/taTA==}
     engines: {node: '>=6.9.0'}
     dependencies:
-      '@babel/types': 7.19.4
+      '@babel/types': 7.20.2
       '@jridgewell/gen-mapping': 0.3.2
       jsesc: 2.5.2
 
@@ -1431,7 +1431,7 @@ packages:
       '@babel/helper-validator-identifier': 7.19.1
       '@babel/template': 7.18.10
       '@babel/traverse': 7.19.6
-      '@babel/types': 7.19.4
+      '@babel/types': 7.20.2
     transitivePeerDependencies:
       - supports-color
 
@@ -1564,7 +1564,7 @@ packages:
     dependencies:
       '@babel/template': 7.18.10
       '@babel/traverse': 7.19.6
-      '@babel/types': 7.19.4
+      '@babel/types': 7.20.2
     transitivePeerDependencies:
       - supports-color
 
@@ -3261,7 +3261,7 @@ packages:
     dependencies:
       '@babel/core': 7.20.2
       '@babel/helper-create-class-features-plugin': 7.19.0_@babel+core@7.20.2
-      '@babel/helper-plugin-utils': 7.20.2
+      '@babel/helper-plugin-utils': 7.19.0
       '@babel/plugin-syntax-typescript': 7.18.6_@babel+core@7.20.2
     transitivePeerDependencies:
       - supports-color
@@ -10579,19 +10579,14 @@ packages:
       keyv: 4.5.0
     dev: false
 
-  /@types/lodash-es/4.17.2:
-    resolution: {integrity: sha512-Bpl6bh7kF9IdepJEfSd6g/E6OPq99jcIQP5g0xqv47P1FjLOP1+PENCy2vWvrzY+KwnnHwGAbUcTxbEr+WAnUw==}
+  /@types/lodash-es/4.17.6:
+    resolution: {integrity: sha512-R+zTeVUKDdfoRxpAryaQNRKk3105Rrgx2CFRClIgRGaqDTdjsm8h6IYA8ir584W3ePzkZfst5xIgDwYrlh9HLg==}
     dependencies:
-      '@types/lodash': 4.14.186
-    dev: false
-
-  /@types/lodash/4.14.186:
-    resolution: {integrity: sha512-eHcVlLXP0c2FlMPm56ITode2AgLMSa6aJ05JTTbYbI+7EMkCEE5qk2E41d5g2lCVTqRe0GnnRFurmlCsDODrPw==}
+      '@types/lodash': 4.14.188
     dev: false
 
   /@types/lodash/4.14.188:
     resolution: {integrity: sha512-zmEmF5OIM3rb7SbLCFYoQhO4dGt2FRM9AMkxvA3LaADOF1n8in/zGJlWji9fmafLoNyz+FoL6FE0SLtGIArD7w==}
-    dev: true
 
   /@types/long/4.0.2:
     resolution: {integrity: sha512-MqTGEo5bj5t157U6fA/BiDynNkn0YknVdh48CMPkTSpFTVmvao5UQmm7uEF6xBEo7qIMAlY/JSleYaE6VOdpaA==}

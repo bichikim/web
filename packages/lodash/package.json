@@ -31,7 +31,7 @@
     "prepare": "tsup --dts"
   },
   "dependencies": {
-    "@types/lodash-es": "4.17.2"
+    "@types/lodash-es": "4.17.6"
   },
   "devDependencies": {
     "lodash-cli": "4.17.5",
