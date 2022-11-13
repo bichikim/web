@@ -5,6 +5,8 @@ import {freeze, toArray} from '@winter-love/utils'
 import {MaybeRef} from 'src/types'
 import {isInInstance} from 'src/is-in-instance'
 
+export type RetryPromiseRecipe = () => any[] | boolean
+
 export interface UsePromiseOptions<Data> {
   /**
    * todo
@@ -35,6 +37,8 @@ export interface UsePromiseOptions<Data> {
   immediate?: boolean
 
   initData?: Data
+
+  retry?: RetryPromiseRecipe
 }
 
 export interface UsePromiseReturnType<Data, Args extends any[], Error> {
@@ -49,9 +53,11 @@ export interface UsePromiseReturnType<Data, Args extends any[], Error> {
 
 export interface RecipeContext<Data, Error> {
   readonly previous: {
+    readonly args: any[]
     readonly count: number
     readonly data: Data | undefined
     readonly error: Error | undefined
+    readonly retryCount: number
   }
   signal: AbortSignal
 }
@@ -59,6 +65,19 @@ export interface RecipeContext<Data, Error> {
 export type Recipe<Data, Args extends any[], Error> =
   // todo cannot pass Data type
   (context: RecipeContext<any, Error>, ...args: Args) => Promise<Data>
+
+export const getRetryArgs = (
+  context: RecipeContext<any, any>,
+  retry?: RetryPromiseRecipe,
+): undefined | any[] => {
+  const _result = retry?.()
+  if (Array.isArray(_result)) {
+    return _result
+  }
+  if (_result) {
+    return []
+  }
+}
 
 /**
  * todo experimental
@@ -69,19 +88,32 @@ export type Recipe<Data, Args extends any[], Error> =
  */
 export const usePromise = <Data, Args extends any[] = any, Error = any>(
   recipe: Recipe<Data, Args, Error>,
-  args?: MaybeRef<Args>,
   options: UsePromiseOptions<Data> = {},
 ): UsePromiseReturnType<Data, Args, Error> => {
-  const {immediate, initData} = options
+  const {immediate, retry} = options
   const cancelPrevPromise = toRef(options, 'cancelPrevPromise', false)
   const cleanOnExecuteRef = toRef(options, 'cleanOnExecute', true)
-  const dataRef = bindRef(resolveRef<Data | undefined>(initData))
-  const argsRef = resolveRef(args)
+  const dataRef = bindRef(toRef(options, 'initData'))
+  const argsRef = ref<any[]>([])
   const countRef = ref<number>(0)
   const waitingRef = ref<boolean>(false)
   const errorRef = ref<Error | undefined>()
   const promiseRef = ref<Promise<Data> | undefined>()
   const abortController = new AbortController()
+  const retryCountRef = ref(0)
+
+  const getRecipeContext = () => {
+    return freeze({
+      previous: freeze({
+        args: argsRef.value,
+        count: countRef.value,
+        data: dataRef.value,
+        error: errorRef.value,
+        retryCount: retryCountRef.value,
+      }),
+      signal: abortController.signal,
+    })
+  }
 
   const execute = (...args: Args) => {
     if (cancelPrevPromise.value) {
@@ -91,14 +123,7 @@ export const usePromise = <Data, Args extends any[] = any, Error = any>(
       dataRef.value = undefined
     }
 
-    const context = freeze({
-      previous: {
-        count: countRef.value,
-        data: dataRef.value,
-        error: errorRef.value,
-      },
-      signal: abortController.signal,
-    })
+    const context = getRecipeContext()
 
     waitingRef.value = true
     errorRef.value = undefined
@@ -108,19 +133,26 @@ export const usePromise = <Data, Args extends any[] = any, Error = any>(
       .then((data) => {
         dataRef.value = data
         waitingRef.value = false
+        retryCountRef.value = 0
         return data
       })
       .catch((error) => {
         errorRef.value = error
+        const context = getRecipeContext()
+        const retryArgs = getRetryArgs(context, retry)
+        if (retryArgs) {
+          retryCountRef.value += 1
+          return execute(...(retryArgs as any))
+        }
         waitingRef.value = false
         throw error
       })
 
+    argsRef.value = args
     promiseRef.value = promise
     return promise
   }
 
-  // https://stackoverflow.com/questions/30233302/promise-is-it-possible-to-force-cancel-a-promise
   const cancel = () => {
     abortController.abort()
   }
@@ -128,10 +160,10 @@ export const usePromise = <Data, Args extends any[] = any, Error = any>(
   if (immediate) {
     if (isInInstance()) {
       onMounted(() => {
-        promiseRef.value = execute(...(toArray(argsRef.value) as any))
+        promiseRef.value = execute(...(argsRef.value as any))
       })
     } else {
-      promiseRef.value = execute(...(toArray(argsRef.value) as any))
+      promiseRef.value = execute(...(argsRef.value as any))
     }
   }
 

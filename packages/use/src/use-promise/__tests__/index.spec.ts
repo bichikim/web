@@ -84,7 +84,7 @@ describe('use promise', () => {
 
   it('should resolve promise immediately', async () => {
     const resultValue = 'foo'
-    const {waiting, data, promise} = usePromise(() => Promise.resolve(resultValue), undefined, {
+    const {waiting, data, promise} = usePromise(() => Promise.resolve(resultValue), {
       immediate: true,
     })
 
@@ -152,17 +152,27 @@ describe('use promise', () => {
     })
   })
 
-  it('should resolve promise with an arg and the immediate option', async () => {
-    const {waiting, data, promise} = usePromise(
-      (_, name: string) => Promise.resolve(name),
-      ['foo'],
-      {immediate: true},
+  it('should retry', async () => {
+    const {execute, data, error} = usePromise(
+      (_, count?: number) => {
+        if (count !== 1) {
+          return Promise.reject(new Error('foo'))
+        }
+        return Promise.resolve('foo')
+      },
+      {
+        retry: () => {
+          return [1]
+        },
+      },
     )
 
-    expect(waiting.value).toBe(true)
-    await promise
-    expect(waiting.value).toBe(false)
+    expect(data.value).toBeUndefined()
+
+    const result = await execute(0)
+    expect(result).toBe('foo')
     expect(data.value).toBe('foo')
+    expect(error.value).toBeUndefined()
   })
 
   it.todo('should execute with cancel')
