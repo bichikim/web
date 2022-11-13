@@ -1,5 +1,5 @@
-import baseGt from './_baseGt.js';
-import createRelationalOperation from './_createRelationalOperation.js';
+import baseGt from './_baseGt.js'
+import createRelationalOperation from './_createRelationalOperation.js'
 
 /**
  * Checks if `value` is greater than `other`.
@@ -24,6 +24,6 @@ import createRelationalOperation from './_createRelationalOperation.js';
  * _.gt(1, 3);
  * // => false
  */
-var gt = createRelationalOperation(baseGt);
+const gt = createRelationalOperation(baseGt)
 
-export default gt;
+export default gt

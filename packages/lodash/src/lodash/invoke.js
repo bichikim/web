@@ -1,5 +1,5 @@
-import baseInvoke from './_baseInvoke.js';
-import baseRest from './_baseRest.js';
+import baseInvoke from './_baseInvoke.js'
+import baseRest from './_baseRest.js'
 
 /**
  * Invokes the method at `path` of `object`.
@@ -19,6 +19,6 @@ import baseRest from './_baseRest.js';
  * _.invoke(object, 'a[0].b.c.slice', 1, 3);
  * // => [2, 3]
  */
-var invoke = baseRest(baseInvoke);
+const invoke = baseRest(baseInvoke)
 
-export default invoke;
+export default invoke

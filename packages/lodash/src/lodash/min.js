@@ -1,6 +1,6 @@
-import baseExtremum from './_baseExtremum.js';
-import baseLt from './_baseLt.js';
-import identity from './identity.js';
+import baseExtremum from './_baseExtremum.js'
+import baseLt from './_baseLt.js'
+import identity from './identity.js'
 
 /**
  * Computes the minimum value of `array`. If `array` is empty or falsey,
@@ -21,9 +21,7 @@ import identity from './identity.js';
  * // => undefined
  */
 function min(array) {
-  return (array && array.length)
-    ? baseExtremum(array, identity, baseLt)
-    : undefined;
+  return array && array.length > 0 ? baseExtremum(array, identity, baseLt) : undefined
 }
 
-export default min;
+export default min

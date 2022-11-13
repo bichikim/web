@@ -1,4 +1,4 @@
-import ary from './ary.js';
+import ary from './ary.js'
 
 /**
  * Creates a function that accepts up to one argument, ignoring any
@@ -16,7 +16,7 @@ import ary from './ary.js';
  * // => [6, 8, 10]
  */
 function unary(func) {
-  return ary(func, 1);
+  return ary(func, 1)
 }
 
-export default unary;
+export default unary

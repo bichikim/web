@@ -1,4 +1,4 @@
-import createRound from './_createRound.js';
+import createRound from './_createRound.js'
 
 /**
  * Computes `number` rounded down to `precision`.
@@ -21,6 +21,6 @@ import createRound from './_createRound.js';
  * _.floor(4060, -2);
  * // => 4000
  */
-var floor = createRound('floor');
+const floor = createRound('floor')
 
-export default floor;
+export default floor

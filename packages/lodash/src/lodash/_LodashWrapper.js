@@ -1,5 +1,5 @@
-import baseCreate from './_baseCreate.js';
-import baseLodash from './_baseLodash.js';
+import baseCreate from './_baseCreate.js'
+import baseLodash from './_baseLodash.js'
 
 /**
  * The base constructor for creating `lodash` wrapper objects.
@@ -9,14 +9,14 @@ import baseLodash from './_baseLodash.js';
  * @param {boolean} [chainAll] Enable explicit method chain sequences.
  */
 function LodashWrapper(value, chainAll) {
-  this.__wrapped__ = value;
-  this.__actions__ = [];
-  this.__chain__ = !!chainAll;
-  this.__index__ = 0;
-  this.__values__ = undefined;
+  this.__wrapped__ = value
+  this.__actions__ = []
+  this.__chain__ = Boolean(chainAll)
+  this.__index__ = 0
+  this.__values__ = undefined
 }
 
-LodashWrapper.prototype = baseCreate(baseLodash.prototype);
-LodashWrapper.prototype.constructor = LodashWrapper;
+LodashWrapper.prototype = baseCreate(baseLodash.prototype)
+LodashWrapper.prototype.constructor = LodashWrapper
 
-export default LodashWrapper;
+export default LodashWrapper

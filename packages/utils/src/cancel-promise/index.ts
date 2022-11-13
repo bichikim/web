@@ -3,16 +3,15 @@ export type CancelPromiseConstructor = (resolve, reject?) => void
 export type CancelPromise<T = unknown> = Promise<T> & {cancel: () => void}
 /**
  * @experimental
- * @param constructor
+ * @param promise
  */
-export const createCancelPromise = (constructor: CancelPromiseConstructor): CancelPromise => {
-  const promise = new Promise<any>(constructor)
+export const createCancelPromise = <T>(promise: Promise<T>): [Promise<T | null>, () => void] => {
   let cancel: () => void
   const cancelPromise = new Promise((resolve) => {
     cancel = () => resolve(null)
   })
 
-  const racePromise = Promise.race([cancelPromise, promise])
+  const racePromise: Promise<any> = Promise.race([cancelPromise, promise])
 
-  return Object.assign(racePromise, {cancel})
+  return [racePromise, cancel]
 }

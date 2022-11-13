@@ -1,4 +1,5 @@
 export * from './callbackify'
+export * from './cancel-promise'
 export * from './clean-object'
 export * from './functional'
 export * from './get-document'

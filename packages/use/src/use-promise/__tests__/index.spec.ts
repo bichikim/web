@@ -96,14 +96,15 @@ describe('use promise', () => {
 
   it('should resolve promise with context', async () => {
     const {waiting, execute} = usePromise((context) => {
-      const {previousCount, previousData, previousError, previousFetching, previousPromise} =
-        context
+      const {
+        previous: {count, data, error},
+        signal,
+      } = context
       return Promise.resolve({
-        previousCount,
-        previousData,
-        previousError,
-        previousFetching,
-        previousPromise,
+        count,
+        data,
+        error,
+        signal,
       })
     })
 
@@ -125,18 +126,16 @@ describe('use promise', () => {
     await flushPromises()
 
     expect(result1).toEqual({
-      previousCount: 0,
-      previousData: undefined,
-      previousError: undefined,
-      previousFetching: false,
-      previousPromise: undefined,
+      count: 0,
+      data: undefined,
+      error: undefined,
+      signal: expect.any(Object),
     })
     expect(result2).toEqual({
-      previousCount: 1,
-      previousData: undefined,
-      previousError: undefined,
-      previousFetching: true,
-      previousPromise: Promise.resolve(null),
+      count: 1,
+      data: undefined,
+      error: undefined,
+      signal: expect.any(Object),
     })
   })
 

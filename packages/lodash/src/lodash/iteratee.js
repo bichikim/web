@@ -1,8 +1,8 @@
-import baseClone from './_baseClone.js';
-import baseIteratee from './_baseIteratee.js';
+import baseClone from './_baseClone.js'
+import baseIteratee from './_baseIteratee.js'
 
 /** Used to compose bitmasks for cloning. */
-var CLONE_DEEP_FLAG = 1;
+const CLONE_DEEP_FLAG = 1
 
 /**
  * Creates a function that invokes `func` with the arguments of the created
@@ -47,7 +47,7 @@ var CLONE_DEEP_FLAG = 1;
  * // => ['def']
  */
 function iteratee(func) {
-  return baseIteratee(typeof func == 'function' ? func : baseClone(func, CLONE_DEEP_FLAG));
+  return baseIteratee(typeof func == 'function' ? func : baseClone(func, CLONE_DEEP_FLAG))
 }
 
-export default iteratee;
+export default iteratee

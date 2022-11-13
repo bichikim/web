@@ -1,4 +1,4 @@
-import createFlow from './_createFlow.js';
+import createFlow from './_createFlow.js'
 
 /**
  * Creates a function that returns the result of invoking the given functions
@@ -22,6 +22,6 @@ import createFlow from './_createFlow.js';
  * addSquare(1, 2);
  * // => 9
  */
-var flow = createFlow();
+const flow = createFlow()
 
-export default flow;
+export default flow

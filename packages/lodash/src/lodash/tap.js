@@ -22,8 +22,8 @@
  * // => [2, 1]
  */
 function tap(value, interceptor) {
-  interceptor(value);
-  return value;
+  interceptor(value)
+  return value
 }
 
-export default tap;
+export default tap

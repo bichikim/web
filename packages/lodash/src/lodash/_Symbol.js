@@ -1,6 +1,6 @@
-import root from './_root.js';
+import root from './_root.js'
 
 /** Built-in value references. */
-var Symbol = root.Symbol;
+const {Symbol} = root
 
-export default Symbol;
+export default Symbol

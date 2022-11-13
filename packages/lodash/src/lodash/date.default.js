@@ -1,5 +1,5 @@
-import now from './now.js';
+import now from './now.js'
 
 export default {
-  now
-};
+  now,
+}

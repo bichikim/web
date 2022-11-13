@@ -1,5 +1,5 @@
-import castFunction from './_castFunction.js';
-import partial from './partial.js';
+import castFunction from './_castFunction.js'
+import partial from './partial.js'
 
 /**
  * Creates a function that provides `value` to `wrapper` as its first
@@ -24,7 +24,7 @@ import partial from './partial.js';
  * // => '<p>fred, barney, &amp; pebbles</p>'
  */
 function wrap(value, wrapper) {
-  return partial(castFunction(wrapper), value);
+  return partial(castFunction(wrapper), value)
 }
 
-export default wrap;
+export default wrap
