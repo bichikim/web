@@ -1,8 +1,8 @@
-import debounce from './debounce.js'
-import isObject from './isObject.js'
+import debounce from './debounce.js';
+import isObject from './isObject.js';
 
 /** Error message constants. */
-const FUNC_ERROR_TEXT = 'Expected a function'
+var FUNC_ERROR_TEXT = 'Expected a function';
 
 /**
  * Creates a throttled function that only invokes `func` at most once per
@@ -49,21 +49,21 @@ const FUNC_ERROR_TEXT = 'Expected a function'
  * jQuery(window).on('popstate', throttled.cancel);
  */
 function throttle(func, wait, options) {
-  let leading = true
-  let trailing = true
+  var leading = true,
+      trailing = true;
 
   if (typeof func != 'function') {
-    throw new TypeError(FUNC_ERROR_TEXT)
+    throw new TypeError(FUNC_ERROR_TEXT);
   }
   if (isObject(options)) {
-    leading = 'leading' in options ? Boolean(options.leading) : leading
-    trailing = 'trailing' in options ? Boolean(options.trailing) : trailing
+    leading = 'leading' in options ? !!options.leading : leading;
+    trailing = 'trailing' in options ? !!options.trailing : trailing;
   }
   return debounce(func, wait, {
-    leading: leading,
-    maxWait: wait,
-    trailing: trailing,
-  })
+    'leading': leading,
+    'maxWait': wait,
+    'trailing': trailing
+  });
 }
 
-export default throttle
+export default throttle;

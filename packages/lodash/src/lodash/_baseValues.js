@@ -1,4 +1,4 @@
-import arrayMap from './_arrayMap.js'
+import arrayMap from './_arrayMap.js';
 
 /**
  * The base implementation of `_.values` and `_.valuesIn` which creates an
@@ -11,9 +11,9 @@ import arrayMap from './_arrayMap.js'
  * @returns {Object} Returns the array of property values.
  */
 function baseValues(object, props) {
-  return arrayMap(props, function (key) {
-    return object[key]
-  })
+  return arrayMap(props, function(key) {
+    return object[key];
+  });
 }
 
-export default baseValues
+export default baseValues;

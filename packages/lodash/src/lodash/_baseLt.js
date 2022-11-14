@@ -8,7 +8,7 @@
  *  else `false`.
  */
 function baseLt(value, other) {
-  return value < other
+  return value < other;
 }
 
-export default baseLt
+export default baseLt;

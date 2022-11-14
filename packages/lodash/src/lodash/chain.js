@@ -1,4 +1,4 @@
-import lodash from './wrapperLodash.js'
+import lodash from './wrapperLodash.js';
 
 /**
  * Creates a `lodash` wrapper instance that wraps `value` with explicit method
@@ -30,9 +30,9 @@ import lodash from './wrapperLodash.js'
  * // => 'pebbles is 1'
  */
 function chain(value) {
-  const result = lodash(value)
-  result.__chain__ = true
-  return result
+  var result = lodash(value);
+  result.__chain__ = true;
+  return result;
 }
 
-export default chain
+export default chain;

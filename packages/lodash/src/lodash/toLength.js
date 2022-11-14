@@ -1,8 +1,8 @@
-import baseClamp from './_baseClamp.js'
-import toInteger from './toInteger.js'
+import baseClamp from './_baseClamp.js';
+import toInteger from './toInteger.js';
 
 /** Used as references for the maximum length and index of an array. */
-const MAX_ARRAY_LENGTH = 4_294_967_295
+var MAX_ARRAY_LENGTH = 4294967295;
 
 /**
  * Converts `value` to an integer suitable for use as the length of an
@@ -32,7 +32,7 @@ const MAX_ARRAY_LENGTH = 4_294_967_295
  * // => 3
  */
 function toLength(value) {
-  return value ? baseClamp(toInteger(value), 0, MAX_ARRAY_LENGTH) : 0
+  return value ? baseClamp(toInteger(value), 0, MAX_ARRAY_LENGTH) : 0;
 }
 
-export default toLength
+export default toLength;

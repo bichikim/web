@@ -1,5 +1,5 @@
-import isObjectLike from './isObjectLike.js'
-import isPlainObject from './isPlainObject.js'
+import isObjectLike from './isObjectLike.js';
+import isPlainObject from './isPlainObject.js';
 
 /**
  * Checks if `value` is likely a DOM element.
@@ -19,7 +19,7 @@ import isPlainObject from './isPlainObject.js'
  * // => false
  */
 function isElement(value) {
-  return isObjectLike(value) && value.nodeType === 1 && !isPlainObject(value)
+  return isObjectLike(value) && value.nodeType === 1 && !isPlainObject(value);
 }
 
-export default isElement
+export default isElement;

@@ -1,5 +1,5 @@
-import basePickBy from './_basePickBy.js'
-import hasIn from './hasIn.js'
+import basePickBy from './_basePickBy.js';
+import hasIn from './hasIn.js';
 
 /**
  * The base implementation of `_.pick` without support for individual
@@ -11,9 +11,9 @@ import hasIn from './hasIn.js'
  * @returns {Object} Returns the new object.
  */
 function basePick(object, paths) {
-  return basePickBy(object, paths, function (value, path) {
-    return hasIn(object, path)
-  })
+  return basePickBy(object, paths, function(value, path) {
+    return hasIn(object, path);
+  });
 }
 
-export default basePick
+export default basePick;

@@ -1,9 +1,9 @@
-import toString from './toString.js'
-import unescapeHtmlChar from './_unescapeHtmlChar.js'
+import toString from './toString.js';
+import unescapeHtmlChar from './_unescapeHtmlChar.js';
 
 /** Used to match HTML entities and HTML characters. */
-const reEscapedHtml = /&(?:amp|lt|gt|quot|#39);/g
-const reHasEscapedHtml = RegExp(reEscapedHtml.source)
+var reEscapedHtml = /&(?:amp|lt|gt|quot|#39);/g,
+    reHasEscapedHtml = RegExp(reEscapedHtml.source);
 
 /**
  * The inverse of `_.escape`; this method converts the HTML entities
@@ -25,10 +25,10 @@ const reHasEscapedHtml = RegExp(reEscapedHtml.source)
  * // => 'fred, barney, & pebbles'
  */
 function unescape(string) {
-  string = toString(string)
-  return string && reHasEscapedHtml.test(string)
+  string = toString(string);
+  return (string && reHasEscapedHtml.test(string))
     ? string.replace(reEscapedHtml, unescapeHtmlChar)
-    : string
+    : string;
 }
 
-export default unescape
+export default unescape;

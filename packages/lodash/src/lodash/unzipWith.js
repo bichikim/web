@@ -1,6 +1,6 @@
-import apply from './_apply.js'
-import arrayMap from './_arrayMap.js'
-import unzip from './unzip.js'
+import apply from './_apply.js';
+import arrayMap from './_arrayMap.js';
+import unzip from './unzip.js';
 
 /**
  * This method is like `_.unzip` except that it accepts `iteratee` to specify
@@ -24,16 +24,16 @@ import unzip from './unzip.js'
  * // => [3, 30, 300]
  */
 function unzipWith(array, iteratee) {
-  if (!(array && array.length > 0)) {
-    return []
+  if (!(array && array.length)) {
+    return [];
   }
-  const result = unzip(array)
+  var result = unzip(array);
   if (iteratee == null) {
-    return result
+    return result;
   }
-  return arrayMap(result, function (group) {
-    return apply(iteratee, undefined, group)
-  })
+  return arrayMap(result, function(group) {
+    return apply(iteratee, undefined, group);
+  });
 }
 
-export default unzipWith
+export default unzipWith;

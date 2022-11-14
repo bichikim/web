@@ -6,13 +6,13 @@
  * @returns {Array} Returns the value-value pairs.
  */
 function setToPairs(set) {
-  let index = -1
-  const result = Array(set.size)
+  var index = -1,
+      result = Array(set.size);
 
-  set.forEach(function (value) {
-    result[++index] = [value, value]
-  })
-  return result
+  set.forEach(function(value) {
+    result[++index] = [value, value];
+  });
+  return result;
 }
 
-export default setToPairs
+export default setToPairs;

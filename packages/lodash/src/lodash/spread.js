@@ -1,14 +1,14 @@
-import apply from './_apply.js'
-import arrayPush from './_arrayPush.js'
-import baseRest from './_baseRest.js'
-import castSlice from './_castSlice.js'
-import toInteger from './toInteger.js'
+import apply from './_apply.js';
+import arrayPush from './_arrayPush.js';
+import baseRest from './_baseRest.js';
+import castSlice from './_castSlice.js';
+import toInteger from './toInteger.js';
 
 /** Error message constants. */
-const FUNC_ERROR_TEXT = 'Expected a function'
+var FUNC_ERROR_TEXT = 'Expected a function';
 
 /* Built-in method references for those with the same name as other `lodash` methods. */
-const nativeMax = Math.max
+var nativeMax = Math.max;
 
 /**
  * Creates a function that invokes `func` with the `this` binding of the
@@ -46,18 +46,18 @@ const nativeMax = Math.max
  */
 function spread(func, start) {
   if (typeof func != 'function') {
-    throw new TypeError(FUNC_ERROR_TEXT)
+    throw new TypeError(FUNC_ERROR_TEXT);
   }
-  start = start == null ? 0 : nativeMax(toInteger(start), 0)
-  return baseRest(function (args) {
-    const array = args[start]
-    const otherArgs = castSlice(args, 0, start)
+  start = start == null ? 0 : nativeMax(toInteger(start), 0);
+  return baseRest(function(args) {
+    var array = args[start],
+        otherArgs = castSlice(args, 0, start);
 
     if (array) {
-      arrayPush(otherArgs, array)
+      arrayPush(otherArgs, array);
     }
-    return apply(func, this, otherArgs)
-  })
+    return apply(func, this, otherArgs);
+  });
 }
 
-export default spread
+export default spread;

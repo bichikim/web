@@ -1,6 +1,6 @@
-import baseFor from './_baseFor.js'
-import castFunction from './_castFunction.js'
-import keysIn from './keysIn.js'
+import baseFor from './_baseFor.js';
+import castFunction from './_castFunction.js';
+import keysIn from './keysIn.js';
 
 /**
  * Iterates over own and inherited enumerable string keyed properties of an
@@ -31,7 +31,9 @@ import keysIn from './keysIn.js'
  * // => Logs 'a', 'b', then 'c' (iteration order is not guaranteed).
  */
 function forIn(object, iteratee) {
-  return object == null ? object : baseFor(object, castFunction(iteratee), keysIn)
+  return object == null
+    ? object
+    : baseFor(object, castFunction(iteratee), keysIn);
 }
 
-export default forIn
+export default forIn;

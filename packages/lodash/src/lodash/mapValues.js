@@ -1,6 +1,6 @@
-import baseAssignValue from './_baseAssignValue.js'
-import baseForOwn from './_baseForOwn.js'
-import baseIteratee from './_baseIteratee.js'
+import baseAssignValue from './_baseAssignValue.js';
+import baseForOwn from './_baseForOwn.js';
+import baseIteratee from './_baseIteratee.js';
 
 /**
  * Creates an object with the same keys as `object` and values generated
@@ -31,13 +31,13 @@ import baseIteratee from './_baseIteratee.js'
  * // => { 'fred': 40, 'pebbles': 1 } (iteration order is not guaranteed)
  */
 function mapValues(object, iteratee) {
-  const result = {}
-  iteratee = baseIteratee(iteratee, 3)
+  var result = {};
+  iteratee = baseIteratee(iteratee, 3);
 
-  baseForOwn(object, function (value, key, object) {
-    baseAssignValue(result, key, iteratee(value, key, object))
-  })
-  return result
+  baseForOwn(object, function(value, key, object) {
+    baseAssignValue(result, key, iteratee(value, key, object));
+  });
+  return result;
 }
 
-export default mapValues
+export default mapValues;

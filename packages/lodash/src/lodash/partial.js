@@ -1,10 +1,10 @@
-import baseRest from './_baseRest.js'
-import createWrap from './_createWrap.js'
-import getHolder from './_getHolder.js'
-import replaceHolders from './_replaceHolders.js'
+import baseRest from './_baseRest.js';
+import createWrap from './_createWrap.js';
+import getHolder from './_getHolder.js';
+import replaceHolders from './_replaceHolders.js';
 
 /** Used to compose bitmasks for function metadata. */
-const WRAP_PARTIAL_FLAG = 32
+var WRAP_PARTIAL_FLAG = 32;
 
 /**
  * Creates a function that invokes `func` with `partials` prepended to the
@@ -39,12 +39,12 @@ const WRAP_PARTIAL_FLAG = 32
  * greetFred('hi');
  * // => 'hi fred'
  */
-var partial = baseRest(function (func, partials) {
-  const holders = replaceHolders(partials, getHolder(partial))
-  return createWrap(func, WRAP_PARTIAL_FLAG, undefined, partials, holders)
-})
+var partial = baseRest(function(func, partials) {
+  var holders = replaceHolders(partials, getHolder(partial));
+  return createWrap(func, WRAP_PARTIAL_FLAG, undefined, partials, holders);
+});
 
 // Assign default placeholders.
-partial.placeholder = {}
+partial.placeholder = {};
 
-export default partial
+export default partial;

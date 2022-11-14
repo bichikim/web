@@ -1,4 +1,4 @@
-import baseGet from './_baseGet.js'
+import baseGet from './_baseGet.js';
 
 /**
  * A specialized version of `baseProperty` which supports deep paths.
@@ -8,9 +8,9 @@ import baseGet from './_baseGet.js'
  * @returns {Function} Returns the new accessor function.
  */
 function basePropertyDeep(path) {
-  return function (object) {
-    return baseGet(object, path)
-  }
+  return function(object) {
+    return baseGet(object, path);
+  };
 }
 
-export default basePropertyDeep
+export default basePropertyDeep;

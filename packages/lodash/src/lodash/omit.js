@@ -1,16 +1,16 @@
-import arrayMap from './_arrayMap.js'
-import baseClone from './_baseClone.js'
-import baseUnset from './_baseUnset.js'
-import castPath from './_castPath.js'
-import copyObject from './_copyObject.js'
-import customOmitClone from './_customOmitClone.js'
-import flatRest from './_flatRest.js'
-import getAllKeysIn from './_getAllKeysIn.js'
+import arrayMap from './_arrayMap.js';
+import baseClone from './_baseClone.js';
+import baseUnset from './_baseUnset.js';
+import castPath from './_castPath.js';
+import copyObject from './_copyObject.js';
+import customOmitClone from './_customOmitClone.js';
+import flatRest from './_flatRest.js';
+import getAllKeysIn from './_getAllKeysIn.js';
 
 /** Used to compose bitmasks for cloning. */
-const CLONE_DEEP_FLAG = 1
-const CLONE_FLAT_FLAG = 2
-const CLONE_SYMBOLS_FLAG = 4
+var CLONE_DEEP_FLAG = 1,
+    CLONE_FLAT_FLAG = 2,
+    CLONE_SYMBOLS_FLAG = 4;
 
 /**
  * The opposite of `_.pick`; this method creates an object composed of the
@@ -32,30 +32,26 @@ const CLONE_SYMBOLS_FLAG = 4
  * _.omit(object, ['a', 'c']);
  * // => { 'b': '2' }
  */
-const omit = flatRest(function (object, paths) {
-  let result = {}
+var omit = flatRest(function(object, paths) {
+  var result = {};
   if (object == null) {
-    return result
+    return result;
   }
-  let isDeep = false
-  paths = arrayMap(paths, function (path) {
-    path = castPath(path, object)
-    isDeep || (isDeep = path.length > 1)
-    return path
-  })
-  copyObject(object, getAllKeysIn(object), result)
+  var isDeep = false;
+  paths = arrayMap(paths, function(path) {
+    path = castPath(path, object);
+    isDeep || (isDeep = path.length > 1);
+    return path;
+  });
+  copyObject(object, getAllKeysIn(object), result);
   if (isDeep) {
-    result = baseClone(
-      result,
-      CLONE_DEEP_FLAG | CLONE_FLAT_FLAG | CLONE_SYMBOLS_FLAG,
-      customOmitClone,
-    )
+    result = baseClone(result, CLONE_DEEP_FLAG | CLONE_FLAT_FLAG | CLONE_SYMBOLS_FLAG, customOmitClone);
   }
-  let {length} = paths
+  var length = paths.length;
   while (length--) {
-    baseUnset(result, paths[length])
+    baseUnset(result, paths[length]);
   }
-  return result
-})
+  return result;
+});
 
-export default omit
+export default omit;

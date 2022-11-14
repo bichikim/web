@@ -1,8 +1,8 @@
-import arrayEvery from './_arrayEvery.js'
-import baseEvery from './_baseEvery.js'
-import baseIteratee from './_baseIteratee.js'
-import isArray from './isArray.js'
-import isIterateeCall from './_isIterateeCall.js'
+import arrayEvery from './_arrayEvery.js';
+import baseEvery from './_baseEvery.js';
+import baseIteratee from './_baseIteratee.js';
+import isArray from './isArray.js';
+import isIterateeCall from './_isIterateeCall.js';
 
 /**
  * Checks if `predicate` returns truthy for **all** elements of `collection`.
@@ -46,11 +46,11 @@ import isIterateeCall from './_isIterateeCall.js'
  * // => false
  */
 function every(collection, predicate, guard) {
-  const func = isArray(collection) ? arrayEvery : baseEvery
+  var func = isArray(collection) ? arrayEvery : baseEvery;
   if (guard && isIterateeCall(collection, predicate, guard)) {
-    predicate = undefined
+    predicate = undefined;
   }
-  return func(collection, baseIteratee(predicate, 3))
+  return func(collection, baseIteratee(predicate, 3));
 }
 
-export default every
+export default every;

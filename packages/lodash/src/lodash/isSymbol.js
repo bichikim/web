@@ -1,8 +1,8 @@
-import baseGetTag from './_baseGetTag.js'
-import isObjectLike from './isObjectLike.js'
+import baseGetTag from './_baseGetTag.js';
+import isObjectLike from './isObjectLike.js';
 
 /** `Object#toString` result references. */
-const symbolTag = '[object Symbol]'
+var symbolTag = '[object Symbol]';
 
 /**
  * Checks if `value` is classified as a `Symbol` primitive or object.
@@ -22,7 +22,8 @@ const symbolTag = '[object Symbol]'
  * // => false
  */
 function isSymbol(value) {
-  return typeof value == 'symbol' || (isObjectLike(value) && baseGetTag(value) == symbolTag)
+  return typeof value == 'symbol' ||
+    (isObjectLike(value) && baseGetTag(value) == symbolTag);
 }
 
-export default isSymbol
+export default isSymbol;

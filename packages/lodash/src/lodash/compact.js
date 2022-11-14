@@ -14,18 +14,18 @@
  * // => [1, 2, 3]
  */
 function compact(array) {
-  let index = -1
-  const length = array == null ? 0 : array.length
-  let resIndex = 0
-  const result = []
+  var index = -1,
+      length = array == null ? 0 : array.length,
+      resIndex = 0,
+      result = [];
 
   while (++index < length) {
-    const value = array[index]
+    var value = array[index];
     if (value) {
-      result[resIndex++] = value
+      result[resIndex++] = value;
     }
   }
-  return result
+  return result;
 }
 
-export default compact
+export default compact;

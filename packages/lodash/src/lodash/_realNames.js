@@ -1,4 +1,4 @@
 /** Used to lookup unminified function names. */
-const realNames = {}
+var realNames = {};
 
-export default realNames
+export default realNames;

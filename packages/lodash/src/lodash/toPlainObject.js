@@ -1,5 +1,5 @@
-import copyObject from './_copyObject.js'
-import keysIn from './keysIn.js'
+import copyObject from './_copyObject.js';
+import keysIn from './keysIn.js';
 
 /**
  * Converts `value` to a plain object flattening inherited enumerable string
@@ -26,7 +26,7 @@ import keysIn from './keysIn.js'
  * // => { 'a': 1, 'b': 2, 'c': 3 }
  */
 function toPlainObject(value) {
-  return copyObject(value, keysIn(value))
+  return copyObject(value, keysIn(value));
 }
 
-export default toPlainObject
+export default toPlainObject;

@@ -1,4 +1,4 @@
-import baseWrapperValue from './_baseWrapperValue.js'
+import baseWrapperValue from './_baseWrapperValue.js';
 
 /**
  * Executes the chain sequence to resolve the unwrapped value.
@@ -15,7 +15,7 @@ import baseWrapperValue from './_baseWrapperValue.js'
  * // => [1, 2, 3]
  */
 function wrapperValue() {
-  return baseWrapperValue(this.__wrapped__, this.__actions__)
+  return baseWrapperValue(this.__wrapped__, this.__actions__);
 }
 
-export default wrapperValue
+export default wrapperValue;

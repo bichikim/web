@@ -1,7 +1,7 @@
-import MapCache from './_MapCache.js'
+import MapCache from './_MapCache.js';
 
 /** Error message constants. */
-const FUNC_ERROR_TEXT = 'Expected a function'
+var FUNC_ERROR_TEXT = 'Expected a function';
 
 /**
  * Creates a function that memoizes the result of `func`. If `resolver` is
@@ -49,25 +49,25 @@ const FUNC_ERROR_TEXT = 'Expected a function'
  */
 function memoize(func, resolver) {
   if (typeof func != 'function' || (resolver != null && typeof resolver != 'function')) {
-    throw new TypeError(FUNC_ERROR_TEXT)
+    throw new TypeError(FUNC_ERROR_TEXT);
   }
-  var memoized = function () {
-    const args = arguments
-    const key = resolver ? resolver.apply(this, args) : args[0]
-    const {cache} = memoized
+  var memoized = function() {
+    var args = arguments,
+        key = resolver ? resolver.apply(this, args) : args[0],
+        cache = memoized.cache;
 
     if (cache.has(key)) {
-      return cache.get(key)
+      return cache.get(key);
     }
-    const result = func.apply(this, args)
-    memoized.cache = cache.set(key, result) || cache
-    return result
-  }
-  memoized.cache = new (memoize.Cache || MapCache)()
-  return memoized
+    var result = func.apply(this, args);
+    memoized.cache = cache.set(key, result) || cache;
+    return result;
+  };
+  memoized.cache = new (memoize.Cache || MapCache);
+  return memoized;
 }
 
 // Expose `MapCache`.
-memoize.Cache = MapCache
+memoize.Cache = MapCache;
 
-export default memoize
+export default memoize;

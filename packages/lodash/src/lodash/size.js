@@ -1,12 +1,12 @@
-import baseKeys from './_baseKeys.js'
-import getTag from './_getTag.js'
-import isArrayLike from './isArrayLike.js'
-import isString from './isString.js'
-import stringSize from './_stringSize.js'
+import baseKeys from './_baseKeys.js';
+import getTag from './_getTag.js';
+import isArrayLike from './isArrayLike.js';
+import isString from './isString.js';
+import stringSize from './_stringSize.js';
 
 /** `Object#toString` result references. */
-const mapTag = '[object Map]'
-const setTag = '[object Set]'
+var mapTag = '[object Map]',
+    setTag = '[object Set]';
 
 /**
  * Gets the size of `collection` by returning its length for array-like
@@ -31,16 +31,16 @@ const setTag = '[object Set]'
  */
 function size(collection) {
   if (collection == null) {
-    return 0
+    return 0;
   }
   if (isArrayLike(collection)) {
-    return isString(collection) ? stringSize(collection) : collection.length
+    return isString(collection) ? stringSize(collection) : collection.length;
   }
-  const tag = getTag(collection)
+  var tag = getTag(collection);
   if (tag == mapTag || tag == setTag) {
-    return collection.size
+    return collection.size;
   }
-  return baseKeys(collection).length
+  return baseKeys(collection).length;
 }
 
-export default size
+export default size;

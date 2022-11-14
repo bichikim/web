@@ -1,4 +1,4 @@
-import baseGet from './_baseGet.js'
+import baseGet from './_baseGet.js';
 
 /**
  * Gets the value at `path` of `object`. If the resolved value is
@@ -26,8 +26,8 @@ import baseGet from './_baseGet.js'
  * // => 'default'
  */
 function get(object, path, defaultValue) {
-  const result = object == null ? undefined : baseGet(object, path)
-  return result === undefined ? defaultValue : result
+  var result = object == null ? undefined : baseGet(object, path);
+  return result === undefined ? defaultValue : result;
 }
 
-export default get
+export default get;

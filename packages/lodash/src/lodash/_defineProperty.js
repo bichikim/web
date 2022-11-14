@@ -1,11 +1,11 @@
-import getNative from './_getNative.js'
+import getNative from './_getNative.js';
 
-const defineProperty = (function () {
+var defineProperty = (function() {
   try {
-    const func = getNative(Object, 'defineProperty')
-    func({}, '', {})
-    return func
-  } catch {}
-})()
+    var func = getNative(Object, 'defineProperty');
+    func({}, '', {});
+    return func;
+  } catch (e) {}
+}());
 
-export default defineProperty
+export default defineProperty;

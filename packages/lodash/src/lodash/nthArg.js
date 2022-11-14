@@ -1,6 +1,6 @@
-import baseNth from './_baseNth.js'
-import baseRest from './_baseRest.js'
-import toInteger from './toInteger.js'
+import baseNth from './_baseNth.js';
+import baseRest from './_baseRest.js';
+import toInteger from './toInteger.js';
 
 /**
  * Creates a function that gets the argument at index `n`. If `n` is negative,
@@ -23,10 +23,10 @@ import toInteger from './toInteger.js'
  * // => 'c'
  */
 function nthArg(n) {
-  n = toInteger(n)
-  return baseRest(function (args) {
-    return baseNth(args, n)
-  })
+  n = toInteger(n);
+  return baseRest(function(args) {
+    return baseNth(args, n);
+  });
 }
 
-export default nthArg
+export default nthArg;

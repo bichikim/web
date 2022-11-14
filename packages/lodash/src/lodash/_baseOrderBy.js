@@ -1,10 +1,10 @@
-import arrayMap from './_arrayMap.js'
-import baseIteratee from './_baseIteratee.js'
-import baseMap from './_baseMap.js'
-import baseSortBy from './_baseSortBy.js'
-import baseUnary from './_baseUnary.js'
-import compareMultiple from './_compareMultiple.js'
-import identity from './identity.js'
+import arrayMap from './_arrayMap.js';
+import baseIteratee from './_baseIteratee.js';
+import baseMap from './_baseMap.js';
+import baseSortBy from './_baseSortBy.js';
+import baseUnary from './_baseUnary.js';
+import compareMultiple from './_compareMultiple.js';
+import identity from './identity.js';
 
 /**
  * The base implementation of `_.orderBy` without param guards.
@@ -16,19 +16,19 @@ import identity from './identity.js'
  * @returns {Array} Returns the new sorted array.
  */
 function baseOrderBy(collection, iteratees, orders) {
-  let index = -1
-  iteratees = arrayMap(iteratees.length > 0 ? iteratees : [identity], baseUnary(baseIteratee))
+  var index = -1;
+  iteratees = arrayMap(iteratees.length ? iteratees : [identity], baseUnary(baseIteratee));
 
-  const result = baseMap(collection, function (value, key, collection) {
-    const criteria = arrayMap(iteratees, function (iteratee) {
-      return iteratee(value)
-    })
-    return {criteria: criteria, index: ++index, value: value}
-  })
+  var result = baseMap(collection, function(value, key, collection) {
+    var criteria = arrayMap(iteratees, function(iteratee) {
+      return iteratee(value);
+    });
+    return { 'criteria': criteria, 'index': ++index, 'value': value };
+  });
 
-  return baseSortBy(result, function (object, other) {
-    return compareMultiple(object, other, orders)
-  })
+  return baseSortBy(result, function(object, other) {
+    return compareMultiple(object, other, orders);
+  });
 }
 
-export default baseOrderBy
+export default baseOrderBy;

@@ -1,5 +1,5 @@
-import baseRest from './_baseRest.js'
-import unzipWith from './unzipWith.js'
+import baseRest from './_baseRest.js';
+import unzipWith from './unzipWith.js';
 
 /**
  * This method is like `_.zip` except that it accepts `iteratee` to specify
@@ -21,12 +21,12 @@ import unzipWith from './unzipWith.js'
  * });
  * // => [111, 222]
  */
-const zipWith = baseRest(function (arrays) {
-  const {length} = arrays
-  let iteratee = length > 1 ? arrays[length - 1] : undefined
+var zipWith = baseRest(function(arrays) {
+  var length = arrays.length,
+      iteratee = length > 1 ? arrays[length - 1] : undefined;
 
-  iteratee = typeof iteratee == 'function' ? (arrays.pop(), iteratee) : undefined
-  return unzipWith(arrays, iteratee)
-})
+  iteratee = typeof iteratee == 'function' ? (arrays.pop(), iteratee) : undefined;
+  return unzipWith(arrays, iteratee);
+});
 
-export default zipWith
+export default zipWith;

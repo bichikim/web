@@ -1,10 +1,10 @@
-import apply from './_apply.js'
-import arrayMap from './_arrayMap.js'
-import baseIteratee from './_baseIteratee.js'
-import baseRest from './_baseRest.js'
+import apply from './_apply.js';
+import arrayMap from './_arrayMap.js';
+import baseIteratee from './_baseIteratee.js';
+import baseRest from './_baseRest.js';
 
 /** Error message constants. */
-const FUNC_ERROR_TEXT = 'Expected a function'
+var FUNC_ERROR_TEXT = 'Expected a function';
 
 /**
  * Creates a function that iterates over `pairs` and invokes the corresponding
@@ -36,27 +36,25 @@ const FUNC_ERROR_TEXT = 'Expected a function'
  * // => 'no match'
  */
 function cond(pairs) {
-  const length = pairs == null ? 0 : pairs.length
-  const toIteratee = baseIteratee
+  var length = pairs == null ? 0 : pairs.length,
+      toIteratee = baseIteratee;
 
-  pairs = !length
-    ? []
-    : arrayMap(pairs, function (pair) {
-        if (typeof pair[1] != 'function') {
-          throw new TypeError(FUNC_ERROR_TEXT)
-        }
-        return [toIteratee(pair[0]), pair[1]]
-      })
+  pairs = !length ? [] : arrayMap(pairs, function(pair) {
+    if (typeof pair[1] != 'function') {
+      throw new TypeError(FUNC_ERROR_TEXT);
+    }
+    return [toIteratee(pair[0]), pair[1]];
+  });
 
-  return baseRest(function (args) {
-    let index = -1
+  return baseRest(function(args) {
+    var index = -1;
     while (++index < length) {
-      const pair = pairs[index]
+      var pair = pairs[index];
       if (apply(pair[0], this, args)) {
-        return apply(pair[1], this, args)
+        return apply(pair[1], this, args);
       }
     }
-  })
+  });
 }
 
-export default cond
+export default cond;

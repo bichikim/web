@@ -1,4 +1,4 @@
-import baseEach from './_baseEach.js'
+import baseEach from './_baseEach.js';
 
 /**
  * Aggregates elements of `collection` on `accumulator` with keys transformed
@@ -12,10 +12,10 @@ import baseEach from './_baseEach.js'
  * @returns {Function} Returns `accumulator`.
  */
 function baseAggregator(collection, setter, iteratee, accumulator) {
-  baseEach(collection, function (value, key, collection) {
-    setter(accumulator, value, iteratee(value), collection)
-  })
-  return accumulator
+  baseEach(collection, function(value, key, collection) {
+    setter(accumulator, value, iteratee(value), collection);
+  });
+  return accumulator;
 }
 
-export default baseAggregator
+export default baseAggregator;

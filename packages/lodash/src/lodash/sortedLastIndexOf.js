@@ -1,5 +1,5 @@
-import baseSortedIndex from './_baseSortedIndex.js'
-import eq from './eq.js'
+import baseSortedIndex from './_baseSortedIndex.js';
+import eq from './eq.js';
 
 /**
  * This method is like `_.lastIndexOf` except that it performs a binary
@@ -18,14 +18,14 @@ import eq from './eq.js'
  * // => 3
  */
 function sortedLastIndexOf(array, value) {
-  const length = array == null ? 0 : array.length
+  var length = array == null ? 0 : array.length;
   if (length) {
-    const index = baseSortedIndex(array, value, true) - 1
+    var index = baseSortedIndex(array, value, true) - 1;
     if (eq(array[index], value)) {
-      return index
+      return index;
     }
   }
-  return -1
+  return -1;
 }
 
-export default sortedLastIndexOf
+export default sortedLastIndexOf;

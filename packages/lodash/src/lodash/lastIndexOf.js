@@ -1,11 +1,11 @@
-import baseFindIndex from './_baseFindIndex.js'
-import baseIsNaN from './_baseIsNaN.js'
-import strictLastIndexOf from './_strictLastIndexOf.js'
-import toInteger from './toInteger.js'
+import baseFindIndex from './_baseFindIndex.js';
+import baseIsNaN from './_baseIsNaN.js';
+import strictLastIndexOf from './_strictLastIndexOf.js';
+import toInteger from './toInteger.js';
 
 /* Built-in method references for those with the same name as other `lodash` methods. */
-const nativeMax = Math.max
-const nativeMin = Math.min
+var nativeMax = Math.max,
+    nativeMin = Math.min;
 
 /**
  * This method is like `_.indexOf` except that it iterates over elements of
@@ -29,18 +29,18 @@ const nativeMin = Math.min
  * // => 1
  */
 function lastIndexOf(array, value, fromIndex) {
-  const length = array == null ? 0 : array.length
+  var length = array == null ? 0 : array.length;
   if (!length) {
-    return -1
+    return -1;
   }
-  let index = length
+  var index = length;
   if (fromIndex !== undefined) {
-    index = toInteger(fromIndex)
-    index = index < 0 ? nativeMax(length + index, 0) : nativeMin(index, length - 1)
+    index = toInteger(fromIndex);
+    index = index < 0 ? nativeMax(length + index, 0) : nativeMin(index, length - 1);
   }
   return value === value
     ? strictLastIndexOf(array, value, index)
-    : baseFindIndex(array, baseIsNaN, index, true)
+    : baseFindIndex(array, baseIsNaN, index, true);
 }
 
-export default lastIndexOf
+export default lastIndexOf;

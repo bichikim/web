@@ -1,10 +1,10 @@
-import baseFindIndex from './_baseFindIndex.js'
-import baseIteratee from './_baseIteratee.js'
-import toInteger from './toInteger.js'
+import baseFindIndex from './_baseFindIndex.js';
+import baseIteratee from './_baseIteratee.js';
+import toInteger from './toInteger.js';
 
 /* Built-in method references for those with the same name as other `lodash` methods. */
-const nativeMax = Math.max
-const nativeMin = Math.min
+var nativeMax = Math.max,
+    nativeMin = Math.min;
 
 /**
  * This method is like `_.findIndex` except that it iterates over elements
@@ -42,16 +42,18 @@ const nativeMin = Math.min
  * // => 0
  */
 function findLastIndex(array, predicate, fromIndex) {
-  const length = array == null ? 0 : array.length
+  var length = array == null ? 0 : array.length;
   if (!length) {
-    return -1
+    return -1;
   }
-  let index = length - 1
+  var index = length - 1;
   if (fromIndex !== undefined) {
-    index = toInteger(fromIndex)
-    index = fromIndex < 0 ? nativeMax(length + index, 0) : nativeMin(index, length - 1)
+    index = toInteger(fromIndex);
+    index = fromIndex < 0
+      ? nativeMax(length + index, 0)
+      : nativeMin(index, length - 1);
   }
-  return baseFindIndex(array, baseIteratee(predicate, 3), index, true)
+  return baseFindIndex(array, baseIteratee(predicate, 3), index, true);
 }
 
-export default findLastIndex
+export default findLastIndex;

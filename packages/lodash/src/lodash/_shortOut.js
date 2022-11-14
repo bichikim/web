@@ -1,9 +1,9 @@
 /** Used to detect hot functions by number of calls within a span of milliseconds. */
-const HOT_COUNT = 800
-const HOT_SPAN = 16
+var HOT_COUNT = 800,
+    HOT_SPAN = 16;
 
 /* Built-in method references for those with the same name as other `lodash` methods. */
-const nativeNow = Date.now
+var nativeNow = Date.now;
 
 /**
  * Creates a function that'll short out and invoke `identity` instead
@@ -15,23 +15,23 @@ const nativeNow = Date.now
  * @returns {Function} Returns the new shortable function.
  */
 function shortOut(func) {
-  let count = 0
-  let lastCalled = 0
+  var count = 0,
+      lastCalled = 0;
 
-  return function () {
-    const stamp = nativeNow()
-    const remaining = HOT_SPAN - (stamp - lastCalled)
+  return function() {
+    var stamp = nativeNow(),
+        remaining = HOT_SPAN - (stamp - lastCalled);
 
-    lastCalled = stamp
+    lastCalled = stamp;
     if (remaining > 0) {
       if (++count >= HOT_COUNT) {
-        return arguments[0]
+        return arguments[0];
       }
     } else {
-      count = 0
+      count = 0;
     }
-    return func.apply(undefined, arguments)
-  }
+    return func.apply(undefined, arguments);
+  };
 }
 
-export default shortOut
+export default shortOut;

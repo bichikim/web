@@ -1,8 +1,8 @@
 /** Used for built-in method references. */
-const arrayProto = Array.prototype
+var arrayProto = Array.prototype;
 
 /* Built-in method references for those with the same name as other `lodash` methods. */
-const nativeJoin = arrayProto.join
+var nativeJoin = arrayProto.join;
 
 /**
  * Converts all elements in `array` into a string separated by `separator`.
@@ -20,7 +20,7 @@ const nativeJoin = arrayProto.join
  * // => 'a~b~c'
  */
 function join(array, separator) {
-  return array == null ? '' : nativeJoin.call(array, separator)
+  return array == null ? '' : nativeJoin.call(array, separator);
 }
 
-export default join
+export default join;

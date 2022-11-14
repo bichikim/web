@@ -1,5 +1,5 @@
-import baseIteratee from './_baseIteratee.js'
-import baseWhile from './_baseWhile.js'
+import baseIteratee from './_baseIteratee.js';
+import baseWhile from './_baseWhile.js';
 
 /**
  * Creates a slice of `array` with elements taken from the end. Elements are
@@ -37,7 +37,9 @@ import baseWhile from './_baseWhile.js'
  * // => []
  */
 function takeRightWhile(array, predicate) {
-  return array && array.length > 0 ? baseWhile(array, baseIteratee(predicate, 3), false, true) : []
+  return (array && array.length)
+    ? baseWhile(array, baseIteratee(predicate, 3), false, true)
+    : [];
 }
 
-export default takeRightWhile
+export default takeRightWhile;

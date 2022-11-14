@@ -1,4 +1,4 @@
-import getMapData from './_getMapData.js'
+import getMapData from './_getMapData.js';
 
 /**
  * Removes `key` and its value from the map.
@@ -10,9 +10,9 @@ import getMapData from './_getMapData.js'
  * @returns {boolean} Returns `true` if the entry was removed, else `false`.
  */
 function mapCacheDelete(key) {
-  const result = getMapData(this, key).delete(key)
-  this.size -= result ? 1 : 0
-  return result
+  var result = getMapData(this, key)['delete'](key);
+  this.size -= result ? 1 : 0;
+  return result;
 }
 
-export default mapCacheDelete
+export default mapCacheDelete;

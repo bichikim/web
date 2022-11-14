@@ -1,9 +1,9 @@
-import arrayMap from './_arrayMap.js'
-import baseAt from './_baseAt.js'
-import basePullAt from './_basePullAt.js'
-import compareAscending from './_compareAscending.js'
-import flatRest from './_flatRest.js'
-import isIndex from './_isIndex.js'
+import arrayMap from './_arrayMap.js';
+import baseAt from './_baseAt.js';
+import basePullAt from './_basePullAt.js';
+import compareAscending from './_compareAscending.js';
+import flatRest from './_flatRest.js';
+import isIndex from './_isIndex.js';
 
 /**
  * Removes elements from `array` corresponding to `indexes` and returns an
@@ -29,18 +29,15 @@ import isIndex from './_isIndex.js'
  * console.log(pulled);
  * // => ['b', 'd']
  */
-const pullAt = flatRest(function (array, indexes) {
-  const length = array == null ? 0 : array.length
-  const result = baseAt(array, indexes)
+var pullAt = flatRest(function(array, indexes) {
+  var length = array == null ? 0 : array.length,
+      result = baseAt(array, indexes);
 
-  basePullAt(
-    array,
-    arrayMap(indexes, function (index) {
-      return isIndex(index, length) ? Number(index) : index
-    }).sort(compareAscending),
-  )
+  basePullAt(array, arrayMap(indexes, function(index) {
+    return isIndex(index, length) ? +index : index;
+  }).sort(compareAscending));
 
-  return result
-})
+  return result;
+});
 
-export default pullAt
+export default pullAt;

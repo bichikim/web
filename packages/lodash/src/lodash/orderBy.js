@@ -1,5 +1,5 @@
-import baseOrderBy from './_baseOrderBy.js'
-import isArray from './isArray.js'
+import baseOrderBy from './_baseOrderBy.js';
+import isArray from './isArray.js';
 
 /**
  * This method is like `_.sortBy` except that it allows specifying the sort
@@ -32,16 +32,16 @@ import isArray from './isArray.js'
  */
 function orderBy(collection, iteratees, orders, guard) {
   if (collection == null) {
-    return []
+    return [];
   }
   if (!isArray(iteratees)) {
-    iteratees = iteratees == null ? [] : [iteratees]
+    iteratees = iteratees == null ? [] : [iteratees];
   }
-  orders = guard ? undefined : orders
+  orders = guard ? undefined : orders;
   if (!isArray(orders)) {
-    orders = orders == null ? [] : [orders]
+    orders = orders == null ? [] : [orders];
   }
-  return baseOrderBy(collection, iteratees, orders)
+  return baseOrderBy(collection, iteratees, orders);
 }
 
-export default orderBy
+export default orderBy;

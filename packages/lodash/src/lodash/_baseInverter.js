@@ -1,4 +1,4 @@
-import baseForOwn from './_baseForOwn.js'
+import baseForOwn from './_baseForOwn.js';
 
 /**
  * The base implementation of `_.invert` and `_.invertBy` which inverts
@@ -12,10 +12,10 @@ import baseForOwn from './_baseForOwn.js'
  * @returns {Function} Returns `accumulator`.
  */
 function baseInverter(object, setter, iteratee, accumulator) {
-  baseForOwn(object, function (value, key, object) {
-    setter(accumulator, iteratee(value), key, object)
-  })
-  return accumulator
+  baseForOwn(object, function(value, key, object) {
+    setter(accumulator, iteratee(value), key, object);
+  });
+  return accumulator;
 }
 
-export default baseInverter
+export default baseInverter;

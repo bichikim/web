@@ -1,7 +1,7 @@
-import asciiWords from './_asciiWords.js'
-import hasUnicodeWord from './_hasUnicodeWord.js'
-import toString from './toString.js'
-import unicodeWords from './_unicodeWords.js'
+import asciiWords from './_asciiWords.js';
+import hasUnicodeWord from './_hasUnicodeWord.js';
+import toString from './toString.js';
+import unicodeWords from './_unicodeWords.js';
 
 /**
  * Splits `string` into an array of its words.
@@ -23,13 +23,13 @@ import unicodeWords from './_unicodeWords.js'
  * // => ['fred', 'barney', '&', 'pebbles']
  */
 function words(string, pattern, guard) {
-  string = toString(string)
-  pattern = guard ? undefined : pattern
+  string = toString(string);
+  pattern = guard ? undefined : pattern;
 
   if (pattern === undefined) {
-    return hasUnicodeWord(string) ? unicodeWords(string) : asciiWords(string)
+    return hasUnicodeWord(string) ? unicodeWords(string) : asciiWords(string);
   }
-  return string.match(pattern) || []
+  return string.match(pattern) || [];
 }
 
-export default words
+export default words;

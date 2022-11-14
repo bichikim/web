@@ -1,5 +1,5 @@
-import arraySome from './_arraySome.js'
-import createOver from './_createOver.js'
+import arraySome from './_arraySome.js';
+import createOver from './_createOver.js';
 
 /**
  * Creates a function that checks if **any** of the `predicates` return
@@ -25,6 +25,6 @@ import createOver from './_createOver.js'
  * func(NaN);
  * // => false
  */
-const overSome = createOver(arraySome)
+var overSome = createOver(arraySome);
 
-export default overSome
+export default overSome;

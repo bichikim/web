@@ -1,7 +1,7 @@
-import arrayMap from './_arrayMap.js'
-import baseIntersection from './_baseIntersection.js'
-import baseRest from './_baseRest.js'
-import castArrayLikeObject from './_castArrayLikeObject.js'
+import arrayMap from './_arrayMap.js';
+import baseIntersection from './_baseIntersection.js';
+import baseRest from './_baseRest.js';
+import castArrayLikeObject from './_castArrayLikeObject.js';
 
 /**
  * Creates an array of unique values that are included in all given arrays
@@ -20,9 +20,11 @@ import castArrayLikeObject from './_castArrayLikeObject.js'
  * _.intersection([2, 1], [2, 3]);
  * // => [2]
  */
-const intersection = baseRest(function (arrays) {
-  const mapped = arrayMap(arrays, castArrayLikeObject)
-  return mapped.length > 0 && mapped[0] === arrays[0] ? baseIntersection(mapped) : []
-})
+var intersection = baseRest(function(arrays) {
+  var mapped = arrayMap(arrays, castArrayLikeObject);
+  return (mapped.length && mapped[0] === arrays[0])
+    ? baseIntersection(mapped)
+    : [];
+});
 
-export default intersection
+export default intersection;

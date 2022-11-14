@@ -1,12 +1,12 @@
 /** Used to escape characters for inclusion in compiled string literals. */
-const stringEscapes = {
+var stringEscapes = {
+  '\\': '\\',
+  "'": "'",
   '\n': 'n',
   '\r': 'r',
-  "'": "'",
-  '\\': '\\',
   '\u2028': 'u2028',
-  '\u2029': 'u2029',
-}
+  '\u2029': 'u2029'
+};
 
 /**
  * Used by `_.template` to escape characters for inclusion in compiled string literals.
@@ -16,7 +16,7 @@ const stringEscapes = {
  * @returns {string} Returns the escaped character.
  */
 function escapeStringChar(chr) {
-  return `\\${stringEscapes[chr]}`
+  return '\\' + stringEscapes[chr];
 }
 
-export default escapeStringChar
+export default escapeStringChar;

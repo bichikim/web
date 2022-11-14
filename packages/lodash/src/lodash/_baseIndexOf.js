@@ -1,6 +1,6 @@
-import baseFindIndex from './_baseFindIndex.js'
-import baseIsNaN from './_baseIsNaN.js'
-import strictIndexOf from './_strictIndexOf.js'
+import baseFindIndex from './_baseFindIndex.js';
+import baseIsNaN from './_baseIsNaN.js';
+import strictIndexOf from './_strictIndexOf.js';
 
 /**
  * The base implementation of `_.indexOf` without `fromIndex` bounds checks.
@@ -14,7 +14,7 @@ import strictIndexOf from './_strictIndexOf.js'
 function baseIndexOf(array, value, fromIndex) {
   return value === value
     ? strictIndexOf(array, value, fromIndex)
-    : baseFindIndex(array, baseIsNaN, fromIndex)
+    : baseFindIndex(array, baseIsNaN, fromIndex);
 }
 
-export default baseIndexOf
+export default baseIndexOf;

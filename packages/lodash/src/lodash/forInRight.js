@@ -1,6 +1,6 @@
-import baseForRight from './_baseForRight.js'
-import castFunction from './_castFunction.js'
-import keysIn from './keysIn.js'
+import baseForRight from './_baseForRight.js';
+import castFunction from './_castFunction.js';
+import keysIn from './keysIn.js';
 
 /**
  * This method is like `_.forIn` except that it iterates over properties of
@@ -29,7 +29,9 @@ import keysIn from './keysIn.js'
  * // => Logs 'c', 'b', then 'a' assuming `_.forIn` logs 'a', 'b', then 'c'.
  */
 function forInRight(object, iteratee) {
-  return object == null ? object : baseForRight(object, castFunction(iteratee), keysIn)
+  return object == null
+    ? object
+    : baseForRight(object, castFunction(iteratee), keysIn);
 }
 
-export default forInRight
+export default forInRight;

@@ -1,4 +1,4 @@
-import createRelationalOperation from './_createRelationalOperation.js'
+import createRelationalOperation from './_createRelationalOperation.js';
 
 /**
  * Checks if `value` is less than or equal to `other`.
@@ -23,8 +23,8 @@ import createRelationalOperation from './_createRelationalOperation.js'
  * _.lte(3, 1);
  * // => false
  */
-const lte = createRelationalOperation(function (value, other) {
-  return value <= other
-})
+var lte = createRelationalOperation(function(value, other) {
+  return value <= other;
+});
 
-export default lte
+export default lte;

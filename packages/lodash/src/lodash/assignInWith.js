@@ -1,6 +1,6 @@
-import copyObject from './_copyObject.js'
-import createAssigner from './_createAssigner.js'
-import keysIn from './keysIn.js'
+import copyObject from './_copyObject.js';
+import createAssigner from './_createAssigner.js';
+import keysIn from './keysIn.js';
 
 /**
  * This method is like `_.assignIn` except that it accepts `customizer`
@@ -31,8 +31,8 @@ import keysIn from './keysIn.js'
  * defaults({ 'a': 1 }, { 'b': 2 }, { 'a': 3 });
  * // => { 'a': 1, 'b': 2 }
  */
-const assignInWith = createAssigner(function (object, source, srcIndex, customizer) {
-  copyObject(source, keysIn(source), object, customizer)
-})
+var assignInWith = createAssigner(function(object, source, srcIndex, customizer) {
+  copyObject(source, keysIn(source), object, customizer);
+});
 
-export default assignInWith
+export default assignInWith;

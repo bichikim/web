@@ -1,8 +1,8 @@
-import baseIsNative from './_baseIsNative.js'
-import isMaskable from './_isMaskable.js'
+import baseIsNative from './_baseIsNative.js';
+import isMaskable from './_isMaskable.js';
 
 /** Error message constants. */
-const CORE_ERROR_TEXT = 'Unsupported core-js use. Try https://npms.io/search?q=ponyfill.'
+var CORE_ERROR_TEXT = 'Unsupported core-js use. Try https://npms.io/search?q=ponyfill.';
 
 /**
  * Checks if `value` is a pristine native function.
@@ -32,9 +32,9 @@ const CORE_ERROR_TEXT = 'Unsupported core-js use. Try https://npms.io/search?q=p
  */
 function isNative(value) {
   if (isMaskable(value)) {
-    throw new Error(CORE_ERROR_TEXT)
+    throw new Error(CORE_ERROR_TEXT);
   }
-  return baseIsNative(value)
+  return baseIsNative(value);
 }
 
-export default isNative
+export default isNative;

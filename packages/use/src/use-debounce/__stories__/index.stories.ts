@@ -1,6 +1,10 @@
 import {useDebounce} from '../'
 import {h, ref} from 'vue'
 
+export default {
+  title: 'use/useDebounce',
+}
+
 export const Default = () => ({
   setup() {
     const countRef = ref(0)

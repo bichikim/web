@@ -1,5 +1,5 @@
-import baseIteratee from './_baseIteratee.js'
-import basePullAt from './_basePullAt.js'
+import baseIteratee from './_baseIteratee.js';
+import basePullAt from './_basePullAt.js';
 
 /**
  * Removes all elements from `array` that `predicate` returns truthy for
@@ -30,24 +30,24 @@ import basePullAt from './_basePullAt.js'
  * // => [2, 4]
  */
 function remove(array, predicate) {
-  const result = []
-  if (!(array && array.length > 0)) {
-    return result
+  var result = [];
+  if (!(array && array.length)) {
+    return result;
   }
-  let index = -1
-  const indexes = []
-  const {length} = array
+  var index = -1,
+      indexes = [],
+      length = array.length;
 
-  predicate = baseIteratee(predicate, 3)
+  predicate = baseIteratee(predicate, 3);
   while (++index < length) {
-    const value = array[index]
+    var value = array[index];
     if (predicate(value, index, array)) {
-      result.push(value)
-      indexes.push(index)
+      result.push(value);
+      indexes.push(index);
     }
   }
-  basePullAt(array, indexes)
-  return result
+  basePullAt(array, indexes);
+  return result;
 }
 
-export default remove
+export default remove;

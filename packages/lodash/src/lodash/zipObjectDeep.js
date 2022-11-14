@@ -1,5 +1,5 @@
-import baseSet from './_baseSet.js'
-import baseZipObject from './_baseZipObject.js'
+import baseSet from './_baseSet.js';
+import baseZipObject from './_baseZipObject.js';
 
 /**
  * This method is like `_.zipObject` except that it supports property paths.
@@ -17,7 +17,7 @@ import baseZipObject from './_baseZipObject.js'
  * // => { 'a': { 'b': [{ 'c': 1 }, { 'd': 2 }] } }
  */
 function zipObjectDeep(props, values) {
-  return baseZipObject(props || [], values || [], baseSet)
+  return baseZipObject(props || [], values || [], baseSet);
 }
 
-export default zipObjectDeep
+export default zipObjectDeep;

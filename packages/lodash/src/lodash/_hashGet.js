@@ -1,13 +1,13 @@
-import nativeCreate from './_nativeCreate.js'
+import nativeCreate from './_nativeCreate.js';
 
 /** Used to stand-in for `undefined` hash values. */
-const HASH_UNDEFINED = '__lodash_hash_undefined__'
+var HASH_UNDEFINED = '__lodash_hash_undefined__';
 
 /** Used for built-in method references. */
-const objectProto = Object.prototype
+var objectProto = Object.prototype;
 
 /** Used to check objects for own properties. */
-const {hasOwnProperty} = objectProto
+var hasOwnProperty = objectProto.hasOwnProperty;
 
 /**
  * Gets the hash value for `key`.
@@ -19,12 +19,12 @@ const {hasOwnProperty} = objectProto
  * @returns {*} Returns the entry value.
  */
 function hashGet(key) {
-  const data = this.__data__
+  var data = this.__data__;
   if (nativeCreate) {
-    const result = data[key]
-    return result === HASH_UNDEFINED ? undefined : result
+    var result = data[key];
+    return result === HASH_UNDEFINED ? undefined : result;
   }
-  return hasOwnProperty.call(data, key) ? data[key] : undefined
+  return hasOwnProperty.call(data, key) ? data[key] : undefined;
 }
 
-export default hashGet
+export default hashGet;

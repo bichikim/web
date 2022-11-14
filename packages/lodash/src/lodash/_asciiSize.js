@@ -1,4 +1,4 @@
-import baseProperty from './_baseProperty.js'
+import baseProperty from './_baseProperty.js';
 
 /**
  * Gets the size of an ASCII `string`.
@@ -7,6 +7,6 @@ import baseProperty from './_baseProperty.js'
  * @param {string} string The string inspect.
  * @returns {number} Returns the string size.
  */
-const asciiSize = baseProperty('length')
+var asciiSize = baseProperty('length');
 
-export default asciiSize
+export default asciiSize;

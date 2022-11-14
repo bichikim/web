@@ -1,11 +1,11 @@
-import baseAssignValue from './_baseAssignValue.js'
-import createAggregator from './_createAggregator.js'
+import baseAssignValue from './_baseAssignValue.js';
+import createAggregator from './_createAggregator.js';
 
 /** Used for built-in method references. */
-const objectProto = Object.prototype
+var objectProto = Object.prototype;
 
 /** Used to check objects for own properties. */
-const {hasOwnProperty} = objectProto
+var hasOwnProperty = objectProto.hasOwnProperty;
 
 /**
  * Creates an object composed of keys generated from the results of running
@@ -30,12 +30,12 @@ const {hasOwnProperty} = objectProto
  * _.groupBy(['one', 'two', 'three'], 'length');
  * // => { '3': ['one', 'two'], '5': ['three'] }
  */
-const groupBy = createAggregator(function (result, value, key) {
+var groupBy = createAggregator(function(result, value, key) {
   if (hasOwnProperty.call(result, key)) {
-    result[key].push(value)
+    result[key].push(value);
   } else {
-    baseAssignValue(result, key, [value])
+    baseAssignValue(result, key, [value]);
   }
-})
+});
 
-export default groupBy
+export default groupBy;

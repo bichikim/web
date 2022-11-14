@@ -1,4 +1,4 @@
-import createRound from './_createRound.js'
+import createRound from './_createRound.js';
 
 /**
  * Computes `number` rounded up to `precision`.
@@ -21,6 +21,6 @@ import createRound from './_createRound.js'
  * _.ceil(6040, -2);
  * // => 6100
  */
-const ceil = createRound('ceil')
+var ceil = createRound('ceil');
 
-export default ceil
+export default ceil;

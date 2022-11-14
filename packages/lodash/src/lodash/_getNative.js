@@ -1,5 +1,5 @@
-import baseIsNative from './_baseIsNative.js'
-import getValue from './_getValue.js'
+import baseIsNative from './_baseIsNative.js';
+import getValue from './_getValue.js';
 
 /**
  * Gets the native function at `key` of `object`.
@@ -10,8 +10,8 @@ import getValue from './_getValue.js'
  * @returns {*} Returns the function if it's native, else `undefined`.
  */
 function getNative(object, key) {
-  const value = getValue(object, key)
-  return baseIsNative(value) ? value : undefined
+  var value = getValue(object, key);
+  return baseIsNative(value) ? value : undefined;
 }
 
-export default getNative
+export default getNative;

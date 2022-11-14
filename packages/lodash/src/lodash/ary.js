@@ -1,7 +1,7 @@
-import createWrap from './_createWrap.js'
+import createWrap from './_createWrap.js';
 
 /** Used to compose bitmasks for function metadata. */
-const WRAP_ARY_FLAG = 128
+var WRAP_ARY_FLAG = 128;
 
 /**
  * Creates a function that invokes `func`, with up to `n` arguments,
@@ -21,9 +21,9 @@ const WRAP_ARY_FLAG = 128
  * // => [6, 8, 10]
  */
 function ary(func, n, guard) {
-  n = guard ? undefined : n
-  n = func && n == null ? func.length : n
-  return createWrap(func, WRAP_ARY_FLAG, undefined, undefined, undefined, undefined, n)
+  n = guard ? undefined : n;
+  n = (func && n == null) ? func.length : n;
+  return createWrap(func, WRAP_ARY_FLAG, undefined, undefined, undefined, undefined, n);
 }
 
-export default ary
+export default ary;

@@ -1,4 +1,4 @@
-import assocIndexOf from './_assocIndexOf.js'
+import assocIndexOf from './_assocIndexOf.js';
 
 /**
  * Checks if a list cache value for `key` exists.
@@ -10,7 +10,7 @@ import assocIndexOf from './_assocIndexOf.js'
  * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
  */
 function listCacheHas(key) {
-  return assocIndexOf(this.__data__, key) > -1
+  return assocIndexOf(this.__data__, key) > -1;
 }
 
-export default listCacheHas
+export default listCacheHas;

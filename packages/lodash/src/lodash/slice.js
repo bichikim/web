@@ -1,6 +1,6 @@
-import baseSlice from './_baseSlice.js'
-import isIterateeCall from './_isIterateeCall.js'
-import toInteger from './toInteger.js'
+import baseSlice from './_baseSlice.js';
+import isIterateeCall from './_isIterateeCall.js';
+import toInteger from './toInteger.js';
 
 /**
  * Creates a slice of `array` from `start` up to, but not including, `end`.
@@ -19,18 +19,19 @@ import toInteger from './toInteger.js'
  * @returns {Array} Returns the slice of `array`.
  */
 function slice(array, start, end) {
-  const length = array == null ? 0 : array.length
+  var length = array == null ? 0 : array.length;
   if (!length) {
-    return []
+    return [];
   }
   if (end && typeof end != 'number' && isIterateeCall(array, start, end)) {
-    start = 0
-    end = length
-  } else {
-    start = start == null ? 0 : toInteger(start)
-    end = end === undefined ? length : toInteger(end)
+    start = 0;
+    end = length;
   }
-  return baseSlice(array, start, end)
+  else {
+    start = start == null ? 0 : toInteger(start);
+    end = end === undefined ? length : toInteger(end);
+  }
+  return baseSlice(array, start, end);
 }
 
-export default slice
+export default slice;

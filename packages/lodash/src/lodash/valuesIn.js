@@ -1,5 +1,5 @@
-import baseValues from './_baseValues.js'
-import keysIn from './keysIn.js'
+import baseValues from './_baseValues.js';
+import keysIn from './keysIn.js';
 
 /**
  * Creates an array of the own and inherited enumerable string keyed property
@@ -26,7 +26,7 @@ import keysIn from './keysIn.js'
  * // => [1, 2, 3] (iteration order is not guaranteed)
  */
 function valuesIn(object) {
-  return object == null ? [] : baseValues(object, keysIn(object))
+  return object == null ? [] : baseValues(object, keysIn(object));
 }
 
-export default valuesIn
+export default valuesIn;

@@ -1,18 +1,18 @@
-import baseIteratee from './_baseIteratee.js'
-import createInverter from './_createInverter.js'
+import baseIteratee from './_baseIteratee.js';
+import createInverter from './_createInverter.js';
 
 /** Used for built-in method references. */
-const objectProto = Object.prototype
+var objectProto = Object.prototype;
 
 /** Used to check objects for own properties. */
-const {hasOwnProperty} = objectProto
+var hasOwnProperty = objectProto.hasOwnProperty;
 
 /**
  * Used to resolve the
  * [`toStringTag`](http://ecma-international.org/ecma-262/7.0/#sec-object.prototype.tostring)
  * of values.
  */
-const nativeObjectToString = objectProto.toString
+var nativeObjectToString = objectProto.toString;
 
 /**
  * This method is like `_.invert` except that the inverted object is generated
@@ -40,16 +40,17 @@ const nativeObjectToString = objectProto.toString
  * });
  * // => { 'group1': ['a', 'c'], 'group2': ['b'] }
  */
-const invertBy = createInverter(function (result, value, key) {
-  if (value != null && typeof value.toString != 'function') {
-    value = nativeObjectToString.call(value)
+var invertBy = createInverter(function(result, value, key) {
+  if (value != null &&
+      typeof value.toString != 'function') {
+    value = nativeObjectToString.call(value);
   }
 
   if (hasOwnProperty.call(result, value)) {
-    result[value].push(key)
+    result[value].push(key);
   } else {
-    result[value] = [key]
+    result[value] = [key];
   }
-}, baseIteratee)
+}, baseIteratee);
 
-export default invertBy
+export default invertBy;

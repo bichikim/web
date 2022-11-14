@@ -1,6 +1,6 @@
-import baseExtremum from './_baseExtremum.js'
-import baseGt from './_baseGt.js'
-import identity from './identity.js'
+import baseExtremum from './_baseExtremum.js';
+import baseGt from './_baseGt.js';
+import identity from './identity.js';
 
 /**
  * Computes the maximum value of `array`. If `array` is empty or falsey,
@@ -21,7 +21,9 @@ import identity from './identity.js'
  * // => undefined
  */
 function max(array) {
-  return array && array.length > 0 ? baseExtremum(array, identity, baseGt) : undefined
+  return (array && array.length)
+    ? baseExtremum(array, identity, baseGt)
+    : undefined;
 }
 
-export default max
+export default max;

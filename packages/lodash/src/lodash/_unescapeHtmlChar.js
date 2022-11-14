@@ -1,13 +1,13 @@
-import basePropertyOf from './_basePropertyOf.js'
+import basePropertyOf from './_basePropertyOf.js';
 
 /** Used to map HTML entities to characters. */
-const htmlUnescapes = {
-  '&#39;': "'",
+var htmlUnescapes = {
   '&amp;': '&',
-  '&gt;': '>',
   '&lt;': '<',
+  '&gt;': '>',
   '&quot;': '"',
-}
+  '&#39;': "'"
+};
 
 /**
  * Used by `_.unescape` to convert HTML entities to characters.
@@ -16,6 +16,6 @@ const htmlUnescapes = {
  * @param {string} chr The matched character to unescape.
  * @returns {string} Returns the unescaped character.
  */
-const unescapeHtmlChar = basePropertyOf(htmlUnescapes)
+var unescapeHtmlChar = basePropertyOf(htmlUnescapes);
 
-export default unescapeHtmlChar
+export default unescapeHtmlChar;

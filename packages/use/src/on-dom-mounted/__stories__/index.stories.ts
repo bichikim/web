@@ -1,6 +1,10 @@
 import {h, onMounted, ref} from 'vue'
 import {onDomMounted} from '../'
 
+export default {
+  title: 'use/onDomMounted',
+}
+
 export const Default = () => ({
   setup() {
     const mountedRef = ref('')

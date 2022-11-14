@@ -1,4 +1,4 @@
-import createBaseFor from './_createBaseFor.js'
+import createBaseFor from './_createBaseFor.js';
 
 /**
  * This function is like `baseFor` except that it iterates over properties
@@ -10,6 +10,6 @@ import createBaseFor from './_createBaseFor.js'
  * @param {Function} keysFunc The function to get the keys of `object`.
  * @returns {Object} Returns `object`.
  */
-const baseForRight = createBaseFor(true)
+var baseForRight = createBaseFor(true);
 
-export default baseForRight
+export default baseForRight;

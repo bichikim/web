@@ -7,7 +7,7 @@
  * @returns {*} Returns the property value.
  */
 function getValue(object, key) {
-  return object == null ? undefined : object[key]
+  return object == null ? undefined : object[key];
 }
 
-export default getValue
+export default getValue;

@@ -1,11 +1,11 @@
-import baseIndexOf from './_baseIndexOf.js'
-import isArrayLike from './isArrayLike.js'
-import isString from './isString.js'
-import toInteger from './toInteger.js'
-import values from './values.js'
+import baseIndexOf from './_baseIndexOf.js';
+import isArrayLike from './isArrayLike.js';
+import isString from './isString.js';
+import toInteger from './toInteger.js';
+import values from './values.js';
 
 /* Built-in method references for those with the same name as other `lodash` methods. */
-const nativeMax = Math.max
+var nativeMax = Math.max;
 
 /**
  * Checks if `value` is in `collection`. If `collection` is a string, it's
@@ -38,16 +38,16 @@ const nativeMax = Math.max
  * // => true
  */
 function includes(collection, value, fromIndex, guard) {
-  collection = isArrayLike(collection) ? collection : values(collection)
-  fromIndex = fromIndex && !guard ? toInteger(fromIndex) : 0
+  collection = isArrayLike(collection) ? collection : values(collection);
+  fromIndex = (fromIndex && !guard) ? toInteger(fromIndex) : 0;
 
-  const {length} = collection
+  var length = collection.length;
   if (fromIndex < 0) {
-    fromIndex = nativeMax(length + fromIndex, 0)
+    fromIndex = nativeMax(length + fromIndex, 0);
   }
   return isString(collection)
-    ? fromIndex <= length && collection.includes(value, fromIndex)
-    : Boolean(length) && baseIndexOf(collection, value, fromIndex) > -1
+    ? (fromIndex <= length && collection.indexOf(value, fromIndex) > -1)
+    : (!!length && baseIndexOf(collection, value, fromIndex) > -1);
 }
 
-export default includes
+export default includes;

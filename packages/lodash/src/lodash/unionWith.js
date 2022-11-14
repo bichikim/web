@@ -1,8 +1,8 @@
-import baseFlatten from './_baseFlatten.js'
-import baseRest from './_baseRest.js'
-import baseUniq from './_baseUniq.js'
-import isArrayLikeObject from './isArrayLikeObject.js'
-import last from './last.js'
+import baseFlatten from './_baseFlatten.js';
+import baseRest from './_baseRest.js';
+import baseUniq from './_baseUniq.js';
+import isArrayLikeObject from './isArrayLikeObject.js';
+import last from './last.js';
 
 /**
  * This method is like `_.union` except that it accepts `comparator` which
@@ -25,10 +25,10 @@ import last from './last.js'
  * _.unionWith(objects, others, _.isEqual);
  * // => [{ 'x': 1, 'y': 2 }, { 'x': 2, 'y': 1 }, { 'x': 1, 'y': 1 }]
  */
-const unionWith = baseRest(function (arrays) {
-  let comparator = last(arrays)
-  comparator = typeof comparator == 'function' ? comparator : undefined
-  return baseUniq(baseFlatten(arrays, 1, isArrayLikeObject, true), undefined, comparator)
-})
+var unionWith = baseRest(function(arrays) {
+  var comparator = last(arrays);
+  comparator = typeof comparator == 'function' ? comparator : undefined;
+  return baseUniq(baseFlatten(arrays, 1, isArrayLikeObject, true), undefined, comparator);
+});
 
-export default unionWith
+export default unionWith;

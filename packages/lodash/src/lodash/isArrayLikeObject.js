@@ -1,5 +1,5 @@
-import isArrayLike from './isArrayLike.js'
-import isObjectLike from './isObjectLike.js'
+import isArrayLike from './isArrayLike.js';
+import isObjectLike from './isObjectLike.js';
 
 /**
  * This method is like `_.isArrayLike` except that it also checks if `value`
@@ -27,7 +27,7 @@ import isObjectLike from './isObjectLike.js'
  * // => false
  */
 function isArrayLikeObject(value) {
-  return isObjectLike(value) && isArrayLike(value)
+  return isObjectLike(value) && isArrayLike(value);
 }
 
-export default isArrayLikeObject
+export default isArrayLikeObject;

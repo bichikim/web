@@ -1,8 +1,8 @@
-import hashClear from './_hashClear.js'
-import hashDelete from './_hashDelete.js'
-import hashGet from './_hashGet.js'
-import hashHas from './_hashHas.js'
-import hashSet from './_hashSet.js'
+import hashClear from './_hashClear.js';
+import hashDelete from './_hashDelete.js';
+import hashGet from './_hashGet.js';
+import hashHas from './_hashHas.js';
+import hashSet from './_hashSet.js';
 
 /**
  * Creates a hash object.
@@ -12,21 +12,21 @@ import hashSet from './_hashSet.js'
  * @param {Array} [entries] The key-value pairs to cache.
  */
 function Hash(entries) {
-  let index = -1
-  const length = entries == null ? 0 : entries.length
+  var index = -1,
+      length = entries == null ? 0 : entries.length;
 
-  this.clear()
+  this.clear();
   while (++index < length) {
-    const entry = entries[index]
-    this.set(entry[0], entry[1])
+    var entry = entries[index];
+    this.set(entry[0], entry[1]);
   }
 }
 
 // Add methods to `Hash`.
-Hash.prototype.clear = hashClear
-Hash.prototype.delete = hashDelete
-Hash.prototype.get = hashGet
-Hash.prototype.has = hashHas
-Hash.prototype.set = hashSet
+Hash.prototype.clear = hashClear;
+Hash.prototype['delete'] = hashDelete;
+Hash.prototype.get = hashGet;
+Hash.prototype.has = hashHas;
+Hash.prototype.set = hashSet;
 
-export default Hash
+export default Hash;

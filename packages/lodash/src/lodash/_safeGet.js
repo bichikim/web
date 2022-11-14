@@ -7,7 +7,9 @@
  * @returns {*} Returns the property value.
  */
 function safeGet(object, key) {
-  return key == '__proto__' ? undefined : object[key]
+  return key == '__proto__'
+    ? undefined
+    : object[key];
 }
 
-export default safeGet
+export default safeGet;

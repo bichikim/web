@@ -8,14 +8,14 @@
  * @returns {Array} Returns the new mapped array.
  */
 function arrayMap(array, iteratee) {
-  let index = -1
-  const length = array == null ? 0 : array.length
-  const result = Array(length)
+  var index = -1,
+      length = array == null ? 0 : array.length,
+      result = Array(length);
 
   while (++index < length) {
-    result[index] = iteratee(array[index], index, array)
+    result[index] = iteratee(array[index], index, array);
   }
-  return result
+  return result;
 }
 
-export default arrayMap
+export default arrayMap;

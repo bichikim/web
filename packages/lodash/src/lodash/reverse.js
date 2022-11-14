@@ -1,8 +1,8 @@
 /** Used for built-in method references. */
-const arrayProto = Array.prototype
+var arrayProto = Array.prototype;
 
 /* Built-in method references for those with the same name as other `lodash` methods. */
-const nativeReverse = arrayProto.reverse
+var nativeReverse = arrayProto.reverse;
 
 /**
  * Reverses `array` so that the first element becomes the last, the second
@@ -28,7 +28,7 @@ const nativeReverse = arrayProto.reverse
  * // => [3, 2, 1]
  */
 function reverse(array) {
-  return array == null ? array : nativeReverse.call(array)
+  return array == null ? array : nativeReverse.call(array);
 }
 
-export default reverse
+export default reverse;

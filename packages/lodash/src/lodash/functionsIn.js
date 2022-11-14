@@ -1,5 +1,5 @@
-import baseFunctions from './_baseFunctions.js'
-import keysIn from './keysIn.js'
+import baseFunctions from './_baseFunctions.js';
+import keysIn from './keysIn.js';
 
 /**
  * Creates an array of function property names from own and inherited
@@ -25,7 +25,7 @@ import keysIn from './keysIn.js'
  * // => ['a', 'b', 'c']
  */
 function functionsIn(object) {
-  return object == null ? [] : baseFunctions(object, keysIn(object))
+  return object == null ? [] : baseFunctions(object, keysIn(object));
 }
 
-export default functionsIn
+export default functionsIn;

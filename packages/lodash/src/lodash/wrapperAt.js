@@ -1,9 +1,9 @@
-import LazyWrapper from './_LazyWrapper.js'
-import LodashWrapper from './_LodashWrapper.js'
-import baseAt from './_baseAt.js'
-import flatRest from './_flatRest.js'
-import isIndex from './_isIndex.js'
-import thru from './thru.js'
+import LazyWrapper from './_LazyWrapper.js';
+import LodashWrapper from './_LodashWrapper.js';
+import baseAt from './_baseAt.js';
+import flatRest from './_flatRest.js';
+import isIndex from './_isIndex.js';
+import thru from './thru.js';
 
 /**
  * This method is the wrapper version of `_.at`.
@@ -21,34 +21,28 @@ import thru from './thru.js'
  * _(object).at(['a[0].b.c', 'a[1]']).value();
  * // => [3, 4]
  */
-const wrapperAt = flatRest(function (paths) {
-  const {length} = paths
-  const start = length ? paths[0] : 0
-  let value = this.__wrapped__
-  const interceptor = function (object) {
-    return baseAt(object, paths)
-  }
+var wrapperAt = flatRest(function(paths) {
+  var length = paths.length,
+      start = length ? paths[0] : 0,
+      value = this.__wrapped__,
+      interceptor = function(object) { return baseAt(object, paths); };
 
-  if (
-    length > 1 ||
-    this.__actions__.length > 0 ||
-    !(value instanceof LazyWrapper) ||
-    !isIndex(start)
-  ) {
-    return this.thru(interceptor)
+  if (length > 1 || this.__actions__.length ||
+      !(value instanceof LazyWrapper) || !isIndex(start)) {
+    return this.thru(interceptor);
   }
-  value = value.slice(start, Number(start) + (length ? 1 : 0))
+  value = value.slice(start, +start + (length ? 1 : 0));
   value.__actions__.push({
-    args: [interceptor],
-    func: thru,
-    thisArg: undefined,
-  })
-  return new LodashWrapper(value, this.__chain__).thru(function (array) {
-    if (length && array.length === 0) {
-      array.push(undefined)
+    'func': thru,
+    'args': [interceptor],
+    'thisArg': undefined
+  });
+  return new LodashWrapper(value, this.__chain__).thru(function(array) {
+    if (length && !array.length) {
+      array.push(undefined);
     }
-    return array
-  })
-})
+    return array;
+  });
+});
 
-export default wrapperAt
+export default wrapperAt;

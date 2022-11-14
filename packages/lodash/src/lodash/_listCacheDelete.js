@@ -1,10 +1,10 @@
-import assocIndexOf from './_assocIndexOf.js'
+import assocIndexOf from './_assocIndexOf.js';
 
 /** Used for built-in method references. */
-const arrayProto = Array.prototype
+var arrayProto = Array.prototype;
 
 /** Built-in value references. */
-const {splice} = arrayProto
+var splice = arrayProto.splice;
 
 /**
  * Removes `key` and its value from the list cache.
@@ -16,20 +16,20 @@ const {splice} = arrayProto
  * @returns {boolean} Returns `true` if the entry was removed, else `false`.
  */
 function listCacheDelete(key) {
-  const data = this.__data__
-  const index = assocIndexOf(data, key)
+  var data = this.__data__,
+      index = assocIndexOf(data, key);
 
   if (index < 0) {
-    return false
+    return false;
   }
-  const lastIndex = data.length - 1
+  var lastIndex = data.length - 1;
   if (index == lastIndex) {
-    data.pop()
+    data.pop();
   } else {
-    splice.call(data, index, 1)
+    splice.call(data, index, 1);
   }
-  --this.size
-  return true
+  --this.size;
+  return true;
 }
 
-export default listCacheDelete
+export default listCacheDelete;

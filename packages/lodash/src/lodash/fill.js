@@ -1,5 +1,5 @@
-import baseFill from './_baseFill.js'
-import isIterateeCall from './_isIterateeCall.js'
+import baseFill from './_baseFill.js';
+import isIterateeCall from './_isIterateeCall.js';
 
 /**
  * Fills elements of `array` with `value` from `start` up to, but not
@@ -31,15 +31,15 @@ import isIterateeCall from './_isIterateeCall.js'
  * // => [4, '*', '*', 10]
  */
 function fill(array, value, start, end) {
-  const length = array == null ? 0 : array.length
+  var length = array == null ? 0 : array.length;
   if (!length) {
-    return []
+    return [];
   }
   if (start && typeof start != 'number' && isIterateeCall(array, value, start)) {
-    start = 0
-    end = length
+    start = 0;
+    end = length;
   }
-  return baseFill(array, value, start, end)
+  return baseFill(array, value, start, end);
 }
 
-export default fill
+export default fill;

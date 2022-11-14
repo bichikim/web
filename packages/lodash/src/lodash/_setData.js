@@ -1,5 +1,5 @@
-import baseSetData from './_baseSetData.js'
-import shortOut from './_shortOut.js'
+import baseSetData from './_baseSetData.js';
+import shortOut from './_shortOut.js';
 
 /**
  * Sets metadata for `func`.
@@ -15,6 +15,6 @@ import shortOut from './_shortOut.js'
  * @param {*} data The metadata.
  * @returns {Function} Returns `func`.
  */
-const setData = shortOut(baseSetData)
+var setData = shortOut(baseSetData);
 
-export default setData
+export default setData;

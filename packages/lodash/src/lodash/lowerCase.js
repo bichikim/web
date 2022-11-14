@@ -1,4 +1,4 @@
-import createCompounder from './_createCompounder.js'
+import createCompounder from './_createCompounder.js';
 
 /**
  * Converts `string`, as space separated words, to lower case.
@@ -20,8 +20,8 @@ import createCompounder from './_createCompounder.js'
  * _.lowerCase('__FOO_BAR__');
  * // => 'foo bar'
  */
-const lowerCase = createCompounder(function (result, word, index) {
-  return result + (index ? ' ' : '') + word.toLowerCase()
-})
+var lowerCase = createCompounder(function(result, word, index) {
+  return result + (index ? ' ' : '') + word.toLowerCase();
+});
 
-export default lowerCase
+export default lowerCase;

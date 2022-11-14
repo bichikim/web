@@ -1,5 +1,5 @@
-import arrayEvery from './_arrayEvery.js'
-import createOver from './_createOver.js'
+import arrayEvery from './_arrayEvery.js';
+import createOver from './_createOver.js';
 
 /**
  * Creates a function that checks if **all** of the `predicates` return
@@ -25,6 +25,6 @@ import createOver from './_createOver.js'
  * func(NaN);
  * // => false
  */
-const overEvery = createOver(arrayEvery)
+var overEvery = createOver(arrayEvery);
 
-export default overEvery
+export default overEvery;

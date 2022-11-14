@@ -1,14 +1,14 @@
-import apply from './_apply.js'
-import arrayMap from './_arrayMap.js'
-import baseFlatten from './_baseFlatten.js'
-import baseIteratee from './_baseIteratee.js'
-import baseRest from './_baseRest.js'
-import baseUnary from './_baseUnary.js'
-import castRest from './_castRest.js'
-import isArray from './isArray.js'
+import apply from './_apply.js';
+import arrayMap from './_arrayMap.js';
+import baseFlatten from './_baseFlatten.js';
+import baseIteratee from './_baseIteratee.js';
+import baseRest from './_baseRest.js';
+import baseUnary from './_baseUnary.js';
+import castRest from './_castRest.js';
+import isArray from './isArray.js';
 
 /* Built-in method references for those with the same name as other `lodash` methods. */
-const nativeMin = Math.min
+var nativeMin = Math.min;
 
 /**
  * Creates a function that invokes `func` with its arguments transformed.
@@ -41,22 +41,21 @@ const nativeMin = Math.min
  * func(10, 5);
  * // => [100, 10]
  */
-const overArgs = castRest(function (func, transforms) {
-  transforms =
-    transforms.length == 1 && isArray(transforms[0])
-      ? arrayMap(transforms[0], baseUnary(baseIteratee))
-      : arrayMap(baseFlatten(transforms, 1), baseUnary(baseIteratee))
+var overArgs = castRest(function(func, transforms) {
+  transforms = (transforms.length == 1 && isArray(transforms[0]))
+    ? arrayMap(transforms[0], baseUnary(baseIteratee))
+    : arrayMap(baseFlatten(transforms, 1), baseUnary(baseIteratee));
 
-  const funcsLength = transforms.length
-  return baseRest(function (args) {
-    let index = -1
-    const length = nativeMin(args.length, funcsLength)
+  var funcsLength = transforms.length;
+  return baseRest(function(args) {
+    var index = -1,
+        length = nativeMin(args.length, funcsLength);
 
     while (++index < length) {
-      args[index] = transforms[index].call(this, args[index])
+      args[index] = transforms[index].call(this, args[index]);
     }
-    return apply(func, this, args)
-  })
-})
+    return apply(func, this, args);
+  });
+});
 
-export default overArgs
+export default overArgs;

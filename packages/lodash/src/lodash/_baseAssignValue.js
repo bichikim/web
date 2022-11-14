@@ -1,4 +1,4 @@
-import defineProperty from './_defineProperty.js'
+import defineProperty from './_defineProperty.js';
 
 /**
  * The base implementation of `assignValue` and `assignMergeValue` without
@@ -12,14 +12,14 @@ import defineProperty from './_defineProperty.js'
 function baseAssignValue(object, key, value) {
   if (key == '__proto__' && defineProperty) {
     defineProperty(object, key, {
-      configurable: true,
-      enumerable: true,
-      value: value,
-      writable: true,
-    })
+      'configurable': true,
+      'enumerable': true,
+      'value': value,
+      'writable': true
+    });
   } else {
-    object[key] = value
+    object[key] = value;
   }
 }
 
-export default baseAssignValue
+export default baseAssignValue;

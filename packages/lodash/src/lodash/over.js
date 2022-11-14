@@ -1,5 +1,5 @@
-import arrayMap from './_arrayMap.js'
-import createOver from './_createOver.js'
+import arrayMap from './_arrayMap.js';
+import createOver from './_createOver.js';
 
 /**
  * Creates a function that invokes `iteratees` with the arguments it receives
@@ -19,6 +19,6 @@ import createOver from './_createOver.js'
  * func(1, 2, 3, 4);
  * // => [4, 1]
  */
-const over = createOver(arrayMap)
+var over = createOver(arrayMap);
 
-export default over
+export default over;

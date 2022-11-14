@@ -1,4 +1,4 @@
-import baseIsEqual from './_baseIsEqual.js'
+import baseIsEqual from './_baseIsEqual.js';
 
 /**
  * Performs a deep comparison between two values to determine if they are
@@ -29,7 +29,7 @@ import baseIsEqual from './_baseIsEqual.js'
  * // => false
  */
 function isEqual(value, other) {
-  return baseIsEqual(value, other)
+  return baseIsEqual(value, other);
 }
 
-export default isEqual
+export default isEqual;

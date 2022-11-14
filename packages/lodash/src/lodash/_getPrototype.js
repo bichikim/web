@@ -1,6 +1,6 @@
-import overArg from './_overArg.js'
+import overArg from './_overArg.js';
 
 /** Built-in value references. */
-const getPrototype = overArg(Object.getPrototypeOf, Object)
+var getPrototype = overArg(Object.getPrototypeOf, Object);
 
-export default getPrototype
+export default getPrototype;

@@ -1,9 +1,9 @@
-import castPath from './_castPath.js'
-import isArguments from './isArguments.js'
-import isArray from './isArray.js'
-import isIndex from './_isIndex.js'
-import isLength from './isLength.js'
-import toKey from './_toKey.js'
+import castPath from './_castPath.js';
+import isArguments from './isArguments.js';
+import isArray from './isArray.js';
+import isIndex from './_isIndex.js';
+import isLength from './isLength.js';
+import toKey from './_toKey.js';
 
 /**
  * Checks if `path` exists on `object`.
@@ -15,29 +15,25 @@ import toKey from './_toKey.js'
  * @returns {boolean} Returns `true` if `path` exists, else `false`.
  */
 function hasPath(object, path, hasFunc) {
-  path = castPath(path, object)
+  path = castPath(path, object);
 
-  let index = -1
-  let {length} = path
-  let result = false
+  var index = -1,
+      length = path.length,
+      result = false;
 
   while (++index < length) {
-    var key = toKey(path[index])
+    var key = toKey(path[index]);
     if (!(result = object != null && hasFunc(object, key))) {
-      break
+      break;
     }
-    object = object[key]
+    object = object[key];
   }
   if (result || ++index != length) {
-    return result
+    return result;
   }
-  length = object == null ? 0 : object.length
-  return (
-    Boolean(length) &&
-    isLength(length) &&
-    isIndex(key, length) &&
-    (isArray(object) || isArguments(object))
-  )
+  length = object == null ? 0 : object.length;
+  return !!length && isLength(length) && isIndex(key, length) &&
+    (isArray(object) || isArguments(object));
 }
 
-export default hasPath
+export default hasPath;

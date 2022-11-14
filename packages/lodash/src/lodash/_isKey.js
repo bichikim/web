@@ -1,9 +1,9 @@
-import isArray from './isArray.js'
-import isSymbol from './isSymbol.js'
+import isArray from './isArray.js';
+import isSymbol from './isSymbol.js';
 
 /** Used to match property names within property paths. */
-var reIsDeepProp = /\.|\[(?:[^[\]]*|(["'])(?:(?!\1)[^\\]|\\.)*?\1)]/,
-  reIsPlainProp = /^\w*$/
+var reIsDeepProp = /\.|\[(?:[^[\]]*|(["'])(?:(?!\1)[^\\]|\\.)*?\1)\]/,
+    reIsPlainProp = /^\w*$/;
 
 /**
  * Checks if `value` is a property name and not a property path.
@@ -15,22 +15,15 @@ var reIsDeepProp = /\.|\[(?:[^[\]]*|(["'])(?:(?!\1)[^\\]|\\.)*?\1)]/,
  */
 function isKey(value, object) {
   if (isArray(value)) {
-    return false
+    return false;
   }
-  let type = typeof value
-  if (
-    type == 'number' ||
-    type == 'symbol' ||
-    type == 'boolean' ||
-    value == null ||
-    isSymbol(value)
-  ) {
-    return true
+  var type = typeof value;
+  if (type == 'number' || type == 'symbol' || type == 'boolean' ||
+      value == null || isSymbol(value)) {
+    return true;
   }
-  return (
-    reIsPlainProp.test(value) ||
-    !reIsDeepProp.test(value) ||
-    (object != null && value in Object(object))
+  return reIsPlainProp.test(value) || !reIsDeepProp.test(value) ||
+    (object != null && value in Object(object));
 }
 
-export default isKey
+export default isKey;

@@ -6,8 +6,8 @@
  * @memberOf ListCache
  */
 function listCacheClear() {
-  this.__data__ = []
-  this.size = 0
+  this.__data__ = [];
+  this.size = 0;
 }
 
-export default listCacheClear
+export default listCacheClear;

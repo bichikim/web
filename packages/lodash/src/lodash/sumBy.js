@@ -1,5 +1,5 @@
-import baseIteratee from './_baseIteratee.js'
-import baseSum from './_baseSum.js'
+import baseIteratee from './_baseIteratee.js';
+import baseSum from './_baseSum.js';
 
 /**
  * This method is like `_.sum` except that it accepts `iteratee` which is
@@ -25,7 +25,9 @@ import baseSum from './_baseSum.js'
  * // => 20
  */
 function sumBy(array, iteratee) {
-  return array && array.length > 0 ? baseSum(array, baseIteratee(iteratee, 2)) : 0
+  return (array && array.length)
+    ? baseSum(array, baseIteratee(iteratee, 2))
+    : 0;
 }
 
-export default sumBy
+export default sumBy;

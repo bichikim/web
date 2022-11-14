@@ -1,7 +1,7 @@
-import baseFlatten from './_baseFlatten.js'
-import baseOrderBy from './_baseOrderBy.js'
-import baseRest from './_baseRest.js'
-import isIterateeCall from './_isIterateeCall.js'
+import baseFlatten from './_baseFlatten.js';
+import baseOrderBy from './_baseOrderBy.js';
+import baseRest from './_baseRest.js';
+import isIterateeCall from './_isIterateeCall.js';
 
 /**
  * Creates an array of elements, sorted in ascending order by the results of
@@ -32,17 +32,17 @@ import isIterateeCall from './_isIterateeCall.js'
  * _.sortBy(users, ['user', 'age']);
  * // => objects for [['barney', 34], ['barney', 36], ['fred', 40], ['fred', 48]]
  */
-const sortBy = baseRest(function (collection, iteratees) {
+var sortBy = baseRest(function(collection, iteratees) {
   if (collection == null) {
-    return []
+    return [];
   }
-  const {length} = iteratees
+  var length = iteratees.length;
   if (length > 1 && isIterateeCall(collection, iteratees[0], iteratees[1])) {
-    iteratees = []
+    iteratees = [];
   } else if (length > 2 && isIterateeCall(iteratees[0], iteratees[1], iteratees[2])) {
-    iteratees = [iteratees[0]]
+    iteratees = [iteratees[0]];
   }
-  return baseOrderBy(collection, baseFlatten(iteratees, 1), [])
-})
+  return baseOrderBy(collection, baseFlatten(iteratees, 1), []);
+});
 
-export default sortBy
+export default sortBy;

@@ -1,7 +1,7 @@
-import arrayFilter from './_arrayFilter.js'
-import baseFilter from './_baseFilter.js'
-import baseIteratee from './_baseIteratee.js'
-import isArray from './isArray.js'
+import arrayFilter from './_arrayFilter.js';
+import baseFilter from './_baseFilter.js';
+import baseIteratee from './_baseIteratee.js';
+import isArray from './isArray.js';
 
 /**
  * Iterates over elements of `collection`, returning an array of all elements
@@ -41,8 +41,8 @@ import isArray from './isArray.js'
  * // => objects for ['barney']
  */
 function filter(collection, predicate) {
-  const func = isArray(collection) ? arrayFilter : baseFilter
-  return func(collection, baseIteratee(predicate, 3))
+  var func = isArray(collection) ? arrayFilter : baseFilter;
+  return func(collection, baseIteratee(predicate, 3));
 }
 
-export default filter
+export default filter;

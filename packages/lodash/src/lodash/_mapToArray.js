@@ -6,13 +6,13 @@
  * @returns {Array} Returns the key-value pairs.
  */
 function mapToArray(map) {
-  let index = -1
-  const result = Array(map.size)
+  var index = -1,
+      result = Array(map.size);
 
-  map.forEach(function (value, key) {
-    result[++index] = [key, value]
-  })
-  return result
+  map.forEach(function(value, key) {
+    result[++index] = [key, value];
+  });
+  return result;
 }
 
-export default mapToArray
+export default mapToArray;

@@ -1,10 +1,10 @@
-import arrayPush from './_arrayPush.js'
-import getPrototype from './_getPrototype.js'
-import getSymbols from './_getSymbols.js'
-import stubArray from './stubArray.js'
+import arrayPush from './_arrayPush.js';
+import getPrototype from './_getPrototype.js';
+import getSymbols from './_getSymbols.js';
+import stubArray from './stubArray.js';
 
 /* Built-in method references for those with the same name as other `lodash` methods. */
-const nativeGetSymbols = Object.getOwnPropertySymbols
+var nativeGetSymbols = Object.getOwnPropertySymbols;
 
 /**
  * Creates an array of the own and inherited enumerable symbols of `object`.
@@ -13,15 +13,13 @@ const nativeGetSymbols = Object.getOwnPropertySymbols
  * @param {Object} object The object to query.
  * @returns {Array} Returns the array of symbols.
  */
-const getSymbolsIn = !nativeGetSymbols
-  ? stubArray
-  : function (object) {
-      const result = []
-      while (object) {
-        arrayPush(result, getSymbols(object))
-        object = getPrototype(object)
-      }
-      return result
-    }
+var getSymbolsIn = !nativeGetSymbols ? stubArray : function(object) {
+  var result = [];
+  while (object) {
+    arrayPush(result, getSymbols(object));
+    object = getPrototype(object);
+  }
+  return result;
+};
 
-export default getSymbolsIn
+export default getSymbolsIn;

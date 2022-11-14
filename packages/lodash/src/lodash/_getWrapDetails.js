@@ -1,6 +1,6 @@
 /** Used to match wrap detail comments. */
-const reWrapDetails = /{\n\/\* \[wrapped with (.+)] \*/
-const reSplitDetails = /,? & /
+var reWrapDetails = /\{\n\/\* \[wrapped with (.+)\] \*/,
+    reSplitDetails = /,? & /;
 
 /**
  * Extracts wrapper details from the `source` body comment.
@@ -10,8 +10,8 @@ const reSplitDetails = /,? & /
  * @returns {Array} Returns the wrapper details.
  */
 function getWrapDetails(source) {
-  const match = source.match(reWrapDetails)
-  return match ? match[1].split(reSplitDetails) : []
+  var match = source.match(reWrapDetails);
+  return match ? match[1].split(reSplitDetails) : [];
 }
 
-export default getWrapDetails
+export default getWrapDetails;

@@ -1,6 +1,6 @@
 /* Built-in method references for those with the same name as other `lodash` methods. */
-const nativeFloor = Math.floor
-const nativeRandom = Math.random
+var nativeFloor = Math.floor,
+    nativeRandom = Math.random;
 
 /**
  * The base implementation of `_.random` without support for returning
@@ -12,7 +12,7 @@ const nativeRandom = Math.random
  * @returns {number} Returns the random number.
  */
 function baseRandom(lower, upper) {
-  return lower + nativeFloor(nativeRandom() * (upper - lower + 1))
+  return lower + nativeFloor(nativeRandom() * (upper - lower + 1));
 }
 
-export default baseRandom
+export default baseRandom;

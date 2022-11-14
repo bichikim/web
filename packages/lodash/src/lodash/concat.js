@@ -1,7 +1,7 @@
-import arrayPush from './_arrayPush.js'
-import baseFlatten from './_baseFlatten.js'
-import copyArray from './_copyArray.js'
-import isArray from './isArray.js'
+import arrayPush from './_arrayPush.js';
+import baseFlatten from './_baseFlatten.js';
+import copyArray from './_copyArray.js';
+import isArray from './isArray.js';
 
 /**
  * Creates a new array concatenating `array` with any additional arrays
@@ -26,18 +26,18 @@ import isArray from './isArray.js'
  * // => [1]
  */
 function concat() {
-  const {length} = arguments
+  var length = arguments.length;
   if (!length) {
-    return []
+    return [];
   }
-  const args = Array(length - 1)
-  const array = arguments[0]
-  let index = length
+  var args = Array(length - 1),
+      array = arguments[0],
+      index = length;
 
   while (index--) {
-    args[index - 1] = arguments[index]
+    args[index - 1] = arguments[index];
   }
-  return arrayPush(isArray(array) ? copyArray(array) : [array], baseFlatten(args, 1))
+  return arrayPush(isArray(array) ? copyArray(array) : [array], baseFlatten(args, 1));
 }
 
-export default concat
+export default concat;

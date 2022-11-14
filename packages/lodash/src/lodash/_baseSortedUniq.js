@@ -1,4 +1,4 @@
-import eq from './eq.js'
+import eq from './eq.js';
 
 /**
  * The base implementation of `_.sortedUniq` and `_.sortedUniqBy` without
@@ -10,21 +10,21 @@ import eq from './eq.js'
  * @returns {Array} Returns the new duplicate free array.
  */
 function baseSortedUniq(array, iteratee) {
-  let index = -1
-  const {length} = array
-  let resIndex = 0
-  const result = []
+  var index = -1,
+      length = array.length,
+      resIndex = 0,
+      result = [];
 
   while (++index < length) {
-    const value = array[index]
-    const computed = iteratee ? iteratee(value) : value
+    var value = array[index],
+        computed = iteratee ? iteratee(value) : value;
 
     if (!index || !eq(computed, seen)) {
-      var seen = computed
-      result[resIndex++] = value === 0 ? 0 : value
+      var seen = computed;
+      result[resIndex++] = value === 0 ? 0 : value;
     }
   }
-  return result
+  return result;
 }
 
-export default baseSortedUniq
+export default baseSortedUniq;

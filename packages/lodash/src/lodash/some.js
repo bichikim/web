@@ -1,8 +1,8 @@
-import arraySome from './_arraySome.js'
-import baseIteratee from './_baseIteratee.js'
-import baseSome from './_baseSome.js'
-import isArray from './isArray.js'
-import isIterateeCall from './_isIterateeCall.js'
+import arraySome from './_arraySome.js';
+import baseIteratee from './_baseIteratee.js';
+import baseSome from './_baseSome.js';
+import isArray from './isArray.js';
+import isIterateeCall from './_isIterateeCall.js';
 
 /**
  * Checks if `predicate` returns truthy for **any** element of `collection`.
@@ -41,11 +41,11 @@ import isIterateeCall from './_isIterateeCall.js'
  * // => true
  */
 function some(collection, predicate, guard) {
-  const func = isArray(collection) ? arraySome : baseSome
+  var func = isArray(collection) ? arraySome : baseSome;
   if (guard && isIterateeCall(collection, predicate, guard)) {
-    predicate = undefined
+    predicate = undefined;
   }
-  return func(collection, baseIteratee(predicate, 3))
+  return func(collection, baseIteratee(predicate, 3));
 }
 
-export default some
+export default some;

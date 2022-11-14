@@ -17,7 +17,7 @@
  * // => undefined
  */
 function head(array) {
-  return array && array.length > 0 ? array[0] : undefined
+  return (array && array.length) ? array[0] : undefined;
 }
 
-export default head
+export default head;

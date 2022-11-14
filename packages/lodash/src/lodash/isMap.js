@@ -1,9 +1,9 @@
-import baseIsMap from './_baseIsMap.js'
-import baseUnary from './_baseUnary.js'
-import nodeUtil from './_nodeUtil.js'
+import baseIsMap from './_baseIsMap.js';
+import baseUnary from './_baseUnary.js';
+import nodeUtil from './_nodeUtil.js';
 
 /* Node.js helper references. */
-const nodeIsMap = nodeUtil && nodeUtil.isMap
+var nodeIsMap = nodeUtil && nodeUtil.isMap;
 
 /**
  * Checks if `value` is classified as a `Map` object.
@@ -22,6 +22,6 @@ const nodeIsMap = nodeUtil && nodeUtil.isMap
  * _.isMap(new WeakMap);
  * // => false
  */
-const isMap = nodeIsMap ? baseUnary(nodeIsMap) : baseIsMap
+var isMap = nodeIsMap ? baseUnary(nodeIsMap) : baseIsMap;
 
-export default isMap
+export default isMap;

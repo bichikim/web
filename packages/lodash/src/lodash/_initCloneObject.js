@@ -1,6 +1,6 @@
-import baseCreate from './_baseCreate.js'
-import getPrototype from './_getPrototype.js'
-import isPrototype from './_isPrototype.js'
+import baseCreate from './_baseCreate.js';
+import getPrototype from './_getPrototype.js';
+import isPrototype from './_isPrototype.js';
 
 /**
  * Initializes an object clone.
@@ -10,9 +10,9 @@ import isPrototype from './_isPrototype.js'
  * @returns {Object} Returns the initialized clone.
  */
 function initCloneObject(object) {
-  return typeof object.constructor == 'function' && !isPrototype(object)
+  return (typeof object.constructor == 'function' && !isPrototype(object))
     ? baseCreate(getPrototype(object))
-    : {}
+    : {};
 }
 
-export default initCloneObject
+export default initCloneObject;

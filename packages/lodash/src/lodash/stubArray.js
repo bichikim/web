@@ -17,7 +17,7 @@
  * // => false
  */
 function stubArray() {
-  return []
+  return [];
 }
 
-export default stubArray
+export default stubArray;

@@ -1,6 +1,6 @@
-import root from './_root.js'
+import root from './_root.js';
 
 /** Used to detect overreaching core-js shims. */
-const coreJsData = root['__core-js_shared__']
+var coreJsData = root['__core-js_shared__'];
 
-export default coreJsData
+export default coreJsData;

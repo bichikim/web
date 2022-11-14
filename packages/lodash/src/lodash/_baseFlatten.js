@@ -1,5 +1,5 @@
-import arrayPush from './_arrayPush.js'
-import isFlattenable from './_isFlattenable.js'
+import arrayPush from './_arrayPush.js';
+import isFlattenable from './_isFlattenable.js';
 
 /**
  * The base implementation of `_.flatten` with support for restricting flattening.
@@ -13,26 +13,26 @@ import isFlattenable from './_isFlattenable.js'
  * @returns {Array} Returns the new flattened array.
  */
 function baseFlatten(array, depth, predicate, isStrict, result) {
-  let index = -1
-  const {length} = array
+  var index = -1,
+      length = array.length;
 
-  predicate || (predicate = isFlattenable)
-  result || (result = [])
+  predicate || (predicate = isFlattenable);
+  result || (result = []);
 
   while (++index < length) {
-    const value = array[index]
+    var value = array[index];
     if (depth > 0 && predicate(value)) {
       if (depth > 1) {
         // Recursively flatten arrays (susceptible to call stack limits).
-        baseFlatten(value, depth - 1, predicate, isStrict, result)
+        baseFlatten(value, depth - 1, predicate, isStrict, result);
       } else {
-        arrayPush(result, value)
+        arrayPush(result, value);
       }
     } else if (!isStrict) {
-      result[result.length] = value
+      result[result.length] = value;
     }
   }
-  return result
+  return result;
 }
 
-export default baseFlatten
+export default baseFlatten;

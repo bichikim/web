@@ -1,5 +1,5 @@
-import arrayPush from './_arrayPush.js'
-import isArray from './isArray.js'
+import arrayPush from './_arrayPush.js';
+import isArray from './isArray.js';
 
 /**
  * The base implementation of `getAllKeys` and `getAllKeysIn` which uses
@@ -13,8 +13,8 @@ import isArray from './isArray.js'
  * @returns {Array} Returns the array of property names and symbols.
  */
 function baseGetAllKeys(object, keysFunc, symbolsFunc) {
-  const result = keysFunc(object)
-  return isArray(object) ? result : arrayPush(result, symbolsFunc(object))
+  var result = keysFunc(object);
+  return isArray(object) ? result : arrayPush(result, symbolsFunc(object));
 }
 
-export default baseGetAllKeys
+export default baseGetAllKeys;

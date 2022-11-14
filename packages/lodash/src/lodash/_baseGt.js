@@ -8,7 +8,7 @@
  *  else `false`.
  */
 function baseGt(value, other) {
-  return value > other
+  return value > other;
 }
 
-export default baseGt
+export default baseGt;

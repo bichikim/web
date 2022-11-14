@@ -22,7 +22,7 @@
  * // => ['abc']
  */
 function thru(value, interceptor) {
-  return interceptor(value)
+  return interceptor(value);
 }
 
-export default thru
+export default thru;

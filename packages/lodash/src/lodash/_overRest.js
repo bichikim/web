@@ -1,7 +1,7 @@
-import apply from './_apply.js'
+import apply from './_apply.js';
 
 /* Built-in method references for those with the same name as other `lodash` methods. */
-const nativeMax = Math.max
+var nativeMax = Math.max;
 
 /**
  * A specialized version of `baseRest` which transforms the rest array.
@@ -13,24 +13,24 @@ const nativeMax = Math.max
  * @returns {Function} Returns the new function.
  */
 function overRest(func, start, transform) {
-  start = nativeMax(start === undefined ? func.length - 1 : start, 0)
-  return function () {
-    const args = arguments
-    let index = -1
-    const length = nativeMax(args.length - start, 0)
-    const array = Array(length)
+  start = nativeMax(start === undefined ? (func.length - 1) : start, 0);
+  return function() {
+    var args = arguments,
+        index = -1,
+        length = nativeMax(args.length - start, 0),
+        array = Array(length);
 
     while (++index < length) {
-      array[index] = args[start + index]
+      array[index] = args[start + index];
     }
-    index = -1
-    const otherArgs = Array(start + 1)
+    index = -1;
+    var otherArgs = Array(start + 1);
     while (++index < start) {
-      otherArgs[index] = args[index]
+      otherArgs[index] = args[index];
     }
-    otherArgs[start] = transform(array)
-    return apply(func, this, otherArgs)
-  }
+    otherArgs[start] = transform(array);
+    return apply(func, this, otherArgs);
+  };
 }
 
-export default overRest
+export default overRest;

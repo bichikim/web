@@ -1,5 +1,5 @@
-import baseAssignValue from './_baseAssignValue.js'
-import createAggregator from './_createAggregator.js'
+import baseAssignValue from './_baseAssignValue.js';
+import createAggregator from './_createAggregator.js';
 
 /**
  * Creates an object composed of keys generated from the results of running
@@ -29,8 +29,8 @@ import createAggregator from './_createAggregator.js'
  * _.keyBy(array, 'dir');
  * // => { 'left': { 'dir': 'left', 'code': 97 }, 'right': { 'dir': 'right', 'code': 100 } }
  */
-const keyBy = createAggregator(function (result, value, key) {
-  baseAssignValue(result, key, value)
-})
+var keyBy = createAggregator(function(result, value, key) {
+  baseAssignValue(result, key, value);
+});
 
-export default keyBy
+export default keyBy;

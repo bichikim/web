@@ -1,4 +1,4 @@
-import assocIndexOf from './_assocIndexOf.js'
+import assocIndexOf from './_assocIndexOf.js';
 
 /**
  * Sets the list cache `key` to `value`.
@@ -11,16 +11,16 @@ import assocIndexOf from './_assocIndexOf.js'
  * @returns {Object} Returns the list cache instance.
  */
 function listCacheSet(key, value) {
-  const data = this.__data__
-  const index = assocIndexOf(data, key)
+  var data = this.__data__,
+      index = assocIndexOf(data, key);
 
   if (index < 0) {
-    ++this.size
-    data.push([key, value])
+    ++this.size;
+    data.push([key, value]);
   } else {
-    data[index][1] = value
+    data[index][1] = value;
   }
-  return this
+  return this;
 }
 
-export default listCacheSet
+export default listCacheSet;

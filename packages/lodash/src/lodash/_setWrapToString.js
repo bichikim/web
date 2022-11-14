@@ -1,7 +1,7 @@
-import getWrapDetails from './_getWrapDetails.js'
-import insertWrapDetails from './_insertWrapDetails.js'
-import setToString from './_setToString.js'
-import updateWrapDetails from './_updateWrapDetails.js'
+import getWrapDetails from './_getWrapDetails.js';
+import insertWrapDetails from './_insertWrapDetails.js';
+import setToString from './_setToString.js';
+import updateWrapDetails from './_updateWrapDetails.js';
 
 /**
  * Sets the `toString` method of `wrapper` to mimic the source of `reference`
@@ -14,11 +14,8 @@ import updateWrapDetails from './_updateWrapDetails.js'
  * @returns {Function} Returns `wrapper`.
  */
 function setWrapToString(wrapper, reference, bitmask) {
-  const source = `${reference}`
-  return setToString(
-    wrapper,
-    insertWrapDetails(source, updateWrapDetails(getWrapDetails(source), bitmask)),
-  )
+  var source = (reference + '');
+  return setToString(wrapper, insertWrapDetails(source, updateWrapDetails(getWrapDetails(source), bitmask)));
 }
 
-export default setWrapToString
+export default setWrapToString;

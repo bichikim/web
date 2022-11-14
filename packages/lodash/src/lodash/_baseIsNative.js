@@ -1,34 +1,32 @@
-import isFunction from './isFunction.js'
-import isMasked from './_isMasked.js'
-import isObject from './isObject.js'
-import toSource from './_toSource.js'
+import isFunction from './isFunction.js';
+import isMasked from './_isMasked.js';
+import isObject from './isObject.js';
+import toSource from './_toSource.js';
 
 /**
  * Used to match `RegExp`
  * [syntax characters](http://ecma-international.org/ecma-262/7.0/#sec-patterns).
  */
-const reRegExpChar = /[$()*+.?[\\\]^{|}]/g
+var reRegExpChar = /[\\^$.*+?()[\]{}|]/g;
 
 /** Used to detect host constructors (Safari). */
-const reIsHostCtor = /^\[object .+?Constructor]$/
+var reIsHostCtor = /^\[object .+?Constructor\]$/;
 
 /** Used for built-in method references. */
-const funcProto = Function.prototype
-const objectProto = Object.prototype
+var funcProto = Function.prototype,
+    objectProto = Object.prototype;
 
 /** Used to resolve the decompiled source of functions. */
-const funcToString = funcProto.toString
+var funcToString = funcProto.toString;
 
 /** Used to check objects for own properties. */
-const {hasOwnProperty} = objectProto
+var hasOwnProperty = objectProto.hasOwnProperty;
 
 /** Used to detect if a method is native. */
-const reIsNative = RegExp(
-  `^${funcToString
-    .call(hasOwnProperty)
-    .replace(reRegExpChar, '\\$&')
-    .replace(/hasOwnProperty|(function).*?(?=\\\()| for .+?(?=\\])/g, '$1.*?')}$`,
-)
+var reIsNative = RegExp('^' +
+  funcToString.call(hasOwnProperty).replace(reRegExpChar, '\\$&')
+  .replace(/hasOwnProperty|(function).*?(?=\\\()| for .+?(?=\\\])/g, '$1.*?') + '$'
+);
 
 /**
  * The base implementation of `_.isNative` without bad shim checks.
@@ -40,10 +38,10 @@ const reIsNative = RegExp(
  */
 function baseIsNative(value) {
   if (!isObject(value) || isMasked(value)) {
-    return false
+    return false;
   }
-  const pattern = isFunction(value) ? reIsNative : reIsHostCtor
-  return pattern.test(toSource(value))
+  var pattern = isFunction(value) ? reIsNative : reIsHostCtor;
+  return pattern.test(toSource(value));
 }
 
-export default baseIsNative
+export default baseIsNative;

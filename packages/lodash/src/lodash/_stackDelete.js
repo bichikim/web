@@ -8,11 +8,11 @@
  * @returns {boolean} Returns `true` if the entry was removed, else `false`.
  */
 function stackDelete(key) {
-  const data = this.__data__
-  const result = data.delete(key)
+  var data = this.__data__,
+      result = data['delete'](key);
 
-  this.size = data.size
-  return result
+  this.size = data.size;
+  return result;
 }
 
-export default stackDelete
+export default stackDelete;

@@ -1,4 +1,4 @@
-import getMapData from './_getMapData.js'
+import getMapData from './_getMapData.js';
 
 /**
  * Sets the map `key` to `value`.
@@ -11,12 +11,12 @@ import getMapData from './_getMapData.js'
  * @returns {Object} Returns the map cache instance.
  */
 function mapCacheSet(key, value) {
-  const data = getMapData(this, key)
-  const {size} = data
+  var data = getMapData(this, key),
+      size = data.size;
 
-  data.set(key, value)
-  this.size += data.size == size ? 0 : 1
-  return this
+  data.set(key, value);
+  this.size += data.size == size ? 0 : 1;
+  return this;
 }
 
-export default mapCacheSet
+export default mapCacheSet;

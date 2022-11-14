@@ -1,12 +1,12 @@
-import arrayReduce from './_arrayReduce.js'
-import deburr from './deburr.js'
-import words from './words.js'
+import arrayReduce from './_arrayReduce.js';
+import deburr from './deburr.js';
+import words from './words.js';
 
 /** Used to compose unicode capture groups. */
-const rsApos = "['\u2019]"
+var rsApos = "['\u2019]";
 
 /** Used to match apostrophes. */
-const reApos = RegExp(rsApos, 'g')
+var reApos = RegExp(rsApos, 'g');
 
 /**
  * Creates a function like `_.camelCase`.
@@ -16,9 +16,9 @@ const reApos = RegExp(rsApos, 'g')
  * @returns {Function} Returns the new compounder function.
  */
 function createCompounder(callback) {
-  return function (string) {
-    return arrayReduce(words(deburr(string).replace(reApos, '')), callback, '')
-  }
+  return function(string) {
+    return arrayReduce(words(deburr(string).replace(reApos, '')), callback, '');
+  };
 }
 
-export default createCompounder
+export default createCompounder;

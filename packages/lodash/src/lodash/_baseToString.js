@@ -1,14 +1,14 @@
-import Symbol from './_Symbol.js'
-import arrayMap from './_arrayMap.js'
-import isArray from './isArray.js'
-import isSymbol from './isSymbol.js'
+import Symbol from './_Symbol.js';
+import arrayMap from './_arrayMap.js';
+import isArray from './isArray.js';
+import isSymbol from './isSymbol.js';
 
 /** Used as references for various `Number` constants. */
-const INFINITY = 1 / 0
+var INFINITY = 1 / 0;
 
 /** Used to convert symbols to primitives and strings. */
-const symbolProto = Symbol ? Symbol.prototype : undefined
-const symbolToString = symbolProto ? symbolProto.toString : undefined
+var symbolProto = Symbol ? Symbol.prototype : undefined,
+    symbolToString = symbolProto ? symbolProto.toString : undefined;
 
 /**
  * The base implementation of `_.toString` which doesn't convert nullish
@@ -21,17 +21,17 @@ const symbolToString = symbolProto ? symbolProto.toString : undefined
 function baseToString(value) {
   // Exit early for strings to avoid a performance hit in some environments.
   if (typeof value == 'string') {
-    return value
+    return value;
   }
   if (isArray(value)) {
     // Recursively convert values (susceptible to call stack limits).
-    return `${arrayMap(value, baseToString)}`
+    return arrayMap(value, baseToString) + '';
   }
   if (isSymbol(value)) {
-    return symbolToString ? symbolToString.call(value) : ''
+    return symbolToString ? symbolToString.call(value) : '';
   }
-  const result = `${value}`
-  return result == '0' && 1 / value == -INFINITY ? '-0' : result
+  var result = (value + '');
+  return (result == '0' && (1 / value) == -INFINITY) ? '-0' : result;
 }
 
-export default baseToString
+export default baseToString;

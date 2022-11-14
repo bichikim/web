@@ -1,5 +1,5 @@
 /** Used as the internal argument placeholder. */
-const PLACEHOLDER = '__lodash_placeholder__'
+var PLACEHOLDER = '__lodash_placeholder__';
 
 /**
  * Replaces all `placeholder` elements in `array` with an internal placeholder
@@ -11,19 +11,19 @@ const PLACEHOLDER = '__lodash_placeholder__'
  * @returns {Array} Returns the new array of placeholder indexes.
  */
 function replaceHolders(array, placeholder) {
-  let index = -1
-  const {length} = array
-  let resIndex = 0
-  const result = []
+  var index = -1,
+      length = array.length,
+      resIndex = 0,
+      result = [];
 
   while (++index < length) {
-    const value = array[index]
+    var value = array[index];
     if (value === placeholder || value === PLACEHOLDER) {
-      array[index] = PLACEHOLDER
-      result[resIndex++] = index
+      array[index] = PLACEHOLDER;
+      result[resIndex++] = index;
     }
   }
-  return result
+  return result;
 }
 
-export default replaceHolders
+export default replaceHolders;

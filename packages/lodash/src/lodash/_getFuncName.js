@@ -1,10 +1,10 @@
-import realNames from './_realNames.js'
+import realNames from './_realNames.js';
 
 /** Used for built-in method references. */
-const objectProto = Object.prototype
+var objectProto = Object.prototype;
 
 /** Used to check objects for own properties. */
-const {hasOwnProperty} = objectProto
+var hasOwnProperty = objectProto.hasOwnProperty;
 
 /**
  * Gets the name of `func`.
@@ -14,18 +14,18 @@ const {hasOwnProperty} = objectProto
  * @returns {string} Returns the function name.
  */
 function getFuncName(func) {
-  const result = `${func.name}`
-  const array = realNames[result]
-  let length = hasOwnProperty.call(realNames, result) ? array.length : 0
+  var result = (func.name + ''),
+      array = realNames[result],
+      length = hasOwnProperty.call(realNames, result) ? array.length : 0;
 
   while (length--) {
-    const data = array[length]
-    const otherFunc = data.func
+    var data = array[length],
+        otherFunc = data.func;
     if (otherFunc == null || otherFunc == func) {
-      return data.name
+      return data.name;
     }
   }
-  return result
+  return result;
 }
 
-export default getFuncName
+export default getFuncName;

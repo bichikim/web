@@ -1,11 +1,11 @@
-import toString from './toString.js'
+import toString from './toString.js';
 
 /**
  * Used to match `RegExp`
  * [syntax characters](http://ecma-international.org/ecma-262/7.0/#sec-patterns).
  */
-const reRegExpChar = /[$()*+.?[\\\]^{|}]/g
-const reHasRegExpChar = RegExp(reRegExpChar.source)
+var reRegExpChar = /[\\^$.*+?()[\]{}|]/g,
+    reHasRegExpChar = RegExp(reRegExpChar.source);
 
 /**
  * Escapes the `RegExp` special characters "^", "$", "\", ".", "*", "+",
@@ -23,8 +23,10 @@ const reHasRegExpChar = RegExp(reRegExpChar.source)
  * // => '\[lodash\]\(https://lodash\.com/\)'
  */
 function escapeRegExp(string) {
-  string = toString(string)
-  return string && reHasRegExpChar.test(string) ? string.replace(reRegExpChar, '\\$&') : string
+  string = toString(string);
+  return (string && reHasRegExpChar.test(string))
+    ? string.replace(reRegExpChar, '\\$&')
+    : string;
 }
 
-export default escapeRegExp
+export default escapeRegExp;

@@ -1,8 +1,8 @@
-import arrayEach from './_arrayEach.js'
-import baseAssignValue from './_baseAssignValue.js'
-import bind from './bind.js'
-import flatRest from './_flatRest.js'
-import toKey from './_toKey.js'
+import arrayEach from './_arrayEach.js';
+import baseAssignValue from './_baseAssignValue.js';
+import bind from './bind.js';
+import flatRest from './_flatRest.js';
+import toKey from './_toKey.js';
 
 /**
  * Binds methods of an object to the object itself, overwriting the existing
@@ -30,12 +30,12 @@ import toKey from './_toKey.js'
  * jQuery(element).on('click', view.click);
  * // => Logs 'clicked docs' when clicked.
  */
-const bindAll = flatRest(function (object, methodNames) {
-  arrayEach(methodNames, function (key) {
-    key = toKey(key)
-    baseAssignValue(object, key, bind(object[key], object))
-  })
-  return object
-})
+var bindAll = flatRest(function(object, methodNames) {
+  arrayEach(methodNames, function(key) {
+    key = toKey(key);
+    baseAssignValue(object, key, bind(object[key], object));
+  });
+  return object;
+});
 
-export default bindAll
+export default bindAll;

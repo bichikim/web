@@ -1,8 +1,8 @@
-import apply from './_apply.js'
-import baseEach from './_baseEach.js'
-import baseInvoke from './_baseInvoke.js'
-import baseRest from './_baseRest.js'
-import isArrayLike from './isArrayLike.js'
+import apply from './_apply.js';
+import baseEach from './_baseEach.js';
+import baseInvoke from './_baseInvoke.js';
+import baseRest from './_baseRest.js';
+import isArrayLike from './isArrayLike.js';
 
 /**
  * Invokes the method at `path` of each element in `collection`, returning
@@ -27,15 +27,15 @@ import isArrayLike from './isArrayLike.js'
  * _.invokeMap([123, 456], String.prototype.split, '');
  * // => [['1', '2', '3'], ['4', '5', '6']]
  */
-const invokeMap = baseRest(function (collection, path, args) {
-  let index = -1
-  const isFunc = typeof path == 'function'
-  const result = isArrayLike(collection) ? Array(collection.length) : []
+var invokeMap = baseRest(function(collection, path, args) {
+  var index = -1,
+      isFunc = typeof path == 'function',
+      result = isArrayLike(collection) ? Array(collection.length) : [];
 
-  baseEach(collection, function (value) {
-    result[++index] = isFunc ? apply(path, value, args) : baseInvoke(value, path, args)
-  })
-  return result
-})
+  baseEach(collection, function(value) {
+    result[++index] = isFunc ? apply(path, value, args) : baseInvoke(value, path, args);
+  });
+  return result;
+});
 
-export default invokeMap
+export default invokeMap;

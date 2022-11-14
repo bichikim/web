@@ -1,6 +1,10 @@
 import {h, ref} from 'vue'
 import {onClickOutside} from '../'
 
+export default {
+  title: 'use/onClickOutside',
+}
+
 export const Default = () => ({
   setup() {
     const countRef = ref(0)

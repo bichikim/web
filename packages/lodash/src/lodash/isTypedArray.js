@@ -1,9 +1,9 @@
-import baseIsTypedArray from './_baseIsTypedArray.js'
-import baseUnary from './_baseUnary.js'
-import nodeUtil from './_nodeUtil.js'
+import baseIsTypedArray from './_baseIsTypedArray.js';
+import baseUnary from './_baseUnary.js';
+import nodeUtil from './_nodeUtil.js';
 
 /* Node.js helper references. */
-const nodeIsTypedArray = nodeUtil && nodeUtil.isTypedArray
+var nodeIsTypedArray = nodeUtil && nodeUtil.isTypedArray;
 
 /**
  * Checks if `value` is classified as a typed array.
@@ -22,6 +22,6 @@ const nodeIsTypedArray = nodeUtil && nodeUtil.isTypedArray
  * _.isTypedArray([]);
  * // => false
  */
-const isTypedArray = nodeIsTypedArray ? baseUnary(nodeIsTypedArray) : baseIsTypedArray
+var isTypedArray = nodeIsTypedArray ? baseUnary(nodeIsTypedArray) : baseIsTypedArray;
 
-export default isTypedArray
+export default isTypedArray;

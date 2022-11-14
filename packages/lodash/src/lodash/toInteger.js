@@ -1,4 +1,4 @@
-import toFinite from './toFinite.js'
+import toFinite from './toFinite.js';
 
 /**
  * Converts `value` to an integer.
@@ -27,10 +27,10 @@ import toFinite from './toFinite.js'
  * // => 3
  */
 function toInteger(value) {
-  const result = toFinite(value)
-  const remainder = result % 1
+  var result = toFinite(value),
+      remainder = result % 1;
 
-  return result === result ? (remainder ? result - remainder : result) : 0
+  return result === result ? (remainder ? result - remainder : result) : 0;
 }
 
-export default toInteger
+export default toInteger;

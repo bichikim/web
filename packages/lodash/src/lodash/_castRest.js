@@ -1,4 +1,4 @@
-import baseRest from './_baseRest.js'
+import baseRest from './_baseRest.js';
 
 /**
  * A `baseRest` alias which can be replaced with `identity` by module
@@ -9,6 +9,6 @@ import baseRest from './_baseRest.js'
  * @param {Function} func The function to apply a rest parameter to.
  * @returns {Function} Returns the new function.
  */
-const castRest = baseRest
+var castRest = baseRest;
 
-export default castRest
+export default castRest;

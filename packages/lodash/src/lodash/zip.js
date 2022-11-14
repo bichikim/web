@@ -1,5 +1,5 @@
-import baseRest from './_baseRest.js'
-import unzip from './unzip.js'
+import baseRest from './_baseRest.js';
+import unzip from './unzip.js';
 
 /**
  * Creates an array of grouped elements, the first of which contains the
@@ -17,6 +17,6 @@ import unzip from './unzip.js'
  * _.zip(['a', 'b'], [1, 2], [true, false]);
  * // => [['a', 1, true], ['b', 2, false]]
  */
-const zip = baseRest(unzip)
+var zip = baseRest(unzip);
 
-export default zip
+export default zip;

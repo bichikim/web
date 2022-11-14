@@ -1,8 +1,8 @@
-import baseRest from './_baseRest.js'
-import toInteger from './toInteger.js'
+import baseRest from './_baseRest.js';
+import toInteger from './toInteger.js';
 
 /** Error message constants. */
-const FUNC_ERROR_TEXT = 'Expected a function'
+var FUNC_ERROR_TEXT = 'Expected a function';
 
 /**
  * Creates a function that invokes `func` with the `this` binding of the
@@ -31,10 +31,10 @@ const FUNC_ERROR_TEXT = 'Expected a function'
  */
 function rest(func, start) {
   if (typeof func != 'function') {
-    throw new TypeError(FUNC_ERROR_TEXT)
+    throw new TypeError(FUNC_ERROR_TEXT);
   }
-  start = start === undefined ? start : toInteger(start)
-  return baseRest(func, start)
+  start = start === undefined ? start : toInteger(start);
+  return baseRest(func, start);
 }
 
-export default rest
+export default rest;

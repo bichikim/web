@@ -1,4 +1,4 @@
-import isArray from './isArray.js'
+import isArray from './isArray.js';
 
 /**
  * Casts `value` as an array if it's not one.
@@ -34,11 +34,11 @@ import isArray from './isArray.js'
  * // => true
  */
 function castArray() {
-  if (arguments.length === 0) {
-    return []
+  if (!arguments.length) {
+    return [];
   }
-  const value = arguments[0]
-  return isArray(value) ? value : [value]
+  var value = arguments[0];
+  return isArray(value) ? value : [value];
 }
 
-export default castArray
+export default castArray;

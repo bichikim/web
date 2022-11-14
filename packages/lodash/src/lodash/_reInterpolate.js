@@ -1,4 +1,4 @@
 /** Used to match template delimiters. */
-const reInterpolate = /<%=([\S\s]+?)%>/g
+var reInterpolate = /<%=([\s\S]+?)%>/g;
 
-export default reInterpolate
+export default reInterpolate;

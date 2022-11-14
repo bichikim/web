@@ -1,10 +1,10 @@
-import arrayEach from './_arrayEach.js'
-import arrayPush from './_arrayPush.js'
-import baseFunctions from './_baseFunctions.js'
-import copyArray from './_copyArray.js'
-import isFunction from './isFunction.js'
-import isObject from './isObject.js'
-import keys from './keys.js'
+import arrayEach from './_arrayEach.js';
+import arrayPush from './_arrayPush.js';
+import baseFunctions from './_baseFunctions.js';
+import copyArray from './_copyArray.js';
+import isFunction from './isFunction.js';
+import isObject from './isObject.js';
+import keys from './keys.js';
 
 /**
  * Adds all own enumerable string keyed function properties of a source
@@ -43,32 +43,32 @@ import keys from './keys.js'
  * // => ['e']
  */
 function mixin(object, source, options) {
-  const props = keys(source)
-  const methodNames = baseFunctions(source, props)
+  var props = keys(source),
+      methodNames = baseFunctions(source, props);
 
-  const chain = !(isObject(options) && 'chain' in options) || Boolean(options.chain)
-  const isFunc = isFunction(object)
+  var chain = !(isObject(options) && 'chain' in options) || !!options.chain,
+      isFunc = isFunction(object);
 
-  arrayEach(methodNames, function (methodName) {
-    const func = source[methodName]
-    object[methodName] = func
+  arrayEach(methodNames, function(methodName) {
+    var func = source[methodName];
+    object[methodName] = func;
     if (isFunc) {
-      object.prototype[methodName] = function () {
-        const chainAll = this.__chain__
+      object.prototype[methodName] = function() {
+        var chainAll = this.__chain__;
         if (chain || chainAll) {
-          const result = object(this.__wrapped__)
-          const actions = (result.__actions__ = copyArray(this.__actions__))
+          var result = object(this.__wrapped__),
+              actions = result.__actions__ = copyArray(this.__actions__);
 
-          actions.push({args: arguments, func: func, thisArg: object})
-          result.__chain__ = chainAll
-          return result
+          actions.push({ 'func': func, 'args': arguments, 'thisArg': object });
+          result.__chain__ = chainAll;
+          return result;
         }
-        return func.apply(object, arrayPush([this.value()], arguments))
-      }
+        return func.apply(object, arrayPush([this.value()], arguments));
+      };
     }
-  })
+  });
 
-  return object
+  return object;
 }
 
-export default mixin
+export default mixin;

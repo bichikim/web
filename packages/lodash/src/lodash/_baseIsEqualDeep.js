@@ -1,25 +1,25 @@
-import Stack from './_Stack.js'
-import equalArrays from './_equalArrays.js'
-import equalByTag from './_equalByTag.js'
-import equalObjects from './_equalObjects.js'
-import getTag from './_getTag.js'
-import isArray from './isArray.js'
-import isBuffer from './isBuffer.js'
-import isTypedArray from './isTypedArray.js'
+import Stack from './_Stack.js';
+import equalArrays from './_equalArrays.js';
+import equalByTag from './_equalByTag.js';
+import equalObjects from './_equalObjects.js';
+import getTag from './_getTag.js';
+import isArray from './isArray.js';
+import isBuffer from './isBuffer.js';
+import isTypedArray from './isTypedArray.js';
 
 /** Used to compose bitmasks for value comparisons. */
-const COMPARE_PARTIAL_FLAG = 1
+var COMPARE_PARTIAL_FLAG = 1;
 
 /** `Object#toString` result references. */
-const argsTag = '[object Arguments]'
-const arrayTag = '[object Array]'
-const objectTag = '[object Object]'
+var argsTag = '[object Arguments]',
+    arrayTag = '[object Array]',
+    objectTag = '[object Object]';
 
 /** Used for built-in method references. */
-const objectProto = Object.prototype
+var objectProto = Object.prototype;
 
 /** Used to check objects for own properties. */
-const {hasOwnProperty} = objectProto
+var hasOwnProperty = objectProto.hasOwnProperty;
 
 /**
  * A specialized version of `baseIsEqual` for arrays and objects which performs
@@ -36,48 +36,48 @@ const {hasOwnProperty} = objectProto
  * @returns {boolean} Returns `true` if the objects are equivalent, else `false`.
  */
 function baseIsEqualDeep(object, other, bitmask, customizer, equalFunc, stack) {
-  let objIsArr = isArray(object)
-  const othIsArr = isArray(other)
-  let objTag = objIsArr ? arrayTag : getTag(object)
-  let othTag = othIsArr ? arrayTag : getTag(other)
+  var objIsArr = isArray(object),
+      othIsArr = isArray(other),
+      objTag = objIsArr ? arrayTag : getTag(object),
+      othTag = othIsArr ? arrayTag : getTag(other);
 
-  objTag = objTag == argsTag ? objectTag : objTag
-  othTag = othTag == argsTag ? objectTag : othTag
+  objTag = objTag == argsTag ? objectTag : objTag;
+  othTag = othTag == argsTag ? objectTag : othTag;
 
-  let objIsObj = objTag == objectTag
-  const othIsObj = othTag == objectTag
-  const isSameTag = objTag == othTag
+  var objIsObj = objTag == objectTag,
+      othIsObj = othTag == objectTag,
+      isSameTag = objTag == othTag;
 
   if (isSameTag && isBuffer(object)) {
     if (!isBuffer(other)) {
-      return false
+      return false;
     }
-    objIsArr = true
-    objIsObj = false
+    objIsArr = true;
+    objIsObj = false;
   }
   if (isSameTag && !objIsObj) {
-    stack || (stack = new Stack())
-    return objIsArr || isTypedArray(object)
+    stack || (stack = new Stack);
+    return (objIsArr || isTypedArray(object))
       ? equalArrays(object, other, bitmask, customizer, equalFunc, stack)
-      : equalByTag(object, other, objTag, bitmask, customizer, equalFunc, stack)
+      : equalByTag(object, other, objTag, bitmask, customizer, equalFunc, stack);
   }
   if (!(bitmask & COMPARE_PARTIAL_FLAG)) {
-    const objIsWrapped = objIsObj && hasOwnProperty.call(object, '__wrapped__')
-    const othIsWrapped = othIsObj && hasOwnProperty.call(other, '__wrapped__')
+    var objIsWrapped = objIsObj && hasOwnProperty.call(object, '__wrapped__'),
+        othIsWrapped = othIsObj && hasOwnProperty.call(other, '__wrapped__');
 
     if (objIsWrapped || othIsWrapped) {
-      const objUnwrapped = objIsWrapped ? object.value() : object
-      const othUnwrapped = othIsWrapped ? other.value() : other
+      var objUnwrapped = objIsWrapped ? object.value() : object,
+          othUnwrapped = othIsWrapped ? other.value() : other;
 
-      stack || (stack = new Stack())
-      return equalFunc(objUnwrapped, othUnwrapped, bitmask, customizer, stack)
+      stack || (stack = new Stack);
+      return equalFunc(objUnwrapped, othUnwrapped, bitmask, customizer, stack);
     }
   }
   if (!isSameTag) {
-    return false
+    return false;
   }
-  stack || (stack = new Stack())
-  return equalObjects(object, other, bitmask, customizer, equalFunc, stack)
+  stack || (stack = new Stack);
+  return equalObjects(object, other, bitmask, customizer, equalFunc, stack);
 }
 
-export default baseIsEqualDeep
+export default baseIsEqualDeep;

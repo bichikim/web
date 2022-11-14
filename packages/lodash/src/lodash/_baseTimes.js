@@ -8,13 +8,13 @@
  * @returns {Array} Returns the array of results.
  */
 function baseTimes(n, iteratee) {
-  let index = -1
-  const result = Array(n)
+  var index = -1,
+      result = Array(n);
 
   while (++index < n) {
-    result[index] = iteratee(index)
+    result[index] = iteratee(index);
   }
-  return result
+  return result;
 }
 
-export default baseTimes
+export default baseTimes;

@@ -1,6 +1,6 @@
-import apply from './_apply.js'
-import baseRest from './_baseRest.js'
-import isError from './isError.js'
+import apply from './_apply.js';
+import baseRest from './_baseRest.js';
+import isError from './isError.js';
 
 /**
  * Attempts to invoke `func`, returning either the result or the caught error
@@ -24,12 +24,12 @@ import isError from './isError.js'
  *   elements = [];
  * }
  */
-const attempt = baseRest(function (func, args) {
+var attempt = baseRest(function(func, args) {
   try {
-    return apply(func, undefined, args)
-  } catch (error) {
-    return isError(error) ? error : new Error(error)
+    return apply(func, undefined, args);
+  } catch (e) {
+    return isError(e) ? e : new Error(e);
   }
-})
+});
 
-export default attempt
+export default attempt;

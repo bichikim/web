@@ -1,4 +1,4 @@
-import isSymbol from './isSymbol.js'
+import isSymbol from './isSymbol.js';
 
 /**
  * The base implementation of methods like `_.max` and `_.min` which accepts a
@@ -11,24 +11,22 @@ import isSymbol from './isSymbol.js'
  * @returns {*} Returns the extremum value.
  */
 function baseExtremum(array, iteratee, comparator) {
-  let index = -1
-  const {length} = array
+  var index = -1,
+      length = array.length;
 
   while (++index < length) {
-    const value = array[index]
-    const current = iteratee(value)
+    var value = array[index],
+        current = iteratee(value);
 
-    if (
-      current != null &&
-      (computed === undefined
-        ? current === current && !isSymbol(current)
-        : comparator(current, computed))
-    ) {
-      var computed = current
-      var result = value
+    if (current != null && (computed === undefined
+          ? (current === current && !isSymbol(current))
+          : comparator(current, computed)
+        )) {
+      var computed = current,
+          result = value;
     }
   }
-  return result
+  return result;
 }
 
-export default baseExtremum
+export default baseExtremum;

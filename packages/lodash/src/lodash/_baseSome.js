@@ -1,4 +1,4 @@
-import baseEach from './_baseEach.js'
+import baseEach from './_baseEach.js';
 
 /**
  * The base implementation of `_.some` without support for iteratee shorthands.
@@ -10,13 +10,13 @@ import baseEach from './_baseEach.js'
  *  else `false`.
  */
 function baseSome(collection, predicate) {
-  let result
+  var result;
 
-  baseEach(collection, function (value, index, collection) {
-    result = predicate(value, index, collection)
-    return !result
-  })
-  return Boolean(result)
+  baseEach(collection, function(value, index, collection) {
+    result = predicate(value, index, collection);
+    return !result;
+  });
+  return !!result;
 }
 
-export default baseSome
+export default baseSome;

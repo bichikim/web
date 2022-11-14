@@ -1,5 +1,5 @@
-import baseIsMatch from './_baseIsMatch.js'
-import getMatchData from './_getMatchData.js'
+import baseIsMatch from './_baseIsMatch.js';
+import getMatchData from './_getMatchData.js';
 
 /**
  * Performs a partial deep comparison between `object` and `source` to
@@ -30,7 +30,7 @@ import getMatchData from './_getMatchData.js'
  * // => false
  */
 function isMatch(object, source) {
-  return object === source || baseIsMatch(object, source, getMatchData(source))
+  return object === source || baseIsMatch(object, source, getMatchData(source));
 }
 
-export default isMatch
+export default isMatch;

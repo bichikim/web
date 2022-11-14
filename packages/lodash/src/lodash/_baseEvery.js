@@ -1,4 +1,4 @@
-import baseEach from './_baseEach.js'
+import baseEach from './_baseEach.js';
 
 /**
  * The base implementation of `_.every` without support for iteratee shorthands.
@@ -10,12 +10,12 @@ import baseEach from './_baseEach.js'
  *  else `false`
  */
 function baseEvery(collection, predicate) {
-  let result = true
-  baseEach(collection, function (value, index, collection) {
-    result = Boolean(predicate(value, index, collection))
-    return result
-  })
-  return result
+  var result = true;
+  baseEach(collection, function(value, index, collection) {
+    result = !!predicate(value, index, collection);
+    return result;
+  });
+  return result;
 }
 
-export default baseEvery
+export default baseEvery;

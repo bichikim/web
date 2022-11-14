@@ -1,6 +1,6 @@
-import baseFindKey from './_baseFindKey.js'
-import baseForOwnRight from './_baseForOwnRight.js'
-import baseIteratee from './_baseIteratee.js'
+import baseFindKey from './_baseFindKey.js';
+import baseForOwnRight from './_baseForOwnRight.js';
+import baseIteratee from './_baseIteratee.js';
 
 /**
  * This method is like `_.findKey` except that it iterates over elements of
@@ -38,7 +38,7 @@ import baseIteratee from './_baseIteratee.js'
  * // => 'pebbles'
  */
 function findLastKey(object, predicate) {
-  return baseFindKey(object, baseIteratee(predicate, 3), baseForOwnRight)
+  return baseFindKey(object, baseIteratee(predicate, 3), baseForOwnRight);
 }
 
-export default findLastKey
+export default findLastKey;

@@ -1,13 +1,13 @@
-import baseRest from './_baseRest.js'
-import eq from './eq.js'
-import isIterateeCall from './_isIterateeCall.js'
-import keysIn from './keysIn.js'
+import baseRest from './_baseRest.js';
+import eq from './eq.js';
+import isIterateeCall from './_isIterateeCall.js';
+import keysIn from './keysIn.js';
 
 /** Used for built-in method references. */
-const objectProto = Object.prototype
+var objectProto = Object.prototype;
 
 /** Used to check objects for own properties. */
-const {hasOwnProperty} = objectProto
+var hasOwnProperty = objectProto.hasOwnProperty;
 
 /**
  * Assigns own and inherited enumerable string keyed properties of source
@@ -30,37 +30,35 @@ const {hasOwnProperty} = objectProto
  * _.defaults({ 'a': 1 }, { 'b': 2 }, { 'a': 3 });
  * // => { 'a': 1, 'b': 2 }
  */
-const defaults = baseRest(function (object, sources) {
-  object = Object(object)
+var defaults = baseRest(function(object, sources) {
+  object = Object(object);
 
-  let index = -1
-  let {length} = sources
-  const guard = length > 2 ? sources[2] : undefined
+  var index = -1;
+  var length = sources.length;
+  var guard = length > 2 ? sources[2] : undefined;
 
   if (guard && isIterateeCall(sources[0], sources[1], guard)) {
-    length = 1
+    length = 1;
   }
 
   while (++index < length) {
-    const source = sources[index]
-    const props = keysIn(source)
-    let propsIndex = -1
-    const propsLength = props.length
+    var source = sources[index];
+    var props = keysIn(source);
+    var propsIndex = -1;
+    var propsLength = props.length;
 
     while (++propsIndex < propsLength) {
-      const key = props[propsIndex]
-      const value = object[key]
+      var key = props[propsIndex];
+      var value = object[key];
 
-      if (
-        value === undefined ||
-        (eq(value, objectProto[key]) && !hasOwnProperty.call(object, key))
-      ) {
-        object[key] = source[key]
+      if (value === undefined ||
+          (eq(value, objectProto[key]) && !hasOwnProperty.call(object, key))) {
+        object[key] = source[key];
       }
     }
   }
 
-  return object
-})
+  return object;
+});
 
-export default defaults
+export default defaults;

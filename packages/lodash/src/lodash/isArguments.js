@@ -1,14 +1,14 @@
-import baseIsArguments from './_baseIsArguments.js'
-import isObjectLike from './isObjectLike.js'
+import baseIsArguments from './_baseIsArguments.js';
+import isObjectLike from './isObjectLike.js';
 
 /** Used for built-in method references. */
-const objectProto = Object.prototype
+var objectProto = Object.prototype;
 
 /** Used to check objects for own properties. */
-const {hasOwnProperty} = objectProto
+var hasOwnProperty = objectProto.hasOwnProperty;
 
 /** Built-in value references. */
-const {propertyIsEnumerable} = objectProto
+var propertyIsEnumerable = objectProto.propertyIsEnumerable;
 
 /**
  * Checks if `value` is likely an `arguments` object.
@@ -28,18 +28,9 @@ const {propertyIsEnumerable} = objectProto
  * _.isArguments([1, 2, 3]);
  * // => false
  */
-const isArguments = baseIsArguments(
-  (function () {
-    return arguments
-  })(),
-)
-  ? baseIsArguments
-  : function (value) {
-      return (
-        isObjectLike(value) &&
-        hasOwnProperty.call(value, 'callee') &&
-        !propertyIsEnumerable.call(value, 'callee')
-      )
-    }
+var isArguments = baseIsArguments(function() { return arguments; }()) ? baseIsArguments : function(value) {
+  return isObjectLike(value) && hasOwnProperty.call(value, 'callee') &&
+    !propertyIsEnumerable.call(value, 'callee');
+};
 
-export default isArguments
+export default isArguments;

@@ -1,7 +1,7 @@
-import toInteger from './toInteger.js'
+import toInteger from './toInteger.js';
 
 /** Error message constants. */
-const FUNC_ERROR_TEXT = 'Expected a function'
+var FUNC_ERROR_TEXT = 'Expected a function';
 
 /**
  * The opposite of `_.before`; this method creates a function that invokes
@@ -29,14 +29,14 @@ const FUNC_ERROR_TEXT = 'Expected a function'
  */
 function after(n, func) {
   if (typeof func != 'function') {
-    throw new TypeError(FUNC_ERROR_TEXT)
+    throw new TypeError(FUNC_ERROR_TEXT);
   }
-  n = toInteger(n)
-  return function () {
+  n = toInteger(n);
+  return function() {
     if (--n < 1) {
-      return Reflect.apply(func, this, arguments)
+      return func.apply(this, arguments);
     }
-  }
+  };
 }
 
-export default after
+export default after;

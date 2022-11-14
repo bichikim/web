@@ -1,6 +1,6 @@
-import arrayLikeKeys from './_arrayLikeKeys.js'
-import baseKeysIn from './_baseKeysIn.js'
-import isArrayLike from './isArrayLike.js'
+import arrayLikeKeys from './_arrayLikeKeys.js';
+import baseKeysIn from './_baseKeysIn.js';
+import isArrayLike from './isArrayLike.js';
 
 /**
  * Creates an array of the own and inherited enumerable property names of `object`.
@@ -26,7 +26,7 @@ import isArrayLike from './isArrayLike.js'
  * // => ['a', 'b', 'c'] (iteration order is not guaranteed)
  */
 function keysIn(object) {
-  return isArrayLike(object) ? arrayLikeKeys(object, true) : baseKeysIn(object)
+  return isArrayLike(object) ? arrayLikeKeys(object, true) : baseKeysIn(object);
 }
 
-export default keysIn
+export default keysIn;

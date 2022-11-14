@@ -1,13 +1,13 @@
-import Symbol from './_Symbol.js'
-import getRawTag from './_getRawTag.js'
-import objectToString from './_objectToString.js'
+import Symbol from './_Symbol.js';
+import getRawTag from './_getRawTag.js';
+import objectToString from './_objectToString.js';
 
 /** `Object#toString` result references. */
-const nullTag = '[object Null]'
-const undefinedTag = '[object Undefined]'
+var nullTag = '[object Null]',
+    undefinedTag = '[object Undefined]';
 
 /** Built-in value references. */
-const symToStringTag = Symbol ? Symbol.toStringTag : undefined
+var symToStringTag = Symbol ? Symbol.toStringTag : undefined;
 
 /**
  * The base implementation of `getTag` without fallbacks for buggy environments.
@@ -18,11 +18,11 @@ const symToStringTag = Symbol ? Symbol.toStringTag : undefined
  */
 function baseGetTag(value) {
   if (value == null) {
-    return value === undefined ? undefinedTag : nullTag
+    return value === undefined ? undefinedTag : nullTag;
   }
-  return symToStringTag && symToStringTag in Object(value)
+  return (symToStringTag && symToStringTag in Object(value))
     ? getRawTag(value)
-    : objectToString(value)
+    : objectToString(value);
 }
 
-export default baseGetTag
+export default baseGetTag;

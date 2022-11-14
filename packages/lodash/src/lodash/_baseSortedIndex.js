@@ -1,10 +1,10 @@
-import baseSortedIndexBy from './_baseSortedIndexBy.js'
-import identity from './identity.js'
-import isSymbol from './isSymbol.js'
+import baseSortedIndexBy from './_baseSortedIndexBy.js';
+import identity from './identity.js';
+import isSymbol from './isSymbol.js';
 
 /** Used as references for the maximum length and index of an array. */
-const MAX_ARRAY_LENGTH = 4_294_967_295
-const HALF_MAX_ARRAY_LENGTH = MAX_ARRAY_LENGTH >>> 1
+var MAX_ARRAY_LENGTH = 4294967295,
+    HALF_MAX_ARRAY_LENGTH = MAX_ARRAY_LENGTH >>> 1;
 
 /**
  * The base implementation of `_.sortedIndex` and `_.sortedLastIndex` which
@@ -19,27 +19,24 @@ const HALF_MAX_ARRAY_LENGTH = MAX_ARRAY_LENGTH >>> 1
  *  into `array`.
  */
 function baseSortedIndex(array, value, retHighest) {
-  let low = 0
-  let high = array == null ? low : array.length
+  var low = 0,
+      high = array == null ? low : array.length;
 
   if (typeof value == 'number' && value === value && high <= HALF_MAX_ARRAY_LENGTH) {
     while (low < high) {
-      const mid = (low + high) >>> 1
-      const computed = array[mid]
+      var mid = (low + high) >>> 1,
+          computed = array[mid];
 
-      if (
-        computed !== null &&
-        !isSymbol(computed) &&
-        (retHighest ? computed <= value : computed < value)
-      ) {
-        low = mid + 1
+      if (computed !== null && !isSymbol(computed) &&
+          (retHighest ? (computed <= value) : (computed < value))) {
+        low = mid + 1;
       } else {
-        high = mid
+        high = mid;
       }
     }
-    return high
+    return high;
   }
-  return baseSortedIndexBy(array, value, identity, retHighest)
+  return baseSortedIndexBy(array, value, identity, retHighest);
 }
 
-export default baseSortedIndex
+export default baseSortedIndex;

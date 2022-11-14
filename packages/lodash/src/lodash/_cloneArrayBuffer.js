@@ -1,4 +1,4 @@
-import Uint8Array from './_Uint8Array.js'
+import Uint8Array from './_Uint8Array.js';
 
 /**
  * Creates a clone of `arrayBuffer`.
@@ -8,9 +8,9 @@ import Uint8Array from './_Uint8Array.js'
  * @returns {ArrayBuffer} Returns the cloned array buffer.
  */
 function cloneArrayBuffer(arrayBuffer) {
-  const result = new arrayBuffer.constructor(arrayBuffer.byteLength)
-  new Uint8Array(result).set(new Uint8Array(arrayBuffer))
-  return result
+  var result = new arrayBuffer.constructor(arrayBuffer.byteLength);
+  new Uint8Array(result).set(new Uint8Array(arrayBuffer));
+  return result;
 }
 
-export default cloneArrayBuffer
+export default cloneArrayBuffer;
