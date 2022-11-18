@@ -1,8 +1,8 @@
 {
   "name": "vare",
   "version": "1.0.27-alpha.10",
-  "description": "share state for vue components",
   "private": true,
+  "description": "share state for vue components",
   "keywords": [
     "typescript",
     "vuex",

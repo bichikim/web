@@ -1,8 +1,8 @@
 {
   "name": "@coong/socket-io-server",
   "version": "1.0.27-alpha.10",
-  "description": "Vue utils",
   "private": true,
+  "description": "Vue utils",
   "keywords": [
     "typescript",
     "composition-api",

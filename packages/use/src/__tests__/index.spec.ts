@@ -5,6 +5,7 @@ describe('composition', () => {
     expect(Object.keys(composition)).toMatchInlineSnapshot(`
       [
         "bindRef",
+        "reRef",
         "bunchRef",
         "createAsElement",
         "debug",
@@ -45,8 +46,10 @@ describe('composition', () => {
         "useElementIntersection",
         "useEvent",
         "useInstanceId",
+        "getRetryArgs",
         "usePromise",
         "useSize",
+        "useElementSticky",
         "useSticky",
         "useThrottle",
         "VerifyInputsKey",

@@ -5,8 +5,8 @@
   "description": "",
   "scripts": {
     "build:spa": "vite build --outDir dist/spa",
-    "dev:spa": "vite --host",
     "dev:preview": "vite preview",
+    "dev:spa": "vite --host",
     "fix": "npx vue-demi-fix",
     "generate-pwa-icons": "pnpx pwa-asset-generator public/favicon.svg public/images/pwa --path-override /images/pwa",
     "generator:graphql": "graphql-codegen",
@@ -66,9 +66,6 @@
     "workbox-build": "^6.5.4",
     "workbox-window": "^6.5.4"
   },
-  "web-types": [
-    "../../web-types.json"
-  ],
   "ts-gql": {
     "schema": "../server/schema.graphql"
   },
@@ -80,5 +77,8 @@
     "outDir": "dist",
     "sourcemap": true,
     "splitting": false
-  }
+  },
+  "web-types": [
+    "../../web-types.json"
+  ]
 }

@@ -1,8 +1,8 @@
 {
   "name": "@winter-love/stitches",
   "version": "1.0.27-alpha.5",
-  "repository": "git@github.com:winter-love/web.git",
   "private": true,
+  "repository": "git@github.com:winter-love/web.git",
   "author": "bichi@live.co.kr",
   "exports": {
     ".": {

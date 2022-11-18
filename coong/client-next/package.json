@@ -1,11 +1,11 @@
 {
-  "private": true,
-  "version": "1.0.27-alpha.5",
   "name": "@winter-love/client-next",
+  "version": "1.0.27-alpha.5",
+  "private": true,
   "scripts": {
     "build:ssr": "quasar build -m ssr",
-    "dev:ssr": "quasar dev -m ssr",
     "dev": "quasar dev",
+    "dev:ssr": "quasar dev -m ssr",
     "preview:ssr": "node dist/ssr/index.js"
   },
   "dependencies": {
