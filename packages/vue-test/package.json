@@ -30,7 +30,7 @@
     "@vue/runtime-core": "^3.2.41",
     "@vue/test-utils": "^2.2.0",
     "jest-mock": "^29.2.1",
-    "node-html-parser": "^5.4.2",
+    "node-html-parser": "^6.0.0",
     "vue": "^3.2.45"
   },
   "devDependencies": {
