@@ -28,7 +28,7 @@ jobs:
           key: ${{ runner.os }}-libraies-${{ hashFiles('packages/**/*.ts') }}
 
       - name: Prepare Pnpm
-        uses: pnpm/action-setup@v2.0.1
+        uses: pnpm/action-setup@v2.2.4
         with:
           version: ${{ env.PNPM_VERSION }}
 
@@ -67,7 +67,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Prepare Pnpm
-        uses: pnpm/action-setup@v2.0.1
+        uses: pnpm/action-setup@v2.2.4
         with:
           version: ${{ env.PNPM_VERSION }}
 
@@ -134,7 +134,7 @@ jobs:
             ${{ runner.os }}-
 
       - name: Prepare Pnpm
-        uses: pnpm/action-setup@v2.0.1
+        uses: pnpm/action-setup@v2.2.4
         with:
           version: ${{ env.PNPM_VERSION }}
 
