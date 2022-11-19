@@ -4,7 +4,7 @@
   "private": true,
   "description": "",
   "scripts": {
-    "build:spa": "vite build --outDir dist/spa",
+    "build:spa": "vite build --outDir dist",
     "dev:preview": "vite preview",
     "dev:spa": "vite --host",
     "fix": "npx vue-demi-fix",
