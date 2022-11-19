@@ -4,6 +4,7 @@
   "compilerOptions": {
     "declaration": true,
     "outDir": "lib",
+    "target": "es2015",
     "baseUrl": ".",
     "paths": {
       "src/*": ["src/*"]
