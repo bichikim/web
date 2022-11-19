@@ -40,7 +40,7 @@
     "fast-glob": "^3.2.12",
     "globby": "^13.1.2",
     "lodash": "^4.17.21",
-    "node-html-parser": "^5.4.2",
+    "node-html-parser": "^6.0.0",
     "yargs": "^17.6.0"
   },
   "devDependencies": {
