@@ -91,7 +91,7 @@ importers:
       vite: ^3.2.3
       vite-plugin-babel: ^1.1.2
       vite-tsconfig-paths: 3.5.2
-      vue: 3.2.45
+      vue: ^3.2.45
     devDependencies:
       '@babel/core': 7.20.2
       '@babel/plugin-proposal-class-properties': 7.18.6_@babel+core@7.20.2
