@@ -549,7 +549,7 @@ importers:
       '@types/node': 18.0.4
       '@types/sinon': 10.0.13
       '@vue/server-renderer': 3.2.33
-      '@vue/test-utils': 2.2.1
+      '@vue/test-utils': 2.2.3
       '@winter-love/lodash': workspace:^1.0.27-alpha.5
       '@winter-love/utils': workspace:^1.0.27-alpha.10
       debounce: ^1.2.1
@@ -564,7 +564,7 @@ importers:
       '@types/node': 18.0.4
       '@types/sinon': 10.0.13
       '@vue/server-renderer': 3.2.33_vue@3.2.33
-      '@vue/test-utils': 2.2.1_vue@3.2.33
+      '@vue/test-utils': 2.2.3_vue@3.2.33
       debounce: 1.2.1
       vue: 3.2.33
 
@@ -10455,7 +10455,7 @@ packages:
       '@babel/runtime': 7.20.1
       '@testing-library/dom': 8.19.0
       '@vue/compiler-sfc': 3.2.45
-      '@vue/test-utils': 2.2.1_vue@3.2.41
+      '@vue/test-utils': 2.2.3_vue@3.2.41
       vue: 3.2.41
     dev: true
 
@@ -11893,16 +11893,24 @@ packages:
       vue: 3.2.41
     dev: false
 
-  /@vue/test-utils/2.2.1_vue@3.2.33:
+  /@vue/test-utils/2.2.1_vue@3.2.41:
     resolution: {integrity: sha512-AkLt24wnnxedJ3NX090JYiueog184QqlR5TVNZM+lggCrK8XjeuPr274okaLqDmiRgp4XVCaGa07KqKLGQbsMQ==}
+    peerDependencies:
+      vue: ^3.0.1
+    dependencies:
+      vue: 3.2.41
+    dev: true
+
+  /@vue/test-utils/2.2.3_vue@3.2.33:
+    resolution: {integrity: sha512-MbqIS11cPEuZmqvyKNCnTdGxfNS4FhvQx7HO1JFQHlZRIM3ql2iwjPv9L1AFiLl4taW/5RTQz0r54d47xJuurA==}
     peerDependencies:
       vue: ^3.0.1
     dependencies:
       vue: 3.2.33
     dev: true
 
-  /@vue/test-utils/2.2.1_vue@3.2.41:
-    resolution: {integrity: sha512-AkLt24wnnxedJ3NX090JYiueog184QqlR5TVNZM+lggCrK8XjeuPr274okaLqDmiRgp4XVCaGa07KqKLGQbsMQ==}
+  /@vue/test-utils/2.2.3_vue@3.2.41:
+    resolution: {integrity: sha512-MbqIS11cPEuZmqvyKNCnTdGxfNS4FhvQx7HO1JFQHlZRIM3ql2iwjPv9L1AFiLl4taW/5RTQz0r54d47xJuurA==}
     peerDependencies:
       vue: ^3.0.1
     dependencies:
