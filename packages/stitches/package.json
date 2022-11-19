@@ -30,7 +30,7 @@
     "@stitches/core": "^1.2.8",
     "@vue/runtime-core": "^3.2.41",
     "@winter-love/lodash": "workspace:1.0.27-alpha.5",
-    "vue": "^3.2.41"
+    "vue": "^3.2.45"
   },
   "devDependencies": {
     "@types/node": "^18.11.4",

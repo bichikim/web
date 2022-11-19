@@ -41,7 +41,7 @@
     "@winter-love/use": "workspace:1.0.27-alpha.10",
     "@winter-love/utils": "workspace:1.0.27-alpha.10",
     "clsx": "^1.2.1",
-    "vue": "^3.2.41"
+    "vue": "^3.2.45"
   },
   "devDependencies": {
     "@babel/core": "^7.19.6",

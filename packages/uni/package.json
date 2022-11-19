@@ -35,7 +35,7 @@
     "@winter-love/utils": "^1.0.27-alpha.10",
     "jest-mock": "^29.2.1",
     "node-html-parser": "^5.4.2",
-    "vue": "^3.2.41"
+    "vue": "^3.2.45"
   },
   "devDependencies": {
     "@types/jest": "^28.1.8",
