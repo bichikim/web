@@ -365,7 +365,7 @@ export const createVueStitches = <
     stitches = createStitches(config)
   } catch {
     // 에러시 가짜 stitches 제작
-    console.warn('in unable environment')
+    console.warn('It is created in unable environment')
     stitches = createFakeStitches()
   }
 

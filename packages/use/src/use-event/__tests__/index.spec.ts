@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 import {flushPromises, mount} from '@vue/test-utils'
-import {defineComponent, h, ref} from 'vue'
+import {defineComponent, h, ref, effectScope} from 'vue'
 import {useEvent} from '../index'
 
 interface SetupOptions {
@@ -119,16 +119,20 @@ describe('use-event', () => {
     removeEventListenerSpy.mockRestore()
   })
   it('should work well outside of a component', () => {
+    const scope = effectScope()
     const callback = jest.fn()
-    useEvent(window, 'message', callback)
+    scope.run(() => {
+      useEvent(window, 'message', callback)
 
-    expect(callback).toHaveBeenCalledTimes(0)
+      expect(callback).toHaveBeenCalledTimes(0)
 
-    const event = new Event('message')
+      const event = new Event('message')
 
-    window.dispatchEvent(event)
+      window.dispatchEvent(event)
 
-    expect(callback).toHaveBeenCalledTimes(1)
+      expect(callback).toHaveBeenCalledTimes(1)
+    })
+    scope.stop()
   })
   it('should init the use-event with null', () => {
     const {wrapper} = setup({

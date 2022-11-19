@@ -38,15 +38,18 @@ export type ComponentMountingOptions<T> = T extends DefineComponent<
  */
 export const mountComposition = <Props extends Record<string, any>, RawBindings = object>(
   setup: (props: Props, ctx: SetupContext) => RawBindings,
-  options?: ComponentMountingOptions<any>,
+  options: ComponentMountingOptions<any> & {propsOptions?: any[]} = {},
 ): VueWrapper<ComponentPublicInstance<Props>> & {setupState: UnwrapNestedRefs<RawBindings>} => {
+  const {props = {}, propsOptions = []} = options
+  const propKeys = [...Object.keys(props), ...propsOptions]
   const wrapper: VueWrapper<ComponentPublicInstance<Props>> = mount(
     defineComponent({
+      props: propKeys,
       render() {
         return null
       },
       setup(props, ctx) {
-        return setup(ctx.attrs as any, ctx)
+        return setup(props, ctx)
       },
     }),
     options,

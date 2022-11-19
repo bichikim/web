@@ -45,6 +45,10 @@ describe('useInstanceId', () => {
   it('should warn in ssr environment', async () => {
     _isSSR.mockReturnValueOnce(true)
     jest.spyOn(console, 'warn')
+    // stop console run once
+    jest.mocked(console.warn).mockImplementationOnce(() => {
+      // empty
+    })
     const wrapper = mountComposition(() => {
       const id = useInstanceId()
 
@@ -52,13 +56,16 @@ describe('useInstanceId', () => {
         id,
       }
     })
-
     expect(typeof wrapper.setupState.id).toBe('number')
     expect(console.warn).toHaveBeenCalledWith('Do not use in SSR environment')
   })
   it('should warn id not in an instance', async () => {
     _getCurrentInstance.mockReturnValueOnce(null)
     jest.spyOn(console, 'warn')
+    // stop console run once
+    jest.mocked(console.warn).mockImplementationOnce(() => {
+      // empty
+    })
     mountComposition(() => {
       const id = useInstanceId()
 
