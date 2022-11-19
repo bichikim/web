@@ -7,7 +7,7 @@
   },
   "dependencies": {
     "@typescript-eslint/typescript-estree": "5.42.1",
-    "astring": "1.8.1"
+    "astring": "1.8.3"
   },
   "devDependencies": {
     "@types/node": "^17.0.45",
