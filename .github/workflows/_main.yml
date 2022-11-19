@@ -64,7 +64,7 @@ jobs:
     needs: build-client
     runs-on: ubuntu-latest
     # only master
-    if: ${{ github.ref == 'refs/heads/master' && needs.build-client.outputs.run_job == 'true' }}
+    if: ${{ github.ref == 'refs/heads/master' }}
     env:
       DESTINATION: coong-static-production
     steps:
