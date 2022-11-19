@@ -45,7 +45,7 @@
   },
   "devDependencies": {
     "@quasar/extras": "1.15.5",
-    "quasar": "2.6.6",
+    "quasar": "2.10.2",
     "tsup": "^6.3.0",
     "vue": "latest"
   },
