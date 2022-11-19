@@ -16,7 +16,7 @@ export const HMainLayout = defineComponent({
 })
 
 export default styled(HMainLayout, {
-  height: '100%',
   display: 'flex',
   flexDirection: 'column',
+  height: '100%',
 })

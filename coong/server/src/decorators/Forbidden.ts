@@ -1,6 +1,5 @@
-import {createMethodDecorator, ResolverData, UnauthorizedError} from 'type-graphql'
-import {ValidateMode} from 'src/auth'
 import {Context} from 'src/context'
+import {createMethodDecorator, ResolverData, UnauthorizedError} from 'type-graphql'
 
 export type ForbiddenResolver<Context extends Record<string, any>> = (
   resolverData: ResolverData<Context>,

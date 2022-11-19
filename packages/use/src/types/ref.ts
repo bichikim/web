@@ -1,15 +1,12 @@
+import {EmptyObject} from '@winter-love/utils'
 import {
   ComponentOptionsBase,
   ComputedRef,
-  EmitsOptions,
-  ObjectEmitsOptions,
-  PropType,
   Ref,
   UnwrapRef,
   WatchSource,
   WritableComputedRef,
 } from 'vue'
-import {Data, EmptyObject} from '@winter-love/utils'
 
 export type ToRef<T> = [T] extends [Ref] ? T : Ref<UnwrapRef<T>>
 

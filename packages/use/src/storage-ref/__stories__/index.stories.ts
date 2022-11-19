@@ -1,10 +1,14 @@
 import {storageRef} from '../'
 import {h, ref} from 'vue'
 
+export default {
+  title: 'use/storageRef',
+}
+
 export const Default = () => ({
   setup() {
     const originalFooRef = ref('foo')
-    const storageFooRef = storageRef('foo', originalFooRef)
+    const storageFooRef = storageRef('local', 'foo', originalFooRef)
 
     const addDot = () => {
       storageFooRef.value += '.'

@@ -1,6 +1,7 @@
 {
   "name": "@winter-love/uni",
-  "version": "1.0.25-alpha.16",
+  "version": "1.0.27-alpha.10",
+  "private": true,
   "repository": "git@github.com:winter-love/web.git",
   "author": "bichi@live.co.kr",
   "exports": {
@@ -29,25 +30,25 @@
     "@vue/runtime-core": "^3.2.41",
     "@vue/test-utils": "^2.2.0",
     "@vueuse/core": "^9.3.1",
-    "@winter-love/stitches": "workspace:1.0.25-alpha.16",
-    "@winter-love/use": "workspace:1.0.25-alpha.16",
-    "@winter-love/utils": "workspace:1.0.25-alpha.16",
+    "@winter-love/stitches": "^1.0.27-alpha.5",
+    "@winter-love/use": "^1.0.27-alpha.10",
+    "@winter-love/utils": "^1.0.27-alpha.10",
     "jest-mock": "^29.2.1",
     "node-html-parser": "^5.4.2",
-    "vue": "^3.2.41"
+    "vue": "^3.2.45"
   },
   "devDependencies": {
     "@types/jest": "^28.1.8",
     "@types/node": "^18.11.4",
     "lodash": "^4.17.21",
-    "tsd": "^0.22.0",
+    "tsd": "^0.24.0",
     "tsup": "^6.3.0",
     "typescript": "^4.8.4"
   },
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
+    "access": "public"
   },
-  "gitHead": "162bc0badb2b0932df3c9dc51cc1ff7af3587140",
+  "gitHead": "cace853a74de291e423dc79447ce0db596fdf60d",
   "tsup": {
     "entry": [
       "src/index.ts"
@@ -61,5 +62,8 @@
     "outDir": "dist",
     "sourcemap": true,
     "splitting": false
-  }
+  },
+  "web-types": [
+    "../../web-types.json"
+  ]
 }

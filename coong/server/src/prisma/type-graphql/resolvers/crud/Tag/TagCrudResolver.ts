@@ -7,8 +7,10 @@ import { CreateOneTagArgs } from "./args/CreateOneTagArgs";
 import { DeleteManyTagArgs } from "./args/DeleteManyTagArgs";
 import { DeleteOneTagArgs } from "./args/DeleteOneTagArgs";
 import { FindFirstTagArgs } from "./args/FindFirstTagArgs";
+import { FindFirstTagOrThrowArgs } from "./args/FindFirstTagOrThrowArgs";
 import { FindManyTagArgs } from "./args/FindManyTagArgs";
 import { FindUniqueTagArgs } from "./args/FindUniqueTagArgs";
+import { FindUniqueTagOrThrowArgs } from "./args/FindUniqueTagOrThrowArgs";
 import { GroupByTagArgs } from "./args/GroupByTagArgs";
 import { UpdateManyTagArgs } from "./args/UpdateManyTagArgs";
 import { UpdateOneTagArgs } from "./args/UpdateOneTagArgs";
@@ -96,6 +98,19 @@ export class TagCrudResolver {
     });
   }
 
+  @TypeGraphQL.Query(_returns => Tag, {
+    nullable: true
+  })
+  async findFirstTagOrThrow(@TypeGraphQL.Ctx() ctx: any, @TypeGraphQL.Info() info: GraphQLResolveInfo, @TypeGraphQL.Args() args: FindFirstTagOrThrowArgs): Promise<Tag | null> {
+    const { _count } = transformFields(
+      graphqlFields(info as any)
+    );
+    return getPrismaFromContext(ctx).tag.findFirstOrThrow({
+      ...args,
+      ...(_count && transformCountFieldIntoSelectRelationsCount(_count)),
+    });
+  }
+
   @TypeGraphQL.Query(_returns => [Tag], {
     nullable: false
   })
@@ -117,6 +132,19 @@ export class TagCrudResolver {
       graphqlFields(info as any)
     );
     return getPrismaFromContext(ctx).tag.findUnique({
+      ...args,
+      ...(_count && transformCountFieldIntoSelectRelationsCount(_count)),
+    });
+  }
+
+  @TypeGraphQL.Query(_returns => Tag, {
+    nullable: true
+  })
+  async getTag(@TypeGraphQL.Ctx() ctx: any, @TypeGraphQL.Info() info: GraphQLResolveInfo, @TypeGraphQL.Args() args: FindUniqueTagOrThrowArgs): Promise<Tag | null> {
+    const { _count } = transformFields(
+      graphqlFields(info as any)
+    );
+    return getPrismaFromContext(ctx).tag.findUniqueOrThrow({
       ...args,
       ...(_count && transformCountFieldIntoSelectRelationsCount(_count)),
     });

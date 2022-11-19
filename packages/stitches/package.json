@@ -1,6 +1,7 @@
 {
   "name": "@winter-love/stitches",
-  "version": "1.0.25-alpha.16",
+  "version": "1.0.27-alpha.5",
+  "private": true,
   "repository": "git@github.com:winter-love/web.git",
   "author": "bichi@live.co.kr",
   "exports": {
@@ -28,14 +29,14 @@
   "dependencies": {
     "@stitches/core": "^1.2.8",
     "@vue/runtime-core": "^3.2.41",
-    "@winter-love/lodash": "workspace:1.0.25-alpha.16",
-    "vue": "^3.2.41"
+    "@winter-love/lodash": "workspace:1.0.27-alpha.5",
+    "vue": "^3.2.45"
   },
   "devDependencies": {
     "@types/node": "^18.11.4",
     "@vue/server-renderer": "^3.2.41",
     "lodash": "^4.17.21",
-    "tsd": "^0.22.0",
+    "tsd": "^0.24.0",
     "tslib": "^2.4.0",
     "tsup": "^6.3.0",
     "typescript": "^4.8.4"
@@ -43,7 +44,7 @@
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"
   },
-  "gitHead": "162bc0badb2b0932df3c9dc51cc1ff7af3587140",
+  "gitHead": "cace853a74de291e423dc79447ce0db596fdf60d",
   "tsup": {
     "entry": [
       "src/index.ts"

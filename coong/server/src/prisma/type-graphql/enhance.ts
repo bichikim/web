@@ -22,8 +22,10 @@ const actionResolversMap = {
     deleteManyUser: actionResolvers.DeleteManyUserResolver,
     deleteOneUser: actionResolvers.DeleteOneUserResolver,
     findFirstUser: actionResolvers.FindFirstUserResolver,
+    findFirstUserOrThrow: actionResolvers.FindFirstUserOrThrowResolver,
     users: actionResolvers.FindManyUserResolver,
     user: actionResolvers.FindUniqueUserResolver,
+    getUser: actionResolvers.FindUniqueUserOrThrowResolver,
     groupByUser: actionResolvers.GroupByUserResolver,
     updateManyUser: actionResolvers.UpdateManyUserResolver,
     updateOneUser: actionResolvers.UpdateOneUserResolver,
@@ -36,8 +38,10 @@ const actionResolversMap = {
     deleteManyPost: actionResolvers.DeleteManyPostResolver,
     deleteOnePost: actionResolvers.DeleteOnePostResolver,
     findFirstPost: actionResolvers.FindFirstPostResolver,
+    findFirstPostOrThrow: actionResolvers.FindFirstPostOrThrowResolver,
     posts: actionResolvers.FindManyPostResolver,
     post: actionResolvers.FindUniquePostResolver,
+    getPost: actionResolvers.FindUniquePostOrThrowResolver,
     groupByPost: actionResolvers.GroupByPostResolver,
     updateManyPost: actionResolvers.UpdateManyPostResolver,
     updateOnePost: actionResolvers.UpdateOnePostResolver,
@@ -50,8 +54,10 @@ const actionResolversMap = {
     deleteManyComment: actionResolvers.DeleteManyCommentResolver,
     deleteOneComment: actionResolvers.DeleteOneCommentResolver,
     findFirstComment: actionResolvers.FindFirstCommentResolver,
+    findFirstCommentOrThrow: actionResolvers.FindFirstCommentOrThrowResolver,
     comments: actionResolvers.FindManyCommentResolver,
     comment: actionResolvers.FindUniqueCommentResolver,
+    getComment: actionResolvers.FindUniqueCommentOrThrowResolver,
     groupByComment: actionResolvers.GroupByCommentResolver,
     updateManyComment: actionResolvers.UpdateManyCommentResolver,
     updateOneComment: actionResolvers.UpdateOneCommentResolver,
@@ -64,8 +70,10 @@ const actionResolversMap = {
     deleteManyTag: actionResolvers.DeleteManyTagResolver,
     deleteOneTag: actionResolvers.DeleteOneTagResolver,
     findFirstTag: actionResolvers.FindFirstTagResolver,
+    findFirstTagOrThrow: actionResolvers.FindFirstTagOrThrowResolver,
     tags: actionResolvers.FindManyTagResolver,
     tag: actionResolvers.FindUniqueTagResolver,
+    getTag: actionResolvers.FindUniqueTagOrThrowResolver,
     groupByTag: actionResolvers.GroupByTagResolver,
     updateManyTag: actionResolvers.UpdateManyTagResolver,
     updateOneTag: actionResolvers.UpdateOneTagResolver,
@@ -73,10 +81,10 @@ const actionResolversMap = {
   }
 };
 const crudResolversInfo = {
-  User: ["aggregateUser", "createManyUser", "createOneUser", "deleteManyUser", "deleteOneUser", "findFirstUser", "users", "user", "groupByUser", "updateManyUser", "updateOneUser", "upsertOneUser"],
-  Post: ["aggregatePost", "createManyPost", "createOnePost", "deleteManyPost", "deleteOnePost", "findFirstPost", "posts", "post", "groupByPost", "updateManyPost", "updateOnePost", "upsertOnePost"],
-  Comment: ["aggregateComment", "createManyComment", "createOneComment", "deleteManyComment", "deleteOneComment", "findFirstComment", "comments", "comment", "groupByComment", "updateManyComment", "updateOneComment", "upsertOneComment"],
-  Tag: ["aggregateTag", "createManyTag", "createOneTag", "deleteManyTag", "deleteOneTag", "findFirstTag", "tags", "tag", "groupByTag", "updateManyTag", "updateOneTag", "upsertOneTag"]
+  User: ["aggregateUser", "createManyUser", "createOneUser", "deleteManyUser", "deleteOneUser", "findFirstUser", "findFirstUserOrThrow", "users", "user", "getUser", "groupByUser", "updateManyUser", "updateOneUser", "upsertOneUser"],
+  Post: ["aggregatePost", "createManyPost", "createOnePost", "deleteManyPost", "deleteOnePost", "findFirstPost", "findFirstPostOrThrow", "posts", "post", "getPost", "groupByPost", "updateManyPost", "updateOnePost", "upsertOnePost"],
+  Comment: ["aggregateComment", "createManyComment", "createOneComment", "deleteManyComment", "deleteOneComment", "findFirstComment", "findFirstCommentOrThrow", "comments", "comment", "getComment", "groupByComment", "updateManyComment", "updateOneComment", "upsertOneComment"],
+  Tag: ["aggregateTag", "createManyTag", "createOneTag", "deleteManyTag", "deleteOneTag", "findFirstTag", "findFirstTagOrThrow", "tags", "tag", "getTag", "groupByTag", "updateManyTag", "updateOneTag", "upsertOneTag"]
 };
 const argsInfo = {
   AggregateUserArgs: ["where", "orderBy", "cursor", "take", "skip"],
@@ -85,8 +93,10 @@ const argsInfo = {
   DeleteManyUserArgs: ["where"],
   DeleteOneUserArgs: ["where"],
   FindFirstUserArgs: ["where", "orderBy", "cursor", "take", "skip", "distinct"],
+  FindFirstUserOrThrowArgs: ["where", "orderBy", "cursor", "take", "skip", "distinct"],
   FindManyUserArgs: ["where", "orderBy", "cursor", "take", "skip", "distinct"],
   FindUniqueUserArgs: ["where"],
+  FindUniqueUserOrThrowArgs: ["where"],
   GroupByUserArgs: ["where", "orderBy", "by", "having", "take", "skip"],
   UpdateManyUserArgs: ["data", "where"],
   UpdateOneUserArgs: ["data", "where"],
@@ -97,8 +107,10 @@ const argsInfo = {
   DeleteManyPostArgs: ["where"],
   DeleteOnePostArgs: ["where"],
   FindFirstPostArgs: ["where", "orderBy", "cursor", "take", "skip", "distinct"],
+  FindFirstPostOrThrowArgs: ["where", "orderBy", "cursor", "take", "skip", "distinct"],
   FindManyPostArgs: ["where", "orderBy", "cursor", "take", "skip", "distinct"],
   FindUniquePostArgs: ["where"],
+  FindUniquePostOrThrowArgs: ["where"],
   GroupByPostArgs: ["where", "orderBy", "by", "having", "take", "skip"],
   UpdateManyPostArgs: ["data", "where"],
   UpdateOnePostArgs: ["data", "where"],
@@ -109,8 +121,10 @@ const argsInfo = {
   DeleteManyCommentArgs: ["where"],
   DeleteOneCommentArgs: ["where"],
   FindFirstCommentArgs: ["where", "orderBy", "cursor", "take", "skip", "distinct"],
+  FindFirstCommentOrThrowArgs: ["where", "orderBy", "cursor", "take", "skip", "distinct"],
   FindManyCommentArgs: ["where", "orderBy", "cursor", "take", "skip", "distinct"],
   FindUniqueCommentArgs: ["where"],
+  FindUniqueCommentOrThrowArgs: ["where"],
   GroupByCommentArgs: ["where", "orderBy", "by", "having", "take", "skip"],
   UpdateManyCommentArgs: ["data", "where"],
   UpdateOneCommentArgs: ["data", "where"],
@@ -121,8 +135,10 @@ const argsInfo = {
   DeleteManyTagArgs: ["where"],
   DeleteOneTagArgs: ["where"],
   FindFirstTagArgs: ["where", "orderBy", "cursor", "take", "skip", "distinct"],
+  FindFirstTagOrThrowArgs: ["where", "orderBy", "cursor", "take", "skip", "distinct"],
   FindManyTagArgs: ["where", "orderBy", "cursor", "take", "skip", "distinct"],
   FindUniqueTagArgs: ["where"],
+  FindUniqueTagOrThrowArgs: ["where"],
   GroupByTagArgs: ["where", "orderBy", "by", "having", "take", "skip"],
   UpdateManyTagArgs: ["data", "where"],
   UpdateOneTagArgs: ["data", "where"],
@@ -133,11 +149,11 @@ type ResolverModelNames = keyof typeof crudResolversMap;
 
 type ModelResolverActionNames<
   TModel extends ResolverModelNames
-  > = keyof typeof crudResolversMap[TModel]["prototype"];
+> = keyof typeof crudResolversMap[TModel]["prototype"];
 
 export type ResolverActionsConfig<
   TModel extends ResolverModelNames
-  > = Partial<Record<ModelResolverActionNames<TModel> | "_all", MethodDecorator[]>>;
+> = Partial<Record<ModelResolverActionNames<TModel> | "_all", MethodDecorator[]>>;
 
 export type ResolversEnhanceMap = {
   [TModel in ResolverModelNames]?: ResolverActionsConfig<TModel>;
@@ -187,7 +203,7 @@ type ArgFieldNames<TArgsType extends ArgsTypesNames> = Exclude<
 
 type ArgFieldsConfig<
   TArgsType extends ArgsTypesNames
-  > = FieldsConfig<ArgFieldNames<TArgsType>>;
+> = FieldsConfig<ArgFieldNames<TArgsType>>;
 
 export type ArgConfig<TArgsType extends ArgsTypesNames> = {
   class?: ClassDecorator[];
@@ -232,7 +248,7 @@ type RelationResolverModelNames = keyof typeof relationResolversMap;
 
 type RelationResolverActionNames<
   TModel extends RelationResolverModelNames
-  > = keyof typeof relationResolversMap[TModel]["prototype"];
+> = keyof typeof relationResolversMap[TModel]["prototype"];
 
 export type RelationResolverActionsConfig<TModel extends RelationResolverModelNames>
   = Partial<Record<RelationResolverActionNames<TModel> | "_all", MethodDecorator[]>>;
@@ -383,7 +399,7 @@ type OutputTypeFieldNames<TOutput extends OutputTypesNames> = Exclude<
 
 type OutputTypeFieldsConfig<
   TOutput extends OutputTypesNames
-  > = FieldsConfig<OutputTypeFieldNames<TOutput>>;
+> = FieldsConfig<OutputTypeFieldNames<TOutput>>;
 
 export type OutputTypeConfig<TOutput extends OutputTypesNames> = {
   class?: ClassDecorator[];
@@ -608,7 +624,7 @@ type InputTypeFieldNames<TInput extends InputTypesNames> = Exclude<
 
 type InputTypeFieldsConfig<
   TInput extends InputTypesNames
-  > = FieldsConfig<InputTypeFieldNames<TInput>>;
+> = FieldsConfig<InputTypeFieldNames<TInput>>;
 
 export type InputTypeConfig<TInput extends InputTypesNames> = {
   class?: ClassDecorator[];

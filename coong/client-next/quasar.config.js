@@ -37,8 +37,8 @@ module.exports = configure(() => {
         browser: ['es2019', 'edge88', 'firefox78', 'chrome87', 'safari13.1'],
         node: 'node16',
       },
-
-      vueRouterMode: 'hash', // available values: 'hash', 'history'
+      // available values: 'hash', 'history'
+      vueRouterMode: 'hash',
       // vueRouterBase,
       // vueDevtools,
       // vueOptionsAPI: false,
@@ -80,7 +80,8 @@ module.exports = configure(() => {
     // Full list of options: https://v2.quasar.dev/quasar-cli-vite/quasar-config-js#devServer
     devServer: {
       // https: true
-      open: true, // opens browser window automatically
+      // opens browser window automatically
+      open: true,
     },
 
     // Full list of options: https://v2.quasar.dev/quasar-cli-vite/developing-electron-apps/configuring-electron
@@ -128,9 +129,10 @@ module.exports = configure(() => {
       // 'themify',
       // 'line-awesome',
       // 'roboto-font-latin-ext', // this or either 'roboto-font', NEVER both!
-
-      'roboto-font', // optional, you are not bound to it
-      'material-icons', // optional, you are not bound to it
+      // optional, you are not bound to it
+      'roboto-font',
+      // optional, you are not bound to it
+      'material-icons',
     ],
 
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-js#framework
@@ -189,7 +191,8 @@ module.exports = configure(() => {
       // The default port that the production server should use
       // (gets superseded if process.env.PORT is specified at runtime)
       middlewares: [
-        'render', // keep this as last one
+        // keep this as last one
+        'render',
       ],
 
       // manualStoreHydration: true,

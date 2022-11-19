@@ -179,3 +179,8 @@ export const useSticky = (
     }
   })
 }
+
+/**
+ * useSticky 의 새 이름
+ */
+export const useElementSticky = useSticky

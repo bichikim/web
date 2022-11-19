@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/utils",
-  "version": "1.0.25-alpha.16",
+  "version": "1.0.27-alpha.10",
   "description": "Useful javascript utils",
   "keywords": [
     "typescript",
@@ -30,10 +30,11 @@
   "scripts": {
     "build": "tsup --dts --minify",
     "dev": "tsup --watch",
-    "prepare": "tsup --dts"
+    "prepare": "tsup --dts",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@winter-love/lodash": "workspace:^1.0.25-alpha.16",
+    "@winter-love/lodash": "^1.0.27-alpha.5",
     "safe-stable-stringify": "^2.4.1"
   },
   "devDependencies": {
@@ -46,7 +47,7 @@
   "publishConfig": {
     "access": "public"
   },
-  "gitHead": "162bc0badb2b0932df3c9dc51cc1ff7af3587140",
+  "gitHead": "b8f8c59a3c3b040b94cd578439949acde8212f5d",
   "tsup": {
     "entry": [
       "src/index.ts"

@@ -1,6 +1,10 @@
 import {onFocus} from '../'
 import {h, ref} from 'vue'
 
+export default {
+  title: 'use/onFocus',
+}
+
 export const Default = () => ({
   setup() {
     const countRef = ref(0)

@@ -1,6 +1,10 @@
 import {h, ref} from 'vue'
 import {watchExtended} from '../'
 
+export default {
+  title: 'use/watchExtended',
+}
+
 export const Default = () => ({
   setup() {
     const fooRef = ref(0)

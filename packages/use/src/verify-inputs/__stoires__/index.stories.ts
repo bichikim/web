@@ -1,6 +1,10 @@
 import {defineComponent, ref, toRefs} from 'vue'
 import {useVerifyInput, useVerifyInputs, verifyDirective} from '../'
 
+export default {
+  title: 'use/useVerifyInput',
+}
+
 export const Default = () => {
   const TUseInput = defineComponent({
     setup: () => {

@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 import {onElementMutation} from '../'
-import {mountComposition} from '@bluchip-nft/vue-test'
+import {mountComposition} from '@winter-love/vue-test'
 globalThis.MutationObserver = function ob() {
   // empty
 } as any

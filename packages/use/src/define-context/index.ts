@@ -1,11 +1,12 @@
+import {toValue} from '@winter-love/utils'
 import {inject, provide} from 'vue'
-import {MaybeFunction, NotFunction, toValue} from '@winter-love/utils'
 
 export const CONTEXT_KEY = Symbol('context-key')
 
-export interface ProvideContext<T extends NotFunction> {
-  (props?: MaybeFunction<T>): T
+export interface ProvideContext<T> {
   [CONTEXT_KEY]?: string | symbol
+
+  (props?: T): T
 }
 
 export interface InjectContextOptions {
@@ -14,20 +15,16 @@ export interface InjectContextOptions {
 }
 
 export interface InjectContext<T> {
-  (options?: InjectContextOptions): T
   [CONTEXT_KEY]?: string | symbol
+
+  (options?: InjectContextOptions): T
 }
 
-export type DefineContextResult<T extends NotFunction> = [
-  InjectContext<T>,
-  ProvideContext<T>,
-  string | symbol,
-]
+export type DefineContextResult<T> = [InjectContext<T>, ProvideContext<T>, string | symbol]
 
-export const defineContext = <T extends NotFunction>(
-  props?: MaybeFunction<T>,
-  key?: string | symbol,
-): DefineContextResult<T> => {
+export function defineContext<T>(props?: () => T, key?: string | symbol): DefineContextResult<T>
+export function defineContext<T>(props?: T, key?: string | symbol): DefineContextResult<T>
+export function defineContext<T>(props?: T, key?: string | symbol): DefineContextResult<T> {
   const _props = props
   const _key = key ?? Symbol()
 
@@ -44,7 +41,7 @@ export const defineContext = <T extends NotFunction>(
   )
 
   const provideContext = Object.assign(
-    (props?: MaybeFunction<T>): T => {
+    (props?: T): T => {
       const valueProps = props ? toValue(props) : undefined
       const context = valueProps ?? toValue(_props)
       provide(_key, context)
@@ -56,10 +53,7 @@ export const defineContext = <T extends NotFunction>(
   return [injectContext, provideContext, _key]
 }
 
-export const preferParentContext = <T extends NotFunction>(
-  provide: ProvideContext<T>,
-  _key?: string | symbol,
-) => {
+export const preferParentContext = <T>(provide: ProvideContext<T>, _key?: string | symbol) => {
   const key = _key ?? provide[CONTEXT_KEY]
 
   if (!key) {

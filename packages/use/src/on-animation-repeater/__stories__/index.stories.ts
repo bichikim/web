@@ -1,6 +1,10 @@
 import {onAnimationRepeater} from '../'
 import {h, ref} from 'vue'
 
+export default {
+  title: 'use/onAnimationRepeater',
+}
+
 export const Default = () => ({
   setup() {
     const countRef = ref(0)

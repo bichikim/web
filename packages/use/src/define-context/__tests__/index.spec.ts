@@ -66,7 +66,7 @@ describe('defineContext', () => {
 
     const component2 = defineComponent({
       setup: () => {
-        const {name} = toRefs(useContext())
+        const {name} = toRefs(useContext() ?? (reactive({}) as any))
         return () => h('div', [name?.value])
       },
     })
@@ -104,6 +104,7 @@ describe('defineContext', () => {
     const component1 = defineComponent({
       setup: () => {
         const {name} = toRefs(inject())
+        // const name = ref('foo')
         return () => h('div', name.value)
       },
     })
@@ -123,6 +124,7 @@ describe('defineContext', () => {
     const component2 = defineComponent({
       setup: () => {
         const {name} = toRefs(injectFromRoot())
+        // const name = ref('foo')
         return () => h('div', name.value)
       },
     })

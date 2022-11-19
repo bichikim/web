@@ -1,6 +1,8 @@
 {
   "compileOnSave": false,
   "compilerOptions": {
+    "jsx": "preserve",
+    "noEmit": true,
     "rootDir": ".",
     "sourceMap": true,
     "esModuleInterop": true,

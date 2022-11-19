@@ -1,7 +1,7 @@
 import {HstVue} from '@histoire/plugin-vue'
 import vue from '@vitejs/plugin-vue'
 import {defineConfig} from 'histoire'
-import babel from 'vite-plugin-babel'
+// import babel from 'vite-plugin-babel'
 import {histoireTree} from './scripts/histoire-tree'
 import {viteAlias} from './scripts/vite-alias'
 
@@ -24,34 +24,34 @@ export default defineConfig({
   vite: {
     plugins: [
       vue(),
-      babel({
-        apply: 'serve',
-        babelConfig: {
-          babelrc: false,
-          configFile: false,
-          plugins: [
-            [
-              'module-resolver',
-              {
-                alias: {
-                  src: './src',
-                },
-                cwd: 'packagejson',
-              },
-            ],
-          ],
-          presets: [
-            [
-              '@babel/preset-typescript',
-              {
-                allExtensions: true,
-                isTSX: true,
-              },
-            ],
-          ],
-        },
-        filter: /\.[jt]sx?$/u,
-      }),
+      // babel({
+      //   apply: 'serve',
+      //   babelConfig: {
+      //     babelrc: false,
+      //     configFile: false,
+      //     plugins: [
+      //       [
+      //         'module-resolver',
+      //         {
+      //           alias: {
+      //             src: './src',
+      //           },
+      //           cwd: 'packagejson',
+      //         },
+      //       ],
+      //     ],
+      //     presets: [
+      //       [
+      //         '@babel/preset-typescript',
+      //         {
+      //           allExtensions: true,
+      //           isTSX: true,
+      //         },
+      //       ],
+      //     ],
+      //   },
+      //   filter: /\.[jt]sx?$/u,
+      // }),
     ],
     resolve: {
       alias: [

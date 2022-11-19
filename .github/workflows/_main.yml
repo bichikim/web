@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - dev
+      - master
 env:
   PNPM_VERSION: 7.1.0
   NODE_VERSION: 16
@@ -43,6 +44,9 @@ jobs:
 
       - name: Install Dependencies
         run: pnpm install
+
+      - name: Unit Test
+        run: pnpm run test
 
       - name: Build
         run: pnpm run build:coong-client

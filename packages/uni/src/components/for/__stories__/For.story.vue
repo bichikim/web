@@ -1,10 +1,12 @@
 <template>
   <story>
-    <for :each="list">
-      <template #default="{item, index}">
-        <div :key="index">{{ item }}</div>
-      </template>
-    </for>
+    <variant title="default">
+      <for :each="list">
+        <template #default="{item, index}">
+          <div :key="index">{{ item }}</div>
+        </template>
+      </for>
+    </variant>
   </story>
 </template>
 

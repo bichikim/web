@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 import {flushPromises, mountComposition} from '@winter-love/vue-test'
-import {ref, watch, reactive} from 'vue'
+import {reactive, ref, watch} from 'vue'
 import {toDeepRef} from '../'
 
 describe('deep bind ref', () => {

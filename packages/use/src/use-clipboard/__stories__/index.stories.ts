@@ -1,6 +1,10 @@
 import {useClipboard, useLegacyClipboard} from '../'
 import {h, ref} from 'vue'
 
+export default {
+  title: 'use/useClipboard',
+}
+
 export const Default = () => ({
   setup() {
     const valueRef = ref('')

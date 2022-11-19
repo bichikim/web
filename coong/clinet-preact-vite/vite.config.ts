@@ -9,8 +9,6 @@ import tsconfigPaths from 'vite-tsconfig-paths'
 import iconsResolver from 'unplugin-icons/resolver'
 import components from 'unplugin-vue-components/vite'
 // import {getBabelOutputPlugin} from '@rollup/plugin-babel'
-import babel from 'vite-plugin-babel'
-import {extname} from 'path'
 import preact from '@preact/preset-vite'
 
 // eslint-disable-next-line import/no-named-as-default-member

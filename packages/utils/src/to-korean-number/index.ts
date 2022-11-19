@@ -1,6 +1,6 @@
-import {toNumber} from '../to-number'
 import {compact, flow, last, reverse} from '@winter-love/lodash'
-import {mapFn, joinFn, chunkFn, freeze} from 'src/functional'
+import {chunkFn, freeze, joinFn, mapFn} from 'src/functional'
+import {toNumber} from '../to-number'
 
 const _numberNames = freeze(['0', '일', '이', '삼', '사', '오', '육', '칠', '팔', '구'])
 const _numberUnitNames = freeze(['', '만', '억', '조', '경', '해', '자', '양', '구', '간', '정'])

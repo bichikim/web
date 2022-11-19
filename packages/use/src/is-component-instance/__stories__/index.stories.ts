@@ -1,6 +1,10 @@
 import {computed, defineComponent, h, ref} from 'vue'
 import {isComponentInstance} from '../'
 
+export default {
+  title: 'use/isComponentInstance',
+}
+
 export const Default = () => {
   const Foo = defineComponent(() => {
     return () => h('div', 'foo')

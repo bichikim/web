@@ -1,14 +1,18 @@
-import {usePromise2} from '../'
+import {usePromise} from '../'
 import {h} from 'vue'
 import {setTimeoutPromise} from '@winter-love/utils'
 
+export default {
+  title: 'use/usePromise',
+}
+
 export const Default = () => ({
   setup() {
-    const {execute, data} = usePromise2((context) => {
-      const {previousCount} = context
+    const {execute, data} = usePromise((context) => {
+      const {previous} = context
       // eslint-disable-next-line no-magic-numbers
       return setTimeoutPromise(1000).then(() => {
-        return `foo ${previousCount}`
+        return `foo ${previous.count}`
       })
     })
 

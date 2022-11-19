@@ -1,10 +1,14 @@
 import {ref, watch} from 'vue'
 import {asyncPipe} from '../'
 
+export default {
+  title: 'use/asyncPipe',
+}
+
 export const Default = () => {
   const deco = asyncPipe(
     (name: string) => Promise.resolve([`${name}-foo`, name]),
-    (name: string, nextName: string) => Promise.resolve(`${name}-bar-${nextName}`),
+    ([name, nextName]) => Promise.resolve(`${name}-bar-${nextName}`),
   )
 
   return {

@@ -84,7 +84,7 @@ describe('use promise', () => {
 
   it('should resolve promise immediately', async () => {
     const resultValue = 'foo'
-    const {waiting, data, promise} = usePromise(() => Promise.resolve(resultValue), undefined, {
+    const {waiting, data, promise} = usePromise(() => Promise.resolve(resultValue), {
       immediate: true,
     })
 
@@ -96,14 +96,15 @@ describe('use promise', () => {
 
   it('should resolve promise with context', async () => {
     const {waiting, execute} = usePromise((context) => {
-      const {previousCount, previousData, previousError, previousFetching, previousPromise} =
-        context
+      const {
+        previous: {count, data, error},
+        signal,
+      } = context
       return Promise.resolve({
-        previousCount,
-        previousData,
-        previousError,
-        previousFetching,
-        previousPromise,
+        count,
+        data,
+        error,
+        signal,
       })
     })
 
@@ -125,18 +126,16 @@ describe('use promise', () => {
     await flushPromises()
 
     expect(result1).toEqual({
-      previousCount: 0,
-      previousData: undefined,
-      previousError: undefined,
-      previousFetching: false,
-      previousPromise: undefined,
+      count: 0,
+      data: undefined,
+      error: undefined,
+      signal: expect.any(Object),
     })
     expect(result2).toEqual({
-      previousCount: 1,
-      previousData: undefined,
-      previousError: undefined,
-      previousFetching: true,
-      previousPromise: Promise.resolve(null),
+      count: 1,
+      data: undefined,
+      error: undefined,
+      signal: expect.any(Object),
     })
   })
 
@@ -153,16 +152,28 @@ describe('use promise', () => {
     })
   })
 
-  it('should resolve promise with an arg and the immediate option', async () => {
-    const {waiting, data, promise} = usePromise(
-      (_, name: string) => Promise.resolve(name),
-      ['foo'],
-      {immediate: true},
+  it('should retry', async () => {
+    const {execute, data, error} = usePromise(
+      (_, count?: number) => {
+        if (count !== 1) {
+          return Promise.reject(new Error('foo'))
+        }
+        return Promise.resolve('foo')
+      },
+      {
+        retry: () => {
+          return [1]
+        },
+      },
     )
 
-    expect(waiting.value).toBe(true)
-    await promise
-    expect(waiting.value).toBe(false)
+    expect(data.value).toBeUndefined()
+
+    const result = await execute(0)
+    expect(result).toBe('foo')
     expect(data.value).toBe('foo')
+    expect(error.value).toBeUndefined()
   })
+
+  it.todo('should execute with cancel')
 })
