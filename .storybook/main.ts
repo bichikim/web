@@ -12,24 +12,23 @@ module.exports = {
     '@storybook/addon-essentials',
     '@storybook/addon-interactions',
   ],
-  babel: async (options) => {
-    console.log('hello-------------------')
-    // monorepo alias resolving
-    // noinspection SpellCheckingInspection
-    options.plugins.push([
-      'module-resolver',
-      {
-        alias: {
-          src: './src',
-        },
-        cwd: 'packagejson',
-        loglevel: 'info',
-      },
-    ])
-    return {
-      ...options,
-    }
-  },
+  // babel: async (options) => {
+  //   // monorepo alias resolving
+  //   // noinspection SpellCheckingInspection
+  //   options.plugins.push([
+  //     'module-resolver',
+  //     {
+  //       alias: {
+  //         src: './src',
+  //       },
+  //       cwd: 'packagejson',
+  //       loglevel: 'info',
+  //     },
+  //   ])
+  //   return {
+  //     ...options,
+  //   }
+  // },
   features: {
     interactionsDebugger: true,
     'storyStoreV7': true,
