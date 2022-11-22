@@ -645,7 +645,7 @@ importers:
       globby: ^13.1.2
       lodash: ^4.17.21
       node-html-parser: ^6.0.0
-      quasar: 2.6.6
+      quasar: 2.10.2
       tsup: ^6.3.0
       vue: latest
       yargs: ^17.6.0
@@ -658,7 +658,7 @@ importers:
       yargs: 17.6.0
     devDependencies:
       '@quasar/extras': 1.15.5
-      quasar: 2.6.6
+      quasar: 2.10.2
       tsup: 6.3.0
       vue: 3.2.45
 
@@ -25617,11 +25617,6 @@ packages:
   /quasar/2.10.2:
     resolution: {integrity: sha512-y6suu0f2hJKrnFPHzx+p2EBVGzDF6xHaqYGkDIsMNkhxsrO9Qi2+dZCjq1J6+48EJiqPEOn8t9X/gT7yLSSnLw==}
     engines: {node: '>= 10.18.1', npm: '>= 6.13.4', yarn: '>= 1.21.1'}
-
-  /quasar/2.6.6:
-    resolution: {integrity: sha512-rXoGZROOXVutQX14l/ys0te/NrgQ754krI0Vz52pBXdznyS+dTL6AgGpr3JMwffoxpxhQyedrL2jOAMpq+Jsgw==}
-    engines: {node: '>= 10.18.1', npm: '>= 6.13.4', yarn: '>= 1.21.1'}
-    dev: true
 
   /querystring-es3/0.2.1:
     resolution: {integrity: sha512-773xhDQnZBMFobEiztv8LIl70ch5MSF/jUQVlhwFyBILqq96anmoctVIYz+ZRp0qbCKATTn6ev02M3r7Ga5vqA==}
