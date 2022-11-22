@@ -86,5 +86,5 @@ jobs:
       - id: upload-file
         uses: google-github-actions/upload-cloud-storage@v0
         with:
-          path: ${{ env.PROJECT_CLIENT_PATH }}/dist
-          destination: ${{ env.DESTINATION }}/web
+          path: ${{ env.PROJECT_CLIENT_PATH }}/dist/spa
+          destination: ${{ env.DESTINATION }}
