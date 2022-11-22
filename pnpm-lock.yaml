@@ -639,7 +639,7 @@ importers:
 
   packages/quasar-svg-syntax:
     specifiers:
-      '@quasar/extras': 1.15.5
+      '@quasar/extras': 1.15.6
       '@winter-love/utils': workspace:^1.0.27-alpha.10
       fast-glob: ^3.2.12
       globby: ^13.1.2
@@ -657,7 +657,7 @@ importers:
       node-html-parser: 6.1.1
       yargs: 17.6.0
     devDependencies:
-      '@quasar/extras': 1.15.5
+      '@quasar/extras': 1.15.6
       quasar: 2.10.2
       tsup: 6.3.0
       vue: 3.2.45
@@ -8253,6 +8253,11 @@ packages:
 
   /@quasar/extras/1.15.5:
     resolution: {integrity: sha512-JzKKx5/eKAip3X3bZUEJOOWT9NudqjF01gcce6rtyviko49OU4r+ekyJU3QQIKF8ZqnjZ+DpsVpMWBBZnO6hSQ==}
+    dev: false
+
+  /@quasar/extras/1.15.6:
+    resolution: {integrity: sha512-lG3wrcz47c86N/j1ULZugmyVfwpmnsJpjtSWh+LhaFfe0g1kTMdAnxkWGKsa3ouZ4QBcnkrNan0kYSnKc3MiBg==}
+    dev: true
 
   /@quasar/fastclick/1.1.5:
     resolution: {integrity: sha512-p3JKgTjRlJ1YQXbqTw3Bsa4j0mQdt5dq+WfYvyb7MgKGdephHCKdR/kxA5PCTAmJanGJuDKqRdyGYX/hYN4KGw==}
