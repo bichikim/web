@@ -1,4 +1,4 @@
-FROM node:16 as dependencies
+FROM node:19 as dependencies
 
 WORKDIR /usr/src/app
 
@@ -7,7 +7,7 @@ COPY ../client ./
 RUN npm i -g pnpm
 RUN pnpm install --prod
 
-FROM node:16-alpine as runner
+FROM node:19-alpine as runner
 
 WORKDIR /usr/src/app
 
