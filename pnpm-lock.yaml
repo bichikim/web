@@ -453,7 +453,7 @@ importers:
     specifiers:
       '@types/express': 4.17.14
       '@types/node': 18.11.9
-      '@types/sharp': 0.30.4
+      '@types/sharp': 0.31.0
       '@winter-love/utils': workspace:^1.0.27-alpha.10
       class-transformer: 0.5.1
       class-validator: 0.13.2
@@ -463,7 +463,7 @@ importers:
       got: 12.5.3
       qs: ^6.11.0
       reflect-metadata: 0.1.13
-      sharp: 0.30.5
+      sharp: 0.31.2
       ts-node: 10.9.1
       ts-node-dev: 2.0.0
       tsconfig-paths: 4.1.0
@@ -478,11 +478,11 @@ importers:
       got: 12.5.3
       qs: 6.11.0
       reflect-metadata: 0.1.13
-      sharp: 0.30.5
+      sharp: 0.31.2
     devDependencies:
       '@types/express': 4.17.14
       '@types/node': 18.11.9
-      '@types/sharp': 0.30.4
+      '@types/sharp': 0.31.0
       cross-env: 7.0.3
       ts-node: 10.9.1_avzsx6adyi6q3tw6ixirywrzpe
       ts-node-dev: 2.0.0_avzsx6adyi6q3tw6ixirywrzpe
@@ -11177,8 +11177,8 @@ packages:
       '@types/mime': 3.0.1
       '@types/node': 18.11.9
 
-  /@types/sharp/0.30.4:
-    resolution: {integrity: sha512-6oJEzKt7wZeS7e+6x9QFEOWGs0T/6of00+0onZGN1zSmcSjcTDZKgIGZ6YWJnHowpaKUCFBPH52mYljWqU32Eg==}
+  /@types/sharp/0.31.0:
+    resolution: {integrity: sha512-nwivOU101fYInCwdDcH/0/Ru6yIRXOpORx25ynEOc6/IakuCmjOAGpaO5VfUl4QkDtUC6hj+Z2eCQvgXOioknw==}
     dependencies:
       '@types/node': 18.11.9
     dev: true
@@ -26750,9 +26750,9 @@ packages:
       kind-of: 6.0.3
     dev: true
 
-  /sharp/0.30.5:
-    resolution: {integrity: sha512-0T28KxqY4DzUMLSAp1/IhGVeHpPIQyp1xt7esmuXCAfyi/+6tYMUeRhQok+E/+E52Yk5yFjacXp90cQOkmkl4w==}
-    engines: {node: '>=12.13.0'}
+  /sharp/0.31.2:
+    resolution: {integrity: sha512-DUdNVEXgS5A97cTagSLIIp8dUZ/lZtk78iNVZgHdHbx1qnQR7JAHY0BnXnwwH39Iw+VKhO08CTYhIg0p98vQ5Q==}
+    engines: {node: '>=14.15.0'}
     requiresBuild: true
     dependencies:
       color: 4.2.3
