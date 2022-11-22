@@ -10,7 +10,7 @@
     "astring": "1.8.3"
   },
   "devDependencies": {
-    "@types/node": "^17.0.45",
+    "@types/node": "^18.0.0",
     "ts-node": "*",
     "ts-node-dev": "2.0.0",
     "typescript": "^4.8.4"
