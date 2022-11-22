@@ -36,7 +36,7 @@
     "@graphql-codegen/typescript-vue-urql": "2.3.6",
     "@iconify/json": "^2.1.127",
     "@preact/preset-vite": "^2.4.0",
-    "@rollup/plugin-babel": "^5.3.1",
+    "@rollup/plugin-babel": "^6.0.0",
     "@ts-gql/babel-plugin": "^0.1.0",
     "@types/node": "^18.11.4",
     "autoprefixer": "^10.4.12",
