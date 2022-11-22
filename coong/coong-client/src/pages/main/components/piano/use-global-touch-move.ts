@@ -11,10 +11,13 @@ const initEvent = createOnce(() => {
     const touchmove = ref(null)
 
     const update = (event: TouchEvent) => {
+      event.preventDefault()
       touchmove.value = event.changedTouches
     }
 
-    useEvent(window, 'touchmove', update)
+    useEvent(window, 'touchmove', update, true, {
+      passive: false,
+    })
 
     return touchmove
   })
