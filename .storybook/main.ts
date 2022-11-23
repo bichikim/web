@@ -1,6 +1,5 @@
 import {mergeConfig} from 'vite'
 import vueJsx from '@vitejs/plugin-vue-jsx'
-import babelPlugin from 'vite-plugin-babel'
 import tsconfigPaths from 'vite-tsconfig-paths'
 
 module.exports = {
@@ -12,23 +11,6 @@ module.exports = {
     '@storybook/addon-essentials',
     '@storybook/addon-interactions',
   ],
-  // babel: async (options) => {
-  //   // monorepo alias resolving
-  //   // noinspection SpellCheckingInspection
-  //   options.plugins.push([
-  //     'module-resolver',
-  //     {
-  //       alias: {
-  //         src: './src',
-  //       },
-  //       cwd: 'packagejson',
-  //       loglevel: 'info',
-  //     },
-  //   ])
-  //   return {
-  //     ...options,
-  //   }
-  // },
   features: {
     interactionsDebugger: true,
     'storyStoreV7': true,
