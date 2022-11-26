@@ -28,6 +28,7 @@
     "pinia": "^2.0.23",
     "vexflow": "^4.0.3",
     "vue": "^3.2.45",
+    "vue-shepherd": "^2.0.1",
     "vue-query": "^2.0.0-beta.12",
     "vue-router": "^4.1.5",
     "web-vitals": "^3.0.4"
