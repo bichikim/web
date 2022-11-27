@@ -18,3 +18,7 @@ Coong everywhere
 ## Web types in Web Storm
 
 Gen: https://www.npmjs.com/package/vue-docgen-web-types
+
+
+
+## v18 nodejs has a hash error with Storybook

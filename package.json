@@ -98,7 +98,7 @@
     "eslint-plugin-sort-export-all": "^1.2.2",
     "eslint-plugin-sort-keys-fix": "1.1.2",
     "eslint-plugin-typescript-sort-keys": "2.1.0",
-    "eslint-plugin-unicorn": "42.0.0",
+    "eslint-plugin-unicorn": "45.0.0",
     "eslint-plugin-vue": "^9.7.0",
     "flush-promises": "^1.0.2",
     "jasmine": "^4.5.0",
@@ -119,7 +119,7 @@
     "lerna": "^6.0.3",
     "lodash": "^4.17.21",
     "playwright": "^1.28.0",
-    "prettier": "^2.7.1",
+    "prettier": "^2.8.0",
     "reflect-metadata": "^0.1.13",
     "sinon": "^14.0.2",
     "tsd": "0.24.1",
@@ -129,11 +129,11 @@
     "unplugin-auto-import": "^0.11.5",
     "vite": "^3.2.4",
     "vite-plugin-babel": "^1.1.2",
-    "vite-tsconfig-paths": "3.5.2",
+    "vite-tsconfig-paths": "3.6.0",
     "vue": "^3.2.45"
   },
   "engines": {
-    "node": ">= 16",
+    "node": ">= 16 <18",
     "pnpm": ">= 6.17"
   },
   "pnpm": {
@@ -156,7 +156,6 @@
       "prismjs@<1.27.0": "1.27.0",
       "simple-get@<2.8.2": "2.8.2",
       "chokidar@<3.5.3": "3.5.3",
-      "uuid@<8.3.2": "8.3.2",
       "esbuild@<0.13.14": "0.13.14",
       "trim@<0.0.3": "0.0.3",
       "glob-parent@<5.1.2": "5.1.2",
