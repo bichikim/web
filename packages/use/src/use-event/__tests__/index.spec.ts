@@ -2,8 +2,10 @@
  * @jest-environment jsdom
  */
 import {flushPromises, mount} from '@vue/test-utils'
-import {defineComponent, h, ref, effectScope} from 'vue'
+import {MaybeRef} from 'src/types'
+import {defineComponent, effectScope, h, ref} from 'vue'
 import {useEvent} from '../index'
+import {expectType, printType} from 'tsd'
 
 interface SetupOptions {
   eventName?: string
@@ -139,5 +141,33 @@ describe('use-event', () => {
       target: null,
     })
     expect(wrapper.get('#count').text()).toBe('0')
+  })
+  it('should not have type error', () => {
+    {
+      const useFoo = (element: HTMLElement) => {
+        useEvent(element, 'blur', () => {
+          //
+        })
+      }
+      const useBar = (element: MaybeRef<HTMLElement>) => {
+        useEvent(element, 'blur', () => {
+          //
+        })
+      }
+    }
+    {
+      const useFoo = (element: Window) => {
+        useEvent(element, 'blur', () => {
+          //
+        })
+      }
+    }
+    {
+      const useFoo = (element: Document) => {
+        useEvent(element, 'blur', () => {
+          //
+        })
+      }
+    }
   })
 })

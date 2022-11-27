@@ -14,7 +14,7 @@
   "dependencies": {
     "@apollo/client": "^3.7.0",
     "@preact/signals": "^1.1.2",
-    "@supabase/supabase-js": "^1.35.7",
+    "@supabase/supabase-js": "^2.0.0",
     "@ts-gql/compiler": "^0.16.0",
     "@ts-gql/tag": "^0.7.0",
     "@urql/preact": "^3.0.2",

@@ -1,8 +1,9 @@
 import {MaybeRef, resolveRef, useEvent} from '@winter-love/use'
 import {ref, watch} from 'vue'
-import {useGlobalTouchMove} from './use-global-touch-move'
+import {useGlobalTouchMove} from '../use-global-touch-move'
+import {elementFromPoint} from './element-from-point'
 
-export const useHoverTouchDown = (element: MaybeRef<HTMLElement>) => {
+export const useEventHoverTouchDown = (element: MaybeRef<HTMLElement>) => {
   const elementRef = resolveRef(element)
   const isInsideRef = ref(false)
   const touchMove = useGlobalTouchMove()
@@ -17,8 +18,7 @@ export const useHoverTouchDown = (element: MaybeRef<HTMLElement>) => {
       // eslint-disable-next-line unicorn/no-for-loop
       for (let index = 0; index < touches.length; index += 1) {
         const touch = touches[index]
-        const isInside =
-          document.elementFromPoint(touch.clientX, touch.clientY) === elementRef.value
+        const isInside = elementFromPoint(touch.clientX, touch.clientY) === elementRef.value
         if (isInside) {
           isInsideRef.value = true
           identifier.value = touch.identifier
@@ -32,31 +32,50 @@ export const useHoverTouchDown = (element: MaybeRef<HTMLElement>) => {
     },
   )
 
-  useEvent(window, 'touchend', (event: TouchEvent) => {
-    // if (identifier.value < 0) {
-    //   return
-    // }
-    const touches = event.changedTouches
-    // eslint-disable-next-line unicorn/no-for-loop
-    for (let index = 0; index < touches.length; index += 1) {
-      const touch = touches[index]
-
-      if (
-        identifier.value === touch.identifier &&
-        document.elementFromPoint(touch.clientX, touch.clientY) === elementRef.value
-      ) {
-        isInsideRef.value = false
-        identifier.value = -1
+  useEvent(
+    window,
+    'touchend',
+    (event: TouchEvent) => {
+      // event.preventDefault()
+      if (identifier.value < 0) {
         return
       }
-    }
-  })
+      const touches = event.changedTouches
+      // eslint-disable-next-line unicorn/no-for-loop
+      for (let index = 0; index < touches.length; index += 1) {
+        const touch = touches[index]
+
+        if (
+          identifier.value === touch.identifier &&
+          elementFromPoint(touch.clientX, touch.clientY) === elementRef.value
+        ) {
+          isInsideRef.value = false
+          identifier.value = -1
+          return
+        }
+      }
+    },
+    true,
+    {
+      passive: false,
+    },
+  )
+
+  useEvent(
+    elementRef,
+    'touchmove',
+    (event: TouchEvent) => {
+      event.preventDefault()
+    },
+    true,
+    {passive: false},
+  )
 
   watch(touchMove, (touches: TouchList) => {
     // eslint-disable-next-line unicorn/no-for-loop
     for (let index = 0; index < touches.length; index += 1) {
       const touch = touches[index]
-      const isInside = document.elementFromPoint(touch.clientX, touch.clientY) === elementRef.value
+      const isInside = elementFromPoint(touch.clientX, touch.clientY) === elementRef.value
 
       if (isInside) {
         isInsideRef.value = true

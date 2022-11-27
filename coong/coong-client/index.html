@@ -12,9 +12,15 @@
   <link rel="stylesheet" type="text/css" media="print" href="https://cdn.jsdelivr.net/npm/modern-normalize@1.1.0/modern-normalize.min.css"  />
   <link rel="stylesheet" title="font" type="text/css" media="print" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard-dynamic-subset.css" />
   <style>
-    {
-      content-visibility: auto;
-      contain-intrinsic-size: 1px 5000px;
+    @supports (content-visibility: auto) {
+      {
+        content-visibility: auto;
+      }
+    }
+    @supports (contain-intrinsic-size: 1px 5000px) {
+      {
+        contain-intrinsic-size: 1px 5000px;
+      }
     }
     * {
       -ms-user-select: none; /* Internet Explorer/Edge */
@@ -26,10 +32,18 @@
     * {
       box-sizing: border-box;
     }
+    @supports (-webkit-touch-callout: none) {
+      * {
+        -webkit-touch-callout: none
+      }
+    }
+    @supports (-webkit-tap-highlight-color: transparent) {
+      * {
+        -webkit-tap-highlight-color: transparent
+      }
+    }
     {
       touch-action: none;
-      -webkit-tap-highlight-color: transparent;
-      -webkit-touch-callout: none;
     }
     body {
       font-family: Pretendard -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Emoji', sans-serif

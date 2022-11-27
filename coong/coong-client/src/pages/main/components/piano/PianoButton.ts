@@ -1,10 +1,11 @@
 import {styled} from '@winter-love/uni'
+import {getWindow} from '@winter-love/utils'
 import {PianoKeys, usePiano} from 'src/hooks/piano'
+import {useEventDown} from 'src/hooks/use-event-down'
 import {defineComponent, h, PropType, ref, toRef, watch} from 'vue'
 import {getDataBooleanAttrs} from './get-data-boolean-attrs'
-import {useGlobalPointDown} from './use-global-pointer-down'
-import {useHoverTouchDown} from './use-hover-touch-down'
 import {typeVariants} from './type-variants'
+import {useEventHoverTouchDown} from 'src/hooks/use-event-hover-touch-down'
 
 const onPointerupCapture = (event: PointerEvent) => {
   event.preventDefault()
@@ -13,16 +14,21 @@ const onPointerupCapture = (event: PointerEvent) => {
 export const HPianoButton = defineComponent({
   name: 'PianoButton',
   props: {
+    keyName: {type: String},
     pianoKey: {default: '1c', type: String as PropType<PianoKeys>},
+    showKeyName: {type: Boolean},
   },
   setup: (props) => {
     const buttonRef = ref(null)
-    const isGlobalPointDown = useGlobalPointDown()
+    const isGlobalPointDown = useEventDown(getWindow(), {
+      down: 'mousedown',
+      up: 'mouseup',
+    })
     const pianoKey = toRef(props, 'pianoKey')
     const piano = usePiano(pianoKey.value)
     const isKeyDown = ref(false)
 
-    const isHoverDown = useHoverTouchDown(buttonRef)
+    const isHoverDown = useEventHoverTouchDown(buttonRef)
 
     const downPlay = () => {
       isKeyDown.value = true
@@ -54,23 +60,35 @@ export const HPianoButton = defineComponent({
     })
 
     return () =>
-      h('button', {
-        ...getDataBooleanAttrs({
-          down: isKeyDown.value,
-        }),
-        onMousedown: downPlay,
-        onMouseout: mouseout,
-        onMouseover: hoverPlay,
-        onPointerupCapture,
-        ref: buttonRef,
-        title: `piano-key-${pianoKey.value}`,
-      })
+      h(
+        'button',
+        {
+          ...getDataBooleanAttrs({
+            down: isKeyDown.value,
+          }),
+          onMousedown: downPlay,
+          onMouseout: mouseout,
+          onMouseover: hoverPlay,
+          onPointerupCapture,
+          ref: buttonRef,
+          title: `piano-key-${pianoKey.value}`,
+        },
+        h('span', {class: 'key-name'}, props.keyName),
+      )
   },
 })
 
 export const PianoButton = styled(
   HPianoButton,
   {
+    '.key-name': {
+      bottom: 0,
+      color: 'gray',
+      fontWeight: 700,
+      paddingBottom: 10,
+      position: 'absolute',
+      width: '100%',
+    },
     border: '1px solid #ccc',
     borderRadius: '0 0 3px 3px',
     boxShadow:
@@ -84,7 +102,6 @@ export const PianoButton = styled(
     pointerEvents: 'auto',
     position: 'relative',
     touchAction: 'none',
-    width: '50px',
   },
   typeVariants,
 )
