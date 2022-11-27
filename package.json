@@ -98,7 +98,7 @@
     "eslint-plugin-sort-export-all": "^1.2.2",
     "eslint-plugin-sort-keys-fix": "1.1.2",
     "eslint-plugin-typescript-sort-keys": "2.1.0",
-    "eslint-plugin-unicorn": "42.0.0",
+    "eslint-plugin-unicorn": "45.0.0",
     "eslint-plugin-vue": "^9.7.0",
     "flush-promises": "^1.0.2",
     "jasmine": "^4.5.0",
