@@ -1,8 +1,8 @@
 {
   "appId": "io.coong",
-  "appName": "TRIPPY",
+  "appName": "Coong",
   "bundledWebRuntime": false,
-  "npmClient": "npm",
+  "npmClient": "pnpm",
   "webDir": "dist/spa",
   "plugins": {
     "SplashScreen": {
