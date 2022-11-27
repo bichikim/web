@@ -524,7 +524,7 @@ importers:
       tslib: ^2.4.0
       ttypescript: 1.5.13
       type-graphql: ^1.1.1
-      typegraphql-prisma: 0.22.2
+      typegraphql-prisma: 0.23.0
       typescript: 4.9.3
     dependencies:
       '@prisma/client': 4.6.1_prisma@4.6.1
@@ -559,7 +559,7 @@ importers:
       ts-node-dev: 2.0.0_wup25etrarvlqkprac7h35hj7u
       tsconfig-paths: 4.1.0
       ttypescript: 1.5.13_2dtigtkb225m7ii7q45utxqwgi
-      typegraphql-prisma: 0.22.2_zy44klgiqwn5yoe5dvmoeqaovq
+      typegraphql-prisma: 0.23.0_zy44klgiqwn5yoe5dvmoeqaovq
       typescript: 4.9.3
 
   coong/smart-contract:
@@ -28668,8 +28668,8 @@ packages:
     resolution: {integrity: sha512-/aCDEGatGvZ2BIk+HmLf4ifCJFwvKFNb9/JeZPMulfgFracn9QFcAf5GO8B/mweUjSoblS5In0cWhqpfs/5PQA==}
     dev: true
 
-  /typegraphql-prisma/0.22.2_zy44klgiqwn5yoe5dvmoeqaovq:
-    resolution: {integrity: sha512-t7FO6gknZXXtMszpyiFPVW6TYcPP4uzN8uiH4llx8M2b/US1UcWMjYNGembTGAl8v84lrHJhJfkNQkrGB+vhkw==}
+  /typegraphql-prisma/0.23.0_zy44klgiqwn5yoe5dvmoeqaovq:
+    resolution: {integrity: sha512-Y7mmYxO2S7xolW/yMhHOuewoeb887vlvaWvwUA9o0f7O1d5009DHRQnYBovAaXqYrZt8do77yMkWyB5JrPTmfg==}
     engines: {node: '>=12.4'}
     hasBin: true
     peerDependencies:
