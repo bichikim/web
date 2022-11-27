@@ -102,7 +102,7 @@ jobs:
             coong/client/dist
 
       - name: Changed files
-        uses: tj-actions/changed-files@v18
+        uses: tj-actions/changed-files@v34
         id: changed-files
         with:
           files: |
@@ -154,7 +154,7 @@ jobs:
 #            coong/server/.keystone
 
       - name: Changed files
-        uses: tj-actions/changed-files@v18
+        uses: tj-actions/changed-files@v34
         id: changed-files
         with:
           files: |
