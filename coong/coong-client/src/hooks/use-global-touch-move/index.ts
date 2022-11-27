@@ -9,7 +9,6 @@ export const useGlobalTouchMove = createOnce(() => {
     const touchmove = ref(null)
 
     const update = (event: TouchEvent) => {
-      event.preventDefault()
       touchmove.value = event.changedTouches
     }
 

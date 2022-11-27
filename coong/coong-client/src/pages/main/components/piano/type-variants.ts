@@ -37,7 +37,10 @@ export const typeVariants = css({
           transform: 'skew(-0.5deg, 0)',
           width: 5,
         },
-        width: '70px',
+        '.key-name': {
+          color: 'gray',
+        },
+        width: '80px',
       },
       sharp: {
         '&[data-down]': {
@@ -45,6 +48,9 @@ export const typeVariants = css({
           boxShadow:
             'inset 0px -1px 1px rgb(255 255 255 / 40%), 0 1px 0px rgb(0 0 0 / 80%),' +
             ' 0 2px 2px rgb(0 0 0 / 40%), 0 -1px 0px #000',
+        },
+        '.key-name': {
+          color: 'white',
         },
         background: 'linear-gradient(-20deg,#333,#000,#333)',
         backgroundColor: 'black',

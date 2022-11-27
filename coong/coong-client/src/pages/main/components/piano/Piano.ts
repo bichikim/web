@@ -7,7 +7,7 @@ export const HPiano = defineComponent({
   name: 'Piano',
   setup: () => {
     return () =>
-      h('section', [
+      h('section', {}, [
         //
         h(PianoFlat, {class: 'flat'}),
         h(PianoSharp, {class: 'sharp'}),
@@ -21,6 +21,8 @@ export const Piano = styled(HPiano, {
     top: 0,
   },
   height: '100%',
+  maxHeight: 500,
+  paddingBottom: 30,
   position: 'relative',
   width: '100%',
 })

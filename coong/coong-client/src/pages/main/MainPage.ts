@@ -15,7 +15,7 @@ export const HMainPage = defineComponent({
 
 export const MainPage = styled(HMainPage, {
   height: '100%',
-  maxHeight: '500px',
+  overflowY: 'hidden',
   pb: 10,
   pt: 8,
   px: 8,

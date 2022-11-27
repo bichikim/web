@@ -36,7 +36,7 @@ export const useEventHoverTouchDown = (element: MaybeRef<HTMLElement>) => {
     window,
     'touchend',
     (event: TouchEvent) => {
-      event.preventDefault()
+      // event.preventDefault()
       if (identifier.value < 0) {
         return
       }
@@ -59,6 +59,16 @@ export const useEventHoverTouchDown = (element: MaybeRef<HTMLElement>) => {
     {
       passive: false,
     },
+  )
+
+  useEvent(
+    elementRef,
+    'touchmove',
+    (event: TouchEvent) => {
+      event.preventDefault()
+    },
+    true,
+    {passive: false},
   )
 
   watch(touchMove, (touches: TouchList) => {
