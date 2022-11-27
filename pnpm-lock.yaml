@@ -870,7 +870,7 @@ importers:
       aes-js: ^3.1.2
       bip39: 3.0.4
       ethers: ^5.7.2
-      nanoevents: ^6.0.2
+      nanoevents: ^7.0.0
       scrypt-js: ^3.0.1
       tweetnacl: ^1.0.3
       vue: ^3.2.41
@@ -889,7 +889,7 @@ importers:
       aes-js: 3.1.2
       bip39: 3.0.4
       ethers: 5.7.2
-      nanoevents: 6.0.2
+      nanoevents: 7.0.1
       scrypt-js: 3.0.1
       tweetnacl: 1.0.3
     devDependencies:
@@ -23578,9 +23578,9 @@ packages:
       thenify-all: 1.6.0
     dev: true
 
-  /nanoevents/6.0.2:
-    resolution: {integrity: sha512-FRS2otuFcPPYDPYViNWQ42+1iZqbXydinkRHTHFxrF4a1CpBfmydR9zkI44WSXAXCyPrkcGtPk5CnpW6Y3lFKQ==}
-    engines: {node: ^12.0.0 || ^14.0.0 || >=16.0.0}
+  /nanoevents/7.0.1:
+    resolution: {integrity: sha512-o6lpKiCxLeijK4hgsqfR6CNToPyRU3keKyyI6uwuHRvpRTbZ0wXw51WRgyldVugZqoJfkGFrjrIenYH3bfEO3Q==}
+    engines: {node: ^14.0.0 || ^16.0.0 || >=18.0.0}
     dev: false
 
   /nanoid/3.3.4:
