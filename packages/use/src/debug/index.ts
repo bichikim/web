@@ -9,13 +9,13 @@ declare module 'vue' {
 // eslint-disable-next-line no-negated-condition
 export const debug =
   // eslint-disable-next-line no-negated-condition
-  process.env.NODE_ENV !== 'production'
-    ? (states: Record<string, any>) => {
+  process.env.NODE_ENV === 'production'
+    ? () => {
+        // empty
+      }
+    : (states: Record<string, any>) => {
         const instance = getCurrentInstance()
         if (instance) {
           instance.setupState = reactive({...states, ...instance.setupState})
         }
-      }
-    : () => {
-        // empty
       }

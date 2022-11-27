@@ -5,11 +5,14 @@ import {UseStickyRelativePosition} from './types'
 
 export const getPositionMethod = (position: UseStickyRelativePosition) => {
   switch (position) {
-    case 'center':
+    case 'center': {
       return getCenterPosition
-    case 'start':
+    }
+    case 'start': {
       return getStartPosition
-    case 'end':
+    }
+    case 'end': {
       return getEndPosition
+    }
   }
 }

@@ -49,12 +49,15 @@ const toArray = (value: any | any[]): any[] => {
 
 const pickHeaderData = (data: ResolverData, header: string) => {
   switch (header) {
-    case 'args':
+    case 'args': {
       return toArray(data.args.data)
-    case 'root':
+    }
+    case 'root': {
       return toArray(data.root)
-    default:
+    }
+    default: {
       return []
+    }
   }
 }
 
@@ -83,7 +86,7 @@ const checkRole = (
     return role
   }
 
-  if (typeof role === 'undefined') {
+  if (role === undefined) {
     return defaultRole
   }
 

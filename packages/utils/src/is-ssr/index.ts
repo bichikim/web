@@ -1,4 +1,4 @@
 /**
  * isSSr
  */
-export const isSSR = () => typeof globalThis.window === 'undefined'
+export const isSSR = () => globalThis.window === undefined

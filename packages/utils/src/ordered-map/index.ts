@@ -1,5 +1,8 @@
 import {getIndexedMap} from 'src/get-indexed-map'
 
+/**
+ * todo not yet done
+ */
 class OrderedMap<Item extends Record<any, any>> {
   readonly #list: Item[] = []
   readonly #indexMaps = new Map<string, Map<string, Item>>()

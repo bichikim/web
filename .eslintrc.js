@@ -494,7 +494,7 @@ module.exports = {
     'switch-colon-spacing': [
       'error',
       {
-        after: false,
+        after: true,
       },
     ],
     'template-curly-spacing': ['error', 'never'],

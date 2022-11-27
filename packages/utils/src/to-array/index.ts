@@ -9,7 +9,7 @@ export const toArray = <T>(value?: MaybeArray<T> | null): T[] => {
     return value
   }
 
-  if (typeof value === 'undefined') {
+  if (value === undefined) {
     return []
   }
 

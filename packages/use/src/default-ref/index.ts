@@ -3,7 +3,7 @@ import {computed, Ref} from 'vue'
 
 export function defaultRef<T>(
   value: Ref<T>,
-  defaultValue?: () => T,
+  defaultValue?: (() => T) | T,
   defaultValueOnce?: boolean,
 ): Ref<T>
 export function defaultRef<T>(value: Ref<T>, defaultValue?: T, defaultValueOnce?: boolean): Ref<T> {
@@ -15,7 +15,7 @@ export function defaultRef<T>(value: Ref<T>, defaultValue?: T, defaultValueOnce?
       if (!first && defaultValueOnce) {
         return _value
       }
-      if (typeof _value !== 'undefined') {
+      if (_value !== undefined) {
         first = false
       }
       return _defaultValue(_value, defaultValue)

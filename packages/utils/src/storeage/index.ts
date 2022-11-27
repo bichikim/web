@@ -20,12 +20,11 @@ export const getStorage = (storage: StorageKind): Storage | undefined => {
   if (!window) {
     return
   }
-  switch (storage) {
-    case 'session':
-      return window.sessionStorage
-    case 'local':
-      return window.localStorage
+
+  if (storage === 'local') {
+    return window.localStorage
   }
+  return window.sessionStorage
 }
 
 export const getStorageItem = (storage: StorageKind, key: string, defaultValue: any = null) => {
@@ -51,23 +50,30 @@ export function createStorage(kind: 'cookie', options?: CookieStorageOptions): a
 export function createStorage(kind: StorageAndCookieKind, options?: Record<string, any>) {
   const get = (key: string) => {
     switch (kind) {
-      case 'cookie':
+      // eslint-disable-next-line switch-colon-spacing
+      case 'cookie': {
         return getCookieItem(key)
-      case 'local':
+      }
+      case 'local': {
         return getStorageItem('local', key)
-      case 'session':
+      }
+      case 'session': {
         return getStorageItem('session', key)
+      }
     }
   }
 
   const set = (key: string, value: any) => {
     switch (kind) {
-      case 'cookie':
+      case 'cookie': {
         return setCookieItem(key, value, options)
-      case 'local':
+      }
+      case 'local': {
         return setStorageItem('local', key, value)
-      case 'session':
+      }
+      case 'session': {
         return setStorageItem('session', key, value)
+      }
     }
   }
 

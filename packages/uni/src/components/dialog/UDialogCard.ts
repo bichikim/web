@@ -5,14 +5,18 @@ import {DialogPosition} from './HDialog'
 
 const indicatorBySide = (side: DialogPosition) => {
   switch (side) {
-    case 'top':
+    case 'top': {
       return 'centerBottom'
-    case 'bottom':
+    }
+    case 'bottom': {
       return 'centerTop'
-    case 'left':
+    }
+    case 'left': {
       return 'endTop'
-    case 'right':
+    }
+    case 'right': {
       return 'startTop'
+    }
   }
 }
 

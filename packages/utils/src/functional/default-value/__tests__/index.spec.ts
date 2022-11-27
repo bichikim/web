@@ -21,7 +21,7 @@ describe('defaultValueFn', () => {
     const run = defaultValueFn(
       () => 'foo',
       (value) => {
-        return value === null || typeof value === 'undefined'
+        return value === null || value === undefined
       },
     )
     expect(run('foo')).toBe('foo')
