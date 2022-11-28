@@ -1,12 +1,26 @@
 import {MaybeRef, resolveRef, useEvent} from '@winter-love/use'
-import {ref, watch} from 'vue'
-import {useGlobalTouchMove} from '../use-global-touch-move'
+import {createOnce} from '@winter-love/utils'
+import {effectScope, Ref, ref, shallowRef, watch} from 'vue'
+import {createGlobalEvent} from '../create-global-event'
 import {elementFromPoint} from './element-from-point'
+
+const useShardEnd = createOnce(() => {
+  const scope = effectScope()
+  return scope.run((): Ref<null | TouchList> => {
+    return shallowRef(null)
+  })
+})
+
+export const useGlobalTouchMove = createGlobalEvent(
+  'touchmove',
+  (event: TouchEvent) => event.targetTouches,
+)
 
 export const useEventHoverTouchDown = (element: MaybeRef<HTMLElement>) => {
   const elementRef = resolveRef(element)
   const isInsideRef = ref(false)
   const touchMove = useGlobalTouchMove()
+  const shardEnd = useShardEnd()
   const identifier = ref(-1)
 
   useEvent(
@@ -32,28 +46,30 @@ export const useEventHoverTouchDown = (element: MaybeRef<HTMLElement>) => {
     },
   )
 
-  useEvent(
-    window,
-    'touchend',
-    (event: TouchEvent) => {
-      // event.preventDefault()
-      if (identifier.value < 0) {
+  watch(shardEnd, (touches) => {
+    if (!touches) {
+      return
+    }
+    // eslint-disable-next-line unicorn/no-for-loop
+    for (let index = 0; index < touches.length; index += 1) {
+      const touch = touches[index]
+      if (
+        identifier.value === touch.identifier &&
+        elementFromPoint(touch.clientX, touch.clientY) === elementRef.value
+      ) {
+        isInsideRef.value = false
+        identifier.value = -1
         return
       }
-      const touches = event.changedTouches
-      // eslint-disable-next-line unicorn/no-for-loop
-      for (let index = 0; index < touches.length; index += 1) {
-        const touch = touches[index]
+    }
+  })
 
-        if (
-          identifier.value === touch.identifier &&
-          elementFromPoint(touch.clientX, touch.clientY) === elementRef.value
-        ) {
-          isInsideRef.value = false
-          identifier.value = -1
-          return
-        }
-      }
+  useEvent(
+    elementRef,
+    'touchend',
+    (event: TouchEvent) => {
+      // update shardEnd
+      shardEnd.value = event.changedTouches
     },
     true,
     {
@@ -61,15 +77,15 @@ export const useEventHoverTouchDown = (element: MaybeRef<HTMLElement>) => {
     },
   )
 
-  useEvent(
-    elementRef,
-    'touchmove',
-    (event: TouchEvent) => {
-      event.preventDefault()
-    },
-    true,
-    {passive: false},
-  )
+  // useEvent(
+  //   elementRef,
+  //   'touchmove',
+  //   (event: TouchEvent) => {
+  //     event.preventDefault()
+  //   },
+  //   true,
+  //   {passive: false},
+  // )
 
   watch(touchMove, (touches: TouchList) => {
     // eslint-disable-next-line unicorn/no-for-loop

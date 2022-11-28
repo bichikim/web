@@ -17,7 +17,7 @@ const routes: RouteRecordRaw[] = [
         path: 'test',
       },
     ],
-    component: () => import('src/layouts/main-layout/Index'),
+    component: () => import('src/layouts/main-layout'),
     path: '/',
   },
 ]
