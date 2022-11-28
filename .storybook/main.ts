@@ -5,6 +5,7 @@ import tsconfigPaths from 'vite-tsconfig-paths'
 module.exports = {
   stories: [
     '../packages/*/src/**/*.stories.@(js|jsx|ts|tsx|mdx)',
+    '../coong/*/src/**/*.stories.@(js|jsx|ts|tsx|mdx)',
   ],
   addons: [
     '@storybook/addon-links',
@@ -13,7 +14,7 @@ module.exports = {
   ],
   features: {
     interactionsDebugger: true,
-    'storyStoreV7': true,
+    storyStoreV7: true,
   },
   'core': {
     'builder': '@storybook/builder-vite',

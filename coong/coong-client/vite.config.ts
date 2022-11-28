@@ -11,6 +11,7 @@ import iconsResolver from 'unplugin-icons/resolver'
 import components from 'unplugin-vue-components/vite'
 import babel from 'vite-plugin-babel'
 import {extname} from 'path'
+import checker from 'vite-plugin-checker'
 
 // eslint-disable-next-line import/no-named-as-default-member
 dotenv.config()
@@ -36,6 +37,9 @@ export default defineConfig(({mode}) => {
 
     plugins: [
       vue(),
+      checker({
+        vueTsc: true,
+      }),
       components({
         dts: true,
         resolvers: [

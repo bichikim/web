@@ -7,6 +7,7 @@ export default defineConfig({
   plugins: [
     //
     vue(),
+    // support src path and monorepo relative path
     tsconfigPaths(),
   ],
 })
