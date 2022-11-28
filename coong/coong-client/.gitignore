@@ -22,5 +22,7 @@ pnpm-debug.log*
 *.sln
 *.sw?
 
-# cache
-__generated__/ts-gql/@document-cache.json
+
+# generated
+
+__generated__
