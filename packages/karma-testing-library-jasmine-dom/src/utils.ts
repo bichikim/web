@@ -57,14 +57,17 @@ function getTag(htmlElement) {
 
 function getInputValue(inputElement) {
   switch (inputElement.type) {
-    case 'number':
+    case 'number': {
       return inputElement.value === '' ? null : Number(inputElement.value)
+    }
 
-    case 'checkbox':
+    case 'checkbox': {
       return inputElement.checked
+    }
 
-    default:
+    default: {
       return inputElement.value
+    }
   }
 }
 
@@ -85,14 +88,17 @@ function getSingleElementValue(htmlElement) {
   }
 
   switch (htmlElement.tagName.toLowerCase()) {
-    case 'input':
+    case 'input': {
       return getInputValue(htmlElement)
+    }
 
-    case 'select':
+    case 'select': {
       return getSelectValue(htmlElement)
+    }
 
-    default:
+    default: {
       return htmlElement.value
+    }
   }
 }
 

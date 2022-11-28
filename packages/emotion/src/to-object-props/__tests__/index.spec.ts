@@ -1,4 +1,4 @@
-import {toObjectProps} from 'src/to-object-props/index'
+import {toObjectProps} from 'src/to-object-props'
 
 describe('to-object-props', () => {
   it('should ', () => {

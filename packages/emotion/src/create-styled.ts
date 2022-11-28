@@ -146,7 +146,7 @@ export const createStyled = (emotion: _Emotion & {theme?: any}) => {
               allAttrs,
             )
 
-            const rules = insertStyles(cache, serialized, isStringElement)
+            const rules: any = insertStyles(cache, serialized, isStringElement) ?? ''
 
             const className = `${registeredClassName}${cache.key}-${serialized.name}${_target}`
 
