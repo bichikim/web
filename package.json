@@ -89,6 +89,7 @@
     "babel-jest": "^29.3.1",
     "babel-plugin-module-resolver": "4.1.0",
     "babel-plugin-transform-typescript-metadata": "^0.3.2",
+    "chromatic": "^6.11.4",
     "cross-env": "^7.0.3",
     "eslint": "8.28.0",
     "eslint-config-prettier": "^8.5.0",

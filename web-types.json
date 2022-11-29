@@ -19,6 +19,29 @@
         {
           "name": "story"
         }
+      ],
+      "attributes": [
+        {
+          "name": "text",
+          "description": "unocss attributify text",
+          "value": {
+            "type": "string"
+          }
+        },
+        {
+          "name": "bg",
+          "description": "unocss attributify bg",
+          "value": {
+            "type": "string"
+          }
+        },
+        {
+          "name": "gap",
+          "description": "unocss attributify gap",
+          "value": {
+            "type": "string"
+          }
+        }
       ]
     }
   }

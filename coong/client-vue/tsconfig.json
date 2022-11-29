@@ -1,0 +1,29 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "jsx": "preserve",
+    "target": "ESNext",
+    "module": "ESNext",
+    "outDir": "dist",
+    "moduleResolution": "Node",
+    "baseUrl": ".",
+    "paths": {
+      "src/*": [
+        "src/*"
+      ],
+    },
+  },
+  "ts-node": {
+    "compilerOptions": {
+      "target": "ES2015",
+      "module": "CommonJS"
+    }
+  },
+  "include": [
+    "__generated__/**/*.ts",
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "auto-imports.d.ts",
+    "components.d.ts",
+  ],
+}
