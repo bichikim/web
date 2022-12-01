@@ -108,11 +108,12 @@ importers:
       karma-vite: ^1.0.3
       karma-webkit-launcher: ^1.1.0
       lerna: ^6.0.3
-      lodash: ^4.17.21
+      lodash: 4.17.21
       playwright: ^1.28.0
       prettier: ^2.8.0
       reflect-metadata: ^0.1.13
       sinon: ^14.0.2
+      storybook-addon-manual-mocks: ^0.0.6
       tsd: 0.24.1
       tslib: ^2.4.1
       tsup: ^6.5.0
@@ -205,6 +206,7 @@ importers:
       prettier: 2.8.0
       reflect-metadata: 0.1.13
       sinon: 14.0.2
+      storybook-addon-manual-mocks: 0.0.6_g6ityhmh3xkjwdmgabrsfcxsse
       tsd: 0.24.1
       tslib: 2.4.1
       tsup: 6.5.0_ho3bajwh6ehv46y3zna67pdz7i
@@ -27596,6 +27598,31 @@ packages:
 
   /store2/2.14.2:
     resolution: {integrity: sha512-siT1RiqlfQnGqgT/YzXVUNsom9S0H1OX+dpdGN1xkyYATo4I6sep5NmsRD/40s3IIOvlCq6akxkqG82urIZW1w==}
+    dev: true
+
+  /storybook-addon-manual-mocks/0.0.6_g6ityhmh3xkjwdmgabrsfcxsse:
+    resolution: {integrity: sha512-9+O0Pua1vWAhCj1dZ9c/A09sMqMAYqw65d4nULasPTwKWCC8z2mVKhbgbf+f23hMIj3NGmSdd91QqeYzr2ND+A==}
+    peerDependencies:
+      '@storybook/addons': ^6.5.8
+      '@storybook/api': ^6.5.8
+      '@storybook/components': ^6.5.8
+      '@storybook/core-events': ^6.5.8
+      '@storybook/theming': ^6.5.8
+      react: ^16.8.0 || ^17.0.0
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
+    peerDependenciesMeta:
+      react:
+        optional: true
+      react-dom:
+        optional: true
+    dependencies:
+      '@storybook/addons': 6.5.13_6l5554ty5ajsajah6yazvrjhoe
+      '@storybook/api': 6.5.13_6l5554ty5ajsajah6yazvrjhoe
+      '@storybook/components': 6.5.13_6l5554ty5ajsajah6yazvrjhoe
+      '@storybook/core-events': 6.5.13
+      '@storybook/theming': 6.5.13_6l5554ty5ajsajah6yazvrjhoe
+      react: 17.0.2
+      react-dom: 18.2.0_react@17.0.2
     dev: true
 
   /stream-browserify/2.0.2:
