@@ -113,7 +113,6 @@
     "karma-jasmine": "^5.1.0",
     "karma-jasmine-sinon": "^1.0.4",
     "karma-spec-reporter": "^0.0.34",
-    "karma-testing-library-jasmine-dom": "latest",
     "karma-vite": "^1.0.3",
     "karma-webkit-launcher": "^1.1.0",
     "lerna": "^6.1.0",
