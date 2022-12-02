@@ -1,13 +1,13 @@
 {
   "name": "karma-testing-library-jasmine-dom",
   "version": "1.0.27-alpha.16",
+  "private": true,
   "description": "Useful javascript utils",
   "keywords": [
     "typescript",
     "utils",
     "functional"
   ],
-  "private": true,
   "repository": "git@github.com:winter-love/web.git",
   "license": "MIT",
   "author": "bichi@live.co.kr",
