@@ -8,7 +8,7 @@
       "npmClient": "pnpm"
     },
     "publish": {
-      "ignoreChanges": ["lerna.json", "ignored-file", "*.md"]
+      "ignoreChanges": ["lerna.json", "ignored-file", "*.md", "package.json"]
     }
   }
 }
