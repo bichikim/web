@@ -36,7 +36,7 @@
     "prepare": "tsup --dts"
   },
   "dependencies": {
-    "@winter-love/utils": "workspace:^1.0.27-alpha.11",
+    "@winter-love/utils": "^1.0.27-alpha.11",
     "fast-glob": "^3.2.12",
     "globby": "^13.1.2",
     "lodash": "^4.17.21",
@@ -52,7 +52,7 @@
   "publishConfig": {
     "access": "public"
   },
-  "gitHead": "b8f8c59a3c3b040b94cd578439949acde8212f5d",
+  "gitHead": "eabb485e5312311553b8c6030753b25f3877fc35",
   "tsup": {
     "entry": [
       "src/index.ts"

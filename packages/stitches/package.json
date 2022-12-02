@@ -28,7 +28,7 @@
   "dependencies": {
     "@stitches/core": "^1.2.8",
     "@vue/runtime-core": "^3.2.41",
-    "@winter-love/lodash": "workspace:1.0.27-alpha.11",
+    "@winter-love/lodash": "1.0.27-alpha.11",
     "vue": "^3.2.45"
   },
   "devDependencies": {
@@ -43,7 +43,7 @@
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"
   },
-  "gitHead": "cace853a74de291e423dc79447ce0db596fdf60d",
+  "gitHead": "eabb485e5312311553b8c6030753b25f3877fc35",
   "tsup": {
     "entry": [
       "src/index.ts"
