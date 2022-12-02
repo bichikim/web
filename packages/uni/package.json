@@ -1,7 +1,6 @@
 {
   "name": "@winter-love/uni",
   "version": "1.0.27-alpha.10",
-  "private": true,
   "repository": "git@github.com:winter-love/web.git",
   "author": "bichi@live.co.kr",
   "exports": {

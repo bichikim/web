@@ -70,9 +70,6 @@ importers:
       '@vue/eslint-config-typescript': ^11.0.2
       '@vue/test-utils': ^2.2.4
       '@vue/vue3-jest': ^29.2.0
-      '@winter-love/uni': workspace:1.0.27-alpha.10
-      '@winter-love/utils': workspace:1.0.27-alpha.10
-      '@winter-love/vue-test': workspace:1.0.27-alpha.5
       babel-jest: ^29.3.1
       babel-plugin-module-resolver: 4.1.0
       babel-plugin-transform-typescript-metadata: ^0.3.2
@@ -104,7 +101,7 @@ importers:
       karma-jasmine: ^5.1.0
       karma-jasmine-sinon: ^1.0.4
       karma-spec-reporter: ^0.0.34
-      karma-testing-library-jasmine-dom: workspace:0.0.1
+      karma-testing-library-jasmine-dom: latest
       karma-vite: ^1.0.3
       karma-webkit-launcher: ^1.1.0
       lerna: ^6.1.0
@@ -163,9 +160,6 @@ importers:
       '@vue/eslint-config-typescript': 11.0.2_vf5i6yh7tubwt4lqvaz2kfrjpa
       '@vue/test-utils': 2.2.4_vue@3.2.45
       '@vue/vue3-jest': 29.2.0_dzmml5e754eytj63legviqw6qa
-      '@winter-love/uni': link:packages/uni
-      '@winter-love/utils': link:packages/utils
-      '@winter-love/vue-test': link:packages/vue-test
       babel-jest: 29.3.1_@babel+core@7.20.2
       babel-plugin-module-resolver: 4.1.0
       babel-plugin-transform-typescript-metadata: 0.3.2
@@ -4368,20 +4362,6 @@ packages:
       graphql: 16.6.0
       tslib: 2.4.1
     dev: true
-
-  /@graphql-codegen/plugin-helpers/2.7.1_graphql@16.3.0:
-    resolution: {integrity: sha512-wpEShhwbQp8pqXolnSCNaj0pU91LbuBvYHpYqm96TUqyeKQYAYRVmw3JIt0g8UQpKYhg8lYIDwWdcINOYqkGLg==}
-    peerDependencies:
-      graphql: ^0.8.0 || ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0 || ^16.0.0
-    dependencies:
-      '@graphql-tools/utils': 8.12.0_graphql@16.3.0
-      change-case-all: 1.0.14
-      common-tags: 1.8.2
-      graphql: 16.3.0
-      import-from: 4.0.0
-      lodash: 4.17.21
-      tslib: 2.4.1
-    dev: false
 
   /@graphql-codegen/plugin-helpers/2.7.2_graphql@16.3.0:
     resolution: {integrity: sha512-kln2AZ12uii6U59OQXdjLk5nOlh1pHis1R98cDZGFnfaiAbX9V3fxcZ1MMJkB7qFUymTALzyjZoXXdyVmPMfRg==}
@@ -10412,10 +10392,10 @@ packages:
       graphql: ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || 14 || 15 || 16
     dependencies:
       '@babel/code-frame': 7.18.6
-      '@babel/parser': 7.19.6
-      '@babel/runtime': 7.19.4
-      '@babel/types': 7.19.4
-      '@graphql-codegen/plugin-helpers': 2.7.1_graphql@16.3.0
+      '@babel/parser': 7.20.3
+      '@babel/runtime': 7.20.1
+      '@babel/types': 7.20.2
+      '@graphql-codegen/plugin-helpers': 2.7.2_graphql@16.3.0
       '@graphql-codegen/typescript-operations': 2.5.7_graphql@16.3.0
       '@nodelib/fs.walk': 1.2.8
       '@ts-gql/config': 0.9.1_graphql@16.3.0
