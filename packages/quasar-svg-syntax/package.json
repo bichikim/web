@@ -52,7 +52,7 @@
   "publishConfig": {
     "access": "public"
   },
-  "gitHead": "eabb485e5312311553b8c6030753b25f3877fc35",
+  "gitHead": "03a929977cab2f1fedebb88f79ee759f20e9a7da",
   "tsup": {
     "entry": [
       "src/index.ts"
