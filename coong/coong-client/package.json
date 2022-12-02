@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/coong-client",
-  "version": "1.0.27-alpha.16",
+  "version": "1.0.27-alpha.17",
   "private": true,
   "description": "",
   "scripts": {
@@ -23,7 +23,7 @@
     "@urql/vue": "^1.0.2",
     "@vueuse/sound": "^1.1.7",
     "@winter-love/lodash": "workspace:1.0.27-alpha.16",
-    "@winter-love/uni": "workspace:1.0.27-alpha.16",
+    "@winter-love/uni": "workspace:1.0.27-alpha.17",
     "@winter-love/use": "workspace:1.0.27-alpha.16",
     "class-variance-authority": "^0.3.0",
     "express": "^4.18.2",
