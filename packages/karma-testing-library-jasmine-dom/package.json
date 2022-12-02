@@ -1,6 +1,6 @@
 {
   "name": "karma-testing-library-jasmine-dom",
-  "version": "1.0.27-alpha.15",
+  "version": "1.0.27-alpha.16",
   "description": "Useful javascript utils",
   "keywords": [
     "typescript",
@@ -36,7 +36,7 @@
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^5.16.5",
-    "@winter-love/lodash": "^1.0.27-alpha.15",
+    "@winter-love/lodash": "^1.0.27-alpha.16",
     "css": "^3.0.0",
     "css.escape": "^1.5.1",
     "tsd": "^0.24.1",

@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/utils",
-  "version": "1.0.27-alpha.15",
+  "version": "1.0.27-alpha.16",
   "description": "Useful javascript utils",
   "keywords": [
     "typescript",
@@ -34,7 +34,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@winter-love/lodash": "^1.0.27-alpha.15",
+    "@winter-love/lodash": "^1.0.27-alpha.16",
     "safe-stable-stringify": "^2.4.1"
   },
   "devDependencies": {

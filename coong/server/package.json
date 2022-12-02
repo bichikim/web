@@ -1,6 +1,6 @@
 {
   "name": "@coong/server",
-  "version": "1.0.27-alpha.15",
+  "version": "1.0.27-alpha.16",
   "private": true,
   "scripts": {
     "build": "rimraf ./lib && pnpm run prisma:generate && ttsc -p tsconfig.build.json",
@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@prisma/client": "~4.6.0",
-    "@winter-love/utils": "workspace:^1.0.27-alpha.15",
+    "@winter-love/utils": "workspace:^1.0.27-alpha.16",
     "apollo-server": "3.6.4",
     "apollo-server-core": "^3.10.3",
     "apollo-server-express": "^3.10.3",
