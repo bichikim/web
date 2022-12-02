@@ -40,7 +40,7 @@
   "publishConfig": {
     "access": "public"
   },
-  "gitHead": "03a929977cab2f1fedebb88f79ee759f20e9a7da",
+  "gitHead": "204b654b9e4a6525453425fe7770d9c7bdddec7f",
   "tsup": {
     "entry": [
       "src/index.ts"
