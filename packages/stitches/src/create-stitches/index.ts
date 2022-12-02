@@ -21,8 +21,6 @@ import {
 } from 'vue'
 import {$$$CSS_COMPONENT_PROPS, getComposersProps} from '../get-composers-props'
 
-export * from '@stitches/core'
-
 export interface StyledVueComponent<Type = 'span', Props = {}, Media = {}, CSS = {}, E = {}> {
   [StyledComponent.$$StyledComponentMedia]: Media
   [StyledComponent.$$StyledComponentProps]: Props
