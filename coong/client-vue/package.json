@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/client-vue",
-  "version": "1.0.27-alpha.17",
+  "version": "1.0.27-alpha.18",
   "private": true,
   "description": "",
   "scripts": {
@@ -24,7 +24,7 @@
     "@urql/vue": "^1.0.2",
     "@vueuse/sound": "^1.1.7",
     "@winter-love/lodash": "workspace:1.0.27-alpha.16",
-    "@winter-love/uni": "workspace:1.0.27-alpha.17",
+    "@winter-love/uni": "workspace:1.0.27-alpha.18",
     "@winter-love/use": "workspace:1.0.27-alpha.16",
     "axios": "^1.2.0",
     "class-variance-authority": "^0.3.0",
