@@ -31,7 +31,7 @@
     "build": "tsup --dts --minify",
     "dev": "tsup --watch",
     "prepare": "tsup --dts",
-    "publish": "publish npm",
+    "publish": "npm publish",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
