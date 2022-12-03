@@ -42,6 +42,7 @@ lerna-debug.log*
 
 # IDEs and editors
 .idea
+.fleet
 *.suo
 *.ntvs*
 *.njsproj
