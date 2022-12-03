@@ -1,6 +1,6 @@
 {
   "name": "@coong/socket-io-server",
-  "version": "1.0.27-alpha.10",
+  "version": "1.0.27-alpha.16",
   "private": true,
   "description": "Vue utils",
   "keywords": [
@@ -38,8 +38,8 @@
     "dev": "tsup --watch"
   },
   "dependencies": {
-    "@winter-love/lodash": "workspace:^1.0.27-alpha.5",
-    "@winter-love/utils": "workspace:^1.0.27-alpha.10",
+    "@winter-love/lodash": "workspace:^1.0.27-alpha.16",
+    "@winter-love/utils": "workspace:^1.0.27-alpha.16",
     "socket.io": "^4.5.3"
   },
   "devDependencies": {

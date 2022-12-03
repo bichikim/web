@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/lodash",
-  "version": "1.0.27-alpha.5",
+  "version": "1.0.27-alpha.16",
   "description": "Stitches for Vue",
   "keywords": [
     "lodash"
@@ -40,7 +40,7 @@
   "publishConfig": {
     "access": "public"
   },
-  "gitHead": "b8f8c59a3c3b040b94cd578439949acde8212f5d",
+  "gitHead": "4a8bc8b824e5780a82d3b2958e1a8afb48a49bb0",
   "tsup": {
     "entry": [
       "src/index.ts"

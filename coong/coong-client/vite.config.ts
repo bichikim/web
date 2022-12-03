@@ -2,22 +2,19 @@ import {defineConfig} from 'vite'
 import icons from 'unplugin-icons/vite'
 import {VitePWA as vitePWA} from 'vite-plugin-pwa'
 import vitePluginImp from 'vite-plugin-imp'
-import * as dotenv from 'dotenv'
 import vue from '@vitejs/plugin-vue'
 import autoImport from 'unplugin-auto-import/vite'
 import tsconfigPaths from 'vite-tsconfig-paths'
 import vueJsx from '@vitejs/plugin-vue-jsx'
 import iconsResolver from 'unplugin-icons/resolver'
 import components from 'unplugin-vue-components/vite'
-import babel from 'vite-plugin-babel'
-import {extname} from 'path'
 import checker from 'vite-plugin-checker'
-
-// eslint-disable-next-line import/no-named-as-default-member
-dotenv.config()
 
 // eslint-disable-next-line max-lines-per-function
 export default defineConfig(({mode}) => {
+  // load env
+  // https://vitejs.dev/config/#environment-variables
+  // const env = loadEnv(mode, process.cwd(), '')
   return {
     build: {
       chunkSizeWarningLimit: 600,
@@ -34,7 +31,6 @@ export default defineConfig(({mode}) => {
       exclude: ['vite'],
       include: ['vue', 'vue-router'],
     },
-
     plugins: [
       vue(),
       checker({
@@ -92,45 +88,18 @@ export default defineConfig(({mode}) => {
         },
         registerType: 'autoUpdate',
       }),
-      babel({
-        babelConfig: {
-          babelrc: false,
-          configFile: false,
-          plugins: ['@ts-gql/babel-plugin'],
-          presets: [
-            [
-              '@babel/preset-typescript',
-              {
-                allExtensions: true,
-                isTSX: true,
-              },
-            ],
-          ],
-        },
-        filter: /\.[jt]sx?$/u,
-        loader: (path) => {
-          if (extname(path) === '.jsx') {
-            return 'jsx'
-          }
-          if (extname(path) === '.tsx') {
-            return 'tsx'
-          }
-        },
-      }),
     ],
-
     resolve: {
       alias: {
         vue: 'vue/dist/vue.esm-bundler.js',
       },
     },
-
     server: {
       // https: true,
       fs: {
         // allow: ['..', '../..'],
       },
-
+      // api proxy
       proxy: {
         '/server': {
           changeOrigin: true,

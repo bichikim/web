@@ -1,7 +1,6 @@
 {
   "name": "@winter-love/uni",
-  "version": "1.0.27-alpha.10",
-  "private": true,
+  "version": "1.0.27-alpha.18",
   "repository": "git@github.com:winter-love/web.git",
   "author": "bichi@live.co.kr",
   "exports": {
@@ -23,16 +22,15 @@
   "scripts": {
     "build": "tsup --dts --minify",
     "dev": "tsup --watch",
-    "prepare": "tsup --dts",
-    "publish": "npm publish"
+    "prepare": "tsup --dts"
   },
   "dependencies": {
     "@vue/runtime-core": "^3.2.41",
     "@vue/test-utils": "^2.2.0",
     "@vueuse/core": "^9.3.1",
-    "@winter-love/stitches": "^1.0.27-alpha.5",
-    "@winter-love/use": "^1.0.27-alpha.10",
-    "@winter-love/utils": "^1.0.27-alpha.10",
+    "@winter-love/stitches": "^1.0.27-alpha.18",
+    "@winter-love/use": "^1.0.27-alpha.16",
+    "@winter-love/utils": "^1.0.27-alpha.16",
     "jest-mock": "^29.2.1",
     "node-html-parser": "^6.0.0",
     "vue": "^3.2.45"
@@ -48,7 +46,7 @@
   "publishConfig": {
     "access": "public"
   },
-  "gitHead": "cace853a74de291e423dc79447ce0db596fdf60d",
+  "gitHead": "4a8bc8b824e5780a82d3b2958e1a8afb48a49bb0",
   "tsup": {
     "entry": [
       "src/index.ts"
