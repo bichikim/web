@@ -1,4 +1,4 @@
-import {createVueStitches} from '@winter-love/stitches'
+import {createVueStitches, type VariantProps} from '@winter-love/stitches'
 import {baseColors, colors, darkColors} from './colors'
 import {radii} from './radii'
 
@@ -73,3 +73,5 @@ export const globalStyle = globalCss(
 )
 
 export type ThemeNames = typeof lightTheme | typeof darkTheme
+
+export {VariantProps}

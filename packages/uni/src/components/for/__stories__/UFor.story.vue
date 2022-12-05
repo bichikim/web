@@ -1,17 +1,17 @@
 <template>
   <story>
     <variant title="default">
-      <for :each="list">
+      <u-for :each="list">
         <template #default="{item, index}">
           <div :key="index">{{ item }}</div>
         </template>
-      </for>
+      </u-for>
     </variant>
   </story>
 </template>
 
 <script setup lang="ts">
-import {For} from '../For'
+import {UFor} from '../UFor'
 
 const list = ['a', 'b', 'c']
 </script>

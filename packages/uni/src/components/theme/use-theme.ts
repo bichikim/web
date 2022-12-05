@@ -1,10 +1,11 @@
-import {defineContext, MaybeRef, resolveRef} from '@winter-love/use'
+import {bindRef, defineContext, MaybeRef, resolveRef} from '@winter-love/use'
 import {updateElementClasses} from '@winter-love/utils'
-import {reactive, ref, ToRef, toRef} from 'vue'
+import {onScopeDispose, reactive, toRef, ToRef, watchEffect} from 'vue'
 
 export interface ThemeContext {
   theme: string
 }
+
 const [injectContext, provideContext, THEME_CONTEXT] = defineContext<ThemeContext>()
 
 export {THEME_CONTEXT}
@@ -15,9 +16,12 @@ export const useTheme = (): ToRef<string> => {
   return toRef(theme, 'theme')
 }
 
-export const provideTheme = (element: MaybeRef<HTMLElement | string>) => {
+export const provideTheme = (
+  element: MaybeRef<HTMLElement | string> = 'body',
+  themeName: MaybeRef<string> = 'light-theme',
+) => {
   const elementRef = resolveRef(element)
-  const theme = ref()
+  const theme = bindRef(resolveRef(themeName))
 
   const context = reactive({theme})
 
@@ -25,10 +29,11 @@ export const provideTheme = (element: MaybeRef<HTMLElement | string>) => {
 
   watchEffect(
     () => {
-      updateElementClasses(elementRef.value, [theme.value])
+      updateElementClasses(elementRef.value, theme.value)
     },
     {flush: 'post'},
   )
+
   onScopeDispose(() => {
     updateElementClasses(elementRef.value)
   })

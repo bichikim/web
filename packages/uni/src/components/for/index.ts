@@ -1,1 +1,1 @@
-export * from './For'
+export * from 'src/components/for/UFor'

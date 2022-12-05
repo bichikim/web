@@ -23,7 +23,7 @@ export const DIALOG_SYMBOL = Symbol('dialog')
 export const DIALOG_CONTEXT: InjectionKey<DialogGlobalContext> = DIALOG_SYMBOL
 
 export interface DialogContext extends ControlDialogContext {
-  element: HTMLElement | null
+  element?: HTMLElement | ComponentPublicInstance
   id: Readonly<string>
   message?: string
   props: Record<string, any>
@@ -38,6 +38,7 @@ export interface DialogGlobalContext {
 export interface DialogState {
   element?: HTMLElement | ComponentPublicInstance
   isOpen: boolean
+  message?: string
   props?: Record<string, any>
 }
 

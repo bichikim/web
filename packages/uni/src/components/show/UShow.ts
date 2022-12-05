@@ -10,7 +10,7 @@ export const HShow = defineComponent({
   },
 })
 
-export const Show = styled(HShow, {
+export const UShow = styled(HShow, {
   defaultVariants: {
     when: false,
   },

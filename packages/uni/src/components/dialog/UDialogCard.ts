@@ -1,5 +1,5 @@
-import {defineComponent, h} from 'vue'
-import {UCard} from 'src/components/card'
+import {defineComponent, h, PropType} from 'vue'
+import {UCard, UCardVariants} from 'src/components/card'
 import {UDialog} from './UDialog'
 import {DialogPosition} from './HDialog'
 
@@ -23,9 +23,9 @@ const indicatorBySide = (side: DialogPosition) => {
 export const UDialogCard = defineComponent({
   name: 'UDialogCard',
   props: {
-    bg: {type: String},
+    bg: {type: String as PropType<UCardVariants['bg']>},
     for: null,
-    indicator: {type: String},
+    indicator: {type: String as PropType<UCardVariants['indicator']>},
   },
   setup: (props, {slots}) => {
     return () =>

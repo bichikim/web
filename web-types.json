@@ -18,6 +18,20 @@
         },
         {
           "name": "story"
+        },
+        {
+          "name": "hst-radio",
+          "attributes": [
+            {
+              "name": "options",
+              "value": {
+                "type": "array"
+              }
+            }
+          ]
+        },
+        {
+          "name": "hst-checkbox"
         }
       ],
       "attributes": [

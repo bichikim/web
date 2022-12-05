@@ -1,4 +1,4 @@
-import {styled} from 'src/style'
+import {styled, VariantProps} from 'src/style'
 import {HCard} from './HCard'
 
 export const UCard = styled(
@@ -131,3 +131,5 @@ export const UCard = styled(
     },
   },
 )
+
+export type UCardVariants = VariantProps<typeof UCard>
