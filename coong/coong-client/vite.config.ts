@@ -34,7 +34,12 @@ export default defineConfig(({mode}) => {
     plugins: [
       vue(),
       checker({
-        vueTsc: true,
+        typescript: {
+          tsconfigPath: 'tsconfig.check.json',
+        },
+        vueTsc: {
+          tsconfigPath: 'tsconfig.check.json',
+        },
       }),
       components({
         dts: true,
