@@ -55,16 +55,10 @@ export const globalStyle = globalCss(
         "Pretendard -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', 'Segoe UI'," +
         " 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', 'Apple Color Emoji', 'Segoe UI Emoji'," +
         " 'Segoe UI Symbol', 'Noto Emoji', sans-serif",
+      fontSize: '16px',
       height: '100vh',
     },
-    button: {
-      all: 'unset',
-    },
-    html: {
-      fontSize: '16px',
-      height: '-webkit-fill-available',
-    },
-  } as any,
+  },
   {
     body: {
       height: '-webkit-fill-available',
@@ -74,4 +68,4 @@ export const globalStyle = globalCss(
 
 export type ThemeNames = typeof lightTheme | typeof darkTheme
 
-export {VariantProps}
+export type {VariantProps}
