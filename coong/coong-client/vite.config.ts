@@ -8,6 +8,7 @@ import tsconfigPaths from 'vite-tsconfig-paths'
 import vueJsx from '@vitejs/plugin-vue-jsx'
 import iconsResolver from 'unplugin-icons/resolver'
 import components from 'unplugin-vue-components/vite'
+import topLevelAwait from 'vite-plugin-top-level-await'
 import checker from 'vite-plugin-checker'
 
 // eslint-disable-next-line max-lines-per-function
@@ -64,6 +65,7 @@ export default defineConfig(({mode}) => {
       icons({
         autoInstall: true,
       }),
+      topLevelAwait(),
       // https://github.com/antfu/vite-plugin-pwa
       vitePWA({
         includeAssets: ['favicon.svg', 'robots.txt', 'safari-pinned-tab.svg'],
