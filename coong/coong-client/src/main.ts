@@ -9,7 +9,9 @@ const bootstrap = async () => {
   app.mount('#app')
 }
 
-bootstrap().then(() => 'Welcome to coong')
+await bootstrap()
+
+console.log('Welcome to coong')
 
 if (import.meta.env.VITE_WEB_VITALS) {
   reportWebVitals(console.log)

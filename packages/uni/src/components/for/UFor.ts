@@ -4,7 +4,7 @@ export interface ForProps {
   each?: any[]
 }
 
-export const For: FunctionalComponent<ForProps> = (props, {slots}) => {
+export const UFor: FunctionalComponent<ForProps> = (props, {slots}) => {
   const {each} = props
 
   if (!each || each.length === 0) {
@@ -14,6 +14,6 @@ export const For: FunctionalComponent<ForProps> = (props, {slots}) => {
   return each.map((item, index) => slots.default?.({index, item}))
 }
 
-For.props = {
+UFor.props = {
   each: null,
 }

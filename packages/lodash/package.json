@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/lodash",
-  "version": "1.0.27-alpha.5",
+  "version": "1.0.27-alpha.19",
   "description": "Stitches for Vue",
   "keywords": [
     "lodash"
@@ -28,19 +28,22 @@
     "build": "tsup --dts --minify",
     "dev": "tsup --watch",
     "generate-lodash-es": "lodash modularize exports=es -d -s -o src/lodash",
-    "prepare": "tsup --dts"
+    "copytype": "cpx \"node_modules/@types/lodash/**/*.ts\" dist ",
+    "prepare": "tsup && pnpm run copytype"
   },
   "dependencies": {
     "@types/lodash-es": "4.17.6"
   },
   "devDependencies": {
+    "@types/lodash": "4.14.191",
+    "cpx": "^1.5.0",
     "lodash-cli": "4.17.5",
     "tsup": "^6.3.0"
   },
   "publishConfig": {
     "access": "public"
   },
-  "gitHead": "b8f8c59a3c3b040b94cd578439949acde8212f5d",
+  "gitHead": "4a8bc8b824e5780a82d3b2958e1a8afb48a49bb0",
   "tsup": {
     "entry": [
       "src/index.ts"

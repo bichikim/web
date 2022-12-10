@@ -146,18 +146,18 @@ export const createStyled = (emotion: _Emotion & {theme?: any}) => {
               allAttrs,
             )
 
-            const rules = insertStyles(cache, serialized, isStringElement)
+            const rules: any = insertStyles(cache, serialized, isStringElement) ?? ''
 
             const className = `${registeredClassName}${cache.key}-${serialized.name}${_target}`
 
             const vNode = h(_element, {...restNextAttrs, class: className, ref: 'root'}, slots)
 
-            if (isSSR() && typeof rules !== 'undefined') {
+            if (isSSR() && rules !== undefined) {
               // eslint-disable-next-line prefer-destructuring
               let next = serialized.next
               let dataEmotion = serialized.name
 
-              while (typeof next !== 'undefined') {
+              while (next !== undefined) {
                 dataEmotion += ` ${next.name}`
                 // eslint-disable-next-line prefer-destructuring
                 next = next.next

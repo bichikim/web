@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 import {useSize} from '../index'
-import {ref, effectScope} from 'vue'
+import {effectScope, ref} from 'vue'
 
 jest.mock('src/on-element-resize')
 

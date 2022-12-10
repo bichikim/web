@@ -1,7 +1,7 @@
 import {toValue} from 'src/to-value'
 import {MaybeFunction} from 'src/types'
 
-export const undefinedWhen = (value: any) => typeof value === 'undefined'
+export const undefinedWhen = (value: any) => value === undefined
 
 export function defaultValue<T>(
   value: T,

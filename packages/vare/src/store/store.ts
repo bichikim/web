@@ -139,13 +139,13 @@ const getOptions = <T extends Record<string, any>>(
   arg1: string | CreateStoreOptions<T>,
   arg2?: Setup<T>,
 ): CreateStoreOptions<T> => {
-  if (typeof arg1 === 'string' && typeof arg2 !== 'undefined') {
+  if (typeof arg1 === 'string' && arg2 !== undefined) {
     return {
       name: arg1,
       setup: arg2,
     }
   }
-  if (typeof arg1 === 'object' && typeof arg2 === 'undefined') {
+  if (typeof arg1 === 'object' && arg2 === undefined) {
     return arg1
   }
   throw new Error('params error')

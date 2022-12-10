@@ -1,20 +1,20 @@
 <template>
   <story>
-    <show :when="true">show</show>
+    <u-show :when="true">show</u-show>
     <br />
-    <show when>show</show>
+    <u-show when>show</u-show>
     <br />
-    <show when as="span">show</show>
+    <u-show when as="span">show</u-show>
     <br />
-    <show><span>not show</span></show>
+    <u-show><span>not show</span></u-show>
     <br />
-    <show :when="false">not show</show>
+    <u-show :when="false">not show</u-show>
   </story>
 </template>
 
 <script setup lang="ts">
 import {} from 'vue'
-import {Show} from '../Show'
+import {UShow} from '../UShow'
 
 const props = defineProps({})
 const emit = defineEmits([])

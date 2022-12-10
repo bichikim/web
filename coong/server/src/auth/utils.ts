@@ -83,7 +83,7 @@ export const transformAllPermission = (permissions: string[], allActions: string
   const complexPermissions = permissions.map((permission) => {
     const [name, postFix] = permission.split('.')
     if (!postFix || Object.is(postFix, 'all')) {
-      return [...allActions.map((action) => `${name}.${action}`)]
+      return allActions.map((action) => `${name}.${action}`)
     }
     return permission
   })

@@ -5,7 +5,7 @@ import {createVueStitches} from 'src/create-stitches'
 import {h} from 'vue'
 
 export default {
-  title: 'hello',
+  title: 'stiches/create-stitches',
 }
 
 const stitches = createVueStitches({})

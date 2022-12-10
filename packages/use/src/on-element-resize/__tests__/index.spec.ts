@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 import {mountComposition} from '@winter-love/vue-test'
-import {ref} from 'vue'
+import {markRaw, Ref, ref} from 'vue'
 import {onElementResize} from '../'
 import {isElement} from 'src/is-element'
 
@@ -48,7 +48,7 @@ describe('onElementResize', () => {
       },
     } as any
     const wrapper = mountComposition(() => {
-      const elementRef = ref(element)
+      const elementRef: Ref<HTMLElement> = ref(markRaw(element))
       onElementResize(elementRef, callback)
     })
 

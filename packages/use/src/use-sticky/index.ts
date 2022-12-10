@@ -28,41 +28,46 @@ export interface UseStickyOptions {
 
 const mergeSize = (elementSize: Rect, targetSize: Rect, position: UseStickyPosition) => {
   switch (position) {
-    case 'bottom':
+    case 'bottom': {
       return {
         height: elementSize.height + targetSize.height,
         width: elementSize.width,
         x: targetSize.x,
         y: targetSize.y,
       }
-    case 'top':
+    }
+    case 'top': {
       return {
         height: elementSize.height + targetSize.height,
         width: elementSize.width,
         x: targetSize.x,
         y: targetSize.y - elementSize.height,
       }
-    case 'left':
+    }
+    case 'left': {
       return {
         height: elementSize.height,
         width: elementSize.width + targetSize.width,
         x: targetSize.x - elementSize.width,
         y: targetSize.y,
       }
-    case 'right':
+    }
+    case 'right': {
       return {
         height: elementSize.height,
         width: elementSize.width + targetSize.width,
         x: targetSize.x,
         y: targetSize.y,
       }
-    default:
+    }
+    default: {
       return {
         height: targetSize.height,
         width: targetSize.width,
         x: targetSize.x,
         y: targetSize.y,
       }
+    }
   }
 }
 
@@ -136,7 +141,7 @@ export const useSticky = (
     }
 
     switch (side) {
-      case 'bottom':
+      case 'bottom': {
         return {
           height: targetSize.height,
           side,
@@ -144,7 +149,8 @@ export const useSticky = (
           x: horizontalSize.x,
           y: targetSize.y + targetSize.height,
         }
-      case 'top':
+      }
+      case 'top': {
         return {
           height: targetSize.height,
           side,
@@ -152,7 +158,8 @@ export const useSticky = (
           x: horizontalSize.x,
           y: targetSize.y - elementSize.height,
         }
-      case 'right':
+      }
+      case 'right': {
         return {
           height: targetSize.height,
           side,
@@ -160,7 +167,8 @@ export const useSticky = (
           x: targetSize.width + targetSize.x,
           y: verticalSize.y,
         }
-      case 'left':
+      }
+      case 'left': {
         return {
           height: targetSize.height,
           side,
@@ -168,7 +176,8 @@ export const useSticky = (
           x: targetSize.x - elementSize.width,
           y: verticalSize.y,
         }
-      default:
+      }
+      default: {
         return {
           height: targetSize.height,
           side,
@@ -176,6 +185,7 @@ export const useSticky = (
           x: targetSize.x,
           y: targetSize.y,
         }
+      }
     }
   })
 }

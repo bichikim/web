@@ -18,6 +18,43 @@
         },
         {
           "name": "story"
+        },
+        {
+          "name": "hst-radio",
+          "attributes": [
+            {
+              "name": "options",
+              "value": {
+                "type": "array"
+              }
+            }
+          ]
+        },
+        {
+          "name": "hst-checkbox"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "text",
+          "description": "unocss attributify text",
+          "value": {
+            "type": "string"
+          }
+        },
+        {
+          "name": "bg",
+          "description": "unocss attributify bg",
+          "value": {
+            "type": "string"
+          }
+        },
+        {
+          "name": "gap",
+          "description": "unocss attributify gap",
+          "value": {
+            "type": "string"
+          }
         }
       ]
     }

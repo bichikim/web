@@ -7,15 +7,15 @@ describe('stitches', () => {
         "createComponentName",
         "createFakeStitches",
         "createVueStitches",
+        "getClassName",
+        "getDirectiveStoreKey",
+        "updateClassName",
         "createStitches",
         "createTheme",
         "css",
         "defaultThemeMap",
         "globalCss",
         "keyframes",
-        "getClassName",
-        "getDirectiveStoreKey",
-        "updateClassName",
       ]
     `)
   })

@@ -1,10 +1,15 @@
-import {defineComponent} from 'vue'
+import {defineComponent, toRef} from 'vue'
+import {provideTheme} from './use-theme'
+
 export const UTheme = defineComponent({
   name: 'UTheme',
   props: {
-    color: {type: String},
+    theme: {type: String},
   },
   setup(props, {slots}) {
+    const themeProp = toRef(props, 'theme')
+    provideTheme('body', themeProp)
+
     return () => slots.default?.()
   },
 })

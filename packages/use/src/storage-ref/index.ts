@@ -60,7 +60,7 @@ export function storageRef<Data>(
 
     const result = storageRef.value.get(key)
 
-    if (typeof result !== 'undefined') {
+    if (result !== undefined) {
       valueRef.value = result
     }
   }

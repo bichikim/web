@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/quasar-svg-syntax",
-  "version": "1.0.27-alpha.10",
+  "version": "1.0.27-alpha.19",
   "description": "Useful javascript utils",
   "keywords": [
     "typescript",
@@ -36,7 +36,7 @@
     "prepare": "tsup --dts"
   },
   "dependencies": {
-    "@winter-love/utils": "workspace:^1.0.27-alpha.10",
+    "@winter-love/utils": "^1.0.27-alpha.19",
     "fast-glob": "^3.2.12",
     "globby": "^13.1.2",
     "lodash": "^4.17.21",
@@ -52,7 +52,7 @@
   "publishConfig": {
     "access": "public"
   },
-  "gitHead": "b8f8c59a3c3b040b94cd578439949acde8212f5d",
+  "gitHead": "4a8bc8b824e5780a82d3b2958e1a8afb48a49bb0",
   "tsup": {
     "entry": [
       "src/index.ts"

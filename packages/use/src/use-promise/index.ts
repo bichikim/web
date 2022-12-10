@@ -1,9 +1,7 @@
-import {resolveRef} from 'src/resolve-ref'
+import {freeze} from '@winter-love/utils'
 import {bindRef} from 'src/bind-ref'
-import {onMounted, Ref, ref, toRef} from 'vue'
-import {freeze, toArray} from '@winter-love/utils'
-import {MaybeRef} from 'src/types'
 import {isInInstance} from 'src/is-in-instance'
+import {onMounted, Ref, ref, toRef} from 'vue'
 
 export type RetryPromiseRecipe = () => any[] | boolean
 

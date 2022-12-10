@@ -1,4 +1,4 @@
-import {NavMenuType} from 'layouts/main-layout/components/NavMenu'
+import {NavMenuType} from './NavMenu'
 
 export const NavMenuEndItem = defineComponent({
   props: {

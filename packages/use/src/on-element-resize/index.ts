@@ -11,7 +11,7 @@ import {watchEffect} from 'vue'
  * @param isActive
  */
 export const onElementResize = (
-  element?: MaybeRef<Element | undefined>,
+  element?: MaybeRef<HTMLElement | undefined>,
   callback?: (size: Size) => any | null | undefined,
   isActive: MaybeRef<boolean> = true,
 ) => {
