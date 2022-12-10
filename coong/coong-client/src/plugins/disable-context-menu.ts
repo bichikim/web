@@ -1,7 +1,5 @@
-import {getWindow} from '@winter-love/utils'
-
 export const disableContextMenu = () => {
-  const window = getWindow()
+  const window = globalThis.window
   if (!window) {
     return
   }
