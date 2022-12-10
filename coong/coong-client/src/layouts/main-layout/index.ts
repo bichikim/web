@@ -1,6 +1,6 @@
 import {defineComponent, h} from 'vue'
 import {RouterView} from 'vue-router'
-import {Footer, Header} from './components'
+import {Footer} from './components'
 import {styled} from '@winter-love/uni'
 
 export const HMainLayout = defineComponent({
