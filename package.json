@@ -122,7 +122,7 @@
     "playwright": "^1.28.0",
     "prettier": "^2.8.0",
     "reflect-metadata": "^0.1.13",
-    "sinon": "^14.0.2",
+    "sinon": "^15.0.0",
     "storybook-addon-manual-mocks": "^0.0.6",
     "tsd": "0.24.1",
     "tslib": "^2.4.1",
