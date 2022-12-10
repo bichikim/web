@@ -1,15 +1,13 @@
 import {defineConfig} from 'vite'
 import icons from 'unplugin-icons/vite'
 import {VitePWA as vitePWA} from 'vite-plugin-pwa'
-import vitePluginImp from 'vite-plugin-imp'
 import vue from '@vitejs/plugin-vue'
-import autoImport from 'unplugin-auto-import/vite'
 import tsconfigPaths from 'vite-tsconfig-paths'
 import vueJsx from '@vitejs/plugin-vue-jsx'
 import iconsResolver from 'unplugin-icons/resolver'
 import components from 'unplugin-vue-components/vite'
-import topLevelAwait from 'vite-plugin-top-level-await'
 import checker from 'vite-plugin-checker'
+import {fileURLToPath, URL} from 'node:url'
 
 // eslint-disable-next-line max-lines-per-function
 export default defineConfig(({mode}) => {
@@ -49,23 +47,13 @@ export default defineConfig(({mode}) => {
             prefix: 'icon',
           }),
         ],
-      }),
-      autoImport({
-        imports: ['vue'],
-        resolvers: [
-          iconsResolver({
-            extension: 'jsx',
-            prefix: 'Icon',
-          }),
-        ],
-      }),
+      }) as any,
       vueJsx(),
       tsconfigPaths(),
-      vitePluginImp(),
+      // vitePluginImp(),
       icons({
         autoInstall: true,
       }),
-      topLevelAwait(),
       // https://github.com/antfu/vite-plugin-pwa
       vitePWA({
         includeAssets: ['favicon.svg', 'robots.txt', 'safari-pinned-tab.svg'],
@@ -98,6 +86,7 @@ export default defineConfig(({mode}) => {
     ],
     resolve: {
       alias: {
+        src: fileURLToPath(new URL('src', import.meta.url)),
         vue: 'vue/dist/vue.esm-bundler.js',
       },
     },

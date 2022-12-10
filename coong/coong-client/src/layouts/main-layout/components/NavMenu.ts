@@ -1,5 +1,5 @@
 import {NavMenuItem} from './NavMenuItem'
-
+import {defineComponent} from 'vue'
 export const NavMenu = defineComponent({
   components: {
     NavMenuItem,

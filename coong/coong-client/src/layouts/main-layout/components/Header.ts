@@ -1,7 +1,7 @@
 import {Logo} from './Logo'
 import {NavBar} from './NavBar'
 import {NavMenu, NavMenuType} from './NavMenu'
-import {defineComponent} from 'vue'
+import {defineComponent, h} from 'vue'
 
 export const Header = defineComponent({
   components: {
@@ -13,6 +13,6 @@ export const Header = defineComponent({
     navList: {type: Array as PropType<NavMenuType[]>},
   },
   setup: () => {
-    return () => <div>Piano</div>
+    return () => h('div', 'Piano')
   },
 })

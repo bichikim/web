@@ -525,6 +525,7 @@ module.exports = {
     // 적용 할 수 있도록 해야한다
     'unicorn/prefer-node-protocol': 'off',
     'unicorn/prefer-ternary': 'off',
+    'unicorn/prefer-top-level-await': 'off',
     'unicorn/prevent-abbreviations': 'off',
     'vue/component-name-in-template-casing': ['warn', 'kebab-case'],
     'vue/multi-word-component-names': 'off',
