@@ -29,7 +29,7 @@ export default defineConfig(({mode}) => {
       legalComments: 'none',
     },
     optimizeDeps: {
-      exclude: ['vite'],
+      exclude: ['vite', 'vue-demi'],
       include: ['vue', 'vue-router'],
     },
     plugins: [
