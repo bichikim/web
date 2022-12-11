@@ -1,4 +1,3 @@
-import {getDocument, getWindow} from '@winter-love/utils'
 import {globalCss} from '@winter-love/uni'
 
 const SCREEN_HEIGHT_PROPERTY = '--screen-height'
@@ -11,11 +10,11 @@ const globalBodySize = globalCss({
 
 export const updateScreenHeight = () => {
   globalBodySize()
-  const window = getWindow()
+  const {window} = globalThis
   if (!window) {
     return
   }
-  const document = getDocument()
+  const {document} = globalThis
   if (!document) {
     return
   }

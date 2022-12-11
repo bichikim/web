@@ -1,3 +1,4 @@
+import {defineComponent} from 'vue'
 export const NavBar = defineComponent({
   template: `
     <div class="navbar bg-base-100 shadow-xl rounded-box bg-base-100">

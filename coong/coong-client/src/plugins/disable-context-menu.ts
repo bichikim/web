@@ -1,5 +1,5 @@
 export const disableContextMenu = () => {
-  const window = globalThis.window
+  const {window} = globalThis
   if (!window) {
     return
   }

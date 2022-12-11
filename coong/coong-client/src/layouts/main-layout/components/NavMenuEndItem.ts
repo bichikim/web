@@ -1,3 +1,4 @@
+import {defineComponent} from 'vue'
 import {NavMenuType} from './NavMenu'
 
 export const NavMenuEndItem = defineComponent({
