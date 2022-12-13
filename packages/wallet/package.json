@@ -51,18 +51,18 @@
     "@ethersproject/keccak256": "^5.7.0",
     "@ethersproject/random": "^5.7.0",
     "@ethersproject/transactions": "^5.7.0",
-    "@solana/web3.js": "^1.66.2",
-    "@vue/reactivity": "^3.2.41",
+    "@solana/web3.js": "^1.70.1",
+    "@vue/reactivity": "^3.2.45",
     "@winter-love/utils": "workspace:^1.0.27-alpha.19",
     "aes-js": "^3.1.2",
     "bip39": "3.0.4",
     "ethers": "^5.7.2",
-    "nanoevents": "^7.0.0",
+    "nanoevents": "^7.0.1",
     "scrypt-js": "^3.0.1",
     "tweetnacl": "^1.0.3"
   },
   "devDependencies": {
-    "vue": "^3.2.41",
+    "vue": "^3.2.45",
     "vue-router": "^4.1.6"
   },
   "publishConfig": {
