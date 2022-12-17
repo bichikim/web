@@ -47,7 +47,7 @@
   },
   "dependencies": {
     "@vue/server-renderer": "^3.2.45",
-    "node-html-parser": "^6.0.0",
+    "node-html-parser": "^6.1.4",
     "vue": "^3.2.45"
   },
   "publishConfig": {

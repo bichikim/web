@@ -1,6 +1,6 @@
-import {createOnce} from '../once'
+import {once} from '../once'
 
-export const isSupportPassive = createOnce(() => {
+export const isSupportPassive = once(() => {
   let supportsPassive = false
   try {
     window.addEventListener(

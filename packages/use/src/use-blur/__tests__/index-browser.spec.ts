@@ -2,19 +2,13 @@
  * @jest-environment jsdom
  */
 import {useBlur} from '../'
-import {getDocument, getHtmlElement} from '@winter-love/utils'
+import {getDocument, getHtmlElementClass} from 'src/_imports/utils'
 import {mountComposition} from '@winter-love/vue-test'
 
-jest.mock('@winter-love/utils', () => {
-  return {
-    ...jest.requireActual('@winter-love/utils'),
-    getDocument: jest.fn(),
-    getHtmlElement: jest.fn(),
-  }
-})
+jest.mock('@winter-love/utils')
 
-const mockGetDocument: jest.Mock = getDocument as any
-const mockGetHtmlElement: jest.Mock = getHtmlElement as any
+const mockGetDocument = jest.mocked(getDocument)
+const mockGetHtmlElement = jest.mocked(getHtmlElementClass)
 
 describe('blur', () => {
   it('should blur', () => {
@@ -28,7 +22,7 @@ describe('blur', () => {
           _activeElement = element
         },
       }
-    })()
+    })() as any
     mockGetDocument.mockImplementation(() => fakeDocument)
     mockGetHtmlElement.mockImplementation(() => HTMLElement)
 

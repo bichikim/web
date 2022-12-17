@@ -9,9 +9,10 @@ const bootstrap = async () => {
   app.mount('#app')
 }
 
-await bootstrap()
-
-console.log('Welcome to coong')
+// eslint-disable-next-line unicorn/prefer-top-level-await
+bootstrap().then(() => {
+  console.log('Welcome to coong')
+})
 
 if (import.meta.env.VITE_WEB_VITALS) {
   reportWebVitals(console.log)

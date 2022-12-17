@@ -6,7 +6,7 @@ import { User } from "../../../models/User";
 import { PostCommentsArgs } from "./args/PostCommentsArgs";
 import { PostLikesArgs } from "./args/PostLikesArgs";
 import { PostTagsArgs } from "./args/PostTagsArgs";
-import { transformFields, getPrismaFromContext, transformCountFieldIntoSelectRelationsCount } from "../../../helpers";
+import { transformInfoIntoPrismaArgs, getPrismaFromContext, transformCountFieldIntoSelectRelationsCount } from "../../../helpers";
 
 @TypeGraphQL.Resolver(_of => Post)
 export class PostRelationsResolver {

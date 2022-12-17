@@ -38,15 +38,15 @@
     "prepare": "tsup --dts"
   },
   "dependencies": {
-    "@winter-love/lodash": "^1.0.27-alpha.19",
-    "@winter-love/utils": "^1.0.27-alpha.19",
+    "@winter-love/lodash": "workspace:^1.0.27-alpha.19",
+    "@winter-love/utils": "workspace:^1.0.27-alpha.19",
     "immer": "^9.0.16",
     "vue": "^3.2.45"
   },
   "devDependencies": {
     "@types/debounce": "^1.2.1",
     "@types/sinon": "10.0.13",
-    "@vue/server-renderer": "^3.2.41"
+    "@vue/server-renderer": "^3.2.45"
   },
   "publishConfig": {
     "access": "public"

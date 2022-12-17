@@ -1,9 +1,8 @@
 import * as TypeGraphQL from "type-graphql";
-import graphqlFields from "graphql-fields";
 import { GraphQLResolveInfo } from "graphql";
 import { UpsertOneTagArgs } from "./args/UpsertOneTagArgs";
 import { Tag } from "../../../models/Tag";
-import { transformFields, getPrismaFromContext, transformCountFieldIntoSelectRelationsCount } from "../../../helpers";
+import { transformInfoIntoPrismaArgs, getPrismaFromContext, transformCountFieldIntoSelectRelationsCount } from "../../../helpers";
 
 @TypeGraphQL.Resolver(_of => Tag)
 export class UpsertOneTagResolver {
@@ -11,9 +10,7 @@ export class UpsertOneTagResolver {
     nullable: false
   })
   async upsertOneTag(@TypeGraphQL.Ctx() ctx: any, @TypeGraphQL.Info() info: GraphQLResolveInfo, @TypeGraphQL.Args() args: UpsertOneTagArgs): Promise<Tag> {
-    const { _count } = transformFields(
-      graphqlFields(info as any)
-    );
+    const { _count } = transformInfoIntoPrismaArgs(info);
     return getPrismaFromContext(ctx).tag.upsert({
       ...args,
       ...(_count && transformCountFieldIntoSelectRelationsCount(_count)),

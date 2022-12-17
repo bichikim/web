@@ -1,12 +1,9 @@
 import {ClassFunction} from '@winter-love/utils'
-import {
-  ApolloServerPluginDrainHttpServer,
-  ApolloServerPluginLandingPageLocalDefault,
-  ContextFunction,
-} from 'apollo-server-core'
-import {ApolloServer} from 'apollo-server-express'
+import {ApolloServer, ContextFunction} from '@apollo/server'
+import {ExpressContextFunctionArgument, expressMiddleware} from '@apollo/server/express4'
 import express, {Express} from 'express'
 import {GraphQLSchema} from 'graphql'
+import {json} from 'body-parser'
 import http, {Server} from 'http'
 import cors from 'cors'
 import {AuthChecker, buildSchema, NonEmptyArray, PrintSchemaOptions} from 'type-graphql'
@@ -18,12 +15,12 @@ export interface EmitSchemaFileOptions extends Partial<PrintSchemaOptions> {
 }
 
 export interface ServerStartOptions {
+  context?: ContextFunction<[ExpressContextFunctionArgument]>
   port?: number
 }
 
 export interface ServerPrePareOptions<Context, Role = any> {
   authChecker?: AuthChecker<Context, Role>
-  context?: ContextFunction
   emitSchemaFile?: string | boolean | EmitSchemaFileOptions
   optionCache?: boolean
   playground?: boolean
@@ -42,7 +39,7 @@ export const prepare = async <Context, Role>(
 ): Promise<PrepareResult> => {
   const app = express()
   const httpServer = http.createServer(app)
-  const {resolvers, authChecker, context, emitSchemaFile, optionCache} = options
+  const {resolvers, authChecker, emitSchemaFile, optionCache} = options
 
   if (!resolvers) {
     throw new Error('needs resolvers')
@@ -56,23 +53,23 @@ export const prepare = async <Context, Role>(
 
   const server = new ApolloServer({
     cache: 'bounded',
-    context,
     csrfPrevention: true,
-    plugins: [
-      //
-      ApolloServerPluginDrainHttpServer({httpServer}),
-      ApolloServerPluginLandingPageLocalDefault({embed: true}),
-    ],
+    // plugins: [
+    //   //
+    //   ApolloServerPluginDrainHttpServer({httpServer}),
+    //   ApolloServerPluginLandingPageLocalDefault({embed: true}),
+    // ],
     schema,
   })
+  app.use(
+    cors({
+      maxAge: 86_400,
+      preflightContinue: true,
+    }),
+  )
+  app.use(json())
 
   if (optionCache) {
-    app.use(
-      cors({
-        maxAge: 86_400,
-        preflightContinue: true,
-      }),
-    )
     app.use((req, res, next) => {
       if (req.method === 'OPTIONS') {
         res.setHeader('Cache-Control', 'public, max-age=86400')
@@ -100,10 +97,10 @@ export const start = async (
   serverResult: PrepareResult,
   options: ServerStartOptions = {},
 ): Promise<string> => {
-  const {port} = options
-  const {app, server, httpServer} = serverResult
+  const {port, context} = options
+  const {httpServer, server, app} = serverResult
   await server.start()
-  server.applyMiddleware({app})
+  app.use('/graphql', expressMiddleware(server, {context}))
   return new Promise<string>((resolve) => {
     httpServer.listen({port: port ?? DEFAULT_POST}, () => {
       resolve(`http://localhost:${port}`)
