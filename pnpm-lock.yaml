@@ -385,7 +385,7 @@ importers:
       vite-tsconfig-paths: ^4.0.2
       vue: ^3.2.45
       vue-query: ^2.0.0-beta.12
-      vue-router: 4.1.5
+      vue-router: 4.1.6
       vue-shepherd: ^2.0.1
       vue-tsc: ^1.0.13
       web-vitals: ^3.1.0
@@ -415,7 +415,7 @@ importers:
       vexflow: 4.1.0
       vue: 3.2.45
       vue-query: 2.0.0-beta.12_vue@3.2.45
-      vue-router: 4.1.5_vue@3.2.45
+      vue-router: 4.1.6_vue@3.2.45
       vue-shepherd: 2.0.1_vue@3.2.45
       web-vitals: 3.1.0
     devDependencies:
@@ -29177,15 +29177,6 @@ packages:
       match-sorter: 6.3.1
       vue: 3.2.45
       vue-demi: 0.13.11_vue@3.2.45
-    dev: false
-
-  /vue-router/4.1.5_vue@3.2.45:
-    resolution: {integrity: sha512-IsvoF5D2GQ/EGTs/Th4NQms9gd2NSqV+yylxIyp/OYp8xOwxmU8Kj/74E9DTSYAyH5LX7idVUngN3JSj1X4xcQ==}
-    peerDependencies:
-      vue: ^3.2.0
-    dependencies:
-      '@vue/devtools-api': 6.4.5
-      vue: 3.2.45
     dev: false
 
   /vue-router/4.1.6_vue@3.2.45:
