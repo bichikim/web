@@ -14,10 +14,10 @@
   },
   "dependencies": {
     "@apollo/client": "^3.7.2",
-    "@capacitor/android": "4.5.0",
-    "@capacitor/cli": "4.5.0",
-    "@capacitor/core": "4.5.0",
-    "@capacitor/ios": "4.5.0",
+    "@capacitor/android": "4.6.1",
+    "@capacitor/cli": "4.6.1",
+    "@capacitor/core": "4.6.1",
+    "@capacitor/ios": "4.6.1",
     "@ts-gql/compiler": "^0.16.1",
     "@ts-gql/tag": "^0.7.0",
     "@urql/vue": "^1.0.4",
@@ -36,7 +36,7 @@
     "vexflow": "^4.1.0",
     "vue": "^3.2.45",
     "vue-query": "^2.0.0-beta.12",
-    "vue-router": "4.1.5",
+    "vue-router": "4.1.6",
     "vue-shepherd": "^2.0.1",
     "web-vitals": "^3.1.0"
   },
