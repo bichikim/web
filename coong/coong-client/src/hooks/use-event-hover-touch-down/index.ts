@@ -77,16 +77,6 @@ export const useEventHoverTouchDown = (element: MaybeRef<HTMLElement>) => {
     },
   )
 
-  // useEvent(
-  //   elementRef,
-  //   'touchmove',
-  //   (event: TouchEvent) => {
-  //     event.preventDefault()
-  //   },
-  //   true,
-  //   {passive: false},
-  // )
-
   watch(touchMove, (touches: TouchList) => {
     // eslint-disable-next-line unicorn/no-for-loop
     for (let index = 0; index < touches.length; index += 1) {
