@@ -37,7 +37,7 @@ describe('cancelPromise', () => {
       _resolve = resolve
     })
 
-    const [cancelPromise, cancel] = createCancelPromise(promise)
+    const [_, cancel] = createCancelPromise(promise)
 
     promise.then((data) => {
       _data = data

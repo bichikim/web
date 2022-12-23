@@ -1,4 +1,4 @@
-import {toNumber} from '../to-number'
+import {toNumber} from 'src/number/to-number'
 
 export const toFormatNumber = (
   value?: any,
