@@ -373,17 +373,18 @@ export const createVueStitches = <
     const props = getComposersProps(composers)
 
     return defineComponent({
-      inheritAttrs: false,
       name: `Styled.${name ?? 'unknown'}`,
       props:
         process.env.NODE_ENV === 'production'
-          ? ['as', ...props]
+          ? ['as', 'css', 'class', ...props]
           : {
               // for histoire props inspector
               ...Object.fromEntries(props.map((key) => [key, null])),
               as: null,
+              class: null,
+              css: null,
             },
-      setup: (props, {attrs, slots}) => {
+      setup: (props, {slots}) => {
         const asRef = toRef(props, 'as')
 
         const elementRef = computed(() => {
@@ -401,8 +402,7 @@ export const createVueStitches = <
         })
 
         return () => {
-          const {as, ...variants} = props
-          const {class: className, css, ...restAttrs} = attrs
+          const {as, css, class: className, ...variants} = props
           const styledObject = system({
             ...variants,
             css,
@@ -411,7 +411,6 @@ export const createVueStitches = <
           return h(
             elementRef.value,
             {
-              ...restAttrs,
               as: nextAsProp.value,
               class: [className, styledObject.className].join(' '),
             },
