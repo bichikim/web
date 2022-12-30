@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/stitches",
-  "version": "1.0.27-alpha.19",
+  "version": "1.0.27-alpha.20",
   "repository": "git@github.com:winter-love/web.git",
   "author": "bichi@live.co.kr",
   "exports": {
@@ -27,7 +27,7 @@
   "dependencies": {
     "@stitches/core": "^1.2.8",
     "@vue/runtime-core": "^3.2.45",
-    "@winter-love/lodash": "workspace:^1.0.27-alpha.19",
+    "@winter-love/lodash": "workspace:^1.0.27-alpha.20",
     "vue": "^3.2.45"
   },
   "devDependencies": {
