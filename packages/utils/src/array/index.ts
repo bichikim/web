@@ -1,4 +1,5 @@
 export * from './chunk'
+export * from './drop'
 export * from './join'
 export * from './last'
 export * from './map'

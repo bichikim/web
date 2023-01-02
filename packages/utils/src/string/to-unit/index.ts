@@ -1,7 +1,14 @@
-import {getPxSize} from 'src/get-px-size'
+import {getPxSize} from 'src/string/get-px-size'
+import {addUnit} from 'src/string/add-unit'
 export type EmOrRem = 'em' | 'rem'
 
 const DEFAULT_BASE_SIZE = 16
+
+export const toUnit = (size: number | string, type: string = 'px') => {
+  const _size = getPxSize(size)
+
+  return addUnit(_size, type)
+}
 
 /**
  * px size 를  em size 로 바꾸어 줍니다

@@ -51,6 +51,7 @@
     "@iconify/json": "^2.1.151",
     "@ts-gql/babel-plugin": "^0.1.0",
     "@types/node": "^18.11.14",
+    "vite-ssg": "^0.22.1",
     "@vitejs/plugin-vue": "4.0.0",
     "@vitejs/plugin-vue-jsx": "3.0.0",
     "@vue/server-renderer": "^3.2.45",
