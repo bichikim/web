@@ -475,7 +475,7 @@ importers:
       '@types/sharp': 0.31.0
       '@winter-love/utils': workspace:^1.0.27-alpha.20
       class-transformer: 0.5.1
-      class-validator: 0.13.2
+      class-validator: 0.14.0
       cross-env: 7.0.3
       dotenv: 16.0.3
       express: 4.18.2
@@ -491,7 +491,7 @@ importers:
     dependencies:
       '@winter-love/utils': link:../../packages/utils
       class-transformer: 0.5.1
-      class-validator: 0.13.2
+      class-validator: 0.14.0
       dotenv: 16.0.3
       express: 4.18.2
       got: 12.5.3
@@ -13840,13 +13840,6 @@ packages:
       isobject: 3.0.1
       static-extend: 0.1.2
     dev: true
-
-  /class-validator/0.13.2:
-    resolution: {integrity: sha512-yBUcQy07FPlGzUjoLuUfIOXzgynnQPPruyK1Ge2B74k9ROwnle1E+NxLWnUv5OLU8hA/qL5leAE9XnXq3byaBw==}
-    dependencies:
-      libphonenumber-js: 1.10.15
-      validator: 13.7.0
-    dev: false
 
   /class-validator/0.14.0:
     resolution: {integrity: sha512-ct3ltplN8I9fOwUd8GrP8UQixwff129BkEtuWDKL5W45cQuLd19xqmTLu5ge78YDm/fdje6FMt0hGOhl0lii3A==}
