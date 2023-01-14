@@ -30,6 +30,7 @@ export const changeKeys = <T>(
 
 export interface ChangeKeysRight {
   (transform: (value: keyof any) => keyof any, deep?: number): <T>(value: T) => T
+
   <T>(transform: (value: keyof any) => keyof any, deep: number, value: T): T
 }
 

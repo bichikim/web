@@ -6,6 +6,7 @@ const _map = <T, R>(list: T[], iteratee: (value: T, key: number, array: T[]) => 
 
 export interface Map {
   <T, R>(list: T[]): (iteratee: (value: T, key: number, array: T[]) => R) => R[]
+
   <T, R>(list: T[], iteratee: (value: T, key: number, array: T[]) => R): R[]
 }
 
@@ -23,6 +24,7 @@ export const map: Map = (...args: any[]): any => {
 
 export interface MapOp {
   <T, R>(iteratee: (value: T, key: number, array: T[]) => R): (list: T[]) => R[]
+
   <T, R>(iteratee: (value: T, key: number, array: T[]) => R, list: T[]): R[]
 }
 

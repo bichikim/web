@@ -86,6 +86,7 @@ export const PianoButton = styled(
       color: 'gray',
       fontWeight: 700,
       paddingBottom: 10,
+      pointerEvents: 'none',
       position: 'absolute',
       width: '100%',
     },

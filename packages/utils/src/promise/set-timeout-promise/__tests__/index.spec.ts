@@ -1,5 +1,5 @@
-import {setTimeoutPromise} from '../'
 import {useFakeTimers} from 'sinon'
+import {setTimeoutPromise} from '../'
 
 describe('set-timeout-promise', () => {
   it('should return a timeout promise', async () => {

@@ -10,7 +10,7 @@ export const Default: StoryFn = () => ({
     const element = ref(null)
 
     window.addEventListener('mousedown', (event) => {
-
+      //
     })
 
     return () => h('div', {ref: element}, 'hello')

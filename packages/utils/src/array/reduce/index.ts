@@ -13,6 +13,7 @@ const _reduce = <T, R>(list: T[], iteratee: ReduceIteratee<T, R>, initialValue?:
 
 export interface Reduce {
   <T>(list: T[]): <R>(iteratee: ReduceIteratee<T, R>, initialValue?: R) => R
+
   <T, R>(list: T[], iteratee: ReduceIteratee<T, R>, initialValue?: R): R
 }
 
@@ -28,6 +29,7 @@ export const reduce: Reduce = (...args: any[]) => {
 
 export interface ReduceOp {
   <T, R>(iteratee: ReduceIteratee<T, R>, initialValue?: R): (list: T[]) => R
+
   <T, R>(iteratee: ReduceIteratee<T, R>, initialValue: R, list: T[]): R
 }
 

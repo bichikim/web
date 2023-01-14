@@ -1,6 +1,5 @@
 /* eslint-disable id-length */
 import {createEthereumWallet} from '../'
-import {utils} from 'ethers'
 
 describe('save-account', () => {
   // fix ethers nextTick Error

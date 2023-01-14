@@ -1,6 +1,6 @@
 import {expect} from '@storybook/jest'
-import {changeKeys} from '../'
 import {camelCase} from '@winter-love/lodash'
+import {changeKeys} from '../'
 
 describe('change-keys', () => {
   it('should not change keys with a none object', () => {

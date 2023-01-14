@@ -1,6 +1,6 @@
-import {toValue} from '../'
-import {expectType} from 'tsd'
 import {MaybeFunction} from 'src/types'
+import {expectType} from 'tsd'
+import {toValue} from '../'
 
 describe('to-value', () => {
   it('should return a value from function execution', () => {

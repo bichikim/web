@@ -1,14 +1,16 @@
-import {trimPath} from './trim-path'
-import {dedupSeparator} from './depub-separator'
+import {createTrimPath} from './trim-path'
+import {createTrimPathSeparator} from './trim-path-separator'
 
 const MAX_URL_LENGTH = 300
 const MAX_URL_COUNT = 100
 
-export const createResolveUrl = (
+export const createJoinUrl = (
   separator: string = '/',
   max: number = MAX_URL_LENGTH,
   maxCount: number = MAX_URL_COUNT,
 ) => {
+  const dedupSeparator = createTrimPathSeparator(separator)
+  const trimPath = createTrimPath(separator)
   return (...urls: string[]): string => {
     if (process.env.NODE_ENV === 'development' && urls.length > maxCount) {
       console.warn('please do not pass string url list too long')
@@ -26,4 +28,4 @@ export const createResolveUrl = (
   }
 }
 
-export const resolveUrl = createResolveUrl()
+export const joinUrl = createJoinUrl()

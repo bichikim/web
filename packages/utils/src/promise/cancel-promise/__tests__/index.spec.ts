@@ -1,5 +1,5 @@
-import {createCancelPromise} from '../'
 import {flushPromises} from '@winter-love/vue-test'
+import {createCancelPromise} from '../'
 
 describe('cancelPromise', () => {
   it('should cancel promise', async () => {

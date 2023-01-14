@@ -1,18 +1,18 @@
-import {createDedupSeparator, dedupSeparator} from 'src/path/depub-separator'
+import {createTrimPathSeparator, trimPathSeparator} from '../trim-path-separator'
 
 describe('createTrimDupPath', () => {
   it('should return the trimmed path', () => {
-    expect(dedupSeparator('a/b/c/d')).toBe('a/b/c/d')
-    expect(dedupSeparator('a///b/c/d')).toBe('a/b/c/d')
-    expect(dedupSeparator('a///b//c/d')).toBe('a/b/c/d')
-    expect(dedupSeparator('a///b//c/d///')).toBe('a/b/c/d/')
-    expect(dedupSeparator('///a///b//c/d///')).toBe('/a/b/c/d/')
+    expect(trimPathSeparator('a/b/c/d')).toBe('a/b/c/d')
+    expect(trimPathSeparator('a///b/c/d')).toBe('a/b/c/d')
+    expect(trimPathSeparator('a///b//c/d')).toBe('a/b/c/d')
+    expect(trimPathSeparator('a///b//c/d///')).toBe('a/b/c/d/')
+    expect(trimPathSeparator('///a///b//c/d///')).toBe('/a/b/c/d/')
   })
 })
 
 describe('createDedupSeparator', () => {
   it('should return trimMidPath', () => {
-    const trimMidPath = createDedupSeparator('.')
+    const trimMidPath = createTrimPathSeparator('.')
     expect(trimMidPath('a.b.c.d')).toBe('a.b.c.d')
     expect(trimMidPath('a...b.c.d')).toBe('a.b.c.d')
     expect(trimMidPath('a..b..c.d')).toBe('a.b.c.d')

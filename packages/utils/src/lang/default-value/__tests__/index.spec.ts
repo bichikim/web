@@ -1,6 +1,6 @@
-import {defaultValue, defaultValueOp} from '../'
-import {isUndefined} from 'src/validate/is-undefined'
 import {isNil} from 'src/validate/is-nil'
+import {isUndefined} from 'src/validate/is-undefined'
+import {defaultValue, defaultValueOp} from '../'
 
 describe('defaultValue', () => {
   it('should return value ', () => {

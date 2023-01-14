@@ -1,5 +1,6 @@
-import {promiseDebounce} from '../'
 import {ref} from 'vue'
+import {promiseDebounce} from '../'
+
 export default {
   title: 'utils/Promise Debounce',
 }
@@ -20,10 +21,10 @@ export const Default = () => {
       }
     },
     template: `
-    <div>
-      <span>{{ number }}</span>
-    <button @click="change">change</button>
-    </div>
-  `,
+      <div>
+      <span>{{number}}</span>
+      <button @click="change">change</button>
+      </div>
+    `,
   }
 }

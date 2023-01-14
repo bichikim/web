@@ -1,5 +1,5 @@
-import {promisify} from '../'
 import {expectType} from 'tsd'
+import {promisify} from '../'
 
 describe('promisify', () => {
   it('should create a returning promise function from a callback function', () => {

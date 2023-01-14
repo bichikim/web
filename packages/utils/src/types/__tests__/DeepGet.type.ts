@@ -1,5 +1,5 @@
-import {DeepGet} from '../DeepGet'
 import {expectType} from 'tsd'
+import {DeepGet} from '../DeepGet'
 
 interface JCase {
   john: symbol

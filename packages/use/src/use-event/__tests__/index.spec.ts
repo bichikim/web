@@ -23,7 +23,7 @@ const setup = (options: SetupOptions) => {
       const elementRef = ref()
       const countRef = ref(0)
       const active = useEvent(
-        target ? target : elementRef,
+        target ?? elementRef,
         eventName as any,
         () => {
           countRef.value += 1

@@ -4,6 +4,7 @@ export const take = <T>(list: T[], size: number = 1) => {
 
 export interface TakeRight {
   (size?: number): <T>(list: T[]) => T[]
+
   <T>(size: number, list: T[]): T[]
 }
 

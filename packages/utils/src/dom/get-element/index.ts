@@ -1,4 +1,5 @@
 import {isNil} from 'src/validate/is-nil'
+
 export const getElement = (value?: HTMLElement | string | null): null | HTMLElement => {
   if (isNil(value)) {
     return null

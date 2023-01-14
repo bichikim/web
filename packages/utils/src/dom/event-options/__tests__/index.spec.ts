@@ -1,5 +1,5 @@
-import {eventOptions} from '../'
 import {isSupportPassive} from 'src/env/is-support-passive'
+import {eventOptions} from '../'
 
 jest.mock('src/env/is-support-passive')
 

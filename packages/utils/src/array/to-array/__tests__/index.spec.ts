@@ -1,5 +1,5 @@
-import {toArray} from '../'
 import {expectType} from 'tsd'
+import {toArray} from '../'
 
 describe('to-array', () => {
   it('should return an array with an array argument', () => {

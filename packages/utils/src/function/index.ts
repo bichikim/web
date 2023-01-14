@@ -1,3 +1,6 @@
+export * from './aysnc-pipe'
+export * from './curry'
 export * from './once'
+export * from './pipe'
 export * from './stateful'
 export * from './to-value'

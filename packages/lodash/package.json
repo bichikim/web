@@ -26,9 +26,9 @@
   ],
   "scripts": {
     "build": "tsup --dts --minify",
+    "copytype": "cpx \"node_modules/@types/lodash/**/*.ts\" dist ",
     "dev": "tsup --watch",
     "generate-lodash-es": "lodash modularize exports=es -d -s -o src/lodash",
-    "copytype": "cpx \"node_modules/@types/lodash/**/*.ts\" dist ",
     "prepare": "tsup && pnpm run copytype"
   },
   "dependencies": {

@@ -4,6 +4,7 @@ export const join = <T>(list: T[], separator?: string): string => _join.call(lis
 
 export interface JoinOp {
   (separator?: string): <T>(list: T[]) => string
+
   <T>(separator: string, list: T[]): string
 }
 

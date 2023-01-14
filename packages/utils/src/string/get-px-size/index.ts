@@ -1,6 +1,7 @@
+/* eslint-disable prefer-named-capture-group */
 import {toNumber} from 'src/number/to-number'
 
-const unitRegex = /^((?:[+-]?[0-9]{1,10})?(?:\.[0-9]{1,10})?)(?:px|r?em)?$/iu
+// const unitRegex = /^((?:[+-]?[0-9]{1,10})?(?:\.[0-9]{1,10})?)(?:px|r?em)?$/iu
 export const getSize = (size: number | string, failValue: number = 0) => {
   // todo
 }

@@ -1,6 +1,6 @@
-import {promiseDebounce} from '../'
-import {useFakeTimers} from 'sinon'
 import {flushPromises} from '@winter-love/vue-test'
+import {useFakeTimers} from 'sinon'
+import {promiseDebounce} from '../'
 
 describe('promiseDebounce', () => {
   it('should return promise', async () => {

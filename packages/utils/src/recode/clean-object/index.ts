@@ -1,6 +1,7 @@
+import {pipe} from 'src/function/pipe'
 import {PureObject} from 'src/types'
+
 const {entries, fromEntries} = Object
-import {pipe} from 'src/functional/pipe'
 
 /**
  * remove keys which has undefined value

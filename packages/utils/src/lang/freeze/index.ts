@@ -1,4 +1,5 @@
 const {freeze: _freeze} = Object
+
 /**
  * Optimized freeze
  * @param record

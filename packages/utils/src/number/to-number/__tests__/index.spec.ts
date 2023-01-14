@@ -1,4 +1,5 @@
 import {toNumber} from '../'
+
 describe('to-number', () => {
   it('should return number with a string number', () => {
     const result = toNumber('20')

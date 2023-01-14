@@ -1,6 +1,6 @@
-import {isUndefined} from 'src/validate/is-undefined'
 import {toValue} from 'src/function/to-value'
 import {MaybeFunction} from 'src/types'
+import {isUndefined} from 'src/validate/is-undefined'
 
 export const defaultValue = <T>(
   value: T,
@@ -14,6 +14,7 @@ export const defaultValue = <T>(
 }
 
 type DefaultValueOp1<T> = (value: T) => T
+
 interface DefaultValueOp {
   <T>(defaultValue?: MaybeFunction<T>, when?: (value: any) => boolean): DefaultValueOp1<T>
 

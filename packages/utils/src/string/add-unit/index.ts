@@ -8,6 +8,7 @@ export const addUnit = (value: any, unit: string = ''): string => {
 
 export interface ToUnitRight {
   (unit?: string): (value: any) => string
+
   (unit: string, value: any): string
 }
 

@@ -1,5 +1,6 @@
-import {getPxSize} from 'src/string/get-px-size'
 import {addUnit} from 'src/string/add-unit'
+import {getPxSize} from 'src/string/get-px-size'
+
 export type EmOrRem = 'em' | 'rem'
 
 const DEFAULT_BASE_SIZE = 16

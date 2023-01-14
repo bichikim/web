@@ -6,6 +6,7 @@ import {chunk} from '@winter-love/lodash'
 
 export interface ChunkOp {
   <T>(size: number, list: T[]): T[][]
+
   (size: number): <T>(list: T[]) => T[][]
 }
 

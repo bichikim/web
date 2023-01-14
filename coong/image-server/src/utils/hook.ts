@@ -52,8 +52,9 @@ export const createContext = <T>(defaultValue: T = null): Context<T> => {
   }
 }
 
-const getKey = (key: symbol | string | Context): string | symbol =>
-  typeof key === 'object' ? key.key : key
+const getKey = (key: symbol | string | Context): string | symbol => {
+  return typeof key === 'object' ? key.key : key
+}
 
 export const useContext = (key: symbol | string | Context): any => {
   const _key: string | symbol = getKey(key)

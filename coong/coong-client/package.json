@@ -5,12 +5,12 @@
   "description": "",
   "scripts": {
     "build:spa": "vite build --outDir dist/spa",
-    "preview": "vite preview",
     "dev:spa": "vite --host",
     "fix:vue-demi": "npx vue-demi-fix",
     "generate-pwa-icons": "pnpx pwa-asset-generator public/favicon.svg public/images/pwa --path-override /images/pwa",
     "generator:graphql": "graphql-codegen",
-    "postinstall": "ts-gql build"
+    "postinstall": "ts-gql build",
+    "preview": "vite preview"
   },
   "dependencies": {
     "@apollo/client": "^3.7.2",
@@ -51,7 +51,6 @@
     "@iconify/json": "^2.1.151",
     "@ts-gql/babel-plugin": "^0.1.0",
     "@types/node": "^18.11.14",
-    "vite-ssg": "^0.22.1",
     "@vitejs/plugin-vue": "4.0.0",
     "@vitejs/plugin-vue-jsx": "3.0.0",
     "@vue/server-renderer": "^3.2.45",
@@ -70,6 +69,7 @@
     "vite-plugin-imp": "^2.3.1",
     "vite-plugin-pwa": "^0.13.3",
     "vite-plugin-top-level-await": "^1.2.2",
+    "vite-ssg": "^0.22.1",
     "vite-tsconfig-paths": "^4.0.2",
     "vue-tsc": "^1.0.13",
     "workbox-build": "^6.5.4",
