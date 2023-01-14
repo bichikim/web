@@ -2,10 +2,10 @@ import {GraphQLResolveInfo} from 'graphql'
 import graphqlFields from 'graphql-fields'
 import {
   transformCountFieldIntoSelectRelationsCount,
-  transformFields,
+  transformInfoIntoPrismaArgs,
 } from 'src/prisma/type-graphql/helpers'
 
 export const getIncludes = (info: GraphQLResolveInfo) => {
-  const {_count} = transformFields(graphqlFields(info))
+  const {_count} = transformInfoIntoPrismaArgs(graphqlFields(info))
   return _count && transformCountFieldIntoSelectRelationsCount(_count)
 }

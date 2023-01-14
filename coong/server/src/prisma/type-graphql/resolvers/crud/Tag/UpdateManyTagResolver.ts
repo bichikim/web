@@ -1,5 +1,5 @@
 import * as TypeGraphQL from "type-graphql";
-import { GraphQLResolveInfo } from "graphql";
+import type { GraphQLResolveInfo } from "graphql";
 import { UpdateManyTagArgs } from "./args/UpdateManyTagArgs";
 import { Tag } from "../../../models/Tag";
 import { AffectedRowsOutput } from "../../outputs/AffectedRowsOutput";

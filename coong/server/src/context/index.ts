@@ -4,7 +4,6 @@ import {AuthContext, useAuth, UserData} from './auth'
 import {HashPasswordContext, preparePasswordBcrypt} from './hash-password'
 import {JwtContext, prepareJwt} from './jwt'
 import {preparePrisma, PrismaContext} from './prisma'
-// import {ContextFunction} from './types'
 
 export {UserData}
 

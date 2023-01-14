@@ -1,5 +1,5 @@
 import * as TypeGraphQL from "type-graphql";
-import { GraphQLResolveInfo } from "graphql";
+import type { GraphQLResolveInfo } from "graphql";
 import { GroupByCommentArgs } from "./args/GroupByCommentArgs";
 import { Comment } from "../../../models/Comment";
 import { CommentGroupBy } from "../../outputs/CommentGroupBy";

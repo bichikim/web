@@ -1,5 +1,5 @@
 import * as TypeGraphQL from "type-graphql";
-import { GraphQLResolveInfo } from "graphql";
+import type { GraphQLResolveInfo } from "graphql";
 import { GroupByTagArgs } from "./args/GroupByTagArgs";
 import { Tag } from "../../../models/Tag";
 import { TagGroupBy } from "../../outputs/TagGroupBy";

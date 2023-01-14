@@ -47,7 +47,7 @@ const toArray = (value: any | any[]): any[] => {
   return [value]
 }
 
-const pickHeaderData = (data: ResolverData, header: string) => {
+const pickHeaderData = <ContextType>(data: ResolverData<ContextType>, header: string) => {
   switch (header) {
     case 'args': {
       return toArray(data.args.data)
@@ -70,14 +70,14 @@ const pickDataFromArray = (data: any[], track: (string | number) | (string | num
   })
 }
 
-const pickData = (data: ResolverData, map: string) => {
+const pickData = <ContextType>(data: ResolverData<ContextType>, map: string) => {
   const [header, ...track] = map.split('.')
   const headerData = pickHeaderData(data, header)
   return pickDataFromArray(headerData, track)
 }
 
-const checkRole = (
-  data: ResolverData,
+const checkRole = <ContextType>(
+  data: ResolverData<ContextType>,
   id: string | number,
   role: TargetRole | boolean | undefined,
   defaultRole: boolean = false,

@@ -1,5 +1,5 @@
 import * as TypeGraphQL from "type-graphql";
-import { GraphQLResolveInfo } from "graphql";
+import type { GraphQLResolveInfo } from "graphql";
 import { DeleteManyCommentArgs } from "./args/DeleteManyCommentArgs";
 import { Comment } from "../../../models/Comment";
 import { AffectedRowsOutput } from "../../outputs/AffectedRowsOutput";
