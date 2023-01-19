@@ -10,12 +10,12 @@ export const typeVariants = css({
         width: '50px',
       },
       flat: {
-        '&[data-down]': {
+        '& .key[data-down]': {
           boxShadow: '0 2px 2px rgb(0 0 0 / 40%)',
           transform: 'scale(1, 0.99)',
           transformOrigin: 'top',
         },
-        '&[data-down]:after': {
+        '& .key[data-down]:after': {
           backgroundColor: '#000000',
           content: '',
           height: '100%',
@@ -26,7 +26,7 @@ export const typeVariants = css({
           transform: 'skew(0.5deg, 0)',
           width: 5,
         },
-        '&[data-down]:before': {
+        '& .key[data-down]:before': {
           backgroundColor: '#000000',
           content: '',
           height: '100%',
@@ -43,7 +43,17 @@ export const typeVariants = css({
         width: '80px',
       },
       sharp: {
-        '&[data-down]': {
+        '& .key': {
+          background: 'linear-gradient(-20deg,#333,#000,#333)',
+          backgroundColor: 'black',
+          borderColor: '#666 #222 #111 #555',
+          borderRadius: '0 0 2px 2px',
+          borderStyle: 'solid',
+          borderWidth: '1px 2px 10px',
+          boxShadow: 'inset 0px -1px 2px rgb(255 255 255 / 40%), 0 2px 3px rgb(0 0 0 / 40%)',
+          width: '50px',
+        },
+        '& .key[data-down]': {
           borderBottomWidth: '2px',
           boxShadow:
             'inset 0px -1px 1px rgb(255 255 255 / 40%), 0 1px 0px rgb(0 0 0 / 80%),' +
@@ -52,14 +62,6 @@ export const typeVariants = css({
         '.key-name': {
           color: 'white',
         },
-        background: 'linear-gradient(-20deg,#333,#000,#333)',
-        backgroundColor: 'black',
-        borderColor: '#666 #222 #111 #555',
-        borderRadius: '0 0 2px 2px',
-        borderStyle: 'solid',
-        borderWidth: '1px 2px 10px',
-        boxShadow: 'inset 0px -1px 2px rgb(255 255 255 / 40%), 0 2px 3px rgb(0 0 0 / 40%)',
-        width: '50px',
       },
     },
   },
