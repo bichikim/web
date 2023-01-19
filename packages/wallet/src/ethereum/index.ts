@@ -1,11 +1,11 @@
 import {TransactionResponse} from '@ethersproject/abstract-provider'
 import {BigNumberish} from '@ethersproject/bignumber'
+import {EncryptOptions} from '@ethersproject/json-wallets'
 import {AccessListish} from '@ethersproject/transactions'
-import {computed, reactive, ref, UnwrapNestedRefs} from 'vue'
 import {Contract, Wallet as EthersWallet, providers} from 'ethers'
 import type {Socket} from 'net'
+import {computed, reactive, ref, UnwrapNestedRefs} from 'vue'
 import {Account, BytesLike, Wallet, WalletItemTypes} from '../types'
-import {EncryptOptions} from '@ethersproject/json-wallets'
 
 export interface CreateEthereumWalletOptions {
   saveKey?: string

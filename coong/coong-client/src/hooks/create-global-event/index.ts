@@ -1,5 +1,5 @@
 import {useEvent} from '@winter-love/use'
-import {createOnce} from '@winter-love/utils'
+import {once} from '@winter-love/utils'
 import {DeepReadonly, effectScope, readonly, Ref, shallowRef} from 'vue'
 
 const DEFAULT_UPDATE = (event) => event
@@ -8,7 +8,7 @@ export const createGlobalEvent = (
   eventName: keyof WindowEventMap,
   update: (event: any) => any = DEFAULT_UPDATE,
 ) => {
-  return createOnce(() => {
+  return once(() => {
     const scope = effectScope()
     return scope.run((): DeepReadonly<Ref<null | TouchList>> => {
       const eventRef = shallowRef(null)

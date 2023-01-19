@@ -30,15 +30,18 @@ describe('useEventHoverTouchDown', () => {
   beforeEach(() => {
     _useEvent.mockImplementation((_, name, callback) => {
       switch (name) {
-        case 'touchstart':
+        case 'touchstart': {
           startCallback = callback
           break
-        case 'touchmove':
+        }
+        case 'touchmove': {
           moveCallback = callback
           break
-        case 'touchend':
+        }
+        case 'touchend': {
           endCallback = callback
           break
+        }
       }
     })
 

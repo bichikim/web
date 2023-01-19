@@ -1,6 +1,7 @@
-import {trimPath} from './trim-path'
-import {resolveUrl} from './resolve-url'
+import {createJoinUrl} from 'src/path/join-url'
 
-export const getPathDeeps = (path: string) => {
-  return trimPath(resolveUrl(path)).split('/').length - 1
+export const createGetPathDeeps = (separator: string = '/') => {
+  const joinUrl = createJoinUrl(separator)
+  return (path: string) => joinUrl(path).split(separator).length - 1
 }
+export const getPathDeeps = createGetPathDeeps()

@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/uni",
-  "version": "1.0.27-alpha.19",
+  "version": "1.0.27-alpha.20",
   "repository": "git@github.com:winter-love/web.git",
   "author": "bichi@live.co.kr",
   "exports": {
@@ -25,23 +25,23 @@
     "prepare": "tsup --dts"
   },
   "dependencies": {
-    "@vue/runtime-core": "^3.2.41",
-    "@vue/test-utils": "^2.2.0",
-    "@vueuse/core": "^9.3.1",
-    "@winter-love/stitches": "workspace:^1.0.27-alpha.19",
-    "@winter-love/use": "^1.0.27-alpha.19",
-    "@winter-love/utils": "^1.0.27-alpha.19",
-    "jest-mock": "^29.2.1",
-    "node-html-parser": "^6.0.0",
+    "@vue/runtime-core": "^3.2.45",
+    "@vue/test-utils": "^2.2.6",
+    "@vueuse/core": "^9.6.0",
+    "@winter-love/stitches": "workspace:^1.0.27-alpha.20",
+    "@winter-love/use": "workspace:^1.0.27-alpha.20",
+    "@winter-love/utils": "workspace:^1.0.27-alpha.20",
+    "jest-mock": "^29.3.1",
+    "node-html-parser": "^6.1.4",
     "vue": "^3.2.45"
   },
   "devDependencies": {
     "@types/jest": "^28.1.8",
-    "@types/node": "^18.11.4",
+    "@types/node": "^18.11.14",
     "lodash": "^4.17.21",
-    "tsd": "^0.24.0",
-    "tsup": "^6.3.0",
-    "typescript": "^4.8.4"
+    "tsd": "^0.24.1",
+    "tsup": "^6.5.0",
+    "typescript": "^4.9.4"
   },
   "publishConfig": {
     "access": "public"

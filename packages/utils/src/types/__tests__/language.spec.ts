@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/ban-types */
-import {ArrayLength, ClassFunction, DropParameters} from '../'
 import {expectType} from 'tsd'
+import {ArrayLength, ClassFunction, DropParameters} from '../'
 
 describe('language', () => {
   describe('DropParameters', () => {

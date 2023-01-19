@@ -1,4 +1,5 @@
 import {createEthereumWallet} from '../'
+
 describe('createEthereumWallet', () => {
   describe('createAccount', () => {
     // fix ethers nextTick Error

@@ -29,8 +29,9 @@ module.exports = {
       },
     },
     {
-      files: ['**/*.story.{t,t}s?(x)'],
+      files: ['**/*.story.{t,t}s?(x)', '**/*.stories.{t,t}s?(x)'],
       rules: {
+        'no-magic-numbers': 'off',
         'unicorn/consistent-function-scoping': 'off',
       },
     },
@@ -57,6 +58,7 @@ module.exports = {
         'no-magic-numbers': 'off',
         'prefer-destructuring': 'off',
         'unicorn/consistent-function-scoping': 'off',
+        'unicorn/no-thenable': 'off',
         'unicorn/no-useless-undefined': 'off',
         'vue/one-component-per-file': 'off',
         'vue/require-prop-types': 'off',
@@ -448,7 +450,7 @@ module.exports = {
     'prefer-const': 'error',
     'prefer-destructuring': 'warn',
     'prefer-exponentiation-operator': 'warn',
-    'prefer-named-capture-group': 'error',
+    'prefer-named-capture-group': 'off',
     'prefer-numeric-literals': 'error',
     'prefer-object-spread': 'error',
     'prefer-promise-reject-errors': 'error',

@@ -3,7 +3,7 @@ import {getWindow} from '@winter-love/utils'
 import {PianoKeys, usePiano} from 'src/hooks/piano'
 import {useEventDown} from 'src/hooks/use-event-down'
 import {defineComponent, h, PropType, ref, toRef, watch} from 'vue'
-import {getDataBooleanAttrs} from './get-data-boolean-attrs'
+import {dataBooleanAttrs} from 'src/pages/main/components/piano/data-boolean-attrs'
 import {typeVariants} from './type-variants'
 import {useEventHoverTouchDown} from 'src/hooks/use-event-hover-touch-down'
 
@@ -63,7 +63,7 @@ export const HPianoButton = defineComponent({
       h(
         'button',
         {
-          ...getDataBooleanAttrs({
+          ...dataBooleanAttrs({
             down: isKeyDown.value,
           }),
           onMousedown: downPlay,
@@ -86,6 +86,7 @@ export const PianoButton = styled(
       color: 'gray',
       fontWeight: 700,
       paddingBottom: 10,
+      pointerEvents: 'none',
       position: 'absolute',
       width: '100%',
     },

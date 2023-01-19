@@ -2,7 +2,7 @@
   "extends": "../../tsconfig.json",
   "compileOnSave": false,
   "compilerOptions": {
-    "declaration":  true,
+    "declaration": true,
     "outDir": "dist",
     "baseUrl": ".",
     "paths": {

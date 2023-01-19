@@ -1,5 +1,4 @@
-import {ExpressContext} from 'apollo-server-express'
-
+import {ExpressContext} from './types'
 export interface UserData {
   email: string
   id: string

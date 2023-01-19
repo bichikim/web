@@ -1,10 +1,10 @@
 import {MaybeRef, resolveRef, useEvent} from '@winter-love/use'
-import {createOnce} from '@winter-love/utils'
+import {once} from '@winter-love/utils'
 import {effectScope, Ref, ref, shallowRef, watch} from 'vue'
 import {createGlobalEvent} from '../create-global-event'
 import {elementFromPoint} from './element-from-point'
 
-const useShardEnd = createOnce(() => {
+const useShardEnd = once(() => {
   const scope = effectScope()
   return scope.run((): Ref<null | TouchList> => {
     return shallowRef(null)
@@ -76,16 +76,6 @@ export const useEventHoverTouchDown = (element: MaybeRef<HTMLElement>) => {
       passive: false,
     },
   )
-
-  // useEvent(
-  //   elementRef,
-  //   'touchmove',
-  //   (event: TouchEvent) => {
-  //     event.preventDefault()
-  //   },
-  //   true,
-  //   {passive: false},
-  // )
 
   watch(touchMove, (touches: TouchList) => {
     // eslint-disable-next-line unicorn/no-for-loop

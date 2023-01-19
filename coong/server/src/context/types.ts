@@ -1,5 +1,6 @@
-import {ExpressContext} from 'apollo-server-express'
+import {Request, Response} from 'express'
 
-export type ContextFunction<ReturnType extends Record<string, any>> = (
-  expressContext: ExpressContext,
-) => Promise<ReturnType> | ReturnType
+export type ExpressContext = {
+  req: Request
+  res: Response
+}

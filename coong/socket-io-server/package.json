@@ -1,6 +1,6 @@
 {
   "name": "@coong/socket-io-server",
-  "version": "1.0.27-alpha.19",
+  "version": "1.0.27-alpha.20",
   "private": true,
   "description": "Vue utils",
   "keywords": [
@@ -38,16 +38,16 @@
     "dev": "tsup --watch"
   },
   "dependencies": {
-    "@winter-love/lodash": "workspace:^1.0.27-alpha.19",
-    "@winter-love/utils": "workspace:^1.0.27-alpha.19",
-    "socket.io": "^4.5.3"
+    "@winter-love/lodash": "workspace:^1.0.27-alpha.20",
+    "@winter-love/utils": "workspace:^1.0.27-alpha.20",
+    "socket.io": "^4.5.4"
   },
   "devDependencies": {
     "@types/debounce": "1.2.1",
     "@types/node": "18.11.9",
     "@types/sinon": "10.0.13",
     "@vue/server-renderer": "3.2.45",
-    "@vue/test-utils": "2.2.4",
+    "@vue/test-utils": "2.2.6",
     "debounce": "^1.2.1",
     "vue": "3.2.45"
   },

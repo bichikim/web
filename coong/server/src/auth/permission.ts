@@ -1,5 +1,4 @@
 import {cleanObject, MaybePromise, toArray} from '@winter-love/utils'
-import {Forbidden} from 'src/decorators'
 import {ResolverData} from 'type-graphql'
 import {Context, UserData} from 'src/context'
 import {isEmpty, isMatch} from 'lodash'

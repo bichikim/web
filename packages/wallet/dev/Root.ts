@@ -1,6 +1,6 @@
 import {defineComponent, h} from 'vue'
-import {Solana} from './Solana'
 import {Ethereum} from './Ethereum'
+import {Solana} from './Solana'
 
 export const Root = defineComponent({
   setup() {

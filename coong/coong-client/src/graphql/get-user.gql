@@ -1,15 +1,12 @@
-
-  query getUser ($where: UserWhereUniqueInput!) {
-    user(where: $where) {
+query getUser($where: UserWhereUniqueInput!) {
+  user(where: $where) {
+    id
+    email
+    posts {
       id
-      email
-      posts {
-        id
-        _count {
-          likes
-        }
+      _count {
+        likes
       }
     }
   }
-
-
+}

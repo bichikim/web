@@ -14,7 +14,6 @@ const emitSchemaFile = env.nodeEnv === 'development' ? 'schema.graphql' : false
 const bootstrap = async () => {
   return prepare({
     authChecker,
-    context,
     emitSchemaFile,
     optionCache: env.optionCache,
     playground: isPlayGround,
@@ -24,7 +23,7 @@ const bootstrap = async () => {
 // eslint-disable-next-line @typescript-eslint/no-floating-promises
 bootstrap()
   .then((result) => {
-    return start(result, {port: env.port})
+    return start(result, {context, port: env.port})
   })
   .then((result) => {
     console.log(`Server is running, GraphQL Playground available at ${result}`)

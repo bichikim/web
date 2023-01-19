@@ -10,6 +10,7 @@ export type MaybeFunctionParams<T> = T extends (...args: infer P) => any ? P : [
 export interface EmptyObject {
   // empty
 }
+
 export type ObjectKey = string | number | symbol
 export type PureObject<Value = unknown> = Record<ObjectKey, Value>
 export type StringKeyObject<Value = any> = Record<string, Value>
