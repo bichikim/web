@@ -44,11 +44,13 @@ export const HPianoButton = defineComponent({
 
     const mouseout = () => {
       isKeyDown.value = false
+      piano.muteSmoothly()
     }
 
     watch(isGlobalPointDown, (value) => {
       if (!value) {
         isKeyDown.value = false
+        piano.muteSmoothly()
       }
     })
 
@@ -56,16 +58,15 @@ export const HPianoButton = defineComponent({
       isKeyDown.value = value
       if (value) {
         piano.play()
+        return
       }
+      piano.muteSmoothly()
     })
 
     return () =>
       h(
         'button',
         {
-          ...dataBooleanAttrs({
-            down: isKeyDown.value,
-          }),
           onMousedown: downPlay,
           onMouseout: mouseout,
           onMouseover: hoverPlay,
@@ -73,7 +74,17 @@ export const HPianoButton = defineComponent({
           ref: buttonRef,
           title: `piano-key-${pianoKey.value}`,
         },
-        h('span', {class: 'key-name'}, props.keyName),
+        h(
+          'div',
+          {
+            ...dataBooleanAttrs({
+              down: isKeyDown.value,
+            }),
+            class: 'key',
+          },
+          //
+          h('span', {class: 'key-name'}, props.keyName),
+        ),
       )
   },
 })
@@ -81,7 +92,33 @@ export const HPianoButton = defineComponent({
 export const PianoButton = styled(
   HPianoButton,
   {
-    '.key-name': {
+    border: 'none',
+    display: 'inline-flex',
+    flexShrink: 0,
+    height: '100%',
+    m: 0,
+    p: 0,
+    pointerEvents: 'auto',
+    position: 'relative',
+    touchAction: 'none',
+  },
+  {
+    '& .key': {
+      border: '1px solid #ccc',
+      borderRadius: '0 0 3px 3px',
+      boxShadow:
+        'inset 0 1px 0px #fff, inset 0 -1px 0px #fff, inset 1px 0px 0px #fff,' +
+        ' inset -1px 0px 0px #fff, 0 4px 3px rgb(0 0 0 / 70%)',
+      display: 'inline-flex',
+      flexShrink: 0,
+      height: '100%',
+      overflow: 'hidden',
+      p: 0,
+      pointerEvents: 'none',
+      position: 'relative',
+      width: '100%',
+    },
+    '& .key-name': {
       bottom: 0,
       color: 'gray',
       fontWeight: 700,
@@ -90,19 +127,6 @@ export const PianoButton = styled(
       position: 'absolute',
       width: '100%',
     },
-    border: '1px solid #ccc',
-    borderRadius: '0 0 3px 3px',
-    boxShadow:
-      'inset 0 1px 0px #fff, inset 0 -1px 0px #fff, inset 1px 0px 0px #fff,' +
-      ' inset -1px 0px 0px #fff, 0 4px 3px rgb(0 0 0 / 70%)',
-    display: 'inline-flex',
-    flexShrink: 0,
-    height: '100%',
-    overflow: 'hidden',
-    p: 0,
-    pointerEvents: 'auto',
-    position: 'relative',
-    touchAction: 'none',
   },
   typeVariants,
 )
