@@ -3,7 +3,6 @@
  */
 import {flushPromises} from '@vue/test-utils'
 import {mountComposition} from '@winter-love/vue-test'
-import {getWindow} from '@winter-love/utils'
 import {ref} from 'vue'
 import {onAnimationRepeater} from '../'
 

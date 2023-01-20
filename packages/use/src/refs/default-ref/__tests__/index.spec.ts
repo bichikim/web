@@ -1,5 +1,5 @@
 import {expectType} from 'tsd'
-import {Ref, ref, WritableComputedRef} from 'vue'
+import {Ref, ref} from 'vue'
 import {defaultRef} from '../'
 
 describe('useDefaultRef', () => {

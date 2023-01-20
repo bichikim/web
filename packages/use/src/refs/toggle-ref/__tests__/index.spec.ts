@@ -1,8 +1,8 @@
 /**
  * @jest-environment jsdom
  */
-import {flushPromises, mount, mountComposition} from '@winter-love/vue-test'
-import {defineComponent, h, ref} from 'vue'
+import {flushPromises, mountComposition} from '@winter-love/vue-test'
+import {ref} from 'vue'
 import {toggleRef} from '../'
 
 describe('toggle', () => {

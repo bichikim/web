@@ -3,7 +3,6 @@ import {expectType} from 'tsd'
 import {effectScope, ref} from 'vue'
 import {useFakeTimers} from 'sinon'
 import {flushPromises} from '@winter-love/vue-test'
-import {debounce} from '@winter-love/lodash'
 
 jest.mock('@winter-love/lodash', () => {
   const actual = jest.requireActual('@winter-love/lodash')
@@ -12,8 +11,6 @@ jest.mock('@winter-love/lodash', () => {
     debounce: jest.fn(actual.debounce),
   }
 })
-
-const _debounce = jest.mocked(debounce)
 
 describe('useDebounce', () => {
   it('should type', () => {
@@ -59,7 +56,6 @@ describe('useDebounce', () => {
   it('should call cancel', async () => {
     const clock = useFakeTimers()
     const scope = effectScope()
-    let call
     const callback = jest.fn(() => 'foo')
     const wait = ref(100)
     const func = scope.run(() => {

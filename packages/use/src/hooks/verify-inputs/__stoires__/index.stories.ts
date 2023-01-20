@@ -18,8 +18,8 @@ export const Default = () => {
     },
     template: `
       <div>
-        <input ref="rootInput" />
-        <button @click="verifyRootInput">trigger verify</button>
+      <input ref="rootInput" />
+      <button @click="verifyRootInput">trigger verify</button>
       </div>
     `,
   })
@@ -30,7 +30,7 @@ export const Default = () => {
     },
     template: `
       <div>
-        <input v-verify="(value) => value.length > 4 && 'max length 4'" />
+      <input v-verify="(value) => value.length > 4 && 'max length 4'" />
       </div>
     `,
   })
@@ -55,13 +55,16 @@ export const Default = () => {
     },
     template: `
       <div>
-        <span>{{ isValid }}</span><br>
-        <span>{{ errorMessage }}</span>
-        <button @click="showInput = !showInput">toggle input</button><br>
-        <span>t-input max 4</span><TInput v-if="showInput" ></TInput>
-        <span>t-use-input min 2</span><TUseInput />
-        <span>input all ways ok</span><input v-verify="() => false" />
-        <button @click="verifyAll">verifyAll</button>
+      <span>{{isValid}}</span><br>
+      <span>{{errorMessage}}</span>
+      <button @click="showInput = !showInput">toggle input</button>
+      <br>
+      <span>t-input max 4</span>
+      <TInput v-if="showInput"></TInput>
+      <span>t-use-input min 2</span>
+      <TUseInput />
+      <span>input all ways ok</span><input v-verify="() => false" />
+      <button @click="verifyAll">verifyAll</button>
       </div>
     `,
   })
@@ -72,7 +75,7 @@ export const Default = () => {
     },
     template: `
       <t-from>
-        
+
       </t-from>
     `,
   }

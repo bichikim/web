@@ -46,6 +46,7 @@ const containerHeightRef = ref(400)
   position: relative;
   overflow: auto;
 }
+
 .container {
   position: relative;
   left: 0;
@@ -53,6 +54,7 @@ const containerHeightRef = ref(400)
   width: 10000px;
   height: 10000px;
 }
+
 .item {
   position: absolute;
   left: 400px;
