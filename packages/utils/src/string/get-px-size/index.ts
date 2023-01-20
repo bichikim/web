@@ -1,14 +1,26 @@
-/* eslint-disable prefer-named-capture-group */
-import {toNumber} from 'src/number/to-number'
+// eslint-disable-next-line prefer-named-capture-group
+const unitRegex = /^[+-]?([0-9]{1,10})|(\.[0-9]{1,10})px$/u
 
-// const unitRegex = /^((?:[+-]?[0-9]{1,10})?(?:\.[0-9]{1,10})?)(?:px|r?em)?$/iu
-export const getSize = (size: number | string, failValue: number = 0) => {
-  // todo
-}
-
-export const getPxSize = (size: number | string, failValue: number = 0): number => {
+export const getPxSize = (size: number | string, failBakeValue = 0) => {
   if (typeof size === 'number') {
     return size
   }
-  return toNumber(size.replace(/px$/u, ''), failValue)
+  let _size = size.trim()
+  if (unitRegex.test(_size)) {
+    if (_size.startsWith('.')) {
+      _size = `0${_size}`
+    }
+    return Number(_size.replace(/px$/u, ''))
+  }
+  return failBakeValue
+}
+
+const DEFAULT_EM_SIZE = 16
+
+export const toEm = (px: number, emSize: number = DEFAULT_EM_SIZE): number => {
+  return px / emSize
+}
+
+export const toPx = (em: number, emSize: number = DEFAULT_EM_SIZE): number => {
+  return em * emSize
 }

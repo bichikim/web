@@ -1,6 +1,7 @@
 // todo support array & object
 import {trim} from '@winter-love/lodash'
 
+// URLSearchParams 를 쓴느 것이 더 좋을까 ?
 export interface ToQueryRecodeOptions {
   decodeKey?: DecodeQueryKey
   decodeValue?: DecodeQueryValue

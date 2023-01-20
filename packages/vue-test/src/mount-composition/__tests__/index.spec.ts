@@ -25,13 +25,13 @@ describe('test-use', () => {
 
     expect(setupState.count).toBe(2)
   })
-  it('should test with props', () => {
-    const {setupState} = mountComposition(
+  it('should test with props', async () => {
+    const wrapper = mountComposition(
       (props) => {
         const countProp = toRef(props, 'count')
         const countRef = ref(countProp.value)
         return {
-          count: countRef,
+          countProp,
           foo: 'foo',
           toggle: (add) => {
             countRef.value += add
@@ -44,7 +44,13 @@ describe('test-use', () => {
         },
       },
     )
-    expect(setupState.foo).toBe('foo')
-    expect(setupState.count).toBe(2)
+    expect(wrapper.setupState.foo).toBe('foo')
+    expect(wrapper.setupState.countProp).toBe(2)
+
+    await wrapper.setProps({
+      count: 3,
+    })
+
+    expect(wrapper.vm.countProp).toBe(3)
   })
 })

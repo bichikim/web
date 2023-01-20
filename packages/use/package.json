@@ -65,5 +65,8 @@
     "outDir": "dist",
     "sourcemap": true,
     "splitting": false
-  }
+  },
+  "web-types": [
+    "../../web-types.json"
+  ]
 }

@@ -3,35 +3,34 @@ import {getPxSize} from 'src/string/get-px-size'
 
 export type EmOrRem = 'em' | 'rem'
 
-const DEFAULT_BASE_SIZE = 16
+const DEFAULT_EM_SIZE = 16
 
-export const toUnit = (size: number | string, type: string = 'px') => {
+export const toUnit = (
+  size: number | string,
+  type: string = 'px',
+  fixSize: (value: number) => number = (value) => value,
+) => {
   const _size = getPxSize(size)
 
-  return addUnit(_size, type)
+  return addUnit(fixSize(_size), type)
 }
+
+export const toPx = (size: number | string) => toUnit(size)
 
 /**
  * px size 를  em size 로 바꾸어 줍니다
  * @param size
- * @param baseSize
+ * @param emSize
  * @param type
  */
-export const toEm = (
-  size: number | string,
-  baseSize: number = DEFAULT_BASE_SIZE,
-  type: EmOrRem = 'em',
-) => {
-  const _size = getPxSize(size)
-
-  return `${_size / baseSize}${type}`
-}
+export const toRem = (size: number | string, emSize = DEFAULT_EM_SIZE, type: EmOrRem = 'rem') =>
+  toUnit(size, type, (value) => value / emSize)
 
 /**
  * px size 를 rem size 로 바꾸어 줍니다
  * @param pxSize
- * @param baseSize
+ * @param emSize
  */
-export const toRem = (pxSize: number | string, baseSize: number = DEFAULT_BASE_SIZE) => {
-  return toEm(pxSize, baseSize, 'rem')
+export const toEm = (pxSize: number | string, emSize: number = DEFAULT_EM_SIZE) => {
+  return toRem(pxSize, emSize, 'em')
 }

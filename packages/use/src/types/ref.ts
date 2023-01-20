@@ -12,6 +12,8 @@ export type ToRef<T> = [T] extends [Ref] ? T : Ref<UnwrapRef<T>>
 
 export type MaybeRef<T> = Ref<T> | ComputedRef<T> | T | WritableComputedRef<T>
 
+export type WritableRef<T> = WritableComputedRef<T> | Ref<T>
+
 export type UnwrapNestedRefs<T> = T extends Ref ? T : UnwrapRef<T>
 
 /**
