@@ -1,5 +1,5 @@
 import {onEvent} from 'src/hooks/event'
-import {MaybeRef} from '../types'
+import {MaybeRef} from 'src/types'
 import {resolveRef} from 'src/refs/resolve-ref'
 import {getWindow} from '@winter-love/utils'
 import {mutRef} from 'src/refs/mut-ref'

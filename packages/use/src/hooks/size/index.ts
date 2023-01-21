@@ -3,8 +3,8 @@ import {getElementSize, Rect} from '@winter-love/utils'
 import {computed, Ref, ref, toRef} from 'vue'
 import {MaybeRef} from 'src/types'
 import {resolveRef} from 'src/refs/resolve-ref'
-import {onElementResize} from 'src/element-resize'
-import {useThrottle} from 'src/use-throttle'
+import {onElementResize} from 'src/hooks/element-resize'
+import {useThrottle} from 'src/hooks/throttle'
 
 const DEFAULT_SIZE: Rect = {height: 0, width: 0, x: 0, y: 0}
 const DEFAULT_DELAY = 0

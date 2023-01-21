@@ -1,4 +1,4 @@
-import {bindRef, defineContext, MaybeRef, resolveRef} from '@winter-love/use'
+import {defineContext, MaybeRef, mutRef, resolveRef} from '@winter-love/use'
 import {updateElementClasses} from '@winter-love/utils'
 import {onScopeDispose, reactive, toRef, ToRef, watchEffect} from 'vue'
 
@@ -21,7 +21,7 @@ export const provideTheme = (
   themeName: MaybeRef<string> = 'light-theme',
 ) => {
   const elementRef = resolveRef(element)
-  const theme = bindRef(resolveRef(themeName))
+  const theme = mutRef(resolveRef(themeName))
 
   const context = reactive({theme})
 

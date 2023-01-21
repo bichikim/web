@@ -60,7 +60,7 @@ export interface RecipeContext<Data, Error> {
   signal: AbortSignal
 }
 
-export type Recipe<Data, Args extends any[], Error> =
+export type PromiseRecipe<Data, Args extends any[], Error> =
   // todo cannot pass Data type
   (context: RecipeContext<any, Error>, ...args: Args) => Promise<Data>
 
@@ -84,7 +84,7 @@ export const getRetryArgs = (
  * @param options
  */
 export const usePromise = <Data, Args extends any[] = any, Error = any>(
-  recipe: Recipe<Data, Args, Error>,
+  recipe: PromiseRecipe<Data, Args, Error>,
   options: UsePromiseOptions<Data> = {},
 ): UsePromiseReturnType<Data, Args, Error> => {
   const {immediate, retry} = options

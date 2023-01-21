@@ -70,6 +70,7 @@
     "vite-plugin-pwa": "^0.13.3",
     "vite-plugin-top-level-await": "^1.2.2",
     "vite-ssg": "^0.22.1",
+    "@unocss/vite": "0.48.4",
     "vite-tsconfig-paths": "^4.0.2",
     "vue-tsc": "^1.0.13",
     "workbox-build": "^6.5.4",

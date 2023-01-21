@@ -1,5 +1,5 @@
 import {throttle} from '@winter-love/lodash'
-import {createUseDelay} from 'src/use-delay'
+import {createUseDelay} from 'src/hooks/delay'
 
 export const useThrottle = createUseDelay((handle, wait, immediate) =>
   throttle(handle, wait, {

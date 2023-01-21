@@ -3,7 +3,7 @@ import {defineComponent} from 'vue'
 
 const html = (value) => value.join('')
 
-export const Footer = styled(
+export const CFooter = styled(
   defineComponent({
     template: html`
       <footer>
