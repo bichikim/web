@@ -114,8 +114,6 @@ module.exports = {
   root: true,
   rules: {
     '@ts-gql/ts-gql': 'warn',
-    // '@typescript-eslint/interface-name-prefix': 'off',
-    // '@typescript-eslint/explicit-function-return-type': 'off',
     '@typescript-eslint/explicit-module-boundary-types': 'off',
     '@typescript-eslint/indent': 'off',
     '@typescript-eslint/member-delimiter-style': [

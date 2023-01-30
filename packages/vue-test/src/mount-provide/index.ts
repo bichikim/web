@@ -56,7 +56,7 @@ export const mountProvide = <
   const Parent = defineComponent<Props>({
     props: propKeys as any,
     render() {
-      return h(Component, {...this.props})
+      return h(Component, {...this.$props})
     },
     setup(props) {
       const injectReceiver = ref(null)

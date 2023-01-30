@@ -16,6 +16,7 @@
   "repository": "git@github.com:winter-love/web.git",
   "license": "MIT",
   "author": "bichi@live.co.kr",
+  "sideEffects": false,
   "exports": {
     ".": {
       "import": "./dist/index.mjs",

@@ -1,4 +1,4 @@
-import {MaybeRef, useEvent} from '@winter-love/use'
+import {MaybeRef, onEvent} from '@winter-love/use'
 import {readonly, ref} from 'vue'
 
 export interface UseEventDownOptions<KeyMap> {
@@ -22,10 +22,10 @@ export function useEventDown(
 export function useEventDown(element: MaybeRef<any>, options: UseEventDownOptions<any> = {}) {
   const {down = 'pointerdown', up = 'pointerup'} = options
   const downState = ref(false)
-  useEvent(element, down, () => {
+  onEvent(element, down, () => {
     downState.value = true
   })
-  useEvent(element, up, () => {
+  onEvent(element, up, () => {
     downState.value = false
   })
 

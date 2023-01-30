@@ -1,10 +1,13 @@
 import {useUntilTo} from '../'
 import {useFakeTimers} from 'sinon'
+import {mountScope} from '@winter-love/vue-test'
 
 describe('until-to', () => {
   it('should change number to 0', () => {
     const clock = useFakeTimers()
-    const untilTo = useUntilTo(10)
+    const wrapper = mountScope(() => useUntilTo(10))
+
+    const {result: untilTo} = wrapper
 
     untilTo.run(0, 1)
 
@@ -27,10 +30,12 @@ describe('until-to', () => {
     expect(untilTo.value.value).toBe(0)
 
     clock.restore()
+
+    wrapper.stop()
   })
   it('should stop changing number to 0', () => {
     const clock = useFakeTimers()
-    const untilTo = useUntilTo(10)
+    const {result: untilTo, stop} = mountScope(() => useUntilTo(10))
 
     untilTo.run(0, 1)
 
@@ -51,10 +56,12 @@ describe('until-to', () => {
     expect(untilTo.value.value).toBe(8)
 
     clock.restore()
+
+    stop()
   })
   it('should rerun changing number to 0', () => {
     const clock = useFakeTimers()
-    const untilTo = useUntilTo(10)
+    const {result: untilTo, stop} = mountScope(() => useUntilTo(10))
 
     untilTo.run(0, 1)
 
@@ -75,5 +82,7 @@ describe('until-to', () => {
     expect(untilTo.value.value).toBe(0)
 
     clock.restore()
+
+    stop()
   })
 })
