@@ -1,20 +1,26 @@
 {
-  "name": "@winter-love/use",
+  "name": "@winter-love/ether-wallet",
   "version": "1.0.27-alpha.20",
-  "description": "Vue utils",
+  "private": true,
+  "description": "share state for vue components",
   "keywords": [
     "typescript",
-    "composition-api",
+    "vuex",
+    "store",
     "vue",
     "vue3",
     "vuejs",
     "vuejs3",
-    "ref",
-    "hook",
-    "composable"
+    "composition",
+    "redux",
+    "reactive",
+    "mobx",
+    "vare",
+    "type",
+    "safe"
   ],
+  "homepage": "https://github.com/winter-love/web/tree/dev/packages/vare",
   "repository": "git@github.com:winter-love/web.git",
-  "license": "MIT",
   "author": "bichi@live.co.kr",
   "exports": {
     ".": {
@@ -38,21 +44,27 @@
     "prepare": "tsup --dts"
   },
   "dependencies": {
-    "@winter-love/lodash": "workspace:^",
-    "@winter-love/utils": "workspace:^",
-    "immer": "^9.0.16",
+    "@ethersproject/abstract-provider": "^5.7.0",
+    "@ethersproject/bignumber": "^5.7.0",
+    "@ethersproject/bytes": "^5.7.0",
+    "@ethersproject/json-wallets": "^5.7.0",
+    "@ethersproject/keccak256": "^5.7.0",
+    "@ethersproject/random": "^5.7.0",
+    "@ethersproject/transactions": "^5.7.0",
     "vue": "^3.2.45",
-    "@vue/shared": "^3.2.45"
+    "@winter-love/utils": "workspace:^",
+    "aes-js": "^3.1.2",
+    "bip39": "3.0.4",
+    "ethers": "^5.7.2",
+    "scrypt-js": "^3.0.1",
+    "tweetnacl": "^1.0.3"
   },
   "devDependencies": {
-    "@types/debounce": "^1.2.1",
-    "@types/sinon": "10.0.13",
-    "@vue/server-renderer": "^3.2.45"
+    "vue-router": "^4.1.6"
   },
   "publishConfig": {
     "access": "public"
   },
-  "gitHead": "4a8bc8b824e5780a82d3b2958e1a8afb48a49bb0",
   "tsup": {
     "entry": [
       "src/index.ts"
@@ -66,8 +78,5 @@
     "outDir": "dist",
     "sourcemap": true,
     "splitting": false
-  },
-  "web-types": [
-    "../../web-types.json"
-  ]
+  }
 }

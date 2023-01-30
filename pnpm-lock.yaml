@@ -648,6 +648,41 @@ importers:
       '@emotion/server': 11.10.0_@emotion+css@11.10.5
       '@vue/server-renderer': 3.2.45_vue@3.2.45
 
+  packages/ether-wallet:
+    specifiers:
+      '@ethersproject/abstract-provider': ^5.7.0
+      '@ethersproject/bignumber': ^5.7.0
+      '@ethersproject/bytes': ^5.7.0
+      '@ethersproject/json-wallets': ^5.7.0
+      '@ethersproject/keccak256': ^5.7.0
+      '@ethersproject/random': ^5.7.0
+      '@ethersproject/transactions': ^5.7.0
+      '@winter-love/utils': workspace:^
+      aes-js: ^3.1.2
+      bip39: 3.0.4
+      ethers: ^5.7.2
+      scrypt-js: ^3.0.1
+      tweetnacl: ^1.0.3
+      vue: ^3.2.45
+      vue-router: ^4.1.6
+    dependencies:
+      '@ethersproject/abstract-provider': 5.7.0
+      '@ethersproject/bignumber': 5.7.0
+      '@ethersproject/bytes': 5.7.0
+      '@ethersproject/json-wallets': 5.7.0
+      '@ethersproject/keccak256': 5.7.0
+      '@ethersproject/random': 5.7.0
+      '@ethersproject/transactions': 5.7.0
+      '@winter-love/utils': link:../utils
+      aes-js: 3.1.2
+      bip39: 3.0.4
+      ethers: 5.7.2
+      scrypt-js: 3.0.1
+      tweetnacl: 1.0.3
+      vue: 3.2.45
+    devDependencies:
+      vue-router: 4.1.6_vue@3.2.45
+
   packages/f-ck-vue-render:
     specifiers:
       '@types/node': ^18.11.14
@@ -788,11 +823,13 @@ importers:
       '@types/debounce': ^1.2.1
       '@types/sinon': 10.0.13
       '@vue/server-renderer': ^3.2.45
-      '@winter-love/lodash': workspace:^1.0.27-alpha.20
-      '@winter-love/utils': workspace:^1.0.27-alpha.20
+      '@vue/shared': ^3.2.45
+      '@winter-love/lodash': workspace:^
+      '@winter-love/utils': workspace:^
       immer: ^9.0.16
       vue: ^3.2.45
     dependencies:
+      '@vue/shared': 3.2.45
       '@winter-love/lodash': link:../lodash
       '@winter-love/utils': link:../utils
       immer: 9.0.17

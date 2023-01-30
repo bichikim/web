@@ -3,16 +3,16 @@
  */
 import {mount} from '@vue/test-utils'
 import {defineComponent, h, onMounted, ref} from 'vue'
-import {getComponentElement} from '../'
+import {resolveElement} from '../'
 
-describe('getRefElement', () => {
+describe('resolveElement', () => {
   it('should not get element with none element', () => {
-    const result = getComponentElement({} as any)
+    const result = resolveElement({} as any)
     expect(result).toBeNull()
   })
   it('should get element from ref', () => {
     const element = document.createElement('div')
-    const result = getComponentElement(element)
+    const result = resolveElement(element)
     expect(result).toBe(element)
   })
   it('should get element from ref', () => {
@@ -30,7 +30,7 @@ describe('getRefElement', () => {
         const elementRef = ref()
 
         onMounted(() => {
-          result = getComponentElement(elementRef.value)
+          result = resolveElement(elementRef.value)
         })
 
         return () => h(ComponentElement, {ref: elementRef})

@@ -4,7 +4,7 @@
 import {useSize} from '../index'
 import {effectScope, ref} from 'vue'
 
-jest.mock('src/on-element-resize')
+jest.mock('src/hooks/element-resize')
 
 describe('useSizeRef', () => {
   it('should return reactive ref ', () => {

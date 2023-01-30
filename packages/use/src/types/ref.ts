@@ -3,12 +3,15 @@ import {
   ComponentOptionsBase,
   ComputedRef,
   Ref,
+  ToRef,
   UnwrapRef,
   WatchSource,
   WritableComputedRef,
 } from 'vue'
 
-export type ToRef<T> = [T] extends [Ref] ? T : Ref<UnwrapRef<T>>
+export type ToRefsValueOnly<T = any> = {
+  [K in keyof T]: T[K] extends (...args: any) => any ? T[K] : ToRef<T[K]>
+}
 
 export type MaybeRef<T> = Ref<T> | ComputedRef<T> | T | WritableComputedRef<T>
 

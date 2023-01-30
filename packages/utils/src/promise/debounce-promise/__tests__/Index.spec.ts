@@ -1,11 +1,11 @@
 import {flushPromises} from '@winter-love/vue-test'
 import {useFakeTimers} from 'sinon'
-import {promiseDebounce} from '../'
+import {debouncePromise} from '../'
 
-describe('promiseDebounce', () => {
+describe('debouncePromise', () => {
   it('should return promise', async () => {
     const clock = useFakeTimers()
-    const newFunction = promiseDebounce(() => 'foo', 250)
+    const newFunction = debouncePromise(() => 'foo', 250)
     const foo = newFunction()
     // noinspection SuspiciousTypeOfGuard
     expect(foo instanceof Promise).toBe(true)

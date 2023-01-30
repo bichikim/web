@@ -1,5 +1,5 @@
 import {isSSR} from '@winter-love/utils'
-import {getComponentElement} from 'src/utils/get-component-element'
+import {resolveElement} from 'src/utils/resolve-element'
 import {resolveRef} from 'src/refs/resolve-ref'
 import {MaybeRef} from 'src/types'
 import {ComponentPublicInstance, computed, onBeforeUnmount, watch} from 'vue'
@@ -38,7 +38,7 @@ export const onElementIntersection = (
 
   watch([observerRef, elementRef], ([observer, element], [oldObserver]) => {
     oldObserver.disconnect()
-    const _element = getComponentElement(element)
+    const _element = resolveElement(element)
     if (_element) {
       // using any owing to typescript bug
       observer.observe(_element as any)

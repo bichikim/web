@@ -1,6 +1,6 @@
 import {isSSR} from 'src/_imports/utils'
 import {mutRef} from 'src/refs'
-import {getComponentElement} from 'src/utils/get-component-element'
+import {resolveElement} from 'src/utils/resolve-element'
 import {MaybeElement} from 'src/types'
 import {onEvent} from 'src/hooks/event'
 import {computed, Ref} from 'vue'
@@ -26,7 +26,7 @@ export const onClickOutside = <Event extends keyof WindowEventMap = 'pointerdown
   const targetRef = mutRef(target)
 
   const elementRef = computed(() => {
-    return getComponentElement(targetRef.value)
+    return resolveElement(targetRef.value)
   })
 
   const listener = (event: WindowEventMap[Event]) => {
