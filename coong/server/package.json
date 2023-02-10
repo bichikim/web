@@ -12,7 +12,7 @@
     "start": "node ./dist/index.js"
   },
   "dependencies": {
-    "@apollo/server": "4.3.0",
+    "@apollo/server": "4.3.3",
     "@prisma/client": "~4.8.0",
     "@winter-love/utils": "workspace:^",
     "bcryptjs": "2.4.3",
