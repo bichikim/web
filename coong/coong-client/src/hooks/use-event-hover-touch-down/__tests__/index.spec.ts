@@ -4,7 +4,7 @@
 import {useEventHoverTouchDown} from '../'
 import {flushPromises, h, mount, onMounted, ref} from '@winter-love/vue-test'
 import {elementFromPoint} from '../element-from-point'
-import {MaybeRef, resolveRef, useEvent} from '@winter-love/use'
+import {MaybeRef, onEvent, resolveRef} from '@winter-love/use'
 
 jest.mock('../element-from-point', () => ({
   elementFromPoint: jest.fn(),
@@ -19,7 +19,7 @@ jest.mock('@winter-love/use', () => {
 })
 
 const _elementFromPoint = jest.mocked(elementFromPoint)
-const _useEvent = jest.mocked(useEvent)
+const _useEvent = jest.mocked(onEvent)
 
 describe('useEventHoverTouchDown', () => {
   let startCallback

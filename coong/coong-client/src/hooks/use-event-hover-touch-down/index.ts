@@ -1,4 +1,4 @@
-import {MaybeRef, resolveRef, useEvent} from '@winter-love/use'
+import {MaybeRef, onEvent, resolveRef} from '@winter-love/use'
 import {once} from '@winter-love/utils'
 import {effectScope, Ref, ref, shallowRef, watch} from 'vue'
 import {createGlobalEvent} from '../create-global-event'
@@ -23,11 +23,14 @@ export const useEventHoverTouchDown = (element: MaybeRef<HTMLElement>) => {
   const shardEnd = useShardEnd()
   const identifier = ref(-1)
 
-  useEvent(
+  onEvent(
     elementRef,
     'touchstart',
     (event: TouchEvent) => {
-      event.preventDefault()
+      if (event.cancelable) {
+        event.preventDefault()
+      }
+
       const touches = event.changedTouches
       // eslint-disable-next-line unicorn/no-for-loop
       for (let index = 0; index < touches.length; index += 1) {
@@ -64,7 +67,7 @@ export const useEventHoverTouchDown = (element: MaybeRef<HTMLElement>) => {
     }
   })
 
-  useEvent(
+  onEvent(
     elementRef,
     'touchend',
     (event: TouchEvent) => {

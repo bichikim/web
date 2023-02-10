@@ -16,5 +16,7 @@ export const CFooter = styled(
   {
     bottom: 0,
     position: 'fixed',
+    px: 10,
+    py: 5,
   },
 )

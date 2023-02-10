@@ -30,7 +30,9 @@
     "version:beta": "lerna version prerelease --preid beta",
     "version:next": "lerna version prerelease --preid next",
     "version:patch": "lerna version patch",
-    "version:patch-force": "lerna version patch --force-publish"
+    "version:patch-force": "lerna version patch --force-publish",
+    "sync:android": "ionic cap sync android",
+    "dev:android": "ionic cap run android -l --external --open"
   },
   "browserslist": [
     "last 10 Chrome versions",
@@ -44,6 +46,10 @@
     "last 5 Opera versions"
   ],
   "devDependencies": {
+    "@capacitor/android": "4.6.3",
+    "@capacitor/cli": "4.6.3",
+    "@capacitor/core": "4.6.3",
+    "@capacitor/ios": "4.6.3",
     "@babel/core": "^7.20.12",
     "@babel/plugin-proposal-class-properties": "^7.18.6",
     "@babel/plugin-proposal-decorators": "^7.20.7",

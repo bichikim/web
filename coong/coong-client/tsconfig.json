@@ -22,7 +22,8 @@
   "include": [
     "__generated__/**/*.ts",
     "src/**/*.ts",
-    "src/**/*.tsx"
+    "src/**/*.tsx",
+    "capacitor.config.ts"
   ],
   "exclude": [
     "node_modules"

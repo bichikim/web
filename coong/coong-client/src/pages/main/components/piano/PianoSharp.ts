@@ -62,16 +62,24 @@ export const HPianoSharp = defineComponent({
   },
 })
 
-export const PianoSharp = styled(HPianoSharp, {
-  display: 'flex',
-  flexWrap: 'nowrap',
-  gap: 30,
-  height: '100%',
-  pb: 207,
-  overflow: 'visible',
-  pl: 55,
-  pointerEvents: 'none',
-  position: 'relative',
-  whiteSpace: 'nowrap',
-  width: '100%',
-})
+export const PianoSharp = styled(
+  HPianoSharp,
+  {
+    marginRight: 30,
+  },
+  {
+    '&>*': {
+      marginRight: 30,
+    },
+    display: 'flex',
+    flexWrap: 'nowrap',
+    height: '100%',
+    overflow: 'visible',
+    pb: 207,
+    pl: 55,
+    pointerEvents: 'none',
+    position: 'relative',
+    whiteSpace: 'nowrap',
+    width: '100%',
+  },
+)

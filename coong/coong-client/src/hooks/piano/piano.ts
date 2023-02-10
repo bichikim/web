@@ -1,6 +1,6 @@
 import {PlayFunction} from '@vueuse/sound/dist/esm/src/types'
 import {computed} from '@winter-love/vue-test'
-import {Ref, watch} from 'vue'
+import {Ref} from 'vue'
 import {indexKeys} from './source'
 import {Howl} from 'howler'
 import {useSound} from '@vueuse/sound'
