@@ -32,7 +32,8 @@
     "version:patch": "lerna version patch",
     "version:patch-force": "lerna version patch --force-publish",
     "sync:android": "ionic cap sync android",
-    "dev:android": "ionic cap run android -l --external --open"
+    "dev:android": "ionic cap run android -l --external --open",
+    "build:android": "ionic cap build android"
   },
   "browserslist": [
     "last 10 Chrome versions",

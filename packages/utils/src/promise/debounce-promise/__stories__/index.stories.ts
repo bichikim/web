@@ -1,12 +1,12 @@
 import {ref} from 'vue'
-import {promiseDebounce} from '../'
+import {debouncePromise} from '../'
 
 export default {
-  title: 'utils/Promise Debounce',
+  title: 'utils/promise/debounce-promise',
 }
 
 export const Default = () => {
-  const foo = promiseDebounce(() => Math.random(), 1000)
+  const foo = debouncePromise(() => Math.random(), 1000)
   return {
     setup() {
       const number = ref(0)

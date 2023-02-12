@@ -1,3 +1,6 @@
+/**
+ * @jest-environment jsdom
+ */
 import * as composition from '../'
 
 describe('composition', () => {
@@ -49,6 +52,7 @@ describe('composition', () => {
         "bunchRef",
         "defaultRef",
         "mutRef",
+        "resolveElementRef",
         "resolveRef",
         "setRef",
         "storageRef",

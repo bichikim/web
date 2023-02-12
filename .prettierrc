@@ -4,6 +4,6 @@
   "semi": false,
   "trailingComma": "all",
   "jsxSingleQuote": false,
-  "printWidth": 100,
+  "printWidth": 90,
   "endOfLine": "lf"
 }

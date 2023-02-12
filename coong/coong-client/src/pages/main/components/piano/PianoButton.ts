@@ -39,7 +39,7 @@ export const HPianoButton = defineComponent({
         return
       }
       isKeyDown.value = true
-      piano.play()
+      piano.down()
     }
 
     const hoverPlay = () => {
@@ -48,7 +48,7 @@ export const HPianoButton = defineComponent({
       }
       if (isGlobalPointDown.value) {
         isKeyDown.value = true
-        piano.play()
+        piano.down()
       }
     }
 
@@ -57,23 +57,23 @@ export const HPianoButton = defineComponent({
         return
       }
       isKeyDown.value = false
-      piano.muteSmoothly()
+      piano.up()
     }
 
     watch(isGlobalPointDown, (value) => {
       if (!value) {
         isKeyDown.value = false
-        piano.muteSmoothly()
+        piano.up()
       }
     })
 
     watch(isHoverDown, (value) => {
       isKeyDown.value = value
       if (value) {
-        piano.play()
+        piano.down()
         return
       }
-      piano.muteSmoothly()
+      piano.up()
     })
 
     return () =>

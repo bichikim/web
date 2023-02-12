@@ -5,7 +5,7 @@ import {resolveRef} from 'src/refs/resolve-ref'
 
 export const resolveElementRef = (
   value: MaybeRef<MaybeElement>,
-): ComputedRef<HTMLElement | null> => {
+): ComputedRef<HTMLElement | null | undefined> => {
   const maybeElement = resolveRef(value)
 
   return computed(() => {

@@ -1,6 +1,7 @@
 export * from './bunch-ref'
 export * from './default-ref'
 export * from './mut-ref'
+export * from './resolve-element-ref'
 export * from './resolve-ref'
 export * from './set-ref'
 export * from './storage-ref'
