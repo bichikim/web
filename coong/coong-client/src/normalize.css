@@ -41,3 +41,8 @@ body {
 #app {
     height: 100%;
 }
+
+/* markdown */
+.markdown-body {
+    padding: 20px;
+}
