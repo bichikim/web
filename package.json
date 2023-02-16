@@ -30,7 +30,10 @@
     "version:beta": "lerna version prerelease --preid beta",
     "version:next": "lerna version prerelease --preid next",
     "version:patch": "lerna version patch",
-    "version:patch-force": "lerna version patch --force-publish"
+    "version:patch-force": "lerna version patch --force-publish",
+    "sync:android": "ionic cap sync android",
+    "dev:android": "ionic cap run android -l --external --open",
+    "build:android": "ionic cap build android"
   },
   "browserslist": [
     "last 10 Chrome versions",
@@ -44,6 +47,10 @@
     "last 5 Opera versions"
   ],
   "devDependencies": {
+    "@capacitor/android": "4.6.3",
+    "@capacitor/cli": "4.6.3",
+    "@capacitor/core": "4.6.3",
+    "@capacitor/ios": "4.6.3",
     "@babel/core": "^7.20.12",
     "@babel/plugin-proposal-class-properties": "^7.18.6",
     "@babel/plugin-proposal-decorators": "^7.20.7",
@@ -74,8 +81,8 @@
     "@types/node": "^18.11.18",
     "@types/sinon": "^10.0.13",
     "@types/testing-library__jest-dom": "^5.14.5",
-    "@typescript-eslint/eslint-plugin": "5.46.1",
-    "@typescript-eslint/parser": "5.46.1",
+    "@typescript-eslint/eslint-plugin": "5.51.0",
+    "@typescript-eslint/parser": "5.51.0",
     "@vitejs/plugin-vue": "^3.2.0",
     "@vitejs/plugin-vue-jsx": "^2.1.1",
     "@vue/babel-plugin-transform-vue-jsx": "^1.4.0",
@@ -135,7 +142,7 @@
     "vue": "^3.2.45"
   },
   "engines": {
-    "node": ">= 16 <18",
+    "node": ">= 16",
     "pnpm": ">= 6.17"
   },
   "pnpm": {

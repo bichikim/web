@@ -4,6 +4,7 @@
     "jsx": "preserve",
     "noEmit": true,
     "rootDir": ".",
+    "strict": false,
     "sourceMap": true,
     "esModuleInterop": true,
     "resolveJsonModule": true,
@@ -25,8 +26,5 @@
   "include": [
     "**/*.ts",
     "auto-imports.d.ts"
-  ],
-  "exclude": [
-    "node_modules"
   ]
 }

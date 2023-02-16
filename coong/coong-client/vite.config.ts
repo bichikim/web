@@ -8,6 +8,9 @@ import iconsResolver from 'unplugin-icons/resolver'
 import components from 'unplugin-vue-components/vite'
 import checker from 'vite-plugin-checker'
 import {fileURLToPath, URL} from 'node:url'
+import topLevelAwait from 'vite-plugin-top-level-await'
+import markdown from 'vite-plugin-vue-markdown'
+// import unocss from '@unocss/vite'
 
 // eslint-disable-next-line max-lines-per-function
 export default defineConfig(({mode}) => {
@@ -31,7 +34,10 @@ export default defineConfig(({mode}) => {
       include: ['vue', 'vue-router'],
     },
     plugins: [
-      vue(),
+      vue({
+        include: [/\.vue$/u, /\.md$/u],
+      }),
+      markdown(),
       checker({
         typescript: {
           tsconfigPath: 'tsconfig.check.json',
@@ -51,6 +57,7 @@ export default defineConfig(({mode}) => {
       vueJsx(),
       tsconfigPaths(),
       // vitePluginImp(),
+      topLevelAwait(),
       icons({
         autoInstall: true,
       }),

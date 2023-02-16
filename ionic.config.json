@@ -1,0 +1,14 @@
+{
+  "defaultProject": "Coong",
+  "projects": {
+    "Coong": {
+      "name": "Coong",
+      "integrations": {
+        "capacitor": {}
+      },
+      "type": "vue",
+      "npmClient": "pnpm",
+      "root": "coong/coong-client/"
+    }
+  }
+}

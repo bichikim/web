@@ -3,6 +3,7 @@
 
 interface ImportMetaEnv {
   readonly VITE_API_URL: string
+  readonly VITE_DEVICE: string | undefined
   readonly VITE_PRIMARY_COLOR: string
   readonly VITE_WEB_VITALS: string
 }

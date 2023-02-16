@@ -1,18 +1,20 @@
-import {defineComponent, h} from 'vue'
-import {RouterView} from 'vue-router'
-import {Footer} from './components'
 import {styled} from '@winter-love/uni'
+import {defineComponent} from 'vue'
+import {RouterView} from 'vue-router'
+import {CFooter} from './components'
 
 export const HMainLayout = defineComponent({
-  name: 'MainLayout',
-  setup: () => {
-    return () =>
-      h('div', [
-        //
-        h(RouterView),
-        h(Footer),
-      ])
+  components: {
+    CFooter,
+    RouterView,
   },
+  name: 'MainLayout',
+  template: `
+    <div>
+    <router-view></router-view>
+    <c-footer/>
+    </div>
+  `,
 })
 
 export default styled(HMainLayout, {

@@ -1,4 +1,4 @@
-import {useEvent} from '@winter-love/use'
+import {onEvent} from '@winter-love/use'
 import {once} from '@winter-love/utils'
 import {DeepReadonly, effectScope, readonly, Ref, shallowRef} from 'vue'
 
@@ -17,7 +17,7 @@ export const createGlobalEvent = (
         eventRef.value = update(event)
       }
 
-      useEvent(document.body as any, eventName, _update, true, {
+      onEvent(document.body as any, eventName, _update, true, {
         passive: false,
       })
 

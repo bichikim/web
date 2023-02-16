@@ -1,10 +1,10 @@
 /**
  * @jest-environment jsdom
  */
-import {useEventHoverTouchDown} from '../'
 import {flushPromises, h, mount, onMounted, ref} from '@winter-love/vue-test'
+import {useEventHoverTouchDown} from '../'
 import {elementFromPoint} from '../element-from-point'
-import {MaybeRef, resolveRef, useEvent} from '@winter-love/use'
+import {onEvent} from '@winter-love/use'
 
 jest.mock('../element-from-point', () => ({
   elementFromPoint: jest.fn(),
@@ -14,12 +14,12 @@ jest.mock('@winter-love/use', () => {
   const originalModule = jest.requireActual('@winter-love/use')
   return {
     ...originalModule,
-    useEvent: jest.fn(originalModule.useEvent),
+    onEvent: jest.fn(originalModule.onEvent),
   }
 })
 
 const _elementFromPoint = jest.mocked(elementFromPoint)
-const _useEvent = jest.mocked(useEvent)
+const _onEvent = jest.mocked(onEvent)
 
 describe('useEventHoverTouchDown', () => {
   let startCallback
@@ -28,7 +28,7 @@ describe('useEventHoverTouchDown', () => {
   let wrapper
 
   beforeEach(() => {
-    _useEvent.mockImplementation((_, name, callback) => {
+    _onEvent.mockImplementation((_, name, callback) => {
       switch (name) {
         case 'touchstart': {
           startCallback = callback
@@ -70,7 +70,9 @@ describe('useEventHoverTouchDown', () => {
 
     // 해당 엘리먼트에서 터치 다운
     startCallback?.(
-      new TouchEvent('foo', {changedTouches: [{clientX: 0, clientY: 0, identifier: 1} as any]}),
+      new TouchEvent('foo', {
+        changedTouches: [{clientX: 0, clientY: 0, identifier: 1} as any],
+      }),
     )
     await flushPromises()
 
@@ -78,7 +80,9 @@ describe('useEventHoverTouchDown', () => {
 
     // 해당 엘리먼트에서 터치 업
     endCallback?.(
-      new TouchEvent('foo', {changedTouches: [{clientX: 0, clientY: 0, identifier: 1} as any]}),
+      new TouchEvent('foo', {
+        changedTouches: [{clientX: 0, clientY: 0, identifier: 1} as any],
+      }),
     )
     await flushPromises()
 
@@ -88,7 +92,9 @@ describe('useEventHoverTouchDown', () => {
     expect(wrapper.text()).toBe('false')
     // 해당 엘리먼트에서 터치 다운
     startCallback?.(
-      new TouchEvent('foo', {changedTouches: [{clientX: 0, clientY: 0, identifier: 2} as any]}),
+      new TouchEvent('foo', {
+        changedTouches: [{clientX: 0, clientY: 0, identifier: 2} as any],
+      }),
     )
     await flushPromises()
 
@@ -96,7 +102,9 @@ describe('useEventHoverTouchDown', () => {
 
     // 해당 엘리먼트에서 터치 이동
     moveCallback?.(
-      new TouchEvent('foo', {changedTouches: [{clientX: 0, clientY: 2, identifier: 2} as any]}),
+      new TouchEvent('foo', {
+        changedTouches: [{clientX: 0, clientY: 2, identifier: 2} as any],
+      }),
     )
     await flushPromises()
 
@@ -105,7 +113,9 @@ describe('useEventHoverTouchDown', () => {
     // 해당 엘리먼트밖으로 터치 이동
     _elementFromPoint.mockImplementationOnce(() => [] as any)
     moveCallback?.(
-      new TouchEvent('foo', {changedTouches: [{clientX: 0, clientY: 1, identifier: 2} as any]}),
+      new TouchEvent('foo', {
+        changedTouches: [{clientX: 0, clientY: 1, identifier: 2} as any],
+      }),
     )
     await flushPromises()
 
@@ -113,7 +123,9 @@ describe('useEventHoverTouchDown', () => {
 
     // 해당 엘리먼트안으로 터치 이동
     moveCallback?.(
-      new TouchEvent('foo', {changedTouches: [{clientX: 0, clientY: 0, identifier: 2} as any]}),
+      new TouchEvent('foo', {
+        changedTouches: [{clientX: 0, clientY: 0, identifier: 2} as any],
+      }),
     )
     await flushPromises()
 
@@ -121,7 +133,9 @@ describe('useEventHoverTouchDown', () => {
 
     // 해당 엘리먼트에서 터치 업
     endCallback?.(
-      new TouchEvent('foo', {changedTouches: [{clientX: 0, clientY: 0, identifier: 2} as any]}),
+      new TouchEvent('foo', {
+        changedTouches: [{clientX: 0, clientY: 0, identifier: 2} as any],
+      }),
     )
     await flushPromises()
 
@@ -132,7 +146,9 @@ describe('useEventHoverTouchDown', () => {
 
     // 해당 엘리먼트에서 터치 이동
     moveCallback?.(
-      new TouchEvent('foo', {changedTouches: [{clientX: 0, clientY: 1, identifier: 1} as any]}),
+      new TouchEvent('foo', {
+        changedTouches: [{clientX: 0, clientY: 1, identifier: 1} as any],
+      }),
     )
     await flushPromises()
 
@@ -141,7 +157,9 @@ describe('useEventHoverTouchDown', () => {
     // 해당 엘리먼트밖으로 터치 이동
     _elementFromPoint.mockImplementationOnce(() => [] as any)
     moveCallback?.(
-      new TouchEvent('foo', {changedTouches: [{clientX: 0, clientY: 2, identifier: 1} as any]}),
+      new TouchEvent('foo', {
+        changedTouches: [{clientX: 0, clientY: 2, identifier: 1} as any],
+      }),
     )
     await flushPromises()
 
@@ -149,7 +167,9 @@ describe('useEventHoverTouchDown', () => {
 
     // 해당 엘리먼트안으로 터치 이동
     moveCallback?.(
-      new TouchEvent('foo', {changedTouches: [{clientX: 0, clientY: 1, identifier: 1} as any]}),
+      new TouchEvent('foo', {
+        changedTouches: [{clientX: 0, clientY: 1, identifier: 1} as any],
+      }),
     )
     await flushPromises()
 
@@ -157,7 +177,9 @@ describe('useEventHoverTouchDown', () => {
 
     // 해당 엘리먼트에서 터치 업
     endCallback?.(
-      new TouchEvent('foo', {changedTouches: [{clientX: 0, clientY: 0, identifier: 1} as any]}),
+      new TouchEvent('foo', {
+        changedTouches: [{clientX: 0, clientY: 0, identifier: 1} as any],
+      }),
     )
     await flushPromises()
 

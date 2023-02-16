@@ -1,7 +1,7 @@
 import {CapacitorConfig} from '@capacitor/cli'
 
 const config: CapacitorConfig = {
-  appId: 'io.coong',
+  appId: 'io.coong.app',
   appName: 'Coong',
   bundledWebRuntime: false,
   cordova: {},

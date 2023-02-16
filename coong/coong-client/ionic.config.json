@@ -1,0 +1,9 @@
+{
+  "name": "Coong",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "vue",
+  "id": "io.coong.app",
+  "npmClient": "pnpm"
+}
