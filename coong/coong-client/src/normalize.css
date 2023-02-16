@@ -1,10 +1,10 @@
 @supports (content-visibility: auto) {
-{
+root {
     content-visibility: auto;
 }
 }
 @supports (contain-intrinsic-size: 1px 5000px) {
-{
+root {
     contain-intrinsic-size: 1px 5000px;
 }
 }
@@ -28,7 +28,7 @@
         -webkit-tap-highlight-color: transparent
     }
 }
-{
+root {
     touch-action: none;
 }
 body {
