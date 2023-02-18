@@ -1,6 +1,6 @@
 # Privacy Policy For Coong
 
-Last updated: February 17, 2023
+**Last updated: February 17, 2023**
 
 We at Coong (“we”, “us”, “our” or “Coong”) are committed to protecting any data that
 we collect concerning you when you use or register on our website located at www.coong.io (the “Site”) or
