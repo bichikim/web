@@ -45,4 +45,10 @@ body {
 /* markdown */
 .markdown-body {
     padding: 20px;
+    max-width: 1024px;
+    margin: 0 auto;
+}
+
+.markdown-body li {
+    margin-bottom: 10px;
 }
