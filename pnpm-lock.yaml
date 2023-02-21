@@ -503,7 +503,7 @@ importers:
       sharp: 0.31.2
       ts-node: 10.9.1
       ts-node-dev: 2.0.0
-      tsconfig-paths: 4.1.0
+      tsconfig-paths: 4.1.2
       ttypescript: 1.5.13
       typescript: 4.9.4
     dependencies:
@@ -523,7 +523,7 @@ importers:
       cross-env: 7.0.3
       ts-node: 10.9.1_3v2cms72gsblw7jmali7btb3pu
       ts-node-dev: 2.0.0_3v2cms72gsblw7jmali7btb3pu
-      tsconfig-paths: 4.1.0
+      tsconfig-paths: 4.1.2
       ttypescript: 1.5.13_z6wznmtyb6ovnulj6iujpct7um
       typescript: 4.9.4
 
@@ -554,7 +554,7 @@ importers:
       rimraf: 3.0.2
       ts-node: ^10.9.1
       ts-node-dev: 2.0.0
-      tsconfig-paths: 4.1.0
+      tsconfig-paths: 4.1.2
       tslib: ^2.4.1
       ttypescript: 1.5.15
       type-graphql: ^2.0.0-beta.1
@@ -590,7 +590,7 @@ importers:
       rimraf: 3.0.2
       ts-node: 10.9.1_3v2cms72gsblw7jmali7btb3pu
       ts-node-dev: 2.0.0_3v2cms72gsblw7jmali7btb3pu
-      tsconfig-paths: 4.1.0
+      tsconfig-paths: 4.1.2
       ttypescript: 1.5.15_z6wznmtyb6ovnulj6iujpct7um
       typegraphql-prisma: 0.23.2_vgp36uoumckciaeo4jvue4qy4u
       typescript: 4.9.4
@@ -28601,15 +28601,6 @@ packages:
     dependencies:
       '@types/json5': 0.0.29
       json5: 1.0.2
-      minimist: 1.2.7
-      strip-bom: 3.0.0
-    dev: true
-
-  /tsconfig-paths/4.1.0:
-    resolution: {integrity: sha512-AHx4Euop/dXFC+Vx589alFba8QItjF+8hf8LtmuiCwHyI4rHXQtOOENaM8kvYf5fR0dRChy3wzWIZ9WbB7FWow==}
-    engines: {node: '>=6'}
-    dependencies:
-      json5: 2.2.3
       minimist: 1.2.7
       strip-bom: 3.0.0
     dev: true
