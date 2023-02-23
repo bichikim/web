@@ -12,7 +12,6 @@
     "generate-app-icons": "pnpm dlx @capacitor/assets generate --android --assetPath resource",
     "generator:graphql": "graphql-codegen",
     "postinstall": "ts-gql build",
-    "pnpx": "pnpx cap add android",
     "ionic:build": "vite build --outDir dist/spa",
     "ionic:serve": "vite dev --host --port 8100",
     "preview": "vite preview"
