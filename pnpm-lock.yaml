@@ -474,13 +474,13 @@ importers:
 
   coong/firebase:
     specifiers:
-      '@firebase/rules-unit-testing': 2.0.5
+      '@firebase/rules-unit-testing': 2.0.7
       '@types/node': ^18.11.14
       firebase: 9.14.0
       jest: 27.5.1
       jest-environment-node: 27.5.1
     devDependencies:
-      '@firebase/rules-unit-testing': 2.0.5_firebase@9.14.0
+      '@firebase/rules-unit-testing': 2.0.7_firebase@9.14.0
       '@types/node': 18.11.18
       firebase: 9.14.0
       jest: 27.5.1
@@ -4118,8 +4118,8 @@ packages:
       tslib: 2.4.1
     dev: true
 
-  /@firebase/rules-unit-testing/2.0.5_firebase@9.14.0:
-    resolution: {integrity: sha512-EV9YgbpfdUSA65aHBX/wkqKJbORrA9UmBNLRZxUsIWbHu9W8GE8Jvlb0uxU02iR+GpGW69zw+ZENANdRW3ZUMA==}
+  /@firebase/rules-unit-testing/2.0.7_firebase@9.14.0:
+    resolution: {integrity: sha512-tioToru3AgRanuHLt650rmP9oeyhyc9yb3i3jtZDFz3MTpztHVFI4q6sYnIneTr9aSllsItCYYCJS5ylPOCsWg==}
     engines: {node: '>=10.10.0'}
     peerDependencies:
       firebase: ^9.0.0
