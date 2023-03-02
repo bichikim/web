@@ -7,10 +7,10 @@ import {unref} from 'src/refs/unref'
  * 적당한 이름을 뭐로 하지?
  * @param value
  */
-export const mutRef = <T>(value?: MaybeRef<T>): Ref<T | undefined> => {
-  const refValue = ref<T>()
+export const mutRef = <T>(value: MaybeRef<T>): Ref<T> => {
+  const refValue = ref<any>(unref(value))
 
-  const update = (_value?: T) => {
+  const update = (_value: T) => {
     refValue.value = _value
   }
 

@@ -28,7 +28,7 @@ export const onElementResize = (
   watchEffect((onCleanup) => {
     const element = elementRef.value
     if (isElement(element) && isActiveRef.value) {
-      resizeObserver.observe(elementRef.value)
+      resizeObserver.observe(element)
     }
     onCleanup(() => {
       resizeObserver.disconnect()

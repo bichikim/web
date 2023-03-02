@@ -6,7 +6,7 @@ export const CONTEXT_KEY = Symbol('context-key')
 export interface ProvideContext<T> {
   [CONTEXT_KEY]?: string | symbol
 
-  (props?: T): T
+  (props?: T): T | null | undefined
 }
 
 export interface InjectContextOptions {
@@ -17,19 +17,29 @@ export interface InjectContextOptions {
 export interface InjectContext<T> {
   [CONTEXT_KEY]?: string | symbol
 
-  (options?: InjectContextOptions): T
+  (options?: InjectContextOptions): T | null | undefined
 }
 
-export type DefineContextResult<T> = [InjectContext<T>, ProvideContext<T>, string | symbol]
+export type DefineContextResult<T> = [
+  InjectContext<T>,
+  ProvideContext<T>,
+  string | symbol,
+]
 
-export function defineContext<T>(props?: () => T, key?: string | symbol): DefineContextResult<T>
+export function defineContext<T>(
+  props?: () => T,
+  key?: string | symbol,
+): DefineContextResult<T>
 export function defineContext<T>(props?: T, key?: string | symbol): DefineContextResult<T>
-export function defineContext<T>(props?: T, key?: string | symbol): DefineContextResult<T> {
+export function defineContext<T>(
+  props?: T,
+  key?: string | symbol,
+): DefineContextResult<T> {
   const _props = props
   const _key = key ?? Symbol()
 
   const injectContext = Object.assign(
-    (options: InjectContextOptions = {}): T => {
+    (options: InjectContextOptions = {}): T | null | undefined => {
       const {createIfEmpty, consume} = options
       const context = inject(_key, () => (createIfEmpty ? toValue(_props) : null), true)
       if (consume) {
@@ -41,7 +51,7 @@ export function defineContext<T>(props?: T, key?: string | symbol): DefineContex
   )
 
   const provideContext = Object.assign(
-    (props?: T): T => {
+    (props?: T): T | null | undefined => {
       const valueProps = props ? toValue(props) : undefined
       const context = valueProps ?? toValue(_props)
       provide(_key, context)
@@ -53,7 +63,10 @@ export function defineContext<T>(props?: T, key?: string | symbol): DefineContex
   return [injectContext, provideContext, _key]
 }
 
-export const preferParentContext = <T>(provide: ProvideContext<T>, _key?: string | symbol) => {
+export const preferParentContext = <T>(
+  provide: ProvideContext<T>,
+  _key?: string | symbol,
+) => {
   const key = _key ?? provide[CONTEXT_KEY]
 
   if (!key) {

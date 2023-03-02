@@ -1,7 +1,16 @@
 import {onEvent} from 'src/hooks/event'
 import {EmptyObject, isSSR} from 'src/_imports/utils'
 import {clone} from '@winter-love/lodash'
-import {computed, isRef, readonly, Ref, ref, unref, UnwrapNestedRefs, UnwrapRef} from 'vue'
+import {
+  computed,
+  isRef,
+  readonly,
+  Ref,
+  ref,
+  unref,
+  UnwrapNestedRefs,
+  UnwrapRef,
+} from 'vue'
 
 export type RequestResult<R, P> = {
   cancel: () => void
@@ -55,7 +64,7 @@ const unObjectRef = <P extends Record<string, any>>(
  * @param options
  */
 export const useRequest =
-  <R, P>(
+  <R, P extends Record<any, any>>(
     service: Service<P, R>,
     options?: BaseOptions<R, P>,
     // eslint-disable-next-line max-statements
@@ -74,12 +83,16 @@ export const useRequest =
     } = newOptions
     const refreshOnWindowFocusRef = computed(() => {
       return (
-        unref(innerOptions?.refreshOnWindowFocus) ?? unref(options?.refreshOnWindowFocus) ?? false
+        unref(innerOptions?.refreshOnWindowFocus) ??
+        unref(options?.refreshOnWindowFocus) ??
+        false
       )
     })
     const refreshOnVisibilityRef = computed(() => {
       return (
-        unref(innerOptions?.refreshOnVisibility) ?? unref(options?.refreshOnVisibility) ?? false
+        unref(innerOptions?.refreshOnVisibility) ??
+        unref(options?.refreshOnVisibility) ??
+        false
       )
     })
     const loading = ref(false)

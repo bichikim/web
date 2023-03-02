@@ -8,6 +8,10 @@ import {h} from 'vue'
  * @param props
  * @param children
  */
-export const createAsElement = (as: any, props: Record<string, any>, children?: () => Children) => {
-  return h(as, props, isComponent(as) ? children : children?.())
+export const createAsElement = (
+  as: any,
+  props: Record<string, any>,
+  children?: () => Children,
+) => {
+  return h(as, props, (isComponent(as) ? children : children?.()) as any)
 }

@@ -1,24 +1,25 @@
-import {defaultValue as _defaultValue} from '@winter-love/utils'
+import {defaultValue as _defaultValue, NotUndefined} from '@winter-love/utils'
 import {computed, Ref} from 'vue'
 
-export function defaultRef<T>(
+export function defaultRef<T, R>(
   value: Ref<T>,
-  defaultValue?: (() => T) | T,
+  defaultValue: (() => R) | R,
   defaultValueOnce?: boolean,
-): Ref<T>
-export function defaultRef<T>(value: Ref<T>, defaultValue?: T, defaultValueOnce?: boolean): Ref<T> {
+): Ref<NotUndefined<T> & R> {
   let first = true
 
   return computed({
-    get: () => {
+    get: (): NotUndefined<T> & R => {
       const _value = value.value
       if (!first && defaultValueOnce) {
-        return _value
+        // todo fix type
+        return _value as any
       }
       if (_value !== undefined) {
         first = false
       }
-      return _defaultValue(_value, defaultValue)
+      // todo fix type
+      return _defaultValue(_value, defaultValue as any) as any
     },
     set: (_value: T) => {
       value.value = _value

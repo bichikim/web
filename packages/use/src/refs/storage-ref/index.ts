@@ -39,7 +39,7 @@ export function storageRef<Data>(
   value?: MaybeRef<Data>,
   options?: MaybeRef<Record<string, any>>,
 ) {
-  const valueRef = mutRef(resolveRef<Data>(value))
+  const valueRef = mutRef(resolveRef<Data | undefined>(value))
   const optionsRef = resolveRef(options)
   const freezeWatch = ref(false)
   const storageRef = computed(() => createStorage(type, optionsRef.value))

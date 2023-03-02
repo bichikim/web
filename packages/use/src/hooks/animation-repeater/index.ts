@@ -1,4 +1,4 @@
-import {ref, watch} from 'src/_imports/vue'
+import {ref, watch, Ref} from 'src/_imports/vue'
 import {resolveRef} from 'src/refs/resolve-ref'
 import {mutRef} from 'src/refs/mut-ref'
 import {defaultRef} from 'src/refs/default-ref'
@@ -15,7 +15,7 @@ export const onAnimationRepeater = (
   handle: UseAnimationTickHandle,
   toggle?: MaybeRef<boolean | undefined>,
 ) => {
-  const toggleRef = mutRef(defaultRef(resolveRef(toggle), () => true))
+  const toggleRef: Ref<boolean> = mutRef(defaultRef(resolveRef(toggle), () => true))
   const cancelFlagRef = ref<number | undefined>()
   const window = getWindow()
 
