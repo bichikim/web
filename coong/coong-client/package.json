@@ -14,7 +14,7 @@
     "postinstall": "ts-gql build",
     "ionic:build": "vite build --outDir dist/spa",
     "ionic:serve": "vite dev --host --port 8100",
-    "preview": "vite preview"
+    "preview": "vite preview --host --https"
   },
   "dependencies": {
     "@apollo/client": "^3.7.2",
@@ -74,6 +74,7 @@
     "unplugin-vue-components": "^0.22.12",
     "vite": "4.0.0",
     "vite-plugin-vue-markdown": "0.22.4",
+    "@vitejs/plugin-basic-ssl": "1.0.1",
     "vite-plugin-checker": "^0.5.2",
     "vite-plugin-imp": "^2.3.1",
     "vite-plugin-pwa": "^0.13.3",

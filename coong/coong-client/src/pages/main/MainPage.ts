@@ -18,4 +18,5 @@ export const MainPage = styled(HMainPage, {
   overflowY: 'hidden',
   pt: 0,
   px: 8,
+  display: 'flex',
 })

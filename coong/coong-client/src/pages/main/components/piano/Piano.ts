@@ -25,5 +25,4 @@ export const Piano = styled(HPiano, {
   paddingBottom: 30,
   pointerEvents: 'none',
   position: 'relative',
-  width: '100%',
 })

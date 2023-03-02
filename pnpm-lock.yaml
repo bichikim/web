@@ -363,6 +363,7 @@ importers:
       '@types/node': ^18.11.14
       '@unocss/vite': 0.48.4
       '@urql/vue': ^1.0.4
+      '@vitejs/plugin-basic-ssl': 1.0.1
       '@vitejs/plugin-vue': 4.0.0
       '@vitejs/plugin-vue-jsx': 3.0.0
       '@vue/server-renderer': ^3.2.45
@@ -447,6 +448,7 @@ importers:
       '@ts-gql/babel-plugin': 0.1.0
       '@types/node': 18.11.18
       '@unocss/vite': 0.48.4_rollup@2.79.1+vite@4.0.0
+      '@vitejs/plugin-basic-ssl': 1.0.1_vite@4.0.0
       '@vitejs/plugin-vue': 4.0.0_vite@4.0.0+vue@3.2.45
       '@vitejs/plugin-vue-jsx': 3.0.0_vite@4.0.0+vue@3.2.45
       '@vue/server-renderer': 3.2.45_vue@3.2.45
@@ -11593,6 +11595,15 @@ packages:
       vue: 3.2.45
       wonka: 6.1.2
     dev: false
+
+  /@vitejs/plugin-basic-ssl/1.0.1_vite@4.0.0:
+    resolution: {integrity: sha512-pcub+YbFtFhaGRTo1832FQHQSHvMrlb43974e2eS8EKleR3p1cDdkJFPci1UhwkEf1J9Bz+wKBSzqpKp7nNj2A==}
+    engines: {node: '>=14.6.0'}
+    peerDependencies:
+      vite: ^3.0.0 || ^4.0.0
+    dependencies:
+      vite: 4.0.0_@types+node@18.11.18
+    dev: true
 
   /@vitejs/plugin-react/2.2.0_vite@3.2.5:
     resolution: {integrity: sha512-FFpefhvExd1toVRlokZgxgy2JtnBOdp4ZDsq7ldCWaqGSGn9UhWMAVm/1lxPL14JfNS5yGz+s9yFrQY6shoStA==}

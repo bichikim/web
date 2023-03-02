@@ -10,6 +10,7 @@ import checker from 'vite-plugin-checker'
 import {fileURLToPath, URL} from 'node:url'
 import topLevelAwait from 'vite-plugin-top-level-await'
 import markdown from 'vite-plugin-vue-markdown'
+import basicSsl from '@vitejs/plugin-basic-ssl'
 // import unocss from '@unocss/vite'
 
 // eslint-disable-next-line max-lines-per-function
@@ -61,6 +62,7 @@ export default defineConfig(({mode}) => {
       icons({
         autoInstall: true,
       }),
+      basicSsl(),
       // https://github.com/antfu/vite-plugin-pwa
       vitePWA({
         includeAssets: ['favicon.svg', 'robots.txt', 'safari-pinned-tab.svg'],
@@ -89,6 +91,24 @@ export default defineConfig(({mode}) => {
           theme_color: '#ffffff',
         },
         registerType: 'autoUpdate',
+        workbox: {
+          runtimeCaching: [
+            {
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'cdn-jsdelivr',
+                cacheableResponse: {
+                  statuses: [0, 200],
+                },
+                expiration: {
+                  maxAgeSeconds: 60 * 60 * 24 * 365,
+                  maxEntries: 10,
+                },
+              },
+              urlPattern: /^https:\/\/cdn\.jsdelivr\.net\/.*/iu,
+            },
+          ],
+        },
       }),
     ],
     resolve: {
@@ -98,10 +118,10 @@ export default defineConfig(({mode}) => {
       },
     },
     server: {
-      // https: true,
       fs: {
         // allow: ['..', '../..'],
       },
+      https: true,
       // api proxy
       proxy: {
         '/server': {
