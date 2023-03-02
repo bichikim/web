@@ -1,7 +1,12 @@
 const {map: originalMap} = Array.prototype
 
-const _map = <T, R>(list: T[], iteratee: (value: T, key: number, array: T[]) => R): R[] => {
-  return originalMap.call(list, (value: T, key, array) => iteratee(value, key, array))
+const _map = <T, R>(
+  list: T[],
+  iteratee: (value: T, key: number, array: T[]) => R,
+): R[] => {
+  return (originalMap as any).call(list, (value: T, key, array) =>
+    iteratee(value, key, array),
+  )
 }
 
 export interface Map {

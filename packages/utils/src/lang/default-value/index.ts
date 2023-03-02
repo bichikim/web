@@ -4,7 +4,7 @@ import {isUndefined} from 'src/validate/is-undefined'
 
 export const defaultValue = <T>(
   value: T,
-  defaultValue?: MaybeFunction<T>,
+  defaultValue: MaybeFunction<T>,
   when: (value: T) => boolean = isUndefined,
 ): T => {
   if (when(value)) {

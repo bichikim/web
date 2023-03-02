@@ -3,7 +3,7 @@ import {once} from 'src/function/once'
 export const isSupportPassive = once(() => {
   let supportsPassive = false
   try {
-    window.addEventListener(
+    ;(window.addEventListener as any)(
       'test',
       null,
       Object.defineProperty({}, 'passive', {

@@ -7,19 +7,20 @@ export interface ToQueryStringOptions {
   sort?: (aKey, bKey) => number
 }
 
-export type EncodeQueryKey = (key: string) => string
+export type EncodeQueryKey = (key?: string | undefined) => string
 export type EncodeQueryValue = (value: any) => string
 
 const TRIM_QUERY_REGEX = /^[?&]/u
 
-export const removeQueryChar = (value: string) => trim(value).replace(TRIM_QUERY_REGEX, '')
+export const removeQueryChar = (value: string) =>
+  trim(value).replace(TRIM_QUERY_REGEX, '')
 
 export const encodeQueryKey = (key: string) => encodeURIComponent(key)
-const trimQueryKey = (key: string): string | undefined => {
+const trimQueryKey = (key: string): string => {
   const _key = removeQueryChar(trim(key))
 
   if (_key.length === 0) {
-    return
+    return ''
   }
 
   return _key
@@ -50,6 +51,9 @@ export const encodeQueryRecord = (
   return entries.map(([key, value]) => encodeQueryItem(key, value))
 }
 
-export const toQueryString = (record: Record<string, any>, options?: ToQueryStringOptions) => {
+export const toQueryString = (
+  record: Record<string, any>,
+  options?: ToQueryStringOptions,
+) => {
   return joinStringQueries(encodeQueryRecord(record, options))
 }

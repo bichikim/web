@@ -29,8 +29,14 @@ export const mountProvide = <
 ): VueWrapper<ComponentPublicInstance<Props>> & {
   setupState: {inject: InjectRawBindings; provide: ProvideRawBindings}
 } => {
-  const {inject: _inject, provide: _provide, propsOptions, props = {}, ...rest} = options
-  const KEY: InjectionKey<Ref<string>> = '__KEY_PROVIDE__' as any
+  const {
+    inject: _inject,
+    provide: _provide,
+    propsOptions = [],
+    props = {},
+    ...rest
+  } = options
+  const KEY: InjectionKey<Ref<any>> = '__KEY_PROVIDE__' as any
   const propKeys = [...Object.keys(props), ...propsOptions]
   // eslint-disable-next-line vue/one-component-per-file
   const Component = defineComponent<Props>({
@@ -53,10 +59,10 @@ export const mountProvide = <
     },
   })
   // eslint-disable-next-line vue/one-component-per-file
-  const Parent = defineComponent<Props>({
+  const Parent = defineComponent({
     props: propKeys as any,
     render() {
-      return h(Component, {...this.$props})
+      return h(Component, {...(this.$props as any)})
     },
     setup(props) {
       const injectReceiver = ref(null)
@@ -64,7 +70,7 @@ export const mountProvide = <
 
       return {
         inject: injectReceiver,
-        provide: _provide(props),
+        provide: _provide(props as any),
       }
     },
   })

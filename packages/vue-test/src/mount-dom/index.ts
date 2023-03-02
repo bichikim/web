@@ -21,7 +21,7 @@ export const mountDom: typeof mount = (originalComponent, options) => {
 
   const wrapper = mount(originalComponent, options)
 
-  root.append(wrapper.element)
+  root?.append(wrapper.element)
 
   return wrapper
 }

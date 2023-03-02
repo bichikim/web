@@ -1,6 +1,8 @@
 import {isNil} from 'src/validate/is-nil'
 
-export const getElement = (value?: HTMLElement | string | null): null | HTMLElement => {
+export const getElement = (
+  value?: Element | string | null,
+): null | Element | undefined => {
   if (isNil(value)) {
     return null
   }
