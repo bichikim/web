@@ -6,5 +6,5 @@ export const createComponentName = (
   if (typeof component === 'string') {
     return component
   }
-  return component.name
+  return component.name ?? 'unknown'
 }
