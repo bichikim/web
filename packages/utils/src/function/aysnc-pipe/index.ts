@@ -10,8 +10,8 @@ export function asyncPipe<A, R1, R2, R3, R4, R5, R6, R7>(
   f5: (args: R4) => MaybePromise<R5>,
   f6: (args: R5) => MaybePromise<R6>,
   f7: (args: R6) => MaybePromise<R7>,
-  ...func: ((a: any) => any)[]
-): (arg: MaybeFunction<A>) => any
+  ...func: ((a: unknown) => unknown)[]
+): (arg: MaybeFunction<A>) => unknown
 export function asyncPipe<A, R1, R2, R3, R4, R5, R6, R7>(
   f1: (arg: A) => MaybePromise<R1>,
   f2: (arg: R1) => MaybePromise<R2>,
@@ -51,9 +51,11 @@ export function asyncPipe<A, R1, R2>(
   f1: (arg: A) => MaybePromise<R1>,
   f2: (arg: R1) => MaybePromise<R2>,
 ): (arg: MaybeFunction<A>) => Promise<R2>
-export function asyncPipe<A, R1>(f1: (arg: A) => MaybePromise<R1>): (arg: A) => Promise<R1>
-export function asyncPipe(...functions: ((...args: any[]) => any)[]): any {
-  return async (value: any) => {
+export function asyncPipe<A, R1>(
+  f1: (arg: A) => MaybePromise<R1>,
+): (arg: A) => Promise<R1>
+export function asyncPipe(...functions: ((...args: unknown[]) => unknown)[]): unknown {
+  return async (value: unknown) => {
     return reduce(
       functions,
       (result, item) => {

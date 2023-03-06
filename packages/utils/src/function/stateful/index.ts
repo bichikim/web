@@ -1,4 +1,4 @@
-export const stateful = <State, Args extends any[]>(
+export const stateful = <State, Args extends unknown[]>(
   initValue: State,
   runner: (state: State, ...args: Args) => State,
 ) => {
