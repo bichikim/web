@@ -7,7 +7,7 @@ export const HDialogForGlobal = defineComponent({
     id: {type: String},
   },
   setup(props, {slots}) {
-    const idRef = toRef(props, 'id')
+    const idRef = toRef(props, 'id', '')
     const elementRef = ref(null)
     const [context] = useLocalDialog(idRef)
     const handleUpdateOpen = (value: boolean) => {
@@ -21,7 +21,11 @@ export const HDialogForGlobal = defineComponent({
     return () => {
       return h(
         HDialog,
-        {modelValue: context.isOpen, 'onUpdate:modelValue': handleUpdateOpen, ref: elementRef},
+        {
+          modelValue: context.isOpen,
+          'onUpdate:modelValue': handleUpdateOpen,
+          ref: elementRef,
+        },
         () => slots.default?.(),
       )
     }

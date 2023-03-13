@@ -21,13 +21,13 @@ export const HDialog = defineComponent({
   setup: (props, {slots, attrs, emit}) => {
     const isOpenRef = toRef(props, 'modelValue')
     const positionRef = toRef(props, 'position')
-    const elementRef = ref(null)
+    const elementRef = ref<HTMLElement | null>(null)
     const targetRef = toRef(props, 'for')
     const xPosition = toRef(props, 'xPosition')
     const yPosition = toRef(props, 'yPosition')
 
     const stickySizeRef = useSticky(
-      elementRef,
+      elementRef as any,
       targetRef,
       reactive({defaultPosition: positionRef, xPosition, yPosition}),
     )

@@ -18,15 +18,16 @@ export interface ControlDialogContext {
 }
 
 export const CONTROL_DIALOG_SYMBOL = Symbol('control-dialog')
-export const CONTROL_DIALOG_CONTEXT: InjectionKey<ControlDialogContext> = CONTROL_DIALOG_SYMBOL
+export const CONTROL_DIALOG_CONTEXT: InjectionKey<ControlDialogContext> =
+  CONTROL_DIALOG_SYMBOL
 export const DIALOG_SYMBOL = Symbol('dialog')
 export const DIALOG_CONTEXT: InjectionKey<DialogGlobalContext> = DIALOG_SYMBOL
 
 export interface DialogContext extends ControlDialogContext {
-  element?: HTMLElement | ComponentPublicInstance
+  element?: HTMLElement | ComponentPublicInstance | null
   id: Readonly<string>
   message?: string
-  props: Record<string, any>
+  props?: Record<string, any>
 }
 
 export interface DialogGlobalContext {

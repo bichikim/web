@@ -71,7 +71,10 @@ const mergeSize = (elementSize: Rect, targetSize: Rect, position: UseStickyPosit
   }
 }
 
-const getSide = (position: Position, defaultPosition: UseStickyPosition): UseStickyPosition => {
+const getSide = (
+  position: Position,
+  defaultPosition: UseStickyPosition,
+): UseStickyPosition => {
   const {x, y} = position
   if (x > 0) {
     return 'left'
@@ -89,7 +92,7 @@ const getSide = (position: Position, defaultPosition: UseStickyPosition): UseSti
 }
 
 export const useSticky = (
-  element: MaybeRef<HTMLElement>,
+  element: MaybeRef<HTMLElement | null>,
   target?: MaybeRef<HTMLElement | Window | undefined>,
   options: UseStickyOptions = {},
 ): ComputedRef<UseStickyResult> => {
@@ -117,9 +120,13 @@ export const useSticky = (
     mergeSize(elementSizeRef.value, targetSizeRef.value, defaultPositionRef.value),
   )
 
-  const outsidePositionRef = computed(() => getOutside(mergedSizeRef.value, containerSizeRef.value))
+  const outsidePositionRef = computed(() =>
+    getOutside(mergedSizeRef.value, containerSizeRef.value),
+  )
 
-  const sideRef = computed(() => getSide(outsidePositionRef.value, defaultPositionRef.value))
+  const sideRef = computed(() =>
+    getSide(outsidePositionRef.value, defaultPositionRef.value),
+  )
 
   return computed(() => {
     const elementSize = elementSizeRef.value

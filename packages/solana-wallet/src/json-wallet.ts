@@ -1,6 +1,10 @@
 /* eslint-disable no-magic-numbers,no-bitwise,id-length,import/no-named-as-default,import/no-named-as-default-member */
 import {arrayify, concat, hexlify} from '@ethersproject/bytes'
-import {getPassword, looseArrayify, uuidV4} from '@ethersproject/json-wallets/src.ts/utils'
+import {
+  getPassword,
+  looseArrayify,
+  uuidV4,
+} from '@ethersproject/json-wallets/src.ts/utils'
 import {keccak256} from '@ethersproject/keccak256'
 import {randomBytes} from '@ethersproject/random'
 import {Keypair} from '@solana/web3.js'

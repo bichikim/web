@@ -22,6 +22,6 @@ export const createGlobalEvent = (
       })
 
       return readonly(eventRef)
-    })
+    }) as DeepReadonly<Ref<TouchList | null>>
   })
 }

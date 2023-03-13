@@ -1,5 +1,5 @@
 {
-  "name": "@winter-love/wallet",
+  "name": "@winter-love/solana-wallet",
   "version": "1.0.27-alpha.20",
   "private": true,
   "description": "share state for vue components",
@@ -46,19 +46,27 @@
   "dependencies": {
     "@ethersproject/abstract-provider": "^5.7.0",
     "@ethersproject/bignumber": "^5.7.0",
+
     "@ethersproject/bytes": "^5.7.0",
+
     "@ethersproject/json-wallets": "^5.7.0",
+
     "@ethersproject/keccak256": "^5.7.0",
+
     "@ethersproject/random": "^5.7.0",
     "@ethersproject/transactions": "^5.7.0",
+
     "@solana/web3.js": "^1.70.1",
     "@vue/reactivity": "^3.2.45",
     "@winter-love/utils": "workspace:^1.0.27-alpha.20",
+
     "aes-js": "^3.1.2",
-    "bip39": "3.0.4",
+
     "ethers": "^5.7.2",
     "nanoevents": "^7.0.1",
+
     "scrypt-js": "^3.0.1",
+
     "tweetnacl": "^1.0.3"
   },
   "devDependencies": {

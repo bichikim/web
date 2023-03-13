@@ -774,6 +774,45 @@ importers:
       tsup: 6.5.0
       vue: 3.2.47
 
+  packages/solana-wallet:
+    specifiers:
+      '@ethersproject/abstract-provider': ^5.7.0
+      '@ethersproject/bignumber': ^5.7.0
+      '@ethersproject/bytes': ^5.7.0
+      '@ethersproject/json-wallets': ^5.7.0
+      '@ethersproject/keccak256': ^5.7.0
+      '@ethersproject/random': ^5.7.0
+      '@ethersproject/transactions': ^5.7.0
+      '@solana/web3.js': ^1.70.1
+      '@vue/reactivity': ^3.2.45
+      '@winter-love/utils': workspace:^1.0.27-alpha.20
+      aes-js: ^3.1.2
+      ethers: ^5.7.2
+      nanoevents: ^7.0.1
+      scrypt-js: ^3.0.1
+      tweetnacl: ^1.0.3
+      vue: ^3.2.45
+      vue-router: ^4.1.6
+    dependencies:
+      '@ethersproject/abstract-provider': 5.7.0
+      '@ethersproject/bignumber': 5.7.0
+      '@ethersproject/bytes': 5.7.0
+      '@ethersproject/json-wallets': 5.7.0
+      '@ethersproject/keccak256': 5.7.0
+      '@ethersproject/random': 5.7.0
+      '@ethersproject/transactions': 5.7.0
+      '@solana/web3.js': 1.73.0
+      '@vue/reactivity': 3.2.47
+      '@winter-love/utils': link:../utils
+      aes-js: 3.1.2
+      ethers: 5.7.2
+      nanoevents: 7.0.1
+      scrypt-js: 3.0.1
+      tweetnacl: 1.0.3
+    devDependencies:
+      vue: 3.2.47
+      vue-router: 4.1.6_vue@3.2.47
+
   packages/stitches:
     specifiers:
       '@stitches/core': ^1.2.8
@@ -943,47 +982,6 @@ importers:
       tsd: 0.24.1
       tsup: 6.5.0_typescript@4.9.4
       typescript: 4.9.4
-
-  packages/wallet:
-    specifiers:
-      '@ethersproject/abstract-provider': ^5.7.0
-      '@ethersproject/bignumber': ^5.7.0
-      '@ethersproject/bytes': ^5.7.0
-      '@ethersproject/json-wallets': ^5.7.0
-      '@ethersproject/keccak256': ^5.7.0
-      '@ethersproject/random': ^5.7.0
-      '@ethersproject/transactions': ^5.7.0
-      '@solana/web3.js': ^1.70.1
-      '@vue/reactivity': ^3.2.45
-      '@winter-love/utils': workspace:^1.0.27-alpha.20
-      aes-js: ^3.1.2
-      bip39: 3.0.4
-      ethers: ^5.7.2
-      nanoevents: ^7.0.1
-      scrypt-js: ^3.0.1
-      tweetnacl: ^1.0.3
-      vue: ^3.2.45
-      vue-router: ^4.1.6
-    dependencies:
-      '@ethersproject/abstract-provider': 5.7.0
-      '@ethersproject/bignumber': 5.7.0
-      '@ethersproject/bytes': 5.7.0
-      '@ethersproject/json-wallets': 5.7.0
-      '@ethersproject/keccak256': 5.7.0
-      '@ethersproject/random': 5.7.0
-      '@ethersproject/transactions': 5.7.0
-      '@solana/web3.js': 1.73.0
-      '@vue/reactivity': 3.2.45
-      '@winter-love/utils': link:../utils
-      aes-js: 3.1.2
-      bip39: 3.0.4
-      ethers: 5.7.2
-      nanoevents: 7.0.1
-      scrypt-js: 3.0.1
-      tweetnacl: 1.0.3
-    devDependencies:
-      vue: 3.2.45
-      vue-router: 4.1.6_vue@3.2.45
 
 packages:
 
@@ -11899,7 +11897,6 @@ packages:
     resolution: {integrity: sha512-7khqQ/75oyyg+N/e+iwV6lpy1f5wq759NdlS1fpAhFXa8VeAIKGgk2E/C4VF59lx5b+Ezs5fpp/5WsRYXQiKxQ==}
     dependencies:
       '@vue/shared': 3.2.47
-    dev: true
 
   /@vue/runtime-core/3.2.45:
     resolution: {integrity: sha512-gzJiTA3f74cgARptqzYswmoQx0fIA+gGYBfokYVhF8YSXjWTUA2SngRzZRku2HbGbjzB6LBYSbKGIaK8IW+s0A==}
@@ -11953,7 +11950,6 @@ packages:
 
   /@vue/shared/3.2.47:
     resolution: {integrity: sha512-BHGyyGN3Q97EZx0taMQ+OLNuZcW3d37ZEVmEAyeoA9ERdGvm9Irc/0Fua8SNyOtV1w6BS4q25wbMzJujO9HIfQ==}
-    dev: true
 
   /@vue/test-utils/2.2.6_vue@3.2.45:
     resolution: {integrity: sha512-64zHtJZdG7V/U2L0j/z3Pt5bSygccI3xs+Kl7LB73AZK4MQ8WONJhqDQPK8leUFFA9CmmoJygeky7zcl2hX10A==}
@@ -30250,6 +30246,15 @@ packages:
     dependencies:
       '@vue/devtools-api': 6.4.5
       vue: 3.2.45
+
+  /vue-router/4.1.6_vue@3.2.47:
+    resolution: {integrity: sha512-DYWYwsG6xNPmLq/FmZn8Ip+qrhFEzA14EI12MsMgVxvHFDYvlr4NXpVF5hrRH1wVcDP8fGi5F4rxuJSl8/r+EQ==}
+    peerDependencies:
+      vue: ^3.2.0
+    dependencies:
+      '@vue/devtools-api': 6.4.5
+      vue: 3.2.47
+    dev: true
 
   /vue-shepherd/2.0.1_vue@3.2.45:
     resolution: {integrity: sha512-mJjIwBxIn243rOhG8+IuCcS/809KRHjjALKSCBT4CHZ/RpV/ayzLPKdGZFivlScjWLxvDaPDM23y700O+YioNQ==}

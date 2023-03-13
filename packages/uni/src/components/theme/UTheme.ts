@@ -7,7 +7,7 @@ export const UTheme = defineComponent({
     theme: {type: String},
   },
   setup(props, {slots}) {
-    const themeProp = toRef(props, 'theme')
+    const themeProp = toRef(props, 'theme', 'unknown')
     provideTheme('body', themeProp)
 
     return () => slots.default?.()

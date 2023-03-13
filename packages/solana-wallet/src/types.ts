@@ -1,4 +1,4 @@
-import type {Unsubscribe} from 'nanoevents'
+import {ToRef} from 'vue'
 
 export interface Account<PrivateKey> {
   address: string
@@ -9,24 +9,15 @@ export type Bytes = ArrayLike<number>
 export type BytesLike = Bytes | string
 export type Event = 'update:wallet' | 'saved' | 'connected'
 
-export interface OnEvent {
-  (event: 'update:wallet', callback: (account: Account<any>) => any): Unsubscribe
-
-  (event: 'saved', callback: (account: Account<any>) => any): Unsubscribe
-}
-
-export interface WalletEvent {
-  emit: (event: Event, ...args: any[]) => void
-  on: OnEvent
-  once: (event: Event, callback: (wallet: Wallet<any>) => any) => Unsubscribe
-  stopAll: () => void
-}
-
 export interface WalletItemTypes {
   encrypt: any
   privateKey: any
   transaction: any
   transactionResponse: any
+}
+
+export type ToRefsValueOnly<T = any> = {
+  [K in keyof T]: T[K] extends (...any: any) => any ? T[K] : ToRef<T[K]>
 }
 
 export interface Wallet<TransactionRequest extends WalletItemTypes> {

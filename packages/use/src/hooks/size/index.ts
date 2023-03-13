@@ -16,7 +16,7 @@ export interface UseSizeOptions {
 }
 
 export const useSize = (
-  element: MaybeRef<HTMLElement | Window>,
+  element: MaybeRef<HTMLElement | Window | null>,
   container: MaybeRef<HTMLElement | Window> = window,
   options: UseSizeOptions = {},
 ): Ref<Rect> => {
@@ -26,7 +26,7 @@ export const useSize = (
   const defaultSizeRef = toRef(options, 'defaultSize', DEFAULT_SIZE)
   const isActiveRef = toRef(options, 'isActive', true)
   const delayRef = toRef(options, 'delay', DEFAULT_DELAY)
-  const elementNotWindowRef = computed<HTMLElement | undefined>(() => {
+  const elementNotWindowRef = computed<HTMLElement | undefined | null>(() => {
     const element = elementRef.value
     if (element instanceof Window) {
       return
