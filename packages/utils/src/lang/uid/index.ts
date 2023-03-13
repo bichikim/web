@@ -1,5 +1,7 @@
 // create uid generator
-export const createUidGenerator = (prefix: string = 'v'): ((prefix?: string) => string) => {
+export const createUidGenerator = (
+  prefix: string = 'v',
+): ((prefix?: string) => string) => {
   let uid = 0
   return (_prefix: string = '') => {
     uid += 1

@@ -22,8 +22,8 @@ export function pipe<A, R1, R2, R3, R4, R5, R6, R7>(
   f5: (value: R4) => R5,
   f6: (value: R5) => R6,
   f7: (value: R6) => R7,
-  ...func: ((a: any) => any)[]
-): (value: MaybeFunction<A>) => any
+  ...func: ((a: unknown) => unknown)[]
+): (value: MaybeFunction<A>) => unknown
 export function pipe<A, R1, R2, R3, R4, R5, R6>(
   f1: (value: A) => R1,
   f2: (value: R1) => R2,
@@ -61,7 +61,7 @@ export function pipe<A, R1, R2>(
 
 export function pipe<A, R1>(f1: (value: A) => R1): (value: MaybeFunction<A>) => R1
 
-export function pipe(...functions: ((...args: any[]) => any)[]): any {
+export function pipe(...functions: ((...args: unknown[]) => unknown)[]): unknown {
   return (_value) => {
     return reduce(
       functions,

@@ -8,7 +8,7 @@ export interface ToQueryStringOptions {
 }
 
 export type EncodeQueryKey = (key?: string | undefined) => string
-export type EncodeQueryValue = (value: any) => string
+export type EncodeQueryValue = (value: unknown) => string
 
 const TRIM_QUERY_REGEX = /^[?&]/u
 
@@ -26,11 +26,12 @@ const trimQueryKey = (key: string): string => {
   return _key
 }
 
-export const encodeQueryValue = (value: any) => encodeURIComponent(value)
+export const encodeQueryValue = (value: string | number | boolean) =>
+  encodeURIComponent(value)
 
 export const encodeQueryItem = (
   key: string,
-  value: any,
+  value: string | number | boolean,
   options: Omit<ToQueryStringOptions, 'sort'> = {},
 ) => {
   const {encodeKey = encodeQueryKey, encodeValue = encodeQueryValue} = options
@@ -38,7 +39,7 @@ export const encodeQueryItem = (
 }
 
 export const encodeQueryRecord = (
-  record: Record<string, any>,
+  record: Record<string, string | number | boolean>,
   options: ToQueryStringOptions = {},
 ) => {
   const {sort} = options
@@ -52,7 +53,7 @@ export const encodeQueryRecord = (
 }
 
 export const toQueryString = (
-  record: Record<string, any>,
+  record: Record<string, string | number | boolean>,
   options?: ToQueryStringOptions,
 ) => {
   return joinStringQueries(encodeQueryRecord(record, options))

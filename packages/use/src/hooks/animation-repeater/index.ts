@@ -1,9 +1,9 @@
-import {ref, watch, Ref} from 'src/_imports/vue'
-import {resolveRef} from 'src/refs/resolve-ref'
-import {mutRef} from 'src/refs/mut-ref'
-import {defaultRef} from 'src/refs/default-ref'
-import {MaybeRef} from 'src/types'
 import {getWindow} from 'src/_imports/utils'
+import {ref, Ref, watch} from 'src/_imports/vue'
+import {defaultRef} from 'src/refs/default-ref'
+import {mutRef} from 'src/refs/mut-ref'
+import {resolveRef} from 'src/refs/resolve-ref'
+import {MaybeRef} from 'src/types'
 
 export type UseAnimationTickHandle = () => any
 

@@ -12,6 +12,8 @@ const _reduce = <T, R>(
   iteratee: ReduceIteratee<T, R>,
   initialValue?: R,
 ): R => {
+  // ignore type from reduce
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (originalReduce as any).call(list, iteratee, initialValue)
 }
 
@@ -21,6 +23,8 @@ export interface Reduce {
   <T, R>(list: T[], iteratee: ReduceIteratee<T, R>, initialValue?: R): R
 }
 
+// retype with Reduce
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const reduce: Reduce = (...args: any[]): any => {
   const [list, iteratee, initialValue] = args
   if (args.length > 1) {
@@ -37,6 +41,8 @@ export interface ReduceOp {
   <T, R>(iteratee: ReduceIteratee<T, R>, initialValue: R, list: T[]): R
 }
 
+// retype with ReduceOp
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const reduceOp: ReduceOp = (...args: any[]): any => {
   const [iteratee, initialValue, list] = args
   if (args.length > 2) {

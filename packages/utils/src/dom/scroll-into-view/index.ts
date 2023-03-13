@@ -9,5 +9,6 @@ export type ScrollIntoView = (target: Element, options?: StandardBehaviorOptions
 const document = getDocument()
 export const scrollIntoView: ScrollIntoView =
   document && 'scrollBehavior' in document.documentElement.style
-    ? (_scrollIntoView as any)
-    : (smoothScrollIntoView as any)
+    ? _scrollIntoView
+    : // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (smoothScrollIntoView as any)

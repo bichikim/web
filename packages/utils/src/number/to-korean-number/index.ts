@@ -4,7 +4,19 @@ import {freeze} from 'src/lang'
 import {toNumber} from 'src/number/to-number'
 
 const _numberNames = freeze(['0', '일', '이', '삼', '사', '오', '육', '칠', '팔', '구'])
-const _numberUnitNames = freeze(['', '만', '억', '조', '경', '해', '자', '양', '구', '간', '정'])
+const _numberUnitNames = freeze([
+  '',
+  '만',
+  '억',
+  '조',
+  '경',
+  '해',
+  '자',
+  '양',
+  '구',
+  '간',
+  '정',
+])
 const _smallNumberUnitNames = freeze(['', '십', '백', '천'])
 
 export type NumberToKoreanMode = 'all' | 'unit-number' | 'number'
@@ -65,7 +77,7 @@ const addNumberUnit = (value: string[], index: number): string[] => {
   return value
 }
 
-const anyToStringArray = (value: any) => [...toNumber(value).toString()]
+const anyToStringArray = (value: unknown) => [...toNumber(value).toString()]
 
 const KoreanChunk = 4
 
@@ -91,5 +103,5 @@ export const toKoreanNumberFn = ({
     joinOp(joinGroup),
   )
 
-export const toKoreanNumber = (value?: any, options?: NumberToKoreanOptions) =>
+export const toKoreanNumber = (value?: unknown, options?: NumberToKoreanOptions) =>
   toKoreanNumberFn(options)(value)
