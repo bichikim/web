@@ -74,6 +74,9 @@ export const createSolanaWallet = (
     if (!keypair) {
       return Promise.resolve()
     }
+    // todo wip
+    // noinspection JSUnusedLocalSymbols
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const transaction = new Transaction()
   }
 
@@ -122,7 +125,9 @@ export const createSolanaWallet = (
     const messageBytes = utils.toUtf8Bytes(message)
 
     // eslint-disable-next-line import/no-named-as-default-member
-    return Promise.resolve(utils.hexlify(nacl.sign.detached(messageBytes, keypair.secretKey)))
+    return Promise.resolve(
+      utils.hexlify(nacl.sign.detached(messageBytes, keypair.secretKey)),
+    )
   }
 
   const restoreAccount = (mnemonic: string) => {
