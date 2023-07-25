@@ -4,7 +4,10 @@ import {getDocument} from 'src/dom/get-document'
 
 export type {StandardBehaviorOptions} from 'scroll-into-view-if-needed'
 
-export type ScrollIntoView = (target: Element, options?: StandardBehaviorOptions) => void
+export type ScrollIntoView = (
+  target: Element,
+  options?: StandardBehaviorOptions,
+) => void
 
 const document = getDocument()
 export const scrollIntoView: ScrollIntoView =

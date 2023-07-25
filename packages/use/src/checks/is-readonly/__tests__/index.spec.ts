@@ -1,7 +1,7 @@
 /**
  * @jest-environment jsdom
  */
-import {computed, isReadonly, reactive, toRef} from 'src/_imports/vue'
+import {computed, isReadonly, reactive, toRef} from 'vue'
 import {mount} from '@winter-love/vue-test'
 
 describe('isReadonly', () => {

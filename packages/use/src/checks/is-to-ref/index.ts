@@ -1,4 +1,4 @@
-import {isReadonly, ToRef} from 'src/_imports/vue'
+import {isReadonly, ToRef} from 'vue'
 // fix type error
 // eslint-disable-next-line vue/prefer-import-from-vue
 export {type IfAny} from '@vue/shared'

@@ -13,7 +13,7 @@ describe('defineContext', () => {
 
     const component = defineComponent({
       setup: () => {
-        const {age, name} = toRefs(useContext())
+        const {age, name}: any = toRefs(useContext() ?? {})
         return () => h('div', [name.value, age.value])
       },
     })
@@ -21,7 +21,7 @@ describe('defineContext', () => {
     const parent = defineComponent({
       setup() {
         const context = provideContext()
-        return () => h('div', [h(h(component)), context.name])
+        return () => h('div', [h(h(component)), context?.name])
       },
     })
 
@@ -36,7 +36,7 @@ describe('defineContext', () => {
 
     const component = defineComponent({
       setup: () => {
-        const {age, name} = toRefs(useContext())
+        const {age, name}: any = toRefs(useContext() ?? {})
         return () => h('div', [name.value, age.value])
       },
     })
@@ -59,7 +59,7 @@ describe('defineContext', () => {
 
     const component = defineComponent({
       setup: () => {
-        const {name} = toRefs(useContext({consume: true}))
+        const {name}: any = toRefs(useContext({consume: true}) ?? {})
         return () => h('div', [name.value, h(component2)])
       },
     })
@@ -87,7 +87,7 @@ describe('defineContext', () => {
     const [useContext] = defineContext<{name: string}>(() => reactive({name}))
     const parent = defineComponent({
       setup() {
-        const {name} = toRefs(useContext({createIfEmpty: true}))
+        const {name}: any = toRefs(useContext({createIfEmpty: true}) ?? {})
         return () => h('div', name.value)
       },
     })
@@ -103,7 +103,7 @@ describe('defineContext', () => {
 
     const component1 = defineComponent({
       setup: () => {
-        const {name} = toRefs(inject())
+        const {name}: any = toRefs(inject() ?? {})
         // const name = ref('foo')
         return () => h('div', name.value)
       },
@@ -123,7 +123,7 @@ describe('defineContext', () => {
 
     const component2 = defineComponent({
       setup: () => {
-        const {name} = toRefs(injectFromRoot())
+        const {name}: any = toRefs(injectFromRoot() ?? {})
         // const name = ref('foo')
         return () => h('div', name.value)
       },
@@ -132,7 +132,7 @@ describe('defineContext', () => {
     const root2 = defineComponent({
       setup: () => {
         const context = provideFromRoot()
-        return () => h('div', [h(component2), context.name])
+        return () => h('div', [h(component2), context?.name])
       },
     })
 
@@ -163,7 +163,7 @@ describe('preferParentContext', () => {
 
   const resultLevel = defineComponent({
     setup() {
-      const {name} = toRefs(injectContext())
+      const {name}: any = toRefs(injectContext() ?? {})
       return () => h('div', name.value)
     },
   })
@@ -207,18 +207,18 @@ describe('preferParentContext', () => {
     const customProvideOrUse = preferParentContext((props: any) => {
       return provide(CONTEXT_KEY, props)
     }, CONTEXT_KEY)
-    const injectContext = (): {name: string} => inject(CONTEXT_KEY)
+    const injectContext = (): {name: string} => inject(CONTEXT_KEY) as any
 
     const level1 = defineComponent({
       setup(props, {slots}) {
-        customProvideOrUse(reactive({name: name1}))
+        customProvideOrUse(reactive({name: name1}) as any)
         return () => slots.default?.()
       },
     })
 
     const level2 = defineComponent({
       setup(props, {slots}) {
-        customProvideOrUse(reactive({name: name2}))
+        customProvideOrUse(reactive({name: name2}) as any)
         return () => slots.default?.()
       },
     })
@@ -250,8 +250,8 @@ describe('preferParentContext', () => {
 
   it('should not create provider without key', () => {
     const CONTEXT_KEY = 'context-key'
-    expect(() => preferParentContext((props: any) => provide(CONTEXT_KEY, props))).toThrowError(
-      'No context key provided',
-    )
+    expect(() =>
+      preferParentContext((props: any) => provide(CONTEXT_KEY, props)),
+    ).toThrowError('No context key provided')
   })
 })

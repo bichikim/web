@@ -48,3 +48,7 @@ export type ExtractComponentProps<T> = T extends ComponentOptionsBase<
  * 여러 WatchSource
  */
 export type MultiWatchSources = (WatchSource<unknown> | object)[]
+
+export type ReactiveOptions<T> = {
+  [K in keyof T]: MaybeRef<T[K]>
+}

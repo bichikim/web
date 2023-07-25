@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 import {useScrollIntoView} from '../'
-import {scrollIntoView} from 'src/_imports/utils'
+import {scrollIntoView} from '@winter-love/utils'
 
 jest.mock('src/_imports/utils', () => {
   const actual = jest.requireActual('src/_imports/utils')

@@ -1,27 +1,26 @@
-import {reactive, ref} from 'vue'
+import {reactiveRef} from '../'
+import {reactive, watch} from 'vue'
+import {flushPromises} from '@vue/test-utils'
 
-/**
- * reactive to ref 작동 되는지 확인 여부
- */
-describe('reactive to ref', () => {
-  it('should convert reactive to ref', () => {
-    const fooRef = ref('foo')
-    const barRef = ref('bar')
-    const rootRef = ref(
-      reactive({
-        bar: barRef,
-        foo: fooRef,
-      }),
-    )
+describe('reactiveRef', () => {
+  it('should return a ref', async () => {
+    const callback = jest.fn()
+    const data = reactive({
+      name: 'foo',
+    })
 
-    expect(rootRef.value).toEqual({
-      bar: 'bar',
-      foo: 'foo',
-    })
-    fooRef.value = 'foo1'
-    expect(rootRef.value).toEqual({
-      bar: 'bar',
-      foo: 'foo1',
-    })
+    const resultRef = reactiveRef(data)
+
+    watch(resultRef, callback)
+
+    expect(resultRef.value.name).toBe('foo')
+
+    data.name = 'bar'
+
+    await flushPromises()
+
+    expect(callback).toHaveBeenCalledTimes(1)
+
+    expect(resultRef.value.name).toBe('bar')
   })
 })

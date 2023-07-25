@@ -1,4 +1,4 @@
-import {isSSR} from 'src/_imports/utils'
+import {isSSR} from '@winter-love/utils'
 import {mutRef} from 'src/refs'
 import {resolveElement} from 'src/utils/resolve-element'
 import {MaybeElement} from 'src/types'
@@ -13,9 +13,6 @@ export interface OnClickOutsideOptions<Event extends keyof WindowEventMap> {
   event?: Event
 }
 
-/**
- * @useful ⭐⭐⭐⭐
- */
 export const onClickOutside = <Event extends keyof WindowEventMap = 'pointerdown'>(
   target: Ref<MaybeElement>,
   handle: OnClickOutsideHandle<Event>,
@@ -42,7 +39,7 @@ export const onClickOutside = <Event extends keyof WindowEventMap = 'pointerdown
     handle(event)
   }
 
-  return onEvent<Event>(isSSR() ? undefined : window, event as Event, listener, true, {
+  return onEvent<Event>(isSSR() ? undefined : window, event as Event, listener, {
     passive: true,
   })
 }

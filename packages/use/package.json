@@ -36,7 +36,8 @@
   "scripts": {
     "build": "tsup --dts --minify",
     "dev": "tsup --watch",
-    "prepare": "tsup --dts"
+    "prepare": "tsup --dts",
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "@winter-love/lodash": "workspace:^",

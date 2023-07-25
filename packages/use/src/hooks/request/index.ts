@@ -1,5 +1,5 @@
 import {onEvent} from 'src/hooks/event'
-import {EmptyObject, isSSR} from 'src/_imports/utils'
+import {EmptyObject, isSSR} from '@winter-love/utils'
 import {clone} from '@winter-love/lodash'
 import {
   computed,

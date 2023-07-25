@@ -1,4 +1,10 @@
-import {ComponentPublicInstance, VNode} from 'vue'
+import {ComponentPublicInstance, VNodeChild} from 'vue'
 
-export type Children = VNode | VNode[] | string | number | undefined | null
+export type Children = VNodeChild
 export type MaybeElement = ComponentPublicInstance | HTMLElement | null | undefined
+export type MaybeElementOrWindow =
+  | ComponentPublicInstance
+  | HTMLElement
+  | null
+  | undefined
+  | Window

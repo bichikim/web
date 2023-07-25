@@ -1,40 +1,54 @@
 /**
  * @jest-environment jsdom
  */
-import {flushPromises, mount} from '@vue/test-utils'
-import {defineComponent, effectScope, h, ref} from 'vue'
+import {
+  defineComponent,
+  effectScope,
+  flushPromises,
+  h,
+  mount,
+  reactive,
+  ref,
+  toRef,
+} from '@winter-love/vue-test'
+import {mutRef} from 'src/refs/mut-ref'
 import {onEvent} from '../index'
 
 interface SetupOptions {
   eventName?: string
-  immediate?: boolean
+  isActive?: boolean
   once?: boolean
   target?: any
 }
 
 const setup = (options: SetupOptions) => {
-  const {immediate, once, target, eventName = 'click'} = options
+  const {isActive, once, target, eventName = 'click'} = options
 
   const Component = defineComponent({
-    props: ['once', 'immediate'],
+    props: ['once', 'isActive'],
     setup(props) {
       const elementRef = ref()
       const countRef = ref(0)
-      const active = onEvent(
+      const isActive = mutRef(toRef(props, 'isActive'))
+      const once = toRef(props, 'once')
+      onEvent(
         target ?? elementRef,
         eventName as any,
         () => {
           countRef.value += 1
         },
-        props.immediate,
-        {once: props.once},
+        reactive({isActive, once}),
       )
 
       return () =>
         h('div', [
           h('div', {id: 'count'}, countRef.value),
-          h('button', {id: 'inactive', onClick: () => (active.value = false)}, 'inactive'),
-          h('button', {id: 'active', onClick: () => (active.value = true)}, 'active'),
+          h(
+            'button',
+            {id: 'inactive', onClick: () => (isActive.value = false)},
+            'inactive',
+          ),
+          h('button', {id: 'active', onClick: () => (isActive.value = true)}, 'active'),
           h('button', {id: 'target', ref: elementRef}, 'target'),
         ])
     },
@@ -42,7 +56,7 @@ const setup = (options: SetupOptions) => {
 
   const wrapper = mount(Component, {
     props: {
-      immediate,
+      isActive,
       once,
     },
   })
@@ -54,7 +68,7 @@ const setup = (options: SetupOptions) => {
 
 describe('use-event', () => {
   it('should trigger event with immediate', async () => {
-    const {wrapper} = setup({immediate: true})
+    const {wrapper} = setup({isActive: true})
 
     expect(wrapper.get('#count').text()).toBe('0')
     await wrapper.get('#target').trigger('click')
@@ -71,7 +85,7 @@ describe('use-event', () => {
     expect(wrapper.get('#count').text()).toBe('3')
   })
   it('should not trigger event with the immediate false', async () => {
-    const {wrapper} = setup({immediate: false})
+    const {wrapper} = setup({isActive: false})
     expect(wrapper.get('#count').text()).toBe('0')
     await wrapper.get('#target').trigger('click')
     expect(wrapper.get('#count').text()).toBe('0')
@@ -80,7 +94,7 @@ describe('use-event', () => {
     expect(wrapper.get('#count').text()).toBe('1')
   })
   it('should not trigger event with the once and the mounted immediate', async () => {
-    const {wrapper} = setup({immediate: true, once: true})
+    const {wrapper} = setup({isActive: true, once: true})
     expect(wrapper.get('#count').text()).toBe('0')
     await wrapper.get('#target').trigger('click')
     expect(wrapper.get('#count').text()).toBe('1')
@@ -89,7 +103,7 @@ describe('use-event', () => {
   })
   it('should trigger with the window target', async () => {
     const removeEventListenerSpy = jest.spyOn(window, 'removeEventListener')
-    const {wrapper} = setup({eventName: 'message', target: window})
+    const {wrapper} = setup({eventName: 'message', isActive: true, target: window})
     expect(wrapper.get('#count').text()).toBe('0')
     const event = document.createEvent('MessageEvent')
     event.initEvent('message')
@@ -103,7 +117,7 @@ describe('use-event', () => {
   })
   it('should trigger with the window target & false immediate', async () => {
     const removeEventListenerSpy = jest.spyOn(window, 'removeEventListener')
-    const {wrapper} = setup({eventName: 'message', immediate: false, target: window})
+    const {wrapper} = setup({eventName: 'message', isActive: false, target: window})
     expect(wrapper.get('#count').text()).toBe('0')
     const event = document.createEvent('MessageEvent')
     event.initEvent('message')
@@ -118,7 +132,23 @@ describe('use-event', () => {
     expect(removeEventListenerSpy.mock.calls.length).toBe(1)
     removeEventListenerSpy.mockRestore()
   })
-  it('should work well outside of a component', () => {
+  it('should work outside of a component', () => {
+    const scope = effectScope()
+    const callback = jest.fn()
+    scope.run(() => {
+      onEvent(window, 'message', callback, {isActive: true})
+
+      expect(callback).toHaveBeenCalledTimes(0)
+
+      const event = new Event('message')
+
+      window.dispatchEvent(event)
+
+      expect(callback).toHaveBeenCalledTimes(1)
+    })
+    scope.stop()
+  })
+  it('should work without isActive options', () => {
     const scope = effectScope()
     const callback = jest.fn()
     scope.run(() => {
@@ -134,7 +164,7 @@ describe('use-event', () => {
     })
     scope.stop()
   })
-  it('should init the use-event with null', () => {
+  it('should initialize the use-event with null', () => {
     const {wrapper} = setup({
       target: null,
     })

@@ -48,8 +48,8 @@ export const useSize = (
     }
   }, delayRef)
 
-  onEvent(window, 'resize', updateSize, isActiveRef)
-  onEvent(containerRef, 'scroll', updateSize, isActiveRef)
+  // onEvent(window, 'resize', updateSize, isActiveRef)
+  // onEvent(containerRef, 'scroll', updateSize, isActiveRef)
   onElementResize(elementNotWindowRef, updateSize)
   onElementResize(containerNotWindowRef, updateSize)
 

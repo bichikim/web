@@ -1,9 +1,10 @@
-import {scrollIntoView, StandardBehaviorOptions} from 'src/_imports/utils'
-import {MaybeElement, MaybeRef} from 'src/types'
-import {resolveElementRef} from 'src/refs'
-export const useScrollIntoView = (element: MaybeRef<MaybeElement>) => {
-  const elementRef = resolveElementRef(element)
-  return (options?: StandardBehaviorOptions | boolean) => {
+import {scrollIntoView, StandardBehaviorOptions} from '@winter-love/utils'
+import {resolveRef} from 'src/refs'
+import {MaybeRef} from 'src/types'
+
+export const useScrollIntoView = (element: MaybeRef<HTMLElement | null | undefined>) => {
+  const elementRef = resolveRef(element)
+  return (options?: StandardBehaviorOptions) => {
     const element = elementRef.value
     if (element) {
       scrollIntoView(element, options)

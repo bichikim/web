@@ -1,5 +1,5 @@
-import {getWindow} from 'src/_imports/utils'
-import {ref, Ref, watch} from 'src/_imports/vue'
+import {getWindow} from '@winter-love/utils'
+import {ref, Ref, watch} from 'vue'
 import {defaultRef} from 'src/refs/default-ref'
 import {mutRef} from 'src/refs/mut-ref'
 import {resolveRef} from 'src/refs/resolve-ref'

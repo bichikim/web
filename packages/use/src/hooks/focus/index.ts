@@ -1,5 +1,5 @@
 import {onEvent} from 'src/hooks/event'
-import {isSSR} from 'src/_imports/utils'
+import {isSSR} from '@winter-love/utils'
 
 export type FocusHandle = () => unknown
 

@@ -7,11 +7,11 @@ import {effectScope, ref} from 'vue'
 
 describe('storageRef', () => {
   afterEach(() => {
-    localStorage.setItem('foo', null)
+    localStorage.setItem('foo', null as any)
   })
   it('should change localStorage by ref', async () => {
     const scope = effectScope()
-    const valueRef = scope.run(() => {
+    const valueRef: any = scope.run(() => {
       return storageRef('local', 'foo')
     })
     expect(localStorage.getItem('foo')).toBe(null)
@@ -25,7 +25,7 @@ describe('storageRef', () => {
     const valueRef = scope.run(() => {
       return storageRef('local', 'foo', 'bar')
     })
-    expect(valueRef.value).toBe('bar')
+    expect(valueRef?.value).toBe('bar')
     expect(localStorage.getItem('foo')).toBe('"bar"')
     localStorage.clear()
     scope.stop()
@@ -36,7 +36,7 @@ describe('storageRef', () => {
     const valueRef = scope.run(() => {
       return storageRef('local', 'foo', 'bar')
     })
-    expect(valueRef.value).toBe('bar')
+    expect(valueRef?.value).toBe('bar')
     expect(localStorage.getItem('foo')).toBe('"bar"')
     localStorage.clear()
   })
@@ -46,7 +46,7 @@ describe('storageRef', () => {
     const valueRef = scope.run(() => {
       return storageRef('local', 'foo', 'bar', {reset: true})
     })
-    expect(valueRef.value).toBe('bar')
+    expect(valueRef?.value).toBe('bar')
     expect(localStorage.getItem('foo')).toBe('"bar"')
     localStorage.clear()
   })
@@ -56,11 +56,11 @@ describe('storageRef', () => {
     const valueRef = scope.run(() => {
       return storageRef('local', 'bar', originalValueRef)
     })
-    expect(valueRef.value).toBe('bar')
+    expect(valueRef?.value).toBe('bar')
     expect(localStorage.getItem('bar')).toBe('"bar"')
     originalValueRef.value = 'john'
     await flushPromises()
-    expect(valueRef.value).toBe('john')
+    expect(valueRef?.value).toBe('john')
     expect(localStorage.getItem('bar')).toBe('"john"')
     localStorage.removeItem('bar')
     scope.stop()
@@ -70,11 +70,11 @@ describe('storageRef', () => {
     const valueRef = scope.run(() => {
       return storageRef('local', 'john')
     })
-    expect(valueRef.value).toBe(null)
+    expect(valueRef?.value).toBe(null)
     localStorage.setItem('john', '"bar"')
     window.dispatchEvent(new Event('storage'))
     await flushPromises()
-    expect(valueRef.value).toBe('bar')
+    expect(valueRef?.value).toBe('bar')
     localStorage.removeItem('john')
     scope.stop()
   })

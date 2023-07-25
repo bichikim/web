@@ -1,5 +1,5 @@
 import {effectScope, ref, watch} from 'vue'
-import {isSSR} from 'src/_imports/utils'
+import {isSSR} from '@winter-love/utils'
 import {onEvent} from 'src/hooks/event'
 
 export interface RouteHistory {

@@ -1,14 +1,25 @@
 /* eslint-disable max-params */
-import {MaybeRef} from 'src/types'
+import {eventOptions, getWindow} from '@winter-love/utils'
+import {
+  computed,
+  getCurrentInstance,
+  onMounted,
+  onScopeDispose,
+  reactive,
+  watch,
+} from 'vue'
 import {resolveRef} from 'src/refs/resolve-ref'
-import {defaultRef} from 'src/refs/default-ref'
 import {mutRef} from 'src/refs/mut-ref'
-import {getCurrentInstance, onMounted, onScopeDispose, Ref, watch} from 'vue'
+import {MaybeRef, ReactiveOptions} from 'src/types'
 
 export type Listener<ElementEvent> = (event: ElementEvent) => any
 
 export interface UseElementEventOptions {
   capture?: boolean
+  /**
+   * @default true
+   */
+  isActive?: boolean
   once?: boolean
   passive?: boolean
 }
@@ -17,65 +28,57 @@ export function onEvent<Key extends keyof WindowEventMap>(
   window: MaybeRef<Window | undefined | null>,
   eventName: Key,
   listener: Listener<WindowEventMap[Key]>,
-  isActive?: MaybeRef<boolean | undefined>,
-  options?: UseElementEventOptions,
-): Ref<boolean>
+  options?: ReactiveOptions<UseElementEventOptions>,
+): void
 export function onEvent<Key extends keyof HTMLElementEventMap>(
   element: MaybeRef<HTMLElement | undefined | null>,
   eventName: Key,
   listener: Listener<HTMLElementEventMap[Key]>,
-  isActive?: MaybeRef<boolean | undefined>,
-  options?: UseElementEventOptions,
-): Ref<boolean>
-export function onEvent<Key extends keyof HTMLElementEventMap & keyof WindowEventMap>(
-  element: MaybeRef<HTMLElement | Window | undefined | null>,
-  eventName: Key,
-  listener: Listener<HTMLElementEventMap[Key] | WindowEventMap[Key]>,
-  isActive?: MaybeRef<boolean | undefined>,
-  options?: UseElementEventOptions,
-): Ref<boolean>
+  options?: ReactiveOptions<UseElementEventOptions>,
+): void
 export function onEvent<Key extends keyof DocumentEventMap>(
   document: MaybeRef<Document | undefined | null>,
   eventName: Key,
   listener: Listener<DocumentEventMap[Key]>,
-  isActive?: MaybeRef<boolean | undefined>,
-  options?: UseElementEventOptions,
-)
+  options?: ReactiveOptions<UseElementEventOptions>,
+): void
 export function onEvent<Key extends string>(
   element: MaybeRef<HTMLElement | Window | Document | undefined | null>,
   eventName: Key,
   listener: Listener<Event>,
-  isActive?: MaybeRef<boolean | undefined>,
-  options: UseElementEventOptions = {},
-): Ref<boolean> {
-  const {once = false, passive = true, capture = false} = options
+  options: ReactiveOptions<UseElementEventOptions> = {},
+): void {
+  const reactiveOptions = reactive(options)
   const instance = getCurrentInstance()
   const isInInstance = Boolean(instance)
   const elementRef = resolveRef(element)
-  const isActiveRef = mutRef(defaultRef(resolveRef(isActive), () => true))
+  const isActiveRef = mutRef(computed(() => reactiveOptions.isActive ?? true))
 
   const handle = (event) => {
     listener(event)
-    if (once) {
+    if (reactiveOptions.once) {
       inactive()
     }
   }
 
   const active = () => {
     const element = elementRef.value
-    if (element) {
+    if (element && getWindow()) {
       isActiveRef.value = true
-      element.addEventListener?.(eventName, handle, {
-        capture,
-        passive,
-      })
+      element.addEventListener?.(
+        eventName,
+        handle,
+        eventOptions({
+          capture: reactiveOptions.capture,
+          passive: reactiveOptions.passive,
+        }),
+      )
     }
   }
-
   const inactive = () => {
     isActiveRef.value = false
     const element = elementRef.value
-    if (element) {
+    if (element && getWindow()) {
       element.removeEventListener?.(eventName, handle)
     }
   }
@@ -107,6 +110,4 @@ export function onEvent<Key extends string>(
   onScopeDispose(() => {
     inactive()
   })
-
-  return isActiveRef
 }

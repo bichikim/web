@@ -11,7 +11,7 @@ export const Default = () => ({
     const increaseCount = () => {
       countRef.value += 1
     }
-    const debouncedClick = useDebounce(increaseCount, 1000)
+    const debouncedClick = useDebounce(1000, increaseCount)
     return () =>
       h('div', [
         h('div', `value ${countRef.value}`),

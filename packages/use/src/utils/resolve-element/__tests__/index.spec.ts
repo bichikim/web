@@ -33,7 +33,7 @@ describe('resolveElement', () => {
           result = resolveElement(elementRef.value)
         })
 
-        return () => h(ComponentElement, {ref: elementRef})
+        return () => h(ComponentElement as any, {ref: elementRef})
       },
     })
     mount(component)

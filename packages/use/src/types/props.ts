@@ -1,23 +1,6 @@
 import {EmitsOptions, ObjectEmitsOptions, Prop, PropType} from 'vue'
 import {PureObject} from '@winter-love/utils'
 
-export type DefaultFactory<T> = (props: PureObject) => T | null | undefined
-export interface PropOptions<T = any, D = T> {
-  default?: D | DefaultFactory<D> | null | undefined | object
-  required?: boolean
-  type?: PropType<T> | true | null
-
-  validator?(value: unknown): boolean
-}
-
-export type PropsArray = string[]
-export type PropsObject<Key extends string = string, T = any, D = T> = Record<
-  Key,
-  Prop<T, D> | null
->
-
-export type Props<T = any, D = T> = PropsArray | PropsObject<string, T, D>
-
 export type RequiredKeys<T> = {
   [K in keyof T]: T[K] extends {
     required: true
@@ -89,7 +72,9 @@ export type EmitsToProps<T extends EmitsOptions> = T extends string[]
       [K in string & `on${Capitalize<string & keyof T>}`]?: K extends `on${infer C}`
         ? T[Uncapitalize<C>] extends null
           ? (...args: any[]) => any
-          : (...args: T[Uncapitalize<C>] extends (...args: infer P) => any ? P : never) => any
+          : (
+              ...args: T[Uncapitalize<C>] extends (...args: infer P) => any ? P : never
+            ) => any
         : never
     }
   : // eslint-disable-next-line @typescript-eslint/ban-types

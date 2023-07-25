@@ -3,12 +3,12 @@ import {changeKeys} from '../'
 
 describe('change-keys', () => {
   it('should not change keys with a none object', () => {
-    expect(changeKeys('foo', camelCase)).toBe('foo')
-    expect(changeKeys(20, camelCase)).toBe(20)
+    expect(changeKeys('foo', camelCase as any)).toBe('foo')
+    expect(changeKeys(20, camelCase as any)).toBe(20)
     const symbol = Symbol()
-    expect(changeKeys(symbol, camelCase)).toBe(symbol)
-    expect(changeKeys(null, camelCase)).toBe(null)
-    expect(changeKeys(undefined, camelCase)).toBe(undefined)
+    expect(changeKeys(symbol, camelCase as any)).toBe(symbol)
+    expect(changeKeys(null, camelCase as any)).toBe(null)
+    expect(changeKeys(undefined, camelCase as any)).toBe(undefined)
   })
   it('should change keys with an object', () => {
     expect(
@@ -17,12 +17,12 @@ describe('change-keys', () => {
           'my-bar': 'bar',
           'my-foo': 'foo',
         },
-        camelCase,
+        camelCase as any,
       ),
     ).toEqual({myBar: 'bar', myFoo: 'foo'})
   })
   it('should change keys with an array', () => {
-    expect(changeKeys([{'my-foo': 'foo'}, {'my-bar': 'bar'}], camelCase)).toEqual([
+    expect(changeKeys([{'my-foo': 'foo'}, {'my-bar': 'bar'}], camelCase as any)).toEqual([
       {myFoo: 'foo'},
       {myBar: 'bar'},
     ])
@@ -42,7 +42,7 @@ describe('change-keys', () => {
             'john',
           ],
         },
-        camelCase,
+        camelCase as any,
       ),
     ).toEqual({
       myFoo: [{myFoo: 'foo'}, {myBar: 'bar', myJohn: {myFoo: 'foo'}}, 'john'],
@@ -58,7 +58,7 @@ describe('change-keys', () => {
             },
           },
         },
-        camelCase,
+        camelCase as any,
         2,
       ),
     ).toEqual({

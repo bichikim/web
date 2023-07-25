@@ -1,4 +1,4 @@
-import {getDocument, getWindow} from 'src/_imports/utils'
+import {getDocument, getWindow} from '@winter-love/utils'
 import {useBlur} from 'src/hooks/blur'
 import {ClipboardState} from 'src/hooks/clipboard'
 import {onEvent} from 'src/hooks/event'

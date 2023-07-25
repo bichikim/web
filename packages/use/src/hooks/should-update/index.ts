@@ -1,9 +1,9 @@
-import {isSSR} from 'src/_imports/utils'
+import {isSSR} from '@winter-love/utils'
 import {useDebounce} from 'src/hooks/debounce'
-import {watch} from 'src/_imports/vue'
+import {watch} from 'vue'
 import {useConnection} from 'src/hooks/connection'
 import {onEvent} from 'src/hooks/event'
-import {useElementIntersection} from 'src/hooks/element-intersection-state'
+import {useIntersectionRef} from 'src/hooks/intersection-ref'
 import {MaybeRef} from 'src/types'
 
 export type OnShouldUpdateHandle = () => unknown
@@ -82,7 +82,7 @@ export const onShouldUpdate = (
     handle?.()
   }
 
-  const onDebounceHandle = useDebounce(onHandle, debounceWait, true)
+  const onDebounceHandle = useDebounce(debounceWait, onHandle)
 
   const onShouldUpdate = () => {
     if (debounce) {
@@ -106,7 +106,7 @@ export const onShouldUpdate = (
 
   const isOnline = useConnection(true)
 
-  const isShowing = useElementIntersection(visibleElement)
+  const isShowing = useIntersectionRef(visibleElement)
 
   if (firstExecute && isVisible()) {
     onShouldUpdate()
