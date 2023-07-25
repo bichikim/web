@@ -38,7 +38,9 @@ export const stopRouteHistory = scope.stop
  * @WIP
  * @param callback
  */
-export const onRouteHistory = (callback: (state: RouteHistory, location: Location) => unknown) => {
+export const onRouteHistory = (
+  callback: (state: RouteHistory, location: Location) => unknown,
+) => {
   watch([stateRef, locationRef], ([state, location]) => {
     if (state && location) {
       callback(state, location)

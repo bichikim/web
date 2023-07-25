@@ -1,6 +1,6 @@
-import {useDebounce} from '../'
-import {effectScope, flushPromises} from '@winter-love/vue-test'
 import {debounce} from '@winter-love/lodash'
+import {effectScope} from '@winter-love/vue-test'
+import {useDebounce} from '../'
 
 jest.mock('@winter-love/lodash')
 

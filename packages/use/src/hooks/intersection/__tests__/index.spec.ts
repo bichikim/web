@@ -52,7 +52,12 @@ describe('on-element-intersection', () => {
           'div',
           {
             ref: elementRef,
-            style: {backgroundColor: 'red', height: '100px', marginBottom: '10px', width: '100%'},
+            style: {
+              backgroundColor: 'red',
+              height: '100px',
+              marginBottom: '10px',
+              width: '100%',
+            },
           },
           showRef.value ? slots.default?.() : undefined,
         )
@@ -94,7 +99,8 @@ describe('on-element-intersection', () => {
   }
 
   it('should show or hide element', async () => {
-    const {disconnect, observe, observerMock, teardown, observerTrigger, wrapper} = setup()
+    const {disconnect, observe, observerMock, teardown, observerTrigger, wrapper} =
+      setup()
 
     await flushPromises()
     expect(disconnect).toHaveBeenCalledTimes(0)

@@ -30,7 +30,12 @@ describe('use-element-intersection', () => {
             'div',
             {
               ref: elementRef,
-              style: {backgroundColor: 'red', height: '100px', marginBottom: '10px', width: '100%'},
+              style: {
+                backgroundColor: 'red',
+                height: '100px',
+                marginBottom: '10px',
+                width: '100%',
+              },
             },
             showRef.value ? slots.default?.() : undefined,
           )

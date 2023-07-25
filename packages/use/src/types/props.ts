@@ -1,5 +1,4 @@
-import {EmitsOptions, ObjectEmitsOptions, Prop, PropType} from 'vue'
-import {PureObject} from '@winter-love/utils'
+import {EmitsOptions, ObjectEmitsOptions, Prop} from 'vue'
 
 export type RequiredKeys<T> = {
   [K in keyof T]: T[K] extends {
