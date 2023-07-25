@@ -23,7 +23,7 @@ export const useSize = (
   const containerRef = resolveRef(container)
   const result = ref(getElementSize(elementRef?.value))
   const defaultSizeRef = toRef(options, 'defaultSize', DEFAULT_SIZE)
-  const isActiveRef = toRef(options, 'isActive', true)
+  // const isActiveRef = toRef(options, 'isActive', true)
   const delayRef = toRef(options, 'delay', DEFAULT_DELAY)
   const elementNotWindowRef = computed<HTMLElement | undefined | null>(() => {
     const element = elementRef.value
