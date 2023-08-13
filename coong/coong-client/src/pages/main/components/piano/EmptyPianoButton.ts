@@ -1,21 +1,11 @@
 import {defineComponent, h} from 'vue'
-import {styled} from '@winter-love/uni'
-import {typeVariants} from './type-variants'
 
 export const HEmptyPianoButton = defineComponent({
   name: 'HEmptyPianoButton',
   setup() {
-    return () => h('div')
+    return () =>
+      h('div', {
+        class: 'inline-block flex-shrink-0 h-full pointer-event-none w-50px mr-30px',
+      })
   },
 })
-
-export const EmptyPianoButton = styled(
-  HEmptyPianoButton,
-  {
-    display: 'inline-block',
-    flexShrink: 0,
-    height: '100%',
-    pointerEvents: 'none',
-  },
-  typeVariants,
-)

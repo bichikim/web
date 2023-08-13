@@ -44,7 +44,6 @@ export const useEventHoverTouchDown = (element: MaybeRef<HTMLElement | null>) =>
         }
       }
     },
-    true,
     {
       passive: false,
     },
@@ -75,7 +74,6 @@ export const useEventHoverTouchDown = (element: MaybeRef<HTMLElement | null>) =>
       // update shardEnd
       shardEnd.value = event.changedTouches
     },
-    true,
     {
       passive: false,
     },
