@@ -1,3 +1,5 @@
+import {getWindow} from 'src/dom/get-window'
+
 export const getDocument = () => {
-  return globalThis.document
+  return getWindow()?.document
 }
