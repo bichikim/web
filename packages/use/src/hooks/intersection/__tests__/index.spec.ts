@@ -6,8 +6,8 @@ import {isSSR} from '@winter-love/utils'
 import {defineComponent, h, ref} from 'vue'
 import {onIntersection} from '../'
 
-jest.mock('@wavve/utils', () => {
-  const actual = jest.requireActual('@wavve/utils')
+jest.mock('@winter-love/utils', () => {
+  const actual = jest.requireActual('@winter-love/utils')
   return {
     ...actual,
     isSSR: jest.fn(actual.isSSR),
