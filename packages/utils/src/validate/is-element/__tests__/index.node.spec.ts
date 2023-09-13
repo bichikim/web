@@ -1,4 +1,4 @@
-import {isElement, isHtmlElement} from '../'
+import {isElement} from '../'
 
 describe('is-element (in nodejs)', () => {
   it('should return false with string', () => {

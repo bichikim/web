@@ -15,6 +15,7 @@ export const requestIdleCallbackPolyfill = (
         // eslint-disable-next-line no-magic-numbers
         callback({
           didTimeout: true,
+          // eslint-disable-next-line no-magic-numbers
           timeRemaining: () => Math.max(0, 50 - (Date.now() - start)),
         })
       }
