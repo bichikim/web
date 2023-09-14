@@ -46,6 +46,7 @@
     "last 5 Opera versions"
   ],
   "devDependencies": {
+    "@quasar/cli": "^2.3.0",
     "@capacitor/android": "4.6.3",
     "@capacitor/cli": "4.6.3",
     "@capacitor/core": "4.6.3",
