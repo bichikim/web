@@ -1,7 +1,5 @@
 import {isReadonly, ToRef} from 'vue'
-// fix type error
-// eslint-disable-next-line vue/prefer-import-from-vue
-export {type IfAny} from '@vue/shared'
+export declare type IfAny<T, Y, N> = 0 extends 1 & T ? Y : N
 
 export const isToRef = <T>(value: any): value is ToRef<T> => {
   return Boolean(value?._key)

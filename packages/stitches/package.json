@@ -27,7 +27,7 @@
   "dependencies": {
     "@stitches/core": "^1.2.8",
     "@vue/runtime-core": "^3.2.45",
-    "@winter-love/lodash": "workspace:^1.0.27-alpha.20",
+    "@winter-love/lodash": "workspace:*",
     "vue": "^3.2.45"
   },
   "devDependencies": {

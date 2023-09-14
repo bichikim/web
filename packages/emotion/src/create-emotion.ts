@@ -6,7 +6,7 @@ import {Plugin} from 'vue'
 import {EMOTION_CACHE_CONTEXT} from './cache'
 import {createStyled} from './create-styled'
 import {EMOTION_THEME_CONTEXT, Theme} from './theme'
-export {CSSObject} from '@emotion/css/create-instance'
+export type {CSSObject} from '@emotion/css/create-instance'
 
 export interface EmotionExtend extends _Emotion {
   styled: ReturnType<typeof createStyled>

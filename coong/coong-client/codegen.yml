@@ -13,6 +13,7 @@ generates:
             - "/* eslint-disable */"
             - "/* istanbul ignore file */"
             - "// noinspection JSUnusedGlobalSymbols ,JSUnnecessarySemicolon \n"
+            - "//@ts-nocheck"
             - "import {DocumentNode} from 'graphql';"
             - "export type {DocumentNode};"
     config:

@@ -38,8 +38,8 @@
     "@emotion/css": "^11.10.5",
     "@emotion/serialize": "^1.1.1",
     "@emotion/utils": "^1.2.0",
-    "@winter-love/use": "workspace:1.0.27-alpha.20",
-    "@winter-love/utils": "workspace:1.0.27-alpha.20",
+    "@winter-love/use": "workspace:*",
+    "@winter-love/utils": "workspace:*",
     "clsx": "^1.2.1",
     "vue": "^3.2.45"
   },

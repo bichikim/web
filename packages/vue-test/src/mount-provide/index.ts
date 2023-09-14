@@ -1,5 +1,4 @@
-import {mount, VueWrapper} from '@vue/test-utils'
-import {ComponentMountingOptions} from 'src/mount-composition'
+import {ComponentMountingOptions, mount, VueWrapper} from '@vue/test-utils'
 import {
   ComponentPublicInstance,
   defineComponent,
@@ -37,7 +36,7 @@ export const mountProvide = <
     ...rest
   } = options
   const KEY: InjectionKey<Ref<any>> = '__KEY_PROVIDE__' as any
-  const propKeys = [...Object.keys(props), ...propsOptions]
+  const propKeys = [...Object.keys(props as any), ...propsOptions]
   // eslint-disable-next-line vue/one-component-per-file
   const Component = defineComponent<Props>({
     props: propKeys as any,
@@ -78,9 +77,9 @@ export const mountProvide = <
   const wrapper = mount(Parent, {
     ...rest,
     props,
-  })
+  } as any)
 
   const {setupState} = wrapper.vm.$ as any
 
-  return Object.assign(wrapper, {setupState})
+  return Object.assign(wrapper, {setupState}) as any
 }

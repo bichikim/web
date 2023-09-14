@@ -36,7 +36,7 @@
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^5.16.5",
-    "@winter-love/lodash": "workspace:^1.0.27-alpha.20",
+    "@winter-love/lodash": "workspace:*",
     "css": "^3.0.0",
     "css.escape": "^1.5.1",
     "tsd": "^0.24.1",
