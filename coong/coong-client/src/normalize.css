@@ -52,3 +52,7 @@ body {
 .markdown-body li {
     margin-bottom: 10px;
 }
+
+body {
+    height: 100vh;
+}

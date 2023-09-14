@@ -9,11 +9,12 @@ describe('use-event-down', () => {
   const wrapper = mount(
     defineComponent({
       setup() {
-        const element = ref(null)
+        const element: any = ref(null)
         const elementState = useEventDown(element)
-        return () => h('div', {'data-testid': 'element', ref: element}, elementState.value)
+        return () =>
+          h('div', {'data-testid': 'element', ref: element}, elementState.value)
       },
-    }),
+    }) as any,
   )
 
   it('should change state when a user trigger a down and up event', async () => {

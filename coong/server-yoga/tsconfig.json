@@ -33,7 +33,6 @@
     // for 4.4.0
     // "exactOptionalPropertyTypes": true,
     "allowSyntheticDefaultImports": true,
-    "suppressImplicitAnyIndexErrors": true,
     "sourceMap": true,
     "strict": true,
   },

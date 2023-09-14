@@ -1,28 +1,15 @@
 import {defineComponent, h} from 'vue'
-import {styled} from '@winter-love/uni'
-import {PianoFlat} from './PianoFlat'
-import {PianoSharp} from './PianoSharp'
+import {HPianoFlat} from './PianoFlat'
+import {HPianoSharp} from './PianoSharp'
 
 export const HPiano = defineComponent({
   name: 'Piano',
   setup: () => {
     return () =>
-      h('section', {}, [
+      h('section', {class: 'h-full max-h-466px pb-30px pointer-events-none relative'}, [
         //
-        h(PianoFlat, {class: 'flat'}),
-        h(PianoSharp, {class: 'sharp'}),
+        h(HPianoFlat, {class: 'flat'}),
+        h(HPianoSharp, {class: 'sharp absolute top-0'}),
       ])
   },
-})
-
-export const Piano = styled(HPiano, {
-  '& .sharp': {
-    position: 'absolute',
-    top: 0,
-  },
-  height: '100%',
-  maxHeight: 466,
-  paddingBottom: 30,
-  pointerEvents: 'none',
-  position: 'relative',
 })

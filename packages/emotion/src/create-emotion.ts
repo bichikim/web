@@ -16,7 +16,9 @@ export interface EmotionPluginOptions {
   theme?: Theme
 }
 
-export interface EmotionOptions extends Omit<OriginalEmotionOptions, 'key'>, EmotionPluginOptions {
+export interface EmotionOptions
+  extends Omit<OriginalEmotionOptions, 'key'>,
+    EmotionPluginOptions {
   key?: string
 }
 

@@ -40,7 +40,7 @@ describe('useSound', () => {
       stop: jest.fn(),
     }
 
-    _useUntilTo.mockReturnValueOnce(untilTo)
+    _useUntilTo.mockReturnValueOnce(untilTo as any)
     _useSound.mockReturnValueOnce(sound)
     const piano = mountScope(() => usePiano('2c'))
 

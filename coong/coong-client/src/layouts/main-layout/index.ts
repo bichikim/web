@@ -1,24 +1,19 @@
-import {styled} from '@winter-love/uni'
 import {defineComponent} from 'vue'
 import {RouterView} from 'vue-router'
 import {CFooter} from './components'
 
-export const HMainLayout = defineComponent({
+export const MainLayout = defineComponent({
   components: {
     CFooter,
     RouterView,
   },
   name: 'MainLayout',
   template: `
-    <div>
+    <div class="flex flex-col h-full">
     <router-view></router-view>
     <c-footer/>
     </div>
   `,
 })
 
-export default styled(HMainLayout, {
-  display: 'flex',
-  flexDirection: 'column',
-  height: '100%',
-})
+export default MainLayout

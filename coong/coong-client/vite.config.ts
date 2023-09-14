@@ -11,7 +11,7 @@ import {fileURLToPath, URL} from 'node:url'
 import topLevelAwait from 'vite-plugin-top-level-await'
 import markdown from 'vite-plugin-vue-markdown'
 import basicSsl from '@vitejs/plugin-basic-ssl'
-// import unocss from '@unocss/vite'
+import unoCss from 'unocss/vite'
 
 // eslint-disable-next-line max-lines-per-function
 export default defineConfig(({mode}) => {
@@ -35,6 +35,9 @@ export default defineConfig(({mode}) => {
       include: ['vue', 'vue-router'],
     },
     plugins: [
+      unoCss({
+
+      }),
       vue({
         include: [/\.vue$/u, /\.md$/u],
       }),

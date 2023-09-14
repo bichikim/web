@@ -1,22 +1,13 @@
 import {defineComponent, h} from 'vue'
-import {Piano} from './components'
-import {styled} from '@winter-love/uni'
+import {HPiano} from './components'
 
-export const HMainPage = defineComponent({
+export const MainPage = defineComponent({
   name: 'HMainPage',
   setup() {
     return () =>
-      h('main', [
+      h('main', {class: 'h-full overflow-y-hidden pt-0 px-2 flex'}, [
         //
-        h(Piano),
+        h(HPiano),
       ])
   },
-})
-
-export const MainPage = styled(HMainPage, {
-  height: '100%',
-  overflowY: 'hidden',
-  pt: 0,
-  px: 8,
-  display: 'flex',
 })

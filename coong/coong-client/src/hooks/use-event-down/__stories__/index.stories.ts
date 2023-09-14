@@ -11,7 +11,7 @@ export default {
 export const Default: StoryFn = () => {
   return {
     setup() {
-      const element = ref()
+      const element: any = ref()
       const down = useEventDown(element)
       return () => h('div', {'data-testid': 'root', ref: element}, down.value)
     },
