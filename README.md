@@ -30,3 +30,11 @@ This repository contributors are welcome to use
 [Wallaby.js OSS License](https://wallabyjs.com/oss/) to get
 test results immediately as you type, and see the results in
 your editor right next to your code.
+
+
+## install dependencies
+
+```bash
+# we use bunjs refer to https://bun.sh/
+bun install
+```
