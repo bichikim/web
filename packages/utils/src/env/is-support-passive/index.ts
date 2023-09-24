@@ -1,4 +1,4 @@
-import {once} from 'src/function/once'
+import {once} from 'src/factory/once'
 
 export const isSupportPassive = once(() => {
   let supportsPassive = false

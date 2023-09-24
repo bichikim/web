@@ -19,8 +19,18 @@
     <template #controls>
       <hst-slider v-model="widthRef" :min="0" :max="200" title="width" />
       <hst-slider v-model="heightRef" :min="0" :max="200" title="height" />
-      <hst-slider v-model="containerWidthRef" :min="0" :max="800" title="container width" />
-      <hst-slider v-model="containerHeightRef" :min="0" :max="800" title="container height" />
+      <hst-slider
+        v-model="containerWidthRef"
+        :min="0"
+        :max="800"
+        title="container width"
+      />
+      <hst-slider
+        v-model="containerHeightRef"
+        :min="0"
+        :max="800"
+        title="container height"
+      />
     </template>
   </story>
 </template>

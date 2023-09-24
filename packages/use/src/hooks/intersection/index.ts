@@ -1,4 +1,4 @@
-import {isSSR} from '@winter-love/utils'
+import {getWindow} from '@winter-love/utils'
 import {resolveRef} from 'src/refs/resolve-ref'
 import {getComponentElement} from 'src/rendering-utils/get-component-element'
 import {MaybeRef} from 'src/types'
@@ -18,7 +18,7 @@ export const onIntersection = (
   options: IntersectionObserverInit = {},
 ) => {
   // skip in ssr environment
-  if (isSSR()) {
+  if (!getWindow()) {
     return
   }
   const optionsRef = ref(options)

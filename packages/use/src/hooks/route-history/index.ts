@@ -1,5 +1,5 @@
 import {effectScope, ref, watch} from 'vue'
-import {isSSR} from '@winter-love/utils'
+import {getWindow} from '@winter-love/utils'
 import {onEvent} from 'src/hooks/event'
 
 export interface RouteHistory {
@@ -11,7 +11,7 @@ export interface RouteHistory {
   scroll: {left: number; top: number}
 }
 
-const _isSSR = isSSR()
+const _isSSR = !getWindow()
 
 const original: any = _isSSR ? undefined : window.onpopstate
 const stateRef = ref<RouteHistory>()

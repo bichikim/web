@@ -1,5 +1,5 @@
 import {reduce} from 'src/array/reduce'
-import {toValue} from 'src/function/to-value'
+import {toValue} from 'src/factory/to-value'
 import {MaybeFunction, MaybePromise} from 'src/types'
 
 export function asyncPipe<A, R1, R2, R3, R4, R5, R6, R7>(

@@ -7,17 +7,9 @@ const root0 = /^\/Users\/app\/packages\/[-/._a-zA-Z0-9]*\/src\//u
 const root1 = /^\/Users\/app\/apps\/[-/._a-zA-Z0-9]*\/src\//u
 describe('get-workspace-path', () => {
   it('should return root', () => {
-    expect(getWorkspacePath([root0, root1], testPath0)).toBe(
-      'headless/form/__stories__/HForm.story.vue',
-    )
-    expect(getWorkspacePath([root0, root1], testPath1)).toBe(
-      'headless/form/__stories__/HForm.story.vue',
-    )
-    expect(
-      getWorkspacePath(
-        [root0, root1],
-        '/Users/app/packages2/vue-components/src/headless/form/__stories__/HForm.story.vue',
-      ),
-    ).toBe('')
+    expect(getWorkspacePath([root0, root1])).toEqual([root0, root1])
+
+    const [regex] = getWorkspacePath(['/Users/app/apps/'])
+    expect(regex.test(testPath1)).toBe(true)
   })
 })

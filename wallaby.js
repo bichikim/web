@@ -7,7 +7,7 @@ module.exports = () => {
     testFramework: {
       // it does not work
       // arguments: '--selectProjects unit-test',
-      configFile: './jest.config.js',
+      configFile: './jest.config.ts',
     },
   }
 }

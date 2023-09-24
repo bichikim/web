@@ -3,13 +3,14 @@
   "compilerOptions": {
     "jsx": "preserve",
     "noEmit": true,
-    "rootDir": ".",
     "strict": true,
+    "rootDir": ".",
     "sourceMap": true,
     "esModuleInterop": true,
     "resolveJsonModule": true,
+    "forceConsistentCasingInFileNames": true,
     "declaration": true,
-    "moduleResolution": "node",
+    "moduleResolution": "Node",
     "allowSyntheticDefaultImports": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
@@ -17,13 +18,12 @@
     "target": "ESNext",
     "noImplicitAny": false,
     "module": "ESNext",
-    "lib": ["ESNext", "dom"],
+    "lib": ["ESNext", "DOM", "DOM.Iterable", "ESNext.Promise"],
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "baseUrl": "."
   },
   "include": [
-    "**/*.ts",
-    "auto-imports.d.ts"
+    "**/*.ts"
   ]
 }

@@ -31,6 +31,8 @@ This repository contributors are welcome to use
 test results immediately as you type, and see the results in
 your editor right next to your code.
 
+node_modules/.pnpm jest-runtime 버전이 29.4.3 말고 다른것들이 있으면 wallabyjs 가 작동을 안한다
+
 
 ## install dependencies
 
@@ -38,3 +40,7 @@ your editor right next to your code.
 # we use bunjs refer to https://bun.sh/
 bun install
 ```
+
+## recommended global dependencies
+- rimraf
+- lerna

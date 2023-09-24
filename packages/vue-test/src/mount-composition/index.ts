@@ -1,4 +1,4 @@
-import {ComponentMountingOptions, mount, VueWrapper} from '@vue/test-utils'
+import {MountingOptions, mount, VueWrapper} from '@vue/test-utils'
 import {
   AllowedComponentProps,
   ComponentCustomProps,
@@ -17,7 +17,7 @@ export type PublicProps = VNodeProps & AllowedComponentProps & ComponentCustomPr
  */
 export const mountComposition = <Props extends Record<string, any>, RawBindings = object>(
   setup: (props: Props, ctx: SetupContext) => RawBindings,
-  options: ComponentMountingOptions<any> & {propsOptions?: any[]} = {},
+  options: MountingOptions<any> & {propsOptions?: any[]} = {},
 ): VueWrapper<ComponentPublicInstance<Props>> & {
   setupState: UnwrapNestedRefs<RawBindings>
 } => {

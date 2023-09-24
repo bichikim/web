@@ -40,7 +40,7 @@ export const createSolanaWallet = (
   provider?: Cluster,
   net?: Socket,
   options: CreateSolanaWalletOptions = {},
-): UnwrapNestedRefs<Wallet<SolanaWalletItemTypes>> => {
+): Wallet<SolanaWalletItemTypes> => {
   const arraySize = 32
   const {saveKey = 'winter-love--solana-wallet'} = options
   const keypairRef = ref<Keypair | undefined>()
@@ -142,11 +142,11 @@ export const createSolanaWallet = (
   })
 
   return reactive({
-    accountAddress: accountAddressRef,
+    accountAddress: accountAddressRef as any,
     createAccount,
     createContract,
     loadAccount,
-    mnemonicPhrase: mnemonicPhraseRef,
+    mnemonicPhrase: mnemonicPhraseRef as any,
     provider: providerRef,
     restoreAccount,
     saveAccount,

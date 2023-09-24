@@ -4,8 +4,8 @@
 import {useScrollIntoView} from '../'
 import {scrollIntoView} from '@winter-love/utils'
 
-jest.mock('src/_imports/utils', () => {
-  const actual = jest.requireActual('src/_imports/utils')
+jest.mock('@winter-love/utils', () => {
+  const actual = jest.requireActual('@winter-love/utils')
   return {
     ...actual,
     scrollIntoView: jest.fn(),

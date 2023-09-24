@@ -1,4 +1,4 @@
-import {ComponentMountingOptions, mount, VueWrapper} from '@vue/test-utils'
+import {MountingOptions, mount, VueWrapper} from '@vue/test-utils'
 import {
   ComponentPublicInstance,
   defineComponent,
@@ -15,7 +15,7 @@ export type MountProvideOptions<
   Props extends Record<string, any>,
   InjectRawBindings,
   ProvideRawBindings,
-> = ComponentMountingOptions<any> & {
+> = MountingOptions<any> & {
   inject: (props: Props) => InjectRawBindings
   provide: (props: Props) => ProvideRawBindings
 } & {propsOptions?: any[]}

@@ -8,6 +8,7 @@ import {MaybeRef} from 'src/types'
 export type UseAnimationTickHandle = () => any
 
 /**
+ * @deprecated use useAnimationLoop
  * @param handle
  * @param toggle
  */

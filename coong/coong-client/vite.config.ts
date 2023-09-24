@@ -9,7 +9,6 @@ import components from 'unplugin-vue-components/vite'
 import checker from 'vite-plugin-checker'
 import {fileURLToPath, URL} from 'node:url'
 import topLevelAwait from 'vite-plugin-top-level-await'
-import markdown from 'vite-plugin-vue-markdown'
 import basicSsl from '@vitejs/plugin-basic-ssl'
 import unoCss from 'unocss/vite'
 
@@ -41,7 +40,6 @@ export default defineConfig(({mode}) => {
       vue({
         include: [/\.vue$/u, /\.md$/u],
       }),
-      markdown(),
       checker({
         typescript: {
           tsconfigPath: 'tsconfig.check.json',

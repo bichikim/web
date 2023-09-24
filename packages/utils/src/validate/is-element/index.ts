@@ -2,7 +2,7 @@ import {getWindow} from 'src/dom/get-window'
 import {isUndefined} from 'src/validate/is-undefined'
 export const isElement = (value: any): value is Element => {
   const window = getWindow()
-  const {Element} = window ?? {}
+  const {Element} = window ?? ({} as any)
   if (isUndefined(Element)) {
     return false
   }
@@ -11,7 +11,7 @@ export const isElement = (value: any): value is Element => {
 
 export const isHtmlElement = (value: any): value is HTMLElement => {
   const window = getWindow()
-  const {HTMLElement} = window ?? {}
+  const {HTMLElement} = window ?? ({} as any)
   if (isUndefined(HTMLElement)) {
     return false
   }

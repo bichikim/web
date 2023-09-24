@@ -1,3 +1,6 @@
+/**
+ * @jest-environment node
+ */
 import {getHtmlElementClass} from '../'
 
 describe('getHtmlElement', () => {

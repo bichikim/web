@@ -1,4 +1,4 @@
-export const getWindow = () => {
+export const getWindow = (): Window | undefined => {
   if (typeof window === 'undefined') {
     return
   }

@@ -1,5 +1,5 @@
 import {reduce} from 'src/array/reduce'
-import {toValue} from 'src/function/to-value'
+import {toValue} from 'src/factory/to-value'
 import {MaybeFunction} from 'src/types'
 
 /**

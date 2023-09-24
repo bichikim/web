@@ -1,3 +1,6 @@
+/**
+ * @jest-environment node
+ */
 import {getDocument} from '../'
 
 describe('getDocument', () => {

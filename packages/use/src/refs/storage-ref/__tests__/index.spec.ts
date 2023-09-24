@@ -1,81 +1,98 @@
-/**
- * @jest-environment jsdom
- */
+import {flushPromises} from '@winter-love/vue-test'
+import {storage} from '@winter-love/utils'
 import {storageRef} from '../'
-import {flushPromises} from '@vue/test-utils'
-import {effectScope, ref} from 'vue'
 
-describe('storageRef', () => {
-  afterEach(() => {
-    localStorage.setItem('foo', null as any)
+jest.mock('@winter-love/utils', () => {
+  const actual = jest.requireActual('@winter-love/utils')
+  return {
+    ...actual,
+    storage: jest.fn(actual.storage),
+  }
+})
+
+describe('storageRef ', () => {
+  beforeEach(() => {
+    jest.mocked(storage).mockClear()
   })
-  it('should change localStorage by ref', async () => {
-    const scope = effectScope()
-    const valueRef: any = scope.run(() => {
-      return storageRef('local', 'foo')
+  it('should pass options', () => {
+    const name = '__foo__'
+    storageRef('cookie', name, undefined, {expires: 30})
+    expect(storage).toBeCalledWith('cookie', {
+      expires: 30,
     })
-    expect(localStorage.getItem('foo')).toBe(null)
-    valueRef.value = 'bar'
+  })
+  it('should save init value with empty localStorage', () => {
+    const name = '__foo__'
+    const value = 'hello'
+    storageRef('local', name, value)
+
+    expect(window.localStorage.getItem(name)).toBe(JSON.stringify(value))
+    window.localStorage.clear()
+  })
+  it('should not save init value with filled localStorage', () => {
+    const name = '__foo__'
+    const value = 'hello'
+    const value2 = 'hell'
+    window.localStorage.setItem(name, JSON.stringify(value2))
+    storageRef('local', name, value)
+    expect(window.localStorage.getItem(name)).toBe(JSON.stringify(value2))
+    window.localStorage.clear()
+  })
+  it('should not save empty init value with filled localStorage', () => {
+    const name = '__foo__'
+    const value = 'hello'
+    window.localStorage.setItem(name, JSON.stringify(value))
+    storageRef('local', name, undefined)
+    expect(window.localStorage.getItem(name)).toBe(JSON.stringify(value))
+    window.localStorage.clear()
+  })
+  it('should update value with empty localStorage and empty init value', async () => {
+    const name = '__foo__'
+    const value = 'hello'
+    const valueRef = storageRef<string>('local', name, undefined)
+    expect(window.localStorage.getItem(name)).toBe(JSON.stringify(null))
+    valueRef.value = value
     await flushPromises()
-    expect(localStorage.getItem('foo')).toBe('"bar"')
-    localStorage.removeItem('foo')
+    expect(window.localStorage.getItem(name)).toBe(JSON.stringify(value))
+    window.localStorage.clear()
   })
-  it('should change localStorage by value', () => {
-    const scope = effectScope()
-    const valueRef = scope.run(() => {
-      return storageRef('local', 'foo', 'bar')
-    })
-    expect(valueRef?.value).toBe('bar')
-    expect(localStorage.getItem('foo')).toBe('"bar"')
-    localStorage.clear()
-    scope.stop()
-  })
-  it('should not change localStorage by value', () => {
-    const scope = effectScope()
-    localStorage.setItem('foo', '"foo"')
-    const valueRef = scope.run(() => {
-      return storageRef('local', 'foo', 'bar')
-    })
-    expect(valueRef?.value).toBe('bar')
-    expect(localStorage.getItem('foo')).toBe('"bar"')
-    localStorage.clear()
-  })
-  it('should change localStorage by value with rest', () => {
-    const scope = effectScope()
-    localStorage.setItem('foo', '"foo"')
-    const valueRef = scope.run(() => {
-      return storageRef('local', 'foo', 'bar', {reset: true})
-    })
-    expect(valueRef?.value).toBe('bar')
-    expect(localStorage.getItem('foo')).toBe('"bar"')
-    localStorage.clear()
-  })
-  it('should change localStorage by ref value', async () => {
-    const scope = effectScope()
-    const originalValueRef = ref('bar')
-    const valueRef = scope.run(() => {
-      return storageRef('local', 'bar', originalValueRef)
-    })
-    expect(valueRef?.value).toBe('bar')
-    expect(localStorage.getItem('bar')).toBe('"bar"')
-    originalValueRef.value = 'john'
+  it('should update value with empty localStorage and init value', async () => {
+    const name = '__foo__'
+    const value = 'hello'
+    const value2 = 'hell'
+    const valueRef = storageRef<string>('local', name, value)
+    expect(window.localStorage.getItem(name)).toBe(JSON.stringify(value))
+    valueRef.value = value2
     await flushPromises()
-    expect(valueRef?.value).toBe('john')
-    expect(localStorage.getItem('bar')).toBe('"john"')
-    localStorage.removeItem('bar')
-    scope.stop()
+    expect(window.localStorage.getItem(name)).toBe(JSON.stringify(value2))
+    window.localStorage.clear()
   })
-  it('should change with the window storage event', async () => {
-    const scope = effectScope()
-    const valueRef = scope.run(() => {
-      return storageRef('local', 'john')
-    })
-    expect(valueRef?.value).toBe(null)
-    localStorage.setItem('john', '"bar"')
-    window.dispatchEvent(new Event('storage'))
+  it('should update undefined value with empty localStorage and init value', async () => {
+    const name = '__foo__'
+    const value = 'hello'
+    const valueRef: any = storageRef<string>('local', name, value)
+    expect(window.localStorage.getItem(name)).toBe(JSON.stringify(value))
+    valueRef.value = undefined
     await flushPromises()
-    expect(valueRef?.value).toBe('bar')
-    localStorage.removeItem('john')
-    scope.stop()
+    expect(window.localStorage.getItem(name)).toBe(JSON.stringify(null))
+    window.localStorage.clear()
+  })
+  it('should update null value with empty localStorage and init value', async () => {
+    const name = '__foo__'
+    const value = 'hello'
+    const valueRef = storageRef<string>('local', name, value)
+    expect(window.localStorage.getItem(name)).toBe(JSON.stringify(value))
+    valueRef.value = null
+    await flushPromises()
+    expect(window.localStorage.getItem(name)).toBe(JSON.stringify(null))
+    window.localStorage.clear()
+  })
+  it('should restore value', async () => {
+    const name = '__foo__'
+    const value = 'hello'
+    window.localStorage.setItem(name, JSON.stringify(value))
+    storageRef<string>('local', name, undefined)
+    expect(window.localStorage.getItem(name)).toBe(JSON.stringify(value))
+    window.localStorage.clear()
   })
 })

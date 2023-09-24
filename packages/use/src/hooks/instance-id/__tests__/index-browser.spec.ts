@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 import {mountComposition} from '@winter-love/vue-test'
-import {isSSR} from '@winter-love/utils'
+import {getWindow} from '@winter-love/utils'
 import {getCurrentInstance} from 'vue'
 import {useInstanceId} from '../'
 
@@ -10,7 +10,7 @@ jest.mock('@winter-love/utils', () => {
   const actual = jest.requireActual('@winter-love/utils')
   return {
     ...actual,
-    isSSR: jest.fn(actual.isSSR),
+    getWindow: jest.fn(actual.getWindow),
   }
 })
 
@@ -22,7 +22,7 @@ jest.mock('vue', () => {
   }
 })
 
-const _isSSR = jest.mocked(isSSR)
+const _isSSR = jest.mocked(getWindow)
 const _getCurrentInstance = jest.mocked(getCurrentInstance)
 
 describe('useInstanceId', () => {
@@ -43,7 +43,7 @@ describe('useInstanceId', () => {
   })
 
   it('should warn in ssr environment', async () => {
-    _isSSR.mockReturnValueOnce(true)
+    _isSSR.mockReturnValueOnce(undefined)
     jest.spyOn(console, 'warn')
     // stop console run once
     jest.mocked(console.warn).mockImplementationOnce(() => {

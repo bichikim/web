@@ -1,7 +1,7 @@
-const path = require('path')
-process.env.TZ = 'Europe/London'
+import type {Config} from 'jest'
+// process.env.TZ = 'Europe/London'
 // for wallaby runtime
-module.exports = {
+const config: Config = {
   collectCoverageFrom: [
     '<rootDir>/packages/*/src/**/*.{ts,tsx}',
     '<rootDir>/coong/*/src/**/*.{ts,tsx}',
@@ -21,7 +21,6 @@ module.exports = {
     '\\.(css|scss)$': 'identity-obj-proxy',
     '\\.(jpg|jpeg|png|svg)$': '<rootDir>/__mocks__/file.mock.ts',
     '\\.svg$': '<rootDir>/__mocks__/svg.mock.ts',
-    quasar: 'quasar/dist/quasar.esm.prod',
   },
   projects: [
     {
@@ -29,27 +28,32 @@ module.exports = {
       globals: {
         __DEV__: true,
       },
+      moduleNameMapper: {
+        '\\.(css|scss)$': 'identity-obj-proxy',
+        '\\.(jpg|jpeg|png|svg)$': '<rootDir>/__mocks__/file.mock.ts',
+        '\\.svg$': '<rootDir>/__mocks__/svg.mock.ts',
+      },
       setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
-      // not working
-      // snapshotSerializers: ['jest-stitches'],
-      testEnvironment: 'jest-environment-node',
-
+      testEnvironment: 'jest-environment-jsdom',
       testEnvironmentOptions: {
         customExportConditions: ['node', 'node-addons'],
         url: 'http://localhost/',
       },
       testMatch: [
-        '!<rootDir>/**/*.e2e.ts',
+        '!<rootDir>/**/*.e2e.{ts,tsx}',
         '<rootDir>/packages/*/src/**/__tests__/*.spec.{ts,tsx}',
         '<rootDir>/coong/*/src/**/__tests__/*.spec.{ts,tsx}',
         '<rootDir>/scripts/**/__tests__/*.spec.{ts,tsx}',
-        '<rootDir>/scripts/__tests__/*.spec.{ts,tsx}',
       ],
+      transform: {
+        '^.+\\.jsx?$': 'babel-jest',
+        '^.+\\.tsx?$': 'babel-jest',
+        '^.+\\.vue$': '@vue/vue3-jest',
+      },
       transformIgnorePatterns: ['/node_modules/'],
     },
   ],
 
-  setupFilesAfterEnv: [path.resolve(__dirname, 'jest.setup.ts')],
   testEnvironment: 'jest-environment-node',
 
   testEnvironmentOptions: {
@@ -64,12 +68,12 @@ module.exports = {
   // https://github.com/facebook/jest/issues/6766
 
   transform: {
-    // '.+\\.(css|styl|less|sass|scss|jpg|jpeg|png|svg|gif|eot|otf|webp|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$':
-    //   require.resolve('jest-transform-stub'),
-    '^.+\\.jsx?$': require.resolve('babel-jest'),
-    '^.+\\.tsx?$': require.resolve('babel-jest'),
+    '^.+\\.jsx?$': 'babel-jest',
+    '^.+\\.tsx?$': 'babel-jest',
     '^.+\\.vue$': '@vue/vue3-jest',
   },
 
-  transformIgnorePatterns: ['/node_modules/'],
+  transformIgnorePatterns: ['/node_modules/', '!/node_modules/@tanstack/vue-query/'],
 }
+
+export default config

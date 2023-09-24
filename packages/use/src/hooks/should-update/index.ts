@@ -1,4 +1,4 @@
-import {isSSR} from '@winter-love/utils'
+import {getWindow} from '@winter-love/utils'
 import {useDebounce} from 'src/hooks/debounce'
 import {watch} from 'vue'
 import {useConnection} from 'src/hooks/connection'
@@ -45,7 +45,7 @@ export interface OnShouldUpdateOptions {
 }
 
 export const isVisible = () => {
-  if (isSSR()) {
+  if (!getWindow()) {
     return false
   }
   return document.visibilityState !== 'hidden'
@@ -63,6 +63,7 @@ export const onShouldUpdate = (
   handle?: OnShouldUpdateHandle,
   options: OnShouldUpdateOptions = {},
 ) => {
+  const window = getWindow()
   const {
     firstExecute = true,
     windowFocus = true,
@@ -76,7 +77,7 @@ export const onShouldUpdate = (
   // noinspection SuspiciousTypeOfGuard
   const debounceWait = typeof debounce === 'boolean' ? defaultDebounceWait : debounce
 
-  const thisDocument = isSSR() ? null : window.document
+  const thisDocument = window?.document ?? null
 
   const onHandle = () => {
     handle?.()

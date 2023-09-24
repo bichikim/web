@@ -46,6 +46,7 @@
     "vue": "^3.3.4"
   },
   "devDependencies": {
+    "@vue/shared": "^3.3.4",
     "@types/sinon": "10.0.16",
     "@vue/server-renderer": "^3.3.4"
   },

@@ -1,3 +1,4 @@
+export * from './animation-loop'
 export * from './animation-repeater'
 export * from './blur'
 export * from './click-outside'

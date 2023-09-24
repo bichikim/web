@@ -1,5 +1,5 @@
-import {getWindow} from 'src/dom/get-window'
+import {getWindow} from '../get-window'
 
-export const getDocument = () => {
+export const getDocument = (): Document | undefined => {
   return getWindow()?.document
 }

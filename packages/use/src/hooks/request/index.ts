@@ -1,5 +1,5 @@
 import {onEvent} from 'src/hooks/event'
-import {EmptyObject, isSSR} from '@winter-love/utils'
+import {EmptyObject, getWindow} from '@winter-love/utils'
 import {clone} from '@winter-love/lodash'
 import {
   computed,
@@ -69,10 +69,12 @@ export const useRequest =
     options?: BaseOptions<R, P>,
     // eslint-disable-next-line max-statements
   ) =>
+  // eslint-disable-next-line max-statements
   (
     _payload?: Ref<P> | UnwrapNestedRefs<P> | P,
     innerOptions?: BaseOptions<R, P>,
   ): RequestResult<R, P> => {
+    const window = getWindow()
     const newOptions = {...options, ...innerOptions}
     const {
       initialData,
@@ -128,7 +130,7 @@ export const useRequest =
       return run(previousPayload.value)
     }
 
-    if (!isSSR()) {
+    if (!window) {
       onEvent(window, 'focus', () => {
         if (refreshOnWindowFocusRef.value) {
           // eslint-disable-next-line @typescript-eslint/no-floating-promises

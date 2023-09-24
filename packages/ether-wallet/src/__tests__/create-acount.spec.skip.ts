@@ -5,11 +5,11 @@ describe('createEthereumWallet', () => {
     // fix ethers nextTick Error
     let keep: any
     beforeAll(() => {
-      keep = globalThis.setImmediate
-      globalThis.setImmediate = undefined as any
+      keep = window.setImmediate
+      window.setImmediate = undefined as any
     })
     afterAll(() => {
-      globalThis.setImmediate = keep
+      window.setImmediate = keep
     })
     it('should create an account', () => {
       const wallet = createEthereumWallet()

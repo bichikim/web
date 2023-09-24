@@ -1,4 +1,4 @@
-import {pipe} from 'src/function/pipe'
+import {pipe} from 'src/factory/pipe'
 import {PureObject} from 'src/types'
 
 const {entries, fromEntries} = Object

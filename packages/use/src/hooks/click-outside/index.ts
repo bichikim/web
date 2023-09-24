@@ -1,4 +1,4 @@
-import {isSSR} from '@winter-love/utils'
+import {getWindow} from '@winter-love/utils'
 import {mutRef} from 'src/refs'
 import {resolveElement} from 'src/utils/resolve-element'
 import {MaybeElement} from 'src/types'
@@ -39,7 +39,7 @@ export const onClickOutside = <Event extends keyof WindowEventMap = 'pointerdown
     handle(event)
   }
 
-  return onEvent<Event>(isSSR() ? undefined : window, event as Event, listener, {
+  return onEvent<Event>(getWindow(), event as Event, listener, {
     passive: true,
   })
 }

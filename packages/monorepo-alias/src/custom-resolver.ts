@@ -15,12 +15,12 @@ export const createCustomResolver = (options) => {
     workspacePaths = [],
     root = './',
     osPathDelimiter = process.platform === 'win32' ? '\\' : '/',
-    sourceRoot,
+    // sourceRoot,
   } = options
 
   const rootRegexp = createRootRegexp(root, osPathDelimiter)
 
-  const workspaceRegexps = getWorkspacePath(workspacePaths, sourceRoot)
+  const workspaceRegexps = getWorkspacePath(workspacePaths)
 
   return (source: string, importer: undefined | string) => {
     if (!importer) {

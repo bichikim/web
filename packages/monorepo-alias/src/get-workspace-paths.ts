@@ -1,7 +1,4 @@
-export const getWorkspacePath = (
-  workspacePaths?: (string | RegExp)[],
-  sourceRoot?: string,
-) => {
+export const getWorkspacePath = (workspacePaths?: (string | RegExp)[]) => {
   if (!workspacePaths) {
     return []
   }

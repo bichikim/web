@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 import {flushPromises, mount} from '@vue/test-utils'
-import {isSSR} from '@winter-love/utils'
+import {getWindow} from '@winter-love/utils'
 import {defineComponent, h, ref} from 'vue'
 import {onIntersection} from '../'
 
@@ -10,11 +10,11 @@ jest.mock('@winter-love/utils', () => {
   const actual = jest.requireActual('@winter-love/utils')
   return {
     ...actual,
-    isSSR: jest.fn(actual.isSSR),
+    getWindow: jest.fn(actual.getWindow),
   }
 })
 
-const _isSSR = jest.mocked(isSSR)
+const _getWindow = jest.mocked(getWindow)
 
 describe('on-element-intersection', () => {
   const setup = () => {
@@ -77,7 +77,7 @@ describe('on-element-intersection', () => {
     ;(window as any).IntersectionObserver = observerMock
 
     const teardown = () => {
-      _isSSR.mockClear()
+      _getWindow.mockClear()
       window.IntersectionObserver = originalObserver
     }
 
@@ -136,7 +136,7 @@ describe('on-element-intersection', () => {
   })
 
   it('should not run any in SSR environment', async () => {
-    _isSSR.mockReturnValueOnce(true)
+    _getWindow.mockReturnValueOnce(undefined)
     const {teardown, observerMock} = setup()
     expect(observerMock).not.toHaveBeenCalled()
 

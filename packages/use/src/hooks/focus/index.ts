@@ -1,5 +1,5 @@
 import {onEvent} from 'src/hooks/event'
-import {isSSR} from '@winter-love/utils'
+import {getWindow} from '@winter-love/utils'
 
 export type FocusHandle = () => unknown
 
@@ -8,7 +8,8 @@ export type FocusHandle = () => unknown
  * @param handle
  */
 export const onFocus = (handle?: FocusHandle) => {
-  if (isSSR()) {
+  const window = getWindow()
+  if (!window) {
     return
   }
 

@@ -384,7 +384,7 @@ export const createVueStitches = <
               class: null,
               css: null,
             },
-      setup: (props, {slots}) => {
+      setup: (props: any, {slots}) => {
         const asRef = toRef(props, 'as')
 
         const elementRef = computed(() => {

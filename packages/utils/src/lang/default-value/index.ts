@@ -1,4 +1,4 @@
-import {toValue} from 'src/function/to-value'
+import {toValue} from 'src/factory/to-value'
 import {MaybeFunction} from 'src/types'
 import {isUndefined} from 'src/validate/is-undefined'
 

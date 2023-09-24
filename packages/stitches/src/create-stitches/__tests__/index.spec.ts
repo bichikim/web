@@ -1,3 +1,6 @@
+/**
+ * @jest-environment node
+ */
 import {nodeParse} from '@winter-love/vue-test'
 import {renderToString} from '@vue/server-renderer'
 import {createSSRApp, defineComponent, h, withDirectives} from 'vue'
