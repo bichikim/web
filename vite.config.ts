@@ -1,6 +1,6 @@
 /// <reference types="histoire" />
 import {fileURLToPath, URL} from 'node:url'
-import {viteAlias} from './scripts/vite-alias'
+import {monorepoAlias} from 'packages/vite-monorepo-alias'
 import {defineConfig} from 'vite'
 import vue from '@vitejs/plugin-vue'
 import path from 'node:path'
@@ -29,21 +29,12 @@ export default defineConfig({
   plugins: [
     // Vite Plugins
     vue(),
+    monorepoAlias({
+      root: fileURLToPath(new URL('./', import.meta.url)),
+      sourceRoot: 'src',
+      workspacePaths: [/^\/coong\//u, /^\/packages\//u],
+    }),
   ],
-
-  resolve: {
-    alias: [
-      viteAlias({
-        alias: 'src',
-        osPathDelimiter: path.delimiter,
-        root: fileURLToPath(new URL('./', import.meta.url)),
-        workspacePaths: [
-          /^\/apps\/[-/._a-zA-Z0-9]+\/src\//u,
-          /^\/packages\/[-/._a-zA-Z0-9]+\/src\//u,
-        ],
-      }),
-    ],
-  },
 })
 
 console.info('vite histoire debug', fileURLToPath(new URL('./', import.meta.url)))

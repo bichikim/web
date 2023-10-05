@@ -8,5 +8,5 @@ export const createRootRegexp = (root: string, osPathDelimiter: string) => {
 
   const rootPath = changePathDelimiter(purePath, osPathDelimiter, '/')
 
-  return RegExp(`^${windowRoot}${trimPathRight(rootPath)}`, 'u')
+  return RegExp(`^${windowRoot ?? ''}${trimPathRight(rootPath)}`, 'u')
 }
