@@ -1,4 +1,9 @@
-import {booleanAttr, booleanTupleAttr, dataAttrKey, dataBooleanAttrs} from '../data-boolean-attrs'
+import {
+  booleanAttr,
+  booleanTupleAttr,
+  dataAttrKey,
+  dataBooleanAttrs,
+} from '../data-boolean-attrs'
 
 describe('dataAttrKey', () => {
   it('should return data attr key', () => {

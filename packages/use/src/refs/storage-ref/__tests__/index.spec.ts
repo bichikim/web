@@ -1,6 +1,7 @@
 import {flushPromises} from '@winter-love/vue-test'
 import {storage} from '@winter-love/utils'
 import {storageRef} from '../'
+import {effectScope} from 'vue'
 
 jest.mock('@winter-love/utils', () => {
   const actual = jest.requireActual('@winter-love/utils')
@@ -16,7 +17,10 @@ describe('storageRef ', () => {
   })
   it('should pass options', () => {
     const name = '__foo__'
-    storageRef('cookie', name, undefined, {expires: 30})
+    const scope = effectScope()
+    scope.run(() => {
+      storageRef('cookie', name, undefined, {expires: 30})
+    })
     expect(storage).toBeCalledWith('cookie', {
       expires: 30,
     })
@@ -24,7 +28,10 @@ describe('storageRef ', () => {
   it('should save init value with empty localStorage', () => {
     const name = '__foo__'
     const value = 'hello'
-    storageRef('local', name, value)
+    const scope = effectScope()
+    scope.run(() => {
+      storageRef('local', name, value)
+    })
 
     expect(window.localStorage.getItem(name)).toBe(JSON.stringify(value))
     window.localStorage.clear()
@@ -34,7 +41,10 @@ describe('storageRef ', () => {
     const value = 'hello'
     const value2 = 'hell'
     window.localStorage.setItem(name, JSON.stringify(value2))
-    storageRef('local', name, value)
+    const scope = effectScope()
+    scope.run(() => {
+      storageRef('local', name, value)
+    })
     expect(window.localStorage.getItem(name)).toBe(JSON.stringify(value2))
     window.localStorage.clear()
   })
