@@ -77,6 +77,7 @@ export { PostUpdateManyWithoutAuthorNestedInput } from "./PostUpdateManyWithoutA
 export { PostUpdateManyWithoutLikesNestedInput } from "./PostUpdateManyWithoutLikesNestedInput";
 export { PostUpdateManyWithoutTagsNestedInput } from "./PostUpdateManyWithoutTagsNestedInput";
 export { PostUpdateOneRequiredWithoutCommentsNestedInput } from "./PostUpdateOneRequiredWithoutCommentsNestedInput";
+export { PostUpdateToOneWithWhereWithoutCommentsInput } from "./PostUpdateToOneWithWhereWithoutCommentsInput";
 export { PostUpdateWithWhereUniqueWithoutAuthorInput } from "./PostUpdateWithWhereUniqueWithoutAuthorInput";
 export { PostUpdateWithWhereUniqueWithoutLikesInput } from "./PostUpdateWithWhereUniqueWithoutLikesInput";
 export { PostUpdateWithWhereUniqueWithoutTagsInput } from "./PostUpdateWithWhereUniqueWithoutTagsInput";
@@ -164,6 +165,8 @@ export { UserUpdateManyWithoutFollowingNestedInput } from "./UserUpdateManyWitho
 export { UserUpdateManyWithoutLikePostsNestedInput } from "./UserUpdateManyWithoutLikePostsNestedInput";
 export { UserUpdateOneRequiredWithoutCommentsNestedInput } from "./UserUpdateOneRequiredWithoutCommentsNestedInput";
 export { UserUpdateOneRequiredWithoutPostsNestedInput } from "./UserUpdateOneRequiredWithoutPostsNestedInput";
+export { UserUpdateToOneWithWhereWithoutCommentsInput } from "./UserUpdateToOneWithWhereWithoutCommentsInput";
+export { UserUpdateToOneWithWhereWithoutPostsInput } from "./UserUpdateToOneWithWhereWithoutPostsInput";
 export { UserUpdateWithWhereUniqueWithoutFollowersInput } from "./UserUpdateWithWhereUniqueWithoutFollowersInput";
 export { UserUpdateWithWhereUniqueWithoutFollowingInput } from "./UserUpdateWithWhereUniqueWithoutFollowingInput";
 export { UserUpdateWithWhereUniqueWithoutLikePostsInput } from "./UserUpdateWithWhereUniqueWithoutLikePostsInput";

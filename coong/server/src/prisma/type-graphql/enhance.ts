@@ -8,6 +8,8 @@ import * as models from "./models";
 import * as outputTypes from "./resolvers/outputs";
 import * as inputTypes from "./resolvers/inputs";
 
+export type MethodDecoratorOverrideFn = (decorators: MethodDecorator[]) => MethodDecorator[];
+
 const crudResolversMap = {
   User: crudResolvers.UserCrudResolver,
   Post: crudResolvers.PostCrudResolver,
@@ -153,7 +155,12 @@ type ModelResolverActionNames<
 
 export type ResolverActionsConfig<
   TModel extends ResolverModelNames
-> = Partial<Record<ModelResolverActionNames<TModel> | "_all", MethodDecorator[]>>;
+> = Partial<Record<ModelResolverActionNames<TModel>, MethodDecorator[] | MethodDecoratorOverrideFn>>
+  & {
+    _all?: MethodDecorator[];
+    _query?: MethodDecorator[];
+    _mutation?: MethodDecorator[];
+  };
 
 export type ResolversEnhanceMap = {
   [TModel in ResolverModelNames]?: ResolverActionsConfig<TModel>;
@@ -162,29 +169,32 @@ export type ResolversEnhanceMap = {
 export function applyResolversEnhanceMap(
   resolversEnhanceMap: ResolversEnhanceMap,
 ) {
+  const mutationOperationPrefixes = [
+    "createOne", "createMany", "deleteOne", "updateOne", "deleteMany", "updateMany", "upsertOne"
+  ];
   for (const resolversEnhanceMapKey of Object.keys(resolversEnhanceMap)) {
     const modelName = resolversEnhanceMapKey as keyof typeof resolversEnhanceMap;
     const crudTarget = crudResolversMap[modelName].prototype;
     const resolverActionsConfig = resolversEnhanceMap[modelName]!;
     const actionResolversConfig = actionResolversMap[modelName];
-    if (resolverActionsConfig._all) {
-      const allActionsDecorators = resolverActionsConfig._all;
-      const resolverActionNames = crudResolversInfo[modelName as keyof typeof crudResolversInfo];
-      for (const resolverActionName of resolverActionNames) {
-        const actionTarget = (actionResolversConfig[
-          resolverActionName as keyof typeof actionResolversConfig
-        ] as Function).prototype;
-        tslib.__decorate(allActionsDecorators, crudTarget, resolverActionName, null);
-        tslib.__decorate(allActionsDecorators, actionTarget, resolverActionName, null);
-      }
-    }
-    const resolverActionsToApply = Object.keys(resolverActionsConfig).filter(
-      it => it !== "_all"
-    );
-    for (const resolverActionName of resolverActionsToApply) {
-      const decorators = resolverActionsConfig[
+    const allActionsDecorators = resolverActionsConfig._all;
+    const resolverActionNames = crudResolversInfo[modelName as keyof typeof crudResolversInfo];
+    for (const resolverActionName of resolverActionNames) {
+      const maybeDecoratorsOrFn = resolverActionsConfig[
         resolverActionName as keyof typeof resolverActionsConfig
-      ] as MethodDecorator[];
+      ] as MethodDecorator[] | MethodDecoratorOverrideFn | undefined;
+      const isWriteOperation = mutationOperationPrefixes.some(prefix => resolverActionName.startsWith(prefix));
+      const operationKindDecorators = isWriteOperation ? resolverActionsConfig._mutation : resolverActionsConfig._query;
+      const mainDecorators = [
+        ...allActionsDecorators ?? [],
+        ...operationKindDecorators ?? [],
+      ]
+      let decorators: MethodDecorator[];
+      if (typeof maybeDecoratorsOrFn === "function") {
+        decorators = maybeDecoratorsOrFn(mainDecorators);
+      } else {
+        decorators = [...mainDecorators, ...maybeDecoratorsOrFn ?? []];
+      }
       const actionTarget = (actionResolversConfig[
         resolverActionName as keyof typeof actionResolversConfig
       ] as Function).prototype;
@@ -251,7 +261,8 @@ type RelationResolverActionNames<
 > = keyof typeof relationResolversMap[TModel]["prototype"];
 
 export type RelationResolverActionsConfig<TModel extends RelationResolverModelNames>
-  = Partial<Record<RelationResolverActionNames<TModel> | "_all", MethodDecorator[]>>;
+  = Partial<Record<RelationResolverActionNames<TModel>, MethodDecorator[] | MethodDecoratorOverrideFn>>
+  & { _all?: MethodDecorator[] };
 
 export type RelationResolversEnhanceMap = {
   [TModel in RelationResolverModelNames]?: RelationResolverActionsConfig<TModel>;
@@ -264,20 +275,18 @@ export function applyRelationResolversEnhanceMap(
     const modelName = relationResolversEnhanceMapKey as keyof typeof relationResolversEnhanceMap;
     const relationResolverTarget = relationResolversMap[modelName].prototype;
     const relationResolverActionsConfig = relationResolversEnhanceMap[modelName]!;
-    if (relationResolverActionsConfig._all) {
-      const allActionsDecorators = relationResolverActionsConfig._all;
-      const relationResolverActionNames = relationResolversInfo[modelName as keyof typeof relationResolversInfo];
-      for (const relationResolverActionName of relationResolverActionNames) {
-        tslib.__decorate(allActionsDecorators, relationResolverTarget, relationResolverActionName, null);
-      }
-    }
-    const relationResolverActionsToApply = Object.keys(relationResolverActionsConfig).filter(
-      it => it !== "_all"
-    );
-    for (const relationResolverActionName of relationResolverActionsToApply) {
-      const decorators = relationResolverActionsConfig[
+    const allActionsDecorators = relationResolverActionsConfig._all ?? [];
+    const relationResolverActionNames = relationResolversInfo[modelName as keyof typeof relationResolversInfo];
+    for (const relationResolverActionName of relationResolverActionNames) {
+      const maybeDecoratorsOrFn = relationResolverActionsConfig[
         relationResolverActionName as keyof typeof relationResolverActionsConfig
-      ] as MethodDecorator[];
+      ] as MethodDecorator[] | MethodDecoratorOverrideFn | undefined;
+      let decorators: MethodDecorator[];
+      if (typeof maybeDecoratorsOrFn === "function") {
+        decorators = maybeDecoratorsOrFn(allActionsDecorators);
+      } else {
+        decorators = [...allActionsDecorators, ...maybeDecoratorsOrFn ?? []];
+      }
       tslib.__decorate(decorators, relationResolverTarget, relationResolverActionName, null);
     }
   }
@@ -288,9 +297,11 @@ type TypeConfig = {
   fields?: FieldsConfig;
 };
 
+export type PropertyDecoratorOverrideFn = (decorators: PropertyDecorator[]) => PropertyDecorator[];
+
 type FieldsConfig<TTypeKeys extends string = string> = Partial<
-  Record<TTypeKeys | "_all", PropertyDecorator[]>
->;
+  Record<TTypeKeys, PropertyDecorator[] | PropertyDecoratorOverrideFn>
+> & { _all?: PropertyDecorator[] };
 
 function applyTypeClassEnhanceConfig<
   TEnhanceConfig extends TypeConfig,
@@ -305,18 +316,18 @@ function applyTypeClassEnhanceConfig<
     tslib.__decorate(enhanceConfig.class, typeClass);
   }
   if (enhanceConfig.fields) {
-    if (enhanceConfig.fields._all) {
-      const allFieldsDecorators = enhanceConfig.fields._all;
-      for (const typeFieldName of typeFieldNames) {
-        tslib.__decorate(allFieldsDecorators, typePrototype, typeFieldName, void 0);
+    const allFieldsDecorators = enhanceConfig.fields._all ?? [];
+    for (const typeFieldName of typeFieldNames) {
+      const maybeDecoratorsOrFn = enhanceConfig.fields[
+        typeFieldName
+      ] as PropertyDecorator[] | PropertyDecoratorOverrideFn | undefined;
+      let decorators: PropertyDecorator[];
+      if (typeof maybeDecoratorsOrFn === "function") {
+        decorators = maybeDecoratorsOrFn(allFieldsDecorators);
+      } else {
+        decorators = [...allFieldsDecorators, ...maybeDecoratorsOrFn ?? []];
       }
-    }
-    const configFieldsToApply = Object.keys(enhanceConfig.fields).filter(
-      it => it !== "_all"
-    );
-    for (const typeFieldName of configFieldsToApply) {
-      const fieldDecorators = enhanceConfig.fields[typeFieldName]!;
-      tslib.__decorate(fieldDecorators, typePrototype, typeFieldName, void 0);
+      tslib.__decorate(decorators, typePrototype, typeFieldName, void 0);
     }
   }
 }
@@ -428,46 +439,46 @@ export function applyOutputTypesEnhanceMap(
 }
 
 const inputsInfo = {
-  UserWhereInput: ["AND", "OR", "NOT", "id", "email", "name", "password", "followers", "followerIDs", "following", "followingIDs", "likePosts", "likePostIDs", "posts", "comments", "roles"],
-  UserOrderByWithRelationInput: ["id", "email", "name", "password", "followers", "followerIDs", "following", "followingIDs", "likePosts", "likePostIDs", "posts", "comments", "roles"],
-  UserWhereUniqueInput: ["id", "email"],
+  UserWhereInput: ["AND", "OR", "NOT", "id", "email", "name", "password", "followerIDs", "followingIDs", "likePostIDs", "roles", "followers", "following", "likePosts", "posts", "comments"],
+  UserOrderByWithRelationInput: ["id", "email", "name", "password", "followerIDs", "followingIDs", "likePostIDs", "roles", "followers", "following", "likePosts", "posts", "comments"],
+  UserWhereUniqueInput: ["id", "email", "AND", "OR", "NOT", "name", "password", "followerIDs", "followingIDs", "likePostIDs", "roles", "followers", "following", "likePosts", "posts", "comments"],
   UserOrderByWithAggregationInput: ["id", "email", "name", "password", "followerIDs", "followingIDs", "likePostIDs", "roles", "_count", "_max", "_min"],
   UserScalarWhereWithAggregatesInput: ["AND", "OR", "NOT", "id", "email", "name", "password", "followerIDs", "followingIDs", "likePostIDs", "roles"],
-  PostWhereInput: ["AND", "OR", "NOT", "id", "title", "message", "author", "authorId", "likes", "likeIDs", "tags", "tagIDs", "comments"],
-  PostOrderByWithRelationInput: ["id", "title", "message", "author", "authorId", "likes", "likeIDs", "tags", "tagIDs", "comments"],
-  PostWhereUniqueInput: ["id"],
+  PostWhereInput: ["AND", "OR", "NOT", "id", "title", "message", "authorId", "likeIDs", "tagIDs", "author", "likes", "tags", "comments"],
+  PostOrderByWithRelationInput: ["id", "title", "message", "authorId", "likeIDs", "tagIDs", "author", "likes", "tags", "comments"],
+  PostWhereUniqueInput: ["id", "AND", "OR", "NOT", "title", "message", "authorId", "likeIDs", "tagIDs", "author", "likes", "tags", "comments"],
   PostOrderByWithAggregationInput: ["id", "title", "message", "authorId", "likeIDs", "tagIDs", "_count", "_max", "_min"],
   PostScalarWhereWithAggregatesInput: ["AND", "OR", "NOT", "id", "title", "message", "authorId", "likeIDs", "tagIDs"],
-  CommentWhereInput: ["AND", "OR", "NOT", "id", "message", "port", "postId", "author", "authorId"],
-  CommentOrderByWithRelationInput: ["id", "message", "port", "postId", "author", "authorId"],
-  CommentWhereUniqueInput: ["id"],
+  CommentWhereInput: ["AND", "OR", "NOT", "id", "message", "postId", "authorId", "port", "author"],
+  CommentOrderByWithRelationInput: ["id", "message", "postId", "authorId", "port", "author"],
+  CommentWhereUniqueInput: ["id", "AND", "OR", "NOT", "message", "postId", "authorId", "port", "author"],
   CommentOrderByWithAggregationInput: ["id", "message", "postId", "authorId", "_count", "_max", "_min"],
   CommentScalarWhereWithAggregatesInput: ["AND", "OR", "NOT", "id", "message", "postId", "authorId"],
-  TagWhereInput: ["AND", "OR", "NOT", "id", "name", "posts", "postIDs"],
-  TagOrderByWithRelationInput: ["id", "name", "posts", "postIDs"],
-  TagWhereUniqueInput: ["id"],
+  TagWhereInput: ["AND", "OR", "NOT", "id", "name", "postIDs", "posts"],
+  TagOrderByWithRelationInput: ["id", "name", "postIDs", "posts"],
+  TagWhereUniqueInput: ["id", "AND", "OR", "NOT", "name", "postIDs", "posts"],
   TagOrderByWithAggregationInput: ["id", "name", "postIDs", "_count", "_max", "_min"],
   TagScalarWhereWithAggregatesInput: ["AND", "OR", "NOT", "id", "name", "postIDs"],
-  UserCreateInput: ["id", "email", "name", "password", "followers", "followerIDs", "following", "followingIDs", "likePosts", "likePostIDs", "posts", "comments", "roles"],
-  UserUpdateInput: ["email", "name", "password", "followers", "followerIDs", "following", "followingIDs", "likePosts", "likePostIDs", "posts", "comments", "roles"],
+  UserCreateInput: ["id", "email", "name", "password", "roles", "followers", "following", "likePosts", "posts", "comments"],
+  UserUpdateInput: ["email", "name", "password", "roles", "followers", "following", "likePosts", "posts", "comments"],
   UserCreateManyInput: ["id", "email", "name", "password", "followerIDs", "followingIDs", "likePostIDs", "roles"],
-  UserUpdateManyMutationInput: ["email", "name", "password", "followerIDs", "followingIDs", "likePostIDs", "roles"],
-  PostCreateInput: ["id", "title", "message", "author", "likes", "likeIDs", "tags", "tagIDs", "comments"],
-  PostUpdateInput: ["title", "message", "author", "likes", "likeIDs", "tags", "tagIDs", "comments"],
+  UserUpdateManyMutationInput: ["email", "name", "password", "roles"],
+  PostCreateInput: ["id", "title", "message", "author", "likes", "tags", "comments"],
+  PostUpdateInput: ["title", "message", "author", "likes", "tags", "comments"],
   PostCreateManyInput: ["id", "title", "message", "authorId", "likeIDs", "tagIDs"],
-  PostUpdateManyMutationInput: ["title", "message", "likeIDs", "tagIDs"],
+  PostUpdateManyMutationInput: ["title", "message"],
   CommentCreateInput: ["id", "message", "port", "author"],
   CommentUpdateInput: ["message", "port", "author"],
   CommentCreateManyInput: ["id", "message", "postId", "authorId"],
   CommentUpdateManyMutationInput: ["message"],
-  TagCreateInput: ["id", "name", "posts", "postIDs"],
-  TagUpdateInput: ["name", "posts", "postIDs"],
+  TagCreateInput: ["id", "name", "posts"],
+  TagUpdateInput: ["name", "posts"],
   TagCreateManyInput: ["id", "name", "postIDs"],
-  TagUpdateManyMutationInput: ["name", "postIDs"],
+  TagUpdateManyMutationInput: ["name"],
   StringFilter: ["equals", "in", "notIn", "lt", "lte", "gt", "gte", "contains", "startsWith", "endsWith", "mode", "not"],
   StringNullableFilter: ["equals", "in", "notIn", "lt", "lte", "gt", "gte", "contains", "startsWith", "endsWith", "mode", "not", "isSet"],
-  UserListRelationFilter: ["every", "some", "none"],
   StringNullableListFilter: ["equals", "has", "hasEvery", "hasSome", "isEmpty"],
+  UserListRelationFilter: ["every", "some", "none"],
   PostListRelationFilter: ["every", "some", "none"],
   CommentListRelationFilter: ["every", "some", "none"],
   UserOrderByRelationAggregateInput: ["_count"],
@@ -491,38 +502,38 @@ const inputsInfo = {
   TagCountOrderByAggregateInput: ["id", "name", "postIDs"],
   TagMaxOrderByAggregateInput: ["id", "name"],
   TagMinOrderByAggregateInput: ["id", "name"],
+  UserCreaterolesInput: ["set"],
   UserCreateNestedManyWithoutFollowingInput: ["create", "connectOrCreate", "connect"],
-  UserCreatefollowerIDsInput: ["set"],
   UserCreateNestedManyWithoutFollowersInput: ["create", "connectOrCreate", "connect"],
-  UserCreatefollowingIDsInput: ["set"],
   PostCreateNestedManyWithoutLikesInput: ["create", "connectOrCreate", "connect"],
-  UserCreatelikePostIDsInput: ["set"],
   PostCreateNestedManyWithoutAuthorInput: ["create", "connectOrCreate", "createMany", "connect"],
   CommentCreateNestedManyWithoutAuthorInput: ["create", "connectOrCreate", "createMany", "connect"],
-  UserCreaterolesInput: ["set"],
+  UserCreatefollowerIDsInput: ["set"],
+  UserCreatefollowingIDsInput: ["set"],
+  UserCreatelikePostIDsInput: ["set"],
   StringFieldUpdateOperationsInput: ["set"],
   NullableStringFieldUpdateOperationsInput: ["set", "unset"],
+  UserUpdaterolesInput: ["set", "push"],
   UserUpdateManyWithoutFollowingNestedInput: ["create", "connectOrCreate", "upsert", "set", "disconnect", "delete", "connect", "update", "updateMany", "deleteMany"],
-  UserUpdatefollowerIDsInput: ["set", "push"],
   UserUpdateManyWithoutFollowersNestedInput: ["create", "connectOrCreate", "upsert", "set", "disconnect", "delete", "connect", "update", "updateMany", "deleteMany"],
-  UserUpdatefollowingIDsInput: ["set", "push"],
   PostUpdateManyWithoutLikesNestedInput: ["create", "connectOrCreate", "upsert", "set", "disconnect", "delete", "connect", "update", "updateMany", "deleteMany"],
-  UserUpdatelikePostIDsInput: ["set", "push"],
   PostUpdateManyWithoutAuthorNestedInput: ["create", "connectOrCreate", "upsert", "createMany", "set", "disconnect", "delete", "connect", "update", "updateMany", "deleteMany"],
   CommentUpdateManyWithoutAuthorNestedInput: ["create", "connectOrCreate", "upsert", "createMany", "set", "disconnect", "delete", "connect", "update", "updateMany", "deleteMany"],
-  UserUpdaterolesInput: ["set", "push"],
+  UserUpdatefollowerIDsInput: ["set", "push"],
+  UserUpdatefollowingIDsInput: ["set", "push"],
+  UserUpdatelikePostIDsInput: ["set", "push"],
   UserCreateNestedOneWithoutPostsInput: ["create", "connectOrCreate", "connect"],
   UserCreateNestedManyWithoutLikePostsInput: ["create", "connectOrCreate", "connect"],
-  PostCreatelikeIDsInput: ["set"],
   TagCreateNestedManyWithoutPostsInput: ["create", "connectOrCreate", "connect"],
-  PostCreatetagIDsInput: ["set"],
   CommentCreateNestedManyWithoutPortInput: ["create", "connectOrCreate", "createMany", "connect"],
+  PostCreatelikeIDsInput: ["set"],
+  PostCreatetagIDsInput: ["set"],
   UserUpdateOneRequiredWithoutPostsNestedInput: ["create", "connectOrCreate", "upsert", "connect", "update"],
   UserUpdateManyWithoutLikePostsNestedInput: ["create", "connectOrCreate", "upsert", "set", "disconnect", "delete", "connect", "update", "updateMany", "deleteMany"],
-  PostUpdatelikeIDsInput: ["set", "push"],
   TagUpdateManyWithoutPostsNestedInput: ["create", "connectOrCreate", "upsert", "set", "disconnect", "delete", "connect", "update", "updateMany", "deleteMany"],
-  PostUpdatetagIDsInput: ["set", "push"],
   CommentUpdateManyWithoutPortNestedInput: ["create", "connectOrCreate", "upsert", "createMany", "set", "disconnect", "delete", "connect", "update", "updateMany", "deleteMany"],
+  PostUpdatelikeIDsInput: ["set", "push"],
+  PostUpdatetagIDsInput: ["set", "push"],
   PostCreateNestedOneWithoutCommentsInput: ["create", "connectOrCreate", "connect"],
   UserCreateNestedOneWithoutCommentsInput: ["create", "connectOrCreate", "connect"],
   PostUpdateOneRequiredWithoutCommentsNestedInput: ["create", "connectOrCreate", "upsert", "connect", "update"],
@@ -537,13 +548,13 @@ const inputsInfo = {
   NestedIntFilter: ["equals", "in", "notIn", "lt", "lte", "gt", "gte", "not"],
   NestedStringNullableWithAggregatesFilter: ["equals", "in", "notIn", "lt", "lte", "gt", "gte", "contains", "startsWith", "endsWith", "not", "_count", "_min", "_max", "isSet"],
   NestedIntNullableFilter: ["equals", "in", "notIn", "lt", "lte", "gt", "gte", "not", "isSet"],
-  UserCreateWithoutFollowingInput: ["id", "email", "name", "password", "followers", "followerIDs", "followingIDs", "likePosts", "likePostIDs", "posts", "comments", "roles"],
+  UserCreateWithoutFollowingInput: ["id", "email", "name", "password", "roles", "followers", "likePosts", "posts", "comments"],
   UserCreateOrConnectWithoutFollowingInput: ["where", "create"],
-  UserCreateWithoutFollowersInput: ["id", "email", "name", "password", "followerIDs", "following", "followingIDs", "likePosts", "likePostIDs", "posts", "comments", "roles"],
+  UserCreateWithoutFollowersInput: ["id", "email", "name", "password", "roles", "following", "likePosts", "posts", "comments"],
   UserCreateOrConnectWithoutFollowersInput: ["where", "create"],
-  PostCreateWithoutLikesInput: ["id", "title", "message", "author", "likeIDs", "tags", "tagIDs", "comments"],
+  PostCreateWithoutLikesInput: ["id", "title", "message", "author", "tags", "comments"],
   PostCreateOrConnectWithoutLikesInput: ["where", "create"],
-  PostCreateWithoutAuthorInput: ["id", "title", "message", "likes", "likeIDs", "tags", "tagIDs", "comments"],
+  PostCreateWithoutAuthorInput: ["id", "title", "message", "likes", "tags", "comments"],
   PostCreateOrConnectWithoutAuthorInput: ["where", "create"],
   PostCreateManyAuthorInputEnvelope: ["data"],
   CommentCreateWithoutAuthorInput: ["id", "message", "port"],
@@ -567,17 +578,18 @@ const inputsInfo = {
   CommentUpdateWithWhereUniqueWithoutAuthorInput: ["where", "data"],
   CommentUpdateManyWithWhereWithoutAuthorInput: ["where", "data"],
   CommentScalarWhereInput: ["AND", "OR", "NOT", "id", "message", "postId", "authorId"],
-  UserCreateWithoutPostsInput: ["id", "email", "name", "password", "followers", "followerIDs", "following", "followingIDs", "likePosts", "likePostIDs", "comments", "roles"],
+  UserCreateWithoutPostsInput: ["id", "email", "name", "password", "roles", "followers", "following", "likePosts", "comments"],
   UserCreateOrConnectWithoutPostsInput: ["where", "create"],
-  UserCreateWithoutLikePostsInput: ["id", "email", "name", "password", "followers", "followerIDs", "following", "followingIDs", "likePostIDs", "posts", "comments", "roles"],
+  UserCreateWithoutLikePostsInput: ["id", "email", "name", "password", "roles", "followers", "following", "posts", "comments"],
   UserCreateOrConnectWithoutLikePostsInput: ["where", "create"],
-  TagCreateWithoutPostsInput: ["id", "name", "postIDs"],
+  TagCreateWithoutPostsInput: ["id", "name"],
   TagCreateOrConnectWithoutPostsInput: ["where", "create"],
   CommentCreateWithoutPortInput: ["id", "message", "author"],
   CommentCreateOrConnectWithoutPortInput: ["where", "create"],
   CommentCreateManyPortInputEnvelope: ["data"],
-  UserUpsertWithoutPostsInput: ["update", "create"],
-  UserUpdateWithoutPostsInput: ["email", "name", "password", "followers", "followerIDs", "following", "followingIDs", "likePosts", "likePostIDs", "comments", "roles"],
+  UserUpsertWithoutPostsInput: ["update", "create", "where"],
+  UserUpdateToOneWithWhereWithoutPostsInput: ["where", "data"],
+  UserUpdateWithoutPostsInput: ["email", "name", "password", "roles", "followers", "following", "likePosts", "comments"],
   UserUpsertWithWhereUniqueWithoutLikePostsInput: ["where", "update", "create"],
   UserUpdateWithWhereUniqueWithoutLikePostsInput: ["where", "data"],
   UserUpdateManyWithWhereWithoutLikePostsInput: ["where", "data"],
@@ -588,31 +600,33 @@ const inputsInfo = {
   CommentUpsertWithWhereUniqueWithoutPortInput: ["where", "update", "create"],
   CommentUpdateWithWhereUniqueWithoutPortInput: ["where", "data"],
   CommentUpdateManyWithWhereWithoutPortInput: ["where", "data"],
-  PostCreateWithoutCommentsInput: ["id", "title", "message", "author", "likes", "likeIDs", "tags", "tagIDs"],
+  PostCreateWithoutCommentsInput: ["id", "title", "message", "author", "likes", "tags"],
   PostCreateOrConnectWithoutCommentsInput: ["where", "create"],
-  UserCreateWithoutCommentsInput: ["id", "email", "name", "password", "followers", "followerIDs", "following", "followingIDs", "likePosts", "likePostIDs", "posts", "roles"],
+  UserCreateWithoutCommentsInput: ["id", "email", "name", "password", "roles", "followers", "following", "likePosts", "posts"],
   UserCreateOrConnectWithoutCommentsInput: ["where", "create"],
-  PostUpsertWithoutCommentsInput: ["update", "create"],
-  PostUpdateWithoutCommentsInput: ["title", "message", "author", "likes", "likeIDs", "tags", "tagIDs"],
-  UserUpsertWithoutCommentsInput: ["update", "create"],
-  UserUpdateWithoutCommentsInput: ["email", "name", "password", "followers", "followerIDs", "following", "followingIDs", "likePosts", "likePostIDs", "posts", "roles"],
-  PostCreateWithoutTagsInput: ["id", "title", "message", "author", "likes", "likeIDs", "tagIDs", "comments"],
+  PostUpsertWithoutCommentsInput: ["update", "create", "where"],
+  PostUpdateToOneWithWhereWithoutCommentsInput: ["where", "data"],
+  PostUpdateWithoutCommentsInput: ["title", "message", "author", "likes", "tags"],
+  UserUpsertWithoutCommentsInput: ["update", "create", "where"],
+  UserUpdateToOneWithWhereWithoutCommentsInput: ["where", "data"],
+  UserUpdateWithoutCommentsInput: ["email", "name", "password", "roles", "followers", "following", "likePosts", "posts"],
+  PostCreateWithoutTagsInput: ["id", "title", "message", "author", "likes", "comments"],
   PostCreateOrConnectWithoutTagsInput: ["where", "create"],
   PostUpsertWithWhereUniqueWithoutTagsInput: ["where", "update", "create"],
   PostUpdateWithWhereUniqueWithoutTagsInput: ["where", "data"],
   PostUpdateManyWithWhereWithoutTagsInput: ["where", "data"],
   PostCreateManyAuthorInput: ["id", "title", "message", "likeIDs", "tagIDs"],
   CommentCreateManyAuthorInput: ["id", "message", "postId"],
-  UserUpdateWithoutFollowingInput: ["email", "name", "password", "followers", "followerIDs", "followingIDs", "likePosts", "likePostIDs", "posts", "comments", "roles"],
-  UserUpdateWithoutFollowersInput: ["email", "name", "password", "followerIDs", "following", "followingIDs", "likePosts", "likePostIDs", "posts", "comments", "roles"],
-  PostUpdateWithoutLikesInput: ["title", "message", "author", "likeIDs", "tags", "tagIDs", "comments"],
-  PostUpdateWithoutAuthorInput: ["title", "message", "likes", "likeIDs", "tags", "tagIDs", "comments"],
+  UserUpdateWithoutFollowingInput: ["email", "name", "password", "roles", "followers", "likePosts", "posts", "comments"],
+  UserUpdateWithoutFollowersInput: ["email", "name", "password", "roles", "following", "likePosts", "posts", "comments"],
+  PostUpdateWithoutLikesInput: ["title", "message", "author", "tags", "comments"],
+  PostUpdateWithoutAuthorInput: ["title", "message", "likes", "tags", "comments"],
   CommentUpdateWithoutAuthorInput: ["message", "port"],
   CommentCreateManyPortInput: ["id", "message", "authorId"],
-  UserUpdateWithoutLikePostsInput: ["email", "name", "password", "followers", "followerIDs", "following", "followingIDs", "likePostIDs", "posts", "comments", "roles"],
-  TagUpdateWithoutPostsInput: ["name", "postIDs"],
+  UserUpdateWithoutLikePostsInput: ["email", "name", "password", "roles", "followers", "following", "posts", "comments"],
+  TagUpdateWithoutPostsInput: ["name"],
   CommentUpdateWithoutPortInput: ["message", "author"],
-  PostUpdateWithoutTagsInput: ["title", "message", "author", "likes", "likeIDs", "tagIDs", "comments"]
+  PostUpdateWithoutTagsInput: ["title", "message", "author", "likes", "comments"]
 };
 
 type InputTypesNames = keyof typeof inputTypes;

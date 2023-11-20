@@ -3,9 +3,7 @@ import * as GraphQLScalars from "graphql-scalars";
 import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 
-@TypeGraphQL.InputType("CommentCreateManyPortInput", {
-  isAbstract: true
-})
+@TypeGraphQL.InputType("CommentCreateManyPortInput", {})
 export class CommentCreateManyPortInput {
   @TypeGraphQL.Field(_type => String, {
     nullable: true

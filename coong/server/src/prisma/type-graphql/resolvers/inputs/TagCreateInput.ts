@@ -3,11 +3,8 @@ import * as GraphQLScalars from "graphql-scalars";
 import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 import { PostCreateNestedManyWithoutTagsInput } from "../inputs/PostCreateNestedManyWithoutTagsInput";
-import { TagCreatepostIDsInput } from "../inputs/TagCreatepostIDsInput";
 
-@TypeGraphQL.InputType("TagCreateInput", {
-  isAbstract: true
-})
+@TypeGraphQL.InputType("TagCreateInput", {})
 export class TagCreateInput {
   @TypeGraphQL.Field(_type => String, {
     nullable: true
@@ -23,9 +20,4 @@ export class TagCreateInput {
     nullable: true
   })
   posts?: PostCreateNestedManyWithoutTagsInput | undefined;
-
-  @TypeGraphQL.Field(_type => TagCreatepostIDsInput, {
-    nullable: true
-  })
-  postIDs?: TagCreatepostIDsInput | undefined;
 }

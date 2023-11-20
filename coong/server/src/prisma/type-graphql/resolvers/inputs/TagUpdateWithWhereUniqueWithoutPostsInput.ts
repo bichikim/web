@@ -5,9 +5,7 @@ import { DecimalJSScalar } from "../../scalars";
 import { TagUpdateWithoutPostsInput } from "../inputs/TagUpdateWithoutPostsInput";
 import { TagWhereUniqueInput } from "../inputs/TagWhereUniqueInput";
 
-@TypeGraphQL.InputType("TagUpdateWithWhereUniqueWithoutPostsInput", {
-  isAbstract: true
-})
+@TypeGraphQL.InputType("TagUpdateWithWhereUniqueWithoutPostsInput", {})
 export class TagUpdateWithWhereUniqueWithoutPostsInput {
   @TypeGraphQL.Field(_type => TagWhereUniqueInput, {
     nullable: false

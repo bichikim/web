@@ -7,9 +7,7 @@ import { UserCreatefollowingIDsInput } from "../inputs/UserCreatefollowingIDsInp
 import { UserCreatelikePostIDsInput } from "../inputs/UserCreatelikePostIDsInput";
 import { UserCreaterolesInput } from "../inputs/UserCreaterolesInput";
 
-@TypeGraphQL.InputType("UserCreateManyInput", {
-  isAbstract: true
-})
+@TypeGraphQL.InputType("UserCreateManyInput", {})
 export class UserCreateManyInput {
   @TypeGraphQL.Field(_type => String, {
     nullable: true

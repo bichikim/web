@@ -6,9 +6,7 @@ import { Comment } from "../models/Comment";
 import { Post } from "../models/Post";
 import { UserCount } from "../resolvers/outputs/UserCount";
 
-@TypeGraphQL.ObjectType("User", {
-  isAbstract: true
-})
+@TypeGraphQL.ObjectType("User", {})
 export class User {
   @TypeGraphQL.Field(_type => String, {
     nullable: false

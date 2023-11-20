@@ -4,15 +4,11 @@ import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 import { CommentUpdateManyWithoutPortNestedInput } from "../inputs/CommentUpdateManyWithoutPortNestedInput";
 import { NullableStringFieldUpdateOperationsInput } from "../inputs/NullableStringFieldUpdateOperationsInput";
-import { PostUpdatelikeIDsInput } from "../inputs/PostUpdatelikeIDsInput";
-import { PostUpdatetagIDsInput } from "../inputs/PostUpdatetagIDsInput";
 import { StringFieldUpdateOperationsInput } from "../inputs/StringFieldUpdateOperationsInput";
 import { UserUpdateManyWithoutLikePostsNestedInput } from "../inputs/UserUpdateManyWithoutLikePostsNestedInput";
 import { UserUpdateOneRequiredWithoutPostsNestedInput } from "../inputs/UserUpdateOneRequiredWithoutPostsNestedInput";
 
-@TypeGraphQL.InputType("PostUpdateWithoutTagsInput", {
-  isAbstract: true
-})
+@TypeGraphQL.InputType("PostUpdateWithoutTagsInput", {})
 export class PostUpdateWithoutTagsInput {
   @TypeGraphQL.Field(_type => StringFieldUpdateOperationsInput, {
     nullable: true
@@ -33,16 +29,6 @@ export class PostUpdateWithoutTagsInput {
     nullable: true
   })
   likes?: UserUpdateManyWithoutLikePostsNestedInput | undefined;
-
-  @TypeGraphQL.Field(_type => PostUpdatelikeIDsInput, {
-    nullable: true
-  })
-  likeIDs?: PostUpdatelikeIDsInput | undefined;
-
-  @TypeGraphQL.Field(_type => PostUpdatetagIDsInput, {
-    nullable: true
-  })
-  tagIDs?: PostUpdatetagIDsInput | undefined;
 
   @TypeGraphQL.Field(_type => CommentUpdateManyWithoutPortNestedInput, {
     nullable: true

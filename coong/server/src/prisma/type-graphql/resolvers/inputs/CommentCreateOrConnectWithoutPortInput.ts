@@ -5,9 +5,7 @@ import { DecimalJSScalar } from "../../scalars";
 import { CommentCreateWithoutPortInput } from "../inputs/CommentCreateWithoutPortInput";
 import { CommentWhereUniqueInput } from "../inputs/CommentWhereUniqueInput";
 
-@TypeGraphQL.InputType("CommentCreateOrConnectWithoutPortInput", {
-  isAbstract: true
-})
+@TypeGraphQL.InputType("CommentCreateOrConnectWithoutPortInput", {})
 export class CommentCreateOrConnectWithoutPortInput {
   @TypeGraphQL.Field(_type => CommentWhereUniqueInput, {
     nullable: false

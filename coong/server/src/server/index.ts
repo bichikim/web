@@ -19,12 +19,12 @@ export interface ServerStartOptions {
   port?: number
 }
 
-export interface ServerPrePareOptions<Context, Role = any> {
+export interface ServerPrePareOptions<Context extends object, Role = any> {
   authChecker?: AuthChecker<Context, Role>
   emitSchemaFile?: string | boolean | EmitSchemaFileOptions
   optionCache?: boolean
   playground?: boolean
-  resolvers?: NonEmptyArray<ClassFunction> | NonEmptyArray<string>
+  resolvers?: NonEmptyArray<ClassFunction>
 }
 
 export interface PrepareResult {
@@ -34,7 +34,7 @@ export interface PrepareResult {
   server: ApolloServer
 }
 
-export const prepare = async <Context, Role>(
+export const prepare = async <Context extends object, Role>(
   options: ServerPrePareOptions<Context, Role> = {},
 ): Promise<PrepareResult> => {
   const app = express()

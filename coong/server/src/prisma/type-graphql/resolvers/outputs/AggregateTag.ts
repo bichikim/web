@@ -6,9 +6,7 @@ import { TagCountAggregate } from "../outputs/TagCountAggregate";
 import { TagMaxAggregate } from "../outputs/TagMaxAggregate";
 import { TagMinAggregate } from "../outputs/TagMinAggregate";
 
-@TypeGraphQL.ObjectType("AggregateTag", {
-  isAbstract: true
-})
+@TypeGraphQL.ObjectType("AggregateTag", {})
 export class AggregateTag {
   @TypeGraphQL.Field(_type => TagCountAggregate, {
     nullable: true

@@ -10,9 +10,7 @@ import { UserUpdateWithWhereUniqueWithoutFollowersInput } from "../inputs/UserUp
 import { UserUpsertWithWhereUniqueWithoutFollowersInput } from "../inputs/UserUpsertWithWhereUniqueWithoutFollowersInput";
 import { UserWhereUniqueInput } from "../inputs/UserWhereUniqueInput";
 
-@TypeGraphQL.InputType("UserUpdateManyWithoutFollowersNestedInput", {
-  isAbstract: true
-})
+@TypeGraphQL.InputType("UserUpdateManyWithoutFollowersNestedInput", {})
 export class UserUpdateManyWithoutFollowersNestedInput {
   @TypeGraphQL.Field(_type => [UserCreateWithoutFollowersInput], {
     nullable: true

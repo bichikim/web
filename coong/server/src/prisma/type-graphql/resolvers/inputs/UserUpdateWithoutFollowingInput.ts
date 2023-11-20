@@ -8,14 +8,9 @@ import { PostUpdateManyWithoutAuthorNestedInput } from "../inputs/PostUpdateMany
 import { PostUpdateManyWithoutLikesNestedInput } from "../inputs/PostUpdateManyWithoutLikesNestedInput";
 import { StringFieldUpdateOperationsInput } from "../inputs/StringFieldUpdateOperationsInput";
 import { UserUpdateManyWithoutFollowingNestedInput } from "../inputs/UserUpdateManyWithoutFollowingNestedInput";
-import { UserUpdatefollowerIDsInput } from "../inputs/UserUpdatefollowerIDsInput";
-import { UserUpdatefollowingIDsInput } from "../inputs/UserUpdatefollowingIDsInput";
-import { UserUpdatelikePostIDsInput } from "../inputs/UserUpdatelikePostIDsInput";
 import { UserUpdaterolesInput } from "../inputs/UserUpdaterolesInput";
 
-@TypeGraphQL.InputType("UserUpdateWithoutFollowingInput", {
-  isAbstract: true
-})
+@TypeGraphQL.InputType("UserUpdateWithoutFollowingInput", {})
 export class UserUpdateWithoutFollowingInput {
   @TypeGraphQL.Field(_type => StringFieldUpdateOperationsInput, {
     nullable: true
@@ -32,30 +27,20 @@ export class UserUpdateWithoutFollowingInput {
   })
   password?: NullableStringFieldUpdateOperationsInput | undefined;
 
+  @TypeGraphQL.Field(_type => UserUpdaterolesInput, {
+    nullable: true
+  })
+  roles?: UserUpdaterolesInput | undefined;
+
   @TypeGraphQL.Field(_type => UserUpdateManyWithoutFollowingNestedInput, {
     nullable: true
   })
   followers?: UserUpdateManyWithoutFollowingNestedInput | undefined;
 
-  @TypeGraphQL.Field(_type => UserUpdatefollowerIDsInput, {
-    nullable: true
-  })
-  followerIDs?: UserUpdatefollowerIDsInput | undefined;
-
-  @TypeGraphQL.Field(_type => UserUpdatefollowingIDsInput, {
-    nullable: true
-  })
-  followingIDs?: UserUpdatefollowingIDsInput | undefined;
-
   @TypeGraphQL.Field(_type => PostUpdateManyWithoutLikesNestedInput, {
     nullable: true
   })
   likePosts?: PostUpdateManyWithoutLikesNestedInput | undefined;
-
-  @TypeGraphQL.Field(_type => UserUpdatelikePostIDsInput, {
-    nullable: true
-  })
-  likePostIDs?: UserUpdatelikePostIDsInput | undefined;
 
   @TypeGraphQL.Field(_type => PostUpdateManyWithoutAuthorNestedInput, {
     nullable: true
@@ -66,9 +51,4 @@ export class UserUpdateWithoutFollowingInput {
     nullable: true
   })
   comments?: CommentUpdateManyWithoutAuthorNestedInput | undefined;
-
-  @TypeGraphQL.Field(_type => UserUpdaterolesInput, {
-    nullable: true
-  })
-  roles?: UserUpdaterolesInput | undefined;
 }

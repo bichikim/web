@@ -7,9 +7,7 @@ import { Tag } from "../models/Tag";
 import { User } from "../models/User";
 import { PostCount } from "../resolvers/outputs/PostCount";
 
-@TypeGraphQL.ObjectType("Post", {
-  isAbstract: true
-})
+@TypeGraphQL.ObjectType("Post", {})
 export class Post {
   @TypeGraphQL.Field(_type => String, {
     nullable: false

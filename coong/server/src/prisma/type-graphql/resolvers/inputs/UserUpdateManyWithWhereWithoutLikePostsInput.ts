@@ -5,9 +5,7 @@ import { DecimalJSScalar } from "../../scalars";
 import { UserScalarWhereInput } from "../inputs/UserScalarWhereInput";
 import { UserUpdateManyMutationInput } from "../inputs/UserUpdateManyMutationInput";
 
-@TypeGraphQL.InputType("UserUpdateManyWithWhereWithoutLikePostsInput", {
-  isAbstract: true
-})
+@TypeGraphQL.InputType("UserUpdateManyWithWhereWithoutLikePostsInput", {})
 export class UserUpdateManyWithWhereWithoutLikePostsInput {
   @TypeGraphQL.Field(_type => UserScalarWhereInput, {
     nullable: false

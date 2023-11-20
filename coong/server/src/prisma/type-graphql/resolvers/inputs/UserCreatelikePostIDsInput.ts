@@ -3,9 +3,7 @@ import * as GraphQLScalars from "graphql-scalars";
 import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 
-@TypeGraphQL.InputType("UserCreatelikePostIDsInput", {
-  isAbstract: true
-})
+@TypeGraphQL.InputType("UserCreatelikePostIDsInput", {})
 export class UserCreatelikePostIDsInput {
   @TypeGraphQL.Field(_type => [String], {
     nullable: false

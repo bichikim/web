@@ -6,9 +6,7 @@ import { UserCreateOrConnectWithoutFollowersInput } from "../inputs/UserCreateOr
 import { UserCreateWithoutFollowersInput } from "../inputs/UserCreateWithoutFollowersInput";
 import { UserWhereUniqueInput } from "../inputs/UserWhereUniqueInput";
 
-@TypeGraphQL.InputType("UserCreateNestedManyWithoutFollowersInput", {
-  isAbstract: true
-})
+@TypeGraphQL.InputType("UserCreateNestedManyWithoutFollowersInput", {})
 export class UserCreateNestedManyWithoutFollowersInput {
   @TypeGraphQL.Field(_type => [UserCreateWithoutFollowersInput], {
     nullable: true

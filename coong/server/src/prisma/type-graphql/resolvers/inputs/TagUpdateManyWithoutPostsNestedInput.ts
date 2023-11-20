@@ -10,9 +10,7 @@ import { TagUpdateWithWhereUniqueWithoutPostsInput } from "../inputs/TagUpdateWi
 import { TagUpsertWithWhereUniqueWithoutPostsInput } from "../inputs/TagUpsertWithWhereUniqueWithoutPostsInput";
 import { TagWhereUniqueInput } from "../inputs/TagWhereUniqueInput";
 
-@TypeGraphQL.InputType("TagUpdateManyWithoutPostsNestedInput", {
-  isAbstract: true
-})
+@TypeGraphQL.InputType("TagUpdateManyWithoutPostsNestedInput", {})
 export class TagUpdateManyWithoutPostsNestedInput {
   @TypeGraphQL.Field(_type => [TagCreateWithoutPostsInput], {
     nullable: true

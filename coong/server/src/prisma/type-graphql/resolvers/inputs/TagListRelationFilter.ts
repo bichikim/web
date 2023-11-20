@@ -4,9 +4,7 @@ import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 import { TagWhereInput } from "../inputs/TagWhereInput";
 
-@TypeGraphQL.InputType("TagListRelationFilter", {
-  isAbstract: true
-})
+@TypeGraphQL.InputType("TagListRelationFilter", {})
 export class TagListRelationFilter {
   @TypeGraphQL.Field(_type => TagWhereInput, {
     nullable: true

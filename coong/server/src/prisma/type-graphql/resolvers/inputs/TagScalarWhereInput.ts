@@ -5,9 +5,7 @@ import { DecimalJSScalar } from "../../scalars";
 import { StringFilter } from "../inputs/StringFilter";
 import { StringNullableListFilter } from "../inputs/StringNullableListFilter";
 
-@TypeGraphQL.InputType("TagScalarWhereInput", {
-  isAbstract: true
-})
+@TypeGraphQL.InputType("TagScalarWhereInput", {})
 export class TagScalarWhereInput {
   @TypeGraphQL.Field(_type => [TagScalarWhereInput], {
     nullable: true

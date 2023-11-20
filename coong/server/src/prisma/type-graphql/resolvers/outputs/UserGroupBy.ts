@@ -6,9 +6,7 @@ import { UserCountAggregate } from "../outputs/UserCountAggregate";
 import { UserMaxAggregate } from "../outputs/UserMaxAggregate";
 import { UserMinAggregate } from "../outputs/UserMinAggregate";
 
-@TypeGraphQL.ObjectType("UserGroupBy", {
-  isAbstract: true
-})
+@TypeGraphQL.ObjectType("UserGroupBy", {})
 export class UserGroupBy {
   @TypeGraphQL.Field(_type => String, {
     nullable: false

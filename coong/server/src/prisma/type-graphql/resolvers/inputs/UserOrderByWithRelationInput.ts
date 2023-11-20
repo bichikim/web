@@ -7,9 +7,7 @@ import { PostOrderByRelationAggregateInput } from "../inputs/PostOrderByRelation
 import { UserOrderByRelationAggregateInput } from "../inputs/UserOrderByRelationAggregateInput";
 import { SortOrder } from "../../enums/SortOrder";
 
-@TypeGraphQL.InputType("UserOrderByWithRelationInput", {
-  isAbstract: true
-})
+@TypeGraphQL.InputType("UserOrderByWithRelationInput", {})
 export class UserOrderByWithRelationInput {
   @TypeGraphQL.Field(_type => SortOrder, {
     nullable: true
@@ -31,35 +29,40 @@ export class UserOrderByWithRelationInput {
   })
   password?: "asc" | "desc" | undefined;
 
-  @TypeGraphQL.Field(_type => UserOrderByRelationAggregateInput, {
-    nullable: true
-  })
-  followers?: UserOrderByRelationAggregateInput | undefined;
-
   @TypeGraphQL.Field(_type => SortOrder, {
     nullable: true
   })
   followerIDs?: "asc" | "desc" | undefined;
-
-  @TypeGraphQL.Field(_type => UserOrderByRelationAggregateInput, {
-    nullable: true
-  })
-  following?: UserOrderByRelationAggregateInput | undefined;
 
   @TypeGraphQL.Field(_type => SortOrder, {
     nullable: true
   })
   followingIDs?: "asc" | "desc" | undefined;
 
-  @TypeGraphQL.Field(_type => PostOrderByRelationAggregateInput, {
-    nullable: true
-  })
-  likePosts?: PostOrderByRelationAggregateInput | undefined;
-
   @TypeGraphQL.Field(_type => SortOrder, {
     nullable: true
   })
   likePostIDs?: "asc" | "desc" | undefined;
+
+  @TypeGraphQL.Field(_type => SortOrder, {
+    nullable: true
+  })
+  roles?: "asc" | "desc" | undefined;
+
+  @TypeGraphQL.Field(_type => UserOrderByRelationAggregateInput, {
+    nullable: true
+  })
+  followers?: UserOrderByRelationAggregateInput | undefined;
+
+  @TypeGraphQL.Field(_type => UserOrderByRelationAggregateInput, {
+    nullable: true
+  })
+  following?: UserOrderByRelationAggregateInput | undefined;
+
+  @TypeGraphQL.Field(_type => PostOrderByRelationAggregateInput, {
+    nullable: true
+  })
+  likePosts?: PostOrderByRelationAggregateInput | undefined;
 
   @TypeGraphQL.Field(_type => PostOrderByRelationAggregateInput, {
     nullable: true
@@ -70,9 +73,4 @@ export class UserOrderByWithRelationInput {
     nullable: true
   })
   comments?: CommentOrderByRelationAggregateInput | undefined;
-
-  @TypeGraphQL.Field(_type => SortOrder, {
-    nullable: true
-  })
-  roles?: "asc" | "desc" | undefined;
 }

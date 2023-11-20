@@ -6,9 +6,7 @@ import { PostListRelationFilter } from "../inputs/PostListRelationFilter";
 import { StringFilter } from "../inputs/StringFilter";
 import { StringNullableListFilter } from "../inputs/StringNullableListFilter";
 
-@TypeGraphQL.InputType("TagWhereInput", {
-  isAbstract: true
-})
+@TypeGraphQL.InputType("TagWhereInput", {})
 export class TagWhereInput {
   @TypeGraphQL.Field(_type => [TagWhereInput], {
     nullable: true
@@ -35,13 +33,13 @@ export class TagWhereInput {
   })
   name?: StringFilter | undefined;
 
-  @TypeGraphQL.Field(_type => PostListRelationFilter, {
-    nullable: true
-  })
-  posts?: PostListRelationFilter | undefined;
-
   @TypeGraphQL.Field(_type => StringNullableListFilter, {
     nullable: true
   })
   postIDs?: StringNullableListFilter | undefined;
+
+  @TypeGraphQL.Field(_type => PostListRelationFilter, {
+    nullable: true
+  })
+  posts?: PostListRelationFilter | undefined;
 }

@@ -5,9 +5,7 @@ import { DecimalJSScalar } from "../../scalars";
 import { PostCreatelikeIDsInput } from "../inputs/PostCreatelikeIDsInput";
 import { PostCreatetagIDsInput } from "../inputs/PostCreatetagIDsInput";
 
-@TypeGraphQL.InputType("PostCreateManyInput", {
-  isAbstract: true
-})
+@TypeGraphQL.InputType("PostCreateManyInput", {})
 export class PostCreateManyInput {
   @TypeGraphQL.Field(_type => String, {
     nullable: true

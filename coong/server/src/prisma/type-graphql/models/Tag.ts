@@ -5,9 +5,7 @@ import { DecimalJSScalar } from "../scalars";
 import { Post } from "../models/Post";
 import { TagCount } from "../resolvers/outputs/TagCount";
 
-@TypeGraphQL.ObjectType("Tag", {
-  isAbstract: true
-})
+@TypeGraphQL.ObjectType("Tag", {})
 export class Tag {
   @TypeGraphQL.Field(_type => String, {
     nullable: false

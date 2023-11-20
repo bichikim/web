@@ -1,14 +1,15 @@
-# Server old
+# Server
 
-postgres client settings
-
-https://cloud.google.com/sql/docs/postgres/connect-admin-ip
-
-update // test // 6
-
+// under construction
 https://back.coong.io
 
 <!-- version flag a -->
+
+## Hot to start (development)
+
+use docker compose (*under construction) to set server environment
+
+run dev scripts
 
 ## ENV
 db url
@@ -16,7 +17,7 @@ db url
 DATABASE_URL=mongodb+srv://ser..
 ```
 
-dev jwt key
+Setting jwt key
 ```dotenv
 JWT_KEY=dev-jwt-key
 ```

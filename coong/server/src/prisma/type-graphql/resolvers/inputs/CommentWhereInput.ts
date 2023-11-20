@@ -6,9 +6,7 @@ import { PostRelationFilter } from "../inputs/PostRelationFilter";
 import { StringFilter } from "../inputs/StringFilter";
 import { UserRelationFilter } from "../inputs/UserRelationFilter";
 
-@TypeGraphQL.InputType("CommentWhereInput", {
-  isAbstract: true
-})
+@TypeGraphQL.InputType("CommentWhereInput", {})
 export class CommentWhereInput {
   @TypeGraphQL.Field(_type => [CommentWhereInput], {
     nullable: true
@@ -35,23 +33,23 @@ export class CommentWhereInput {
   })
   message?: StringFilter | undefined;
 
-  @TypeGraphQL.Field(_type => PostRelationFilter, {
-    nullable: true
-  })
-  port?: PostRelationFilter | undefined;
-
   @TypeGraphQL.Field(_type => StringFilter, {
     nullable: true
   })
   postId?: StringFilter | undefined;
 
-  @TypeGraphQL.Field(_type => UserRelationFilter, {
-    nullable: true
-  })
-  author?: UserRelationFilter | undefined;
-
   @TypeGraphQL.Field(_type => StringFilter, {
     nullable: true
   })
   authorId?: StringFilter | undefined;
+
+  @TypeGraphQL.Field(_type => PostRelationFilter, {
+    nullable: true
+  })
+  port?: PostRelationFilter | undefined;
+
+  @TypeGraphQL.Field(_type => UserRelationFilter, {
+    nullable: true
+  })
+  author?: UserRelationFilter | undefined;
 }

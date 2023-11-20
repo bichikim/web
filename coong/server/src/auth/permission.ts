@@ -7,7 +7,7 @@ export const roles = ['admin', 'user']
 
 export type ActionKey = 'create' | 'delete' | 'read' | 'self' | 'update' | 'all'
 
-export type SelfIdGetter<Context> = (
+export type SelfIdGetter<Context extends object> = (
   resolverData: ResolverData<Context>,
 ) => MaybePromise<Record<string, any> | Record<string, any>[]>
 
@@ -54,7 +54,10 @@ export const allow =
   }
 
 export const user = (selfIdGetter: SelfIdGetter<Context>, allow?: Allow): Role => {
-  return async (userData: UserData, resolverData: ResolverData<Context>): Promise<boolean> => {
+  return async (
+    userData: UserData,
+    resolverData: ResolverData<Context>,
+  ): Promise<boolean> => {
     if (allow && !(await allow(resolverData))) {
       return false
     }
@@ -72,7 +75,11 @@ export type Validator<T = any> = (value: T) => boolean
 
 export type ValidateMode = 'or' | 'and'
 
-export const validate = (list: (string | Validator)[], value: any, mode: ValidateMode = 'and') => {
+export const validate = (
+  list: (string | Validator)[],
+  value: any,
+  mode: ValidateMode = 'and',
+) => {
   const allAround = (arg: string | Validator) => {
     if (typeof arg === 'function') {
       return arg(value)
@@ -109,7 +116,10 @@ export const role = (
   allow?: Allow,
 ): Role => {
   const _authRoles = toArray(authRoles)
-  return async (userData: UserData, resolverData: ResolverData<Context>): Promise<boolean> => {
+  return async (
+    userData: UserData,
+    resolverData: ResolverData<Context>,
+  ): Promise<boolean> => {
     if (allow && !(await allow(resolverData))) {
       return false
     }

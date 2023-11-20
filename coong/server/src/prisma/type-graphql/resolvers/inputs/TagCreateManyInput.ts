@@ -4,9 +4,7 @@ import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 import { TagCreatepostIDsInput } from "../inputs/TagCreatepostIDsInput";
 
-@TypeGraphQL.InputType("TagCreateManyInput", {
-  isAbstract: true
-})
+@TypeGraphQL.InputType("TagCreateManyInput", {})
 export class TagCreateManyInput {
   @TypeGraphQL.Field(_type => String, {
     nullable: true

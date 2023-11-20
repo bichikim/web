@@ -331,7 +331,15 @@ input CommentWhereInput {
 }
 
 input CommentWhereUniqueInput {
+  AND: [CommentWhereInput!]
+  NOT: [CommentWhereInput!]
+  OR: [CommentWhereInput!]
+  author: UserRelationFilter
+  authorId: StringFilter
   id: String
+  message: StringFilter
+  port: PostRelationFilter
+  postId: StringFilter
 }
 
 type Mutation {
@@ -475,9 +483,9 @@ type Post {
 }
 
 type PostCount {
-  comments: Int!
-  likes: Int!
-  tags: Int!
+  comments(where: CommentWhereInput): Int!
+  likes(where: UserWhereInput): Int!
+  tags(where: TagWhereInput): Int!
 }
 
 type PostCountAggregate {
@@ -503,10 +511,8 @@ input PostCreateInput {
   author: UserCreateNestedOneWithoutPostsInput!
   comments: CommentCreateNestedManyWithoutPortInput
   id: String
-  likeIDs: PostCreatelikeIDsInput
   likes: UserCreateNestedManyWithoutLikePostsInput
   message: String
-  tagIDs: PostCreatetagIDsInput
   tags: TagCreateNestedManyWithoutPostsInput
   title: String!
 }
@@ -580,10 +586,8 @@ input PostCreateOrConnectWithoutTagsInput {
 input PostCreateWithoutAuthorInput {
   comments: CommentCreateNestedManyWithoutPortInput
   id: String
-  likeIDs: PostCreatelikeIDsInput
   likes: UserCreateNestedManyWithoutLikePostsInput
   message: String
-  tagIDs: PostCreatetagIDsInput
   tags: TagCreateNestedManyWithoutPostsInput
   title: String!
 }
@@ -591,10 +595,8 @@ input PostCreateWithoutAuthorInput {
 input PostCreateWithoutCommentsInput {
   author: UserCreateNestedOneWithoutPostsInput!
   id: String
-  likeIDs: PostCreatelikeIDsInput
   likes: UserCreateNestedManyWithoutLikePostsInput
   message: String
-  tagIDs: PostCreatetagIDsInput
   tags: TagCreateNestedManyWithoutPostsInput
   title: String!
 }
@@ -603,9 +605,7 @@ input PostCreateWithoutLikesInput {
   author: UserCreateNestedOneWithoutPostsInput!
   comments: CommentCreateNestedManyWithoutPortInput
   id: String
-  likeIDs: PostCreatelikeIDsInput
   message: String
-  tagIDs: PostCreatetagIDsInput
   tags: TagCreateNestedManyWithoutPostsInput
   title: String!
 }
@@ -614,10 +614,8 @@ input PostCreateWithoutTagsInput {
   author: UserCreateNestedOneWithoutPostsInput!
   comments: CommentCreateNestedManyWithoutPortInput
   id: String
-  likeIDs: PostCreatelikeIDsInput
   likes: UserCreateNestedManyWithoutLikePostsInput
   message: String
-  tagIDs: PostCreatetagIDsInput
   title: String!
 }
 
@@ -745,18 +743,14 @@ input PostScalarWhereWithAggregatesInput {
 input PostUpdateInput {
   author: UserUpdateOneRequiredWithoutPostsNestedInput
   comments: CommentUpdateManyWithoutPortNestedInput
-  likeIDs: PostUpdatelikeIDsInput
   likes: UserUpdateManyWithoutLikePostsNestedInput
   message: NullableStringFieldUpdateOperationsInput
-  tagIDs: PostUpdatetagIDsInput
   tags: TagUpdateManyWithoutPostsNestedInput
   title: StringFieldUpdateOperationsInput
 }
 
 input PostUpdateManyMutationInput {
-  likeIDs: PostUpdatelikeIDsInput
   message: NullableStringFieldUpdateOperationsInput
-  tagIDs: PostUpdatetagIDsInput
   title: StringFieldUpdateOperationsInput
 }
 
@@ -819,8 +813,13 @@ input PostUpdateOneRequiredWithoutCommentsNestedInput {
   connect: PostWhereUniqueInput
   connectOrCreate: PostCreateOrConnectWithoutCommentsInput
   create: PostCreateWithoutCommentsInput
-  update: PostUpdateWithoutCommentsInput
+  update: PostUpdateToOneWithWhereWithoutCommentsInput
   upsert: PostUpsertWithoutCommentsInput
+}
+
+input PostUpdateToOneWithWhereWithoutCommentsInput {
+  data: PostUpdateWithoutCommentsInput!
+  where: PostWhereInput
 }
 
 input PostUpdateWithWhereUniqueWithoutAuthorInput {
@@ -840,20 +839,16 @@ input PostUpdateWithWhereUniqueWithoutTagsInput {
 
 input PostUpdateWithoutAuthorInput {
   comments: CommentUpdateManyWithoutPortNestedInput
-  likeIDs: PostUpdatelikeIDsInput
   likes: UserUpdateManyWithoutLikePostsNestedInput
   message: NullableStringFieldUpdateOperationsInput
-  tagIDs: PostUpdatetagIDsInput
   tags: TagUpdateManyWithoutPostsNestedInput
   title: StringFieldUpdateOperationsInput
 }
 
 input PostUpdateWithoutCommentsInput {
   author: UserUpdateOneRequiredWithoutPostsNestedInput
-  likeIDs: PostUpdatelikeIDsInput
   likes: UserUpdateManyWithoutLikePostsNestedInput
   message: NullableStringFieldUpdateOperationsInput
-  tagIDs: PostUpdatetagIDsInput
   tags: TagUpdateManyWithoutPostsNestedInput
   title: StringFieldUpdateOperationsInput
 }
@@ -861,9 +856,7 @@ input PostUpdateWithoutCommentsInput {
 input PostUpdateWithoutLikesInput {
   author: UserUpdateOneRequiredWithoutPostsNestedInput
   comments: CommentUpdateManyWithoutPortNestedInput
-  likeIDs: PostUpdatelikeIDsInput
   message: NullableStringFieldUpdateOperationsInput
-  tagIDs: PostUpdatetagIDsInput
   tags: TagUpdateManyWithoutPostsNestedInput
   title: StringFieldUpdateOperationsInput
 }
@@ -871,21 +864,9 @@ input PostUpdateWithoutLikesInput {
 input PostUpdateWithoutTagsInput {
   author: UserUpdateOneRequiredWithoutPostsNestedInput
   comments: CommentUpdateManyWithoutPortNestedInput
-  likeIDs: PostUpdatelikeIDsInput
   likes: UserUpdateManyWithoutLikePostsNestedInput
   message: NullableStringFieldUpdateOperationsInput
-  tagIDs: PostUpdatetagIDsInput
   title: StringFieldUpdateOperationsInput
-}
-
-input PostUpdatelikeIDsInput {
-  push: [String!]
-  set: [String!]
-}
-
-input PostUpdatetagIDsInput {
-  push: [String!]
-  set: [String!]
 }
 
 input PostUpsertWithWhereUniqueWithoutAuthorInput {
@@ -909,6 +890,7 @@ input PostUpsertWithWhereUniqueWithoutTagsInput {
 input PostUpsertWithoutCommentsInput {
   create: PostCreateWithoutCommentsInput!
   update: PostUpdateWithoutCommentsInput!
+  where: PostWhereInput
 }
 
 input PostWhereInput {
@@ -928,7 +910,19 @@ input PostWhereInput {
 }
 
 input PostWhereUniqueInput {
+  AND: [PostWhereInput!]
+  NOT: [PostWhereInput!]
+  OR: [PostWhereInput!]
+  author: UserRelationFilter
+  authorId: StringFilter
+  comments: CommentListRelationFilter
   id: String
+  likeIDs: StringNullableListFilter
+  likes: UserListRelationFilter
+  message: StringNullableFilter
+  tagIDs: StringNullableListFilter
+  tags: TagListRelationFilter
+  title: StringFilter
 }
 
 type Query {
@@ -1073,7 +1067,7 @@ type Tag {
 }
 
 type TagCount {
-  posts: Int!
+  posts(where: PostWhereInput): Int!
 }
 
 type TagCountAggregate {
@@ -1092,7 +1086,6 @@ input TagCountOrderByAggregateInput {
 input TagCreateInput {
   id: String
   name: String!
-  postIDs: TagCreatepostIDsInput
   posts: PostCreateNestedManyWithoutTagsInput
 }
 
@@ -1116,7 +1109,6 @@ input TagCreateOrConnectWithoutPostsInput {
 input TagCreateWithoutPostsInput {
   id: String
   name: String!
-  postIDs: TagCreatepostIDsInput
 }
 
 input TagCreatepostIDsInput {
@@ -1204,13 +1196,11 @@ input TagScalarWhereWithAggregatesInput {
 
 input TagUpdateInput {
   name: StringFieldUpdateOperationsInput
-  postIDs: TagUpdatepostIDsInput
   posts: PostUpdateManyWithoutTagsNestedInput
 }
 
 input TagUpdateManyMutationInput {
   name: StringFieldUpdateOperationsInput
-  postIDs: TagUpdatepostIDsInput
 }
 
 input TagUpdateManyWithWhereWithoutPostsInput {
@@ -1238,12 +1228,6 @@ input TagUpdateWithWhereUniqueWithoutPostsInput {
 
 input TagUpdateWithoutPostsInput {
   name: StringFieldUpdateOperationsInput
-  postIDs: TagUpdatepostIDsInput
-}
-
-input TagUpdatepostIDsInput {
-  push: [String!]
-  set: [String!]
 }
 
 input TagUpsertWithWhereUniqueWithoutPostsInput {
@@ -1263,7 +1247,13 @@ input TagWhereInput {
 }
 
 input TagWhereUniqueInput {
+  AND: [TagWhereInput!]
+  NOT: [TagWhereInput!]
+  OR: [TagWhereInput!]
   id: String
+  name: StringFilter
+  postIDs: StringNullableListFilter
+  posts: PostListRelationFilter
 }
 
 type Test {
@@ -1290,11 +1280,11 @@ type User {
 }
 
 type UserCount {
-  comments: Int!
-  followers: Int!
-  following: Int!
-  likePosts: Int!
-  posts: Int!
+  comments(where: CommentWhereInput): Int!
+  followers(where: UserWhereInput): Int!
+  following(where: UserWhereInput): Int!
+  likePosts(where: PostWhereInput): Int!
+  posts(where: PostWhereInput): Int!
 }
 
 type UserCountAggregate {
@@ -1323,12 +1313,9 @@ input UserCountOrderByAggregateInput {
 input UserCreateInput {
   comments: CommentCreateNestedManyWithoutAuthorInput
   email: String!
-  followerIDs: UserCreatefollowerIDsInput
   followers: UserCreateNestedManyWithoutFollowingInput
   following: UserCreateNestedManyWithoutFollowersInput
-  followingIDs: UserCreatefollowingIDsInput
   id: String
-  likePostIDs: UserCreatelikePostIDsInput
   likePosts: PostCreateNestedManyWithoutLikesInput
   name: String
   password: String
@@ -1404,12 +1391,9 @@ input UserCreateOrConnectWithoutPostsInput {
 
 input UserCreateWithoutCommentsInput {
   email: String!
-  followerIDs: UserCreatefollowerIDsInput
   followers: UserCreateNestedManyWithoutFollowingInput
   following: UserCreateNestedManyWithoutFollowersInput
-  followingIDs: UserCreatefollowingIDsInput
   id: String
-  likePostIDs: UserCreatelikePostIDsInput
   likePosts: PostCreateNestedManyWithoutLikesInput
   name: String
   password: String
@@ -1420,11 +1404,8 @@ input UserCreateWithoutCommentsInput {
 input UserCreateWithoutFollowersInput {
   comments: CommentCreateNestedManyWithoutAuthorInput
   email: String!
-  followerIDs: UserCreatefollowerIDsInput
   following: UserCreateNestedManyWithoutFollowersInput
-  followingIDs: UserCreatefollowingIDsInput
   id: String
-  likePostIDs: UserCreatelikePostIDsInput
   likePosts: PostCreateNestedManyWithoutLikesInput
   name: String
   password: String
@@ -1435,11 +1416,8 @@ input UserCreateWithoutFollowersInput {
 input UserCreateWithoutFollowingInput {
   comments: CommentCreateNestedManyWithoutAuthorInput
   email: String!
-  followerIDs: UserCreatefollowerIDsInput
   followers: UserCreateNestedManyWithoutFollowingInput
-  followingIDs: UserCreatefollowingIDsInput
   id: String
-  likePostIDs: UserCreatelikePostIDsInput
   likePosts: PostCreateNestedManyWithoutLikesInput
   name: String
   password: String
@@ -1450,12 +1428,9 @@ input UserCreateWithoutFollowingInput {
 input UserCreateWithoutLikePostsInput {
   comments: CommentCreateNestedManyWithoutAuthorInput
   email: String!
-  followerIDs: UserCreatefollowerIDsInput
   followers: UserCreateNestedManyWithoutFollowingInput
   following: UserCreateNestedManyWithoutFollowersInput
-  followingIDs: UserCreatefollowingIDsInput
   id: String
-  likePostIDs: UserCreatelikePostIDsInput
   name: String
   password: String
   posts: PostCreateNestedManyWithoutAuthorInput
@@ -1465,12 +1440,9 @@ input UserCreateWithoutLikePostsInput {
 input UserCreateWithoutPostsInput {
   comments: CommentCreateNestedManyWithoutAuthorInput
   email: String!
-  followerIDs: UserCreatefollowerIDsInput
   followers: UserCreateNestedManyWithoutFollowingInput
   following: UserCreateNestedManyWithoutFollowersInput
-  followingIDs: UserCreatefollowingIDsInput
   id: String
-  likePostIDs: UserCreatelikePostIDsInput
   likePosts: PostCreateNestedManyWithoutLikesInput
   name: String
   password: String
@@ -1622,11 +1594,8 @@ input UserScalarWhereWithAggregatesInput {
 input UserUpdateInput {
   comments: CommentUpdateManyWithoutAuthorNestedInput
   email: StringFieldUpdateOperationsInput
-  followerIDs: UserUpdatefollowerIDsInput
   followers: UserUpdateManyWithoutFollowingNestedInput
   following: UserUpdateManyWithoutFollowersNestedInput
-  followingIDs: UserUpdatefollowingIDsInput
-  likePostIDs: UserUpdatelikePostIDsInput
   likePosts: PostUpdateManyWithoutLikesNestedInput
   name: NullableStringFieldUpdateOperationsInput
   password: NullableStringFieldUpdateOperationsInput
@@ -1636,9 +1605,6 @@ input UserUpdateInput {
 
 input UserUpdateManyMutationInput {
   email: StringFieldUpdateOperationsInput
-  followerIDs: UserUpdatefollowerIDsInput
-  followingIDs: UserUpdatefollowingIDsInput
-  likePostIDs: UserUpdatelikePostIDsInput
   name: NullableStringFieldUpdateOperationsInput
   password: NullableStringFieldUpdateOperationsInput
   roles: UserUpdaterolesInput
@@ -1702,7 +1668,7 @@ input UserUpdateOneRequiredWithoutCommentsNestedInput {
   connect: UserWhereUniqueInput
   connectOrCreate: UserCreateOrConnectWithoutCommentsInput
   create: UserCreateWithoutCommentsInput
-  update: UserUpdateWithoutCommentsInput
+  update: UserUpdateToOneWithWhereWithoutCommentsInput
   upsert: UserUpsertWithoutCommentsInput
 }
 
@@ -1710,8 +1676,18 @@ input UserUpdateOneRequiredWithoutPostsNestedInput {
   connect: UserWhereUniqueInput
   connectOrCreate: UserCreateOrConnectWithoutPostsInput
   create: UserCreateWithoutPostsInput
-  update: UserUpdateWithoutPostsInput
+  update: UserUpdateToOneWithWhereWithoutPostsInput
   upsert: UserUpsertWithoutPostsInput
+}
+
+input UserUpdateToOneWithWhereWithoutCommentsInput {
+  data: UserUpdateWithoutCommentsInput!
+  where: UserWhereInput
+}
+
+input UserUpdateToOneWithWhereWithoutPostsInput {
+  data: UserUpdateWithoutPostsInput!
+  where: UserWhereInput
 }
 
 input UserUpdateWithWhereUniqueWithoutFollowersInput {
@@ -1731,11 +1707,8 @@ input UserUpdateWithWhereUniqueWithoutLikePostsInput {
 
 input UserUpdateWithoutCommentsInput {
   email: StringFieldUpdateOperationsInput
-  followerIDs: UserUpdatefollowerIDsInput
   followers: UserUpdateManyWithoutFollowingNestedInput
   following: UserUpdateManyWithoutFollowersNestedInput
-  followingIDs: UserUpdatefollowingIDsInput
-  likePostIDs: UserUpdatelikePostIDsInput
   likePosts: PostUpdateManyWithoutLikesNestedInput
   name: NullableStringFieldUpdateOperationsInput
   password: NullableStringFieldUpdateOperationsInput
@@ -1746,10 +1719,7 @@ input UserUpdateWithoutCommentsInput {
 input UserUpdateWithoutFollowersInput {
   comments: CommentUpdateManyWithoutAuthorNestedInput
   email: StringFieldUpdateOperationsInput
-  followerIDs: UserUpdatefollowerIDsInput
   following: UserUpdateManyWithoutFollowersNestedInput
-  followingIDs: UserUpdatefollowingIDsInput
-  likePostIDs: UserUpdatelikePostIDsInput
   likePosts: PostUpdateManyWithoutLikesNestedInput
   name: NullableStringFieldUpdateOperationsInput
   password: NullableStringFieldUpdateOperationsInput
@@ -1760,10 +1730,7 @@ input UserUpdateWithoutFollowersInput {
 input UserUpdateWithoutFollowingInput {
   comments: CommentUpdateManyWithoutAuthorNestedInput
   email: StringFieldUpdateOperationsInput
-  followerIDs: UserUpdatefollowerIDsInput
   followers: UserUpdateManyWithoutFollowingNestedInput
-  followingIDs: UserUpdatefollowingIDsInput
-  likePostIDs: UserUpdatelikePostIDsInput
   likePosts: PostUpdateManyWithoutLikesNestedInput
   name: NullableStringFieldUpdateOperationsInput
   password: NullableStringFieldUpdateOperationsInput
@@ -1774,11 +1741,8 @@ input UserUpdateWithoutFollowingInput {
 input UserUpdateWithoutLikePostsInput {
   comments: CommentUpdateManyWithoutAuthorNestedInput
   email: StringFieldUpdateOperationsInput
-  followerIDs: UserUpdatefollowerIDsInput
   followers: UserUpdateManyWithoutFollowingNestedInput
   following: UserUpdateManyWithoutFollowersNestedInput
-  followingIDs: UserUpdatefollowingIDsInput
-  likePostIDs: UserUpdatelikePostIDsInput
   name: NullableStringFieldUpdateOperationsInput
   password: NullableStringFieldUpdateOperationsInput
   posts: PostUpdateManyWithoutAuthorNestedInput
@@ -1788,30 +1752,12 @@ input UserUpdateWithoutLikePostsInput {
 input UserUpdateWithoutPostsInput {
   comments: CommentUpdateManyWithoutAuthorNestedInput
   email: StringFieldUpdateOperationsInput
-  followerIDs: UserUpdatefollowerIDsInput
   followers: UserUpdateManyWithoutFollowingNestedInput
   following: UserUpdateManyWithoutFollowersNestedInput
-  followingIDs: UserUpdatefollowingIDsInput
-  likePostIDs: UserUpdatelikePostIDsInput
   likePosts: PostUpdateManyWithoutLikesNestedInput
   name: NullableStringFieldUpdateOperationsInput
   password: NullableStringFieldUpdateOperationsInput
   roles: UserUpdaterolesInput
-}
-
-input UserUpdatefollowerIDsInput {
-  push: [String!]
-  set: [String!]
-}
-
-input UserUpdatefollowingIDsInput {
-  push: [String!]
-  set: [String!]
-}
-
-input UserUpdatelikePostIDsInput {
-  push: [String!]
-  set: [String!]
 }
 
 input UserUpdaterolesInput {
@@ -1840,11 +1786,13 @@ input UserUpsertWithWhereUniqueWithoutLikePostsInput {
 input UserUpsertWithoutCommentsInput {
   create: UserCreateWithoutCommentsInput!
   update: UserUpdateWithoutCommentsInput!
+  where: UserWhereInput
 }
 
 input UserUpsertWithoutPostsInput {
   create: UserCreateWithoutPostsInput!
   update: UserUpdateWithoutPostsInput!
+  where: UserWhereInput
 }
 
 input UserWhereInput {
@@ -1867,6 +1815,20 @@ input UserWhereInput {
 }
 
 input UserWhereUniqueInput {
+  AND: [UserWhereInput!]
+  NOT: [UserWhereInput!]
+  OR: [UserWhereInput!]
+  comments: CommentListRelationFilter
   email: String
+  followerIDs: StringNullableListFilter
+  followers: UserListRelationFilter
+  following: UserListRelationFilter
+  followingIDs: StringNullableListFilter
   id: String
+  likePostIDs: StringNullableListFilter
+  likePosts: PostListRelationFilter
+  name: StringNullableFilter
+  password: StringNullableFilter
+  posts: PostListRelationFilter
+  roles: StringNullableListFilter
 }

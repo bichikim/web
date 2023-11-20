@@ -10,9 +10,7 @@ import { TagListRelationFilter } from "../inputs/TagListRelationFilter";
 import { UserListRelationFilter } from "../inputs/UserListRelationFilter";
 import { UserRelationFilter } from "../inputs/UserRelationFilter";
 
-@TypeGraphQL.InputType("PostWhereInput", {
-  isAbstract: true
-})
+@TypeGraphQL.InputType("PostWhereInput", {})
 export class PostWhereInput {
   @TypeGraphQL.Field(_type => [PostWhereInput], {
     nullable: true
@@ -44,35 +42,35 @@ export class PostWhereInput {
   })
   message?: StringNullableFilter | undefined;
 
-  @TypeGraphQL.Field(_type => UserRelationFilter, {
-    nullable: true
-  })
-  author?: UserRelationFilter | undefined;
-
   @TypeGraphQL.Field(_type => StringFilter, {
     nullable: true
   })
   authorId?: StringFilter | undefined;
-
-  @TypeGraphQL.Field(_type => UserListRelationFilter, {
-    nullable: true
-  })
-  likes?: UserListRelationFilter | undefined;
 
   @TypeGraphQL.Field(_type => StringNullableListFilter, {
     nullable: true
   })
   likeIDs?: StringNullableListFilter | undefined;
 
-  @TypeGraphQL.Field(_type => TagListRelationFilter, {
-    nullable: true
-  })
-  tags?: TagListRelationFilter | undefined;
-
   @TypeGraphQL.Field(_type => StringNullableListFilter, {
     nullable: true
   })
   tagIDs?: StringNullableListFilter | undefined;
+
+  @TypeGraphQL.Field(_type => UserRelationFilter, {
+    nullable: true
+  })
+  author?: UserRelationFilter | undefined;
+
+  @TypeGraphQL.Field(_type => UserListRelationFilter, {
+    nullable: true
+  })
+  likes?: UserListRelationFilter | undefined;
+
+  @TypeGraphQL.Field(_type => TagListRelationFilter, {
+    nullable: true
+  })
+  tags?: TagListRelationFilter | undefined;
 
   @TypeGraphQL.Field(_type => CommentListRelationFilter, {
     nullable: true

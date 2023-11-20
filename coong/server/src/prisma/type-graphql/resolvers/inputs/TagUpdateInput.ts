@@ -4,11 +4,8 @@ import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 import { PostUpdateManyWithoutTagsNestedInput } from "../inputs/PostUpdateManyWithoutTagsNestedInput";
 import { StringFieldUpdateOperationsInput } from "../inputs/StringFieldUpdateOperationsInput";
-import { TagUpdatepostIDsInput } from "../inputs/TagUpdatepostIDsInput";
 
-@TypeGraphQL.InputType("TagUpdateInput", {
-  isAbstract: true
-})
+@TypeGraphQL.InputType("TagUpdateInput", {})
 export class TagUpdateInput {
   @TypeGraphQL.Field(_type => StringFieldUpdateOperationsInput, {
     nullable: true
@@ -19,9 +16,4 @@ export class TagUpdateInput {
     nullable: true
   })
   posts?: PostUpdateManyWithoutTagsNestedInput | undefined;
-
-  @TypeGraphQL.Field(_type => TagUpdatepostIDsInput, {
-    nullable: true
-  })
-  postIDs?: TagUpdatepostIDsInput | undefined;
 }

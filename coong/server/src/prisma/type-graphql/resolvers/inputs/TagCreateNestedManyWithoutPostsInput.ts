@@ -6,9 +6,7 @@ import { TagCreateOrConnectWithoutPostsInput } from "../inputs/TagCreateOrConnec
 import { TagCreateWithoutPostsInput } from "../inputs/TagCreateWithoutPostsInput";
 import { TagWhereUniqueInput } from "../inputs/TagWhereUniqueInput";
 
-@TypeGraphQL.InputType("TagCreateNestedManyWithoutPostsInput", {
-  isAbstract: true
-})
+@TypeGraphQL.InputType("TagCreateNestedManyWithoutPostsInput", {})
 export class TagCreateNestedManyWithoutPostsInput {
   @TypeGraphQL.Field(_type => [TagCreateWithoutPostsInput], {
     nullable: true

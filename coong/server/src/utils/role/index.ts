@@ -47,7 +47,10 @@ const toArray = (value: any | any[]): any[] => {
   return [value]
 }
 
-const pickHeaderData = <ContextType>(data: ResolverData<ContextType>, header: string) => {
+const pickHeaderData = <ContextType extends object>(
+  data: ResolverData<ContextType>,
+  header: string,
+) => {
   switch (header) {
     case 'args': {
       return toArray(data.args.data)
@@ -61,7 +64,10 @@ const pickHeaderData = <ContextType>(data: ResolverData<ContextType>, header: st
   }
 }
 
-const pickDataFromArray = (data: any[], track: (string | number) | (string | number)[]): any[] => {
+const pickDataFromArray = (
+  data: any[],
+  track: (string | number) | (string | number)[],
+): any[] => {
   return data.map((data) => {
     if (typeof data === 'object') {
       return get(data, track)
@@ -70,13 +76,16 @@ const pickDataFromArray = (data: any[], track: (string | number) | (string | num
   })
 }
 
-const pickData = <ContextType>(data: ResolverData<ContextType>, map: string) => {
+const pickData = <ContextType extends object>(
+  data: ResolverData<ContextType>,
+  map: string,
+) => {
   const [header, ...track] = map.split('.')
   const headerData = pickHeaderData(data, header)
   return pickDataFromArray(headerData, track)
 }
 
-const checkRole = <ContextType>(
+const checkRole = <ContextType extends object>(
   data: ResolverData<ContextType>,
   id: string | number,
   role: TargetRole | boolean | undefined,
@@ -105,7 +114,7 @@ const checkRole = <ContextType>(
   })
 }
 
-export const createAuthInputGate = <ContextType = Record<string, any>>(roles: GateRoles) => {
+export const createAuthInputGate = <ContextType extends object>(roles: GateRoles) => {
   const allowRoles = roles.roles ? Object.keys(roles.roles) : undefined
 
   return (data: ResolverData<ContextType>, userRoles: string[], id: string | number) => {

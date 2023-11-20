@@ -6,9 +6,7 @@ import { PostUpdateOneRequiredWithoutCommentsNestedInput } from "../inputs/PostU
 import { StringFieldUpdateOperationsInput } from "../inputs/StringFieldUpdateOperationsInput";
 import { UserUpdateOneRequiredWithoutCommentsNestedInput } from "../inputs/UserUpdateOneRequiredWithoutCommentsNestedInput";
 
-@TypeGraphQL.InputType("CommentUpdateInput", {
-  isAbstract: true
-})
+@TypeGraphQL.InputType("CommentUpdateInput", {})
 export class CommentUpdateInput {
   @TypeGraphQL.Field(_type => StringFieldUpdateOperationsInput, {
     nullable: true

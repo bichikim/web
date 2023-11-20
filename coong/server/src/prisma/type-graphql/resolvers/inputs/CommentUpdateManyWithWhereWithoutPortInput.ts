@@ -5,9 +5,7 @@ import { DecimalJSScalar } from "../../scalars";
 import { CommentScalarWhereInput } from "../inputs/CommentScalarWhereInput";
 import { CommentUpdateManyMutationInput } from "../inputs/CommentUpdateManyMutationInput";
 
-@TypeGraphQL.InputType("CommentUpdateManyWithWhereWithoutPortInput", {
-  isAbstract: true
-})
+@TypeGraphQL.InputType("CommentUpdateManyWithWhereWithoutPortInput", {})
 export class CommentUpdateManyWithWhereWithoutPortInput {
   @TypeGraphQL.Field(_type => CommentScalarWhereInput, {
     nullable: false

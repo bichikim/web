@@ -7,9 +7,7 @@ import { CommentCreateOrConnectWithoutPortInput } from "../inputs/CommentCreateO
 import { CommentCreateWithoutPortInput } from "../inputs/CommentCreateWithoutPortInput";
 import { CommentWhereUniqueInput } from "../inputs/CommentWhereUniqueInput";
 
-@TypeGraphQL.InputType("CommentCreateNestedManyWithoutPortInput", {
-  isAbstract: true
-})
+@TypeGraphQL.InputType("CommentCreateNestedManyWithoutPortInput", {})
 export class CommentCreateNestedManyWithoutPortInput {
   @TypeGraphQL.Field(_type => [CommentCreateWithoutPortInput], {
     nullable: true

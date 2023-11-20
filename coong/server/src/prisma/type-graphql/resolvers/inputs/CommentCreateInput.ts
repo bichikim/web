@@ -5,9 +5,7 @@ import { DecimalJSScalar } from "../../scalars";
 import { PostCreateNestedOneWithoutCommentsInput } from "../inputs/PostCreateNestedOneWithoutCommentsInput";
 import { UserCreateNestedOneWithoutCommentsInput } from "../inputs/UserCreateNestedOneWithoutCommentsInput";
 
-@TypeGraphQL.InputType("CommentCreateInput", {
-  isAbstract: true
-})
+@TypeGraphQL.InputType("CommentCreateInput", {})
 export class CommentCreateInput {
   @TypeGraphQL.Field(_type => String, {
     nullable: true

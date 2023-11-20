@@ -6,9 +6,7 @@ import { StringFilter } from "../inputs/StringFilter";
 import { StringNullableFilter } from "../inputs/StringNullableFilter";
 import { StringNullableListFilter } from "../inputs/StringNullableListFilter";
 
-@TypeGraphQL.InputType("UserScalarWhereInput", {
-  isAbstract: true
-})
+@TypeGraphQL.InputType("UserScalarWhereInput", {})
 export class UserScalarWhereInput {
   @TypeGraphQL.Field(_type => [UserScalarWhereInput], {
     nullable: true

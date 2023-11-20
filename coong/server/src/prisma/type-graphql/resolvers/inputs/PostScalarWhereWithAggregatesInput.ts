@@ -6,9 +6,7 @@ import { StringNullableListFilter } from "../inputs/StringNullableListFilter";
 import { StringNullableWithAggregatesFilter } from "../inputs/StringNullableWithAggregatesFilter";
 import { StringWithAggregatesFilter } from "../inputs/StringWithAggregatesFilter";
 
-@TypeGraphQL.InputType("PostScalarWhereWithAggregatesInput", {
-  isAbstract: true
-})
+@TypeGraphQL.InputType("PostScalarWhereWithAggregatesInput", {})
 export class PostScalarWhereWithAggregatesInput {
   @TypeGraphQL.Field(_type => [PostScalarWhereWithAggregatesInput], {
     nullable: true

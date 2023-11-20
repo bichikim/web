@@ -5,9 +5,7 @@ import { DecimalJSScalar } from "../scalars";
 import { Post } from "../models/Post";
 import { User } from "../models/User";
 
-@TypeGraphQL.ObjectType("Comment", {
-  isAbstract: true
-})
+@TypeGraphQL.ObjectType("Comment", {})
 export class Comment {
   @TypeGraphQL.Field(_type => String, {
     nullable: false
