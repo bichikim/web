@@ -9,6 +9,8 @@
     "prisma:generate": "prisma generate --schema ./src/prisma/schema.prisma",
     "prisma:generate:watch": "prisma generate --schema ./src/prisma/schema.prisma --watch",
     "prisma:studio": "prisma studio --schema ./src/prisma/schema.prisma",
+    "prisma:migrate-dev": "prisma migrate dev --schema ./src/prisma/schema.prisma",
+    "docker-compose:up": "docker-compose up -d",
     "start": "node ./dist/index.js",
     "type-check": "tsc --noEmit"
   },
@@ -40,7 +42,7 @@
     "@types/node": "20.9.2",
     "typescript-transform-paths": "3.4.6",
     "cross-env": "7.0.3",
-    "graphql-scalars": "^1.22.1",
+    "graphql-scalars": "^1.20.1",
     "prisma": "~5.6.0",
     "rimraf": "3.0.2",
     "ts-node": "^10.9.1",
