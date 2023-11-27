@@ -7,11 +7,6 @@ import { PostCreateNestedManyWithoutTagsInput } from "../inputs/PostCreateNested
 @TypeGraphQL.InputType("TagCreateInput", {})
 export class TagCreateInput {
   @TypeGraphQL.Field(_type => String, {
-    nullable: true
-  })
-  id?: string | undefined;
-
-  @TypeGraphQL.Field(_type => String, {
     nullable: false
   })
   name!: string;

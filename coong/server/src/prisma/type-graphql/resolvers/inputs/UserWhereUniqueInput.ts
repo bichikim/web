@@ -11,10 +11,10 @@ import { UserWhereInput } from "../inputs/UserWhereInput";
 
 @TypeGraphQL.InputType("UserWhereUniqueInput", {})
 export class UserWhereUniqueInput {
-  @TypeGraphQL.Field(_type => String, {
+  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
     nullable: true
   })
-  id?: string | undefined;
+  id?: number | undefined;
 
   @TypeGraphQL.Field(_type => String, {
     nullable: true
@@ -45,21 +45,6 @@ export class UserWhereUniqueInput {
     nullable: true
   })
   password?: StringNullableFilter | undefined;
-
-  @TypeGraphQL.Field(_type => StringNullableListFilter, {
-    nullable: true
-  })
-  followerIDs?: StringNullableListFilter | undefined;
-
-  @TypeGraphQL.Field(_type => StringNullableListFilter, {
-    nullable: true
-  })
-  followingIDs?: StringNullableListFilter | undefined;
-
-  @TypeGraphQL.Field(_type => StringNullableListFilter, {
-    nullable: true
-  })
-  likePostIDs?: StringNullableListFilter | undefined;
 
   @TypeGraphQL.Field(_type => StringNullableListFilter, {
     nullable: true

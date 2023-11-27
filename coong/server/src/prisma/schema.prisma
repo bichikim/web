@@ -1,5 +1,5 @@
 datasource db {
-  provider = "mongodb"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -13,17 +13,15 @@ generator typegraphql {
 }
 
 model User {
-  id           String    @id @default(auto()) @map("_id") @db.ObjectId
+  id           Int    @id @default(autoincrement())
   email        String    @unique
   name         String?
   /// @TypeGraphQL.omit(output: true)
   password     String?
-  followers    User[]    @relation("UserFollows", fields: [followerIDs], references: [id])
-  followerIDs  String[]  @db.ObjectId()
-  following    User[]    @relation("UserFollows", fields: [followingIDs], references: [id])
-  followingIDs String[]  @db.ObjectId()
-  likePosts    Post[]    @relation("Likes", fields: [likePostIDs], references: [id])
-  likePostIDs  String[]  @db.ObjectId()
+  followers    User[]    @relation("UserFollows")
+  following    User[]    @relation("UserFollows")
+
+  likePosts    Post[]    @relation("Likes")
   posts        Post[]    @relation("PostAuthor")
   comments     Comment[] @relation("CommentAuthor")
   /// @TypeGraphQL.omit(output: true)
@@ -31,30 +29,27 @@ model User {
 }
 
 model Post {
-  id       String    @id @default(auto()) @map("_id") @db.ObjectId
+  id       Int    @id @default(autoincrement())
   title    String
   message  String?
   author   User      @relation("PostAuthor", fields: [authorId], references: [id])
-  authorId String    @db.ObjectId
-  likes    User[]    @relation("Likes", fields: [likeIDs], references: [id])
-  likeIDs  String[]  @db.ObjectId()
-  tags     Tag[]     @relation("Tags", references: [id], fields: [tagIDs])
-  tagIDs   String[]  @db.ObjectId()
+  authorId Int
+  likes    User[]    @relation("Likes")
+  tags     Tag[]     @relation("Tags")
   comments Comment[] @relation("Comments")
 }
 
 model Comment {
-  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  id       Int @id @default(autoincrement())
   message  String
-  port     Post   @relation("Comments", references: [id], fields: [postId])
-  postId   String @db.ObjectId
+  post     Post   @relation("Comments", fields: [postId], references: [id])
+  postId Int
   author   User   @relation("CommentAuthor", fields: [authorId], references: [id])
-  authorId String @db.ObjectId
+  authorId Int
 }
 
 model Tag {
-  id      String   @id @default(auto()) @map("_id") @db.ObjectId
+  id      Int   @id @default(autoincrement())
   name    String
-  posts   Post[]   @relation("Tags", references: [id], fields: [postIDs])
-  postIDs String[] @db.ObjectId()
+  posts   Post[]   @relation("Tags")
 }

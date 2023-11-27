@@ -10,4 +10,9 @@ export class CommentCreateManyAuthorInputEnvelope {
     nullable: false
   })
   data!: CommentCreateManyAuthorInput[];
+
+  @TypeGraphQL.Field(_type => Boolean, {
+    nullable: true
+  })
+  skipDuplicates?: boolean | undefined;
 }

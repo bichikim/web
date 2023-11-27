@@ -54,11 +54,6 @@ export const prepare = async <Context extends object, Role>(
   const server = new ApolloServer({
     cache: 'bounded',
     csrfPrevention: true,
-    // plugins: [
-    //   //
-    //   ApolloServerPluginDrainHttpServer({httpServer}),
-    //   ApolloServerPluginLandingPageLocalDefault({embed: true}),
-    // ],
     schema,
   })
   app.use(

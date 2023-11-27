@@ -3,15 +3,15 @@ import * as GraphQLScalars from "graphql-scalars";
 import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 
-@TypeGraphQL.InputType("PostUpdatelikeIDsInput", {})
-export class PostUpdatelikeIDsInput {
-  @TypeGraphQL.Field(_type => [String], {
+@TypeGraphQL.ObjectType("PostAvgAggregate", {})
+export class PostAvgAggregate {
+  @TypeGraphQL.Field(_type => TypeGraphQL.Float, {
     nullable: true
   })
-  set?: string[] | undefined;
+  id!: number | null;
 
-  @TypeGraphQL.Field(_type => [String], {
+  @TypeGraphQL.Field(_type => TypeGraphQL.Float, {
     nullable: true
   })
-  push?: string[] | undefined;
+  authorId!: number | null;
 }

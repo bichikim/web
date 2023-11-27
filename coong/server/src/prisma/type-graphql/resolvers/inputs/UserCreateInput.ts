@@ -12,11 +12,6 @@ import { UserCreaterolesInput } from "../inputs/UserCreaterolesInput";
 @TypeGraphQL.InputType("UserCreateInput", {})
 export class UserCreateInput {
   @TypeGraphQL.Field(_type => String, {
-    nullable: true
-  })
-  id?: string | undefined;
-
-  @TypeGraphQL.Field(_type => String, {
     nullable: false
   })
   email!: string;

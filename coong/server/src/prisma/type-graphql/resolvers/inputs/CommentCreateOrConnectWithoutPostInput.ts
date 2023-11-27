@@ -2,18 +2,18 @@ import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
 import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
-import { CommentCreateWithoutPortInput } from "../inputs/CommentCreateWithoutPortInput";
+import { CommentCreateWithoutPostInput } from "../inputs/CommentCreateWithoutPostInput";
 import { CommentWhereUniqueInput } from "../inputs/CommentWhereUniqueInput";
 
-@TypeGraphQL.InputType("CommentCreateOrConnectWithoutPortInput", {})
-export class CommentCreateOrConnectWithoutPortInput {
+@TypeGraphQL.InputType("CommentCreateOrConnectWithoutPostInput", {})
+export class CommentCreateOrConnectWithoutPostInput {
   @TypeGraphQL.Field(_type => CommentWhereUniqueInput, {
     nullable: false
   })
   where!: CommentWhereUniqueInput;
 
-  @TypeGraphQL.Field(_type => CommentCreateWithoutPortInput, {
+  @TypeGraphQL.Field(_type => CommentCreateWithoutPostInput, {
     nullable: false
   })
-  create!: CommentCreateWithoutPortInput;
+  create!: CommentCreateWithoutPostInput;
 }

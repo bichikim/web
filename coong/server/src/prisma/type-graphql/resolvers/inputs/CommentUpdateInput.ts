@@ -16,7 +16,7 @@ export class CommentUpdateInput {
   @TypeGraphQL.Field(_type => PostUpdateOneRequiredWithoutCommentsNestedInput, {
     nullable: true
   })
-  port?: PostUpdateOneRequiredWithoutCommentsNestedInput | undefined;
+  post?: PostUpdateOneRequiredWithoutCommentsNestedInput | undefined;
 
   @TypeGraphQL.Field(_type => UserUpdateOneRequiredWithoutCommentsNestedInput, {
     nullable: true

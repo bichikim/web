@@ -31,7 +31,7 @@ export class CommentOrderByWithRelationInput {
   @TypeGraphQL.Field(_type => PostOrderByWithRelationInput, {
     nullable: true
   })
-  port?: PostOrderByWithRelationInput | undefined;
+  post?: PostOrderByWithRelationInput | undefined;
 
   @TypeGraphQL.Field(_type => UserOrderByWithRelationInput, {
     nullable: true

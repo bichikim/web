@@ -7,11 +7,6 @@ import { PostCreateNestedOneWithoutCommentsInput } from "../inputs/PostCreateNes
 @TypeGraphQL.InputType("CommentCreateWithoutAuthorInput", {})
 export class CommentCreateWithoutAuthorInput {
   @TypeGraphQL.Field(_type => String, {
-    nullable: true
-  })
-  id?: string | undefined;
-
-  @TypeGraphQL.Field(_type => String, {
     nullable: false
   })
   message!: string;
@@ -19,5 +14,5 @@ export class CommentCreateWithoutAuthorInput {
   @TypeGraphQL.Field(_type => PostCreateNestedOneWithoutCommentsInput, {
     nullable: false
   })
-  port!: PostCreateNestedOneWithoutCommentsInput;
+  post!: PostCreateNestedOneWithoutCommentsInput;
 }

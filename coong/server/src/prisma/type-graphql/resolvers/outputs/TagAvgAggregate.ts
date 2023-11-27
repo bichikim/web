@@ -3,10 +3,10 @@ import * as GraphQLScalars from "graphql-scalars";
 import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 
-@TypeGraphQL.InputType("TagCreatepostIDsInput", {})
-export class TagCreatepostIDsInput {
-  @TypeGraphQL.Field(_type => [String], {
-    nullable: false
+@TypeGraphQL.ObjectType("TagAvgAggregate", {})
+export class TagAvgAggregate {
+  @TypeGraphQL.Field(_type => TypeGraphQL.Float, {
+    nullable: true
   })
-  set!: string[];
+  id!: number | null;
 }

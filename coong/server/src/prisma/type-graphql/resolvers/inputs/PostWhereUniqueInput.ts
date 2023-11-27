@@ -3,20 +3,20 @@ import * as GraphQLScalars from "graphql-scalars";
 import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 import { CommentListRelationFilter } from "../inputs/CommentListRelationFilter";
+import { IntFilter } from "../inputs/IntFilter";
 import { PostWhereInput } from "../inputs/PostWhereInput";
 import { StringFilter } from "../inputs/StringFilter";
 import { StringNullableFilter } from "../inputs/StringNullableFilter";
-import { StringNullableListFilter } from "../inputs/StringNullableListFilter";
 import { TagListRelationFilter } from "../inputs/TagListRelationFilter";
 import { UserListRelationFilter } from "../inputs/UserListRelationFilter";
 import { UserRelationFilter } from "../inputs/UserRelationFilter";
 
 @TypeGraphQL.InputType("PostWhereUniqueInput", {})
 export class PostWhereUniqueInput {
-  @TypeGraphQL.Field(_type => String, {
+  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
     nullable: true
   })
-  id?: string | undefined;
+  id?: number | undefined;
 
   @TypeGraphQL.Field(_type => [PostWhereInput], {
     nullable: true
@@ -43,20 +43,10 @@ export class PostWhereUniqueInput {
   })
   message?: StringNullableFilter | undefined;
 
-  @TypeGraphQL.Field(_type => StringFilter, {
+  @TypeGraphQL.Field(_type => IntFilter, {
     nullable: true
   })
-  authorId?: StringFilter | undefined;
-
-  @TypeGraphQL.Field(_type => StringNullableListFilter, {
-    nullable: true
-  })
-  likeIDs?: StringNullableListFilter | undefined;
-
-  @TypeGraphQL.Field(_type => StringNullableListFilter, {
-    nullable: true
-  })
-  tagIDs?: StringNullableListFilter | undefined;
+  authorId?: IntFilter | undefined;
 
   @TypeGraphQL.Field(_type => UserRelationFilter, {
     nullable: true

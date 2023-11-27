@@ -66,9 +66,4 @@ export class StringNullableFilter {
     nullable: true
   })
   not?: NestedStringNullableFilter | undefined;
-
-  @TypeGraphQL.Field(_type => Boolean, {
-    nullable: true
-  })
-  isSet?: boolean | undefined;
 }

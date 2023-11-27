@@ -2,6 +2,7 @@ import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
 import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
+import { IntFilter } from "../inputs/IntFilter";
 import { PostRelationFilter } from "../inputs/PostRelationFilter";
 import { StringFilter } from "../inputs/StringFilter";
 import { UserRelationFilter } from "../inputs/UserRelationFilter";
@@ -23,30 +24,30 @@ export class CommentWhereInput {
   })
   NOT?: CommentWhereInput[] | undefined;
 
-  @TypeGraphQL.Field(_type => StringFilter, {
+  @TypeGraphQL.Field(_type => IntFilter, {
     nullable: true
   })
-  id?: StringFilter | undefined;
+  id?: IntFilter | undefined;
 
   @TypeGraphQL.Field(_type => StringFilter, {
     nullable: true
   })
   message?: StringFilter | undefined;
 
-  @TypeGraphQL.Field(_type => StringFilter, {
+  @TypeGraphQL.Field(_type => IntFilter, {
     nullable: true
   })
-  postId?: StringFilter | undefined;
+  postId?: IntFilter | undefined;
 
-  @TypeGraphQL.Field(_type => StringFilter, {
+  @TypeGraphQL.Field(_type => IntFilter, {
     nullable: true
   })
-  authorId?: StringFilter | undefined;
+  authorId?: IntFilter | undefined;
 
   @TypeGraphQL.Field(_type => PostRelationFilter, {
     nullable: true
   })
-  port?: PostRelationFilter | undefined;
+  post?: PostRelationFilter | undefined;
 
   @TypeGraphQL.Field(_type => UserRelationFilter, {
     nullable: true

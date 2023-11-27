@@ -4,13 +4,8 @@ import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 import { UserCreateNestedOneWithoutCommentsInput } from "../inputs/UserCreateNestedOneWithoutCommentsInput";
 
-@TypeGraphQL.InputType("CommentCreateWithoutPortInput", {})
-export class CommentCreateWithoutPortInput {
-  @TypeGraphQL.Field(_type => String, {
-    nullable: true
-  })
-  id?: string | undefined;
-
+@TypeGraphQL.InputType("CommentCreateWithoutPostInput", {})
+export class CommentCreateWithoutPostInput {
   @TypeGraphQL.Field(_type => String, {
     nullable: false
   })

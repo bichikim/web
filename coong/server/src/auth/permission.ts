@@ -94,11 +94,11 @@ export const validate = (
   return list.some((arg) => allAround(arg))
 }
 
-export const createValidate = (
+export const createValidate = <T>(
   mode: ValidateMode = 'and',
-  ...args: (string | Validator)[]
-): Validator => {
-  return (value: string) => {
+  ...args: (string | Validator<T>)[]
+): Validator<T> => {
+  return (value: T) => {
     return validate(args, value, mode)
   }
 }

@@ -5,23 +5,23 @@ import { DecimalJSScalar } from "../../scalars";
 
 @TypeGraphQL.InputType("CommentCreateManyInput", {})
 export class CommentCreateManyInput {
-  @TypeGraphQL.Field(_type => String, {
+  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
     nullable: true
   })
-  id?: string | undefined;
+  id?: number | undefined;
 
   @TypeGraphQL.Field(_type => String, {
     nullable: false
   })
   message!: string;
 
-  @TypeGraphQL.Field(_type => String, {
+  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
     nullable: false
   })
-  postId!: string;
+  postId!: number;
 
-  @TypeGraphQL.Field(_type => String, {
+  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
     nullable: false
   })
-  authorId!: string;
+  authorId!: number;
 }

@@ -5,10 +5,10 @@ import { DecimalJSScalar } from "../../scalars";
 
 @TypeGraphQL.ObjectType("UserMaxAggregate", {})
 export class UserMaxAggregate {
-  @TypeGraphQL.Field(_type => String, {
+  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
     nullable: true
   })
-  id!: string | null;
+  id!: number | null;
 
   @TypeGraphQL.Field(_type => String, {
     nullable: true

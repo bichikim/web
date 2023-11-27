@@ -2,7 +2,7 @@ import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
 import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
-import { CommentUpdateManyWithoutPortNestedInput } from "../inputs/CommentUpdateManyWithoutPortNestedInput";
+import { CommentUpdateManyWithoutPostNestedInput } from "../inputs/CommentUpdateManyWithoutPostNestedInput";
 import { NullableStringFieldUpdateOperationsInput } from "../inputs/NullableStringFieldUpdateOperationsInput";
 import { StringFieldUpdateOperationsInput } from "../inputs/StringFieldUpdateOperationsInput";
 import { UserUpdateManyWithoutLikePostsNestedInput } from "../inputs/UserUpdateManyWithoutLikePostsNestedInput";
@@ -30,8 +30,8 @@ export class PostUpdateWithoutTagsInput {
   })
   likes?: UserUpdateManyWithoutLikePostsNestedInput | undefined;
 
-  @TypeGraphQL.Field(_type => CommentUpdateManyWithoutPortNestedInput, {
+  @TypeGraphQL.Field(_type => CommentUpdateManyWithoutPostNestedInput, {
     nullable: true
   })
-  comments?: CommentUpdateManyWithoutPortNestedInput | undefined;
+  comments?: CommentUpdateManyWithoutPostNestedInput | undefined;
 }

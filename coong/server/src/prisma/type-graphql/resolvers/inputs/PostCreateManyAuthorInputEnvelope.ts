@@ -10,4 +10,9 @@ export class PostCreateManyAuthorInputEnvelope {
     nullable: false
   })
   data!: PostCreateManyAuthorInput[];
+
+  @TypeGraphQL.Field(_type => Boolean, {
+    nullable: true
+  })
+  skipDuplicates?: boolean | undefined;
 }

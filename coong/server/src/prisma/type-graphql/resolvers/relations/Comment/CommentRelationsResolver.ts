@@ -10,13 +10,13 @@ export class CommentRelationsResolver {
   @TypeGraphQL.FieldResolver(_type => Post, {
     nullable: false
   })
-  async port(@TypeGraphQL.Root() comment: Comment, @TypeGraphQL.Ctx() ctx: any, @TypeGraphQL.Info() info: GraphQLResolveInfo): Promise<Post> {
+  async post(@TypeGraphQL.Root() comment: Comment, @TypeGraphQL.Ctx() ctx: any, @TypeGraphQL.Info() info: GraphQLResolveInfo): Promise<Post> {
     const { _count } = transformInfoIntoPrismaArgs(info);
     return getPrismaFromContext(ctx).comment.findUniqueOrThrow({
       where: {
         id: comment.id,
       },
-    }).port({
+    }).post({
       ...(_count && transformCountFieldIntoSelectRelationsCount(_count)),
     });
   }

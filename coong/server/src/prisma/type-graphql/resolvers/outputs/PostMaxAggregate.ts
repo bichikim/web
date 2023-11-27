@@ -5,10 +5,10 @@ import { DecimalJSScalar } from "../../scalars";
 
 @TypeGraphQL.ObjectType("PostMaxAggregate", {})
 export class PostMaxAggregate {
-  @TypeGraphQL.Field(_type => String, {
+  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
     nullable: true
   })
-  id!: string | null;
+  id!: number | null;
 
   @TypeGraphQL.Field(_type => String, {
     nullable: true
@@ -20,8 +20,8 @@ export class PostMaxAggregate {
   })
   message!: string | null;
 
-  @TypeGraphQL.Field(_type => String, {
+  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
     nullable: true
   })
-  authorId!: string | null;
+  authorId!: number | null;
 }

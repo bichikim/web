@@ -8,27 +8,35 @@ type AffectedRowsOutput {
 }
 
 type AggregateComment {
+  _avg: CommentAvgAggregate
   _count: CommentCountAggregate
   _max: CommentMaxAggregate
   _min: CommentMinAggregate
+  _sum: CommentSumAggregate
 }
 
 type AggregatePost {
+  _avg: PostAvgAggregate
   _count: PostCountAggregate
   _max: PostMaxAggregate
   _min: PostMinAggregate
+  _sum: PostSumAggregate
 }
 
 type AggregateTag {
+  _avg: TagAvgAggregate
   _count: TagCountAggregate
   _max: TagMaxAggregate
   _min: TagMinAggregate
+  _sum: TagSumAggregate
 }
 
 type AggregateUser {
+  _avg: UserAvgAggregate
   _count: UserCountAggregate
   _max: UserMaxAggregate
   _min: UserMinAggregate
+  _sum: UserSumAggregate
 }
 
 """user and auth token"""
@@ -36,12 +44,9 @@ type AuthUser {
   _count: UserCount
   comments(cursor: CommentWhereUniqueInput, distinct: [CommentScalarFieldEnum!], orderBy: [CommentOrderByWithRelationInput!], skip: Int, take: Int, where: CommentWhereInput): [Comment!]!
   email: String!
-  followerIDs: [String!]!
   followers(cursor: UserWhereUniqueInput, distinct: [UserScalarFieldEnum!], orderBy: [UserOrderByWithRelationInput!], skip: Int, take: Int, where: UserWhereInput): [User!]!
   following(cursor: UserWhereUniqueInput, distinct: [UserScalarFieldEnum!], orderBy: [UserOrderByWithRelationInput!], skip: Int, take: Int, where: UserWhereInput): [User!]!
-  followingIDs: [String!]!
-  id: String!
-  likePostIDs: [String!]!
+  id: Int!
   likePosts(cursor: PostWhereUniqueInput, distinct: [PostScalarFieldEnum!], orderBy: [PostOrderByWithRelationInput!], skip: Int, take: Int, where: PostWhereInput): [Post!]!
   name: String
   posts(cursor: PostWhereUniqueInput, distinct: [PostScalarFieldEnum!], orderBy: [PostOrderByWithRelationInput!], skip: Int, take: Int, where: PostWhereInput): [Post!]!
@@ -52,11 +57,23 @@ type AuthUser {
 
 type Comment {
   author: User!
-  authorId: String!
-  id: String!
+  authorId: Int!
+  id: Int!
   message: String!
-  port: Post!
-  postId: String!
+  post: Post!
+  postId: Int!
+}
+
+type CommentAvgAggregate {
+  authorId: Float
+  id: Float
+  postId: Float
+}
+
+input CommentAvgOrderByAggregateInput {
+  authorId: SortOrder
+  id: SortOrder
+  postId: SortOrder
 }
 
 type CommentCountAggregate {
@@ -76,36 +93,37 @@ input CommentCountOrderByAggregateInput {
 
 input CommentCreateInput {
   author: UserCreateNestedOneWithoutCommentsInput!
-  id: String
   message: String!
-  port: PostCreateNestedOneWithoutCommentsInput!
+  post: PostCreateNestedOneWithoutCommentsInput!
 }
 
 input CommentCreateManyAuthorInput {
-  id: String
+  id: Int
   message: String!
-  postId: String!
+  postId: Int!
 }
 
 input CommentCreateManyAuthorInputEnvelope {
   data: [CommentCreateManyAuthorInput!]!
+  skipDuplicates: Boolean
 }
 
 input CommentCreateManyInput {
-  authorId: String!
-  id: String
+  authorId: Int!
+  id: Int
   message: String!
-  postId: String!
+  postId: Int!
 }
 
-input CommentCreateManyPortInput {
-  authorId: String!
-  id: String
+input CommentCreateManyPostInput {
+  authorId: Int!
+  id: Int
   message: String!
 }
 
-input CommentCreateManyPortInputEnvelope {
-  data: [CommentCreateManyPortInput!]!
+input CommentCreateManyPostInputEnvelope {
+  data: [CommentCreateManyPostInput!]!
+  skipDuplicates: Boolean
 }
 
 input CommentCreateNestedManyWithoutAuthorInput {
@@ -115,11 +133,11 @@ input CommentCreateNestedManyWithoutAuthorInput {
   createMany: CommentCreateManyAuthorInputEnvelope
 }
 
-input CommentCreateNestedManyWithoutPortInput {
+input CommentCreateNestedManyWithoutPostInput {
   connect: [CommentWhereUniqueInput!]
-  connectOrCreate: [CommentCreateOrConnectWithoutPortInput!]
-  create: [CommentCreateWithoutPortInput!]
-  createMany: CommentCreateManyPortInputEnvelope
+  connectOrCreate: [CommentCreateOrConnectWithoutPostInput!]
+  create: [CommentCreateWithoutPostInput!]
+  createMany: CommentCreateManyPostInputEnvelope
 }
 
 input CommentCreateOrConnectWithoutAuthorInput {
@@ -127,31 +145,31 @@ input CommentCreateOrConnectWithoutAuthorInput {
   where: CommentWhereUniqueInput!
 }
 
-input CommentCreateOrConnectWithoutPortInput {
-  create: CommentCreateWithoutPortInput!
+input CommentCreateOrConnectWithoutPostInput {
+  create: CommentCreateWithoutPostInput!
   where: CommentWhereUniqueInput!
 }
 
 input CommentCreateWithoutAuthorInput {
-  id: String
   message: String!
-  port: PostCreateNestedOneWithoutCommentsInput!
+  post: PostCreateNestedOneWithoutCommentsInput!
 }
 
-input CommentCreateWithoutPortInput {
+input CommentCreateWithoutPostInput {
   author: UserCreateNestedOneWithoutCommentsInput!
-  id: String
   message: String!
 }
 
 type CommentGroupBy {
+  _avg: CommentAvgAggregate
   _count: CommentCountAggregate
   _max: CommentMaxAggregate
   _min: CommentMinAggregate
-  authorId: String!
-  id: String!
+  _sum: CommentSumAggregate
+  authorId: Int!
+  id: Int!
   message: String!
-  postId: String!
+  postId: Int!
 }
 
 input CommentListRelationFilter {
@@ -161,10 +179,10 @@ input CommentListRelationFilter {
 }
 
 type CommentMaxAggregate {
-  authorId: String
-  id: String
+  authorId: Int
+  id: Int
   message: String
-  postId: String
+  postId: Int
 }
 
 input CommentMaxOrderByAggregateInput {
@@ -175,10 +193,10 @@ input CommentMaxOrderByAggregateInput {
 }
 
 type CommentMinAggregate {
-  authorId: String
-  id: String
+  authorId: Int
+  id: Int
   message: String
-  postId: String
+  postId: Int
 }
 
 input CommentMinOrderByAggregateInput {
@@ -193,9 +211,11 @@ input CommentOrderByRelationAggregateInput {
 }
 
 input CommentOrderByWithAggregationInput {
+  _avg: CommentAvgOrderByAggregateInput
   _count: CommentCountOrderByAggregateInput
   _max: CommentMaxOrderByAggregateInput
   _min: CommentMinOrderByAggregateInput
+  _sum: CommentSumOrderByAggregateInput
   authorId: SortOrder
   id: SortOrder
   message: SortOrder
@@ -207,7 +227,7 @@ input CommentOrderByWithRelationInput {
   authorId: SortOrder
   id: SortOrder
   message: SortOrder
-  port: PostOrderByWithRelationInput
+  post: PostOrderByWithRelationInput
   postId: SortOrder
 }
 
@@ -222,26 +242,38 @@ input CommentScalarWhereInput {
   AND: [CommentScalarWhereInput!]
   NOT: [CommentScalarWhereInput!]
   OR: [CommentScalarWhereInput!]
-  authorId: StringFilter
-  id: StringFilter
+  authorId: IntFilter
+  id: IntFilter
   message: StringFilter
-  postId: StringFilter
+  postId: IntFilter
 }
 
 input CommentScalarWhereWithAggregatesInput {
   AND: [CommentScalarWhereWithAggregatesInput!]
   NOT: [CommentScalarWhereWithAggregatesInput!]
   OR: [CommentScalarWhereWithAggregatesInput!]
-  authorId: StringWithAggregatesFilter
-  id: StringWithAggregatesFilter
+  authorId: IntWithAggregatesFilter
+  id: IntWithAggregatesFilter
   message: StringWithAggregatesFilter
-  postId: StringWithAggregatesFilter
+  postId: IntWithAggregatesFilter
+}
+
+type CommentSumAggregate {
+  authorId: Int
+  id: Int
+  postId: Int
+}
+
+input CommentSumOrderByAggregateInput {
+  authorId: SortOrder
+  id: SortOrder
+  postId: SortOrder
 }
 
 input CommentUpdateInput {
   author: UserUpdateOneRequiredWithoutCommentsNestedInput
   message: StringFieldUpdateOperationsInput
-  port: PostUpdateOneRequiredWithoutCommentsNestedInput
+  post: PostUpdateOneRequiredWithoutCommentsNestedInput
 }
 
 input CommentUpdateManyMutationInput {
@@ -253,7 +285,7 @@ input CommentUpdateManyWithWhereWithoutAuthorInput {
   where: CommentScalarWhereInput!
 }
 
-input CommentUpdateManyWithWhereWithoutPortInput {
+input CommentUpdateManyWithWhereWithoutPostInput {
   data: CommentUpdateManyMutationInput!
   where: CommentScalarWhereInput!
 }
@@ -272,18 +304,18 @@ input CommentUpdateManyWithoutAuthorNestedInput {
   upsert: [CommentUpsertWithWhereUniqueWithoutAuthorInput!]
 }
 
-input CommentUpdateManyWithoutPortNestedInput {
+input CommentUpdateManyWithoutPostNestedInput {
   connect: [CommentWhereUniqueInput!]
-  connectOrCreate: [CommentCreateOrConnectWithoutPortInput!]
-  create: [CommentCreateWithoutPortInput!]
-  createMany: CommentCreateManyPortInputEnvelope
+  connectOrCreate: [CommentCreateOrConnectWithoutPostInput!]
+  create: [CommentCreateWithoutPostInput!]
+  createMany: CommentCreateManyPostInputEnvelope
   delete: [CommentWhereUniqueInput!]
   deleteMany: [CommentScalarWhereInput!]
   disconnect: [CommentWhereUniqueInput!]
   set: [CommentWhereUniqueInput!]
-  update: [CommentUpdateWithWhereUniqueWithoutPortInput!]
-  updateMany: [CommentUpdateManyWithWhereWithoutPortInput!]
-  upsert: [CommentUpsertWithWhereUniqueWithoutPortInput!]
+  update: [CommentUpdateWithWhereUniqueWithoutPostInput!]
+  updateMany: [CommentUpdateManyWithWhereWithoutPostInput!]
+  upsert: [CommentUpsertWithWhereUniqueWithoutPostInput!]
 }
 
 input CommentUpdateWithWhereUniqueWithoutAuthorInput {
@@ -291,17 +323,17 @@ input CommentUpdateWithWhereUniqueWithoutAuthorInput {
   where: CommentWhereUniqueInput!
 }
 
-input CommentUpdateWithWhereUniqueWithoutPortInput {
-  data: CommentUpdateWithoutPortInput!
+input CommentUpdateWithWhereUniqueWithoutPostInput {
+  data: CommentUpdateWithoutPostInput!
   where: CommentWhereUniqueInput!
 }
 
 input CommentUpdateWithoutAuthorInput {
   message: StringFieldUpdateOperationsInput
-  port: PostUpdateOneRequiredWithoutCommentsNestedInput
+  post: PostUpdateOneRequiredWithoutCommentsNestedInput
 }
 
-input CommentUpdateWithoutPortInput {
+input CommentUpdateWithoutPostInput {
   author: UserUpdateOneRequiredWithoutCommentsNestedInput
   message: StringFieldUpdateOperationsInput
 }
@@ -312,9 +344,9 @@ input CommentUpsertWithWhereUniqueWithoutAuthorInput {
   where: CommentWhereUniqueInput!
 }
 
-input CommentUpsertWithWhereUniqueWithoutPortInput {
-  create: CommentCreateWithoutPortInput!
-  update: CommentUpdateWithoutPortInput!
+input CommentUpsertWithWhereUniqueWithoutPostInput {
+  create: CommentCreateWithoutPostInput!
+  update: CommentUpdateWithoutPostInput!
   where: CommentWhereUniqueInput!
 }
 
@@ -323,11 +355,11 @@ input CommentWhereInput {
   NOT: [CommentWhereInput!]
   OR: [CommentWhereInput!]
   author: UserRelationFilter
-  authorId: StringFilter
-  id: StringFilter
+  authorId: IntFilter
+  id: IntFilter
   message: StringFilter
-  port: PostRelationFilter
-  postId: StringFilter
+  post: PostRelationFilter
+  postId: IntFilter
 }
 
 input CommentWhereUniqueInput {
@@ -335,18 +367,45 @@ input CommentWhereUniqueInput {
   NOT: [CommentWhereInput!]
   OR: [CommentWhereInput!]
   author: UserRelationFilter
-  authorId: StringFilter
-  id: String
+  authorId: IntFilter
+  id: Int
   message: StringFilter
-  port: PostRelationFilter
-  postId: StringFilter
+  post: PostRelationFilter
+  postId: IntFilter
+}
+
+input IntFilter {
+  equals: Int
+  gt: Int
+  gte: Int
+  in: [Int!]
+  lt: Int
+  lte: Int
+  not: NestedIntFilter
+  notIn: [Int!]
+}
+
+input IntWithAggregatesFilter {
+  _avg: NestedFloatFilter
+  _count: NestedIntFilter
+  _max: NestedIntFilter
+  _min: NestedIntFilter
+  _sum: NestedIntFilter
+  equals: Int
+  gt: Int
+  gte: Int
+  in: [Int!]
+  lt: Int
+  lte: Int
+  not: NestedIntWithAggregatesFilter
+  notIn: [Int!]
 }
 
 type Mutation {
-  createManyComment(data: [CommentCreateManyInput!]!): AffectedRowsOutput!
-  createManyPost(data: [PostCreateManyInput!]!): AffectedRowsOutput!
-  createManyTag(data: [TagCreateManyInput!]!): AffectedRowsOutput!
-  createManyUser(data: [UserCreateManyInput!]!): AffectedRowsOutput!
+  createManyComment(data: [CommentCreateManyInput!]!, skipDuplicates: Boolean): AffectedRowsOutput!
+  createManyPost(data: [PostCreateManyInput!]!, skipDuplicates: Boolean): AffectedRowsOutput!
+  createManyTag(data: [TagCreateManyInput!]!, skipDuplicates: Boolean): AffectedRowsOutput!
+  createManyUser(data: [UserCreateManyInput!]!, skipDuplicates: Boolean): AffectedRowsOutput!
   createOneComment(data: CommentCreateInput!): Comment!
   createOnePost(data: PostCreateInput!): Post!
   createOneTag(data: TagCreateInput!): Tag!
@@ -376,6 +435,17 @@ type Mutation {
   upsertOneUser(create: UserCreateInput!, update: UserUpdateInput!, where: UserWhereUniqueInput!): User!
 }
 
+input NestedFloatFilter {
+  equals: Float
+  gt: Float
+  gte: Float
+  in: [Float!]
+  lt: Float
+  lte: Float
+  not: NestedFloatFilter
+  notIn: [Float!]
+}
+
 input NestedIntFilter {
   equals: Int
   gt: Int
@@ -392,10 +462,25 @@ input NestedIntNullableFilter {
   gt: Int
   gte: Int
   in: [Int!]
-  isSet: Boolean
   lt: Int
   lte: Int
   not: NestedIntNullableFilter
+  notIn: [Int!]
+}
+
+input NestedIntWithAggregatesFilter {
+  _avg: NestedFloatFilter
+  _count: NestedIntFilter
+  _max: NestedIntFilter
+  _min: NestedIntFilter
+  _sum: NestedIntFilter
+  equals: Int
+  gt: Int
+  gte: Int
+  in: [Int!]
+  lt: Int
+  lte: Int
+  not: NestedIntWithAggregatesFilter
   notIn: [Int!]
 }
 
@@ -420,7 +505,6 @@ input NestedStringNullableFilter {
   gt: String
   gte: String
   in: [String!]
-  isSet: Boolean
   lt: String
   lte: String
   not: NestedStringNullableFilter
@@ -438,7 +522,6 @@ input NestedStringNullableWithAggregatesFilter {
   gt: String
   gte: String
   in: [String!]
-  isSet: Boolean
   lt: String
   lte: String
   not: NestedStringNullableWithAggregatesFilter
@@ -465,21 +548,33 @@ input NestedStringWithAggregatesFilter {
 
 input NullableStringFieldUpdateOperationsInput {
   set: String
-  unset: Boolean
+}
+
+enum NullsOrder {
+  first
+  last
 }
 
 type Post {
   _count: PostCount
   author: User!
-  authorId: String!
+  authorId: Int!
   comments(cursor: CommentWhereUniqueInput, distinct: [CommentScalarFieldEnum!], orderBy: [CommentOrderByWithRelationInput!], skip: Int, take: Int, where: CommentWhereInput): [Comment!]!
-  id: String!
-  likeIDs: [String!]!
+  id: Int!
   likes(cursor: UserWhereUniqueInput, distinct: [UserScalarFieldEnum!], orderBy: [UserOrderByWithRelationInput!], skip: Int, take: Int, where: UserWhereInput): [User!]!
   message: String
-  tagIDs: [String!]!
   tags(cursor: TagWhereUniqueInput, distinct: [TagScalarFieldEnum!], orderBy: [TagOrderByWithRelationInput!], skip: Int, take: Int, where: TagWhereInput): [Tag!]!
   title: String!
+}
+
+type PostAvgAggregate {
+  authorId: Float
+  id: Float
+}
+
+input PostAvgOrderByAggregateInput {
+  authorId: SortOrder
+  id: SortOrder
 }
 
 type PostCount {
@@ -492,25 +587,20 @@ type PostCountAggregate {
   _all: Int!
   authorId: Int!
   id: Int!
-  likeIDs: Int!
   message: Int!
-  tagIDs: Int!
   title: Int!
 }
 
 input PostCountOrderByAggregateInput {
   authorId: SortOrder
   id: SortOrder
-  likeIDs: SortOrder
   message: SortOrder
-  tagIDs: SortOrder
   title: SortOrder
 }
 
 input PostCreateInput {
   author: UserCreateNestedOneWithoutPostsInput!
-  comments: CommentCreateNestedManyWithoutPortInput
-  id: String
+  comments: CommentCreateNestedManyWithoutPostInput
   likes: UserCreateNestedManyWithoutLikePostsInput
   message: String
   tags: TagCreateNestedManyWithoutPostsInput
@@ -518,23 +608,20 @@ input PostCreateInput {
 }
 
 input PostCreateManyAuthorInput {
-  id: String
-  likeIDs: PostCreatelikeIDsInput
+  id: Int
   message: String
-  tagIDs: PostCreatetagIDsInput
   title: String!
 }
 
 input PostCreateManyAuthorInputEnvelope {
   data: [PostCreateManyAuthorInput!]!
+  skipDuplicates: Boolean
 }
 
 input PostCreateManyInput {
-  authorId: String!
-  id: String
-  likeIDs: PostCreatelikeIDsInput
+  authorId: Int!
+  id: Int
   message: String
-  tagIDs: PostCreatetagIDsInput
   title: String!
 }
 
@@ -584,8 +671,7 @@ input PostCreateOrConnectWithoutTagsInput {
 }
 
 input PostCreateWithoutAuthorInput {
-  comments: CommentCreateNestedManyWithoutPortInput
-  id: String
+  comments: CommentCreateNestedManyWithoutPostInput
   likes: UserCreateNestedManyWithoutLikePostsInput
   message: String
   tags: TagCreateNestedManyWithoutPostsInput
@@ -594,7 +680,6 @@ input PostCreateWithoutAuthorInput {
 
 input PostCreateWithoutCommentsInput {
   author: UserCreateNestedOneWithoutPostsInput!
-  id: String
   likes: UserCreateNestedManyWithoutLikePostsInput
   message: String
   tags: TagCreateNestedManyWithoutPostsInput
@@ -603,8 +688,7 @@ input PostCreateWithoutCommentsInput {
 
 input PostCreateWithoutLikesInput {
   author: UserCreateNestedOneWithoutPostsInput!
-  comments: CommentCreateNestedManyWithoutPortInput
-  id: String
+  comments: CommentCreateNestedManyWithoutPostInput
   message: String
   tags: TagCreateNestedManyWithoutPostsInput
   title: String!
@@ -612,30 +696,21 @@ input PostCreateWithoutLikesInput {
 
 input PostCreateWithoutTagsInput {
   author: UserCreateNestedOneWithoutPostsInput!
-  comments: CommentCreateNestedManyWithoutPortInput
-  id: String
+  comments: CommentCreateNestedManyWithoutPostInput
   likes: UserCreateNestedManyWithoutLikePostsInput
   message: String
   title: String!
 }
 
-input PostCreatelikeIDsInput {
-  set: [String!]!
-}
-
-input PostCreatetagIDsInput {
-  set: [String!]!
-}
-
 type PostGroupBy {
+  _avg: PostAvgAggregate
   _count: PostCountAggregate
   _max: PostMaxAggregate
   _min: PostMinAggregate
-  authorId: String!
-  id: String!
-  likeIDs: [String!]
+  _sum: PostSumAggregate
+  authorId: Int!
+  id: Int!
   message: String
-  tagIDs: [String!]
   title: String!
 }
 
@@ -646,8 +721,8 @@ input PostListRelationFilter {
 }
 
 type PostMaxAggregate {
-  authorId: String
-  id: String
+  authorId: Int
+  id: Int
   message: String
   title: String
 }
@@ -660,8 +735,8 @@ input PostMaxOrderByAggregateInput {
 }
 
 type PostMinAggregate {
-  authorId: String
-  id: String
+  authorId: Int
+  id: Int
   message: String
   title: String
 }
@@ -678,14 +753,14 @@ input PostOrderByRelationAggregateInput {
 }
 
 input PostOrderByWithAggregationInput {
+  _avg: PostAvgOrderByAggregateInput
   _count: PostCountOrderByAggregateInput
   _max: PostMaxOrderByAggregateInput
   _min: PostMinOrderByAggregateInput
+  _sum: PostSumOrderByAggregateInput
   authorId: SortOrder
   id: SortOrder
-  likeIDs: SortOrder
-  message: SortOrder
-  tagIDs: SortOrder
+  message: SortOrderInput
   title: SortOrder
 }
 
@@ -694,10 +769,8 @@ input PostOrderByWithRelationInput {
   authorId: SortOrder
   comments: CommentOrderByRelationAggregateInput
   id: SortOrder
-  likeIDs: SortOrder
   likes: UserOrderByRelationAggregateInput
-  message: SortOrder
-  tagIDs: SortOrder
+  message: SortOrderInput
   tags: TagOrderByRelationAggregateInput
   title: SortOrder
 }
@@ -710,9 +783,7 @@ input PostRelationFilter {
 enum PostScalarFieldEnum {
   authorId
   id
-  likeIDs
   message
-  tagIDs
   title
 }
 
@@ -720,11 +791,9 @@ input PostScalarWhereInput {
   AND: [PostScalarWhereInput!]
   NOT: [PostScalarWhereInput!]
   OR: [PostScalarWhereInput!]
-  authorId: StringFilter
-  id: StringFilter
-  likeIDs: StringNullableListFilter
+  authorId: IntFilter
+  id: IntFilter
   message: StringNullableFilter
-  tagIDs: StringNullableListFilter
   title: StringFilter
 }
 
@@ -732,17 +801,25 @@ input PostScalarWhereWithAggregatesInput {
   AND: [PostScalarWhereWithAggregatesInput!]
   NOT: [PostScalarWhereWithAggregatesInput!]
   OR: [PostScalarWhereWithAggregatesInput!]
-  authorId: StringWithAggregatesFilter
-  id: StringWithAggregatesFilter
-  likeIDs: StringNullableListFilter
+  authorId: IntWithAggregatesFilter
+  id: IntWithAggregatesFilter
   message: StringNullableWithAggregatesFilter
-  tagIDs: StringNullableListFilter
   title: StringWithAggregatesFilter
+}
+
+type PostSumAggregate {
+  authorId: Int
+  id: Int
+}
+
+input PostSumOrderByAggregateInput {
+  authorId: SortOrder
+  id: SortOrder
 }
 
 input PostUpdateInput {
   author: UserUpdateOneRequiredWithoutPostsNestedInput
-  comments: CommentUpdateManyWithoutPortNestedInput
+  comments: CommentUpdateManyWithoutPostNestedInput
   likes: UserUpdateManyWithoutLikePostsNestedInput
   message: NullableStringFieldUpdateOperationsInput
   tags: TagUpdateManyWithoutPostsNestedInput
@@ -838,7 +915,7 @@ input PostUpdateWithWhereUniqueWithoutTagsInput {
 }
 
 input PostUpdateWithoutAuthorInput {
-  comments: CommentUpdateManyWithoutPortNestedInput
+  comments: CommentUpdateManyWithoutPostNestedInput
   likes: UserUpdateManyWithoutLikePostsNestedInput
   message: NullableStringFieldUpdateOperationsInput
   tags: TagUpdateManyWithoutPostsNestedInput
@@ -855,7 +932,7 @@ input PostUpdateWithoutCommentsInput {
 
 input PostUpdateWithoutLikesInput {
   author: UserUpdateOneRequiredWithoutPostsNestedInput
-  comments: CommentUpdateManyWithoutPortNestedInput
+  comments: CommentUpdateManyWithoutPostNestedInput
   message: NullableStringFieldUpdateOperationsInput
   tags: TagUpdateManyWithoutPostsNestedInput
   title: StringFieldUpdateOperationsInput
@@ -863,7 +940,7 @@ input PostUpdateWithoutLikesInput {
 
 input PostUpdateWithoutTagsInput {
   author: UserUpdateOneRequiredWithoutPostsNestedInput
-  comments: CommentUpdateManyWithoutPortNestedInput
+  comments: CommentUpdateManyWithoutPostNestedInput
   likes: UserUpdateManyWithoutLikePostsNestedInput
   message: NullableStringFieldUpdateOperationsInput
   title: StringFieldUpdateOperationsInput
@@ -898,13 +975,11 @@ input PostWhereInput {
   NOT: [PostWhereInput!]
   OR: [PostWhereInput!]
   author: UserRelationFilter
-  authorId: StringFilter
+  authorId: IntFilter
   comments: CommentListRelationFilter
-  id: StringFilter
-  likeIDs: StringNullableListFilter
+  id: IntFilter
   likes: UserListRelationFilter
   message: StringNullableFilter
-  tagIDs: StringNullableListFilter
   tags: TagListRelationFilter
   title: StringFilter
 }
@@ -914,13 +989,11 @@ input PostWhereUniqueInput {
   NOT: [PostWhereInput!]
   OR: [PostWhereInput!]
   author: UserRelationFilter
-  authorId: StringFilter
+  authorId: IntFilter
   comments: CommentListRelationFilter
-  id: String
-  likeIDs: StringNullableListFilter
+  id: Int
   likes: UserListRelationFilter
   message: StringNullableFilter
-  tagIDs: StringNullableListFilter
   tags: TagListRelationFilter
   title: StringFilter
 }
@@ -978,6 +1051,11 @@ enum SortOrder {
   desc
 }
 
+input SortOrderInput {
+  nulls: NullsOrder
+  sort: SortOrder!
+}
+
 input StringFieldUpdateOperationsInput {
   set: String
 }
@@ -1004,7 +1082,6 @@ input StringNullableFilter {
   gt: String
   gte: String
   in: [String!]
-  isSet: Boolean
   lt: String
   lte: String
   mode: QueryMode
@@ -1031,7 +1108,6 @@ input StringNullableWithAggregatesFilter {
   gt: String
   gte: String
   in: [String!]
-  isSet: Boolean
   lt: String
   lte: String
   mode: QueryMode
@@ -1060,10 +1136,17 @@ input StringWithAggregatesFilter {
 
 type Tag {
   _count: TagCount
-  id: String!
+  id: Int!
   name: String!
-  postIDs: [String!]!
   posts(cursor: PostWhereUniqueInput, distinct: [PostScalarFieldEnum!], orderBy: [PostOrderByWithRelationInput!], skip: Int, take: Int, where: PostWhereInput): [Post!]!
+}
+
+type TagAvgAggregate {
+  id: Float
+}
+
+input TagAvgOrderByAggregateInput {
+  id: SortOrder
 }
 
 type TagCount {
@@ -1074,25 +1157,21 @@ type TagCountAggregate {
   _all: Int!
   id: Int!
   name: Int!
-  postIDs: Int!
 }
 
 input TagCountOrderByAggregateInput {
   id: SortOrder
   name: SortOrder
-  postIDs: SortOrder
 }
 
 input TagCreateInput {
-  id: String
   name: String!
   posts: PostCreateNestedManyWithoutTagsInput
 }
 
 input TagCreateManyInput {
-  id: String
+  id: Int
   name: String!
-  postIDs: TagCreatepostIDsInput
 }
 
 input TagCreateNestedManyWithoutPostsInput {
@@ -1107,21 +1186,17 @@ input TagCreateOrConnectWithoutPostsInput {
 }
 
 input TagCreateWithoutPostsInput {
-  id: String
   name: String!
-}
-
-input TagCreatepostIDsInput {
-  set: [String!]!
 }
 
 type TagGroupBy {
+  _avg: TagAvgAggregate
   _count: TagCountAggregate
   _max: TagMaxAggregate
   _min: TagMinAggregate
-  id: String!
+  _sum: TagSumAggregate
+  id: Int!
   name: String!
-  postIDs: [String!]
 }
 
 input TagListRelationFilter {
@@ -1131,7 +1206,7 @@ input TagListRelationFilter {
 }
 
 type TagMaxAggregate {
-  id: String
+  id: Int
   name: String
 }
 
@@ -1141,7 +1216,7 @@ input TagMaxOrderByAggregateInput {
 }
 
 type TagMinAggregate {
-  id: String
+  id: Int
   name: String
 }
 
@@ -1155,43 +1230,48 @@ input TagOrderByRelationAggregateInput {
 }
 
 input TagOrderByWithAggregationInput {
+  _avg: TagAvgOrderByAggregateInput
   _count: TagCountOrderByAggregateInput
   _max: TagMaxOrderByAggregateInput
   _min: TagMinOrderByAggregateInput
+  _sum: TagSumOrderByAggregateInput
   id: SortOrder
   name: SortOrder
-  postIDs: SortOrder
 }
 
 input TagOrderByWithRelationInput {
   id: SortOrder
   name: SortOrder
-  postIDs: SortOrder
   posts: PostOrderByRelationAggregateInput
 }
 
 enum TagScalarFieldEnum {
   id
   name
-  postIDs
 }
 
 input TagScalarWhereInput {
   AND: [TagScalarWhereInput!]
   NOT: [TagScalarWhereInput!]
   OR: [TagScalarWhereInput!]
-  id: StringFilter
+  id: IntFilter
   name: StringFilter
-  postIDs: StringNullableListFilter
 }
 
 input TagScalarWhereWithAggregatesInput {
   AND: [TagScalarWhereWithAggregatesInput!]
   NOT: [TagScalarWhereWithAggregatesInput!]
   OR: [TagScalarWhereWithAggregatesInput!]
-  id: StringWithAggregatesFilter
+  id: IntWithAggregatesFilter
   name: StringWithAggregatesFilter
-  postIDs: StringNullableListFilter
+}
+
+type TagSumAggregate {
+  id: Int
+}
+
+input TagSumOrderByAggregateInput {
+  id: SortOrder
 }
 
 input TagUpdateInput {
@@ -1240,9 +1320,8 @@ input TagWhereInput {
   AND: [TagWhereInput!]
   NOT: [TagWhereInput!]
   OR: [TagWhereInput!]
-  id: StringFilter
+  id: IntFilter
   name: StringFilter
-  postIDs: StringNullableListFilter
   posts: PostListRelationFilter
 }
 
@@ -1250,9 +1329,8 @@ input TagWhereUniqueInput {
   AND: [TagWhereInput!]
   NOT: [TagWhereInput!]
   OR: [TagWhereInput!]
-  id: String
+  id: Int
   name: StringFilter
-  postIDs: StringNullableListFilter
   posts: PostListRelationFilter
 }
 
@@ -1268,15 +1346,20 @@ type User {
   _count: UserCount
   comments(cursor: CommentWhereUniqueInput, distinct: [CommentScalarFieldEnum!], orderBy: [CommentOrderByWithRelationInput!], skip: Int, take: Int, where: CommentWhereInput): [Comment!]!
   email: String!
-  followerIDs: [String!]!
   followers(cursor: UserWhereUniqueInput, distinct: [UserScalarFieldEnum!], orderBy: [UserOrderByWithRelationInput!], skip: Int, take: Int, where: UserWhereInput): [User!]!
   following(cursor: UserWhereUniqueInput, distinct: [UserScalarFieldEnum!], orderBy: [UserOrderByWithRelationInput!], skip: Int, take: Int, where: UserWhereInput): [User!]!
-  followingIDs: [String!]!
-  id: String!
-  likePostIDs: [String!]!
+  id: Int!
   likePosts(cursor: PostWhereUniqueInput, distinct: [PostScalarFieldEnum!], orderBy: [PostOrderByWithRelationInput!], skip: Int, take: Int, where: PostWhereInput): [Post!]!
   name: String
   posts(cursor: PostWhereUniqueInput, distinct: [PostScalarFieldEnum!], orderBy: [PostOrderByWithRelationInput!], skip: Int, take: Int, where: PostWhereInput): [Post!]!
+}
+
+type UserAvgAggregate {
+  id: Float
+}
+
+input UserAvgOrderByAggregateInput {
+  id: SortOrder
 }
 
 type UserCount {
@@ -1290,10 +1373,7 @@ type UserCount {
 type UserCountAggregate {
   _all: Int!
   email: Int!
-  followerIDs: Int!
-  followingIDs: Int!
   id: Int!
-  likePostIDs: Int!
   name: Int!
   password: Int!
   roles: Int!
@@ -1301,10 +1381,7 @@ type UserCountAggregate {
 
 input UserCountOrderByAggregateInput {
   email: SortOrder
-  followerIDs: SortOrder
-  followingIDs: SortOrder
   id: SortOrder
-  likePostIDs: SortOrder
   name: SortOrder
   password: SortOrder
   roles: SortOrder
@@ -1315,7 +1392,6 @@ input UserCreateInput {
   email: String!
   followers: UserCreateNestedManyWithoutFollowingInput
   following: UserCreateNestedManyWithoutFollowersInput
-  id: String
   likePosts: PostCreateNestedManyWithoutLikesInput
   name: String
   password: String
@@ -1325,10 +1401,7 @@ input UserCreateInput {
 
 input UserCreateManyInput {
   email: String!
-  followerIDs: UserCreatefollowerIDsInput
-  followingIDs: UserCreatefollowingIDsInput
-  id: String
-  likePostIDs: UserCreatelikePostIDsInput
+  id: Int
   name: String
   password: String
   roles: UserCreaterolesInput
@@ -1393,7 +1466,6 @@ input UserCreateWithoutCommentsInput {
   email: String!
   followers: UserCreateNestedManyWithoutFollowingInput
   following: UserCreateNestedManyWithoutFollowersInput
-  id: String
   likePosts: PostCreateNestedManyWithoutLikesInput
   name: String
   password: String
@@ -1405,7 +1477,6 @@ input UserCreateWithoutFollowersInput {
   comments: CommentCreateNestedManyWithoutAuthorInput
   email: String!
   following: UserCreateNestedManyWithoutFollowersInput
-  id: String
   likePosts: PostCreateNestedManyWithoutLikesInput
   name: String
   password: String
@@ -1417,7 +1488,6 @@ input UserCreateWithoutFollowingInput {
   comments: CommentCreateNestedManyWithoutAuthorInput
   email: String!
   followers: UserCreateNestedManyWithoutFollowingInput
-  id: String
   likePosts: PostCreateNestedManyWithoutLikesInput
   name: String
   password: String
@@ -1430,7 +1500,6 @@ input UserCreateWithoutLikePostsInput {
   email: String!
   followers: UserCreateNestedManyWithoutFollowingInput
   following: UserCreateNestedManyWithoutFollowersInput
-  id: String
   name: String
   password: String
   posts: PostCreateNestedManyWithoutAuthorInput
@@ -1442,23 +1511,10 @@ input UserCreateWithoutPostsInput {
   email: String!
   followers: UserCreateNestedManyWithoutFollowingInput
   following: UserCreateNestedManyWithoutFollowersInput
-  id: String
   likePosts: PostCreateNestedManyWithoutLikesInput
   name: String
   password: String
   roles: UserCreaterolesInput
-}
-
-input UserCreatefollowerIDsInput {
-  set: [String!]!
-}
-
-input UserCreatefollowingIDsInput {
-  set: [String!]!
-}
-
-input UserCreatelikePostIDsInput {
-  set: [String!]!
 }
 
 input UserCreaterolesInput {
@@ -1466,14 +1522,13 @@ input UserCreaterolesInput {
 }
 
 type UserGroupBy {
+  _avg: UserAvgAggregate
   _count: UserCountAggregate
   _max: UserMaxAggregate
   _min: UserMinAggregate
+  _sum: UserSumAggregate
   email: String!
-  followerIDs: [String!]
-  followingIDs: [String!]
-  id: String!
-  likePostIDs: [String!]
+  id: Int!
   name: String
   password: String
   roles: [String!]
@@ -1487,7 +1542,7 @@ input UserListRelationFilter {
 
 type UserMaxAggregate {
   email: String
-  id: String
+  id: Int
   name: String
   password: String
 }
@@ -1501,7 +1556,7 @@ input UserMaxOrderByAggregateInput {
 
 type UserMinAggregate {
   email: String
-  id: String
+  id: Int
   name: String
   password: String
 }
@@ -1518,31 +1573,27 @@ input UserOrderByRelationAggregateInput {
 }
 
 input UserOrderByWithAggregationInput {
+  _avg: UserAvgOrderByAggregateInput
   _count: UserCountOrderByAggregateInput
   _max: UserMaxOrderByAggregateInput
   _min: UserMinOrderByAggregateInput
+  _sum: UserSumOrderByAggregateInput
   email: SortOrder
-  followerIDs: SortOrder
-  followingIDs: SortOrder
   id: SortOrder
-  likePostIDs: SortOrder
-  name: SortOrder
-  password: SortOrder
+  name: SortOrderInput
+  password: SortOrderInput
   roles: SortOrder
 }
 
 input UserOrderByWithRelationInput {
   comments: CommentOrderByRelationAggregateInput
   email: SortOrder
-  followerIDs: SortOrder
   followers: UserOrderByRelationAggregateInput
   following: UserOrderByRelationAggregateInput
-  followingIDs: SortOrder
   id: SortOrder
-  likePostIDs: SortOrder
   likePosts: PostOrderByRelationAggregateInput
-  name: SortOrder
-  password: SortOrder
+  name: SortOrderInput
+  password: SortOrderInput
   posts: PostOrderByRelationAggregateInput
   roles: SortOrder
 }
@@ -1554,10 +1605,7 @@ input UserRelationFilter {
 
 enum UserScalarFieldEnum {
   email
-  followerIDs
-  followingIDs
   id
-  likePostIDs
   name
   password
   roles
@@ -1568,10 +1616,7 @@ input UserScalarWhereInput {
   NOT: [UserScalarWhereInput!]
   OR: [UserScalarWhereInput!]
   email: StringFilter
-  followerIDs: StringNullableListFilter
-  followingIDs: StringNullableListFilter
-  id: StringFilter
-  likePostIDs: StringNullableListFilter
+  id: IntFilter
   name: StringNullableFilter
   password: StringNullableFilter
   roles: StringNullableListFilter
@@ -1582,13 +1627,18 @@ input UserScalarWhereWithAggregatesInput {
   NOT: [UserScalarWhereWithAggregatesInput!]
   OR: [UserScalarWhereWithAggregatesInput!]
   email: StringWithAggregatesFilter
-  followerIDs: StringNullableListFilter
-  followingIDs: StringNullableListFilter
-  id: StringWithAggregatesFilter
-  likePostIDs: StringNullableListFilter
+  id: IntWithAggregatesFilter
   name: StringNullableWithAggregatesFilter
   password: StringNullableWithAggregatesFilter
   roles: StringNullableListFilter
+}
+
+type UserSumAggregate {
+  id: Int
+}
+
+input UserSumOrderByAggregateInput {
+  id: SortOrder
 }
 
 input UserUpdateInput {
@@ -1801,12 +1851,9 @@ input UserWhereInput {
   OR: [UserWhereInput!]
   comments: CommentListRelationFilter
   email: StringFilter
-  followerIDs: StringNullableListFilter
   followers: UserListRelationFilter
   following: UserListRelationFilter
-  followingIDs: StringNullableListFilter
-  id: StringFilter
-  likePostIDs: StringNullableListFilter
+  id: IntFilter
   likePosts: PostListRelationFilter
   name: StringNullableFilter
   password: StringNullableFilter
@@ -1820,12 +1867,9 @@ input UserWhereUniqueInput {
   OR: [UserWhereInput!]
   comments: CommentListRelationFilter
   email: String
-  followerIDs: StringNullableListFilter
   followers: UserListRelationFilter
   following: UserListRelationFilter
-  followingIDs: StringNullableListFilter
-  id: String
-  likePostIDs: StringNullableListFilter
+  id: Int
   likePosts: PostListRelationFilter
   name: StringNullableFilter
   password: StringNullableFilter

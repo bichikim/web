@@ -26,7 +26,9 @@ applyResolversEnhanceMap({
         role('admin'),
         user(
           ({args}) => args.data.map((data) => getPostAuthorConnect(data)),
-          forbidden(({args: {data}}) => hasSome(data.map((data) => getPostForbiddenData(data)))),
+          forbidden(({args: {data}}) =>
+            hasSome(data.map((data) => getPostForbiddenData(data))),
+          ),
         ),
       ]),
     ],

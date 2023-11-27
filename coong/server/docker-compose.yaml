@@ -1,16 +1,13 @@
-version: "3.8"
+# compose
+version: "3"
 services:
-  mongodb:
-    build: ./mongodb-rs
+  postgresql:
+    image: postgres
     restart: always
-    volumes:
-      - ./data:/data
     ports:
-      - "27017:27017"
+      - "5432:5432"
     environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: foo-bar
-      MONGO_INITDB_DATABASE: data
-      MONGO_REPLICA_HOST: localhost
-      MONGO_REPLICA_PORT: 27017
-
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: foo-bar
+    volumes:
+      - ./data/postgres/:/data/postgresql/

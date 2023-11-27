@@ -25,14 +25,4 @@ export class PostCountOrderByAggregateInput {
     nullable: true
   })
   authorId?: "asc" | "desc" | undefined;
-
-  @TypeGraphQL.Field(_type => SortOrder, {
-    nullable: true
-  })
-  likeIDs?: "asc" | "desc" | undefined;
-
-  @TypeGraphQL.Field(_type => SortOrder, {
-    nullable: true
-  })
-  tagIDs?: "asc" | "desc" | undefined;
 }

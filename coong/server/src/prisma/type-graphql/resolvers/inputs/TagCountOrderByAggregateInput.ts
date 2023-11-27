@@ -15,9 +15,4 @@ export class TagCountOrderByAggregateInput {
     nullable: true
   })
   name?: "asc" | "desc" | undefined;
-
-  @TypeGraphQL.Field(_type => SortOrder, {
-    nullable: true
-  })
-  postIDs?: "asc" | "desc" | undefined;
 }

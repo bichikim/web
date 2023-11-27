@@ -83,9 +83,4 @@ export class StringNullableWithAggregatesFilter {
     nullable: true
   })
   _max?: NestedStringNullableFilter | undefined;
-
-  @TypeGraphQL.Field(_type => Boolean, {
-    nullable: true
-  })
-  isSet?: boolean | undefined;
 }

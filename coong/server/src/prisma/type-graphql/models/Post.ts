@@ -9,10 +9,10 @@ import { PostCount } from "../resolvers/outputs/PostCount";
 
 @TypeGraphQL.ObjectType("Post", {})
 export class Post {
-  @TypeGraphQL.Field(_type => String, {
+  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
     nullable: false
   })
-  id!: string;
+  id!: number;
 
   @TypeGraphQL.Field(_type => String, {
     nullable: false
@@ -26,24 +26,14 @@ export class Post {
 
   author?: User;
 
-  @TypeGraphQL.Field(_type => String, {
+  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
     nullable: false
   })
-  authorId!: string;
+  authorId!: number;
 
   likes?: User[];
 
-  @TypeGraphQL.Field(_type => [String], {
-    nullable: false
-  })
-  likeIDs!: string[];
-
   tags?: Tag[];
-
-  @TypeGraphQL.Field(_type => [String], {
-    nullable: false
-  })
-  tagIDs!: string[];
 
   comments?: Comment[];
 

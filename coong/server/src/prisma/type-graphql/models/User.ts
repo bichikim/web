@@ -8,10 +8,10 @@ import { UserCount } from "../resolvers/outputs/UserCount";
 
 @TypeGraphQL.ObjectType("User", {})
 export class User {
-  @TypeGraphQL.Field(_type => String, {
+  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
     nullable: false
   })
-  id!: string;
+  id!: number;
 
   @TypeGraphQL.Field(_type => String, {
     nullable: false
@@ -27,24 +27,9 @@ export class User {
 
   followers?: User[];
 
-  @TypeGraphQL.Field(_type => [String], {
-    nullable: false
-  })
-  followerIDs!: string[];
-
   following?: User[];
 
-  @TypeGraphQL.Field(_type => [String], {
-    nullable: false
-  })
-  followingIDs!: string[];
-
   likePosts?: Post[];
-
-  @TypeGraphQL.Field(_type => [String], {
-    nullable: false
-  })
-  likePostIDs!: string[];
 
   posts?: Post[];
 
