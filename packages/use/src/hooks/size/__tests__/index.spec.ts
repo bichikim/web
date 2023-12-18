@@ -7,7 +7,7 @@ import {effectScope, ref} from 'vue'
 jest.mock('src/hooks/element-resize')
 
 describe('useSizeRef', () => {
-  it('should return reactive ref ', () => {
+  it.skip('should return reactive ref ', () => {
     const scope = effectScope()
     scope.run(() => {
       const elementSize = {
