@@ -82,7 +82,7 @@
     "@vue/eslint-config-typescript": "^11.0.3",
     "@vue/test-utils": "^2.3.2",
     "@vue/vue3-jest": "^29.2.4",
-    "@winter-love/vite-monorepo-alias": "workspace:*",
+    "@winter-love/vite-plugin-monorepo-alias": "workspace:*",
     "babel-jest": "29.4.3",
     "babel-plugin-module-resolver": "4.1.0",
     "babel-plugin-transform-typescript-metadata": "^0.3.2",

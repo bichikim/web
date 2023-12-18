@@ -1,10 +1,11 @@
-import {createRootRegexp} from './root-regexp'
-import {getWorkspacePath} from './get-workspace-paths'
-import {getRelativePath} from './get-relative-path'
-import {getPathDeeps} from './get-path-deeps'
-import {removeDeeps} from './remove-deeps'
-import {resolveUrl} from './resolve-url'
-import {applySourceRoot} from './apply-source-root'
+import {createRootRegexp} from '../root-regexp'
+import {getWorkspacePath} from '../get-workspace-paths'
+import {getRelativePath} from '../get-relative-path'
+import {getPathDeeps} from '../get-path-deeps'
+import {removeDeeps} from '../remove-deeps'
+import {resolveUrl} from '../resolve-url'
+import {applySourceRoot} from '../apply-source-root'
+
 export interface CustomResolverOptions {
   osPathDelimiter?: string
   root?: string
@@ -21,13 +22,15 @@ export const createCustomResolver = (options: CustomResolverOptions) => {
 
   const rootRegexp = createRootRegexp(root, osPathDelimiter)
 
-  console.log('rootRegexp', rootRegexp)
-
   const workspaceRegexString = getWorkspacePath(workspacePaths)
 
-  console.log('workspaceRegexps', workspaceRegexString)
+  return async function resolveId (
+    this: any,
+    source: string,
+    importer: undefined | string,
+    resolveOptions?: Record<any, any>,
+  ) {
 
-  return (source: string, importer: undefined | string) => {
     if (!importer) {
       return source
     }
@@ -39,20 +42,22 @@ export const createCustomResolver = (options: CustomResolverOptions) => {
 
     const leftPath = importer.replace(rootRegexp, '')
 
-    console.log('leftPath', leftPath)
-
     const relativePath = getRelativePath(workspaceRegexps, leftPath)
-
-    console.log('relativePath', relativePath)
 
     const deeps = getPathDeeps(relativePath)
 
-    console.log('deeps', deeps)
-
     const path = removeDeeps(importer, deeps)
 
-    console.log('path', path)
+    const lookupPath = resolveUrl('/', path, source)
 
-    return resolveUrl('/', path, source)
+    const newPath = await this.resolve?.(lookupPath, importer, {...resolveOptions, skipSelf: true})
+
+    if (newPath) {
+      return newPath
+    }
+
+    return {
+      id: resolveUrl('/', path, source)
+    }
   }
 }
