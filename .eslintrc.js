@@ -36,6 +36,13 @@ module.exports = {
       },
     },
     {
+      // solid js
+      files: ['**/*.{j,t}s?(x)'],
+      rules: {
+        '@typescript-eslint/no-unused-expressions': 'off',
+      },
+    },
+    {
       // tests
       env: {jest: true},
       files: [
