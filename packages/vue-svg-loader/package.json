@@ -3,6 +3,7 @@
   "version": "1.0.27-alpha.11",
   "private": true,
   "main": "src/index.js",
+  "description": "vue-svg-loader \uD83E\uDDEA experimental",
   "scripts": {
     "build": "echo doing notting",
     "dev": "echo doing notting"

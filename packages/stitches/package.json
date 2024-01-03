@@ -3,6 +3,7 @@
   "version": "1.0.27",
   "repository": "git@github.com:winter-love/web.git",
   "author": "bichi@live.co.kr",
+  "description": "stitches for vue",
   "exports": {
     ".": {
       "import": "./dist/index.mjs",
