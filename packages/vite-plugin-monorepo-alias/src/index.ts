@@ -4,6 +4,10 @@ import type {Plugin} from 'vite'
 
 export type VitePluginMonorepoOptions = CustomResolverOptions
 
+/**
+ * vite plugin
+ * @param options
+ */
 export const monorepoAlias = (options: VitePluginMonorepoOptions): Plugin => {
   const {sourceRoot = './'} = options
   return {
