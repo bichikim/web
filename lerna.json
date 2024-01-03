@@ -1,7 +1,7 @@
 {
   "packages": ["packages/*"],
   "npmClient": "bun",
-  "version": "1.0.27-alpha.20",
+  "version": "1.0.27-alpha.21",
   "command": {
     "run": {
       "npmClient": "bun"

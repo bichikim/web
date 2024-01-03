@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/utils",
-  "version": "1.0.27-alpha.20",
+  "version": "1.0.27-alpha.21",
   "description": "Useful javascript utils",
   "keywords": [
     "typescript",
@@ -34,10 +34,10 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "scroll-into-view-if-needed": "^3.0.4",
-    "smooth-scroll-into-view-if-needed": "^1.1.33",
     "@winter-love/lodash": "workspace:*",
-    "safe-stable-stringify": "^2.4.1"
+    "safe-stable-stringify": "^2.4.1",
+    "scroll-into-view-if-needed": "^3.0.4",
+    "smooth-scroll-into-view-if-needed": "^1.1.33"
   },
   "devDependencies": {
     "@types/js-cookie": "^3.0.2",

@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/ether-wallet",
-  "version": "1.0.27-alpha.20",
+  "version": "1.0.27-alpha.21",
   "private": true,
   "description": "share state for vue components",
   "keywords": [
@@ -51,13 +51,13 @@
     "@ethersproject/keccak256": "^5.7.0",
     "@ethersproject/random": "^5.7.0",
     "@ethersproject/transactions": "^5.7.0",
-    "vue": "^3.2.45",
     "@winter-love/utils": "workspace:^",
     "aes-js": "^3.1.2",
     "bip39": "3.0.4",
     "ethers": "^5.7.2",
     "scrypt-js": "^3.0.1",
-    "tweetnacl": "^1.0.3"
+    "tweetnacl": "^1.0.3",
+    "vue": "^3.2.45"
   },
   "devDependencies": {
     "vue-router": "^4.1.6"
