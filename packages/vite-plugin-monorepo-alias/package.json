@@ -1,7 +1,6 @@
 {
   "name": "@winter-love/vite-plugin-monorepo-alias",
   "version": "1.0.27-alpha.20",
-  "private": true,
   "description": "hyper components base on quasar and stitches",
   "keywords": [
     "typescript",

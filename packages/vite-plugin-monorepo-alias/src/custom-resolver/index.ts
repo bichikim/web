@@ -5,6 +5,7 @@ import {getPathDeeps} from '../get-path-deeps'
 import {removeDeeps} from '../remove-deeps'
 import {resolveUrl} from '../resolve-url'
 import {applySourceRoot} from '../apply-source-root'
+import {removeQuery} from '../remove-query'
 
 export interface CustomResolverOptions {
   osPathDelimiter?: string
@@ -40,17 +41,19 @@ export const createCustomResolver = (options: CustomResolverOptions) => {
       source,
     })
 
-    const leftPath = importer.replace(rootRegexp, '')
+    const importerWithoutQuery = removeQuery(importer)
+
+    const leftPath = importerWithoutQuery.replace(rootRegexp, '')
 
     const relativePath = getRelativePath(workspaceRegexps, leftPath)
 
     const deeps = getPathDeeps(relativePath)
 
-    const path = removeDeeps(importer, deeps)
+    const path = removeDeeps(importerWithoutQuery, deeps)
 
     const lookupPath = resolveUrl('/', path, source)
 
-    const newPath = await this.resolve?.(lookupPath, importer, {...resolveOptions, skipSelf: true})
+    const newPath = await this.resolve?.(lookupPath, importerWithoutQuery, {...resolveOptions, skipSelf: true})
 
     if (newPath) {
       return newPath
