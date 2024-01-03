@@ -113,7 +113,7 @@
     "jest-environment-jsdom": "29.4.3",
     "jest-environment-node": "29.4.3",
     "jest-extended": "^3.2.4",
-    "lerna": "^6.6.2",
+    "lerna": "^8.0.1",
     "lodash": "^4.17.21",
     "portal-vue": "3.0.0",
     "prettier": "^2.8.8",
