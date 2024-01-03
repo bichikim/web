@@ -17,7 +17,7 @@
     "publish:alpha": "lerna publish from-package --preid alpha --dist-tag alpha",
     "publish:beta": "lerna publish from-package --preid beta --dist-tag beta",
     "publish:next": "lerna publish from-package --preid next --dist-tag next",
-    "publish:patch": "lerna publish from-package --no-private",
+    "publish:patch": "lerna publish patch from-package --no-private",
     "start:local-docker": "docker-compose -f local/docker-compose.yml up -d",
     "story:build": "histoire build",
     "story:dev": "histoire dev",
