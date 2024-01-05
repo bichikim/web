@@ -31,8 +31,11 @@
     "sync:android": "ionic cap sync android",
     "dev:android": "ionic cap run android -l --external --open",
     "build:android": "ionic cap build android",
-    "build:docs": "vuepress build docs",
-    "dev:docs": "vuepress dev docs"
+    "build:docs": "vitepress build docs",
+    "dev:docs": "vitepress dev docs",
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs"
   },
   "browserslist": [
     "last 10 Chrome versions",
@@ -132,7 +135,7 @@
     "vite-plugin-static-copy": "0.17.0",
     "vue": "^3.3.4",
     "vue-router": "^4.2.4",
-    "vuepress": "^2.0.0-rc.0",
+    "vitepress": "^1.0.0-rc.35",
     "@vuepress/client": "^2.0.0-rc.0"
   },
   "engines": {

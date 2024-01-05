@@ -88,3 +88,6 @@ coverage
 
 .temp
 .cache
+
+docs/.vitepress/cache
+docs/.vitepress/dist
