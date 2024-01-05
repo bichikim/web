@@ -30,7 +30,9 @@
     "version:patch-force": "lerna version patch --force-publish",
     "sync:android": "ionic cap sync android",
     "dev:android": "ionic cap run android -l --external --open",
-    "build:android": "ionic cap build android"
+    "build:android": "ionic cap build android",
+    "build:docs": "vuepress build docs",
+    "dev:docs": "vuepress dev docs"
   },
   "browserslist": [
     "last 10 Chrome versions",
@@ -129,7 +131,9 @@
     "vite": "4.2.3",
     "vite-plugin-static-copy": "0.17.0",
     "vue": "^3.3.4",
-    "vue-router": "^4.2.4"
+    "vue-router": "^4.2.4",
+    "vuepress": "^2.0.0-rc.0",
+    "@vuepress/client": "^2.0.0-rc.0"
   },
   "engines": {
     "node": ">= 16",
