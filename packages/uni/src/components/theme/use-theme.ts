@@ -2,6 +2,8 @@ import {defaultRef, defineContext, MaybeRef, mutRef, resolveRef} from '@winter-l
 import {updateElementClasses} from '@winter-love/utils'
 import {onScopeDispose, reactive, toRef, ToRef, watchEffect} from 'vue'
 
+export type * from '@vue/reactivity'
+
 export interface ThemeContext {
   theme: string
 }

@@ -53,7 +53,7 @@ const unObjectRef = <P extends Record<string, any>>(
     return value.value
   }
   if (value) {
-    return {...value}
+    return {...value} as any
   }
 }
 

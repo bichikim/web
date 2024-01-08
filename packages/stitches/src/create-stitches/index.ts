@@ -21,6 +21,8 @@ import {
 } from 'vue'
 import {$$$CSS_COMPONENT_PROPS, getComposersProps} from '../get-composers-props'
 
+export type * from 'vue/jsx'
+
 export interface StyledVueComponent<Type = 'span', Props = {}, Media = {}, CSS = {}, E = {}> {
   [StyledComponent.$$StyledComponentMedia]: Media
   [StyledComponent.$$StyledComponentProps]: Props
