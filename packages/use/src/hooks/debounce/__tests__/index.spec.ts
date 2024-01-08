@@ -1,5 +1,5 @@
 import {debounce} from '@winter-love/lodash'
-import {effectScope} from '@winter-love/vue-test'
+import {effectScope} from '@winter-love/test-utils'
 import {useDebounce} from '../'
 
 jest.mock('@winter-love/lodash')

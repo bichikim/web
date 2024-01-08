@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 import {flushPromises} from '@vue/test-utils'
-import {mountComposition} from '@winter-love/vue-test'
+import {mountComposition} from '@winter-love/test-utils'
 import {SinonFakeTimers, useFakeTimers} from 'sinon'
 import {onEvent} from 'src/hooks/event'
 import {useClipboard} from '../'

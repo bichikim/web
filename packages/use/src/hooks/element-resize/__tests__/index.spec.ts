@@ -1,7 +1,7 @@
 /**
  * @jest-environment jsdom
  */
-import {mountComposition} from '@winter-love/vue-test'
+import {mountComposition} from '@winter-love/test-utils'
 import {markRaw, Ref, ref} from 'vue'
 import {onElementResize} from '../'
 import {isElement} from 'src/checks/is-element'

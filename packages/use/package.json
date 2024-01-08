@@ -43,7 +43,7 @@
     "@winter-love/lodash": "workspace:*",
     "@winter-love/utils": "workspace:*",
     "immer": "^10.0.2",
-    "vue": "^3.3.4"
+    "vue": "^3.4.5"
   },
   "devDependencies": {
     "@types/sinon": "10.0.16",

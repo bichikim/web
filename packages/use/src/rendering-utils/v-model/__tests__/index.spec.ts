@@ -1,7 +1,7 @@
 /**
  * @jest-environment jsdom
  */
-import {defineComponent, h, mount, ref, toRef} from '@winter-love/vue-test'
+import {defineComponent, h, mount, ref, toRef} from '@winter-love/test-utils'
 import {inputModel, valueModel} from '../'
 
 describe('v-model', () => {
@@ -18,7 +18,7 @@ describe('v-model', () => {
             //
             h('input', {
               id: 'input-model-value',
-              onInput: (event) => emit('update:modelValue', event?.target?.value),
+              onInput: (event: any) => emit('update:modelValue', event?.target?.value),
               type: 'text',
               value: modelValueRef.value,
             }),

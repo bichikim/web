@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 import {slot} from '../'
-import {defineComponent, h, mount} from '@winter-love/vue-test'
+import {defineComponent, h, mount} from '@winter-love/test-utils'
 
 describe('Slot', () => {
   const setup = () => {

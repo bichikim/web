@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 import {useEventDown} from '../'
-import {mount} from '@winter-love/vue-test'
+import {mount} from '@winter-love/test-utils'
 import {defineComponent, h, ref} from 'vue'
 
 describe('use-event-down', () => {

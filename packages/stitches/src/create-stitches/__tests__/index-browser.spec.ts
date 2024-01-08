@@ -1,7 +1,7 @@
 /**
  * @jest-environment jsdom
  */
-import {mount} from '@winter-love/vue-test'
+import {mount} from '@winter-love/test-utils'
 import {h, withDirectives} from 'vue'
 import {createVueStitches} from '../'
 

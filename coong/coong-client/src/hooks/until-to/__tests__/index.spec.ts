@@ -1,6 +1,6 @@
 import {useUntilTo} from '../'
 import {useFakeTimers} from 'sinon'
-import {mountScope} from '@winter-love/vue-test'
+import {mountScope} from '@winter-love/test-utils'
 
 describe('until-to', () => {
   it('should change number to 0', () => {

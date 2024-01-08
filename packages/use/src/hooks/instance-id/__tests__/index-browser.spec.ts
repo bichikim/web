@@ -1,7 +1,7 @@
 /**
  * @jest-environment jsdom
  */
-import {mountComposition} from '@winter-love/vue-test'
+import {mountComposition} from '@winter-love/test-utils'
 import {getWindow} from '@winter-love/utils'
 import {getCurrentInstance} from 'vue'
 import {useInstanceId} from '../'

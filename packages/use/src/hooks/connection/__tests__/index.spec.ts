@@ -1,7 +1,7 @@
 /**
  * @jest-environment jsdom
  */
-import {mountScope} from '@winter-love/vue-test'
+import {mountScope} from '@winter-love/test-utils'
 import {onEvent} from 'src/hooks/event'
 import {onOffline, onOnline, useConnection} from '../'
 

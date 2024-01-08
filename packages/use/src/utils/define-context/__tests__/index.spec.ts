@@ -1,7 +1,7 @@
 /**
  * @jest-environment jsdom
  */
-import {mount} from '@winter-love/vue-test'
+import {mount} from '@winter-love/test-utils'
 import {defineComponent, h, inject, provide, reactive, ref, toRefs} from 'vue'
 import {defineContext, preferParentContext} from '../'
 

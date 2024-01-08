@@ -1,4 +1,5 @@
-import {MountingOptions, mount, VueWrapper} from '@vue/test-utils'
+/* eslint-disable vue/prefer-import-from-vue */
+import {mount, MountingOptions, VueWrapper} from '@vue/test-utils'
 import {
   AllowedComponentProps,
   ComponentCustomProps,
@@ -9,7 +10,10 @@ import {
   VNodeProps,
 } from 'vue'
 
-export type PublicProps = VNodeProps & AllowedComponentProps & ComponentCustomProps
+export type * from '@vue/shared'
+export {VNodeProps, AllowedComponentProps, ComponentCustomProps}
+
+// export type PublicProps = VNodeProps & AllowedComponentProps & ComponentCustomProps
 /**
  * @vue/test-utils/mount + setupState
  * @param setup

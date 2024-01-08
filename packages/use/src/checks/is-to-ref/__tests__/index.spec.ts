@@ -3,7 +3,7 @@
  */
 import {isToRef} from '../'
 import {computed, reactive, readonly, ref, toRef} from 'vue'
-import {mountComposition} from '@winter-love/vue-test'
+import {mountComposition} from '@winter-love/test-utils'
 
 describe('isToRef', () => {
   it('should be ref', () => {

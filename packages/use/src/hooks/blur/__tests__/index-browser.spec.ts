@@ -3,7 +3,7 @@
  */
 import {useBlur} from '../'
 import {getDocument, getHtmlElementClass} from '@winter-love/utils'
-import {mountComposition} from '@winter-love/vue-test'
+import {mountComposition} from '@winter-love/test-utils'
 
 jest.mock('@winter-love/utils')
 

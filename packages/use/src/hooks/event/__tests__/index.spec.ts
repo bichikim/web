@@ -10,7 +10,7 @@ import {
   reactive,
   ref,
   toRef,
-} from '@winter-love/vue-test'
+} from '@winter-love/test-utils'
 import {mutRef} from 'src/refs/mut-ref'
 import {onEvent} from '../index'
 

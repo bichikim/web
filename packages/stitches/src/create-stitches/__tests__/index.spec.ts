@@ -1,7 +1,7 @@
 /**
  * @jest-environment node
  */
-import {nodeParse} from '@winter-love/vue-test'
+import {nodeParse} from '@winter-love/test-utils'
 import {renderToString} from '@vue/server-renderer'
 import {createSSRApp, defineComponent, h, withDirectives} from 'vue'
 import {createVueStitches} from '../'

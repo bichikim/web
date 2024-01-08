@@ -1,7 +1,7 @@
 /**
  * @jest-environment jsdom
  */
-import {computed, mountComposition, ref, toRef, toRefs} from '@winter-love/vue-test'
+import {computed, mountComposition, ref, toRef, toRefs} from '@winter-love/test-utils'
 import {isWritableRef} from '../'
 
 describe('isWritableRef', () => {

@@ -1,4 +1,4 @@
-import {flushPromises} from '@winter-love/vue-test'
+import {flushPromises} from '@winter-love/test-utils'
 import {createCancelPromise} from '../'
 
 describe('cancelPromise', () => {

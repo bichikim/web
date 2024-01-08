@@ -1,4 +1,5 @@
-import {MountingOptions, mount, VueWrapper} from '@vue/test-utils'
+/* eslint-disable vue/prefer-import-from-vue */
+import {mount, MountingOptions, VueWrapper} from '@vue/test-utils'
 import {
   ComponentPublicInstance,
   defineComponent,
@@ -11,14 +12,18 @@ import {
   watch,
 } from 'vue'
 
+export type * from '@vue/shared'
+export type {MountingOptions}
+
 export type MountProvideOptions<
   Props extends Record<string, any>,
   InjectRawBindings,
   ProvideRawBindings,
-> = MountingOptions<any> & {
+> = MountingOptions<Props> & {
   inject: (props: Props) => InjectRawBindings
   provide: (props: Props) => ProvideRawBindings
 } & {propsOptions?: any[]}
+
 export const mountProvide = <
   Props extends Record<string, any>,
   InjectRawBindings,

@@ -1,5 +1,5 @@
 import {useSound} from '@vueuse/sound'
-import {mountScope, ref} from '@winter-love/vue-test'
+import {mountScope, ref} from '@winter-love/test-utils'
 // import {indexKeys} from 'src/hooks/piano/source'
 import {usePiano} from '../'
 import {useUntilTo} from 'src/hooks/until-to'
