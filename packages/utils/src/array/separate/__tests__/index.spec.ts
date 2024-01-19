@@ -1,5 +1,5 @@
 import {separate, separateOp} from '../'
-
+import {describe, it, expect} from 'vitest'
 describe('separate', () => {
   it('should separate list', () => {
     const [list, left] = separate(['$1', '$2', '$3', '4', '5', '6'], ((item) =>

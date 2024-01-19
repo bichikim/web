@@ -1,5 +1,5 @@
 import {CIRCULAR, jsonParse, jsonStringify} from '../'
-
+import {describe, it, expect} from 'vitest'
 describe('jsonParse', () => {
   it('should parse Json string', () => {
     const result = jsonParse('{"foo": "foo"}')

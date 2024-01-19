@@ -1,14 +1,12 @@
-/**
- * @jest-environment jsdom
- */
+import {describe, it, expect, vi} from 'vitest'
 import {isScrollAble} from '../'
 import {getStyle} from '../../get-style'
 
-jest.mock('../../get-style', () => ({
-  getStyle: jest.fn(),
+vi.mock('../../get-style', () => ({
+  getStyle: vi.fn(),
 }))
 
-const _getStyle = jest.mocked(getStyle)
+const _getStyle = vi.mocked(getStyle)
 
 describe('isScrollAble', () => {
   const setup = (style) => {

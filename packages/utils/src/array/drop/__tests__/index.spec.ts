@@ -1,5 +1,5 @@
 import {drop, dropFn} from '../'
-
+import {describe, it, expect} from 'vitest'
 describe('dropFn', () => {
   it('should drop array items', () => {
     const target = [1, 2, 3, 4, 5]

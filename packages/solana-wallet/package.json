@@ -61,7 +61,7 @@
     "tweetnacl": "^1.0.3"
   },
   "devDependencies": {
-    "vue": "^3.2.45",
+    "vue": "^3.3.0",
     "vue-router": "^4.1.6"
   },
   "publishConfig": {

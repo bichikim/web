@@ -1,24 +1,24 @@
 import {requestIdleCallback} from '../'
 import {getWindow} from 'src/dom/get-window'
 import {requestIdleCallbackPolyfill} from '../polyfill'
-
-jest.mock('src/dom/get-window')
-jest.mock('../polyfill')
+import {describe, it, expect, vi ,afterEach, beforeEach} from 'vitest'
+vi.mock('src/dom/get-window')
+vi.mock('../polyfill')
 
 describe('requestIdleCallback', () => {
   afterEach(() => {
-    jest.clearAllMocks()
+    vi.clearAllMocks()
   })
   it('should request idle callback', () => {
-    jest.mocked(getWindow).mockReturnValueOnce({
-      requestIdleCallback: jest.fn(((callback: any) => callback()) as any),
+    vi.mocked(getWindow).mockReturnValueOnce({
+      requestIdleCallback: vi.fn(((callback: any) => callback()) as any),
     } as any)
-    const callback = jest.fn()
+    const callback = vi.fn()
     requestIdleCallback(callback)
     expect(callback).toBeCalled()
   })
   it('should use polyfill when there is no requestIdleCallback', () => {
-    const callback = jest.fn()
+    const callback = vi.fn()
     requestIdleCallback(callback)
     expect(requestIdleCallbackPolyfill).toBeCalled()
   })

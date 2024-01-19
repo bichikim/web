@@ -1,9 +1,9 @@
 {
   "name": "@winter-love/stitches",
   "version": "1.0.27",
+  "description": "stitches for vue",
   "repository": "git@github.com:winter-love/web.git",
   "author": "bichi@live.co.kr",
-  "description": "stitches for vue",
   "exports": {
     ".": {
       "import": "./dist/index.mjs",
@@ -29,7 +29,7 @@
     "@stitches/core": "^1.2.8",
     "@vue/runtime-core": "^3.2.45",
     "@winter-love/lodash": "workspace:*",
-    "vue": "^3.2.45"
+    "vue": "^3.3.0"
   },
   "devDependencies": {
     "@types/node": "^18.11.14",

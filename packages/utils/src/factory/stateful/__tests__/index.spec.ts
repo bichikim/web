@@ -1,5 +1,5 @@
 import {statefulWithArgs} from '../'
-
+import {describe, it, expect} from 'vitest'
 describe('state', () => {
   it('should keep state and update', () => {
     const stateFunc = statefulWithArgs('foo', (state, name: string) => {

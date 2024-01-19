@@ -1,9 +1,9 @@
 {
   "name": "@winter-love/uni",
   "version": "1.0.27",
+  "description": "universally reactive utils 🧪 experimental",
   "repository": "git@github.com:winter-love/web.git",
   "author": "bichi@live.co.kr",
-  "description": "universally reactive utils \uD83E\uDDEA experimental",
   "exports": {
     ".": {
       "import": "./dist/index.mjs",
@@ -27,6 +27,7 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@vue/reactivity": "^3.4.5",
     "@vue/runtime-core": "^3.2.45",
     "@vue/test-utils": "^2.2.6",
     "@vueuse/core": "^9.6.0",
@@ -35,8 +36,7 @@
     "@winter-love/utils": "workspace:*",
     "jest-mock": "^29.3.1",
     "node-html-parser": "^6.1.4",
-    "vue": "^3.4.5",
-    "@vue/reactivity": "^3.4.5"
+    "vue": "^3.3.0"
   },
   "devDependencies": {
     "@types/jest": "^28.1.8",

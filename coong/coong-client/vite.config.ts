@@ -11,6 +11,7 @@ import {fileURLToPath, URL} from 'node:url'
 import topLevelAwait from 'vite-plugin-top-level-await'
 import basicSsl from '@vitejs/plugin-basic-ssl'
 import unoCss from 'unocss/vite'
+import markdown from 'unplugin-vue-markdown/vite'
 
 // eslint-disable-next-line max-lines-per-function
 export default defineConfig(({mode}) => {
@@ -34,9 +35,7 @@ export default defineConfig(({mode}) => {
       include: ['vue', 'vue-router'],
     },
     plugins: [
-      unoCss({
-
-      }),
+      unoCss({}),
       vue({
         include: [/\.vue$/u, /\.md$/u],
       }),
@@ -62,6 +61,9 @@ export default defineConfig(({mode}) => {
       topLevelAwait(),
       icons({
         autoInstall: true,
+      }),
+      markdown({
+        headEnabled: true,
       }),
       basicSsl(),
       // https://github.com/antfu/vite-plugin-pwa

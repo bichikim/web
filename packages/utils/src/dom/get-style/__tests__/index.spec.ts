@@ -1,15 +1,13 @@
-/**
- * @jest-environment jsdom
- */
+import {describe, it, expect, afterEach, beforeEach, vi} from 'vitest'
 import {getStyle} from '../'
 
 describe('getStyle', () => {
   afterEach(() => {
-    jest.spyOn(window, 'getComputedStyle').mockRestore()
+    vi.spyOn(window, 'getComputedStyle').mockRestore()
   })
   const setup = () => {
-    const getPropertyValue = jest.fn(() => 'mock')
-    jest.spyOn(window, 'getComputedStyle').mockReturnValueOnce({
+    const getPropertyValue = vi.fn(() => 'mock')
+    vi.spyOn(window, 'getComputedStyle').mockReturnValueOnce({
       getPropertyValue,
     } as any)
     const element = document.createElement('div')

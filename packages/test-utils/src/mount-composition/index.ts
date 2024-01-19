@@ -10,7 +10,6 @@ import {
   VNodeProps,
 } from 'vue'
 
-export type * from '@vue/shared'
 export {VNodeProps, AllowedComponentProps, ComponentCustomProps}
 
 // export type PublicProps = VNodeProps & AllowedComponentProps & ComponentCustomProps
@@ -22,7 +21,7 @@ export {VNodeProps, AllowedComponentProps, ComponentCustomProps}
 export const mountComposition = <Props extends Record<string, any>, RawBindings = object>(
   setup: (props: Props, ctx: SetupContext) => RawBindings,
   options: MountingOptions<any> & {propsOptions?: any[]} = {},
-): VueWrapper<ComponentPublicInstance<Props>> & {
+): any & {
   setupState: UnwrapNestedRefs<RawBindings>
 } => {
   const {props = {}, propsOptions = []} = options

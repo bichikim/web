@@ -1,3 +1,4 @@
+/// <reference types="@vue/shared" />
 /* eslint-disable vue/prefer-import-from-vue */
 import {mount, MountingOptions, VueWrapper} from '@vue/test-utils'
 import {
@@ -12,7 +13,6 @@ import {
   watch,
 } from 'vue'
 
-export type * from '@vue/shared'
 export type {MountingOptions}
 
 export type MountProvideOptions<

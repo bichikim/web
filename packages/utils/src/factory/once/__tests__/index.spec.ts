@@ -1,8 +1,8 @@
 import {once} from '../'
-
+import {describe, it, expect, vi} from 'vitest'
 describe('create once', () => {
   it('should once that run once', () => {
-    const runner = jest.fn()
+    const runner = vi.fn()
     const _once = once(runner)
     _once()
 

@@ -1,6 +1,6 @@
 import {camelCase} from '@winter-love/lodash'
 import {changeKeys} from '../'
-
+import {describe, expect, it, vi} from 'vitest'
 describe('change-keys', () => {
   it('should not change keys with a none object', () => {
     expect(changeKeys('foo', camelCase as any)).toBe('foo')

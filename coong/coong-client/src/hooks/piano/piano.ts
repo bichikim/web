@@ -32,7 +32,6 @@ export interface ReturnedValue {
   mute: (id?: number) => void
   pause: (id?: number) => void
   sound: Ref<Howl | null>
-
   up: () => void
 }
 

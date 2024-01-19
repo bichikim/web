@@ -43,7 +43,7 @@ export const HPianoSharp = defineComponent({
           h(HEmptyPianoButton, {type: 'emptySharp'}),
           h(HPianoButton, {pianoKey: '2fis', type: 'sharp'}),
           h(HPianoButton, {pianoKey: '2gis', type: 'sharp'}),
-          h(HPianoButton, {pianoKey: '2ais', type: 'sharp'}),
+          h(HPianoButton, {pianoKey: '3ais', type: 'sharp'}),
           h(HEmptyPianoButton, {type: 'emptySharp'}),
           h(HPianoButton, {pianoKey: '3cis', type: 'sharp'}),
           h(HPianoButton, {pianoKey: '3dis', type: 'sharp'}),

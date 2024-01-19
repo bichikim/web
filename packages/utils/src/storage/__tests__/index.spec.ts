@@ -1,8 +1,5 @@
-/**
- * @jest-environment jsdom
- */
 import {storage} from '../'
-
+import {describe, expect, it, vi} from 'vitest'
 describe('createStorage', () => {
   it('should create local storage', () => {
     const _storage = storage('local')

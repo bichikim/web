@@ -43,12 +43,11 @@
     "@winter-love/lodash": "workspace:*",
     "@winter-love/utils": "workspace:*",
     "immer": "^10.0.2",
-    "vue": "^3.4.5"
+    "vue": "^3.3.0"
   },
   "devDependencies": {
     "@types/sinon": "10.0.16",
-    "@vue/server-renderer": "^3.3.4",
-    "@vue/shared": "^3.3.4"
+    "@vue/server-renderer": "^3.4.0"
   },
   "publishConfig": {
     "access": "public"

@@ -57,7 +57,7 @@
     "ethers": "^5.7.2",
     "scrypt-js": "^3.0.1",
     "tweetnacl": "^1.0.3",
-    "vue": "^3.2.45"
+    "vue": "^3.3.0"
   },
   "devDependencies": {
     "vue-router": "^4.1.6"

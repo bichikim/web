@@ -1,5 +1,5 @@
 import {toQueryString} from 'src/path/to-query-string'
-
+import {describe, it, expect} from 'vitest'
 describe('toQueryString', () => {
   it('should return a query string', () => {
     const result = toQueryString({

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/ban-types */
 import {expectType} from 'tsd'
 import {ArrayLength, ClassFunction, DropParameters} from '../'
-
+import {describe, expect, it, vi} from 'vitest'
 describe('language', () => {
   describe('DropParameters', () => {
     it('should drop one item from an array tuple type', () => {

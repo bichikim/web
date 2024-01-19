@@ -1,7 +1,4 @@
-/**
- * @jest-environment jsdom
- */
-
+import {describe, it, expect} from 'vitest'
 import {getWindow} from '../'
 
 describe('getWindow', () => {

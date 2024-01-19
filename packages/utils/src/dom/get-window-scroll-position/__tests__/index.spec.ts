@@ -1,6 +1,4 @@
-/**
- * @jest-environment jsdom
- */
+import {describe, it, expect} from 'vitest'
 import {getWindowScrollPosition} from '../'
 
 // todo testing not yet
