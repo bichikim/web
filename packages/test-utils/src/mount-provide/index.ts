@@ -1,17 +1,7 @@
 /// <reference types="@vue/shared" />
 /* eslint-disable vue/prefer-import-from-vue */
-import {mount, MountingOptions, VueWrapper} from '@vue/test-utils'
-import {
-  ComponentPublicInstance,
-  defineComponent,
-  h,
-  inject,
-  InjectionKey,
-  provide,
-  Ref,
-  ref,
-  watch,
-} from 'vue'
+import {mount, MountingOptions} from '@vue/test-utils'
+import {defineComponent, h, inject, InjectionKey, provide, Ref, ref, watch} from 'vue'
 
 export type {MountingOptions}
 
@@ -30,7 +20,7 @@ export const mountProvide = <
   ProvideRawBindings,
 >(
   options: MountProvideOptions<Props, InjectRawBindings, ProvideRawBindings>,
-): VueWrapper<ComponentPublicInstance<Props>> & {
+): any & {
   setupState: {inject: InjectRawBindings; provide: ProvideRawBindings}
 } => {
   const {
