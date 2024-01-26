@@ -1,3 +1,4 @@
+/* eslint-disable no-magic-numbers */
 import {defineConfig} from 'vite'
 import icons from 'unplugin-icons/vite'
 import {VitePWA as vitePWA} from 'vite-plugin-pwa'
