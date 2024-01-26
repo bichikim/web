@@ -6,7 +6,7 @@ on:
       - master
 env:
   PNPM_VERSION: 7.1.0
-  NODE_VERSION: 16
+  NODE_VERSION: 18
   GCP_SERVICE_NAME: coong
   PROJECT_CLIENT_PATH: coong/coong-client
   ARTIFACT_CLIENT_NAME: dist-client
