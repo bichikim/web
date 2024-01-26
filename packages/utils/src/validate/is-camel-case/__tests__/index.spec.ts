@@ -1,5 +1,5 @@
 import {isCamelCase} from '../'
-
+import {describe, expect, it, vi} from 'vitest'
 describe('isCamelcase', () => {
   it('should return true withim camel case string', () => {
     expect(isCamelCase('fooBar')).toBe(true)

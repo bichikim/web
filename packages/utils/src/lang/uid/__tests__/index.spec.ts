@@ -1,5 +1,5 @@
 import {createUidGenerator} from '../'
-
+import {describe, it, expect} from 'vitest'
 describe('createUidGenerator', () => {
   it('should return uid', () => {
     const uid = createUidGenerator()

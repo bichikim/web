@@ -1,5 +1,5 @@
 import {isPromise} from '../'
-
+import {describe, expect, it, vi} from 'vitest'
 describe('is-promise', () => {
   it('should return true with promise', () => {
     expect(isPromise(Promise.resolve())).toBe(true)
@@ -11,14 +11,14 @@ describe('is-promise', () => {
   })
   it('should return true with promise like', () => {
     const promiseLike = {
-      catch: jest.fn(),
-      then: jest.fn(),
+      catch: vi.fn(),
+      then: vi.fn(),
     }
     expect(isPromise(promiseLike)).toBe(true)
   })
   it('should return false without promise like', () => {
     const promiseLike = {
-      then: jest.fn(),
+      then: vi.fn(),
     }
     expect(isPromise(promiseLike)).toBe(false)
   })

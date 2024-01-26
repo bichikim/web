@@ -4,13 +4,11 @@ import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 import { PostCreateOrConnectWithoutCommentsInput } from "../inputs/PostCreateOrConnectWithoutCommentsInput";
 import { PostCreateWithoutCommentsInput } from "../inputs/PostCreateWithoutCommentsInput";
-import { PostUpdateWithoutCommentsInput } from "../inputs/PostUpdateWithoutCommentsInput";
+import { PostUpdateToOneWithWhereWithoutCommentsInput } from "../inputs/PostUpdateToOneWithWhereWithoutCommentsInput";
 import { PostUpsertWithoutCommentsInput } from "../inputs/PostUpsertWithoutCommentsInput";
 import { PostWhereUniqueInput } from "../inputs/PostWhereUniqueInput";
 
-@TypeGraphQL.InputType("PostUpdateOneRequiredWithoutCommentsNestedInput", {
-  isAbstract: true
-})
+@TypeGraphQL.InputType("PostUpdateOneRequiredWithoutCommentsNestedInput", {})
 export class PostUpdateOneRequiredWithoutCommentsNestedInput {
   @TypeGraphQL.Field(_type => PostCreateWithoutCommentsInput, {
     nullable: true
@@ -32,8 +30,8 @@ export class PostUpdateOneRequiredWithoutCommentsNestedInput {
   })
   connect?: PostWhereUniqueInput | undefined;
 
-  @TypeGraphQL.Field(_type => PostUpdateWithoutCommentsInput, {
+  @TypeGraphQL.Field(_type => PostUpdateToOneWithWhereWithoutCommentsInput, {
     nullable: true
   })
-  update?: PostUpdateWithoutCommentsInput | undefined;
+  update?: PostUpdateToOneWithWhereWithoutCommentsInput | undefined;
 }

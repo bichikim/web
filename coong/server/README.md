@@ -1,14 +1,15 @@
-# Server old
+# Server
 
-postgres client settings
-
-https://cloud.google.com/sql/docs/postgres/connect-admin-ip
-
-update // test // 6
-
+// under construction
 https://back.coong.io
 
 <!-- version flag a -->
+
+## Hot to start (development)
+
+use docker compose (*under construction) to set server environment
+
+run dev scripts
 
 ## ENV
 db url
@@ -16,7 +17,25 @@ db url
 DATABASE_URL=mongodb+srv://ser..
 ```
 
-dev jwt key
+Setting jwt key
 ```dotenv
 JWT_KEY=dev-jwt-key
 ```
+
+## setting mongodb for development
+
+run docker-compose:up
+
+docker exec -it server-mongodb-1 bash
+
+mongosh admin -u root -p foo-bar
+
+use data
+
+db.creatUser({user: "bichi", pwd: "foo-bar", roles: ["readWrite"]})
+
+show users 
+
+DATABASE_URL=mongodb://root:foo-bar@localhost:27017/data?authSource=admin
+
+refer to https://haneenmahdin.medium.com/set-up-mongodb-prisma-with-docker-c8c2f28e85de

@@ -11,27 +11,30 @@ import {watchEffect} from 'vue'
  * @param isActive
  */
 export const onElementResize = (
-  element?: MaybeRef<HTMLElement | undefined>,
+  element?: MaybeRef<HTMLElement | undefined | null>,
   callback?: (size: Size) => any | null | undefined,
   isActive: MaybeRef<boolean> = true,
 ) => {
   const elementRef = resolveRef(element)
-  const resizeObserver = new ResizeObserver((entries: ResizeObserverEntry[]) => {
-    if (entries.length === 0) {
-      return
-    }
-    const {width, height} = entries[0].contentRect
-    callback?.({height, width})
-  })
+  const resizeObserver =
+    typeof ResizeObserver === 'undefined'
+      ? undefined
+      : new ResizeObserver((entries: ResizeObserverEntry[]) => {
+          if (entries.length === 0) {
+            return
+          }
+          const {width, height} = entries[0].contentRect
+          callback?.({height, width})
+        })
   const isActiveRef = resolveRef(isActive)
 
   watchEffect((onCleanup) => {
     const element = elementRef.value
     if (isElement(element) && isActiveRef.value) {
-      resizeObserver.observe(elementRef.value)
+      resizeObserver?.observe(element)
     }
     onCleanup(() => {
-      resizeObserver.disconnect()
+      resizeObserver?.disconnect()
     })
   })
 }

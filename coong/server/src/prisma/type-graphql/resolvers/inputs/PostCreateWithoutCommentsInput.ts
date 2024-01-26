@@ -2,21 +2,12 @@ import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
 import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
-import { PostCreatelikeIDsInput } from "../inputs/PostCreatelikeIDsInput";
-import { PostCreatetagIDsInput } from "../inputs/PostCreatetagIDsInput";
 import { TagCreateNestedManyWithoutPostsInput } from "../inputs/TagCreateNestedManyWithoutPostsInput";
 import { UserCreateNestedManyWithoutLikePostsInput } from "../inputs/UserCreateNestedManyWithoutLikePostsInput";
 import { UserCreateNestedOneWithoutPostsInput } from "../inputs/UserCreateNestedOneWithoutPostsInput";
 
-@TypeGraphQL.InputType("PostCreateWithoutCommentsInput", {
-  isAbstract: true
-})
+@TypeGraphQL.InputType("PostCreateWithoutCommentsInput", {})
 export class PostCreateWithoutCommentsInput {
-  @TypeGraphQL.Field(_type => String, {
-    nullable: true
-  })
-  id?: string | undefined;
-
   @TypeGraphQL.Field(_type => String, {
     nullable: false
   })
@@ -37,18 +28,8 @@ export class PostCreateWithoutCommentsInput {
   })
   likes?: UserCreateNestedManyWithoutLikePostsInput | undefined;
 
-  @TypeGraphQL.Field(_type => PostCreatelikeIDsInput, {
-    nullable: true
-  })
-  likeIDs?: PostCreatelikeIDsInput | undefined;
-
   @TypeGraphQL.Field(_type => TagCreateNestedManyWithoutPostsInput, {
     nullable: true
   })
   tags?: TagCreateNestedManyWithoutPostsInput | undefined;
-
-  @TypeGraphQL.Field(_type => PostCreatetagIDsInput, {
-    nullable: true
-  })
-  tagIDs?: PostCreatetagIDsInput | undefined;
 }

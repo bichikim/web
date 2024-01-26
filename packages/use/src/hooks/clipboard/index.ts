@@ -10,7 +10,7 @@ export * from './legacy'
 export type ClipboardState = 'idle' | 'reading' | 'writing'
 
 /**
- * @useful ⭐⭐⭐
+ * 클립보드 내용을 사용 합니다
  * @param initState
  * @param updateOnEvent
  */

@@ -16,6 +16,10 @@ const routes: RouteRecordRaw[] = [
         component: () => import('src/pages/privacy-policy'),
         path: 'privacy-policy',
       },
+      {
+        component: () => import('src/pages/style'),
+        path: 'style',
+      },
     ],
     component: () => import('src/layouts/main-layout'),
     path: '/',

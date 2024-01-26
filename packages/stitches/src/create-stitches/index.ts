@@ -1,3 +1,4 @@
+/// <reference types="vue/jsx" />
 /* eslint-disable @typescript-eslint/ban-types,@typescript-eslint/naming-convention */
 import {createStitches} from '@stitches/core'
 import type {ConfigType, DefaultThemeMap} from '@stitches/core/types/config'
@@ -21,7 +22,13 @@ import {
 } from 'vue'
 import {$$$CSS_COMPONENT_PROPS, getComposersProps} from '../get-composers-props'
 
-export interface StyledVueComponent<Type = 'span', Props = {}, Media = {}, CSS = {}, E = {}> {
+export interface StyledVueComponent<
+  Type = 'span',
+  Props = {},
+  Media = {},
+  CSS = {},
+  E = {},
+> {
   [StyledComponent.$$StyledComponentMedia]: Media
   [StyledComponent.$$StyledComponentProps]: Props
   [StyledComponent.$$StyledComponentType]: Type
@@ -158,7 +165,9 @@ export interface VueStitches<
     ): string & {
       className: string
       selector: string
-    } & (Argument0 extends string ? ThemeTokens<Argument1, Prefix> : ThemeTokens<Argument0, Prefix>)
+    } & (Argument0 extends string
+        ? ThemeTokens<Argument1, Prefix>
+        : ThemeTokens<Argument0, Prefix>)
   }
   css: {
     <
@@ -261,7 +270,12 @@ export interface VueStitches<
   styled: {
     <
       Type extends keyof JSX.IntrinsicElements | Component | Util.Function,
-      Composers extends (string | Component | Util.Function | {[name: string]: unknown})[],
+      Composers extends (
+        | string
+        | Component
+        | Util.Function
+        | {[name: string]: unknown}
+      )[],
       CSS = CSSUtil.CSS<Media, Theme, ThemeMap, Utils>,
     >(
       type: Type,
@@ -384,7 +398,7 @@ export const createVueStitches = <
               class: null,
               css: null,
             },
-      setup: (props, {slots}) => {
+      setup: (props: any, {slots}) => {
         const asRef = toRef(props, 'as')
 
         const elementRef = computed(() => {

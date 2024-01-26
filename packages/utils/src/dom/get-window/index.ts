@@ -1,3 +1,6 @@
 export const getWindow = (): Window | undefined => {
-  return globalThis.window
+  if (typeof window === 'undefined') {
+    return
+  }
+  return window
 }

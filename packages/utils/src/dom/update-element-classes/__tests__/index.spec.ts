@@ -1,8 +1,6 @@
-/**
- * @jest-environment jsdom
- */
-import {updateElementClasses} from '../'
 
+import {updateElementClasses} from '../'
+import {describe, it, expect} from 'vitest'
 describe('useUpdateElementClasses', () => {
   it('should update classes', () => {
     const element = document.createElement('div')

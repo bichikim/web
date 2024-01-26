@@ -1,7 +1,7 @@
 /**
  * @jest-environment jsdom
  */
-import {flushPromises, mountComposition} from '@winter-love/vue-test'
+import {flushPromises, mountComposition} from '@winter-love/test-utils'
 import {reactive, ref, watch} from 'vue'
 import {toDeepRef} from '../'
 

@@ -1,10 +1,14 @@
-import _scrollIntoView from 'scroll-into-view-if-needed'
+import _scrollIntoView, {StandardBehaviorOptions} from 'scroll-into-view-if-needed'
 import smoothScrollIntoView from 'smooth-scroll-into-view-if-needed'
 import {getDocument} from 'src/dom/get-document'
 
 export type {StandardBehaviorOptions} from 'scroll-into-view-if-needed'
+
+export type ScrollIntoView = (target: Element, options?: StandardBehaviorOptions) => void
+
 const document = getDocument()
-export const scrollIntoView =
+export const scrollIntoView: ScrollIntoView =
   document && 'scrollBehavior' in document.documentElement.style
     ? _scrollIntoView
-    : smoothScrollIntoView
+    : // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (smoothScrollIntoView as any)

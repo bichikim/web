@@ -1,0 +1,26 @@
+{
+  "name": "@winter-love/solid-coong",
+  "type": "module",
+  "scripts": {
+    "build": "vinxi build",
+    "dev": "vinxi dev",
+    "start": "node ./.output/server/index.mjs"
+  },
+  "dependencies": {
+    "@solidjs/meta": "^0.29.2",
+    "@solidjs/router": "^0.10.5",
+    "@solidjs/start": "^0.4.1",
+    "@unocss/vite": "0.57.7",
+    "@winter-love/utils": "workspace:*",
+    "solid-js": "^1.8.7",
+    "solid-styled": "^0.8.2",
+    "unocss": "0.57.7",
+    "vinxi": "0.0.54"
+  },
+  "devDependencies": {
+    "flush-promises": "^1.0.2"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

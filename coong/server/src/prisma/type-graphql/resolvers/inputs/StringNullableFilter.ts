@@ -5,9 +5,7 @@ import { DecimalJSScalar } from "../../scalars";
 import { NestedStringNullableFilter } from "../inputs/NestedStringNullableFilter";
 import { QueryMode } from "../../enums/QueryMode";
 
-@TypeGraphQL.InputType("StringNullableFilter", {
-  isAbstract: true
-})
+@TypeGraphQL.InputType("StringNullableFilter", {})
 export class StringNullableFilter {
   @TypeGraphQL.Field(_type => String, {
     nullable: true
@@ -68,9 +66,4 @@ export class StringNullableFilter {
     nullable: true
   })
   not?: NestedStringNullableFilter | undefined;
-
-  @TypeGraphQL.Field(_type => Boolean, {
-    nullable: true
-  })
-  isSet?: boolean | undefined;
 }

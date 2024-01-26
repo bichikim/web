@@ -9,7 +9,7 @@ export const HDialogClose = defineComponent({
     const controlDialog = useControlDialog()
 
     const handleClick = (event) => {
-      controlDialog.open(false)
+      controlDialog?.open(false)
       emit('click', event)
     }
 

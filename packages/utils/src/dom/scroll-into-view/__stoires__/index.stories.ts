@@ -1,6 +1,6 @@
 import {scrollIntoView} from '../'
 import {h, ref} from 'vue'
-
+import {describe, it, expect} from 'vitest'
 export default {
   title: 'utils/scrollIntoView',
 }

@@ -1,7 +1,16 @@
 import {onEvent} from 'src/hooks/event'
-import {EmptyObject, isSSR} from 'src/_imports/utils'
+import {EmptyObject, getWindow} from '@winter-love/utils'
 import {clone} from '@winter-love/lodash'
-import {computed, isRef, readonly, Ref, ref, unref, UnwrapNestedRefs, UnwrapRef} from 'vue'
+import {
+  computed,
+  isRef,
+  readonly,
+  Ref,
+  ref,
+  unref,
+  UnwrapNestedRefs,
+  UnwrapRef,
+} from 'vue'
 
 export type RequestResult<R, P> = {
   cancel: () => void
@@ -44,7 +53,7 @@ const unObjectRef = <P extends Record<string, any>>(
     return value.value
   }
   if (value) {
-    return {...value}
+    return {...value} as any
   }
 }
 
@@ -55,15 +64,17 @@ const unObjectRef = <P extends Record<string, any>>(
  * @param options
  */
 export const useRequest =
-  <R, P>(
+  <R, P extends Record<any, any>>(
     service: Service<P, R>,
     options?: BaseOptions<R, P>,
     // eslint-disable-next-line max-statements
   ) =>
+  // eslint-disable-next-line max-statements
   (
     _payload?: Ref<P> | UnwrapNestedRefs<P> | P,
     innerOptions?: BaseOptions<R, P>,
   ): RequestResult<R, P> => {
+    const window = getWindow()
     const newOptions = {...options, ...innerOptions}
     const {
       initialData,
@@ -74,12 +85,16 @@ export const useRequest =
     } = newOptions
     const refreshOnWindowFocusRef = computed(() => {
       return (
-        unref(innerOptions?.refreshOnWindowFocus) ?? unref(options?.refreshOnWindowFocus) ?? false
+        unref(innerOptions?.refreshOnWindowFocus) ??
+        unref(options?.refreshOnWindowFocus) ??
+        false
       )
     })
     const refreshOnVisibilityRef = computed(() => {
       return (
-        unref(innerOptions?.refreshOnVisibility) ?? unref(options?.refreshOnVisibility) ?? false
+        unref(innerOptions?.refreshOnVisibility) ??
+        unref(options?.refreshOnVisibility) ??
+        false
       )
     })
     const loading = ref(false)
@@ -115,7 +130,7 @@ export const useRequest =
       return run(previousPayload.value)
     }
 
-    if (!isSSR()) {
+    if (!window) {
       onEvent(window, 'focus', () => {
         if (refreshOnWindowFocusRef.value) {
           // eslint-disable-next-line @typescript-eslint/no-floating-promises

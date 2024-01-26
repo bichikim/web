@@ -25,7 +25,7 @@ export const getElementSize = (
       y: 0,
     }
   }
-  const rect = (element as any).getBoundingClientRect?.()
+  const rect = element.getBoundingClientRect?.()
   if (rect) {
     return {
       height: rect.height,

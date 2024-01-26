@@ -6,9 +6,7 @@ import { UserCreateWithoutLikePostsInput } from "../inputs/UserCreateWithoutLike
 import { UserUpdateWithoutLikePostsInput } from "../inputs/UserUpdateWithoutLikePostsInput";
 import { UserWhereUniqueInput } from "../inputs/UserWhereUniqueInput";
 
-@TypeGraphQL.InputType("UserUpsertWithWhereUniqueWithoutLikePostsInput", {
-  isAbstract: true
-})
+@TypeGraphQL.InputType("UserUpsertWithWhereUniqueWithoutLikePostsInput", {})
 export class UserUpsertWithWhereUniqueWithoutLikePostsInput {
   @TypeGraphQL.Field(_type => UserWhereUniqueInput, {
     nullable: false

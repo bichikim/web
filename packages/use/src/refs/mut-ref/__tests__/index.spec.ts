@@ -27,7 +27,7 @@ describe('bindRef', () => {
     expect(bindingRef.value).toBe('john')
   })
   it('should bind ref with a undefined value', () => {
-    const bindingRef = mutRef(undefined)
+    const bindingRef: any = mutRef(undefined)
 
     expect(bindingRef.value).toBe(undefined)
     bindingRef.value = 'bar'

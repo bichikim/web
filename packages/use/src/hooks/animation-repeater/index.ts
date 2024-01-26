@@ -1,13 +1,14 @@
-import {ref, watch} from 'src/_imports/vue'
-import {resolveRef} from 'src/refs/resolve-ref'
-import {mutRef} from 'src/refs/mut-ref'
+import {getWindow} from '@winter-love/utils'
+import {ref, Ref, watch} from 'vue'
 import {defaultRef} from 'src/refs/default-ref'
+import {mutRef} from 'src/refs/mut-ref'
+import {resolveRef} from 'src/refs/resolve-ref'
 import {MaybeRef} from 'src/types'
-import {getWindow} from 'src/_imports/utils'
 
 export type UseAnimationTickHandle = () => any
 
 /**
+ * @deprecated use useAnimationLoop
  * @param handle
  * @param toggle
  */
@@ -15,7 +16,7 @@ export const onAnimationRepeater = (
   handle: UseAnimationTickHandle,
   toggle?: MaybeRef<boolean | undefined>,
 ) => {
-  const toggleRef = mutRef(defaultRef(resolveRef(toggle), () => true))
+  const toggleRef: Ref<boolean> = mutRef(defaultRef(resolveRef(toggle), () => true))
   const cancelFlagRef = ref<number | undefined>()
   const window = getWindow()
 

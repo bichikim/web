@@ -5,15 +5,8 @@ import { DecimalJSScalar } from "../../scalars";
 import { PostCreateNestedOneWithoutCommentsInput } from "../inputs/PostCreateNestedOneWithoutCommentsInput";
 import { UserCreateNestedOneWithoutCommentsInput } from "../inputs/UserCreateNestedOneWithoutCommentsInput";
 
-@TypeGraphQL.InputType("CommentCreateInput", {
-  isAbstract: true
-})
+@TypeGraphQL.InputType("CommentCreateInput", {})
 export class CommentCreateInput {
-  @TypeGraphQL.Field(_type => String, {
-    nullable: true
-  })
-  id?: string | undefined;
-
   @TypeGraphQL.Field(_type => String, {
     nullable: false
   })
@@ -22,7 +15,7 @@ export class CommentCreateInput {
   @TypeGraphQL.Field(_type => PostCreateNestedOneWithoutCommentsInput, {
     nullable: false
   })
-  port!: PostCreateNestedOneWithoutCommentsInput;
+  post!: PostCreateNestedOneWithoutCommentsInput;
 
   @TypeGraphQL.Field(_type => UserCreateNestedOneWithoutCommentsInput, {
     nullable: false

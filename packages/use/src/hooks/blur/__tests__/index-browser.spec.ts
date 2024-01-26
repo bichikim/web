@@ -2,8 +2,8 @@
  * @jest-environment jsdom
  */
 import {useBlur} from '../'
-import {getDocument, getHtmlElementClass} from 'src/_imports/utils'
-import {mountComposition} from '@winter-love/vue-test'
+import {getDocument, getHtmlElementClass} from '@winter-love/utils'
+import {mountComposition} from '@winter-love/test-utils'
 
 jest.mock('@winter-love/utils')
 

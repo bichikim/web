@@ -2,18 +2,19 @@
  * @jest-environment jsdom
  */
 import {useEventDown} from '../'
-import {mount} from '@winter-love/vue-test'
+import {mount} from '@winter-love/test-utils'
 import {defineComponent, h, ref} from 'vue'
 
 describe('use-event-down', () => {
   const wrapper = mount(
     defineComponent({
       setup() {
-        const element = ref(null)
+        const element: any = ref(null)
         const elementState = useEventDown(element)
-        return () => h('div', {'data-testid': 'element', ref: element}, elementState.value)
+        return () =>
+          h('div', {'data-testid': 'element', ref: element}, elementState.value)
       },
-    }),
+    }) as any,
   )
 
   it('should change state when a user trigger a down and up event', async () => {

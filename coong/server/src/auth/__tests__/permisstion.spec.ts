@@ -1,31 +1,30 @@
 import {createValidate, role, validate} from '../permission'
+import {and} from '../permission'
 
-describe('validate', () => {
-  it('should validate any with mixed validator and or logic', () => {
-    const logic = ['foo', (value) => value === 'bar']
-    expect(validate(logic, 'foo', 'or')).toBe(true)
-    expect(validate(logic, 'bar', 'or')).toBe(true)
-    expect(validate(logic, 'john', 'or')).toBe(false)
-  })
-  it('should validate any with mixed validator and and logic', () => {
-    const logic = [
-      (value: string) => value.includes('foo'),
-      (value: string) => value.includes('bar'),
-      'foo bar john',
-    ]
-    expect(validate(logic, 'foo bar john')).toBe(true)
-    expect(validate(logic, 'bar')).toBe(false)
-    expect(validate(logic, 'foo')).toBe(false)
-  })
-})
+describe('and', () => {
+  it('should compare both values with and logic all true', () => {
+    const run = and(
+      (value: boolean) => value,
+      (value: boolean) => value,
+    )
 
-describe('createValidate', () => {
-  it('should return validator any with mixed validator and or logic', () => {
-    const logic = ['foo', (value) => value === 'bar']
-    const validate = createValidate('or', ...logic)
-    expect(validate('foo')).toBe(true)
-    expect(validate('bar')).toBe(true)
-    expect(validate('john')).toBe(false)
+    expect(run(true)).toBeTruthy()
+  })
+  it('should compare both values with and logic all true', () => {
+    const run = and(
+      (value: boolean) => value,
+      (value: boolean) => !value,
+    )
+
+    expect(run(true)).toBeFalsy()
+  })
+  it('should compare both values with and logic all true', () => {
+    const run = and(
+      (value: boolean) => !value,
+      (value: boolean) => value,
+    )
+
+    expect(run(true)).toBeFalsy()
   })
 })
 

@@ -1,9 +1,10 @@
-import {isSupportPassive} from 'src/env/is-support-passive'
 import {eventOptions} from '../'
+import {isSupportPassive} from 'src/env/is-support-passive'
+import {describe, it, expect, vi} from 'vitest'
 
-jest.mock('src/env/is-support-passive')
+vi.mock('src/env/is-support-passive')
 
-const _isSupportPassive = jest.mocked(isSupportPassive)
+const _isSupportPassive = vi.mocked(isSupportPassive)
 
 describe('createEventOptions', () => {
   it('should create event options with supporting passive', () => {

@@ -5,9 +5,7 @@ import { DecimalJSScalar } from "../../scalars";
 import { CommentUpdateWithoutAuthorInput } from "../inputs/CommentUpdateWithoutAuthorInput";
 import { CommentWhereUniqueInput } from "../inputs/CommentWhereUniqueInput";
 
-@TypeGraphQL.InputType("CommentUpdateWithWhereUniqueWithoutAuthorInput", {
-  isAbstract: true
-})
+@TypeGraphQL.InputType("CommentUpdateWithWhereUniqueWithoutAuthorInput", {})
 export class CommentUpdateWithWhereUniqueWithoutAuthorInput {
   @TypeGraphQL.Field(_type => CommentWhereUniqueInput, {
     nullable: false

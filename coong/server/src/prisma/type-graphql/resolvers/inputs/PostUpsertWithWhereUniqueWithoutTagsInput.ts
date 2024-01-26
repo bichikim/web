@@ -6,9 +6,7 @@ import { PostCreateWithoutTagsInput } from "../inputs/PostCreateWithoutTagsInput
 import { PostUpdateWithoutTagsInput } from "../inputs/PostUpdateWithoutTagsInput";
 import { PostWhereUniqueInput } from "../inputs/PostWhereUniqueInput";
 
-@TypeGraphQL.InputType("PostUpsertWithWhereUniqueWithoutTagsInput", {
-  isAbstract: true
-})
+@TypeGraphQL.InputType("PostUpsertWithWhereUniqueWithoutTagsInput", {})
 export class PostUpsertWithWhereUniqueWithoutTagsInput {
   @TypeGraphQL.Field(_type => PostWhereUniqueInput, {
     nullable: false

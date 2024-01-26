@@ -1,6 +1,7 @@
 {
   "name": "@winter-love/uni",
-  "version": "1.0.27-alpha.20",
+  "version": "1.0.27",
+  "description": "universally reactive utils 🧪 experimental",
   "repository": "git@github.com:winter-love/web.git",
   "author": "bichi@live.co.kr",
   "exports": {
@@ -22,25 +23,26 @@
   "scripts": {
     "build": "tsup --dts --minify",
     "dev": "tsup --watch",
-    "prepare": "tsup --dts"
+    "prepare": "tsup --dts",
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@vue/reactivity": "^3.4.5",
     "@vue/runtime-core": "^3.2.45",
     "@vue/test-utils": "^2.2.6",
     "@vueuse/core": "^9.6.0",
-    "@winter-love/stitches": "workspace:^1.0.27-alpha.20",
-    "@winter-love/use": "workspace:^1.0.27-alpha.20",
-    "@winter-love/utils": "workspace:^1.0.27-alpha.20",
+    "@winter-love/stitches": "workspace:*",
+    "@winter-love/use": "workspace:*",
+    "@winter-love/utils": "workspace:*",
     "jest-mock": "^29.3.1",
     "node-html-parser": "^6.1.4",
-    "vue": "^3.2.45"
+    "vue": "^3.3.0"
   },
   "devDependencies": {
     "@types/jest": "^28.1.8",
     "@types/node": "^18.11.14",
     "lodash": "^4.17.21",
     "tsd": "^0.24.1",
-    "tsup": "^6.5.0",
     "typescript": "^4.9.4"
   },
   "publishConfig": {

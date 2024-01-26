@@ -8,7 +8,10 @@ export interface CreateWithJwtOptions {
 }
 
 export interface JwtContext {
-  sign: (payload: PureObject | string | Buffer, options?: jwt.SignOptions) => Promise<string | null>
+  sign: (
+    payload: PureObject | string | Buffer,
+    options?: jwt.SignOptions,
+  ) => Promise<string | null>
   verify: (
     token: string,
     options?: jwt.VerifyOptions,

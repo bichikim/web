@@ -1,9 +1,11 @@
-import {once} from 'src/function/once'
+import {once} from 'src/factory/once'
 
 export const isSupportPassive = once(() => {
   let supportsPassive = false
   try {
-    window.addEventListener(
+    // testing passive supporting does not require type
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(window.addEventListener as any)(
       'test',
       null,
       Object.defineProperty({}, 'passive', {

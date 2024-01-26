@@ -1,9 +1,9 @@
 /**
  * @jest-environment jsdom
  */
-import {isToRef, isWritableToRef} from '../'
+import {isToRef} from '../'
 import {computed, reactive, readonly, ref, toRef} from 'vue'
-import {mountComposition} from '@winter-love/vue-test'
+import {mountComposition} from '@winter-love/test-utils'
 
 describe('isToRef', () => {
   it('should be ref', () => {
@@ -28,11 +28,5 @@ describe('isToRef', () => {
     expect(wrapper.setupState.isFoo).toEqual(true)
     expect(wrapper.setupState.isBar).toEqual(false)
     expect(wrapper.setupState.isJohn).toEqual(false)
-  })
-})
-
-describe('isWritableToRef', () => {
-  it('should 87785666', () => {
-    expect(isWritableToRef(toRef(readonly(reactive({name: 'foo'})), 'name'))).toBeFalsy()
   })
 })

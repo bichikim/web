@@ -1,6 +1,6 @@
 import {useFakeTimers} from 'sinon'
 import {setTimeoutPromise} from '../'
-
+import {describe, expect, it, vi} from 'vitest'
 describe('set-timeout-promise', () => {
   it('should return a timeout promise', async () => {
     const clock = useFakeTimers()

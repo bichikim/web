@@ -35,5 +35,5 @@ export class TagPostsArgs {
   @TypeGraphQL.Field(_type => [PostScalarFieldEnum], {
     nullable: true
   })
-  distinct?: Array<"id" | "title" | "message" | "authorId" | "likeIDs" | "tagIDs"> | undefined;
+  distinct?: Array<"id" | "title" | "message" | "authorId"> | undefined;
 }

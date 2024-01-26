@@ -6,7 +6,7 @@ export type Setup<T extends Record<string, any>, R> = (initState: Partial<T>) =>
 
 const uuid = createUuid('data')
 
-export interface UseStoreOptions<T, R> {
+export interface UseStoreOptions<T extends Record<string, any>, R> {
   initState?: T
   /**
    * target manager

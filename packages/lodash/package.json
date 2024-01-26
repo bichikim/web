@@ -1,7 +1,7 @@
 {
   "name": "@winter-love/lodash",
-  "version": "1.0.27-alpha.20",
-  "description": "Stitches for Vue",
+  "version": "1.0.27",
+  "description": "Lodash for tree shaking",
   "keywords": [
     "lodash"
   ],
@@ -26,19 +26,18 @@
   ],
   "scripts": {
     "build": "tsup --dts --minify",
-    "copytype": "cpx \"node_modules/@types/lodash/**/*.ts\" dist ",
+    "copytype": "cpx \"../../node_modules/@types/lodash/**/*.ts\" dist ",
     "dev": "tsup --watch",
     "generate-lodash-es": "lodash modularize exports=es -d -s -o src/lodash",
     "prepare": "tsup && pnpm run copytype"
   },
   "dependencies": {
-    "@types/lodash-es": "4.17.6"
+    "@types/lodash-es": "4.17.9"
   },
   "devDependencies": {
-    "@types/lodash": "4.14.191",
+    "@types/lodash": "4.14.198",
     "cpx": "^1.5.0",
-    "lodash-cli": "4.17.5",
-    "tsup": "^6.5.0"
+    "lodash-cli": "4.17.5"
   },
   "publishConfig": {
     "access": "public"

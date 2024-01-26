@@ -1,10 +1,10 @@
-import {toValue} from 'src/function/to-value'
+import {toValue} from 'src/factory/to-value'
 import {MaybeFunction} from 'src/types'
 import {isUndefined} from 'src/validate/is-undefined'
 
 export const defaultValue = <T>(
   value: T,
-  defaultValue?: MaybeFunction<T>,
+  defaultValue: MaybeFunction<T>,
   when: (value: T) => boolean = isUndefined,
 ): T => {
   if (when(value)) {
@@ -13,14 +13,16 @@ export const defaultValue = <T>(
   return value
 }
 
-type DefaultValueOp1<T> = (value: T) => T
+type DefaultValueOp1<T> = (value?: T) => T
 
 interface DefaultValueOp {
-  <T>(defaultValue?: MaybeFunction<T>, when?: (value: any) => boolean): DefaultValueOp1<T>
+  <T>(defaultValue?: MaybeFunction<T>, when?: (value: T) => boolean): DefaultValueOp1<T>
 
-  <T>(defaultValue: MaybeFunction<T>, when: (value: any) => boolean, value: T): T
+  <T>(defaultValue: MaybeFunction<T>, when?: (value: T) => boolean, value?: T): T
 }
 
+// retype by DefaultValueOp
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const defaultValueOp: DefaultValueOp = (...args: any[]) => {
   const [_defaultValue, when, value] = args
   // eslint-disable-next-line no-magic-numbers

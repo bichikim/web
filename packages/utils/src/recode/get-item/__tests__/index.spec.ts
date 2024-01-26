@@ -1,5 +1,5 @@
 import {getItem} from '../'
-
+import {describe, expect, it, vi} from 'vitest'
 describe('getItem', () => {
   it('should not get the item with a none object', () => {
     const data = 'foo'

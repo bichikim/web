@@ -17,11 +17,11 @@ export const createGlobalEvent = (
         eventRef.value = update(event)
       }
 
-      onEvent(document.body as any, eventName, _update, true, {
+      onEvent(document.body as any, eventName, _update, {
         passive: false,
       })
 
       return readonly(eventRef)
-    })
+    }) as DeepReadonly<Ref<TouchList | null>>
   })
 }

@@ -1,5 +1,5 @@
 import {useSound} from '@vueuse/sound'
-import {mountScope, ref} from '@winter-love/vue-test'
+import {mountScope, ref} from '@winter-love/test-utils'
 // import {indexKeys} from 'src/hooks/piano/source'
 import {usePiano} from '../'
 import {useUntilTo} from 'src/hooks/until-to'
@@ -40,7 +40,7 @@ describe('useSound', () => {
       stop: jest.fn(),
     }
 
-    _useUntilTo.mockReturnValueOnce(untilTo)
+    _useUntilTo.mockReturnValueOnce(untilTo as any)
     _useSound.mockReturnValueOnce(sound)
     const piano = mountScope(() => usePiano('2c'))
 
@@ -51,7 +51,7 @@ describe('useSound', () => {
     expect(_useSound).toHaveBeenCalledTimes(1)
     expect(untilTo.stop).toHaveBeenCalledTimes(0)
     expect(sound.play).toHaveBeenCalledTimes(0)
-    piano.down()
+    piano?.down()
     expect(untilTo.stop).toHaveBeenCalledTimes(1)
     expect(sound.play).toHaveBeenCalledTimes(1)
   })
@@ -59,7 +59,7 @@ describe('useSound', () => {
     const {piano, untilTo} = setup()
     expect(_useSound).toHaveBeenCalledTimes(1)
     expect(untilTo.stop).toHaveBeenCalledTimes(0)
-    piano.down()
+    piano?.down()
     expect(untilTo.stop).toHaveBeenCalledTimes(1)
   })
 })

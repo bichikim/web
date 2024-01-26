@@ -85,3 +85,9 @@ coverage
 
 #
 /__scratch__
+
+.temp
+.cache
+
+docs/.vitepress/cache
+docs/.vitepress/dist

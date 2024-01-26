@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/ban-types */
 import 'reflect-metadata'
+import * as console from 'console'
 import {resolvers as prismaResolvers} from 'src/prisma'
 import {prepare, start} from 'src/server'
 import authChecker from './auth'

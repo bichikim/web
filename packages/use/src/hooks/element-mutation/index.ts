@@ -3,7 +3,7 @@ import {MaybeRef} from 'src/types'
 import {resolveRef} from 'src/refs/resolve-ref'
 
 export const onElementMutation = (
-  element: MaybeRef<HTMLElement>,
+  element: MaybeRef<HTMLElement | undefined>,
   callback: (record: MutationRecord[], observer: MutationObserver) => any,
   options?: MaybeRef<MutationObserverInit>,
 ) => {
@@ -21,7 +21,7 @@ export const onElementMutation = (
     if (!element) {
       return
     }
-    observer.observe(elementRef.value, {attributes: true, ...options})
+    observer.observe(elementRef.value as any, {attributes: true, ...options})
     cleanup(() => {
       observer.disconnect()
     })

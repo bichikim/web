@@ -1,26 +1,21 @@
-import {globalCss} from '@winter-love/uni'
-
+//
 const SCREEN_HEIGHT_PROPERTY = '--screen-height'
 
-const globalBodySize = globalCss({
-  body: {
-    height: `var(${SCREEN_HEIGHT_PROPERTY}, 100vh)`,
-  },
-})
-
 export const updateScreenHeight = () => {
-  globalBodySize()
+  // globalBodySize()
   const {window} = globalThis
   if (!window) {
     return
   }
   const {document} = globalThis
+  document.body.style.height = `var(${SCREEN_HEIGHT_PROPERTY}, 100vh)`
   if (!document) {
     return
   }
   // todo fix scroll
   window.addEventListener('DOMContentLoaded', () => {
     const {clientHeight, style} = document.documentElement
+    console.log('loaded')
 
     style.setProperty(SCREEN_HEIGHT_PROPERTY, `${clientHeight}px`)
   })

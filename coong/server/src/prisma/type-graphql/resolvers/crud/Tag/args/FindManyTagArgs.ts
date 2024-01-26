@@ -35,5 +35,5 @@ export class FindManyTagArgs {
   @TypeGraphQL.Field(_type => [TagScalarFieldEnum], {
     nullable: true
   })
-  distinct?: Array<"id" | "name" | "postIDs"> | undefined;
+  distinct?: Array<"id" | "name"> | undefined;
 }

@@ -1,5 +1,5 @@
 import {getPathDeeps} from '../get-path-deeps'
-
+import {describe, it, expect} from 'vitest'
 describe('getPathDeeps', () => {
   it('should return count of deeps', () => {
     expect(getPathDeeps('john')).toBe(0)

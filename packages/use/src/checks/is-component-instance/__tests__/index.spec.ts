@@ -38,7 +38,7 @@ describe('isComponentInstance', () => {
 
     const Root = defineComponent({
       setup() {
-        const element = ref(null)
+        const element = ref<any>(null)
 
         watch(element, (element) => {
           _isElement = element instanceof HTMLElement

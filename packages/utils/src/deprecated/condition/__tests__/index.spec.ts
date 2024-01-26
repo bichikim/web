@@ -1,5 +1,5 @@
 import {condition} from '../'
-
+import {describe, it, expect} from 'vitest'
 describe('condition', () => {
   it('should run a next code by condition', () => {
     const run = condition(

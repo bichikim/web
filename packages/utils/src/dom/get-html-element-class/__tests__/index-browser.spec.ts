@@ -1,7 +1,4 @@
-/**
- * @jest-environment jsdom
- */
-
+import {describe, it, expect} from 'vitest'
 import {getHtmlElementClass} from '../'
 
 describe('getHtmlElement', () => {

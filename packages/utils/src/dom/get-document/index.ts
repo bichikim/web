@@ -1,3 +1,5 @@
-export const getDocument = () => {
-  return globalThis.document
+import {getWindow} from '../get-window'
+
+export const getDocument = (): Document | undefined => {
+  return getWindow()?.document
 }

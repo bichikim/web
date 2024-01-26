@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 import {flushPromises} from '@vue/test-utils'
-import {mountComposition} from '@winter-love/vue-test'
+import {mountComposition} from '@winter-love/test-utils'
 import {SinonFakeTimers, useFakeTimers} from 'sinon'
 import {onEvent} from 'src/hooks/event'
 import {useClipboard} from '../'
@@ -65,12 +65,14 @@ describe('clipboard', () => {
     expect(wrapper.setupState.state).toBe('idle')
     expect(wrapper.setupState.value).toBe(undefined)
     //
-    mockClipboard.readText.mockResolvedValueOnce('foo')
+    // @ts-ignore
+    mockClipboard.readText.mockResolvedValueOnce('foo' as any)
     mock.trigger('copy')
     await flushPromises()
     expect(wrapper.setupState.value).toBe('foo')
     //
-    mockClipboard.readText.mockResolvedValueOnce('bar')
+    // @ts-ignore
+    mockClipboard.readText.mockResolvedValueOnce('bar' as any)
     mock.trigger('cut')
     await flushPromises()
     expect(wrapper.setupState.value).toBe('bar')

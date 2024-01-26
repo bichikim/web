@@ -3,14 +3,12 @@ import * as GraphQLScalars from "graphql-scalars";
 import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
 
-@TypeGraphQL.ObjectType("PostMinAggregate", {
-  isAbstract: true
-})
+@TypeGraphQL.ObjectType("PostMinAggregate", {})
 export class PostMinAggregate {
-  @TypeGraphQL.Field(_type => String, {
+  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
     nullable: true
   })
-  id!: string | null;
+  id!: number | null;
 
   @TypeGraphQL.Field(_type => String, {
     nullable: true
@@ -22,8 +20,8 @@ export class PostMinAggregate {
   })
   message!: string | null;
 
-  @TypeGraphQL.Field(_type => String, {
+  @TypeGraphQL.Field(_type => TypeGraphQL.Int, {
     nullable: true
   })
-  authorId!: string | null;
+  authorId!: number | null;
 }

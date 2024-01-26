@@ -8,7 +8,7 @@ describe('defaultRef with bind ref', () => {
     expect(result.value).toBe('foo')
   })
   it('should return the default value with a ref', () => {
-    const valueRef = ref(undefined)
+    const valueRef: any = ref(undefined)
     const result = defaultRef(valueRef, 'foo')
     expect(result.value).toBe('foo')
 

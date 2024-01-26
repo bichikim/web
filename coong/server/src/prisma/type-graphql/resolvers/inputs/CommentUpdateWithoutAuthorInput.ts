@@ -5,9 +5,7 @@ import { DecimalJSScalar } from "../../scalars";
 import { PostUpdateOneRequiredWithoutCommentsNestedInput } from "../inputs/PostUpdateOneRequiredWithoutCommentsNestedInput";
 import { StringFieldUpdateOperationsInput } from "../inputs/StringFieldUpdateOperationsInput";
 
-@TypeGraphQL.InputType("CommentUpdateWithoutAuthorInput", {
-  isAbstract: true
-})
+@TypeGraphQL.InputType("CommentUpdateWithoutAuthorInput", {})
 export class CommentUpdateWithoutAuthorInput {
   @TypeGraphQL.Field(_type => StringFieldUpdateOperationsInput, {
     nullable: true
@@ -17,5 +15,5 @@ export class CommentUpdateWithoutAuthorInput {
   @TypeGraphQL.Field(_type => PostUpdateOneRequiredWithoutCommentsNestedInput, {
     nullable: true
   })
-  port?: PostUpdateOneRequiredWithoutCommentsNestedInput | undefined;
+  post?: PostUpdateOneRequiredWithoutCommentsNestedInput | undefined;
 }

@@ -6,9 +6,7 @@ import { PostOrderByWithRelationInput } from "../inputs/PostOrderByWithRelationI
 import { UserOrderByWithRelationInput } from "../inputs/UserOrderByWithRelationInput";
 import { SortOrder } from "../../enums/SortOrder";
 
-@TypeGraphQL.InputType("CommentOrderByWithRelationInput", {
-  isAbstract: true
-})
+@TypeGraphQL.InputType("CommentOrderByWithRelationInput", {})
 export class CommentOrderByWithRelationInput {
   @TypeGraphQL.Field(_type => SortOrder, {
     nullable: true
@@ -20,23 +18,23 @@ export class CommentOrderByWithRelationInput {
   })
   message?: "asc" | "desc" | undefined;
 
-  @TypeGraphQL.Field(_type => PostOrderByWithRelationInput, {
-    nullable: true
-  })
-  port?: PostOrderByWithRelationInput | undefined;
-
   @TypeGraphQL.Field(_type => SortOrder, {
     nullable: true
   })
   postId?: "asc" | "desc" | undefined;
 
-  @TypeGraphQL.Field(_type => UserOrderByWithRelationInput, {
-    nullable: true
-  })
-  author?: UserOrderByWithRelationInput | undefined;
-
   @TypeGraphQL.Field(_type => SortOrder, {
     nullable: true
   })
   authorId?: "asc" | "desc" | undefined;
+
+  @TypeGraphQL.Field(_type => PostOrderByWithRelationInput, {
+    nullable: true
+  })
+  post?: PostOrderByWithRelationInput | undefined;
+
+  @TypeGraphQL.Field(_type => UserOrderByWithRelationInput, {
+    nullable: true
+  })
+  author?: UserOrderByWithRelationInput | undefined;
 }

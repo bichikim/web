@@ -8,4 +8,9 @@ export class CreateManyCommentArgs {
     nullable: false
   })
   data!: CommentCreateManyInput[];
+
+  @TypeGraphQL.Field(_type => Boolean, {
+    nullable: true
+  })
+  skipDuplicates?: boolean | undefined;
 }

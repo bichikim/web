@@ -1,4 +1,4 @@
-import {getDocument, getHtmlElementClass} from 'src/_imports/utils'
+import {getDocument, getHtmlElementClass} from '@winter-love/utils'
 
 /**
  * 지금 돔에서 포커싱 된 엘리먼트를 blur 동작을 실행시킵니다

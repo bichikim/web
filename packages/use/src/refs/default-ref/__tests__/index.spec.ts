@@ -4,7 +4,7 @@ import {defaultRef} from '../'
 
 describe('useDefaultRef', () => {
   it('should resolve undefined with a defaultValue', () => {
-    const valueRef = ref(undefined)
+    const valueRef: any = ref(undefined)
     const result = defaultRef(valueRef, 'foo')
     expect(result.value).toBe('foo')
     valueRef.value = 'john'
@@ -13,7 +13,7 @@ describe('useDefaultRef', () => {
     expect(result.value).toBe('foo')
   })
   it('should resolve undefined with a function defaultValue', () => {
-    const valueRef = ref(undefined)
+    const valueRef: any = ref(undefined)
     const result = defaultRef(valueRef, () => 'foo')
     expect(result.value).toBe('foo')
     valueRef.value = 'john'

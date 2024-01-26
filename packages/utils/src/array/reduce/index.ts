@@ -7,8 +7,14 @@ export type ReduceIteratee<T, R> = (
   array: T[],
 ) => R
 
-const _reduce = <T, R>(list: T[], iteratee: ReduceIteratee<T, R>, initialValue?: R) => {
-  return originalReduce.call(list, iteratee, initialValue)
+const _reduce = <T, R>(
+  list: T[],
+  iteratee: ReduceIteratee<T, R>,
+  initialValue?: R,
+): R => {
+  // ignore type from reduce
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (originalReduce as any).call(list, iteratee, initialValue)
 }
 
 export interface Reduce {
@@ -17,7 +23,9 @@ export interface Reduce {
   <T, R>(list: T[], iteratee: ReduceIteratee<T, R>, initialValue?: R): R
 }
 
-export const reduce: Reduce = (...args: any[]) => {
+// retype with Reduce
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const reduce: Reduce = (...args: any[]): any => {
   const [list, iteratee, initialValue] = args
   if (args.length > 1) {
     return _reduce(list, iteratee, initialValue)
@@ -33,7 +41,9 @@ export interface ReduceOp {
   <T, R>(iteratee: ReduceIteratee<T, R>, initialValue: R, list: T[]): R
 }
 
-export const reduceOp: ReduceOp = (...args: any[]) => {
+// retype with ReduceOp
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const reduceOp: ReduceOp = (...args: any[]): any => {
   const [iteratee, initialValue, list] = args
   if (args.length > 2) {
     return _reduce(list, iteratee, initialValue)

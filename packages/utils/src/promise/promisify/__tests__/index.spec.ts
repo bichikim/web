@@ -1,6 +1,6 @@
 import {expectType} from 'tsd'
 import {promisify} from '../'
-
+import {describe, expect, it, vi} from 'vitest'
 describe('promisify', () => {
   it('should create a returning promise function from a callback function', () => {
     const callbackRunner = (count: number, callback: (error: any, data: number) => any) => {

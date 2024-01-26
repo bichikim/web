@@ -7,9 +7,7 @@ import { CommentCreateOrConnectWithoutAuthorInput } from "../inputs/CommentCreat
 import { CommentCreateWithoutAuthorInput } from "../inputs/CommentCreateWithoutAuthorInput";
 import { CommentWhereUniqueInput } from "../inputs/CommentWhereUniqueInput";
 
-@TypeGraphQL.InputType("CommentCreateNestedManyWithoutAuthorInput", {
-  isAbstract: true
-})
+@TypeGraphQL.InputType("CommentCreateNestedManyWithoutAuthorInput", {})
 export class CommentCreateNestedManyWithoutAuthorInput {
   @TypeGraphQL.Field(_type => [CommentCreateWithoutAuthorInput], {
     nullable: true

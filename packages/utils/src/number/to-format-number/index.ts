@@ -1,7 +1,7 @@
 import {toNumber} from 'src/number/to-number'
 
 export const toFormatNumber = (
-  value?: any,
+  value?: unknown,
   locale: string = 'ko-KR',
   options: Partial<Intl.NumberFormatOptions> = {},
 ) => {

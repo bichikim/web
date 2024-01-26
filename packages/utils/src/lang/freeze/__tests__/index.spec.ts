@@ -1,6 +1,6 @@
 import * as process from 'process'
 import {freeze} from '../index'
-
+import {describe, it, expect} from 'vitest'
 describe('freeze', () => {
   it('should return a frozen object', () => {
     const oldEnv = process.env.NODE_ENV
@@ -10,8 +10,7 @@ describe('freeze', () => {
     const foo = freeze({foo: 'foo'})
 
     const error = () => {
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // noinspection JSConstantReassignment
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       ;(foo as any).foo = ''
     }
 

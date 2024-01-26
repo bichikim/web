@@ -1,3 +1,4 @@
+export * from './event-options'
 export * from './get-document'
 export * from './get-element'
 export * from './get-element-size'

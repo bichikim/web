@@ -8,7 +8,7 @@ const useShardEnd = once(() => {
   const scope = effectScope()
   return scope.run((): Ref<null | TouchList> => {
     return shallowRef(null)
-  })
+  }) as Ref<null | TouchList>
 })
 
 export const useGlobalTouchMove = createGlobalEvent(
@@ -16,7 +16,7 @@ export const useGlobalTouchMove = createGlobalEvent(
   (event: TouchEvent) => event.targetTouches,
 )
 
-export const useEventHoverTouchDown = (element: MaybeRef<HTMLElement>) => {
+export const useEventHoverTouchDown = (element: MaybeRef<HTMLElement | null>) => {
   const elementRef = resolveRef(element)
   const isInsideRef = ref(false)
   const touchMove = useGlobalTouchMove()
@@ -35,7 +35,8 @@ export const useEventHoverTouchDown = (element: MaybeRef<HTMLElement>) => {
       // eslint-disable-next-line unicorn/no-for-loop
       for (let index = 0; index < touches.length; index += 1) {
         const touch = touches[index]
-        const isInside = elementFromPoint(touch.clientX, touch.clientY) === elementRef.value
+        const isInside =
+          elementFromPoint(touch.clientX, touch.clientY) === elementRef.value
         if (isInside) {
           isInsideRef.value = true
           identifier.value = touch.identifier
@@ -43,7 +44,6 @@ export const useEventHoverTouchDown = (element: MaybeRef<HTMLElement>) => {
         }
       }
     },
-    true,
     {
       passive: false,
     },
@@ -74,15 +74,18 @@ export const useEventHoverTouchDown = (element: MaybeRef<HTMLElement>) => {
       // update shardEnd
       shardEnd.value = event.changedTouches
     },
-    true,
     {
       passive: false,
     },
   )
 
-  watch(touchMove, (touches: TouchList) => {
+  watch(touchMove, (touches: TouchList | null) => {
+    if (!touches) {
+      return
+    }
+    const maxLength = touches.length
     // eslint-disable-next-line unicorn/no-for-loop
-    for (let index = 0; index < touches.length; index += 1) {
+    for (let index = 0; index < maxLength; index += 1) {
       const touch = touches[index]
       const isInside = elementFromPoint(touch.clientX, touch.clientY) === elementRef.value
 

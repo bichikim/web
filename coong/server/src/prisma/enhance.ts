@@ -26,7 +26,9 @@ applyResolversEnhanceMap({
         role('admin'),
         user(
           ({args}) => args.data.map((data) => getPostAuthorConnect(data)),
-          forbidden(({args: {data}}) => hasSome(data.map((data) => getPostForbiddenData(data)))),
+          forbidden(({args: {data}}) =>
+            hasSome(data.map((data) => getPostForbiddenData(data))),
+          ),
         ),
       ]),
     ],
@@ -51,21 +53,22 @@ applyResolversEnhanceMap({
     upsertOnePost: [Authorized([role('admin')])],
   },
   User: {
-    // aggregateUser: [Authorized([privateUser.read, privateUser.self])],
-    // createManyUser: [Authorized([privateUser.create])],
-    // // createUser: [Authorized([privateUser.create])],
-    // deleteManyUser: [Authorized([privateUser.delete])],
-    // // deleteUser: [Authorized([privateUser.delete])],
-    // findFirstUser: [Authorized([privateUser.read])],
-    // groupByUser: [Authorized([privateUser.read])],
-    // updateManyUser: [Authorized([privateUser.update])],
-    // // updateUser: [Authorized([privateUser.update])],
-    // // upsertUser: [Authorized([privateUser.update, privateUser.create])],
-    // user: [Authorized(privateUser.read, privateUser.self), SelfAuthorized(({args}) => args.where)],
-    // users: [Authorized(privateUser.read, privateUser.self)],
+    _all: [Authorized([role('admin')])],
   },
 })
 
+// aggregateUser: [Authorized([privateUser.read, privateUser.self])],
+// createManyUser: [Authorized([privateUser.create])],
+// // createUser: [Authorized([privateUser.create])],
+// deleteManyUser: [Authorized([privateUser.delete])],
+// // deleteUser: [Authorized([privateUser.delete])],
+// findFirstUser: [Authorized([privateUser.read])],
+// groupByUser: [Authorized([privateUser.read])],
+// updateManyUser: [Authorized([privateUser.update])],
+// // updateUser: [Authorized([privateUser.update])],
+// // upsertUser: [Authorized([privateUser.update, privateUser.create])],
+// user: [Authorized(privateUser.read, privateUser.self), SelfAuthorized(({args}) => args.where)],
+// users: [Authorized(privateUser.read, privateUser.self)],
 // const PostSelfAuthorized = SelfAuthorized(({root}) => ({id: root.authorId}))
 // const UserSelfAuthorized = SelfAuthorized(({root}) => ({id: root.id}))
 

@@ -1,10 +1,16 @@
-import {PlayFunction} from '@vueuse/sound/dist/esm/src/types'
-import {computed} from '@winter-love/vue-test'
-import {Ref, toRef} from 'vue'
-import {indexKeys} from './source'
-import {Howl} from 'howler'
 import {useSound} from '@vueuse/sound'
+import {Howl} from 'howler'
 import {useUntilTo} from 'src/hooks/until-to'
+import {computed, Ref, toRef} from 'vue'
+import {indexKeys} from './source'
+
+interface PlayOptions {
+  forceSoundEnabled?: boolean
+  id?: number
+  playbackRate?: number
+}
+
+type PlayFunction = (options?: PlayOptions) => void
 
 export interface DamperOptions {
   step?: number
@@ -26,7 +32,6 @@ export interface ReturnedValue {
   mute: (id?: number) => void
   pause: (id?: number) => void
   sound: Ref<Howl | null>
-
   up: () => void
 }
 

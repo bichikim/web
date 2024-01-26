@@ -1,5 +1,5 @@
 import {createVueStitches} from '../'
-import {mount} from '@winter-love/vue-test'
+import {mount} from '@winter-love/test-utils'
 
 beforeEach(() => {
   document.body.innerHTML = `

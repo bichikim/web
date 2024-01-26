@@ -2,7 +2,7 @@ import {DebouncedFunc, throttle} from '@winter-love/lodash'
 import {defaultRef} from 'src/refs/default-ref'
 import {resolveRef} from 'src/refs/resolve-ref'
 import {MaybeRef} from 'src/types'
-import {watchEffect} from 'src/_imports/vue'
+import {watchEffect} from 'vue'
 
 const DEFAULT_WAIT = 150
 

@@ -1,4 +1,4 @@
-import produce, {Draft} from 'immer'
+import {Draft, produce} from 'immer'
 import {shallowRef, ShallowRef} from 'vue'
 
 export type Recipe<S> = (arg: Draft<S>) => void

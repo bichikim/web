@@ -7,29 +7,31 @@ export interface ToQueryStringOptions {
   sort?: (aKey, bKey) => number
 }
 
-export type EncodeQueryKey = (key: string) => string
-export type EncodeQueryValue = (value: any) => string
+export type EncodeQueryKey = (key?: string | undefined) => string
+export type EncodeQueryValue = (value: unknown) => string
 
 const TRIM_QUERY_REGEX = /^[?&]/u
 
-export const removeQueryChar = (value: string) => trim(value).replace(TRIM_QUERY_REGEX, '')
+export const removeQueryChar = (value: string) =>
+  trim(value).replace(TRIM_QUERY_REGEX, '')
 
 export const encodeQueryKey = (key: string) => encodeURIComponent(key)
-const trimQueryKey = (key: string): string | undefined => {
+const trimQueryKey = (key: string): string => {
   const _key = removeQueryChar(trim(key))
 
   if (_key.length === 0) {
-    return
+    return ''
   }
 
   return _key
 }
 
-export const encodeQueryValue = (value: any) => encodeURIComponent(value)
+export const encodeQueryValue = (value: string | number | boolean) =>
+  encodeURIComponent(value)
 
 export const encodeQueryItem = (
   key: string,
-  value: any,
+  value: string | number | boolean,
   options: Omit<ToQueryStringOptions, 'sort'> = {},
 ) => {
   const {encodeKey = encodeQueryKey, encodeValue = encodeQueryValue} = options
@@ -37,7 +39,7 @@ export const encodeQueryItem = (
 }
 
 export const encodeQueryRecord = (
-  record: Record<string, any>,
+  record: Record<string, string | number | boolean>,
   options: ToQueryStringOptions = {},
 ) => {
   const {sort} = options
@@ -50,6 +52,9 @@ export const encodeQueryRecord = (
   return entries.map(([key, value]) => encodeQueryItem(key, value))
 }
 
-export const toQueryString = (record: Record<string, any>, options?: ToQueryStringOptions) => {
+export const toQueryString = (
+  record: Record<string, string | number | boolean>,
+  options?: ToQueryStringOptions,
+) => {
   return joinStringQueries(encodeQueryRecord(record, options))
 }

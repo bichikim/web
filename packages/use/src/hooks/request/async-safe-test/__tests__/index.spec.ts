@@ -9,7 +9,7 @@ import {
   onUnmounted,
   ref,
   toRef,
-} from '@winter-love/vue-test'
+} from '@winter-love/test-utils'
 
 /**
  * vue 는 unmount 후에 비동기가 실행되도 안전 한 것에 대한 증명 테스트

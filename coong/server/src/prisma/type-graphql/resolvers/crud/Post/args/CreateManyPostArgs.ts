@@ -8,4 +8,9 @@ export class CreateManyPostArgs {
     nullable: false
   })
   data!: PostCreateManyInput[];
+
+  @TypeGraphQL.Field(_type => Boolean, {
+    nullable: true
+  })
+  skipDuplicates?: boolean | undefined;
 }

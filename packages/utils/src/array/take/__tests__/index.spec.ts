@@ -1,5 +1,5 @@
 import {take, takeRight} from '../'
-
+import {describe, it, expect} from 'vitest'
 describe('takeFn', () => {
   it('should return 2 items (curry)', () => {
     const target = [1, 2, 3, 4, 5]

@@ -1,6 +1,6 @@
 import {expectType} from 'tsd'
 import {toArray} from '../'
-
+import {describe, it, expect} from 'vitest'
 describe('to-array', () => {
   it('should return an array with an array argument', () => {
     const result = toArray(['foo'])

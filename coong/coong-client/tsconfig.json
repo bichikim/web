@@ -2,10 +2,10 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "jsx": "preserve",
-    "target": "ESNext",
-    "module": "ESNext",
+    "target": "esnext",
+    "module": "esnext",
     "outDir": "dist",
-    "moduleResolution": "Node16",
+    "moduleResolution": "Node",
     "baseUrl": ".",
     "paths": {
       "src/*": [

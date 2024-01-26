@@ -1,9 +1,9 @@
-import {isSSR} from 'src/_imports/utils'
+import {getWindow} from '@winter-love/utils'
 import {useDebounce} from 'src/hooks/debounce'
-import {watch} from 'src/_imports/vue'
+import {watch} from 'vue'
 import {useConnection} from 'src/hooks/connection'
 import {onEvent} from 'src/hooks/event'
-import {useElementIntersection} from 'src/hooks/element-intersection-state'
+import {useIntersectionRef} from 'src/hooks/intersection-ref'
 import {MaybeRef} from 'src/types'
 
 export type OnShouldUpdateHandle = () => unknown
@@ -45,7 +45,7 @@ export interface OnShouldUpdateOptions {
 }
 
 export const isVisible = () => {
-  if (isSSR()) {
+  if (!getWindow()) {
     return false
   }
   return document.visibilityState !== 'hidden'
@@ -63,6 +63,7 @@ export const onShouldUpdate = (
   handle?: OnShouldUpdateHandle,
   options: OnShouldUpdateOptions = {},
 ) => {
+  const window = getWindow()
   const {
     firstExecute = true,
     windowFocus = true,
@@ -76,13 +77,13 @@ export const onShouldUpdate = (
   // noinspection SuspiciousTypeOfGuard
   const debounceWait = typeof debounce === 'boolean' ? defaultDebounceWait : debounce
 
-  const thisDocument = isSSR() ? null : window.document
+  const thisDocument = window?.document ?? null
 
   const onHandle = () => {
     handle?.()
   }
 
-  const onDebounceHandle = useDebounce(onHandle, debounceWait, true)
+  const onDebounceHandle = useDebounce(debounceWait, onHandle)
 
   const onShouldUpdate = () => {
     if (debounce) {
@@ -106,7 +107,7 @@ export const onShouldUpdate = (
 
   const isOnline = useConnection(true)
 
-  const isShowing = useElementIntersection(visibleElement)
+  const isShowing = useIntersectionRef(visibleElement)
 
   if (firstExecute && isVisible()) {
     onShouldUpdate()

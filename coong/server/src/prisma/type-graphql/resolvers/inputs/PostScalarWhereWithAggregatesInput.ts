@@ -2,13 +2,11 @@ import * as TypeGraphQL from "type-graphql";
 import * as GraphQLScalars from "graphql-scalars";
 import { Prisma } from "@prisma/client";
 import { DecimalJSScalar } from "../../scalars";
-import { StringNullableListFilter } from "../inputs/StringNullableListFilter";
+import { IntWithAggregatesFilter } from "../inputs/IntWithAggregatesFilter";
 import { StringNullableWithAggregatesFilter } from "../inputs/StringNullableWithAggregatesFilter";
 import { StringWithAggregatesFilter } from "../inputs/StringWithAggregatesFilter";
 
-@TypeGraphQL.InputType("PostScalarWhereWithAggregatesInput", {
-  isAbstract: true
-})
+@TypeGraphQL.InputType("PostScalarWhereWithAggregatesInput", {})
 export class PostScalarWhereWithAggregatesInput {
   @TypeGraphQL.Field(_type => [PostScalarWhereWithAggregatesInput], {
     nullable: true
@@ -25,10 +23,10 @@ export class PostScalarWhereWithAggregatesInput {
   })
   NOT?: PostScalarWhereWithAggregatesInput[] | undefined;
 
-  @TypeGraphQL.Field(_type => StringWithAggregatesFilter, {
+  @TypeGraphQL.Field(_type => IntWithAggregatesFilter, {
     nullable: true
   })
-  id?: StringWithAggregatesFilter | undefined;
+  id?: IntWithAggregatesFilter | undefined;
 
   @TypeGraphQL.Field(_type => StringWithAggregatesFilter, {
     nullable: true
@@ -40,18 +38,8 @@ export class PostScalarWhereWithAggregatesInput {
   })
   message?: StringNullableWithAggregatesFilter | undefined;
 
-  @TypeGraphQL.Field(_type => StringWithAggregatesFilter, {
+  @TypeGraphQL.Field(_type => IntWithAggregatesFilter, {
     nullable: true
   })
-  authorId?: StringWithAggregatesFilter | undefined;
-
-  @TypeGraphQL.Field(_type => StringNullableListFilter, {
-    nullable: true
-  })
-  likeIDs?: StringNullableListFilter | undefined;
-
-  @TypeGraphQL.Field(_type => StringNullableListFilter, {
-    nullable: true
-  })
-  tagIDs?: StringNullableListFilter | undefined;
+  authorId?: IntWithAggregatesFilter | undefined;
 }

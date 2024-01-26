@@ -4,17 +4,18 @@ import {AuthContext, useAuth, UserData} from './auth'
 import {HashPasswordContext, preparePasswordBcrypt} from './hash-password'
 import {JwtContext, prepareJwt} from './jwt'
 import {preparePrisma, PrismaContext} from './prisma'
+import {env} from 'src/env'
 
 export {UserData}
 
 export const DEFAULT_SALT_FACTOR = 7
 
 const usePasswordBcrypt = preparePasswordBcrypt({
-  saltFactor: Number(process.env.PASSWORD_SALT_FACTOR ?? DEFAULT_SALT_FACTOR),
+  saltFactor: env.passwordSaltFactor,
 })
 
 const useJwt = prepareJwt({
-  key: process.env.JWT_KEY,
+  key: env.jwtKey,
 })
 
 const usePrisma = preparePrisma()

@@ -6,9 +6,7 @@ import { CommentCreateWithoutAuthorInput } from "../inputs/CommentCreateWithoutA
 import { CommentUpdateWithoutAuthorInput } from "../inputs/CommentUpdateWithoutAuthorInput";
 import { CommentWhereUniqueInput } from "../inputs/CommentWhereUniqueInput";
 
-@TypeGraphQL.InputType("CommentUpsertWithWhereUniqueWithoutAuthorInput", {
-  isAbstract: true
-})
+@TypeGraphQL.InputType("CommentUpsertWithWhereUniqueWithoutAuthorInput", {})
 export class CommentUpsertWithWhereUniqueWithoutAuthorInput {
   @TypeGraphQL.Field(_type => CommentWhereUniqueInput, {
     nullable: false

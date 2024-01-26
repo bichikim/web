@@ -1,5 +1,5 @@
 import {chunkUrl} from '../chunk-url'
-
+import {describe, it, expect} from 'vitest'
 describe('chunkUrl', () => {
   it('should with protocol, host and url', () => {
     const result = chunkUrl('https://foo.com/bar/john')
