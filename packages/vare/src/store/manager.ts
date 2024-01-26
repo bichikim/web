@@ -36,7 +36,10 @@ export interface ManagerData {
 
 const {assign} = Object
 
-export type Plugin = (state: ComputedRef<Record<string, any>>, info?: StoreTreeInfo) => unknown
+export type Plugin = (
+  state: ComputedRef<Record<string, any>>,
+  info?: StoreTreeInfo,
+) => unknown
 
 export const createManager = (info?: StoreTreeInfo): StoreManager => {
   const storeTree: UnwrapNestedRefs<StoreTree> = reactive({})

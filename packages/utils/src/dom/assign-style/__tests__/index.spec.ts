@@ -1,5 +1,5 @@
 import {assignStyle} from '../'
-import {describe, it, expect} from 'vitest'
+import {describe, expect, it} from 'vitest'
 describe('resolveStyle', () => {
   it('should resolve style with string and object', () => {
     expect(assignStyle('display: block;', {color: 'red'})).toBe(

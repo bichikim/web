@@ -25,13 +25,12 @@ export const createCustomResolver = (options: CustomResolverOptions) => {
 
   const workspaceRegexString = getWorkspacePath(workspacePaths)
 
-  return async function resolveId (
+  return async function resolveId(
     this: any,
     source: string,
     importer: undefined | string,
     resolveOptions?: Record<any, any>,
   ) {
-
     if (!importer) {
       return source
     }
@@ -53,14 +52,18 @@ export const createCustomResolver = (options: CustomResolverOptions) => {
 
     const lookupPath = resolveUrl('/', path, source)
 
-    const newPath = await this.resolve?.(lookupPath, importerWithoutQuery, {...resolveOptions, skipSelf: true})
+    // eslint-disable-next-line no-invalid-this
+    const newPath = await this.resolve?.(lookupPath, importerWithoutQuery, {
+      ...resolveOptions,
+      skipSelf: true,
+    })
 
     if (newPath) {
       return newPath
     }
 
     return {
-      id: resolveUrl('/', path, source)
+      id: resolveUrl('/', path, source),
     }
   }
 }

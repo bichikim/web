@@ -5,7 +5,11 @@ export * from './get-class-name'
 export * from './get-directive-store-key'
 export * from './update-class-name'
 export * from '@stitches/core'
-export type {ConfigType, DefaultThemeMap, CreateStitches} from '@stitches/core/types/config'
+export type {
+  ConfigType,
+  DefaultThemeMap,
+  CreateStitches,
+} from '@stitches/core/types/config'
 export type {Token, ScaleValue} from '@stitches/core/types/theme'
 export type {
   CSS,

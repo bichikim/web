@@ -3,8 +3,8 @@ import {splitWindowRoot} from '../'
 describe('splitWindowRoot', () => {
   it.each([
     //
-    ['C:\\Users\\foo\\web\\', { restPath: '\\Users\\foo\\web\\', root: 'C:' }],
-    ['/users/foo/web/', { restPath: '/users/foo/web/'}],
+    ['C:\\Users\\foo\\web\\', {restPath: '\\Users\\foo\\web\\', root: 'C:'}],
+    ['/users/foo/web/', {restPath: '/users/foo/web/'}],
   ])('should return path info with window path', (path, result) => {
     expect(splitWindowRoot(path)).toEqual(result)
   })

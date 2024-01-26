@@ -1,5 +1,5 @@
 import {toFormatNumber} from '../'
-import {describe, it, expect} from 'vitest'
+import {describe, expect, it} from 'vitest'
 describe('number-format', () => {
   it('should return currency formatted number', () => {
     const result = toFormatNumber('123456.789')

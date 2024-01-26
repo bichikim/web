@@ -1,5 +1,5 @@
 import {asyncPipe} from '../'
-import {describe, it, expect} from 'vitest'
+import {describe, expect, it} from 'vitest'
 describe('async-pipe', () => {
   it('should call all async functions', async () => {
     const result = asyncPipe(

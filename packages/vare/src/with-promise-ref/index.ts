@@ -50,7 +50,10 @@ export const withWaitRef = <F extends AnyPromiseFunction>(
   return withWait(target, refToCallback(valueRef))
 }
 
-export const withErrorRef = <F extends AnyPromiseFunction>(target: F, errorRef?: Ref<any>): F => {
+export const withErrorRef = <F extends AnyPromiseFunction>(
+  target: F,
+  errorRef?: Ref<any>,
+): F => {
   return withError(target, refToCallback(errorRef))
 }
 

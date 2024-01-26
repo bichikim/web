@@ -34,7 +34,8 @@ export const UDialogCard = defineComponent({
         {for: props.for},
         {
           default: ({side}) => {
-            const indicator = props.indicator ?? props.for ? indicatorBySide(side) : undefined
+            const indicator =
+              props.indicator ?? props.for ? indicatorBySide(side) : undefined
             return h(UCard, {bg: props.bg, indicator}, () => slots.default?.())
           },
         },

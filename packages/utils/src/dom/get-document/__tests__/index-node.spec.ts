@@ -2,7 +2,7 @@
  * @vitest-environment node
  */
 import {getDocument} from '../'
-import {describe, it, expect} from 'vitest'
+import {describe, expect, it} from 'vitest'
 describe('getDocument', () => {
   it('should return the document', () => {
     const doc = getDocument()

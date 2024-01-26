@@ -2,6 +2,11 @@ import {HPianoButton} from './PianoButton'
 import {HEmptyPianoButton} from './EmptyPianoButton'
 import {defineComponent, h} from 'vue'
 
+const rootStyle = [
+  'flex h-full overflow-visible pb-207px pl-55px flex-nowrap pointer-events-none absolute whitespace-nowrap',
+  'w-full mr-30px',
+]
+
 export const HPianoSharp = defineComponent({
   name: 'PianoSharp',
   setup() {
@@ -9,10 +14,7 @@ export const HPianoSharp = defineComponent({
       h(
         'div',
         {
-          class: [
-            'flex h-full overflow-visible pb-207px pl-55px flex-nowrap pointer-events-none absolute whitespace-nowrap',
-            'w-full mr-30px',
-          ],
+          class: rootStyle,
         },
         [
           h(HPianoButton, {pianoKey: '-1ais', type: 'sharp'}),
@@ -69,25 +71,3 @@ export const HPianoSharp = defineComponent({
       )
   },
 })
-
-// export const PianoSharp = styled(
-//   HPianoSharp,
-//   {
-//     marginRight: 30,
-//   },
-//   {
-//     '&>*': {
-//       marginRight: 30,
-//     },
-//     display: 'flex',
-//     flexWrap: 'nowrap',
-//     height: '100%',
-//     overflow: 'visible',
-//     pb: 207,
-//     pl: 55,
-//     pointerEvents: 'none',
-//     position: 'relative',
-//     whiteSpace: 'nowrap',
-//     width: '100%',
-//   },
-// )

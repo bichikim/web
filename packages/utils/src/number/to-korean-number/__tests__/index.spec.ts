@@ -1,5 +1,5 @@
 import {toKoreanNumber} from '../'
-import {describe, it, expect} from 'vitest'
+import {describe, expect, it} from 'vitest'
 describe('to-korean-number', () => {
   it('should return korean string', () => {
     const result = toKoreanNumber(760_050_720)

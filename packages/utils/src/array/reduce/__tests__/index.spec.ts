@@ -1,5 +1,5 @@
 import {reduce, reduceOp} from '../'
-import {describe, it, expect} from 'vitest'
+import {describe, expect, it} from 'vitest'
 describe('reduce', () => {
   it('should return the value with list and iteratee', () => {
     expect(reduce([1, 2, 3], (prev, value) => prev + value, 0)).toBe(6)

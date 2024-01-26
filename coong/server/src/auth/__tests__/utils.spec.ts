@@ -121,8 +121,17 @@ describe('roles/utils', () => {
 
   describe('transformAllPermission', () => {
     it('should a', () => {
-      const result = transformAllPermission(['foo', 'john.all', 'bar.create'], ['create', 'read'])
-      expect(result).toEqual(['foo.create', 'foo.read', 'john.create', 'john.read', 'bar.create'])
+      const result = transformAllPermission(
+        ['foo', 'john.all', 'bar.create'],
+        ['create', 'read'],
+      )
+      expect(result).toEqual([
+        'foo.create',
+        'foo.read',
+        'john.create',
+        'john.read',
+        'bar.create',
+      ])
     })
   })
 })

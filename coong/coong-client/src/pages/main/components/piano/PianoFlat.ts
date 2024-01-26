@@ -67,14 +67,3 @@ export const HPianoFlat = defineComponent({
       ])
   },
 })
-
-// export const PianoFlat = styled(HPianoFlat, {
-//   '&>button': {
-//     background: 'linear-gradient(-30deg,#f5f5f5,#fff)',
-//   },
-//   height: '100%',
-//   pointerEvents: 'none',
-//   position: 'relative',
-//   whiteSpace: 'nowrap',
-//   width: '100%',
-// })

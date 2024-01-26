@@ -1,5 +1,5 @@
 import {map, mapOp} from '../'
-import {describe, it, expect} from 'vitest'
+import {describe, expect, it} from 'vitest'
 describe('map', () => {
   it('should return new array', () => {
     const resource = ['foo', 'bar']

@@ -23,7 +23,10 @@ describe('animationRepeater ssr', () => {
         }
 
         return () =>
-          h('div', [h('div', countRef.value), h('button', {onClick: toggleCount}, 'toggle count')])
+          h('div', [
+            h('div', countRef.value),
+            h('button', {onClick: toggleCount}, 'toggle count'),
+          ])
       },
     })
 

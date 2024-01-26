@@ -1,6 +1,7 @@
 const _join = Array.prototype.join
 
-export const join = <T>(list: T[], separator?: string): string => _join.call(list, separator)
+export const join = <T>(list: T[], separator?: string): string =>
+  _join.call(list, separator)
 
 export interface JoinOp {
   (separator?: string): <T>(list: T[]) => string

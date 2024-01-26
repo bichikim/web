@@ -2,11 +2,11 @@ import {onEvent} from '@winter-love/use'
 import {once} from '@winter-love/utils'
 import {DeepReadonly, effectScope, readonly, Ref, shallowRef} from 'vue'
 
-const DEFAULT_UPDATE = (event) => event
+const DEFAULT_UPDATE = <T>(event: T) => event
 
-export const createGlobalEvent = (
+export const createGlobalEvent = <T>(
   eventName: keyof WindowEventMap,
-  update: (event: any) => any = DEFAULT_UPDATE,
+  update: (event: T) => any = DEFAULT_UPDATE,
 ) => {
   return once(() => {
     const scope = effectScope()

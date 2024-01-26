@@ -1,5 +1,5 @@
 import {toUndefined} from '../'
-import {describe, it, expect} from 'vitest'
+import {describe, expect, it} from 'vitest'
 describe('to-undefined', () => {
   it('should return undefined with null', () => {
     const result = toUndefined(null)

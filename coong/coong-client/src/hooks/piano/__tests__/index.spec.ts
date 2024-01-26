@@ -1,28 +1,28 @@
 import {useSound} from '@vueuse/sound'
 import {mountScope, ref} from '@winter-love/test-utils'
-// import {indexKeys} from 'src/hooks/piano/source'
+import {describe, expect, it, vi} from 'vitest'
 import {usePiano} from '../'
 import {useUntilTo} from 'src/hooks/until-to'
 
-jest.mock('../source', () => {
+vi.mock('../source', () => {
   return {
     indexKeys: {},
   }
 })
-jest.mock('@vueuse/sound', () => {
+vi.mock('@vueuse/sound', () => {
   return {
-    useSound: jest.fn(),
+    useSound: vi.fn(),
   }
 })
 
-jest.mock('src/hooks/until-to', () => {
+vi.mock('src/hooks/until-to', () => {
   return {
-    useUntilTo: jest.fn(),
+    useUntilTo: vi.fn(),
   }
 })
 
-const _useSound = jest.mocked(useSound)
-const _useUntilTo = jest.mocked(useUntilTo)
+const _useSound = vi.mocked(useSound)
+const _useUntilTo = vi.mocked(useUntilTo)
 
 describe('useSound', () => {
   const setup = () => {
@@ -30,14 +30,14 @@ describe('useSound', () => {
     _useUntilTo.mockClear()
 
     const untilTo = {
-      run: jest.fn(),
-      stop: jest.fn(),
+      run: vi.fn(),
+      stop: vi.fn(),
       value: ref(100),
     }
 
     const sound: any = {
-      play: jest.fn(),
-      stop: jest.fn(),
+      play: vi.fn(),
+      stop: vi.fn(),
     }
 
     _useUntilTo.mockReturnValueOnce(untilTo as any)

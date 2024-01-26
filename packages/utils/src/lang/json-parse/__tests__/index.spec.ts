@@ -1,5 +1,5 @@
 import {jsonParse} from '../'
-import {describe, it, expect} from 'vitest'
+import {describe, expect, it} from 'vitest'
 describe('jsonParse', () => {
   it('should parse Json string', () => {
     const result = jsonParse('{"foo": "foo"}')

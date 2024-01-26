@@ -29,7 +29,10 @@ const tagThemes = {
   },
 }
 
-export const createTree = (managerData: ManagerData, index: number = 0): CustomInspectorNode[] => {
+export const createTree = (
+  managerData: ManagerData,
+  index: number = 0,
+): CustomInspectorNode[] => {
   const {info, store} = managerData
 
   return Object.keys(store).map((key): CustomInspectorNode => {
@@ -72,7 +75,10 @@ export const createTreeMultiple = (...stores: ManagerData[]) => {
   })
 }
 
-export const createInspect = (name, state: UnwrapNestedRefs<any>): Record<string, StateBase[]> => {
+export const createInspect = (
+  name,
+  state: UnwrapNestedRefs<any>,
+): Record<string, StateBase[]> => {
   const itemInfo = jsonParse(name, name)
   return {
     state: [

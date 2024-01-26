@@ -51,7 +51,9 @@ export type NotFunction = object | number | string | boolean | symbol | null | u
 // ============================================
 
 // any ========================================
-export type AnyFunction<Args extends any[] = any[], Return = any> = (...args: Args) => Return
+export type AnyFunction<Args extends any[] = any[], Return = any> = (
+  ...args: Args
+) => Return
 // ============================================
 
 // promise ====================================
@@ -61,13 +63,20 @@ export type PromiseReturnType<T extends AnyFunction> = PromiseType<ReturnType<T>
 // ============================================
 
 // parameters =================================
-export type DropParameters<T extends (...args: any) => any, S = any> = Drop<Parameters<T>, S>
-export type DropRightParameters<T extends (...args: any) => any> = DropRight<Parameters<T>>
+export type DropParameters<T extends (...args: any) => any, S = any> = Drop<
+  Parameters<T>,
+  S
+>
+export type DropRightParameters<T extends (...args: any) => any> = DropRight<
+  Parameters<T>
+>
 export type PopParameters<T extends (...args: any) => any> = Pop<Parameters<T>>
 // ============================================
 
 // type assistants ============================
-export type TakeFlatKeys<R, K extends keyof R> = R extends Record<K, infer P> ? Keyof<P> : never
+export type TakeFlatKeys<R, K extends keyof R> = R extends Record<K, infer P>
+  ? Keyof<P>
+  : never
 // ============================================
 
 export type FunctionObject<T extends Record<string, AnyFunction>> = {

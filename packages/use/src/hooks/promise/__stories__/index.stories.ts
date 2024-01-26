@@ -17,6 +17,9 @@ export const Default = () => ({
     })
 
     return () =>
-      h('div', [h('div', data.value), h('button', {onClick: () => execute()}, 'toggle value')])
+      h('div', [
+        h('div', data.value),
+        h('button', {onClick: () => execute()}, 'toggle value'),
+      ])
   },
 })

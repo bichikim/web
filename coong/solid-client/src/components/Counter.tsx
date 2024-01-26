@@ -1,4 +1,4 @@
-import {createEffect, createSignal} from 'solid-js'
+import {createEffect} from 'solid-js'
 import {createStore} from 'solid-js/store'
 
 const counter = () => {

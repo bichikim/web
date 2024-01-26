@@ -4,7 +4,12 @@
       <div class="header" />
       <div ref="targetRef" class="target" />
       <div class="footer" />
-      <u-dialog-card v-model="show" :for="targetRef" :indicator="indicator" x-position="center">
+      <u-dialog-card
+        v-model="show"
+        :for="targetRef"
+        :indicator="indicator"
+        x-position="center"
+      >
         <div>hello world</div>
         <div>hello world</div>
         <div>hello world</div>

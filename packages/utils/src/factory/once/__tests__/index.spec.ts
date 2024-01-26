@@ -1,5 +1,5 @@
 import {once} from '../'
-import {describe, it, expect, vi} from 'vitest'
+import {describe, expect, it, vi} from 'vitest'
 describe('create once', () => {
   it('should once that run once', () => {
     const runner = vi.fn()

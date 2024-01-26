@@ -1,6 +1,9 @@
 import {HTMLElement} from 'node-html-parser'
 
-export const insertTeleports = (htmlElement: HTMLElement, teleports?: Record<string, string>) => {
+export const insertTeleports = (
+  htmlElement: HTMLElement,
+  teleports?: Record<string, string>,
+) => {
   if (!teleports) {
     return
   }

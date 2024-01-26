@@ -7,7 +7,11 @@ export interface DirectiveStoreProps {
   previousClassNames?: string[]
 }
 
-export const updateClassName = (system: CssComponent, el: any, binding: DirectiveBinding) => {
+export const updateClassName = (
+  system: CssComponent,
+  el: any,
+  binding: DirectiveBinding,
+) => {
   const key = getDirectiveStoreKey(binding)
 
   const {previousClassNames}: DirectiveStoreProps = el[key] ?? {}

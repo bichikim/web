@@ -1,5 +1,5 @@
 import {App, CustomInspectorNode, setupDevtoolsPlugin, StateBase} from '@vue/devtools-api'
-import {drop, jsonParse, toArray} from '@winter-love/utils'
+import {drop, parseJson, toArray} from '@winter-love/utils'
 import {UnwrapNestedRefs, watch} from 'vue'
 import {ManagerData} from './manager'
 
@@ -21,11 +21,14 @@ const tagThemes = {
   },
 }
 
-export const createTree = (store: ManagerData, index: number = 0): CustomInspectorNode[] => {
+export const createTree = (
+  store: ManagerData,
+  index: number = 0,
+): CustomInspectorNode[] => {
   const {info, tree} = store
 
   return Object.keys(tree).map((key): CustomInspectorNode => {
-    const itemInfo = jsonParse(key, key)
+    const itemInfo = parseJson(key, key)
     const tag =
       typeof itemInfo === 'string'
         ? []
@@ -63,8 +66,11 @@ export const createTreeMultiple = (...stores: ManagerData[]) => {
   })
 }
 
-export const createInspect = (name, state: UnwrapNestedRefs<any>): Record<string, StateBase[]> => {
-  const itemInfo = jsonParse(name, name)
+export const createInspect = (
+  name,
+  state: UnwrapNestedRefs<any>,
+): Record<string, StateBase[]> => {
+  const itemInfo = parseJson(name, name)
   return {
     state: [
       {
@@ -118,7 +124,7 @@ export const createStoreDevTool = (app: App, stores: ManagerData | ManagerData[]
         }
 
         const name = payload.nodeId
-        const {key, index} = jsonParse(name, {index: 0, key: name})
+        const {key, index} = parseJson(name, {index: 0, key: name})
 
         const state = _stores[index].tree[key]
 

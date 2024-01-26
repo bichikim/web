@@ -1,7 +1,6 @@
 import {defineConfig, presetMini} from 'unocss'
 
 export default defineConfig({
-  presets: [presetMini()],
   content: {
     pipeline: {
       include: [
@@ -11,6 +10,7 @@ export default defineConfig({
       ],
     },
   },
+  presets: [presetMini()],
   theme: {
     boxShadow: {
       'flat-key':

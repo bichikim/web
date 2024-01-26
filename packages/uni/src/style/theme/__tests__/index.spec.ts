@@ -11,7 +11,9 @@ describe('theme', () => {
       const themeName = useThemeName()
 
       const toggleThemeName = () => {
-        themeName.value === 'dark' ? (themeName.value = 'light') : (themeName.value = 'dark')
+        themeName.value === 'dark'
+          ? (themeName.value = 'light')
+          : (themeName.value = 'dark')
       }
       return () => h('button', {onClick: toggleThemeName})
     },

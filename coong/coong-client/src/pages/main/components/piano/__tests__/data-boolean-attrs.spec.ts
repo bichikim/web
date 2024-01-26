@@ -4,7 +4,7 @@ import {
   dataAttrKey,
   dataBooleanAttrs,
 } from '../data-boolean-attrs'
-
+import {vi, describe, expect, it} from 'vitest'
 describe('dataAttrKey', () => {
   it('should return data attr key', () => {
     expect(dataAttrKey('foo')).toBe('data-foo')

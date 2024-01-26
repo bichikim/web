@@ -1,4 +1,4 @@
-import {dedupSeparator, createDedupSeparator} from '../'
+import {createDedupSeparator, dedupSeparator} from '../'
 
 describe('dedupSeparator', () => {
   it.each([
@@ -12,4 +12,3 @@ describe('dedupSeparator', () => {
     expect(dedupSeparator(path)).toBe(result)
   })
 })
-

@@ -1,6 +1,6 @@
 import {eventOptions} from '../'
 import {isSupportPassive} from 'src/env/is-support-passive'
-import {describe, it, expect, vi} from 'vitest'
+import {describe, expect, it, vi} from 'vitest'
 
 vi.mock('src/env/is-support-passive')
 

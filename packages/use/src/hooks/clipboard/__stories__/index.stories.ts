@@ -17,7 +17,10 @@ export const Default = () => ({
         h('div', 'hello world'),
         h('div', valueRef.value),
         h('div', state.value),
-        h('input', {onInput: (event) => setValue(event.target.value), value: valueRef.value}),
+        h('input', {
+          onInput: (event) => setValue(event.target.value),
+          value: valueRef.value,
+        }),
         h('button', {onClick: () => write(valueRef.value)}, 'copy'),
         h('button', {onClick: () => read()}, 'read'),
       ])
@@ -35,7 +38,10 @@ export const Legacy = () => ({
       h('div', [
         h('div', 'hello world'),
         h('div', valueRef.value),
-        h('input', {onInput: (event) => setValue(event.target.value), value: valueRef.value}),
+        h('input', {
+          onInput: (event) => setValue(event.target.value),
+          value: valueRef.value,
+        }),
         h('button', {onClick: () => write(valueRef.value)}, 'copy'),
         h('button', {onClick: () => read()}, 'read'),
       ])

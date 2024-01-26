@@ -1,5 +1,5 @@
 import {toStyleString} from '../'
-import {describe, it, expect} from 'vitest'
+import {describe, expect, it} from 'vitest'
 describe('toStyleString', () => {
   it('should return string style with an object style', () => {
     expect(toStyleString({color: 'red'})).toBe('color:red;')

@@ -1,5 +1,5 @@
 import {trimPath} from '../trim-path'
-import {describe, it, expect} from 'vitest'
+import {describe, expect, it} from 'vitest'
 describe('trimPath', () => {
   it('should return trimmed path', () => {
     expect(trimPath('/foo')).toBe('foo')

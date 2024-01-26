@@ -3,7 +3,7 @@ import {createAliasRegexp} from '../'
 describe('createAliasRegexp', () => {
   it.each([
     //
-    ['src', '/^src\\/(.*)$/u']
+    ['src', '/^src\\/(.*)$/u'],
   ])('should create alias regexp', (alias, regexp) => {
     const aliasRegexp = createAliasRegexp('src')
 
