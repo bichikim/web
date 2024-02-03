@@ -26,7 +26,7 @@ const buttonStyle = cva(
 
 const keyStyle = cva(
   [
-    'b-solid b-#ccc rd-t-0 inline-flex flex-shrink-0 h-full overflow-hidden',
+    'block b-solid b-#ccc rd-t-0 inline-flex flex-shrink-0 h-full overflow-hidden',
     'p-0 pointer-events-none relative w-full',
   ],
   {
@@ -166,7 +166,7 @@ export const HPianoButton = defineComponent({
           title: `piano-key-${pianoKey.value}`,
         },
         h(
-          'div',
+          'span',
           {
             class: keyStyle({down: isKeyDown.value, type: props.type}),
           },
