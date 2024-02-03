@@ -3,7 +3,6 @@ import {cva, VariantProps} from 'class-variance-authority'
 import {PianoKeys, usePiano} from 'src/hooks/piano'
 import {useEventDown} from 'src/hooks/use-event-down'
 import {useEventHoverTouchDown} from 'src/hooks/use-event-hover-touch-down'
-import {dataBooleanAttrs} from 'src/pages/main/components/piano/data-boolean-attrs'
 import {isNativePlatform} from 'src/utils/capacitor'
 import {defineComponent, h, PropType, ref, toRef, watch} from 'vue'
 
@@ -31,28 +30,43 @@ const keyStyle = cva(
     'p-0 pointer-events-none relative w-full',
   ],
   {
+    compoundVariants: [
+      //
+      {
+        class: [
+          //
+          'shadow-[0 2px 2px rgb(0 0 0 / 40%)] scale-x-100 scale-y-99 origin-top',
+          'after:content-[""] after:bg-black after:h-full after:left--2.5px after:opacity-10 after:absolute',
+          'after:top-0 after:skew-x-0.5 after:w-5px',
+          'before:content-[""] before:bg-black before:h-full before:right--2.5px before:opacity-10 before:absolute',
+          'before:top-0 before:skew-x--0.5 before:w-5px',
+        ],
+        down: true,
+        type: 'flat',
+      },
+      {
+        class: [
+          //
+          'b-b-2px shadow-sharp-down-key',
+        ],
+        down: true,
+        type: 'sharp',
+      },
+    ],
     variants: {
+      down: {
+        true: '',
+      },
       type: {
         flat: [
           //
           'rd-b-3px b-1px shadow-flat-key',
-          //
-          'data-[down]:shadow-[0 2px 2px rgb(0 0 0 / 40%)] data-[down]:scale-x-100 data-[down]:scale-y-99',
-          'data-[down]:origin-top',
-          'data-[down]:after:content-[""] data-[down]:after:bg-black data-[down]:after:h-full',
-          'data-[down]:after:left--2.5px data-[down]:after:opacity-10 data-[down]:after:absolute',
-          'data-[down]:after:top-0 data-[down]:after:skew-x-0.5 data-[down]:after:w-5px',
-          'data-[down]:before:content-[""] data-[down]:before:bg-black data-[down]:before:h-full',
-          'data-[down]:before:right--2.5px data-[down]:before:opacity-10 data-[down]:before:absolute',
-          'data-[down]:before:top-0 data-[down]:before:skew-x--0.5 data-[down]:before:w-5px',
         ],
         sharp: [
           //
           'b-x-2px b-t-1px b-b-10px rd-b-2px shadow-sharp-key',
           'bg-gradient-linear bg-gradient-[-20deg,#333,#000,#333] bg-black',
           'b-t-#666 b-r-#222 b-b-#111 b-l-#555',
-          //
-          'data-[down]:b-b-2px data-[down]:shadow-sharp-down-key',
         ],
       },
     },
@@ -154,10 +168,7 @@ export const HPianoButton = defineComponent({
         h(
           'div',
           {
-            ...dataBooleanAttrs({
-              down: isKeyDown.value,
-            }),
-            class: keyStyle({type: props.type}),
+            class: keyStyle({down: isKeyDown.value, type: props.type}),
           },
           //
           h('span', {class: keyNameStyle({type: props.type})}, props.keyName),
