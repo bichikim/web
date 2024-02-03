@@ -1,16 +1,30 @@
-import {defineComponent, h} from 'vue'
-import {Synth, now} from 'tone'
+import {SplendidGrandPiano} from 'smplr'
+import {computed, defineComponent, h, onMounted, shallowRef, ref} from 'vue'
+import {createSplendidGrandPiano} from 'src/instruments/splendid-grand-piano'
 
 export default defineComponent(() => {
-  const synth = new Synth().toDestination()
+  // const audioContext: AudioContext = new StandardizedAudioContext() as any
+  // const piano = new SplendidGrandPiano(audioContext)
+  // const marimba = new Soundfont(audioContext, {instrument: 'electric_grand_piano'})
+  const piano = createSplendidGrandPiano()
+
+  const disabled = ref(true)
+
+  onMounted(async () => {
+    await piano.load
+    disabled.value = false
+  })
+
   const onPlay = () => {
-    const current = now()
-    synth.triggerAttack('C4', current)
-    synth.triggerRelease(current + 1)
+    piano.start({note: 'C4'})
   }
   return () =>
     h('div', [
       //
-      h('button', {onClick: onPlay}, 'play'),
+      h(
+        'button',
+        {disabled: disabled.value, onClick: onPlay},
+        disabled.value ? 'loading' : 'play',
+      ),
     ])
 })

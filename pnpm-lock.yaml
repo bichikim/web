@@ -378,6 +378,9 @@ importers:
       smplr:
         specifier: ^0.12.1
         version: 0.12.1
+      standardized-audio-context:
+        specifier: 25.3.63
+        version: 25.3.63
       tone:
         specifier: ^14.8.49
         version: 14.8.49
