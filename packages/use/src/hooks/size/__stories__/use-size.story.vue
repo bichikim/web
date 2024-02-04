@@ -1,5 +1,5 @@
 <template>
-  <story>
+  <Story>
     <variant>
       <div
         ref="scrollRef"
@@ -32,7 +32,7 @@
         title="container height"
       />
     </template>
-  </story>
+  </Story>
 </template>
 
 <script setup lang="ts">

@@ -1,8 +1,10 @@
 <template>
-  <div>
-    <span>{{ activeA }}</span>
-    <span>{{ active }}</span>
-  </div>
+  <Story>
+    <div>
+      <span>{{ activeA }}</span>
+      <span>{{ active }}</span>
+    </div>
+  </Story>
 </template>
 
 <script setup lang="ts">

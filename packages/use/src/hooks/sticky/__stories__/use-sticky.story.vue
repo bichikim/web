@@ -1,5 +1,5 @@
 <template>
-  <story>
+  <Story>
     <variant>
       <div ref="container" class="container">
         <div class="content" />
@@ -7,7 +7,7 @@
         <div ref="modal" class="modal" />
       </div>
     </variant>
-  </story>
+  </Story>
 </template>
 
 <script setup lang="ts">
