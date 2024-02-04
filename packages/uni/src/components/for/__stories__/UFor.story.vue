@@ -1,5 +1,5 @@
 <template>
-  <story>
+  <Story>
     <variant title="default">
       <u-for :each="list">
         <template #default="{item, index}">
@@ -7,7 +7,7 @@
         </template>
       </u-for>
     </variant>
-  </story>
+  </Story>
 </template>
 
 <script setup lang="ts">

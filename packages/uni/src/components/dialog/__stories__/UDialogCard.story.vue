@@ -1,5 +1,5 @@
 <template>
-  <story>
+  <Story>
     <variant title="target">
       <div class="header" />
       <div ref="targetRef" class="target" />
@@ -54,7 +54,7 @@
       ></hst-radio>
       <hst-checkbox v-model="show" title="show"></hst-checkbox>
     </template>
-  </story>
+  </Story>
 </template>
 
 <script setup lang="ts">
