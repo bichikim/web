@@ -30,11 +30,12 @@ export const HPiano = defineComponent({
     })
 
     const onDown = (key: string | number) => {
-      piano.start({note: key, stopId: key})
+      piano.start(key)
     }
 
     const onUp = (key: string | number) => {
-      piano.stop({stopId: key})
+      console.log('up')
+      piano.stop(key)
     }
 
     return () =>

@@ -89,10 +89,6 @@ const keyNameStyle = cva(
 
 type ButtonStylePropsType = VariantProps<typeof buttonStyle>
 
-const onPointerupCapture = (event: PointerEvent) => {
-  event.preventDefault()
-}
-
 export const HPianoButton = defineComponent({
   emits: ['up', 'down'],
   name: 'PianoButton',
@@ -112,6 +108,12 @@ export const HPianoButton = defineComponent({
     const pianoKey = toRef(props, 'pianoKey')
     const isKeyDown = ref(false)
     const isHoverDown = useEventHoverTouchDown(buttonRef)
+
+    const onPointerupCapture = (event: PointerEvent) => {
+      event.preventDefault()
+      isKeyDown.value = false
+      emit('up', props.pianoKey)
+    }
 
     const downPlay = () => {
       if (_isNativePlatform) {
