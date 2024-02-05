@@ -60,7 +60,16 @@ export const createServerHandler = (
       }
       const context = {req, res, url}
       const {
-        html: {app, afterApp, appendHead, prependHead, htmlAttrs, bodyAttrs, beforeApp, teleports},
+        html: {
+          app,
+          afterApp,
+          appendHead,
+          prependHead,
+          htmlAttrs,
+          bodyAttrs,
+          beforeApp,
+          teleports,
+        },
         response,
       }: SSRResult = await render({context})
 

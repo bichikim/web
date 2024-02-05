@@ -1,5 +1,5 @@
 <template>
-  <story>
+  <Story>
     <variant>
       <div class="header" />
       <div ref="targetRef" class="target" />
@@ -12,7 +12,7 @@
         <div>hello world</div>
       </h-dialog>
     </variant>
-  </story>
+  </Story>
 </template>
 
 <script setup lang="ts">

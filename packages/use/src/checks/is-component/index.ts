@@ -7,6 +7,7 @@ export const isComponent = (value: any): value is Component => {
   const type = typeof value
   return (
     type === 'function' ||
-    (type === 'object' && (typeof value.setup === 'function' || typeof value.render === 'function'))
+    (type === 'object' &&
+      (typeof value.setup === 'function' || typeof value.render === 'function'))
   )
 }

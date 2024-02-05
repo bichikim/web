@@ -4,41 +4,47 @@ on:
   push:
     branches:
       # deploying docs is suspected
-      - master
+      - docs
 
 env:
-  BUN_VERSION: 1
+  NODE_VERSION: 18
+  PNPM_VERSION: latest
 jobs:
   build-docs:
-    name: Build Docs
+    name: Build Client
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v4
-        with:
-          # fetch all commits to get last updated time or other git log info
-          fetch-depth: 0
+        uses: actions/checkout@master
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v1
+      - name: Setup Node
+        uses: actions/setup-node@v3
         with:
-          node-version: ${{ env.BUN_VERSION }}
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Cache pnpm modules
+        uses: actions/cache@v3
+        with:
+          path: ~/.pnpm-store
+          key: ${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-
+
+      - name: Prepare Pnpm
+        uses: pnpm/action-setup@v2.2.4
+        with:
+          version: ${{ env.PNPM_VERSION }}
 
       - name: Install Dependencies
-        run: bun install
+        run: pnpm install
 
       - name: Build
-        run: bun run build:docs
+        run: pnpm run build:docs
 
-      # please check out the docs of the workflow for more details
-      # @see https://github.com/crazy-max/ghaction-github-pages
-      - name: Deploy to GitHub Pages
-        uses: crazy-max/ghaction-github-pages@v4
-        with:
-          # deploy to gh-pages branch
-          target_branch: gh-pages
-          # deploy the default output dir of VuePress
-          build_dir: docs/.vuepress/dist
-        env:
-          # @see https://docs.github.com/en/actions/reference/authentication-in-a-workflow#about-the-github_token-secret
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#      - name: deploy
+#        uses: jsmrcaga/action-netlify-deploy@v1.7.2
+#        with:
+#          build_directory: docs/winter-love/.vitepress/dist
+#          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+#          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+#          NETLIFY_DEPLOY_TO_PROD: false

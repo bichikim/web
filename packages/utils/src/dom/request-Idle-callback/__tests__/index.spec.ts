@@ -1,7 +1,7 @@
 import {requestIdleCallback} from '../'
 import {getWindow} from 'src/dom/get-window'
 import {requestIdleCallbackPolyfill} from '../polyfill'
-import {describe, it, expect, vi ,afterEach, beforeEach} from 'vitest'
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 vi.mock('src/dom/get-window')
 vi.mock('../polyfill')
 

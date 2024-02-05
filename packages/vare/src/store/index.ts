@@ -87,7 +87,10 @@ export const createVare = (): Vare => {
 
 export const createVareStore = createVare
 
-export const provideStoreManager = (manager?: StoreManager, localManager?: StoreManager): void => {
+export const provideStoreManager = (
+  manager?: StoreManager,
+  localManager?: StoreManager,
+): void => {
   provide(STORE_CONTEXT, manager ?? createManager())
   if (process.env.NODE_ENV !== 'production') {
     provide(STORE_LOCAL_CONTEXT, localManager)

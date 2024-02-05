@@ -1,6 +1,5 @@
-
 import {updateElementClasses} from '../'
-import {describe, it, expect} from 'vitest'
+import {describe, expect, it} from 'vitest'
 describe('useUpdateElementClasses', () => {
   it('should update classes', () => {
     const element = document.createElement('div')

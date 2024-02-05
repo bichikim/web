@@ -46,7 +46,9 @@ const config: Config = {
         '<rootDir>/scripts/**/__tests__/*.spec.{ts,tsx}',
       ],
       testPathIgnorePatterns: [
+        //
         '<rootDir>/packages/utils/src/',
+        '<rootDir>/coong/coong-client/src/',
       ],
       transform: {
         '^.+\\.jsx?$': 'babel-jest',

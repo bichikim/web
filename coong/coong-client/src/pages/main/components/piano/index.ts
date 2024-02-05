@@ -1,1 +1,1 @@
-export * from './Piano'
+export * from './HPiano'

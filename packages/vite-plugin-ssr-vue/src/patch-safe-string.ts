@@ -14,5 +14,5 @@ const escape = (unsafeChar: string) => {
  * @param value
  */
 export const patchSafeString = (value: string): string => {
-  return value.replace(UNSAFE_CHARS_REGEXP, escape)
+  return value.replaceAll(UNSAFE_CHARS_REGEXP, escape)
 }

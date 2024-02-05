@@ -68,7 +68,9 @@ describe('use promise', () => {
   })
 
   it('should resolve a rejection', async () => {
-    const {error, execute, waiting, count} = usePromise(() => Promise.reject(new Error('foo')))
+    const {error, execute, waiting, count} = usePromise(() =>
+      Promise.reject(new Error('foo')),
+    )
     expect(count.value).toBe(0)
     expect(error.value).toBe(undefined)
 

@@ -1,5 +1,5 @@
 import {toNumber} from '../'
-import {describe, it, expect} from 'vitest'
+import {describe, expect, it} from 'vitest'
 describe('to-number', () => {
   it('should return number with a string number', () => {
     const result = toNumber('20')

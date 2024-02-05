@@ -15,7 +15,7 @@ import {utils} from 'ethers'
 import {Socket} from 'net'
 import {Account, Wallet, WalletItemTypes} from 'src/types'
 import nacl from 'tweetnacl'
-import {computed, reactive, ref, UnwrapNestedRefs} from 'vue'
+import {computed, reactive, ref} from 'vue'
 import {decryptKeypair, encryptKeypair} from './json-wallet'
 
 export interface CreateSolanaWalletOptions {

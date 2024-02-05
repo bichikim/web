@@ -5,21 +5,21 @@ import {flushPromises, h, mount, onMounted, ref} from '@winter-love/test-utils'
 import {useEventHoverTouchDown} from '../'
 import {elementFromPoint} from '../element-from-point'
 import {onEvent} from '@winter-love/use'
-
-jest.mock('../element-from-point', () => ({
-  elementFromPoint: jest.fn(),
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
+vi.mock('../element-from-point', () => ({
+  elementFromPoint: vi.fn(),
 }))
 
-jest.mock('@winter-love/use', () => {
-  const originalModule = jest.requireActual('@winter-love/use')
+vi.mock('@winter-love/use', async () => {
+  const originalModule: any = await vi.importActual('@winter-love/use')
   return {
     ...originalModule,
-    onEvent: jest.fn(originalModule.onEvent),
+    onEvent: vi.fn(originalModule.onEvent),
   }
 })
 
-const _elementFromPoint = jest.mocked(elementFromPoint)
-const _onEvent = jest.mocked(onEvent)
+const _elementFromPoint = vi.mocked(elementFromPoint)
+const _onEvent = vi.mocked(onEvent)
 
 describe('useEventHoverTouchDown', () => {
   let startCallback
@@ -62,7 +62,7 @@ describe('useEventHoverTouchDown', () => {
   })
 
   afterEach(() => {
-    jest.resetAllMocks()
+    vi.resetAllMocks()
   })
 
   it('should state boolean', async () => {

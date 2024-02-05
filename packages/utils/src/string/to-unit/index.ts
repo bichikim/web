@@ -23,8 +23,11 @@ export const toPx = (size: number | string) => toUnit(size)
  * @param emSize
  * @param type
  */
-export const toRem = (size: number | string, emSize = DEFAULT_EM_SIZE, type: EmOrRem = 'rem') =>
-  toUnit(size, type, (value) => value / emSize)
+export const toRem = (
+  size: number | string,
+  emSize = DEFAULT_EM_SIZE,
+  type: EmOrRem = 'rem',
+) => toUnit(size, type, (value) => value / emSize)
 
 /**
  * px size 를 rem size 로 바꾸어 줍니다

@@ -1,6 +1,6 @@
 import * as process from 'process'
 import {freeze} from '../index'
-import {describe, it, expect} from 'vitest'
+import {describe, expect, it} from 'vitest'
 describe('freeze', () => {
   it('should return a frozen object', () => {
     const oldEnv = process.env.NODE_ENV

@@ -19,7 +19,10 @@ export function useEventDown(
   element: MaybeRef<HTMLElement>,
   options?: UseEventDownOptions<keyof HTMLElementEventMap>,
 )
-export function useEventDown(element: MaybeRef<any>, options: UseEventDownOptions<any> = {}) {
+export function useEventDown(
+  element: MaybeRef<any>,
+  options: UseEventDownOptions<any> = {},
+) {
   const {down = 'pointerdown', up = 'pointerup'} = options
   const downState = ref(false)
   onEvent(element, down, () => {

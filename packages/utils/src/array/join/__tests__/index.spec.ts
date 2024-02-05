@@ -1,5 +1,5 @@
 import {join, joinOp} from '../'
-import {describe, it, expect} from 'vitest'
+import {describe, expect, it} from 'vitest'
 describe('join', () => {
   it('should join array', () => {
     expect(join(['foo', 'bar'], '/')).toBe('foo/bar')

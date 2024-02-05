@@ -64,6 +64,7 @@ describe('createCustomResolver', () => {
     ],
   ])(
     'should create custom resolver',
+    // eslint-disable-next-line max-params
     async (root, sourceRoot, workspacePaths, mockParams, hasResolver, result) => {
       const customResolver = createCustomResolver({
         root,

@@ -1,22 +1,22 @@
 # Coong / Winter Love packages
 
-## 문서
-공사중
+## Documents
+https://bichikim.github.io/web WIP
 
-## install dependencies
+## Install dependencies
 
 ```bash
 # we use bunjs refer to https://bun.sh/
 bun i
 ```
 
-## recommended global dependencies
+## Recommended global dependencies
 - rimraf
 - lerna
 
 ## Winter Love packages
 
-packages/* 각 프로젝트 폴더 README.md 를 확인 하세요
+refer to packages/* README.md each project folder
 
 ## ☄ Coong
 
@@ -24,7 +24,7 @@ packages/* 각 프로젝트 폴더 README.md 를 확인 하세요
 
 Coong everywhere
 
-[ ] 첫번째 미션 무료로 매우 많은 사람이 쓰는 앱/웹
+[ ] First Mission A very popular app/web app for free
 
 ## Web types in Web Storm
 
@@ -39,4 +39,4 @@ This repository contributors are welcome to use
 test results immediately as you type, and see the results in
 your editor right next to your code.
 
-node_modules/.pnpm jest-runtime 버전이 29.4.3 말고 다른것들이 있으면 wallabyjs 가 작동을 안한다
+node_modules/.pnpm jest-runtime version other than 29.4.3 will cause wallabyjs to stop working

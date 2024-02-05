@@ -146,7 +146,10 @@ export const useVerifyInputs = () => {
   return context
 }
 
-export const useVerifyInput = (ref: Ref<any>, value: ObjectValue | Validator): VerifyInput => {
+export const useVerifyInput = (
+  ref: Ref<any>,
+  value: ObjectValue | Validator,
+): VerifyInput => {
   const context = inject(VerifyInputsKey)
 
   if (process.env.NODE_ENV === 'development' && !context) {

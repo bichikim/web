@@ -7,7 +7,9 @@ describe('createFakeStitches', () => {
     const real = createStitches()
     expect(
       Object.fromEntries(Object.entries(fake).map(([key, value]) => [key, typeof value])),
-    ).toEqual(Object.fromEntries(Object.entries(real).map(([key, value]) => [key, typeof value])))
+    ).toEqual(
+      Object.fromEntries(Object.entries(real).map(([key, value]) => [key, typeof value])),
+    )
   })
   it('should return value same as real', () => {
     const fake = createFakeStitches()

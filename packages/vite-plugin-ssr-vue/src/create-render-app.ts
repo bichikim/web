@@ -63,7 +63,10 @@ export interface ClientSideOptions extends SharedSideOptions {
 
 const SERVER_RENDERED_KEY = 'data-server-rendered'
 
-export const createViteClientSideApp = async (rootComponent: Component, rootProps: Data = {}) => {
+export const createViteClientSideApp = async (
+  rootComponent: Component,
+  rootProps: Data = {},
+) => {
   const {createApp, createSSRApp, render: appRender} = await importClientSideModule()
   let app
   const serverRendered = isServerRendered()
@@ -83,9 +86,14 @@ export const createViteClientSideApp = async (rootComponent: Component, rootProp
   }
 }
 
-export type AfterRender<T extends Record<string, any>> = (factoryResponse: T) => any | Promise<any>
+export type AfterRender<T extends Record<string, any>> = (
+  factoryResponse: T,
+) => any | Promise<any>
 
-export const createViteServerSideApp = async (rootComponent: Component, rootProps: Data = {}) => {
+export const createViteServerSideApp = async (
+  rootComponent: Component,
+  rootProps: Data = {},
+) => {
   const {createApp, render: appRender} = await importServerSideModule()
   const app = createApp(rootComponent, rootProps)
 

@@ -65,7 +65,10 @@ export const createGetPermissions =
 
     return [...getPermissionFromRoles(receivedRoles, flatRoles), ...receivedPermissions]
   }
-export type GeneratedRole<P extends string, A extends string> = Record<P, Record<A, string>>
+export type GeneratedRole<P extends string, A extends string> = Record<
+  P,
+  Record<A, string>
+>
 export const createPermissions = <P extends string, A extends string>(
   permissions: Permissions<P, A>,
 ): GeneratedRole<P, A> => {

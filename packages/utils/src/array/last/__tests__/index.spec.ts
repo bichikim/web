@@ -1,5 +1,5 @@
 import {last} from '../'
-import {describe, it, expect} from 'vitest'
+import {describe, expect, it} from 'vitest'
 describe('last', () => {
   it('should return last item of the array', () => {
     expect(last([1, 2, 3, 4, 5])).toBe(5)

@@ -1,7 +1,12 @@
 import 'reflect-metadata'
 import express, {json, urlencoded} from 'express'
 import * as dotenv from 'dotenv'
-import {imageFormat, imageRequest, imageTransform, imageTransformContext} from './middleware'
+import {
+  imageFormat,
+  imageRequest,
+  imageTransform,
+  imageTransformContext,
+} from './middleware'
 
 dotenv.config()
 

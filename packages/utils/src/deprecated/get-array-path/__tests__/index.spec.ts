@@ -1,3 +1,4 @@
+import {describe, expect, it} from 'vitest'
 import {getArrayPath} from '../'
 import {describe, it, expect} from 'vitest'
 describe('getArrayPath', () => {

@@ -47,7 +47,10 @@ export function watchExtended<T, Immediate extends Readonly<boolean> = false>(
   options?: WatchExtendOptions<Immediate>,
 ): WatchStopHandle
 
-export function watchExtended<T extends object, Immediate extends Readonly<boolean> = false>(
+export function watchExtended<
+  T extends object,
+  Immediate extends Readonly<boolean> = false,
+>(
   sources: T,
   callback: WatchCallback<T, Immediate extends true ? T | undefined : T>,
   options?: WatchExtendOptions<Immediate>,

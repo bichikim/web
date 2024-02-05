@@ -9,7 +9,10 @@ export const Default = () => {
   const TUseInput = defineComponent({
     setup: () => {
       const rootInput = ref()
-      const verifyInput = useVerifyInput(rootInput, (value) => value.length < 2 && 'min length 2')
+      const verifyInput = useVerifyInput(
+        rootInput,
+        (value) => value.length < 2 && 'min length 2',
+      )
       const {verify: verifyRootInput} = toRefs(verifyInput)
       return {
         rootInput,

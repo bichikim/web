@@ -34,7 +34,8 @@ describe('createAsElement', () => {
     })
     const component = defineComponent({
       setup: () => {
-        return () => createAsElement(childrenComponent, {style: 'color:red'}, () => name.value)
+        return () =>
+          createAsElement(childrenComponent, {style: 'color:red'}, () => name.value)
       },
     })
 

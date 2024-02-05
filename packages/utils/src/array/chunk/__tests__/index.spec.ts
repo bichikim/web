@@ -1,5 +1,5 @@
 import {chunkOp} from '../'
-import {describe, it, expect} from 'vitest'
+import {describe, expect, it} from 'vitest'
 describe('chunkOp', () => {
   it('should chunk list (curry)', () => {
     const list = [1, 2, 3, 4, 5, 6, 7, 8]
