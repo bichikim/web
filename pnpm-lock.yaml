@@ -9061,7 +9061,7 @@ packages:
     hasBin: true
     dependencies:
       '@ampproject/remapping': 2.2.1
-      '@rollup/pluginutils': 5.1.0(rollup@2.79.1)
+      '@rollup/pluginutils': 5.1.0(rollup@4.9.5)
       '@unocss/config': 0.58.3
       '@unocss/core': 0.58.3
       '@unocss/preset-uno': 0.58.3
@@ -9640,7 +9640,7 @@ packages:
       vite: ^2.9.0 || ^3.0.0-0 || ^4.0.0 || ^5.0.0-0
     dependencies:
       '@ampproject/remapping': 2.2.1
-      '@rollup/pluginutils': 5.1.0(rollup@2.79.1)
+      '@rollup/pluginutils': 5.1.0(rollup@4.9.5)
       '@unocss/config': 0.58.0
       '@unocss/core': 0.58.0
       '@unocss/inspector': 0.58.0
@@ -21537,6 +21537,7 @@ packages:
     hasBin: true
     optionalDependencies:
       fsevents: 2.3.3
+    dev: true
 
   /rollup@3.29.4:
     resolution: {integrity: sha512-oWzmBZwvYrU0iJHtDmhsm662rC15FRXmcjCk1xD771dFDx5jJ02ufAQQTn0etB2emNk4J9EZg/yWKpsn9BWGRw==}
@@ -24141,7 +24142,7 @@ packages:
         optional: true
     dependencies:
       '@antfu/utils': 0.7.7
-      '@rollup/pluginutils': 5.1.0(rollup@2.79.1)
+      '@rollup/pluginutils': 5.1.0(rollup@4.9.5)
       chokidar: 3.5.3
       debug: 4.3.4
       fast-glob: 3.3.2

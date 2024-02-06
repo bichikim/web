@@ -95,6 +95,7 @@ export const HPianoButton = defineComponent({
   props: {
     disabled: {default: false, type: Boolean},
     keyName: {type: String},
+    keyboardKey: {type: String},
     pianoKey: {default: '1c', type: [String, Number]},
     showKeyName: {type: Boolean},
     type: {default: 'flat', type: String as PropType<ButtonStylePropsType['type']>},
