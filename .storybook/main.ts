@@ -9,7 +9,11 @@ const config: StorybookConfig = {
   ],
   framework: {
     name: "storybook-solidjs-vite",
-    options: {},
+    options: {
+      builder: {
+        viteConfigPath: './vite.config.mts',
+      }
+    },
   },
   docs: {
     autodocs: "tag",
