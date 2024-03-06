@@ -1,3 +1,6 @@
+/**
+ * @vitest-environment happy-dom
+ */
 import {onKeyboard} from '../keyboard'
 import {describe, expect, it, vi} from 'vitest'
 describe('onKeyboard', () => {
