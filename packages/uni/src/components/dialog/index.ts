@@ -1,5 +1,1 @@
-export * from './HDialogClose'
-export * from './HDialogForGlobal'
-export * from './UDialog'
-export * from './UDialogCard'
-export * from './use-dialog'
+export * from './dialog'
