@@ -1,5 +1,7 @@
+import {getWindow} from 'src/dom/get-window'
 import {isScrollAble} from '../is-scroll-able'
-export const getScrollParent = (node: Element): ParentNode | Window => {
+
+export const getScrollParent = (node: Element): ParentNode | Window | undefined => {
   let parent = node.parentNode
 
   while (parent) {
@@ -8,5 +10,5 @@ export const getScrollParent = (node: Element): ParentNode | Window => {
     }
     parent = parent.parentElement
   }
-  return window
+  return getWindow()
 }

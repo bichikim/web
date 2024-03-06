@@ -32,9 +32,6 @@ type InverseArray<A extends any[]> = A extends [infer A1]
   ? [A5 | undefined, A4, A3, A2, A1]
   : unknown[]
 
-const foo = (a: number, b?: string) => 'foo'
-const a: InverseArray<Parameters<typeof foo>> = [undefined, 2]
-
 /**
  * inverse order parameter factory
  * @param targetFunction
