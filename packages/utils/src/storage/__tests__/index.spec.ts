@@ -1,3 +1,6 @@
+/**
+ * @vitest-environment happy-dom
+ */
 import {storage} from '../'
 import {describe, expect, it, vi} from 'vitest'
 describe('createStorage', () => {

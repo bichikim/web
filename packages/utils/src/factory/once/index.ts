@@ -1,6 +1,6 @@
 export const once = <T>(runner: () => T): (() => T) => {
   let isRun = false
-  let returnValue
+  let returnValue: T
   return () => {
     if (!isRun) {
       returnValue = runner()

@@ -18,6 +18,6 @@ export default defineConfig({
       'packages/utils/src/**/*.{test,spec}.?(c|m)[jt]s?(x)',
       'coong/coong-client/src/**/*.{test,spec}.?(c|m)[jt]s?(x)',
     ],
-    environment: 'happy-dom',
+    environment: 'node',
   },
 })

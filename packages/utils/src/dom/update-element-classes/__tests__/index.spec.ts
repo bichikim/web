@@ -1,3 +1,6 @@
+/**
+ * @vitest-environment happy-dom
+ */
 import {updateElementClasses} from '../'
 import {describe, expect, it} from 'vitest'
 describe('useUpdateElementClasses', () => {

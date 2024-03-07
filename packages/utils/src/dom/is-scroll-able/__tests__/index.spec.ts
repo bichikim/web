@@ -1,3 +1,6 @@
+/**
+ * @vitest-environment happy-dom
+ */
 import {describe, expect, it, vi} from 'vitest'
 import {isScrollAble} from '../'
 import {getStyle} from '../../get-style'

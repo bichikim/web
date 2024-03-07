@@ -14,7 +14,7 @@ const sharpSet = flatten(
       {key: 11, name: 'F#'},
     ])
     .map((item, index) => {
-      return item.map(({key, name}) => ({key: 12 * index + key, name}))
+      return item.map(({key, name}) => ({key: 12 * index + key - 5, name}))
     }),
 )
 
