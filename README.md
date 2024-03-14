@@ -24,7 +24,7 @@ refer to packages/* README.md each project folder
 
 Coong everywhere
 
-[ ] First Mission A very popular app/web app for free
+[ ] First Mission A popular app/web app for free
 
 ## Web types in Web Storm
 
