@@ -14,7 +14,7 @@ const flatSet = flatten(
       {key: 12, name: 'G'},
     ])
     .map((item, index) => {
-      return item.map(({key, name}) => ({key: 12 * index + key, name}))
+      return item.map(({key, name}) => ({key: 12 * index + key - 5, name}))
     }),
 )
 

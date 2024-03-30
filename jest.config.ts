@@ -48,6 +48,7 @@ const config: Config = {
       testPathIgnorePatterns: [
         //
         '<rootDir>/packages/utils/src/',
+        '<rootDir>/packages/solid/src/',
         '<rootDir>/coong/coong-client/src/',
       ],
       transform: {

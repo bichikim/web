@@ -30,10 +30,11 @@ export default defineConfig({
     // Vite Plugins
     vue(),
     monorepoAlias({
+      osPathDelimiter: process.platform === 'win32' ? '\\' : '/',
       root: fileURLToPath(new URL('./', import.meta.url)),
       sourceRoot: 'src',
       workspacePaths: [/^\/coong\//u, /^\/packages\//u],
-    }),
+    }) as any,
   ],
 })
 

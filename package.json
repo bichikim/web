@@ -37,7 +37,8 @@
     "version:beta": "lerna version prerelease --preid beta",
     "version:next": "lerna version prerelease --preid next",
     "version:patch": "lerna version patch",
-    "version:patch-force": "lerna version patch --force-publish"
+    "version:patch-force": "lerna version patch --force-publish",
+    "storybook": "storybook dev -p 6006"
   },
   "browserslist": [
     "last 10 Chrome versions",
@@ -51,8 +52,17 @@
     "last 5 Opera versions"
   ],
   "devDependencies": {
+    "@storybook/addon-essentials": "^7.6.12",
+    "@storybook/addon-interactions": "^7.6.12",
+    "@storybook/addon-links": "^7.6.12",
+    "@storybook/blocks": "^7.6.12",
+    "@storybook/testing-library": "^0.2.2",
+    "storybook": "^7.6.12",
+    "storybook-solidjs": "^1.0.0-beta.2",
+    "storybook-solidjs-vite": "^1.0.0-beta.2",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "@babel/core": "^7.22.5",
-    "@babel/plugin-proposal-class-properties": "^7.18.6",
     "@babel/plugin-proposal-decorators": "^7.22.5",
     "@babel/preset-env": "^7.22.5",
     "@babel/preset-typescript": "^7.22.5",
@@ -129,10 +139,11 @@
     "prettier": "^2.8.8",
     "reflect-metadata": "^0.1.13",
     "sinon": "^17.0.1",
+    "solid-js": "^1.8.15",
     "tsd": "0.24.1",
     "tslib": "^2.5.3",
     "tsup": "^8.0.1",
-    "typescript": "^5.0.0",
+    "typescript": "^5.3.3",
     "unocss": "0.53.5",
     "unplugin-icons": "^0.16.3",
     "unplugin-vue-components": "^0.24.1",
@@ -150,6 +161,10 @@
   },
   "pnpm": {
     "overrides": {
+      "semver@<5.7.2": "5.7.2",
+      "follow-redirects@<1.15.4": "1.15.4",
+      "vite@<4.5.2": "4.5.2",
+      "json5@<1.0.2": "1.0.2",
       "uuid@<7.0.3": "7.0.3",
       "parse-url@<8.1.0": "8.1.0",
       "archiver@<5.3.1": "5.3.1",

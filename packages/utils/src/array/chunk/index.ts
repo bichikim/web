@@ -1,9 +1,5 @@
 import {chunk} from '@winter-love/lodash'
 
-// export const chunkOp = (size?: number) =>
-//   <T>(list: T[] | null | undefined): T[][] =>
-//     chunk<T>(list, size)
-
 export interface ChunkOp {
   <T>(size: number, list: T[]): T[][]
 

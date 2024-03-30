@@ -1,7 +1,7 @@
 import {kebabCase} from '@winter-love/lodash'
 export const getStyle = (
-  node: Element,
-  styleName: Exclude<keyof CSSStyleDeclaration, number>,
+  element: Element,
+  styleName: Exclude<keyof CSSStyleDeclaration, number | symbol>,
 ) => {
-  return window.getComputedStyle(node).getPropertyValue(kebabCase(styleName))
+  return window.getComputedStyle(element).getPropertyValue(kebabCase(styleName))
 }
