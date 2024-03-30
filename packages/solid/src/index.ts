@@ -1,1 +1,1 @@
-export const foo = () => null
+export * from 'solid-js'

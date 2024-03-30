@@ -5,6 +5,7 @@ import {useEventDown} from '../'
 import {mount} from '@winter-love/test-utils'
 import {defineComponent, h, ref} from 'vue'
 import {describe, expect, it, vi} from 'vitest'
+
 describe('use-event-down', () => {
   const wrapper = mount(
     defineComponent({

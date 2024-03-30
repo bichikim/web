@@ -152,6 +152,8 @@
     "vitepress": "^1.0.0-rc.35",
     "vitest": "^1.2.1",
     "vue": "^3.4.0",
+    "solid-testing-library": "^0.5.1",
+    "vite-plugin-solid": "^2.10.2",
     "vue-docgen-web-types": "^0.1.8",
     "vue-router": "^4.2.4"
   },

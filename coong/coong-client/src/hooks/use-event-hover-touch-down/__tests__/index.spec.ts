@@ -6,9 +6,12 @@ import {useEventHoverTouchDown} from '../'
 import {elementFromPoint} from '../element-from-point'
 import {onEvent} from '@winter-love/use'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
-vi.mock('../element-from-point', () => ({
-  elementFromPoint: vi.fn(),
-}))
+
+vi.mock('../element-from-point', async () => {
+  return {
+    elementFromPoint: vi.fn(),
+  }
+})
 
 vi.mock('@winter-love/use', async () => {
   const originalModule: any = await vi.importActual('@winter-love/use')

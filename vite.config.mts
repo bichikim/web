@@ -3,7 +3,6 @@ import {fileURLToPath, URL} from 'node:url'
 import {monorepoAlias} from '@winter-love/vite-plugin-monorepo-alias'
 import {defineConfig} from 'vite'
 import vue from '@vitejs/plugin-vue'
-import path from 'node:path'
 export default defineConfig({
   // Example build config for a component library
   build: {

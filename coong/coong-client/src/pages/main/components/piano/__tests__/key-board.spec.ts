@@ -1,5 +1,5 @@
 /**
- * @vitest-environment happy-dom
+ * @vitest-environment jsdom
  */
 import {onKeyboard} from '../keyboard'
 import {describe, expect, it, vi} from 'vitest'

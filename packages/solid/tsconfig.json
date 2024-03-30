@@ -6,8 +6,8 @@
     "declaration": true,
     "outDir": "dist",
     "moduleResolution": "Node",
-    "target": "ESNext",
-    "module": "ESNext",
+    "target": "esnext",
+    "module": "esnext",
     "baseUrl": ".",
     "paths": {
       "src/*": ["src/*"]
@@ -21,6 +21,7 @@
   },
   "include": [
     "src/**/*.ts",
-    "src/**/*.tsx"
+    "src/**/*.tsx",
+    "vite.config.mts"
   ]
 }
