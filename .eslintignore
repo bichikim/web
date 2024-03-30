@@ -3,3 +3,5 @@ dist
 node_modules
 **/*.d.ts
 /coong/coong-client/android
+/coong/coong-clinet/ios
+/packages/lodash/src/lodash
