@@ -5,7 +5,7 @@ import flushPromises from 'flush-promises'
 import {createRoot, createSignal} from 'solid-js'
 import {createMutable, createStore} from 'solid-js/store'
 import {describe, it, vi} from 'vitest'
-import {watch} from '../'
+import {useWatch} from '../'
 
 describe('watch', () => {
   const mutableValue = createMutable({name: 'foo'})
@@ -64,7 +64,7 @@ describe('watch', () => {
 
         setState(firstValue)
         // to catch an effect, use an effect
-        watch(state, _callback, clone)
+        useWatch(state, _callback, {clone})
         expect(_callback).not.toHaveBeenCalled()
         await flushPromises()
         expect(_callback).toHaveBeenNthCalledWith(1, firstValue, undefined)
@@ -85,7 +85,7 @@ describe('watch', () => {
       const cleanup = vi.fn()
       const callback = vi.fn(() => cleanup)
 
-      watch([state1, state2], callback)
+      useWatch([state1, state2], callback)
 
       expect(callback).not.toHaveBeenCalled()
 
@@ -104,4 +104,25 @@ describe('watch', () => {
 
       dispose()
     }))
+
+  // I don't know if immediate is necessary
+  // It hasn't been implemented yet
+  it.each([
+    //
+    {immediate: true},
+    {immediate: false},
+  ])('should watch immediately', () => {
+    const callback = vi.fn()
+    const {dispose, state, setState} = createRoot((dispose) => {
+      const [state, setState] = createSignal('foo')
+
+      useWatch(state, callback, {})
+
+      expect(callback).not.toHaveBeenCalled()
+
+      return {dispose, setState, state}
+    })
+
+    expect(callback).toHaveBeenCalled()
+  })
 })
