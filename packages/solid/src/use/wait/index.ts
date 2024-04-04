@@ -1,6 +1,6 @@
 import {resolveAccessor} from 'src/use/resolve-accessor'
 import {MayBeAccessor} from 'src/use/types'
-import {watch} from 'src/use/watch'
+import {useWatch} from 'src/use/watch'
 
 export interface WaitSource<Options extends Record<string, any>> {
   cancel: () => void
@@ -15,6 +15,7 @@ export interface WaitSource<Options extends Record<string, any>> {
     wait: number,
     options?: Partial<Options>,
   ) => void
+  flush: (callback: (...args: any) => void) => void
 }
 
 export type WaitCreator<Options extends Record<string, any>> = () => WaitSource<Options>
@@ -25,7 +26,7 @@ export interface WaitReturn<Args extends any[]> {
   flush: () => void
 }
 
-export const waitFactory = <Options extends Record<string, any>>(
+export const createUseWait = <Options extends Record<string, any>>(
   creator: WaitCreator<Options>,
 ) => {
   const source = creator()
@@ -38,7 +39,7 @@ export const waitFactory = <Options extends Record<string, any>>(
     const waitAccessor = resolveAccessor(wait)
     const optionsAccessor = resolveAccessor(options)
 
-    watch(waitAccessor, (wait) => {
+    useWatch(waitAccessor, (wait) => {
       source.create?.(callback, wait, optionsAccessor())
       return () => {
         source.cancel()
@@ -53,7 +54,7 @@ export const waitFactory = <Options extends Record<string, any>>(
         source.execute(args, callback, waitAccessor())
       },
       flush: () => {
-        // todo
+        source.flush(callback)
       },
     }
   }

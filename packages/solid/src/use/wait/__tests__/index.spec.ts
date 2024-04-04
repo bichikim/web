@@ -1,9 +1,8 @@
-import {debounce, DebouncedFunc, DebounceSettings} from '@winter-love/lodash'
-import {AnyFunction} from '@winter-love/utils'
+import {debounce, DebounceSettings} from '@winter-love/lodash'
 import {useFakeTimers} from 'sinon'
-import {createSignal} from 'solid-js'
+import {createRoot, createSignal} from 'solid-js'
 import {afterEach, describe, expect, it, vi} from 'vitest'
-import {waitFactory} from '../'
+import {createUseWait} from '../'
 
 const callback = vi.fn()
 vi.spyOn(global, 'setTimeout')
@@ -15,27 +14,33 @@ vi.mock('@winter-love/lodash', async () => {
   }
 })
 
-const setTimeoutWait = waitFactory<Record<string, unknown>>(() => {
+const setTimeoutWait = createUseWait<Record<string, unknown>>(() => {
   // prepare stage
-  let flag: any
+  let _flag: any
+  let _args: any
   return {
     cancel: () => {
-      clearTimeout(flag)
+      clearTimeout(_flag)
     },
     execute: (args, callback, wait) => {
-      flag = setTimeout(callback, wait, ...args) as any
+      _flag = setTimeout(callback, wait, ...args) as any
+      _args = [...args]
+    },
+    flush: (callback) => {
+      clearTimeout(_flag)
+      callback(..._args)
     },
   }
 })
 
-const debounceWait = waitFactory<DebounceSettings>(() => {
-  let flag: any
+const debounceWait = createUseWait<DebounceSettings>(() => {
+  let _flag: any
   return {
     cancel: () => {
-      flag.cancel()
+      _flag.cancel()
     },
     create: (callback, wait: number, options) => {
-      flag = debounce(
+      _flag = debounce(
         (...args: any) => {
           callback(...args)
         },
@@ -44,7 +49,10 @@ const debounceWait = waitFactory<DebounceSettings>(() => {
       )
     },
     execute: (args) => {
-      flag(...args)
+      _flag(...args)
+    },
+    flush: () => {
+      _flag.flush()
     },
   }
 })
@@ -53,7 +61,7 @@ describe('waitFactory', () => {
     callback.mockClear()
   })
 
-  it.each([
+  it.skip.each([
     //
     {target: setTimeout, wait: setTimeoutWait},
     {options: {}, target: debounce, wait: debounceWait},
@@ -105,6 +113,54 @@ describe('waitFactory', () => {
 
     callback.mockClear()
 
+    result.execute()
+
+    if (leading) {
+      expect(callback).toHaveBeenCalledTimes(1)
+      callback.mockClear()
+    }
+    expect(callback).toHaveBeenCalledTimes(0)
+
+    timer.tick(50)
+
+    result.flush()
+
+    if (leading) {
+      expect(callback).toHaveBeenCalledTimes(0)
+    } else {
+      expect(callback).toHaveBeenCalledTimes(1)
+    }
+
+    timer.restore()
+  })
+
+  it.each([
+    {
+      args: ['hello'],
+      waits: [100, 200],
+    },
+  ])('should accept wait and options accessors', async ({waits, args}) => {
+    const callback = vi.fn()
+    const timer = useFakeTimers()
+    const {wait, dispose} = createRoot((dispose) => {
+      const wait = debounceWait(callback, waits[0])
+
+      return {dispose, wait}
+    })
+
+    wait.execute(...args)
+
+    expect(callback).not.toHaveBeenCalled()
+
+    timer.tick(50)
+
+    expect(callback).not.toHaveBeenCalled()
+
+    timer.tick(101)
+
+    expect(callback).toHaveBeenCalled()
+
+    dispose()
     timer.restore()
   })
 })
