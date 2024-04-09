@@ -36,6 +36,3 @@ export default defineConfig({
     }) as any,
   ],
 })
-
-console.info('vite histoire debug', fileURLToPath(new URL('./', import.meta.url)))
-console.info('vite histoire debug', path.delimiter)

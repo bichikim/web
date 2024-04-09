@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [
     monorepoAlias({
       osPathDelimiter: process.platform === 'win32' ? '\\' : '/',
-      root: fileURLToPath(new URL('./', import.meta.url)),
+      root: fileURLToPath(new URL('../', import.meta.url)),
       sourceRoot: 'src',
       workspacePaths: [/^\/coong\//u, /^\/packages\//u],
     }) as any,
