@@ -21,5 +21,8 @@ export const useDebounce = waitFactory(() => {
         flag(...args)
       }
     },
+    flush: () => {
+      flag?.flush()
+    },
   }
 })

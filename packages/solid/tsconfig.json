@@ -3,6 +3,7 @@
   "compileOnSave": false,
   "compilerOptions": {
     "jsx": "preserve",
+    "jsxImportSource": "solid-js",
     "declaration": true,
     "outDir": "dist",
     "moduleResolution": "Node",

@@ -1,14 +1,9 @@
 import {Meta, StoryObj} from 'storybook-solidjs'
 import {Foo} from 'src/Foo'
 
-const Test = () => {
-  return <div>hello</div>
-}
-
 const meta = {
   component: Foo,
-  title: 'Test',
-} satisfies Meta<typeof Test>
+} satisfies Meta<typeof Foo>
 
 export default meta
 type Story = StoryObj<typeof meta>

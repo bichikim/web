@@ -1,7 +1,7 @@
 import {} from 'solid-js'
 import {MayBeAccessor} from 'src/use/types'
 import {resolveAccessor} from 'src/use/resolve-accessor'
-import {watch} from 'src/use/watch'
+import {useWatch} from 'src/use/watch'
 
 export interface Listener {
   addEventListener(
@@ -54,7 +54,7 @@ export const onEvent: OnEvent = (
 ) => {
   const elementAccessor = resolveAccessor(element)
 
-  watch(elementAccessor, (element) => {
+  useWatch(elementAccessor, (element) => {
     element.addEventListener(type, listener, options)
     return () => element.removeEventListener(type, listener)
   })
