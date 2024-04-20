@@ -1,6 +1,7 @@
 export * from './array'
 export * from './const'
 export * from './dom'
+export * from './emit'
 export * from './env'
 export * from './event'
 export * from './factory'

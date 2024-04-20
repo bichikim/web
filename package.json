@@ -38,7 +38,8 @@
     "version:next": "lerna version prerelease --preid next",
     "version:patch": "lerna version patch",
     "version:patch-force": "lerna version patch --force-publish",
-    "storybook": "storybook dev -p 6006"
+    "storybook": "storybook dev -p 6006",
+    "test:storybook": "test-storybook"
   },
   "browserslist": [
     "last 10 Chrome versions",
@@ -57,6 +58,7 @@
     "@storybook/addon-links": "^8.0.5",
     "@storybook/blocks": "^8.0.5",
     "@storybook/testing-library": "^0.2.2",
+    "@storybook/test-runner": "^0.17.0",
     "storybook": "^8.0.5",
     "storybook-solidjs": "^1.0.0-beta.2",
     "storybook-solidjs-vite": "^1.0.0-beta.2",

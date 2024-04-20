@@ -15,13 +15,13 @@ export interface Listener {
 
 export interface OnEvent {
   <K extends keyof WindowEventMap>(
-    window: Window,
+    window: MayBeAccessor<Window | undefined>,
     type: K,
     listener: (event: WindowEventMap[K]) => void,
     options?: AddEventListenerOptions,
   ): void
   (
-    window: Window,
+    window: MayBeAccessor<Window | undefined>,
     type: string,
     listener: (event: CustomEvent) => void,
     options?: AddEventListenerOptions,
@@ -33,21 +33,21 @@ export interface OnEvent {
     options?: AddEventListenerOptions,
   ): void
   (
-    window: HTMLElement,
+    window: MayBeAccessor<HTMLElement | undefined>,
     type: string,
     listener: (event: CustomEvent) => void,
     options?: AddEventListenerOptions,
   ): void
   (
-    window: Element,
+    window: MayBeAccessor<Element | undefined>,
     type: string,
     listener: (event: Event) => void,
     options?: AddEventListenerOptions,
   ): void
 }
 
-export const onEvent: OnEvent = (
-  element: MayBeAccessor<Listener>,
+export const useEvent: OnEvent = (
+  element: MayBeAccessor<Listener | undefined>,
   type: string,
   listener: (event: any) => void,
   options: AddEventListenerOptions = {},
@@ -55,7 +55,9 @@ export const onEvent: OnEvent = (
   const elementAccessor = resolveAccessor(element)
 
   useWatch(elementAccessor, (element) => {
-    element.addEventListener(type, listener, options)
-    return () => element.removeEventListener(type, listener)
+    element?.addEventListener(type, listener, options)
+    return () => {
+      element?.removeEventListener(type, listener)
+    }
   })
 }

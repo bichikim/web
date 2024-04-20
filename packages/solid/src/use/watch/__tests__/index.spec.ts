@@ -113,7 +113,7 @@ describe('watch', () => {
     {immediate: false},
   ])('should watch immediately', () => {
     const callback = vi.fn()
-    const {dispose, state, setState} = createRoot((dispose) => {
+    const {dispose, setState} = createRoot((dispose) => {
       const [state, setState] = createSignal('foo')
 
       useWatch(state, callback, {})
@@ -123,6 +123,12 @@ describe('watch', () => {
       return {dispose, setState, state}
     })
 
-    expect(callback).toHaveBeenCalled()
+    expect(callback).toHaveBeenCalledTimes(1)
+
+    setState('bar')
+
+    expect(callback).toHaveBeenCalledTimes(2)
+
+    dispose()
   })
 })
