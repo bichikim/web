@@ -24,7 +24,8 @@ export default defineConfig({
     include: [
       'packages/utils/src/**/*.{test,spec}.?(c|m)[jt]s?(x)',
       'packages/solid/src/**/*.{test,spec}.?(c|m)[jt]s?(x)',
-      'coong/coong-client/src/**/*.{test,spec}.?(c|m)[jt]s?(x)',
+      'apps/coong-client/src/**/*.{test,spec}.?(c|m)[jt]s?(x)',
+      'apps/bplan-client/src/**/*.{test,spec}.?(c|m)[jt]s?(x)',
     ],
   },
 })

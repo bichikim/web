@@ -4,7 +4,7 @@ import type {Config} from 'jest'
 const config: Config = {
   collectCoverageFrom: [
     '<rootDir>/packages/*/src/**/*.{ts,tsx}',
-    '<rootDir>/coong/*/src/**/*.{ts,tsx}',
+    '<rootDir>/apps/*/src/**/*.{ts,tsx}',
     '<rootDir>/scripts/**/*.{ts,tsx}',
     '!<rootDir>/**/*.d.ts',
     '!<rootDir>/**/*.stories.{ts,tsx}',
@@ -42,14 +42,15 @@ const config: Config = {
       testMatch: [
         '!<rootDir>/**/*.e2e.{ts,tsx}',
         '<rootDir>/packages/*/src/**/__tests__/*.spec.{ts,tsx}',
-        '<rootDir>/coong/*/src/**/__tests__/*.spec.{ts,tsx}',
+        '<rootDir>/apps/*/src/**/__tests__/*.spec.{ts,tsx}',
         '<rootDir>/scripts/**/__tests__/*.spec.{ts,tsx}',
       ],
       testPathIgnorePatterns: [
         //
         '<rootDir>/packages/utils/src/',
         '<rootDir>/packages/solid/src/',
-        '<rootDir>/coong/coong-client/src/',
+        '<rootDir>/apps/coong-client/src/',
+        '<rootDir>/apps/bplan-client/src/',
       ],
       transform: {
         '^.+\\.jsx?$': 'babel-jest',

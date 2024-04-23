@@ -1,5 +1,5 @@
 {
-  "name": "@winter-love/solid-coong",
+  "name": "@winter-love/bplan-client",
   "type": "module",
   "scripts": {
     "build": "vinxi build",

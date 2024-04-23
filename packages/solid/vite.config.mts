@@ -13,6 +13,7 @@ export default defineConfig({
   build: {
     lib: {
       entry: {
+        'components/index': resolvePath('src/components'),
         index: resolvePath('src/index.ts'),
         'test/index': resolvePath('src/test'),
         'use/index': resolvePath('src/use'),

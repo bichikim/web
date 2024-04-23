@@ -1,1 +1,4 @@
-export const index = () => null
+
+export const render = () => {
+
+}

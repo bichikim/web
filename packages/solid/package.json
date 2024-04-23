@@ -48,7 +48,8 @@
     "solid-js": "^1.8.15"
   },
   "peerDependencies": {
-    "solid-js": "^1.0.0"
+    "solid-js": "^1.0.0",
+    "solid-dom-testing": "^0.0.3"
   },
   "devDependencies": {
     "@types/jest": "^28.1.8",

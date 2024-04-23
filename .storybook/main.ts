@@ -2,8 +2,8 @@ import type { StorybookConfig } from "storybook-solidjs-vite";
 
 const config: StorybookConfig = {
   stories: [
-    "../coong/solid-client/src/**/*.mdx",
-    "../coong/solid-client/src/**/*.story.@(js|jsx|mjs|ts|tsx)",
+    "../apps/bplan-client/src/**/*.mdx",
+    "../apps/bplan-client/src/**/*.story.@(js|jsx|mjs|ts|tsx)",
     "../packages/solid/src/**/*.mdx",
     "../packages/solid/src/**/*.story.@(js|jsx|mjs|ts|tsx)"
   ],

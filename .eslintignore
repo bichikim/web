@@ -2,6 +2,6 @@ dist
 .quasar
 node_modules
 **/*.d.ts
-/coong/coong-client/android
-/coong/coong-clinet/ios
+/apps/coong-client/android
+/apps/coong-clinet/ios
 /packages/lodash/src/lodash
