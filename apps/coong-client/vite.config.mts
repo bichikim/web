@@ -36,7 +36,7 @@ export default defineConfig(({mode}) => {
       include: ['vue', 'vue-router'],
     },
     plugins: [
-      unoCss({}),
+      unoCss('../../uno.config.ts'),
       vue({
         include: [/\.vue$/u, /\.md$/u],
       }),

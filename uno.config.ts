@@ -1,4 +1,4 @@
-import {defineConfig} from 'unocss'
+import {defineConfig, presetUno, toEscapedSelector} from 'unocss'
 
 export default defineConfig({
   content: {
@@ -6,10 +6,29 @@ export default defineConfig({
       include: [
         // eslint-disable-next-line require-unicode-regexp
         /\.(vue|svelte|[jt]sx|mdx?|astro|elm|php|phtml|html)($|\?)/,
-        'src/**/*.{js,ts}',
+        '**/src/**/*.{js,ts}',
       ],
     },
   },
+  presets: [presetUno()],
+  rules: [
+    //
+    [
+      /^scrollbar-none$/u,
+      (_, {rawSelector}) => {
+        const selector = toEscapedSelector(rawSelector)
+        return `
+          ${selector}::-webkit-scrollbar {
+            display: none;
+          }
+          ${selector} {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+          }
+        `
+      },
+    ],
+  ],
   theme: {
     boxShadow: {
       'flat-key':

@@ -5,7 +5,7 @@ import unoCss from 'unocss/vite'
 export default defineConfig({
   plugins: [
     //
-    unoCss(),
+    unoCss('../../uno.config.ts'),
   ] as any,
   resolve: {
     alias: {

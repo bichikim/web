@@ -1,5 +1,5 @@
 import {onClickOutside} from '@winter-love/use'
-import {defineComponent, h, ref} from 'vue'
+import {defineComponent, h, ref, Ref} from 'vue'
 import {HOptionButton} from './HOptionButton'
 import {HOptionPanel} from './HOptionPanel'
 
@@ -11,7 +11,7 @@ export const HOptions = defineComponent({
   },
   setup(props, {emit}) {
     const show = ref(false)
-    const rootElement = ref()
+    const rootElement: Ref<any> = ref()
     const toggleShow = () => {
       show.value = !show.value
     }
@@ -22,7 +22,7 @@ export const HOptions = defineComponent({
     const onScale = (value: number) => {
       emit('scale', value)
     }
-    onClickOutside(rootElement, () => {
+    onClickOutside(rootElement as any, () => {
       onClose()
     })
     return () =>
