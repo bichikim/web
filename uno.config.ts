@@ -1,5 +1,19 @@
 import {defineConfig, presetUno, toEscapedSelector} from 'unocss'
 
+const readSizeName = (name: string): string => {
+  switch (name) {
+    case 'width':
+    case 'w': {
+      return 'width'
+    }
+    case 'height':
+    case 'h': {
+      return 'height'
+    }
+  }
+  return name
+}
+
 export default defineConfig({
   content: {
     pipeline: {
@@ -26,6 +40,24 @@ export default defineConfig({
             scrollbar-width: none;
           }
         `
+      },
+    ],
+    // preset var
+    [
+      /^(top|left|right|bottom)-var$/u,
+      ([, direction]) => {
+        return {
+          [direction]: `var(--var-${direction})`,
+        }
+      },
+    ],
+    [
+      /^(width|height|w|h)-var/u,
+      ([, direction]) => {
+        const kind = readSizeName(direction)
+        return {
+          [kind]: `var(--var-${kind})`,
+        }
       },
     ],
   ],
