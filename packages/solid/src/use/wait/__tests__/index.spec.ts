@@ -61,7 +61,7 @@ describe('waitFactory', () => {
     callback.mockClear()
   })
 
-  it.skip.each([
+  it.each([
     //
     {target: setTimeout, wait: setTimeoutWait},
     {options: {}, target: debounce, wait: debounceWait},
@@ -134,6 +134,35 @@ describe('waitFactory', () => {
     timer.restore()
   })
 
+  it('should cancel before dispose', () => {
+    const callback = vi.fn()
+    const timer = useFakeTimers()
+    const timeout = 150
+    const {wait, dispose} = createRoot((dispose) => {
+      const wait = debounceWait(callback, timeout)
+
+      return {dispose, wait}
+    })
+
+    wait.execute()
+    expect(callback).not.toHaveBeenCalled()
+    timer.tick(timeout + 1)
+
+    expect(callback).toHaveBeenCalled()
+
+    callback.mockClear()
+
+    wait.execute()
+
+    dispose()
+
+    timer.tick(timeout + 1)
+
+    expect(callback).not.toHaveBeenCalled()
+
+    timer.restore()
+  })
+
   it.each([
     {
       args: ['hello'],
@@ -159,7 +188,6 @@ describe('waitFactory', () => {
     timer.tick(101)
 
     expect(callback).toHaveBeenCalled()
-
     dispose()
     timer.restore()
   })

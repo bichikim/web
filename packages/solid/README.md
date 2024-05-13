@@ -38,3 +38,7 @@ export const SomePage = () => {
   )
 }
 ```
+
+refer to
+
+https://raqueebuddinaziz.com/blog/3-patterns-to-write-better-and-more-readable-solidjs-components/

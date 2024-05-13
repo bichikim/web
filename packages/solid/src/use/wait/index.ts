@@ -15,6 +15,10 @@ export interface WaitSource<Options extends Record<string, any>> {
     wait: number,
     options?: Partial<Options>,
   ) => void
+  /**
+   * stop wait and call callback function
+   * @param callback
+   */
   flush: (callback: (...args: any) => void) => void
 }
 
@@ -29,13 +33,12 @@ export interface WaitReturn<Args extends any[]> {
 export const createUseWait = <Options extends Record<string, any>>(
   creator: WaitCreator<Options>,
 ) => {
-  const source = creator()
-
   return <Args extends any[]>(
     callback: (...args: Args) => void,
     wait: MayBeAccessor<number>,
     options: MayBeAccessor<Partial<Options>> = {},
   ): WaitReturn<Args> => {
+    const source = creator()
     const waitAccessor = resolveAccessor(wait)
     const optionsAccessor = resolveAccessor(options)
 

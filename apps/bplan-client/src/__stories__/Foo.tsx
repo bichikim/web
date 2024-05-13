@@ -1,3 +1,3 @@
 export const Foo = () => {
-  return <div>foo</div>
+  return <div class="c-red">foo</div>
 }

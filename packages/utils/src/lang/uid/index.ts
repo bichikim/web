@@ -1,4 +1,7 @@
-// create uid generator
+/**
+ * @deprecated
+ * @param prefix
+ */
 export const createUidGenerator = (
   prefix: string = 'v',
 ): ((prefix?: string) => string) => {
@@ -12,4 +15,7 @@ export const createUidGenerator = (
   }
 }
 
+/**
+ * @deprecated
+ */
 export const uid = createUidGenerator()

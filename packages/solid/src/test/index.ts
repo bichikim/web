@@ -1,4 +1,1 @@
-
-export const render = () => {
-
-}
+export * from './trigger'

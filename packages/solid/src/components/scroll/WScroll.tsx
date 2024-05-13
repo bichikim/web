@@ -1,13 +1,15 @@
-import {cva} from 'class-variance-authority'
+import {ParentProps, splitProps} from 'solid-js'
+import {Dynamic} from 'solid-js/web'
 
-const rootStyle = cva({
-  base: 'relative',
-})
+export interface WScrollProps extends ParentProps {
+  [key: string]: any
+  /**
+   * class recommended relative overflow-hidden
+   */
+  as?: string
+}
+export const WScroll = (_props: WScrollProps) => {
+  const [props, restProps] = splitProps(_props, ['as'])
 
-export const WScroll = () => {
-  return (
-    <div class={rootStyle()}>
-      <div></div>
-    </div>
-  )
+  return <Dynamic component={props.as ?? 'div'} {...restProps} />
 }
