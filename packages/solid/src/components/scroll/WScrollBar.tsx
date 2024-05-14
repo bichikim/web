@@ -9,6 +9,7 @@ import {
   WIDTH_VAR,
 } from 'src/components/css-var'
 import {sx, ValidStyle} from '@winter-love/solid/use'
+import {useScrollEvent} from './scroll-event-context'
 import {ScrollBarContext} from './scroll-bar-context'
 import {useScrollContext} from './scroll-context'
 import {ScrollBarType} from './types'
@@ -32,7 +33,7 @@ export const WScrollBar = (_props: WScrollBarProps) => {
     _props,
   )
   const scrollContext = useScrollContext()
-
+  const scrollEvent = useScrollEvent()
   const scrollBarState = createMemo(() => {
     const {
       containerLeft,
@@ -98,8 +99,9 @@ export const WScrollBar = (_props: WScrollBarProps) => {
   })
 
   const onClick = (event: MouseEvent) => {
-    const {containerSize, percent} = scrollBarContext()
+    const {containerSize, percent, scrollSize} = scrollBarContext()
     const clickPercent = event.offsetY / containerSize
+    // scrollEvent.setScroll()
     console.log('click', percent, clickPercent)
   }
 

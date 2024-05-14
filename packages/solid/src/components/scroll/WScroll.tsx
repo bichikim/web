@@ -5,6 +5,7 @@ import {ScrollContext} from './scroll-context'
 import {ScrollEventContext} from './scroll-event-context'
 import {useScrollState} from './scroll-state'
 import {scrollUuid} from './scroll-uuid'
+import {ScrollBarType} from './types'
 
 export interface WScrollProps extends ParentProps {
   [key: string]: any
@@ -52,24 +53,24 @@ export const WScroll = (_props: WScrollProps) => {
     }
   })
 
-  const setScroll = (type: 'x' | 'y', position: number) => {
+  const setScroll = (type: ScrollBarType, position: number) => {
     const element = scrollBodyElement()
     if (!element) {
       return
     }
-    if (type === 'x') {
+    if (type === 'horizontal') {
       element.scrollLeft = position
       return
     }
     element.scrollTop = position
   }
 
-  const moveScroll = (type: 'x' | 'y', position: number) => {
+  const moveScroll = (type: ScrollBarType, position: number) => {
     const element = scrollBodyElement()
     if (!element) {
       return
     }
-    if (type === 'x') {
+    if (type === 'horizontal') {
       element.scrollLeft += position
       return
     }

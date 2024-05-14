@@ -71,11 +71,7 @@ export const WScrollHandel = (_props: WScrollBarProps) => {
 
   const setScroll = (position: number) => {
     const {type} = scrollBar()
-    if (type === 'horizontal') {
-      scrollEvent.setScroll('x', position)
-      return
-    }
-    scrollEvent.setScroll('y', position)
+    scrollEvent.setScroll(type, position)
   }
 
   useEvent(getWindow, 'pointermove', (event: PointerEvent) => {

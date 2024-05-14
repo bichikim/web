@@ -1,15 +1,21 @@
-import {createCustomResolver, CustomResolverOptions} from './custom-resolver'
-import {createAliasRegexp} from './alias-regexp'
+import {toAlias} from 'src/to-alias'
 import type {Plugin} from 'vite'
+import {createAliasRegexp} from './alias-regexp'
+import {createCustomResolver, CustomResolverOptions} from './custom-resolver'
 
-export type VitePluginMonorepoOptions = CustomResolverOptions
+export interface VitePluginMonorepoOptions extends CustomResolverOptions {
+  /**
+   * same as object vite alias
+   */
+  alias?: Record<string, string>
+}
 
 /**
  * vite plugin
  * @param options
  */
 export const monorepoAlias = (options: VitePluginMonorepoOptions): Plugin => {
-  const {sourceRoot = './'} = options
+  const {sourceRoot = './', alias = {}} = options
   return {
     config: () => {
       return {
@@ -20,6 +26,7 @@ export const monorepoAlias = (options: VitePluginMonorepoOptions): Plugin => {
               find: createAliasRegexp(sourceRoot),
               replacement: `$1`,
             },
+            ...toAlias(alias),
           ],
         },
       }

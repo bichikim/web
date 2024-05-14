@@ -1,4 +1,5 @@
 import {createContext, useContext} from 'solid-js'
+import {ScrollBarType} from './types'
 
 export interface ScrollEventContextProps {
   /**
@@ -6,11 +7,11 @@ export interface ScrollEventContextProps {
    * @param type direction to be changed
    * @param amount how much will be changed
    */
-  moveScroll: (type: 'x' | 'y', amount: number) => void
+  moveScroll: (type: ScrollBarType, amount: number) => void
   /**
    * change the scroll position
    */
-  setScroll: (type: 'x' | 'y', scrollPosition: number) => void
+  setScroll: (type: ScrollBarType, scrollPosition: number) => void
 }
 
 export const ScrollEventContext = createContext<ScrollEventContextProps>({
