@@ -10,7 +10,7 @@ js 기본 함수들이 null 을 리턴한다 window.querySelector 등
 
 Do This
 ```ts
-import {MaybeAccessor} from '@winter-love/solid/use'
+import {MaybeAccessor} from 'src/use'
 const useFoo = (element: MayBeAccessor<Element | null>) => {
   // do something
 }
@@ -18,7 +18,7 @@ const useFoo = (element: MayBeAccessor<Element | null>) => {
 
 Don't Do This
 ```ts
-import {MaybeAccessor} from '@winter-love/solid/use'
+import {MaybeAccessor} from 'src/use'
 const useFoo = (element: MayBeAccessor<Element | undefined>) => {
   // do something
 }

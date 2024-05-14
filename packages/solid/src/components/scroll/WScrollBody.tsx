@@ -1,7 +1,7 @@
 import {createMemo, JSXElement, mergeProps, ParentProps, ValidComponent} from 'solid-js'
 import {Dynamic} from 'solid-js/web'
 import {SCROLL_X_PERCENT, SCROLL_Y_PERCENT} from 'src/components/css-var'
-import {sx, ValidStyle} from 'src/use'
+import {sx, ValidStyle} from '@winter-love/solid/use'
 import {useScrollBodyContext} from './scroll-body-context'
 import {useScrollContext} from './scroll-context'
 

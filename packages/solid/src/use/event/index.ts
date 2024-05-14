@@ -1,4 +1,3 @@
-import {} from 'solid-js'
 import {MayBeAccessor} from 'src/use/types'
 import {resolveAccessor} from 'src/use/resolve-accessor'
 import {useWatch} from 'src/use/watch'

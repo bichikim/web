@@ -1,11 +1,10 @@
 import {getWindow} from '@winter-love/utils'
 import {createMemo, createSignal, mergeProps, ParentProps} from 'solid-js'
 import {Dynamic} from 'solid-js/web'
-import {useEvent} from 'src/use/event'
+import {stopPropagation, sx, useEvent, ValidStyle} from '@winter-love/solid/use'
 import {BOTTOM_VAR, HEIGHT_VAR, LEFT_VAR, RIGHT_VAR, TOP_VAR, WIDTH_VAR} from '../css-var'
 import {useScrollBar} from './scroll-bar-context'
 import {useScrollEvent} from './scroll-event-context'
-import {stopPropagation, sx, ValidStyle} from 'src/use'
 
 export interface WScrollBarProps extends ParentProps {
   as?: string

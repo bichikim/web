@@ -8,7 +8,7 @@ import {
   TOP_VAR,
   WIDTH_VAR,
 } from 'src/components/css-var'
-import {sx, ValidStyle} from 'src/use'
+import {sx, ValidStyle} from '@winter-love/solid/use'
 import {ScrollBarContext} from './scroll-bar-context'
 import {useScrollContext} from './scroll-context'
 import {ScrollBarType} from './types'
