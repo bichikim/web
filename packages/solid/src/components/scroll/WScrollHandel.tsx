@@ -19,9 +19,9 @@ export const WScrollHandel = (_props: WScrollBarProps) => {
   let pointerDown = false
   let startDragPoint = 0
 
-  const [element, setElement] = createSignal<HTMLElement>()
+  const [element, setElement] = createSignal<HTMLElement | null>(null)
 
-  const {onScrollX, onScrollY} = useScrollEvent()
+  const scrollEvent = useScrollEvent()
 
   const handleValues = createMemo(() => {
     const {containerSize, scrollPosition, scrollSize} = scrollBar()
@@ -70,9 +70,17 @@ export const WScrollHandel = (_props: WScrollBarProps) => {
     pointerDown = false
   })
 
+  const setScroll = (position: number) => {
+    const {type} = scrollBar()
+    if (type === 'horizontal') {
+      scrollEvent.setScroll('x', position)
+      return
+    }
+    scrollEvent.setScroll('y', position)
+  }
+
   useEvent(getWindow, 'pointermove', (event: PointerEvent) => {
     const {type} = scrollBar()
-    const onScroll = type === 'horizontal' ? onScrollX : onScrollY
     const bodyElement = element()
     const {barSize} = handleValues()
     const {containerSize, scrollSize, containerPosition} = scrollBar()
@@ -83,7 +91,7 @@ export const WScrollHandel = (_props: WScrollBarProps) => {
     const targetPoint = currentPoint - containerPosition - startDragPoint
     const pointPercent = targetPoint / (containerSize - barSize)
     const nextScrollPosition = (scrollSize - containerSize) * pointPercent
-    onScroll(nextScrollPosition < 0 ? 0 : nextScrollPosition)
+    setScroll(nextScrollPosition < 0 ? 0 : nextScrollPosition)
   })
 
   return (

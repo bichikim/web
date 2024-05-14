@@ -1,5 +1,5 @@
 import {Accessor, createContext, useContext} from 'solid-js'
-import {ScrollBarType} from './scroll-type-context'
+import {ScrollBarType} from './types'
 export interface ScrollBarContext {
   containerPosition: number
   containerSize: number

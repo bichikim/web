@@ -2,9 +2,12 @@ import {createMemo} from 'solid-js'
 import {resolveAccessor} from 'src/use/resolve-accessor'
 import {MayBeAccessor} from 'src/use/types'
 
-export const naturalImageSize = (
-  element: MayBeAccessor<HTMLImageElement | undefined>,
-) => {
+export interface NaturalImageLike {
+  naturalHeight: number
+  naturalWidth: number
+}
+
+export const naturalImageSize = (element: MayBeAccessor<NaturalImageLike | null>) => {
   const elementAccessor = resolveAccessor(element)
 
   return createMemo(() => {

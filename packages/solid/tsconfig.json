@@ -11,7 +11,9 @@
     "module": "esnext",
     "baseUrl": ".",
     "paths": {
-      "src/*": ["src/*"]
+      "src/*": ["src/*"],
+      "@winter-love/solid/use": ["src/use"],
+      "@winter-love/solid/test": ["src/test"]
     }
   },
   "ts-node": {

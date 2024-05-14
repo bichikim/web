@@ -10,7 +10,7 @@ interface EventProps {
 const Event = (props: EventProps) => {
   const [count, setCount] = createSignal(0)
 
-  const [element, setElement] = createSignal<HTMLButtonElement | undefined>()
+  const [element, setElement] = createSignal<HTMLButtonElement | null>(null)
 
   useEvent(element, 'click', () => {
     setCount((count) => count + 1)

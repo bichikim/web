@@ -5,7 +5,12 @@ import solidPlugin from 'vite-plugin-solid'
 
 import pkg from './package.json'
 
-const external = [...Object.keys(pkg.dependencies), ...Object.keys(pkg.peerDependencies)]
+const external = [
+  ...Object.keys(pkg.dependencies),
+  ...Object.keys(pkg.peerDependencies),
+  '@winter-love/solid/use',
+  '@winter-love/solid/test',
+]
 
 const resolvePath = (url: string) => fileURLToPath(new URL(url, import.meta.url))
 
@@ -44,6 +49,8 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
+      '@winter-love/solid/test': resolvePath('src/test'),
+      '@winter-love/solid/use': resolvePath('src/use'),
       src: resolvePath('src'),
     },
   },

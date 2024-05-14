@@ -15,11 +15,13 @@ export interface WScrollContextProps extends ScrollState {
   id: string
   percentX: number
   percentY: number
+  showXBar: boolean
+  showYBar: boolean
 }
 
 export const ScrollContext = createContext<Accessor<WScrollContextProps>>()
 
-export const useScroll = (): Accessor<WScrollContextProps> => {
+export const useScrollContext = (): Accessor<WScrollContextProps> => {
   const context = useContext(ScrollContext)
 
   if (context === undefined) {

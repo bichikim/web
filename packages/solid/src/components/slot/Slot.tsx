@@ -1,8 +1,8 @@
 import {JSXElement, mergeProps} from 'solid-js'
 export const SLOT_KEY = '__slot__'
 export interface SlotProps {
-  name: string
   children: JSXElement
+  name: string
 }
 
 export interface SlotContext extends SlotProps {

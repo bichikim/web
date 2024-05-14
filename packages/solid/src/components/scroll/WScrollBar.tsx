@@ -1,4 +1,4 @@
-import {createMemo, mergeProps, ParentProps} from 'solid-js'
+import {createMemo, mergeProps, ParentProps, Show} from 'solid-js'
 import {Dynamic} from 'solid-js/web'
 import {
   BOTTOM_VAR,
@@ -8,11 +8,10 @@ import {
   TOP_VAR,
   WIDTH_VAR,
 } from 'src/components/css-var'
-import {useScroll} from 'src/components/scroll/scroll-context'
-import {ScrollBarContext} from './scroll-bar-context'
-import {ScrollBarType, useScrollBarType} from './scroll-bar-type-context'
 import {sx, ValidStyle} from 'src/use'
-
+import {ScrollBarContext} from './scroll-bar-context'
+import {useScrollContext} from './scroll-context'
+import {ScrollBarType} from './types'
 export interface WScrollBarProps extends ParentProps {
   as?: string
   /**
@@ -28,9 +27,11 @@ export interface WScrollBarProps extends ParentProps {
 }
 
 export const WScrollBar = (_props: WScrollBarProps) => {
-  const scrollBarType = useScrollBarType()
-  const props = mergeProps({as: 'div', thickness: '0.5rem', type: scrollBarType}, _props)
-  const scroll = useScroll()
+  const props = mergeProps(
+    {as: 'div', thickness: '0.5rem', type: 'vertical' as const},
+    _props,
+  )
+  const scrollContext = useScrollContext()
 
   const scrollBarState = createMemo(() => {
     const {
@@ -45,7 +46,9 @@ export const WScrollBar = (_props: WScrollBarProps) => {
       scrollWidth,
       percentX,
       percentY,
-    } = scroll()
+      showXBar,
+      showYBar,
+    } = scrollContext()
 
     if (props.type === 'horizontal') {
       return {
@@ -55,6 +58,7 @@ export const WScrollBar = (_props: WScrollBarProps) => {
         scrollId: id,
         scrollPosition: scrollLeft,
         scrollSize: scrollWidth,
+        show: showXBar,
       }
     }
     return {
@@ -64,6 +68,7 @@ export const WScrollBar = (_props: WScrollBarProps) => {
       scrollId: id,
       scrollPosition: scrollTop,
       scrollSize: scrollHeight,
+      show: showYBar,
     }
   })
 
@@ -99,15 +104,17 @@ export const WScrollBar = (_props: WScrollBarProps) => {
   }
 
   return (
-    <ScrollBarContext.Provider value={scrollBarContext}>
-      <Dynamic
-        component={props.as}
-        class={props.class}
-        style={sx(scrollBarStyle(), props.style)}
-        onClick={onClick}
-      >
-        {props.children}
-      </Dynamic>
-    </ScrollBarContext.Provider>
+    <Show when={scrollBarState().show}>
+      <ScrollBarContext.Provider value={scrollBarContext}>
+        <Dynamic
+          component={props.as}
+          class={props.class}
+          style={sx(scrollBarStyle(), props.style)}
+          onClick={onClick}
+        >
+          {props.children}
+        </Dynamic>
+      </ScrollBarContext.Provider>
+    </Show>
   )
 }
