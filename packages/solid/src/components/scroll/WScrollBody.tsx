@@ -1,5 +1,5 @@
 import {sx, ValidStyle} from '@winter-love/solid/use'
-import {createMemo, mergeProps, ParentProps, ValidComponent} from 'solid-js'
+import {createMemo, mergeProps, ParentProps, splitProps, ValidComponent} from 'solid-js'
 import {Dynamic} from 'solid-js/web'
 import {SCROLL_X_PERCENT, SCROLL_Y_PERCENT} from 'src/components/css-var'
 import {useScrollContext} from './scroll-context'
@@ -16,7 +16,12 @@ export interface WScrollBodyProps extends ParentProps {
 }
 
 export const WScrollBody = (_props: WScrollBodyProps) => {
-  const props = mergeProps({as: 'div'}, _props)
+  const [props, restProps] = splitProps(mergeProps({as: 'div'}, _props), [
+    'as',
+    'class',
+    'children',
+    'style',
+  ])
 
   const {setScrollBodyElement, value: ScrollValue} = useScrollContext()
   const scrollId = createMemo(() => ScrollValue().id)
@@ -32,6 +37,7 @@ export const WScrollBody = (_props: WScrollBodyProps) => {
 
   return (
     <Dynamic
+      {...restProps}
       style={sx(style(), props.style)}
       component={props.as}
       id={scrollId()}

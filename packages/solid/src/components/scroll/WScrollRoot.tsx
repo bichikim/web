@@ -1,29 +1,23 @@
-import {createMemo, createSignal, ParentProps, splitProps} from 'solid-js'
+import {createMemo, createSignal, ParentProps, splitProps, createUniqueId} from 'solid-js'
 import {Dynamic} from 'solid-js/web'
 import {ScrollContext} from './scroll-context'
 import {useScrollState} from './scroll-state'
 import {scrollUuid} from './scroll-uuid'
 import {ScrollBarType} from './types'
+import {DynamicParentProps} from 'src/components/types'
 
-export interface WScrollRootProps extends ParentProps {
+export interface WScrollRootProps extends DynamicParentProps {
   [key: string]: any
-
-  /**
-   * class recommended relative overflow-hidden
-   */
-  as?: string
-  keepXBar?: boolean
-  keepYBar?: boolean
 }
 
 export const WScrollRoot = (_props: WScrollRootProps) => {
-  const [props, restProps] = splitProps(_props, ['as', 'keepYBar', 'keepXBar'])
+  const [props, restProps] = splitProps(_props, ['as'])
 
   const [scrollBodyElement, setScrollBodyElement] = createSignal<HTMLElement | null>(null)
 
   const nativeScrollState = useScrollState(scrollBodyElement)
 
-  const scrollId = scrollUuid()
+  const scrollId = createUniqueId()
 
   const scrollValue = createMemo(() => {
     const state = nativeScrollState()
@@ -38,8 +32,8 @@ export const WScrollRoot = (_props: WScrollRootProps) => {
         ? state.scrollTop / (state.scrollHeight - state.containerHeight)
         : 0
 
-    const showXBar = props.keepXBar || state.scrollWidth > state.containerWidth
-    const showYBar = props.keepYBar || state.scrollHeight > state.containerHeight
+    const showXBar = state.scrollWidth > state.containerWidth
+    const showYBar = state.scrollHeight > state.containerHeight
 
     return {
       ...state,
@@ -84,7 +78,7 @@ export const WScrollRoot = (_props: WScrollRootProps) => {
         value: scrollValue,
       }}
     >
-      <Dynamic component={props.as ?? 'div'} {...restProps} />
+      <Dynamic {...restProps} component={props.as ?? 'div'} />
     </ScrollContext.Provider>
   )
 }

@@ -1,6 +1,7 @@
 import {DragType, stopPropagation, sx, useDrag, ValidStyle} from '@winter-love/solid/use'
-import {createMemo, createSignal, mergeProps, ParentProps} from 'solid-js'
+import {createMemo, createSignal, mergeProps, splitProps} from 'solid-js'
 import {Dynamic} from 'solid-js/web'
+import {DynamicParentProps} from 'src/components/types'
 import {
   BAR_PERCENT,
   BOTTOM_VAR,
@@ -13,15 +14,22 @@ import {
 import {useScrollBar} from './scroll-bar-context'
 import {useScrollContext} from './scroll-context'
 
-export interface WScrollHandleProps extends ParentProps {
+export interface WScrollHandleProps extends DynamicParentProps {
+  [key: string]: any
+
   as?: string
   class?: string
-  dragFocus?: boolean
+
   style?: ValidStyle
 }
 
 export const WScrollHandle = (_props: WScrollHandleProps) => {
-  const props = mergeProps({as: 'div', dragFocus: true}, _props)
+  const [props, restProps] = splitProps(mergeProps({as: 'div'}, _props), [
+    'as',
+    'style',
+    'children',
+    'class',
+  ])
   const scrollBar = useScrollBar()
   // const [pointerDown, setPointerDown] = createSignal(false)
 
@@ -92,8 +100,9 @@ export const WScrollHandle = (_props: WScrollHandleProps) => {
 
   return (
     <Dynamic
-      ref={setElement}
       tabindex="0"
+      {...restProps}
+      ref={setElement}
       component={props.as}
       data-state={barState()}
       aria-controls={scrollBar().scrollId}
