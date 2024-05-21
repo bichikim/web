@@ -1,4 +1,5 @@
-import {Accessor, createContext, useContext} from 'solid-js'
+import {Accessor, createContext, Setter, useContext} from 'solid-js'
+import {ScrollBarType} from 'src/components/scroll/types'
 
 export interface ScrollState {
   containerHeight: number
@@ -11,7 +12,22 @@ export interface ScrollState {
   scrollWidth: number
 }
 
-export interface WScrollContextProps extends ScrollState {
+export interface WScrollContextProps {
+  /**
+   * move the scroll by a set amount and direction
+   * @param type direction to be changed
+   * @param amount how much will be changed
+   */
+  moveScroll: (type: ScrollBarType, amount: number) => void
+  /**
+   * change the scroll position
+   */
+  setScroll: (type: ScrollBarType, scrollPosition: number) => void
+  setScrollBodyElement: Setter<HTMLElement | null>
+  value: Accessor<WScrollValue>
+}
+
+export interface WScrollValue extends ScrollState {
   id: string
   percentX: number
   percentY: number
@@ -19,9 +35,9 @@ export interface WScrollContextProps extends ScrollState {
   showYBar: boolean
 }
 
-export const ScrollContext = createContext<Accessor<WScrollContextProps>>()
+export const ScrollContext = createContext<WScrollContextProps>()
 
-export const useScrollContext = (): Accessor<WScrollContextProps> => {
+export const useScrollContext = (): WScrollContextProps => {
   const context = useContext(ScrollContext)
 
   if (context === undefined) {

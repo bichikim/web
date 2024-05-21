@@ -1,6 +1,8 @@
+import {sx, ValidStyle} from '@winter-love/solid/use'
 import {createMemo, mergeProps, ParentProps, Show} from 'solid-js'
 import {Dynamic} from 'solid-js/web'
 import {
+  BAR_PERCENT,
   BOTTOM_VAR,
   HEIGHT_VAR,
   LEFT_VAR,
@@ -8,11 +10,10 @@ import {
   TOP_VAR,
   WIDTH_VAR,
 } from 'src/components/css-var'
-import {sx, ValidStyle} from '@winter-love/solid/use'
-import {useScrollEvent} from './scroll-event-context'
 import {ScrollBarContext} from './scroll-bar-context'
 import {useScrollContext} from './scroll-context'
 import {ScrollBarType} from './types'
+
 export interface WScrollBarProps extends ParentProps {
   as?: string
   /**
@@ -33,7 +34,6 @@ export const WScrollBar = (_props: WScrollBarProps) => {
     _props,
   )
   const scrollContext = useScrollContext()
-  const scrollEvent = useScrollEvent()
   const scrollBarState = createMemo(() => {
     const {
       containerLeft,
@@ -49,7 +49,7 @@ export const WScrollBar = (_props: WScrollBarProps) => {
       percentY,
       showXBar,
       showYBar,
-    } = scrollContext()
+    } = scrollContext.value()
 
     if (props.type === 'horizontal') {
       return {
@@ -74,8 +74,10 @@ export const WScrollBar = (_props: WScrollBarProps) => {
   })
 
   const scrollBarStyle = createMemo(() => {
+    const {percent} = scrollBarState()
     if (props.type === 'horizontal') {
       return {
+        [BAR_PERCENT]: percent,
         [BOTTOM_VAR]: '0',
         [HEIGHT_VAR]: props.thickness,
         [LEFT_VAR]: '0',
@@ -83,6 +85,7 @@ export const WScrollBar = (_props: WScrollBarProps) => {
       }
     }
     return {
+      [BAR_PERCENT]: percent,
       [HEIGHT_VAR]: '100%',
       [RIGHT_VAR]: '0',
       [TOP_VAR]: '0',
@@ -99,10 +102,11 @@ export const WScrollBar = (_props: WScrollBarProps) => {
   })
 
   const onClick = (event: MouseEvent) => {
-    const {containerSize, percent, scrollSize} = scrollBarContext()
-    const clickPercent = event.offsetY / containerSize
-    // scrollEvent.setScroll()
-    console.log('click', percent, clickPercent)
+    const type = props.type ?? 'horizontal'
+    const {containerSize, scrollSize} = scrollBarContext()
+    const clickPosition = type === 'horizontal' ? event.offsetX : event.offsetY
+    const clickedPercent = clickPosition / containerSize
+    scrollContext.setScroll(props.type, (scrollSize - containerSize) * clickedPercent)
   }
 
   return (

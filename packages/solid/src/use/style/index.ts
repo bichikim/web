@@ -1,3 +1,4 @@
+import {cx} from 'class-variance-authority'
 export type ValidStyle = string | Record<string, any> | undefined
 
 export const objectStyleToString = (style: Record<string, any>) => {
@@ -19,3 +20,8 @@ export const sx = (...args: ValidStyle[]) => {
     })
     .join('')
 }
+
+/**
+ * c
+ */
+export {cx}

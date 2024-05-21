@@ -1,5 +1,10 @@
-import {MayBeAccessor, resolveAccessor, useEvent} from '@winter-love/solid/use'
-import {Accessor, createEffect, createSignal} from 'solid-js'
+import {
+  createManualMemo,
+  MayBeAccessor,
+  resolveAccessor,
+  useEvent,
+} from '@winter-love/solid/use'
+import {Accessor, onMount} from 'solid-js'
 import {ScrollState} from './scroll-context'
 
 /**
@@ -10,18 +15,22 @@ export const useScrollState = (
   element: MayBeAccessor<HTMLElement | null>,
 ): Accessor<ScrollState> => {
   const elementAccessor = resolveAccessor(element)
-  const [nativeScrollState, setNativeScrollState] = createSignal<ScrollState>({
-    containerHeight: 0,
-    containerLeft: 0,
-    containerTop: 0,
-    containerWidth: 0,
-    scrollHeight: 0,
-    scrollLeft: 0,
-    scrollTop: 0,
-    scrollWidth: 0,
-  })
 
-  const updateScrollState = (element: HTMLElement | null) => {
+  const [nativeScrollState, updateNativeScrollState] = createManualMemo(() => {
+    const element = elementAccessor()
+    if (!element) {
+      return {
+        containerHeight: 0,
+        containerLeft: 0,
+        containerTop: 0,
+        containerWidth: 0,
+        scrollHeight: 0,
+        scrollLeft: 0,
+        scrollTop: 0,
+        scrollWidth: 0,
+      }
+    }
+
     const {
       clientHeight: containerHeight = 0,
       clientWidth: containerWidth = 0,
@@ -29,12 +38,11 @@ export const useScrollState = (
       scrollWidth = 0,
       scrollLeft = 0,
       scrollTop = 0,
-    } = element ?? {}
+    } = element
 
     const {top: containerTop = 0, left: containerLeft = 0} =
-      element?.getBoundingClientRect() ?? {}
-
-    setNativeScrollState({
+      element.getBoundingClientRect() ?? {}
+    return {
       containerHeight,
       containerLeft,
       containerTop,
@@ -43,15 +51,15 @@ export const useScrollState = (
       scrollLeft,
       scrollTop,
       scrollWidth,
-    })
-  }
+    }
+  })
 
-  createEffect(() => {
-    updateScrollState(elementAccessor())
+  onMount(() => {
+    updateNativeScrollState()
   })
 
   useEvent(elementAccessor, 'scroll', () => {
-    updateScrollState(elementAccessor())
+    updateNativeScrollState()
   })
 
   return nativeScrollState

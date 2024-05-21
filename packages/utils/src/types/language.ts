@@ -164,3 +164,12 @@ export type FlatKeys<R> = TakeFlatKeys<R, keyof R>
 
 // eslint-disable-next-line @typescript-eslint/ban-types
 export type ClassFunction = Function
+
+export type SnakeToCamelCase<S extends string> =
+  S extends `${infer P1}_${infer P2}${infer P3}`
+    ? `${Lowercase<P1>}${Uppercase<P2>}${SnakeToCamelCase<P3>}`
+    : Lowercase<S>
+
+export type CamelToSnakeCase<S extends string> = S extends `${infer T}${infer U}`
+  ? `${T extends Capitalize<T> ? '_' : ''}${Lowercase<T>}${CamelToSnakeCase<U>}`
+  : S

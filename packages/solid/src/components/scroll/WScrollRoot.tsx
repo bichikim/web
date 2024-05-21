@@ -1,13 +1,11 @@
 import {createMemo, createSignal, ParentProps, splitProps} from 'solid-js'
 import {Dynamic} from 'solid-js/web'
-import {ScrollBodyContext} from './scroll-body-context'
 import {ScrollContext} from './scroll-context'
-import {ScrollEventContext} from './scroll-event-context'
 import {useScrollState} from './scroll-state'
 import {scrollUuid} from './scroll-uuid'
 import {ScrollBarType} from './types'
 
-export interface WScrollProps extends ParentProps {
+export interface WScrollRootProps extends ParentProps {
   [key: string]: any
 
   /**
@@ -18,7 +16,7 @@ export interface WScrollProps extends ParentProps {
   keepYBar?: boolean
 }
 
-export const WScroll = (_props: WScrollProps) => {
+export const WScrollRoot = (_props: WScrollRootProps) => {
   const [props, restProps] = splitProps(_props, ['as', 'keepYBar', 'keepXBar'])
 
   const [scrollBodyElement, setScrollBodyElement] = createSignal<HTMLElement | null>(null)
@@ -27,7 +25,7 @@ export const WScroll = (_props: WScrollProps) => {
 
   const scrollId = scrollUuid()
 
-  const scrollContext = createMemo(() => {
+  const scrollValue = createMemo(() => {
     const state = nativeScrollState()
 
     const percentX =
@@ -78,12 +76,15 @@ export const WScroll = (_props: WScrollProps) => {
   }
 
   return (
-    <ScrollBodyContext.Provider value={[scrollBodyElement, setScrollBodyElement]}>
-      <ScrollContext.Provider value={scrollContext}>
-        <ScrollEventContext.Provider value={{moveScroll, setScroll}}>
-          <Dynamic component={props.as ?? 'div'} {...restProps} />
-        </ScrollEventContext.Provider>
-      </ScrollContext.Provider>
-    </ScrollBodyContext.Provider>
+    <ScrollContext.Provider
+      value={{
+        moveScroll,
+        setScroll,
+        setScrollBodyElement,
+        value: scrollValue,
+      }}
+    >
+      <Dynamic component={props.as ?? 'div'} {...restProps} />
+    </ScrollContext.Provider>
   )
 }

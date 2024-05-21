@@ -11,15 +11,15 @@
     "module": "esnext",
     "baseUrl": ".",
     "paths": {
-      "src/*": ["src/*"],
-      "@winter-love/solid/use": ["src/use"],
-      "@winter-love/solid/test": ["src/test"]
-    }
-  },
-  "ts-node": {
-    "compilerOptions": {
-      "target": "ES2015",
-      "module": "CommonJS"
+      "src/*": [
+        "src/*"
+      ],
+      "@winter-love/solid/use": [
+        "src/use"
+      ],
+      "@winter-love/solid/test": [
+        "src/test"
+      ]
     }
   },
   "include": [

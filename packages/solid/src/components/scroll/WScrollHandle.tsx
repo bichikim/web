@@ -1,89 +1,90 @@
-import {getWindow} from '@winter-love/utils'
+import {DragType, stopPropagation, sx, useDrag, ValidStyle} from '@winter-love/solid/use'
 import {createMemo, createSignal, mergeProps, ParentProps} from 'solid-js'
 import {Dynamic} from 'solid-js/web'
-import {stopPropagation, sx, useEvent, ValidStyle} from '@winter-love/solid/use'
-import {BOTTOM_VAR, HEIGHT_VAR, LEFT_VAR, RIGHT_VAR, TOP_VAR, WIDTH_VAR} from '../css-var'
+import {
+  BAR_PERCENT,
+  BOTTOM_VAR,
+  HEIGHT_VAR,
+  LEFT_VAR,
+  RIGHT_VAR,
+  TOP_VAR,
+  WIDTH_VAR,
+} from '../css-var'
 import {useScrollBar} from './scroll-bar-context'
-import {useScrollEvent} from './scroll-event-context'
+import {useScrollContext} from './scroll-context'
 
-export interface WScrollBarProps extends ParentProps {
+export interface WScrollHandleProps extends ParentProps {
   as?: string
   class?: string
+  dragFocus?: boolean
   style?: ValidStyle
 }
 
-export const WScrollHandel = (_props: WScrollBarProps) => {
-  const props = mergeProps({as: 'div'}, _props)
+export const WScrollHandle = (_props: WScrollHandleProps) => {
+  const props = mergeProps({as: 'div', dragFocus: true}, _props)
   const scrollBar = useScrollBar()
-  let pointerDown = false
-  let startDragPoint = 0
+  // const [pointerDown, setPointerDown] = createSignal(false)
 
   const [element, setElement] = createSignal<HTMLElement | null>(null)
-
-  const scrollEvent = useScrollEvent()
+  const scrollContext = useScrollContext()
+  const [barState, setBarState] = createSignal<DragType>('end')
 
   const handleValues = createMemo(() => {
-    const {containerSize, scrollPosition, scrollSize} = scrollBar()
+    const {containerSize, scrollSize, percent} = scrollBar()
     const barSize = scrollSize > 0 ? (containerSize / scrollSize) * containerSize : 0
-    const barSizeNoneOverflow = barSize > containerSize ? containerSize : barSize
-    const percent = scrollPosition > 0 ? scrollPosition / (scrollSize - containerSize) : 0
     const barPosition = (containerSize - barSize) * percent
 
     return {
       barPosition,
-      barSize: barSizeNoneOverflow,
+      barSize,
       percent,
     }
   })
 
   const handleStyle = createMemo(() => {
-    const {barPosition, barSize} = handleValues()
+    const {barPosition, barSize, percent} = handleValues()
     const {type} = scrollBar()
 
     if (type === 'horizontal') {
       return {
+        [BAR_PERCENT]: percent,
         [BOTTOM_VAR]: '0',
-        [HEIGHT_VAR]: '100%',
+        // [HEIGHT_VAR]: '100%',
         [LEFT_VAR]: `${barPosition}px`,
-        [TOP_VAR]: 'unset',
         [WIDTH_VAR]: `${barSize}px`,
       }
     }
 
     return {
+      [BAR_PERCENT]: percent,
       [HEIGHT_VAR]: `${barSize}px`,
-      [LEFT_VAR]: 'unset',
       [RIGHT_VAR]: '0',
       [TOP_VAR]: `${barPosition}px`,
-      [WIDTH_VAR]: '100%',
+      // [WIDTH_VAR]: '100%',
     }
   })
-
-  useEvent(element, 'pointerdown', (event) => {
-    const {type} = scrollBar()
-    startDragPoint = type === 'horizontal' ? event.offsetX : event.offsetY
-    pointerDown = true
-  })
-
-  useEvent(getWindow, 'pointerup', () => {
-    pointerDown = false
-  })
-
   const setScroll = (position: number) => {
     const {type} = scrollBar()
-    scrollEvent.setScroll(type, position)
+    scrollContext.setScroll(type, position)
   }
+  useDrag(element, (type, payload) => {
+    setBarState(type)
+    if (type !== 'move') {
+      return
+    }
+    const {type: barType} = scrollBar()
+    const [clientX, clientY] = payload.currentPoint
+    const [relativeX, relativeY] = payload.relativePoint
+    const relativePoint = barType === 'horizontal' ? relativeX : relativeY
 
-  useEvent(getWindow, 'pointermove', (event: PointerEvent) => {
-    const {type} = scrollBar()
     const bodyElement = element()
     const {barSize} = handleValues()
     const {containerSize, scrollSize, containerPosition} = scrollBar()
-    if (!pointerDown || !bodyElement) {
+    if (!bodyElement) {
       return
     }
-    const currentPoint = type === 'horizontal' ? event.clientX : event.clientY
-    const targetPoint = currentPoint - containerPosition - startDragPoint
+    const currentPoint = barType === 'horizontal' ? clientX : clientY
+    const targetPoint = currentPoint - containerPosition - relativePoint
     const pointPercent = targetPoint / (containerSize - barSize)
     const nextScrollPosition = (scrollSize - containerSize) * pointPercent
     setScroll(nextScrollPosition < 0 ? 0 : nextScrollPosition)
@@ -92,7 +93,9 @@ export const WScrollHandel = (_props: WScrollBarProps) => {
   return (
     <Dynamic
       ref={setElement}
+      tabindex="0"
       component={props.as}
+      data-state={barState()}
       aria-controls={scrollBar().scrollId}
       aria-valuenow={scrollBar().scrollPosition}
       aria-valuemin="0"
