@@ -14,7 +14,12 @@ export const WSliderBar = (_props: WSliderBarProps) => {
   const sliderContext = useSliderContext()
 
   const onClick = (event: MouseEvent) => {
-    //
+    const {type, containerSize} = sliderContext.value()
+    if (type === 'horizontal') {
+      sliderContext.setPercent(event.offsetX / containerSize)
+    } else {
+      sliderContext.setPercent(event.offsetY / containerSize)
+    }
   }
 
   const barStyle = createMemo(() => {
@@ -26,7 +31,13 @@ export const WSliderBar = (_props: WSliderBarProps) => {
   })
 
   return (
-    <Dynamic {...restProps} component={as()} ref={sliderContext.setContainerElement}>
+    <Dynamic
+      {...restProps}
+      component={as()}
+      ref={sliderContext.setContainerElement}
+      onClick={onClick}
+      style={barStyle()}
+    >
       {props.children}
     </Dynamic>
   )
