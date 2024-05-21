@@ -73,8 +73,9 @@ export const XYScroll: Story = {
       >
         <WScroll.Handle
           tabindex="0"
-          class="absolute left-var right-var w-var h-full rd-0.5rem [&>.shadow]:blur-sm [&>.block]:data-[state=move]:outline
-            [&>.block]:data-[state=move]:translate-y--10px [&:hover>.block]:outline select-none"
+          class="absolute left-var right-var w-var h-full rd-0.5rem [&>.shadow]:blur-sm
+           [&>.block]:data-[state=move]:outline [&>.block]:data-[state=move]:translate-y--10px
+           [&:hover>.block]:outline select-none"
         >
           <div class="shadow absolute w-full h-full bg-black/50 rd-0.5rem"></div>
           <div
