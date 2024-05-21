@@ -54,7 +54,7 @@ export const XYScroll: Story = {
       >
         <WScroll.Handle
           tabindex="0"
-          class="absolute left-0 top-var w-var h-var hover:outline outline-3 outline-black rd-0.5rem select-none
+          class="absolute left-0 top-var w-var h-var @hover-outline outline-3 outline-black rd-0.5rem select-none
           data-[state=move]:outline"
         >
           <img
@@ -75,7 +75,7 @@ export const XYScroll: Story = {
           tabindex="0"
           class="absolute left-var right-var w-var h-full rd-0.5rem [&>.shadow]:blur-sm
            [&>.block]:data-[state=move]:outline [&>.block]:data-[state=move]:translate-y--10px
-           [&:hover>.block]:outline select-none"
+           @hover-[&:hover>.block]:outline select-none"
         >
           <div class="shadow absolute w-full h-full bg-black/50 rd-0.5rem"></div>
           <div
