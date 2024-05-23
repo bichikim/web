@@ -2,7 +2,7 @@ import {MayBeAccessor} from 'src/use/types'
 import {resolveAccessor} from 'src/use/resolve-accessor'
 import {useWatch} from 'src/use/watch'
 
-export interface Listener {
+export interface Emitter {
   addEventListener(
     type: string,
     listener: EventListener,
@@ -20,9 +20,15 @@ export interface OnEvent {
     options?: AddEventListenerOptions,
   ): void
   (
-    window: MayBeAccessor<Window | null>,
+    window: MayBeAccessor<Emitter | null>,
     type: string,
     listener: (event: CustomEvent) => void,
+    options?: AddEventListenerOptions,
+  ): void
+  (
+    window: MayBeAccessor<Emitter | null>,
+    type: string,
+    listener: (event: Event) => void,
     options?: AddEventListenerOptions,
   ): void
   <K extends keyof HTMLElementEventMap>(
@@ -58,7 +64,7 @@ export interface OnEvent {
 }
 
 export const useEvent: OnEvent = (
-  element: MayBeAccessor<Listener | null>,
+  element: MayBeAccessor<Emitter | null>,
   type: string,
   listener: (event: any) => void,
   options: AddEventListenerOptions = {},

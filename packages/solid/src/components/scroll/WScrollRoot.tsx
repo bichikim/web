@@ -1,10 +1,9 @@
-import {createMemo, createSignal, ParentProps, splitProps, createUniqueId} from 'solid-js'
+import {createMemo, createSignal, createUniqueId, splitProps} from 'solid-js'
 import {Dynamic} from 'solid-js/web'
+import {DynamicParentProps} from 'src/components/types'
 import {ScrollContext} from './scroll-context'
 import {useScrollState} from './scroll-state'
-import {scrollUuid} from './scroll-uuid'
 import {ScrollBarType} from './types'
-import {DynamicParentProps} from 'src/components/types'
 
 export interface WScrollRootProps extends DynamicParentProps {
   [key: string]: any
@@ -78,7 +77,7 @@ export const WScrollRoot = (_props: WScrollRootProps) => {
         value: scrollValue,
       }}
     >
-      <Dynamic {...restProps} component={props.as ?? 'div'} />
+      <Dynamic {...restProps} component={props.as ?? 'div'}/>
     </ScrollContext.Provider>
   )
 }
