@@ -1,15 +1,15 @@
-import {createUseLoop} from '../'
-import {describe, expect, it, vi} from 'vitest'
+import {createRoot} from 'solid-js'
 import {createTrigger} from 'src/test'
-import {createRoot, createSignal} from 'solid-js'
+import {describe, expect, it, vi} from 'vitest'
+import {createUseLoop} from '../'
 
 describe('createUseLoop', () => {
   const intervalTrigger = createTrigger()
-  const fakeSetInterval = vi.fn((callback, interval) => {
+  const fakeSetInterval = vi.fn((callback, _) => {
     intervalTrigger.target = callback
     return 0
   })
-  const fakeClearInterval = vi.fn((flag?: number) => {
+  const fakeClearInterval = vi.fn((_?: number) => {
     intervalTrigger.target = undefined
   })
   it('should be defined', () => {
@@ -57,5 +57,7 @@ describe('createUseLoop', () => {
 
     intervalLoop.stop()
     expect(fakeClearInterval).toHaveBeenCalledTimes(1)
+
+    dispose()
   })
 })
