@@ -13,7 +13,7 @@ export interface FloatingOptions<T extends ReferenceElement = ReferenceElement> 
   placement?: Placement
   strategy?: Strategy
   transform?: boolean
-  whileElementsMounted?: (
+  autoUpdate?: (
     reference: T,
     floating: FloatingElement,
     update: () => void,

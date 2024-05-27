@@ -1,15 +1,7 @@
 import {sx, ValidStyle} from '@winter-love/solid/use'
 import {createMemo, mergeProps, splitProps} from 'solid-js'
 import {Dynamic} from 'solid-js/web'
-import {
-  BAR_PERCENT,
-  BOTTOM_VAR,
-  HEIGHT_VAR,
-  LEFT_VAR,
-  RIGHT_VAR,
-  TOP_VAR,
-  WIDTH_VAR,
-} from 'src/components/css-var'
+import {BAR_PERCENT, PERCENT_VAR} from 'src/components/css-var'
 import {DynamicParentProps} from 'src/components/types'
 import {ScrollBarContext} from './scroll-bar-context'
 import {useScrollContext} from './scroll-context'
@@ -75,19 +67,8 @@ export const WScrollBar = (_props: WScrollBarProps) => {
 
   const scrollBarStyle = createMemo(() => {
     const {percent, show} = scrollBarState()
-    if (props.type === 'horizontal') {
-      return {
-        [BAR_PERCENT]: percent,
-        [BOTTOM_VAR]: '0',
-        [LEFT_VAR]: '0',
-        [WIDTH_VAR]: '100%',
-      }
-    }
     return {
-      [BAR_PERCENT]: percent,
-      [HEIGHT_VAR]: '100%',
-      [RIGHT_VAR]: '0',
-      [TOP_VAR]: '0',
+      [PERCENT_VAR]: percent,
     }
   })
 

@@ -10,6 +10,8 @@ import {
   RIGHT_VAR,
   TOP_VAR,
   WIDTH_VAR,
+  SIZE_VAR,
+  POSITION_VAR,
 } from '../css-var'
 import {useScrollBar} from './scroll-bar-context'
 import {useScrollContext} from './scroll-context'
@@ -53,22 +55,9 @@ export const WScrollHandle = (_props: WScrollHandleProps) => {
     const {barPosition, barSize, percent} = handleValues()
     const {type} = scrollBar()
 
-    if (type === 'horizontal') {
-      return {
-        [BAR_PERCENT]: percent,
-        [BOTTOM_VAR]: '0',
-        // [HEIGHT_VAR]: '100%',
-        [LEFT_VAR]: `${barPosition}px`,
-        [WIDTH_VAR]: `${barSize}px`,
-      }
-    }
-
     return {
-      [BAR_PERCENT]: percent,
-      [HEIGHT_VAR]: `${barSize}px`,
-      [RIGHT_VAR]: '0',
-      [TOP_VAR]: `${barPosition}px`,
-      // [WIDTH_VAR]: '100%',
+      [POSITION_VAR]: `${barPosition}px`,
+      [SIZE_VAR]: `${barSize}px`,
     }
   })
   const setScroll = (position: number) => {

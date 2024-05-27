@@ -43,17 +43,27 @@ export default defineConfig({
     ],
     // preset var
     [
-      /^(top|left|right|bottom)-var$/u,
-      ([, direction]) => {
+      /^(top|left|right|bottom)-var(-.+)?$/u,
+      ([, direction, varName]) => {
+        if (varName) {
+          return {
+            [direction]: `var(--var${varName})`,
+          }
+        }
         return {
           [direction]: `var(--var-${direction})`,
         }
       },
     ],
     [
-      /^(width|height|w|h)-var/u,
-      ([, direction]) => {
+      /^(width|height|w|h)-var(-.+)?$/u,
+      ([, direction, varName]) => {
         const kind = readSizeName(direction)
+        if (varName) {
+          return {
+            [kind]: `var(--var${varName})`,
+          }
+        }
         return {
           [kind]: `var(--var-${kind})`,
         }

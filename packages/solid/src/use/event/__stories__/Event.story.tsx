@@ -26,6 +26,7 @@ const Event = (props: EventProps) => {
 }
 
 const meta: Meta = {
+  title: 'solid/use/event',
   args: {
     show: true,
   },

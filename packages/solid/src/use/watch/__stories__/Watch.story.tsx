@@ -43,6 +43,7 @@ const meta = {
     seed: 0,
   },
   component: Watch,
+  title: 'solid/use/watch',
 } satisfies Meta<typeof Watch>
 
 export default meta

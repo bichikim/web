@@ -40,7 +40,6 @@
   "dependencies": {
     "@winter-love/lodash": "workspace:*",
     "@winter-love/utils": "workspace:*",
-    "@floating-ui/core": "^1.6.2",
     "@floating-ui/dom": "^1.6.5",
     "class-variance-authority": "^0.7.0",
     "solid-js": "^1.8.15"

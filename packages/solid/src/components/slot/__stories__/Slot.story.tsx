@@ -1,6 +1,6 @@
 import {JSXElement} from 'solid-js'
-import {Slot} from './Slot'
-import {getSlots} from './use-slots'
+import {Slot} from '../Slot'
+import {getSlots} from '../use-slots'
 
 export interface SlotParentProps {
   children?: JSXElement
@@ -18,6 +18,7 @@ const SlotComponent = (props: SlotParentProps) => {
 
 const meta = {
   component: SlotComponent,
+  title: 'Solid/components/Slot',
 }
 
 export default meta

@@ -1,7 +1,7 @@
 import {sx, ValidStyle} from '@winter-love/solid/use'
 import {createMemo, mergeProps, ParentProps, splitProps, ValidComponent} from 'solid-js'
 import {Dynamic} from 'solid-js/web'
-import {SCROLL_X_PERCENT, SCROLL_Y_PERCENT} from 'src/components/css-var'
+import {X_PERCENT_VAR, Y_PERCENT_VAR} from 'src/components/css-var'
 import {useScrollContext} from './scroll-context'
 
 export interface WScrollBodyProps extends ParentProps {
@@ -30,8 +30,8 @@ export const WScrollBody = (_props: WScrollBodyProps) => {
     const {percentX, percentY} = ScrollValue()
 
     return {
-      [SCROLL_X_PERCENT]: percentX,
-      [SCROLL_Y_PERCENT]: percentY,
+      [X_PERCENT_VAR]: percentX,
+      [Y_PERCENT_VAR]: percentY,
     }
   })
 
