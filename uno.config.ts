@@ -18,8 +18,7 @@ export default defineConfig({
   content: {
     pipeline: {
       include: [
-        // eslint-disable-next-line require-unicode-regexp
-        /\.(vue|svelte|[jt]sx|mdx?|astro|elm|php|phtml|html)($|\?)/,
+        /\.(vue|svelte|[jt]sx|mdx?|astro|elm|php|phtml|html)($|\?)/u,
         '**/src/**/*.{js,ts}',
       ],
     },

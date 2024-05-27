@@ -1,13 +1,13 @@
-import {useReq, withHook} from '../hook'
 import flushPromises from 'flush-promises'
+import {useReq as useRequest, withHook} from '../hook'
 
 describe('hook', () => {
   it('should this', async () => {
     const send = jest.fn()
     const next = jest.fn()
     const run = withHook(() => {
-      const req = useReq()
-      return () => Promise.resolve(`hello, ${req.url}`)
+      const request = useRequest()
+      return () => Promise.resolve(`hello, ${request.url}`)
     })
 
     run({url: 'req1'}, {send}, next)

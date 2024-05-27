@@ -6,7 +6,7 @@ import {HUNDRED} from '@winter-love/utils'
 import {createSplendidGrandPiano} from 'src/instruments/splendid-grand-piano'
 
 export const HPiano = defineComponent({
-  name: 'Piano',
+  name: 'HPiano',
   props: {
     scale: {default: 100, type: Number},
   },
@@ -34,7 +34,6 @@ export const HPiano = defineComponent({
     }
 
     const onUp = (key: string | number) => {
-      console.log('up')
       piano.stop(key)
     }
 

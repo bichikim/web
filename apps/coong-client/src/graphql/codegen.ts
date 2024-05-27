@@ -1,3 +1,4 @@
+/* eslint-disable unicorn/no-abusive-eslint-disable */
 /* eslint-disable */
 /* istanbul ignore file */
 // noinspection JSUnusedGlobalSymbols ,JSUnnecessarySemicolon 

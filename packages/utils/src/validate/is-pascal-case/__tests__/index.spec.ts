@@ -1,5 +1,6 @@
+import {describe, expect, it} from 'vitest'
 import {isPascalCase} from '../'
-import {describe, expect, it, vi} from 'vitest'
+
 describe('isPascalCase', () => {
   it('should return true with pascal case string', () => {
     expect(isPascalCase('FooBar')).toBe(true)

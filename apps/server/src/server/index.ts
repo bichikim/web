@@ -4,7 +4,7 @@ import {ExpressContextFunctionArgument, expressMiddleware} from '@apollo/server/
 import express, {Express} from 'express'
 import {GraphQLSchema} from 'graphql'
 import {json} from 'body-parser'
-import http, {Server} from 'http'
+import http, {Server} from 'node:http'
 import cors from 'cors'
 import {AuthChecker, buildSchema, NonEmptyArray, PrintSchemaOptions} from 'type-graphql'
 
@@ -76,7 +76,7 @@ export const prepare = async <Context extends object, Role>(
     })
   }
 
-  app.get('/', (req, res) => {
+  app.get('/', (_, res) => {
     res.send('Welcome to my graphql api')
   })
 

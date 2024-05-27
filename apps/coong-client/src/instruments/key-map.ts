@@ -1,3 +1,4 @@
+/* eslint-disable quote-props */
 export const midiNoteMap = {
   23: 'B-1',
   27: 'D#0',

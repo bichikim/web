@@ -25,7 +25,6 @@ describe('resolveElement', () => {
       },
     })
     const component = defineComponent({
-      name: '',
       setup() {
         const elementRef = ref()
 

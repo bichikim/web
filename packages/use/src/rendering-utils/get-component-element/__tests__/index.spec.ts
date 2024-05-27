@@ -24,7 +24,6 @@ describe('getRefElement', () => {
       },
     })
     const component = defineComponent({
-      name: '',
       setup() {
         const elementRef = ref()
 

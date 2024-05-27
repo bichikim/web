@@ -1,4 +1,4 @@
-import {mergeProps, createContext, useContext} from'solid-js'
+import {createContext, useContext} from 'solid-js'
 
 export const DialogContext = createContext()
 

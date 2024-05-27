@@ -14,7 +14,6 @@ import basicSsl from '@vitejs/plugin-basic-ssl'
 import unoCss from 'unocss/vite'
 import markdown from 'unplugin-vue-markdown/vite'
 
-// eslint-disable-next-line max-lines-per-function
 export default defineConfig(({mode}) => {
   // load env
   // https://vitejs.dev/config/#environment-variables
@@ -125,7 +124,7 @@ export default defineConfig(({mode}) => {
       fs: {
         // allow: ['..', '../..'],
       },
-      https: true,
+      // https: true,
       // api proxy
       proxy: {
         '/server': {

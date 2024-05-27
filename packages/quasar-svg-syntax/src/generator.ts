@@ -1,6 +1,6 @@
-import fs from 'fs'
+import fs from 'node:fs'
 import {generateFiles, GenerateOptions} from './generate-files'
-import path from 'path'
+import path from 'node:path'
 
 export const generator = async (options: GenerateOptions) => {
   const {dist = 'generated.ts', cwd} = options

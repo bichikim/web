@@ -8,7 +8,6 @@ export type ForbiddenResolver<Context extends Record<string, any>> = (
 export function Forbidden(resolver?: ForbiddenResolver<Context>): any {
   return createMethodDecorator<Context>((resolverData, next) => {
     if (!resolver) {
-      // eslint-disable-next-line unicorn/error-message
       throw new Error('unauthorized')
     }
 

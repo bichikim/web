@@ -1,5 +1,5 @@
 import {ParentProps} from 'solid-js'
-import {Dynamic, Portal} from 'solid-js/web'
+import {Dynamic} from 'solid-js/web'
 import {AnyElementOrComponent} from 'src/types'
 
 export interface DialogProps extends ParentProps {

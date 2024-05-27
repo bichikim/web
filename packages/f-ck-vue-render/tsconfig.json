@@ -6,7 +6,7 @@
     "baseUrl": ".",
     "paths": {
       "src/*": ["src/*"]
-    },
+    }
   },
   "ts-node": {
     "compilerOptions": {
@@ -14,8 +14,5 @@
       "module": "CommonJS"
     }
   },
-  "include": [
-    "src/**/*.ts",
-    "src/**/*.tsx"
-  ]
+  "include": ["src/**/*.ts", "src/**/*.tsx"]
 }

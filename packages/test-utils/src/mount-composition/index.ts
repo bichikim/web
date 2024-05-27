@@ -1,17 +1,12 @@
 /// <reference types="@vue/shared" />
-/* eslint-disable vue/prefer-import-from-vue */
+
 import {mount, MountingOptions, VueWrapper} from '@vue/test-utils'
 import {
-  AllowedComponentProps,
-  ComponentCustomProps,
   ComponentPublicInstance,
   defineComponent,
   SetupContext,
   UnwrapNestedRefs,
-  VNodeProps,
 } from 'vue'
-
-export {VNodeProps, AllowedComponentProps, ComponentCustomProps}
 
 // export type PublicProps = VNodeProps & AllowedComponentProps & ComponentCustomProps
 /**
@@ -20,7 +15,7 @@ export {VNodeProps, AllowedComponentProps, ComponentCustomProps}
  * @param options
  */
 export const mountComposition = <Props extends Record<string, any>, RawBindings = object>(
-  setup: (props: Props, ctx: SetupContext) => RawBindings,
+  setup: (props: Props, context: SetupContext) => RawBindings,
   options: MountingOptions<any> & {propsOptions?: any[]} = {},
 ): any & {
   setupState: UnwrapNestedRefs<RawBindings>
@@ -33,8 +28,8 @@ export const mountComposition = <Props extends Record<string, any>, RawBindings 
       render() {
         return null
       },
-      setup(props, ctx) {
-        return setup(props, ctx)
+      setup(props, context) {
+        return setup(props, context)
       },
     }),
     options as any,
@@ -42,6 +37,7 @@ export const mountComposition = <Props extends Record<string, any>, RawBindings 
 
   const {setupState} = wrapper.vm.$ as any
 
-  // eslint-disable-next-line prefer-object-spread
   return Object.assign(wrapper, {setupState})
 }
+
+export {AllowedComponentProps, ComponentCustomProps, VNodeProps} from 'vue'

@@ -1,34 +1,35 @@
-import path from "path";
-import { defineConfig } from "vite";
-import dts from "vite-plugin-dts";
-import solidPlugin from "vite-plugin-solid";
+import path from 'node:path'
+import {fileURLToPath, URL} from 'node:url'
+import {defineConfig} from 'vite'
+import dts from 'vite-plugin-dts'
+import solidPlugin from 'vite-plugin-solid'
 
-import pkg from "./package.json";
+import package_ from './package.json'
 
 export default defineConfig({
+  build: {
+    lib: {
+      entry: fileURLToPath(new URL('src/index.ts', import.meta.url)),
+      formats: ['es', 'cjs'],
+    },
+    rollupOptions: {
+      external: [
+        ...Object.keys(package_.dependencies),
+        ...Object.keys(package_.peerDependencies),
+      ],
+    },
+  },
   plugins: [
     solidPlugin(),
     dts({
       compilerOptions: {
-        emitDeclarationOnly: true,
         declaration: true,
+        declarationDir: 'dist',
         declarationMap: true,
-        declarationDir: 'dist'
+        emitDeclarationOnly: true,
       },
+      entryRoot: 'src',
       insertTypesEntry: true,
-      entryRoot: 'src'
     }),
   ],
-  build: {
-    lib: {
-      entry: path.resolve(__dirname, "src/index.ts"),
-      formats: ["es", "cjs"],
-    },
-    rollupOptions: {
-      external: [
-        ...Object.keys(pkg.dependencies),
-        ...Object.keys(pkg.peerDependencies),
-      ],
-    },
-  },
-});
+})

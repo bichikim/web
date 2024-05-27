@@ -20,8 +20,8 @@ export interface VerifyInputs {
   errorItems: [any, undefined | string | boolean][]
   errorMessage: undefined | string | boolean
   isValid: boolean
-  registerInput: (el: any, value: ContextObjectValue) => void
-  unRegisterInput: (el: any) => void
+  registerInput: (element: any, value: ContextObjectValue) => void
+  unRegisterInput: (element: any) => void
   verify: () => void
 }
 
@@ -42,7 +42,7 @@ export interface ContextObjectValue {
 }
 
 export interface ObjectValue extends ContextObjectValue {
-  getInput?: (el: any, vnode: VNode) => HTMLInputElement
+  getInput?: (element: any, vnode: VNode) => HTMLInputElement
 }
 
 const getHandel = (handel: AnyFunction, wait?: number) => {
@@ -52,10 +52,10 @@ const getHandel = (handel: AnyFunction, wait?: number) => {
   return debounce(handel, wait)
 }
 
-const triggerChange = (el: any, type: 'input' | 'change' = 'input') => {
-  if (el instanceof HTMLInputElement) {
+const triggerChange = (element: any, type: 'input' | 'change' = 'input') => {
+  if (element instanceof HTMLInputElement) {
     const event = new Event(type)
-    el.dispatchEvent(event)
+    element.dispatchEvent(event)
   }
 }
 
@@ -79,6 +79,7 @@ const createContext = (): VerifyInputs => {
     return !first(errorItems.value)
   })
 
+  // eslint-disable-next-line vue/return-in-computed-property
   const errorMessage = computed(() => {
     const error = first(errorItems.value)
     if (error) {
@@ -86,48 +87,48 @@ const createContext = (): VerifyInputs => {
     }
   })
 
-  const registerInput = (el: any, value: ContextObjectValue) => {
-    unRegisterInput(el)
-    if (el instanceof HTMLInputElement) {
+  const registerInput = (element: any, value: ContextObjectValue) => {
+    unRegisterInput(element)
+    if (element instanceof HTMLInputElement) {
       const {
         validator,
         validateAt = 'input',
         debounce: debounceWait = DEFAULT_DEBOUNCE_WAIT,
       } = value
-      inputContexts.set(el, value)
-      inputs.value.set(el, false)
+      inputContexts.set(element, value)
+      inputs.value.set(element, false)
       const handle = getHandel((event) => {
         const value = event.target?.value
         const result = validator(value)
-        inputs.value.set(el, result)
+        inputs.value.set(element, result)
       }, debounceWait)
       if (validateAt === 'input') {
-        el.addEventListener('input', handle)
+        element.addEventListener('input', handle)
       } else {
-        el.addEventListener('change', handle)
+        element.addEventListener('change', handle)
       }
-      handles.value.set(el, handle)
+      handles.value.set(element, handle)
     }
   }
 
   const verify = () => {
     const allElements = inputsRef.value.map(([element]) => element)
 
-    allElements.forEach((element) => {
+    for (const element of allElements) {
       const validateAt = inputContexts.get(element)?.validateAt
       triggerChange(element, validateAt)
-    })
+    }
   }
 
-  const unRegisterInput = (el: any) => {
-    inputs.value.delete(el)
-    inputContexts.delete(el)
-    const handle = handles.value.get(el)
+  const unRegisterInput = (element: any) => {
+    inputs.value.delete(element)
+    inputContexts.delete(element)
+    const handle = handles.value.get(element)
     if (handle) {
-      ;(el as HTMLInputElement).removeEventListener('input', handle)
-      ;(el as HTMLInputElement).removeEventListener('change', handle)
+      ;(element as HTMLInputElement).removeEventListener('input', handle)
+      ;(element as HTMLInputElement).removeEventListener('change', handle)
     }
-    handles.value.delete(el)
+    handles.value.delete(element)
   }
 
   return reactive({
@@ -171,6 +172,7 @@ export const useVerifyInput = (
     _context.unRegisterInput(ref.value)
   })
 
+  // eslint-disable-next-line vue/return-in-computed-property
   const errorMessage = computed(() => {
     const result = errorItems.value.find(([key]) => key === ref.value)
     if (result) {
@@ -179,8 +181,8 @@ export const useVerifyInput = (
   })
 
   const verify = () => {
-    const el = ref.value
-    triggerChange(el, objectValue?.validateAt)
+    const element = ref.value
+    triggerChange(element, objectValue?.validateAt)
   }
 
   return reactive({
@@ -215,16 +217,16 @@ const getValue = (binding: DirectiveBinding<any>): ObjectValue | undefined => {
   return getObjectValue(value)
 }
 
-const getElement = (el: any, value: ObjectValue, vnode: VNode): any => {
+const getElement = (element: any, value: ObjectValue, vnode: VNode): any => {
   if (typeof value.getInput === 'function') {
-    return value.getInput(el, vnode)
+    return value.getInput(element, vnode)
   }
-  return el
+  return element
 }
 
 export type Validator = (value: string) => boolean | string
 
-const updateValidation = (el: any, binding: DirectiveBinding, vnode: VNode) => {
+const updateValidation = (element_: any, binding: DirectiveBinding, vnode: VNode) => {
   const verifyInputs = getContext(binding)
 
   if (!verifyInputs) {
@@ -240,14 +242,14 @@ const updateValidation = (el: any, binding: DirectiveBinding, vnode: VNode) => {
     return
   }
 
-  const element = getElement(el, value, vnode)
+  const element = getElement(element_, value, vnode)
 
   verifyInputs.registerInput(element, value)
 }
 
 export const verifyDirective: ObjectDirective = {
   beforeMount: updateValidation,
-  beforeUnmount(el: any, binding, vnode) {
+  beforeUnmount(element_: any, binding, vnode) {
     const verifyInputs = getContext(binding as any)
     if (!verifyInputs) {
       return
@@ -258,7 +260,7 @@ export const verifyDirective: ObjectDirective = {
       return
     }
 
-    const element = getElement(el, value, vnode)
+    const element = getElement(element_, value, vnode)
 
     verifyInputs.unRegisterInput(element)
   },

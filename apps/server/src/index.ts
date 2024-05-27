@@ -1,6 +1,4 @@
-/* eslint-disable @typescript-eslint/ban-types */
 import 'reflect-metadata'
-import * as console from 'console'
 import {resolvers as prismaResolvers} from 'src/prisma'
 import {prepare, start} from 'src/server'
 import authChecker from './auth'
@@ -21,14 +19,10 @@ const bootstrap = async () => {
     resolvers: [...prismaResolvers, ...resolvers],
   })
 }
-// eslint-disable-next-line @typescript-eslint/no-floating-promises
 bootstrap()
   .then((result) => {
     return start(result, {context, port: env.port})
   })
   .then((result) => {
-    console.log(`Server is running, GraphQL Playground available at ${result}`)
-  })
-  .catch((error) => {
-    console.error(error)
+    console.info(`Server is running, GraphQL Playground available at ${result}`)
   })

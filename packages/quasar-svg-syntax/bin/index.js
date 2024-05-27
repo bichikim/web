@@ -1,6 +1,4 @@
-#!/usr/bin/env node
-
-const {generator, readArgv} = require('../lib/index.js')
+const {generator, readArgv} = require('../dist/index.js')
 
 generator(readArgv(process.argv)).then(() => {
   console.log('Done')

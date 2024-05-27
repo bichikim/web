@@ -17,11 +17,12 @@ export interface CreateGetRolesOptions<R extends Roles> {
 
 export const getTrueKeys = flow([
   (target: Record<string, any>) => toPairs(target),
-  (pairs) => pairs.filter(([_, value]) => Boolean(value)),
-  (pairs) => pairs.map(([key]) => key),
+  (pairs: [any, any][]) => pairs.filter(([_, value]) => Boolean(value)),
+  (pairs: [any, any][]) => pairs.map(([key]) => key),
 ])
 
 export const getRoles = (roles: string[], permissionsKeys: string[]) =>
+  // eslint-disable-next-line unicorn/no-array-reduce
   roles.reduce(
     (result, role) => {
       if (permissionsKeys.includes(role)) {
@@ -72,14 +73,22 @@ export type GeneratedRole<P extends string, A extends string> = Record<
 export const createPermissions = <P extends string, A extends string>(
   permissions: Permissions<P, A>,
 ): GeneratedRole<P, A> => {
-  return Object.keys(permissions).reduce((result, permissionKey) => {
-    const value = permissions[permissionKey]
-    result[permissionKey] = Object.keys(value).reduce((result, actionKey) => {
-      result[actionKey] = `${permissionKey}.${actionKey}`
+  // eslint-disable-next-line unicorn/no-array-reduce
+  return Object.keys(permissions).reduce(
+    (result, permissionKey) => {
+      const value = permissions[permissionKey]
+      // eslint-disable-next-line unicorn/no-array-reduce
+      result[permissionKey] = Object.keys(value).reduce(
+        (result, actionKey) => {
+          result[actionKey] = `${permissionKey}.${actionKey}`
+          return result
+        },
+        {} as Record<string, any>,
+      )
       return result
-    }, {} as Record<string, any>)
-    return result
-  }, {} as GeneratedRole<P, A>)
+    },
+    {} as GeneratedRole<P, A>,
+  )
 }
 
 export const transformAllPermission = (permissions: string[], allActions: string[]) => {

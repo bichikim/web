@@ -1,7 +1,0 @@
-dist
-.quasar
-node_modules
-**/*.d.ts
-/apps/coong-client/android
-/apps/coong-clinet/ios
-/packages/lodash/src/lodash

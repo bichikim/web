@@ -23,6 +23,8 @@ export const assignRef: AssignRef = (...args) => {
   })
   return computed(() => {
     return Object.fromEntries(
+      // todo fix this
+      // eslint-disable-next-line unicorn/no-array-reduce
       _args.reduce((result, arg) => {
         return [...result, ...Object.entries(unref(arg))]
       }, []),

@@ -1,7 +1,8 @@
-import {useUntilTo} from '../'
-import {useFakeTimers} from 'sinon'
 import {mountScope} from '@winter-love/test-utils'
-import {vi, describe, expect, it} from 'vitest'
+import {useFakeTimers} from 'sinon'
+import {describe, expect, it} from 'vitest'
+import {useUntilTo} from '../'
+
 describe('until-to', () => {
   it('should change number to 0', () => {
     const clock = useFakeTimers()

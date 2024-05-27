@@ -1,3 +1,1 @@
-import {parse} from 'node-html-parser'
-
-export const nodeParse = parse
+export {parse as nodeParse} from 'node-html-parser'

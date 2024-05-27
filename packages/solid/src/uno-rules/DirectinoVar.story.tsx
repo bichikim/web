@@ -1,8 +1,7 @@
-import {Meta, StoryObj} from 'storybook-solidjs'
-import {DirectionVar} from './DirectionVar'
+import {DirectionVar as DirectionVariable} from './DirectionVar'
 
 const meta = {
-  component: DirectionVar,
+  component: DirectionVariable,
 }
 
 export default meta

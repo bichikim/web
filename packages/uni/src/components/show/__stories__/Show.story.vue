@@ -1,6 +1,6 @@
 <template>
   <Story>
-    <u-show :when="true">show</u-show>
+    <u-show :when="true"> show </u-show>
     <br />
     <u-show when>show</u-show>
     <br />
@@ -13,7 +13,6 @@
 </template>
 
 <script setup lang="ts">
-import {} from 'vue'
 import {UShow} from '../UShow'
 
 const props = defineProps({})

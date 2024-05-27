@@ -3,9 +3,10 @@ import {resolveAccessor} from 'src/use/resolve-accessor'
 import {MayBeAccessor} from 'src/use/types'
 
 export interface ToggleValue {
-  <T>(value: MayBeAccessor<T>, toggleValue: MayBeAccessor<boolean>): Accessor<
-    T | undefined
-  >
+  <T>(
+    value: MayBeAccessor<T>,
+    toggleValue: MayBeAccessor<boolean>,
+  ): Accessor<T | undefined>
   <T, R>(
     value: MayBeAccessor<T>,
     toggleValue: MayBeAccessor<boolean>,

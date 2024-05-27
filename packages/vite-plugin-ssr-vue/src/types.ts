@@ -1,4 +1,4 @@
-import http from 'http'
+import http from 'node:http'
 import type {Ref} from 'vue'
 
 export type Data = Record<string, any>

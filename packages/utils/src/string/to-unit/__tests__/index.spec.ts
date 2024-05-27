@@ -1,5 +1,6 @@
+import {describe, expect, it} from 'vitest'
 import {toEm, toRem} from '../'
-import {describe, expect, it, vi} from 'vitest'
+
 describe('toEm', () => {
   it('converts a string px or number to an em', () => {
     expect(toEm(16)).toBe('1em')

@@ -64,12 +64,7 @@ const unObjectRef = <P extends Record<string, any>>(
  * @param options
  */
 export const useRequest =
-  <R, P extends Record<any, any>>(
-    service: Service<P, R>,
-    options?: BaseOptions<R, P>,
-    // eslint-disable-next-line max-statements
-  ) =>
-  // eslint-disable-next-line max-statements
+  <R, P extends Record<any, any>>(service: Service<P, R>, options?: BaseOptions<R, P>) =>
   (
     _payload?: Ref<P> | UnwrapNestedRefs<P> | P,
     innerOptions?: BaseOptions<R, P>,
@@ -133,13 +128,11 @@ export const useRequest =
     if (!window) {
       onEvent(window, 'focus', () => {
         if (refreshOnWindowFocusRef.value) {
-          // eslint-disable-next-line @typescript-eslint/no-floating-promises
           retry()
         }
       })
       onEvent(document, 'visibilitychange', () => {
         if (refreshOnVisibilityRef.value) {
-          // eslint-disable-next-line @typescript-eslint/no-floating-promises
           retry()
         }
       })

@@ -3,7 +3,7 @@ import {BigNumberish} from '@ethersproject/bignumber'
 import {EncryptOptions} from '@ethersproject/json-wallets'
 import {AccessListish} from '@ethersproject/transactions'
 import {Contract, Wallet as EthersWallet, providers} from 'ethers'
-import type {Socket} from 'net'
+import type {Socket} from 'node:net'
 import {computed, ref} from 'vue'
 import {Account, BytesLike, ToRefsValueOnly, Wallet, WalletItemTypes} from './types'
 
@@ -46,7 +46,6 @@ export interface EthereumWalletItemTypes extends WalletItemTypes {
   transactionResponse: TransactionResponse
 }
 
-// eslint-disable-next-line max-lines-per-function
 export const createEthereumWallet = (
   provider?: any,
   net?: Socket,

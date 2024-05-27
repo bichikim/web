@@ -1,8 +1,9 @@
 /**
  * @vitest-environment node
  */
+import {describe, expect, it} from 'vitest'
 import {isElement} from '../'
-import {describe, expect, it, vi} from 'vitest'
+
 describe('is-element (in nodejs)', () => {
   it('should return false with string', () => {
     expect(isElement('foo')).toBe(false)

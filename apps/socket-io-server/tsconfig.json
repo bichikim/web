@@ -12,11 +12,7 @@
     "experimentalDecorators": true,
     "forceConsistentCasingInFileNames": true,
     "strictPropertyInitialization": false,
-    "lib": [
-      "esnext",
-      "esnext.asynciterable",
-      "scripthost"
-    ],
+    "lib": ["esnext", "esnext.asynciterable", "scripthost"],
     "paths": {
       "#*": ["*"],
       "#auth": ["src/auth/index.ts"],
@@ -37,10 +33,6 @@
     "sourceMap": true,
     "strict": true
   },
-  "include": [
-    "**/*.ts"
-  ],
-  "exclude": [
-    "node_modules"
-  ]
+  "include": ["**/*.ts"],
+  "exclude": ["node_modules"]
 }

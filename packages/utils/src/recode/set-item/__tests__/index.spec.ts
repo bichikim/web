@@ -1,5 +1,6 @@
+import {describe, expect, it} from 'vitest'
 import {setItem} from '../'
-import {describe, expect, it, vi} from 'vitest'
+
 describe('setItem', () => {
   it('should update the item', () => {
     const data = {info: {name: 'foo'}}

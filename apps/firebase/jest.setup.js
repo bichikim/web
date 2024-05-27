@@ -1,3 +1,4 @@
-/* eslint-disable unicorn/numeric-separators-style,no-magic-numbers */
+/* eslint-disable unicorn/numeric-separators-style */
 // noinspection MagicNumberJS,DynamicallyGeneratedCodeJS
-jest.setTimeout(20000)
+const timeout = 20000
+jest.setTimeout(timeout)

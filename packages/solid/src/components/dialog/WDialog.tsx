@@ -1,4 +1,4 @@
-import {mergeProps, splitProps, Show} from 'solid-js'
+import {mergeProps, Show, splitProps} from 'solid-js'
 import {Dynamic, Portal} from 'solid-js/web'
 import {DynamicParentProps} from 'src/components/types'
 
@@ -12,7 +12,7 @@ export const WDialogRoot = (_props: WDialogRootProps) => {
     'as',
     'show',
     'children',
-    'onShowChange'
+    'onShowChange',
   ])
 
   const onShowChange = (value: boolean) => {
@@ -21,11 +21,11 @@ export const WDialogRoot = (_props: WDialogRootProps) => {
 
   return (
     <Show when={props.show}>
-    <Portal>
-      <Dynamic {...restProps} component={props.as}>
-        {props.children}
-      </Dynamic>
-    </Portal>
+      <Portal>
+        <Dynamic {...restProps} component={props.as}>
+          {props.children}
+        </Dynamic>
+      </Portal>
     </Show>
   )
 }

@@ -37,7 +37,7 @@ export interface ChangeKeysRight {
 
 export const changeKeysRight: ChangeKeysRight = (...args: any[]) => {
   const [transform, deep, value] = args
-  // eslint-disable-next-line no-magic-numbers
+
   if (args.length > 2) {
     return changeKeys(value, transform, deep)
   }

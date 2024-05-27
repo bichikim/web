@@ -5,13 +5,9 @@
     "outDir": "dist",
     "baseUrl": ".",
     "paths": {
-      "src/*": [
-        "src/*",
-      ],
-      "dev/*": [
-        "dev/*"
-      ]
-    },
+      "src/*": ["src/*"],
+      "dev/*": ["dev/*"]
+    }
   },
   "ts-node": {
     "compilerOptions": {
@@ -25,9 +21,7 @@
     "src/**/*.d.ts",
     "src/**/*.tsx",
     "tests/**/*.ts",
-    "tests/**/*.tsx",
+    "tests/**/*.tsx"
   ],
-  "exclude": [
-    "node_modules"
-  ]
+  "exclude": ["node_modules"]
 }

@@ -15,7 +15,6 @@ export const updateScreenHeight = () => {
   // todo fix scroll
   window.addEventListener('DOMContentLoaded', () => {
     const {clientHeight, style} = document.documentElement
-    console.log('loaded')
 
     style.setProperty(SCREEN_HEIGHT_PROPERTY, `${clientHeight}px`)
   })

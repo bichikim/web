@@ -1,4 +1,3 @@
-/* eslint-disable max-classes-per-file */
 import {App, Component, ComponentPublicInstance, createApp, createSSRApp} from 'vue'
 import {renderToString} from '@vue/server-renderer'
 import {Data, Headers, SSRContext} from './types'
@@ -68,13 +67,11 @@ export const createViteClientSideApp = async (
   rootProps: Data = {},
 ) => {
   const {createApp, createSSRApp, render: appRender} = await importClientSideModule()
-  let app
+
   const serverRendered = isServerRendered()
-  if (serverRendered) {
-    app = createSSRApp(rootComponent, rootProps)
-  } else {
-    app = createApp(rootComponent, rootProps)
-  }
+  const app = serverRendered
+    ? createSSRApp(rootComponent, rootProps)
+    : createApp(rootComponent, rootProps)
 
   const render = (rootContainer: string, _app: App = app) => {
     return appRender(_app, rootContainer, serverRendered)

@@ -12,8 +12,8 @@ export const insertTags = (
   }
   const targetElement = htmlElement.querySelector(selector)
   if (targetElement) {
-    tags.forEach((tag) => {
+    for (const tag of tags) {
       targetElement.insertAdjacentHTML(where, tag)
-    })
+    }
   }
 }

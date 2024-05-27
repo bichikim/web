@@ -12,18 +12,10 @@
     "experimentalDecorators": true,
     "strictPropertyInitialization": false,
     "paths": {
-      "src/*": [
-        "src/*"
-      ]
+      "src/*": ["src/*"]
     },
-    "lib": [
-      "esnext",
-      "esnext.asynciterable",
-      "scripthost"
-    ],
-    "plugins": [
-      { "transform": "@zerollup/ts-transform-paths" }
-    ],
+    "lib": ["esnext", "esnext.asynciterable", "scripthost"],
+    "plugins": [{"transform": "@zerollup/ts-transform-paths"}],
     "allowJs": true,
     // `baseUrl` must be placed on the extending configuration in devland, or paths won't be recognized
     "esModuleInterop": true,
@@ -38,7 +30,7 @@
     // "exactOptionalPropertyTypes": true,
     "allowSyntheticDefaultImports": true,
     "sourceMap": true,
-    "strict": true,
+    "strict": true
   },
   "ts-node": {
     "compilerOptions": {
@@ -46,7 +38,5 @@
       "module": "CommonJS"
     }
   },
-  "exclude": [
-    "node_modules"
-  ]
+  "exclude": ["node_modules"]
 }

@@ -5,9 +5,9 @@ module.exports = {
   testMatch: ['**/__specs__/**/*.[jt]s?(x)', '**/?(*.)+(spec|test).[jt]s?(x)'],
 
   testPathIgnorePatterns: [
-    '\\.snap$',
+    String.raw`\.snap$`,
     '/node_modules/',
-    '(/__tests__/.*|(\\.|/)(test|spec))\\.d.ts$',
+    String.raw`(/__tests__/.*|(\.|/)(test|spec))\.d.ts$`,
   ],
 
   transformIgnorePatterns: ['/node_modules/'],

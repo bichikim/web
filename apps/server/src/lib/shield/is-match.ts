@@ -29,6 +29,7 @@ export const isMatch = <RoleNames extends string, ActionNames extends string = s
 ) => {
   // noinspection JSUnusedLocalSymbols
   const {allActions = defaultAllActions, algorithm = Algorithm.OR} = options
+  // eslint-disable-next-line unicorn/no-array-reduce
   return Object.keys(requiredRoles).reduce(
     (result, kind) => {
       const userRole = userRoles[kind]

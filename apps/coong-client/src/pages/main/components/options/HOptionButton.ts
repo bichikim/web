@@ -2,7 +2,6 @@ import UilSetting from '~icons/uil/setting'
 import {defineComponent, h} from 'vue'
 export const HOptionButton = defineComponent({
   emits: ['click'],
-  name: 'HOptionButton',
   setup: (_, {emit}) => {
     const onClick = () => {
       emit('click')

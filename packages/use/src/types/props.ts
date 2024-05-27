@@ -15,41 +15,40 @@ export type RequiredKeys<T> = {
 export type InferPropType<T> = [T] extends [null]
   ? any
   : [T] extends [
-      {
-        type: null | true
-      },
-    ]
-  ? any
-  : [T] extends [
-      | ObjectConstructor
-      | {
-          type: ObjectConstructor
+        {
+          type: null | true
         },
-    ]
-  ? Record<string, any>
-  : [T] extends [
-      | BooleanConstructor
-      | {
-          type: BooleanConstructor
-        },
-    ]
-  ? boolean
-  : [T] extends [
-      | DateConstructor
-      | {
-          type: DateConstructor
-        },
-    ]
-  ? Date
-  : [T] extends [Prop<infer V, infer D>]
-  ? unknown extends V
-    ? D
-    : V
-  : T
+      ]
+    ? any
+    : [T] extends [
+          | ObjectConstructor
+          | {
+              type: ObjectConstructor
+            },
+        ]
+      ? Record<string, any>
+      : [T] extends [
+            | BooleanConstructor
+            | {
+                type: BooleanConstructor
+              },
+          ]
+        ? boolean
+        : [T] extends [
+              | DateConstructor
+              | {
+                  type: DateConstructor
+                },
+            ]
+          ? Date
+          : [T] extends [Prop<infer V, infer D>]
+            ? unknown extends V
+              ? D
+              : V
+            : T
 
 export type OptionalKeys<T> = Exclude<keyof T, RequiredKeys<T>>
 
-// eslint-disable-next-line @typescript-eslint/ban-types
 export type ExtractPropTypesForUsing<O> = O extends object
   ? {
       [K in keyof O]?: unknown
@@ -67,14 +66,14 @@ export type EmitsToProps<T extends EmitsOptions> = T extends string[]
       [K in string & `on${Capitalize<T[number]>}`]?: (...args: any[]) => any
     }
   : T extends ObjectEmitsOptions
-  ? {
-      [K in string & `on${Capitalize<string & keyof T>}`]?: K extends `on${infer C}`
-        ? T[Uncapitalize<C>] extends null
-          ? (...args: any[]) => any
-          : (
-              ...args: T[Uncapitalize<C>] extends (...args: infer P) => any ? P : never
-            ) => any
-        : never
-    }
-  : // eslint-disable-next-line @typescript-eslint/ban-types
-    {}
+    ? {
+        [K in string & `on${Capitalize<string & keyof T>}`]?: K extends `on${infer C}`
+          ? T[Uncapitalize<C>] extends null
+            ? (...args: any[]) => any
+            : (
+                ...args: T[Uncapitalize<C>] extends (...args: infer P) => any ? P : never
+              ) => any
+          : never
+      }
+    : // eslint-disable-next-line @typescript-eslint/ban-types
+      {}

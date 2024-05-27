@@ -9,6 +9,7 @@
   "devDependencies": {
     "@babel/core": "7.20.12",
     "@babel/node": "7.20.7",
-    "ganache": "7.5.0"
+    "ganache": "7.5.0",
+    "solc": "^0.8.26"
   }
 }

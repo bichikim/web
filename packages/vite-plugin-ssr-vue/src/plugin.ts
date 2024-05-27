@@ -1,7 +1,7 @@
-import http from 'http'
+import http from 'node:http'
 import {Connect, Plugin, UserConfig} from 'vite'
-import path from 'path'
-import fs from 'fs'
+import path from 'node:path'
+import fs from 'node:fs'
 import {createServerHandler, CreateServerHandlerOptions} from './create-server-handler'
 import {parse} from 'node-html-parser'
 import {entryFromTemplate} from './entry-from-template'
@@ -62,9 +62,9 @@ export const plugin = (options: ViteVueSsrOptions): Plugin => {
         const handler = createServerHandler(server, options)
 
         return (): Connect.Server => {
-          middlewares.forEach((handler) => {
+          for (const handler of middlewares) {
             server.middlewares.use(handler)
-          })
+          }
 
           return server.middlewares.use(handler)
         }

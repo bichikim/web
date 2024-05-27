@@ -1,5 +1,6 @@
 import vue from '@vitejs/plugin-vue'
-import * as path from 'path'
+import * as path from 'node:path'
+import {fileURLToPath, URL} from 'node:url'
 import {defineConfig} from 'vite'
 import vueJsx from '@vitejs/plugin-vue-jsx'
 
@@ -36,13 +37,13 @@ export default defineConfig(() => {
 
     resolve: {
       alias: {
-        '~/': `${path.resolve(__dirname, '')}/`,
-        'components/': `${path.resolve(__dirname, 'src/components')}/`,
-        'dev/': `${path.resolve(__dirname, 'dev')}/`,
-        'layouts/': `${path.resolve(__dirname, 'src/layouts')}/`,
-        'pages/': `${path.resolve(__dirname, 'src/pages')}/`,
-        'src/': `${path.resolve(__dirname, 'src')}/`,
-        'store/': `${path.resolve(__dirname, 'src/store')}/`,
+        '~/': fileURLToPath(new URL('', import.meta.url)),
+        'components/': fileURLToPath(new URL('src/components', import.meta.url)),
+        'dev/': fileURLToPath(new URL('dev', import.meta.url)),
+        'layouts/': fileURLToPath(new URL('src/layout', import.meta.url)),
+        'pages/': fileURLToPath(new URL('src/pages', import.meta.url)),
+        'src/': fileURLToPath(new URL('src', import.meta.url)),
+        'store/': fileURLToPath(new URL('src/store', import.meta.url)),
         vue: 'vue/dist/vue.runtime.esm-bundler.js',
       },
     },

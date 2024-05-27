@@ -5,7 +5,7 @@ const hookUid = () => {
   return {[WEAK_ID]: true}
 }
 
-export interface ParamsDictionary {
+export interface ParametersDictionary {
   [key: string]: string
 }
 

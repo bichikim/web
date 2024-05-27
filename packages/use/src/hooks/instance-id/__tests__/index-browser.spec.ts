@@ -43,7 +43,7 @@ describe('useInstanceId', () => {
   })
 
   it('should warn in ssr environment', async () => {
-    _isSSR.mockReturnValueOnce(undefined)
+    _isSSR.mockReturnValueOnce()
     jest.spyOn(console, 'warn')
     // stop console run once
     jest.mocked(console.warn).mockImplementationOnce(() => {

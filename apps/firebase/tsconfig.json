@@ -31,7 +31,7 @@
     // "exactOptionalPropertyTypes": true,
     "allowSyntheticDefaultImports": true,
     "sourceMap": true,
-    "strict": true,
+    "strict": true
   },
   "ts-node": {
     "transpileOnly": true,
@@ -40,9 +40,5 @@
       "module": "CommonJS"
     }
   },
-  "include": [
-    "run-ssr/**/*",
-    "vite-vue-ssr/**/*",
-    "src/**/*",
-  ]
+  "include": ["run-ssr/**/*", "vite-vue-ssr/**/*", "src/**/*"]
 }

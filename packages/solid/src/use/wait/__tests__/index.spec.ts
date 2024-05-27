@@ -71,7 +71,7 @@ describe('waitFactory', () => {
       target: debounce,
       wait: debounceWait,
     },
-  ])('should return a function (set timeout)', ({wait, target, leading, options}) => {
+  ])('should return a function (set timeout)', ({wait, leading, options}) => {
     const timer = useFakeTimers()
     const [waitTime, setWaitTime] = createSignal(100)
     const result = wait(callback, waitTime, options)

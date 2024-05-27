@@ -13,18 +13,10 @@
     "experimentalDecorators": true,
     "strictPropertyInitialization": false,
     "paths": {
-      "src/*": [
-        "src/*"
-      ]
+      "src/*": ["src/*"]
     },
-    "lib": [
-      "esnext",
-      "esnext.asynciterable",
-      "scripthost"
-    ],
-    "plugins": [
-      { "transform": "@zerollup/ts-transform-paths" }
-    ]
+    "lib": ["esnext", "esnext.asynciterable", "scripthost"],
+    "plugins": [{"transform": "@zerollup/ts-transform-paths"}]
   },
   "ts-node": {
     "compilerOptions": {
@@ -40,7 +32,5 @@
     "tests/**/*.ts",
     "tests/**/*.tsx"
   ],
-  "exclude": [
-    "node_modules"
-  ]
+  "exclude": ["node_modules"]
 }

@@ -1,4 +1,3 @@
-import * as process from 'process'
 import {freeze} from '../index'
 import {describe, expect, it} from 'vitest'
 describe('freeze', () => {

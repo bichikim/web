@@ -18,10 +18,10 @@ const useEventMock = jest.mocked(onEvent)
 
 const createUseElementEventMock = () => {
   const listeners = {}
-  let _value = ''
+  let value_ = ''
   return {
     setValue: (value: string) => {
-      _value = value
+      value_ = value
     },
     trigger: (key: string, value?) => {
       listeners[key]?.(value)
@@ -65,13 +65,15 @@ describe('clipboard', () => {
     expect(wrapper.setupState.state).toBe('idle')
     expect(wrapper.setupState.value).toBe(undefined)
     //
-    // @ts-ignore
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-expect-error
     mockClipboard.readText.mockResolvedValueOnce('foo' as any)
     mock.trigger('copy')
     await flushPromises()
     expect(wrapper.setupState.value).toBe('foo')
     //
-    // @ts-ignore
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-expect-error
     mockClipboard.readText.mockResolvedValueOnce('bar' as any)
     mock.trigger('cut')
     await flushPromises()

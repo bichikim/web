@@ -22,7 +22,6 @@ describe('createInverseOrderParameters', () => {
   })
   it('should support void parameters (2 params)', () => {
     const targetFunction = vi.fn((foo: string, age?: number) => `${foo}, ${age}`)
-    const a: Parameters<typeof targetFunction> = ['a']
     const inverseOrderedFunction = createInverseOrderParameters(targetFunction)
     const result = inverseOrderedFunction(undefined, 'foo')
     expectTypeOf(inverseOrderedFunction).parameters.toEqualTypeOf<
@@ -33,8 +32,10 @@ describe('createInverseOrderParameters', () => {
     expect(result).toBe('foo, undefined')
   })
   it('should support void parameters (3 params)', () => {
-    const targetFunction = vi.fn((foo: string, age?: number, info?: {name: string}) => `${foo}, ${age} ${info?.name}`)
-    const a: Parameters<typeof targetFunction> = ['a']
+    const targetFunction = vi.fn(
+      (foo: string, age?: number, info?: {name: string}) =>
+        `${foo}, ${age} ${info?.name}`,
+    )
     const inverseOrderedFunction = createInverseOrderParameters(targetFunction)
     const result = inverseOrderedFunction(undefined, undefined, 'foo')
     expectTypeOf(inverseOrderedFunction).parameters.toEqualTypeOf<

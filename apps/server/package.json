@@ -34,6 +34,7 @@
     "type-graphql": "^2.0.0-beta.3"
   },
   "devDependencies": {
+    "@types/lodash": "^4.17.4",
     "@types/bcrypt": "5.0.2",
     "@types/body-parser": "^1.19.5",
     "@types/cors": "^2.8.16",

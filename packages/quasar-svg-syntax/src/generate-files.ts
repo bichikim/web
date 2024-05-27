@@ -1,5 +1,5 @@
 import {asyncReadFile} from './async-read-file'
-import path from 'path'
+import path from 'node:path'
 import {generate} from './generate'
 import {camelCase, last} from 'lodash'
 import fg from 'fast-glob'

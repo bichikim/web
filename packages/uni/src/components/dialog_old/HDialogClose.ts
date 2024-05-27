@@ -5,7 +5,7 @@ export const HDialogClose = defineComponent({
   emits: {
     click: (event: MouseEvent) => event,
   },
-  setup(props, {slots, emit}) {
+  setup(_, {slots, emit}) {
     const controlDialog = useControlDialog()
 
     const handleClick = (event) => {

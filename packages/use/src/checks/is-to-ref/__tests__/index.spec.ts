@@ -1,9 +1,9 @@
 /**
  * @jest-environment jsdom
  */
-import {isToRef} from '../'
-import {computed, reactive, readonly, ref, toRef} from 'vue'
 import {mountComposition} from '@winter-love/test-utils'
+import {computed, ref, toRef} from 'vue'
+import {isToRef} from '../'
 
 describe('isToRef', () => {
   it('should be ref', () => {

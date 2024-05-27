@@ -9,15 +9,15 @@ export interface DirectiveStoreProps {
 
 export const updateClassName = (
   system: CssComponent,
-  el: any,
+  element: any,
   binding: DirectiveBinding,
 ) => {
   const key = getDirectiveStoreKey(binding)
 
-  const {previousClassNames}: DirectiveStoreProps = el[key] ?? {}
+  const {previousClassNames}: DirectiveStoreProps = element[key] ?? {}
 
   if (previousClassNames) {
-    el.classList.remove(...previousClassNames)
+    element.classList.remove(...previousClassNames)
   }
 
   const className = getClassName(system, binding)
@@ -28,9 +28,9 @@ export const updateClassName = (
 
   const classNames = className.split(' ')
 
-  el[key] = {
+  element[key] = {
     previousClassNames: classNames,
   }
 
-  el.classList.add(...classNames)
+  element.classList.add(...classNames)
 }

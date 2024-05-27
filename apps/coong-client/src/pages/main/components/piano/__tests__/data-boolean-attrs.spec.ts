@@ -1,39 +1,40 @@
+import {describe, expect, it} from 'vitest'
 import {
-  booleanAttr,
-  booleanTupleAttr,
-  dataAttrKey,
-  dataBooleanAttrs,
+  booleanAttr as booleanAttribute,
+  booleanTupleAttr as booleanTupleAttribute,
+  dataAttrKey as dataAttributeKey,
+  dataBooleanAttrs as dataBooleanAttributes,
 } from '../data-boolean-attrs'
-import {vi, describe, expect, it} from 'vitest'
+
 describe('dataAttrKey', () => {
   it('should return data attr key', () => {
-    expect(dataAttrKey('foo')).toBe('data-foo')
+    expect(dataAttributeKey('foo')).toBe('data-foo')
   })
 })
 
 describe('dataBooleanAttrs', () => {
   it('should return BooleanTupleAttr', () => {
-    expect(booleanTupleAttr(['foo', true])).toEqual(['data-foo', ''])
+    expect(booleanTupleAttribute(['foo', true])).toEqual(['data-foo', ''])
   })
 })
 
 describe('booleanAttr', () => {
   it('should return BooleanAttr', () => {
-    expect(booleanAttr(undefined)).toBe(undefined)
-    expect(booleanAttr(null)).toBe(undefined)
-    expect(booleanAttr('')).toBe(undefined)
-    expect(booleanAttr('t')).toBe('')
-    expect(booleanAttr('false')).toBe('')
-    expect(booleanAttr('true')).toBe('')
-    expect(booleanAttr(true)).toBe('')
-    expect(booleanAttr(false)).toBe(undefined)
+    expect(booleanAttribute()).toBe(undefined)
+    expect(booleanAttribute(null)).toBe(undefined)
+    expect(booleanAttribute('')).toBe(undefined)
+    expect(booleanAttribute('t')).toBe('')
+    expect(booleanAttribute('false')).toBe('')
+    expect(booleanAttribute('true')).toBe('')
+    expect(booleanAttribute(true)).toBe('')
+    expect(booleanAttribute(false)).toBe(undefined)
   })
 })
 
 describe('dataBooleanAttrs', () => {
   it('should return data Attrs', () => {
     expect(
-      dataBooleanAttrs({
+      dataBooleanAttributes({
         bar: false,
         foo: true,
       }),

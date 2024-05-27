@@ -1,5 +1,4 @@
-import {createValidate, role, validate} from '../permission'
-import {and} from '../permission'
+import {and, role} from '../permission'
 
 describe('and', () => {
   it('should compare both values with and logic all true', () => {

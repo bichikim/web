@@ -1,12 +1,10 @@
 import {BaseContext, ContextFunction} from '@apollo/server'
 import {ExpressContextFunctionArgument} from '@apollo/server/express4'
-import {AuthContext, useAuth, UserData} from './auth'
+import {AuthContext, useAuth} from './auth'
 import {HashPasswordContext, preparePasswordBcrypt} from './hash-password'
 import {JwtContext, prepareJwt} from './jwt'
 import {preparePrisma, PrismaContext} from './prisma'
 import {env} from 'src/env'
-
-export {UserData}
 
 export const DEFAULT_SALT_FACTOR = 7
 
@@ -44,3 +42,5 @@ const context: ContextFunction<[ExpressContextFunctionArgument], Context> = asyn
 }
 
 export default context
+
+export {UserData} from './auth'

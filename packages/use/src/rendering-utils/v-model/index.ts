@@ -37,7 +37,9 @@ export const _vModel = <T, ValueName extends string, InputName extends string>(
 }
 
 export interface VModel {
-  <T>(value: Ref<T>): <ValueName extends string, InputName extends string>(
+  <T>(
+    value: Ref<T>,
+  ): <ValueName extends string, InputName extends string>(
     options?: VModelOptions<ValueName, InputName>,
   ) => VModelResult<T, ValueName, InputName>
   <T, ValueName extends string, InputName extends string>(

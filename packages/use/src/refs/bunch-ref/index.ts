@@ -17,7 +17,7 @@ export const bunchRef = <T>(...args: RefSource<T>[]): Ref<T> => {
     valueRef.value = value
   }
 
-  args.forEach((arg) => {
+  for (const arg of args) {
     watch(arg, update, {flush: 'sync'})
     /**
      * update first value
@@ -26,7 +26,7 @@ export const bunchRef = <T>(...args: RefSource<T>[]): Ref<T> => {
     if (_value !== undefined) {
       valueRef.value = _value
     }
-  })
+  }
 
   return valueRef
 }

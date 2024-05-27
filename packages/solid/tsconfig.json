@@ -11,20 +11,10 @@
     "module": "esnext",
     "baseUrl": ".",
     "paths": {
-      "src/*": [
-        "src/*"
-      ],
-      "@winter-love/solid/use": [
-        "src/use"
-      ],
-      "@winter-love/solid/test": [
-        "src/test"
-      ]
+      "src/*": ["src/*"],
+      "@winter-love/solid/use": ["src/use"],
+      "@winter-love/solid/test": ["src/test"]
     }
   },
-  "include": [
-    "src/**/*.ts",
-    "src/**/*.tsx",
-    "vite.config.mts"
-  ]
+  "include": ["src/**/*.ts", "src/**/*.tsx", "vite.config.mts"]
 }

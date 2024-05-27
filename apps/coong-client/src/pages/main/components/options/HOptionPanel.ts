@@ -2,7 +2,6 @@ import {defineComponent, h} from 'vue'
 
 export const HOptionPanel = defineComponent({
   emits: ['scale'],
-  name: 'HOptionPanel',
   props: {
     scale: {default: 100, type: Number},
   },

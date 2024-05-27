@@ -1,4 +1,3 @@
-/* eslint-disable id-length,no-magic-numbers */
 import {
   Cluster,
   clusterApiUrl,
@@ -12,7 +11,7 @@ import {
   TransferWithSeedParams,
 } from '@solana/web3.js'
 import {utils} from 'ethers'
-import {Socket} from 'net'
+import {Socket} from 'node:net'
 import {Account, Wallet, WalletItemTypes} from 'src/types'
 import nacl from 'tweetnacl'
 import {computed, reactive, ref} from 'vue'
@@ -35,7 +34,6 @@ const getAccounts = (keypair: Keypair): Account<Uint8Array> => {
   }
 }
 
-// eslint-disable-next-line max-lines-per-function
 export const createSolanaWallet = (
   provider?: Cluster,
   net?: Socket,
@@ -124,7 +122,6 @@ export const createSolanaWallet = (
     }
     const messageBytes = utils.toUtf8Bytes(message)
 
-    // eslint-disable-next-line import/no-named-as-default-member
     return Promise.resolve(
       utils.hexlify(nacl.sign.detached(messageBytes, keypair.secretKey)),
     )

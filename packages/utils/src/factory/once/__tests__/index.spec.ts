@@ -29,15 +29,15 @@ describe('once share value example', () => {
       }
     })
 
-    const a = _once()
-    const b = _once()
+    const aValue = _once()
+    const bValue = _once()
 
-    expect(a.count).toBe(0)
-    expect(b.count).toBe(0)
+    expect(aValue.count).toBe(0)
+    expect(bValue.count).toBe(0)
 
-    a.count += 1
+    aValue.count += 1
 
-    expect(a.count).toBe(1)
-    expect(b.count).toBe(1)
+    expect(aValue.count).toBe(1)
+    expect(bValue.count).toBe(1)
   })
 })

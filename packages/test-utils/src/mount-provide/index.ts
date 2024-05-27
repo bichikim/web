@@ -1,9 +1,7 @@
 /// <reference types="@vue/shared" />
-/* eslint-disable vue/prefer-import-from-vue */
+
 import {mount, MountingOptions} from '@vue/test-utils'
 import {defineComponent, h, inject, InjectionKey, provide, Ref, ref, watch} from 'vue'
-
-export type {MountingOptions}
 
 export type MountProvideOptions<
   Props extends Record<string, any>,
@@ -78,3 +76,5 @@ export const mountProvide = <
 
   return Object.assign(wrapper, {setupState}) as any
 }
+
+export {type MountingOptions} from '@vue/test-utils'

@@ -1,4 +1,3 @@
-// eslint-disable-next-line prefer-named-capture-group
 const unitRegex = /^[+-]?([0-9]{1,10})|(\.[0-9]{1,10})px$/u
 
 export const getPxSize = (size: number | string, failBakeValue = 0) => {

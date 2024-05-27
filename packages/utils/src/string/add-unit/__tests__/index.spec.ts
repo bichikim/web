@@ -1,5 +1,6 @@
+import {describe, expect, it} from 'vitest'
 import {addEm, addPx, addRem, addUnit} from '../'
-import {describe, expect, it, vi} from 'vitest'
+
 describe('addUnit', () => {
   it('should return unit string with number', () => {
     expect(addUnit(1, 'px')).toEqual('1px')

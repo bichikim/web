@@ -1,1 +1,3 @@
-export * from './simple-store'
+export const vare = () => {
+  //
+}

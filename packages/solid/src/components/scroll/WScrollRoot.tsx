@@ -77,7 +77,7 @@ export const WScrollRoot = (_props: WScrollRootProps) => {
         value: scrollValue,
       }}
     >
-      <Dynamic {...restProps} component={props.as ?? 'div'}/>
+      <Dynamic {...restProps} component={props.as ?? 'div'} />
     </ScrollContext.Provider>
   )
 }

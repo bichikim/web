@@ -1,10 +1,10 @@
 /**
  * @jest-environment jsdom
  */
-import {useEventDown} from '../'
 import {mount} from '@winter-love/test-utils'
+import {describe, expect, it} from 'vitest'
 import {defineComponent, h, ref} from 'vue'
-import {describe, expect, it, vi} from 'vitest'
+import {useEventDown} from '../'
 
 describe('use-event-down', () => {
   const wrapper = mount(

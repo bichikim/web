@@ -1,6 +1,6 @@
-import fs from 'fs'
+import fs from 'node:fs'
 import {parse} from 'node-html-parser'
-import path from 'path'
+import path from 'node:path'
 import type {Connect, ViteDevServer} from 'vite'
 import {SSRResult} from './create-render-app'
 import {defaultModule} from './default-module'
@@ -39,7 +39,6 @@ export const createServerHandler = (
   options: CreateServerHandlerOptions = {},
 ): Connect.NextHandleFunction => {
   const {entry: ssrEntry, appSelector = 'body #app'} = options
-  // eslint-disable-next-line max-statements
   return async (req, res, next) => {
     if (req.method !== GET || !req.originalUrl) {
       return next()

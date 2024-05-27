@@ -4,7 +4,6 @@ export const isSupportPassive = once(() => {
   let supportsPassive = false
   try {
     // testing passive supporting does not require type
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ;(window.addEventListener as any)(
       'test',
       null,

@@ -37,8 +37,6 @@ export class AuthResolver {
 
     const hashedPassword = await passwordBcrypt.hash(password)
 
-    console.log(hashedPassword)
-
     return prisma.user.create({
       data: {
         email,

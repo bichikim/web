@@ -1,3 +1,1 @@
-import Page from './Page.md'
-
-export default Page
+export {default} from './Page.md'

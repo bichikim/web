@@ -18,7 +18,7 @@ const _getWindow = jest.mocked(getWindow)
 
 describe('on-element-intersection', () => {
   const setup = () => {
-    const TestComponent = defineComponent((props, {slots}) => {
+    const TestComponent = defineComponent((_, {slots}) => {
       const elementRef = ref()
       const showRef = ref()
 
@@ -136,7 +136,7 @@ describe('on-element-intersection', () => {
   })
 
   it('should not run any in SSR environment', async () => {
-    _getWindow.mockReturnValueOnce(undefined)
+    _getWindow.mockReturnValueOnce(null)
     const {teardown, observerMock} = setup()
     expect(observerMock).not.toHaveBeenCalled()
 

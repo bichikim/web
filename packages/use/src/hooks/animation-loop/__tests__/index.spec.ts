@@ -1,6 +1,4 @@
 import {useAnimationLoop} from '../'
-import {ref} from 'vue'
-import {flushPromises} from '@vue/test-utils'
 
 describe('animation-loop', () => {
   afterEach(() => {

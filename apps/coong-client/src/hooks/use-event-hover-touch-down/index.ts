@@ -84,7 +84,6 @@ export const useEventHoverTouchDown = (element: MaybeRef<HTMLElement | null>) =>
       return
     }
     const maxLength = touches.length
-    // eslint-disable-next-line unicorn/no-for-loop
     for (let index = 0; index < maxLength; index += 1) {
       const touch = touches[index]
       const isInside = elementFromPoint(touch.clientX, touch.clientY) === elementRef.value

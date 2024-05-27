@@ -6,9 +6,7 @@ declare module 'vue' {
   }
 }
 
-// eslint-disable-next-line no-negated-condition
 export const debug =
-  // eslint-disable-next-line no-negated-condition
   process.env.NODE_ENV === 'production'
     ? () => {
         // empty

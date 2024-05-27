@@ -2,8 +2,14 @@ import {HPianoButton} from './HPianoButton'
 import {defineComponent, h} from 'vue'
 import {flatten} from '@winter-love/lodash'
 
+interface FlatData {
+  key: number
+  name: string
+}
+const keyOffset = 5
+const keyCount = 12
 const flatSet = flatten(
-  Array(8)
+  Array.from<FlatData[]>({length: 8})
     .fill([
       {key: 2, name: 'A'},
       {key: 4, name: 'B'},
@@ -14,11 +20,10 @@ const flatSet = flatten(
       {key: 12, name: 'G'},
     ])
     .map((item, index) => {
-      return item.map(({key, name}) => ({key: 12 * index + key - 5, name}))
+      return item.map(({key, name}) => ({key: keyCount * index + key - keyOffset, name}))
     }),
 )
 
-// eslint-disable-next-line no-magic-numbers
 flatSet.splice(-4)
 // h(HPianoButton, {keyName: 'A', pianoKey: 2}),
 export const HPianoFlat = defineComponent({

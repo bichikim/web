@@ -148,14 +148,14 @@ describe('preferParentContext', () => {
   const provideOrUse = preferParentContext(provideContext)
 
   const level1 = defineComponent({
-    setup(props, {slots}) {
+    setup(_, {slots}) {
       provideContext(reactive({name: name1}))
       return () => slots.default?.()
     },
   })
 
   const level2 = defineComponent({
-    setup(props, {slots}) {
+    setup(_, {slots}) {
       provideOrUse(reactive({name: name2}))
       return () => slots.default?.()
     },
@@ -210,14 +210,14 @@ describe('preferParentContext', () => {
     const injectContext = (): {name: string} => inject(CONTEXT_KEY) as any
 
     const level1 = defineComponent({
-      setup(props, {slots}) {
+      setup(_, {slots}) {
         customProvideOrUse(reactive({name: name1}) as any)
         return () => slots.default?.()
       },
     })
 
     const level2 = defineComponent({
-      setup(props, {slots}) {
+      setup(_, {slots}) {
         customProvideOrUse(reactive({name: name2}) as any)
         return () => slots.default?.()
       },

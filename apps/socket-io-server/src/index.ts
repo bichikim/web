@@ -6,7 +6,6 @@ const io = new Server(PORT)
 
 io.on('connection', (socket) => {
   socket.on('ping', (arg) => {
-    console.log(arg)
     socket.emit('pong', 'pong')
   })
 })

@@ -67,9 +67,9 @@ const config: Config = {
     url: 'http://localhost/',
   },
   testPathIgnorePatterns: [
-    '\\.snap$',
+    String.raw`\.snap$`,
     '/node_modules/',
-    '(/__tests__/.*|(\\.|/)(test|spec))\\.d.ts$',
+    String.raw`(/__tests__/.*|(\.|/)(test|spec))\.d.ts$`,
   ],
 
   // https://github.com/facebook/jest/issues/6766

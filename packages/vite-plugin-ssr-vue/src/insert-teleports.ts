@@ -7,10 +7,10 @@ export const insertTeleports = (
   if (!teleports) {
     return
   }
-  Object.keys(teleports).forEach((key) => {
+  for (const key of Object.keys(teleports)) {
     const element = htmlElement.querySelector(key)
     if (element) {
       element.insertAdjacentHTML('afterbegin', teleports[key])
     }
-  })
+  }
 }

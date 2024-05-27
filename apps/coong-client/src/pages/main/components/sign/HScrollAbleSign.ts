@@ -1,5 +1,4 @@
 import {defineComponent, h} from 'vue'
-import {cva, VariantProps} from 'class-variance-authority'
 import UilArrowsH from '~icons/uil/arrows-h'
 
 export const HScrollAbleSign = defineComponent(() => {

@@ -1,28 +1,26 @@
-import { defineConfig } from 'vitepress'
+import {defineConfig} from 'vitepress'
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
-  title: "Bichi Project",
-  description: "A VitePress Site",
+  description: 'A VitePress Site',
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
     nav: [
-      { text: 'Home', link: '/' },
-      { text: 'Examples', link: '/markdown-examples' }
+      {link: '/', text: 'Home'},
+      {link: '/markdown-examples', text: 'Examples'},
     ],
 
     sidebar: [
       {
-        text: 'Examples',
         items: [
-          { text: 'Markdown Examples', link: '/markdown-examples' },
-          { text: 'Runtime API Examples', link: '/api-examples' }
-        ]
-      }
+          {link: '/markdown-examples', text: 'Markdown Examples'},
+          {link: '/api-examples', text: 'Runtime API Examples'},
+        ],
+        text: 'Examples',
+      },
     ],
 
-    socialLinks: [
-      { icon: 'github', link: 'https://github.com/vuejs/vitepress' }
-    ]
-  }
+    socialLinks: [{icon: 'github', link: 'https://github.com/vuejs/vitepress'}],
+  },
+  title: 'Bichi Project',
 })

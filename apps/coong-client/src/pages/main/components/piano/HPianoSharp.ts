@@ -2,8 +2,14 @@ import {HPianoButton} from './HPianoButton'
 import {HEmptyPianoButton} from './EmptyPianoButton'
 import {defineComponent, h} from 'vue'
 import {flatten} from '@winter-love/lodash'
+
+interface SharpData {
+  key: number
+  name: string
+}
+
 const sharpSet = flatten(
-  Array(8)
+  Array.from<SharpData[]>({length: 8})
     .fill([
       {key: 1, name: 'G#'},
       {key: 3, name: 'A#'},

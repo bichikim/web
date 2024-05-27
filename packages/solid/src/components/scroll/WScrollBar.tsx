@@ -1,5 +1,5 @@
 import {sx, ValidStyle} from '@winter-love/solid/use'
-import {createMemo, mergeProps, ParentProps, Show, splitProps} from 'solid-js'
+import {createMemo, mergeProps, splitProps} from 'solid-js'
 import {Dynamic} from 'solid-js/web'
 import {
   BAR_PERCENT,
@@ -10,13 +10,14 @@ import {
   TOP_VAR,
   WIDTH_VAR,
 } from 'src/components/css-var'
+import {DynamicParentProps} from 'src/components/types'
 import {ScrollBarContext} from './scroll-bar-context'
 import {useScrollContext} from './scroll-context'
 import {ScrollBarType} from './types'
-import {DynamicParentProps} from 'src/components/types'
 
 export interface WScrollBarProps extends DynamicParentProps {
   [key: string]: any
+
   as?: string
   /**
    * recommend left-var top-var bottom-var right-var w-var h-var absolute

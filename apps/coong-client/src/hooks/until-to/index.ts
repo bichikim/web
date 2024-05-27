@@ -1,4 +1,3 @@
-/* eslint-disable unicorn/consistent-destructuring */
 import {onScopeDispose, ref} from 'vue'
 
 const DEFAULT_TICK = 100

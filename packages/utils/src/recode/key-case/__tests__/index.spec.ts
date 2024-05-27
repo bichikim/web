@@ -1,6 +1,6 @@
 /* eslint-disable camelcase */
+import {assertType, describe, expect, it} from 'vitest'
 import {createKeyCase, createSnakeCase} from '../'
-import {assertType, describe, expect, it, vi} from 'vitest'
 
 describe.skip('createKeyMatch function', () => {
   it('should return a new object with transformed keys', () => {

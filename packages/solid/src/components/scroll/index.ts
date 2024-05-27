@@ -1,7 +1,7 @@
-import {WScrollRoot, type WScrollRootProps} from './WScrollRoot'
-import {WScrollBody, type WScrollBodyProps} from './WScrollBody'
-import {WScrollBar, type WScrollBarProps} from './WScrollBar'
-import {WScrollHandle, type WScrollHandleProps} from 'src/components/scroll/WScrollHandle'
+import {WScrollRoot} from './WScrollRoot'
+import {WScrollBody} from './WScrollBody'
+import {WScrollBar} from './WScrollBar'
+import {WScrollHandle} from 'src/components/scroll/WScrollHandle'
 
 const WScroll = {
   Bar: WScrollBar,
@@ -10,4 +10,9 @@ const WScroll = {
   Root: WScrollRoot,
 }
 
-export {WScroll, WScrollRootProps, WScrollHandleProps, WScrollBarProps, WScrollBodyProps}
+export {WScroll}
+
+export {type WScrollRootProps} from './WScrollRoot'
+export {type WScrollBodyProps} from './WScrollBody'
+export {type WScrollBarProps} from './WScrollBar'
+export {type WScrollHandleProps} from 'src/components/scroll/WScrollHandle'

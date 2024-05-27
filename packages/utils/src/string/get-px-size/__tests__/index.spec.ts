@@ -1,5 +1,6 @@
+import {describe, expect, it} from 'vitest'
 import {getPxSize} from '../index'
-import {describe, expect, it, vi} from 'vitest'
+
 describe('getSize', () => {
   it('should return number size with number', () => {
     expect(getPxSize(100)).toBe(100)

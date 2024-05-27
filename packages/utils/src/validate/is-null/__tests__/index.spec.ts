@@ -1,5 +1,6 @@
+import {describe, expect, it} from 'vitest'
 import {isNull} from '../'
-import {describe, expect, it, vi} from 'vitest'
+
 describe('is-null', () => {
   it('should return true if value is undefined', () => {
     expect(isNull(null)).toBe(true)

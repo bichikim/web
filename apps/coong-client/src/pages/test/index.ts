@@ -1,6 +1,5 @@
-import {SplendidGrandPiano} from 'smplr'
-import {computed, defineComponent, h, onMounted, shallowRef, ref} from 'vue'
 import {createSplendidGrandPiano} from 'src/instruments/splendid-grand-piano'
+import {defineComponent, h, onMounted, ref} from 'vue'
 
 export default defineComponent(() => {
   // const audioContext: AudioContext = new StandardizedAudioContext() as any
