@@ -1,0 +1,20 @@
+{
+  "name": "@winter-love/unocss-config",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "uno.config.ts",
+  "files": [
+    "uno.config.ts"
+  ],
+  "devDependencies": {
+    "@unocss/preset-attributify": "^0.60.3",
+    "@unocss/preset-mini": "^0.60.3",
+    "@unocss/preset-uno": "^0.60.3",
+    "@unocss/transformer-compile-class": "^0.60.3",
+    "@unocss/transformer-directives": "^0.60.3",
+    "@unocss/transformer-variant-group": "^0.60.3",
+    "@unocss/vite": "^0.60.3",
+    "unocss": "^0.60.3"
+  }
+}
