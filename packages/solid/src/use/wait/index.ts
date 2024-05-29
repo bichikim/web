@@ -4,14 +4,14 @@ import {useWatch} from 'src/use/watch'
 
 export interface WaitSource<Options extends Record<string, any>> {
   cancel: () => void
-  create?: <Args extends any[]>(
-    callback: (...args: Args) => void,
+  create?: (
+    callback: (...args: any) => void,
     wait: number,
     options?: Partial<Options>,
   ) => void
-  execute: <Args extends any[]>(
-    args: Args,
-    callback: (...args: Args) => void,
+  execute: (
+    args: any,
+    callback: (...args: any) => void,
     wait: number,
     options?: Partial<Options>,
   ) => void

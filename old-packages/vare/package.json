@@ -47,7 +47,7 @@
     "build": "tsup --dts --minify",
     "dev": "tsup --watch",
     "fix": "npx vue-demi-fix",
-    "prepare": "tsup --dts",
+    "prepare-build": "tsup --dts",
     "test-dev": "vite"
   },
   "dependencies": {
@@ -58,7 +58,7 @@
   "devDependencies": {
     "@vitejs/plugin-vue": "^3.2.0",
     "@vitejs/plugin-vue-jsx": "^2.1.1",
-    "vite": "^3.2.5",
+    "vite": "^5",
     "vue-router": "^4.1.6"
   },
   "peerDependencies": {

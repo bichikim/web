@@ -24,7 +24,7 @@
   "scripts": {
     "build": "tsup --dts --minify",
     "dev": "tsup --watch",
-    "prepare": "tsup --dts"
+    "prepare-build": "tsup --dts"
   },
   "dependencies": {
     "@vue/runtime-core": "^3.3.0",

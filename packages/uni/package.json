@@ -23,7 +23,6 @@
   "scripts": {
     "build": "vite build",
     "dev": "",
-    "prepare": "",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
@@ -41,6 +40,7 @@
   },
   "peerDependencies": {},
   "devDependencies": {
+    "@winter-love/vite-lib-config": "workspace:*",
     "@types/jest": "^28.1.8",
     "@types/node": "^18.11.14",
     "@winter-love/lodash": "workspace:*",

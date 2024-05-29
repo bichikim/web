@@ -33,7 +33,7 @@
   "scripts": {
     "build": "tsup --dts --minify",
     "dev": "tsup --watch",
-    "prepare": "tsup --dts"
+    "prepare-build": "tsup --dts"
   },
   "dependencies": {
     "@winter-love/utils": "workspace:^1.0.27",

@@ -41,7 +41,7 @@
   "scripts": {
     "build": "tsup --dts --minify",
     "dev": "tsup --watch",
-    "prepare": "tsup --dts"
+    "prepare-build": "tsup --dts"
   },
   "dependencies": {
     "@ethersproject/abstract-provider": "^5.7.0",

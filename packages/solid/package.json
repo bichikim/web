@@ -34,7 +34,7 @@
   "scripts": {
     "build": "vite build",
     "dev": "vite build --watch --minify false",
-    "prepare": "vite build --minify false",
+    "prepare-build": "vite build --minify false",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
@@ -49,6 +49,7 @@
     "solid-dom-testing": "^0.0.3"
   },
   "devDependencies": {
+    "@winter-love/vite-lib-config": "workspace:*",
     "@types/jest": "^28.1.8",
     "@types/node": "^18.11.14",
     "@winter-love/lodash": "workspace:*",

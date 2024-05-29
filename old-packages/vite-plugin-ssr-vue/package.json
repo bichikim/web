@@ -43,7 +43,7 @@
   "scripts": {
     "build": "tsup --dts --minify",
     "dev": "tsup --watch",
-    "prepare": "tsup --dts"
+    "prepare-build": "tsup --dts"
   },
   "dependencies": {
     "@vue/server-renderer": "^3.2.45",

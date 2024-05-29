@@ -40,9 +40,9 @@
     "*.d.ts"
   ],
   "scripts": {
-    "build": "tsup --dts --minify",
-    "dev": "tsup --watch",
-    "prepare": "tsup --dts"
+    "build": "vite build",
+    "dev": "vite build --watch --minify false",
+    "prepare-build": "vite build --minify false"
   },
   "dependencies": {
     "@types/node": "^20.2.1",
@@ -50,6 +50,9 @@
     "node-html-parser": "^6.1.4",
     "vite": "^4.5.2",
     "vue": "^3.3.0"
+  },
+  "devDependencies": {
+    "@winter-love/vite-lib-config": "workspace:*"
   },
   "publishConfig": {
     "access": "public"

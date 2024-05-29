@@ -27,12 +27,13 @@
   "scripts": {
     "build": "vite build && pnpm run copytype",
     "copytype": "cpx \"./node_modules/@types/lodash/**/*.ts\" dist ",
-    "dev": "tsup --watch",
-    "generate-lodash-es": "lodash modularize exports=es -d -s -o src/lodash",
-    "prepare": "vite build && pnpm run copytype"
+    "dev": "vite build --watch --minify false",
+    "prepare-build": "vite build --minify false && pnpm run copytype",
+    "generate-lodash-es": "lodash modularize exports=es -d -s -o src/lodash"
   },
   "dependencies": {},
   "devDependencies": {
+    "@winter-love/vite-lib-config": "workspace:*",
     "@types/lodash-es": "4.17.9",
     "@types/lodash": "4.17.4",
     "lodash-es": "^4.17.21",

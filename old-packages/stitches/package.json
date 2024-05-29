@@ -23,7 +23,7 @@
   "scripts": {
     "build": "tsup --dts --minify",
     "dev": "tsup --watch",
-    "prepare": "tsup --dts"
+    "prepare-build": "tsup --dts"
   },
   "dependencies": {
     "@stitches/core": "^1.2.8",

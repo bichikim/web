@@ -1,0 +1,15 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "globalDependencies": ["**/.env.*local"],
+  "pipeline": {
+    "prepare-build": {
+      "dependsOn": ["^prepare-build"],
+      "inputs": ["src/**/*.tsx", "src/**/*.ts", "src/**/*.css"],
+      "outputs": ["dist/**"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    }
+  }
+}
