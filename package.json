@@ -107,6 +107,7 @@
   "pnpm": {
     "overrides": {
       "@winter-love/vite-lib-config": "workspace:*",
+      "@winter-love/vite-plugin-monorepo-alias": "workspace:*",
       "@winter-love/eslint-config": "workspace:*",
       "@winter-love/solid": "workspace:*",
       "@winter-love/use": "workspace:*",
