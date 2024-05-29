@@ -8,6 +8,9 @@
     "eslint.config.mjs"
   ],
   "devDependencies": {
+    "@stylistic/eslint-plugin-ts": "^2.1.0",
+    "@vue/eslint-config-typescript": "^11.0.3",
+    "@unocss/eslint-config": "0.59.4",
     "@eslint/eslintrc": "^3.1.0",
     "@eslint/js": "^9.3.0",
     "eslint": "^9.3.0",
@@ -23,6 +26,7 @@
     "eslint-plugin-vue": "^9.26.0",
     "prettier": "^3.2.5",
     "typescript": "^5.4.5",
+    "vue-eslint-parser": "^9.4.2",
     "typescript-eslint": "^7.10.0"
   }
 }
