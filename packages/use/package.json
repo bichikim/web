@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/use",
-  "version": "1.0.27",
+  "version": "1.0.29",
   "description": "Vue utils",
   "keywords": [
     "typescript",
@@ -40,11 +40,11 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@vue/shared": "^3.3.0",
     "@winter-love/lodash": "workspace:*",
     "@winter-love/utils": "workspace:*",
     "immer": "^10.0.2",
-    "vue": "^3",
-    "@vue/shared": "^3.3.0"
+    "vue": "^3"
   },
   "devDependencies": {
     "@types/sinon": "10.0.16"

@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/utils",
-  "version": "1.0.27",
+  "version": "1.0.29",
   "description": "Useful javascript utils",
   "keywords": [
     "typescript",
@@ -40,8 +40,8 @@
     "smooth-scroll-into-view-if-needed": "^1.1.33"
   },
   "devDependencies": {
-    "@winter-love/vite-lib-config": "workspace:*",
     "@types/js-cookie": "^3.0.2",
+    "@winter-love/vite-lib-config": "workspace:*",
     "js-cookie": "^3.0.1",
     "micro-memoize": "^4.0.14",
     "tsd": "^0.25.0",

@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/vite-lib-config",
-  "version": "1.0.0",
+  "version": "1.0.29",
   "private": true,
   "description": "",
   "repository": {
@@ -20,9 +20,9 @@
   "types": "index.d.ts",
   "devDependencies": {
     "dotenv": "latest",
+    "lodash": "^4.17",
     "vite": "^5",
     "vite-plugin-dts": "^3.9",
-    "vite-plugin-solid": "^2.10",
-    "lodash": "^4.17"
+    "vite-plugin-solid": "^2.10"
   }
 }

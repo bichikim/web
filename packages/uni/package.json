@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/uni",
-  "version": "1.0.27",
+  "version": "1.0.29",
   "description": "universally reactive utils 🧪 experimental",
   "repository": "git@github.com:winter-love/web.git",
   "author": "bichi@live.co.kr",
@@ -35,19 +35,18 @@
     "@winter-love/utils": "workspace:*",
     "jest-mock": "^29.3.1",
     "node-html-parser": "^6.1.4",
-    "vue": "^3",
-    "solid-js": "^1.8.14"
+    "solid-js": "^1.8.14",
+    "vue": "^3"
   },
-  "peerDependencies": {},
   "devDependencies": {
-    "@winter-love/vite-lib-config": "workspace:*",
     "@types/jest": "^28.1.8",
     "@types/node": "^18.11.14",
     "@winter-love/lodash": "workspace:*",
+    "@winter-love/vite-lib-config": "workspace:*",
+    "typescript": "^5.3.3",
     "vite": "^5",
     "vite-plugin-dts": "^3.7.2",
-    "vite-plugin-solid": "^2.9.1",
-    "typescript": "^5.3.3"
+    "vite-plugin-solid": "^2.9.1"
   },
   "publishConfig": {
     "access": "public"

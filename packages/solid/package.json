@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/solid",
-  "version": "1.0.27",
+  "version": "1.0.29",
   "description": "solid-js utils",
   "repository": "git@github.com:winter-love/web.git",
   "author": "bichi@live.co.kr",
@@ -38,21 +38,21 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@floating-ui/dom": "^1.6.5",
     "@winter-love/lodash": "workspace:*",
     "@winter-love/utils": "workspace:*",
-    "@floating-ui/dom": "^1.6.5",
     "class-variance-authority": "^0.7.0",
     "solid-js": "^1.8.15"
   },
   "peerDependencies": {
-    "solid-js": "^1.0.0",
-    "solid-dom-testing": "^0.0.3"
+    "solid-dom-testing": "^0.0.3",
+    "solid-js": "^1.0.0"
   },
   "devDependencies": {
-    "@winter-love/vite-lib-config": "workspace:*",
     "@types/jest": "^28.1.8",
     "@types/node": "^18.11.14",
     "@winter-love/lodash": "workspace:*",
+    "@winter-love/vite-lib-config": "workspace:*",
     "vite": "^5",
     "vite-plugin-dts": "^3.7.2",
     "vite-plugin-solid": "^2.9.1"
