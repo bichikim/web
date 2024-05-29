@@ -1,5 +1,5 @@
 {
-  "name": "@coong/firebase",
+  "name": "@apps/firebase",
   "version": "1.0.27-alpha.11",
   "private": true,
   "scripts": {

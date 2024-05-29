@@ -47,7 +47,6 @@
     "build": "tsup --dts --minify",
     "dev": "tsup --watch",
     "fix": "npx vue-demi-fix",
-    "prepare-build": "tsup --dts",
     "test-dev": "vite"
   },
   "dependencies": {

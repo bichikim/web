@@ -1,5 +1,5 @@
 {
-  "name": "@coong/image-server",
+  "name": "@apps/image-server",
   "version": "1.0.27-alpha.20",
   "private": true,
   "scripts": {

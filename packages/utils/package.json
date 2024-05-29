@@ -30,7 +30,6 @@
   "scripts": {
     "build": "vite build",
     "dev": "vite build --watch --minify false",
-    "prepare-build": "vite build --minify false",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

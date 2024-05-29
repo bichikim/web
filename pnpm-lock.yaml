@@ -1050,10 +1050,10 @@ importers:
         version: 3.4.15
       '@vue/test-utils':
         specifier: ^2.2.6
-        version: 2.4.3(@vue/server-renderer@3.4.27(vue@3.4.15(typescript@5.3.3)))(vue@3.4.15(typescript@5.3.3))
+        version: 2.4.3(@vue/server-renderer@3.4.27(vue@3.4.27(typescript@5.3.3)))(vue@3.4.27(typescript@5.3.3))
       '@vueuse/core':
         specifier: ^9.6.0
-        version: 9.13.0(@vue/composition-api@1.7.2(vue@3.4.15(typescript@5.3.3)))(vue@3.4.15(typescript@5.3.3))
+        version: 9.13.0(@vue/composition-api@1.7.2(vue@3.4.27(typescript@5.3.3)))(vue@3.4.27(typescript@5.3.3))
       '@winter-love/stitches':
         specifier: workspace:*
         version: link:../../old-packages/stitches
@@ -1073,8 +1073,8 @@ importers:
         specifier: ^1.8.14
         version: 1.8.14
       vue:
-        specifier: ^3.3.0
-        version: 3.4.15(typescript@5.3.3)
+        specifier: ^3
+        version: 3.4.27(typescript@5.3.3)
     devDependencies:
       '@types/jest':
         specifier: ^28.1.8
@@ -1149,9 +1149,6 @@ importers:
       '@types/sinon':
         specifier: 10.0.16
         version: 10.0.16
-      '@vue/server-renderer':
-        specifier: ^3.3.0
-        version: 3.4.15(vue@3.4.27(typescript@5.4.5))
 
   packages/utils:
     dependencies:
@@ -22918,7 +22915,7 @@ snapshots:
 
   '@vue/compiler-core@3.4.24':
     dependencies:
-      '@babel/parser': 7.24.4
+      '@babel/parser': 7.24.6
       '@vue/shared': 3.4.24
       entities: 4.5.0
       estree-walker: 2.0.2
@@ -22959,7 +22956,7 @@ snapshots:
 
   '@vue/compiler-sfc@3.4.15':
     dependencies:
-      '@babel/parser': 7.24.4
+      '@babel/parser': 7.24.6
       '@vue/compiler-core': 3.4.15
       '@vue/compiler-dom': 3.4.15
       '@vue/compiler-ssr': 3.4.15
@@ -23018,14 +23015,14 @@ snapshots:
       '@vue/compiler-dom': 3.4.27
       '@vue/shared': 3.4.27
 
-  '@vue/composition-api@1.7.2(vue@3.4.15(typescript@5.3.3))':
-    dependencies:
-      vue: 3.4.15(typescript@5.3.3)
-    optional: true
-
   '@vue/composition-api@1.7.2(vue@3.4.24(typescript@5.3.3))':
     dependencies:
       vue: 3.4.24(typescript@5.3.3)
+    optional: true
+
+  '@vue/composition-api@1.7.2(vue@3.4.27(typescript@5.3.3))':
+    dependencies:
+      vue: 3.4.27(typescript@5.3.3)
     optional: true
 
   '@vue/composition-api@1.7.2(vue@3.4.27(typescript@5.4.5))':
@@ -23147,23 +23144,11 @@ snapshots:
       '@vue/shared': 3.2.45
       vue: 3.4.27(typescript@5.4.5)
 
-  '@vue/server-renderer@3.4.15(vue@3.4.15(typescript@5.3.3))':
-    dependencies:
-      '@vue/compiler-ssr': 3.4.15
-      '@vue/shared': 3.4.15
-      vue: 3.4.15(typescript@5.3.3)
-
   '@vue/server-renderer@3.4.15(vue@3.4.15(typescript@5.4.5))':
     dependencies:
       '@vue/compiler-ssr': 3.4.15
       '@vue/shared': 3.4.15
       vue: 3.4.15(typescript@5.4.5)
-
-  '@vue/server-renderer@3.4.15(vue@3.4.27(typescript@5.4.5))':
-    dependencies:
-      '@vue/compiler-ssr': 3.4.15
-      '@vue/shared': 3.4.15
-      vue: 3.4.27(typescript@5.4.5)
 
   '@vue/server-renderer@3.4.21(vue@3.4.24(typescript@5.3.3))':
     dependencies:
@@ -23188,13 +23173,6 @@ snapshots:
       '@vue/compiler-ssr': 3.4.24
       '@vue/shared': 3.4.24
       vue: 3.4.27(typescript@5.4.5)
-
-  '@vue/server-renderer@3.4.27(vue@3.4.15(typescript@5.3.3))':
-    dependencies:
-      '@vue/compiler-ssr': 3.4.27
-      '@vue/shared': 3.4.27
-      vue: 3.4.15(typescript@5.3.3)
-    optional: true
 
   '@vue/server-renderer@3.4.27(vue@3.4.27(typescript@5.3.3))':
     dependencies:
@@ -23221,14 +23199,6 @@ snapshots:
   '@vue/test-utils@2.2.6(vue@3.4.27(typescript@5.4.5))':
     dependencies:
       vue: 3.4.27(typescript@5.4.5)
-
-  '@vue/test-utils@2.4.3(@vue/server-renderer@3.4.27(vue@3.4.15(typescript@5.3.3)))(vue@3.4.15(typescript@5.3.3))':
-    dependencies:
-      js-beautify: 1.14.11
-      vue: 3.4.15(typescript@5.3.3)
-      vue-component-type-helpers: 1.8.27
-    optionalDependencies:
-      '@vue/server-renderer': 3.4.27(vue@3.4.15(typescript@5.3.3))
 
   '@vue/test-utils@2.4.3(@vue/server-renderer@3.4.27(vue@3.4.27(typescript@5.3.3)))(vue@3.4.27(typescript@5.3.3))':
     dependencies:
@@ -23264,12 +23234,12 @@ snapshots:
       - '@vue/composition-api'
       - vue
 
-  '@vueuse/core@9.13.0(@vue/composition-api@1.7.2(vue@3.4.15(typescript@5.3.3)))(vue@3.4.15(typescript@5.3.3))':
+  '@vueuse/core@9.13.0(@vue/composition-api@1.7.2(vue@3.4.27(typescript@5.3.3)))(vue@3.4.27(typescript@5.3.3))':
     dependencies:
       '@types/web-bluetooth': 0.0.16
       '@vueuse/metadata': 9.13.0
-      '@vueuse/shared': 9.13.0(@vue/composition-api@1.7.2(vue@3.4.15(typescript@5.3.3)))(vue@3.4.15(typescript@5.3.3))
-      vue-demi: 0.14.7(@vue/composition-api@1.7.2(vue@3.4.15(typescript@5.3.3)))(vue@3.4.15(typescript@5.3.3))
+      '@vueuse/shared': 9.13.0(@vue/composition-api@1.7.2(vue@3.4.27(typescript@5.3.3)))(vue@3.4.27(typescript@5.3.3))
+      vue-demi: 0.14.7(@vue/composition-api@1.7.2(vue@3.4.27(typescript@5.3.3)))(vue@3.4.27(typescript@5.3.3))
     transitivePeerDependencies:
       - '@vue/composition-api'
       - vue
@@ -23306,9 +23276,9 @@ snapshots:
       - '@vue/composition-api'
       - vue
 
-  '@vueuse/shared@9.13.0(@vue/composition-api@1.7.2(vue@3.4.15(typescript@5.3.3)))(vue@3.4.15(typescript@5.3.3))':
+  '@vueuse/shared@9.13.0(@vue/composition-api@1.7.2(vue@3.4.27(typescript@5.3.3)))(vue@3.4.27(typescript@5.3.3))':
     dependencies:
-      vue-demi: 0.14.7(@vue/composition-api@1.7.2(vue@3.4.15(typescript@5.3.3)))(vue@3.4.15(typescript@5.3.3))
+      vue-demi: 0.14.7(@vue/composition-api@1.7.2(vue@3.4.27(typescript@5.3.3)))(vue@3.4.27(typescript@5.3.3))
     transitivePeerDependencies:
       - '@vue/composition-api'
       - vue
@@ -32750,7 +32720,7 @@ snapshots:
     dependencies:
       '@babel/core': 7.24.4
       '@babel/standalone': 7.23.8
-      '@babel/types': 7.24.0
+      '@babel/types': 7.24.6
       defu: 6.1.4
       jiti: 1.21.0
       mri: 1.2.0
@@ -33391,17 +33361,17 @@ snapshots:
     optionalDependencies:
       '@vue/composition-api': 1.7.2(vue@3.4.27(typescript@5.4.5))
 
-  vue-demi@0.14.7(@vue/composition-api@1.7.2(vue@3.4.15(typescript@5.3.3)))(vue@3.4.15(typescript@5.3.3)):
-    dependencies:
-      vue: 3.4.15(typescript@5.3.3)
-    optionalDependencies:
-      '@vue/composition-api': 1.7.2(vue@3.4.15(typescript@5.3.3))
-
   vue-demi@0.14.7(@vue/composition-api@1.7.2(vue@3.4.24(typescript@5.3.3)))(vue@3.4.24(typescript@5.3.3)):
     dependencies:
       vue: 3.4.24(typescript@5.3.3)
     optionalDependencies:
       '@vue/composition-api': 1.7.2(vue@3.4.24(typescript@5.3.3))
+
+  vue-demi@0.14.7(@vue/composition-api@1.7.2(vue@3.4.27(typescript@5.3.3)))(vue@3.4.27(typescript@5.3.3)):
+    dependencies:
+      vue: 3.4.27(typescript@5.3.3)
+    optionalDependencies:
+      '@vue/composition-api': 1.7.2(vue@3.4.27(typescript@5.3.3))
 
   vue-demi@0.14.7(@vue/composition-api@1.7.2(vue@3.4.27(typescript@5.4.5)))(vue@3.4.27(typescript@5.4.5)):
     dependencies:
@@ -33489,16 +33459,6 @@ snapshots:
       '@vue/language-core': 1.8.27(typescript@5.4.5)
       semver: 7.5.4
       typescript: 5.4.5
-
-  vue@3.4.15(typescript@5.3.3):
-    dependencies:
-      '@vue/compiler-dom': 3.4.15
-      '@vue/compiler-sfc': 3.4.15
-      '@vue/runtime-dom': 3.4.15
-      '@vue/server-renderer': 3.4.15(vue@3.4.15(typescript@5.3.3))
-      '@vue/shared': 3.4.15
-    optionalDependencies:
-      typescript: 5.3.3
 
   vue@3.4.15(typescript@5.4.5):
     dependencies:

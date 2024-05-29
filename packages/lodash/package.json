@@ -28,7 +28,6 @@
     "build": "vite build && pnpm run copytype",
     "copytype": "cpx \"./node_modules/@types/lodash/**/*.ts\" dist ",
     "dev": "vite build --watch --minify false",
-    "prepare-build": "vite build --minify false && pnpm run copytype",
     "generate-lodash-es": "lodash modularize exports=es -d -s -o src/lodash"
   },
   "devDependencies": {

@@ -1,11 +1,12 @@
 {
-  "name": "@winter-love/bplan-client",
+  "name": "@apps/bplan-client",
   "type": "module",
   "scripts": {
     "build": "vinxi build",
     "dev": "vinxi dev",
     "start": "node ./.output/server/index.mjs"
   },
+  "private": true,
   "dependencies": {
     "@solidjs/meta": "^0.29.4",
     "@solidjs/router": "^0.13.3",

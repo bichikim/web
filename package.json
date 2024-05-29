@@ -32,7 +32,7 @@
     "test:vitest:watch": "vitest watch",
     "storybook": "storybook dev -p 6006",
     "test:storybook": "test-storybook",
-    "prepare-build": "turbo prepare-build"
+    "prepare": "turbo build --filter=@winter-love/*"
   },
   "browserslist": [
     "last 10 Chrome versions",

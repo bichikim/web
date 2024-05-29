@@ -41,8 +41,7 @@
   ],
   "scripts": {
     "build": "vite build",
-    "dev": "vite build --watch --minify false",
-    "prepare-build": "vite build --minify false"
+    "dev": "vite build --watch --minify false"
   },
   "dependencies": {
     "@types/node": "^20.2.1",
