@@ -22,7 +22,7 @@
     "lint": "eslint --cache ./",
     "lint:errors": "eslint --cache --quiet ./",
     "lint:fix": "eslint --fix --ext .js,.ts,.tsx,.vue ./",
-    "publish:alpha": "lerna publish from-package --preid alpha --dist-tag alpha",
+    "publish:alpha": "lernan publish from-package --preid alpha --dist-tag alpha",
     "publish:beta": "lerna publish from-package --preid beta --dist-tag beta",
     "publish:next": "lerna publish from-package --preid next --dist-tag next",
     "publish:patch": "lerna publish patch --no-private --force-publish",
@@ -106,6 +106,12 @@
   },
   "pnpm": {
     "overrides": {
+      "@winter-love/vite-lib-config": "workspace:*",
+      "@winter-love/eslint-config": "workspace:*",
+      "@winter-love/solid": "workspace:*",
+      "@winter-love/use": "workspace:*",
+      "@winter-love/utils": "workspace:*",
+      "@winter-love/lodash": "workspace:*",
       "semver@<5.7.2": "5.7.2",
       "follow-redirects@<1.15.6": "1.15.6",
       "vite@<4.5.3": "4.5.3",

@@ -33,7 +33,7 @@
   "devDependencies": {
     "@types/lodash": "4.17.4",
     "@types/lodash-es": "4.17.9",
-    "@winter-love/vite-lib-config": "1.0.29",
+    "@winter-love/vite-lib-config": "workspace:*",
     "cpx2": "^7.0.1",
     "lodash-cli": "4.17.5",
     "lodash-es": "^4.17.21"
