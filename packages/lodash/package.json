@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/lodash",
-  "version": "1.0.31",
+  "version": "1.0.32",
   "description": "Lodash for tree shaking",
   "keywords": [
     "lodash"
