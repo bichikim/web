@@ -13,7 +13,7 @@ export type ToRefsValueOnly<T = any> = {
   [K in keyof T]: T[K] extends (...args: any) => any ? T[K] : ToRef<T[K]>
 }
 
-export type MaybeRef<T> = Ref<T> | ComputedRef<T> | T | WritableComputedRef<T>
+export type MaybeRef<T> = T | Ref<T> | ComputedRef<T> | WritableComputedRef<T>
 
 export type WritableRef<T> = WritableComputedRef<T> | Ref<T>
 

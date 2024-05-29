@@ -1,18 +1,10 @@
 /**
  * @jest-environment jsdom
  */
-import {
-  defineComponent,
-  effectScope,
-  flushPromises,
-  h,
-  mount,
-  reactive,
-  ref,
-  toRef,
-} from '@winter-love/test-utils'
+import {flushPromises, mount} from '@winter-love/test-utils'
 import {mutRef} from 'src/refs/mut-ref'
 import {onEvent} from '../index'
+import {defineComponent, effectScope, h, reactive, ref, toRef} from 'vue'
 
 interface SetupOptions {
   eventName?: string

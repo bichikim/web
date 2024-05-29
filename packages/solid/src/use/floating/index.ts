@@ -1,5 +1,5 @@
 import {computePosition, FloatingElement, ReferenceElement} from '@floating-ui/dom'
-import {Accessor, createEffect, createMemo, createResource, createSignal, onCleanup, onMount} from 'solid-js'
+import {Accessor, createEffect, createMemo, createSignal, onCleanup} from 'solid-js'
 import {FloatingOptions, FloatingReturn} from 'src/use/floating/types'
 import {resolveAccessor} from 'src/use/resolve-accessor'
 import {MayBeAccessor} from 'src/use/types'

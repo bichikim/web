@@ -32,7 +32,7 @@
     "@vue/test-utils": "^2",
     "jest-mock": "^29.3.1",
     "node-html-parser": "^6.1.4",
-    "vue": "^3.3.0"
+    "vue": "^3"
   },
   "devDependencies": {
     "@types/jest": "^28.1.8",

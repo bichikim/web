@@ -29,11 +29,12 @@
     "copytype": "cpx \"./node_modules/@types/lodash/**/*.ts\" dist ",
     "dev": "tsup --watch",
     "generate-lodash-es": "lodash modularize exports=es -d -s -o src/lodash",
-    "prepare": "tsup && pnpm run copytype"
+    "prepare": "vite build && pnpm run copytype"
   },
   "dependencies": {},
   "devDependencies": {
     "@types/lodash-es": "4.17.9",
+    "@types/lodash": "4.17.4",
     "lodash-es": "^4.17.21",
     "cpx2": "^7.0.1",
     "lodash-cli": "4.17.5"
