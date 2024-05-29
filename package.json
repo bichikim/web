@@ -25,19 +25,14 @@
     "publish:alpha": "lerna publish from-package --preid alpha --dist-tag alpha",
     "publish:beta": "lerna publish from-package --preid beta --dist-tag beta",
     "publish:next": "lerna publish from-package --preid next --dist-tag next",
-    "publish:patch": "lerna publish patch --no-private",
+    "publish:patch": "lerna publish patch --no-private --force-publish",
     "start:local-docker": "docker-compose -f local/docker-compose.yml up -d",
     "test": "vitest run",
     "test:vitest": "vitest run",
     "test:vitest:watch": "vitest watch",
-    "version:alpha": "lerna version prerelease --preid alpha",
-    "version:beta": "lerna version prerelease --preid beta",
-    "version:next": "lerna version prerelease --preid next",
-    "version:patch": "lerna version patch",
-    "version:patch-force": "lerna version patch --force-publish",
     "storybook": "storybook dev -p 6006",
     "test:storybook": "test-storybook",
-    "prepare": "turbo prepare-build"
+    "prepare-build": "turbo prepare-build"
   },
   "browserslist": [
     "last 10 Chrome versions",
