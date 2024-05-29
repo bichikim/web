@@ -6,8 +6,12 @@ settings:
 
 overrides:
   '@winter-love/vite-lib-config': workspace:*
+  '@winter-love/vite-plugin-monorepo-alias': workspace:*
+  '@winter-love/eslint-config': workspace:*
+  '@winter-love/solid': workspace:*
   '@winter-love/use': workspace:*
   '@winter-love/utils': workspace:*
+  '@winter-love/lodash': workspace:*
   semver@<5.7.2: 5.7.2
   follow-redirects@<1.15.6: 1.15.6
   vite@<4.5.3: 4.5.3
@@ -1086,8 +1090,8 @@ importers:
         specifier: ^18.11.14
         version: 18.19.8
       '@winter-love/lodash':
-        specifier: '*'
-        version: 1.0.33
+        specifier: workspace:*
+        version: link:../lodash
       '@winter-love/vite-lib-config':
         specifier: workspace:*
         version: link:../vite-lib-config
@@ -1137,8 +1141,8 @@ importers:
         specifier: ^3.3.0
         version: 3.4.15
       '@winter-love/lodash':
-        specifier: 1.0.33
-        version: 1.0.33
+        specifier: workspace:*
+        version: link:../lodash
       '@winter-love/utils':
         specifier: workspace:*
         version: link:../utils
@@ -1156,8 +1160,8 @@ importers:
   packages/utils:
     dependencies:
       '@winter-love/lodash':
-        specifier: 1.0.33
-        version: 1.0.33
+        specifier: workspace:*
+        version: link:../lodash
       safe-stable-stringify:
         specifier: ^2.4.1
         version: 2.4.3
@@ -6742,9 +6746,6 @@ packages:
   '@whatwg-node/node-fetch@0.5.4':
     resolution: {integrity: sha512-5AXi4B44/6SOlQG+X3cO5lsUdRTWSXqaWLkGKnwWfeJoMgRfA53RnYVnvTV+4CoatNBStPrIoDorjgQv+ouiMQ==}
     engines: {node: '>=16.0.0'}
-
-  '@winter-love/lodash@1.0.33':
-    resolution: {integrity: sha512-Jk1K9AvJ/CIMnI2sSzxXCf9zoQfKGoXv8+sidWvQthf8aXt9Qx9r9xFJal6i1nIwQ1TTdmzID5+jhAQ5ah52/Q==}
 
   '@wry/caches@1.0.1':
     resolution: {integrity: sha512-bXuaUNLVVkD20wcGBWRyo7j9N3TxePEWFZj2Y+r9OoUzfqmavM84+mFykRicNsBqatba5JLay1t48wxaXaWnlA==}
@@ -23330,8 +23331,6 @@ snapshots:
       busboy: 1.6.0
       fast-querystring: 1.1.2
       tslib: 2.6.2
-
-  '@winter-love/lodash@1.0.33': {}
 
   '@wry/caches@1.0.1':
     dependencies:
