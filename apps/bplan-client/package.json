@@ -7,16 +7,14 @@
     "start": "node ./.output/server/index.mjs"
   },
   "dependencies": {
-    "@solidjs/meta": "^0.29.3",
-    "@solidjs/router": "^0.10.10",
-    "@solidjs/start": "^0.5.1",
-    "@unocss/vite": "^0.59.4",
+    "@solidjs/meta": "^0.29.4",
+    "@solidjs/router": "^0.13.3",
+    "@solidjs/start": "^1.0.0",
+    "@unocss/vite": "^0.60.3",
     "@winter-love/utils": "workspace:*",
     "solid-js": "^1.8.7",
-    "solid-styled": "^0.8.2",
-    "unocss": "^0.59.4",
-    "vite": "4.5.2",
-    "vinxi": "0.2.1"
+    "vite": "^4",
+    "vinxi": "0.3.10"
   },
   "devDependencies": {
     "flush-promises": "^1.0.2"
