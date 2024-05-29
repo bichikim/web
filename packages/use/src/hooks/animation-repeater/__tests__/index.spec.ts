@@ -5,14 +5,14 @@ import {flushPromises} from '@vue/test-utils'
 import {mountComposition} from '@winter-love/test-utils'
 import {ref} from 'vue'
 import {onAnimationRepeater} from '../'
-
+import {describe, it, expect, vi} from 'vitest'
 describe('animation-repeater', () => {
   let tick
-  const requestAnimationFrame: any = jest.fn((callback) => {
+  const requestAnimationFrame: any = vi.fn((callback) => {
     tick = callback
     return 'flag'
   })
-  const cancelAnimationFrame = jest.fn()
+  const cancelAnimationFrame = vi.fn()
   let _requestAnimationFrame
   let _cancelAnimationFrame
   beforeEach(() => {

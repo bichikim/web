@@ -1,7 +1,7 @@
 import {createCustomResolver} from '../'
-
+import {describe, it, expect, vi} from 'vitest'
 describe('createCustomResolver', () => {
-  const fakeResolve = jest.fn(() => ({id: 'fake-id'}))
+  const fakeResolve = vi.fn(() => ({id: 'fake-id'}))
   const fakeRollup = {
     resolve: fakeResolve,
   }

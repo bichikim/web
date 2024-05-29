@@ -1,9 +1,9 @@
 import {assignRef} from '../'
 import {reactive, ref, watch} from 'vue'
-
+import {describe, it, expect, vi} from 'vitest'
 describe('assignRef', () => {
   const setup = (...args: any) => {
-    const callback = jest.fn()
+    const callback = vi.fn()
     const result = assignRef(...args)
     watch(result, callback, {flush: 'sync'})
 

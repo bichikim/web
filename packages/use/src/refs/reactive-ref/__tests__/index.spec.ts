@@ -4,7 +4,7 @@ import {flushPromises} from '@vue/test-utils'
 
 describe('reactiveRef', () => {
   it('should return a ref', async () => {
-    const callback = jest.fn()
+    const callback = vi.fn()
     const data = reactive({
       name: 'foo',
     })

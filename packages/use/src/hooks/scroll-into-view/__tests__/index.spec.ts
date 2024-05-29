@@ -3,12 +3,12 @@
  */
 import {useScrollIntoView} from '../'
 import {scrollIntoView} from '@winter-love/utils'
-
-jest.mock('@winter-love/utils', () => {
-  const actual = jest.requireActual('@winter-love/utils')
+import {describe, expect, it, vi} from 'vitest'
+vi.mock('@winter-love/utils', async () => {
+  const actual: any = await vi.importActual('@winter-love/utils')
   return {
     ...actual,
-    scrollIntoView: jest.fn(),
+    scrollIntoView: vi.fn(),
   }
 })
 

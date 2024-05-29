@@ -2,11 +2,11 @@ import {ref} from 'vue'
 import {watchExtended} from '../'
 import {flushPromises} from '@vue/test-utils'
 import {useFakeTimers} from 'sinon'
-
+import {describe, it, expect, vi} from 'vitest'
 describe('watchExtended', () => {
   it('should watch once', async () => {
     const valueRef = ref(0)
-    const watched = jest.fn()
+    const watched = vi.fn()
     watchExtended(valueRef, watched, {once: true})
     expect(watched).toBeCalledTimes(0)
     valueRef.value += 1
@@ -19,7 +19,7 @@ describe('watchExtended', () => {
   it('should watch with debounce', async () => {
     const clock = useFakeTimers()
     const valueRef = ref(0)
-    const watched = jest.fn()
+    const watched = vi.fn()
     watchExtended(valueRef, watched, {debounce: {interval: 500}})
     expect(watched).toBeCalledTimes(0)
     valueRef.value += 1
@@ -44,7 +44,7 @@ describe('watchExtended', () => {
   it.skip('should watch with debounce and once', async () => {
     const clock = useFakeTimers()
     const valueRef = ref(0)
-    const watched = jest.fn()
+    const watched = vi.fn()
     watchExtended(valueRef, watched, {debounce: {interval: 500}, once: true})
     expect(watched).toBeCalledTimes(0)
     valueRef.value += 1

@@ -46,6 +46,7 @@
     "last 5 Opera versions"
   ],
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.4.5",
     "@unocss/vite": "^0.60.3",
     "@solidjs/testing-library": "^0.8.8",
     "@storybook/addon-essentials": "^8.1.4",

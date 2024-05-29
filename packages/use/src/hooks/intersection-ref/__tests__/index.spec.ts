@@ -5,16 +5,16 @@ import {flushPromises, mount} from '@vue/test-utils'
 import {defineComponent, h, ref} from 'vue'
 import {useIntersectionRef} from '../'
 import {onIntersection} from 'src/hooks/intersection'
-
-jest.mock('src/hooks/intersection', () => {
-  const actual = jest.requireActual('src/hooks/intersection')
+import {describe, it, expect, vi, afterEach} from 'vitest'
+vi.mock('src/hooks/intersection', async () => {
+  const actual: any = await vi.importActual('src/hooks/intersection')
   return {
     ...actual,
-    onIntersection: jest.fn(actual.onIntersection),
+    onIntersection: vi.fn(actual.onIntersection),
   }
 })
 
-const _onIntersection = jest.mocked(onIntersection)
+const _onIntersection = vi.mocked(onIntersection)
 
 describe('use-element-intersection', () => {
   const setup = (threshold?: number) => {
@@ -47,7 +47,7 @@ describe('use-element-intersection', () => {
     }
   }
   afterEach(() => {
-    jest.resetAllMocks()
+    vi.resetAllMocks()
   })
   it('should show or hide element', async () => {
     const threshold = 0.05

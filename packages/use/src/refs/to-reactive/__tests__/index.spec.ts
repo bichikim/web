@@ -3,7 +3,7 @@ import {toReactive} from '../'
 
 describe('toReactive', () => {
   const setup = (target) => {
-    const callback = jest.fn()
+    const callback = vi.fn()
     const result = toReactive(target)
     watch(result, callback, {flush: 'sync'})
     return {

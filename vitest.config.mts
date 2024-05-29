@@ -10,7 +10,7 @@ export default defineConfig({
   },
   plugins: [
     vue(),
-    solid(),
+    solid() as any,
     monorepoAlias({
       alias: {
         '@winter-love/solid/test': resolvePath('packages/solid/src/test'),
@@ -20,16 +20,14 @@ export default defineConfig({
       root: fileURLToPath(new URL('./', import.meta.url)),
       sourceRoot: 'src',
       workspacePaths: [/^\/coong\//u, /^\/packages\//u],
-    }) as any,
+    }),
   ],
   test: {
     environment: 'node',
     globals: true,
     include: [
-      'packages/utils/src/**/*.{test,spec}.?(c|m)[jt]s?(x)',
-      'packages/solid/src/**/*.{test,spec}.?(c|m)[jt]s?(x)',
-      'apps/coong-client/src/**/*.{test,spec}.?(c|m)[jt]s?(x)',
-      'apps/bplan-client/src/**/*.{test,spec}.?(c|m)[jt]s?(x)',
+      'packages/*/src/**/*.{test,spec}.?(c|m)[jt]s?(x)',
+      'apps/*/src/**/*.{test,spec}.?(c|m)[jt]s?(x)',
     ],
   },
 })

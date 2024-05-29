@@ -6,15 +6,15 @@ import {mountComposition} from '@winter-love/test-utils'
 import {SinonFakeTimers, useFakeTimers} from 'sinon'
 import {onEvent} from 'src/hooks/event'
 import {useClipboard} from '../'
-
-jest.mock('src/hooks/event', () => {
+import {describe, expect, it, vi, beforeEach, afterEach} from 'vitest'
+vi.mock('src/hooks/event', async () => {
   return {
-    ...jest.requireActual('src/hooks/event'),
-    onEvent: jest.fn(),
+    ...(await vi.importActual('src/hooks/event')),
+    onEvent: vi.fn(),
   }
 })
 
-const useEventMock = jest.mocked(onEvent)
+const useEventMock = vi.mocked(onEvent)
 
 const createUseElementEventMock = () => {
   const listeners = {}
@@ -34,8 +34,8 @@ const createUseElementEventMock = () => {
 
 describe('clipboard', () => {
   const mockClipboard = {
-    readText: jest.fn(() => null),
-    writeText: jest.fn(() => null),
+    readText: vi.fn(() => null),
+    writeText: vi.fn(() => null),
   }
   afterEach(() => {
     useEventMock.mockRestore()
@@ -66,14 +66,14 @@ describe('clipboard', () => {
     expect(wrapper.setupState.value).toBe(undefined)
     //
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-expect-error
+    // @ts-ignore
     mockClipboard.readText.mockResolvedValueOnce('foo' as any)
     mock.trigger('copy')
     await flushPromises()
     expect(wrapper.setupState.value).toBe('foo')
     //
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-expect-error
+    // @ts-ignore
     mockClipboard.readText.mockResolvedValueOnce('bar' as any)
     mock.trigger('cut')
     await flushPromises()

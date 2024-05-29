@@ -3,10 +3,10 @@
  */
 import {resolveElement} from 'src/utils'
 import {elementRef} from '../'
+import {describe, it, expect, vi} from 'vitest'
+vi.mock('src/utils')
 
-jest.mock('src/utils')
-
-const _resolveElementRef = jest.mocked(resolveElement)
+const _resolveElementRef = vi.mocked(resolveElement)
 
 describe('elementRef', () => {
   it('should resolve element', () => {

@@ -1,4 +1,3 @@
-/// <reference types="histoire" />
 import {fileURLToPath, URL} from 'node:url'
 import {monorepoAlias} from '@winter-love/vite-plugin-monorepo-alias'
 import {defineConfig} from 'vite'
@@ -18,11 +17,6 @@ export default defineConfig({
         },
       },
     },
-  },
-
-  histoire: {
-    // Alternative way of specifying histoire config
-    setupFile: '/histoire.setup.ts',
   },
 
   plugins: [

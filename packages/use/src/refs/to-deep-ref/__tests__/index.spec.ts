@@ -4,11 +4,12 @@
 import {flushPromises, mountComposition} from '@winter-love/test-utils'
 import {reactive, ref, watch} from 'vue'
 import {toDeepRef} from '../'
+import {describe, it, expect, vi} from 'vitest'
 
 describe('deep bind ref', () => {
   it('should compute deep tree ref', async () => {
     const target = ref({info: {name: 'foo'}})
-    const changed = jest.fn()
+    const changed = vi.fn()
     const wrapper = mountComposition(() => {
       const data = toDeepRef(target, ['info', 'name'])
       watch(data, changed)
@@ -34,7 +35,7 @@ describe('deep bind ref', () => {
   })
   it('should compute deep tree reactive', async () => {
     const target = reactive({info: {name: 'foo'}})
-    const changed = jest.fn()
+    const changed = vi.fn()
     const wrapper = mountComposition(() => {
       const data = toDeepRef(target, ['info', 'name'])
       watch(data, changed)

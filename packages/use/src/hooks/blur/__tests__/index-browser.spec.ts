@@ -4,11 +4,11 @@
 import {useBlur} from '../'
 import {getDocument, getHtmlElementClass} from '@winter-love/utils'
 import {mountComposition} from '@winter-love/test-utils'
+import {describe, it, expect, vi} from 'vitest'
+vi.mock('@winter-love/utils')
 
-jest.mock('@winter-love/utils')
-
-const mockGetDocument = jest.mocked(getDocument)
-const mockGetHtmlElement = jest.mocked(getHtmlElementClass)
+const mockGetDocument = vi.mocked(getDocument)
+const mockGetHtmlElement = vi.mocked(getHtmlElementClass)
 
 describe('blur', () => {
   it('should blur', () => {
@@ -35,7 +35,7 @@ describe('blur', () => {
 
     const element = document.createElement('div')
 
-    element.blur = jest.fn()
+    element.blur = vi.fn()
 
     fakeDocument.setActiveElement(element)
 

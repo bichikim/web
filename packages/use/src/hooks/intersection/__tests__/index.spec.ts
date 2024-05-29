@@ -5,16 +5,16 @@ import {flushPromises, mount} from '@vue/test-utils'
 import {getWindow} from '@winter-love/utils'
 import {defineComponent, h, ref} from 'vue'
 import {onIntersection} from '../'
-
-jest.mock('@winter-love/utils', () => {
-  const actual = jest.requireActual('@winter-love/utils')
+import {describe, it, expect, vi} from 'vitest'
+vi.mock('@winter-love/utils', async () => {
+  const actual: any = await vi.importActual('@winter-love/utils')
   return {
     ...actual,
-    getWindow: jest.fn(actual.getWindow),
+    getWindow: vi.fn(actual.getWindow),
   }
 })
 
-const _getWindow = jest.mocked(getWindow)
+const _getWindow = vi.mocked(getWindow)
 
 describe('on-element-intersection', () => {
   const setup = () => {
@@ -64,9 +64,9 @@ describe('on-element-intersection', () => {
     })
     let observerTrigger: any
     const threshold = 0.05
-    const disconnect = jest.fn()
-    const observe = jest.fn()
-    const observerMock = jest.fn((callback) => {
+    const disconnect = vi.fn()
+    const observe = vi.fn()
+    const observerMock = vi.fn((callback) => {
       observerTrigger = callback
       return {
         disconnect,

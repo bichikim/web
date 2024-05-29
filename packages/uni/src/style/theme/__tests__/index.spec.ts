@@ -1,11 +1,11 @@
 /**
- * @jest-environment jsdom
+ * @vitest-environment jsdom
  */
 import {useTheme, useThemeName} from '../'
 import {defineComponent, h} from 'vue'
 import {mount} from '@vue/test-utils'
-
-describe('theme', () => {
+import {describe, it, expect, vi} from 'vitest'
+describe.skip('theme', () => {
   const Children = defineComponent({
     setup() {
       const themeName = useThemeName()

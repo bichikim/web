@@ -4,10 +4,10 @@
 import {mountScope} from '@winter-love/test-utils'
 import {onEvent} from 'src/hooks/event'
 import {onOffline, onOnline, useConnection} from '../'
+import {describe, it, expect, vi, afterEach} from 'vitest'
+vi.mock('src/hooks/event')
 
-jest.mock('src/hooks/event')
-
-const _useEvent = jest.mocked(onEvent)
+const _useEvent = vi.mocked(onEvent)
 
 describe('on-connection', () => {
   describe('onOffline', () => {
@@ -16,7 +16,7 @@ describe('on-connection', () => {
     })
     it('should use useEvent correctly', () => {
       mountScope(() => {
-        const callback = jest.fn()
+        const callback = vi.fn()
         onOffline(callback)
         expect(_useEvent).toBeCalledTimes(1)
         expect(_useEvent).toBeCalledWith(window, 'offline', callback, {
@@ -32,7 +32,7 @@ describe('on-connection', () => {
     })
     it('should call onOffline handle', () => {
       mountScope(() => {
-        const callback = jest.fn()
+        const callback = vi.fn()
 
         onOnline(callback)
 

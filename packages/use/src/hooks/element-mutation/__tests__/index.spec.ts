@@ -3,20 +3,21 @@
  */
 import {onElementMutation} from '../'
 import {mountComposition} from '@winter-love/test-utils'
+import {describe, it, expect, vi, afterEach} from 'vitest'
 globalThis.MutationObserver = function ob() {
   // empty
 } as any
 
 describe('onElementMutation', () => {
   afterEach(() => {
-    jest.clearAllMocks()
+    vi.clearAllMocks()
   })
   it('should call callback when the element is mutated', () => {
-    const observe = jest.fn()
-    const disconnect = jest.fn()
+    const observe = vi.fn()
+    const disconnect = vi.fn()
     let _callback
 
-    jest.spyOn(globalThis, 'MutationObserver').mockImplementationOnce((callback) => {
+    vi.spyOn(globalThis, 'MutationObserver').mockImplementationOnce((callback) => {
       _callback = callback
       return {
         disconnect,
@@ -24,7 +25,7 @@ describe('onElementMutation', () => {
       } as any
     })
 
-    const callback = jest.fn()
+    const callback = vi.fn()
     const fakeElement: any = {}
 
     const wrapper = mountComposition(() => {
@@ -44,13 +45,13 @@ describe('onElementMutation', () => {
     expect(disconnect).toHaveBeenCalledTimes(1)
   })
   it('should do nothing if element is not element', () => {
-    const observe = jest.fn()
-    const disconnect = jest.fn()
-    jest.spyOn(globalThis, 'MutationObserver').mockReturnValueOnce({
+    const observe = vi.fn()
+    const disconnect = vi.fn()
+    vi.spyOn(globalThis, 'MutationObserver').mockReturnValueOnce({
       disconnect,
       observe,
     } as any)
-    const callback = jest.fn()
+    const callback = vi.fn()
     const wrapper = mountComposition(() => {
       onElementMutation(undefined, callback)
       return {}

@@ -5,30 +5,30 @@ import {mountComposition} from '@winter-love/test-utils'
 import {getWindow} from '@winter-love/utils'
 import {getCurrentInstance} from 'vue'
 import {useInstanceId} from '../'
-
-jest.mock('@winter-love/utils', () => {
-  const actual = jest.requireActual('@winter-love/utils')
+import {describe, it, expect, vi, afterEach} from 'vitest'
+vi.mock('@winter-love/utils', async () => {
+  const actual: any = await vi.importActual('@winter-love/utils')
   return {
     ...actual,
-    getWindow: jest.fn(actual.getWindow),
+    getWindow: vi.fn(actual.getWindow),
   }
 })
 
-jest.mock('vue', () => {
-  const actual = jest.requireActual('vue')
+vi.mock('vue', async () => {
+  const actual: any = await vi.importActual('vue')
   return {
     ...actual,
-    getCurrentInstance: jest.fn(actual.getCurrentInstance),
+    getCurrentInstance: vi.fn(actual.getCurrentInstance),
   }
 })
 
-const _isSSR = jest.mocked(getWindow)
-const _getCurrentInstance = jest.mocked(getCurrentInstance)
+const _isSSR = vi.mocked(getWindow)
+const _getCurrentInstance = vi.mocked(getCurrentInstance)
 
 describe('useInstanceId', () => {
   afterEach(() => {
     _isSSR.mockClear()
-    jest.spyOn(console, 'warn').mockClear()
+    vi.spyOn(console, 'warn').mockClear()
   })
   it('should return id', async () => {
     const wrapper = mountComposition(() => {
@@ -43,10 +43,10 @@ describe('useInstanceId', () => {
   })
 
   it('should warn in ssr environment', async () => {
-    _isSSR.mockReturnValueOnce()
-    jest.spyOn(console, 'warn')
+    ;(_isSSR as any).mockReturnValueOnce()
+    vi.spyOn(console, 'warn')
     // stop console run once
-    jest.mocked(console.warn).mockImplementationOnce(() => {
+    vi.mocked(console.warn).mockImplementationOnce(() => {
       // empty
     })
     const wrapper = mountComposition(() => {
@@ -61,9 +61,9 @@ describe('useInstanceId', () => {
   })
   it('should warn id not in an instance', async () => {
     _getCurrentInstance.mockReturnValueOnce(null)
-    jest.spyOn(console, 'warn')
+    vi.spyOn(console, 'warn')
     // stop console run once
-    jest.mocked(console.warn).mockImplementationOnce(() => {
+    vi.mocked(console.warn).mockImplementationOnce(() => {
       // empty
     })
     mountComposition(() => {
