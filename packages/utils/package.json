@@ -33,14 +33,14 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@winter-love/lodash": "workspace:*",
+    "@winter-love/lodash": "1.0.33",
     "safe-stable-stringify": "^2.4.1",
     "scroll-into-view-if-needed": "^3.0.4",
     "smooth-scroll-into-view-if-needed": "^1.1.33"
   },
   "devDependencies": {
     "@types/js-cookie": "^3.0.2",
-    "@winter-love/vite-lib-config": "workspace:*",
+    "@winter-love/vite-lib-config": "1.0.29",
     "js-cookie": "^3.0.1",
     "micro-memoize": "^4.0.14",
     "tsd": "^0.25.0",
@@ -49,7 +49,7 @@
   "publishConfig": {
     "access": "public"
   },
-  "gitHead": "4a8bc8b824e5780a82d3b2958e1a8afb48a49bb0",
+  "gitHead": "d2b83a5ae925fd122a6f46c99d743ede11b86c2f",
   "tsup": {
     "entry": [
       "src/index.ts"

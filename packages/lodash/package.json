@@ -33,7 +33,7 @@
   "devDependencies": {
     "@types/lodash": "4.17.4",
     "@types/lodash-es": "4.17.9",
-    "@winter-love/vite-lib-config": "workspace:*",
+    "@winter-love/vite-lib-config": "1.0.29",
     "cpx2": "^7.0.1",
     "lodash-cli": "4.17.5",
     "lodash-es": "^4.17.21"
@@ -41,7 +41,7 @@
   "publishConfig": {
     "access": "public"
   },
-  "gitHead": "4a8bc8b824e5780a82d3b2958e1a8afb48a49bb0",
+  "gitHead": "d2b83a5ae925fd122a6f46c99d743ede11b86c2f",
   "tsup": {
     "entry": [
       "src/index.ts"

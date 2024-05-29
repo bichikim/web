@@ -30,8 +30,8 @@
     "@vue/test-utils": "^2.2.6",
     "@vueuse/core": "^9.6.0",
     "@winter-love/stitches": "workspace:*",
-    "@winter-love/use": "workspace:*",
-    "@winter-love/utils": "workspace:*",
+    "@winter-love/use": "1.0.33",
+    "@winter-love/utils": "1.0.33",
     "jest-mock": "^29.3.1",
     "node-html-parser": "^6.1.4",
     "solid-js": "^1.8.14",
@@ -40,8 +40,8 @@
   "devDependencies": {
     "@types/jest": "^28.1.8",
     "@types/node": "^18.11.14",
-    "@winter-love/lodash": "workspace:*",
-    "@winter-love/vite-lib-config": "workspace:*",
+    "@winter-love/lodash": "1.0.33",
+    "@winter-love/vite-lib-config": "1.0.29",
     "typescript": "^5.3.3",
     "vite": "^5",
     "vite-plugin-dts": "^3.7.2",
@@ -50,7 +50,7 @@
   "publishConfig": {
     "access": "public"
   },
-  "gitHead": "4a8bc8b824e5780a82d3b2958e1a8afb48a49bb0",
+  "gitHead": "d2b83a5ae925fd122a6f46c99d743ede11b86c2f",
   "web-types": [
     "../../web-types.json"
   ]
