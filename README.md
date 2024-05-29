@@ -1,4 +1,4 @@
-# Coong / Winter Love packages
+# Winter Love Project
 
 ## Documents
 https://bichikim.github.io/web WIP
@@ -7,7 +7,7 @@ https://bichikim.github.io/web WIP
 
 ```bash
 # we use bunjs refer to https://bun.sh/
-bun i
+pnpm i
 ```
 
 ## Recommended global dependencies
