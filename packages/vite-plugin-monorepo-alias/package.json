@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/vite-plugin-monorepo-alias",
-  "version": "1.0.30",
+  "version": "1.0.31",
   "description": "vite monorepo alias plugin",
   "keywords": [
     "typescript",
