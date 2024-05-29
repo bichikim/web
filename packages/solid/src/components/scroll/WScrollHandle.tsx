@@ -1,28 +1,13 @@
-import {DragType, stopPropagation, sx, useDrag, ValidStyle} from '@winter-love/solid/use'
+import {DragType, stopPropagation, sx, useDrag} from '@winter-love/solid/use'
 import {createMemo, createSignal, mergeProps, splitProps} from 'solid-js'
 import {Dynamic} from 'solid-js/web'
 import {DynamicParentProps} from 'src/components/types'
-import {
-  BAR_PERCENT,
-  BOTTOM_VAR,
-  HEIGHT_VAR,
-  LEFT_VAR,
-  RIGHT_VAR,
-  TOP_VAR,
-  WIDTH_VAR,
-  SIZE_VAR,
-  POSITION_VAR,
-} from '../css-var'
+import {POSITION_VAR, SIZE_VAR} from '../css-var'
 import {useScrollBar} from './scroll-bar-context'
 import {useScrollContext} from './scroll-context'
 
 export interface WScrollHandleProps extends DynamicParentProps {
-  [key: string]: any
-
-  as?: string
-  class?: string
-
-  style?: ValidStyle
+  //
 }
 
 export const WScrollHandle = (_props: WScrollHandleProps) => {
@@ -33,7 +18,6 @@ export const WScrollHandle = (_props: WScrollHandleProps) => {
     'class',
   ])
   const scrollBar = useScrollBar()
-  // const [pointerDown, setPointerDown] = createSignal(false)
 
   const [element, setElement] = createSignal<HTMLElement | null>(null)
   const scrollContext = useScrollContext()
@@ -52,18 +36,19 @@ export const WScrollHandle = (_props: WScrollHandleProps) => {
   })
 
   const handleStyle = createMemo(() => {
-    const {barPosition, barSize, percent} = handleValues()
-    const {type} = scrollBar()
+    const {barPosition, barSize} = handleValues()
 
     return {
       [POSITION_VAR]: `${barPosition}px`,
       [SIZE_VAR]: `${barSize}px`,
     }
   })
+
   const setScroll = (position: number) => {
     const {type} = scrollBar()
     scrollContext.setScroll(type, position)
   }
+
   useDrag(element, (type, payload) => {
     setBarState(type)
     if (type !== 'move') {

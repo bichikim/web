@@ -55,8 +55,8 @@ export const XYScroll: Story = {
       >
         <WScroll.Handle
           tabindex="0"
-          class="absolute left-0 top-var-position h-var-size @hover-outline outline-3 outline-black rd-0.5rem select-none
-          data-[state=move]:outline"
+          class="absolute left-0 top-var-position h-var-size @hover-outline outline-3 outline-black
+            rd-0.5rem select-none data-[state=move]:outline"
         >
           <img
             draggable="false"

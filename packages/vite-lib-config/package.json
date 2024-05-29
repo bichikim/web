@@ -1,0 +1,28 @@
+{
+  "name": "@winter-love/vite-lib-config",
+  "version": "1.0.0",
+  "private": true,
+  "description": "",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/project-sharp-one/project-1.git"
+  },
+  "exports": {
+    ".": {
+      "import": "./index.mjs"
+    },
+    "./require": {
+      "import": "./require.mjs"
+    },
+    "./*": "./*"
+  },
+  "main": "index.mjs",
+  "types": "index.d.ts",
+  "devDependencies": {
+    "dotenv": "latest",
+    "vite": "^5",
+    "vite-plugin-dts": "^3.9",
+    "vite-plugin-solid": "^2.10",
+    "lodash": "^4.17"
+  }
+}

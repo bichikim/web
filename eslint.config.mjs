@@ -385,7 +385,6 @@ export default [
             String.raw`\.spec$`,
           ],
           replacements: {
-            pkg: false,
             arg: false,
             args: false,
             as: false,
@@ -398,6 +397,7 @@ export default [
             net: false,
             param: false,
             params: false,
+            pkg: false,
             prev: false,
             prop: false,
             props: false,

@@ -25,23 +25,23 @@
     "dist/*"
   ],
   "scripts": {
-    "build": "tsup --dts --minify",
+    "build": "vite build && pnpm run copytype",
     "copytype": "cpx \"./node_modules/@types/lodash/**/*.ts\" dist ",
     "dev": "tsup --watch",
     "generate-lodash-es": "lodash modularize exports=es -d -s -o src/lodash",
     "prepare": "tsup && pnpm run copytype"
   },
-  "dependencies": {
-    "@types/lodash-es": "4.17.9"
-  },
+  "dependencies": {},
   "devDependencies": {
-    "@types/lodash": "4.14.198",
-    "cpx": "^1.5.0",
+    "@types/lodash-es": "4.17.9",
+    "lodash-es": "^4.17.21",
+    "cpx2": "^7.0.1",
     "lodash-cli": "4.17.5"
   },
   "publishConfig": {
     "access": "public"
   },
+  "peerDependencies": {},
   "gitHead": "4a8bc8b824e5780a82d3b2958e1a8afb48a49bb0",
   "tsup": {
     "entry": [

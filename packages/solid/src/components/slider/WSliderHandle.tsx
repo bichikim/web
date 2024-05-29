@@ -1,10 +1,10 @@
-import {stopPropagation, sx, useDrag} from '@winter-love/solid/use'
-import {createMemo, createSignal, splitProps} from 'solid-js'
+import {cx, stopPropagation, sx, useDrag} from '@winter-love/solid/use'
+import {createMemo, createSignal, mergeProps, splitProps} from 'solid-js'
 import {Dynamic} from 'solid-js/web'
-import {LEFT_VAR, TOP_VAR} from 'src/components/css-var'
+import {POSITION_VAR} from 'src/components/css-var'
 import {DynamicParentProps} from 'src/components/types'
-import {useSliderContext} from './slider-context'
 import {useSliderAriaContext} from './slider-aria-context'
+import {useSliderContext} from './slider-context'
 
 export interface WSliderHandleProps extends DynamicParentProps {
   //
@@ -20,8 +20,15 @@ const toRangeValue = (value: number, min: number, max: number) => {
   return value
 }
 
+export const wSliderHandleClassName = 'w-slider-handle'
+
 export const WSliderHandle = (_props: WSliderHandleProps) => {
-  const [props, restProps] = splitProps(_props, ['as', 'style', 'children'])
+  const [props, restProps] = splitProps(mergeProps({as: 'div'}, _props), [
+    'as',
+    'style',
+    'children',
+    'class',
+  ])
   const sliderContext = useSliderContext()
   const sliderAriaContext = useSliderAriaContext()
   const [handelElement, setHandelElement] = createSignal<HTMLElement | null>(null)
@@ -45,15 +52,10 @@ export const WSliderHandle = (_props: WSliderHandleProps) => {
 
   const handleStyle = createMemo(() => {
     const {size} = elementValue()
-    const {type, percent, containerSize} = sliderContext.value()
+    const {percent, containerSize} = sliderContext.value()
     const position = (containerSize - size) * percent
-    if (type === 'horizontal') {
-      return {
-        [LEFT_VAR]: `${position}px`,
-      }
-    }
     return {
-      [TOP_VAR]: `${position}px`,
+      [POSITION_VAR]: `${position}px`,
     }
   })
 
@@ -76,11 +78,11 @@ export const WSliderHandle = (_props: WSliderHandleProps) => {
     sliderContext.setPercent(position / (containerSize - size))
   })
 
-  const as = createMemo(() => props.as ?? 'div')
   return (
     <Dynamic
       {...restProps}
-      component={as()}
+      class={cx(props.class, wSliderHandleClassName)}
+      component={props.as}
       role="slider"
       aria-orientation={sliderContext.value().type}
       aria-valuemin={sliderAriaContext().valuemin}
