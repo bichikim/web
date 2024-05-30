@@ -11,6 +11,10 @@ import sortKeys from 'eslint-plugin-sort-keys-fix'
 import pluginVue from 'eslint-plugin-vue'
 import typeSortKeys from 'eslint-plugin-typescript-sort-keys'
 import exportsSort from 'eslint-plugin-sort-export-all'
+// .js 인븥이면 파일을 못찾는다
+// noinspection JSFileReferences
+import solid from 'eslint-plugin-solid/configs/recommended.js'
+import * as tsParser from '@typescript-eslint/parser'
 
 const MAX_LINES = 600
 
@@ -22,6 +26,16 @@ export default [
   prettierRecommended,
   unicorn.configs['flat/recommended'],
   ...pluginVue.configs['flat/recommended'],
+  {
+    files: ['**/*.{ts,tsx}'],
+    ...solid,
+    languageOptions: {
+      parser: tsParser,
+      parserOptions: {
+        // project: 'tsconfig.json',
+      },
+    },
+  },
   {
     files: ['**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx,vue}'],
     ignores: ['**/package.json'],
