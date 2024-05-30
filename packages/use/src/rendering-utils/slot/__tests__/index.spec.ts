@@ -3,11 +3,12 @@
  */
 import {slot} from '../'
 import {defineComponent, h, mount} from '@winter-love/test-utils'
+import {describe, it, expect} from 'vitest'
 
 describe('Slot', () => {
   const setup = () => {
     const Component = defineComponent({
-      setup(props, {slots}) {
+      setup(_, {slots}) {
         return () =>
           h('div', [
             //

@@ -9,7 +9,6 @@ describe('freeze', () => {
     const foo = freeze({foo: 'foo'})
 
     const error = () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       ;(foo as any).foo = ''
     }
 

@@ -19884,7 +19884,7 @@ snapshots:
       error-stack-parser: 2.1.4
       glob: 10.4.1
       html-to-image: 1.11.11
-      radix3: 1.1.2
+      radix3: 1.1.0
       seroval: 1.0.7
       seroval-plugins: 1.0.7(seroval@1.0.7)
       shikiji: 0.9.19

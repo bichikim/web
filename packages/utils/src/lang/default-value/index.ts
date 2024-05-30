@@ -22,10 +22,8 @@ interface DefaultValueOp {
 }
 
 // retype by DefaultValueOp
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const defaultValueOp: DefaultValueOp = (...args: any[]) => {
   const [_defaultValue, when, value] = args
-  // eslint-disable-next-line no-magic-numbers
   if (args.length > 2) {
     return defaultValue(value, _defaultValue, when)
   }

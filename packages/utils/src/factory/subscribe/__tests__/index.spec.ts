@@ -6,7 +6,6 @@ import {describe, expect, it, vi} from 'vitest'
 
 describe('createSubscribe', () => {
   it('should create subscribe function', () => {
-    const eventName = 'foo'
     const value = 'foo'
     const nextValue = 'bar'
     const eventSubscribe = createSubscribe(() => 'john' as string)

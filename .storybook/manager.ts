@@ -1,14 +1,15 @@
 import {addons} from '@storybook/manager-api'
-import {camelCase} from 'lodash'
+import {words} from 'lodash'
 
 const pascalCase = (value: string) => {
-  const [first, ...rest] = camelCase(value)
-  return [first.toUpperCase(),...rest].join('')
+  return words(value)
+    .map((value) => `${value.charAt(0).toUpperCase()}${value.slice(1)}`)
+    .join('')
 }
 
 addons.setConfig({
   sidebar: {
-    renderLabel: ({ name, type }) => {
+    renderLabel: ({name, type}) => {
       if (type === 'root' || type === 'group') {
         return pascalCase(name)
       }
