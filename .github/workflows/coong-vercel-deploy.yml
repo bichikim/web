@@ -11,6 +11,8 @@ on:
 env:
   PNPM_VERSION: 9
   NODE_VERSION: 20
+  PROJECT_CLIENT_PATH: apps/coong-client
+  ARTIFACT_CLIENT_NAME: dist-client
 
 jobs:
   build-client:
@@ -49,3 +51,14 @@ jobs:
 
       - name: Unit Test
         run: pnpm run test
+
+      - name: Build
+        run: pnpm run build:coong-client
+
+      - name: Archive Production Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          retention-days: 1
+          name: ${{ env.ARTIFACT_CLIENT_NAME }}
+          path: |
+            ${{ env.PROJECT_CLIENT_PATH }}/dist

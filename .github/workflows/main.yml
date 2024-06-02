@@ -2,7 +2,8 @@ name: Build and Deploy Coong
 on:
   push:
     branches:
-      - dev
+      # stop deploy for now
+      - dev-none
       # stop deploy for now
       - release/coong-none
 
