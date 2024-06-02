@@ -9,15 +9,16 @@
   "private": true,
   "dependencies": {
     "@solidjs/meta": "^0.29.4",
-    "@solidjs/router": "^0.13.3",
-    "@solidjs/start": "^1.0.0",
-    "@unocss/vite": "^0.60.3",
+    "@solidjs/router": "^0.13.5",
+    "@solidjs/start": "^1.0.1",
     "@winter-love/utils": "workspace:*",
-    "solid-js": "^1.8.7",
-    "vite": "^4",
-    "vinxi": "0.3.10"
+    "solid-js": "^1.8.17",
+    "vite": "^5",
+    "vinxi": "0.3.11"
   },
   "devDependencies": {
+    "unocss": "^0.60.4",
+    "@unocss/vite": "^0.60.4",
     "flush-promises": "^1.0.2"
   },
   "engines": {

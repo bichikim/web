@@ -1,4 +1,4 @@
-// @refresh reload
+import 'virtual:uno.css'
 import {MetaProvider} from '@solidjs/meta'
 import {Router} from '@solidjs/router'
 import {FileRoutes} from '@solidjs/start/router'
