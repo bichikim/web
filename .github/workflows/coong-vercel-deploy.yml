@@ -81,4 +81,4 @@ jobs:
       - name: Deploy
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-        run: pnpm exec vercel --prod --cwd ${{ env.PROJECT_CLIENT_PATH }}/dist
+        run: pnpm exec vercel --prod --cwd ${{ env.PROJECT_CLIENT_PATH }}/dist/spa
