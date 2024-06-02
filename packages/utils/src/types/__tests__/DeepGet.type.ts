@@ -17,8 +17,8 @@ interface BCase {
 
 const bCase: DeepGet<BCase, ['foo', 'foo']> = {} as any
 const aCase: DeepGet<BCase, ['foo']> = {} as any
-const jCase: DeepGet<BCase, ['foo', 'john', 'john']> = {} as any
+const jaCase: DeepGet<BCase, ['foo', 'john', 'john']> = {} as any
 
 expectType<string>(bCase)
 expectType<ACase>(aCase)
-expectType<symbol>(jCase)
+expectType<symbol>(jaCase)

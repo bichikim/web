@@ -3,7 +3,7 @@
  */
 import {slot} from '../'
 import {defineComponent, h, mount} from '@winter-love/test-utils'
-import {describe, it, expect} from 'vitest'
+import {describe, expect, it} from 'vitest'
 
 describe('Slot', () => {
   const setup = () => {

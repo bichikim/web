@@ -1,0 +1,51 @@
+name: Deploy Coong to Vercel
+
+on:
+  push:
+    branches:
+      # build only
+      - dev
+      # build and deploy
+      - release/coong
+
+env:
+  PNPM_VERSION: 9
+  NODE_VERSION: 20
+
+jobs:
+  build-client:
+    name: Build Client
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Prepare Pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.NODE_VERSION }}
+          run_install: false
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - uses: actions/cache@v4
+        name: Setup pnpm cache
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Unit Test
+        run: pnpm run test

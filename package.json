@@ -10,7 +10,7 @@
   ],
   "scripts": {
     "build:android": "ionic cap build android",
-    "build:coong-client": "pnpm --filter @winter-love/coong-client run build:spa ",
+    "build:coong-client": "pnpm --filter @apps/coong-client run build:spa ",
     "build:docs": "vitepress build docs",
     "clean": "lerna clean --yes && rimraf node_modules",
     "dev:android": "ionic cap run android -l --external --open",

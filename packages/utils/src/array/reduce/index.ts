@@ -40,7 +40,6 @@ export interface ReduceOp {
 }
 
 // retype with ReduceOp
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const reduceOp: ReduceOp = (...args: any[]): any => {
   const [iteratee, initialValue, list] = args
   if (args.length > 2) {
