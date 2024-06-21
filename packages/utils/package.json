@@ -30,7 +30,7 @@
   "scripts": {
     "build": "vite build",
     "dev": "vite build --watch --minify false",
-    "typecheck": "tsc --noEmit"
+    "check-types": "tsc --noEmit"
   },
   "dependencies": {
     "@winter-love/lodash": "^1.0.34",

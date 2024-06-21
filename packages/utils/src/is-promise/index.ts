@@ -2,12 +2,13 @@ import {isNil} from 'src/export-lodash'
 
 export type ToBePromiseType<T> = T extends {
   catch: (...arg: any) => any
-  then: (value: infer U) => any
   finally: (...arg: any) => any
+  then: (value: infer U) => any
 }
   ? Promise<U>
   : never
 
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 export const isPromise = <T>(value: T): value is ToBePromiseType<T> => {
   if (isNil(value)) {

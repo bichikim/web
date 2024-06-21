@@ -13,13 +13,3 @@ export const getPxSize = (size: number | string, failBakeValue = 0) => {
   }
   return failBakeValue
 }
-
-const DEFAULT_EM_SIZE = 16
-
-export const toEm = (px: number, emSize: number = DEFAULT_EM_SIZE): number => {
-  return px / emSize
-}
-
-export const toPx = (em: number, emSize: number = DEFAULT_EM_SIZE): number => {
-  return em * emSize
-}

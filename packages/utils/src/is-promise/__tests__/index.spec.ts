@@ -1,9 +1,7 @@
 import {isPromise} from '../'
 import {describe, expect, it, vi} from 'vitest'
 describe('is-promise', () => {
-  const foo =
-
-  it('should return true with promise', () => {
+  const foo = it('should return true with promise', () => {
     expect(isPromise(Promise.resolve())).toBe(true)
   })
   it('should return false without promise', () => {
@@ -14,8 +12,8 @@ describe('is-promise', () => {
   it('should return true with promise like', () => {
     const promiseLike = {
       catch: vi.fn(),
+      finally: vi.fn(),
       then: vi.fn(),
-      finally: vi.fn()
     }
 
     expect(isPromise(promiseLike)).toBe(true)

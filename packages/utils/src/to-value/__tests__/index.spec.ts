@@ -1,7 +1,7 @@
-import {MaybeFunction} from 'src/types'
 import {expectType} from 'tsd'
-import {toValue} from '../'
 import {describe, expect, it} from 'vitest'
+import {toValue} from '../'
+
 describe('to-value', () => {
   it('should return a value from function execution', () => {
     const result = toValue(() => 'foo')
@@ -20,8 +20,7 @@ describe('to-value', () => {
     expect(result).toBe('foo, bar')
   })
   it('should return the value with args (maybe function)', () => {
-    const value = (foo: string, bar: string) =>
-      `${foo}, ${bar}`
+    const value = (foo: string, bar: string) => `${foo}, ${bar}`
 
     const result = toValue<string, [string, string]>(value, ['foo', 'bar'])
     expectType<string>(result)

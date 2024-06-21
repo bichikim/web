@@ -1,9 +1,8 @@
-import {createUuid} from '@winter-love/utils'
-import {Accessor, createMemo, createSignal} from 'solid-js'
+import {} from '@winter-love/utils'
+import {Accessor, createMemo, createSignal, createUniqueId} from 'solid-js'
 
 export const manualMemo = <R>(effectFunction: () => R): [Accessor<R>, () => void] => {
-  const uuid = createUuid()
-  const [signal, setSignal] = createSignal(uuid())
+  const [signal, setSignal] = createSignal(createUniqueId())
 
   const value = createMemo(() => {
     signal()
@@ -11,7 +10,7 @@ export const manualMemo = <R>(effectFunction: () => R): [Accessor<R>, () => void
   })
 
   const forceUpdate = () => {
-    setSignal(() => uuid())
+    setSignal(() => createUniqueId())
   }
 
   return [value, forceUpdate]

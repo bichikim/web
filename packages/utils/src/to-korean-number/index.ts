@@ -86,11 +86,11 @@ const anyToStringArray = (value: unknown) => [...toNumber(value).toString()]
 const KoreanChunk = 4
 
 export const toKoreanNumberFn = ({
-                                   mode = 'all',
-                                   joinString = '',
-                                   firstOne = false,
-                                   joinGroup = '',
-                                 }: NumberToKoreanOptions = {}) =>
+  mode = 'all',
+  joinString = '',
+  firstOne = false,
+  joinGroup = '',
+}: NumberToKoreanOptions = {}) =>
   flow(
     anyToStringArray,
     mode === 'all' ? mapFp((value) => _numberNames[Number(value)]) : (value) => value,
@@ -99,8 +99,8 @@ export const toKoreanNumberFn = ({
     mode === 'number'
       ? mapFp(removeUselessZero)
       : mapFp((value: string[], index: number, array: string[][]) =>
-        addSmallNumberUnit(value, !firstOne || index < array.length - 1),
-      ),
+          addSmallNumberUnit(value, !firstOne || index < array.length - 1),
+        ),
     mapFp((value: string[], index: number) => addNumberUnit(value, index)),
     mapFp((value: string[]) => compact(value).reverse().join(joinString)),
     reverse,

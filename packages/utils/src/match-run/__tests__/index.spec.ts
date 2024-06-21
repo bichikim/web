@@ -1,4 +1,4 @@
-import {describe, expect, it, vi} from 'vitest'
+import {describe, expect, it} from 'vitest'
 import {matchRun} from '../'
 
 describe('matchRun', () => {
@@ -26,7 +26,6 @@ describe('matchRun', () => {
   it('should return undefined if no match is found and no default function is provided', () => {
     const value = 'C'
     const matches = {
-      // eslint-disable-next-line id-length
       A: (v: string) => `Matched A: ${v}`,
       B: (v: string) => `Matched B: ${v}`,
     }
@@ -66,9 +65,9 @@ describe('matchRun', () => {
       '2': (v) => `Matched 2: ${v}`,
       A: (v) => `Matched A: ${v}`,
       B: (v) => `Matched B: ${v}`,
-      default: (v) => `Default`,
-      [x]: (v) => `Matched Symbol: x`,
-      [y]: (v) => `Matched Symbol: y`,
+      default: () => `Default`,
+      [x]: () => `Matched Symbol: x`,
+      [y]: () => `Matched Symbol: y`,
     }
     const result = matchRun(value)(matches)
     expect(result).toBe(expected)

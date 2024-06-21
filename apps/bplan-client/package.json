@@ -4,7 +4,8 @@
   "scripts": {
     "build": "vinxi build",
     "dev": "vinxi dev",
-    "start": "node ./.output/server/index.mjs"
+    "start": "node ./.output/server/index.mjs",
+    "check-types": "tsc --noEmit"
   },
   "private": true,
   "dependencies": {
@@ -19,7 +20,8 @@
   "devDependencies": {
     "unocss": "^0.60.4",
     "@unocss/vite": "^0.60.4",
-    "flush-promises": "^1.0.2"
+    "flush-promises": "^1.0.2",
+    "typescript": "^5.3.3"
   },
   "engines": {
     "node": ">=18"

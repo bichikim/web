@@ -34,7 +34,7 @@
   "scripts": {
     "build": "vite build",
     "dev": "vite build --watch --minify false",
-    "type-check": "tsc --noEmit"
+    "check-types": "tsc --noEmit"
   },
   "dependencies": {
     "@floating-ui/dom": "^1.6.5",
