@@ -1,0 +1,23 @@
+import {isNil} from 'src/export-lodash'
+
+export type ToBePromiseType<T> = T extends {
+  catch: (...arg: any) => any
+  then: (value: infer U) => any
+  finally: (...arg: any) => any
+}
+  ? Promise<U>
+  : never
+
+// @ts-ignore
+export const isPromise = <T>(value: T): value is ToBePromiseType<T> => {
+  if (isNil(value)) {
+    return false
+  }
+
+  return (
+    typeof value === 'object' &&
+    typeof (value as any).then === 'function' &&
+    typeof (value as any).catch === 'function' &&
+    typeof (value as any).finally === 'function'
+  )
+}

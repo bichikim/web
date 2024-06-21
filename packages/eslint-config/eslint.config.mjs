@@ -450,6 +450,7 @@ export default [
   {
     files: ['**/*.spec.ts'],
     rules: {
+      'id-length': 'off',
       'max-lines-per-function': 'off',
       'max-nested-callbacks': 'off',
       'no-magic-numbers': 'off',
@@ -464,6 +465,7 @@ export default [
   {
     files: ['**/*.story.{ts,tsx}', '**/*.stories.{ts,tsx}'],
     rules: {
+      'id-length': 'off',
       'no-magic-numbers': 'off',
     },
   },

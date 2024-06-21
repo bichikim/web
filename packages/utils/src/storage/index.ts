@@ -1,6 +1,6 @@
 import cookieJs, {CookieAttributes} from 'js-cookie'
 import {jsonParse, jsonStringify} from 'src/json'
-import {getDocument} from 'src/dom/get-document'
+import {getDocument} from 'src/get-document'
 
 export type StorageAndCookieKind = 'local' | 'session' | 'cookie'
 export type StorageKind = 'local' | 'session'
