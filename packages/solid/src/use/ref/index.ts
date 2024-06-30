@@ -9,6 +9,11 @@ declare module 'solid-js' {
   }
 }
 
+/**
+ * clean up able ref
+ * @param element
+ * @param value
+ */
 export const ref = (element: Element, value: () => Setter<null | Element>) => {
   const set = value()
   onCleanup(() => {
