@@ -1,5 +1,6 @@
 import {setRef} from '../'
 import {computed, ref} from 'vue'
+import {describe, expect, it} from 'vitest'
 
 describe('setRef', () => {
   it('should set value with a ref target', () => {

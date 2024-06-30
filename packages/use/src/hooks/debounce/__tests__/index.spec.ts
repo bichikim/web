@@ -1,5 +1,5 @@
 import {debounce} from '@winter-love/lodash'
-import {effectScope} from '@winter-love/test-utils'
+import {effectScope} from 'vue'
 import {useDebounce} from '../'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 vi.mock('@winter-love/lodash')

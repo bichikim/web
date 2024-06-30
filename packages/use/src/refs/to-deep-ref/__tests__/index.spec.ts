@@ -1,33 +1,39 @@
 /**
- * @jest-environment jsdom
+ * @vitest-environment jsdom
  */
-import {flushPromises, mountComposition} from '@winter-love/test-utils'
-import {reactive, ref, watch} from 'vue'
+import {flushPromises, mount} from '@vue/test-utils'
+import {defineComponent, reactive, ref, watch} from 'vue'
 import {toDeepRef} from '../'
-import {describe, it, expect, vi} from 'vitest'
+import {describe, expect, it, vi} from 'vitest'
 
 describe('deep bind ref', () => {
   it('should compute deep tree ref', async () => {
     const target = ref({info: {name: 'foo'}})
     const changed = vi.fn()
-    const wrapper = mountComposition(() => {
-      const data = toDeepRef(target, ['info', 'name'])
-      watch(data, changed)
-      return {
-        data,
-      }
-    })
+    const wrapper = mount(
+      defineComponent({
+        setup: () => {
+          const data = toDeepRef(target, ['info', 'name'])
+          watch(data, changed)
+          return {
+            data,
+          }
+        },
+      }),
+    )
 
-    expect(wrapper.setupState.data).toBe('foo')
+    const setupState = wrapper.vm.$.setupState
+
+    expect(setupState.data).toBe('foo')
     expect(changed).toBeCalledTimes(0)
 
     target.value.info.name = 'bar'
     await flushPromises()
 
-    expect(wrapper.setupState.data).toBe('bar')
+    expect(setupState.data).toBe('bar')
     expect(changed).toBeCalledTimes(1)
 
-    wrapper.setupState.data = 'john'
+    setupState.data = 'john'
     await flushPromises()
 
     expect(target.value.info.name).toBe('john')
@@ -36,24 +42,30 @@ describe('deep bind ref', () => {
   it('should compute deep tree reactive', async () => {
     const target = reactive({info: {name: 'foo'}})
     const changed = vi.fn()
-    const wrapper = mountComposition(() => {
-      const data = toDeepRef(target, ['info', 'name'])
-      watch(data, changed)
-      return {
-        data,
-      }
-    })
+    const wrapper = mount(
+      defineComponent({
+        setup: () => {
+          const data = toDeepRef(target, ['info', 'name'])
+          watch(data, changed)
+          return {
+            data,
+          }
+        },
+      }),
+    )
 
-    expect(wrapper.setupState.data).toBe('foo')
+    const setupState = wrapper.vm.$.setupState
+
+    expect(setupState.data).toBe('foo')
     expect(changed).toBeCalledTimes(0)
 
     target.info.name = 'bar'
     await flushPromises()
 
-    expect(wrapper.setupState.data).toBe('bar')
+    expect(setupState.data).toBe('bar')
     expect(changed).toBeCalledTimes(1)
 
-    wrapper.setupState.data = 'john'
+    setupState.data = 'john'
     await flushPromises()
 
     expect(target.info.name).toBe('john')

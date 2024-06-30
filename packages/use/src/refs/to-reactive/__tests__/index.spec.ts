@@ -1,5 +1,6 @@
 import {computed, reactive, ref, watch} from 'vue'
 import {toReactive} from '../'
+import {describe, expect, it, vi} from 'vitest'
 
 describe('toReactive', () => {
   const setup = (target) => {

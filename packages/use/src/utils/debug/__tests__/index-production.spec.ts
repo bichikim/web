@@ -4,7 +4,8 @@
 import {debug} from '../'
 import {defineComponent, h, ref} from 'vue'
 import {mount} from '@vue/test-utils'
-import {describe, it, expect, vi} from 'vitest'
+import {afterEach, describe, expect, it, vi} from 'vitest'
+
 vi.mock('../', async () => {
   process.env.NODE_ENV = 'production'
   const actual = await vi.importActual('../')

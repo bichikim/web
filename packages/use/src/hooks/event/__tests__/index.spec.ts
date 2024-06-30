@@ -1,11 +1,11 @@
 /**
  * @jest-environment jsdom
  */
-import {flushPromises, mount} from '@winter-love/test-utils'
+import {flushPromises, mount} from '@vue/test-utils'
 import {mutRef} from 'src/refs/mut-ref'
 import {onEvent} from '../index'
 import {defineComponent, effectScope, h, reactive, ref, toRef} from 'vue'
-import {describe, it, expect, vi} from 'vitest'
+import {describe, expect, it, vi} from 'vitest'
 interface SetupOptions {
   eventName?: string
   isActive?: boolean

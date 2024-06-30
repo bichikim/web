@@ -1,11 +1,12 @@
 /**
- * @jest-environment jsdom
+ * @vitest-environment jsdom
  */
 import {flushPromises, mount} from '@vue/test-utils'
 import {defineComponent, h, ref} from 'vue'
 import {useIntersectionRef} from '../'
 import {onIntersection} from 'src/hooks/intersection'
-import {describe, it, expect, vi, afterEach} from 'vitest'
+import {afterEach, describe, expect, it, vi} from 'vitest'
+
 vi.mock('src/hooks/intersection', async () => {
   const actual: any = await vi.importActual('src/hooks/intersection')
   return {

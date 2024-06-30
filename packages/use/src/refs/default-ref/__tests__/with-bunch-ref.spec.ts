@@ -1,6 +1,7 @@
 import {bunchRef} from 'src/refs/bunch-ref'
 import {ref} from 'vue'
 import {defaultRef} from '../'
+import {describe, expect, it} from 'vitest'
 
 describe('defaultRef with bunch ref', () => {
   it('should return ref with a default value', () => {

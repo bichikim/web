@@ -1,5 +1,6 @@
 import {ref} from 'vue'
 import {mutRef} from '../'
+import {describe, expect, it} from 'vitest'
 
 describe('bindRef', () => {
   it('should bind ref (one way)', () => {

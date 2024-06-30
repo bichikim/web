@@ -1,11 +1,11 @@
 /**
  * @jest-environment jsdom
  */
-import {mountComposition} from '@winter-love/test-utils'
+import {mount} from '@vue/test-utils'
 import {getWindow} from '@winter-love/utils'
-import {getCurrentInstance} from 'vue'
+import {defineComponent, getCurrentInstance} from 'vue'
 import {useInstanceId} from '../'
-import {describe, it, expect, vi, afterEach} from 'vitest'
+import {afterEach, describe, expect, it, vi} from 'vitest'
 vi.mock('@winter-love/utils', async () => {
   const actual: any = await vi.importActual('@winter-love/utils')
   return {
@@ -31,15 +31,21 @@ describe('useInstanceId', () => {
     vi.spyOn(console, 'warn').mockClear()
   })
   it('should return id', async () => {
-    const wrapper = mountComposition(() => {
-      const id = useInstanceId()
+    const wrapper = mount(
+      defineComponent({
+        setup: () => {
+          const id = useInstanceId()
 
-      return {
-        id,
-      }
-    })
+          return {
+            id,
+          }
+        },
+      }),
+    )
 
-    expect(typeof wrapper.setupState.id).toBe('number')
+    const setupState = wrapper.vm.$.setupState
+
+    expect(typeof setupState.id).toBe('number')
   })
 
   it('should warn in ssr environment', async () => {
@@ -49,14 +55,19 @@ describe('useInstanceId', () => {
     vi.mocked(console.warn).mockImplementationOnce(() => {
       // empty
     })
-    const wrapper = mountComposition(() => {
-      const id = useInstanceId()
+    const wrapper = mount(
+      defineComponent({
+        setup: () => {
+          const id = useInstanceId()
 
-      return {
-        id,
-      }
-    })
-    expect(typeof wrapper.setupState.id).toBe('number')
+          return {
+            id,
+          }
+        },
+      }),
+    )
+    const setupState = wrapper.vm.$.setupState
+    expect(typeof setupState.id).toBe('number')
     expect(console.warn).toHaveBeenCalledWith('Do not use in SSR environment')
   })
   it('should warn id not in an instance', async () => {
@@ -66,13 +77,17 @@ describe('useInstanceId', () => {
     vi.mocked(console.warn).mockImplementationOnce(() => {
       // empty
     })
-    mountComposition(() => {
-      const id = useInstanceId()
+    mount(
+      defineComponent({
+        setup: () => {
+          const id = useInstanceId()
 
-      return {
-        id,
-      }
-    })
+          return {
+            id,
+          }
+        },
+      }),
+    )
 
     expect(console.warn).toHaveBeenCalledWith('Do not use outside of a component')
   })

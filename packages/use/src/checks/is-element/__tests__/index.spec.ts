@@ -4,6 +4,7 @@
 import {isElement} from '../'
 import {mount} from '@vue/test-utils'
 import {defineComponent, h} from 'vue'
+import {describe, expect, it} from 'vitest'
 
 describe('isElement', () => {
   it('should return true', () => {

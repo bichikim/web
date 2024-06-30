@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 import {useAnimationLoop} from '../'
-import {describe, it, expect, vi, afterEach} from 'vitest'
+import {afterEach, describe, expect, it, vi} from 'vitest'
 describe('animation-loop', () => {
   afterEach(() => {
     vi.spyOn(window, 'requestAnimationFrame').mockClear()

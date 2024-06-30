@@ -1,11 +1,11 @@
 /**
  * @jest-environment jsdom
  */
-import {mountComposition} from '@winter-love/test-utils'
-import {markRaw, Ref, ref} from 'vue'
+import {mount} from '@vue/test-utils'
+import {defineComponent, markRaw, Ref, ref} from 'vue'
 import {onElementResize} from '../'
 import {isElement} from 'src/checks/is-element'
-import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest'
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 vi.mock('src/checks/is-element')
 
 const _isElement = vi.mocked(isElement)
@@ -47,10 +47,14 @@ describe('onElementResize', () => {
         return {height: 300, width: 300}
       },
     } as any
-    const wrapper = mountComposition(() => {
-      const elementRef: Ref<HTMLElement> = ref(markRaw(element))
-      onElementResize(elementRef, callback)
-    })
+    const wrapper = mount(
+      defineComponent({
+        setup: () => {
+          const elementRef: Ref<HTMLElement> = ref(markRaw(element))
+          onElementResize(elementRef, callback)
+        },
+      }),
+    )
 
     expect(typeof watchResult.callback).toBe('function')
     expect(watchResult.observe).toBeCalledTimes(1)

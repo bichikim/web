@@ -4,6 +4,7 @@
 import {isComponentInstance} from '../'
 import {mount} from '@vue/test-utils'
 import {defineComponent, h, ref, watch} from 'vue'
+import {describe, expect, it} from 'vitest'
 
 describe('isComponentInstance', () => {
   it('should return true with a component', async () => {

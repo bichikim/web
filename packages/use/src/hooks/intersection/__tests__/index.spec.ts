@@ -1,11 +1,12 @@
 /**
- * @jest-environment jsdom
+ * @vitest-environment jsdom
  */
 import {flushPromises, mount} from '@vue/test-utils'
 import {getWindow} from '@winter-love/utils'
 import {defineComponent, h, ref} from 'vue'
 import {onIntersection} from '../'
-import {describe, it, expect, vi} from 'vitest'
+import {describe, expect, it, vi} from 'vitest'
+
 vi.mock('@winter-love/utils', async () => {
   const actual: any = await vi.importActual('@winter-love/utils')
   return {

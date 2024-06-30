@@ -1,6 +1,7 @@
 import {assignRef} from '../'
 import {reactive, ref, watch} from 'vue'
-import {describe, it, expect, vi} from 'vitest'
+import {describe, expect, it, vi} from 'vitest'
+
 describe('assignRef', () => {
   const setup = (...args: any) => {
     const callback = vi.fn()

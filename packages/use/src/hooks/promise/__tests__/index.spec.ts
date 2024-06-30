@@ -1,4 +1,5 @@
 import {flushPromises} from '@vue/test-utils'
+import {describe, expect, it} from 'vitest'
 import {usePromise} from '../index'
 
 describe('use promise', () => {
@@ -45,6 +46,7 @@ describe('use promise', () => {
       age?: number
       name?: string
     }
+
     const resultValue: Foo = {
       name: 'foo',
     }

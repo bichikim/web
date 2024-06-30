@@ -1,11 +1,10 @@
 /**
  * @jest-environment jsdom
  */
-import {flushPromises} from '@vue/test-utils'
-import {mountComposition} from '@winter-love/test-utils'
-import {ref} from 'vue'
+import {flushPromises, mount} from '@vue/test-utils'
+import {defineComponent, ref} from 'vue'
 import {onAnimationRepeater} from '../'
-import {describe, it, expect, vi} from 'vitest'
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 describe('animation-repeater', () => {
   let tick
   const requestAnimationFrame: any = vi.fn((callback) => {
@@ -28,49 +27,55 @@ describe('animation-repeater', () => {
   })
 
   it('should on', async () => {
-    const wrapper = mountComposition(() => {
-      const valueRef = ref(0)
-      const isRun = onAnimationRepeater(() => {
-        valueRef.value += 1
-      })
-      return {
-        isRun,
-        value: valueRef,
-      }
-    })
+    const wrapper = mount(
+      defineComponent({
+        setup() {
+          const valueRef = ref(0)
+          const isRun = onAnimationRepeater(() => {
+            valueRef.value += 1
+          })
+          return {
+            isRun,
+            value: valueRef,
+          }
+        },
+      }),
+    )
 
-    expect(wrapper.setupState.value).toBe(0)
-    expect(wrapper.setupState.isRun).toBe(true)
+    const setupState = wrapper.vm.$.setupState
+
+    expect(setupState.value).toBe(0)
+    expect(setupState.isRun).toBe(true)
     tick()
     await flushPromises()
-    expect(wrapper.setupState.value).toBe(1)
-    expect(wrapper.setupState.isRun).toBe(true)
+    expect(setupState.value).toBe(1)
+    expect(setupState.isRun).toBe(true)
 
-    wrapper.setupState.isRun = false
+    setupState.isRun = false
     tick()
     await flushPromises()
     expect(cancelAnimationFrame).toBeCalledTimes(1)
-    expect(wrapper.setupState.value).toBe(1)
-    expect(wrapper.setupState.isRun).toBe(false)
+    expect(setupState.value).toBe(1)
+    expect(setupState.isRun).toBe(false)
 
-    wrapper.setupState.isRun = false
+    setupState.isRun = false
     tick()
     await flushPromises()
-    expect(wrapper.setupState.value).toBe(1)
-    expect(wrapper.setupState.isRun).toBe(false)
+    expect(setupState.value).toBe(1)
+    expect(setupState.isRun).toBe(false)
 
-    wrapper.setupState.isRun = true
-    tick()
-    await flushPromises()
-
-    expect(wrapper.setupState.value).toBe(2)
-    expect(wrapper.setupState.isRun).toBe(true)
-
-    wrapper.setupState.isRun = false
+    setupState.isRun = true
     tick()
     await flushPromises()
 
-    expect(wrapper.setupState.value).toBe(2)
-    expect(wrapper.setupState.isRun).toBe(false)
+    expect(setupState.value).toBe(2)
+    expect(setupState.isRun).toBe(true)
+
+    setupState.isRun = false
+    tick()
+    await flushPromises()
+
+    expect(setupState.value).toBe(2)
+    expect(setupState.isRun).toBe(false)
   })
 })

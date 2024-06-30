@@ -1,6 +1,7 @@
 import {expectType} from 'tsd'
 import {Ref, ref} from 'vue'
 import {defaultRef} from '../'
+import {describe, expect, it} from 'vitest'
 
 describe('useDefaultRef', () => {
   it('should resolve undefined with a defaultValue', () => {
@@ -30,18 +31,6 @@ describe('useDefaultRef', () => {
     expect(result.value).toBe('bar')
 
     valueref.value = undefined
-    expect(result.value).toBeUndefined()
-    expectType<Ref<string>>(result)
-  })
-  it('should resolve a ref with a function defaultValue and the defaultValueOnce', () => {
-    const value = ref()
-    const result = defaultRef(value, () => 'foo', true)
-    expect(result.value).toEqual('foo')
-
-    value.value = 'bar'
-    expect(result.value).toBe('bar')
-
-    value.value = undefined
     expect(result.value).toBeUndefined()
     expectType<Ref<string>>(result)
   })

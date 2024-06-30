@@ -30,7 +30,6 @@
     "@vue/runtime-core": "^3.2.45",
     "@vue/test-utils": "^2.2.6",
     "@vueuse/core": "^9.6.0",
-    "@winter-love/stitches": "workspace:*",
     "@winter-love/use": "workspace:*",
     "@winter-love/utils": "workspace:*",
     "jest-mock": "^29.3.1",

@@ -1,9 +1,10 @@
 /**
- * @jest-environment jsdom
+ * @vitest-environment jsdom
  */
 import {defineComponent, h} from 'vue'
 import {isInInstance} from '../'
 import {mount} from '@vue/test-utils'
+import {describe, expect, it} from 'vitest'
 
 describe('isInInstance', () => {
   it('should return ture if the hook is in a vue component instance', () => {

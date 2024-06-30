@@ -1,11 +1,12 @@
 /**
  * @vitest-environment jsdom
  */
-import {flushPromises} from '@winter-love/test-utils'
+import {flushPromises} from '@vue/test-utils'
 import {storage} from '@winter-love/utils'
 import {storageRef} from '../'
 import {effectScope} from 'vue'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
+
 vi.mock('@winter-love/utils', async () => {
   const actual: any = await vi.importActual('@winter-love/utils')
   return {

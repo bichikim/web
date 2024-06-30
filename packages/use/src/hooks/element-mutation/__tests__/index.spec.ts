@@ -1,9 +1,10 @@
 /**
  * @jest-environment jsdom
  */
+import {defineComponent} from 'vue'
 import {onElementMutation} from '../'
-import {mountComposition} from '@winter-love/test-utils'
-import {describe, it, expect, vi, afterEach} from 'vitest'
+import {mount} from '@vue/test-utils'
+import {afterEach, describe, expect, it, vi} from 'vitest'
 globalThis.MutationObserver = function ob() {
   // empty
 } as any
@@ -28,10 +29,14 @@ describe('onElementMutation', () => {
     const callback = vi.fn()
     const fakeElement: any = {}
 
-    const wrapper = mountComposition(() => {
-      onElementMutation(fakeElement, callback)
-      return {}
-    })
+    const wrapper = mount(
+      defineComponent({
+        setup: () => {
+          onElementMutation(fakeElement, callback)
+          return {}
+        },
+      }),
+    )
 
     expect(MutationObserver).toHaveBeenCalledWith(expect.any(Function))
     expect(observe).toHaveBeenCalledWith(fakeElement, {attributes: true})
@@ -52,10 +57,14 @@ describe('onElementMutation', () => {
       observe,
     } as any)
     const callback = vi.fn()
-    const wrapper = mountComposition(() => {
-      onElementMutation(undefined, callback)
-      return {}
-    })
+    const wrapper = mount(
+      defineComponent({
+        setup: () => {
+          onElementMutation(undefined, callback)
+          return {}
+        },
+      }),
+    )
     expect(observe).toHaveBeenCalledTimes(0)
     wrapper.unmount()
     expect(disconnect).toHaveBeenCalledTimes(0)

@@ -66,7 +66,6 @@
     "@vitejs/plugin-vue-jsx": "3.1.0",
     "@vue/test-utils": "^2.4.6",
     "@winter-love/eslint-config": "workspace:*",
-    "@winter-love/test-utils": "workspace:*",
     "@winter-love/unocss-config": "workspace:*",
     "@winter-love/vite-plugin-monorepo-alias": "workspace:*",
     "concurrently": "^8.2.2",

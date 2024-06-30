@@ -1,8 +1,10 @@
 /**
  * @jest-environment jsdom
  */
-import {computed, mountComposition, ref, toRef, toRefs} from '@winter-love/test-utils'
+import {computed, defineComponent, ref, toRef, toRefs} from 'vue'
+import {mount} from '@vue/test-utils'
 import {isWritableRef} from '../'
+import {describe, expect, it} from 'vitest'
 
 describe('isWritableRef', () => {
   it('should return true for a writable computed', () => {
@@ -33,38 +35,42 @@ describe('isWritableRef', () => {
     expect(result).toBe(false)
   })
   it('should return false with toRefs props', () => {
-    const wrapper = mountComposition(
-      (props) => {
-        const {foo} = toRefs(props)
-        // _object
-        return {
-          isWritable: isWritableRef(foo),
-        }
-      },
-      {
+    const wrapper = mount(
+      defineComponent({
         props: {
-          foo: 'bar',
+          foo: {default: 'bar'},
         },
-      },
+        setup(props) {
+          const {foo} = toRefs(props)
+          // _object
+          return {
+            isWritable: isWritableRef(foo),
+          }
+        },
+      }),
     )
 
-    expect(wrapper.setupState.isWritable).toBe(false)
+    const setupState = wrapper.vm.$.setupState
+
+    expect(setupState.isWritable).toBe(false)
   })
   it('should return false with toRef props', () => {
-    const wrapper = mountComposition(
-      (props) => {
-        const foo = toRef(props, 'foo')
-        return {
-          isWritable: isWritableRef(foo),
-        }
-      },
-      {
+    const wrapper = mount(
+      defineComponent({
         props: {
-          foo: 'bar',
+          foo: {default: 'bar'},
         },
-      },
+        setup(props) {
+          const foo = toRef(props, 'foo')
+          return {
+            isWritable: isWritableRef(foo),
+          }
+        },
+      }),
     )
 
-    expect(wrapper.setupState.isWritable).toBe(false)
+    const setupState = wrapper.vm.$.setupState
+
+    expect(setupState.isWritable).toBe(false)
   })
 })

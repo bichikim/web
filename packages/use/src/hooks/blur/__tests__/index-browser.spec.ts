@@ -1,10 +1,11 @@
 /**
- * @jest-environment jsdom
+ * @vitest-environment jsdom
  */
 import {useBlur} from '../'
 import {getDocument, getHtmlElementClass} from '@winter-love/utils'
-import {mountComposition} from '@winter-love/test-utils'
-import {describe, it, expect, vi} from 'vitest'
+import {mount} from '@vue/test-utils'
+import {describe, expect, it, vi} from 'vitest'
+import {defineComponent} from 'vue'
 vi.mock('@winter-love/utils')
 
 const mockGetDocument = vi.mocked(getDocument)
@@ -26,12 +27,17 @@ describe('blur', () => {
     mockGetDocument.mockImplementation(() => fakeDocument)
     mockGetHtmlElement.mockImplementation(() => HTMLElement)
 
-    const {setupState} = mountComposition(() => {
-      const blur = useBlur()
-      return {
-        blur,
-      }
-    })
+    const wrapper = mount(
+      defineComponent({
+        setup() {
+          const blur = useBlur()
+          return {
+            blur,
+          }
+        },
+      }),
+    )
+    const setupState = wrapper.vm.$.setupState
 
     const element = document.createElement('div')
 

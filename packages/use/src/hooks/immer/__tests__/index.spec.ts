@@ -1,4 +1,5 @@
 import {useImmer} from '../'
+import {describe, expect, it} from 'vitest'
 
 describe('useImmer', () => {
   it('should return state and update', async () => {

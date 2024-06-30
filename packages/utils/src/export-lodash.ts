@@ -14,5 +14,4 @@ export {
   flow,
   last,
   compact,
-  defaultTo as defaultValue,
 } from '@winter-love/lodash'

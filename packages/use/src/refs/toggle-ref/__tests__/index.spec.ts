@@ -1,48 +1,61 @@
 /**
  * @jest-environment jsdom
  */
-import {flushPromises, mountComposition} from '@winter-love/test-utils'
-import {ref} from 'vue'
+import {flushPromises, mount} from '@vue/test-utils'
+import {describe, expect, it} from 'vitest'
+import {defineComponent, ref} from 'vue'
 import {toggleRef} from '../'
 
 describe('toggle', () => {
   it('should change value', async () => {
-    const wrapper = mountComposition(() => {
-      const original = ref(false)
-      const [value, toggle] = toggleRef(original)
-      return {
-        original,
-        toggle,
-        value,
-      }
-    })
+    const wrapper = mount(
+      defineComponent({
+        setup: () => {
+          const original = ref(false)
+          const [value, toggle] = toggleRef(original)
+          return {
+            original,
+            toggle,
+            value,
+          }
+        },
+      }),
+    )
 
-    expect(wrapper.setupState.value).toBe(false)
-    wrapper.setupState.toggle()
+    const setupState = wrapper.vm.$.setupState
+
+    expect(setupState.value).toBe(false)
+    setupState.toggle()
     await flushPromises()
-    expect(wrapper.setupState.value).toBe(true)
-    wrapper.setupState.toggle()
+    expect(setupState.value).toBe(true)
+    setupState.toggle()
     await flushPromises()
-    expect(wrapper.setupState.value).toBe(false)
-    wrapper.setupState.original = true
+    expect(setupState.value).toBe(false)
+    setupState.original = true
     await flushPromises()
-    expect(wrapper.setupState.value).toBe(true)
+    expect(setupState.value).toBe(true)
   })
 })
 
 describe('toggle', () => {
   it('should ', async () => {
-    const wrapper = mountComposition(() => {
-      const [value, toggle] = toggleRef()
-      return {
-        toggle,
-        value,
-      }
-    })
+    const wrapper = mount(
+      defineComponent({
+        setup: () => {
+          const [value, toggle] = toggleRef()
+          return {
+            toggle,
+            value,
+          }
+        },
+      }),
+    )
 
-    expect(wrapper.setupState.value).toBe(false)
-    wrapper.setupState.toggle()
+    const setupState = wrapper.vm.$.setupState
+
+    expect(setupState.value).toBe(false)
+    setupState.toggle()
     await flushPromises()
-    expect(wrapper.setupState.value).toBe(true)
+    expect(setupState.value).toBe(true)
   })
 })

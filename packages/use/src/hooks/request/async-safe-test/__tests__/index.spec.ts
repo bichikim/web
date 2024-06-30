@@ -1,15 +1,9 @@
 /**
  * @jest-environment jsdom
  */
-import {
-  defineComponent,
-  flushPromises,
-  h,
-  mount,
-  onUnmounted,
-  ref,
-  toRef,
-} from '@winter-love/test-utils'
+import {flushPromises, mount} from '@vue/test-utils'
+import {describe, expect, it} from 'vitest'
+import {defineComponent, h, onUnmounted, ref, toRef} from 'vue'
 
 /**
  * vue 는 unmount 후에 비동기가 실행되도 안전 한 것에 대한 증명 테스트

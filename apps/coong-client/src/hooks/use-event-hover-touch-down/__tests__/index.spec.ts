@@ -1,7 +1,9 @@
 /**
  * @jest-environment jsdom
  */
-import {flushPromises, h, mount, onMounted, ref} from '@winter-love/test-utils'
+import {h, onMounted, ref} from 'vue'
+import {mount} from '@vue/test-utils'
+import flushPromises from 'flush-promises'
 import {useEventHoverTouchDown} from '../'
 import {elementFromPoint} from '../element-from-point'
 import {onEvent} from '@winter-love/use'

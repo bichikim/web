@@ -1,6 +1,7 @@
 /**
  * @jest-environment node
  */
+import {describe, expect, it} from 'vitest'
 import {useClipboard} from '../'
 
 describe('clipboard in ssr', () => {

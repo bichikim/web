@@ -1,9 +1,10 @@
 /**
- * @jest-environment jsdom
+ * @vitest-environment jsdom
  */
 import {useSize} from '../index'
 import {effectScope, ref} from 'vue'
-import {describe, it, expect, vi} from 'vitest'
+import {describe, expect, it, vi} from 'vitest'
+
 vi.mock('src/hooks/element-resize')
 
 describe('useSizeRef', () => {

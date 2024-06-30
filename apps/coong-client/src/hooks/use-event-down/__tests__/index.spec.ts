@@ -1,7 +1,7 @@
 /**
- * @jest-environment jsdom
+ * @vitest-environment jsdom
  */
-import {mount} from '@winter-love/test-utils'
+import {mount} from '@vue/test-utils'
 import {describe, expect, it} from 'vitest'
 import {defineComponent, h, ref} from 'vue'
 import {useEventDown} from '../'

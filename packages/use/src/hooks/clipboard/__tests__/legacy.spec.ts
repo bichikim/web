@@ -4,7 +4,8 @@
 import {useLegacyClipboard} from '../legacy'
 import {mount} from '@vue/test-utils'
 import {defineComponent, h, ref} from 'vue'
-import {describe, it, expect, vi, beforeEach} from 'vitest'
+import {beforeEach, describe, expect, it, vi} from 'vitest'
+
 describe('legacy', () => {
   const mock = vi.fn(() => 'bar')
   beforeEach(() => {

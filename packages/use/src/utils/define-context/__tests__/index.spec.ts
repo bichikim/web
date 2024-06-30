@@ -1,9 +1,10 @@
 /**
  * @jest-environment jsdom
  */
-import {mount} from '@winter-love/test-utils'
+import {mount} from '@vue/test-utils'
 import {defineComponent, h, inject, provide, reactive, ref, toRefs} from 'vue'
 import {defineContext, preferParentContext} from '../'
+import {describe, expect, it} from 'vitest'
 
 describe('defineContext', () => {
   it('should return context with defined context', () => {

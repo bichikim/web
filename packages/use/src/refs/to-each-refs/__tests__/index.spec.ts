@@ -1,6 +1,7 @@
 import {ref} from 'vue'
 import {toEachRefs} from '../'
 import {flushPromises} from '@vue/test-utils'
+import {describe, expect, it} from 'vitest'
 
 describe('toRefs', () => {
   it('should a ref object from object ref', () => {

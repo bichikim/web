@@ -2,7 +2,8 @@ import {ref} from 'vue'
 import {watchExtended} from '../'
 import {flushPromises} from '@vue/test-utils'
 import {useFakeTimers} from 'sinon'
-import {describe, it, expect, vi} from 'vitest'
+import {describe, expect, it, vi} from 'vitest'
+
 describe('watchExtended', () => {
   it('should watch once', async () => {
     const valueRef = ref(0)

@@ -1,4 +1,4 @@
-import {flushPromises} from '@winter-love/test-utils'
+import flushPromises from 'flush-promises'
 import {describe, expect, it} from 'vitest'
 import {createCancelPromise} from '../'
 
