@@ -54,8 +54,8 @@ describe('useEventHoverTouchDown', () => {
     _elementFromPoint.mockImplementation(() => _element)
     wrapper = mount({
       setup() {
-        const element = ref(null)
-        const state = useEventHoverTouchDown(element)
+        const element = ref<any>(null)
+        const state = useEventHoverTouchDown(element as any)
 
         onMounted(() => {
           _element = element.value
