@@ -10,7 +10,7 @@ export const renderRaw = (maxCount: number, renderCount: number) => {
     repeatString(maxCount - half - 1, ' ')
   )
 }
-// 역순
+
 export const renderHalfDiamond = (
   count: number,
   opposite: boolean = false,
