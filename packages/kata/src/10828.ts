@@ -1,6 +1,7 @@
 export const push =
   (value: any) =>
   ([stack, print]: [any[], string[]]): [any[], string[]] => [[value, ...stack], print]
+
 export const pop = ([stack, print]: [any[], string[]]): [any[], string[]] => {
   const [value, ...rest] = stack
 
