@@ -16,8 +16,6 @@ export const renderHalfDiamond = (
   opposite: boolean = false,
   padding: number = 0,
 ) => {
-  const half = Math.floor(count / 2)
-
   return Array.from({length: count}, (_, index) => {
     const _index = opposite ? count - index - 1 : index
     return (
