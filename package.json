@@ -79,6 +79,8 @@
     "lodash": "^4.17.21",
     "portal-vue": "3.0.0",
     "prettier": "^3.3.2",
+    "@turbo/gen": "^2.0.7",
+    "cpx2": "^7.0.1",
     "reflect-metadata": "^0.1.14",
     "sinon": "^17.0.1",
     "solid-js": "^1.8.17",
