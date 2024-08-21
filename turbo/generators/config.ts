@@ -16,6 +16,11 @@ export default function generator(plop: PlopTypes.NodePlopAPI): void {
         templateFile: 'templates/vite.config.hbs',
         type: 'add',
       },
+      // {
+      //   path: 'packages/{{kebabCase name}}/README.md',
+      //   templateFile: 'templates/readme.hbs',
+      //   type: 'add',
+      // },
       async (answers: Record<string, any>) => {
         await new Promise((resolve) => {
           cpx.copy(

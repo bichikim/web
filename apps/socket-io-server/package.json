@@ -40,7 +40,7 @@
   "dependencies": {
     "@winter-love/lodash": "workspace:*",
     "@winter-love/utils": "workspace:*",
-    "socket.io": "^4.5.4"
+    "socket.io": "^4.7.5"
   },
   "devDependencies": {
     "@types/debounce": "1.2.1",

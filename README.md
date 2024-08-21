@@ -40,3 +40,11 @@ test results immediately as you type, and see the results in
 your editor right next to your code.
 
 node_modules/.pnpm jest-runtime version other than 29.4.3 will cause wallabyjs to stop working
+
+## Turborepo 
+
+### run generate 
+
+```shell
+turbo gen
+```

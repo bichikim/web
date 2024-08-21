@@ -33,18 +33,18 @@
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
-    "@winter-love/lodash": "^1.0.34",
-    "safe-stable-stringify": "^2.4.1",
-    "scroll-into-view-if-needed": "^3.0.4",
+    "@winter-love/lodash": "workspace:*",
+    "safe-stable-stringify": "^2.4.3",
+    "scroll-into-view-if-needed": "^3.1.0",
     "smooth-scroll-into-view-if-needed": "^1.1.33"
   },
   "devDependencies": {
-    "@types/js-cookie": "^3.0.2",
-    "@winter-love/vite-lib-config": "1.0.29",
-    "js-cookie": "^3.0.1",
-    "micro-memoize": "^4.0.14",
+    "@types/js-cookie": "^3.0.6",
+    "@winter-love/vite-lib-config": "workspace:*",
+    "js-cookie": "^3.0.5",
+    "micro-memoize": "^4.1.2",
     "tsd": "^0.25.0",
-    "typescript": "^5.3.3"
+    "typescript": "^5.5.4"
   },
   "publishConfig": {
     "access": "public"

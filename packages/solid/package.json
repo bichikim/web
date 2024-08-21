@@ -37,11 +37,11 @@
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
-    "@floating-ui/dom": "^1.6.5",
+    "@floating-ui/dom": "^1.6.10",
     "@winter-love/lodash": "workspace:*",
     "@winter-love/utils": "workspace:*",
     "class-variance-authority": "^0.7.0",
-    "solid-js": "^1.8.15"
+    "solid-js": "^1.8.21"
   },
   "peerDependencies": {
     "solid-dom-testing": "^0.0.3",
@@ -49,12 +49,12 @@
   },
   "devDependencies": {
     "@types/jest": "^28.1.8",
-    "@types/node": "^18.11.14",
+    "@types/node": "^18.19.45",
     "@winter-love/lodash": "workspace:*",
     "@winter-love/vite-lib-config": "workspace:*",
-    "vite": "^5",
-    "vite-plugin-dts": "^3.7.2",
-    "vite-plugin-solid": "^2.9.1"
+    "vite": "^5.4.2",
+    "vite-plugin-dts": "^3.9.1",
+    "vite-plugin-solid": "^2.10.2"
   },
   "publishConfig": {
     "access": "public"

@@ -44,14 +44,14 @@
     "dev": "vite build --watch --minify false"
   },
   "dependencies": {
-    "@types/node": "^20.2.1",
-    "@vue/server-renderer": "^3.2.45",
-    "node-html-parser": "^6.1.4",
-    "vite": "^5",
-    "vue": "^3.3.0"
+    "@types/node": "^20.16.1",
+    "@vue/server-renderer": "^3.4.38",
+    "node-html-parser": "^6.1.13",
+    "vite": "^5.4.2",
+    "vue": "^3.4.38"
   },
   "devDependencies": {
-    "@winter-love/vite-lib-config": "1.0.29"
+    "@winter-love/vite-lib-config": "workspace:*"
   },
   "publishConfig": {
     "access": "public"

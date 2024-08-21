@@ -12,31 +12,20 @@ export const setCache = (cacheMap: Map<string, any>, args: any[], result: any): 
   cacheMap.set(cacheKey, result)
 }
 
-export const clearCache = (cacheMap: Map<string, any>): void => {
-  cacheMap.clear()
-}
-
-export type MemoizedFunction<T extends (...args: any) => any> = T & {
-  clearCache: () => void
-}
-
 /**
  * memo
  */
-export const memo = <T extends (...args: any) => any>(func: T): MemoizedFunction<T> => {
+export const memo = <T extends (...args: any) => any>(func: T): T => {
   const cacheMap = new Map<string, any>()
 
-  return Object.assign(
-    (...args: any) => {
-      const cachedResult = getCache(cacheMap, args)
-      if (cachedResult) {
-        return cachedResult
-      }
+  return ((...args: any) => {
+    const cachedResult = getCache(cacheMap, args)
+    if (cachedResult) {
+      return cachedResult
+    }
 
-      const result = func(...args)
-      setCache(cacheMap, args, result)
-      return result
-    },
-    {clearCache: () => clearCache(cacheMap)},
-  ) as any
+    const result = func(...args)
+    setCache(cacheMap, args, result)
+    return result
+  }) as any
 }
