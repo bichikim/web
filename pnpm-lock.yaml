@@ -106,6 +106,9 @@ importers:
       '@winter-love/eslint-config':
         specifier: workspace:*
         version: link:packages/eslint-config
+      '@winter-love/solid-test':
+        specifier: workspace:*
+        version: link:packages/solid-test
       '@winter-love/unocss-config':
         specifier: workspace:*
         version: link:packages/unocss-config
@@ -781,6 +784,12 @@ importers:
 
   packages/solid-components:
     dependencies:
+      '@winter-love/solid-use':
+        specifier: workspace:*
+        version: link:../solid-use
+      class-variance-authority:
+        specifier: ^0.7.0
+        version: 0.7.0
       solid-js:
         specifier: ^1.8.21
         version: 1.8.21
@@ -801,6 +810,18 @@ importers:
 
   packages/solid-use:
     dependencies:
+      '@floating-ui/dom':
+        specifier: ^1.6.10
+        version: 1.6.10
+      '@winter-love/lodash':
+        specifier: workspace:*
+        version: link:../lodash
+      '@winter-love/utils':
+        specifier: workspace:*
+        version: link:../utils
+      class-variance-authority:
+        specifier: ^0.7.0
+        version: 0.7.0
       solid-js:
         specifier: ^1.8.21
         version: 1.8.21

@@ -1,3 +1,1 @@
-export const helloWorld = () => {
-  return 'hello world'
-}
+export * from './scroll'

@@ -69,6 +69,7 @@
     "@winter-love/eslint-config": "workspace:*",
     "@winter-love/unocss-config": "workspace:*",
     "@winter-love/vite-plugin-monorepo-alias": "workspace:*",
+    "@winter-love/solid-test": "workspace:*",
     "concurrently": "^8.2.2",
     "cpx2": "^7.0.1",
     "cross-env": "^7.0.3",

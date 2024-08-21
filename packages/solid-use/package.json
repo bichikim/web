@@ -20,10 +20,15 @@
   ],
   "scripts": {
     "build": "cross-env NODE_ENV=production vite build",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "solid-js": "^1.8.21"
+    "solid-js": "^1.8.21",
+    "@winter-love/utils": "^1.0.34",
+    "@winter-love/lodash": "^1.0.34",
+    "@floating-ui/dom": "^1.6.10",
+    "class-variance-authority": "^0.7.0"
   },
   "devDependencies": {
     "@winter-love/vite-lib-config": "workspace:*"
