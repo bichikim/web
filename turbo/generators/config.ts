@@ -30,8 +30,9 @@ export default function generator(plop: PlopTypes.NodePlopAPI): void {
     description: 'create a new package',
     prompts: [
       {
-        message: 'What is the name of the package?',
-        name: 'name',
+        default: 'winter-love',
+        message: 'What is the name of the package scope?',
+        name: 'scope',
         type: 'input',
         validate: Boolean,
       },
