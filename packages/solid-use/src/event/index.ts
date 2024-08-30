@@ -20,33 +20,21 @@ export interface OnEvent {
     options?: AddEventListenerOptions,
   ): void
   <K extends keyof HTMLElementEventMap>(
-    window: HTMLElement,
+    element: HTMLElement,
     type: K,
     listener: (event: HTMLElementEventMap[K]) => void,
     options?: AddEventListenerOptions,
   ): void
   <K extends keyof HTMLElementEventMap>(
-    window: MayBeAccessor<HTMLElement | null>,
+    element: MayBeAccessor<HTMLElement | null>,
     type: K,
     listener: (event: HTMLElementEventMap[K]) => void,
     options?: AddEventListenerOptions,
   ): void
   (
-    window: HTMLElement,
+    window: MayBeAccessor<HTMLElement | Window | null>,
     type: string,
     listener: (event: CustomEvent) => void,
-    options?: AddEventListenerOptions,
-  ): void
-  (
-    window: MayBeAccessor<HTMLElement | null>,
-    type: string,
-    listener: (event: CustomEvent) => void,
-    options?: AddEventListenerOptions,
-  ): void
-  (
-    window: MayBeAccessor<Element | null>,
-    type: string,
-    listener: (event: Event) => void,
     options?: AddEventListenerOptions,
   ): void
 }

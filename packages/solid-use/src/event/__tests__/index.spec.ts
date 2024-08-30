@@ -9,7 +9,7 @@ import flushPromises from 'flush-promises'
 describe('onEvent', () => {
   it.each([
     //
-    {target: window as any, type: 'click'},
+    {target: window, type: 'click'},
     {target: window, type: 'click'},
     {target: document.createElement('div'), type: 'click'},
   ])('should emit events', async ({target, type}) => {
