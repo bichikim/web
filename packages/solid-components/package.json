@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/solid-components",
-  "version": "0.0.1",
+  "version": "1.0.35",
   "description": "",
   "repository": {
     "type": "git",
@@ -26,9 +26,9 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "solid-js": "^1.8.21",
     "@winter-love/solid-use": "^1",
-    "class-variance-authority": "^0.7.0"
+    "class-variance-authority": "^0.7.0",
+    "solid-js": "^1.8.21"
   },
   "devDependencies": {
     "@winter-love/vite-lib-config": "workspace:*"

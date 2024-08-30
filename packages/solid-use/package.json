@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/solid-use",
-  "version": "0.0.1",
+  "version": "1.0.35",
   "description": "",
   "repository": {
     "type": "git",
@@ -26,11 +26,11 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "solid-js": "^1.8.21",
-    "@winter-love/utils": "^1.0.34",
-    "@winter-love/lodash": "^1.0.34",
     "@floating-ui/dom": "^1.6.10",
-    "class-variance-authority": "^0.7.0"
+    "@winter-love/lodash": "^1.0.35",
+    "@winter-love/utils": "^1.0.35",
+    "class-variance-authority": "^0.7.0",
+    "solid-js": "^1.8.21"
   },
   "devDependencies": {
     "@winter-love/vite-lib-config": "workspace:*"
