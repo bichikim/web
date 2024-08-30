@@ -229,6 +229,9 @@ importers:
       '@solidjs/start':
         specifier: ^1.0.6
         version: 1.0.6(@nuxt/kit@3.12.4(rollup@4.21.0))(@testing-library/jest-dom@6.4.8)(rollup@4.21.0)(solid-js@1.8.21)(vinxi@0.3.11(@types/node@22.4.2)(encoding@0.1.13)(ioredis@5.4.1)(terser@5.31.6))(vite@5.4.2(@types/node@22.4.2)(terser@5.31.6))
+      '@winter-love/solid-use':
+        specifier: workspace:*
+        version: link:../../packages/solid-use
       '@winter-love/utils':
         specifier: workspace:*
         version: link:../../packages/utils
@@ -741,46 +744,6 @@ importers:
       lodash-es:
         specifier: ^4.17.21
         version: 4.17.21
-
-  packages/solid:
-    dependencies:
-      '@floating-ui/dom':
-        specifier: ^1.6.10
-        version: 1.6.10
-      '@winter-love/lodash':
-        specifier: workspace:*
-        version: link:../lodash
-      '@winter-love/utils':
-        specifier: workspace:*
-        version: link:../utils
-      class-variance-authority:
-        specifier: ^0.7.0
-        version: 0.7.0
-      solid-dom-testing:
-        specifier: ^0.0.3
-        version: 0.0.3
-      solid-js:
-        specifier: ^1.8.21
-        version: 1.8.21
-    devDependencies:
-      '@types/jest':
-        specifier: ^28.1.8
-        version: 28.1.8
-      '@types/node':
-        specifier: ^18.19.45
-        version: 18.19.45
-      '@winter-love/vite-lib-config':
-        specifier: workspace:*
-        version: link:../vite-lib-config
-      vite:
-        specifier: ^5.4.2
-        version: 5.4.2(@types/node@18.19.45)(terser@5.31.6)
-      vite-plugin-dts:
-        specifier: ^3.9.1
-        version: 3.9.1(@types/node@18.19.45)(rollup@4.21.0)(typescript@5.5.4)(vite@5.4.2(@types/node@18.19.45)(terser@5.31.6))
-      vite-plugin-solid:
-        specifier: ^2.10.2
-        version: 2.10.2(@testing-library/jest-dom@6.4.8)(solid-js@1.8.21)(vite@5.4.2(@types/node@18.19.45)(terser@5.31.6))
 
   packages/solid-components:
     dependencies:
@@ -11152,9 +11115,6 @@ packages:
   socks@2.8.3:
     resolution: {integrity: sha512-l5x7VUUWbjVFbafGLxPWkYsHIhEvmF85tbIeFZWc8ZPtoMyybuEhL7Jye/ooC4/d48FgOjSJXgsF/AJPYCW8Zw==}
     engines: {node: '>= 10.0.0', npm: '>= 3.0.0'}
-
-  solid-dom-testing@0.0.3:
-    resolution: {integrity: sha512-1n1SeqGmIbFAf8+W1SNSkkxs7M6Vz/fjsRJoxBNoW74b12Eodx1Krjzeq/bxrEwwL1323aDyIR1Z0JvA1k+vIQ==}
 
   solid-js@1.8.21:
     resolution: {integrity: sha512-FHUGdoo7GVa1BTpGh/4UtwIISde0vSXoqNB6KFpHiTgkIY959tmCJ7NYQAWDfScBfnpoMGZR8lFz0DiwW/gFlw==}
@@ -26546,10 +26506,6 @@ snapshots:
     dependencies:
       ip-address: 9.0.5
       smart-buffer: 4.2.0
-
-  solid-dom-testing@0.0.3:
-    dependencies:
-      dom-accessibility-api: 0.5.16
 
   solid-js@1.8.21:
     dependencies:
