@@ -238,6 +238,9 @@ importers:
       '@winter-love/utils':
         specifier: workspace:*
         version: link:../../packages/utils
+      class-variance-authority:
+        specifier: ^0.7.0
+        version: 0.7.0
       solid-js:
         specifier: ^1.8.21
         version: 1.9.2

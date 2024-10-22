@@ -16,7 +16,8 @@
     "@winter-love/solid-use": "workspace:*",
     "solid-js": "^1.8.21",
     "vinxi": "0.3.11",
-    "vite": "^5.4.9"
+    "vite": "^5.4.9",
+    "class-variance-authority": "^0.7.0"
   },
   "devDependencies": {
     "@unocss/vite": "^0.62.2",

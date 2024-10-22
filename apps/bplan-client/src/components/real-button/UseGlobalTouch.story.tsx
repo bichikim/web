@@ -1,25 +1,19 @@
+import {createEffect, createSignal, createUniqueId} from 'solid-js'
 import {Meta, StoryObj} from 'storybook-solidjs'
 import {
   ELEMENT_IDENTIFIER_DATA_ATTR,
   useGlobalTouch,
   useGlobalTouchEmitter,
 } from './use-global-touch'
-import {createEffect, createSignal, createUniqueId, Show} from 'solid-js'
 
 const UseGlobalTouch = (props) => {
   const id = createUniqueId()
   const isDown = useGlobalTouch(id)
-  const [element, setElement] = createSignal<null | HTMLElement>(null)
 
-  createEffect(() => {
-    const _element = element()
-    if (_element) {
-      _element.setAttribute(ELEMENT_IDENTIFIER_DATA_ATTR, id)
-    }
-  })
+  const attrs = {...props, [ELEMENT_IDENTIFIER_DATA_ATTR]: id}
 
   return (
-    <button {...props} ref={setElement} class={`select-none ${props.class}`}>
+    <button {...attrs} class={`select-none ${props.class}`}>
       touch {isDown() ? 'down' : 'up'}
     </button>
   )
