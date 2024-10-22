@@ -55,6 +55,7 @@
     "@storybook/blocks": "^8.2.9",
     "@storybook/test": "^8.2.9",
     "@storybook/test-runner": "^0.17.0",
+    "@storybook/docs-tools": "^8.2.9",
     "@tanstack/vue-query": "^4.37.1",
     "@testing-library/jest-dom": "^6.4.8",
     "@testing-library/vue": "^6.6.1",

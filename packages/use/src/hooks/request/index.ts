@@ -93,7 +93,7 @@ export const useRequest =
       )
     })
     const loading = ref(false)
-    const data: Ref<UnwrapRef<R> | undefined> = ref(initialData)
+    const data: any = ref(initialData)
     const error = ref()
     const abortController = new AbortController()
     const {signal} = abortController
