@@ -44,7 +44,7 @@
     "dev": "vite build --watch --minify false"
   },
   "dependencies": {
-    "@types/node": "^20.17.6",
+    "@types/node": "^22.9.0",
     "@vue/server-renderer": "^3.5.12",
     "node-html-parser": "^6.1.13",
     "vite": "^5.4.10",

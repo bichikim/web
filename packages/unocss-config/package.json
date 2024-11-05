@@ -8,13 +8,13 @@
     "uno.config.ts"
   ],
   "devDependencies": {
-    "@unocss/preset-attributify": "^0.60.4",
-    "@unocss/preset-mini": "^0.60.4",
-    "@unocss/preset-uno": "^0.60.4",
-    "@unocss/transformer-compile-class": "^0.60.4",
-    "@unocss/transformer-directives": "^0.60.4",
-    "@unocss/transformer-variant-group": "^0.60.4",
-    "@unocss/vite": "^0.60.4",
-    "unocss": "^0.60.4"
+    "@unocss/preset-attributify": "^0.63.6",
+    "@unocss/preset-mini": "^0.63.6",
+    "@unocss/preset-uno": "^0.63.6",
+    "@unocss/transformer-compile-class": "^0.63.6",
+    "@unocss/transformer-directives": "^0.63.6",
+    "@unocss/transformer-variant-group": "^0.63.6",
+    "@unocss/vite": "^0.63.6",
+    "unocss": "^0.63.6"
   }
 }
