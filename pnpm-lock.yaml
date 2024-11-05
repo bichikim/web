@@ -167,11 +167,11 @@ importers:
         specifier: ^8.4.1
         version: 8.4.1(bufferutil@4.0.8)(prettier@3.3.3)(utf-8-validate@5.0.10)
       storybook-solidjs:
-        specifier: 1.0.0-beta.3
-        version: 1.0.0-beta.3(solid-js@1.9.3)
+        specifier: 1.0.0-beta.2
+        version: 1.0.0-beta.2(babel-preset-solid@1.9.3(@babel/core@7.26.0))(solid-js@1.9.3)
       storybook-solidjs-vite:
-        specifier: 1.0.0-beta.3
-        version: 1.0.0-beta.3(@testing-library/jest-dom@6.6.3)(solid-js@1.9.3)(storybook@8.4.1(bufferutil@4.0.8)(prettier@3.3.3)(utf-8-validate@5.0.10))(vite@5.4.10(@types/node@22.9.0)(terser@5.36.0))(webpack-sources@3.2.3)
+        specifier: 1.0.0-beta.2
+        version: 1.0.0-beta.2(storybook@8.4.1(bufferutil@4.0.8)(prettier@3.3.3)(utf-8-validate@5.0.10))(vite@5.4.10(@types/node@22.9.0)(terser@5.36.0))(webpack-sources@3.2.3)
       tsd:
         specifier: ^0.31.2
         version: 0.31.2
@@ -10648,15 +10648,16 @@ packages:
     resolution: {integrity: sha512-iCGQj+0l0HOdZ2AEeBADlsRC+vsnDsZsbdSiH1yNSjcfKM7fdpCMfqAL/dwF5BLiw/XhRft/Wax6zQbhq2BcjQ==}
     engines: {node: '>= 0.4'}
 
-  storybook-solidjs-vite@1.0.0-beta.3:
-    resolution: {integrity: sha512-5nySUbfk2sQQeFs/+do9jOcDjDuW3t/EMgjFxQROBS0kIWqf0bSgIjPFJUGYRUJBA97m4QOzznHby6xlewRQhg==}
-    engines: {node: '>=18'}
+  storybook-solidjs-vite@1.0.0-beta.2:
+    resolution: {integrity: sha512-dD+VMYC5fBBQNesVb+mjB0LOkZIf100SQFbjAt9/sDstNUvc5ce3yZwLYXzgcOc7jcSMkrBu/cZNRzEM4YIAyw==}
+    engines: {node: ^14.18 || >=16}
 
-  storybook-solidjs@1.0.0-beta.3:
-    resolution: {integrity: sha512-YXb6sHwTjfR71ShvR/OJOEL9lt/+g/6N/AmAdWsOlHs8X0M76npyFowNKhZM8dyOBEz5g6GBcbFsVVK5KKQZlg==}
-    engines: {node: '>=18.0.0'}
+  storybook-solidjs@1.0.0-beta.2:
+    resolution: {integrity: sha512-wXjM/uH29IPjgxlPvQVNTM/7iBFNNzjuOugpk7iM2oy+sZl7K70eBjvOqGgX5v35pNHTaA8Ju3BlLdp+O20abg==}
+    engines: {node: '>=16.0.0'}
     peerDependencies:
-      solid-js: ^1.9.2
+      babel-preset-solid: ^1.6.6
+      solid-js: ^1.6.6
 
   storybook@8.4.1:
     resolution: {integrity: sha512-0tfFIFghjho9FtnFoiJMoxhcs2iIdvEF81GTSVnTsDVJrYA84nB+FxN3UY1fT0BcQ8BFlbf+OhSjZL7ufqqWKA==}
@@ -24423,21 +24424,17 @@ snapshots:
     dependencies:
       internal-slot: 1.0.7
 
-  storybook-solidjs-vite@1.0.0-beta.3(@testing-library/jest-dom@6.6.3)(solid-js@1.9.3)(storybook@8.4.1(bufferutil@4.0.8)(prettier@3.3.3)(utf-8-validate@5.0.10))(vite@5.4.10(@types/node@22.9.0)(terser@5.36.0))(webpack-sources@3.2.3):
+  storybook-solidjs-vite@1.0.0-beta.2(storybook@8.4.1(bufferutil@4.0.8)(prettier@3.3.3)(utf-8-validate@5.0.10))(vite@5.4.10(@types/node@22.9.0)(terser@5.36.0))(webpack-sources@3.2.3):
     dependencies:
       '@storybook/builder-vite': 8.5.0-alpha.2(storybook@8.4.1(bufferutil@4.0.8)(prettier@3.3.3)(utf-8-validate@5.0.10))(vite@5.4.10(@types/node@22.9.0)(terser@5.36.0))(webpack-sources@3.2.3)
-      magic-string: 0.30.12
-      vite-plugin-solid: 2.10.2(@testing-library/jest-dom@6.6.3)(solid-js@1.9.3)(vite@5.4.10(@types/node@22.9.0)(terser@5.36.0))
     transitivePeerDependencies:
-      - '@testing-library/jest-dom'
-      - solid-js
       - storybook
-      - supports-color
       - vite
       - webpack-sources
 
-  storybook-solidjs@1.0.0-beta.3(solid-js@1.9.3):
+  storybook-solidjs@1.0.0-beta.2(babel-preset-solid@1.9.3(@babel/core@7.26.0))(solid-js@1.9.3):
     dependencies:
+      babel-preset-solid: 1.9.3(@babel/core@7.26.0)
       solid-js: 1.9.3
 
   storybook@8.4.1(bufferutil@4.0.8)(prettier@3.3.3)(utf-8-validate@5.0.10):

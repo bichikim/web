@@ -1,4 +1,4 @@
-import {createEffect, createSignal, createUniqueId} from 'solid-js'
+import {createUniqueId} from 'solid-js'
 import {Meta, StoryObj} from 'storybook-solidjs'
 import {
   ELEMENT_IDENTIFIER_DATA_ATTR,
