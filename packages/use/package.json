@@ -39,11 +39,11 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@vue/shared": "^3.4.38",
+    "@vue/shared": "^3.5.12",
     "@winter-love/lodash": "workspace:*",
     "@winter-love/utils": "workspace:*",
     "immer": "^10.1.1",
-    "vue": "^3.4.38"
+    "vue": "^3.5.12"
   },
   "devDependencies": {
     "@types/sinon": "10.0.16"

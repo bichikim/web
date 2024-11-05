@@ -26,11 +26,11 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@floating-ui/dom": "^1.6.10",
-    "@winter-love/lodash": "^1.0.35",
-    "@winter-love/utils": "^1.0.35",
+    "@floating-ui/dom": "^1.6.12",
+    "@winter-love/lodash": "workspace:*",
+    "@winter-love/utils": "workspace:*",
     "class-variance-authority": "^0.7.0",
-    "solid-js": "^1.8.21"
+    "solid-js": "^1.9.3"
   },
   "devDependencies": {
     "@winter-love/vite-lib-config": "workspace:*"

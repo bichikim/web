@@ -26,9 +26,9 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@winter-love/solid-use": "^1",
+    "@winter-love/solid-use": "workspace:*",
     "class-variance-authority": "^0.7.0",
-    "solid-js": "^1.8.21"
+    "solid-js": "^1.9.3"
   },
   "devDependencies": {
     "@winter-love/vite-lib-config": "workspace:*"

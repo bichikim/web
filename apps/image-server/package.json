@@ -26,7 +26,7 @@
     "ts-node-dev": "2.0.0",
     "tsconfig-paths": "4.1.2",
     "ttypescript": "1.5.13",
-    "typescript": "^5.5.4"
+    "typescript": "^5.6.3"
   },
   "gitHead": "49922aa2164ceefcebf5fcd3bd83dce16c67df21"
 }
