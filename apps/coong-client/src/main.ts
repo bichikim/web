@@ -1,6 +1,5 @@
 import {createWepApp} from './app'
 import {Root} from './Root'
-import reportWebVitals from './report-web-vitals'
 import './normalize.css'
 import 'virtual:uno.css'
 
@@ -14,7 +13,3 @@ const bootstrap = async () => {
 bootstrap().then(() => {
   console.info('Welcome to coong')
 })
-
-if (import.meta.env.VITE_WEB_VITALS) {
-  reportWebVitals(console.info)
-}

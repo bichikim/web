@@ -1,7 +1,7 @@
 import {createUniqueId} from 'solid-js'
 import {Meta, StoryObj} from 'storybook-solidjs'
 import {
-  ELEMENT_IDENTIFIER_DATA_ATTR,
+  ELEMENT_IDENTIFIER_GLOBAL_TOUCH,
   useGlobalTouch,
   useGlobalTouchEmitter,
 } from './use-global-touch'
@@ -10,7 +10,7 @@ const UseGlobalTouch = (props) => {
   const id = createUniqueId()
   const isDown = useGlobalTouch(id)
 
-  const attrs = {...props, [ELEMENT_IDENTIFIER_DATA_ATTR]: id}
+  const attrs = {...props, [ELEMENT_IDENTIFIER_GLOBAL_TOUCH]: id}
 
   return (
     <button {...attrs} class={`select-none ${props.class}`}>

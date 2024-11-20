@@ -3,7 +3,6 @@ import {defineConfig} from 'vite'
 import icons from 'unplugin-icons/vite'
 import {VitePWA as vitePWA} from 'vite-plugin-pwa'
 import vue from '@vitejs/plugin-vue'
-import tsconfigPaths from 'vite-tsconfig-paths'
 import vueJsx from '@vitejs/plugin-vue-jsx'
 import iconsResolver from 'unplugin-icons/resolver'
 import components from 'unplugin-vue-components/vite'
@@ -56,7 +55,6 @@ export default defineConfig(({mode}) => {
         ],
       }) as any,
       vueJsx(),
-      tsconfigPaths(),
       // vitePluginImp(),
       topLevelAwait(),
       icons({

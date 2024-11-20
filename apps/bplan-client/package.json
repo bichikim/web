@@ -3,17 +3,18 @@
   "type": "module",
   "scripts": {
     "build": "vinxi build",
-    "dev": "vinxi dev",
+    "dev": "vinxi dev --host ",
     "start": "node ./.output/server/index.mjs",
     "check-types": "tsc --noEmit"
   },
   "private": true,
   "dependencies": {
     "@solidjs/meta": "^0.29.4",
-    "@solidjs/router": "^0.15.0",
+    "@solidjs/router": "^0.15.1",
     "@solidjs/start": "^1.0.10",
     "@winter-love/solid-use": "workspace:*",
     "@winter-love/utils": "workspace:*",
+    "@winter-love/lodash": "workspace:*",
     "class-variance-authority": "^0.7.0",
     "solid-js": "^1.9.3",
     "vinxi": "^0.4.3",
@@ -23,7 +24,7 @@
     "@unocss/vite": "^0.63.6",
     "flush-promises": "^1.0.2",
     "typescript": "^5.6.3",
-    "unocss": "^0.63.6"
+    "unocss": "^0.64.1"
   },
   "engines": {
     "node": ">=18"
