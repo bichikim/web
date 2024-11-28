@@ -244,9 +244,15 @@ importers:
       class-variance-authority:
         specifier: ^0.7.0
         version: 0.7.0
+      smplr:
+        specifier: ^0.15.1
+        version: 0.15.1
       solid-js:
         specifier: ^1.9.3
         version: 1.9.3
+      standardized-audio-context:
+        specifier: ^25.3.77
+        version: 25.3.77
       vinxi:
         specifier: ^0.4.3
         version: 0.4.3(@types/node@22.9.0)(encoding@0.1.13)(ioredis@5.4.1)(terser@5.36.0)(typescript@5.6.3)(webpack-sources@3.2.3)
@@ -4176,10 +4182,10 @@ packages:
       react-dom:
         optional: true
 
-  '@storybook/builder-vite@8.5.0-alpha.4':
-    resolution: {integrity: sha512-rau/ckEylVIw26f62Uka0+MYbFtRO53BdUK0HglKv7jfQh58n79IuxZFrPomFwVPTNxz6NgfYdQfy2sOazDa7g==}
+  '@storybook/builder-vite@8.5.0-alpha.11':
+    resolution: {integrity: sha512-AX5GCyd1Mr7iAAlDjO7heAY9SW6fcN8t86+uSpKpzHWkCFoX3uqcYL9XTfwP9FG7zWAOtbunkdbvNdNoN25znQ==}
     peerDependencies:
-      storybook: ^8.5.0-alpha.4
+      storybook: ^8.5.0-alpha.11
       vite: 4.5.3
 
   '@storybook/core-common@8.4.1':
@@ -4200,10 +4206,10 @@ packages:
     peerDependencies:
       storybook: ^8.4.1
 
-  '@storybook/csf-plugin@8.5.0-alpha.4':
-    resolution: {integrity: sha512-77ZghTcV630GU1QnX9XiPsk105Jcz2P5a4B1ooRz69081D1Y/Q3uamfUhwaPmPR3F5CTqnPr5svve4LbKfw8xA==}
+  '@storybook/csf-plugin@8.5.0-alpha.11':
+    resolution: {integrity: sha512-1WBNdgvM+iGnP7f5H/rn1860XbpXASoVHHWNDPWQQRFBJb4N2pGCYsnaW2PsS8hvCQLLfwp5AtLkAsRcfBmfPg==}
     peerDependencies:
-      storybook: ^8.5.0-alpha.4
+      storybook: ^8.5.0-alpha.11
 
   '@storybook/csf-tools@8.4.1':
     resolution: {integrity: sha512-WfcUPdTYZJCqiVzrmpqHZxwfKraZUoYk3JNkkXBRcTxaJx0jkcv1zl6NTm4JDrCJNU97f8zrwLD+Zyi69DXCTg==}
@@ -16426,9 +16432,9 @@ snapshots:
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
 
-  '@storybook/builder-vite@8.5.0-alpha.4(storybook@8.4.1(bufferutil@4.0.8)(prettier@3.3.3)(utf-8-validate@5.0.10))(vite@5.4.10(@types/node@22.9.0)(terser@5.36.0))(webpack-sources@3.2.3)':
+  '@storybook/builder-vite@8.5.0-alpha.11(storybook@8.4.1(bufferutil@4.0.8)(prettier@3.3.3)(utf-8-validate@5.0.10))(vite@5.4.10(@types/node@22.9.0)(terser@5.36.0))(webpack-sources@3.2.3)':
     dependencies:
-      '@storybook/csf-plugin': 8.5.0-alpha.4(storybook@8.4.1(bufferutil@4.0.8)(prettier@3.3.3)(utf-8-validate@5.0.10))(webpack-sources@3.2.3)
+      '@storybook/csf-plugin': 8.5.0-alpha.11(storybook@8.4.1(bufferutil@4.0.8)(prettier@3.3.3)(utf-8-validate@5.0.10))(webpack-sources@3.2.3)
       browser-assert: 1.2.1
       storybook: 8.4.1(bufferutil@4.0.8)(prettier@3.3.3)(utf-8-validate@5.0.10)
       ts-dedent: 2.2.0
@@ -16467,7 +16473,7 @@ snapshots:
     transitivePeerDependencies:
       - webpack-sources
 
-  '@storybook/csf-plugin@8.5.0-alpha.4(storybook@8.4.1(bufferutil@4.0.8)(prettier@3.3.3)(utf-8-validate@5.0.10))(webpack-sources@3.2.3)':
+  '@storybook/csf-plugin@8.5.0-alpha.11(storybook@8.4.1(bufferutil@4.0.8)(prettier@3.3.3)(utf-8-validate@5.0.10))(webpack-sources@3.2.3)':
     dependencies:
       storybook: 8.4.1(bufferutil@4.0.8)(prettier@3.3.3)(utf-8-validate@5.0.10)
       unplugin: 1.15.0(webpack-sources@3.2.3)
@@ -24656,7 +24662,7 @@ snapshots:
 
   storybook-solidjs-vite@1.0.0-beta.2(storybook@8.4.1(bufferutil@4.0.8)(prettier@3.3.3)(utf-8-validate@5.0.10))(vite@5.4.10(@types/node@22.9.0)(terser@5.36.0))(webpack-sources@3.2.3):
     dependencies:
-      '@storybook/builder-vite': 8.5.0-alpha.4(storybook@8.4.1(bufferutil@4.0.8)(prettier@3.3.3)(utf-8-validate@5.0.10))(vite@5.4.10(@types/node@22.9.0)(terser@5.36.0))(webpack-sources@3.2.3)
+      '@storybook/builder-vite': 8.5.0-alpha.11(storybook@8.4.1(bufferutil@4.0.8)(prettier@3.3.3)(utf-8-validate@5.0.10))(vite@5.4.10(@types/node@22.9.0)(terser@5.36.0))(webpack-sources@3.2.3)
     transitivePeerDependencies:
       - storybook
       - vite

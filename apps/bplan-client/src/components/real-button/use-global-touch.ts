@@ -117,9 +117,7 @@ export const useGlobalTouchEmitter = (options: UseGlobalTouchEmitterOptions = {}
 
   if (preventTouchContext) {
     useEvent(getWindow, 'contextmenu', (event: any) => {
-      if (event.pointerType === 'touch') {
-        event.preventDefault()
-      }
+      event.preventDefault()
     })
   }
 
@@ -145,7 +143,6 @@ export const useGlobalTouchEmitter = (options: UseGlobalTouchEmitterOptions = {}
     //
     emitAllMultiIDs(downIDs, false)
     downIDs = new Map()
-    // console.log('pointerup', event.pointerType)
   })
 
   useEvent(getWindow, 'pointermove', (event: PointerEvent) => {
@@ -167,8 +164,6 @@ export const useGlobalTouchEmitter = (options: UseGlobalTouchEmitterOptions = {}
 
     emitAllIDs(downTouchIds, true)
     emitAllIDs(upTouchIds, false)
-    // console.log(downIDs)
-    // console.log('pointermove', event.pointerType)
   })
 
   useEvent(getWindow, 'touchstart', (event) => {
@@ -181,6 +176,7 @@ export const useGlobalTouchEmitter = (options: UseGlobalTouchEmitterOptions = {}
   })
 
   useEvent(getWindow, 'touchmove', (event) => {
+    event.preventDefault()
     // const upTouchIds: Set<string> = new Set(downIDs)
     const touches = event.changedTouches
     const touchIds = getTouchedIds(touches, takeFirst)

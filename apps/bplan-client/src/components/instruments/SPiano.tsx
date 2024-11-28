@@ -4,18 +4,19 @@ import {
   SPianoFlatKey,
   SPianoFlatSet,
   SPianoRoot,
+  SPianoRootProps,
   SPianoSharpEmpty,
   SPianoSharpKey,
   SPianoSharpSet,
 } from 'src/components/instruments/SPianoParts'
-export type SPianoProps = SPianoBodyProps
+export type SPianoProps = SPianoBodyProps & SPianoRootProps
 
 export const SPiano = (props: SPianoProps) => {
   return (
-    <SPianoRoot>
+    <SPianoRoot onDown={props.onDown} onUp={props.onUp}>
       <SPianoBody
         {...props}
-        class={`relative h-486px relative visible min-w-max bg-red ${props.class}`}
+        class={`relative h-486px relative visible min-w-max ${props.class ?? ''}`}
       >
         <SPianoFlatSet class="inline-flex relative w-max h-[calc(100%-10px)]">
           <SPianoFlatKey class="w-80px h-full bg-#f7f7f7" />

@@ -4,7 +4,7 @@ import {KeyContext} from './key-context'
 import {HRealButton, HRealButtonProps} from 'src/components/real-button/HRealButton'
 
 export interface HKeyProps extends HRealButtonProps {
-  key?: string
+  key?: string | number
 }
 
 // instrument key

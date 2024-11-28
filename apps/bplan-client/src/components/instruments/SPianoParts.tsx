@@ -5,13 +5,15 @@ import {HPianoFlatSet, HPianoFlatSetProps} from './HPianoFlatSet'
 import {HKey, HKeyProps} from './Hkey'
 import {JSX} from 'solid-js'
 
-export const SPianoRoot = (props: HPianoRootProps) => {
+export type SPianoRootProps = HPianoRootProps
+
+export const SPianoRoot = (props: SPianoRootProps) => {
   return <HPianoRoot {...props} />
 }
 
 export type SPianoBodyProps = HPianoBodyProps
 
-export const SPianoBody = (props: HPianoBodyProps) => {
+export const SPianoBody = (props: SPianoBodyProps) => {
   return <HPianoBody {...props} />
 }
 

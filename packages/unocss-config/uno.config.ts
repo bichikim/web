@@ -33,6 +33,22 @@ export default defineConfig({
     }),
   ],
   rules: [
+    [
+      'disable-tap-zoom',
+      {
+        'touch-action': 'manipulation',
+      },
+    ],
+    [
+      'pattern-a',
+      {
+        'background-color': '#e5e5f7',
+        'background-image':
+          'repeating-radial-gradient( circle at 0 0, transparent 0, #e5e5f7 6px ),' +
+          ' repeating-linear-gradient( #9495a555, #9495a5 )',
+        opacity: '0.3',
+      },
+    ],
     //
     [
       /^scrollbar-none$/u,
