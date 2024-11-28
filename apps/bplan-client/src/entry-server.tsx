@@ -39,6 +39,7 @@ export default createHandler(() => (
         <head>
           <meta charset="utf-8" />
           <meta name="viewport" content="width=device-width, initial-scale=1" />
+          <meta name="apple-mobile-web-app-capable" content="yes" />
           <link rel="icon" href="/favicon.ico" />
           <style type="text/css">{appStyle}</style>
           <title>bplan</title>
