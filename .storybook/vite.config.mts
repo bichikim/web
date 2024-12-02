@@ -14,7 +14,7 @@ export default defineConfig({
       osPathDelimiter: process.platform === 'win32' ? '\\' : '/',
       root: fileURLToPath(new URL('../', import.meta.url)),
       sourceRoot: 'src',
-      workspacePaths: [/^\/coong\//u, /^\/packages\//u],
+      workspacePaths: [/^\/apps\//u, /^\/packages\//u],
     }) as Plugin,
   ],
 })

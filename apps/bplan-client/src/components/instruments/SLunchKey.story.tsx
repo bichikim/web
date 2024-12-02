@@ -1,28 +1,28 @@
 import {Meta, StoryObj} from 'storybook-solidjs'
-import {HRealButton} from './HRealButton'
+import {SLunchKey} from './SLunchKey'
 import {useGlobalTouchEmitter} from 'src/components/real-button/use-global-touch'
 
 const Root = (props: any) => {
   useGlobalTouchEmitter({preventTouchContext: true, topLevelElementOnly: true})
   return (
-    <div>
-      <HRealButton {...props} />
-      <HRealButton {...props} />
-      <HRealButton {...props} />
+    <div class="flex gap-20px">
+      <SLunchKey {...props} />
+      <SLunchKey {...props} />
+      <SLunchKey {...props} />
     </div>
   )
 }
 
 const meta = {
   component: Root,
-} satisfies Meta<typeof HRealButton>
+} satisfies Meta<typeof SLunchKey>
 
 export default meta
 type Story = StoryObj<typeof meta>
 
 export const Default: Story = {
   args: {
-    children: 'hello',
-    class: 'w-200px h-200px data data-[state="down"]:bg-red',
+    class: 'w-200px h-200px',
+    key: 1,
   },
 }

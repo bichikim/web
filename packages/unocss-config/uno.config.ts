@@ -95,7 +95,12 @@ export default defineConfig({
     ],
   ],
   shortcuts: {
-    'piano-flat': [
+    'key-lunch': [
+      'relative p-0 b-4px b-solid outline-none rd-22% bg-#f4f5f6 shadow-lunch-key duration-130',
+      'ease-in-out cursor-pointer box-border data-[state="down"]:shadow-none [&>div]:data-[state="down"]:shadow-none',
+      '[&>div]:data-[state="down"]:top-0',
+    ],
+    'key-piano-flat': [
       ':uno: block b-solid b-#ccc rd-t-0 inline-flex flex-shrink-0 overflow-hidden b-b-2px',
       'p-0 relative rd-b-3px b-1px shadow-flat-up data-[state="down"]:shadow-flat-down b-b-#ddd',
       'data-[state="down"]:shadow-[0 2px 2px rgb(0 0 0 / 40%)] data-[state="down"]:scale-x-100',
@@ -109,7 +114,7 @@ export default defineConfig({
       'data-[state="down"]:before:top-0 data-[state="down"]:before:skew-x--0.5 data-[state="down"]:before:w-5px',
       'data-[state="down"]:before:shadow-flat-right',
     ],
-    'piano-sharp': [
+    'key-piano-sharp': [
       'block b-solid rd-t-0 inline-flex flex-shrink-0 overflow-hidden bb-black',
       'p-0 relative b-x-2px b-t-1px b-b-10px rd-b-2px shadow-sharp-key',
       'bg-gradient-linear bg-gradient-[-20deg,#333,#000,#333] bg-black',
@@ -127,6 +132,8 @@ export default defineConfig({
       'flat-up':
         'inset 0 1px 0px #fff, inset 0 -3px 3px #fff, inset 1px 0px 0px #fff,' +
         ' inset -1px 0px 0px #fff, 0 4px 5px rgb(0 0 0 / 20%)',
+      'lunch-content': 'inset 0px -4px 0px rgba(0,0,0,0.2)',
+      'lunch-key': '0 20px 25px rgba(0,0,0,0.2)',
       'sharp-down':
         'inset 0px -1px 1px rgb(255 255 255 / 40%), 0 1px 0px rgb(0 0 0 / 80%),' +
         ' 0 2px 2px rgb(0 0 0 / 40%), 0 -1px 0px #000',
