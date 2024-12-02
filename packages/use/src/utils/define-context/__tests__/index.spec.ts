@@ -1,9 +1,10 @@
 /**
  * @jest-environment jsdom
  */
-import {mount} from '@winter-love/test-utils'
+import {mount} from '@vue/test-utils'
 import {defineComponent, h, inject, provide, reactive, ref, toRefs} from 'vue'
 import {defineContext, preferParentContext} from '../'
+import {describe, expect, it} from 'vitest'
 
 describe('defineContext', () => {
   it('should return context with defined context', () => {
@@ -148,14 +149,14 @@ describe('preferParentContext', () => {
   const provideOrUse = preferParentContext(provideContext)
 
   const level1 = defineComponent({
-    setup(props, {slots}) {
+    setup(_, {slots}) {
       provideContext(reactive({name: name1}))
       return () => slots.default?.()
     },
   })
 
   const level2 = defineComponent({
-    setup(props, {slots}) {
+    setup(_, {slots}) {
       provideOrUse(reactive({name: name2}))
       return () => slots.default?.()
     },
@@ -210,14 +211,14 @@ describe('preferParentContext', () => {
     const injectContext = (): {name: string} => inject(CONTEXT_KEY) as any
 
     const level1 = defineComponent({
-      setup(props, {slots}) {
+      setup(_, {slots}) {
         customProvideOrUse(reactive({name: name1}) as any)
         return () => slots.default?.()
       },
     })
 
     const level2 = defineComponent({
-      setup(props, {slots}) {
+      setup(_, {slots}) {
         customProvideOrUse(reactive({name: name2}) as any)
         return () => slots.default?.()
       },

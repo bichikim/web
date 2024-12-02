@@ -6,9 +6,7 @@
     "outDir": "dist",
     "baseUrl": ".",
     "paths": {
-      "src/*": [
-        "src/*"
-      ]
+      "src/*": ["src/*"]
     }
   },
   "ts-node": {
@@ -17,8 +15,5 @@
       "module": "CommonJS"
     }
   },
-  "include": [
-    "src/**/*.ts",
-    "src/**/*.tsx",
-  ]
+  "include": ["src/**/*.ts", "src/**/*.tsx"]
 }

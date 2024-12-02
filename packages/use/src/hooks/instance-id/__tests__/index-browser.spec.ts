@@ -1,78 +1,93 @@
 /**
  * @jest-environment jsdom
  */
-import {mountComposition} from '@winter-love/test-utils'
+import {mount} from '@vue/test-utils'
 import {getWindow} from '@winter-love/utils'
-import {getCurrentInstance} from 'vue'
+import {defineComponent, getCurrentInstance} from 'vue'
 import {useInstanceId} from '../'
-
-jest.mock('@winter-love/utils', () => {
-  const actual = jest.requireActual('@winter-love/utils')
+import {afterEach, describe, expect, it, vi} from 'vitest'
+vi.mock('@winter-love/utils', async () => {
+  const actual: any = await vi.importActual('@winter-love/utils')
   return {
     ...actual,
-    getWindow: jest.fn(actual.getWindow),
+    getWindow: vi.fn(actual.getWindow),
   }
 })
 
-jest.mock('vue', () => {
-  const actual = jest.requireActual('vue')
+vi.mock('vue', async () => {
+  const actual: any = await vi.importActual('vue')
   return {
     ...actual,
-    getCurrentInstance: jest.fn(actual.getCurrentInstance),
+    getCurrentInstance: vi.fn(actual.getCurrentInstance),
   }
 })
 
-const _isSSR = jest.mocked(getWindow)
-const _getCurrentInstance = jest.mocked(getCurrentInstance)
+const _isSSR = vi.mocked(getWindow)
+const _getCurrentInstance = vi.mocked(getCurrentInstance)
 
 describe('useInstanceId', () => {
   afterEach(() => {
     _isSSR.mockClear()
-    jest.spyOn(console, 'warn').mockClear()
+    vi.spyOn(console, 'warn').mockClear()
   })
   it('should return id', async () => {
-    const wrapper = mountComposition(() => {
-      const id = useInstanceId()
+    const wrapper = mount(
+      defineComponent({
+        setup: () => {
+          const id = useInstanceId()
 
-      return {
-        id,
-      }
-    })
+          return {
+            id,
+          }
+        },
+      }),
+    )
 
-    expect(typeof wrapper.setupState.id).toBe('number')
+    const setupState = wrapper.vm.$.setupState
+
+    expect(typeof setupState.id).toBe('number')
   })
 
   it('should warn in ssr environment', async () => {
-    _isSSR.mockReturnValueOnce(undefined)
-    jest.spyOn(console, 'warn')
+    ;(_isSSR as any).mockReturnValueOnce()
+    vi.spyOn(console, 'warn')
     // stop console run once
-    jest.mocked(console.warn).mockImplementationOnce(() => {
+    vi.mocked(console.warn).mockImplementationOnce(() => {
       // empty
     })
-    const wrapper = mountComposition(() => {
-      const id = useInstanceId()
+    const wrapper = mount(
+      defineComponent({
+        setup: () => {
+          const id = useInstanceId()
 
-      return {
-        id,
-      }
-    })
-    expect(typeof wrapper.setupState.id).toBe('number')
+          return {
+            id,
+          }
+        },
+      }),
+    )
+    const setupState = wrapper.vm.$.setupState
+    expect(typeof setupState.id).toBe('number')
     expect(console.warn).toHaveBeenCalledWith('Do not use in SSR environment')
   })
   it('should warn id not in an instance', async () => {
     _getCurrentInstance.mockReturnValueOnce(null)
-    jest.spyOn(console, 'warn')
+    vi.spyOn(console, 'warn')
     // stop console run once
-    jest.mocked(console.warn).mockImplementationOnce(() => {
+    vi.mocked(console.warn).mockImplementationOnce(() => {
       // empty
     })
-    mountComposition(() => {
-      const id = useInstanceId()
+    mount(
+      defineComponent({
+        setup: () => {
+          const id = useInstanceId()
 
-      return {
-        id,
-      }
-    })
+          return {
+            id,
+          }
+        },
+      }),
+    )
 
     expect(console.warn).toHaveBeenCalledWith('Do not use outside of a component')
   })

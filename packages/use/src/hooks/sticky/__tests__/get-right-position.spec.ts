@@ -1,4 +1,5 @@
 import {getEndPosition} from '../get-end-position'
+import {describe, it, expect} from 'vitest'
 
 describe('getEndPosition', () => {
   it('should return end', () => {

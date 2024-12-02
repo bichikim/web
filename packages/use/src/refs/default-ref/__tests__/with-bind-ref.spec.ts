@@ -1,6 +1,7 @@
 import {resolveRef} from 'src/refs/resolve-ref'
 import {ref} from 'vue'
 import {defaultRef} from '../'
+import {describe, expect, it} from 'vitest'
 
 describe('defaultRef with bind ref', () => {
   it('should return the default value', () => {

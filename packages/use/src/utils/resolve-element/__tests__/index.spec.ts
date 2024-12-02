@@ -4,6 +4,7 @@
 import {mount} from '@vue/test-utils'
 import {defineComponent, h, onMounted, ref} from 'vue'
 import {resolveElement} from '../'
+import {describe, expect, it} from 'vitest'
 
 describe('resolveElement', () => {
   it('should not get element with none element', () => {
@@ -25,7 +26,6 @@ describe('resolveElement', () => {
       },
     })
     const component = defineComponent({
-      name: '',
       setup() {
         const elementRef = ref()
 

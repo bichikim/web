@@ -1,19 +1,11 @@
 /**
  * @jest-environment jsdom
  */
-import {
-  defineComponent,
-  effectScope,
-  flushPromises,
-  h,
-  mount,
-  reactive,
-  ref,
-  toRef,
-} from '@winter-love/test-utils'
+import {flushPromises, mount} from '@vue/test-utils'
 import {mutRef} from 'src/refs/mut-ref'
 import {onEvent} from '../index'
-
+import {defineComponent, effectScope, h, reactive, ref, toRef} from 'vue'
+import {describe, expect, it, vi} from 'vitest'
 interface SetupOptions {
   eventName?: string
   isActive?: boolean
@@ -102,7 +94,7 @@ describe('use-event', () => {
     expect(wrapper.get('#count').text()).toBe('1')
   })
   it('should trigger with the window target', async () => {
-    const removeEventListenerSpy = jest.spyOn(window, 'removeEventListener')
+    const removeEventListenerSpy = vi.spyOn(window, 'removeEventListener')
     const {wrapper} = setup({eventName: 'message', isActive: true, target: window})
     expect(wrapper.get('#count').text()).toBe('0')
     const event = document.createEvent('MessageEvent')
@@ -116,7 +108,7 @@ describe('use-event', () => {
     removeEventListenerSpy.mockRestore()
   })
   it('should trigger with the window target & false immediate', async () => {
-    const removeEventListenerSpy = jest.spyOn(window, 'removeEventListener')
+    const removeEventListenerSpy = vi.spyOn(window, 'removeEventListener')
     const {wrapper} = setup({eventName: 'message', isActive: false, target: window})
     expect(wrapper.get('#count').text()).toBe('0')
     const event = document.createEvent('MessageEvent')
@@ -134,7 +126,7 @@ describe('use-event', () => {
   })
   it('should work outside of a component', () => {
     const scope = effectScope()
-    const callback = jest.fn()
+    const callback = vi.fn()
     scope.run(() => {
       onEvent(window, 'message', callback, {isActive: true})
 
@@ -150,7 +142,7 @@ describe('use-event', () => {
   })
   it('should work without isActive options', () => {
     const scope = effectScope()
-    const callback = jest.fn()
+    const callback = vi.fn()
     scope.run(() => {
       onEvent(window, 'message', callback)
 

@@ -25,7 +25,7 @@ export const createUseDelay = (
 }
 
 export const useDelay = <Args extends any[], R>(
-  method: (
+  _: (
     handle: UseDelayHandle<Args, R>,
     wait: number,
     immediate: boolean,

@@ -1,5 +1,7 @@
 import {getOutside} from '../get-outside'
+import {describe, expect, it} from 'vitest'
 
+// eslint-disable-next-line max-lines-per-function
 describe('getOutside', () => {
   it('should return position over left', () => {
     const result = getOutside(

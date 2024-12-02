@@ -1,15 +1,19 @@
-name: Build and Deploy
+name: Build and Deploy Coong
 on:
   push:
     branches:
-      - dev
-      - master
+      # stop deploy for now
+      - dev-none
+      # stop deploy for now
+      - release/coong-none
+
 env:
-  PNPM_VERSION: 7.1.0
-  NODE_VERSION: 18
+  PNPM_VERSION: 9.1.4
+  NODE_VERSION: 20
   GCP_SERVICE_NAME: coong
-  PROJECT_CLIENT_PATH: coong/coong-client
+  PROJECT_CLIENT_PATH: apps/coong-client
   ARTIFACT_CLIENT_NAME: dist-client
+  TARGET_DEPLOY_BRANCH: release/coong
 jobs:
   build-client:
     name: Build Client
@@ -64,7 +68,7 @@ jobs:
     needs: build-client
     runs-on: ubuntu-latest
     # only master
-    if: ${{ github.ref == 'refs/heads/master' }}
+    if: github.ref == 'refs/heads/${{ env.TARGET_DEPLOY_BRANCH }}'
     env:
       DESTINATION: coong-static-production
     steps:

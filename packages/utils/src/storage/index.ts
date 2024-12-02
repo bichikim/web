@@ -1,7 +1,7 @@
-/* eslint-disable max-params */
 import cookieJs, {CookieAttributes} from 'js-cookie'
-import {jsonParse, jsonStringify} from 'src/json'
-import {getDocument} from 'src/dom/get-document'
+import {jsonStringify} from 'src/json-stringfy'
+import {jsonParse} from 'src/json-parse'
+import {getDocument} from 'src/get-document'
 
 export type StorageAndCookieKind = 'local' | 'session' | 'cookie'
 export type StorageKind = 'local' | 'session'
@@ -90,7 +90,6 @@ export const getAnyStorageItem = (
   raw: boolean = false,
 ) => {
   switch (kind) {
-    // eslint-disable-next-line switch-colon-spacing
     case 'cookie': {
       return getCookieItem(key, defaultValue, raw)
     }
@@ -128,11 +127,11 @@ export const cleanAllCookie = () => {
   if (!document) {
     return
   }
-  document.cookie.split(';').forEach((cookie) => {
+  for (const cookie of document.cookie.split(';')) {
     document.cookie = cookie
       .replace(/^ +/u, '')
       .replace(/[=].*/u, `=;expires=${new Date().toUTCString()};path=/`)
-  })
+  }
 }
 
 export interface StorageReturn<T = any> {

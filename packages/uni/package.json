@@ -1,9 +1,10 @@
 {
   "name": "@winter-love/uni",
-  "version": "1.0.27",
+  "version": "1.0.33",
   "description": "universally reactive utils 🧪 experimental",
   "repository": "git@github.com:winter-love/web.git",
   "author": "bichi@live.co.kr",
+  "private": true,
   "exports": {
     ".": {
       "import": "./dist/index.mjs",
@@ -21,38 +22,34 @@
     "dist/*"
   ],
   "scripts": {
-    "build": "vite build",
     "dev": "",
-    "prepare": "",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@vue/reactivity": "^3.4.5",
-    "@vue/runtime-core": "^3.2.45",
-    "@vue/test-utils": "^2.2.6",
-    "@vueuse/core": "^9.6.0",
-    "@winter-love/stitches": "workspace:*",
+    "@vue/reactivity": "^3.5.12",
+    "@vue/runtime-core": "^3.5.12",
+    "@vue/test-utils": "^2.4.6",
+    "@vueuse/core": "^11.2.0",
     "@winter-love/use": "workspace:*",
     "@winter-love/utils": "workspace:*",
-    "jest-mock": "^29.3.1",
-    "node-html-parser": "^6.1.4",
-    "vue": "^3.3.0",
-    "solid-js": "^1.8.14"
+    "jest-mock": "^29.7.0",
+    "node-html-parser": "^6.1.13",
+    "solid-js": "^1.9.3",
+    "vue": "^3.5.12"
   },
-  "peerDependencies": {},
   "devDependencies": {
-    "@types/jest": "^28.1.8",
-    "@types/node": "^18.11.14",
+    "@types/node": "^22.9.0",
     "@winter-love/lodash": "workspace:*",
-    "vite": "^5.0.12",
-    "vite-plugin-dts": "^3.7.2",
-    "vite-plugin-solid": "^2.9.1",
-    "typescript": "^5.3.3"
+    "@winter-love/vite-lib-config": "workspace:*",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.10",
+    "vite-plugin-dts": "^4.3.0",
+    "vite-plugin-solid": "^2.10.2"
   },
   "publishConfig": {
     "access": "public"
   },
-  "gitHead": "4a8bc8b824e5780a82d3b2958e1a8afb48a49bb0",
+  "gitHead": "d2b83a5ae925fd122a6f46c99d743ede11b86c2f",
   "web-types": [
     "../../web-types.json"
   ]

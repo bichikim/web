@@ -30,7 +30,6 @@ export type MaybeFunctionParams<T> = T extends (...args: infer P) => any ? P : n
 // ============================================
 
 // object =====================================
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
 /**
  * @example
  * const foo: EmptyObject = {} // true
@@ -136,9 +135,8 @@ export type PopParameters<T extends (...args: any) => any> = Pop<Parameters<T>>
 // ============================================
 
 // type assistants ============================
-export type TakeFlatKeys<R, K extends keyof R> = R extends Record<K, infer P>
-  ? Keyof<P>
-  : never
+export type TakeFlatKeys<R, K extends keyof R> =
+  R extends Record<K, infer P> ? Keyof<P> : never
 // ============================================
 
 export type FunctionObject<T extends Record<string, AnyFunction>> = {
@@ -164,3 +162,12 @@ export type FlatKeys<R> = TakeFlatKeys<R, keyof R>
 
 // eslint-disable-next-line @typescript-eslint/ban-types
 export type ClassFunction = Function
+
+export type SnakeToCamelCase<S extends string> =
+  S extends `${infer P1}_${infer P2}${infer P3}`
+    ? `${Lowercase<P1>}${Uppercase<P2>}${SnakeToCamelCase<P3>}`
+    : Lowercase<S>
+
+export type CamelToSnakeCase<S extends string> = S extends `${infer T}${infer U}`
+  ? `${T extends Capitalize<T> ? '_' : ''}${Lowercase<T>}${CamelToSnakeCase<U>}`
+  : S

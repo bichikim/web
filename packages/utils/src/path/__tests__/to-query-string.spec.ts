@@ -20,7 +20,7 @@ describe('toQueryString', () => {
         bar: '_bar',
       },
       {
-        sort: (a: string, b: string) => (a > b ? 1 : -1),
+        sort: (aValue: string, b: string) => (aValue > b ? 1 : -1),
       },
     )
 

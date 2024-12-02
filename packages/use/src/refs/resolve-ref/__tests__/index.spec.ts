@@ -1,6 +1,7 @@
 import {expectType} from 'tsd'
 import {computed, ref, Ref} from 'vue'
 import {resolveRef} from '../'
+import {describe, expect, it} from 'vitest'
 
 describe('resolveRef', () => {
   it('should resolve a ref with null', () => {

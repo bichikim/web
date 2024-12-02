@@ -14,7 +14,7 @@ export interface OnClickOutsideOptions<Event extends keyof WindowEventMap> {
 }
 
 export const onClickOutside = <Event extends keyof WindowEventMap = 'pointerdown'>(
-  target: Ref<MaybeElement>,
+  target: Ref<MaybeElement | undefined>,
   handle: OnClickOutsideHandle<Event>,
   options: OnClickOutsideOptions<Event> = {},
 ) => {

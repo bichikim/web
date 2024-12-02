@@ -1,6 +1,4 @@
 const protocolRegx = /^(?:https?|ftp):\/\//u
-// todo unsafe 원인을 모르겠습니다 연구중
-// eslint-disable-next-line unicorn/no-unsafe-regex
 const hostRegx = /^[_a-z-]{1,50}(?:\.[_a-z-]{1,50}){1,2}$/u
 
 export interface ChunkedUrlResult {

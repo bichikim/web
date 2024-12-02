@@ -7,10 +7,10 @@ export type MapSources<T, Immediate> = {
       ? V | undefined
       : V
     : T[K] extends object
-    ? Immediate extends true
-      ? T[K] | undefined
-      : T[K]
-    : never
+      ? Immediate extends true
+        ? T[K] | undefined
+        : T[K]
+      : never
 }
 
 export interface DebounceOptions {
@@ -58,12 +58,12 @@ export function watchExtended<
 
 export function watchExtended(sources, callback, options?: WatchExtendOptions): any {
   const {once, debounce} = options ?? {}
-  // eslint-disable-next-line unicorn/consistent-function-scoping
+
   const beforeStop: (() => void)[] = []
   const stop: () => void = () => {
-    beforeStop.forEach((fn) => {
-      fn()
-    })
+    for (const function_ of beforeStop) {
+      function_()
+    }
   }
   let _callback = callback
   if (once) {

@@ -1,9 +1,10 @@
 /**
- * @jest-environment jsdom
+ * @vitest-environment jsdom
  */
 import {mount} from '@vue/test-utils'
 import {defineComponent, h, onMounted, ref} from 'vue'
 import {getComponentElement} from '../'
+import {describe, expect, it} from 'vitest'
 
 describe('getRefElement', () => {
   it('should not get element with none element', () => {
@@ -24,7 +25,6 @@ describe('getRefElement', () => {
       },
     })
     const component = defineComponent({
-      name: '',
       setup() {
         const elementRef = ref()
 

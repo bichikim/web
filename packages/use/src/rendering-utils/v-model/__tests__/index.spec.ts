@@ -1,8 +1,10 @@
 /**
  * @jest-environment jsdom
  */
-import {defineComponent, h, mount, ref, toRef} from '@winter-love/test-utils'
+import {defineComponent, h, ref, toRef} from 'vue'
+import {mount} from '@vue/test-utils'
 import {inputModel, valueModel} from '../'
+import {describe, expect, it} from 'vitest'
 
 describe('v-model', () => {
   const setup = () => {

@@ -1,19 +1,20 @@
 /* eslint-disable @typescript-eslint/ban-types */
 import {expectType} from 'tsd'
+import {describe, it} from 'vitest'
 import {ArrayLength, ClassFunction, DropParameters} from '../'
-import {describe, expect, it, vi} from 'vitest'
+
 describe('language', () => {
   describe('DropParameters', () => {
     it('should drop one item from an array tuple type', () => {
       // noinspection JSUnusedLocalSymbols
       const typeTest = <Func extends (...args: any[]) => any>(
-        func: Func,
+        _: Func,
       ): DropParameters<Func> => {
         return 'foo' as any
       }
 
       // noinspection JSUnusedLocalSymbols
-      expectType<[number]>(typeTest((foo: string, bar: number) => 'foo'))
+      expectType<[number]>(typeTest((_: string, __: number) => 'foo'))
     })
   })
   describe('ArrayLength', () => {

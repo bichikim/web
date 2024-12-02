@@ -1,22 +1,24 @@
 /**
  * @jest-environment jsdom
  */
+import {defineComponent} from 'vue'
 import {onElementMutation} from '../'
-import {mountComposition} from '@winter-love/test-utils'
+import {mount} from '@vue/test-utils'
+import {afterEach, describe, expect, it, vi} from 'vitest'
 globalThis.MutationObserver = function ob() {
   // empty
 } as any
 
 describe('onElementMutation', () => {
   afterEach(() => {
-    jest.clearAllMocks()
+    vi.clearAllMocks()
   })
   it('should call callback when the element is mutated', () => {
-    const observe = jest.fn()
-    const disconnect = jest.fn()
+    const observe = vi.fn()
+    const disconnect = vi.fn()
     let _callback
 
-    jest.spyOn(globalThis, 'MutationObserver').mockImplementationOnce((callback) => {
+    vi.spyOn(globalThis, 'MutationObserver').mockImplementationOnce((callback) => {
       _callback = callback
       return {
         disconnect,
@@ -24,13 +26,17 @@ describe('onElementMutation', () => {
       } as any
     })
 
-    const callback = jest.fn()
+    const callback = vi.fn()
     const fakeElement: any = {}
 
-    const wrapper = mountComposition(() => {
-      onElementMutation(fakeElement, callback)
-      return {}
-    })
+    const wrapper = mount(
+      defineComponent({
+        setup: () => {
+          onElementMutation(fakeElement, callback)
+          return {}
+        },
+      }),
+    )
 
     expect(MutationObserver).toHaveBeenCalledWith(expect.any(Function))
     expect(observe).toHaveBeenCalledWith(fakeElement, {attributes: true})
@@ -44,17 +50,21 @@ describe('onElementMutation', () => {
     expect(disconnect).toHaveBeenCalledTimes(1)
   })
   it('should do nothing if element is not element', () => {
-    const observe = jest.fn()
-    const disconnect = jest.fn()
-    jest.spyOn(globalThis, 'MutationObserver').mockReturnValueOnce({
+    const observe = vi.fn()
+    const disconnect = vi.fn()
+    vi.spyOn(globalThis, 'MutationObserver').mockReturnValueOnce({
       disconnect,
       observe,
     } as any)
-    const callback = jest.fn()
-    const wrapper = mountComposition(() => {
-      onElementMutation(undefined, callback)
-      return {}
-    })
+    const callback = vi.fn()
+    const wrapper = mount(
+      defineComponent({
+        setup: () => {
+          onElementMutation(undefined, callback)
+          return {}
+        },
+      }),
+    )
     expect(observe).toHaveBeenCalledTimes(0)
     wrapper.unmount()
     expect(disconnect).toHaveBeenCalledTimes(0)

@@ -1,5 +1,6 @@
 import {isComponent} from '../'
 import {defineComponent} from 'vue'
+import {describe, expect, it} from 'vitest'
 
 describe('isComponent', () => {
   it('should return true for a component', () => {

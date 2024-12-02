@@ -1,13 +1,12 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "declaration":  true,
+    "resolveJsonModule": true,
+    "declaration": true,
     "outDir": "lib",
     "baseUrl": ".",
     "paths": {
-      "src/*": [
-        "src/*"
-      ]
+      "src/*": ["src/*"]
     }
   },
   "ts-node": {
@@ -16,13 +15,6 @@
       "module": "CommonJS"
     }
   },
-  "include": [
-    "src/**/*.ts",
-    "src/**/*.d.ts",
-    "src/**/*.tsx",
-  ],
-  "exclude": [
-    "dist",
-    "node_modules"
-  ]
+  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx"],
+  "exclude": ["dist", "node_modules"]
 }

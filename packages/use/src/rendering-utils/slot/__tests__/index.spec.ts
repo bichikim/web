@@ -2,12 +2,14 @@
  * @jest-environment jsdom
  */
 import {slot} from '../'
-import {defineComponent, h, mount} from '@winter-love/test-utils'
+import {defineComponent, h} from 'vue'
+import {mount} from '@vue/test-utils'
+import {describe, expect, it} from 'vitest'
 
 describe('Slot', () => {
   const setup = () => {
     const Component = defineComponent({
-      setup(props, {slots}) {
+      setup(_, {slots}) {
         return () =>
           h('div', [
             //

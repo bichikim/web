@@ -4,10 +4,11 @@
 import {debug} from '../'
 import {defineComponent, h, ref} from 'vue'
 import {mount} from '@vue/test-utils'
+import {afterEach, describe, expect, it, vi} from 'vitest'
 
-jest.mock('../', () => {
+vi.mock('../', async () => {
   process.env.NODE_ENV = 'production'
-  const actual = jest.requireActual('../')
+  const actual = await vi.importActual('../')
   return {
     ...actual,
   }

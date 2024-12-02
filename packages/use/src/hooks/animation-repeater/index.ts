@@ -16,7 +16,7 @@ export const onAnimationRepeater = (
   handle: UseAnimationTickHandle,
   toggle?: MaybeRef<boolean | undefined>,
 ) => {
-  const toggleRef: Ref<boolean> = mutRef(defaultRef(resolveRef(toggle), () => true))
+  const toggleRef: Ref<boolean> = mutRef(defaultRef(resolveRef(toggle), true))
   const cancelFlagRef = ref<number | undefined>()
   const window = getWindow()
 

@@ -1,24 +1,25 @@
 /**
- * @jest-environment jsdom
+ * @vitest-environment jsdom
  */
 import {flushPromises, mount} from '@vue/test-utils'
 import {getWindow} from '@winter-love/utils'
 import {defineComponent, h, ref} from 'vue'
 import {onIntersection} from '../'
+import {describe, expect, it, vi} from 'vitest'
 
-jest.mock('@winter-love/utils', () => {
-  const actual = jest.requireActual('@winter-love/utils')
+vi.mock('@winter-love/utils', async () => {
+  const actual: any = await vi.importActual('@winter-love/utils')
   return {
     ...actual,
-    getWindow: jest.fn(actual.getWindow),
+    getWindow: vi.fn(actual.getWindow),
   }
 })
 
-const _getWindow = jest.mocked(getWindow)
+const _getWindow = vi.mocked(getWindow)
 
 describe('on-element-intersection', () => {
   const setup = () => {
-    const TestComponent = defineComponent((props, {slots}) => {
+    const TestComponent = defineComponent((_, {slots}) => {
       const elementRef = ref()
       const showRef = ref()
 
@@ -64,9 +65,9 @@ describe('on-element-intersection', () => {
     })
     let observerTrigger: any
     const threshold = 0.05
-    const disconnect = jest.fn()
-    const observe = jest.fn()
-    const observerMock = jest.fn((callback) => {
+    const disconnect = vi.fn()
+    const observe = vi.fn()
+    const observerMock = vi.fn((callback) => {
       observerTrigger = callback
       return {
         disconnect,
@@ -136,7 +137,7 @@ describe('on-element-intersection', () => {
   })
 
   it('should not run any in SSR environment', async () => {
-    _getWindow.mockReturnValueOnce(undefined)
+    _getWindow.mockReturnValueOnce(null)
     const {teardown, observerMock} = setup()
     expect(observerMock).not.toHaveBeenCalled()
 

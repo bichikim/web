@@ -1,9 +1,7 @@
-/// <reference types="histoire" />
 import {fileURLToPath, URL} from 'node:url'
 import {monorepoAlias} from '@winter-love/vite-plugin-monorepo-alias'
 import {defineConfig} from 'vite'
 import vue from '@vitejs/plugin-vue'
-import path from 'node:path'
 export default defineConfig({
   // Example build config for a component library
   build: {
@@ -21,11 +19,6 @@ export default defineConfig({
     },
   },
 
-  histoire: {
-    // Alternative way of specifying histoire config
-    setupFile: '/histoire.setup.ts',
-  },
-
   plugins: [
     // Vite Plugins
     vue(),
@@ -37,6 +30,3 @@ export default defineConfig({
     }) as any,
   ],
 })
-
-console.info('vite histoire debug', fileURLToPath(new URL('./', import.meta.url)))
-console.info('vite histoire debug', path.delimiter)

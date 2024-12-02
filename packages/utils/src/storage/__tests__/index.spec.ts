@@ -1,8 +1,9 @@
 /**
  * @vitest-environment happy-dom
  */
+import {describe, expect, it} from 'vitest'
 import {storage} from '../'
-import {describe, expect, it, vi} from 'vitest'
+
 describe('createStorage', () => {
   it('should create local storage', () => {
     const _storage = storage('local')

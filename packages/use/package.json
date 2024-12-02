@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/use",
-  "version": "1.0.27",
+  "version": "1.0.35",
   "description": "Vue utils",
   "keywords": [
     "typescript",
@@ -36,24 +36,20 @@
   "scripts": {
     "build": "tsup --dts --minify",
     "dev": "tsup --watch",
-    "prepare": "tsup --dts",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@vue/shared": "^3.5.12",
     "@winter-love/lodash": "workspace:*",
     "@winter-love/utils": "workspace:*",
-    "immer": "^10.0.2",
-    "vue": "^3.3.0",
-    "@vue/shared": "^3.3.0"
+    "immer": "^10.1.1",
+    "vue": "^3.5.12"
   },
-  "devDependencies": {
-    "@types/sinon": "10.0.16",
-    "@vue/server-renderer": "^3.3.0"
-  },
+  "devDependencies": {},
   "publishConfig": {
     "access": "public"
   },
-  "gitHead": "4a8bc8b824e5780a82d3b2958e1a8afb48a49bb0",
+  "gitHead": "d2b83a5ae925fd122a6f46c99d743ede11b86c2f",
   "tsup": {
     "entry": [
       "src/index.ts"

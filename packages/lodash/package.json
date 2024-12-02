@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/lodash",
-  "version": "1.0.27",
+  "version": "1.0.35",
   "description": "Lodash for tree shaking",
   "keywords": [
     "lodash"
@@ -25,24 +25,22 @@
     "dist/*"
   ],
   "scripts": {
-    "build": "tsup --dts --minify",
+    "build": "vite build && pnpm run copytype",
     "copytype": "cpx \"./node_modules/@types/lodash/**/*.ts\" dist ",
-    "dev": "tsup --watch",
-    "generate-lodash-es": "lodash modularize exports=es -d -s -o src/lodash",
-    "prepare": "tsup && pnpm run copytype"
-  },
-  "dependencies": {
-    "@types/lodash-es": "4.17.9"
+    "dev": "vite build --watch --minify false",
+    "generate-lodash-es": "lodash modularize exports=es -d -s -o src/lodash"
   },
   "devDependencies": {
-    "@types/lodash": "4.14.198",
-    "cpx": "^1.5.0",
-    "lodash-cli": "4.17.5"
+    "@types/lodash": "4.17.4",
+    "@types/lodash-es": "4.17.9",
+    "@winter-love/vite-lib-config": "workspace:*",
+    "lodash-cli": "4.17.5",
+    "lodash-es": "^4.17.21"
   },
   "publishConfig": {
     "access": "public"
   },
-  "gitHead": "4a8bc8b824e5780a82d3b2958e1a8afb48a49bb0",
+  "gitHead": "d2b83a5ae925fd122a6f46c99d743ede11b86c2f",
   "tsup": {
     "entry": [
       "src/index.ts"

@@ -2,7 +2,8 @@
  * @jest-environment jsdom
  */
 import {computed, isReadonly, reactive, toRef} from 'vue'
-import {mount} from '@winter-love/test-utils'
+import {mount} from '@vue/test-utils'
+import {describe, expect, it} from 'vitest'
 
 describe('isReadonly', () => {
   it('should return true with reactive', () => {

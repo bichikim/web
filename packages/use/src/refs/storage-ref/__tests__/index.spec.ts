@@ -1,19 +1,23 @@
-import {flushPromises} from '@winter-love/test-utils'
+/**
+ * @vitest-environment jsdom
+ */
+import {flushPromises} from '@vue/test-utils'
 import {storage} from '@winter-love/utils'
 import {storageRef} from '../'
 import {effectScope} from 'vue'
+import {beforeEach, describe, expect, it, vi} from 'vitest'
 
-jest.mock('@winter-love/utils', () => {
-  const actual = jest.requireActual('@winter-love/utils')
+vi.mock('@winter-love/utils', async () => {
+  const actual: any = await vi.importActual('@winter-love/utils')
   return {
     ...actual,
-    storage: jest.fn(actual.storage),
+    storage: vi.fn(actual.storage),
   }
 })
 
 describe('storageRef ', () => {
   beforeEach(() => {
-    jest.mocked(storage).mockClear()
+    vi.mocked(storage).mockClear()
   })
   it('should pass options', () => {
     const name = '__foo__'

@@ -1,2 +1,0 @@
-# Ether Wallet
-

@@ -1,22 +1,31 @@
-import type { StorybookConfig } from "storybook-solidjs-vite";
+import nodePath from 'node:path'
+import type {StorybookConfig} from 'storybook-solidjs-vite'
 
 const config: StorybookConfig = {
-  stories: ["../coong/solid-client/src/**/__stories__/*.mdx", "../coong/solid-client/src/**/__stories__/*.story.@(js|jsx|mjs|ts|tsx)"],
   addons: [
-    "@storybook/addon-links",
-    "@storybook/addon-essentials",
-    "@storybook/addon-interactions",
+    getAbsolutePath('@storybook/addon-links'),
+    getAbsolutePath('@storybook/addon-essentials'),
+    getAbsolutePath('@storybook/addon-interactions'),
   ],
+  docs: {},
   framework: {
-    name: "storybook-solidjs-vite",
+    name: getAbsolutePath('storybook-solidjs-vite'),
     options: {
       builder: {
-        viteConfigPath: './vite.config.mts',
-      }
+        viteConfigPath: './.storybook/vite.config.mts',
+      },
     },
   },
-  docs: {
-    autodocs: "tag",
-  },
-};
-export default config;
+  stories: [
+    '../apps/bplan-client/src/**/*.mdx',
+    '../apps/bplan-client/src/**/*.story.@(js|jsx|mjs|ts|tsx)',
+    '../packages/solid/src/**/*.mdx',
+    '../packages/solid/src/**/*.story.@(js|jsx|mjs|ts|tsx)',
+  ],
+}
+export default config
+
+function getAbsolutePath(value: string): any {
+  // eslint-disable-next-line unicorn/prefer-module
+  return nodePath.dirname(require.resolve(nodePath.join(value, 'package.json')))
+}

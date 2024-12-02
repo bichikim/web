@@ -1,13 +1,13 @@
 /**
  * @jest-environment jsdom
  */
-import {mountScope} from '@winter-love/test-utils'
+import {effectScope} from 'vue'
 import {onEvent} from 'src/hooks/event'
 import {onOffline, onOnline, useConnection} from '../'
+import {afterEach, describe, expect, it, vi} from 'vitest'
+vi.mock('src/hooks/event')
 
-jest.mock('src/hooks/event')
-
-const _useEvent = jest.mocked(onEvent)
+const _useEvent = vi.mocked(onEvent)
 
 describe('on-connection', () => {
   describe('onOffline', () => {
@@ -15,15 +15,18 @@ describe('on-connection', () => {
       _useEvent.mockClear()
     })
     it('should use useEvent correctly', () => {
-      mountScope(() => {
-        const callback = jest.fn()
+      const scope = effectScope()
+      scope.run(() => {
+        const callback = vi.fn()
         onOffline(callback)
         expect(_useEvent).toBeCalledTimes(1)
         expect(_useEvent).toBeCalledWith(window, 'offline', callback, {
           capture: false,
           passive: true,
         })
-      }).stop()
+      })
+
+      scope.stop()
     })
   })
   describe('onOnline', () => {
@@ -31,8 +34,9 @@ describe('on-connection', () => {
       _useEvent.mockClear()
     })
     it('should call onOffline handle', () => {
-      mountScope(() => {
-        const callback = jest.fn()
+      const scope = effectScope()
+      scope.run(() => {
+        const callback = vi.fn()
 
         onOnline(callback)
 
@@ -41,7 +45,8 @@ describe('on-connection', () => {
           capture: false,
           passive: true,
         })
-      }).stop()
+      })
+      scope.stop()
     })
   })
   describe('useConnection', () => {
@@ -49,7 +54,8 @@ describe('on-connection', () => {
       _useEvent.mockClear()
     })
     it('should update connection state', async () => {
-      mountScope(() => {
+      const scope = effectScope()
+      scope.run(() => {
         const result = useConnection()
 
         expect(_useEvent).toBeCalledTimes(2)
@@ -71,15 +77,18 @@ describe('on-connection', () => {
 
         triggerOffline()
         expect(result.value).toBe(false)
-      }).stop()
+      })
+      scope.stop()
     })
 
     it('should initialize connection', () => {
-      mountScope(() => {
+      const scope = effectScope()
+      scope.run(() => {
         const result = useConnection(false)
 
         expect(result.value).toBe(false)
-      }).stop()
+      })
+      scope.stop()
     })
   })
 })

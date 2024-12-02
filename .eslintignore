@@ -1,5 +1,0 @@
-dist
-.quasar
-node_modules
-**/*.d.ts
-/coong/coong-client/android

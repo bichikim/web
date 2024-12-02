@@ -1,4 +1,5 @@
 import {getCenterPosition} from '../get-center-position'
+import {describe, expect, it} from 'vitest'
 
 describe('getCenterPosition', () => {
   it('should return center', () => {

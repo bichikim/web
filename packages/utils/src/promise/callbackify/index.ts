@@ -1,4 +1,4 @@
-import {isPromise} from 'src/validate/is-promise'
+import {isPromise} from 'src/is-promise'
 
 export type CallbackifyHandle<S> = (error: unknown, value?: S | undefined) => unknown
 
@@ -16,7 +16,7 @@ export const callbackify = <S>(
 
   if (isPromise(result)) {
     return result
-      .then((data: S) => {
+      .then((data: any) => {
         handle(undefined, data)
       })
       .catch((error) => {

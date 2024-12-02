@@ -1,9 +1,10 @@
 /**
- * @jest-environment jsdom
+ * @vitest-environment jsdom
  */
 import {debug} from '../'
 import {defineComponent, h, ref} from 'vue'
 import {mount} from '@vue/test-utils'
+import {describe, expect, it} from 'vitest'
 
 describe('debug', () => {
   it('should debug', () => {

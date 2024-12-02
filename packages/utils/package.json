@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/utils",
-  "version": "1.0.27",
+  "version": "1.0.35",
   "description": "Useful javascript utils",
   "keywords": [
     "typescript",
@@ -28,28 +28,28 @@
     "dist/*"
   ],
   "scripts": {
-    "build": "tsup --dts --minify",
-    "dev": "tsup --watch",
-    "prepare": "tsup --dts",
-    "typecheck": "tsc --noEmit"
+    "build": "vite build",
+    "dev": "vite build --watch --minify false",
+    "check-types": "tsc --noEmit"
   },
   "dependencies": {
     "@winter-love/lodash": "workspace:*",
-    "safe-stable-stringify": "^2.4.1",
-    "scroll-into-view-if-needed": "^3.0.4",
-    "smooth-scroll-into-view-if-needed": "^1.1.33"
+    "safe-stable-stringify": "^2.5.0",
+    "scroll-into-view-if-needed": "^3.1.0",
+    "smooth-scroll-into-view-if-needed": "^2.0.2"
   },
   "devDependencies": {
-    "@types/js-cookie": "^3.0.2",
-    "js-cookie": "^3.0.1",
-    "micro-memoize": "^4.0.14",
-    "tsd": "^0.25.0",
-    "typescript": "^5.3.3"
+    "@types/js-cookie": "^3.0.6",
+    "@winter-love/vite-lib-config": "workspace:*",
+    "js-cookie": "^3.0.5",
+    "micro-memoize": "^4.1.2",
+    "tsd": "^0.31.2",
+    "typescript": "^5.6.3"
   },
   "publishConfig": {
     "access": "public"
   },
-  "gitHead": "4a8bc8b824e5780a82d3b2958e1a8afb48a49bb0",
+  "gitHead": "d2b83a5ae925fd122a6f46c99d743ede11b86c2f",
   "tsup": {
     "entry": [
       "src/index.ts"

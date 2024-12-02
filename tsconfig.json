@@ -2,29 +2,25 @@
   "compileOnSave": false,
   "compilerOptions": {
     "jsx": "preserve",
-    "noEmit": true,
-    "strict": true,
-    "rootDir": ".",
-    "sourceMap": true,
+    "jsxImportSource": "solid-js",
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
+    "allowJs": true,
+    "strict": true,
+    "noEmit": true,
     "resolveJsonModule": true,
     "forceConsistentCasingInFileNames": true,
-    "declaration": true,
-    "moduleResolution": "Node",
-    "allowSyntheticDefaultImports": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "importHelpers": true,
-    "target": "esnext",
     "noImplicitAny": false,
-    "module": "esnext",
+    "types": ["@testing-library/jest-dom"],
     "lib": ["ESNext", "DOM", "DOM.Iterable", "ESNext.Promise"],
     "skipLibCheck": true,
-    "skipDefaultLibCheck": true,
-    "baseUrl": "."
+    "skipDefaultLibCheck": true
   },
-  "include": [
-    "**/*.ts",
-    "**/*.md"
-  ]
+  "include": ["**/*.ts", "**/*.mts", "**/*.md"]
 }

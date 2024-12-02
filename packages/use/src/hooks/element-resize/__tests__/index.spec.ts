@@ -1,14 +1,14 @@
 /**
  * @jest-environment jsdom
  */
-import {mountComposition} from '@winter-love/test-utils'
-import {markRaw, Ref, ref} from 'vue'
+import {mount} from '@vue/test-utils'
+import {defineComponent, markRaw, Ref, ref} from 'vue'
 import {onElementResize} from '../'
 import {isElement} from 'src/checks/is-element'
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
+vi.mock('src/checks/is-element')
 
-jest.mock('src/checks/is-element')
-
-const _isElement = jest.mocked(isElement)
+const _isElement = vi.mocked(isElement)
 
 describe('onElementResize', () => {
   let nativeResizeObserver: any
@@ -19,14 +19,14 @@ describe('onElementResize', () => {
     watchResult = {}
 
     class ResizeObserver {
-      observe: jest.Mock
-      disconnect: jest.Mock
+      observe: any
+      disconnect: any
 
       constructor(callback) {
         //
         watchResult.callback = callback
-        watchResult.observe = jest.fn()
-        watchResult.disconnect = jest.fn()
+        watchResult.observe = vi.fn()
+        watchResult.disconnect = vi.fn()
         this.observe = watchResult.observe
         this.disconnect = watchResult.disconnect
       }
@@ -41,16 +41,20 @@ describe('onElementResize', () => {
 
   it('should call callback when element size is changed', () => {
     _isElement.mockReturnValue(true)
-    const callback = jest.fn()
+    const callback = vi.fn()
     const element: HTMLElement = {
       get contentRect() {
         return {height: 300, width: 300}
       },
     } as any
-    const wrapper = mountComposition(() => {
-      const elementRef: Ref<HTMLElement> = ref(markRaw(element))
-      onElementResize(elementRef, callback)
-    })
+    const wrapper = mount(
+      defineComponent({
+        setup: () => {
+          const elementRef: Ref<HTMLElement> = ref(markRaw(element))
+          onElementResize(elementRef, callback)
+        },
+      }),
+    )
 
     expect(typeof watchResult.callback).toBe('function')
     expect(watchResult.observe).toBeCalledTimes(1)

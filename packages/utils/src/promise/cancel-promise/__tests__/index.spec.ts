@@ -1,6 +1,7 @@
-import {flushPromises} from '@winter-love/test-utils'
+import flushPromises from 'flush-promises'
+import {describe, expect, it} from 'vitest'
 import {createCancelPromise} from '../'
-import {describe, expect, it, vi} from 'vitest'
+
 describe('cancelPromise', () => {
   it('should cancel promise', async () => {
     let _resolve

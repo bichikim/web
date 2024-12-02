@@ -1,4 +1,5 @@
 import {getStartPosition} from '../get-start-position'
+import {describe, expect, it} from 'vitest'
 
 describe('getStart', () => {
   it('should return start', () => {

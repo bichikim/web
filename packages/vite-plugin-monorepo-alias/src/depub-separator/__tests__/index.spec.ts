@@ -1,4 +1,4 @@
-import {createDedupSeparator, dedupSeparator} from '../'
+import {dedupSeparator} from '../'
 
 describe('dedupSeparator', () => {
   it.each([

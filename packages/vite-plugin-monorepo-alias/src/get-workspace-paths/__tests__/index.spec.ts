@@ -9,7 +9,7 @@ describe('getWorkspacePath', () => {
     ],
     [
       [/^\/apps\//u, /^\/packages\//u],
-      ['^\\/apps/[-._a-zA-Z0-9]*/', '^\\/packages/[-._a-zA-Z0-9]*/'],
+      [String.raw`^\/apps/[-._a-zA-Z0-9]*/`, String.raw`^\/packages/[-._a-zA-Z0-9]*/`],
     ],
   ])('should return workspace path string regexp', (workspacePaths, result) => {
     expect(getWorkspacePath(workspacePaths)).toEqual(result)

@@ -1,4 +1,4 @@
-# Coong / Winter Love packages
+# Winter Love Project
 
 ## Documents
 https://bichikim.github.io/web WIP
@@ -7,7 +7,7 @@ https://bichikim.github.io/web WIP
 
 ```bash
 # we use bunjs refer to https://bun.sh/
-bun i
+pnpm i
 ```
 
 ## Recommended global dependencies
@@ -24,7 +24,7 @@ refer to packages/* README.md each project folder
 
 Coong everywhere
 
-[ ] First Mission A very popular app/web app for free
+[ ] First Mission A popular app/web app for free
 
 ## Web types in Web Storm
 
@@ -40,3 +40,11 @@ test results immediately as you type, and see the results in
 your editor right next to your code.
 
 node_modules/.pnpm jest-runtime version other than 29.4.3 will cause wallabyjs to stop working
+
+## Turborepo 
+
+### run generate 
+
+```shell
+turbo gen
+```

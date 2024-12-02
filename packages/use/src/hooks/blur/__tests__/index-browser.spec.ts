@@ -1,14 +1,15 @@
 /**
- * @jest-environment jsdom
+ * @vitest-environment jsdom
  */
 import {useBlur} from '../'
 import {getDocument, getHtmlElementClass} from '@winter-love/utils'
-import {mountComposition} from '@winter-love/test-utils'
+import {mount} from '@vue/test-utils'
+import {describe, expect, it, vi} from 'vitest'
+import {defineComponent} from 'vue'
+vi.mock('@winter-love/utils')
 
-jest.mock('@winter-love/utils')
-
-const mockGetDocument = jest.mocked(getDocument)
-const mockGetHtmlElement = jest.mocked(getHtmlElementClass)
+const mockGetDocument = vi.mocked(getDocument)
+const mockGetHtmlElement = vi.mocked(getHtmlElementClass)
 
 describe('blur', () => {
   it('should blur', () => {
@@ -26,16 +27,21 @@ describe('blur', () => {
     mockGetDocument.mockImplementation(() => fakeDocument)
     mockGetHtmlElement.mockImplementation(() => HTMLElement)
 
-    const {setupState} = mountComposition(() => {
-      const blur = useBlur()
-      return {
-        blur,
-      }
-    })
+    const wrapper = mount(
+      defineComponent({
+        setup() {
+          const blur = useBlur()
+          return {
+            blur,
+          }
+        },
+      }),
+    )
+    const setupState = wrapper.vm.$.setupState
 
     const element = document.createElement('div')
 
-    element.blur = jest.fn()
+    element.blur = vi.fn()
 
     fakeDocument.setActiveElement(element)
 
