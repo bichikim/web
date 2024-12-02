@@ -167,6 +167,7 @@ export const useGlobalTouchEmitter = (options: UseGlobalTouchEmitterOptions = {}
   })
 
   useEvent(getWindow, 'touchstart', (event) => {
+    event.preventDefault()
     const touches = event.changedTouches
     const touchIds = getTouchedIds(touches, takeFirst)
     for (const [identifier, idSet] of touchIds.entries()) {
@@ -177,20 +178,19 @@ export const useGlobalTouchEmitter = (options: UseGlobalTouchEmitterOptions = {}
 
   useEvent(getWindow, 'touchmove', (event) => {
     event.preventDefault()
-    // const upTouchIds: Set<string> = new Set(downIDs)
     const touches = event.changedTouches
-    const touchIds = getTouchedIds(touches, takeFirst)
-    for (const [identifier, ids] of touchIds) {
-      const upTouchIds = new Set(downIDs.get(identifier))
-      const downTouchIds = new Set(ids)
-
-      for (const id of ids) {
+    const touchIdsMap = getTouchedIds(touches, takeFirst)
+    for (const [identifier, ids] of downIDs) {
+      const touchIds = new Set(touchIdsMap.get(identifier))
+      const upTouchIds = new Set(ids)
+      const downTouchIds = new Set(touchIds)
+      for (const id of touchIds) {
         if (upTouchIds.has(id)) {
           upTouchIds.delete(id)
           downTouchIds.delete(id)
         }
       }
-      downIDs.set(identifier, ids)
+      downIDs.set(identifier, touchIds)
 
       emitAllIDs(downTouchIds, true)
       emitAllIDs(upTouchIds, false)
@@ -198,7 +198,7 @@ export const useGlobalTouchEmitter = (options: UseGlobalTouchEmitterOptions = {}
   })
 
   useEvent(getWindow, 'touchend', (event) => {
-    // touchend 가 모든 손가락 터치가 끝난 것이 아닙니다
+    event.preventDefault()
     const touches = event.changedTouches
     const touchIds = getTouchedIds(touches, takeFirst)
     for (const [identifier, idSet] of touchIds.entries()) {

@@ -1,4 +1,5 @@
 import {defineConfig} from '@solidjs/start/config'
+import {VitePWA as vitePwa} from 'vite-plugin-pwa'
 import {fileURLToPath, URL} from 'node:url'
 import unoCss from 'unocss/vite'
 
@@ -7,6 +8,9 @@ export default defineConfig({
     plugins: [
       //
       unoCss('../../uno.config.ts'),
+      vitePwa({
+        registerType: 'autoUpdate',
+      }),
     ] as any,
     resolve: {
       alias: {
