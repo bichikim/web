@@ -2,7 +2,7 @@
   "name": "@apps/bplan-client",
   "type": "module",
   "scripts": {
-    "build": "vinxi build && ls && node build-hot-fix.mjs",
+    "build": "vinxi build && ls -a",
     "dev": "vinxi dev --host ",
     "start": "node ./.output/server/index.mjs",
     "fix": "node build-hot-fix.mjs",
@@ -33,6 +33,6 @@
     "unocss": "^0.64.1"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=20 <= 22"
   }
 }
