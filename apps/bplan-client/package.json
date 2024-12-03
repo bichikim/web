@@ -2,7 +2,7 @@
   "name": "@apps/bplan-client",
   "type": "module",
   "scripts": {
-    "build": "vinxi build && node build-hot-fix.mjs",
+    "build": "vinxi build && ls && node build-hot-fix.mjs",
     "dev": "vinxi dev --host ",
     "start": "node ./.output/server/index.mjs",
     "fix": "node build-hot-fix.mjs",
