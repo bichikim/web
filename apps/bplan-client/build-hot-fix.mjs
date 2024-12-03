@@ -6,7 +6,8 @@ import {fileURLToPath, URL} from 'node:url'
 console.log('??', process.env)
 
 const fix = async () => {
-  const src = nodePath.resolve('.output/server/chunks/nitro/nitro.mjs')
+  // const src = nodePath.resolve('.output/server/chunks/nitro/nitro.mjs')
+  const src = nodePath.resolve('.vercel/output/functions/__nitro.func/chunks/nitro/nitro.mjs')
   const scriptJs = await nodeFs.promises.readFile(src, 'utf8')
   await nodeFs.promises.writeFile(src, scriptJs.replace(`
 function getDefaultExportFromNamespaceIfNotNamed (n) {
