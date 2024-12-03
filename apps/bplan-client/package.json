@@ -2,7 +2,7 @@
   "name": "@apps/bplan-client",
   "type": "module",
   "scripts": {
-    "build": "vinxi build && cd .vercel/output && ls -a",
+    "build": "vinxi build && cd .vercel/output/functions && ls -a",
     "dev": "vinxi dev --host ",
     "start": "node ./.output/server/index.mjs",
     "fix": "node build-hot-fix.mjs",
