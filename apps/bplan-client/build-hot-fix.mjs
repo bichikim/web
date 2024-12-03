@@ -1,13 +1,9 @@
 /* eslint-disable no-tabs,max-len,prettier/prettier,unicorn/prevent-abbreviations */
 import nodeFs from 'node:fs'
 import nodePath from 'node:path'
-import {fileURLToPath, URL} from 'node:url'
-
-console.log('??', process.env)
 
 const fix = async () => {
-  // const src = nodePath.resolve('.output/server/chunks/nitro/nitro.mjs')
-  const src = nodePath.resolve('.vercel/output/functions/__nitro.func/chunks/nitro/nitro.mjs')
+  const src = process.env.VERCEL === '1' ? nodePath.resolve('.vercel/output/functions/__nitro.func/chunks/nitro/nitro.mjs') : nodePath.resolve('.output/server/chunks/nitro/nitro.mjs')
   const scriptJs = await nodeFs.promises.readFile(src, 'utf8')
   await nodeFs.promises.writeFile(src, scriptJs.replace(`
 function getDefaultExportFromNamespaceIfNotNamed (n) {
