@@ -3,6 +3,8 @@ import nodeFs from 'node:fs'
 import nodePath from 'node:path'
 import {fileURLToPath, URL} from 'node:url'
 
+console.log('??', process.env)
+
 const fix = async () => {
   const src = nodePath.resolve('.output/server/chunks/nitro/nitro.mjs')
   const scriptJs = await nodeFs.promises.readFile(src, 'utf8')
