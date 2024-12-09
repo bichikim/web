@@ -15,3 +15,8 @@ https://blog.paperspace.com/image-captioning-with-tensorflow/
 https://github.com/abi/secret-llama 구현체
 https://github.com/mlc-ai/web-llm
 https://llm.mlc.ai/docs/deploy/javascript.html 
+
+
+## 
+
+fix vinxi version 0.4.3

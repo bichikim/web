@@ -3,13 +3,13 @@ import type {StorybookConfig} from 'storybook-solidjs-vite'
 
 const config: StorybookConfig = {
   addons: [
-    getAbsolutePath('@storybook/addon-links'),
-    getAbsolutePath('@storybook/addon-essentials'),
-    getAbsolutePath('@storybook/addon-interactions'),
+    '@storybook/addon-links',
+    '@storybook/addon-essentials',
+    '@storybook/addon-interactions',
   ],
   docs: {},
   framework: {
-    name: getAbsolutePath('storybook-solidjs-vite'),
+    name: 'storybook-solidjs-vite',
     options: {
       builder: {
         viteConfigPath: './.storybook/vite.config.mts',
