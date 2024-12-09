@@ -1,4 +1,3 @@
-import nodePath from 'node:path'
 import type {StorybookConfig} from 'storybook-solidjs-vite'
 
 const config: StorybookConfig = {
@@ -6,6 +5,7 @@ const config: StorybookConfig = {
     '@storybook/addon-links',
     '@storybook/addon-essentials',
     '@storybook/addon-interactions',
+    '@chromatic-com/storybook',
   ],
   docs: {},
   framework: {
@@ -24,8 +24,3 @@ const config: StorybookConfig = {
   ],
 }
 export default config
-
-function getAbsolutePath(value: string): any {
-  // eslint-disable-next-line unicorn/prefer-module
-  return nodePath.dirname(require.resolve(nodePath.join(value, 'package.json')))
-}
