@@ -48,7 +48,6 @@
     "last 5 Opera versions"
   ],
   "devDependencies": {
-    "@chromatic-com/storybook": "^3",
     "@solidjs/testing-library": "^0.8.10",
     "@storybook/addon-essentials": "^8.4.7",
     "@storybook/addon-interactions": "^8.4.7",
@@ -100,7 +99,7 @@
     "unplugin-icons": "^0.16.6",
     "unplugin-vue-components": "^0.24.1",
     "vite": "^6.0.3",
-    "vite-plugin-dts": "^3.9.1",
+    "vite-plugin-dts": "^4.3.0",
     "vite-plugin-solid": "^2.11.0",
     "vite-plugin-static-copy": "2.2.0",
     "vitest": "^2.1.8",
