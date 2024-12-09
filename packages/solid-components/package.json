@@ -27,7 +27,7 @@
   },
   "dependencies": {
     "@winter-love/solid-use": "workspace:*",
-    "class-variance-authority": "^0.7.0",
+    "class-variance-authority": "^0.7.1",
     "solid-js": "^1.9.3"
   },
   "devDependencies": {

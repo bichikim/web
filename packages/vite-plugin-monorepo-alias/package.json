@@ -44,11 +44,11 @@
     "dev": "vite build --watch --minify false"
   },
   "dependencies": {
-    "@types/node": "^22.9.0",
-    "@vue/server-renderer": "^3.5.12",
+    "@types/node": "^22.10.1",
+    "@vue/server-renderer": "^3.5.13",
     "node-html-parser": "^6.1.13",
-    "vite": "^5.4.10",
-    "vue": "^3.5.12"
+    "vite": "^6.0.3",
+    "vue": "^3.5.13"
   },
   "devDependencies": {
     "@winter-love/vite-lib-config": "workspace:*"

@@ -44,8 +44,8 @@
   },
   "devDependencies": {
     "@types/debounce": "^3.0.0",
-    "@types/node": "^22.9.0",
-    "@vue/server-renderer": "^3.5.12",
+    "@types/node": "^22.10.1",
+    "@vue/server-renderer": "^3.5.13",
     "@vue/test-utils": "^2.4.6",
     "debounce": "^2.2.0"
   },
