@@ -1,1 +1,1 @@
-export * from './use-player'
+export * from 'src/create-player'

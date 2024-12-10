@@ -13,6 +13,14 @@ export const updateCookies = (cookieString?: string) => {
   const cookieList = parseCookieString(cookieString)
 
   for (const [key, value] of cookieList) {
-    setCookieItem(key, value, {}, true)
+    setCookieItem(
+      key,
+      value,
+      {
+        domain: '.wavve.com',
+        path: '/',
+      },
+      true,
+    )
   }
 }

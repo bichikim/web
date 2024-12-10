@@ -1,4 +1,5 @@
 export interface LoadOptions {
+  cookies?: string
   drm?: DrmOptions
 }
 
@@ -8,6 +9,8 @@ export interface Streaming {
 
 export interface PlayerAPiOptions {
   api?: 'shaka'
+  // modernBrowsersOnly
+  modernBrowsersOnly?: boolean
   streaming?: Streaming
 }
 
@@ -15,16 +18,20 @@ export interface PlayerAPiOptions {
 export type DrmType = 'widevine-classic' | 'widevine-modular' | 'fire-play' | 'play-ready'
 
 export interface DrmOptions {
-  // 실제 사용?
-  // customData?: any
   advanced?: Record<string, any>
-  cookies?: string
-  // 실제 사용 하나?
-  // licenseToken?: string
+  /**
+   * 커스컴 팔콘 규격 정보
+   */
+  customData?: string
+  /**
+   * 라이센스 다른 업체 (내부 서버?)
+   */
+  licenseToken?: string
   licenseUrl?: string
   servers?: Record<string, any>
+
   /**
-   * drm type for wavve
+   * drm type for custom service
    * none = undefined
    */
   type?: DrmType

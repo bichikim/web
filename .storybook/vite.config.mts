@@ -2,6 +2,7 @@ import {monorepoAlias} from '@winter-love/vite-plugin-monorepo-alias'
 import {fileURLToPath, URL} from 'node:url'
 import unoCss from '@unocss/vite'
 import {defineConfig, Plugin} from 'vite'
+
 const resolvePath = (url: string) => fileURLToPath(new URL(`../${url}`, import.meta.url))
 export default defineConfig({
   plugins: [

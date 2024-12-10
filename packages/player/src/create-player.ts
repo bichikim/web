@@ -8,6 +8,7 @@ import {
   PlayerState,
   PlayerStateMutable,
 } from 'src/player/types'
+import {updateDrmRequestFilter} from 'src/player/update-drm-filter'
 import {createShakaPlayer} from './player/shaka'
 
 export const createPlayer = (
@@ -60,7 +61,7 @@ export const createPlayer = (
   const update = (event: Event) => {
     const {target} = event
     if (target instanceof HTMLVideoElement) {
-      setState(getState(target))
+      _setState(getState(target))
     }
   }
 
@@ -81,10 +82,11 @@ export const createPlayer = (
   }
 
   const load = (url: string, options: LoadOptions = {}): Promise<any> => {
-    return (
-      player?.load(url, options) ??
-      Promise.reject(new Error('You should init a video element'))
-    )
+    if (!player) {
+      return Promise.reject(new Error('You should init a video element'))
+    }
+
+    return player.load(url, options)
   }
 
   const destroy = (): Promise<any> => {
@@ -98,9 +100,23 @@ export const createPlayer = (
   ) => {
     if (typeof state === 'function') {
       _setState((prev) => {
+        const element = videoElement()
+        const newState = state(prev)
+        if (element) {
+          for (const [key, value] of Object.entries(newState)) {
+            element[key] = value
+          }
+        }
         return {
           ...prev,
-          ...state(prev),
+          ...newState,
+        }
+      })
+    } else {
+      _setState((prev) => {
+        return {
+          ...prev,
+          ...state,
         }
       })
     }

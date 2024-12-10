@@ -1,31 +1,24 @@
 import shaka from 'shaka-player'
-import {createSignal} from 'solid-js'
+import {updateDrmRequestFilter} from 'src/player/update-drm-filter'
 import {isDtsSupported} from './check'
-import {
-  DrmOptions,
-  LoadOptions,
-  PlayerApi,
-  PlayerAPiOptions,
-  PlayerLoadApi,
-  PlayerState,
-} from './types'
+import {DrmOptions, LoadOptions, PlayerAPiOptions, PlayerLoadApi} from './types'
 import {updateCookies} from './update-cookies'
-import {useEvent} from '@winter-love/solid-use'
 
-export const createShaka = (
-  element: HTMLVideoElement,
-  options: PlayerAPiOptions = {},
-): null | shaka.Player => {
-  const {streaming: {stallEnabled} = {}} = options
+const fixAtmosOrder = (player: shaka.Player) => {
+  player.configure({
+    preferredAudioChannelCount: 6,
+  })
+}
 
-  if (!shaka.Player.isBrowserSupported()) {
-    return null
-  }
-
-  const shakaPlayer = new shaka.Player(element)
+const configPlayer = (shakaPlayer: shaka.Player, options: PlayerAPiOptions = {}) => {
+  const {streaming: {stallEnabled} = {}, modernBrowsersOnly} = options
 
   if (stallEnabled) {
     shakaPlayer.configure('streaming.stallEnabled', true)
+  }
+
+  if (!modernBrowsersOnly) {
+    shaka.polyfill.installAll()
   }
 
   if (!isDtsSupported()) {
@@ -41,6 +34,21 @@ export const createShaka = (
       },
     )
   }
+}
+
+export const createShaka = (
+  element: HTMLVideoElement,
+  options: PlayerAPiOptions = {},
+): null | shaka.Player => {
+  if (!shaka.Player.isBrowserSupported()) {
+    return null
+  }
+
+  const shakaPlayer = new shaka.Player(element)
+
+  configPlayer(shakaPlayer, options)
+
+  fixAtmosOrder(shakaPlayer)
 
   return shakaPlayer
 }
@@ -56,9 +64,7 @@ export const createShakaPlayer = (
   }
 
   const updateDrm = (drm: DrmOptions = {}) => {
-    const {advanced, servers, licenseUrl, type, cookies} = drm
-    updateCookies(cookies)
-
+    const {advanced, servers, licenseUrl, type} = drm
     if (advanced || servers) {
       shakaPlayer.configure('drm', {
         advanced: advanced,
@@ -101,8 +107,9 @@ export const createShakaPlayer = (
   }
 
   const load = (url: string, options: LoadOptions = {}) => {
+    updateDrmRequestFilter(shakaPlayer, options.drm)
     updateDrm(options.drm)
-
+    updateCookies(options.cookies)
     return shakaPlayer.load(url, null)
   }
 
