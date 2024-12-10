@@ -1,4 +1,3 @@
-import {Setter} from 'solid-js'
 export interface LoadOptions {
   drm?: DrmOptions
 }
