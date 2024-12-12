@@ -145,7 +145,7 @@ export const useGlobalTouchEmitter = (options: UseGlobalTouchEmitterOptions = {}
     }
     mouseDown = true
     downIDs = new Map<number, InfoIds>([
-      [mouseId, getPointedIds({x: event.clientX, y: event.clientY}, takeFirst)],
+      [mouseId, getPointedIds({x: event.pageX, y: event.pageY}, takeFirst)],
     ])
     emitAllMultiIDs(downIDs, true)
   })
@@ -170,7 +170,7 @@ export const useGlobalTouchEmitter = (options: UseGlobalTouchEmitterOptions = {}
     const _downIds = downIDs.get(mouseId)
     const upTouchIds: Set<string> = new Set(_downIds?.ids)
     const {ids: downTouchIds, point} = getPointedIds(
-      {x: event.clientX, y: event.clientY},
+      {x: event.pageX, y: event.pageY},
       takeFirst,
     )
     // const downTouchIds = new Set(
@@ -189,7 +189,6 @@ export const useGlobalTouchEmitter = (options: UseGlobalTouchEmitterOptions = {}
   })
 
   useEvent(getWindow, 'touchstart', (event) => {
-    event.preventDefault()
     const touches = event.changedTouches
     const touchIds = getTouchedIds(touches, takeFirst)
     for (const [identifier, idSet] of touchIds.entries()) {
@@ -199,7 +198,6 @@ export const useGlobalTouchEmitter = (options: UseGlobalTouchEmitterOptions = {}
   })
 
   useEvent(getWindow, 'touchmove', (event) => {
-    event.preventDefault()
     const touches = event.changedTouches
     const touchIdsMap = getTouchedIds(touches, takeFirst)
     for (const [identifier, {ids, point: _point}] of downIDs) {
@@ -210,7 +208,8 @@ export const useGlobalTouchEmitter = (options: UseGlobalTouchEmitterOptions = {}
       for (const id of touchIds) {
         if (upTouchIds.has(id)) {
           upTouchIds.delete(id)
-          downTouchIds.delete(id)
+          // 불필요한 다운 이벤트 제거 그런데 move 정보 수집을 위해 제거안하는
+          // downTouchIds.delete(id)
         }
       }
       downIDs.set(identifier, {ids: touchIds, point})
