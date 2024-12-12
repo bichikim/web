@@ -1,12 +1,12 @@
+import {Position} from '@winter-love/utils'
 import {
   createEffect,
   createMemo,
   createSignal,
   createUniqueId,
-  type JSX,
+  JSX,
   mergeProps,
   splitProps,
-  untrack,
   useContext,
   ValidComponent,
 } from 'solid-js'
@@ -16,8 +16,6 @@ import {
   ELEMENT_IDENTIFIER_GLOBAL_TOUCH,
   useGlobalTouch,
 } from 'src/components/real-button/use-global-touch'
-import {useEvent} from '@winter-love/solid-use'
-import {getWindow, Position} from '@winter-love/utils'
 import {DragContext} from './drag-context'
 
 export interface DragProps extends JSX.HTMLAttributes<HTMLElement> {

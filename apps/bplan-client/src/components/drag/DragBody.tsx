@@ -1,21 +1,18 @@
-import {Position} from '@winter-love/utils'
-import {Dynamic} from 'solid-js/web'
 import {
-  createEffect,
   createMemo,
   createSignal,
-  createUniqueId,
-  type JSX,
+  JSX,
   mergeProps,
+  onMount,
   splitProps,
   ValidComponent,
-  onMount,
 } from 'solid-js'
+import {Dynamic} from 'solid-js/web'
+import {DragContext} from './drag-context'
 
 export interface DragBodyProps extends JSX.HTMLAttributes<HTMLElement> {
   as?: ValidComponent
 }
-import {DragContext} from './drag-context'
 
 export const DragBody = (props: DragBodyProps) => {
   const [mounted, setMounted] = createSignal(false)
