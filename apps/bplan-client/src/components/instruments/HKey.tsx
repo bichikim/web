@@ -27,7 +27,13 @@ export const HKey = (props: HKeyProps) => {
   }
 
   return (
-    <HRealButton {...props} onDown={handleDown} onUp={handleUp} disabled={disabled()}>
+    <HRealButton
+      {...props}
+      onDown={handleDown}
+      onUp={handleUp}
+      disabled={disabled()}
+      aria-label={`key ${key}`}
+    >
       {props.children}
     </HRealButton>
   )
