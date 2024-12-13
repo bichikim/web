@@ -48,9 +48,11 @@ export const HRealButton = (props: HRealButtonProps) => {
   })
 
   const attrs = createMemo(() => {
+    const down = isDown()
     return {
       [ELEMENT_IDENTIFIER_GLOBAL_TOUCH]: id,
-      [ELEMENT_IDENTIFIER_REAL_BUTTON_STATE]: isDown() ? 'down' : 'up',
+      [ELEMENT_IDENTIFIER_REAL_BUTTON_STATE]: down ? 'down' : 'up',
+      'aria-pressed': down,
       class: `select-none ${restProps.class}`,
     }
   })

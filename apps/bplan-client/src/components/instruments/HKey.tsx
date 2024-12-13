@@ -5,6 +5,7 @@ import {HRealButton, HRealButtonProps} from 'src/components/real-button/HRealBut
 
 export interface HKeyProps extends HRealButtonProps {
   key?: string | number
+  name?: string
 }
 
 // instrument key
@@ -32,7 +33,7 @@ export const HKey = (props: HKeyProps) => {
       onDown={handleDown}
       onUp={handleUp}
       disabled={disabled()}
-      aria-label={`key ${key}`}
+      aria-label={`${props.name} key ${key}`}
     >
       {props.children}
     </HRealButton>
