@@ -239,7 +239,7 @@ export const useGlobalTouchEmitter = (options: UseGlobalTouchEmitterOptions = {}
     const touches = event.changedTouches
     const touchIdsMap = getTouchedIdsMap(touches, takeFirst)
 
-    for (const [identifier, {ids, point}] of touchIdsMap.entries()) {
+    for (const [identifier, {ids}] of touchIdsMap.entries()) {
       const downedIds = savedDownIds.get(identifier)
       const downTouchIds: Set<string> = new Set(downedIds)
       const upTouchIds: Set<string> = new Set(ids)
