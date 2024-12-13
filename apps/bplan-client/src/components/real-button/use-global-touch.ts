@@ -4,7 +4,6 @@ import {Accessor, createSignal} from 'solid-js'
 import {
   DragInfoIds,
   DragPayload,
-  DragState,
   InfoIds,
   UseGlobalTouchEmitterOptions,
 } from './types'
