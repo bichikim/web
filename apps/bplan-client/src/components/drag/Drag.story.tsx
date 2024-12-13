@@ -19,6 +19,8 @@ const meta: Meta<typeof Drag> = {
   component: Root,
 }
 
+// storybook meta
+// noinspection JSUnusedGlobalSymbols
 export default meta
 
 type Story = StoryObj<typeof meta>

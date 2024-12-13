@@ -1,3 +1,5 @@
+import {getWindow} from '@winter-love/utils'
+
 const offListener = (event: MouseEvent) => {
   event.preventDefault()
   event.stopPropagation()
@@ -6,9 +8,9 @@ const offListener = (event: MouseEvent) => {
 export const createDisableContextMenu = () => {
   return (off: boolean) => {
     if (off) {
-      window.addEventListener('contextmenu', offListener)
+      getWindow()?.addEventListener('contextmenu', offListener)
     } else {
-      window.removeEventListener('contextmenu', offListener)
+      getWindow()?.removeEventListener('contextmenu', offListener)
     }
   }
 }

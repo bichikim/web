@@ -34,6 +34,8 @@ const meta = {
   component: Root,
 } satisfies Meta<typeof Root>
 
+// storybook meta
+// noinspection JSUnusedGlobalSymbols
 export default meta
 type Story = StoryObj<typeof meta>
 

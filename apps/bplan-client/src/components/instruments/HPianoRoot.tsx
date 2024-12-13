@@ -9,11 +9,11 @@ export type HPianoRootProps = ParentProps & {
 
 export const HPianoRoot = (props: HPianoRootProps) => {
   useGlobalTouchEmitter({preventTouchContext: true, topLevelElementOnly: true})
-  const onDown = (key) => {
+  const onDown = (key: string | number) => {
     props.onDown?.(key)
   }
 
-  const onUp = (key) => {
+  const onUp = (key: string | number) => {
     props.onUp?.(key)
   }
 
