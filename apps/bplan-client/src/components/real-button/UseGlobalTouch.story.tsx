@@ -14,7 +14,7 @@ const UseGlobalTouch = (props) => {
 
   return (
     <button {...attrs} class={`select-none ${props.class}`}>
-      touch {isDown().down ? 'down' : 'up'}
+      touch {isDown() ? 'down' : 'up'}
     </button>
   )
 }

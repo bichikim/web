@@ -40,7 +40,6 @@ export const Drag = (props: DragProps) => {
   const isDown = useGlobalTouch(id)
   const {parentPosition} = useContext(DragContext)
   const [rootElement, setRootElement] = createSignal<null | HTMLElement>(null)
-  let mounted = false
   let oldDown = false
   let startPosition = {x: 0, y: 0}
 
@@ -54,32 +53,30 @@ export const Drag = (props: DragProps) => {
   }
 
   createEffect(() => {
-    const downData = isDown()
-    if (downData.down) {
+    if (isDown()) {
       innerProps.onDown?.()
-    } else if (mounted) {
+    } else {
       innerProps.onUp?.()
     }
-    mounted = true
   })
 
   const attrs = createMemo(() => {
-    const downData = isDown()
-    if (downData.down && !oldDown && downData.point) {
-      updateStartPosition(downData.point)
+    const down = isDown()
+    if (down && !oldDown) {
+      // updateStartPosition(down.point)
     }
     const _parentPosition = parentPosition() ?? {x: 0, y: 0}
 
-    const x = (downData.point?.x ?? 0) - _parentPosition.x - startPosition.x
-    const y = (downData.point?.y ?? 0) - _parentPosition.y - startPosition.y
+    // const x = (down.point?.x ?? 0) - _parentPosition.x - startPosition.x
+    // const y = (down.point?.y ?? 0) - _parentPosition.y - startPosition.y
 
-    oldDown = downData.down
+    oldDown = down
 
     return {
       [ELEMENT_IDENTIFIER_GLOBAL_TOUCH]: id,
-      [ELEMENT_IDENTIFIER_REAL_BUTTON_STATE]: isDown().down ? 'down' : 'up',
+      [ELEMENT_IDENTIFIER_REAL_BUTTON_STATE]: down ? 'down' : 'up',
       class: `select-none ${restProps.class}`,
-      style: `top:${y}px; left:${x}px`,
+      // style: `top:${y}px; left:${x}px`,
     }
   })
 
