@@ -7,7 +7,7 @@ import {
   ParentProps,
   splitProps,
 } from 'solid-js'
-import {ELEMENT_IDENTIFIER_GLOBAL_TOUCH, useGlobalTouch} from './use-global-touch'
+import {ELEMENT_IDENTIFIER_GLOBAL_TOUCH, useGlobalDown} from './use-global-touch'
 
 export interface HRealButtonAsProps {
   isDown: boolean
@@ -35,7 +35,7 @@ export interface HRealButtonProps extends JSX.ButtonHTMLAttributes<HTMLButtonEle
 export const HRealButton = (props: HRealButtonProps) => {
   const [eventProps, restProps] = splitProps(props, ['onDown', 'onUp'])
   const id = createUniqueId()
-  const isDown = useGlobalTouch(id)
+  const isDown = useGlobalDown(id)
   let mounted = false
 
   createEffect(() => {

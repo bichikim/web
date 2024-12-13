@@ -14,7 +14,8 @@ import {Dynamic} from 'solid-js/web'
 import {ELEMENT_IDENTIFIER_REAL_BUTTON_STATE} from 'src/components/real-button/HRealButton'
 import {
   ELEMENT_IDENTIFIER_GLOBAL_TOUCH,
-  useGlobalTouch,
+  useGlobalDown,
+  useGlobalDragPoint,
 } from 'src/components/real-button/use-global-touch'
 import {DragContext} from './drag-context'
 
@@ -37,10 +38,10 @@ export const Drag = (props: DragProps) => {
   ])
 
   const id = createUniqueId()
-  const isDown = useGlobalTouch(id)
+  const isDown = useGlobalDown(id)
+  const dragPoint = useGlobalDragPoint(id)
   const {parentPosition} = useContext(DragContext)
   const [rootElement, setRootElement] = createSignal<null | HTMLElement>(null)
-  let oldDown = false
   let startPosition = {x: 0, y: 0}
 
   const updateStartPosition = (point: Position) => {
@@ -62,21 +63,20 @@ export const Drag = (props: DragProps) => {
 
   const attrs = createMemo(() => {
     const down = isDown()
-    if (down && !oldDown) {
-      // updateStartPosition(down.point)
+    const pointState = dragPoint()
+    if (down && pointState.state === 'start' && pointState.point) {
+      updateStartPosition(pointState.point)
     }
     const _parentPosition = parentPosition() ?? {x: 0, y: 0}
 
-    // const x = (down.point?.x ?? 0) - _parentPosition.x - startPosition.x
-    // const y = (down.point?.y ?? 0) - _parentPosition.y - startPosition.y
-
-    oldDown = down
+    const x = (pointState.point?.x ?? 0) - _parentPosition.x - startPosition.x
+    const y = (pointState.point?.y ?? 0) - _parentPosition.y - startPosition.y
 
     return {
       [ELEMENT_IDENTIFIER_GLOBAL_TOUCH]: id,
       [ELEMENT_IDENTIFIER_REAL_BUTTON_STATE]: down ? 'down' : 'up',
       class: `select-none ${restProps.class}`,
-      // style: `top:${y}px; left:${x}px`,
+      style: `top:${y}px; left:${x}px`,
     }
   })
 

@@ -2,13 +2,13 @@ import {createUniqueId} from 'solid-js'
 import {Meta, StoryObj} from 'storybook-solidjs'
 import {
   ELEMENT_IDENTIFIER_GLOBAL_TOUCH,
-  useGlobalTouch,
+  useGlobalDown,
   useGlobalTouchEmitter,
 } from './use-global-touch'
 
 const UseGlobalTouch = (props) => {
   const id = createUniqueId()
-  const isDown = useGlobalTouch(id)
+  const isDown = useGlobalDown(id)
 
   const attrs = {...props, [ELEMENT_IDENTIFIER_GLOBAL_TOUCH]: id}
 

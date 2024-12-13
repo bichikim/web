@@ -7,7 +7,7 @@ const Root = (props: any) => {
   useGlobalTouchEmitter({preventTouchContext: true, topLevelElementOnly: true})
 
   return (
-    <DragBody as="div" class="relative h-500px w-1000px">
+    <DragBody as="div" class="relative h-300px w-1000px">
       <Drag as="div" class="absolute w-100px h-100px bg-red" {...props} />
       {/*<Drag as="div" class="absolue w-100px h-100px bg-yellow" {...props} />*/}
       {/*<Drag as="div" class="absolue w-100px h-100px bg-green" {...props} />*/}
