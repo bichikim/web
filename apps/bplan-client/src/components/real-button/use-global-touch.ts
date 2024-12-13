@@ -1,12 +1,7 @@
 import {useEvent} from '@winter-love/solid-use'
 import {getDocument, getWindow, Position} from '@winter-love/utils'
 import {Accessor, createSignal} from 'solid-js'
-import {
-  DragInfoIds,
-  DragPayload,
-  InfoIds,
-  UseGlobalTouchEmitterOptions,
-} from './types'
+import {DragInfoIds, DragPayload, InfoIds, UseGlobalTouchEmitterOptions} from './types'
 
 export const getElementsFromPoint = (position: Position): Element[] => {
   const document = getDocument()
