@@ -9,6 +9,7 @@ import {
   SPianoSharpKey,
   SPianoSharpSet,
 } from 'src/components/instruments/SPianoParts'
+
 export type SPianoProps = SPianoBodyProps & SPianoRootProps
 
 export const SPiano = (props: SPianoProps) => {
