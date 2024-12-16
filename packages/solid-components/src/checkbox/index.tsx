@@ -1,7 +1,6 @@
 import {
   Accessor,
   createContext,
-  createEffect,
   createMemo,
   createSignal,
   createUniqueId,
@@ -10,8 +9,8 @@ import {
   useContext,
   ValidComponent,
 } from 'solid-js'
-import {LabelContext} from 'src/label'
 import {Dynamic, DynamicProps} from 'solid-js/web'
+import {LabelContext, LabelRoot} from 'src/label'
 
 export interface ToggleRootProps extends ParentProps {
   disabled?: boolean
@@ -33,39 +32,33 @@ export interface CheckboxContextActions {
 }
 
 export const CheckboxContext = createContext<
-  Accessor<CheckboxContextProps> & CheckboxContextActions
->(
-  Object.assign(
-    () => ({
-      checked: false,
-      disabled: false,
-      id: '',
-      required: false,
-    }),
-    {
-      onToggleChecked: () => {
-        throw new Error('not implemented')
-      },
+  [Accessor<CheckboxContextProps>, {onToggleChecked(): void}]
+>([
+  () => ({
+    checked: false,
+    disabled: false,
+    id: '',
+    required: false,
+  }),
+  {
+    onToggleChecked: (): void => {
+      throw new Error('not implemented')
     },
-  ),
-)
+  },
+])
 
 /**
  * data-toggle 통해
  */
 export const CheckboxRoot = (props: ToggleRootProps) => {
+  // initValue
+  // eslint-disable-next-line solid/reactivity
   const [checked, setChecked] = createSignal(props.initValue ?? false)
-
-  const labelContext = useContext(LabelContext)
 
   const instanceId = createUniqueId()
 
   const id = createMemo(() => {
     return props.id ?? instanceId
-  })
-
-  createEffect(() => {
-    labelContext.setId(id())
   })
 
   const onToggleChecked = () => {
@@ -86,25 +79,25 @@ export const CheckboxRoot = (props: ToggleRootProps) => {
   })
 
   return (
-    <CheckboxContext.Provider
-      value={Object.assign(checkboxContextValue, {onToggleChecked})}
-    >
-      {props.children}
-    </CheckboxContext.Provider>
+    <LabelRoot targetId={id()}>
+      <CheckboxContext.Provider value={[checkboxContextValue, {onToggleChecked}]}>
+        {props.children}
+      </CheckboxContext.Provider>
+    </LabelRoot>
   )
 }
 
-export type CheckboxBodyProps<T extends ValidComponent> = DynamicProps<T>
+export type CheckboxBodyProps<T extends ValidComponent> = DynamicProps<T> & ParentProps
 
 export const CheckboxBody = <T extends ValidComponent>(props: CheckboxBodyProps<T>) => {
-  const checkboxContext = useContext(CheckboxContext)
+  const [checkboxContext, {onToggleChecked}] = useContext(CheckboxContext)
 
   return (
     <Dynamic
       {...props}
       aria-checked={checkboxContext().checked}
       aria-required={checkboxContext().required}
-      onClick={checkboxContext.onToggleChecked}
+      onClick={onToggleChecked}
       data-checked={checkboxContext().checked}
       data-disabled={checkboxContext().disabled}
       disabled={checkboxContext().disabled}
@@ -122,20 +115,17 @@ export type CheckboxIndicatorProps<T extends ValidComponent> = DynamicProps<T>
 export const CheckboxIndicator = <T extends ValidComponent>(
   props: CheckboxIndicatorProps<T>,
 ) => {
-  const checkboxContext = useContext(CheckboxContext)
+  const [checkboxContext] = useContext(CheckboxContext)
 
   return (
-    <Show when={checkboxContext().checked}>
-      <Dynamic
-        {...props}
-        data-checked={checkboxContext().checked}
-        data-disabled={checkboxContext().disabled}
-      />
-    </Show>
+    <Dynamic
+      {...props}
+      data-checked={checkboxContext().checked}
+      data-disabled={checkboxContext().disabled}
+    />
   )
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface CheckboxToggleProps extends ParentProps {
   // empty
 }
@@ -146,7 +136,7 @@ export interface CheckboxToggleProps extends ParentProps {
  * @constructor
  */
 export const CheckboxToggle = (props: CheckboxToggleProps) => {
-  const checkboxContext = useContext(CheckboxContext)
+  const [checkboxContext] = useContext(CheckboxContext)
 
   return <Show when={checkboxContext().checked}>{props.children}</Show>
 }

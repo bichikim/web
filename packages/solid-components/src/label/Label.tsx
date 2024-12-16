@@ -2,9 +2,11 @@ import {
   Accessor,
   createContext,
   createMemo,
+  createSignal,
   createUniqueId,
   ParentProps,
   Setter,
+  splitProps,
   useContext,
   ValidComponent,
 } from 'solid-js'
@@ -12,9 +14,7 @@ import {ComponentProps} from 'solid-js/types/render/component'
 import {Dynamic, DynamicProps} from 'solid-js/web'
 import {createSync} from '@winter-love/solid-use'
 
-export type LabelRootProps<T extends ValidComponent> = DynamicProps<T> & {
-  targetId?: string
-}
+export type LabelRootProps = {targetId?: string} & ParentProps
 
 export interface LabelContextProps {
   targetId?: string
@@ -24,32 +24,21 @@ export interface LabelContextActions {
   setId: Setter<string>
 }
 
-export const LabelContext = createContext<
-  Accessor<LabelContextProps> & LabelContextActions
->(
-  Object.assign(() => ({}), {
-    setId: () => {
-      throw new Error('not implemented')
-    },
-  }),
-)
+export const LabelContext = createContext<Accessor<LabelContextProps>>(() => ({}))
 
-export const LabelRoot = <T extends ValidComponent>(props: LabelRootProps<T>) => {
+export const LabelRoot = (props: LabelRootProps) => {
+  const [innerProps, restProps] = splitProps(props, ['targetId'])
   const instanceId = createUniqueId()
 
   const computedId = createMemo(() => {
-    return props.targetId ?? instanceId
+    return innerProps.targetId ?? instanceId
   })
 
-  // eslint-disable-next-line solid/reactivity
-  const [id, setId] = createSync(computedId)
-
-  const labelContextValue = createMemo(() => ({targetId: id()}))
+  const labelContextValue = createMemo(() => ({targetId: computedId()}))
 
   return (
-    // eslint-disable-next-line solid/reactivity
-    <LabelContext.Provider value={Object.assign(labelContextValue, {setId})}>
-      <Dynamic {...props} />
+    <LabelContext.Provider value={labelContextValue}>
+      {props.children}
     </LabelContext.Provider>
   )
 }
