@@ -135,6 +135,7 @@ export const CheckboxIndicator = <T extends ValidComponent>(
   )
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface CheckboxToggleProps extends ParentProps {
   // empty
 }

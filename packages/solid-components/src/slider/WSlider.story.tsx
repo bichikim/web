@@ -1,5 +1,5 @@
 import {Meta, StoryObj} from 'storybook-solidjs'
-import {WSlider} from '../'
+import {WSlider} from './'
 
 const meta = {
   component: WSlider.Root,
