@@ -53,11 +53,12 @@ export const SFileItem = (props: SFileItemProps) => {
     },
   })
 
-  const aiIconStyle = cva('scale-150 inline-flex origin-center', {
+  const aiIconStyle = cva('inline-flex origin-center', {
     variants: {
       generated: {
-        false: 'text-gray-600 animate-blink animate-duration-1s cursor-pointer',
-        true: 'text-black select-none',
+        false:
+          'text-gray-600 animate-blink animate-duration-1s cursor-pointer scale-170 ',
+        true: 'text-black select-none scale-140 ',
       },
     },
   })
@@ -85,7 +86,7 @@ export const SFileItem = (props: SFileItemProps) => {
         <STypeIcon name={props.ext} />
       </span>
       <Show when={innerProps.inProgress}>
-        <span class="scale-150 inline-flex origin-center">
+        <span class="scale-140 inline-flex origin-center">
           <span
             class={cx('inline-block i-hugeicons:loading-02 text-black', 'animate-spin')}
           />
