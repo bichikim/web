@@ -1,4 +1,4 @@
-import {defineConfig, presetUno, toEscapedSelector} from 'unocss'
+import {defineConfig, presetIcons, presetUno, toEscapedSelector} from 'unocss'
 import presetLegacyCompat from '@unocss/preset-legacy-compat'
 import transformerVariantGroup from '@unocss/transformer-variant-group'
 import transformerCompileClass from '@unocss/transformer-compile-class'
@@ -27,6 +27,7 @@ export default defineConfig({
     },
   },
   presets: [
+    presetIcons(),
     presetUno(),
     presetLegacyCompat({
       commaStyleColorFunction: true,
@@ -123,6 +124,17 @@ export default defineConfig({
     ],
   },
   theme: {
+    animation: {
+      counts: {
+        blink: 'infinite',
+      },
+      durations: {
+        blink: '1s',
+      },
+      keyframes: {
+        blink: '{0%, 100% { opacity: 0.5; } 50% { opacity: 1; }}',
+      },
+    },
     boxShadow: {
       'flat-down':
         'inset 0 0 0 #fff, inset 0 0 0 #fff, inset 0 0 0 #fff,' +

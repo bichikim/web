@@ -11,6 +11,7 @@
   },
   "private": true,
   "dependencies": {
+    "@tonejs/midi": "^2.0.28",
     "@solidjs/meta": "^0.29.4",
     "@solidjs/router": "^0.14.10",
     "@solidjs/start": "^1.0.10",

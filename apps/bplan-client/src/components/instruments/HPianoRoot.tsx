@@ -1,14 +1,16 @@
-import {ParentProps} from 'solid-js'
+import {createMemo, ParentProps, createEffect} from 'solid-js'
 import {useGlobalTouchEmitter} from 'src/components/real-button/use-global-touch'
 import {PianoContext} from './piano-context'
 
 export type HPianoRootProps = ParentProps & {
+  down?: Set<string | number>
   onDown?: (key: string | number) => void
   onUp?: (key: string | number) => void
 }
 
 export const HPianoRoot = (props: HPianoRootProps) => {
   useGlobalTouchEmitter({preventTouchContext: true, topLevelElementOnly: true})
+
   const onDown = (key: string | number) => {
     props.onDown?.(key)
   }
@@ -17,8 +19,14 @@ export const HPianoRoot = (props: HPianoRootProps) => {
     props.onUp?.(key)
   }
 
+  const down = createMemo(() => props.down ?? new Set<string | number>())
+
+  createEffect(() => {
+    console.log(down())
+  })
+
   return (
-    <PianoContext.Provider value={{onDown, onUp, scale: 100}}>
+    <PianoContext.Provider value={{down, onDown, onUp, scale: 100}}>
       {props.children}
     </PianoContext.Provider>
   )

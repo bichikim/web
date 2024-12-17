@@ -25,6 +25,7 @@ export const ELEMENT_IDENTIFIER_REAL_BUTTON_STATE = 'data-state'
 export interface HRealButtonProps extends JSX.ButtonHTMLAttributes<HTMLButtonElement> {
   onDown?: () => void
   onUp?: () => void
+  renderDown?: boolean
 }
 
 /**
@@ -33,27 +34,32 @@ export interface HRealButtonProps extends JSX.ButtonHTMLAttributes<HTMLButtonEle
  * If you press and hold your finger and move your finger to enter the button, the button will be pressed
  */
 export const HRealButton = (props: HRealButtonProps) => {
-  const [eventProps, restProps] = splitProps(props, ['onDown', 'onUp'])
+  const [innerProps, restProps] = splitProps(props, [
+    'onDown',
+    'onUp',
+    'renderDown',
+    'class',
+  ])
   const id = createUniqueId()
   const isDown = useGlobalDown(id)
   let mounted = false
 
   createEffect(() => {
     if (isDown()) {
-      eventProps.onDown?.()
+      innerProps.onDown?.()
     } else if (mounted) {
-      eventProps.onUp?.()
+      innerProps.onUp?.()
     }
     mounted = true
   })
 
   const attrs = createMemo(() => {
-    const down = isDown()
+    const down = isDown() || innerProps.renderDown
     return {
       [ELEMENT_IDENTIFIER_GLOBAL_TOUCH]: id,
       [ELEMENT_IDENTIFIER_REAL_BUTTON_STATE]: down ? 'down' : 'up',
       'aria-pressed': down,
-      class: `select-none ${restProps.class}`,
+      class: `select-none ${innerProps.class}`,
     }
   })
 

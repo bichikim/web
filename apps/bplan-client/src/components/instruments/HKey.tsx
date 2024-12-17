@@ -1,4 +1,4 @@
-import {useContext} from 'solid-js'
+import {createMemo, useContext} from 'solid-js'
 import {PianoContext} from './piano-context'
 import {KeyContext} from './key-context'
 import {HRealButton, HRealButtonProps} from 'src/components/real-button/HRealButton'
@@ -10,7 +10,7 @@ export interface HKeyProps extends HRealButtonProps {
 
 // instrument key
 export const HKey = (props: HKeyProps) => {
-  const {onDown: onKeyDown, onUp: onKeyUp} = useContext(PianoContext)
+  const {onDown: onKeyDown, onUp: onKeyUp, down} = useContext(PianoContext)
   const {key, disabled} = useContext(KeyContext)
 
   const handleDown = () => {
@@ -27,9 +27,17 @@ export const HKey = (props: HKeyProps) => {
     }
   }
 
+  const renderDown = createMemo(() => {
+    if (!key) {
+      return false
+    }
+    return down().has(key)
+  })
+
   return (
     <HRealButton
       {...props}
+      renderDown={renderDown()}
       onDown={handleDown}
       onUp={handleUp}
       disabled={disabled()}
