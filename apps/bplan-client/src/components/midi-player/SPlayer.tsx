@@ -4,6 +4,7 @@ import {cva, cx} from 'class-variance-authority'
 import {SMidiFileInput} from './SMidiFileInput'
 import {MusicInfo} from './SFileItem'
 import {createMemo, createSignal, Show} from 'solid-js'
+import {SClose} from './SClose'
 
 export interface SPlayerProps {
   onPause?: () => void
@@ -15,6 +16,7 @@ export const SPlayer = (props: SPlayerProps) => {
   const [playingId, setPlayingId] = createSignal('')
   const [playList, setPlayList] = createSignal<MusicInfo[]>([])
   const [selectedId, setSelectedId] = createSignal<string>('')
+  const [isShow, setIsShow] = createSignal(false)
 
   const handleAddPlayItem = (payload: MusicInfo[]) => {
     // first select
@@ -57,6 +59,10 @@ export const SPlayer = (props: SPlayerProps) => {
     setPlayingId('')
   }
 
+  const handleClose = () => {
+    setIsShow((prev) => !prev)
+  }
+
   const playStyle = cva('block text-32px', {
     variants: {
       isPlaying: {
@@ -66,8 +72,17 @@ export const SPlayer = (props: SPlayerProps) => {
     },
   })
 
+  const rootStyle = cva(' bg-white rd-2 flex flex-col relative duration-150', {
+    variants: {
+      isShow: {
+        false: 'w-20px h-20px',
+        true: 'min-w-350px max-w-500px p-2',
+      },
+    },
+  })
+
   return (
-    <div class="min-w-350px bg-white p-2 rd-2 flex flex-col relative max-w-500px">
+    <div class={rootStyle({isShow: isShow()})}>
       <Show when={playList().length > 0}>
         <SFileList
           list={playList()}
@@ -86,14 +101,11 @@ export const SPlayer = (props: SPlayerProps) => {
         </SPlayerButton>
         <SMidiFileInput class="min-w-44px" onAdd={handleAddPlayItem} />
       </div>
-      <div
-        class={cx(
-          'absolute top--20px left--20px w-36px h-36px flex items-center justify-center rd-6px',
-          'bg-red cursor-pointer',
-        )}
-      >
-        <span class="inline-block i-hugeicons:cancel-02 text-28px text-white" />
-      </div>
+      <SClose
+        class="absolute top--20px left--20px"
+        onClose={handleClose}
+        isHidden={!isShow()}
+      />
     </div>
   )
 }
