@@ -20,3 +20,8 @@ export interface UseGlobalTouchEmitterOptions {
   // Apply only the top-level element
   topLevelElementOnly?: boolean
 }
+
+export interface DownEventPayload {
+  down: boolean
+  renderOnly: boolean
+}

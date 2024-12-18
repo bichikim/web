@@ -42,6 +42,7 @@ https://archive.org/details/SalamanderGrandPianoV3
 https://surikov.github.io/webaudiofont/
 https://github.com/surikov/webaudiofont
 
-## 
+### css
+https://lenadesign.org/2022/01/21/css-shiny-diamond/
 
 fix vinxi version 0.4.3

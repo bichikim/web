@@ -8,6 +8,7 @@ export interface SPlayerButtonProps
 export const SPlayerButton = (props: SPlayerButtonProps) => {
   return (
     <button
+      {...props}
       class={cx(
         'px-6px py-2px b-0 rd-6px cursor-pointer overflow-hidden bg-#f4f5f6',
         props.class,

@@ -49,5 +49,9 @@ export default defineConfig({
         src: fileURLToPath(new URL('src', import.meta.url)),
       },
     },
+    // ssr: {
+    //   // Add npm packages containing invalid code here
+    //   noExternal: ['@tonejs/midi'],
+    // },
   },
 })

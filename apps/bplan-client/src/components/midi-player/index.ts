@@ -1,1 +1,1 @@
-export * from './HPlayer'
+export * from 'src/components/midi-player/SPlayer'

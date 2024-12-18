@@ -1,6 +1,10 @@
-import {Midi} from '@tonejs/midi'
+import {Midi} from '@tonejs/midi/src/Midi'
 
-export const loadMidi = async (blob: Blob): Promise<Midi> => {
+export const loadMidi = async (blob: File): Promise<{midi: Midi; name: string}> => {
   const buffer = await blob.arrayBuffer()
-  return new Midi(buffer)
+  const midi = new Midi(buffer)
+  return {
+    midi,
+    name: blob.name,
+  }
 }

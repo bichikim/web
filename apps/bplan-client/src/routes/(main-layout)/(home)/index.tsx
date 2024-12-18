@@ -1,43 +1,95 @@
 import {createMemo} from 'solid-js'
 import {SPiano} from 'src/components/instruments'
+import {SPlayer} from 'src/components/midi-player'
+import {MusicInfo} from 'src/components/midi-player/SFileItem'
+import {emitAllIds} from 'src/components/real-button/use-global-touch'
 import {createSplendidGrandPiano} from 'src/use/instruments'
-import {HPlayer} from 'src/components/midi-player'
 
 export default function HomePage() {
+  let _targetId = ''
+  const velocityPercent = 100
+  const userPlayFlag = Symbol('user-play')
   const splendidGrandPiano = createSplendidGrandPiano({
+    onEnded: (payload) => {
+      if (payload[userPlayFlag]) {
+        return
+      }
+      const id = payload.stopId
+      if (id === undefined) {
+        return
+      }
+      emitAllIds(new Set([String(id)]), false, true)
+    },
     onStart: (payload) => {
-      console.log('splendid-grand-piano started', payload)
+      if (payload[userPlayFlag]) {
+        return
+      }
+      const id = payload.stopId
+      if (id === undefined) {
+        return
+      }
+      emitAllIds(new Set([String(id)]), true, true)
     },
   })
 
-  const onDown = (key: string | number) => {
+  const handleDown = (key: string | number) => {
     const piano = splendidGrandPiano()
-    piano?.start(key)
+    piano?.start({
+      note: key,
+      [userPlayFlag]: true,
+    } as any)
   }
 
-  const onUp = (key: string | number) => {
+  const handleUp = (key: string | number) => {
     const piano = splendidGrandPiano()
     piano?.stop(key)
   }
 
-  const onTestPlay = () => {
-    console.log('???')
+  const handlePlay = async (payload: MusicInfo, targetId: string) => {
     const piano = splendidGrandPiano()
-    if (piano) {
-      console.log(piano.context.currentTime)
+    if (!piano) {
+      return
     }
-    piano?.start({
-      duration: 0.5807291666666666,
-      note: 'G5',
-      time: 0.5924479166666666 + piano.context.currentTime,
-      velocity: 0.6062992125984252 * 100,
-    })
-    piano?.start({
-      duration: 0.29036458333333326,
-      note: 'F5',
-      time: 0.8828125 + piano.context.currentTime,
-      velocity: 0.6062992125984252 * 100,
-    })
+    const oldTargetId = _targetId
+    _targetId = targetId
+    if (piano.context.state === 'suspended' && oldTargetId === targetId) {
+      return piano.context.resume()
+    }
+    piano.stop()
+    await piano.context.resume()
+    const {midi} = payload
+
+    if (!midi) {
+      return
+    }
+
+    for (const notes of midi) {
+      for (const note of notes) {
+        piano.start({
+          ...note,
+          time: (note.time ?? 0) + piano.context.currentTime,
+          velocity: (note.velocity ?? 1) * velocityPercent,
+        })
+      }
+    }
+  }
+
+  const handlePause = () => {
+    const piano = splendidGrandPiano()
+    if (!piano) {
+      return
+    }
+    return piano.context.suspend()
+  }
+
+  const handleStop = async () => {
+    const piano = splendidGrandPiano()
+    if (!piano) {
+      return
+    }
+    // await piano.context.suspend()
+    piano.stop()
+    _targetId = ''
   }
 
   const isDone = createMemo(() => Boolean(splendidGrandPiano()))
@@ -46,11 +98,11 @@ export default function HomePage() {
     <>
       <main class="relative h-full overflow-y-hidden pt-0 px-2 flex flex-col overflow-x-auto">
         <div class="h-full w-max">
-          <SPiano onDown={onDown} onUp={onUp} />
+          <SPiano onDown={handleDown} onUp={handleUp} />
         </div>
       </main>
       <div class="absolute bottom-0 right-0">
-        <HPlayer />
+        <SPlayer onPlay={handlePlay} onPause={handlePause} onStop={handleStop} />
       </div>
       <span class="select-none fixed left-0 bottom-0 px-4px">
         {' '}

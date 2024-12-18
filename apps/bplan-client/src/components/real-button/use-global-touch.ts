@@ -1,7 +1,13 @@
 import {useEvent} from '@winter-love/solid-use'
 import {getDocument, getWindow, Position} from '@winter-love/utils'
 import {Accessor, createSignal} from 'solid-js'
-import {DragInfoIds, DragPayload, InfoIds, UseGlobalTouchEmitterOptions} from './types'
+import {
+  DownEventPayload,
+  DragInfoIds,
+  DragPayload,
+  InfoIds,
+  UseGlobalTouchEmitterOptions,
+} from './types'
 
 export const getElementsFromPoint = (position: Position): Element[] => {
   const document = getDocument()
@@ -22,7 +28,11 @@ export const getGlobalTouch = (element: Element): string | null => {
   return element.getAttribute(ELEMENT_IDENTIFIER_GLOBAL_TOUCH)
 }
 
-const emitAllIds = (ids: Set<string>, value: boolean) => {
+export const emitAllIds = (
+  ids: Set<string>,
+  value: boolean,
+  renderOnly: boolean = false,
+) => {
   const window = getWindow()
 
   if (!window) {
@@ -31,7 +41,7 @@ const emitAllIds = (ids: Set<string>, value: boolean) => {
 
   for (const id of ids) {
     const eventName = generateGlobalTouchEventName(id)
-    window.dispatchEvent(new CustomEvent(eventName, {detail: value}))
+    window.dispatchEvent(new CustomEvent(eventName, {detail: {down: value, renderOnly}}))
   }
 }
 
@@ -57,7 +67,7 @@ const emitAllMultiIDs = (downTouchIDs: Map<number, Set<string>>, value: boolean)
   }
 }
 
-const generateGlobalTouchEventName = (id: string): string => {
+export const generateGlobalTouchEventName = (id: string): string => {
   return `global-touch__${id}`
 }
 
@@ -250,13 +260,20 @@ export const useGlobalTouchEmitter = (options: UseGlobalTouchEmitterOptions = {}
   })
 }
 
-export const useGlobalDown = (id: string): Accessor<boolean> => {
-  const [isDown, setIsDown] = createSignal<boolean>(false)
+export const useGlobalDown = (id: string): Accessor<DownEventPayload> => {
+  const [isDown, setIsDown] = createSignal<DownEventPayload>({
+    down: false,
+    renderOnly: false,
+  })
   const eventName = generateGlobalTouchEventName(id)
 
-  useEvent(getWindow, eventName, ({detail: down}: CustomEvent<boolean>) => {
-    setIsDown(down)
-  })
+  useEvent(
+    getWindow,
+    eventName,
+    ({detail: {down, renderOnly}}: CustomEvent<DownEventPayload>) => {
+      setIsDown({down, renderOnly})
+    },
+  )
 
   return isDown
 }

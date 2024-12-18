@@ -22,7 +22,9 @@ export interface HRealButtonProps extends ParentProps {
 
 export const ELEMENT_IDENTIFIER_REAL_BUTTON_STATE = 'data-state'
 
-export interface HRealButtonProps extends JSX.ButtonHTMLAttributes<HTMLButtonElement> {
+export interface HRealButtonProps
+  extends Omit<JSX.ButtonHTMLAttributes<HTMLButtonElement>, 'id'> {
+  id?: string | number
   onDown?: () => void
   onUp?: () => void
   renderDown?: boolean
@@ -39,24 +41,31 @@ export const HRealButton = (props: HRealButtonProps) => {
     'onUp',
     'renderDown',
     'class',
+    'id',
   ])
   const id = createUniqueId()
-  const isDown = useGlobalDown(id)
+  // eslint-disable-next-line solid/reactivity
+  const targetId = `${innerProps.id ?? id}`
+  const isDown = useGlobalDown(targetId)
   let mounted = false
 
   createEffect(() => {
-    if (isDown()) {
+    mounted = true
+    const downState = isDown()
+    if (downState.renderOnly) {
+      return
+    }
+    if (downState.down) {
       innerProps.onDown?.()
     } else if (mounted) {
       innerProps.onUp?.()
     }
-    mounted = true
   })
 
   const attrs = createMemo(() => {
-    const down = isDown() || innerProps.renderDown
+    const down = isDown().down || innerProps.renderDown
     return {
-      [ELEMENT_IDENTIFIER_GLOBAL_TOUCH]: id,
+      [ELEMENT_IDENTIFIER_GLOBAL_TOUCH]: targetId,
       [ELEMENT_IDENTIFIER_REAL_BUTTON_STATE]: down ? 'down' : 'up',
       'aria-pressed': down,
       class: `select-none ${innerProps.class}`,

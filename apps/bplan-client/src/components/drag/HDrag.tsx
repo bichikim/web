@@ -54,7 +54,7 @@ export const HDrag = (props: HDragProps) => {
   }
 
   createEffect(() => {
-    if (isDown()) {
+    if (isDown().down) {
       innerProps.onDown?.()
     } else {
       innerProps.onUp?.()
@@ -62,7 +62,7 @@ export const HDrag = (props: HDragProps) => {
   })
 
   const attrs = createMemo(() => {
-    const down = isDown()
+    const {down} = isDown()
     const pointState = dragPoint()
     if (down && pointState.state === 'start' && pointState.point) {
       updateStartPosition(pointState.point)
