@@ -1,5 +1,6 @@
 import {cva, cx} from 'class-variance-authority'
-import {JSX} from 'solid-js'
+import {createMemo, JSX} from 'solid-js'
+import {ELEMENT_IDENTIFIER_GLOBAL_TOUCH} from 'src/components/real-button/use-global-touch'
 
 export interface SCloseProps extends JSX.HTMLAttributes<HTMLButtonElement> {
   isHidden?: boolean
@@ -20,8 +21,11 @@ export const SClose = (props: SCloseProps) => {
     },
   })
 
+  const attrs = createMemo(() => ({[ELEMENT_IDENTIFIER_GLOBAL_TOUCH]: '??'}))
+
   return (
     <button
+      {...attrs()}
       class={cx(
         'w-36px h-36px flex items-center justify-center rd-6px',
         'bg-red cursor-pointer b-0',

@@ -1,3 +1,4 @@
+import {ELEMENT_IDENTIFIER_GLOBAL_TOUCH} from 'src/components/real-button/use-global-touch'
 import {SPlayerButton} from './SPlayerButton'
 import {SFileList} from './SFileList'
 import {cva, cx} from 'class-variance-authority'
@@ -81,8 +82,10 @@ export const SPlayer = (props: SPlayerProps) => {
     },
   })
 
+  const attrs = createMemo(() => ({[ELEMENT_IDENTIFIER_GLOBAL_TOUCH]: '??'}))
+
   return (
-    <div class={rootStyle({isShow: isShow()})}>
+    <div {...attrs()} class={rootStyle({isShow: isShow()})}>
       <Show when={playList().length > 0}>
         <SFileList
           list={playList()}
