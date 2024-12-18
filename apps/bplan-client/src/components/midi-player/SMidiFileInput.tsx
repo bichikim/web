@@ -82,6 +82,7 @@ export const SMidiFileInput = (props: HMidiFileInputProps) => {
       <input
         {...inputProps}
         type="file"
+        multiple
         accept="audio/midi"
         onChange={(event) => handleInputFiles(event.target.files)}
         class="block absolute opacity-0 cursor-pointer w-full h-full"

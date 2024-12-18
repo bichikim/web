@@ -14,8 +14,8 @@ export const SClose = (props: SCloseProps) => {
   const iconStyle = cva('inline-block  text-28px text-white', {
     variants: {
       isHidden: {
-        true: 'i-hugeicons:youtube',
         false: 'i-hugeicons:cancel-02',
+        true: 'i-hugeicons:youtube',
       },
     },
   })
