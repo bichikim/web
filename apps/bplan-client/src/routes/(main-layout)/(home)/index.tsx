@@ -1,17 +1,21 @@
-import {createMemo} from 'solid-js'
+import {createMemo, createSignal} from 'solid-js'
 import {SPiano} from 'src/components/instruments'
 import {SHiddenPlayer} from 'src/components/midi-player'
 import {MusicInfo} from 'src/components/midi-player/SFileItem'
+import {SampleStart} from 'src/components/midi-player/types'
 import {emitAllIds} from 'src/components/real-button/use-global-touch'
 import {createSplendidGrandPiano} from 'src/use/instruments'
 
 export default function HomePage() {
-  let _targetId = ''
+  const [leftTime, setLeftTime] = createSignal(0)
+  let _currentTargetId = ''
   const velocityPercent = 100
-  const userPlayFlag = Symbol('user-play')
+  const playStartedAtKey = Symbol('play-started-at')
+  const targetIdKey = Symbol('play-started-at')
+  const userPlayFlagKey = Symbol('user-play')
   const splendidGrandPiano = createSplendidGrandPiano({
     onEnded: (payload) => {
-      if (payload[userPlayFlag]) {
+      if (payload[userPlayFlagKey]) {
         return
       }
       const id = payload.stopId
@@ -19,9 +23,18 @@ export default function HomePage() {
         return
       }
       emitAllIds(new Set([String(id)]), false, true)
+      const piano = splendidGrandPiano()
+      if (!piano || _currentTargetId !== payload[targetIdKey]) {
+        return
+      }
+      setLeftTime(
+        (payload.time ?? 0) -
+          ((payload as any)[playStartedAtKey] ?? 0) +
+          (payload.duration ?? 0),
+      )
     },
     onStart: (payload) => {
-      if (payload[userPlayFlag]) {
+      if (payload[userPlayFlagKey]) {
         return
       }
       const id = payload.stopId
@@ -36,7 +49,7 @@ export default function HomePage() {
     const piano = splendidGrandPiano()
     piano?.start({
       note: key,
-      [userPlayFlag]: true,
+      [userPlayFlagKey]: true,
     } as any)
   }
 
@@ -45,41 +58,20 @@ export default function HomePage() {
     piano?.stop(key)
   }
 
-  const handlePlay = async (payload: MusicInfo, targetId: string) => {
+  const handleMountSample = (payload: SampleStart, targetId: string) => {
     const piano = splendidGrandPiano()
     if (!piano) {
       return
     }
-    const oldTargetId = _targetId
-    _targetId = targetId
-    if (piano.context.state === 'suspended' && oldTargetId === targetId) {
-      return piano.context.resume()
-    }
-    piano.stop()
-    await piano.context.resume()
-    const {midi} = payload
-
-    if (!midi) {
-      return
-    }
-
-    for (const notes of midi) {
-      for (const note of notes) {
-        piano.start({
-          ...note,
-          time: (note.time ?? 0) + piano.context.currentTime,
-          velocity: (note.velocity ?? 1) * velocityPercent,
-        })
-      }
-    }
-  }
-
-  const handlePause = () => {
-    const piano = splendidGrandPiano()
-    if (!piano) {
-      return
-    }
-    return piano.context.suspend()
+    _currentTargetId = targetId
+    setLeftTime(0)
+    piano.start({
+      ...payload,
+      [playStartedAtKey]: piano.context.currentTime,
+      [targetIdKey]: targetId,
+      time: (payload.time ?? 0) + piano.context.currentTime,
+      velocity: (payload.velocity ?? 1) * velocityPercent,
+    } as any)
   }
 
   const handleStop = async () => {
@@ -89,7 +81,22 @@ export default function HomePage() {
     }
     // await piano.context.suspend()
     piano.stop()
-    _targetId = ''
+  }
+
+  const handleResume = () => {
+    const piano = splendidGrandPiano()
+    if (!piano) {
+      return
+    }
+    return piano.context.resume()
+  }
+
+  const handleSuspend = () => {
+    const piano = splendidGrandPiano()
+    if (!piano) {
+      return
+    }
+    return piano.context.suspend()
   }
 
   const isDone = createMemo(() => Boolean(splendidGrandPiano()))
@@ -102,7 +109,13 @@ export default function HomePage() {
         </div>
       </main>
       <div class="absolute bottom-0 right-0">
-        <SHiddenPlayer onPlay={handlePlay} onPause={handlePause} onStop={handleStop} />
+        <SHiddenPlayer
+          onResume={handleResume}
+          onStop={handleStop}
+          onMountSample={handleMountSample}
+          onSuspend={handleSuspend}
+          leftTime={leftTime()}
+        />
       </div>
       <span class="select-none fixed left-0 bottom-0 px-4px">
         {' '}

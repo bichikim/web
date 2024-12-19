@@ -44,5 +44,24 @@ https://github.com/surikov/webaudiofont
 
 ### css
 https://lenadesign.org/2022/01/21/css-shiny-diamond/
-
+https://codepen.io/electerious/pen/MjZPVe
+https://codepen.io/mprquinn/pen/OmOMrR
+https://codepen.io/webstoryboy/pen/eYexvbN
+https://wsss.tistory.com/1851
+https://msm1307.tistory.com/83
+https://codepen.io/cjgammon/pen/KgBOGg
+https://codepen.io/lbebber/pen/KwGEQv
+https://codepen.io/lbebber/pen/DOoXLj
+https://codepen.io/chriseisenbraun/pen/AxNWNp
+https://codepen.io/mayurelbhar/pen/wBvGbX
+https://codepen.io/jh3y/pen/GRegoaL
+https://codepen.io/ksenia-k/pen/vYwgrWv
+https://codepen.io/jh3y/pen/QWYPaax
+https://codepen.io/pablostanley/pen/gOJVaeJ
+https://codepen.io/nicolasjesenberger/pen/BaqYwea
+https://wsss.tistory.com/?page=7
+https://codepen.io/cobra_winfrey/pen/mdGBGEO
+https://codepen.io/jkantner/pen/WNKZbmZ
+https://codepen.io/jkantner/pen/wvXbboe
+https://wsss.tistory.com/1885
 fix vinxi version 0.4.3

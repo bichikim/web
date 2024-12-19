@@ -36,30 +36,47 @@ export const SMidiFileInput = (props: HMidiFileInputProps) => {
     const samples: MusicInfo[] = midis
       .map((midiFile, index): MusicInfo | null => {
         const {name, midi} = midiFile
-        const midiData: (SampleStart[] | null)[] = midi.tracks.map((track) => {
-          const {notes, instrument: {family} = {}} = track
-          if (!notes || family !== 'piano') {
-            return null
-          }
-          return notes.map((track): SampleStart => {
-            return {
-              duration: track.duration,
-              note: track.name,
-              time: track.time,
-              velocity: track.velocity,
+        const midiData: SampleStart[][] = midi.tracks
+          .map((track) => {
+            const {notes, instrument: {family} = {}} = track
+            if (!notes || family !== 'piano') {
+              return null
             }
+            return notes.map((track): SampleStart => {
+              return {
+                duration: track.duration,
+                note: track.name,
+                time: track.time,
+                velocity: track.velocity,
+              }
+            })
           })
-        })
+          .filter(Boolean) as SampleStart[][]
+
+        let totalDuration = 0
+        for (const track of midiData) {
+          const lastNote = track.at(-1)
+          if (lastNote) {
+            const trackTotal = (lastNote.time ?? 0) + (lastNote.duration ?? 0)
+            if (trackTotal > totalDuration) {
+              totalDuration = trackTotal
+            }
+          }
+        }
+
         const [singleTrack] = midi.tracks
         if (!singleTrack) {
           return null
         }
+
+        console.log('totalDuration', totalDuration)
 
         return {
           ext: 'midi',
           id: `${name}-${index}`,
           midi: midiData.filter(Boolean) as SampleStart[][],
           name: name.replace(/\.mid$/u, ''),
+          totalDuration,
         }
       })
       .filter(Boolean) as MusicInfo[]

@@ -1,7 +1,8 @@
-import {createEffect, JSX, Show, splitProps} from 'solid-js'
+import {createEffect, createMemo, JSX, Show, splitProps} from 'solid-js'
 import {cva, cx} from 'class-variance-authority'
 import {STypeIcon} from './STypeIcon'
 import {SampleStart} from './types'
+import {SProgress} from './SProgress'
 
 export interface MusicInfo {
   ext?: string
@@ -10,13 +11,16 @@ export interface MusicInfo {
   inProgress?: boolean
   midi?: SampleStart[][]
   name: string
+  playing?: boolean
   selected?: boolean
+  totalDuration?: number
 }
 
 export interface SFileItemProps
   extends Omit<JSX.HTMLAttributes<HTMLButtonElement>, 'onSelect' | 'id'>,
     MusicInfo {
   index?: number
+  leftTime?: number
   onGenerate?: (id: string) => void
   onSelect?: (id: string) => void
 }
@@ -32,6 +36,9 @@ export const SFileItem = (props: SFileItemProps) => {
     'selected',
     'generated',
     'ext',
+    'leftTime',
+    'playing',
+    'totalDuration',
   ])
 
   const nameStyle = cva('block line-height-20px truncate pt-2px', {
@@ -63,41 +70,48 @@ export const SFileItem = (props: SFileItemProps) => {
     },
   })
 
-  const rootStyle = cva(
-    cx(
-      'flex gap-4 items-center b-0 bg-transparent text-20px flex-shrink-0 h-36px',
-      'b-t-1px b-t-gray-300 b-t-solid first:b-t-0 px-4 relative',
-    ),
-    {
-      variants: {
-        selected: {
-          false: '',
-          true: cx(
-            'before-content-[""] before-absolute before-bg-blue before-opacity-30 before-rd-6px',
-            'before-left-0 before-top-0 before-bottom-0 before-right-0',
-          ),
-        },
+  const indexStyle = cva('', {
+    variants: {
+      playing: {
+        true: 'opacity-0',
       },
     },
-  )
+  })
 
   const handleSelect = () => {
     props.onSelect?.(props.id)
   }
 
-  createEffect(() => {
-    console.log(innerProps.selected)
-  })
+  const progress = createMemo(
+    () => ((props.leftTime ?? 0) / (props.totalDuration ?? 1)) * 100,
+  )
 
   return (
     <button
       {...restProps}
-      class={cx(rootStyle({selected: Boolean(innerProps.selected)}), restProps.class)}
+      class={cx(
+        'flex gap-4 items-center b-0 bg-transparent text-20px flex-shrink-0 h-36px',
+        'b-t-1px b-t-gray-300 b-t-solid first:b-t-0 px-4 relative',
+        restProps.class,
+      )}
       onClick={handleSelect}
     >
+      <Show when={innerProps.playing}>
+        <SProgress
+          class="block absolute w-full h-full left-0 top-0 bg-gray-100"
+          progress={progress()}
+        />
+      </Show>
+      <Show when={innerProps.selected}>
+        <span class="block absolute bg-blue rd-6px top-0 left-0 w-full h-full opacity-40" />
+      </Show>
+      <Show when={innerProps.playing}>
+        <span class="block i-hugeicons:arrow-right-double absolute text-gray-500 left-3" />
+      </Show>
       <span class="relative block text-gray b-r-solid b-r-1px b-r-gray-300 pr-2">
-        {innerProps.index}
+        <span class={indexStyle({playing: innerProps.playing})}>{innerProps.index}</span>
       </span>
+
       <span class="relative flex gap-1 flex-grow-1 flex-shrink-1 items-center overflow-hidden">
         <span
           class={nameStyle({

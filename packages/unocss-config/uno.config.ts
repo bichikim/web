@@ -28,7 +28,9 @@ export default defineConfig({
   },
   presets: [
     presetIcons(),
-    presetUno(),
+    presetUno({
+      autoInstall: true,
+    }),
     presetLegacyCompat({
       commaStyleColorFunction: true,
     }),

@@ -14,7 +14,7 @@ export const SHiddenPlayer = (props: SHiddenPlayerProps) => {
   }
 
   const rootStyle = cva(
-    'relative duration-150 bg-white rd-2 flex flex-col relative duration-150',
+    'relative duration-150 bg-white rd-2 flex flex-col duration-150',
     {
       variants: {
         isShow: {
@@ -26,13 +26,15 @@ export const SHiddenPlayer = (props: SHiddenPlayerProps) => {
   )
 
   return (
-    <div
-      {...preventGlobalTouchAttrs()}
-      class={cx(rootStyle({isShow: isShow()}), props.class)}
-    >
-      <SPlayer {...props} class={rootStyle({isShow: isShow()})} />
+    <div class="relative">
+      <div
+        {...preventGlobalTouchAttrs()}
+        class={cx(rootStyle({isShow: isShow()}), props.class)}
+      >
+        <SPlayer {...props} />
+      </div>
       <SClose
-        class="absolute top--20px left--20px"
+        class="absolute top--20px left--20px hover:z-1"
         onClose={handleClose}
         isHidden={!isShow()}
       />

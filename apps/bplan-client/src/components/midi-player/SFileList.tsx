@@ -4,14 +4,22 @@ import {MusicInfo, SFileItem} from './SFileItem'
 
 export interface SFileListProps
   extends Omit<JSX.HTMLAttributes<HTMLDivElement>, 'onSelect'> {
+  leftTime?: number
   list: MusicInfo[]
   onSelect?: (id: string) => void
+  playingId?: string
   selectedId?: string
 }
 
 export const SFileList = (props: SFileListProps) => {
   const [element, setElement] = createSignal<HTMLDivElement | null>(null)
-  const [innerProps, restProps] = splitProps(props, ['list', 'onSelect', 'selectedId'])
+  const [innerProps, restProps] = splitProps(props, [
+    'list',
+    'onSelect',
+    'selectedId',
+    'leftTime',
+    'playingId',
+  ])
   // indicators
   const [scrollIndicators, setScrollIndicators] = createSignal({
     bottom: false,
@@ -86,6 +94,8 @@ export const SFileList = (props: SFileListProps) => {
               index={index()}
               selected={item.selected || item.id === innerProps.selectedId}
               class="w-full"
+              leftTime={innerProps.leftTime}
+              playing={item.id === innerProps.playingId}
               onSelect={handelSelect}
             />
           )}
