@@ -1,6 +1,6 @@
 import {createMemo} from 'solid-js'
 import {SPiano} from 'src/components/instruments'
-import {SPlayer} from 'src/components/midi-player'
+import {SHiddenPlayer} from 'src/components/midi-player'
 import {MusicInfo} from 'src/components/midi-player/SFileItem'
 import {emitAllIds} from 'src/components/real-button/use-global-touch'
 import {createSplendidGrandPiano} from 'src/use/instruments'
@@ -102,7 +102,7 @@ export default function HomePage() {
         </div>
       </main>
       <div class="absolute bottom-0 right-0">
-        <SPlayer onPlay={handlePlay} onPause={handlePause} onStop={handleStop} />
+        <SHiddenPlayer onPlay={handlePlay} onPause={handlePause} onStop={handleStop} />
       </div>
       <span class="select-none fixed left-0 bottom-0 px-4px">
         {' '}

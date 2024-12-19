@@ -20,12 +20,22 @@ export const getElementsFromPoint = (position: Position): Element[] => {
 }
 
 export const ELEMENT_IDENTIFIER_GLOBAL_TOUCH = `data-global-touch__`
+export const PREVENT_GLOBAL_TOUCH_FLAG = '__prevent__'
+
+export const preventGlobalTouchAttrs = () => ({
+  [ELEMENT_IDENTIFIER_GLOBAL_TOUCH]: PREVENT_GLOBAL_TOUCH_FLAG,
+})
 
 /**
  * 전역에서 감지해서 통보할 엘리먼트 인지 여부확인
  */
 export const getGlobalTouch = (element: Element): string | null => {
-  return element.getAttribute(ELEMENT_IDENTIFIER_GLOBAL_TOUCH)
+  const identifier = element.getAttribute(ELEMENT_IDENTIFIER_GLOBAL_TOUCH)
+  // 터치 깊이 탐지 금지 플레그
+  if (identifier === PREVENT_GLOBAL_TOUCH_FLAG) {
+    return null
+  }
+  return identifier
 }
 
 export const emitAllIds = (

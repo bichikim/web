@@ -79,6 +79,10 @@ export const SMidiFileInput = (props: HMidiFileInputProps) => {
         containerProps.class,
       )}
     >
+      <span class="">Click or Drop </span>
+      <span class="block i-hugeicons:file-add text-28px px-1" />
+      <span>Your files</span>
+      {props.children}
       <input
         {...inputProps}
         type="file"
@@ -87,10 +91,6 @@ export const SMidiFileInput = (props: HMidiFileInputProps) => {
         onChange={(event) => handleInputFiles(event.target.files)}
         class="block absolute opacity-0 cursor-pointer w-full h-full"
       />
-      <span class="">Click or Drop </span>
-      <span class="block i-hugeicons:file-add text-28px px-1" />
-      <span>Your files</span>
-      {props.children}
     </div>
   )
 }

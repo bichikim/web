@@ -43,7 +43,7 @@ export const HKey = (props: HKeyProps) => {
       onDown={handleDown}
       onUp={handleUp}
       disabled={disabled()}
-      aria-label={`${innerProps.name} key ${key}`}
+      title={`${innerProps.name} key ${key}`}
     >
       {props.children}
     </HRealButton>

@@ -1,13 +1,11 @@
-import {ELEMENT_IDENTIFIER_GLOBAL_TOUCH} from 'src/components/real-button/use-global-touch'
-import {SPlayerButton} from './SPlayerButton'
-import {SFileList} from './SFileList'
-import {cva, cx} from 'class-variance-authority'
-import {SMidiFileInput} from './SMidiFileInput'
+import {cva} from 'class-variance-authority'
+import {createMemo, createSignal, JSX, Show} from 'solid-js'
 import {MusicInfo} from './SFileItem'
-import {createMemo, createSignal, Show} from 'solid-js'
-import {SClose} from './SClose'
+import {SFileList} from './SFileList'
+import {SMidiFileInput} from './SMidiFileInput'
+import {SPlayerButton} from './SPlayerButton'
 
-export interface SPlayerProps {
+export interface SPlayerProps extends Omit<JSX.HTMLAttributes<HTMLElement>, 'onPlay'> {
   onPause?: () => void
   onPlay?: (payload: MusicInfo, targetId: string) => void
   onStop?: () => void
@@ -17,7 +15,6 @@ export const SPlayer = (props: SPlayerProps) => {
   const [playingId, setPlayingId] = createSignal('')
   const [playList, setPlayList] = createSignal<MusicInfo[]>([])
   const [selectedId, setSelectedId] = createSignal<string>('')
-  const [isShow, setIsShow] = createSignal(false)
 
   const handleAddPlayItem = (payload: MusicInfo[]) => {
     // first select
@@ -60,10 +57,6 @@ export const SPlayer = (props: SPlayerProps) => {
     setPlayingId('')
   }
 
-  const handleClose = () => {
-    setIsShow((prev) => !prev)
-  }
-
   const playStyle = cva('block text-32px', {
     variants: {
       isPlaying: {
@@ -73,19 +66,8 @@ export const SPlayer = (props: SPlayerProps) => {
     },
   })
 
-  const rootStyle = cva(' bg-white rd-2 flex flex-col relative duration-150', {
-    variants: {
-      isShow: {
-        false: 'w-20px h-20px',
-        true: 'min-w-350px max-w-500px p-2',
-      },
-    },
-  })
-
-  const attrs = createMemo(() => ({[ELEMENT_IDENTIFIER_GLOBAL_TOUCH]: '??'}))
-
   return (
-    <div {...attrs()} class={rootStyle({isShow: isShow()})}>
+    <>
       <Show when={playList().length > 0}>
         <SFileList
           list={playList()}
@@ -95,20 +77,23 @@ export const SPlayer = (props: SPlayerProps) => {
         />
       </Show>
       <div class="flex gap-2 p-2">
-        <SPlayerButton class="min-w-44px bg-gray-100" onClick={handlePlayOrPause}>
+        <SPlayerButton
+          class="min-w-44px min-h-36px bg-gray-100"
+          onClick={handlePlayOrPause}
+          title={isPlaying() ? 'pause' : 'play'}
+        >
           <span class={playStyle({isPlaying: isPlaying()})} />
         </SPlayerButton>
 
-        <SPlayerButton class="min-w-44px bg-gray-100" onClick={handleStop}>
+        <SPlayerButton
+          class="min-w-44px min-h-36px bg-gray-100"
+          onClick={handleStop}
+          title="stop"
+        >
           <span class="block i-hugeicons:stop text-32px" />
         </SPlayerButton>
-        <SMidiFileInput class="min-w-44px" onAdd={handleAddPlayItem} />
+        <SMidiFileInput class="min-w-44px px-2" onAdd={handleAddPlayItem} />
       </div>
-      <SClose
-        class="absolute top--20px left--20px"
-        onClose={handleClose}
-        isHidden={!isShow()}
-      />
-    </div>
+    </>
   )
 }
