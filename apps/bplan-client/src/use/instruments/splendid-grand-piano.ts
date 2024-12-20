@@ -1,11 +1,20 @@
-import {CacheStorage, SplendidGrandPiano, type SplendidGrandPianoConfig} from 'smplr'
-import {AudioContext as StandardizedAudioContext} from 'standardized-audio-context'
-import {once} from '@winter-love/utils'
+import {
+  CacheStorage,
+  DrumMachine,
+  SplendidGrandPiano,
+  type SplendidGrandPianoConfig,
+} from 'smplr'
 import {Accessor, createEffect, createSignal} from 'solid-js'
+import {AudioContext as StandardizedAudioContext} from 'standardized-audio-context'
+import {createEmitter} from './emiter'
+
+export type SampleStart = Parameters<DrumMachine['start']>[0]
 
 export type SplendidGrandPianoOptions = Partial<
   Omit<SplendidGrandPianoConfig, 'notesToLoad' | 'baseUrl'>
 >
+
+export type PianoEvent = 'start' | 'end'
 
 export const createSplendidGrandPiano = (
   options: SplendidGrandPianoOptions = {},
@@ -28,8 +37,21 @@ export const createSplendidGrandPiano = (
     })
     _audioContext = audioContext
 
+    const emitter = createEmitter<
+      PianoEvent,
+      {
+        end: SampleStart
+        start: SampleStart
+      }
+    >(
+      (event) => {
+        return `piano-${event}`
+      },
+      ['start', 'end'],
+    )
+
     splendidGrandPiano.load.then(() => {
-      setSplendidGrandPiano(splendidGrandPiano)
+      setSplendidGrandPiano(Object.assign(splendidGrandPiano, emitter))
     })
   })
 

@@ -1,4 +1,4 @@
-import {createMemo, createSignal} from 'solid-js'
+import {createEffect, createMemo, createSignal} from 'solid-js'
 import {SPiano} from 'src/components/instruments'
 import {SHiddenPlayer} from 'src/components/midi-player'
 import {MusicInfo} from 'src/components/midi-player/SFileItem'
@@ -99,7 +99,7 @@ export default function HomePage() {
     return piano.context.suspend()
   }
 
-  const isDone = createMemo(() => Boolean(splendidGrandPiano()))
+  const isLoadDone = createMemo(() => Boolean(splendidGrandPiano()))
 
   return (
     <>
@@ -119,7 +119,7 @@ export default function HomePage() {
       </div>
       <span class="select-none fixed left-0 bottom-0 px-4px">
         {' '}
-        {isDone() ? '' : 'Please wait files loading ...'}
+        {isLoadDone() ? '' : 'Please wait files loading ...'}
       </span>
     </>
   )
