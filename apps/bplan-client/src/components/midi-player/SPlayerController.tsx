@@ -9,7 +9,8 @@ import {RepeatType, SRepeatButton} from './SRepeatButton'
 
 const filePlayLast = Symbol('file-play')
 
-export interface SPlayerControllerProps extends Omit<JSX.HTMLAttributes<HTMLElement>, 'onPlay'> {
+export interface SPlayerControllerProps
+  extends Omit<JSX.HTMLAttributes<HTMLElement>, 'onPlay'> {
   leftTime?: number
   onMountSample?: (
     payload: SampleStart & {[filePlayLast]?: boolean},
