@@ -190,22 +190,24 @@ export const useGlobalTouchEmitter = (options: UseGlobalTouchEmitterOptions = {}
     }
     const downedIds = savedDownIds.get(mouseId)
     const upTouchIds: Set<string> = new Set(downedIds)
-    const {ids: downTouchIds, point} = getPointedIds(
+    const {ids: newDownIds, point} = getPointedIds(
       {x: event.pageX, y: event.pageY},
       takeFirst,
     )
 
-    savedDownIds = new Map<number, Set<string>>([[mouseId, new Set(downTouchIds)]])
+    const downTouchIds = new Set(newDownIds)
+    savedDownIds = new Map<number, Set<string>>([[mouseId, new Set(newDownIds)]])
 
-    for (const id of downTouchIds) {
+    for (const id of newDownIds) {
       if (upTouchIds.has(id)) {
         upTouchIds.delete(id)
+        downTouchIds.delete(id)
       }
     }
 
     emitAllIds(downTouchIds, true)
     emitAllIds(upTouchIds, false)
-    emitAllDragIds({ids: downTouchIds, point, state: 'move'})
+    emitAllDragIds({ids: newDownIds, point, state: 'move'})
   })
 
   useEvent(getWindow, 'touchstart', (event) => {
