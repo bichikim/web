@@ -1,4 +1,4 @@
-import {HUNDRED} from '@winter-love/utils'
+import {getWindow, HUNDRED} from '@winter-love/utils'
 import {
   CacheStorage,
   DrumMachine,
@@ -6,7 +6,7 @@ import {
   type SplendidGrandPianoConfig,
 } from 'smplr'
 import {Accessor, createEffect, createSignal, onCleanup} from 'solid-js'
-import {AudioContext as StandardizedAudioContext} from 'standardized-audio-context'
+import {getAudioContext} from 'src/use/instruments/prepare-audio-context'
 import {createEmitter, EmitterListener} from './emiter'
 
 export type SampleStart = Parameters<DrumMachine['start']>[0]
@@ -57,11 +57,6 @@ export interface SplendidGrandPianoController
 
 export type StopFn = (time?: number) => any
 
-export interface SampleStop {
-  stopId?: string | number
-  time?: number
-}
-
 export interface ExtendedSampleStart extends SampleStart {
   [PLAY_STARTED_AT_KEY]?: number
   [TARGET_ID_KEY]?: string
@@ -73,8 +68,8 @@ interface StartOptions {
   isUserStart?: boolean
 }
 
+// eslint-disable-next-line max-lines-per-function
 export const createSplendidGrandPiano = (
-  // options: Omit<SplendidGrandPianoOptions, 'onEnded' | 'onStart'> = {},
   options: Omit<SplendidGrandPianoOptions, 'onEnded' | 'onStart'> = {},
 ): [Accessor<SplendidGrandPianoState>, SplendidGrandPianoController] => {
   const {onEmitInstrument} = options
@@ -87,6 +82,7 @@ export const createSplendidGrandPiano = (
   })
   let _splendidGrandPiano: SplendidGrandPiano | undefined
   let _audioContext: AudioContext | undefined
+  let _cleanup = false
 
   const emitter = createEmitter<
     PianoEvent,
@@ -139,29 +135,49 @@ export const createSplendidGrandPiano = (
     if (_audioContext) {
       return
     }
-    const storage = new CacheStorage()
-    const audioContext: AudioContext = new StandardizedAudioContext() as any
-    const splendidGrandPiano = new SplendidGrandPiano(audioContext, {
-      ...options,
-      // baseUrl: '/instruments/splendid-grand-piano',
-      onEnded: handelEnded,
-      onStart: handleStart,
-      storage,
-    })
-    _audioContext = audioContext
+    const window = getWindow()
+    if (!window) {
+      return
+    }
+    let splendidGrandPiano: SplendidGrandPiano | undefined
 
-    splendidGrandPiano.load.then(() => {
-      _splendidGrandPiano = splendidGrandPiano
-      setState((prev) => ({
-        ...prev,
-        loaded: true,
-      }))
-    })
+    const prepare = (audioContext: AudioContext | void) => {
+      if (!audioContext || _cleanup) {
+        return
+      }
+
+      const storage = new CacheStorage()
+      splendidGrandPiano = new SplendidGrandPiano(audioContext, {
+        ...options,
+        // baseUrl: '/instruments/splendid-grand-piano',
+        onEnded: handelEnded,
+        onStart: handleStart,
+        storage,
+      })
+      _audioContext = audioContext
+
+      splendidGrandPiano.load.then(() => {
+        if (_cleanup) {
+          return
+        }
+        _splendidGrandPiano = splendidGrandPiano
+        setState((prev) => ({
+          ...prev,
+          loaded: true,
+        }))
+      })
+    }
+
+    getAudioContext().then(prepare)
 
     onCleanup(() => {
-      splendidGrandPiano.stop()
+      splendidGrandPiano?.stop()
       _splendidGrandPiano = undefined
     })
+  })
+
+  onCleanup(() => {
+    _cleanup = true
   })
 
   const start = (payload: SampleStart, options: StartOptions = {}): StopFn => {

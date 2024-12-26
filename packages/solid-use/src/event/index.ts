@@ -1,6 +1,6 @@
 import {MayBeAccessor} from 'src/types'
 import {resolveAccessor} from 'src/resolve-accessor'
-import {useWatch} from 'src/watch'
+import {createEffect, onCleanup} from 'solid-js'
 
 export interface Emitter {
   addEventListener(
@@ -47,10 +47,14 @@ export const useEvent: OnEvent = (
 ) => {
   const elementAccessor = resolveAccessor(element)
 
-  useWatch(elementAccessor, (element) => {
+  createEffect(() => {
+    const element = elementAccessor()
     element?.addEventListener(type, listener, options)
-    return () => {
+
+    onCleanup(() => {
       element?.removeEventListener(type, listener)
-    }
+    })
+
+    return element
   })
 }
