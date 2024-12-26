@@ -4,22 +4,46 @@ import {ELEMENT_IDENTIFIER_GLOBAL_TOUCH} from 'src/components/real-button/use-gl
 
 export interface SCloseProps extends JSX.HTMLAttributes<HTMLButtonElement> {
   isHidden?: boolean
+  isPlaying?: boolean
   onClose?: () => void
 }
+
+const rootStyle = cva(
+  'flex items-center justify-center bg-red cursor-pointer b-0 absolute',
+  {
+    compoundVariants: [
+      {
+        class: 'animate-pulse-alt',
+        isHidden: true,
+        isPlaying: true,
+      },
+    ],
+    variants: {
+      isHidden: {
+        false: 'w-36px h-36px left--32px bottom-0 rd-l-6px',
+        true: 'w-36px h-36px top--40px left--40px z-1 rd-6px',
+      },
+      isPlaying: {
+        false: '',
+        true: '',
+      },
+    },
+  },
+)
+
+const iconStyle = cva('inline-block  text-28px text-white', {
+  variants: {
+    isHidden: {
+      false: 'i-hugeicons:cancel-02',
+      true: 'i-hugeicons:youtube',
+    },
+  },
+})
 
 export const SClose = (props: SCloseProps) => {
   const handleClose = () => {
     props.onClose?.()
   }
-
-  const iconStyle = cva('inline-block  text-28px text-white', {
-    variants: {
-      isHidden: {
-        false: 'i-hugeicons:cancel-02',
-        true: 'i-hugeicons:youtube',
-      },
-    },
-  })
 
   const attrs = createMemo(() => ({[ELEMENT_IDENTIFIER_GLOBAL_TOUCH]: '??'}))
 
@@ -27,8 +51,10 @@ export const SClose = (props: SCloseProps) => {
     <button
       {...attrs()}
       class={cx(
-        'w-36px h-36px flex items-center justify-center rd-6px',
-        'bg-red cursor-pointer b-0',
+        rootStyle({
+          isHidden: Boolean(props.isHidden),
+          isPlaying: Boolean(props.isPlaying),
+        }),
         props.class,
       )}
       onClick={handleClose}

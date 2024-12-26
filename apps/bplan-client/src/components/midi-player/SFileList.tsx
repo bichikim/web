@@ -25,7 +25,7 @@ const rootStyle = cva(
         true: '',
       },
       show: {
-        false: 'pb-3',
+        false: '',
         true: 'before-content-[""] after-content-[""] py-3',
       },
       top: {

@@ -1,28 +1,34 @@
 import {cva} from 'class-variance-authority'
 import {createEffect, createMemo, createSignal, JSX, mergeProps, Show} from 'solid-js'
-import {SampleStart} from 'src/components/midi-player/types'
 import {MusicInfo} from './SFileItem'
 import {SFileList} from './SFileList'
 import {SMidiFileInput} from './SMidiFileInput'
 import {SPlayerButton} from './SPlayerButton'
 import {RepeatType, SRepeatButton} from './SRepeatButton'
 
-const filePlayLast = Symbol('file-play')
+export interface PlayingPayload {
+  leftTime: number
+  totalTime: number
+}
+
+export interface MountMusicInfo
+  extends Required<Pick<MusicInfo, 'id' | 'midi'>>,
+    Omit<MusicInfo, 'id' | 'midi'> {}
 
 export interface SPlayerControllerProps
-  extends Omit<JSX.HTMLAttributes<HTMLElement>, 'onPlay' | 'onSelect'> {
+  extends Omit<JSX.HTMLAttributes<HTMLElement>, 'onPlay' | 'onSelect' | 'onPlaying'> {
+  isSuspend?: boolean
   leftTime?: number
   onAddItem?: (payload: MusicInfo[]) => void
   onDeleteItem?: (id: string) => void
-  onMountSample?: (
-    payload: SampleStart & {[filePlayLast]?: boolean},
-    targetId: string,
-  ) => void
+  onMount?: (samples: MountMusicInfo) => void
+  onPlaying?: (value: boolean) => void
   onResume?: () => void
   onSelect?: (id: string) => void
   onStop?: () => void
   onSuspend?: () => void
   playList?: MusicInfo[]
+  playingId?: string
   selectedId?: string
 }
 
@@ -41,13 +47,12 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
     {
       leftTime: 0,
       playList: [],
+      playingId: '',
       selectedId: '',
     },
     props,
   )
-  let _targetId = ''
   const forecastEstimationMargin = 1000
-  const [playingId, setPlayingId] = createSignal('')
   const [repeat, setRepeat] = createSignal<RepeatType>('no')
 
   const handleAddPlayItem = (payload: MusicInfo[]) => {
@@ -55,7 +60,7 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
   }
 
   const isPlaying = createMemo(() => {
-    const _playingId = playingId()
+    const _playingId = innerProps.playingId
     const isPlaying = Boolean(_playingId)
     return isPlaying && _playingId === innerProps.selectedId
   })
@@ -64,29 +69,28 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
     innerProps.onSelect?.(id)
   }
 
-  const handlePlay = (payload: MusicInfo, targetId: string) => {
-    if (isPlaying() && playingId() === targetId) {
-      return innerProps.onResume?.()
-    }
+  const handlePlay = (payload: MusicInfo) => {
     innerProps.onStop?.()
     innerProps.onResume?.()
-    const {midi} = payload
+    const {midi, id} = payload
 
-    // eslint-disable-next-line prefer-destructuring
-    const onMountSample = innerProps.onMountSample
+    const _onMount = innerProps.onMount
 
-    if (!midi || !onMountSample) {
+    if (!midi || !_onMount || !id) {
       return
     }
-    for (const notes of midi) {
-      for (const note of notes) {
-        onMountSample(note, targetId)
-      }
-    }
-    setPlayingId(targetId)
+    _onMount({
+      ...payload,
+      id,
+      midi,
+    })
   }
 
   const currentPlayingMusic = createMemo(() => {
+    return (innerProps.playList ?? []).find((item) => item.id === innerProps.playingId)
+  })
+
+  const currentSelectedMusic = createMemo(() => {
     return (innerProps.playList ?? []).find((item) => item.id === innerProps.selectedId)
   })
 
@@ -116,6 +120,10 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
     return item
   }
 
+  const handleResume = () => {
+    innerProps.onResume?.()
+  }
+
   const handlePause = () => {
     innerProps.onSuspend?.()
   }
@@ -123,27 +131,24 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
   const handlePlayOrPause = () => {
     const _isPlaying = isPlaying()
     const _selectedId = innerProps.selectedId
-    if (_isPlaying && _selectedId === _targetId) {
-      handlePause()
-      _targetId = ''
+    const _playingId = innerProps.playingId
+    if (_isPlaying && _selectedId === _playingId) {
+      if (innerProps.isSuspend) {
+        handleResume()
+      } else {
+        handlePause()
+      }
     } else {
-      const payload = currentPlayingMusic()
+      const payload = currentSelectedMusic()
       if (payload) {
-        handlePlay(payload, _selectedId)
-        _targetId = _selectedId
+        handlePlay(payload)
       }
     }
-  }
-
-  const handleInit = () => {
-    setPlayingId('')
-    _targetId = ''
   }
 
   const handleStop = () => {
     // stop
     innerProps.onStop?.()
-    handleInit()
   }
 
   const handleChangeRepeat = (value: RepeatType) => {
@@ -152,21 +157,21 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
 
   const handleTryRepeat = () => {
     const _repeat = repeat()
-    const _currentPlayingMusic = currentPlayingMusic()
+    const _currentPlayingMusic = currentSelectedMusic()
     if (_repeat === 'one' && _currentPlayingMusic) {
-      handlePlay(_currentPlayingMusic, playingId())
+      handlePlay(_currentPlayingMusic)
       return
     }
-    const nextItem = getNextItem(playingId(), _repeat)
+    const nextItem = getNextItem(innerProps.playingId, _repeat)
     if (nextItem) {
-      handlePlay(nextItem, nextItem.id)
+      handlePlay(nextItem)
     } else {
-      handleInit()
+      handleStop()
     }
   }
 
   const handleDelete = (id: string) => {
-    props.onDeleteItem?.(id)
+    innerProps.onDeleteItem?.(id)
   }
 
   // watch music is ended
@@ -190,7 +195,7 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
           onSelect={handleSelected}
           onDelete={handleDelete}
           leftTime={innerProps.leftTime}
-          playingId={playingId()}
+          playingId={innerProps.playingId}
         />
       </Show>
       <div class="flex gap-2 p-2">

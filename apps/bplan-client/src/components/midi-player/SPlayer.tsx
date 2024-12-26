@@ -1,17 +1,24 @@
-import {createSignal, splitProps} from 'solid-js'
+import {createEffect, createSignal, splitProps} from 'solid-js'
 import {MusicInfo} from 'src/components/midi-player/SFileItem'
 import {SampleStart} from 'src/components/midi-player/types'
 import {SplendidGrandPianoController} from 'src/use/instruments'
-import {SPlayerController, SPlayerControllerProps} from './SPlayerController'
+import {
+  MountMusicInfo,
+  SPlayerController,
+  SPlayerControllerProps,
+} from './SPlayerController'
 
 export interface SPlayerProps extends Pick<SPlayerControllerProps, 'leftTime'> {
+  onPlaying?: (value: boolean) => void
   pianoController?: SplendidGrandPianoController
 }
 
 export const SPlayer = (props: SPlayerProps) => {
-  const [innerProps, restProps] = splitProps(props, ['pianoController'])
+  const [innerProps, restProps] = splitProps(props, ['pianoController', 'onPlaying'])
   const [playList, setPlayList] = createSignal<MusicInfo[]>([])
   const [selectedId, setSelectedId] = createSignal<string>('')
+  const [playingId, setPlayingId] = createSignal('')
+  const [isSuspend, setIsSuspend] = createSignal(false)
 
   const handleMountSample = (payload: SampleStart, targetId: string) => {
     innerProps.pianoController?.mount({
@@ -22,14 +29,17 @@ export const SPlayer = (props: SPlayerProps) => {
 
   const handleStop = async () => {
     innerProps.pianoController?.stop()
+    setPlayingId('')
   }
 
   const handleResume = () => {
     innerProps.pianoController?.resume()
+    setIsSuspend(false)
   }
 
   const handleSuspend = () => {
     innerProps.pianoController?.suspend()
+    setIsSuspend(true)
   }
 
   const handleAddPlayItem = (payload: MusicInfo[]) => {
@@ -68,18 +78,38 @@ export const SPlayer = (props: SPlayerProps) => {
     })
   }
 
+  createEffect(() => {
+    const value = Boolean(playingId())
+    innerProps.onPlaying?.(value)
+    return value
+  })
+
+  const handlePlay = (info: MountMusicInfo) => {
+    const {midi, id} = info
+
+    for (const notes of midi) {
+      for (const note of notes) {
+        handleMountSample(note, id)
+      }
+    }
+    setPlayingId(id)
+    setIsSuspend(false)
+  }
+
   return (
     <SPlayerController
       {...restProps}
       playList={playList()}
+      playingId={playingId()}
+      isSuspend={isSuspend()}
       selectedId={selectedId()}
       onSuspend={handleSuspend}
       onStop={handleStop}
       onDeleteItem={handleDelete}
       onResume={handleResume}
-      onMountSample={handleMountSample}
       onAddItem={handleAddPlayItem}
       onSelect={handleSelect}
+      onMount={handlePlay}
     />
   )
 }
