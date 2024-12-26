@@ -1,10 +1,12 @@
 import {cva, cx} from 'class-variance-authority'
-import {createSignal} from 'solid-js'
+import {createSignal, JSX} from 'solid-js'
 import {SClose} from 'src/components/midi-player/SClose'
-import {SPlayerController, SPlayerControllerProps} from './SPlayerController'
 import {preventGlobalTouchAttrs} from 'src/components/real-button/use-global-touch'
+import {SPlayer, SPlayerProps} from './SPlayer'
 
-export interface SHiddenPlayerProps extends SPlayerControllerProps {}
+export interface SHiddenPlayerProps
+  extends SPlayerProps,
+    JSX.HTMLAttributes<HTMLElement> {}
 
 export const SHiddenPlayer = (props: SHiddenPlayerProps) => {
   const [isShow, setIsShow] = createSignal(false)
@@ -19,7 +21,7 @@ export const SHiddenPlayer = (props: SHiddenPlayerProps) => {
       variants: {
         isShow: {
           false: 'w-20px h-20px',
-          true: 'min-w-350px max-w-500px p-2',
+          true: 'min-w-350px max-w-500px p-2 mr-1 mb-1',
         },
       },
     },
@@ -31,7 +33,7 @@ export const SHiddenPlayer = (props: SHiddenPlayerProps) => {
         {...preventGlobalTouchAttrs()}
         class={cx(rootStyle({isShow: isShow()}), props.class)}
       >
-        <SPlayerController {...props} />
+        <SPlayer {...props} />
       </div>
       <SClose
         class="absolute top--20px left--20px hover:z-1"

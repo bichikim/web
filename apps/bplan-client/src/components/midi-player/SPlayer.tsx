@@ -1,60 +1,62 @@
-import {SplendidGrandPiano} from 'smplr'
+import {createSignal, splitProps} from 'solid-js'
+import {MusicInfo} from 'src/components/midi-player/SFileItem'
 import {SampleStart} from 'src/components/midi-player/types'
+import {SplendidGrandPianoController} from 'src/use/instruments'
 import {SPlayerController, SPlayerControllerProps} from './SPlayerController'
-import {createMemo, splitProps} from 'solid-js'
 
-export interface SPlayerProps extends SPlayerControllerProps {
-  piano?: SplendidGrandPiano
+export interface SPlayerProps extends Pick<SPlayerControllerProps, 'leftTime'> {
+  pianoController?: SplendidGrandPianoController
 }
 
 export const SPlayer = (props: SPlayerProps) => {
-  const playStartedAtKey = Symbol('play-started-at')
-  const targetIdKey = Symbol('play-started-at')
-  const velocityPercent = 100
-  let _currentTargetId = ''
-  //
-  const [innerProps, restProps] = splitProps(props, ['piano'])
+  const [innerProps, restProps] = splitProps(props, ['pianoController'])
+  const [playList, setPlayList] = createSignal<MusicInfo[]>([])
+  const [selectedId, setSelectedId] = createSignal<string>('')
 
   const handleMountSample = (payload: SampleStart, targetId: string) => {
-    const _piano = innerProps.piano
-    if (!_piano) {
-      return
-    }
-    _currentTargetId = targetId
-    // setLeftTime(0)
-    _piano.start({
+    innerProps.pianoController?.mount({
       ...payload,
-      [playStartedAtKey]: _piano.context.currentTime,
-      [targetIdKey]: targetId,
-      time: (payload.time ?? 0) + _piano.context.currentTime,
-      velocity: (payload.velocity ?? 1) * velocityPercent,
-    } as any)
+      id: targetId,
+    })
   }
 
   const handleStop = async () => {
-    const _piano = innerProps.piano
-    if (!_piano) {
-      return
-    }
-    // await piano.context.suspend()
-    _piano.stop()
+    innerProps.pianoController?.stop()
   }
 
   const handleResume = () => {
-    const _piano = innerProps.piano
-    if (!_piano) {
-      return
-    }
-    return _piano.context.resume()
+    innerProps.pianoController?.resume()
   }
 
   const handleSuspend = () => {
-    const _piano = innerProps.piano
-    if (!_piano) {
-      return
-    }
-    return _piano.context.suspend()
+    innerProps.pianoController?.suspend()
   }
 
-  return <SPlayerController {...restProps} />
+  const handleAddPlayItem = (payload: MusicInfo[]) => {
+    // first select
+    if (playList().length === 0 && payload.length > 0) {
+      setSelectedId(payload[0].id)
+    }
+    setPlayList((prev) => {
+      return [...prev, ...payload]
+    })
+  }
+
+  const handleSelect = (id: string) => {
+    setSelectedId(id)
+  }
+
+  return (
+    <SPlayerController
+      {...restProps}
+      playList={playList()}
+      selectedId={selectedId()}
+      onSuspend={handleSuspend}
+      onStop={handleStop}
+      onResume={handleResume}
+      onMountSample={handleMountSample}
+      onAddItem={handleAddPlayItem}
+      onSelect={handleSelect}
+    />
+  )
 }

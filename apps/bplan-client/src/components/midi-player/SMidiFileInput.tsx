@@ -1,4 +1,4 @@
-import {JSX, onCleanup, splitProps} from 'solid-js'
+import {createSignal, JSX, onCleanup, splitProps} from 'solid-js'
 import {cx} from 'class-variance-authority'
 import {Midi} from '@tonejs/midi/src/Midi'
 import {MusicInfo} from 'src/components/midi-player/SFileItem'
@@ -6,13 +6,18 @@ import {loadMidi} from 'src/utils/read-midi'
 import {SampleStart} from './types'
 
 export interface HMidiFileInputProps
-  extends Omit<JSX.InputHTMLAttributes<HTMLInputElement>, 'accept' | 'type'> {
-  //
+  extends Omit<
+    JSX.InputHTMLAttributes<HTMLInputElement>,
+    'accept' | 'type' | 'onTouchEnd'
+  > {
   onAdd?: (value: MusicInfo[]) => void
+  //
+  onTouchEnd?: (event: Event) => void
 }
 
 export const SMidiFileInput = (props: HMidiFileInputProps) => {
-  const [containerProps, inputProps] = splitProps(props, ['class'])
+  const [innerProps, restProps] = splitProps(props, ['class', 'onAdd', 'onTouchEnd'])
+  const [inputElement, setInputElement] = createSignal<HTMLInputElement | null>(null)
   let isCleanup = false
 
   const handleInputFiles = async (files: FileList | null) => {
@@ -69,8 +74,6 @@ export const SMidiFileInput = (props: HMidiFileInputProps) => {
           return null
         }
 
-        console.log('totalDuration', totalDuration)
-
         return {
           ext: 'midi',
           id: `${name}-${index}`,
@@ -81,7 +84,16 @@ export const SMidiFileInput = (props: HMidiFileInputProps) => {
       })
       .filter(Boolean) as MusicInfo[]
 
-    props.onAdd?.(samples)
+    innerProps.onAdd?.(samples)
+  }
+
+  const handleTouchEnd = (event: Event) => {
+    innerProps.onTouchEnd?.(event)
+    const element = inputElement()
+    if (!element) {
+      return
+    }
+    element.click()
   }
 
   onCleanup(() => {
@@ -93,7 +105,7 @@ export const SMidiFileInput = (props: HMidiFileInputProps) => {
       class={cx(
         'bg-gray-100 flex items-center justify-center flex-grow-1 rd-6px cursor-pointer b-dashed b-2px b-gray',
         'relative',
-        containerProps.class,
+        innerProps.class,
       )}
     >
       <span class="">Click or Drop </span>
@@ -101,10 +113,12 @@ export const SMidiFileInput = (props: HMidiFileInputProps) => {
       <span>Your files</span>
       {props.children}
       <input
-        {...inputProps}
+        {...restProps}
+        ref={setInputElement}
         type="file"
         multiple
         accept="audio/midi"
+        onTouchEnd={handleTouchEnd}
         onChange={(event) => handleInputFiles(event.target.files)}
         class="block absolute opacity-0 cursor-pointer w-full h-full"
       />

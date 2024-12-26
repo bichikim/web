@@ -7,7 +7,7 @@ export interface MTypeIconProps {
 
 export const STypeIcon = (props: MTypeIconProps) => {
   const colorMatch = {
-    midi: 'bg-pink text-white',
+    midi: 'bg-blue text-white',
     mp3: 'bg-blue text-white',
   }
 

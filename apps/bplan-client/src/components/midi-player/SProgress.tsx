@@ -1,16 +1,39 @@
 import {JSX, splitProps} from 'solid-js'
-import {cx} from 'class-variance-authority'
+import {cva, cx} from 'class-variance-authority'
 
 export interface SProgressProps extends JSX.HTMLAttributes<HTMLSpanElement> {
   progress?: number
+  selected?: boolean
 }
 
 export const SProgress = (props: SProgressProps) => {
-  const [innerProps, restProps] = splitProps(props, ['progress'])
+  const [innerProps, restProps] = splitProps(props, ['progress', 'selected'])
+
+  const rootStyle = cva('block overflow-hidden rd-6px', {
+    variants: {
+      selected: {
+        false: 'bg-gray-100',
+        true: '',
+      },
+    },
+  })
+
+  const barStyle = cva('block h-full', {
+    variants: {
+      selected: {
+        false: 'bg-blue-300',
+        true: 'bg-blue-200',
+      },
+    },
+  })
+
   return (
-    <span {...restProps} class={cx('block overflow-hidden rd-6px', props.class)}>
+    <span
+      {...restProps}
+      class={cx(rootStyle({selected: innerProps.selected}), props.class)}
+    >
       <span
-        class="block bg-blue-100 h-full"
+        class={barStyle({selected: innerProps.selected})}
         style={{width: `${innerProps.progress ?? 0}%`}}
       />
     </span>

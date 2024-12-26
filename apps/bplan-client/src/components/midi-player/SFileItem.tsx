@@ -1,8 +1,9 @@
-import {createEffect, createMemo, JSX, Show, splitProps} from 'solid-js'
+import {HUNDRED} from '@winter-love/utils'
 import {cva, cx} from 'class-variance-authority'
+import {createMemo, JSX, Show, splitProps} from 'solid-js'
+import {SProgress} from './SProgress'
 import {STypeIcon} from './STypeIcon'
 import {SampleStart} from './types'
-import {SProgress} from './SProgress'
 
 export interface MusicInfo {
   ext?: string
@@ -24,6 +25,7 @@ export interface SFileItemProps
   onGenerate?: (id: string) => void
   onSelect?: (id: string) => void
 }
+
 export const SFileItem = (props: SFileItemProps) => {
   const [innerProps, restProps] = splitProps(props, [
     'children',
@@ -83,22 +85,24 @@ export const SFileItem = (props: SFileItemProps) => {
   }
 
   const progress = createMemo(
-    () => ((props.leftTime ?? 0) / (props.totalDuration ?? 1)) * 100,
+    () => ((props.leftTime ?? 0) / (props.totalDuration ?? 1)) * HUNDRED,
   )
 
   return (
     <button
       {...restProps}
       class={cx(
-        'flex gap-4 items-center b-0 bg-transparent text-20px flex-shrink-0 h-36px',
-        'b-t-1px b-t-gray-300 b-t-solid first:b-t-0 px-4 relative',
+        'flex gap-4 items-center b-0 bg-transparent text-20px flex-shrink-0 h-36px px-4 relative',
+        'after:bg-gray-300 after:h-1px first:after:hidden after:content-[""] after:absolute',
+        'after:top--3px mb-5px after:left-0.5rem after:w-[calc(100%-1rem)]',
         restProps.class,
       )}
       onClick={handleSelect}
     >
       <Show when={innerProps.playing}>
         <SProgress
-          class="block absolute w-full h-full left-0 top-0 bg-gray-100"
+          class="block absolute w-full h-full left-0 top-0"
+          selected={innerProps.selected}
           progress={progress()}
         />
       </Show>

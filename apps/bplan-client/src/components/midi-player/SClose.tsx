@@ -32,6 +32,7 @@ export const SClose = (props: SCloseProps) => {
         props.class,
       )}
       onClick={handleClose}
+      onTouchEnd={handleClose}
     >
       <span class={iconStyle({isHidden: Boolean(props.isHidden)})} />
     </button>
