@@ -13,6 +13,7 @@ export interface SPlayerControllerProps
   extends Omit<JSX.HTMLAttributes<HTMLElement>, 'onPlay' | 'onSelect'> {
   leftTime?: number
   onAddItem?: (payload: MusicInfo[]) => void
+  onDeleteItem?: (id: string) => void
   onMountSample?: (
     payload: SampleStart & {[filePlayLast]?: boolean},
     targetId: string,
@@ -164,6 +165,10 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
     }
   }
 
+  const handleDelete = (id: string) => {
+    props.onDeleteItem?.(id)
+  }
+
   // watch music is ended
   createEffect(() => {
     const _isEnd = isEnd()
@@ -183,6 +188,7 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
           class="max-h-124px"
           selectedId={innerProps.selectedId}
           onSelect={handleSelected}
+          onDelete={handleDelete}
           leftTime={innerProps.leftTime}
           playingId={playingId()}
         />

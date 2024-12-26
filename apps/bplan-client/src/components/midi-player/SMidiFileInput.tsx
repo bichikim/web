@@ -118,7 +118,10 @@ export const SMidiFileInput = (props: HMidiFileInputProps) => {
         multiple
         accept="audio/midi"
         onTouchEnd={handleTouchEnd}
-        onChange={(event) => handleInputFiles(event.target.files)}
+        onChange={async (event) => {
+          await handleInputFiles(event.target.files)
+          ;(event.target.value as any) = null
+        }}
         class="block absolute opacity-0 cursor-pointer w-full h-full"
       />
     </div>

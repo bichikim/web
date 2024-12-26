@@ -46,6 +46,28 @@ export const SPlayer = (props: SPlayerProps) => {
     setSelectedId(id)
   }
 
+  const handleDelete = (id: string) => {
+    const _playList = playList()
+    const index = _playList.findIndex((item) => item.id === id)
+    if (index === -1) {
+      return
+    }
+    if (selectedId() === id) {
+      const prevItem = _playList[index - 1]
+      const nextItem = _playList[index + 1]
+      if (prevItem) {
+        setSelectedId(prevItem.id)
+      } else if (nextItem) {
+        setSelectedId(nextItem.id)
+      } else {
+        setSelectedId('')
+      }
+    }
+    setPlayList((prev) => {
+      return [...prev.slice(0, index), ...prev.slice(index + 1)]
+    })
+  }
+
   return (
     <SPlayerController
       {...restProps}
@@ -53,6 +75,7 @@ export const SPlayer = (props: SPlayerProps) => {
       selectedId={selectedId()}
       onSuspend={handleSuspend}
       onStop={handleStop}
+      onDeleteItem={handleDelete}
       onResume={handleResume}
       onMountSample={handleMountSample}
       onAddItem={handleAddPlayItem}

@@ -6,6 +6,7 @@ export interface SFileListProps
   extends Omit<JSX.HTMLAttributes<HTMLDivElement>, 'onSelect'> {
   leftTime?: number
   list: MusicInfo[]
+  onDelete?: (id: string) => void
   onSelect?: (id: string) => void
   playingId?: string
   selectedId?: string
@@ -43,6 +44,7 @@ export const SFileList = (props: SFileListProps) => {
     'selectedId',
     'leftTime',
     'playingId',
+    'onDelete',
   ])
   // indicators
   const [scrollIndicators, setScrollIndicators] = createSignal({
@@ -80,6 +82,10 @@ export const SFileList = (props: SFileListProps) => {
     innerProps?.onSelect?.(id)
   }
 
+  const handleDelete = (id: string) => {
+    innerProps?.onDelete?.(id)
+  }
+
   return (
     <div {...restProps} class={cx(rootStyle(scrollIndicators()), props.class)}>
       <div
@@ -97,6 +103,9 @@ export const SFileList = (props: SFileListProps) => {
               leftTime={innerProps.leftTime}
               playing={item.id === innerProps.playingId}
               onSelect={handelSelect}
+              onDelete={handleDelete}
+              dragEndSize={90}
+              dragExecuteSize={40}
             />
           )}
         </For>

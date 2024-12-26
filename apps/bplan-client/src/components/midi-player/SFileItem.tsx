@@ -1,11 +1,13 @@
 import {HUNDRED} from '@winter-love/utils'
 import {cva, cx} from 'class-variance-authority'
-import {createMemo, JSX, Show, splitProps} from 'solid-js'
+import {createMemo, createSignal, JSX, Show, splitProps} from 'solid-js'
 import {SProgress} from './SProgress'
 import {STypeIcon} from './STypeIcon'
 import {SampleStart} from './types'
+import {HDragExecute} from './HDragExecute'
 
 export interface MusicInfo {
+  dragEndSize?: number
   ext?: string
   generated?: boolean
   id: string
@@ -20,14 +22,16 @@ export interface MusicInfo {
 export interface SFileItemProps
   extends Omit<JSX.HTMLAttributes<HTMLButtonElement>, 'onSelect' | 'id'>,
     MusicInfo {
+  dragExecuteSize?: number
   index?: number
   leftTime?: number
+  onDelete?: (id: string) => void
   onGenerate?: (id: string) => void
   onSelect?: (id: string) => void
 }
 
 const rootStyle = cx(
-  'flex gap-4 items-center b-0 bg-transparent text-20px flex-shrink-0 h-36px px-4 relative',
+  'gap-4 p-0 b-0 bg-transparent text-20px flex-shrink-0 h-36px',
   'after:bg-gray-300 after:h-1px first:after:hidden after:content-[""] after:absolute',
   'after:top--3px mb-5px after:left-0.5rem after:w-[calc(100%-1rem)]',
 )
@@ -68,6 +72,11 @@ const nameStyle = cva('block line-height-20px truncate pt-2px', {
   },
 })
 
+interface DragData {
+  current?: {x: number; y: number}
+  started: {identifier: number; x: number; y: number}
+}
+
 export const SFileItem = (props: SFileItemProps) => {
   const [innerProps, restProps] = splitProps(props, [
     'children',
@@ -83,6 +92,7 @@ export const SFileItem = (props: SFileItemProps) => {
     'leftTime',
     'playing',
     'totalDuration',
+    'onDelete',
   ])
 
   const handleSelect = () => {
@@ -93,12 +103,22 @@ export const SFileItem = (props: SFileItemProps) => {
     () => ((props.leftTime ?? 0) / (props.totalDuration ?? 1)) * HUNDRED,
   )
 
+  const handleLeDelete = () => {
+    innerProps.onDelete?.(props.id)
+  }
+
   return (
-    <button
+    <HDragExecute
       {...restProps}
       class={cx(rootStyle, restProps.class)}
+      containerClass="px-4 gap-2"
       onClick={handleSelect}
-      onTouchEnd={handleSelect}
+      onLeftExecute={handleLeDelete}
+      dragLeftChildren={
+        <span class="block w-full h-full overflow-hidden bg-red p-1 box-border rd-6px">
+          <span class="block w-full h-full i-hugeicons:delete-02 bg-white " />
+        </span>
+      }
     >
       <Show when={innerProps.playing}>
         <SProgress
@@ -144,6 +164,6 @@ export const SFileItem = (props: SFileItemProps) => {
         </span>
       </Show>
       {innerProps.children}
-    </button>
+    </HDragExecute>
   )
 }
