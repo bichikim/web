@@ -98,6 +98,7 @@ export const SFileItem = (props: SFileItemProps) => {
         restProps.class,
       )}
       onClick={handleSelect}
+      onTouchEnd={handleSelect}
     >
       <Show when={innerProps.playing}>
         <SProgress
