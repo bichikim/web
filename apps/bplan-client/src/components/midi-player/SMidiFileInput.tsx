@@ -15,6 +15,11 @@ export interface HMidiFileInputProps
   onTouchEnd?: (event: Event) => void
 }
 
+const rootStyle = cx(
+  'bg-gray-100 flex items-center justify-center flex-grow-1 rd-6px cursor-pointer b-dashed b-2px b-gray',
+  'relative',
+)
+
 export const SMidiFileInput = (props: HMidiFileInputProps) => {
   const [innerProps, restProps] = splitProps(props, ['class', 'onAdd', 'onTouchEnd'])
   const [inputElement, setInputElement] = createSignal<HTMLInputElement | null>(null)
@@ -101,13 +106,7 @@ export const SMidiFileInput = (props: HMidiFileInputProps) => {
   })
 
   return (
-    <div
-      class={cx(
-        'bg-gray-100 flex items-center justify-center flex-grow-1 rd-6px cursor-pointer b-dashed b-2px b-gray',
-        'relative',
-        innerProps.class,
-      )}
-    >
+    <div class={cx(rootStyle, innerProps.class)}>
       <span class="">Click or Drop </span>
       <span class="block i-hugeicons:file-add text-28px px-1" />
       <span>Your files</span>

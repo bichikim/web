@@ -26,6 +26,48 @@ export interface SFileItemProps
   onSelect?: (id: string) => void
 }
 
+const rootStyle = cx(
+  'flex gap-4 items-center b-0 bg-transparent text-20px flex-shrink-0 h-36px px-4 relative',
+  'after:bg-gray-300 after:h-1px first:after:hidden after:content-[""] after:absolute',
+  'after:top--3px mb-5px after:left-0.5rem after:w-[calc(100%-1rem)]',
+)
+
+const indexStyle = cva('', {
+  variants: {
+    playing: {
+      true: 'opacity-0',
+    },
+  },
+})
+
+const aiIconStyle = cva('flex origin-center flex-shrink-0', {
+  variants: {
+    generated: {
+      false: 'text-gray-600 animate-blink animate-duration-1s cursor-pointer scale-170 ',
+      true: 'text-black select-none scale-140 ',
+    },
+  },
+})
+
+const nameStyle = cva('block line-height-20px truncate pt-2px', {
+  compoundVariants: [
+    {
+      class: 'text-gray line-through',
+      ext: true,
+      inProgress: true,
+    },
+  ],
+  variants: {
+    ext: {
+      false: 'text-gray line-through',
+      true: '',
+    },
+    inProgress: {
+      false: 'text-black',
+    },
+  },
+})
+
 export const SFileItem = (props: SFileItemProps) => {
   const [innerProps, restProps] = splitProps(props, [
     'children',
@@ -43,43 +85,6 @@ export const SFileItem = (props: SFileItemProps) => {
     'totalDuration',
   ])
 
-  const nameStyle = cva('block line-height-20px truncate pt-2px', {
-    compoundVariants: [
-      {
-        class: 'text-gray line-through',
-        ext: true,
-        inProgress: true,
-      },
-    ],
-    variants: {
-      ext: {
-        false: 'text-gray line-through',
-        true: '',
-      },
-      inProgress: {
-        false: 'text-black',
-      },
-    },
-  })
-
-  const aiIconStyle = cva('flex origin-center flex-shrink-0', {
-    variants: {
-      generated: {
-        false:
-          'text-gray-600 animate-blink animate-duration-1s cursor-pointer scale-170 ',
-        true: 'text-black select-none scale-140 ',
-      },
-    },
-  })
-
-  const indexStyle = cva('', {
-    variants: {
-      playing: {
-        true: 'opacity-0',
-      },
-    },
-  })
-
   const handleSelect = () => {
     props.onSelect?.(props.id)
   }
@@ -91,12 +96,7 @@ export const SFileItem = (props: SFileItemProps) => {
   return (
     <button
       {...restProps}
-      class={cx(
-        'flex gap-4 items-center b-0 bg-transparent text-20px flex-shrink-0 h-36px px-4 relative',
-        'after:bg-gray-300 after:h-1px first:after:hidden after:content-[""] after:absolute',
-        'after:top--3px mb-5px after:left-0.5rem after:w-[calc(100%-1rem)]',
-        restProps.class,
-      )}
+      class={cx(rootStyle, restProps.class)}
       onClick={handleSelect}
       onTouchEnd={handleSelect}
     >

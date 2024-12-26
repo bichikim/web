@@ -25,6 +25,15 @@ export interface SPlayerControllerProps
   selectedId?: string
 }
 
+const playStyle = cva('block text-32px', {
+  variants: {
+    isPlaying: {
+      false: 'i-hugeicons:play',
+      true: 'i-hugeicons:pause',
+    },
+  },
+})
+
 // eslint-disable-next-line max-lines-per-function
 export const SPlayerController = (props: SPlayerControllerProps) => {
   const innerProps = mergeProps(
@@ -164,15 +173,6 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
     }
 
     return _isEnd
-  })
-
-  const playStyle = cva('block text-32px', {
-    variants: {
-      isPlaying: {
-        false: 'i-hugeicons:play',
-        true: 'i-hugeicons:pause',
-      },
-    },
   })
 
   return (

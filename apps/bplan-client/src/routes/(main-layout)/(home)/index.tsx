@@ -1,3 +1,4 @@
+import {Meta, Title} from '@solidjs/meta'
 import {createMemo} from 'solid-js'
 import {SPiano} from 'src/components/instruments'
 import {SHiddenPlayer} from 'src/components/midi-player'
@@ -10,9 +11,14 @@ export default function HomePage() {
   })
 
   const isLoadDone = createMemo(() => splendidGrandPiano().loaded)
+  const pageName = 'Piano'
 
   return (
     <>
+      <Title>Coong - {pageName}</Title>
+      <Meta property="og:site_name" content={pageName} />
+      <Meta property="og:title" content={pageName} />
+      <Meta property="og:description" content="Your instruments for free" />
       <main class="relative h-full overflow-y-hidden pt-0 px-2 flex flex-col overflow-x-auto">
         <div class="h-full w-max">
           <SPiano

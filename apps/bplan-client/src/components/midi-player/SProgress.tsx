@@ -6,26 +6,26 @@ export interface SProgressProps extends JSX.HTMLAttributes<HTMLSpanElement> {
   selected?: boolean
 }
 
+const rootStyle = cva('block overflow-hidden rd-6px', {
+  variants: {
+    selected: {
+      false: 'bg-gray-100',
+      true: '',
+    },
+  },
+})
+
+const barStyle = cva('block h-full', {
+  variants: {
+    selected: {
+      false: 'bg-blue-300',
+      true: 'bg-blue-200',
+    },
+  },
+})
+
 export const SProgress = (props: SProgressProps) => {
   const [innerProps, restProps] = splitProps(props, ['progress', 'selected'])
-
-  const rootStyle = cva('block overflow-hidden rd-6px', {
-    variants: {
-      selected: {
-        false: 'bg-gray-100',
-        true: '',
-      },
-    },
-  })
-
-  const barStyle = cva('block h-full', {
-    variants: {
-      selected: {
-        false: 'bg-blue-300',
-        true: 'bg-blue-200',
-      },
-    },
-  })
 
   return (
     <span

@@ -1,7 +1,7 @@
-import {createMemo, useContext, splitProps} from 'solid-js'
-import {PianoContext} from './piano-context'
-import {KeyContext} from './key-context'
+import {createMemo, splitProps, useContext} from 'solid-js'
 import {HRealButton, HRealButtonProps} from 'src/components/real-button/HRealButton'
+import {KeyContext} from './key-context'
+import {PianoContext} from './piano-context'
 
 export interface HKeyProps extends HRealButtonProps {
   key?: string | number

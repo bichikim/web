@@ -8,24 +8,21 @@ export interface SHiddenPlayerProps
   extends SPlayerProps,
     JSX.HTMLAttributes<HTMLElement> {}
 
+const rootStyle = cva('relative duration-150 bg-white rd-2 flex flex-col duration-150', {
+  variants: {
+    isShow: {
+      false: 'w-20px h-20px',
+      true: 'min-w-350px max-w-500px p-2 mr-1 mb-1',
+    },
+  },
+})
+
 export const SHiddenPlayer = (props: SHiddenPlayerProps) => {
   const [isShow, setIsShow] = createSignal(false)
 
   const handleClose = () => {
     setIsShow((prev) => !prev)
   }
-
-  const rootStyle = cva(
-    'relative duration-150 bg-white rd-2 flex flex-col duration-150',
-    {
-      variants: {
-        isShow: {
-          false: 'w-20px h-20px',
-          true: 'min-w-350px max-w-500px p-2 mr-1 mb-1',
-        },
-      },
-    },
-  )
 
   return (
     <div class="relative">

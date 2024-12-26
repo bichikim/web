@@ -11,6 +11,30 @@ export interface SFileListProps
   selectedId?: string
 }
 
+const rootStyle = cva(
+  cx(
+    'bg-white rd-4px flex flex-col relative',
+    'before-i-hugeicons:arrow-down-01 before-absolute before-w-20px before-h-20px before-bottom--1 before-w-full',
+    'after-i-hugeicons:arrow-up-01 after-absolute after-w-20px after-h-20px after-top--1 after-w-full',
+  ),
+  {
+    variants: {
+      bottom: {
+        false: 'before-opacity-20',
+        true: '',
+      },
+      show: {
+        false: 'pb-3',
+        true: 'before-content-[""] after-content-[""] py-3',
+      },
+      top: {
+        false: 'after-opacity-20',
+        true: '',
+      },
+    },
+  },
+)
+
 export const SFileList = (props: SFileListProps) => {
   const [element, setElement] = createSignal<HTMLDivElement | null>(null)
   const [innerProps, restProps] = splitProps(props, [
@@ -43,30 +67,6 @@ export const SFileList = (props: SFileListProps) => {
     updateScrollIndicators(_element)
     return [innerProps.list, _element]
   })
-
-  const rootStyle = cva(
-    cx(
-      'bg-white rd-4px flex flex-col relative',
-      'before-i-hugeicons:arrow-down-01 before-absolute before-w-20px before-h-20px before-bottom--1 before-w-full',
-      'after-i-hugeicons:arrow-up-01 after-absolute after-w-20px after-h-20px after-top--1 after-w-full',
-    ),
-    {
-      variants: {
-        bottom: {
-          false: 'before-opacity-20',
-          true: '',
-        },
-        show: {
-          false: 'pb-3',
-          true: 'before-content-[""] after-content-[""] py-3',
-        },
-        top: {
-          false: 'after-opacity-20',
-          true: '',
-        },
-      },
-    },
-  )
 
   const handleScroll = () => {
     const _element = element()
