@@ -1,6 +1,6 @@
 import {cva, cx} from 'class-variance-authority'
-import {createMemo, JSX} from 'solid-js'
-import {ELEMENT_IDENTIFIER_GLOBAL_TOUCH, preventGlobalTouchAttrs} from 'src/components/real-button/use-global-touch'
+import {JSX} from 'solid-js'
+import {preventGlobalTouchAttrs} from 'src/components/real-button/use-global-touch'
 
 export interface SCloseProps extends JSX.HTMLAttributes<HTMLButtonElement> {
   isHidden?: boolean
@@ -14,7 +14,6 @@ const rootStyle = cva(
     compoundVariants: [
       {
         class: 'animate-pulse-alt',
-        isHidden: true,
         isPlaying: true,
       },
     ],
@@ -59,7 +58,7 @@ export const SClose = (props: SCloseProps) => {
       aria-label="Close midi player"
       {...preventGlobalTouchAttrs()}
     >
-      <span class={iconStyle({isHidden: Boolean(props.isHidden)})} />
+      <span class={iconStyle({isHidden: Boolean(props.isHidden)})}/>
     </button>
   )
 }

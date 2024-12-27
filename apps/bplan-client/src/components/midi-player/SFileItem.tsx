@@ -1,10 +1,10 @@
 import {HUNDRED} from '@winter-love/utils'
 import {cva, cx} from 'class-variance-authority'
-import {createMemo, createSignal, JSX, Show, splitProps} from 'solid-js'
+import {createMemo, JSX, Show, splitProps} from 'solid-js'
+import {HDragExecute} from './HDragExecute'
 import {SProgress} from './SProgress'
 import {STypeIcon} from './STypeIcon'
 import {SampleStart} from './types'
-import {HDragExecute} from './HDragExecute'
 
 export interface MusicInfo {
   dragEndSize?: number
@@ -116,7 +116,7 @@ export const SFileItem = (props: SFileItemProps) => {
       onLeftExecute={handleLeDelete}
       dragLeftChildren={
         <span class="block w-[calc(100%-0.25rem)] h-full overflow-hidden bg-red p-1 box-border rd-6px">
-          <span class="block w-full h-full i-hugeicons:delete-02 bg-white " />
+          <span class="block w-full h-full i-hugeicons:delete-02 bg-white "/>
         </span>
       }
     >
@@ -128,10 +128,10 @@ export const SFileItem = (props: SFileItemProps) => {
         />
       </Show>
       <Show when={innerProps.selected}>
-        <span class="block absolute bg-blue rd-6px top-0 left-0 w-full h-full opacity-40" />
+        <span class="block absolute bg-blue rd-6px top-0 left-0 w-full h-full opacity-40"/>
       </Show>
       <Show when={innerProps.playing}>
-        <span class="block i-hugeicons:arrow-right-double absolute text-gray-500 left-3" />
+        <span class="block i-hugeicons:arrow-right-double absolute text-gray-500 left-3"/>
       </Show>
       <span class="relative block text-gray b-r-solid b-r-1px b-r-gray-300 pr-2">
         <span class={indexStyle({playing: innerProps.playing})}>{innerProps.index}</span>
@@ -146,11 +146,11 @@ export const SFileItem = (props: SFileItemProps) => {
         >
           {innerProps.name}
         </span>
-        <STypeIcon name={props.ext} />
+        <STypeIcon name={props.ext}/>
       </span>
       <Show
         when={innerProps.inProgress}
-        fallback={<span class="w-20px h-20px flex-shrink-0" />}
+        fallback={<span class="w-20px h-20px flex-shrink-0"/>}
       >
         <span class="scale-140 inline-flex origin-center flex-shrink-0">
           <span
@@ -160,7 +160,7 @@ export const SFileItem = (props: SFileItemProps) => {
       </Show>
       <Show when={innerProps.ext && innerProps.ext !== 'midi' && !innerProps.inProgress}>
         <span class={aiIconStyle({generated: Boolean(innerProps.generated)})}>
-          <span class="inline-block i-hugeicons:artificial-intelligence-04" />
+          <span class="inline-block i-hugeicons:artificial-intelligence-04"/>
         </span>
       </Show>
       {innerProps.children}

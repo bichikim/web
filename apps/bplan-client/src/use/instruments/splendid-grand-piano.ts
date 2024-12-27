@@ -1,5 +1,4 @@
 import {getWindow, HUNDRED} from '@winter-love/utils'
-import {EventTarget} from 'happy-dom'
 import {
   CacheStorage,
   DrumMachine,
@@ -134,7 +133,7 @@ export const createSplendidGrandPiano = (
   const handleStateChange = (event: Event) => {
     const {target} = event
     if (target) {
-      const state = (target as unknown as AudioContext).state
+      const {state} = target as unknown as AudioContext
       console.log(state)
     }
   }
