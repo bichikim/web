@@ -31,16 +31,8 @@ export const SHiddenPlayer = (props: SHiddenPlayerProps) => {
 
   return (
     <div class="relative">
-      <SClose
-        class=""
-        onClose={handleClose}
-        isHidden={!isShow()}
-        isPlaying={isPlaying()}
-      />
-      <div
-        {...preventGlobalTouchAttrs()}
-        class={cx(rootStyle({isShow: isShow()}), props.class)}
-      >
+      <SClose onClose={handleClose} isHidden={!isShow()} isPlaying={isPlaying()} />
+      <div {...preventGlobalTouchAttrs()} class={cx(rootStyle({isShow: isShow()}), props.class)}>
         <SPlayer {...props} onPlaying={handlePlaying} />
       </div>
     </div>

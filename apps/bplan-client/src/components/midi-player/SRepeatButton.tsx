@@ -1,6 +1,6 @@
 import {cva} from 'class-variance-authority'
 import {SPlayerButton, SPlayerButtonProps} from './SPlayerButton'
-import {createEffect, splitProps} from 'solid-js'
+import {createEffect, mergeProps, splitProps} from 'solid-js'
 
 export interface SRepeatButtonProps extends SPlayerButtonProps {
   hasManyItems?: boolean
@@ -21,7 +21,8 @@ const iconStyle = cva('block text-32px', {
 })
 
 export const SRepeatButton = (props: SRepeatButtonProps) => {
-  const [innerProps, restProps] = splitProps(props, [
+  const defaultProps = mergeProps({repeat: 'no' as const}, props)
+  const [innerProps, restProps] = splitProps(defaultProps, [
     'onClick',
     'onChangeRepeat',
     'repeat',
@@ -60,8 +61,12 @@ export const SRepeatButton = (props: SRepeatButtonProps) => {
   })
 
   return (
-    <SPlayerButton {...restProps} onClick={handelChangeRepeat}>
-      <span class={iconStyle({repeat: innerProps.repeat || 'no'})} />
+    <SPlayerButton
+      {...restProps}
+      onClick={handelChangeRepeat}
+      aria-label={`repeat ${innerProps.repeat}`}
+    >
+      <span class={iconStyle({repeat: innerProps.repeat})} />
     </SPlayerButton>
   )
 }

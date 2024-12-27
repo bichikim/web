@@ -79,7 +79,7 @@
     "vite-plugin-pwa": "^0.20.5",
     "vite-plugin-top-level-await": "^1.4.4",
     "vite-tsconfig-paths": "^5.1.4",
-    "vue-tsc": "^2.1.10"
+    "vue-tsc": "^2.2.0"
   },
   "ts-gql": {
     "schema": "../server/schema.graphql"

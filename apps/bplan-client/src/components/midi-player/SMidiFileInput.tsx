@@ -117,6 +117,7 @@ export const SMidiFileInput = (props: HMidiFileInputProps) => {
         type="file"
         multiple
         accept="audio/midi"
+        aria-label="Midi file input"
         onTouchEnd={handleTouchEnd}
         onChange={async (event) => {
           await handleInputFiles(event.target.files)

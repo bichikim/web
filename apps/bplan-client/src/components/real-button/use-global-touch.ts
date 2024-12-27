@@ -30,12 +30,7 @@ export const preventGlobalTouchAttrs = () => ({
  * 전역에서 감지해서 통보할 엘리먼트 인지 여부확인
  */
 export const getGlobalTouch = (element: Element): string | null => {
-  const identifier = element.getAttribute(ELEMENT_IDENTIFIER_GLOBAL_TOUCH)
-  // 터치 깊이 탐지 금지 플레그
-  if (identifier === PREVENT_GLOBAL_TOUCH_FLAG) {
-    return null
-  }
-  return identifier
+  return element.getAttribute(ELEMENT_IDENTIFIER_GLOBAL_TOUCH)
 }
 
 export const emitAllIds = (
@@ -93,6 +88,10 @@ export const findTouchFirstId = (elements: Element[]) => {
   for (const element of elements) {
     const id = getGlobalTouch(element)
 
+    if (id === PREVENT_GLOBAL_TOUCH_FLAG) {
+      return []
+    }
+
     if (isString(id)) {
       return [id]
     }
@@ -106,7 +105,7 @@ export const findTouchIds = (elements: Element[]) => {
 
   for (const element of elements) {
     const id = getGlobalTouch(element)
-    if (isString(id)) {
+    if (isString(id) && id !== PREVENT_GLOBAL_TOUCH_FLAG) {
       ids.push(id)
     }
   }

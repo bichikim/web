@@ -115,7 +115,7 @@ export const SFileItem = (props: SFileItemProps) => {
       onClick={handleSelect}
       onLeftExecute={handleLeDelete}
       dragLeftChildren={
-        <span class="block w-full h-full overflow-hidden bg-red p-1 box-border rd-6px">
+        <span class="block w-[calc(100%-0.25rem)] h-full overflow-hidden bg-red p-1 box-border rd-6px">
           <span class="block w-full h-full i-hugeicons:delete-02 bg-white " />
         </span>
       }

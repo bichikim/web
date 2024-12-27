@@ -1,4 +1,5 @@
 import {getWindow, HUNDRED} from '@winter-love/utils'
+import {EventTarget} from 'happy-dom'
 import {
   CacheStorage,
   DrumMachine,
@@ -81,7 +82,6 @@ export const createSplendidGrandPiano = (
     totalTime: 0,
   })
   let _splendidGrandPiano: SplendidGrandPiano | undefined
-  let _audioContext: AudioContext | undefined
   let _cleanup = false
 
   const emitter = createEmitter<
@@ -131,21 +131,28 @@ export const createSplendidGrandPiano = (
     onEmitInstrument?.(new Set([String(id)]), true, true)
   }
 
-  createEffect(() => {
-    if (_audioContext) {
-      return
+  const handleStateChange = (event: Event) => {
+    const {target} = event
+    if (target) {
+      const state = (target as unknown as AudioContext).state
+      console.log(state)
     }
+  }
+
+  createEffect(() => {
     const window = getWindow()
     if (!window) {
       return
     }
     let splendidGrandPiano: SplendidGrandPiano | undefined
+    let _audioContext: AudioContext | undefined
 
     const prepare = (audioContext: AudioContext | void) => {
       if (!audioContext || _cleanup) {
         return
       }
-
+      _audioContext = audioContext
+      audioContext.addEventListener('statechange', handleStateChange)
       const storage = new CacheStorage()
       splendidGrandPiano = new SplendidGrandPiano(audioContext, {
         ...options,
@@ -172,6 +179,7 @@ export const createSplendidGrandPiano = (
 
     onCleanup(() => {
       splendidGrandPiano?.stop()
+      _audioContext?.removeEventListener('statechange', handleStateChange)
       _splendidGrandPiano = undefined
     })
   })
