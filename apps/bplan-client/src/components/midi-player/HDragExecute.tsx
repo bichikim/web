@@ -203,6 +203,7 @@ export const HDragExecute = (props: HDragExecuteProps) => {
       onTouchMove={handleTouchMove}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
+      role="listitem"
     >
       <span class="block h-full absolute overflow-hidden" style={{width: dragX()}}>
         {resolved()}

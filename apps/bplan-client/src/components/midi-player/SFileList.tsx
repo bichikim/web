@@ -88,7 +88,8 @@ export const SFileList = (props: SFileListProps) => {
 
   return (
     <div {...restProps} class={cx(rootStyle(scrollIndicators()), props.class)}>
-      <div
+      <section
+        role="list"
         ref={setElement}
         class="h-full w-full overflow-y-auto overflow-x-hidden"
         onScroll={handleScroll}
@@ -109,7 +110,7 @@ export const SFileList = (props: SFileListProps) => {
             />
           )}
         </For>
-      </div>
+      </section>
     </div>
   )
 }

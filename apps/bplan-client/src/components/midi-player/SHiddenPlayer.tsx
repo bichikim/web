@@ -59,19 +59,19 @@ export const SHiddenPlayer = (props: SHiddenPlayerProps) => {
   )
 
   return (
-    <Dynamic
-      component={innerProps.component}
-      class={props.class ?? 'relative'}
-      aria-expanded={isShow() ? 'true' : 'false'}
-    >
+    <Dynamic component={innerProps.component} class={props.class ?? 'relative'}>
       <SClose
         class="mb-1"
         onClose={handleClose}
         isHidden={!isShow()}
         isPlaying={isPlaying()}
+        aria-expanded={isShow() ? 'true' : 'false'}
+        aria-controls="__midi_player__"
       />
       <section
         title="midi player"
+        id="__midi_player__"
+        aria-hidden={isShow() ? 'false' : 'true'}
         {...preventGlobalTouchAttrs()}
         class={rootStyle({isShow: isShow()})}
       >
