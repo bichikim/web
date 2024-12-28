@@ -57,7 +57,7 @@ export const SClose = (props: SCloseProps) => {
       )}
       onClick={handleClose}
       onTouchEnd={handleClose}
-      aria-label="Close midi player"
+      title="close midi player"
       {...preventGlobalTouchAttrs()}
     >
       <span class={iconStyle({isHidden: Boolean(props.isHidden)})} />

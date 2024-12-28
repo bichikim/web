@@ -129,7 +129,7 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
         <SPlayerButton
           class="min-w-44px min-h-36px bg-gray-100"
           onClick={handlePlayOrPause}
-          aria-label={isPlayingButton() ? 'play' : 'pause'}
+          title={isPlayingButton() ? 'play' : 'pause'}
         >
           <span class={playStyle({isPlaying: isPlayingButton()})} />
         </SPlayerButton>
@@ -137,7 +137,7 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
         <SPlayerButton
           class="min-w-44px min-h-36px bg-gray-100"
           onClick={handleStop}
-          aria-label="stop"
+          title="stop"
         >
           <span class="block i-hugeicons:stop text-32px" />
         </SPlayerButton>

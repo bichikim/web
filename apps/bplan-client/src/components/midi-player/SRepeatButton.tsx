@@ -64,7 +64,7 @@ export const SRepeatButton = (props: SRepeatButtonProps) => {
     <SPlayerButton
       {...restProps}
       onClick={handelChangeRepeat}
-      aria-label={`repeat ${innerProps.repeat}`}
+      title={`repeat ${innerProps.repeat}`}
     >
       <span class={iconStyle({repeat: innerProps.repeat})} />
     </SPlayerButton>

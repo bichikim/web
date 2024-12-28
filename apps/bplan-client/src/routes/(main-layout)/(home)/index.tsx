@@ -2,10 +2,16 @@ import {Meta, Title} from '@solidjs/meta'
 import {createMemo} from 'solid-js'
 import {SPiano} from 'src/components/instruments'
 import {SHiddenPlayer} from 'src/components/midi-player'
+import {MusicInfo} from 'src/components/midi-player/SFileItem'
 import {emitAllIds} from 'src/components/real-button/use-global-touch'
 import {createSplendidGrandPiano} from 'src/use/instruments'
 
-export default function HomePage() {
+export interface HomePageProps {
+  musics?: MusicInfo[]
+  presetTitle?: string
+}
+
+export default function HomePage(props: HomePageProps) {
   const [splendidGrandPiano, splendidGrandPianoController] = createSplendidGrandPiano({
     onEmitInstrument: emitAllIds,
   })
@@ -15,7 +21,10 @@ export default function HomePage() {
 
   return (
     <>
-      <Title>Coong - {pageName}</Title>
+      <Title>
+        Coong - {pageName}
+        {props.musics ? ` - ${props.presetTitle}` : ''}
+      </Title>
       <Meta property="og:site_name" content={pageName} />
       <Meta property="og:title" content={pageName} />
       <Meta property="og:description" content="Your instruments for free" />
