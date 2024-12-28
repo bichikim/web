@@ -21,7 +21,7 @@ const rootStyle = cva(
     variants: {
       isHidden: {
         false:
-          'w-36px h-36px left--32px sm:left-1 sm-top--32px bottom-0 rd-l-6px sm:rd-t-6px sm:rd-b-0px',
+          'w-36px h-36px left-1 md:left--32px top--32px md:top-unset md:bottom-0 md:rd-tr-0 md:rd-l-6px rd-t-6px',
         true: 'w-36px h-36px top--40px left--40px z-1 rd-6px',
       },
       isPlaying: {

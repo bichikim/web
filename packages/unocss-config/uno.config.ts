@@ -155,6 +155,7 @@ export default defineConfig({
         'inset 0px -1px 2px rgb(255 255 255 / 40%), 0 2px 3px rgb(0 0 0 / 40%)',
     },
     breakpoints: {
+      md: '768px',
       sm: '375px',
     },
   },

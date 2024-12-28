@@ -125,7 +125,7 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
           playingId={innerProps.playingId}
         />
       </Show>
-      <div class="flex gap-2 p-2">
+      <div class="flex gap-2">
         <SPlayerButton
           class="min-w-44px min-h-36px bg-gray-100"
           onClick={handlePlayOrPause}

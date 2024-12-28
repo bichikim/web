@@ -1,4 +1,4 @@
-import {cva, cx} from 'class-variance-authority'
+import {cva} from 'class-variance-authority'
 import {createMemo, createSignal, JSX, mergeProps, ValidComponent} from 'solid-js'
 import {Dynamic} from 'solid-js/web'
 import {SClose} from 'src/components/midi-player/SClose'

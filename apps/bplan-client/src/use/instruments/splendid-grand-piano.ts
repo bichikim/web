@@ -46,10 +46,15 @@ export interface SplendidGrandPianoController
     }
   > {
   down(key: number | string): StopFn
+
   mount(options: MountOptions, startFrom?: number): Promise<void>
+
   resume(): void
+
   stop(): void
+
   suspend(): void
+
   up(key: number | string): void
 }
 
@@ -123,7 +128,9 @@ export const createSplendidGrandPiano = (
     const {target} = event
     if (target) {
       const {state} = target as unknown as AudioContext
-      console.log('State Changed', state)
+      if (state === 'suspended') {
+        setState((prevState) => ({...prevState, playingId: '', suspended: false}))
+      }
     }
   }
 
@@ -260,7 +267,6 @@ export const createSplendidGrandPiano = (
       return _start({note: key}, {isUserStart: true})
     },
     async mount(options: MountOptions) {
-      console.log('mount')
       const piano = _splendidGrandPiano
       const {id, totalDuration, midi} = options
       if (!midi || !piano) {
