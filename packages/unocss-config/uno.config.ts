@@ -154,6 +154,9 @@ export default defineConfig({
       'sharp-key':
         'inset 0px -1px 2px rgb(255 255 255 / 40%), 0 2px 3px rgb(0 0 0 / 40%)',
     },
+    breakpoints: {
+      sm: '375px',
+    },
   },
   transformers: [transformerVariantGroup(), transformerCompileClass()],
 })

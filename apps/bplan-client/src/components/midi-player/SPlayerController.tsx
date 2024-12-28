@@ -21,7 +21,7 @@ export interface SPlayerControllerProps
   leftTime?: number
   onAddItem?: (payload: MusicInfo[]) => void
   onDeleteItem?: (id: string) => void
-  onMount?: (samples: MountMusicInfo) => void
+  onMount?: (id: string) => void
   onPlaying?: (value: boolean) => void
   onResume?: () => void
   onSelect?: (id: string) => void
@@ -60,65 +60,58 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
   }
 
   const isPlaying = createMemo(() => {
-    const _playingId = innerProps.playingId
-    const isPlaying = Boolean(_playingId)
-    return isPlaying && _playingId === innerProps.selectedId
+    return Boolean(innerProps.playingId) && !isSuspend()
+  })
+
+  const isSuspend = createMemo(() => {
+    return Boolean(innerProps.isSuspend)
+  })
+
+  const isPlayingButton = createMemo(() => {
+    return !isSuspend && innerProps.playingId === innerProps.selectedId
   })
 
   const handleSelected = (id: string) => {
     innerProps.onSelect?.(id)
   }
 
-  const handlePlay = (payload: MusicInfo) => {
-    innerProps.onStop?.()
-    innerProps.onResume?.()
-    const {midi, id} = payload
-
-    const _onMount = innerProps.onMount
-
-    if (!midi || !_onMount || !id) {
-      return
-    }
-    _onMount({
-      ...payload,
-      id,
-      midi,
-    })
+  const handlePlay = (id: string) => {
+    innerProps.onMount?.(id)
   }
 
-  const currentPlayingMusic = createMemo(() => {
-    return (innerProps.playList ?? []).find((item) => item.id === innerProps.playingId)
-  })
+  // const currentPlayingMusic = createMemo(() => {
+  //   return (innerProps.playList ?? []).find((item) => item.id === innerProps.playingId)
+  // })
 
-  const currentSelectedMusic = createMemo(() => {
-    return (innerProps.playList ?? []).find((item) => item.id === innerProps.selectedId)
-  })
+  // const currentSelectedMusic = createMemo(() => {
+  //   return (innerProps.playList ?? []).find((item) => item.id === innerProps.selectedId)
+  // })
+  //
+  // const isEnd = createMemo(() => {
+  //   const payload = currentPlayingMusic()
+  //   if (!payload || !payload.totalDuration) {
+  //     return true
+  //   }
+  //   return (
+  //     payload.totalDuration <
+  //     Math.ceil(innerProps.leftTime * forecastEstimationMargin) / forecastEstimationMargin
+  //   )
+  // })
 
-  const isEnd = createMemo(() => {
-    const payload = currentPlayingMusic()
-    if (!payload || !payload.totalDuration) {
-      return true
-    }
-    return (
-      payload.totalDuration <
-      Math.ceil(innerProps.leftTime * forecastEstimationMargin) / forecastEstimationMargin
-    )
-  })
-
-  const getNextItem = (id: string, repeat: RepeatType) => {
-    const _playLoad = innerProps.playList
-    const index = _playLoad.findIndex((item) => item.id === id)
-    if (index === -1) {
-      return repeat === 'all' ? _playLoad[0] : undefined
-    }
-    const nextIndex = index + 1
-    const item = _playLoad[nextIndex]
-
-    if (!item) {
-      return repeat === 'all' ? _playLoad[0] : undefined
-    }
-    return item
-  }
+  // const getNextItem = (id: string, repeat: RepeatType) => {
+  //   const _playLoad = innerProps.playList
+  //   const index = _playLoad.findIndex((item) => item.id === id)
+  //   if (index === -1) {
+  //     return repeat === 'all' ? _playLoad[0] : undefined
+  //   }
+  //   const nextIndex = index + 1
+  //   const item = _playLoad[nextIndex]
+  //
+  //   if (!item) {
+  //     return repeat === 'all' ? _playLoad[0] : undefined
+  //   }
+  //   return item
+  // }
 
   const handleResume = () => {
     innerProps.onResume?.()
@@ -129,20 +122,14 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
   }
 
   const handlePlayOrPause = () => {
-    const _isPlaying = isPlaying()
-    const _selectedId = innerProps.selectedId
-    const _playingId = innerProps.playingId
-    if (_isPlaying && _selectedId === _playingId) {
+    if (innerProps.selectedId === innerProps.playingId) {
       if (innerProps.isSuspend) {
         handleResume()
       } else {
         handlePause()
       }
     } else {
-      const payload = currentSelectedMusic()
-      if (payload) {
-        handlePlay(payload)
-      }
+      handlePlay(innerProps.selectedId)
     }
   }
 
@@ -155,35 +142,34 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
     setRepeat(value)
   }
 
-  const handleTryRepeat = () => {
-    const _repeat = repeat()
-    const _currentPlayingMusic = currentSelectedMusic()
-    if (_repeat === 'one' && _currentPlayingMusic) {
-      handlePlay(_currentPlayingMusic)
-      return
-    }
-    const nextItem = getNextItem(innerProps.playingId, _repeat)
-    if (nextItem) {
-      handlePlay(nextItem)
-    } else {
-      handleStop()
-    }
-  }
+  // const handleTryRepeat = () => {
+  //   const _repeat = repeat()
+  //   const _currentPlayingMusic = currentSelectedMusic()
+  //   if (_repeat === 'one' && _currentPlayingMusic) {
+  //     handlePlay(_currentPlayingMusic)
+  //     return
+  //   }
+  //   const nextItem = getNextItem(innerProps.playingId, _repeat)
+  //   if (nextItem) {
+  //     handlePlay(nextItem)
+  //   }
+  // }
 
   const handleDelete = (id: string) => {
     innerProps.onDeleteItem?.(id)
   }
 
   // watch music is ended
-  createEffect(() => {
-    const _isEnd = isEnd()
-
-    if (_isEnd) {
-      handleTryRepeat()
-    }
-
-    return _isEnd
-  })
+  // createEffect(() => {
+  //   const _isEnd = isEnd()
+  //
+  //   if (_isEnd) {
+  //     console.log('handleTryRepeat')
+  //     handleTryRepeat()
+  //   }
+  //
+  //   return _isEnd
+  // })
 
   return (
     <>
@@ -202,9 +188,9 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
         <SPlayerButton
           class="min-w-44px min-h-36px bg-gray-100"
           onClick={handlePlayOrPause}
-          aria-label={isPlaying() ? 'pause' : 'play'}
+          aria-label={isPlayingButton() ? 'play' : 'pause'}
         >
-          <span class={playStyle({isPlaying: isPlaying()})} />
+          <span class={playStyle({isPlaying: isPlayingButton()})} />
         </SPlayerButton>
 
         <SPlayerButton

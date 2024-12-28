@@ -27,12 +27,13 @@ export default function HomePage() {
           />
         </div>
       </main>
-      <div class="absolute bottom-0 right-0">
-        <SHiddenPlayer
-          pianoController={splendidGrandPianoController}
-          leftTime={splendidGrandPiano().leftTime}
-        />
-      </div>
+      <SHiddenPlayer
+        component="aside"
+        pianoController={splendidGrandPianoController}
+        pianoState={splendidGrandPiano()}
+        leftTime={splendidGrandPiano().leftTime}
+        class="absolute bottom-0 right-0 max-w-100vw"
+      />
       <span class="select-none fixed left-0 bottom-0 px-4px">
         {' '}
         {isLoadDone() ? '' : 'Please wait files loading ...'}

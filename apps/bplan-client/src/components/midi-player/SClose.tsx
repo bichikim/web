@@ -19,7 +19,8 @@ const rootStyle = cva(
     ],
     variants: {
       isHidden: {
-        false: 'w-36px h-36px left--32px bottom-0 rd-l-6px',
+        false:
+          'w-36px h-36px left--32px sm:left-1 sm-top--32px bottom-0 rd-l-6px sm:rd-t-6px sm:rd-b-0px',
         true: 'w-36px h-36px top--40px left--40px z-1 rd-6px',
       },
       isPlaying: {
@@ -58,7 +59,7 @@ export const SClose = (props: SCloseProps) => {
       aria-label="Close midi player"
       {...preventGlobalTouchAttrs()}
     >
-      <span class={iconStyle({isHidden: Boolean(props.isHidden)})}/>
+      <span class={iconStyle({isHidden: Boolean(props.isHidden)})} />
     </button>
   )
 }

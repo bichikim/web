@@ -1,7 +1,7 @@
-import {createEffect, createSignal, splitProps} from 'solid-js'
+import {createEffect, createMemo, createSignal, mergeProps, splitProps} from 'solid-js'
 import {MusicInfo} from 'src/components/midi-player/SFileItem'
 import {SampleStart} from 'src/components/midi-player/types'
-import {SplendidGrandPianoController} from 'src/use/instruments'
+import {SplendidGrandPianoController, SplendidGrandPianoState} from 'src/use/instruments'
 import {
   MountMusicInfo,
   SPlayerController,
@@ -9,37 +9,41 @@ import {
 } from './SPlayerController'
 
 export interface SPlayerProps extends Pick<SPlayerControllerProps, 'leftTime'> {
-  onPlaying?: (value: boolean) => void
   pianoController?: SplendidGrandPianoController
+  pianoState?: SplendidGrandPianoState
 }
 
 export const SPlayer = (props: SPlayerProps) => {
-  const [innerProps, restProps] = splitProps(props, ['pianoController', 'onPlaying'])
+  const defaultProps = mergeProps(
+    {
+      pianoState: {
+        leftTime: 0,
+        loaded: false,
+        playingId: '',
+        startedAt: 0,
+        suspended: false,
+        totalDuration: 0,
+      },
+    },
+    props,
+  )
+  const [innerProps, restProps] = splitProps(defaultProps, [
+    'pianoController',
+    'pianoState',
+  ])
   const [playList, setPlayList] = createSignal<MusicInfo[]>([])
   const [selectedId, setSelectedId] = createSignal<string>('')
-  const [playingId, setPlayingId] = createSignal('')
-  const [isSuspend, setIsSuspend] = createSignal(false)
-
-  const handleMountSample = (payload: SampleStart, targetId: string) => {
-    innerProps.pianoController?.mount({
-      ...payload,
-      id: targetId,
-    })
-  }
 
   const handleStop = async () => {
     innerProps.pianoController?.stop()
-    setPlayingId('')
   }
 
   const handleResume = () => {
     innerProps.pianoController?.resume()
-    setIsSuspend(false)
   }
 
   const handleSuspend = () => {
     innerProps.pianoController?.suspend()
-    setIsSuspend(true)
   }
 
   const handleAddPlayItem = (payload: MusicInfo[]) => {
@@ -54,6 +58,14 @@ export const SPlayer = (props: SPlayerProps) => {
 
   const handleSelect = (id: string) => {
     setSelectedId(id)
+  }
+
+  const handleMount = (id: string) => {
+    const info = playList().find((item) => item.id === id)
+    if (!info) {
+      return
+    }
+    innerProps.pianoController?.mount(info)
   }
 
   const handleDelete = (id: string) => {
@@ -78,30 +90,12 @@ export const SPlayer = (props: SPlayerProps) => {
     })
   }
 
-  createEffect(() => {
-    const value = Boolean(playingId())
-    innerProps.onPlaying?.(value)
-    return value
-  })
-
-  const handlePlay = (info: MountMusicInfo) => {
-    const {midi, id} = info
-
-    for (const notes of midi) {
-      for (const note of notes) {
-        handleMountSample(note, id)
-      }
-    }
-    setPlayingId(id)
-    setIsSuspend(false)
-  }
-
   return (
     <SPlayerController
       {...restProps}
       playList={playList()}
-      playingId={playingId()}
-      isSuspend={isSuspend()}
+      playingId={innerProps.pianoState.playingId}
+      isSuspend={innerProps.pianoState.suspended}
       selectedId={selectedId()}
       onSuspend={handleSuspend}
       onStop={handleStop}
@@ -109,7 +103,7 @@ export const SPlayer = (props: SPlayerProps) => {
       onResume={handleResume}
       onAddItem={handleAddPlayItem}
       onSelect={handleSelect}
-      onMount={handlePlay}
+      onMount={handleMount}
     />
   )
 }

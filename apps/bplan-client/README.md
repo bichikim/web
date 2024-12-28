@@ -16,6 +16,9 @@ https://huggingface.co/spaces/sweetcocoa/pop2piano
 https://salvatore-raieli.medium.com/generate-a-piano-cover-with-ai-f4178bc9cb30
 https://colab.research.google.com/drive/1rBAs2TkryDnnQOhcM-mtlrgtL2h3ekml?usp=sharing#scrollTo=QPFXcxnZNfb9
 https://github.com/sweetcocoa/pop2piano
+https://ai-midi.com/
+https://github.com/HemantKArya/Melodfy?tab=readme-ov-file
+https://tuneonmusic.com/music-tools/midi-converter/
 
 ### instrument
 https://github.com/t-hamano/piano-block
@@ -68,3 +71,7 @@ fix vinxi version 0.4.3
 
 ### midi file
 https://midiex.net/
+https://www.mapianist.com/sheet/121897
+
+## ai player
+https://magenta.tensorflow.org/get-started/#magenta-js
