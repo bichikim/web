@@ -14,6 +14,7 @@ const rootStyle = cva(
     compoundVariants: [
       {
         class: 'animate-pulse-alt',
+        isHidden: true,
         isPlaying: true,
       },
     ],

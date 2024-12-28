@@ -100,6 +100,10 @@ export const SFileItem = (props: SFileItemProps) => {
     innerProps.onDelete?.(props.id)
   }
 
+  const showPlayingIcon = createMemo(
+    () => innerProps.playing && (innerProps.leftTime ?? 0) < innerProps.totalDuration,
+  )
+
   return (
     <HDragExecute
       {...restProps}
@@ -123,11 +127,11 @@ export const SFileItem = (props: SFileItemProps) => {
       <Show when={innerProps.selected}>
         <span class="block absolute bg-blue rd-6px top-0 left-0 w-full h-full opacity-40" />
       </Show>
-      <Show when={innerProps.playing}>
+      <Show when={showPlayingIcon()}>
         <span class="block i-hugeicons:arrow-right-double absolute text-gray-500 left-3" />
       </Show>
       <span class="relative block text-gray b-r-solid b-r-1px b-r-gray-300 pr-2">
-        <span class={indexStyle({playing: innerProps.playing})}>{innerProps.index}</span>
+        <span class={indexStyle({playing: showPlayingIcon()})}>{innerProps.index}</span>
       </span>
 
       <span class="relative flex gap-1 flex-grow-1 flex-shrink-1 items-center overflow-hidden">

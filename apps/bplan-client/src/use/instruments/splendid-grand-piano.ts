@@ -11,11 +11,6 @@ import {createEmitter, EmitterListener} from './emiter'
 
 export type SampleStart = Parameters<DrumMachine['start']>[0]
 
-export type MountStart = SampleStart & {
-  id: string
-  totalTime: number
-}
-
 export interface MountOptions {
   id: string
   midi?: SampleStart[][]
@@ -132,23 +127,32 @@ export const createSplendidGrandPiano = (
     }
   }
 
-  const isPlaying = createMemo(() => state().playingId !== '' && !state().suspended)
+  const isPlaying = createMemo(
+    () =>
+      state().playingId !== '' &&
+      !state().suspended &&
+      state().leftTime < state().totalDuration,
+  )
   const hasPlayingItem = createMemo(() => state().playingId !== '')
 
   createEffect(() => {
     let cleanupFlag: any
 
     const updateLeftTime = () => {
+      if (!_splendidGrandPiano) {
+        return
+      }
+      const {startedAt, totalDuration} = state()
+      const leftTime = _splendidGrandPiano.context.currentTime - startedAt
+      const isEnd = leftTime >= totalDuration
       setState((prevState) => {
-        if (!_splendidGrandPiano) {
-          return prevState
-        }
         return {
           ...prevState,
-          leftTime: _splendidGrandPiano.context.currentTime - state().startedAt,
+          leftTime,
+          // playingId: isEnd ? '' : prevState.playingId,
         }
       })
-      if (isPlaying()) {
+      if (isPlaying() && !isEnd) {
         cleanupFlag = requestAnimationFrame(updateLeftTime)
       }
     }
@@ -256,6 +260,7 @@ export const createSplendidGrandPiano = (
       return _start({note: key}, {isUserStart: true})
     },
     async mount(options: MountOptions) {
+      console.log('mount')
       const piano = _splendidGrandPiano
       const {id, totalDuration, midi} = options
       if (!midi || !piano) {

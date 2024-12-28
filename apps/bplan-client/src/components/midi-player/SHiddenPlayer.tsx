@@ -41,7 +41,12 @@ export const SHiddenPlayer = (props: SHiddenPlayerProps) => {
     setIsShow((prev) => !prev)
   }
 
-  const isPlaying = createMemo(() => defaultProps.pianoState.playingId !== '')
+  const isPlaying = createMemo(
+    () =>
+      defaultProps.pianoState.playingId !== '' &&
+      defaultProps.pianoState.leftTime < defaultProps.pianoState.totalDuration &&
+      !defaultProps.pianoState.suspended,
+  )
 
   return (
     <Dynamic component={defaultProps.component} class={props.class ?? 'relative'}>
