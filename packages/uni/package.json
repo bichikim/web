@@ -26,25 +26,25 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@vue/reactivity": "^3.5.12",
-    "@vue/runtime-core": "^3.5.12",
+    "@vue/reactivity": "^3.5.13",
+    "@vue/runtime-core": "^3.5.13",
     "@vue/test-utils": "^2.4.6",
-    "@vueuse/core": "^11.2.0",
+    "@vueuse/core": "^11.3.0",
     "@winter-love/use": "workspace:*",
     "@winter-love/utils": "workspace:*",
     "jest-mock": "^29.7.0",
     "node-html-parser": "^6.1.13",
     "solid-js": "^1.9.3",
-    "vue": "^3.5.12"
+    "vue": "^3.5.13"
   },
   "devDependencies": {
-    "@types/node": "^22.9.0",
+    "@types/node": "^22.10.1",
     "@winter-love/lodash": "workspace:*",
     "@winter-love/vite-lib-config": "workspace:*",
-    "typescript": "^5.6.3",
-    "vite": "^5.4.10",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.3",
     "vite-plugin-dts": "^4.3.0",
-    "vite-plugin-solid": "^2.10.2"
+    "vite-plugin-solid": "^2.11.0"
   },
   "publishConfig": {
     "access": "public"

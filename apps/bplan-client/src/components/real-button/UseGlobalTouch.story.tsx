@@ -2,19 +2,19 @@ import {createUniqueId} from 'solid-js'
 import {Meta, StoryObj} from 'storybook-solidjs'
 import {
   ELEMENT_IDENTIFIER_GLOBAL_TOUCH,
-  useGlobalTouch,
+  useGlobalDown,
   useGlobalTouchEmitter,
 } from './use-global-touch'
 
 const UseGlobalTouch = (props) => {
   const id = createUniqueId()
-  const isDown = useGlobalTouch(id)
+  const isDown = useGlobalDown(id)
 
   const attrs = {...props, [ELEMENT_IDENTIFIER_GLOBAL_TOUCH]: id}
 
   return (
     <button {...attrs} class={`select-none ${props.class}`}>
-      touch {isDown() ? 'down' : 'up'}
+      touch {isDown().down ? 'down' : 'up'}
     </button>
   )
 }
@@ -34,6 +34,8 @@ const meta = {
   component: Root,
 } satisfies Meta<typeof Root>
 
+// storybook meta
+// noinspection JSUnusedGlobalSymbols
 export default meta
 type Story = StoryObj<typeof meta>
 

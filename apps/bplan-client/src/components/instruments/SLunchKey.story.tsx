@@ -17,6 +17,8 @@ const meta = {
   component: Root,
 } satisfies Meta<typeof SLunchKey>
 
+// storybook meta
+// noinspection JSUnusedGlobalSymbols
 export default meta
 type Story = StoryObj<typeof meta>
 

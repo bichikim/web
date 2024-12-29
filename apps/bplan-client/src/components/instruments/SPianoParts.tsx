@@ -21,13 +21,17 @@ export const SPianoBody = (props: SPianoBodyProps) => {
 export type SPianoSharpKeyProps = HKeyProps
 
 export const SPianoSharpKey = (props: SPianoSharpKeyProps) => {
-  return <HKey {...props} class={cx('key-piano-sharp touch-none', props.class)} />
+  return (
+    <HKey {...props} class={cx('key-piano-sharp touch-none', props.class)} name="sharp" />
+  )
 }
 
 export type SPianoFlatKeyProps = HKeyProps
 
 export const SPianoFlatKey = (props: SPianoFlatKeyProps) => {
-  return <HKey {...props} class={cx('key-piano-flat touch-none', props.class)} />
+  return (
+    <HKey {...props} class={cx('key-piano-flat touch-none', props.class)} name="flat" />
+  )
 }
 
 export const SPianoSharpSet = (props: HPianoSharpSetProps) => {

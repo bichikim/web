@@ -1,4 +1,6 @@
+export * from './HKey'
 export * from './HPianoBody'
+export * from './HPianoFlatSet'
 export * from './HPianoRoot'
 export * from './HPianoSharpSet'
 export * from './SPiano'

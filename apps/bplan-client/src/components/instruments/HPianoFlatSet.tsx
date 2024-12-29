@@ -24,8 +24,8 @@ const flatSet = flatten(
       return item.map(({key, name}) => ({key: keyCount * index + key - keyOffset, name}))
     }),
 )
-
-flatSet.splice(-4)
+const lastDeleteCount = 4
+flatSet.splice(lastDeleteCount * -1)
 
 export interface HPianoFlatSetProps extends JSX.HTMLAttributes<HTMLDivElement> {
   disabled?: boolean

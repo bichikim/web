@@ -1,12 +1,14 @@
-import {createContext} from 'solid-js'
+import {Accessor, createContext} from 'solid-js'
 
 export interface PianoContextProps {
+  down: Accessor<Set<string | number>>
   onDown: (key: string | number) => any
   onUp: (key: string | number) => any
-  scale: number
+  scale?: number
 }
 
 export const PianoContext = createContext<PianoContextProps>({
+  down: () => new Set<string | number>(),
   onDown: () => {
     console.warn('PianoContext onDown not implemented')
   },

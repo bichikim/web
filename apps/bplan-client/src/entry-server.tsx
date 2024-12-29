@@ -1,6 +1,7 @@
 // @refresh reload
 import {createHandler, StartServer} from '@solidjs/start/server'
 
+// noinspection HtmlRequiredTitleElement
 export default createHandler(() => (
   <StartServer
     document={({assets, children, scripts}) => (
@@ -9,8 +10,8 @@ export default createHandler(() => (
           <meta charset="utf-8" />
           <meta name="viewport" content="width=device-width, initial-scale=1" />
           <meta name="apple-mobile-web-app-capable" content="yes" />
+          <meta name="mobile-web-app-capable" content="yes" />
           <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-          <title>Coong</title>
           <meta name="description" content="Your instruments for free" />
           <meta name="theme-color" content="#eee" />
           <link rel="mask-icon" href="/favicon.svg" color="#00aba9" />

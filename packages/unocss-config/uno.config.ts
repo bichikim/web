@@ -1,4 +1,4 @@
-import {defineConfig, presetUno, toEscapedSelector} from 'unocss'
+import {defineConfig, presetIcons, presetUno, toEscapedSelector} from 'unocss'
 import presetLegacyCompat from '@unocss/preset-legacy-compat'
 import transformerVariantGroup from '@unocss/transformer-variant-group'
 import transformerCompileClass from '@unocss/transformer-compile-class'
@@ -27,7 +27,10 @@ export default defineConfig({
     },
   },
   presets: [
-    presetUno(),
+    presetIcons(),
+    presetUno({
+      autoInstall: true,
+    }),
     presetLegacyCompat({
       commaStyleColorFunction: true,
     }),
@@ -123,6 +126,17 @@ export default defineConfig({
     ],
   },
   theme: {
+    animation: {
+      counts: {
+        blink: 'infinite',
+      },
+      durations: {
+        blink: '1s',
+      },
+      keyframes: {
+        blink: '{0%, 100% { opacity: 0.5; } 50% { opacity: 1; }}',
+      },
+    },
     boxShadow: {
       'flat-down':
         'inset 0 0 0 #fff, inset 0 0 0 #fff, inset 0 0 0 #fff,' +
@@ -139,6 +153,10 @@ export default defineConfig({
         ' 0 2px 2px rgb(0 0 0 / 40%), 0 -1px 0px #000',
       'sharp-key':
         'inset 0px -1px 2px rgb(255 255 255 / 40%), 0 2px 3px rgb(0 0 0 / 40%)',
+    },
+    breakpoints: {
+      md: '768px',
+      sm: '375px',
     },
   },
   transformers: [transformerVariantGroup(), transformerCompileClass()],

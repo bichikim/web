@@ -7,7 +7,7 @@ import {
   ParentProps,
   splitProps,
 } from 'solid-js'
-import {ELEMENT_IDENTIFIER_GLOBAL_TOUCH, useGlobalTouch} from './use-global-touch'
+import {ELEMENT_IDENTIFIER_GLOBAL_TOUCH, useGlobalDown} from './use-global-touch'
 
 export interface HRealButtonAsProps {
   isDown: boolean
@@ -22,9 +22,12 @@ export interface HRealButtonProps extends ParentProps {
 
 export const ELEMENT_IDENTIFIER_REAL_BUTTON_STATE = 'data-state'
 
-export interface HRealButtonProps extends JSX.ButtonHTMLAttributes<HTMLButtonElement> {
+export interface HRealButtonProps
+  extends Omit<JSX.ButtonHTMLAttributes<HTMLButtonElement>, 'id'> {
+  id?: string | number
   onDown?: () => void
   onUp?: () => void
+  renderDown?: boolean
 }
 
 /**
@@ -33,25 +36,39 @@ export interface HRealButtonProps extends JSX.ButtonHTMLAttributes<HTMLButtonEle
  * If you press and hold your finger and move your finger to enter the button, the button will be pressed
  */
 export const HRealButton = (props: HRealButtonProps) => {
-  const [eventProps, restProps] = splitProps(props, ['onDown', 'onUp'])
+  const [innerProps, restProps] = splitProps(props, [
+    'onDown',
+    'onUp',
+    'renderDown',
+    'class',
+    'id',
+  ])
   const id = createUniqueId()
-  const isDown = useGlobalTouch(id)
+  // eslint-disable-next-line solid/reactivity
+  const targetId = `${innerProps.id ?? id}`
+  const isDown = useGlobalDown(targetId)
   let mounted = false
 
   createEffect(() => {
-    if (isDown()) {
-      eventProps.onDown?.()
-    } else if (mounted) {
-      eventProps.onUp?.()
-    }
     mounted = true
+    const downState = isDown()
+    if (downState.renderOnly) {
+      return
+    }
+    if (downState.down) {
+      innerProps.onDown?.()
+    } else if (mounted) {
+      innerProps.onUp?.()
+    }
   })
 
   const attrs = createMemo(() => {
+    const down = isDown().down || innerProps.renderDown
     return {
-      [ELEMENT_IDENTIFIER_GLOBAL_TOUCH]: id,
-      [ELEMENT_IDENTIFIER_REAL_BUTTON_STATE]: isDown() ? 'down' : 'up',
-      class: `select-none ${restProps.class}`,
+      [ELEMENT_IDENTIFIER_GLOBAL_TOUCH]: targetId,
+      [ELEMENT_IDENTIFIER_REAL_BUTTON_STATE]: down ? 'down' : 'up',
+      'aria-pressed': down,
+      class: `select-none ${innerProps.class}`,
     }
   })
 

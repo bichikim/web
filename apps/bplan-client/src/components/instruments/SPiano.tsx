@@ -9,13 +9,17 @@ import {
   SPianoSharpKey,
   SPianoSharpSet,
 } from 'src/components/instruments/SPianoParts'
+import {splitProps} from 'solid-js'
+
 export type SPianoProps = SPianoBodyProps & SPianoRootProps
 
 export const SPiano = (props: SPianoProps) => {
+  const [innerProps, restProps] = splitProps(props, ['onDown', 'onUp', 'down'])
+
   return (
-    <SPianoRoot onDown={props.onDown} onUp={props.onUp}>
+    <SPianoRoot onDown={innerProps.onDown} onUp={innerProps.onUp} down={innerProps.down}>
       <SPianoBody
-        {...props}
+        {...restProps}
         class={`relative h-486px relative visible min-w-max ${props.class ?? ''}`}
       >
         <SPianoFlatSet class="inline-flex relative w-max h-[calc(100%-10px)]">

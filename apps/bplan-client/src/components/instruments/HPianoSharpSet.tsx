@@ -1,12 +1,14 @@
-import {createMemo, For, JSX, ParentProps, Show, splitProps} from 'solid-js'
-import {KeyContext} from './key-context'
 import {flatten} from '@winter-love/lodash'
+import {createMemo, For, JSX, Show, splitProps} from 'solid-js'
+import {KeyContext} from './key-context'
 
 interface SharpData {
   key: number
   name: string
 }
 
+const keyLoopCount = 12
+const lastDeleteCount = 5
 const sharpSet = flatten(
   Array.from<SharpData[]>({length: 8})
     .fill([
@@ -19,12 +21,15 @@ const sharpSet = flatten(
       {key: 11, name: 'F#'},
     ])
     .map((item, index) => {
-      return item.map(({key, name}) => ({key: 12 * index + key - 5, name}))
+      return item.map(({key, name}) => ({
+        key: keyLoopCount * index + key - lastDeleteCount,
+        name,
+      }))
     }),
 )
 
 sharpSet.shift()
-sharpSet.splice(-5)
+sharpSet.splice(lastDeleteCount * -1)
 
 export interface HPianoSharpSetProps extends JSX.HTMLAttributes<HTMLDivElement> {
   disabled?: boolean

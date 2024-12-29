@@ -15,4 +15,4 @@ function getDefaultExportFromNamespaceIfNotNamed (n) {
 }`), 'utf8')
 }
 
-fix()
+fix().then(() => console.info('hot fix done'))
