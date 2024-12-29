@@ -62,6 +62,7 @@ export const SSeeker = (props: SSeekerProps) => {
       onClick={handleClick}
       onTouchStart={handleTouchStart}
       ref={setElement}
+      title="seek"
     >
       <div class="absolute top-0 left-0 w-full h-full bg-gray-100" />
       <div
