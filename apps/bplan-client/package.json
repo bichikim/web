@@ -27,6 +27,7 @@
   },
   "devDependencies": {
     "@iconify-json/hugeicons": "^1.2.3",
+    "@iconify-json/tabler": "^1.2.3",
     "@unocss/vite": "^0.64.1",
     "@vite-pwa/assets-generator": "^0.2.6",
     "flush-promises": "^1.0.2",

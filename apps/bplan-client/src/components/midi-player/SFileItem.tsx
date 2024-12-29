@@ -1,13 +1,13 @@
 import {HUNDRED} from '@winter-love/utils'
 import {cva, cx} from 'class-variance-authority'
 import {createMemo, JSX, Show, splitProps} from 'solid-js'
-import {MountOptions} from 'src/use/instruments'
+import {PlayOptions} from 'src/use/instruments'
 import {HDragExecute} from './HDragExecute'
 import {SProgress} from './SProgress'
 import {STypeIcon} from './STypeIcon'
 import {SampleStart} from './types'
 
-export interface MusicInfo extends MountOptions {
+export interface MusicInfo extends PlayOptions {
   dragEndSize?: number
   ext?: string
   generated?: boolean

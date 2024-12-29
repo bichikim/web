@@ -21,7 +21,7 @@ export interface SHiddenPlayerProps
 }
 
 const rootStyle = cva(
-  'relative duration-150 bg-white rd-2 flex flex-col duration-150 gap-1',
+  'relative duration-150 bg-white rd-2 flex flex-col duration-150 gap-2',
   {
     variants: {
       isShow: {

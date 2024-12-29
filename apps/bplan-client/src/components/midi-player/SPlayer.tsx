@@ -57,12 +57,12 @@ export const SPlayer = (props: SPlayerProps) => {
     setSelectedId(id)
   }
 
-  const handleMount = (id: string) => {
+  const handlePlay = (id: string) => {
     const info = playList().find((item) => item.id === id)
     if (!info) {
       return
     }
-    innerProps.pianoController?.mount(info)
+    innerProps.pianoController?.play(info)
   }
 
   const handleDelete = (id: string) => {
@@ -115,12 +115,12 @@ export const SPlayer = (props: SPlayerProps) => {
   const handleTryRepeat = () => {
     const _repeat = repeat()
     if (_repeat === 'one' && innerProps.pianoState.playingId) {
-      handleMount(innerProps.pianoState.playingId)
+      handlePlay(innerProps.pianoState.playingId)
       return
     }
     const nextItem = getNextItem(innerProps.pianoState.playingId, _repeat)
     if (nextItem) {
-      innerProps.pianoController?.mount(nextItem)
+      innerProps.pianoController?.play(nextItem)
     }
   }
 
@@ -146,7 +146,7 @@ export const SPlayer = (props: SPlayerProps) => {
       onResume={handleResume}
       onAddItem={handleAddPlayItem}
       onSelect={handleSelect}
-      onMount={handleMount}
+      onPlay={handlePlay}
       onChangeRepeat={handleChangeRepeat}
     />
   )

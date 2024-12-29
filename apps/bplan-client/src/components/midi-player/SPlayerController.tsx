@@ -15,8 +15,7 @@ export interface SPlayerControllerProps
   onAddItem?: (payload: MusicInfo[]) => void
   onChangeRepeat?: (value: RepeatType) => void
   onDeleteItem?: (id: string) => void
-  onMount?: (id: string) => void
-  onPlaying?: (value: boolean) => void
+  onPlay?: (id: string) => void
   onResume?: () => void
   onSelect?: (id: string) => void
   onStop?: () => void
@@ -66,22 +65,6 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
     )
   })
 
-  const handleSelected = (id: string) => {
-    innerProps.onSelect?.(id)
-  }
-
-  const handlePlay = (id: string) => {
-    innerProps.onMount?.(id)
-  }
-
-  const handleResume = () => {
-    innerProps.onResume?.()
-  }
-
-  const handlePause = () => {
-    innerProps.onSuspend?.()
-  }
-
   const isEnd = createMemo(() => {
     return (
       Boolean(innerProps.playingId) && innerProps.totalDuration <= innerProps.leftTime
@@ -91,26 +74,13 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
   const handlePlayOrPause = () => {
     if (innerProps.selectedId === innerProps.playingId && !isEnd()) {
       if (innerProps.isSuspend) {
-        handleResume()
+        innerProps.onResume?.()
       } else {
-        handlePause()
+        innerProps.onSuspend?.()
       }
     } else {
-      handlePlay(innerProps.selectedId)
+      innerProps.onPlay?.(innerProps.selectedId)
     }
-  }
-
-  const handleStop = () => {
-    // stop
-    innerProps.onStop?.()
-  }
-
-  const handleChangeRepeat = (value: RepeatType) => {
-    innerProps.onChangeRepeat?.(value)
-  }
-
-  const handleDelete = (id: string) => {
-    innerProps.onDeleteItem?.(id)
   }
 
   return (
@@ -120,8 +90,8 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
           list={innerProps.playList}
           class="max-h-124px"
           selectedId={innerProps.selectedId}
-          onSelect={handleSelected}
-          onDelete={handleDelete}
+          onSelect={innerProps.onSelect}
+          onDelete={innerProps.onDeleteItem}
           leftTime={innerProps.leftTime}
           playingId={innerProps.playingId}
         />
@@ -142,14 +112,14 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
 
         <SPlayerButton
           class="min-w-44px min-h-36px bg-gray-100"
-          onClick={handleStop}
+          onClick={innerProps.onStop}
           title="stop"
         >
           <span class="block i-hugeicons:stop text-32px" />
         </SPlayerButton>
         <SRepeatButton
           class="min-w-44px"
-          onChangeRepeat={handleChangeRepeat}
+          onChangeRepeat={innerProps.onChangeRepeat}
           repeat={innerProps.repeat}
           hasManyItems={innerProps.playList.length > 1}
         />

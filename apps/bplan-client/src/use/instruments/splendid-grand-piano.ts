@@ -11,7 +11,7 @@ import {createEmitter, EmitterListener} from './emiter'
 
 export type SampleStart = Parameters<DrumMachine['start']>[0]
 
-export interface MountOptions {
+export interface PlayOptions {
   id: string
   midi?: SampleStart[][]
   totalDuration: number
@@ -46,15 +46,10 @@ export interface SplendidGrandPianoController
     }
   > {
   down(key: number | string): StopFn
-
-  mount(options: MountOptions, startFrom?: number): Promise<void>
-
+  play(options: PlayOptions, startFrom?: number): Promise<void>
   resume(): void
-
   stop(): void
-
   suspend(): void
-
   up(key: number | string): void
 }
 
@@ -266,7 +261,7 @@ export const createSplendidGrandPiano = (
     down(key: string | number): StopFn {
       return _start({note: key}, {isUserStart: true})
     },
-    async mount(options: MountOptions) {
+    async play(options: PlayOptions) {
       const piano = _splendidGrandPiano
       const {id, totalDuration, midi} = options
       if (!midi || !piano) {
