@@ -1,10 +1,20 @@
-import {createEffect, createMemo, createSignal, mergeProps, splitProps} from 'solid-js'
+import {
+  createEffect,
+  createMemo,
+  createSignal,
+  mergeProps,
+  Show,
+  splitProps,
+} from 'solid-js'
 import {MusicInfo} from 'src/components/midi-player/SFileItem'
 import {RepeatType} from 'src/components/midi-player/types'
 import {SplendidGrandPianoController, SplendidGrandPianoState} from 'src/use/instruments'
 import {SPlayerController, SPlayerControllerProps} from './SPlayerController'
 
 export interface SPlayerProps extends Pick<SPlayerControllerProps, 'leftTime'> {
+  isHidden?: boolean
+  musics?: MusicInfo[]
+  onSetting?: () => void
   pianoController?: SplendidGrandPianoController
   pianoState?: SplendidGrandPianoState
 }
@@ -26,6 +36,9 @@ export const SPlayer = (props: SPlayerProps) => {
   const [innerProps, restProps] = splitProps(defaultProps, [
     'pianoController',
     'pianoState',
+    'onSetting',
+    'isHidden',
+    'musics',
   ])
   const [playList, setPlayList] = createSignal<MusicInfo[]>([])
   const [selectedId, setSelectedId] = createSignal<string>('')
@@ -136,23 +149,26 @@ export const SPlayer = (props: SPlayerProps) => {
   })
 
   return (
-    <SPlayerController
-      {...restProps}
-      repeat={repeat()}
-      totalDuration={innerProps.pianoState.totalDuration}
-      playList={playList()}
-      playingId={innerProps.pianoState.playingId}
-      isSuspend={innerProps.pianoState.suspended}
-      selectedId={selectedId()}
-      onSuspend={handleSuspend}
-      onStop={handleStop}
-      onDeleteItem={handleDelete}
-      onResume={handleResume}
-      onAddItem={handleAddPlayItem}
-      onSelect={handleSelect}
-      onPlay={handlePlay}
-      onSeek={handleSeek}
-      onChangeRepeat={handleChangeRepeat}
-    />
+    <Show when={!innerProps.isHidden}>
+      <SPlayerController
+        {...restProps}
+        repeat={repeat()}
+        totalDuration={innerProps.pianoState.totalDuration}
+        playList={playList()}
+        playingId={innerProps.pianoState.playingId}
+        isSuspend={innerProps.pianoState.suspended}
+        selectedId={selectedId()}
+        onSuspend={handleSuspend}
+        onStop={handleStop}
+        onDeleteItem={handleDelete}
+        onResume={handleResume}
+        onAddItem={handleAddPlayItem}
+        onSelect={handleSelect}
+        onPlay={handlePlay}
+        onSeek={handleSeek}
+        onSetting={innerProps.onSetting}
+        onChangeRepeat={handleChangeRepeat}
+      />
+    </Show>
   )
 }

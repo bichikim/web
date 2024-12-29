@@ -18,7 +18,7 @@ export const SPlayerButton = (props: SPlayerButtonProps) => {
     <button
       {...restProps}
       class={cx(
-        'px-6px py-2px b-0 rd-6px cursor-pointer overflow-hidden bg-#f4f5f6',
+        'flex px-6px py-2px b-0 rd-1 cursor-pointer overflow-hidden bg-#f4f5f6 justify-center items-center',
         props.class,
       )}
       onClick={handelClick}

@@ -6,7 +6,7 @@ export interface SProgressProps extends JSX.HTMLAttributes<HTMLSpanElement> {
   selected?: boolean
 }
 
-const rootStyle = cva('block overflow-hidden rd-6px', {
+const rootStyle = cva('block overflow-hidden rd-1', {
   variants: {
     selected: {
       false: 'bg-gray-100',

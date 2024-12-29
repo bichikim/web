@@ -10,7 +10,7 @@ export interface SRepeatButtonProps extends SPlayerButtonProps {
 
 export type RepeatType = 'no' | 'all' | 'one'
 
-const iconStyle = cva('block text-32px', {
+const iconStyle = cva('block text-8', {
   variants: {
     repeat: {
       all: 'i-hugeicons:repeat',

@@ -1,10 +1,11 @@
 import {Meta, Title} from '@solidjs/meta'
 import {createMemo} from 'solid-js'
 import {SPiano} from 'src/components/instruments'
-import {SHiddenPlayer} from 'src/components/midi-player'
+import {SettingData, SHiddenPlayer} from 'src/components/midi-player'
 import {MusicInfo} from 'src/components/midi-player/SFileItem'
 import {emitAllIds} from 'src/components/real-button/use-global-touch'
 import {createSplendidGrandPiano} from 'src/use/instruments'
+import {useStorage} from '@winter-love/solid-use'
 
 export interface HomePageProps {
   musics?: MusicInfo[]
@@ -16,8 +17,17 @@ export default function HomePage(props: HomePageProps) {
     onEmitInstrument: emitAllIds,
   })
 
+  const [settingData, setSettingData] = useStorage('local', 'coong:piano-setting', {
+    keepPlayList: true,
+    pianoSize: 100,
+  })
+
   const isLoadDone = createMemo(() => splendidGrandPiano().loaded)
   const pageName = 'Piano'
+
+  const handleSettingData = (data: SettingData) => {
+    setSettingData((prev) => ({...prev, ...data}))
+  }
 
   return (
     <>
@@ -37,6 +47,8 @@ export default function HomePage(props: HomePageProps) {
         </div>
       </main>
       <SHiddenPlayer
+        settingData={settingData()}
+        onSettingData={handleSettingData}
         component="aside"
         pianoController={splendidGrandPianoController}
         pianoState={splendidGrandPiano()}

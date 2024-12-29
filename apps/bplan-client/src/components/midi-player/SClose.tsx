@@ -21,8 +21,8 @@ const rootStyle = cva(
     variants: {
       isHidden: {
         false:
-          'w-36px h-36px left-1 md:left--32px top--32px md:top-unset md:bottom-0 md:rd-tr-0 md:rd-l-6px rd-t-6px',
-        true: 'w-36px h-36px top--40px left--40px z-1 rd-6px',
+          'w-9 h-9 left-1 md:left--7 top--8 md:top-unset md:bottom-0 md:rd-tr-0 md:rd-l-1 rd-t-1',
+        true: 'w-9 h-9 top--10 left--10 z-1 rd-1',
       },
       isPlaying: {
         false: '',
@@ -32,7 +32,7 @@ const rootStyle = cva(
   },
 )
 
-const iconStyle = cva('inline-block  text-28px text-white', {
+const iconStyle = cva('inline-block  text-7 text-white', {
   variants: {
     isHidden: {
       false: 'i-hugeicons:cancel-02',

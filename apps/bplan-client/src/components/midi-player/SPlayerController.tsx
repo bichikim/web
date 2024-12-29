@@ -19,6 +19,7 @@ export interface SPlayerControllerProps
   onResume?: () => void
   onSeek?: (time: number) => void
   onSelect?: (id: string) => void
+  onSetting?: () => void
   onStop?: () => void
   onSuspend?: () => void
   playList?: MusicInfo[]
@@ -28,7 +29,7 @@ export interface SPlayerControllerProps
   totalDuration?: number
 }
 
-const playStyle = cva('block text-32px', {
+const playStyle = cva('block text-8', {
   variants: {
     isPlaying: {
       false: 'i-hugeicons:play',
@@ -89,7 +90,7 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
       <Show when={innerProps.playList.length > 0}>
         <SFileList
           list={innerProps.playList}
-          class="max-h-124px"
+          class="max-h-31"
           selectedId={innerProps.selectedId}
           onSelect={innerProps.onSelect}
           onDelete={innerProps.onDeleteItem}
@@ -105,7 +106,7 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
       />
       <section class="flex gap-2">
         <SPlayerButton
-          class="min-w-44px min-h-36px bg-gray-100"
+          class="min-w-11 min-h-9 bg-gray-100"
           onClick={handlePlayOrPause}
           title={isPlayingButton() ? 'play' : 'pause'}
         >
@@ -113,19 +114,26 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
         </SPlayerButton>
 
         <SPlayerButton
-          class="min-w-44px min-h-36px bg-gray-100"
+          class="min-w-11 min-h-9 bg-gray-100"
           onClick={innerProps.onStop}
           title="stop"
         >
-          <span class="block i-hugeicons:stop text-32px" />
+          <span class="block i-hugeicons:stop text-9" />
         </SPlayerButton>
         <SRepeatButton
-          class="min-w-44px"
+          class="min-w-11"
           onChangeRepeat={innerProps.onChangeRepeat}
           repeat={innerProps.repeat}
           hasManyItems={innerProps.playList.length > 1}
         />
-        <SMidiFileInput class="min-w-44px px-2" onAdd={handleAddPlayItem} />
+        <SMidiFileInput class="min-w-11 px-2" onAdd={handleAddPlayItem} />
+        <SPlayerButton
+          class="min-w-11 min-h-9 bg-gray-100"
+          onClick={innerProps.onSetting}
+          title="setting"
+        >
+          <span class="block i-hugeicons:setting-07 text-8" />
+        </SPlayerButton>
       </section>
     </>
   )
