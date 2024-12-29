@@ -107,9 +107,9 @@ export const SMidiFileInput = (props: HMidiFileInputProps) => {
 
   return (
     <div class={cx(rootStyle, innerProps.class)}>
-      <span class="text-nowrap">Click or Drop </span>
-      <span class="block i-hugeicons:file-add text-7 px-1" />
-      <span class="text-nowrap md:inline hidden">Your files</span>
+      <span class="text-nowrap md:text-6 text-4">Click or Drop </span>
+      <span class="block i-hugeicons:file-add text-6 px-1" />
+      <span class="text-nowrap md:inline hidden md:text-6 text-4">Your files</span>
       {props.children}
       <input
         {...restProps}
