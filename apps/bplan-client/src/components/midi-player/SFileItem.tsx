@@ -106,6 +106,7 @@ export const SFileItem = (props: SFileItemProps) => {
   return (
     <HDragExecute
       {...restProps}
+      title={innerProps.name}
       class={cx(rootStyle, restProps.class)}
       containerClass="px-4 gap-2"
       onClick={handleSelect}
