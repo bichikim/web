@@ -131,7 +131,9 @@ export const SFileItem = (props: SFileItemProps) => {
         <span class="block i-hugeicons:arrow-right-double absolute text-gray-500 left-3" />
       </Show>
       <span class="relative block text-gray b-r-solid b-r-.25 b-r-gray-300 pr-2">
-        <span class={indexStyle({playing: showPlayingIcon()})}>{innerProps.index}</span>
+        <span class={indexStyle({playing: showPlayingIcon()})}>
+          {(innerProps.index ?? 0) + 1}
+        </span>
       </span>
 
       <span class="relative flex gap-1 flex-grow-1 flex-shrink-1 items-center overflow-hidden">
