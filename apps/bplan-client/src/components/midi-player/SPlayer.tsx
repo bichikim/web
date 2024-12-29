@@ -124,6 +124,10 @@ export const SPlayer = (props: SPlayerProps) => {
     }
   }
 
+  const handleSeek = (time: number) => {
+    innerProps.pianoController?.seek(time)
+  }
+
   createEffect(() => {
     if (isEnd()) {
       handleTryRepeat()
@@ -147,6 +151,7 @@ export const SPlayer = (props: SPlayerProps) => {
       onAddItem={handleAddPlayItem}
       onSelect={handleSelect}
       onPlay={handlePlay}
+      onSeek={handleSeek}
       onChangeRepeat={handleChangeRepeat}
     />
   )

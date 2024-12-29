@@ -5,7 +5,6 @@ import {PlayOptions} from 'src/use/instruments'
 import {HDragExecute} from './HDragExecute'
 import {SProgress} from './SProgress'
 import {STypeIcon} from './STypeIcon'
-import {SampleStart} from './types'
 
 export interface MusicInfo extends PlayOptions {
   dragEndSize?: number
@@ -29,9 +28,9 @@ export interface SFileItemProps
 }
 
 const rootStyle = cx(
-  'gap-4 p-0 b-0 bg-transparent text-20px flex-shrink-0 h-36px',
+  'gap-4 p-0 b-0 bg-transparent text-5 flex-shrink-0 h-36px mb-5px last:mb-0',
   'after:bg-gray-300 after:h-1px first:after:hidden after:content-[""] after:absolute',
-  'after:top--3px mb-5px after:left-0.5rem after:w-[calc(100%-1rem)]',
+  'after:top--3px after:left-0.5rem after:w-[calc(100%-1rem)]',
 )
 
 const indexStyle = cva('', {
@@ -51,7 +50,7 @@ const aiIconStyle = cva('flex origin-center flex-shrink-0', {
   },
 })
 
-const nameStyle = cva('block line-height-20px truncate pt-2px', {
+const nameStyle = cva('block line-height-6 truncate pb-2px', {
   compoundVariants: [
     {
       class: 'text-gray line-through',

@@ -48,6 +48,7 @@ export interface SplendidGrandPianoController
   down(key: number | string): StopFn
   play(options: PlayOptions, startFrom?: number): Promise<void>
   resume(): void
+  seek(time: number): void
   stop(): void
   suspend(): void
   up(key: number | string): void
@@ -237,6 +238,15 @@ export const createSplendidGrandPiano = (
     } as any)
   }
 
+  const _seek = (time: number) => {
+    const piano = _splendidGrandPiano
+    if (!piano) {
+      return
+    }
+    piano.stop()
+    _resume(time)
+  }
+
   const _resume = (suspendedTime: number) => {
     for (const notes of _currentMidi) {
       const leftNotesIndex = notes.findIndex((note) => {
@@ -297,6 +307,23 @@ export const createSplendidGrandPiano = (
       }))
       _suspendedTime = 0
     },
+    seek(time: number) {
+      const piano = _splendidGrandPiano
+      if (!piano) {
+        return
+      }
+      const {suspended} = state()
+      setState((prev) => ({
+        ...prev,
+        leftTime: time,
+        startedAt: suspended ? prev.startedAt : piano.context.currentTime - time,
+      }))
+      if (suspended) {
+        _suspendedTime = time
+        return
+      }
+      _seek(time)
+    },
     stop() {
       const piano = _splendidGrandPiano
       if (!piano || !hasPlayingItem()) {
@@ -307,7 +334,9 @@ export const createSplendidGrandPiano = (
         leftTime: 0,
         playingId: '',
         suspended: false,
+        totalDuration: 0,
       }))
+      _currentMidi = []
       piano.stop()
     },
     suspend() {

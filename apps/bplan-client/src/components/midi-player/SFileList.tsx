@@ -14,7 +14,7 @@ export interface SFileListProps
 
 const rootStyle = cva(
   cx(
-    'bg-white rd-4px flex flex-col relative',
+    'rd-4px flex flex-col relative',
     'before-i-hugeicons:arrow-down-01 before-absolute before-w-20px before-h-20px before-bottom--1 before-w-full',
     'after-i-hugeicons:arrow-up-01 after-absolute after-w-20px after-h-20px after-top--1 after-w-full',
   ),

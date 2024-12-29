@@ -17,6 +17,7 @@ export interface SPlayerControllerProps
   onDeleteItem?: (id: string) => void
   onPlay?: (id: string) => void
   onResume?: () => void
+  onSeek?: (time: number) => void
   onSelect?: (id: string) => void
   onStop?: () => void
   onSuspend?: () => void
@@ -97,9 +98,10 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
         />
       </Show>
       <SSeeker
-        class="flex-1 min-h-2 relative rd-1 overflow-hidden"
+        class="flex-1 min-h-2 relative rd-1 overflow-hidden b-0 w-full touch-none"
         leftTime={innerProps.leftTime}
         totalDuration={innerProps.totalDuration}
+        onSeek={innerProps.onSeek}
       />
       <section class="flex gap-2">
         <SPlayerButton
