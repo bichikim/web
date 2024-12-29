@@ -55,6 +55,7 @@ export const SClose = (props: SCloseProps) => {
         }),
         props.class,
       )}
+      type="button"
       onClick={handleClose}
       onTouchEnd={handleClose}
       title="close midi player"

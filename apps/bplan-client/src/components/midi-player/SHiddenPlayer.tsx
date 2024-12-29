@@ -20,14 +20,17 @@ export interface SHiddenPlayerProps
   musics?: MusicInfo[]
 }
 
-const rootStyle = cva('relative duration-150 bg-white rd-2 flex flex-col duration-150', {
-  variants: {
-    isShow: {
-      false: 'w-0px h-0px',
-      true: 'min-w-350px max-w-500px p-2 mx-1 mb-1',
+const rootStyle = cva(
+  'relative duration-150 bg-white rd-2 flex flex-col duration-150 gap-1',
+  {
+    variants: {
+      isShow: {
+        false: 'w-0px h-0px',
+        true: 'min-w-350px max-w-500px p-2 mx-1 mb-1',
+      },
     },
   },
-})
+)
 
 export const SHiddenPlayer = (props: SHiddenPlayerProps) => {
   const defaultProps = mergeProps(

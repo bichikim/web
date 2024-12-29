@@ -98,6 +98,7 @@ export const SFileList = (props: SFileListProps) => {
           {(item, index) => (
             <SFileItem
               {...item}
+              role="listitem"
               index={index()}
               selected={item.selected || item.id === innerProps.selectedId}
               class="w-full"

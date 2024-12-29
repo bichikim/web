@@ -6,6 +6,7 @@ import {SMidiFileInput} from './SMidiFileInput'
 import {SPlayerButton} from './SPlayerButton'
 import {SRepeatButton} from './SRepeatButton'
 import {RepeatType} from './types'
+import {SSeeker} from './SSeeker'
 
 export interface SPlayerControllerProps
   extends Omit<JSX.HTMLAttributes<HTMLElement>, 'onPlay' | 'onSelect' | 'onPlaying'> {
@@ -125,7 +126,12 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
           playingId={innerProps.playingId}
         />
       </Show>
-      <div class="flex gap-2">
+      <SSeeker
+        class="flex-1 min-h-2 relative rd-1 overflow-hidden"
+        leftTime={innerProps.leftTime}
+        totalDuration={innerProps.totalDuration}
+      />
+      <section class="flex gap-2">
         <SPlayerButton
           class="min-w-44px min-h-36px bg-gray-100"
           onClick={handlePlayOrPause}
@@ -148,7 +154,7 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
           hasManyItems={innerProps.playList.length > 1}
         />
         <SMidiFileInput class="min-w-44px px-2" onAdd={handleAddPlayItem} />
-      </div>
+      </section>
     </>
   )
 }

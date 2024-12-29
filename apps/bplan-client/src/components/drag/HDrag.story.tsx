@@ -9,8 +9,8 @@ const Root = (props: any) => {
   return (
     <HDragBody as="div" class="relative h-300px w-1000px">
       <HDrag as="div" class="absolute w-100px h-100px bg-red" {...props} />
-      {/*<Drag as="div" class="absolue w-100px h-100px bg-yellow" {...props} />*/}
-      {/*<Drag as="div" class="absolue w-100px h-100px bg-green" {...props} />*/}
+      {/*<Drag as="div" class="absolute w-100px h-100px bg-yellow" {...props} />*/}
+      {/*<Drag as="div" class="absolute w-100px h-100px bg-green" {...props} />*/}
     </HDragBody>
   )
 }
