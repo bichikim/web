@@ -18,10 +18,12 @@ export interface SHiddenPlayerProps
   extends Omit<SPlayerProps, 'onPlaying'>,
     Omit<JSX.HTMLAttributes<HTMLElement>, 'onPlay'> {
   component?: ValidComponent
-  onSettingData?: (data: SettingData) => void
+  onSettingDataChange?: (data: SettingData) => void
   settingData?: SettingData
 }
+
 export type SurfaceKind = 'player' | 'setting'
+
 const rootStyle = cva(
   'relative duration-150 bg-white rd-2 flex flex-col duration-150 gap-2',
   {
@@ -56,7 +58,7 @@ export const SHiddenPlayer = (props: SHiddenPlayerProps) => {
   const [innerProps, restProps] = splitProps(defaultProps, [
     'component',
     'settingData',
-    'onSettingData',
+    'onSettingDataChange',
   ])
   const [isShow, setIsShow] = createSignal(false)
   const [surfaceKind, setSurfaceKind] = createSignal<SurfaceKind>('player')
@@ -115,6 +117,7 @@ export const SHiddenPlayer = (props: SHiddenPlayerProps) => {
             settingData={innerProps.settingData}
             class="absolute bottom-0 left-0 w-full bg-white"
             onClose={() => handleSurfaceKindChange('player')}
+            onSettingDataChange={innerProps.onSettingDataChange}
           />
         </Show>
       </section>

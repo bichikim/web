@@ -12,8 +12,9 @@ import {SplendidGrandPianoController, SplendidGrandPianoState} from 'src/use/ins
 import {SPlayerController, SPlayerControllerProps} from './SPlayerController'
 
 export interface SPlayerProps extends Pick<SPlayerControllerProps, 'leftTime'> {
+  initMusics?: MusicInfo[]
   isHidden?: boolean
-  musics?: MusicInfo[]
+  onMusicsChange?: (musics: MusicInfo[]) => void
   onSetting?: () => void
   pianoController?: SplendidGrandPianoController
   pianoState?: SplendidGrandPianoState
@@ -38,11 +39,17 @@ export const SPlayer = (props: SPlayerProps) => {
     'pianoState',
     'onSetting',
     'isHidden',
-    'musics',
+    'initMusics',
+    'onMusicsChange',
   ])
-  const [playList, setPlayList] = createSignal<MusicInfo[]>([])
+  // eslint-disable-next-line solid/reactivity
+  const [playList, setPlayList] = createSignal<MusicInfo[]>(innerProps.initMusics ?? [])
   const [selectedId, setSelectedId] = createSignal<string>('')
   const [repeat, setRepeat] = createSignal<RepeatType>('no')
+
+  createEffect(() => {
+    innerProps.onMusicsChange?.(playList())
+  })
 
   const handleStop = async () => {
     innerProps.pianoController?.stop()
