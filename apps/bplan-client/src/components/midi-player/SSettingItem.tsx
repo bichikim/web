@@ -1,4 +1,4 @@
-import {createEffect, createUniqueId, JSX, Match, splitProps, Switch} from 'solid-js'
+import {createUniqueId, JSX, Match, splitProps, Switch} from 'solid-js'
 
 export type SSettingItemType = 'switch' | 'slider'
 
