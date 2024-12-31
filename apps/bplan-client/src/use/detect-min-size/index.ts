@@ -1,15 +1,18 @@
 import {Accessor, createEffect, createSignal} from 'solid-js'
 import {useEvent} from '@winter-love/solid-use'
-import {getWindow} from '@winter-love/utils'
+import {getWindow, HUNDRED} from '@winter-love/utils'
 
 const minScreenWidth = 375
 
-const getMinScale = (pianoSize?: number) => {
-  return (getWindow()?.innerWidth ?? minScreenWidth) / (pianoSize ?? 1)
+const getMinScale = (pianoSize?: number, defaultSize: number = HUNDRED) => {
+  return (getWindow()?.innerWidth ?? minScreenWidth) / (pianoSize ?? defaultSize)
 }
 
-export const useDetectMinScale = (element: Accessor<HTMLElement | null>) => {
-  const [size, setSize] = createSignal(getMinScale(element()?.clientWidth))
+export const useDetectMinScale = (
+  element: Accessor<HTMLElement | null>,
+  defaultSize: number = HUNDRED,
+) => {
+  const [size, setSize] = createSignal(getMinScale(element()?.clientWidth, defaultSize))
 
   useEvent(getWindow, 'resize', () => {
     setSize(getMinScale(element()?.clientWidth))
