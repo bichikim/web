@@ -1,4 +1,4 @@
-import {createUniqueId} from 'solid-js'
+import {createUniqueId, JSX} from 'solid-js'
 import {Meta, StoryObj} from 'storybook-solidjs'
 import {
   ELEMENT_IDENTIFIER_GLOBAL_TOUCH,
@@ -6,7 +6,9 @@ import {
   useGlobalTouchEmitter,
 } from './use-global-touch'
 
-const UseGlobalTouch = (props) => {
+export interface UseGlobalTouchProps extends JSX.HTMLAttributes<HTMLButtonElement> {}
+
+const UseGlobalTouch = (props: UseGlobalTouchProps) => {
   const id = createUniqueId()
   const isDown = useGlobalDown(id)
 
