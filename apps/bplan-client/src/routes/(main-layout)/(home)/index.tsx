@@ -24,7 +24,7 @@ export default function HomePage(props: HomePageProps) {
 
   const [settingData, setSettingData] = useStorage('local', 'coong:piano-setting', {
     keepPlayList: true,
-    pianoSize: 1,
+    pianoSize: 100,
   })
 
   const [musics, setMusics] = useStorage<MusicInfo[]>(
