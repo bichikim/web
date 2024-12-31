@@ -110,7 +110,7 @@
     "vue-router": "^4.5.0"
   },
   "engines": {
-    "node": ">= 16",
+    "node": ">= 22",
     "pnpm": ">= 6.17"
   },
   "pnpm": {

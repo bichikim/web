@@ -6,6 +6,7 @@
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "jsx": "preserve",
+    "resolveJsonModule": true,
     "jsxImportSource": "solid-js",
     "allowJs": true,
     "strict": true,

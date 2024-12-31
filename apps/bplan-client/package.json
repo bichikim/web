@@ -13,29 +13,30 @@
   "dependencies": {
     "@tonejs/midi": "^2.0.28",
     "@solidjs/meta": "^0.29.4",
-    "@solidjs/router": "^0.14.10",
+    "@solidjs/router": "^0.15.2",
     "@solidjs/start": "^1.0.10",
     "@winter-love/lodash": "workspace:*",
     "@winter-love/solid-use": "workspace:*",
     "@winter-love/utils": "workspace:*",
     "class-variance-authority": "^0.7.1",
-    "smplr": "^0.15.1",
+    "smplr": "^0.16.1",
     "solid-js": "^1.9.3",
     "standardized-audio-context": "^25.3.77",
+    "axios": "1.7.9",
     "vinxi": "0.4.3",
     "vite": "^5.4.11"
   },
   "devDependencies": {
     "@iconify-json/hugeicons": "^1.2.3",
-    "@iconify-json/tabler": "^1.2.3",
-    "@unocss/vite": "^0.64.1",
+    "@iconify-json/tabler": "^1.2.13",
+    "@unocss/vite": "^0.65.3",
     "@vite-pwa/assets-generator": "^0.2.6",
     "flush-promises": "^1.0.2",
     "typescript": "^5.7.2",
-    "unocss": "^0.64.1",
+    "unocss": "^0.65.3",
     "vite-plugin-pwa": "^0.21.1"
   },
   "engines": {
-    "node": ">=20 <= 22"
+    "node": ">= 22"
   }
 }
