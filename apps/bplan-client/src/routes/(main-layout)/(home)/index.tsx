@@ -14,10 +14,10 @@ export interface HomePageProps {
   initMusics?: MusicInfo[]
   presetTitle?: string
 }
-
+const pianoSize = 7520
 export default function HomePage(props: HomePageProps) {
   const [pianoElement, setPianoElement] = createSignal<HTMLElement | null>(null)
-  const minPianoSize = useDetectMinScale(pianoElement)
+  const minPianoSize = useDetectMinScale(pianoElement, pianoSize)
   const [splendidGrandPiano, splendidGrandPianoController] = createSplendidGrandPiano({
     onEmitInstrument: emitAllIds,
   })
