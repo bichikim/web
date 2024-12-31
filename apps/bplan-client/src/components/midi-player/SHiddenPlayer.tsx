@@ -19,6 +19,7 @@ export interface SHiddenPlayerProps
     Omit<JSX.HTMLAttributes<HTMLElement>, 'onPlay'> {
   component?: ValidComponent
   onSettingDataChange?: (data: SettingData) => void
+  pianoMinScale?: number
   settingData?: SettingData
 }
 
@@ -59,6 +60,7 @@ export const SHiddenPlayer = (props: SHiddenPlayerProps) => {
     'component',
     'settingData',
     'onSettingDataChange',
+    'pianoMinScale',
   ])
   const [isShow, setIsShow] = createSignal(false)
   const [surfaceKind, setSurfaceKind] = createSignal<SurfaceKind>('player')
@@ -114,6 +116,7 @@ export const SHiddenPlayer = (props: SHiddenPlayerProps) => {
         />
         <Show when={surfaceKind() === 'setting'}>
           <SSetting
+            pianoMinScale={innerProps.pianoMinScale}
             settingData={innerProps.settingData}
             class="absolute bottom-0 left-0 w-full bg-white"
             onClose={() => handleSurfaceKindChange('player')}

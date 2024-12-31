@@ -1,11 +1,14 @@
 import {Meta, Title} from '@solidjs/meta'
-import {createEffect, createMemo} from 'solid-js'
+import {createEffect, createMemo, createSignal} from 'solid-js'
 import {SPiano} from 'src/components/instruments'
 import {SettingData, SHiddenPlayer} from 'src/components/midi-player'
 import {MusicInfo} from 'src/components/midi-player/SFileItem'
 import {emitAllIds} from 'src/components/real-button/use-global-touch'
 import {createSplendidGrandPiano} from 'src/use/instruments'
 import {useStorage} from '@winter-love/solid-use'
+import {SScale} from 'src/components/scale'
+import {HUNDRED} from '@winter-love/utils'
+import {useDetectMinScale} from 'src/use/detect-min-size'
 
 export interface HomePageProps {
   initMusics?: MusicInfo[]
@@ -13,6 +16,8 @@ export interface HomePageProps {
 }
 
 export default function HomePage(props: HomePageProps) {
+  const [pianoElement, setPianoElement] = createSignal<HTMLElement | null>(null)
+  const minPianoSize = useDetectMinScale(pianoElement)
   const [splendidGrandPiano, splendidGrandPianoController] = createSplendidGrandPiano({
     onEmitInstrument: emitAllIds,
   })
@@ -59,14 +64,19 @@ export default function HomePage(props: HomePageProps) {
       <Meta property="og:title" content={pageName} />
       <Meta property="og:description" content="Your instruments for free" />
       <main class="relative h-full overflow-y-hidden pt-0 px-2 flex flex-col overflow-x-auto">
-        <div class="h-full w-max">
+        <SScale
+          class="h-full w-max origin-top-left"
+          size={settingData().pianoSize / HUNDRED}
+        >
           <SPiano
+            ref={setPianoElement}
             onDown={splendidGrandPianoController.down}
             onUp={splendidGrandPianoController.up}
           />
-        </div>
+        </SScale>
       </main>
       <SHiddenPlayer
+        pianoMinScale={minPianoSize()}
         settingData={settingData()}
         component="aside"
         initMusics={musics()}

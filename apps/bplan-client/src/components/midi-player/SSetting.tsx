@@ -12,8 +12,11 @@ export interface SettingData {
 export interface SSettingProps extends JSX.HTMLAttributes<HTMLDivElement> {
   onClose?: () => void
   onSettingDataChange?: (data: SettingData) => void
+  pianoMinScale?: number
   settingData?: SettingData
 }
+
+const DEFAULT_MIN_SCALE = 20
 
 export const SSetting = (props: SSettingProps) => {
   const [innerProps, restProps] = splitProps(props, [
@@ -21,6 +24,7 @@ export const SSetting = (props: SSettingProps) => {
     'onClose',
     'settingData',
     'onSettingDataChange',
+    'pianoMinScale',
   ])
 
   const handleClose = () => {
@@ -32,12 +36,10 @@ export const SSetting = (props: SSettingProps) => {
   }
 
   const handleSettingPianoSize = (value: number) => {
-    console.log('value', value)
     handleSettingData({...innerProps.settingData, pianoSize: value})
   }
 
   const handleSettingKeepPlayList = (value: boolean) => {
-    console.log('value', value)
     handleSettingData({...innerProps.settingData, keepPlayList: value})
   }
 
@@ -53,7 +55,11 @@ export const SSetting = (props: SSettingProps) => {
         label="Piano Size"
         type="slider"
         value={innerProps.settingData?.pianoSize ?? HUNDRED}
-        min={20}
+        min={
+          innerProps.pianoMinScale
+            ? innerProps.pianoMinScale * HUNDRED
+            : DEFAULT_MIN_SCALE
+        }
         max={100}
         onValueChange={handleSettingPianoSize}
       />

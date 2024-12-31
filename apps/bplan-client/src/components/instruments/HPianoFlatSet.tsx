@@ -10,7 +10,7 @@ interface FlatData {
 const keyOffset = 5
 const keyCount = 12
 const flatSet = flatten(
-  Array.from<FlatData[]>({length: 8})
+  Array.from<FlatData[]>({length: 14})
     .fill([
       {key: 2, name: 'A'},
       {key: 4, name: 'B'},

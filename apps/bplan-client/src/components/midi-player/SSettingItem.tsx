@@ -56,7 +56,7 @@ export function SSettingItem<T extends SSettingItemType>(props: SSettingItemProp
             min={innerProps.min ?? 0}
             max={innerProps.max ?? 1}
             value={typeof innerProps.value === 'number' ? innerProps.value : 1}
-            onChange={handleSliderChange}
+            onInput={handleSliderChange}
           />
         </Match>
       </Switch>

@@ -10,7 +10,7 @@ interface SharpData {
 const keyLoopCount = 12
 const lastDeleteCount = 5
 const sharpSet = flatten(
-  Array.from<SharpData[]>({length: 8})
+  Array.from<SharpData[]>({length: 14})
     .fill([
       {key: 1, name: 'G#'},
       {key: 3, name: 'A#'},

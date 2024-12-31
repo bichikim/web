@@ -11,7 +11,6 @@ const presetMap: Record<string, Preset> = {
 
 export async function GET(event: APIEvent) {
   const {id} = event.params
-  console.log(id)
   const preset = presetMap[id] ?? {musics: [], title: 'Unknown Preset'}
 
   return preset
