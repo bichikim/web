@@ -1,44 +1,20 @@
-/* eslint-disable camelcase */
 import {defineConfig} from '@solidjs/start/config'
 import {VitePWA as vitePwa} from 'vite-plugin-pwa'
 import {fileURLToPath, URL} from 'node:url'
 import unoCss from 'unocss/vite'
-
+import mkcert from 'vite-plugin-mkcert'
 export default defineConfig({
+  server: {
+    https: true,
+  },
   vite: {
     plugins: [
+      mkcert(),
       //
       unoCss('../../uno.config.ts'),
       vitePwa({
-        manifest: {
-          description: 'My Awesome App description',
-          icons: [
-            {
-              sizes: '64x64',
-              src: 'pwa-64x64.png',
-              type: 'image/png',
-            },
-            {
-              sizes: '192x192',
-              src: 'pwa-192x192.png',
-              type: 'image/png',
-            },
-            {
-              sizes: '512x512',
-              src: 'pwa-512x512.png',
-              type: 'image/png',
-            },
-            {
-              purpose: 'maskable',
-              sizes: '512x512',
-              src: 'maskable-icon-512x512.png',
-              type: 'image/png',
-            },
-          ],
-          name: 'My Awesome App',
-          short_name: 'MyApp',
-          theme_color: '#eee',
-        },
+        injectRegister: null,
+        manifest: false,
         registerType: 'autoUpdate',
       }),
     ] as any,

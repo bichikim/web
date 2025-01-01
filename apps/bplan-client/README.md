@@ -75,3 +75,5 @@ https://www.mapianist.com/sheet/121897
 
 ## ai player
 https://magenta.tensorflow.org/get-started/#magenta-js
+
+## kwnown issue
