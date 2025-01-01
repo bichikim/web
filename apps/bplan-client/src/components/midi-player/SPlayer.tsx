@@ -78,7 +78,6 @@ export const SPlayer = (props: SPlayerProps) => {
   }
 
   const handlePlay = (id: string) => {
-    console.log('play?')
     const info = playList().find((item) => item.id === id)
     if (!info) {
       const [firstItem] = playList()
