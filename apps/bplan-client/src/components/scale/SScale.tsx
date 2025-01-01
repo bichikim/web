@@ -11,6 +11,8 @@ export function SScale(props: SScaleProps) {
   const scaleStyle = createMemo(() => {
     return {
       transform: `scale(${innerProps.size ?? 1})`,
+      // just send resizing signal for the browser rendering engine
+      width: `${innerProps.size ?? 1}%`,
     }
   })
 

@@ -78,8 +78,14 @@ export const SPlayer = (props: SPlayerProps) => {
   }
 
   const handlePlay = (id: string) => {
+    console.log('play?')
     const info = playList().find((item) => item.id === id)
     if (!info) {
+      const [firstItem] = playList()
+      if (firstItem) {
+        setSelectedId(firstItem.id)
+        innerProps.pianoController?.play(firstItem)
+      }
       return
     }
     innerProps.pianoController?.play(info)

@@ -63,7 +63,7 @@ export default function HomePage(props: HomePageProps) {
       <Meta property="og:site_name" content={pageName} />
       <Meta property="og:title" content={pageName} />
       <Meta property="og:description" content="Your instruments for free" />
-      <main class="relative h-full overflow-y-hidden pt-0 px-2 flex flex-col overflow-x-auto">
+      <main class="relative h-full overflow-y-hidden pt-0 px-2 flex flex-col overflow-x-auto inline-block">
         <SScale
           class="h-full w-max origin-top-left"
           size={settingData().pianoSize / HUNDRED}

@@ -74,6 +74,10 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
   })
 
   const handlePlayOrPause = () => {
+    if (innerProps.selectedId === '') {
+      innerProps.onPlay?.(innerProps.selectedId)
+      return
+    }
     if (innerProps.selectedId === innerProps.playingId && !isEnd()) {
       if (innerProps.isSuspend) {
         innerProps.onResume?.()
