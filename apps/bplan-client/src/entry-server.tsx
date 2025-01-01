@@ -1,6 +1,5 @@
 // @refresh reload
 import {createHandler, StartServer} from '@solidjs/start/server'
-import { link } from 'fs'
 
 // noinspection HtmlRequiredTitleElement
 export default createHandler(() => (
