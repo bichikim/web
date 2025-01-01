@@ -30,7 +30,6 @@
     "@iconify-json/hugeicons": "^1.2.3",
     "@iconify-json/tabler": "^1.2.13",
     "@unocss/vite": "^0.65.3",
-    "vite-plugin-mkcert": "^1.17.6",
     "@vite-pwa/assets-generator": "^0.2.6",
     "flush-promises": "^1.0.2",
     "typescript": "^5.7.2",

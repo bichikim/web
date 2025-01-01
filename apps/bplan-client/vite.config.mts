@@ -2,15 +2,9 @@ import {defineConfig} from '@solidjs/start/config'
 import {VitePWA as vitePwa} from 'vite-plugin-pwa'
 import {fileURLToPath, URL} from 'node:url'
 import unoCss from 'unocss/vite'
-import mkcert from 'vite-plugin-mkcert'
 export default defineConfig({
-  server: {
-    https: true,
-  },
   vite: {
     plugins: [
-      mkcert(),
-      //
       unoCss('../../uno.config.ts'),
       vitePwa({
         injectRegister: null,
@@ -25,9 +19,5 @@ export default defineConfig({
         src: fileURLToPath(new URL('src', import.meta.url)),
       },
     },
-    // ssr: {
-    //   // Add npm packages containing invalid code here
-    //   noExternal: ['@tonejs/midi'],
-    // },
   },
 })
