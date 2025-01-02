@@ -11,10 +11,18 @@ export default defineConfig({
     plugins: [
       unoCss('../../uno.config.ts'),
       vitePwa({
-        includeAssets: ['*.svg', '*.png', 'robots.txt', '*.ogg', 'index.html'],
         injectRegister: null,
         manifest: false,
         registerType: 'prompt',
+        strategies: 'generateSW',
+        workbox: {
+          // Only precache these files - html should be excluded
+          globPatterns: ['**/*.{js,css}'],
+
+          // Don't fallback on document based (e.g. `/some-page`) requests
+          // Even though this says `null` by default, I had to set this specifically to `null` to make it work
+          navigateFallback: null,
+        },
       }),
     ] as any,
     resolve: {
