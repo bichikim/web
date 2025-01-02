@@ -90,7 +90,7 @@ export const SHiddenPlayer = (props: SHiddenPlayerProps) => {
     setIsRender(isShow())
   }
 
-  // Dynamic error with ssr prefetching hydration
+  // Dynamic component has an error with ssr prefetching hydration
   return (
     <aside class={props.class ?? 'relative'}>
       <SClose
