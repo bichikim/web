@@ -30,7 +30,8 @@
   "scripts": {
     "build": "vite build",
     "dev": "vite build --watch --minify false",
-    "check-types": "tsc --noEmit"
+    "check-types": "tsc --noEmit",
+    "lint": "eslint src"
   },
   "dependencies": {
     "@winter-love/lodash": "workspace:*",
