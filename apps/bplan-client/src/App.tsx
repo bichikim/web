@@ -23,7 +23,7 @@ export default function App() {
         <FileRoutes />
       </Router>
       <Show when={isClient()}>
-        <ReloadPrompt />
+        <ReloadPrompt class="fixed top-1 right-1 p-2 bg-white rd-1" />
       </Show>
     </>
   )

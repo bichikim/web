@@ -42,7 +42,6 @@ export const SPlayer = (props: SPlayerProps) => {
     'initMusics',
     'onMusicsChange',
   ])
-  // eslint-disable-next-line solid/reactivity
   const [playList, setPlayList] = createSignal<MusicInfo[]>(innerProps.initMusics ?? [])
   const [selectedId, setSelectedId] = createSignal<string>('')
   const [repeat, setRepeat] = createSignal<RepeatType>('no')
