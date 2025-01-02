@@ -6,7 +6,7 @@ import unoCss from 'unocss/vite'
 export default defineConfig({
   vite: {
     build: {
-      ssrManifest: true,
+      minify: false,
     },
     plugins: [
       unoCss('../../uno.config.ts'),

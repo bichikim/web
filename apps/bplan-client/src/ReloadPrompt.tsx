@@ -17,6 +17,12 @@ export const ReloadPrompt = (props: ReloadPromptProps) => {
       console.info(`Service worker at: ${swUrl}`)
     },
   })
+  const handleUpdateServiceWorker = () => {
+    console.info('handleUpdateServiceWorker')
+
+    return updateServiceWorker(true)
+  }
+
   const handleClose = () => {
     setOfflineReady(false)
     setNeedRefresh(false)
@@ -39,7 +45,7 @@ export const ReloadPrompt = (props: ReloadPromptProps) => {
             <div class="flex gap-2">
               <button
                 class="b-0 cusor-pointer rd-1 px-5 py-1"
-                onClick={() => updateServiceWorker(true)}
+                onClick={handleUpdateServiceWorker}
               >
                 Reload
               </button>
