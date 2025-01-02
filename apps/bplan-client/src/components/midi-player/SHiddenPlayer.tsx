@@ -91,7 +91,7 @@ export const SHiddenPlayer = (props: SHiddenPlayerProps) => {
   }
 
   return (
-    <Dynamic component={innerProps.component} class={props.class ?? 'relative'}>
+    <aside class={props.class ?? 'relative'}>
       <SClose
         class="mb-1"
         onClose={handleClose}
@@ -123,6 +123,6 @@ export const SHiddenPlayer = (props: SHiddenPlayerProps) => {
           />
         </Show>
       </section>
-    </Dynamic>
+    </aside>
   )
 }
