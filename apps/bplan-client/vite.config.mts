@@ -11,7 +11,7 @@ export default defineConfig({
     plugins: [
       unoCss('../../uno.config.ts'),
       vitePwa({
-        includeAssets: ['*.svg', '*.png', 'robots.txt', '*.ogg', '*.{js,css}'],
+        includeAssets: ['*.svg', '*.png', 'robots.txt', '*.ogg'],
         injectRegister: null,
         manifest: false,
         registerType: 'prompt',
