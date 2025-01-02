@@ -124,7 +124,6 @@
       "@winter-love/solid-use": "workspace:*",
       "@winter-love/solid-test": "workspace:*",
       "@winter-love/solid-components": "workspace:*",
-      "@winter-love/use": "workspace:*",
       "@winter-love/utils": "workspace:*",
       "@winter-love/lodash": "workspace:*",
       "semver@<5.7.2": "5.7.2",
