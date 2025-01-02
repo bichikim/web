@@ -24,7 +24,6 @@ const getPreset = query(async (id?: string) => {
 export default function PresetPage() {
   const params = useParams()
   const [preset] = createResource(() => getPreset(params.id))
-  // const preset = () => ({musics: [], title: 'test'})
 
   return <HomePage presetTitle={preset()?.title} initMusics={preset()?.musics} />
 }
