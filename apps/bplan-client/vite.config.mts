@@ -14,7 +14,6 @@ export default defineConfig({
         includeAssets: ['*.svg', '*.png', 'robots.txt', '*.ogg'],
         injectRegister: null,
         manifest: false,
-        navigateFallback: null,
         registerType: 'prompt',
       }),
     ] as any,
