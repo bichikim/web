@@ -27,7 +27,8 @@
     "standardized-audio-context": "^25.3.77",
     "axios": "1.7.9",
     "vinxi": "0.4.3",
-    "vite": "^5.4.11"
+    "vite": "^5.4.11",
+    "workbox-window": "^7.3.0"
   },
   "devDependencies": {
     "@iconify-json/hugeicons": "^1.2.3",
