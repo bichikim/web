@@ -45,7 +45,7 @@ export default function HomePage(props: HomePageProps) {
   }
 
   createEffect(() => {
-    // updateActive(Boolean(settingData().keepPlayList))
+    updateActive(Boolean(settingData().keepPlayList))
   })
 
   return (
