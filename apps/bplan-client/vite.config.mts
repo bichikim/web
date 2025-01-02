@@ -2,14 +2,10 @@ import {defineConfig} from '@solidjs/start/config'
 import {VitePWA as vitePwa} from 'vite-plugin-pwa'
 import {fileURLToPath, URL} from 'node:url'
 import unoCss from 'unocss/vite'
-import checker from 'vite-plugin-checker'
 
 export default defineConfig({
   vite: {
     plugins: [
-      checker({
-        typescript: true,
-      }),
       unoCss('../../uno.config.ts'),
       vitePwa({
         injectRegister: null,
