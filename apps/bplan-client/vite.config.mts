@@ -10,7 +10,7 @@ export default defineConfig({
       vitePwa({
         injectRegister: null,
         manifest: false,
-        registerType: 'autoUpdate',
+        registerType: 'prompt',
       }),
     ] as any,
     resolve: {

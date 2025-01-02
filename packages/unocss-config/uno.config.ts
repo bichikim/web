@@ -14,6 +14,7 @@ const readSizeName = (name: string): string => {
       return 'height'
     }
   }
+
   return name
 }
 
@@ -57,6 +58,7 @@ export default defineConfig({
       /^scrollbar-none$/u,
       (_, {rawSelector}) => {
         const selector = toEscapedSelector(rawSelector)
+
         return `
           ${selector}::-webkit-scrollbar {
             display: none;
@@ -77,6 +79,7 @@ export default defineConfig({
             [direction]: `var(--var${variableName})`,
           }
         }
+
         return {
           [direction]: `var(--var-${direction})`,
         }
@@ -86,11 +89,13 @@ export default defineConfig({
       /^(width|height|w|h)-var(-.+)?$/u,
       ([, direction, variableName]) => {
         const kind = readSizeName(direction)
+
         if (variableName) {
           return {
             [kind]: `var(--var${variableName})`,
           }
         }
+
         return {
           [kind]: `var(--var-${kind})`,
         }
@@ -104,9 +109,9 @@ export default defineConfig({
       '[&>div]:data-[state="down"]:top-0',
     ],
     'key-piano-flat': [
-      ':uno: block b-solid b-#ccc rd-t-0 inline-flex flex-shrink-0 overflow-hidden b-b-2px',
+      'block b-solid b-#ccc rd-t-0 inline-flex flex-shrink-0 overflow-hidden b-b-2px',
       'p-0 relative rd-b-3px b-1px shadow-flat-up data-[state="down"]:shadow-flat-down b-b-#ddd',
-      'data-[state="down"]:shadow-[0 2px 2px rgb(0 0 0 / 40%)] data-[state="down"]:scale-x-100',
+      'data-[state="down"]-shadow-[0_2px_2px_rgba(0,0,0,0.4)] data-[state="down"]:scale-x-100',
       'data-[state="down"]:scale-y-99 data-[state="down"]:origin-top data-[state="down"]:b-b-1px',
       'data-[state="down"]:after:content-[""] data-[state="down"]:after:bg-black data-[state="down"]:after:h-full',
       'data-[state="down"]:after:left--5px data-[state="down"]:after:opacity-10 data-[state="down"]:after:absolute',
@@ -118,7 +123,7 @@ export default defineConfig({
       'data-[state="down"]:before:shadow-flat-right',
     ],
     'key-piano-sharp': [
-      'block b-solid rd-t-0 inline-flex flex-shrink-0 overflow-hidden bb-black',
+      'block b-solid rd-t-0 inline-flex flex-shrink-0 overflow-hidden b-b-black',
       'p-0 relative b-x-2px b-t-1px b-b-10px rd-b-2px shadow-sharp-key',
       'bg-gradient-linear bg-gradient-[-20deg,#333,#000,#333] bg-black',
       'b-t-#666 b-r-#222 b-b-#111 b-l-#555',
