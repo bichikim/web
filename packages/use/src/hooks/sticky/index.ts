@@ -1,4 +1,4 @@
-import {Position, Rect} from '@winter-love/utils'
+import {getWindow, Position, Rect} from '@winter-love/utils'
 import {getPosition} from './get-position'
 import {getOutside} from './get-outside'
 import {resolveRef} from 'src/refs/resolve-ref'
@@ -36,6 +36,7 @@ const mergeSize = (elementSize: Rect, targetSize: Rect, position: UseStickyPosit
         y: targetSize.y,
       }
     }
+
     case 'top': {
       return {
         height: elementSize.height + targetSize.height,
@@ -44,6 +45,7 @@ const mergeSize = (elementSize: Rect, targetSize: Rect, position: UseStickyPosit
         y: targetSize.y - elementSize.height,
       }
     }
+
     case 'left': {
       return {
         height: elementSize.height,
@@ -52,6 +54,7 @@ const mergeSize = (elementSize: Rect, targetSize: Rect, position: UseStickyPosit
         y: targetSize.y,
       }
     }
+
     case 'right': {
       return {
         height: elementSize.height,
@@ -60,6 +63,7 @@ const mergeSize = (elementSize: Rect, targetSize: Rect, position: UseStickyPosit
         y: targetSize.y,
       }
     }
+
     default: {
       return {
         height: targetSize.height,
@@ -76,18 +80,23 @@ const getSide = (
   defaultPosition: UseStickyPosition,
 ): UseStickyPosition => {
   const {x, y} = position
+
   if (x > 0) {
     return 'left'
   }
+
   if (x < 0) {
     return 'right'
   }
+
   if (y > 0) {
     return 'top'
   }
+
   if (y < 0) {
     return 'bottom'
   }
+
   return defaultPosition
 }
 
@@ -96,7 +105,7 @@ export const useSticky = (
   target?: MaybeRef<HTMLElement | Window | undefined>,
   options: UseStickyOptions = {},
 ): ComputedRef<UseStickyResult> => {
-  const container = toRef(options, 'container', window)
+  const container = toRef(options, 'container', getWindow() as any)
   const defaultPosition = toRef(options, 'defaultPosition', 'bottom')
   const xPositionRef = toRef(options, 'xPosition', 'start')
   const yPositionRef = toRef(options, 'yPosition', 'start')
@@ -106,7 +115,7 @@ export const useSticky = (
     return Boolean(targetRef.value)
   })
   const targetSizeRef = useSize(
-    defaultRef(targetRef, () => window),
+    defaultRef(targetRef, () => globalThis),
     container,
   )
   const elementSizeRef = useSize(
@@ -115,15 +124,12 @@ export const useSticky = (
     reactive({defaultSize: targetSizeRef, delay: 125}),
   )
   const containerSizeRef = useSize(container, container)
-
   const mergedSizeRef = computed(() =>
     mergeSize(elementSizeRef.value, targetSizeRef.value, defaultPositionRef.value),
   )
-
   const outsidePositionRef = computed(() =>
     getOutside(mergedSizeRef.value, containerSizeRef.value),
   )
-
   const sideRef = computed(() =>
     getSide(outsidePositionRef.value, defaultPositionRef.value),
   )
@@ -157,6 +163,7 @@ export const useSticky = (
           y: targetSize.y + targetSize.height,
         }
       }
+
       case 'top': {
         return {
           height: targetSize.height,
@@ -166,6 +173,7 @@ export const useSticky = (
           y: targetSize.y - elementSize.height,
         }
       }
+
       case 'right': {
         return {
           height: targetSize.height,
@@ -175,6 +183,7 @@ export const useSticky = (
           y: verticalSize.y,
         }
       }
+
       case 'left': {
         return {
           height: targetSize.height,
@@ -184,6 +193,7 @@ export const useSticky = (
           y: verticalSize.y,
         }
       }
+
       default: {
         return {
           height: targetSize.height,

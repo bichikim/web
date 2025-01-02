@@ -11,8 +11,10 @@ interface WatchProps {
 
 const Watch = (props: WatchProps) => {
   const [state, setState] = createSignal(0)
+
   useWatch([state, () => props.seed], (...args) => {
     props.onWatch?.(...args)
+
     return (...args) => {
       props.onCleanUp?.(...args)
     }
@@ -30,7 +32,6 @@ const Watch = (props: WatchProps) => {
     </>
   )
 }
-
 const meta = {
   argTypes: {
     seed: {

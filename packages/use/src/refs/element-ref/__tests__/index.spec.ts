@@ -12,6 +12,7 @@ const _resolveElementRef = vi.mocked(resolveElement)
 describe('elementRef', () => {
   it('should resolve element', () => {
     const element = document.createElement('div')
+
     _resolveElementRef.mockReturnValueOnce(element)
     const result = elementRef()
 

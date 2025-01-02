@@ -10,6 +10,7 @@ vi.mock('src/hooks/element-resize')
 describe('useSizeRef', () => {
   it.skip('should return reactive ref ', () => {
     const scope = effectScope()
+
     scope.run(() => {
       const elementSize = {
         height: 100,
@@ -21,9 +22,8 @@ describe('useSizeRef', () => {
         getBoundingClientRect: () => elementSize,
       })
       let scrollCallback
-
       const fakeContainer = ref({
-        addEventListener: (key, callback) => {
+        addEventListener: (_, callback) => {
           scrollCallback = callback
         },
         getBoundingClientRect: () => ({
@@ -34,6 +34,7 @@ describe('useSizeRef', () => {
         }),
       })
       const sizeRef = useSize(fakeElement as any, fakeContainer as any)
+
       expect(scrollCallback).toEqual(expect.any(Function))
       expect(sizeRef.value).toEqual(elementSize)
       elementSize.x = 50

@@ -52,6 +52,7 @@ const unObjectRef = <P extends Record<string, any>>(
   if (isRef(value)) {
     return value.value
   }
+
   if (value) {
     return {...value} as any
   }
@@ -99,24 +100,27 @@ export const useRequest =
     const {signal} = abortController
     const previousPayload = ref<P | undefined>()
     const waitPromise = ref<Promise<any>>()
-
     const run = (payload: P | undefined = unObjectRef<P>(_payload)) => {
       if (!payload) {
         return Promise.reject(new Error('No Payload'))
       }
+
       previousPayload.value = payload
       loading.value = true
+
       return service(payload, signal)
         .then((response) => {
           data.value = clone(response)
           onSuccess?.(response, payload)
           loading.value = false
+
           return response
         })
         .catch((_error: Error) => {
           error.value = _error
           onError?.(_error, payload)
           loading.value = false
+
           return null
         })
     }

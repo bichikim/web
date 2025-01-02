@@ -9,6 +9,7 @@ import {afterEach, describe, expect, it, vi} from 'vitest'
 vi.mock('../', async () => {
   process.env.NODE_ENV = 'production'
   const actual = await vi.importActual('../')
+
   return {
     ...actual,
   }
@@ -22,13 +23,16 @@ describe('debug', () => {
     const Component = defineComponent({
       setup() {
         const name = ref('foo')
+
         debug({
           name,
         })
+
         return () => h('div', name.value)
       },
     })
     const wrapper = mount(Component)
+
     expect(wrapper.get('div').text()).toBe('foo')
     expect(wrapper.vm.$.setupState).toEqual({})
   })

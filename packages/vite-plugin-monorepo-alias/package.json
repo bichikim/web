@@ -41,7 +41,8 @@
   ],
   "scripts": {
     "build": "vite build",
-    "dev": "vite build --watch --minify false"
+    "dev": "vite build --watch --minify false",
+    "lint": "eslint src"
   },
   "dependencies": {
     "@types/node": "^22.10.1",

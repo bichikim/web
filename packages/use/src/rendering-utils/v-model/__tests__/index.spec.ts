@@ -15,6 +15,7 @@ describe('v-model', () => {
       },
       setup(props, {emit}) {
         const modelValueRef = toRef(props, 'modelValue')
+
         return () => {
           return h('div', [
             //
@@ -33,6 +34,7 @@ describe('v-model', () => {
       setup() {
         const inputValue = ref('foo')
         const modelValue = ref('bar')
+
         return () =>
           h('div', [
             //
@@ -43,10 +45,13 @@ describe('v-model', () => {
       },
     })
     const wrapper = mount(Component)
+
     return {wrapper}
   }
+
   it('should render and change value', async () => {
     const {wrapper} = setup()
+
     expect(wrapper.get('#input').element).toHaveValue('foo')
     await wrapper.get('#input').setValue('bar')
     expect(wrapper.get('#input').element).toHaveValue('bar')
@@ -54,6 +59,7 @@ describe('v-model', () => {
   })
   it('should render and change modelValue', async () => {
     const {wrapper} = setup()
+
     expect(wrapper.get('#input-model-value').element).toHaveValue('bar')
     await wrapper.get('#input-model-value').setValue('foo')
     expect(wrapper.get('#input-model-value').element).toHaveValue('foo')

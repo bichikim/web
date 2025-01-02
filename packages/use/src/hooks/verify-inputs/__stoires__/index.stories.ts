@@ -14,6 +14,7 @@ export const Default = () => {
         (value) => value.length < 2 && 'min length 2',
       )
       const {verify: verifyRootInput} = toRefs(verifyInput)
+
       return {
         rootInput,
         verifyRootInput,
@@ -26,7 +27,6 @@ export const Default = () => {
       </div>
     `,
   })
-
   const TInput = defineComponent({
     directives: {
       verify: verifyDirective,
@@ -49,6 +49,7 @@ export const Default = () => {
       const showInput = ref(true)
       const verifyInputs = useVerifyInputs()
       const {isValid, errorMessage, verify: verifyAll} = toRefs(verifyInputs)
+
       return {
         errorMessage,
         isValid,

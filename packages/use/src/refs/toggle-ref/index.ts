@@ -12,7 +12,6 @@ import {defaultRef} from 'src/refs/default-ref'
  */
 export const toggleRef = (value?: MaybeRef<boolean>): [Ref<boolean>, () => void] => {
   const valueRef = mutRef(defaultRef(resolveRef(value), false))
-
   const toggle = () => {
     valueRef.value = !valueRef.value
   }

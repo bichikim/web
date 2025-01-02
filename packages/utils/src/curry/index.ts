@@ -182,11 +182,14 @@ export function curry(
   args: unknown[] = [],
 ) {
   const _args: unknown[] = args
+
   return (...args: unknown[]) => {
     const nextArgs = [..._args, ...args]
+
     if (nextArgs.length >= length) {
       return target(...nextArgs)
     }
+
     return curry(target, target.length, nextArgs)
   }
 }

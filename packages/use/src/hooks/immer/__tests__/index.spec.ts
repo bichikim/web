@@ -6,6 +6,7 @@ describe('useImmer', () => {
     const [state, setState] = useImmer({
       name: 'foo',
     })
+
     expect(state.value).toEqual({name: 'foo'})
     setState((state) => {
       state.name = 'bar'

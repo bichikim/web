@@ -15,6 +15,7 @@ describe('blur', () => {
   it('should blur', () => {
     const fakeDocument = (() => {
       let _activeElement
+
       return {
         get activeElement() {
           return _activeElement
@@ -24,6 +25,7 @@ describe('blur', () => {
         },
       }
     })() as any
+
     mockGetDocument.mockImplementation(() => fakeDocument)
     mockGetHtmlElement.mockImplementation(() => HTMLElement)
 
@@ -31,6 +33,7 @@ describe('blur', () => {
       defineComponent({
         setup() {
           const blur = useBlur()
+
           return {
             blur,
           }
@@ -38,7 +41,6 @@ describe('blur', () => {
       }),
     )
     const setupState = wrapper.vm.$.setupState
-
     const element = document.createElement('div')
 
     element.blur = vi.fn()

@@ -20,6 +20,7 @@ describe('onElementMutation', () => {
 
     vi.spyOn(globalThis, 'MutationObserver').mockImplementationOnce((callback) => {
       _callback = callback
+
       return {
         disconnect,
         observe,
@@ -28,11 +29,11 @@ describe('onElementMutation', () => {
 
     const callback = vi.fn()
     const fakeElement: any = {}
-
     const wrapper = mount(
       defineComponent({
         setup: () => {
           onElementMutation(fakeElement, callback)
+
           return {}
         },
       }),
@@ -52,6 +53,7 @@ describe('onElementMutation', () => {
   it('should do nothing if element is not element', () => {
     const observe = vi.fn()
     const disconnect = vi.fn()
+
     vi.spyOn(globalThis, 'MutationObserver').mockReturnValueOnce({
       disconnect,
       observe,
@@ -61,10 +63,12 @@ describe('onElementMutation', () => {
       defineComponent({
         setup: () => {
           onElementMutation(undefined, callback)
+
           return {}
         },
       }),
     )
+
     expect(observe).toHaveBeenCalledTimes(0)
     wrapper.unmount()
     expect(disconnect).toHaveBeenCalledTimes(0)

@@ -1,4 +1,3 @@
-/* eslint-disable max-params */
 import {eventOptions, getWindow} from '@winter-love/utils'
 import {
   computed,
@@ -53,9 +52,9 @@ export function onEvent<Key extends string>(
   const isInInstance = Boolean(instance)
   const elementRef = resolveRef(element)
   const isActiveRef = mutRef(computed(() => reactiveOptions.isActive ?? true))
-
   const handle = (event) => {
     listener(event)
+
     if (reactiveOptions.once) {
       inactive()
     }
@@ -63,6 +62,7 @@ export function onEvent<Key extends string>(
 
   const active = () => {
     const element = elementRef.value
+
     if (element && getWindow()) {
       isActiveRef.value = true
       element.addEventListener?.(
@@ -75,9 +75,11 @@ export function onEvent<Key extends string>(
       )
     }
   }
+
   const inactive = () => {
     isActiveRef.value = false
     const element = elementRef.value
+
     if (element && getWindow()) {
       element.removeEventListener?.(eventName, handle)
     }
@@ -107,6 +109,7 @@ export function onEvent<Key extends string>(
       active()
     }
   }
+
   onScopeDispose(() => {
     inactive()
   })

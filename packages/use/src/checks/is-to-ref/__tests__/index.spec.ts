@@ -17,6 +17,7 @@ describe('isToRef', () => {
           const fooProp = toRef(props, 'foo')
           const bar = ref('bar')
           const john = computed(() => 'john')
+
           return {
             isBar: isToRef(bar),
             isFoo: isToRef(fooProp),
@@ -25,7 +26,6 @@ describe('isToRef', () => {
         },
       }),
     )
-
     const setupState = wrapper.vm.$.setupState
 
     expect(setupState.isFoo).toEqual(true)

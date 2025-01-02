@@ -6,19 +6,23 @@ import {describe, expect, it} from 'vitest'
 describe('resolveRef', () => {
   it('should resolve a ref with null', () => {
     const result = resolveRef(null)
+
     expect(result.value).toBeNull()
   })
   it('should resolve a ref with undefined', () => {
     const result = resolveRef(undefined)
+
     expect(result.value).toBeUndefined()
   })
   it('should resolve an object', () => {
     const result = resolveRef({})
+
     expect(result.value).toEqual({})
   })
   it('should resolve a ref and detect changes', () => {
     const value = ref('foo')
     const result = resolveRef(value)
+
     expect(result.value).toBe('foo')
 
     value.value = 'bar'
@@ -28,6 +32,7 @@ describe('resolveRef', () => {
   it('should resolve a undefined ref and detect changes with null', () => {
     const value = ref()
     const result = resolveRef(value)
+
     expect(result.value).toEqual(undefined)
 
     value.value = null
@@ -40,7 +45,6 @@ describe('resolveRef', () => {
   })
   it('should update readonly ref', () => {
     const value = ref('foo')
-
     const result = resolveRef(value, true)
 
     expect(result.value).toBe('foo')
@@ -56,7 +60,6 @@ describe('resolveRef', () => {
   it('should not update readonly ref', () => {
     const value = ref('foo')
     const computedValue = computed(() => value.value)
-
     const result = resolveRef(computedValue, true)
 
     expect(result.value).toBe('foo')
@@ -72,7 +75,6 @@ describe('resolveRef', () => {
   it('should not update with off update original', () => {
     const value = ref('foo')
     const computedValue = computed(() => value.value)
-
     const result = resolveRef(computedValue)
 
     expect(result.value).toBe('foo')

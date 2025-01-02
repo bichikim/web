@@ -2,6 +2,7 @@ import {autoUpdate, flip} from '@floating-ui/dom'
 import {createMemo, createSignal, Show} from 'solid-js'
 import {StoryObj} from 'storybook-solidjs'
 import {useFloating} from '../'
+// eslint-disable-next-line  @typescript-eslint/no-unused-vars
 import {ref} from 'src/ref'
 
 const Floating = () => {

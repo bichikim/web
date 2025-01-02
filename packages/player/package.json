@@ -21,7 +21,8 @@
   "scripts": {
     "build": "cross-env NODE_ENV=production vite build",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "lint": "eslint src"
   },
   "dependencies": {
     "solid-js": "^1.9.3",

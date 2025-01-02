@@ -1,6 +1,7 @@
 import {removeDeeps} from '../remove-deeps'
 const testPath0 =
   '/Users/app/packages/vue-components/src/headless/form/__stories__/HForm.story.vue'
+
 describe('removeDeeps', () => {
   it('should return removed path', () => {
     expect(removeDeeps(testPath0, 0)).toBe(

@@ -12,6 +12,7 @@ export const Default = () => ({
     const setValue = (value) => {
       valueRef.value = value
     }
+
     return () =>
       h('div', [
         h('div', 'hello world'),
@@ -34,6 +35,7 @@ export const Legacy = () => ({
     const setValue = (value) => {
       valueRef.value = value
     }
+
     return () =>
       h('div', [
         h('div', 'hello world'),

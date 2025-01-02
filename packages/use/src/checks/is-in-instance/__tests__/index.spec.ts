@@ -11,10 +11,10 @@ describe('isInInstance', () => {
     const Component = defineComponent({
       setup() {
         const result = isInInstance()
+
         return () => h('div', result)
       },
     })
-
     const wrapper = mount(Component)
 
     expect(wrapper.get('div').text()).toBe('true')

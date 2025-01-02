@@ -8,10 +8,12 @@ describe('debounce', () => {
   beforeEach(() => {
     vi.mocked(debounce).mockClear()
   })
+
   const setup = () => {
     const fakeCancel = vi.fn()
     const debouncedFunction = vi.fn()
     const callback = vi.fn()
+
     vi.mocked(debounce).mockImplementationOnce(
       () => Object.assign(debouncedFunction, {cancel: fakeCancel}) as any,
     )
@@ -22,10 +24,11 @@ describe('debounce', () => {
       debouncedFunction,
     }
   }
+
   it('should cancel debounced function', () => {
     const prepare = setup()
-
     const scope = effectScope()
+
     scope.run(() => {
       return useDebounce(1, prepare.callback)
     })
@@ -38,7 +41,6 @@ describe('debounce', () => {
   })
   it('should call debounced function', () => {
     const prepare = setup()
-
     const scope = effectScope()
     const call = scope.run(() => {
       return useDebounce(1, prepare.callback)
@@ -52,7 +54,6 @@ describe('debounce', () => {
   })
   it('should pass options', async () => {
     const prepare = setup()
-
     const scope = effectScope()
     const call = scope.run(() => {
       return useDebounce(1, prepare.callback)

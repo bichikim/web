@@ -74,6 +74,5 @@ export type EmitsToProps<T extends EmitsOptions> = T extends string[]
                 ...args: T[Uncapitalize<C>] extends (...args: infer P) => any ? P : never
               ) => any
           : never
-      }
-    : // eslint-disable-next-line @typescript-eslint/ban-types
-      {}
+      } // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+    : {}

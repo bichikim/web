@@ -9,6 +9,7 @@ import {describe, expect, it, vi} from 'vitest'
 
 vi.mock('@winter-love/utils', async () => {
   const actual: any = await vi.importActual('@winter-love/utils')
+
   return {
     ...actual,
     getWindow: vi.fn(actual.getWindow),
@@ -32,6 +33,7 @@ describe('on-element-intersection', () => {
 
           if (shouldClose) {
             showRef.value = false
+
             return
           }
 
@@ -69,19 +71,20 @@ describe('on-element-intersection', () => {
     const observe = vi.fn()
     const observerMock = vi.fn((callback) => {
       observerTrigger = callback
+
       return {
         disconnect,
         observe,
       }
     })
     const originalObserver = (window as any).IntersectionObserver
+
     ;(window as any).IntersectionObserver = observerMock
 
     const teardown = () => {
       _getWindow.mockClear()
       window.IntersectionObserver = originalObserver
     }
-
     const wrapper = mount(TestComponent, {
       slots: {
         default: () => h('div', 'foo'),
@@ -139,6 +142,7 @@ describe('on-element-intersection', () => {
   it('should not run any in SSR environment', async () => {
     _getWindow.mockReturnValueOnce(null)
     const {teardown, observerMock} = setup()
+
     expect(observerMock).not.toHaveBeenCalled()
 
     teardown()

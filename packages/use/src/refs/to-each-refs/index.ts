@@ -8,6 +8,7 @@ export type RefToRefs<T = any> = T extends object
   : EmptyObject
 export const toEachRefs = <T>(value: Ref<T>): RefToRefs<T> => {
   const data: T = unref(value)
+
   if (data !== null && typeof data === 'object') {
     return Object.fromEntries(
       Object.keys(data).map((key) => {
@@ -28,5 +29,6 @@ export const toEachRefs = <T>(value: Ref<T>): RefToRefs<T> => {
       }),
     ) as any
   }
+
   return {} as any
 }

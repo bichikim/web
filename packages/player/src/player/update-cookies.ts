@@ -10,6 +10,7 @@ export const updateCookies = (cookieString?: string) => {
   if (!cookieString) {
     return
   }
+
   const cookieList = parseCookieString(cookieString)
 
   for (const [key, value] of cookieList) {

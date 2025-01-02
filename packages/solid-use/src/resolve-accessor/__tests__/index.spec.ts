@@ -17,6 +17,7 @@ describe('actual uses', () => {
     createRoot((dispose) => {
       const [value] = createSignal('foo')
       const valueAccessor = resolveAccessor(value)
+
       expect(valueAccessor()).toBe('foo')
       dispose()
     }))
@@ -36,28 +37,40 @@ describe('resolveAccessors', () => {
     const [value3] = createSignal('bar1')
     const [value4] = createSignal('bar2')
     const [value5] = createSignal(5)
+
     {
       const result = resolveAccessors(value1)
+
       expectTypeOf<() => string>(result)
     }
+
     {
       const result = resolveAccessors([value1])
+
       expectTypeOf<() => [string]>(result)
     }
+
     {
       const result = resolveAccessors([value1, value2])
+
       expectTypeOf<() => string[]>(result)
     }
+
     {
       const result = resolveAccessors([value1, value2, value3])
+
       expectTypeOf<() => string[]>(result)
     }
+
     {
       const result = resolveAccessors([value1, value2, value3, value4])
+
       expectTypeOf<() => string[]>(result)
     }
+
     {
       const result = resolveAccessors([value1, value2, value3, value4, value5])
+
       expectTypeOf<() => [string, string, string, string, number]>(result)
     }
   })

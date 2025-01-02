@@ -65,6 +65,7 @@ export const createShakaPlayer = (
 
   const updateDrm = (drm: DrmOptions = {}) => {
     const {advanced, servers, licenseUrl, type} = drm
+
     if (advanced || servers) {
       shakaPlayer.configure('drm', {
         advanced: advanced,
@@ -86,14 +87,18 @@ export const createShakaPlayer = (
               },
             },
           })
+
           return
         }
+
         case 'play-ready': {
           shakaPlayer.configure('drm.servers', {
             'com.microsoft.playready': licenseUrl,
           })
+
           return
         }
+
         default: {
           shakaPlayer.configure('drm.servers', {
             'com.widevine.alpha': licenseUrl,
@@ -110,6 +115,7 @@ export const createShakaPlayer = (
     updateDrmRequestFilter(shakaPlayer, options.drm)
     updateDrm(options.drm)
     updateCookies(options.cookies)
+
     return shakaPlayer.load(url, null)
   }
 

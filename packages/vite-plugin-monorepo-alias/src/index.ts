@@ -16,6 +16,7 @@ export interface VitePluginMonorepoOptions extends CustomResolverOptions {
  */
 export const monorepoAlias = (options: VitePluginMonorepoOptions): Plugin => {
   const {sourceRoot = './', alias = {}} = options
+
   return {
     config: () => {
       return {

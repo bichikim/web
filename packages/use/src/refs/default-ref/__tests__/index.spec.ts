@@ -7,6 +7,7 @@ describe('useDefaultRef', () => {
   it('should resolve undefined with a defaultValue', () => {
     const valueRef: any = ref(undefined)
     const result = defaultRef(valueRef, 'foo')
+
     expect(result.value).toBe('foo')
     valueRef.value = 'john'
     expect(result.value).toBe('john')
@@ -16,6 +17,7 @@ describe('useDefaultRef', () => {
   it('should resolve undefined with a function defaultValue', () => {
     const valueRef: any = ref(undefined)
     const result = defaultRef(valueRef, () => 'foo')
+
     expect(result.value).toBe('foo')
     valueRef.value = 'john'
     expect(result.value).toBe('john')
@@ -25,6 +27,7 @@ describe('useDefaultRef', () => {
   it('should resolve a ref with a defaultValue and the defaultValueOnce', () => {
     const valueref = ref()
     const result = defaultRef(valueref, 'foo', true)
+
     expect(result.value).toEqual('foo')
 
     valueref.value = 'bar'

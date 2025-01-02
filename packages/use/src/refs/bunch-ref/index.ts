@@ -12,7 +12,6 @@ export type RefSource<T> = Ref<T> | WritableComputedRef<T> | ComputedRef<T>
  */
 export const bunchRef = <T>(...args: RefSource<T>[]): Ref<T> => {
   const valueRef = ref()
-
   const update = (value: T) => {
     valueRef.value = value
   }
@@ -23,6 +22,7 @@ export const bunchRef = <T>(...args: RefSource<T>[]): Ref<T> => {
      * update first value
      */
     const _value = arg.value
+
     if (_value !== undefined) {
       valueRef.value = _value
     }

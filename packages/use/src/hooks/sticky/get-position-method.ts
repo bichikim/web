@@ -8,9 +8,11 @@ export const getPositionMethod = (position: UseStickyRelativePosition) => {
     case 'center': {
       return getCenterPosition
     }
+
     case 'start': {
       return getStartPosition
     }
+
     case 'end': {
       return getEndPosition
     }

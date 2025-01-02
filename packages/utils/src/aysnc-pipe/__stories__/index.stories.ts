@@ -14,15 +14,15 @@ export const Default = () => {
   return {
     setup() {
       const name = ref('john')
-
       const switchName = () => {
         if (name.value === 'john') {
           name.value = 'foo'
+
           return
         }
+
         name.value = 'john'
       }
-
       const decoName = ref('')
 
       watch(name, (name) => {

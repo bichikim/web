@@ -9,6 +9,7 @@ describe('getStart', () => {
       x: 100,
       y: 200,
     })
+
     expect(center).toEqual({x: 100, y: 200})
   })
 })

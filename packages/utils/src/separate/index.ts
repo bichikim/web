@@ -4,6 +4,7 @@ export const separate = <TargetItem, FilteredItem = TargetItem>(
 ): [FilteredItem[], TargetItem[]] => {
   const leftList: TargetItem[] = []
   const filteredList: FilteredItem[] = []
+
   for (const item of list) {
     if (filter(item)) {
       filteredList.push(item)
@@ -11,6 +12,7 @@ export const separate = <TargetItem, FilteredItem = TargetItem>(
       leftList.push(item)
     }
   }
+
   return [filteredList, leftList]
 }
 

@@ -13,9 +13,11 @@ export const updateDrmRequestFilter = (
   const {customData, licenseToken} = drm
   const prevDrmRequestFilter = player[DRM_REQUEST_FILTER]
   const networkingEngine = player.getNetworkingEngine()
+
   if (prevDrmRequestFilter) {
     networkingEngine?.unregisterRequestFilter(prevDrmRequestFilter)
   }
+
   const filter: shaka.extern.RequestFilter = (type, request) => {
     request.allowCrossSiteCredentials = true
 
@@ -23,6 +25,7 @@ export const updateDrmRequestFilter = (
     if (type !== shaka.net.NetworkingEngine.RequestType.LICENSE) {
       return
     }
+
     // 쿠키를 막고
     request.allowCrossSiteCredentials = false
 

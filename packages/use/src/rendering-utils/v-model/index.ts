@@ -24,12 +24,15 @@ export const _vModel = <T, ValueName extends string, InputName extends string>(
   options: VModelOptions<ValueName, InputName> = {},
 ): VModelResult<T, ValueName, InputName> => {
   const {valueName = 'value', inputName = 'onInput', update} = options
+
   return {
     [inputName]: (event: any) => {
       if (update) {
         update(value, event)
+
         return
       }
+
       value.value = event.target?.value
     },
     [valueName]: value.value,
@@ -52,6 +55,7 @@ export const vModel: VModel = (value, options?): any => {
   if (options) {
     return _vModel(value, options)
   }
+
   return (options) => {
     return _vModel(value, options)
   }

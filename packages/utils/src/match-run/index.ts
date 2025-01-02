@@ -25,12 +25,15 @@ export const matchRun = <T extends number | string | symbol>(
 ): MatchRunner<T> => {
   return (matches: Record<any, any>) => {
     const matchedValue = matches[value]
+
     if (typeof matchedValue === 'function') {
       const result = matchedValue(value)
+
       if (result !== undefined) {
         return result as any
       }
     }
+
     return matches.default?.(value) as any
   }
 }

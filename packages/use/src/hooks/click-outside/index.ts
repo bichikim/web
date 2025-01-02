@@ -19,15 +19,13 @@ export const onClickOutside = <Event extends keyof WindowEventMap = 'pointerdown
   options: OnClickOutsideOptions<Event> = {},
 ) => {
   const {event = 'pointerdown'} = options
-
   const targetRef = mutRef(target)
-
   const elementRef = computed(() => {
     return resolveElement(targetRef.value)
   })
-
   const listener = (event: WindowEventMap[Event]) => {
     const element = elementRef.value
+
     if (!element) {
       return
     }

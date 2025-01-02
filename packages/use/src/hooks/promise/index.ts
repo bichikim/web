@@ -65,13 +65,15 @@ export type PromiseRecipe<Data, Args extends any[], Error> =
   (context: RecipeContext<any, Error>, ...args: Args) => Promise<Data>
 
 export const getRetryArgs = (
-  context: RecipeContext<any, any>,
+  _: RecipeContext<any, any>,
   retry?: RetryPromiseRecipe,
 ): undefined | any[] => {
   const _result = retry?.()
+
   if (Array.isArray(_result)) {
     return _result
   }
+
   if (_result) {
     return []
   }
@@ -98,7 +100,6 @@ export const usePromise = <Data, Args extends any[] = any, Error = any>(
   const promiseRef = ref<Promise<Data> | undefined>()
   const abortController = new AbortController()
   const retryCountRef = ref(0)
-
   const getRecipeContext = () => {
     return freeze({
       previous: freeze({
@@ -116,6 +117,7 @@ export const usePromise = <Data, Args extends any[] = any, Error = any>(
     if (cancelPrevPromise.value) {
       cancel()
     }
+
     if (cleanOnExecuteRef.value) {
       dataRef.value = undefined
     }
@@ -131,22 +133,27 @@ export const usePromise = <Data, Args extends any[] = any, Error = any>(
         dataRef.value = data
         waitingRef.value = false
         retryCountRef.value = 0
+
         return data
       })
       .catch((error) => {
         errorRef.value = error
         const context = getRecipeContext()
         const retryArgs = getRetryArgs(context, retry)
+
         if (retryArgs) {
           retryCountRef.value += 1
+
           return execute(...(retryArgs as any))
         }
+
         waitingRef.value = false
         throw error
       })
 
     argsRef.value = args
     promiseRef.value = promise
+
     return promise
   }
 

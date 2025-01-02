@@ -51,6 +51,7 @@ describe('onElementResize', () => {
       defineComponent({
         setup: () => {
           const elementRef: Ref<HTMLElement> = ref(markRaw(element))
+
           onElementResize(elementRef, callback)
         },
       }),

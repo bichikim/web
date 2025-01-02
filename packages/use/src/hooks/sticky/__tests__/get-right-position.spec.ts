@@ -1,5 +1,5 @@
 import {getEndPosition} from '../get-end-position'
-import {describe, it, expect} from 'vitest'
+import {describe, expect, it} from 'vitest'
 
 describe('getEndPosition', () => {
   it('should return end', () => {
@@ -15,6 +15,7 @@ describe('getEndPosition', () => {
         width: 100,
       },
     )
+
     expect(center).toEqual({x: 100, y: 350})
   })
 })

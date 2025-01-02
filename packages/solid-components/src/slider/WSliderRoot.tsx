@@ -14,7 +14,6 @@ export const WSliderRoot = (_props: WSliderRootProps) => {
     return props.type ?? 'horizontal'
   })
   const context = useSlider(typeAccessor)
-
   const ariaContext = createMemo((): SliderAriaContextValue => {
     return {
       valuemax: String(props.max),
@@ -22,6 +21,7 @@ export const WSliderRoot = (_props: WSliderRootProps) => {
       valuenow: String((props.max - props.min) * context.value().percent + props.min),
     }
   })
+
   return (
     <SliderContext.Provider value={context}>
       <SliderAriaContext.Provider value={ariaContext}>

@@ -12,15 +12,16 @@ export const onElementMutation = (
   const mutated = (record: MutationRecord[], observer: MutationObserver) => {
     return callback(record, observer)
   }
-
   const observer = new MutationObserver(mutated)
 
   watchEffect((cleanup) => {
     const element = elementRef.value
     const options = optionsRef.value
+
     if (!element) {
       return
     }
+
     observer.observe(elementRef.value as any, {attributes: true, ...options})
     cleanup(() => {
       observer.disconnect()

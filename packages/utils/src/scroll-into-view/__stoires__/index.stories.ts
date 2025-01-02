@@ -8,7 +8,6 @@ export default {
 export const Default = () => ({
   setup() {
     const element = ref()
-
     const scroll = () => {
       scrollIntoView(element.value, {behavior: 'smooth'})
     }

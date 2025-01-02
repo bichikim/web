@@ -51,13 +51,13 @@ describe('use promise', () => {
       name: 'foo',
     }
     const {execute, data} = usePromise(() => Promise.resolve(resultValue))
+
     await execute()
     expect(data.value?.name).toBe('foo')
   })
 
   it('should resolve promise with a promise return from an execute function', async () => {
     const {data, execute, waiting, count} = usePromise(() => Promise.resolve('foo'))
-
     const wait = execute()
 
     expect(count.value).toBe(1)
@@ -73,6 +73,7 @@ describe('use promise', () => {
     const {error, execute, waiting, count} = usePromise(() =>
       Promise.reject(new Error('foo')),
     )
+
     expect(count.value).toBe(0)
     expect(error.value).toBe(undefined)
 
@@ -104,6 +105,7 @@ describe('use promise', () => {
         previous: {count, data, error},
         signal,
       } = context
+
       return Promise.resolve({
         count,
         data,
@@ -162,6 +164,7 @@ describe('use promise', () => {
         if (count !== 1) {
           return Promise.reject(new Error('foo'))
         }
+
         return Promise.resolve('foo')
       },
       {
@@ -174,6 +177,7 @@ describe('use promise', () => {
     expect(data.value).toBeUndefined()
 
     const result = await execute(0)
+
     expect(result).toBe('foo')
     expect(data.value).toBe('foo')
     expect(error.value).toBeUndefined()

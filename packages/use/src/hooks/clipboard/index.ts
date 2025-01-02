@@ -23,7 +23,6 @@ export const useClipboard = (
   const navigator = window?.navigator
   const clipboard = navigator?.clipboard
   const stateRef = ref<ClipboardState>('idle')
-
   const read = async () => {
     if (!clipboard || stateRef.value !== 'idle') {
       return valueRef.value
@@ -31,8 +30,10 @@ export const useClipboard = (
 
     stateRef.value = 'reading'
     const value = await clipboard.readText()
+
     valueRef.value = value
     stateRef.value = 'idle'
+
     return value
   }
 
@@ -43,6 +44,7 @@ export const useClipboard = (
 
     const {value} = valueRef
     const newValue = _value ?? value
+
     if (newValue) {
       stateRef.value = 'writing'
 

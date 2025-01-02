@@ -14,11 +14,9 @@ export const Default = () => {
     setup() {
       const componentRef = ref()
       const elementRef = ref()
-
       const thisKind = computed(() => {
         return isComponentInstance(componentRef.value) ? 'componentInstance' : 'unknown'
       })
-
       const barKind = computed(() => {
         return isComponentInstance(elementRef.value) ? 'componentInstance' : 'unknown'
       })

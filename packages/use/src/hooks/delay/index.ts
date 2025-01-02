@@ -37,13 +37,9 @@ export const useDelay = <Args extends any[], R>(
   const onHandle = (...args: Args): R => {
     return handle?.(...args)
   }
-
   const waitRef = defaultRef(resolveRef(wait), () => DEFAULT_WAIT)
-
   const immediateRef = resolveRef(immediate)
-
   let call
-
   const updateCall = (_call) => {
     call = _call
   }
@@ -58,14 +54,17 @@ export const useDelay = <Args extends any[], R>(
     })
     const wait = waitRef.value
     const immediate = immediateRef.value
+
     if (wait > 0) {
       updateCall(
         throttle(onHandle, wait, {
           leading: immediate,
         }),
       )
+
       return
     }
+
     updateCall(onHandle)
   })
 

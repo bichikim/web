@@ -9,6 +9,7 @@ import {beforeEach, describe, expect, it, vi} from 'vitest'
 
 vi.mock('@winter-love/utils', async () => {
   const actual: any = await vi.importActual('@winter-love/utils')
+
   return {
     ...actual,
     storage: vi.fn(actual.storage),
@@ -22,6 +23,7 @@ describe('storageRef ', () => {
   it('should pass options', () => {
     const name = '__foo__'
     const scope = effectScope()
+
     scope.run(() => {
       storageRef('cookie', name, undefined, {expires: 30})
     })
@@ -33,6 +35,7 @@ describe('storageRef ', () => {
     const name = '__foo__'
     const value = 'hello'
     const scope = effectScope()
+
     scope.run(() => {
       storageRef('local', name, value)
     })
@@ -44,8 +47,10 @@ describe('storageRef ', () => {
     const name = '__foo__'
     const value = 'hello'
     const value2 = 'hell'
+
     window.localStorage.setItem(name, JSON.stringify(value2))
     const scope = effectScope()
+
     scope.run(() => {
       storageRef('local', name, value)
     })
@@ -55,6 +60,7 @@ describe('storageRef ', () => {
   it('should not save empty init value with filled localStorage', () => {
     const name = '__foo__'
     const value = 'hello'
+
     window.localStorage.setItem(name, JSON.stringify(value))
     storageRef('local', name, undefined)
     expect(window.localStorage.getItem(name)).toBe(JSON.stringify(value))
@@ -64,6 +70,7 @@ describe('storageRef ', () => {
     const name = '__foo__'
     const value = 'hello'
     const valueRef = storageRef<string>('local', name, undefined)
+
     expect(window.localStorage.getItem(name)).toBe(JSON.stringify(null))
     valueRef.value = value
     await flushPromises()
@@ -75,6 +82,7 @@ describe('storageRef ', () => {
     const value = 'hello'
     const value2 = 'hell'
     const valueRef = storageRef<string>('local', name, value)
+
     expect(window.localStorage.getItem(name)).toBe(JSON.stringify(value))
     valueRef.value = value2
     await flushPromises()
@@ -85,6 +93,7 @@ describe('storageRef ', () => {
     const name = '__foo__'
     const value = 'hello'
     const valueRef: any = storageRef<string>('local', name, value)
+
     expect(window.localStorage.getItem(name)).toBe(JSON.stringify(value))
     valueRef.value = undefined
     await flushPromises()
@@ -95,6 +104,7 @@ describe('storageRef ', () => {
     const name = '__foo__'
     const value = 'hello'
     const valueRef = storageRef<string>('local', name, value)
+
     expect(window.localStorage.getItem(name)).toBe(JSON.stringify(value))
     valueRef.value = null
     await flushPromises()
@@ -104,6 +114,7 @@ describe('storageRef ', () => {
   it('should restore value', async () => {
     const name = '__foo__'
     const value = 'hello'
+
     window.localStorage.setItem(name, JSON.stringify(value))
     storageRef<string>('local', name, undefined)
     expect(window.localStorage.getItem(name)).toBe(JSON.stringify(value))

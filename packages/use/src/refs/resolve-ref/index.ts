@@ -15,6 +15,7 @@ export function resolveRef<T>(value: MaybeRef<T>, updateOrigin: boolean = false)
         return value.value
       }
     }
+
     return () => {
       return value
     }
@@ -26,6 +27,7 @@ export function resolveRef<T>(value: MaybeRef<T>, updateOrigin: boolean = false)
         ;(value as any).value = _value
       }
     }
+
     return () => {
       // empty skip write
     }

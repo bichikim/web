@@ -12,7 +12,6 @@ export const useDebounce = <Args extends any[]>(
 ) => {
   const props = reactive(options)
   const delayRef = resolveRef(delay)
-
   const debouncedFunction = ref()
 
   watchEffect((onCleanup) => {
@@ -20,16 +19,21 @@ export const useDebounce = <Args extends any[]>(
     const leading = props.leading
     const maxWait = props.maxWait
     const trailing = props.trailing
+
     if (leading !== undefined) {
       options.leading = leading
     }
+
     if (maxWait !== undefined) {
       options.maxWait = maxWait
     }
+
     if (trailing !== undefined) {
       options.trailing = trailing
     }
+
     const _debouncedFunction = debounce(callback, delayRef.value, options)
+
     debouncedFunction.value = _debouncedFunction
     onCleanup(() => {
       _debouncedFunction.cancel()

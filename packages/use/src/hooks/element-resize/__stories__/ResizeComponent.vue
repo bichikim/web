@@ -7,6 +7,7 @@ import {ref} from 'vue'
 import {onElementResize} from '../'
 
 const rootRef = ref(null)
+
 onElementResize(rootRef, (size) => {
   console.info(size)
 })

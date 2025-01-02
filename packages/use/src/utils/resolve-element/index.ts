@@ -12,5 +12,6 @@ export const resolveElement = (maybeElement?: MaybeElement): HTMLElement | null 
   if (maybeElement?.$el instanceof HTMLElement) {
     return maybeElement.$el
   }
+
   return null
 }

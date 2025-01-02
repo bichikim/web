@@ -9,6 +9,7 @@ export type FocusHandle = () => unknown
  */
 export const onFocus = (handle?: FocusHandle) => {
   const window = getWindow()
+
   if (!window) {
     return
   }

@@ -29,15 +29,14 @@ export const useIntersectionRef = (
   const hideRef = toRef(options, 'hide', true)
   const elementRef = resolveRef(element)
   const thresholdRef = toRef(options, 'threshold', DEFAULT_THRESHOLD)
-
   const shownRef = ref(initState)
-
   // hide 로 다시 바뀔일 없으면 더 이상 옵져빙이 필요 없다
   // 최적화 코드
   const observingElementRef = computed(() => {
     const hide = hideRef.value
     const element = elementRef.value
     const show = shownRef.value
+
     if (hide) {
       return elementRef.value
     }
@@ -45,6 +44,7 @@ export const useIntersectionRef = (
     if (show) {
       return null
     }
+
     return element
   })
 
@@ -53,6 +53,7 @@ export const useIntersectionRef = (
     (entries) => {
       const hide = hideRef.value
       const threshold = thresholdRef.value
+
       if (hide) {
         const shouldClose = entries.some((entry) => {
           return entry.intersectionRatio < threshold
@@ -60,6 +61,7 @@ export const useIntersectionRef = (
 
         if (shouldClose) {
           shownRef.value = false
+
           return
         }
       }

@@ -10,9 +10,11 @@ export const changeKeys = <T>(
   deep: number = -1,
 ): T => {
   const isEnterDeeply = deep > 0 || deep < 0
+
   if (typeof value !== 'object' || value === null || !isEnterDeeply) {
     return value
   }
+
   if (Array.isArray(value)) {
     return value.map((item) => {
       return changeKeys(item, transform, deep - 1)
@@ -24,6 +26,7 @@ export const changeKeys = <T>(
       const newKey = transform(key)
       const newItem =
         typeof item === 'object' ? changeKeys(item, transform, deep - 1) : item
+
       return [newKey, newItem]
     }),
   ) as any
@@ -41,6 +44,7 @@ export const changeKeysRight: ChangeKeysRight = (...args: any[]) => {
   if (args.length > 2) {
     return changeKeys(value, transform, deep)
   }
+
   return (value) => {
     return changeKeys(value, transform, deep)
   }

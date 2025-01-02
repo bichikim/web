@@ -13,6 +13,7 @@ export const debug =
       }
     : (states: Record<string, any>) => {
         const instance = getCurrentInstance()
+
         if (instance) {
           instance.setupState = reactive({...states, ...instance.setupState})
         }

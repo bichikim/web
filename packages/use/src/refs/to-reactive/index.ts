@@ -19,10 +19,13 @@ export interface ToReactive {
 export const toReactive: ToReactive = (value: MaybeRef<any>): any => {
   if (isRef(value)) {
     const data = unref(value)
+
     if (data !== null && typeof data === 'object') {
       return reactive(toEachRefs(value))
     }
+
     return reactive({})
   }
+
   return reactive(value)
 }

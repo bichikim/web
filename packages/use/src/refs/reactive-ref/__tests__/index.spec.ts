@@ -9,7 +9,6 @@ describe('reactiveRef', () => {
     const data = reactive({
       name: 'foo',
     })
-
     const resultRef = reactiveRef(data)
 
     watch(resultRef, callback)

@@ -14,14 +14,15 @@ describe('deep bind ref', () => {
       defineComponent({
         setup: () => {
           const data = toDeepRef(target, ['info', 'name'])
+
           watch(data, changed)
+
           return {
             data,
           }
         },
       }),
     )
-
     const setupState = wrapper.vm.$.setupState
 
     expect(setupState.data).toBe('foo')
@@ -46,14 +47,15 @@ describe('deep bind ref', () => {
       defineComponent({
         setup: () => {
           const data = toDeepRef(target, ['info', 'name'])
+
           watch(data, changed)
+
           return {
             data,
           }
         },
       }),
     )
-
     const setupState = wrapper.vm.$.setupState
 
     expect(setupState.data).toBe('foo')

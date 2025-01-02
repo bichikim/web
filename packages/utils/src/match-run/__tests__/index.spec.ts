@@ -9,6 +9,7 @@ describe('matchRun', () => {
       B: (v: string) => `Matched B: ${v}`,
     }
     const result = matchRun(value)(matches)
+
     expect(result).toBe('Matched A: A')
   })
 
@@ -20,6 +21,7 @@ describe('matchRun', () => {
       default: (v: string) => `Default: ${v}`,
     }
     const result = matchRun(value)(matches)
+
     expect(result).toBe('Default: C')
   })
 
@@ -30,6 +32,7 @@ describe('matchRun', () => {
       B: (v: string) => `Matched B: ${v}`,
     }
     const result = matchRun(value)(matches)
+
     expect(result).toBeUndefined()
   })
 
@@ -44,11 +47,13 @@ describe('matchRun', () => {
       default: (v: string) => `Default: ${v}`,
     }
     const result = matchRun(value)(matches)
+
     expect(result).toBe(expected)
   })
   const x = Symbol('X')
   const y = Symbol('Y')
   const z = Symbol('Z')
+
   it.each([
     [1, 'Matched 1: 1'],
     [2, 'Matched 2: 2'],
@@ -70,6 +75,7 @@ describe('matchRun', () => {
       [y]: () => `Matched Symbol: y`,
     }
     const result = matchRun(value)(matches)
+
     expect(result).toBe(expected)
   })
 })

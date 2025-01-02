@@ -9,6 +9,7 @@ export const Default = () => ({
   setup() {
     const countRef = ref(0)
     const watchCountRef = ref(0)
+
     onShouldUpdate(
       () => {
         countRef.value += 1
@@ -17,6 +18,7 @@ export const Default = () => ({
         watchValue: watchCountRef,
       },
     )
+
     return () => {
       return h('div', [
         h('div', watchCountRef.value),

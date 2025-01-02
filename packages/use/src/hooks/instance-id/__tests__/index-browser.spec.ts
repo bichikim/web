@@ -8,6 +8,7 @@ import {useInstanceId} from '../'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 vi.mock('@winter-love/utils', async () => {
   const actual: any = await vi.importActual('@winter-love/utils')
+
   return {
     ...actual,
     getWindow: vi.fn(actual.getWindow),
@@ -16,6 +17,7 @@ vi.mock('@winter-love/utils', async () => {
 
 vi.mock('vue', async () => {
   const actual: any = await vi.importActual('vue')
+
   return {
     ...actual,
     getCurrentInstance: vi.fn(actual.getCurrentInstance),
@@ -42,7 +44,6 @@ describe('useInstanceId', () => {
         },
       }),
     )
-
     const setupState = wrapper.vm.$.setupState
 
     expect(typeof setupState.id).toBe('number')
@@ -67,6 +68,7 @@ describe('useInstanceId', () => {
       }),
     )
     const setupState = wrapper.vm.$.setupState
+
     expect(typeof setupState.id).toBe('number')
     expect(console.warn).toHaveBeenCalledWith('Do not use in SSR environment')
   })

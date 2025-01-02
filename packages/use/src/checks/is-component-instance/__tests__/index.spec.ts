@@ -14,7 +14,6 @@ describe('isComponentInstance', () => {
         return () => h('div')
       },
     })
-
     const Root = defineComponent({
       setup() {
         const element = ref(null)
@@ -26,7 +25,6 @@ describe('isComponentInstance', () => {
         return () => h(Component, {ref: element})
       },
     })
-
     const wrapper = await mount(Root)
 
     expect(_isComponentInstance).toBe(true)
@@ -36,7 +34,6 @@ describe('isComponentInstance', () => {
     let _isComponentInstance
     let _isElement
     const Component = () => h('div')
-
     const Root = defineComponent({
       setup() {
         const element = ref<any>(null)
@@ -49,7 +46,6 @@ describe('isComponentInstance', () => {
         return () => h(Component, {ref: element})
       },
     })
-
     const wrapper = await mount(Root)
 
     expect(_isComponentInstance).toBe(false)

@@ -9,7 +9,6 @@ import {ref} from 'vue'
 
 // todo fix this
 let _legacyInput: HTMLInputElement
-
 const getLegacyInput = (): HTMLInputElement | undefined => {
   if (_legacyInput) {
     return _legacyInput
@@ -25,23 +24,25 @@ const getLegacyInput = (): HTMLInputElement | undefined => {
 
   if (_inputElement) {
     _legacyInput = _inputElement as HTMLInputElement
+
     return _legacyInput
   }
 
   const inputElement = document.createElement('input')
+
   inputElement.id = '__legacy_input__'
   inputElement.style.display = 'block'
   inputElement.setAttribute('type', 'text')
   document.body.append(inputElement)
   _legacyInput = inputElement
+
   return inputElement
 }
-
 const blur = useBlur()
-
 const legacyCopy = (value: string) => {
   const document = getDocument()
   const input = getLegacyInput()
+
   if (!input || !document) {
     return
   }
@@ -50,11 +51,14 @@ const legacyCopy = (value: string) => {
   input.value = value
   input.select()
   const result = document.execCommand('copy')
+
   if (!result) {
     return result
   }
+
   blur()
   input.style.display = 'none'
+
   return result
 }
 
@@ -67,17 +71,20 @@ export const useLegacyClipboard = (
   const clipboard = navigator?.clipboard
   const valueRef = mutRef(resolveRef(initState))
   const stateRef = ref<ClipboardState>('idle')
-
   const write = (value: string) => {
     stateRef.value = 'writing'
     const result = legacyCopy(value ?? valueRef.value)
+
     if (!result) {
       return Promise.reject(new Error('Cannot copy string (legacy)'))
     }
+
     if (value) {
       valueRef.value = value
     }
+
     stateRef.value = 'idle'
+
     return Promise.resolve(valueRef.value)
   }
 
@@ -88,8 +95,10 @@ export const useLegacyClipboard = (
 
     stateRef.value = 'reading'
     const value = await clipboard.readText()
+
     valueRef.value = value
     stateRef.value = 'idle'
+
     return value
   }
 

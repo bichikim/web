@@ -18,8 +18,10 @@ export const statefulWithArgs = <State, Args extends any[]>(
 
 export const stateful = <State>(initValue: State) => {
   let state = initValue
+
   return (predicate: (state: State) => State) => {
     state = predicate(state)
+
     return state
   }
 }

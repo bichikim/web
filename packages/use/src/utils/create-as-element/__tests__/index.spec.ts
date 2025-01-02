@@ -14,7 +14,6 @@ describe('createAsElement', () => {
         return () => createAsElement('div', {style: 'color:red'}, () => name.value)
       },
     })
-
     const wrapper = mount(component)
 
     expect(wrapper.get('div').element).toHaveStyle({color: 'rgb(255, 0, 0)'})
@@ -39,7 +38,6 @@ describe('createAsElement', () => {
           createAsElement(childrenComponent, {style: 'color:red'}, () => name.value)
       },
     })
-
     const wrapper = mount(component)
 
     expect(wrapper.get('div').element).toHaveStyle({color: 'rgb(255, 0, 0)'})
@@ -57,17 +55,14 @@ describe('createAsElement', () => {
       _data = data
     })
     const name = ref('foo')
-
     const MyComponent = defineComponent((_, {slots}) => {
       return () => h('div', {style: 'color:red'}, slots.defauil?.())
     })
-
     const component = defineComponent({
       setup: () => {
         return () => h(MyComponent, {}, name.value)
       },
     })
-
     const wrapper = mount(component)
 
     await expect(wrapper.get('div').text()).toBe('')

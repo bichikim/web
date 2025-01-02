@@ -12,6 +12,7 @@ export type OnOnlineHandle = (event: Event) => unknown
  */
 export const onOffline = (handle: OnOfflineHandle) => {
   const window = getWindow()
+
   return onEvent(window, 'offline', handle, {capture: false, passive: true})
 }
 
@@ -20,6 +21,7 @@ export const onOffline = (handle: OnOfflineHandle) => {
  */
 export const onOnline = (handle: OnOnlineHandle) => {
   const window = getWindow()
+
   return onEvent(window, 'online', handle, {capture: false, passive: true})
 }
 

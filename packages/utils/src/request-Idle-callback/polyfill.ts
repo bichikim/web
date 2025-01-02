@@ -10,6 +10,7 @@ export const requestIdleCallbackPolyfill = (
   if (timeout !== undefined) {
     timeoutId = setTimeout(() => {
       clearTimeout(executeId)
+
       if (!didExecute) {
         didExecute = true
         callback({

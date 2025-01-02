@@ -18,8 +18,10 @@ export const SliderAriaContext = createContext<Accessor<SliderAriaContextValue>>
 
 export const useSliderAriaContext = () => {
   const context = useContext(SliderAriaContext)
+
   if (context === undefined) {
     throw new Error('useSliderAriaContext must be used within a SliderAria')
   }
+
   return context
 }

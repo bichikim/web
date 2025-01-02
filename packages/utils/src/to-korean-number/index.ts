@@ -6,7 +6,6 @@ import {toNumber} from 'src/to-number'
 const chunkFp = beFactory(chunk)
 const mapFp = beFactory(map)
 const joinFp = beFactory(join)
-
 const _numberNames = freeze(['0', '일', '이', '삼', '사', '오', '육', '칠', '팔', '구'])
 const _numberUnitNames = freeze([
   '',
@@ -49,15 +48,18 @@ export interface NumberToKoreanOptions {
 const removeUselessZero = (value: string[]): string[] => {
   const _value = [...value].reverse()
   const index = _value.findIndex((value) => value !== '0')
+
   return _value.slice(index).reverse()
 }
 
 const addSmallNumberUnit = (value: string[], removeOne: boolean = true): string[] => {
   const _value = removeUselessZero(value).filter(Boolean)
   const hasOneItem = _value.length === 1
+
   return [..._value].map((value, index, array) => {
     const isFirst = index === 0
     const isLast = index === array.length - 1
+
     if (value === '0') {
       return ''
     }
@@ -80,9 +82,7 @@ const addNumberUnit = (value: string[], index: number): string[] => {
 
   return value
 }
-
 const anyToStringArray = (value: unknown) => [...toNumber(value).toString()]
-
 const KoreanChunk = 4
 
 export const toKoreanNumberFn = ({

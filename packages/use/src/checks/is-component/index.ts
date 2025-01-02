@@ -4,7 +4,9 @@ export const isComponent = (value: any): value is Component => {
   if (value === null) {
     return false
   }
+
   const type = typeof value
+
   return (
     type === 'function' ||
     (type === 'object' &&

@@ -7,9 +7,7 @@ describe('useDebounce', () => {
     const timer = useFakeTimers()
     const options = {leading: true}
     const args = ['hello']
-
     const callback = vi.fn()
-
     const debounce = useDebounce(callback, 100, options)
 
     debounce.execute(...args)

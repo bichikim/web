@@ -19,7 +19,6 @@ export const onAnimationRepeater = (
   const toggleRef: Ref<boolean> = mutRef(defaultRef(resolveRef(toggle), true))
   const cancelFlagRef = ref<number | undefined>()
   const window = getWindow()
-
   const tick = () => {
     if (window && toggleRef.value) {
       handle()
@@ -34,6 +33,7 @@ export const onAnimationRepeater = (
 
     if (value) {
       cancelFlagRef.value = window?.requestAnimationFrame(tick)
+
       return
     }
 

@@ -38,7 +38,7 @@ export const stringifyFocusPosition = (focusPosition: FocusPosition) => {
 }
 
 export const parseFocusPosition = (focusPositionString: string): FocusPosition => {
-  return focusPositionString.split('|').map(parsePoint)
+  return focusPositionString.split('|').map((element) => parsePoint(element))
 }
 
 export const createPositionMap = <Info extends AbstractInfo>(): PositionMap<Info> => {

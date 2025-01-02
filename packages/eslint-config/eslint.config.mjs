@@ -351,6 +351,7 @@ export default [
       radix: 'error',
       'require-unicode-regexp': 'warn',
       'rest-spread-spacing': 'error',
+      'solid/reactivity': 'off',
       'sort-export-all/sort-export-all': 'warn',
       'sort-imports': [
         'warn',
@@ -424,6 +425,7 @@ export default [
       'vue/html-self-closing': 'off',
       'vue/max-attributes-per-line': 'off',
       'vue/multi-word-component-names': 'off',
+      'vue/one-component-per-file': 'off',
       'vue/order-in-components': 'off',
       'vue/require-default-prop': 'off',
       'vue/singleline-html-element-content-newline': 'off',
@@ -467,10 +469,11 @@ export default [
     },
   },
   {
-    files: ['**/*.story.{ts,tsx}', '**/*.stories.{ts,tsx}'],
+    files: ['**/*.story.{ts,tsx}', '**/*.stories.{ts,tsx}', '**/*.story.vue'],
     rules: {
       'id-length': 'off',
       'no-magic-numbers': 'off',
+      'solid/reactivity': 'off',
     },
   },
   {
@@ -519,6 +522,9 @@ export default [
       parserOptions: {
         // project: 'tsconfig.json',
       },
+    },
+    rules: {
+      'solid/reactivity': 'off',
     },
   },
 ]

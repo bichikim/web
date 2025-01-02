@@ -6,17 +6,21 @@ describe('toReactive', () => {
   const setup = (target) => {
     const callback = vi.fn()
     const result = toReactive(target)
+
     watch(result, callback, {flush: 'sync'})
+
     return {
       callback,
       result,
     }
   }
+
   it('should return a reactive object with ref', () => {
     const foo = ref({
       name: 'foo',
     })
     const {result, callback} = setup(foo)
+
     expect(result.name).toBe(foo.value.name)
     foo.value = {name: 'foo1'}
     expect(result.name).toBe(foo.value.name)
@@ -28,6 +32,7 @@ describe('toReactive', () => {
     })
     const computedFoo = computed(() => foo.value)
     const {result, callback} = setup(computedFoo)
+
     expect(result.name).toBe(foo.value.name)
     foo.value = {name: 'foo1'}
     expect(result.name).toBe(foo.value.name)
@@ -38,6 +43,7 @@ describe('toReactive', () => {
       name: 'foo',
     })
     const {result, callback} = setup(foo)
+
     expect(result.name).toBe(foo.name)
     foo.name = 'foo1'
     expect(result.name).toBe(foo.name)

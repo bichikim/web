@@ -19,8 +19,10 @@ export const assignRef: AssignRef = (...args) => {
     if (isRef(arg)) {
       return typeof unref(arg) === 'object'
     }
+
     return true
   })
+
   return computed(() => {
     return Object.fromEntries(
       // todo fix this

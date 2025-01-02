@@ -11,5 +11,6 @@ export const useImmer = <T>(value: T): [ShallowRef<T>, (recipe) => void] => {
   const update = (recipe: Recipe<T>) => {
     state.value = produce(state.value, recipe)
   }
+
   return [state, update]
 }

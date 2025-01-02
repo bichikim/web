@@ -49,6 +49,7 @@ export const useEvent: OnEvent = (
 
   createEffect(() => {
     const element = elementAccessor()
+
     element?.addEventListener(type, listener, options)
 
     onCleanup(() => {

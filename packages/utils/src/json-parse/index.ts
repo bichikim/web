@@ -12,6 +12,7 @@ export const jsonParse = (
   if (data === null || data === 'undefined' || data === 'null') {
     return defaultValue
   }
+
   try {
     return parse(data)
   } catch {

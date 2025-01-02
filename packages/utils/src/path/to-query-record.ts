@@ -27,6 +27,7 @@ export const decodeQueryItem = (
   options: ToQueryRecodeOptions = {},
 ) => {
   const {decodeKey = decodeQueryKey, decodeValue = decodeQueryValue} = options
+
   return [decodeKey(trimQueryKey(key)), decodeValue(value)]
 }
 
@@ -38,5 +39,6 @@ export const toQueryRecord = (query: string, options?: ToQueryRecodeOptions) => 
       return item.split('=', 2)
     })
     .map(([key, value]) => decodeQueryItem(key, value, options))
+
   return Object.fromEntries(entries)
 }

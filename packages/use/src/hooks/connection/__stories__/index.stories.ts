@@ -8,6 +8,7 @@ export default {
 export const Default = () => ({
   setup() {
     const valueRef = useConnection(true)
+
     return () => h('div', [h('div', valueRef.value)])
   },
 })

@@ -18,5 +18,6 @@ export interface SlotOptions {
 export const slot = (name: string, slots: any, options: SlotOptions = {}) => {
   const {slotDefault, args = []} = options
   const slot = slots[name]
-  return slot ? slot(...args) : slotDefault ?? null
+
+  return slot ? slot(...args) : (slotDefault ?? null)
 }

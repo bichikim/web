@@ -3,6 +3,7 @@ import {debounce, DebouncedFunc} from '@winter-love/lodash'
 
 export const useDebounce = createUseWait(() => {
   let flag: undefined | DebouncedFunc<(...args: any) => any>
+
   return {
     cancel: () => {
       flag?.cancel()

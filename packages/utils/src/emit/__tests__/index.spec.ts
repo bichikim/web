@@ -30,6 +30,7 @@ describe('createEmitter', () => {
     const callback = vi.fn()
     const emitter = createEmitter()
     const event = {path: '/foo'}
+
     emitter.addEventListener(callback)
     emitter.trigger(event)
     expect(callback).toHaveBeenCalledTimes(1)
@@ -55,6 +56,7 @@ describe('createEmitter', () => {
     )
     const emitter = createEmitter()
     const event = {path: '/foo'}
+
     emitter.addEventListener(callback)
     const promise = emitter.trigger(event)
 
@@ -79,6 +81,7 @@ describe('createEmitter', () => {
     const callback2 = vi.fn()
     const emitter = createEmitter()
     const event = {path: '/foo'}
+
     emitter.addEventListener(callback1)
     emitter.addEventListener(callback2, 'foo')
     emitter.trigger(event)

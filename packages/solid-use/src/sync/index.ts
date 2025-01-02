@@ -8,6 +8,7 @@ export const sync = <T>(value: MayBeAccessor<T>): Signal<T> => {
 
   createEffect(() => {
     const value = valueAccessor()
+
     setValue(() => value)
   })
 

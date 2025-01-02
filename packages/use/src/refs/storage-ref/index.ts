@@ -61,10 +61,13 @@ export function storageRef<Data>(
       if (savedValue === null || savedValue === undefined) {
         storageRef.value.set(key, value ?? null)
       }
+
       return
     }
+
     storageRef.value.set(key, value ?? null)
   }
+
   saveValue(valueRef.value, true)
   updateValue()
 

@@ -23,16 +23,20 @@ export const onElementResize = (
           if (entries.length === 0) {
             return
           }
+
           const {width, height} = entries[0].contentRect
+
           callback?.({height, width})
         })
   const isActiveRef = resolveRef(isActive)
 
   watchEffect((onCleanup) => {
     const element = elementRef.value
+
     if (isElement(element) && isActiveRef.value) {
       resizeObserver?.observe(element)
     }
+
     onCleanup(() => {
       resizeObserver?.disconnect()
     })

@@ -10,7 +10,7 @@ export const Default = () => ({
   setup() {
     const {execute, data} = usePromise((context) => {
       const {previous} = context
-      // eslint-disable-next-line no-magic-numbers
+
       return setTimeoutPromise(1000).then(() => {
         return `foo ${previous.count}`
       })

@@ -1,6 +1,7 @@
 import {watch, WatchCallback, WatchOptions, WatchSource, WatchStopHandle} from 'vue'
 import {debounce as createDebounce} from '@winter-love/lodash'
 import {MultiWatchSources} from 'src/types'
+
 export type MapSources<T, Immediate> = {
   [K in keyof T]: T[K] extends WatchSource<infer V>
     ? Immediate extends true
@@ -58,7 +59,6 @@ export function watchExtended<
 
 export function watchExtended(sources, callback, options?: WatchExtendOptions): any {
   const {once, debounce} = options ?? {}
-
   const beforeStop: (() => void)[] = []
   const stop: () => void = () => {
     for (const function_ of beforeStop) {
@@ -66,8 +66,10 @@ export function watchExtended(sources, callback, options?: WatchExtendOptions): 
     }
   }
   let _callback = callback
+
   if (once) {
     const oldCallback = _callback
+
     _callback = (...args) => {
       oldCallback(...args)
       stop()
@@ -79,10 +81,12 @@ export function watchExtended(sources, callback, options?: WatchExtendOptions): 
     const debounceFunction = createDebounce(oldCallback, debounce.interval, {
       leading: options?.immediate,
     })
+
     beforeStop.push(debounceFunction.cancel)
     _callback = debounceFunction
   }
 
   beforeStop.push(watch(sources, _callback, options))
+
   return stop
 }

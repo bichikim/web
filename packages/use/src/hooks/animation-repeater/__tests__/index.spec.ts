@@ -9,6 +9,7 @@ describe('animation-repeater', () => {
   let tick
   const requestAnimationFrame: any = vi.fn((callback) => {
     tick = callback
+
     return 'flag'
   })
   const cancelAnimationFrame = vi.fn()
@@ -34,6 +35,7 @@ describe('animation-repeater', () => {
           const isRun = onAnimationRepeater(() => {
             valueRef.value += 1
           })
+
           return {
             isRun,
             value: valueRef,
@@ -41,7 +43,6 @@ describe('animation-repeater', () => {
         },
       }),
     )
-
     const setupState = wrapper.vm.$.setupState
 
     expect(setupState.value).toBe(0)

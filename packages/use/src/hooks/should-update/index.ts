@@ -48,6 +48,7 @@ export const isVisible = () => {
   if (!getWindow()) {
     return false
   }
+
   return document.visibilityState !== 'hidden'
 }
 
@@ -73,23 +74,20 @@ export const onShouldUpdate = (
     debounce = defaultDebounceWait,
     watchValue,
   } = options
-
   // noinspection SuspiciousTypeOfGuard
   const debounceWait = typeof debounce === 'boolean' ? defaultDebounceWait : debounce
-
   const thisDocument = window?.document ?? null
-
   const onHandle = () => {
     handle?.()
   }
-
   const onDebounceHandle = useDebounce(debounceWait, onHandle)
-
   const onShouldUpdate = () => {
     if (debounce) {
       onDebounceHandle()
+
       return
     }
+
     onHandle()
   }
 
@@ -104,9 +102,7 @@ export const onShouldUpdate = (
       onShouldUpdate()
     }
   }
-
   const isOnline = useConnection(true)
-
   const isShowing = useIntersectionRef(visibleElement)
 
   if (firstExecute && isVisible()) {

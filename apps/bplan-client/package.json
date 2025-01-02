@@ -8,7 +8,7 @@
     "fix": "node build-hot-fix.mjs",
     "generate-pwa-assets": "pwa-assets-generator",
     "check-types": "tsc --noEmit",
-    "lint": "eslint src"
+    "lint": "eslint src/**/*.ts[x]"
   },
   "private": true,
   "dependencies": {

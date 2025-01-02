@@ -9,6 +9,7 @@ import {afterEach, describe, expect, it, vi} from 'vitest'
 
 vi.mock('src/hooks/intersection', async () => {
   const actual: any = await vi.importActual('src/hooks/intersection')
+
   return {
     ...actual,
     onIntersection: vi.fn(actual.onIntersection),
@@ -20,7 +21,7 @@ const _onIntersection = vi.mocked(onIntersection)
 describe('use-element-intersection', () => {
   const setup = (threshold?: number) => {
     const TestComponent = defineComponent({
-      setup(props, {slots}) {
+      setup(_, {slots}) {
         const elementRef = ref()
         const showRef = useIntersectionRef(elementRef, {
           threshold,
@@ -47,6 +48,7 @@ describe('use-element-intersection', () => {
       TestComponent,
     }
   }
+
   afterEach(() => {
     vi.resetAllMocks()
   })
@@ -100,6 +102,7 @@ describe('use-element-intersection', () => {
         default: () => h('div', 'foo'),
       },
     })
+
     expect(wrapper.text()).toBe('')
     handle([
       {

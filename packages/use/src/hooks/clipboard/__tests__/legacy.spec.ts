@@ -8,6 +8,7 @@ import {beforeEach, describe, expect, it, vi} from 'vitest'
 
 describe('legacy', () => {
   const mock = vi.fn(() => 'bar')
+
   beforeEach(() => {
     const _window: any = window
 
@@ -18,7 +19,6 @@ describe('legacy', () => {
       setup() {
         const inputValue = ref()
         const legacyClipboard = useLegacyClipboard()
-
         const onWrite = () => {
           legacyClipboard.write('foo')
         }
@@ -35,7 +35,6 @@ describe('legacy', () => {
           ])
       },
     })
-
     const wrapper = mount(Component)
 
     await wrapper.get('#write').trigger('click')

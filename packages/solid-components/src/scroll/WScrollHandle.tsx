@@ -11,18 +11,17 @@ export interface WScrollHandleProps extends DynamicParentProps {
 }
 
 export const WScrollHandle = (_props: WScrollHandleProps) => {
-  const [props, restProps] = splitProps(mergeProps({as: 'div'}, _props), [
+  const defaultProps = mergeProps({as: 'div'}, _props)
+  const [props, restProps] = splitProps(defaultProps, [
     'as',
     'style',
     'children',
     'class',
   ])
   const scrollBar = useScrollBar()
-
   const [element, setElement] = createSignal<HTMLElement | null>(null)
   const scrollContext = useScrollContext()
   const [barState, setBarState] = createSignal<DragType>('end')
-
   const handleValues = createMemo(() => {
     const {containerSize, scrollSize, percent} = scrollBar()
     const barSize = scrollSize > 0 ? (containerSize / scrollSize) * containerSize : 0
@@ -34,7 +33,6 @@ export const WScrollHandle = (_props: WScrollHandleProps) => {
       percent,
     }
   })
-
   const handleStyle = createMemo(() => {
     const {barPosition, barSize} = handleValues()
 
@@ -43,33 +41,37 @@ export const WScrollHandle = (_props: WScrollHandleProps) => {
       [SIZE_VAR]: `${barSize}px`,
     }
   })
-
   const setScroll = (position: number) => {
     const {type} = scrollBar()
+
     scrollContext.setScroll(type, position)
   }
 
   useDrag(element, (type, payload) => {
     setBarState(type)
+
     if (type !== 'move') {
       return
     }
+
     const {type: barType} = scrollBar()
     const [clientX, clientY] = payload.currentPoint
     const [relativeX, relativeY] = payload.relativePoint
     const relativePoint = barType === 'horizontal' ? relativeX : relativeY
-
     const bodyElement = element()
     const {barSize} = handleValues()
     const {containerSize, scrollSize, containerPosition} = scrollBar()
+
     if (!bodyElement) {
       return
     }
+
     const currentPoint = barType === 'horizontal' ? clientX : clientY
     const targetPoint = currentPoint - containerPosition - relativePoint
     const pointPercent = targetPoint / (containerSize - barSize)
     const nextScrollPosition = (scrollSize - containerSize) * pointPercent
-    setScroll(nextScrollPosition < 0 ? 0 : nextScrollPosition)
+
+    setScroll(Math.max(nextScrollPosition, 0))
   })
 
   return (

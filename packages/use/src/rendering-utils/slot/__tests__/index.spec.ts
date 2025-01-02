@@ -36,8 +36,10 @@ describe('Slot', () => {
 
     return {wrapper}
   }
+
   it('should render default slot content', () => {
     const {wrapper} = setup()
+
     expect(wrapper.text()).toBe('foo')
   })
 })

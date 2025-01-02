@@ -16,8 +16,10 @@ describe('on-connection', () => {
     })
     it('should use useEvent correctly', () => {
       const scope = effectScope()
+
       scope.run(() => {
         const callback = vi.fn()
+
         onOffline(callback)
         expect(_useEvent).toBeCalledTimes(1)
         expect(_useEvent).toBeCalledWith(window, 'offline', callback, {
@@ -35,6 +37,7 @@ describe('on-connection', () => {
     })
     it('should call onOffline handle', () => {
       const scope = effectScope()
+
       scope.run(() => {
         const callback = vi.fn()
 
@@ -55,6 +58,7 @@ describe('on-connection', () => {
     })
     it('should update connection state', async () => {
       const scope = effectScope()
+
       scope.run(() => {
         const result = useConnection()
 
@@ -64,6 +68,7 @@ describe('on-connection', () => {
           passive: true,
         })
         const triggerOnLine: any = _useEvent.mock.calls[0][2]
+
         expect(_useEvent).toBeCalledWith(window, 'offline', expect.any(Function), {
           capture: false,
           passive: true,
@@ -83,6 +88,7 @@ describe('on-connection', () => {
 
     it('should initialize connection', () => {
       const scope = effectScope()
+
       scope.run(() => {
         const result = useConnection(false)
 

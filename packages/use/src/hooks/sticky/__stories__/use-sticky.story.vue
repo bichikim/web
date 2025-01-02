@@ -12,12 +12,13 @@
 
 <script setup lang="ts">
 import {reactive, ref, watch} from 'vue'
-import {useSticky, UseStickyPosition} from '../'
+import {useSticky} from '../'
 const root = ref(null)
 const modal = ref(null)
 const container = ref(null)
-const position = ref<UseStickyPosition>('bottom')
+// const position = ref<UseStickyPosition>('bottom')
 const value = useSticky(modal, root, reactive({container}))
+
 watch(value, (value) => {
   if (modal.value && modal.value.style) {
     modal.value.style.top = `${value.y}px`

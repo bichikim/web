@@ -8,6 +8,7 @@ describe('watchExtended', () => {
   it('should watch once', async () => {
     const valueRef = ref(0)
     const watched = vi.fn()
+
     watchExtended(valueRef, watched, {once: true})
     expect(watched).toBeCalledTimes(0)
     valueRef.value += 1
@@ -21,6 +22,7 @@ describe('watchExtended', () => {
     const clock = useFakeTimers()
     const valueRef = ref(0)
     const watched = vi.fn()
+
     watchExtended(valueRef, watched, {debounce: {interval: 500}})
     expect(watched).toBeCalledTimes(0)
     valueRef.value += 1
@@ -46,6 +48,7 @@ describe('watchExtended', () => {
     const clock = useFakeTimers()
     const valueRef = ref(0)
     const watched = vi.fn()
+
     watchExtended(valueRef, watched, {debounce: {interval: 500}, once: true})
     expect(watched).toBeCalledTimes(0)
     valueRef.value += 1

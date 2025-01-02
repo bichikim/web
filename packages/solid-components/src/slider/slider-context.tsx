@@ -29,9 +29,11 @@ export const SliderContext = createContext<SliderContextValue>()
 
 export const useSliderContext = () => {
   const context = useContext(SliderContext)
+
   if (context === undefined) {
     throw new Error('useSliderContext must be used within a Slider')
   }
+
   return context
 }
 
@@ -46,10 +48,10 @@ export const useSlider = (
   const [getPercentValue, setPercentValue] = createSync(percentAccessor)
   const [getEndPercentValue, setEndPercentValue] = createSync(endPercentAccessor)
   const [containerElement, setContainerElement] = createSignal<HTMLElement | null>(null)
-
   const sliderValue = createMemo(() => {
     const element = containerElement()
     const type = typeAccessor()
+
     if (!element) {
       return {
         containerPosition: 0,
@@ -73,6 +75,7 @@ export const useSlider = (
         type,
       }
     }
+
     return {
       containerPosition: y,
       containerSize: height,
@@ -81,7 +84,6 @@ export const useSlider = (
       type,
     }
   })
-
   const setPercent = (percent: number) => {
     setPercentValue(percent)
   }

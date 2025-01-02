@@ -35,22 +35,22 @@ describe('async safe', () => {
         return () => h('div', {}, result.value)
       },
     })
-
     const root = defineComponent({
       props: {
         show: {type: Boolean},
       },
       setup(props, {slots}) {
         const show = toRef(props, 'show')
+
         return () => {
           if (show.value) {
             return h(component, {}, slots.default?.())
           }
+
           return null
         }
       },
     })
-
     const wrapper = mount(root, {
       props: {
         show: true,

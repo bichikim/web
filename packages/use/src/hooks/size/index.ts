@@ -1,4 +1,4 @@
-import {getElementSize, Rect} from '@winter-love/utils'
+import {getElementSize, getWindow, Rect} from '@winter-love/utils'
 import {onElementResize} from 'src/hooks/element-resize'
 import {useThrottle} from 'src/hooks/throttle'
 import {resolveRef} from 'src/refs/resolve-ref'
@@ -16,7 +16,7 @@ export interface UseSizeOptions {
 
 export const useSize = (
   element: MaybeRef<HTMLElement | Window | null>,
-  container: MaybeRef<HTMLElement | Window> = window,
+  container: MaybeRef<HTMLElement | Window> = getWindow() as any,
   options: UseSizeOptions = {},
 ): Ref<Rect> => {
   const elementRef = resolveRef(element)
@@ -27,21 +27,25 @@ export const useSize = (
   const delayRef = toRef(options, 'delay', DEFAULT_DELAY)
   const elementNotWindowRef = computed<HTMLElement | undefined | null>(() => {
     const element = elementRef.value
+
     if (element instanceof Window) {
       return
     }
+
     return element
   })
   const containerNotWindowRef = computed<HTMLElement | undefined>(() => {
     const container = containerRef.value
+
     if (container instanceof Window) {
       return
     }
+
     return container
   })
-
   const updateSize = useThrottle(() => {
     const element = elementRef.value
+
     if (element) {
       result.value = getElementSize(elementRef.value, defaultSizeRef.value)
     }

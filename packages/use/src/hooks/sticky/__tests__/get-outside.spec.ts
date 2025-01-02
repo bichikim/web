@@ -1,7 +1,6 @@
 import {getOutside} from '../get-outside'
 import {describe, expect, it} from 'vitest'
 
-// eslint-disable-next-line max-lines-per-function
 describe('getOutside', () => {
   it('should return position over left', () => {
     const result = getOutside(
@@ -18,6 +17,7 @@ describe('getOutside', () => {
         y: 0,
       },
     )
+
     expect(result).toEqual({
       x: -5,
       y: 0,
@@ -38,6 +38,7 @@ describe('getOutside', () => {
         y: 0,
       },
     )
+
     expect(result).toEqual({
       x: 1,
       y: 0,
@@ -58,6 +59,7 @@ describe('getOutside', () => {
         y: 0,
       },
     )
+
     expect(result).toEqual({
       x: 0,
       y: -1,
@@ -78,6 +80,7 @@ describe('getOutside', () => {
         y: 0,
       },
     )
+
     expect(result).toEqual({
       x: 0,
       y: 1,
@@ -98,6 +101,7 @@ describe('getOutside', () => {
         y: 0,
       },
     )
+
     expect(result).toEqual({
       x: 0,
       y: 0,
@@ -118,6 +122,7 @@ describe('getOutside', () => {
         y: 0,
       },
     )
+
     expect(result).toEqual({
       x: -10,
       y: 0,
@@ -138,6 +143,7 @@ describe('getOutside', () => {
         y: 0,
       },
     )
+
     expect(result).toEqual({
       x: 1,
       y: 0,
@@ -158,6 +164,7 @@ describe('getOutside', () => {
         y: 10,
       },
     )
+
     expect(result).toEqual({
       x: 0,
       y: -11,
@@ -178,6 +185,7 @@ describe('getOutside', () => {
         y: -10,
       },
     )
+
     expect(result).toEqual({
       x: 0,
       y: 1,

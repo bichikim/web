@@ -12,7 +12,6 @@ describe('toggleValue', () => {
     expect(toggleValue(undefined, true)()).toBe(undefined)
     expect(toggleValue(undefined, false)()).toBe(undefined)
 
-    // eslint-disable-next-line solid/reactivity
     const toggledValue = toggleValue(valueAccessor, toggleValueAccessor)
 
     expect(toggledValue()).toBe(456)

@@ -37,24 +37,26 @@ export function defineContext<T>(
 ): DefineContextResult<T> {
   const _props = props
   const _key = key ?? Symbol()
-
   const injectContext = Object.assign(
     (options: InjectContextOptions = {}): T | null | undefined => {
       const {createIfEmpty, consume} = options
       const context = inject(_key, () => (createIfEmpty ? toValue(_props) : null), true)
+
       if (consume) {
         provide(_key, null)
       }
+
       return context
     },
     {[CONTEXT_KEY]: _key},
   )
-
   const provideContext = Object.assign(
     (props?: T): T | null | undefined => {
       const valueProps = props ? toValue(props) : undefined
       const context = valueProps ?? toValue(_props)
+
       provide(_key, context)
+
       return context
     },
     {[CONTEXT_KEY]: _key},
@@ -75,9 +77,11 @@ export const preferParentContext = <T>(
 
   return (props?: T) => {
     const parentContext = inject(key, null)
+
     if (parentContext) {
       return parentContext
     }
+
     return provide(props)
   }
 }

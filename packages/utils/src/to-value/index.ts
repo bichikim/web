@@ -17,5 +17,6 @@ export function toValue(value: any, args?: any[]) {
   if (typeof value === 'function') {
     return value(...(args ?? []))
   }
+
   return value
 }

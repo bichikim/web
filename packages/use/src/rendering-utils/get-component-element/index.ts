@@ -15,5 +15,6 @@ export const getComponentElement = (
   if (maybeElement?.$el instanceof HTMLElement) {
     return maybeElement.$el
   }
+
   return null
 }

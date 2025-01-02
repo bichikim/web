@@ -13,6 +13,7 @@ describe('toggle', () => {
         setup: () => {
           const original = ref(false)
           const [value, toggle] = toggleRef(original)
+
           return {
             original,
             toggle,
@@ -21,7 +22,6 @@ describe('toggle', () => {
         },
       }),
     )
-
     const setupState = wrapper.vm.$.setupState
 
     expect(setupState.value).toBe(false)
@@ -43,6 +43,7 @@ describe('toggle', () => {
       defineComponent({
         setup: () => {
           const [value, toggle] = toggleRef()
+
           return {
             toggle,
             value,
@@ -50,7 +51,6 @@ describe('toggle', () => {
         },
       }),
     )
-
     const setupState = wrapper.vm.$.setupState
 
     expect(setupState.value).toBe(false)

@@ -17,6 +17,7 @@ describe('isReadonly', () => {
   })
   it('should return false with writeable computed', () => {
     const _value = {value: 'foo'}
+
     expect(
       isReadonly(
         computed({
@@ -33,6 +34,7 @@ describe('isReadonly', () => {
         render: () => null,
         setup(props) {
           const result = isReadonly(toRef(props, 'name'))
+
           return {
             result,
           }
@@ -44,6 +46,7 @@ describe('isReadonly', () => {
         },
       },
     )
+
     expect(wrapper.vm.result).toBe(false)
   })
   it('should return false with toRef props', () => {
@@ -53,6 +56,7 @@ describe('isReadonly', () => {
         render: () => null,
         setup(props) {
           const result = isReadonly(props)
+
           return {
             result,
           }
@@ -64,6 +68,7 @@ describe('isReadonly', () => {
         },
       },
     )
+
     expect(wrapper.vm.result).toBe(true)
   })
 })

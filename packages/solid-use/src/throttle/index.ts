@@ -3,6 +3,7 @@ import {createUseWait} from 'src/wait'
 
 export const useThrottle = createUseWait(() => {
   let flag: undefined | DebouncedFunc<(...args: any) => any>
+
   return {
     cancel: () => {
       flag?.cancel()

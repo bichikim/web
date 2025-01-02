@@ -36,7 +36,8 @@
   "scripts": {
     "build": "tsup --dts --minify",
     "dev": "tsup --watch",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "lint": "eslint src"
   },
   "dependencies": {
     "@vue/shared": "^3.5.13",

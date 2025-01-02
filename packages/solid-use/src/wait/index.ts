@@ -44,6 +44,7 @@ export const createUseWait = <Options extends Record<string, any>>(
 
     useWatch(waitAccessor, (wait) => {
       source.create?.(callback, wait, optionsAccessor())
+
       return () => {
         source.cancel()
       }

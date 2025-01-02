@@ -52,7 +52,6 @@ export const CheckboxContext = createContext<
  */
 export const CheckboxRoot = (props: ToggleRootProps) => {
   // initValue
-  // eslint-disable-next-line solid/reactivity
   const [checked, setChecked] = createSignal(props.initValue ?? false)
   const instanceId = createUniqueId()
   const id = createMemo(() => {

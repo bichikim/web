@@ -49,64 +49,68 @@ const getHandel = (handel: AnyFunction, wait?: number) => {
   if (!wait) {
     return handel
   }
+
   return debounce(handel, wait)
 }
 
 const triggerChange = (element: any, type: 'input' | 'change' = 'input') => {
   if (element instanceof HTMLInputElement) {
     const event = new Event(type)
+
     element.dispatchEvent(event)
   }
 }
-
 const DEFAULT_DEBOUNCE_WAIT = 250
 const createContext = (): VerifyInputs => {
   const inputs = ref<Map<any, boolean | string>>(new Map())
   const handles = ref<Map<any, AnyFunction>>(new Map())
   const inputContexts = new WeakMap<any, ContextObjectValue>()
-
   const inputsRef = computed(() => {
     const _inputs = inputs.value
+
     return [..._inputs.entries()]
   })
-
   const errorItems = computed(() => {
     const inputs = inputsRef.value
+
     return inputs.filter(([_, value]) => value)
   })
-
   const isValid = computed(() => {
     return !first(errorItems.value)
   })
-
   // eslint-disable-next-line vue/return-in-computed-property
   const errorMessage = computed(() => {
     const error = first(errorItems.value)
+
     if (error) {
       return error[1]
     }
   })
-
   const registerInput = (element: any, value: ContextObjectValue) => {
     unRegisterInput(element)
+
     if (element instanceof HTMLInputElement) {
       const {
         validator,
         validateAt = 'input',
         debounce: debounceWait = DEFAULT_DEBOUNCE_WAIT,
       } = value
+
       inputContexts.set(element, value)
       inputs.value.set(element, false)
       const handle = getHandel((event) => {
         const value = event.target?.value
         const result = validator(value)
+
         inputs.value.set(element, result)
       }, debounceWait)
+
       if (validateAt === 'input') {
         element.addEventListener('input', handle)
       } else {
         element.addEventListener('change', handle)
       }
+
       handles.value.set(element, handle)
     }
   }
@@ -116,6 +120,7 @@ const createContext = (): VerifyInputs => {
 
     for (const element of allElements) {
       const validateAt = inputContexts.get(element)?.validateAt
+
       triggerChange(element, validateAt)
     }
   }
@@ -124,10 +129,12 @@ const createContext = (): VerifyInputs => {
     inputs.value.delete(element)
     inputContexts.delete(element)
     const handle = handles.value.get(element)
+
     if (handle) {
       ;(element as HTMLInputElement).removeEventListener('input', handle)
       ;(element as HTMLInputElement).removeEventListener('change', handle)
     }
+
     handles.value.delete(element)
   }
 
@@ -143,7 +150,9 @@ const createContext = (): VerifyInputs => {
 
 export const useVerifyInputs = () => {
   const context = createContext()
+
   provide(VerifyInputsKey, context)
+
   return context
 }
 
@@ -165,6 +174,7 @@ export const useVerifyInput = (
     if (!objectValue) {
       return
     }
+
     _context.registerInput(ref.value, objectValue)
   })
 
@@ -175,13 +185,14 @@ export const useVerifyInput = (
   // eslint-disable-next-line vue/return-in-computed-property
   const errorMessage = computed(() => {
     const result = errorItems.value.find(([key]) => key === ref.value)
+
     if (result) {
       return result[1]
     }
   })
-
   const verify = () => {
     const element = ref.value
+
     triggerChange(element, objectValue?.validateAt)
   }
 
@@ -195,6 +206,7 @@ const getContext = (binding: DirectiveBinding<any>): undefined | VerifyInputs =>
   const {instance} = binding
   const innerInstance: any = instance?.$
   const {provides = {}} = innerInstance ?? {}
+
   return provides[VerifyInputsKey as any]
 }
 
@@ -204,8 +216,10 @@ const getObjectValue = (value: ObjectValue | Validator): ObjectValue | undefined
       validator: value,
     }
   }
+
   if (typeof value === 'object') {
     const {validator} = value
+
     if (typeof validator === 'function') {
       return value
     }
@@ -214,6 +228,7 @@ const getObjectValue = (value: ObjectValue | Validator): ObjectValue | undefined
 
 const getValue = (binding: DirectiveBinding<any>): ObjectValue | undefined => {
   const {value} = binding
+
   return getObjectValue(value)
 }
 
@@ -221,6 +236,7 @@ const getElement = (element: any, value: ObjectValue, vnode: VNode): any => {
   if (typeof value.getInput === 'function') {
     return value.getInput(element, vnode)
   }
+
   return element
 }
 
@@ -239,6 +255,7 @@ const updateValidation = (element_: any, binding: DirectiveBinding, vnode: VNode
     if (process.env.NODE_ENV === 'development') {
       console.warn(`${binding.value} is not supported`)
     }
+
     return
   }
 
@@ -251,11 +268,13 @@ export const verifyDirective: ObjectDirective = {
   beforeMount: updateValidation,
   beforeUnmount(element_: any, binding, vnode) {
     const verifyInputs = getContext(binding as any)
+
     if (!verifyInputs) {
       return
     }
 
     const value = getValue(binding)
+
     if (!value) {
       return
     }

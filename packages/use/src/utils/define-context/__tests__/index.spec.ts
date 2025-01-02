@@ -11,21 +11,20 @@ describe('defineContext', () => {
     const name = ref('foo')
     const age = ref(10)
     const [useContext, provideContext] = defineContext(reactive({age, name}))
-
     const component = defineComponent({
       setup: () => {
         const {age, name}: any = toRefs(useContext() ?? {})
+
         return () => h('div', [name.value, age.value])
       },
     })
-
     const parent = defineComponent({
       setup() {
         const context = provideContext()
+
         return () => h('div', [h(h(component)), context?.name])
       },
     })
-
     const wrapper = mount(parent)
 
     expect(wrapper.get('div').text()).toBe('foo10foo')
@@ -34,51 +33,48 @@ describe('defineContext', () => {
     const name = ref('foo')
     const age = ref(10)
     const [useContext, provideContext] = defineContext<{age: number; name: string}>()
-
     const component = defineComponent({
       setup: () => {
         const {age, name}: any = toRefs(useContext() ?? {})
+
         return () => h('div', [name.value, age.value])
       },
     })
-
     const parent = defineComponent({
       setup() {
         provideContext(reactive({age, name}))
+
         return () => h(component)
       },
     })
-
     const wrapper = mount(parent)
 
     expect(wrapper.get('div').text()).toBe('foo10')
   })
   it('should consume (get and remove) context with the consume option', () => {
     const name = ref('foo')
-
     const [useContext, provideContext] = defineContext<{name: string}>(reactive({name}))
-
     const component = defineComponent({
       setup: () => {
         const {name}: any = toRefs(useContext({consume: true}) ?? {})
+
         return () => h('div', [name.value, h(component2)])
       },
     })
-
     const component2 = defineComponent({
       setup: () => {
         const {name} = toRefs(useContext() ?? (reactive({}) as any))
+
         return () => h('div', [name?.value])
       },
     })
-
     const parent = defineComponent({
       setup() {
         provideContext(reactive({name}))
+
         return () => h(component)
       },
     })
-
     const wrapper = mount(parent)
 
     expect(wrapper.get('div').text()).toBe('foo')
@@ -89,55 +85,54 @@ describe('defineContext', () => {
     const parent = defineComponent({
       setup() {
         const {name}: any = toRefs(useContext({createIfEmpty: true}) ?? {})
+
         return () => h('div', name.value)
       },
     })
-
     const wrapper = mount(parent)
 
     expect(wrapper.get('div').text()).toBe('foo')
   })
   it('should provide and inject context with a function value', () => {
     const name = ref('foo')
-
     const [inject, provide] = defineContext<{name: string}>()
-
     const component1 = defineComponent({
       setup: () => {
         const {name}: any = toRefs(inject() ?? {})
+
         // const name = ref('foo')
         return () => h('div', name.value)
       },
     })
-
     const root1 = defineComponent({
       setup: () => {
         provide(() => reactive({name}))
+
         return () => h(component1)
       },
     })
-
     const wrapper1 = mount(root1)
+
     expect(wrapper1.get('div').text()).toBe('foo')
 
     const [injectFromRoot, provideFromRoot] = defineContext(() => reactive({name}))
-
     const component2 = defineComponent({
       setup: () => {
         const {name}: any = toRefs(injectFromRoot() ?? {})
+
         // const name = ref('foo')
         return () => h('div', name.value)
       },
     })
-
     const root2 = defineComponent({
       setup: () => {
         const context = provideFromRoot()
+
         return () => h('div', [h(component2), context?.name])
       },
     })
-
     const wrapper2 = mount(root2)
+
     expect(wrapper2.get('div').text()).toBe('foofoo')
   })
 })
@@ -147,24 +142,24 @@ describe('preferParentContext', () => {
   const name2 = ref('level2')
   const [injectContext, provideContext] = defineContext<{name: string}>()
   const provideOrUse = preferParentContext(provideContext)
-
   const level1 = defineComponent({
     setup(_, {slots}) {
       provideContext(reactive({name: name1}))
+
       return () => slots.default?.()
     },
   })
-
   const level2 = defineComponent({
     setup(_, {slots}) {
       provideOrUse(reactive({name: name2}))
+
       return () => slots.default?.()
     },
   })
-
   const resultLevel = defineComponent({
     setup() {
       const {name}: any = toRefs(injectContext() ?? {})
+
       return () => h('div', name.value)
     },
   })
@@ -197,7 +192,6 @@ describe('preferParentContext', () => {
           ])
       },
     })
-
     const wrapper = mount(root)
 
     expect(wrapper.get('div').text()).toBe('level2')
@@ -209,28 +203,27 @@ describe('preferParentContext', () => {
       return provide(CONTEXT_KEY, props)
     }, CONTEXT_KEY)
     const injectContext = (): {name: string} => inject(CONTEXT_KEY) as any
-
     const level1 = defineComponent({
       setup(_, {slots}) {
         customProvideOrUse(reactive({name: name1}) as any)
+
         return () => slots.default?.()
       },
     })
-
     const level2 = defineComponent({
       setup(_, {slots}) {
         customProvideOrUse(reactive({name: name2}) as any)
+
         return () => slots.default?.()
       },
     })
-
     const resultLevel = defineComponent({
       setup() {
         const {name} = toRefs(injectContext())
+
         return () => h('div', name.value)
       },
     })
-
     const root = defineComponent({
       setup() {
         return () =>
@@ -243,7 +236,6 @@ describe('preferParentContext', () => {
           ])
       },
     })
-
     const wrapper = mount(root)
 
     expect(wrapper.get('div').text()).toBe('level1')
@@ -251,6 +243,7 @@ describe('preferParentContext', () => {
 
   it('should not create provider without key', () => {
     const CONTEXT_KEY = 'context-key'
+
     expect(() =>
       preferParentContext((props: any) => provide(CONTEXT_KEY, props)),
     ).toThrowError('No context key provided')

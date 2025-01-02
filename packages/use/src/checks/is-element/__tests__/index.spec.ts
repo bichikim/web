@@ -13,7 +13,6 @@ describe('isElement', () => {
         return () => h('div')
       },
     })
-
     const wrapper = mount(Component)
 
     expect(isElement(wrapper.vm)).toBe(false)

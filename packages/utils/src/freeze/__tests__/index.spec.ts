@@ -7,7 +7,6 @@ describe('freeze', () => {
     process.env.NODE_ENV = 'development'
 
     const foo = freeze({foo: 'foo'})
-
     const error = () => {
       ;(foo as any).foo = ''
     }

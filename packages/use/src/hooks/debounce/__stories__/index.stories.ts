@@ -12,6 +12,7 @@ export const Default = () => ({
       countRef.value += 1
     }
     const debouncedClick = useDebounce(1000, increaseCount)
+
     return () =>
       h('div', [
         h('div', `value ${countRef.value}`),

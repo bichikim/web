@@ -42,6 +42,7 @@ describe('isWritableRef', () => {
         },
         setup(props) {
           const {foo} = toRefs(props)
+
           // _object
           return {
             isWritable: isWritableRef(foo),
@@ -49,7 +50,6 @@ describe('isWritableRef', () => {
         },
       }),
     )
-
     const setupState = wrapper.vm.$.setupState
 
     expect(setupState.isWritable).toBe(false)
@@ -62,13 +62,13 @@ describe('isWritableRef', () => {
         },
         setup(props) {
           const foo = toRef(props, 'foo')
+
           return {
             isWritable: isWritableRef(foo),
           }
         },
       }),
     )
-
     const setupState = wrapper.vm.$.setupState
 
     expect(setupState.isWritable).toBe(false)

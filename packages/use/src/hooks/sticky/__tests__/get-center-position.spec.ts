@@ -15,6 +15,7 @@ describe('getCenterPosition', () => {
         width: 100,
       },
     )
+
     expect(center).toEqual({x: 100, y: 275})
   })
 })

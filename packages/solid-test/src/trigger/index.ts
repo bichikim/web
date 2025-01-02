@@ -1,6 +1,7 @@
 export const createTrigger = () => {
   let _target: undefined | ((...args: any) => any)
   let _changed: number = 0
+
   return {
     get changed() {
       return _changed

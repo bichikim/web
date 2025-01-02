@@ -14,9 +14,9 @@ export const createEmitter = <Event>(options: EmitterOptions = {}) => {
   let started = false
   const {end, start} = options
   const _channels = new Map<string | symbol, Set<(event: Event) => void>>()
-
   const triggerEach = (listeners: Set<(event: Event) => void>, event: Event) => {
     const promises = [...listeners.values()].map((listener) => listener(event))
+
     return Promise.all(promises)
   }
 
@@ -35,6 +35,7 @@ export const createEmitter = <Event>(options: EmitterOptions = {}) => {
     for (const channel of omit) {
       nextListenersList.delete(channel)
     }
+
     return [...nextListenersList.values()]
   }
 
@@ -46,18 +47,24 @@ export const createEmitter = <Event>(options: EmitterOptions = {}) => {
       if (listeners) {
         return triggerEach(listeners, event)
       }
+
       return Promise.resolve()
     })
+
     return Promise.all(promises)
   }
 
   const getChannel = (channel: string | symbol): Set<(event: Event) => void> => {
     const listeners = _channels.get(channel)
+
     if (listeners) {
       return listeners
     }
+
     const newListeners = new Set<(event: Event) => void>()
+
     _channels.set(channel, newListeners)
+
     return newListeners
   }
 
@@ -67,7 +74,9 @@ export const createEmitter = <Event>(options: EmitterOptions = {}) => {
       channel: string | symbol = NONE_CHANNEL_KEY,
     ) => {
       const _listeners = getChannel(channel)
+
       _listeners.add(listener)
+
       if (!started) {
         start?.()
         started = true
@@ -78,7 +87,9 @@ export const createEmitter = <Event>(options: EmitterOptions = {}) => {
       channel: string | symbol = NONE_CHANNEL_KEY,
     ) => {
       const _listeners = getChannel(channel)
+
       _listeners.delete(listener)
+
       if (_listeners.size === 0 && started) {
         end?.()
         started = false

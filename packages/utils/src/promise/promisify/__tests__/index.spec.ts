@@ -12,7 +12,6 @@ describe('promisify', () => {
         callback(null, count + 1)
       }, 1)
     }
-
     const runner = promisify(callbackRunner)
 
     expectType<(count: number) => Promise<number>>(runner)
@@ -26,7 +25,6 @@ describe('promisify', () => {
         callback(count + 1)
       }, 1)
     }
-
     const runner = promisify(callbackRunner)
 
     return expect(runner(1)).rejects.toEqual(2)

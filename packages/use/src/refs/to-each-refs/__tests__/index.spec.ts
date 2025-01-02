@@ -8,7 +8,6 @@ describe('toRefs', () => {
     const target = ref<{name?: string}>({
       name: 'foo',
     })
-
     const result = toEachRefs(target)
 
     expect(result.name?.value).toBe('foo')
@@ -18,14 +17,12 @@ describe('toRefs', () => {
   })
   it('should empty object from no object ref', () => {
     const target = ref(100)
-
     const result: any = toEachRefs(target)
 
     expect(result?.name?.value).toBe(undefined)
   })
   it('should empty object from no object ref', async () => {
     const target = ref<{name?: string}>({name: undefined})
-
     const result = toEachRefs(target)
 
     expect(result.name?.value).toBe(undefined)

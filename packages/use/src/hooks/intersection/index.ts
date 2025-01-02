@@ -21,18 +21,18 @@ export const onIntersection = (
   if (!getWindow()) {
     return
   }
+
   const optionsRef = ref(options)
   const elementRef = resolveRef(element)
-
   const updateState: IntersectionObserverCallback = (entries, observer) => {
     callback?.(entries, observer)
   }
-
   const observerRef = computed(() => {
     // for node.js env
     if (!globalThis.IntersectionObserver) {
       return
     }
+
     return new IntersectionObserver(updateState, {
       // todo fix type error
       threshold: DEFAULT_THRESHOLD,
@@ -43,9 +43,11 @@ export const onIntersection = (
   watchEffect(
     (onCleanup) => {
       const observer = observerRef.value
+
       if (!observer) {
         return
       }
+
       onCleanup(() => {
         observer.disconnect()
       })
@@ -54,6 +56,7 @@ export const onIntersection = (
       if (!element) {
         return
       }
+
       observer.observe(element as any)
     },
     {

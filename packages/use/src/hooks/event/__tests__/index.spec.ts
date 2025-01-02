@@ -15,7 +15,6 @@ interface SetupOptions {
 
 const setup = (options: SetupOptions) => {
   const {isActive, once, target, eventName = 'click'} = options
-
   const Component = defineComponent({
     props: ['once', 'isActive'],
     setup(props) {
@@ -23,6 +22,7 @@ const setup = (options: SetupOptions) => {
       const countRef = ref(0)
       const isActive = mutRef(toRef(props, 'isActive'))
       const once = toRef(props, 'once')
+
       onEvent(
         target ?? elementRef,
         eventName as any,
@@ -45,7 +45,6 @@ const setup = (options: SetupOptions) => {
         ])
     },
   })
-
   const wrapper = mount(Component, {
     props: {
       isActive,
@@ -78,6 +77,7 @@ describe('use-event', () => {
   })
   it('should not trigger event with the immediate false', async () => {
     const {wrapper} = setup({isActive: false})
+
     expect(wrapper.get('#count').text()).toBe('0')
     await wrapper.get('#target').trigger('click')
     expect(wrapper.get('#count').text()).toBe('0')
@@ -87,6 +87,7 @@ describe('use-event', () => {
   })
   it('should not trigger event with the once and the mounted immediate', async () => {
     const {wrapper} = setup({isActive: true, once: true})
+
     expect(wrapper.get('#count').text()).toBe('0')
     await wrapper.get('#target').trigger('click')
     expect(wrapper.get('#count').text()).toBe('1')
@@ -96,8 +97,10 @@ describe('use-event', () => {
   it('should trigger with the window target', async () => {
     const removeEventListenerSpy = vi.spyOn(window, 'removeEventListener')
     const {wrapper} = setup({eventName: 'message', isActive: true, target: window})
+
     expect(wrapper.get('#count').text()).toBe('0')
     const event = document.createEvent('MessageEvent')
+
     event.initEvent('message')
     window.dispatchEvent(event)
     await flushPromises()
@@ -110,8 +113,10 @@ describe('use-event', () => {
   it('should trigger with the window target & false immediate', async () => {
     const removeEventListenerSpy = vi.spyOn(window, 'removeEventListener')
     const {wrapper} = setup({eventName: 'message', isActive: false, target: window})
+
     expect(wrapper.get('#count').text()).toBe('0')
     const event = document.createEvent('MessageEvent')
+
     event.initEvent('message')
     window.dispatchEvent(event)
     expect(wrapper.get('#count').text()).toBe('0')
@@ -127,6 +132,7 @@ describe('use-event', () => {
   it('should work outside of a component', () => {
     const scope = effectScope()
     const callback = vi.fn()
+
     scope.run(() => {
       onEvent(window, 'message', callback, {isActive: true})
 
@@ -143,6 +149,7 @@ describe('use-event', () => {
   it('should work without isActive options', () => {
     const scope = effectScope()
     const callback = vi.fn()
+
     scope.run(() => {
       onEvent(window, 'message', callback)
 
@@ -160,6 +167,7 @@ describe('use-event', () => {
     const {wrapper} = setup({
       target: null,
     })
+
     expect(wrapper.get('#count').text()).toBe('0')
   })
 })

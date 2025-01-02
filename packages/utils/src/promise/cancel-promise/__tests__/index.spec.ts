@@ -7,12 +7,11 @@ describe('cancelPromise', () => {
     let _resolve
     let _data
     let order = 0
-
     const promise = new Promise((resolve) => {
       _resolve = resolve
     })
-
     const [cancelPromise, cancel] = createCancelPromise(promise)
+
     cancelPromise.then((data) => {
       _data = data
     })
@@ -33,11 +32,9 @@ describe('cancelPromise', () => {
   it('should cancel promise (before cancel)', async () => {
     let _resolve
     let _data
-
     const promise = new Promise((resolve) => {
       _resolve = resolve
     })
-
     const [_, cancel] = createCancelPromise(promise)
 
     promise.then((data) => {

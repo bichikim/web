@@ -32,6 +32,7 @@ describe('bunchRef', () => {
       const fooRef = ref()
       const barRef = ref('bar')
       const valueRef = bunchRef(fooRef, barRef)
+
       expect(valueRef.value).toBe(barRef.value)
     }
 
@@ -39,6 +40,7 @@ describe('bunchRef', () => {
       const fooRef = ref('foo')
       const barRef = ref()
       const valueRef = bunchRef(fooRef, barRef)
+
       expect(valueRef.value).toBe(fooRef.value)
     }
   })

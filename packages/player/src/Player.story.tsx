@@ -26,6 +26,7 @@ const getUrl = async (
   if (typeof data === 'string') {
     return {url: data}
   }
+
   // eslint-disable-next-line n/no-unsupported-features/node-builtins
   return fetch(
     `https://apis.wavve.com/fz/streaming?contentid=${data.id}&contenttype=${data.type}&credential=${apiCredential}`,
@@ -42,7 +43,6 @@ export const Root = (props: RootProps) => {
     null,
   )
   const [playerState, setPlayerState, playerController] = createPlayer(element)
-
   const stop = () => {
     playerController.pause()
     setPlayerState((prevState) => ({...prevState, currentTime: 0}))
@@ -50,6 +50,7 @@ export const Root = (props: RootProps) => {
 
   const load = async () => {
     const {url, cookies} = await getUrl(props.url, apiCredential())
+
     return playerController.load(url, {cookies: props.cookies ?? cookies, drm: props.drm})
   }
 

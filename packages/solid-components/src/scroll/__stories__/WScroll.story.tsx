@@ -42,8 +42,10 @@ export const XYScroll: Story = {
     <WScroll.Root class="w-200px h-200px bg-yello relative pb-1rem pr-1rem">
       <WScroll.Body
         class="overflow-auto relative w-full h-full scrollbar-none"
-        style="background-color: rgb(calc(var(--var-y-percent) * 100 + 155),
-         calc(var(--var-x-percent) * 100 + 155), 255);"
+        style={{
+          'background-color':
+            'rgb(calc(var(--var-y-percent) * 100 + 155),\n         calc(var(--var-x-percent) * 100 + 155), 255)',
+        }}
       >
         <div class="w-700px">{fooBarPrinter(400)}</div>
       </WScroll.Body>
@@ -51,7 +53,7 @@ export const XYScroll: Story = {
         tabindex="0"
         type="vertical"
         class="bg-green top-0 right-0 w-1rem h-full absolute data-[show=false]:hidden"
-        style="background-color: rgb(calc(var(--var-percent) * 255), 100, 255);"
+        style={{'background-color': 'rgb(calc(var(--var-percent) * 255), 100, 255)'}}
       >
         <WScroll.Handle
           tabindex="0"
@@ -69,7 +71,7 @@ export const XYScroll: Story = {
       <WScroll.Bar
         type="horizontal"
         class="bg-green left-0 bottom-0 w-full h-1rem absolute data-[show=false]:hidden"
-        style="background-color: rgb(calc(var(--var-percent) * 255), 255, 100);"
+        style={{'background-color': 'rgb(calc(var(--var-percent) * 255), 255, 100)'}}
         thickness="0.5rem"
       >
         <WScroll.Handle
@@ -78,11 +80,11 @@ export const XYScroll: Story = {
            [&>.block]:data-[state=move]:outline [&>.block]:data-[state=move]:translate-y--10px
            @hover-[&:hover>.block]:outline select-none"
         >
-          <div class="shadow absolute w-full h-full bg-black/50 rd-0.5rem"></div>
+          <div class="shadow absolute w-full h-full bg-black/50 rd-0.5rem" />
           <div
             class="block absolute w-full h-full rd-0.5rem
              outline-3 outline-white "
-            style="background-color: rgb(100, calc(var(--var-percent) * 255), 255);"
+            style={{'background-color': 'rgb(100, calc(var(--var-percent) * 255), 255)'}}
           />
         </WScroll.Handle>
       </WScroll.Bar>

@@ -9,11 +9,13 @@ import {describe, expect, it} from 'vitest'
 describe('resolveElement', () => {
   it('should not get element with none element', () => {
     const result = resolveElement({} as any)
+
     expect(result).toBeNull()
   })
   it('should get element from ref', () => {
     const element = document.createElement('div')
     const result = resolveElement(element)
+
     expect(result).toBe(element)
   })
   it('should get element from ref', () => {
@@ -36,6 +38,7 @@ describe('resolveElement', () => {
         return () => h(ComponentElement as any, {ref: elementRef})
       },
     })
+
     mount(component)
     expect(result).toBeInstanceOf(HTMLElement)
   })

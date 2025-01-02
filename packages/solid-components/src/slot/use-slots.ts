@@ -5,6 +5,7 @@ import {SLOT_KEY, SlotContext} from 'src/slot/Slot'
 export const getSlots = (_children: JSXElement) => {
   const parts = children(() => _children)
   const [slots, setSlots] = createStore<Record<string, JSXElement>>({})
+
   createComputed(
     on(parts, () => {
       for (const part of parts.toArray() as unknown as SlotContext[]) {
@@ -16,5 +17,6 @@ export const getSlots = (_children: JSXElement) => {
       }
     }),
   )
+
   return slots
 }
