@@ -52,9 +52,11 @@ export const HRealButton = (props: HRealButtonProps) => {
   createEffect(() => {
     mounted = true
     const downState = isDown()
+
     if (downState.renderOnly) {
       return
     }
+
     if (downState.down) {
       innerProps.onDown?.()
     } else if (mounted) {
@@ -64,6 +66,7 @@ export const HRealButton = (props: HRealButtonProps) => {
 
   const attrs = createMemo(() => {
     const down = isDown().down || innerProps.renderDown
+
     return {
       [ELEMENT_IDENTIFIER_GLOBAL_TOUCH]: targetId,
       [ELEMENT_IDENTIFIER_REAL_BUTTON_STATE]: down ? 'down' : 'up',

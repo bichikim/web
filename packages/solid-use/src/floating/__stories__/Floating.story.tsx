@@ -2,24 +2,23 @@ import {autoUpdate, flip} from '@floating-ui/dom'
 import {createMemo, createSignal, Show} from 'solid-js'
 import {StoryObj} from 'storybook-solidjs'
 import {useFloating} from '../'
-import {ref} from 'src/use/ref'
+import {ref} from 'src/ref'
 
 const Floating = () => {
-  const [reference, setReference] = createSignal(null)
+  const [reference, setReference] = createSignal<HTMLElement | null>(null)
   const [floatingElement, setFloatingElement] = createSignal<HTMLElement | null>(null)
   const floating = useFloating(reference, floatingElement, {
     autoUpdate,
     middleware: [flip()],
   })
-
   const style = createMemo(() => {
     const {x, y} = floating()
+
     return {
       left: `${x}px`,
       top: `${y}px`,
     }
   })
-
   const [show, setShow] = createSignal(true)
 
   return (
@@ -47,7 +46,6 @@ const Floating = () => {
     </>
   )
 }
-
 const meta = {
   component: Floating,
   title: 'solid/use/floating',

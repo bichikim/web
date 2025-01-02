@@ -37,29 +37,29 @@ export const HDragExecute = (props: HDragExecuteProps) => {
     'onRightExecute',
   ])
   const [drag, setDrag] = createSignal<DragData>({started: {identifier: -1, x: 0, y: 0}})
-
   const hasLeft = createMemo(() => Boolean(innerProps.onLeftExecute))
   const hasRight = createMemo(() => Boolean(innerProps.onRightExecute))
-
   const dragX = createMemo(() => {
     const {current} = drag()
     let x = current?.x ?? 0
-
     const _dragEndSize = innerProps.dragEndSize
+
     if (!_dragEndSize) {
       return '0px'
     }
+
     if (_dragEndSize < x) {
       x = _dragEndSize
     } else if (x < _dragEndSize * -1) {
       x = _dragEndSize * -1
     }
+
     if ((x > 0 && hasLeft()) || (x < 0 && hasRight())) {
       return `${x}px`
     }
+
     return '0px'
   })
-
   const handleClick = (event: MouseEvent) => {
     innerProps.onClick?.(event)
   }
@@ -89,6 +89,7 @@ export const HDragExecute = (props: HDragExecuteProps) => {
 
   const handleTouchStart = (event: TouchEvent) => {
     const [touch] = event.touches
+
     if (touch) {
       handleStart({
         identifier: touch.identifier,
@@ -112,6 +113,7 @@ export const HDragExecute = (props: HDragExecuteProps) => {
     const {
       started: {identifier, x, y},
     } = drag()
+
     if (identifier === -1) {
       return
     }
@@ -127,9 +129,11 @@ export const HDragExecute = (props: HDragExecuteProps) => {
       started: {identifier, x, y},
     } = drag()
     const item = event.changedTouches[identifier]
+
     if (!item) {
       return
     }
+
     handleMove({
       x: item.clientX - x,
       y: item.clientY - y,
@@ -145,11 +149,14 @@ export const HDragExecute = (props: HDragExecuteProps) => {
     if (!data) {
       return
     }
+
     const {x} = data
     const _dragExecuteSize = innerProps.dragExecuteSize
+
     if (!_dragExecuteSize) {
       return
     }
+
     if (x > _dragExecuteSize) {
       handleLeftExecute()
     } else if (x < _dragExecuteSize * -1) {
@@ -163,6 +170,7 @@ export const HDragExecute = (props: HDragExecuteProps) => {
     const {
       started: {x, y},
     } = drag()
+
     handleEnd(event, {
       x: event.clientX - x,
       y: event.clientY - y,
@@ -173,13 +181,17 @@ export const HDragExecute = (props: HDragExecuteProps) => {
     const {
       started: {identifier, x, y},
     } = drag()
+
     if (identifier === -1) {
       return
     }
+
     const item = event.changedTouches[identifier]
+
     if (!item) {
       return handleEnd(event)
     }
+
     const {clientX, clientY} = item
     const draggedX = clientX - x
     const draggedY = clientY - y
@@ -189,7 +201,6 @@ export const HDragExecute = (props: HDragExecuteProps) => {
       y: draggedY,
     })
   }
-
   const resolved = children(() => props.dragLeftChildren)
 
   return (

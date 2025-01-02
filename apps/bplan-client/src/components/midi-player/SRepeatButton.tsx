@@ -29,23 +29,27 @@ export const SRepeatButton = (props: SRepeatButtonProps) => {
     'hasManyItems',
   ])
   const repeatLoopOrder: RepeatType[] = ['no', 'one', 'all']
-
   const handelChangeRepeat = () => {
     // console.log('??')
     if (!innerProps.hasManyItems) {
       const current = innerProps.repeat || 'no'
+
       if (current === 'no') {
         innerProps.onChangeRepeat?.('one')
+
         return
       }
+
       // console.log('no')
       innerProps.onChangeRepeat?.('no')
+
       return
     }
 
     const current = innerProps.repeat || 'no'
     const index = repeatLoopOrder.indexOf(current) + 1
     const next = repeatLoopOrder[index % repeatLoopOrder.length]
+
     innerProps.onChangeRepeat?.(next ?? 'no')
   }
 

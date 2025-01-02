@@ -8,7 +8,6 @@ import {
   PlayerState,
   PlayerStateMutable,
 } from 'src/player/types'
-import {updateDrmRequestFilter} from 'src/player/update-drm-filter'
 import {createShakaPlayer} from './player/shaka'
 
 export const createPlayer = (
@@ -27,6 +26,7 @@ export const createPlayer = (
         volume: 1,
       }
     }
+
     return {
       currentTime: videoElement.currentTime,
       duration: videoElement.duration,
@@ -36,21 +36,25 @@ export const createPlayer = (
       volume: videoElement.volume,
     }
   }
-
   const [state, _setState] = createSignal<PlayerState>(getState(videoElement()))
 
   createEffect(() => {
     const element = videoElement()
+
     if (!element) {
       return
     }
+
     const {api = 'shaka'} = options
+
     setState(getState(element))
+
     switch (api) {
       case 'shaka': {
         player = createShakaPlayer(element, options)
         break
       }
+
       // Add more player options here
       default: {
         player = createShakaPlayer(element, options)
@@ -60,6 +64,7 @@ export const createPlayer = (
 
   const update = (event: Event) => {
     const {target} = event
+
     if (target instanceof HTMLVideoElement) {
       _setState(getState(target))
     }
@@ -102,11 +107,13 @@ export const createPlayer = (
       _setState((prev) => {
         const element = videoElement()
         const newState = state(prev)
+
         if (element) {
           for (const [key, value] of Object.entries(newState)) {
             element[key] = value
           }
         }
+
         return {
           ...prev,
           ...newState,

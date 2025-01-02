@@ -4,18 +4,23 @@ import {AudioContext as StandardizedAudioContext} from 'standardized-audio-conte
 let __audioContext: AudioContext | undefined
 
 export const getAudioContext = async (): Promise<AudioContext | void> => {
+  const window = getWindow()
+
   if (__audioContext) {
     return __audioContext
   }
-  const window = getWindow()
+
   if (!window) {
     return
   }
+
   return window.navigator.mediaDevices
     .getUserMedia({audio: true})
     .then(() => {
       const audioContext: AudioContext = new StandardizedAudioContext() as any
+
       __audioContext = audioContext
+
       return audioContext
     })
     .catch(() => {
@@ -24,15 +29,17 @@ export const getAudioContext = async (): Promise<AudioContext | void> => {
       }
 
       const audioContext: AudioContext = new StandardizedAudioContext() as any
-      __audioContext = audioContext
-
       let prepared = false
+
+      __audioContext = audioContext
 
       const prepareAudio = () => {
         window.removeEventListener('mousemove', prepareAudio)
+
         if (prepared) {
           return
         }
+
         prepared = true
         audioContext.resume()
       }

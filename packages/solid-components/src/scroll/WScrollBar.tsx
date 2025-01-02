@@ -21,10 +21,15 @@ export interface WScrollBarProps extends DynamicParentProps {
 }
 
 export const WScrollBar = (_props: WScrollBarProps) => {
-  const [props, restProps] = splitProps(
-    mergeProps({as: 'div', type: 'vertical' as const}, _props),
-    ['as', 'thickness', 'type', 'class', 'style', 'children'],
-  )
+  const defaultProps = mergeProps({as: 'div', type: 'vertical' as const}, _props)
+  const [props, restProps] = splitProps(defaultProps, [
+    'as',
+    'thickness',
+    'type',
+    'class',
+    'style',
+    'children',
+  ])
   const scrollContext = useScrollContext()
   const scrollBarState = createMemo(() => {
     const {
@@ -54,6 +59,7 @@ export const WScrollBar = (_props: WScrollBarProps) => {
         show: showXBar,
       }
     }
+
     return {
       containerPosition: containerTop,
       containerSize: containerHeight,
@@ -64,27 +70,27 @@ export const WScrollBar = (_props: WScrollBarProps) => {
       show: showYBar,
     }
   })
-
   const scrollBarStyle = createMemo(() => {
     const {percent} = scrollBarState()
+
     return {
       [PERCENT_VAR]: percent,
     }
   })
-
   const scrollBarContext = createMemo(() => {
     const state = scrollBarState()
+
     return {
       ...state,
       type: props.type,
     }
   })
-
   const onClick = (event: MouseEvent) => {
     const type = props.type ?? 'horizontal'
     const {containerSize, scrollSize} = scrollBarContext()
     const clickPosition = type === 'horizontal' ? event.offsetX : event.offsetY
     const clickedPercent = clickPosition / containerSize
+
     scrollContext.setScroll(props.type, (scrollSize - containerSize) * clickedPercent)
   }
 

@@ -4,6 +4,7 @@ import {useGlobalTouchEmitter} from 'src/components/real-button/use-global-touch
 
 const Root = (props: any) => {
   useGlobalTouchEmitter({preventTouchContext: true, topLevelElementOnly: true})
+
   return (
     <div>
       <HRealButton {...props} />
@@ -12,7 +13,6 @@ const Root = (props: any) => {
     </div>
   )
 }
-
 const meta = {
   component: Root,
 } satisfies Meta<typeof HRealButton>

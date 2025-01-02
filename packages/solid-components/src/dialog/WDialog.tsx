@@ -8,16 +8,16 @@ export interface WDialogRootProps extends DynamicParentProps {
 }
 
 export const WDialogRoot = (_props: WDialogRootProps) => {
-  const [props, restProps] = splitProps(mergeProps({as: 'div'}, _props), [
+  const defaultProps = mergeProps({as: 'div'}, _props)
+  const [props, restProps] = splitProps(defaultProps, [
     'as',
     'show',
     'children',
     'onShowChange',
   ])
-
-  const onShowChange = (value: boolean) => {
-    props.onShowChange?.(value)
-  }
+  // const onShowChange = (value: boolean) => {
+  //   props.onShowChange?.(value)
+  // }
 
   return (
     <Show when={props.show}>

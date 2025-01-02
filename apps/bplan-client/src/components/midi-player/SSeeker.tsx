@@ -19,23 +19,25 @@ export interface SSeekerProps extends JSX.ButtonHTMLAttributes<HTMLButtonElement
 export const SSeeker = (props: SSeekerProps) => {
   const defaultProps = mergeProps({leftTime: 0, totalDuration: 0}, props)
   const [innerProps, restProps] = splitProps(defaultProps, ['leftTime', 'totalDuration'])
-
   const progress = createMemo(() => {
     if (innerProps.totalDuration === 0) {
       return 0
     }
+
     return innerProps.leftTime / innerProps.totalDuration
   })
   const [element, setElement] = createSignal<HTMLElement | null>(null)
-
   const handleSeek = (x: number) => {
     const target = element()
+
     if (!target) {
       return
     }
+
     const {left, width} = target.getBoundingClientRect()
     const progress = (x - left) / width
     const leftTime = progress * innerProps.totalDuration
+
     props.onSeek?.(leftTime)
   }
 
@@ -46,12 +48,14 @@ export const SSeeker = (props: SSeekerProps) => {
 
     if (touch) {
       const {pageX} = touch
+
       handleSeek(pageX)
     }
   }
 
   const handleClick = (event: MouseEvent) => {
     const {pageX} = event
+
     handleSeek(pageX)
   }
 

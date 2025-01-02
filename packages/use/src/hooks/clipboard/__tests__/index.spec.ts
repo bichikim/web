@@ -7,6 +7,7 @@ import {defineComponent} from 'vue'
 import {onEvent} from 'src/hooks/event'
 import {useClipboard} from '../'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
+
 vi.mock('src/hooks/event', async () => {
   return {
     ...(await vi.importActual('src/hooks/event')),
@@ -15,18 +16,17 @@ vi.mock('src/hooks/event', async () => {
 })
 
 const useEventMock = vi.mocked(onEvent)
-
 const createUseElementEventMock = () => {
   const listeners = {}
-  let value_ = ''
+
   return {
-    setValue: (value: string) => {
-      value_ = value
+    setValue: (_: string) => {
+      // empty
     },
     trigger: (key: string, value?) => {
       listeners[key]?.(value)
     },
-    useElementEvent: (target, key, listener: any) => {
+    useElementEvent: (_, key, listener: any) => {
       listeners[key] = listener
     },
   }
@@ -37,6 +37,7 @@ describe('clipboard', () => {
     readText: vi.fn(() => null),
     writeText: vi.fn(() => null),
   }
+
   afterEach(() => {
     useEventMock.mockRestore()
     mockClipboard.readText.mockRestore()
@@ -45,7 +46,7 @@ describe('clipboard', () => {
   })
   let clock: SinonFakeTimers
   beforeEach(() => {
-    ;(window.navigator as any).clipboard = mockClipboard
+    ;(globalThis.navigator as any).clipboard = mockClipboard
     clock = useFakeTimers()
   })
 
@@ -57,6 +58,7 @@ describe('clipboard', () => {
       defineComponent({
         setup() {
           const {value, state} = useClipboard()
+
           return {
             state,
             value,
@@ -64,7 +66,6 @@ describe('clipboard', () => {
         },
       }),
     )
-
     const setupState = wrapper.vm.$.setupState
 
     expect(setupState.state).toBe('idle')
@@ -94,6 +95,7 @@ describe('clipboard', () => {
       defineComponent({
         setup() {
           const {value, state, write} = useClipboard()
+
           return {
             state,
             value,
@@ -102,7 +104,6 @@ describe('clipboard', () => {
         },
       }),
     )
-
     const setupState = wrapper.vm.$.setupState
 
     expect(setupState.state).toBe('idle')
@@ -124,6 +125,7 @@ describe('clipboard', () => {
       defineComponent({
         setup: () => {
           const {value, state, write} = useClipboard()
+
           return {
             state,
             value,
@@ -132,7 +134,6 @@ describe('clipboard', () => {
         },
       }),
     )
-
     const setupState = wrapper.vm.$.setupState
 
     expect(setupState.state).toBe('idle')

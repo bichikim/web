@@ -4,7 +4,7 @@ import {
   setAnyStorageItem,
   StorageOptions,
 } from '@winter-love/utils'
-import {createEffect, createSignal, Signal, Accessor, Setter} from 'solid-js'
+import {Accessor, createEffect, createSignal, Setter} from 'solid-js'
 import {resolveAccessor} from 'src/resolve-accessor'
 import {MayBeAccessor} from 'src/types'
 
@@ -52,6 +52,7 @@ export const useStorage: UseStorage = (
 
   const updateActive = (value: boolean) => {
     active = value
+
     if (!value) {
       setAnyStorageItem(kind, getKey(), null, options)
     }

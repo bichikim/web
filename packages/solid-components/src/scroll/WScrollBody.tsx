@@ -16,16 +16,15 @@ export interface WScrollBodyProps extends ParentProps {
 }
 
 export const WScrollBody = (_props: WScrollBodyProps) => {
-  const [props, restProps] = splitProps(mergeProps({as: 'div'}, _props), [
+  const defaultProps = mergeProps({as: 'div'}, _props)
+  const [props, restProps] = splitProps(defaultProps, [
     'as',
     'class',
     'children',
     'style',
   ])
-
   const {setScrollBodyElement, value: ScrollValue} = useScrollContext()
   const scrollId = createMemo(() => ScrollValue().id)
-
   const style = createMemo(() => {
     const {percentX, percentY} = ScrollValue()
 

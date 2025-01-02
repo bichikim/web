@@ -3,6 +3,7 @@
  */
 import {useAnimationLoop} from '../'
 import {afterEach, describe, expect, it, vi} from 'vitest'
+
 describe('animation-loop', () => {
   afterEach(() => {
     vi.spyOn(window, 'requestAnimationFrame').mockClear()
@@ -13,10 +14,10 @@ describe('animation-loop', () => {
     vi.spyOn(window, 'requestAnimationFrame').mockImplementation((_loop) => {
       loop = _loop
       flag += 1
+
       return flag
     })
     const callback = vi.fn()
-
     const animationLoop = useAnimationLoop(callback)
 
     animationLoop.start()
@@ -28,11 +29,12 @@ describe('animation-loop', () => {
     expect(callback).toBeCalledTimes(2)
   })
   it('should not start animation loop with false active', () => {
-    let loop: any
+    // let loop: any
     let flag: number = 0
-    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((_loop) => {
-      loop = _loop
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((_) => {
+      // loop = _loop
       flag += 1
+
       return flag
     })
     const callback = vi.fn()
@@ -48,11 +50,11 @@ describe('animation-loop', () => {
     vi.spyOn(window, 'requestAnimationFrame').mockImplementation((_loop) => {
       loop = _loop
       flag += 1
+
       return flag
     })
     vi.spyOn(window, 'cancelAnimationFrame')
     const callback = vi.fn()
-
     const animationLoop = useAnimationLoop(callback)
 
     animationLoop.start()

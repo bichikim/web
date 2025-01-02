@@ -154,6 +154,9 @@ importers:
       lodash:
         specifier: ^4.17.21
         version: 4.17.21
+      oxlint:
+        specifier: ^0.15.4
+        version: 0.15.4
       portal-vue:
         specifier: 3.0.0
         version: 3.0.0(vue@3.5.13(typescript@5.7.2))
@@ -299,9 +302,15 @@ importers:
       unocss:
         specifier: ^0.65.3
         version: 0.65.3(postcss@8.4.49)(rollup@4.28.1)(vite@5.4.11(@types/node@22.10.1)(terser@5.37.0))(vue@3.5.13(typescript@5.7.2))
+      vite-plugin-checker:
+        specifier: ^0.8.0
+        version: 0.8.0(eslint@9.16.0(jiti@2.4.1))(meow@9.0.0)(optionator@0.9.4)(typescript@5.7.2)(vite@5.4.11(@types/node@22.10.1)(terser@5.37.0))(vue-tsc@2.2.0(typescript@5.7.2))
       vite-plugin-pwa:
         specifier: ^0.21.1
         version: 0.21.1(@vite-pwa/assets-generator@0.2.6)(vite@5.4.11(@types/node@22.10.1)(terser@5.37.0))(workbox-build@7.0.0(@types/babel__core@7.20.5))(workbox-window@7.0.0)
+      vue-tsc:
+        specifier: ^2.2.0
+        version: 2.2.0(typescript@5.7.2)
 
   apps/coong-client:
     dependencies:
@@ -3747,6 +3756,46 @@ packages:
 
   '@one-ini/wasm@0.1.1':
     resolution: {integrity: sha512-XuySG1E38YScSJoMlqovLru4KTUNSjgVTIjyh7qMX6aNN5HY5Ct5LhRJdxO79JtTzKfzV/bnWpz+zquYrISsvw==}
+
+  '@oxlint/darwin-arm64@0.15.4':
+    resolution: {integrity: sha512-auE1N8ph15Xq7XtSzi3Jxv2oCiWtOBNcbM1I8wrCKWBHHeAZmWlkUpPAOpAeyGuKJBHw8Sz4BXQhV3GD7hu+1A==}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@oxlint/darwin-x64@0.15.4':
+    resolution: {integrity: sha512-o66/bAL+rLrAu89e12Ep6u5xKTyadu4ozFW1vAHYQayd7ywMosOsv/Hg8WM0EnwH/sRpV4u6qdWQKsIjr2UOXw==}
+    cpu: [x64]
+    os: [darwin]
+
+  '@oxlint/linux-arm64-gnu@0.15.4':
+    resolution: {integrity: sha512-xQbojI9hMKhEM/R19flpZs1m7YCcPM8/8taYPRcHOheU/wZOdfyBWjSd5IfgcNBX1xKsX52dAg+lMOyrPH98Nw==}
+    cpu: [arm64]
+    os: [linux]
+
+  '@oxlint/linux-arm64-musl@0.15.4':
+    resolution: {integrity: sha512-wZoACdMUi8oKha1KzUmz57eWY93fcjf7YtnQvGtiOYjj0rziZnAoTbLxpYsdb9+1aGKbAY8grHlsgKjVmFAU5g==}
+    cpu: [arm64]
+    os: [linux]
+
+  '@oxlint/linux-x64-gnu@0.15.4':
+    resolution: {integrity: sha512-gMydrqLGRoRpY+nqjGBCenymKjqhcIuix6h1yMQ+IXiS2Togmda/vBRAje5rVZUehj8wt5NK2O2lt0C/pZkvJQ==}
+    cpu: [x64]
+    os: [linux]
+
+  '@oxlint/linux-x64-musl@0.15.4':
+    resolution: {integrity: sha512-2sfJs/IN4xTo2U62YlvcwsKJNntowxd4TXZMsx42mT1NhovGJXHBpFOq5a9WvZkeQUVR5sUbqr/UgGzGxG0+gA==}
+    cpu: [x64]
+    os: [linux]
+
+  '@oxlint/win32-arm64@0.15.4':
+    resolution: {integrity: sha512-NNK4hLQoyPlOkdFB0fCGrnKERwor+KSVLqW354p+pC+2IZfVLBUJi6k5E7sFoBi/32+s+5oqJ6zBJok2xLM4+Q==}
+    cpu: [arm64]
+    os: [win32]
+
+  '@oxlint/win32-x64@0.15.4':
+    resolution: {integrity: sha512-28d0qB+pUrCfZl79PWPukncE+csAN4QrjXhE04LE47wr5nydPP3B57mlaq9Ui6FJ/PsDpvlX1dZsfrmLKN15bQ==}
+    cpu: [x64]
+    os: [win32]
 
   '@parcel/watcher-android-arm64@2.5.0':
     resolution: {integrity: sha512-qlX4eS28bUcQCdribHkg/herLe+0A9RyYC+mm2PXpncit8z5b3nSqGVzMNR3CmtAOgRutiZ02eIJJgP/b1iEFQ==}
@@ -9781,6 +9830,11 @@ packages:
   os-tmpdir@1.0.2:
     resolution: {integrity: sha512-D2FR03Vir7FIu45XBY20mTb+/ZSWB00sjU9jdQXt83gDrI4Ztz5Fs7/yy74g2N5SVQY4xY1qDr4rNddwYRVX0g==}
     engines: {node: '>=0.10.0'}
+
+  oxlint@0.15.4:
+    resolution: {integrity: sha512-73z4T/GEiBSzcCbAoTkZyAWTkBLSFXxESBSLYl1O+h3kZxdtUYO6z+TVkHegrt5ApriCb4Y2GvATsHPfGBcoIw==}
+    engines: {node: '>=14.*'}
+    hasBin: true
 
   p-cancelable@4.0.1:
     resolution: {integrity: sha512-wBowNApzd45EIKdO1LaU+LrMBwAcjfPaYtVzV3lmfM3gf8Z4CHZsiIqlM8TZZ8okYvh5A1cP6gTfCRQtwUpaUg==}
@@ -16167,6 +16221,30 @@ snapshots:
       '@octokit/openapi-types': 18.1.1
 
   '@one-ini/wasm@0.1.1': {}
+
+  '@oxlint/darwin-arm64@0.15.4':
+    optional: true
+
+  '@oxlint/darwin-x64@0.15.4':
+    optional: true
+
+  '@oxlint/linux-arm64-gnu@0.15.4':
+    optional: true
+
+  '@oxlint/linux-arm64-musl@0.15.4':
+    optional: true
+
+  '@oxlint/linux-x64-gnu@0.15.4':
+    optional: true
+
+  '@oxlint/linux-x64-musl@0.15.4':
+    optional: true
+
+  '@oxlint/win32-arm64@0.15.4':
+    optional: true
+
+  '@oxlint/win32-x64@0.15.4':
+    optional: true
 
   '@parcel/watcher-android-arm64@2.5.0':
     optional: true
@@ -23683,7 +23761,7 @@ snapshots:
       '@yarnpkg/parsers': 3.0.2
       '@zkochan/js-yaml': 0.0.7
       axios: 1.7.9(debug@4.4.0)
-      chalk: 4.1.0
+      chalk: 4.1.2
       cli-cursor: 3.1.0
       cli-spinners: 2.6.1
       cliui: 8.0.1
@@ -23880,6 +23958,17 @@ snapshots:
   os-homedir@1.0.2: {}
 
   os-tmpdir@1.0.2: {}
+
+  oxlint@0.15.4:
+    optionalDependencies:
+      '@oxlint/darwin-arm64': 0.15.4
+      '@oxlint/darwin-x64': 0.15.4
+      '@oxlint/linux-arm64-gnu': 0.15.4
+      '@oxlint/linux-arm64-musl': 0.15.4
+      '@oxlint/linux-x64-gnu': 0.15.4
+      '@oxlint/linux-x64-musl': 0.15.4
+      '@oxlint/win32-arm64': 0.15.4
+      '@oxlint/win32-x64': 0.15.4
 
   p-cancelable@4.0.1: {}
 
@@ -26552,6 +26641,30 @@ snapshots:
       - sugarss
       - supports-color
       - terser
+
+  vite-plugin-checker@0.8.0(eslint@9.16.0(jiti@2.4.1))(meow@9.0.0)(optionator@0.9.4)(typescript@5.7.2)(vite@5.4.11(@types/node@22.10.1)(terser@5.37.0))(vue-tsc@2.2.0(typescript@5.7.2)):
+    dependencies:
+      '@babel/code-frame': 7.26.2
+      ansi-escapes: 4.3.2
+      chalk: 4.1.2
+      chokidar: 3.5.3
+      commander: 8.3.0
+      fast-glob: 3.3.2
+      fs-extra: 11.2.0
+      npm-run-path: 4.0.1
+      strip-ansi: 6.0.1
+      tiny-invariant: 1.3.3
+      vite: 5.4.11(@types/node@22.10.1)(terser@5.37.0)
+      vscode-languageclient: 7.0.0
+      vscode-languageserver: 7.0.0
+      vscode-languageserver-textdocument: 1.0.12
+      vscode-uri: 3.0.8
+    optionalDependencies:
+      eslint: 9.16.0(jiti@2.4.1)
+      meow: 9.0.0
+      optionator: 0.9.4
+      typescript: 5.7.2
+      vue-tsc: 2.2.0(typescript@5.7.2)
 
   vite-plugin-checker@0.8.0(eslint@9.16.0(jiti@2.4.1))(meow@9.0.0)(optionator@0.9.4)(typescript@5.7.2)(vite@6.0.3(@types/node@22.10.1)(jiti@2.4.1)(terser@5.37.0)(tsx@4.19.2)(yaml@2.6.1))(vue-tsc@2.2.0(typescript@5.7.2)):
     dependencies:

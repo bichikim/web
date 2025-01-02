@@ -11,7 +11,6 @@ export interface UseGlobalTouchProps extends JSX.HTMLAttributes<HTMLButtonElemen
 const UseGlobalTouch = (props: UseGlobalTouchProps) => {
   const id = createUniqueId()
   const isDown = useGlobalDown(id)
-
   const attrs = {...props, [ELEMENT_IDENTIFIER_GLOBAL_TOUCH]: id}
 
   return (
@@ -23,6 +22,7 @@ const UseGlobalTouch = (props: UseGlobalTouchProps) => {
 
 const Root = () => {
   useGlobalTouchEmitter({preventTouchContext: true, topLevelElementOnly: true})
+
   return (
     <div class="relative">
       <UseGlobalTouch class="w-50px h-100px bg-red" />
@@ -31,7 +31,6 @@ const Root = () => {
     </div>
   )
 }
-
 const meta = {
   component: Root,
 } satisfies Meta<typeof Root>

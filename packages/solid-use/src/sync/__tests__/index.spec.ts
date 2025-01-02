@@ -1,6 +1,6 @@
 import {createSignal} from 'solid-js'
 import {sync} from '../'
-import {describe, expect, it, vi} from 'vitest'
+import {describe, expect, it} from 'vitest'
 
 describe('manualMemo', () => {
   it('should return a value', () => {

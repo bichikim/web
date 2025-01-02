@@ -1,6 +1,6 @@
-import {effectScope, ref, watch} from 'vue'
 import {getWindow} from '@winter-love/utils'
 import {onEvent} from 'src/hooks/event'
+import {effectScope, ref, watch} from 'vue'
 
 export interface RouteHistory {
   back: string | null
@@ -12,8 +12,7 @@ export interface RouteHistory {
 }
 
 const _isSSR = !getWindow()
-
-const original: any = _isSSR ? undefined : window.onpopstate
+const original: any = _isSSR ? undefined : getWindow()?.onpopstate
 const stateRef = ref<RouteHistory>()
 const locationRef = ref<Location | undefined>(_isSSR ? undefined : document.location)
 
@@ -21,14 +20,16 @@ function onPopState(this: WindowEventHandlers, event: PopStateEvent) {
   if (typeof original === 'function') {
     original(event)
   }
+
   stateRef.value = event.state
   locationRef.value = document.location
 }
 
 const scope = effectScope()
+
 scope.run(() => {
   if (!_isSSR) {
-    onEvent(window, 'popstate', onPopState)
+    onEvent(getWindow(), 'popstate', onPopState)
   }
 })
 

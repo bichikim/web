@@ -36,17 +36,16 @@ export const HDrag = (props: HDragProps) => {
     'preventDrag',
     'parentPosition',
   ])
-
+  let startPosition = {x: 0, y: 0}
   const id = createUniqueId()
   const isDown = useGlobalDown(id)
   const dragPoint = useGlobalDragPoint(id)
   const {parentPosition} = useContext(DragContext)
   const [rootElement, setRootElement] = createSignal<null | HTMLElement>(null)
-  let startPosition = {x: 0, y: 0}
-
   const updateStartPosition = (point: Position) => {
     const rect = rootElement()?.getBoundingClientRect()
     const rootPosition = rect ? {x: rect.left, y: rect.top} : {x: 0, y: 0}
+
     startPosition = {
       x: point.x - rootPosition.x,
       y: point.y - rootPosition.y,
@@ -64,13 +63,13 @@ export const HDrag = (props: HDragProps) => {
   const attrs = createMemo(() => {
     const {down} = isDown()
     const pointState = dragPoint()
+    const _parentPosition = parentPosition() ?? {x: 0, y: 0}
+    const x = (pointState.point?.x ?? 0) - _parentPosition.x - startPosition.x
+    const y = (pointState.point?.y ?? 0) - _parentPosition.y - startPosition.y
+
     if (down && pointState.state === 'start' && pointState.point) {
       updateStartPosition(pointState.point)
     }
-    const _parentPosition = parentPosition() ?? {x: 0, y: 0}
-
-    const x = (pointState.point?.x ?? 0) - _parentPosition.x - startPosition.x
-    const y = (pointState.point?.y ?? 0) - _parentPosition.y - startPosition.y
 
     return {
       [ELEMENT_IDENTIFIER_GLOBAL_TOUCH]: id,
