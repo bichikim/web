@@ -5,25 +5,25 @@ const getSelfUrl = () => {
   return import.meta.env.VITE_API_URL ?? 'http://localhost:3000'
 }
 const getPreset = query(async (id?: string) => {
+  'use server'
+
   if (!id) {
     return
   }
 
-  const preset = await fetch(`${getSelfUrl()}/api/preset/${id}`).then((res) => {
+  return fetch(`${getSelfUrl()}/api/preset/${id}`).then((res) => {
     if (res.ok) {
       return res.json()
     }
 
     return {musics: [], title: 'Unknown'}
   })
-
-  return preset
 }, 'preset')
 
 export default function PresetPage() {
   const params = useParams()
-  // const preset = createAsync(() => getPreset(params.id))
-  const preset = () => ({musics: [], title: 'test'})
+  const preset = createAsync(() => getPreset(params.id))
+  // const preset = () => ({musics: [], title: 'test'})
 
   return <HomePage presetTitle={preset()?.title} initMusics={preset()?.musics} />
 }
