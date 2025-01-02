@@ -31,7 +31,6 @@ const rootStyle = cva(
     },
   },
 )
-
 const iconStyle = cva('inline-block  text-7 text-white', {
   variants: {
     isHidden: {

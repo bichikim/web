@@ -1,6 +1,0 @@
-export * from './is-component'
-export * from './is-component-instance'
-export * from './is-element'
-export * from './is-in-instance'
-export * from './is-to-ref'
-export * from './is-writable-ref'

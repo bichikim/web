@@ -15,11 +15,13 @@ describe('requestIdleCallback', () => {
       requestIdleCallback: vi.fn(((callback: any) => callback()) as any),
     } as any)
     const callback = vi.fn()
+
     requestIdleCallback(callback)
     expect(callback).toBeCalled()
   })
   it('should use polyfill when there is no requestIdleCallback', () => {
     const callback = vi.fn()
+
     requestIdleCallback(callback)
     expect(requestIdleCallbackPolyfill).toBeCalled()
   })

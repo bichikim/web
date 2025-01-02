@@ -16,9 +16,9 @@ export const createSubscribe = <Value extends NotFunction>(
 ): Subscribe<Value> => {
   let _value: Value
   const _poll = new Set<(value: Value) => void>()
-
   const listener = (value: Value) => {
     _value = value
+
     for (const callback of _poll) {
       callback(value)
     }
@@ -26,12 +26,15 @@ export const createSubscribe = <Value extends NotFunction>(
 
   const subscribe = (callback: SubscribeCallback<Value>): UnsubscribeFunc<Value> => {
     _poll.add(callback)
+
     return () => {
       //
       _poll.delete(callback)
+
       if (_value === undefined) {
         _value = initValue()
       }
+
       return _value
     }
   }

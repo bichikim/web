@@ -9,7 +9,6 @@ interface EventProps {
 
 const Event = (props: EventProps) => {
   const [count, setCount] = createSignal(0)
-
   const [element, setElement] = createSignal<HTMLButtonElement | null>(null)
 
   useEvent(element, 'click', () => {
@@ -24,13 +23,12 @@ const Event = (props: EventProps) => {
     </Show>
   )
 }
-
 const meta: Meta = {
-  title: 'solid/use/event',
   args: {
     show: true,
   },
   component: Event,
+  title: 'solid/use/event',
 }
 
 export default meta
@@ -45,7 +43,6 @@ export const Default: Story = {
     }
 
     const canvas = within(canvasElement)
-
     const button = canvas.getByLabelText('count button')
 
     await userEvent.click(button)

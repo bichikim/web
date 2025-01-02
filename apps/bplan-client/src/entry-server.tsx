@@ -16,6 +16,9 @@ export default createHandler(() => (
           <meta name="theme-color" content="#eee" />
           <link rel="mask-icon" href="/favicon.svg" color="#00aba9" />
           <link rel="apple-touch-icon" href="/apple-touch-icon-180x180.png" />
+          <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+          <link rel="mask-icon" href="/favicon.svg" color="#00aba9" />
+          <link rel="manifest" href="/manifest.json" />
           <style type="text/css">
             {'body {position: relative; overflow: hidden; margin: 0; height: 100vh;}'}
           </style>

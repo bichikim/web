@@ -9,6 +9,7 @@ import {useStorage} from '@winter-love/solid-use'
 import {SScale} from 'src/components/scale'
 import {HUNDRED} from '@winter-love/utils'
 import {useDetectMinScale} from 'src/use/detect-min-size'
+import {useCookie} from 'src/use/cookie'
 
 export interface HomePageProps {
   initMusics?: MusicInfo[]
@@ -22,12 +23,12 @@ export default function HomePage(props: HomePageProps) {
     onEmitInstrument: emitAllIds,
   })
 
-  const [settingData, setSettingData] = useStorage('local', 'coong:piano-setting', {
+  const [settingData, setSettingData] = useCookie('coong__piano-setting', {
     keepPlayList: true,
     pianoSize: 100,
   })
 
-  const [musics, setMusics] = useStorage<MusicInfo[]>(
+  const [musics, setMusics, updateActive] = useStorage<MusicInfo[]>(
     'local',
     // eslint-disable-next-line solid/reactivity
     `coong:piano-musics-${props.presetTitle ?? 'default'}`,
@@ -47,11 +48,7 @@ export default function HomePage(props: HomePageProps) {
   }
 
   createEffect(() => {
-    if (settingData().keepPlayList) {
-      setMusics(musics())
-    } else {
-      setMusics([])
-    }
+    updateActive(Boolean(settingData().keepPlayList))
   })
 
   return (
@@ -63,7 +60,7 @@ export default function HomePage(props: HomePageProps) {
       <Meta property="og:site_name" content={pageName} />
       <Meta property="og:title" content={pageName} />
       <Meta property="og:description" content="Your instruments for free" />
-      <main class="relative h-full overflow-y-hidden pt-0 px-2 flex flex-col overflow-x-auto">
+      <main class="relative h-full overflow-y-hidden pt-0 px-2 flex flex-col overflow-x-auto inline-block">
         <SScale
           class="h-full w-max origin-top-left"
           size={settingData().pianoSize / HUNDRED}

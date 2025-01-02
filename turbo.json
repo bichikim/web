@@ -14,6 +14,10 @@
     "check-types": {
       "dependsOn": ["^check-types"],
       "inputs": ["src/**/*.tsx", "src/**/*.ts"]
+    },
+    "lint": {
+      "dependsOn": ["^lint"],
+      "inputs": ["src/**/*.tsx", "src/**/*.ts", "src/**/*.css"]
     }
   }
 }

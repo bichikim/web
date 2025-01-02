@@ -22,7 +22,8 @@
   },
   "scripts": {
     "build": "cross-env NODE_ENV=production vite build",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint src"
   },
   "dependencies": {
     "solid-js": "^1.9.3"

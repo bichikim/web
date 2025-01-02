@@ -10,5 +10,6 @@ export const getElement = (
   if (typeof value === 'string') {
     return document.querySelector(value)
   }
+
   return value
 }

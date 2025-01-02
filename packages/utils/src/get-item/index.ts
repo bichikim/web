@@ -7,6 +7,7 @@ export const getItem = <T>(target: T, paths: string[]): any => {
 
   for (const path of paths) {
     result = Reflect.get(result, path)
+
     if (typeof result !== 'object') {
       return result
     }

@@ -1,4 +1,4 @@
-import {createMemo, splitProps, useContext} from 'solid-js'
+import {splitProps, useContext} from 'solid-js'
 import {HRealButton, HRealButtonProps} from 'src/components/real-button/HRealButton'
 import {KeyContext} from './key-context'
 import {PianoContext} from './piano-context'
@@ -14,26 +14,29 @@ export const HKey = (props: HKeyProps) => {
   const [innerProps, restProps] = splitProps(props, ['key', 'name'])
   const {key, disabled} = useContext(KeyContext)
 
-  const handleDown = () => {
+  function handleDown() {
     const _key = key ?? innerProps.key
+
     if (_key) {
       onKeyDown(_key)
     }
   }
 
-  const handleUp = () => {
+  function handleUp() {
     const _key = key ?? innerProps.key
+
     if (_key) {
       onKeyUp(_key)
     }
   }
 
-  const renderDown = createMemo(() => {
+  function renderDown() {
     if (!key) {
       return false
     }
+
     return down().has(key)
-  })
+  }
 
   return (
     <HRealButton

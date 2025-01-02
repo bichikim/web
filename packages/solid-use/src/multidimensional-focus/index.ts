@@ -28,15 +28,17 @@ export const stringifyPoint = (point: Point): string => {
 
 export const parsePoint = (pointString: string): Point => {
   const [x, y] = pointString.split(',').map(Number)
+
   return {x, y}
 }
 
 export const stringifyFocusPosition = (focusPosition: FocusPosition) => {
+  // eslint-disable-next-line unicorn/no-array-callback-reference
   return focusPosition.map(stringifyPoint).join('|')
 }
 
 export const parseFocusPosition = (focusPositionString: string): FocusPosition => {
-  return focusPositionString.split('|').map(parsePoint)
+  return focusPositionString.split('|').map((element) => parsePoint(element))
 }
 
 export const createPositionMap = <Info extends AbstractInfo>(): PositionMap<Info> => {
@@ -51,13 +53,14 @@ export const createPointInfo = <Info extends AbstractInfo>(
 ): PointInfo<Info> => {
   const members = new Set<string>()
   let _info: Info = {...info}
-
   const hasMembers = () => {
     return members.size > 0
   }
+
   const setMember = (id: string) => {
     members.add(id)
   }
+
   const deleteMember = (id: string) => {
     members.delete(id)
   }
@@ -83,15 +86,19 @@ export const addEachFocusPosition = <Info extends AbstractInfo>(
   positions: Map<string, PointInfo<Info>>,
   focusPosition: FocusPosition,
   id: string,
-  initInfo: Info = ({} as Info),
+  initInfo: Info = {} as Info,
 ) => {
   const focusPositionKey = stringifyFocusPosition(focusPosition)
   const currentInfo = positions.get(focusPositionKey)
+
   if (currentInfo) {
     currentInfo.setMember(id)
+
     return
   }
+
   const info = createPointInfo(initInfo)
+
   info.setMember(id)
   positions.set(focusPositionKey, info)
 }
@@ -102,8 +109,8 @@ export const addFocusPosition = <Info extends AbstractInfo>(
   id: string,
 ) => {
   const positions = new Map(map.positions)
-
   const currentReadingFocusPosition = [...focusPosition]
+
   while (currentReadingFocusPosition.length > 0) {
     addEachFocusPosition(positions, currentReadingFocusPosition, id)
     currentReadingFocusPosition.splice(-1, 1)

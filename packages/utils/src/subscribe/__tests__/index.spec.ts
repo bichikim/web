@@ -10,7 +10,6 @@ describe('createSubscribe', () => {
     const nextValue = 'bar'
     const eventSubscribe = createSubscribe(() => 'john' as string)
     const callback = vi.fn()
-
     const unsubscribe = eventSubscribe.subscribe(callback)
 
     expect(callback).not.toHaveBeenCalled()

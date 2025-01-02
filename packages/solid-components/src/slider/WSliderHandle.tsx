@@ -15,9 +15,11 @@ const toRangeValue = (value: number, min: number, max: number) => {
   if (value > max) {
     return max
   }
+
   if (value < min) {
     return min
   }
+
   return value
 }
 
@@ -33,7 +35,6 @@ export const WSliderHandle = (_props: WSliderHandleProps) => {
   const sliderContext = useSliderContext()
   const sliderAriaContext = useSliderAriaContext()
   const [handelElement, setHandelElement] = createSignal<HTMLElement | null>(null)
-
   const elementValue = createMemo(() => {
     const element = handelElement()
     const {width, height} = element
@@ -46,15 +47,16 @@ export const WSliderHandle = (_props: WSliderHandleProps) => {
         size: width,
       }
     }
+
     return {
       size: height,
     }
   })
-
   const handleStyle = createMemo(() => {
     const {size} = elementValue()
     const {percent, containerSize} = sliderContext.value()
     const position = (containerSize - size) * percent
+
     return {
       [POSITION_VAR]: `${position}px`,
     }
@@ -76,6 +78,7 @@ export const WSliderHandle = (_props: WSliderHandleProps) => {
       0,
       containerSize - size,
     )
+
     sliderContext.setPercent(position / (containerSize - size))
   })
 

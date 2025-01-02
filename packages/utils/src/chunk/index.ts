@@ -8,9 +8,11 @@ export interface ChunkOp {
 
 export const chunkOp: ChunkOp = (...args: any[]): any => {
   const [size, list] = args
+
   if (args.length > 1) {
     return chunk(list, size)
   }
+
   return (list) => {
     return chunk(list, size)
   }

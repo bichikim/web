@@ -32,7 +32,6 @@ const rootStyle = cx(
   'after:bg-gray-300 after:h-.25 first:after:hidden after:content-[""] after:absolute',
   'after:top--0.1875rem after:left-0.5rem after:w-[calc(100%-1rem)]',
 )
-
 const indexStyle = cva('', {
   variants: {
     playing: {
@@ -40,7 +39,6 @@ const indexStyle = cva('', {
     },
   },
 })
-
 const aiIconStyle = cva('flex origin-center flex-shrink-0', {
   variants: {
     generated: {
@@ -49,7 +47,6 @@ const aiIconStyle = cva('flex origin-center flex-shrink-0', {
     },
   },
 })
-
 const nameStyle = cva('block line-height-6 truncate pb-.5', {
   compoundVariants: [
     {
@@ -86,19 +83,15 @@ export const SFileItem = (props: SFileItemProps) => {
     'totalDuration',
     'onDelete',
   ])
-
   const handleSelect = () => {
     props.onSelect?.(props.id)
   }
-
   const progress = createMemo(
     () => ((props.leftTime ?? 0) / (props.totalDuration ?? 1)) * HUNDRED,
   )
-
   const handleLeDelete = () => {
     innerProps.onDelete?.(props.id)
   }
-
   const showPlayingIcon = createMemo(
     () => innerProps.playing && (innerProps.leftTime ?? 0) < innerProps.totalDuration,
   )

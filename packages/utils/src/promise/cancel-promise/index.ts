@@ -4,6 +4,7 @@ export type CancelPromise<T = unknown> = Promise<T> & {cancel: () => void}
 const emptyCancel = () => {
   // empty
 }
+
 /**
  * @experimental
  * @param promise
@@ -15,7 +16,6 @@ export const createCancelPromise = <T>(
   const cancelPromise = new Promise<null>((resolve) => {
     cancel = () => resolve(null)
   })
-
   const racePromise: Promise<T | null> = Promise.race([cancelPromise, promise])
 
   return [racePromise, cancel]

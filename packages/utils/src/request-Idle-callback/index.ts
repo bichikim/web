@@ -6,6 +6,7 @@ export const requestIdleCallback = (
   options?: IdleRequestOptions,
 ): (() => void) => {
   const window = getWindow()
+
   if (window?.requestIdleCallback === undefined) {
     return requestIdleCallbackPolyfill(callback, options)
   }

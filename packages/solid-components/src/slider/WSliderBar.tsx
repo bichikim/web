@@ -12,16 +12,15 @@ export const WSliderBar = (_props: WSliderBarProps) => {
   const [props, restProps] = splitProps(_props, ['as', 'children'])
   const as = createMemo(() => props.as ?? 'div')
   const sliderContext = useSliderContext()
-
   const onClick = (event: MouseEvent) => {
     const {type, containerSize} = sliderContext.value()
+
     if (type === 'horizontal') {
       sliderContext.setPercent(event.offsetX / containerSize)
     } else {
       sliderContext.setPercent(event.offsetY / containerSize)
     }
   }
-
   const barStyle = createMemo(() => {
     const {percent} = sliderContext.value()
 

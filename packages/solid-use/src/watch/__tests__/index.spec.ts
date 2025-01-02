@@ -4,11 +4,12 @@
 import flushPromises from 'flush-promises'
 import {createRoot, createSignal} from 'solid-js'
 import {createMutable, createStore} from 'solid-js/store'
-import {describe, it, vi, expect} from 'vitest'
+import {describe, expect, it, vi} from 'vitest'
 import {useWatch} from '../'
 
 describe('watch', () => {
   const mutableValue = createMutable({name: 'foo'})
+
   it.each([
     //
     {
@@ -23,6 +24,7 @@ describe('watch', () => {
     {
       callback: (value) => {
         expect(['bar', 'john']).toContain(value)
+
         return (prevValue) => {
           expect(['bar', 'john']).toContain(prevValue)
         }
@@ -34,6 +36,7 @@ describe('watch', () => {
     {
       callback: (value) => {
         expect(['bar', 'john']).toContain(value.name)
+
         return (prevValue) => {
           expect(['bar', 'john']).toContain(prevValue.name)
         }
@@ -46,6 +49,7 @@ describe('watch', () => {
     {
       callback: (value) => {
         expect(['bar', 'john']).toContain(value.name)
+
         return (prevValue) => {
           expect(['bar', 'john']).toContain(prevValue.name)
         }

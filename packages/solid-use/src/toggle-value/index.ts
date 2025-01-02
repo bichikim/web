@@ -21,6 +21,7 @@ export const toggleValue: ToggleValue = <T, R>(
 ) => {
   const valueAccessor = resolveAccessor(value)
   const toggleValueAccessor = resolveAccessor(toggleValue)
+
   return createMemo(() => {
     const value = valueAccessor()
     const toggleValue = toggleValueAccessor()

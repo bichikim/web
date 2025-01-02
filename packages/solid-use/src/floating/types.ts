@@ -8,16 +8,12 @@ import {
 } from '@floating-ui/dom'
 
 export interface FloatingOptions<T extends ReferenceElement = ReferenceElement> {
+  autoUpdate?: (reference: T, floating: FloatingElement, update: () => void) => () => void
   middleware?: Middleware[]
   open?: boolean
   placement?: Placement
   strategy?: Strategy
   transform?: boolean
-  autoUpdate?: (
-    reference: T,
-    floating: FloatingElement,
-    update: () => void,
-  ) => () => void
 }
 
 export interface FloatingReturn {

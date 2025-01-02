@@ -46,6 +46,7 @@ export const emitAllIds = (
 
   for (const id of ids) {
     const eventName = generateGlobalTouchEventName(id)
+
     window.dispatchEvent(new CustomEvent(eventName, {detail: {down: value, renderOnly}}))
   }
 }
@@ -60,6 +61,7 @@ const emitAllDragIds = (downTouchIDs: DragInfoIds) => {
 
   for (const id of ids) {
     const eventName = generateGlobalTouchDragEventName(id)
+
     window.dispatchEvent(
       new CustomEvent<DragPayload>(eventName, {detail: {point, state}}),
     )
@@ -105,6 +107,7 @@ export const findTouchIds = (elements: Element[]) => {
 
   for (const element of elements) {
     const id = getGlobalTouch(element)
+
     if (isString(id) && id !== PREVENT_GLOBAL_TOUCH_FLAG) {
       ids.push(id)
     }
@@ -139,10 +142,12 @@ export const getTouchedIdsMap = (touches: TouchList, takeFirst: boolean = false)
         ids: new Set<string>(),
         touch: undefined,
       }
+
       touchSets.add(touchedElementID)
       touchIDs.set(identifier, {ids: touchSets, point: {x: touch.pageX, y: touch.pageY}})
     }
   }
+
   return touchIDs
 }
 
@@ -163,8 +168,10 @@ export const useGlobalTouchEmitter = (options: UseGlobalTouchEmitterOptions = {}
     if (event.pointerType === 'touch') {
       return
     }
+
     mouseDown = true
     const {ids, point} = getPointedIds({x: event.pageX, y: event.pageY}, takeFirst)
+
     savedDownIds = new Map<number, Set<string>>([[mouseId, ids]])
     emitAllIds(ids, true)
     emitAllDragIds({ids, point, state: 'start'})
@@ -187,14 +194,15 @@ export const useGlobalTouchEmitter = (options: UseGlobalTouchEmitterOptions = {}
     if (event.pointerType === 'touch' || !mouseDown) {
       return
     }
+
     const downedIds = savedDownIds.get(mouseId)
     const upTouchIds: Set<string> = new Set(downedIds)
     const {ids: newDownIds, point} = getPointedIds(
       {x: event.pageX, y: event.pageY},
       takeFirst,
     )
-
     const downTouchIds = new Set(newDownIds)
+
     savedDownIds = new Map<number, Set<string>>([[mouseId, new Set(newDownIds)]])
 
     for (const id of newDownIds) {

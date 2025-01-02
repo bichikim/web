@@ -1,7 +1,0 @@
-export * from './Header'
-export * from './Logo'
-export * from './NavBar'
-export * from './NavMenu'
-export * from './NavMenuEndItem'
-export * from './NavMenuItem'
-export * from 'src/layouts/main-layout/components/CFooter'

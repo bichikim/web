@@ -19,6 +19,7 @@ describe('isScrollAble', () => {
       result: isScrollAble(document.createElement('div')),
     }
   }
+
   it('should return true with scroll', () => {
     const {result} = setup('auto')
 

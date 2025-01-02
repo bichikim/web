@@ -9,7 +9,6 @@ export interface SPlayerButtonProps
 
 export const SPlayerButton = (props: SPlayerButtonProps) => {
   const [innerProps, restProps] = splitProps(props, ['onClick'])
-
   const handelClick = (event: Event) => {
     innerProps.onClick?.(event)
   }

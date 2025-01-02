@@ -46,6 +46,7 @@ export const setCookieItem = (
 
 export const getStorage = (storage: StorageKind): Storage | undefined => {
   const {window} = globalThis
+
   if (!window) {
     return
   }
@@ -53,6 +54,7 @@ export const getStorage = (storage: StorageKind): Storage | undefined => {
   if (storage === 'local') {
     return window.localStorage
   }
+
   return window.sessionStorage
 }
 
@@ -63,10 +65,13 @@ export const getStorageItem = (
   raw: boolean = false,
 ) => {
   const _storage = getStorage(storage)
+
   if (!_storage) {
     return defaultValue
   }
+
   const rawValue = _storage.getItem(key)
+
   return parse(rawValue, defaultValue, raw)
 }
 
@@ -77,9 +82,11 @@ export const setStorageItem = (
   raw: boolean = false,
 ) => {
   const _storage = getStorage(storage)
+
   if (!_storage) {
     return
   }
+
   _storage.setItem(key, stringify(data, raw))
 }
 
@@ -93,9 +100,11 @@ export const getAnyStorageItem = (
     case 'cookie': {
       return getCookieItem(key, defaultValue, raw)
     }
+
     case 'local': {
       return getStorageItem('local', key, defaultValue, raw)
     }
+
     case 'session': {
       return getStorageItem('session', key, defaultValue, raw)
     }
@@ -113,9 +122,11 @@ export const setAnyStorageItem = (
     case 'cookie': {
       return setCookieItem(key, value, options, raw)
     }
+
     case 'local': {
       return setStorageItem('local', key, value, raw)
     }
+
     case 'session': {
       return setStorageItem('session', key, value, raw)
     }
@@ -124,9 +135,11 @@ export const setAnyStorageItem = (
 
 export const cleanAllCookie = () => {
   const document = getDocument()
+
   if (!document) {
     return
   }
+
   for (const cookie of document.cookie.split(';')) {
     document.cookie = cookie
       .replace(/^ +/u, '')

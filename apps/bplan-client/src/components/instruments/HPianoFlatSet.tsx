@@ -25,6 +25,7 @@ const flatSet = flatten(
     }),
 )
 const lastDeleteCount = 4
+
 flatSet.splice(lastDeleteCount * -1)
 
 export interface HPianoFlatSetProps extends JSX.HTMLAttributes<HTMLDivElement> {

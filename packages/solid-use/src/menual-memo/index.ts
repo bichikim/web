@@ -3,12 +3,11 @@ import {Accessor, createMemo, createSignal, createUniqueId} from 'solid-js'
 
 export const manualMemo = <R>(effectFunction: () => R): [Accessor<R>, () => void] => {
   const [signal, setSignal] = createSignal(createUniqueId())
-
   const value = createMemo(() => {
     signal()
+
     return effectFunction()
   })
-
   const forceUpdate = () => {
     setSignal(() => createUniqueId())
   }

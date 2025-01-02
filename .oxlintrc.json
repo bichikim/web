@@ -1,0 +1,32 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["import", "typescript", "unicorn"],
+  "env": {
+    "browser": true
+  },
+  "globals": {
+    "foo": "readonly"
+  },
+  "settings": {},
+  "rules": {},
+  "overrides": [
+    {
+      "files": ["*.spec.ts"],
+      "rules": {
+        "unicorn/no-thenable": "off"
+      }
+    },
+    {
+      "files": ["*.ts"],
+      "rules": {
+        "unicorn/no-document-cookie": "off"
+      }
+    },
+    {
+      "files": ["packages/solid-use/src/floating/__stories__/Floating.story.tsx"],
+      "rules": {
+        "no-unused-vars": "off"
+      }
+    }
+  ]
+}

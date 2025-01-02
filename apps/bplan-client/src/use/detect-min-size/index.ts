@@ -3,7 +3,6 @@ import {useEvent} from '@winter-love/solid-use'
 import {getWindow, HUNDRED} from '@winter-love/utils'
 
 const minScreenWidth = 375
-
 const getMinScale = (pianoSize?: number, defaultSize: number = HUNDRED) => {
   return (getWindow()?.innerWidth ?? minScreenWidth) / (pianoSize ?? defaultSize)
 }

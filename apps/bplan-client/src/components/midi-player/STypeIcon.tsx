@@ -10,7 +10,6 @@ export const STypeIcon = (props: MTypeIconProps) => {
     midi: 'bg-blue text-white',
     mp3: 'bg-blue text-white',
   }
-
   const color = createMemo(() => colorMatch[props.name ?? ''] ?? 'bg-gray text-white')
 
   return (

@@ -20,7 +20,8 @@
     "docs:dev": "vitepress dev docs",
     "docs:preview": "vitepress preview docs",
     "format:package.json": "pnpm dlx sort-package-json \\\"package.json\\\" \\\"packages/*/package.json\\\" \\\"apps/*/package.json\\\" ",
-    "lint": "eslint --cache ./",
+    "lint": "turbo lint --filter=@winter-love/* --filter=@apps/*",
+    "oxlint": "oxlint",
     "lint:errors": "eslint --cache --quiet ./",
     "lint:fix": "eslint --fix --ext .js,.ts,.tsx,.vue ./",
     "publish:alpha": "lernan publish from-package --preid alpha --dist-tag alpha",
@@ -49,6 +50,7 @@
     "last 5 Opera versions"
   ],
   "devDependencies": {
+    "oxlint": "^0.15.4",
     "@solidjs/testing-library": "^0.8.10",
     "@storybook/addon-essentials": "8.5.0-alpha.18",
     "@storybook/addon-interactions": "8.5.0-alpha.18",
@@ -122,7 +124,6 @@
       "@winter-love/solid-use": "workspace:*",
       "@winter-love/solid-test": "workspace:*",
       "@winter-love/solid-components": "workspace:*",
-      "@winter-love/use": "workspace:*",
       "@winter-love/utils": "workspace:*",
       "@winter-love/lodash": "workspace:*",
       "semver@<5.7.2": "5.7.2",

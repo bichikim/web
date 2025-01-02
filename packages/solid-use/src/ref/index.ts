@@ -16,6 +16,7 @@ declare module 'solid-js' {
  */
 export const ref = (element: Element, value: () => Setter<null | Element>) => {
   const set = value()
+
   onCleanup(() => {
     set(null)
   })

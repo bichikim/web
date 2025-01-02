@@ -1,5 +1,5 @@
 import {useThrottle} from '../'
-import {describe, expect, vi, it} from 'vitest'
+import {describe, expect, it, vi} from 'vitest'
 import {useFakeTimers} from 'sinon'
 
 describe('useThrottle', () => {
@@ -7,9 +7,7 @@ describe('useThrottle', () => {
     const timer = useFakeTimers()
     const options = {leading: true}
     const args = ['hello']
-
     const callback = vi.fn()
-
     const throttle = useThrottle(callback, 100, options)
 
     throttle.execute(...args)

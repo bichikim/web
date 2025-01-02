@@ -10,6 +10,7 @@ export const isSupportPassive = once(() => {
       Object.defineProperty({}, 'passive', {
         get: function () {
           supportsPassive = true
+
           return true
         },
       }),

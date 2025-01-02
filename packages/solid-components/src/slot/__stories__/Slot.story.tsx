@@ -8,6 +8,7 @@ export interface SlotParentProps {
 
 const SlotComponent = (props: SlotParentProps) => {
   const slots = getSlots(props.children)
+
   return (
     <div>
       {slots.head}
@@ -15,7 +16,6 @@ const SlotComponent = (props: SlotParentProps) => {
     </div>
   )
 }
-
 const meta = {
   component: SlotComponent,
   title: 'Solid/components/Slot',

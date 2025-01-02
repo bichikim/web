@@ -72,6 +72,7 @@ export const createSplendidGrandPiano = (
   options: Omit<SplendidGrandPianoOptions, 'onEnded' | 'onStart'> = {},
 ): [Accessor<SplendidGrandPianoState>, SplendidGrandPianoController] => {
   const {onEmitInstrument} = options
+
   const [state, setState] = createSignal<SplendidGrandPianoState>({
     leftTime: 0,
     loaded: false,
@@ -84,7 +85,6 @@ export const createSplendidGrandPiano = (
   let _cleanup = false
   let _currentMidi: SampleStart[][] = []
   let _suspendedTime = 0
-
   const emitter = createEmitter<
     PianoEvent,
     {
@@ -102,10 +102,13 @@ export const createSplendidGrandPiano = (
     if (payload[USER_PLAY_FLAG_KEY]) {
       return
     }
+
     const id = payload.stopId
+
     if (id === undefined) {
       return
     }
+
     onEmitInstrument?.(new Set([String(id)]), false, true)
   }
 
@@ -113,17 +116,22 @@ export const createSplendidGrandPiano = (
     if (payload[USER_PLAY_FLAG_KEY]) {
       return
     }
+
     const id = payload.stopId
+
     if (id === undefined) {
       return
     }
+
     onEmitInstrument?.(new Set([String(id)]), true, true)
   }
 
   const handleStateChange = (event: Event) => {
     const {target} = event
+
     if (target) {
       const {state} = target as unknown as AudioContext
+
       if (state === 'suspended') {
         setState((prevState) => ({...prevState, playingId: '', suspended: false}))
       }
@@ -136,18 +144,22 @@ export const createSplendidGrandPiano = (
       !state().suspended &&
       state().leftTime < state().totalDuration,
   )
+
   const hasPlayingItem = createMemo(() => state().playingId !== '')
 
   createEffect(() => {
     let cleanupFlag: any
-
     const updateLeftTime = () => {
       if (!_splendidGrandPiano) {
         return
       }
+
       const {startedAt, totalDuration} = state()
+
       const leftTime = _splendidGrandPiano.context.currentTime - startedAt
+
       const isEnd = leftTime >= totalDuration
+
       setState((prevState) => {
         return {
           ...prevState,
@@ -155,6 +167,7 @@ export const createSplendidGrandPiano = (
           // playingId: isEnd ? '' : prevState.playingId,
         }
       })
+
       if (isPlaying() && !isEnd) {
         cleanupFlag = requestAnimationFrame(updateLeftTime)
       }
@@ -173,19 +186,22 @@ export const createSplendidGrandPiano = (
 
   createEffect(() => {
     const window = getWindow()
+
     if (!window) {
       return
     }
+
     let splendidGrandPiano: SplendidGrandPiano | undefined
     let _audioContext: AudioContext | undefined
-
     const prepare = (audioContext: AudioContext | void) => {
       if (!audioContext || _cleanup) {
         return
       }
+
       _audioContext = audioContext
       audioContext.addEventListener('statechange', handleStateChange)
       const storage = new CacheStorage()
+
       splendidGrandPiano = new SplendidGrandPiano(audioContext, {
         ...options,
         // baseUrl: '/instruments/splendid-grand-piano',
@@ -199,6 +215,7 @@ export const createSplendidGrandPiano = (
         if (_cleanup) {
           return
         }
+
         _splendidGrandPiano = splendidGrandPiano
         setState((prev) => ({
           ...prev,
@@ -222,10 +239,13 @@ export const createSplendidGrandPiano = (
 
   const _start = (payload: SampleStart, options: StartOptions = {}): StopFn => {
     const {id = '', isUserStart = false} = options
+
     const piano = _splendidGrandPiano
+
     if (!piano) {
       return () => null
     }
+
     const {time = 0, velocity = 1} = payload
 
     return piano.start({
@@ -240,9 +260,11 @@ export const createSplendidGrandPiano = (
 
   const _seek = (time: number) => {
     const piano = _splendidGrandPiano
+
     if (!piano) {
       return
     }
+
     piano.stop()
     _resume(time)
   }
@@ -252,6 +274,7 @@ export const createSplendidGrandPiano = (
       const leftNotesIndex = notes.findIndex((note) => {
         return suspendedTime < (note.time ?? 0)
       })
+
       if (leftNotesIndex !== -1) {
         const leftNotes = notes.slice(leftNotesIndex).map((note) => {
           return {
@@ -259,6 +282,7 @@ export const createSplendidGrandPiano = (
             time: (note.time ?? 0) - suspendedTime,
           }
         })
+
         for (const note of leftNotes) {
           _start(note)
         }
@@ -273,10 +297,13 @@ export const createSplendidGrandPiano = (
     },
     async play(options: PlayOptions) {
       const piano = _splendidGrandPiano
+
       const {id, totalDuration, midi} = options
+
       if (!midi || !piano) {
         return
       }
+
       piano.stop()
       setState((prev) => ({
         ...prev,
@@ -296,9 +323,11 @@ export const createSplendidGrandPiano = (
     },
     resume() {
       const piano = _splendidGrandPiano
+
       if (!piano) {
         return
       }
+
       _resume(_suspendedTime)
       setState((prev) => ({
         ...prev,
@@ -309,26 +338,34 @@ export const createSplendidGrandPiano = (
     },
     seek(time: number) {
       const piano = _splendidGrandPiano
+
       if (!piano) {
         return
       }
+
       const {suspended} = state()
+
       setState((prev) => ({
         ...prev,
         leftTime: time,
         startedAt: suspended ? prev.startedAt : piano.context.currentTime - time,
       }))
+
       if (suspended) {
         _suspendedTime = time
+
         return
       }
+
       _seek(time)
     },
     stop() {
       const piano = _splendidGrandPiano
+
       if (!piano || !hasPlayingItem()) {
         return
       }
+
       setState((prev) => ({
         ...prev,
         leftTime: 0,
@@ -341,21 +378,26 @@ export const createSplendidGrandPiano = (
     },
     suspend() {
       const piano = _splendidGrandPiano
+
       if (!piano) {
         return
       }
+
       setState((prev) => ({
         ...prev,
         suspended: true,
       }))
       _suspendedTime = piano.context.currentTime - state().startedAt
+
       return piano.stop()
     },
     up(key: string | number) {
       const piano = _splendidGrandPiano
+
       if (!piano) {
         return
       }
+
       piano.stop(key)
     },
   }

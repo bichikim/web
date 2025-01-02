@@ -15,7 +15,6 @@ const Root = (props: any) => {
     </CheckboxRoot>
   )
 }
-
 const meta = {
   component: Root,
   title: 'Solid/components/checkbox',

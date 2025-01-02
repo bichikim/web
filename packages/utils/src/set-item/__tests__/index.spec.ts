@@ -4,6 +4,7 @@ import {setItem} from '../'
 describe('setItem', () => {
   it('should update the item', () => {
     const data = {info: {name: 'foo'}}
+
     setItem(data, ['info', 'name'], 'bar')
     expect(data).toEqual({info: {name: 'bar'}})
     setItem(data, ['info', 'age'], 10)

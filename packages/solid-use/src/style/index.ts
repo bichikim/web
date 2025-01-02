@@ -12,11 +12,12 @@ export const sx = (...args: ValidStyle[]) => {
       if (arg === undefined) {
         return ''
       }
+
       if (typeof arg === 'string') {
         return arg
       }
+
       return objectStyleToString(arg)
     })
     .join('')
 }
-

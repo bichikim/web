@@ -3,6 +3,7 @@ import {createUseWait} from 'src/wait'
 export const useTimeout = createUseWait(() => {
   let flag: any
   let _callback: any
+
   return {
     cancel: () => {
       clearTimeout(flag)

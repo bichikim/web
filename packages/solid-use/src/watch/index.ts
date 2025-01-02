@@ -36,6 +36,7 @@ export const useWatch = <T extends MayBeAccessors>(
       ? valueFromAccessor.map((value: any) => clone(value))
       : clone(valueFromAccessor)
     const cleanUp = callback(value, _prevValue)
+
     _prevValue = value
 
     onCleanup(() => {

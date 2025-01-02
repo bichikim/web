@@ -9,9 +9,10 @@ export const jsonParse = (
   data: string | null,
   defaultValue: Record<string, any> = {},
 ) => {
-  if (data === null) {
+  if (data === null || data === 'undefined' || data === 'null') {
     return defaultValue
   }
+
   try {
     return parse(data)
   } catch {

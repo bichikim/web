@@ -42,7 +42,6 @@ export const SPlayer = (props: SPlayerProps) => {
     'initMusics',
     'onMusicsChange',
   ])
-  // eslint-disable-next-line solid/reactivity
   const [playList, setPlayList] = createSignal<MusicInfo[]>(innerProps.initMusics ?? [])
   const [selectedId, setSelectedId] = createSignal<string>('')
   const [repeat, setRepeat] = createSignal<RepeatType>('no')
@@ -68,6 +67,7 @@ export const SPlayer = (props: SPlayerProps) => {
     if (playList().length === 0 && payload.length > 0) {
       setSelectedId(payload[0].id)
     }
+
     setPlayList((prev) => {
       return [...prev, ...payload]
     })
@@ -79,21 +79,33 @@ export const SPlayer = (props: SPlayerProps) => {
 
   const handlePlay = (id: string) => {
     const info = playList().find((item) => item.id === id)
+
     if (!info) {
+      const [firstItem] = playList()
+
+      if (firstItem) {
+        setSelectedId(firstItem.id)
+        innerProps.pianoController?.play(firstItem)
+      }
+
       return
     }
+
     innerProps.pianoController?.play(info)
   }
 
   const handleDelete = (id: string) => {
     const _playList = playList()
     const index = _playList.findIndex((item) => item.id === id)
+
     if (index === -1) {
       return
     }
+
     if (selectedId() === id) {
       const prevItem = _playList[index - 1]
       const nextItem = _playList[index + 1]
+
       if (prevItem) {
         setSelectedId(prevItem.id)
       } else if (nextItem) {
@@ -102,6 +114,7 @@ export const SPlayer = (props: SPlayerProps) => {
         setSelectedId('')
       }
     }
+
     setPlayList((prev) => {
       return [...prev.slice(0, index), ...prev.slice(index + 1)]
     })
@@ -110,35 +123,40 @@ export const SPlayer = (props: SPlayerProps) => {
   const handleChangeRepeat = (value: RepeatType) => {
     setRepeat(value)
   }
-
   const isEnd = createMemo(() => {
     const {playingId, totalDuration, leftTime} = defaultProps.pianoState
 
     return Boolean(playingId) && totalDuration <= leftTime
   })
-
   const getNextItem = (id: string, repeat: RepeatType) => {
     const _playLoad = playList()
     const index = _playLoad.findIndex((item) => item.id === id)
+
     if (index === -1) {
       return repeat === 'all' ? _playLoad[0] : undefined
     }
+
     const nextIndex = index + 1
     const item = _playLoad[nextIndex]
 
     if (!item) {
       return repeat === 'all' ? _playLoad[0] : undefined
     }
+
     return item
   }
 
   const handleTryRepeat = () => {
     const _repeat = repeat()
+
     if (_repeat === 'one' && innerProps.pianoState.playingId) {
       handlePlay(innerProps.pianoState.playingId)
+
       return
     }
+
     const nextItem = getNextItem(innerProps.pianoState.playingId, _repeat)
+
     if (nextItem) {
       innerProps.pianoController?.play(nextItem)
     }
@@ -152,6 +170,7 @@ export const SPlayer = (props: SPlayerProps) => {
     if (isEnd()) {
       handleTryRepeat()
     }
+
     return isEnd()
   })
 

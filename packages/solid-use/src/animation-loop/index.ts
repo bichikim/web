@@ -9,12 +9,14 @@ export const useAnimationLoop = createUseLoop<{__never__?: never}, [DOMHighResTi
         flag = undefined
       }
     }
+
     const start = (callback: (...args: any) => void) => {
       flag = requestAnimationFrame(() => {
         callback()
         start(callback)
       })
     }
+
     return {
       start,
       stop,

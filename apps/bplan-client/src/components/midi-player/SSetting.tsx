@@ -26,7 +26,6 @@ export const SSetting = (props: SSettingProps) => {
     'onSettingDataChange',
     'pianoMinScale',
   ])
-
   const handleClose = () => {
     innerProps.onClose?.()
   }

@@ -52,7 +52,6 @@ export const SFileList = (props: SFileListProps) => {
     show: false,
     top: false,
   })
-
   const updateScrollIndicators = (element: HTMLElement) => {
     setScrollIndicators({
       bottom: element.scrollTop < element.scrollHeight - element.clientHeight,
@@ -63,18 +62,23 @@ export const SFileList = (props: SFileListProps) => {
 
   createEffect(() => {
     const _element = element()
+
     if (!_element) {
       return
     }
+
     updateScrollIndicators(_element)
+
     return [innerProps.list, _element]
   })
 
   const handleScroll = () => {
     const _element = element()
+
     if (!_element) {
       return
     }
+
     updateScrollIndicators(_element)
   }
 

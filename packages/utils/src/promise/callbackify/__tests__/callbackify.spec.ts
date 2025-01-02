@@ -5,6 +5,7 @@ import flushPromises from 'flush-promises'
 describe('callbackify', () => {
   it('should call a callback function', async () => {
     const callback = vi.fn()
+
     callbackify(() => Promise.resolve('foo'), callback)
     expect(callback).not.toHaveBeenCalled()
 
@@ -16,6 +17,7 @@ describe('callbackify', () => {
 
   it('should call a callback function with an error', async () => {
     const callback = vi.fn()
+
     callbackify(() => Promise.reject(new Error('foo')), callback)
 
     expect(callback).not.toHaveBeenCalled()
@@ -28,6 +30,7 @@ describe('callbackify', () => {
 
   it('should call a callback with none promise', () => {
     const callback = vi.fn()
+
     callbackify(() => 'foo', callback)
 
     expect(callback).toHaveBeenCalled()
@@ -36,6 +39,7 @@ describe('callbackify', () => {
 
   it('should call a callback with none promise', () => {
     const callback = vi.fn()
+
     callbackify(() => {
       throw new Error('foo')
     }, callback)

@@ -4,16 +4,20 @@ export const createTrimPathRegExp = (
   type: TrimType = 'both',
 ) => {
   const defaultRegExp = () => RegExp(`^[${pathSeparator}]+|[${pathSeparator}]+$`, 'giu')
+
   switch (type) {
     case 'left': {
       return RegExp(`^${pathSeparator}+`, 'giu')
     }
+
     case 'right': {
       return RegExp(`${pathSeparator}+$`, 'giu')
     }
+
     case 'both': {
       return defaultRegExp()
     }
+
     default: {
       return defaultRegExp()
     }
@@ -28,10 +32,12 @@ export const createTrimPath = (
   type: TrimType = 'both',
 ) => {
   const TRIM_PATH_REGEX = createTrimPathRegExp(pathSeparator, type)
+
   return (path: string, replaceValue: string = '') => {
     if (process.env.NODE_ENV === 'development' && path.length > max) {
       console.warn('please do not pass a string path too long')
     }
+
     return path.slice(0, max).replace(TRIM_PATH_REGEX, replaceValue)
   }
 }

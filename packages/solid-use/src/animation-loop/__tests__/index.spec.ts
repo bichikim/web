@@ -12,6 +12,7 @@ describe('useAnimationLoop', () => {
     animationTrigger.target = callback
   })
   const cancelAnimationFrame = vi.fn()
+
   beforeEach(() => {
     vi.spyOn(window, 'requestAnimationFrame').mockImplementation(requestAnimationFrame)
     vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(cancelAnimationFrame)
@@ -22,8 +23,9 @@ describe('useAnimationLoop', () => {
   })
   it('should call callback many in animation frame', () => {
     const callback = vi.fn()
-    const {dispose, animationLoop} = createRoot((dispose) => {
+    const {animationLoop} = createRoot((dispose) => {
       const animationLoop = useAnimationLoop(callback)
+
       return {animationLoop, dispose}
     })
 

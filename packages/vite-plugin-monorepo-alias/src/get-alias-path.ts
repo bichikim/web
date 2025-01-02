@@ -2,4 +2,5 @@ export type Alias = ((workspacePath: string) => string | undefined) | string | s
 
 export const getAliasPath = (workspacePath: string, alias: Alias) => {
   // todo
+  console.info(workspacePath, alias)
 }

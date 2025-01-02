@@ -15,9 +15,9 @@ export const useScrollState = (
   element: MayBeAccessor<HTMLElement | null>,
 ): Accessor<ScrollState> => {
   const elementAccessor = resolveAccessor(element)
-
   const [nativeScrollState, updateNativeScrollState] = createManualMemo(() => {
     const element = elementAccessor()
+
     if (!element) {
       return {
         containerHeight: 0,
@@ -39,9 +39,9 @@ export const useScrollState = (
       scrollLeft = 0,
       scrollTop = 0,
     } = element
-
     const {top: containerTop = 0, left: containerLeft = 0} =
       element.getBoundingClientRect() ?? {}
+
     return {
       containerHeight,
       containerLeft,

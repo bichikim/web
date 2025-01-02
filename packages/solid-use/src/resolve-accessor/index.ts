@@ -11,7 +11,9 @@ export const resolveAccessors = <T extends MayBeAccessors>(
 ): Accessor<AccessorsValue<T>> => {
   if (Array.isArray(value)) {
     const accessors = value.map((value) => resolveAccessor(value))
+
     return (() => accessors.map((accessor) => accessor())) as any
   }
+
   return resolveAccessor(value) as any
 }

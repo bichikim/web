@@ -32,7 +32,6 @@ export const createEmitter = <
   events: EventName[],
 ): Emitter<EventName, EVentMap> => {
   const listenerMatchMap = new Map<(...args: any[]) => any, (...args: any[]) => any>()
-
   const addEventListener = <E extends EventName>(
     event: E,
     listener: (payload: EVentMap[E]) => void,
@@ -42,6 +41,7 @@ export const createEmitter = <
     }
 
     const window = getWindow()
+
     if (!window) {
       return
     }
@@ -60,9 +60,11 @@ export const createEmitter = <
     listener: (payload: EVentMap[E]) => void,
   ) => {
     const window = getWindow()
+
     if (!window) {
       return
     }
+
     const listenerAdepter = listenerMatchMap.get(listener)
 
     if (!listenerAdepter) {
@@ -76,9 +78,11 @@ export const createEmitter = <
 
   const emit = <E extends EventName>(event: E, payload: EVentMap[E]) => {
     const window = getWindow()
+
     if (!window) {
       return
     }
+
     const customEvent = new CustomEvent(eventNameRecipe(event), {detail: payload})
 
     window.dispatchEvent(customEvent)
@@ -86,6 +90,7 @@ export const createEmitter = <
 
   const clear = () => {
     const window = getWindow()
+
     if (!window) {
       return
     }

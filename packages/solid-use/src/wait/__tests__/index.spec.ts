@@ -5,9 +5,11 @@ import {afterEach, describe, expect, it, vi} from 'vitest'
 import {createUseWait} from '../'
 
 const callback = vi.fn()
+
 vi.spyOn(global, 'setTimeout')
 vi.mock('@winter-love/lodash', async () => {
   const actual: any = await vi.importActual('@winter-love/lodash')
+
   return {
     ...actual,
     debounce: vi.fn(actual.debounce),
@@ -18,6 +20,7 @@ const setTimeoutWait = createUseWait<Record<string, unknown>>(() => {
   // prepare stage
   let _flag: any
   let _args: any
+
   return {
     cancel: () => {
       clearTimeout(_flag)
@@ -32,9 +35,9 @@ const setTimeoutWait = createUseWait<Record<string, unknown>>(() => {
     },
   }
 })
-
 const debounceWait = createUseWait<DebounceSettings>(() => {
   let _flag: any
+
   return {
     cancel: () => {
       _flag.cancel()
@@ -56,6 +59,7 @@ const debounceWait = createUseWait<DebounceSettings>(() => {
     },
   }
 })
+
 describe('waitFactory', () => {
   afterEach(() => {
     callback.mockClear()
@@ -119,6 +123,7 @@ describe('waitFactory', () => {
       expect(callback).toHaveBeenCalledTimes(1)
       callback.mockClear()
     }
+
     expect(callback).toHaveBeenCalledTimes(0)
 
     timer.tick(50)

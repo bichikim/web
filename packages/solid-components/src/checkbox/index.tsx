@@ -10,7 +10,7 @@ import {
   ValidComponent,
 } from 'solid-js'
 import {Dynamic, DynamicProps} from 'solid-js/web'
-import {LabelContext, LabelRoot} from 'src/label'
+import {LabelRoot} from 'src/label'
 
 export interface ToggleRootProps extends ParentProps {
   disabled?: boolean
@@ -52,23 +52,19 @@ export const CheckboxContext = createContext<
  */
 export const CheckboxRoot = (props: ToggleRootProps) => {
   // initValue
-  // eslint-disable-next-line solid/reactivity
   const [checked, setChecked] = createSignal(props.initValue ?? false)
-
   const instanceId = createUniqueId()
-
   const id = createMemo(() => {
     return props.id ?? instanceId
   })
-
   const onToggleChecked = () => {
     if (props.disabled) {
       return
     }
+
     setChecked((value) => !value)
     props.onChange?.(checked())
   }
-
   const checkboxContextValue = createMemo(() => {
     return {
       checked: checked(),

@@ -6,6 +6,7 @@ describe('pipe', () => {
       (name: string) => `${name}-foo`,
       (name: string) => `${name}-bar`,
     )
+
     expect(await result('john')).toBe('john-foo-bar')
   })
 })

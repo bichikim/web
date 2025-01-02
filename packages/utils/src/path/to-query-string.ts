@@ -35,6 +35,7 @@ export const encodeQueryItem = (
   options: Omit<ToQueryStringOptions, 'sort'> = {},
 ) => {
   const {encodeKey = encodeQueryKey, encodeValue = encodeQueryValue} = options
+
   return `${encodeKey(trimQueryKey(key))}=${encodeValue(value)}`
 }
 

@@ -6,6 +6,7 @@ describe('async-pipe', () => {
       (name: string) => Promise.resolve(`${name}-foo`),
       (name: string) => Promise.resolve(`${name}-bar`),
     )
+
     expect(await result('john')).toBe('john-foo-bar')
   })
 })

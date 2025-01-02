@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-types */
 import {expectType} from 'tsd'
 import {describe, it} from 'vitest'
 import {ArrayLength, ClassFunction, DropParameters} from '../'
@@ -29,7 +28,9 @@ describe('language', () => {
   })
   describe('ClassFunction', () => {
     it('should type class function', () => {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
       const foo: Function = 'foo' as any
+
       expectType<ClassFunction>(foo)
     })
   })

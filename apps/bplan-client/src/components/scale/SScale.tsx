@@ -7,10 +7,11 @@ export interface SScaleProps extends JSX.HTMLAttributes<HTMLDivElement> {
 
 export function SScale(props: SScaleProps) {
   const [innerProps, restProps] = splitProps(props, ['size'])
-
   const scaleStyle = createMemo(() => {
     return {
       transform: `scale(${innerProps.size ?? 1})`,
+      // just send resizing signal for the browser rendering engine
+      width: `${innerProps.size ?? 1}%`,
     }
   })
 

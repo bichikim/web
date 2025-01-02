@@ -12,10 +12,13 @@ export const naturalImageSize = (element: MayBeAccessor<NaturalImageLike | null>
 
   return createMemo(() => {
     const element = elementAccessor()
+
     if (element) {
       const {naturalWidth, naturalHeight} = element
+
       return {height: naturalHeight, width: naturalWidth}
     }
+
     return {height: 0, width: 0}
   })
 }

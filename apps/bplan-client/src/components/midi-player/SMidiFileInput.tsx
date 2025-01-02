@@ -24,16 +24,18 @@ export const SMidiFileInput = (props: HMidiFileInputProps) => {
   const [innerProps, restProps] = splitProps(props, ['class', 'onAdd', 'onTouchEnd'])
   const [inputElement, setInputElement] = createSignal<HTMLInputElement | null>(null)
   let isCleanup = false
-
   const handleInputFiles = async (files: FileList | null) => {
     if (!files || files.length === 0) {
       return
     }
+
     const promiseList: Promise<{midi: Midi; name: string}>[] = []
+
     // FileList 는 이터레이블이 아닙니다
     // eslint-disable-next-line unicorn/no-for-loop
     for (let index = 0; index < files.length; index += 1) {
       const file = files[index]
+
       promiseList.push(loadMidi(file))
     }
 
@@ -49,9 +51,11 @@ export const SMidiFileInput = (props: HMidiFileInputProps) => {
         const midiData: SampleStart[][] = midi.tracks
           .map((track) => {
             const {notes, instrument: {family} = {}} = track
+
             if (!notes || family !== 'piano') {
               return null
             }
+
             return notes.map((track): SampleStart => {
               return {
                 duration: track.duration,
@@ -62,12 +66,13 @@ export const SMidiFileInput = (props: HMidiFileInputProps) => {
             })
           })
           .filter(Boolean) as SampleStart[][]
-
         let totalDuration = 0
         for (const track of midiData) {
           const lastNote = track.at(-1)
+
           if (lastNote) {
             const trackTotal = (lastNote.time ?? 0) + (lastNote.duration ?? 0)
+
             if (trackTotal > totalDuration) {
               totalDuration = trackTotal
             }
@@ -75,6 +80,7 @@ export const SMidiFileInput = (props: HMidiFileInputProps) => {
         }
 
         const [singleTrack] = midi.tracks
+
         if (!singleTrack) {
           return null
         }
@@ -95,9 +101,11 @@ export const SMidiFileInput = (props: HMidiFileInputProps) => {
   const handleTouchEnd = (event: Event) => {
     innerProps.onTouchEnd?.(event)
     const element = inputElement()
+
     if (!element) {
       return
     }
+
     element.click()
   }
 

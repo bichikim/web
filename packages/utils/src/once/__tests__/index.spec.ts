@@ -5,6 +5,7 @@ describe('once', () => {
   it('should run once', () => {
     const runner = vi.fn()
     const _once = once(runner)
+
     _once()
 
     expect(runner).toHaveBeenCalledTimes(1)
@@ -19,6 +20,7 @@ describe('once share value example', () => {
   it('should run once ', () => {
     const _once = once(() => {
       let count = 0
+
       return {
         get count() {
           return count
@@ -28,7 +30,6 @@ describe('once share value example', () => {
         },
       }
     })
-
     const aValue = _once()
     const bValue = _once()
 

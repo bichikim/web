@@ -7,14 +7,17 @@ describe('createUseLoop', () => {
   const intervalTrigger = createTrigger()
   const fakeSetInterval = vi.fn((callback, _) => {
     intervalTrigger.target = callback
+
     return 0
   })
   const fakeClearInterval = vi.fn((_?: number) => {
     intervalTrigger.target = undefined
   })
+
   it('should be defined', () => {
     const useIntervalLoop = createUseLoop<{time: number}, []>(() => {
       let flag: number | undefined
+
       return {
         flush: (callback) => {
           if (flag !== undefined) {
@@ -24,6 +27,7 @@ describe('createUseLoop', () => {
         },
         start: (callback, options) => {
           const {time = 0} = options
+
           flag = fakeSetInterval(callback, time)
         },
         stop: () => {
@@ -32,11 +36,10 @@ describe('createUseLoop', () => {
         },
       }
     })
-
     const callback = vi.fn()
-
     const {intervalLoop, dispose} = createRoot((dispose) => {
       const intervalLoop = useIntervalLoop(callback)
+
       return {dispose, intervalLoop}
     })
 
