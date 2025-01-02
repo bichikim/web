@@ -8,7 +8,7 @@ import {
   splitProps,
   ValidComponent,
 } from 'solid-js'
-import {Dynamic} from 'solid-js/web'
+// import {Dynamic} from 'solid-js/web'
 import {SClose} from 'src/components/midi-player/SClose'
 import {preventGlobalTouchAttrs} from 'src/components/real-button/use-global-touch'
 import {SPlayer, SPlayerProps} from './SPlayer'
@@ -90,6 +90,7 @@ export const SHiddenPlayer = (props: SHiddenPlayerProps) => {
     setIsRender(isShow())
   }
 
+  // Dynamic error with ssr prefetching hydration
   return (
     <aside class={props.class ?? 'relative'}>
       <SClose
