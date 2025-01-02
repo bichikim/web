@@ -16,29 +16,26 @@ export interface HomePageProps {
   presetTitle?: string
 }
 const pianoSize = 7520
+
 export default function HomePage(props: HomePageProps) {
   const [pianoElement, setPianoElement] = createSignal<HTMLElement | null>(null)
   const minPianoSize = useDetectMinScale(pianoElement, pianoSize)
   const [splendidGrandPiano, splendidGrandPianoController] = createSplendidGrandPiano({
     onEmitInstrument: emitAllIds,
   })
-
   const [settingData, setSettingData] = useCookie('coong__piano-setting', {
     keepPlayList: true,
     pianoSize: 100,
   })
-
   const [musics, setMusics, updateActive] = useStorage<MusicInfo[]>(
     'local',
-    // eslint-disable-next-line solid/reactivity
+
     `coong:piano-musics-${props.presetTitle ?? 'default'}`,
-    // eslint-disable-next-line solid/reactivity
+
     props.initMusics ?? [],
   )
-
   const isLoadDone = createMemo(() => splendidGrandPiano().loaded)
   const pageName = 'Piano'
-
   const handleSettingDataChange = (data: SettingData) => {
     setSettingData((prev) => ({...prev, ...data}))
   }
@@ -48,7 +45,7 @@ export default function HomePage(props: HomePageProps) {
   }
 
   createEffect(() => {
-    updateActive(Boolean(settingData().keepPlayList))
+    // updateActive(Boolean(settingData().keepPlayList))
   })
 
   return (
