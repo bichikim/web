@@ -17,7 +17,7 @@ export default defineConfig({
       unoCss('../../uno.config.ts'),
       vitePwa({
         base: '/',
-        // buildBase: '/_build/',
+        buildBase: '/_build/',
         // filename: 'sw.ts',
         includeAssets: ['favicon.svg', 'robots.txt', '*.svg', '*.png', '*.html'],
         injectRegister: null,
@@ -66,8 +66,9 @@ export default defineConfig({
         workbox: {
           globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
           modifyURLPrefix: {
-            '': '/_build/',
-            '/index.html': '',
+            '': '_build/',
+            './': '_build/',
+            '/index.html': '/index.html',
           },
           navigateFallback: '/index.html',
         },
