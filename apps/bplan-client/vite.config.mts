@@ -16,7 +16,7 @@ export default defineConfig({
     plugins: [
       unoCss('../../uno.config.ts'),
       vitePwa({
-        // base: '/',
+        base: '/',
         // buildBase: '/_build/',
         // filename: 'sw.ts',
         includeAssets: ['favicon.svg', 'robots.txt', '*.svg', '*.png', '*.html'],
@@ -67,6 +67,7 @@ export default defineConfig({
           globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
           modifyURLPrefix: {
             '': '/_build',
+            '/index.html': '',
           },
           navigateFallback: '/index.html',
         },
