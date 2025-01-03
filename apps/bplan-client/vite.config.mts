@@ -68,9 +68,9 @@ export default defineConfig({
           modifyURLPrefix: {
             '': '_build/',
             // './': '_build/',
-            '/index.html': '/index.html',
+            // '/index.html': '/index.html',
           },
-          navigateFallback: '/index.html',
+          // navigateFallback: '/index.html',
           inlineWorkboxRuntime: true,
         },
       }),
