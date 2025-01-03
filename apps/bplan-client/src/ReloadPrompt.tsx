@@ -1,6 +1,6 @@
-import {useRegisterSW} from 'virtual:pwa-register/solid'
-import {createSignal, JSX, Show} from 'solid-js'
+import {JSX, Show} from 'solid-js'
 import {preventGlobalTouchAttrs} from 'src/components/real-button/use-global-touch'
+import {useRegisterSW} from 'virtual:pwa-register/solid'
 
 export interface ReloadPromptProps extends JSX.HTMLAttributes<HTMLDivElement> {
   //
@@ -49,7 +49,11 @@ export const ReloadPrompt = (props: ReloadPromptProps) => {
               >
                 Reload
               </button>
-              <button class="b-0 cusor-pointer rd-1 px-2 py-1" onClick={handleClose}>
+              <button
+                class="b-0 cusor-pointer rd-1 px-2 py-1"
+                onClick={handleClose}
+                onTouchEnd={handleClose}
+              >
                 Skip
               </button>
             </div>

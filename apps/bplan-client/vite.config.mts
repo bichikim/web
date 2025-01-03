@@ -4,6 +4,11 @@ import {fileURLToPath, URL} from 'node:url'
 import unoCss from 'unocss/vite'
 
 export default defineConfig({
+  server: {
+    prerender: {
+      routes: ['/'],
+    },
+  },
   vite: {
     build: {
       minify: false,
@@ -26,6 +31,10 @@ export default defineConfig({
               handler: 'NetworkFirst',
               options: {
                 cacheName: 'html-cache',
+                networkTimeoutSeconds: 3,
+                precacheFallback: {
+                  fallbackURL: '/index.html',
+                },
               },
               urlPattern: ({request}) => request.destination === 'document',
             },
@@ -41,6 +50,9 @@ export default defineConfig({
               handler: 'CacheFirst',
               options: {
                 cacheName: 'image-cache',
+                expiration: {
+                  maxAgeSeconds: 2_592_000,
+                },
               },
               urlPattern: ({request}) => ['image'].includes(request.destination),
             },
