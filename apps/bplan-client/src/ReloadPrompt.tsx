@@ -34,7 +34,7 @@ export const ReloadPrompt = (props: ReloadPromptProps) => {
         <Show when={offlineReady()}>
           <div class="flex flex-col gap-2">
             <span>App ready to work offline</span>
-            <button class="" onClick={handleClose}>
+            <button class="" onClick={handleClose} onTouchEnd={handleClose}>
               OK
             </button>
           </div>
@@ -46,6 +46,7 @@ export const ReloadPrompt = (props: ReloadPromptProps) => {
               <button
                 class="b-0 cusor-pointer rd-1 px-5 py-1"
                 onClick={handleUpdateServiceWorker}
+                onTouchEnd={handleUpdateServiceWorker}
               >
                 Reload
               </button>
