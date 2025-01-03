@@ -17,10 +17,11 @@ export const ReloadPrompt = (props: ReloadPromptProps) => {
       console.info(`Service worker at: ${swUrl}`)
     },
   })
-  const handleUpdateServiceWorker = () => {
+  const handleUpdateServiceWorker = async () => {
     console.info('handleUpdateServiceWorker')
 
-    return updateServiceWorker(true)
+    await updateServiceWorker(true)
+    handleClose()
   }
 
   const handleClose = () => {

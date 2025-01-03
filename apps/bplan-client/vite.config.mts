@@ -16,6 +16,7 @@ export default defineConfig({
     plugins: [
       unoCss('../../uno.config.ts'),
       vitePwa({
+        buildBase: '/',
         // filename: 'sw.ts',
         includeAssets: ['favicon.svg', 'robots.txt', '*.svg', '*.png', '*.html'],
         injectRegister: null,
