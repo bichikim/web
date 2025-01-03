@@ -66,7 +66,7 @@ export default defineConfig({
         workbox: {
           globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
           modifyURLPrefix: {
-            '': '/_build',
+            '': '/_build/',
             '/index.html': '',
           },
           navigateFallback: '/index.html',
