@@ -17,7 +17,7 @@ export default defineConfig({
       unoCss('../../uno.config.ts'),
       vitePwa({
         base: '/',
-        buildBase: '/_build/',
+        buildBase: '/',
         // filename: 'sw.ts',
         includeAssets: ['favicon.svg', 'robots.txt', '*.svg', '*.png', '*.html'],
         injectRegister: null,
@@ -71,6 +71,7 @@ export default defineConfig({
             '/index.html': '/index.html',
           },
           navigateFallback: '/index.html',
+          swDest: '.output/public/sw.ts',
         },
       }),
     ] as any,
