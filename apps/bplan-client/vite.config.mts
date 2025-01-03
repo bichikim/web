@@ -8,6 +8,7 @@ export default defineConfig({
     prerender: {
       routes: ['/'],
     },
+
   },
   vite: {
     build: {
@@ -17,7 +18,7 @@ export default defineConfig({
       unoCss('../../uno.config.ts'),
       vitePwa({
         base: '/',
-        buildBase: '/_build/',
+        buildBase: '/',
         filename: 'sw.ts',
         includeAssets: ['favicon.svg', 'robots.txt', '*.svg', '*.png', '*.html'],
         injectRegister: null,
@@ -25,6 +26,10 @@ export default defineConfig({
         registerType: 'prompt',
         scope: '/',
         srcDir: 'src',
+        outDir: './public',
+        injectManifest: {
+          globDirectory: '.vinxi/build/client'
+        },
         strategies: 'injectManifest',
         // workbox: {
         //   // Only precache these files - html should be excluded

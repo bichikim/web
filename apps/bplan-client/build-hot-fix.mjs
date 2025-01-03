@@ -17,20 +17,9 @@ function getDefaultExportFromNamespaceIfNotNamed (n) {
 }`), 'utf8')
 }
 
-// const fixSw = async () => {
-//   const files = await glob('.output/public/_build/*.js')
-//   const dest = nodePath.resolve('.output/public')
-//
-//   await Promise.all(files.map((file) => {
-//     const filename = nodePath.basename(file)
-//
-//     return nodeFs.promises.copyFile(file, nodePath.join(dest, filename))
-//   }))
-//
-//   return Promise.all(files.map((file) => {
-//     return nodeFs.promises.rm(file)
-//   }))
-// }
+const fixSw = async () => {
+  return nodeFs.promises.rm(nodePath.resolve('public/sw.js'))
+}
 
 fix().then(() => console.info('hot fix done'))
-// fixSw().then(() => console.info('hot fix sw done'))
+fixSw().then(() => console.info('hot fix sw done'))
