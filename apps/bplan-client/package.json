@@ -28,7 +28,11 @@
     "axios": "1.7.9",
     "vinxi": "0.4.3",
     "vite": "^5.4.11",
-    "workbox-window": "^7.3.0"
+    "workbox-window": "^7.3.0",
+    "workbox-precaching": "^7.3.0",
+    "workbox-routing": "^7.3.0",
+    "workbox-strategies": "^7.3.0",
+    "workbox-expiration": "^7.3.0"
   },
   "devDependencies": {
     "@types/serviceworker": "^0.0.108",
