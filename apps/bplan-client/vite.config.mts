@@ -17,56 +17,20 @@ export default defineConfig({
       unoCss('../../uno.config.ts'),
       vitePwa({
         base: '/',
-        buildBase: '/_build/',
-        // outDir
-        // filename: 'sw.ts',
+        buildBase: '/',
+        filename: 'sw.ts',
         includeAssets: ['favicon.svg', 'robots.txt', '*.svg', '*.png', '*.html'],
+        injectManifest: {
+          globDirectory: '.vinxi/build/client',
+          globPatterns: ['**/*.{js,css,html,svg,png}'],
+        },
         injectRegister: null,
         manifest: false,
+        outDir: './public',
         registerType: 'prompt',
-        // srcDir: 'src',
-        strategies: 'generateSW',
-        // workbox: {
-        //   // Only precache these files - html should be excluded
-        //   globPatterns: ['**/*.{js,css,ogg,html}'],
-        //   // Don't fallback on document based (e.g. `/some-page`) requests
-        //   // Even though this says `null` by default, I had to set this specifically to `null` to make it work
-        //   navigateFallback: null,
-        //   runtimeCaching: [
-        //     {
-        //       handler: 'NetworkFirst',
-        //       options: {
-        //         cacheName: 'html-cache',
-        //         networkTimeoutSeconds: 3,
-        //         precacheFallback: {
-        //           fallbackURL: '/index.html',
-        //         },
-        //       },
-        //       urlPattern: ({request}) => request.destination === 'document',
-        //     },
-        //     {
-        //       handler: 'StaleWhileRevalidate',
-        //       options: {
-        //         cacheName: 'assets-cache',
-        //       },
-        //       urlPattern: ({request}) =>
-        //         ['style', 'script', 'worker'].includes(request.destination),
-        //     },
-        //     {
-        //       handler: 'CacheFirst',
-        //       options: {
-        //         cacheName: 'image-cache',
-        //         expiration: {
-        //           maxAgeSeconds: 2_592_000,
-        //         },
-        //       },
-        //       urlPattern: ({request}) => ['image'].includes(request.destination),
-        //     },
-        //   ],
-        // },
-        workbox: {
-          globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
-        },
+        scope: '/',
+        srcDir: 'src',
+        strategies: 'injectManifest',
       }),
     ] as any,
     resolve: {

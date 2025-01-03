@@ -4,38 +4,9 @@ import {registerRoute} from 'workbox-routing'
 import {CacheFirst, NetworkFirst, StaleWhileRevalidate} from 'workbox-strategies'
 import {ExpirationPlugin} from 'workbox-expiration'
 
-// 미리 캐싱할 파일
 precacheAndRoute((self as any).__WB_MANIFEST)
 
 cleanupOutdatedCaches()
-
-// offline 파일 캐싱
-self.addEventListener('install', (event: ExtendableEvent) => {
-  event.waitUntil(
-    caches.open('offline-cache').then((cache) => {
-      return cache.addAll(['/index.html'])
-    }),
-  )
-})
-// 네트워크 요청 실패 시 fallback 처리
-registerRoute(
-  // HTML 요청인 경우
-  ({request}) => request.mode === 'navigate',
-  async ({request}): Promise<Response> => {
-    try {
-      return fetch(request)
-    } catch (error) {
-      const cache = await caches.open('offline-cache')
-      const matched = await cache.match('/index.html')
-
-      if (matched) {
-        return matched
-      }
-
-      throw error
-    }
-  },
-)
 
 registerRoute(
   ({request}) => request.destination === 'document',
@@ -56,7 +27,7 @@ registerRoute(
 
 // 이미지 캐싱
 registerRoute(
-  ({request}) => ['image'].includes(request.destination),
+  ({request}) => ['image', 'font'].includes(request.destination),
   new CacheFirst({
     cacheName: 'image-cache',
     plugins: [

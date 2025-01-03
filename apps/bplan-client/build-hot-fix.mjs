@@ -1,6 +1,7 @@
 /* eslint-disable no-tabs,max-len,prettier/prettier,unicorn/prevent-abbreviations */
 import nodeFs from 'node:fs'
 import nodePath from 'node:path'
+// import {glob} from 'glob'
 
 const fix = async () => {
   const src = process.env.VERCEL === '1' ? nodePath.resolve('.vercel/output/functions/__nitro.func/chunks/nitro/nitro.mjs') : nodePath.resolve('.output/server/chunks/nitro/nitro.mjs')
@@ -16,4 +17,9 @@ function getDefaultExportFromNamespaceIfNotNamed (n) {
 }`), 'utf8')
 }
 
+const fixSw = async () => {
+  return nodeFs.promises.rm(nodePath.resolve('public/sw.js'))
+}
+
 fix().then(() => console.info('hot fix done'))
+fixSw().then(() => console.info('hot fix sw done'))
