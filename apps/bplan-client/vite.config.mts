@@ -21,6 +21,7 @@ export default defineConfig({
         injectRegister: null,
         manifest: false,
         registerType: 'prompt',
+        scope: '/',
         srcDir: 'src',
         strategies: 'injectManifest',
         // workbox: {
