@@ -1,16 +1,19 @@
 /* eslint-disable unicorn/prefer-global-this */
-import {cleanupOutdatedCaches, precacheAndRoute} from 'workbox-precaching'
+import {cleanupOutdatedCaches, precacheAndRoute, PrecacheEntry} from 'workbox-precaching'
 import {registerRoute} from 'workbox-routing'
 import {CacheFirst, NetworkFirst, StaleWhileRevalidate} from 'workbox-strategies'
 import {ExpirationPlugin} from 'workbox-expiration'
 
+const precaches: PrecacheEntry[] = (self as any).__WB_MANIFEST
+
 // 미리 캐싱할 파일
-precacheAndRoute((self as any).__WB_MANIFEST)
+precacheAndRoute(precaches.map((cache) => `_build/${cache.url}`))
 
 cleanupOutdatedCaches()
 
 // offline 파일 캐싱
 self.addEventListener('install', (event: ExtendableEvent) => {
+  console.info('SW: install')
   event.waitUntil(
     caches.open('offline-cache').then((cache) => {
       return cache.addAll(['/index.html'])
