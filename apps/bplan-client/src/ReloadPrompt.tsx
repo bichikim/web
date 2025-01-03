@@ -1,6 +1,7 @@
 import {JSX, Show} from 'solid-js'
 import {preventGlobalTouchAttrs} from 'src/components/real-button/use-global-touch'
 import {useRegisterSW} from 'virtual:pwa-register/solid'
+import {getWindow} from '@winter-love/utils'
 
 export interface ReloadPromptProps extends JSX.HTMLAttributes<HTMLDivElement> {
   //
@@ -25,6 +26,7 @@ export const ReloadPrompt = (props: ReloadPromptProps) => {
   const handleUpdateServiceWorker = async () => {
     console.info('handleUpdateServiceWorker')
     handleClose()
+    getWindow()?.location.reload()
 
     return updateServiceWorker(true)
   }
