@@ -72,7 +72,6 @@ export const createSplendidGrandPiano = (
   options: Omit<SplendidGrandPianoOptions, 'onEnded' | 'onStart'> = {},
 ): [Accessor<SplendidGrandPianoState>, SplendidGrandPianoController] => {
   const {onEmitInstrument} = options
-
   const [state, setState] = createSignal<SplendidGrandPianoState>({
     leftTime: 0,
     loaded: false,
@@ -97,7 +96,6 @@ export const createSplendidGrandPiano = (
     },
     ['start', 'end'],
   )
-
   const handelEnded = (payload: ExtendedSampleStart) => {
     if (payload[USER_PLAY_FLAG_KEY]) {
       return
@@ -137,14 +135,12 @@ export const createSplendidGrandPiano = (
       }
     }
   }
-
   const isPlaying = createMemo(
     () =>
       state().playingId !== '' &&
       !state().suspended &&
       state().leftTime < state().totalDuration,
   )
-
   const hasPlayingItem = createMemo(() => state().playingId !== '')
 
   createEffect(() => {
@@ -155,9 +151,7 @@ export const createSplendidGrandPiano = (
       }
 
       const {startedAt, totalDuration} = state()
-
       const leftTime = _splendidGrandPiano.context.currentTime - startedAt
-
       const isEnd = leftTime >= totalDuration
 
       setState((prevState) => {
@@ -224,7 +218,7 @@ export const createSplendidGrandPiano = (
       })
     }
 
-    getAudioContext().then(prepare)
+    prepare(getAudioContext())
 
     onCleanup(() => {
       splendidGrandPiano?.stop()
@@ -239,7 +233,6 @@ export const createSplendidGrandPiano = (
 
   const _start = (payload: SampleStart, options: StartOptions = {}): StopFn => {
     const {id = '', isUserStart = false} = options
-
     const piano = _splendidGrandPiano
 
     if (!piano) {
@@ -289,7 +282,6 @@ export const createSplendidGrandPiano = (
       }
     }
   }
-
   const controller: SplendidGrandPianoController = {
     ...emitter,
     down(key: string | number): StopFn {
@@ -297,7 +289,6 @@ export const createSplendidGrandPiano = (
     },
     async play(options: PlayOptions) {
       const piano = _splendidGrandPiano
-
       const {id, totalDuration, midi} = options
 
       if (!midi || !piano) {
@@ -315,6 +306,7 @@ export const createSplendidGrandPiano = (
       }))
       await piano.context.resume()
       _currentMidi = midi
+
       for (const notes of midi) {
         for (const note of notes) {
           _start(note)
