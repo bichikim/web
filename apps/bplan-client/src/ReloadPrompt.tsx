@@ -17,16 +17,16 @@ export const ReloadPrompt = (props: ReloadPromptProps) => {
       console.info(`Service worker at: ${swUrl}`)
     },
   })
-  const handleUpdateServiceWorker = async () => {
-    console.info('handleUpdateServiceWorker')
-
-    await updateServiceWorker(true)
-    handleClose()
-  }
-
   const handleClose = () => {
     setOfflineReady(false)
     setNeedRefresh(false)
+  }
+
+  const handleUpdateServiceWorker = async () => {
+    console.info('handleUpdateServiceWorker')
+    handleClose()
+
+    return updateServiceWorker(true)
   }
 
   return (
