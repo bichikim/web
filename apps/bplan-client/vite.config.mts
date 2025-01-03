@@ -18,7 +18,6 @@ export default defineConfig({
       vitePwa({
         base: '/',
         buildBase: '/_build/',
-        // outDir
         // filename: 'sw.ts',
         includeAssets: ['favicon.svg', 'robots.txt', '*.svg', '*.png', '*.html'],
         injectRegister: null,
@@ -66,6 +65,10 @@ export default defineConfig({
         // },
         workbox: {
           globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+          modifyURLPrefix: {
+            '': '/_build',
+          },
+          navigateFallback: '/index.html',
         },
       }),
     ] as any,
