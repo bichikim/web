@@ -12,14 +12,14 @@ precacheAndRoute(precaches.map((cache) => `_build/${cache.url}`))
 cleanupOutdatedCaches()
 
 // offline 파일 캐싱
-self.addEventListener('install', (event: ExtendableEvent) => {
-  console.info('SW: install')
-  event.waitUntil(
-    caches.open('offline-cache').then((cache) => {
-      return cache.addAll(['/index.html'])
-    }),
-  )
-})
+// self.addEventListener('install', (event: ExtendableEvent) => {
+//   console.info('SW: install')
+//   event.waitUntil(
+//     caches.open('offline-cache').then((cache) => {
+//       return cache.addAll(['/index.html'])
+//     }),
+//   )
+// })
 // 네트워크 요청 실패 시 fallback 처리
 registerRoute(
   // HTML 요청인 경우
