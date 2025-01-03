@@ -20,7 +20,14 @@ export default createHandler(() => (
           <link rel="mask-icon" href="/favicon.svg" color="#00aba9" />
           <link rel="manifest" href="/manifest.json" />
           <style type="text/css">
-            {'body {position: relative; overflow: hidden; margin: 0; height: 100vh;}'}
+            {`body {
+                position: relative;
+                overflow: hidden;
+                margin: 0;
+                height:100;
+                height: 100dvh;
+                height: --webkit-fill-available;
+              }`}
           </style>
           {assets}
         </head>

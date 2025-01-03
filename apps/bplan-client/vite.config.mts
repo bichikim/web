@@ -17,11 +17,34 @@ export default defineConfig({
         strategies: 'generateSW',
         workbox: {
           // Only precache these files - html should be excluded
-          globPatterns: ['**/*.{js,css}'],
-
+          globPatterns: ['**/*.{js,css,ogg}'],
           // Don't fallback on document based (e.g. `/some-page`) requests
           // Even though this says `null` by default, I had to set this specifically to `null` to make it work
           navigateFallback: null,
+          runtimeCaching: [
+            {
+              handler: 'NetworkFirst',
+              options: {
+                cacheName: 'html-cache',
+              },
+              urlPattern: ({request}) => request.destination === 'document',
+            },
+            {
+              handler: 'StaleWhileRevalidate',
+              options: {
+                cacheName: 'assets-cache',
+              },
+              urlPattern: ({request}) =>
+                ['style', 'script', 'worker'].includes(request.destination),
+            },
+            {
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'image-cache',
+              },
+              urlPattern: ({request}) => ['image'].includes(request.destination),
+            },
+          ],
         },
       }),
     ] as any,
