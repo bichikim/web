@@ -17,7 +17,7 @@ export default defineConfig({
       unoCss('../../uno.config.ts'),
       vitePwa({
         base: '/',
-        buildBase: '/',
+        buildBase: '/_build/',
         // filename: 'sw.ts',
         includeAssets: ['favicon.svg', 'robots.txt', '*.svg', '*.png', '*.html'],
         injectRegister: null,
@@ -71,7 +71,7 @@ export default defineConfig({
             '/index.html': '/index.html',
           },
           navigateFallback: '/index.html',
-          swDest: '.vinxi/build/client/_sw/sw.ts',
+          inlineWorkboxRuntime: true,
         },
       }),
     ] as any,
