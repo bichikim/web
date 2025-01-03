@@ -16,48 +16,51 @@ export default defineConfig({
     plugins: [
       unoCss('../../uno.config.ts'),
       vitePwa({
+        filename: 'sw.ts',
+        includeAssets: ['favicon.svg', 'robots.txt', '*.svg', '*.png', '*.html'],
         injectRegister: null,
         manifest: false,
         registerType: 'prompt',
-        strategies: 'generateSW',
-        workbox: {
-          // Only precache these files - html should be excluded
-          globPatterns: ['**/*.{js,css,ogg}'],
-          // Don't fallback on document based (e.g. `/some-page`) requests
-          // Even though this says `null` by default, I had to set this specifically to `null` to make it work
-          navigateFallback: null,
-          runtimeCaching: [
-            {
-              handler: 'NetworkFirst',
-              options: {
-                cacheName: 'html-cache',
-                networkTimeoutSeconds: 3,
-                precacheFallback: {
-                  fallbackURL: '/index.html',
-                },
-              },
-              urlPattern: ({request}) => request.destination === 'document',
-            },
-            {
-              handler: 'StaleWhileRevalidate',
-              options: {
-                cacheName: 'assets-cache',
-              },
-              urlPattern: ({request}) =>
-                ['style', 'script', 'worker'].includes(request.destination),
-            },
-            {
-              handler: 'CacheFirst',
-              options: {
-                cacheName: 'image-cache',
-                expiration: {
-                  maxAgeSeconds: 2_592_000,
-                },
-              },
-              urlPattern: ({request}) => ['image'].includes(request.destination),
-            },
-          ],
-        },
+        srcDir: 'src',
+        strategies: 'injectManifest',
+        // workbox: {
+        //   // Only precache these files - html should be excluded
+        //   globPatterns: ['**/*.{js,css,ogg,html}'],
+        //   // Don't fallback on document based (e.g. `/some-page`) requests
+        //   // Even though this says `null` by default, I had to set this specifically to `null` to make it work
+        //   navigateFallback: null,
+        //   runtimeCaching: [
+        //     {
+        //       handler: 'NetworkFirst',
+        //       options: {
+        //         cacheName: 'html-cache',
+        //         networkTimeoutSeconds: 3,
+        //         precacheFallback: {
+        //           fallbackURL: '/index.html',
+        //         },
+        //       },
+        //       urlPattern: ({request}) => request.destination === 'document',
+        //     },
+        //     {
+        //       handler: 'StaleWhileRevalidate',
+        //       options: {
+        //         cacheName: 'assets-cache',
+        //       },
+        //       urlPattern: ({request}) =>
+        //         ['style', 'script', 'worker'].includes(request.destination),
+        //     },
+        //     {
+        //       handler: 'CacheFirst',
+        //       options: {
+        //         cacheName: 'image-cache',
+        //         expiration: {
+        //           maxAgeSeconds: 2_592_000,
+        //         },
+        //       },
+        //       urlPattern: ({request}) => ['image'].includes(request.destination),
+        //     },
+        //   ],
+        // },
       }),
     ] as any,
     resolve: {

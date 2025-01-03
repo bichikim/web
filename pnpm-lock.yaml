@@ -289,6 +289,9 @@ importers:
       '@iconify-json/tabler':
         specifier: ^1.2.13
         version: 1.2.13
+      '@types/serviceworker':
+        specifier: ^0.0.108
+        version: 0.0.108
       '@unocss/vite':
         specifier: ^0.65.3
         version: 0.65.3(rollup@4.28.1)(vite@5.4.11(@types/node@22.10.1)(terser@5.37.0))(vue@3.5.13(typescript@5.7.2))
@@ -4135,6 +4138,9 @@ packages:
 
   '@types/serve-static@1.15.7':
     resolution: {integrity: sha512-W8Ym+h8nhuRwaKPaDw34QUkwsGi6Rc4yYqvKFo5rm2FUEhCFbzVWrxXUxuKK8TASjWsysJY0nsmNCGhCOIsrOw==}
+
+  '@types/serviceworker@0.0.108':
+    resolution: {integrity: sha512-jicpN0A3+X1HUlVhtykUmqOnnfAzAD+IV2FOOzJ9EvN/FItR9igOWUey+ZyP/kRQr8uAN1HMVBBaYniVCniGAA==}
 
   '@types/sinon@17.0.3':
     resolution: {integrity: sha512-j3uovdn8ewky9kRBG19bOwaZbexJu/XjtkHyjvUgt4xfPFz18dcORIMqnYh66Fx3Powhcr85NT5+er3+oViapw==}
@@ -14980,6 +14986,8 @@ snapshots:
       '@types/http-errors': 2.0.4
       '@types/node': 22.10.1
       '@types/send': 0.17.4
+
+  '@types/serviceworker@0.0.108': {}
 
   '@types/sinon@17.0.3':
     dependencies:
