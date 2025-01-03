@@ -16,15 +16,13 @@ export default defineConfig({
     plugins: [
       unoCss('../../uno.config.ts'),
       vitePwa({
-        base: '/',
-        buildBase: '/_build/',
-        // filename: 'sw.ts',
+        filename: 'sw.ts',
         includeAssets: ['favicon.svg', 'robots.txt', '*.svg', '*.png', '*.html'],
         injectRegister: null,
         manifest: false,
         registerType: 'prompt',
-        // srcDir: 'src',
-        strategies: 'generateSW',
+        srcDir: 'src',
+        strategies: 'injectManifest',
         // workbox: {
         //   // Only precache these files - html should be excluded
         //   globPatterns: ['**/*.{js,css,ogg,html}'],
@@ -63,16 +61,16 @@ export default defineConfig({
         //     },
         //   ],
         // },
-        workbox: {
-          globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
-          modifyURLPrefix: {
-            '': '_build/',
-            // './': '_build/',
-            // '/index.html': '/index.html',
-          },
-          // navigateFallback: '/index.html',
-          inlineWorkboxRuntime: true,
-        },
+        // workbox: {
+        //   globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+        //   modifyURLPrefix: {
+        //     '': '_build/',
+        //     // './': '_build/',
+        //     // '/index.html': '/index.html',
+        //   },
+        //   // navigateFallback: '/index.html',
+        //   inlineWorkboxRuntime: true,
+        // },
       }),
     ] as any,
     resolve: {
