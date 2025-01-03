@@ -4,7 +4,7 @@ import {registerRoute} from 'workbox-routing'
 import {CacheFirst, NetworkFirst, StaleWhileRevalidate} from 'workbox-strategies'
 import {ExpirationPlugin} from 'workbox-expiration'
 
-// const precaches: PrecacheEntry[] = (self as any).__WB_MANIFEST
+const precaches: PrecacheEntry[] = (self as any).__WB_MANIFEST
 //
 // // 미리 캐싱할 파일
 // precacheAndRoute(
