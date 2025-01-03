@@ -71,7 +71,7 @@ export default defineConfig({
             '/index.html': '/index.html',
           },
           navigateFallback: '/index.html',
-          swDest: '.output/public/sw.ts',
+          swDest: '.vinxi/build/client/_sw/sw.ts',
         },
       }),
     ] as any,
