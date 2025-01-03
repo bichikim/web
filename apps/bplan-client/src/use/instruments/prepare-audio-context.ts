@@ -3,7 +3,7 @@ import {AudioContext as StandardizedAudioContext} from 'standardized-audio-conte
 
 let __audioContext: AudioContext | undefined
 
-export const getAudioContext = async (): Promise<AudioContext | void> => {
+export const getAudioContext = (): AudioContext | undefined => {
   const window = getWindow()
 
   if (__audioContext) {
@@ -14,39 +14,7 @@ export const getAudioContext = async (): Promise<AudioContext | void> => {
     return
   }
 
-  return window.navigator.mediaDevices
-    .getUserMedia({audio: true})
-    .then(() => {
-      const audioContext: AudioContext = new StandardizedAudioContext() as any
+  __audioContext = new StandardizedAudioContext() as any
 
-      __audioContext = audioContext
-
-      return audioContext
-    })
-    .catch(() => {
-      if (__audioContext) {
-        return
-      }
-
-      const audioContext: AudioContext = new StandardizedAudioContext() as any
-      let prepared = false
-
-      __audioContext = audioContext
-
-      const prepareAudio = () => {
-        window.removeEventListener('mousemove', prepareAudio)
-
-        if (prepared) {
-          return
-        }
-
-        prepared = true
-        audioContext.resume()
-      }
-
-      window.addEventListener('mousemove', prepareAudio)
-      window.addEventListener('touchstart', prepareAudio)
-
-      return audioContext
-    })
+  return __audioContext
 }
