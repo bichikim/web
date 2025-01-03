@@ -66,7 +66,7 @@ registerRoute(
 
 // 이미지 캐싱
 registerRoute(
-  ({request}) => ['image'].includes(request.destination),
+  ({request}) => ['image', 'font'].includes(request.destination),
   new CacheFirst({
     cacheName: 'image-cache',
     plugins: [
