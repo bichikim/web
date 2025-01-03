@@ -21,9 +21,6 @@ const fixSw = async () => {
   const files = await glob('.vinxi/build/client/_sw/*.js')
   const dest = nodePath.resolve('.output/public')
 
-  console.log(files)
-  console.log(dest)
-
   return Promise.all(files.map((file) => {
     const filename = nodePath.basename(file)
 
