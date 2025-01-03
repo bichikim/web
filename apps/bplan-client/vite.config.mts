@@ -67,7 +67,7 @@ export default defineConfig({
           globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
           modifyURLPrefix: {
             '': '_build/',
-            './': '_build/',
+            // './': '_build/',
             '/index.html': '/index.html',
           },
           navigateFallback: '/index.html',
