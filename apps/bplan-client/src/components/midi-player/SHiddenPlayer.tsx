@@ -65,6 +65,7 @@ export const SHiddenPlayer = (props: SHiddenPlayerProps) => {
   const [isShow, setIsShow] = createSignal(false)
   const [surfaceKind, setSurfaceKind] = createSignal<SurfaceKind>('player')
   const [isRender, setIsRender] = createSignal(false)
+
   const handleClose = () => {
     const _isShow = !isShow()
 
@@ -76,12 +77,14 @@ export const SHiddenPlayer = (props: SHiddenPlayerProps) => {
 
     setIsShow(_isShow)
   }
+
   const isPlaying = createMemo(
     () =>
       defaultProps.pianoState.playingId !== '' &&
       defaultProps.pianoState.leftTime < defaultProps.pianoState.totalDuration &&
       !defaultProps.pianoState.suspended,
   )
+
   const handleSurfaceKindChange = (kind: SurfaceKind) => {
     setSurfaceKind(kind)
   }

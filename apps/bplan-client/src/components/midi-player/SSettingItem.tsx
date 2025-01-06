@@ -22,6 +22,7 @@ export function SSettingItem<T extends SSettingItemType>(props: SSettingItemProp
     'onValueChange',
   ])
   const id = createUniqueId()
+
   const handleSwitchChange = (event: Event) => {
     innerProps.onValueChange?.((event.target as HTMLInputElement).checked as any)
   }

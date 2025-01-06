@@ -83,15 +83,19 @@ export const SFileItem = (props: SFileItemProps) => {
     'totalDuration',
     'onDelete',
   ])
+
   const handleSelect = () => {
     props.onSelect?.(props.id)
   }
+
   const progress = createMemo(
     () => ((props.leftTime ?? 0) / (props.totalDuration ?? 1)) * HUNDRED,
   )
+
   const handleLeDelete = () => {
     innerProps.onDelete?.(props.id)
   }
+
   const showPlayingIcon = createMemo(
     () => innerProps.playing && (innerProps.leftTime ?? 0) < innerProps.totalDuration,
   )

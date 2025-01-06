@@ -1,7 +1,7 @@
 import {JSX} from 'solid-js'
 
 export interface HButtonProps
-  extends Omit<JSX.HTMLAttributes<HTMLButtonElement>, 'onClick' | 'onTouchEnd'> {
+  extends Omit<JSX.ButtonHTMLAttributes<HTMLButtonElement>, 'onClick' | 'onTouchEnd'> {
   onClick?: JSX.EventHandler<HTMLButtonElement, MouseEvent | TouchEvent>
   onTouchEnd?: JSX.EventHandler<HTMLButtonElement, TouchEvent>
 }

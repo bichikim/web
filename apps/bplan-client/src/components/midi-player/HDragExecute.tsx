@@ -36,6 +36,7 @@ export const HDragExecute = (props: HDragExecuteProps) => {
     'onLeftExecute',
     'onRightExecute',
   ])
+  const resolved = children(() => props.dragLeftChildren)
   const [drag, setDrag] = createSignal<DragData>({started: {identifier: -1, x: 0, y: 0}})
   const hasLeft = createMemo(() => Boolean(innerProps.onLeftExecute))
   const hasRight = createMemo(() => Boolean(innerProps.onRightExecute))
@@ -60,6 +61,7 @@ export const HDragExecute = (props: HDragExecuteProps) => {
 
     return '0px'
   })
+
   const handleClick = (event: MouseEvent) => {
     innerProps.onClick?.(event)
   }
@@ -201,7 +203,6 @@ export const HDragExecute = (props: HDragExecuteProps) => {
       y: draggedY,
     })
   }
-  const resolved = children(() => props.dragLeftChildren)
 
   return (
     <button

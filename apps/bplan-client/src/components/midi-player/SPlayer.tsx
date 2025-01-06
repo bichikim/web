@@ -123,11 +123,13 @@ export const SPlayer = (props: SPlayerProps) => {
   const handleChangeRepeat = (value: RepeatType) => {
     setRepeat(value)
   }
+
   const isEnd = createMemo(() => {
     const {playingId, totalDuration, leftTime} = defaultProps.pianoState
 
     return Boolean(playingId) && totalDuration <= leftTime
   })
+
   const getNextItem = (id: string, repeat: RepeatType) => {
     const _playLoad = playList()
     const index = _playLoad.findIndex((item) => item.id === id)

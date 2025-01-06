@@ -27,6 +27,7 @@ export const SSeeker = (props: SSeekerProps) => {
     return innerProps.leftTime / innerProps.totalDuration
   })
   const [element, setElement] = createSignal<HTMLElement | null>(null)
+
   const handleSeek = (x: number) => {
     const target = element()
 
