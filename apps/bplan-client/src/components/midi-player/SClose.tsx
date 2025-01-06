@@ -9,7 +9,7 @@ export interface SCloseProps extends JSX.HTMLAttributes<HTMLButtonElement> {
 }
 
 const rootStyle = cva(
-  'flex items-center justify-center bg-red cursor-pointer b-0 absolute',
+  'flex items-center justify-center bg-red cursor-pointer b-0 absolute p-0',
   {
     compoundVariants: [
       {

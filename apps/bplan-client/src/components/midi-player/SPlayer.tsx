@@ -13,13 +13,36 @@ import {SPlayerController, SPlayerControllerProps} from './SPlayerController'
 
 export interface SPlayerProps extends Pick<SPlayerControllerProps, 'leftTime'> {
   initMusics?: MusicInfo[]
-  isHidden?: boolean
   onMusicsChange?: (musics: MusicInfo[]) => void
   onSetting?: () => void
   pianoController?: SplendidGrandPianoController
   pianoState?: SplendidGrandPianoState
 }
 
+/**
+ * MIDI Player Component
+ *
+ * A player component for playing and controlling MIDI files.
+ * Provides functionality for playlist management, repeat playback, pause/resume etc.
+ *
+ * @example
+ * ```tsx
+ * <SPlayer
+ *   initMusics={[]}
+ *   pianoController={pianoController}
+ *   pianoState={pianoState}
+ *   onMusicsChange={(musics) => console.log('Playlist changed:', musics)}
+ * />
+ * ```
+ *
+ * @param props {SPlayerProps} The props for the player component
+ * @prop {MusicInfo[]} [initMusics] - Initial playlist of music files
+ * @prop {boolean} [isHidden] - Whether the player should be hidden
+ * @prop {(musics: MusicInfo[]) => void} [onMusicsChange] - Callback fired when playlist changes
+ * @prop {() => void} [onSetting] - Callback fired when settings button is clicked
+ * @prop {SplendidGrandPianoController} [pianoController] - Piano controller instance
+ * @prop {SplendidGrandPianoState} [pianoState] - Current state of the piano
+ */
 export const SPlayer = (props: SPlayerProps) => {
   const defaultProps = mergeProps(
     {
@@ -38,7 +61,6 @@ export const SPlayer = (props: SPlayerProps) => {
     'pianoController',
     'pianoState',
     'onSetting',
-    'isHidden',
     'initMusics',
     'onMusicsChange',
   ])
@@ -123,11 +145,13 @@ export const SPlayer = (props: SPlayerProps) => {
   const handleChangeRepeat = (value: RepeatType) => {
     setRepeat(value)
   }
+
   const isEnd = createMemo(() => {
     const {playingId, totalDuration, leftTime} = defaultProps.pianoState
 
     return Boolean(playingId) && totalDuration <= leftTime
   })
+
   const getNextItem = (id: string, repeat: RepeatType) => {
     const _playLoad = playList()
     const index = _playLoad.findIndex((item) => item.id === id)
@@ -175,26 +199,24 @@ export const SPlayer = (props: SPlayerProps) => {
   })
 
   return (
-    <Show when={!innerProps.isHidden}>
-      <SPlayerController
-        {...restProps}
-        repeat={repeat()}
-        totalDuration={innerProps.pianoState.totalDuration}
-        playList={playList()}
-        playingId={innerProps.pianoState.playingId}
-        isSuspend={innerProps.pianoState.suspended}
-        selectedId={selectedId()}
-        onSuspend={handleSuspend}
-        onStop={handleStop}
-        onDeleteItem={handleDelete}
-        onResume={handleResume}
-        onAddItem={handleAddPlayItem}
-        onSelect={handleSelect}
-        onPlay={handlePlay}
-        onSeek={handleSeek}
-        onSetting={innerProps.onSetting}
-        onChangeRepeat={handleChangeRepeat}
-      />
-    </Show>
+    <SPlayerController
+      {...restProps}
+      repeat={repeat()}
+      totalDuration={innerProps.pianoState.totalDuration}
+      playList={playList()}
+      playingId={innerProps.pianoState.playingId}
+      isSuspend={innerProps.pianoState.suspended}
+      selectedId={selectedId()}
+      onSuspend={handleSuspend}
+      onStop={handleStop}
+      onDeleteItem={handleDelete}
+      onResume={handleResume}
+      onAddItem={handleAddPlayItem}
+      onSelect={handleSelect}
+      onPlay={handlePlay}
+      onSeek={handleSeek}
+      onSetting={innerProps.onSetting}
+      onChangeRepeat={handleChangeRepeat}
+    />
   )
 }

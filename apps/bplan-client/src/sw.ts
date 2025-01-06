@@ -8,6 +8,7 @@ precacheAndRoute((self as any).__WB_MANIFEST)
 
 cleanupOutdatedCaches()
 
+// html document caching
 registerRoute(
   ({request}) => request.destination === 'document',
   new NetworkFirst({
@@ -17,7 +18,7 @@ registerRoute(
   'GET',
 )
 
-// 정적 자산 캐싱 (JS, CSS 등)
+// Static asset caching (JS, CSS, etc)
 registerRoute(
   ({request}) => ['style', 'script', 'worker'].includes(request.destination),
   new StaleWhileRevalidate({
@@ -25,7 +26,7 @@ registerRoute(
   }),
 )
 
-// 이미지 캐싱
+// Image caching
 registerRoute(
   ({request}) => ['image', 'font'].includes(request.destination),
   new CacheFirst({

@@ -50,9 +50,6 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
     },
     props,
   )
-  const handleAddPlayItem = (payload: MusicInfo[]) => {
-    innerProps.onAddItem?.(payload)
-  }
   const isSuspend = createMemo(() => {
     return Boolean(innerProps.isSuspend)
   })
@@ -68,6 +65,11 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
       Boolean(innerProps.playingId) && innerProps.totalDuration <= innerProps.leftTime
     )
   })
+
+  const handleAddPlayItem = (payload: MusicInfo[]) => {
+    innerProps.onAddItem?.(payload)
+  }
+
   const handlePlayOrPause = () => {
     if (innerProps.selectedId === '') {
       innerProps.onPlay?.(innerProps.selectedId)

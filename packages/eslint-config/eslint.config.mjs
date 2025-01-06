@@ -1,5 +1,3 @@
-// @ts-check
-
 import importPlugin from 'eslint-plugin-i'
 import nodePlugin from 'eslint-plugin-n'
 import js from '@eslint/js'
@@ -151,6 +149,8 @@ export default [
         {blankLine: 'always', next: 'function', prev: 'function'},
         {blankLine: 'always', next: '*', prev: 'if'},
         {blankLine: 'always', next: 'if', prev: '*'},
+        {blankLine: 'always', next: 'const', prev: 'block-like'},
+        {blankLine: 'always', next: 'block-like', prev: 'const'},
         {blankLine: 'always', next: 'expression', prev: 'block-like'},
         {blankLine: 'always', next: 'import', prev: 'block-like'},
         {blankLine: 'always', next: 'block-like', prev: 'block-like'},

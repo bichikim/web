@@ -52,6 +52,7 @@ export const SFileList = (props: SFileListProps) => {
     show: false,
     top: false,
   })
+
   const updateScrollIndicators = (element: HTMLElement) => {
     setScrollIndicators({
       bottom: element.scrollTop < element.scrollHeight - element.clientHeight,
@@ -59,18 +60,6 @@ export const SFileList = (props: SFileListProps) => {
       top: element.scrollTop > 0,
     })
   }
-
-  createEffect(() => {
-    const _element = element()
-
-    if (!_element) {
-      return
-    }
-
-    updateScrollIndicators(_element)
-
-    return [innerProps.list, _element]
-  })
 
   const handleScroll = () => {
     const _element = element()
@@ -89,6 +78,18 @@ export const SFileList = (props: SFileListProps) => {
   const handleDelete = (id: string) => {
     innerProps?.onDelete?.(id)
   }
+
+  createEffect(() => {
+    const _element = element()
+
+    if (!_element) {
+      return
+    }
+
+    updateScrollIndicators(_element)
+
+    return [innerProps.list, _element]
+  })
 
   return (
     <div {...restProps} class={cx(rootStyle(scrollIndicators()), props.class)}>
@@ -111,7 +112,7 @@ export const SFileList = (props: SFileListProps) => {
               onSelect={handelSelect}
               onDelete={handleDelete}
               dragEndSize={90}
-              dragExecuteSize={40}
+              dragExecuteSize={90}
             />
           )}
         </For>
