@@ -20,6 +20,30 @@ export interface SPlayerProps extends Pick<SPlayerControllerProps, 'leftTime'> {
   pianoState?: SplendidGrandPianoState
 }
 
+/**
+ * MIDI Player Component
+ *
+ * A player component for playing and controlling MIDI files.
+ * Provides functionality for playlist management, repeat playback, pause/resume etc.
+ *
+ * @example
+ * ```tsx
+ * <SPlayer
+ *   initMusics={[]}
+ *   pianoController={pianoController}
+ *   pianoState={pianoState}
+ *   onMusicsChange={(musics) => console.log('Playlist changed:', musics)}
+ * />
+ * ```
+ *
+ * @param props {SPlayerProps} The props for the player component
+ * @prop {MusicInfo[]} [initMusics] - Initial playlist of music files
+ * @prop {boolean} [isHidden] - Whether the player should be hidden
+ * @prop {(musics: MusicInfo[]) => void} [onMusicsChange] - Callback fired when playlist changes
+ * @prop {() => void} [onSetting] - Callback fired when settings button is clicked
+ * @prop {SplendidGrandPianoController} [pianoController] - Piano controller instance
+ * @prop {SplendidGrandPianoState} [pianoState] - Current state of the piano
+ */
 export const SPlayer = (props: SPlayerProps) => {
   const defaultProps = mergeProps(
     {
