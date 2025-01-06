@@ -96,6 +96,14 @@ export const createSplendidGrandPiano = (
     },
     ['start', 'end'],
   )
+  const isPlaying = createMemo(
+    () =>
+      state().playingId !== '' &&
+      !state().suspended &&
+      state().leftTime < state().totalDuration,
+  )
+  const hasPlayingItem = createMemo(() => state().playingId !== '')
+
   const handelEnded = (payload: ExtendedSampleStart) => {
     if (payload[USER_PLAY_FLAG_KEY]) {
       return
@@ -135,13 +143,6 @@ export const createSplendidGrandPiano = (
       }
     }
   }
-  const isPlaying = createMemo(
-    () =>
-      state().playingId !== '' &&
-      !state().suspended &&
-      state().leftTime < state().totalDuration,
-  )
-  const hasPlayingItem = createMemo(() => state().playingId !== '')
 
   createEffect(() => {
     let cleanupFlag: any
@@ -282,6 +283,7 @@ export const createSplendidGrandPiano = (
       }
     }
   }
+
   const controller: SplendidGrandPianoController = {
     ...emitter,
     down(key: string | number): StopFn {

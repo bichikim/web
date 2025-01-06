@@ -18,6 +18,7 @@ export const ReloadPrompt = (props: ReloadPromptProps) => {
       console.info(`Service worker at: ${swUrl}`)
     },
   })
+
   const handleClose = () => {
     setOfflineReady(false)
     setNeedRefresh(false)
@@ -26,9 +27,9 @@ export const ReloadPrompt = (props: ReloadPromptProps) => {
   const handleUpdateServiceWorker = async () => {
     console.info('handleUpdateServiceWorker')
     handleClose()
-    getWindow()?.location.reload()
 
-    return updateServiceWorker(true)
+    await updateServiceWorker(true)
+    getWindow()?.location.reload()
   }
 
   return (
