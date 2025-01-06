@@ -1,14 +1,9 @@
 import {JSX, Show} from 'solid-js'
 import {preventGlobalTouchAttrs} from 'src/components/real-button/use-global-touch'
 import {useRegisterSW} from 'virtual:pwa-register/solid'
-import {getWindow} from '@winter-love/utils'
 
 export interface ReloadPromptProps extends JSX.HTMLAttributes<HTMLDivElement> {
   //
-}
-
-const useRegisterSW2 = () => {
-  // empty
 }
 
 export const ReloadPrompt = (props: ReloadPromptProps) => {
@@ -18,7 +13,7 @@ export const ReloadPrompt = (props: ReloadPromptProps) => {
     updateServiceWorker,
   } = useRegisterSW({
     immediate: true,
-    onRegisteredSW(swUrl, registration) {
+    onRegisteredSW(swUrl) {
       console.info(`Service worker at: ${swUrl}`)
     },
   })

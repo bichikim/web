@@ -27,7 +27,7 @@ export default defineConfig({
         injectRegister: null,
         manifest: false,
         outDir: './public',
-        registerType: 'prompt',
+        registerType: 'autoUpdate',
         scope: '/',
         srcDir: 'src',
         strategies: 'injectManifest',
