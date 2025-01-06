@@ -13,6 +13,14 @@ export interface HDragExecuteProps
   onRightExecute?: () => void
 }
 
+const findTouch = (list: TouchList, identifier: number) => {
+  for (const item of list) {
+    if (item.identifier === identifier) {
+      return item
+    }
+  }
+}
+
 interface StartData {
   identifier: number
   x: number
@@ -130,7 +138,7 @@ export const HDragExecute = (props: HDragExecuteProps) => {
     const {
       started: {identifier, x, y},
     } = drag()
-    const item = event.changedTouches[identifier]
+    const item = findTouch(event.changedTouches, identifier)
 
     if (!item) {
       return
@@ -188,7 +196,7 @@ export const HDragExecute = (props: HDragExecuteProps) => {
       return
     }
 
-    const item = event.changedTouches[identifier]
+    const item = findTouch(event.changedTouches, identifier)
 
     if (!item) {
       return handleEnd(event)
@@ -203,6 +211,8 @@ export const HDragExecute = (props: HDragExecuteProps) => {
       y: draggedY,
     })
   }
+
+  // useEvent(getWindow, 'onTouchEnd', handleTouchEnd)
 
   return (
     <button
