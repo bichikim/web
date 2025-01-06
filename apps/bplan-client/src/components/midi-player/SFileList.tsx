@@ -112,7 +112,7 @@ export const SFileList = (props: SFileListProps) => {
               onSelect={handelSelect}
               onDelete={handleDelete}
               dragEndSize={90}
-              dragExecuteSize={40}
+              dragExecuteSize={90}
             />
           )}
         </For>

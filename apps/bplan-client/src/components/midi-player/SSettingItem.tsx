@@ -33,6 +33,10 @@ export function SSettingItem<T extends SSettingItemType>(props: SSettingItemProp
     }
   }
 
+  const handleTouchEnd: JSX.EventHandlerUnion<HTMLInputElement, TouchEvent> = (event) => {
+    ;(event.target as any)?.click()
+  }
+
   return (
     <div {...restProps} class="flex items-center justify-start gap-2">
       <label class="text-nowrap text-4" for={id}>
@@ -43,16 +47,17 @@ export function SSettingItem<T extends SSettingItemType>(props: SSettingItemProp
           <input
             type="checkbox"
             id={id}
-            class="w-6 h-6"
+            class="w-6 h-6 touch-none"
             checked={typeof innerProps.value === 'boolean' ? innerProps.value : false}
             onChange={handleSwitchChange}
+            onTouchEnd={handleTouchEnd}
           />
         </Match>
         <Match when={innerProps.type === 'slider'}>
           <input
             type="range"
             id={id}
-            class="w-full"
+            class="w-full touch-none"
             min={innerProps.min ?? 0}
             max={innerProps.max ?? 1}
             value={typeof innerProps.value === 'number' ? innerProps.value : 1}
