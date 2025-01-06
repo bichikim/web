@@ -1,6 +1,8 @@
 import {JSX, ParentProps, splitProps} from 'solid-js'
 import {cx} from 'class-variance-authority'
 
+import {HButton} from 'src/components/button'
+
 export interface SPlayerButtonProps
   extends ParentProps,
     Omit<JSX.ButtonHTMLAttributes<HTMLButtonElement>, 'onClick'> {
