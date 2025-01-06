@@ -14,7 +14,7 @@ export const ReloadPrompt = (props: ReloadPromptProps) => {
     updateServiceWorker,
   } = useRegisterSW({
     immediate: true,
-    onRegisteredSW(swUrl) {
+    onRegisteredSW(swUrl, registration) {
       console.info(`Service worker at: ${swUrl}`)
     },
   })
@@ -26,10 +26,8 @@ export const ReloadPrompt = (props: ReloadPromptProps) => {
 
   const handleUpdateServiceWorker = async () => {
     console.info('handleUpdateServiceWorker')
+    await updateServiceWorker()
     handleClose()
-
-    await updateServiceWorker(true)
-    getWindow()?.location.reload()
   }
 
   return (
