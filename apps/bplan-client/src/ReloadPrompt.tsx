@@ -7,6 +7,10 @@ export interface ReloadPromptProps extends JSX.HTMLAttributes<HTMLDivElement> {
   //
 }
 
+const useRegisterSW2 = () => {
+  // empty
+}
+
 export const ReloadPrompt = (props: ReloadPromptProps) => {
   const {
     needRefresh: [needRefresh, setNeedRefresh],
