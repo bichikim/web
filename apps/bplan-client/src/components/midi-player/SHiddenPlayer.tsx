@@ -31,7 +31,7 @@ const rootStyle = cva(
     variants: {
       isSetting: {
         false: '',
-        true: 'h-0',
+        true: '',
       },
       isShow: {
         false: 'w-0 h-0',
@@ -40,6 +40,14 @@ const rootStyle = cva(
     },
   },
 )
+const playerContainerStyle = cva('flex flex-col', {
+  variants: {
+    isShow: {
+      false: 'h-0 opacity-0',
+      true: 'opacity-100',
+    },
+  },
+})
 
 export const SHiddenPlayer = (props: SHiddenPlayerProps) => {
   const defaultProps = mergeProps(
@@ -112,16 +120,19 @@ export const SHiddenPlayer = (props: SHiddenPlayerProps) => {
         class={rootStyle({isSetting: surfaceKind() === 'setting', isShow: isShow()})}
         onTransitionEnd={handleTransitionEnd}
       >
-        <SPlayer
-          {...restProps}
-          isHidden={!isRender()}
-          onSetting={() => handleSurfaceKindChange('setting')}
-        />
+        <div class={playerContainerStyle({isShow: surfaceKind() !== 'setting'})}>
+          <Show when={isRender()}>
+            <SPlayer
+              {...restProps}
+              onSetting={() => handleSurfaceKindChange('setting')}
+            />
+          </Show>
+        </div>
         <Show when={surfaceKind() === 'setting'}>
           <SSetting
             pianoMinScale={innerProps.pianoMinScale}
             settingData={innerProps.settingData}
-            class="absolute bottom-0 left-0 w-full bg-white"
+            class="w-full bg-white"
             onClose={() => handleSurfaceKindChange('player')}
             onSettingDataChange={innerProps.onSettingDataChange}
           />

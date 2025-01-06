@@ -13,7 +13,6 @@ import {SPlayerController, SPlayerControllerProps} from './SPlayerController'
 
 export interface SPlayerProps extends Pick<SPlayerControllerProps, 'leftTime'> {
   initMusics?: MusicInfo[]
-  isHidden?: boolean
   onMusicsChange?: (musics: MusicInfo[]) => void
   onSetting?: () => void
   pianoController?: SplendidGrandPianoController
@@ -62,7 +61,6 @@ export const SPlayer = (props: SPlayerProps) => {
     'pianoController',
     'pianoState',
     'onSetting',
-    'isHidden',
     'initMusics',
     'onMusicsChange',
   ])
@@ -201,26 +199,24 @@ export const SPlayer = (props: SPlayerProps) => {
   })
 
   return (
-    <Show when={!innerProps.isHidden}>
-      <SPlayerController
-        {...restProps}
-        repeat={repeat()}
-        totalDuration={innerProps.pianoState.totalDuration}
-        playList={playList()}
-        playingId={innerProps.pianoState.playingId}
-        isSuspend={innerProps.pianoState.suspended}
-        selectedId={selectedId()}
-        onSuspend={handleSuspend}
-        onStop={handleStop}
-        onDeleteItem={handleDelete}
-        onResume={handleResume}
-        onAddItem={handleAddPlayItem}
-        onSelect={handleSelect}
-        onPlay={handlePlay}
-        onSeek={handleSeek}
-        onSetting={innerProps.onSetting}
-        onChangeRepeat={handleChangeRepeat}
-      />
-    </Show>
+    <SPlayerController
+      {...restProps}
+      repeat={repeat()}
+      totalDuration={innerProps.pianoState.totalDuration}
+      playList={playList()}
+      playingId={innerProps.pianoState.playingId}
+      isSuspend={innerProps.pianoState.suspended}
+      selectedId={selectedId()}
+      onSuspend={handleSuspend}
+      onStop={handleStop}
+      onDeleteItem={handleDelete}
+      onResume={handleResume}
+      onAddItem={handleAddPlayItem}
+      onSelect={handleSelect}
+      onPlay={handlePlay}
+      onSeek={handleSeek}
+      onSetting={innerProps.onSetting}
+      onChangeRepeat={handleChangeRepeat}
+    />
   )
 }
