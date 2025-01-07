@@ -8,6 +8,10 @@ precacheAndRoute((self as any).__WB_MANIFEST)
 
 cleanupOutdatedCaches()
 
+self.addEventListener('install', () => {
+  self.skipWaiting()
+})
+
 // html document caching
 registerRoute(
   ({request}) => request.destination === 'document',

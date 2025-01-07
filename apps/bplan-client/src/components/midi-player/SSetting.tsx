@@ -1,5 +1,6 @@
 import {cx} from 'class-variance-authority'
 import {JSX, splitProps} from 'solid-js'
+import {getRegistrations} from 'src/utils/service-worker'
 import {SPlayerButton} from './SPlayerButton'
 import {SSettingItem} from './SSettingItem'
 import {HUNDRED} from '@winter-love/utils'
@@ -14,6 +15,16 @@ export interface SSettingProps extends JSX.HTMLAttributes<HTMLDivElement> {
   onSettingDataChange?: (data: SettingData) => void
   pianoMinScale?: number
   settingData?: SettingData
+}
+
+const unregisterServiceWorker = async () => {
+  const registrations = await getRegistrations()
+
+  if (registrations.length > 0) {
+    console.info('unregister service worker')
+  }
+
+  return Promise.all(registrations.map((registration) => registration.unregister()))
 }
 
 const DEFAULT_MIN_SCALE = 20
@@ -51,6 +62,7 @@ export const SSetting = (props: SSettingProps) => {
         innerProps.class,
       )}
     >
+      <SSettingItem label="reset PWA" type="button" onClick={unregisterServiceWorker} />
       <SSettingItem
         label="Piano Size"
         type="slider"

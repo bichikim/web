@@ -51,28 +51,28 @@ export const emitAllIds = (
   }
 }
 
-const emitAllDragIds = (downTouchIDs: DragInfoIds) => {
-  const {ids, point, state} = downTouchIDs
-  const window = getWindow()
-
-  if (!window) {
-    return
-  }
-
-  for (const id of ids) {
-    const eventName = generateGlobalTouchDragEventName(id)
-
-    window.dispatchEvent(
-      new CustomEvent<DragPayload>(eventName, {detail: {point, state}}),
-    )
-  }
-}
-
-const emitAllMultiIDs = (downTouchIDs: Map<number, Set<string>>, value: boolean) => {
-  for (const idSet of downTouchIDs.values()) {
-    emitAllIds(idSet, value)
-  }
-}
+// const emitAllDragIds = (downTouchIDs: DragInfoIds) => {
+//   const {ids, point, state} = downTouchIDs
+//   const window = getWindow()
+//
+//   if (!window) {
+//     return
+//   }
+//
+//   for (const id of ids) {
+//     const eventName = generateGlobalTouchDragEventName(id)
+//
+//     window.dispatchEvent(
+//       new CustomEvent<DragPayload>(eventName, {detail: {point, state}}),
+//     )
+//   }
+// }
+//
+// const emitAllMultiIDs = (downTouchIDs: Map<number, Set<string>>, value: boolean) => {
+//   for (const idSet of downTouchIDs.values()) {
+//     emitAllIds(idSet, value)
+//   }
+// }
 
 export const generateGlobalTouchEventName = (id: string): string => {
   return `global-touch__${id}`
@@ -125,6 +125,25 @@ const getPointedIds = (position: Position, takeFirst: boolean = false): InfoIds 
   }
 }
 
+export const getTouchedIds = (touches: TouchList, takeFirst: boolean = false) => {
+  const ids: Set<string> = new Set()
+  const touchesLength = touches.length
+
+  for (let index = 0; index < touchesLength; index += 1) {
+    const touch = touches[index]
+    const elements = getElementsFromPoint({x: touch.clientX, y: touch.clientY})
+    const touchedElementIDs = takeFirst
+      ? findTouchFirstId(elements)
+      : findTouchIds(elements)
+
+    for (const touchedElementID of touchedElementIDs) {
+      ids.add(touchedElementID)
+    }
+  }
+
+  return ids
+}
+
 export const getTouchedIdsMap = (touches: TouchList, takeFirst: boolean = false) => {
   const touchIDs: Map<number, InfoIds> = new Map()
   const touchesLength = touches.length
@@ -152,9 +171,8 @@ export const getTouchedIdsMap = (touches: TouchList, takeFirst: boolean = false)
 }
 
 export const useGlobalTouchEmitter = (options: UseGlobalTouchEmitterOptions = {}) => {
-  let savedDownIds: Map<number, Set<string>> = new Map()
+  const savedDownIds: Set<string> = new Set()
   let mouseDown: boolean = false
-  const mouseId = -1
   const {topLevelElementOnly: takeFirst = false, preventTouchContext} = options
 
   if (preventTouchContext) {
@@ -172,9 +190,12 @@ export const useGlobalTouchEmitter = (options: UseGlobalTouchEmitterOptions = {}
     mouseDown = true
     const {ids, point} = getPointedIds({x: event.pageX, y: event.pageY}, takeFirst)
 
-    savedDownIds = new Map<number, Set<string>>([[mouseId, ids]])
     emitAllIds(ids, true)
-    emitAllDragIds({ids, point, state: 'start'})
+
+    for (const id of ids) {
+      savedDownIds.add(id)
+    }
+    // emitAllDragIds({ids, point, state: 'start'})
   })
 
   useEvent(getWindow, 'pointerup', (event: PointerEvent) => {
@@ -185,98 +206,77 @@ export const useGlobalTouchEmitter = (options: UseGlobalTouchEmitterOptions = {}
 
     mouseDown = false
     //
-    emitAllMultiIDs(savedDownIds, false)
-    savedDownIds = new Map()
+    emitAllIds(savedDownIds, false)
+    savedDownIds.clear()
   })
 
   useEvent(getWindow, 'pointermove', (event: PointerEvent) => {
-    // skip touch down
     if (event.pointerType === 'touch' || !mouseDown) {
       return
     }
 
-    const downedIds = savedDownIds.get(mouseId)
-    const upTouchIds: Set<string> = new Set(downedIds)
-    const {ids: newDownIds, point} = getPointedIds(
-      {x: event.pageX, y: event.pageY},
-      takeFirst,
-    )
-    const downTouchIds = new Set(newDownIds)
+    const {ids, point} = getPointedIds({x: event.pageX, y: event.pageY}, takeFirst)
+    const downIds = new Set(ids)
+    const upIds = new Set(savedDownIds)
 
-    savedDownIds = new Map<number, Set<string>>([[mouseId, new Set(newDownIds)]])
-
-    for (const id of newDownIds) {
-      if (upTouchIds.has(id)) {
-        upTouchIds.delete(id)
-        downTouchIds.delete(id)
+    for (const id of ids) {
+      if (savedDownIds.has(id)) {
+        downIds.delete(id)
       }
+
+      savedDownIds.add(id)
+      upIds.delete(id)
     }
 
-    emitAllIds(downTouchIds, true)
-    emitAllIds(upTouchIds, false)
-    emitAllDragIds({ids: newDownIds, point, state: 'move'})
+    for (const id of upIds) {
+      savedDownIds.delete(id)
+    }
+
+    emitAllIds(downIds, true)
+    emitAllIds(upIds, false)
   })
 
   useEvent(getWindow, 'touchstart', (event) => {
-    const touches = event.changedTouches
-    const touchIds = getTouchedIdsMap(touches, takeFirst)
+    const {touches} = event
+    const touchIds = getTouchedIds(touches, takeFirst)
+    const downIds = new Set<string>(touchIds)
 
-    for (const [identifier, {ids, point}] of touchIds.entries()) {
-      savedDownIds.set(identifier, ids)
-      emitAllIds(ids, true)
-      emitAllDragIds({ids, point, state: 'start'})
-    }
-  })
-
-  useEvent(getWindow, 'touchmove', (event) => {
-    const touches = event.changedTouches
-    const touchIdsMap = getTouchedIdsMap(touches, takeFirst)
-
-    for (const [identifier, downedIds] of savedDownIds) {
-      const {ids: newDownIds = new Set<string>(), point} =
-        touchIdsMap.get(identifier) ?? {}
-      const upTouchIds = new Set<string>(downedIds)
-      const downTouchIds = new Set(newDownIds)
-      const touchMoveIds = new Set<string>()
-
-      for (const id of newDownIds) {
-        if (downedIds.has(id)) {
-          upTouchIds.delete(id)
-          downTouchIds.delete(id)
-          touchMoveIds.add(id)
-        }
+    for (const id of touchIds) {
+      if (savedDownIds.has(id)) {
+        downIds.delete(id)
       }
 
-      savedDownIds.set(identifier, newDownIds)
-      emitAllIds(downTouchIds, true)
-      emitAllIds(upTouchIds, false)
-      // emitAllDragIds({ids: upTouchIds, point, state: 'end'})
-      emitAllDragIds({ids: touchMoveIds, point, state: 'move'})
-      emitAllDragIds({ids: downTouchIds, point, state: 'start'})
+      savedDownIds.add(id)
     }
+
+    emitAllIds(downIds, true)
   })
 
-  useEvent(getWindow, 'touchend', (event) => {
-    event.preventDefault()
+  const updateDownIds = (event: TouchEvent) => {
+    const {touches} = event
+    const touchIds = getTouchedIds(touches, takeFirst)
+    const downIds = new Set<string>(touchIds)
+    const upIds = new Set<string>(savedDownIds)
 
-    const touches = event.changedTouches
-    const touchIdsMap = getTouchedIdsMap(touches, takeFirst)
-
-    for (const [identifier, {ids}] of touchIdsMap.entries()) {
-      const downedIds = savedDownIds.get(identifier)
-      const downTouchIds: Set<string> = new Set(downedIds)
-      const upTouchIds: Set<string> = new Set(ids)
-
-      for (const id of upTouchIds) {
-        // down 된 목록에서 up 할 id 제거
-        downTouchIds.delete(id)
+    for (const id of touchIds) {
+      if (savedDownIds.has(id)) {
+        downIds.delete(id)
       }
 
-      savedDownIds.set(identifier, downTouchIds)
-      emitAllIds(upTouchIds, false)
-      // emitAllDragIds({ids, point, state: 'end'})
+      upIds.delete(id)
+      savedDownIds.add(id)
     }
-  })
+
+    for (const id of upIds) {
+      savedDownIds.delete(id)
+    }
+
+    emitAllIds(downIds, true)
+    emitAllIds(upIds, false)
+  }
+
+  useEvent(getWindow, 'touchmove', updateDownIds)
+  useEvent(getWindow, 'touchend', updateDownIds)
 }
 
 export const useGlobalDown = (id: string): Accessor<DownEventPayload> => {
