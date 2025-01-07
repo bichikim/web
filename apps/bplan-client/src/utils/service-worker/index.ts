@@ -1,1 +1,1 @@
-export * from './get-registration'
+export * from './get-registrations'

@@ -1,12 +1,13 @@
 import {createUniqueId, JSX, Match, splitProps, Switch} from 'solid-js'
 
-export type SSettingItemType = 'switch' | 'slider'
+export type SSettingItemType = 'switch' | 'slider' | 'button'
 
 export interface SSettingItemProps<T extends SSettingItemType>
-  extends JSX.HTMLAttributes<HTMLDivElement> {
+  extends Omit<JSX.HTMLAttributes<HTMLDivElement>, 'onClick'> {
   label: string
   max?: T extends 'slider' ? number : never
   min?: T extends 'slider' ? number : never
+  onClick?: () => void
   onValueChange?: (value: T extends 'switch' ? boolean : number) => void
   type: T
   value?: T extends 'switch' ? boolean : number
@@ -20,6 +21,7 @@ export function SSettingItem<T extends SSettingItemType>(props: SSettingItemProp
     'min',
     'max',
     'onValueChange',
+    'onClick',
   ])
   const id = createUniqueId()
 
@@ -35,6 +37,10 @@ export function SSettingItem<T extends SSettingItemType>(props: SSettingItemProp
 
   const handleTouchEnd: JSX.EventHandlerUnion<HTMLInputElement, TouchEvent> = (event) => {
     ;(event.target as any)?.click()
+  }
+
+  const handleClick = () => {
+    innerProps.onClick?.()
   }
 
   return (
@@ -63,6 +69,11 @@ export function SSettingItem<T extends SSettingItemType>(props: SSettingItemProp
             value={typeof innerProps.value === 'number' ? innerProps.value : 1}
             onInput={handleSliderChange}
           />
+        </Match>
+        <Match when={innerProps.type === 'button'}>
+          <button class="p-2 touch-none" onClick={handleClick}>
+            Run
+          </button>
         </Match>
       </Switch>
     </div>
