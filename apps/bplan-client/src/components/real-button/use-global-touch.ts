@@ -51,28 +51,28 @@ export const emitAllIds = (
   }
 }
 
-const emitAllDragIds = (downTouchIDs: DragInfoIds) => {
-  const {ids, point, state} = downTouchIDs
-  const window = getWindow()
-
-  if (!window) {
-    return
-  }
-
-  for (const id of ids) {
-    const eventName = generateGlobalTouchDragEventName(id)
-
-    window.dispatchEvent(
-      new CustomEvent<DragPayload>(eventName, {detail: {point, state}}),
-    )
-  }
-}
-
-const emitAllMultiIDs = (downTouchIDs: Map<number, Set<string>>, value: boolean) => {
-  for (const idSet of downTouchIDs.values()) {
-    emitAllIds(idSet, value)
-  }
-}
+// const emitAllDragIds = (downTouchIDs: DragInfoIds) => {
+//   const {ids, point, state} = downTouchIDs
+//   const window = getWindow()
+//
+//   if (!window) {
+//     return
+//   }
+//
+//   for (const id of ids) {
+//     const eventName = generateGlobalTouchDragEventName(id)
+//
+//     window.dispatchEvent(
+//       new CustomEvent<DragPayload>(eventName, {detail: {point, state}}),
+//     )
+//   }
+// }
+//
+// const emitAllMultiIDs = (downTouchIDs: Map<number, Set<string>>, value: boolean) => {
+//   for (const idSet of downTouchIDs.values()) {
+//     emitAllIds(idSet, value)
+//   }
+// }
 
 export const generateGlobalTouchEventName = (id: string): string => {
   return `global-touch__${id}`
