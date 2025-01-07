@@ -1,3 +1,4 @@
+import {describe, expect, it} from 'vitest'
 import {isMatch} from '../'
 
 describe('shield', () => {
@@ -57,6 +58,7 @@ describe('shield', () => {
         self: true,
       },
     }
+
     expect(isMatch(readSelfPrivateRoles, privateUserBoth)).toEqual({
       isSelf: true,
       match: {
@@ -74,6 +76,7 @@ describe('shield', () => {
         read: true,
       },
     }
+
     expect(isMatch(readSelfPrivateRoles, privateUserRead)).toEqual({
       isSelf: false,
       match: {
@@ -104,7 +107,6 @@ describe('shield', () => {
     const privateUserFalse = {
       privateUser: false,
     }
-
     const privateUserUndefined = {}
 
     expect(isMatch(readSelfPrivateRoles, privateUserFalse)).toEqual({

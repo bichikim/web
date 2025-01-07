@@ -22,6 +22,6 @@
     "skipLibCheck": true,
     "skipDefaultLibCheck": true
   },
-  "include": ["**/*.ts", "**/*.mts", "**/*.md"],
-  "exclude": ["**/node_modules/**", ".output", ".server"]
+  "include": ["apps/**/*.ts", "packages/**/*.mts", "**/*.md", "*.mts", "*.ts"],
+  "exclude": ["node_modules", ".output", ".server"]
 }
