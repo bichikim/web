@@ -29,19 +29,18 @@ export default function HomePage(props: HomePageProps) {
   })
   const [musics, setMusics, updateActive] = useStorage<MusicInfo[]>(
     'local',
-
     `coong:piano-musics-${props.presetTitle ?? 'default'}`,
-
     props.initMusics ?? [],
   )
   const isLoadDone = createMemo(() => splendidGrandPiano().loaded)
   const pageName = 'Piano'
+
   const handleSettingDataChange = (data: SettingData) => {
     setSettingData((prev) => ({...prev, ...data}))
   }
 
   const handleMusicsChange = (musics: MusicInfo[]) => {
-    setMusics(musics)
+    // setMusics(musics)
   }
 
   createEffect(() => {

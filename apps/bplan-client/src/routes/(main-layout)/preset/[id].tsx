@@ -1,5 +1,5 @@
-import {query, useParams} from '@solidjs/router'
-import {createResource} from 'solid-js'
+import {createAsync, query, useParams} from '@solidjs/router'
+// import {createResource} from 'solid-js'
 import {default as HomePage} from 'src/routes/(main-layout)/(home)'
 
 const getSelfUrl = () => {
@@ -24,8 +24,8 @@ const getPreset = query(async (id?: string) => {
 
 export default function PresetPage() {
   const params = useParams()
-  // const [preset] = createResource(() => getPreset(params.id))
-  const preset = () => ({musics: [], title: 'Unknown'})
+  const preset = createAsync(() => getPreset(params.id))
+  // const preset = () => ({musics: [], title: 'Unknown'})
 
   return <HomePage presetTitle={preset()?.title} initMusics={preset()?.musics} />
 }
