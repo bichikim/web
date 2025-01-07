@@ -25,8 +25,8 @@ export const ReloadPrompt = (props: ReloadPromptProps) => {
 
   const handleUpdateServiceWorker = async () => {
     console.info('handleUpdateServiceWorker')
-    await updateServiceWorker()
     handleClose()
+    await updateServiceWorker()
   }
 
   return (
