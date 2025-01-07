@@ -20,6 +20,10 @@ export interface SSettingProps extends JSX.HTMLAttributes<HTMLDivElement> {
 const unregisterServiceWorker = async () => {
   const registrations = await getRegistrations()
 
+  if (registrations.length > 0) {
+    console.info('unregister service worker')
+  }
+
   return Promise.all(registrations.map((registration) => registration.unregister()))
 }
 
