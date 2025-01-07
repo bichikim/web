@@ -1,6 +1,6 @@
 /* eslint-disable unicorn/prefer-global-this */
 import {cleanupOutdatedCaches, precacheAndRoute} from 'workbox-precaching'
-import {registerRoute} from 'workbox-routing'
+import {registerRoute, NavigationRoute} from 'workbox-routing'
 import {CacheFirst, NetworkFirst, StaleWhileRevalidate} from 'workbox-strategies'
 import {ExpirationPlugin} from 'workbox-expiration'
 
@@ -27,6 +27,11 @@ registerRoute(
   ({request}) => ['style', 'script', 'worker'].includes(request.destination),
   new StaleWhileRevalidate({
     cacheName: 'assets-cache',
+    plugins: [
+      new ExpirationPlugin({
+        maxAgeSeconds: 2592e3,
+      }),
+    ],
   }),
 )
 

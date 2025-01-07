@@ -238,8 +238,8 @@ importers:
         specifier: ^0.15.2
         version: 0.15.2(solid-js@1.9.3)
       '@solidjs/start':
-        specifier: ^1.0.10
-        version: 1.0.10(@testing-library/jest-dom@6.6.3)(solid-js@1.9.3)(vinxi@0.4.3(@types/node@22.10.1)(encoding@0.1.13)(ioredis@5.4.1)(terser@5.37.0)(typescript@5.7.2))(vite@5.4.11(@types/node@22.10.1)(terser@5.37.0))
+        specifier: ^1.0.11
+        version: 1.0.11(@testing-library/jest-dom@6.6.3)(solid-js@1.9.3)(vinxi@0.4.3(@types/node@22.10.1)(encoding@0.1.13)(ioredis@5.4.1)(terser@5.37.0)(typescript@5.7.2))(vite@5.4.11(@types/node@22.10.1)(terser@5.37.0))
       '@tonejs/midi':
         specifier: ^2.0.28
         version: 2.0.28
@@ -252,9 +252,6 @@ importers:
       '@winter-love/utils':
         specifier: workspace:*
         version: link:../../packages/utils
-      axios:
-        specifier: 1.7.9
-        version: 1.7.9(debug@4.4.0)
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -277,7 +274,7 @@ importers:
         specifier: 0.4.3
         version: 0.4.3(@types/node@22.10.1)(encoding@0.1.13)(ioredis@5.4.1)(terser@5.37.0)(typescript@5.7.2)
       vite:
-        specifier: ^5.4.11
+        specifier: ^5.2.8
         version: 5.4.11(@types/node@22.10.1)(terser@5.37.0)
       workbox-expiration:
         specifier: ^7.3.0
@@ -3639,8 +3636,8 @@ packages:
     peerDependencies:
       solid-js: ^1.8.6
 
-  '@solidjs/start@1.0.10':
-    resolution: {integrity: sha512-3yg4KraSxc4rXs9dy/3kkqjDhU0JCPsZFLmDl5n6hHRPwtLLac6WUhs2k5VxGzitHaaJM/ZQCfT7i544Mf+4tw==}
+  '@solidjs/start@1.0.11':
+    resolution: {integrity: sha512-ZkrHtwxnmaVGItah13BtmST6rh3PtATcj0RyXM19Shj6MK/cIpDBBsDTsgwqCbZoa/AT8/JLM5xUHFjQyBjRCA==}
 
   '@solidjs/testing-library@0.8.10':
     resolution: {integrity: sha512-qdeuIerwyq7oQTIrrKvV0aL9aFeuwTd86VYD3afdq5HYEwoox1OBTJy4y8A3TFZr8oAR0nujYgCzY/8wgHGfeQ==}
@@ -11114,6 +11111,7 @@ packages:
 
   workbox-google-analytics@7.0.0:
     resolution: {integrity: sha512-MEYM1JTn/qiC3DbpvP2BVhyIH+dV/5BjHk756u9VbwuAhu0QHyKscTnisQuz21lfRpOwiS9z4XdqeVAKol0bzg==}
+    deprecated: It is not compatible with newer versions of GA starting with v4, as long as you are using GAv3 it should be ok, but the package is not longer being maintained
 
   workbox-navigation-preload@7.0.0:
     resolution: {integrity: sha512-juWCSrxo/fiMz3RsvDspeSLGmbgC0U9tKqcUPZBCf35s64wlaLXyn2KdHHXVQrb2cqF7I0Hc9siQalainmnXJA==}
@@ -14351,7 +14349,7 @@ snapshots:
     dependencies:
       solid-js: 1.9.3
 
-  '@solidjs/start@1.0.10(@testing-library/jest-dom@6.6.3)(solid-js@1.9.3)(vinxi@0.4.3(@types/node@22.10.1)(encoding@0.1.13)(ioredis@5.4.1)(terser@5.37.0)(typescript@5.7.2))(vite@5.4.11(@types/node@22.10.1)(terser@5.37.0))':
+  '@solidjs/start@1.0.11(@testing-library/jest-dom@6.6.3)(solid-js@1.9.3)(vinxi@0.4.3(@types/node@22.10.1)(encoding@0.1.13)(ioredis@5.4.1)(terser@5.37.0)(typescript@5.7.2))(vite@5.4.11(@types/node@22.10.1)(terser@5.37.0))':
     dependencies:
       '@vinxi/plugin-directives': 0.4.3(vinxi@0.4.3(@types/node@22.10.1)(encoding@0.1.13)(ioredis@5.4.1)(terser@5.37.0)(typescript@5.7.2))
       '@vinxi/server-components': 0.4.3(vinxi@0.4.3(@types/node@22.10.1)(encoding@0.1.13)(ioredis@5.4.1)(terser@5.37.0)(typescript@5.7.2))
