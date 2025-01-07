@@ -10,9 +10,9 @@ export default defineConfig({
     },
   },
   vite: {
-    build: {
-      minify: false,
-    },
+    // build: {
+    //   minify: false,
+    // },
     plugins: [
       unoCss('../../uno.config.ts'),
       vitePwa({
