@@ -1,17 +1,14 @@
 /* eslint-disable unicorn/prefer-global-this */
 import {cleanupOutdatedCaches, precacheAndRoute} from 'workbox-precaching'
-import {registerRoute, NavigationRoute} from 'workbox-routing'
+import {NavigationRoute, registerRoute} from 'workbox-routing'
 import {CacheFirst, NetworkFirst, StaleWhileRevalidate} from 'workbox-strategies'
 import {ExpirationPlugin} from 'workbox-expiration'
 
 precacheAndRoute((self as any).__WB_MANIFEST)
-
 cleanupOutdatedCaches()
-
 self.addEventListener('install', () => {
   self.skipWaiting()
 })
-
 // html document caching
 registerRoute(
   ({request}) => request.destination === 'document',
@@ -21,11 +18,10 @@ registerRoute(
   }),
   'GET',
 )
-
 // Static asset caching (JS, CSS, etc)
 registerRoute(
   ({request}) => ['style', 'script', 'worker'].includes(request.destination),
-  new StaleWhileRevalidate({
+  new NetworkFirst({
     cacheName: 'assets-cache',
     plugins: [
       new ExpirationPlugin({
@@ -34,7 +30,6 @@ registerRoute(
     ],
   }),
 )
-
 // Image caching
 registerRoute(
   ({request}) => ['image', 'font'].includes(request.destination),
