@@ -1,7 +1,7 @@
 /* eslint-disable unicorn/prefer-global-this */
 import {cleanupOutdatedCaches, precacheAndRoute} from 'workbox-precaching'
-import {NavigationRoute, registerRoute} from 'workbox-routing'
-import {CacheFirst, NetworkFirst, StaleWhileRevalidate} from 'workbox-strategies'
+import {registerRoute} from 'workbox-routing'
+import {NetworkFirst, StaleWhileRevalidate} from 'workbox-strategies'
 import {ExpirationPlugin} from 'workbox-expiration'
 
 precacheAndRoute((self as any).__WB_MANIFEST)
@@ -14,7 +14,6 @@ registerRoute(
   ({request}) => request.destination === 'document',
   new NetworkFirst({
     cacheName: 'html-cache',
-    networkTimeoutSeconds: 3,
   }),
   'GET',
 )
@@ -33,7 +32,7 @@ registerRoute(
 // Image caching
 registerRoute(
   ({request}) => ['image', 'font'].includes(request.destination),
-  new CacheFirst({
+  new StaleWhileRevalidate({
     cacheName: 'image-cache',
     plugins: [
       new ExpirationPlugin({
