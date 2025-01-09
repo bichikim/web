@@ -1,4 +1,4 @@
-import {JSX} from 'solid-js'
+import {JSX, splitProps} from 'solid-js'
 
 export interface HButtonProps
   extends Omit<JSX.ButtonHTMLAttributes<HTMLButtonElement>, 'onClick' | 'onTouchEnd'> {
@@ -25,27 +25,28 @@ export interface HButtonProps
  * @prop {JSX.EventHandler<HTMLButtonElement, TouchEvent>} [onTouchEnd] - Event handler for the `touchend` event.
  */
 export const HButton = (props: HButtonProps) => {
+  const [innerProps, restProps] = splitProps(props, ['onClick', 'onTouchEnd'])
   /**
    * Handles the `click` event for the button component and forwards it to the parent component.
    *
    * @param event The mouse event triggered by user interaction.
    */
-  const handleClick: HButtonProps['onClick'] = (event) => {
-    props.onClick?.(event)
+  const handleClick: HButtonProps['onClick'] = (event: any) => {
+    // skip touch
+    if (event.pointerType === 'touch') {
+      return
+    }
+
+    innerProps.onClick?.(event)
   }
 
-  /**
-   * Handles the `click` or `touch` event for the button component.
-   *
-   * @param event The touch event triggered by user interaction.
-   */
   const handleTouchEnd: HButtonProps['onTouchEnd'] = (event) => {
-    props.onTouchEnd?.(event)
-    props.onClick?.(event)
+    innerProps.onClick?.(event)
+    innerProps.onTouchEnd?.(event)
   }
 
   return (
-    <button {...props} onClick={handleClick} onTouchEnd={handleTouchEnd}>
+    <button {...restProps} on:click={handleClick} onTouchEnd={handleTouchEnd}>
       {props.children}
     </button>
   )

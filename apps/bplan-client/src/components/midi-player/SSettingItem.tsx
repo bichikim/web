@@ -13,6 +13,10 @@ export interface SSettingItemProps<T extends SSettingItemType>
   value?: T extends 'switch' ? boolean : number
 }
 
+const handleTouchEnd: JSX.EventHandlerUnion<HTMLInputElement, TouchEvent> = (event) => {
+  ;(event.target as any)?.click()
+}
+
 export function SSettingItem<T extends SSettingItemType>(props: SSettingItemProps<T>) {
   const [innerProps, restProps] = splitProps(props, [
     'label',
@@ -33,10 +37,6 @@ export function SSettingItem<T extends SSettingItemType>(props: SSettingItemProp
     if (innerProps.type === 'slider') {
       innerProps.onValueChange?.(Number((event.target as HTMLInputElement).value) as any)
     }
-  }
-
-  const handleTouchEnd: JSX.EventHandlerUnion<HTMLInputElement, TouchEvent> = (event) => {
-    ;(event.target as any)?.click()
   }
 
   const handleClick = () => {

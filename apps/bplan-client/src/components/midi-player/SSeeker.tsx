@@ -1,5 +1,6 @@
 import {createMemo, createSignal, JSX, mergeProps, splitProps} from 'solid-js'
 import {HUNDRED} from '@winter-love/utils'
+import {cx} from 'class-variance-authority'
 
 /**
  * SSeeker Props
@@ -63,7 +64,7 @@ export const SSeeker = (props: SSeekerProps) => {
   return (
     <button
       {...restProps}
-      class={props.class ?? 'relative'}
+      class={cx(props.class ?? 'relative', 'cursor-pointer')}
       onClick={handleClick}
       onTouchStart={handleTouchStart}
       ref={setElement}

@@ -42,8 +42,12 @@ const rootStyle = cva(
 )
 const playerContainerStyle = cva('flex flex-col gap-2', {
   variants: {
+    isActive: {
+      false: 'pointer-events-none',
+      true: '',
+    },
     isShow: {
-      false: 'h-0 opacity-0 pointer-events-none',
+      false: 'h-0 opacity-0 ',
       true: 'opacity-100',
     },
   },
@@ -72,33 +76,25 @@ export const SHiddenPlayer = (props: SHiddenPlayerProps) => {
   ])
   const [isShow, setIsShow] = createSignal(false)
   const [surfaceKind, setSurfaceKind] = createSignal<SurfaceKind>('player')
-  const [isRender, setIsRender] = createSignal(false)
-
   const handleClose = () => {
-    const _isShow = !isShow()
+    setIsShow((prev) => {
+      const nextState = !prev
 
-    if (_isShow) {
-      setIsRender(true)
-    } else {
-      handleSurfaceKindChange('player')
-    }
+      if (nextState) {
+        handleSurfaceKindChange('player')
+      }
 
-    setIsShow(_isShow)
+      return nextState
+    })
   }
-
   const isPlaying = createMemo(
     () =>
       defaultProps.pianoState.playingId !== '' &&
       defaultProps.pianoState.leftTime < defaultProps.pianoState.totalDuration &&
       !defaultProps.pianoState.suspended,
   )
-
   const handleSurfaceKindChange = (kind: SurfaceKind) => {
     setSurfaceKind(kind)
-  }
-
-  const handleTransitionEnd = () => {
-    setIsRender(isShow())
   }
 
   // Dynamic component has an error with ssr prefetching hydration
@@ -118,15 +114,13 @@ export const SHiddenPlayer = (props: SHiddenPlayerProps) => {
         aria-hidden={isShow() ? 'false' : 'true'}
         {...preventGlobalTouchAttrs()}
         class={rootStyle({isSetting: surfaceKind() === 'setting', isShow: isShow()})}
-        onTransitionEnd={handleTransitionEnd}
       >
-        <div class={playerContainerStyle({isShow: surfaceKind() !== 'setting'})}>
-          <Show when={isRender()}>
-            <SPlayer
-              {...restProps}
-              onSetting={() => handleSurfaceKindChange('setting')}
-            />
-          </Show>
+        <div
+          class={playerContainerStyle({
+            isShow: surfaceKind() !== 'setting',
+          })}
+        >
+          <SPlayer {...restProps} onSetting={() => handleSurfaceKindChange('setting')} />
         </div>
         <Show when={surfaceKind() === 'setting'}>
           <SSetting

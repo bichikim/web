@@ -48,3 +48,10 @@ node_modules/.pnpm jest-runtime version other than 29.4.3 will cause wallabyjs t
 ```shell
 turbo gen
 ```
+
+## Known issues
+
+### Solidjs vitest test does not work
+
+fix vitest and vite version until fixed by solidjs team
+vitest 

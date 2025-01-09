@@ -30,7 +30,7 @@ export interface SFileItemProps
 const rootStyle = cx(
   'gap-4 p-0 b-0 bg-transparent text-5 flex-shrink-0 h-9 mb-0.3125rem last:mb-0',
   'after:bg-gray-300 after:h-.25 first:after:hidden after:content-[""] after:absolute',
-  'after:top--0.1875rem after:left-0.5rem after:w-[calc(100%-1rem)]',
+  'after:top--0.1875rem after:left-0.5rem after:w-[calc(100%-1rem)] cursor-pointer',
 )
 const indexStyle = cva('', {
   variants: {
