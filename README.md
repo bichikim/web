@@ -39,8 +39,6 @@ This repository contributors are welcome to use
 test results immediately as you type, and see the results in
 your editor right next to your code.
 
-node_modules/.pnpm jest-runtime version other than 29.4.3 will cause wallabyjs to stop working
-
 ## Turborepo 
 
 ### run generate 
@@ -53,5 +51,6 @@ turbo gen
 
 ### Solidjs vitest test does not work
 
-fix vitest and vite version until fixed by solidjs team
-vitest 
+fixed version until solidjs team fixes the issue
+vitest: 2.0.5
+vite: 5.4.11
