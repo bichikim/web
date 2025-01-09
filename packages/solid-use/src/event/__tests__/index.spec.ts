@@ -23,13 +23,9 @@ describe('onEvent', () => {
     })
 
     await flushPromises()
-
     expect(target.addEventListener).toHaveBeenCalledTimes(1)
-
     target.dispatchEvent(new MouseEvent(type))
-
     expect(callback).toHaveBeenCalled()
-
     dispose()
     expect(target.removeEventListener).toHaveBeenCalledTimes(1)
   })
