@@ -6,7 +6,7 @@ self.addEventListener('install', (event) => {
   event.waitUntil(self.skipWaiting())
 })
 self.addEventListener('fetch', (event) => {
-  if (event.request.method !== 'GET') {
+  if (event.request.method.lowercase() !== 'get') {
     return
   }
 
