@@ -8,7 +8,8 @@
     "fix": "node build-hot-fix.mjs",
     "generate-pwa-assets": "pwa-assets-generator",
     "check-types": "tsc --noEmit",
-    "lint": "eslint src/**/*.ts[x]"
+    "lint": "eslint src/**/*.ts[x]",
+    "generate-sw": "sw build -r '.output/public/assets' -a '**/*.{js,css}' ./output/public/sw.js"
   },
   "private": true,
   "dependencies": {
@@ -34,6 +35,7 @@
     "workbox-expiration": "^7.3.0"
   },
   "devDependencies": {
+    "@winter-love/sw": "workspace:*",
     "glob": "^11.0.0",
     "@types/serviceworker": "^0.0.108",
     "@iconify-json/hugeicons": "^1.2.3",

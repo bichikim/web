@@ -1,0 +1,44 @@
+{
+  "name": "@winter-love/sw",
+  "version": "1.0.0",
+  "private": true,
+  "description": "",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bichikim/web.git"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs"
+    },
+    "./*": "./*"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/*"
+  ],
+  "bin": {
+    "sw": "bin/index.js"
+  },
+  "scripts": {
+    "build": "cross-env NODE_ENV=production vite build",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint src",
+    "start": "node dist/cli.mjs build -r 'test/assets' -a '**/*' ./node_modules/sw.js"
+  },
+  "dependencies": {
+    "commander": "^13.0.0",
+    "glob": "^11.0.1",
+    "solid-js": "^1.9.3",
+    "@winter-love/utils": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/serviceworker": "^0.0.111",
+    "vitest": "*",
+    "vite": "^6.0.3",
+    "vite-plugin-dts": "^4.3.0",
+    "@winter-love/vite-lib-config": "workspace:*"
+  }
+}
