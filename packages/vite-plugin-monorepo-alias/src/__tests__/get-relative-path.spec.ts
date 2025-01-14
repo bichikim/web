@@ -1,4 +1,5 @@
 import {getRelativePath} from '../get-relative-path'
+import {describe, expect, it} from 'vitest'
 
 describe('getRelativePath', () => {
   const roots = [/^foo\/bar\//u, /^joo\/zar\//u]

@@ -1,4 +1,5 @@
 import {createRootRegexp} from '../'
+import {describe, expect, it} from 'vitest'
 
 describe('createRootRegexp', () => {
   it.each([

@@ -1,4 +1,5 @@
 import {createAliasRegexp} from '../'
+import {describe, expect, it} from 'vitest'
 
 describe('createAliasRegexp', () => {
   it.each([

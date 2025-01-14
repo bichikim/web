@@ -24,7 +24,7 @@
     "build": "cross-env NODE_ENV=production vite build",
     "build:Dev": "cross-env NODE_ENV=production vite build --minify false",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "type-check": "tsc --noEmit",
+    "check-types": "tsc --noEmit",
     "lint": "eslint src"
   },
   "dependencies": {
