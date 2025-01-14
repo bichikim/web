@@ -38,7 +38,6 @@ export const useWatch = <T extends MayBeAccessors>(
     const cleanUp = callback(value, _prevValue)
 
     _prevValue = value
-
     onCleanup(() => {
       if (typeof cleanUp === 'function') {
         cleanUp(value)

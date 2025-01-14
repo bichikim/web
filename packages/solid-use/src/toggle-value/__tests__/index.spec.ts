@@ -15,17 +15,11 @@ describe('toggleValue', () => {
     const toggledValue = toggleValue(valueAccessor, toggleValueAccessor)
 
     expect(toggledValue()).toBe(456)
-
     setToggleValue(false)
-
     expect(toggledValue()).toBe(undefined)
-
     setToggleValue(true)
-
     expect(toggledValue()).toBe(456)
-
     setValue(123)
-
     expect(toggledValue()).toBe(123)
   })
 })

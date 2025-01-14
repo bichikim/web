@@ -11,19 +11,12 @@ describe('useThrottle', () => {
     const throttle = useThrottle(callback, 100, options)
 
     throttle.execute(...args)
-
     expect(callback).toHaveBeenCalledTimes(1)
-
     throttle.execute(...args)
-
     timer.tick(50)
-
     expect(callback).toHaveBeenCalledTimes(1)
-
     throttle.execute(...args)
-
     timer.tick(50)
-
     expect(callback).toHaveBeenCalledTimes(2)
   })
 })

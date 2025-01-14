@@ -12,9 +12,7 @@ describe('freeze', () => {
     }
 
     expect(foo).toEqual({foo: 'foo'})
-
     expect(error).toThrow()
-
     process.env.NODE_ENV = oldEnv
   })
 })

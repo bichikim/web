@@ -5,7 +5,6 @@ import {requestIdleCallbackPolyfill} from '../polyfill'
 
 vi.mock('src/get-window')
 vi.mock('../polyfill')
-
 describe('requestIdleCallback', () => {
   afterEach(() => {
     vi.clearAllMocks()

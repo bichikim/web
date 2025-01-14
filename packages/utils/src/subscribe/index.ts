@@ -41,7 +41,6 @@ export const createSubscribe = <Value extends NotFunction>(
 
   const update = (value: ((value: Value | undefined) => Value) | Value) => {
     _value = typeof value === 'function' ? value(_value) : value
-
     listener(_value)
   }
 

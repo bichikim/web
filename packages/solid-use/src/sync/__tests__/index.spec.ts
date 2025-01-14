@@ -13,19 +13,12 @@ describe('manualMemo', () => {
     const [value, setValue] = sync(source)
 
     expect(value()).toBe(123)
-
     setSource(456)
-
     expect(value()).toBe(456)
-
     setValue(789)
-
     expect(value()).toBe(789)
-
     expect(source()).toBe(456)
-
     setSource(101_112)
-
     expect(value()).toBe(101_112)
   })
 })

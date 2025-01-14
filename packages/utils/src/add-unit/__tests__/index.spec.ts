@@ -21,7 +21,6 @@ describe('addUnit', () => {
     expect(addUnit(1)).toEqual('1')
   })
 })
-
 describe('toPx', () => {
   it('should add px', () => {
     expect(addPx(1)).toEqual('1px')
@@ -33,7 +32,6 @@ describe('toPx', () => {
     expect(addRem(1)).toEqual('1rem')
   })
 })
-
 describe('addRem', () => {
   it('should add px', () => {
     expect(addRem(1)).toEqual('1rem')

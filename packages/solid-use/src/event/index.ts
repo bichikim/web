@@ -51,7 +51,6 @@ export const useEvent: OnEvent = (
     const element = elementAccessor()
 
     element?.addEventListener(type, listener, options)
-
     onCleanup(() => {
       element?.removeEventListener(type, listener)
     })

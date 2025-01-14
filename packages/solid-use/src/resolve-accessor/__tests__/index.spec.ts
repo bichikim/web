@@ -11,7 +11,6 @@ describe('resolveAccessor', () => {
     expect(resolveAccessor(value)()).toBe(result)
   })
 })
-
 describe('actual uses', () => {
   it('should resolve accessor in real solid js component system', () =>
     createRoot((dispose) => {
@@ -22,7 +21,6 @@ describe('actual uses', () => {
       dispose()
     }))
 })
-
 describe('resolveAccessors', () => {
   it.each([
     //

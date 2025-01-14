@@ -14,7 +14,6 @@ describe('createJoinUrl', () => {
     expect(url).toBe('foo~bar~john')
   })
 })
-
 describe('join-url', () => {
   it('should right url', () => {
     const url = joinUrl('/foo', '///bar/', 'john')

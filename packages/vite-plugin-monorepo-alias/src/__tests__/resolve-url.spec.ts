@@ -1,4 +1,5 @@
 import {createResolveUrl, resolveUrl} from '../resolve-url'
+import {describe, expect, it} from 'vitest'
 
 describe('createResolveUrl', () => {
   it('should return resolveUrl', () => {
@@ -14,7 +15,6 @@ describe('createResolveUrl', () => {
     expect(url).toBe('foo~bar~john')
   })
 })
-
 describe('resolve-url', () => {
   it('should right url', () => {
     const url = resolveUrl('/foo', '///bar/', 'john')

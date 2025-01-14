@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 
-import {describe, expect, it, vi} from 'vitest'
+import {describe, it, vi} from 'vitest'
 import {useStorage} from '../'
 import {createRoot} from 'solid-js'
 
@@ -18,7 +18,6 @@ describe('useStorage', () => {
       return {dispose, storage}
     })
     dispose()
-
     // expect(getItem).toHaveBeenCalled()
     getItem.mockRestore()
     setItem.mockRestore()

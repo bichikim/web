@@ -1,8 +1,8 @@
-import {describe, expect, it, vi, afterEach} from 'vitest'
+import {afterEach, describe, expect, it, vi} from 'vitest'
 import {glob} from 'glob'
 import {getFilesFromPath} from '../get-files-from-path'
 import fs from 'node:fs'
-import nodePath from 'node:path'
+import path from 'node:path'
 import {fileURLToPath} from 'node:url'
 
 vi.mock('glob', async () => {

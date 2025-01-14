@@ -12,7 +12,6 @@ describe('matchRun', () => {
 
     expect(result).toBe('Matched A: A')
   })
-
   it('should return the result of the default function if no match is found', () => {
     const value = 'C'
     const matches = {
@@ -24,7 +23,6 @@ describe('matchRun', () => {
 
     expect(result).toBe('Default: C')
   })
-
   it('should return undefined if no match is found and no default function is provided', () => {
     const value = 'C'
     const matches = {
@@ -35,7 +33,6 @@ describe('matchRun', () => {
 
     expect(result).toBeUndefined()
   })
-
   it.each([
     ['A', 'Matched A: A'],
     ['B', 'Matched B: B'],

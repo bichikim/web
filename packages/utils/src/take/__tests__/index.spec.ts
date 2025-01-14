@@ -16,7 +16,6 @@ describe('takeFn', () => {
     expect(target).toEqual([1, 2, 3, 4, 5])
   })
 })
-
 describe('take', () => {
   it('should return 2 items', () => {
     const target = [1, 2, 3, 4, 5]

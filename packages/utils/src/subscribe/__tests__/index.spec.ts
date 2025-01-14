@@ -13,17 +13,11 @@ describe('createSubscribe', () => {
     const unsubscribe = eventSubscribe.subscribe(callback)
 
     expect(callback).not.toHaveBeenCalled()
-
     eventSubscribe.update(() => value)
-
     expect(callback).toHaveBeenNthCalledWith(1, value)
-
     expect(unsubscribe()).toEqual(value)
-
     eventSubscribe.update(() => nextValue)
-
     expect(callback).toHaveBeenCalledTimes(1)
-
     expect(unsubscribe()).toEqual(nextValue)
   })
   it('should get value', () => {

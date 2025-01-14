@@ -10,22 +10,15 @@ describe('createEmitter', () => {
     const callback2 = vi.fn()
 
     emitter.addEventListener(callback1)
-
     expect(start).toHaveBeenCalledTimes(1)
-
     emitter.addEventListener(callback2)
-
     emitter.removeEventListener(callback1)
-
     expect(start).toHaveBeenCalledTimes(1)
     expect(end).toHaveBeenCalledTimes(0)
-
     emitter.removeEventListener(callback2)
-
     expect(start).toHaveBeenCalledTimes(1)
     expect(end).toHaveBeenCalledTimes(1)
   })
-
   it('should call listener', () => {
     const callback = vi.fn()
     const emitter = createEmitter()
@@ -35,14 +28,10 @@ describe('createEmitter', () => {
     emitter.trigger(event)
     expect(callback).toHaveBeenCalledTimes(1)
     expect(callback).toHaveBeenCalledWith(event)
-
     emitter.removeEventListener(callback)
-
     emitter.trigger(event)
-
     expect(callback).toHaveBeenCalledTimes(1)
   })
-
   it('should call async listener', async () => {
     let isWaited = false
     const callback = vi.fn(
@@ -61,21 +50,14 @@ describe('createEmitter', () => {
     const promise = emitter.trigger(event)
 
     expect(isWaited).toBe(false)
-
     await promise
-
     expect(isWaited).toBe(true)
-
     expect(callback).toHaveBeenCalledTimes(1)
     expect(callback).toHaveBeenCalledWith(event)
-
     emitter.removeEventListener(callback)
-
     await emitter.trigger(event)
-
     expect(callback).toHaveBeenCalledTimes(1)
   })
-
   it('should call channel listener', () => {
     const callback1 = vi.fn()
     const callback2 = vi.fn()
@@ -87,19 +69,13 @@ describe('createEmitter', () => {
     emitter.trigger(event)
     expect(callback1).toHaveBeenCalledTimes(1)
     expect(callback2).toHaveBeenCalledTimes(1)
-
     emitter.trigger(event, {pick: ['foo']})
-
     expect(callback1).toHaveBeenCalledTimes(1)
     expect(callback2).toHaveBeenCalledTimes(2)
-
     emitter.trigger(event, {omit: ['foo']})
-
     expect(callback1).toHaveBeenCalledTimes(2)
     expect(callback2).toHaveBeenCalledTimes(2)
-
     emitter.trigger(event, {})
-
     expect(callback1).toHaveBeenCalledTimes(3)
     expect(callback2).toHaveBeenCalledTimes(3)
   })

@@ -8,7 +8,6 @@ describe('toEm', () => {
     expect(toEm('2px')).toBe('0.125em')
   })
 })
-
 describe('toRem', () => {
   it('converts a string px or number to a rem', () => {
     expect(toRem(16)).toBe('1rem')
