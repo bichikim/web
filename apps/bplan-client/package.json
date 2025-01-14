@@ -2,14 +2,12 @@
   "name": "@apps/bplan-client",
   "type": "module",
   "scripts": {
-    "build": "vinxi build && node build-hot-fix.mjs",
+    "build": "vinxi build",
     "dev": "vinxi dev --host ",
     "start": "node ./.output/server/index.mjs",
-    "fix": "node build-hot-fix.mjs",
     "generate-pwa-assets": "pwa-assets-generator",
     "check-types": "tsc --noEmit",
-    "lint": "eslint src/**/*.ts[x]",
-    "generate-sw": "sw build -r '.output/public/assets' -a '**/*.{js,css}' ./output/public/sw.js"
+    "lint": "eslint src/**/*.ts[x]"
   },
   "private": true,
   "dependencies": {

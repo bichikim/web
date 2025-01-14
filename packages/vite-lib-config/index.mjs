@@ -14,6 +14,7 @@ const defaultRoot = process.cwd()
  * @param external dependencies not to include in the build
  * @param entry
  * @param alias
+ * @param target
  * @return {UserConfig}
  */
 export const createConfig = ({
@@ -22,6 +23,7 @@ export const createConfig = ({
   external = [],
   entry = {},
   alias = {},
+  target,
 } = {}) => {
   const _packageJson =
     packageJson ?? JSON.parse(readFileSync(path.join(root, 'package.json'), 'utf8'))
@@ -50,6 +52,7 @@ export const createConfig = ({
         rollupOptions: {
           external: [...depsKey, ...external],
         },
+        target,
       },
       optimizeDeps: {
         exclude: [],

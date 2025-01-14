@@ -1,49 +1,23 @@
-/* eslint-disable max-nested-callbacks */
-/* eslint-disable unicorn/prefer-global-this */
-/// <reference types="@types/serviceworker" />
-const CACHE_NAME = 'coong-cache'
+import fs from 'node:fs'
+import path from 'node:path'
+import {fileURLToPath} from 'node:url'
+import {getInstallFiles} from './get-install-files'
 
-// eslint-disable-next-line camelcase
-declare const __inject__code__: string
+export const INJECT_TARGET = '__inject_code__'
+export const libraryRoot = path.dirname(fileURLToPath(new URL(import.meta.url)))
 
-const APP_FILES = JSON.parse(__inject__code__)
+export interface GenerateSWOptions {
+  assets: string
+  assetsRoot: string
+  cwd: string
+}
 
-self.addEventListener('install', (event) => {
-  event.waitUntil(() => {
-    caches.open(CACHE_NAME).then((cache) => {
-      cache.addAll(APP_FILES)
-    })
-    self.skipWaiting()
-  })
-})
-self.addEventListener('fetch', (event) => {
-  if (event.request.method.lowercase() !== 'get') {
-    return
-  }
-
-  if (
-    !event.request.url.startsWith('http://') &&
-    !event.request.url.startsWith('https://')
-  ) {
-    return
-  }
-
-  event.respondWith(
-    caches.match(event.request).then((resource) => {
-      if (resource) {
-        return resource
-      }
-
-      // Return cached resource if available
-      return fetch(event.request).then((response) => {
-        return caches.open(CACHE_NAME).then((cache) => {
-          // Store response in cache
-          cache.put(event.request, response.clone())
-
-          // Return response
-          return response
-        })
-      })
-    }),
+export const generateSW = async (distribution: string, options: GenerateSWOptions) => {
+  const {assets, assetsRoot, cwd = process.cwd()} = options
+  const swFile = await fs.readFileSync(path.join(libraryRoot, 'sw.mjs'), 'utf8')
+  const installFiles = await getInstallFiles({cwd, files: assets, root: assetsRoot})
+  await fs.promises.writeFile(
+    path.join(cwd, distribution),
+    swFile.replace(INJECT_TARGET, JSON.stringify(installFiles)),
   )
-})
+}

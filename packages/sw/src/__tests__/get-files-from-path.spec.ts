@@ -2,7 +2,7 @@ import {describe, expect, it, vi, afterEach} from 'vitest'
 import {glob} from 'glob'
 import {getFilesFromPath} from '../get-files-from-path'
 import fs from 'node:fs'
-import path from 'node:path'
+import nodePath from 'node:path'
 import {fileURLToPath} from 'node:url'
 
 vi.mock('glob', async () => {
