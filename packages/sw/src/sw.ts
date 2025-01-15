@@ -91,7 +91,11 @@ self.addEventListener('fetch', (event: FetchEvent) => {
   }
 
   // Use network request for document navigation, otherwise use cache request
-  if (['document', 'style', 'script', 'worker'].includes(event.request.destination)) {
+  if (
+    ['document', 'style', 'script', 'worker', 'manifest'].includes(
+      event.request.destination,
+    )
+  ) {
     event.respondWith(createNetworkFirst(event))
 
     return
