@@ -25,7 +25,7 @@
     "sw": "bin/index.js"
   },
   "scripts": {
-    "build": "cross-env NODE_ENV=production vite build --minify false",
+    "build": "cross-env NODE_ENV=production vite build",
     "test": "echo \"Error: no test specified\" && exit 1",
     "check-types": "tsc --noEmit",
     "lint": "eslint src",
