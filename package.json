@@ -50,15 +50,15 @@
   "devDependencies": {
     "oxlint": "^0.15.4",
     "@solidjs/testing-library": "^0.8.10",
-    "@storybook/addon-essentials": "8.5.0-alpha.18",
-    "@storybook/addon-interactions": "8.5.0-alpha.18",
-    "@storybook/addon-links": "8.5.0-alpha.18",
-    "@storybook/blocks": "8.5.0-alpha.18",
-    "@storybook/builder-vite": "8.5.0-alpha.18",
-    "@storybook/docs-tools": "8.5.0-alpha.18",
-    "@storybook/manager-api": "8.5.0-alpha.18",
-    "@storybook/test": "8.5.0-alpha.18",
-    "@storybook/test-runner": "0.20.1",
+    "@storybook/addon-essentials": "8.4.7",
+    "@storybook/addon-interactions": "8.4.7",
+    "@storybook/addon-links": "8.4.7",
+    "@storybook/blocks": "8.4.7",
+    "@storybook/builder-vite": "8.4.7",
+    "@storybook/docs-tools": "8.4.7",
+    "@storybook/manager-api": "8.4.7",
+    "@storybook/test": "8.4.7",
+    "@storybook/test-runner": "0.21.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@turbo/gen": "^2.3.3",
     "@types/lodash": "^4.17.14",
@@ -84,7 +84,7 @@
     "reflect-metadata": "^0.2.2",
     "sinon": "^19.0.2",
     "solid-js": "^1.9.4",
-    "storybook": "8.5.0-alpha.18",
+    "storybook": "8.4.7",
     "storybook-solidjs": "1.0.0-beta.6",
     "storybook-solidjs-vite": "1.0.0-beta.6",
     "tsd": "0.31.2",
@@ -148,5 +148,20 @@
   },
   "web-types": [
     "./web-types.json"
-  ]
+  ],
+  "loki": {
+    "configurations": {
+      "chrome.laptop": {
+        "target": "chrome.docker",
+        "width": 1366,
+        "height": 768,
+        "deviceScaleFactor": 1,
+        "mobile": false
+      },
+      "chrome.iphone7": {
+        "target": "chrome.docker",
+        "preset": "iPhone 7"
+      }
+    }
+  }
 }

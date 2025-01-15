@@ -42,6 +42,8 @@
     "vitest": "*",
     "vite": "^6.0.7",
     "vite-plugin-dts": "^4.3.0",
-    "@winter-love/vite-lib-config": "workspace:*"
+    "@winter-love/vite-lib-config": "workspace:*",
+    "@rollup/plugin-babel": "^6.0.4",
+    "@babel/preset-env": "^7.26.0"
   }
 }

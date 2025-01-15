@@ -15,8 +15,8 @@ export interface SFileListProps
 const rootStyle = cva(
   cx(
     'flex flex-col relative',
-    'before-i-hugeicons:arrow-down-01 before-absolute before-w-5 before-h-5 before-bottom--1 before-w-full',
-    'after-i-hugeicons:arrow-up-01 after-absolute after-w-5 after-h-5 after-top--1 after-w-full',
+    'before-i-tabler:chevron-down before-absolute before-w-5 before-h-5 before-bottom--1 before-w-full',
+    'after-i-tabler:chevron-up after-absolute after-w-5 after-h-5 after-top--1 after-w-full',
   ),
   {
     variants: {

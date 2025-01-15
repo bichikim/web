@@ -32,8 +32,8 @@ export interface SPlayerControllerProps
 const playStyle = cva('block text-8', {
   variants: {
     isPlaying: {
-      false: 'i-hugeicons:play',
-      true: 'i-hugeicons:pause',
+      false: 'i-tabler:player-play',
+      true: 'i-tabler:player-pause',
     },
   },
 })
@@ -121,7 +121,7 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
           onClick={innerProps.onStop}
           title="stop"
         >
-          <span class="block i-hugeicons:stop text-9" />
+          <span class="block i-tabler:player-stop text-9" />
         </SPlayerButton>
         <SRepeatButton
           class="min-w-11"
@@ -135,7 +135,7 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
           onClick={innerProps.onSetting}
           title="setting"
         >
-          <span class="block i-hugeicons:setting-07 text-8" />
+          <span class="block i-tabler:settings text-8" />
         </SPlayerButton>
       </section>
     </>

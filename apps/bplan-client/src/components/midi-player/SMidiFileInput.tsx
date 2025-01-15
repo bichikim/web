@@ -106,7 +106,7 @@ export const SMidiFileInput = (props: HMidiFileInputProps) => {
     <div class={cx(rootStyle, innerProps.class)}>
       <label class="inline-flex" for={id}>
         <span class="text-nowrap md:text-6 text-4">Click or Drop </span>
-        <span class="block i-hugeicons:file-add text-6 px-1" />
+        <span class="block i-tabler:file-plus text-6 px-1" />
         <span class="text-nowrap md:inline hidden md:text-6 text-4">Your files</span>
       </label>
 

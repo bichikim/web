@@ -83,7 +83,7 @@ export const SSetting = (props: SSettingProps) => {
       />
       <div class="flex justify-end w-full">
         <SPlayerButton class="min-w-11 min-h-9 bg-gray-100" onClick={handleClose}>
-          <span class="i-hugeicons:cancel-01 text-8 inline-block" />
+          <span class="i-tabler:x text-8 inline-block" />
         </SPlayerButton>
       </div>
     </div>

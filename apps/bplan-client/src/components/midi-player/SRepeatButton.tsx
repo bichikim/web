@@ -13,9 +13,9 @@ export type RepeatType = 'no' | 'all' | 'one'
 const iconStyle = cva('block text-8', {
   variants: {
     repeat: {
-      all: 'i-hugeicons:repeat',
-      no: 'i-hugeicons:arrow-right-03',
-      one: 'i-hugeicons:repeat-one-01',
+      all: 'i-tabler:repeat',
+      no: 'i-tabler:repeat-off',
+      one: 'i-tabler:repeat-once',
     },
   },
 })

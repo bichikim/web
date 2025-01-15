@@ -7,6 +7,8 @@ import * as path from 'node:path'
 import {generateSW} from '@winter-love/sw'
 import unoCss from 'unocss/vite'
 import * as nodeFs from 'node:fs'
+import legacy from '@vitejs/plugin-legacy'
+import {targets} from '@winter-love/vite-lib-config'
 
 const fixNitroFunction = async () => {
   const source =
@@ -79,7 +81,14 @@ export default defineConfig({
     // build: {
     //   minify: false,
     // },
-    plugins: [unoCss('../../uno.config.ts'), createGenerateSwPlugin()],
+    plugins: [
+      //
+      unoCss('../../uno.config.ts'),
+      createGenerateSwPlugin(),
+      legacy({
+        targets,
+      }),
+    ],
     resolve: {
       alias: {
         // fix #start/app is app.tsx only @solid/state error

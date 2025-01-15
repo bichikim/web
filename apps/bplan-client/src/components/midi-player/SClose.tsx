@@ -35,8 +35,8 @@ const rootStyle = cva(
 const iconStyle = cva('inline-block  text-7 text-white', {
   variants: {
     isHidden: {
-      false: 'i-hugeicons:cancel-02',
-      true: 'i-hugeicons:youtube',
+      false: 'i-tabler:x',
+      true: 'i-tabler:playlist',
     },
   },
 })
