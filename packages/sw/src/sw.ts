@@ -14,9 +14,12 @@ const isOriginPath = (url: string) =>
 
 const isApiPath = (url: string) => url.startsWith(apiPath)
 
-const createNetworkFirst = async (event: FetchEvent) => {
+const createNetworkFirst = async (event: FetchEvent, cache: RequestCache = 'default') => {
+  const headers = new Headers()
+  headers.append('cache-control', cache)
+  headers.append('pragma', cache)
   try {
-    const response = await fetch(event.request)
+    const response = await fetch(event.request, {headers})
     const cache = await caches.open(CACHE_NAME)
     await cache.put(event.request, response.clone())
 
@@ -90,12 +93,16 @@ self.addEventListener('fetch', (event: FetchEvent) => {
     return
   }
 
+  const destination: RequestDestination[] = [
+    'style',
+    'script',
+    'worker',
+    'manifest',
+    'document',
+  ]
+
   // Use network request for document navigation, otherwise use cache request
-  if (
-    ['document', 'style', 'script', 'worker', 'manifest'].includes(
-      event.request.destination,
-    )
-  ) {
+  if (destination.includes(event.request.destination)) {
     event.respondWith(createNetworkFirst(event))
 
     return
