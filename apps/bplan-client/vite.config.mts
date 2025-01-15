@@ -84,6 +84,10 @@ export default defineConfig({
       alias: {
         // fix #start/app is app.tsx only @solid/state error
         '#start/app': fileURLToPath(new URL('src/App.tsx', import.meta.url)),
+        // fix @tonejs/midi is not module js
+        '@tonejs/midi': fileURLToPath(
+          new URL('node_modules/@tonejs/midi/src/Midi.ts', import.meta.url),
+        ),
         src: fileURLToPath(new URL('src', import.meta.url)),
       },
     },

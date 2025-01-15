@@ -13,7 +13,7 @@
   "dependencies": {
     "@tonejs/midi": "^2.0.28",
     "@solidjs/meta": "^0.29.4",
-    "@solidjs/router": "^0.15.2",
+    "@solidjs/router": "0.15.3",
     "@solidjs/start": "^1.0.11",
     "@winter-love/lodash": "workspace:*",
     "@winter-love/solid-use": "workspace:*",

@@ -40,14 +40,10 @@ const rootStyle = cva(
     },
   },
 )
-const playerContainerStyle = cva('flex flex-col gap-2', {
+const playerContainerStyle = cva('flex flex-col gap-2 overflow-hidden', {
   variants: {
-    isActive: {
-      false: 'pointer-events-none',
-      true: '',
-    },
     isShow: {
-      false: 'h-0 opacity-0 ',
+      false: 'h-0 opacity-0 pointer-events-none',
       true: 'opacity-100',
     },
   },

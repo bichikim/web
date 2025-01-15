@@ -2,7 +2,7 @@
 // @refresh reload
 import {mount, StartClient} from '@solidjs/start/client'
 
-if ('serviceWorker' in navigator) {
+if (!import.meta.env.DEV && 'serviceWorker' in navigator) {
   navigator.serviceWorker.register('/sw.js')
 }
 

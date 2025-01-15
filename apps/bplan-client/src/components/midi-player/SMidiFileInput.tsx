@@ -1,6 +1,6 @@
 import {createUniqueId, JSX, onCleanup, splitProps} from 'solid-js'
 import {cx} from 'class-variance-authority'
-import {Midi} from '@tonejs/midi'
+import type {Midi} from '@tonejs/midi'
 import {MusicInfo} from 'src/components/midi-player/SFileItem'
 import {loadMidi} from 'src/utils/read-midi'
 import {SampleStart} from './types'
