@@ -82,7 +82,6 @@ export const useDrag = (
 
     onMove(firstPoint.clientX, firstPoint.clientY)
   })
-
   useEvent(toggleValue(getWindow, pointDown, null), 'pointermove', (event) => {
     onMove(event.clientX, event.clientY)
   })

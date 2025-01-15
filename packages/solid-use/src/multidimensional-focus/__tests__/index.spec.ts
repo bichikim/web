@@ -8,7 +8,6 @@ describe('stringifyPoint', () => {
     expect(stringifyPoint(point)).toBe('1,2')
   })
 })
-
 describe('parsePoint', () => {
   it('should parse a point string', () => {
     const pointString = '1,2'
@@ -16,7 +15,6 @@ describe('parsePoint', () => {
     expect(parsePoint(pointString)).toEqual({x: 1, y: 2})
   })
 })
-
 describe('stringifyFocusPosition', () => {
   it('should stringify a focus position', () => {
     const focusPosition = [
@@ -27,7 +25,6 @@ describe('stringifyFocusPosition', () => {
     expect(stringifyFocusPosition(focusPosition)).toBe('1,2|3,4')
   })
 })
-
 describe('parseFocusPosition', () => {
   it('should parse a focus position string', () => {
     const focusPositionString = '1,2|3,4'

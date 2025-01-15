@@ -57,7 +57,6 @@ export const useScrollState = (
   onMount(() => {
     updateNativeScrollState()
   })
-
   useEvent(elementAccessor, 'scroll', () => {
     updateNativeScrollState()
   })

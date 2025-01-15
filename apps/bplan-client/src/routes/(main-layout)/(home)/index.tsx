@@ -1,5 +1,5 @@
 import {Meta, Title} from '@solidjs/meta'
-import {createEffect, createMemo, createSignal} from 'solid-js'
+import {createEffect, createMemo, createSignal, untrack} from 'solid-js'
 import {SPiano} from 'src/components/instruments'
 import {SettingData, SHiddenPlayer} from 'src/components/midi-player'
 import {MusicInfo} from 'src/components/midi-player/SFileItem'
@@ -27,19 +27,21 @@ export default function HomePage(props: HomePageProps) {
     keepPlayList: true,
     pianoSize: 100,
   })
+  const initMusics = untrack(() => props.initMusics)
   const [musics, setMusics, updateActive] = useStorage<MusicInfo[]>(
     'local',
-
-    `coong:piano-musics-${props.presetTitle ?? 'default'}`,
-
-    props.initMusics ?? [],
+    'coong:piano-musics-default',
+    [],
+    {
+      enforceValue: initMusics,
+      mounted: true,
+    },
   )
   const isLoadDone = createMemo(() => splendidGrandPiano().loaded)
   const pageName = 'Piano'
   const handleSettingDataChange = (data: SettingData) => {
     setSettingData((prev) => ({...prev, ...data}))
   }
-
   const handleMusicsChange = (musics: MusicInfo[]) => {
     setMusics(musics)
   }

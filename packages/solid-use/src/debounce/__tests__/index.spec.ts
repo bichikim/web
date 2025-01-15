@@ -11,25 +11,15 @@ describe('useDebounce', () => {
     const debounce = useDebounce(callback, 100, options)
 
     debounce.execute(...args)
-
     expect(callback).toHaveBeenCalledTimes(1)
-
     debounce.execute(...args)
-
     timer.tick(50)
-
     debounce.execute(...args)
-
     timer.tick(50)
-
     debounce.execute(...args)
-
     expect(callback).toHaveBeenCalledTimes(1)
-
     timer.tick(100)
-
     expect(callback).toHaveBeenCalledTimes(2)
-
     timer.restore()
   })
 })

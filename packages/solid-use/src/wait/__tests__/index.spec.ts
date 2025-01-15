@@ -64,7 +64,6 @@ describe('waitFactory', () => {
   afterEach(() => {
     callback.mockClear()
   })
-
   it.each([
     //
     {target: setTimeout, wait: setTimeoutWait},
@@ -89,16 +88,11 @@ describe('waitFactory', () => {
     }
 
     expect(callback).toHaveBeenCalledTimes(0)
-
     result.execute()
-
     timer.tick(101)
-
     result.cancel()
-
     expect(callback).toHaveBeenCalledTimes(1)
     callback.mockClear()
-
     // changing wait
     result.execute()
 
@@ -108,15 +102,10 @@ describe('waitFactory', () => {
     }
 
     timer.tick(50)
-
     setWaitTime(150)
-
     timer.tick(200)
-
     expect(callback).toHaveBeenCalledTimes(0)
-
     callback.mockClear()
-
     result.execute()
 
     if (leading) {
@@ -125,9 +114,7 @@ describe('waitFactory', () => {
     }
 
     expect(callback).toHaveBeenCalledTimes(0)
-
     timer.tick(50)
-
     result.flush()
 
     if (leading) {
@@ -138,7 +125,6 @@ describe('waitFactory', () => {
 
     timer.restore()
   })
-
   it('should cancel before dispose', () => {
     const callback = vi.fn()
     const timer = useFakeTimers()
@@ -152,22 +138,14 @@ describe('waitFactory', () => {
     wait.execute()
     expect(callback).not.toHaveBeenCalled()
     timer.tick(timeout + 1)
-
     expect(callback).toHaveBeenCalled()
-
     callback.mockClear()
-
     wait.execute()
-
     dispose()
-
     timer.tick(timeout + 1)
-
     expect(callback).not.toHaveBeenCalled()
-
     timer.restore()
   })
-
   it.each([
     {
       args: ['hello'],
@@ -183,15 +161,10 @@ describe('waitFactory', () => {
     })
 
     wait.execute(...args)
-
     expect(callback).not.toHaveBeenCalled()
-
     timer.tick(50)
-
     expect(callback).not.toHaveBeenCalled()
-
     timer.tick(101)
-
     expect(callback).toHaveBeenCalled()
     dispose()
     timer.restore()

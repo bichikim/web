@@ -1,6 +1,6 @@
-import {createSignal, JSX, onCleanup, splitProps} from 'solid-js'
+import {createUniqueId, JSX, onCleanup, splitProps} from 'solid-js'
 import {cx} from 'class-variance-authority'
-import {Midi} from '@tonejs/midi/src/Midi'
+import type {Midi} from '@tonejs/midi'
 import {MusicInfo} from 'src/components/midi-player/SFileItem'
 import {loadMidi} from 'src/utils/read-midi'
 import {SampleStart} from './types'
@@ -16,13 +16,13 @@ export interface HMidiFileInputProps
 }
 
 const rootStyle = cx(
-  'bg-gray-100 flex items-center justify-center flex-grow-1 rd-1 cursor-pointer b-dashed b-.5 b-gray',
+  'bg-gray-100 flex items-center justify-center flex-grow-1 rd-1 b-dashed b-.5 b-gray',
   'relative text-4',
 )
 
 export const SMidiFileInput = (props: HMidiFileInputProps) => {
+  const id = createUniqueId()
   const [innerProps, restProps] = splitProps(props, ['class', 'onAdd', 'onTouchEnd'])
-  const [inputElement, setInputElement] = createSignal<HTMLInputElement | null>(null)
   let isCleanup = false
   const handleInputFiles = async (files: FileList | null) => {
     if (!files || files.length === 0) {
@@ -98,40 +98,32 @@ export const SMidiFileInput = (props: HMidiFileInputProps) => {
     innerProps.onAdd?.(samples)
   }
 
-  const handleTouchEnd = (event: Event) => {
-    innerProps.onTouchEnd?.(event)
-    const element = inputElement()
-
-    if (!element) {
-      return
-    }
-
-    element.click()
-  }
-
   onCleanup(() => {
     isCleanup = true
   })
 
   return (
     <div class={cx(rootStyle, innerProps.class)}>
-      <span class="text-nowrap md:text-6 text-4">Click or Drop </span>
-      <span class="block i-hugeicons:file-add text-6 px-1" />
-      <span class="text-nowrap md:inline hidden md:text-6 text-4">Your files</span>
+      <label class="inline-flex" for={id}>
+        <span class="text-nowrap md:text-6 text-4 pt-1">Click or Drop </span>
+        <span class="block i-tabler:file-plus text-6 px-1 pt-2" />
+        <span class="text-nowrap md:inline hidden md:text-6 text-4 pt-1">Your files</span>
+      </label>
+
       {props.children}
       <input
         {...restProps}
-        ref={setInputElement}
+        title=""
         type="file"
         multiple
         accept="audio/midi"
         aria-label="Midi file input"
-        onTouchEnd={handleTouchEnd}
+        id={id}
         onChange={async (event) => {
           await handleInputFiles(event.target.files)
           ;(event.target.value as any) = null
         }}
-        class="block absolute opacity-0 cursor-pointer w-full h-full"
+        class="block absolute opacity-0 w-100% h-100% cursor-pointer"
       />
     </div>
   )

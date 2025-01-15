@@ -10,15 +10,10 @@ describe('useTimeout', () => {
     const timeout = useTimeout(callback, wait)
 
     timeout.execute()
-
     clock.tick(50)
-
     expect(callback).toHaveBeenCalledTimes(0)
-
     timeout.execute()
-
     clock.tick(50)
-
     expect(callback).toHaveBeenCalledTimes(1)
   })
 })

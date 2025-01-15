@@ -46,7 +46,6 @@ export const Default: Story = {
     const button = canvas.getByLabelText('count button')
 
     await userEvent.click(button)
-
     await expect(button.textContent).toBe('count 1')
   },
 }

@@ -3,8 +3,8 @@ import {
   createMemo,
   createSignal,
   mergeProps,
-  Show,
   splitProps,
+  untrack,
 } from 'solid-js'
 import {MusicInfo} from 'src/components/midi-player/SFileItem'
 import {RepeatType} from 'src/components/midi-player/types'
@@ -43,6 +43,7 @@ export interface SPlayerProps extends Pick<SPlayerControllerProps, 'leftTime'> {
  * @prop {SplendidGrandPianoController} [pianoController] - Piano controller instance
  * @prop {SplendidGrandPianoState} [pianoState] - Current state of the piano
  */
+// eslint-disable-next-line max-lines-per-function
 export const SPlayer = (props: SPlayerProps) => {
   const defaultProps = mergeProps(
     {
@@ -64,26 +65,25 @@ export const SPlayer = (props: SPlayerProps) => {
     'initMusics',
     'onMusicsChange',
   ])
-  const [playList, setPlayList] = createSignal<MusicInfo[]>(innerProps.initMusics ?? [])
+  const [playList, setPlayList] = createSignal<MusicInfo[]>(
+    untrack(() => innerProps.initMusics ?? []),
+  )
   const [selectedId, setSelectedId] = createSignal<string>('')
   const [repeat, setRepeat] = createSignal<RepeatType>('no')
 
-  createEffect(() => {
+  const handleMusicsChange = () => {
     innerProps.onMusicsChange?.(playList())
-  })
+  }
 
   const handleStop = async () => {
     innerProps.pianoController?.stop()
   }
-
   const handleResume = () => {
     innerProps.pianoController?.resume()
   }
-
   const handleSuspend = () => {
     innerProps.pianoController?.suspend()
   }
-
   const handleAddPlayItem = (payload: MusicInfo[]) => {
     // first select
     if (playList().length === 0 && payload.length > 0) {
@@ -93,12 +93,11 @@ export const SPlayer = (props: SPlayerProps) => {
     setPlayList((prev) => {
       return [...prev, ...payload]
     })
+    handleMusicsChange()
   }
-
   const handleSelect = (id: string) => {
     setSelectedId(id)
   }
-
   const handlePlay = (id: string) => {
     const info = playList().find((item) => item.id === id)
 
@@ -115,7 +114,6 @@ export const SPlayer = (props: SPlayerProps) => {
 
     innerProps.pianoController?.play(info)
   }
-
   const handleDelete = (id: string) => {
     const _playList = playList()
     const index = _playList.findIndex((item) => item.id === id)
@@ -140,18 +138,16 @@ export const SPlayer = (props: SPlayerProps) => {
     setPlayList((prev) => {
       return [...prev.slice(0, index), ...prev.slice(index + 1)]
     })
+    handleMusicsChange()
   }
-
   const handleChangeRepeat = (value: RepeatType) => {
     setRepeat(value)
   }
-
   const isEnd = createMemo(() => {
     const {playingId, totalDuration, leftTime} = defaultProps.pianoState
 
     return Boolean(playingId) && totalDuration <= leftTime
   })
-
   const getNextItem = (id: string, repeat: RepeatType) => {
     const _playLoad = playList()
     const index = _playLoad.findIndex((item) => item.id === id)
@@ -169,7 +165,6 @@ export const SPlayer = (props: SPlayerProps) => {
 
     return item
   }
-
   const handleTryRepeat = () => {
     const _repeat = repeat()
 
@@ -185,7 +180,6 @@ export const SPlayer = (props: SPlayerProps) => {
       innerProps.pianoController?.play(nextItem)
     }
   }
-
   const handleSeek = (time: number) => {
     innerProps.pianoController?.seek(time)
   }
@@ -196,6 +190,13 @@ export const SPlayer = (props: SPlayerProps) => {
     }
 
     return isEnd()
+  })
+  createEffect(() => {
+    const musics = innerProps.initMusics ?? []
+
+    if (musics.length > 0) {
+      setPlayList(musics)
+    }
   })
 
   return (

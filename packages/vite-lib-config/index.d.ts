@@ -4,4 +4,9 @@ export const createConfig: (payload?: {
   external?: string[]
   entry?: Record<string, string>
   alias?: Record<string, string>
+  target?: 'modules' | string
+  plugins?: import('vite').Plugin[]
+  rollupOutputPlugins?: import('rollup').OutputPluginOption[]
 }) => import('vite')['UserConfig']
+
+export const targets: string

@@ -14,6 +14,9 @@ const defaultRoot = process.cwd()
  * @param external dependencies not to include in the build
  * @param entry
  * @param alias
+ * @param target
+ * @param plugins
+ * @param rollupOutputPlugins
  * @return {UserConfig}
  */
 export const createConfig = ({
@@ -22,6 +25,9 @@ export const createConfig = ({
   external = [],
   entry = {},
   alias = {},
+  target,
+  plugins = [],
+  rollupOutputPlugins = [],
 } = {}) => {
   const _packageJson =
     packageJson ?? JSON.parse(readFileSync(path.join(root, 'package.json'), 'utf8'))
@@ -49,7 +55,11 @@ export const createConfig = ({
         },
         rollupOptions: {
           external: [...depsKey, ...external],
+          output: {
+            plugins: rollupOutputPlugins,
+          },
         },
+        target,
       },
       optimizeDeps: {
         exclude: [],
@@ -71,6 +81,7 @@ export const createConfig = ({
           exclude: ['**/__tests__/*', '**/__stories__/*'],
           include: ['**/*.ts', '**/*.tsx'],
         }),
+        ...plugins,
       ],
       resolve: {
         alias: {
@@ -81,3 +92,6 @@ export const createConfig = ({
     }
   })
 }
+
+export const targets =
+  'chrome >= 55, safari >= 11.3, firefox >= 53, opera >= 42, edge >= 15, last 2 versions, not dead'

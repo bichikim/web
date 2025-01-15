@@ -17,9 +17,9 @@ function getDefaultExportFromNamespaceIfNotNamed (n) {
 }`), 'utf8')
 }
 
-const fixSw = async () => {
-  return nodeFs.promises.rm(nodePath.resolve('public/sw.js'))
-}
+// const fixSw = async () => {
+//   return nodeFs.promises.rm(nodePath.resolve('public/sw.js'))
+// }
 
 fix().then(() => console.info('hot fix done'))
-fixSw().then(() => console.info('hot fix sw done'))
+// fixSw().then(() => console.info('hot fix sw done'))

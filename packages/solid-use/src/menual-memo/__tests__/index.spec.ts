@@ -9,13 +9,9 @@ describe('manualMemo', () => {
     const [value, forceUpdate] = manualMemo(() => source() * 2 + nunReactiveValue)
 
     expect(value()).toBe(3)
-
     nunReactiveValue = 2
-
     expect(value()).toBe(3)
-
     forceUpdate()
-
     expect(value()).toBe(4)
   })
 })

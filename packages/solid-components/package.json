@@ -23,7 +23,7 @@
   "scripts": {
     "build": "cross-env NODE_ENV=production vite build",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "type-check": "tsc --noEmit",
+    "check-types": "tsc --noEmit",
     "lint": "eslint src"
   },
   "dependencies": {

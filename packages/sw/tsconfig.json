@@ -1,0 +1,12 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "target": "es5",
+    "baseUrl": ".",
+    "paths": {
+      "src/*": ["src/*"]
+    }
+  },
+  "extends": ["../../tsconfig.json"],
+  "include": ["src/**/*.ts", "src/**/*.tsx"]
+}

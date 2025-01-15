@@ -13,7 +13,6 @@ describe('getScrollParent', () => {
 
     container.append(child)
     containerNotScroll.append(childNotScroll)
-
     container.style.overflow = 'auto'
 
     return {

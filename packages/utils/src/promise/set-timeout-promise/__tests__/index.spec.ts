@@ -9,13 +9,11 @@ describe('set-timeout-promise', () => {
     setTimeoutPromise(1000).then(() => {
       end = true
     })
-
     expect(end).toBe(false)
     await clock.tick(500)
     expect(end).toBe(false)
     await clock.tick(550)
     expect(end).toBe(true)
-
     clock.restore()
   })
 })

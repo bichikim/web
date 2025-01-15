@@ -8,7 +8,6 @@ describe('reduce', () => {
     expect(reduce([1, 2, 3])((prev, value) => prev + value, 0)).toBe(6)
   })
 })
-
 describe('reduceOp', () => {
   it('should return the value with list and iteratee', () => {
     expect(reduceOp((prev, value) => prev + value, 0, [1, 2, 3])).toBe(6)

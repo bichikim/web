@@ -30,7 +30,7 @@ export interface SFileItemProps
 const rootStyle = cx(
   'gap-4 p-0 b-0 bg-transparent text-5 flex-shrink-0 h-9 mb-0.3125rem last:mb-0',
   'after:bg-gray-300 after:h-.25 first:after:hidden after:content-[""] after:absolute',
-  'after:top--0.1875rem after:left-0.5rem after:w-[calc(100%-1rem)]',
+  'after:top--0.1875rem after:left-0.5rem after:w-[calc(100%-1rem)] cursor-pointer',
 )
 const indexStyle = cva('', {
   variants: {
@@ -110,7 +110,7 @@ export const SFileItem = (props: SFileItemProps) => {
       onLeftExecute={handleLeDelete}
       dragLeftChildren={
         <span class="block w-[calc(100%-0.25rem)] h-full overflow-hidden bg-red p-1 box-border rd-1">
-          <span class="block w-full h-full i-hugeicons:delete-02 bg-white " />
+          <span class="block w-full h-full i-tabler:trash bg-white " />
         </span>
       }
     >
@@ -125,7 +125,7 @@ export const SFileItem = (props: SFileItemProps) => {
         <span class="block absolute bg-blue rd-1 top-0 left-0 w-full h-full opacity-40" />
       </Show>
       <Show when={showPlayingIcon()}>
-        <span class="block i-hugeicons:arrow-right-double absolute text-gray-500 left-3" />
+        <span class="block i-tabler:chevrons-right absolute text-gray-500 left-3" />
       </Show>
       <span class="relative block text-gray b-r-solid b-r-.25 b-r-gray-300 pr-2">
         <span class={indexStyle({playing: showPlayingIcon()})}>
@@ -146,12 +146,10 @@ export const SFileItem = (props: SFileItemProps) => {
       </span>
       <Show
         when={innerProps.inProgress}
-        fallback={<span class="w-5 h-5 flex-shrink-0" />}
+        fallback={<span class="w-5 h-5 flex-shrink-0 i-tabler:piano" />}
       >
         <span class="scale-140 inline-flex origin-center flex-shrink-0">
-          <span
-            class={cx('inline-block i-hugeicons:loading-02 text-black', 'animate-spin')}
-          />
+          <span class={cx('inline-block i-tabler:loader-2 text-black', 'animate-spin')} />
         </span>
       </Show>
       <Show when={innerProps.ext && innerProps.ext !== 'midi' && !innerProps.inProgress}>

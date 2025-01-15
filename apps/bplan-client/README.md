@@ -77,3 +77,11 @@ https://www.mapianist.com/sheet/121897
 https://magenta.tensorflow.org/get-started/#magenta-js
 
 ## kwnown issue
+
+## Browser Compatibility
+
+- chrome 55+
+- safari 11.3+
+- firefox 53+
+- opera 42+
+- edge 15+

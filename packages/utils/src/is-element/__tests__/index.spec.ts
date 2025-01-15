@@ -12,7 +12,6 @@ describe('is-element', () => {
     expect(isElement({})).toBe(false)
   })
 })
-
 describe('is-html-element', () => {
   it('should return true with HTMLElement', () => {
     expect(isHtmlElement(document.createElement('div'))).toBe(true)

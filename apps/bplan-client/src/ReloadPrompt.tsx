@@ -1,32 +1,27 @@
-import {JSX, Show} from 'solid-js'
+import {Accessor, createEffect, createSignal, JSX, Show, Signal} from 'solid-js'
 import {preventGlobalTouchAttrs} from 'src/components/real-button/use-global-touch'
-import {useRegisterSW} from 'virtual:pwa-register/solid'
+import {getWindow} from '@winter-love/utils'
 
 export interface ReloadPromptProps extends JSX.HTMLAttributes<HTMLDivElement> {
   //
 }
 
 export const ReloadPrompt = (props: ReloadPromptProps) => {
-  const {
-    needRefresh: [needRefresh, setNeedRefresh],
-    offlineReady: [offlineReady, setOfflineReady],
-    updateServiceWorker,
-  } = useRegisterSW({
-    immediate: true,
-    onRegisteredSW(swUrl) {
-      console.info(`Service worker at: ${swUrl}`)
-    },
+  const [offlineReady, setOfflineReady] = createSignal(false)
+  const [needRefresh, setNeedRefresh] = createSignal(false)
+
+  createEffect(() => {
   })
 
   const handleClose = () => {
-    setOfflineReady(false)
-    setNeedRefresh(false)
+    // setOfflineReady(false)
+    // setNeedRefresh(false)
   }
 
   const handleUpdateServiceWorker = async () => {
     console.info('handleUpdateServiceWorker')
     handleClose()
-    await updateServiceWorker()
+    // await updateServiceWorker()
   }
 
   return (

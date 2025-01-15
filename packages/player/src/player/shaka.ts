@@ -47,7 +47,6 @@ export const createShaka = (
   const shakaPlayer = new shaka.Player(element)
 
   configPlayer(shakaPlayer, options)
-
   fixAtmosOrder(shakaPlayer)
 
   return shakaPlayer

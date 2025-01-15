@@ -1,10 +1,11 @@
-import {query, useParams} from '@solidjs/router'
-import {createResource} from 'solid-js'
+import {createAsync, query, useParams} from '@solidjs/router'
+// import {createResource} from 'solid-js'
 import {default as HomePage} from 'src/routes/(main-layout)/(home)'
 
 const getSelfUrl = () => {
   return import.meta.env.VITE_API_URL ?? 'http://localhost:3000'
 }
+
 const getPreset = query(async (id?: string) => {
   'use server'
 
@@ -23,7 +24,8 @@ const getPreset = query(async (id?: string) => {
 
 export default function PresetPage() {
   const params = useParams()
-  const [preset] = createResource(() => getPreset(params.id))
+  const preset = createAsync(() => getPreset(params.id))
+  // const preset = () => ({musics: [], title: 'Unknown'})
 
   return <HomePage presetTitle={preset()?.title} initMusics={preset()?.musics} />
 }

@@ -6,7 +6,6 @@ import prettierRecommended from 'eslint-plugin-prettier/recommended'
 import unicorn from 'eslint-plugin-unicorn'
 import jsonc from 'eslint-plugin-jsonc'
 import sortKeys from 'eslint-plugin-sort-keys-fix'
-import pluginVue from 'eslint-plugin-vue'
 import typeSortKeys from 'eslint-plugin-typescript-sort-keys'
 import exportsSort from 'eslint-plugin-sort-export-all'
 import stylisticTs from '@stylistic/eslint-plugin-ts'
@@ -24,9 +23,8 @@ export default [
   ...ts.configs.recommended,
   prettierRecommended,
   unicorn.configs['flat/recommended'],
-  ...pluginVue.configs['flat/recommended'],
   {
-    files: ['**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx,vue}'],
+    files: ['**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx}'],
     ignores: ['**/package.json'],
     plugins: {
       format: stylisticTs,
@@ -142,19 +140,19 @@ export default [
         'warn',
         {blankLine: 'always', next: 'export', prev: 'import'},
         {blankLine: 'always', next: 'return', prev: '*'},
-        {blankLine: 'always', next: '*', prev: 'const'},
-        {blankLine: 'never', next: 'const', prev: 'const'},
-        {blankLine: 'never', next: 'let', prev: 'const'},
-        {blankLine: 'never', next: 'const', prev: 'let'},
+        // {blankLine: 'always', next: '*', prev: 'const'},
+        {blankLine: 'never', next: 'expression', prev: 'expression'},
+        // {blankLine: 'never', next: 'const', prev: 'let'},
         {blankLine: 'always', next: 'function', prev: 'function'},
         {blankLine: 'always', next: '*', prev: 'if'},
         {blankLine: 'always', next: 'if', prev: '*'},
-        {blankLine: 'always', next: 'const', prev: 'block-like'},
-        {blankLine: 'always', next: 'block-like', prev: 'const'},
-        {blankLine: 'always', next: 'expression', prev: 'block-like'},
-        {blankLine: 'always', next: 'import', prev: 'block-like'},
-        {blankLine: 'always', next: 'block-like', prev: 'block-like'},
-        {blankLine: 'always', next: 'block-like', prev: 'expression'},
+        // {blankLine: 'always', next: 'const', prev: 'block-like'},
+        // {blankLine: 'always', next: 'block-like', prev: 'const'},
+        {blankLine: 'always', next: 'expression', prev: 'function'},
+        // {blankLine: 'always', next: 'import', prev: 'block-like'},
+        // {blankLine: 'always', next: 'block-like', prev: 'block-like'},
+        // {blankLine: 'always', next: 'block-like', prev: 'expression'},
+        // {blankLine: 'never', next: 'const', prev: 'const'},
       ],
       'format/semi': ['error', 'never'],
       'format/space-before-blocks': [
@@ -422,13 +420,6 @@ export default [
           },
         },
       ],
-      'vue/html-self-closing': 'off',
-      'vue/max-attributes-per-line': 'off',
-      'vue/multi-word-component-names': 'off',
-      'vue/one-component-per-file': 'off',
-      'vue/order-in-components': 'off',
-      'vue/require-default-prop': 'off',
-      'vue/singleline-html-element-content-newline': 'off',
       'wrap-iife': 'error',
       'yield-star-spacing': ['error', {before: true}],
       yoda: 'error',
@@ -464,12 +455,10 @@ export default [
       'unicorn/no-thenable': 'off',
       'unicorn/no-useless-undefined': 'off',
       'unicorn/prefer-global-this': 'off',
-      'vue/one-component-per-file': 'off',
-      'vue/require-prop-types': 'off',
     },
   },
   {
-    files: ['**/*.story.{ts,tsx}', '**/*.stories.{ts,tsx}', '**/*.story.vue'],
+    files: ['**/*.story.{ts,tsx}', '**/*.stories.{ts,tsx}'],
     rules: {
       'id-length': 'off',
       'no-magic-numbers': 'off',
@@ -494,25 +483,6 @@ export default [
       'apps/coong-client/android/**/*',
       'apps/coong-client/ios/**/*',
     ],
-  },
-  {
-    files: ['**/*.vue'],
-    languageOptions: {
-      parserOptions: {
-        ecmaFeatures: {
-          jsx: true,
-        },
-        extraFileExtensions: ['.vue'],
-        parser: {
-          js: 'espree',
-          jsx: 'espree',
-          mjs: 'espree',
-          mts: ts.parser,
-          ts: ts.parser,
-          tsx: ts.parser,
-        },
-      },
-    },
   },
   {
     files: ['**/*.{ts,tsx}'],

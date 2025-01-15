@@ -73,11 +73,8 @@ describe('watch', () => {
         await flushPromises()
         expect(_callback).toHaveBeenNthCalledWith(1, firstValue, undefined)
         setState(secondValue)
-
         await flushPromises()
-
         expect(_callback).toHaveBeenNthCalledWith(2, secondValue, firstValue)
-
         expect(_callback).toHaveBeenCalledTimes(2)
         dispose()
       }),
@@ -90,25 +87,16 @@ describe('watch', () => {
       const callback = vi.fn(() => cleanup)
 
       useWatch([state1, state2], callback)
-
       expect(callback).not.toHaveBeenCalled()
-
       setState1('foo1')
-
       await flushPromises()
-
       expect(callback).toHaveBeenNthCalledWith(1, ['foo1', 'bar'], [])
-
       setState2('bar1')
       await flushPromises()
-
       expect(callback).toHaveBeenNthCalledWith(2, ['foo1', 'bar1'], ['foo1', 'bar'])
-
       expect(cleanup).toHaveBeenNthCalledWith(1, ['foo1', 'bar'])
-
       dispose()
     }))
-
   // I don't know if immediate is necessary
   // It hasn't been implemented yet
   it.each([
@@ -121,18 +109,14 @@ describe('watch', () => {
       const [state, setState] = createSignal('foo')
 
       useWatch(state, callback, {})
-
       expect(callback).not.toHaveBeenCalled()
 
       return {dispose, setState, state}
     })
 
     expect(callback).toHaveBeenCalledTimes(1)
-
     setState('bar')
-
     expect(callback).toHaveBeenCalledTimes(2)
-
     dispose()
   })
 })

@@ -34,9 +34,7 @@ describe('useAnimationLoop', () => {
     expect(requestAnimationFrame).toHaveBeenCalled()
     expect(callback).not.toHaveBeenCalled()
     expect(animationTrigger.changed).toBe(1)
-
     animationTrigger.run()
-
     expect(callback).toHaveBeenCalledTimes(1)
     expect(animationTrigger.changed).toBe(2)
   })
