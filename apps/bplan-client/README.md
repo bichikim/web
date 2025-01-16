@@ -33,6 +33,8 @@ https://github.com/nbrosowsky/tonejs-instruments
 ### instrument velocity
 https://github.com/Tonejs/Tone.js/issues/1034
 
+### youtube to mp3
+https://ezmp3.cc/v4
 
 ### load and play mid
 https://github.com/cifkao/html-midi-player

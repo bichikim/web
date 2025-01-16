@@ -1,9 +1,12 @@
-import {splitProps, useContext} from 'solid-js'
+import {createSignal, JSX, splitProps, useContext} from 'solid-js'
 import {HRealButton, HRealButtonProps} from 'src/components/real-button/HRealButton'
 import {KeyContext} from './key-context'
 import {PianoContext} from './piano-context'
+import {SKeyEffect} from './SKeyEffect'
+import {cx} from 'class-variance-authority'
 
 export interface HKeyProps extends HRealButtonProps {
+  effectClass?: string
   key?: string | number
   name?: string
 }
@@ -48,7 +51,14 @@ export const HKey = (props: HKeyProps) => {
       disabled={disabled()}
       title={`${innerProps.name} key ${key}`}
     >
-      {props.children}
+      <SKeyEffect
+        class={cx(
+          'absolute top--20px left-0 w-full h-full pointer-events-none',
+          props.effectClass,
+        )}
+      >
+        {props.children}
+      </SKeyEffect>
     </HRealButton>
   )
 }

@@ -197,7 +197,6 @@ export const useGlobalTouchEmitter = (options: UseGlobalTouchEmitterOptions = {}
     }
     // emitAllDragIds({ids, point, state: 'start'})
   })
-
   useEvent(getWindow, 'pointerup', (event: PointerEvent) => {
     // skip touch down
     if (event.pointerType === 'touch') {
@@ -209,7 +208,6 @@ export const useGlobalTouchEmitter = (options: UseGlobalTouchEmitterOptions = {}
     emitAllIds(savedDownIds, false)
     savedDownIds.clear()
   })
-
   useEvent(getWindow, 'pointermove', (event: PointerEvent) => {
     if (event.pointerType === 'touch' || !mouseDown) {
       return
@@ -235,7 +233,6 @@ export const useGlobalTouchEmitter = (options: UseGlobalTouchEmitterOptions = {}
     emitAllIds(downIds, true)
     emitAllIds(upIds, false)
   })
-
   useEvent(getWindow, 'touchstart', (event) => {
     const {touches} = event
     const touchIds = getTouchedIds(touches, takeFirst)
