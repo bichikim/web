@@ -23,7 +23,7 @@ export const SPiano = (props: SPianoProps) => {
         class={`relative h-486px relative visible min-w-max ${props.class ?? ''}`}
       >
         <SPianoFlatSet class="inline-flex relative w-max h-[calc(100%-10px)]">
-          <SPianoFlatKey class="w-80px h-full bg-#f7f7f7" effectClass="from-purple-500" />
+          <SPianoFlatKey class="w-80px h-full bg-#f7f7f7" effectClass="from-indigo-500" />
         </SPianoFlatSet>
         <SPianoSharpSet
           emptyChildren={<SPianoSharpEmpty class="w-50px mr-30px" />}
