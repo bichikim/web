@@ -1,5 +1,7 @@
 import {
+  Accessor,
   Component,
+  createContext,
   createEffect,
   createMemo,
   createUniqueId,
@@ -8,10 +10,16 @@ import {
   splitProps,
 } from 'solid-js'
 import {ELEMENT_IDENTIFIER_GLOBAL_TOUCH, useGlobalDown} from './use-global-touch'
+import {DownEventPayload} from './types'
 
 export interface HRealButtonAsProps {
   isDown: boolean
 }
+
+export const KeyDownContext = createContext<Accessor<DownEventPayload>>(() => ({
+  down: false,
+  renderOnly: false,
+}))
 
 export interface HRealButtonProps extends ParentProps {
   /**
@@ -44,7 +52,7 @@ export const HRealButton = (props: HRealButtonProps) => {
     'id',
   ])
   const id = createUniqueId()
-  // eslint-disable-next-line solid/reactivity
+
   const targetId = `${innerProps.id ?? id}`
   const isDown = useGlobalDown(targetId)
   let mounted = false
@@ -76,12 +84,14 @@ export const HRealButton = (props: HRealButtonProps) => {
   })
 
   return (
-    <button
-      {...restProps}
-      {...attrs()}
-      on:pointerup={{capture: true, handleEvent: (event) => event.preventDefault()}}
-    >
-      {props.children}
-    </button>
+    <KeyDownContext.Provider value={isDown}>
+      <button
+        {...restProps}
+        {...attrs()}
+        on:pointerup={{capture: true, handleEvent: (event) => event.preventDefault()}}
+      >
+        {props.children}
+      </button>
+    </KeyDownContext.Provider>
   )
 }

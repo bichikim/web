@@ -30,7 +30,9 @@ export type SPianoFlatKeyProps = HKeyProps
 
 export const SPianoFlatKey = (props: SPianoFlatKeyProps) => {
   return (
-    <HKey {...props} class={cx('key-piano-flat touch-none', props.class)} name="flat" />
+    <HKey {...props} class={cx('key-piano-flat touch-none', props.class)} name="flat">
+      {props.children}
+    </HKey>
   )
 }
 

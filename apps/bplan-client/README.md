@@ -20,6 +20,11 @@ https://ai-midi.com/
 https://github.com/HemantKArya/Melodfy?tab=readme-ov-file
 https://tuneonmusic.com/music-tools/midi-converter/
 
+## piano audio to midi
+https://github.com/bytedance/GiantMIDI-Piano
+https://github.com/asigalov61/piano_transcription_inference
+https://www.youtube.com/watch?v=d1gnen15opI
+
 ### instrument
 https://github.com/t-hamano/piano-block
 https://tonejs.github.io/examples/sampler
@@ -28,17 +33,22 @@ https://github.com/nbrosowsky/tonejs-instruments
 ### instrument velocity
 https://github.com/Tonejs/Tone.js/issues/1034
 
+### youtube to mp3
+https://ezmp3.cc/v4
 
 ### load and play mid
 https://github.com/cifkao/html-midi-player
 https://github.com/surikov/webaudiofont
 https://tonejs.github.io/Midi/
 https://tonejs.github.io/Midi/
+https://github.com/djipco/webmidi
 
-### local llm 
+### local llm or ai
 https://github.com/abi/secret-llama 구현체
 https://github.com/mlc-ai/web-llm
 https://llm.mlc.ai/docs/deploy/javascript.html 
+https://www.npmjs.com/package/@picovoice/picollm-web
+https://github.com/microsoft/onnxjs/tree/master/examples/browser/resnet50
 
 ### Source
 https://archive.org/details/SalamanderGrandPianoV3
@@ -75,6 +85,9 @@ https://www.mapianist.com/sheet/121897
 
 ## ai player
 https://magenta.tensorflow.org/get-started/#magenta-js
+
+## ai good to view
+https://vgzep.csb.app/
 
 ## kwnown issue
 
