@@ -29,3 +29,4 @@ gitignore
 Thumbs.db
 
 
+vite.config.timestamp_*
