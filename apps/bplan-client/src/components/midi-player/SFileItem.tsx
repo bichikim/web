@@ -5,11 +5,13 @@ import {PlayOptions} from 'src/use/instruments'
 import {HDragExecute} from './HDragExecute'
 import {SProgress} from './SProgress'
 import {STypeIcon} from './STypeIcon'
+import type {Header} from '@tonejs/midi'
 
 export interface MusicInfo extends PlayOptions {
   dragEndSize?: number
   ext?: string
   generated?: boolean
+  header?: Header
   inProgress?: boolean
   name: string
   playing?: boolean

@@ -81,7 +81,10 @@ export const SSetting = (props: SSettingProps) => {
         value={innerProps.settingData?.keepPlayList}
         onValueChange={handleSettingKeepPlayList}
       />
-      <div class="flex justify-end w-full">
+      <div class="flex justify-end w-full gap-2">
+        <span class="text-7 text-gray-500 flex-grow-1 pt-3 leading-6">
+          The world goes round with LOVE.
+        </span>
         <SPlayerButton class="min-w-11 min-h-9 bg-gray-100" onClick={handleClose}>
           <span class="i-tabler:x text-8 inline-block" />
         </SPlayerButton>

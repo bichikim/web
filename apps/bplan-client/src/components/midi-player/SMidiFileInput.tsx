@@ -48,11 +48,12 @@ export const SMidiFileInput = (props: HMidiFileInputProps) => {
     const samples: MusicInfo[] = midis
       .map((midiFile, index): MusicInfo | null => {
         const {name, midi} = midiFile
+        const {header} = midi
         const midiData: SampleStart[][] = midi.tracks
           .map((track) => {
             const {notes, instrument: {family} = {}} = track
 
-            if (!notes || family !== 'piano') {
+            if (!notes) {
               return null
             }
 
@@ -87,6 +88,7 @@ export const SMidiFileInput = (props: HMidiFileInputProps) => {
 
         return {
           ext: 'midi',
+          header,
           id: `${name}-${index}`,
           midi: midiData.filter(Boolean) as SampleStart[][],
           name: name.replace(/\.mid$/u, ''),
