@@ -1,13 +1,17 @@
-import {createAsync, query, useParams} from '@solidjs/router'
-// import {createResource} from 'solid-js'
+import {createResource} from 'solid-js'
+import {MusicInfo} from 'src/components/midi-player'
 import {default as HomePage} from 'src/routes/(main-layout)/(home)'
 
 const getSelfUrl = () => {
   return import.meta.env.VITE_API_URL ?? 'http://localhost:3000'
 }
 
-const getPreset = query(async (id?: string) => {
-  'use server'
+interface Data {
+  musics: MusicInfo[]
+  title: string
+}
+const getPreset = async (id?: string): Promise<Data | undefined> => {
+  // 'use server'
 
   if (!id) {
     return
@@ -20,11 +24,14 @@ const getPreset = query(async (id?: string) => {
 
     return {musics: [], title: 'Unknown'}
   })
-}, 'preset')
+}
 
 export default function PresetPage() {
-  const params = useParams()
-  const preset = createAsync(() => getPreset(params.id))
+  // const params = useParams()
+  // solidjs/router query send empty page time to time
+  // do not use createAsync because it create a template and it does not work
+  // createResource also make the template and it does not work
+  const [preset] = createResource(() => getPreset())
   // const preset = () => ({musics: [], title: 'Unknown'})
 
   return <HomePage presetTitle={preset()?.title} initMusics={preset()?.musics} />
