@@ -110,7 +110,7 @@ export default defineConfig({
     ],
     'key-piano-flat': [
       'block b-solid b-#ccc rd-t-0 inline-flex flex-shrink-0 overflow-hidden b-b-2px',
-      'p-0 relative rd-b-3px b-1px shadow-flat-up data-[state="down"]:shadow-flat-down b-b-#ddd',
+      'p-0 relative rd-b-3px b-l-1px b-r-1px b-t-0 shadow-flat-up data-[state="down"]:shadow-flat-down b-b-#ddd',
       'data-[state="down"]-shadow-[0_2px_2px_rgba(0,0,0,0.4)] data-[state="down"]:scale-x-100',
       'data-[state="down"]:scale-y-99 data-[state="down"]:origin-top data-[state="down"]:b-b-1px',
       'data-[state="down"]:after:content-[""] data-[state="down"]:after:bg-black data-[state="down"]:after:h-full',

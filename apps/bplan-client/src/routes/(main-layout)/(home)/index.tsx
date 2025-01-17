@@ -23,9 +23,10 @@ export default function HomePage(props: HomePageProps) {
   const [splendidGrandPiano, splendidGrandPianoController] = createSplendidGrandPiano({
     onEmitInstrument: emitAllIds,
   })
-  const [settingData, setSettingData] = useCookie('coong__piano-setting', {
+  const [settingData, setSettingData] = useCookie<SettingData>('coong__piano-setting', {
     keepPlayList: true,
     pianoSize: 100,
+    showKeyName: false,
   })
   const initMusics = untrack(() => props.initMusics)
   const [musics, setMusics, updateActive] = useStorage<MusicInfo[]>(
@@ -62,12 +63,13 @@ export default function HomePage(props: HomePageProps) {
       <main class="relative h-full overflow-y-hidden pt-0 px-2 flex flex-col overflow-x-auto inline-block">
         <SScale
           class="h-full w-max origin-top-left"
-          size={settingData().pianoSize / HUNDRED}
+          size={(settingData().pianoSize ?? HUNDRED) / HUNDRED}
         >
           <SPiano
             ref={setPianoElement}
             onDown={splendidGrandPianoController.down}
             onUp={splendidGrandPianoController.up}
+            showKeyName={settingData().showKeyName}
           />
         </SScale>
       </main>
