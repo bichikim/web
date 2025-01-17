@@ -20,8 +20,13 @@ const flatSet = flatten(
       {key: 10, name: 'F'},
       {key: 12, name: 'G'},
     ])
-    .map((item, index) => {
-      return item.map(({key, name}) => ({key: keyCount * index + key - keyOffset, name}))
+    .map((item, setIndex) => {
+      return item.map(({key, name}) => {
+        const _key = keyCount * setIndex + key - keyOffset
+        const setName = `${name} ${setIndex - 1}`
+
+        return {key: _key, name: setName}
+      })
     }),
 )
 const lastDeleteCount = 4

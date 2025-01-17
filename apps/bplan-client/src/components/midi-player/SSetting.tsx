@@ -8,6 +8,7 @@ import {HUNDRED} from '@winter-love/utils'
 export interface SettingData {
   keepPlayList?: boolean
   pianoSize?: number
+  showKeyName?: boolean
 }
 
 export interface SSettingProps extends JSX.HTMLAttributes<HTMLDivElement> {
@@ -54,15 +55,25 @@ export const SSetting = (props: SSettingProps) => {
     handleSettingData({...innerProps.settingData, keepPlayList: value})
   }
 
+  const handleSettingShowKeyName = (value: boolean) => {
+    handleSettingData({...innerProps.settingData, showKeyName: value})
+  }
+
   return (
     <div
       {...restProps}
       class={cx(
-        'bg-white rd-2 p-2 box-border flex flex-col justify-end',
+        'flex flex-col gap-2 bg-white rd-2 p-2 box-border flex flex-col justify-end',
         innerProps.class,
       )}
     >
-      <SSettingItem label="reset PWA" type="button" onClick={unregisterServiceWorker} />
+      <SSettingItem
+        label="Show key name"
+        type="switch"
+        value={innerProps.settingData?.showKeyName}
+        onValueChange={handleSettingShowKeyName}
+      />
+      <SSettingItem label="Reset PWA" type="button" onClick={unregisterServiceWorker} />
       <SSettingItem
         label="Piano Size"
         type="slider"
@@ -82,7 +93,7 @@ export const SSetting = (props: SSettingProps) => {
         onValueChange={handleSettingKeepPlayList}
       />
       <div class="flex justify-end w-full gap-2">
-        <span class="text-7 text-gray-500 flex-grow-1 pt-3 leading-6">
+        <span class="text-5 md:text-7 text-gray-500 flex-grow-1 pt-3 leading-6">
           The world goes round with LOVE.
         </span>
         <SPlayerButton class="min-w-11 min-h-9 bg-gray-100" onClick={handleClose}>

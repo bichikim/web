@@ -36,6 +36,9 @@ https://github.com/Tonejs/Tone.js/issues/1034
 ### youtube to mp3
 https://ezmp3.cc/v4
 
+### midi  format
+https://www.audiolabs-erlangen.de/resources/MIR/FMP/C1/C1S2_MIDI.html
+
 ### load and play mid
 https://github.com/cifkao/html-midi-player
 https://github.com/surikov/webaudiofont
