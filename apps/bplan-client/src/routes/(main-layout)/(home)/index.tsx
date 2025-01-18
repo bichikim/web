@@ -1,10 +1,9 @@
 import {Meta, Title} from '@solidjs/meta'
-import {createEffect, createMemo, createSignal, untrack} from 'solid-js'
+import {createEffect, createMemo, createSignal, untrack, useContext} from 'solid-js'
 import {SPiano} from 'src/components/instruments'
 import {SettingData, SHiddenPlayer} from 'src/components/midi-player'
 import {MusicInfo} from 'src/components/midi-player/SFileItem'
-import {emitAllIds} from 'src/components/real-button/use-global-touch'
-import {createSplendidGrandPiano} from 'src/use/instruments'
+import {SplendidGrandPianoContext} from 'src/use/instruments'
 import {useStorage} from '@winter-love/solid-use'
 import {SScale} from 'src/components/scale'
 import {HUNDRED} from '@winter-love/utils'
@@ -20,9 +19,9 @@ const pianoSize = 7520
 export default function HomePage(props: HomePageProps) {
   const [pianoElement, setPianoElement] = createSignal<HTMLElement | null>(null)
   const minPianoSize = useDetectMinScale(pianoElement, pianoSize)
-  const [splendidGrandPiano, splendidGrandPianoController] = createSplendidGrandPiano({
-    onEmitInstrument: emitAllIds,
-  })
+  const [splendidGrandPiano, splendidGrandPianoController] = useContext(
+    SplendidGrandPianoContext,
+  )
   const [settingData, setSettingData] = useCookie<SettingData>('coong__piano-setting', {
     keepPlayList: true,
     pianoSize: 100,

@@ -107,9 +107,11 @@ export const SMidiFileInput = (props: HMidiFileInputProps) => {
   return (
     <div class={cx(rootStyle, innerProps.class)}>
       <label class="inline-flex text-inherit" for={id}>
-        <span class="text-nowrap md:text-6 text-4 pt-1">Click or Drop </span>
+        <span class="text-nowrap md:text-6 text-4 md:pt-.5 pt-1.5">Click or Drop </span>
         <span class="block i-tabler:file-plus text-6 px-1 pt-2" />
-        <span class="text-nowrap md:inline hidden md:text-6 text-4 pt-1">Your files</span>
+        <span class="text-nowrap md:inline hidden md:text-6 text-4 md:pt-.5">
+          Your files
+        </span>
       </label>
 
       {props.children}

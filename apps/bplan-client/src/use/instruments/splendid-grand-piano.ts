@@ -5,7 +5,14 @@ import {
   SplendidGrandPiano,
   type SplendidGrandPianoConfig,
 } from 'smplr'
-import {Accessor, createEffect, createMemo, createSignal, onCleanup} from 'solid-js'
+import {
+  Accessor,
+  createContext,
+  createEffect,
+  createMemo,
+  createSignal,
+  onCleanup,
+} from 'solid-js'
 import {getAudioContext} from 'src/use/instruments/prepare-audio-context'
 import {createEmitter, EmitterListener} from './emiter'
 
@@ -67,10 +74,15 @@ interface StartOptions {
   isUserStart?: boolean
 }
 
+export type SplendidGrandPianoContextProps = [
+  Accessor<SplendidGrandPianoState>,
+  SplendidGrandPianoController,
+]
+
 // eslint-disable-next-line max-lines-per-function
 export const createSplendidGrandPiano = (
   options: Omit<SplendidGrandPianoOptions, 'onEnded' | 'onStart'> = {},
-): [Accessor<SplendidGrandPianoState>, SplendidGrandPianoController] => {
+): SplendidGrandPianoContextProps => {
   const {onEmitInstrument} = options
   const [state, setState] = createSignal<SplendidGrandPianoState>({
     leftTime: 0,
@@ -178,7 +190,6 @@ export const createSplendidGrandPiano = (
 
     return isPlaying()
   })
-
   createEffect(() => {
     const window = getWindow()
 
@@ -205,7 +216,6 @@ export const createSplendidGrandPiano = (
         storage,
       })
       _audioContext = audioContext
-
       splendidGrandPiano.load.then(() => {
         if (_cleanup) {
           return
@@ -220,14 +230,12 @@ export const createSplendidGrandPiano = (
     }
 
     prepare(getAudioContext())
-
     onCleanup(() => {
       splendidGrandPiano?.stop()
       _audioContext?.removeEventListener('statechange', handleStateChange)
       _splendidGrandPiano = undefined
     })
   })
-
   onCleanup(() => {
     _cleanup = true
   })
@@ -398,5 +406,43 @@ export const createSplendidGrandPiano = (
 
   return [state, controller]
 }
+
+export const SplendidGrandPianoContext = createContext<SplendidGrandPianoContextProps>([
+  () =>
+    ({
+      leftTime: 0,
+      loaded: false,
+      playingId: '',
+      startedAt: 0,
+      suspended: false,
+      totalDuration: 0,
+    }) satisfies SplendidGrandPianoState,
+  {
+    addEventListener: () => {
+      //
+    },
+    // eslint-disable-next-line unicorn/consistent-function-scoping
+    down: () => () => null,
+    play: () => Promise.resolve(),
+    removeEventListener: () => {
+      //
+    },
+    resume: () => {
+      //
+    },
+    seek: () => {
+      //
+    },
+    stop: () => {
+      //
+    },
+    suspend: () => {
+      //
+    },
+    up: () => {
+      //
+    },
+  },
+])
 
 export {type SplendidGrandPiano} from 'smplr'
