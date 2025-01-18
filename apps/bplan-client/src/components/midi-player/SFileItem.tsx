@@ -148,10 +148,10 @@ export const SFileItem = (props: SFileItemProps) => {
       </span>
       <Show
         when={innerProps.inProgress}
-        fallback={<span class="w-5 h-5 flex-shrink-0 i-tabler:piano" />}
+        fallback={<span class="w-5 h-5 c-black flex-shrink-0 i-tabler:piano" />}
       >
         <span class="scale-140 inline-flex origin-center flex-shrink-0">
-          <span class={cx('inline-block i-tabler:loader-2 text-black', 'animate-spin')} />
+          <span class={cx('inline-block i-tabler:loader-2 c-black', 'animate-spin')} />
         </span>
       </Show>
       <Show when={innerProps.ext && innerProps.ext !== 'midi' && !innerProps.inProgress}>
