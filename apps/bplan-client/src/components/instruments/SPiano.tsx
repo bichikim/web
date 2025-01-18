@@ -16,6 +16,8 @@ export type SPianoProps = SPianoBodyProps &
     showKeyName?: boolean
   }
 
+export const pianoSize = 7520
+
 export const SPiano = (props: SPianoProps) => {
   const [innerProps, restProps] = splitProps(props, [
     'onDown',

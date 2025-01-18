@@ -35,5 +35,5 @@ export default function PresetPage() {
   const [preset] = createResource(() => getPreset(params.id))
   // const preset = () => ({musics: [], title: 'Unknown'})
 
-  return <HomePage presetTitle={preset()?.title} initMusics={preset()?.musics} />
+  return <HomePage presetTitle={preset()?.title} />
 }

@@ -1,5 +1,5 @@
 import {cx} from 'class-variance-authority'
-import {JSX, splitProps} from 'solid-js'
+import {Accessor, createContext, JSX, splitProps} from 'solid-js'
 import {getRegistrations} from 'src/utils/service-worker'
 import {SPlayerButton} from './SPlayerButton'
 import {SSettingItem} from './SSettingItem'
@@ -10,6 +10,12 @@ export interface SettingData {
   pianoSize?: number
   showKeyName?: boolean
 }
+
+export const SettingContext = createContext<Accessor<SettingData>>(() => ({
+  keepPlayList: true,
+  pianoSize: 100,
+  showKeyName: false,
+}))
 
 export interface SSettingProps extends JSX.HTMLAttributes<HTMLDivElement> {
   onClose?: () => void

@@ -15,7 +15,7 @@ import {
 } from 'solid-js'
 import {getAudioContext} from 'src/use/instruments/prepare-audio-context'
 import {createEmitter, EmitterListener} from './emiter'
-
+const UPDATE_LEFT_TIME_INTERVAL = 250
 export type SampleStart = Parameters<DrumMachine['start']>[0]
 
 export interface PlayOptions {
@@ -175,17 +175,17 @@ export const createSplendidGrandPiano = (
         }
       })
 
-      if (isPlaying() && !isEnd) {
-        cleanupFlag = requestAnimationFrame(updateLeftTime)
+      if (!isPlaying() || isEnd) {
+        clearInterval(cleanupFlag)
       }
     }
 
     if (isPlaying()) {
-      cleanupFlag = requestAnimationFrame(updateLeftTime)
+      cleanupFlag = setInterval(updateLeftTime, UPDATE_LEFT_TIME_INTERVAL)
     }
 
     onCleanup(() => {
-      cancelAnimationFrame(cleanupFlag)
+      clearTimeout(cleanupFlag)
     })
 
     return isPlaying()
