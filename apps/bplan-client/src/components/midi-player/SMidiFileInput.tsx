@@ -53,7 +53,7 @@ export const SMidiFileInput = (props: HMidiFileInputProps) => {
           .map((track) => {
             const {notes, instrument: {family} = {}} = track
 
-            if (!notes) {
+            if (!notes || family !== 'piano') {
               return null
             }
 
