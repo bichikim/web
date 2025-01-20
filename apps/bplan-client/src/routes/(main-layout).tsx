@@ -1,6 +1,6 @@
 import {RouteSectionProps, useSearchParams} from '@solidjs/router'
 import {useStorage} from '@winter-love/solid-use'
-import {createEffect, createResource} from 'solid-js'
+import {createMemo, createResource} from 'solid-js'
 import {
   MusicInfo,
   SettingContext,
@@ -45,17 +45,20 @@ export default function MainLayout(props: RouteSectionProps) {
   })
   const [searchParams] = useSearchParams<{preset?: string}>()
   const [preset] = createResource(() => getPreset(searchParams.preset))
+
   const [settingData, setSettingData] = useCookie<SettingData>('coong__piano-setting', {
     keepPlayList: true,
     pianoSize: 100,
     showKeyName: false,
   })
-  const [musics, setMusics, updateActive] = useStorage<MusicInfo[]>(
+  const isActiveStore = createMemo(() => Boolean(settingData().keepPlayList))
+  const [musics, setMusics] = useStorage<MusicInfo[]>(
     'local',
     'coong:piano-musics-default',
-    [],
     {
+      active: isActiveStore,
       enforceValue: preset()?.musics,
+      initValue: [],
       mounted: true,
     },
   )
@@ -65,10 +68,6 @@ export default function MainLayout(props: RouteSectionProps) {
   const handleMusicsChange = (musics: MusicInfo[]) => {
     setMusics(musics)
   }
-
-  createEffect(() => {
-    updateActive(Boolean(settingData().keepPlayList))
-  })
 
   return (
     <SettingContext.Provider value={settingData}>

@@ -2,12 +2,12 @@ import {computePosition, FloatingElement, ReferenceElement} from '@floating-ui/d
 import {Accessor, createEffect, createMemo, createSignal, onCleanup} from 'solid-js'
 import {FloatingOptions, FloatingReturn} from 'src/floating/types'
 import {resolveAccessor} from 'src/resolve-accessor'
-import {MayBeAccessor} from 'src/types'
+import {MaybeAccessor} from 'src/types'
 
 export const useFloating = <T extends ReferenceElement = ReferenceElement>(
-  reference: MayBeAccessor<T | null>,
-  floating: MayBeAccessor<FloatingElement | null>,
-  options: MayBeAccessor<FloatingOptions<T>>,
+  reference: MaybeAccessor<T | null>,
+  floating: MaybeAccessor<FloatingElement | null>,
+  options: MaybeAccessor<FloatingOptions<T>>,
 ): Accessor<FloatingReturn> => {
   const optionsAccessor = resolveAccessor(options)
   const referenceAccessor = resolveAccessor(reference)

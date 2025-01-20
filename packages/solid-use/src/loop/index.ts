@@ -1,5 +1,5 @@
 import {resolveAccessor} from 'src/resolve-accessor'
-import {MayBeAccessor} from 'src/types'
+import {MaybeAccessor} from 'src/types'
 import {onCleanup} from 'solid-js'
 
 export interface LoopSource<Options extends Record<string, any>> {
@@ -15,7 +15,7 @@ export const createUseLoop = <Options extends Record<string, any>, Args extends 
 ) => {
   return (
     callback: (...args: Args) => void,
-    options: MayBeAccessor<Partial<Options>> = {},
+    options: MaybeAccessor<Partial<Options>> = {},
   ) => {
     const source = creator()
     const resolveOptions = resolveAccessor(options)

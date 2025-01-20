@@ -1,8 +1,13 @@
+import {now} from '@winter-love/lodash'
 import {JSX, splitProps} from 'solid-js'
 
 export interface HButtonProps
-  extends Omit<JSX.ButtonHTMLAttributes<HTMLButtonElement>, 'onClick' | 'onTouchEnd'> {
+  extends Omit<
+    JSX.ButtonHTMLAttributes<HTMLButtonElement>,
+    'onClick' | 'onTouchEnd' | 'onDblClick'
+  > {
   onClick?: JSX.EventHandler<HTMLButtonElement, MouseEvent | TouchEvent>
+  onDoubleClick?: JSX.EventHandler<HTMLButtonElement, MouseEvent | TouchEvent>
   onTouchEnd?: JSX.EventHandler<HTMLButtonElement, TouchEvent>
 }
 
@@ -25,7 +30,13 @@ export interface HButtonProps
  * @prop {JSX.EventHandler<HTMLButtonElement, TouchEvent>} [onTouchEnd] - Event handler for the `touchend` event.
  */
 export const HButton = (props: HButtonProps) => {
-  const [innerProps, restProps] = splitProps(props, ['onClick', 'onTouchEnd'])
+  const doubleClickGap = 200
+  let clickTime = 0
+  const [innerProps, restProps] = splitProps(props, [
+    'onClick',
+    'onTouchEnd',
+    'onDoubleClick',
+  ])
   /**
    * Handles the `click` event for the button component and forwards it to the parent component.
    *
@@ -40,13 +51,32 @@ export const HButton = (props: HButtonProps) => {
     innerProps.onClick?.(event)
   }
 
+  const handleDoubleClick: HButtonProps['onDoubleClick'] = (event) => {
+    innerProps.onDoubleClick?.(event)
+  }
+
   const handleTouchEnd: HButtonProps['onTouchEnd'] = (event) => {
-    innerProps.onClick?.(event)
     innerProps.onTouchEnd?.(event)
+    innerProps.onClick?.(event)
+
+    const newClickTime = now()
+
+    if (newClickTime - clickTime < doubleClickGap) {
+      handleDoubleClick(event)
+
+      return
+    }
+
+    clickTime = newClickTime
   }
 
   return (
-    <button {...restProps} on:click={handleClick} onTouchEnd={handleTouchEnd}>
+    <button
+      {...restProps}
+      onClick={handleClick}
+      onDblClick={handleDoubleClick}
+      onTouchEnd={handleTouchEnd}
+    >
       {props.children}
     </button>
   )

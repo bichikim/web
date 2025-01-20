@@ -25,22 +25,7 @@ export default createHandler(() => (
           <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
           <link rel="mask-icon" href="/favicon.svg" color="#00aba9" />
           <link rel="manifest" href="/manifest.json" />
-          <style type="text/css">
-            {`
-              body {
-                position: relative;
-                overflow: hidden;
-                margin: 0;
-                height:100;
-                height: 100dvh;
-                height: --webkit-fill-available;
-                font-family: "Pretendard Variable", sans-serif;
-              }
-              button {
-                font-family: inherit;
-              }
-            `}
-          </style>
+          <link rel="stylesheet" href="/normalize.css" />
           {assets}
         </head>
         <body>

@@ -64,6 +64,7 @@ export const SSeeker = (props: SSeekerProps) => {
   return (
     <button
       {...restProps}
+      tabIndex="-1"
       class={cx(props.class ?? 'relative', 'cursor-pointer')}
       onClick={handleClick}
       onTouchStart={handleTouchStart}

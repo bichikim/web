@@ -1,5 +1,5 @@
 import {createSignal} from 'solid-js'
-import {MayBeAccessor} from 'src/types'
+import {MaybeAccessor} from 'src/types'
 import {useEvent} from 'src/event'
 import {getWindow} from '@winter-love/utils'
 import {toggleValue} from 'src/toggle-value'
@@ -27,7 +27,7 @@ interface DragPayload {
 }
 
 export const useDrag = (
-  handleElement: MayBeAccessor<HTMLElement | null>,
+  handleElement: MaybeAccessor<HTMLElement | null>,
   callback: (type: DragType, payload: DragPayload) => void,
 ) => {
   const [startPoints, setStartPoints] = createSignal<StartPoints>({

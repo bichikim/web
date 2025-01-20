@@ -1,12 +1,12 @@
 import {Accessor} from 'solid-js'
 import {isAccessor} from 'src/is-accessor'
-import {AccessorsValue, MayBeAccessor, MayBeAccessors} from 'src/types'
+import {AccessorsValue, MaybeAccessor, MaybeAccessors} from 'src/types'
 
-export const resolveAccessor = <T>(value: MayBeAccessor<T>): Accessor<T> => {
+export const resolveAccessor = <T>(value: MaybeAccessor<T>): Accessor<T> => {
   return isAccessor(value) ? value : () => value
 }
 
-export const resolveAccessors = <T extends MayBeAccessors>(
+export const resolveAccessors = <T extends MaybeAccessors>(
   value: T,
 ): Accessor<AccessorsValue<T>> => {
   if (Array.isArray(value)) {

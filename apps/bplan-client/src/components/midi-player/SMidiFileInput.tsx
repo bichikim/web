@@ -1,4 +1,4 @@
-import {createUniqueId, JSX, onCleanup, splitProps} from 'solid-js'
+import {createSignal, createUniqueId, JSX, onCleanup, splitProps} from 'solid-js'
 import {cx} from 'class-variance-authority'
 import type {Midi} from '@tonejs/midi'
 import {MusicInfo} from 'src/components/midi-player/SFileItem'
@@ -23,6 +23,7 @@ const rootStyle = cx(
 export const SMidiFileInput = (props: HMidiFileInputProps) => {
   const id = createUniqueId()
   const [innerProps, restProps] = splitProps(props, ['class', 'onAdd', 'onTouchEnd'])
+  const [inputElement, setInputElement] = createSignal<HTMLInputElement | null>(null)
   let isCleanup = false
   const handleInputFiles = async (files: FileList | null) => {
     if (!files || files.length === 0) {
@@ -100,13 +101,26 @@ export const SMidiFileInput = (props: HMidiFileInputProps) => {
     innerProps.onAdd?.(samples)
   }
 
+  const handleKeyDown = (event: KeyboardEvent) => {
+    const element = inputElement()
+
+    if (event.key === 'Enter' && element) {
+      element.click()
+    }
+  }
+
   onCleanup(() => {
     isCleanup = true
   })
 
   return (
     <div class={cx(rootStyle, innerProps.class)}>
-      <label class="inline-flex text-inherit" for={id}>
+      <label
+        class="inline-flex text-inherit"
+        for={id}
+        tabIndex="0"
+        onKeyDown={handleKeyDown}
+      >
         <span class="text-nowrap md:text-6 text-4 md:pt-.5 pt-1.5">Click or Drop </span>
         <span class="block i-tabler:file-plus text-6 px-1 pt-2" />
         <span class="text-nowrap md:inline hidden md:text-6 text-4 md:pt-.5">
@@ -117,6 +131,8 @@ export const SMidiFileInput = (props: HMidiFileInputProps) => {
       {props.children}
       <input
         {...restProps}
+        ref={setInputElement}
+        tabIndex="-1"
         title=""
         type="file"
         multiple
