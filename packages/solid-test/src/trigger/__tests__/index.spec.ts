@@ -14,4 +14,22 @@ describe('trigger', () => {
     trigger.run()
     expect(callback).toHaveBeenCalled()
   })
+  it('should get changed count', () => {
+    const trigger = createTrigger()
+    const callback = vi.fn()
+
+    expect(trigger.changed).toBe(0)
+    trigger.target = callback
+    expect(trigger.changed).toBe(1)
+    trigger.target = callback
+    expect(trigger.changed).toBe(2)
+  })
+  it('should get target', () => {
+    const trigger = createTrigger()
+    const callback = vi.fn()
+
+    expect(trigger.target).toBeUndefined()
+    trigger.target = callback
+    expect(trigger.target).toBe(callback)
+  })
 })
