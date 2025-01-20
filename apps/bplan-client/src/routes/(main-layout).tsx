@@ -78,7 +78,6 @@ export default function MainLayout(props: RouteSectionProps) {
           {props.children}
           <SHiddenPlayer
             settingData={settingData()}
-            component="aside"
             initMusics={musics()}
             pianoController={splendidGrandPianoController}
             pianoState={splendidGrandPiano()}

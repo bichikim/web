@@ -33,6 +33,9 @@
     "workbox-expiration": "^7.3.0"
   },
   "devDependencies": {
+    "solid-devtools": "0.33.0",
+    "@solid-devtools/transform": "0.10.4",
+    "@solid-devtools/overlay": "0.33.0",
     "@winter-love/vite-lib-config": "workspace:*",
     "@vitejs/plugin-legacy": "6.0.0",
     "@types/js-cookie": "^3.0.6",

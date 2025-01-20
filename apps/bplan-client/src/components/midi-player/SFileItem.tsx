@@ -12,21 +12,34 @@ export interface MusicInfo extends PlayOptions {
   ext?: string
   generated?: boolean
   header?: Header
-  inProgress?: boolean
+  /**
+   * Currently generating AI MIDI
+   */
+  inGeneratingProgress?: boolean
+  /**
+   * Currently suspended
+   */
+  isSuspend?: boolean
   name: string
+  /**
+   * Currently playing target
+   */
   playing?: boolean
   selected?: boolean
 }
 
 export interface SFileItemProps
-  extends Omit<JSX.HTMLAttributes<HTMLButtonElement>, 'onSelect' | 'id'>,
+  extends Omit<JSX.HTMLAttributes<HTMLButtonElement>, 'onSelect' | 'id' | 'onPlay'>,
     MusicInfo {
   dragExecuteSize?: number
   index?: number
   leftTime?: number
   onDelete?: (id: string) => void
   onGenerate?: (id: string) => void
+  onPlay?: (id: string) => void
+  onResume?: () => void
   onSelect?: (id: string) => void
+  onSuspend?: () => void
 }
 
 const rootStyle = cx(
@@ -76,7 +89,8 @@ export const SFileItem = (props: SFileItemProps) => {
     'onSelect',
     'id',
     'midi',
-    'inProgress',
+    'inGeneratingProgress',
+    'isSuspend',
     'selected',
     'generated',
     'ext',
@@ -84,18 +98,31 @@ export const SFileItem = (props: SFileItemProps) => {
     'playing',
     'totalDuration',
     'onDelete',
+    'onPlay',
+    'onResume',
+    'onSuspend',
   ])
 
   const handleSelect = () => {
-    props.onSelect?.(props.id)
+    innerProps.onSelect?.(innerProps.id)
   }
 
   const progress = createMemo(
-    () => ((props.leftTime ?? 0) / (props.totalDuration ?? 1)) * HUNDRED,
+    () => ((innerProps.leftTime ?? 0) / (innerProps.totalDuration ?? 1)) * HUNDRED,
   )
 
-  const handleLeDelete = () => {
-    innerProps.onDelete?.(props.id)
+  const handleDelete = () => {
+    innerProps.onDelete?.(innerProps.id)
+  }
+
+  const handlePlayOrSuspend = () => {
+    if (innerProps.isSuspend && innerProps.playing) {
+      innerProps.onResume?.()
+    } else if (innerProps.playing) {
+      innerProps.onSuspend?.()
+    } else {
+      innerProps.onPlay?.(innerProps.id)
+    }
   }
 
   const showPlayingIcon = createMemo(
@@ -109,7 +136,8 @@ export const SFileItem = (props: SFileItemProps) => {
       class={cx(rootStyle, restProps.class)}
       containerClass="px-4 gap-2"
       onClick={handleSelect}
-      onLeftExecute={handleLeDelete}
+      onDoubleClick={handlePlayOrSuspend}
+      onLeftExecute={handleDelete}
       dragLeftChildren={
         <span class="block w-[calc(100%-0.25rem)] h-full overflow-hidden bg-red p-1 box-border rd-1">
           <span class="block w-full h-full i-tabler:trash bg-white " />
@@ -139,22 +167,26 @@ export const SFileItem = (props: SFileItemProps) => {
         <span
           class={nameStyle({
             ext: Boolean(innerProps.ext),
-            inProgress: Boolean(innerProps.inProgress),
+            inProgress: Boolean(innerProps.inGeneratingProgress),
           })}
         >
           {innerProps.name}
         </span>
-        <STypeIcon name={props.ext} />
+        <STypeIcon name={innerProps.ext} />
       </span>
       <Show
-        when={innerProps.inProgress}
+        when={innerProps.inGeneratingProgress}
         fallback={<span class="w-5 h-5 c-black flex-shrink-0 i-tabler:piano" />}
       >
         <span class="scale-140 inline-flex origin-center flex-shrink-0">
           <span class={cx('inline-block i-tabler:loader-2 c-black', 'animate-spin')} />
         </span>
       </Show>
-      <Show when={innerProps.ext && innerProps.ext !== 'midi' && !innerProps.inProgress}>
+      <Show
+        when={
+          innerProps.ext && innerProps.ext !== 'midi' && !innerProps.inGeneratingProgress
+        }
+      >
         <span class={aiIconStyle({generated: Boolean(innerProps.generated)})}>
           <span class="inline-block i-hugeicons:artificial-intelligence-04" />
         </span>

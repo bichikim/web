@@ -9,6 +9,7 @@ import unoCss from 'unocss/vite'
 import * as nodeFs from 'node:fs'
 import legacy from '@vitejs/plugin-legacy'
 import {targets} from '@winter-love/vite-lib-config'
+import devtools from '@solid-devtools/transform'
 
 const fixNitroFunction = async () => {
   const source =
@@ -82,6 +83,9 @@ export default defineConfig({
     //   minify: false,
     // },
     plugins: [
+      devtools({
+        autoname: true,
+      }),
       //
       unoCss('../../uno.config.ts'),
       createGenerateSwPlugin(),

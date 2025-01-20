@@ -30,7 +30,7 @@ export interface HButtonProps
  * @prop {JSX.EventHandler<HTMLButtonElement, TouchEvent>} [onTouchEnd] - Event handler for the `touchend` event.
  */
 export const HButton = (props: HButtonProps) => {
-  const doubleClickGap = 200
+  const doubleClickGap = 250
   let clickTime = 0
   const [innerProps, restProps] = splitProps(props, [
     'onClick',

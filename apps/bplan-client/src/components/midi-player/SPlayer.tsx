@@ -191,6 +191,19 @@ export const SPlayer = (props: SPlayerProps) => {
 
     return isEnd()
   })
+
+  const isSuspend = createMemo(() => {
+    return Boolean(innerProps.pianoState.suspended)
+  })
+
+  const playingId = createMemo(() => {
+    return innerProps.pianoState.playingId
+  })
+
+  const totalDuration = createMemo(() => {
+    return innerProps.pianoState.totalDuration
+  })
+
   createEffect(() => {
     const musics = innerProps.initMusics ?? []
 
@@ -203,10 +216,10 @@ export const SPlayer = (props: SPlayerProps) => {
     <SPlayerController
       {...restProps}
       repeat={repeat()}
-      totalDuration={innerProps.pianoState.totalDuration}
+      totalDuration={totalDuration()}
       playList={playList()}
-      playingId={innerProps.pianoState.playingId}
-      isSuspend={innerProps.pianoState.suspended}
+      playingId={playingId()}
+      isSuspend={isSuspend()}
       selectedId={selectedId()}
       onSuspend={handleSuspend}
       onStop={handleStop}

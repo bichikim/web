@@ -3,11 +3,18 @@ import {createEffect, createSignal, For, JSX, splitProps} from 'solid-js'
 import {MusicInfo, SFileItem} from './SFileItem'
 
 export interface SFileListProps
-  extends Omit<JSX.HTMLAttributes<HTMLDivElement>, 'onSelect'> {
+  extends Omit<JSX.HTMLAttributes<HTMLDivElement>, 'onSelect' | 'onPlay'> {
+  /**
+   * Currently suspended
+   */
+  isSuspend?: boolean
   leftTime?: number
   list: MusicInfo[]
   onDelete?: (id: string) => void
+  onPlay?: (id: string) => void
+  onResume?: () => void
   onSelect?: (id: string) => void
+  onSuspend?: () => void
   playingId?: string
   selectedId?: string
 }
@@ -45,6 +52,10 @@ export const SFileList = (props: SFileListProps) => {
     'leftTime',
     'playingId',
     'onDelete',
+    'onPlay',
+    'onSuspend',
+    'onResume',
+    'isSuspend',
   ])
   // indicators
   const [scrollIndicators, setScrollIndicators] = createSignal({
@@ -108,9 +119,13 @@ export const SFileList = (props: SFileListProps) => {
               selected={item.selected || item.id === innerProps.selectedId}
               class="w-full"
               leftTime={innerProps.leftTime}
+              isSuspend={innerProps.isSuspend}
               playing={item.id === innerProps.playingId}
               onSelect={handelSelect}
               onDelete={handleDelete}
+              onPlay={innerProps.onPlay}
+              onResume={innerProps.onResume}
+              onSuspend={innerProps.onSuspend}
               dragEndSize={90}
               dragExecuteSize={90}
             />
