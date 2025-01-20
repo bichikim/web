@@ -1,4 +1,4 @@
-import {HFrameContent} from 'src/components/iframe/HFrame'
+import {HFrameContent} from 'src/components/iframe'
 import {RouteSectionProps} from '@solidjs/router'
 import {createMemo} from 'solid-js'
 import {Process} from './_components/Process'

@@ -27,6 +27,11 @@ export interface HDragProps extends JSX.HTMLAttributes<HTMLElement> {
   preventDrag?: boolean
 }
 
+/**
+ * Working in progress
+ * @param props
+ * @returns
+ */
 export const HDrag = (props: HDragProps) => {
   const mergedProps = mergeProps({as: 'div'}, props)
   const [innerProps, restProps] = splitProps(mergedProps, [

@@ -1,5 +1,5 @@
 import {createSignal} from 'solid-js'
-import {HFrame} from 'src/components/iframe/HFrame'
+import {HFrame} from 'src/components/iframe'
 
 export default function IframeTest() {
   const [message, setMessage] = createSignal('')
@@ -10,7 +10,7 @@ export default function IframeTest() {
 
   // eslint-disable-next-line unicorn/consistent-function-scoping
   const handleIFrameMessage = (message: string) => {
-    console.log('child to parent', message)
+    console.info('child to parent', message)
   }
 
   return (

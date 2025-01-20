@@ -119,12 +119,6 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
         >
           <span class={playStyle({isPlaying: isPlayingButton()})} />
         </SPlayerButton>
-        <SRepeatButton
-          class="min-w-11"
-          onChangeRepeat={innerProps.onChangeRepeat}
-          repeat={innerProps.repeat}
-          hasManyItems={innerProps.playList.length > 1}
-        />
         <SPlayerButton
           class="min-w-11 min-h-9 bg-gray-100"
           onClick={innerProps.onStop}
@@ -132,6 +126,12 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
         >
           <span class="block i-tabler:player-stop text-9" />
         </SPlayerButton>
+        <SRepeatButton
+          class="min-w-11"
+          onChangeRepeat={innerProps.onChangeRepeat}
+          repeat={innerProps.repeat}
+          hasManyItems={innerProps.playList.length > 1}
+        />
         <SMidiFileInput class="min-w-11 px-2" onAdd={handleAddPlayItem} />
         <SPlayerButton
           class="min-w-11 min-h-9 bg-gray-100"
