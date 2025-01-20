@@ -1,7 +1,6 @@
 import {monorepoAlias} from '@winter-love/vite-plugin-monorepo-alias'
 import {fileURLToPath, URL} from 'node:url'
 import {defineConfig} from 'vitest/config'
-import vue from '@vitejs/plugin-vue'
 import solid from 'vite-plugin-solid'
 
 const resolvePath = (url: string) => fileURLToPath(new URL(url, import.meta.url))
@@ -11,7 +10,6 @@ export default defineConfig({
     target: 'esnext',
   },
   plugins: [
-    vue(),
     solid() as any,
     monorepoAlias({
       alias: {
