@@ -42,6 +42,7 @@ export const HButton = (props: HButtonProps) => {
     'onTouchEnd',
     'onDoubleClick',
   ])
+
   /**
    * Handles the `click` event for the button component and forwards it to the parent component.
    *
@@ -52,7 +53,6 @@ export const HButton = (props: HButtonProps) => {
     if (event.pointerType === 'touch') {
       return
     }
-
     innerProps.onClick?.(event)
   }
 
@@ -80,7 +80,6 @@ export const HButton = (props: HButtonProps) => {
 
       return
     }
-
     clickTime = newClickTime
   }
 
