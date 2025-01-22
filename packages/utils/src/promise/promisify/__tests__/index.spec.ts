@@ -18,6 +18,7 @@ describe('promisify', () => {
 
     return expect(runner(1)).resolves.toEqual(2)
   })
+
   it('should make a call function to be a returning promise reject function ', () => {
     const callbackRunner = (count: number, callback) => {
       setTimeout(() => {

@@ -2,7 +2,7 @@ import {children, createComputed, JSXElement, on} from 'solid-js'
 import {createStore} from 'solid-js/store'
 import {SLOT_KEY, SlotContext} from 'src/slot/Slot'
 
-export const getSlots = (_children: JSXElement) => {
+export const useSlots = (_children: JSXElement) => {
   const parts = children(() => _children)
   const [slots, setSlots] = createStore<Record<string, JSXElement>>({})
 

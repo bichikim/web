@@ -18,32 +18,33 @@
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "files": [
-    "dist/*"
-  ],
   "bin": {
     "sw": "bin/index.js"
   },
+  "files": [
+    "dist/*"
+  ],
   "scripts": {
     "build": "cross-env NODE_ENV=production vite build",
-    "test": "echo \"Error: no test specified\" && exit 1",
     "check-types": "tsc --noEmit",
     "lint": "eslint src",
-    "start": "node dist/cli.js build -r 'test/assets' -a '**/*' ./node_modules/sw.js"
+    "lint:fix": "eslint src --fix",
+    "start": "node dist/cli.js build -r 'test/assets' -a '**/*' ./node_modules/sw.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
+    "@winter-love/utils": "workspace:*",
     "commander": "^13.0.0",
     "glob": "^11.0.1",
-    "solid-js": "^1.9.3",
-    "@winter-love/utils": "workspace:*"
+    "solid-js": "^1.9.3"
   },
   "devDependencies": {
+    "@babel/preset-env": "^7.26.0",
+    "@rollup/plugin-babel": "^6.0.4",
     "@types/serviceworker": "^0.0.111",
-    "vitest": "*",
+    "@winter-love/vite-lib-config": "workspace:*",
     "vite": "^6.0.7",
     "vite-plugin-dts": "^4.3.0",
-    "@winter-love/vite-lib-config": "workspace:*",
-    "@rollup/plugin-babel": "^6.0.4",
-    "@babel/preset-env": "^7.26.0"
+    "vitest": "*"
   }
 }

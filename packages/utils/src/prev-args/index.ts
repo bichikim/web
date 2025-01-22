@@ -12,6 +12,7 @@ export const createPrevArgs = <Args extends unknown[]>(
 ): PrevArgsFunc<Args> => {
   // should solve type somehow
   let prevArgs: Args = [] as any
+
   const run = (...args: Args) => {
     const result = caller(...args)
 

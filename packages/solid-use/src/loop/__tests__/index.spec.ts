@@ -5,11 +5,13 @@ import {createUseLoop} from '../'
 
 describe('createUseLoop', () => {
   const intervalTrigger = createTrigger()
+
   const fakeSetInterval = vi.fn((callback, _) => {
     intervalTrigger.target = callback
 
     return 0
   })
+
   const fakeClearInterval = vi.fn((_?: number) => {
     intervalTrigger.target = undefined
   })
@@ -37,6 +39,7 @@ describe('createUseLoop', () => {
       }
     })
     const callback = vi.fn()
+
     const {intervalLoop, dispose} = createRoot((dispose) => {
       const intervalLoop = useIntervalLoop(callback)
 

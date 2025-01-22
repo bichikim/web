@@ -32,12 +32,14 @@ export const useWatch = <T extends MaybeAccessors>(
 
   createEffect(() => {
     const valueFromAccessor = valueAccessor()
+
     const value = isArrayValue
       ? valueFromAccessor.map((value: any) => clone(value))
       : clone(valueFromAccessor)
     const cleanUp = callback(value, _prevValue)
 
     _prevValue = value
+
     onCleanup(() => {
       if (typeof cleanUp === 'function') {
         cleanUp(value)

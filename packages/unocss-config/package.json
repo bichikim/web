@@ -8,16 +8,16 @@
     "uno.config.ts"
   ],
   "devDependencies": {
-    "unocss-preset-animations": "^1.1.0",
-    "@unocss/preset-icons": "^65.4.0",
     "@unocss/preset-attributify": "^65.4.0",
+    "@unocss/preset-icons": "^65.4.0",
+    "@unocss/preset-legacy-compat": "^65.4.0",
     "@unocss/preset-mini": "^65.4.0",
     "@unocss/preset-uno": "^65.4.0",
     "@unocss/transformer-compile-class": "^65.4.0",
     "@unocss/transformer-directives": "^65.4.0",
     "@unocss/transformer-variant-group": "^65.4.0",
-    "@unocss/preset-legacy-compat": "^65.4.0",
     "@unocss/vite": "^65.4.0",
-    "unocss": "^65.4.0"
+    "unocss": "^65.4.0",
+    "unocss-preset-animations": "^1.1.0"
   }
 }

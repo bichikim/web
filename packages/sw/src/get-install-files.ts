@@ -6,6 +6,7 @@ export interface GetInstallFilesOptions {
   files: string
   root?: string
 }
+
 // https://www.eliostruyf.com/devhack-caching-data-vscode-extension/
 export const getInstallFiles = async (options: GetInstallFilesOptions) => {
   const {cwd = process.cwd(), files, root = './'} = options

@@ -15,6 +15,7 @@ export const createPlayer = (
   options: PlayerAPiOptions = {},
 ): [Accessor<PlayerState>, Setter<PlayerStateMutable>, PlayerApi] => {
   let player: PlayerLoadApi | undefined
+
   const getState = (videoElement?: HTMLVideoElement | null): PlayerState => {
     if (!videoElement) {
       return {

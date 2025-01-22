@@ -6,12 +6,15 @@ const assetOption = new Option(
 )
 const assetsRootOption = new Option('-r, --assets-root <path>', 'Path to assets root')
 const cwdOptions = new Option('-c, --cwd <path>', 'Path to project root')
+
 const action = async (arg: string, options: GenerateSWOptions) => {
   const {generateSW} = await import('./index')
+
   generateSW(arg, options)
 }
 
 program.name('service worker generator').description('Generate service worker')
+
 program
   .command('build')
   .addOption(assetOption)

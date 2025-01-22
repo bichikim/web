@@ -9,9 +9,11 @@ describe('useDebounce', () => {
   beforeEach(() => {
     timer = useFakeTimers()
   })
+
   afterEach(() => {
     timer.restore()
   })
+
   it('should debounce calling the callback function', () => {
     const options = {leading: true}
     const args = ['hello']
@@ -34,6 +36,7 @@ describe('useDebounce', () => {
     expect(callback).toHaveBeenCalledTimes(2)
     dispose()
   })
+
   it('should cancel debounce with dispose', () => {
     const options = {leading: true}
     const args = ['hello']
@@ -51,6 +54,7 @@ describe('useDebounce', () => {
     timer.tick(100)
     expect(callback).toHaveBeenCalledTimes(1)
   })
+
   it('should cancel debounce', () => {
     const options = {leading: true}
     const args = ['hello']
@@ -68,6 +72,7 @@ describe('useDebounce', () => {
     timer.tick(100)
     expect(callback).toHaveBeenCalledTimes(1)
   })
+
   it('should flush debounce', () => {
     const options = {leading: true}
     const args = ['hello']

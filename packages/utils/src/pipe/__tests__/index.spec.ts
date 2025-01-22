@@ -1,5 +1,6 @@
 import {pipe} from '../'
 import {describe, expect, it} from 'vitest'
+
 describe('pipe', () => {
   it('should call all functions', async () => {
     const result = pipe(

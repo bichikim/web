@@ -8,6 +8,7 @@ describe('split-window-root', () => {
       root: 'C:',
     })
   })
+
   it('should return path array with path ', () => {
     expect(splitWindowRoot('/users/foo/web/')).toEqual({restPath: '/users/foo/web/'})
   })

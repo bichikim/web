@@ -17,6 +17,7 @@ describe('useUpdateElementClasses', () => {
     expect(element.classList.value).toBe('john')
     element.remove()
   })
+
   it('should update classes with element query', () => {
     const element = document.createElement('div')
 

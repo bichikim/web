@@ -1,4 +1,4 @@
-import {ParentProps, ValidComponent} from 'solid-js'
+import {Accessor, ParentProps, ValidComponent} from 'solid-js'
 
 export type ElementStyle = string | Record<string, any>
 
@@ -12,3 +12,5 @@ export interface DynamicProps {
 export interface DynamicParentProps extends ParentProps, DynamicProps {
   __empty__?: never
 }
+
+export type Directive<T = any> = (element: HTMLElement, accessor: Accessor<T>) => void

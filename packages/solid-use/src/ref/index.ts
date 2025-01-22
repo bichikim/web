@@ -20,6 +20,7 @@ export const ref = (element: Element, value: () => Setter<null | Element>) => {
   onCleanup(() => {
     set(null)
   })
+
   onMount(() => {
     set(element)
   })

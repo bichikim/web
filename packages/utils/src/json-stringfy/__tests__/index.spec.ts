@@ -10,6 +10,7 @@ vi.mock('safe-stable-stringify', async () => {
     stringify: vi.fn(module.stringify),
   }
 })
+
 describe('jsonStringify', () => {
   it('should return string', async () => {
     const result = jsonStringify({
@@ -18,6 +19,7 @@ describe('jsonStringify', () => {
 
     expect(result).toBe('{"foo":"foo"}')
   })
+
   it('should return string with circular', async () => {
     const obj = {props: {} as any}
 
@@ -26,6 +28,7 @@ describe('jsonStringify', () => {
 
     expect(result).toBe('{"props":"[Circular]"}')
   })
+
   it('should return empty defaultValue when error occurs', async () => {
     // mock stringify to throw error
     vi.mocked(stringify).mockImplementation(() => {

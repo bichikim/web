@@ -9,6 +9,7 @@ export interface ToQueryRecodeOptions {
 
 export type DecodeQueryKey = (key: string) => string | number | symbol
 export type DecodeQueryValue = (value: string) => any
+
 export const decodeQueryValue = (value: string) => {
   return decodeURIComponent(value)
 }

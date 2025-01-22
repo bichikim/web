@@ -126,6 +126,7 @@ describe('createKeyMatch function', () => {
     }
   })
 })
+
 describe('createSnakeCaseMatch function', () => {
   it('should return a new object with transformed keys', () => {
     const originalObject = {
@@ -148,6 +149,7 @@ describe('createSnakeCaseMatch function', () => {
     expect(transformedObject.fooMember.numberName).toBe('John')
     expect(transformedObject.fooMember.barMember.numberId).toBe(2)
     expect(transformedObject.fooMember.barMember.numberName).toBe('Bar')
+
     assertType<{
       fooAge: number
       fooMember: {

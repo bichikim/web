@@ -12,6 +12,7 @@ export const WSliderBar = (_props: WSliderBarProps) => {
   const [props, restProps] = splitProps(_props, ['as', 'children'])
   const as = createMemo(() => props.as ?? 'div')
   const sliderContext = useSliderContext()
+
   const onClick = (event: MouseEvent) => {
     const {type, containerSize} = sliderContext.value()
 

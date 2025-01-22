@@ -11,14 +11,17 @@ describe('get-workspace-path', () => {
     const [regex] = getWorkspacePath([root01])
 
     expect(regex).toBe(String.raw`^\/Users\/app\/packages/[-._a-zA-Z0-9]*/`)
+
     expect(testPath0.replace(new RegExp(regex, 'u'), '')).toBe(
       'src/headless/form/__stories__/HForm.story.vue',
     )
   })
+
   it('should return root', () => {
     const [regex] = getWorkspacePath(['/Users/app/apps/'])
 
     expect(regex).toBe('^/Users/app/apps/[-._a-zA-Z0-9]*/')
+
     expect(testPath1.replace(new RegExp(regex, 'u'), '')).toBe(
       'src/headless/form/__stories__/HForm.story.vue',
     )

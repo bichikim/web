@@ -12,6 +12,7 @@ describe('once', () => {
     expect(runner).toHaveBeenCalledTimes(1)
   })
 })
+
 describe('once share value example', () => {
   it('should run once ', () => {
     const _once = once(() => {

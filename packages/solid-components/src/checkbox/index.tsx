@@ -57,11 +57,11 @@ export const CheckboxRoot = (props: ToggleRootProps) => {
   const id = createMemo(() => {
     return props.id ?? instanceId
   })
+
   const onToggleChecked = () => {
     if (props.disabled) {
       return
     }
-
     setChecked((value) => !value)
     props.onChange?.(checked())
   }

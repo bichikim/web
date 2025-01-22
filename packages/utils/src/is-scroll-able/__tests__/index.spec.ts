@@ -25,6 +25,7 @@ describe('isScrollAble', () => {
 
     expect(result).toBe(true)
   })
+
   it('should return false with none scroll', () => {
     const {result} = setup('none')
 

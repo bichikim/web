@@ -16,6 +16,7 @@ export const generateSW = async (distribution: string, options: GenerateSWOption
   const {assets, assetsRoot, cwd = process.cwd()} = options
   const swFile = await fs.readFileSync(path.join(libraryRoot, 'sw.mjs'), 'utf8')
   const installFiles = await getInstallFiles({cwd, files: assets, root: assetsRoot})
+
   await fs.promises.writeFile(
     path.join(cwd, distribution),
     swFile.replace(INJECT_TARGET, JSON.stringify(installFiles)),

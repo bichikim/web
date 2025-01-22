@@ -26,6 +26,7 @@ export const useFloating = <T extends ReferenceElement = ReferenceElement>(
     x: 0,
     y: 0,
   })
+
   const update = async () => {
     const {floating, options, reference} = updatePayload()
 

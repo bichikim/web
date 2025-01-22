@@ -95,5 +95,3 @@ export const HButton = (props: HButtonProps) => {
     </button>
   )
 }
-
-export default HButton

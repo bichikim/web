@@ -8,7 +8,7 @@ import {
   splitProps,
   ValidComponent,
 } from 'solid-js'
-// import {Dynamic} from 'solid-js/web'
+import {Dynamic} from 'solid-js/web'
 import {SClose} from 'src/components/midi-player/SClose'
 import {preventGlobalTouchAttrs} from 'src/components/real-button/use-global-touch'
 import {SPlayer, SPlayerProps} from './SPlayer'
@@ -72,6 +72,7 @@ export const SHiddenPlayer = (props: SHiddenPlayerProps) => {
   ])
   const [isShow, setIsShow] = createSignal(false)
   const [surfaceKind, setSurfaceKind] = createSignal<SurfaceKind>('player')
+
   const handleClose = () => {
     setIsShow((prev) => {
       const nextState = !prev
@@ -89,13 +90,14 @@ export const SHiddenPlayer = (props: SHiddenPlayerProps) => {
       defaultProps.pianoState.leftTime < defaultProps.pianoState.totalDuration &&
       !defaultProps.pianoState.suspended,
   )
+
   const handleSurfaceKindChange = (kind: SurfaceKind) => {
     setSurfaceKind(kind)
   }
 
   // Dynamic component has an error with ssr prefetching hydration
   return (
-    <aside class={props.class ?? 'relative'}>
+    <Dynamic component={innerProps.component} class={props.class ?? 'relative'}>
       <SClose
         class="mb-1"
         onClose={handleClose}
@@ -128,6 +130,6 @@ export const SHiddenPlayer = (props: SHiddenPlayerProps) => {
           />
         </Show>
       </section>
-    </aside>
+    </Dynamic>
   )
 }

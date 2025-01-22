@@ -1,6 +1,6 @@
 import {
   createManualMemo,
-  MayBeAccessor,
+  MaybeAccessor,
   resolveAccessor,
   useEvent,
 } from '@winter-love/solid-use'
@@ -12,7 +12,7 @@ import {ScrollState} from './scroll-context'
  * @param element
  */
 export const useScrollState = (
-  element: MayBeAccessor<HTMLElement | null>,
+  element: MaybeAccessor<HTMLElement | null>,
 ): Accessor<ScrollState> => {
   const elementAccessor = resolveAccessor(element)
   const [nativeScrollState, updateNativeScrollState] = createManualMemo(() => {
@@ -57,6 +57,7 @@ export const useScrollState = (
   onMount(() => {
     updateNativeScrollState()
   })
+
   useEvent(elementAccessor, 'scroll', () => {
     updateNativeScrollState()
   })

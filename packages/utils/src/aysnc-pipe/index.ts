@@ -54,6 +54,7 @@ export function asyncPipe<A, R1, R2>(
 export function asyncPipe<A, R1>(
   f1: (arg: A) => MaybePromise<R1>,
 ): (arg: A) => Promise<R1>
+
 export function asyncPipe(...functions: ((...args: unknown[]) => unknown)[]): unknown {
   return async (value: unknown) => {
     return reduce(

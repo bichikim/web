@@ -85,6 +85,7 @@ export const WScrollBar = (_props: WScrollBarProps) => {
       type: props.type,
     }
   })
+
   const onClick = (event: MouseEvent) => {
     const type = props.type ?? 'horizontal'
     const {containerSize, scrollSize} = scrollBarContext()

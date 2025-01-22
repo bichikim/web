@@ -1,5 +1,6 @@
 import {freeze} from '../index'
 import {describe, expect, it} from 'vitest'
+
 describe('freeze', () => {
   it('should return a frozen object', () => {
     const oldEnv = process.env.NODE_ENV
@@ -7,6 +8,7 @@ describe('freeze', () => {
     process.env.NODE_ENV = 'development'
 
     const foo = freeze({foo: 'foo'})
+
     const error = () => {
       ;(foo as any).foo = ''
     }

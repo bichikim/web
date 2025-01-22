@@ -13,6 +13,7 @@ export interface CustomResolverOptions {
   sourceRoot?: string
   workspacePaths?: (string | RegExp)[]
 }
+
 export const createCustomResolver = (options: CustomResolverOptions) => {
   const {
     workspacePaths = [],

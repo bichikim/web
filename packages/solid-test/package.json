@@ -17,18 +17,18 @@
   "files": [
     "dist/*"
   ],
-  "publishConfig": {
-    "access": "public"
-  },
   "scripts": {
     "build": "cross-env NODE_ENV=production vite build",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "lint": "eslint src"
+    "lint": "eslint src",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
     "solid-js": "^1.9.3"
   },
   "devDependencies": {
     "@winter-love/vite-lib-config": "workspace:*"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

@@ -17,15 +17,13 @@
   "files": [
     "dist/*"
   ],
-  "publishConfig": {
-    "access": "public"
-  },
   "scripts": {
     "build": "cross-env NODE_ENV=production vite build",
     "build:Dev": "cross-env NODE_ENV=production vite build --minify false",
-    "test": "echo \"Error: no test specified\" && exit 1",
     "check-types": "tsc --noEmit",
-    "lint": "eslint src"
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
     "@floating-ui/dom": "^1.6.12",
@@ -36,5 +34,8 @@
   },
   "devDependencies": {
     "@winter-love/vite-lib-config": "workspace:*"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

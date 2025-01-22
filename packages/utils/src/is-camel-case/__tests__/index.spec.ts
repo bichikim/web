@@ -9,6 +9,7 @@ describe('isCamelcase', () => {
     expect(isCamelCase('fooB1ar')).toBe(true)
     expect(isCamelCase('foobar')).toBe(true)
   })
+
   it('should return false without camelcase string', () => {
     expect(isCamelCase('FooBar')).toBe(false)
     expect(isCamelCase('foo-bar')).toBe(false)

@@ -17,21 +17,22 @@
   "files": [
     "dist/*"
   ],
-  "publishConfig": {
-    "access": "public"
-  },
   "scripts": {
     "build": "cross-env NODE_ENV=production vite build",
-    "test": "echo \"Error: no test specified\" && exit 1",
     "check-types": "tsc --noEmit",
-    "lint": "eslint src"
+    "lint": "eslint src",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
+    "@winter-love/lodash": "workspace:*",
     "@winter-love/solid-use": "workspace:*",
     "class-variance-authority": "^0.7.1",
     "solid-js": "^1.9.3"
   },
   "devDependencies": {
     "@winter-love/vite-lib-config": "workspace:*"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

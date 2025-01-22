@@ -19,6 +19,7 @@ export const createUseLoop = <Options extends Record<string, any>, Args extends 
   ) => {
     const source = creator()
     const resolveOptions = resolveAccessor(options)
+
     const stop = () => {
       source.stop(callback, resolveOptions())
     }

@@ -28,6 +28,7 @@ describe('getScrollParent', () => {
 
     expect(getScrollParent(child)).toBe(container)
   })
+
   it('should return null none scroll able parent', () => {
     const {childNotScroll} = setup()
 

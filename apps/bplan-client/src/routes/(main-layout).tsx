@@ -19,6 +19,7 @@ interface Data {
   musics: MusicInfo[]
   title: string
 }
+
 const getPreset = async (id?: string): Promise<Data | undefined> => {
   'use server'
 
@@ -62,9 +63,11 @@ export default function MainLayout(props: RouteSectionProps) {
       mounted: true,
     },
   )
+
   const handleSettingDataChange = (data: SettingData) => {
     setSettingData((prev) => ({...prev, ...data}))
   }
+
   const handleMusicsChange = (musics: MusicInfo[]) => {
     setMusics(musics)
   }

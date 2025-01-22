@@ -41,6 +41,7 @@ export const WScrollHandle = (_props: WScrollHandleProps) => {
       [SIZE_VAR]: `${barSize}px`,
     }
   })
+
   const setScroll = (position: number) => {
     const {type} = scrollBar()
 

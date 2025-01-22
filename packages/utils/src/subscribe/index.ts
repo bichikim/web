@@ -16,6 +16,7 @@ export const createSubscribe = <Value extends NotFunction>(
 ): Subscribe<Value> => {
   let _value: Value
   const _poll = new Set<(value: Value) => void>()
+
   const listener = (value: Value) => {
     _value = value
 

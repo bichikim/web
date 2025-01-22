@@ -1,5 +1,6 @@
 import {reverse} from '../'
 import {describe, expect, it} from 'vitest'
+
 describe('reverse', () => {
   it('should reverse an array', () => {
     const target = [1, 2, 3, 4, 5]

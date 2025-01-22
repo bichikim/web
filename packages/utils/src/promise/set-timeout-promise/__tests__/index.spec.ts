@@ -6,6 +6,7 @@ describe('set-timeout-promise', () => {
   it('should return a timeout promise', async () => {
     const clock = useFakeTimers()
     let end = false
+
     setTimeoutPromise(1000).then(() => {
       end = true
     })

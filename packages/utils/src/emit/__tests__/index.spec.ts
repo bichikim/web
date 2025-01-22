@@ -19,6 +19,7 @@ describe('createEmitter', () => {
     expect(start).toHaveBeenCalledTimes(1)
     expect(end).toHaveBeenCalledTimes(1)
   })
+
   it('should call listener', () => {
     const callback = vi.fn()
     const emitter = createEmitter()
@@ -32,6 +33,7 @@ describe('createEmitter', () => {
     emitter.trigger(event)
     expect(callback).toHaveBeenCalledTimes(1)
   })
+
   it('should call async listener', async () => {
     let isWaited = false
     const callback = vi.fn(
@@ -58,6 +60,7 @@ describe('createEmitter', () => {
     await emitter.trigger(event)
     expect(callback).toHaveBeenCalledTimes(1)
   })
+
   it('should call channel listener', () => {
     const callback1 = vi.fn()
     const callback2 = vi.fn()

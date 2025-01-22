@@ -36,6 +36,7 @@ export const WScrollRoot = (_props: WScrollRootProps) => {
       showYBar,
     }
   })
+
   const setScroll = (type: ScrollBarType, position: number) => {
     const element = scrollBodyElement()
 
@@ -48,7 +49,6 @@ export const WScrollRoot = (_props: WScrollRootProps) => {
 
       return
     }
-
     element.scrollTop = position
   }
 
@@ -64,7 +64,6 @@ export const WScrollRoot = (_props: WScrollRootProps) => {
 
       return
     }
-
     element.scrollTop += position
   }
 
