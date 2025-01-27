@@ -148,8 +148,12 @@ export default [
         {blankLine: 'always', next: 'expression', prev: 'const'},
         {blankLine: 'always', next: 'expression', prev: 'let'},
         {blankLine: 'always', next: 'multiline-expression', prev: '*'},
+        {blankLine: 'always', next: 'multiline-block-like', prev: '*'},
         {blankLine: 'always', next: 'function', prev: '*'},
         {blankLine: 'always', next: 'if', prev: '*'},
+        {blankLine: 'always', next: 'expression', prev: 'if'},
+        {blankLine: 'always', next: 'for', prev: '*'},
+        {blankLine: 'always', next: 'expression', prev: 'for'},
       ],
       'format/semi': ['error', 'never'],
       'format/space-before-blocks': [

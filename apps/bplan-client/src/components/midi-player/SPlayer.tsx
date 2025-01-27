@@ -78,12 +78,15 @@ export const SPlayer = (props: SPlayerProps) => {
   const handleStop = async () => {
     innerProps.pianoController?.stop()
   }
+
   const handleResume = () => {
     innerProps.pianoController?.resume()
   }
+
   const handleSuspend = () => {
     innerProps.pianoController?.suspend()
   }
+
   const handleAddPlayItem = (payload: MusicInfo[]) => {
     // first select
     if (playList().length === 0 && payload.length > 0) {
@@ -95,9 +98,11 @@ export const SPlayer = (props: SPlayerProps) => {
     })
     handleMusicsChange()
   }
+
   const handleSelect = (id: string) => {
     setSelectedId(id)
   }
+
   const handlePlay = (id: string) => {
     const info = playList().find((item) => item.id === id)
 
@@ -114,6 +119,7 @@ export const SPlayer = (props: SPlayerProps) => {
 
     innerProps.pianoController?.play(info)
   }
+
   const handleDelete = (id: string) => {
     const _playList = playList()
     const index = _playList.findIndex((item) => item.id === id)
@@ -140,6 +146,7 @@ export const SPlayer = (props: SPlayerProps) => {
     })
     handleMusicsChange()
   }
+
   const handleChangeRepeat = (value: RepeatType) => {
     setRepeat(value)
   }
@@ -148,6 +155,7 @@ export const SPlayer = (props: SPlayerProps) => {
 
     return Boolean(playingId) && totalDuration <= leftTime
   })
+
   const getNextItem = (id: string, repeat: RepeatType) => {
     const _playLoad = playList()
     const index = _playLoad.findIndex((item) => item.id === id)
@@ -165,6 +173,7 @@ export const SPlayer = (props: SPlayerProps) => {
 
     return item
   }
+
   const handleTryRepeat = () => {
     const _repeat = repeat()
 
@@ -180,6 +189,7 @@ export const SPlayer = (props: SPlayerProps) => {
       innerProps.pianoController?.play(nextItem)
     }
   }
+
   const handleSeek = (time: number) => {
     innerProps.pianoController?.seek(time)
   }

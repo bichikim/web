@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-namespace */
-import {Accessor, createEffect, createRenderEffect, createSignal, onMount} from 'solid-js'
+import {Accessor, createRenderEffect} from 'solid-js'
 import {Directive} from 'src/types'
 import {useTargetElement} from 'src/use/target-element'
 

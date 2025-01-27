@@ -53,6 +53,7 @@ export const HButton = (props: HButtonProps) => {
     if (event.pointerType === 'touch') {
       return
     }
+
     innerProps.onClick?.(event)
   }
 
@@ -80,6 +81,7 @@ export const HButton = (props: HButtonProps) => {
 
       return
     }
+
     clickTime = newClickTime
   }
 

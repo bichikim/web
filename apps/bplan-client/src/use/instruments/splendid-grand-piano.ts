@@ -158,6 +158,7 @@ export const createSplendidGrandPiano = (
 
   createEffect(() => {
     let cleanupFlag: any
+
     const updateLeftTime = () => {
       if (!_splendidGrandPiano) {
         return
@@ -190,6 +191,7 @@ export const createSplendidGrandPiano = (
 
     return isPlaying()
   })
+
   createEffect(() => {
     const window = getWindow()
 
@@ -199,6 +201,7 @@ export const createSplendidGrandPiano = (
 
     let splendidGrandPiano: SplendidGrandPiano | undefined
     let _audioContext: AudioContext | undefined
+
     const prepare = (audioContext: AudioContext | void) => {
       if (!audioContext || _cleanup) {
         return
@@ -216,12 +219,14 @@ export const createSplendidGrandPiano = (
         storage,
       })
       _audioContext = audioContext
+
       splendidGrandPiano.load.then(() => {
         if (_cleanup) {
           return
         }
 
         _splendidGrandPiano = splendidGrandPiano
+
         setState((prev) => ({
           ...prev,
           loaded: true,
@@ -230,12 +235,14 @@ export const createSplendidGrandPiano = (
     }
 
     prepare(getAudioContext())
+
     onCleanup(() => {
       splendidGrandPiano?.stop()
       _audioContext?.removeEventListener('statechange', handleStateChange)
       _splendidGrandPiano = undefined
     })
   })
+
   onCleanup(() => {
     _cleanup = true
   })
@@ -306,6 +313,7 @@ export const createSplendidGrandPiano = (
       }
 
       piano.stop()
+
       setState((prev) => ({
         ...prev,
         leftTime: 0,
@@ -331,6 +339,7 @@ export const createSplendidGrandPiano = (
       }
 
       _resume(_suspendedTime)
+
       setState((prev) => ({
         ...prev,
         startedAt: piano.context.currentTime - _suspendedTime,

@@ -41,7 +41,6 @@ export const SRepeatButton = (props: SRepeatButtonProps) => {
         return
       }
 
-      // console.log('no')
       innerProps.onChangeRepeat?.('no')
 
       return
