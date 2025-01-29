@@ -22,7 +22,7 @@ This project uses pnpm for package management and follows a monorepo architectur
 Directory Structure
 /
 ├── apps/                  # Standalone applications
-│   └── bplan-client/      # Client application
+│   └── bplan-client/      # Solid Start SSR Client application
 │
 ├── packages/              # Shared packages
 │   ├── utils/             # TypeScript utilities
