@@ -1,4 +1,4 @@
-import {cva} from 'class-variance-authority'
+import {cva, cx} from 'class-variance-authority'
 import {createMemo, JSX, mergeProps, Show} from 'solid-js'
 import {MusicInfo} from './SFileItem'
 import {SFileList} from './SFileList'
@@ -7,6 +7,7 @@ import {SPlayerButton} from './SPlayerButton'
 import {SRepeatButton} from './SRepeatButton'
 import {RepeatType} from './types'
 import {SSeeker} from './SSeeker'
+import {useLocation} from '@solidjs/router'
 
 export interface SPlayerControllerProps
   extends Omit<JSX.HTMLAttributes<HTMLElement>, 'onPlay' | 'onSelect' | 'onPlaying'> {
@@ -50,6 +51,7 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
     },
     props,
   )
+  const location = useLocation()
   const isSuspend = createMemo(() => {
     return Boolean(innerProps.isSuspend)
   })
@@ -87,6 +89,10 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
       innerProps.onPlay?.(innerProps.selectedId)
     }
   }
+
+  const isPianoPage = createMemo(() => {
+    return location.pathname === '/'
+  })
 
   return (
     <>
@@ -135,10 +141,15 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
         <SMidiFileInput class="min-w-11 px-2" onAdd={handleAddPlayItem} />
         <SPlayerButton
           class="min-w-11 min-h-9 bg-gray-100"
-          onClick={innerProps.onStop}
-          title="get music more"
+          href={isPianoPage() ? '/music' : '/'}
+          title={isPianoPage() ? 'get music more' : 'piano'}
         >
-          <span class="block i-tabler:music-plus text-9" />
+          <span
+            class={cx(
+              'block text-9',
+              isPianoPage() ? 'i-tabler:music-plus' : 'i-tabler:piano',
+            )}
+          />
         </SPlayerButton>
         <SPlayerButton
           class="min-w-11 min-h-9 bg-gray-100"

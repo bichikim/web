@@ -58,7 +58,6 @@ export const HRealButton = (props: HRealButtonProps) => {
   let mounted = false
 
   createEffect(() => {
-    mounted = true
     const downState = isDown()
 
     if (downState.renderOnly) {
@@ -70,6 +69,8 @@ export const HRealButton = (props: HRealButtonProps) => {
     } else if (mounted) {
       innerProps.onUp?.()
     }
+
+    mounted = true
   })
 
   const attrs = createMemo(() => {

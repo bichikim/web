@@ -14,8 +14,9 @@ import {
   onCleanup,
 } from 'solid-js'
 import {getAudioContext} from 'src/use/instruments/prepare-audio-context'
-import {createEmitter, EmitterListener} from './emiter'
-const UPDATE_LEFT_TIME_INTERVAL = 250
+import {createEmitter, EmitterListener} from './emitter'
+import {useIsCleanup} from '@winter-love/solid-use'
+
 export type SampleStart = Parameters<DrumMachine['start']>[0]
 
 export interface PlayOptions {
@@ -31,6 +32,8 @@ export type SplendidGrandPianoOptions = Partial<
 }
 
 export type PianoEvent = 'start' | 'end'
+
+const UPDATE_LEFT_TIME_INTERVAL = 250
 export const PLAY_STARTED_AT_KEY = Symbol('play-started-at')
 export const TARGET_ID_KEY = Symbol('play-started-at')
 export const USER_PLAY_FLAG_KEY = Symbol('user-play')
@@ -52,7 +55,7 @@ export interface SplendidGrandPianoController
       start: SampleStart
     }
   > {
-  down(key: number | string): StopFn
+  down(key: number | string | SampleStart): StopFn
   play(options: PlayOptions, startFrom?: number): Promise<void>
   resume(): void
   seek(time: number): void
@@ -83,6 +86,10 @@ export type SplendidGrandPianoContextProps = [
 export const createSplendidGrandPiano = (
   options: Omit<SplendidGrandPianoOptions, 'onEnded' | 'onStart'> = {},
 ): SplendidGrandPianoContextProps => {
+  let _splendidGrandPiano: SplendidGrandPiano | undefined
+  let _currentMidi: SampleStart[][] = []
+  let _suspendedTime = 0
+
   const {onEmitInstrument} = options
   const [state, setState] = createSignal<SplendidGrandPianoState>({
     leftTime: 0,
@@ -92,10 +99,7 @@ export const createSplendidGrandPiano = (
     suspended: false,
     totalDuration: 0,
   })
-  let _splendidGrandPiano: SplendidGrandPiano | undefined
-  let _cleanup = false
-  let _currentMidi: SampleStart[][] = []
-  let _suspendedTime = 0
+  const isCleanup = useIsCleanup()
   const emitter = createEmitter<
     PianoEvent,
     {
@@ -108,6 +112,7 @@ export const createSplendidGrandPiano = (
     },
     ['start', 'end'],
   )
+
   const isPlaying = createMemo(
     () =>
       state().playingId !== '' &&
@@ -156,6 +161,14 @@ export const createSplendidGrandPiano = (
     }
   }
 
+  /**
+   * The createEffect below tracks and updates playback time.
+   *
+   * - Updates leftTime at UPDATE_LEFT_TIME_INTERVAL intervals when isPlaying() is true
+   * - Calculates current playback time based on startedAt and totalDuration
+   * - Cleans up interval when playback ends or isPlaying() becomes false
+   * - Uses cleanup function to clear interval when component unmounts
+   */
   createEffect(() => {
     let cleanupFlag: any
 
@@ -182,6 +195,7 @@ export const createSplendidGrandPiano = (
     }
 
     if (isPlaying()) {
+      // Using setInterval instead of requestAnimationFrame to keep playback running in background
       cleanupFlag = setInterval(updateLeftTime, UPDATE_LEFT_TIME_INTERVAL)
     }
 
@@ -192,6 +206,13 @@ export const createSplendidGrandPiano = (
     return isPlaying()
   })
 
+  /**
+   * The createEffect below handles piano loading and initialization.
+   *
+   * - Only loads the piano when window is open
+   * - Does nothing when window is not open
+   * - If another component unmounts during piano loading, stops piano and removes event listeners
+   */
   createEffect(() => {
     const window = getWindow()
 
@@ -203,7 +224,7 @@ export const createSplendidGrandPiano = (
     let _audioContext: AudioContext | undefined
 
     const prepare = (audioContext: AudioContext | void) => {
-      if (!audioContext || _cleanup) {
+      if (!audioContext || isCleanup()) {
         return
       }
 
@@ -221,7 +242,7 @@ export const createSplendidGrandPiano = (
       _audioContext = audioContext
 
       splendidGrandPiano.load.then(() => {
-        if (_cleanup) {
+        if (isCleanup()) {
           return
         }
 
@@ -241,10 +262,6 @@ export const createSplendidGrandPiano = (
       _audioContext?.removeEventListener('statechange', handleStateChange)
       _splendidGrandPiano = undefined
     })
-  })
-
-  onCleanup(() => {
-    _cleanup = true
   })
 
   const _start = (payload: SampleStart, options: StartOptions = {}): StopFn => {
@@ -301,8 +318,12 @@ export const createSplendidGrandPiano = (
 
   const controller: SplendidGrandPianoController = {
     ...emitter,
-    down(key: string | number): StopFn {
-      return _start({note: key}, {isUserStart: true})
+    down(key: string | number | SampleStart): StopFn {
+      if (typeof key === 'string' || typeof key === 'number') {
+        return _start({note: key}, {isUserStart: true})
+      }
+
+      return _start(key)
     },
     async play(options: PlayOptions) {
       const piano = _splendidGrandPiano

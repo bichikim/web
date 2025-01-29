@@ -41,6 +41,7 @@ export const HButton = (props: HButtonProps) => {
     'onClick',
     'onTouchEnd',
     'onDoubleClick',
+    'type',
   ])
 
   /**

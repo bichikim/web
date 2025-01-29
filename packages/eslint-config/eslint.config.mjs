@@ -139,8 +139,8 @@ export default [
       'format/padding-line-between-statements': [
         'warn',
         {blankLine: 'never', next: 'expression', prev: '*'},
+        {blankLine: 'never', next: 'import', prev: 'import'},
         {blankLine: 'always', next: 'export', prev: 'import'},
-        {blankLine: 'always', next: 'import', prev: 'export'},
         {blankLine: 'always', next: 'return', prev: '*'},
         {blankLine: 'always', next: 'block-like', prev: '*'},
         {blankLine: 'always', next: 'block', prev: '*'},
@@ -152,6 +152,8 @@ export default [
         {blankLine: 'always', next: 'function', prev: '*'},
         {blankLine: 'always', next: 'if', prev: '*'},
         {blankLine: 'always', next: 'expression', prev: 'if'},
+        {blankLine: 'always', next: 'expression', prev: 'import'},
+        {blankLine: 'always', next: 'expression', prev: 'function'},
         {blankLine: 'always', next: 'for', prev: '*'},
         {blankLine: 'always', next: 'expression', prev: 'for'},
       ],
