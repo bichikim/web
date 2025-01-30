@@ -55,6 +55,7 @@ const createGenerateSwPlugin = (): Plugin => {
 
       const {outDir, root} = _config.router
       const swOutPath = path.join(root, 'public/sw.js')
+
       await generateSW(swOutPath, {
         assets: '_build/assets/**/*',
         assetsRoot: outDir,

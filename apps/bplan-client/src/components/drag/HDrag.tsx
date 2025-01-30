@@ -34,6 +34,7 @@ export interface HDragProps extends JSX.HTMLAttributes<HTMLElement> {
  */
 export const HDrag = (props: HDragProps) => {
   const mergedProps = mergeProps({as: 'div'}, props)
+
   const [innerProps, restProps] = splitProps(mergedProps, [
     'as',
     'onDown',
@@ -47,6 +48,7 @@ export const HDrag = (props: HDragProps) => {
   const dragPoint = useGlobalDragPoint(id)
   const {parentPosition} = useContext(DragContext)
   const [rootElement, setRootElement] = createSignal<null | HTMLElement>(null)
+
   const updateStartPosition = (point: Position) => {
     const rect = rootElement()?.getBoundingClientRect()
     const rootPosition = rect ? {x: rect.left, y: rect.top} : {x: 0, y: 0}

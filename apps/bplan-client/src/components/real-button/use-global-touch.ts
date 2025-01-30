@@ -108,6 +108,7 @@ export const getTouchedIds = (touches: TouchList, takeFirst: boolean = false) =>
   for (let index = 0; index < touchesLength; index += 1) {
     const touch = touches[index]
     const elements = getElementsFromPoint({x: touch.clientX, y: touch.clientY})
+
     const touchedElementIDs = takeFirst
       ? findTouchFirstId(elements)
       : findTouchIds(elements)
@@ -128,6 +129,7 @@ export const getTouchedIdsMap = (touches: TouchList, takeFirst: boolean = false)
     const touch = touches[index]
     const {identifier} = touch
     const elements = getElementsFromPoint({x: touch.clientX, y: touch.clientY})
+
     const touchedElementIDs = takeFirst
       ? findTouchFirstId(elements)
       : findTouchIds(elements)

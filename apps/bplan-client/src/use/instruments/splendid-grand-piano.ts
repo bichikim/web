@@ -91,6 +91,7 @@ export const createSplendidGrandPiano = (
   let _suspendedTime = 0
 
   const {onEmitInstrument} = options
+
   const [state, setState] = createSignal<SplendidGrandPianoState>({
     leftTime: 0,
     loaded: false,
@@ -100,6 +101,7 @@ export const createSplendidGrandPiano = (
     totalDuration: 0,
   })
   const isCleanup = useIsCleanup()
+
   const emitter = createEmitter<
     PianoEvent,
     {

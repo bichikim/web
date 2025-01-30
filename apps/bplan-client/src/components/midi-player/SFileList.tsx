@@ -45,6 +45,7 @@ const rootStyle = cva(
 
 export const SFileList = (props: SFileListProps) => {
   const [element, setElement] = createSignal<HTMLDivElement | null>(null)
+
   const [innerProps, restProps] = splitProps(props, [
     'list',
     'onSelect',
@@ -57,6 +58,7 @@ export const SFileList = (props: SFileListProps) => {
     'onResume',
     'isSuspend',
   ])
+
   // indicators
   const [scrollIndicators, setScrollIndicators] = createSignal({
     bottom: false,

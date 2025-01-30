@@ -20,6 +20,7 @@ export const pianoSize = 7520
 
 export const SPiano = (props: SPianoProps) => {
   const defaultProps = mergeProps({velocity: 0.6}, props)
+
   const [innerProps, bodyProps] = splitProps(defaultProps, [
     'onDown',
     'onUp',

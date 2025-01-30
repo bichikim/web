@@ -15,6 +15,7 @@ export interface HKeyProps extends HRealButtonProps {
 // instrument key
 export const HKey = (props: HKeyProps) => {
   const {onDown: onKeyDown, onUp: onKeyUp, down} = useContext(PianoContext)
+
   const [innerProps, restProps] = splitProps(props, [
     'key',
     'name',

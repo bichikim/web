@@ -16,6 +16,7 @@ const SlotComponent = (props: SlotParentProps) => {
     </div>
   )
 }
+
 const meta = {
   component: SlotComponent,
   title: 'Solid/components/Slot',

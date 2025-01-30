@@ -15,6 +15,7 @@ export const useScrollState = (
   element: MaybeAccessor<HTMLElement | null>,
 ): Accessor<ScrollState> => {
   const elementAccessor = resolveAccessor(element)
+
   const [nativeScrollState, updateNativeScrollState] = createManualMemo(() => {
     const element = elementAccessor()
 
@@ -39,6 +40,7 @@ export const useScrollState = (
       scrollLeft = 0,
       scrollTop = 0,
     } = element
+
     const {top: containerTop = 0, left: containerLeft = 0} =
       element.getBoundingClientRect() ?? {}
 

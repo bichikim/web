@@ -58,6 +58,7 @@ export const SPlayer = (props: SPlayerProps) => {
     },
     props,
   )
+
   const [innerProps, restProps] = splitProps(defaultProps, [
     'pianoController',
     'pianoState',
@@ -65,6 +66,7 @@ export const SPlayer = (props: SPlayerProps) => {
     'initMusics',
     'onMusicsChange',
   ])
+
   const [playList, setPlayList] = createSignal<MusicInfo[]>(
     untrack(() => innerProps.initMusics ?? []),
   )
@@ -150,6 +152,7 @@ export const SPlayer = (props: SPlayerProps) => {
   const handleChangeRepeat = (value: RepeatType) => {
     setRepeat(value)
   }
+
   const isEnd = createMemo(() => {
     const {playingId, totalDuration, leftTime} = defaultProps.pianoState
 

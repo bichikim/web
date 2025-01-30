@@ -51,6 +51,7 @@ export const SMidiFileInput = (props: HMidiFileInputProps) => {
       .map((midiFile, index): MusicInfo | null => {
         const {name, midi} = midiFile
         const {header} = midi
+
         const midiData: SampleStart[][] = midi.tracks
           .map((track) => {
             const {notes, instrument: {family} = {}} = track

@@ -48,6 +48,7 @@ export const useSlider = (
   const [getPercentValue, setPercentValue] = createSync(percentAccessor)
   const [getEndPercentValue, setEndPercentValue] = createSync(endPercentAccessor)
   const [containerElement, setContainerElement] = createSignal<HTMLElement | null>(null)
+
   const sliderValue = createMemo(() => {
     const element = containerElement()
     const type = typeAccessor()

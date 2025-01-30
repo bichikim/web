@@ -22,6 +22,7 @@ const SUB_PROCESS_TARGET_URL = 'sub-process'
 
 export function HFrame(props: HFrameProps) {
   const targetId = untrack(() => props.targetId ?? 'default')
+
   const [innerProps, restProps] = splitProps(props, [
     'onMessage',
     'onLoad',

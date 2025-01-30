@@ -52,9 +52,11 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
     props,
   )
   const location = useLocation()
+
   const isSuspend = createMemo(() => {
     return Boolean(innerProps.isSuspend)
   })
+
   const isPlayingButton = createMemo(() => {
     return (
       !isSuspend() &&
@@ -62,6 +64,7 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
       innerProps.leftTime < innerProps.totalDuration
     )
   })
+
   const isEnd = createMemo(() => {
     return (
       Boolean(innerProps.playingId) && innerProps.totalDuration <= innerProps.leftTime
