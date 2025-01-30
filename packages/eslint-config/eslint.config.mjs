@@ -9,8 +9,6 @@ import sortKeys from 'eslint-plugin-sort-keys-fix'
 import typeSortKeys from 'eslint-plugin-typescript-sort-keys'
 import exportsSort from 'eslint-plugin-sort-export-all'
 import stylisticTs from '@stylistic/eslint-plugin-ts'
-// .js 인븥이면 파일을 못찾는다
-// noinspection JSFileReferences
 import solid from 'eslint-plugin-solid/configs/typescript'
 import * as tsParser from '@typescript-eslint/parser'
 
@@ -149,6 +147,7 @@ export default [
         {blankLine: 'always', next: 'expression', prev: 'let'},
         {blankLine: 'always', next: 'multiline-expression', prev: '*'},
         {blankLine: 'always', next: 'multiline-block-like', prev: '*'},
+        {blankLine: 'always', next: 'multiline-const', prev: '*'},
         {blankLine: 'always', next: 'function', prev: '*'},
         {blankLine: 'always', next: 'if', prev: '*'},
         {blankLine: 'always', next: 'expression', prev: 'if'},
