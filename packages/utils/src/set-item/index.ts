@@ -17,5 +17,6 @@ export const setItem = <T, P = any>(
   if (typeof targetItem !== 'object') {
     return
   }
+
   Reflect.set(targetItem, targetName, value)
 }

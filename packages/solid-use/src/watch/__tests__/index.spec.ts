@@ -107,6 +107,7 @@ describe('watch', () => {
     {immediate: false},
   ])('should watch immediately', () => {
     const callback = vi.fn()
+
     const {dispose, setState} = createRoot((dispose) => {
       const [state, setState] = createSignal('foo')
 

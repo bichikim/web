@@ -25,6 +25,7 @@ export const callbackify = <S>(
         handle(error)
       })
   }
+
   handle(undefined, result)
 
   return result

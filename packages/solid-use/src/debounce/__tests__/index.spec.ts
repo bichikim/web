@@ -18,6 +18,7 @@ describe('useDebounce', () => {
     const options = {leading: true}
     const args = ['hello']
     const callback = vi.fn()
+
     const {debounce, dispose} = createRoot((dispose) => {
       const debounce = useDebounce(callback, 100, options)
 
@@ -41,6 +42,7 @@ describe('useDebounce', () => {
     const options = {leading: true}
     const args = ['hello']
     const callback = vi.fn()
+
     const {debounce, dispose} = createRoot((dispose) => {
       const debounce = useDebounce(callback, 100, options)
 
@@ -59,6 +61,7 @@ describe('useDebounce', () => {
     const options = {leading: true}
     const args = ['hello']
     const callback = vi.fn()
+
     const {debounce} = createRoot((dispose) => {
       const debounce = useDebounce(callback, 100, options)
 
@@ -77,6 +80,7 @@ describe('useDebounce', () => {
     const options = {leading: true}
     const args = ['hello']
     const callback = vi.fn()
+
     const {debounce} = createRoot((dispose) => {
       const debounce = useDebounce(callback, 100, options)
 

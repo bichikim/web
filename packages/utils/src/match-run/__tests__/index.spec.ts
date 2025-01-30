@@ -4,6 +4,7 @@ import {matchRun} from '../'
 describe('matchRun', () => {
   it('should return the result of the matched function', () => {
     const value = 'A'
+
     const matches = {
       A: (v: string) => `Matched A: ${v}`,
       B: (v: string) => `Matched B: ${v}`,
@@ -15,6 +16,7 @@ describe('matchRun', () => {
 
   it('should return the result of the default function if no match is found', () => {
     const value = 'C'
+
     const matches = {
       A: (v: string) => `Matched A: ${v}`,
       B: (v: string) => `Matched B: ${v}`,
@@ -27,6 +29,7 @@ describe('matchRun', () => {
 
   it('should return undefined if no match is found and no default function is provided', () => {
     const value = 'C'
+
     const matches = {
       A: (v: string) => `Matched A: ${v}`,
       B: (v: string) => `Matched B: ${v}`,

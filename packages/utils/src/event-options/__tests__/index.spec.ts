@@ -1,6 +1,7 @@
 import {eventOptions} from '../'
 import {isSupportPassive} from 'src/is-support-passive'
 import {describe, expect, it, vi} from 'vitest'
+
 vi.mock('src/is-support-passive')
 
 const _isSupportPassive = vi.mocked(isSupportPassive)

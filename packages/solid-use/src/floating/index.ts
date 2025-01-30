@@ -12,6 +12,7 @@ export const useFloating = <T extends ReferenceElement = ReferenceElement>(
   const optionsAccessor = resolveAccessor(options)
   const referenceAccessor = resolveAccessor(reference)
   const floatingAccessor = resolveAccessor(floating)
+
   const updatePayload = createMemo(() => {
     return {
       floating: floatingAccessor(),
@@ -19,6 +20,7 @@ export const useFloating = <T extends ReferenceElement = ReferenceElement>(
       reference: referenceAccessor(),
     }
   })
+
   const [position, setPosition] = createSignal({
     middlewareData: {},
     placement: optionsAccessor().placement ?? 'bottom',

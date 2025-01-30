@@ -89,6 +89,7 @@ describe('waitFactory', () => {
       expect(callback).toHaveBeenCalledTimes(1)
       callback.mockClear()
     }
+
     expect(callback).toHaveBeenCalledTimes(0)
     result.execute()
     timer.tick(101)
@@ -102,6 +103,7 @@ describe('waitFactory', () => {
       expect(callback).toHaveBeenCalledTimes(1)
       callback.mockClear()
     }
+
     timer.tick(50)
     setWaitTime(150)
     timer.tick(200)
@@ -113,6 +115,7 @@ describe('waitFactory', () => {
       expect(callback).toHaveBeenCalledTimes(1)
       callback.mockClear()
     }
+
     expect(callback).toHaveBeenCalledTimes(0)
     timer.tick(50)
     result.flush()
@@ -122,6 +125,7 @@ describe('waitFactory', () => {
     } else {
       expect(callback).toHaveBeenCalledTimes(1)
     }
+
     timer.restore()
   })
 

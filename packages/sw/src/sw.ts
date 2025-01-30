@@ -9,6 +9,7 @@ declare const __inject_code__: string[]
 const APP_FILES = __inject_code__
 const {origin: originPath} = self.location
 const apiPath = `${originPath}/api/`
+
 const isOriginPath = (url: string) =>
   url.startsWith(`${originPath}/`) || url === originPath
 
@@ -113,5 +114,6 @@ self.addEventListener('fetch', (event: FetchEvent) => {
 
     return
   }
+
   event.respondWith(createCacheFirst(event))
 })

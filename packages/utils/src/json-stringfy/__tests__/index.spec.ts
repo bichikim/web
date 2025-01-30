@@ -34,6 +34,7 @@ describe('jsonStringify', () => {
     vi.mocked(stringify).mockImplementation(() => {
       throw new Error('test')
     })
+
     const result = jsonStringify({
       foo: '',
     })

@@ -31,6 +31,7 @@ describe('useAnimationLoop', () => {
 
   it('should call callback many in animation frame', () => {
     const callback = vi.fn()
+
     const {animationLoop} = createRoot((dispose) => {
       const animationLoop = useAnimationLoop(callback)
 
@@ -49,6 +50,7 @@ describe('useAnimationLoop', () => {
 
   it('should cancel animation frame with dispose', () => {
     const callback = vi.fn()
+
     const {animationLoop, dispose} = createRoot((dispose) => {
       const animationLoop = useAnimationLoop(callback)
 
@@ -64,6 +66,7 @@ describe('useAnimationLoop', () => {
 
   it('should cancel animation frame with stop', () => {
     const callback = vi.fn()
+
     const {animationLoop} = createRoot((dispose) => {
       const animationLoop = useAnimationLoop(callback)
 

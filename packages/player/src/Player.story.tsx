@@ -37,6 +37,7 @@ const getUrl = async (
 
 export const Root = (props: RootProps) => {
   const [element, setElement] = createSignal(null)
+
   const [apiCredential, setApiCredential] = useStorage<string | null>(
     'local',
     '__api_credential',

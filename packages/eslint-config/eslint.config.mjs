@@ -87,7 +87,6 @@ export default [
       // 'consistent-return': 'off',
       'consistent-this': 'error',
       curly: 'error',
-      // 'default-case': 'off',
       'default-case-last': 'error',
       'default-param-last': 'error',
       'dot-location': ['error', 'property'],
@@ -198,7 +197,6 @@ export default [
       // 'import/no-unresolved': 'off',
       // indent: 'off',
       'jsx-quotes': ['error', 'prefer-double'],
-
       'line-comment-position': ['warn', {position: 'above'}],
       'max-depth': ['error', {max: 4}],
       'max-len': [
@@ -253,6 +251,8 @@ export default [
       'no-extra-bind': 'error',
       'no-extra-label': 'error',
       'no-extra-parens': ['error', 'functions'],
+      // 'default-case': 'off',
+      'no-fallthrough': 'off',
       'no-floating-decimal': 'error',
       'no-implicit-coercion': 'error',
       // 'no-implicit-globals': 'off',

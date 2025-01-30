@@ -25,6 +25,7 @@ describe('useStorage local', () => {
     const storeValue = 'value'
 
     vi.mocked(getAnyStorageItem).mockReturnValueOnce(storeValue)
+
     const {dispose, value} = createRoot((dispose) => {
       const [value] = useStorage('local', key)
 
@@ -40,6 +41,7 @@ describe('useStorage local', () => {
     const key = 'key'
 
     vi.mocked(getAnyStorageItem).mockReturnValueOnce(null)
+
     const {dispose, value} = createRoot((dispose) => {
       const [value] = useStorage('local', key)
 
@@ -56,6 +58,7 @@ describe('useStorage local', () => {
     const initValue = 'init-value'
 
     vi.mocked(getAnyStorageItem).mockReturnValueOnce(initValue)
+
     const {dispose, value} = createRoot((dispose) => {
       const [value] = useStorage('local', key, {initValue})
 
@@ -108,6 +111,7 @@ describe('useStorage local', () => {
     const newValue = 'new-value'
 
     vi.mocked(getAnyStorageItem).mockReturnValueOnce(storeValue)
+
     const {dispose, value, setValue} = createRoot((dispose) => {
       const [value, setValue] = useStorage('local', key)
 
