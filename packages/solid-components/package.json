@@ -36,6 +36,7 @@
     "solid-js": "^1.9.3"
   },
   "devDependencies": {
+    "rollup": "^4.32.1",
     "@winter-love/vite-lib-config": "workspace:*",
     "rollup-preset-solid": "2.0.1"
   },

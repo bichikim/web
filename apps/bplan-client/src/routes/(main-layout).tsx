@@ -53,6 +53,7 @@ export default function MainLayout(props: RouteSectionProps) {
     showKeyName: false,
   })
   const isActiveStore = createMemo(() => Boolean(settingData().keepPlayList))
+
   const [musics, setMusics] = useStorage<MusicInfo[]>(
     'local',
     'coong:piano-musics-default',
