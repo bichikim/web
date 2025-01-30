@@ -1,10 +1,16 @@
 import {Position} from '@winter-love/utils'
 import {cx} from 'class-variance-authority'
-import {children, createMemo, createSignal, JSX, splitProps} from 'solid-js'
-import {HButton} from 'src/components/button'
+import {
+  children,
+  ComponentProps,
+  createMemo,
+  createSignal,
+  JSX,
+  splitProps,
+} from 'solid-js'
+import {HButton} from '@winter-love/solid-components'
 
-export interface HDragExecuteProps
-  extends Omit<JSX.HTMLAttributes<HTMLButtonElement>, 'onClick'> {
+export interface HDragExecuteProps extends Omit<ComponentProps<'button'>, 'onClick'> {
   containerClass?: string
   dragEndSize?: number
   dragExecuteSize?: number
@@ -51,6 +57,7 @@ export const HDragExecute = (props: HDragExecuteProps) => {
   const [drag, setDrag] = createSignal<DragData>({started: {identifier: -1, x: 0, y: 0}})
   const hasLeft = createMemo(() => Boolean(innerProps.onLeftExecute))
   const hasRight = createMemo(() => Boolean(innerProps.onRightExecute))
+
   const dragX = createMemo(() => {
     const {current} = drag()
     let x = current?.x ?? 0

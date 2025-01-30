@@ -1,6 +1,6 @@
 import {createMemo, JSX, Show, splitProps} from 'solid-js'
 import {cx} from 'class-variance-authority'
-import {HButton, HButtonProps} from 'src/components/button'
+import {HButton, HButtonProps} from '@winter-love/solid-components'
 
 export interface SPlayerButtonProps
   extends Pick<HButtonProps, 'class' | 'children' | 'title'> {

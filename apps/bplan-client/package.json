@@ -17,6 +17,7 @@
     "@tonejs/midi": "^2.0.28",
     "@winter-love/lodash": "workspace:*",
     "@winter-love/solid-use": "workspace:*",
+    "@winter-love/solid-components": "workspace:*",
     "@winter-love/utils": "workspace:*",
     "class-variance-authority": "^0.7.1",
     "cookie": "^1.0.2",

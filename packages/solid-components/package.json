@@ -8,17 +8,23 @@
   },
   "exports": {
     ".": {
-      "import": "./dist/index.mjs"
-    },
-    "./*": "./*"
+      "solid": "./dist/index/index.jsx",
+      "import": "./dist/index/index.module.js",
+      "types": "./dist/index/index.d.ts",
+      "browser": "./dist/index/index.module.js",
+      "require": "./dist/index/index.common.js",
+      "node": "./dist/index/index.common.js"
+    }
   },
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "type": "module",
+  "main": "./dist/index/index.common.js",
+  "module": "./dist/index/index.module.js",
+  "types": "./dist/index/index.d.ts",
   "files": [
     "dist/*"
   ],
   "scripts": {
-    "build": "cross-env NODE_ENV=production vite build",
+    "build": "rollup -c rollup.config.js",
     "check-types": "tsc --noEmit",
     "lint": "eslint src",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -30,9 +36,11 @@
     "solid-js": "^1.9.3"
   },
   "devDependencies": {
-    "@winter-love/vite-lib-config": "workspace:*"
+    "@winter-love/vite-lib-config": "workspace:*",
+    "rollup-preset-solid": "2.0.1"
   },
   "publishConfig": {
     "access": "public"
-  }
+  },
+  "sideEffects": false
 }
