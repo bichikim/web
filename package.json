@@ -56,6 +56,7 @@
     "@types/node": "20.11.18",
     "@types/sinon": "^17.0.3",
     "@unocss/vite": "^65.4.0",
+    "@testing-library/jest-dom": "^6.6.3",
     "@winter-love/eslint-config": "workspace:*",
     "@winter-love/solid-test": "workspace:*",
     "@winter-love/unocss-config": "workspace:*",

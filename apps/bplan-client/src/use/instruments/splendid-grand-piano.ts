@@ -16,19 +16,30 @@ import {
 import {getAudioContext} from 'src/use/instruments/prepare-audio-context'
 import {createEmitter, EmitterListener} from './emitter'
 import {useIsCleanup} from '@winter-love/solid-use'
+import {
+  createSplendidGrandPianoExtended,
+  PlayOptions as PlayOptionsExtended,
+  SplendidGrandPianoExtended,
+} from './splendid-grand-piano-extended'
 
 export type SampleStart = Parameters<DrumMachine['start']>[0]
 
-export interface PlayOptions {
+export interface PlayOptions extends Omit<PlayOptionsExtended, 'notes'> {
   id: string
   midi?: SampleStart[][]
   totalDuration: number
 }
 
+export interface OnEmitInstrumentPayload {
+  channelName: string | number
+  isDown: boolean
+  renderOnly?: boolean
+}
+
 export type SplendidGrandPianoOptions = Partial<
   Omit<SplendidGrandPianoConfig, 'notesToLoad' | 'baseUrl'>
 > & {
-  onEmitInstrument?(ids: Set<string>, isDown: boolean, renderOnly?: boolean): void
+  onEmitInstrument?(ids: Set<string>, payload: OnEmitInstrumentPayload): void
 }
 
 export type PianoEvent = 'start' | 'end'
@@ -41,6 +52,7 @@ export const USER_PLAY_FLAG_KEY = Symbol('user-play')
 export interface SplendidGrandPianoState {
   leftTime: number
   loaded: boolean
+  playedTime: number
   playingId: string
   startedAt: number
   suspended: boolean
@@ -56,7 +68,7 @@ export interface SplendidGrandPianoController
     }
   > {
   down(key: number | string | SampleStart): StopFn
-  play(options: PlayOptions, startFrom?: number): Promise<void>
+  play(options: PlayOptions, startFrom?: number): void
   resume(): void
   seek(time: number): void
   stop(): void
@@ -82,11 +94,19 @@ export type SplendidGrandPianoContextProps = [
   SplendidGrandPianoController,
 ]
 
+const PLAY_ABLE_CHANNEL_NAME = 'default'
+
 // eslint-disable-next-line max-lines-per-function
 export const createSplendidGrandPiano = (
   options: Omit<SplendidGrandPianoOptions, 'onEnded' | 'onStart'> = {},
-): SplendidGrandPianoContextProps => {
-  let _splendidGrandPiano: SplendidGrandPiano | undefined
+): SplendidGrandPianoController => {
+  const _audioContext = getAudioContext()
+
+  let _splendidPlayablePiano: SplendidGrandPianoExtended | undefined
+
+  const _splendidGrandPianoMap: Map<string | number, SplendidGrandPianoExtended> =
+    new Map()
+
   let _currentMidi: SampleStart[][] = []
   let _suspendedTime = 0
 
@@ -95,6 +115,7 @@ export const createSplendidGrandPiano = (
   const [state, setState] = createSignal<SplendidGrandPianoState>({
     leftTime: 0,
     loaded: false,
+    playedTime: 0,
     playingId: '',
     startedAt: 0,
     suspended: false,
@@ -115,15 +136,14 @@ export const createSplendidGrandPiano = (
     ['start', 'end'],
   )
 
+  const isEnd = createMemo(() => state().leftTime <= 0)
+
   const isPlaying = createMemo(
-    () =>
-      state().playingId !== '' &&
-      !state().suspended &&
-      state().leftTime < state().totalDuration,
+    () => state().playingId !== '' && !state().suspended && !isEnd(),
   )
   const hasPlayingItem = createMemo(() => state().playingId !== '')
 
-  const handelEnded = (payload: ExtendedSampleStart) => {
+  const handelEnded = (payload: ExtendedSampleStart, channelName: string | number) => {
     if (payload[USER_PLAY_FLAG_KEY]) {
       return
     }
@@ -134,10 +154,14 @@ export const createSplendidGrandPiano = (
       return
     }
 
-    onEmitInstrument?.(new Set([String(id)]), false, true)
+    onEmitInstrument?.(new Set([String(id)]), {
+      channelName,
+      isDown: false,
+      renderOnly: true,
+    })
   }
 
-  const handleStart = (payload: ExtendedSampleStart) => {
+  const handleStart = (payload: ExtendedSampleStart, channelName: string | number) => {
     if (payload[USER_PLAY_FLAG_KEY]) {
       return
     }
@@ -148,7 +172,11 @@ export const createSplendidGrandPiano = (
       return
     }
 
-    onEmitInstrument?.(new Set([String(id)]), true, true)
+    onEmitInstrument?.(new Set([String(id)]), {
+      channelName,
+      isDown: true,
+      renderOnly: true,
+    })
   }
 
   const handleStateChange = (event: Event) => {
@@ -175,30 +203,26 @@ export const createSplendidGrandPiano = (
     let cleanupFlag: any
 
     const updateLeftTime = () => {
-      if (!_splendidGrandPiano) {
+      const piano = _splendidGrandPianoMap.get(PLAY_ABLE_CHANNEL_NAME)
+
+      if (!piano) {
         return
       }
-
-      const {startedAt, totalDuration} = state()
-      const leftTime = _splendidGrandPiano.context.currentTime - startedAt
-      const isEnd = leftTime >= totalDuration
 
       setState((prevState) => {
         return {
           ...prevState,
-          leftTime,
-          // playingId: isEnd ? '' : prevState.playingId,
+          leftTime: piano.getLeftTime(),
+          playedTime: piano.getPlayedTime(),
         }
       })
-
-      if (!isPlaying() || isEnd) {
-        clearInterval(cleanupFlag)
-      }
     }
 
     if (isPlaying()) {
       // Using setInterval instead of requestAnimationFrame to keep playback running in background
       cleanupFlag = setInterval(updateLeftTime, UPDATE_LEFT_TIME_INTERVAL)
+    } else {
+      clearInterval(cleanupFlag)
     }
 
     onCleanup(() => {
@@ -207,6 +231,17 @@ export const createSplendidGrandPiano = (
 
     return isPlaying()
   })
+
+  const createChannelPiano = (
+    audioContext: AudioContext,
+    channelName: string | number,
+  ): SplendidGrandPianoExtended => {
+    return createSplendidGrandPianoExtended(audioContext, {
+      ...options,
+      onEnded: (payload) => handelEnded(payload, channelName),
+      onStart: (payload) => handleStart(payload, channelName),
+    })
+  }
 
   /**
    * The createEffect below handles piano loading and initialization.
@@ -218,157 +253,162 @@ export const createSplendidGrandPiano = (
   createEffect(() => {
     const window = getWindow()
 
-    if (!window) {
+    if (!window || !_audioContext || isCleanup()) {
       return
     }
 
-    let splendidGrandPiano: SplendidGrandPiano | undefined
-    let _audioContext: AudioContext | undefined
-
-    const prepare = (audioContext: AudioContext | void) => {
-      if (!audioContext || isCleanup()) {
-        return
-      }
-
-      _audioContext = audioContext
-      audioContext.addEventListener('statechange', handleStateChange)
-      const storage = new CacheStorage()
-
-      splendidGrandPiano = new SplendidGrandPiano(audioContext, {
-        ...options,
-        // baseUrl: '/instruments/splendid-grand-piano',
-        onEnded: handelEnded,
-        onStart: handleStart,
-        storage,
-      })
-      _audioContext = audioContext
-
-      splendidGrandPiano.load.then(() => {
-        if (isCleanup()) {
-          return
-        }
-
-        _splendidGrandPiano = splendidGrandPiano
-
-        setState((prev) => ({
-          ...prev,
-          loaded: true,
-        }))
-      })
-    }
-
-    prepare(getAudioContext())
+    _audioContext.addEventListener('statechange', handleStateChange)
+    _splendidPlayablePiano = createChannelPiano(_audioContext, PLAY_ABLE_CHANNEL_NAME)
 
     onCleanup(() => {
-      splendidGrandPiano?.stop()
+      _splendidPlayablePiano?.stop()
+
+      for (const piano of _splendidGrandPianoMap.values()) {
+        piano.stop()
+      }
+
       _audioContext?.removeEventListener('statechange', handleStateChange)
-      _splendidGrandPiano = undefined
+      _splendidGrandPianoMap.clear()
+      _splendidPlayablePiano = undefined
     })
   })
 
-  const _start = (payload: SampleStart, options: StartOptions = {}): StopFn => {
-    const {id = '', isUserStart = false} = options
-    const piano = _splendidGrandPiano
+  // const _start = (payload: SampleStart, options: StartOptions = {}): StopFn => {
+  //   const {id = '', isUserStart = false} = options
+  //   const piano = _splendidGrandPiano
 
-    if (!piano) {
-      return () => null
+  //   if (!piano) {
+  //     return () => null
+  //   }
+
+  //   const {time = 0, velocity = 1} = payload
+
+  //   return piano.start({
+  //     ...payload,
+  //     [PLAY_STARTED_AT_KEY]: piano.context.currentTime,
+  //     [TARGET_ID_KEY]: id,
+  //     [USER_PLAY_FLAG_KEY]: isUserStart,
+  //     time: time + piano.context.currentTime,
+  //     velocity: velocity * HUNDRED,
+  //   } as any)
+  // }
+
+  // const _seek = (time: number) => {
+  //   const piano = _splendidGrandPiano
+
+  //   if (!piano) {
+  //     return
+  //   }
+
+  //   piano.stop()
+  //   _resume(time)
+  // }
+
+  // const _resume = (suspendedTime: number) => {
+  //   for (const notes of _currentMidi) {
+  //     const leftNotesIndex = notes.findIndex((note) => {
+  //       return suspendedTime < (note.time ?? 0)
+  //     })
+
+  //     if (leftNotesIndex !== -1) {
+  //       const leftNotes = notes.slice(leftNotesIndex).map((note) => {
+  //         return {
+  //           ...note,
+  //           time: (note.time ?? 0) - suspendedTime,
+  //         }
+  //       })
+
+  //       for (const note of leftNotes) {
+  //         _start(note)
+  //       }
+  //     }
+  //   }
+  // }
+
+  const getPlayAblePiano = (): SplendidGrandPianoExtended => {
+    if (!_splendidPlayablePiano) {
+      throw new Error('Play able Piano not found')
     }
 
-    const {time = 0, velocity = 1} = payload
-
-    return piano.start({
-      ...payload,
-      [PLAY_STARTED_AT_KEY]: piano.context.currentTime,
-      [TARGET_ID_KEY]: id,
-      [USER_PLAY_FLAG_KEY]: isUserStart,
-      time: time + piano.context.currentTime,
-      velocity: velocity * HUNDRED,
-    } as any)
+    return _splendidPlayablePiano
   }
 
-  const _seek = (time: number) => {
-    const piano = _splendidGrandPiano
+  const stopAllPiano = () => {
+    for (const piano of _splendidGrandPianoMap.values()) {
+      piano.stop()
+    }
+  }
 
-    if (!piano) {
+  const suspendAllPiano = () => {
+    for (const piano of _splendidGrandPianoMap.values()) {
+      piano.suspend()
+    }
+  }
+
+  const resumeAllPiano = (time?: number) => {
+    for (const piano of _splendidGrandPianoMap.values()) {
+      piano.resume(time)
+    }
+
+    setState((prev) => ({
+      ...prev,
+      suspended: false,
+    }))
+  }
+
+  const playMultipleChannel = (payload: PlayOptions) => {
+    const {id, midi, totalDuration} = payload
+
+    if (!midi || !_audioContext) {
       return
     }
 
-    piano.stop()
-    _resume(time)
-  }
+    stopAllPiano()
 
-  const _resume = (suspendedTime: number) => {
-    for (const notes of _currentMidi) {
-      const leftNotesIndex = notes.findIndex((note) => {
-        return suspendedTime < (note.time ?? 0)
-      })
+    const oldPianoMap = new Map(_splendidGrandPianoMap)
 
-      if (leftNotesIndex !== -1) {
-        const leftNotes = notes.slice(leftNotesIndex).map((note) => {
-          return {
-            ...note,
-            time: (note.time ?? 0) - suspendedTime,
-          }
-        })
+    _splendidGrandPianoMap.clear()
 
-        for (const note of leftNotes) {
-          _start(note)
-        }
+    for (const [channelName, notes] of midi.entries()) {
+      let piano = oldPianoMap.get(channelName)
+
+      if (piano) {
+        _splendidGrandPianoMap.set(channelName, piano)
+      } else {
+        piano = createChannelPiano(_audioContext, channelName)
+        _splendidGrandPianoMap.set(channelName, piano)
       }
+
+      piano.play({
+        id,
+        notes,
+        totalDuration: 0,
+      })
     }
+
+    setState((prev) => ({
+      ...prev,
+      leftTime: totalDuration,
+      playedTime: 0,
+      playingId: id,
+      suspended: false,
+      totalDuration,
+    }))
   }
 
   const controller: SplendidGrandPianoController = {
     ...emitter,
     down(key: string | number | SampleStart): StopFn {
-      if (typeof key === 'string' || typeof key === 'number') {
-        return _start({note: key}, {isUserStart: true})
-      }
-
-      return _start(key)
+      return getPlayAblePiano().down(key)
     },
-    async play(options: PlayOptions) {
-      const piano = _splendidGrandPiano
-      const {id, totalDuration, midi} = options
-
-      if (!midi || !piano) {
-        return
-      }
-
-      piano.stop()
+    play: playMultipleChannel,
+    resume(time?: number) {
+      resumeAllPiano(time)
 
       setState((prev) => ({
         ...prev,
-        leftTime: 0,
-        playingId: id,
-        startedAt: piano.context.currentTime,
-        suspended: false,
-        totalDuration,
-      }))
-      await piano.context.resume()
-      _currentMidi = midi
-
-      for (const notes of midi) {
-        for (const note of notes) {
-          _start(note)
-        }
-      }
-    },
-    resume() {
-      const piano = _splendidGrandPiano
-
-      if (!piano) {
-        return
-      }
-
-      _resume(_suspendedTime)
-
-      setState((prev) => ({
-        ...prev,
-        startedAt: piano.context.currentTime - _suspendedTime,
         suspended: false,
       }))
-      _suspendedTime = 0
     },
     seek(time: number) {
       const piano = _splendidGrandPiano
@@ -381,8 +421,7 @@ export const createSplendidGrandPiano = (
 
       setState((prev) => ({
         ...prev,
-        leftTime: time,
-        startedAt: suspended ? prev.startedAt : piano.context.currentTime - time,
+        playedTime: time,
       }))
 
       if (suspended) {
