@@ -14,6 +14,7 @@ const rootStyle = cva('block overflow-hidden rd-1', {
     },
   },
 })
+
 const barStyle = cva('block h-full', {
   variants: {
     selected: {
