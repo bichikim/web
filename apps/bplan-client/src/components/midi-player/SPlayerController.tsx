@@ -88,6 +88,10 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
     }
   }
 
+  const handleGoMusicStore = () => {
+    console.log('go music store')
+  }
+
   return (
     <>
       <Show when={innerProps.playList.length > 0}>
@@ -135,7 +139,7 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
         <SMidiFileInput class="min-w-11 px-2" onAdd={handleAddPlayItem} />
         <SPlayerButton
           class="min-w-11 min-h-9 bg-gray-100"
-          onClick={innerProps.onStop}
+          onClick={handleGoMusicStore}
           title="get music more"
         >
           <span class="block i-tabler:music-plus text-9" />

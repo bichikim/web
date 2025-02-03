@@ -5,31 +5,33 @@ import {KeyContext} from './key-context'
 interface SharpData {
   key: number
   name: string
+  rightEmpty?: boolean
 }
 
 const keyLoopCount = 12
-const lastDeleteCount = 5
+const keyOffset = 5
 const sharpSet = flatten(
   Array.from<SharpData[]>({length: 14})
     .fill([
       {key: 1, name: 'G#'},
-      {key: 3, name: 'A#'},
+      {key: 3, name: 'A#', rightEmpty: true},
       {key: 0, name: 'empty'},
       {key: 6, name: 'C#'},
-      {key: 8, name: 'D#'},
+      {key: 8, name: 'D#', rightEmpty: true},
       {key: 0, name: 'empty'},
       {key: 11, name: 'F#'},
     ])
-    .map((item, index) => {
-      return item.map(({key, name}) => ({
-        key: keyLoopCount * index + key - lastDeleteCount,
+    .map((item, setIndex) => {
+      return item.map(({key, name, rightEmpty}) => ({
+        key: keyLoopCount * setIndex + key,
         name,
+        rightEmpty,
       }))
     }),
 )
 
 sharpSet.shift()
-sharpSet.splice(lastDeleteCount * -1)
+sharpSet.splice(keyOffset * -1)
 
 export interface HPianoSharpSetProps extends JSX.HTMLAttributes<HTMLDivElement> {
   disabled?: boolean

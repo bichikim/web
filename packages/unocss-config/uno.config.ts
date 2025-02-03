@@ -109,7 +109,7 @@ export default defineConfig({
       '[&>div]:data-[state="down"]:top-0',
     ],
     'key-piano-flat': [
-      'block b-solid b-#ccc rd-t-0 inline-flex flex-shrink-0 overflow-hidden b-b-2px',
+      'block b-solid b-#ccc rd-t-0 inline-flex overflow-hidden b-b-2px',
       'focus-visible:outline-black focus-visible:outline-auto focus-visible:outline-2px',
       'p-0 relative rd-b-3px b-l-1px b-r-1px b-t-0 shadow-flat-up data-[state="down"]:shadow-flat-down b-b-#ddd',
       'data-[state="down"]-shadow-[0_2px_2px_rgba(0,0,0,0.4)] data-[state="down"]:scale-x-100',
