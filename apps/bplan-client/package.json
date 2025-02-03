@@ -6,6 +6,7 @@
     "build": "vinxi build",
     "check-types": "tsc --noEmit",
     "dev": "vinxi dev --host ",
+    "dev:ninja": "console-ninja vinxi dev --host",
     "generate-pwa-assets": "pwa-assets-generator",
     "lint": "eslint src/**/*.ts[x]",
     "start": "node ./.output/server/index.mjs"

@@ -55,10 +55,7 @@ export const SPiano = (props: SPianoProps) => {
             showKeyName={keyProps.showKeyName}
           />
         </SPianoFlatSet>
-        <SPianoSharpSet
-          emptyChildren={<SPianoSharpEmpty class="w-50px mr-30px" />}
-          class="flex absolute w-auto h-259px left-55px top-0 left-0"
-        >
+        <SPianoSharpSet class="flex absolute w-auto h-259px left-55px top-0 left-0">
           <SPianoSharpKey
             class="w-50px h-full bg-black mr-30px flex flex-shrink-0 justify-center items-end c-gray-300 text-4"
             effectClass="from-indigo-300"

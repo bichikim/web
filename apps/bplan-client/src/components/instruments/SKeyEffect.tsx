@@ -4,10 +4,11 @@ import {KeyDownContext} from 'src/components/real-button/HRealButton'
 
 export interface HKeyEffectProps extends JSX.HTMLAttributes<HTMLSpanElement> {}
 
-const rootStyle = cva('block blur-sm opacity-80', {
+const rootStyle = cva('block blur-sm', {
   variants: {
     isDown: {
-      true: 'bg-gradient-to-b',
+      false: 'opacity-0',
+      true: 'bg-gradient-to-b opacity-80',
     },
   },
 })
