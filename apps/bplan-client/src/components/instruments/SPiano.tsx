@@ -5,7 +5,6 @@ import {
   SPianoFlatSet,
   SPianoRoot,
   SPianoRootProps,
-  SPianoSharpEmpty,
   SPianoSharpKey,
   SPianoSharpSet,
 } from 'src/components/instruments/SPianoParts'

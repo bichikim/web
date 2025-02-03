@@ -4,7 +4,6 @@ import {
   SplendidGrandPiano,
   type SplendidGrandPianoConfig,
 } from 'smplr'
-import {getAudioContext} from './prepare-audio-context'
 import {HUNDRED} from '@winter-love/utils'
 
 export type SplendidGrandPianoOptions = Partial<
@@ -180,11 +179,19 @@ export const createSplendidGrandPianoExtended = (
   }
 
   return {
-    ..._piano,
     __original: _piano,
+    get context() {
+      return _piano.context
+    },
     down,
     getLeftTime,
     getPlayedTime,
+    get load() {
+      return _piano.load
+    },
+    get options() {
+      return _piano.options
+    },
     play,
     resume,
     seek,
