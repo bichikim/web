@@ -8,6 +8,7 @@ export interface SubProcessPageProps extends RouteSectionProps {
     id: string
   }
 }
+
 /**
  * sub process page 는 다른 페이지에서 iframe 으로 호출되는 페이지이다.
  */

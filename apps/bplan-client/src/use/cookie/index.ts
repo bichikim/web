@@ -37,6 +37,7 @@ const getCookie = <T>(name: string, defaultValue: T): T => {
 
 export const useCookie = <T>(name: string, defaultValue: T): Signal<T> => {
   const [cookie, __setCookie] = createSignal<T>(getCookie(name, defaultValue))
+
   const updateCookie = (value: T) => {
     setCookie(name, value)
   }

@@ -6,11 +6,15 @@ import transformerCompileClass from '@unocss/transformer-compile-class'
 const readSizeName = (name: string): string => {
   switch (name) {
     case 'width':
+
     case 'w': {
+      //
       return 'width'
     }
     case 'height':
+
     case 'h': {
+      //
       return 'height'
     }
   }

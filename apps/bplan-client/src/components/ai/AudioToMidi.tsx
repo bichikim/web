@@ -4,6 +4,7 @@ export interface PianoConvertAiProps {
    */
   file: string
 }
+
 /**
  * Ai 를 이용하여 피아노 mp3 를 midi 파일로 변환하는 컴포넌트
  */

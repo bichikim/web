@@ -12,6 +12,7 @@ export function SScale(props: SScaleProps) {
   const actualSize = createMemo(() => {
     return (innerProps.size ?? HUNDRED) / HUNDRED
   })
+
   const scaleStyle = createMemo(() => {
     return {
       transform: `scale(${actualSize()})`,

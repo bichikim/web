@@ -25,6 +25,7 @@ export const SMidiFileInput = (props: HMidiFileInputProps) => {
   const [innerProps, restProps] = splitProps(props, ['class', 'onAdd', 'onTouchEnd'])
   const [inputElement, setInputElement] = createSignal<HTMLInputElement | null>(null)
   let isCleanup = false
+
   const handleInputFiles = async (files: FileList | null) => {
     if (!files || files.length === 0) {
       return
@@ -50,6 +51,7 @@ export const SMidiFileInput = (props: HMidiFileInputProps) => {
       .map((midiFile, index): MusicInfo | null => {
         const {name, midi} = midiFile
         const {header} = midi
+
         const midiData: SampleStart[][] = midi.tracks
           .map((track) => {
             const {notes, instrument: {family} = {}} = track
@@ -69,6 +71,7 @@ export const SMidiFileInput = (props: HMidiFileInputProps) => {
           })
           .filter(Boolean) as SampleStart[][]
         let totalDuration = 0
+
         for (const track of midiData) {
           const lastNote = track.at(-1)
 

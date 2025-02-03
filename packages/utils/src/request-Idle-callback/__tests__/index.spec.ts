@@ -2,6 +2,7 @@ import {getWindow} from 'src/get-window'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 import {requestIdleCallback} from '../'
 import {requestIdleCallbackPolyfill} from '../polyfill'
+
 vi.mock('src/get-window')
 vi.mock('../polyfill')
 

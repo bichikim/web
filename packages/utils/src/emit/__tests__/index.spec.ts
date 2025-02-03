@@ -36,6 +36,7 @@ describe('createEmitter', () => {
 
   it('should call async listener', async () => {
     let isWaited = false
+
     const callback = vi.fn(
       () =>
         new Promise((resolve) => {

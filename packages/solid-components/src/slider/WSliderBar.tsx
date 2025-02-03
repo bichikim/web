@@ -1,16 +1,11 @@
-import {createMemo, splitProps} from 'solid-js'
-import {Dynamic} from 'solid-js/web'
+import {createMemo, ValidComponent} from 'solid-js'
+import {Dynamic, DynamicProps} from 'solid-js/web'
 import {BAR_PERCENT} from 'src/css-var'
-import {DynamicParentProps} from 'src/types'
 import {useSliderContext} from './slider-context'
 
-export interface WSliderBarProps extends DynamicParentProps {
-  //
-}
+export type WSliderBarProps<T extends ValidComponent> = DynamicProps<T>
 
-export const WSliderBar = (_props: WSliderBarProps) => {
-  const [props, restProps] = splitProps(_props, ['as', 'children'])
-  const as = createMemo(() => props.as ?? 'div')
+export const WSliderBar = <T extends ValidComponent>(props: WSliderBarProps<T>) => {
   const sliderContext = useSliderContext()
 
   const onClick = (event: MouseEvent) => {
@@ -22,6 +17,7 @@ export const WSliderBar = (_props: WSliderBarProps) => {
       sliderContext.setPercent(event.offsetY / containerSize)
     }
   }
+
   const barStyle = createMemo(() => {
     const {percent} = sliderContext.value()
 
@@ -32,8 +28,7 @@ export const WSliderBar = (_props: WSliderBarProps) => {
 
   return (
     <Dynamic
-      {...restProps}
-      component={as()}
+      {...props}
       ref={sliderContext.setContainerElement}
       onClick={onClick}
       style={barStyle()}

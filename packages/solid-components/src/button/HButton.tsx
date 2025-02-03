@@ -1,11 +1,11 @@
 import {now} from '@winter-love/lodash'
-import {JSX, splitProps} from 'solid-js'
+import {ComponentProps, JSX, splitProps} from 'solid-js'
+
+const DEFAULT_DOUBLE_CLICK_GAP = 250
 
 export interface HButtonProps
-  extends Omit<
-    JSX.ButtonHTMLAttributes<HTMLButtonElement>,
-    'onClick' | 'onTouchEnd' | 'onDblClick'
-  > {
+  extends Omit<ComponentProps<'button'>, 'onClick' | 'onTouchEnd' | 'onDblClick'> {
+  doubleClickGap?: number
   onClick?: JSX.EventHandler<HTMLButtonElement, MouseEvent | TouchEvent>
   onDoubleClick?: JSX.EventHandler<HTMLButtonElement, MouseEvent | TouchEvent>
   onTouchEnd?: JSX.EventHandler<HTMLButtonElement, TouchEvent>
@@ -34,13 +34,14 @@ export interface HButtonProps
  * @prop {JSX.EventHandler<HTMLButtonElement, TouchEvent>} [onTouchEnd] - Event handler for the `touchend` event.
  */
 export const HButton = (props: HButtonProps) => {
-  const doubleClickGap = 250
   // Previous click time used to check if current click is a double click
   let clickTime = 0
+
   const [innerProps, restProps] = splitProps(props, [
     'onClick',
     'onTouchEnd',
     'onDoubleClick',
+    'doubleClickGap',
   ])
 
   /**
@@ -53,6 +54,7 @@ export const HButton = (props: HButtonProps) => {
     if (event.pointerType === 'touch') {
       return
     }
+
     innerProps.onClick?.(event)
   }
 
@@ -70,16 +72,18 @@ export const HButton = (props: HButtonProps) => {
    * @returns
    */
   const handleTouchEnd: HButtonProps['onTouchEnd'] = (event) => {
+    const doubleClickGap = innerProps.doubleClickGap ?? DEFAULT_DOUBLE_CLICK_GAP
+    const newClickTime = now()
+
     innerProps.onTouchEnd?.(event)
     innerProps.onClick?.(event)
-
-    const newClickTime = now()
 
     if (newClickTime - clickTime < doubleClickGap) {
       handleDoubleClick(event)
 
       return
     }
+
     clickTime = newClickTime
   }
 

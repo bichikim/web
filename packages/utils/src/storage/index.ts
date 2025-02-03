@@ -86,6 +86,7 @@ export const setStorageItem = (
   if (!_storage) {
     return
   }
+
   _storage.setItem(key, stringify(data, raw))
 }
 

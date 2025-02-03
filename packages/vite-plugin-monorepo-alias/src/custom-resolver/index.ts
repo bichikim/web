@@ -44,6 +44,7 @@ export const createCustomResolver = (options: CustomResolverOptions) => {
     const deeps = getPathDeeps(relativePath)
     const path = removeDeeps(importerWithoutQuery, deeps)
     const lookupPath = resolveUrl('/', path, source)
+
     // eslint-disable-next-line no-invalid-this
     const newPath = await this.resolve?.(lookupPath, importerWithoutQuery, {
       ...resolveOptions,

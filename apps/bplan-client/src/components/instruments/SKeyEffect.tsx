@@ -1,4 +1,4 @@
-import {JSX, splitProps, useContext} from 'solid-js'
+import {JSX, useContext} from 'solid-js'
 import {cva, cx} from 'class-variance-authority'
 import {KeyDownContext} from 'src/components/real-button/HRealButton'
 

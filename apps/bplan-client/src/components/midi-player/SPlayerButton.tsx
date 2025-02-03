@@ -1,10 +1,12 @@
-import {JSX, splitProps} from 'solid-js'
+import {createMemo, JSX, Show, splitProps} from 'solid-js'
 import {cx} from 'class-variance-authority'
-import {HButton} from 'src/components/button'
+import {HButton, HButtonProps} from '@winter-love/solid-components'
 
 export interface SPlayerButtonProps
-  extends Omit<JSX.ButtonHTMLAttributes<HTMLButtonElement>, 'onClick' | 'onTouchEnd'> {
-  onClick?: JSX.EventHandler<HTMLButtonElement, MouseEvent | TouchEvent>
+  extends Pick<HButtonProps, 'class' | 'children' | 'title'> {
+  href?: string
+  onClick?: JSX.EventHandler<HTMLElement, MouseEvent | TouchEvent>
+  type?: 'button' | 'anchor'
 }
 
 /**
@@ -24,22 +26,36 @@ export interface SPlayerButtonProps
  * @prop {(event: Event) => void} [onClick] - Event handler for click events
  */
 export const SPlayerButton = (props: SPlayerButtonProps) => {
-  const [innerProps, restProps] = splitProps(props, ['onClick'])
+  const [innerProps, restProps] = splitProps(props, ['onClick', 'class', 'type', 'href'])
 
   const handelClick: SPlayerButtonProps['onClick'] = (event) => {
     innerProps.onClick?.(event)
   }
 
+  const className = createMemo(() =>
+    cx(
+      'flex px-6px py-2px b-0 rd-1 cursor-pointer overflow-hidden bg-#f4f5f6 justify-center items-center text-black',
+      innerProps.class,
+    ),
+  )
+
   return (
-    <HButton
-      {...restProps}
-      class={cx(
-        'flex px-6px py-2px b-0 rd-1 cursor-pointer overflow-hidden bg-#f4f5f6 justify-center items-center text-black',
-        props.class,
-      )}
-      onClick={handelClick}
+    <Show
+      when={innerProps.type === 'button'}
+      fallback={
+        <a
+          {...restProps}
+          class={className()}
+          onClick={handelClick}
+          href={innerProps.href}
+        >
+          {props.children}
+        </a>
+      }
     >
-      {props.children}
-    </HButton>
+      <HButton {...restProps} class={className()} onClick={handelClick}>
+        {props.children}
+      </HButton>
+    </Show>
   )
 }

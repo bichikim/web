@@ -12,6 +12,7 @@ export interface HFrameContentProps extends JSX.HTMLAttributes<HTMLDivElement> {
 
   onMessage?: (message: string) => void
 }
+
 export function HFrameContent(props: HFrameContentProps) {
   const initMessage = untrack(() => props.initMessage)
   const [message, setMessage] = createSignal<string | undefined>(initMessage)

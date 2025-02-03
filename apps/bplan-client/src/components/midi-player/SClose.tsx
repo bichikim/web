@@ -1,9 +1,9 @@
 import {cva, cx} from 'class-variance-authority'
-import {JSX} from 'solid-js'
-import {HButton} from 'src/components/button/HButton'
+import {ComponentProps} from 'solid-js'
+import {HButton} from '@winter-love/solid-components'
 import {preventGlobalTouchAttrs} from 'src/components/real-button/use-global-touch'
 
-export interface SCloseProps extends JSX.HTMLAttributes<HTMLButtonElement> {
+export interface SCloseProps extends ComponentProps<'button'> {
   isHidden?: boolean
   isPlaying?: boolean
   onClose?: () => void
@@ -32,6 +32,7 @@ const rootStyle = cva(
     },
   },
 )
+
 const iconStyle = cva('inline-block  text-7 text-white', {
   variants: {
     isHidden: {

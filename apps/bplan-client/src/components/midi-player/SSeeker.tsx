@@ -20,6 +20,7 @@ export interface SSeekerProps extends JSX.ButtonHTMLAttributes<HTMLButtonElement
 export const SSeeker = (props: SSeekerProps) => {
   const defaultProps = mergeProps({leftTime: 0, totalDuration: 0}, props)
   const [innerProps, restProps] = splitProps(defaultProps, ['leftTime', 'totalDuration'])
+
   const progress = createMemo(() => {
     if (innerProps.totalDuration === 0) {
       return 0

@@ -22,6 +22,7 @@ const iconStyle = cva('block text-8', {
 
 export const SRepeatButton = (props: SRepeatButtonProps) => {
   const defaultProps = mergeProps({repeat: 'no' as const}, props)
+
   const [innerProps, restProps] = splitProps(defaultProps, [
     'onClick',
     'onChangeRepeat',
@@ -41,7 +42,6 @@ export const SRepeatButton = (props: SRepeatButtonProps) => {
         return
       }
 
-      // console.log('no')
       innerProps.onChangeRepeat?.('no')
 
       return

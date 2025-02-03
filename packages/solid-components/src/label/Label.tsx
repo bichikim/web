@@ -18,10 +18,7 @@ export const LabelContext = createContext<Accessor<LabelContextProps>>(() => ({}
 
 export const LabelRoot = (props: LabelRootProps) => {
   const instanceId = createUniqueId()
-  const computedId = createMemo(() => {
-    return props.targetId ?? instanceId
-  })
-  const labelContextValue = createMemo(() => ({targetId: computedId()}))
+  const labelContextValue = createMemo(() => ({targetId: props.targetId ?? instanceId}))
 
   return (
     <LabelContext.Provider value={labelContextValue}>

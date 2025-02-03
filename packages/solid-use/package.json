@@ -19,7 +19,7 @@
   ],
   "scripts": {
     "build": "cross-env NODE_ENV=production vite build",
-    "build:Dev": "cross-env NODE_ENV=production vite build --minify false",
+    "build:dev": "cross-env NODE_ENV=production vite build --minify false",
     "check-types": "tsc --noEmit",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",

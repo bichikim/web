@@ -32,6 +32,7 @@ export const createEmitter = <
   events: EventName[],
 ): Emitter<EventName, EVentMap> => {
   const listenerMatchMap = new Map<(...args: any[]) => any, (...args: any[]) => any>()
+
   const addEventListener = <E extends EventName>(
     event: E,
     listener: (payload: EVentMap[E]) => void,
@@ -51,7 +52,6 @@ export const createEmitter = <
     }
 
     listenerMatchMap.set(listener, listenerAdepter)
-
     window.addEventListener(eventNameRecipe(event), listenerAdepter as any)
   }
 
@@ -72,7 +72,6 @@ export const createEmitter = <
     }
 
     listenerMatchMap.delete(listener)
-
     window.removeEventListener(eventNameRecipe(event), listenerAdepter as any)
   }
 

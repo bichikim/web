@@ -40,6 +40,7 @@ const rootStyle = cva(
     },
   },
 )
+
 const playerContainerStyle = cva('flex flex-col gap-2 overflow-hidden', {
   variants: {
     isShow: {
@@ -64,6 +65,7 @@ export const SHiddenPlayer = (props: SHiddenPlayerProps) => {
     },
     props,
   )
+
   const [innerProps, restProps] = splitProps(defaultProps, [
     'component',
     'settingData',
@@ -84,6 +86,7 @@ export const SHiddenPlayer = (props: SHiddenPlayerProps) => {
       return nextState
     })
   }
+
   const isPlaying = createMemo(
     () =>
       defaultProps.pianoState.playingId !== '' &&

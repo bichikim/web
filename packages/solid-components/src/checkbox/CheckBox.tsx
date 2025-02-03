@@ -48,12 +48,14 @@ export const CheckboxContext = createContext<
 ])
 
 /**
- * data-toggle 통해
+ * A component that passes the toggle state through data-toggle
+ * @component
  */
 export const CheckboxRoot = (props: ToggleRootProps) => {
   // initValue
   const [checked, setChecked] = createSignal(props.initValue ?? false)
   const instanceId = createUniqueId()
+
   const id = createMemo(() => {
     return props.id ?? instanceId
   })
@@ -62,9 +64,11 @@ export const CheckboxRoot = (props: ToggleRootProps) => {
     if (props.disabled) {
       return
     }
+
     setChecked((value) => !value)
     props.onChange?.(checked())
   }
+
   const checkboxContextValue = createMemo(() => {
     return {
       checked: checked(),
@@ -105,8 +109,8 @@ export const CheckboxBody = <T extends ValidComponent>(props: CheckboxBodyProps<
 export type CheckboxIndicatorProps<T extends ValidComponent> = DynamicProps<T>
 
 /**
- * data-checked 와 data-disabled 가 속성으로 추가해주는 element 가 Indicator 로 필요할 경우
- * @constructor
+ * When an element that adds data-checked and data-disabled attributes is needed as an Indicator
+ * @component
  */
 export const CheckboxIndicator = <T extends ValidComponent>(
   props: CheckboxIndicatorProps<T>,
@@ -127,9 +131,8 @@ export interface CheckboxToggleProps extends ParentProps {
 }
 
 /**
- * CheckboxIndicator 과 다르게 element 랩퍼가 필요 없을 경우
- * @param props
- * @constructor
+ * Unlike CheckboxIndicator, when no element wrapper is needed
+ * @component
  */
 export const CheckboxToggle = (props: CheckboxToggleProps) => {
   const [checkboxContext] = useContext(CheckboxContext)

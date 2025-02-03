@@ -9,7 +9,7 @@ import unoCss from 'unocss/vite'
 import * as nodeFs from 'node:fs'
 import legacy from '@vitejs/plugin-legacy'
 import {targets} from '@winter-love/vite-lib-config'
-import devtools from '@solid-devtools/transform'
+import devtools from 'solid-devtools/vite'
 
 const fixNitroFunction = async () => {
   const source =

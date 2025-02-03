@@ -14,6 +14,7 @@ export const createCancelPromise = <T>(
   promise: Promise<T>,
 ): [Promise<T | null>, () => void] => {
   let cancel: () => void = emptyCancel
+
   const cancelPromise = new Promise<null>((resolve) => {
     cancel = () => resolve(null)
   })

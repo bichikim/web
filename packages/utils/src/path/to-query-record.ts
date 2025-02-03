@@ -34,6 +34,7 @@ export const decodeQueryItem = (
 
 export const toQueryRecord = (query: string, options?: ToQueryRecodeOptions) => {
   const trimmedQuery: string = query.replace(/^\?/u, '')
+
   const entries = trimmedQuery
     .split('&')
     .map((item: string) => {

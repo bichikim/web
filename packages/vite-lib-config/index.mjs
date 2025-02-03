@@ -6,6 +6,7 @@ import dts from 'vite-plugin-dts'
 import solidPlugin from 'vite-plugin-solid'
 
 const defaultRoot = process.cwd()
+
 /**
  * create vite config for building library
  * @param root project root
@@ -34,6 +35,7 @@ export const createConfig = ({
 
   const {dependencies = {}, name} = _packageJson ?? {}
   const depsKey = Object.keys(dependencies)
+
   const newEntry = Object.fromEntries(
     Object.entries(entry).map(([key, value]) => [key, path.join(root, value)]),
   )
@@ -78,7 +80,7 @@ export const createConfig = ({
             skipLibCheck: true,
           },
           entryRoot: './src',
-          exclude: ['**/__tests__/*', '**/__stories__/*'],
+          exclude: ['**/__tests__/*', '**/__stories__/*', '**/*.story.tsx'],
           include: ['**/*.ts', '**/*.tsx'],
         }),
         ...plugins,

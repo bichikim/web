@@ -8,6 +8,7 @@ export const getScrollParent = (node: Element): ParentNode | Window | null => {
     if (isScrollAble(parent as any)) {
       return parent
     }
+
     parent = parent.parentElement
   }
 

@@ -25,6 +25,7 @@ export const updateDrmRequestFilter = (
     if (type !== shaka.net.NetworkingEngine.RequestType.LICENSE) {
       return
     }
+
     // 쿠키를 막고
     request.allowCrossSiteCredentials = false
 
