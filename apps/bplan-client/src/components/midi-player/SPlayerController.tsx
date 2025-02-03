@@ -12,7 +12,6 @@ import {useLocation} from '@solidjs/router'
 export interface SPlayerControllerProps
   extends Omit<JSX.HTMLAttributes<HTMLElement>, 'onPlay' | 'onSelect' | 'onPlaying'> {
   isSuspend?: boolean
-  leftTime?: number
   onAddItem?: (payload: MusicInfo[]) => void
   onChangeRepeat?: (value: RepeatType) => void
   onDeleteItem?: (id: string) => void
@@ -24,6 +23,7 @@ export interface SPlayerControllerProps
   onStop?: () => void
   onSuspend?: () => void
   playList?: MusicInfo[]
+  playedTime?: number
   playingId?: string
   repeat?: RepeatType
   selectedId?: string
@@ -42,8 +42,8 @@ const playStyle = cva('block text-8', {
 export const SPlayerController = (props: SPlayerControllerProps) => {
   const innerProps = mergeProps(
     {
-      leftTime: 0,
       playList: [],
+      playedTime: 0,
       playingId: '',
       repeat: 'no' as const,
       selectedId: '',
@@ -61,13 +61,13 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
     return (
       !isSuspend() &&
       innerProps.playingId === innerProps.selectedId &&
-      innerProps.leftTime < innerProps.totalDuration
+      innerProps.playedTime < innerProps.totalDuration
     )
   })
 
   const isEnd = createMemo(() => {
     return (
-      Boolean(innerProps.playingId) && innerProps.totalDuration <= innerProps.leftTime
+      Boolean(innerProps.playingId) && innerProps.totalDuration <= innerProps.playedTime
     )
   })
 
@@ -110,13 +110,13 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
           onPlay={innerProps.onPlay}
           onSuspend={innerProps.onSuspend}
           onResume={innerProps.onResume}
-          leftTime={innerProps.leftTime}
+          playedTime={innerProps.playedTime}
           playingId={innerProps.playingId}
         />
       </Show>
       <SSeeker
         class="flex-1 min-h-2 relative rd-1 overflow-hidden b-0 w-full touch-none"
-        leftTime={innerProps.leftTime}
+        playedTime={innerProps.playedTime}
         totalDuration={innerProps.totalDuration}
         onSeek={innerProps.onSeek}
       />

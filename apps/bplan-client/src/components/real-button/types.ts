@@ -22,6 +22,7 @@ export interface UseGlobalTouchEmitterOptions {
 }
 
 export interface DownEventPayload {
+  channelName?: string | number
   down: boolean
   renderOnly: boolean
 }

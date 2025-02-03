@@ -20,6 +20,7 @@ import {
   TARGET_ID_KEY,
   USER_PLAY_FLAG_KEY,
 } from './splendid-grand-piano-extended'
+import {OnEmitInstrumentPayload} from 'src/components/real-button/use-global-touch'
 
 export type SampleStart = Parameters<DrumMachine['start']>[0]
 
@@ -27,12 +28,6 @@ export interface PlayOptions extends Omit<PlayOptionsExtended, 'notes'> {
   id: string
   midi?: SampleStart[][]
   totalDuration: number
-}
-
-export interface OnEmitInstrumentPayload {
-  channelName: string | number
-  isDown: boolean
-  renderOnly?: boolean
 }
 
 export type SplendidGrandPianoOptions = Partial<
@@ -175,6 +170,22 @@ export const createSplendidGrandPiano = (
     }
   }
 
+  const updateLeftTime = () => {
+    const piano = _autoPianoMap.get(PLAY_ABLE_CHANNEL_NAME)
+
+    if (!piano) {
+      return
+    }
+
+    setState((prevState) => {
+      return {
+        ...prevState,
+        leftTime: piano.getLeftTime(),
+        playedTime: piano.getPlayedTime(),
+      }
+    })
+  }
+
   /**
    * The createEffect below tracks and updates playback time.
    *
@@ -185,22 +196,6 @@ export const createSplendidGrandPiano = (
    */
   createEffect(() => {
     let cleanupFlag: any
-
-    const updateLeftTime = () => {
-      const piano = _autoPianoMap.get(PLAY_ABLE_CHANNEL_NAME)
-
-      if (!piano) {
-        return
-      }
-
-      setState((prevState) => {
-        return {
-          ...prevState,
-          leftTime: piano.getLeftTime(),
-          playedTime: piano.getPlayedTime(),
-        }
-      })
-    }
 
     if (isPlaying()) {
       // Using setInterval instead of requestAnimationFrame to keep playback running in background
@@ -241,13 +236,19 @@ export const createSplendidGrandPiano = (
       if (!window || !_audioContext || isCleanup()) {
         return
       }
+      const playablePiano = createChannelPiano(_audioContext, PLAY_ABLE_CHANNEL_NAME)
 
-      _audioContext.addEventListener('statechange', handleStateChange)
-      _playablePiano = createChannelPiano(_audioContext, PLAY_ABLE_CHANNEL_NAME)
+      _playablePiano = playablePiano
 
       _playablePiano.load.then(() => {
         if (isCleanup()) {
           return
+        }
+
+        if (_playablePiano) {
+          console.log('start')
+          _playablePiano.__original.context.resume()
+          _playablePiano.start({note: 'C4'})
         }
 
         // eslint-disable-next-line max-nested-callbacks
@@ -319,21 +320,20 @@ export const createSplendidGrandPiano = (
     const oldPianoMap = new Map(_autoPianoMap)
 
     _autoPianoMap.clear()
+    const piano = getPlayAblePiano()
 
     for (const [channelName, notes] of midi.entries()) {
-      let piano = oldPianoMap.get(channelName)
-
-      if (piano) {
-        _autoPianoMap.set(channelName, piano)
-      } else {
-        piano = createChannelPiano(_audioContext, channelName)
-        _autoPianoMap.set(channelName, piano)
-      }
+      // if (piano) {
+      //   _autoPianoMap.set(channelName, piano)
+      // } else {
+      //   piano = createChannelPiano(_audioContext, channelName)
+      //   _autoPianoMap.set(channelName, piano)
+      // }
 
       piano.play({
         id,
         notes,
-        totalDuration: 0,
+        totalDuration,
       })
     }
 

@@ -11,7 +11,7 @@ import {RepeatType} from 'src/components/midi-player/types'
 import {SplendidGrandPianoController, SplendidGrandPianoState} from 'src/use/instruments'
 import {SPlayerController, SPlayerControllerProps} from './SPlayerController'
 
-export interface SPlayerProps extends Pick<SPlayerControllerProps, 'leftTime'> {
+export interface SPlayerProps extends Pick<SPlayerControllerProps, 'playedTime'> {
   initMusics?: MusicInfo[]
   onMusicsChange?: (musics: MusicInfo[]) => void
   onSetting?: () => void

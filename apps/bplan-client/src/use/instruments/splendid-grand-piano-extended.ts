@@ -54,7 +54,7 @@ export interface SplendidGrandPianoExtended
   readonly play: (payload: PlayOptions) => void
   readonly resume: (time?: number) => void
   readonly seek: (time: number) => void
-  readonly start: (payload: SampleStart, options: StartOptions) => StopFn
+  readonly start: (payload: SampleStart, options?: StartOptions) => StopFn
   readonly stop: (payload?: SampleStart) => void
   readonly suspend: () => void
   readonly up: (key: string | number | SampleStart) => void
@@ -90,7 +90,9 @@ export const createSplendidGrandPianoExtended = (
   }
 
   const play = (payload: PlayOptions) => {
-    const {notes} = payload
+    const {notes, id} = payload
+
+    console.log('play', payload)
 
     if (!notes) {
       return
@@ -101,7 +103,7 @@ export const createSplendidGrandPianoExtended = (
     _currentPlay = payload
 
     for (const note of notes) {
-      _piano.start(note)
+      start(note, {id, isUserStart: false})
     }
   }
 

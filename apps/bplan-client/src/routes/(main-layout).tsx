@@ -85,7 +85,7 @@ export default function MainLayout(props: RouteSectionProps) {
             initMusics={musics()}
             pianoController={splendidGrandPianoController}
             pianoState={splendidGrandPiano()}
-            leftTime={splendidGrandPiano().leftTime}
+            playedTime={splendidGrandPiano().playedTime}
             onSettingDataChange={handleSettingDataChange}
             onMusicsChange={handleMusicsChange}
             class="absolute bottom-0 right-0 max-w-100vw"
