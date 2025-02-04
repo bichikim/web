@@ -22,21 +22,27 @@ export type SampleStart = Parameters<DrumMachine['start']>[0]
 export const PLAY_STARTED_AT_KEY = Symbol('play-started-at')
 export const TARGET_ID_KEY = Symbol('play-started-at')
 export const USER_PLAY_FLAG_KEY = Symbol('user-play')
+export const ORIGINAL_NOTE_KEY = Symbol('original-note')
+export const CHANNEL_NAME_KEY = Symbol('channel-name')
 
 export type StopFn = (time?: number) => any
 
 export interface ExtendedSampleStart extends SampleStart {
+  [CHANNEL_NAME_KEY]?: string | number
+  [ORIGINAL_NOTE_KEY]?: string | number
   [PLAY_STARTED_AT_KEY]?: number
   [TARGET_ID_KEY]?: string
   [USER_PLAY_FLAG_KEY]?: boolean
 }
 
 export interface StartOptions {
+  channelName?: string | number
   id?: string
   isUserStart?: boolean
 }
 
 export interface PlayOptions {
+  channelName?: string | number
   id: string
   notes?: SampleStart[]
   totalDuration: number
@@ -76,34 +82,39 @@ export const createSplendidGrandPianoExtended = (
   })
 
   const start = (payload: SampleStart, options: StartOptions = {}) => {
-    const {id = '', isUserStart = false} = options
-    const {time = 0, velocity = 1} = payload
+    const {channelName, id = '', isUserStart = false} = options
+    const {time = 0, velocity = 1, note} = payload
 
     return _piano.start({
       ...payload,
+      [CHANNEL_NAME_KEY]: channelName,
+      [ORIGINAL_NOTE_KEY]: note,
       [PLAY_STARTED_AT_KEY]: _piano.context.currentTime,
       [TARGET_ID_KEY]: id,
       [USER_PLAY_FLAG_KEY]: isUserStart,
+      stopId: isUserStart
+        ? undefined
+        : `${channelName ?? ''}${channelName === undefined ? '' : '|'}${note}`,
       time: time + _piano.context.currentTime,
       velocity: velocity * HUNDRED,
     } as any)
   }
 
   const play = (payload: PlayOptions) => {
-    const {notes, id} = payload
-
-    console.log('play', payload)
+    const {notes, id, channelName} = payload
 
     if (!notes) {
       return
     }
 
     _piano.stop()
+    // 유저 트리거에 의한 audio context 활설화를 위하여
+    _piano.context.resume()
     _startedAt = _piano.context.currentTime
     _currentPlay = payload
 
     for (const note of notes) {
-      start(note, {id, isUserStart: false})
+      start(note, {channelName, id, isUserStart: false})
     }
   }
 
@@ -156,7 +167,11 @@ export const createSplendidGrandPianoExtended = (
   }
 
   const up = (key: string | number | SampleStart) => {
-    _piano.stop(key)
+    if (typeof key === 'string' || typeof key === 'number') {
+      _piano.stop({stopId: String(key), time: _piano.context.currentTime})
+    } else {
+      _piano.stop(key)
+    }
   }
 
   const seek = (time: number) => {

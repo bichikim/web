@@ -13,11 +13,12 @@ import {getAudioContext} from 'src/use/instruments/prepare-audio-context'
 import {createEmitter, EmitterListener} from './emitter'
 import {useIsCleanup} from '@winter-love/solid-use'
 import {
+  CHANNEL_NAME_KEY,
   createSplendidGrandPianoExtended,
-  PLAY_STARTED_AT_KEY,
+  ExtendedSampleStart,
+  ORIGINAL_NOTE_KEY,
   PlayOptions as PlayOptionsExtended,
   SplendidGrandPianoExtended,
-  TARGET_ID_KEY,
   USER_PLAY_FLAG_KEY,
 } from './splendid-grand-piano-extended'
 import {OnEmitInstrumentPayload} from 'src/components/real-button/use-global-touch'
@@ -69,12 +70,6 @@ export interface SplendidGrandPianoController
 
 export type StopFn = (time?: number) => any
 
-export interface ExtendedSampleStart extends SampleStart {
-  [PLAY_STARTED_AT_KEY]?: number
-  [TARGET_ID_KEY]?: string
-  [USER_PLAY_FLAG_KEY]?: boolean
-}
-
 export type SplendidGrandPianoContextProps = [
   Accessor<SplendidGrandPianoState>,
   SplendidGrandPianoController,
@@ -124,35 +119,36 @@ export const createSplendidGrandPiano = (
     () => state().playingId !== '' && !state().suspended && !isEnd(),
   )
 
-  const handelEnded = (payload: ExtendedSampleStart, channelName: string | number) => {
+  const handelEnded = (payload: ExtendedSampleStart) => {
     if (payload[USER_PLAY_FLAG_KEY]) {
       return
     }
-    const id = payload.stopId
+
+    const id = payload[ORIGINAL_NOTE_KEY]
 
     if (id === undefined) {
       return
     }
 
     onEmitInstrument?.(new Set([String(id)]), {
-      channelName,
+      channelName: payload[CHANNEL_NAME_KEY],
       isDown: false,
       renderOnly: true,
     })
   }
 
-  const handleStart = (payload: ExtendedSampleStart, channelName: string | number) => {
+  const handleStart = (payload: ExtendedSampleStart) => {
     if (payload[USER_PLAY_FLAG_KEY]) {
       return
     }
-    const id = payload.stopId
+    const id = payload[ORIGINAL_NOTE_KEY]
 
     if (id === undefined) {
       return
     }
 
     onEmitInstrument?.(new Set([String(id)]), {
-      channelName,
+      channelName: payload[CHANNEL_NAME_KEY],
       isDown: true,
       renderOnly: true,
     })
@@ -211,14 +207,11 @@ export const createSplendidGrandPiano = (
     return isPlaying()
   })
 
-  const createChannelPiano = (
-    audioContext: AudioContext,
-    channelName: string | number,
-  ): SplendidGrandPianoExtended => {
+  const createChannelPiano = (audioContext: AudioContext): SplendidGrandPianoExtended => {
     return createSplendidGrandPianoExtended(audioContext, {
       ...options,
-      onEnded: (payload) => handelEnded(payload, channelName),
-      onStart: (payload) => handleStart(payload, channelName),
+      onEnded: handelEnded,
+      onStart: handleStart,
     })
   }
 
@@ -236,19 +229,13 @@ export const createSplendidGrandPiano = (
       if (!window || !_audioContext || isCleanup()) {
         return
       }
-      const playablePiano = createChannelPiano(_audioContext, PLAY_ABLE_CHANNEL_NAME)
+      const playablePiano = createChannelPiano(_audioContext)
 
       _playablePiano = playablePiano
 
       _playablePiano.load.then(() => {
         if (isCleanup()) {
           return
-        }
-
-        if (_playablePiano) {
-          console.log('start')
-          _playablePiano.__original.context.resume()
-          _playablePiano.start({note: 'C4'})
         }
 
         // eslint-disable-next-line max-nested-callbacks
@@ -280,16 +267,12 @@ export const createSplendidGrandPiano = (
     return _playablePiano
   }
 
-  const stopAutoPiano = () => {
-    for (const piano of _autoPianoMap.values()) {
-      piano.stop()
-    }
+  const stop = () => {
+    getPlayAblePiano().stop()
   }
 
-  const suspendAutoPiano = () => {
-    for (const piano of _autoPianoMap.values()) {
-      piano.suspend()
-    }
+  const suspend = () => {
+    getPlayAblePiano().suspend()
 
     setState((prev) => ({
       ...prev,
@@ -297,10 +280,8 @@ export const createSplendidGrandPiano = (
     }))
   }
 
-  const resumeAutoPiano = (time?: number) => {
-    for (const piano of _autoPianoMap.values()) {
-      piano.resume(time)
-    }
+  const resume = (time?: number) => {
+    getPlayAblePiano().resume(time)
 
     setState((prev) => ({
       ...prev,
@@ -308,29 +289,20 @@ export const createSplendidGrandPiano = (
     }))
   }
 
-  const playAutoPiano = (payload: PlayOptions) => {
+  const play = (payload: PlayOptions) => {
     const {id, midi, totalDuration} = payload
 
     if (!midi || !_audioContext) {
       return
     }
 
-    stopAutoPiano()
+    stop()
 
-    const oldPianoMap = new Map(_autoPianoMap)
-
-    _autoPianoMap.clear()
     const piano = getPlayAblePiano()
 
     for (const [channelName, notes] of midi.entries()) {
-      // if (piano) {
-      //   _autoPianoMap.set(channelName, piano)
-      // } else {
-      //   piano = createChannelPiano(_audioContext, channelName)
-      //   _autoPianoMap.set(channelName, piano)
-      // }
-
       piano.play({
+        channelName,
         id,
         notes,
         totalDuration,
@@ -347,10 +319,8 @@ export const createSplendidGrandPiano = (
     }))
   }
 
-  const seekPlayerPiano = (time: number) => {
-    for (const piano of _autoPianoMap.values()) {
-      piano.seek(time)
-    }
+  const seek = (time: number) => {
+    getPlayAblePiano().seek(time)
 
     setState((prev) => ({
       ...prev,
@@ -358,23 +328,23 @@ export const createSplendidGrandPiano = (
     }))
   }
 
-  const downPlayablePiano = (key: string | number | SampleStart): StopFn => {
+  const down = (key: string | number | SampleStart): StopFn => {
     return getPlayAblePiano().down(key)
   }
 
-  const upPlayablePiano = (key: string | number) => {
+  const up = (key: string | number) => {
     return getPlayAblePiano().up(key)
   }
 
   const controller: SplendidGrandPianoController = {
     ...emitter,
-    down: downPlayablePiano,
-    play: playAutoPiano,
-    resume: resumeAutoPiano,
-    seek: seekPlayerPiano,
-    stop: stopAutoPiano,
-    suspend: suspendAutoPiano,
-    up: upPlayablePiano,
+    down,
+    play,
+    resume,
+    seek,
+    stop,
+    suspend,
+    up,
   }
 
   return [state, controller]

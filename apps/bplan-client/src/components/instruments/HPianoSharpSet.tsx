@@ -8,8 +8,9 @@ interface SharpData {
   rightEmpty?: boolean
 }
 
-const keyLoopCount = 12
+// const keyLoopCount = 12
 const keyOffset = 5
+
 const sharpSet = flatten(
   Array.from<SharpData[]>({length: 14})
     .fill([
@@ -22,8 +23,8 @@ const sharpSet = flatten(
       {key: 11, name: 'F#'},
     ])
     .map((item, setIndex) => {
-      return item.map(({key, name, rightEmpty}) => ({
-        key: keyLoopCount * setIndex + key,
+      return item.map(({name, rightEmpty}) => ({
+        key: `${name}${setIndex - 1}`,
         name,
         rightEmpty,
       }))

@@ -7,8 +7,9 @@ interface FlatData {
   name: string
 }
 
-const keyLoopCount = 12
+// const keyLoopCount = 12
 const keyOffset = 4
+
 const flatSet = flatten(
   Array.from<FlatData[]>({length: 14})
     .fill([
@@ -21,8 +22,8 @@ const flatSet = flatten(
       {key: 12, name: 'G'},
     ])
     .map((item, setIndex) => {
-      return item.map(({key, name}) => {
-        const _key = keyLoopCount * setIndex + key
+      return item.map(({name}) => {
+        const _key = `${name}${setIndex - 1}`
         const setName = `${name} ${setIndex - 1}`
 
         return {key: _key, name: setName}
