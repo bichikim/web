@@ -6,6 +6,7 @@ import {SplendidGrandPianoContext} from 'src/use/instruments'
 import {useStorage} from '@winter-love/solid-use'
 import {SScale} from 'src/components/scale'
 import {HUNDRED} from '@winter-love/utils'
+import {getStorageKey} from 'src/utils/storage-key'
 
 export interface HomePageProps {
   presetTitle?: string
@@ -22,7 +23,7 @@ export default function HomePage() {
    */
   const [savedMainScrollLeft, setSavedMainScrollLeft] = useStorage<number | null>(
     'local',
-    '__piano_scroll_left__',
+    getStorageKey('piano-scroll-left'),
     {
       initValue: null,
     },
@@ -33,7 +34,11 @@ export default function HomePage() {
 
   onMount(() => {
     const element = mainElement()
-    const savedScrollLeft = savedMainScrollLeft()
+    let savedScrollLeft = savedMainScrollLeft()
+
+    if (Number.isNaN(savedScrollLeft)) {
+      savedScrollLeft = null
+    }
 
     if (element) {
       element.scrollLeft =
