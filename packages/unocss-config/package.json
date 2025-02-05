@@ -8,6 +8,7 @@
     "uno.config.ts"
   ],
   "devDependencies": {
+    "unocss-preset-useful": "^0.9.2",
     "@unocss/preset-attributify": "^65.4.0",
     "@unocss/preset-icons": "^65.4.0",
     "@unocss/preset-legacy-compat": "^65.4.0",

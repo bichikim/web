@@ -9,9 +9,10 @@ import {
 import {MusicInfo} from 'src/components/midi-player/SFileItem'
 import {RepeatType} from 'src/components/midi-player/types'
 import {SplendidGrandPianoController, SplendidGrandPianoState} from 'src/use/instruments'
-import {SPlayerController} from './SPlayerController'
+import {SPlayerController, SPlayerControllerProps} from './SPlayerController'
 
-export interface SPlayerProps {
+export interface SPlayerProps
+  extends Omit<SPlayerControllerProps, 'onSelect' | 'onSelect' | 'onSuspend'> {
   initMusics?: MusicInfo[]
   onMusicsChange?: (musics: MusicInfo[]) => void
   onSetting?: () => void

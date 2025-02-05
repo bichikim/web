@@ -1,10 +1,10 @@
 import {now} from '@winter-love/lodash'
-import {ComponentProps, JSX, splitProps} from 'solid-js'
+import {ComponentProps, createMemo, JSX, splitProps} from 'solid-js'
 import {Dynamic} from 'solid-js/web'
 
 const DEFAULT_DOUBLE_CLICK_GAP = 250
 
-export type HButtonType = 'button' | 'anchor'
+export type HButtonType = 'button' | 'anchor' | 'anchor-button'
 
 export interface HButtonProps
   extends Omit<
@@ -12,6 +12,7 @@ export interface HButtonProps
     'onClick' | 'onTouchEnd' | 'onDblClick' | 'onTouchStart' | 'type'
   > {
   doubleClickGap?: number
+  href?: string
   onClick?: JSX.EventHandler<HTMLButtonElement, MouseEvent | TouchEvent>
   onDoubleClick?: JSX.EventHandler<HTMLButtonElement, MouseEvent | TouchEvent>
   onTouchEnd?: JSX.EventHandler<HTMLButtonElement, TouchEvent>
@@ -53,6 +54,7 @@ export const HButton = (props: HButtonProps) => {
     'onTouchStart',
     'doubleClickGap',
     'type',
+    'href',
   ])
 
   /**
@@ -121,14 +123,27 @@ export const HButton = (props: HButtonProps) => {
     clickTime = newClickTime
   }
 
+  const href = createMemo(() => {
+    switch (innerProps.type) {
+      case 'anchor': {
+        return innerProps.href
+      }
+
+      default: {
+        return ''
+      }
+    }
+  })
+
   return (
     <Dynamic
-      component={innerProps.type === 'anchor' ? 'a' : 'button'}
+      component={innerProps.type === 'button' ? 'button' : 'a'}
       {...restProps}
       onClick={handleClick}
       onDblClick={handleDoubleClick}
       onTouchEnd={handleTouchEnd}
       onTouchStart={handleTouchStart}
+      href={href()}
     >
       {props.children}
     </Dynamic>

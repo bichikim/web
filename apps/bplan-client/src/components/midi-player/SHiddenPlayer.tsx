@@ -6,6 +6,7 @@ import {
   mergeProps,
   Show,
   splitProps,
+  untrack,
   ValidComponent,
 } from 'solid-js'
 import {Dynamic} from 'solid-js/web'
@@ -15,18 +16,19 @@ import {SPlayer, SPlayerProps} from './SPlayer'
 import {SettingData, SSetting} from './SSetting'
 
 export interface SHiddenPlayerProps
-  extends Omit<SPlayerProps, 'onPlaying'>,
+  extends Omit<SPlayerProps, 'onPlaying' | 'onPlay'>,
     Omit<JSX.HTMLAttributes<HTMLElement>, 'onPlay'> {
   component?: ValidComponent
   onSettingDataChange?: (data: SettingData) => void
   pianoMinScale?: number
   settingData?: SettingData
+  initShow?: boolean
 }
 
 export type SurfaceKind = 'player' | 'setting'
 
 const rootStyle = cva(
-  'relative duration-150 bg-white rd-2 flex flex-col duration-150 gap-2',
+  'relative duration-150 bg-white rd-2 flex flex-col duration-150 gap-2 bg-opacity-80 backdrop-blur-sm b-2 b-white/90',
   {
     variants: {
       isSetting: {
@@ -73,7 +75,8 @@ export const SHiddenPlayer = (props: SHiddenPlayerProps) => {
     'onSettingDataChange',
     'pianoMinScale',
   ])
-  const [isShow, setIsShow] = createSignal(false)
+  const initShow = untrack(() => props.initShow ?? false)
+  const [isShow, setIsShow] = createSignal(initShow)
   const [surfaceKind, setSurfaceKind] = createSignal<SurfaceKind>('player')
 
   const handleClose = () => {

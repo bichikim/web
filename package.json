@@ -62,6 +62,8 @@
     "@winter-love/solid-test": "workspace:*",
     "@winter-love/unocss-config": "workspace:*",
     "@winter-love/vite-plugin-monorepo-alias": "workspace:*",
+    "@iconify-json/hugeicons": "^1.2.3",
+    "@iconify-json/tabler": "^1.2.13",
     "concurrently": "^9.1.2",
     "cpx2": "^8.0.0",
     "cross-env": "^7.0.3",
