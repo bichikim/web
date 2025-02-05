@@ -3,12 +3,9 @@ import {
   createSplendidGrandPianoExtended,
   PLAY_STARTED_AT_KEY,
   PlayOptions,
-  SampleStart,
-  StopFn,
   TARGET_ID_KEY,
   USER_PLAY_FLAG_KEY,
 } from './splendid-grand-piano-extended'
-import {SplendidGrandPiano} from 'smplr'
 import {getAudioContext} from './prepare-audio-context'
 
 vi.mock('smplr', () => {

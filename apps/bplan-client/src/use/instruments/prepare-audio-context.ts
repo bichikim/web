@@ -16,13 +16,14 @@ export const getAudioContext = (): AudioContext | undefined => {
   __audioContext = new StandardizedAudioContext() as any
 
   const activateAudioContext = () => {
-    console.log('activateAudioContext', __audioContext)
     if (__audioContext) {
       __audioContext.resume()
       const source = __audioContext.createBufferSource()
+
       source.connect(__audioContext.destination)
       source.start()
     }
+
     window.removeEventListener('touchstart', activateAudioContext)
     window.removeEventListener('mousedown', activateAudioContext)
     window.removeEventListener('mousemove', activateAudioContext)

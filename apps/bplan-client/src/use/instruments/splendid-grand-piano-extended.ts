@@ -122,7 +122,7 @@ export const createSplendidGrandPianoExtended = (
     const suspendedTime = time ?? _suspendedTime
     const {notes} = _currentPlay ?? {}
 
-    _startedAt = _piano.context.currentTime - _suspendedTime
+    _startedAt = _piano.context.currentTime - suspendedTime
     _suspendedTime = 0
 
     if (!notes) {
@@ -142,19 +142,21 @@ export const createSplendidGrandPianoExtended = (
       })
 
       for (const note of leftNotes) {
-        _piano.start(note)
+        start(note)
       }
     }
   }
 
-  const suspend = () => {
-    _suspendedTime = _piano.context.currentTime - _startedAt
+  const suspend = (time?: number) => {
+    _suspendedTime = time ?? _piano.context.currentTime - _startedAt
 
     return _piano.stop()
   }
 
   const stop = (payload?: SampleStart) => {
     _currentPlay = undefined
+    _suspendedTime = 0
+    _startedAt = 0
     _piano.stop(payload)
   }
 
@@ -175,8 +177,14 @@ export const createSplendidGrandPianoExtended = (
   }
 
   const seek = (time: number) => {
-    _piano.stop()
-    resume(time)
+    const isSuspended = _suspendedTime > 0
+
+    if (isSuspended) {
+      suspend(time)
+    } else {
+      _piano.stop()
+      resume(time)
+    }
   }
 
   const getPlayedTime = () => {

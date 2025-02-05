@@ -75,8 +75,6 @@ export type SplendidGrandPianoContextProps = [
   SplendidGrandPianoController,
 ]
 
-const PLAY_ABLE_CHANNEL_NAME = 'default'
-
 // eslint-disable-next-line max-lines-per-function
 export const createSplendidGrandPiano = (
   options: Omit<SplendidGrandPianoOptions, 'onEnded' | 'onStart'> = {},
@@ -167,7 +165,7 @@ export const createSplendidGrandPiano = (
   }
 
   const updateLeftTime = () => {
-    const piano = _autoPianoMap.get(PLAY_ABLE_CHANNEL_NAME)
+    const piano = getPlayAblePiano()
 
     if (!piano) {
       return
@@ -269,6 +267,15 @@ export const createSplendidGrandPiano = (
 
   const stop = () => {
     getPlayAblePiano().stop()
+
+    setState((prev) => ({
+      ...prev,
+      leftTime: 0,
+      playedTime: 0,
+      playingId: '',
+      suspended: false,
+      totalDuration: 0,
+    }))
   }
 
   const suspend = () => {
@@ -320,10 +327,14 @@ export const createSplendidGrandPiano = (
   }
 
   const seek = (time: number) => {
-    getPlayAblePiano().seek(time)
+    const piano = getPlayAblePiano()
+
+    // stop interval updating leftTime
+    piano.seek(time)
 
     setState((prev) => ({
       ...prev,
+      leftTime: piano.getLeftTime(),
       playedTime: time,
     }))
   }

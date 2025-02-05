@@ -1,12 +1,11 @@
-import {createMemo, JSX, Show, splitProps} from 'solid-js'
+import {createMemo, JSX, mergeProps, splitProps} from 'solid-js'
 import {cx} from 'class-variance-authority'
-import {HButton, HButtonProps} from '@winter-love/solid-components'
+import {HButton, HButtonProps, HButtonType} from '@winter-love/solid-components'
 
 export interface SPlayerButtonProps
-  extends Pick<HButtonProps, 'class' | 'children' | 'title'> {
+  extends Pick<HButtonProps, 'class' | 'children' | 'title' | 'type'> {
   href?: string
   onClick?: JSX.EventHandler<HTMLElement, MouseEvent | TouchEvent>
-  type?: 'button' | 'anchor'
 }
 
 /**
@@ -26,7 +25,9 @@ export interface SPlayerButtonProps
  * @prop {(event: Event) => void} [onClick] - Event handler for click events
  */
 export const SPlayerButton = (props: SPlayerButtonProps) => {
-  const [innerProps, restProps] = splitProps(props, ['onClick', 'class', 'type', 'href'])
+  const defaultProps = mergeProps({type: 'button' as HButtonType}, props)
+
+  const [innerProps, restProps] = splitProps(defaultProps, ['class', 'type', 'onClick'])
 
   const handelClick: SPlayerButtonProps['onClick'] = (event) => {
     innerProps.onClick?.(event)
@@ -34,28 +35,20 @@ export const SPlayerButton = (props: SPlayerButtonProps) => {
 
   const className = createMemo(() =>
     cx(
-      'flex px-6px py-2px b-0 rd-1 cursor-pointer overflow-hidden bg-#f4f5f6 justify-center items-center text-black',
+      'flex px-6px py-2px b-0 rd-1 cursor-pointer overflow-hidden bg-gray-100',
+      'justify-center items-center text-black touch-none',
       innerProps.class,
     ),
   )
 
   return (
-    <Show
-      when={innerProps.type === 'button'}
-      fallback={
-        <a
-          {...restProps}
-          class={className()}
-          onClick={handelClick}
-          href={innerProps.href}
-        >
-          {props.children}
-        </a>
-      }
+    <HButton
+      {...restProps}
+      class={className()}
+      onClick={handelClick}
+      type={innerProps.type}
     >
-      <HButton {...restProps} class={className()} onClick={handelClick}>
-        {props.children}
-      </HButton>
-    </Show>
+      {props.children}
+    </HButton>
   )
 }
