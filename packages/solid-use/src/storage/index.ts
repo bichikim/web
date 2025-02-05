@@ -4,7 +4,7 @@ import {
   setAnyStorageItem,
   StorageOptions,
 } from '@winter-love/utils'
-import {Accessor, createEffect, createSignal, onMount, Setter} from 'solid-js'
+import {Accessor, createSignal, onMount, Setter} from 'solid-js'
 import {resolveAccessor} from 'src/resolve-accessor'
 import {MaybeAccessor} from 'src/types'
 
@@ -68,6 +68,7 @@ export const useStorage: UseStorage = (
   const beforeValue = mounted ? null : getAnyStorageItem(kind, keyAccessor(), initValue)
   const [value, _setValue] = createSignal(beforeValue)
   const activeAccessor = resolveAccessor(active)
+  let isMounted = false
 
   onMount(() => {
     if (enforceValue) {
@@ -76,23 +77,19 @@ export const useStorage: UseStorage = (
       // once
       setValue(() => getAnyStorageItem(kind, keyAccessor(), initValue))
     }
+
+    isMounted = true
   })
 
   const setValue: any = (_value) => {
     const result = _setValue(_value)
 
-    if (activeAccessor()) {
+    if (isMounted && activeAccessor()) {
       setAnyStorageItem(kind, keyAccessor(), value(), options)
     }
 
     return result
   }
-
-  createEffect(() => {
-    if (activeAccessor()) {
-      setAnyStorageItem(kind, keyAccessor(), null, options)
-    }
-  })
 
   return [value, setValue]
 }

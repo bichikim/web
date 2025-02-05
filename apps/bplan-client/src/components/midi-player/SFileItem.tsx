@@ -33,19 +33,19 @@ export interface SFileItemProps
     MusicInfo {
   dragExecuteSize?: number
   index?: number
-  leftTime?: number
   onDelete?: (id: string) => void
   onGenerate?: (id: string) => void
   onPlay?: (id: string) => void
   onResume?: () => void
   onSelect?: (id: string) => void
   onSuspend?: () => void
+  playedTime?: number
 }
 
 const rootStyle = cx(
   'gap-4 p-0 b-0 bg-transparent text-5 flex-shrink-0 h-9 mb-0.3125rem last:mb-0',
   'after:bg-gray-300 after:h-.25 first:after:hidden after:content-[""] after:absolute',
-  'after:top--0.1875rem after:left-0.5rem after:w-[calc(100%-1rem)] cursor-pointer',
+  'after:top--0.1875rem after:left-0.5rem after:w-[calc(100%-1rem)] cursor-pointer touch-none',
 )
 
 const indexStyle = cva('', {
@@ -97,7 +97,7 @@ export const SFileItem = (props: SFileItemProps) => {
     'selected',
     'generated',
     'ext',
-    'leftTime',
+    'playedTime',
     'playing',
     'totalDuration',
     'onDelete',
@@ -111,7 +111,7 @@ export const SFileItem = (props: SFileItemProps) => {
   }
 
   const progress = createMemo(
-    () => ((innerProps.leftTime ?? 0) / (innerProps.totalDuration ?? 1)) * HUNDRED,
+    () => ((innerProps.playedTime ?? 0) / (innerProps.totalDuration ?? 1)) * HUNDRED,
   )
 
   const handleDelete = () => {
@@ -129,7 +129,7 @@ export const SFileItem = (props: SFileItemProps) => {
   }
 
   const showPlayingIcon = createMemo(
-    () => innerProps.playing && (innerProps.leftTime ?? 0) < innerProps.totalDuration,
+    () => innerProps.playing && (innerProps.playedTime ?? 0) < innerProps.totalDuration,
   )
 
   return (

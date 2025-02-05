@@ -54,9 +54,10 @@ export const SHiddenPlayer = (props: SHiddenPlayerProps) => {
   const defaultProps = mergeProps(
     {
       component: 'div',
-      pianoState: {
+      playState: {
         leftTime: 0,
         loaded: false,
+        playedTime: 0,
         playingId: '',
         startedAt: 0,
         suspended: false,
@@ -89,16 +90,15 @@ export const SHiddenPlayer = (props: SHiddenPlayerProps) => {
 
   const isPlaying = createMemo(
     () =>
-      defaultProps.pianoState.playingId !== '' &&
-      defaultProps.pianoState.leftTime < defaultProps.pianoState.totalDuration &&
-      !defaultProps.pianoState.suspended,
+      defaultProps.playState.playingId !== '' &&
+      defaultProps.playState.leftTime < defaultProps.playState.totalDuration &&
+      !defaultProps.playState.suspended,
   )
 
   const handleSurfaceKindChange = (kind: SurfaceKind) => {
     setSurfaceKind(kind)
   }
 
-  // Dynamic component has an error with ssr prefetching hydration
   return (
     <Dynamic component={innerProps.component} class={props.class ?? 'relative'}>
       <SClose

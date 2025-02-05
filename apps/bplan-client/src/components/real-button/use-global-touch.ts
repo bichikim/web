@@ -32,21 +32,26 @@ export const getGlobalTouch = (element: Element): string | null => {
   return element.getAttribute(ELEMENT_IDENTIFIER_GLOBAL_TOUCH)
 }
 
-export const emitAllIds = (
-  ids: Set<string>,
-  value: boolean,
-  renderOnly: boolean = false,
-) => {
+export interface OnEmitInstrumentPayload {
+  channelName?: string | number
+  isDown: boolean
+  renderOnly?: boolean
+}
+
+export const emitAllIds = (ids: Set<string>, payload: OnEmitInstrumentPayload) => {
   const window = getWindow()
 
   if (!window) {
     return
   }
+  const {channelName, isDown, renderOnly} = payload
 
   for (const id of ids) {
     const eventName = generateGlobalTouchEventName(id)
 
-    window.dispatchEvent(new CustomEvent(eventName, {detail: {down: value, renderOnly}}))
+    window.dispatchEvent(
+      new CustomEvent(eventName, {detail: {channelName, down: isDown, renderOnly}}),
+    )
   }
 }
 
@@ -168,7 +173,7 @@ export const useGlobalTouchEmitter = (options: UseGlobalTouchEmitterOptions = {}
     mouseDown = true
     const {ids} = getPointedIds({x: event.pageX, y: event.pageY}, takeFirst)
 
-    emitAllIds(ids, true)
+    emitAllIds(ids, {isDown: true})
 
     for (const id of ids) {
       savedDownIds.add(id)
@@ -184,7 +189,7 @@ export const useGlobalTouchEmitter = (options: UseGlobalTouchEmitterOptions = {}
 
     mouseDown = false
     //
-    emitAllIds(savedDownIds, false)
+    emitAllIds(savedDownIds, {isDown: false})
     savedDownIds.clear()
   })
 
@@ -210,8 +215,8 @@ export const useGlobalTouchEmitter = (options: UseGlobalTouchEmitterOptions = {}
       savedDownIds.delete(id)
     }
 
-    emitAllIds(downIds, true)
-    emitAllIds(upIds, false)
+    emitAllIds(downIds, {isDown: true})
+    emitAllIds(upIds, {isDown: false})
   })
 
   useEvent(getWindow, 'touchstart', (event) => {
@@ -227,7 +232,7 @@ export const useGlobalTouchEmitter = (options: UseGlobalTouchEmitterOptions = {}
       savedDownIds.add(id)
     }
 
-    emitAllIds(downIds, true)
+    emitAllIds(downIds, {isDown: true})
   })
 
   const updateDownIds = (event: TouchEvent) => {
@@ -249,8 +254,8 @@ export const useGlobalTouchEmitter = (options: UseGlobalTouchEmitterOptions = {}
       savedDownIds.delete(id)
     }
 
-    emitAllIds(downIds, true)
-    emitAllIds(upIds, false)
+    emitAllIds(downIds, {isDown: true})
+    emitAllIds(upIds, {isDown: false})
   }
 
   useEvent(getWindow, 'touchmove', updateDownIds)
@@ -267,8 +272,8 @@ export const useGlobalDown = (id: string): Accessor<DownEventPayload> => {
   useEvent(
     getWindow,
     eventName,
-    ({detail: {down, renderOnly}}: CustomEvent<DownEventPayload>) => {
-      setIsDown({down, renderOnly})
+    ({detail: {down, renderOnly, channelName}}: CustomEvent<DownEventPayload>) => {
+      setIsDown({channelName, down, renderOnly})
     },
   )
 

@@ -7,8 +7,8 @@ import {cx} from 'class-variance-authority'
  * extend HTML DIV Element attributes
  */
 export interface SSeekerProps extends JSX.ButtonHTMLAttributes<HTMLButtonElement> {
-  leftTime?: number
   onSeek?: (time: number) => void
+  playedTime?: number
   totalDuration?: number
 }
 
@@ -18,15 +18,19 @@ export interface SSeekerProps extends JSX.ButtonHTMLAttributes<HTMLButtonElement
  * @constructor
  */
 export const SSeeker = (props: SSeekerProps) => {
-  const defaultProps = mergeProps({leftTime: 0, totalDuration: 0}, props)
-  const [innerProps, restProps] = splitProps(defaultProps, ['leftTime', 'totalDuration'])
+  const defaultProps = mergeProps({playedTime: 0, totalDuration: 0}, props)
+
+  const [innerProps, restProps] = splitProps(defaultProps, [
+    'playedTime',
+    'totalDuration',
+  ])
 
   const progress = createMemo(() => {
     if (innerProps.totalDuration === 0) {
       return 0
     }
 
-    return innerProps.leftTime / innerProps.totalDuration
+    return innerProps.playedTime / innerProps.totalDuration
   })
   const [element, setElement] = createSignal<HTMLElement | null>(null)
 

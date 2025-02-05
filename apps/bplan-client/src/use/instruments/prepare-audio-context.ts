@@ -1,6 +1,5 @@
 import {getWindow} from '@winter-love/utils'
 import {AudioContext as StandardizedAudioContext} from 'standardized-audio-context'
-
 let __audioContext: AudioContext | undefined
 
 export const getAudioContext = (): AudioContext | undefined => {
@@ -17,7 +16,14 @@ export const getAudioContext = (): AudioContext | undefined => {
   __audioContext = new StandardizedAudioContext() as any
 
   const activateAudioContext = () => {
-    __audioContext?.resume()
+    if (__audioContext) {
+      __audioContext.resume()
+      const source = __audioContext.createBufferSource()
+
+      source.connect(__audioContext.destination)
+      source.start()
+    }
+
     window.removeEventListener('touchstart', activateAudioContext)
     window.removeEventListener('mousedown', activateAudioContext)
     window.removeEventListener('mousemove', activateAudioContext)

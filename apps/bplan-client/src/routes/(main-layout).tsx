@@ -10,6 +10,7 @@ import {
 import {emitAllIds} from 'src/components/real-button/use-global-touch'
 import {useCookie} from 'src/use/cookie'
 import {createSplendidGrandPiano, SplendidGrandPianoContext} from 'src/use/instruments'
+import {getStorageKey} from 'src/utils/storage-key'
 
 const getSelfUrl = () => {
   return import.meta.env.VITE_API_URL ?? 'http://localhost:3000'
@@ -47,16 +48,19 @@ export default function MainLayout(props: RouteSectionProps) {
   const [searchParams] = useSearchParams<{preset?: string}>()
   const [preset] = createResource(() => getPreset(searchParams.preset))
 
-  const [settingData, setSettingData] = useCookie<SettingData>('coong__piano-setting', {
-    keepPlayList: true,
-    pianoSize: 100,
-    showKeyName: false,
-  })
+  const [settingData, setSettingData] = useCookie<SettingData>(
+    getStorageKey('piano-setting'),
+    {
+      keepPlayList: true,
+      pianoSize: 100,
+      showKeyName: false,
+    },
+  )
   const isActiveStore = createMemo(() => Boolean(settingData().keepPlayList))
 
   const [musics, setMusics] = useStorage<MusicInfo[]>(
     'local',
-    'coong:piano-musics-default',
+    getStorageKey('piano-musics-default'),
     {
       active: isActiveStore,
       enforceValue: preset()?.musics,
@@ -84,8 +88,7 @@ export default function MainLayout(props: RouteSectionProps) {
             settingData={settingData()}
             initMusics={musics()}
             pianoController={splendidGrandPianoController}
-            pianoState={splendidGrandPiano()}
-            leftTime={splendidGrandPiano().leftTime}
+            playState={splendidGrandPiano()}
             onSettingDataChange={handleSettingDataChange}
             onMusicsChange={handleMusicsChange}
             class="absolute bottom-0 right-0 max-w-100vw"
