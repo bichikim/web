@@ -1,8 +1,6 @@
-import {} from 'solid-js'
+import {freeze} from '@winter-love/utils'
 
-export const WDialog = () => {
-  // todo WIP
-}
+export const Dialog = {}
 
 export const DialogPolyfillMode = () => {
   // todo WIP

@@ -1,26 +1,33 @@
-import {cva} from 'class-variance-authority'
-import {Component} from 'solid-js'
+import {cva, cx} from 'class-variance-authority'
+import {Component, splitProps} from 'solid-js'
 import {HButton, HButtonProps} from '@winter-love/solid-components'
 
 interface SButtonProps extends HButtonProps {
   glass?: boolean
+  outline?: boolean
   size?: 'sm' | 'md' | 'lg'
-  variant?: 'primary' | 'secondary' | 'outline'
+  variant?: 'primary' | 'secondary' | 'default'
 }
 
 const buttonStyles = cva(
-  'font-medium transition-all inline-flex items-center justify-center gap-2' +
-    'select-none outline-none backdrop-blur-sm shadow-sm',
+  cx(
+    'font-medium inline-flex items-center justify-center gap-2',
+    'select-none shadow-sm outline-offset-2 cursor-pointer',
+  ),
   {
     defaultVariants: {
       glass: false,
+      outline: false,
       size: 'md',
       variant: 'primary',
     },
     variants: {
       glass: {
-        false: '',
-        true: 'backdrop-blur-sm bg-opacity-80',
+        false: 'b-opacity-0',
+        true: 'backdrop-blur-sm bg-opacity-90 b-opacity-80 focus:outline-opacity-50',
+      },
+      outline: {
+        true: 'b-1 b-solid',
       },
       size: {
         lg: 'h-11 px-6 rd-lg text-lg',
@@ -29,33 +36,31 @@ const buttonStyles = cva(
       },
       variant: {
         default: [
-          'bg-gray-100 c-gray-900',
+          ' c-gray-900 b-gray-100',
           'hover:bg-gray-200',
-          'focus:ring-2 focus:ring-gray-500 focus:ring-offset-2',
+          // eslint-disable-next-line max-len
+          'bg-[radial-gradient(at_90%_30%,_theme(colors.gray.300/_var(--un-bg-opacity,_1))_50%,_theme(colors.white/_var(--un-bg-opacity,_1))_130%)]',
+          'hover:bg-[radial-gradient(_theme(colors.gray.100),_theme(colors.gray.100))] hover:b-gray-100',
+          ' focus:enabled:outline-gray-100 focus:enabled:outline-2 focus:enabled:outline-solid',
           'active:bg-gray-300',
           'disabled:bg-gray-100 disabled:c-gray-400',
-          'b-2 b-transparent',
-        ],
-        outline: [
-          'b-2 bg-white/80 c-gray-900',
-          'hover:bg-gray-50',
-          'focus:ring-2 focus:ring-gray-500 focus:ring-offset-2',
-          'active:bg-gray-100b',
-          'disabled:bg-white disabled:c-gray-300 disabled:b-gray-200',
         ],
         primary: [
-          'bg-blue-600 c-white b-transparent',
-          'hover:bg-blue-700',
-          'focus:ring-2 focus:ring-blue-500 focus:ring-offset-2',
-          'active:bg-blue-800',
-          'disabled:bg-blue-100 disabled:c-blue-400',
+          ' c-white b-blue-500',
+          // eslint-disable-next-line max-len
+          'bg-[radial-gradient(at_90%_30%,_theme(colors.blue.600/_var(--un-bg-opacity,_1))_50%,_theme(colors.blue.200/_var(--un-bg-opacity,_1))_130%)]',
+          'hover:enabled:bg-[radial-gradient(_theme(colors.blue.600),_theme(colors.blue.600))]',
+          ' hover:enabled:b-blue-600',
+          ' focus:outline-blue-600 focus:outline-2 focus:outline-solid',
+          'disabled:bg-opacity-70 disabled:c-blue-200',
         ],
         secondary: [
-          'bg-indigo-600 c-white b-transparent',
-          'hover:bg-indigo-700',
-          'focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2',
-          'active:bg-indigo-800',
-          'disabled:bg-indigo-50 disabled:c-indigo-300',
+          'c-white b-indigo-500',
+          // eslint-disable-next-line max-len
+          'bg-[radial-gradient(at_90%_30%,_theme(colors.indigo.600/_var(--un-bg-opacity,_1))_50%,_theme(colors.indigo.200/_var(--un-bg-opacity,_1))_130%)]',
+          'hover:bg-[radial-gradient(_theme(colors.indigo.600),_theme(colors.indigo.600))] hover:b-indigo-600',
+          'focus:enabled:outline-indigo-600 focus:enabled:outline-2 focus:enabled:outline-solid',
+          'disabled:bg-indigo-100 disabled:c-indigo-300',
         ],
       },
     },
@@ -63,14 +68,16 @@ const buttonStyles = cva(
 )
 
 export const SButton: Component<SButtonProps> = (props) => {
+  const [innerProps, restProps] = splitProps(props, ['class', 'glass', 'size', 'variant'])
+
   return (
     <HButton
-      {...props}
+      {...restProps}
       class={buttonStyles({
-        class: props.class,
-        glass: props.glass,
-        size: props.size,
-        variant: props.variant,
+        class: innerProps.class,
+        glass: innerProps.glass,
+        size: innerProps.size,
+        variant: innerProps.variant,
       })}
     />
   )

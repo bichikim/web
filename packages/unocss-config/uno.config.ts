@@ -3,6 +3,19 @@ import presetLegacyCompat from '@unocss/preset-legacy-compat'
 import transformerVariantGroup from '@unocss/transformer-variant-group'
 import transformerCompileClass from '@unocss/transformer-compile-class'
 import {defineUsefulConfig} from 'unocss-preset-useful'
+import * as theme from '@unocss/preset-uno/theme'
+
+const HUNDRED = 100
+
+const toNumber = (value: string, defaultValue: number): number => {
+  const result = Number(value)
+
+  if (Number.isNaN(result)) {
+    return defaultValue
+  }
+
+  return result
+}
 
 const readSizeName = (name: string): string => {
   switch (name) {
@@ -24,7 +37,11 @@ const readSizeName = (name: string): string => {
 }
 
 export default defineUsefulConfig(
-  {},
+  {
+    attributify: false,
+    remToPx: false,
+    theme,
+  },
   {
     content: {
       pipeline: {
@@ -42,8 +59,17 @@ export default defineUsefulConfig(
       presetLegacyCompat({
         commaStyleColorFunction: true,
       }),
-    ],
+    ] as any,
     rules: [
+      // outline opacity
+      [
+        /^outline-opacity-(.+)$/u,
+        ([, value]) => {
+          return {
+            '--un-outline-color-opacity': toNumber(value, HUNDRED) / HUNDRED,
+          }
+        },
+      ],
       // inject var
       [
         /^var-(.+)=(.+)$/u,
@@ -88,11 +114,11 @@ export default defineUsefulConfig(
       ],
       // preset var
       [
-        /^(top|left|right|bottom)-var(-.+)?$/u,
+        /^(top|left|right|bottom)-var-(.+)?$/u,
         ([, direction, variableName]) => {
           if (variableName) {
             return {
-              [direction]: `var(--var${variableName})`,
+              [direction]: `var(--var-${variableName})`,
             }
           }
 
@@ -102,13 +128,13 @@ export default defineUsefulConfig(
         },
       ],
       [
-        /^(width|height|w|h)-var(-.+)?$/u,
+        /^(width|height|w|h)-var-(.+)?$/u,
         ([, direction, variableName]) => {
           const kind = readSizeName(direction)
 
           if (variableName) {
             return {
-              [kind]: `var(--var${variableName})`,
+              [kind]: `var(--var-${variableName})`,
             }
           }
 
@@ -180,9 +206,12 @@ export default defineUsefulConfig(
       },
       breakpoints: {
         md: '768px',
-        sm: '375px',
+        sm: '376px',
+      },
+      colors: {
+        primary: 'var(--un-color-primary)',
       },
     },
-    transformers: [transformerVariantGroup(), transformerCompileClass()],
+    transformers: [transformerVariantGroup(), transformerCompileClass()] as any,
   },
 )

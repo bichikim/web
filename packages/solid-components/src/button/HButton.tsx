@@ -1,5 +1,5 @@
 import {now} from '@winter-love/lodash'
-import {ComponentProps, createMemo, JSX, splitProps} from 'solid-js'
+import {ComponentProps, createMemo, JSX, mergeProps, splitProps} from 'solid-js'
 import {Dynamic} from 'solid-js/web'
 
 const DEFAULT_DOUBLE_CLICK_GAP = 250
@@ -47,7 +47,14 @@ export const HButton = (props: HButtonProps) => {
   let clickTime = 0
   let touchdown = false
 
-  const [innerProps, restProps] = splitProps(props, [
+  const defaultProps = mergeProps(
+    {
+      type: 'button',
+    },
+    props,
+  )
+
+  const [innerProps, restProps] = splitProps(defaultProps, [
     'onClick',
     'onTouchEnd',
     'onDoubleClick',

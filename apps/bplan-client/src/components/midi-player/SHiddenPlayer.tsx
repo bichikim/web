@@ -19,16 +19,17 @@ export interface SHiddenPlayerProps
   extends Omit<SPlayerProps, 'onPlaying' | 'onPlay'>,
     Omit<JSX.HTMLAttributes<HTMLElement>, 'onPlay'> {
   component?: ValidComponent
+  initShow?: boolean
   onSettingDataChange?: (data: SettingData) => void
   pianoMinScale?: number
   settingData?: SettingData
-  initShow?: boolean
 }
 
 export type SurfaceKind = 'player' | 'setting'
 
 const rootStyle = cva(
-  'relative duration-150 bg-white rd-2 flex flex-col duration-150 gap-2 bg-opacity-80 backdrop-blur-sm b-2 b-white/90',
+  'relative duration-150 bg-white rd-2 flex flex-col duration-150 gap-2 bg-opacity-80 ' +
+    'backdrop-blur-sm b-2 b-white/90 shadow-md',
   {
     variants: {
       isSetting: {
@@ -111,6 +112,8 @@ export const SHiddenPlayer = (props: SHiddenPlayerProps) => {
         isPlaying={isPlaying()}
         aria-expanded={isShow() ? 'true' : 'false'}
         aria-controls="__midi_player__"
+        playedTime={defaultProps.playState.playedTime}
+        totalTime={defaultProps.playState.totalDuration}
       />
       <section
         title="midi player"

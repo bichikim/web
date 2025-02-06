@@ -34,6 +34,14 @@ const meta = {
         defaultValue: {summary: 'undefined'},
       },
     },
+    outline: {
+      control: 'boolean',
+      description: '버튼 테두리 유무',
+      table: {
+        category: 'Props',
+        defaultValue: {summary: 'false'},
+      },
+    },
     size: {
       control: 'select',
       description: '버튼 크기',
@@ -46,7 +54,7 @@ const meta = {
     variant: {
       control: 'select',
       description: '버튼 스타일 변형',
-      options: ['primary', 'secondary', 'outline', 'default'],
+      options: ['primary', 'secondary', 'default'],
       table: {
         category: 'Props',
         defaultValue: {summary: 'primary'},
@@ -82,14 +90,6 @@ export const Default: Story = {
     children: '기본 버튼',
     size: 'md',
     variant: 'default',
-  },
-}
-
-export const Outline: Story = {
-  args: {
-    children: '외곽선 버튼',
-    size: 'md',
-    variant: 'outline',
   },
 }
 
