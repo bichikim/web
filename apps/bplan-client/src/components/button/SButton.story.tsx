@@ -12,9 +12,25 @@ const meta = {
         defaultValue: {summary: 'false'},
       },
     },
+    flat: {
+      control: 'boolean',
+      description: '버튼 플랫 유무',
+      table: {
+        category: 'Props',
+        defaultValue: {summary: 'false'},
+      },
+    },
     glass: {
       control: 'boolean',
       description: '버튼 배경 투명도',
+      table: {
+        category: 'Props',
+        defaultValue: {summary: 'false'},
+      },
+    },
+    loading: {
+      control: 'boolean',
+      description: '로딩 상태',
       table: {
         category: 'Props',
         defaultValue: {summary: 'false'},
@@ -37,6 +53,14 @@ const meta = {
     outline: {
       control: 'boolean',
       description: '버튼 테두리 유무',
+      table: {
+        category: 'Props',
+        defaultValue: {summary: 'false'},
+      },
+    },
+    preventLoadingDisabled: {
+      control: 'boolean',
+      description: '로딩 비활성화 방지',
       table: {
         category: 'Props',
         defaultValue: {summary: 'false'},
@@ -71,7 +95,7 @@ type Story = StoryObj<typeof meta>
 
 export const Primary: Story = {
   args: {
-    children: '기본 버튼',
+    children: '주요 버튼',
     size: 'md',
     variant: 'primary',
   },
@@ -82,6 +106,22 @@ export const Secondary: Story = {
     children: '보조 버튼',
     size: 'md',
     variant: 'secondary',
+  },
+}
+
+export const Danger: Story = {
+  args: {
+    children: '위험 버튼',
+    size: 'md',
+    variant: 'danger',
+  },
+}
+
+export const Warning: Story = {
+  args: {
+    children: '경고 버튼',
+    size: 'md',
+    variant: 'warning',
   },
 }
 
@@ -111,5 +151,12 @@ export const Disabled: Story = {
   args: {
     children: '비활성화 버튼',
     disabled: true,
+  },
+}
+
+export const LoadingNumber: Story = {
+  args: {
+    children: '비활성화 버튼',
+    loading: 50,
   },
 }

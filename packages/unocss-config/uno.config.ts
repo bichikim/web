@@ -61,6 +61,15 @@ export default defineUsefulConfig(
       }),
     ] as any,
     rules: [
+      // chip
+      [
+        /^chip-(inset|circle|path)-(.+)$/u,
+        ([, variableName, value]) => {
+          return {
+            'clip-path': `${variableName}(${value})`,
+          }
+        },
+      ],
       // outline opacity
       [
         /^outline-opacity-(.+)$/u,
@@ -179,12 +188,16 @@ export default defineUsefulConfig(
       animation: {
         counts: {
           blink: 'infinite',
+          loading: 'infinite',
         },
         durations: {
           blink: '1s',
+          loading: '2s',
         },
         keyframes: {
           blink: '{0%, 100% { opacity: 0.5; } 50% { opacity: 1; }}',
+          loading:
+            '{0% { transform: translateX(-100%); } 100% { transform: translateX(100%); }}',
         },
       },
       boxShadow: {
