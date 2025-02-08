@@ -38,7 +38,7 @@ const rootStyle = cva(
       },
       isShow: {
         false: 'w-0 h-0',
-        true: 'min-w-88 max-w-200 p-2 mx-1 mb-1',
+        true: 'md:max-w-180 w-400 p-2 mx-1 mb-1 max-w-full',
       },
     },
   },

@@ -124,10 +124,10 @@ export const SMidiFileInput = (props: HMidiFileInputProps) => {
         tabIndex="0"
         onKeyDown={handleKeyDown}
       >
-        <span class="text-nowrap md:text-6 text-4 md:pt-.5 sm:inline-block hidden truncate flex-shrink-1">
+        <span class="text-nowrap text-6 md:pt-.5 sm:inline-block hidden truncate flex-shrink-1">
           Click or Drop{' '}
         </span>
-        <span class="inline-block i-tabler:file-plus text-6 px-1 pt-2 md:h-6 sm:h-5 h-9 w-9" />
+        <span class="inline-block i-tabler:file-plus text-6 px-1 pt-2 md:h-7 md:w-7 h-9 w-9" />
         <span class="text-nowrap md:inline hidden md:text-6 text-4 md:pt-.5">
           Your files
         </span>

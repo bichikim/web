@@ -2,7 +2,7 @@ import {cva} from 'class-variance-authority'
 import {Component, createMemo, splitProps} from 'solid-js'
 import {HButton, HButtonProps} from '@winter-love/solid-components'
 
-interface SButtonProps extends HButtonProps {
+export interface SButtonProps extends HButtonProps {
   flat?: boolean
   glass?: boolean
   loading?: number | boolean
@@ -97,7 +97,7 @@ const buttonStyles = cva(
       loadingAnimation: false,
       outline: false,
       size: 'md',
-      variant: 'primary',
+      variant: 'default',
     },
     variants: {
       flat: {
@@ -112,11 +112,11 @@ const buttonStyles = cva(
           'before:w-full before:h-full before:opacity-70',
           'before:content-[""] before:absolute before:left-0 before:top-0 before:right-0 before:bottom-0',
           'before:inset-0 before:bg-gradient-to-r before:from-transparent before:w-var-close-percent',
-          'before:pointer-events-none',
+          'before:pointer-events-none animate-pulse-alt',
         ],
       },
       loadingAnimation: {
-        true: 'before:animate-loading animate-pulse-alt',
+        true: 'before:animate-loading',
       },
       outline: {
         false: 'var-padding-offset=1px',
@@ -134,19 +134,19 @@ const buttonStyles = cva(
           'disabled:c-red-200 before:to-red-300',
         ],
         default: [
-          ' c-black b-gray-100',
-          ' focus-visible:outline-gray-100 focus-visible:outline-2 focus-visible:outline-solid',
-          ' disabled:c-gray-400 before:to-gray-300',
+          'c-black b-gray-100',
+          'focus-visible:outline-gray-100 focus-visible:outline-2 focus-visible:outline-solid',
+          'disabled:c-gray-400 before:to-gray-300',
         ],
         primary: [
-          ' c-white b-blue-600',
-          ' focus-visible:outline-blue-600 focus-visible:outline-2 focus-visible:outline-solid',
-          ' disabled:c-blue-200 before:to-white',
+          'c-white b-blue-600',
+          'focus-visible:outline-blue-600 focus-visible:outline-2 focus-visible:outline-solid',
+          'disabled:c-blue-200 before:to-white',
         ],
         secondary: [
           'c-white b-indigo-600',
           'focus-visible:outline-indigo-600 focus-visible:outline-2 focus-visible:outline-solid',
-          ' disabled:c-indigo-200 before:to-white',
+          'disabled:c-indigo-200 before:to-white',
         ],
         warning: [
           'c-white b-orange-400',

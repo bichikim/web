@@ -66,7 +66,7 @@ export function SSettingItem<T extends SSettingItemType>(props: SSettingItemProp
           />
         </Match>
         <Match when={innerProps.type === 'button'}>
-          <button class="p-2 touch-none" onClick={handleClick}>
+          <button class="p-2 touch-none bg-gray-200 rd-2" onClick={handleClick}>
             Run
           </button>
         </Match>
