@@ -29,7 +29,7 @@ const meta = {
   },
   args: {onClick: fn(), onDoubleClick: fn()},
   component: HButton,
-  title: 'Solid/components/button',
+  title: 'Solid/Components/Button/HButton',
 } satisfies Meta<typeof HButton>
 
 export default meta

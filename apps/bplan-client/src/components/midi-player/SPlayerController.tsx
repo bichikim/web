@@ -7,14 +7,17 @@ import {SPlayerButton} from './SPlayerButton'
 import {SRepeatButton} from './SRepeatButton'
 import {RepeatType} from './types'
 import {SSeeker} from './SSeeker'
-import {useLocation} from '@solidjs/router'
+
+export type LinkType = 'piano' | 'music'
 
 export interface SPlayerControllerProps
   extends Omit<JSX.HTMLAttributes<HTMLElement>, 'onPlay' | 'onSelect' | 'onPlaying'> {
   isSuspend?: boolean
+  linkType?: LinkType
   onAddItem?: (payload: MusicInfo[]) => void
   onChangeRepeat?: (value: RepeatType) => void
   onDeleteItem?: (id: string) => void
+  onLink?: (value: LinkType) => void
   onPlay?: (id: string) => void
   onResume?: () => void
   onSeek?: (time: number) => void
@@ -42,6 +45,7 @@ const playStyle = cva('block text-8', {
 export const SPlayerController = (props: SPlayerControllerProps) => {
   const innerProps = mergeProps(
     {
+      linkType: 'piano' as const,
       playList: [],
       playedTime: 0,
       playingId: '',
@@ -51,7 +55,6 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
     },
     props,
   )
-  const location = useLocation()
 
   const isSuspend = createMemo(() => {
     return Boolean(innerProps.isSuspend)
@@ -93,9 +96,9 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
     }
   }
 
-  const isPianoPage = createMemo(() => {
-    return location.pathname === '/'
-  })
+  const handleLink = () => {
+    innerProps.onLink?.(innerProps.linkType)
+  }
 
   return (
     <>
@@ -143,15 +146,15 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
         />
         <SMidiFileInput class="min-w-11 px-2" onAdd={handleAddPlayItem} />
         <SPlayerButton
-          type="anchor"
+          type="anchor-button"
           class="min-w-11 min-h-9 bg-gray-100"
-          href={isPianoPage() ? '/music' : '/'}
-          title={isPianoPage() ? 'get music more' : 'piano'}
+          onClick={handleLink}
+          title={innerProps.linkType === 'music' ? 'get music more' : 'piano'}
         >
           <span
             class={cx(
               'block text-9',
-              isPianoPage() ? 'i-tabler:music-plus' : 'i-tabler:piano',
+              innerProps.linkType === 'music' ? 'i-tabler:music-plus' : 'i-tabler:piano',
             )}
           />
         </SPlayerButton>

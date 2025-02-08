@@ -41,7 +41,7 @@
     "@solid-devtools/debugger": "^0.26.0",
     "@types/js-cookie": "^3.0.6",
     "@types/serviceworker": "^0.0.108",
-    "@unocss/vite": "^0.65.3",
+    "@unocss/vite": "^65.4.3",
     "@vite-pwa/assets-generator": "^0.2.6",
     "@vitejs/plugin-legacy": "6.0.0",
     "@winter-love/sw": "workspace:*",
@@ -51,7 +51,7 @@
     "solid-devtools": "0.33.0",
     "terser": "^5.37.0",
     "typescript": "^5.7.3",
-    "unocss": "^0.65.3",
+    "unocss": "^65.4.3",
     "vue-tsc": "^2.2.0"
   },
   "engines": {

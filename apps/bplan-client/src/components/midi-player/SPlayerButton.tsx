@@ -1,9 +1,9 @@
-import {createMemo, JSX, mergeProps, splitProps} from 'solid-js'
-import {cx} from 'class-variance-authority'
-import {HButton, HButtonProps, HButtonType} from '@winter-love/solid-components'
+import {JSX, mergeProps, splitProps} from 'solid-js'
+import {HButtonType} from '@winter-love/solid-components'
+import {SButton, SButtonProps} from 'src/components/button'
 
 export interface SPlayerButtonProps
-  extends Pick<HButtonProps, 'class' | 'children' | 'title' | 'type'> {
+  extends Pick<SButtonProps, 'class' | 'children' | 'title' | 'type'> {
   href?: string
   onClick?: JSX.EventHandler<HTMLElement, MouseEvent | TouchEvent>
 }
@@ -33,22 +33,18 @@ export const SPlayerButton = (props: SPlayerButtonProps) => {
     innerProps.onClick?.(event)
   }
 
-  const className = createMemo(() =>
-    cx(
-      'flex px-6px py-2px b-0 rd-1 cursor-pointer overflow-hidden bg-gray-100',
-      'justify-center items-center text-black touch-none',
-      innerProps.class,
-    ),
-  )
+  // px-6px py-2px b-0 rd-1 cursor-pointer bg-gray-100 overflow-hidden
 
   return (
-    <HButton
+    <SButton
       {...restProps}
-      class={className()}
+      flat
+      variant="default"
+      class={innerProps.class}
       onClick={handelClick}
       type={innerProps.type}
     >
       {props.children}
-    </HButton>
+    </SButton>
   )
 }
