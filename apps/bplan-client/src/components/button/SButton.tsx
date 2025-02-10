@@ -189,7 +189,7 @@ export const SButton: Component<SButtonProps> = (props) => {
   })
 
   const isLoadingAnimation = createMemo(() => {
-    return typeof innerProps.loading !== 'number' && innerProps.loading
+    return innerProps.loading === true
   })
 
   const isDisabled = createMemo(() => {
