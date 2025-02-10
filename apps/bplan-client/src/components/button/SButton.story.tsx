@@ -93,6 +93,15 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
+export const OverrideClass: Story = {
+  args: {
+    children: '주요 버튼',
+    class: 'absolute left-20 top-20',
+    size: 'md',
+    variant: 'primary',
+  },
+}
+
 export const Primary: Story = {
   args: {
     children: '주요 버튼',
