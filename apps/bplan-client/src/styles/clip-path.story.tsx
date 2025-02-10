@@ -19,7 +19,7 @@ const Template = (props: RounededPolygonProps & {height: number; width: number})
           width: `${props.width}px`,
         }}
       >
-        Hello world
+        Hello
       </div>
     </>
   )
