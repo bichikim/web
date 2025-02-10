@@ -7,15 +7,17 @@ import {SPlayerButton} from './SPlayerButton'
 import {SRepeatButton} from './SRepeatButton'
 import {RepeatType} from './types'
 import {SSeeker} from './SSeeker'
-import {useLocation} from '@solidjs/router'
+
+export type LinkType = 'piano' | 'music'
 
 export interface SPlayerControllerProps
   extends Omit<JSX.HTMLAttributes<HTMLElement>, 'onPlay' | 'onSelect' | 'onPlaying'> {
   isSuspend?: boolean
-  leftTime?: number
+  linkType?: LinkType
   onAddItem?: (payload: MusicInfo[]) => void
   onChangeRepeat?: (value: RepeatType) => void
   onDeleteItem?: (id: string) => void
+  onLink?: (value: LinkType) => void
   onPlay?: (id: string) => void
   onResume?: () => void
   onSeek?: (time: number) => void
@@ -24,6 +26,7 @@ export interface SPlayerControllerProps
   onStop?: () => void
   onSuspend?: () => void
   playList?: MusicInfo[]
+  playedTime?: number
   playingId?: string
   repeat?: RepeatType
   selectedId?: string
@@ -42,8 +45,9 @@ const playStyle = cva('block text-8', {
 export const SPlayerController = (props: SPlayerControllerProps) => {
   const innerProps = mergeProps(
     {
-      leftTime: 0,
+      linkType: 'piano' as const,
       playList: [],
+      playedTime: 0,
       playingId: '',
       repeat: 'no' as const,
       selectedId: '',
@@ -51,7 +55,6 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
     },
     props,
   )
-  const location = useLocation()
 
   const isSuspend = createMemo(() => {
     return Boolean(innerProps.isSuspend)
@@ -61,13 +64,13 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
     return (
       !isSuspend() &&
       innerProps.playingId === innerProps.selectedId &&
-      innerProps.leftTime < innerProps.totalDuration
+      innerProps.playedTime < innerProps.totalDuration
     )
   })
 
   const isEnd = createMemo(() => {
     return (
-      Boolean(innerProps.playingId) && innerProps.totalDuration <= innerProps.leftTime
+      Boolean(innerProps.playingId) && innerProps.totalDuration <= innerProps.playedTime
     )
   })
 
@@ -93,9 +96,9 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
     }
   }
 
-  const isPianoPage = createMemo(() => {
-    return location.pathname === '/'
-  })
+  const handleLink = () => {
+    innerProps.onLink?.(innerProps.linkType)
+  }
 
   return (
     <>
@@ -110,13 +113,13 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
           onPlay={innerProps.onPlay}
           onSuspend={innerProps.onSuspend}
           onResume={innerProps.onResume}
-          leftTime={innerProps.leftTime}
+          playedTime={innerProps.playedTime}
           playingId={innerProps.playingId}
         />
       </Show>
       <SSeeker
         class="flex-1 min-h-2 relative rd-1 overflow-hidden b-0 w-full touch-none"
-        leftTime={innerProps.leftTime}
+        playedTime={innerProps.playedTime}
         totalDuration={innerProps.totalDuration}
         onSeek={innerProps.onSeek}
       />
@@ -143,14 +146,15 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
         />
         <SMidiFileInput class="min-w-11 px-2" onAdd={handleAddPlayItem} />
         <SPlayerButton
+          type="anchor-button"
           class="min-w-11 min-h-9 bg-gray-100"
-          href={isPianoPage() ? '/music' : '/'}
-          title={isPianoPage() ? 'get music more' : 'piano'}
+          onClick={handleLink}
+          title={innerProps.linkType === 'music' ? 'get music more' : 'piano'}
         >
           <span
             class={cx(
               'block text-9',
-              isPianoPage() ? 'i-tabler:music-plus' : 'i-tabler:piano',
+              innerProps.linkType === 'music' ? 'i-tabler:music-plus' : 'i-tabler:piano',
             )}
           />
         </SPlayerButton>

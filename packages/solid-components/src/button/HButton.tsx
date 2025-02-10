@@ -1,14 +1,23 @@
 import {now} from '@winter-love/lodash'
-import {ComponentProps, JSX, splitProps} from 'solid-js'
+import {ComponentProps, createMemo, JSX, mergeProps, splitProps} from 'solid-js'
+import {Dynamic} from 'solid-js/web'
 
 const DEFAULT_DOUBLE_CLICK_GAP = 250
 
+export type HButtonType = 'button' | 'anchor' | 'anchor-button'
+
 export interface HButtonProps
-  extends Omit<ComponentProps<'button'>, 'onClick' | 'onTouchEnd' | 'onDblClick'> {
+  extends Omit<
+    ComponentProps<'button'>,
+    'onClick' | 'onTouchEnd' | 'onDblClick' | 'onTouchStart' | 'type'
+  > {
   doubleClickGap?: number
+  href?: string
   onClick?: JSX.EventHandler<HTMLButtonElement, MouseEvent | TouchEvent>
   onDoubleClick?: JSX.EventHandler<HTMLButtonElement, MouseEvent | TouchEvent>
   onTouchEnd?: JSX.EventHandler<HTMLButtonElement, TouchEvent>
+  onTouchStart?: JSX.EventHandler<HTMLButtonElement, TouchEvent>
+  type?: HButtonType
 }
 
 /**
@@ -36,12 +45,23 @@ export interface HButtonProps
 export const HButton = (props: HButtonProps) => {
   // Previous click time used to check if current click is a double click
   let clickTime = 0
+  let touchdown = false
 
-  const [innerProps, restProps] = splitProps(props, [
+  const defaultProps = mergeProps(
+    {
+      type: 'button',
+    },
+    props,
+  )
+
+  const [innerProps, restProps] = splitProps(defaultProps, [
     'onClick',
     'onTouchEnd',
     'onDoubleClick',
+    'onTouchStart',
     'doubleClickGap',
+    'type',
+    'href',
   ])
 
   /**
@@ -50,8 +70,9 @@ export const HButton = (props: HButtonProps) => {
    * @param event The mouse event triggered by user interaction.
    */
   const handleClick: HButtonProps['onClick'] = (event: any) => {
-    // skip touch
-    if (event.pointerType === 'touch') {
+    // skip touch event
+    // skip anchor event because it will navigate to the href
+    if (event.pointerType === 'touch' || innerProps.type === 'anchor') {
       return
     }
 
@@ -63,7 +84,19 @@ export const HButton = (props: HButtonProps) => {
    * @param event The mouse event triggered by user interaction.
    */
   const handleDoubleClick: HButtonProps['onDoubleClick'] = (event) => {
+    // skip anchor event because it will navigate to the href
+    if (innerProps.type === 'anchor') {
+      return
+    }
+
+    // pass original event to parent
     innerProps.onDoubleClick?.(event)
+  }
+
+  const handleTouchStart: HButtonProps['onTouchStart'] = (event) => {
+    touchdown = true
+    // pass original event to parent
+    innerProps.onTouchStart?.(event)
   }
 
   /**
@@ -72,11 +105,21 @@ export const HButton = (props: HButtonProps) => {
    * @returns
    */
   const handleTouchEnd: HButtonProps['onTouchEnd'] = (event) => {
+    // pass original event to parent
+    innerProps.onTouchEnd?.(event)
+
+    // anchor use href to navigate
+    if (innerProps.type === 'anchor') {
+      return
+    }
+
     const doubleClickGap = innerProps.doubleClickGap ?? DEFAULT_DOUBLE_CLICK_GAP
     const newClickTime = now()
 
-    innerProps.onTouchEnd?.(event)
-    innerProps.onClick?.(event)
+    if (touchdown) {
+      innerProps.onClick?.(event)
+      touchdown = false
+    }
 
     if (newClickTime - clickTime < doubleClickGap) {
       handleDoubleClick(event)
@@ -87,14 +130,29 @@ export const HButton = (props: HButtonProps) => {
     clickTime = newClickTime
   }
 
+  const href = createMemo(() => {
+    switch (innerProps.type) {
+      case 'anchor': {
+        return innerProps.href
+      }
+
+      default: {
+        return ''
+      }
+    }
+  })
+
   return (
-    <button
+    <Dynamic
+      component={innerProps.type === 'button' ? 'button' : 'a'}
       {...restProps}
       onClick={handleClick}
       onDblClick={handleDoubleClick}
       onTouchEnd={handleTouchEnd}
+      onTouchStart={handleTouchStart}
+      href={href()}
     >
       {props.children}
-    </button>
+    </Dynamic>
   )
 }

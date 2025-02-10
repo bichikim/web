@@ -8,13 +8,13 @@ export interface SFileListProps
    * Currently suspended
    */
   isSuspend?: boolean
-  leftTime?: number
   list: MusicInfo[]
   onDelete?: (id: string) => void
   onPlay?: (id: string) => void
   onResume?: () => void
   onSelect?: (id: string) => void
   onSuspend?: () => void
+  playedTime?: number
   playingId?: string
   selectedId?: string
 }
@@ -50,7 +50,7 @@ export const SFileList = (props: SFileListProps) => {
     'list',
     'onSelect',
     'selectedId',
-    'leftTime',
+    'playedTime',
     'playingId',
     'onDelete',
     'onPlay',
@@ -120,7 +120,7 @@ export const SFileList = (props: SFileListProps) => {
               index={index()}
               selected={item.selected || item.id === innerProps.selectedId}
               class="w-full"
-              leftTime={innerProps.leftTime}
+              playedTime={innerProps.playedTime}
               isSuspend={innerProps.isSuspend}
               playing={item.id === innerProps.playingId}
               onSelect={handelSelect}

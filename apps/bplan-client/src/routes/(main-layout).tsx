@@ -1,7 +1,13 @@
-import {RouteSectionProps, useSearchParams} from '@solidjs/router'
+import {
+  RouteSectionProps,
+  useLocation,
+  useNavigate,
+  useSearchParams,
+} from '@solidjs/router'
 import {useStorage} from '@winter-love/solid-use'
 import {createMemo, createResource} from 'solid-js'
 import {
+  LinkType,
   MusicInfo,
   SettingContext,
   SettingData,
@@ -10,6 +16,7 @@ import {
 import {emitAllIds} from 'src/components/real-button/use-global-touch'
 import {useCookie} from 'src/use/cookie'
 import {createSplendidGrandPiano, SplendidGrandPianoContext} from 'src/use/instruments'
+import {getStorageKey} from 'src/utils/storage-key'
 
 const getSelfUrl = () => {
   return import.meta.env.VITE_API_URL ?? 'http://localhost:3000'
@@ -46,17 +53,26 @@ export default function MainLayout(props: RouteSectionProps) {
   })
   const [searchParams] = useSearchParams<{preset?: string}>()
   const [preset] = createResource(() => getPreset(searchParams.preset))
+  const location = useLocation()
+  const navigate = useNavigate()
 
-  const [settingData, setSettingData] = useCookie<SettingData>('coong__piano-setting', {
-    keepPlayList: true,
-    pianoSize: 100,
-    showKeyName: false,
-  })
+  const [settingData, setSettingData] = useCookie<SettingData>(
+    getStorageKey('piano-setting'),
+    {
+      keepPlayList: true,
+      pianoSize: 100,
+      showKeyName: false,
+    },
+  )
   const isActiveStore = createMemo(() => Boolean(settingData().keepPlayList))
+
+  const linkType = createMemo(() => {
+    return location.pathname === '/' ? 'music' : 'piano'
+  })
 
   const [musics, setMusics] = useStorage<MusicInfo[]>(
     'local',
-    'coong:piano-musics-default',
+    getStorageKey('piano-musics-default'),
     {
       active: isActiveStore,
       enforceValue: preset()?.musics,
@@ -73,6 +89,10 @@ export default function MainLayout(props: RouteSectionProps) {
     setMusics(musics)
   }
 
+  const handleLinkTypeChange = (linkType: LinkType) => {
+    navigate(linkType === 'piano' ? '/' : '/music')
+  }
+
   return (
     <SettingContext.Provider value={settingData}>
       <SplendidGrandPianoContext.Provider
@@ -81,13 +101,14 @@ export default function MainLayout(props: RouteSectionProps) {
         <div id="layout" class={layoutStyle}>
           {props.children}
           <SHiddenPlayer
+            linkType={linkType()}
             settingData={settingData()}
             initMusics={musics()}
             pianoController={splendidGrandPianoController}
-            pianoState={splendidGrandPiano()}
-            leftTime={splendidGrandPiano().leftTime}
+            playState={splendidGrandPiano()}
             onSettingDataChange={handleSettingDataChange}
             onMusicsChange={handleMusicsChange}
+            onLink={handleLinkTypeChange}
             class="absolute bottom-0 right-0 max-w-100vw"
           />
         </div>
