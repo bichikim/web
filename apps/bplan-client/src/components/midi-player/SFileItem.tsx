@@ -2,7 +2,7 @@ import {HUNDRED} from '@winter-love/utils'
 import {cva, cx} from 'class-variance-authority'
 import {createMemo, JSX, Show, splitProps} from 'solid-js'
 import {PlayOptions} from 'src/use/instruments'
-import {HDragExecute} from './HDragExecute'
+import {HDragExecute, HDragExecuteProps} from './HDragExecute'
 import {SProgress} from './SProgress'
 import {STypeIcon} from './STypeIcon'
 import type {Header} from '@tonejs/midi'
@@ -29,7 +29,7 @@ export interface MusicInfo extends PlayOptions {
 }
 
 export interface SFileItemProps
-  extends Omit<JSX.HTMLAttributes<HTMLButtonElement>, 'onSelect' | 'id' | 'onPlay'>,
+  extends Omit<HDragExecuteProps, 'id' | 'name' | 'onPlay' | 'onSelect'>,
     MusicInfo {
   dragExecuteSize?: number
   index?: number
@@ -56,30 +56,20 @@ const indexStyle = cva('', {
   },
 })
 
-const aiIconStyle = cva('flex origin-center flex-shrink-0', {
+const aiIconStyle = cva('flex origin-center flex-shrink-0 w-5 h-5', {
   variants: {
     generated: {
       false: 'text-gray-600 animate-blink animate-duration-1s cursor-pointer scale-170 ',
-      true: 'text-black select-none scale-140 ',
+      true: 'text-black select-none scale-100 ',
     },
   },
 })
 
 const nameStyle = cva('block line-height-6 truncate pb-.5', {
-  compoundVariants: [
-    {
-      class: 'text-gray line-through',
-      ext: true,
-      inProgress: true,
-    },
-  ],
   variants: {
-    ext: {
+    isPlayable: {
       false: 'text-gray line-through',
-      true: '',
-    },
-    inProgress: {
-      false: 'text-black',
+      true: 'text-black',
     },
   },
 })
@@ -132,6 +122,18 @@ export const SFileItem = (props: SFileItemProps) => {
     () => innerProps.playing && (innerProps.playedTime ?? 0) < innerProps.totalDuration,
   )
 
+  const isMidi = createMemo(() => innerProps.ext && innerProps.ext === 'midi')
+
+  const isPlayable = createMemo(
+    () =>
+      innerProps.ext === 'midi' ||
+      (innerProps.generated && !innerProps.inGeneratingProgress),
+  )
+
+  const showAiIcon = createMemo(
+    () => innerProps.ext !== 'midi' && !innerProps.inGeneratingProgress,
+  )
+
   return (
     <HDragExecute
       {...restProps}
@@ -169,29 +171,24 @@ export const SFileItem = (props: SFileItemProps) => {
       <span class="relative flex gap-1 flex-grow-1 flex-shrink-1 items-center overflow-hidden">
         <span
           class={nameStyle({
-            ext: Boolean(innerProps.ext),
-            inProgress: Boolean(innerProps.inGeneratingProgress),
+            isPlayable: Boolean(isPlayable()),
           })}
         >
           {innerProps.name}
         </span>
         <STypeIcon name={innerProps.ext} />
       </span>
-      <Show
-        when={innerProps.inGeneratingProgress}
-        fallback={<span class="w-5 h-5 c-black flex-shrink-0 i-tabler:piano" />}
-      >
-        <span class="scale-140 inline-flex origin-center flex-shrink-0">
-          <span class={cx('inline-block i-tabler:loader-2 c-black', 'animate-spin')} />
-        </span>
+      <Show when={isMidi()}>
+        <span class="w-5 h-5 c-black flex-shrink-0 i-tabler:piano" />
       </Show>
-      <Show
-        when={
-          innerProps.ext && innerProps.ext !== 'midi' && !innerProps.inGeneratingProgress
-        }
-      >
+      <Show when={showAiIcon()}>
         <span class={aiIconStyle({generated: Boolean(innerProps.generated)})}>
           <span class="inline-block i-hugeicons:artificial-intelligence-04" />
+        </span>
+      </Show>
+      <Show when={innerProps.inGeneratingProgress}>
+        <span class="scale-140 inline-flex origin-center flex-shrink-0">
+          <span class={cx('inline-block i-tabler:loader-2 c-black', 'animate-spin')} />
         </span>
       </Show>
       {innerProps.children}

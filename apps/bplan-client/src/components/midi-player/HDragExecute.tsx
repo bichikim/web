@@ -1,16 +1,9 @@
 import {Position} from '@winter-love/utils'
 import {cx} from 'class-variance-authority'
-import {
-  children,
-  ComponentProps,
-  createMemo,
-  createSignal,
-  JSX,
-  splitProps,
-} from 'solid-js'
-import {HButton} from '@winter-love/solid-components'
+import {children, createMemo, createSignal, JSX, splitProps} from 'solid-js'
+import {HButton, HButtonProps} from '@winter-love/solid-components'
 
-export interface HDragExecuteProps extends Omit<ComponentProps<'button'>, 'onClick'> {
+export interface HDragExecuteProps extends Omit<HButtonProps, 'onClick'> {
   containerClass?: string
   dragEndSize?: number
   dragExecuteSize?: number
