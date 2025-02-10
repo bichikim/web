@@ -86,7 +86,7 @@ export const DragExecute: Story = {
     dragExecuteSize: 90,
     ext: 'midi',
     index: 0,
-    name: '정지 아이템',
+    name: '밀기 가능 아이템',
     playedTime: 0,
     playing: false,
     totalDuration: 100,

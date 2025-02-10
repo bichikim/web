@@ -1,4 +1,5 @@
 export * from './button'
+export * from './drag-button'
 // export * from './scroll'
 // export * from './slider'
 // export * from './sticky'
