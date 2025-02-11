@@ -1,4 +1,4 @@
-/* eslint-disable id-length,unicorn/consistent-destructuring */
+/* eslint-disable id-length */
 import {RequestHandler} from 'express'
 import {imageContext} from './image-request'
 import sharp from 'sharp'
@@ -30,6 +30,7 @@ const MAX_SIZE = 2000
 
 const getCropSize = (width: number, maxSize: number, height?: number): Size => {
   const _height = height ?? width
+
   if (width <= maxSize && _height <= maxSize) {
     return {height: _height, width}
   }
@@ -42,6 +43,7 @@ const getCropSize = (width: number, maxSize: number, height?: number): Size => {
       width: maxSize,
     }
   }
+
   return {
     height: maxSize,
     width: Math.round(maxSize * aspectRatio),
@@ -51,7 +53,7 @@ const getCropSize = (width: number, maxSize: number, height?: number): Size => {
 export const imageTransform = (options: ImageTransformOptions = {}): RequestHandler => {
   const {maxSize = MAX_SIZE} = options
 
-  return async (req, res, next) => {
+  return async (req, _, next) => {
     const {query} = req
     const {w, h, c, q} = query
 
@@ -78,6 +80,7 @@ export const imageTransform = (options: ImageTransformOptions = {}): RequestHand
 
     if (crop && width) {
       const size = getCropSize(width, maxSize, height)
+
       transformer.resize(size.width, size.height, {
         fit: crop,
         position: position,
@@ -95,7 +98,6 @@ export const imageTransform = (options: ImageTransformOptions = {}): RequestHand
       format,
       image: transformedImage,
     })
-
     next()
   }
 }

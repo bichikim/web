@@ -5,8 +5,10 @@ describe('hook', () => {
   it('should this', async () => {
     const send = vi.fn()
     const next = vi.fn()
+
     const run = withHook(() => {
       const request = useRequest()
+
       return () => Promise.resolve(`hello, ${request.url}`)
     })
 
