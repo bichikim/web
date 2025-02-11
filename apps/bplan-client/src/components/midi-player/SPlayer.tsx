@@ -44,7 +44,6 @@ export interface SPlayerProps
  * @prop {SplendidGrandPianoController} [pianoController] - Piano controller instance
  * @prop {SplendidGrandPianoState} [pianoState] - Current state of the piano
  */
-// eslint-disable-next-line max-lines-per-function
 export const SPlayer = (props: SPlayerProps) => {
   const defaultProps = mergeProps(
     {
