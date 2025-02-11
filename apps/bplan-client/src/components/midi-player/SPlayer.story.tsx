@@ -7,7 +7,6 @@ const meta = {
     onPlay: {action: 'play clicked'},
     onSeek: {action: 'seek changed'},
     onStop: {action: 'stop clicked'},
-    onVolume: {action: 'volume changed'},
   },
   component: SPlayer,
   parameters: {

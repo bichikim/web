@@ -33,7 +33,6 @@ interface DragData {
   started: StartData
 }
 
-// eslint-disable-next-line max-lines-per-function
 export const HDragExecute = (props: HDragExecuteProps) => {
   const [innerProps, restProps] = splitProps(props, [
     'class',
