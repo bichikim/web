@@ -1,22 +1,45 @@
-import {HDragButton} from './HDragButton'
+import {HDragButton, HDragButtonProps} from './HDragButton'
 import type {Meta, StoryObj} from 'storybook-solidjs'
 import {fn} from '@storybook/test'
+import {DragButtonAside} from './DragButtonAside'
+import {DragButtonContent} from './DragButtonContent'
+
+const Template = (args: HDragButtonProps) => {
+  return (
+    <HDragButton {...args} class="relative ml-50 w-100px h-50px bg-red-500">
+      <DragButtonAside
+        position="left"
+        component="span"
+        class="h-80% bg-green-500 c-white block absolute left-0 top-0 overflow-hidden w-var-drag-x"
+      >
+        왼쪽으로 드래그 실행
+      </DragButtonAside>
+      <DragButtonContent
+        component="span"
+        class=" bg-yellow-500 c-white block absolute top-0 left-var-drag-x w-full h-full"
+      >
+        드레그버튼
+      </DragButtonContent>
+      <DragButtonAside
+        position="right"
+        component="span"
+        class="h-80% bg-blue-500 c-white block absolute right-0 top-0 overflow-hidden w-var-drag-x"
+      >
+        오른쪽으로 드래그 실행
+      </DragButtonAside>
+    </HDragButton>
+  )
+}
 
 const meta = {
   argTypes: {
     dragEndSize: {
       control: {type: 'number'},
-      defaultValue: 100,
       description: '드래그 가능한 최대 거리',
     },
     dragExecuteSize: {
       control: {type: 'number'},
-      defaultValue: 50,
       description: '드래그 실행 거리',
-    },
-    dragLeftChildren: {
-      control: {type: 'text'},
-      description: '왼쪽으로 드래그 시 보여질 컨텐츠',
     },
     onLeftExecute: {
       action: '왼쪽으로 드래그 실행',
@@ -26,23 +49,19 @@ const meta = {
     },
   },
   args: {
-    class: 'ml-50 w-100px h-50px bg-red-500',
-    containerClass: 'w-full h-80% bg-blue-500 c-white',
     dragEndSize: 50,
     dragExecuteSize: 50,
-    dragLeftChildren: <div class="w-full h-full bg-green-500 c-white">왼쪽 실행</div>,
-    dragRightChildren: <div class="w-full h-full bg-purple-500 c-white">오른쪽 실행</div>,
     onLeftExecute: fn(),
     onRightExecute: fn(),
   },
-  component: HDragButton,
+  component: Template,
   parameters: {
     backgrounds: {
       default: 'white',
     },
   },
   title: 'Solid/Components/DragButton/HDragButton',
-} satisfies Meta<typeof HDragButton>
+} satisfies Meta<typeof Template>
 
 export default meta
 type Story = StoryObj<typeof meta>

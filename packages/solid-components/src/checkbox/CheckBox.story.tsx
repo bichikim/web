@@ -1,30 +1,27 @@
-import {CheckboxBody, CheckboxIndicator, CheckboxRoot} from './'
 import {Meta, StoryObj} from 'storybook-solidjs'
-import {LabelContent} from 'src/label'
+import {Checkbox, CheckboxRootProps} from './index'
 
-const DefaultTemplate = (props: any) => {
+const Template = (props: CheckboxRootProps) => {
   return (
-    <CheckboxRoot {...props}>
-      <CheckboxBody component="div">
-        <CheckboxIndicator
+    <Checkbox.Root {...props}>
+      <Checkbox.Body component="div">
+        <Checkbox.Indicator
           component="span"
           class="w-20px h-20px bg-gray block data-[checked=true]:bg-red"
         />
-        <LabelContent>hello</LabelContent>
-      </CheckboxBody>
-    </CheckboxRoot>
+        <Checkbox.Label>hello</Checkbox.Label>
+      </Checkbox.Body>
+    </Checkbox.Root>
   )
 }
 
 const meta = {
-  component: CheckboxRoot,
-  title: 'Solid/components/checkbox',
-} satisfies Meta<typeof CheckboxRoot>
+  component: Template,
+  title: 'Solid/Components/checkbox',
+} satisfies Meta<typeof Template>
 
 export default meta
 
 type Story = StoryObj<typeof meta>
 
-export const Default: Story = {
-  render: (args) => <DefaultTemplate {...args} />,
-}
+export const Default: Story = {}

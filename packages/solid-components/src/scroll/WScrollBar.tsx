@@ -1,7 +1,7 @@
 import {sx, ValidStyle} from '@winter-love/solid-use'
 import {createMemo, mergeProps, splitProps, ValidComponent} from 'solid-js'
 import {Dynamic, DynamicProps} from 'solid-js/web'
-import {PERCENT_VAR} from 'src/css-var'
+import {PERCENT_VAR} from '../css-var'
 import {ScrollBarContext} from './scroll-bar-context'
 import {useScrollContext} from './scroll-context'
 import {ScrollBarType} from './types'

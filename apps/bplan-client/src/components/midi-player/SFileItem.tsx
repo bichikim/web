@@ -6,6 +6,7 @@ import {HDragExecute, HDragExecuteProps} from './HDragExecute'
 import {SProgress} from './SProgress'
 import {STypeIcon} from './STypeIcon'
 import type {Header} from '@tonejs/midi'
+import {DragButton} from '@winter-love/solid-components'
 
 export interface MusicInfo extends PlayOptions {
   dragEndSize?: number
@@ -135,63 +136,72 @@ export const SFileItem = (props: SFileItemProps) => {
   )
 
   return (
-    <HDragExecute
-      {...restProps}
-      title={innerProps.name}
-      class={cx(rootStyle, restProps.class)}
-      containerClass="px-4 gap-2"
+    <DragButton.Root
       onClick={handleSelect}
       onDoubleClick={handlePlayOrSuspend}
       onLeftExecute={handleDelete}
-      dragLeftChildren={
-        <span class="block w-[calc(100%-0.25rem)] h-full overflow-hidden bg-red p-1 box-border rd-1">
-          <span class="block w-full h-full i-tabler:trash bg-white " />
-        </span>
-      }
     >
-      <Show when={innerProps.playing}>
-        <SProgress
-          class="block absolute w-full h-full left-0 top-0"
-          selected={innerProps.selected}
-          progress={progress()}
-        />
-      </Show>
-      <Show when={innerProps.selected}>
-        <span class="block absolute bg-blue rd-1 top-0 left-0 w-full h-full opacity-40" />
-      </Show>
-      <Show when={showPlayingIcon()}>
-        <span class="block i-tabler:chevrons-right absolute text-gray-500 left-3" />
-      </Show>
-      <span class="relative block text-gray b-r-solid b-r-.25 b-r-gray-300 pr-2">
-        <span class={indexStyle({playing: showPlayingIcon()})}>
-          {(innerProps.index ?? 0) + 1}
-        </span>
-      </span>
-
-      <span class="relative flex gap-1 flex-grow-1 flex-shrink-1 items-center overflow-hidden">
-        <span
-          class={nameStyle({
-            isPlayable: Boolean(isPlayable()),
-          })}
+      <DragButton.Body
+        {...restProps}
+        component="button"
+        class={cx(rootStyle, restProps.class)}
+        title={innerProps.name}
+      >
+        <DragButton.Aside
+          position="left"
+          component="span"
+          class="block w-[calc(100%-0.25rem)] h-full overflow-hidden bg-red p-1 box-border rd-1"
         >
-          {innerProps.name}
-        </span>
-        <STypeIcon name={innerProps.ext} />
-      </span>
-      <Show when={isMidi()}>
-        <span class="w-5 h-5 c-black flex-shrink-0 i-tabler:piano" />
-      </Show>
-      <Show when={showAiIcon()}>
-        <span class={aiIconStyle({generated: Boolean(innerProps.generated)})}>
-          <span class="inline-block i-hugeicons:artificial-intelligence-04" />
-        </span>
-      </Show>
-      <Show when={innerProps.inGeneratingProgress}>
-        <span class="scale-140 inline-flex origin-center flex-shrink-0">
-          <span class={cx('inline-block i-tabler:loader-2 c-black', 'animate-spin')} />
-        </span>
-      </Show>
-      {innerProps.children}
-    </HDragExecute>
+          <span class="block w-full h-full i-tabler:trash bg-white " />
+        </DragButton.Aside>
+        <DragButton.Content component="span" class="px-4 gap-2">
+          <Show when={innerProps.playing}>
+            <SProgress
+              class="block absolute w-full h-full left-0 top-0"
+              selected={innerProps.selected}
+              progress={progress()}
+            />
+          </Show>
+          <Show when={innerProps.selected}>
+            <span class="block absolute bg-blue rd-1 top-0 left-0 w-full h-full opacity-40" />
+          </Show>
+          <Show when={showPlayingIcon()}>
+            <span class="block i-tabler:chevrons-right absolute text-gray-500 left-3" />
+          </Show>
+          <span class="relative block text-gray b-r-solid b-r-.25 b-r-gray-300 pr-2">
+            <span class={indexStyle({playing: showPlayingIcon()})}>
+              {(innerProps.index ?? 0) + 1}
+            </span>
+          </span>
+
+          <span class="relative flex gap-1 flex-grow-1 flex-shrink-1 items-center overflow-hidden">
+            <span
+              class={nameStyle({
+                isPlayable: Boolean(isPlayable()),
+              })}
+            >
+              {innerProps.name}
+            </span>
+            <STypeIcon name={innerProps.ext} />
+          </span>
+          <Show when={isMidi()}>
+            <span class="w-5 h-5 c-black flex-shrink-0 i-tabler:piano" />
+          </Show>
+          <Show when={showAiIcon()}>
+            <span class={aiIconStyle({generated: Boolean(innerProps.generated)})}>
+              <span class="inline-block i-hugeicons:artificial-intelligence-04" />
+            </span>
+          </Show>
+          <Show when={innerProps.inGeneratingProgress}>
+            <span class="scale-140 inline-flex origin-center flex-shrink-0">
+              <span
+                class={cx('inline-block i-tabler:loader-2 c-black', 'animate-spin')}
+              />
+            </span>
+          </Show>
+          {innerProps.children}
+        </DragButton.Content>
+      </DragButton.Body>
+    </DragButton.Root>
   )
 }

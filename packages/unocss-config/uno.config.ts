@@ -122,22 +122,22 @@ export default defineUsefulConfig(
         },
       ],
       // preset var
-      [
-        /^(top|left|right|bottom)-var-(.+)?$/u,
-        ([, direction, variableName]) => {
-          if (variableName) {
-            return {
-              [direction]: `var(--var-${variableName})`,
-            }
-          }
+      // [
+      //   /^(top|left|right|bottom)-var-(.+)?$/u,
+      //   ([, direction, variableName]) => {
+      //     if (variableName) {
+      //       return {
+      //         [direction]: `var(--var-${variableName})`,
+      //       }
+      //     }
 
-          return {
-            [direction]: `var(--var-${direction})`,
-          }
-        },
-      ],
+      //     return {
+      //       [direction]: `var(--var-${direction})`,
+      //     }
+      //   },
+      // ],
       [
-        /^(width|height|w|h)-var-(.+)?$/u,
+        /^(width|height|w|h|top|left|right|bottom)-var-(.+)?$/u,
         ([, direction, variableName]) => {
           const kind = readSizeName(direction)
 

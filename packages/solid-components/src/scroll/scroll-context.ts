@@ -1,5 +1,5 @@
 import {Accessor, createContext, Setter, useContext} from 'solid-js'
-import {ScrollBarType} from 'src/scroll/types'
+import {ScrollBarType} from '../scroll/types'
 
 export interface ScrollState {
   containerHeight: number

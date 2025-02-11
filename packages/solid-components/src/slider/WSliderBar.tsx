@@ -1,6 +1,6 @@
 import {createMemo, ValidComponent} from 'solid-js'
 import {Dynamic, DynamicProps} from 'solid-js/web'
-import {BAR_PERCENT} from 'src/css-var'
+import {BAR_PERCENT} from '../css-var'
 import {useSliderContext} from './slider-context'
 
 export type WSliderBarProps<T extends ValidComponent> = DynamicProps<T>

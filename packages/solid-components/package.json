@@ -25,6 +25,7 @@
   ],
   "scripts": {
     "build": "rollup -c rollup.config.js",
+    "test1": "tspc -p tsconfig.build.json",
     "check-types": "tsc --noEmit",
     "lint": "eslint src",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -37,6 +38,8 @@
     "solid-js": "^1.9.3"
   },
   "devDependencies": {
+    "rollup-plugin-typescript-paths": "1.5.0",
+    "@rollup/plugin-alias": "^5.1.1",
     "rollup": "^4.32.1",
     "@winter-love/vite-lib-config": "workspace:*",
     "rollup-preset-solid": "2.0.1"

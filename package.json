@@ -19,7 +19,7 @@
     "format:package.json": "pnpm dlx sort-package-json \"package.json\" \"packages/*/package.json\" \"apps/*/package.json\" ",
     "lint": "turbo lint --filter=@winter-love/* --filter=@apps/*",
     "oxlint": "oxlint",
-    "prepare": "turbo build --filter=@winter-love/*",
+    "prepare": "turbo build --filter=@winter-love/* && ts-patch install -s",
     "publish:alpha": "lernan publish from-package --preid alpha --dist-tag alpha",
     "publish:beta": "lerna publish from-package --preid beta --dist-tag beta",
     "publish:next": "lerna publish from-package --preid next --dist-tag next",
@@ -94,6 +94,9 @@
     "vite-plugin-mkcert": "^1.17.6",
     "vite-plugin-solid": "^2.11.0",
     "vite-plugin-static-copy": "2.2.0",
+    "typescript-transform-paths": "3.5.3",
+    "tsconfig-paths": "4.2.0",
+    "ts-patch": "3.3.0",
     "vitest": "2.0.5"
   },
   "packageManager": "pnpm@9.1.4",

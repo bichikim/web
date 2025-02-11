@@ -1,6 +1,18 @@
 {
   "compileOnSave": false,
   "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "jsx": "preserve",
+    "jsxImportSource": "solid-js",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "declaration": true,
+    "declarationDir": "./dist1",
+    "allowJs": true,
+    "strict": true,
+    "noEmit": false,
     "baseUrl": ".",
     "outDir": "./dist1",
     "paths": {

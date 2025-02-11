@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-namespace */
 import {Accessor, createRenderEffect} from 'solid-js'
-import {Directive} from 'src/types'
+import {Directive} from '../types'
 import {useTargetElement} from '@winter-love/solid-use'
 
 export interface StickyPosition {
