@@ -25,8 +25,15 @@ Directory Structure
 │   └── bplan-client/      # Solid Start SSR Client application
 │
 ├── packages/              # Shared packages
+│   ├── eslint-config/     # ESLint configuration
+│   ├── kata/              # Coding practice folder
+│   ├── lodash/            # Repackaged Lodash utilities
+│   ├── solid-use/         # Solid.js reactive hooks
+│   ├── solid-components/  # Solid.js UI components
+│   ├── sw/                # Service worker generator
+│   ├── unocss-config/     # UnoCSS configuration and presets
 │   ├── utils/             # TypeScript utilities
-│   └── solid-use/         # Solid.js reactive hooks
+│   └── vite-lib-config/   # Vite library configuration to build a library
 │
 ├── pnpm-workspace.yaml    # Workspace configuration
 └── package.json           # Root package configuration
