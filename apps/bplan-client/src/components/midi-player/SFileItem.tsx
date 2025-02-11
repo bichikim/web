@@ -1,12 +1,11 @@
 import {HUNDRED} from '@winter-love/utils'
 import {cva, cx} from 'class-variance-authority'
-import {createMemo, JSX, Show, splitProps} from 'solid-js'
+import {createMemo, Show, splitProps} from 'solid-js'
 import {PlayOptions} from 'src/use/instruments'
-import {HDragExecute, HDragExecuteProps} from './HDragExecute'
 import {SProgress} from './SProgress'
 import {STypeIcon} from './STypeIcon'
 import type {Header} from '@tonejs/midi'
-import {DragButton} from '@winter-love/solid-components'
+import {DragButton, DragButtonBodyProps} from '@winter-love/solid-components'
 
 export interface MusicInfo extends PlayOptions {
   dragEndSize?: number
@@ -30,7 +29,7 @@ export interface MusicInfo extends PlayOptions {
 }
 
 export interface SFileItemProps
-  extends Omit<HDragExecuteProps, 'id' | 'name' | 'onPlay' | 'onSelect'>,
+  extends Omit<DragButtonBodyProps, 'id' | 'name' | 'onPlay' | 'onSelect'>,
     MusicInfo {
   dragExecuteSize?: number
   index?: number
@@ -137,13 +136,13 @@ export const SFileItem = (props: SFileItemProps) => {
 
   return (
     <DragButton.Root
+      type="button"
       onClick={handleSelect}
       onDoubleClick={handlePlayOrSuspend}
       onLeftExecute={handleDelete}
     >
       <DragButton.Body
         {...restProps}
-        component="button"
         class={cx(rootStyle, restProps.class)}
         title={innerProps.name}
       >
