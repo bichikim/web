@@ -1,5 +1,6 @@
 import {Accessor, createContext, createMemo, JSX, mergeProps, ParentProps} from 'solid-js'
 import {now} from '@winter-love/lodash'
+import {} from 'solid-js/web'
 
 export type ButtonType = 'button' | 'anchor' | 'anchor-button'
 export type ButtonTag = 'button' | 'a'
@@ -7,7 +8,6 @@ export type ButtonTag = 'button' | 'a'
 export interface ButtonContextProps {
   disabled: boolean
   href?: string
-  loading: boolean
   tag: ButtonTag
 }
 
@@ -21,7 +21,7 @@ export interface ButtonContextActions {
 export const ButtonContext = createContext<
   [Accessor<ButtonContextProps>, ButtonContextActions]
 >([
-  () => ({disabled: false, loading: false, tag: 'button' as const}),
+  () => ({disabled: false, tag: 'button' as const}),
   {
     handleClick: () => {
       throw new Error('not implemented')
@@ -42,7 +42,6 @@ export interface ButtonRootProps extends ParentProps {
   disabled?: boolean
   doubleClickGap?: number
   href?: string
-  loading?: boolean
   onClick?: JSX.EventHandler<HTMLButtonElement, MouseEvent | TouchEvent>
   onDoubleClick?: JSX.EventHandler<HTMLButtonElement, MouseEvent | TouchEvent>
   onTouchEnd?: JSX.EventHandler<HTMLButtonElement, TouchEvent>
@@ -162,7 +161,6 @@ export const ButtonRoot = (props: ButtonRootProps) => {
     return {
       disabled: defaultProps.disabled ?? false,
       href: href(),
-      loading: defaultProps.loading ?? false,
       tag: tag(),
     }
   })
