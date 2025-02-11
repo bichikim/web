@@ -5,6 +5,7 @@ import {DragButtonContent} from './DragButtonContent'
 import {DragButtonRoot} from './DragButtonRoot'
 
 export * from './DragButtonAside'
+export * from './DragButtonBody'
 export * from './DragButtonContent'
 export * from './DragButtonRoot'
 export * from './HDragButton'
