@@ -6,4 +6,4 @@ if (!import.meta.env.DEV && 'serviceWorker' in navigator) {
   navigator.serviceWorker.register('/sw.js')
 }
 
-mount(() => <StartClient />, document.body)
+mount(() => <StartClient />, document.body.querySelector('#root')!)

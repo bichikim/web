@@ -16,12 +16,6 @@ export default createHandler(() => (
           <meta name="theme-color" content="#eee" />
           <link rel="mask-icon" href="/favicon.svg" color="#00aba9" />
           <link rel="apple-touch-icon" href="/apple-touch-icon-180x180.png" />
-          <link
-            rel="stylesheet"
-            as="style"
-            crossorigin=""
-            href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
-          />
           <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
           <link rel="mask-icon" href="/favicon.svg" color="#00aba9" />
           <link rel="manifest" href="/manifest.json" />
@@ -29,8 +23,20 @@ export default createHandler(() => (
           {assets}
         </head>
         <body>
-          {children}
+          <div id="root">{children}</div>
           {scripts}
+          <script>
+            {`
+              document.addEventListener('DOMContentLoaded', function () {
+                const font = document.createElement('link');
+                font.href = 'https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css';
+                font.rel = 'stylesheet';
+                font.as = 'style';
+                font.crossOrigin = '';
+                document.head.appendChild(font);
+              });
+            `}
+          </script>
         </body>
       </html>
     )}
