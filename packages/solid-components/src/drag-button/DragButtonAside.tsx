@@ -31,14 +31,22 @@ export function DragButtonAside<T extends ValidComponent>(
 
   const dragX = createMemo(() => dragContext().dragX)
 
+  const position = createMemo(() => {
+    if (innerProps.position === 'left') {
+      return dragX() > 0 ? 'left' : ''
+    }
+
+    return dragX() < 0 ? 'right' : ''
+  })
+
   return (
     <Switch>
-      <Match when={innerProps.position === 'left'}>
+      <Match when={position() === 'left'}>
         <Dynamic {...restProps} style={{'--var-drag-x': `${onlyPlus(dragX())}px`}}>
           {restProps.children}
         </Dynamic>
       </Match>
-      <Match when={innerProps.position === 'right'}>
+      <Match when={position() === 'right'}>
         <Dynamic {...restProps} style={{'--var-drag-x': `${onlyPlus(dragX() * -1)}px`}}>
           {restProps.children}
         </Dynamic>
