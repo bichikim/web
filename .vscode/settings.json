@@ -6,6 +6,7 @@
     "demi",
     "hugeicons",
     "iconify",
+    "kata",
     "pinia",
     "Pretendard",
     "smplr",
@@ -14,6 +15,7 @@
     "teenieping",
     "tonejs",
     "unocss",
-    "vinxi"
+    "vinxi",
+    "Vite"
   ]
 }

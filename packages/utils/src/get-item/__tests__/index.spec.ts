@@ -7,6 +7,7 @@ describe('getItem', () => {
 
     expect(getItem(data, ['info', 'name'])).toBeUndefined()
   })
+
   it('should return the item', () => {
     const data = {info: {name: 'foo'}}
 

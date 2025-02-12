@@ -37,12 +37,16 @@ const getUrl = async (
 
 export const Root = (props: RootProps) => {
   const [element, setElement] = createSignal(null)
+
   const [apiCredential, setApiCredential] = useStorage<string | null>(
     'local',
     '__api_credential',
-    null,
+    {
+      initValue: null,
+    },
   )
   const [playerState, setPlayerState, playerController] = createPlayer(element)
+
   const stop = () => {
     playerController.pause()
     setPlayerState((prevState) => ({...prevState, currentTime: 0}))

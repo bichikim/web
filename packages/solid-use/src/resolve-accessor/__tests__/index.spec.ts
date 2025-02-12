@@ -11,6 +11,7 @@ describe('resolveAccessor', () => {
     expect(resolveAccessor(value)()).toBe(result)
   })
 })
+
 describe('actual uses', () => {
   it('should resolve accessor in real solid js component system', () =>
     createRoot((dispose) => {
@@ -21,6 +22,7 @@ describe('actual uses', () => {
       dispose()
     }))
 })
+
 describe('resolveAccessors', () => {
   it.each([
     //
@@ -29,6 +31,7 @@ describe('resolveAccessors', () => {
   ])('should resolve accessors', ({value, result}) => {
     expect(resolveAccessors(value as any)()).toEqual(result)
   })
+
   it('typing many accessors', () => {
     const [value1] = createSignal('foo')
     const [value2] = createSignal('bar')

@@ -1,5 +1,5 @@
 import {cx} from 'class-variance-authority'
-import {JSX, splitProps} from 'solid-js'
+import {Accessor, createContext, JSX, splitProps} from 'solid-js'
 import {getRegistrations} from 'src/utils/service-worker'
 import {SPlayerButton} from './SPlayerButton'
 import {SSettingItem} from './SSettingItem'
@@ -10,6 +10,12 @@ export interface SettingData {
   pianoSize?: number
   showKeyName?: boolean
 }
+
+export const SettingContext = createContext<Accessor<SettingData>>(() => ({
+  keepPlayList: true,
+  pianoSize: 100,
+  showKeyName: false,
+}))
 
 export interface SSettingProps extends JSX.HTMLAttributes<HTMLDivElement> {
   onClose?: () => void
@@ -94,7 +100,7 @@ export const SSetting = (props: SSettingProps) => {
       />
       <div class="flex justify-end w-full gap-2">
         <span class="text-5 md:text-7 text-gray-500 flex-grow-1 pt-3 leading-6">
-          The world goes round with LOVE.
+          Love makes the world go round.
         </span>
         <SPlayerButton class="min-w-11 min-h-9 bg-gray-100" onClick={handleClose}>
           <span class="i-tabler:x text-8 inline-block" />

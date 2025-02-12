@@ -29,9 +29,10 @@
   ],
   "scripts": {
     "build": "vite build",
-    "dev": "vite build --watch --minify false",
     "check-types": "tsc --noEmit",
-    "lint": "eslint src"
+    "dev": "vite build --watch --minify false",
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix"
   },
   "dependencies": {
     "@winter-love/lodash": "workspace:*",

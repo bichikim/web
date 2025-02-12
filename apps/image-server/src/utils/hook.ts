@@ -43,10 +43,11 @@ export interface Context<T = any> {
   ) => (req: Request, res: Response, next: () => void) => void
 }
 
-export const createContext = <T>(defaultValue: T = null): Context<T> => {
+export const createContext = <T>(defaultValue?: T): Context<T> => {
   const key = Symbol('context-key')
+
   return {
-    [TYPE_CONTEXT]: defaultValue,
+    [TYPE_CONTEXT]: defaultValue ?? null,
     key,
     provide: (logic) => {
       return provideContext(key, logic)
@@ -66,11 +67,13 @@ export const useContext = (key: symbol | string | Context): any => {
   if (!map) {
     throw new Error('Context not found')
   }
+
   return map.get(_key)
 }
 
 export const createStaticContextLogic = (value: MaybeFunction<any>) => {
   const _value = toValue(value)
+
   return () => {
     return _value
   }
@@ -81,12 +84,15 @@ export const provideContext = (
   logic: (req, res, next) => any,
 ) => {
   const _key = getKey(key)
+
   return async (req, res, next) => {
     const map = _contextHookMap.get(req)
+
     if (!map) {
       return next()
     }
     const result = await logic(req, res, next)
+
     map.set(_key, result)
     next()
   }
@@ -96,10 +102,13 @@ export const withHook = (controller: Controller) => {
   return async (req, res, next) => {
     _reqHookMap.set(_currentId, req)
     _contextHookMap.set(req, new Map())
+
     try {
       const runner = controller()
+
       _currentId = hookUid()
       const result = await runner()
+
       res.send(result)
     } catch (error) {
       _errorHandler(error, req, res, next)

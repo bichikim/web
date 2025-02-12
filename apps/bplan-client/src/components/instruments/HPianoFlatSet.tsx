@@ -7,8 +7,9 @@ interface FlatData {
   name: string
 }
 
-const keyOffset = 5
-const keyCount = 12
+// const keyLoopCount = 12
+const keyOffset = 4
+
 const flatSet = flatten(
   Array.from<FlatData[]>({length: 14})
     .fill([
@@ -21,17 +22,16 @@ const flatSet = flatten(
       {key: 12, name: 'G'},
     ])
     .map((item, setIndex) => {
-      return item.map(({key, name}) => {
-        const _key = keyCount * setIndex + key - keyOffset
+      return item.map(({name}) => {
+        const _key = `${name}${setIndex - 1}`
         const setName = `${name} ${setIndex - 1}`
 
         return {key: _key, name: setName}
       })
     }),
 )
-const lastDeleteCount = 4
 
-flatSet.splice(lastDeleteCount * -1)
+flatSet.splice(keyOffset * -1)
 
 export interface HPianoFlatSetProps extends JSX.HTMLAttributes<HTMLDivElement> {
   disabled?: boolean

@@ -54,3 +54,9 @@ turbo gen
 fixed version until solidjs team fixes the issue
 vitest: 2.0.5
 vite: 5.4.11
+
+### Solidjs storybook module is not defined error
+refer to: https://github.com/storybookjs/solidjs/pull/19
+
+fixed version until solidjs team fixes the issue
+nodejs: 20.x.x

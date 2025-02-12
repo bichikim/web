@@ -7,6 +7,7 @@ import {createUseWait} from '../'
 const callback = vi.fn()
 
 vi.spyOn(global, 'setTimeout')
+
 vi.mock('@winter-love/lodash', async () => {
   const actual: any = await vi.importActual('@winter-love/lodash')
 
@@ -35,6 +36,7 @@ const setTimeoutWait = createUseWait<Record<string, unknown>>(() => {
     },
   }
 })
+
 const debounceWait = createUseWait<DebounceSettings>(() => {
   let _flag: any
 
@@ -64,6 +66,7 @@ describe('waitFactory', () => {
   afterEach(() => {
     callback.mockClear()
   })
+
   it.each([
     //
     {target: setTimeout, wait: setTimeoutWait},
@@ -125,10 +128,12 @@ describe('waitFactory', () => {
 
     timer.restore()
   })
+
   it('should cancel before dispose', () => {
     const callback = vi.fn()
     const timer = useFakeTimers()
     const timeout = 150
+
     const {wait, dispose} = createRoot((dispose) => {
       const wait = debounceWait(callback, timeout)
 
@@ -146,6 +151,7 @@ describe('waitFactory', () => {
     expect(callback).not.toHaveBeenCalled()
     timer.restore()
   })
+
   it.each([
     {
       args: ['hello'],
@@ -154,6 +160,7 @@ describe('waitFactory', () => {
   ])('should accept wait and options accessors', async ({waits, args}) => {
     const callback = vi.fn()
     const timer = useFakeTimers()
+
     const {wait, dispose} = createRoot((dispose) => {
       const wait = debounceWait(callback, waits[0])
 

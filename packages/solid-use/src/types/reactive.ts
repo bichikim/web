@@ -1,6 +1,6 @@
 import {Accessor} from 'solid-js'
 
-export type MayBeAccessor<T> = Accessor<T> | T
+export type MaybeAccessor<T> = Accessor<T> | T
 
 export type AccessorsValue<T> = T extends any[]
   ? {[K in keyof T]: T[K] extends Accessor<infer L> ? L : T[K]}
@@ -18,4 +18,4 @@ export type NotArray =
   | ((...args: any) => any)
   | Record<string, any>
 
-export type MayBeAccessors = [...any] | [any] | NotArray
+export type MaybeAccessors = [...any] | [any] | NotArray

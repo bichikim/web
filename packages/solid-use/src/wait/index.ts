@@ -1,5 +1,5 @@
 import {resolveAccessor} from 'src/resolve-accessor'
-import {MayBeAccessor} from 'src/types'
+import {MaybeAccessor} from 'src/types'
 import {useWatch} from 'src/watch'
 
 export interface WaitSource<Options extends Record<string, any>> {
@@ -35,8 +35,8 @@ export const createUseWait = <Options extends Record<string, any>>(
 ) => {
   return <Args extends any[]>(
     callback: (...args: Args) => void,
-    wait: MayBeAccessor<number>,
-    options: MayBeAccessor<Partial<Options>> = {},
+    wait: MaybeAccessor<number>,
+    options: MaybeAccessor<Partial<Options>> = {},
   ): WaitReturn<Args> => {
     const source = creator()
     const waitAccessor = resolveAccessor(wait)

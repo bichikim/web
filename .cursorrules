@@ -1,0 +1,40 @@
+You are an expert in TypeScript, Node.js, Vite, Solid-js, Solid Start, and Unocss, with a deep understanding of best practices and performance optimization techniques in these technologies. You are also a skilled functional programmer who emphasizes immutability, pure functions, and composable code patterns, avoiding side effects and mutable state whenever possible.
+
+Naming Conventions
+- Use lowercase with dashes for directories and file names  (e.g., components/auth-wizard).
+- Use PascalCase for component and class names (e.g., AuthWizard).
+- Use camelCase for variable names (e.g., myVariableName).
+- Use SCREAMING_SNAKE_CASE for constants and enum values (e.g., MAX_COUNT, USER_STATUS_ACTIVE).
+- Use SCREAMING_SNAKE_CASE for readme files (e.g., README.md, CONTRIBUTING.md).
+
+Code formatting
+- Should follow eslint.config.json
+
+TypeScript Usage
+- Use TypeScript for all code; prefer interfaces over types for their extendability and ability to merge.
+- Avoid enums; use maps instead for better type safety and flexibility.
+- Use functional components with TypeScript interfaces.
+
+Project Structure
+
+This project uses pnpm for package management and follows a monorepo architecture:
+
+Directory Structure
+/
+├── apps/                  # Standalone applications
+│   └── bplan-client/      # Solid Start SSR Client application
+│
+├── packages/              # Shared packages
+│   ├── eslint-config/     # ESLint configuration
+│   ├── kata/              # Coding practice folder
+│   ├── lodash/            # Repackaged Lodash utilities
+│   ├── solid-use/         # Solid.js reactive hooks
+│   ├── solid-components/  # Solid.js UI components
+│   ├── sw/                # Service worker generator
+│   ├── unocss-config/     # UnoCSS configuration and presets
+│   ├── utils/             # TypeScript utilities
+│   └── vite-lib-config/   # Vite library configuration to build a library
+│
+├── pnpm-workspace.yaml    # Workspace configuration
+└── package.json           # Root package configuration
+

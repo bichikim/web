@@ -1,6 +1,6 @@
 import {createEffect, onCleanup} from 'solid-js'
 import {resolveAccessors} from 'src/resolve-accessor'
-import {AccessorsValue, MayBeAccessors} from 'src/types'
+import {AccessorsValue, MaybeAccessors} from 'src/types'
 
 type CleanUpFunc<T> = (prevValue: T) => void
 
@@ -17,7 +17,7 @@ export interface UseWatchOptions<T> {
  * @param callback
  * @param options
  */
-export const useWatch = <T extends MayBeAccessors>(
+export const useWatch = <T extends MaybeAccessors>(
   value: T,
   callback: (
     value: AccessorsValue<T>,
@@ -32,12 +32,14 @@ export const useWatch = <T extends MayBeAccessors>(
 
   createEffect(() => {
     const valueFromAccessor = valueAccessor()
+
     const value = isArrayValue
       ? valueFromAccessor.map((value: any) => clone(value))
       : clone(valueFromAccessor)
     const cleanUp = callback(value, _prevValue)
 
     _prevValue = value
+
     onCleanup(() => {
       if (typeof cleanUp === 'function') {
         cleanUp(value)

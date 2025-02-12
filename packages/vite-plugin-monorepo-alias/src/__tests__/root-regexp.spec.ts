@@ -8,6 +8,7 @@ describe('root-Regexp', () => {
     expect(result.test('src/foo')).toBeTruthy()
     expect(result.test('src/')).toBeTruthy()
   })
+
   it('should return alias regex with ./', () => {
     const result = createAliasRegexp('./src/foo')
 

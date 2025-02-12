@@ -20,6 +20,7 @@ describe('createSubscribe', () => {
     expect(callback).toHaveBeenCalledTimes(1)
     expect(unsubscribe()).toEqual(nextValue)
   })
+
   it('should get value', () => {
     const eventSubscribe = createSubscribe(() => 'john' as string)
 

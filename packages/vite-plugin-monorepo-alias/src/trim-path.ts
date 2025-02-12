@@ -1,4 +1,5 @@
 type TrimType = 'left' | 'right' | 'both'
+
 export const createTrimPathRegExp = (
   pathSeparator: string = '/',
   type: TrimType = 'both',

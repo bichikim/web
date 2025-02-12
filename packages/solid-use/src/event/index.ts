@@ -1,4 +1,4 @@
-import {MayBeAccessor} from 'src/types'
+import {MaybeAccessor} from 'src/types'
 import {resolveAccessor} from 'src/resolve-accessor'
 import {createEffect, onCleanup} from 'solid-js'
 
@@ -14,7 +14,7 @@ export interface Emitter {
 
 export interface OnEvent {
   <K extends keyof WindowEventMap>(
-    window: MayBeAccessor<Window | null>,
+    window: MaybeAccessor<Window | null>,
     type: K,
     listener: (event: WindowEventMap[K]) => void,
     options?: AddEventListenerOptions,
@@ -26,13 +26,13 @@ export interface OnEvent {
     options?: AddEventListenerOptions,
   ): void
   <K extends keyof HTMLElementEventMap>(
-    element: MayBeAccessor<HTMLElement | null>,
+    element: MaybeAccessor<HTMLElement | null>,
     type: K,
     listener: (event: HTMLElementEventMap[K]) => void,
     options?: AddEventListenerOptions,
   ): void
   (
-    window: MayBeAccessor<HTMLElement | Window | null>,
+    window: MaybeAccessor<HTMLElement | Window | null>,
     type: string,
     listener: (event: CustomEvent) => void,
     options?: AddEventListenerOptions,
@@ -40,7 +40,7 @@ export interface OnEvent {
 }
 
 export const useEvent: OnEvent = (
-  element: MayBeAccessor<Emitter | null>,
+  element: MaybeAccessor<Emitter | null>,
   type: string,
   listener: (event: any) => void,
   options: AddEventListenerOptions = {},
@@ -51,6 +51,7 @@ export const useEvent: OnEvent = (
     const element = elementAccessor()
 
     element?.addEventListener(type, listener, options)
+
     onCleanup(() => {
       element?.removeEventListener(type, listener)
     })

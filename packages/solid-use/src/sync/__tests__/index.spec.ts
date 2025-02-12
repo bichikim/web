@@ -8,6 +8,7 @@ describe('manualMemo', () => {
 
     expect(value()).toBe(123)
   })
+
   it('should update the value', () => {
     const [source, setSource] = createSignal(123)
     const [value, setValue] = sync(source)

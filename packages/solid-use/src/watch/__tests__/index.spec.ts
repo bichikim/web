@@ -79,6 +79,7 @@ describe('watch', () => {
         dispose()
       }),
   )
+
   it('should watch many accessors', () =>
     createRoot(async (dispose) => {
       const [state1, setState1] = createSignal('foo')
@@ -97,6 +98,7 @@ describe('watch', () => {
       expect(cleanup).toHaveBeenNthCalledWith(1, ['foo1', 'bar'])
       dispose()
     }))
+
   // I don't know if immediate is necessary
   // It hasn't been implemented yet
   it.each([
@@ -105,6 +107,7 @@ describe('watch', () => {
     {immediate: false},
   ])('should watch immediately', () => {
     const callback = vi.fn()
+
     const {dispose, setState} = createRoot((dispose) => {
       const [state, setState] = createSignal('foo')
 

@@ -1,5 +1,5 @@
 import {createSignal} from 'solid-js'
-import {MayBeAccessor} from 'src/types'
+import {MaybeAccessor} from 'src/types'
 import {useEvent} from 'src/event'
 import {getWindow} from '@winter-love/utils'
 import {toggleValue} from 'src/toggle-value'
@@ -27,7 +27,7 @@ interface DragPayload {
 }
 
 export const useDrag = (
-  handleElement: MayBeAccessor<HTMLElement | null>,
+  handleElement: MaybeAccessor<HTMLElement | null>,
   callback: (type: DragType, payload: DragPayload) => void,
 ) => {
   const [startPoints, setStartPoints] = createSignal<StartPoints>({
@@ -35,6 +35,7 @@ export const useDrag = (
     relativePoint: [0, 0],
   })
   const [pointDown, setPointDown] = createSignal(false)
+
   let currentPoint: [number, number] = [0, 0]
 
   useEvent(handleElement, 'pointerdown', (event) => {
@@ -45,6 +46,7 @@ export const useDrag = (
 
     setStartPoints(points)
     setPointDown(true)
+
     callback('start', {
       currentPoint: points.point,
       relativePoint: points.relativePoint,
@@ -56,6 +58,7 @@ export const useDrag = (
     const {point, relativePoint} = startPoints()
 
     setPointDown(false)
+
     callback('end', {
       currentPoint,
       relativePoint,
@@ -70,6 +73,7 @@ export const useDrag = (
     const {point, relativePoint} = startPoints()
 
     currentPoint = [x, y]
+
     callback('move', {
       currentPoint,
       relativePoint,
@@ -82,6 +86,7 @@ export const useDrag = (
 
     onMove(firstPoint.clientX, firstPoint.clientY)
   })
+
   useEvent(toggleValue(getWindow, pointDown, null), 'pointermove', (event) => {
     onMove(event.clientX, event.clientY)
   })

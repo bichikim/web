@@ -18,6 +18,7 @@ describe('renderHalfDiamond', () => {
     expect(renderHalfDiamond(2)).toBe(' * \n***')
     expect(renderHalfDiamond(1)).toBe('*')
   })
+
   test('opposite direction', () => {
     expect(renderHalfDiamond(5, true)).toBe(
       '*********\n ******* \n  *****  \n   ***   \n    *    ',
@@ -27,10 +28,12 @@ describe('renderHalfDiamond', () => {
     expect(renderHalfDiamond(2, true)).toBe('***\n * ')
     expect(renderHalfDiamond(1, true)).toBe('*')
   })
+
   test('opposite direction padding', () => {
     expect(renderHalfDiamond(5, true)).toBe(
       '*********\n ******* \n  *****  \n   ***   \n    *    ',
     )
+
     expect(renderHalfDiamond(4, true, 1)).toBe(
       ' ******* \n  *****  \n   ***   \n    *    ',
     )
@@ -45,6 +48,7 @@ describe('renderDiamond', () => {
     expect(renderDiamond(5)).toBe(
       '    *    \n   ***   \n  *****  \n ******* \n*********\n ******* \n  *****  \n   ***   \n    *    ',
     )
+
     expect(renderDiamond(4)).toBe(
       '   *   \n  ***  \n ***** \n*******\n ***** \n  ***  \n   *   ',
     )

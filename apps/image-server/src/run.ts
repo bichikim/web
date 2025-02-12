@@ -15,6 +15,7 @@ const port = process.env.PORT ?? DEFAULT_PORT
 const NOT_FOUND = 404
 
 const app = express()
+
 //
 app.use(json())
 app.use(urlencoded({extended: false}))
@@ -24,14 +25,17 @@ app.use(imageTransform())
 
 app.get('/:url(*)', (req, res) => {
   const imageTransform = imageTransformContext.use(req)
+
   if (imageTransform) {
     res.type(`image/${imageTransform.format}`)
     res.send(imageTransform.image)
+
     return
   }
+
   res.status(NOT_FOUND).send('Not found')
 })
 
 app.listen(port, () => {
-  console.log('http://localhost:8080')
+  console.info('http://localhost:8080')
 })

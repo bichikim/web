@@ -1,0 +1,37 @@
+---
+description: git commit rules
+globs: 
+---
+
+# Git commit rules
+
+## Type
+- `update`: New feature or update feture
+- `docs`: Documentation changes
+- `refactor`: Code refactoring, test code or add Storybook
+- `chore`: Build process or package manager modifications, CI configuration changes
+
+## Subject Rules
+- Keep it under 50 characters
+- Use present tense
+- Don't end with a period
+- Use imperative mood
+
+## Body Rules
+- Optional
+- Explain what and why vs. how
+- Wrap at 72 characters
+- Use blank line to separate from subject
+
+## Important Guidelines
+- Write commit messages in English
+
+## Example
+
+```
+update - add authentication component
+
+- Implement OAuth2 login flow
+- Add user session management
+- Create protected route wrapper
+```

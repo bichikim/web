@@ -1,6 +1,7 @@
 export type CancelPromiseConstructor = (resolve, reject?) => void
 
 export type CancelPromise<T = unknown> = Promise<T> & {cancel: () => void}
+
 const emptyCancel = () => {
   // empty
 }
@@ -13,6 +14,7 @@ export const createCancelPromise = <T>(
   promise: Promise<T>,
 ): [Promise<T | null>, () => void] => {
   let cancel: () => void = emptyCancel
+
   const cancelPromise = new Promise<null>((resolve) => {
     cancel = () => resolve(null)
   })

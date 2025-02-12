@@ -1,13 +1,13 @@
 import {createMemo} from 'solid-js'
 import {resolveAccessor} from 'src/resolve-accessor'
-import {MayBeAccessor} from 'src/types'
+import {MaybeAccessor} from 'src/types'
 
 export interface NaturalImageLike {
   naturalHeight: number
   naturalWidth: number
 }
 
-export const naturalImageSize = (element: MayBeAccessor<NaturalImageLike | null>) => {
+export const naturalImageSize = (element: MaybeAccessor<NaturalImageLike | null>) => {
   const elementAccessor = resolveAccessor(element)
 
   return createMemo(() => {

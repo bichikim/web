@@ -1,17 +1,15 @@
-import {onCleanup, Setter, splitProps} from 'solid-js'
-import {Dynamic} from 'solid-js/web'
-import {DynamicParentProps} from 'src/types'
+import {onCleanup, ValidComponent} from 'solid-js'
+import {Dynamic, DynamicProps} from 'solid-js/web'
 
-export interface ElementRefProps extends DynamicParentProps {
-  ref: Setter<HTMLElement | null>
-}
+export type ElementRefProps<T extends ValidComponent> = DynamicProps<T>
 
-export const ElementRef = (_props: ElementRefProps) => {
-  const [props, restProps] = splitProps(_props, ['as', 'ref'])
-
+/**
+ * A component that solves the problem of ref being stored in ref even after the element is removed in solid-js
+ */
+export const ElementRef = <T extends ValidComponent>(props: DynamicProps<T>) => {
   onCleanup(() => {
     props.ref(null)
   })
 
-  return <Dynamic component={props.as} {...restProps} ref={props.ref} />
+  return <Dynamic {...props} />
 }

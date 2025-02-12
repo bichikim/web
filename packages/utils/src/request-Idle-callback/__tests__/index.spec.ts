@@ -5,10 +5,12 @@ import {requestIdleCallbackPolyfill} from '../polyfill'
 
 vi.mock('src/get-window')
 vi.mock('../polyfill')
+
 describe('requestIdleCallback', () => {
   afterEach(() => {
     vi.clearAllMocks()
   })
+
   it('should request idle callback', () => {
     vi.mocked(getWindow).mockReturnValueOnce({
       requestIdleCallback: vi.fn(((callback: any) => callback()) as any),
@@ -18,6 +20,7 @@ describe('requestIdleCallback', () => {
     requestIdleCallback(callback)
     expect(callback).toBeCalled()
   })
+
   it('should use polyfill when there is no requestIdleCallback', () => {
     const callback = vi.fn()
 

@@ -6,18 +6,20 @@ import {
   mergeProps,
   Show,
   splitProps,
+  untrack,
   ValidComponent,
 } from 'solid-js'
-// import {Dynamic} from 'solid-js/web'
+import {Dynamic} from 'solid-js/web'
 import {SClose} from 'src/components/midi-player/SClose'
 import {preventGlobalTouchAttrs} from 'src/components/real-button/use-global-touch'
 import {SPlayer, SPlayerProps} from './SPlayer'
 import {SettingData, SSetting} from './SSetting'
 
 export interface SHiddenPlayerProps
-  extends Omit<SPlayerProps, 'onPlaying'>,
+  extends Omit<SPlayerProps, 'onPlaying' | 'onPlay'>,
     Omit<JSX.HTMLAttributes<HTMLElement>, 'onPlay'> {
   component?: ValidComponent
+  initShow?: boolean
   onSettingDataChange?: (data: SettingData) => void
   pianoMinScale?: number
   settingData?: SettingData
@@ -26,7 +28,8 @@ export interface SHiddenPlayerProps
 export type SurfaceKind = 'player' | 'setting'
 
 const rootStyle = cva(
-  'relative duration-150 bg-white rd-2 flex flex-col duration-150 gap-2',
+  'relative duration-500 bg-white rd-2 flex flex-col duration-150 gap-2 bg-opacity-80 ' +
+    'backdrop-blur-sm b-2 b-white/90 shadow-md max-w-full md:max-w-180 w-[calc(100vw-.5rem)] p-2',
   {
     variants: {
       isSetting: {
@@ -34,16 +37,21 @@ const rootStyle = cva(
         true: '',
       },
       isShow: {
-        false: 'w-0 h-0',
-        true: 'min-w-88 max-w-124 p-2 mx-1 mb-1',
+        false: 'ml-1 mr--400',
+        true: '',
       },
     },
   },
 )
+
 const playerContainerStyle = cva('flex flex-col gap-2 overflow-hidden', {
   variants: {
+    isSetting: {
+      false: '',
+      true: 'w-0 h-0 hidden pointer-events-none',
+    },
     isShow: {
-      false: 'h-0 opacity-0 pointer-events-none',
+      false: 'hidden opacity-0 pointer-events-none',
       true: 'opacity-100',
     },
   },
@@ -53,9 +61,10 @@ export const SHiddenPlayer = (props: SHiddenPlayerProps) => {
   const defaultProps = mergeProps(
     {
       component: 'div',
-      pianoState: {
+      playState: {
         leftTime: 0,
         loaded: false,
+        playedTime: 0,
         playingId: '',
         startedAt: 0,
         suspended: false,
@@ -64,14 +73,17 @@ export const SHiddenPlayer = (props: SHiddenPlayerProps) => {
     },
     props,
   )
+
   const [innerProps, restProps] = splitProps(defaultProps, [
     'component',
     'settingData',
     'onSettingDataChange',
     'pianoMinScale',
   ])
-  const [isShow, setIsShow] = createSignal(false)
+  const initShow = untrack(() => props.initShow ?? false)
+  const [isShow, setIsShow] = createSignal(initShow)
   const [surfaceKind, setSurfaceKind] = createSignal<SurfaceKind>('player')
+
   const handleClose = () => {
     setIsShow((prev) => {
       const nextState = !prev
@@ -83,19 +95,20 @@ export const SHiddenPlayer = (props: SHiddenPlayerProps) => {
       return nextState
     })
   }
+
   const isPlaying = createMemo(
     () =>
-      defaultProps.pianoState.playingId !== '' &&
-      defaultProps.pianoState.leftTime < defaultProps.pianoState.totalDuration &&
-      !defaultProps.pianoState.suspended,
+      defaultProps.playState.playingId !== '' &&
+      defaultProps.playState.leftTime < defaultProps.playState.totalDuration &&
+      !defaultProps.playState.suspended,
   )
+
   const handleSurfaceKindChange = (kind: SurfaceKind) => {
     setSurfaceKind(kind)
   }
 
-  // Dynamic component has an error with ssr prefetching hydration
   return (
-    <aside class={props.class ?? 'relative'}>
+    <Dynamic component={innerProps.component} class={props.class ?? 'relative'}>
       <SClose
         class="mb-1"
         onClose={handleClose}
@@ -103,6 +116,8 @@ export const SHiddenPlayer = (props: SHiddenPlayerProps) => {
         isPlaying={isPlaying()}
         aria-expanded={isShow() ? 'true' : 'false'}
         aria-controls="__midi_player__"
+        playedTime={defaultProps.playState.playedTime}
+        totalTime={defaultProps.playState.totalDuration}
       />
       <section
         title="midi player"
@@ -113,7 +128,8 @@ export const SHiddenPlayer = (props: SHiddenPlayerProps) => {
       >
         <div
           class={playerContainerStyle({
-            isShow: surfaceKind() !== 'setting',
+            isSetting: surfaceKind() === 'setting',
+            isShow: isShow(),
           })}
         >
           <SPlayer {...restProps} onSetting={() => handleSurfaceKindChange('setting')} />
@@ -128,6 +144,6 @@ export const SHiddenPlayer = (props: SHiddenPlayerProps) => {
           />
         </Show>
       </section>
-    </aside>
+    </Dynamic>
   )
 }

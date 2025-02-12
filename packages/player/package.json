@@ -20,19 +20,19 @@
   ],
   "scripts": {
     "build": "cross-env NODE_ENV=production vite build",
-    "test": "echo \"Error: no test specified\" && exit 1",
     "check-types": "tsc --noEmit",
-    "lint": "eslint src"
+    "lint": "eslint src",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "solid-js": "^1.9.3",
-    "shaka-player": "^4.12.4",
+    "@winter-love/solid-use": "workspace:*",
     "@winter-love/utils": "workspace:*",
-    "@winter-love/solid-use": "workspace:*"
+    "shaka-player": "^4.12.4",
+    "solid-js": "^1.9.3"
   },
   "devDependencies": {
+    "@winter-love/vite-lib-config": "workspace:*",
     "vite": "^6.0.3",
-    "vite-plugin-dts": "^4.3.0",
-    "@winter-love/vite-lib-config": "workspace:*"
+    "vite-plugin-dts": "^4.3.0"
   }
 }

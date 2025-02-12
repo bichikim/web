@@ -1,13 +1,13 @@
 import {JSXElement} from 'solid-js'
 import {Slot} from '../Slot'
-import {getSlots} from '../use-slots'
+import {useSlots} from '../use-slots'
 
 export interface SlotParentProps {
   children?: JSXElement
 }
 
 const SlotComponent = (props: SlotParentProps) => {
-  const slots = getSlots(props.children)
+  const slots = useSlots(props.children)
 
   return (
     <div>
@@ -16,6 +16,7 @@ const SlotComponent = (props: SlotParentProps) => {
     </div>
   )
 }
+
 const meta = {
   component: SlotComponent,
   title: 'Solid/components/Slot',
@@ -27,6 +28,7 @@ export const Default = {
   render: () => (
     <SlotComponent>
       body
+      {/* The order is rendered in reverse as defined in SlotComponent */}
       <Slot name="head">head</Slot>
     </SlotComponent>
   ),

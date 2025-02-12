@@ -3,7 +3,6 @@ import {getDocument, getWindow, Position} from '@winter-love/utils'
 import {Accessor, createSignal} from 'solid-js'
 import {
   DownEventPayload,
-  DragInfoIds,
   DragPayload,
   InfoIds,
   UseGlobalTouchEmitterOptions,
@@ -33,46 +32,28 @@ export const getGlobalTouch = (element: Element): string | null => {
   return element.getAttribute(ELEMENT_IDENTIFIER_GLOBAL_TOUCH)
 }
 
-export const emitAllIds = (
-  ids: Set<string>,
-  value: boolean,
-  renderOnly: boolean = false,
-) => {
+export interface OnEmitInstrumentPayload {
+  channelName?: string | number
+  isDown: boolean
+  renderOnly?: boolean
+}
+
+export const emitAllIds = (ids: Set<string>, payload: OnEmitInstrumentPayload) => {
   const window = getWindow()
 
   if (!window) {
     return
   }
+  const {channelName, isDown, renderOnly} = payload
 
   for (const id of ids) {
     const eventName = generateGlobalTouchEventName(id)
 
-    window.dispatchEvent(new CustomEvent(eventName, {detail: {down: value, renderOnly}}))
+    window.dispatchEvent(
+      new CustomEvent(eventName, {detail: {channelName, down: isDown, renderOnly}}),
+    )
   }
 }
-
-// const emitAllDragIds = (downTouchIDs: DragInfoIds) => {
-//   const {ids, point, state} = downTouchIDs
-//   const window = getWindow()
-//
-//   if (!window) {
-//     return
-//   }
-//
-//   for (const id of ids) {
-//     const eventName = generateGlobalTouchDragEventName(id)
-//
-//     window.dispatchEvent(
-//       new CustomEvent<DragPayload>(eventName, {detail: {point, state}}),
-//     )
-//   }
-// }
-//
-// const emitAllMultiIDs = (downTouchIDs: Map<number, Set<string>>, value: boolean) => {
-//   for (const idSet of downTouchIDs.values()) {
-//     emitAllIds(idSet, value)
-//   }
-// }
 
 export const generateGlobalTouchEventName = (id: string): string => {
   return `global-touch__${id}`
@@ -132,6 +113,7 @@ export const getTouchedIds = (touches: TouchList, takeFirst: boolean = false) =>
   for (let index = 0; index < touchesLength; index += 1) {
     const touch = touches[index]
     const elements = getElementsFromPoint({x: touch.clientX, y: touch.clientY})
+
     const touchedElementIDs = takeFirst
       ? findTouchFirstId(elements)
       : findTouchIds(elements)
@@ -152,6 +134,7 @@ export const getTouchedIdsMap = (touches: TouchList, takeFirst: boolean = false)
     const touch = touches[index]
     const {identifier} = touch
     const elements = getElementsFromPoint({x: touch.clientX, y: touch.clientY})
+
     const touchedElementIDs = takeFirst
       ? findTouchFirstId(elements)
       : findTouchIds(elements)
@@ -188,15 +171,16 @@ export const useGlobalTouchEmitter = (options: UseGlobalTouchEmitterOptions = {}
     }
 
     mouseDown = true
-    const {ids, point} = getPointedIds({x: event.pageX, y: event.pageY}, takeFirst)
+    const {ids} = getPointedIds({x: event.pageX, y: event.pageY}, takeFirst)
 
-    emitAllIds(ids, true)
+    emitAllIds(ids, {isDown: true})
 
     for (const id of ids) {
       savedDownIds.add(id)
     }
     // emitAllDragIds({ids, point, state: 'start'})
   })
+
   useEvent(getWindow, 'pointerup', (event: PointerEvent) => {
     // skip touch down
     if (event.pointerType === 'touch') {
@@ -205,15 +189,16 @@ export const useGlobalTouchEmitter = (options: UseGlobalTouchEmitterOptions = {}
 
     mouseDown = false
     //
-    emitAllIds(savedDownIds, false)
+    emitAllIds(savedDownIds, {isDown: false})
     savedDownIds.clear()
   })
+
   useEvent(getWindow, 'pointermove', (event: PointerEvent) => {
     if (event.pointerType === 'touch' || !mouseDown) {
       return
     }
 
-    const {ids, point} = getPointedIds({x: event.pageX, y: event.pageY}, takeFirst)
+    const {ids} = getPointedIds({x: event.pageX, y: event.pageY}, takeFirst)
     const downIds = new Set(ids)
     const upIds = new Set(savedDownIds)
 
@@ -230,9 +215,10 @@ export const useGlobalTouchEmitter = (options: UseGlobalTouchEmitterOptions = {}
       savedDownIds.delete(id)
     }
 
-    emitAllIds(downIds, true)
-    emitAllIds(upIds, false)
+    emitAllIds(downIds, {isDown: true})
+    emitAllIds(upIds, {isDown: false})
   })
+
   useEvent(getWindow, 'touchstart', (event) => {
     const {touches} = event
     const touchIds = getTouchedIds(touches, takeFirst)
@@ -246,7 +232,7 @@ export const useGlobalTouchEmitter = (options: UseGlobalTouchEmitterOptions = {}
       savedDownIds.add(id)
     }
 
-    emitAllIds(downIds, true)
+    emitAllIds(downIds, {isDown: true})
   })
 
   const updateDownIds = (event: TouchEvent) => {
@@ -268,8 +254,8 @@ export const useGlobalTouchEmitter = (options: UseGlobalTouchEmitterOptions = {}
       savedDownIds.delete(id)
     }
 
-    emitAllIds(downIds, true)
-    emitAllIds(upIds, false)
+    emitAllIds(downIds, {isDown: true})
+    emitAllIds(upIds, {isDown: false})
   }
 
   useEvent(getWindow, 'touchmove', updateDownIds)
@@ -286,8 +272,8 @@ export const useGlobalDown = (id: string): Accessor<DownEventPayload> => {
   useEvent(
     getWindow,
     eventName,
-    ({detail: {down, renderOnly}}: CustomEvent<DownEventPayload>) => {
-      setIsDown({down, renderOnly})
+    ({detail: {down, renderOnly, channelName}}: CustomEvent<DownEventPayload>) => {
+      setIsDown({channelName, down, renderOnly})
     },
   )
 

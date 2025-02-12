@@ -1,10 +1,11 @@
-import {JSX, splitProps} from 'solid-js'
-import {cx} from 'class-variance-authority'
-import {HButton} from 'src/components/button'
+import {JSX, mergeProps, splitProps} from 'solid-js'
+import {HButtonType} from '@winter-love/solid-components'
+import {SButton, SButtonProps} from 'src/components/button'
 
 export interface SPlayerButtonProps
-  extends Omit<JSX.ButtonHTMLAttributes<HTMLButtonElement>, 'onClick' | 'onTouchEnd'> {
-  onClick?: JSX.EventHandler<HTMLButtonElement, MouseEvent | TouchEvent>
+  extends Pick<SButtonProps, 'class' | 'children' | 'title' | 'type'> {
+  href?: string
+  onClick?: JSX.EventHandler<HTMLElement, MouseEvent | TouchEvent>
 }
 
 /**
@@ -24,22 +25,26 @@ export interface SPlayerButtonProps
  * @prop {(event: Event) => void} [onClick] - Event handler for click events
  */
 export const SPlayerButton = (props: SPlayerButtonProps) => {
-  const [innerProps, restProps] = splitProps(props, ['onClick'])
+  const defaultProps = mergeProps({type: 'button' as HButtonType}, props)
+
+  const [innerProps, restProps] = splitProps(defaultProps, ['class', 'type', 'onClick'])
 
   const handelClick: SPlayerButtonProps['onClick'] = (event) => {
     innerProps.onClick?.(event)
   }
 
+  // px-6px py-2px b-0 rd-1 cursor-pointer bg-gray-100 overflow-hidden
+
   return (
-    <HButton
+    <SButton
       {...restProps}
-      class={cx(
-        'flex px-6px py-2px b-0 rd-1 cursor-pointer overflow-hidden bg-#f4f5f6 justify-center items-center text-black',
-        props.class,
-      )}
+      flat
+      variant="default"
+      class={innerProps.class}
       onClick={handelClick}
+      type={innerProps.type}
     >
       {props.children}
-    </HButton>
+    </SButton>
   )
 }

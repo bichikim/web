@@ -1,25 +1,24 @@
-import {createMemo, createSignal, createUniqueId, splitProps} from 'solid-js'
-import {Dynamic} from 'solid-js/web'
-import {DynamicParentProps} from 'src/types'
+import {createMemo, createSignal, createUniqueId, ValidComponent} from 'solid-js'
+import {Dynamic, DynamicProps} from 'solid-js/web'
 import {ScrollContext} from './scroll-context'
 import {useScrollState} from './scroll-state'
 import {ScrollBarType} from './types'
 
-export interface WScrollRootProps extends DynamicParentProps {
-  [key: string]: any
-}
+export type WScrollRootProps<T extends ValidComponent> = DynamicProps<T>
 
-export const WScrollRoot = (_props: WScrollRootProps) => {
-  const [props, restProps] = splitProps(_props, ['as'])
+export const WScrollRoot = <T extends ValidComponent>(props: WScrollRootProps<T>) => {
   const [scrollBodyElement, setScrollBodyElement] = createSignal<HTMLElement | null>(null)
   const nativeScrollState = useScrollState(scrollBodyElement)
   const scrollId = createUniqueId()
+
   const scrollValue = createMemo(() => {
     const state = nativeScrollState()
+
     const percentX =
       state.scrollLeft > 0
         ? state.scrollLeft / (state.scrollWidth - state.containerWidth)
         : 0
+
     const percentY =
       state.scrollTop > 0
         ? state.scrollTop / (state.scrollHeight - state.containerHeight)
@@ -36,6 +35,7 @@ export const WScrollRoot = (_props: WScrollRootProps) => {
       showYBar,
     }
   })
+
   const setScroll = (type: ScrollBarType, position: number) => {
     const element = scrollBodyElement()
 
@@ -77,7 +77,7 @@ export const WScrollRoot = (_props: WScrollRootProps) => {
         value: scrollValue,
       }}
     >
-      <Dynamic {...restProps} component={props.as ?? 'div'} />
+      <Dynamic {...props} />
     </ScrollContext.Provider>
   )
 }

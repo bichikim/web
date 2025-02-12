@@ -1,36 +1,29 @@
 import {sx, ValidStyle} from '@winter-love/solid-use'
-import {createMemo, mergeProps, splitProps} from 'solid-js'
-import {Dynamic} from 'solid-js/web'
-import {PERCENT_VAR} from 'src/css-var'
-import {DynamicParentProps} from 'src/types'
+import {createMemo, mergeProps, splitProps, ValidComponent} from 'solid-js'
+import {Dynamic, DynamicProps} from 'solid-js/web'
+import {PERCENT_VAR} from '../css-var'
 import {ScrollBarContext} from './scroll-bar-context'
 import {useScrollContext} from './scroll-context'
 import {ScrollBarType} from './types'
 
-export interface WScrollBarProps extends DynamicParentProps {
-  [key: string]: any
-
-  as?: string
-  /**
-   * recommend left-var top-var bottom-var right-var w-var h-var absolute
-   */
-  class?: string
+type InnerProps = {
+  barType?: ScrollBarType
   style?: ValidStyle
-
-  type?: ScrollBarType
+  thickness?: string
 }
 
-export const WScrollBar = (_props: WScrollBarProps) => {
-  const defaultProps = mergeProps({as: 'div', type: 'vertical' as const}, _props)
-  const [props, restProps] = splitProps(defaultProps, [
-    'as',
+export type WScrollBarProps<T extends ValidComponent> = InnerProps & DynamicProps<T>
+
+export const WScrollBar = <T extends ValidComponent>(props: WScrollBarProps<T>) => {
+  const defaultProps = mergeProps({barType: 'vertical' as const, component: 'div'}, props)
+
+  const [innerProps, restProps] = splitProps(defaultProps, [
     'thickness',
-    'type',
-    'class',
+    'barType',
     'style',
-    'children',
-  ])
+  ]) as unknown as [Required<InnerProps>, DynamicProps<T>]
   const scrollContext = useScrollContext()
+
   const scrollBarState = createMemo(() => {
     const {
       containerLeft,
@@ -48,7 +41,7 @@ export const WScrollBar = (_props: WScrollBarProps) => {
       showYBar,
     } = scrollContext.value()
 
-    if (props.type === 'horizontal') {
+    if (innerProps.barType === 'horizontal') {
       return {
         containerPosition: containerLeft,
         containerSize: containerWidth,
@@ -70,6 +63,7 @@ export const WScrollBar = (_props: WScrollBarProps) => {
       show: showYBar,
     }
   })
+
   const scrollBarStyle = createMemo(() => {
     const {percent} = scrollBarState()
 
@@ -77,21 +71,26 @@ export const WScrollBar = (_props: WScrollBarProps) => {
       [PERCENT_VAR]: percent,
     }
   })
+
   const scrollBarContext = createMemo(() => {
     const state = scrollBarState()
 
     return {
       ...state,
-      type: props.type,
+      type: innerProps.barType,
     }
   })
+
   const onClick = (event: MouseEvent) => {
-    const type = props.type ?? 'horizontal'
+    const type = innerProps.barType ?? 'horizontal'
     const {containerSize, scrollSize} = scrollBarContext()
     const clickPosition = type === 'horizontal' ? event.offsetX : event.offsetY
     const clickedPercent = clickPosition / containerSize
 
-    scrollContext.setScroll(props.type, (scrollSize - containerSize) * clickedPercent)
+    scrollContext.setScroll(
+      innerProps.barType,
+      (scrollSize - containerSize) * clickedPercent,
+    )
   }
 
   return (
@@ -99,13 +98,9 @@ export const WScrollBar = (_props: WScrollBarProps) => {
       <Dynamic
         {...restProps}
         data-show={scrollBarState().show}
-        component={props.as}
-        class={props.class}
-        style={sx(scrollBarStyle(), props.style)}
+        style={sx(scrollBarStyle(), innerProps.style)}
         onClick={onClick}
-      >
-        {props.children}
-      </Dynamic>
+      />
     </ScrollBarContext.Provider>
   )
 }

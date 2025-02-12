@@ -7,6 +7,7 @@ export const callbackify = <S>(
   handle: CallbackifyHandle<S>,
 ) => {
   let result
+
   try {
     result = action()
   } catch (error: unknown) {

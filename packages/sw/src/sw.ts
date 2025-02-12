@@ -9,6 +9,7 @@ declare const __inject_code__: string[]
 const APP_FILES = __inject_code__
 const {origin: originPath} = self.location
 const apiPath = `${originPath}/api/`
+
 const isOriginPath = (url: string) =>
   url.startsWith(`${originPath}/`) || url === originPath
 
@@ -16,11 +17,14 @@ const isApiPath = (url: string) => url.startsWith(apiPath)
 
 const createNetworkFirst = async (event: FetchEvent, cache: RequestCache = 'default') => {
   const headers = new Headers()
+
   headers.append('cache-control', cache)
   headers.append('pragma', cache)
+
   try {
     const response = await fetch(event.request, {headers})
     const cache = await caches.open(CACHE_NAME)
+
     await cache.put(event.request, response.clone())
 
     return response
@@ -65,6 +69,7 @@ const createCacheFirst = async (event: FetchEvent) => {
   // Return cached resource if available
   const response = await fetch(event.request)
   const cache = await caches.open(CACHE_NAME)
+
   await cache.put(event.request, response.clone())
 
   return response
@@ -73,12 +78,14 @@ const createCacheFirst = async (event: FetchEvent) => {
 // Handle service worker install event
 self.addEventListener('install', (event) => {
   self.skipWaiting()
+
   event.waitUntil(() => {
     caches.open(CACHE_NAME).then((cache) => {
       cache.addAll(APP_FILES)
     })
   })
 })
+
 // Handle network requests
 self.addEventListener('fetch', (event: FetchEvent) => {
   const {method, url} = event.request

@@ -1,0 +1,41 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "jsx": "preserve",
+    "jsxImportSource": "solid-js",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "declaration": true,
+    "declarationDir": "./dist/index",
+    "allowJs": true,
+    "strict": true,
+    "noEmit": false,
+    "baseUrl": ".",
+    "skipLibCheck": true,
+    "outDir": "./dist/index",
+    "paths": {
+      "src/*": ["src/*"]
+    },
+    "plugins": [
+      // Transform paths in output .js files
+      {"transform": "typescript-transform-paths"},
+
+      // Transform paths in output .d.ts files (Include this line if you output declarations files)
+      {"transform": "typescript-transform-paths", "afterDeclarations": true}
+    ]
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "src/**/*.story.tsx",
+    "src/**/*.story.ts",
+    "src/**/*.test.ts",
+    "src/**/*.test.tsx",
+    "src/**/*.spec.ts",
+    "src/**/*.spec.tsx"
+  ]
+}

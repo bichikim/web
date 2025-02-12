@@ -1,4 +1,4 @@
-import {IframeContentMessage} from 'src/components/iframe/HFrame'
+import {IframeContentMessage} from 'src/components/iframe'
 import {createEffect, useContext} from 'solid-js'
 
 export interface ProcessProps {
@@ -7,6 +7,7 @@ export interface ProcessProps {
    */
   file: string
 }
+
 /**
  * Ai 를 이용하여 피아노 mp3 를 midi 파일로 변환하는 컴포넌트
  */
@@ -18,7 +19,7 @@ export function Process() {
   }
 
   createEffect(() => {
-    console.log('message from parent', message())
+    console.info('message from parent', message())
   })
 
   return (

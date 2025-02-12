@@ -167,8 +167,10 @@ export function storage<T = any>(
   options?: CookieStorageOptions & StorageOptions,
   raw?: boolean,
 ): StorageReturn<T>
+
 export function storage(kind: StorageAndCookieKind, options: Record<string, any> = {}) {
   const {defaultValue = null} = options
+
   const get = (key: string, raw: boolean = false) => {
     return getAnyStorageItem(kind, key, defaultValue, raw)
   }

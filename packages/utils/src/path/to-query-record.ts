@@ -9,6 +9,7 @@ export interface ToQueryRecodeOptions {
 
 export type DecodeQueryKey = (key: string) => string | number | symbol
 export type DecodeQueryValue = (value: string) => any
+
 export const decodeQueryValue = (value: string) => {
   return decodeURIComponent(value)
 }
@@ -33,6 +34,7 @@ export const decodeQueryItem = (
 
 export const toQueryRecord = (query: string, options?: ToQueryRecodeOptions) => {
   const trimmedQuery: string = query.replace(/^\?/u, '')
+
   const entries = trimmedQuery
     .split('&')
     .map((item: string) => {

@@ -1,5 +1,6 @@
 import {toQueryString} from 'src/path/to-query-string'
 import {describe, expect, it} from 'vitest'
+
 describe('toQueryString', () => {
   it('should return a query string', () => {
     const result = toQueryString({
@@ -10,6 +11,7 @@ describe('toQueryString', () => {
 
     expect(result).toBe('?bar=_bar&foo=_foo&john=_john')
   })
+
   it('should return a query string with sorting', () => {
     const result = toQueryString(
       {

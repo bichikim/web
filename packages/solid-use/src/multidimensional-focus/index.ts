@@ -53,6 +53,7 @@ export const createPointInfo = <Info extends AbstractInfo>(
 ): PointInfo<Info> => {
   const members = new Set<string>()
   let _info: Info = {...info}
+
   const hasMembers = () => {
     return members.size > 0
   }

@@ -1,30 +1,24 @@
 import {sx, ValidStyle} from '@winter-love/solid-use'
-import {createMemo, mergeProps, ParentProps, splitProps, ValidComponent} from 'solid-js'
-import {Dynamic} from 'solid-js/web'
+import {createMemo, splitProps, ValidComponent} from 'solid-js'
+import {Dynamic, DynamicProps} from 'solid-js/web'
 import {X_PERCENT_VAR, Y_PERCENT_VAR} from 'src/css-var'
 import {useScrollContext} from './scroll-context'
 
-export interface WScrollBodyProps extends ParentProps {
-  as?: ValidComponent
-  /**
-   * recommend overflow-auto relative w-full h-full scrollbar-none
-   */
-  class?: string
-  keepXBar?: boolean
-  keepYBar?: boolean
+interface InnerProps {
   style?: ValidStyle
 }
 
-export const WScrollBody = (_props: WScrollBodyProps) => {
-  const defaultProps = mergeProps({as: 'div'}, _props)
-  const [props, restProps] = splitProps(defaultProps, [
-    'as',
-    'class',
-    'children',
-    'style',
-  ])
+export type WScrollBodyProps<T extends ValidComponent> = InnerProps & DynamicProps<T>
+
+export const WScrollBody = <T extends ValidComponent>(props: WScrollBodyProps<T>) => {
   const {setScrollBodyElement, value: ScrollValue} = useScrollContext()
   const scrollId = createMemo(() => ScrollValue().id)
+
+  const [innerProps, restProps] = splitProps(props, ['style']) as unknown as [
+    InnerProps,
+    DynamicProps<T>,
+  ]
+
   const style = createMemo(() => {
     const {percentX, percentY} = ScrollValue()
 
@@ -37,11 +31,9 @@ export const WScrollBody = (_props: WScrollBodyProps) => {
   return (
     <Dynamic
       {...restProps}
-      style={sx(style(), props.style)}
-      component={props.as}
+      style={sx(style(), innerProps.style)}
       id={scrollId()}
       ref={setScrollBodyElement}
-      class={props.class}
     >
       {props.children}
     </Dynamic>

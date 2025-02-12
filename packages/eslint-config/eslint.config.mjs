@@ -9,8 +9,6 @@ import sortKeys from 'eslint-plugin-sort-keys-fix'
 import typeSortKeys from 'eslint-plugin-typescript-sort-keys'
 import exportsSort from 'eslint-plugin-sort-export-all'
 import stylisticTs from '@stylistic/eslint-plugin-ts'
-// .js 인븥이면 파일을 못찾는다
-// noinspection JSFileReferences
 import solid from 'eslint-plugin-solid/configs/typescript'
 import * as tsParser from '@typescript-eslint/parser'
 
@@ -89,7 +87,6 @@ export default [
       // 'consistent-return': 'off',
       'consistent-this': 'error',
       curly: 'error',
-      // 'default-case': 'off',
       'default-case-last': 'error',
       'default-param-last': 'error',
       'dot-location': ['error', 'property'],
@@ -138,21 +135,25 @@ export default [
       'format/object-curly-spacing': ['error', 'never'],
       'format/padding-line-between-statements': [
         'warn',
+        {blankLine: 'never', next: 'expression', prev: '*'},
+        {blankLine: 'never', next: 'import', prev: 'import'},
         {blankLine: 'always', next: 'export', prev: 'import'},
         {blankLine: 'always', next: 'return', prev: '*'},
-        // {blankLine: 'always', next: '*', prev: 'const'},
-        {blankLine: 'never', next: 'expression', prev: 'expression'},
-        // {blankLine: 'never', next: 'const', prev: 'let'},
-        {blankLine: 'always', next: 'function', prev: 'function'},
-        {blankLine: 'always', next: '*', prev: 'if'},
+        {blankLine: 'always', next: 'block-like', prev: '*'},
+        {blankLine: 'always', next: 'block', prev: '*'},
+        {blankLine: 'always', next: 'block-like', prev: '*'},
+        {blankLine: 'always', next: 'expression', prev: 'const'},
+        {blankLine: 'always', next: 'expression', prev: 'let'},
+        {blankLine: 'always', next: 'multiline-expression', prev: '*'},
+        {blankLine: 'always', next: 'multiline-block-like', prev: '*'},
+        {blankLine: 'always', next: 'multiline-const', prev: '*'},
+        {blankLine: 'always', next: 'function', prev: '*'},
         {blankLine: 'always', next: 'if', prev: '*'},
-        // {blankLine: 'always', next: 'const', prev: 'block-like'},
-        // {blankLine: 'always', next: 'block-like', prev: 'const'},
+        {blankLine: 'always', next: 'expression', prev: 'if'},
+        {blankLine: 'always', next: 'expression', prev: 'import'},
         {blankLine: 'always', next: 'expression', prev: 'function'},
-        // {blankLine: 'always', next: 'import', prev: 'block-like'},
-        // {blankLine: 'always', next: 'block-like', prev: 'block-like'},
-        // {blankLine: 'always', next: 'block-like', prev: 'expression'},
-        // {blankLine: 'never', next: 'const', prev: 'const'},
+        {blankLine: 'always', next: 'for', prev: '*'},
+        {blankLine: 'always', next: 'expression', prev: 'for'},
       ],
       'format/semi': ['error', 'never'],
       'format/space-before-blocks': [
@@ -196,7 +197,6 @@ export default [
       // 'import/no-unresolved': 'off',
       // indent: 'off',
       'jsx-quotes': ['error', 'prefer-double'],
-
       'line-comment-position': ['warn', {position: 'above'}],
       'max-depth': ['error', {max: 4}],
       'max-len': [
@@ -212,7 +212,7 @@ export default [
       'max-lines-per-function': [
         'error',
         {
-          max: 150,
+          max: 200,
           skipBlankLines: true,
           skipComments: true,
         },
@@ -251,6 +251,8 @@ export default [
       'no-extra-bind': 'error',
       'no-extra-label': 'error',
       'no-extra-parens': ['error', 'functions'],
+      // 'default-case': 'off',
+      'no-fallthrough': 'off',
       'no-floating-decimal': 'error',
       'no-implicit-coercion': 'error',
       // 'no-implicit-globals': 'off',

@@ -1,14 +1,15 @@
 import {Position} from '@winter-love/utils'
 import {cx} from 'class-variance-authority'
 import {children, createMemo, createSignal, JSX, splitProps} from 'solid-js'
+import {HButton, HButtonProps} from '@winter-love/solid-components'
 
-export interface HDragExecuteProps
-  extends Omit<JSX.HTMLAttributes<HTMLButtonElement>, 'onClick'> {
+export interface HDragExecuteProps extends Omit<HButtonProps, 'onClick'> {
   containerClass?: string
   dragEndSize?: number
   dragExecuteSize?: number
   dragLeftChildren?: JSX.Element
   onClick?: (event: MouseEvent | TouchEvent) => void
+  onDoubleClick?: JSX.EventHandler<HTMLButtonElement, MouseEvent | TouchEvent>
   onLeftExecute?: () => void
   onRightExecute?: () => void
 }
@@ -32,7 +33,6 @@ interface DragData {
   started: StartData
 }
 
-// eslint-disable-next-line max-lines-per-function
 export const HDragExecute = (props: HDragExecuteProps) => {
   const [innerProps, restProps] = splitProps(props, [
     'class',
@@ -43,11 +43,13 @@ export const HDragExecute = (props: HDragExecuteProps) => {
     'dragLeftChildren',
     'onLeftExecute',
     'onRightExecute',
+    'onDoubleClick',
   ])
   const resolved = children(() => props.dragLeftChildren)
   const [drag, setDrag] = createSignal<DragData>({started: {identifier: -1, x: 0, y: 0}})
   const hasLeft = createMemo(() => Boolean(innerProps.onLeftExecute))
   const hasRight = createMemo(() => Boolean(innerProps.onRightExecute))
+
   const dragX = createMemo(() => {
     const {current} = drag()
     let x = current?.x ?? 0
@@ -70,7 +72,7 @@ export const HDragExecute = (props: HDragExecuteProps) => {
     return '0px'
   })
 
-  const handleClick = (event: MouseEvent) => {
+  const handleClick = (event: MouseEvent | TouchEvent) => {
     innerProps.onClick?.(event)
   }
 
@@ -215,7 +217,7 @@ export const HDragExecute = (props: HDragExecuteProps) => {
   // useEvent(getWindow, 'onTouchEnd', handleTouchEnd)
 
   return (
-    <button
+    <HButton
       {...restProps}
       class={cx('flex relative', innerProps.class)}
       onClick={handleClick}
@@ -225,6 +227,7 @@ export const HDragExecute = (props: HDragExecuteProps) => {
       onTouchMove={handleTouchMove}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
+      onDoubleClick={innerProps.onDoubleClick}
     >
       <span class="block h-full absolute overflow-hidden" style={{width: dragX()}}>
         {resolved()}
@@ -238,6 +241,6 @@ export const HDragExecute = (props: HDragExecuteProps) => {
       >
         {props.children}
       </span>
-    </button>
+    </HButton>
   )
 }

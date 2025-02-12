@@ -1,4 +1,5 @@
 import {createMemo, JSX, splitProps} from 'solid-js'
+import {HUNDRED} from '@winter-love/utils'
 
 export interface SScaleProps extends JSX.HTMLAttributes<HTMLDivElement> {
   /** 스케일 크기 */
@@ -7,11 +8,16 @@ export interface SScaleProps extends JSX.HTMLAttributes<HTMLDivElement> {
 
 export function SScale(props: SScaleProps) {
   const [innerProps, restProps] = splitProps(props, ['size'])
+
+  const actualSize = createMemo(() => {
+    return (innerProps.size ?? HUNDRED) / HUNDRED
+  })
+
   const scaleStyle = createMemo(() => {
     return {
-      transform: `scale(${innerProps.size ?? 1})`,
+      transform: `scale(${actualSize()})`,
       // just send resizing signal for the browser rendering engine
-      width: `${innerProps.size ?? 1}%`,
+      width: `${actualSize()}%`,
     }
   })
 

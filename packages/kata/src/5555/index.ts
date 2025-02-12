@@ -14,6 +14,7 @@ export const createEmitter = () => {
         listener(event)
       }
     }
+
     poll.length = 0
     executed = false
   }
@@ -21,20 +22,26 @@ export const createEmitter = () => {
   return {
     emit(channel: string | symbol, event: any) {
       poll.push({channel, event})
+
       if (!executed) {
         queueMicrotask(flushPoll)
       }
+
       executed = true
     },
+
     off(channel: string | symbol, listener: (event: any) => void) {
       _channels.get(channel)?.delete(listener)
     },
+
     on(channel: string | symbol, listener: (event: any) => void) {
       let channelListeners = _channels.get(channel)
+
       if (!channelListeners) {
         channelListeners = new Set()
         _channels.set(channel, channelListeners)
       }
+
       channelListeners.add(listener)
     },
   }

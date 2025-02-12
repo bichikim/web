@@ -9,6 +9,7 @@ import unoCss from 'unocss/vite'
 import * as nodeFs from 'node:fs'
 import legacy from '@vitejs/plugin-legacy'
 import {targets} from '@winter-love/vite-lib-config'
+import devtools from 'solid-devtools/vite'
 
 const fixNitroFunction = async () => {
   const source =
@@ -54,6 +55,7 @@ const createGenerateSwPlugin = (): Plugin => {
 
       const {outDir, root} = _config.router
       const swOutPath = path.join(root, 'public/sw.js')
+
       await generateSW(swOutPath, {
         assets: '_build/assets/**/*',
         assetsRoot: outDir,
@@ -82,6 +84,9 @@ export default defineConfig({
     //   minify: false,
     // },
     plugins: [
+      devtools({
+        autoname: true,
+      }),
       //
       unoCss('../../uno.config.ts'),
       createGenerateSwPlugin(),

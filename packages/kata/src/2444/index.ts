@@ -4,6 +4,7 @@ export const repeatString = (count: number, string: string): string => {
 
 export const renderRaw = (maxCount: number, renderCount: number) => {
   const half = Math.floor(renderCount / 2)
+
   return (
     repeatString(maxCount - half - 1, ' ') +
     repeatString(renderCount, '*') +
@@ -18,6 +19,7 @@ export const renderHalfDiamond = (
 ) => {
   return Array.from({length: count}, (_, index) => {
     const _index = opposite ? count - index - 1 : index
+
     return (
       repeatString(padding, ' ') +
       renderRaw(count, _index * 2 + 1) +

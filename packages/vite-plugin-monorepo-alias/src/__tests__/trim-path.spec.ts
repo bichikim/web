@@ -9,6 +9,7 @@ describe('trimPath', () => {
     expect(trimPath('foo/')).toBe('foo')
     expect(trimPath('foo//')).toBe('foo')
   })
+
   it('should return trimmed path with left', () => {
     const trimPath = createTrimPath('/', 1000, 'left')
 
@@ -18,6 +19,7 @@ describe('trimPath', () => {
     expect(trimPath('foo/')).toBe('foo/')
     expect(trimPath('foo//')).toBe('foo//')
   })
+
   it('should return trimmed path with right', () => {
     const trimPath = createTrimPath('/', 1000, 'right')
 

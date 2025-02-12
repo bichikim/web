@@ -1,4 +1,4 @@
-import {createSync, MayBeAccessor, resolveAccessor} from '@winter-love/solid-use'
+import {createSync, MaybeAccessor, resolveAccessor} from '@winter-love/solid-use'
 import {
   Accessor,
   createContext,
@@ -38,9 +38,9 @@ export const useSliderContext = () => {
 }
 
 export const useSlider = (
-  type: MayBeAccessor<SliderType>,
-  percent: MayBeAccessor<number> = 0,
-  endPercent: MayBeAccessor<number> = 0,
+  type: MaybeAccessor<SliderType>,
+  percent: MaybeAccessor<number> = 0,
+  endPercent: MaybeAccessor<number> = 0,
 ): SliderContextValue => {
   const typeAccessor = resolveAccessor(type)
   const percentAccessor = resolveAccessor(percent)
@@ -48,6 +48,7 @@ export const useSlider = (
   const [getPercentValue, setPercentValue] = createSync(percentAccessor)
   const [getEndPercentValue, setEndPercentValue] = createSync(endPercentAccessor)
   const [containerElement, setContainerElement] = createSignal<HTMLElement | null>(null)
+
   const sliderValue = createMemo(() => {
     const element = containerElement()
     const type = typeAccessor()
@@ -84,6 +85,7 @@ export const useSlider = (
       type,
     }
   })
+
   const setPercent = (percent: number) => {
     setPercentValue(percent)
   }

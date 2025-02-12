@@ -17,21 +17,32 @@ type Story = StoryObj<typeof meta>
 
 export const YOnlyScroll: Story = {
   render: () => (
-    <WScroll.Root class="w-200px h-200px bg-yello relative">
-      <WScroll.Body class="overflow-auto relative w-full h-full scrollbar-none">
+    <WScroll.Root component="div" class="w-200px h-200px bg-yello relative">
+      <WScroll.Body
+        component="div"
+        class="overflow-auto relative w-full h-full scrollbar-none"
+      >
         {fooBarPrinter(200)}
       </WScroll.Body>
       <WScroll.Bar
-        type="vertical"
+        component="div"
+        barType="vertical"
         class="bg-green left-var top-0 right-0 w-0.5rem h-full absolute data-[show=false]:hidden"
       >
-        <WScroll.Handle class="absolute bg-red right-0 top-var-position w-full h-var-size" />
+        <WScroll.Handle
+          component="div"
+          class="absolute bg-red right-0 top-var-position w-full h-var-size"
+        />
       </WScroll.Bar>
       <WScroll.Bar
-        type="horizontal"
+        component="div"
+        barType="horizontal"
         class="bg-green left-0 bottom-0 w-full h-0.5rem absolute data-[show=false]:hidden"
       >
-        <WScroll.Handle class="absolute bg-red left-var-position w-var-size h-full" />
+        <WScroll.Handle
+          component="div"
+          class="absolute bg-red left-var-position w-var-size h-full"
+        />
       </WScroll.Bar>
     </WScroll.Root>
   ),
@@ -39,8 +50,12 @@ export const YOnlyScroll: Story = {
 
 export const XYScroll: Story = {
   render: () => (
-    <WScroll.Root class="w-200px h-200px bg-yello relative pb-1rem pr-1rem">
+    <WScroll.Root
+      component="div"
+      class="w-200px h-200px bg-yello relative pb-1rem pr-1rem"
+    >
       <WScroll.Body
+        component="div"
         class="overflow-auto relative w-full h-full scrollbar-none"
         style={{
           'background-color':
@@ -50,12 +65,14 @@ export const XYScroll: Story = {
         <div class="w-700px">{fooBarPrinter(400)}</div>
       </WScroll.Body>
       <WScroll.Bar
+        component="div"
         tabindex="0"
-        type="vertical"
+        barType="vertical"
         class="bg-green top-0 right-0 w-1rem h-full absolute data-[show=false]:hidden"
         style={{'background-color': 'rgb(calc(var(--var-percent) * 255), 100, 255)'}}
       >
         <WScroll.Handle
+          component="div"
           tabindex="0"
           class="absolute left-0 top-var-position h-var-size @hover-outline outline-3 outline-black
             rd-0.5rem select-none data-[state=move]:outline"
@@ -69,12 +86,14 @@ export const XYScroll: Story = {
         </WScroll.Handle>
       </WScroll.Bar>
       <WScroll.Bar
-        type="horizontal"
+        component="div"
+        barType="horizontal"
         class="bg-green left-0 bottom-0 w-full h-1rem absolute data-[show=false]:hidden"
         style={{'background-color': 'rgb(calc(var(--var-percent) * 255), 255, 100)'}}
         thickness="0.5rem"
       >
         <WScroll.Handle
+          component="div"
           tabindex="0"
           class="absolute left-var-position w-var-size h-full rd-0.5rem [&>.shadow]:blur-sm
            [&>.block]:data-[state=move]:outline [&>.block]:data-[state=move]:translate-y--10px

@@ -13,6 +13,7 @@ export const requestIdleCallbackPolyfill = (
 
       if (!didExecute) {
         didExecute = true
+
         callback({
           didTimeout: true,
           // eslint-disable-next-line no-magic-numbers
@@ -25,6 +26,7 @@ export const requestIdleCallbackPolyfill = (
   const executeId = setTimeout(() => {
     clearTimeout(timeoutId)
     didExecute = true
+
     callback({
       didTimeout: false,
       // eslint-disable-next-line no-magic-numbers

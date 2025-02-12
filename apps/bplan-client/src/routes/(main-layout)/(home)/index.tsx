@@ -1,90 +1,83 @@
 import {Meta, Title} from '@solidjs/meta'
-import {createEffect, createMemo, createSignal, untrack} from 'solid-js'
+import {createMemo, createSignal, onMount, useContext} from 'solid-js'
 import {SPiano} from 'src/components/instruments'
-import {SettingData, SHiddenPlayer} from 'src/components/midi-player'
-import {MusicInfo} from 'src/components/midi-player/SFileItem'
-import {emitAllIds} from 'src/components/real-button/use-global-touch'
-import {createSplendidGrandPiano} from 'src/use/instruments'
+import {SettingContext} from 'src/components/midi-player'
+import {SplendidGrandPianoContext} from 'src/use/instruments'
 import {useStorage} from '@winter-love/solid-use'
 import {SScale} from 'src/components/scale'
 import {HUNDRED} from '@winter-love/utils'
-import {useDetectMinScale} from 'src/use/detect-min-size'
-import {useCookie} from 'src/use/cookie'
+import {getStorageKey} from 'src/utils/storage-key'
 
 export interface HomePageProps {
-  initMusics?: MusicInfo[]
   presetTitle?: string
 }
-const pianoSize = 7520
 
-export default function HomePage(props: HomePageProps) {
-  const [pianoElement, setPianoElement] = createSignal<HTMLElement | null>(null)
-  const minPianoSize = useDetectMinScale(pianoElement, pianoSize)
-  const [splendidGrandPiano, splendidGrandPianoController] = createSplendidGrandPiano({
-    onEmitInstrument: emitAllIds,
-  })
-  const [settingData, setSettingData] = useCookie<SettingData>('coong__piano-setting', {
-    keepPlayList: true,
-    pianoSize: 100,
-    showKeyName: false,
-  })
-  const initMusics = untrack(() => props.initMusics)
-  const [musics, setMusics, updateActive] = useStorage<MusicInfo[]>(
+export default function HomePage() {
+  const [splendidGrandPiano, splendidGrandPianoController] = useContext(
+    SplendidGrandPianoContext,
+  )
+  const [mainElement, setMainElement] = createSignal<HTMLElement | null>(null)
+
+  /**
+   * left percent of main element
+   */
+  const [savedMainScrollLeft, setSavedMainScrollLeft] = useStorage<number | null>(
     'local',
-    'coong:piano-musics-default',
-    [],
+    getStorageKey('piano-scroll-left'),
     {
-      enforceValue: initMusics,
-      mounted: true,
+      initValue: null,
     },
   )
+  const settingData = useContext(SettingContext)
   const isLoadDone = createMemo(() => splendidGrandPiano().loaded)
   const pageName = 'Piano'
-  const handleSettingDataChange = (data: SettingData) => {
-    setSettingData((prev) => ({...prev, ...data}))
-  }
-  const handleMusicsChange = (musics: MusicInfo[]) => {
-    setMusics(musics)
-  }
 
-  createEffect(() => {
-    updateActive(Boolean(settingData().keepPlayList))
+  onMount(() => {
+    const element = mainElement()
+    let savedScrollLeft = savedMainScrollLeft()
+
+    if (Number.isNaN(savedScrollLeft)) {
+      savedScrollLeft = null
+    }
+
+    if (element) {
+      element.scrollLeft =
+        typeof savedScrollLeft === 'number'
+          ? (element.scrollWidth - element.clientWidth) * savedScrollLeft
+          : (element.scrollWidth - element.clientWidth) / 2
+    }
   })
+
+  const handleScroll = (event: Event) => {
+    const element = event.target as HTMLElement
+    const {scrollLeft} = element
+    const scrollLeftPercent = scrollLeft / (element.scrollWidth - element.clientWidth)
+
+    setSavedMainScrollLeft(scrollLeftPercent)
+  }
 
   return (
     <>
-      <Title>
-        Coong - {pageName}
-        {props.presetTitle ? ` - ${props.presetTitle}` : ''}
-      </Title>
+      <Title>Coong - {pageName}</Title>
       <Meta property="og:site_name" content={pageName} />
       <Meta property="og:title" content={pageName} />
       <Meta property="og:description" content="Your instruments for free" />
-      <main class="relative h-full overflow-y-hidden pt-0 px-2 flex flex-col overflow-x-auto inline-block">
+      <main
+        class="relative h-full overflow-y-hidden pt-0 px-2 flex flex-col overflow-x-auto inline-block"
+        ref={setMainElement}
+        on:scroll={{handleEvent: handleScroll, passive: true}}
+      >
         <SScale
           class="h-full w-max origin-top-left"
-          size={(settingData().pianoSize ?? HUNDRED) / HUNDRED}
+          size={settingData().pianoSize ?? HUNDRED}
         >
           <SPiano
-            ref={setPianoElement}
             onDown={splendidGrandPianoController.down}
             onUp={splendidGrandPianoController.up}
             showKeyName={settingData().showKeyName}
           />
         </SScale>
       </main>
-      <SHiddenPlayer
-        pianoMinScale={minPianoSize()}
-        settingData={settingData()}
-        component="aside"
-        initMusics={musics()}
-        pianoController={splendidGrandPianoController}
-        pianoState={splendidGrandPiano()}
-        leftTime={splendidGrandPiano().leftTime}
-        onSettingDataChange={handleSettingDataChange}
-        onMusicsChange={handleMusicsChange}
-        class="absolute bottom-0 right-0 max-w-100vw"
-      />
       <span class="select-none fixed left-0 bottom-0 px-4px">
         {' '}
         {isLoadDone() ? '' : 'Please wait files loading ...'}

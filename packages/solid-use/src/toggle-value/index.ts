@@ -1,22 +1,22 @@
 import {Accessor, createMemo} from 'solid-js'
 import {resolveAccessor} from 'src/resolve-accessor'
-import {MayBeAccessor} from 'src/types'
+import {MaybeAccessor} from 'src/types'
 
 export interface ToggleValue {
   <T>(
-    value: MayBeAccessor<T>,
-    toggleValue: MayBeAccessor<boolean>,
+    value: MaybeAccessor<T>,
+    toggleValue: MaybeAccessor<boolean>,
   ): Accessor<T | undefined>
   <T, R>(
-    value: MayBeAccessor<T>,
-    toggleValue: MayBeAccessor<boolean>,
+    value: MaybeAccessor<T>,
+    toggleValue: MaybeAccessor<boolean>,
     offValue: R,
   ): Accessor<T | R>
 }
 
 export const toggleValue: ToggleValue = <T, R>(
-  value: MayBeAccessor<T>,
-  toggleValue: MayBeAccessor<boolean>,
+  value: MaybeAccessor<T>,
+  toggleValue: MaybeAccessor<boolean>,
   offValue?: R,
 ) => {
   const valueAccessor = resolveAccessor(value)

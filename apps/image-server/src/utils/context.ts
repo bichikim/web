@@ -7,6 +7,7 @@ export interface ProvideContext<T> {
 
 export const createProvideContext = <T>(): ProvideContext<T> => {
   const map = new WeakMap<Request, T>()
+
   return {
     provide: (req: Request, data: T) => {
       map.set(req, data)

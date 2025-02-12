@@ -8,30 +8,43 @@
   },
   "exports": {
     ".": {
-      "import": "./dist/index.mjs"
-    },
-    "./*": "./*"
+      "solid": "./dist/index/index.jsx",
+      "import": "./dist/index/index.module.js",
+      "types": "./dist/index/index.d.ts",
+      "browser": "./dist/index/index.module.js",
+      "require": "./dist/index/index.common.js",
+      "node": "./dist/index/index.common.js"
+    }
   },
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "type": "module",
+  "main": "./dist/index/index.common.js",
+  "module": "./dist/index/index.module.js",
+  "types": "./dist/index/index.d.ts",
   "files": [
     "dist/*"
   ],
-  "publishConfig": {
-    "access": "public"
-  },
   "scripts": {
-    "build": "cross-env NODE_ENV=production vite build",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "rollup -c rollup.config.js && tspc -p tsconfig.build.json",
+    "fix-build": "node fix-build.js",
     "check-types": "tsc --noEmit",
-    "lint": "eslint src"
+    "lint": "eslint src",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
+    "@winter-love/lodash": "workspace:*",
     "@winter-love/solid-use": "workspace:*",
+    "@winter-love/utils": "workspace:*",
     "class-variance-authority": "^0.7.1",
     "solid-js": "^1.9.3"
   },
   "devDependencies": {
-    "@winter-love/vite-lib-config": "workspace:*"
-  }
+    "@rollup/plugin-alias": "^5.1.1",
+    "rollup": "^4.32.1",
+    "@winter-love/vite-lib-config": "workspace:*",
+    "rollup-preset-solid": "^3.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "sideEffects": false
 }

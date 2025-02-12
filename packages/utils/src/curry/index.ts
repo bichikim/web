@@ -176,6 +176,7 @@ export function curry<T1, T2, T3, T4, R>(
   length?: number,
   args?: unknown[],
 ): CurriedFunction4<T1, T2, T3, T4, R>
+
 export function curry(
   target: (...args: unknown[]) => unknown,
   length: number = target.length,

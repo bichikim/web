@@ -14,6 +14,7 @@ export const createEmitter = <Event>(options: EmitterOptions = {}) => {
   let started = false
   const {end, start} = options
   const _channels = new Map<string | symbol, Set<(event: Event) => void>>()
+
   const triggerEach = (listeners: Set<(event: Event) => void>, event: Event) => {
     const promises = [...listeners.values()].map((listener) => listener(event))
 
@@ -43,6 +44,7 @@ export const createEmitter = <Event>(options: EmitterOptions = {}) => {
     const listenersList = channels
       ? filterListenersList(channels)
       : [..._channels.values()]
+
     const promises = listenersList.map((listeners) => {
       if (listeners) {
         return triggerEach(listeners, event)
