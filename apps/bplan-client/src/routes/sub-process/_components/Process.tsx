@@ -19,7 +19,7 @@ export function Process() {
   }
 
   createEffect(() => {
-    console.log('message from parent', message())
+    console.info('message from parent', message())
   })
 
   return (
