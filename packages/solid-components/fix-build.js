@@ -1,5 +1,4 @@
 import {readFileSync, writeFileSync} from 'node:fs'
-
 const modulePath = await import.meta.resolve('rollup-preset-solid')
 
 const code = readFileSync(modulePath.replace('file://', ''), 'utf8')
