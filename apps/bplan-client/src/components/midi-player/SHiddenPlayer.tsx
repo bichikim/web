@@ -28,8 +28,8 @@ export interface SHiddenPlayerProps
 export type SurfaceKind = 'player' | 'setting'
 
 const rootStyle = cva(
-  'relative duration-150 bg-white rd-2 flex flex-col duration-150 gap-2 bg-opacity-80 ' +
-    'backdrop-blur-sm b-2 b-white/90 shadow-md',
+  'relative duration-500 bg-white rd-2 flex flex-col duration-150 gap-2 bg-opacity-80 ' +
+    'backdrop-blur-sm b-2 b-white/90 shadow-md max-w-full md:max-w-180 w-[calc(100vw-.5rem)] p-2',
   {
     variants: {
       isSetting: {
@@ -37,8 +37,8 @@ const rootStyle = cva(
         true: '',
       },
       isShow: {
-        false: 'w-0 h-0',
-        true: 'md:max-w-180 w-400 p-2 mx-1 mb-1 max-w-full',
+        false: 'ml-1 mr--400',
+        true: '',
       },
     },
   },
@@ -46,8 +46,12 @@ const rootStyle = cva(
 
 const playerContainerStyle = cva('flex flex-col gap-2 overflow-hidden', {
   variants: {
+    isSetting: {
+      false: '',
+      true: 'w-0 h-0 hidden pointer-events-none',
+    },
     isShow: {
-      false: 'h-0 opacity-0 pointer-events-none',
+      false: 'hidden opacity-0 pointer-events-none',
       true: 'opacity-100',
     },
   },
@@ -124,7 +128,8 @@ export const SHiddenPlayer = (props: SHiddenPlayerProps) => {
       >
         <div
           class={playerContainerStyle({
-            isShow: surfaceKind() !== 'setting',
+            isSetting: surfaceKind() === 'setting',
+            isShow: isShow(),
           })}
         >
           <SPlayer {...restProps} onSetting={() => handleSurfaceKindChange('setting')} />

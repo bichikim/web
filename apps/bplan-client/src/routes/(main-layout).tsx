@@ -109,7 +109,7 @@ export default function MainLayout(props: RouteSectionProps) {
             onSettingDataChange={handleSettingDataChange}
             onMusicsChange={handleMusicsChange}
             onLink={handleLinkTypeChange}
-            class="absolute bottom-0 right-0 max-w-100vw"
+            class="absolute bottom-1 right-1 max-w-100vw"
           />
         </div>
       </SplendidGrandPianoContext.Provider>
