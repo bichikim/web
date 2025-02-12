@@ -25,7 +25,7 @@
   ],
   "scripts": {
     "build": "rollup -c rollup.config.js && tspc -p tsconfig.build.json",
-    "prepare": "node fix-build.js",
+    "postinstall": "node fix-build.js",
     "check-types": "tsc --noEmit",
     "lint": "eslint src",
     "test": "echo \"Error: no test specified\" && exit 1"
