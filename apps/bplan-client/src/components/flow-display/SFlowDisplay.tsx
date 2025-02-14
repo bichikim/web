@@ -2,7 +2,6 @@ import {ComponentProps, createMemo, createSignal, onMount, splitProps} from 'sol
 import {cva} from 'class-variance-authority'
 import {HUNDRED} from '@winter-love/utils'
 import {sx} from '@winter-love/solid-use'
-import {i} from 'vite/dist/node/types.d-aGj9QkWt'
 
 export interface SFlowDisplayProps extends ComponentProps<'span'> {
   move?: boolean
