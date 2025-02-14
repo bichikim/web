@@ -116,7 +116,7 @@ const buttonStyles = cva(
         ],
       },
       loadingAnimation: {
-        true: 'before:animate-loading',
+        true: 'before:animate-slide',
       },
       outline: {
         false: 'var-padding-offset=1px',

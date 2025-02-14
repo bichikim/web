@@ -65,11 +65,15 @@ const aiIconStyle = cva('inline-flex origin-center flex-shrink-0 w-5 h-5', {
   },
 })
 
-const nameStyle = cva('block line-height-6 truncate pb-.5', {
+const nameStyle = cva('block line-height-6 pb-.5', {
   variants: {
     isPlayable: {
       false: 'text-gray line-through',
       true: 'text-black',
+    },
+    selected: {
+      false: 'truncate',
+      true: 'text-nowrap',
     },
   },
 })
@@ -183,11 +187,12 @@ export const SFileItem = (props: SFileItemProps) => {
             <span
               class={nameStyle({
                 isPlayable: Boolean(isPlayable()),
+                selected: innerProps.selected,
               })}
             >
               {innerProps.name}
             </span>
-            <STypeIcon name={innerProps.ext} />
+            <STypeIcon class="flex-shrink-0" name={innerProps.ext} />
           </span>
           <Show when={isMidi()}>
             <span class="w-5 h-5 c-black flex-shrink-0 i-tabler:piano" />

@@ -1,5 +1,5 @@
 {
-  "description": "My Awesome App description",
+  "description": "Your free instrument",
   "icons": [
     {
       "sizes": "64x64",
@@ -23,7 +23,7 @@
       "type": "image/png"
     }
   ],
-  "name": "My Awesome App",
+  "name": "Coong",
   "short_name": "MyApp",
   "theme_color": "#eee"
 }
