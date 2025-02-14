@@ -8,6 +8,11 @@ const meta = {
       defaultValue: false,
       description: '애니메이션 활성화 여부',
     },
+    speed: {
+      control: 'number',
+      defaultValue: 1,
+      description: '애니메이션 속도',
+    },
   },
   component: SFlowDisplay,
   title: 'BPlan/Components/FlowDisplay',
