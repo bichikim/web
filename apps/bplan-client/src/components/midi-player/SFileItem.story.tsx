@@ -79,6 +79,18 @@ export const Default: Story = {
   },
 }
 
+export const LongName: Story = {
+  args: {
+    class: 'w-300px',
+    ext: 'midi',
+    index: 0,
+    name: '매우 긴 이름의 아이템 입니다 길기 때문에 넘치는 경우 선택되는 경우 흐릅니다',
+    playedTime: 0,
+    playing: false,
+    totalDuration: 100,
+  },
+}
+
 export const DragExecute: Story = {
   args: {
     class: 'w-300px',

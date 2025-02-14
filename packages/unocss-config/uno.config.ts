@@ -121,21 +121,6 @@ export default defineUsefulConfig(
         `
         },
       ],
-      // preset var
-      // [
-      //   /^(top|left|right|bottom)-var-(.+)?$/u,
-      //   ([, direction, variableName]) => {
-      //     if (variableName) {
-      //       return {
-      //         [direction]: `var(--var-${variableName})`,
-      //       }
-      //     }
-
-      //     return {
-      //       [direction]: `var(--var-${direction})`,
-      //     }
-      //   },
-      // ],
       [
         /^(width|height|w|h|top|left|right|bottom)-var-(.+)?$/u,
         ([, direction, variableName]) => {
@@ -188,16 +173,20 @@ export default defineUsefulConfig(
       animation: {
         counts: {
           blink: 'infinite',
-          loading: 'infinite',
+          slide: 'infinite',
+          'slide-text': 'infinite',
         },
         durations: {
           blink: '1s',
-          loading: '2s',
+          slide: '2s',
+          'slide-text': '2s',
         },
         keyframes: {
           blink: '{0%, 100% { opacity: 0.5; } 50% { opacity: 1; }}',
-          loading:
+          slide:
             '{0% { transform: translateX(-100%); } 100% { transform: translateX(100%); }}',
+          'slide-text':
+            '{0% { transform: translateX(0%); } 100% { transform: translateX(-50%); }}',
         },
       },
       boxShadow: {
