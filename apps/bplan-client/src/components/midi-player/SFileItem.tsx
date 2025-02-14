@@ -6,6 +6,7 @@ import {SProgress} from './SProgress'
 import {STypeIcon} from './STypeIcon'
 import type {Header} from '@tonejs/midi'
 import {DragButton, DragButtonBodyProps} from '@winter-love/solid-components'
+import {SFlowDisplay} from 'src/components/flow-display'
 
 export interface MusicInfo extends PlayOptions {
   dragEndSize?: number
@@ -66,6 +67,9 @@ const aiIconStyle = cva('inline-flex origin-center flex-shrink-0 w-5 h-5', {
 })
 
 const nameStyle = cva('block line-height-6 pb-.5', {
+  defaultVariants: {
+    selected: false,
+  },
   variants: {
     isPlayable: {
       false: 'text-gray line-through',
@@ -184,14 +188,16 @@ export const SFileItem = (props: SFileItemProps) => {
           </span>
 
           <span class="relative inline-flex gap-1 flex-grow-1 flex-shrink-1 items-center overflow-hidden">
-            <span
+            <SFlowDisplay
               class={nameStyle({
                 isPlayable: Boolean(isPlayable()),
                 selected: innerProps.selected,
               })}
+              move={innerProps.selected}
+              speed={2}
             >
               {innerProps.name}
-            </span>
+            </SFlowDisplay>
             <STypeIcon class="flex-shrink-0" name={innerProps.ext} />
           </span>
           <Show when={isMidi()}>
