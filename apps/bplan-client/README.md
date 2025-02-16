@@ -101,3 +101,10 @@ https://vgzep.csb.app/
 - firefox 53+
 - opera 42+
 - edge 15+
+
+## /Img
+
+### http source
+
+example
+http://localhost:3000/img/w_100/http://localhost:3000/images/duck.jpg

@@ -24,8 +24,7 @@
     "dist/*"
   ],
   "scripts": {
-    "build": "rollup -c rollup.config.js && tspc -p tsconfig.build.json",
-    "fix-build": "node fix-build.js",
+    "build": "node fix-build.js && rollup -c rollup.config.js && tspc -p tsconfig.build.json",
     "check-types": "tsc --noEmit",
     "lint": "eslint src",
     "test": "echo \"Error: no test specified\" && exit 1"

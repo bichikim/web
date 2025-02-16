@@ -12,6 +12,8 @@
     "start": "node ./.output/server/index.mjs"
   },
   "dependencies": {
+    "@trpc/server": "^10.45.2",
+    "@trpc/client": "^10.45.2",
     "@solidjs/meta": "^0.29.4",
     "@solidjs/router": "0.15.3",
     "@solidjs/start": "^1.0.11",
@@ -25,14 +27,14 @@
     "js-cookie": "^3.0.5",
     "smplr": "^0.16.1",
     "solid-js": "^1.9.4",
+    "ufo": "^1.5.4",
     "standardized-audio-context": "^25.3.77",
     "vinxi": "0.4.3",
     "vite": "^5.2.8",
-    "workbox-expiration": "^7.3.0",
-    "workbox-precaching": "^7.3.0",
-    "workbox-routing": "^7.3.0",
-    "workbox-strategies": "^7.3.0",
-    "workbox-window": "^7.3.0"
+    "ipx": "^3.0.1",
+    "h3": "^1.10.1",
+    "@auth/core": "^0.37.4",
+    "@auth/solid-start": "^0.15.4"
   },
   "devDependencies": {
     "@iconify-json/hugeicons": "^1.2.3",

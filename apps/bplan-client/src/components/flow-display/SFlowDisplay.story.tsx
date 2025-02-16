@@ -26,6 +26,7 @@ export const Default: Story = {
     children: '흐르는 텍스트입니다',
     class: 'text-2xl text-nowrap bg-red-500',
     move: true,
+    speed: 2,
   },
   render: (args: SFlowDisplayProps) => {
     return (

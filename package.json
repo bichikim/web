@@ -19,7 +19,6 @@
     "format:package.json": "pnpm dlx sort-package-json \"package.json\" \"packages/*/package.json\" \"apps/*/package.json\" ",
     "lint": "turbo lint --filter=@winter-love/* --filter=@apps/*",
     "oxlint": "oxlint",
-    "postinstall": "pnpm --filter=@winter-love/solid-components run fix-build",
     "prepare": "turbo build --filter=@winter-love/*",
     "publish:alpha": "lernan publish from-package --preid alpha --dist-tag alpha",
     "publish:beta": "lerna publish from-package --preid beta --dist-tag beta",
