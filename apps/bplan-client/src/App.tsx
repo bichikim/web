@@ -5,7 +5,6 @@ import {Router} from '@solidjs/router'
 import {FileRoutes} from '@solidjs/start/router'
 import {createEffect, createSignal, Show, Suspense} from 'solid-js'
 import {ReloadPrompt} from './ReloadPrompt'
-import {Analytics} from './components/vercel'
 
 export default function App() {
   const [isClient, setIsClient] = createSignal(false)
@@ -27,7 +26,6 @@ export default function App() {
       <Show when={isClient()}>
         <ReloadPrompt class="fixed top-1 right-1 p-2 bg-white rd-1" />
       </Show>
-      <Analytics />
     </>
   )
 }

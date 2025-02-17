@@ -1,4 +1,4 @@
-import {createEffect, createSignal} from 'solid-js'
+import {createEffect} from 'solid-js'
 import {useLocation, useParams} from '@solidjs/router'
 import {computeRoute, inject, pageview} from '@vercel/analytics'
 
