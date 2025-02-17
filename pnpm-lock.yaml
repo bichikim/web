@@ -234,6 +234,9 @@ importers:
       '@tonejs/midi':
         specifier: ^2.0.28
         version: 2.0.28
+      '@vercel/analytics':
+        specifier: ^1.5.0
+        version: 1.5.0(react@18.3.1)(vue@3.5.13(typescript@5.7.3))
       '@winter-love/lodash':
         specifier: workspace:*
         version: link:../../packages/lodash
@@ -4313,6 +4316,32 @@ packages:
     resolution: {integrity: sha512-YajF8Z2J/KvXdnC5BsGJjt3fm4D14vmYaHdlTyzi92Rkh/67JtaCz2OhElDoF6k4S4fm9B8uLRP10p+smRe9Fw==}
     peerDependencies:
       vite: 5.4.12
+
+  '@vercel/analytics@1.5.0':
+    resolution: {integrity: sha512-MYsBzfPki4gthY5HnYN7jgInhAZ7Ac1cYDoRWFomwGHWEX7odTEzbtg9kf/QSo7XEsEAqlQugA6gJ2WS2DEa3g==}
+    peerDependencies:
+      '@remix-run/react': ^2
+      '@sveltejs/kit': ^1 || ^2
+      next: '>= 13'
+      react: ^18 || ^19 || ^19.0.0-rc
+      svelte: '>= 4'
+      vue: ^3
+      vue-router: ^4
+    peerDependenciesMeta:
+      '@remix-run/react':
+        optional: true
+      '@sveltejs/kit':
+        optional: true
+      next:
+        optional: true
+      react:
+        optional: true
+      svelte:
+        optional: true
+      vue:
+        optional: true
+      vue-router:
+        optional: true
 
   '@vercel/nft@0.27.10':
     resolution: {integrity: sha512-zbaF9Wp/NsZtKLE4uVmL3FyfFwlpDyuymQM1kPbeT0mVOHKDQQNjnnfslB3REg3oZprmNFJuh3pkHBk2qAaizg==}
@@ -14935,6 +14964,11 @@ snapshots:
       - rollup
       - supports-color
       - vue
+
+  '@vercel/analytics@1.5.0(react@18.3.1)(vue@3.5.13(typescript@5.7.3))':
+    optionalDependencies:
+      react: 18.3.1
+      vue: 3.5.13(typescript@5.7.3)
 
   '@vercel/nft@0.27.10(encoding@0.1.13)(rollup@4.32.1)':
     dependencies:

@@ -6,6 +6,8 @@
     "type": "git",
     "url": "https://github.com/bichikim/web.git"
   },
+  "sideEffects": false,
+  "type": "module",
   "exports": {
     ".": {
       "solid": "./dist/index/index.jsx",
@@ -16,7 +18,6 @@
       "node": "./dist/index/index.common.js"
     }
   },
-  "type": "module",
   "main": "./dist/index/index.common.js",
   "module": "./dist/index/index.module.js",
   "types": "./dist/index/index.d.ts",
@@ -38,12 +39,11 @@
   },
   "devDependencies": {
     "@rollup/plugin-alias": "^5.1.1",
-    "rollup": "^4.32.1",
     "@winter-love/vite-lib-config": "workspace:*",
+    "rollup": "^4.32.1",
     "rollup-preset-solid": "^3.0.0"
   },
   "publishConfig": {
     "access": "public"
-  },
-  "sideEffects": false
+  }
 }
