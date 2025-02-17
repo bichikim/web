@@ -81,7 +81,10 @@ export default defineConfig({
   },
   vite: {
     // build: {
-    //   minify: false,
+    //   // minify: false,
+    //   rollupOptions: {
+    //     external: ['@trpc/server', '@trpc/server/*'],
+    //   },
     // },
     plugins: [
       devtools({

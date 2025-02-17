@@ -11,7 +11,7 @@ const handler = (event: APIEvent) =>
     createContext: () => ({foo: 'bar'}),
 
     // the endpoint handling the requests
-    endpoint: '/trpc',
+    endpoint: '/api/trpc',
 
     // the request object
     req: event.request,

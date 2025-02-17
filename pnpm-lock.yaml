@@ -234,6 +234,12 @@ importers:
       '@tonejs/midi':
         specifier: ^2.0.28
         version: 2.0.28
+      '@trpc/client':
+        specifier: ^10.45.2
+        version: 10.45.2(@trpc/server@10.45.2)
+      '@trpc/server':
+        specifier: ^10.45.2
+        version: 10.45.2
       '@vercel/analytics':
         specifier: ^1.5.0
         version: 1.5.0(react@18.3.1)(vue@3.5.13(typescript@5.7.3))
@@ -3675,7 +3681,7 @@ packages:
     resolution: {integrity: sha512-rKg9QjiQXI13RojahajmQC1VIPxdgSRYo8WeGls1tGrnn8GtAyE3y49SVPtk9sJvP1wW17qI0nq38xnJ3arEWw==}
     peerDependencies:
       storybook: ^8.6.0-beta.0
-      vite: 4.5.3
+      vite: 5.4.12
 
   '@storybook/core@8.6.0-alpha.0':
     resolution: {integrity: sha512-6/okb7hD/2AAarYOCAACwuxR/0LQq6NWSNi+Eo7NEWjq+aliOGe3Vc/yUQekq+h3Uwls+AT/HANLo8t3sYbPrg==}
@@ -3851,6 +3857,14 @@ packages:
 
   '@tootallnate/quickjs-emscripten@0.23.0':
     resolution: {integrity: sha512-C5Mc6rdnsaJDjO3UpGW/CQTHtCKaYlScZTly4JIu97Jxo/odCiH0ITnDXSJPTOrEKk/ycSZ0AOgTmkDtkOsvIA==}
+
+  '@trpc/client@10.45.2':
+    resolution: {integrity: sha512-ykALM5kYWTLn1zYuUOZ2cPWlVfrXhc18HzBDyRhoPYN0jey4iQHEFSEowfnhg1RvYnrAVjNBgHNeSAXjrDbGwg==}
+    peerDependencies:
+      '@trpc/server': 10.45.2
+
+  '@trpc/server@10.45.2':
+    resolution: {integrity: sha512-wOrSThNNE4HUnuhJG6PfDRp4L2009KDVxsd+2VYH8ro6o/7/jwYZ8Uu5j+VaW+mOmc8EHerHzGcdbGNQSAUPgg==}
 
   '@trysound/sax@0.2.0':
     resolution: {integrity: sha512-L7z9BgrNEcYyUYtF+HaEfiS5ebkh9jXqbszz7pC0hRBPaatV0XjSD3+eHrpqFemQfgwiFF0QPIarnIihIDn7OA==}
@@ -4160,7 +4174,7 @@ packages:
   '@unocss/astro@65.4.3':
     resolution: {integrity: sha512-yhPKH4CT2CFjvKR8lL6oS/7jarMWp4iSnYcNlTlZLmvTIS3dGxyhAsVy/xkdzdJ6sM+6FS0hUuQNv+NYvArRNg==}
     peerDependencies:
-      vite: 4.5.3
+      vite: 5.4.12
     peerDependenciesMeta:
       vite:
         optional: true
@@ -9348,7 +9362,7 @@ packages:
     resolution: {integrity: sha512-xRB4Jhgns3dBuM/s0j70BpXKy77sNjISud9xXBv60qC4cnJ/TcuVHI1t+05luj1BEKJVQSokqIaVoZWcjqA9yw==}
     peerDependencies:
       solid-js: ^1.9.0
-      vite: 4.5.3
+      vite: 5.4.12
     peerDependenciesMeta:
       vite:
         optional: true
@@ -9376,7 +9390,7 @@ packages:
       solid-start-node: '*'
       solid-start-static: '*'
       solid-start-vercel: '*'
-      vite: 4.5.3
+      vite: 5.4.12
     peerDependenciesMeta:
       solid-start-aws:
         optional: true
@@ -10388,7 +10402,7 @@ packages:
     engines: {node: '>=14'}
     peerDependencies:
       '@nuxt/kit': '*'
-      vite: 4.5.3
+      vite: 5.4.12
     peerDependenciesMeta:
       '@nuxt/kit':
         optional: true
@@ -10397,7 +10411,7 @@ packages:
     resolution: {integrity: sha512-4JR1RN0HEg/w17eRQJ/Ve2pSa6KCVQcQO6yKtIaKQCFDyd63zGfXHWpygBkvvRSpqa0GcqNKf0fjUJ0HiJQXVQ==}
     engines: {node: '>=v16.7.0'}
     peerDependencies:
-      vite: 4.5.3
+      vite: 5.4.12
 
   vite-plugin-solid@2.11.0:
     resolution: {integrity: sha512-G+NiwDj4EAeUE0wt3Ur9f+Lt9oMUuLd0FIxYuqwJSqRacKQRteCwUFzNy8zMEt88xWokngQhiFjfJMhjc1fDXw==}
@@ -10489,7 +10503,7 @@ packages:
   vitefu@1.0.5:
     resolution: {integrity: sha512-h4Vflt9gxODPFNGPwp4zAMZRpZR7eslzwH2c5hn5kNZ5rhnKyRJ50U+yGCdc2IRaBs8O4haIgLNGrV5CrpMsCA==}
     peerDependencies:
-      vite: 4.5.3
+      vite: 5.4.12
     peerDependenciesMeta:
       vite:
         optional: true
@@ -14240,6 +14254,12 @@ snapshots:
       midi-file: 1.2.4
 
   '@tootallnate/quickjs-emscripten@0.23.0': {}
+
+  '@trpc/client@10.45.2(@trpc/server@10.45.2)':
+    dependencies:
+      '@trpc/server': 10.45.2
+
+  '@trpc/server@10.45.2': {}
 
   '@trysound/sax@0.2.0': {}
 
