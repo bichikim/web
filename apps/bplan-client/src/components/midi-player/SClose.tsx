@@ -12,16 +12,15 @@ export interface SCloseProps extends ComponentProps<'button'> {
   totalTime?: number
 }
 
-const rootStyle = cva(['absolute'], {
+const rootStyle = cva(['absolute rd-1'], {
   defaultVariants: {
     isHidden: false,
     isPlaying: false,
   },
   variants: {
     isHidden: {
-      false:
-        'left-1 md:left--7 top--8 md:top-unset md:bottom-1 md:rd-tr-0 md:rd-l-1 rd-t- before:opacity-0',
-      true: 'top--10 left--10 z-1 rd-1 before:opacity-50',
+      false: 'left-1 md:left--8 top--8 md:top-unset md:bottom-1 before:opacity-0',
+      true: 'bottom-1 left--10 z-1 before:opacity-50',
     },
     isPlaying: {
       false: '',

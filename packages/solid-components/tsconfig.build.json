@@ -9,12 +9,13 @@
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "declaration": true,
-    "declarationDir": "./dist1",
+    "declarationDir": "./dist/index",
     "allowJs": true,
     "strict": true,
     "noEmit": false,
     "baseUrl": ".",
-    "outDir": "./dist1",
+    "skipLibCheck": true,
+    "outDir": "./dist/index",
     "paths": {
       "src/*": ["src/*"]
     },
@@ -26,6 +27,15 @@
       {"transform": "typescript-transform-paths", "afterDeclarations": true}
     ]
   },
-  "extends": ["../../tsconfig.json"],
-  "include": ["src/**/*.ts", "src/**/*.tsx"]
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "src/**/*.story.tsx",
+    "src/**/*.story.ts",
+    "src/**/*.test.ts",
+    "src/**/*.test.tsx",
+    "src/**/*.spec.ts",
+    "src/**/*.spec.tsx"
+  ]
 }

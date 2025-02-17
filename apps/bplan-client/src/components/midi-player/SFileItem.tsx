@@ -6,6 +6,7 @@ import {SProgress} from './SProgress'
 import {STypeIcon} from './STypeIcon'
 import type {Header} from '@tonejs/midi'
 import {DragButton, DragButtonBodyProps} from '@winter-love/solid-components'
+import {SFlowDisplay} from 'src/components/flow-display'
 
 export interface MusicInfo extends PlayOptions {
   dragEndSize?: number
@@ -43,7 +44,7 @@ export interface SFileItemProps
 }
 
 const rootStyle = cx(
-  'gap-4 p-0 b-0 bg-transparent text-5 flex-shrink-0 h-9 mb-0.3125rem last:mb-0',
+  'relative gap-4 p-0 b-0 bg-transparent text-5 flex-shrink-0 h-9 mb-0.3125rem last:mb-0',
   'after:bg-gray-300 after:h-.25 first:after:hidden after:content-[""] after:absolute',
   'after:top--0.1875rem after:left-0.5rem after:w-[calc(100%-1rem)] cursor-pointer touch-none',
 )
@@ -56,7 +57,7 @@ const indexStyle = cva('', {
   },
 })
 
-const aiIconStyle = cva('flex origin-center flex-shrink-0 w-5 h-5', {
+const aiIconStyle = cva('inline-flex origin-center flex-shrink-0 w-5 h-5', {
   variants: {
     generated: {
       false: 'text-gray-600 animate-blink animate-duration-1s cursor-pointer scale-170 ',
@@ -65,11 +66,18 @@ const aiIconStyle = cva('flex origin-center flex-shrink-0 w-5 h-5', {
   },
 })
 
-const nameStyle = cva('block line-height-6 truncate pb-.5', {
+const nameStyle = cva('block line-height-6 pb-.5', {
+  defaultVariants: {
+    selected: false,
+  },
   variants: {
     isPlayable: {
       false: 'text-gray line-through',
       true: 'text-black',
+    },
+    selected: {
+      false: 'truncate',
+      true: 'text-nowrap',
     },
   },
 })
@@ -140,6 +148,7 @@ export const SFileItem = (props: SFileItemProps) => {
       onClick={handleSelect}
       onDoubleClick={handlePlayOrSuspend}
       onLeftExecute={handleDelete}
+      preventRight
     >
       <DragButton.Body
         {...restProps}
@@ -149,11 +158,16 @@ export const SFileItem = (props: SFileItemProps) => {
         <DragButton.Aside
           position="left"
           component="span"
-          class="block w-[calc(100%-0.25rem)] h-full overflow-hidden bg-red p-1 box-border rd-1"
+          class="absolute flex left-0 top-0 w-var-drag-x h-full overflow-hidden box-border"
         >
-          <span class="block w-full h-full i-tabler:trash bg-white " />
+          <span class="mr-1 bg-red rd-1 w-full h-full flex items-center p-1">
+            <span class="block w-full h-full i-tabler:trash bg-white" />
+          </span>
         </DragButton.Aside>
-        <DragButton.Content component="span" class="px-4 gap-2">
+        <DragButton.Content
+          component="span"
+          class="absolute flex top-0 left-var-drag-x w-full h-full px-4 gap-2 items-center"
+        >
           <Show when={innerProps.playing}>
             <SProgress
               class="block absolute w-full h-full left-0 top-0"
@@ -162,26 +176,29 @@ export const SFileItem = (props: SFileItemProps) => {
             />
           </Show>
           <Show when={innerProps.selected}>
-            <span class="block absolute bg-blue rd-1 top-0 left-0 w-full h-full opacity-40" />
+            <span class="inline-block absolute bg-blue rd-1 top-0 left-0 w-full h-full opacity-40" />
           </Show>
           <Show when={showPlayingIcon()}>
-            <span class="block i-tabler:chevrons-right absolute text-gray-500 left-3" />
+            <span class="inline-block i-tabler:chevrons-right absolute text-gray-500 left-3" />
           </Show>
-          <span class="relative block text-gray b-r-solid b-r-.25 b-r-gray-300 pr-2">
+          <span class="relative inline-block text-gray b-r-solid b-r-.25 b-r-gray-300 pr-2">
             <span class={indexStyle({playing: showPlayingIcon()})}>
               {(innerProps.index ?? 0) + 1}
             </span>
           </span>
 
-          <span class="relative flex gap-1 flex-grow-1 flex-shrink-1 items-center overflow-hidden">
-            <span
+          <span class="relative inline-flex gap-1 flex-grow-1 flex-shrink-1 items-center overflow-hidden">
+            <SFlowDisplay
               class={nameStyle({
                 isPlayable: Boolean(isPlayable()),
+                selected: innerProps.selected,
               })}
+              move={innerProps.selected}
+              speed={2}
             >
               {innerProps.name}
-            </span>
-            <STypeIcon name={innerProps.ext} />
+            </SFlowDisplay>
+            <STypeIcon class="flex-shrink-0" name={innerProps.ext} />
           </span>
           <Show when={isMidi()}>
             <span class="w-5 h-5 c-black flex-shrink-0 i-tabler:piano" />

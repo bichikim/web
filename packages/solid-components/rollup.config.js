@@ -9,8 +9,8 @@ export default withSolid([
       alias({
         entries: [
           {
-            find: 'src',
-            replacement: fileURLToPath(new URL('src', import.meta.url)),
+            find: /^src\/(.*)$/u,
+            replacement: `${fileURLToPath(new URL('src', import.meta.url))}/$1`,
           },
         ],
       }),

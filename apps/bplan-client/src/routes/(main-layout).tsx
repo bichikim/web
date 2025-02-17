@@ -17,10 +17,7 @@ import {emitAllIds} from 'src/components/real-button/use-global-touch'
 import {useCookie} from 'src/use/cookie'
 import {createSplendidGrandPiano, SplendidGrandPianoContext} from 'src/use/instruments'
 import {getStorageKey} from 'src/utils/storage-key'
-
-const getSelfUrl = () => {
-  return import.meta.env.VITE_API_URL ?? 'http://localhost:3000'
-}
+import {getSelfUrl} from 'src/utils/self-url'
 
 interface Data {
   musics: MusicInfo[]
@@ -109,7 +106,7 @@ export default function MainLayout(props: RouteSectionProps) {
             onSettingDataChange={handleSettingDataChange}
             onMusicsChange={handleMusicsChange}
             onLink={handleLinkTypeChange}
-            class="absolute bottom-0 right-0 max-w-100vw"
+            class="absolute bottom-1 right-1 max-w-100vw"
           />
         </div>
       </SplendidGrandPianoContext.Provider>
