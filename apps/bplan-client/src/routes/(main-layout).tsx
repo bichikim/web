@@ -17,7 +17,7 @@ import {emitAllIds} from 'src/components/real-button/use-global-touch'
 import {useCookie} from 'src/use/cookie'
 import {createSplendidGrandPiano, SplendidGrandPianoContext} from 'src/use/instruments'
 import {getStorageKey} from 'src/utils/storage-key'
-import {getSelfUrl} from 'src/utils/self-url'
+import {getSelfUrl} from 'src/env'
 import {Analytics} from 'src/components/vercel'
 
 interface Data {
