@@ -1,7 +1,7 @@
 import type {AppRouter} from './routes'
 import {createTRPCProxyClient, httpBatchLink, loggerLink} from '@trpc/client'
 import {joinURL} from 'ufo'
-import {getSelfUrl} from 'src/utils/self-url'
+import {getSelfUrl} from 'src/env'
 import {TRPC_ENDPOINT} from './consts'
 
 export type {AppRouter} from './routes'
