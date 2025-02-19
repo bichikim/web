@@ -11,3 +11,14 @@ export const getDatabaseUrl = (): string => {
 
   return url
 }
+
+export const getGithubClient = () => {
+  const clientId = import.meta.env.VITE_GITHUB_CLIENT_ID
+  const clientSecret = import.meta.env.VITE_GITHUB_CLIENT_SECRET
+
+  if (!clientId || !clientSecret) {
+    throw new Error('GITHUB_CLIENT_ID or GITHUB_CLIENT_SECRET is not set')
+  }
+
+  return {clientId, clientSecret}
+}
