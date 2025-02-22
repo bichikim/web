@@ -1,5 +1,5 @@
 import {getWindow} from '@winter-love/utils'
-import {Accessor, createMemo, onCleanup} from 'solid-js'
+import {Accessor, createMemo} from 'solid-js'
 
 export const useTargetElement = (
   target: Accessor<HTMLElement | string | null>,
