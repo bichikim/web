@@ -1,7 +1,7 @@
 import {APIEvent} from '@solidjs/start/server'
 import {createIPX, createIPXH3App, ipxFSStorage, ipxHttpStorage} from 'ipx'
 import {toWebHandler} from 'h3'
-import {getSelfUrl} from 'src/utils/self-url'
+import {getSelfUrl} from 'src/env'
 
 const ipx = createIPX({
   httpStorage: ipxHttpStorage({domains: [getSelfUrl()]}),
