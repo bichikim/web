@@ -20,7 +20,7 @@ describe('useTargetElement', () => {
     })
   })
 
-  it('HTMLElement를 전달하면 그대로 반환합니다', () => {
+  it('returns the HTMLElement as-is when passed directly', () => {
     createRoot(() => {
       const div = document.createElement('div')
       const target = useTargetElement(() => div)
@@ -29,7 +29,7 @@ describe('useTargetElement', () => {
     })
   })
 
-  it('null을 전달하면 null을 반환합니다', () => {
+  it('returns null when null is passed', () => {
     createRoot(() => {
       const target = useTargetElement(() => null)
 
@@ -37,7 +37,7 @@ describe('useTargetElement', () => {
     })
   })
 
-  it('존재하지 않는 선택자를 전달하면 null을 반환합니다', () => {
+  it('returns null when a non-existent selector is passed', () => {
     createRoot(() => {
       const target = useTargetElement(() => '#non-existent')
 
