@@ -17,8 +17,8 @@ export const ReloadPrompt = (props: ReloadPromptProps) => {
   })
 
   const handleClose = () => {
-    // setOfflineReady(false)
-    // setNeedRefresh(false)
+    setOfflineReady(false)
+    setNeedRefresh(false)
   }
 
   const handleUpdateServiceWorker = async () => {
