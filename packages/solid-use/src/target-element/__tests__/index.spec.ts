@@ -32,6 +32,7 @@ describe('useTargetElement', () => {
   it('null을 전달하면 null을 반환합니다', () => {
     createRoot(() => {
       const target = useTargetElement(() => null)
+
       expect(target()).toBeNull()
     })
   })
@@ -39,6 +40,7 @@ describe('useTargetElement', () => {
   it('존재하지 않는 선택자를 전달하면 null을 반환합니다', () => {
     createRoot(() => {
       const target = useTargetElement(() => '#non-existent')
+
       expect(target()).toBeNull()
     })
   })
