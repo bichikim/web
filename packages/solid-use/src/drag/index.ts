@@ -26,6 +26,9 @@ interface DragPayload {
   startPoint: [number, number]
 }
 
+/**
+ * @experimental
+ */
 export const useDrag = (
   handleElement: MaybeAccessor<HTMLElement | null>,
   callback: (type: DragType, payload: DragPayload) => void,
