@@ -13,7 +13,7 @@ const useServiceWorker = (path: string) => {
   let _registration: ServiceWorkerRegistration | undefined
 
   const handleSkipWaiting = () => {
-    _registration?.postMessage({type: 'SKIP_WAITING'})
+    _registration?.waiting?.postMessage({type: 'SKIP_WAITING'})
   }
 
   createEffect(async () => {
@@ -26,7 +26,8 @@ const useServiceWorker = (path: string) => {
     }
 
     const registration = await serviceWorker.register(path)
-    const _registration = registration
+
+    _registration = registration
 
     const statechange = () => {
       if (registration.installing) {
@@ -62,7 +63,7 @@ export const ReloadPrompt = (props: ReloadPromptProps) => {
   const [offlineReady, setOfflineReady] = createSignal(false)
   const [needRefresh, setNeedRefresh] = createSignal(false)
 
-  const [state, {handleSkipWaiting}] = useServiceWorker('/sw.js')
+  const [state] = useServiceWorker('/sw.js')
 
   const handleClose = () => {
     setOfflineReady(false)
