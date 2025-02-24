@@ -52,7 +52,7 @@ const useServiceWorker = (path: string) => {
     })
   })
 
-  return [(state, {handleSkipWaiting})]
+  return [state, {handleSkipWaiting}]
 }
 
 /**
