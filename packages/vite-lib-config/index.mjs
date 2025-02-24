@@ -80,7 +80,12 @@ export const createConfig = ({
             skipLibCheck: true,
           },
           entryRoot: './src',
-          exclude: ['**/__tests__/*', '**/__stories__/*', '**/*.story.tsx'],
+          exclude: [
+            '**/__tests__/*',
+            '**/__stories__/*',
+            '**/*.story.tsx',
+            '**/*.spec.ts',
+          ],
           include: ['**/*.ts', '**/*.tsx'],
         }),
         ...plugins,

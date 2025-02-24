@@ -1,21 +1,24 @@
-import {Accessor, createEffect, createSignal, JSX, Show, Signal} from 'solid-js'
+import {createEffect, createSignal, JSX, Show} from 'solid-js'
 import {preventGlobalTouchAttrs} from 'src/components/real-button/use-global-touch'
-import {getWindow} from '@winter-love/utils'
 
 export interface ReloadPromptProps extends JSX.HTMLAttributes<HTMLDivElement> {
   //
 }
 
+/**
+ * @WIP
+ */
 export const ReloadPrompt = (props: ReloadPromptProps) => {
   const [offlineReady, setOfflineReady] = createSignal(false)
   const [needRefresh, setNeedRefresh] = createSignal(false)
 
   createEffect(() => {
+    //
   })
 
   const handleClose = () => {
-    // setOfflineReady(false)
-    // setNeedRefresh(false)
+    setOfflineReady(false)
+    setNeedRefresh(false)
   }
 
   const handleUpdateServiceWorker = async () => {

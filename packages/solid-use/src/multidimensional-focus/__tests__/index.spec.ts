@@ -38,15 +38,3 @@ describe('parseFocusPosition', () => {
     ])
   })
 })
-
-// describe('focus controller', () => {
-//   // todo
-//   it('can search next focus position direction', () => {
-//     const aMap = new Map([[1, 1]])
-//     const bMap = new Map(aMap)
-//     // bMap.
-//     //
-//     // console.log(aMap)
-//     // console.log(bMap)
-//   })
-// })

@@ -1,7 +1,12 @@
-import {} from '@winter-love/utils'
 import {Accessor, createMemo, createSignal, createUniqueId} from 'solid-js'
 
-export const manualMemo = <R>(effectFunction: () => R): [Accessor<R>, () => void] => {
+/**
+ * create a manual memo hook
+ * can update value manually
+ */
+export const createManualMemo = <R>(
+  effectFunction: () => R,
+): [Accessor<R>, () => void] => {
   const [signal, setSignal] = createSignal(createUniqueId())
 
   const value = createMemo(() => {
@@ -16,5 +21,3 @@ export const manualMemo = <R>(effectFunction: () => R): [Accessor<R>, () => void
 
   return [value, forceUpdate]
 }
-
-export const createManualMemo = manualMemo
