@@ -77,13 +77,19 @@ const createCacheFirst = async (event: FetchEvent) => {
 
 // Handle service worker install event
 self.addEventListener('install', (event) => {
-  self.skipWaiting()
-
   event.waitUntil(() => {
     caches.open(CACHE_NAME).then((cache) => {
       cache.addAll(APP_FILES)
     })
   })
+})
+
+self.addEventListener('message', (event) => {
+  console.log('message', event)
+
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting()
+  }
 })
 
 // Handle network requests
