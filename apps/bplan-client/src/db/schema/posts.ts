@@ -1,4 +1,4 @@
-import {integer, pgTable, text, serial} from 'drizzle-orm/pg-core'
+import {integer, pgTable, serial, text} from 'drizzle-orm/pg-core'
 import {relations} from 'drizzle-orm'
 import {users} from './users'
 import {timestamps} from '../fragments'
