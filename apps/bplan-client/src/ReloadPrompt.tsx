@@ -1,8 +1,8 @@
-import {createEffect, createSignal, JSX, onCleanup, Show} from 'solid-js'
+import {createEffect, createSignal, JSX, onCleanup, Show, ComponentProps} from 'solid-js'
 import {preventGlobalTouchAttrs} from 'src/components/real-button/use-global-touch'
 import {getWindow} from '@winter-love/utils'
 
-export interface ReloadPromptProps extends JSX.HTMLAttributes<HTMLDivElement> {
+export interface ReloadPromptProps extends ComponentProps<'div'> {
   //
 }
 
