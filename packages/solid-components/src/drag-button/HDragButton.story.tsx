@@ -1,32 +1,32 @@
 import {HDragButton, HDragButtonProps} from './HDragButton'
 import type {Meta, StoryObj} from 'storybook-solidjs'
 import {fn} from '@storybook/test'
-import {DragButtonAside} from './DragButtonAside'
-import {DragButtonContent} from './DragButtonContent'
+import {HDragButtonAside} from './HDragButtonAside'
+import {HDragButtonContent} from './HDragButtonContent'
 
 const Template = (args: HDragButtonProps) => {
   return (
     <HDragButton {...args} class="relative ml-50 w-100px h-50px bg-red-500">
-      <DragButtonAside
+      <HDragButtonAside
         position="left"
         component="span"
         class="h-80% bg-green-500 c-white block absolute left-0 top-0 overflow-hidden w-var-drag-x"
       >
         왼쪽으로 드래그 실행
-      </DragButtonAside>
-      <DragButtonContent
+      </HDragButtonAside>
+      <HDragButtonContent
         component="span"
         class=" bg-yellow-500 c-white block absolute top-0 left-var-drag-x w-full h-full"
       >
         드레그버튼
-      </DragButtonContent>
-      <DragButtonAside
+      </HDragButtonContent>
+      <HDragButtonAside
         position="right"
         component="span"
         class="h-80% bg-blue-500 c-white block absolute right-0 top-0 overflow-hidden w-var-drag-x"
       >
         오른쪽으로 드래그 실행
-      </DragButtonAside>
+      </HDragButtonAside>
     </HDragButton>
   )
 }

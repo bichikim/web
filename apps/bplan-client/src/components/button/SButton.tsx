@@ -3,19 +3,20 @@ import {Component, createMemo, splitProps} from 'solid-js'
 import {HButton, HButtonProps} from '@winter-love/solid-components'
 
 export interface SButtonProps extends HButtonProps {
+  fit?: boolean
   flat?: boolean
   glass?: boolean
   loading?: number | boolean
   outline?: boolean
   preventLoadingDisabled?: boolean
   size?: 'sm' | 'md' | 'lg'
-  variant?: 'primary' | 'secondary' | 'default' | 'danger' | 'warning'
+  variant?: 'primary' | 'secondary' | 'default' | 'danger' | 'warning' | 'transparent'
 }
 
 const buttonStyles = cva(
   [
     'font-medium inline-flex items-center justify-center gap-2',
-    'select-none shadow-sm outline-offset-2 cursor-pointer overflow-hidden',
+    'select-none outline-offset-2 cursor-pointer overflow-hidden',
   ],
   {
     compoundVariants: [
@@ -50,28 +51,28 @@ const buttonStyles = cva(
       {
         className: [
           // eslint-disable-next-line max-len
-          'bg-[radial-gradient(at_90%_30%,_theme(colors.blue.600/_var(--un-bg-opacity,_1))_50%,_theme(colors.blue.200/_var(--un-bg-opacity,_1))_130%)]',
-          'hover:enabled:bg-[radial-gradient(_theme(colors.blue.600),_theme(colors.blue.600))]',
+          'bg-[radial-gradient(at_90%_30%,_theme(colors.blue.400/_var(--un-bg-opacity,_1))_50%,_theme(colors.blue.200/_var(--un-bg-opacity,_1))_130%)]',
+          'hover:enabled:bg-[radial-gradient(_theme(colors.blue.400),_theme(colors.blue.600))]',
         ],
         flat: false,
         variant: 'primary',
       },
       {
-        className: ['bg-blue-600 hover:enabled:b-blue-600'],
+        className: ['bg-blue-400 hover:enabled:b-blue-400'],
         flat: true,
         variant: 'primary',
       },
       {
         className: [
           // eslint-disable-next-line max-len
-          'bg-[radial-gradient(at_90%_30%,_theme(colors.indigo.600/_var(--un-bg-opacity,_1))_50%,_theme(colors.indigo.200/_var(--un-bg-opacity,_1))_130%)]',
-          'hover:enabled:bg-[radial-gradient(_theme(colors.indigo.600),_theme(colors.indigo.600))]',
+          'bg-[radial-gradient(at_90%_30%,_theme(colors.indigo.400/_var(--un-bg-opacity,_1))_50%,_theme(colors.indigo.200/_var(--un-bg-opacity,_1))_130%)]',
+          'hover:enabled:bg-[radial-gradient(_theme(colors.indigo.400),_theme(colors.indigo.600))]',
         ],
         flat: false,
         variant: 'secondary',
       },
       {
-        className: ['bg-indigo-600 hover:enabled:b-indigo-600'],
+        className: ['bg-indigo-400 hover:enabled:b-indigo-400'],
         flat: true,
         variant: 'secondary',
       },
@@ -89,8 +90,39 @@ const buttonStyles = cva(
         flat: true,
         variant: 'default',
       },
+      {
+        className: ['var-padding=.1rem'],
+        fit: true,
+        size: 'sm',
+      },
+      {
+        className: ['var-padding=.25rem'],
+        fit: true,
+        size: 'md',
+      },
+      {
+        className: ['var-padding=.75rem'],
+        fit: true,
+        size: 'lg',
+      },
+      {
+        className: ['var-padding=.25rem'],
+        fit: false,
+        size: 'sm',
+      },
+      {
+        className: ['var-padding=.75rem'],
+        fit: false,
+        size: 'md',
+      },
+      {
+        className: ['var-padding=1.25rem'],
+        fit: false,
+        size: 'lg',
+      },
     ],
     defaultVariants: {
+      fit: false,
       flat: false,
       glass: false,
       loading: false,
@@ -100,7 +132,11 @@ const buttonStyles = cva(
       variant: 'default',
     },
     variants: {
+      fit: {
+        true: '',
+      },
       flat: {
+        false: 'shadow-sm',
         true: '',
       },
       glass: {
@@ -109,7 +145,7 @@ const buttonStyles = cva(
       },
       loading: {
         true: [
-          'before:w-full before:h-full before:opacity-70',
+          'before:w-full before:h-full before:opacity-70 before:z--1',
           'before:content-[""] before:absolute before:left-0 before:top-0 before:right-0 before:bottom-0',
           'before:inset-0 before:bg-gradient-to-r before:from-transparent before:w-var-close-percent',
           'before:pointer-events-none animate-pulse-alt',
@@ -123,9 +159,21 @@ const buttonStyles = cva(
         true: 'b-1 b-solid',
       },
       size: {
-        lg: 'p-[calc(_0.75rem+_var(--un-padding-offset,_0px))] rd-lg text-lg',
-        md: 'p-[calc(_.25rem+_var(--un-padding-offset,_0px))] rd-md text-base',
-        sm: 'p-[calc(_.1rem+_var(--un-padding-offset,_0px))] rd-sm text-sm',
+        lg: [
+          'py-[calc(_0.75rem+_var(--un-padding-offset,_0px))]',
+          'px-[calc(_var(--un-padding,_0px)+_var(--un-padding-offset,_0px))]',
+          'rd-lg text-lg',
+        ],
+        md: [
+          'py-[calc(_.25rem+_var(--un-padding-offset,_0px))]',
+          'px-[calc(_var(--un-padding,_0px)+_var(--un-padding-offset,_0px))]',
+          'rd-md text-base',
+        ],
+        sm: [
+          'py-[calc(_.1rem+_var(--un-padding-offset,_0px))]',
+          'px-[calc(_var(--un-padding,_0px)+_var(--un-padding-offset,_0px))]',
+          'rd-sm text-sm',
+        ],
       },
       variant: {
         danger: [
@@ -139,14 +187,19 @@ const buttonStyles = cva(
           'disabled:c-gray-400 before:to-gray-300',
         ],
         primary: [
-          'c-white b-blue-600',
-          'focus-visible:outline-blue-600 focus-visible:outline-2 focus-visible:outline-solid',
+          'c-white b-blue-400',
+          'focus-visible:outline-blue-400 focus-visible:outline-2 focus-visible:outline-solid',
           'disabled:c-blue-200 before:to-white',
         ],
         secondary: [
-          'c-white b-indigo-600',
-          'focus-visible:outline-indigo-600 focus-visible:outline-2 focus-visible:outline-solid',
+          'c-white b-indigo-400',
+          'focus-visible:outline-indigo-400 focus-visible:outline-2 focus-visible:outline-solid',
           'disabled:c-indigo-200 before:to-white',
+        ],
+        transparent: [
+          'c-black b-transparent',
+          'focus-visible:outline-black focus-visible:outline-2 focus-visible:outline-solid',
+          'disabled:c-gray-400 before:to-gray-300',
         ],
         warning: [
           'c-white b-orange-400',
@@ -170,6 +223,7 @@ export const SButton: Component<SButtonProps> = (props) => {
     'disabled',
     'preventLoadingDisabled',
     'children',
+    'fit',
   ])
 
   const isLoading = createMemo(() => {
@@ -205,6 +259,7 @@ export const SButton: Component<SButtonProps> = (props) => {
       {...restProps}
       class={buttonStyles({
         class: innerProps.class ?? 'relative',
+        fit: innerProps.fit,
         flat: innerProps.flat,
         glass: innerProps.glass,
         loading: isLoading(),

@@ -28,8 +28,8 @@ export interface SHiddenPlayerProps
 export type SurfaceKind = 'player' | 'setting'
 
 const rootStyle = cva(
-  'relative duration-500 bg-white rd-2 flex flex-col duration-150 gap-2 bg-opacity-80 ' +
-    'backdrop-blur-sm b-2 b-white/90 shadow-md max-w-full md:max-w-180 w-[calc(100vw-.5rem)] p-2',
+  'relative duration-500 bg-white rd-2 flex flex-col duration-150 gap-2 bg-opacity-90 ' +
+    'backdrop-blur-sm b-1 b-white shadow-md max-w-full md:max-w-180 w-[calc(100vw-.5rem)] p-2',
   {
     variants: {
       isSetting: {

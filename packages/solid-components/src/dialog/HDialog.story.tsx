@@ -1,5 +1,5 @@
 import {Meta, StoryObj} from 'storybook-solidjs'
-import {HDialogRoot} from './HDialog'
+import {HDialogRoot} from './HDialogRoot'
 import {fn} from '@storybook/test'
 
 const meta = {
@@ -17,7 +17,6 @@ const meta = {
     },
   },
   component: HDialogRoot,
-  tags: ['autodocs'],
   title: 'Solid/Components/Dialog/HDialog',
 } satisfies Meta<typeof HDialogRoot>
 

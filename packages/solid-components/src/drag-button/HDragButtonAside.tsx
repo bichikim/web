@@ -10,22 +10,22 @@ const onlyPlus = (value: number) => {
   return value
 }
 
-export type DragAsidePosition = 'left' | 'right'
+export type HDragButtonAsidePosition = 'left' | 'right'
 
-interface DragButtonAsideOwnProps {
+interface HDragButtonAsideOwnProps {
   position: 'left' | 'right'
 }
 
-export type DragButtonAsideProps<T extends ValidComponent> = DynamicProps<T> &
-  DragButtonAsideOwnProps
+export type HDragButtonAsideProps<T extends ValidComponent> = DynamicProps<T> &
+  HDragButtonAsideOwnProps
 
-export function DragButtonAside<T extends ValidComponent>(
-  props: DragButtonAsideProps<T>,
+export function HDragButtonAside<T extends ValidComponent>(
+  props: HDragButtonAsideProps<T>,
 ) {
   const [dragContext] = useContext(DragButtonContext)
 
   const [innerProps, restProps] = splitProps(props, ['position']) as unknown as [
-    DragButtonAsideOwnProps,
+    HDragButtonAsideOwnProps,
     DynamicProps<T>,
   ]
 

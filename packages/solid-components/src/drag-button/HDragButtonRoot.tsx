@@ -1,10 +1,10 @@
-import {ButtonRoot, ButtonRootProps} from '../button'
+import {Button, HButtonRootProps} from '../button'
 import {createMemo, mergeProps, splitProps} from 'solid-js'
 import {Position} from '@winter-love/utils'
 import {DragButtonContext, DragButtonContextProps} from './context'
 import {useDrag} from '../use/drag'
 
-export interface DragButtonRootProps extends Omit<ButtonRootProps, 'onClick'> {
+export interface HDragButtonRootProps extends Omit<HButtonRootProps, 'onClick'> {
   allowBottom?: boolean
   allowTop?: boolean
   clickAllowMoveSize?: number
@@ -20,7 +20,7 @@ export interface DragButtonRootProps extends Omit<ButtonRootProps, 'onClick'> {
 const getExecutePosition = (
   position: Position,
   options: Pick<
-    DragButtonRootProps,
+    HDragButtonRootProps,
     'allowBottom' | 'allowTop' | 'preventLeft' | 'preventRight'
   >,
 ) => {
@@ -42,7 +42,7 @@ const getExecutePosition = (
   return {x, y}
 }
 
-export const DragButtonRoot = (props: DragButtonRootProps) => {
+export const HDragButtonRoot = (props: HDragButtonRootProps) => {
   const defaultProps = mergeProps(
     {clickAllowMoveSize: 10, dragEndSize: 50, dragExecuteSize: 50},
     props,
@@ -138,13 +138,13 @@ export const DragButtonRoot = (props: DragButtonRootProps) => {
         },
       ]}
     >
-      <ButtonRoot
+      <Button.Root
         {...restProps}
         onTouchEnd={handleTouchEnd}
         onTouchStart={handleTouchStart}
       >
         {props.children}
-      </ButtonRoot>
+      </Button.Root>
     </DragButtonContext.Provider>
   )
 }

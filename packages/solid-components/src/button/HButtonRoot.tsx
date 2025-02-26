@@ -38,7 +38,7 @@ export const ButtonContext = createContext<
   },
 ])
 
-export interface ButtonRootProps extends ParentProps {
+export interface HButtonRootProps extends ParentProps {
   disabled?: boolean
   doubleClickGap?: number
   href?: string
@@ -51,7 +51,7 @@ export interface ButtonRootProps extends ParentProps {
 
 const DEFAULT_DOUBLE_CLICK_GAP = 250
 
-export const ButtonRoot = (props: ButtonRootProps) => {
+export const HButtonRoot = (props: HButtonRootProps) => {
   // Previous click time used to check if current click is a double click
   let clickTime = 0
   let touchdown = false
@@ -68,7 +68,7 @@ export const ButtonRoot = (props: ButtonRootProps) => {
    *
    * @param event The mouse event triggered by user interaction.
    */
-  const handleClick: ButtonRootProps['onClick'] = (event: any) => {
+  const handleClick: HButtonRootProps['onClick'] = (event: any) => {
     // skip touch event
     // skip anchor event because it will navigate to the href
     if (event.pointerType === 'touch' || defaultProps.type === 'anchor') {
@@ -82,7 +82,7 @@ export const ButtonRoot = (props: ButtonRootProps) => {
    * Handles the `doubleClick` event for the button component and forwards it to the parent component.
    * @param event The mouse event triggered by user interaction.
    */
-  const handleDoubleClick: ButtonRootProps['onDoubleClick'] = (event) => {
+  const handleDoubleClick: HButtonRootProps['onDoubleClick'] = (event) => {
     // skip anchor event because it will navigate to the href
     if (defaultProps.type === 'anchor') {
       return
@@ -92,7 +92,7 @@ export const ButtonRoot = (props: ButtonRootProps) => {
     defaultProps.onDoubleClick?.(event)
   }
 
-  const handleTouchStart: ButtonRootProps['onTouchStart'] = (event) => {
+  const handleTouchStart: HButtonRootProps['onTouchStart'] = (event) => {
     touchdown = true
     // pass original event to parent
     defaultProps.onTouchStart?.(event)
@@ -103,7 +103,7 @@ export const ButtonRoot = (props: ButtonRootProps) => {
    * @param event
    * @returns
    */
-  const handleTouchEnd: ButtonRootProps['onTouchEnd'] = (event) => {
+  const handleTouchEnd: HButtonRootProps['onTouchEnd'] = (event) => {
     // pass original event to parent
     defaultProps.onTouchEnd?.(event)
 

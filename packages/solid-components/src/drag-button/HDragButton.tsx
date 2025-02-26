@@ -1,8 +1,8 @@
 import {splitProps} from 'solid-js'
-import {DragButtonRoot, DragButtonRootProps} from './DragButtonRoot'
-import {DragButtonBody, DragButtonBodyProps} from './DragButtonBody'
+import {HDragButtonRoot, HDragButtonRootProps} from './HDragButtonRoot'
+import {HDragButtonBody, HDragButtonBodyProps} from './HDragButtonBody'
 
-export interface HDragButtonProps extends DragButtonBodyProps, DragButtonRootProps {
+export interface HDragButtonProps extends HDragButtonBodyProps, HDragButtonRootProps {
   //
 }
 
@@ -17,8 +17,8 @@ export const HDragButton = (props: HDragButtonProps) => {
   ])
 
   return (
-    <DragButtonRoot {...rootProps}>
-      <DragButtonBody {...bodyProps}>{props.children}</DragButtonBody>
-    </DragButtonRoot>
+    <HDragButtonRoot {...rootProps}>
+      <HDragButtonBody {...bodyProps}>{props.children}</HDragButtonBody>
+    </HDragButtonRoot>
   )
 }

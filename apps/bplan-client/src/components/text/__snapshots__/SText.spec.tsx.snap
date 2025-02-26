@@ -1,0 +1,36 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`SText > should render 1`] = `
+<span
+  class=""
+>
+  Hello
+</span>
+`;
+
+exports[`SText > should render size: 'lg' 1`] = `
+<span
+  class="text-lg"
+  size="lg"
+>
+  Hello
+</span>
+`;
+
+exports[`SText > should render size: 'md' 1`] = `
+<span
+  class="text-base"
+  size="md"
+>
+  Hello
+</span>
+`;
+
+exports[`SText > should render size: 'sm' 1`] = `
+<span
+  class="text-sm"
+  size="sm"
+>
+  Hello
+</span>
+`;

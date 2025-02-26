@@ -9,8 +9,8 @@ export const STypeIcon = (props: MTypeIconProps) => {
   const [innerProps, restProps] = splitProps(props, ['name', 'class'])
 
   const colorMatch: Record<string, string> = {
-    midi: 'bg-blue text-white',
-    mp3: 'bg-blue text-white',
+    midi: 'bg-blue-400 text-white',
+    mp3: 'bg-blue-400 text-white',
   }
   const color = createMemo(() => colorMatch[props.name ?? ''] ?? 'bg-gray text-white')
 

@@ -3,16 +3,16 @@ import './global.css'
 import {MetaProvider, Title} from '@solidjs/meta'
 import {Router} from '@solidjs/router'
 import {FileRoutes} from '@solidjs/start/router'
-import {createEffect, createSignal, Show, Suspense} from 'solid-js'
+import {Show, Suspense} from 'solid-js'
 import {ReloadPrompt} from './ReloadPrompt'
+import {ServiceWorkerProvider} from 'src/components/service-worker'
+import {useIsClient} from '@winter-love/solid-use'
 
 export default function App() {
-  const [isClient, setIsClient] = createSignal(false)
-
-  createEffect(() => setIsClient(true))
+  const isClient = useIsClient()
 
   return (
-    <>
+    <ServiceWorkerProvider src="/sw.js">
       <Router
         root={(props) => (
           <MetaProvider>
@@ -24,8 +24,8 @@ export default function App() {
         <FileRoutes />
       </Router>
       <Show when={isClient()}>
-        <ReloadPrompt class="fixed top-1 right-1 p-2 bg-white rd-1" />
+        <ReloadPrompt />
       </Show>
-    </>
+    </ServiceWorkerProvider>
   )
 }

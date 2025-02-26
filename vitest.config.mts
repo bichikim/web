@@ -22,13 +22,4 @@ export default defineConfig({
       workspacePaths: [/^\/coong\//u, /^\/packages\//u],
     }),
   ],
-  test: {
-    environment: 'node',
-    globals: true,
-    include: [
-      'packages/*/src/**/*.{test,spec}.?(c|m)[jt]s?(x)',
-      'apps/*/src/**/*.{test,spec}.?(c|m)[jt]s?(x)',
-    ],
-    // setupFiles: ['./vitest.setup.ts'],
-  },
 })

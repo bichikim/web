@@ -1,5 +1,4 @@
 import {JSX, mergeProps, splitProps} from 'solid-js'
-import {HButtonType} from '@winter-love/solid-components'
 import {SButton, SButtonProps} from 'src/components/button'
 
 export interface SPlayerButtonProps
@@ -25,7 +24,7 @@ export interface SPlayerButtonProps
  * @prop {(event: Event) => void} [onClick] - Event handler for click events
  */
 export const SPlayerButton = (props: SPlayerButtonProps) => {
-  const defaultProps = mergeProps({type: 'button' as HButtonType}, props)
+  const defaultProps = mergeProps({type: 'button' as const}, props)
 
   const [innerProps, restProps] = splitProps(defaultProps, ['class', 'type', 'onClick'])
 
@@ -39,6 +38,7 @@ export const SPlayerButton = (props: SPlayerButtonProps) => {
     <SButton
       {...restProps}
       flat
+      fit
       variant="default"
       class={innerProps.class}
       onClick={handelClick}

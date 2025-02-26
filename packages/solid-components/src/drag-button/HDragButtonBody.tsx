@@ -1,19 +1,19 @@
-import {ButtonBody, ButtonBodyProps} from '../button'
+import {Button, HButtonBodyProps} from '../button'
 import {DragButtonContext} from './context'
 import {createMemo, useContext} from 'solid-js'
 
-export interface DragButtonBodyProps extends ButtonBodyProps {
+export interface HDragButtonBodyProps extends HButtonBodyProps {
   //
 }
 
-export const DragButtonBody = (props: DragButtonBodyProps) => {
+export const HDragButtonBody = (props: HDragButtonBodyProps) => {
   const [dragContext, {handleMouseDown, handleMouseMove, handleTouchMove}] =
     useContext(DragButtonContext)
 
   const dragX = createMemo(() => dragContext().dragX)
 
   return (
-    <ButtonBody
+    <Button.Body
       {...props}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
@@ -21,6 +21,6 @@ export const DragButtonBody = (props: DragButtonBodyProps) => {
       style={{'--var-drag-x': `${dragX()}px`}}
     >
       {props.children}
-    </ButtonBody>
+    </Button.Body>
   )
 }

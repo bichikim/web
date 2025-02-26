@@ -1,12 +1,12 @@
 import {freeze} from '@winter-love/utils'
-import {ButtonBody} from './ButtonBody'
-import {ButtonRoot} from './ButtonRoot'
+import {HButtonBody} from './HButtonBody'
+import {HButtonRoot} from './HButtonRoot'
 
-export * from './ButtonBody'
-export * from './ButtonRoot'
 export * from './HButton'
+export * from './HButtonBody'
+export * from './HButtonRoot'
 
 export const Button = freeze({
-  Body: ButtonBody,
-  Root: ButtonRoot,
+  Body: HButtonBody,
+  Root: HButtonRoot,
 })

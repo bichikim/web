@@ -1,114 +1,65 @@
-import {createEffect, createSignal, JSX, onCleanup, Show, ComponentProps} from 'solid-js'
+import {ComponentProps, createMemo, createSignal, Show} from 'solid-js'
 import {preventGlobalTouchAttrs} from 'src/components/real-button/use-global-touch'
-import {getWindow} from '@winter-love/utils'
+import {useServiceWorker} from 'src/components/service-worker'
+import {SButton} from 'src/components/button'
+import {SDivider} from 'src/components/divider'
 
 export interface ReloadPromptProps extends ComponentProps<'div'> {
   //
-}
-
-type ServiceWorkerState = 'active' | 'installing' | 'waiting'
-
-const useServiceWorker = (path: string) => {
-  const [state, setState] = createSignal<ServiceWorkerState | undefined>()
-  let _registration: ServiceWorkerRegistration | undefined
-
-  const handleSkipWaiting = () => {
-    _registration?.waiting?.postMessage({type: 'SKIP_WAITING'})
-  }
-
-  createEffect(async () => {
-    const window = getWindow()
-    const {navigator} = window || {}
-    const {serviceWorker} = navigator || {}
-
-    if (import.meta.env.DEV || !window || !navigator || !serviceWorker) {
-      return
-    }
-
-    const registration = await serviceWorker.register(path)
-
-    _registration = registration
-
-    const statechange = () => {
-      if (registration.installing) {
-        setState('installing')
-      } else if (registration.waiting) {
-        setState('waiting')
-      } else if (registration.active) {
-        setState('active')
-      }
-    }
-
-    const updatefound = () => {
-      setState('installing')
-      registration.installing?.addEventListener('statechange', statechange)
-    }
-
-    registration.addEventListener('updatefound', updatefound)
-    registration.addEventListener('statechange', statechange)
-
-    onCleanup(() => {
-      registration.removeEventListener('updatefound', updatefound)
-      registration.removeEventListener('statechange', statechange)
-    })
-  })
-
-  return [state, {handleSkipWaiting}]
 }
 
 /**
  * @WIP
  */
 export const ReloadPrompt = (props: ReloadPromptProps) => {
-  const [offlineReady, setOfflineReady] = createSignal(false)
-  const [needRefresh, setNeedRefresh] = createSignal(false)
-
-  const [state] = useServiceWorker('/sw.js')
+  const [serviceWorkerState, {handleSkipWaiting, handleSkipUpdate}] = useServiceWorker()
 
   const handleClose = () => {
-    setOfflineReady(false)
-    setNeedRefresh(false)
+    handleSkipUpdate()
   }
 
+  const isWaitingForUpdate = createMemo(() => {
+    return serviceWorkerState().state === 'waiting'
+  })
+
   const handleUpdateServiceWorker = async () => {
-    console.info('handleUpdateServiceWorker')
-    handleClose()
-    // await updateServiceWorker()
+    const result = await handleSkipWaiting()
+
+    if (result) {
+      console.info('oh ye!!!')
+    }
   }
 
   return (
-    <Show when={offlineReady() || needRefresh()}>
-      <div {...props} {...preventGlobalTouchAttrs()}>
-        <Show when={offlineReady()}>
-          <div class="flex flex-col gap-2">
-            <span>App ready to work offline</span>
-            <button class="" onClick={handleClose} onTouchEnd={handleClose}>
-              OK
-            </button>
-          </div>
-        </Show>
-        <Show when={needRefresh()}>
-          <div class="flex flex-col gap-2">
-            <span>App Updated Please Click Reload to use the updated App</span>
-            <div class="flex gap-2">
-              <button
-                class="b-0 cusor-pointer rd-1 px-5 py-1"
-                onClick={handleUpdateServiceWorker}
-                onTouchEnd={handleUpdateServiceWorker}
-              >
+    <>
+      <Show when={isWaitingForUpdate()}>
+        <div
+          {...props}
+          class="fixed top-2 right-2 p-2 bg-white rd-1 backdrop-blur-sm bg-opacity-90 b-1 b-white"
+          {...preventGlobalTouchAttrs()}
+        >
+          <div class="flex flex-col gap-1">
+            <div class="p-1">
+              <h4 class="font-bold">App Updated</h4>
+              <span class="text-md color-gray-600">
+                Please Click Reload to use the updated App
+              </span>
+            </div>
+            <SDivider type="horizontal" class="mx-2" />
+            <div class="flex gap-2 p-1">
+              <SButton variant="primary" flat onClick={handleUpdateServiceWorker}>
                 Reload
-              </button>
-              <button
-                class="b-0 cusor-pointer rd-1 px-2 py-1"
-                onClick={handleClose}
-                onTouchEnd={handleClose}
-              >
+              </SButton>
+              <SButton variant="transparent" flat onClick={handleClose}>
                 Skip
-              </button>
+              </SButton>
             </div>
           </div>
-        </Show>
+        </div>
+      </Show>
+      <div class="fixed top-1 left-1 bg-green-400 rd-1 min-w-2 min-h-2 px-1 text-white duration-300">
+        {serviceWorkerState().state}
       </div>
-    </Show>
+    </>
   )
 }
