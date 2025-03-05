@@ -1,6 +1,7 @@
 import {Message, useClose} from '@winter-love/solid-components'
-import {createMemo} from 'solid-js'
+import {createMemo, For, Show} from 'solid-js'
 import {Dynamic} from 'solid-js/web'
+import {SToastAction} from './SToastAction'
 
 export interface SToastItemProps extends Message {
   //
@@ -29,7 +30,12 @@ export const SToastItem = (props: SToastItemProps) => {
       onClick={handleClick}
       class="bg-opacity-90 bg-white rd-2 p-2 shadow-md backdrop-blur-sm"
     >
-      {props.message}
+      <span>{props.message}</span>
+      <Show when={!props.clickToClose && props.actions?.length}>
+        <For each={props.actions}>
+          {(action) => <SToastAction {...action} onClose={() => handleShow(false)} />}
+        </For>
+      </Show>
     </Dynamic>
   )
 }
