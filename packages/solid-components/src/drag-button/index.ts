@@ -1,18 +1,18 @@
 import {freeze} from '@winter-love/utils'
-import {HDragButtonBody} from './HDragButtonBody'
-import {HDragButtonAside} from './HDragButtonAside'
-import {HDragButtonContent} from './HDragButtonContent'
-import {HDragButtonRoot} from './HDragButtonRoot'
+import {DragButtonBody} from './DragButtonBody'
+import {DragButtonAside} from './DragButtonAside'
+import {DragButtonContent} from './DragButtonContent'
+import {DragButtonProvider} from './DragButtonProvider'
 
+export * from './DragButtonAside'
+export * from './DragButtonBody'
+export * from './DragButtonContent'
+export * from './DragButtonProvider'
 export * from './HDragButton'
-export * from './HDragButtonAside'
-export * from './HDragButtonBody'
-export * from './HDragButtonContent'
-export * from './HDragButtonRoot'
 
 export const DragButton = freeze({
-  Aside: HDragButtonAside,
-  Body: HDragButtonBody,
-  Content: HDragButtonContent,
-  Root: HDragButtonRoot,
+  Aside: DragButtonAside,
+  Body: DragButtonBody,
+  Content: DragButtonContent,
+  Provider: DragButtonProvider,
 })

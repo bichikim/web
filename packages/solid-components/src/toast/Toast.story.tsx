@@ -1,16 +1,17 @@
 import type {Meta, StoryObj} from 'storybook-solidjs'
-import {NotificationRoot} from './NotificationRoot'
+import {ToastProvider} from './ToastProvider'
+import {ToastBody} from './ToastBody'
 import {useContext} from 'solid-js'
-import {createTimeout, NotificationContext} from './context'
+import {createTimeout, Message, NotificationContext} from './context'
 import {createUuid} from '@winter-love/utils'
 import {fn} from '@storybook/test'
 
 const uuid = createUuid()
 
 const meta = {
-  component: NotificationRoot,
-  title: 'BPlan/Components/Notification',
-} satisfies Meta<typeof NotificationRoot>
+  component: ToastProvider,
+  title: 'Solid/Components/Toast',
+} satisfies Meta<typeof ToastProvider>
 
 export default meta
 type Story = StoryObj<typeof meta>
@@ -27,9 +28,9 @@ const DemoContent = () => {
           type: 'click',
         },
       ],
+      closeHook: createTimeout(3000),
       id: uuid(),
       message: '알림 메시지입니다',
-      timeout: createTimeout(3000),
     })
   }
 
@@ -45,10 +46,21 @@ const DemoContent = () => {
   )
 }
 
+interface NotificationItemProps extends Message {}
+
+const NotificationItem = (props: NotificationItemProps) => {
+  return (
+    <div class="bg-white rounded-lg p-4 shadow-lg">
+      <div class="text-lg font-bold">{props.message}</div>
+    </div>
+  )
+}
+
 export const Primary: Story = {
   render: () => (
-    <NotificationRoot>
+    <ToastProvider>
+      <ToastBody>{(message) => <NotificationItem {...message} />}</ToastBody>
       <DemoContent />
-    </NotificationRoot>
+    </ToastProvider>
   ),
 }

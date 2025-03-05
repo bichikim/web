@@ -1,4 +1,4 @@
-import {createContext, Accessor} from 'solid-js'
+import {Accessor, createContext} from 'solid-js'
 
 export const createTimeout = (timeout: number) => {
   return (callback: () => void) => {

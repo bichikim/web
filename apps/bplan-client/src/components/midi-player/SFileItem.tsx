@@ -5,7 +5,7 @@ import {PlayOptions} from 'src/use/instruments'
 import {SProgress} from './SProgress'
 import {STypeIcon} from './STypeIcon'
 import type {Header} from '@tonejs/midi'
-import {DragButton, HDragButtonBodyProps} from '@winter-love/solid-components'
+import {DragButton, DragButtonBodyProps} from '@winter-love/solid-components'
 import {SFlowDisplay} from 'src/components/flow-display'
 
 export interface MusicInfo extends PlayOptions {
@@ -30,7 +30,7 @@ export interface MusicInfo extends PlayOptions {
 }
 
 export interface SFileItemProps
-  extends Omit<HDragButtonBodyProps, 'id' | 'name' | 'onPlay' | 'onSelect'>,
+  extends Omit<DragButtonBodyProps, 'id' | 'name' | 'onPlay' | 'onSelect'>,
     MusicInfo {
   dragExecuteSize?: number
   index?: number
@@ -143,7 +143,7 @@ export const SFileItem = (props: SFileItemProps) => {
   )
 
   return (
-    <DragButton.Root
+    <DragButton.Provider
       type="button"
       onClick={handleSelect}
       onDoubleClick={handlePlayOrSuspend}
@@ -218,6 +218,6 @@ export const SFileItem = (props: SFileItemProps) => {
           {innerProps.children}
         </DragButton.Content>
       </DragButton.Body>
-    </DragButton.Root>
+    </DragButton.Provider>
   )
 }

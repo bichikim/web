@@ -5,7 +5,7 @@ export interface CloseContextProps {
 }
 
 export type CloseContextValue = readonly [
-  Accessor<CloseContextProps>,
+  Accessor<boolean>,
   {
     handleShow: (value: boolean) => void
   },
@@ -16,9 +16,7 @@ export interface CloseContextActions {
 }
 
 export const CloseContext = createContext<CloseContextValue>([
-  () => ({
-    show: true,
-  }),
+  () => true,
   {
     handleShow: () => {
       throw new Error('handleClose is not implemented')

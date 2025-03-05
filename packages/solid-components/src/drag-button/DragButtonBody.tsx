@@ -1,12 +1,12 @@
-import {Button, HButtonBodyProps} from '../button'
+import {Button, ButtonBodyProps} from '../button'
 import {DragButtonContext} from './context'
 import {createMemo, useContext} from 'solid-js'
 
-export interface HDragButtonBodyProps extends HButtonBodyProps {
+export interface DragButtonBodyProps extends ButtonBodyProps {
   //
 }
 
-export const HDragButtonBody = (props: HDragButtonBodyProps) => {
+export const DragButtonBody = (props: DragButtonBodyProps) => {
   const [dragContext, {handleMouseDown, handleMouseMove, handleTouchMove}] =
     useContext(DragButtonContext)
 

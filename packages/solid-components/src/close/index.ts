@@ -1,11 +1,10 @@
 import {freeze} from '@winter-love/utils'
-import {HCloseRoot} from './HCloseRoot'
-import {HCloseBody} from './HCloseBody'
+import {CloseProvider} from './CloseProvider'
+import {CloseBody} from './CloseBody'
 
-export * from './HCloseRoot'
 export * from './context'
 
-export const HClose = freeze({
-  Body: HCloseBody,
-  Root: HCloseRoot,
+export const Close = freeze({
+  Body: CloseBody,
+  Provider: CloseProvider,
 })

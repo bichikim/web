@@ -1,5 +1,5 @@
 import {Meta, StoryObj} from 'storybook-solidjs'
-import {HDialogRoot} from './HDialogRoot'
+import {DialogProvider} from './DialogProvider'
 import {fn} from '@storybook/test'
 
 const meta = {
@@ -16,9 +16,9 @@ const meta = {
       description: '다이얼로그 표시 여부',
     },
   },
-  component: HDialogRoot,
+  component: DialogProvider,
   title: 'Solid/Components/Dialog/HDialog',
-} satisfies Meta<typeof HDialogRoot>
+} satisfies Meta<typeof DialogProvider>
 
 export default meta
 type Story = StoryObj<typeof meta>

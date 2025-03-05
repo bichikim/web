@@ -2,9 +2,9 @@ import {ValidComponent} from 'solid-js'
 import {Dynamic, DynamicProps} from 'solid-js/web'
 import {useClose} from './context'
 
-export type HCloseBodyProps<T extends ValidComponent> = DynamicProps<T>
+export type CloseBodyProps<T extends ValidComponent> = DynamicProps<T>
 
-export const HCloseBody = <T extends ValidComponent>(props: HCloseBodyProps<T>) => {
+export const CloseBody = <T extends ValidComponent>(props: CloseBodyProps<T>) => {
   const [, {handleShow}] = useClose()
 
   const handleClose = (event: MouseEvent) => {

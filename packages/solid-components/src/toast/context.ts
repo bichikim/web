@@ -1,4 +1,4 @@
-import {createContext, Accessor} from 'solid-js'
+import {Accessor, createContext} from 'solid-js'
 
 export const createTimeout = (timeout: number) => {
   return (callback: () => void) => {
@@ -10,19 +10,25 @@ export const createTimeout = (timeout: number) => {
 
 export interface MessageAction {
   action: () => void
+  actionToClose?: boolean
   label: string
   type: 'click'
 }
 
 export interface Message {
-  actions: MessageAction[]
+  actions?: MessageAction[]
+  /**
+   * Close when clicked
+   */
+  clickToClose?: boolean
+  closeHook?: (close: () => void) => void
   id: string | number
   message: string
-  timeout: (callback: () => void) => void
 }
 
 export interface NotificationContextValue {
   setMessage: (message: Message) => void
+  turnOffMessage: (id: string | number) => void
 }
 
 export interface NotificationInnerContextValue {
@@ -31,6 +37,9 @@ export interface NotificationInnerContextValue {
 
 export const NotificationContext = createContext<NotificationContextValue>({
   setMessage: () => {
+    //
+  },
+  turnOffMessage: () => {
     //
   },
 })

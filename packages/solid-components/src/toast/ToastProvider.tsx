@@ -1,13 +1,11 @@
-import {Accessor, createSignal, For, JSX, ParentProps} from 'solid-js'
+import {createSignal, ParentProps} from 'solid-js'
 import {Message, NotificationContext, NotificationInnerContext} from './context'
-import {Portal} from 'solid-js/web'
-import {NotificationItem} from './NotificationItem'
 
-export interface NotificationProps extends ParentProps {
+export interface ToastProviderProps extends ParentProps {
   //
 }
 
-export const NotificationRoot = (props: NotificationProps) => {
+export const ToastProvider = (props: ToastProviderProps) => {
   const [messages, setMessages] = createSignal(new Map<string | number, Message>())
 
   const turnOffMessage = (id: string | number) => {
@@ -19,12 +17,12 @@ export const NotificationRoot = (props: NotificationProps) => {
   }
 
   const setMessage = (message: Message) => {
-    const {id} = message
-
     setMessages((prev) => {
-      prev.set(message.id, message)
+      const {id} = message
 
-      message.timeout(() => {
+      prev.set(id, message)
+
+      message.closeHook?.(() => {
         turnOffMessage(id)
       })
 
@@ -33,7 +31,7 @@ export const NotificationRoot = (props: NotificationProps) => {
   }
 
   return (
-    <NotificationContext.Provider value={{setMessage}}>
+    <NotificationContext.Provider value={{setMessage, turnOffMessage}}>
       <NotificationInnerContext.Provider value={{messages}}>
         {props.children}
       </NotificationInnerContext.Provider>

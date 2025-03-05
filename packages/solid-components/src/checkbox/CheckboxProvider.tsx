@@ -1,8 +1,8 @@
 import {createMemo, createSignal, createUniqueId, ParentProps} from 'solid-js'
-import {LabelRoot} from '../label'
+import {LabelProvider} from '../label'
 import {CheckboxContext} from './context'
 
-export interface CheckboxRootProps extends ParentProps {
+export interface CheckboxProviderProps extends ParentProps {
   disabled?: boolean
   id?: string
   initValue?: boolean
@@ -14,7 +14,7 @@ export interface CheckboxRootProps extends ParentProps {
  * A component that passes the toggle state through data-toggle
  * @component
  */
-export const CheckboxRoot = (props: CheckboxRootProps) => {
+export const CheckboxProvider = (props: CheckboxProviderProps) => {
   // initValue
   const [checked, setChecked] = createSignal(props.initValue ?? false)
   const instanceId = createUniqueId()
@@ -42,10 +42,10 @@ export const CheckboxRoot = (props: CheckboxRootProps) => {
   })
 
   return (
-    <LabelRoot targetId={id()}>
+    <LabelProvider targetId={id()}>
       <CheckboxContext.Provider value={[checkboxContextValue, {handleToggleChecked}]}>
         {props.children}
       </CheckboxContext.Provider>
-    </LabelRoot>
+    </LabelProvider>
   )
 }

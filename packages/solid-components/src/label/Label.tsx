@@ -1,3 +1,4 @@
+import {freeze} from '@winter-love/utils'
 import {
   Accessor,
   createContext,
@@ -8,7 +9,7 @@ import {
 } from 'solid-js'
 import {ComponentProps} from 'solid-js/types/render/component'
 
-export type LabelRootProps = {targetId?: string} & ParentProps
+export type LabelProviderProps = {targetId?: string} & ParentProps
 
 export interface LabelContextProps {
   targetId?: string
@@ -16,7 +17,7 @@ export interface LabelContextProps {
 
 export const LabelContext = createContext<Accessor<LabelContextProps>>(() => ({}))
 
-export const LabelRoot = (props: LabelRootProps) => {
+export const LabelProvider = (props: LabelProviderProps) => {
   const instanceId = createUniqueId()
   const labelContextValue = createMemo(() => ({targetId: props.targetId ?? instanceId}))
 
@@ -36,3 +37,8 @@ export const LabelContent = (props: LabelContentProps) => {
 
   return <label {...props} for={labelContext().targetId} />
 }
+
+export const Label = freeze({
+  Content: LabelContent,
+  Provider: LabelProvider,
+})

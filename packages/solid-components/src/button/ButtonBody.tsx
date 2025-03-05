@@ -1,8 +1,8 @@
-import {ButtonContext} from './HButtonRoot'
+import {ButtonContext} from './context'
 import {Dynamic} from 'solid-js/web'
 import {ComponentProps, useContext} from 'solid-js'
 
-export interface HButtonBodyProps
+export interface ButtonBodyProps
   extends Omit<
     ComponentProps<'button'>,
     'onClick' | 'onTouchEnd' | 'onDblClick' | 'onTouchStart' | 'type'
@@ -10,7 +10,7 @@ export interface HButtonBodyProps
   //
 }
 
-export const HButtonBody = (props: HButtonBodyProps) => {
+export const ButtonBody = (props: ButtonBodyProps) => {
   const [
     buttonContextValue,
     {handleClick, handleDoubleClick, handleTouchEnd, handleTouchStart},

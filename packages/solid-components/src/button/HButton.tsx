@@ -1,8 +1,8 @@
 import {splitProps} from 'solid-js'
-import {HButtonBody, HButtonBodyProps} from './HButtonBody'
-import {HButtonRoot, HButtonRootProps} from './HButtonRoot'
+import {ButtonBody, ButtonBodyProps} from './ButtonBody'
+import {ButtonProvider, ButtonProviderProps} from './ButtonProvider'
 
-export type HButtonProps = HButtonBodyProps & HButtonRootProps
+export type HButtonProps = ButtonBodyProps & ButtonProviderProps
 
 /**
  * A customizable button component that triggers a click event when a touch event occurs.
@@ -38,8 +38,8 @@ export const HButton = (props: HButtonProps) => {
   ])
 
   return (
-    <HButtonRoot {...innerProps}>
-      <HButtonBody {...restProps}>{props.children}</HButtonBody>
-    </HButtonRoot>
+    <ButtonProvider {...innerProps}>
+      <ButtonBody {...restProps}>{props.children}</ButtonBody>
+    </ButtonProvider>
   )
 }

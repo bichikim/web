@@ -1,11 +1,11 @@
 import {freeze} from '@winter-love/utils'
-import {HDialogOverlay} from './HDialogOverlay'
-import {HDialogRoot} from './HDialogRoot'
+import {DialogOverlay} from './DialogOverlay'
+import {DialogProvider} from './DialogProvider'
 
-export * from './HDialogOverlay'
-export * from './HDialogRoot'
+export * from './DialogOverlay'
+export * from './DialogProvider'
 
 export const Dialog = freeze({
-  Overlay: HDialogOverlay,
-  Root: HDialogRoot,
+  Overlay: DialogOverlay,
+  Provider: DialogProvider,
 })

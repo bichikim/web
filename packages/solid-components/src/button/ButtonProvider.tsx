@@ -1,44 +1,10 @@
-import {Accessor, createContext, createMemo, JSX, mergeProps, ParentProps} from 'solid-js'
+import {createMemo, JSX, mergeProps, ParentProps} from 'solid-js'
 import {now} from '@winter-love/lodash'
-import {} from 'solid-js/web'
+import {ButtonContext, ButtonContextProps} from './context'
 
 export type ButtonType = 'button' | 'anchor' | 'anchor-button'
-export type ButtonTag = 'button' | 'a'
 
-export interface ButtonContextProps {
-  disabled: boolean
-  href?: string
-  tag: ButtonTag
-}
-
-export interface ButtonContextActions {
-  handleClick: JSX.EventHandler<HTMLButtonElement, MouseEvent | TouchEvent>
-  handleDoubleClick: JSX.EventHandler<HTMLButtonElement, MouseEvent | TouchEvent>
-  handleTouchEnd: JSX.EventHandler<HTMLButtonElement, TouchEvent>
-  handleTouchStart: JSX.EventHandler<HTMLButtonElement, TouchEvent>
-}
-
-export const ButtonContext = createContext<
-  [Accessor<ButtonContextProps>, ButtonContextActions]
->([
-  () => ({disabled: false, tag: 'button' as const}),
-  {
-    handleClick: () => {
-      throw new Error('not implemented')
-    },
-    handleDoubleClick: () => {
-      throw new Error('not implemented')
-    },
-    handleTouchEnd: () => {
-      throw new Error('not implemented')
-    },
-    handleTouchStart: () => {
-      throw new Error('not implemented')
-    },
-  },
-])
-
-export interface HButtonRootProps extends ParentProps {
+export interface ButtonProviderProps extends ParentProps {
   disabled?: boolean
   doubleClickGap?: number
   href?: string
@@ -51,7 +17,7 @@ export interface HButtonRootProps extends ParentProps {
 
 const DEFAULT_DOUBLE_CLICK_GAP = 250
 
-export const HButtonRoot = (props: HButtonRootProps) => {
+export const ButtonProvider = (props: ButtonProviderProps) => {
   // Previous click time used to check if current click is a double click
   let clickTime = 0
   let touchdown = false
@@ -68,7 +34,7 @@ export const HButtonRoot = (props: HButtonRootProps) => {
    *
    * @param event The mouse event triggered by user interaction.
    */
-  const handleClick: HButtonRootProps['onClick'] = (event: any) => {
+  const handleClick: ButtonProviderProps['onClick'] = (event: any) => {
     // skip touch event
     // skip anchor event because it will navigate to the href
     if (event.pointerType === 'touch' || defaultProps.type === 'anchor') {
@@ -82,7 +48,7 @@ export const HButtonRoot = (props: HButtonRootProps) => {
    * Handles the `doubleClick` event for the button component and forwards it to the parent component.
    * @param event The mouse event triggered by user interaction.
    */
-  const handleDoubleClick: HButtonRootProps['onDoubleClick'] = (event) => {
+  const handleDoubleClick: ButtonProviderProps['onDoubleClick'] = (event) => {
     // skip anchor event because it will navigate to the href
     if (defaultProps.type === 'anchor') {
       return
@@ -92,7 +58,7 @@ export const HButtonRoot = (props: HButtonRootProps) => {
     defaultProps.onDoubleClick?.(event)
   }
 
-  const handleTouchStart: HButtonRootProps['onTouchStart'] = (event) => {
+  const handleTouchStart: ButtonProviderProps['onTouchStart'] = (event) => {
     touchdown = true
     // pass original event to parent
     defaultProps.onTouchStart?.(event)
@@ -103,7 +69,7 @@ export const HButtonRoot = (props: HButtonRootProps) => {
    * @param event
    * @returns
    */
-  const handleTouchEnd: HButtonRootProps['onTouchEnd'] = (event) => {
+  const handleTouchEnd: ButtonProviderProps['onTouchEnd'] = (event) => {
     // pass original event to parent
     defaultProps.onTouchEnd?.(event)
 
