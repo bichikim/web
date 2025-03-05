@@ -1,4 +1,4 @@
-import {ComponentProps, createMemo, createSignal, Show} from 'solid-js'
+import {ComponentProps, createMemo, Show} from 'solid-js'
 import {preventGlobalTouchAttrs} from 'src/components/real-button/use-global-touch'
 import {useServiceWorker} from 'src/components/service-worker'
 import {SButton} from 'src/components/button'
