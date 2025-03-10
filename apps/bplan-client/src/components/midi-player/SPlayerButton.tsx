@@ -2,7 +2,7 @@ import {JSX, mergeProps, splitProps} from 'solid-js'
 import {SButton, SButtonProps} from 'src/components/button'
 
 export interface SPlayerButtonProps
-  extends Pick<SButtonProps, 'class' | 'children' | 'title' | 'type'> {
+  extends Pick<SButtonProps, 'class' | 'children' | 'title' | 'type' | 'tabIndex'> {
   href?: string
   onClick?: JSX.EventHandler<HTMLElement, MouseEvent | TouchEvent>
 }

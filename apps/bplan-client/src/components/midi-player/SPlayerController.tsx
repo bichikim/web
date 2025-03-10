@@ -143,6 +143,7 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
         <SMidiFileInput class="min-w-11 px-2" onAdd={handleAddPlayItem} />
         <SPlayerButton
           type="anchor-button"
+          tabIndex="0"
           class="min-w-11"
           onClick={handleLink}
           title={innerProps.linkType === 'music' ? 'get music more' : 'piano'}

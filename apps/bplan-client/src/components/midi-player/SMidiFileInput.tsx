@@ -20,6 +20,11 @@ const rootStyle = cx(
   'relative text-4',
 )
 
+const labelStyle = cx(
+  'inline-flex text-inherit flex justify-center items-center overflow-hidden w-full rd-md',
+  'focus-visible:outline-3 focus-visible:outline-solid focus-visible:outline-black focus-visible:outline-offset--3',
+)
+
 export const SMidiFileInput = (props: HMidiFileInputProps) => {
   const id = createUniqueId()
   const [innerProps, restProps] = splitProps(props, ['class', 'onAdd', 'onTouchEnd'])
@@ -118,12 +123,7 @@ export const SMidiFileInput = (props: HMidiFileInputProps) => {
 
   return (
     <div class={cx(rootStyle, innerProps.class)}>
-      <label
-        class="inline-flex text-inherit flex justify-center items-center overflow-hidden"
-        for={id}
-        tabIndex="0"
-        onKeyDown={handleKeyDown}
-      >
+      <label class={labelStyle} for={id} tabIndex="0" onKeyDown={handleKeyDown}>
         <span class="text-nowrap text-6 md:pt-.5 sm:inline-block hidden truncate flex-shrink-1">
           Click or Drop{' '}
         </span>
