@@ -47,6 +47,9 @@ export const getStickyPosition = (element: HTMLElement, position: StickyPosition
   return result
 }
 
+/**
+ * WIP
+ */
 export const sticky: Directive<StickyDirective> = (element, value) => {
   const [target, position] = value()
   const targetElement = useTargetElement(target)

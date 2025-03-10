@@ -3,6 +3,7 @@ import {
   createMemo,
   createSignal,
   mergeProps,
+  Show,
   splitProps,
   untrack,
 } from 'solid-js'
@@ -14,6 +15,7 @@ import {SPlayerController, SPlayerControllerProps} from './SPlayerController'
 export interface SPlayerProps
   extends Omit<SPlayerControllerProps, 'onSelect' | 'onSelect' | 'onSuspend'> {
   initMusics?: MusicInfo[]
+  isShow?: boolean
   onMusicsChange?: (musics: MusicInfo[]) => void
   onSetting?: () => void
   pianoController?: SplendidGrandPianoController
@@ -66,6 +68,7 @@ export const SPlayer = (props: SPlayerProps) => {
     'onSetting',
     'initMusics',
     'onMusicsChange',
+    'isShow',
   ])
 
   const [playList, setPlayList] = createSignal<MusicInfo[]>(
@@ -231,25 +234,27 @@ export const SPlayer = (props: SPlayerProps) => {
   })
 
   return (
-    <SPlayerController
-      {...restProps}
-      playedTime={playedTime()}
-      repeat={repeat()}
-      totalDuration={totalDuration()}
-      playList={playList()}
-      playingId={playingId()}
-      isSuspend={isSuspend()}
-      selectedId={selectedId()}
-      onSuspend={handleSuspend}
-      onStop={handleStop}
-      onDeleteItem={handleDelete}
-      onResume={handleResume}
-      onAddItem={handleAddPlayItem}
-      onSelect={handleSelect}
-      onPlay={handlePlay}
-      onSeek={handleSeek}
-      onSetting={innerProps.onSetting}
-      onChangeRepeat={handleChangeRepeat}
-    />
+    <Show when={innerProps.isShow}>
+      <SPlayerController
+        {...restProps}
+        playedTime={playedTime()}
+        repeat={repeat()}
+        totalDuration={totalDuration()}
+        playList={playList()}
+        playingId={playingId()}
+        isSuspend={isSuspend()}
+        selectedId={selectedId()}
+        onSuspend={handleSuspend}
+        onStop={handleStop}
+        onDeleteItem={handleDelete}
+        onResume={handleResume}
+        onAddItem={handleAddPlayItem}
+        onSelect={handleSelect}
+        onPlay={handlePlay}
+        onSeek={handleSeek}
+        onSetting={innerProps.onSetting}
+        onChangeRepeat={handleChangeRepeat}
+      />
+    </Show>
   )
 }

@@ -125,17 +125,13 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
       />
       <section class="flex gap-2">
         <SPlayerButton
-          class="min-w-11 min-h-9 bg-gray-100"
+          class="min-w-11"
           onClick={handlePlayOrPause}
           title={isPlayingButton() ? 'play' : 'pause'}
         >
           <span class={playStyle({isPlaying: isPlayingButton()})} />
         </SPlayerButton>
-        <SPlayerButton
-          class="min-w-11 min-h-9 bg-gray-100"
-          onClick={innerProps.onStop}
-          title="stop"
-        >
+        <SPlayerButton class="min-w-11 min-h-9" onClick={innerProps.onStop} title="stop">
           <span class="block i-tabler:player-stop text-9" />
         </SPlayerButton>
         <SRepeatButton
@@ -147,7 +143,7 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
         <SMidiFileInput class="min-w-11 px-2" onAdd={handleAddPlayItem} />
         <SPlayerButton
           type="anchor-button"
-          class="min-w-11 min-h-9 bg-gray-100"
+          class="min-w-11"
           onClick={handleLink}
           title={innerProps.linkType === 'music' ? 'get music more' : 'piano'}
         >
@@ -158,11 +154,7 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
             )}
           />
         </SPlayerButton>
-        <SPlayerButton
-          class="min-w-11 min-h-9 bg-gray-100"
-          onClick={innerProps.onSetting}
-          title="setting"
-        >
+        <SPlayerButton class="min-w-11" onClick={innerProps.onSetting} title="setting">
           <span class="block i-tabler:settings text-8" />
         </SPlayerButton>
       </section>

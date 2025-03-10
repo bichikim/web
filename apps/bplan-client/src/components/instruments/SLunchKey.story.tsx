@@ -7,14 +7,16 @@ const Root = (props: any) => {
 
   return (
     <div class="flex gap-20px">
-      <SLunchKey {...props} />
-      <SLunchKey {...props} />
-      <SLunchKey {...props} />
+      <SLunchKey {...props} key="1" />
+      <SLunchKey {...props} key="2" />
+      <SLunchKey {...props} key="3" />
     </div>
   )
 }
+
 const meta = {
   component: Root,
+  title: 'BPlan/components/instruments/SLunchKey',
 } satisfies Meta<typeof SLunchKey>
 
 // storybook meta
@@ -25,6 +27,5 @@ type Story = StoryObj<typeof meta>
 export const Default: Story = {
   args: {
     class: 'w-200px h-200px',
-    key: 1,
   },
 }

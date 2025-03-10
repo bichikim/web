@@ -9,7 +9,7 @@ export const createTimeout = (timeout: number) => {
 }
 
 export interface MessageAction {
-  action: () => void
+  action?: () => void
   actionToClose?: boolean
   label: string
   type: 'click'
@@ -26,16 +26,31 @@ export interface Message {
   message: string
 }
 
-export interface NotificationContextValue {
+export interface ToastContextValue {
   setMessage: (message: Message) => void
   turnOffMessage: (id: string | number) => void
 }
 
-export interface NotificationInnerContextValue {
+export interface ToastInnerContextValue {
   messages: Accessor<Map<string | number, Message>>
 }
 
-export const NotificationContext = createContext<NotificationContextValue>({
+export interface ToastContentContextValue {
+  message: Message
+}
+
+export type ToastActionsContextValue =
+  | {
+      actions?: MessageAction[]
+      id: string | number
+    }
+  | undefined
+
+export type ToastActionContextValue = MessageAction & {
+  onClose?: () => void
+}
+
+export const ToastContext = createContext<ToastContextValue>({
   setMessage: () => {
     //
   },
@@ -44,6 +59,23 @@ export const NotificationContext = createContext<NotificationContextValue>({
   },
 })
 
-export const NotificationInnerContext = createContext<NotificationInnerContextValue>({
+export const ToastInnerContext = createContext<ToastInnerContextValue>({
   messages: () => new Map(),
+})
+
+export const ToastContentContext = createContext<ToastContentContextValue>({
+  message: {
+    id: '',
+    message: '',
+  },
+})
+
+export const ToastActionsContext = createContext<ToastActionsContextValue>()
+
+export const ToastActionContext = createContext<ToastActionContextValue>({
+  action: () => {
+    //
+  },
+  label: '',
+  type: 'click',
 })

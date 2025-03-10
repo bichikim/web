@@ -10,7 +10,15 @@ export const DragButtonBody = (props: DragButtonBodyProps) => {
   const [dragContext, {handleMouseDown, handleMouseMove, handleTouchMove}] =
     useContext(DragButtonContext)
 
-  const dragX = createMemo(() => dragContext().dragX)
+  const style = createMemo(() => {
+    const {dragX} = dragContext()
+
+    if (dragX) {
+      return {
+        '--var-drag-x': `${dragX}px`,
+      }
+    }
+  })
 
   return (
     <Button.Body
@@ -18,7 +26,7 @@ export const DragButtonBody = (props: DragButtonBodyProps) => {
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onTouchMove={handleTouchMove}
-      style={{'--var-drag-x': `${dragX()}px`}}
+      style={style()}
     >
       {props.children}
     </Button.Body>

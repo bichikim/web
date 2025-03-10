@@ -16,7 +16,7 @@ import {SPlayer, SPlayerProps} from './SPlayer'
 import {SettingData, SSetting} from './SSetting'
 
 export interface SHiddenPlayerProps
-  extends Omit<SPlayerProps, 'onPlaying' | 'onPlay'>,
+  extends Omit<SPlayerProps, 'onPlaying' | 'onPlay' | 'isShow'>,
     Omit<JSX.HTMLAttributes<HTMLElement>, 'onPlay'> {
   component?: ValidComponent
   initShow?: boolean
@@ -120,7 +120,7 @@ export const SHiddenPlayer = (props: SHiddenPlayerProps) => {
         totalTime={defaultProps.playState.totalDuration}
       />
       <section
-        title="midi player"
+        aria-label="midi player"
         id="__midi_player__"
         aria-hidden={isShow() ? 'false' : 'true'}
         {...preventGlobalTouchAttrs()}
@@ -132,9 +132,13 @@ export const SHiddenPlayer = (props: SHiddenPlayerProps) => {
             isShow: isShow(),
           })}
         >
-          <SPlayer {...restProps} onSetting={() => handleSurfaceKindChange('setting')} />
+          <SPlayer
+            {...restProps}
+            isShow={isShow()}
+            onSetting={() => handleSurfaceKindChange('setting')}
+          />
         </div>
-        <Show when={surfaceKind() === 'setting'}>
+        <Show when={surfaceKind() === 'setting' && isShow()}>
           <SSetting
             pianoMinScale={innerProps.pianoMinScale}
             settingData={innerProps.settingData}

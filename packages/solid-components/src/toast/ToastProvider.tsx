@@ -1,5 +1,5 @@
 import {createSignal, ParentProps} from 'solid-js'
-import {Message, NotificationContext, NotificationInnerContext} from './context'
+import {Message, ToastContext, ToastInnerContext} from './context'
 
 export interface ToastProviderProps extends ParentProps {
   //
@@ -31,10 +31,10 @@ export const ToastProvider = (props: ToastProviderProps) => {
   }
 
   return (
-    <NotificationContext.Provider value={{setMessage, turnOffMessage}}>
-      <NotificationInnerContext.Provider value={{messages}}>
+    <ToastContext.Provider value={{setMessage, turnOffMessage}}>
+      <ToastInnerContext.Provider value={{messages}}>
         {props.children}
-      </NotificationInnerContext.Provider>
-    </NotificationContext.Provider>
+      </ToastInnerContext.Provider>
+    </ToastContext.Provider>
   )
 }

@@ -100,10 +100,6 @@ export const ButtonProvider = (props: ButtonProviderProps) => {
       case 'anchor': {
         return defaultProps.href
       }
-
-      default: {
-        return ''
-      }
     }
   })
 

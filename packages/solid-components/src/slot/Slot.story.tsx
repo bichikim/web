@@ -1,6 +1,6 @@
 import {JSXElement} from 'solid-js'
-import {Slot} from '../Slot'
-import {useSlots} from '../use-slots'
+import {Slot} from './Slot'
+import {useSlots} from './use-slots'
 
 export interface SlotParentProps {
   children?: JSXElement

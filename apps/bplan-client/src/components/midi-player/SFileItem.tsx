@@ -45,8 +45,9 @@ export interface SFileItemProps
 
 const rootStyle = cx(
   'relative gap-4 p-0 b-0 bg-transparent text-5 flex-shrink-0 h-9 mb-0.3125rem last:mb-0',
-  'after:bg-gray-300 after:h-.25 first:after:hidden after:content-[""] after:absolute',
+  'after:bg-gray-300 after:h-.25 first:after:hidden after:content-[""] after:absolute rd-md',
   'after:top--0.1875rem after:left-0.5rem after:w-[calc(100%-1rem)] cursor-pointer touch-none',
+  'focus-visible:outline-3 focus-visible:outline-solid focus-visible:outline-black focus-visible:outline-offset--3',
 )
 
 const indexStyle = cva('', {
@@ -102,6 +103,9 @@ export const SFileItem = (props: SFileItemProps) => {
     'onPlay',
     'onResume',
     'onSuspend',
+    'header',
+    'dragExecuteSize',
+    'dragEndSize',
   ])
 
   const handleSelect = () => {
@@ -149,6 +153,8 @@ export const SFileItem = (props: SFileItemProps) => {
       onDoubleClick={handlePlayOrSuspend}
       onLeftExecute={handleDelete}
       preventRight
+      dragEndSize={innerProps.dragEndSize}
+      dragExecuteSize={innerProps.dragExecuteSize}
     >
       <DragButton.Body
         {...restProps}

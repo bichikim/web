@@ -31,8 +31,10 @@ const Root = () => {
     </div>
   )
 }
+
 const meta = {
   component: Root,
+  title: 'BPlan/components/real-button/UseGlobalTouch',
 } satisfies Meta<typeof Root>
 
 // storybook meta
