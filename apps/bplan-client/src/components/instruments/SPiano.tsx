@@ -9,6 +9,7 @@ import {
   SPianoSharpSet,
 } from 'src/components/instruments/SPianoParts'
 import {mergeProps, splitProps} from 'solid-js'
+import {cx} from 'class-variance-authority'
 
 export type SPianoProps = SPianoBodyProps &
   SPianoRootProps & {
@@ -16,6 +17,16 @@ export type SPianoProps = SPianoBodyProps &
   }
 
 export const pianoSize = 7520
+
+const pianoFlatKeyStyle = cx([
+  'w-80px h-full bg-#f7f7f7 flex items-end justify-center c-gray-400 text-4',
+  'focus-visible:outline-3 focus-visible:outline-solid focus-visible:outline-black focus-visible:outline-offset--3',
+])
+
+const pianoSharpKeyStyle = cx([
+  'w-50px h-full bg-black mr-30px flex flex-shrink-0 justify-center items-end c-gray-300 text-4',
+  'focus-visible:outline-3 focus-visible:outline-solid focus-visible:outline-black focus-visible:outline-offset-2',
+])
 
 export const SPiano = (props: SPianoProps) => {
   const defaultProps = mergeProps({velocity: 0.6}, props)
@@ -49,14 +60,14 @@ export const SPiano = (props: SPianoProps) => {
       >
         <SPianoFlatSet class="inline-flex relative w-max h-[calc(100%-10px)]">
           <SPianoFlatKey
-            class="w-80px h-full bg-#f7f7f7 flex items-end justify-center c-gray-400 text-4"
+            class={pianoFlatKeyStyle}
             effectClass="from-blue"
             showKeyName={keyProps.showKeyName}
           />
         </SPianoFlatSet>
         <SPianoSharpSet class="flex absolute w-auto h-259px left-55px top-0 left-0">
           <SPianoSharpKey
-            class="w-50px h-full bg-black mr-30px flex flex-shrink-0 justify-center items-end c-gray-300 text-4"
+            class={pianoSharpKeyStyle}
             effectClass="from-blue"
             showKeyName={innerProps.showKeyName}
           />

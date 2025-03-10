@@ -26,7 +26,7 @@ export const button = {
 export const buttonVariant = {
   '__button-danger': [
     'c-white b-red-400',
-    'focus-visible:outline-red-500',
+    'focus-visible:outline-red-700',
     'disabled:c-red-200 before:to-red-300',
   ],
   '__button-default': [
@@ -36,12 +36,12 @@ export const buttonVariant = {
   ],
   '__button-primary': [
     'c-white b-blue-400',
-    'focus-visible:outline-blue-400',
+    'focus-visible:outline-blue-700',
     'disabled:c-blue-200 before:to-white',
   ],
   '__button-secondary': [
     'c-white b-indigo-400',
-    'focus-visible:outline-indigo-400',
+    'focus-visible:outline-indigo-700',
     'disabled:c-indigo-200 before:to-white',
   ],
   '__button-transparent': [
@@ -51,7 +51,7 @@ export const buttonVariant = {
   ],
   '__button-warning': [
     'c-white b-orange-400',
-    'focus-visible:outline-orange-500',
+    'focus-visible:outline-orange-700',
     'disabled:c-orange-200 before:to-orange-300',
   ],
 }
