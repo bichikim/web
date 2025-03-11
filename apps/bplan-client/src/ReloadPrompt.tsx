@@ -7,10 +7,9 @@ import {
   useContext,
 } from 'solid-js'
 import {preventGlobalTouchAttrs} from 'src/components/real-button/use-global-touch'
-import {useServiceWorker} from 'src/components/service-worker'
+import {ServiceWorkerInfo, useServiceWorker} from 'src/components/service-worker'
 import {SButton} from 'src/components/button'
 import {SDivider} from 'src/components/divider'
-// import {ServiceWorkerInfo} from 'src/components/service-worker'
 import {createTimeout, ToastContext} from '@winter-love/solid-components'
 
 export interface ReloadPromptProps extends ComponentProps<'div'> {
