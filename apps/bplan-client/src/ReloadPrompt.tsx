@@ -1,8 +1,17 @@
-import {ComponentProps, createMemo, Show} from 'solid-js'
+import {
+  ComponentProps,
+  createEffect,
+  createMemo,
+  createSignal,
+  Show,
+  useContext,
+} from 'solid-js'
 import {preventGlobalTouchAttrs} from 'src/components/real-button/use-global-touch'
 import {useServiceWorker} from 'src/components/service-worker'
 import {SButton} from 'src/components/button'
 import {SDivider} from 'src/components/divider'
+// import {ServiceWorkerInfo} from 'src/components/service-worker'
+import {createTimeout, ToastContext} from '@winter-love/solid-components'
 
 export interface ReloadPromptProps extends ComponentProps<'div'> {
   //
@@ -12,7 +21,13 @@ export interface ReloadPromptProps extends ComponentProps<'div'> {
  * @WIP
  */
 export const ReloadPrompt = (props: ReloadPromptProps) => {
-  const [serviceWorkerState, {handleSkipWaiting, handleSkipUpdate}] = useServiceWorker()
+  const [, {handleSkipWaiting, handleSkipUpdate}] = useServiceWorker()
+  const {setMessage} = useContext(ToastContext)
+
+  const [serviceWorkerState, setServiceWorkerState] = createSignal<ServiceWorkerInfo>({
+    offline: false,
+    state: 'initializing',
+  })
 
   const handleClose = () => {
     handleSkipUpdate()
@@ -30,8 +45,71 @@ export const ReloadPrompt = (props: ReloadPromptProps) => {
     }
   }
 
+  const handleTestWait = () => {
+    setServiceWorkerState({
+      offline: false,
+      state: 'waiting',
+    })
+  }
+
+  createEffect(() => {
+    const workerState = serviceWorkerState()
+
+    if (workerState.state === 'waiting') {
+      console.info('waiting')
+
+      setMessage({
+        actions: [
+          {
+            action: () => {
+              console.info('action')
+            },
+            label: 'confirm',
+            type: 'click',
+          },
+        ],
+        id: 'test',
+        message: 'test',
+      })
+    }
+  })
+
+  const handleMesssage = () => {
+    setMessage({
+      actions: [
+        {
+          action: () => {
+            console.info('action')
+          },
+          label: 'confirm',
+          type: 'click',
+        },
+        {
+          action: () => {
+            console.info('action')
+          },
+          label: 'cancel',
+          type: 'click',
+        },
+      ],
+      closeHook: createTimeout(3000),
+      id: 'test',
+      message: 'test',
+      title: 'test',
+    })
+  }
+
   return (
     <>
+      <div class="fixed top-2 right-2 p-2 bg-white rd-1 backdrop-blur-sm bg-opacity-90 b-1 b-white">
+        <span>test</span>
+        <SButton variant="transparent" flat onClick={handleTestWait}>
+          test waiting
+        </SButton>
+        <SButton variant="transparent" flat onClick={handleMesssage}>
+          test message
+        </SButton>
+      </div>
       <Show when={isWaitingForUpdate()}>
         <div
           {...props}

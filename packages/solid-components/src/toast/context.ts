@@ -12,6 +12,7 @@ export interface MessageAction {
   action?: () => void
   actionToClose?: boolean
   label: string
+  props?: Record<string, any>
   type: 'click'
 }
 
@@ -24,6 +25,7 @@ export interface Message {
   closeHook?: (close: () => void) => void
   id: string | number
   message: string
+  title?: string
 }
 
 export interface ToastContextValue {

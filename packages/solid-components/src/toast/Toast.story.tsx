@@ -5,6 +5,7 @@ import {createTimeout, ToastContext} from './context'
 import {createUuid} from '@winter-love/utils'
 import {fn} from '@storybook/test'
 import {Toast} from './index'
+import {HButton} from '../button'
 const uuid = createUuid()
 
 const meta = {
@@ -111,10 +112,14 @@ export const Primary: Story = {
     <Toast.Provider>
       <Toast.Body class="fixed top-0 left-0 flex flex-col gap-2">
         <Toast.Item class="bg-white rounded-lg p-4 shadow-lg">
-          <Toast.Content />
-          <Toast.Actions>
-            <Toast.Action />
-          </Toast.Actions>
+          <Toast.Title />
+          <Toast.Message />
+          <Toast.ActionBody>
+            <span>Actions list</span>
+            <Toast.ActionList>
+              <Toast.Action component={HButton} />
+            </Toast.ActionList>
+          </Toast.ActionBody>
         </Toast.Item>
       </Toast.Body>
       <DemoContent />

@@ -1,9 +1,11 @@
 import {ToastActionContext} from './context'
-import {ComponentProps, useContext} from 'solid-js'
+import {createMemo, splitProps, useContext, ValidComponent} from 'solid-js'
+import {Dynamic, DynamicProps} from 'solid-js/web'
 
-export type ToastActionProps = ComponentProps<'button'>
+export type ToastActionProps<T extends ValidComponent> = DynamicProps<T>
 
-export const ToastAction = (props: ToastActionProps) => {
+export const ToastAction = <T extends ValidComponent>(props: ToastActionProps<T>) => {
+  const [innerProps, restProps] = splitProps(props as any, ['component'])
   const action = useContext(ToastActionContext)
 
   const handleClick = () => {
@@ -18,9 +20,18 @@ export const ToastAction = (props: ToastActionProps) => {
     }
   }
 
+  const receivedProps = createMemo(() => {
+    return action.props
+  })
+
   return (
-    <button {...props} onClick={handleClick}>
+    <Dynamic
+      component={innerProps.component}
+      {...restProps}
+      {...receivedProps}
+      onClick={handleClick}
+    >
       {action.label}
-    </button>
+    </Dynamic>
   )
 }
