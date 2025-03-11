@@ -66,6 +66,10 @@ export interface SplendidGrandPianoExtended
   readonly up: (key: string | number | SampleStart) => void
 }
 
+const getUserInputStopId = (note: string | number) => {
+  return `user-input|${note}`
+}
+
 export const createSplendidGrandPianoExtended = (
   audioContext: AudioContext,
   options: SplendidGrandPianoOptions = {},
@@ -93,7 +97,7 @@ export const createSplendidGrandPianoExtended = (
       [TARGET_ID_KEY]: id,
       [USER_PLAY_FLAG_KEY]: isUserStart,
       stopId: isUserStart
-        ? undefined
+        ? getUserInputStopId(note)
         : `${channelName ?? ''}${channelName === undefined ? '' : '|'}${note}`,
       time: time + _piano.context.currentTime,
       velocity: velocity * HUNDRED,
@@ -170,9 +174,9 @@ export const createSplendidGrandPianoExtended = (
 
   const up = (key: string | number | SampleStart) => {
     if (typeof key === 'string' || typeof key === 'number') {
-      _piano.stop({stopId: String(key), time: _piano.context.currentTime})
+      _piano.stop({stopId: getUserInputStopId(key), time: _piano.context.currentTime})
     } else {
-      _piano.stop(key)
+      _piano.stop({...key, stopId: key.stopId ?? getUserInputStopId(key.note)})
     }
   }
 

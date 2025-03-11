@@ -1,18 +1,10 @@
 import {presetIcons, presetUno, toEscapedSelector} from 'unocss'
 import presetLegacyCompat from '@unocss/preset-legacy-compat'
 import transformerVariantGroup from '@unocss/transformer-variant-group'
-import transformerCompileClass from '@unocss/transformer-compile-class'
+import transformerCompileClass from './transformer-class'
 import {defineUsefulConfig} from 'unocss-preset-useful'
+import transformerHash from 'unocss-transformer-hash'
 import * as theme from '@unocss/preset-uno/theme'
-import {
-  button,
-  buttonGlass,
-  buttonOutline,
-  buttonSize,
-  buttonState,
-  buttonVariant,
-  buttonVariantFlat,
-} from './button'
 import {pianoKeys} from './piano'
 const HUNDRED = 100
 
@@ -155,16 +147,7 @@ export default defineUsefulConfig(
         },
       ],
     ],
-    shortcuts: [
-      button,
-      buttonSize,
-      buttonVariant,
-      buttonVariantFlat,
-      buttonState,
-      buttonGlass,
-      buttonOutline,
-      pianoKeys,
-    ],
+    shortcuts: [pianoKeys],
     theme: {
       animation: {
         counts: {
@@ -210,6 +193,10 @@ export default defineUsefulConfig(
         primary: 'var(--un-color-primary)',
       },
     },
-    transformers: [transformerVariantGroup(), transformerCompileClass()] as any,
+    transformers: [
+      transformerVariantGroup(),
+      transformerCompileClass(),
+      transformerHash(),
+    ] as any,
   },
 )

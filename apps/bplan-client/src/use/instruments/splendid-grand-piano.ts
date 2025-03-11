@@ -22,6 +22,7 @@ import {
   USER_PLAY_FLAG_KEY,
 } from './splendid-grand-piano-extended'
 import {OnEmitInstrumentPayload} from 'src/components/real-button/use-global-touch'
+import {noteMatchMap} from './key-match'
 
 export type SampleStart = Parameters<DrumMachine['start']>[0]
 
@@ -29,6 +30,10 @@ export interface PlayOptions extends Omit<PlayOptionsExtended, 'notes'> {
   id: string
   midi?: SampleStart[][]
   totalDuration: number
+}
+
+const getNoteFromName = (name: string | number) => {
+  return noteMatchMap.get(String(name)) ?? name
 }
 
 export type SplendidGrandPianoOptions = Partial<
@@ -122,7 +127,7 @@ export const createSplendidGrandPiano = (
       return
     }
 
-    const id = payload[ORIGINAL_NOTE_KEY]
+    const id = getNoteFromName(payload[ORIGINAL_NOTE_KEY] ?? '')
 
     if (id === undefined) {
       return
@@ -139,7 +144,7 @@ export const createSplendidGrandPiano = (
     if (payload[USER_PLAY_FLAG_KEY]) {
       return
     }
-    const id = payload[ORIGINAL_NOTE_KEY]
+    const id = getNoteFromName(payload[ORIGINAL_NOTE_KEY] ?? '')
 
     if (id === undefined) {
       return

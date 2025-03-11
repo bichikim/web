@@ -61,7 +61,7 @@ export const HKey = (props: HKeyProps) => {
     >
       <SKeyEffect
         class={cx(
-          'absolute top--4 left-0 w-full h-full pointer-events-none',
+          ':uno: absolute top--4 left-0 w-full h-full pointer-events-none',
           innerProps.effectClass,
         )}
       />

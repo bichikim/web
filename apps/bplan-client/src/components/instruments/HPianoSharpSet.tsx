@@ -1,38 +1,6 @@
-import {flatten} from '@winter-love/lodash'
 import {createMemo, For, JSX, Show, splitProps} from 'solid-js'
 import {KeyContext} from './key-context'
-
-interface SharpData {
-  key: number
-  name: string
-  rightEmpty?: boolean
-}
-
-// const keyLoopCount = 12
-const keyOffset = 5
-
-const sharpSet = flatten(
-  Array.from<SharpData[]>({length: 14})
-    .fill([
-      {key: 1, name: 'G#'},
-      {key: 3, name: 'A#', rightEmpty: true},
-      {key: 0, name: 'empty'},
-      {key: 6, name: 'C#'},
-      {key: 8, name: 'D#', rightEmpty: true},
-      {key: 0, name: 'empty'},
-      {key: 11, name: 'F#'},
-    ])
-    .map((item, setIndex) => {
-      return item.map(({name, rightEmpty}) => ({
-        key: `${name}${setIndex - 1}`,
-        name,
-        rightEmpty,
-      }))
-    }),
-)
-
-sharpSet.shift()
-sharpSet.splice(keyOffset * -1)
+import {sharpSet} from 'src/use/instruments'
 
 export interface HPianoSharpSetProps extends JSX.HTMLAttributes<HTMLDivElement> {
   disabled?: boolean

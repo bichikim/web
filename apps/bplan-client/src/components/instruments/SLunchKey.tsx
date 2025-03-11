@@ -6,9 +6,10 @@ export type SLunchKeyProps = HKeyProps & {
   bgColor?: string
 }
 
-const contentStyle =
-  'absolute top--4px bottom-0 box-border p-20px w-full rd-20% duration-130 ease-in-out ' +
-  'shadow-lunch-content border-color-var-border-color'
+const contentStyle = `:uno:
+absolute top--4px bottom-0 box-border p-20px w-full rd-20% duration-130 ease-in-out
+shadow-lunch-content border-color-var-border-color
+`
 
 // https://codepen.io/vladracoare/pen/jOPmMap
 export const SLunchKey = (_props: SLunchKeyProps) => {

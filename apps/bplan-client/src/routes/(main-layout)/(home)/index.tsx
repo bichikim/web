@@ -63,12 +63,12 @@ export default function HomePage() {
       <Meta property="og:title" content={pageName} />
       <Meta property="og:description" content="Your instruments for free" />
       <main
-        class="relative h-full overflow-y-hidden pt-0 px-2 flex flex-col overflow-x-auto inline-block"
+        class=":uno: relative h-full overflow-y-hidden pt-0 px-2 flex flex-col overflow-x-auto inline-block"
         ref={setMainElement}
         on:scroll={{handleEvent: handleScroll, passive: true}}
       >
         <SScale
-          class="h-full w-max origin-top-left"
+          class=":uno: h-full w-max origin-top-left"
           size={settingData().pianoSize ?? HUNDRED}
         >
           <SPiano
@@ -78,7 +78,7 @@ export default function HomePage() {
           />
         </SScale>
       </main>
-      <span class="select-none fixed left-0 bottom-0 px-4px">
+      <span class=":uno: select-none fixed left-0 bottom-0 px-4px">
         {' '}
         {isLoadDone() ? '' : 'Please wait files loading ...'}
       </span>

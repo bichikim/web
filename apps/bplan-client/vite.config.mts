@@ -91,11 +91,14 @@ export default defineConfig({
         autoname: true,
       }),
       //
-      unoCss('../../uno.config.ts'),
+      unoCss({
+        configFile: '../../uno.config.ts',
+      }),
       createGenerateSwPlugin(),
       legacy({
         targets,
       }),
+      // fullReload(['../../packages/unocss-config/*.ts']) as any,
     ],
     resolve: {
       alias: {

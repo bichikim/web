@@ -118,7 +118,7 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
         />
       </Show>
       <SSeeker
-        class="flex-1 min-h-2 relative rd-1 overflow-hidden b-0 w-full touch-none"
+        class=":uno: flex-1 min-h-2 relative rd-1 overflow-hidden b-0 w-full touch-none"
         playedTime={innerProps.playedTime}
         totalDuration={innerProps.totalDuration}
         onSeek={innerProps.onSeek}
