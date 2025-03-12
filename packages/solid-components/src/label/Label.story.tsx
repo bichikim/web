@@ -1,5 +1,5 @@
 import {useContext} from 'solid-js'
-import {LabelContent, LabelContext, LabelRoot} from './Label'
+import {LabelContent, LabelContext, LabelProvider} from './Label'
 import type {Meta, StoryObj} from 'storybook-solidjs'
 
 const LabelContextConsumer = () => {
@@ -9,21 +9,21 @@ const LabelContextConsumer = () => {
 }
 
 const meta = {
-  component: LabelRoot,
+  component: LabelProvider,
   title: 'Solid/Components/Label',
-} satisfies Meta<typeof LabelRoot>
+} satisfies Meta<typeof LabelProvider>
 
 export default meta
-type Story = StoryObj<typeof LabelRoot>
+type Story = StoryObj<typeof LabelProvider>
 
 export const Default: Story = {
   render: () => {
     return (
       <div>
-        <LabelRoot>
+        <LabelProvider>
           <LabelContent class="pr-2">name</LabelContent>
           <LabelContextConsumer />
-        </LabelRoot>
+        </LabelProvider>
       </div>
     )
   },
@@ -35,10 +35,10 @@ export const CustomTargetId: Story = {
 
     return (
       <div>
-        <LabelRoot targetId={customId}>
+        <LabelProvider targetId={customId}>
           <LabelContent>custom target id</LabelContent>
           <LabelContextConsumer />
-        </LabelRoot>
+        </LabelProvider>
       </div>
     )
   },

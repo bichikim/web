@@ -19,6 +19,7 @@
     "@unocss/vite": "^65.4.0",
     "unocss": "^65.4.0",
     "unocss-preset-animations": "^1.1.0",
-    "unocss-preset-useful": "^0.9.2"
+    "unocss-preset-useful": "^0.9.2",
+    "vite": "^5.4.12"
   }
 }
