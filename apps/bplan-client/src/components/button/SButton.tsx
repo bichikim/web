@@ -55,22 +55,22 @@ hover:enabled:bg-[radial-gradient(_theme(colors.red.400),_theme(colors.red.400))
 
 const buttonDefaultNoneFlat = `:uno:
 bg-[radial-gradient(at_90%_30%,_theme(colors.gray.200/_var(--un-bg-opacity,_1))_50%,_theme(colors.white/_var(--un-bg-opacity,_1))_130%)]
-hover:enabled:bg-[radial-gradient(_theme(colors.gray.200),_theme(colors.gray.100))]
+hover:enabled:bg-[radial-gradient(_theme(colors.gray.200),_theme(colors.gray.200))]
 `
 
 const buttonPrimaryNoneFlat = `:uno:
 bg-[radial-gradient(at_90%_30%,_theme(colors.blue.400/_var(--un-bg-opacity,_1))_50%,_theme(colors.blue.200/_var(--un-bg-opacity,_1))_130%)]
-hover:enabled:bg-[radial-gradient(_theme(colors.blue.400),_theme(colors.blue.600))]
+hover:enabled:bg-[radial-gradient(_theme(colors.blue.400),_theme(colors.blue.400))]
 `
 
 const buttonSecondaryNoneFlat = `:uno:
 bg-[radial-gradient(at_90%_30%,_theme(colors.indigo.400/_var(--un-bg-opacity,_1))_50%,_theme(colors.indigo.200/_var(--un-bg-opacity,_1))_130%)]
-hover:enabled:bg-[radial-gradient(_theme(colors.indigo.400),_theme(colors.indigo.600))]
+hover:enabled:bg-[radial-gradient(_theme(colors.indigo.400),_theme(colors.indigo.400))]
 `
 
 const buttonTransparentNoneFlat = `:uno:
 bg-[radial-gradient(at_90%_30%,_theme(colors.gray.200/_var(--un-bg-opacity,_1))_50%,_theme(colors.white/_var(--un-bg-opacity,_1))_130%)]
-hover:enabled:bg-[radial-gradient(_theme(colors.gray.200),_theme(colors.gray.100))]
+hover:enabled:bg-[radial-gradient(_theme(colors.gray.200),_theme(colors.gray.200))]
 `
 
 const buttonLg = `:uno:

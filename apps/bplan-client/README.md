@@ -108,3 +108,19 @@ https://vgzep.csb.app/
 
 example
 http://localhost:3000/img/w_100/http://localhost:3000/images/duck.jpg
+
+
+### @solidjs/start vinxi error
+
+https://github.com/nksaraf/vinxi/issues/435
+
+버전을 주의해서 올려주세요
+
+vinxi, vite, @solidjs/start
+
+
+### Solidjs storybook "uncaught TypeError: Cannot read properties of undefined (reading 'parser')" error
+
+fix version
+"@storybook/builder-vite": "9.0.0-alpha.0",
+"@storybook/csf-plugin": "9.0.0-alpha.0",

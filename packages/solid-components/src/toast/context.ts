@@ -1,4 +1,4 @@
-import {Accessor, createContext} from 'solid-js'
+import {Accessor, createContext, Setter} from 'solid-js'
 
 export const createTimeout = (timeout: number) => {
   return (callback: () => void) => {
@@ -8,11 +8,26 @@ export const createTimeout = (timeout: number) => {
   }
 }
 
-export interface MessageAction {
-  action?: () => void
-  actionToClose?: boolean
+export interface MutableMessageAction {
   label: string
   props?: Record<string, any>
+}
+
+export interface MutableMessage {
+  message?: string
+  sharedActionProps?: Record<string, any>
+  title?: string
+}
+
+export interface MessageAction extends MutableMessageAction {
+  action?: (
+    actions: Readonly<{
+      close: () => void
+      setAction: Setter<MutableMessageAction>
+      // setMessage: Setter<MutableMessage>
+    }>,
+  ) => void
+  actionToClose?: boolean
   type: 'click'
 }
 

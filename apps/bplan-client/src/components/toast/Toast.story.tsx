@@ -51,17 +51,48 @@ const DemoContent = () => {
   const handleActions = () => {
     const id = uuid()
 
+    const setLoadingMessage = () => {
+      setMessage({
+        actions: [
+          {
+            actionToClose: true,
+            label: 'Confirm',
+            props: {flat: true, loading: true, variant: 'primary'},
+            type: 'click',
+          },
+          {
+            actionToClose: true,
+            label: 'Cancel',
+            props: {disabled: true, flat: true},
+            type: 'click',
+          },
+        ],
+        closeHook: (close) => {
+          setTimeout(() => {
+            close()
+          }, 3000)
+        },
+        id,
+        message: `This is a notification message that will disappear after 3 seconds ${id}`,
+        title: 'Message Title (please wait)',
+      })
+    }
+
     setMessage({
       actions: [
         {
-          action: fn(),
+          action: () => {
+            setLoadingMessage()
+          },
           label: 'Confirm',
+          props: {variant: 'primary'},
           type: 'click',
         },
         {
           action: fn(),
           actionToClose: true,
           label: 'Cancel',
+          props: {flat: true},
           type: 'click',
         },
       ],

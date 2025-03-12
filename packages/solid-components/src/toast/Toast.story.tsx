@@ -60,8 +60,15 @@ const DemoContent = () => {
     setMessage({
       actions: [
         {
-          action: () => {
+          action: ({setAction}) => {
             handleOpenTimeout()
+
+            setAction((prev) => {
+              return {
+                ...prev,
+                label: 'One more!!!',
+              }
+            })
           },
           label: 'One more',
           type: 'click',

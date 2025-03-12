@@ -99,7 +99,7 @@ export default defineConfig({
         targets,
       }),
       // fullReload(['../../packages/unocss-config/*.ts']) as any,
-    ],
+    ] as any,
     resolve: {
       alias: {
         // fix #start/app is app.tsx only @solid/state error
