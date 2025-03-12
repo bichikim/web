@@ -108,6 +108,8 @@
   },
   "pnpm": {
     "overrides": {
+      "@storybook/builder-vite": "9.0.0-alpha.0",
+      "@storybook/csf-plugin": "9.0.0-alpha.0",
       "@unocss/core@<65.4.0": "65.4.0",
       "@winter-love/eslint-config": "workspace:*",
       "@winter-love/lodash": "workspace:*",

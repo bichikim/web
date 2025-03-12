@@ -1,5 +1,5 @@
 import {Preview} from 'storybook-solidjs'
-// import 'virtual:uno.css'
+import 'virtual:uno.css'
 
 const preview: Preview = {
   parameters: {
