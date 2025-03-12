@@ -1,11 +1,12 @@
 import {ToastActionContext} from './context'
-import {createMemo, splitProps, useContext, ValidComponent} from 'solid-js'
+import {createMemo, mergeProps, splitProps, useContext, ValidComponent} from 'solid-js'
 import {Dynamic, DynamicProps} from 'solid-js/web'
 
-export type ToastActionProps<T extends ValidComponent> = DynamicProps<T>
+export type ToastActionProps<T extends ValidComponent> = Partial<DynamicProps<T>>
 
 export const ToastAction = <T extends ValidComponent>(props: ToastActionProps<T>) => {
-  const [innerProps, restProps] = splitProps(props as any, ['component'])
+  const defaultProps = mergeProps({component: 'button'}, props)
+  const [innerProps, restProps] = splitProps(defaultProps as any, ['component'])
   const action = useContext(ToastActionContext)
 
   const handleClick = () => {

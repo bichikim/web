@@ -1,10 +1,17 @@
 import {ToastContentContext} from './context'
-import {ComponentProps, useContext} from 'solid-js'
+import {mergeProps, splitProps, useContext, ValidComponent} from 'solid-js'
+import {Dynamic, DynamicProps} from 'solid-js/web'
 
-export type ToastMessageProps = ComponentProps<'span'>
+export type ToastMessageProps<T extends ValidComponent> = Partial<DynamicProps<T>>
 
-export const ToastMessage = (props: ToastMessageProps) => {
+export const ToastMessage = <T extends ValidComponent>(props: ToastMessageProps<T>) => {
+  const defaultProps = mergeProps({component: 'span'}, props)
+  const [innerProps, restProps] = splitProps(defaultProps as any, ['component'])
   const {message} = useContext(ToastContentContext)
 
-  return <span {...props}>{message.message}</span>
+  return (
+    <Dynamic component={innerProps.component} {...restProps}>
+      {message.message}
+    </Dynamic>
+  )
 }

@@ -19,7 +19,7 @@ export interface SDividerProps extends ComponentProps<'div'> {
 
 export const SDivider = (props: SDividerProps) => {
   return (
-    <div {...props} class={dividerStyles({type: props.type})}>
+    <div {...props} class={dividerStyles({class: props.class, type: props.type})}>
       {props.children}
     </div>
   )

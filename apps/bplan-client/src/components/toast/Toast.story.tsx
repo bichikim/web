@@ -25,13 +25,14 @@ const DemoContent = () => {
       actions: [
         {
           action: fn(),
-          label: '확인',
+          label: 'Confirm',
           type: 'click',
         },
       ],
       closeHook: createTimeout(3000),
       id,
-      message: `알림 메시지입니다 3초 후 사라집니다 ${id}`,
+      message: `This is a notification message that will disappear after 3 seconds ${id}`,
+      title: 'Message Title',
     })
   }
 
@@ -41,7 +42,9 @@ const DemoContent = () => {
     setMessage({
       clickToClose: true,
       id,
-      message: `알림 메시지입니다 닫기전 까지 사라지지 않습니다 ${id}`,
+      // eslint-disable-next-line max-len
+      message: `This is a notification message that will not disappear until closed ${id} This is a notification message that will not disappear until closed`,
+      title: 'Message Title',
     })
   }
 
@@ -63,7 +66,8 @@ const DemoContent = () => {
         },
       ],
       id,
-      message: `알림 메시지입니다 클릭 후 사라집니다 ${id}`,
+      message: `This is a notification message that will disappear after 3 seconds ${id}`,
+      title: 'Message Title',
     })
   }
 
