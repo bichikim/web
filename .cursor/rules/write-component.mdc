@@ -149,6 +149,13 @@ export const Button = (props: ButtonProps) => {
 
 ```
 
+## Reference Documentation
+
+- Always refer to the latest SolidJS reference documentation at https://docs.solidjs.com
+- Follow the patterns and techniques recommended in the official documentation
+- Regularly check for new features and API changes
+- Apply best practices from the documentation to ensure optimal performance and maintainability
+- Consult the reference when encountering complex reactivity challenges
 
 
 
