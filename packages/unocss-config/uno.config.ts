@@ -3,7 +3,6 @@ import presetLegacyCompat from '@unocss/preset-legacy-compat'
 import transformerVariantGroup from '@unocss/transformer-variant-group'
 import transformerCompileClass from './transformer-class'
 import {defineUsefulConfig} from 'unocss-preset-useful'
-import transformerHash from 'unocss-transformer-hash'
 import * as theme from '@unocss/preset-uno/theme'
 import {pianoKeys} from './piano'
 const HUNDRED = 100
@@ -196,7 +195,6 @@ export default defineUsefulConfig(
     transformers: [
       transformerVariantGroup(),
       transformerCompileClass(),
-      transformerHash(),
     ] as any,
   },
 )
