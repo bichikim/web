@@ -1,58 +1,47 @@
-import {
-  ComponentProps,
-  createEffect,
-  createMemo,
-  createSignal,
-  Show,
-  useContext,
-} from 'solid-js'
-import {preventGlobalTouchAttrs} from 'src/components/real-button/use-global-touch'
-import {ServiceWorkerInfo, useServiceWorker} from 'src/components/service-worker'
-import {SButton} from 'src/components/button'
-import {SDivider} from 'src/components/divider'
-import {createTimeout, ToastContext} from '@winter-love/solid-components'
-
-export interface ReloadPromptProps extends ComponentProps<'div'> {
-  //
-}
+import {createEffect, useContext} from 'solid-js'
+import {ToastContext} from '@winter-love/solid-components'
+import {useServiceWorker} from 'src/components/service-worker'
 
 /**
  * @WIP
  */
-export const ReloadPrompt = (props: ReloadPromptProps) => {
-  const [, {handleSkipWaiting, handleSkipUpdate}] = useServiceWorker()
+export const ReloadPrompt = () => {
+  const [serviceWorkerState, {handleSkipWaiting, handleSkipUpdate}] = useServiceWorker()
   const {setMessage} = useContext(ToastContext)
 
-  const [serviceWorkerState, setServiceWorkerState] = createSignal<ServiceWorkerInfo>({
-    offline: false,
-    state: 'initializing',
-  })
-
-  const handleClose = () => {
-    handleSkipUpdate()
-  }
-
-  const isWaitingForUpdate = createMemo(() => {
-    return serviceWorkerState().state === 'waiting'
-  })
-
-  const handleUpdateServiceWorker = async () => {
-    const result = await handleSkipWaiting()
-
-    if (result) {
-      console.info('oh ye!!!')
-    }
-  }
-
-  const handleTestWait = () => {
-    setServiceWorkerState({
-      offline: false,
-      state: 'waiting',
-    })
-  }
-
   createEffect(() => {
+    const id = '__confirm_pwa_update__'
     const workerState = serviceWorkerState()
+
+    const message = 'Please confirm to update the app'
+    const title = 'App Updated'
+    const confirmLabel = 'Confirm'
+    const skipLabel = 'Skip for now'
+
+    const waitingConfirmProcess = () => {
+      setMessage({
+        actions: [
+          {
+            label: confirmLabel,
+            props: {loading: true, variant: 'primary'},
+            type: 'click',
+          },
+          {
+            actionToClose: false,
+            label: skipLabel,
+            props: {disabled: true, flat: true},
+            type: 'click',
+          },
+        ],
+        closeHook: async (close) => {
+          await handleSkipWaiting()
+          close()
+        },
+        id,
+        message,
+        title,
+      })
+    }
 
     if (workerState.state === 'waiting') {
       console.info('waiting')
@@ -61,82 +50,28 @@ export const ReloadPrompt = (props: ReloadPromptProps) => {
         actions: [
           {
             action: () => {
-              console.info('action')
+              waitingConfirmProcess()
             },
-            label: 'confirm',
+            label: confirmLabel,
+            props: {variant: 'primary'},
+            type: 'click',
+          },
+          {
+            action: ({close}) => {
+              handleSkipUpdate()
+              close()
+            },
+            label: skipLabel,
+            props: {flat: true},
             type: 'click',
           },
         ],
-        id: 'test',
-        message: 'test',
+        id,
+        message,
+        title,
       })
     }
   })
 
-  const handleMesssage = () => {
-    setMessage({
-      actions: [
-        {
-          action: () => {
-            console.info('action')
-          },
-          label: 'confirm',
-          type: 'click',
-        },
-        {
-          action: () => {
-            console.info('action')
-          },
-          label: 'cancel',
-          type: 'click',
-        },
-      ],
-      closeHook: createTimeout(3000),
-      id: 'test',
-      message: 'test',
-      title: 'test',
-    })
-  }
-
-  return (
-    <>
-      <div class="fixed top-2 right-2 p-2 bg-white rd-1 backdrop-blur-sm bg-opacity-90 b-1 b-white">
-        <span>test</span>
-        <SButton variant="transparent" flat onClick={handleTestWait}>
-          test waiting
-        </SButton>
-        <SButton variant="transparent" flat onClick={handleMesssage}>
-          test message
-        </SButton>
-      </div>
-      <Show when={isWaitingForUpdate()}>
-        <div
-          {...props}
-          class="fixed top-2 right-2 p-2 bg-white rd-1 backdrop-blur-sm bg-opacity-90 b-1 b-white"
-          {...preventGlobalTouchAttrs()}
-        >
-          <div class="flex flex-col gap-1">
-            <div class="p-1">
-              <h4 class="font-bold">App Updated</h4>
-              <span class="text-md color-gray-600">
-                Please Click Reload to use the updated App
-              </span>
-            </div>
-            <SDivider type="horizontal" class="mx-2" />
-            <div class="flex gap-2 p-1">
-              <SButton variant="primary" flat onClick={handleUpdateServiceWorker}>
-                Reload
-              </SButton>
-              <SButton variant="transparent" flat onClick={handleClose}>
-                Skip
-              </SButton>
-            </div>
-          </div>
-        </div>
-      </Show>
-      <div class="fixed top-1 left-1 bg-green-400 rd-1 min-w-2 min-h-2 px-1 text-white duration-300">
-        {serviceWorkerState().state}
-      </div>
-    </>
-  )
+  return null
 }
