@@ -9,7 +9,6 @@ import unoCss from 'unocss/vite'
 import * as nodeFs from 'node:fs'
 import legacy from '@vitejs/plugin-legacy'
 import {targets} from '@winter-love/vite-lib-config'
-import devtools from 'solid-devtools/vite'
 
 const fixNitroFunction = async () => {
   const source =
@@ -45,14 +44,13 @@ const hotfix = async () => {
 }
 
 const createGenerateSwPlugin = (): Plugin => {
-  let _config: ResolvedConfig | undefined
+  let _config: any | undefined
 
   return {
     async closeBundle() {
       if (!_config) {
         return
       }
-
       const {outDir, root} = _config.router
       const swOutPath = path.join(root, 'public/sw.js')
 
@@ -62,7 +60,7 @@ const createGenerateSwPlugin = (): Plugin => {
         cwd: '',
       })
     },
-    configResolved(config: ResolvedConfig) {
+    configResolved(config: any) {
       if (config.router.type === 'client' && config.mode === 'production') {
         _config = config
       }
@@ -80,16 +78,13 @@ export default defineConfig({
     },
   },
   vite: {
-    // build: {
-    //   // minify: false,
-    //   rollupOptions: {
-    //     external: ['@trpc/server', '@trpc/server/*'],
-    //   },
-    // },
+    build: {
+      minify: false,
+      // rollupOptions: {
+      //   external: ['@trpc/server', '@trpc/server/*'],
+      // },
+    },
     plugins: [
-      devtools({
-        autoname: true,
-      }),
       //
       unoCss({
         configFile: '../../uno.config.ts',
