@@ -55,19 +55,12 @@ export const SClose = (props: SCloseProps) => {
     return (props.playedTime / props.totalTime) * HUNDRED
   })
 
-  // class={cx(
-  //   rootStyle({
-  //     isHidden: Boolean(props.isHidden),
-  //     isPlaying: Boolean(props.isPlaying),
-  //   }),
-  //   props.class,
-  // )}
-
   return (
     <SButton
       {...preventGlobalTouchAttrs()}
       variant="danger"
       flat
+      fit
       loading={percent()}
       type="button"
       onClick={handleClose}

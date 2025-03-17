@@ -70,7 +70,7 @@ export const SFlowDisplay = (props: SFlowDisplayProps) => {
       )}
     >
       {props.children}
-      <Show when={isMove()}>{props.children}</Show>
+      <Show when={isMove()}> {props.children}</Show>
     </span>
   )
 }

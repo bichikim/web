@@ -1,5 +1,5 @@
 import {Meta, Title} from '@solidjs/meta'
-import {createMemo, createSignal, onMount, useContext} from 'solid-js'
+import {createEffect, createMemo, createSignal, onMount, useContext} from 'solid-js'
 import {SPiano} from 'src/components/instruments'
 import {SettingContext} from 'src/components/midi-player'
 import {SplendidGrandPianoContext} from 'src/use/instruments'
@@ -7,6 +7,7 @@ import {useStorage} from '@winter-love/solid-use'
 import {SScale} from 'src/components/scale'
 import {HUNDRED} from '@winter-love/utils'
 import {getStorageKey} from 'src/utils/storage-key'
+import {ToastContext} from '@winter-love/solid-components'
 
 export interface HomePageProps {
   presetTitle?: string
@@ -29,8 +30,9 @@ export default function HomePage() {
     },
   )
   const settingData = useContext(SettingContext)
-  const isLoadDone = createMemo(() => splendidGrandPiano().loaded)
+  const isLoaded = createMemo(() => splendidGrandPiano().loaded)
   const pageName = 'Piano'
+  const {setMessage} = useContext(ToastContext)
 
   onMount(() => {
     const element = mainElement()
@@ -56,6 +58,27 @@ export default function HomePage() {
     setSavedMainScrollLeft(scrollLeftPercent)
   }
 
+  createEffect(() => {
+    const isPianoLoaded = isLoaded()
+    const id = 'piano-loading'
+    const message = 'Please wait, Piano files are loading...'
+
+    if (isPianoLoaded) {
+      setMessage({
+        closeHook: (close) => {
+          close()
+        },
+        id,
+        message,
+      })
+    } else {
+      setMessage({
+        id,
+        message,
+      })
+    }
+  })
+
   return (
     <>
       <Title>Coong - {pageName}</Title>
@@ -63,12 +86,12 @@ export default function HomePage() {
       <Meta property="og:title" content={pageName} />
       <Meta property="og:description" content="Your instruments for free" />
       <main
-        class="relative h-full overflow-y-hidden pt-0 px-2 flex flex-col overflow-x-auto inline-block"
+        class=":uno: relative h-full overflow-y-hidden pt-0 px-2 flex flex-col overflow-x-auto inline-block"
         ref={setMainElement}
         on:scroll={{handleEvent: handleScroll, passive: true}}
       >
         <SScale
-          class="h-full w-max origin-top-left"
+          class=":uno: h-full w-max origin-top-left"
           size={settingData().pianoSize ?? HUNDRED}
         >
           <SPiano
@@ -78,10 +101,6 @@ export default function HomePage() {
           />
         </SScale>
       </main>
-      <span class="select-none fixed left-0 bottom-0 px-4px">
-        {' '}
-        {isLoadDone() ? '' : 'Please wait files loading ...'}
-      </span>
     </>
   )
 }

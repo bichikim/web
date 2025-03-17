@@ -1,4 +1,4 @@
-import {ButtonContext} from './ButtonRoot'
+import {ButtonContext} from './context'
 import {Dynamic} from 'solid-js/web'
 import {ComponentProps, useContext} from 'solid-js'
 

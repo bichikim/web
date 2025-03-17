@@ -16,7 +16,7 @@ import {SPlayer, SPlayerProps} from './SPlayer'
 import {SettingData, SSetting} from './SSetting'
 
 export interface SHiddenPlayerProps
-  extends Omit<SPlayerProps, 'onPlaying' | 'onPlay'>,
+  extends Omit<SPlayerProps, 'onPlaying' | 'onPlay' | 'isShow'>,
     Omit<JSX.HTMLAttributes<HTMLElement>, 'onPlay'> {
   component?: ValidComponent
   initShow?: boolean
@@ -27,32 +27,33 @@ export interface SHiddenPlayerProps
 
 export type SurfaceKind = 'player' | 'setting'
 
-const rootStyle = cva(
-  'relative duration-500 bg-white rd-2 flex flex-col duration-150 gap-2 bg-opacity-80 ' +
-    'backdrop-blur-sm b-2 b-white/90 shadow-md max-w-full md:max-w-180 w-[calc(100vw-.5rem)] p-2',
-  {
-    variants: {
-      isSetting: {
-        false: '',
-        true: '',
-      },
-      isShow: {
-        false: 'ml-1 mr--400',
-        true: '',
-      },
-    },
-  },
-)
+const rootBaseStyle = `:uno:
+relative duration-500 bg-white rd-2 flex flex-col duration-150 gap-2 bg-opacity-90
+backdrop-blur-sm b-1 b-white shadow-md max-w-full md:max-w-180 w-[calc(100vw-.5rem)] p-2
+`
 
-const playerContainerStyle = cva('flex flex-col gap-2 overflow-hidden', {
+const rootStyle = cva(rootBaseStyle, {
   variants: {
     isSetting: {
       false: '',
-      true: 'w-0 h-0 hidden pointer-events-none',
+      true: '',
     },
     isShow: {
-      false: 'hidden opacity-0 pointer-events-none',
-      true: 'opacity-100',
+      false: 'ml-1 mr--400',
+      true: '',
+    },
+  },
+})
+
+const playerContainerStyle = cva(':uno: flex flex-col gap-2 overflow-hidden', {
+  variants: {
+    isSetting: {
+      false: '',
+      true: ':uno: w-0 h-0 hidden pointer-events-none',
+    },
+    isShow: {
+      false: ':uno: hidden opacity-0 pointer-events-none',
+      true: ':uno: opacity-100',
     },
   },
 })
@@ -120,7 +121,7 @@ export const SHiddenPlayer = (props: SHiddenPlayerProps) => {
         totalTime={defaultProps.playState.totalDuration}
       />
       <section
-        title="midi player"
+        aria-label="midi player"
         id="__midi_player__"
         aria-hidden={isShow() ? 'false' : 'true'}
         {...preventGlobalTouchAttrs()}
@@ -132,9 +133,13 @@ export const SHiddenPlayer = (props: SHiddenPlayerProps) => {
             isShow: isShow(),
           })}
         >
-          <SPlayer {...restProps} onSetting={() => handleSurfaceKindChange('setting')} />
+          <SPlayer
+            {...restProps}
+            isShow={isShow()}
+            onSetting={() => handleSurfaceKindChange('setting')}
+          />
         </div>
-        <Show when={surfaceKind() === 'setting'}>
+        <Show when={surfaceKind() === 'setting' && isShow()}>
           <SSetting
             pianoMinScale={innerProps.pianoMinScale}
             settingData={innerProps.settingData}

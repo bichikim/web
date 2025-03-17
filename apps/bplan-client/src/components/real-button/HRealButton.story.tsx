@@ -13,8 +13,10 @@ const Root = (props: any) => {
     </div>
   )
 }
+
 const meta = {
   component: Root,
+  title: 'BPlan/components/real-button/HRealButton',
 } satisfies Meta<typeof HRealButton>
 
 // storybook meta
@@ -25,6 +27,6 @@ type Story = StoryObj<typeof meta>
 export const Default: Story = {
   args: {
     children: 'hello',
-    class: 'w-200px h-200px data data-[state="down"]:bg-red',
+    class: 'w-200px h-200px data data-[state="down"]:bg-red data-[state="up"]:bg-white',
   },
 }

@@ -13,6 +13,7 @@ addons.setConfig({
       if (type === 'root' || type === 'group') {
         return pascalCase(name)
       }
+
       return name
     },
   },

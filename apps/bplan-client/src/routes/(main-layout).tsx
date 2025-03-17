@@ -17,10 +17,8 @@ import {emitAllIds} from 'src/components/real-button/use-global-touch'
 import {useCookie} from 'src/use/cookie'
 import {createSplendidGrandPiano, SplendidGrandPianoContext} from 'src/use/instruments'
 import {getStorageKey} from 'src/utils/storage-key'
-
-const getSelfUrl = () => {
-  return import.meta.env.VITE_API_URL ?? 'http://localhost:3000'
-}
+import {getSelfUrl} from 'src/env'
+import {Analytics} from 'src/components/vercel'
 
 interface Data {
   musics: MusicInfo[]
@@ -43,9 +41,10 @@ const getPreset = async (id?: string): Promise<Data | undefined> => {
   })
 }
 
-const layoutStyle =
-  'absolute overflow-hidden top-0 left-0 bottom-0 right-0 before:content-[""] before:absolute before:top-0 ' +
-  'before:bottom-0 before:left-0 before:right-0 before:pattern-a before:pointer-events-none'
+const layoutStyle = `:uno:
+absolute overflow-hidden top-0 left-0 bottom-0 right-0 before:content-[""] before:absolute before:top-0
+before:bottom-0 before:left-0 before:right-0 before:pattern-a before:pointer-events-none
+`
 
 export default function MainLayout(props: RouteSectionProps) {
   const [splendidGrandPiano, splendidGrandPianoController] = createSplendidGrandPiano({
@@ -94,25 +93,28 @@ export default function MainLayout(props: RouteSectionProps) {
   }
 
   return (
-    <SettingContext.Provider value={settingData}>
-      <SplendidGrandPianoContext.Provider
-        value={[splendidGrandPiano, splendidGrandPianoController]}
-      >
-        <div id="layout" class={layoutStyle}>
-          {props.children}
-          <SHiddenPlayer
-            linkType={linkType()}
-            settingData={settingData()}
-            initMusics={musics()}
-            pianoController={splendidGrandPianoController}
-            playState={splendidGrandPiano()}
-            onSettingDataChange={handleSettingDataChange}
-            onMusicsChange={handleMusicsChange}
-            onLink={handleLinkTypeChange}
-            class="absolute bottom-1 right-1 max-w-100vw"
-          />
-        </div>
-      </SplendidGrandPianoContext.Provider>
-    </SettingContext.Provider>
+    <>
+      <SettingContext.Provider value={settingData}>
+        <SplendidGrandPianoContext.Provider
+          value={[splendidGrandPiano, splendidGrandPianoController]}
+        >
+          <div id="layout" class={layoutStyle}>
+            {props.children}
+            <SHiddenPlayer
+              linkType={linkType()}
+              settingData={settingData()}
+              initMusics={musics()}
+              pianoController={splendidGrandPianoController}
+              playState={splendidGrandPiano()}
+              onSettingDataChange={handleSettingDataChange}
+              onMusicsChange={handleMusicsChange}
+              onLink={handleLinkTypeChange}
+              class="absolute bottom-1 right-1 max-w-100vw"
+            />
+          </div>
+        </SplendidGrandPianoContext.Provider>
+      </SettingContext.Provider>
+      <Analytics />
+    </>
   )
 }

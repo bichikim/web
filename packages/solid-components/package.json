@@ -6,6 +6,8 @@
     "type": "git",
     "url": "https://github.com/bichikim/web.git"
   },
+  "sideEffects": false,
+  "type": "module",
   "exports": {
     ".": {
       "solid": "./dist/index/index.jsx",
@@ -16,7 +18,6 @@
       "node": "./dist/index/index.common.js"
     }
   },
-  "type": "module",
   "main": "./dist/index/index.common.js",
   "module": "./dist/index/index.module.js",
   "types": "./dist/index/index.d.ts",
@@ -24,8 +25,7 @@
     "dist/*"
   ],
   "scripts": {
-    "build": "rollup -c rollup.config.js && tspc -p tsconfig.build.json",
-    "fix-build": "node fix-build.js",
+    "build": "node fix-build.js && rollup -c rollup.config.js && tspc -p tsconfig.build.json",
     "check-types": "tsc --noEmit",
     "lint": "eslint src",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -39,12 +39,13 @@
   },
   "devDependencies": {
     "@rollup/plugin-alias": "^5.1.1",
-    "rollup": "^4.32.1",
     "@winter-love/vite-lib-config": "workspace:*",
-    "rollup-preset-solid": "^3.0.0"
+    "rollup": "^4.32.1",
+    "rollup-preset-solid": "^3.0.0",
+    "ts-patch": "^3.3.0",
+    "typescript-transform-paths": "^3.5.4"
   },
   "publishConfig": {
     "access": "public"
-  },
-  "sideEffects": false
+  }
 }

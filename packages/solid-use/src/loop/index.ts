@@ -10,6 +10,9 @@ export interface LoopSource<Options extends Record<string, any>> {
   stop: (callback: (...args: any) => any, options: Partial<Options>) => void
 }
 
+/**
+ * create a loop hook such as useInterval, useAnimationFrame, etc.
+ */
 export const createUseLoop = <Options extends Record<string, any>, Args extends any[]>(
   creator: () => LoopSource<Options>,
 ) => {

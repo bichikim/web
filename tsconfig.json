@@ -21,6 +21,13 @@
     "skipLibCheck": true,
     "skipDefaultLibCheck": true
   },
-  "include": ["apps/**/*.ts", "packages/**/*.mts", "**/*.md", "*.mts", "*.ts"],
+  "include": [
+    "apps/**/*.ts",
+    "packages/**/*.mts",
+    "**/*.md",
+    "*.mts",
+    "*.ts",
+    "vitest.setup.ts"
+  ],
   "exclude": ["node_modules", ".output", ".server"]
 }

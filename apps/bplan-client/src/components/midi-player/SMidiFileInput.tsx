@@ -15,10 +15,15 @@ export interface HMidiFileInputProps
   onTouchEnd?: (event: Event) => void
 }
 
-const rootStyle = cx(
-  'bg-gray-100 flex items-center justify-center flex-grow-1 rd-1 b-dashed b-.5 b-gray',
-  'relative text-4',
-)
+const rootStyle = `:uno:
+bg-gray-100 flex items-center justify-center flex-grow-1 rd-1 b-dashed b-.5 b-gray
+relative text-4
+`
+
+const labelStyle = `:uno:
+inline-flex text-inherit flex justify-center items-center overflow-hidden w-full rd-md
+focus-visible:outline-3 focus-visible:outline-solid focus-visible:outline-black focus-visible:outline-offset--3
+`
 
 export const SMidiFileInput = (props: HMidiFileInputProps) => {
   const id = createUniqueId()
@@ -118,19 +123,12 @@ export const SMidiFileInput = (props: HMidiFileInputProps) => {
 
   return (
     <div class={cx(rootStyle, innerProps.class)}>
-      <label
-        class="inline-flex text-inherit flex justify-center items-center overflow-hidden"
-        for={id}
-        tabIndex="0"
-        onKeyDown={handleKeyDown}
-      >
-        <span class="text-nowrap text-6 md:pt-.5 sm:inline-block hidden truncate flex-shrink-1">
+      <label class={labelStyle} for={id} tabIndex="0" onKeyDown={handleKeyDown}>
+        <span class=":uno: text-6 md:pt-.5 sm:inline-block hidden truncate flex-shrink-1">
           Click or Drop{' '}
         </span>
-        <span class="inline-block i-tabler:file-plus text-6 px-1 pt-2 md:h-7 md:w-7 h-9 w-9" />
-        <span class="text-nowrap md:inline hidden md:text-6 text-4 md:pt-.5">
-          Your files
-        </span>
+        <span class=":uno: inline-block i-tabler:file-plus text-6 px-1 pt-2 md:h-7 md:w-7 h-9 w-9" />
+        <span class=":uno: md:inline hidden md:text-6 text-4 md:pt-.5">Your files</span>
       </label>
 
       {props.children}
@@ -148,7 +146,7 @@ export const SMidiFileInput = (props: HMidiFileInputProps) => {
           await handleInputFiles(event.target.files)
           ;(event.target.value as any) = null
         }}
-        class="block absolute opacity-0 w-100% h-100% cursor-pointer"
+        class=":uno: block absolute opacity-0 w-100% h-100% cursor-pointer"
       />
     </div>
   )

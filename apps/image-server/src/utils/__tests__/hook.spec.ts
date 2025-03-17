@@ -1,5 +1,6 @@
 import flushPromises from 'flush-promises'
 import {useReq as useRequest, withHook} from '../hook'
+import {describe, expect, it, vi} from 'vitest'
 
 describe('hook', () => {
   it('should this', async () => {

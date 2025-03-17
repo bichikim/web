@@ -45,8 +45,9 @@ export interface SFileItemProps
 
 const rootStyle = cx(
   'relative gap-4 p-0 b-0 bg-transparent text-5 flex-shrink-0 h-9 mb-0.3125rem last:mb-0',
-  'after:bg-gray-300 after:h-.25 first:after:hidden after:content-[""] after:absolute',
+  'after:bg-gray-300 after:h-.25 first:after:hidden after:content-[""] after:absolute rd-md',
   'after:top--0.1875rem after:left-0.5rem after:w-[calc(100%-1rem)] cursor-pointer touch-none',
+  'focus-visible:outline-3 focus-visible:outline-solid focus-visible:outline-black focus-visible:outline-offset--3',
 )
 
 const indexStyle = cva('', {
@@ -102,6 +103,9 @@ export const SFileItem = (props: SFileItemProps) => {
     'onPlay',
     'onResume',
     'onSuspend',
+    'header',
+    'dragExecuteSize',
+    'dragEndSize',
   ])
 
   const handleSelect = () => {
@@ -143,12 +147,14 @@ export const SFileItem = (props: SFileItemProps) => {
   )
 
   return (
-    <DragButton.Root
+    <DragButton.Provider
       type="button"
       onClick={handleSelect}
       onDoubleClick={handlePlayOrSuspend}
       onLeftExecute={handleDelete}
       preventRight
+      dragEndSize={innerProps.dragEndSize}
+      dragExecuteSize={innerProps.dragExecuteSize}
     >
       <DragButton.Body
         {...restProps}
@@ -176,7 +182,7 @@ export const SFileItem = (props: SFileItemProps) => {
             />
           </Show>
           <Show when={innerProps.selected}>
-            <span class="inline-block absolute bg-blue rd-1 top-0 left-0 w-full h-full opacity-40" />
+            <span class="inline-block absolute bg-blue-400 rd-1 top-0 left-0 w-full h-full opacity-40" />
           </Show>
           <Show when={showPlayingIcon()}>
             <span class="inline-block i-tabler:chevrons-right absolute text-gray-500 left-3" />
@@ -218,6 +224,6 @@ export const SFileItem = (props: SFileItemProps) => {
           {innerProps.children}
         </DragButton.Content>
       </DragButton.Body>
-    </DragButton.Root>
+    </DragButton.Provider>
   )
 }

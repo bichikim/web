@@ -1,6 +1,7 @@
 import {createSignal} from 'solid-js'
 import {describe, expect, it} from 'vitest'
 import {toggleValue} from '../'
+import {renderHook} from '@solidjs/testing-library'
 
 describe('toggleValue', () => {
   it('should return true if value is undefined', () => {
@@ -12,7 +13,9 @@ describe('toggleValue', () => {
     expect(toggleValue(undefined, true)()).toBe(undefined)
     expect(toggleValue(undefined, false)()).toBe(undefined)
 
-    const toggledValue = toggleValue(valueAccessor, toggleValueAccessor)
+    const {result: toggledValue} = renderHook(() =>
+      toggleValue(valueAccessor, toggleValueAccessor),
+    )
 
     expect(toggledValue()).toBe(456)
     setToggleValue(false)

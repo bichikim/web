@@ -12,6 +12,14 @@ const meta = {
         defaultValue: {summary: 'false'},
       },
     },
+    fit: {
+      control: 'boolean',
+      description: '버튼 피트 유무',
+      table: {
+        category: 'Props',
+        defaultValue: {summary: 'false'},
+      },
+    },
     flat: {
       control: 'boolean',
       description: '버튼 플랫 유무',
@@ -78,7 +86,7 @@ const meta = {
     variant: {
       control: 'select',
       description: '버튼 스타일 변형',
-      options: ['primary', 'secondary', 'default'],
+      options: ['primary', 'secondary', 'default', 'transparent', 'danger', 'warning'],
       table: {
         category: 'Props',
         defaultValue: {summary: 'primary'},
@@ -160,6 +168,13 @@ export const Disabled: Story = {
   args: {
     children: '비활성화 버튼',
     disabled: true,
+  },
+}
+
+export const Loading: Story = {
+  args: {
+    children: '로딩 버튼',
+    loading: true,
   },
 }
 

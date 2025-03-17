@@ -23,12 +23,9 @@ export default defineConfig({
     }),
   ],
   test: {
-    environment: 'node',
-    globals: true,
     include: [
-      'packages/*/src/**/*.{test,spec}.?(c|m)[jt]s?(x)',
-      'apps/*/src/**/*.{test,spec}.?(c|m)[jt]s?(x)',
+      'packages/*/src/**/*.spec.?(c|m)[jt]s?(x)',
+      'apps/*/src/**/*.spec.?(c|m)[jt]s?(x)',
     ],
-    // setupFiles: ['./vitest.setup.ts'],
   },
 })

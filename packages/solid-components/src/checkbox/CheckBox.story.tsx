@@ -1,9 +1,9 @@
 import {Meta, StoryObj} from 'storybook-solidjs'
-import {Checkbox, CheckboxRootProps} from './index'
+import {Checkbox, CheckboxProviderProps} from './index'
 
-const Template = (props: CheckboxRootProps) => {
+const Template = (props: CheckboxProviderProps) => {
   return (
-    <Checkbox.Root {...props}>
+    <Checkbox.Provider {...props}>
       <Checkbox.Body component="div">
         <Checkbox.Indicator
           component="span"
@@ -11,7 +11,7 @@ const Template = (props: CheckboxRootProps) => {
         />
         <Checkbox.Label>hello</Checkbox.Label>
       </Checkbox.Body>
-    </Checkbox.Root>
+    </Checkbox.Provider>
   )
 }
 

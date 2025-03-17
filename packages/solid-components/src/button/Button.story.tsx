@@ -1,9 +1,9 @@
 import {Meta, StoryObj} from 'storybook-solidjs'
-import {Button, ButtonBodyProps, ButtonRootProps} from './'
+import {Button, ButtonBodyProps, ButtonProviderProps} from './'
 import {splitProps} from 'solid-js'
 import {fn} from '@storybook/test'
 
-const Template = (props: ButtonBodyProps & ButtonRootProps) => {
+const Template = (props: ButtonBodyProps & ButtonProviderProps) => {
   const [innerProps, restProps] = splitProps(props, [
     'onClick',
     'onTouchEnd',
@@ -15,9 +15,9 @@ const Template = (props: ButtonBodyProps & ButtonRootProps) => {
   ])
 
   return (
-    <Button.Root {...innerProps}>
+    <Button.Provider {...innerProps}>
       <Button.Body {...restProps}>Click me</Button.Body>
-    </Button.Root>
+    </Button.Provider>
   )
 }
 

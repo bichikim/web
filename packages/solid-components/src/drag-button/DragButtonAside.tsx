@@ -10,7 +10,7 @@ const onlyPlus = (value: number) => {
   return value
 }
 
-export type DragAsidePosition = 'left' | 'right'
+export type DragButtonAsidePosition = 'left' | 'right'
 
 interface DragButtonAsideOwnProps {
   position: 'left' | 'right'

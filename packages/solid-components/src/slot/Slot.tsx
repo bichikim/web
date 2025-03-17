@@ -17,12 +17,15 @@ export interface SlotContext extends SlotProps {
 
 /**
  * A component that defines a named slot for content projection.
+ * In most cases, Slot is not necessary. Only use it if you know exactly how it works.
  *
  * @component
  * @example
+ * ```tsx
  * <Slot name="header">
  *   <h1>Header Content</h1>
  * </Slot>
+ * ```
  *
  * @param {SlotProps} props - The properties for the Slot component.
  * @param {JSXElement} props.children - The content to be projected into the slot.

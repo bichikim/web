@@ -118,24 +118,20 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
         />
       </Show>
       <SSeeker
-        class="flex-1 min-h-2 relative rd-1 overflow-hidden b-0 w-full touch-none"
+        class=":uno: flex-1 min-h-2 relative rd-1 overflow-hidden b-0 w-full touch-none"
         playedTime={innerProps.playedTime}
         totalDuration={innerProps.totalDuration}
         onSeek={innerProps.onSeek}
       />
       <section class="flex gap-2">
         <SPlayerButton
-          class="min-w-11 min-h-9 bg-gray-100"
+          class="min-w-11"
           onClick={handlePlayOrPause}
           title={isPlayingButton() ? 'play' : 'pause'}
         >
           <span class={playStyle({isPlaying: isPlayingButton()})} />
         </SPlayerButton>
-        <SPlayerButton
-          class="min-w-11 min-h-9 bg-gray-100"
-          onClick={innerProps.onStop}
-          title="stop"
-        >
+        <SPlayerButton class="min-w-11 min-h-9" onClick={innerProps.onStop} title="stop">
           <span class="block i-tabler:player-stop text-9" />
         </SPlayerButton>
         <SRepeatButton
@@ -147,7 +143,8 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
         <SMidiFileInput class="min-w-11 px-2" onAdd={handleAddPlayItem} />
         <SPlayerButton
           type="anchor-button"
-          class="min-w-11 min-h-9 bg-gray-100"
+          tabIndex="0"
+          class="min-w-11"
           onClick={handleLink}
           title={innerProps.linkType === 'music' ? 'get music more' : 'piano'}
         >
@@ -158,11 +155,7 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
             )}
           />
         </SPlayerButton>
-        <SPlayerButton
-          class="min-w-11 min-h-9 bg-gray-100"
-          onClick={innerProps.onSetting}
-          title="setting"
-        >
+        <SPlayerButton class="min-w-11" onClick={innerProps.onSetting} title="setting">
           <span class="block i-tabler:settings text-8" />
         </SPlayerButton>
       </section>

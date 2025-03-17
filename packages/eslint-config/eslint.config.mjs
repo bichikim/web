@@ -419,6 +419,7 @@ export default [
             refs: false,
             req: false,
             res: false,
+            src: false,
           },
         },
       ],

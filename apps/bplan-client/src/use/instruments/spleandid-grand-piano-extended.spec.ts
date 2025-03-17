@@ -1,6 +1,8 @@
 import {describe, expect, it, vi} from 'vitest'
 import {
+  CHANNEL_NAME_KEY,
   createSplendidGrandPianoExtended,
+  ORIGINAL_NOTE_KEY,
   PLAY_STARTED_AT_KEY,
   PlayOptions,
   TARGET_ID_KEY,
@@ -14,6 +16,9 @@ vi.mock('smplr', () => {
   const mockAudioContext = {
     get currentTime() {
       return _currentTime
+    },
+    resume: () => {
+      // empty
     },
   } as AudioContext
 
@@ -40,6 +45,9 @@ vi.mock('smplr', () => {
 vi.mock('./prepare-audio-context', () => {
   const mockAudioContext = {
     currentTime: 33,
+    resume: () => {
+      // empty
+    },
   } as AudioContext
 
   return {
@@ -53,14 +61,20 @@ describe('createSplendidGrandPianoExtended', () => {
       const piano = createSplendidGrandPianoExtended(getAudioContext() as AudioContext)
       const stopFn = piano?.down('C4')
 
-      expect(piano?.__original.start).toHaveBeenNthCalledWith(1, {
-        [PLAY_STARTED_AT_KEY]: 33,
-        [TARGET_ID_KEY]: '',
-        [USER_PLAY_FLAG_KEY]: true,
-        note: 'C4',
-        time: 33,
-        velocity: 100,
-      })
+      expect(piano?.__original.start).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({
+          [CHANNEL_NAME_KEY]: undefined,
+          [ORIGINAL_NOTE_KEY]: 'C4',
+          [PLAY_STARTED_AT_KEY]: 33,
+          [TARGET_ID_KEY]: '',
+          [USER_PLAY_FLAG_KEY]: true,
+          note: 'C4',
+          stopId: 'user-input|C4',
+          time: 33,
+          velocity: 100,
+        }),
+      )
       expect(typeof stopFn).toBe('function')
     })
   })
@@ -77,17 +91,50 @@ describe('createSplendidGrandPianoExtended', () => {
 
       piano?.play(playOptions)
 
-      expect(piano?.__original.start).toHaveBeenNthCalledWith(1, {
-        note: 'C4',
-      })
+      expect(piano?.__original.start).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({
+          [CHANNEL_NAME_KEY]: undefined,
+          [ORIGINAL_NOTE_KEY]: 'C4',
+          [PLAY_STARTED_AT_KEY]: 33,
+          [TARGET_ID_KEY]: 'test',
+          [USER_PLAY_FLAG_KEY]: false,
+          note: 'C4',
+          stopId: 'C4',
+          time: 33,
+          velocity: 100,
+        }),
+      )
 
-      expect(piano?.__original.start).toHaveBeenNthCalledWith(2, {
-        note: 'E4',
-      })
+      expect(piano?.__original.start).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({
+          [CHANNEL_NAME_KEY]: undefined,
+          [ORIGINAL_NOTE_KEY]: 'E4',
+          [PLAY_STARTED_AT_KEY]: 33,
+          [TARGET_ID_KEY]: 'test',
+          [USER_PLAY_FLAG_KEY]: false,
+          note: 'E4',
+          stopId: 'E4',
+          time: 33,
+          velocity: 100,
+        }),
+      )
 
-      expect(piano?.__original.start).toHaveBeenNthCalledWith(3, {
-        note: 'G4',
-      })
+      expect(piano?.__original.start).toHaveBeenNthCalledWith(
+        3,
+        expect.objectContaining({
+          [CHANNEL_NAME_KEY]: undefined,
+          [ORIGINAL_NOTE_KEY]: 'G4',
+          [PLAY_STARTED_AT_KEY]: 33,
+          [TARGET_ID_KEY]: 'test',
+          [USER_PLAY_FLAG_KEY]: false,
+          note: 'G4',
+          stopId: 'G4',
+          time: 33,
+          velocity: 100,
+        }),
+      )
     })
   })
 
@@ -106,15 +153,32 @@ describe('createSplendidGrandPianoExtended', () => {
 
       piano?.play(playOptions)
 
-      expect(piano?.__original.start).toHaveBeenNthCalledWith(1, {
-        note: 'C4',
-        time: 0,
-      })
+      expect(piano?.__original.start).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({
+          [CHANNEL_NAME_KEY]: undefined,
+          [ORIGINAL_NOTE_KEY]: 'C4',
+          [PLAY_STARTED_AT_KEY]: 33,
+          [USER_PLAY_FLAG_KEY]: false,
+          note: 'C4',
+          stopId: 'C4',
+          time: 33,
+        }),
+      )
 
-      expect(piano?.__original.start).toHaveBeenNthCalledWith(2, {
-        note: 'E4',
-        time: 20,
-      })
+      expect(piano?.__original.start).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({
+          [CHANNEL_NAME_KEY]: undefined,
+          [ORIGINAL_NOTE_KEY]: 'E4',
+          [PLAY_STARTED_AT_KEY]: 33,
+          [USER_PLAY_FLAG_KEY]: false,
+          note: 'E4',
+          stopId: 'E4',
+          time: 53,
+          velocity: 100,
+        }),
+      )
       ;(piano?.__original as any).__setCurrentTime(44)
       piano?.suspend()
 
@@ -122,10 +186,19 @@ describe('createSplendidGrandPianoExtended', () => {
       ;(piano?.__original as any).__setCurrentTime(55)
       piano?.resume()
 
-      expect(piano?.__original.start).toHaveBeenNthCalledWith(3, {
-        note: 'E4',
-        time: 9,
-      })
+      expect(piano?.__original.start).toHaveBeenNthCalledWith(
+        3,
+        expect.objectContaining({
+          [CHANNEL_NAME_KEY]: undefined,
+          [ORIGINAL_NOTE_KEY]: 'E4',
+          [PLAY_STARTED_AT_KEY]: 55,
+          [USER_PLAY_FLAG_KEY]: false,
+          note: 'E4',
+          stopId: 'E4',
+          time: 64,
+          velocity: 100,
+        }),
+      )
     })
   })
 
@@ -153,10 +226,20 @@ describe('createSplendidGrandPianoExtended', () => {
       piano?.play(playOptions)
       piano?.seek(10)
 
-      expect(piano?.__original.start).toHaveBeenNthCalledWith(3, {
-        note: 'E4',
-        time: 10,
-      })
+      expect(piano?.__original.start).toHaveBeenNthCalledWith(
+        3,
+        expect.objectContaining({
+          [CHANNEL_NAME_KEY]: undefined,
+          [ORIGINAL_NOTE_KEY]: 'E4',
+          [PLAY_STARTED_AT_KEY]: 55,
+          [TARGET_ID_KEY]: '',
+          [USER_PLAY_FLAG_KEY]: false,
+          note: 'E4',
+          stopId: 'E4',
+          time: 65,
+          velocity: 100,
+        }),
+      )
       expect(piano?.__original.stop).toHaveBeenCalled()
     })
   })

@@ -18,7 +18,7 @@
     "dist/*"
   ],
   "scripts": {
-    "build": "cross-env NODE_ENV=production vite build",
+    "build": "vite build",
     "lint": "eslint src",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -26,7 +26,8 @@
     "solid-js": "^1.9.3"
   },
   "devDependencies": {
-    "@winter-love/vite-lib-config": "workspace:*"
+    "@winter-love/vite-lib-config": "workspace:*",
+    "vite": "^5.4.12"
   },
   "publishConfig": {
     "access": "public"
