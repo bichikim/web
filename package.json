@@ -66,6 +66,7 @@
     "@winter-love/solid-test": "workspace:*",
     "@winter-love/unocss-config": "workspace:*",
     "@winter-love/vite-plugin-monorepo-alias": "workspace:*",
+    "chromatic": "^11.27.0",
     "concurrently": "^9.1.2",
     "cpx2": "^8.0.0",
     "cross-env": "^7.0.3",
