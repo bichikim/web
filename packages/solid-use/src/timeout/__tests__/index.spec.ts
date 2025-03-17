@@ -15,5 +15,6 @@ describe('useTimeout', () => {
     timeout.execute()
     clock.tick(50)
     expect(callback).toHaveBeenCalledTimes(1)
+    clock.restore()
   })
 })
