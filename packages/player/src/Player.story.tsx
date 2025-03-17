@@ -1,5 +1,4 @@
 import {useStorage} from '@winter-love/solid-use'
-import {HTMLInputElement} from 'happy-dom'
 import {createSignal} from 'solid-js'
 import {createPlayer} from 'src/create-player'
 import {Meta, StoryObj} from 'storybook-solidjs'
