@@ -22,4 +22,7 @@ export default defineConfig({
       workspacePaths: [/^\/coong\//u, /^\/packages\//u],
     }),
   ],
+  test: {
+    include: ['packages/*/src/**/*.spec.ts', 'apps/*/src/**/*.spec.ts'],
+  },
 })
