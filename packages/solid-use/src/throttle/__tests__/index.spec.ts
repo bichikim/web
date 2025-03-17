@@ -18,5 +18,6 @@ describe('useThrottle', () => {
     throttle.execute(...args)
     timer.tick(50)
     expect(callback).toHaveBeenCalledTimes(2)
+    timer.restore()
   })
 })
