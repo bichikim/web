@@ -32,7 +32,7 @@
     "test:storybook": "test-storybook",
     "test:vitest": "vitest run",
     "test:vitest:watch": "vitest watch",
-    "chromatic": "npx chromatic --project-token=chpt_b4b4c6198bbdeda"
+    "chromatic": "nve 20.18.1 pnpm dlx chromatic --project-token=chpt_b4b4c6198bbdeda"
   },
   "browserslist": [
     "last 10 Chrome versions",
