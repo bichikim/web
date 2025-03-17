@@ -10,7 +10,7 @@ exports[`SText > should render 1`] = `
 
 exports[`SText > should render size: 'lg' 1`] = `
 <span
-  class="text-lg"
+  class="text-lg py-.5 px-1.5 rd-1"
   size="lg"
 >
   Hello
@@ -19,7 +19,7 @@ exports[`SText > should render size: 'lg' 1`] = `
 
 exports[`SText > should render size: 'md' 1`] = `
 <span
-  class="text-base"
+  class="text-base py-.5 px-1.5 rd-1"
   size="md"
 >
   Hello
@@ -28,7 +28,7 @@ exports[`SText > should render size: 'md' 1`] = `
 
 exports[`SText > should render size: 'sm' 1`] = `
 <span
-  class="text-sm"
+  class="text-sm py-.5 px-1.5 rd-1"
   size="sm"
 >
   Hello
