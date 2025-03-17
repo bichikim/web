@@ -1,5 +1,5 @@
 /**
- * @vitest-environment happy-dom
+ * @vitest-environment jsdom
  */
 import {createSubscribe, getSubscribeValue} from '../'
 import {describe, expect, it, vi} from 'vitest'

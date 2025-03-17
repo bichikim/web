@@ -1,5 +1,5 @@
 /**
- * @vitest-environment happy-dom
+ * @vitest-environment jsdom
  */
 import {updateElementClasses} from '../'
 import {describe, expect, it} from 'vitest'

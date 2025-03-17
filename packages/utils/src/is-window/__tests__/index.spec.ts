@@ -1,5 +1,5 @@
 /**
- * @vitest-environment happy-dom
+ * @vitest-environment jsdom
  */
 import {isWindow} from '../'
 import {describe, expect, it} from 'vitest'
