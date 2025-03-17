@@ -1,10 +1,11 @@
-import {createEffect, createSignal, Signal} from 'solid-js'
+import {createEffect, createSignal, Signal, untrack} from 'solid-js'
 import {MaybeAccessor} from 'src/types'
 import {resolveAccessor} from 'src/resolve-accessor'
 
 export const sync = <T>(value: MaybeAccessor<T>): Signal<T> => {
   const valueAccessor = resolveAccessor(value)
-  const [getValue, setValue] = createSignal<T>(valueAccessor())
+  const untrackedValue = untrack(() => valueAccessor())
+  const [getValue, setValue] = createSignal<T>(untrackedValue)
 
   createEffect(() => {
     const value = valueAccessor()
