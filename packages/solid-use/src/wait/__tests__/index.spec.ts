@@ -6,8 +6,6 @@ import {createUseWait} from '../'
 
 const callback = vi.fn()
 
-vi.spyOn(global, 'setTimeout')
-
 vi.mock('@winter-love/lodash', async () => {
   const actual: any = await vi.importActual('@winter-love/lodash')
 
