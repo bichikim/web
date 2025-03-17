@@ -18,8 +18,8 @@
     "dist/*"
   ],
   "scripts": {
-    "build": "cross-env NODE_ENV=production vite build",
-    "build:dev": "cross-env NODE_ENV=production vite build --minify false",
+    "build": "vite build",
+    "build:dev": "vite build --minify false",
     "check-types": "tsc --noEmit",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
@@ -33,7 +33,8 @@
     "solid-js": "^1.9.4"
   },
   "devDependencies": {
-    "@winter-love/vite-lib-config": "workspace:*"
+    "@winter-love/vite-lib-config": "workspace:*",
+    "vite": "^5.4.12"
   },
   "publishConfig": {
     "access": "public"

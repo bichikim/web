@@ -19,7 +19,7 @@
     "dist/*"
   ],
   "scripts": {
-    "build": "cross-env NODE_ENV=production vite build",
+    "build": "vite build",
     "check-types": "tsc --noEmit",
     "lint": "eslint src",
     "test": "echo \"Error: no test specified\" && exit 1"

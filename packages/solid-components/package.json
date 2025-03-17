@@ -41,7 +41,9 @@
     "@rollup/plugin-alias": "^5.1.1",
     "@winter-love/vite-lib-config": "workspace:*",
     "rollup": "^4.32.1",
-    "rollup-preset-solid": "^3.0.0"
+    "rollup-preset-solid": "^3.0.0",
+    "ts-patch": "^3.3.0",
+    "typescript-transform-paths": "^3.5.4"
   },
   "publishConfig": {
     "access": "public"

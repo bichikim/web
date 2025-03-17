@@ -484,6 +484,9 @@ importers:
       '@winter-love/vite-lib-config':
         specifier: workspace:*
         version: link:../vite-lib-config
+      cpx:
+        specifier: ^1.5.0
+        version: 1.5.0
       lodash-cli:
         specifier: 4.17.5
         version: 4.17.5
@@ -552,6 +555,12 @@ importers:
       rollup-preset-solid:
         specifier: ^3.0.0
         version: 3.0.0(@types/babel__core@7.20.5)
+      ts-patch:
+        specifier: ^3.3.0
+        version: 3.3.0
+      typescript-transform-paths:
+        specifier: ^3.5.4
+        version: 3.5.5(typescript@5.8.2)
 
   packages/solid-test:
     dependencies:
@@ -562,6 +571,9 @@ importers:
       '@winter-love/vite-lib-config':
         specifier: workspace:*
         version: link:../vite-lib-config
+      vite:
+        specifier: ^5.4.12
+        version: 5.4.12(@types/node@22.13.10)(terser@5.39.0)
 
   packages/solid-use:
     dependencies:
@@ -584,6 +596,9 @@ importers:
       '@winter-love/vite-lib-config':
         specifier: workspace:*
         version: link:../vite-lib-config
+      vite:
+        specifier: ^5.4.12
+        version: 5.4.12(@types/node@22.13.10)(terser@5.39.0)
 
   packages/sw:
     dependencies:
@@ -688,6 +703,9 @@ importers:
       js-cookie:
         specifier: ^3.0.5
         version: 3.0.5
+      lodash:
+        specifier: ^4.17.21
+        version: 4.17.21
       micro-memoize:
         specifier: ^4.1.2
         version: 4.1.3
@@ -697,6 +715,9 @@ importers:
       typescript:
         specifier: ^5.7.2
         version: 5.8.2
+      vite:
+        specifier: ^5.4.12
+        version: 5.4.12(@types/node@22.13.10)(terser@5.39.0)
 
   packages/vite-lib-config:
     devDependencies:
@@ -4807,6 +4828,9 @@ packages:
     peerDependencies:
       '@babel/core': ^7.0.0
 
+  babel-runtime@6.26.0:
+    resolution: {integrity: sha512-ITKNuq2wKlW1fJg9sSW52eepoYgZBggvOAHC0u/CYu/qxQ9EVzThCgR69BnSXLHjy2f7SY5zaQ4yt7H9ZVxY2g==}
+
   balanced-match@1.0.2:
     resolution: {integrity: sha512-3oSeUO0TMV67hN1AmbXsK4yaqU7tjiHlbxRDZOpH0KW9+CeX4bRAaX0Anxt0tx2MrpRpWwQaPwIlISEJhYU5Pw==}
 
@@ -5451,6 +5475,10 @@ packages:
   core-js-pure@3.41.0:
     resolution: {integrity: sha512-71Gzp96T9YPk63aUvE5Q5qP+DryB4ZloUZPSOebGM88VNw8VNfvdA7z6kGA8iGOTEzAomsRidp4jXSmUIJsL+Q==}
 
+  core-js@2.6.12:
+    resolution: {integrity: sha512-Kb2wC0fvsWfQrgk8HU5lW6U/Lcs8+9aaYcy4ZFc6DDlo4nZ7n70dEgE5rtR0oG6ufKDUnrwfWL1mXR5ljDatrQ==}
+    deprecated: core-js@<3.23.3 is no longer maintained and not recommended for usage due to the number of issues. Because of the V8 engine whims, feature detection in old core-js versions could cause a slowdown up to 100x even if nothing is polyfilled. Some versions have web compatibility issues. Please, upgrade your dependencies to the actual version of core-js.
+
   core-js@3.41.0:
     resolution: {integrity: sha512-SJ4/EHwS36QMJd6h/Rg+GyR4A5xE0FSI3eZ+iBVpfqf1x0eTSg1smWLHrA+2jQThZSh97fmSgFSU8B61nxosxA==}
 
@@ -5473,6 +5501,10 @@ packages:
   cpx2@8.0.0:
     resolution: {integrity: sha512-RxD9jrSVNSOmfcbiPlr3XnKbUKH9K1w2HCv0skczUKhsZTueiDBecxuaSAKQkYSLQaGVA4ZQJZlTj5hVNNEvKg==}
     engines: {node: ^20.0.0 || >=22.0.0, npm: '>=10'}
+    hasBin: true
+
+  cpx@1.5.0:
+    resolution: {integrity: sha512-jHTjZhsbg9xWgsP2vuNW2jnnzBX+p4T+vNI9Lbjzs1n4KhOfa22bQppiFYLsWQKd8TzmL5aSP/Me3yfsCwXbDA==}
     hasBin: true
 
   crc-32@1.2.2:
@@ -9127,6 +9159,9 @@ packages:
   regenerate@1.4.2:
     resolution: {integrity: sha512-zrceR/XhGYU/d/opr2EKO7aRHUeiBI8qjtfHqADTwZd6Szfy16la6kqD0MIUs5z5hx6AaKa+PixpPrR289+I0A==}
 
+  regenerator-runtime@0.11.1:
+    resolution: {integrity: sha512-MguG95oij0fC3QV3URf4V2SDYGJhJnJGqvIIgdECeODCT98wSWDAJ94SSuVpYQUoTcGUIL6L4yNB7j1DFFHSBg==}
+
   regenerator-runtime@0.14.1:
     resolution: {integrity: sha512-dYnhHh0nJoMfnkZs6GmmhFknAGRrLznOu5nc9ML+EJxGvrx6H7teuevqVqCuPcPK//3eDrrjQhehXVx9cnkGdw==}
 
@@ -10237,6 +10272,11 @@ packages:
 
   typescript-transform-paths@3.5.3:
     resolution: {integrity: sha512-5y2l2iPKNHKOj08/1i+02+ljBVUhWcXQLXomiOXCmNpiTuSxIkj0dM1LUE7OOAt53+/6KidY+sFTCP781J64Eg==}
+    peerDependencies:
+      typescript: '>=3.6.5'
+
+  typescript-transform-paths@3.5.5:
+    resolution: {integrity: sha512-RMK86wKe/4+ad+3kMT9SKAs3K0tUHLe7hF+MLbD6VpC9VUmFuKorhf3pHz+qO5GdS4mUp2ncNUo14j6ws9UvBQ==}
     peerDependencies:
       typescript: '>=3.6.5'
 
@@ -15657,6 +15697,11 @@ snapshots:
       '@babel/core': 7.26.10
       babel-plugin-jsx-dom-expressions: 0.39.7(@babel/core@7.26.10)
 
+  babel-runtime@6.26.0:
+    dependencies:
+      core-js: 2.6.12
+      regenerator-runtime: 0.11.1
+
   balanced-match@1.0.2: {}
 
   bare-events@2.5.4:
@@ -16377,6 +16422,8 @@ snapshots:
 
   core-js-pure@3.41.0: {}
 
+  core-js@2.6.12: {}
+
   core-js@3.41.0: {}
 
   core-util-is@1.0.3: {}
@@ -16415,6 +16462,20 @@ snapshots:
       subarg: 1.0.0
     transitivePeerDependencies:
       - supports-color
+
+  cpx@1.5.0:
+    dependencies:
+      babel-runtime: 6.26.0
+      chokidar: 3.5.3
+      duplexer: 0.1.2
+      glob: 7.2.3
+      glob2base: 0.0.12
+      minimatch: 3.1.2
+      mkdirp: 0.5.6
+      resolve: 1.22.10
+      safe-buffer: 5.2.1
+      shell-quote: 1.8.2
+      subarg: 1.0.0
 
   crc-32@1.2.2: {}
 
@@ -18581,7 +18642,7 @@ snapshots:
   jake@10.9.2:
     dependencies:
       async: 3.2.6
-      chalk: 4.1.0
+      chalk: 4.1.2
       filelist: 1.0.4
       minimatch: 3.1.2
 
@@ -19724,7 +19785,7 @@ snapshots:
       array-differ: 3.0.0
       array-union: 2.1.0
       arrify: 2.0.1
-      minimatch: 3.0.5
+      minimatch: 3.1.2
 
   mute-stream@0.0.8: {}
 
@@ -20036,7 +20097,7 @@ snapshots:
       '@yarnpkg/parsers': 3.0.2
       '@zkochan/js-yaml': 0.0.7
       axios: 1.8.3(debug@4.4.0)
-      chalk: 4.1.0
+      chalk: 4.1.2
       cli-cursor: 3.1.0
       cli-spinners: 2.6.1
       cliui: 8.0.1
@@ -20212,7 +20273,7 @@ snapshots:
   ora@5.3.0:
     dependencies:
       bl: 4.1.0
-      chalk: 4.1.0
+      chalk: 4.1.2
       cli-cursor: 3.1.0
       cli-spinners: 2.6.1
       is-interactive: 1.0.0
@@ -20878,6 +20939,8 @@ snapshots:
       regenerate: 1.4.2
 
   regenerate@1.4.2: {}
+
+  regenerator-runtime@0.11.1: {}
 
   regenerator-runtime@0.14.1: {}
 
@@ -22150,6 +22213,11 @@ snapshots:
       - supports-color
 
   typescript-transform-paths@3.5.3(typescript@5.8.2):
+    dependencies:
+      minimatch: 9.0.5
+      typescript: 5.8.2
+
+  typescript-transform-paths@3.5.5(typescript@5.8.2):
     dependencies:
       minimatch: 9.0.5
       typescript: 5.8.2
