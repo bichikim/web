@@ -31,7 +31,8 @@
     "test": "vitest run",
     "test:storybook": "test-storybook",
     "test:vitest": "vitest run",
-    "test:vitest:watch": "vitest watch"
+    "test:vitest:watch": "vitest watch",
+    "chromatic": "npx chromatic --project-token=chpt_b4b4c6198bbdeda"
   },
   "browserslist": [
     "last 10 Chrome versions",
