@@ -23,6 +23,9 @@ export default defineConfig({
     }),
   ],
   test: {
-    include: ['packages/*/src/**/*.spec.ts', 'apps/*/src/**/*.spec.ts'],
+    include: [
+      'packages/*/src/**/*.spec.?(c|m)[jt]s?(x)',
+      'apps/*/src/**/*.spec.?(c|m)[jt]s?(x)',
+    ],
   },
 })
