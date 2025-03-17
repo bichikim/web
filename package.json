@@ -26,7 +26,7 @@
     "publish:next": "lerna publish from-package --preid next --dist-tag next",
     "publish:patch": "lerna publish patch --no-private",
     "start:local-docker": "docker-compose -f local/docker-compose.yml up -d",
-    "storybook": "nve 20 storybook dev -p 6006 --no-open",
+    "storybook": "nve 20.18.1 storybook dev -p 6006 --no-open",
     "storybook:https": "storybook dev --https --ssl-cert .cert/localhost.crt --ssl-key .cert/localhost.key -p 5555",
     "test": "vitest run",
     "test:storybook": "test-storybook",
