@@ -1,6 +1,7 @@
 import {useThrottle} from '../'
 import {describe, expect, it, vi} from 'vitest'
 import {useFakeTimers} from 'sinon'
+import {renderHook} from '@solidjs/testing-library'
 
 describe('useThrottle', () => {
   it('should throttle calling the callback function', () => {
@@ -8,7 +9,7 @@ describe('useThrottle', () => {
     const options = {leading: true}
     const args = ['hello']
     const callback = vi.fn()
-    const throttle = useThrottle(callback, 100, options)
+    const {result: throttle} = renderHook(() => useThrottle(callback, 100, options))
 
     throttle.execute(...args)
     expect(callback).toHaveBeenCalledTimes(1)

@@ -2,6 +2,7 @@ import {debounce, DebounceSettings} from '@winter-love/lodash'
 import {useFakeTimers} from 'sinon'
 import {createRoot, createSignal} from 'solid-js'
 import {afterEach, describe, expect, it, vi} from 'vitest'
+import {renderHook} from '@solidjs/testing-library'
 import {createUseWait} from '../'
 
 const callback = vi.fn()
@@ -78,7 +79,7 @@ describe('waitFactory', () => {
   ])('should return a function (set timeout)', ({wait, leading, options}) => {
     const timer = useFakeTimers()
     const [waitTime, setWaitTime] = createSignal(100)
-    const result = wait(callback, waitTime, options)
+    const {result} = renderHook(() => wait(callback, waitTime, options))
 
     result.execute()
     result.cancel()
@@ -132,10 +133,13 @@ describe('waitFactory', () => {
     const timer = useFakeTimers()
     const timeout = 150
 
-    const {wait, dispose} = createRoot((dispose) => {
+    const {
+      result: {wait},
+      cleanup,
+    } = renderHook(() => {
       const wait = debounceWait(callback, timeout)
 
-      return {dispose, wait}
+      return {wait}
     })
 
     wait.execute()
@@ -144,7 +148,7 @@ describe('waitFactory', () => {
     expect(callback).toHaveBeenCalled()
     callback.mockClear()
     wait.execute()
-    dispose()
+    cleanup()
     timer.tick(timeout + 1)
     expect(callback).not.toHaveBeenCalled()
     timer.restore()
@@ -159,10 +163,13 @@ describe('waitFactory', () => {
     const callback = vi.fn()
     const timer = useFakeTimers()
 
-    const {wait, dispose} = createRoot((dispose) => {
+    const {
+      result: {wait},
+      cleanup,
+    } = renderHook(() => {
       const wait = debounceWait(callback, waits[0])
 
-      return {dispose, wait}
+      return {wait}
     })
 
     wait.execute(...args)
@@ -171,7 +178,8 @@ describe('waitFactory', () => {
     expect(callback).not.toHaveBeenCalled()
     timer.tick(101)
     expect(callback).toHaveBeenCalled()
-    dispose()
+    cleanup()
     timer.restore()
   })
 })
+// computations created outside a `createRoot` or `render` will never be disposed

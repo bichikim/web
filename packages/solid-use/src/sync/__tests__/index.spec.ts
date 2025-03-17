@@ -1,6 +1,7 @@
 import {createSignal} from 'solid-js'
 import {sync} from '../'
 import {describe, expect, it} from 'vitest'
+import {renderHook} from '@solidjs/testing-library'
 
 describe('manualMemo', () => {
   it('should return a value', () => {
@@ -11,7 +12,10 @@ describe('manualMemo', () => {
 
   it('should update the value', () => {
     const [source, setSource] = createSignal(123)
-    const [value, setValue] = sync(source)
+
+    const {
+      result: [value, setValue],
+    } = renderHook(() => sync(source))
 
     expect(value()).toBe(123)
     setSource(456)
