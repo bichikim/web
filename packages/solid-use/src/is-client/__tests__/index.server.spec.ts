@@ -1,3 +1,7 @@
+/**
+ * @vitest-environment node
+ */
+
 import {createRoot} from 'solid-js'
 import {useIsClient} from '../'
 import {describe, expect, it} from 'vitest'
