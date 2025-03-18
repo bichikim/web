@@ -19,7 +19,6 @@ export default createHandler(() => (
           <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
           <link rel="mask-icon" href="/favicon.svg" color="#00aba9" />
           <link rel="manifest" href="/manifest.json" />
-          <link rel="stylesheet" href="/normalize.css" />
           <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
           {assets}
         </head>
@@ -28,7 +27,7 @@ export default createHandler(() => (
           {scripts}
           <script>
             {`
-              document.addEventListener('DOMContentLoaded', function () {
+              document.addEventListener('load', function () {
                 const font = document.createElement('link');
                 font.href = 'https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css';
                 font.rel = 'stylesheet';
