@@ -20,6 +20,7 @@ export default createHandler(() => (
           <link rel="mask-icon" href="/favicon.svg" color="#00aba9" />
           <link rel="manifest" href="/manifest.json" />
           <link rel="stylesheet" href="/normalize.css" />
+          <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
           {assets}
         </head>
         <body>
