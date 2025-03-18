@@ -8,7 +8,8 @@ export interface SToastProviderProps extends ParentProps {
 }
 
 const bodyStyle = `:uno:
-fixed bottom-2 left-2 flex flex-col gap-2 justify-end items-start w-50%
+fixed top-2 left-2 flex flex-col gap-2 justify-end items-start sm:w-80% md:w-50%
+w-[calc(100%-1rem)]
 `
 
 const itemStyle = `:uno:
