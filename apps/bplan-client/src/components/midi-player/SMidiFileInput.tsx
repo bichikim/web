@@ -1,9 +1,18 @@
-import {createSignal, createUniqueId, JSX, onCleanup, splitProps} from 'solid-js'
+import {
+  createMemo,
+  createSignal,
+  createUniqueId,
+  JSX,
+  onCleanup,
+  splitProps,
+} from 'solid-js'
 import {cx} from 'class-variance-authority'
 import type {Midi} from '@tonejs/midi'
 import {MusicInfo} from 'src/components/midi-player/SFileItem'
 import {loadMidi} from 'src/utils/read-midi'
 import {SampleStart} from './types'
+import {useEvent} from '@winter-love/solid-use'
+import {getWindow} from '@winter-love/utils'
 
 export interface HMidiFileInputProps
   extends Omit<
@@ -21,7 +30,7 @@ relative text-4
 `
 
 const labelStyle = `:uno:
-inline-flex text-inherit flex justify-center items-center overflow-hidden w-full rd-md
+inline-flex text-inherit flex justify-center items-center overflow-hidden w-full rd-md cursor-pointer
 focus-visible:outline-3 focus-visible:outline-solid focus-visible:outline-black focus-visible:outline-offset--3
 `
 
@@ -29,7 +38,9 @@ export const SMidiFileInput = (props: HMidiFileInputProps) => {
   const id = createUniqueId()
   const [innerProps, restProps] = splitProps(props, ['class', 'onAdd', 'onTouchEnd'])
   const [inputElement, setInputElement] = createSignal<HTMLInputElement | null>(null)
+  const [isTouchStart, setIsTouchStart] = createSignal(false)
   let isCleanup = false
+  // let isTouchStart = false
 
   const handleInputFiles = async (files: FileList | null) => {
     if (!files || files.length === 0) {
@@ -116,10 +127,32 @@ export const SMidiFileInput = (props: HMidiFileInputProps) => {
       element.click()
     }
   }
+  const globalTarget = createMemo(() => (isTouchStart() ? getWindow() : null))
+
+  useEvent(globalTarget, 'touchend', () => {
+    if (isTouchStart()) {
+      inputElement()?.click()
+    }
+
+    setIsTouchStart(false)
+  })
 
   onCleanup(() => {
     isCleanup = true
   })
+
+  const handleTouchStart = () => {
+    setIsTouchStart(true)
+  }
+
+  const handleInputClick = (event: MouseEvent) => {
+    // 터치 끝날 시 클릭 방지 터치가 시작된후 바로 그 시작된 엘리먼트 자리에 다른 엘리먼트가 있을 경우 클릭 방지
+    if (!isTouchStart()) {
+      event.preventDefault()
+    }
+
+    setIsTouchStart(false)
+  }
 
   return (
     <div class={cx(rootStyle, innerProps.class)}>
@@ -134,6 +167,8 @@ export const SMidiFileInput = (props: HMidiFileInputProps) => {
       {props.children}
       <input
         {...restProps}
+        onClick={handleInputClick}
+        onTouchStart={handleTouchStart}
         ref={setInputElement}
         tabIndex="-1"
         title=""
@@ -146,7 +181,7 @@ export const SMidiFileInput = (props: HMidiFileInputProps) => {
           await handleInputFiles(event.target.files)
           ;(event.target.value as any) = null
         }}
-        class=":uno: block absolute opacity-0 w-100% h-100% cursor-pointer"
+        class=":uno: block absolute opacity-0 w-100% h-100%"
       />
     </div>
   )
