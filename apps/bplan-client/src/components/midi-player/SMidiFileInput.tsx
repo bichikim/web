@@ -6,7 +6,7 @@ import {
   onCleanup,
   splitProps,
 } from 'solid-js'
-import {cx} from 'class-variance-authority'
+import {cva} from 'class-variance-authority'
 import type {Midi} from '@tonejs/midi'
 import {MusicInfo} from 'src/components/midi-player/SFileItem'
 import {loadMidi} from 'src/utils/read-midi'
@@ -24,8 +24,8 @@ export interface HMidiFileInputProps
   onTouchEnd?: (event: Event) => void
 }
 
-const rootStyle = `:uno:
-bg-gray-100 flex items-center justify-center flex-grow-1 rd-1 b-dashed b-.5 b-gray
+const rootBaseStyle = `:uno:
+bg-gray-100 flex items-center justify-center flex-grow-1 rd-1 b-dashed b-gray
 relative text-4
 `
 
@@ -34,11 +34,21 @@ inline-flex text-inherit flex justify-center items-center overflow-hidden w-full
 focus-visible:outline-3 focus-visible:outline-solid focus-visible:outline-black focus-visible:outline-offset--3
 `
 
+const rootStyle = cva(rootBaseStyle, {
+  variants: {
+    isDragOver: {
+      false: 'b-.5',
+      true: 'b-2',
+    },
+  },
+})
+
 export const SMidiFileInput = (props: HMidiFileInputProps) => {
   const id = createUniqueId()
   const [innerProps, restProps] = splitProps(props, ['class', 'onAdd', 'onTouchEnd'])
   const [inputElement, setInputElement] = createSignal<HTMLInputElement | null>(null)
   const [isTouchStart, setIsTouchStart] = createSignal(false)
+  const [isDragOver, setIsDragOver] = createSignal(false)
   let isCleanup = false
   // let isTouchStart = false
 
@@ -154,9 +164,27 @@ export const SMidiFileInput = (props: HMidiFileInputProps) => {
     setIsTouchStart(false)
   }
 
+  const handleDragOver = () => {
+    setIsDragOver(true)
+  }
+
+  const handleDragLeave = () => {
+    setIsDragOver(false)
+  }
+
+  const handleDrop = () => {
+    setIsDragOver(false)
+  }
+
   return (
-    <div class={cx(rootStyle, innerProps.class)}>
-      <label class={labelStyle} for={id} tabIndex="0" onKeyDown={handleKeyDown}>
+    <div class={rootStyle({class: innerProps.class, isDragOver: isDragOver()})}>
+      <label
+        class={labelStyle}
+        for={id}
+        tabIndex="0"
+        onKeyDown={handleKeyDown}
+        onDragOver={handleDragOver}
+      >
         <span class=":uno: text-6 md:pt-.5 sm:inline-block hidden truncate flex-shrink-1">
           Click or Drop{' '}
         </span>
@@ -169,6 +197,9 @@ export const SMidiFileInput = (props: HMidiFileInputProps) => {
         {...restProps}
         onClick={handleInputClick}
         onTouchStart={handleTouchStart}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
         ref={setInputElement}
         tabIndex="-1"
         title=""
