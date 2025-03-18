@@ -140,7 +140,7 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
           repeat={innerProps.repeat}
           hasManyItems={innerProps.playList.length > 1}
         />
-        <SMidiFileInput class="min-w-11 px-2" onAdd={handleAddPlayItem} />
+        <SMidiFileInput class="min-w-11" onAdd={handleAddPlayItem} />
         <SPlayerButton
           type="anchor-button"
           tabIndex="0"
