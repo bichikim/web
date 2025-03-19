@@ -1,6 +1,6 @@
 import {Dynamic, DynamicProps} from 'solid-js/web'
 import {ResizeCardContext} from './ResizeCardProvider'
-import {createSignal, onMount, useContext, ValidComponent} from 'solid-js'
+import {createMemo, createSignal, onMount, useContext, ValidComponent} from 'solid-js'
 
 export type ResizeCardBodyProps<T extends ValidComponent> = DynamicProps<T>
 
@@ -9,7 +9,7 @@ export const ResizeCardBody = <T extends ValidComponent>(
 ) => {
   const [element, setElement] = createSignal<HTMLElement | undefined>()
 
-  const {initSize} = useContext(ResizeCardContext)
+  const {initSize, size} = useContext(ResizeCardContext)
 
   onMount(() => {
     const _element = element()
@@ -19,5 +19,18 @@ export const ResizeCardBody = <T extends ValidComponent>(
     }
   })
 
-  return <Dynamic {...props} ref={setElement} />
+  const style = createMemo(() => {
+    const _size = size()
+
+    if (!_size) {
+      return {}
+    }
+
+    return {
+      height: _size.height ? `${_size.height}px` : undefined,
+      width: _size.width ? `${_size.width}px` : undefined,
+    }
+  })
+
+  return <Dynamic {...props} ref={setElement} style={style()} />
 }

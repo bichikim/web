@@ -106,7 +106,7 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
         <SFileList
           list={innerProps.playList}
           isSuspend={isSuspend()}
-          class="max-h-31"
+          class="min-h-0 flex-shrink-1"
           selectedId={innerProps.selectedId}
           onSelect={innerProps.onSelect}
           onDelete={innerProps.onDeleteItem}
