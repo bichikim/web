@@ -8,6 +8,8 @@ import {SScale} from 'src/components/scale'
 import {HUNDRED} from '@winter-love/utils'
 import {getStorageKey} from 'src/utils/storage-key'
 import {ToastContext} from '@winter-love/solid-components'
+import {useLocation} from '@solidjs/router'
+import ogImage from './og-image.png'
 
 export interface HomePageProps {
   presetTitle?: string
@@ -33,6 +35,7 @@ export default function HomePage() {
   const isLoaded = createMemo(() => splendidGrandPiano().loaded)
   const pageName = 'Piano'
   const {setMessage} = useContext(ToastContext)
+  const location = useLocation()
 
   onMount(() => {
     const element = mainElement()
@@ -84,7 +87,12 @@ export default function HomePage() {
       <Title>Coong - {pageName}</Title>
       <Meta property="og:site_name" content={pageName} />
       <Meta property="og:title" content={pageName} />
-      <Meta property="og:description" content="Your instruments for free" />
+      <Meta
+        property="og:description"
+        content="Play the piano or enjoy AI-powered piano performances"
+      />
+      <Meta property="og:url" content={location.pathname} />
+      <Meta property="og:image" content={ogImage} />
       <main
         class=":uno: relative h-full overflow-y-hidden pt-0 px-2 flex flex-col overflow-x-auto inline-block"
         ref={setMainElement}
