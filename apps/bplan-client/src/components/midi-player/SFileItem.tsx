@@ -43,12 +43,12 @@ export interface SFileItemProps
   playedTime?: number
 }
 
-const rootStyle = cx(
-  'relative gap-4 p-0 b-0 bg-transparent text-5 flex-shrink-0 h-9 mb-0.3125rem last:mb-0',
-  'after:bg-gray-300 after:h-.25 first:after:hidden after:content-[""] after:absolute rd-md',
-  'after:top--0.1875rem after:left-0.5rem after:w-[calc(100%-1rem)] cursor-pointer touch-none',
-  'focus-visible:outline-3 focus-visible:outline-solid focus-visible:outline-black focus-visible:outline-offset--3',
-)
+const rootStyle = `:uno:
+relative gap-4 p-0 b-0 bg-transparent text-5 flex-shrink-0 h-9 mb-0.3125rem last:mb-0
+after:bg-gray-300 after:h-.25 first:after:hidden after:content-[""] after:absolute rd-md
+after:top--0.1875rem after:left-0.5rem after:w-[calc(100%-1rem)] cursor-pointer touch-none
+focus-visible:outline-3 focus-visible:outline-solid focus-visible:outline-black focus-visible:outline-offset--3
+`
 
 const indexStyle = cva('', {
   variants: {
@@ -164,7 +164,7 @@ export const SFileItem = (props: SFileItemProps) => {
         <DragButton.Aside
           position="left"
           component="span"
-          class="absolute flex left-0 top-0 w-var-drag-x h-full overflow-hidden box-border"
+          class=":uno: absolute flex left-0 top-0 w-var-drag-x h-full overflow-hidden box-border"
         >
           <span class="mr-1 bg-red rd-1 w-full h-full flex items-center p-1">
             <span class="block w-full h-full i-tabler:trash bg-white" />
