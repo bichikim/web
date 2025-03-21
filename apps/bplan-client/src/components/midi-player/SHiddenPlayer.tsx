@@ -35,8 +35,8 @@ h-full max-h-max
 `
 
 const handleUpStyle = `:uno:
-cursor-ns-resize w-full h-2 absolute top-0 left-50%
-translate-x--1/2 translate-y--1/2
+cursor-ns-resize h-2 absolute top-0 md:right-50% right-[calc(50%-2.5rem)]
+translate-x-1/2 translate-y--1/2 md:w-full w-[calc(100vw-2.5rem)]
 `
 
 const handleUpKeyStyle = `:uno:
@@ -60,7 +60,7 @@ const playerContainerStyle = cva(':uno: flex flex-col gap-2 overflow-hidden', {
   variants: {
     isSetting: {
       false: '',
-      true: ':uno: w-0 h-0 hidden pointer-events-none',
+      true: ':uno: w-0 h-auto hidden pointer-events-none',
     },
     isShow: {
       false: ':uno: hidden opacity-0 pointer-events-none',
@@ -123,9 +123,9 @@ export const SHiddenPlayer = (props: SHiddenPlayerProps) => {
   }
 
   const containerStyle = createMemo(() => {
-    return props.class
-      ? cx(props.class, 'h-56 min-h-56 max-h-max')
-      : 'relative h-56 min-h-56 max-h-max'
+    const className = 'h-56 min-h-56 max-h-max flex flex-col justify-end'
+
+    return props.class ? cx(props.class, className) : cx('relative', className)
   })
 
   const maxHeight = createMemo(() => {
@@ -173,10 +173,12 @@ export const SHiddenPlayer = (props: SHiddenPlayerProps) => {
               onSettingDataChange={innerProps.onSettingDataChange}
             />
           </Show>
-          <ResizeCard.Handle resizeType="up" class={handleUpStyle}></ResizeCard.Handle>
-          <div class={handleUpKeyStyle}>
-            <span class="i-hugeicons:equal-sign c-gray-400 w-full h-full block"></span>
-          </div>
+          <Show when={isShow()}>
+            <div class={handleUpKeyStyle}>
+              <span class="i-hugeicons:equal-sign c-gray-400 w-full h-full block"></span>
+            </div>
+            <ResizeCard.Handle resizeType="up" class={handleUpStyle}></ResizeCard.Handle>
+          </Show>
         </section>
       </ResizeCard.Body>
     </ResizeCard.Provider>
