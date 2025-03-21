@@ -50,7 +50,7 @@ after:top--0.1875rem after:left-0.5rem after:w-[calc(100%-1rem)] cursor-pointer 
 focus-visible:outline-3 focus-visible:outline-solid focus-visible:outline-black focus-visible:outline-offset--3
 `
 
-const indexStyle = cva('', {
+const indexStyle = cva('block min-w-1rem', {
   variants: {
     playing: {
       true: 'opacity-0',
@@ -204,8 +204,8 @@ export const SFileItem = (props: SFileItemProps) => {
             >
               {innerProps.name}
             </SFlowDisplay>
-            <STypeIcon class="flex-shrink-0" name={innerProps.ext} />
           </span>
+          <STypeIcon class="flex-shrink-0" name={innerProps.ext} />
           <Show when={isMidi()}>
             <span class="w-5 h-5 c-black flex-shrink-0 i-tabler:piano" />
           </Show>
