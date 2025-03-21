@@ -16,7 +16,7 @@ export interface SButtonProps extends HButtonProps {
 
 const buttonBase = `:uno:
 font-medium inline-flex items-center justify-center gap-2 focus-visible:outline-3 focus-visible:outline-solid
-select-none outline-offset--3 cursor-pointer overflow-hidden
+select-none outline-offset--3 cursor-pointer overflow-hidden min-w-max
 `
 
 const buttonDanger = `:uno:

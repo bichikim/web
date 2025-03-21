@@ -1,7 +1,11 @@
 import type {Meta, StoryObj} from 'storybook-solidjs'
 import {SHiddenPlayer} from './SHiddenPlayer'
+import midiData from './hidden-teenieping.json'
 
 const meta = {
+  args: {
+    class: 'absolute bottom-1 right-1 max-w-100vw',
+  },
   component: SHiddenPlayer,
   parameters: {
     layout: 'centered',
@@ -14,7 +18,7 @@ type Story = StoryObj<typeof meta>
 
 export const Default: Story = {
   args: {
-    initMusics: [],
+    initMusics: midiData,
     initShow: true,
     playState: {
       leftTime: 0,

@@ -1,6 +1,15 @@
 import {cva, cx} from 'class-variance-authority'
-import {createEffect, createSignal, For, JSX, splitProps} from 'solid-js'
+import {
+  createEffect,
+  createSignal,
+  createUniqueId,
+  For,
+  JSX,
+  Show,
+  splitProps,
+} from 'solid-js'
 import {MusicInfo, SFileItem} from './SFileItem'
+import {useMidiFileInput} from './midi-file-input'
 
 export interface SFileListProps
   extends Omit<JSX.HTMLAttributes<HTMLDivElement>, 'onSelect' | 'onPlay'> {
@@ -9,6 +18,7 @@ export interface SFileListProps
    */
   isSuspend?: boolean
   list: MusicInfo[]
+  onAdd?: (value: MusicInfo[]) => void
   onDelete?: (id: string) => void
   onPlay?: (id: string) => void
   onResume?: () => void
@@ -19,32 +29,61 @@ export interface SFileListProps
   selectedId?: string
 }
 
-const rootStyle = cva(
-  cx(
-    'flex flex-col relative',
-    'before-i-tabler:chevron-down before-absolute before-w-5 before-h-5 before-bottom--1 before-w-full',
-    'after-i-tabler:chevron-up after-absolute after-w-5 after-h-5 after-top--1 after-w-full',
-  ),
-  {
-    variants: {
-      bottom: {
-        false: 'before-opacity-20',
-        true: '',
-      },
-      show: {
-        false: '',
-        true: 'before-content-[""] after-content-[""] py-3',
-      },
-      top: {
-        false: 'after-opacity-20',
-        true: '',
-      },
+const rootBaseStyle = `:uno:
+flex flex-col relative
+before-i-tabler:chevron-down before-absolute before-w-5 before-h-5 before-bottom--1 before-w-full rd-1
+after-i-tabler:chevron-up after-absolute after-w-5 after-h-5 after-top--1 after-w-full b-2 b-dashed
+`
+
+const rootStyle = cva(rootBaseStyle, {
+  defaultVariants: {
+    bottom: false,
+    isDragOver: false,
+    show: false,
+    top: false,
+  },
+  variants: {
+    bottom: {
+      false: 'before-opacity-20',
+      true: '',
+    },
+    isDragOver: {
+      false: 'b-transparent',
+      true: 'b-gray',
+    },
+    show: {
+      false: '',
+      true: 'before-content-[""] after-content-[""] py-3',
+    },
+    top: {
+      false: 'after-opacity-20',
+      true: '',
     },
   },
-)
+})
+
+const labelStyle = `:uno:
+absolute top-0 left-0 w-full h-full text-center flex items-center justify-center text-gray-400 text-3rem
+`
+
+const fileListStyle = cva(':uno: h-full w-full overflow-y-auto overflow-x-hidden', {
+  variants: {
+    isDragOver: {
+      false: 'visible',
+      true: 'invisible',
+    },
+  },
+})
 
 export const SFileList = (props: SFileListProps) => {
+  const id = createUniqueId()
   const [element, setElement] = createSignal<HTMLDivElement | null>(null)
+  const [inputElement, setInputElement] = createSignal<HTMLInputElement | null>(null)
+
+  const {handleInputFiles, handleDragOver, handleDragLeave, handleDrop, isDragOver} =
+    useMidiFileInput(inputElement, {
+      onAdd: props.onAdd,
+    })
 
   const [innerProps, restProps] = splitProps(props, [
     'list',
@@ -92,6 +131,10 @@ export const SFileList = (props: SFileListProps) => {
     innerProps?.onDelete?.(id)
   }
 
+  const handleClickInput = (event: MouseEvent) => {
+    event.preventDefault()
+  }
+
   createEffect(() => {
     const _element = element()
 
@@ -105,11 +148,38 @@ export const SFileList = (props: SFileListProps) => {
   })
 
   return (
-    <div {...restProps} class={cx(rootStyle(scrollIndicators()), props.class)}>
+    <div
+      {...restProps}
+      onDragOver={handleDragOver}
+      class={rootStyle({
+        ...scrollIndicators(),
+        class: props.class,
+        isDragOver: isDragOver(),
+      })}
+    >
+      <Show when={isDragOver()}>
+        <label for={id} class={labelStyle}>
+          Drop Here
+        </label>
+        <input
+          type="file"
+          ref={setInputElement}
+          class="absolute opacity-0 w-full h-full"
+          tabIndex="-1"
+          id={id}
+          onDrop={handleDrop}
+          onDragLeave={handleDragLeave}
+          onClick={handleClickInput}
+          onChange={async (event) => {
+            await handleInputFiles(event.target.files)
+            ;(event.target.value as any) = null
+          }}
+        />
+      </Show>
       <section
         role="list"
         ref={setElement}
-        class="h-full w-full overflow-y-auto overflow-x-hidden"
+        class={fileListStyle({isDragOver: isDragOver()})}
         onScroll={handleScroll}
       >
         <For each={innerProps.list}>

@@ -2,13 +2,15 @@ import {Toast} from '@winter-love/solid-components'
 import {ParentProps} from 'solid-js'
 import {SButton} from 'src/components/button'
 import {SDivider} from 'src/components/divider'
+import {preventGlobalTouchAttrs} from 'src/components/real-button/use-global-touch'
 
 export interface SToastProviderProps extends ParentProps {
   //
 }
 
 const bodyStyle = `:uno:
-fixed bottom-2 left-2 flex flex-col gap-2 justify-end items-start w-50%
+fixed top-2 left-2 flex flex-col gap-2 justify-end items-start sm:w-80% md:w-50%
+w-[calc(100%-1rem)]
 `
 
 const itemStyle = `:uno:
@@ -19,7 +21,7 @@ export const SToastProvider = (props: SToastProviderProps) => {
   return (
     <Toast.Provider>
       <Toast.Body class={bodyStyle}>
-        <Toast.Item class={itemStyle}>
+        <Toast.Item {...preventGlobalTouchAttrs()} class={itemStyle}>
           <div class="px-3 pt-3 pb-2 bg-white flex flex-col justify-start items-start">
             <Toast.Title component="h4" class="font-bold text-left" />
             <Toast.Message class="text-md color-gray-600 text-left" />

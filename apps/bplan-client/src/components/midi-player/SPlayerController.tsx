@@ -106,7 +106,7 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
         <SFileList
           list={innerProps.playList}
           isSuspend={isSuspend()}
-          class="max-h-31"
+          class="min-h-0 flex-shrink-1"
           selectedId={innerProps.selectedId}
           onSelect={innerProps.onSelect}
           onDelete={innerProps.onDeleteItem}
@@ -115,6 +115,7 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
           onResume={innerProps.onResume}
           playedTime={innerProps.playedTime}
           playingId={innerProps.playingId}
+          onAdd={handleAddPlayItem}
         />
       </Show>
       <SSeeker
@@ -140,7 +141,7 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
           repeat={innerProps.repeat}
           hasManyItems={innerProps.playList.length > 1}
         />
-        <SMidiFileInput class="min-w-11 px-2" onAdd={handleAddPlayItem} />
+        <SMidiFileInput class="min-w-11" onAdd={handleAddPlayItem} />
         <SPlayerButton
           type="anchor-button"
           tabIndex="0"
