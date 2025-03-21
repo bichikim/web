@@ -6,6 +6,7 @@
     "build": "vinxi build",
     "check-types": "tsc --noEmit",
     "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio",
     "dev": "vinxi dev --host ",
     "dev:ninja": "console-ninja vinxi dev --host",
     "generate-pwa-assets": "pwa-assets-generator",
@@ -30,7 +31,6 @@
     "class-variance-authority": "^0.7.1",
     "cookie": "^1.0.2",
     "dotenv": "^16.4.7",
-    "drizzle-kit": "^0.30.4",
     "drizzle-orm": "^0.39.3",
     "h3": "^1.10.1",
     "ipx": "^3.0.1",
@@ -40,7 +40,8 @@
     "standardized-audio-context": "^25.3.77",
     "ufo": "^1.5.4",
     "vinxi": "0.4.3",
-    "vite": "^5.2.8"
+    "vite": "^5.2.8",
+    "zod": "^3.24.2"
   },
   "devDependencies": {
     "@iconify-json/hugeicons": "^1.2.3",
@@ -52,6 +53,7 @@
     "@vitejs/plugin-legacy": "6.0.0",
     "@winter-love/sw": "workspace:*",
     "@winter-love/vite-lib-config": "workspace:*",
+    "drizzle-kit": "^0.30.4",
     "flush-promises": "^1.0.2",
     "glob": "^11.0.0",
     "terser": "^5.37.0",

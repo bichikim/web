@@ -14,6 +14,7 @@
     "build:coong-client": "pnpm --filter @apps/coong-client run build:spa ",
     "build:docs": "vitepress build docs",
     "check-types": "turbo check-types",
+    "chromatic": "nve 20.18.1 pnpm dlx chromatic --project-token=chpt_b4b4c6198bbdeda",
     "clean": "lerna clean --yes && rimraf node_modules",
     "dev:android": "ionic cap run android -l --external --open",
     "format:package.json": "pnpm dlx sort-package-json \"package.json\" \"packages/*/package.json\" \"apps/*/package.json\" ",
@@ -31,8 +32,7 @@
     "test": "vitest run",
     "test:storybook": "test-storybook",
     "test:vitest": "vitest run",
-    "test:vitest:watch": "vitest watch",
-    "chromatic": "nve 20.18.1 pnpm dlx chromatic --project-token=chpt_b4b4c6198bbdeda"
+    "test:vitest:watch": "vitest watch"
   },
   "browserslist": [
     "last 10 Chrome versions",
