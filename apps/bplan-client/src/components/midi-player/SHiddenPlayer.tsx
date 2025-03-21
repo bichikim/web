@@ -177,7 +177,11 @@ export const SHiddenPlayer = (props: SHiddenPlayerProps) => {
             <div class={handleUpKeyStyle}>
               <span class="i-hugeicons:equal-sign c-gray-400 w-full h-full block"></span>
             </div>
-            <ResizeCard.Handle resizeType="up" class={handleUpStyle}></ResizeCard.Handle>
+            <ResizeCard.Handle
+              tabIndex="-1"
+              resizeType="up"
+              class={handleUpStyle}
+            ></ResizeCard.Handle>
           </Show>
         </section>
       </ResizeCard.Body>
