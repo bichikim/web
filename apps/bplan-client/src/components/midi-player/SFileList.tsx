@@ -105,7 +105,7 @@ export const SFileList = (props: SFileListProps) => {
   })
 
   return (
-    <div {...restProps} class={cx(rootStyle(scrollIndicators()), props.class)}>
+    <div {...restProps} class={rootStyle({...scrollIndicators(), class: props.class})}>
       <section
         role="list"
         ref={setElement}
