@@ -2,6 +2,7 @@ import {Toast} from '@winter-love/solid-components'
 import {ParentProps} from 'solid-js'
 import {SButton} from 'src/components/button'
 import {SDivider} from 'src/components/divider'
+import {preventGlobalTouchAttrs} from 'src/components/real-button/use-global-touch'
 
 export interface SToastProviderProps extends ParentProps {
   //
@@ -20,7 +21,7 @@ export const SToastProvider = (props: SToastProviderProps) => {
   return (
     <Toast.Provider>
       <Toast.Body class={bodyStyle}>
-        <Toast.Item class={itemStyle}>
+        <Toast.Item {...preventGlobalTouchAttrs()} class={itemStyle}>
           <div class="px-3 pt-3 pb-2 bg-white flex flex-col justify-start items-start">
             <Toast.Title component="h4" class="font-bold text-left" />
             <Toast.Message class="text-md color-gray-600 text-left" />
