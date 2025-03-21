@@ -1,7 +1,7 @@
 /* eslint-disable unicorn/import-style */
 /* eslint-disable no-tabs,max-len */
 import {defineConfig} from '@solidjs/start/config'
-import {Plugin, ResolvedConfig} from 'vite'
+import {Plugin} from 'vite'
 import {fileURLToPath, URL} from 'node:url'
 import * as path from 'node:path'
 import {generateSW} from '@winter-love/sw'

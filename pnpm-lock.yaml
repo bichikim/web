@@ -275,9 +275,6 @@ importers:
       dotenv:
         specifier: ^16.4.7
         version: 16.4.7
-      drizzle-kit:
-        specifier: ^0.30.4
-        version: 0.30.5
       drizzle-orm:
         specifier: ^0.39.3
         version: 0.39.3(@neondatabase/serverless@0.10.4)(@types/pg@8.11.6)
@@ -308,6 +305,9 @@ importers:
       vite:
         specifier: 5.4.12
         version: 5.4.12(@types/node@22.13.10)(terser@5.39.0)
+      zod:
+        specifier: ^3.24.2
+        version: 3.24.2
     devDependencies:
       '@iconify-json/hugeicons':
         specifier: ^1.2.3
@@ -336,6 +336,9 @@ importers:
       '@winter-love/vite-lib-config':
         specifier: workspace:*
         version: link:../../packages/vite-lib-config
+      drizzle-kit:
+        specifier: ^0.30.4
+        version: 0.30.5
       flush-promises:
         specifier: ^1.0.2
         version: 1.0.2
