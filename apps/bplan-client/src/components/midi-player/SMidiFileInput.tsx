@@ -17,9 +17,10 @@ import {getWindow} from '@winter-love/utils'
 export interface HMidiFileInputProps
   extends Omit<
     JSX.InputHTMLAttributes<HTMLInputElement>,
-    'accept' | 'type' | 'onTouchEnd'
+    'accept' | 'type' | 'onTouchEnd' | 'onClick'
   > {
   onAdd?: (value: MusicInfo[]) => void
+  onClick?: (event: PointerEvent) => void
   //
   onTouchEnd?: (event: Event) => void
 }
@@ -31,7 +32,6 @@ relative text-4
 
 const labelStyle = `:uno:
 inline-flex text-inherit flex justify-center items-center overflow-hidden w-full rd-md cursor-pointer
-focus-visible:outline-3 focus-visible:outline-solid focus-visible:outline-black focus-visible:outline-offset--3
 `
 
 const rootStyle = cva(rootBaseStyle, {
@@ -40,13 +40,24 @@ const rootStyle = cva(rootBaseStyle, {
       false: 'b-.5',
       true: 'b-2',
     },
+    isFocused: {
+      false: '',
+      true: 'outline-3 outline-solid outline-black outline-offset--3',
+    },
   },
 })
 
 export const SMidiFileInput = (props: HMidiFileInputProps) => {
   const id = createUniqueId()
-  const [innerProps, restProps] = splitProps(props, ['class', 'onAdd', 'onTouchEnd'])
+
+  const [innerProps, restProps] = splitProps(props, [
+    'class',
+    'onAdd',
+    'onTouchEnd',
+    'onClick',
+  ])
   const [inputElement, setInputElement] = createSignal<HTMLInputElement | null>(null)
+  const [isFocused, setIsFocused] = createSignal(false)
   const [isTouchStart, setIsTouchStart] = createSignal(false)
   const [isDragOver, setIsDragOver] = createSignal(false)
   let isCleanup = false
@@ -130,13 +141,6 @@ export const SMidiFileInput = (props: HMidiFileInputProps) => {
     innerProps.onAdd?.(samples)
   }
 
-  const handleKeyDown = (event: KeyboardEvent) => {
-    const element = inputElement()
-
-    if (event.key === 'Enter' && element) {
-      element.click()
-    }
-  }
   const globalTarget = createMemo(() => (isTouchStart() ? getWindow() : null))
 
   useEvent(globalTarget, 'touchend', () => {
@@ -155,9 +159,11 @@ export const SMidiFileInput = (props: HMidiFileInputProps) => {
     setIsTouchStart(true)
   }
 
-  const handleInputClick = (event: MouseEvent) => {
+  const handleInputClick: (event: any) => void = (event: PointerEvent) => {
+    props.onClick?.(event)
+
     // 터치 끝날 시 클릭 방지 터치가 시작된후 바로 그 시작된 엘리먼트 자리에 다른 엘리먼트가 있을 경우 클릭 방지
-    if (!isTouchStart()) {
+    if (!isTouchStart() && event.pointerType === 'touch') {
       event.preventDefault()
     }
 
@@ -176,14 +182,27 @@ export const SMidiFileInput = (props: HMidiFileInputProps) => {
     setIsDragOver(false)
   }
 
+  const handleFocus = () => {
+    setIsFocused(true)
+  }
+
+  const handleBlur = () => {
+    setIsFocused(false)
+  }
+
   return (
-    <div class={rootStyle({class: innerProps.class, isDragOver: isDragOver()})}>
+    <div
+      class={rootStyle({
+        class: innerProps.class,
+        isDragOver: isDragOver(),
+        isFocused: isFocused(),
+      })}
+    >
       <label
         class={labelStyle}
-        for={id}
-        tabIndex="0"
-        onKeyDown={handleKeyDown}
+        tabIndex="-1"
         onDragOver={handleDragOver}
+        aria-controls={id}
       >
         <span class=":uno: text-6 md:pt-.5 sm:inline-block hidden truncate flex-shrink-1">
           Click or Drop{' '}
@@ -196,18 +215,20 @@ export const SMidiFileInput = (props: HMidiFileInputProps) => {
       <input
         {...restProps}
         onClick={handleInputClick}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
         onTouchStart={handleTouchStart}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         ref={setInputElement}
-        tabIndex="-1"
+        tabIndex="0"
         title=""
         type="file"
+        id={id}
         multiple
         accept="audio/midi"
         aria-label="Midi file input"
-        id={id}
         onChange={async (event) => {
           await handleInputFiles(event.target.files)
           ;(event.target.value as any) = null
