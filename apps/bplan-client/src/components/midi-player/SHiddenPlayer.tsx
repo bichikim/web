@@ -174,10 +174,11 @@ export const SHiddenPlayer = (props: SHiddenPlayerProps) => {
             />
           </Show>
           <Show when={isShow()}>
-            <div class={handleUpKeyStyle}>
+            <div {...preventGlobalTouchAttrs()} class={handleUpKeyStyle}>
               <span class="i-hugeicons:equal-sign c-gray-400 w-full h-full block"></span>
             </div>
             <ResizeCard.Handle
+              {...preventGlobalTouchAttrs()}
               tabIndex="-1"
               resizeType="up"
               class={handleUpStyle}

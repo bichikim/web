@@ -115,6 +115,7 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
           onResume={innerProps.onResume}
           playedTime={innerProps.playedTime}
           playingId={innerProps.playingId}
+          onAdd={handleAddPlayItem}
         />
       </Show>
       <SSeeker
