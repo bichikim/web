@@ -112,6 +112,22 @@ export const SFileItem = (props: SFileItemProps) => {
     innerProps.onSelect?.(innerProps.id)
   }
 
+  const handleFocusEnter = (event: KeyboardEvent) => {
+    if (event.key !== 'Enter') {
+      return
+    }
+
+    if (event.target !== document.activeElement) {
+      return
+    }
+
+    if (innerProps.selected) {
+      handlePlayOrSuspend()
+    } else {
+      handleSelect()
+    }
+  }
+
   const progress = createMemo(
     () => ((innerProps.playedTime ?? 0) / (innerProps.totalDuration ?? 1)) * HUNDRED,
   )
@@ -158,6 +174,7 @@ export const SFileItem = (props: SFileItemProps) => {
     >
       <DragButton.Body
         {...restProps}
+        onKeyDown={handleFocusEnter}
         class={cx(rootStyle, restProps.class)}
         title={innerProps.name}
       >
