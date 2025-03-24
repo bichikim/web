@@ -21,9 +21,6 @@ interface DragData {
 
 export interface UseDragActions {
   handleMouseDown: (event: MouseEvent) => void
-  handleMouseMove: (event: MouseEvent) => void
-  handleTouchEnd: (event: TouchEvent) => void
-  handleTouchMove: (event: TouchEvent) => void
   handleTouchStart: (event: TouchEvent) => void
 }
 
@@ -72,7 +69,7 @@ export const useDrag = (
 
   const identifier = createMemo(() => drag().started.identifier)
 
-  const endElement = createMemo(() => {
+  const globalElement = createMemo(() => {
     const window = getWindow()
     const _identifier = identifier()
 
@@ -211,16 +208,15 @@ export const useDrag = (
     })
   }
 
-  useEvent(endElement, 'touchend', handleTouchEnd)
-  useEvent(endElement, 'pointerup', handlePointerUp)
+  useEvent(globalElement, 'touchend', handleTouchEnd)
+  useEvent(globalElement, 'touchmove', handleTouchMove)
+  useEvent(globalElement, 'pointerup', handlePointerUp)
+  useEvent(globalElement, 'mousemove', handleMouseMove)
 
   return freeze([
     position,
     {
       handleMouseDown,
-      handleMouseMove,
-      handleTouchEnd,
-      handleTouchMove,
       handleTouchStart,
     },
   ])
