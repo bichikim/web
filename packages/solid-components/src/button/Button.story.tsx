@@ -31,7 +31,7 @@ const meta = {
     type: 'button',
   },
   component: Template,
-  title: 'Solid/Components/Button',
+  title: 'Solid/Components/button/Button',
 } satisfies Meta<typeof Template>
 
 export default meta

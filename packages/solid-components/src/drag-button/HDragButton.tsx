@@ -14,6 +14,8 @@ export const HDragButton = (props: HDragButtonProps) => {
     'onDoubleClick',
     'onLeftExecute',
     'onRightExecute',
+    'onTouchStart',
+    'onTouchEnd',
   ])
 
   return (

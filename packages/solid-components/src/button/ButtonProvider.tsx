@@ -10,6 +10,7 @@ export interface ButtonProviderProps extends ParentProps {
   href?: string
   onClick?: JSX.EventHandler<HTMLButtonElement, MouseEvent | TouchEvent>
   onDoubleClick?: JSX.EventHandler<HTMLButtonElement, MouseEvent | TouchEvent>
+  onFocusEnter?: (event: KeyboardEvent) => void
   onTouchEnd?: JSX.EventHandler<HTMLButtonElement, TouchEvent>
   onTouchStart?: JSX.EventHandler<HTMLButtonElement, TouchEvent>
   type?: ButtonType
@@ -24,6 +25,7 @@ export const ButtonProvider = (props: ButtonProviderProps) => {
 
   const defaultProps = mergeProps(
     {
+      doubleClickGap: DEFAULT_DOUBLE_CLICK_GAP,
       type: 'button',
     },
     props,
@@ -41,6 +43,16 @@ export const ButtonProvider = (props: ButtonProviderProps) => {
       return
     }
 
+    const _doubleClickGap = defaultProps.doubleClickGap
+    const newClickTime = now()
+
+    if (newClickTime - clickTime < _doubleClickGap) {
+      defaultProps.onDoubleClick?.(event)
+
+      return
+    }
+
+    clickTime = newClickTime
     defaultProps.onClick?.(event)
   }
 
@@ -48,15 +60,17 @@ export const ButtonProvider = (props: ButtonProviderProps) => {
    * Handles the `doubleClick` event for the button component and forwards it to the parent component.
    * @param event The mouse event triggered by user interaction.
    */
-  const handleDoubleClick: ButtonProviderProps['onDoubleClick'] = (event) => {
-    // skip anchor event because it will navigate to the href
-    if (defaultProps.type === 'anchor') {
-      return
-    }
+  // const handleDoubleClick: ButtonProviderProps['onDoubleClick'] = (event) => {
+  //   console.log('handleDoubleClick', event)
 
-    // pass original event to parent
-    defaultProps.onDoubleClick?.(event)
-  }
+  //   // skip anchor event because it will navigate to the href
+  //   if (defaultProps.type === 'anchor') {
+  //     //
+  //   }
+
+  //   // pass original event to parent
+  //   // defaultProps.onDoubleClick?.(event)
+  // }
 
   const handleTouchStart: ButtonProviderProps['onTouchStart'] = (event) => {
     touchdown = true
@@ -78,20 +92,20 @@ export const ButtonProvider = (props: ButtonProviderProps) => {
       return
     }
 
-    const doubleClickGap = defaultProps.doubleClickGap ?? DEFAULT_DOUBLE_CLICK_GAP
+    const _doubleClickGap = defaultProps.doubleClickGap
     const newClickTime = now()
 
     if (touchdown) {
       defaultProps.onClick?.(event)
-      touchdown = false
     }
 
-    if (newClickTime - clickTime < doubleClickGap) {
-      handleDoubleClick(event)
+    if (touchdown && newClickTime - clickTime < _doubleClickGap) {
+      defaultProps.onDoubleClick?.(event)
 
       return
     }
 
+    touchdown = false
     clickTime = newClickTime
   }
 
@@ -129,10 +143,7 @@ export const ButtonProvider = (props: ButtonProviderProps) => {
 
   return (
     <ButtonContext.Provider
-      value={[
-        buttonContextValue,
-        {handleClick, handleDoubleClick, handleTouchEnd, handleTouchStart},
-      ]}
+      value={[buttonContextValue, {handleClick, handleTouchEnd, handleTouchStart}]}
     >
       {props.children}
     </ButtonContext.Provider>
