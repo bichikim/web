@@ -7,7 +7,7 @@ import {useServiceWorker} from 'src/components/service-worker'
  */
 export const ReloadPrompt = () => {
   const [serviceWorkerState, {handleSkipWaiting, handleSkipUpdate}] = useServiceWorker()
-  const {setMessage} = useContext(ToastContext)
+  const {setMessage, turnOffMessage} = useContext(ToastContext)
 
   createEffect(() => {
     const id = '__confirm_pwa_update__'
@@ -44,8 +44,6 @@ export const ReloadPrompt = () => {
     }
 
     if (workerState.state === 'waiting') {
-      console.info('waiting')
-
       setMessage({
         actions: [
           {
@@ -70,6 +68,8 @@ export const ReloadPrompt = () => {
         message,
         title,
       })
+    } else {
+      turnOffMessage(id)
     }
   })
 

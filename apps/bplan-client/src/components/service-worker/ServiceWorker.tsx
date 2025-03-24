@@ -42,6 +42,8 @@ export const createServiceWorker = (
   const handleSkipWaiting = () => {
     return new Promise<boolean>((resolve, reject) => {
       if (!_registration || !_registration.waiting) {
+        resolve(true)
+
         return
       }
 
