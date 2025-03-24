@@ -1,6 +1,6 @@
-import {procedure, router} from 'src/trpc/init'
-import {db} from 'src/db'
-import {musicPosts} from 'src/db/schema/music-posts'
+import {procedure, router} from 'src/server/trpc/init'
+import {db} from 'src/server/db'
+import {musicPosts} from 'src/server/db/schema/music-posts'
 import {eq} from 'drizzle-orm'
 import {z} from 'zod'
 
@@ -19,6 +19,9 @@ export const musicPostsRouter = router({
     .mutation(({input}) => {
       return db.insert(musicPosts).values(input)
     }),
+  deleteAllMusicPost: procedure.mutation(() => {
+    return db.delete(musicPosts)
+  }),
   deleteMusicPost: procedure
     .input(
       z.object({

@@ -1,4 +1,4 @@
-import {procedure, router} from 'src/trpc/init'
+import {procedure, router} from 'src/server/trpc/init'
 import {userRouter} from './user'
 import {authRouter} from './auth'
 import {getWindow} from '@winter-love/utils'

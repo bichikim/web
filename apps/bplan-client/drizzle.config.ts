@@ -8,5 +8,5 @@ export default defineConfig({
   },
   dialect: 'postgresql',
   out: './drizzle',
-  schema: './src/db/schema',
+  schema: './src/server/db/schema',
 })
