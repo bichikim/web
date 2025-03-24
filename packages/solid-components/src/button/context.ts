@@ -10,7 +10,6 @@ export interface ButtonContextProps {
 
 export interface ButtonContextActions {
   handleClick: JSX.EventHandler<HTMLButtonElement, MouseEvent | TouchEvent>
-  handleDoubleClick: JSX.EventHandler<HTMLButtonElement, MouseEvent | TouchEvent>
   handleTouchEnd: JSX.EventHandler<HTMLButtonElement, TouchEvent>
   handleTouchStart: JSX.EventHandler<HTMLButtonElement, TouchEvent>
 }
@@ -21,9 +20,6 @@ export const ButtonContext = createContext<
   () => ({disabled: false, tag: 'button' as const}),
   {
     handleClick: () => {
-      throw new Error('not implemented')
-    },
-    handleDoubleClick: () => {
       throw new Error('not implemented')
     },
     handleTouchEnd: () => {
