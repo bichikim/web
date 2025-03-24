@@ -31,6 +31,7 @@
     "storybook:https": "storybook dev --https --ssl-cert .cert/localhost.crt --ssl-key .cert/localhost.key -p 5555",
     "test": "vitest run",
     "test:storybook": "test-storybook",
+    "test:storybook:watch": "test-storybook --watch",
     "test:vitest": "vitest run",
     "test:vitest:watch": "vitest watch"
   },
