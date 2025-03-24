@@ -85,8 +85,6 @@ self.addEventListener('install', (event) => {
 })
 
 self.addEventListener('message', (event) => {
-  console.log('message', event)
-
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting()
   }
