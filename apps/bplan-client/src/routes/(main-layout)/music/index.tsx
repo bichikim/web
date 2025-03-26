@@ -2,6 +2,7 @@ import {cx} from 'class-variance-authority'
 import {SAuroraText} from 'src/components/text'
 import {useContext} from 'solid-js'
 import {MidiPlayerContext} from 'src/components/midi-player/context'
+import {PageMeta} from 'src/components/page-meta'
 
 const linkStyle = cx(
   'cursor-pointer text-6 flex items-center text-black mt-5 underline',
@@ -31,18 +32,24 @@ export default function MusicPage() {
   }
 
   return (
-    <main class=":uno: flex flex-col items-center justify-center h-full px-2">
-      <h1 class=":uno: text-4xl font-bold leading-15 text-center">
-        MIDI File Market Page
-      </h1>
-      <h3 class="text-2xl text-center">Working in progress...</h3>
-      <a href="/" class={linkStyle}>
-        Go back to piano{' '}
-        <span class=":uno: h-6 w-6 inline-block bg-black i-tabler:piano" />
-      </a>
-      <button class="mt-2" onClick={handleGetSample}>
-        <SAuroraText class={effectText}>Get Sample Midi files</SAuroraText>
-      </button>
-    </main>
+    <>
+      <PageMeta
+        pageName="MIDI File Market"
+        description="Share your MIDI files with others"
+      />
+      <main class=":uno: flex flex-col items-center justify-center h-full px-2">
+        <h1 class=":uno: text-4xl font-bold leading-15 text-center">
+          MIDI File Market Page
+        </h1>
+        <h3 class="text-2xl text-center">Working in progress...</h3>
+        <a href="/" class={linkStyle}>
+          Go back to piano{' '}
+          <span class=":uno: h-6 w-6 inline-block bg-black i-tabler:piano" />
+        </a>
+        <button class="mt-2" onClick={handleGetSample}>
+          <SAuroraText class={effectText}>Get Sample Midi files</SAuroraText>
+        </button>
+      </main>
+    </>
   )
 }
