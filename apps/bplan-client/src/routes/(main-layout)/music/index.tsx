@@ -41,7 +41,7 @@ export default function MusicPage() {
         <span class=":uno: h-6 w-6 inline-block bg-black i-tabler:piano" />
       </a>
       <button class="mt-2" onClick={handleGetSample}>
-        <SAuroraText class={effectText}>Get Sample Midi file</SAuroraText>
+        <SAuroraText class={effectText}>Get Sample Midi files</SAuroraText>
       </button>
     </main>
   )
