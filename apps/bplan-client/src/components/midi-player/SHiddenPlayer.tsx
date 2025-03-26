@@ -4,6 +4,7 @@ import {
   createSignal,
   JSX,
   mergeProps,
+  ParentProps,
   Show,
   splitProps,
   untrack,
@@ -18,7 +19,8 @@ import {useWindowSize} from './window-size'
 
 export interface SHiddenPlayerProps
   extends Omit<SPlayerProps, 'onPlaying' | 'onPlay' | 'isShow'>,
-    Omit<JSX.HTMLAttributes<HTMLElement>, 'onPlay'> {
+    Omit<JSX.HTMLAttributes<HTMLElement>, 'onPlay'>,
+    ParentProps {
   component?: ValidComponent
   initShow?: boolean
   onSettingDataChange?: (data: SettingData) => void

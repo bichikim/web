@@ -225,14 +225,14 @@ importers:
   apps/bplan-client:
     dependencies:
       '@auth/core':
-        specifier: ^0.37.4
-        version: 0.37.4
+        specifier: ^0.38.0
+        version: 0.38.0
       '@auth/drizzle-adapter':
         specifier: ^1.8.0
         version: 1.8.0
       '@auth/solid-start':
-        specifier: ^0.15.4
-        version: 0.15.4(solid-js@1.9.5)(solid-start@0.2.32(@solidjs/meta@0.29.4(solid-js@1.9.5))(@solidjs/router@0.15.3(solid-js@1.9.5))(@testing-library/jest-dom@6.6.3)(solid-js@1.9.5)(vite@5.4.12(@types/node@22.13.10)(terser@5.39.0)))
+        specifier: ^0.16.0
+        version: 0.16.0(solid-js@1.9.5)(solid-start@0.2.32(@solidjs/meta@0.29.4(solid-js@1.9.5))(@solidjs/router@0.15.3(solid-js@1.9.5))(@testing-library/jest-dom@6.6.3)(solid-js@1.9.5)(vite@5.4.12(@types/node@22.13.10)(terser@5.39.0)))
       '@neondatabase/serverless':
         specifier: ^0.10.4
         version: 0.10.4
@@ -798,20 +798,6 @@ packages:
   '@asamuzakjp/css-color@3.1.1':
     resolution: {integrity: sha512-hpRD68SV2OMcZCsrbdkccTw5FXjNDLo5OuqSHyHZfwweGsDWZwDJ2+gONyNAbazZclobMirACLw0lk8WVxIqxA==}
 
-  '@auth/core@0.37.4':
-    resolution: {integrity: sha512-HOXJwXWXQRhbBDHlMU0K/6FT1v+wjtzdKhsNg0ZN7/gne6XPsIrjZ4daMcFnbq0Z/vsAbYBinQhhua0d77v7qw==}
-    peerDependencies:
-      '@simplewebauthn/browser': ^9.0.1
-      '@simplewebauthn/server': ^9.0.2
-      nodemailer: ^6.8.0
-    peerDependenciesMeta:
-      '@simplewebauthn/browser':
-        optional: true
-      '@simplewebauthn/server':
-        optional: true
-      nodemailer:
-        optional: true
-
   '@auth/core@0.38.0':
     resolution: {integrity: sha512-ClHl44x4cY3wfJmHLpW+XrYqED0fZIzbHmwbExltzroCjR5ts3DLTWzADRba8mJFYZ8JIEJDa+lXnGl0E9Bl7Q==}
     peerDependencies:
@@ -829,8 +815,8 @@ packages:
   '@auth/drizzle-adapter@1.8.0':
     resolution: {integrity: sha512-cxApE0h5WcyDsgGix9hzmWmCz0qxvmMJexAOQmI6R/YXYxrZ/mKBKu0BlfgQBR6z2XvNWl4wbEGchwSenSCksQ==}
 
-  '@auth/solid-start@0.15.4':
-    resolution: {integrity: sha512-CImCYhzH6S3aL0lHRBGYjtwxaeAW8QL9T1Z/kt3CReVVrFOpFkjPWodUuHFAMwkuurqcDI7JRmiNE3mPCV5Klw==}
+  '@auth/solid-start@0.16.0':
+    resolution: {integrity: sha512-fTB4D1ovqVvnU8Kub7sltnWROtwwl18QWGGG8DPK6LH9YC/Y2PJihSfIk2hU5q0bLPPjT05JHYIHtXMIcTeVlg==}
     peerDependencies:
       solid-js: ^1.5.7
       solid-start: ^0.2.14
@@ -7599,9 +7585,6 @@ packages:
   joi@17.13.3:
     resolution: {integrity: sha512-otDA4ldcIx+ZXsKHWmp0YizCweVRZG96J10b0FevjfuncLO1oX59THoAmHkNubYJ+9gWsYsp5k8v4ib6oDv1fA==}
 
-  jose@5.10.0:
-    resolution: {integrity: sha512-s+3Al/p9g32Iq+oqXxkW//7jk2Vig6FF1CFqzVXoTUXt2qz89YWbL+OwS17NFYEvxC35n0FKeGO2LGYSxeM2Gg==}
-
   jose@6.0.10:
     resolution: {integrity: sha512-skIAxZqcMkOrSwjJvplIPYrlXGpxTPnro2/QWTDCxAdWQrSTV5/KqspMWmi5WAx5+ULswASJiZ0a+1B/Lxt9cw==}
 
@@ -11191,14 +11174,6 @@ snapshots:
       '@csstools/css-tokenizer': 3.0.3
       lru-cache: 10.4.3
 
-  '@auth/core@0.37.4':
-    dependencies:
-      '@panva/hkdf': 1.2.1
-      jose: 5.10.0
-      oauth4webapi: 3.3.1
-      preact: 10.24.3
-      preact-render-to-string: 6.5.11(preact@10.24.3)
-
   '@auth/core@0.38.0':
     dependencies:
       '@panva/hkdf': 1.2.1
@@ -11215,9 +11190,9 @@ snapshots:
       - '@simplewebauthn/server'
       - nodemailer
 
-  '@auth/solid-start@0.15.4(solid-js@1.9.5)(solid-start@0.2.32(@solidjs/meta@0.29.4(solid-js@1.9.5))(@solidjs/router@0.15.3(solid-js@1.9.5))(@testing-library/jest-dom@6.6.3)(solid-js@1.9.5)(vite@5.4.12(@types/node@22.13.10)(terser@5.39.0)))':
+  '@auth/solid-start@0.16.0(solid-js@1.9.5)(solid-start@0.2.32(@solidjs/meta@0.29.4(solid-js@1.9.5))(@solidjs/router@0.15.3(solid-js@1.9.5))(@testing-library/jest-dom@6.6.3)(solid-js@1.9.5)(vite@5.4.12(@types/node@22.13.10)(terser@5.39.0)))':
     dependencies:
-      '@auth/core': 0.37.4
+      '@auth/core': 0.38.0
       solid-js: 1.9.5
       solid-start: 0.2.32(@solidjs/meta@0.29.4(solid-js@1.9.5))(@solidjs/router@0.15.3(solid-js@1.9.5))(@testing-library/jest-dom@6.6.3)(solid-js@1.9.5)(vite@5.4.12(@types/node@22.13.10)(terser@5.39.0))
     transitivePeerDependencies:
@@ -19120,8 +19095,6 @@ snapshots:
       '@sideway/address': 4.1.5
       '@sideway/formula': 3.0.1
       '@sideway/pinpoint': 2.0.0
-
-  jose@5.10.0: {}
 
   jose@6.0.10: {}
 

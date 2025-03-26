@@ -17,8 +17,13 @@ const toNumber = (value: string, defaultValue: number): number => {
   return result
 }
 
-const readSizeName = (name: string): string => {
+const readName = (name: string): string => {
   switch (name) {
+    case 'background-color':
+
+    case 'bg': {
+      return 'background-color'
+    }
     case 'width':
 
     case 'w': {
@@ -130,9 +135,9 @@ export default defineUsefulConfig(
         },
       ],
       [
-        /^(width|height|w|h|top|left|right|bottom|border-color)-var-(.+)?$/u,
+        /^(width|height|w|h|top|left|right|bottom|border-color|bg)-var-(.+)?$/u,
         ([, direction, variableName]) => {
-          const kind = readSizeName(direction)
+          const kind = readName(direction)
 
           if (variableName) {
             return {
@@ -146,6 +151,7 @@ export default defineUsefulConfig(
         },
       ],
     ],
+    safelist: ['animate-aurora'],
     shortcuts: [pianoKeys],
     theme: {
       animation: {
@@ -160,6 +166,9 @@ export default defineUsefulConfig(
           'slide-text': '2s',
         },
         keyframes: {
+          aurora: `
+            {0% { background-position: 0% 50%; }
+             100% { background-position: 100% 50%; }}`,
           blink: '{0%, 100% { opacity: 0.5; } 50% { opacity: 1; }}',
           slide:
             '{0% { transform: translateX(-100%); } 100% { transform: translateX(100%); }}',

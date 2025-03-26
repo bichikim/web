@@ -19,6 +19,7 @@ import {createSplendidGrandPiano, SplendidGrandPianoContext} from 'src/use/instr
 import {getStorageKey} from 'src/utils/storage-key'
 import {getSelfUrl} from 'src/env'
 import {Analytics} from 'src/components/vercel'
+import {MidiPlayerProvider} from 'src/components/midi-player/context'
 
 interface Data {
   musics: MusicInfo[]
@@ -98,20 +99,23 @@ export default function MainLayout(props: RouteSectionProps) {
         <SplendidGrandPianoContext.Provider
           value={[splendidGrandPiano, splendidGrandPianoController]}
         >
-          <div id="layout" class={layoutStyle}>
-            {props.children}
-            <SHiddenPlayer
-              linkType={linkType()}
-              settingData={settingData()}
-              initMusics={musics()}
-              pianoController={splendidGrandPianoController}
-              playState={splendidGrandPiano()}
-              onSettingDataChange={handleSettingDataChange}
-              onMusicsChange={handleMusicsChange}
-              onLink={handleLinkTypeChange}
-              class="absolute bottom-1 right-1"
-            />
-          </div>
+          <MidiPlayerProvider
+            initMusics={musics()}
+            pianoController={splendidGrandPianoController}
+            playState={splendidGrandPiano()}
+            onMusicsChange={handleMusicsChange}
+          >
+            <div id="layout" class={layoutStyle}>
+              {props.children}
+              <SHiddenPlayer
+                linkType={linkType()}
+                settingData={settingData()}
+                onSettingDataChange={handleSettingDataChange}
+                onLink={handleLinkTypeChange}
+                class="absolute bottom-1 right-1"
+              />
+            </div>
+          </MidiPlayerProvider>
         </SplendidGrandPianoContext.Provider>
       </SettingContext.Provider>
       <Analytics />

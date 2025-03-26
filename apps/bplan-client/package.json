@@ -14,9 +14,9 @@
     "start": "node ./.output/server/index.mjs"
   },
   "dependencies": {
-    "@auth/core": "^0.37.4",
+    "@auth/core": "^0.38.0",
     "@auth/drizzle-adapter": "^1.8.0",
-    "@auth/solid-start": "^0.15.4",
+    "@auth/solid-start": "^0.16.0",
     "@neondatabase/serverless": "^0.10.4",
     "@solidjs/meta": "^0.29.4",
     "@solidjs/router": "0.15.3",

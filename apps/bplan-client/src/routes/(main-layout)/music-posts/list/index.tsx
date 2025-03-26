@@ -10,7 +10,7 @@ const getMusicPosts = async () => {
 }
 
 export default function MusicPostList() {
-  const [musicPosts] = createResource(() => getMusicPosts({}))
+  const [musicPosts] = createResource(() => getMusicPosts())
 
   return (
     <div>
