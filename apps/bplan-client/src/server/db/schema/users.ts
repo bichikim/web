@@ -7,7 +7,7 @@ import type {AdapterAccountType} from '@auth/core/adapters'
 export const users = pgTable('users', {
   age: integer(),
   email: text().unique(),
-  emailVerified: timestamp('emailVerified', {mode: 'date'}),
+  emailVerified: timestamp({mode: 'date'}),
   id: text()
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
@@ -51,9 +51,9 @@ export const accounts = pgTable(
 )
 
 export const sessions = pgTable('sessions', {
-  expires: timestamp('expires', {mode: 'date'}).notNull(),
-  sessionToken: text('sessionToken').primaryKey(),
-  userId: text('userId')
+  expires: timestamp({mode: 'date'}).notNull(),
+  sessionToken: text().primaryKey(),
+  userId: text()
     .notNull()
     .references(() => users.id, {onDelete: 'cascade'}),
 })
@@ -61,9 +61,9 @@ export const sessions = pgTable('sessions', {
 export const verificationTokens = pgTable(
   'verification_tokens',
   {
-    expires: timestamp('expires', {mode: 'date'}).notNull(),
-    identifier: text('identifier').notNull(),
-    token: text('token').notNull().unique(),
+    expires: timestamp({mode: 'date'}).notNull(),
+    identifier: text().notNull(),
+    token: text().notNull().unique(),
   },
   (verificationToken) => [
     {
@@ -78,14 +78,14 @@ export const authenticators = pgTable(
   'authenticators',
   {
     counter: integer('counter').notNull(),
-    credentialBackedUp: boolean('credentialBackedUp').notNull(),
-    credentialDeviceType: text('credentialDeviceType').notNull(),
-    credentialID: text('credentialID').notNull().unique(),
-    credentialPublicKey: text('credentialPublicKey').notNull(),
-    providerAccountId: text('providerAccountId').notNull(),
-    providerId: text('providerId').notNull(),
+    credentialBackedUp: boolean().notNull(),
+    credentialDeviceType: text().notNull(),
+    credentialID: text().notNull().unique(),
+    credentialPublicKey: text().notNull(),
+    providerAccountId: text().notNull(),
+    providerId: text().notNull(),
     transports: text('transports'),
-    userId: text('userId')
+    userId: text()
       .notNull()
       .references(() => users.id, {onDelete: 'cascade'}),
   },
