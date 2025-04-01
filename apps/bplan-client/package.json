@@ -11,7 +11,8 @@
     "dev:ninja": "console-ninja vinxi dev --host",
     "generate-pwa-assets": "pwa-assets-generator",
     "lint": "eslint src/**/*.ts[x]",
-    "start": "node ./.output/server/index.mjs"
+    "start": "node ./.output/server/index.mjs",
+    "start:local": "node -r dotenv/config ./.output/server/index.mjs"
   },
   "dependencies": {
     "@auth/core": "^0.38.0",
