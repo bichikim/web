@@ -1,8 +1,8 @@
 ---
 description: git commit rules
 globs: 
+alwaysApply: false
 ---
-
 # Git commit rules
 
 ## Type
@@ -12,26 +12,37 @@ globs:
 - `chore`: Build process or package manager modifications, CI configuration changes
 
 ## Subject Rules
-- Keep it under 50 characters
+- Keep it under 80 characters
 - Use present tense
 - Don't end with a period
 - Use imperative mood
+- For long changes, use a list format with bullet points after the main subject
 
 ## Body Rules
 - Optional
 - Explain what and why vs. how
 - Wrap at 72 characters
 - Use blank line to separate from subject
+- For multiple changes, use bullet points
 
 ## Important Guidelines
 - Write commit messages in English
+- If changes are too many to fit in 80 characters, split into a list format
 
-## Example
+## Examples
 
+Short format:
 ```
 update - add authentication component
+```
 
-- Implement OAuth2 login flow
-- Add user session management
-- Create protected route wrapper
+List format for multiple changes:
+```
+update - implement user authentication and profile features
+
+- Add OAuth2 login flow with Google and GitHub
+- Create user profile management dashboard
+- Implement session handling and token refresh
+- Add protected route wrapper for authenticated pages
+- Set up user preferences storage and sync
 ```
