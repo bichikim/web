@@ -56,6 +56,9 @@ importers:
       '@iconify-json/hugeicons':
         specifier: ^1.2.3
         version: 1.2.4
+      '@iconify-json/svg-spinners':
+        specifier: ^1.2.2
+        version: 1.2.2
       '@iconify-json/tabler':
         specifier: ^1.2.13
         version: 1.2.17
@@ -2565,6 +2568,9 @@ packages:
 
   '@iconify-json/hugeicons@1.2.4':
     resolution: {integrity: sha512-Rx1I42/wwqNiWx7rdQxtFWWOF1/DT1IMPrNReBVJiZe7NIdGT6Zv6Jw5gayqUtv7lDmE8eRmgd6MYRoVJrbuoA==}
+
+  '@iconify-json/svg-spinners@1.2.2':
+    resolution: {integrity: sha512-DIErwfBWWzLfmAG2oQnbUOSqZhDxlXvr8941itMCrxQoMB0Hiv8Ww6Bln/zIgxwjDvSem2dKJtap+yKKwsB/2A==}
 
   '@iconify-json/tabler@1.2.17':
     resolution: {integrity: sha512-Jfk20IC/n7UOQQSXM600BUhAwEfg8KU1dNUF+kg4eRhbET5w1Ktyax7CDx8Z8y0H6+J/8//AXpJOEgG8YoP8rw==}
@@ -12613,6 +12619,10 @@ snapshots:
   '@hutson/parse-repository-url@3.0.2': {}
 
   '@iconify-json/hugeicons@1.2.4':
+    dependencies:
+      '@iconify/types': 2.0.0
+
+  '@iconify-json/svg-spinners@1.2.2':
     dependencies:
       '@iconify/types': 2.0.0
 

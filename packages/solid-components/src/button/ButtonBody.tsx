@@ -1,7 +1,6 @@
 import {ButtonContext} from './context'
 import {Dynamic} from 'solid-js/web'
-import {ComponentProps, createSignal, useContext} from 'solid-js'
-import _ from 'lodash'
+import {ComponentProps, useContext} from 'solid-js'
 
 export interface ButtonBodyProps
   extends Omit<
