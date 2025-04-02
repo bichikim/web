@@ -1,10 +1,17 @@
 export const getSelfUrl = () => {
+  // find env and use for client case and ssr case
   const urlFromEnv = import.meta.env.VITE_API_URL
 
   if (urlFromEnv) {
     return urlFromEnv
   }
 
+  // in client case, window exists
+  if (typeof window !== 'undefined') {
+    return window.location.origin
+  }
+
+  // ssr case
   const defaultPort = 3000
   const port = process.env.PORT ?? defaultPort
 
@@ -18,6 +25,7 @@ export const getSelfUrl = () => {
 export const getDatabaseUrl = (): string => {
   const url = import.meta.env.DATABASE_URL ?? process.env.DATABASE_URL
 
+  // Throw an error to prevent execution when values (url) are missing
   if (!url) {
     throw new Error('DATABASE_URL is not set')
   }
@@ -33,6 +41,7 @@ export const getGithubClient = () => {
   const clientId = import.meta.env.VITE_GITHUB_CLIENT_ID
   const clientSecret = import.meta.env.VITE_GITHUB_CLIENT_SECRET
 
+  // Throw an error to prevent execution when values (clientId, clientSecret) are missing
   if (!clientId || !clientSecret) {
     throw new Error('GITHUB_CLIENT_ID or GITHUB_CLIENT_SECRET is not set')
   }
