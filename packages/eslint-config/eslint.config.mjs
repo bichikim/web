@@ -274,6 +274,7 @@ export default [
       ],
       // 'no-mixed-operators': 'off',
       'no-mixed-spaces-and-tabs': 'error',
+
       'no-multi-assign': 'error',
       'no-multi-spaces': 'error',
       'no-multi-str': 'error',
@@ -386,6 +387,7 @@ export default [
       'unicorn/import-style': 'warn',
       'unicorn/new-for-builtins': 'off',
       'unicorn/no-null': 'off',
+      'unicorn/prefer-global-this': 'off',
       'unicorn/prefer-top-level-await': 'off',
       'unicorn/prevent-abbreviations': [
         'warn',
