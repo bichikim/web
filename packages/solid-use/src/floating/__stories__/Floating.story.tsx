@@ -8,10 +8,12 @@ import {ref} from 'src/ref'
 const Floating = () => {
   const [reference, setReference] = createSignal<HTMLElement | null>(null)
   const [floatingElement, setFloatingElement] = createSignal<HTMLElement | null>(null)
+
   const floating = useFloating(reference, floatingElement, {
     autoUpdate,
     middleware: [flip()],
   })
+
   const style = createMemo(() => {
     const {x, y} = floating()
 
@@ -47,6 +49,7 @@ const Floating = () => {
     </>
   )
 }
+
 const meta = {
   component: Floating,
   title: 'solid/use/floating',
