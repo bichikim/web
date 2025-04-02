@@ -32,6 +32,7 @@ const Watch = (props: WatchProps) => {
     </>
   )
 }
+
 const meta = {
   argTypes: {
     seed: {

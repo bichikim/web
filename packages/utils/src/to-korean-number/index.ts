@@ -7,6 +7,7 @@ const chunkFp = beFactory(chunk)
 const mapFp = beFactory(map)
 const joinFp = beFactory(join)
 const _numberNames = freeze(['0', '일', '이', '삼', '사', '오', '육', '칠', '팔', '구'])
+
 const _numberUnitNames = freeze([
   '',
   '만',

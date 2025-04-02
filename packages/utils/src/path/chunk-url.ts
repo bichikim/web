@@ -19,6 +19,7 @@ export const chunkUrl = (url: string): ChunkedUrlResult => {
   const [path, query] = leftUrl.split('?')
   const [maybeHost, ...chunkedUrl] = path.split('/')
   const hasHost = hostRegx.test(maybeHost)
+
   const result: ChunkedUrlResult = {
     chunkedUrl: [],
   }

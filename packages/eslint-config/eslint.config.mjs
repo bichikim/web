@@ -11,6 +11,7 @@ import exportsSort from 'eslint-plugin-sort-export-all'
 import stylisticTs from '@stylistic/eslint-plugin-ts'
 import solid from 'eslint-plugin-solid/configs/typescript'
 import * as tsParser from '@typescript-eslint/parser'
+import oxlint from 'eslint-plugin-oxlint'
 
 const MAX_LINES = 600
 
@@ -502,4 +503,5 @@ export default [
       'solid/reactivity': 'off',
     },
   },
+  ...oxlint.buildFromOxlintConfig({}),
 ]

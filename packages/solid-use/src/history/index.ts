@@ -2,6 +2,7 @@ import {createMemo, createSignal} from 'solid-js'
 
 export const useHistory = <T>(initHistory: T[] = []) => {
   const [history, setHistory] = createSignal<T[]>(initHistory)
+
   const currentValue = createMemo(() => {
     const _history = history()
 

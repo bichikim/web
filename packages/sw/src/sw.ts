@@ -1,5 +1,5 @@
 /// <reference types="@types/serviceworker" />
-/* eslint-disable unicorn/prefer-global-this */
+
 const CACHE_NAME = 'coong-cache'
 
 // eslint-disable-next-line camelcase

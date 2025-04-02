@@ -23,6 +23,7 @@ const Event = (props: EventProps) => {
     </Show>
   )
 }
+
 const meta: Meta = {
   args: {
     show: true,

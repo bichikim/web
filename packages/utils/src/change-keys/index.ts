@@ -24,6 +24,7 @@ export const changeKeys = <T>(
   return Object.fromEntries(
     Object.entries(value).map(([key, item]) => {
       const newKey = transform(key)
+
       const newItem =
         typeof item === 'object' ? changeKeys(item, transform, deep - 1) : item
 

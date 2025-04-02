@@ -1,6 +1,6 @@
 import {debounce, DebounceSettings} from '@winter-love/lodash'
 import {useFakeTimers} from 'sinon'
-import {createRoot, createSignal} from 'solid-js'
+import {createSignal} from 'solid-js'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 import {renderHook} from '@solidjs/testing-library'
 import {createUseWait} from '../'
