@@ -5,6 +5,8 @@ alwaysApply: true
 ---
 # BPlan Client Application Guidelines
 
+Project path: apps/bplan-client
+
 ## Project Overview
 BPlan Client is a Solid Start SSR application that follows a specific structure and conventions.
 
@@ -33,27 +35,23 @@ BPlan Client is a Solid Start SSR application that follows a specific structure 
 ### Component Structure
 - Components should be placed in `src/components/`
 - Each component should have its own directory with the following structure:
+- All components must be Solid.js components
 ```
 component-name/
-├── index.tsx           # Main component file
-├── types.ts           # Component types and interfaces
-└── use-component.ts   # Component-specific hooks (if needed)
+├── index.ts           # Export file for components, types, and hooks
+├── Component1.tsx     # Component implementation
+├── Component2.tsx     # Additional component implementation
+├── types.ts           # Type definitions and interfaces for components
+└── use-component.ts   # Component-specific custom hooks (optional)
 ```
 
 ### API Structure
-- API endpoints should be placed in `src/api/`
-- Follow RESTful conventions
-- Use TypeScript interfaces for request/response types
+- All API requests should use tRPC API calls, except for some existing RESTful API calls
+- All API endpoints should be created using tRPC, except for some existing RESTful APIs
 
 ### Routing
 - Routes are file-based in `src/routes/`
-- Use dynamic routes when needed
 - Implement proper error boundaries
-
-### State Management
-- Prefer Solid.js signals for local state
-- Use stores for global state management
-- Keep state as close to where it's used as possible
 
 ### Type Safety
 - Use TypeScript strictly
@@ -61,21 +59,16 @@ component-name/
 - Avoid `any` type usage
 - Use proper type imports/exports
 
-### Performance Guidelines
-- Implement proper code splitting
-- Use lazy loading for routes
-- Optimize images and assets
-- Implement proper caching strategies
+### Important Notes
+- Implement proper code splitting but never split Solidjs props
 
 ### Environment Configuration
-- Use `.env` for environment variables
 - Follow the `.env.example` template
 - Document all environment variables
 
 ### Error Handling
 - Implement proper error boundaries
 - Use consistent error handling patterns
-- Log errors appropriately
 
 ### Testing
 - Write unit tests for components
@@ -86,6 +79,9 @@ component-name/
 - Use `pnpm` for package management
 - Follow semantic versioning
 - Document deployment procedures
+
+## Deployment Environment
+- This project is deployed on Vercel
 
 ## Best Practices
 1. Follow functional programming principles
@@ -101,9 +97,7 @@ component-name/
 
 ## Security Guidelines
 1. Implement proper authentication
-2. Use HTTPS
 3. Sanitize user inputs
-4. Implement proper CORS policies
 5. Follow security best practices
 
 ## Documentation
