@@ -1,7 +1,20 @@
 export const getSelfUrl = () => {
-  return import.meta.env.VITE_API_URL ?? 'http://localhost:3000'
+  const urlFromEnv = import.meta.env.VITE_API_URL
+
+  if (urlFromEnv) {
+    return urlFromEnv
+  }
+
+  const defaultPort = 3000
+  const port = process.env.PORT ?? defaultPort
+
+  return `http://localhost:${port}`
 }
 
+/**
+ * get database url
+ * to setting or get database url visit https://vercel.com/bichis-projects/web/settings/environment-variables
+ */
 export const getDatabaseUrl = (): string => {
   const url = import.meta.env.DATABASE_URL ?? process.env.DATABASE_URL
 
@@ -12,6 +25,10 @@ export const getDatabaseUrl = (): string => {
   return url
 }
 
+/**
+ * get github client id and secret
+ * to setting or get client id and secret visit https://github.com/settings/applications/new (account: bichikim)
+ */
 export const getGithubClient = () => {
   const clientId = import.meta.env.VITE_GITHUB_CLIENT_ID
   const clientSecret = import.meta.env.VITE_GITHUB_CLIENT_SECRET
