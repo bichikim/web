@@ -1,5 +1,5 @@
 import type {AppRouter} from './routes'
-import {createTRPCProxyClient, httpBatchLink, loggerLink} from '@trpc/client'
+import {createTRPCClient, httpBatchLink, loggerLink} from '@trpc/client'
 import {joinURL} from 'ufo'
 import {getSelfUrl} from 'src/env'
 import {TRPC_ENDPOINT} from './consts'
@@ -7,7 +7,7 @@ import {TRPC_ENDPOINT} from './consts'
 export type {AppRouter} from './routes'
 
 // create the client, export it
-export const client = createTRPCProxyClient<AppRouter>({
+export const client = createTRPCClient<AppRouter>({
   links: [
     // will print out helpful logs when using client
     loggerLink(),
