@@ -8,6 +8,12 @@ import {authOptions} from 'src/server/auth/config'
  */
 export default createMiddleware({
   onRequest: (event) => {
+    // skip trpc request
+    // trpc take a session from context
+    if (event.request.url.includes('/api/trpc')) {
+      return
+    }
+
     // insert session to locals from auth/solid-start
     event.locals.session = getSession(event.request, authOptions)
   },
