@@ -1,7 +1,6 @@
 // 'use server'
 import {APIEvent} from '@solidjs/start/server'
 import {fetchRequestHandler} from '@trpc/server/adapters/fetch'
-// import {type TRPCRequestInfo} from '@trpc/server/http'
 import {appRouter} from 'src/server/trpc/routes'
 import {TRPC_ENDPOINT} from 'src/server/trpc/consts'
 import {getSession} from '@auth/solid-start'
@@ -25,8 +24,9 @@ const handler = async (event: APIEvent) => {
 
   // adapts tRPC to fetch API style requests
   return fetchRequestHandler({
-    createContext: async ({req}: CreateContextArg): Promise<Context> => {
+    createContext: async (context: CreateContextArg): Promise<Context> => {
       // Get the session
+      const {req} = context
 
       const session = await getSession(req, authOptions)
 
