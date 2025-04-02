@@ -3,13 +3,12 @@ import {
   createEffect,
   createMemo,
   createSignal,
-  onMount,
   Show,
   splitProps,
 } from 'solid-js'
 import {cva} from 'class-variance-authority'
-import {HUNDRED} from '@winter-love/utils'
-import {sx} from '@winter-love/solid-use'
+import {getWindow, HUNDRED} from '@winter-love/utils'
+import {sx, useEvent} from '@winter-love/solid-use'
 
 export interface SFlowDisplayProps extends ComponentProps<'span'> {
   move?: boolean
@@ -26,34 +25,51 @@ const rootStyle = cva('relative block', {
 
 export const SFlowDisplay = (props: SFlowDisplayProps) => {
   const [element, setElement] = createSignal<HTMLSpanElement | null>(null)
-
-  const [innerProps, restProps] = splitProps(props, ['move', 'class', 'speed', 'style'])
+  const [textElement, setTextElement] = createSignal<HTMLSpanElement | null>(null)
   const [width, setWidth] = createSignal(0)
-  const [isMove, setIsMove] = createSignal(false)
+  const [innerProps, restProps] = splitProps(props, ['move', 'class', 'speed', 'style'])
 
-  onMount(() => {
-    setWidth(element()?.clientWidth ?? 0)
+  const isMove = createMemo(() => {
+    const _move = innerProps.move
+    const _width = width()
+    const parentWidth = element()?.parentElement?.clientWidth ?? 0
+
+    return Boolean(_move && parentWidth < _width)
   })
 
   const duration = createMemo(() => {
-    return (width() / HUNDRED) * (innerProps.speed ?? 1)
-  })
+    const _move = isMove()
 
-  const move = createMemo(() => innerProps.move)
+    if (_move) {
+      const _width = width()
 
-  createEffect(() => {
-    const width = element()?.clientWidth ?? 0
-    const parentWidth = element()?.parentElement?.clientWidth ?? 0
-
-    setIsMove(Boolean(move() && parentWidth < width))
-  })
-
-  const translateX = createMemo(() => {
-    if (isMove()) {
-      return ''
+      return (_width / HUNDRED) * (innerProps.speed ?? 1)
     }
 
-    return '0%'
+    return 0
+  })
+
+  /**
+   * set width after render
+   */
+  createEffect(() => {
+    const _move = innerProps.move
+
+    if (_move) {
+      setWidth(textElement()?.getBoundingClientRect().width ?? 0)
+    }
+  })
+
+  const globalTarget = createMemo(() => {
+    if (innerProps.move) {
+      return getWindow()
+    }
+
+    return null
+  })
+
+  useEvent(globalTarget, 'resize', () => {
+    setWidth(textElement()?.getBoundingClientRect().width ?? 0)
   })
 
   return (
@@ -64,13 +80,14 @@ export const SFlowDisplay = (props: SFlowDisplayProps) => {
       style={sx(
         {
           'animation-duration': `${duration()}s`,
-          transform: `translateX(${translateX()})`,
         },
         innerProps.style,
       )}
     >
-      {props.children}
-      <Show when={isMove()}> {props.children}</Show>
+      <span ref={setTextElement}>{props.children}</span>
+      <Show when={isMove()}>
+        <span>{props.children}</span>
+      </Show>
     </span>
   )
 }
