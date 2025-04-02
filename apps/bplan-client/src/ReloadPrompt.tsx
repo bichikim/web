@@ -3,7 +3,7 @@ import {ToastContext} from '@winter-love/solid-components'
 import {useServiceWorker} from 'src/components/service-worker'
 
 /**
- * @WIP
+ * Prompt PWA update message toast
  */
 export const ReloadPrompt = () => {
   const [serviceWorkerState, {handleSkipWaiting, handleSkipUpdate}] = useServiceWorker()
