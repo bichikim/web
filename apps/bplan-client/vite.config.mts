@@ -10,6 +10,11 @@ import * as nodeFs from 'node:fs'
 import legacy from '@vitejs/plugin-legacy'
 import {targets} from '@winter-love/vite-lib-config'
 
+/**
+ * fix nitro function
+ * for vercel case
+ * uses via vite.config.mts -> hooks: {close: () => {return hotfix()}}
+ */
 const fixNitroFunction = async () => {
   const source =
     process.env.VERCEL === '1'
@@ -34,15 +39,24 @@ function getDefaultExportFromNamespaceIfNotNamed (n) {
   )
 }
 
+/**
+ * remove sw.js because it copied by vite build process
+ */
 const fixSw = async () => {
   return nodeFs.promises.rm(path.resolve('public/sw.js'))
 }
 
+/**
+ * run all hotfix functions
+ */
 const hotfix = async () => {
   await fixNitroFunction()
   await fixSw()
 }
 
+/**
+ * create generate sw plugin
+ */
 const createGenerateSwPlugin = (): Plugin => {
   let _config: any | undefined
 
@@ -80,21 +94,19 @@ export default defineConfig({
   },
   vite: {
     build: {
-      minify: false,
-      // rollupOptions: {
-      //   external: ['@trpc/server', '@trpc/server/*'],
-      // },
+      minify: true,
     },
     plugins: [
-      //
+      // uno css plugin
       unoCss({
         configFile: '../../uno.config.ts',
       }),
+      // create generate sw plugin
       createGenerateSwPlugin(),
+      // legacy plugin
       legacy({
         targets,
       }),
-      // fullReload(['../../packages/unocss-config/*.ts']) as any,
     ] as any,
     resolve: {
       alias: {
@@ -104,6 +116,7 @@ export default defineConfig({
         '@tonejs/midi': fileURLToPath(
           new URL('node_modules/@tonejs/midi/src/Midi.ts', import.meta.url),
         ),
+        // root source path alias
         src: fileURLToPath(new URL('src', import.meta.url)),
       },
     },
