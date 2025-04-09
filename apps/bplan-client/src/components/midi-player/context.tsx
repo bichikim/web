@@ -29,6 +29,7 @@ export interface MidiPlayerContextProps {
   handleStop: () => void
   handleSuspend: () => void
   handleTryRepeat: () => void
+  isPlaying: Accessor<boolean>
   isSuspend: Accessor<boolean>
   playList: Accessor<MusicInfo[]>
   playedTime: Accessor<number>
@@ -77,6 +78,7 @@ export const MidiPlayerContext = createContext<MidiPlayerContextProps>({
   handleTryRepeat: () => {
     //
   },
+  isPlaying: () => false,
   isSuspend: () => false,
   playList: () => [],
   playedTime: () => 0,
@@ -260,6 +262,14 @@ export const MidiPlayerProvider = (props: MidiPlayerProviderProps) => {
     return defaultProps.playState.playedTime
   })
 
+  const isPlaying = createMemo(() => {
+    return Boolean(
+      defaultProps.playState.playingId !== '' &&
+        defaultProps.playState.leftTime < defaultProps.playState.totalDuration &&
+        !defaultProps.playState.suspended,
+    )
+  })
+
   createEffect(() => {
     const musics = defaultProps.initMusics ?? []
 
@@ -287,6 +297,7 @@ export const MidiPlayerProvider = (props: MidiPlayerProviderProps) => {
     handleStop,
     handleSuspend,
     handleTryRepeat,
+    isPlaying,
     isSuspend,
     playList,
     playedTime,

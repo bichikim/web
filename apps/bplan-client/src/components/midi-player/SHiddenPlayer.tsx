@@ -103,14 +103,13 @@ export const SHiddenPlayer = (props: SHiddenPlayerProps) => {
 
   const handleClose = () => {
     setIsShow((prev) => {
-      const nextState = !prev
-
-      if (nextState) {
-        handleSurfaceKindChange('player')
-      }
-
-      return nextState
+      return !prev
     })
+    const _isShow = isShow()
+
+    if (_isShow) {
+      setSurfaceKind('player')
+    }
   }
 
   const isPlaying = createMemo(
@@ -119,10 +118,6 @@ export const SHiddenPlayer = (props: SHiddenPlayerProps) => {
       defaultProps.playState.leftTime < defaultProps.playState.totalDuration &&
       !defaultProps.playState.suspended,
   )
-
-  const handleSurfaceKindChange = (kind: SurfaceKind) => {
-    setSurfaceKind(kind)
-  }
 
   const containerStyle = createMemo(() => {
     const className = 'h-56 min-h-56 max-h-max flex flex-col justify-end'
@@ -163,7 +158,7 @@ export const SHiddenPlayer = (props: SHiddenPlayerProps) => {
             <SPlayer
               {...restProps}
               isShow={isShow()}
-              onSetting={() => handleSurfaceKindChange('setting')}
+              onSetting={() => setSurfaceKind('setting')}
             />
           </div>
           <Show when={surfaceKind() === 'setting' && isShow()}>
@@ -171,7 +166,7 @@ export const SHiddenPlayer = (props: SHiddenPlayerProps) => {
               pianoMinScale={innerProps.pianoMinScale}
               settingData={innerProps.settingData}
               class="w-full bg-white"
-              onClose={() => handleSurfaceKindChange('player')}
+              onClose={() => setSurfaceKind('player')}
               onSettingDataChange={innerProps.onSettingDataChange}
             />
           </Show>
