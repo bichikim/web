@@ -11,6 +11,10 @@
     "blowback": {
       "command": "npx",
       "args": ["-y", "blowback-context"]
+    },
+    "playwright": {
+      "command": "npx",
+      "args": ["@playwright/mcp@latest"]
     }
   }
 }
