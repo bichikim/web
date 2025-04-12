@@ -1,7 +1,9 @@
 import {readFileSync, writeFileSync} from 'node:fs'
 const modulePath = await import.meta.resolve('rollup-preset-solid')
 
-const code = readFileSync(modulePath.replace('file://', ''), 'utf8')
+const modulePathBody = modulePath.replace(/^file:\/\/\/(\w:\/\/)?/u, '')
+
+const code = readFileSync(modulePathBody, 'utf8')
 
 const removedNodeNextPluginCode = code.replace(
   // eslint-disable-next-line require-unicode-regexp
@@ -9,4 +11,4 @@ const removedNodeNextPluginCode = code.replace(
   '',
 )
 
-writeFileSync(modulePath.replace('file://', ''), removedNodeNextPluginCode)
+writeFileSync(modulePathBody, removedNodeNextPluginCode)
