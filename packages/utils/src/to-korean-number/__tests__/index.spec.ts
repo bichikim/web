@@ -1,5 +1,6 @@
 import {toKoreanNumber} from '../'
 import {describe, expect, it} from 'vitest'
+
 describe('to-korean-number', () => {
   it('should return korean string', () => {
     const result = toKoreanNumber(760_050_720)
@@ -21,16 +22,19 @@ describe('to-korean-number', () => {
 
   it('should return korean string with joinString', () => {
     const result = toKoreanNumber(1_000_160_010_720, {joinString: ' '})
+
     expect(result).toBe('일조일억육천 일만칠백 이십')
   })
 
   it('should return korean string with joinString and joinGroup', () => {
     const result = toKoreanNumber(1_000_160_010_720, {joinGroup: ', ', joinString: ' '})
+
     expect(result).toBe('일조, 일억, 육천 일만, 칠백 이십')
   })
 
   it('should return korean string with joinString', () => {
     const result = toKoreanNumber(1_000_160_000_720, {joinGroup: ' '})
+
     expect(result).toBe('일조 일억 육천만 칠백이십')
   })
 
@@ -42,6 +46,7 @@ describe('to-korean-number', () => {
 
   it('should return korean string with big number', () => {
     const result = toKoreanNumber(123_456_760_050_720)
+
     expect(result).toBe('백이십삼조사천오백육십칠억육천오만칠백이십')
   })
 

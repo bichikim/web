@@ -1,0 +1,50 @@
+{
+  "name": "@winter-love/sw",
+  "version": "1.0.0",
+  "private": true,
+  "description": "",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bichikim/web.git"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs"
+    },
+    "./sw": {
+      "import": "./dist/sw.mjs"
+    },
+    "./*": "./*"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "sw": "bin/index.js"
+  },
+  "files": [
+    "dist/*"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "check-types": "tsc --noEmit",
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix",
+    "start": "node dist/cli.js build -r 'test/assets' -a '**/*' ./node_modules/sw.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@winter-love/utils": "workspace:*",
+    "commander": "^13.0.0",
+    "glob": "^11.0.1",
+    "solid-js": "^1.9.3"
+  },
+  "devDependencies": {
+    "@babel/preset-env": "^7.26.0",
+    "@rollup/plugin-babel": "^6.0.4",
+    "@types/serviceworker": "^0.0.111",
+    "@winter-love/vite-lib-config": "workspace:*",
+    "vite": "5.4.12",
+    "vite-plugin-dts": "^4.5.3",
+    "vitest": "*"
+  }
+}

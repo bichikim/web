@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/utils",
-  "version": "1.0.34",
+  "version": "1.0.35",
   "description": "Useful javascript utils",
   "keywords": [
     "typescript",
@@ -29,22 +29,26 @@
   ],
   "scripts": {
     "build": "vite build",
+    "check-types": "tsc --noEmit",
     "dev": "vite build --watch --minify false",
-    "check-types": "tsc --noEmit"
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix"
   },
   "dependencies": {
-    "@winter-love/lodash": "^1.0.34",
-    "safe-stable-stringify": "^2.4.1",
-    "scroll-into-view-if-needed": "^3.0.4",
-    "smooth-scroll-into-view-if-needed": "^1.1.33"
+    "@winter-love/lodash": "workspace:*",
+    "safe-stable-stringify": "^2.5.0",
+    "scroll-into-view-if-needed": "^3.1.0",
+    "smooth-scroll-into-view-if-needed": "^2.0.2"
   },
   "devDependencies": {
-    "@types/js-cookie": "^3.0.2",
-    "@winter-love/vite-lib-config": "1.0.29",
-    "js-cookie": "^3.0.1",
-    "micro-memoize": "^4.0.14",
-    "tsd": "^0.25.0",
-    "typescript": "^5.3.3"
+    "@types/js-cookie": "^3.0.6",
+    "@winter-love/vite-lib-config": "workspace:*",
+    "js-cookie": "^3.0.5",
+    "lodash": "^4.17.21",
+    "micro-memoize": "^4.1.2",
+    "tsd": "^0.31.2",
+    "typescript": "^5.7.2",
+    "vite": "^5.4.12"
   },
   "publishConfig": {
     "access": "public"

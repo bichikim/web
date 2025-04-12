@@ -1,11 +1,10 @@
 {
   "name": "@winter-love/solid-test",
-  "version": "1.0.0",
-  "private": true,
+  "version": "1.0.35",
   "description": "",
   "repository": {
     "type": "git",
-    "url": "https://github.com/project-sharp-one/project-1.git"
+    "url": "https://github.com/bichikim/web.git"
   },
   "exports": {
     ".": {
@@ -19,13 +18,18 @@
     "dist/*"
   ],
   "scripts": {
-    "build": "cross-env NODE_ENV=production vite build",
+    "build": "vite build",
+    "lint": "eslint src",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "solid-js": "^1.8"
+    "solid-js": "^1.9.3"
   },
   "devDependencies": {
-    "@winter-love/vite-lib-config": "workspace:*"
+    "@winter-love/vite-lib-config": "workspace:*",
+    "vite": "^5.4.12"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

@@ -1,7 +1,7 @@
 import {got} from 'got'
 import {RequestHandler} from 'express'
 import {createProvideContext} from '../utils/context'
-import {resolveUrl} from '@winter-love/utils'
+import {joinURL} from 'ufo'
 
 export const imageContext = createProvideContext<Buffer>()
 
@@ -13,21 +13,22 @@ export interface ImageRequestOptions {
 
 export const imageRequest = (options: ImageRequestOptions = {}): RequestHandler => {
   const {defaultUrl} = options
-  return async (req, res, next) => {
+
+  return async (req, _, next) => {
     const requestUrl = req.url
     const {url} = req.query
 
-    const targetUrl = url ?? (defaultUrl ? resolveUrl(defaultUrl, requestUrl) : undefined)
+    const targetUrl = url ?? (defaultUrl ? joinURL(defaultUrl, requestUrl) : undefined)
 
     if (!targetUrl) {
       return next()
     }
+
     const {body} = await got.get(String(targetUrl), {
       responseType: 'buffer',
     })
 
     imageContext.provide(req, body)
-
     next()
   }
 }

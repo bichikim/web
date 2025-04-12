@@ -16,6 +16,7 @@ export const addUnitRight: ToUnitRight = (unit?: string, value?: any): any => {
   if (value) {
     return addUnit(value, unit)
   }
+
   return (value: any) => {
     return addUnit(value, unit)
   }

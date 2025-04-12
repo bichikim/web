@@ -7,12 +7,16 @@ export const setItem = <T, P = any>(
 ): void => {
   const _path = [...path]
   const targetName = _path.pop()
+
   if (!targetName) {
     return
   }
+
   const targetItem = getItem(target, _path)
+
   if (typeof targetItem !== 'object') {
     return
   }
+
   Reflect.set(targetItem, targetName, value)
 }

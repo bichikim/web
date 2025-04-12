@@ -1,4 +1,5 @@
 import {getWorkspacePath} from '../'
+import {describe, expect, it} from 'vitest'
 
 describe('getWorkspacePath', () => {
   it.each([

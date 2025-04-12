@@ -1,4 +1,5 @@
 import {createDedupSeparator, dedupSeparator} from '../depub-separator'
+import {describe, expect, it} from 'vitest'
 
 describe('createTrimDupPath', () => {
   it('should return the trimmed path', () => {
@@ -13,6 +14,7 @@ describe('createTrimDupPath', () => {
 describe('createDedupSeparator', () => {
   it('should return trimMidPath', () => {
     const trimMidPath = createDedupSeparator('.')
+
     expect(trimMidPath('a.b.c.d')).toBe('a.b.c.d')
     expect(trimMidPath('a...b.c.d')).toBe('a.b.c.d')
     expect(trimMidPath('a..b..c.d')).toBe('a.b.c.d')

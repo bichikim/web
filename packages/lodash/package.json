@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/lodash",
-  "version": "1.0.34",
+  "version": "1.0.35",
   "description": "Lodash for tree shaking",
   "keywords": [
     "lodash"
@@ -34,9 +34,11 @@
     "@types/lodash": "4.17.4",
     "@types/lodash-es": "4.17.9",
     "@winter-love/vite-lib-config": "workspace:*",
-    "cpx2": "^7.0.1",
+    "cpx": "^1.5.0",
     "lodash-cli": "4.17.5",
-    "lodash-es": "^4.17.21"
+    "lodash-es": "^4.17.21",
+    "vite": "^5.4.12",
+    "vite-plugin-solid": "^2.11.0"
   },
   "publishConfig": {
     "access": "public"

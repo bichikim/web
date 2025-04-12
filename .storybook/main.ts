@@ -6,9 +6,7 @@ const config: StorybookConfig = {
     '@storybook/addon-essentials',
     '@storybook/addon-interactions',
   ],
-  docs: {
-    autodocs: 'tag',
-  },
+  docs: {},
   framework: {
     name: 'storybook-solidjs-vite',
     options: {
@@ -22,6 +20,8 @@ const config: StorybookConfig = {
     '../apps/bplan-client/src/**/*.story.@(js|jsx|mjs|ts|tsx)',
     '../packages/solid/src/**/*.mdx',
     '../packages/solid/src/**/*.story.@(js|jsx|mjs|ts|tsx)',
+    '../packages/solid-components/src/**/*.story.@(js|jsx|mjs|ts|tsx)',
+    '../packages/player/src/**/*.story.@(js|jsx|mjs|ts|tsx)',
   ],
 }
 export default config

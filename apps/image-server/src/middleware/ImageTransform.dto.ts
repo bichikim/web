@@ -2,6 +2,7 @@ import {IsIn, IsInt, IsOptional, IsString} from 'class-validator'
 import {Transform} from 'class-transformer'
 
 const DEFAULT_QUALITY = 80
+
 const anyToNumber = (value) => {
   return value ? Number(value) : value
 }

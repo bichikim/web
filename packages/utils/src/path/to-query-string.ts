@@ -16,6 +16,7 @@ export const removeQueryChar = (value: string) =>
   trim(value).replace(TRIM_QUERY_REGEX, '')
 
 export const encodeQueryKey = (key: string) => encodeURIComponent(key)
+
 const trimQueryKey = (key: string): string => {
   const _key = removeQueryChar(trim(key))
 
@@ -35,6 +36,7 @@ export const encodeQueryItem = (
   options: Omit<ToQueryStringOptions, 'sort'> = {},
 ) => {
   const {encodeKey = encodeQueryKey, encodeValue = encodeQueryValue} = options
+
   return `${encodeKey(trimQueryKey(key))}=${encodeValue(value)}`
 }
 

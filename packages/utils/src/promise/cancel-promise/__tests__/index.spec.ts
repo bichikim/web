@@ -11,12 +11,13 @@ describe('cancelPromise', () => {
     const promise = new Promise((resolve) => {
       _resolve = resolve
     })
-
     const [cancelPromise, cancel] = createCancelPromise(promise)
+
     cancelPromise.then((data) => {
       _data = data
     })
     cancel()
+
     process.nextTick(() => {
       order += 1
       expect(order).toBe(2)
@@ -30,6 +31,7 @@ describe('cancelPromise', () => {
     await flushPromises()
     expect(_data).not.toBe('foo')
   })
+
   it('should cancel promise (before cancel)', async () => {
     let _resolve
     let _data
@@ -37,7 +39,6 @@ describe('cancelPromise', () => {
     const promise = new Promise((resolve) => {
       _resolve = resolve
     })
-
     const [_, cancel] = createCancelPromise(promise)
 
     promise.then((data) => {

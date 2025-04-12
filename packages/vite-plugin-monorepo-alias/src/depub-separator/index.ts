@@ -8,10 +8,12 @@ export const createDedupSeparator = (
   max: number = MAX_URL_LENGTH,
 ) => {
   const MID_TRIM_URL_REGX = createDedupSeparatorRegExp(pathSeparator)
+
   return (path: string, replaceValue: string = pathSeparator): string => {
     if (process.env.NODE_ENV === 'development' && path.length > max) {
       console.warn('please do not pass a string path too long')
     }
+
     return path.slice(0, max).replace(MID_TRIM_URL_REGX, replaceValue)
   }
 }

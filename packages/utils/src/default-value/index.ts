@@ -6,5 +6,6 @@ export const defaultValue = <T>(value: T | undefined, defaultValue: MaybeFunctio
   if (isUndefined(value)) {
     return toValue(defaultValue)
   }
+
   return value
 }

@@ -90,6 +90,8 @@ coverage
 .temp
 .cache
 .turbo
+.cert
 
 docs/.vitepress/cache
 docs/.vitepress/dist
+*storybook.log

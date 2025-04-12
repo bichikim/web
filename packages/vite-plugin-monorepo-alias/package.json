@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/vite-plugin-monorepo-alias",
-  "version": "1.0.34",
+  "version": "1.0.35",
   "description": "vite monorepo alias plugin",
   "keywords": [
     "typescript",
@@ -41,17 +41,19 @@
   ],
   "scripts": {
     "build": "vite build",
-    "dev": "vite build --watch --minify false"
+    "check-types": "tsc --noEmit",
+    "dev": "vite build --watch --minify false",
+    "lint": "eslint src"
   },
   "dependencies": {
-    "@types/node": "^20.2.1",
-    "@vue/server-renderer": "^3.2.45",
-    "node-html-parser": "^6.1.4",
-    "vite": "^5",
-    "vue": "^3.3.0"
+    "@types/node": "^22.10.1",
+    "@vue/server-renderer": "^3.5.13",
+    "node-html-parser": "^6.1.13",
+    "vite": "^5.4.12",
+    "vue": "^3.5.13"
   },
   "devDependencies": {
-    "@winter-love/vite-lib-config": "1.0.29"
+    "@winter-love/vite-lib-config": "workspace:*"
   },
   "publishConfig": {
     "access": "public"

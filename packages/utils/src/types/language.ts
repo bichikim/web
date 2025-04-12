@@ -34,9 +34,11 @@ export type MaybeFunctionParams<T> = T extends (...args: infer P) => any ? P : n
  * @example
  * const foo: EmptyObject = {} // true
  */
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface EmptyObject {
   // empty
 }
+
 /**
  *all possible object keys
  * @example
@@ -160,7 +162,7 @@ export type Keyof<R> = R extends Record<infer P, any> ? P : never
 
 export type FlatKeys<R> = TakeFlatKeys<R, keyof R>
 
-// eslint-disable-next-line @typescript-eslint/ban-types
+// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 export type ClassFunction = Function
 
 export type SnakeToCamelCase<S extends string> =

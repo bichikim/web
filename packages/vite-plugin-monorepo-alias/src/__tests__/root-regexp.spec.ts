@@ -1,4 +1,5 @@
 import {createAliasRegexp} from '../alias-regexp'
+import {describe, expect, it} from 'vitest'
 
 describe('root-Regexp', () => {
   it('should return alias regex with /', () => {

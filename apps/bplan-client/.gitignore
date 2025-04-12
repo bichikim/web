@@ -5,6 +5,7 @@ dist
 .vercel
 .netlify
 netlify
+.vinxi
 
 # Environment
 .env
@@ -26,3 +27,6 @@ gitignore
 # System Files
 .DS_Store
 Thumbs.db
+
+
+vite.config.timestamp_*

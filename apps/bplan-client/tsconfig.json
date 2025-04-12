@@ -3,9 +3,12 @@
     "target": "ESNext",
     "module": "ESNext",
     "moduleResolution": "node",
+    "skipLibCheck": true,
+    "skipDefaultLibCheck": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "jsx": "preserve",
+    "resolveJsonModule": true,
     "jsxImportSource": "solid-js",
     "allowJs": true,
     "strict": true,
@@ -14,8 +17,8 @@
     "baseUrl": ".",
     "paths": {
       "src/*": ["./src/*"]
-    }
+    },
+    "forceConsistentCasingInFileNames": true
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx"],
-  "extends": ["../../tsconfig.json"]
+  "include": ["src/**/*.ts", "src/**/*.tsx", "vite.config.mts"]
 }

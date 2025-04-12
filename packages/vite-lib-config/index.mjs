@@ -6,6 +6,7 @@ import dts from 'vite-plugin-dts'
 import solidPlugin from 'vite-plugin-solid'
 
 const defaultRoot = process.cwd()
+
 /**
  * create vite config for building library
  * @param root project root
@@ -14,6 +15,9 @@ const defaultRoot = process.cwd()
  * @param external dependencies not to include in the build
  * @param entry
  * @param alias
+ * @param target
+ * @param plugins
+ * @param rollupOutputPlugins
  * @return {UserConfig}
  */
 export const createConfig = ({
@@ -22,12 +26,16 @@ export const createConfig = ({
   external = [],
   entry = {},
   alias = {},
+  target,
+  plugins = [],
+  rollupOutputPlugins = [],
 } = {}) => {
   const _packageJson =
     packageJson ?? JSON.parse(readFileSync(path.join(root, 'package.json'), 'utf8'))
 
   const {dependencies = {}, name} = _packageJson ?? {}
   const depsKey = Object.keys(dependencies)
+
   const newEntry = Object.fromEntries(
     Object.entries(entry).map(([key, value]) => [key, path.join(root, value)]),
   )
@@ -49,7 +57,11 @@ export const createConfig = ({
         },
         rollupOptions: {
           external: [...depsKey, ...external],
+          output: {
+            plugins: rollupOutputPlugins,
+          },
         },
+        target,
       },
       optimizeDeps: {
         exclude: [],
@@ -68,9 +80,15 @@ export const createConfig = ({
             skipLibCheck: true,
           },
           entryRoot: './src',
-          exclude: ['**/__tests__/*', '**/__stories__/*'],
+          exclude: [
+            '**/__tests__/*',
+            '**/__stories__/*',
+            '**/*.story.tsx',
+            '**/*.spec.ts',
+          ],
           include: ['**/*.ts', '**/*.tsx'],
         }),
+        ...plugins,
       ],
       resolve: {
         alias: {
@@ -81,3 +99,6 @@ export const createConfig = ({
     }
   })
 }
+
+export const targets =
+  'chrome >= 55, safari >= 11.3, firefox >= 53, opera >= 42, edge >= 15, last 2 versions, not dead'

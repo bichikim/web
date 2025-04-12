@@ -1,4 +1,5 @@
 import {createTrimPath, trimPath} from '../trim-path'
+import {describe, expect, it} from 'vitest'
 
 describe('trimPath', () => {
   it('should return trimmed path with both', () => {
@@ -8,16 +9,20 @@ describe('trimPath', () => {
     expect(trimPath('foo/')).toBe('foo')
     expect(trimPath('foo//')).toBe('foo')
   })
+
   it('should return trimmed path with left', () => {
     const trimPath = createTrimPath('/', 1000, 'left')
+
     expect(trimPath('/foo')).toBe('foo')
     expect(trimPath('//foo')).toBe('foo')
     expect(trimPath('//foo/')).toBe('foo/')
     expect(trimPath('foo/')).toBe('foo/')
     expect(trimPath('foo//')).toBe('foo//')
   })
+
   it('should return trimmed path with right', () => {
     const trimPath = createTrimPath('/', 1000, 'right')
+
     expect(trimPath('/foo')).toBe('/foo')
     expect(trimPath('//foo')).toBe('//foo')
     expect(trimPath('//foo/')).toBe('//foo')

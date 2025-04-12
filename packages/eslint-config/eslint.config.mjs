@@ -1,5 +1,3 @@
-// @ts-check
-
 import importPlugin from 'eslint-plugin-i'
 import nodePlugin from 'eslint-plugin-n'
 import js from '@eslint/js'
@@ -8,13 +6,12 @@ import prettierRecommended from 'eslint-plugin-prettier/recommended'
 import unicorn from 'eslint-plugin-unicorn'
 import jsonc from 'eslint-plugin-jsonc'
 import sortKeys from 'eslint-plugin-sort-keys-fix'
-import pluginVue from 'eslint-plugin-vue'
 import typeSortKeys from 'eslint-plugin-typescript-sort-keys'
 import exportsSort from 'eslint-plugin-sort-export-all'
-// .js 인븥이면 파일을 못찾는다
-// noinspection JSFileReferences
-import solid from 'eslint-plugin-solid/configs/recommended.js'
+import stylisticTs from '@stylistic/eslint-plugin-ts'
+import solid from 'eslint-plugin-solid/configs/typescript'
 import * as tsParser from '@typescript-eslint/parser'
+import oxlint from 'eslint-plugin-oxlint'
 
 const MAX_LINES = 600
 
@@ -25,21 +22,11 @@ export default [
   ...ts.configs.recommended,
   prettierRecommended,
   unicorn.configs['flat/recommended'],
-  ...pluginVue.configs['flat/recommended'],
   {
-    files: ['**/*.{ts,tsx}'],
-    ...solid,
-    languageOptions: {
-      parser: tsParser,
-      parserOptions: {
-        // project: 'tsconfig.json',
-      },
-    },
-  },
-  {
-    files: ['**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx,vue}'],
+    files: ['**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx}'],
     ignores: ['**/package.json'],
     plugins: {
+      format: stylisticTs,
       import: importPlugin,
       'sort-export-all': exportsSort,
       'sort-keys-fix': sortKeys,
@@ -48,17 +35,10 @@ export default [
     rules: {
       '@typescript-eslint/explicit-module-boundary-types': 'off',
       '@typescript-eslint/indent': 'off',
-      '@typescript-eslint/member-delimiter-style': [
+      '@typescript-eslint/no-empty-object-type': [
         'error',
         {
-          multiline: {
-            delimiter: 'none',
-            requireLast: true,
-          },
-          singleline: {
-            delimiter: 'semi',
-            requireLast: false,
-          },
+          allowInterfaces: 'with-single-extends',
         },
       ],
       '@typescript-eslint/no-explicit-any': 'off',
@@ -95,8 +75,6 @@ export default [
         },
       ],
       'block-scoped-var': 'error',
-      'block-spacing': ['error', 'never'],
-      'brace-style': ['error', '1tbs', {allowSingleLine: true}],
       camelcase: [
         'error',
         {
@@ -105,26 +83,97 @@ export default [
           properties: 'always',
         },
       ],
-      'comma-dangle': ['error', 'always-multiline'],
-      'comma-spacing': [
-        'error',
-        {
-          after: true,
-          before: false,
-        },
-      ],
       complexity: 'error',
       'computed-property-spacing': ['error', 'never'],
       // 'consistent-return': 'off',
       'consistent-this': 'error',
       curly: 'error',
-      // 'default-case': 'off',
       'default-case-last': 'error',
       'default-param-last': 'error',
       'dot-location': ['error', 'property'],
       'dot-notation': 'error',
       'eol-last': 'error',
       eqeqeq: ['error', 'smart'],
+      'format/block-spacing': ['error', 'never'],
+      'format/brace-style': ['error', '1tbs', {allowSingleLine: true}],
+      'format/comma-dangle': ['error', 'always-multiline'],
+      'format/comma-spacing': [
+        'error',
+        {
+          after: true,
+          before: false,
+        },
+      ],
+      'format/key-spacing': [
+        'error',
+        {
+          afterColon: true,
+          beforeColon: false,
+          mode: 'strict',
+        },
+      ],
+      'format/keyword-spacing': [
+        'error',
+        {
+          after: true,
+          before: true,
+          overrides: {
+            catch: {after: true},
+            for: {after: true},
+            if: {after: true},
+            switch: {after: true},
+            while: {after: true},
+          },
+        },
+      ],
+      'format/object-curly-newline': [
+        'warn',
+        {
+          consistent: true,
+          multiline: true,
+        },
+      ],
+      'format/object-curly-spacing': ['error', 'never'],
+      'format/padding-line-between-statements': [
+        'warn',
+        {blankLine: 'never', next: 'expression', prev: '*'},
+        {blankLine: 'never', next: 'import', prev: 'import'},
+        {blankLine: 'always', next: 'export', prev: 'import'},
+        {blankLine: 'always', next: 'return', prev: '*'},
+        {blankLine: 'always', next: 'block-like', prev: '*'},
+        {blankLine: 'always', next: 'block', prev: '*'},
+        {blankLine: 'always', next: 'block-like', prev: '*'},
+        {blankLine: 'always', next: 'expression', prev: 'const'},
+        {blankLine: 'always', next: 'expression', prev: 'let'},
+        {blankLine: 'always', next: 'multiline-expression', prev: '*'},
+        {blankLine: 'always', next: 'multiline-block-like', prev: '*'},
+        {blankLine: 'always', next: 'multiline-const', prev: '*'},
+        {blankLine: 'always', next: 'function', prev: '*'},
+        {blankLine: 'always', next: 'if', prev: '*'},
+        {blankLine: 'always', next: 'expression', prev: 'if'},
+        {blankLine: 'always', next: 'expression', prev: 'import'},
+        {blankLine: 'always', next: 'expression', prev: 'function'},
+        {blankLine: 'always', next: 'for', prev: '*'},
+        {blankLine: 'always', next: 'expression', prev: 'for'},
+      ],
+      'format/semi': ['error', 'never'],
+      'format/space-before-blocks': [
+        'error',
+        {
+          classes: 'always',
+          functions: 'always',
+          keywords: 'always',
+        },
+      ],
+      'format/space-before-function-paren': [
+        'error',
+        {
+          anonymous: 'always',
+          asyncArrow: 'always',
+          named: 'never',
+        },
+      ],
+      'format/space-infix-ops': 'error',
       'func-call-spacing': ['error', 'never'],
       'func-names': ['error', 'as-needed'],
       'func-style': ['error', 'declaration', {allowArrowFunctions: true}],
@@ -149,28 +198,6 @@ export default [
       // 'import/no-unresolved': 'off',
       // indent: 'off',
       'jsx-quotes': ['error', 'prefer-double'],
-      'key-spacing': [
-        'error',
-        {
-          afterColon: true,
-          beforeColon: false,
-          mode: 'strict',
-        },
-      ],
-      'keyword-spacing': [
-        'error',
-        {
-          after: true,
-          before: true,
-          overrides: {
-            catch: {after: true},
-            for: {after: true},
-            if: {after: true},
-            switch: {after: true},
-            while: {after: true},
-          },
-        },
-      ],
       'line-comment-position': ['warn', {position: 'above'}],
       'max-depth': ['error', {max: 4}],
       'max-len': [
@@ -186,7 +213,7 @@ export default [
       'max-lines-per-function': [
         'error',
         {
-          max: 150,
+          max: 200,
           skipBlankLines: true,
           skipComments: true,
         },
@@ -225,6 +252,8 @@ export default [
       'no-extra-bind': 'error',
       'no-extra-label': 'error',
       'no-extra-parens': ['error', 'functions'],
+      // 'default-case': 'off',
+      'no-fallthrough': 'off',
       'no-floating-decimal': 'error',
       'no-implicit-coercion': 'error',
       // 'no-implicit-globals': 'off',
@@ -246,6 +275,7 @@ export default [
       ],
       // 'no-mixed-operators': 'off',
       'no-mixed-spaces-and-tabs': 'error',
+
       'no-multi-assign': 'error',
       'no-multi-spaces': 'error',
       'no-multi-str': 'error',
@@ -304,14 +334,6 @@ export default [
       'no-whitespace-before-property': 'error',
       'no-with': 'error',
       'nonblock-statement-body-position': 'error',
-      'object-curly-newline': [
-        'warn',
-        {
-          consistent: true,
-          multiline: true,
-        },
-      ],
-      'object-curly-spacing': ['error', 'never'],
       'one-var': ['error', 'never'],
       'operator-assignment': ['warn', 'always'],
       'prefer-arrow-callback': 'off',
@@ -331,7 +353,7 @@ export default [
       radix: 'error',
       'require-unicode-regexp': 'warn',
       'rest-spread-spacing': 'error',
-      semi: ['error', 'never'],
+      'solid/reactivity': 'off',
       'sort-export-all/sort-export-all': 'warn',
       'sort-imports': [
         'warn',
@@ -341,24 +363,7 @@ export default [
         },
       ],
       'sort-keys-fix/sort-keys-fix': ['warn', 'asc', {natural: true}],
-      'space-before-blocks': [
-        'error',
-        {
-          classes: 'always',
-          functions: 'always',
-          keywords: 'always',
-        },
-      ],
-      'space-before-function-paren': [
-        'error',
-        {
-          anonymous: 'always',
-          asyncArrow: 'always',
-          named: 'never',
-        },
-      ],
       'space-in-parens': ['error', 'never'],
-      'space-infix-ops': 'error',
       'space-unary-ops': 'error',
       'switch-colon-spacing': [
         'error',
@@ -383,6 +388,7 @@ export default [
       'unicorn/import-style': 'warn',
       'unicorn/new-for-builtins': 'off',
       'unicorn/no-null': 'off',
+      'unicorn/prefer-global-this': 'off',
       'unicorn/prefer-top-level-await': 'off',
       'unicorn/prevent-abbreviations': [
         'warn',
@@ -416,15 +422,10 @@ export default [
             refs: false,
             req: false,
             res: false,
+            src: false,
           },
         },
       ],
-      'vue/html-self-closing': 'off',
-      'vue/max-attributes-per-line': 'off',
-      'vue/multi-word-component-names': 'off',
-      'vue/order-in-components': 'off',
-      'vue/require-default-prop': 'off',
-      'vue/singleline-html-element-content-newline': 'off',
       'wrap-iife': 'error',
       'yield-star-spacing': ['error', {before: true}],
       yoda: 'error',
@@ -455,11 +456,11 @@ export default [
       'max-nested-callbacks': 'off',
       'no-magic-numbers': 'off',
       'prefer-destructuring': 'off',
+      'solid/reactivity': 'off',
       'unicorn/consistent-function-scoping': 'off',
       'unicorn/no-thenable': 'off',
       'unicorn/no-useless-undefined': 'off',
-      'vue/one-component-per-file': 'off',
-      'vue/require-prop-types': 'off',
+      'unicorn/prefer-global-this': 'off',
     },
   },
   {
@@ -467,6 +468,7 @@ export default [
     rules: {
       'id-length': 'off',
       'no-magic-numbers': 'off',
+      'solid/reactivity': 'off',
     },
   },
   {
@@ -489,22 +491,17 @@ export default [
     ],
   },
   {
-    files: ['**/*.vue'],
+    files: ['**/*.{ts,tsx}'],
+    ...solid,
     languageOptions: {
+      parser: tsParser,
       parserOptions: {
-        ecmaFeatures: {
-          jsx: true,
-        },
-        extraFileExtensions: ['.vue'],
-        parser: {
-          js: 'espree',
-          jsx: 'espree',
-          mjs: 'espree',
-          mts: ts.parser,
-          ts: ts.parser,
-          tsx: ts.parser,
-        },
+        // project: 'tsconfig.json',
       },
     },
+    rules: {
+      'solid/reactivity': 'off',
+    },
   },
+  ...oxlint.buildFromOxlintConfig({}),
 ]

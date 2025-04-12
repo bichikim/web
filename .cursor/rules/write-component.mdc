@@ -1,0 +1,163 @@
+---
+description: write component
+globs: *.tsx
+alwaysApply: false
+---
+
+# SolidJS Component Writing Guidelines
+
+## Component Structure
+- Use TypeScript interfaces for props definition
+- Prefer functional components with arrow function syntax
+- Export components as named exports, not default exports
+- Place component files in appropriate feature directories
+
+## Naming Conventions
+- Use PascalCase for component names (e.g., `UserProfile`)
+- Use camelCase for props, signals, and other variables
+- Use descriptive names that reflect component purpose
+
+## Code Formatting
+- **DO NOT use semicolons (;)**
+- Follow the `object-curly-spacing "never"` eslint rule (no spaces inside curly braces)
+- This rule applies to imports as well (e.g., `import {something} from 'package'`, not `import { something } from 'package'`)
+- Follow eslint.config.mjs rules
+
+## Props Handling
+- Define props interface with clear types and documentation
+- **NEVER use destructuring with props as it breaks reactivity**
+- Always use `splitProps` to divide props into `innerProps` (for component internal usage) and `restProps` (to pass down to children) to maintain reactivity
+- Provide default values for optional props using mergeProps before splitting
+- Define prop interfaces outside the component for reusability
+
+## Reactivity
+- Use signals for primitive values (`createSignal`)
+- Use stores for complex objects (`createStore`)
+- Use memos for derived state (`createMemo`)
+- Minimize effect usage (`createEffect`) - prefer derived state
+- Avoid direct DOM manipulation - use Solid's reactivity system
+- Remember that props are reactive objects and must not be destructured
+
+## Styling
+- Use UnoCSS utility classes as primary styling approach
+- Use class-variance-authority (cva) for managing component style variants
+- Avoid inline styles except for dynamic values
+
+## Component Composition
+- Prefer composition over inheritance
+- Use children props for component slots
+- Create small, focused components with single responsibilities
+- Use Context API for deeply nested state sharing
+
+## Performance
+- Avoid unnecessary wrapper components
+- Keep component functions pure
+- Use `batch` for multiple state updates
+- Use `untrack` to prevent unnecessary reactivity
+- Use `lazy` for code-splitting large components
+
+## TypeScript Best Practices
+- Use interfaces for component props
+- Use generics for reusable components
+- Use strict TypeScript configuration
+- Use proper return types (JSX.Element or Component)
+
+## Testing
+- Use Vitest as the testing framework
+- Write unit tests for component logic
+- Write integration tests for component interactions
+- Mock external dependencies
+
+## Documentation
+- Add JSDoc comments to component interfaces
+- Document complex logic with inline comments
+- Create example usage in Storybook
+
+## Example
+
+```tsx
+import {cva} from 'class-variance-authority'
+import {ComponentProps, createMemo, mergeProps, splitProps} from 'solid-js'
+
+interface ButtonProps extends ComponentProps<'button'> {
+  /** Whether the button is in a disabled state */
+  disabled?: boolean
+  /** Function called when button is clicked */
+  onClick?: () => void
+  /** Visual variant of the button */
+  variant?: 'primary' | 'secondary' | 'outline'
+}
+
+// Define button variants using cva
+const buttonStyles = cva('px-4 py-2 rounded font-medium', {
+  defaultVariants: {
+    disabled: false,
+    variant: 'primary',
+  },
+  variants: {
+    disabled: {
+      false: '',
+      true: 'opacity-50 cursor-not-allowed',
+    },
+    variant: {
+      outline: 'border border-blue-600 text-blue-600 hover:bg-blue-50',
+      primary: 'bg-blue-600 text-white hover:bg-blue-700',
+      secondary: 'bg-gray-200 text-gray-800 hover:bg-gray-300',
+    },
+  },
+})
+
+/**
+ * Button component with multiple visual variants
+ */
+export const Button = (props: ButtonProps) => {
+  // First apply default values to props
+  const propsWithDefaults = mergeProps(
+    {disabled: false, variant: 'primary' as const},
+    props,
+  )
+
+  // Split props into those used internally and those to pass to the button element
+  // This maintains reactivity, unlike destructuring which would break it
+  const [innerProps, restProps] = splitProps(propsWithDefaults, [
+    'variant',
+    'children',
+    'onClick',
+    'disabled',
+  ])
+
+  // Notice that we use cva to generate the class names based on variants
+  const buttonClass = createMemo(() =>
+    buttonStyles({
+      disabled: innerProps.disabled,
+      variant: innerProps.variant,
+    }),
+  )
+
+  // Notice that we always access props through innerProps to maintain reactivity
+  return (
+    <button
+      class={buttonClass()}
+      disabled={innerProps.disabled}
+      onClick={() => !innerProps.disabled && innerProps.onClick?.()}
+      {...restProps}
+    >
+      {innerProps.children}
+    </button>
+  )
+}
+
+```
+
+## Reference Documentation
+
+- Always refer to the latest SolidJS reference documentation at https://docs.solidjs.com
+- Follow the patterns and techniques recommended in the official documentation
+- Regularly check for new features and API changes
+- Apply best practices from the documentation to ensure optimal performance and maintainability
+- Consult the reference when encountering complex reactivity challenges
+
+
+
+
+

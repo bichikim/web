@@ -176,17 +176,21 @@ export function curry<T1, T2, T3, T4, R>(
   length?: number,
   args?: unknown[],
 ): CurriedFunction4<T1, T2, T3, T4, R>
+
 export function curry(
   target: (...args: unknown[]) => unknown,
   length: number = target.length,
   args: unknown[] = [],
 ) {
   const _args: unknown[] = args
+
   return (...args: unknown[]) => {
     const nextArgs = [..._args, ...args]
+
     if (nextArgs.length >= length) {
       return target(...nextArgs)
     }
+
     return curry(target, target.length, nextArgs)
   }
 }

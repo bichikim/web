@@ -13,6 +13,7 @@ export interface CustomResolverOptions {
   sourceRoot?: string
   workspacePaths?: (string | RegExp)[]
 }
+
 export const createCustomResolver = (options: CustomResolverOptions) => {
   const {
     workspacePaths = [],
@@ -20,9 +21,7 @@ export const createCustomResolver = (options: CustomResolverOptions) => {
     osPathDelimiter = process.platform === 'win32' ? '\\' : '/',
     sourceRoot = 'src',
   } = options
-
   const rootRegexp = createRootRegexp(root, osPathDelimiter)
-
   const workspaceRegexString = getWorkspacePath(workspacePaths)
 
   return async function resolveId(
@@ -39,17 +38,11 @@ export const createCustomResolver = (options: CustomResolverOptions) => {
       importer,
       source,
     })
-
     const importerWithoutQuery = removeQuery(importer)
-
     const leftPath = importerWithoutQuery.replace(rootRegexp, '')
-
     const relativePath = getRelativePath(workspaceRegexps, leftPath)
-
     const deeps = getPathDeeps(relativePath)
-
     const path = removeDeeps(importerWithoutQuery, deeps)
-
     const lookupPath = resolveUrl('/', path, source)
 
     // eslint-disable-next-line no-invalid-this

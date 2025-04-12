@@ -7,10 +7,12 @@ describe('change-keys', () => {
     expect(changeKeys('foo', camelCase as any)).toBe('foo')
     expect(changeKeys(20, camelCase as any)).toBe(20)
     const symbol = Symbol()
+
     expect(changeKeys(symbol, camelCase as any)).toBe(symbol)
     expect(changeKeys(null, camelCase as any)).toBe(null)
     expect(changeKeys(undefined, camelCase as any)).toBe(undefined)
   })
+
   it('should change keys with an object', () => {
     expect(
       changeKeys(
@@ -22,12 +24,14 @@ describe('change-keys', () => {
       ),
     ).toEqual({myBar: 'bar', myFoo: 'foo'})
   })
+
   it('should change keys with an array', () => {
     expect(changeKeys([{'my-foo': 'foo'}, {'my-bar': 'bar'}], camelCase as any)).toEqual([
       {myFoo: 'foo'},
       {myBar: 'bar'},
     ])
   })
+
   it('should change keys with an object so deeply', () => {
     expect(
       changeKeys(
@@ -49,6 +53,7 @@ describe('change-keys', () => {
       myFoo: [{myFoo: 'foo'}, {myBar: 'bar', myJohn: {myFoo: 'foo'}}, 'john'],
     })
   })
+
   it('should change keys with deep count', () => {
     expect(
       changeKeys(

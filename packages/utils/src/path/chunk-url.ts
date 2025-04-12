@@ -14,13 +14,10 @@ export interface ChunkedUrlResult {
  */
 export const chunkUrl = (url: string): ChunkedUrlResult => {
   const leftUrl: string = url.replace(protocolRegx, '')
-
   const protocol = url.replace(leftUrl, '')
   // noinspection JSUnusedLocalSymbols
   const [path, query] = leftUrl.split('?')
-
   const [maybeHost, ...chunkedUrl] = path.split('/')
-
   const hasHost = hostRegx.test(maybeHost)
 
   const result: ChunkedUrlResult = {

@@ -1,21 +1,34 @@
 import 'virtual:uno.css'
-import {MetaProvider} from '@solidjs/meta'
+import './global.css'
+import {MetaProvider, Title} from '@solidjs/meta'
 import {Router} from '@solidjs/router'
 import {FileRoutes} from '@solidjs/start/router'
-import {Suspense} from 'solid-js'
+import {Show, Suspense} from 'solid-js'
+import {ReloadPrompt} from './ReloadPrompt'
+import {ServiceWorkerProvider} from 'src/components/service-worker'
+import {useIsClient} from '@winter-love/solid-use'
+import {SToastProvider} from 'src/components/toast'
 
 export default function App() {
+  const isClient = useIsClient()
+
   return (
-    <Router
-      root={(props) => (
-        <MetaProvider>
-          <a href="/">Index</a>
-          <a href="/about">About</a>
-          <Suspense>{props.children}</Suspense>
-        </MetaProvider>
-      )}
-    >
-      <FileRoutes />
-    </Router>
+    <SToastProvider>
+      <ServiceWorkerProvider src="/sw.js">
+        <Router
+          root={(props) => (
+            <MetaProvider>
+              <Title>Coong</Title>
+              <Suspense>{props.children}</Suspense>
+            </MetaProvider>
+          )}
+        >
+          <FileRoutes />
+        </Router>
+        <Show when={isClient()}>
+          <ReloadPrompt />
+        </Show>
+      </ServiceWorkerProvider>
+    </SToastProvider>
   )
 }

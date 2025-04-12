@@ -1,4 +1,5 @@
 import {splitWindowRoot} from '../'
+import {describe, expect, it} from 'vitest'
 
 describe('splitWindowRoot', () => {
   it.each([

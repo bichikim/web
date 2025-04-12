@@ -1,5 +1,5 @@
 /**
- * @vitest-environment happy-dom
+ * @vitest-environment jsdom
  */
 import {describe, expect, it, vi} from 'vitest'
 import {isScrollAble} from '../'
@@ -19,11 +19,13 @@ describe('isScrollAble', () => {
       result: isScrollAble(document.createElement('div')),
     }
   }
+
   it('should return true with scroll', () => {
     const {result} = setup('auto')
 
     expect(result).toBe(true)
   })
+
   it('should return false with none scroll', () => {
     const {result} = setup('none')
 

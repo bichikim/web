@@ -13,9 +13,11 @@ export function toValue<T, Args extends unknown[]>(
   args: Args,
 ): T
 export function toValue<T>(value: T): T
+
 export function toValue(value: any, args?: any[]) {
   if (typeof value === 'function') {
     return value(...(args ?? []))
   }
+
   return value
 }

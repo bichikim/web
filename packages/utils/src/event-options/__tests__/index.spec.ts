@@ -15,6 +15,7 @@ describe('createEventOptions', () => {
       passive: true,
     })
   })
+
   it('should create event options without supporting passive', () => {
     _isSupportPassive.mockReturnValueOnce(false)
 

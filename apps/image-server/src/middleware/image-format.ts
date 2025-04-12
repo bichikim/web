@@ -4,7 +4,7 @@ import {createProvideContext} from '../utils/context'
 export const formatContext = createProvideContext<string | undefined>()
 
 export const imageFormat = (): RequestHandler => {
-  return (req, res, next) => {
+  return (req, _, next) => {
     // eslint-disable-next-line id-length
     const {f} = req.query
 
@@ -17,7 +17,6 @@ export const imageFormat = (): RequestHandler => {
     }
 
     formatContext.provide(req, myFormat)
-
     next()
   }
 }

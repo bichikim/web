@@ -1,7 +1,9 @@
 import {createCustomResolver} from '../'
 import {describe, expect, it, vi} from 'vitest'
+
 describe('createCustomResolver', () => {
   const fakeResolve = vi.fn(() => ({id: 'fake-id'}))
+
   const fakeRollup = {
     resolve: fakeResolve,
   }

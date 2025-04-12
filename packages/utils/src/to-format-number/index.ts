@@ -7,5 +7,6 @@ export const toFormatNumber = (
 ) => {
   const {style = 'decimal', ...rest} = options
   const numberValue = toNumber(value)
+
   return new Intl.NumberFormat(locale, {...rest, style}).format(numberValue)
 }

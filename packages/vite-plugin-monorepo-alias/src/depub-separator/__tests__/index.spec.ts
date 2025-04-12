@@ -1,4 +1,5 @@
 import {dedupSeparator} from '../'
+import {describe, expect, it} from 'vitest'
 
 describe('dedupSeparator', () => {
   it.each([

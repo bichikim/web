@@ -9,6 +9,7 @@ export const applySourceRoot = (
   context: SourceRootContext,
 ): RegExp[] => {
   const _sourceRoot = typeof sourceRoot === 'function' ? sourceRoot(context) : sourceRoot
+
   return regexStringList.map((regexString) => {
     return new RegExp(`${regexString}${_sourceRoot}/`, 'u')
   })

@@ -17,10 +17,17 @@
     "experimentalDecorators": true,
     "importHelpers": true,
     "noImplicitAny": false,
-    "types": ["@testing-library/jest-dom"],
     "lib": ["ESNext", "DOM", "DOM.Iterable", "ESNext.Promise"],
     "skipLibCheck": true,
     "skipDefaultLibCheck": true
   },
-  "include": ["**/*.ts", "**/*.mts", "**/*.md"]
+  "include": [
+    "apps/**/*.ts",
+    "packages/**/*.mts",
+    "**/*.md",
+    "*.mts",
+    "*.ts",
+    "vitest.setup.ts"
+  ],
+  "exclude": ["node_modules", ".output", ".server"]
 }

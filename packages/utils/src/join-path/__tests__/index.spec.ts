@@ -1,5 +1,5 @@
 import {joinPath} from '../'
-import {describe, it, expect} from 'vitest'
+import {describe, expect, it} from 'vitest'
 
 describe('join-path', () => {
   it.each([

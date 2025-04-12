@@ -1,0 +1,51 @@
+{
+  "name": "@winter-love/solid-components",
+  "version": "1.0.35",
+  "description": "",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bichikim/web.git"
+  },
+  "sideEffects": false,
+  "type": "module",
+  "exports": {
+    ".": {
+      "solid": "./dist/index/index.jsx",
+      "import": "./dist/index/index.module.js",
+      "types": "./dist/index/index.d.ts",
+      "browser": "./dist/index/index.module.js",
+      "require": "./dist/index/index.common.js",
+      "node": "./dist/index/index.common.js"
+    }
+  },
+  "main": "./dist/index/index.common.js",
+  "module": "./dist/index/index.module.js",
+  "types": "./dist/index/index.d.ts",
+  "files": [
+    "dist/*"
+  ],
+  "scripts": {
+    "build": "node fix-build.js && rollup -c rollup.config.js && tspc -p tsconfig.build.json",
+    "check-types": "tsc --noEmit",
+    "lint": "eslint src",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@winter-love/lodash": "workspace:*",
+    "@winter-love/solid-use": "workspace:*",
+    "@winter-love/utils": "workspace:*",
+    "class-variance-authority": "^0.7.1",
+    "solid-js": "^1.9.3"
+  },
+  "devDependencies": {
+    "@rollup/plugin-alias": "^5.1.1",
+    "@winter-love/vite-lib-config": "workspace:*",
+    "rollup": "^4.32.1",
+    "rollup-preset-solid": "^3.0.0",
+    "ts-patch": "^3.3.0",
+    "typescript-transform-paths": "^3.5.4"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

@@ -16,6 +16,11 @@ export default function generator(plop: PlopTypes.NodePlopAPI): void {
         templateFile: 'templates/vite.config.hbs',
         type: 'add',
       },
+      // {
+      //   path: 'packages/{{kebabCase name}}/README.md',
+      //   templateFile: 'templates/readme.hbs',
+      //   type: 'add',
+      // },
       async (answers: Record<string, any>) => {
         await new Promise((resolve) => {
           cpx.copy(
@@ -30,8 +35,9 @@ export default function generator(plop: PlopTypes.NodePlopAPI): void {
     description: 'create a new package',
     prompts: [
       {
-        message: 'What is the name of the package?',
-        name: 'name',
+        default: 'winter-love',
+        message: 'What is the name of the package scope?',
+        name: 'scope',
         type: 'input',
         validate: Boolean,
       },

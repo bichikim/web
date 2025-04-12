@@ -1,29 +1,71 @@
 {
   "name": "@apps/bplan-client",
+  "private": true,
   "type": "module",
   "scripts": {
     "build": "vinxi build",
-    "dev": "vinxi dev",
+    "check-types": "tsc --noEmit",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio",
+    "dev": "vinxi dev --host ",
+    "dev:ninja": "console-ninja vinxi dev --host",
+    "generate-pwa-assets": "pwa-assets-generator",
+    "lint": "eslint src/**/*.ts[x]",
     "start": "node ./.output/server/index.mjs",
-    "check-types": "tsc --noEmit"
+    "start:local": "node -r dotenv/config ./.output/server/index.mjs"
   },
-  "private": true,
   "dependencies": {
+    "@auth/core": "^0.38.0",
+    "@auth/drizzle-adapter": "^1.8.0",
+    "@auth/solid-start": "^0.16.0",
+    "@neondatabase/serverless": "^0.10.4",
     "@solidjs/meta": "^0.29.4",
-    "@solidjs/router": "^0.13.5",
-    "@solidjs/start": "^1.0.1",
+    "@solidjs/router": "0.15.3",
+    "@solidjs/start": "^1.0.11",
+    "@tonejs/midi": "^2.0.28",
+    "@trpc/client": "^11.0.0",
+    "@trpc/server": "^11.0.0",
+    "@vercel/analytics": "^1.5.0",
+    "@winter-love/lodash": "workspace:*",
+    "@winter-love/solid-components": "workspace:*",
+    "@winter-love/solid-use": "workspace:*",
     "@winter-love/utils": "workspace:*",
-    "solid-js": "^1.8.17",
-    "vite": "^5",
-    "vinxi": "0.3.11"
+    "class-variance-authority": "^0.7.1",
+    "cookie": "^1.0.2",
+    "dotenv": "^16.4.7",
+    "drizzle-orm": "^0.39.3",
+    "h3": "^1.10.1",
+    "ipx": "^3.0.1",
+    "js-cookie": "^3.0.5",
+    "smplr": "^0.16.1",
+    "solid-js": "^1.9.4",
+    "standardized-audio-context": "^25.3.77",
+    "ufo": "^1.5.4",
+    "vinxi": "0.4.3",
+    "vite": "^5.2.8",
+    "zod": "^3.24.2"
   },
   "devDependencies": {
-    "unocss": "^0.60.4",
-    "@unocss/vite": "^0.60.4",
+    "@iconify-json/hugeicons": "^1.2.3",
+    "@iconify-json/tabler": "^1.2.13",
+    "@types/js-cookie": "^3.0.6",
+    "@types/serviceworker": "^0.0.108",
+    "@unocss/vite": "^65.4.3",
+    "@vite-pwa/assets-generator": "^0.2.6",
+    "@vitejs/plugin-legacy": "6.0.0",
+    "@winter-love/sw": "workspace:*",
+    "@winter-love/vite-lib-config": "workspace:*",
+    "drizzle-kit": "^0.30.4",
     "flush-promises": "^1.0.2",
-    "typescript": "^5.3.3"
+    "glob": "^11.0.0",
+    "terser": "^5.37.0",
+    "typescript": "^5.7.3",
+    "unocss": "^65.4.3",
+    "vite-plugin-full-reload": "^1.2.0",
+    "vite-plugin-static-copy": "^2.2.0",
+    "vue-tsc": "^2.2.0"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">= 22"
   }
 }

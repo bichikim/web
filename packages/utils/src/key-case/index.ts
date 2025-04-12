@@ -27,18 +27,24 @@ export const createKeyCase = <
       }
 
       const cacheValue = cache.get(prop)
+
       if (cacheValue !== undefined) {
         return cacheValue
       }
 
       let value = Reflect.get(target, prop, receiver)
+
       // noinspection SuspiciousTypeOfGuard
       if (value === undefined && typeof prop !== 'symbol') {
         const searchKey = changeKeyCase(prop)
+
         value = Reflect.get(target, searchKey, receiver)
       }
+
       const newValue = createKeyCase(value as any, changeKeyCase)
+
       cache.set(prop, newValue)
+
       return newValue
     },
   }) as unknown as R

@@ -7,10 +7,13 @@ export const updateElementClasses = (
   ...classes: string[]
 ) => {
   const element = getElement(_element)
+
   if (!element) {
     return
   }
+
   const prevClasses = element[UPDATE_ELEMENT_SYMBOL] ?? []
+
   element.classList.remove(...prevClasses)
   element[UPDATE_ELEMENT_SYMBOL] = [...classes]
   element.classList.add(...classes)

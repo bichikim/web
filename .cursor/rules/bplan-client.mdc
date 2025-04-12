@@ -1,0 +1,108 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# BPlan Client Application Guidelines
+
+Project path: apps/bplan-client
+
+## Project Overview
+BPlan Client is a Solid Start SSR application that follows a specific structure and conventions.
+
+## Directory Structure
+```
+/
+├── src/                  # Source code
+│   ├── components/       # Reusable UI components
+│   ├── env/              # Environment configuration
+│   ├── middleware/       # Request/response middleware
+│   ├── routes/           # File-based routing
+│   ├── server/           # Server-side code
+│   ├── use/              # Custom hooks and composables
+│   ├── utils/            # Utility functions
+│   ├── types/            # TypeScript type definitions
+│   ├── env/              # Environment configuration
+│   ├── App.tsx           # Root application component
+│   ├── entry-client.tsx  # Client-side entry point
+│   └── entry-server.tsx  # Server-side entry point
+├── public/               # Static assets
+└── .env                  # Environment variables
+```
+
+## Coding Standards
+
+### Component Structure
+- Components should be placed in `src/components/`
+- Each component should have its own directory with the following structure:
+- All components must be Solid.js components
+```
+component-name/
+├── index.ts           # Export file for components, types, and hooks
+├── Component1.tsx     # Component implementation
+├── Component2.tsx     # Additional component implementation
+├── types.ts           # Type definitions and interfaces for components
+└── use-component.ts   # Component-specific custom hooks (optional)
+```
+
+### API Structure
+- All API requests should use tRPC API calls, except for some existing RESTful API calls
+- All API endpoints should be created using tRPC, except for some existing RESTful APIs
+
+### Routing
+- Routes are file-based in `src/routes/`
+- Implement proper error boundaries
+
+### Type Safety
+- Use TypeScript strictly
+- Define interfaces for all data structures
+- Avoid `any` type usage
+- Use proper type imports/exports
+
+### Important Notes
+- Implement proper code splitting but never split Solidjs props
+
+### Environment Configuration
+- Follow the `.env.example` template
+- Document all environment variables
+
+### Error Handling
+- Implement proper error boundaries
+- Use consistent error handling patterns
+
+### Testing
+- Write unit tests for components
+- Write integration tests for API endpoints
+- Implement E2E tests for critical flows
+
+### Build and Deployment
+- Use `pnpm` for package management
+- Follow semantic versioning
+- Document deployment procedures
+
+## Deployment Environment
+- This project is deployed on Vercel
+
+## Best Practices
+1. Follow functional programming principles
+2. Keep components small and focused
+3. Use proper TypeScript types
+4. Implement proper error handling
+5. Follow performance optimization guidelines
+6. Write comprehensive tests
+7. Document code properly
+8. Follow consistent naming conventions
+9. Implement proper security measures
+10. Keep dependencies up to date
+
+## Security Guidelines
+1. Implement proper authentication
+3. Sanitize user inputs
+5. Follow security best practices
+
+## Documentation
+- Document all components
+- Document API endpoints
+- Keep README up to date
+- Document environment setup
+- Document deployment procedures

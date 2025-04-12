@@ -9,6 +9,7 @@ describe('isPascalCase', () => {
     expect(isPascalCase('FooB1ar')).toBe(true)
     expect(isPascalCase('Foobar')).toBe(true)
   })
+
   it('should return false with pascal case string', () => {
     expect(isPascalCase('booBar')).toBe(false)
     expect(isPascalCase('Foo-bar')).toBe(false)

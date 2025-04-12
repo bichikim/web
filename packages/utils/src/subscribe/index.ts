@@ -19,6 +19,7 @@ export const createSubscribe = <Value extends NotFunction>(
 
   const listener = (value: Value) => {
     _value = value
+
     for (const callback of _poll) {
       callback(value)
     }
@@ -26,19 +27,21 @@ export const createSubscribe = <Value extends NotFunction>(
 
   const subscribe = (callback: SubscribeCallback<Value>): UnsubscribeFunc<Value> => {
     _poll.add(callback)
+
     return () => {
       //
       _poll.delete(callback)
+
       if (_value === undefined) {
         _value = initValue()
       }
+
       return _value
     }
   }
 
   const update = (value: ((value: Value | undefined) => Value) | Value) => {
     _value = typeof value === 'function' ? value(_value) : value
-
     listener(_value)
   }
 
