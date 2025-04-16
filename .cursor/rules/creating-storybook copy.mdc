@@ -1,0 +1,133 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Storybook Guidelines for Solid.js Components
+
+## File Structure
+- Stories should be placed in the same directory as the component
+- Story file naming: `ComponentName.story.tsx`
+
+```tsx
+// Button.stories.tsx
+import type {Meta, StoryObj} from 'storybook-solidjs'
+import {Button} from './Button'
+import {fn} from '@storybook/test'
+
+const meta = {
+  argTypes: {
+    // Define your argTypes here
+    size: {control: 'select', options: ['sm', 'md', 'lg']},
+    variant: {control: 'select', options: ['primary', 'secondary', 'ghost']},
+  },
+  args: {
+    // Default props
+    children: 'Primary Button',
+    onClick: fn(),
+    size: 'md',
+    variant: 'primary',
+  },
+  component: Button,
+  title: 'UI/Button',
+} satisfies Meta<typeof Button>
+
+export default meta
+type Story = StoryObj<typeof meta>
+
+// Primary variant
+export const Primary: Story = {
+  args: {
+    children: 'Primary Button',
+    size: 'md',
+    variant: 'primary',
+  },
+}
+
+// With loading state
+export const Loading: Story = {
+  args: {
+    loading: true,
+  },
+}
+
+```
+
+## Component Template
+
+```tsx
+// MyComponent.stories.tsx
+import type {Meta, StoryObj} from 'storybook-solidjs'
+import {MyComponent} from './MyComponent'
+
+const Template = (args: any) => (
+  <div class="flex gap-4">
+    <MyComponent {...args} variant="secondary" />
+  </div>
+)
+
+const meta = {
+  argTypes: {
+    // Define your argTypes here
+    size: {control: 'select', options: ['sm', 'md', 'lg']},
+    variant: {control: 'select', options: ['primary', 'secondary']},
+  },
+  component: Template,
+  title: 'Components/MyComponent',
+} satisfies Meta<typeof MyComponent>
+
+export default meta
+type Story = StoryObj<typeof meta>
+
+export const Default: Story = {
+  args: {
+    // Default props
+  },
+}
+
+export const Variants: Story = {
+  args: {
+    variant: 'secondary',
+  },
+}
+
+export const Sizes: Story = {
+  args: {
+    size: 'sm',
+  },
+}
+
+```
+## Guidelines
+
+1. **Basic Story Structure**
+   - Meta and StoryObj types MUST be imported from 'storybook-solidjs'
+   - Thoroughly analyze component props and document them in argTypes
+   - Analyze and document component's default props in meta's args field
+   - Each component should include at minimum the following stories:
+     - Default
+     - Variants
+
+2. **Props Documentation**
+   - All props must be documented using JSDoc
+   - Use argTypes to specify control types
+
+3. **Interactive Examples**
+   - Use actions to display event handlers
+   - Complex interactions as separate stories
+
+4. **Accessibility**
+   - Each story must pass accessibility tests
+   - Document aria attributes where necessary
+
+5. **Testing Guidelines**
+   - Write snapshot tests for each story
+   - Test across different viewport sizes
+   - Include interaction testing
+   - Include accessibility testing
+
+6. **Best Practices**
+   - Keep stories focused and concise
+   - Use story decorators for common wrappers
+   - Document component API
+   - Keep stories up to date with component changes
