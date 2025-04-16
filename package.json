@@ -103,7 +103,7 @@
     "vite-plugin-mkcert": "^1.17.6",
     "vite-plugin-solid": "^2.11.1",
     "vite-plugin-static-copy": "2.2.0",
-    "vitest": "3.0.7"
+    "vitest": "3.0.9"
   },
   "packageManager": "pnpm@10.7.1",
   "engines": {
