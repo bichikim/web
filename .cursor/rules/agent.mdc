@@ -14,3 +14,7 @@ After responding, cross-verify the provided information again on the internet.
 ##Revision
 Clearly verify and fix TypeScript issues, lint problems, and import issues. When making modifications, always search for the latest information on the internet first before proceeding.
 Reference the package.json version information rather than using the latest versions.
+
+## Code Writing
+Always search for and follow the same patterns as existing components, storybooks, etc. when writing new code.
+This guideline emphasizes maintaining consistency by referencing and following established patterns in the codebase, whether you're creating new components, writing storybooks, or implementing other types of code.
