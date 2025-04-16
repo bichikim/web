@@ -1,6 +1,7 @@
 import {resolveAccessor} from 'src/resolve-accessor'
 import {MaybeAccessor} from 'src/types'
 import {useWatch} from 'src/watch'
+import {createSignal, createEffect} from 'solid-js'
 
 export interface WaitSource<Options extends Record<string, any>> {
   cancel: () => void
@@ -42,8 +43,11 @@ export const createUseWait = <Options extends Record<string, any>>(
     const waitAccessor = resolveAccessor(wait)
     const optionsAccessor = resolveAccessor(options)
 
-    useWatch(waitAccessor, (wait) => {
-      source.create?.(callback, wait, optionsAccessor())
+    createEffect(() => {
+      const wait = waitAccessor()
+      const options = optionsAccessor()
+
+      source.create?.(callback, wait, options)
 
       return () => {
         source.cancel()

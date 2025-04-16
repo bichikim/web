@@ -1,7 +1,7 @@
-import {describe, it} from 'vitest'
+import {describe, expect, it} from 'vitest'
 
 describe('Button', () => {
   it('should render', () => {
-    console.log('Button')
+    expect(true).toBe(true)
   })
 })

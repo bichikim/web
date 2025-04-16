@@ -6,7 +6,27 @@
     "build": {
       "dependsOn": ["^build"],
       "inputs": ["src/**/*.tsx", "src/**/*.ts", "src/**/*.css"],
-      "outputs": ["dist/**"]
+      "outputs": ["dist/**"],
+      "passThroughEnv": [
+        "DATABASE_URL_UNPOOLED",
+        "PGHOST",
+        "POSTGRES_USER",
+        "DATABASE_URL",
+        "PGPASSWORD",
+        "POSTGRES_PRISMA_URL",
+        "PGDATABASE",
+        "PGHOST_UNPOOLED",
+        "POSTGRES_URL_NO_SSL",
+        "PGUSER",
+        "POSTGRES_PASSWORD",
+        "POSTGRES_DATABASE",
+        "POSTGRES_URL_NON_POOLING",
+        "POSTGRES_URL",
+        "POSTGRES_HOST",
+        "AUTH_SECRET",
+        "GITHUB_CLIENT_ID",
+        "GITHUB_CLIENT_SECRET"
+      ]
     },
     "dev": {
       "cache": false,

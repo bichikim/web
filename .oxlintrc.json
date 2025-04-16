@@ -19,6 +19,7 @@
     {
       "files": ["*.ts"],
       "rules": {
+        "typescript/triple-slash-reference": "off",
         "unicorn/no-document-cookie": "off"
       }
     },

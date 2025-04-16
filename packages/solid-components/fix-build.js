@@ -1,7 +1,7 @@
 import {readFileSync, writeFileSync} from 'node:fs'
 const modulePath = await import.meta.resolve('rollup-preset-solid')
 
-const modulePathBody = modulePath.replace(/^file:\/\/\/(\w:\/\/)?/u, '')
+const modulePathBody = modulePath.replace(/^file:\/\/\/(\w:\/\/)?/u, '/')
 
 const code = readFileSync(modulePathBody, 'utf8')
 

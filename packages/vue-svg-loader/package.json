@@ -5,7 +5,6 @@
   "description": "vue-svg-loader 🧪 experimental",
   "main": "src/index.js",
   "scripts": {
-    "build": "echo doing notting",
     "dev": "echo doing notting"
   },
   "dependencies": {

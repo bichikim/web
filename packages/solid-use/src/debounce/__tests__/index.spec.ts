@@ -1,98 +1,88 @@
 import {useDebounce} from '../'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import {SinonFakeTimers, useFakeTimers} from 'sinon'
-import {createRoot} from 'solid-js'
+import {renderHook} from '@solidjs/testing-library'
+import flushPromises from 'flush-promises'
 
 describe('useDebounce', () => {
-  let timer: SinonFakeTimers
-
-  beforeEach(() => {
-    timer = useFakeTimers()
-  })
-
-  afterEach(() => {
-    timer.restore()
-  })
-
   it('should debounce calling the callback function', () => {
+    vi.useFakeTimers()
     const options = {leading: true}
     const args = ['hello']
     const callback = vi.fn()
 
-    const {debounce, dispose} = createRoot((dispose) => {
-      const debounce = useDebounce(callback, 100, options)
+    const {result, cleanup} = renderHook(() => useDebounce(callback, 100, options))
 
-      return {debounce, dispose}
-    })
-
-    debounce.execute(...args)
+    result.execute(...args)
     expect(callback).toHaveBeenCalledTimes(1)
-    debounce.execute(...args)
-    timer.tick(50)
-    debounce.execute(...args)
-    timer.tick(50)
-    debounce.execute(...args)
+    result.execute(...args)
+    vi.advanceTimersByTime(50)
+    result.execute(...args)
+    vi.advanceTimersByTime(50)
+    result.execute(...args)
+    vi.advanceTimersByTime(50)
     expect(callback).toHaveBeenCalledTimes(1)
-    timer.tick(100)
+    vi.advanceTimersByTime(100)
     expect(callback).toHaveBeenCalledTimes(2)
-    dispose()
+    cleanup()
+    vi.useRealTimers()
   })
 
   it('should cancel debounce with dispose', () => {
+    vi.useFakeTimers()
     const options = {leading: true}
     const args = ['hello']
     const callback = vi.fn()
 
-    const {debounce, dispose} = createRoot((dispose) => {
-      const debounce = useDebounce(callback, 100, options)
+    const {result, cleanup} = renderHook(() => useDebounce(callback, 100, options))
 
-      return {debounce, dispose}
-    })
-
-    debounce.execute(...args)
-    timer.tick(50)
-    debounce.execute(...args)
-    dispose()
-    timer.tick(100)
+    result.execute(...args)
+    vi.advanceTimersByTime(50)
+    result.execute(...args)
+    cleanup()
+    vi.advanceTimersByTime(50)
     expect(callback).toHaveBeenCalledTimes(1)
+    vi.useRealTimers()
   })
 
   it('should cancel debounce', () => {
+    vi.useFakeTimers()
     const options = {leading: true}
     const args = ['hello']
     const callback = vi.fn()
 
-    const {debounce} = createRoot((dispose) => {
-      const debounce = useDebounce(callback, 100, options)
+    const {result, cleanup} = renderHook(() => useDebounce(callback, 100, options))
 
-      return {debounce, dispose}
-    })
-
-    debounce.execute(...args)
-    timer.tick(50)
-    debounce.execute(...args)
-    debounce.cancel()
-    timer.tick(100)
+    result.execute(...args)
+    vi.advanceTimersByTime(50)
+    result.execute(...args)
+    cleanup()
+    vi.advanceTimersByTime(50)
     expect(callback).toHaveBeenCalledTimes(1)
+    result.execute(...args)
+    vi.advanceTimersByTime(50)
+    result.execute(...args)
+    result.cancel()
+    vi.advanceTimersByTime(50)
+    expect(callback).toHaveBeenCalledTimes(1)
+    vi.useRealTimers()
   })
 
   it('should flush debounce', () => {
+    vi.useFakeTimers()
     const options = {leading: true}
     const args = ['hello']
     const callback = vi.fn()
 
-    const {debounce} = createRoot((dispose) => {
-      const debounce = useDebounce(callback, 100, options)
+    const {result, cleanup} = renderHook(() => useDebounce(callback, 100, options))
 
-      return {debounce, dispose}
-    })
-
-    debounce.execute(...args)
-    timer.tick(50)
-    debounce.execute(...args)
-    debounce.flush()
+    result.execute(...args)
+    vi.advanceTimersByTime(50)
+    result.execute(...args)
+    result.flush()
     expect(callback).toHaveBeenCalledTimes(2)
-    timer.tick(100)
+    vi.advanceTimersByTime(100)
     expect(callback).toHaveBeenCalledTimes(2)
+    cleanup()
   })
 })

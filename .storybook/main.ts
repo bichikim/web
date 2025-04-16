@@ -16,8 +16,8 @@ const config: StorybookConfig = {
     },
   },
   stories: [
-    '../apps/bplan-client/src/**/*.mdx',
-    '../apps/bplan-client/src/**/*.story.@(js|jsx|mjs|ts|tsx)',
+    '../apps/coong/src/**/*.mdx',
+    '../apps/coong/src/**/*.story.@(js|jsx|mjs|ts|tsx)',
     '../packages/solid/src/**/*.mdx',
     '../packages/solid/src/**/*.story.@(js|jsx|mjs|ts|tsx)',
     '../packages/solid-components/src/**/*.story.@(js|jsx|mjs|ts|tsx)',

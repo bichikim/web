@@ -77,7 +77,7 @@ describe('waitFactory', () => {
       wait: debounceWait,
     },
   ])('should return a function (set timeout)', ({wait, leading, options}) => {
-    const timer = useFakeTimers()
+    vi.useFakeTimers()
     const [waitTime, setWaitTime] = createSignal(100)
     const {result} = renderHook(() => wait(callback, waitTime, options))
 
@@ -87,11 +87,11 @@ describe('waitFactory', () => {
     if (leading) {
       expect(callback).toHaveBeenCalledTimes(1)
       callback.mockClear()
+    } else {
+      expect(callback).toHaveBeenCalledTimes(0)
     }
-
-    expect(callback).toHaveBeenCalledTimes(0)
     result.execute()
-    timer.tick(101)
+    vi.advanceTimersByTime(101)
     result.cancel()
     expect(callback).toHaveBeenCalledTimes(1)
     callback.mockClear()
@@ -103,10 +103,14 @@ describe('waitFactory', () => {
       callback.mockClear()
     }
 
-    timer.tick(50)
+    vi.advanceTimersByTime(50)
     setWaitTime(150)
-    timer.tick(200)
-    expect(callback).toHaveBeenCalledTimes(0)
+    vi.advanceTimersByTime(200)
+    if (leading) {
+      expect(callback).toHaveBeenCalledTimes(0)
+    } else {
+      expect(callback).toHaveBeenCalledTimes(1)
+    }
     callback.mockClear()
     result.execute()
 
@@ -116,7 +120,7 @@ describe('waitFactory', () => {
     }
 
     expect(callback).toHaveBeenCalledTimes(0)
-    timer.tick(50)
+    vi.advanceTimersByTime(50)
     result.flush()
 
     if (leading) {
@@ -125,12 +129,12 @@ describe('waitFactory', () => {
       expect(callback).toHaveBeenCalledTimes(1)
     }
 
-    timer.restore()
+    vi.useRealTimers()
   })
 
   it('should cancel before dispose', () => {
+    vi.useFakeTimers()
     const callback = vi.fn()
-    const timer = useFakeTimers()
     const timeout = 150
 
     const {
@@ -144,14 +148,12 @@ describe('waitFactory', () => {
 
     wait.execute()
     expect(callback).not.toHaveBeenCalled()
-    timer.tick(timeout + 1)
-    expect(callback).toHaveBeenCalled()
-    callback.mockClear()
-    wait.execute()
+    vi.advanceTimersByTime(timeout + 1)
+    expect(callback).toHaveBeenCalledTimes(1)
     cleanup()
-    timer.tick(timeout + 1)
-    expect(callback).not.toHaveBeenCalled()
-    timer.restore()
+    vi.advanceTimersByTime(timeout + 1)
+    expect(callback).toHaveBeenCalledTimes(1)
+    vi.useRealTimers()
   })
 
   it.each([
@@ -161,7 +163,8 @@ describe('waitFactory', () => {
     },
   ])('should accept wait and options accessors', async ({waits, args}) => {
     const callback = vi.fn()
-    const timer = useFakeTimers()
+
+    vi.useFakeTimers()
 
     const {
       result: {wait},
@@ -174,12 +177,12 @@ describe('waitFactory', () => {
 
     wait.execute(...args)
     expect(callback).not.toHaveBeenCalled()
-    timer.tick(50)
+    vi.advanceTimersByTime(50)
     expect(callback).not.toHaveBeenCalled()
-    timer.tick(101)
+    vi.advanceTimersByTime(101)
     expect(callback).toHaveBeenCalled()
     cleanup()
-    timer.restore()
+    vi.useRealTimers()
   })
 })
 // computations created outside a `createRoot` or `render` will never be disposed

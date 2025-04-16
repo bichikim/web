@@ -224,6 +224,7 @@ export default [
       'max-statements-per-line': ['error', {max: 2}],
       'n/no-extraneous-import': 'off',
       'n/no-missing-import': 'off',
+      'n/no-unpublished-import': 'off',
       'no-alert': 'error',
       'no-array-constructor': 'error',
       'no-await-in-loop': 'error',
