@@ -1,20 +1,16 @@
 ---
 description: 
 globs: 
-alwaysApply: true
+alwaysApply: false
 ---
-
 # Agent Rule
 
-## 정보
+## Information
+If you are less than 80% confident before starting, search the internet for information and then respond.
 
-시작하기 전에 80% 이상 확신이 없다면 인터넷에 정보를 찾고 응답을 한다
+## Response
+After responding, cross-verify the provided information again on the internet.
 
-## 응답
-
-응답한 정보는 응답 후 인터넷에 교차 검증을 다시 한번 한다
-
-## 재수정
-
-typescript 문제 lint, import 문제를 명확하게 확인하고 수정한다 수정시 항상 인터넷에서 먼저 최신 정보를 찾고 진행 한다
-최신 보다 package.json 버전 정보를 참고하여 찾는다
+##Revision
+Clearly verify and fix TypeScript issues, lint problems, and import issues. When making modifications, always search for the latest information on the internet first before proceeding.
+Reference the package.json version information rather than using the latest versions.
