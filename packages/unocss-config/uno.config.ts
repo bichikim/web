@@ -3,6 +3,7 @@ import presetLegacyCompat from '@unocss/preset-legacy-compat'
 import transformerVariantGroup from '@unocss/transformer-variant-group'
 import transformerCompileClass from './transformer-class'
 import {defineUsefulConfig} from 'unocss-preset-useful'
+import {presetVariable} from '@winter-love/unocss-preset-var'
 import * as theme from '@unocss/preset-uno/theme'
 import {pianoKeys} from './piano'
 const HUNDRED = 100
@@ -15,30 +16,6 @@ const toNumber = (value: string, defaultValue: number): number => {
   }
 
   return result
-}
-
-const readName = (name: string): string => {
-  switch (name) {
-    case 'background-color':
-
-    case 'bg': {
-      return 'background-color'
-    }
-    case 'width':
-
-    case 'w': {
-      //
-      return 'width'
-    }
-    case 'height':
-
-    case 'h': {
-      //
-      return 'height'
-    }
-  }
-
-  return name
 }
 
 export default defineUsefulConfig(
@@ -61,6 +38,7 @@ export default defineUsefulConfig(
       presetUno({
         autoInstall: true,
       }),
+      presetVariable(),
       presetLegacyCompat({
         commaStyleColorFunction: true,
       }),
@@ -84,23 +62,6 @@ export default defineUsefulConfig(
           }
         },
       ],
-      // inject var
-      [
-        /^un-var-(.+)=(.+)$/u,
-        ([, variableName, value]) => {
-          return {
-            [`--un-${variableName}`]: value,
-          }
-        },
-      ],
-      [
-        /^var-(.+)=(.+)$/u,
-        ([, variableName, value]) => {
-          return {
-            [`--var-${variableName}`]: value,
-          }
-        },
-      ],
       [
         'disable-tap-zoom',
         {
@@ -113,7 +74,7 @@ export default defineUsefulConfig(
           'background-color': '#e5e5f7',
           'background-image':
             'repeating-radial-gradient( circle at 0 0, transparent 0, #e5e5f7 6px ),' +
-            ' repeating-linear-gradient( #9495a555, #9495a5 )',
+            ' repeating-linear-gradient(rgba(195, 196, 202, 0.33), #9495a5 )',
           opacity: '0.3',
         },
       ],
@@ -132,22 +93,6 @@ export default defineUsefulConfig(
             scrollbar-width: none;
           }
         `
-        },
-      ],
-      [
-        /^(width|height|w|h|top|left|right|bottom|border-color|bg)-var-(.+)?$/u,
-        ([, direction, variableName]) => {
-          const kind = readName(direction)
-
-          if (variableName) {
-            return {
-              [kind]: `var(--var-${variableName})`,
-            }
-          }
-
-          return {
-            [kind]: `var(--var-${kind})`,
-          }
         },
       ],
     ],
