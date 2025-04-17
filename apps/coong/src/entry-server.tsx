@@ -20,7 +20,11 @@ export default createHandler(() => (
           <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
           <link rel="manifest" href="/manifest.json" />
           <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
-          <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="anonymous" />
+          <link
+            rel="preconnect"
+            href="https://cdn.jsdelivr.net"
+            crossOrigin="anonymous"
+          />
           {assets}
         </head>
         <body>
