@@ -388,6 +388,7 @@ export default [
       ],
       'unicorn/import-style': 'warn',
       'unicorn/new-for-builtins': 'off',
+      'unicorn/no-array-callback-reference': 'off',
       'unicorn/no-null': 'off',
       'unicorn/prefer-global-this': 'off',
       'unicorn/prefer-top-level-await': 'off',
