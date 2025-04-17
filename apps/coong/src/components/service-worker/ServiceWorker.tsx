@@ -141,6 +141,6 @@ export const ServiceWorkerProvider = (props: ServiceWorkerProviderProps) => {
   )
 }
 
-export const useServiceWorker = () => {
+export const useServiceWorker = (): Readonly<ServiceWorkerContextValue> => {
   return useContext(ServiceWorkerContext)
 }
