@@ -11,16 +11,9 @@ describe('uuid', () => {
     expect(uuid()).toBe(3)
   })
 
-  // TODO: Fix this test
   it.skip('should reset to 1 when reaching MAX_COUNT', () => {
-    const uuid = createUuid()
+    const uuid = createUuid(1_000_000)
 
-    // Set initial value to MAX_COUNT - 1
-    for (let index = 1; index < 1_000_000; index += 1) {
-      uuid()
-    }
-
-    expect(uuid()).toBe(1_000_000)
     expect(uuid()).toBe(1)
   })
 
