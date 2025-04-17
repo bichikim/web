@@ -5,8 +5,6 @@ alwaysApply: true
 ---
 # Git commit rules
 
-!!!!!You must write commit messages in English!!!!!
-
 ## Type
 - `update`: New feature or update feture
 - `docs`: Documentation changes
