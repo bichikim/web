@@ -1,12 +1,15 @@
 import {createMemo, createSignal, onCleanup} from 'solid-js'
 import {MaybeAccessor, resolveAccessor, useEvent} from '@winter-love/solid-use'
 import {loadMidi} from 'src/utils/read-midi'
-import {getWindow} from '@winter-love/utils'
+import {getWindow, isNotNull, ONE_MB, TEN} from '@winter-love/utils'
 import type {Midi} from '@tonejs/midi'
 import {MusicInfo} from 'src/components/midi-player/SFileItem'
 import {SampleStart} from './types'
 
+const DEFAULT_MAX_FILE_SIZE = TEN * ONE_MB
+
 export interface MidiFileInputOptions {
+  maxFileSize?: number
   onAdd?: (value: MusicInfo[]) => void
   onClick?: (event: PointerEvent) => void
 }
@@ -28,14 +31,14 @@ export const useMidiFileInput = (
       return
     }
 
-    const promiseList: Promise<{midi: Midi; name: string}>[] = []
+    const promiseList: Promise<{midi: Midi; name: string} | undefined>[] = []
 
     // FileList 는 이터레이블이 아닙니다
     // eslint-disable-next-line unicorn/no-for-loop
     for (let index = 0; index < files.length; index += 1) {
       const file = files[index]
 
-      promiseList.push(loadMidi(file))
+      promiseList.push(loadMidi(file, options.maxFileSize))
     }
 
     const midis = await Promise.all(promiseList)
@@ -46,6 +49,10 @@ export const useMidiFileInput = (
 
     const samples: MusicInfo[] = midis
       .map((midiFile, index): MusicInfo | null => {
+        if (!midiFile) {
+          return null
+        }
+
         const {name, midi} = midiFile
         const {header} = midi
 
@@ -96,7 +103,7 @@ export const useMidiFileInput = (
           totalDuration,
         }
       })
-      .filter(Boolean) as MusicInfo[]
+      .filter(isNotNull)
 
     options.onAdd?.(samples)
   }
