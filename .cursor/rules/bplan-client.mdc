@@ -87,13 +87,14 @@ component-name/
 1. Follow functional programming principles
 2. Keep components small and focused
 3. Use proper TypeScript types
-4. Implement proper error handling
-5. Follow performance optimization guidelines
-6. Write comprehensive tests
-7. Document code properly
-8. Follow consistent naming conventions
-9. Implement proper security measures
-10. Keep dependencies up to date
+4. Utilize TypeScript type inference for concise type definitions
+5. Implement proper error handling
+6. Follow performance optimization guidelines
+7. Write comprehensive tests
+8. Document code properly
+9. Follow consistent naming conventions
+10. Implement proper security measures
+11. Keep dependencies up to date
 
 ## Security Guidelines
 1. Implement proper authentication
