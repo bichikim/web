@@ -18,9 +18,13 @@ export default createHandler(() => (
           <link rel="mask-icon" href="/favicon.svg" color="#00aba9" />
           <link rel="apple-touch-icon" href="/apple-touch-icon-180x180.png" />
           <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-          <link rel="mask-icon" href="/favicon.svg" color="#00aba9" />
           <link rel="manifest" href="/manifest.json" />
           <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
+          <link
+            rel="preconnect"
+            href="https://cdn.jsdelivr.net"
+            crossOrigin="anonymous"
+          />
           {assets}
         </head>
         <body>
@@ -28,11 +32,12 @@ export default createHandler(() => (
           {scripts}
           <script>
             {`
-              document.addEventListener('load', function () {
+              window.addEventListener('load', function () {
                 const font = document.createElement('link');
                 font.href = 'https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css';
                 font.rel = 'stylesheet';
                 font.as = 'style';
+                font.setAttribute('data-font-display', 'swap');
                 font.crossOrigin = '';
                 document.head.appendChild(font);
               });

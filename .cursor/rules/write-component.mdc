@@ -1,7 +1,7 @@
 ---
-description: write component
-globs: *.tsx
-alwaysApply: false
+description: 
+globs: 
+alwaysApply: true
 ---
 
 # SolidJS Component Writing Guidelines

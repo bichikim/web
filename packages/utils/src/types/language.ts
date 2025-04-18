@@ -110,6 +110,7 @@ export type ArrayLength<T extends any[]> = T extends {length: infer L} ? L : nev
 
 // not ========================================
 export type NotUndefined<T> = T extends undefined ? never : T
+export type NotNull<T> = T extends null ? never : T
 export type NotFunction = object | number | string | boolean | symbol | null | undefined
 // ============================================
 
