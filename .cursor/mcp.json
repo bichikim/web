@@ -15,6 +15,10 @@
     "playwright": {
       "command": "npx",
       "args": ["@playwright/mcp@latest"]
+    },
+    "wallaby": {
+      "command": "node",
+      "args": ["~/.wallaby/mcp/"]
     }
   }
 }
