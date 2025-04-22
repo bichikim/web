@@ -31,12 +31,54 @@ alwaysApply: true
 - Define prop interfaces outside the component for reusability
 
 ## Reactivity
-- Use signals for primitive values (`createSignal`)
-- Use stores for complex objects (`createStore`)
+- Use (`createSignal`) as your primary choice for state management
+- For objects with 3+ levels of nesting or complex update patterns, consider (`createStore`)
 - Use memos for derived state (`createMemo`)
 - Minimize effect usage (`createEffect`) - prefer derived state
 - Avoid direct DOM manipulation - use Solid's reactivity system
 - Remember that props are reactive objects and must not be destructured
+
+### Signal Usage Guidelines
+- Only use signals when the value needs to trigger reactive updates
+- For non-reactive values (e.g. event handler internal variables, utility values), use regular variables
+- Note: This is not for performance reasons (Solid.js signals have negligible overhead), but for code clarity and maintainability
+
+### When to Use Regular Variables vs Signals
+- Use regular variables when:
+  - The value is only used within event handlers
+  - The value doesn't need to trigger UI updates
+  - You want to clearly indicate that a value is non-reactive
+- Use signals when:
+  - The value affects UI rendering
+  - Other computations depend on the value
+  - You need reactive updates when the value changes
+
+#### Examples
+```typescript
+// Good example showing the distinction
+const Button = (props: ButtonProps) => {
+  // Reactive state that affects UI ✅
+  const [isPressed, setIsPressed] = createSignal(false)
+  
+  // Non-reactive internal state ✅
+  let clickCount = 0
+  let lastClickTime = 0
+  
+  const handleClick = (e: MouseEvent) => {
+    clickCount++
+    lastClickTime = Date.now()
+    
+    if (clickCount === 2 && Date.now() - lastClickTime < 300) {
+      props.onDoubleClick?.(e)
+      clickCount = 0
+    }
+    
+    setIsPressed(true)
+  }
+  
+  return <button classList={{active: isPressed()}} onClick={handleClick}>{props.children}</button>
+}
+```
 
 ## Styling
 - Use UnoCSS utility classes as primary styling approach
