@@ -1,9 +1,4 @@
-import {
-  CookieStorageOptions,
-  getAnyStorageItem,
-  setAnyStorageItem,
-  StorageOptions,
-} from '@winter-love/utils'
+import {CookieStorageOptions, getAnyStorageItem, setAnyStorageItem, StorageOptions} from '@winter-love/utils'
 import {Accessor, createSignal, onMount, Setter} from 'solid-js'
 import {resolveAccessor} from 'src/resolve-accessor'
 import {MaybeAccessor} from 'src/types'
@@ -43,26 +38,14 @@ interface UseStorage {
     options?: CookieStorageOptions & UseStorageOptions<T>,
   ): StorageReturn<T>
 
-  <T>(
-    kind: 'local',
-    key: MaybeAccessor<string>,
-    options?: UseStorageOptions<T>,
-  ): StorageReturn<T>
+  <T>(kind: 'local', key: MaybeAccessor<string>, options?: UseStorageOptions<T>): StorageReturn<T>
 
-  <T>(
-    kind: 'session',
-    key: MaybeAccessor<string>,
-    options?: UseStorageOptions<T>,
-  ): StorageReturn<T>
+  <T>(kind: 'session', key: MaybeAccessor<string>, options?: UseStorageOptions<T>): StorageReturn<T>
 }
 
 type StorageReturn<T> = [Accessor<T>, Setter<T>]
 
-export const useStorage: UseStorage = (
-  kind: any,
-  key: any,
-  options: Record<string, any> = {},
-): StorageReturn<any> => {
+export const useStorage: UseStorage = (kind: any, key: any, options: Record<string, any> = {}): StorageReturn<any> => {
   const {mounted, enforceValue, initValue = null, active = true} = options
   const keyAccessor = resolveAccessor(key)
   const beforeValue = mounted ? null : getAnyStorageItem(kind, keyAccessor(), initValue)

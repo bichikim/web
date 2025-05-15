@@ -2,10 +2,7 @@ import {isPromise} from 'src/is-promise'
 
 export type CallbackifyHandle<S> = (error: unknown, value?: S | undefined) => unknown
 
-export const callbackify = <S>(
-  action: () => Promise<S> | S,
-  handle: CallbackifyHandle<S>,
-) => {
+export const callbackify = <S>(action: () => Promise<S> | S, handle: CallbackifyHandle<S>) => {
   let result
 
   try {

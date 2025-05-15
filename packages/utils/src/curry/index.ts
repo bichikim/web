@@ -106,16 +106,8 @@ interface CurriedFunction4And4<T1, T2, T3, T4, R> {
   (t1?: T1, t2?: T2, t3?: T3, t4?: T4): R
 }
 
-export function curry<T1, R>(
-  f: (t1?: T1) => R,
-  length?: number,
-  args?: unknown[],
-): CurriedFunction1And1<T1, R>
-export function curry<T1, R>(
-  f: (t1: T1) => R,
-  length?: number,
-  args?: unknown[],
-): CurriedFunction1<T1, R>
+export function curry<T1, R>(f: (t1?: T1) => R, length?: number, args?: unknown[]): CurriedFunction1And1<T1, R>
+export function curry<T1, R>(f: (t1: T1) => R, length?: number, args?: unknown[]): CurriedFunction1<T1, R>
 export function curry<T1, T2, R>(
   f: (t1?: T1, t2?: T2) => R,
   length?: number,
@@ -177,11 +169,7 @@ export function curry<T1, T2, T3, T4, R>(
   args?: unknown[],
 ): CurriedFunction4<T1, T2, T3, T4, R>
 
-export function curry(
-  target: (...args: unknown[]) => unknown,
-  length: number = target.length,
-  args: unknown[] = [],
-) {
+export function curry(target: (...args: unknown[]) => unknown, length: number = target.length, args: unknown[] = []) {
   const _args: unknown[] = args
 
   return (...args: unknown[]) => {

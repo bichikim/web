@@ -36,10 +36,7 @@ const configPlayer = (shakaPlayer: shaka.Player, options: PlayerAPiOptions = {})
   }
 }
 
-export const createShaka = (
-  element: HTMLVideoElement,
-  options: PlayerAPiOptions = {},
-): null | shaka.Player => {
+export const createShaka = (element: HTMLVideoElement, options: PlayerAPiOptions = {}): null | shaka.Player => {
   if (!shaka.Player.isBrowserSupported()) {
     return null
   }

@@ -26,9 +26,7 @@ export const WSliderRoot = (_props: WSliderRootProps) => {
 
   return (
     <SliderContext.Provider value={context}>
-      <SliderAriaContext.Provider value={ariaContext}>
-        {props.children}
-      </SliderAriaContext.Provider>
+      <SliderAriaContext.Provider value={ariaContext}>{props.children}</SliderAriaContext.Provider>
     </SliderContext.Provider>
   )
 }

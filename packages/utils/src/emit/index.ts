@@ -23,9 +23,10 @@ export const createEmitter = <Event>(options: EmitterOptions = {}) => {
 
   const pickListenersMap = (channels: (string | symbol)[]) => {
     return new Map(
-      channels
-        .map((channel) => [channel, _channels.get(channel)])
-        .filter(([, value]) => value) as [string | symbol, Set<(event: Event) => void>][],
+      channels.map((channel) => [channel, _channels.get(channel)]).filter(([, value]) => value) as [
+        string | symbol,
+        Set<(event: Event) => void>,
+      ][],
     )
   }
 
@@ -41,9 +42,7 @@ export const createEmitter = <Event>(options: EmitterOptions = {}) => {
   }
 
   const trigger = (event: Event, channels?: ChannelFilter) => {
-    const listenersList = channels
-      ? filterListenersList(channels)
-      : [..._channels.values()]
+    const listenersList = channels ? filterListenersList(channels) : [..._channels.values()]
 
     const promises = listenersList.map((listeners) => {
       if (listeners) {
@@ -71,10 +70,7 @@ export const createEmitter = <Event>(options: EmitterOptions = {}) => {
   }
 
   return {
-    addEventListener: (
-      listener: (event: Event) => void,
-      channel: string | symbol = NONE_CHANNEL_KEY,
-    ) => {
+    addEventListener: (listener: (event: Event) => void, channel: string | symbol = NONE_CHANNEL_KEY) => {
       const _listeners = getChannel(channel)
 
       _listeners.add(listener)
@@ -84,10 +80,7 @@ export const createEmitter = <Event>(options: EmitterOptions = {}) => {
         started = true
       }
     },
-    removeEventListener: (
-      listener: (event: Event) => void,
-      channel: string | symbol = NONE_CHANNEL_KEY,
-    ) => {
+    removeEventListener: (listener: (event: Event) => void, channel: string | symbol = NONE_CHANNEL_KEY) => {
       const _listeners = getChannel(channel)
 
       _listeners.delete(listener)

@@ -1,10 +1,6 @@
 import {getItem} from 'src/get-item'
 
-export const setItem = <T, P = any>(
-  target: T | undefined,
-  path: string[],
-  value: P,
-): void => {
+export const setItem = <T, P = any>(target: T | undefined, path: string[], value: P): void => {
   const _path = [...path]
   const targetName = _path.pop()
 

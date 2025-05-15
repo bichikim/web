@@ -1,1 +1,5 @@
-export {default} from '@winter-love/vite-lib-config/require'
+import {createConfig} from '@winter-love/vite-lib-config'
+
+export default createConfig({
+  external: ['node:path'],
+})

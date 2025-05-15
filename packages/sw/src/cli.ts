@@ -1,10 +1,7 @@
 import {Option, program} from 'commander'
 import {type GenerateSWOptions} from './index'
 
-const assetOption = new Option(
-  '-a, --assets <path>',
-  'Path to collecting asset directory',
-)
+const assetOption = new Option('-a, --assets <path>', 'Path to collecting asset directory')
 const assetsRootOption = new Option('-r, --assets-root <path>', 'Path to assets root')
 const cwdOptions = new Option('-c, --cwd <path>', 'Path to project root')
 

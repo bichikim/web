@@ -112,21 +112,13 @@ export const LeftDragWithTouch: Story = {
     })
 
     await fireEvent.touchMove(button, {
-      changedTouches: [
-        new Touch({clientX: DRAG_DISTANCE, clientY: 0, identifier: 0, target: button}),
-      ],
-      touches: [
-        new Touch({clientX: DRAG_DISTANCE, clientY: 0, identifier: 0, target: button}),
-      ],
+      changedTouches: [new Touch({clientX: DRAG_DISTANCE, clientY: 0, identifier: 0, target: button})],
+      touches: [new Touch({clientX: DRAG_DISTANCE, clientY: 0, identifier: 0, target: button})],
     })
 
     await fireEvent.touchEnd(button, {
-      changedTouches: [
-        new Touch({clientX: DRAG_DISTANCE, clientY: 0, identifier: 0, target: button}),
-      ],
-      touches: [
-        new Touch({clientX: DRAG_DISTANCE, clientY: 0, identifier: 0, target: button}),
-      ],
+      changedTouches: [new Touch({clientX: DRAG_DISTANCE, clientY: 0, identifier: 0, target: button})],
+      touches: [new Touch({clientX: DRAG_DISTANCE, clientY: 0, identifier: 0, target: button})],
     })
     expect(args.onLeftExecute).toHaveBeenCalledTimes(1)
   },
@@ -168,21 +160,13 @@ export const RightDragWithTouch: Story = {
     })
 
     await fireEvent.touchMove(button, {
-      changedTouches: [
-        new Touch({clientX: DRAG_DISTANCE, clientY: 0, identifier: 0, target: button}),
-      ],
-      touches: [
-        new Touch({clientX: DRAG_DISTANCE, clientY: 0, identifier: 0, target: button}),
-      ],
+      changedTouches: [new Touch({clientX: DRAG_DISTANCE, clientY: 0, identifier: 0, target: button})],
+      touches: [new Touch({clientX: DRAG_DISTANCE, clientY: 0, identifier: 0, target: button})],
     })
 
     await fireEvent.touchEnd(button, {
-      changedTouches: [
-        new Touch({clientX: DRAG_DISTANCE, clientY: 0, identifier: 0, target: button}),
-      ],
-      touches: [
-        new Touch({clientX: DRAG_DISTANCE, clientY: 0, identifier: 0, target: button}),
-      ],
+      changedTouches: [new Touch({clientX: DRAG_DISTANCE, clientY: 0, identifier: 0, target: button})],
+      touches: [new Touch({clientX: DRAG_DISTANCE, clientY: 0, identifier: 0, target: button})],
     })
     expect(args.onRightExecute).toHaveBeenCalledTimes(1)
   },

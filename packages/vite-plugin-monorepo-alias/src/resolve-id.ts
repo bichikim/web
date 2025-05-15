@@ -1,6 +1,5 @@
-import {getWorkspacePath} from './get-workspace-paths'
-import {Plugin} from 'vite'
-import {applySourceRoot} from './apply-source-root'
+import {type Plugin} from 'vite'
+import path from 'node:path'
 
 export interface ResolveIdOptions {
   /**
@@ -16,6 +15,7 @@ export interface ResolveIdOptions {
    */
   alias?: Record<string, Record<string, string>>
   root?: string
+  separator?: string
   workspacePaths?: (string | RegExp)[]
 }
 
@@ -57,6 +57,8 @@ export const matchWorkspace = (
   workspacePaths: RegExp[],
   path: string,
 ): MatchWorkspaceResult | undefined => {
+  console.log('root', root)
+
   for (const workspacePath of workspacePaths) {
     const result = path.match(workspacePath)
 
@@ -112,6 +114,14 @@ export const normalizeAliasTree = (alias: Record<string, Record<string, string>>
   )
 }
 
+const normalizePath = (path: string, separator: string) => {
+  return path.replaceAll(separator, '/')
+}
+
+const denormalizePath = (path: string, separator: string) => {
+  return path.replaceAll('/', separator)
+}
+
 export const createAlias = (options: ResolveIdOptions): Plugin => {
   const {
     workspacePaths = [],
@@ -121,6 +131,7 @@ export const createAlias = (options: ResolveIdOptions): Plugin => {
       },
     },
     root = process.cwd(),
+    separator = path.sep,
   } = options
 
   const _alias = normalizeAliasTree({
@@ -131,6 +142,7 @@ export const createAlias = (options: ResolveIdOptions): Plugin => {
   })
 
   const workspaceRegexList = getWorkspaceRegexList(workspacePaths)
+  const normalizedRoot = normalizePath(root, separator)
 
   return {
     name: 'monorepo-alias',
@@ -139,13 +151,9 @@ export const createAlias = (options: ResolveIdOptions): Plugin => {
         return source
       }
 
-      const importerInfo = matchWorkspace(root, workspaceRegexList, importer)
+      const normalizedImporter = normalizePath(importer, separator)
 
-      // console.log('importerInfo', importerInfo)
-      // console.log('root', root)
-      // console.log('source', source)
-      // console.log('importer', importer)
-      // console.log('workspaceRegexList', workspaceRegexList)
+      const importerInfo = matchWorkspace(normalizedRoot, workspaceRegexList, normalizedImporter)
 
       if (!importerInfo) {
         return source
@@ -153,7 +161,7 @@ export const createAlias = (options: ResolveIdOptions): Plugin => {
 
       const targetAlias = _alias[importerInfo.relativeWorkspaceRoot] ?? _alias['/DEFAULT/']
 
-      const updatedId = `${importerInfo.workspaceRoot}/${getAliasId(source, targetAlias)}`
+      const updatedId = denormalizePath(`${importerInfo.workspaceRoot}/${getAliasId(source, targetAlias)}`, separator)
 
       return this.resolve(updatedId, importer, {skipSelf: true, ...resolveOptions}).then((resolved) => {
         if (resolved) {

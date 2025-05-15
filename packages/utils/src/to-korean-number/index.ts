@@ -8,19 +8,7 @@ const mapFp = beFactory(map)
 const joinFp = beFactory(join)
 const _numberNames = freeze(['0', '일', '이', '삼', '사', '오', '육', '칠', '팔', '구'])
 
-const _numberUnitNames = freeze([
-  '',
-  '만',
-  '억',
-  '조',
-  '경',
-  '해',
-  '자',
-  '양',
-  '구',
-  '간',
-  '정',
-])
+const _numberUnitNames = freeze(['', '만', '억', '조', '경', '해', '자', '양', '구', '간', '정'])
 const _smallNumberUnitNames = freeze(['', '십', '백', '천'])
 
 export type NumberToKoreanMode = 'all' | 'unit-number' | 'number'
@@ -108,5 +96,4 @@ export const toKoreanNumberFn = ({
     joinFp(joinGroup),
   )
 
-export const toKoreanNumber = (value?: unknown, options?: NumberToKoreanOptions) =>
-  toKoreanNumberFn(options)(value)
+export const toKoreanNumber = (value?: unknown, options?: NumberToKoreanOptions) => toKoreanNumberFn(options)(value)

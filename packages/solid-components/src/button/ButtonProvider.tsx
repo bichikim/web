@@ -142,9 +142,7 @@ export const ButtonProvider = (props: ButtonProviderProps) => {
   })
 
   return (
-    <ButtonContext.Provider
-      value={[buttonContextValue, {handleClick, handleTouchEnd, handleTouchStart}]}
-    >
+    <ButtonContext.Provider value={[buttonContextValue, {handleClick, handleTouchEnd, handleTouchStart}]}>
       {props.children}
     </ButtonContext.Provider>
   )

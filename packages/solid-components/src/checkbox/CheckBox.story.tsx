@@ -5,10 +5,7 @@ const Template = (props: CheckboxProviderProps) => {
   return (
     <Checkbox.Provider {...props}>
       <Checkbox.Body component="div">
-        <Checkbox.Indicator
-          component="span"
-          class="w-20px h-20px bg-gray block data-[checked=true]:bg-red"
-        />
+        <Checkbox.Indicator component="span" class="w-20px h-20px bg-gray block data-[checked=true]:bg-red" />
         <Checkbox.Label>hello</Checkbox.Label>
       </Checkbox.Body>
     </Checkbox.Provider>

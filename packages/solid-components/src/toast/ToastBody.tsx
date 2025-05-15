@@ -38,9 +38,7 @@ export const ToastBody = (props: ToastBodyProps) => {
             // The reason show is always true is because the message is not rendered when it's deleted.
             return (
               <Close.Provider show={true} onShowChange={() => turnOffMessage(message.id)}>
-                <ToastContentContext.Provider value={{message}}>
-                  {props.children}
-                </ToastContentContext.Provider>
+                <ToastContentContext.Provider value={{message}}>{props.children}</ToastContentContext.Provider>
               </Close.Provider>
             )
           }}

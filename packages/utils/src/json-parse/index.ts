@@ -5,10 +5,7 @@ const {parse} = JSON
  * @param data
  * @param defaultValue
  */
-export const jsonParse = (
-  data: string | null,
-  defaultValue: Record<string, any> = {},
-) => {
+export const jsonParse = (data: string | null, defaultValue: Record<string, any> = {}) => {
   if (data === null || data === 'undefined' || data === 'null') {
     return defaultValue
   }

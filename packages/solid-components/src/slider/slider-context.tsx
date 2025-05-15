@@ -1,12 +1,5 @@
 import {createSync, MaybeAccessor, resolveAccessor} from '@winter-love/solid-use'
-import {
-  Accessor,
-  createContext,
-  createMemo,
-  createSignal,
-  Setter,
-  useContext,
-} from 'solid-js'
+import {Accessor, createContext, createMemo, createSignal, Setter, useContext} from 'solid-js'
 
 export interface SliderContextValue {
   setContainerElement: Setter<HTMLElement | null>

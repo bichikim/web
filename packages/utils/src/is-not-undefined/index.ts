@@ -13,5 +13,4 @@ import {NotUndefined} from 'src/types'
  * }
  * ```
  */
-export const isNotUndefined = <T>(value: T): value is NotUndefined<T> =>
-  value !== undefined
+export const isNotUndefined = <T>(value: T): value is NotUndefined<T> => value !== undefined

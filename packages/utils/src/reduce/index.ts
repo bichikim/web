@@ -1,17 +1,8 @@
 const {reduce: originalReduce} = Array.prototype
 
-export type ReduceIteratee<T, R> = (
-  previousValue: R,
-  currentValue: T,
-  currentIndex: number,
-  array: T[],
-) => R
+export type ReduceIteratee<T, R> = (previousValue: R, currentValue: T, currentIndex: number, array: T[]) => R
 
-const _reduce = <T, R>(
-  list: T[],
-  iteratee: ReduceIteratee<T, R>,
-  initialValue?: R,
-): R => {
+const _reduce = <T, R>(list: T[], iteratee: ReduceIteratee<T, R>, initialValue?: R): R => {
   // ignore type from reduce
   return (originalReduce as any).call(list, iteratee, initialValue)
 }

@@ -1,7 +1,6 @@
 import {DrmOptions} from 'src/player/types'
 
-export const url =
-  'https://media.axprod.net/TestVectors/v7-MultiDRM-SingleKey/Manifest.mpd'
+export const url = 'https://media.axprod.net/TestVectors/v7-MultiDRM-SingleKey/Manifest.mpd'
 export const drm: DrmOptions = {
   advanced: {
     'com.microsoft.playready': {
@@ -26,8 +25,7 @@ export const drm: DrmOptions = {
     },
   },
   servers: {
-    'com.microsoft.playready':
-      'https://drm-playready-licensing.axtest.net/AcquireLicense',
+    'com.microsoft.playready': 'https://drm-playready-licensing.axtest.net/AcquireLicense',
     'com.widevine.alpha': 'https://drm-widevine-licensing.axtest.net/AcquireLicense',
   },
 }

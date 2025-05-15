@@ -1,11 +1,4 @@
-import {
-  Accessor,
-  ComponentProps,
-  createContext,
-  createMemo,
-  createSignal,
-  ParentProps,
-} from 'solid-js'
+import {Accessor, ComponentProps, createContext, createMemo, createSignal, ParentProps} from 'solid-js'
 
 export interface FlowDisplayContextProps extends ParentProps {
   move: boolean
@@ -15,9 +8,7 @@ export interface FlowDisplayContextActions {
   handleSelect: (select: boolean) => void
 }
 
-export const FlowDisplayContext = createContext<
-  [Accessor<FlowDisplayContextProps>, FlowDisplayContextActions]
->([
+export const FlowDisplayContext = createContext<[Accessor<FlowDisplayContextProps>, FlowDisplayContextActions]>([
   () => ({
     move: false,
   }),
@@ -38,8 +29,6 @@ export const FlowDisplayRoot = (props: ComponentProps<'div'>) => {
   const contextValue = createMemo(() => ({move: move()}))
 
   return (
-    <FlowDisplayContext.Provider value={[contextValue, {handleSelect}]}>
-      {props.children}
-    </FlowDisplayContext.Provider>
+    <FlowDisplayContext.Provider value={[contextValue, {handleSelect}]}>{props.children}</FlowDisplayContext.Provider>
   )
 }

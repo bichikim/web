@@ -27,12 +27,7 @@ export const WSliderBar = <T extends ValidComponent>(props: WSliderBarProps<T>) 
   })
 
   return (
-    <Dynamic
-      {...props}
-      ref={sliderContext.setContainerElement}
-      onClick={onClick}
-      style={barStyle()}
-    >
+    <Dynamic {...props} ref={sliderContext.setContainerElement} onClick={onClick} style={barStyle()}>
       {props.children}
     </Dynamic>
   )

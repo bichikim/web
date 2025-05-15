@@ -1,7 +1,4 @@
-export type DeepGet<
-  T extends Record<string | symbol | number, any>,
-  P extends any[],
-> = P extends [infer Key1]
+export type DeepGet<T extends Record<string | symbol | number, any>, P extends any[]> = P extends [infer Key1]
   ? Key1 extends keyof T
     ? T[Key1]
     : never

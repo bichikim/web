@@ -4,9 +4,7 @@ import {DragButtonContext} from './context'
 
 export type DragButtonContentProps<T extends ValidComponent> = DynamicProps<T>
 
-export const DragButtonContent = <T extends ValidComponent>(
-  props: DragButtonContentProps<T>,
-) => {
+export const DragButtonContent = <T extends ValidComponent>(props: DragButtonContentProps<T>) => {
   const [dragContext] = useContext(DragButtonContext)
 
   const dragX = createMemo(() => dragContext().dragX)

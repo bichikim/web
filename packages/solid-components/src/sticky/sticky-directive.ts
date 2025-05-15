@@ -10,10 +10,7 @@ export interface StickyPosition {
   top?: number
 }
 
-export type StickyDirective = [
-  Accessor<HTMLElement | string | null>,
-  Accessor<StickyPosition>,
-]
+export type StickyDirective = [Accessor<HTMLElement | string | null>, Accessor<StickyPosition>]
 
 declare module 'solid-js' {
   namespace JSX {

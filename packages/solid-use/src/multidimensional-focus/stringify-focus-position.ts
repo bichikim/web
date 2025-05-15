@@ -5,6 +5,5 @@ export const stringifyPoint = (point: Point): string => {
 }
 
 export const stringifyFocusPosition = (focusPosition: FocusPosition) => {
-  // eslint-disable-next-line unicorn/no-array-callback-reference
   return focusPosition.map(stringifyPoint).join('|')
 }

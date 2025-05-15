@@ -22,11 +22,7 @@ const trimQueryKey = (key: string) => {
   return trim(key)
 }
 
-export const decodeQueryItem = (
-  key: string,
-  value: string,
-  options: ToQueryRecodeOptions = {},
-) => {
+export const decodeQueryItem = (key: string, value: string, options: ToQueryRecodeOptions = {}) => {
   const {decodeKey = decodeQueryKey, decodeValue = decodeQueryValue} = options
 
   return [decodeKey(trimQueryKey(key)), decodeValue(value)]

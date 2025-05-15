@@ -3,10 +3,7 @@ export const createDedupSeparatorRegExp = (pathSeparator: string = '/') => {
 }
 const MAX_URL_LENGTH = 300
 
-export const createDedupSeparator = (
-  pathSeparator: string = '/',
-  max: number = MAX_URL_LENGTH,
-) => {
+export const createDedupSeparator = (pathSeparator: string = '/', max: number = MAX_URL_LENGTH) => {
   const MID_TRIM_URL_REGX = createDedupSeparatorRegExp(pathSeparator)
 
   return (path: string, replaceValue: string = pathSeparator): string => {

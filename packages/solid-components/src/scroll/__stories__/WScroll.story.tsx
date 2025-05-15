@@ -18,10 +18,7 @@ type Story = StoryObj<typeof meta>
 export const YOnlyScroll: Story = {
   render: () => (
     <WScroll.Root component="div" class="w-200px h-200px bg-yello relative">
-      <WScroll.Body
-        component="div"
-        class="overflow-auto relative w-full h-full scrollbar-none"
-      >
+      <WScroll.Body component="div" class="overflow-auto relative w-full h-full scrollbar-none">
         {fooBarPrinter(200)}
       </WScroll.Body>
       <WScroll.Bar
@@ -29,20 +26,14 @@ export const YOnlyScroll: Story = {
         barType="vertical"
         class="bg-green left-var top-0 right-0 w-0.5rem h-full absolute data-[show=false]:hidden"
       >
-        <WScroll.Handle
-          component="div"
-          class="absolute bg-red right-0 top-var-position w-full h-var-size"
-        />
+        <WScroll.Handle component="div" class="absolute bg-red right-0 top-var-position w-full h-var-size" />
       </WScroll.Bar>
       <WScroll.Bar
         component="div"
         barType="horizontal"
         class="bg-green left-0 bottom-0 w-full h-0.5rem absolute data-[show=false]:hidden"
       >
-        <WScroll.Handle
-          component="div"
-          class="absolute bg-red left-var-position w-var-size h-full"
-        />
+        <WScroll.Handle component="div" class="absolute bg-red left-var-position w-var-size h-full" />
       </WScroll.Bar>
     </WScroll.Root>
   ),
@@ -50,10 +41,7 @@ export const YOnlyScroll: Story = {
 
 export const XYScroll: Story = {
   render: () => (
-    <WScroll.Root
-      component="div"
-      class="w-200px h-200px bg-yello relative pb-1rem pr-1rem"
-    >
+    <WScroll.Root component="div" class="w-200px h-200px bg-yello relative pb-1rem pr-1rem">
       <WScroll.Body
         component="div"
         class="overflow-auto relative w-full h-full scrollbar-none"
@@ -77,12 +65,7 @@ export const XYScroll: Story = {
           class="absolute left-0 top-var-position h-var-size @hover-outline outline-3 outline-black
             rd-0.5rem select-none data-[state=move]:outline"
         >
-          <img
-            draggable="false"
-            src={zombieGif}
-            alt="zombe"
-            class="h-full rd-0.5rem overflow-hidden"
-          />
+          <img draggable="false" src={zombieGif} alt="zombe" class="h-full rd-0.5rem overflow-hidden" />
         </WScroll.Handle>
       </WScroll.Bar>
       <WScroll.Bar

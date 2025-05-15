@@ -115,9 +115,7 @@ export type NotFunction = object | number | string | boolean | symbol | null | u
 // ============================================
 
 // any ========================================
-export type AnyFunction<Args extends any[] = any[], Return = any> = (
-  ...args: Args
-) => Return
+export type AnyFunction<Args extends any[] = any[], Return = any> = (...args: Args) => Return
 // ============================================
 
 // promise ====================================
@@ -127,19 +125,13 @@ export type PromiseReturnType<T extends AnyFunction> = PromiseType<ReturnType<T>
 // ============================================
 
 // parameters =================================
-export type DropParameters<T extends (...args: any) => any, S = any> = Drop<
-  Parameters<T>,
-  S
->
-export type DropRightParameters<T extends (...args: any) => any> = DropRight<
-  Parameters<T>
->
+export type DropParameters<T extends (...args: any) => any, S = any> = Drop<Parameters<T>, S>
+export type DropRightParameters<T extends (...args: any) => any> = DropRight<Parameters<T>>
 export type PopParameters<T extends (...args: any) => any> = Pop<Parameters<T>>
 // ============================================
 
 // type assistants ============================
-export type TakeFlatKeys<R, K extends keyof R> =
-  R extends Record<K, infer P> ? Keyof<P> : never
+export type TakeFlatKeys<R, K extends keyof R> = R extends Record<K, infer P> ? Keyof<P> : never
 // ============================================
 
 export type FunctionObject<T extends Record<string, AnyFunction>> = {
@@ -149,15 +141,9 @@ export type FunctionObject<T extends Record<string, AnyFunction>> = {
 export type ArrayOrOne<T> = T extends (infer P)[] ? P[] : [T]
 
 // ->
-export type DropParametersFunction<T extends (...args: any) => any> = AnyFunction<
-  DropParameters<T>,
-  ReturnType<T>
->
+export type DropParametersFunction<T extends (...args: any) => any> = AnyFunction<DropParameters<T>, ReturnType<T>>
 
-export type DropRightParametersFunction<T extends (...args: any) => any> = AnyFunction<
-  DropParameters<T>,
-  ReturnType<T>
->
+export type DropRightParametersFunction<T extends (...args: any) => any> = AnyFunction<DropParameters<T>, ReturnType<T>>
 
 export type Keyof<R> = R extends Record<infer P, any> ? P : never
 
@@ -166,10 +152,9 @@ export type FlatKeys<R> = TakeFlatKeys<R, keyof R>
 // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 export type ClassFunction = Function
 
-export type SnakeToCamelCase<S extends string> =
-  S extends `${infer P1}_${infer P2}${infer P3}`
-    ? `${Lowercase<P1>}${Uppercase<P2>}${SnakeToCamelCase<P3>}`
-    : Lowercase<S>
+export type SnakeToCamelCase<S extends string> = S extends `${infer P1}_${infer P2}${infer P3}`
+  ? `${Lowercase<P1>}${Uppercase<P2>}${SnakeToCamelCase<P3>}`
+  : Lowercase<S>
 
 export type CamelToSnakeCase<S extends string> = S extends `${infer T}${infer U}`
   ? `${T extends Capitalize<T> ? '_' : ''}${Lowercase<T>}${CamelToSnakeCase<U>}`

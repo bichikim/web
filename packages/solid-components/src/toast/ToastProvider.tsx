@@ -32,9 +32,7 @@ export const ToastProvider = (props: ToastProviderProps) => {
 
   return (
     <ToastContext.Provider value={{setMessage, turnOffMessage}}>
-      <ToastInnerContext.Provider value={{messages}}>
-        {props.children}
-      </ToastInnerContext.Provider>
+      <ToastInnerContext.Provider value={{messages}}>{props.children}</ToastInnerContext.Provider>
     </ToastContext.Provider>
   )
 }

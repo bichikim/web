@@ -1,9 +1,4 @@
-import {
-  createManualMemo,
-  MaybeAccessor,
-  resolveAccessor,
-  useEvent,
-} from '@winter-love/solid-use'
+import {createManualMemo, MaybeAccessor, resolveAccessor, useEvent} from '@winter-love/solid-use'
 import {Accessor, onMount} from 'solid-js'
 import {ScrollState} from './scroll-context'
 
@@ -11,9 +6,7 @@ import {ScrollState} from './scroll-context'
  * Whenever scrolls and elements are registered or changed, various scroll-related signal states are updated
  * @param element
  */
-export const useScrollState = (
-  element: MaybeAccessor<HTMLElement | null>,
-): Accessor<ScrollState> => {
+export const useScrollState = (element: MaybeAccessor<HTMLElement | null>): Accessor<ScrollState> => {
   const elementAccessor = resolveAccessor(element)
 
   const [nativeScrollState, updateNativeScrollState] = createManualMemo(() => {
@@ -41,8 +34,7 @@ export const useScrollState = (
       scrollTop = 0,
     } = element
 
-    const {top: containerTop = 0, left: containerLeft = 0} =
-      element.getBoundingClientRect() ?? {}
+    const {top: containerTop = 0, left: containerLeft = 0} = element.getBoundingClientRect() ?? {}
 
     return {
       containerHeight,

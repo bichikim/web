@@ -33,7 +33,6 @@ export const parsePoint = (pointString: string): Point => {
 }
 
 export const stringifyFocusPosition = (focusPosition: FocusPosition) => {
-  // eslint-disable-next-line unicorn/no-array-callback-reference
   return focusPosition.map(stringifyPoint).join('|')
 }
 
@@ -48,9 +47,7 @@ export const createPositionMap = <Info extends AbstractInfo>(): PositionMap<Info
   }
 }
 
-export const createPointInfo = <Info extends AbstractInfo>(
-  info: Info,
-): PointInfo<Info> => {
+export const createPointInfo = <Info extends AbstractInfo>(info: Info): PointInfo<Info> => {
   const members = new Set<string>()
   let _info: Info = {...info}
 

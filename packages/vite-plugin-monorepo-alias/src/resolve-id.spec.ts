@@ -50,17 +50,46 @@ describe('matchWorkspace', () => {
       workspaceRoot: '/Users/user-name/Documents/Apps/web/packages/vite-plugin-monorepo-alias',
     })
   })
+
+  it('should return relative path on window os', () => {
+    const result = matchWorkspace(
+      String.raw`C:/Users/user-name/Documents/Apps/web`,
+      [getWorkspaceRegex(/\/packages\//u)],
+      String.raw`C:/Users/user-name/Documents/Apps/web/packages/vite-plugin-monorepo-alias/src/foo.ts`,
+    )
+
+    expect(result).toEqual({
+      relativePath: 'src/foo.ts',
+      relativeWorkspaceRoot: '/packages/vite-plugin-monorepo-alias/',
+      root: String.raw`C:/Users/user-name/Documents/Apps/web`,
+      workspaceRoot: String.raw`C:/Users/user-name/Documents/Apps/web/packages/vite-plugin-monorepo-alias`,
+    })
+  })
 })
 
 describe('createAlias', () => {
-  it('should return alias plugin', () => {
-    const result: any = createAlias({root: '/Users/user-name/Documents/Apps/web', workspacePaths: ['packages/']})
+  it.each([
+    {
+      id: '/Users/user-name/Documents/Apps/web/packages/vite-plugin-monorepo-alias/src/index.ts',
+      importer: '/Users/user-name/Documents/Apps/web/packages/vite-plugin-monorepo-alias/src/foo.ts',
+      root: '/Users/user-name/Documents/Apps/web',
+      separator: '/',
+      workspacePaths: ['packages/'],
+    },
+    {
+      id: `C:\\Users\\user-name\\Documents\\Apps\\web\\packages\\vite-plugin-monorepo-alias\\src\\index.ts`,
+      importer: `C:\\Users\\user-name\\Documents\\Apps\\web\\packages\\vite-plugin-monorepo-alias\\src\\foo.ts`,
+      root: `C:\\Users\\user-name\\Documents\\Apps\\web`,
+      separator: '\\',
+      workspacePaths: ['packages/'],
+    },
+  ])('should return alias plugin', ({root, workspacePaths, importer, id, separator}) => {
+    const result: any = createAlias({root, separator, workspacePaths})
 
     const {resolveId} = result
 
     const resolve = vi.fn(() => Promise.resolve({id: ''}))
 
-    const importer = '/Users/user-name/Documents/Apps/web/packages/vite-plugin-monorepo-alias/src/foo.ts'
     const source = 'src/index.ts'
 
     resolveId.call(
@@ -71,12 +100,7 @@ describe('createAlias', () => {
       importer,
       {},
     )
-
-    expect(resolve).toHaveBeenCalledWith(
-      '/Users/user-name/Documents/Apps/web/packages/vite-plugin-monorepo-alias/src/index.ts',
-      importer,
-      {skipSelf: true},
-    )
+    expect(resolve).toHaveBeenCalledWith(id, importer, {skipSelf: true})
   })
 
   it('should return alias plugin with alias options', () => {

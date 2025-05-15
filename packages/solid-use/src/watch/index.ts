@@ -19,10 +19,7 @@ export interface UseWatchOptions<T> {
  */
 export const useWatch = <T extends MaybeAccessors>(
   value: T,
-  callback: (
-    value: AccessorsValue<T>,
-    prevValue: AccessorsValue<T> | undefined,
-  ) => CleanUpFunc<T> | void,
+  callback: (value: AccessorsValue<T>, prevValue: AccessorsValue<T> | undefined) => CleanUpFunc<T> | void,
   options: UseWatchOptions<T> = {},
 ) => {
   const {clone = noneClone} = options
@@ -33,9 +30,7 @@ export const useWatch = <T extends MaybeAccessors>(
   createEffect(() => {
     const valueFromAccessor = valueAccessor()
 
-    const value = isArrayValue
-      ? valueFromAccessor.map((value: any) => clone(value))
-      : clone(valueFromAccessor)
+    const value = isArrayValue ? valueFromAccessor.map((value: any) => clone(value)) : clone(valueFromAccessor)
     const cleanUp = callback(value, _prevValue)
 
     _prevValue = value

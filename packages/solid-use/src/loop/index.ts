@@ -16,10 +16,7 @@ export interface LoopSource<Options extends Record<string, any>> {
 export const createUseLoop = <Options extends Record<string, any>, Args extends any[]>(
   creator: () => LoopSource<Options>,
 ) => {
-  return (
-    callback: (...args: Args) => void,
-    options: MaybeAccessor<Partial<Options>> = {},
-  ) => {
+  return (callback: (...args: Args) => void, options: MaybeAccessor<Partial<Options>> = {}) => {
     const source = creator()
     const resolveOptions = resolveAccessor(options)
 

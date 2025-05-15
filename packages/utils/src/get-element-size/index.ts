@@ -9,10 +9,7 @@ export const DEFAULT_RECT = {
   y: 0,
 }
 
-export const getElementSize = (
-  element?: HTMLElement | Window | null,
-  defaultRect: Rect = DEFAULT_RECT,
-): Rect => {
+export const getElementSize = (element?: HTMLElement | Window | null, defaultRect: Rect = DEFAULT_RECT): Rect => {
   if (!element) {
     return {
       ...defaultRect,

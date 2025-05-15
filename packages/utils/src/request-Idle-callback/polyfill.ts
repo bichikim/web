@@ -1,7 +1,4 @@
-export const requestIdleCallbackPolyfill = (
-  callback: IdleRequestCallback,
-  options: IdleRequestOptions = {},
-) => {
+export const requestIdleCallbackPolyfill = (callback: IdleRequestCallback, options: IdleRequestOptions = {}) => {
   const {timeout} = options
   const start = Date.now()
   let didExecute = false

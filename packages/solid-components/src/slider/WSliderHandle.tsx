@@ -27,10 +27,7 @@ const toRangeValue = (value: number, min: number, max: number) => {
 export const wSliderHandleClassName = 'w-slider-handle'
 
 export const WSliderHandle = <T extends ValidComponent>(props: WSliderHandleProps<T>) => {
-  const [innerProps, restProps] = splitProps(props, ['style']) as unknown as [
-    Required<InnerProps>,
-    DynamicProps<T>,
-  ]
+  const [innerProps, restProps] = splitProps(props, ['style']) as unknown as [Required<InnerProps>, DynamicProps<T>]
   const sliderContext = useSliderContext()
   const sliderAriaContext = useSliderAriaContext()
   const [handelElement, setHandelElement] = createSignal<HTMLElement | null>(null)
@@ -38,9 +35,7 @@ export const WSliderHandle = <T extends ValidComponent>(props: WSliderHandleProp
   const elementValue = createMemo(() => {
     const element = handelElement()
 
-    const {width, height} = element
-      ? element.getBoundingClientRect()
-      : {height: 0, width: 0}
+    const {width, height} = element ? element.getBoundingClientRect() : {height: 0, width: 0}
     const {type} = sliderContext.value()
 
     if (type === 'horizontal') {
@@ -75,9 +70,7 @@ export const WSliderHandle = <T extends ValidComponent>(props: WSliderHandleProp
     const [relativeX, relativeY] = payload.relativePoint
 
     const position = toRangeValue(
-      barType === 'horizontal'
-        ? currentX - relativeX - containerPosition
-        : currentY - relativeY - containerPosition,
+      barType === 'horizontal' ? currentX - relativeX - containerPosition : currentY - relativeY - containerPosition,
       0,
       containerSize - size,
     )

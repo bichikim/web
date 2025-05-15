@@ -58,12 +58,7 @@ describe('onEvent', () => {
     })
 
     await flushPromises()
-
-    expect(target.addEventListener).toHaveBeenCalledWith(
-      'click',
-      expect.any(Function),
-      options,
-    )
+    expect(target.addEventListener).toHaveBeenCalledWith('click', expect.any(Function), options)
     dispose()
   })
 })

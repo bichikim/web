@@ -14,9 +14,7 @@ export interface ButtonContextActions {
   handleTouchStart: JSX.EventHandler<HTMLButtonElement, TouchEvent>
 }
 
-export const ButtonContext = createContext<
-  [Accessor<ButtonContextProps>, ButtonContextActions]
->([
+export const ButtonContext = createContext<[Accessor<ButtonContextProps>, ButtonContextActions]>([
   () => ({disabled: false, tag: 'button' as const}),
   {
     handleClick: () => {

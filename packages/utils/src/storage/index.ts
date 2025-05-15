@@ -13,11 +13,7 @@ export interface StorageOptions {
   defaultValue?: any
 }
 
-export const getCookieItem = (
-  key: string,
-  defaultValue: any = null,
-  raw: boolean = false,
-) => {
+export const getCookieItem = (key: string, defaultValue: any = null, raw: boolean = false) => {
   const rowValue = cookieJs.get(key)
 
   if (rowValue) {
@@ -35,12 +31,7 @@ const parse = (data: any, defaultValue?: any, raw?: boolean) => {
   return raw ? data : jsonParse(data, defaultValue)
 }
 
-export const setCookieItem = (
-  key: string,
-  data: any,
-  options?: CookieStorageOptions,
-  raw?: boolean,
-) => {
+export const setCookieItem = (key: string, data: any, options?: CookieStorageOptions, raw?: boolean) => {
   cookieJs.set(key, stringify(data, raw), options)
 }
 
@@ -58,12 +49,7 @@ export const getStorage = (storage: StorageKind): Storage | undefined => {
   return window.sessionStorage
 }
 
-export const getStorageItem = (
-  storage: StorageKind,
-  key: string,
-  defaultValue: any = null,
-  raw: boolean = false,
-) => {
+export const getStorageItem = (storage: StorageKind, key: string, defaultValue: any = null, raw: boolean = false) => {
   const _storage = getStorage(storage)
 
   if (!_storage) {
@@ -75,12 +61,7 @@ export const getStorageItem = (
   return parse(rawValue, defaultValue, raw)
 }
 
-export const setStorageItem = (
-  storage: StorageKind,
-  key: string,
-  data: any = {},
-  raw: boolean = false,
-) => {
+export const setStorageItem = (storage: StorageKind, key: string, data: any = {}, raw: boolean = false) => {
   const _storage = getStorage(storage)
 
   if (!_storage) {
@@ -141,9 +122,7 @@ export const cleanAllCookie = () => {
   }
 
   for (const cookie of document.cookie.split(';')) {
-    document.cookie = cookie
-      .replace(/^ +/u, '')
-      .replace(/[=].*/u, `=;expires=${new Date().toUTCString()};path=/`)
+    document.cookie = cookie.replace(/^ +/u, '').replace(/[=].*/u, `=;expires=${new Date().toUTCString()};path=/`)
   }
 }
 
@@ -152,16 +131,8 @@ export interface StorageReturn<T = any> {
   set: (key: string, value: T, raw?: boolean) => void
 }
 
-export function storage<T = any>(
-  kind: 'local',
-  options?: StorageOptions,
-  raw?: boolean,
-): StorageReturn<T>
-export function storage<T = any>(
-  kind: 'session',
-  options?: StorageOptions,
-  raw?: boolean,
-): StorageReturn<T>
+export function storage<T = any>(kind: 'local', options?: StorageOptions, raw?: boolean): StorageReturn<T>
+export function storage<T = any>(kind: 'session', options?: StorageOptions, raw?: boolean): StorageReturn<T>
 export function storage<T = any>(
   kind: 'cookie',
   options?: CookieStorageOptions & StorageOptions,

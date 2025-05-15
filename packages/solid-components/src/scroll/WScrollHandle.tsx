@@ -17,10 +17,7 @@ export const WScrollHandle = <T extends ValidComponent>(props: WScrollHandleProp
   const scrollContext = useScrollContext()
   const [barState, setBarState] = createSignal<DragType>('end')
 
-  const [innerProps, restProps] = splitProps(props, ['style']) as unknown as [
-    InnerProps,
-    DynamicProps<T>,
-  ]
+  const [innerProps, restProps] = splitProps(props, ['style']) as unknown as [InnerProps, DynamicProps<T>]
 
   const handleValues = createMemo(() => {
     const {containerSize, scrollSize, percent} = scrollBar()

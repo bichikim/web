@@ -7,10 +7,7 @@ export function toBytesSize(bytes: number, unit: number = DEFAULT_BYTES_SIZE): s
     return 'n/a'
   }
 
-  const index: number = Number.parseInt(
-    Math.floor(Math.log(bytes) / Math.log(unit)).toString(),
-    10,
-  )
+  const index: number = Number.parseInt(Math.floor(Math.log(bytes) / Math.log(unit)).toString(), 10)
 
   if (index === 0) {
     return `${bytes} ${sizes[index]}`

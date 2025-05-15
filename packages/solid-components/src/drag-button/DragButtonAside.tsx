@@ -16,12 +16,9 @@ interface DragButtonAsideOwnProps {
   position: 'left' | 'right'
 }
 
-export type DragButtonAsideProps<T extends ValidComponent> = DynamicProps<T> &
-  DragButtonAsideOwnProps
+export type DragButtonAsideProps<T extends ValidComponent> = DynamicProps<T> & DragButtonAsideOwnProps
 
-export function DragButtonAside<T extends ValidComponent>(
-  props: DragButtonAsideProps<T>,
-) {
+export function DragButtonAside<T extends ValidComponent>(props: DragButtonAsideProps<T>) {
   const [dragContext] = useContext(DragButtonContext)
 
   const [innerProps, restProps] = splitProps(props, ['position']) as unknown as [

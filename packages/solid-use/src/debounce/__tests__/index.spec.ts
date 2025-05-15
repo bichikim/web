@@ -1,8 +1,6 @@
 import {useDebounce} from '../'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
-import {SinonFakeTimers, useFakeTimers} from 'sinon'
 import {renderHook} from '@solidjs/testing-library'
-import flushPromises from 'flush-promises'
 
 describe('useDebounce', () => {
   it('should debounce calling the callback function', () => {
@@ -14,6 +12,7 @@ describe('useDebounce', () => {
     const {result, cleanup} = renderHook(() => useDebounce(callback, 100, options))
 
     result.execute(...args)
+    vi.advanceTimersByTime(50)
     expect(callback).toHaveBeenCalledTimes(1)
     result.execute(...args)
     vi.advanceTimersByTime(50)

@@ -1,10 +1,7 @@
 import {snakeCase} from '@winter-love/lodash'
 import {SnakeToCamelCase} from 'src/types'
 
-export const createKeyCase = <
-  T extends Record<string, any>,
-  R extends Record<string, any>,
->(
+export const createKeyCase = <T extends Record<string, any>, R extends Record<string, any>>(
   value: T,
   changeKeyCase: (key: string) => string,
 ): R => {

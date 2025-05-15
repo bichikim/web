@@ -2,18 +2,14 @@ import {NotFunction} from 'src/types'
 
 export type UnsubscribeFunc<Value> = () => Value | undefined
 export type SubscribeCallback<Value> = (value: Value) => unknown
-export type SubscribeFunc<Value> = (
-  callback: SubscribeCallback<Value>,
-) => UnsubscribeFunc<Value>
+export type SubscribeFunc<Value> = (callback: SubscribeCallback<Value>) => UnsubscribeFunc<Value>
 
 export interface Subscribe<Value> {
   subscribe: SubscribeFunc<Value>
   update: (value: ((value: Value | undefined) => Value) | Value) => void
 }
 
-export const createSubscribe = <Value extends NotFunction>(
-  initValue: () => Value,
-): Subscribe<Value> => {
+export const createSubscribe = <Value extends NotFunction>(initValue: () => Value): Subscribe<Value> => {
   let _value: Value
   const _poll = new Set<(value: Value) => void>()
 
@@ -51,5 +47,4 @@ export const createSubscribe = <Value extends NotFunction>(
   }
 }
 
-export const getSubscribeValue = <Value>(target: Subscribe<Value>) =>
-  target.subscribe(() => null)()
+export const getSubscribeValue = <Value>(target: Subscribe<Value>) => target.subscribe(() => null)()

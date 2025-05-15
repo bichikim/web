@@ -1,11 +1,4 @@
-import {
-  FloatingElement,
-  Middleware,
-  MiddlewareData,
-  Placement,
-  ReferenceElement,
-  Strategy,
-} from '@floating-ui/dom'
+import {FloatingElement, Middleware, MiddlewareData, Placement, ReferenceElement, Strategy} from '@floating-ui/dom'
 
 export interface FloatingOptions<T extends ReferenceElement = ReferenceElement> {
   autoUpdate?: (reference: T, floating: FloatingElement, update: () => void) => () => void

@@ -14,10 +14,7 @@ export const WScrollBody = <T extends ValidComponent>(props: WScrollBodyProps<T>
   const {setScrollBodyElement, value: ScrollValue} = useScrollContext()
   const scrollId = createMemo(() => ScrollValue().id)
 
-  const [innerProps, restProps] = splitProps(props, ['style']) as unknown as [
-    InnerProps,
-    DynamicProps<T>,
-  ]
+  const [innerProps, restProps] = splitProps(props, ['style']) as unknown as [InnerProps, DynamicProps<T>]
 
   const style = createMemo(() => {
     const {percentX, percentY} = ScrollValue()
@@ -29,12 +26,7 @@ export const WScrollBody = <T extends ValidComponent>(props: WScrollBodyProps<T>
   })
 
   return (
-    <Dynamic
-      {...restProps}
-      style={sx(style(), innerProps.style)}
-      id={scrollId()}
-      ref={setScrollBodyElement}
-    >
+    <Dynamic {...restProps} style={sx(style(), innerProps.style)} id={scrollId()} ref={setScrollBodyElement}>
       {props.children}
     </Dynamic>
   )

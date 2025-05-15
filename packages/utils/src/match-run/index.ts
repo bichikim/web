@@ -6,9 +6,7 @@ export interface MatchObject<T> {
   readonly default?: MatchRunFuncValue<T>
 }
 
-export type MatchObjectDefault<T> = T extends {default: (...args: any) => infer R}
-  ? R
-  : undefined
+export type MatchObjectDefault<T> = T extends {default: (...args: any) => infer R} ? R : undefined
 
 export type MatchObjectResult<M> = M extends {
   [key: string]: (...args: any) => infer R
@@ -20,9 +18,7 @@ export interface MatchRunner<T extends number | string | symbol> {
   <M extends MatchObject<T>>(matches: M): MatchObjectResult<M> | MatchObjectDefault<M>
 }
 
-export const matchRun = <T extends number | string | symbol>(
-  value: T,
-): MatchRunner<T> => {
+export const matchRun = <T extends number | string | symbol>(value: T): MatchRunner<T> => {
   return (matches: Record<any, any>) => {
     const matchedValue = matches[value]
 

@@ -30,10 +30,7 @@ export const Default: Story = {
         <div class="bg-white p-4 rounded-lg">
           <h2 class="text-lg font-bold mb-2">다이얼로그 제목</h2>
           <p class="mb-4">다이얼로그 내용입니다.</p>
-          <button
-            class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-            onClick={fn()}
-          >
+          <button class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600" onClick={fn()}>
             닫기
           </button>
         </div>

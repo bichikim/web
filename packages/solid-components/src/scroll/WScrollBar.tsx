@@ -17,11 +17,10 @@ export type WScrollBarProps<T extends ValidComponent> = InnerProps & DynamicProp
 export const WScrollBar = <T extends ValidComponent>(props: WScrollBarProps<T>) => {
   const defaultProps = mergeProps({barType: 'vertical' as const, component: 'div'}, props)
 
-  const [innerProps, restProps] = splitProps(defaultProps, [
-    'thickness',
-    'barType',
-    'style',
-  ]) as unknown as [Required<InnerProps>, DynamicProps<T>]
+  const [innerProps, restProps] = splitProps(defaultProps, ['thickness', 'barType', 'style']) as unknown as [
+    Required<InnerProps>,
+    DynamicProps<T>,
+  ]
   const scrollContext = useScrollContext()
 
   const scrollBarState = createMemo(() => {
@@ -87,10 +86,7 @@ export const WScrollBar = <T extends ValidComponent>(props: WScrollBarProps<T>) 
     const clickPosition = type === 'horizontal' ? event.offsetX : event.offsetY
     const clickedPercent = clickPosition / containerSize
 
-    scrollContext.setScroll(
-      innerProps.barType,
-      (scrollSize - containerSize) * clickedPercent,
-    )
+    scrollContext.setScroll(innerProps.barType, (scrollSize - containerSize) * clickedPercent)
   }
 
   return (

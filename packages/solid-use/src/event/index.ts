@@ -3,11 +3,7 @@ import {resolveAccessor} from 'src/resolve-accessor'
 import {createEffect, onCleanup} from 'solid-js'
 
 export interface Emitter {
-  addEventListener(
-    type: string,
-    listener: EventListener,
-    options?: AddEventListenerOptions,
-  ): void
+  addEventListener(type: string, listener: EventListener, options?: AddEventListenerOptions): void
 
   removeEventListener(type: string, listener: EventListener): void
 }

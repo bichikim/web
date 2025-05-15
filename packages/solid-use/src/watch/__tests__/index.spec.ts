@@ -59,25 +59,23 @@ describe('watch', () => {
       reactiveValue: [mutableValue, ({name}) => (mutableValue.name = name)],
       secondValue: {name: 'john'},
     },
-  ])(
-    'stores new state to localStorage',
-    ({callback, firstValue, secondValue, reactiveValue, clone}) =>
-      createRoot(async (dispose) => {
-        const [state, setState] = reactiveValue as any
-        const _callback = vi.fn(callback)
+  ])('stores new state to localStorage', ({callback, firstValue, secondValue, reactiveValue, clone}) =>
+    createRoot(async (dispose) => {
+      const [state, setState] = reactiveValue as any
+      const _callback = vi.fn(callback)
 
-        setState(firstValue)
-        // to catch an effect, use an effect
-        useWatch(state, _callback, {clone})
-        expect(_callback).not.toHaveBeenCalled()
-        await flushPromises()
-        expect(_callback).toHaveBeenNthCalledWith(1, firstValue, undefined)
-        setState(secondValue)
-        await flushPromises()
-        expect(_callback).toHaveBeenNthCalledWith(2, secondValue, firstValue)
-        expect(_callback).toHaveBeenCalledTimes(2)
-        dispose()
-      }),
+      setState(firstValue)
+      // to catch an effect, use an effect
+      useWatch(state, _callback, {clone})
+      expect(_callback).not.toHaveBeenCalled()
+      await flushPromises()
+      expect(_callback).toHaveBeenNthCalledWith(1, firstValue, undefined)
+      setState(secondValue)
+      await flushPromises()
+      expect(_callback).toHaveBeenNthCalledWith(2, secondValue, firstValue)
+      expect(_callback).toHaveBeenCalledTimes(2)
+      dispose()
+    }),
   )
 
   it('should watch many accessors', () =>

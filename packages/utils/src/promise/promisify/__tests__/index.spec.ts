@@ -4,10 +4,7 @@ import {promisify} from '../'
 
 describe('promisify', () => {
   it('should create a returning promise function from a callback function', () => {
-    const callbackRunner = (
-      count: number,
-      callback: (error: any, data: number) => any,
-    ) => {
+    const callbackRunner = (count: number, callback: (error: any, data: number) => any) => {
       setTimeout(() => {
         callback(null, count + 1)
       }, 1)

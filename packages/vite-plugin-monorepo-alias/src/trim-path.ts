@@ -1,9 +1,6 @@
 type TrimType = 'left' | 'right' | 'both'
 
-export const createTrimPathRegExp = (
-  pathSeparator: string = '/',
-  type: TrimType = 'both',
-) => {
+export const createTrimPathRegExp = (pathSeparator: string = '/', type: TrimType = 'both') => {
   const defaultRegExp = () => RegExp(`^[${pathSeparator}]+|[${pathSeparator}]+$`, 'giu')
 
   switch (type) {
@@ -27,11 +24,7 @@ export const createTrimPathRegExp = (
 
 const MAX_URL_LENGTH = 300
 
-export const createTrimPath = (
-  pathSeparator: string = '/',
-  max: number = MAX_URL_LENGTH,
-  type: TrimType = 'both',
-) => {
+export const createTrimPath = (pathSeparator: string = '/', max: number = MAX_URL_LENGTH, type: TrimType = 'both') => {
   const TRIM_PATH_REGEX = createTrimPathRegExp(pathSeparator, type)
 
   return (path: string, replaceValue: string = '') => {

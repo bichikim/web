@@ -90,6 +90,7 @@ describe('waitFactory', () => {
     } else {
       expect(callback).toHaveBeenCalledTimes(0)
     }
+
     result.execute()
     vi.advanceTimersByTime(101)
     result.cancel()
@@ -106,11 +107,13 @@ describe('waitFactory', () => {
     vi.advanceTimersByTime(50)
     setWaitTime(150)
     vi.advanceTimersByTime(200)
+
     if (leading) {
       expect(callback).toHaveBeenCalledTimes(0)
     } else {
       expect(callback).toHaveBeenCalledTimes(1)
     }
+
     callback.mockClear()
     result.execute()
 

@@ -6,9 +6,7 @@ describe('language', () => {
   describe('DropParameters', () => {
     it('should drop one item from an array tuple type', () => {
       // noinspection JSUnusedLocalSymbols
-      const typeTest = <Func extends (...args: any[]) => any>(
-        _: Func,
-      ): DropParameters<Func> => {
+      const typeTest = <Func extends (...args: any[]) => any>(_: Func): DropParameters<Func> => {
         return 'foo' as any
       }
 

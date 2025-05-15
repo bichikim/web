@@ -10,8 +10,7 @@ const APP_FILES = __inject_code__
 const {origin: originPath} = self.location
 const apiPath = `${originPath}/api/`
 
-const isOriginPath = (url: string) =>
-  url.startsWith(`${originPath}/`) || url === originPath
+const isOriginPath = (url: string) => url.startsWith(`${originPath}/`) || url === originPath
 
 const isApiPath = (url: string) => url.startsWith(apiPath)
 
@@ -104,13 +103,7 @@ self.addEventListener('fetch', (event: FetchEvent) => {
     return
   }
 
-  const destination: RequestDestination[] = [
-    'style',
-    'script',
-    'worker',
-    'manifest',
-    'document',
-  ]
+  const destination: RequestDestination[] = ['style', 'script', 'worker', 'manifest', 'document']
 
   // Use network request for document navigation, otherwise use cache request
   if (destination.includes(event.request.destination)) {

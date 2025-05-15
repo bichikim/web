@@ -54,10 +54,7 @@ export function pipe<A, R1, R2, R3>(
   f3: (value: R2) => R3,
 ): (value: MaybeFunction<A>) => R3
 
-export function pipe<A, R1, R2>(
-  f1: (value: A) => R1,
-  f2: (value: R1) => R2,
-): (value: MaybeFunction<A>) => R2
+export function pipe<A, R1, R2>(f1: (value: A) => R1, f2: (value: R1) => R2): (value: MaybeFunction<A>) => R2
 
 export function pipe<A, R1>(f1: (value: A) => R1): (value: MaybeFunction<A>) => R1
 

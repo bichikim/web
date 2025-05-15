@@ -3,16 +3,12 @@ import {Dynamic} from 'solid-js/web'
 import {ComponentProps, useContext} from 'solid-js'
 
 export interface ButtonBodyProps
-  extends Omit<
-    ComponentProps<'button'>,
-    'onClick' | 'onTouchEnd' | 'onDblClick' | 'onTouchStart' | 'type'
-  > {
+  extends Omit<ComponentProps<'button'>, 'onClick' | 'onTouchEnd' | 'onDblClick' | 'onTouchStart' | 'type'> {
   //
 }
 
 export const ButtonBody = (props: ButtonBodyProps) => {
-  const [buttonContextValue, {handleClick, handleTouchEnd, handleTouchStart}] =
-    useContext(ButtonContext)
+  const [buttonContextValue, {handleClick, handleTouchEnd, handleTouchStart}] = useContext(ButtonContext)
 
   return (
     <Dynamic

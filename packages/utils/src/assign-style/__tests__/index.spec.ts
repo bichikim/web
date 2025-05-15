@@ -3,9 +3,7 @@ import {describe, expect, it} from 'vitest'
 
 describe('resolveStyle', () => {
   it('should resolve style with string and object', () => {
-    expect(assignStyle('display: block;', {color: 'red'})).toBe(
-      'display: block;color:red;',
-    )
+    expect(assignStyle('display: block;', {color: 'red'})).toBe('display: block;color:red;')
   })
 
   it('should resolve style with object and object', () => {
@@ -13,15 +11,11 @@ describe('resolveStyle', () => {
   })
 
   it('should resolve style with string and string', () => {
-    expect(assignStyle('display: block;', 'color: red;')).toBe(
-      'display: block;color: red;',
-    )
+    expect(assignStyle('display: block;', 'color: red;')).toBe('display: block;color: red;')
   })
 
   it('should resolve style with object and object', () => {
-    expect(assignStyle({display: 'block'}, {color: 'red'})).toBe(
-      'display:block;color:red;',
-    )
+    expect(assignStyle({display: 'block'}, {color: 'red'})).toBe('display:block;color:red;')
   })
 
   it('should resolve style with null and object', () => {

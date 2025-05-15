@@ -86,10 +86,7 @@ const DemoContent = () => {
 
   return (
     <div class="fixed bottom-0 left-0 flex flex-col gap-4">
-      <button
-        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-        onClick={handleOpenTimeout}
-      >
+      <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" onClick={handleOpenTimeout}>
         Show notification with timeout
       </button>
       <button
@@ -98,16 +95,10 @@ const DemoContent = () => {
       >
         Show notification close on action click
       </button>
-      <button
-        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-        onClick={handleClickToClose}
-      >
+      <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" onClick={handleClickToClose}>
         Show notification close on click
       </button>
-      <button
-        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-        onClick={handleOpenActions}
-      >
+      <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" onClick={handleOpenActions}>
         Show notification with actions
       </button>
     </div>
