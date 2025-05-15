@@ -6,10 +6,8 @@ export default defineConfig({
   plugins: [
     // Vite Plugins
     monorepoAlias({
-      osPathDelimiter: process.platform === 'win32' ? '\\' : '/',
       root: fileURLToPath(new URL('./', import.meta.url)),
-      sourceRoot: 'src',
-      workspacePaths: [/^\/coong\//u, /^\/packages\//u],
+      workspacePaths: [/\/coong\//u, /\/packages\//u],
     }) as any,
   ],
 })

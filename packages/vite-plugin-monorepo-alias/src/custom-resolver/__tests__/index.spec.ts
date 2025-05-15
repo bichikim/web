@@ -76,22 +76,12 @@ describe('createCustomResolver', () => {
 
       if (hasResolver) {
         expect(
-          await customResolver.call(
-            fakeRollup,
-            mockParams.source,
-            mockParams.importer,
-            mockParams.options,
-          ),
+          await customResolver.call(fakeRollup, mockParams.source, mockParams.importer, mockParams.options),
         ).toEqual(result)
       } else {
-        expect(
-          await customResolver.call(
-            {},
-            mockParams.source,
-            mockParams.importer,
-            mockParams.options,
-          ),
-        ).toEqual(result)
+        expect(await customResolver.call({}, mockParams.source, mockParams.importer, mockParams.options)).toEqual(
+          result,
+        )
       }
     },
   )

@@ -8,14 +8,14 @@ export default defineConfig({
   plugins: [
     unoCss('../../uno.config.ts'),
     monorepoAlias({
-      alias: {
-        '@winter-love/solid/test': resolvePath('packages/solid/src/test'),
-        '@winter-love/solid/use': resolvePath('packages/solid/src/use'),
-      },
-      osPathDelimiter: process.platform === 'win32' ? '\\' : '/',
+      // alias: {
+      //   '@winter-love/solid/test': resolvePath('packages/solid/src/test'),
+      //   '@winter-love/solid/use': resolvePath('packages/solid/src/use'),
+      // },
+      // osPathDelimiter: process.platform === 'win32' ? '\\' : '/',
       root: fileURLToPath(new URL('../', import.meta.url)),
-      sourceRoot: 'src',
-      workspacePaths: [/^\/apps\//u, /^\/packages\//u],
+      // sourceRoot: 'src',
+      workspacePaths: [/\/apps\//u, /\/packages\//u],
     }) as Plugin,
   ],
 })

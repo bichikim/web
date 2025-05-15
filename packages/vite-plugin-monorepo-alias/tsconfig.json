@@ -6,7 +6,8 @@
     "outDir": "lib",
     "baseUrl": ".",
     "paths": {
-      "src/*": ["src/*"]
+      "src/*": ["src/*"],
+      "#test/*": ["src/test/*"]
     }
   },
   "ts-node": {

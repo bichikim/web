@@ -43,7 +43,8 @@
     "build": "vite build",
     "check-types": "tsc --noEmit",
     "dev": "vite build --watch --minify false",
-    "lint": "eslint src"
+    "lint": "eslint src",
+    "preview": "vite build -c vite.preview.config.mts"
   },
   "dependencies": {
     "@types/node": "^22.10.1",

@@ -13,20 +13,25 @@ export default defineConfig({
     solid() as any,
     monorepoAlias({
       alias: {
-        '@winter-love/solid/test': resolvePath('packages/solid/src/test'),
-        '@winter-love/solid/use': resolvePath('packages/solid/src/use'),
+        'packages/vite-plugin-monorepo-alias': {
+          '#test': 'src/test',
+        },
       },
-      osPathDelimiter: process.platform === 'win32' ? '\\' : '/',
+
+      // osPathDelimiter: process.platform === 'win32' ? '\\' : '/',
       root: fileURLToPath(new URL('./', import.meta.url)),
-      sourceRoot: 'src',
-      workspacePaths: [/^\/coong\//u, /^\/packages\//u],
+      // sourceRoot: 'src',
+      workspacePaths: [/\/coong\//u, /\/packages\//u],
     }),
   ],
+  // resolve: {
+  //   alias: {
+  //     '@winter-love/solid/test': resolvePath('packages/solid/src/test'),
+  //     '@winter-love/solid/use': resolvePath('packages/solid/src/use'),
+  //   },
+  // },
   test: {
-    include: [
-      'packages/*/src/**/*.spec.?(c|m)[jt]s?(x)',
-      'apps/*/src/**/*.spec.?(c|m)[jt]s?(x)',
-    ],
+    include: ['packages/*/src/**/*.spec.?(c|m)[jt]s?(x)', 'apps/*/src/**/*.spec.?(c|m)[jt]s?(x)'],
     setupFiles: ['./vitest.setup.ts'],
   },
 })
