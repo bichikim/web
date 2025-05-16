@@ -1,1 +1,1 @@
-export * from './resolve-id'
+export * from './alias'

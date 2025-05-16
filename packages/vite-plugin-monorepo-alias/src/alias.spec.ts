@@ -1,5 +1,5 @@
 import {describe, expect, it, vi} from 'vitest'
-import {createAlias, getWorkspaceRegex, matchWorkspace, normalizeAlias, normalizeAliasTree} from './resolve-id'
+import {createAlias, getWorkspaceRegex, matchWorkspace, normalizeAlias, normalizeAliasTree} from './alias'
 
 describe('getWorkspaceRegex', () => {
   it.each([

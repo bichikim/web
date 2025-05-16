@@ -3,17 +3,11 @@
   "version": "1.0.37",
   "description": "vite monorepo alias plugin",
   "keywords": [
-    "typescript",
-    "style",
-    "style-system",
-    "component",
-    "ui",
-    "css",
-    "store",
-    "vue",
-    "vue3",
-    "vuejs",
-    "vuejs3"
+    "vitest",
+    "storybook-vite",
+    "vite",
+    "monorepo",
+    "alias"
   ],
   "repository": "git@github.com:winter-love/web.git",
   "license": "MIT",
@@ -44,17 +38,15 @@
     "check-types": "tsc --noEmit",
     "dev": "vite build --watch --minify false",
     "lint": "eslint src",
+    "lint:fix": "eslint src --fix",
     "preview": "vite build -c vite.preview.config.mts"
   },
   "dependencies": {
-    "@types/node": "^22.10.1",
-    "@vue/server-renderer": "^3.5.13",
-    "node-html-parser": "^6.1.13",
-    "vite": "^5.4.12",
-    "vue": "^3.5.13"
+    "vite": "^5.4.12"
   },
   "devDependencies": {
-    "@winter-love/vite-lib-config": "workspace:*"
+    "@winter-love/vite-lib-config": "workspace:*",
+    "@types/node": "^22.10.1"
   },
   "publishConfig": {
     "access": "public"

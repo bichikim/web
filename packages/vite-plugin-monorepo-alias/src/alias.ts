@@ -57,8 +57,6 @@ export const matchWorkspace = (
   workspacePaths: RegExp[],
   path: string,
 ): MatchWorkspaceResult | undefined => {
-  console.log('root', root)
-
   for (const workspacePath of workspacePaths) {
     const result = path.match(workspacePath)
 
