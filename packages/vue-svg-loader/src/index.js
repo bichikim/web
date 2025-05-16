@@ -1,3 +1,5 @@
+/* eslint-disable format/padding-line-between-statements */
+/* eslint-disable @typescript-eslint/no-require-imports */
 const {optimize} = require('svgo')
 const {getOptions} = require('loader-utils')
 
