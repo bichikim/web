@@ -1,0 +1,11 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+# MCP Usage Guide
+
+- Be sure to check not only the project's MCP, but also the global MCP in Cursor.
+- For weather, use the web_search MCP command to search.
+- For programming questions, always use the get-library-docs MCP to check the latest usage and answer.
+- After writing .spec.ts tests, use wallaby_coveredLinesForTest to ensure all code is covered by tests. If necessary, write additional tests, and use wallaby_failingTests to fix any failing tests so that all tests pass.
