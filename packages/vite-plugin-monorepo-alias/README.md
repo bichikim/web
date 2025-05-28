@@ -18,17 +18,22 @@ import {monorepoAlias} from '@winter-love/vite-plugin-monorepo-alias'
 export default defineConfig({
   plugins: [
     monorepoAlias({
+      alias: {
+        // 특정 위치에 대한 alias
+        'packages/utils': {
+          '@': 'src',
+        }
+      }
       /**
        * Specify the project root path.
        */
       root: fileURLToPath(new URL('./', import.meta.url)),
-      sourceRoot: 'src',
       /**
        * Specify package paths within the monorepo workspace.
        * apps - All packages in the apps directory
        * packages - All packages in the packages directory
        */
-      workspacePaths: [/^\/apps\//u, /^\/packages\//u],
+      workspacePaths: [/\/apps\//u, /\/packages\//u],
     })
   ]
 })

@@ -20,10 +20,7 @@ export interface SSeekerProps extends JSX.ButtonHTMLAttributes<HTMLButtonElement
 export const SSeeker = (props: SSeekerProps) => {
   const defaultProps = mergeProps({playedTime: 0, totalDuration: 0}, props)
 
-  const [innerProps, restProps] = splitProps(defaultProps, [
-    'playedTime',
-    'totalDuration',
-  ])
+  const [innerProps, restProps] = splitProps(defaultProps, ['playedTime', 'totalDuration'])
 
   const progress = createMemo(() => {
     if (innerProps.totalDuration === 0) {
@@ -77,10 +74,7 @@ export const SSeeker = (props: SSeekerProps) => {
       title="seek"
     >
       <div class="absolute top-0 left-0 w-full h-full bg-gray-100" />
-      <div
-        class="absolute top-0 left-0 h-full bg-blue"
-        style={{width: `${progress() * HUNDRED}%`}}
-      />
+      <div class="absolute top-0 left-0 h-full bg-blue" style={{width: `${progress() * HUNDRED}%`}} />
     </button>
   )
 }

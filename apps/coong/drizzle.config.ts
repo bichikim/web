@@ -7,10 +7,10 @@ export default defineConfig({
    */
   casing: 'snake_case',
   dbCredentials: {
-    url: process.env.DATABASE_URL!,
+    url: process.env.COONG_POSTGRES_URL!,
   },
   /**
-   * postgres is Vercel Neno
+   * postgres is Vercel x Supabase
    * @see https://vercel.com/bichis-projects/web/stores
    */
   dialect: 'postgresql',

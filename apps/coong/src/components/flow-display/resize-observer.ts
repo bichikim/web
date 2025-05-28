@@ -1,10 +1,7 @@
 import {MaybeAccessor, resolveAccessor} from '@winter-love/solid-use'
 import {createEffect, onCleanup} from 'solid-js'
 
-export const useResizeObserver = (
-  target: MaybeAccessor<HTMLElement | null>,
-  callback: ResizeObserverCallback,
-) => {
+export const useResizeObserver = (target: MaybeAccessor<HTMLElement | null>, callback: ResizeObserverCallback) => {
   const resolvedTarget = resolveAccessor(target)
 
   createEffect(() => {

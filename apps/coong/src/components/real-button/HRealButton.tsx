@@ -30,8 +30,7 @@ export interface HRealButtonProps extends ParentProps {
 
 export const ELEMENT_IDENTIFIER_REAL_BUTTON_STATE = 'data-state'
 
-export interface HRealButtonProps
-  extends Omit<JSX.ButtonHTMLAttributes<HTMLButtonElement>, 'id'> {
+export interface HRealButtonProps extends Omit<JSX.ButtonHTMLAttributes<HTMLButtonElement>, 'id'> {
   id?: string | number
   onDown?: () => void
   onUp?: () => void
@@ -44,13 +43,7 @@ export interface HRealButtonProps
  * If you press and hold your finger and move your finger to enter the button, the button will be pressed
  */
 export const HRealButton = (props: HRealButtonProps) => {
-  const [innerProps, restProps] = splitProps(props, [
-    'onDown',
-    'onUp',
-    'renderDown',
-    'class',
-    'id',
-  ])
+  const [innerProps, restProps] = splitProps(props, ['onDown', 'onUp', 'renderDown', 'class', 'id'])
   const id = createUniqueId()
 
   const targetId = `${innerProps.id ?? id}`

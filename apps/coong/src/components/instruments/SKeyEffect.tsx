@@ -16,9 +16,5 @@ const rootStyle = cva('block blur-sm', {
 export const SKeyEffect = (props: HKeyEffectProps) => {
   const downContext = useContext(KeyDownContext)
 
-  return (
-    <span class={cx(rootStyle({isDown: Boolean(downContext().down)}), props.class)}>
-      {props.children}
-    </span>
-  )
+  return <span class={cx(rootStyle({isDown: Boolean(downContext().down)}), props.class)}>{props.children}</span>
 }

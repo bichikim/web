@@ -1,14 +1,6 @@
 import {getWindow} from '@winter-love/utils'
 import {DrumMachine, type SplendidGrandPianoConfig} from 'smplr'
-import {
-  Accessor,
-  createContext,
-  createEffect,
-  createMemo,
-  createSignal,
-  onCleanup,
-  untrack,
-} from 'solid-js'
+import {Accessor, createContext, createEffect, createMemo, createSignal, onCleanup, untrack} from 'solid-js'
 import {getAudioContext} from 'src/use/instruments/prepare-audio-context'
 import {createEmitter, EmitterListener} from './emitter'
 import {useIsCleanup} from '@winter-love/solid-use'
@@ -36,9 +28,7 @@ const getNoteFromName = (name: string | number) => {
   return noteMatchMap.get(String(name)) ?? name
 }
 
-export type SplendidGrandPianoOptions = Partial<
-  Omit<SplendidGrandPianoConfig, 'notesToLoad' | 'baseUrl'>
-> & {
+export type SplendidGrandPianoOptions = Partial<Omit<SplendidGrandPianoConfig, 'notesToLoad' | 'baseUrl'>> & {
   onEmitInstrument?(ids: Set<string>, payload: OnEmitInstrumentPayload): void
 }
 
@@ -75,10 +65,7 @@ export interface SplendidGrandPianoController
 
 export type StopFn = (time?: number) => any
 
-export type SplendidGrandPianoContextProps = [
-  Accessor<SplendidGrandPianoState>,
-  SplendidGrandPianoController,
-]
+export type SplendidGrandPianoContextProps = [Accessor<SplendidGrandPianoState>, SplendidGrandPianoController]
 
 // eslint-disable-next-line max-lines-per-function
 export const createSplendidGrandPiano = (
@@ -118,9 +105,7 @@ export const createSplendidGrandPiano = (
 
   const isEnd = createMemo(() => state().leftTime <= 0)
 
-  const isPlaying = createMemo(
-    () => state().playingId !== '' && !state().suspended && !isEnd(),
-  )
+  const isPlaying = createMemo(() => state().playingId !== '' && !state().suspended && !isEnd())
 
   const handelEnded = (payload: ExtendedSampleStart) => {
     if (payload[USER_PLAY_FLAG_KEY]) {

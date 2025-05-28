@@ -1,9 +1,4 @@
-import {
-  CacheStorage,
-  DrumMachine,
-  SplendidGrandPiano,
-  type SplendidGrandPianoConfig,
-} from 'smplr'
+import {CacheStorage, DrumMachine, SplendidGrandPiano, type SplendidGrandPianoConfig} from 'smplr'
 import {HUNDRED} from '@winter-love/utils'
 
 export type SplendidGrandPianoOptions = Partial<
@@ -49,10 +44,7 @@ export interface PlayOptions {
 }
 
 export interface SplendidGrandPianoExtended
-  extends Omit<
-    SplendidGrandPiano,
-    'start' | 'stop' | 'onEnded' | 'onStart' | 'buffers' | 'output' | 'loaded'
-  > {
+  extends Omit<SplendidGrandPiano, 'start' | 'stop' | 'onEnded' | 'onStart' | 'buffers' | 'output' | 'loaded'> {
   readonly __original: Readonly<SplendidGrandPiano>
   readonly down: (key: string | number | SampleStart) => StopFn
   readonly getLeftTime: () => number

@@ -2,41 +2,24 @@
 
 import {getWindow} from '@winter-love/utils'
 
-export interface Emitter<
-  EventName extends string,
-  EVentMap extends Record<EventName, any>,
-> extends EmitterListener<EventName, EVentMap> {
+export interface Emitter<EventName extends string, EVentMap extends Record<EventName, any>>
+  extends EmitterListener<EventName, EVentMap> {
   clear: () => void
   emit<E extends EventName>(event: EventName, payload: EVentMap[E]): void
 }
 
-export interface EmitterListener<
-  EventName extends string,
-  EVentMap extends Record<EventName, any>,
-> {
-  addEventListener<E extends EventName>(
-    event: E,
-    listener: (payload: EVentMap[E]) => void,
-  ): void
-  removeEventListener<E extends EventName>(
-    event: E,
-    listener: (payload: EVentMap[E]) => void,
-  ): void
+export interface EmitterListener<EventName extends string, EVentMap extends Record<EventName, any>> {
+  addEventListener<E extends EventName>(event: E, listener: (payload: EVentMap[E]) => void): void
+  removeEventListener<E extends EventName>(event: E, listener: (payload: EVentMap[E]) => void): void
 }
 
-export const createEmitter = <
-  EventName extends string,
-  EVentMap extends Record<EventName, any>,
->(
+export const createEmitter = <EventName extends string, EVentMap extends Record<EventName, any>>(
   eventNameRecipe: (name: EventName) => string,
   events: EventName[],
 ): Emitter<EventName, EVentMap> => {
   const listenerMatchMap = new Map<(...args: any[]) => any, (...args: any[]) => any>()
 
-  const addEventListener = <E extends EventName>(
-    event: E,
-    listener: (payload: EVentMap[E]) => void,
-  ): void => {
+  const addEventListener = <E extends EventName>(event: E, listener: (payload: EVentMap[E]) => void): void => {
     if (listenerMatchMap.has(listener)) {
       return
     }
@@ -55,10 +38,7 @@ export const createEmitter = <
     window.addEventListener(eventNameRecipe(event), listenerAdepter as any)
   }
 
-  const removeEventListener = <E extends EventName>(
-    event: E,
-    listener: (payload: EVentMap[E]) => void,
-  ) => {
+  const removeEventListener = <E extends EventName>(event: E, listener: (payload: EVentMap[E]) => void) => {
     const window = getWindow()
 
     if (!window) {

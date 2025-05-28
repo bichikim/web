@@ -1,18 +1,7 @@
-import {
-  RouteSectionProps,
-  useLocation,
-  useNavigate,
-  useSearchParams,
-} from '@solidjs/router'
+import {RouteSectionProps, useLocation, useNavigate, useSearchParams} from '@solidjs/router'
 import {useStorage} from '@winter-love/solid-use'
 import {createMemo, createResource} from 'solid-js'
-import {
-  LinkType,
-  MusicInfo,
-  SettingContext,
-  SettingData,
-  SHiddenPlayer,
-} from 'src/components/midi-player'
+import {LinkType, MusicInfo, SettingContext, SettingData, SHiddenPlayer} from 'src/components/midi-player'
 import {emitAllIds} from 'src/components/real-button/use-global-touch'
 import {useCookie} from 'src/use/cookie'
 import {createSplendidGrandPiano, SplendidGrandPianoContext} from 'src/use/instruments'
@@ -55,30 +44,23 @@ export default function MainLayout(props: RouteSectionProps) {
   const location = useLocation()
   const navigate = useNavigate()
 
-  const [settingData, setSettingData] = useCookie<SettingData>(
-    getStorageKey('piano-setting'),
-    {
-      keepPlayList: true,
-      pianoSize: 100,
-      showKeyName: false,
-    },
-  )
+  const [settingData, setSettingData] = useCookie<SettingData>(getStorageKey('piano-setting'), {
+    keepPlayList: true,
+    pianoSize: 100,
+    showKeyName: false,
+  })
   const isActiveStore = createMemo(() => Boolean(settingData().keepPlayList))
 
   const linkType = createMemo(() => {
     return location.pathname === '/' ? 'music' : 'piano'
   })
 
-  const [musics, setMusics] = useStorage<MusicInfo[]>(
-    'local',
-    getStorageKey('piano-musics-default'),
-    {
-      active: isActiveStore,
-      enforceValue: preset()?.musics,
-      initValue: [],
-      mounted: true,
-    },
-  )
+  const [musics, setMusics] = useStorage<MusicInfo[]>('local', getStorageKey('piano-musics-default'), {
+    active: isActiveStore,
+    enforceValue: preset()?.musics,
+    initValue: [],
+    mounted: true,
+  })
 
   const handleSettingDataChange = (data: SettingData) => {
     setSettingData((prev) => ({...prev, ...data}))
@@ -95,9 +77,7 @@ export default function MainLayout(props: RouteSectionProps) {
   return (
     <>
       <SettingContext.Provider value={settingData}>
-        <SplendidGrandPianoContext.Provider
-          value={[splendidGrandPiano, splendidGrandPianoController]}
-        >
+        <SplendidGrandPianoContext.Provider value={[splendidGrandPiano, splendidGrandPianoController]}>
           <MidiPlayerProvider
             initMusics={musics()}
             pianoController={splendidGrandPianoController}

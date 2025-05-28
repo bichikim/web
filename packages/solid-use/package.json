@@ -21,8 +21,8 @@
     "build": "vite build",
     "build:dev": "vite build --minify false",
     "check-types": "tsc --noEmit",
-    "lint": "eslint src",
-    "lint:fix": "eslint src --fix",
+    "lint": "cross-env NODE_ENV=script eslint src",
+    "lint:fix": "cross-env NODE_ENV=script eslint src --fix",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {

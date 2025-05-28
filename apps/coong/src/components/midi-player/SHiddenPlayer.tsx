@@ -155,11 +155,7 @@ export const SHiddenPlayer = (props: SHiddenPlayerProps) => {
               isShow: isShow(),
             })}
           >
-            <SPlayer
-              {...restProps}
-              isShow={isShow()}
-              onSetting={() => setSurfaceKind('setting')}
-            />
+            <SPlayer {...restProps} isShow={isShow()} onSetting={() => setSurfaceKind('setting')} />
           </div>
           <Show when={surfaceKind() === 'setting' && isShow()}>
             <SSetting

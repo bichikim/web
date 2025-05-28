@@ -1,8 +1,6 @@
 import {getWindow} from '@winter-love/utils'
 
-export const getRegistrations = async (): Promise<
-  readonly ServiceWorkerRegistration[]
-> => {
+export const getRegistrations = async (): Promise<readonly ServiceWorkerRegistration[]> => {
   const window = getWindow()
 
   if (!window) {

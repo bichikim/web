@@ -87,8 +87,7 @@ export const buttonStyles = cva(buttonBase, {
       true: '',
     },
     flat: {
-      false:
-        ':uno: shadow-sm bg-[radial-gradient(at_90%_30%,_var(--var-color)_50%,_var(--var-muted-color)_130%)]',
+      false: ':uno: shadow-sm bg-[radial-gradient(at_90%_30%,_var(--var-color)_50%,_var(--var-muted-color)_130%)]',
       true: ':uno: bg-[var(--var-color)] hover:enabled:b-[--var-color]',
     },
     glass: {

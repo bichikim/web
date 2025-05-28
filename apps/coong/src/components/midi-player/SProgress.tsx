@@ -28,14 +28,8 @@ export const SProgress = (props: SProgressProps) => {
   const [innerProps, restProps] = splitProps(props, ['progress', 'selected'])
 
   return (
-    <span
-      {...restProps}
-      class={cx(rootStyle({selected: innerProps.selected}), props.class)}
-    >
-      <span
-        class={barStyle({selected: innerProps.selected})}
-        style={{width: `${innerProps.progress ?? 0}%`}}
-      />
+    <span {...restProps} class={cx(rootStyle({selected: innerProps.selected}), props.class)}>
+      <span class={barStyle({selected: innerProps.selected})} style={{width: `${innerProps.progress ?? 0}%`}} />
     </span>
   )
 }

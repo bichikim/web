@@ -2,10 +2,7 @@ import {MaybeAccessor, resolveAccessor, useEvent} from '@winter-love/solid-use'
 import {createMemo, createSignal} from 'solid-js'
 import {getWindow, Size} from '@winter-love/utils'
 
-export const useWindowSize = (
-  initSize: Size,
-  active?: MaybeAccessor<boolean | undefined>,
-) => {
+export const useWindowSize = (initSize: Size, active?: MaybeAccessor<boolean | undefined>) => {
   const activeAccessor = resolveAccessor(active)
 
   const [size, setSize] = createSignal<Size>({

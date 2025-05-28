@@ -1,18 +1,9 @@
 import {cva} from 'class-variance-authority'
-import {
-  createEffect,
-  createSignal,
-  createUniqueId,
-  For,
-  JSX,
-  Show,
-  splitProps,
-} from 'solid-js'
+import {createEffect, createSignal, createUniqueId, For, JSX, Show, splitProps} from 'solid-js'
 import {MusicInfo, SFileItem} from './SFileItem'
 import {useMidiFileInput} from './midi-file-input'
 
-export interface SFileListProps
-  extends Omit<JSX.HTMLAttributes<HTMLDivElement>, 'onSelect' | 'onPlay'> {
+export interface SFileListProps extends Omit<JSX.HTMLAttributes<HTMLDivElement>, 'onSelect' | 'onPlay'> {
   /**
    * Currently suspended
    */
@@ -75,15 +66,18 @@ const fileListStyle = cva(':uno: h-full w-full overflow-y-auto overflow-x-hidden
   },
 })
 
+const preventDefault = (event: MouseEvent) => {
+  event.preventDefault()
+}
+
 export const SFileList = (props: SFileListProps) => {
   const id = createUniqueId()
   const [element, setElement] = createSignal<HTMLDivElement | null>(null)
   const [inputElement, setInputElement] = createSignal<HTMLInputElement | null>(null)
 
-  const {handleInputFiles, handleDragOver, handleDragLeave, handleDrop, isDragOver} =
-    useMidiFileInput(inputElement, {
-      onAdd: props.onAdd,
-    })
+  const {handleInputFiles, handleDragOver, handleDragLeave, handleDrop, isDragOver} = useMidiFileInput(inputElement, {
+    onAdd: props.onAdd,
+  })
 
   const [innerProps, restProps] = splitProps(props, [
     'list',
@@ -131,10 +125,6 @@ export const SFileList = (props: SFileListProps) => {
     innerProps?.onDelete?.(id)
   }
 
-  const handleClickInput = (event: MouseEvent) => {
-    event.preventDefault()
-  }
-
   createEffect(() => {
     const _element = element()
 
@@ -169,19 +159,14 @@ export const SFileList = (props: SFileListProps) => {
           id={id}
           onDrop={handleDrop}
           onDragLeave={handleDragLeave}
-          onClick={handleClickInput}
+          onClick={preventDefault}
           onChange={async (event) => {
             await handleInputFiles(event.target.files)
             ;(event.target.value as any) = null
           }}
         />
       </Show>
-      <section
-        role="list"
-        ref={setElement}
-        class={fileListStyle({isDragOver: isDragOver()})}
-        onScroll={handleScroll}
-      >
+      <section role="list" ref={setElement} class={fileListStyle({isDragOver: isDragOver()})} onScroll={handleScroll}>
         <For each={innerProps.list}>
           {(item, index) => (
             <SFileItem

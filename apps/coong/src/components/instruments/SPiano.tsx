@@ -54,23 +54,12 @@ export const SPiano = (props: SPianoProps) => {
 
   return (
     <SPianoRoot {...rootProps}>
-      <SPianoBody
-        {...bodyProps}
-        class={cx(':uno: relative h-486px relative visible min-w-max', props.class)}
-      >
+      <SPianoBody {...bodyProps} class={cx(':uno: relative h-486px relative visible min-w-max', props.class)}>
         <SPianoFlatSet class=":uno: inline-flex relative w-max h-[calc(100%-10px)]">
-          <SPianoFlatKey
-            class={pianoFlatKeyStyle}
-            effectClass="from-blue"
-            showKeyName={keyProps.showKeyName}
-          />
+          <SPianoFlatKey class={pianoFlatKeyStyle} effectClass="from-blue" showKeyName={keyProps.showKeyName} />
         </SPianoFlatSet>
         <SPianoSharpSet class=":uno: flex absolute w-auto h-259px left-55px top-0 left-0">
-          <SPianoSharpKey
-            class={pianoSharpKeyStyle}
-            effectClass="from-blue"
-            showKeyName={innerProps.showKeyName}
-          />
+          <SPianoSharpKey class={pianoSharpKeyStyle} effectClass="from-blue" showKeyName={innerProps.showKeyName} />
         </SPianoSharpSet>
       </SPianoBody>
     </SPianoRoot>

@@ -1,4 +1,4 @@
-import {isNil} from 'src/export-lodash'
+import {isNil} from '@winter-love/lodash'
 
 export type ToBePromiseType<T> = T extends {
   catch: (...arg: any) => any

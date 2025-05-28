@@ -25,18 +25,14 @@ export default function HomePage() {
   const pageName = 'Piano'
   const description = 'Play the piano or enjoy AI-powered piano performances'
 
-  const [splendidGrandPiano, splendidGrandPianoController] = useContext(
-    SplendidGrandPianoContext,
-  )
+  const [splendidGrandPiano, splendidGrandPianoController] = useContext(SplendidGrandPianoContext)
   const [mainElement, setMainElement] = createSignal<HTMLElement | null>(null)
   const {handleAddPlayItem} = useContext(MidiPlayerContext)
   const [isLoading, setIsLoading] = createSignal(false)
 
-  const [isShowAddMidisMessage, setIsShowAddMidisMessage] = useStorage(
-    'session',
-    'coong__show-add-midis-message',
-    {initValue: true},
-  )
+  const [isShowAddMidisMessage, setIsShowAddMidisMessage] = useStorage('session', 'coong__show-add-midis-message', {
+    initValue: true,
+  })
 
   useRestoreScroll(mainElement)
 
@@ -119,10 +115,7 @@ export default function HomePage() {
         class=":uno: relative h-full overflow-y-hidden pt-0 px-2 flex flex-col overflow-x-auto inline-block"
         ref={setMainElement}
       >
-        <SScale
-          class=":uno: h-full w-max origin-top-left"
-          size={settingData().pianoSize ?? HUNDRED}
-        >
+        <SScale class=":uno: h-full w-max origin-top-left" size={settingData().pianoSize ?? HUNDRED}>
           <SPiano
             onDown={splendidGrandPianoController.down}
             onUp={splendidGrandPianoController.up}

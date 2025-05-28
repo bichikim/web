@@ -1,10 +1,4 @@
-import {
-  ComponentProps,
-  createMemo,
-  mergeProps,
-  splitProps,
-  ValidComponent,
-} from 'solid-js'
+import {ComponentProps, createMemo, mergeProps, splitProps, ValidComponent} from 'solid-js'
 import {ResizeCard} from 'src/components/resize-card'
 import {useWindowSize} from 'src/use/window-size'
 import {preventGlobalTouchAttrs} from 'src/components/real-button/use-global-touch'

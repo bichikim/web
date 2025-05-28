@@ -61,25 +61,13 @@ const sharpKeyStyle = cva(pianoSharpKeyStyle, {
 })
 
 export const SPianoSharpKey = (props: SPianoSharpKeyProps) => {
-  const [innerProps, restProps] = splitProps(props, [
-    'effectClass',
-    'class',
-    'children',
-    'showKeyName',
-  ])
+  const [innerProps, restProps] = splitProps(props, ['effectClass', 'class', 'children', 'showKeyName'])
   const {rightEmpty, name} = useContext(KeyContext)
 
   return (
-    <HKey
-      {...restProps}
-      class={sharpKeyStyle({class: innerProps.class, rightEmpty})}
-      name="sharp"
-    >
+    <HKey {...restProps} class={sharpKeyStyle({class: innerProps.class, rightEmpty})} name="sharp">
       <SKeyEffect
-        class={cx(
-          ':uno: absolute top--4 left-0 w-full h-full pointer-events-none',
-          innerProps.effectClass,
-        )}
+        class={cx(':uno: absolute top--4 left-0 w-full h-full pointer-events-none', innerProps.effectClass)}
       />
       <Show when={innerProps.showKeyName}>
         <span class="mb-2">{name}</span>
@@ -95,21 +83,13 @@ export type SPianoFlatKeyProps = HKeyProps & {
 }
 
 export const SPianoFlatKey = (props: SPianoFlatKeyProps) => {
-  const [innerProps, restProps] = splitProps(props, [
-    'effectClass',
-    'class',
-    'children',
-    'showKeyName',
-  ])
+  const [innerProps, restProps] = splitProps(props, ['effectClass', 'class', 'children', 'showKeyName'])
   const {name} = useContext(KeyContext)
 
   return (
     <HKey {...restProps} class={cx(pianoFlatKeyStyle, innerProps.class)} name="flat">
       <SKeyEffect
-        class={cx(
-          ':uno: absolute top--4 left-0 w-full h-full pointer-events-none',
-          innerProps.effectClass,
-        )}
+        class={cx(':uno: absolute top--4 left-0 w-full h-full pointer-events-none', innerProps.effectClass)}
       />
       <Show when={innerProps.showKeyName}>
         <span class="mb-2">{name}</span>

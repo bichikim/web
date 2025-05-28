@@ -1,39 +1,45 @@
-import {integer, pgTable, serial, text} from 'drizzle-orm/pg-core'
+import {integer, pgTable, serial, text, uuid} from 'drizzle-orm/pg-core'
 import {relations} from 'drizzle-orm'
-import {users} from './users'
+import {profiles} from './users'
 import {timestamps} from '../fragments'
 
 export const musicPosts = pgTable('music_posts', {
-  authorId: integer(),
+  authorId: uuid()
+    .notNull()
+    .references(() => profiles.id),
   content: text().notNull(),
-  id: serial().primaryKey(),
+  id: uuid().primaryKey(),
   title: text().notNull(),
   ...timestamps,
 })
 
 export const musicPostsRelations = relations(musicPosts, ({one, many}) => ({
-  author: one(users, {
+  author: one(profiles, {
     fields: [musicPosts.authorId],
-    references: [users.id],
+    references: [profiles.id],
   }),
-  comments: many(musicPostsComments),
+  comments: many(musicPostComments),
 }))
 
-export const musicPostsComments = pgTable('music_posts_comments', {
-  authorId: integer(),
+export const musicPostComments = pgTable('music_posts_comments', {
+  authorId: uuid()
+    .notNull()
+    .references(() => profiles.id),
   content: text().notNull(),
-  id: serial().primaryKey(),
-  postId: integer(),
+  id: uuid().primaryKey(),
+  postId: uuid()
+    .notNull()
+    .references(() => musicPosts.id),
   ...timestamps,
 })
 
-export const musicPostsCommentsRelations = relations(musicPostsComments, ({one}) => ({
-  author: one(users, {
-    fields: [musicPostsComments.authorId],
-    references: [users.id],
+export const musicPostsCommentsRelations = relations(musicPostComments, ({one}) => ({
+  author: one(profiles, {
+    fields: [musicPostComments.authorId],
+    references: [profiles.id],
   }),
   post: one(musicPosts, {
-    fields: [musicPostsComments.postId],
+    fields: [musicPostComments.postId],
     references: [musicPosts.id],
   }),
 }))

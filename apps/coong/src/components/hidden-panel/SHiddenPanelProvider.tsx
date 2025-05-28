@@ -1,11 +1,4 @@
-import {
-  Accessor,
-  createContext,
-  createSignal,
-  ParentProps,
-  Setter,
-  untrack,
-} from 'solid-js'
+import {Accessor, createContext, createSignal, ParentProps, Setter, untrack} from 'solid-js'
 
 export interface SHiddenPanelContextValue {
   isOpen: Accessor<boolean>
@@ -27,9 +20,5 @@ export const SHiddenPanelProvider = (props: SHiddenPanelProviderProps) => {
   const initShow = untrack(() => props.initShow ?? false)
   const [isOpen, setIsOpen] = createSignal<boolean>(initShow)
 
-  return (
-    <SHiddenPanelContext.Provider value={{isOpen, setIsOpen}}>
-      {props.children}
-    </SHiddenPanelContext.Provider>
-  )
+  return <SHiddenPanelContext.Provider value={{isOpen, setIsOpen}}>{props.children}</SHiddenPanelContext.Provider>
 }

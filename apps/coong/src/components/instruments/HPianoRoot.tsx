@@ -31,9 +31,5 @@ export const HPianoRoot = (props: HPianoRootProps) => {
   }
   const down = createMemo(() => props.down ?? new Set<string | number>())
 
-  return (
-    <PianoContext.Provider value={{down, onDown, onUp, scale: 100}}>
-      {props.children}
-    </PianoContext.Provider>
-  )
+  return <PianoContext.Provider value={{down, onDown, onUp, scale: 100}}>{props.children}</PianoContext.Provider>
 }

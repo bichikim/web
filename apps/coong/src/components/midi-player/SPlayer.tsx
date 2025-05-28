@@ -2,8 +2,7 @@ import {Show, useContext} from 'solid-js'
 import {SPlayerController, SPlayerControllerProps} from './SPlayerController'
 import {MidiPlayerContext} from './context'
 
-export interface SPlayerProps
-  extends Omit<SPlayerControllerProps, 'onSelect' | 'onSelect' | 'onSuspend'> {
+export interface SPlayerProps extends Omit<SPlayerControllerProps, 'onSelect' | 'onSelect' | 'onSuspend'> {
   isShow?: boolean
 }
 

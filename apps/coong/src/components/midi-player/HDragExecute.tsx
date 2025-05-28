@@ -233,10 +233,7 @@ export const HDragExecute = (props: HDragExecuteProps) => {
         {resolved()}
       </span>
       <span
-        class={cx(
-          'flex w-full h-full items-center absolute box-border',
-          innerProps.containerClass,
-        )}
+        class={cx('flex w-full h-full items-center absolute box-border', innerProps.containerClass)}
         style={{left: dragX()}}
       >
         {props.children}

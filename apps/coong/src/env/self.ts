@@ -33,6 +33,16 @@ export const getDatabaseUrl = (): string => {
   return url
 }
 
+export const getSupabaseUrl = (): string => {
+  const url = import.meta.env.COONG_POSTGRES_URL ?? process.env.COONG_POSTGRES_URL
+
+  if (typeof url !== 'string') {
+    throw new TypeError('COONG_POSTGRES_URL is not set')
+  }
+
+  return url
+}
+
 /**
  * get github client id and secret
  * to setting or get client id and secret visit https://github.com/settings/applications/new (account: bichikim)

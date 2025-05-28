@@ -10,12 +10,7 @@ import {
 } from 'solid-js'
 import {freeze, getWindow} from '@winter-love/utils'
 
-type ServiceWorkerState =
-  | 'active'
-  | 'installing'
-  | 'waiting'
-  | 'initializing'
-  | 'skip-update'
+type ServiceWorkerState = 'active' | 'installing' | 'waiting' | 'initializing' | 'skip-update'
 
 export interface ServiceWorkerInfo {
   offline: boolean
@@ -30,9 +25,7 @@ export type ServiceWorkerContextValue = [
   },
 ]
 
-export const createServiceWorker = (
-  path: string,
-): Readonly<ServiceWorkerContextValue> => {
+export const createServiceWorker = (path: string): Readonly<ServiceWorkerContextValue> => {
   const [state, setState] = createSignal<ServiceWorkerInfo>({
     offline: false,
     state: 'initializing',
@@ -134,11 +127,7 @@ export const ServiceWorkerProvider = (props: ServiceWorkerProviderProps) => {
   const source = untrack(() => props.src)
   const context = createServiceWorker(source)
 
-  return (
-    <ServiceWorkerContext.Provider value={context}>
-      {props.children}
-    </ServiceWorkerContext.Provider>
-  )
+  return <ServiceWorkerContext.Provider value={context}>{props.children}</ServiceWorkerContext.Provider>
 }
 
 export const useServiceWorker = (): Readonly<ServiceWorkerContextValue> => {

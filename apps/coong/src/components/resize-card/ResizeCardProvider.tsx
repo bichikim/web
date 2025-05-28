@@ -1,11 +1,4 @@
-import {
-  Accessor,
-  createContext,
-  createEffect,
-  createSignal,
-  ParentProps,
-  untrack,
-} from 'solid-js'
+import {Accessor, createContext, createEffect, createSignal, ParentProps, untrack} from 'solid-js'
 import {Position, Size} from '@winter-love/utils'
 
 export interface ResizeCardContextValue {
@@ -35,15 +28,7 @@ export const ResizeCardContext = createContext<ResizeCardContextValue>({
   },
 })
 
-export type ResizeType =
-  | 'up'
-  | 'down'
-  | 'left'
-  | 'right'
-  | 'up-left'
-  | 'up-right'
-  | 'down-left'
-  | 'down-right'
+export type ResizeType = 'up' | 'down' | 'left' | 'right' | 'up-left' | 'up-right' | 'down-left' | 'down-right'
 
 export interface ResizeCardProviderProps extends ParentProps {
   maxSize?: Partial<Size>
@@ -210,9 +195,7 @@ export const ResizeCardProvider = (props: ResizeCardProviderProps) => {
   }
 
   return (
-    <ResizeCardContext.Provider
-      value={{initSize, size, startResize, stopResize, updateSize}}
-    >
+    <ResizeCardContext.Provider value={{initSize, size, startResize, stopResize, updateSize}}>
       {props.children}
     </ResizeCardContext.Provider>
   )

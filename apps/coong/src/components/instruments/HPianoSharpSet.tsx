@@ -16,9 +16,7 @@ export const HPianoSharpSet = (_props: HPianoSharpSetProps) => {
       <For each={sharpSet}>
         {(item) => (
           <Show when={item.name !== 'empty'} fallback={props.emptyChildren}>
-            <KeyContext.Provider value={{...item, disabled}}>
-              {props.children}
-            </KeyContext.Provider>
+            <KeyContext.Provider value={{...item, disabled}}>{props.children}</KeyContext.Provider>
           </Show>
         )}
       </For>

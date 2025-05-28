@@ -12,10 +12,7 @@ export const fixOpacityColor = (color?: string) => {
   return color.replace('opacity)', 'opacity, 1)')
 }
 
-export const createVariableMatcher = (
-  prefix: string,
-  colorOpacityName = 'bg',
-): DynamicMatcher => {
+export const createVariableMatcher = (prefix: string, colorOpacityName = 'bg'): DynamicMatcher => {
   const propertyName = 'background-color'
   const bgColorResolver = colorResolver(propertyName, colorOpacityName)
 

@@ -1,4 +1,4 @@
-import {isNil} from 'src/export-lodash'
+import {isNil} from '@winter-love/lodash'
 
 export const getElement = (value?: Element | string | null): null | Element | undefined => {
   if (isNil(value)) {

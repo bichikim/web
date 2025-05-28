@@ -13,7 +13,9 @@
     "dist"
   ],
   "scripts": {
-    "build": "unbuild"
+    "build": "unbuild",
+    "lint": "cross-env NODE_ENV=script eslint src",
+    "lint:fix": "cross-env NODE_ENV=script eslint src --fix"
   },
   "dependencies": {
     "@unocss/core": "^65.4.0",

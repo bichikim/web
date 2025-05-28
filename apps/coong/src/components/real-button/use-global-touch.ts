@@ -1,12 +1,7 @@
 import {useEvent} from '@winter-love/solid-use'
 import {getDocument, getWindow, Position} from '@winter-love/utils'
 import {Accessor, createSignal} from 'solid-js'
-import {
-  DownEventPayload,
-  DragPayload,
-  InfoIds,
-  UseGlobalTouchEmitterOptions,
-} from './types'
+import {DownEventPayload, DragPayload, InfoIds, UseGlobalTouchEmitterOptions} from './types'
 
 export const getElementsFromPoint = (position: Position): Element[] => {
   const document = getDocument()
@@ -49,9 +44,7 @@ export const emitAllIds = (ids: Set<string>, payload: OnEmitInstrumentPayload) =
   for (const id of ids) {
     const eventName = generateGlobalTouchEventName(id)
 
-    window.dispatchEvent(
-      new CustomEvent(eventName, {detail: {channelName, down: isDown, renderOnly}}),
-    )
+    window.dispatchEvent(new CustomEvent(eventName, {detail: {channelName, down: isDown, renderOnly}}))
   }
 }
 
@@ -114,9 +107,7 @@ export const getTouchedIds = (touches: TouchList, takeFirst: boolean = false) =>
     const touch = touches[index]
     const elements = getElementsFromPoint({x: touch.clientX, y: touch.clientY})
 
-    const touchedElementIDs = takeFirst
-      ? findTouchFirstId(elements)
-      : findTouchIds(elements)
+    const touchedElementIDs = takeFirst ? findTouchFirstId(elements) : findTouchIds(elements)
 
     for (const touchedElementID of touchedElementIDs) {
       ids.add(touchedElementID)
@@ -135,9 +126,7 @@ export const getTouchedIdsMap = (touches: TouchList, takeFirst: boolean = false)
     const {identifier} = touch
     const elements = getElementsFromPoint({x: touch.clientX, y: touch.clientY})
 
-    const touchedElementIDs = takeFirst
-      ? findTouchFirstId(elements)
-      : findTouchIds(elements)
+    const touchedElementIDs = takeFirst ? findTouchFirstId(elements) : findTouchIds(elements)
 
     for (const touchedElementID of touchedElementIDs) {
       const {ids: touchSets} = touchIDs.get(identifier) ?? {
@@ -269,13 +258,9 @@ export const useGlobalDown = (id: string): Accessor<DownEventPayload> => {
   })
   const eventName = generateGlobalTouchEventName(id)
 
-  useEvent(
-    getWindow,
-    eventName,
-    ({detail: {down, renderOnly, channelName}}: CustomEvent<DownEventPayload>) => {
-      setIsDown({channelName, down, renderOnly})
-    },
-  )
+  useEvent(getWindow, eventName, ({detail: {down, renderOnly, channelName}}: CustomEvent<DownEventPayload>) => {
+    setIsDown({channelName, down, renderOnly})
+  })
 
   return isDown
 }

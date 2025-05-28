@@ -29,9 +29,7 @@ export interface MusicInfo extends PlayOptions {
   selected?: boolean
 }
 
-export interface SFileItemProps
-  extends Omit<DragButtonBodyProps, 'id' | 'name' | 'onPlay' | 'onSelect'>,
-    MusicInfo {
+export interface SFileItemProps extends Omit<DragButtonBodyProps, 'id' | 'name' | 'onPlay' | 'onSelect'>, MusicInfo {
   dragExecuteSize?: number
   index?: number
   onDelete?: (id: string) => void
@@ -128,9 +126,7 @@ export const SFileItem = (props: SFileItemProps) => {
     }
   }
 
-  const progress = createMemo(
-    () => ((innerProps.playedTime ?? 0) / (innerProps.totalDuration ?? 1)) * HUNDRED,
-  )
+  const progress = createMemo(() => ((innerProps.playedTime ?? 0) / (innerProps.totalDuration ?? 1)) * HUNDRED)
 
   const handleDelete = () => {
     innerProps.onDelete?.(innerProps.id)
@@ -153,14 +149,10 @@ export const SFileItem = (props: SFileItemProps) => {
   const isMidi = createMemo(() => innerProps.ext && innerProps.ext === 'midi')
 
   const isPlayable = createMemo(
-    () =>
-      innerProps.ext === 'midi' ||
-      (innerProps.generated && !innerProps.inGeneratingProgress),
+    () => innerProps.ext === 'midi' || (innerProps.generated && !innerProps.inGeneratingProgress),
   )
 
-  const showAiIcon = createMemo(
-    () => innerProps.ext !== 'midi' && !innerProps.inGeneratingProgress,
-  )
+  const showAiIcon = createMemo(() => innerProps.ext !== 'midi' && !innerProps.inGeneratingProgress)
 
   return (
     <DragButton.Provider
@@ -205,9 +197,7 @@ export const SFileItem = (props: SFileItemProps) => {
             <span class="inline-block i-tabler:chevrons-right absolute text-gray-500 left-3" />
           </Show>
           <span class="relative inline-block text-gray b-r-solid b-r-.25 b-r-gray-300 pr-2">
-            <span class={indexStyle({playing: showPlayingIcon()})}>
-              {(innerProps.index ?? 0) + 1}
-            </span>
+            <span class={indexStyle({playing: showPlayingIcon()})}>{(innerProps.index ?? 0) + 1}</span>
           </span>
 
           <span class="relative inline-flex gap-1 flex-grow-1 flex-shrink-1 items-center overflow-hidden">
@@ -233,9 +223,7 @@ export const SFileItem = (props: SFileItemProps) => {
           </Show>
           <Show when={innerProps.inGeneratingProgress}>
             <span class="scale-140 inline-flex origin-center flex-shrink-0">
-              <span
-                class={cx('inline-block i-tabler:loader-2 c-black', 'animate-spin')}
-              />
+              <span class={cx('inline-block i-tabler:loader-2 c-black', 'animate-spin')} />
             </span>
           </Show>
           {innerProps.children}

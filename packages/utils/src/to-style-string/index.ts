@@ -1,4 +1,4 @@
-export const toStyleString = (target: string | undefined | null | Record<string, string | number>) => {
+export const toStringStyle = (target: string | undefined | null | Record<string, string | number> | string[]) => {
   if (!target) {
     return ''
   }
@@ -7,8 +7,18 @@ export const toStyleString = (target: string | undefined | null | Record<string,
     return target
   }
 
+  if (Array.isArray(target)) {
+    return target.join(';')
+  }
+
   // eslint-disable-next-line unicorn/no-array-reduce
   return Object.entries(target).reduce((result, [key, value]) => {
     return `${result}${key}:${value};`
   }, '')
 }
+
+/**
+ * @deprecated use `toStringStyle` instead
+ */
+export const toStyleString = toStringStyle
+export const sx = toStringStyle

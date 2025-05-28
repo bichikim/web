@@ -1,11 +1,4 @@
-import {
-  ComponentProps,
-  createEffect,
-  createMemo,
-  createSignal,
-  Show,
-  splitProps,
-} from 'solid-js'
+import {ComponentProps, createEffect, createMemo, createSignal, Show, splitProps} from 'solid-js'
 import {cva} from 'class-variance-authority'
 import {getWindow, HUNDRED} from '@winter-love/utils'
 import {sx, useEvent} from '@winter-love/solid-use'

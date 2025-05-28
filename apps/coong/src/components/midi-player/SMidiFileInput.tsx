@@ -4,10 +4,7 @@ import {MusicInfo} from 'src/components/midi-player/SFileItem'
 import {useMidiFileInput} from './midi-file-input'
 
 export interface HMidiFileInputProps
-  extends Omit<
-    JSX.InputHTMLAttributes<HTMLInputElement>,
-    'accept' | 'type' | 'onTouchEnd' | 'onClick'
-  > {
+  extends Omit<JSX.InputHTMLAttributes<HTMLInputElement>, 'accept' | 'type' | 'onTouchEnd' | 'onClick'> {
   onAdd?: (value: MusicInfo[]) => void
   onClick?: (event: PointerEvent) => void
   //
@@ -39,12 +36,7 @@ const rootStyle = cva(rootBaseStyle, {
 export const SMidiFileInput = (props: HMidiFileInputProps) => {
   const id = createUniqueId()
 
-  const [innerProps, restProps] = splitProps(props, [
-    'class',
-    'onAdd',
-    'onTouchEnd',
-    'onClick',
-  ])
+  const [innerProps, restProps] = splitProps(props, ['class', 'onAdd', 'onTouchEnd', 'onClick'])
   const [inputElement, setInputElement] = createSignal<HTMLInputElement | null>(null)
 
   // let isTouchStart = false

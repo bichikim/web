@@ -1,4 +1,4 @@
-import {camelCase} from 'src/export-lodash'
+import {camelCase} from '@winter-love/lodash'
 
 export const pascalCase = (value: string) => {
   const newValue = camelCase(value)

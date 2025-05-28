@@ -13,11 +13,15 @@ import solid from 'eslint-plugin-solid/configs/typescript'
 import * as tsParser from '@typescript-eslint/parser'
 import oxlint from 'eslint-plugin-oxlint'
 
+console.log('evn', process.env.NODE_ENV)
+
+const isScriptCheck = process.env.NODE_ENV === 'script'
+
 const MAX_LINES = 600
 
 export default [
   js.configs.recommended,
-  ...jsonc.configs['flat/recommended-with-jsonc'],
+  ...(isScriptCheck ? [] : jsonc.configs['flat/recommended-with-jsonc']),
   nodePlugin.configs['flat/recommended'],
   ...ts.configs.recommended,
   prettierRecommended,
@@ -441,15 +445,17 @@ export default [
       'unicorn/prefer-module': 'off',
     },
   },
-  {
-    files: ['**/*.json'],
-    rules: {
-      '@typescript-eslint/no-unused-expressions': 'off',
-      'comma-dangle': 'off',
-      'quote-props': 'off',
-      'unicorn/prefer-string-raw': 'off',
-    },
-  },
+  isScriptCheck
+    ? {}
+    : {
+        files: ['**/*.json'],
+        rules: {
+          '@typescript-eslint/no-unused-expressions': 'off',
+          'comma-dangle': 'off',
+          'quote-props': 'off',
+          'unicorn/prefer-string-raw': 'off',
+        },
+      },
   {
     files: ['**/*.spec.ts'],
     rules: {

@@ -13,27 +13,21 @@ cursor-move p-2 hover:bg-gray-200 rounded-full bg-red cursor-grab absolute top-5
 translate-x-100% translate-y--1/2
 `
 
-const bodyStyle = cva(
-  'border border-gray-300 rounded-md bg-white absolute bottom-0 left-0',
-  {
-    defaultVariants: {
-      maxContentSize: false,
-    },
-    variants: {
-      maxContentSize: {
-        true: 'max-h-max',
-      },
+const bodyStyle = cva('border border-gray-300 rounded-md bg-white absolute bottom-0 left-0', {
+  defaultVariants: {
+    maxContentSize: false,
+  },
+  variants: {
+    maxContentSize: {
+      true: 'max-h-max',
     },
   },
-)
+})
 
 const Template = (args: ResizeCardProviderProps & {maxContentSize?: boolean}) => {
   return (
     <ResizeCard.Provider {...args}>
-      <ResizeCard.Body
-        component="div"
-        class={bodyStyle({maxContentSize: args.maxContentSize})}
-      >
+      <ResizeCard.Body component="div" class={bodyStyle({maxContentSize: args.maxContentSize})}>
         <ResizeCard.Handle resizeType="up" class={handleUpStyle}>
           <span class="i-carbon-drag-horizontal text-gray-500" />
         </ResizeCard.Handle>

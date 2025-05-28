@@ -108,9 +108,7 @@ export const MidiPlayerProvider = (props: MidiPlayerProviderProps) => {
     props,
   )
 
-  const [playList, setPlayList] = createSignal<MusicInfo[]>(
-    untrack(() => defaultProps.initMusics ?? []),
-  )
+  const [playList, setPlayList] = createSignal<MusicInfo[]>(untrack(() => defaultProps.initMusics ?? []))
   const [selectedId, setSelectedId] = createSignal<string>('')
   const [repeat, setRepeat] = createSignal<RepeatType>('no')
 
@@ -307,9 +305,5 @@ export const MidiPlayerProvider = (props: MidiPlayerProviderProps) => {
     totalDuration,
   }
 
-  return (
-    <MidiPlayerContext.Provider value={contextValue}>
-      {props.children}
-    </MidiPlayerContext.Provider>
-  )
+  return <MidiPlayerContext.Provider value={contextValue}>{props.children}</MidiPlayerContext.Provider>
 }

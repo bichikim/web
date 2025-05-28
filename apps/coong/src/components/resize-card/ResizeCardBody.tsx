@@ -4,9 +4,7 @@ import {createMemo, createSignal, onMount, useContext, ValidComponent} from 'sol
 
 export type ResizeCardBodyProps<T extends ValidComponent> = DynamicProps<T>
 
-export const ResizeCardBody = <T extends ValidComponent>(
-  props: ResizeCardBodyProps<T>,
-) => {
+export const ResizeCardBody = <T extends ValidComponent>(props: ResizeCardBodyProps<T>) => {
   const [element, setElement] = createSignal<HTMLElement | undefined>()
 
   const {initSize, size} = useContext(ResizeCardContext)

@@ -18,19 +18,19 @@ const deleteAllMusicPosts = async () => {
   return client.musicPosts.deleteAllMusicPost.mutate()
 }
 
+const handleClick = () => {
+  createMusicPosts({
+    content: 'content2',
+    title: 'title2',
+    userId: 2,
+  })
+}
+
+const handleDeleteAll = () => {
+  deleteAllMusicPosts()
+}
+
 export default function MusicPostCreate() {
-  const handleClick = () => {
-    createMusicPosts({
-      content: 'content2',
-      title: 'title2',
-      userId: 2,
-    })
-  }
-
-  const handleDeleteAll = () => {
-    deleteAllMusicPosts()
-  }
-
   return (
     <div>
       <button onClick={handleClick}>create</button>

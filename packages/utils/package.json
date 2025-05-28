@@ -31,8 +31,8 @@
     "build": "vite build",
     "check-types": "tsc --noEmit",
     "dev": "vite build --watch --minify false",
-    "lint": "eslint src",
-    "lint:fix": "eslint src --fix"
+    "lint": "cross-env NODE_ENV=script eslint src",
+    "lint:fix": "cross-env NODE_ENV=script eslint src --fix"
   },
   "dependencies": {
     "@winter-love/lodash": "workspace:*",
@@ -44,11 +44,10 @@
     "@types/js-cookie": "^3.0.6",
     "@winter-love/vite-lib-config": "workspace:*",
     "js-cookie": "^3.0.5",
-    "lodash": "^4.17.21",
     "micro-memoize": "^4.1.2",
     "tsd": "^0.31.2",
     "typescript": "^5.7.2",
-    "vite": "^5.4.12"
+    "vite": "^5.4.18"
   },
   "publishConfig": {
     "access": "public"
