@@ -25,7 +25,7 @@ export const STabButton = (props: STabButtonProps) => {
         <SButton
           {...restProps}
           {...arg}
-          variant={arg.isSelected ? 'default' : restProps.variant}
+          color={arg.isSelected ? 'default' : restProps.color}
           class={rootStyle({class: restProps.class, isSelected: arg.isSelected})}
         >
           {restProps.children}

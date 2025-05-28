@@ -4,15 +4,16 @@ import {HButton, HButtonProps} from '@winter-love/solid-components'
 import {buttonStyles, SButtonStyleProps} from './s-button.style'
 
 export type SButtonProps = HButtonProps & {
+  loading?: number | boolean
   preventLoadingDisabled?: boolean
-} & Omit<SButtonStyleProps, 'loadingAnimation'>
+} & Omit<SButtonStyleProps, 'loadingAnimation' | 'loading'>
 
 export const SButton: Component<SButtonProps> = (props) => {
   const [innerProps, restProps] = splitProps(props, [
     'class',
     'glass',
     'size',
-    'variant',
+    'color',
     'flat',
     'outline',
     'loading',
@@ -33,7 +34,7 @@ export const SButton: Component<SButtonProps> = (props) => {
   const style = createMemo(() => {
     if (typeof innerProps.loading === 'number') {
       return {
-        '--var-close-percent': `${props.loading}%`,
+        '--var-progress-percent': `${props.loading}%`,
       }
     }
   })
@@ -55,6 +56,7 @@ export const SButton: Component<SButtonProps> = (props) => {
       {...restProps}
       class={buttonStyles({
         class: innerProps.class ?? 'relative',
+        color: innerProps.color,
         fit: innerProps.fit,
         flat: innerProps.flat,
         glass: innerProps.glass,
@@ -62,7 +64,6 @@ export const SButton: Component<SButtonProps> = (props) => {
         loadingAnimation: isLoadingAnimation(),
         outline: innerProps.outline,
         size: innerProps.size,
-        variant: innerProps.variant,
       })}
       style={style()}
       disabled={isDisabled()}

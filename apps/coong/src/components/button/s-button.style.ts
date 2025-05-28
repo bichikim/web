@@ -4,7 +4,7 @@ import {cva, VariantProps} from 'class-variance-authority'
 const buttonBase = `:uno:
 font-medium inline-flex items-center justify-center gap-2 focus-visible:outline-3 focus-visible:outline-solid
 select-none outline-offset--3 cursor-pointer overflow-hidden min-w-max
-c-[var(--var-text-color)] b-[var(--var-color)] focus-visible:outline-[var(--var-focus-bg)] disabled:c-[var(--var-muted-color)] before:to-[var(--var-semi-muted-color)]
+c-[var(--var-text-color)] b-[var(--var-color)] focus-visible:outline-[var(--var-focus-bg)] disabled:c-[var(--var-muted-color)] before:to-[var(--var-focus-bg)]
 `
 
 const colorVariants = {
@@ -33,10 +33,10 @@ backdrop-blur-sm bg-opacity-90 b-opacity-80 focus:outline-opacity-50
 `
 
 const buttonLoading = `:uno:
-before:w-full before:h-full before:opacity-70 before:z--1
+before:h-full before:opacity-70 before:z--1
 before:content-[""] before:absolute before:left-0 before:top-0 before:right-0 before:bottom-0
-before:inset-0 before:bg-gradient-to-r before:from-transparent before:w-[var(--var-close-percent)]
-before:pointer-events-none animate-pulse-alt
+before:inset-0 before:bg-gradient-to-r before:from-transparent before:w-[var(--var-progress-percent)]
+before:pointer-events-none animate-pulse-alt before:transition-width before:duration-300
 `
 
 export const buttonStyles = cva(buttonBase, {
@@ -73,6 +73,7 @@ export const buttonStyles = cva(buttonBase, {
     },
   ],
   defaultVariants: {
+    color: 'default',
     fit: false,
     flat: false,
     glass: false,
@@ -80,9 +81,16 @@ export const buttonStyles = cva(buttonBase, {
     loadingAnimation: false,
     outline: false,
     size: 'md',
-    variant: 'default',
   },
   variants: {
+    color: {
+      danger: colorVariants.danger,
+      default: colorVariants.default,
+      primary: colorVariants.primary,
+      secondary: colorVariants.secondary,
+      transparent: colorVariants.transparent,
+      warning: colorVariants.warning,
+    },
     fit: {
       true: '',
     },
@@ -109,14 +117,6 @@ export const buttonStyles = cva(buttonBase, {
       lg: sizeVariants.lg,
       md: sizeVariants.md,
       sm: sizeVariants.sm,
-    },
-    variant: {
-      danger: colorVariants.danger,
-      default: colorVariants.default,
-      primary: colorVariants.primary,
-      secondary: colorVariants.secondary,
-      transparent: colorVariants.transparent,
-      warning: colorVariants.warning,
     },
   },
 })

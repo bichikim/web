@@ -38,7 +38,7 @@ export const SPlayerButton = (props: SPlayerButtonProps) => {
       {...restProps}
       flat
       fit
-      variant="default"
+      color="default"
       class={innerProps.class}
       onClick={handelClick}
       type={innerProps.type}

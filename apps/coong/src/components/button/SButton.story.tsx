@@ -1,12 +1,22 @@
 import type {Meta, StoryObj} from 'storybook-solidjs'
 import {fn} from '@storybook/test'
 import {SButton} from './SButton'
+import {createEffect, createSignal, onCleanup} from 'solid-js'
 
 const meta = {
   argTypes: {
+    color: {
+      control: 'select',
+      description: 'Button variant',
+      options: ['primary', 'secondary', 'default', 'transparent', 'danger', 'warning'],
+      table: {
+        category: 'Props',
+        defaultValue: {summary: 'primary'},
+      },
+    },
     disabled: {
       control: 'boolean',
-      description: '비활성화 상태',
+      description: 'Whether the button is disabled or not',
       table: {
         category: 'Props',
         defaultValue: {summary: 'false'},
@@ -14,7 +24,7 @@ const meta = {
     },
     fit: {
       control: 'boolean',
-      description: '버튼 피트 유무',
+      description: 'Whether the button is fit or not',
       table: {
         category: 'Props',
         defaultValue: {summary: 'false'},
@@ -22,7 +32,7 @@ const meta = {
     },
     flat: {
       control: 'boolean',
-      description: '버튼 플랫 유무',
+      description: 'Whether the button is flat or not',
       table: {
         category: 'Props',
         defaultValue: {summary: 'false'},
@@ -30,7 +40,7 @@ const meta = {
     },
     glass: {
       control: 'boolean',
-      description: '버튼 배경 투명도',
+      description: 'Whether the button is glass or not',
       table: {
         category: 'Props',
         defaultValue: {summary: 'false'},
@@ -38,21 +48,21 @@ const meta = {
     },
     loading: {
       control: 'boolean',
-      description: '로딩 상태',
+      description: 'Whether the button is loading or not',
       table: {
         category: 'Props',
         defaultValue: {summary: 'false'},
       },
     },
     onClick: {
-      description: '클릭 이벤트 핸들러',
+      description: 'Click event handler',
       table: {
         category: 'Events',
         defaultValue: {summary: 'undefined'},
       },
     },
     onDoubleClick: {
-      description: '더블 클릭 이벤트 핸들러',
+      description: 'Double click event handler',
       table: {
         category: 'Events',
         defaultValue: {summary: 'undefined'},
@@ -60,7 +70,7 @@ const meta = {
     },
     outline: {
       control: 'boolean',
-      description: '버튼 테두리 유무',
+      description: 'Whether the button has an outline or not',
       table: {
         category: 'Props',
         defaultValue: {summary: 'false'},
@@ -68,7 +78,7 @@ const meta = {
     },
     preventLoadingDisabled: {
       control: 'boolean',
-      description: '로딩 비활성화 방지',
+      description: 'Whether the button is prevent loading disabled or not',
       table: {
         category: 'Props',
         defaultValue: {summary: 'false'},
@@ -76,20 +86,11 @@ const meta = {
     },
     size: {
       control: 'select',
-      description: '버튼 크기',
+      description: 'Button size',
       options: ['sm', 'md', 'lg'],
       table: {
         category: 'Props',
         defaultValue: {summary: 'md'},
-      },
-    },
-    variant: {
-      control: 'select',
-      description: '버튼 스타일 변형',
-      options: ['primary', 'secondary', 'default', 'transparent', 'danger', 'warning'],
-      table: {
-        category: 'Props',
-        defaultValue: {summary: 'primary'},
       },
     },
   },
@@ -103,84 +104,127 @@ type Story = StoryObj<typeof meta>
 
 export const OverrideClass: Story = {
   args: {
-    children: '주요 버튼',
+    children: 'primary button',
     class: 'absolute left-20 top-20',
+    color: 'primary',
     size: 'md',
-    variant: 'primary',
   },
 }
 
 export const Primary: Story = {
   args: {
-    children: '주요 버튼',
+    children: 'primary button',
+    color: 'primary',
     size: 'md',
-    variant: 'primary',
   },
 }
 
 export const Secondary: Story = {
   args: {
-    children: '보조 버튼',
+    children: 'secondary button',
+    color: 'secondary',
     size: 'md',
-    variant: 'secondary',
   },
 }
 
 export const Danger: Story = {
   args: {
-    children: '위험 버튼',
+    children: 'danger button',
+    color: 'danger',
     size: 'md',
-    variant: 'danger',
   },
 }
 
 export const Warning: Story = {
   args: {
-    children: '경고 버튼',
+    children: 'warning button',
+    color: 'warning',
     size: 'md',
-    variant: 'warning',
   },
 }
 
 export const Default: Story = {
   args: {
-    children: '기본 버튼',
+    children: 'default button',
+    color: 'default',
     size: 'md',
-    variant: 'default',
   },
 }
 
 export const Small: Story = {
   args: {
-    children: '작은 버튼',
+    children: 'small button',
     size: 'sm',
   },
 }
 
 export const Large: Story = {
   args: {
-    children: '큰 버튼',
+    children: 'large button',
     size: 'lg',
+  },
+}
+
+export const Flat: Story = {
+  args: {
+    children: 'flat button',
+    color: 'primary',
+    flat: true,
+    size: 'md',
+  },
+}
+
+export const Glass: Story = {
+  args: {
+    children: 'glass button',
+    color: 'primary',
+    glass: true,
+    size: 'md',
   },
 }
 
 export const Disabled: Story = {
   args: {
-    children: '비활성화 버튼',
+    children: 'disabled button',
     disabled: true,
   },
 }
 
 export const Loading: Story = {
   args: {
-    children: '로딩 버튼',
+    children: 'loading button',
     loading: true,
   },
 }
 
 export const LoadingNumber: Story = {
   args: {
-    children: '비활성화 버튼',
-    loading: 50,
+    children: 'loading button',
+    loading: 10,
+  },
+  render: (args: any) => {
+    const [loading, setLoading] = createSignal(args.loading)
+
+    createEffect(() => {
+      const clear = setInterval(() => {
+        setLoading((value) => {
+          if (value < 100) {
+            return value + 10
+          }
+
+          return 10
+        })
+      }, 500)
+
+      onCleanup(() => {
+        clearInterval(clear)
+      })
+    })
+
+    return (
+      <SButton {...args} loading={loading()}>
+        Loading {loading()}%
+      </SButton>
+    )
   },
 }

@@ -58,7 +58,7 @@ export const SClose = (props: SCloseProps) => {
   return (
     <SButton
       {...preventGlobalTouchAttrs()}
-      variant="danger"
+      color="danger"
       flat
       fit
       loading={percent()}
