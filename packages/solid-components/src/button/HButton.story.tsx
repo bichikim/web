@@ -29,6 +29,7 @@ const meta = {
   },
   args: {
     children: 'Click me',
+    class: 'bg-gray-100 p-2 rounded-md text-4',
     onClick: fn(),
     onDoubleClick: fn(),
     onTouchEnd: fn(),
@@ -102,5 +103,34 @@ export const DoubleClickWithTouch: Story = {
     await fireEvent.touchEnd(button)
     // check double click event
     expect(args.onDoubleClick).toHaveBeenCalledTimes(1)
+  },
+}
+
+export const Loading: Story = {
+  args: {
+    loading: true,
+  },
+}
+
+export const LoadingProcess: Story = {
+  args: {
+    loading: 50,
+  },
+  play: async ({canvasElement, args}) => {
+    const canvas = within(canvasElement)
+    const button = canvas.getByRole('button', {name: 'Click me'})
+
+    expect(button).toHaveAttribute('data-loading', 'loop')
+  },
+}
+
+export const AutoLoading: Story = {
+  args: {
+    autoLoading: true,
+    onClick: async () => {
+      await new Promise((resolve) => {
+        setTimeout(resolve, 1000)
+      })
+    },
   },
 }

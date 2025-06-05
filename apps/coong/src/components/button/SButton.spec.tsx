@@ -17,10 +17,13 @@ describe('SButton', () => {
   it.each([
     {color: 'primary'},
     {color: 'secondary'},
-    {color: 'danger'},
     {color: 'warning'},
     {color: 'default'},
     {color: 'transparent'},
+    {color: 'error'},
+    {color: 'warning'},
+    {color: 'info'},
+    {color: 'success'},
   ] as const)('should render color variant: $color', ({color}: {color: SButtonProps['color']}) => {
     const {getByRole} = render(() => <SButton color={color}>Color Button</SButton>)
 

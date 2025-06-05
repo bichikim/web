@@ -35,6 +35,7 @@
   "dependencies": {
     "@winter-love/utils": "workspace:*",
     "commander": "^13.0.0",
+    "core-js": "^3.42.0",
     "glob": "^11.0.1",
     "solid-js": "^1.9.3"
   },

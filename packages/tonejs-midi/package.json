@@ -1,0 +1,42 @@
+{
+  "name": "@winter-love/tonejs-midi",
+  "version": "1.0.0",
+  "description": "",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bichikim/web.git"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs"
+    },
+    "./*": "./*"
+  },
+  "main": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/*",
+    "es-tone/*"
+  ],
+  "scripts": {
+    "build": "pnpm run build:ts && vite build",
+    "build:dev": "vite build --minify false",
+    "build:ts": "tsc node_modules/@tonejs/midi/src/*.ts --target es2022 --moduleResolution node --outDir es-tone --declaration",
+    "check-types": "tsc --noEmit",
+    "lint": "cross-env NODE_ENV=script eslint src",
+    "lint:fix": "cross-env NODE_ENV=script eslint src --fix",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "array-flatten": "^3.0.0",
+    "midi-file": "^1.2.4"
+  },
+  "devDependencies": {
+    "@tonejs/midi": "^2.0.28",
+    "@winter-love/vite-lib-config": "workspace:*",
+    "vite": "^5.4.12"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

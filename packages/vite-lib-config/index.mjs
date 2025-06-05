@@ -47,7 +47,7 @@ export const createConfig = ({
             index: path.join(root, 'src/index.ts'),
             ...newEntry,
           },
-          formats: ['es', 'cjs'],
+          formats: ['es'],
           name: lodash.camelCase(name),
         },
         rollupOptions: {

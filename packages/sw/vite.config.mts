@@ -18,7 +18,7 @@ export default createConfig({
             // // https://babeljs.io/docs/en/babel-preset-env#modules
             modules: false,
             targets,
-            useBuiltIns: 'entry',
+            useBuiltIns: false,
           },
         ],
       ],

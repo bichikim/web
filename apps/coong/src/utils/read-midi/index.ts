@@ -1,4 +1,4 @@
-import {Midi} from '@tonejs/midi'
+import {Midi} from '@winter-love/tonejs-midi'
 import {ONE_MB, TEN} from '@winter-love/utils'
 
 const DEFAULT_MAX_FILE_SIZE = TEN * ONE_MB

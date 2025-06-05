@@ -4,7 +4,7 @@ import {createMemo, Show, splitProps} from 'solid-js'
 import {PlayOptions} from 'src/use/instruments'
 import {SProgress} from './SProgress'
 import {STypeIcon} from './STypeIcon'
-import type {Header} from '@tonejs/midi'
+import type {Header} from '@winter-love/tonejs-midi'
 import {DragButton, DragButtonBodyProps} from '@winter-love/solid-components'
 import {SFlowDisplay} from 'src/components/flow-display'
 

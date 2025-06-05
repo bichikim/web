@@ -1,13 +1,18 @@
-import {createMemo, JSX, mergeProps, ParentProps} from 'solid-js'
+import {createMemo, createSignal, JSX, mergeProps, ParentProps} from 'solid-js'
 import {now} from '@winter-love/lodash'
 import {ButtonContext, ButtonContextProps} from './context'
 
 export type ButtonType = 'button' | 'anchor' | 'anchor-button'
 
 export interface ButtonProviderProps extends ParentProps {
+  /**
+   * If true, the button will change to loading state when clicked.
+   */
+  autoLoading?: boolean
   disabled?: boolean
   doubleClickGap?: number
   href?: string
+  loading?: boolean
   onClick?: JSX.EventHandler<HTMLButtonElement, MouseEvent | TouchEvent>
   onDoubleClick?: JSX.EventHandler<HTMLButtonElement, MouseEvent | TouchEvent>
   onFocusEnter?: (event: KeyboardEvent) => void
@@ -25,18 +30,26 @@ export const ButtonProvider = (props: ButtonProviderProps) => {
 
   const defaultProps = mergeProps(
     {
+      autoLoading: false,
       doubleClickGap: DEFAULT_DOUBLE_CLICK_GAP,
+      loading: false,
       type: 'button',
     },
     props,
   )
 
   /**
+   * number: loading process percentage
+   * boolean: auto loading state
+   */
+  const [autoLoading, setAutoLoading] = createSignal<number | boolean>(false)
+
+  /**
    * Handles the `click` event for the button component and forwards it to the parent component.
    *
    * @param event The mouse event triggered by user interaction.
    */
-  const handleClick: ButtonProviderProps['onClick'] = (event: any) => {
+  const handleClick: ButtonProviderProps['onClick'] = async (event: any) => {
     // skip touch event
     // skip anchor event because it will navigate to the href
     if (event.pointerType === 'touch' || defaultProps.type === 'anchor') {
@@ -53,7 +66,9 @@ export const ButtonProvider = (props: ButtonProviderProps) => {
     }
 
     clickTime = newClickTime
-    defaultProps.onClick?.(event)
+    setAutoLoading(true)
+    await defaultProps.onClick?.(event)
+    setAutoLoading(false)
   }
 
   /**
@@ -133,10 +148,38 @@ export const ButtonProvider = (props: ButtonProviderProps) => {
     }
   })
 
+  const loadingProcess = createMemo(() => {
+    if (defaultProps.autoLoading) {
+      return
+    }
+
+    if (typeof defaultProps.loading === 'number') {
+      return defaultProps.loading
+    }
+  })
+
+  const loading = createMemo(() => {
+    if (defaultProps.autoLoading) {
+      return autoLoading() ? 'true' : 'false'
+    }
+
+    if (typeof defaultProps.loading === 'number') {
+      return 'loop'
+    }
+
+    return defaultProps.loading ? 'true' : 'false'
+  })
+
+  const disabled = createMemo(() => {
+    return (loading() !== 'false' || defaultProps.disabled) ?? false
+  })
+
   const buttonContextValue = createMemo((): ButtonContextProps => {
     return {
-      disabled: defaultProps.disabled ?? false,
+      disabled: disabled(),
       href: href(),
+      loading: loading(),
+      loadingProcess: loadingProcess(),
       tag: tag(),
     }
   })

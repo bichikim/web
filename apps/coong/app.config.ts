@@ -53,7 +53,7 @@ const createGenerateSwPlugin = (): Plugin => {
 }
 
 export default defineConfig({
-  middleware: 'src/middleware/index.ts',
+  // middleware: 'src/middleware/index.ts',
   server: {
     hooks: {
       close: () => {
@@ -73,7 +73,7 @@ export default defineConfig({
     resolve: {
       alias: {
         // fix @tonejs/midi is not module js
-        '@tonejs/midi': fileURLToPath(new URL('node_modules/@tonejs/midi/src/Midi.ts', import.meta.url)),
+        // '@tonejs/midi': fileURLToPath(new URL('node_modules/@tonejs/midi/src/Midi.ts', import.meta.url)),
 
         // root source path alias
         src: fileURLToPath(new URL('src', import.meta.url)),

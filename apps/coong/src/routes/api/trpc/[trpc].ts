@@ -5,7 +5,6 @@ import {appRouter} from 'src/server/trpc/routes'
 import {TRPC_ENDPOINT} from 'src/server/trpc/consts'
 import {getSession} from '@auth/solid-start'
 import {type Session} from '@auth/core/types'
-import {authOptions} from 'src/server/auth/config'
 
 // tRPC context 타입 정의
 interface Context {
@@ -28,7 +27,7 @@ const handler = async (event: APIEvent) => {
       // Get the session
       const {req} = context
 
-      const session = await getSession(req, authOptions)
+      const session = null
 
       return {
         session,

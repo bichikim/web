@@ -16,7 +16,6 @@ export const SButton: Component<SButtonProps> = (props) => {
     'color',
     'flat',
     'outline',
-    'loading',
     'disabled',
     'preventLoadingDisabled',
     'children',
@@ -31,25 +30,25 @@ export const SButton: Component<SButtonProps> = (props) => {
     return Boolean(props.loading)
   })
 
-  const style = createMemo(() => {
-    if (typeof innerProps.loading === 'number') {
-      return {
-        '--var-progress-percent': `${props.loading}%`,
-      }
-    }
-  })
+  // const style = createMemo(() => {
+  //   if (typeof innerProps.loading === 'number') {
+  //     return {
+  //       '--var-progress-percent': `${props.loading}%`,
+  //     }
+  //   }
+  // })
 
-  const isLoadingAnimation = createMemo(() => {
-    return innerProps.loading === true
-  })
+  // const isLoadingAnimation = createMemo(() => {
+  //   return innerProps.loading === true
+  // })
 
-  const isDisabled = createMemo(() => {
-    if (isLoading() && !innerProps.preventLoadingDisabled) {
-      return true
-    }
+  // const isDisabled = createMemo(() => {
+  //   if (isLoading() && !innerProps.preventLoadingDisabled) {
+  //     return true
+  //   }
 
-    return innerProps.disabled
-  })
+  //   return innerProps.disabled
+  // })
 
   return (
     <HButton
@@ -60,13 +59,10 @@ export const SButton: Component<SButtonProps> = (props) => {
         fit: innerProps.fit,
         flat: innerProps.flat,
         glass: innerProps.glass,
-        loading: isLoading(),
-        loadingAnimation: isLoadingAnimation(),
+        // loadingAnimation: isLoadingAnimation(),
         outline: innerProps.outline,
         size: innerProps.size,
       })}
-      style={style()}
-      disabled={isDisabled()}
     >
       {innerProps.children}
     </HButton>

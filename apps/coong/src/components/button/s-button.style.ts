@@ -4,16 +4,18 @@ import {cva, VariantProps} from 'class-variance-authority'
 const buttonBase = `:uno:
 font-medium inline-flex items-center justify-center gap-2 focus-visible:outline-3 focus-visible:outline-solid
 select-none outline-offset--3 cursor-pointer overflow-hidden min-w-max
-c-[var(--var-text-color)] b-[var(--var-color)] focus-visible:outline-[var(--var-focus-bg)] disabled:c-[var(--var-muted-color)] before:to-[var(--var-focus-bg)]
+c-[var(--var-text-color)] b-[var(--var-color)] focus-visible:outline-[var(--var-focus-bg)] disabled:c-[var(--var-muted-color)] before:to-[var(--var-semi-focus-bg)]
 `
 
 const colorVariants = {
-  danger: `uno: color-var-text-color=white  var-color=red-400 var-focus-bg=red-700 var-muted-color=red-200 var-semi-muted-color=red-300`,
-  default: `uno: color-var-text-color=black var-color=gray-100 var-focus-bg=black var-muted-color=gray-400 var-semi-muted-color=gray-300`,
-  primary: `uno: color-var-text-color=white var-color=blue-400 var-focus-bg=blue-700 var-muted-color=blue-200 var-semi-muted-color=white`,
-  secondary: `uno: color-var-text-color=white var-color=indigo-400 var-focus-bg=indigo-700 var-muted-color=indigo-200 var-semi-muted-color=white`,
-  transparent: `uno: color-var-text-color=black var-color=transparent var-focus-bg=black var-muted-color=gray-400 var-semi-muted-color=gray-300`,
-  warning: `uno: color-var-text-color=white var-color=orange-400 var-focus-bg=orange-700 var-muted-color=orange-200 var-semi-muted-color=orange-300`,
+  default: `uno: color-var-text-color=black var-color=gray-100 var-focus-bg=black var-muted-color=gray-400 var-semi-muted-color=gray-300 var-semi-focus-bg=gray-400`,
+  error: `uno: color-var-text-color=white  var-color=red-400 var-focus-bg=red-700 var-muted-color=red-200 var-semi-muted-color=red-300 var-semi-focus-bg=red-500`,
+  info: `uno: color-var-text-color=white var-color=sky-400 var-focus-bg=sky-700 var-muted-color=sky-200 var-semi-muted-color=sky-300 var-semi-focus-bg=sky-500`,
+  primary: `uno: color-var-text-color=white var-color=blue-400 var-focus-bg=blue-700 var-muted-color=blue-200 var-semi-muted-color=white var-semi-focus-bg=blue-500`,
+  secondary: `uno: color-var-text-color=white var-color=indigo-400 var-focus-bg=indigo-700 var-muted-color=indigo-200 var-semi-muted-color=white var-semi-focus-bg=indigo-500`,
+  success: `uno: color-var-text-color=white var-color=green-400 var-focus-bg=green-700 var-muted-color=green-200 var-semi-muted-color=green-300 var-semi-focus-bg=green-500`,
+  transparent: `uno: color-var-text-color=black var-color=transparent var-focus-bg=black var-muted-color=gray-400 var-semi-muted-color=gray-300 var-semi-focus-bg=gray-200`,
+  warning: `uno: color-var-text-color=white var-color=orange-400 var-focus-bg=orange-700 var-muted-color=orange-200 var-semi-muted-color=orange-300 var-semi-focus-bg=orange-500`,
 }
 
 const sizeVariants = {
@@ -84,12 +86,7 @@ export const buttonStyles = cva(buttonBase, {
   },
   variants: {
     color: {
-      danger: colorVariants.danger,
-      default: colorVariants.default,
-      primary: colorVariants.primary,
-      secondary: colorVariants.secondary,
-      transparent: colorVariants.transparent,
-      warning: colorVariants.warning,
+      ...colorVariants,
     },
     fit: {
       true: '',

@@ -10,9 +10,30 @@ const APP_FILES = __inject_code__
 const {origin: originPath} = self.location
 const apiPath = `${originPath}/api/`
 
-const isOriginPath = (url: string) => url.startsWith(`${originPath}/`) || url === originPath
+const startsWith = (target: string, search: string) => {
+  if (typeof target !== 'string' || typeof search !== 'string') {
+    return false
+  }
 
-const isApiPath = (url: string) => url.startsWith(apiPath)
+  const targetLength = target.length
+  const searchLength = search.length
+
+  if (searchLength > targetLength) {
+    return false
+  }
+
+  for (let index = 0; index < searchLength; index += 1) {
+    if (target[index] !== search[index]) {
+      return false
+    }
+  }
+
+  return true
+}
+
+const isOriginPath = (url: string) => startsWith(url, `${originPath}/`) || url === originPath
+
+const isApiPath = (url: string) => startsWith(url, apiPath)
 
 const createNetworkFirst = async (event: FetchEvent, cache: RequestCache = 'default') => {
   const headers = new Headers()
@@ -74,6 +95,11 @@ const createCacheFirst = async (event: FetchEvent) => {
   return response
 }
 
+const includes = (array: any[], value: any) => {
+  // eslint-disable-next-line unicorn/prefer-includes
+  return array.indexOf(value) !== -1
+}
+
 // Handle service worker install event
 self.addEventListener('install', (event) => {
   event.waitUntil(() => {
@@ -106,7 +132,7 @@ self.addEventListener('fetch', (event: FetchEvent) => {
   const destination: RequestDestination[] = ['style', 'script', 'worker', 'manifest', 'document']
 
   // Use network request for document navigation, otherwise use cache request
-  if (destination.includes(event.request.destination)) {
+  if (includes(destination, event.request.destination)) {
     event.respondWith(createNetworkFirst(event))
 
     return

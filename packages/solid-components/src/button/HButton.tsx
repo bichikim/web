@@ -35,6 +35,8 @@ export const HButton = (props: HButtonProps) => {
     'doubleClickGap',
     'type',
     'href',
+    'loading',
+    'autoLoading',
   ])
 
   return (

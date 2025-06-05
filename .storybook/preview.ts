@@ -3,14 +3,12 @@ import 'virtual:uno.css'
 
 const preview: Preview = {
   parameters: {
-    actions: {argTypesRegex: '^on.*'},
     backgrounds: {
       default: 'chessboard',
       values: [
         {
           name: 'chessboard',
-          value:
-            'repeating-linear-gradient(45deg, #000 0, #000 25px, #fff 25px, #fff 50px)',
+          value: 'repeating-linear-gradient(45deg, #000 0, #000 25px, #fff 25px, #fff 50px)',
         },
         {
           name: 'white',

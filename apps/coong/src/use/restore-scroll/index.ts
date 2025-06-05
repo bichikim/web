@@ -1,4 +1,4 @@
-import {Accessor, onMount} from 'solid-js'
+import {Accessor, onCleanup, onMount} from 'solid-js'
 import {useEvent, useStorage} from '@winter-love/solid-use'
 import {getStorageKey} from 'src/utils/storage-key'
 // restore scroll
