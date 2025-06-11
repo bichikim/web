@@ -89,7 +89,7 @@ export default function HomePage() {
             },
             actionToClose: true,
             label: 'Get Now',
-            props: {loading: isLoading(), variant: 'primary'},
+            props: {loading: isLoading(), color: 'primary'},
             type: 'click',
           },
           {

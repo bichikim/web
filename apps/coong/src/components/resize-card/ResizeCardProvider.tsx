@@ -2,7 +2,7 @@ import {Accessor, createContext, createEffect, createSignal, ParentProps, untrac
 import {Position, Size} from '@winter-love/utils'
 
 export interface ResizeCardContextValue {
-  initSize: (element: HTMLElement) => void
+  setElement: (element: HTMLElement | undefined) => void
   size: Accessor<Partial<Size> | undefined>
   startResize: (position: Position, type: ResizeType) => void
   stopResize: (position: Position) => void
@@ -10,8 +10,8 @@ export interface ResizeCardContextValue {
 }
 
 export const ResizeCardContext = createContext<ResizeCardContextValue>({
-  initSize: () => {
-    console.warn('initSize is not implemented')
+  setElement: () => {
+    console.warn('setElement is not implemented')
   },
   size: () => ({
     height: 0,
@@ -40,6 +40,7 @@ export interface ResizeCardProviderProps extends ParentProps {
 
 export const ResizeCardProvider = (props: ResizeCardProviderProps) => {
   const [size, setSize] = createSignal<Partial<Size> | undefined>()
+  const [element, setElement] = createSignal<HTMLElement | undefined>()
 
   let startPosition: Position | undefined
   let startSize: Partial<Size> | undefined
@@ -84,6 +85,14 @@ export const ResizeCardProvider = (props: ResizeCardProviderProps) => {
   })
 
   const startResize = (position: Position, type: ResizeType) => {
+    const element_ = element()
+
+    if (!element_) {
+      return
+    }
+
+    initSize(element_)
+
     const _size = size()
 
     if (!_size) {
@@ -195,7 +204,7 @@ export const ResizeCardProvider = (props: ResizeCardProviderProps) => {
   }
 
   return (
-    <ResizeCardContext.Provider value={{initSize, size, startResize, stopResize, updateSize}}>
+    <ResizeCardContext.Provider value={{setElement, size, startResize, stopResize, updateSize}}>
       {props.children}
     </ResizeCardContext.Provider>
   )

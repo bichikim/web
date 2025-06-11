@@ -18,6 +18,7 @@ export interface ButtonProviderProps extends ParentProps {
   onFocusEnter?: (event: KeyboardEvent) => void
   onTouchEnd?: JSX.EventHandler<HTMLButtonElement, TouchEvent>
   onTouchStart?: JSX.EventHandler<HTMLButtonElement, TouchEvent>
+  preventLoadingDisabled?: boolean
   type?: ButtonType
 }
 
@@ -171,6 +172,10 @@ export const ButtonProvider = (props: ButtonProviderProps) => {
   })
 
   const disabled = createMemo(() => {
+    if (defaultProps.preventLoadingDisabled) {
+      return defaultProps.disabled ?? false
+    }
+
     return (loading() !== 'false' || defaultProps.disabled) ?? false
   })
 

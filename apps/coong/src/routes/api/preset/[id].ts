@@ -1,6 +1,11 @@
 import {APIEvent} from '@solidjs/start/server'
 import hiddenTeenieping from './hidden-teenieping.json'
-import {Preset} from 'src/types/api'
+import {type MusicInfo} from 'src/components/midi-player/SFileItem'
+
+export interface Preset {
+  musics: MusicInfo[]
+  title: string
+}
 
 const presetMap: Record<string, Preset> = {
   'hidden-teenieping': {

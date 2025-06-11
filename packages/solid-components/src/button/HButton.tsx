@@ -37,6 +37,7 @@ export const HButton = (props: HButtonProps) => {
     'href',
     'loading',
     'autoLoading',
+    'preventLoadingDisabled',
   ])
 
   return (

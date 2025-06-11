@@ -8,14 +8,14 @@ c-[var(--var-text-color)] b-[var(--var-color)] focus-visible:outline-[var(--var-
 `
 
 const colorVariants = {
-  default: `uno: color-var-text-color=black var-color=gray-100 var-focus-bg=black var-muted-color=gray-400 var-semi-muted-color=gray-300 var-semi-focus-bg=gray-400`,
-  error: `uno: color-var-text-color=white  var-color=red-400 var-focus-bg=red-700 var-muted-color=red-200 var-semi-muted-color=red-300 var-semi-focus-bg=red-500`,
-  info: `uno: color-var-text-color=white var-color=sky-400 var-focus-bg=sky-700 var-muted-color=sky-200 var-semi-muted-color=sky-300 var-semi-focus-bg=sky-500`,
-  primary: `uno: color-var-text-color=white var-color=blue-400 var-focus-bg=blue-700 var-muted-color=blue-200 var-semi-muted-color=white var-semi-focus-bg=blue-500`,
-  secondary: `uno: color-var-text-color=white var-color=indigo-400 var-focus-bg=indigo-700 var-muted-color=indigo-200 var-semi-muted-color=white var-semi-focus-bg=indigo-500`,
-  success: `uno: color-var-text-color=white var-color=green-400 var-focus-bg=green-700 var-muted-color=green-200 var-semi-muted-color=green-300 var-semi-focus-bg=green-500`,
-  transparent: `uno: color-var-text-color=black var-color=transparent var-focus-bg=black var-muted-color=gray-400 var-semi-muted-color=gray-300 var-semi-focus-bg=gray-200`,
-  warning: `uno: color-var-text-color=white var-color=orange-400 var-focus-bg=orange-700 var-muted-color=orange-200 var-semi-muted-color=orange-300 var-semi-focus-bg=orange-500`,
+  default: `:uno: color-var-text-color=black var-color=gray-100 var-focus-bg=black var-muted-color=gray-400 var-semi-muted-color=gray-300 var-semi-focus-bg=gray-400`,
+  error: `:uno: color-var-text-color=white  var-color=red-400 var-focus-bg=red-700 var-muted-color=red-200 var-semi-muted-color=red-300 var-semi-focus-bg=red-500`,
+  info: `:uno: color-var-text-color=white var-color=sky-400 var-focus-bg=sky-700 var-muted-color=sky-200 var-semi-muted-color=sky-300 var-semi-focus-bg=sky-500`,
+  primary: `:uno: color-var-text-color=white var-color=blue-400 var-focus-bg=blue-700 var-muted-color=blue-200 var-semi-muted-color=white var-semi-focus-bg=blue-500`,
+  secondary: `:uno: color-var-text-color=white var-color=indigo-400 var-focus-bg=indigo-700 var-muted-color=indigo-200 var-semi-muted-color=white var-semi-focus-bg=indigo-500`,
+  success: `:uno: color-var-text-color=white var-color=green-400 var-focus-bg=green-700 var-muted-color=green-200 var-semi-muted-color=green-300 var-semi-focus-bg=green-500`,
+  transparent: `:uno: color-var-text-color=black var-color=transparent var-focus-bg=black var-muted-color=gray-400 var-semi-muted-color=gray-300 var-semi-focus-bg=gray-200`,
+  warning: `:uno: color-var-text-color=white var-color=orange-400 var-focus-bg=orange-700 var-muted-color=orange-200 var-semi-muted-color=orange-300 var-semi-focus-bg=orange-500`,
 }
 
 const sizeVariants = {
@@ -107,7 +107,7 @@ export const buttonStyles = cva(buttonBase, {
       true: 'before:animate-slide',
     },
     outline: {
-      false: ':uno: var-padding-offset=1px',
+      false: ':var-padding-offset=1px',
       true: ':uno: b-1 b-solid',
     },
     size: {

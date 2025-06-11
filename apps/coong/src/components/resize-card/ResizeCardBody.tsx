@@ -1,20 +1,24 @@
 import {Dynamic, DynamicProps} from 'solid-js/web'
 import {ResizeCardContext} from './ResizeCardProvider'
-import {createMemo, createSignal, onMount, useContext, ValidComponent} from 'solid-js'
+import {createEffect, createMemo, createSignal, onCleanup, onMount, useContext, ValidComponent} from 'solid-js'
 
 export type ResizeCardBodyProps<T extends ValidComponent> = DynamicProps<T>
 
 export const ResizeCardBody = <T extends ValidComponent>(props: ResizeCardBodyProps<T>) => {
   const [element, setElement] = createSignal<HTMLElement | undefined>()
 
-  const {initSize, size} = useContext(ResizeCardContext)
+  const {size, setElement: setElementContext} = useContext(ResizeCardContext)
 
-  onMount(() => {
+  createEffect(() => {
     const _element = element()
 
     if (_element) {
-      initSize(_element)
+      setElementContext(_element)
     }
+
+    onCleanup(() => {
+      setElementContext(undefined)
+    })
   })
 
   const style = createMemo(() => {
