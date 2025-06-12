@@ -12,7 +12,7 @@ export interface ButtonProviderProps extends ParentProps {
   disabled?: boolean
   doubleClickGap?: number
   href?: string
-  loading?: boolean
+  loading?: boolean | number
   onClick?: JSX.EventHandler<HTMLButtonElement, MouseEvent | TouchEvent>
   onDoubleClick?: JSX.EventHandler<HTMLButtonElement, MouseEvent | TouchEvent>
   onFocusEnter?: (event: KeyboardEvent) => void

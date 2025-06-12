@@ -20,9 +20,9 @@ const deleteAllMusicPosts = async () => {
 
 const handleClick = () => {
   createMusicPosts({
+    authorId: '2',
     content: 'content2',
     title: 'title2',
-    userId: 2,
   })
 }
 

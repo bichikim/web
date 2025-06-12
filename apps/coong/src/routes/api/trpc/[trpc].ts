@@ -3,12 +3,11 @@ import {APIEvent} from '@solidjs/start/server'
 import {fetchRequestHandler} from '@trpc/server/adapters/fetch'
 import {appRouter} from 'src/server/trpc/routes'
 import {TRPC_ENDPOINT} from 'src/server/trpc/consts'
-import {getSession} from '@auth/solid-start'
-import {type Session} from '@auth/core/types'
 
 // tRPC context 타입 정의
 interface Context {
-  session: Session | null
+  //
+  __naver__?: any
 }
 
 interface CreateContextArg {
@@ -24,14 +23,7 @@ const handler = async (event: APIEvent) => {
   // adapts tRPC to fetch API style requests
   return fetchRequestHandler({
     createContext: async (context: CreateContextArg): Promise<Context> => {
-      // Get the session
-      const {req} = context
-
-      const session = null
-
-      return {
-        session,
-      }
+      return {}
     },
     endpoint: TRPC_ENDPOINT,
     req: event.request,

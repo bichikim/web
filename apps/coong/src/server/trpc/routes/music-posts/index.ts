@@ -11,13 +11,17 @@ export const musicPostsRouter = router({
   createMusicPost: procedure
     .input(
       z.object({
+        authorId: z.string(),
         content: z.string(),
         title: z.string(),
-        userId: z.number(),
       }),
     )
     .mutation(({input}) => {
-      return db.insert(musicPosts).values(input)
+      return db.insert(musicPosts).values({
+        authorId: input.authorId,
+        content: input.content,
+        title: input.title,
+      })
     }),
   deleteAllMusicPost: procedure.mutation(() => {
     return db.delete(musicPosts)
@@ -25,7 +29,7 @@ export const musicPostsRouter = router({
   deleteMusicPost: procedure
     .input(
       z.object({
-        id: z.number(),
+        id: z.string(),
       }),
     )
     .mutation(({input}) => {
@@ -34,7 +38,7 @@ export const musicPostsRouter = router({
   getMusicPost: procedure
     .input(
       z.object({
-        id: z.number(),
+        id: z.string(),
       }),
     )
     .query(({input}) => {
@@ -57,11 +61,17 @@ export const musicPostsRouter = router({
     .input(
       z.object({
         content: z.string(),
-        id: z.number(),
+        id: z.string(),
         title: z.string(),
       }),
     )
     .mutation(({input}) => {
-      return db.update(musicPosts).set(input).where(eq(musicPosts.id, input.id))
+      return db
+        .update(musicPosts)
+        .set({
+          content: input.content,
+          title: input.title,
+        })
+        .where(eq(musicPosts.id, input.id))
     }),
 })

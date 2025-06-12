@@ -25,13 +25,13 @@ export const STopLevelPanel = (props: STopLevelPanelProps) => {
           <SClose class="mb-1" isPlaying={isPlaying()} />
           <SHiddenContent>
             <STabList>
-              <STabButton value="player" fit flat variant="primary">
+              <STabButton value="player" fit flat color="primary">
                 <span class="i-tabler:music w-7 h-7 block" />
               </STabButton>
-              <STabButton value="setting" fit flat variant="warning">
+              <STabButton value="setting" fit flat color="warning">
                 <span class="i-tabler:settings w-7 h-7 block" />
               </STabButton>
-              <STabButton value="user" fit flat variant="secondary">
+              <STabButton value="user" fit flat color="secondary">
                 <span class="i-tabler:user w-7 h-7 block" />
               </STabButton>
             </STabList>
