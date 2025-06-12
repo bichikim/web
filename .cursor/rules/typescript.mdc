@@ -1,0 +1,11 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+# Typescript Writing Guidelines
+
+## Naming Conventions
+- Use PascalCase for Class names (e.g., `UserProfile`)
+- Use camelCase for variables
+- Use UPPER_SNAKE_CASE for constants (e.g., MAX_COUNT, API_URL)

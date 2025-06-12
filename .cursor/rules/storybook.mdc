@@ -1,9 +1,9 @@
 ---
-description: 
-globs: 
+description:
+globs:
 alwaysApply: true
 ---
-# Storybook Guidelines for Solid.js Components
+# Storybook Writing Guidelines for Solid.js Components
 
 ## File Structure
 - Stories should be placed in the same directory as the component

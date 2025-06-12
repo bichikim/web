@@ -1,10 +1,12 @@
 ---
-description: 
-globs: 
-alwaysApply: true
+description:
+globs: *.tsx
+alwaysApply: false
 ---
 
-# SolidJS Component Writing Guidelines
+# Component Writing Guidelines
+
+This project does not use any React components or Next.js anywhere, so never follow React or Next.js conventions. Always use Solid.js and SolidStart conventions and patterns.
 
 ## Component Structure
 - Use TypeScript interfaces for props definition
@@ -55,27 +57,35 @@ alwaysApply: true
 
 #### Examples
 ```typescript
+import {ParentProps} from 'solid-js'
+
+// ParentProps has a children prop
+export interface ButtonProps extends ParentProps {
+  // Empty interfaces are not allowed. If you need to define an empty interface, you must write it as shown below
+  __never__?: never
+}
+
 // Good example showing the distinction
-const Button = (props: ButtonProps) => {
+export const Button = (props: ButtonProps) => {
   // Reactive state that affects UI ✅
   const [isPressed, setIsPressed] = createSignal(false)
-  
+
   // Non-reactive internal state ✅
   let clickCount = 0
   let lastClickTime = 0
-  
+
   const handleClick = (e: MouseEvent) => {
     clickCount++
     lastClickTime = Date.now()
-    
+
     if (clickCount === 2 && Date.now() - lastClickTime < 300) {
       props.onDoubleClick?.(e)
       clickCount = 0
     }
-    
+
     setIsPressed(true)
   }
-  
+
   return <button classList={{active: isPressed()}} onClick={handleClick}>{props.children}</button>
 }
 ```
@@ -87,14 +97,11 @@ const Button = (props: ButtonProps) => {
 
 ## Component Composition
 - Prefer composition over inheritance
-- Use children props for component slots
 - Create small, focused components with single responsibilities
 - Use Context API for deeply nested state sharing
 
 ## Performance
 - Avoid unnecessary wrapper components
-- Keep component functions pure
-- Use `batch` for multiple state updates
 - Use `untrack` to prevent unnecessary reactivity
 - Use `lazy` for code-splitting large components
 

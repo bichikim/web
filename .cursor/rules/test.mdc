@@ -1,0 +1,8 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+# Test Writing Guidelines
+
+The test file name must be in the format `foo-bar.spec.ts`
