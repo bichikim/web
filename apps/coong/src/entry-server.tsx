@@ -21,16 +21,17 @@ export default createHandler(() => (
           <link rel="manifest" href="/manifest.json" />
           <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
           <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="anonymous" />
+          <script type="text/javascript" src="_cdn/partytown-sw.min.js" />
           {assets}
         </head>
         <body>
           <div id="root">{children}</div>
           {scripts}
-          <script>
+          <script type="text/javascript">
             {`
               window.addEventListener('load', function () {
                 const font = document.createElement('link');
-                font.href = 'https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css';
+                font.href = '_cdn/pretendard.min.css';
                 font.rel = 'stylesheet';
                 font.as = 'style';
                 font.setAttribute('data-font-display', 'swap');

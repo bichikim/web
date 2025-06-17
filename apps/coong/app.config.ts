@@ -5,59 +5,34 @@ import {fileURLToPath} from 'node:url'
 import * as nodeFs from 'node:fs'
 import * as path from 'node:path'
 import {Plugin} from 'vite'
-import {generateSW} from '@winter-love/sw'
+import {generateSwWithCleanUp} from '@winter-love/sw'
 import {targets} from '@winter-love/vite-lib-config'
 import legacy from '@vitejs/plugin-legacy'
+import {cdnWithCleanUp} from '@winter-love/vite-plugin-cdn'
 
-/**
- * remove sw.js because it copied by vite build process
- */
-const fixSw = async () => {
-  return nodeFs.promises.rm(path.resolve('public/sw.js'))
-}
+const {pluginOptions: cdn, cleanUp: cleanUpCdn} = cdnWithCleanUp({
+  preventCleanUpOnCloseBundle: true,
+  root: fileURLToPath(new URL('.', import.meta.url)),
+  sourceMap: {
+    'partytown-sw.min.js': 'https://cdn.jsdelivr.net/npm/@qwik.dev/partytown@0.11.1/lib/partytown-sw.min.js',
+    'pretendard.min.css':
+      'https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable' +
+      '/pretendardvariable-dynamic-subset.min.css',
+  },
+})
 
-/**
- * run all hotfix functions
- */
-const hotfix = async () => {
-  await fixSw()
-}
-
-/**
- * create generate sw plugin
- */
-const createGenerateSwPlugin = (): Plugin => {
-  let _config: any | undefined
-
-  return {
-    async closeBundle() {
-      if (!_config) {
-        return
-      }
-      const {outDir, root} = _config.router
-      const swOutPath = path.join(root, 'public/sw.js')
-
-      await generateSW(swOutPath, {
-        assets: '_build/assets/**/*',
-        assetsRoot: outDir,
-        cwd: '',
-      })
-    },
-    configResolved(config: any) {
-      if (config.router.type === 'client' && config.mode === 'production') {
-        _config = config
-      }
-    },
-    name: 'generate-sw',
-  }
-}
+const {pluginOptions: generateSw, cleanUp: cleanUpGenerateSw} = generateSwWithCleanUp({
+  publicPath: 'public',
+  root: fileURLToPath(new URL('.', import.meta.url)),
+})
 
 export default defineConfig({
   // middleware: 'src/middleware/index.ts',
   server: {
     hooks: {
-      close: () => {
-        return hotfix()
+      close: async () => {
+        await cleanUpCdn()
+        await cleanUpGenerateSw()
       },
     },
   },
@@ -65,10 +40,11 @@ export default defineConfig({
     plugins: [
       //
       UnoCSS(),
-      createGenerateSwPlugin(),
+      generateSw,
       legacy({
         targets,
       }),
+      cdn,
     ],
     resolve: {
       alias: {

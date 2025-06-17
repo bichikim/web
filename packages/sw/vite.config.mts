@@ -6,7 +6,7 @@ export default createConfig({
     cli: 'src/cli.ts',
     sw: 'src/sw.ts',
   },
-  external: ['node:path', 'node:fs', 'node:url'],
+  external: ['node:path', 'node:fs', 'node:url', 'vite'],
   rollupOutputPlugins: [
     getBabelOutputPlugin({
       allowAllFormats: true,

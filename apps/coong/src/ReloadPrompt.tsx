@@ -23,7 +23,7 @@ export const ReloadPrompt = () => {
         actions: [
           {
             label: confirmLabel,
-            props: {loading: true, variant: 'primary'},
+            props: {color: 'primary', loading: true},
             type: 'click',
           },
           {

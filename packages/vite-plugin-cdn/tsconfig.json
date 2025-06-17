@@ -1,0 +1,11 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "src/*": ["src/*"]
+    }
+  },
+  "extends": ["../../tsconfig.json"],
+  "include": ["src/**/*.ts", "src/**/*.tsx"]
+}

@@ -9,6 +9,7 @@
     "dev": "vinxi dev",
     "lint": "cross-env NODE_ENV=script eslint src",
     "lint:fix": "cross-env NODE_ENV=script eslint src",
+    "start": "node ./.output/server/index.mjs",
     "start:local": "node -r dotenv/config ./.output/server/index.mjs",
     "type-check": "tsc --noEmit"
   },
@@ -49,11 +50,13 @@
   "devDependencies": {
     "@iconify-json/hugeicons": "^1.2.3",
     "@iconify-json/tabler": "^1.2.13",
+    "@qwik.dev/partytown": "^0.11.1",
     "@types/js-cookie": "^3.0.6",
     "@vite-pwa/assets-generator": "^1.0.0",
     "@vitejs/plugin-legacy": "^3.0.0",
     "@winter-love/unocss-config": "workspace:*",
     "@winter-love/vite-lib-config": "workspace:*",
+    "@winter-love/vite-plugin-cdn": "workspace:*",
     "dotenv": "^16.4.7"
   },
   "engines": {
