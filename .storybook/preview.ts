@@ -1,8 +1,11 @@
-import {Preview} from 'storybook-solidjs'
+import type {Preview} from '@kachurun/storybook-solid-vite'
 import 'virtual:uno.css'
 
 const preview: Preview = {
   parameters: {
+    // automatically create action args for all props that start with "on"
+    actions: {argTypesRegex: '^on.*'},
+
     backgrounds: {
       default: 'chessboard',
       values: [
@@ -21,13 +24,16 @@ const preview: Preview = {
       ],
     },
     controls: {
-      expanded: true,
       matchers: {
-        color: /(background|color)$/iu,
-        date: /date$/iu,
+        color: /(background|color)$/i,
+        date: /Date$/,
       },
     },
+    docs: {
+      codePanel: true,
+    },
   },
+  // tags: ['autodocs'],
 }
 
 export default preview

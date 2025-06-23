@@ -2,10 +2,14 @@ import {createEffect, useContext} from 'solid-js'
 import {ToastContext} from '@winter-love/solid-components'
 import {useServiceWorker} from 'src/components/service-worker'
 
+export interface ReloadPromptProps {
+  pageReload: boolean
+}
+
 /**
  * Prompt PWA update message toast
  */
-export const ReloadPrompt = () => {
+export const ReloadPrompt = (props: ReloadPromptProps) => {
   const [serviceWorkerState, {handleSkipWaiting, handleSkipUpdate}] = useServiceWorker()
   const {setMessage, turnOffMessage} = useContext(ToastContext)
 
@@ -18,12 +22,12 @@ export const ReloadPrompt = () => {
     const confirmLabel = 'Confirm'
     const skipLabel = 'Skip for now'
 
-    const waitingConfirmProcess = () => {
+    const waitingConfirmProcess = async () => {
       setMessage({
         actions: [
           {
             label: confirmLabel,
-            props: {loading: true, variant: 'primary'},
+            props: {color: 'primary', loading: true},
             type: 'click',
           },
           {
@@ -34,13 +38,18 @@ export const ReloadPrompt = () => {
           },
         ],
         closeHook: async (close) => {
-          await handleSkipWaiting()
           close()
         },
         id,
         message,
         title,
       })
+      console.log('skip waiting ...')
+      await handleSkipWaiting()
+
+      if (props.pageReload) {
+        location.reload()
+      }
     }
 
     if (workerState.state === 'waiting') {
@@ -51,7 +60,7 @@ export const ReloadPrompt = () => {
               waitingConfirmProcess()
             },
             label: confirmLabel,
-            props: {variant: 'primary'},
+            props: {color: 'primary'},
             type: 'click',
           },
           {

@@ -34,7 +34,7 @@
   "devDependencies": {
     "@tonejs/midi": "^2.0.28",
     "@winter-love/vite-lib-config": "workspace:*",
-    "vite": "^5.4.12"
+    "vite": "^6.3.5"
   },
   "publishConfig": {
     "access": "public"

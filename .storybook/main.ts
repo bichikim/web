@@ -1,15 +1,24 @@
-import type {StorybookConfig} from 'storybook-solidjs-vite'
+import {mergeConfig} from 'vite'
+import type {StorybookConfig} from '@kachurun/storybook-solid-vite'
 
-const config: StorybookConfig = {
+export default <StorybookConfig>{
   addons: [
+    '@storybook/addon-onboarding',
+    '@storybook/addon-docs',
+    '@storybook/addon-a11y',
     '@storybook/addon-links',
-    '@storybook/addon-essentials',
-    '@storybook/addon-interactions',
-    '@chromatic-com/storybook',
+    {
+      name: '@storybook/addon-vitest',
+      options: {
+        cli: false,
+      },
+    },
   ],
-  docs: {},
+  docs: {
+    autodocs: false,
+  },
   framework: {
-    name: 'storybook-solidjs-vite',
+    name: '@kachurun/storybook-solid-vite',
     options: {
       builder: {
         viteConfigPath: './.storybook/vite.config.mts',
@@ -24,5 +33,20 @@ const config: StorybookConfig = {
     '../packages/solid-components/src/**/*.story.@(js|jsx|mjs|ts|tsx)',
     '../packages/player/src/**/*.story.@(js|jsx|mjs|ts|tsx)',
   ],
+  typescript: {
+    reactDocgen: 'react-docgen-typescript',
+    reactDocgenTypescriptOptions: {
+      // 👇 Default prop filter, which excludes props from node_modules
+      propFilter: (prop: any) => (prop.parent ? !/node_modules/.test(prop.parent.fileName) : true),
+
+      shouldExtractLiteralValuesFromEnum: true,
+    },
+  },
+  async viteFinal(config) {
+    return mergeConfig(config, {
+      define: {
+        'process.env': {},
+      },
+    })
+  },
 }
-export default config

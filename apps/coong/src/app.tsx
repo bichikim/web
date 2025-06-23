@@ -28,7 +28,7 @@ export default function App() {
             <FileRoutes />
           </Router>
           <Show when={isClient()}>
-            <ReloadPrompt />
+            <ReloadPrompt pageReload={true} />
           </Show>
         </ServiceWorkerProvider>
       </SToastProvider>
