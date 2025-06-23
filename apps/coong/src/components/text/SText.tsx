@@ -7,12 +7,13 @@ const rootStyle = cva('', {
       lg: 'text-lg py-.5 px-1.5 rd-1',
       md: 'text-base py-.5 px-1.5 rd-1',
       sm: 'text-sm py-.5 px-1.5 rd-1',
+      xl: 'text-xl py-.5 px-1.5 rd-1',
     },
   },
 })
 
 export interface STextProps extends ComponentProps<'span'> {
-  size?: 'sm' | 'md' | 'lg'
+  size?: 'sm' | 'md' | 'lg' | 'xl'
 }
 
 export const SText = (props: STextProps) => {

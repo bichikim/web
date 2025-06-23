@@ -57,7 +57,7 @@ const DemoContent = () => {
           {
             actionToClose: true,
             label: 'Confirm',
-            props: {flat: true, loading: true, variant: 'primary'},
+            props: {color: 'primary', flat: true, loading: true},
             type: 'click',
           },
           {
@@ -85,7 +85,7 @@ const DemoContent = () => {
             setLoadingMessage()
           },
           label: 'Confirm',
-          props: {variant: 'primary'},
+          props: {color: 'primary'},
           type: 'click',
         },
         {
@@ -103,7 +103,7 @@ const DemoContent = () => {
   }
 
   return (
-    <div class="fixed top-0 left-0 flex flex-col gap-4">
+    <div class="fixed top-0 left-0 flex flex-col gap-4 p-2">
       <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" onClick={handleAddTimeout}>
         Show notification for 3 seconds
       </button>

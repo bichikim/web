@@ -3,12 +3,12 @@ import {cva, VariantProps} from 'class-variance-authority'
 
 const buttonBase = `:uno:
 font-medium inline-flex items-center justify-center gap-2 focus-visible:outline-3 focus-visible:outline-solid
-select-none outline-offset--3 cursor-pointer overflow-hidden min-w-max
+select-none outline-offset--3 cursor-pointer overflow-hidden min-w-max text-shadow-lg text-shadow-color-[var(--var-semi-focus-bg)]
 c-[var(--var-text-color)] b-[var(--var-color)] focus-visible:outline-[var(--var-focus-bg)] disabled:c-[var(--var-muted-color)] before:to-[var(--var-semi-focus-bg)]
 `
 
 const colorVariants = {
-  default: `:uno: color-var-text-color=black var-color=gray-100 var-focus-bg=black var-muted-color=gray-400 var-semi-muted-color=gray-300 var-semi-focus-bg=gray-400`,
+  default: `:uno: color-var-text-color=black var-color=gray-100 var-focus-bg=black var-muted-color=gray-400 var-semi-muted-color=gray-300 var-semi-focus-bg=white`,
   error: `:uno: color-var-text-color=white  var-color=red-400 var-focus-bg=red-700 var-muted-color=red-200 var-semi-muted-color=red-300 var-semi-focus-bg=red-500`,
   info: `:uno: color-var-text-color=white var-color=sky-400 var-focus-bg=sky-700 var-muted-color=sky-200 var-semi-muted-color=sky-300 var-semi-focus-bg=sky-500`,
   primary: `:uno: color-var-text-color=white var-color=blue-400 var-focus-bg=blue-700 var-muted-color=blue-200 var-semi-muted-color=white var-semi-focus-bg=blue-500`,
@@ -35,13 +35,13 @@ backdrop-blur-sm bg-opacity-90 b-opacity-80 focus:outline-opacity-50
 `
 
 const buttonLoading = `:uno:
-before:h-full before:opacity-70 before:z--1
-before:content-[""] before:absolute before:left-0 before:top-0 before:right-0 before:bottom-0
+before:h-full before:opacity-70 before:z--1  data-[loading-animation=true]:before:animate-slide
+data-[loading=true]:before:content-[""] before:absolute before:left-0 before:top-0 before:right-0 before:bottom-0
 before:inset-0 before:bg-gradient-to-r before:from-transparent before:w-[var(--var-progress-percent)]
-before:pointer-events-none animate-pulse-alt before:transition-width before:duration-300
+before:pointer-events-none data-[loading=true]:animate-pulse-alt before:transition-width before:duration-300
 `
 
-export const buttonStyles = cva(buttonBase, {
+export const buttonStyles = cva([buttonBase, buttonLoading], {
   compoundVariants: [
     {
       className: ['var-padding=.1rem'],
@@ -79,8 +79,6 @@ export const buttonStyles = cva(buttonBase, {
     fit: false,
     flat: false,
     glass: false,
-    loading: false,
-    loadingAnimation: false,
     outline: false,
     size: 'md',
   },
@@ -98,13 +96,6 @@ export const buttonStyles = cva(buttonBase, {
     glass: {
       false: '',
       true: buttonGlass,
-    },
-    loading: {
-      false: '',
-      true: buttonLoading,
-    },
-    loadingAnimation: {
-      true: 'before:animate-slide',
     },
     outline: {
       false: ':var-padding-offset=1px',

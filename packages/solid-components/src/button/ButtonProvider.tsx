@@ -165,7 +165,19 @@ export const ButtonProvider = (props: ButtonProviderProps) => {
     }
 
     if (typeof defaultProps.loading === 'number') {
-      return 'loop'
+      return 'true'
+    }
+
+    return defaultProps.loading ? 'true' : 'false'
+  })
+
+  const loadingAnimation = createMemo(() => {
+    if (defaultProps.autoLoading) {
+      return autoLoading() ? 'true' : 'false'
+    }
+
+    if (typeof defaultProps.loading === 'number') {
+      return 'false'
     }
 
     return defaultProps.loading ? 'true' : 'false'
@@ -184,6 +196,7 @@ export const ButtonProvider = (props: ButtonProviderProps) => {
       disabled: disabled(),
       href: href(),
       loading: loading(),
+      loadingAnimation: loadingAnimation(),
       loadingProcess: loadingProcess(),
       tag: tag(),
     }

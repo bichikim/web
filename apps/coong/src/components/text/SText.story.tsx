@@ -49,3 +49,10 @@ export const Large: Story = {
     size: 'lg',
   },
 }
+
+export const ExtraLarge: Story = {
+  args: {
+    children: 'Hello',
+    size: 'xl',
+  },
+}

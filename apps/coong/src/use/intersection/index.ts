@@ -1,0 +1,32 @@
+import {Accessor, createEffect, createSignal, onCleanup} from 'solid-js'
+
+export const useIntersection = (target: Accessor<HTMLElement | undefined>, options: IntersectionObserverInit) => {
+  const [isIntersecting, setIsIntersecting] = createSignal(false)
+
+  createEffect(() => {
+    const _target = target()
+
+    if (!_target) {
+      return
+    }
+
+    const observer = new IntersectionObserver((entries) => {
+      // eslint-disable-next-line unicorn/no-array-for-each
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          setIsIntersecting(true)
+        } else {
+          setIsIntersecting(false)
+        }
+      })
+    }, options)
+
+    observer.observe(_target)
+
+    onCleanup(() => {
+      observer.disconnect()
+    })
+  })
+
+  return isIntersecting
+}

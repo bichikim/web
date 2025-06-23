@@ -14,6 +14,7 @@ const {pluginOptions: cdn, cleanUp: cleanUpCdn} = cdnWithCleanUp({
   preventCleanUpOnCloseBundle: true,
   root: fileURLToPath(new URL('.', import.meta.url)),
   sourceMap: {
+    'lottie.min.js': 'https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.13.0/lottie.min.js',
     'partytown-sw.min.js': 'https://cdn.jsdelivr.net/npm/@qwik.dev/partytown@0.11.1/lib/partytown-sw.min.js',
     'pretendard.min.css':
       'https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable' +

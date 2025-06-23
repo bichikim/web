@@ -29,7 +29,11 @@ const meta = {
   },
   args: {
     children: 'Click me',
-    class: 'bg-gray-100 p-2 rounded-md text-4',
+    class: [
+      'bg-gray-100 p-2 rounded-md text-4',
+      'data-[loading=true]:bg-yellow-500',
+      'data-[loading=true]:opacity-[var(--var-progress-percent)]',
+    ].join(' '),
     onClick: fn(),
     onDoubleClick: fn(),
     onTouchEnd: fn(),
@@ -127,6 +131,7 @@ export const LoadingProcess: Story = {
 export const AutoLoading: Story = {
   args: {
     autoLoading: true,
+    children: 'Click me to trigger loading automatically',
     onClick: async () => {
       await new Promise((resolve) => {
         setTimeout(resolve, 1000)

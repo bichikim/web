@@ -19,8 +19,7 @@ export default createHandler(() => (
           <link rel="apple-touch-icon" href="/apple-touch-icon-180x180.png" />
           <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
           <link rel="manifest" href="/manifest.json" />
-          <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
-          <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="anonymous" />
+          <script src="_cdn/lottie.min.js"></script>
           <script type="text/javascript" src="_cdn/partytown-sw.min.js" />
           {assets}
         </head>

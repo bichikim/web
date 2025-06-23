@@ -5,23 +5,22 @@ const preview: Preview = {
   parameters: {
     // automatically create action args for all props that start with "on"
     actions: {argTypesRegex: '^on.*'},
-
     backgrounds: {
-      default: 'chessboard',
-      values: [
-        {
+      // values: [
+
+      //   {
+      //     name: 'chessboard',
+      //     value: 'repeating-linear-gradient(45deg, #000 0, #000 25px, #fff 25px, #fff 50px)',
+      //   },
+      // ],
+      options: {
+        black: {name: 'black', value: 'black'},
+        chessboard: {
           name: 'chessboard',
           value: 'repeating-linear-gradient(45deg, #000 0, #000 25px, #fff 25px, #fff 50px)',
         },
-        {
-          name: 'white',
-          value: 'white',
-        },
-        {
-          name: 'black',
-          value: 'black',
-        },
-      ],
+        white: {name: 'white', value: 'white'},
+      },
     },
     controls: {
       matchers: {
@@ -31,6 +30,9 @@ const preview: Preview = {
     },
     docs: {
       codePanel: true,
+    },
+    initialGlobals: {
+      background: 'chessboard',
     },
   },
   // tags: ['autodocs'],

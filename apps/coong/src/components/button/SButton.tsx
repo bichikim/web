@@ -13,7 +13,6 @@ export const SButton: Component<SButtonProps> = (props) => {
     'color',
     'flat',
     'outline',
-    'disabled',
     'children',
     'fit',
   ])

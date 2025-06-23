@@ -9,7 +9,8 @@ export interface ButtonContextProps {
    * number: loading process percentage
    * boolean: auto loading state
    */
-  loading: 'true' | 'false' | 'loop'
+  loading: 'true' | 'false'
+  loadingAnimation: 'true' | 'false'
   loadingProcess?: number
   tag: ButtonTag
 }
@@ -21,7 +22,13 @@ export interface ButtonContextActions {
 }
 
 export const ButtonContext = createContext<[Accessor<ButtonContextProps>, ButtonContextActions]>([
-  () => ({disabled: false, loading: 'false' as const, loadingProcess: undefined, tag: 'button' as const}),
+  () => ({
+    disabled: false,
+    loading: 'false' as const,
+    loadingAnimation: 'false' as const,
+    loadingProcess: undefined,
+    tag: 'button' as const,
+  }),
   {
     handleClick: () => {
       throw new Error('not implemented')

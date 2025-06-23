@@ -127,10 +127,10 @@ export const Secondary: Story = {
   },
 }
 
-export const Danger: Story = {
+export const Error: Story = {
   args: {
-    children: 'danger button',
-    color: 'danger',
+    children: 'error button',
+    color: 'error',
     size: 'md',
   },
 }
@@ -194,6 +194,19 @@ export const Loading: Story = {
   args: {
     children: 'loading button',
     loading: true,
+  },
+}
+
+export const AutoLoading: Story = {
+  args: {
+    autoLoading: true,
+    children: 'Click me to trigger loading automatically',
+    color: 'primary',
+    onClick: async () => {
+      await new Promise((resolve) => {
+        setTimeout(resolve, 3000)
+      })
+    },
   },
 }
 

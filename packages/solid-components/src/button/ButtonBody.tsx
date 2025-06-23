@@ -20,6 +20,12 @@ export const ButtonBody = (props: ButtonBodyProps) => {
     return loading
   })
 
+  const loadingAnimation = createMemo(() => {
+    const {loadingAnimation} = buttonContextValue()
+
+    return loadingAnimation
+  })
+
   const href = createMemo(() => {
     return buttonContextValue().href
   })
@@ -48,6 +54,7 @@ export const ButtonBody = (props: ButtonBodyProps) => {
       onTouchStart={handleTouchStart}
       href={href()}
       data-loading={loading()}
+      data-loading-animation={loadingAnimation()}
       style={style()}
       disabled={disabled()}
     >
