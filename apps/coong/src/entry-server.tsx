@@ -19,26 +19,11 @@ export default createHandler(() => (
           <link rel="apple-touch-icon" href="/apple-touch-icon-180x180.png" />
           <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
           <link rel="manifest" href="/manifest.json" />
-          <script src="_cdn/lottie.min.js"></script>
-          <script type="text/javascript" src="_cdn/partytown-sw.min.js" />
           {assets}
         </head>
         <body>
           <div id="root">{children}</div>
           {scripts}
-          <script type="text/javascript">
-            {`
-              window.addEventListener('load', function () {
-                const font = document.createElement('link');
-                font.href = '_cdn/pretendard.min.css';
-                font.rel = 'stylesheet';
-                font.as = 'style';
-                font.setAttribute('data-font-display', 'swap');
-                font.crossOrigin = '';
-                document.head.appendChild(font);
-              });
-            `}
-          </script>
         </body>
       </html>
     )}

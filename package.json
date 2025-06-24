@@ -5,8 +5,8 @@
   "description": "web & app service",
   "author": "Bichi Kim <bichi@live.co.kr>",
   "workspaces": [
-    "./packages/*",
-    "./apps/*"
+    "./apps/*",
+    "./packages/*"
   ],
   "scripts": {
     "build-storybook": "storybook build",

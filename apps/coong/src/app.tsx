@@ -9,6 +9,7 @@ import {useIsClient} from '@winter-love/solid-use'
 import {SToastProvider} from 'src/components/toast'
 import {ServiceWorkerProvider} from 'src/components/service-worker'
 import {MetaProvider, Title} from '@solidjs/meta'
+import {FontImport} from './components/font-import/FontImport'
 
 export default function App() {
   const isClient = useIsClient()
@@ -32,6 +33,7 @@ export default function App() {
           </Show>
         </ServiceWorkerProvider>
       </SToastProvider>
+      <FontImport />
     </>
   )
 }
