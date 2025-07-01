@@ -226,9 +226,6 @@ importers:
       '@lottiefiles/dotlottie-solid':
         specifier: ^0.2.1
         version: 0.2.3(solid-js@1.9.7)
-      '@qwik.dev/partytown':
-        specifier: ^0.11.1
-        version: 0.11.1
       '@solidjs/meta':
         specifier: ^0.29.0
         version: 0.29.4(solid-js@1.9.7)
@@ -280,9 +277,6 @@ importers:
       cross-env:
         specifier: ^7.0.3
         version: 7.0.3
-      drizzle-kit:
-        specifier: ^0.31.1
-        version: 0.31.1
       drizzle-orm:
         specifier: ^0.43.1
         version: 0.43.1(postgres@3.4.7)
@@ -335,6 +329,9 @@ importers:
       '@iconify-json/tabler':
         specifier: ^1.2.13
         version: 1.2.19
+      '@qwik.dev/partytown':
+        specifier: ^0.11.1
+        version: 0.11.1
       '@types/js-cookie':
         specifier: ^3.0.6
         version: 3.0.6
@@ -356,6 +353,9 @@ importers:
       dotenv:
         specifier: ^16.4.7
         version: 16.5.0
+      drizzle-kit:
+        specifier: ^0.31.4
+        version: 0.31.4
 
   apps/image-server:
     dependencies:
@@ -793,7 +793,7 @@ importers:
     devDependencies:
       dotenv:
         specifier: latest
-        version: 16.5.0
+        version: 17.0.0
       lodash:
         specifier: 4.17.21
         version: 4.17.21
@@ -5254,8 +5254,12 @@ packages:
     resolution: {integrity: sha512-m/C+AwOAr9/W1UOIZUo232ejMNnJAJtYQjUbHoNTBNTJSvqzzDh7vnrei3o3r3m9blf6ZoDkvcw0VmozNRFJxg==}
     engines: {node: '>=12'}
 
-  drizzle-kit@0.31.1:
-    resolution: {integrity: sha512-PUjYKWtzOzPtdtQlTHQG3qfv4Y0XT8+Eas6UbxCmxTj7qgMf+39dDujf1BP1I+qqZtw9uzwTh8jYtkMuCq+B0Q==}
+  dotenv@17.0.0:
+    resolution: {integrity: sha512-A0BJ5lrpJVSfnMMXjmeO0xUnoxqsBHWCoqqTnGwGYVdnctqXXUEhJOO7LxmgxJon9tEZFGpe0xPRX0h2v3AANQ==}
+    engines: {node: '>=12'}
+
+  drizzle-kit@0.31.4:
+    resolution: {integrity: sha512-tCPWVZWZqWVx2XUsVpJRnH9Mx0ClVOf5YUHerZ5so1OKSlqww4zy1R5ksEdGRcO3tM3zj0PYN6V48TbQCL1RfA==}
     hasBin: true
 
   drizzle-orm@0.43.1:
@@ -8760,6 +8764,7 @@ packages:
 
   shaka-player@4.15.3:
     resolution: {integrity: sha512-WGaLcbtOHvSsq8vOIM6Vmh7b3p9VGbz7bABjaNU7WM3OCK0ONPVsBH+wYJjS2ltMG94Qz3/HYt15NvJZiwrgyA==}
+    engines: {node: '>=18'}
 
   shallow-clone@3.0.1:
     resolution: {integrity: sha512-/6KqX+GVUdqPuPPd2LxDDxzX6CAbjJehAAOKlNpqqUpAqPM6HeL8f+o3a+JsyGjn2lv0WY8UsTgUJjU9Ok55NA==}
@@ -15474,7 +15479,9 @@ snapshots:
 
   dotenv@16.5.0: {}
 
-  drizzle-kit@0.31.1:
+  dotenv@17.0.0: {}
+
+  drizzle-kit@0.31.4:
     dependencies:
       '@drizzle-team/brocli': 0.10.2
       '@esbuild-kit/esm-loader': 2.6.5

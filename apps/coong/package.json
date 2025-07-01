@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "build": "vinxi build",
-    "db:push": "drizzle-kit push",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio",
     "dev": "vinxi dev",
     "lint": "cross-env NODE_ENV=script eslint src",
     "lint:fix": "cross-env NODE_ENV=script eslint src",
@@ -32,7 +34,6 @@
     "class-variance-authority": "^0.7.1",
     "cookie": "^1.0.2",
     "cross-env": "^7.0.3",
-    "drizzle-kit": "^0.31.1",
     "drizzle-orm": "^0.43.1",
     "h3": "^1.15.1",
     "ipx": "^3.0.3",
@@ -59,7 +60,8 @@
     "@winter-love/unocss-config": "workspace:*",
     "@winter-love/vite-lib-config": "workspace:*",
     "@winter-love/vite-plugin-cdn": "workspace:*",
-    "dotenv": "^16.4.7"
+    "dotenv": "^16.4.7",
+    "drizzle-kit": "^0.31.4"
   },
   "engines": {
     "node": ">=22"

@@ -1,4 +1,4 @@
-import {integer, pgPolicy, pgTable, serial, text, uuid} from 'drizzle-orm/pg-core'
+import {pgPolicy, pgTable, text, uuid} from 'drizzle-orm/pg-core'
 import {relations, sql} from 'drizzle-orm'
 import {authenticatedRole} from 'drizzle-orm/supabase'
 import {profiles} from './users'
