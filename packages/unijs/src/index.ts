@@ -12,7 +12,7 @@ const endTagRegex = /<\/[-a-zA-Z0-9]+>$/u
  */
 type Children = () => [HTMLElement, teardown: () => void, key: string | null] | Children | null
 
-const onCreate = (
+const createElement = (
   tag: string,
   props: Record<string, any>,
 ): [HTMLElement, Map<string, (event: Event) => void>, ((element: HTMLElement) => void) | undefined] => {
@@ -43,7 +43,7 @@ const onCreate = (
 
 export interface RenderOptions {
   onMount: (element: HTMLElement) => void
-  onTeardown: () => void
+  onUnmount: () => void
 }
 
 export const render = (element: HTMLElement, children: Children[], options: Partial<RenderOptions>) => {
@@ -53,8 +53,8 @@ export const render = (element: HTMLElement, children: Children[], options: Part
       (() => {
         // skip
       }),
-    onTeardown:
-      options.onTeardown ??
+    onUnmount:
+      options.onUnmount ??
       (() => {
         // skip
       }),
@@ -66,7 +66,7 @@ export const renderChildren = (
   children: Children[],
   options: RenderOptions,
 ): [HTMLElement, teardown: () => void, key: string | null] => {
-  const {onMount, onTeardown} = options
+  const {onMount, onUnmount} = options
   const fragment = document.createDocumentFragment()
 
   for (const child of children) {
@@ -106,13 +106,13 @@ export const renderChildren = (
   // todo next tick 으로 실행 해야하나?
   onMount(element)
 
-  return [element, onTeardown, null]
+  return [element, onUnmount, null]
 }
 
 export const h = (tag: string, props: Record<string, any>, children: Children[]): Children => {
-  const [[memoizedElement, teardownEventMap, ref], stopPropsEffect] = effectScope(() => onCreate(tag, props))
+  const [[memoizedElement, teardownEventMap, ref], stopPropsEffect] = effectScope(() => createElement(tag, props))
 
-  const onTeardown = () => {
+  const onUnmount = () => {
     stopPropsEffect()
 
     for (const [propKey, teardown] of teardownEventMap.entries()) {
@@ -128,7 +128,7 @@ export const h = (tag: string, props: Record<string, any>, children: Children[])
   }
 
   return () => {
-    return renderChildren(memoizedElement, children, {onMount, onTeardown})
+    return renderChildren(memoizedElement, children, {onMount, onUnmount})
   }
 }
 
