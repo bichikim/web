@@ -1,3 +1,5 @@
+'use server'
+
 import {APIEvent} from '@solidjs/start/server'
 import {createIPX, createIPXH3App} from 'ipx'
 import {toWebHandler} from 'h3'

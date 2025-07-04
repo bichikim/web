@@ -661,6 +661,16 @@ importers:
         specifier: ^6.3.5
         version: 6.3.5(@types/node@22.15.32)(jiti@2.4.2)(terser@5.43.1)(tsx@4.20.3)(yaml@2.8.0)
 
+  packages/unijs:
+    dependencies:
+      alien-signals:
+        specifier: ^2.0.5
+        version: 2.0.5
+    devDependencies:
+      '@winter-love/vite-lib-config':
+        specifier: workspace:*
+        version: link:../vite-lib-config
+
   packages/unocss-config:
     devDependencies:
       '@unocss/core':
@@ -3970,6 +3980,9 @@ packages:
 
   alien-signals@0.4.14:
     resolution: {integrity: sha512-itUAVzhczTmP2U5yX67xVpsbbOiquusbWVyA9N+sy6+r6YVbFkahXvNCeEPWEOMhwDYwbVbGHFkVL03N9I5g+Q==}
+
+  alien-signals@2.0.5:
+    resolution: {integrity: sha512-PdJB6+06nUNAClInE3Dweq7/2xVAYM64vvvS1IHVHSJmgeOtEdrAGyp7Z2oJtYm0B342/Exd2NT0uMJaThcjLQ==}
 
   align-text@0.1.4:
     resolution: {integrity: sha512-GrTZLRpmp6wIC2ztrWW9MjjTgSKccffgFagbNDOX95/dcjEcYZibYTeaOntySQLcdw1ztBoFkviiUvTMbb9MYg==}
@@ -8764,7 +8777,6 @@ packages:
 
   shaka-player@4.15.3:
     resolution: {integrity: sha512-WGaLcbtOHvSsq8vOIM6Vmh7b3p9VGbz7bABjaNU7WM3OCK0ONPVsBH+wYJjS2ltMG94Qz3/HYt15NvJZiwrgyA==}
-    engines: {node: '>=18'}
 
   shallow-clone@3.0.1:
     resolution: {integrity: sha512-/6KqX+GVUdqPuPPd2LxDDxzX6CAbjJehAAOKlNpqqUpAqPM6HeL8f+o3a+JsyGjn2lv0WY8UsTgUJjU9Ok55NA==}
@@ -14137,6 +14149,8 @@ snapshots:
       uri-js: 4.4.1
 
   alien-signals@0.4.14: {}
+
+  alien-signals@2.0.5: {}
 
   align-text@0.1.4:
     dependencies:

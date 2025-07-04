@@ -1,3 +1,5 @@
+'use server'
+
 import {APIEvent} from '@solidjs/start/server'
 import hiddenTeenieping from './hidden-teenieping.json'
 import {type MusicInfo} from 'src/components/midi-player/SFileItem'
