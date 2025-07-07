@@ -27,7 +27,7 @@ export const h = (tag: string, props: Record<string, any> = {}, children: Childr
         }
       }
 
-      const onMount = (element: HTMLElement) => {
+      const onMount = (element: Element) => {
         // mount 시점에 ref를 줍니다
         if (typeof ref === 'function') {
           ref(element)

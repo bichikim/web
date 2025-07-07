@@ -1,26 +1,30 @@
 import {effect, signal, untrack} from './signal'
 import type {Children} from './types'
+import {Child, createChild, isChild} from './create-child'
 
 export interface RenderOptions {
-  onMount: (element: HTMLElement) => void
+  key: string | null
+  onMount: (element: Element) => void
   onUnmount: () => void
 }
 
 interface EffectResult {
-  childElement: HTMLElement | Text | null
+  childElement: Element | Text | null
   key: string | null
   teardown: (() => void) | null
 }
 
-const renderChild = (child: Children, maxDepth: number = 2) => {
+const renderChild = (child: Children, maxDepth: number = 2): EffectResult[] => {
   // todo 자식이 자기 자리를 지켜야 함
   // 리스트 렌더링에서 위치 변경 등에 최적화 되어야 한다
   if (maxDepth === 0) {
-    return {
-      childElement: null,
-      key: null,
-      teardown: null,
-    }
+    return [
+      {
+        childElement: null,
+        key: null,
+        teardown: null,
+      },
+    ]
   }
 
   const currentResult: EffectResult = {
@@ -30,12 +34,14 @@ const renderChild = (child: Children, maxDepth: number = 2) => {
   }
   const result = typeof child === 'function' ? child() : child
 
-  if (Array.isArray(result)) {
-    const [childElement, teardown, key] = result
+  if (isChild(result)) {
+    const {element: childElement, teardown, key} = result
 
     currentResult.childElement = childElement
     currentResult.teardown = teardown
     currentResult.key = key
+  } else if (Array.isArray(result)) {
+    return result.flatMap((child) => renderChild(child, maxDepth - 1))
   } else if (result === null) {
     currentResult.childElement = null
     currentResult.teardown = null
@@ -48,36 +54,40 @@ const renderChild = (child: Children, maxDepth: number = 2) => {
     currentResult.teardown = null
   }
 
-  return currentResult
+  return [currentResult]
 }
 
-export const renderChildren = (
-  element: HTMLElement,
-  children: Children[],
-  options: RenderOptions,
-): [HTMLElement, teardown: () => void, key: string | null] => {
-  const {onMount, onUnmount} = options
-  const isChildrenChangedSignal = signal(true)
+export const renderChildren = (element: Element, children: Children[], options: RenderOptions): Child => {
+  const {onMount, onUnmount, key} = options
 
   for (const child of children) {
-    effect((prevValue?: EffectResult) => {
-      const {childElement: prevChildElement, teardown: prevTeardown} = prevValue ?? {}
-      const currentResult: EffectResult = renderChild(child)
+    effect((prevValue: EffectResult[] = []) => {
+      const currentResult: EffectResult[] = renderChild(child)
+
+      console.log('currentResult', currentResult)
+      console.log('prevValue', prevValue)
 
       untrack(() => {
-        const {childElement: currentChildElement} = currentResult
+        for (const [index, {childElement: currentChildElement, teardown: currentTeardown}] of currentResult.entries()) {
+          const {childElement: prevChildElement, teardown: prevTeardown} = prevValue[index] ?? {}
 
-        if (prevTeardown) {
-          prevTeardown()
-        }
+          const teardown = () => {
+            if (prevTeardown) {
+              prevTeardown()
+            }
+          }
 
-        if (prevChildElement && currentChildElement) {
-          prevChildElement.replaceWith(currentChildElement)
-          // skip
-        } else if (currentChildElement) {
-          element.append(currentChildElement)
-        } else if (prevChildElement) {
-          prevChildElement.remove()
+          if (prevChildElement && currentChildElement && prevChildElement !== currentChildElement) {
+            teardown()
+            prevChildElement.replaceWith(currentChildElement)
+            // skip
+          } else if (currentChildElement) {
+            teardown()
+            element.append(currentChildElement)
+          } else if (prevChildElement) {
+            teardown()
+            prevChildElement.remove()
+          }
         }
       })
 
@@ -90,11 +100,12 @@ export const renderChildren = (
   // todo next tick 으로 실행 해야하나?
   onMount(element)
 
-  return [element, onUnmount, null]
+  return createChild(element, key, onUnmount)
 }
 
-export const render = (element: HTMLElement, children: Children[], options: Partial<RenderOptions> = {}) => {
+export const render = (element: Element, children: Children[], options: Partial<RenderOptions> = {}) => {
   return renderChildren(element, children, {
+    key: null,
     onMount:
       options.onMount ??
       (() => {

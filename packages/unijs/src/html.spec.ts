@@ -34,6 +34,16 @@ describe('html', () => {
     expect(document.body.innerHTML).toBe('<div><span>Hello, world!</span></div>')
   })
 
+  it.only('should render list', () => {
+    const list = signal([1])
+    const element = h('div', {}, [() => list().map((item) => h('span', {}, [item]))])
+
+    render(document.body, [element])
+    expect(document.body.innerHTML).toBe('<div><span>1</span></div>')
+    list([1, 2])
+    expect(document.body.innerHTML).toBe('<div><span>1</span><span>2</span></div>')
+  })
+
   it('should addEventListeners', () => {
     const clickSpy = vi.fn()
 
@@ -119,5 +129,14 @@ describe('html', () => {
 
     render(document.body, [element])
     expect(document.body.innerHTML).toBe('<div><span>hello</span></div>')
+  })
+
+  it.skip('should rerender list', () => {
+    const list = signal([1])
+    const element = h('div', {}, [() => list().map((item) => h('span', {}, [item]))])
+
+    render(document.body, [element])
+    expect(document.body.innerHTML).toBe('<div><span>1</span></div>')
+    // list([2])
   })
 })

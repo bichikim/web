@@ -1,4 +1,4 @@
-import {effect, setCurrentSub} from 'alien-signals'
+import {effect} from 'alien-signals'
 import {untrack} from './untrack'
 
 interface HiddenArg {

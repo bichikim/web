@@ -1,4 +1,4 @@
-import {effectScope as _effectScope, signal as _signal} from 'alien-signals'
+import {computed as _computed, effectScope as _effectScope, signal as _signal} from 'alien-signals'
 import {effectWithTeardown} from './effect-with-teardown'
 
 export {teardown} from './effect-with-teardown'
@@ -53,6 +53,14 @@ export const signal: typeof _signal = (initialValue?: any): any => {
   signal[SIGNAL_SYMBOL] = true
 
   return signal
+}
+
+export const computed = <T>(getter: (previousValue?: T) => T): (() => T) => {
+  const computed = _computed(getter)
+
+  computed[SIGNAL_SYMBOL] = true
+
+  return computed
 }
 
 export interface Signal<T> {
