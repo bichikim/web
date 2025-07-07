@@ -1,6 +1,7 @@
-import {compare, effectWithTeardown, teardown} from './effect-with-teardown'
+import {effectWithTeardown, teardown} from './effect-with-teardown'
 import {describe, expect, it, vi} from 'vitest'
 import {signal} from 'alien-signals'
+import {untrack} from './untrack'
 
 describe('effectWithTeardown', () => {
   describe('teardown', () => {
@@ -96,18 +97,18 @@ describe('effectWithTeardown', () => {
     })
   })
 
-  describe('compare', () => {
+  describe('prevValue', () => {
     it('should work', () => {
       const effectSpy = vi.fn((value) => value)
       const compareSpy = vi.fn()
       const count = signal(0)
 
-      effectWithTeardown(() => {
+      effectWithTeardown((prevValue) => {
         effectSpy(count())
 
         const currentCount = count()
 
-        compare((prevValue) => {
+        untrack(() => {
           compareSpy(prevValue, currentCount)
         })
 

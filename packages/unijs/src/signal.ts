@@ -1,7 +1,8 @@
 import {effectScope as _effectScope, signal as _signal} from 'alien-signals'
 import {effectWithTeardown} from './effect-with-teardown'
 
-export {teardown, compare} from './effect-with-teardown'
+export {teardown} from './effect-with-teardown'
+export {untrack} from './untrack'
 export * from 'alien-signals'
 
 interface EffectInfo {
@@ -12,7 +13,7 @@ let __effectInfo: EffectInfo = {
   prevTeardown: null,
 }
 
-export function effect<T>(recipe: () => T): [T, stop: () => void] {
+export function effect<T>(recipe: (prevValue?: T) => T): [T, stop: () => void] {
   let result: any
 
   const effectInfo = {
@@ -21,8 +22,10 @@ export function effect<T>(recipe: () => T): [T, stop: () => void] {
 
   __effectInfo = effectInfo
 
-  const stop = effectWithTeardown(() => {
-    result = recipe()
+  const stop = effectWithTeardown((prevValue) => {
+    result = recipe(prevValue as T)
+
+    return result
   })
 
   __effectInfo = {
