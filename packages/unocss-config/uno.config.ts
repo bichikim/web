@@ -27,7 +27,11 @@ export default defineUsefulConfig(
   {
     content: {
       pipeline: {
-        include: [/\.(vue|svelte|[jt]sx|mdx?|astro|elm|php|phtml|html)($|\?)/u, '**/src/**/*.{js,ts}'],
+        include: [
+          //
+          /\.(vue|svelte|[jt]sx|mdx?|astro|elm|php|phtml|html)($|\?)/u,
+          '**/src/**/*.{js,ts}',
+        ],
       },
     },
     presets: [
@@ -112,13 +116,15 @@ export default defineUsefulConfig(
             {0% { background-position: 0% 50%; }
              100% { background-position: 100% 50%; }}`,
           blink: '{0%, 100% { opacity: 0.5; } 50% { opacity: 1; }}',
-          slide: '{0% { transform: translateX(-100%); } 100% { transform: translateX(100%); }}',
-          'slide-text': '{0% { transform: translateX(0%); } 100% { transform: translateX(-50%); }}',
+          slide:
+            '{0% { transform: translateX(-100%); } 100% { transform: translateX(100%); }}',
+          'slide-text':
+            '{0% { transform: translateX(0%); } 100% { transform: translateX(-50%); }}',
         },
       },
       boxShadow: {
         'flat-down':
-          'inset 0 0 0 #fff, inset 0 0 0 #fff, inset 0 0 0 #fff,' + ' inset 0 0 0 #fff, 0 4px 3px rgb(0 0 0 / 30%)',
+          'inset 0 0 0 #fff, inset 0 0 0 #fff, inset 0 0 0 #fff, inset 0 0 0 #fff, 0 4px 3px rgb(0 0 0 / 30%)',
         'flat-left': '3px 0 3px #000',
         'flat-right': '-3px 0 3px #000',
         'flat-up':
@@ -129,7 +135,8 @@ export default defineUsefulConfig(
         'sharp-down':
           'inset 0px -1px 1px rgb(255 255 255 / 40%), 0 1px 0px rgb(0 0 0 / 80%),' +
           ' 0 2px 2px rgb(0 0 0 / 40%), 0 -1px 0px #000',
-        'sharp-key': 'inset 0px -1px 2px rgb(255 255 255 / 40%), 0 2px 3px rgb(0 0 0 / 40%)',
+        'sharp-key':
+          'inset 0px -1px 2px rgb(255 255 255 / 40%), 0 2px 3px rgb(0 0 0 / 40%)',
       },
       breakpoints: {
         md: '768px',
