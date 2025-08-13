@@ -1,15 +1,16 @@
 import {getEventPropName} from './get-event-prop-name'
 import {effect, isSignal} from './signal'
+import {UniElement, UniText} from './types'
 
 export interface SpecialProps {
-  onMount?: (element: Element) => void
-  onUnmount?: (element: Element) => void
-  ref?: (element: Element) => void
+  key: string | null
+  onMount?: (element: UniElement) => void
+  ref?: (element: UniElement) => void
 }
 
-export interface CreateElementResult extends SpecialProps {
-  element: HTMLElement
-  teardownEventMap: Map<string, (event: Event) => void>
+export interface ElementItem extends SpecialProps {
+  element: UniElement
+  onUnmount: (element: UniElement) => void
 }
 
 const toStringStyle = (style: Record<string, any> | string) => {
@@ -26,11 +27,22 @@ const toStringStyle = (style: Record<string, any> | string) => {
   return result
 }
 
-export const createElement = (tag: string, props: Record<string, any>): CreateElementResult => {
+export const createElementItem = (tag: string, props: Record<string, any>): ElementItem => {
   const teardownEventMap: Map<string, (event: Event) => void> = new Map()
   const element = document.createElement(tag)
   let ref: ((element: Element) => void) | undefined
-  const specialProps: SpecialProps = {}
+
+  const specialProps: SpecialProps = {
+    key: props.key ?? null,
+  }
+
+  const onUnmount = () => {
+    for (const [propKey, listener] of teardownEventMap.entries()) {
+      element.removeEventListener(propKey, listener)
+    }
+
+    props.onUnmount?.(element)
+  }
 
   for (const propKey of Object.keys(props)) {
     const prop = props[propKey]
@@ -61,8 +73,13 @@ export const createElement = (tag: string, props: Record<string, any>): CreateEl
           break
         }
 
+        case 'key': {
+          specialProps.key = prop
+          break
+        }
+
         case 'onUnmount': {
-          specialProps.onUnmount = prop
+          // skip
           break
         }
 
@@ -76,6 +93,6 @@ export const createElement = (tag: string, props: Record<string, any>): CreateEl
   return {
     ...specialProps,
     element,
-    teardownEventMap,
+    onUnmount,
   }
 }

@@ -1,6 +1,6 @@
-import {effect, signal, untrack} from './signal'
-import type {Children} from './types'
-import {Child, createChild, isChild} from './create-child'
+import {effect, untrack, isSignal} from './signal'
+import type {Child, Children, UniElement, UniText, UniExtend, UniFragment} from './types'
+import {createChild, isChild} from './create-child'
 
 export interface RenderOptions {
   key: string | null
@@ -8,87 +8,93 @@ export interface RenderOptions {
   onUnmount: () => void
 }
 
-interface EffectResult {
-  childElement: Element | Text | null
-  key: string | null
-  teardown: (() => void) | null
-}
+type CompareReference = Record<string, any> | ((...args: any) => any) | null
 
-const renderChild = (child: Children, maxDepth: number = 2): EffectResult[] => {
+const renderChild = (child: Children, parentElement: UniElement | UniText | UniFragment, maxDepth: number = 2): Child => {
   // todo 자식이 자기 자리를 지켜야 함
   // 리스트 렌더링에서 위치 변경 등에 최적화 되어야 한다
   if (maxDepth === 0) {
-    return [
-      {
-        childElement: null,
-        key: null,
-        teardown: null,
-      },
-    ]
+    return createChild(null, child)
   }
 
-  const currentResult: EffectResult = {
-    childElement: null,
+  const currentResult: Child = {
+    element: null,
     key: null,
-    teardown: null,
   }
-  const result = typeof child === 'function' ? child() : child
+
+  const cache = parentElement.cacheChild
+
+  const result = isSignal(child) ? child() : typeof child === 'function' ? child(cache) : child
 
   if (isChild(result)) {
-    const {element: childElement, teardown, key} = result
+    const {element: childElement, onUnmount, key} = result
 
-    currentResult.childElement = childElement
-    currentResult.teardown = teardown
+    currentResult.element = childElement
     currentResult.key = key
+    currentResult.onUnmount = onUnmount
   } else if (Array.isArray(result)) {
-    return result.flatMap((child) => renderChild(child, maxDepth - 1))
+    console.log('$$ array', result)
   } else if (result === null) {
-    currentResult.childElement = null
-    currentResult.teardown = null
-  } else if (typeof result === 'function') {
-    return renderChild(result, maxDepth - 1)
+    currentResult.element = null
   } else {
     const childElement = document.createTextNode(String(result))
 
-    currentResult.childElement = childElement
-    currentResult.teardown = null
+    currentResult.element = childElement
+    currentResult.key = child
   }
 
-  return [currentResult]
+  parentElement.cacheChild = cache
+
+  console.log('currentResult', currentResult)
+
+  return currentResult
 }
 
-export const renderChildren = (element: Element, children: Children[], options: RenderOptions): Child => {
+const existRun = (prevTeardown?: (() => void) | null) => {
+  if (prevTeardown) {
+    prevTeardown()
+  }
+}
+
+export function renderChildren(fragment: UniFragment, children: Child[], options: RenderOptions): Child
+export function renderChildren(fragment: UniElement, children: Children[], options: RenderOptions): Child
+export function renderChildren(element: any, children: any[], options: RenderOptions): Child {
   const {onMount, onUnmount, key} = options
 
   for (const child of children) {
-    effect((prevValue: EffectResult[] = []) => {
-      const currentResult: EffectResult[] = renderChild(child)
-
-      console.log('currentResult', currentResult)
-      console.log('prevValue', prevValue)
-
+    effect((prevValue?: Child) => {
+      const currentResult: Child = renderChild(child, element)
       untrack(() => {
-        for (const [index, {childElement: currentChildElement, teardown: currentTeardown}] of currentResult.entries()) {
-          const {childElement: prevChildElement, teardown: prevTeardown} = prevValue[index] ?? {}
+        const {element: currentChildElement, onUnmount: currentOnUnmount} = currentResult
+        const {element: prevChildElement, onUnmount: prevOnUnmount} = prevValue ?? {}
 
-          const teardown = () => {
-            if (prevTeardown) {
-              prevTeardown()
-            }
-          }
-
-          if (prevChildElement && currentChildElement && prevChildElement !== currentChildElement) {
-            teardown()
+        if (prevChildElement && currentChildElement && prevChildElement !== currentChildElement) {
+          existRun(prevOnUnmount)
+          console.log('replaceWith', key, prevChildElement, currentChildElement)
+          if ('replaceWith' in prevChildElement) {
             prevChildElement.replaceWith(currentChildElement)
-            // skip
-          } else if (currentChildElement) {
-            teardown()
-            element.append(currentChildElement)
-          } else if (prevChildElement) {
-            teardown()
-            prevChildElement.remove()
+          } else {
+            element.removeChild(prevChildElement)
+            element.appendChild(currentChildElement)
           }
+          // skip
+        } else if (!prevChildElement && currentChildElement) {
+          existRun(prevOnUnmount)
+          console.log('append', element, prevChildElement, currentChildElement)
+          element.append(currentChildElement)
+        } else if (prevChildElement && !currentChildElement) {
+          existRun(prevOnUnmount)
+          console.log('remove', key, prevChildElement)
+          element.removeChild(prevChildElement)
         }
+
+        // for (const [key, {element: prevChildElement, onUnmount: prevOnUnmount}] of prevValue.entries()) {
+        //   existRun(prevOnUnmount)
+        //   console.log('remove left logic', prevChildElement)
+        //   if (prevChildElement) {
+        //     element.removeChild(prevChildElement)
+        //   }
+        // }
       })
 
       return currentResult

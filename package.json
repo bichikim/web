@@ -53,6 +53,7 @@
     "@iconify-json/svg-spinners": "^1.2.2",
     "@iconify-json/tabler": "^1.2.13",
     "@kachurun/storybook-solid-vite": "9.0.11",
+    "@prettier/plugin-oxc": "^0.0.4",
     "@solidjs/testing-library": "^0.8.10",
     "@storybook/addon-a11y": "next",
     "@storybook/addon-essentials": "next",
