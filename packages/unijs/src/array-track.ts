@@ -13,64 +13,6 @@ export interface ChangeRecord {
   oldValue?: any
 }
 
-export const createProxy = <T>(original: T[]): ProxyResult<T> => {
-  const track: WeakMap<any, {now?: number | boolean; prev: number}> = new WeakMap()
-  const proxy = {}
-
-  const addNewObserver = (original: T[], index: number, value: T) => {
-    let oldValue = value
-    const desc = Object.getOwnPropertyDescriptor(original, index)
-
-    Object.defineProperty(proxy, index, {
-      configurable: desc?.configurable ?? true,
-      enumerable: desc?.enumerable ?? true,
-      get() {
-        if (!track.has(value)) {
-          track.set(value, {prev: index})
-        }
-        return value
-      },
-      set(value: T) {
-        const state = track.get(oldValue)
-        if (state) {
-          track.set(oldValue, {now: -1, prev: state.prev})
-        }
-        const newState = track.get(value)
-        if (newState) {
-          track.set(value, {now: true, prev: newState.prev})
-        } else {
-          track.set(value, {prev: index})
-        }
-        oldValue = value
-        return true
-      },
-    })
-  }
-
-  const isUpdated = (index: number) => {
-    const value = proxy[index]
-    const state = track.get(value)
-    if (state) {
-      return state.now === true
-    }
-    return false
-  }
-
-  for (let index = 0; index < original.length; index += 1) {
-    const value = original[index]
-    addNewObserver(original, index, value)
-  }
-
-  return {
-    addNewObserver: (index: number, value: T) => {
-      addNewObserver(original, index, value)
-    },
-    isUpdated,
-    proxy,
-    track,
-  }
-}
-
 export const createArrayTrack = <T>(
   value: T[],
 ): Array<T> & {
@@ -123,15 +65,16 @@ export const createArrayTrack = <T>(
 
     pop: (): T | undefined => {
       if (original.length === 0) return undefined
+      const deleteIndex = original.length - 1  // 삭제할 요소의 인덱스
       const result = original.pop()
       addChange({
         action: 'delete',
-        from: original.length,
+        from: deleteIndex,  // 삭제 전의 정확한 인덱스
         value: result
       })
 
       // Remove indexed access for deleted element
-      delete (array as any)[original.length]
+      delete (array as any)[deleteIndex]  // 삭제 전의 정확한 인덱스
       return result
     },
 
@@ -326,14 +269,22 @@ export const createArrayTrack = <T>(
     },
 
     copyWithin: (target: number, start: number, end?: number): T[] => {
+      // Store original values before copyWithin
+      const originalValues = new Map<number, T>()
+      const endIndex = end || original.length
+      for (let i = target; i < Math.min(target + endIndex - start, original.length); i++) {
+        originalValues.set(i, original[i])
+      }
+
       const result = original.copyWithin(target, start, end)
 
-      for (let i = target; i < Math.min(target + (end || original.length) - start, original.length); i++) {
+      // Track changes with correct oldValue
+      for (let i = target; i < Math.min(target + endIndex - start, original.length); i++) {
         addChange({
           action: 'update',
           from: i,
           value: result[i],
-          oldValue: original[i]
+          oldValue: originalValues.get(i)
         })
       }
 
@@ -341,23 +292,44 @@ export const createArrayTrack = <T>(
     },
 
     concat: (...items: T[]): T[] => {
-      const result = original.concat(...items)
+      // Store original length before concat
+      const originalLength = original.length
 
-      for (let i = 0; i < items.length; i++) {
-        addChange({
-          action: 'insert',
-          from: original.length + i,
-          value: items[i]
-        })
+      // Track insertions for new items (even though they don't modify the original array)
+      // items is an array of arrays, so we need to flatten them
+      let currentIndex = originalLength
+      for (const itemArray of items) {
+        if (Array.isArray(itemArray)) {
+          for (const item of itemArray) {
+            addChange({
+              action: 'insert',
+              from: currentIndex++,
+              value: item
+            })
+          }
+        } else {
+          addChange({
+            action: 'insert',
+            from: currentIndex++,
+            value: itemArray
+          })
+        }
       }
 
-      return result
+      return original.concat(...items)
     },
 
     // Other array methods
     slice: (start?: number, end?: number): T[] => original.slice(start, end),
     indexOf: (searchElement: T, fromIndex?: number): number => original.indexOf(searchElement, fromIndex),
-    lastIndexOf: (searchElement: T, fromIndex?: number): number => original.lastIndexOf(searchElement, fromIndex),
+    lastIndexOf: (searchElement: T, fromIndex?: number): number => {
+      // Handle undefined fromIndex properly
+      if (fromIndex === undefined) {
+        return original.lastIndexOf(searchElement)
+      } else {
+        return original.lastIndexOf(searchElement, fromIndex)
+      }
+    },
     includes: (searchElement: T, fromIndex?: number): boolean => original.includes(searchElement, fromIndex),
     join: (separator?: string): string => original.join(separator),
     toString: (): string => original.toString(),
@@ -414,7 +386,7 @@ export const createArrayTrack = <T>(
     })
   }
 
-  // Add length property
+  // Add length property with tracking
   Object.defineProperty(array, 'length', {
     get() {
       return original.length
@@ -443,11 +415,27 @@ export const createArrayTrack = <T>(
       original.length = newLength
     },
     enumerable: false,
-    configurable: false
+    configurable: true
   })
 
   // Make it look like an Array instance
   Object.setPrototypeOf(array, Array.prototype)
+
+  // Set Symbol.toStringTag to make Array.isArray() work
+  Object.defineProperty(array, Symbol.toStringTag, {
+    value: 'Array',
+    writable: false,
+    enumerable: false,
+    configurable: true
+  })
+
+  // Set constructor to Array
+  Object.defineProperty(array, 'constructor', {
+    value: Array,
+    writable: true,
+    enumerable: false,
+    configurable: true
+  })
 
   return array as any
 }
