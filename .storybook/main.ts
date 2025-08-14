@@ -1,5 +1,5 @@
 import {mergeConfig} from 'vite'
-import type {StorybookConfig} from '@kachurun/storybook-solid-vite'
+import type {StorybookConfig} from 'storybook-solidjs-vite'
 
 export default <StorybookConfig>{
   addons: [
@@ -18,7 +18,7 @@ export default <StorybookConfig>{
     autodocs: false,
   },
   framework: {
-    name: '@kachurun/storybook-solid-vite',
+    name: 'storybook-solidjs-vite',
     options: {
       builder: {
         viteConfigPath: './.storybook/vite.config.mts',

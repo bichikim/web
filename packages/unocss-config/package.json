@@ -2,12 +2,21 @@
   "name": "@winter-love/unocss-config",
   "version": "1.0.29",
   "private": true,
-  "type": "module",
-  "main": "uno.config.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.umd.js"
+    },
+    "./*": "./*"
+  },
+  "main": "dist/index.mjs",
   "files": [
-    "uno.config.ts"
+    "dist/*"
   ],
-  "devDependencies": {
+  "scripts": {
+    "build": "vite build"
+  },
+  "dependencies": {
     "@unocss/core": "^65.4.0",
     "@unocss/preset-attributify": "^65.4.0",
     "@unocss/preset-icons": "^65.4.0",
@@ -20,7 +29,10 @@
     "@winter-love/unocss-preset-var": "workspace:*",
     "unocss": "^65.4.0",
     "unocss-preset-animations": "^1.1.0",
-    "unocss-preset-useful": "^0.9.2",
+    "unocss-preset-useful": "^0.9.2"
+  },
+  "devDependencies": {
+    "@winter-love/vite-lib-config": "workspace:*",
     "vite": "^6.3.5"
   }
 }

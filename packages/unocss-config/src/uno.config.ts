@@ -144,5 +144,5 @@ export default defineUsefulConfig(
       transformerVariantGroup(),
       transformerCompileClass(),
     ] as any,
-  },
-)
+  } as any,
+) as any
