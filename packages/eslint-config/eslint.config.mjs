@@ -1,15 +1,15 @@
-import nodePlugin from 'eslint-plugin-n'
 import js from '@eslint/js'
-import ts from 'typescript-eslint'
-import prettierRecommended, { language } from 'eslint-plugin-prettier/recommended'
+import stylistic from '@stylistic/eslint-plugin'
+import stylisticTs from '@stylistic/eslint-plugin-ts'
 import jsonc from 'eslint-plugin-jsonc'
+import nodePlugin from 'eslint-plugin-n'
+import oxlint from 'eslint-plugin-oxlint'
+import prettierRecommended from 'eslint-plugin-prettier/recommended'
+import solid from 'eslint-plugin-solid/configs/typescript'
+import exportsSort from 'eslint-plugin-sort-export-all'
 import sortKeys from 'eslint-plugin-sort-keys-fix'
 import typeSortKeys from 'eslint-plugin-typescript-sort-keys'
-import exportsSort from 'eslint-plugin-sort-export-all'
-import stylisticTs from '@stylistic/eslint-plugin-ts'
-import solid from 'eslint-plugin-solid/configs/typescript'
-import oxlint from 'eslint-plugin-oxlint'
-import stylistic from '@stylistic/eslint-plugin'
+import ts from 'typescript-eslint'
 
 const MAX_LINES = 600
 
@@ -142,20 +142,7 @@ const sharedConfig = {
         },
       },
     ],
-    // 'line-comment-position': ['warn', {position: 'above'}],
-    // 'max-len': [
-    //   'error',
-    //   {
-    //     code: 120,
-    //     ignoreComments: true,
-    //     ignoreTrailingComments: true,
-    //     ignoreUrls: true,
-    //   },
-    // ],
-    // 'max-params': ['error', {max: 5}],
-    // 'max-statements': ['error', {max: 40}],
-    // 'max-statements-per-line': ['error', {max: 2}],
-    // 'n/no-extraneous-import': 'off',
+
     // 'n/no-missing-import': 'off',
     // 'n/no-unpublished-import': 'off',
     // /**
@@ -170,6 +157,7 @@ const sharedConfig = {
     // 'no-extra-parens': ['error', 'functions'],
     // // 'default-case': 'off',
     'format/no-floating-decimal': 'error',
+
     // 'no-implicit-coercion': 'error',
     // // 'no-implicit-globals': 'off',
     // 'no-implied-eval': 'error',
@@ -259,9 +247,13 @@ const sharedConfig = {
       {blankLine: 'always', next: 'for', prev: '*'},
       {blankLine: 'always', next: 'expression', prev: 'for'},
     ],
+
     'format/quote-props': ['warn', 'as-needed', {numbers: true}],
+
     'format/rest-spread-spacing': 'error',
+
     'format/semi': ['error', 'never'],
+
     'format/space-before-blocks': [
       'error',
       {
@@ -279,19 +271,41 @@ const sharedConfig = {
         named: 'never',
       },
     ],
+
     'format/space-in-parens': ['error', 'never'],
+
     'format/space-infix-ops': 'error',
+
     'format/space-unary-ops': 'error',
+
     'format/switch-colon-spacing': [
       'error',
       {
         after: true,
       },
     ],
+
     'format/template-curly-spacing': ['error', 'never'],
+
     'format/template-tag-spacing': ['error', 'never'],
+
     'format/wrap-iife': 'error',
+
     'format/yield-star-spacing': ['error', {before: true}],
+    // 'line-comment-position': ['warn', {position: 'above'}],
+    // 'max-len': [
+    //   'error',
+    //   {
+    //     code: 120,
+    //     ignoreComments: true,
+    //     ignoreTrailingComments: true,
+    //     ignoreUrls: true,
+    //   },
+    // ],
+    // 'max-params': ['error', {max: 5}],
+    // 'max-statements': ['error', {max: 40}],
+    // 'max-statements-per-line': ['error', {max: 2}],
+    'n/no-extraneous-import': 'off',
     'n/no-missing-import': 'off',
     'solid/reactivity': 'off',
     'sort-export-all/sort-export-all': 'warn',
@@ -343,10 +357,6 @@ export default [
       ignores: [...sharedConfig.ignores, '**/*.spec.ts'],
       languageOptions: {
         sourceType: 'module',
-        // parser: tsParser,
-        // parserOptions: {
-        //   // project: 'tsconfig.json',
-        // },
       },
       plugins: {
         ...sharedConfig.plugins,

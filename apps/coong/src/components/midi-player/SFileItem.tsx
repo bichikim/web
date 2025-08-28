@@ -1,6 +1,6 @@
 import {HUNDRED} from '@winter-love/utils'
 import {cva, cx} from 'class-variance-authority'
-import {createMemo, Show, splitProps} from 'solid-js'
+import {createMemo, Show, splitProps, createEffect} from 'solid-js'
 import {PlayOptions} from 'src/use/instruments'
 import {SProgress} from './SProgress'
 import {STypeIcon} from './STypeIcon'
@@ -154,6 +154,11 @@ export const SFileItem = (props: SFileItemProps) => {
 
   const showAiIcon = createMemo(() => innerProps.ext !== 'midi' && !innerProps.inGeneratingProgress)
 
+  createEffect(() => {
+    console.log(innerProps.dragEndSize)
+    console.log(innerProps.dragExecuteSize)
+  })
+
   return (
     <DragButton.Provider
       type="button"
@@ -173,7 +178,7 @@ export const SFileItem = (props: SFileItemProps) => {
         <DragButton.Aside
           position="left"
           component="span"
-          class=":uno: absolute flex left-0 top-0 w-var-drag-x h-full overflow-hidden box-border"
+          class=":uno: absolute flex left-0 top-0 w-[var(--solid-drag-x)] h-full overflow-hidden box-border"
         >
           <span class="mr-1 bg-red rd-1 w-full h-full flex items-center p-1">
             <span class="block w-full h-full i-tabler:trash bg-white" />
@@ -181,7 +186,7 @@ export const SFileItem = (props: SFileItemProps) => {
         </DragButton.Aside>
         <DragButton.Content
           component="span"
-          class="absolute flex top-0 left-var-drag-x w-full h-full px-4 gap-2 items-center"
+          class="absolute flex top-0 left-[var(--solid-drag-x)] w-full h-full px-4 gap-2 items-center"
         >
           <Show when={innerProps.playing}>
             <SProgress

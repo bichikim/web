@@ -10,20 +10,20 @@ const Template = (args: HDragButtonProps) => {
       <DragButtonAside
         position="left"
         component="span"
-        class="h-80% bg-green-500 c-white block absolute left-0 top-0 overflow-hidden w-var-drag-x"
+        class="h-80% bg-green-500 c-white block absolute left-0 top-0 overflow-hidden w-[var(--solid-drag-x)]"
       >
         왼쪽으로 드래그 실행
       </DragButtonAside>
       <DragButtonContent
         component="span"
-        class=" bg-yellow-500 c-white block absolute top-0 left-var-drag-x w-full h-full"
+        class=" bg-yellow-500 c-white block absolute top-0 left-[var(--solid-drag-x)] w-full h-full"
       >
         {args.children}
       </DragButtonContent>
       <DragButtonAside
         position="right"
         component="span"
-        class="h-80% bg-blue-500 c-white block absolute right-0 top-0 overflow-hidden w-var-drag-x"
+        class="h-80% bg-blue-500 c-white block absolute right-0 top-0 overflow-hidden w-[var(--solid-drag-x)]"
       >
         오른쪽으로 드래그 실행
       </DragButtonAside>
