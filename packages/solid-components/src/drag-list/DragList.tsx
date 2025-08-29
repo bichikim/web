@@ -7,7 +7,7 @@ export type DragListProps<T extends ValidComponent, A extends readonly any[]> = 
   DynamicProps<T>
 
 export const DragList = <T extends ValidComponent, A extends readonly any[]>(props: DragListProps<T, A>) => {
-  const [innerProps, restProps] = splitProps(props, ['list', 'idDetector', 'onChangeList', 'direction'])
+  const [innerProps, restProps] = splitProps(props, ['list', 'idDetector', 'onChangeList'])
 
   return (
     <DragListProvider {...innerProps}>

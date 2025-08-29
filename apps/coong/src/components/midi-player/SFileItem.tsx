@@ -1,6 +1,6 @@
 import {HUNDRED} from '@winter-love/utils'
 import {cva, cx} from 'class-variance-authority'
-import {createMemo, Show, splitProps, createEffect} from 'solid-js'
+import {createMemo, Show, splitProps} from 'solid-js'
 import {PlayOptions} from 'src/use/instruments'
 import {SProgress} from './SProgress'
 import {STypeIcon} from './STypeIcon'
@@ -153,11 +153,6 @@ export const SFileItem = (props: SFileItemProps) => {
   )
 
   const showAiIcon = createMemo(() => innerProps.ext !== 'midi' && !innerProps.inGeneratingProgress)
-
-  createEffect(() => {
-    console.log(innerProps.dragEndSize)
-    console.log(innerProps.dragExecuteSize)
-  })
 
   return (
     <DragButton.Provider

@@ -1,8 +1,7 @@
 import type {Meta, StoryObj} from 'storybook-solidjs'
 import {DragList} from './DragList'
 import {createSignal, onCleanup} from 'solid-js'
-import {DragListProvider} from './DragListProvider'
-import {DragItem} from './DragItem'
+import {DragListItem} from './DragListItem'
 
 const createInterval = (callback: () => void) => {
   let flag: any
@@ -28,7 +27,7 @@ const Template = (args: any) => {
     {id: '5', name: '5'},
   ])
 
-  const interval = createInterval(() => {
+  const addingInterval = createInterval(() => {
     setList((prev) => {
       const newList = [...prev]
 
@@ -38,35 +37,54 @@ const Template = (args: any) => {
     })
   })
 
+  const removingInterval = createInterval(() => {
+    setList((prev) => {
+      const newList = [...prev]
+
+      newList.shift()
+
+      return newList
+    })
+  })
+
   const handleAddingStart = () => {
-    interval.start(1000)
+    addingInterval.start(1000)
   }
 
   const handleAddingEnd = () => {
-    interval.stop()
+    addingInterval.stop()
   }
 
   const handleChangeList = (from: number, to: number, list: {id: string; name: string}[]) => {
     setList(list)
   }
 
+  const handleRemoveStart = () => {
+    removingInterval.start(1000)
+  }
+
+  const handleRemoveEnd = () => {
+    removingInterval.stop()
+  }
+
   return (
     <div>
       <DragList
         list={list()}
-        direction="vertical"
         idDetector={args.idDetector}
         class="flex flex-col gap-1rem"
         component="div"
         onChangeList={handleChangeList}
       >
-        <DragItem component="div" class="w-10rem h-2rem bg-red-500 data-[dragging=true]:opacity-0">
+        <DragListItem component="div" class="w-10rem h-2rem bg-red-500 data-[dragging=true]:opacity-0 select-none">
           {(item) => item.name}
-        </DragItem>
+        </DragListItem>
       </DragList>
       <div class="flex gap-1rem">
         <button onClick={handleAddingStart}>Adding Start</button>
         <button onClick={handleAddingEnd}>Adding End</button>
+        <button onClick={handleRemoveStart}>Remove Start</button>
+        <button onClick={handleRemoveEnd}>Remove End</button>
       </div>
     </div>
   )
@@ -89,5 +107,11 @@ export const Default: Story = {
 export const IdDetector: Story = {
   args: {
     idDetector: (item) => item.id,
+  },
+}
+
+export const CustomGhost: Story = {
+  args: {
+    showGhost: true,
   },
 }

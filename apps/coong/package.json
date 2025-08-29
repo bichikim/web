@@ -61,7 +61,8 @@
     "@winter-love/vite-lib-config": "workspace:*",
     "@winter-love/vite-plugin-cdn": "workspace:*",
     "dotenv": "^16.4.7",
-    "drizzle-kit": "^0.31.4"
+    "drizzle-kit": "^0.31.4",
+    "solid-devtools": "^0.34.3"
   },
   "engines": {
     "node": ">=22"

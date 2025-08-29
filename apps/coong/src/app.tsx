@@ -10,6 +10,7 @@ import {SToastProvider} from 'src/components/toast'
 import {ServiceWorkerProvider} from 'src/components/service-worker'
 import {MetaProvider, Title} from '@solidjs/meta'
 import {FontImport} from './components/font-import/FontImport'
+import 'solid-devtools'
 
 export default function App() {
   const isClient = useIsClient()

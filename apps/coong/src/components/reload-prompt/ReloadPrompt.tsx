@@ -44,7 +44,6 @@ export const ReloadPrompt = (props: ReloadPromptProps) => {
         message,
         title,
       })
-      console.log('skip waiting ...')
       await handleSkipWaiting()
 
       if (props.pageReload) {
