@@ -11,14 +11,6 @@
     "blowback": {
       "command": "npx",
       "args": ["-y", "blowback-context"]
-    },
-    "playwright": {
-      "command": "npx",
-      "args": ["@playwright/mcp@latest"]
-    },
-    "wallaby": {
-      "command": "node",
-      "args": ["~/.wallaby/mcp/"]
     }
   }
 }

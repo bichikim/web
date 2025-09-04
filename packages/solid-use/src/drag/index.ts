@@ -3,27 +3,29 @@ import {MaybeAccessor} from 'src/types'
 import {useEvent} from 'src/event'
 import {getWindow} from '@winter-love/utils'
 import {toggleValue} from 'src/toggle-value'
+import {resolveAccessor} from 'src/resolve-accessor'
 
 interface StartPoints {
-  point: [number, number]
-  relativePoint: [number, number]
+  parentPosition: {x: number; y: number}
+  point: {x: number; y: number}
+  relativePoint: {x: number; y: number}
 }
 
 export type DragType = 'start' | 'move' | 'end'
 
-interface DragPayload {
+export interface DragPayload {
   /**
    * drag position
    */
-  currentPoint: [number, number]
+  currentPoint: {x: number; y: number}
   /**
    * handleElement pressed position
    */
-  relativePoint: [number, number]
+  relativePoint: {x: number; y: number}
   /**
    * where it originated on the screen
    */
-  startPoint: [number, number]
+  startPoint: {x: number; y: number}
 }
 
 /**
@@ -32,19 +34,26 @@ interface DragPayload {
 export const useDrag = (
   handleElement: MaybeAccessor<HTMLElement | null>,
   callback: (type: DragType, payload: DragPayload) => void,
+  parentElement?: MaybeAccessor<HTMLElement | null | undefined>,
 ) => {
+  const parentElementAccessor = resolveAccessor(parentElement)
+
   const [startPoints, setStartPoints] = createSignal<StartPoints>({
-    point: [0, 0],
-    relativePoint: [0, 0],
+    parentPosition: {x: 0, y: 0},
+    point: {x: 0, y: 0},
+    relativePoint: {x: 0, y: 0},
   })
   const [pointDown, setPointDown] = createSignal(false)
 
-  let currentPoint: [number, number] = [0, 0]
+  let currentPoint: {x: number; y: number} = {x: 0, y: 0}
 
   useEvent(handleElement, 'pointerdown', (event) => {
+    const parentPosition = parentElementAccessor()?.getBoundingClientRect() ?? {x: 0, y: 0}
+
     const points: StartPoints = {
-      point: [event.clientX, event.clientY],
-      relativePoint: [event.offsetX, event.offsetY],
+      parentPosition,
+      point: {x: event.clientX - parentPosition.x, y: event.clientY - parentPosition.y},
+      relativePoint: {x: event.offsetX, y: event.offsetY},
     }
 
     setStartPoints(points)
@@ -73,9 +82,9 @@ export const useDrag = (
   useEvent(toggleValue(getWindow, pointDown, null), 'touchend', onMoveEnd)
 
   const onMove = (x: number, y: number) => {
-    const {point, relativePoint} = startPoints()
+    const {point, relativePoint, parentPosition} = startPoints()
 
-    currentPoint = [x, y]
+    currentPoint = {x: x - parentPosition.x, y: y - parentPosition.y}
 
     callback('move', {
       currentPoint,

@@ -10,17 +10,18 @@ export interface DestroyGhostOptions {
 export const createRenderGhost = (isActive: Accessor<boolean>) => {
   let ghostElement: (HTMLElement & {x: number; y: number}) | null = null
 
-  onCleanup(() => {
+  const handleCleanup = () => {
     if (ghostElement) {
+      document.body.style.cursor = 'auto'
       ghostElement.remove()
     }
-  })
+  }
+
+  onCleanup(handleCleanup)
 
   createEffect(() => {
     if (!isActive()) {
-      if (ghostElement) {
-        ghostElement.remove()
-      }
+      handleCleanup()
     }
   })
 
@@ -45,6 +46,7 @@ export const createRenderGhost = (isActive: Accessor<boolean>) => {
       ghostElement.style.pointerEvents = 'none'
       ghostElement.style.transition = 'none'
       ghostElement.style.position = 'fixed'
+      document.body.style.cursor = 'grabbing'
       document.body.appendChild(ghostElement)
     },
     destroy: (options: DestroyGhostOptions, removed?: () => void) => {
@@ -72,6 +74,7 @@ export const createRenderGhost = (isActive: Accessor<boolean>) => {
           },
         )
         .addEventListener('finish', () => {
+          document.body.style.cursor = 'auto'
           element.remove()
           removed?.()
         })

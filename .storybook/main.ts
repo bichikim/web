@@ -31,6 +31,7 @@ export default <StorybookConfig>{
     '../packages/solid/src/**/*.mdx',
     '../packages/solid/src/**/*.story.@(js|jsx|mjs|ts|tsx)',
     '../packages/solid-components/src/**/*.story.@(js|jsx|mjs|ts|tsx)',
+    '../packages/solid-use/src/**/*.story.@(js|jsx|mjs|ts|tsx)',
     '../packages/player/src/**/*.story.@(js|jsx|mjs|ts|tsx)',
   ],
   typescript: {

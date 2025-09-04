@@ -14,6 +14,7 @@ export const useDrag = (element: MaybeAccessor<HTMLElement | null>) => {
     setIsDragging(true)
 
     const element = elementAccessor()
+
     if (element) {
       startX = e.clientX - position().x
       startY = e.clientY - position().y
@@ -36,6 +37,7 @@ export const useDrag = (element: MaybeAccessor<HTMLElement | null>) => {
   // 엘리먼트 이벤트 handleMouseDown 연결
   createEffect(() => {
     const element = elementAccessor()
+
     if (element) {
       element.addEventListener('mousedown', handleMouseDown)
     }

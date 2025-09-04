@@ -19,17 +19,30 @@ import {createRenderGhost} from './render-ghost'
 
 export type DragListItemProps<T extends ValidComponent> = Omit<DynamicProps<T>, 'children'> & {
   children: ((item: any, index: Accessor<number>) => JSX.Element) | JSX.Element
+  ghost?: ((item: any, index: Accessor<number>) => JSX.Element) | JSX.Element
 }
 
 // todo 터치도 작동 되게
 export const DragListItem = <T extends ValidComponent>(props: DragListItemProps<T>) => {
   const [mouseDown, setMouseDown] = createSignal(false)
-  const [hasJsxGhost, setHasJsxGhost] = createSignal(false)
   const [element, setElement] = createSignal<HTMLElement | null>(null)
-
-  const shouldRenderCloneGhost = createMemo(() => !hasJsxGhost())
-  const renderGhost = createRenderGhost(shouldRenderCloneGhost)
   const context = useContext(DragListItemContext)
+
+  const ghostChildren = children(() => {
+    if (!context) {
+      return null
+    }
+
+    if (typeof props.ghost === 'function') {
+      return props.ghost(context?.value(), context?.index)
+    }
+
+    return props.ghost
+  })
+
+  const shouldRenderCloneGhost = createMemo(() => ghostChildren.toArray().length === 0)
+  const renderGhost = createRenderGhost(shouldRenderCloneGhost)
+
   const listContext = useContext(DragListContext)
   const [isDragging, setIsDragging] = createSignal(false)
 
@@ -56,6 +69,7 @@ export const DragListItem = <T extends ValidComponent>(props: DragListItemProps<
 
   const handleDrag = (event: MouseEvent) => {
     setIsDragging(true)
+    // 포지션을 직접 넘겨주는데 상태변경으로 넘겨 주도록 해서 커스텀 엘리먼트와 함께 좌표 전달 가능하게
     renderGhost.update({x: event.clientX, y: event.clientY})
     context?.onDrag(event)
   }
@@ -84,10 +98,6 @@ export const DragListItem = <T extends ValidComponent>(props: DragListItemProps<
   const handlePointerDown = (event: MouseEvent) => {
     setMouseDown(true)
     handleDragStart(event)
-  }
-
-  const handleHasJsxGhost = (value: boolean) => {
-    setHasJsxGhost(value)
   }
 
   const handlePointerMove = (event: MouseEvent) => {
@@ -135,18 +145,20 @@ export const DragListItem = <T extends ValidComponent>(props: DragListItemProps<
     <Dynamic
       {...(props as any)}
       data-dragging={isDragging()}
+      data-list-dragging={listContext?.draggingIndex() !== null}
       ref={setElement}
       onPointerUp={handlePointerUp}
       onPointerDown={handlePointerDown}
       onPointerOver={handleSelfOver}
     >
+      {resolvedChildren()}
+      {/* 드레그 중 랜더링 포지션을 넘겨 줘야한다 */}
       <DragListGhostProvider
         duration={listContext?.duration() ?? 100}
         easing={listContext?.easing() ?? 'ease-in-out'}
         isDragging={isDragging()}
-        onHasJsxGhost={handleHasJsxGhost}
       >
-        {resolvedChildren()}
+        {ghostChildren()}
       </DragListGhostProvider>
     </Dynamic>
   )

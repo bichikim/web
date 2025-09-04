@@ -1,7 +1,9 @@
 import type {Meta, StoryObj} from 'storybook-solidjs'
 import {DragList} from './DragList'
-import {createSignal, onCleanup} from 'solid-js'
+import {createSignal, onCleanup, Show} from 'solid-js'
 import {DragListItem} from './DragListItem'
+import {DragListGhost} from './DragListGhost'
+import {cva, cx} from 'class-variance-authority'
 
 const createInterval = (callback: () => void) => {
   let flag: any
@@ -17,6 +19,23 @@ const createInterval = (callback: () => void) => {
     stop,
   }
 }
+
+const itemStyle = cx(
+  'w-10rem h-2rem bg-blue-500 data-[dragging=true]:opacity-0 select-none cursor-grab rd-md p-1 data-[list-dragging=true]:cursor-unset',
+  'c-white',
+)
+
+const listStyle = cva('flex gap-1rem p-2 rd-md b-2px b-gray-300 b-dashed w-fit', {
+  defaultVariants: {
+    landscape: false,
+  },
+  variants: {
+    landscape: {
+      false: 'flex-col',
+      true: 'flex-row',
+    },
+  },
+})
 
 const Template = (args: any) => {
   const [list, setList] = createSignal<{id: string; name: string}[]>([
@@ -69,23 +88,39 @@ const Template = (args: any) => {
 
   return (
     <div>
+      <div class="flex gap-1rem p-1">
+        <button class="bg-gray-200 rd-md p-1" onClick={handleAddingStart}>
+          Adding Start
+        </button>
+        <button class="bg-gray-200 rd-md p-1" onClick={handleAddingEnd}>
+          Adding End
+        </button>
+        <button class="bg-gray-200 rd-md p-1" onClick={handleRemoveStart}>
+          Remove Start
+        </button>
+        <button class="bg-gray-200 rd-md p-1" onClick={handleRemoveEnd}>
+          Remove End
+        </button>
+      </div>
       <DragList
         list={list()}
         idDetector={args.idDetector}
-        class="flex flex-col gap-1rem"
+        class={listStyle({landscape: args.landscape})}
         component="div"
         onChangeList={handleChangeList}
       >
-        <DragListItem component="div" class="w-10rem h-2rem bg-red-500 data-[dragging=true]:opacity-0 select-none">
+        <DragListItem
+          component="div"
+          class={itemStyle}
+          ghost={(item, index) => (
+            <Show when={args.showGhost}>
+              <div class="w-10rem h-2rem bg-blue-500 c-black">{item.name}</div>
+            </Show>
+          )}
+        >
           {(item) => item.name}
         </DragListItem>
       </DragList>
-      <div class="flex gap-1rem">
-        <button onClick={handleAddingStart}>Adding Start</button>
-        <button onClick={handleAddingEnd}>Adding End</button>
-        <button onClick={handleRemoveStart}>Remove Start</button>
-        <button onClick={handleRemoveEnd}>Remove End</button>
-      </div>
     </div>
   )
 }
@@ -102,6 +137,12 @@ type Story = StoryObj<typeof meta>
 
 export const Default: Story = {
   args: {},
+}
+
+export const Landscape: Story = {
+  args: {
+    landscape: true,
+  },
 }
 
 export const IdDetector: Story = {
