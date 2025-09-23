@@ -10,7 +10,11 @@ export interface RenderOptions {
 
 type CompareReference = Record<string, any> | ((...args: any) => any) | null
 
-const renderChild = (child: Children, parentElement: UniElement | UniText | UniFragment, maxDepth: number = 2): Child => {
+const renderChild = (
+  child: Children,
+  parentElement: UniElement | UniText | UniFragment,
+  maxDepth: number = 2,
+): Child => {
   // todo 자식이 자기 자리를 지켜야 함
   // 리스트 렌더링에서 위치 변경 등에 최적화 되어야 한다
   if (maxDepth === 0) {
@@ -44,7 +48,6 @@ const renderChild = (child: Children, parentElement: UniElement | UniText | UniF
   }
 
   parentElement.cacheChild = cache
-
   console.log('currentResult', currentResult)
 
   return currentResult
@@ -58,12 +61,14 @@ const existRun = (prevTeardown?: (() => void) | null) => {
 
 export function renderChildren(fragment: UniFragment, children: Child[], options: RenderOptions): Child
 export function renderChildren(fragment: UniElement, children: Children[], options: RenderOptions): Child
+
 export function renderChildren(element: any, children: any[], options: RenderOptions): Child {
   const {onMount, onUnmount, key} = options
 
   for (const child of children) {
     effect((prevValue?: Child) => {
       const currentResult: Child = renderChild(child, element)
+
       untrack(() => {
         const {element: currentChildElement, onUnmount: currentOnUnmount} = currentResult
         const {element: prevChildElement, onUnmount: prevOnUnmount} = prevValue ?? {}
@@ -71,6 +76,7 @@ export function renderChildren(element: any, children: any[], options: RenderOpt
         if (prevChildElement && currentChildElement && prevChildElement !== currentChildElement) {
           existRun(prevOnUnmount)
           console.log('replaceWith', key, prevChildElement, currentChildElement)
+
           if ('replaceWith' in prevChildElement) {
             prevChildElement.replaceWith(currentChildElement)
           } else {

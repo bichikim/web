@@ -54,8 +54,8 @@ export const WScrollHandle = <T extends ValidComponent>(props: WScrollHandleProp
     }
 
     const {type: barType} = scrollBar()
-    const [clientX, clientY] = payload.currentPoint
-    const [relativeX, relativeY] = payload.relativePoint
+    const {x: clientX, y: clientY} = payload.currentPoint
+    const {x: relativeX, y: relativeY} = payload.relativePoint
     const relativePoint = barType === 'horizontal' ? relativeX : relativeY
     const bodyElement = element()
     const {barSize} = handleValues()
