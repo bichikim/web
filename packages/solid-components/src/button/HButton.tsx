@@ -38,6 +38,7 @@ export const HButton = (props: HButtonProps) => {
     'loading',
     'autoLoading',
     'preventLoadingDisabled',
+    'disabled',
   ])
 
   return (

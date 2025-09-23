@@ -1,0 +1,40 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`App > should match snapshot 1`] = `
+<div>
+  <div
+    data-testid="toast-provider"
+  >
+    <div
+      data-src="/sw.js"
+      data-testid="service-worker-provider"
+    >
+      <div
+        data-testid="meta-provider"
+      >
+        <title
+          data-testid="title"
+        >
+          Coong
+        </title>
+        <div
+          data-testid="file-routes"
+        >
+          File Routes
+        </div>
+      </div>
+      <div
+        data-page-reload="true"
+        data-testid="reload-prompt"
+      >
+        Reload Prompt
+      </div>
+    </div>
+  </div>
+  <div
+    data-testid="font-import"
+  >
+    Font Import
+  </div>
+</div>
+`;
