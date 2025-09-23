@@ -30,7 +30,12 @@ export default defineConfig({
   //     '@winter-love/solid/use': resolvePath('packages/solid/src/use'),
   //   },
   // },
+  resolve: {
+    // for solidjs testing
+    conditions: ['development', 'browser'],
+  },
   test: {
+    environment: 'jsdom',
     include: ['packages/*/src/**/*.spec.?(c|m)[jt]s?(x)', 'apps/*/src/**/*.spec.?(c|m)[jt]s?(x)'],
     setupFiles: ['./vitest.setup.ts'],
   },
