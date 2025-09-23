@@ -38,7 +38,7 @@
     "lodash-cli": "4.17.5",
     "lodash-es": "^4.17.21",
     "vite": "^6.3.5",
-    "vite-plugin-solid": "^2.11.0"
+    "vite-plugin-solid": "^2.11.8"
   },
   "publishConfig": {
     "access": "public"
