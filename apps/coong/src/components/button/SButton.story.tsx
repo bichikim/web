@@ -5,6 +5,14 @@ import {createEffect, createSignal, onCleanup} from 'solid-js'
 
 const meta = {
   argTypes: {
+    autoLoading: {
+      control: 'boolean',
+      description: 'Whether the button is auto loading or not',
+      table: {
+        category: 'Props',
+        defaultValue: {summary: 'false'},
+      },
+    },
     color: {
       control: 'select',
       description: 'Button variant',

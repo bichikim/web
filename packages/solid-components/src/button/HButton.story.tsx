@@ -4,6 +4,14 @@ import {expect, fireEvent, fn, within} from '@storybook/test'
 
 const meta = {
   argTypes: {
+    disabled: {
+      control: 'boolean',
+      description: 'Whether the button is disabled or not',
+      table: {
+        category: 'Props',
+        defaultValue: {summary: 'false'},
+      },
+    },
     doubleClickGap: {
       control: 'number',
       description: 'The gap between clicks to consider a double click',
@@ -12,19 +20,49 @@ const meta = {
         defaultValue: {summary: '250'},
       },
     },
+    href: {
+      control: 'text',
+      description: 'Button href link',
+      table: {
+        category: 'Props',
+        defaultValue: {summary: 'undefined'},
+      },
+    },
+    loading: {
+      control: 'boolean',
+      description: 'Whether the button is loading or not',
+      table: {
+        category: 'Props',
+        defaultValue: {summary: 'false'},
+      },
+    },
     onClick: {
       description: 'Click event handler',
       table: {
         category: 'Events',
-        defaultValue: {summary: 'undefined'},
       },
+      type: {name: 'function', required: false},
     },
     onDoubleClick: {
       description: 'Double click event handler',
       table: {
         category: 'Events',
-        defaultValue: {summary: 'undefined'},
       },
+      type: {name: 'function', required: false},
+    },
+    onTouchEnd: {
+      description: 'Touch end event handler',
+      table: {
+        category: 'Events',
+      },
+      type: {name: 'function', required: false},
+    },
+    onTouchStart: {
+      description: 'Touch start event handler',
+      table: {
+        category: 'Events',
+      },
+      type: {name: 'function', required: false},
     },
   },
   args: {
