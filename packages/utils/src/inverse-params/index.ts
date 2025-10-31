@@ -33,11 +33,16 @@ type InverseArray<A extends any[]> = A extends [infer A1]
                                 : unknown[]
 
 /**
- * inverse order parameter factory
+ * Creates a function with inverted parameter order
  * @param targetFunction
  */
-export const createInverseOrderParameters = <F extends (...args: any[]) => any>(targetFunction: F) => {
+export const invertParams = <F extends (...args: any[]) => any>(targetFunction: F) => {
   return (...args: InverseArray<Parameters<F>>): ReturnType<F> => {
     return targetFunction(...(args.reverse() as any))
   }
 }
+
+/**
+ * @deprecated Use `invertParams` instead
+ */
+export const createInverseOrderParameters = invertParams

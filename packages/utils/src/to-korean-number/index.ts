@@ -1,11 +1,11 @@
 import {chunk, compact, flow, join, last, map, reverse} from 'es-toolkit/compat'
-import {beFactory} from 'src/be-factory'
+import {flipArgsFactory} from 'src/be-factory'
 import {freeze} from 'src/freeze'
 import {toNumber} from 'src/to-number'
 
-const chunkFp = beFactory(chunk)
-const mapFp = beFactory(map)
-const joinFp = beFactory(join)
+const chunkFp = flipArgsFactory(chunk)
+const mapFp = flipArgsFactory(map)
+const joinFp = flipArgsFactory(join)
 const _numberNames = freeze(['0', '일', '이', '삼', '사', '오', '육', '칠', '팔', '구'])
 
 const _numberUnitNames = freeze(['', '만', '억', '조', '경', '해', '자', '양', '구', '간', '정'])

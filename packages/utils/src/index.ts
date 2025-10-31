@@ -1,6 +1,6 @@
 export * from './add-unit'
 export * from './assign-style'
-export * from './aysnc-pipe'
+export * from './async-pipe'
 export * from './be-factory'
 export * from './change-keys'
 export * from './chunk'

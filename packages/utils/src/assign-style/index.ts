@@ -5,7 +5,7 @@ import {toStyleString} from 'src/to-style-string'
  * @param target
  * @param source
  */
-export const assignStyle = (
+export const setStyle = (
   target: string | null | undefined | Record<string, string | number>,
   source: string | null | undefined | Record<string, string | number>,
 ): string => {
@@ -14,3 +14,8 @@ export const assignStyle = (
 
   return `${_target}${_source}`
 }
+
+/**
+ * @deprecated Use `setStyle` instead
+ */
+export const assignStyle = setStyle

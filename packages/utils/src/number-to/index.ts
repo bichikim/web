@@ -1,4 +1,4 @@
-export const noNaN = (value: number, failValue: number = 0) => {
+export const safeNumber = (value: number, failValue: number = 0) => {
   if (Number.isNaN(value)) {
     return failValue
   }
@@ -6,10 +6,12 @@ export const noNaN = (value: number, failValue: number = 0) => {
   return value
 }
 
-export const numberTo = (value: number, failValue: number = 0) => {
-  if (Number.isNaN(value)) {
-    return failValue
-  }
+/**
+ * @deprecated Use `safeNumber` instead
+ */
+export const noNaN = safeNumber
 
-  return value
-}
+/**
+ * @deprecated Use `safeNumber` instead
+ */
+export const numberTo = safeNumber
