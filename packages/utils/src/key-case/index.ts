@@ -1,4 +1,4 @@
-import {snakeCase} from '@winter-love/lodash'
+import {snakeCase} from 'es-toolkit/string'
 import {SnakeToCamelCase} from 'src/types'
 
 export const createKeyCase = <T extends Record<string, any>, R extends Record<string, any>>(

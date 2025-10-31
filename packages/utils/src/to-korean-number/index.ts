@@ -1,4 +1,4 @@
-import {chunk, compact, flow, join, last, map, reverse} from '@winter-love/lodash'
+import {chunk, compact, flow, join, last, map, reverse} from 'es-toolkit/compat'
 import {beFactory} from 'src/be-factory'
 import {freeze} from 'src/freeze'
 import {toNumber} from 'src/to-number'

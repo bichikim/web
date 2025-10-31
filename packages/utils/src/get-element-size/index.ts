@@ -1,6 +1,6 @@
 import {Rect} from 'src/types'
 import {isWindow} from 'src/is-window'
-import {defaultTo} from '@winter-love/lodash'
+import {defaultTo} from 'es-toolkit/compat'
 
 export const DEFAULT_RECT = {
   height: 0,

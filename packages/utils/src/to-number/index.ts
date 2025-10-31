@@ -1,4 +1,4 @@
-import {toNumber as _toNumber} from '@winter-love/lodash'
+import {toNumber as _toNumber} from 'es-toolkit/compat'
 
 export const toNumber = (value?: unknown, failValue: number = 0): number => {
   const number = _toNumber(value)

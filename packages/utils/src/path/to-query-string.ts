@@ -1,4 +1,4 @@
-import {trim} from '@winter-love/lodash'
+import {trim} from 'es-toolkit/compat'
 import {joinStringQueries} from './join-string-queries'
 
 export interface ToQueryStringOptions {
