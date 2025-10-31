@@ -11,9 +11,13 @@ export type EncodeQueryKey = (key?: string | undefined) => string
 export type EncodeQueryValue = (value: unknown) => string
 
 const TRIM_QUERY_REGEX = /^[?&]/u
-
+/**
+ * @deprecated
+ */
 export const removeQueryChar = (value: string) => trim(value).replace(TRIM_QUERY_REGEX, '')
-
+/**
+ * @deprecated
+ */
 export const encodeQueryKey = (key: string) => encodeURIComponent(key)
 
 const trimQueryKey = (key: string): string => {
@@ -25,9 +29,14 @@ const trimQueryKey = (key: string): string => {
 
   return _key
 }
-
+/**
+ * @deprecated
+ */
 export const encodeQueryValue = (value: string | number | boolean) => encodeURIComponent(value)
 
+/**
+ * @deprecated
+ */
 export const encodeQueryItem = (
   key: string,
   value: string | number | boolean,
@@ -38,6 +47,9 @@ export const encodeQueryItem = (
   return `${encodeKey(trimQueryKey(key))}=${encodeValue(value)}`
 }
 
+/**
+ * @deprecated
+ */
 export const encodeQueryRecord = (
   record: Record<string, string | number | boolean>,
   options: ToQueryStringOptions = {},
@@ -52,6 +64,9 @@ export const encodeQueryRecord = (
   return entries.map(([key, value]) => encodeQueryItem(key, value))
 }
 
+/**
+ * @deprecated
+ */
 export const toQueryString = (record: Record<string, string | number | boolean>, options?: ToQueryStringOptions) => {
   return joinStringQueries(encodeQueryRecord(record, options))
 }

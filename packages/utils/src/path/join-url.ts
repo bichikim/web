@@ -4,6 +4,9 @@ import {createTrimPathSeparator} from './trim-path-separator'
 const MAX_URL_LENGTH = 300
 const MAX_URL_COUNT = 100
 
+/**
+ * @deprecated
+ */
 export const createJoinUrl = (
   separator: string = '/',
   max: number = MAX_URL_LENGTH,
@@ -33,4 +36,7 @@ export const createJoinUrl = (
   }
 }
 
+/**
+ * @deprecated
+ */
 export const joinUrl = createJoinUrl()

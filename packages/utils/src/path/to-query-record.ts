@@ -10,10 +10,16 @@ export interface ToQueryRecodeOptions {
 export type DecodeQueryKey = (key: string) => string | number | symbol
 export type DecodeQueryValue = (value: string) => any
 
+/**
+ * @deprecated
+ */
 export const decodeQueryValue = (value: string) => {
   return decodeURIComponent(value)
 }
 
+/**
+ * @deprecated
+ */
 export const decodeQueryKey = (key: string) => {
   return key
 }
@@ -22,12 +28,18 @@ const trimQueryKey = (key: string) => {
   return trim(key)
 }
 
+/**
+ * @deprecated
+ */
 export const decodeQueryItem = (key: string, value: string, options: ToQueryRecodeOptions = {}) => {
   const {decodeKey = decodeQueryKey, decodeValue = decodeQueryValue} = options
 
   return [decodeKey(trimQueryKey(key)), decodeValue(value)]
 }
 
+/**
+ * @deprecated
+ */
 export const toQueryRecord = (query: string, options?: ToQueryRecodeOptions) => {
   const trimmedQuery: string = query.replace(/^\?/u, '')
 

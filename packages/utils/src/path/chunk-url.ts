@@ -9,6 +9,7 @@ export interface ChunkedUrlResult {
 }
 
 /**
+ * @deprecated
  * url 를 분해 합니다
  * @param url 주소 문자열
  */
