@@ -1,5 +1,3 @@
-'use server'
-
 import {APIEvent} from '@solidjs/start/server'
 import {fetchRequestHandler} from '@trpc/server/adapters/fetch'
 import {appRouter} from 'src/server/trpc/routes'

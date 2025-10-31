@@ -33,6 +33,8 @@ export default defineConfig({
       UnoCSS(),
       generateSw,
       legacy({
+        // plugin-legacy overrode 'build.target'. warning
+        // I won't change build.target, so I'll ignore this warning
         targets,
       }),
     ],
