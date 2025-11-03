@@ -122,9 +122,21 @@ export const SHiddenPlayer = (props: SHiddenPlayerProps) => {
   )
 
   const containerStyle = createMemo(() => {
-    const className = 'h-56 min-h-56 max-h-max flex flex-col justify-end'
+    const className = 'max-h-max flex flex-col justify-end pointer-events-auto'
 
     return props.class ? cx(props.class, className) : cx('relative', className)
+  })
+
+  const containerLayoutStyle = cva('', {
+    defaultVariants: {
+      isShow: false,
+    },
+    variants: {
+      isShow: {
+        false: 'h-2.5rem',
+        true: 'mt-2rem md:mt-0rem min-h-56 ',
+      },
+    },
   })
 
   const maxHeight = createMemo(() => {
@@ -133,7 +145,10 @@ export const SHiddenPlayer = (props: SHiddenPlayerProps) => {
 
   return (
     <ResizeCard.Provider preventWidthResize maxSize={{height: maxHeight()}}>
-      <ResizeCard.Body component={innerProps.component} class={containerStyle()}>
+      <ResizeCard.Body
+        component={innerProps.component}
+        class={cx(containerStyle(), containerLayoutStyle({isShow: isShow()}))}
+      >
         <SClose
           class="mb-1"
           onClose={handleClose}

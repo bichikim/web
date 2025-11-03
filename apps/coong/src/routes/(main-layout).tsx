@@ -35,8 +35,12 @@ absolute overflow-hidden top-0 left-0 bottom-0 right-0 before:content-[""] befor
 before:bottom-0 before:left-0 before:right-0 before:pattern-a before:pointer-events-none
 `
 
+const navGroupStyle = `:uno:
+absolute top-0 left-0 right-0 bottom-0 flex  flex-col justify-end items-end pointer-events-none
+`
+
 const PIANO_PATH = '/piano'
-const MUSIC_PATH = '/music'
+const MUSIC_PATH = '/musics'
 
 export default function MainLayout(props: RouteSectionProps) {
   const [splendidGrandPiano, splendidGrandPianoController] = createSplendidGrandPiano({
@@ -89,14 +93,16 @@ export default function MainLayout(props: RouteSectionProps) {
           >
             <div id="layout" class={layoutStyle}>
               {props.children}
-              <SHiddenPlayer
-                linkType={linkType()}
-                settingData={settingData()}
-                playState={splendidGrandPiano()}
-                onSettingDataChange={handleSettingDataChange}
-                onLink={handleLinkTypeChange}
-                class="absolute bottom-1 right-1"
-              />
+              <div class={navGroupStyle}>
+                <SHiddenPlayer
+                  linkType={linkType()}
+                  settingData={settingData()}
+                  playState={splendidGrandPiano()}
+                  onSettingDataChange={handleSettingDataChange}
+                  onLink={handleLinkTypeChange}
+                  class="relative bottom-1 right-1"
+                />
+              </div>
             </div>
           </MidiPlayerProvider>
         </SplendidGrandPianoContext.Provider>
