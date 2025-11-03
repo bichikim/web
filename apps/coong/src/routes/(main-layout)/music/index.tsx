@@ -48,8 +48,8 @@ export default function MusicPage() {
       <main class=":uno: flex flex-col items-center justify-center h-full px-2">
         <h1 class=":uno: text-4xl font-bold leading-15 text-center">MIDI File Market Page</h1>
         <h3 class="text-2xl text-center">Working in progress...</h3>
-        <a href="/" class={linkStyle}>
-          Go back to piano <span class=":uno: h-6 w-6 inline-block bg-black i-tabler:piano" />
+        <a href="/piano" class={linkStyle}>
+          Go to piano <span class=":uno: h-6 w-6 inline-block bg-black i-tabler:piano" />
         </a>
         <button class="mt-2 flex items-center gap-1" onClick={handleGetSample} disabled={isLoading()}>
           <SAuroraText class={effectTextStyle({isLoading: isLoading()})}>Get Sample Midi files</SAuroraText>
