@@ -173,7 +173,7 @@ export const SFileItem = (props: SFileItemProps) => {
         <DragButton.Aside
           position="left"
           component="span"
-          class=":uno: absolute flex left-0 top-0 w-var-drag-x h-full overflow-hidden box-border"
+          class=":uno: absolute flex left-0 top-0 w-[var(--solid-drag-x)] h-full overflow-hidden box-border"
         >
           <span class="mr-1 bg-red rd-1 w-full h-full flex items-center p-1">
             <span class="block w-full h-full i-tabler:trash bg-white" />
@@ -181,7 +181,7 @@ export const SFileItem = (props: SFileItemProps) => {
         </DragButton.Aside>
         <DragButton.Content
           component="span"
-          class="absolute flex top-0 left-var-drag-x w-full h-full px-4 gap-2 items-center"
+          class="absolute flex top-0 left-[var(--solid-drag-x)] w-full h-full px-4 gap-2 items-center"
         >
           <Show when={innerProps.playing}>
             <SProgress

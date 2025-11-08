@@ -1,4 +1,4 @@
-import {chunk} from '@winter-love/lodash'
+import {chunk} from 'es-toolkit/array'
 
 export interface ChunkOp {
   <T>(size: number, list: T[]): T[][]
@@ -18,4 +18,4 @@ export const chunkOp: ChunkOp = (...args: any[]): any => {
   }
 }
 
-export {chunk} from '@winter-love/lodash'
+export {chunk} from 'es-toolkit/array'

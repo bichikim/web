@@ -18,7 +18,7 @@ export interface MatchRunner<T extends number | string | symbol> {
   <M extends MatchObject<T>>(matches: M): MatchObjectResult<M> | MatchObjectDefault<M>
 }
 
-export const matchRun = <T extends number | string | symbol>(value: T): MatchRunner<T> => {
+export const match = <T extends number | string | symbol>(value: T): MatchRunner<T> => {
   return (matches: Record<any, any>) => {
     const matchedValue = matches[value]
 
@@ -33,3 +33,8 @@ export const matchRun = <T extends number | string | symbol>(value: T): MatchRun
     return matches.default?.(value) as any
   }
 }
+
+/**
+ * @deprecated Use `match` instead
+ */
+export const matchRun = match

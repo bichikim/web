@@ -1,4 +1,4 @@
-import {chunk} from '@winter-love/lodash'
+import {chunk} from 'es-toolkit/array'
 import {describe, expect, it} from 'vitest'
 import {beFactory} from '../'
 

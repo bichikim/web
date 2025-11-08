@@ -91,8 +91,9 @@ export const SSetting = (props: SSettingProps) => {
         value={innerProps.settingData?.keepPlayList}
         onValueChange={handleSettingKeepPlayList}
       />
-      <div class="flex justify-end w-full gap-2">
-        <span class="text-5 md:text-7 text-gray-500 flex-grow-1 pt-3 leading-6">Love makes the world go round.</span>
+      <div class="flex justify-end w-full gap-2 items-center">
+        <span class="text-5 md:text-7 text-gray-500 flex-grow-1 pt-3 leading-6">Setting</span>
+        <span class="text-5 md:text-5 text-gray-500 flex-shrink-0 flex-grow-0 leading-5">click to close -&gt;</span>
         <SPlayerButton class="min-w-11 min-h-9 bg-gray-100" onClick={handleClose}>
           <span class="i-tabler:x text-8 inline-block" />
         </SPlayerButton>

@@ -1,4 +1,4 @@
-import {camelCase} from '@winter-love/lodash'
+import {camelCase} from 'es-toolkit/string'
 import {describe, expect, it} from 'vitest'
 import {changeKeys} from '../'
 

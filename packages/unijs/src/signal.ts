@@ -69,6 +69,69 @@ export interface Signal<T> {
   [SIGNAL_SYMBOL]?: true
 }
 
+export interface ReadonlySignal<T> {
+  (): T
+  [SIGNAL_SYMBOL]?: true
+}
+
+const readonlySignal = <T>(signal: Signal<T>): ReadonlySignal<T> => {
+  return Object.assign(() => signal(), {
+    [SIGNAL_SYMBOL]: true,
+  }) as any
+}
+
 export const isSignal = (value: any): value is Signal<any> => {
   return value && value[SIGNAL_SYMBOL] === true
 }
+
+const createItemSignal = <T>(value: any, key: any): ItemSignal<T> => {
+  return {
+    value,
+    key,
+    signal: false,
+  }
+}
+
+export interface ItemSignal<T> {
+  value: T
+  key: any
+  update: boolean
+}
+
+export type ArraySignal<T> = ReadonlySignal<ItemSignal<T>[]> & {
+  push: (value: any) => void
+  pop: () => void
+  update: (index: number, value: T) => void
+}
+
+export const arraySignal = <T>(value: T[]): ArraySignal<T> => {
+  const valueSignal = signal(value)
+  const compareMap = value.map(createItemSignal)
+
+
+  return Object.assign(readonlySignal(signal), {
+    push: (value: any) => {
+      compareMap.push({
+        value,
+        key: compareMap.length,
+        update: true,
+      })
+
+      valueSignal(valueSignal().concat(value))
+    },
+    remove: (index: number) => {
+      compareMap.splice(index, 1)
+
+      valueSignal(valueSignal().splice(index, 1))
+    },
+    pop: () => {
+      compareMap.pop()
+
+      valueSignal(valueSignal().slice(0, -1))
+    },
+    get compareMap() {
+      return compareMap
+    }
+  })
+}
+

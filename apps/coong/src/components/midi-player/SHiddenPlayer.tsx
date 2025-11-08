@@ -16,6 +16,7 @@ import {SPlayer, SPlayerProps} from './SPlayer'
 import {SettingData, SSetting} from './SSetting'
 import {ResizeCard} from 'src/components/resize-card'
 import {useWindowSize} from './window-size'
+import {SplendidGrandPianoState} from 'src/use/instruments/splendid-grand-piano'
 
 export interface SHiddenPlayerProps
   extends Omit<SPlayerProps, 'onPlaying' | 'onPlay' | 'isShow'>,
@@ -25,6 +26,7 @@ export interface SHiddenPlayerProps
   initShow?: boolean
   onSettingDataChange?: (data: SettingData) => void
   pianoMinScale?: number
+  playState?: SplendidGrandPianoState
   settingData?: SettingData
 }
 
@@ -62,7 +64,7 @@ const playerContainerStyle = cva(':uno: flex flex-col gap-2 overflow-hidden', {
   variants: {
     isSetting: {
       false: '',
-      true: ':uno: w-0 h-auto hidden pointer-events-none',
+      true: ':uno: w-0 h-0 hidden pointer-events-none',
     },
     isShow: {
       false: ':uno: hidden opacity-0 pointer-events-none',
@@ -120,9 +122,21 @@ export const SHiddenPlayer = (props: SHiddenPlayerProps) => {
   )
 
   const containerStyle = createMemo(() => {
-    const className = 'h-56 min-h-56 max-h-max flex flex-col justify-end'
+    const className = 'max-h-max flex flex-col justify-end pointer-events-auto'
 
     return props.class ? cx(props.class, className) : cx('relative', className)
+  })
+
+  const containerLayoutStyle = cva('', {
+    defaultVariants: {
+      isShow: false,
+    },
+    variants: {
+      isShow: {
+        false: 'h-2.5rem',
+        true: 'mt-2rem md:mt-0rem min-h-56 ',
+      },
+    },
   })
 
   const maxHeight = createMemo(() => {
@@ -131,7 +145,10 @@ export const SHiddenPlayer = (props: SHiddenPlayerProps) => {
 
   return (
     <ResizeCard.Provider preventWidthResize maxSize={{height: maxHeight()}}>
-      <ResizeCard.Body component={innerProps.component} class={containerStyle()}>
+      <ResizeCard.Body
+        component={innerProps.component}
+        class={cx(containerStyle(), containerLayoutStyle({isShow: isShow()}))}
+      >
         <SClose
           class="mb-1"
           onClose={handleClose}
@@ -168,14 +185,9 @@ export const SHiddenPlayer = (props: SHiddenPlayerProps) => {
           </Show>
           <Show when={isShow()}>
             <div {...preventGlobalTouchAttrs()} class={handleUpKeyStyle}>
-              <span class="i-hugeicons:equal-sign c-gray-400 w-full h-full block"></span>
+              <span class="i-hugeicons:equal-sign c-gray-400 w-full h-full block" />
             </div>
-            <ResizeCard.Handle
-              {...preventGlobalTouchAttrs()}
-              tabIndex="-1"
-              resizeType="up"
-              class={handleUpStyle}
-            ></ResizeCard.Handle>
+            <ResizeCard.Handle {...preventGlobalTouchAttrs()} tabIndex="-1" resizeType="up" class={handleUpStyle} />
           </Show>
         </section>
       </ResizeCard.Body>

@@ -3,6 +3,9 @@ export const createDedupSeparatorRegExp = (separator: string = '/') => {
 }
 const MAX_URL_LENGTH = 300
 
+/**
+ * @deprecated
+ */
 export const createTrimPathSeparator = (separator: string = '/', max: number = MAX_URL_LENGTH) => {
   const MID_TRIM_URL_REGX = createDedupSeparatorRegExp(separator)
 
@@ -16,6 +19,7 @@ export const createTrimPathSeparator = (separator: string = '/', max: number = M
 }
 
 /**
+ * @deprecated
  * 좌우와 가운데 중복 '//' 를 '/' 패스로 변경 합니다
  * @param path
  * @param replaceValue

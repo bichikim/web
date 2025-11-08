@@ -1,4 +1,3 @@
-/* eslint-disable max-len */
 import {cva, VariantProps} from 'class-variance-authority'
 
 const buttonBase = `:uno:
@@ -35,10 +34,10 @@ backdrop-blur-sm bg-opacity-90 b-opacity-80 focus:outline-opacity-50
 `
 
 const buttonLoading = `:uno:
-before:h-full before:opacity-70 before:z--1  data-[loading-animation=true]:before:animate-slide
+before:h-full before:opacity-70   data-[loading-animation=true]:before:animate-slide
 data-[loading=true]:before:content-[""] before:absolute before:left-0 before:top-0 before:right-0 before:bottom-0
 before:inset-0 before:bg-gradient-to-r before:from-transparent before:w-[var(--var-progress-percent)]
-before:pointer-events-none data-[loading=true]:animate-pulse-alt before:transition-width before:duration-300
+before:pointer-events-none before:transition-width before:duration-300
 `
 
 export const buttonStyles = cva([buttonBase, buttonLoading], {
@@ -80,6 +79,7 @@ export const buttonStyles = cva([buttonBase, buttonLoading], {
     flat: false,
     glass: false,
     outline: false,
+    preventLoadingPulse: false,
     size: 'md',
   },
   variants: {
@@ -100,6 +100,10 @@ export const buttonStyles = cva([buttonBase, buttonLoading], {
     outline: {
       false: ':var-padding-offset=1px',
       true: ':uno: b-1 b-solid',
+    },
+    preventLoadingPulse: {
+      false: 'data-[loading=true]:animate-pulse-alt',
+      true: '',
     },
     size: {
       lg: sizeVariants.lg,

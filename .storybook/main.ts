@@ -1,8 +1,9 @@
 import {mergeConfig} from 'vite'
-import type {StorybookConfig} from '@kachurun/storybook-solid-vite'
+import type {StorybookConfig} from 'storybook-solidjs-vite'
 
 export default <StorybookConfig>{
   addons: [
+    '@storybook/addon-essentials',
     '@storybook/addon-onboarding',
     '@storybook/addon-docs',
     '@storybook/addon-a11y',
@@ -18,7 +19,7 @@ export default <StorybookConfig>{
     autodocs: false,
   },
   framework: {
-    name: '@kachurun/storybook-solid-vite',
+    name: 'storybook-solidjs-vite',
     options: {
       builder: {
         viteConfigPath: './.storybook/vite.config.mts',
@@ -31,6 +32,7 @@ export default <StorybookConfig>{
     '../packages/solid/src/**/*.mdx',
     '../packages/solid/src/**/*.story.@(js|jsx|mjs|ts|tsx)',
     '../packages/solid-components/src/**/*.story.@(js|jsx|mjs|ts|tsx)',
+    '../packages/solid-use/src/**/*.story.@(js|jsx|mjs|ts|tsx)',
     '../packages/player/src/**/*.story.@(js|jsx|mjs|ts|tsx)',
   ],
   typescript: {

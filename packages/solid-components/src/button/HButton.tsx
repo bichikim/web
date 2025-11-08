@@ -28,16 +28,17 @@ export type HButtonProps = ButtonBodyProps & ButtonProviderProps
  */
 export const HButton = (props: HButtonProps) => {
   const [innerProps, restProps] = splitProps(props, [
-    'onClick',
-    'onTouchEnd',
-    'onDoubleClick',
-    'onTouchStart',
+    'autoLoading',
+    'disabled',
     'doubleClickGap',
-    'type',
     'href',
     'loading',
-    'autoLoading',
+    'onClick',
+    'onDoubleClick',
+    'onTouchEnd',
+    'onTouchStart',
     'preventLoadingDisabled',
+    'type',
   ])
 
   return (

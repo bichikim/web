@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["import", "typescript", "unicorn"],
+  "plugins": ["import", "typescript", "unicorn", "vitest", "@prettier/plugin-oxc"],
   "env": {
     "browser": true
   },
@@ -11,16 +11,144 @@
   "rules": {},
   "overrides": [
     {
-      "files": ["*.spec.ts"],
+      "files": ["**/*.spec.ts"],
       "rules": {
         "unicorn/no-thenable": "off"
       }
     },
     {
-      "files": ["*.ts"],
+      "files": ["**/*.ts", "**/*.tsx", "**/*.mjs", "**/*.mts", "**/*.js", "**/*.jsx"],
       "rules": {
+        "no-console": [
+          "warn",
+          {
+            "allow": ["info", "warn"]
+          }
+        ],
+        "no-magic-numbers": [
+          "warn",
+          {
+            "ignore": [1, -1, 0, 2],
+            "ignoreArrayIndexes": true
+          }
+        ],
+        "id-length": [
+          "error",
+          {
+            "exceptions": ["_", "x", "y", "z", "p", "m", "h", "w", "b", "t", "l", "r"]
+          }
+        ],
+        "max-lines-per-function": [
+          "error",
+          {
+            "max": 200,
+            "skipBlankLines": true,
+            "skipComments": true
+          }
+        ],
+        "max-nested-callbacks": ["error", 3],
+        "max-lines": ["error", 1000],
+        "max-depth": ["error", {"max": 4}],
+        "grouped-accessor-pairs": "error",
+        "func-names": ["error", "as-needed"],
+        "no-undef": "off",
+        "no-throw-literal": "error",
+        "no-template-curly-in-string": "error",
+        "no-shadow-restricted-names": "error",
+        "no-self-compare": "error",
+        "no-script-url": "error",
+        "no-proto": "error",
+        "no-plusplus": "error",
+        "no-return-assign": "error",
+        "no-restricted-globals": "error",
+        "no-nonoctal-decimal-escape": "error",
+        "no-new-wrappers": "error",
+        "no-new-require": "error",
+        "no-new-object": "error",
+        "no-new-func": "error",
+        "no-negated-condition": "error",
+        "no-multi-str": "error",
+        "no-multi-assign": "error",
+        "no-loss-of-precision": "error",
+        "no-lonely-if": "error",
+        "no-lone-blocks": "error",
+        "no-labels": "error",
+        "no-label-var": "error",
+        "no-iterator": "warn",
+        "no-fallthrough": "off",
+        "no-extra-label": "error",
+        "no-extra-bind": "error",
+        "no-extend-native": "error",
+        "no-eval": "error",
+        "no-eq-null": "error",
+        "no-empty-function": "error",
+        "no-else-return": "error",
+        "no-duplicate-imports": "error",
+        "no-await-in-loop": "error",
+        "no-div-regex": "error",
+        "no-continue": "error",
+        "no-constructor-return": "error",
+        "no-caller": "error",
+        "no-bitwise": "error",
+        "no-alert": "error",
+        "no-var": "error",
+        "curly": "error",
+        "block-scoped-var": "error",
+        "default-case-last": "error",
+        "default-param-last": "error",
+        "eqeqeq": ["error", "smart"],
+        "yoda": "error",
+        "no-with": "error",
+        "no-void": "error",
         "typescript/triple-slash-reference": "off",
-        "unicorn/no-document-cookie": "off"
+        "unicorn/import-style": "warn",
+        "unicorn/no-document-cookie": "off",
+        "unicorn/new-for-builtins": "off",
+        "unicorn/no-array-callback-reference": "off",
+        "unicorn/no-null": "off",
+        "unicorn/prefer-global-this": "off",
+        "radix": "error",
+        "operator-assignment": ["warn", "always"],
+        "prefer-rest-params": "error",
+        "prefer-promise-reject-errors": "error",
+        "prefer-object-spread": "error",
+        "prefer-numeric-literals": "error",
+        "prefer-exponentiation-operator": "warn",
+        "prefer-spread": "error",
+        "unicorn/prefer-top-level-await": "off",
+        "unicorn/prevent-abbreviations": [
+          "warn",
+          {
+            "ignore": ["\\.spec$"],
+            "replacements": {
+              "arg": false,
+              "args": false,
+              "as": false,
+              "attr": false,
+              "attrs": false,
+              "db": false,
+              "doc": false,
+              "docs": false,
+              "env": false,
+              "fn": false,
+              "func": false,
+              "nav": false,
+              "net": false,
+              "obj": false,
+              "param": false,
+              "params": false,
+              "pkg": false,
+              "prev": false,
+              "prop": false,
+              "props": false,
+              "ref": false,
+              "refs": false,
+              "req": false,
+              "res": false,
+              "src": false
+            }
+          }
+        ]
       }
     },
     {

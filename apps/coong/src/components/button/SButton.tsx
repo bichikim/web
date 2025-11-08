@@ -15,6 +15,7 @@ export const SButton: Component<SButtonProps> = (props) => {
     'outline',
     'children',
     'fit',
+    'preventLoadingPulse',
   ])
 
   return (
@@ -27,6 +28,7 @@ export const SButton: Component<SButtonProps> = (props) => {
         flat: innerProps.flat,
         glass: innerProps.glass,
         outline: innerProps.outline,
+        preventLoadingPulse: innerProps.preventLoadingPulse,
         size: innerProps.size,
       })}
     >

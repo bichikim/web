@@ -1,1 +1,3 @@
-export {default} from '@winter-love/unocss-config'
+import config from '@winter-love/unocss-config'
+
+export default config

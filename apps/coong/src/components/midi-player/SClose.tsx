@@ -12,15 +12,15 @@ export interface SCloseProps extends ComponentProps<'button'> {
   totalTime?: number
 }
 
-const rootStyle = cva(['absolute rd-1'], {
+const rootStyle = cva(['absolute'], {
   defaultVariants: {
     isHidden: false,
     isPlaying: false,
   },
   variants: {
     isHidden: {
-      false: 'left-1 md:left--8 top--8 md:top-unset md:bottom-1 before:opacity-0',
-      true: 'bottom-1 left--10 z-1 before:opacity-50',
+      false: 'left-1 md:left--8 top--8 md:top-unset md:bottom-1',
+      true: 'bottom-1 left--10',
     },
     isPlaying: {
       false: '',
@@ -44,15 +44,14 @@ export const SClose = (props: SCloseProps) => {
   }
 
   const percent = createMemo(() => {
-    if (!props.isHidden) {
+    const _playedTime = props.playedTime
+    const _totalTime = props.totalTime
+
+    if (!_playedTime || !_totalTime) {
       return 0
     }
 
-    if (!props.playedTime || !props.totalTime) {
-      return 0
-    }
-
-    return (props.playedTime / props.totalTime) * HUNDRED
+    return (_playedTime / _totalTime) * HUNDRED
   })
 
   return (
@@ -61,6 +60,7 @@ export const SClose = (props: SCloseProps) => {
       color="error"
       flat
       fit
+      preventLoadingPulse={!props.isPlaying}
       loading={percent()}
       type="button"
       onClick={handleClose}

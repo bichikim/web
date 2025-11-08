@@ -11,7 +11,6 @@ export const toStringStyle = (target: string | undefined | null | Record<string,
     return target.join(';')
   }
 
-  // eslint-disable-next-line unicorn/no-array-reduce
   return Object.entries(target).reduce((result, [key, value]) => {
     return `${result}${key}:${value};`
   }, '')

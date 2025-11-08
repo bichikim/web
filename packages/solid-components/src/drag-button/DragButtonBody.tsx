@@ -1,6 +1,7 @@
 import {createMemo, useContext} from 'solid-js'
 import {Button, ButtonBodyProps} from '../button'
 import {DragButtonContext} from './context'
+import {DRAG_BUTTON_VAR_DRAG_X} from './const'
 
 export interface DragButtonBodyProps extends ButtonBodyProps {
   //
@@ -14,7 +15,7 @@ export const DragButtonBody = (props: DragButtonBodyProps) => {
 
     if (dragX) {
       return {
-        '--var-drag-x': `${dragX}px`,
+        [DRAG_BUTTON_VAR_DRAG_X]: `${dragX}px`,
       }
     }
   })

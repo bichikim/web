@@ -8,10 +8,15 @@ const List = () => {
     list([...list(), list().length + 1])
   }
 
+  const remove = () => {
+    list(list().slice(0, -1))
+  }
+
   return h('div', {}, [
-    //
+    // //
     h('button', {onClick: add}, ['add']),
-    h('ul', {}, [() => list().map((item) => h('li', {}, [item]))]),
+    h('button', {onClick: remove}, ['remove']),
+    h('ul', {}, [() => list().map((item, index) => h('li', {key: index}, [item]))]),
   ])
 }
 
@@ -41,15 +46,15 @@ const Root = () => {
     h('button', {onClick: increment}, ['+']),
     h('span', {class: 'text-red-500'}, [count]),
     h('span', {class: 'text-blue-500 bg-blue-100', style: sizeStyle}, ['??']),
-    () => (toggle() ? h('span', {}, ['showing']) : h('span', {}, ['hidden'])),
-    h('button', {onClick: toggleRender}, [() => (toggle() ? 'stop' : 'start')]),
+    // () => (toggle() ? h('span', {}, ['showing']) : h('span', {}, ['hidden'])),
+    // h('button', {onClick: toggleRender}, [() => (toggle() ? 'stop' : 'start')]),
     h('button', {onClick: decrement}, ['-']),
-    List,
+    List(),
   ])
 }
 
 const appElement = document.querySelector('#app')
 
 if (appElement) {
-  render(appElement, [Root])
+  render(appElement, [Root()])
 }

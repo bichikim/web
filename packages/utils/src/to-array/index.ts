@@ -1,5 +1,5 @@
 import {MaybeArray} from 'src/types'
-import {isNil} from '@winter-love/lodash'
+import {isNil} from 'es-toolkit/compat'
 
 /**
  * return an array always

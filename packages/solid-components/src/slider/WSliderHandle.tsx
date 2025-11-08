@@ -66,8 +66,8 @@ export const WSliderHandle = <T extends ValidComponent>(props: WSliderHandleProp
 
     const {size} = elementValue()
     const {type: barType, containerPosition, containerSize} = sliderContext.value()
-    const [currentX, currentY] = payload.currentPoint
-    const [relativeX, relativeY] = payload.relativePoint
+    const {x: currentX, y: currentY} = payload.currentPoint
+    const {x: relativeX, y: relativeY} = payload.relativePoint
 
     const position = toRangeValue(
       barType === 'horizontal' ? currentX - relativeX - containerPosition : currentY - relativeY - containerPosition,

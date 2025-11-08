@@ -6,7 +6,6 @@ export interface PrevArgsFunc<Args extends any[]> {
   readonly prevArgs: Args
 }
 
-// ??
 export const createPrevArgs = <Args extends unknown[]>(caller: AnyFunction<Args>): PrevArgsFunc<Args> => {
   // should solve type somehow
   let prevArgs: Args = [] as any

@@ -1,5 +1,4 @@
-/* eslint-disable max-params */
-import {describe, expect, it} from 'vitest'
+import {describe, expect, expectTypeOf, it} from 'vitest'
 import {curry, curryReverse} from '../'
 
 describe('curry', () => {
@@ -9,6 +8,120 @@ describe('curry', () => {
 
     expect(curryFoo('foo')(10)).toBe('foo 10')
     expect(curryFoo('foo', 10)).toBe('foo 10')
+  })
+})
+
+describe('type check', () => {
+  it('should be expected type of none parameters', () => {
+    const foo = () => 'foo'
+    const curryFoo = curry(foo)
+
+    expectTypeOf(curryFoo).parameters.toEqualTypeOf<[]>()
+    expectTypeOf(curryFoo).returns.toEqualTypeOf<string>()
+  })
+
+  it('should be expected type of a parameter', () => {
+    const foo = (a: string) => `${a}`
+    const curryFoo = curry(foo)
+
+    expectTypeOf(curryFoo).parameters.toEqualTypeOf<[string]>()
+    expectTypeOf(curryFoo).returns.toEqualTypeOf<string>()
+  })
+
+  it('should be expected type of a? parameter', () => {
+    const foo = (a?: string) => `${a}`
+    const curryFoo = curry(foo)
+
+    expectTypeOf(curryFoo).parameters.toEqualTypeOf<[string?]>()
+    expectTypeOf(curryFoo).returns.toEqualTypeOf<string>()
+  })
+
+  it('should be expected type of a, b parameters', () => {
+    const foo = (a: string, b: number) => `${a} ${b}`
+    const curryFoo = curry(foo)
+
+    expectTypeOf(curryFoo).parameters.toEqualTypeOf<[string] | [string, number]>()
+    const partial1 = curryFoo('foo')
+
+    expectTypeOf(partial1).parameters.toEqualTypeOf<[number]>()
+    expectTypeOf(partial1).returns.toEqualTypeOf<string>()
+
+    const partial2 = curryFoo('foo', 10)
+
+    expectTypeOf(partial2).toEqualTypeOf<string>()
+  })
+
+  it('should be expected type of a, b? parameters', () => {
+    const foo = (a: string, b?: number) => `${a} ${b}`
+    const curryFoo = curry(foo)
+
+    expectTypeOf(curryFoo).parameters.toEqualTypeOf<[string] | [string, number?]>()
+    const partial1 = curryFoo('foo')
+
+    expectTypeOf(partial1).parameters.toEqualTypeOf<[number?]>()
+    expectTypeOf(partial1).returns.toEqualTypeOf<string>()
+
+    const partial2 = curryFoo('foo', 10)
+
+    expectTypeOf(partial2).toEqualTypeOf<string>()
+  })
+
+  it('should be expected type of a?, b? parameters', () => {
+    const foo = (a?: string, b?: number) => `${a} ${b}`
+    const curryFoo = curry(foo)
+
+    expectTypeOf(curryFoo).parameters.toEqualTypeOf<[string?] | [string?, number?]>()
+
+    const partial1 = curryFoo()
+
+    expectTypeOf(partial1).returns.toEqualTypeOf<string>()
+
+    const partial2 = curryFoo('foo')
+
+    expectTypeOf(partial2).parameters.toEqualTypeOf<[number?]>()
+    expectTypeOf(partial2).returns.toEqualTypeOf<string>()
+
+    const partial3 = curryFoo('foo', 10)
+
+    expectTypeOf(partial3).toEqualTypeOf<string>()
+  })
+
+  it('should be expected type of a, b, c parameters', () => {
+    const foo = (a: string, b: number, c: boolean) => `${a} ${b} ${c}`
+    const curryFoo = curry(foo)
+
+    expectTypeOf(curryFoo).parameters.toEqualTypeOf<[string] | [string, number] | [string, number, boolean]>()
+    const partial1 = curryFoo('foo')
+
+    expectTypeOf(partial1).parameters.toEqualTypeOf<[number] | [number, boolean]>()
+
+    const partial2 = partial1(0)
+
+    expectTypeOf(partial2).parameters.toEqualTypeOf<[boolean]>()
+    expectTypeOf(partial2).returns.toEqualTypeOf<string>()
+
+    const partial3 = partial1(0, true)
+
+    expectTypeOf(partial3).toEqualTypeOf<string>()
+  })
+
+  it('should be expected type of a, b, c? parameters', () => {
+    const foo = (a: string, b: number, c?: boolean) => `${a} ${b} ${c}`
+    const curryFoo = curry(foo)
+
+    expectTypeOf(curryFoo).parameters.toEqualTypeOf<[string] | [string, number] | [string, number, boolean?]>()
+    const partial1 = curryFoo('foo')
+
+    expectTypeOf(partial1).parameters.toEqualTypeOf<[number] | [number, boolean?]>()
+
+    const partial2 = partial1(0)
+
+    expectTypeOf(partial2).parameters.toEqualTypeOf<[boolean?]>()
+    expectTypeOf(partial2).returns.toEqualTypeOf<string>()
+
+    const partial3 = partial1(0, true)
+
+    expectTypeOf(partial3).toEqualTypeOf<string>()
   })
 })
 

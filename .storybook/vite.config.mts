@@ -6,7 +6,7 @@ import {defineConfig, Plugin} from 'vite'
 const resolvePath = (url: string) => fileURLToPath(new URL(`../${url}`, import.meta.url))
 export default defineConfig({
   plugins: [
-    unoCss('../../uno.config.ts'),
+    unoCss('../../'),
     monorepoAlias({
       // alias: {
       //   '@winter-love/solid/test': resolvePath('packages/solid/src/test'),

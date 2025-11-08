@@ -35,7 +35,7 @@
     "lint:fix": "cross-env NODE_ENV=script eslint src --fix"
   },
   "dependencies": {
-    "@winter-love/lodash": "workspace:*",
+    "es-toolkit": "^1.41.0",
     "safe-stable-stringify": "^2.5.0",
     "scroll-into-view-if-needed": "^3.1.0",
     "smooth-scroll-into-view-if-needed": "^2.0.2"
@@ -46,7 +46,7 @@
     "js-cookie": "^3.0.5",
     "micro-memoize": "^4.1.2",
     "tsd": "^0.31.2",
-    "typescript": "^5.7.2",
+    "typescript": "^5.9.3",
     "vite": "^6.3.5"
   },
   "publishConfig": {

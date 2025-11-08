@@ -35,6 +35,13 @@ absolute overflow-hidden top-0 left-0 bottom-0 right-0 before:content-[""] befor
 before:bottom-0 before:left-0 before:right-0 before:pattern-a before:pointer-events-none
 `
 
+const navGroupStyle = `:uno:
+absolute top-0 left-0 right-0 bottom-0 flex  flex-col justify-end items-end pointer-events-none
+`
+
+const PIANO_PATH = '/piano'
+const MUSIC_PATH = '/musics'
+
 export default function MainLayout(props: RouteSectionProps) {
   const [splendidGrandPiano, splendidGrandPianoController] = createSplendidGrandPiano({
     onEmitInstrument: emitAllIds,
@@ -52,7 +59,7 @@ export default function MainLayout(props: RouteSectionProps) {
   const isActiveStore = createMemo(() => Boolean(settingData().keepPlayList))
 
   const linkType = createMemo(() => {
-    return location.pathname === '/' ? 'music' : 'piano'
+    return location.pathname === PIANO_PATH ? 'music' : 'piano'
   })
 
   const [musics, setMusics] = useStorage<MusicInfo[]>('local', getStorageKey('piano-musics-default'), {
@@ -71,7 +78,7 @@ export default function MainLayout(props: RouteSectionProps) {
   }
 
   const handleLinkTypeChange = (linkType: LinkType) => {
-    navigate(linkType === 'piano' ? '/' : '/music')
+    navigate(linkType === 'piano' ? PIANO_PATH : MUSIC_PATH)
   }
 
   return (
@@ -86,13 +93,16 @@ export default function MainLayout(props: RouteSectionProps) {
           >
             <div id="layout" class={layoutStyle}>
               {props.children}
-              <SHiddenPlayer
-                linkType={linkType()}
-                settingData={settingData()}
-                onSettingDataChange={handleSettingDataChange}
-                onLink={handleLinkTypeChange}
-                class="absolute bottom-1 right-1"
-              />
+              <div class={navGroupStyle}>
+                <SHiddenPlayer
+                  linkType={linkType()}
+                  settingData={settingData()}
+                  playState={splendidGrandPiano()}
+                  onSettingDataChange={handleSettingDataChange}
+                  onLink={handleLinkTypeChange}
+                  class="relative bottom-1 right-1"
+                />
+              </div>
             </div>
           </MidiPlayerProvider>
         </SplendidGrandPianoContext.Provider>
