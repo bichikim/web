@@ -43,5 +43,3 @@ describe('createLine', () => {
     expect(nextPoint()).toEqual({x: 2, y: 2})
   })
 })
-
-

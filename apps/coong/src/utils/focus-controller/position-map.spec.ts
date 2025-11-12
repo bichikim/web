@@ -3,7 +3,6 @@ import {
   createPositionMap,
   DEFAULT_FILL_OPTIONS,
   DEFAULT_JUMP_OPTIONS,
-  DEFAULT_KEY_OPTIONS,
   DEFAULT_MAX_SEARCH_LENGTH,
   DEFAULT_MOVE_OPTIONS,
   fillPreviousDeepPosition,
@@ -30,7 +29,7 @@ import {
 } from './position-map'
 import {getDirection} from './direction'
 import type {Direction} from './direction'
-import type {DeepPosition} from './deep-position'
+import {type DeepPosition, DEFAULT_KEY_OPTIONS} from './deep-position'
 
 describe('position-map', () => {
   describe('createPositionMap', () => {
@@ -1185,8 +1184,8 @@ describe('position-map', () => {
       ]
 
       savePreviousDeepPosition(positionMap, deepPosition)
-      expect(getDeepPositionInfoWithKey(positionMap, '')?.previousChildPosition).toEqual({x: 0, y: 0})
-      expect(getDeepPositionInfoWithKey(positionMap, '0,0')?.previousChildPosition).toEqual({x: 1, y: 1})
+      expect(getDeepPositionInfoWithKey(positionMap, '::?')?.previousChildPosition).toEqual({x: 0, y: 0})
+      expect(getDeepPositionInfoWithKey(positionMap, '0,0::?')?.previousChildPosition).toEqual({x: 1, y: 1})
     })
 
     it('should not save empty deep position', () => {

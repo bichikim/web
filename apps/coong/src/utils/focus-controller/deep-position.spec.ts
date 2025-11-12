@@ -83,7 +83,7 @@ describe('deep-position', () => {
 
       const result = getDeepPositionKey(deepPosition)
 
-      expect(result).toBe('0,0|1,1|2,2')
+      expect(result).toBe('0,0|1,1|2,2::?')
     })
 
     it('should generate key with custom separator and connector', () => {
@@ -92,9 +92,9 @@ describe('deep-position', () => {
         {x: 1, y: 1},
       ]
 
-      const result = getDeepPositionKey(deepPosition, '_', '->')
+      const result = getDeepPositionKey(deepPosition, {connector: '->', separator: '_'})
 
-      expect(result).toBe('0_0->1_1')
+      expect(result).toBe('0_0->1_1::?')
     })
 
     it('should handle single position', () => {
@@ -102,7 +102,7 @@ describe('deep-position', () => {
 
       const result = getDeepPositionKey(deepPosition)
 
-      expect(result).toBe('5,10')
+      expect(result).toBe('5,10::?')
     })
 
     it('should handle empty deep position', () => {
@@ -110,7 +110,7 @@ describe('deep-position', () => {
 
       const result = getDeepPositionKey(deepPosition)
 
-      expect(result).toBe('')
+      expect(result).toBe('::?')
     })
 
     it('should handle negative position values', () => {
@@ -121,7 +121,7 @@ describe('deep-position', () => {
 
       const result = getDeepPositionKey(deepPosition)
 
-      expect(result).toBe('-1,-2|-3,-4')
+      expect(result).toBe('-1,-2|-3,-4::?')
     })
 
     it('should handle large position values', () => {
@@ -132,7 +132,18 @@ describe('deep-position', () => {
 
       const result = getDeepPositionKey(deepPosition)
 
-      expect(result).toBe('100,200|300,400')
+      expect(result).toBe('100,200|300,400::?')
+    })
+
+    it('should generate key with id', () => {
+      const deepPosition: DeepPosition = [
+        {x: 0, y: 0},
+        {x: 1, y: 1},
+      ]
+
+      const result = getDeepPositionKey(deepPosition, {id: 'test'})
+
+      expect(result).toBe('0,0|1,1::test')
     })
   })
 
@@ -152,7 +163,7 @@ describe('deep-position', () => {
     it('should parse key with custom separator and connector', () => {
       const key = '0_0->1_1'
 
-      const result = getDeepPosition(key, '_', '->')
+      const result = getDeepPosition(key, {connector: '->', separator: '_'})
 
       expect(result).toEqual([
         {x: 0, y: 0},
@@ -212,7 +223,7 @@ describe('deep-position', () => {
     it('should return null when separator is "-"', () => {
       const key = '0-0|1-1'
 
-      const result = getDeepPosition(key, '-')
+      const result = getDeepPosition(key, {separator: '-'})
 
       expect(result).toEqual(null)
     })

@@ -2,18 +2,19 @@ import {
   getDeepPositionKey,
   DEFAULT_CONNECTOR,
   DEFAULT_SEPARATOR,
+  DEFAULT_KEY_OPTIONS,
+  DEFAULT_ID,
   type DeepPosition,
+  type KeyDeepPositionOptions,
   getNextPosition,
   getParentPosition,
   type Position,
+  type KeyOptions,
 } from './deep-position'
 import type {Direction} from './direction'
 
 export const DEFAULT_MAX_SEARCH_LENGTH = 10
-export const DEFAULT_KEY_OPTIONS: Required<KeyOptions> = {
-  connector: DEFAULT_CONNECTOR,
-  separator: DEFAULT_SEPARATOR,
-}
+
 export const DEFAULT_POSITION: Position = {x: 0, y: 0}
 export const DEFAULT_MOVE_OPTIONS: Required<MoveOptions> = {
   ...DEFAULT_KEY_OPTIONS,
@@ -38,11 +39,6 @@ export interface DeepPositionInfo extends DeepPositionPayload {
   count: number
 }
 
-export interface KeyOptions {
-  connector?: string
-  separator?: string
-}
-
 export interface MoveOptions extends KeyOptions {
   limit?: number
   tornadoSearch?: boolean
@@ -58,9 +54,16 @@ export interface JumpOptions extends MoveOptions {
   jumpLimitIndex?: number
 }
 
+export interface PreventMoveFocusOptions {
+  bottom?: boolean
+  left?: boolean
+  right?: boolean
+  top?: boolean
+}
+
 export interface DeepPositionPayload {
   inactive?: boolean
-  preventMoveFocus?: {bottom: boolean; left: boolean; right: boolean; top: boolean}
+  preventMoveFocus?: PreventMoveFocusOptions
   previousChildPosition?: Position
 }
 
@@ -88,9 +91,9 @@ export const createPositionMap = (): PositionMap => {
 export const hasDeepPosition = (
   positionMap: PositionMap,
   deepPosition: DeepPosition,
-  options: KeyOptions = DEFAULT_KEY_OPTIONS,
+  options: KeyDeepPositionOptions = DEFAULT_KEY_OPTIONS,
 ) => {
-  return hasDeepPositionWithKey(positionMap, getDeepPositionKey(deepPosition, options.separator, options.connector))
+  return hasDeepPositionWithKey(positionMap, getDeepPositionKey(deepPosition, options))
 }
 
 export const hasDeepPositionWithKey = (positionMap: PositionMap, key: string) => {
@@ -143,13 +146,9 @@ export const registerDeepPosition = (
   positionMap: PositionMap,
   deepPosition: DeepPosition,
   payload: DeepPositionPayload = {},
-  options: KeyOptions = DEFAULT_KEY_OPTIONS,
+  options: KeyDeepPositionOptions = DEFAULT_KEY_OPTIONS,
 ) => {
-  return registerDeepPositionWithKey(
-    positionMap,
-    getDeepPositionKey(deepPosition, options.separator, options.connector),
-    payload,
-  )
+  return registerDeepPositionWithKey(positionMap, getDeepPositionKey(deepPosition, options), payload)
 }
 
 export const registerDeepPositionWithKey = (
@@ -175,11 +174,7 @@ export const unregisterDeepPosition = (
   deepPosition: DeepPosition,
   options: UnregisterDeepPositionOptions = DEFAULT_KEY_OPTIONS,
 ) => {
-  return unregisterDeepPositionWithKey(
-    positionMap,
-    getDeepPositionKey(deepPosition, options.separator, options.connector),
-    options,
-  )
+  return unregisterDeepPositionWithKey(positionMap, getDeepPositionKey(deepPosition, options), options)
 }
 
 export const unregisterDeepPositionWithKey = (
@@ -229,7 +224,7 @@ export const updateDeepPositionPayload = (
   payload: DeepPositionPayload,
   options: KeyOptions = DEFAULT_KEY_OPTIONS,
 ) => {
-  const key = getDeepPositionKey(deepPosition, options.separator, options.connector)
+  const key = getDeepPositionKey(deepPosition, options)
 
   return updateDeepPositionPayloadWithKey(positionMap, key, payload)
 }
@@ -327,7 +322,7 @@ export const getDeepPositionInfo = (
   deepPosition: DeepPosition,
   options: KeyOptions = DEFAULT_KEY_OPTIONS,
 ) => {
-  return getDeepPositionInfoWithKey(positionMap, getDeepPositionKey(deepPosition, options.separator, options.connector))
+  return getDeepPositionInfoWithKey(positionMap, getDeepPositionKey(deepPosition, options))
 }
 
 export const getDeepPositionInfoWithKey = (positionMap: PositionMap, key: string): DeepPositionInfo | undefined => {
@@ -463,7 +458,7 @@ export const savePreviousDeepPosition = (
     const _targetDeepPosition = [...targetDeepPosition]
     const previousPosition = _targetDeepPosition.pop()
 
-    const targetKey = getDeepPositionKey(_targetDeepPosition, separator, connector)
+    const targetKey = getDeepPositionKey(_targetDeepPosition, options)
 
     updateDeepPositionPayloadWithKey(positionMap, targetKey, {previousChildPosition: previousPosition})
   }
@@ -475,7 +470,7 @@ export const isPreventMoveFocus = (
   direction: Direction,
   options: KeyOptions = DEFAULT_KEY_OPTIONS,
 ) => {
-  const key = getDeepPositionKey(deepPosition, options.separator, options.connector)
+  const key = getDeepPositionKey(deepPosition, options)
   const deepPositionInfo = getDeepPositionInfoWithKey(positionMap, key)
 
   if (!deepPositionInfo) {
