@@ -1,16 +1,4 @@
 {
   "mcpServers": {
-    "sequential-thinking": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"]
-    },
-    "console-ninja": {
-      "command": "node",
-      "args": ["~/.console-ninja/mcp/"]
-    },
-    "blowback": {
-      "command": "npx",
-      "args": ["-y", "blowback-context"]
-    }
   }
 }
