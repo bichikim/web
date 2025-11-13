@@ -9,18 +9,18 @@ import {
 import {type MaybeAccessor, resolveAccessor} from '@winter-love/solid-use'
 
 export const DelegatedEventContext = createContext<{
-  prefix: string
   delegatedEventMap: DelegatedEventMap
   isFake?: boolean
+  prefix: string
 }>({
-  prefix: DEFAULT_CHANNEL_PREFIX,
   delegatedEventMap: new Map(),
   isFake: true,
+  prefix: DEFAULT_CHANNEL_PREFIX,
 })
 
 interface DelegatedEventProviderProps {
-  initialEventNamePrefix?: string
   children: JSX.Element
+  initialEventNamePrefix?: string
 }
 
 export const DelegatedEventProvider = (props: DelegatedEventProviderProps) => {
@@ -29,7 +29,11 @@ export const DelegatedEventProvider = (props: DelegatedEventProviderProps) => {
 
   onCleanup(unsubscribe)
 
-  return <DelegatedEventContext.Provider value={{delegatedEventMap, isFake: false, prefix: initialEventNamePrefix}}>{props.children}</DelegatedEventContext.Provider>
+  return (
+    <DelegatedEventContext.Provider value={{delegatedEventMap, isFake: false, prefix: initialEventNamePrefix}}>
+      {props.children}
+    </DelegatedEventContext.Provider>
+  )
 }
 
 export const useDelegatedEmitHandler = () => {
@@ -45,7 +49,11 @@ export const useDelegatedEmitHandler = () => {
   }
 }
 
-export const useDelegatedOn = (channel: MaybeAccessor<string>, key: MaybeAccessor<string>, listener: (value: any) => void) => {
+export const useDelegatedOn = (
+  channel: MaybeAccessor<string>,
+  key: MaybeAccessor<string>,
+  listener: (value: any) => void,
+) => {
   const {delegatedEventMap, isFake, prefix} = useContext(DelegatedEventContext)
   const channelAccessor = resolveAccessor(channel)
   const keyAccessor = resolveAccessor(key)
@@ -56,7 +64,13 @@ export const useDelegatedOn = (channel: MaybeAccessor<string>, key: MaybeAccesso
   }
 
   createEffect(() => {
-    const {unsubscribe, addListener} = delegatedOn(delegatedEventMap, channelAccessor(), keyAccessor(), listener, prefix)
+    const {unsubscribe, addListener} = delegatedOn(
+      delegatedEventMap,
+      channelAccessor(),
+      keyAccessor(),
+      listener,
+      prefix,
+    )
 
     if (!import.meta.env.SSR) {
       addListener()

@@ -26,6 +26,7 @@ import {
   unregisterDeepPositionRecursively,
   savePreviousDeepPosition,
   findNextDeepPosition,
+  isPreventMoveFocus,
 } from './position-map'
 import {getDirection} from './direction'
 import type {Direction} from './direction'
@@ -1194,6 +1195,43 @@ describe('position-map', () => {
 
       savePreviousDeepPosition(positionMap, deepPosition)
       expect(getDeepPositionInfoWithKey(positionMap, 'root')?.previousChildPosition).toBeUndefined()
+    })
+  })
+
+  describe('isPreventMoveFocus', () => {
+    it('should return false when deep position is not registered', () => {
+      const positionMap = createPositionMap()
+      const deepPosition: DeepPosition = [{x: 0, y: 0}]
+      const direction = getDirection('right')
+
+      expect(isPreventMoveFocus(positionMap, deepPosition, direction)).toBe(false)
+    })
+
+    it('should return true when preventMoveFocus is set for direction', () => {
+      const positionMap = createPositionMap()
+      const deepPosition: DeepPosition = [{x: 0, y: 0}]
+
+      registerDeepPosition(positionMap, deepPosition, {
+        preventMoveFocus: {
+          right: true,
+        },
+      })
+      expect(isPreventMoveFocus(positionMap, deepPosition, getDirection('right'))).toBe(true)
+      expect(isPreventMoveFocus(positionMap, deepPosition, getDirection('left'))).toBe(false)
+    })
+
+    it('should return true for vertical prevent move focus', () => {
+      const positionMap = createPositionMap()
+      const deepPosition: DeepPosition = [{x: 0, y: 0}]
+
+      registerDeepPosition(positionMap, deepPosition, {
+        preventMoveFocus: {
+          bottom: true,
+          top: true,
+        },
+      })
+      expect(isPreventMoveFocus(positionMap, deepPosition, getDirection('down'))).toBe(true)
+      expect(isPreventMoveFocus(positionMap, deepPosition, getDirection('up'))).toBe(true)
     })
   })
 

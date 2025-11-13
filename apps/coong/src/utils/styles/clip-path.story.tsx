@@ -1,5 +1,5 @@
 import {rounededPolygon, RounededPolygonProps} from './clip-path'
-import {Meta, StoryObj} from 'storybook-solidjs'
+import {Meta, StoryObj} from 'storybook-solidjs-vite'
 
 const Template = (props: RounededPolygonProps & {height: number; width: number}) => {
   return (
@@ -31,7 +31,7 @@ const meta = {
     width: {control: 'number'},
   },
   component: Template,
-  title: 'BPlan/Styles/ClipPath',
+  title: 'Coong/Utils/Styles/ClipPath',
 } satisfies Meta<typeof Template>
 
 export default meta

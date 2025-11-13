@@ -1,4 +1,4 @@
-import {getDocument} from './get-document'
+import {getDocument} from '@winter-love/utils'
 
 export type DelegatedPayload = {
   delegatedListener: (value: any) => void

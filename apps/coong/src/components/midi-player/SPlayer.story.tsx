@@ -1,4 +1,4 @@
-import type {Meta, StoryObj} from 'storybook-solidjs'
+import type {Meta, StoryObj} from 'storybook-solidjs-vite'
 import {SPlayer} from './SPlayer'
 
 const meta = {
@@ -15,7 +15,7 @@ const meta = {
     },
     layout: 'centered',
   },
-  title: 'BPlan/Components/MidiPlayer/SPlayer',
+  title: 'Coong/Components/MidiPlayer/SPlayer',
 } satisfies Meta<typeof SPlayer>
 
 export default meta

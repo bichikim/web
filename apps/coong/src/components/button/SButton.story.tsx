@@ -1,4 +1,4 @@
-import type {Meta, StoryObj} from 'storybook-solidjs'
+import type {Meta, StoryObj} from 'storybook-solidjs-vite'
 import {fn} from '@storybook/test'
 import {SButton} from './SButton'
 import {createEffect, createSignal, onCleanup} from 'solid-js'
@@ -104,7 +104,7 @@ const meta = {
   },
   args: {onClick: fn(), onDoubleClick: fn()},
   component: SButton,
-  title: 'BPlan/Components/SButton',
+  title: 'Coong/Components/SButton',
 } satisfies Meta<typeof SButton>
 
 export default meta

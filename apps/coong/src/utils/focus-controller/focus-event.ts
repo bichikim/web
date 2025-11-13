@@ -1,5 +1,11 @@
 import {delegatedOn, DelegatedEventMap, delegatedEmit} from './delegated-event'
-import {type DeepPosition, getDeepPositionKey, type KeyDeepPositionOptions, DEFAULT_KEY_OPTIONS} from './deep-position'
+import {
+  type DeepPosition,
+  getDeepPositionKey,
+  type KeyDeepPositionOptions,
+  DEFAULT_KEY_OPTIONS,
+  DEFAULT_ID,
+} from './deep-position'
 
 export const delegatedFocusOn = (
   delegatedEventMap: DelegatedEventMap,
@@ -7,21 +13,27 @@ export const delegatedFocusOn = (
   listener: (value: boolean, options: any) => void,
   options: KeyDeepPositionOptions = DEFAULT_KEY_OPTIONS,
 ) => {
+  const {id = DEFAULT_ID} = options
   const eventKey = getDeepPositionKey(deepPosition, options)
 
   const _listener = (value: {focused: boolean; options: any}) => {
     listener(value.focused, value.options)
   }
 
-  return delegatedOn(delegatedEventMap, eventKey, _listener)
+  return delegatedOn(delegatedEventMap, id, eventKey, _listener)
 }
 
 export const delegatedFocusEmit = (
-  eventName: string,
   deepPosition: DeepPosition,
+  focused: boolean,
+  payload: any,
   options: KeyDeepPositionOptions = DEFAULT_KEY_OPTIONS,
 ) => {
+  const {id = DEFAULT_ID} = options
   const eventKey = getDeepPositionKey(deepPosition, options)
 
-  return delegatedEmit(eventName, eventKey)
+  return delegatedEmit(id, eventKey, {
+    focused,
+    payload,
+  })
 }

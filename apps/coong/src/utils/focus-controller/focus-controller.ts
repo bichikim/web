@@ -79,7 +79,7 @@ export interface FocusController {
    * @param deepPosition
    * @param options
    */
-  readonly setFocus: (deepPosition: DeepPosition, options: SetFocusOptions) => void
+  readonly setFocus: (deepPosition: DeepPosition, options?: SetFocusOptions) => void
   /**
    * 포커스 좌표를 이동할 때 포커스 이동을 막습니다.
    * @param deepPosition
@@ -103,8 +103,10 @@ export interface FocusController {
  * @param {Function} onChangeFocus - 포커스 좌표가 변경될 때 호출됩니다.
  * @returns {FocusController} focusController
  */
-export const createFocusController = (onChangeFocus?: (deepPosition: DeepPosition) => void): FocusController => {
-  let _active = false
+export const createFocusController = (
+  onChangeFocus?: (deepPosition: DeepPosition, focused: boolean) => void,
+): FocusController => {
+  let _active = true
   const _positionMap = createPositionMap()
   let _deepPosition: DeepPosition = []
 
@@ -119,6 +121,8 @@ export const createFocusController = (onChangeFocus?: (deepPosition: DeepPositio
       preventSavePreviousFocus = false,
       preventCallChangeFocus = false,
     } = options
+
+    const _previousDeepPosition = [..._deepPosition]
 
     // focusController 가 비활성화 되어 있으면 포커스 변경을 막습니다.
     if (!ignoreFocusControllerActive && !_active) {
@@ -142,7 +146,8 @@ export const createFocusController = (onChangeFocus?: (deepPosition: DeepPositio
     _deepPosition = [...deepPosition]
 
     if (!preventCallChangeFocus) {
-      onChangeFocus?.(_deepPosition)
+      onChangeFocus?.(_previousDeepPosition, false)
+      onChangeFocus?.(_deepPosition, true)
     }
   }
 

@@ -1,5 +1,5 @@
 import {type DeepPosition, getDeepPosition, getDeepPositionKey, Position} from './deep-position'
-import {getDocument} from './get-document'
+import {getDocument} from '@winter-love/utils'
 
 export const setElementDeepPosition = (element: HTMLElement, deepPosition: DeepPosition) => {
   const key = getDeepPositionKey(deepPosition)

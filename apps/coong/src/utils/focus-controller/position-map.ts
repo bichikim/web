@@ -479,19 +479,19 @@ export const isPreventMoveFocus = (
 
   const {preventMoveFocus: {bottom, left, right, top} = {}} = deepPositionInfo
 
-  if (direction.x < 1 && left) {
+  if (direction.x < 0 && left) {
     return true
   }
 
-  if (direction.x > 1 && right) {
+  if (direction.x > 0 && right) {
     return true
   }
 
-  if (direction.y < 1 && top) {
+  if (direction.y < 0 && top) {
     return true
   }
 
-  if (direction.y > 1 && bottom) {
+  if (direction.y > 0 && bottom) {
     return true
   }
 

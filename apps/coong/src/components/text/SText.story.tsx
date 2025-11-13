@@ -1,5 +1,5 @@
 import {SText, STextProps} from './SText'
-import type {Meta, StoryObj} from 'storybook-solidjs'
+import type {Meta, StoryObj} from 'storybook-solidjs-vite'
 
 const meta: Meta<STextProps> = {
   argTypes: {
@@ -16,7 +16,7 @@ const meta: Meta<STextProps> = {
     size: 'md',
   },
   component: SText,
-  title: 'BPlan/Components/SText',
+  title: 'Coong/Components/SText',
 }
 
 export default meta

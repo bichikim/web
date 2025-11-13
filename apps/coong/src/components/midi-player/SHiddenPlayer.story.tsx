@@ -1,4 +1,4 @@
-import type {Meta, StoryObj} from 'storybook-solidjs'
+import type {Meta, StoryObj} from 'storybook-solidjs-vite'
 import {SHiddenPlayer} from './SHiddenPlayer'
 import midiData from './hidden-teenieping.json'
 
@@ -10,7 +10,7 @@ const meta = {
   parameters: {
     layout: 'centered',
   },
-  title: 'BPlan/Components/MidiPlayer/SHiddenPlayer',
+  title: 'Coong/Components/MidiPlayer/SHiddenPlayer',
 } satisfies Meta<typeof SHiddenPlayer>
 
 export default meta

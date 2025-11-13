@@ -7,11 +7,11 @@ font-medium inline-flex items-center justify-center gap-2 focus-visible:outline-
 select-none outline-offset--3 cursor-pointer overflow-hidden min-w-max text-shadow-lg text-shadow-color-[var(--var-semi-focus-bg)]
 c-[var(--var-text-color)] b-[var(--var-color)] focus-visible:outline-[var(--var-focus-bg)] disabled:c-[var(--var-muted-color)] before:to-[var(--var-semi-focus-bg)]
  :uno:
-before:h-full before:opacity-70 before:z--1  data-[loading-animation=true]:before:animate-slide
+before:h-full before:opacity-70   data-[loading-animation=true]:before:animate-slide
 data-[loading=true]:before:content-[""] before:absolute before:left-0 before:top-0 before:right-0 before:bottom-0
 before:inset-0 before:bg-gradient-to-r before:from-transparent before:w-[var(--var-progress-percent)]
-before:pointer-events-none data-[loading=true]:animate-pulse-alt before:transition-width before:duration-300
- :uno: color-var-text-color=black var-color=gray-100 var-focus-bg=black var-muted-color=gray-400 var-semi-muted-color=gray-300 var-semi-focus-bg=white :uno: shadow-sm bg-[radial-gradient(at_90%_30%,_var(--var-color)_50%,_var(--var-muted-color)_130%)] :var-padding-offset=1px :uno:
+before:pointer-events-none before:transition-width before:duration-300
+ :uno: color-var-text-color=black var-color=gray-100 var-focus-bg=black var-muted-color=gray-400 var-semi-muted-color=gray-300 var-semi-focus-bg=white :uno: shadow-sm bg-[radial-gradient(at_90%_30%,_var(--var-color)_50%,_var(--var-muted-color)_130%)] :var-padding-offset=1px data-[loading=true]:animate-pulse-alt :uno:
 py-[calc(_.25rem+_var(--var-padding-offset,_0px))] px-[calc(_var(--var-padding,_0px)+_var(--var-padding-offset,_0px))] rd-md text-base
  var-padding=.75rem relative"
   data-loading="false"
@@ -28,11 +28,11 @@ font-medium inline-flex items-center justify-center gap-2 focus-visible:outline-
 select-none outline-offset--3 cursor-pointer overflow-hidden min-w-max text-shadow-lg text-shadow-color-[var(--var-semi-focus-bg)]
 c-[var(--var-text-color)] b-[var(--var-color)] focus-visible:outline-[var(--var-focus-bg)] disabled:c-[var(--var-muted-color)] before:to-[var(--var-semi-focus-bg)]
  :uno:
-before:h-full before:opacity-70 before:z--1  data-[loading-animation=true]:before:animate-slide
+before:h-full before:opacity-70   data-[loading-animation=true]:before:animate-slide
 data-[loading=true]:before:content-[""] before:absolute before:left-0 before:top-0 before:right-0 before:bottom-0
 before:inset-0 before:bg-gradient-to-r before:from-transparent before:w-[var(--var-progress-percent)]
-before:pointer-events-none data-[loading=true]:animate-pulse-alt before:transition-width before:duration-300
- :uno: color-var-text-color=black var-color=gray-100 var-focus-bg=black var-muted-color=gray-400 var-semi-muted-color=gray-300 var-semi-focus-bg=white :uno: shadow-sm bg-[radial-gradient(at_90%_30%,_var(--var-color)_50%,_var(--var-muted-color)_130%)] :var-padding-offset=1px :uno:
+before:pointer-events-none before:transition-width before:duration-300
+ :uno: color-var-text-color=black var-color=gray-100 var-focus-bg=black var-muted-color=gray-400 var-semi-muted-color=gray-300 var-semi-focus-bg=white :uno: shadow-sm bg-[radial-gradient(at_90%_30%,_var(--var-color)_50%,_var(--var-muted-color)_130%)] :var-padding-offset=1px data-[loading=true]:animate-pulse-alt :uno:
 py-[calc(_.25rem+_var(--var-padding-offset,_0px))] px-[calc(_var(--var-padding,_0px)+_var(--var-padding-offset,_0px))] rd-md text-base
  var-padding=.75rem relative"
   data-loading="false"
@@ -49,11 +49,11 @@ font-medium inline-flex items-center justify-center gap-2 focus-visible:outline-
 select-none outline-offset--3 cursor-pointer overflow-hidden min-w-max text-shadow-lg text-shadow-color-[var(--var-semi-focus-bg)]
 c-[var(--var-text-color)] b-[var(--var-color)] focus-visible:outline-[var(--var-focus-bg)] disabled:c-[var(--var-muted-color)] before:to-[var(--var-semi-focus-bg)]
  :uno:
-before:h-full before:opacity-70 before:z--1  data-[loading-animation=true]:before:animate-slide
+before:h-full before:opacity-70   data-[loading-animation=true]:before:animate-slide
 data-[loading=true]:before:content-[""] before:absolute before:left-0 before:top-0 before:right-0 before:bottom-0
 before:inset-0 before:bg-gradient-to-r before:from-transparent before:w-[var(--var-progress-percent)]
-before:pointer-events-none data-[loading=true]:animate-pulse-alt before:transition-width before:duration-300
- :uno: color-var-text-color=white  var-color=red-400 var-focus-bg=red-700 var-muted-color=red-200 var-semi-muted-color=red-300 var-semi-focus-bg=red-500 :uno: shadow-sm bg-[radial-gradient(at_90%_30%,_var(--var-color)_50%,_var(--var-muted-color)_130%)] :var-padding-offset=1px :uno:
+before:pointer-events-none before:transition-width before:duration-300
+ :uno: color-var-text-color=white  var-color=red-400 var-focus-bg=red-700 var-muted-color=red-200 var-semi-muted-color=red-300 var-semi-focus-bg=red-500 :uno: shadow-sm bg-[radial-gradient(at_90%_30%,_var(--var-color)_50%,_var(--var-muted-color)_130%)] :var-padding-offset=1px data-[loading=true]:animate-pulse-alt :uno:
 py-[calc(_.25rem+_var(--var-padding-offset,_0px))] px-[calc(_var(--var-padding,_0px)+_var(--var-padding-offset,_0px))] rd-md text-base
  var-padding=.75rem relative"
   data-loading="false"
@@ -70,11 +70,11 @@ font-medium inline-flex items-center justify-center gap-2 focus-visible:outline-
 select-none outline-offset--3 cursor-pointer overflow-hidden min-w-max text-shadow-lg text-shadow-color-[var(--var-semi-focus-bg)]
 c-[var(--var-text-color)] b-[var(--var-color)] focus-visible:outline-[var(--var-focus-bg)] disabled:c-[var(--var-muted-color)] before:to-[var(--var-semi-focus-bg)]
  :uno:
-before:h-full before:opacity-70 before:z--1  data-[loading-animation=true]:before:animate-slide
+before:h-full before:opacity-70   data-[loading-animation=true]:before:animate-slide
 data-[loading=true]:before:content-[""] before:absolute before:left-0 before:top-0 before:right-0 before:bottom-0
 before:inset-0 before:bg-gradient-to-r before:from-transparent before:w-[var(--var-progress-percent)]
-before:pointer-events-none data-[loading=true]:animate-pulse-alt before:transition-width before:duration-300
- :uno: color-var-text-color=white var-color=sky-400 var-focus-bg=sky-700 var-muted-color=sky-200 var-semi-muted-color=sky-300 var-semi-focus-bg=sky-500 :uno: shadow-sm bg-[radial-gradient(at_90%_30%,_var(--var-color)_50%,_var(--var-muted-color)_130%)] :var-padding-offset=1px :uno:
+before:pointer-events-none before:transition-width before:duration-300
+ :uno: color-var-text-color=white var-color=sky-400 var-focus-bg=sky-700 var-muted-color=sky-200 var-semi-muted-color=sky-300 var-semi-focus-bg=sky-500 :uno: shadow-sm bg-[radial-gradient(at_90%_30%,_var(--var-color)_50%,_var(--var-muted-color)_130%)] :var-padding-offset=1px data-[loading=true]:animate-pulse-alt :uno:
 py-[calc(_.25rem+_var(--var-padding-offset,_0px))] px-[calc(_var(--var-padding,_0px)+_var(--var-padding-offset,_0px))] rd-md text-base
  var-padding=.75rem relative"
   data-loading="false"
@@ -91,11 +91,11 @@ font-medium inline-flex items-center justify-center gap-2 focus-visible:outline-
 select-none outline-offset--3 cursor-pointer overflow-hidden min-w-max text-shadow-lg text-shadow-color-[var(--var-semi-focus-bg)]
 c-[var(--var-text-color)] b-[var(--var-color)] focus-visible:outline-[var(--var-focus-bg)] disabled:c-[var(--var-muted-color)] before:to-[var(--var-semi-focus-bg)]
  :uno:
-before:h-full before:opacity-70 before:z--1  data-[loading-animation=true]:before:animate-slide
+before:h-full before:opacity-70   data-[loading-animation=true]:before:animate-slide
 data-[loading=true]:before:content-[""] before:absolute before:left-0 before:top-0 before:right-0 before:bottom-0
 before:inset-0 before:bg-gradient-to-r before:from-transparent before:w-[var(--var-progress-percent)]
-before:pointer-events-none data-[loading=true]:animate-pulse-alt before:transition-width before:duration-300
- :uno: color-var-text-color=white var-color=blue-400 var-focus-bg=blue-700 var-muted-color=blue-200 var-semi-muted-color=white var-semi-focus-bg=blue-500 :uno: shadow-sm bg-[radial-gradient(at_90%_30%,_var(--var-color)_50%,_var(--var-muted-color)_130%)] :var-padding-offset=1px :uno:
+before:pointer-events-none before:transition-width before:duration-300
+ :uno: color-var-text-color=white var-color=blue-400 var-focus-bg=blue-700 var-muted-color=blue-200 var-semi-muted-color=white var-semi-focus-bg=blue-500 :uno: shadow-sm bg-[radial-gradient(at_90%_30%,_var(--var-color)_50%,_var(--var-muted-color)_130%)] :var-padding-offset=1px data-[loading=true]:animate-pulse-alt :uno:
 py-[calc(_.25rem+_var(--var-padding-offset,_0px))] px-[calc(_var(--var-padding,_0px)+_var(--var-padding-offset,_0px))] rd-md text-base
  var-padding=.75rem relative"
   data-loading="false"
@@ -112,11 +112,11 @@ font-medium inline-flex items-center justify-center gap-2 focus-visible:outline-
 select-none outline-offset--3 cursor-pointer overflow-hidden min-w-max text-shadow-lg text-shadow-color-[var(--var-semi-focus-bg)]
 c-[var(--var-text-color)] b-[var(--var-color)] focus-visible:outline-[var(--var-focus-bg)] disabled:c-[var(--var-muted-color)] before:to-[var(--var-semi-focus-bg)]
  :uno:
-before:h-full before:opacity-70 before:z--1  data-[loading-animation=true]:before:animate-slide
+before:h-full before:opacity-70   data-[loading-animation=true]:before:animate-slide
 data-[loading=true]:before:content-[""] before:absolute before:left-0 before:top-0 before:right-0 before:bottom-0
 before:inset-0 before:bg-gradient-to-r before:from-transparent before:w-[var(--var-progress-percent)]
-before:pointer-events-none data-[loading=true]:animate-pulse-alt before:transition-width before:duration-300
- :uno: color-var-text-color=white var-color=indigo-400 var-focus-bg=indigo-700 var-muted-color=indigo-200 var-semi-muted-color=white var-semi-focus-bg=indigo-500 :uno: shadow-sm bg-[radial-gradient(at_90%_30%,_var(--var-color)_50%,_var(--var-muted-color)_130%)] :var-padding-offset=1px :uno:
+before:pointer-events-none before:transition-width before:duration-300
+ :uno: color-var-text-color=white var-color=indigo-400 var-focus-bg=indigo-700 var-muted-color=indigo-200 var-semi-muted-color=white var-semi-focus-bg=indigo-500 :uno: shadow-sm bg-[radial-gradient(at_90%_30%,_var(--var-color)_50%,_var(--var-muted-color)_130%)] :var-padding-offset=1px data-[loading=true]:animate-pulse-alt :uno:
 py-[calc(_.25rem+_var(--var-padding-offset,_0px))] px-[calc(_var(--var-padding,_0px)+_var(--var-padding-offset,_0px))] rd-md text-base
  var-padding=.75rem relative"
   data-loading="false"
@@ -133,11 +133,11 @@ font-medium inline-flex items-center justify-center gap-2 focus-visible:outline-
 select-none outline-offset--3 cursor-pointer overflow-hidden min-w-max text-shadow-lg text-shadow-color-[var(--var-semi-focus-bg)]
 c-[var(--var-text-color)] b-[var(--var-color)] focus-visible:outline-[var(--var-focus-bg)] disabled:c-[var(--var-muted-color)] before:to-[var(--var-semi-focus-bg)]
  :uno:
-before:h-full before:opacity-70 before:z--1  data-[loading-animation=true]:before:animate-slide
+before:h-full before:opacity-70   data-[loading-animation=true]:before:animate-slide
 data-[loading=true]:before:content-[""] before:absolute before:left-0 before:top-0 before:right-0 before:bottom-0
 before:inset-0 before:bg-gradient-to-r before:from-transparent before:w-[var(--var-progress-percent)]
-before:pointer-events-none data-[loading=true]:animate-pulse-alt before:transition-width before:duration-300
- :uno: color-var-text-color=white var-color=green-400 var-focus-bg=green-700 var-muted-color=green-200 var-semi-muted-color=green-300 var-semi-focus-bg=green-500 :uno: shadow-sm bg-[radial-gradient(at_90%_30%,_var(--var-color)_50%,_var(--var-muted-color)_130%)] :var-padding-offset=1px :uno:
+before:pointer-events-none before:transition-width before:duration-300
+ :uno: color-var-text-color=white var-color=green-400 var-focus-bg=green-700 var-muted-color=green-200 var-semi-muted-color=green-300 var-semi-focus-bg=green-500 :uno: shadow-sm bg-[radial-gradient(at_90%_30%,_var(--var-color)_50%,_var(--var-muted-color)_130%)] :var-padding-offset=1px data-[loading=true]:animate-pulse-alt :uno:
 py-[calc(_.25rem+_var(--var-padding-offset,_0px))] px-[calc(_var(--var-padding,_0px)+_var(--var-padding-offset,_0px))] rd-md text-base
  var-padding=.75rem relative"
   data-loading="false"
@@ -154,11 +154,11 @@ font-medium inline-flex items-center justify-center gap-2 focus-visible:outline-
 select-none outline-offset--3 cursor-pointer overflow-hidden min-w-max text-shadow-lg text-shadow-color-[var(--var-semi-focus-bg)]
 c-[var(--var-text-color)] b-[var(--var-color)] focus-visible:outline-[var(--var-focus-bg)] disabled:c-[var(--var-muted-color)] before:to-[var(--var-semi-focus-bg)]
  :uno:
-before:h-full before:opacity-70 before:z--1  data-[loading-animation=true]:before:animate-slide
+before:h-full before:opacity-70   data-[loading-animation=true]:before:animate-slide
 data-[loading=true]:before:content-[""] before:absolute before:left-0 before:top-0 before:right-0 before:bottom-0
 before:inset-0 before:bg-gradient-to-r before:from-transparent before:w-[var(--var-progress-percent)]
-before:pointer-events-none data-[loading=true]:animate-pulse-alt before:transition-width before:duration-300
- :uno: color-var-text-color=black var-color=transparent var-focus-bg=black var-muted-color=gray-400 var-semi-muted-color=gray-300 var-semi-focus-bg=gray-200 :uno: shadow-sm bg-[radial-gradient(at_90%_30%,_var(--var-color)_50%,_var(--var-muted-color)_130%)] :var-padding-offset=1px :uno:
+before:pointer-events-none before:transition-width before:duration-300
+ :uno: color-var-text-color=black var-color=transparent var-focus-bg=black var-muted-color=gray-400 var-semi-muted-color=gray-300 var-semi-focus-bg=gray-200 :uno: shadow-sm bg-[radial-gradient(at_90%_30%,_var(--var-color)_50%,_var(--var-muted-color)_130%)] :var-padding-offset=1px data-[loading=true]:animate-pulse-alt :uno:
 py-[calc(_.25rem+_var(--var-padding-offset,_0px))] px-[calc(_var(--var-padding,_0px)+_var(--var-padding-offset,_0px))] rd-md text-base
  var-padding=.75rem relative"
   data-loading="false"
@@ -175,11 +175,11 @@ font-medium inline-flex items-center justify-center gap-2 focus-visible:outline-
 select-none outline-offset--3 cursor-pointer overflow-hidden min-w-max text-shadow-lg text-shadow-color-[var(--var-semi-focus-bg)]
 c-[var(--var-text-color)] b-[var(--var-color)] focus-visible:outline-[var(--var-focus-bg)] disabled:c-[var(--var-muted-color)] before:to-[var(--var-semi-focus-bg)]
  :uno:
-before:h-full before:opacity-70 before:z--1  data-[loading-animation=true]:before:animate-slide
+before:h-full before:opacity-70   data-[loading-animation=true]:before:animate-slide
 data-[loading=true]:before:content-[""] before:absolute before:left-0 before:top-0 before:right-0 before:bottom-0
 before:inset-0 before:bg-gradient-to-r before:from-transparent before:w-[var(--var-progress-percent)]
-before:pointer-events-none data-[loading=true]:animate-pulse-alt before:transition-width before:duration-300
- :uno: color-var-text-color=white var-color=orange-400 var-focus-bg=orange-700 var-muted-color=orange-200 var-semi-muted-color=orange-300 var-semi-focus-bg=orange-500 :uno: shadow-sm bg-[radial-gradient(at_90%_30%,_var(--var-color)_50%,_var(--var-muted-color)_130%)] :var-padding-offset=1px :uno:
+before:pointer-events-none before:transition-width before:duration-300
+ :uno: color-var-text-color=white var-color=orange-400 var-focus-bg=orange-700 var-muted-color=orange-200 var-semi-muted-color=orange-300 var-semi-focus-bg=orange-500 :uno: shadow-sm bg-[radial-gradient(at_90%_30%,_var(--var-color)_50%,_var(--var-muted-color)_130%)] :var-padding-offset=1px data-[loading=true]:animate-pulse-alt :uno:
 py-[calc(_.25rem+_var(--var-padding-offset,_0px))] px-[calc(_var(--var-padding,_0px)+_var(--var-padding-offset,_0px))] rd-md text-base
  var-padding=.75rem relative"
   data-loading="false"
@@ -196,11 +196,11 @@ font-medium inline-flex items-center justify-center gap-2 focus-visible:outline-
 select-none outline-offset--3 cursor-pointer overflow-hidden min-w-max text-shadow-lg text-shadow-color-[var(--var-semi-focus-bg)]
 c-[var(--var-text-color)] b-[var(--var-color)] focus-visible:outline-[var(--var-focus-bg)] disabled:c-[var(--var-muted-color)] before:to-[var(--var-semi-focus-bg)]
  :uno:
-before:h-full before:opacity-70 before:z--1  data-[loading-animation=true]:before:animate-slide
+before:h-full before:opacity-70   data-[loading-animation=true]:before:animate-slide
 data-[loading=true]:before:content-[""] before:absolute before:left-0 before:top-0 before:right-0 before:bottom-0
 before:inset-0 before:bg-gradient-to-r before:from-transparent before:w-[var(--var-progress-percent)]
-before:pointer-events-none data-[loading=true]:animate-pulse-alt before:transition-width before:duration-300
- :uno: color-var-text-color=white var-color=orange-400 var-focus-bg=orange-700 var-muted-color=orange-200 var-semi-muted-color=orange-300 var-semi-focus-bg=orange-500 :uno: shadow-sm bg-[radial-gradient(at_90%_30%,_var(--var-color)_50%,_var(--var-muted-color)_130%)] :var-padding-offset=1px :uno:
+before:pointer-events-none before:transition-width before:duration-300
+ :uno: color-var-text-color=white var-color=orange-400 var-focus-bg=orange-700 var-muted-color=orange-200 var-semi-muted-color=orange-300 var-semi-focus-bg=orange-500 :uno: shadow-sm bg-[radial-gradient(at_90%_30%,_var(--var-color)_50%,_var(--var-muted-color)_130%)] :var-padding-offset=1px data-[loading=true]:animate-pulse-alt :uno:
 py-[calc(_.25rem+_var(--var-padding-offset,_0px))] px-[calc(_var(--var-padding,_0px)+_var(--var-padding-offset,_0px))] rd-md text-base
  var-padding=.75rem relative"
   data-loading="false"
@@ -217,13 +217,13 @@ font-medium inline-flex items-center justify-center gap-2 focus-visible:outline-
 select-none outline-offset--3 cursor-pointer overflow-hidden min-w-max text-shadow-lg text-shadow-color-[var(--var-semi-focus-bg)]
 c-[var(--var-text-color)] b-[var(--var-color)] focus-visible:outline-[var(--var-focus-bg)] disabled:c-[var(--var-muted-color)] before:to-[var(--var-semi-focus-bg)]
  :uno:
-before:h-full before:opacity-70 before:z--1  data-[loading-animation=true]:before:animate-slide
+before:h-full before:opacity-70   data-[loading-animation=true]:before:animate-slide
 data-[loading=true]:before:content-[""] before:absolute before:left-0 before:top-0 before:right-0 before:bottom-0
 before:inset-0 before:bg-gradient-to-r before:from-transparent before:w-[var(--var-progress-percent)]
-before:pointer-events-none data-[loading=true]:animate-pulse-alt before:transition-width before:duration-300
+before:pointer-events-none before:transition-width before:duration-300
  :uno: color-var-text-color=black var-color=gray-100 var-focus-bg=black var-muted-color=gray-400 var-semi-muted-color=gray-300 var-semi-focus-bg=white :uno: bg-[var(--var-color)] hover:enabled:b-[--var-color] :uno:
 backdrop-blur-sm bg-opacity-90 b-opacity-80 focus:outline-opacity-50
- :uno: b-1 b-solid :uno:
+ :uno: b-1 b-solid data-[loading=true]:animate-pulse-alt :uno:
 py-[calc(_.25rem+_var(--var-padding-offset,_0px))] px-[calc(_var(--var-padding,_0px)+_var(--var-padding-offset,_0px))] rd-md text-base
  var-padding=.25rem relative"
   data-loading="false"
@@ -240,11 +240,11 @@ font-medium inline-flex items-center justify-center gap-2 focus-visible:outline-
 select-none outline-offset--3 cursor-pointer overflow-hidden min-w-max text-shadow-lg text-shadow-color-[var(--var-semi-focus-bg)]
 c-[var(--var-text-color)] b-[var(--var-color)] focus-visible:outline-[var(--var-focus-bg)] disabled:c-[var(--var-muted-color)] before:to-[var(--var-semi-focus-bg)]
  :uno:
-before:h-full before:opacity-70 before:z--1  data-[loading-animation=true]:before:animate-slide
+before:h-full before:opacity-70   data-[loading-animation=true]:before:animate-slide
 data-[loading=true]:before:content-[""] before:absolute before:left-0 before:top-0 before:right-0 before:bottom-0
 before:inset-0 before:bg-gradient-to-r before:from-transparent before:w-[var(--var-progress-percent)]
-before:pointer-events-none data-[loading=true]:animate-pulse-alt before:transition-width before:duration-300
- :uno: color-var-text-color=black var-color=gray-100 var-focus-bg=black var-muted-color=gray-400 var-semi-muted-color=gray-300 var-semi-focus-bg=white :uno: shadow-sm bg-[radial-gradient(at_90%_30%,_var(--var-color)_50%,_var(--var-muted-color)_130%)] :var-padding-offset=1px :uno:
+before:pointer-events-none before:transition-width before:duration-300
+ :uno: color-var-text-color=black var-color=gray-100 var-focus-bg=black var-muted-color=gray-400 var-semi-muted-color=gray-300 var-semi-focus-bg=white :uno: shadow-sm bg-[radial-gradient(at_90%_30%,_var(--var-color)_50%,_var(--var-muted-color)_130%)] :var-padding-offset=1px data-[loading=true]:animate-pulse-alt :uno:
 py-[calc(_.25rem+_var(--var-padding-offset,_0px))] px-[calc(_var(--var-padding,_0px)+_var(--var-padding-offset,_0px))] rd-md text-base
  var-padding=.75rem relative"
   data-loading="true"
@@ -262,11 +262,11 @@ font-medium inline-flex items-center justify-center gap-2 focus-visible:outline-
 select-none outline-offset--3 cursor-pointer overflow-hidden min-w-max text-shadow-lg text-shadow-color-[var(--var-semi-focus-bg)]
 c-[var(--var-text-color)] b-[var(--var-color)] focus-visible:outline-[var(--var-focus-bg)] disabled:c-[var(--var-muted-color)] before:to-[var(--var-semi-focus-bg)]
  :uno:
-before:h-full before:opacity-70 before:z--1  data-[loading-animation=true]:before:animate-slide
+before:h-full before:opacity-70   data-[loading-animation=true]:before:animate-slide
 data-[loading=true]:before:content-[""] before:absolute before:left-0 before:top-0 before:right-0 before:bottom-0
 before:inset-0 before:bg-gradient-to-r before:from-transparent before:w-[var(--var-progress-percent)]
-before:pointer-events-none data-[loading=true]:animate-pulse-alt before:transition-width before:duration-300
- :uno: color-var-text-color=black var-color=gray-100 var-focus-bg=black var-muted-color=gray-400 var-semi-muted-color=gray-300 var-semi-focus-bg=white :uno: shadow-sm bg-[radial-gradient(at_90%_30%,_var(--var-color)_50%,_var(--var-muted-color)_130%)] :var-padding-offset=1px :uno:
+before:pointer-events-none before:transition-width before:duration-300
+ :uno: color-var-text-color=black var-color=gray-100 var-focus-bg=black var-muted-color=gray-400 var-semi-muted-color=gray-300 var-semi-focus-bg=white :uno: shadow-sm bg-[radial-gradient(at_90%_30%,_var(--var-color)_50%,_var(--var-muted-color)_130%)] :var-padding-offset=1px data-[loading=true]:animate-pulse-alt :uno:
 py-[calc(_.25rem+_var(--var-padding-offset,_0px))] px-[calc(_var(--var-padding,_0px)+_var(--var-padding-offset,_0px))] rd-md text-base
  var-padding=.75rem relative"
   data-loading="true"
@@ -285,11 +285,11 @@ font-medium inline-flex items-center justify-center gap-2 focus-visible:outline-
 select-none outline-offset--3 cursor-pointer overflow-hidden min-w-max text-shadow-lg text-shadow-color-[var(--var-semi-focus-bg)]
 c-[var(--var-text-color)] b-[var(--var-color)] focus-visible:outline-[var(--var-focus-bg)] disabled:c-[var(--var-muted-color)] before:to-[var(--var-semi-focus-bg)]
  :uno:
-before:h-full before:opacity-70 before:z--1  data-[loading-animation=true]:before:animate-slide
+before:h-full before:opacity-70   data-[loading-animation=true]:before:animate-slide
 data-[loading=true]:before:content-[""] before:absolute before:left-0 before:top-0 before:right-0 before:bottom-0
 before:inset-0 before:bg-gradient-to-r before:from-transparent before:w-[var(--var-progress-percent)]
-before:pointer-events-none data-[loading=true]:animate-pulse-alt before:transition-width before:duration-300
- :uno: color-var-text-color=black var-color=gray-100 var-focus-bg=black var-muted-color=gray-400 var-semi-muted-color=gray-300 var-semi-focus-bg=white :uno: shadow-sm bg-[radial-gradient(at_90%_30%,_var(--var-color)_50%,_var(--var-muted-color)_130%)] :var-padding-offset=1px :uno:
+before:pointer-events-none before:transition-width before:duration-300
+ :uno: color-var-text-color=black var-color=gray-100 var-focus-bg=black var-muted-color=gray-400 var-semi-muted-color=gray-300 var-semi-focus-bg=white :uno: shadow-sm bg-[radial-gradient(at_90%_30%,_var(--var-color)_50%,_var(--var-muted-color)_130%)] :var-padding-offset=1px data-[loading=true]:animate-pulse-alt :uno:
 py-[calc(_0.75rem+_var(--var-padding-offset,_0px))] px-[calc(_var(--var-padding,_0px)+_var(--var-padding-offset,_0px))] rd-lg text-lg
  var-padding=1.25rem relative"
   data-loading="false"
@@ -306,11 +306,11 @@ font-medium inline-flex items-center justify-center gap-2 focus-visible:outline-
 select-none outline-offset--3 cursor-pointer overflow-hidden min-w-max text-shadow-lg text-shadow-color-[var(--var-semi-focus-bg)]
 c-[var(--var-text-color)] b-[var(--var-color)] focus-visible:outline-[var(--var-focus-bg)] disabled:c-[var(--var-muted-color)] before:to-[var(--var-semi-focus-bg)]
  :uno:
-before:h-full before:opacity-70 before:z--1  data-[loading-animation=true]:before:animate-slide
+before:h-full before:opacity-70   data-[loading-animation=true]:before:animate-slide
 data-[loading=true]:before:content-[""] before:absolute before:left-0 before:top-0 before:right-0 before:bottom-0
 before:inset-0 before:bg-gradient-to-r before:from-transparent before:w-[var(--var-progress-percent)]
-before:pointer-events-none data-[loading=true]:animate-pulse-alt before:transition-width before:duration-300
- :uno: color-var-text-color=black var-color=gray-100 var-focus-bg=black var-muted-color=gray-400 var-semi-muted-color=gray-300 var-semi-focus-bg=white :uno: shadow-sm bg-[radial-gradient(at_90%_30%,_var(--var-color)_50%,_var(--var-muted-color)_130%)] :var-padding-offset=1px :uno:
+before:pointer-events-none before:transition-width before:duration-300
+ :uno: color-var-text-color=black var-color=gray-100 var-focus-bg=black var-muted-color=gray-400 var-semi-muted-color=gray-300 var-semi-focus-bg=white :uno: shadow-sm bg-[radial-gradient(at_90%_30%,_var(--var-color)_50%,_var(--var-muted-color)_130%)] :var-padding-offset=1px data-[loading=true]:animate-pulse-alt :uno:
 py-[calc(_.25rem+_var(--var-padding-offset,_0px))] px-[calc(_var(--var-padding,_0px)+_var(--var-padding-offset,_0px))] rd-md text-base
  var-padding=.75rem relative"
   data-loading="false"
@@ -327,11 +327,11 @@ font-medium inline-flex items-center justify-center gap-2 focus-visible:outline-
 select-none outline-offset--3 cursor-pointer overflow-hidden min-w-max text-shadow-lg text-shadow-color-[var(--var-semi-focus-bg)]
 c-[var(--var-text-color)] b-[var(--var-color)] focus-visible:outline-[var(--var-focus-bg)] disabled:c-[var(--var-muted-color)] before:to-[var(--var-semi-focus-bg)]
  :uno:
-before:h-full before:opacity-70 before:z--1  data-[loading-animation=true]:before:animate-slide
+before:h-full before:opacity-70   data-[loading-animation=true]:before:animate-slide
 data-[loading=true]:before:content-[""] before:absolute before:left-0 before:top-0 before:right-0 before:bottom-0
 before:inset-0 before:bg-gradient-to-r before:from-transparent before:w-[var(--var-progress-percent)]
-before:pointer-events-none data-[loading=true]:animate-pulse-alt before:transition-width before:duration-300
- :uno: color-var-text-color=black var-color=gray-100 var-focus-bg=black var-muted-color=gray-400 var-semi-muted-color=gray-300 var-semi-focus-bg=white :uno: shadow-sm bg-[radial-gradient(at_90%_30%,_var(--var-color)_50%,_var(--var-muted-color)_130%)] :var-padding-offset=1px :uno:
+before:pointer-events-none before:transition-width before:duration-300
+ :uno: color-var-text-color=black var-color=gray-100 var-focus-bg=black var-muted-color=gray-400 var-semi-muted-color=gray-300 var-semi-focus-bg=white :uno: shadow-sm bg-[radial-gradient(at_90%_30%,_var(--var-color)_50%,_var(--var-muted-color)_130%)] :var-padding-offset=1px data-[loading=true]:animate-pulse-alt :uno:
 py-[calc(_.1rem+_var(--var-padding-offset,_0px))] px-[calc(_var(--var-padding,_0px)+_var(--var-padding-offset,_0px))] rd-sm text-sm
  var-padding=.25rem relative"
   data-loading="false"

@@ -1,4 +1,4 @@
-import type {Meta, StoryObj} from 'storybook-solidjs'
+import type {Meta, StoryObj} from 'storybook-solidjs-vite'
 import {STopLevelPanel} from './STopLevelPanel'
 
 const meta = {
@@ -9,7 +9,7 @@ const meta = {
   parameters: {
     layout: 'centered',
   },
-  title: 'BPlan/Components/HiddenPanel/STopLevelPanel',
+  title: 'Coong/Components/HiddenPanel/STopLevelPanel',
 } satisfies Meta<typeof STopLevelPanel>
 
 export default meta
