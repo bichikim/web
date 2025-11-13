@@ -1,4 +1,4 @@
-import {Meta, StoryObj} from 'storybook-solidjs'
+import {Meta, StoryObj} from 'storybook-solidjs-vite'
 import {Checkbox, CheckboxProviderProps} from './index'
 
 const Template = (props: CheckboxProviderProps) => {

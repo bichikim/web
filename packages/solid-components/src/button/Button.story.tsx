@@ -1,4 +1,4 @@
-import {Meta, StoryObj} from 'storybook-solidjs'
+import {Meta, StoryObj} from 'storybook-solidjs-vite'
 import {Button, ButtonBodyProps, ButtonProviderProps} from './'
 import {splitProps} from 'solid-js'
 import {fn} from '@storybook/test'

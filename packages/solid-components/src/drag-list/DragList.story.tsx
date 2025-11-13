@@ -1,4 +1,4 @@
-import type {Meta, StoryObj} from 'storybook-solidjs'
+import type {Meta, StoryObj} from 'storybook-solidjs-vite'
 import {DragList} from './DragList'
 import {createSignal, onCleanup, Show} from 'solid-js'
 import {DragListItem} from './DragListItem'
