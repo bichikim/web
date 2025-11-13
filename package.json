@@ -48,6 +48,7 @@
     "last 5 Opera versions"
   ],
   "devDependencies": {
+    "@chromatic-com/storybook": "4.1.2",
     "@iconify-json/hugeicons": "^1.2.3",
     "@iconify-json/svg-spinners": "^1.2.2",
     "@iconify-json/tabler": "^1.2.13",
@@ -66,6 +67,7 @@
     "@types/node": "20.11.18",
     "@types/sinon": "^17.0.3",
     "@unocss/vite": "^65.4.0",
+    "@vitest/coverage-v8": "4.0.8",
     "@winter-love/eslint-config": "workspace:*",
     "@winter-love/solid-test": "workspace:*",
     "@winter-love/unocss-config": "workspace:*",
