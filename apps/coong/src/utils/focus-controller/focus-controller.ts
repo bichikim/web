@@ -193,9 +193,9 @@ export const createFocusController = (onChangeFocus?: (deepPosition: DeepPositio
   //
   return {
     active,
-    deepPosition: [],
+    deepPosition: _deepPosition,
     moveFocus,
-    positionMap: createPositionMap(),
+    positionMap: _positionMap,
     registerFocus,
     setActiveFocus,
     setFocus,
