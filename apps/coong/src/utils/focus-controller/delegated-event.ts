@@ -109,7 +109,7 @@ export const delegatedEmit = (
   // eslint-disable-next-line n/no-unsupported-features/node-builtins
   const customEvent = new CustomEvent(eventName, {detail: {key, value}})
 
-  document.dispatchEvent(customEvent)
+  getDocument()?.dispatchEvent(customEvent)
 }
 
 export const delegatedEmitHandler = (channel: string, key: string) => {
