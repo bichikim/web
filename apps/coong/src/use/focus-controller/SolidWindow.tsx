@@ -4,6 +4,7 @@ import {NONE_CUSTOM_EVENT_KEY} from 'src/utils/focus-controller/delegated-event'
 
 export interface KeyMoveProps {
   onKeyDown?: (event: KeyboardEvent) => void
+  onKeyUp?: (event: KeyboardEvent) => void
 }
 
 export const SolidWindow = (props: KeyMoveProps) => {
@@ -12,6 +13,14 @@ export const SolidWindow = (props: KeyMoveProps) => {
     NONE_CUSTOM_EVENT_KEY,
     nonAccessor((event) => {
       props.onKeyDown?.(event)
+    }),
+  )
+
+  useDelegatedOn(
+    'keyup',
+    NONE_CUSTOM_EVENT_KEY,
+    nonAccessor((event) => {
+      props.onKeyUp?.(event)
     }),
   )
 
