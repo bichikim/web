@@ -7,11 +7,13 @@ import {
   DEFAULT_ID,
 } from './deep-position'
 
+export type DelegatedFocusOnOptions = KeyDeepPositionOptions
+
 export const delegatedFocusOn = (
   delegatedEventMap: DelegatedEventMap,
   deepPosition: DeepPosition,
   listener: (value: boolean, options: any) => void,
-  options: KeyDeepPositionOptions = DEFAULT_KEY_OPTIONS,
+  options: DelegatedFocusOnOptions = DEFAULT_KEY_OPTIONS,
 ) => {
   const {id = DEFAULT_ID} = options
   const eventKey = getDeepPositionKey(deepPosition, options)

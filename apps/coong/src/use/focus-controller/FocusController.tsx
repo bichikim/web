@@ -22,7 +22,44 @@ export interface FocusControllerProviderProps extends Readonly<KeyOptions> {
   readonly onChangeFocus?: (deepPosition: DeepPosition, focused: boolean) => void
 }
 
-export const FocusControllerContext = createContext<FocusControllerContextValue | undefined>(undefined)
+const createEmptyFocusController = (): FocusControllerContextValue => {
+  return {
+    focusController: {
+      active: () => {
+        console.warn('focusController is not provided')
+      },
+      deepPosition: [],
+      moveFocus: () => {
+        console.warn('focusController is not provided')
+
+        return null
+      },
+      positionMap: new Map(),
+      registerFocus: () => {
+        console.warn('focusController is not provided')
+      },
+      setActiveFocus: () => {
+        console.warn('focusController is not provided')
+      },
+      setFocus: () => {
+        console.warn('focusController is not provided')
+      },
+      setPreventMoveFocus: () => {
+        console.warn('focusController is not provided')
+      },
+      setPreviousFocus: () => {
+        console.warn('focusController is not provided')
+      },
+      unregisterFocus: () => {
+        console.warn('focusController is not provided')
+      },
+    },
+    id: '',
+    keyOptions: {},
+  }
+}
+
+export const FocusControllerContext = createContext<FocusControllerContextValue>(createEmptyFocusController())
 
 const getUuid = createUuid()
 
@@ -75,4 +112,10 @@ export const FocusControllerProvider = (props: FocusControllerProviderProps) => 
       {props.children}
     </FocusControllerContext.Provider>
   )
+}
+
+export const useFocusController = () => {
+  const {focusController} = useContext(FocusControllerContext)
+
+  return focusController
 }

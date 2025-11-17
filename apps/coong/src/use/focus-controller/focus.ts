@@ -1,5 +1,5 @@
 import {createSignal, useContext, createEffect, createMemo, onMount} from 'solid-js'
-import {MaybeAccessor, resolveAccessor} from '@winter-love/solid-use'
+import {MaybeAccessor, resolveAccessor, nonAccessor} from '@winter-love/solid-use'
 import {getDeepPositionKey, type DeepPosition} from 'src/utils/focus-controller/deep-position'
 import {FocusControllerContext, FOCUS_CONTROLLER_CHANNEL} from './FocusController'
 import {useDelegatedOn} from './DelegatedEvent'
@@ -41,10 +41,18 @@ export const useFocus = (deepPosition: MaybeAccessor<DeepPosition>) => {
     return null
   })
 
-  useDelegatedOn(FOCUS_CONTROLLER_CHANNEL, deepPositionKey, (value) => {
-    setIsFocused(value.focused)
-    setPayload(value.payload)
-  })
+  useDelegatedOn(
+    FOCUS_CONTROLLER_CHANNEL,
+    deepPositionKey,
+    nonAccessor((value) => {
+      if (!value) {
+        return
+      }
+
+      setIsFocused(value.focused)
+      setPayload(value.payload)
+    }),
+  )
 
   const _setIsFocused = (focused: boolean) => {
     if (focused) {

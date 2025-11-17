@@ -1,24 +1,43 @@
+/* eslint-disable n/no-unsupported-features/node-builtins */
 import {getDocument} from '@winter-love/utils'
 
-export type DelegatedPayload = {
+export const NONE_CUSTOM_EVENT_KEY = 'none-custom-event-key'
+
+/**
+ * The payload of delegated event.
+ */
+export type DelegatedEventPayload = {
+  /**
+   * The listener function for the delegated event.
+   * @param value - The value of the delegated event.
+   */
   delegatedListener: (value: any) => void
+  /**
+   * The map of key and listeners.
+   * The map that stores all listener functions registered for a specific key.
+   */
   keyMap: Map<string, Set<(value: any) => void>>
+  /**
+   * The function to unsubscribe the delegated event listener.
+   */
   unsubscribe: () => void
 }
 
-export type DelegatedEventMap = Map<string, DelegatedPayload>
+/**
+ * The map of DelegatedPayload.
+ */
+export type DelegatedEventMap = Map<string, DelegatedEventPayload>
 
-const createNewDelegatedPayload = (
-  channel: string,
-  eventNamePrefix: string = DEFAULT_CHANNEL_PREFIX,
-): DelegatedPayload => {
+const createNewDelegatedPayload = (eventName: string, target: () => any = getDocument): DelegatedEventPayload => {
   const keyMap = new Map()
-  const eventName = createChannelEventName(eventNamePrefix)(channel)
 
   const delegatedListener = (event: Event) => {
     // eslint-disable-next-line n/no-unsupported-features/node-builtins
-    const _event = event as CustomEvent<{key: string; value: any}>
-    const {key, value} = _event.detail
+    const _event = event as any
+    const detail = _event.detail
+    const isCustomEvent = typeof detail === 'object' && detail !== null
+    const key = isCustomEvent ? _event.detail?.key : NONE_CUSTOM_EVENT_KEY
+    const value = isCustomEvent ? _event.detail?.value : _event
     const listeners = keyMap.get(key) ?? new Set()
 
     if (listeners) {
@@ -28,33 +47,27 @@ const createNewDelegatedPayload = (
     }
   }
 
-  getDocument()?.addEventListener(eventName, delegatedListener)
+  target()?.addEventListener(eventName, delegatedListener)
 
   const unsubscribe = () => {
-    getDocument()?.removeEventListener(eventName, delegatedListener)
+    target()?.removeEventListener(eventName, delegatedListener)
   }
 
   return {delegatedListener, keyMap, unsubscribe}
 }
 
-export const DEFAULT_CHANNEL_PREFIX = '$$channel__'
-
-export const createChannelEventName = (prefix: string = DEFAULT_CHANNEL_PREFIX) => {
-  return (channel: string) => {
-    return `${prefix}${channel}`
-  }
-}
+export const DEFAULT_CHANNEL_PREFIX = ''
 
 export const addListener = (
   delegatedEventMap: DelegatedEventMap,
-  channel: string,
+  eventName: string,
   key: string,
   listener: (value: any) => void,
-  eventNamePrefix: string = DEFAULT_CHANNEL_PREFIX,
+  target: () => any = getDocument,
 ) => {
-  const delegatedPayload = delegatedEventMap.get(channel) ?? createNewDelegatedPayload(channel, eventNamePrefix)
+  const delegatedPayload = delegatedEventMap.get(eventName) ?? createNewDelegatedPayload(eventName, target)
 
-  delegatedEventMap.set(channel, delegatedPayload)
+  delegatedEventMap.set(eventName, delegatedPayload)
 
   const listeners = delegatedPayload.keyMap.get(key) ?? new Set()
 
@@ -64,11 +77,11 @@ export const addListener = (
 
 export const removeListener = (
   delegatedEventMap: DelegatedEventMap,
-  channel: string,
+  eventName: string,
   key: string,
   listener: (value: any) => void,
 ): boolean => {
-  const delegatedPayload = delegatedEventMap.get(channel)
+  const delegatedPayload = delegatedEventMap.get(eventName)
 
   if (!delegatedPayload) {
     return false
@@ -85,6 +98,12 @@ export const removeListener = (
   return true
 }
 
+/**
+ * Creates a delegated event.
+ * Creates the delegatedEventMap used by delegatedEmit and delegatedOn, and returns an unsubscribe function to clean up the event map.
+ * @returns {DelegatedEventMap} - The delegated event map.
+ * @returns {() => void} - The unsubscribe function.
+ */
 export const createDelegatedEvent = () => {
   const delegatedEventMap: DelegatedEventMap = new Map()
 
@@ -99,13 +118,7 @@ export const createDelegatedEvent = () => {
   return {delegatedEventMap, unsubscribe}
 }
 
-export const delegatedEmit = (
-  channel: string,
-  key: string,
-  value: any,
-  eventNamePrefix: string = DEFAULT_CHANNEL_PREFIX,
-) => {
-  const eventName = createChannelEventName(eventNamePrefix)(channel)
+export const delegatedEmit = (eventName: string, key: string, value: any) => {
   // eslint-disable-next-line n/no-unsupported-features/node-builtins
   const customEvent = new CustomEvent(eventName, {detail: {key, value}})
 
@@ -123,15 +136,15 @@ export const delegatedOn = (
   channel: string,
   key: string,
   listener: (value: any) => void,
-  eventNamePrefix: string = DEFAULT_CHANNEL_PREFIX,
+  target: () => any = getDocument,
 ) => {
   const _addListener = () => {
-    addListener(delegatedEventMap, channel, key, listener, eventNamePrefix)
+    addListener(delegatedEventMap, channel, key, listener, target)
   }
 
-  const unsubscribe = () => {
+  const _removeListener = () => {
     removeListener(delegatedEventMap, channel, key, listener)
   }
 
-  return {addListener: _addListener, unsubscribe}
+  return {addListener: _addListener, removeListener: _removeListener}
 }

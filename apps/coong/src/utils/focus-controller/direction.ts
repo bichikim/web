@@ -13,4 +13,3 @@ export const directionNameMap = Object.freeze({
 export const getDirection = (directionName: DirectionName): Direction => {
   return directionNameMap[directionName] ?? {x: 0, y: 0}
 }
-

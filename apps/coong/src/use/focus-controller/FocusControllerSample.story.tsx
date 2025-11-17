@@ -15,7 +15,6 @@ const meta = {
   parameters: {
     layout: 'centered',
   },
-  tags: ['autodocs'],
   title: 'Coong/Use/FocusControllerSample',
 } satisfies Meta<typeof FocusControllerSample>
 

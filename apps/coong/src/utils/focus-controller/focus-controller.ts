@@ -56,7 +56,7 @@ export interface FocusController {
    * @param direction
    * @param options
    */
-  readonly moveFocus: (direction: Direction, options: MoveFocusOptions) => DeepPosition | null
+  readonly moveFocus: (direction: Direction, options?: MoveFocusOptions) => DeepPosition | null
   /**
    * 포커스 좌표 맵을 반환합니다.
    */
