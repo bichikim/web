@@ -14,6 +14,7 @@ import {
 import type {Direction} from './direction'
 
 export const DEFAULT_MAX_SEARCH_LENGTH = 10
+export const DEFAULT_LIMIT_OVER_DEPTH = 5
 
 export const DEFAULT_POSITION: Position = {x: 0, y: 0}
 export const DEFAULT_MOVE_OPTIONS: Required<MoveOptions> = {
@@ -26,17 +27,35 @@ export const DEFAULT_FILL_OPTIONS: Required<FillOptions> = {
   ...DEFAULT_KEY_OPTIONS,
   defaultPosition: DEFAULT_POSITION,
   limit: DEFAULT_MAX_SEARCH_LENGTH,
+  limitOverDepth: DEFAULT_LIMIT_OVER_DEPTH,
 }
 
 export const DEFAULT_JUMP_OPTIONS: Required<JumpOptions> = {
   ...DEFAULT_MOVE_OPTIONS,
   defaultPosition: DEFAULT_POSITION,
   jumpLimitIndex: 0,
+  limit: DEFAULT_MAX_SEARCH_LENGTH,
+  limitOverDepth: DEFAULT_LIMIT_OVER_DEPTH,
 }
 
 export interface DeepPositionInfo extends DeepPositionPayload {
   // registered count
   count: number
+  /**
+   * 자기 자신의 좌표로써 등록한 횟수
+   */
+  countAsSelf?: number
+}
+
+export interface RegisterDeepPositionOptions extends KeyDeepPositionOptions {
+  /**
+   * 자기 자신의 좌표로써 등록합니다.
+   */
+  asSelf?: boolean
+  /**
+   * count 를 증가시키지 않습니다.
+   */
+  noIncrementCount?: boolean
 }
 
 export interface MoveOptions extends KeyOptions {
@@ -46,10 +65,18 @@ export interface MoveOptions extends KeyOptions {
 
 export interface FillOptions extends KeyOptions {
   defaultPosition?: Position
+  /**
+   * 방향으로 이동하여 찾을 최대 길이
+   */
   limit?: number
+  /**
+   * 시작 지점 deep position 보다 더 깊은 곳까지 채워야 할 경우 시도할 최대 길이
+   * @default 5
+   */
+  limitOverDepth?: number
 }
 
-export interface JumpOptions extends MoveOptions {
+export interface JumpOptions extends MoveOptions, FillOptions {
   defaultPosition?: Position
   jumpLimitIndex?: number
 }
@@ -96,9 +123,21 @@ export const hasDeepPosition = (
   return hasDeepPositionWithKey(positionMap, getDeepPositionKey(deepPosition, options))
 }
 
-export const hasDeepPositionWithKey = (positionMap: PositionMap, key: string) => {
+export const hasDeepPositionAsSelf = (
+  positionMap: PositionMap,
+  deepPosition: DeepPosition,
+  options: KeyDeepPositionOptions = DEFAULT_KEY_OPTIONS,
+) => {
+  return hasDeepPositionWithKey(positionMap, getDeepPositionKey(deepPosition, options), 'countAsSelf')
+}
+
+export const hasDeepPositionWithKey = (
+  positionMap: PositionMap,
+  key: string,
+  countTarget: 'count' | 'countAsSelf' = 'count',
+) => {
   const savedDeepPosition = positionMap.get(key)
-  const count = savedDeepPosition?.count ?? 0
+  const count = savedDeepPosition?.[countTarget] ?? 0
 
   if (savedDeepPosition?.inactive) {
     return false
@@ -146,25 +185,30 @@ export const registerDeepPosition = (
   positionMap: PositionMap,
   deepPosition: DeepPosition,
   payload: DeepPositionPayload = {},
-  options: KeyDeepPositionOptions = DEFAULT_KEY_OPTIONS,
+  options: RegisterDeepPositionOptions = DEFAULT_KEY_OPTIONS,
 ) => {
-  return registerDeepPositionWithKey(positionMap, getDeepPositionKey(deepPosition, options), payload)
+  return registerDeepPositionWithKey(positionMap, getDeepPositionKey(deepPosition, options), payload, options)
 }
 
 export const registerDeepPositionWithKey = (
   positionMap: PositionMap,
   key: string,
   payload: DeepPositionPayload = {},
-  noIncrementCount?: boolean,
+  options: Pick<RegisterDeepPositionOptions, 'noIncrementCount' | 'asSelf'> = {},
 ) => {
+  const {noIncrementCount = false, asSelf = false} = options
+
   const savedDeepPosition = positionMap.get(key)
   const count = savedDeepPosition?.count ?? 0
+  const countAsSelf = savedDeepPosition?.countAsSelf ?? 0
 
   const addCount = noIncrementCount ? 0 : 1
+  const addCountAsSelf = asSelf ? 1 : 0
 
   return positionMap.set(key, {
     ...savedDeepPosition,
     count: count + addCount,
+    countAsSelf: countAsSelf + addCountAsSelf,
     ...payload,
   })
 }
@@ -237,7 +281,7 @@ export const updateDeepPositionPayloadWithKey = (
   const savedDeepPosition = positionMap.get(key)
 
   if (!savedDeepPosition) {
-    registerDeepPositionWithKey(positionMap, key, payload, true)
+    registerDeepPositionWithKey(positionMap, key, payload, {noIncrementCount: true})
 
     return
   }
@@ -386,10 +430,12 @@ export const fillPreviousDeepPosition = (
   deepPositionLength: number = deepPosition.length,
   options: FillOptions = DEFAULT_FILL_OPTIONS,
 ): DeepPosition => {
+  const {limitOverDepth = DEFAULT_LIMIT_OVER_DEPTH} = options
   let nextDeepPosition: DeepPosition = deepPosition
+  let deepIndex = startDeepIndex
 
-  for (let deepIndex = startDeepIndex; deepIndex < deepPositionLength; deepIndex += 1) {
-    const newNextDeepPosition = restoreDeepPosition(positionMap, nextDeepPosition, deepIndex, direction, options) // ?
+  while (deepIndex < deepPositionLength) {
+    const newNextDeepPosition = restoreDeepPosition(positionMap, nextDeepPosition, deepIndex, direction, options)
 
     // fill 할 위치가 없을 경우 없는 위치 상위 부모 죄표까지만 반환
     if (newNextDeepPosition === null) {
@@ -399,9 +445,19 @@ export const fillPreviousDeepPosition = (
     }
 
     nextDeepPosition = newNextDeepPosition
+    deepIndex += 1
   }
 
-  return nextDeepPosition
+  // nextDeepPosition 가 자기 자신의 좌표 로 등록 되어 있지 않을 경우
+  if (limitOverDepth === 0 || hasDeepPositionAsSelf(positionMap, nextDeepPosition, options)) {
+    return nextDeepPosition
+  }
+
+  // 더 깊이 찾는다
+  return fillPreviousDeepPosition(positionMap, nextDeepPosition, deepIndex, direction, deepPositionLength + 1, {
+    ...options,
+    limitOverDepth: limitOverDepth - 1,
+  })
 }
 
 /**

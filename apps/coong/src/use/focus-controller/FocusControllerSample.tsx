@@ -4,7 +4,7 @@ import {useFocus} from './focus'
 import type {DeepPosition} from 'src/utils/focus-controller/deep-position'
 import {SolidWindow} from './SolidWindow'
 import {cva} from 'class-variance-authority'
-import {Show, createSignal} from 'solid-js'
+import {Show, createSignal, type JSX} from 'solid-js'
 import {getDirection} from 'src/utils/focus-controller/direction'
 import {KeyCap} from './KeyCap'
 
@@ -20,6 +20,7 @@ const focusStyles = cva('border-2  rounded-md p-2 text-sm c-black flex items-cen
   },
 })
 export interface FocusProps {
+  children?: JSX.Element
   deepPosition: DeepPosition
 }
 
@@ -32,14 +33,192 @@ export const Focus = (props: FocusProps) => {
 
   return (
     <button class={focusStyles({isFocused: isFocused()})} onClick={handleClick}>
-      <Show when={isFocused()} fallback={<span class="w-2rem h-2rem" />}>
+      <Show when={isFocused()} fallback={<span class="w-2rem h-2rem">{props.children}</span>}>
         <span class="i-tabler:check text-8 bg-blue-500" />
       </Show>
     </button>
   )
 }
 
-export const FocusControllerSampleBody = () => {
+export const FocusItemsSameLevel = () => {
+  return (
+    <div class="flex flex gap-2 rounded-md p-2">
+      <div class="flex flex-col gap-2 b-dashed border-2 border-gray-300 rounded-md p-2">
+        <span>0, 0</span>
+        <div class="flex gap-2">
+          <Focus
+            deepPosition={[
+              {x: 0, y: 0},
+              {x: 0, y: 0},
+            ]}
+          >
+            <span>0, 0</span>
+          </Focus>
+          <Focus
+            deepPosition={[
+              {x: 0, y: 0},
+              {x: 1, y: 0},
+            ]}
+          >
+            <span>0, 1</span>
+          </Focus>
+        </div>
+        <div class="flex gap-2">
+          <Focus
+            deepPosition={[
+              {x: 0, y: 0},
+              {x: 0, y: 1},
+            ]}
+          >
+            <span>0, 1</span>
+          </Focus>
+          <Focus
+            deepPosition={[
+              {x: 0, y: 0},
+              {x: 1, y: 1},
+            ]}
+          >
+            <span>1, 1</span>
+          </Focus>
+        </div>
+      </div>
+      <div class="flex flex-col gap-2 b-dashed border-2 border-gray-300 rounded-md p-2">
+        <span>0, 1</span>
+        <div class="flex gap-2">
+          <Focus
+            deepPosition={[
+              {x: 1, y: 0},
+              {x: 0, y: 0},
+            ]}
+          >
+            <span>0, 1</span>
+          </Focus>
+          <Focus
+            deepPosition={[
+              {x: 1, y: 0},
+              {x: 1, y: 0},
+            ]}
+          >
+            <span>0, 1</span>
+          </Focus>
+        </div>
+        <div class="flex gap-2">
+          <Focus
+            deepPosition={[
+              {x: 1, y: 0},
+              {x: 0, y: 1},
+            ]}
+          >
+            <span>0, 1</span>
+          </Focus>
+          <Focus
+            deepPosition={[
+              {x: 1, y: 0},
+              {x: 1, y: 1},
+            ]}
+          >
+            <span>1, 1</span>
+          </Focus>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export const FocusItemsDifferentLevel = () => {
+  return (
+    <div class="flex flex gap-2 rounded-md p-2">
+      <div class="flex flex-col gap-2 b-dashed border-2 border-gray-300 rounded-md p-2">
+        <span>0, 0</span>
+        <div class="flex gap-2">
+          <Focus
+            deepPosition={[
+              {x: 0, y: 0},
+              {x: 0, y: 0},
+            ]}
+          >
+            <span>0, 0</span>
+          </Focus>
+          <Focus
+            deepPosition={[
+              {x: 0, y: 0},
+              {x: 1, y: 0},
+            ]}
+          >
+            <span>0, 1</span>
+          </Focus>
+        </div>
+        <div class="flex gap-2">
+          <Focus
+            deepPosition={[
+              {x: 0, y: 0},
+              {x: 0, y: 1},
+            ]}
+          >
+            <span>0, 1</span>
+          </Focus>
+          <Focus
+            deepPosition={[
+              {x: 0, y: 0},
+              {x: 1, y: 1},
+            ]}
+          >
+            <span>1, 1</span>
+          </Focus>
+        </div>
+      </div>
+      <div class="flex flex-col gap-2 b-dashed border-2 border-gray-300 rounded-md p-2">
+        <span>0, 1 - 0, 0</span>
+        <div class="flex gap-2">
+          <Focus
+            deepPosition={[
+              {x: 1, y: 0},
+              {x: 0, y: 0},
+              {x: 0, y: 0},
+            ]}
+          >
+            <span>0, 1</span>
+          </Focus>
+          <Focus
+            deepPosition={[
+              {x: 1, y: 0},
+              {x: 0, y: 0},
+              {x: 1, y: 0},
+            ]}
+          >
+            <span>0, 1</span>
+          </Focus>
+        </div>
+        <div class="flex gap-2">
+          <Focus
+            deepPosition={[
+              {x: 1, y: 0},
+              {x: 0, y: 0},
+              {x: 0, y: 1},
+            ]}
+          >
+            <span>0, 1</span>
+          </Focus>
+          <Focus
+            deepPosition={[
+              {x: 1, y: 0},
+              {x: 0, y: 0},
+              {x: 1, y: 1},
+            ]}
+          >
+            <span>1, 1</span>
+          </Focus>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export interface FocusControllerSampleBodyProps {
+  children?: JSX.Element
+}
+
+export const FocusControllerSampleBody = (props: FocusControllerSampleBodyProps) => {
   const [downUpKey, setDownUpKey] = createSignal<boolean>(false)
   const [downLeftKey, setDownLeftKey] = createSignal<boolean>(false)
   const [downDownKey, setDownDownKey] = createSignal<boolean>(false)
@@ -86,19 +265,13 @@ export const FocusControllerSampleBody = () => {
 
   return (
     <div class="flex flex-col gap-2">
-      <div class="flex gap-2">
-        <Focus deepPosition={[{x: 0, y: 0}]} />
-        <Focus deepPosition={[{x: 1, y: 0}]} />
-      </div>
-      <div class="flex gap-2">
-        <Focus deepPosition={[{x: 0, y: 1}]} />
-        <Focus deepPosition={[{x: 1, y: 1}]} />
-      </div>
+      {props.children}
+
       <SolidWindow onKeyDown={onKeyDown} onKeyUp={onKeyUp} />
       <div class="flex gap-2 justify-center">
         <KeyCap childClassName="i-tabler:caret-up-filled" pressed={downUpKey()} />
       </div>
-      <div class="flex gap-2">
+      <div class="flex gap-2 justify-center">
         <KeyCap childClassName="i-tabler:caret-left-filled" pressed={downLeftKey()} />
         <KeyCap childClassName="i-tabler:caret-down-filled" pressed={downDownKey()} />
         <KeyCap childClassName="i-tabler:caret-right-filled" pressed={downRightKey()} />
@@ -107,11 +280,15 @@ export const FocusControllerSampleBody = () => {
   )
 }
 
-export const FocusControllerSample = () => {
+export interface FocusControllerSampleContainerProps {
+  children?: JSX.Element
+}
+
+export const FocusControllerSampleContainer = (props: FocusControllerSampleContainerProps) => {
   return (
     <DelegatedEventProvider>
       <FocusControllerProvider>
-        <FocusControllerSampleBody />
+        <FocusControllerSampleBody>{props.children}</FocusControllerSampleBody>
       </FocusControllerProvider>
     </DelegatedEventProvider>
   )

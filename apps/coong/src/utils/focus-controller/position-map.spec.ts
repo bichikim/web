@@ -12,6 +12,7 @@ import {
   getParentInfo,
   getPreviousPosition,
   hasDeepPosition,
+  hasDeepPositionAsSelf,
   hasDeepPositionWithKey,
   jumpDeepPosition,
   moveDeepPosition,
@@ -30,7 +31,7 @@ import {
 } from './position-map'
 import {getDirection} from './direction'
 import type {Direction} from './direction'
-import {type DeepPosition, DEFAULT_KEY_OPTIONS} from './deep-position'
+import {type DeepPosition, DEFAULT_KEY_OPTIONS, getDeepPositionKey} from './deep-position'
 
 describe('position-map', () => {
   describe('createPositionMap', () => {
@@ -72,6 +73,24 @@ describe('position-map', () => {
 
       registerDeepPosition(positionMap, [])
       expect(hasDeepPosition(positionMap, [])).toBe(true)
+    })
+  })
+
+  describe('hasDeepPositionAsSelf', () => {
+    it('should return true if deep position exists as self', () => {
+      const positionMap = createPositionMap()
+      const deepPosition: DeepPosition = [{x: 1, y: 1}]
+
+      registerDeepPositionWithKey(positionMap, getDeepPositionKey(deepPosition), {}, {asSelf: true})
+      expect(hasDeepPositionAsSelf(positionMap, deepPosition)).toBe(true)
+    })
+
+    it('should return false if deep position does not exist as self', () => {
+      const positionMap = createPositionMap()
+      const deepPosition: DeepPosition = [{x: 1, y: 1}]
+
+      registerDeepPositionWithKey(positionMap, getDeepPositionKey(deepPosition), {}, {asSelf: false})
+      expect(hasDeepPositionAsSelf(positionMap, deepPosition)).toBe(false)
     })
   })
 
@@ -280,6 +299,7 @@ describe('position-map', () => {
       const info = getDeepPositionInfoWithKey(positionMap, key)
 
       expect(info?.count).toBe(2)
+      expect(info?.countAsSelf).toBe(0)
     })
 
     it('should store payload when registering', () => {
@@ -298,9 +318,18 @@ describe('position-map', () => {
       const positionMap = createPositionMap()
       const key = '1,1'
 
-      registerDeepPositionWithKey(positionMap, key, {}, true)
+      registerDeepPositionWithKey(positionMap, key, {}, {noIncrementCount: true})
       expect(hasDeepPositionWithKey(positionMap, key)).toBe(false)
       expect(getDeepPositionInfoWithKey(positionMap, key)?.count).toBe(0)
+    })
+
+    it('should increment countAsSelf when asSelf is true', () => {
+      const positionMap = createPositionMap()
+      const key = '1,1'
+
+      registerDeepPositionWithKey(positionMap, key, {}, {asSelf: true})
+      expect(hasDeepPositionWithKey(positionMap, key)).toBe(true)
+      expect(getDeepPositionInfoWithKey(positionMap, key)?.countAsSelf).toBe(1)
     })
   })
 
@@ -991,6 +1020,40 @@ describe('position-map', () => {
       const result = fillPreviousDeepPosition(positionMap, deepPosition, 1)
 
       expect(result).toEqual([{x: 0, y: 0}, DEFAULT_FILL_OPTIONS.defaultPosition, DEFAULT_FILL_OPTIONS.defaultPosition])
+    })
+
+    it.only('should fill more deep position when full filled deep position is not found', () => {
+      const positionMap = createPositionMap()
+
+      const deepPosition: DeepPosition = [
+        {x: 0, y: 0},
+        {x: 1, y: 1},
+        {x: 2, y: 2},
+      ]
+
+      const nextPosition: DeepPosition = [
+        {x: 0, y: 0},
+        {x: 1, y: 1},
+        {x: 0, y: 0},
+        {x: 0, y: 0},
+      ]
+
+      registerDeepPositionRecursively(positionMap, nextPosition)
+
+      const result1 = hasDeepPosition(positionMap, [
+        {x: 0, y: 0},
+        {x: 1, y: 1},
+        {x: 0, y: 0},
+      ]) // ?
+
+      const result = fillPreviousDeepPosition(positionMap, deepPosition, 2)
+
+      expect(result).toEqual([
+        {x: 0, y: 0},
+        {x: 1, y: 1},
+        {x: 0, y: 0},
+        {x: 0, y: 0},
+      ])
     })
   })
 
