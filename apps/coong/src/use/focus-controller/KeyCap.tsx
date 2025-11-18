@@ -48,6 +48,7 @@ export interface KeyCapProps {
   borderWidth?: string
   childClassName?: string
   children?: JSX.Element
+  onClick?: () => void
   pressed?: boolean
 }
 
@@ -66,11 +67,21 @@ export const KeyCap = (props: KeyCapProps) => {
     setInnerPressed(false)
   }
 
+  const handleMouseLeave = () => {
+    setInnerPressed(false)
+  }
+
+  const handleClick = () => {
+    props.onClick?.()
+  }
+
   return (
     <button
       class={keyCapStyles({pressed: pressed()})}
       onMouseDown={handleMouseDown}
       onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseLeave}
+      onClick={handleClick}
       style={{
         '--keycap-border-color': borderColor(),
         '--keycap-border-width': borderWidth(),

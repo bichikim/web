@@ -5,7 +5,7 @@ import type {DeepPosition} from 'src/utils/focus-controller/deep-position'
 import {SolidWindow} from './SolidWindow'
 import {cva} from 'class-variance-authority'
 import {Show, createSignal, type JSX} from 'solid-js'
-import {getDirection} from 'src/utils/focus-controller/direction'
+import {getDirection, type DirectionName} from 'src/utils/focus-controller/direction'
 import {KeyCap} from './KeyCap'
 
 const focusStyles = cva('border-2  rounded-md p-2 text-sm c-black flex items-center', {
@@ -215,7 +215,8 @@ export const FocusItemsDifferentLevel = () => {
 }
 
 export interface FocusControllerSampleBodyProps {
-  children?: JSX.Element
+  readonly children?: JSX.Element
+  readonly globalMap?: boolean
 }
 
 export const FocusControllerSampleBody = (props: FocusControllerSampleBodyProps) => {
@@ -225,23 +226,27 @@ export const FocusControllerSampleBody = (props: FocusControllerSampleBodyProps)
   const [downRightKey, setDownRightKey] = createSignal<boolean>(false)
   const focusController = useFocusController()
 
+  const handleDirection = (direction: DirectionName) => {
+    focusController.moveFocus(getDirection(direction))
+  }
+
   const onKeyDown = (event: KeyboardEvent) => {
     switch (event.key) {
       case 'ArrowUp':
         setDownUpKey(true)
-        focusController.moveFocus(getDirection('up'))
+        handleDirection('up')
         break
       case 'ArrowDown':
         setDownDownKey(true)
-        focusController.moveFocus(getDirection('down'))
+        handleDirection('down')
         break
       case 'ArrowLeft':
         setDownLeftKey(true)
-        focusController.moveFocus(getDirection('left'))
+        handleDirection('left')
         break
       case 'ArrowRight':
         setDownRightKey(true)
-        focusController.moveFocus(getDirection('right'))
+        handleDirection('right')
         break
     }
   }
@@ -267,14 +272,26 @@ export const FocusControllerSampleBody = (props: FocusControllerSampleBodyProps)
     <div class="flex flex-col gap-2">
       {props.children}
 
-      <SolidWindow onKeyDown={onKeyDown} onKeyUp={onKeyUp} />
+      <SolidWindow onKeyDown={onKeyDown} onKeyUp={onKeyUp} globalMap={props.globalMap} />
       <div class="flex gap-2 justify-center">
-        <KeyCap childClassName="i-tabler:caret-up-filled" pressed={downUpKey()} />
+        <KeyCap childClassName="i-tabler:caret-up-filled" pressed={downUpKey()} onClick={() => handleDirection('up')} />
       </div>
       <div class="flex gap-2 justify-center">
-        <KeyCap childClassName="i-tabler:caret-left-filled" pressed={downLeftKey()} />
-        <KeyCap childClassName="i-tabler:caret-down-filled" pressed={downDownKey()} />
-        <KeyCap childClassName="i-tabler:caret-right-filled" pressed={downRightKey()} />
+        <KeyCap
+          childClassName="i-tabler:caret-left-filled"
+          pressed={downLeftKey()}
+          onClick={() => handleDirection('left')}
+        />
+        <KeyCap
+          childClassName="i-tabler:caret-down-filled"
+          pressed={downDownKey()}
+          onClick={() => handleDirection('down')}
+        />
+        <KeyCap
+          childClassName="i-tabler:caret-right-filled"
+          pressed={downRightKey()}
+          onClick={() => handleDirection('right')}
+        />
       </div>
     </div>
   )

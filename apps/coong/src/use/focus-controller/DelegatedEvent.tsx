@@ -7,7 +7,9 @@ import {
   type DelegatedEventMap,
 } from 'src/utils/focus-controller/delegated-event'
 import {type MaybeAccessor, resolveAccessor} from '@winter-love/solid-use'
-import {getWindow} from '@winter-love/utils'
+import {getDocument} from '@winter-love/utils'
+
+export const DELEGATED_EVENT_KEYS = Symbol('delegated-event-keys')
 
 export const DelegatedEventContext = createContext<{
   delegatedEventMap: DelegatedEventMap
@@ -52,13 +54,33 @@ export const useDelegatedEmitHandler = () => {
   }
 }
 
+export const useGlobalDelegatedEventMap = (target: () => any = getDocument) => {
+  const _target = target()
+
+  if (typeof _target !== 'object' || _target === null) {
+    return {delegatedEventMap: new Map(), isFake: true}
+  }
+  const {delegatedEventMap, unsubscribe} = _target[DELEGATED_EVENT_KEYS] ?? createDelegatedEvent()
+
+  _target[DELEGATED_EVENT_KEYS] = {delegatedEventMap, unsubscribe}
+
+  return {delegatedEventMap, isFake: false}
+}
+
+export interface UseDelegatedOnOptions {
+  globalMap?: boolean
+  target?: () => any
+}
+
 export const useDelegatedOn = (
   channel: MaybeAccessor<string>,
   key: MaybeAccessor<string>,
   listener: MaybeAccessor<((value: any) => void) | undefined>,
-  target?: () => any,
+  options: UseDelegatedOnOptions = {},
 ) => {
-  const {delegatedEventMap, isFake} = useContext(DelegatedEventContext)
+  const {target = getDocument, globalMap = false} = options
+
+  const {delegatedEventMap, isFake} = globalMap ? useGlobalDelegatedEventMap(target) : useContext(DelegatedEventContext)
   const channelAccessor = resolveAccessor(channel)
   const keyAccessor = resolveAccessor(key)
   const listenerAccessor = resolveAccessor(listener)

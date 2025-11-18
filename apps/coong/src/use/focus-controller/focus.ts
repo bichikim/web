@@ -20,7 +20,7 @@ export const useFocus = (deepPosition: MaybeAccessor<DeepPosition>) => {
   }
 
   // focusControllerContext provided
-  const {focusController, id, keyOptions} = focusControllerContext
+  const {focusController, id, keyOptions, globalMap} = focusControllerContext
 
   onMount(() => {
     focusController.registerFocus(deepPositionAccessor())
@@ -52,6 +52,9 @@ export const useFocus = (deepPosition: MaybeAccessor<DeepPosition>) => {
       setIsFocused(value.focused)
       setPayload(value.payload)
     }),
+    {
+      globalMap,
+    },
   )
 
   const _setIsFocused = (focused: boolean) => {

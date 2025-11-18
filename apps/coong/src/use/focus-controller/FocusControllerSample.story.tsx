@@ -1,6 +1,12 @@
 import type {Meta, StoryObj} from 'storybook-solidjs-vite'
 import type {DeepPosition} from 'src/utils/focus-controller/deep-position'
-import {FocusControllerSampleContainer, FocusItemsSameLevel, FocusItemsDifferentLevel} from './FocusControllerSample'
+import {
+  FocusControllerSampleContainer,
+  FocusItemsSameLevel,
+  FocusItemsDifferentLevel,
+  FocusControllerSampleBody,
+} from './FocusControllerSample'
+import {FocusControllerProvider, type FocusControllerProviderProps} from './FocusController'
 
 const FocusControllerSample = () => {
   return (
@@ -18,14 +24,27 @@ const FocusControllerSampleJumpDifferentLevel = () => {
   )
 }
 
+const FocusControllerSampleGlobalMap = (props: FocusControllerProviderProps) => {
+  return (
+    <FocusControllerProvider globalMap={props.globalMap}>
+      <FocusControllerSampleBody globalMap={props.globalMap}>
+        <FocusItemsSameLevel />
+      </FocusControllerSampleBody>
+    </FocusControllerProvider>
+  )
+}
+
 /** Story configuration for the focus controller sample */
 export interface FocusControllerSampleStoryProps {
-  /** List of deep positions that will render focusable buttons */
-  positions: Readonly<DeepPosition[]>
+  globalMap?: boolean
 }
 
 const meta = {
-  argTypes: {},
+  argTypes: {
+    globalMap: {
+      control: 'boolean',
+    },
+  },
   args: {},
   component: FocusControllerSample,
   parameters: {
@@ -46,6 +65,17 @@ export const JumpVisualDifferentLevel: Story = {
   render: (args: FocusControllerSampleStoryProps) => (
     <div class="flex flex-col gap-6">
       <FocusControllerSampleJumpDifferentLevel />
+    </div>
+  ),
+}
+
+export const UseGlobalMap: Story = {
+  args: {
+    globalMap: true,
+  },
+  render: (args: FocusControllerSampleStoryProps) => (
+    <div class="flex flex-col gap-6">
+      <FocusControllerSampleGlobalMap globalMap={args.globalMap} />
     </div>
   ),
 }

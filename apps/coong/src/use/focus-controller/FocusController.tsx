@@ -11,13 +11,15 @@ import {
 import {useDelegatedEmitHandler} from './DelegatedEvent'
 
 export interface FocusControllerContextValue {
-  focusController: FocusController
-  id: string
-  keyOptions: Readonly<KeyOptions>
+  readonly focusController: FocusController
+  readonly globalMap?: boolean
+  readonly id: string
+  readonly keyOptions: Readonly<KeyOptions>
 }
 
 export interface FocusControllerProviderProps extends Readonly<KeyOptions> {
-  children: JSX.Element
+  children?: JSX.Element
+  readonly globalMap?: boolean
   readonly id?: string
   readonly onChangeFocus?: (deepPosition: DeepPosition, focused: boolean) => void
 }
@@ -54,6 +56,7 @@ const createEmptyFocusController = (): FocusControllerContextValue => {
         console.warn('focusController is not provided')
       },
     },
+    globalMap: false,
     id: '',
     keyOptions: {},
   }
@@ -67,6 +70,7 @@ export const FOCUS_CONTROLLER_CHANNEL = 'focus-controller'
 
 export const FocusControllerProvider = (props: FocusControllerProviderProps) => {
   const id = untrack(() => props.id ?? `id${String(getUuid())}`)
+  const globalMap = untrack(() => props.globalMap ?? false)
 
   const keyOptions = untrack(() => ({
     connector: props.connector,
@@ -105,6 +109,7 @@ export const FocusControllerProvider = (props: FocusControllerProviderProps) => 
     <FocusControllerContext.Provider
       value={{
         focusController,
+        globalMap,
         id,
         keyOptions,
       }}
