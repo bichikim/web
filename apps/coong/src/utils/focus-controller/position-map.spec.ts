@@ -1022,7 +1022,7 @@ describe('position-map', () => {
       expect(result).toEqual([{x: 0, y: 0}, DEFAULT_FILL_OPTIONS.defaultPosition, DEFAULT_FILL_OPTIONS.defaultPosition])
     })
 
-    it.only('should fill more deep position when full filled deep position is not found', () => {
+    it('should fill more deep position when full filled deep position is not found', () => {
       const positionMap = createPositionMap()
 
       const deepPosition: DeepPosition = [
