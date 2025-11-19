@@ -35,6 +35,12 @@ const getCookie = <T>(name: string, defaultValue: T): T => {
   return JSON.parse(value)
 }
 
+/**
+ * signal to save and restore cookie value
+ * @param name - The name of the cookie
+ * @param defaultValue - The default value of the cookie
+ * @returns The signal to save and restore cookie value
+ */
 export const useCookie = <T>(name: string, defaultValue: T): Signal<T> => {
   const [cookie, __setCookie] = createSignal<T>(getCookie(name, defaultValue))
 
