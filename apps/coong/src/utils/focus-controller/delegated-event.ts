@@ -32,7 +32,6 @@ const createNewDelegatedPayload = (eventName: string, target: () => any = getDoc
   const keyMap = new Map()
 
   const delegatedListener = (event: Event) => {
-    // eslint-disable-next-line n/no-unsupported-features/node-builtins
     const _event = event as any
     const detail = _event.detail
     const isCustomEvent = typeof detail === 'object' && detail !== null
@@ -119,7 +118,6 @@ export const createDelegatedEvent = () => {
 }
 
 export const delegatedEmit = (eventName: string, key: string, value: any) => {
-  // eslint-disable-next-line n/no-unsupported-features/node-builtins
   const customEvent = new CustomEvent(eventName, {detail: {key, value}})
 
   getDocument()?.dispatchEvent(customEvent)
