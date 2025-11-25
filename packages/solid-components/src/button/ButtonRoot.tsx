@@ -1,10 +1,10 @@
 import {createMemo, createSignal, JSX, mergeProps, ParentProps} from 'solid-js'
 import {now} from '@winter-love/lodash'
-import {ButtonContext, ButtonContextProps} from './context'
+import {ButtonContext, ButtonContextProps, ButtonContextValue} from './context'
 
 export type ButtonType = 'button' | 'anchor' | 'anchor-button'
 
-export interface ButtonProviderProps extends ParentProps {
+export interface ButtonRootProps extends ParentProps {
   /**
    * If true, the button will change to loading state when clicked.
    */
@@ -24,7 +24,7 @@ export interface ButtonProviderProps extends ParentProps {
 
 const DEFAULT_DOUBLE_CLICK_GAP = 250
 
-export const ButtonProvider = (props: ButtonProviderProps) => {
+export const ButtonRoot = (props: ButtonRootProps) => {
   // Previous click time used to check if current click is a double click
   let clickTime = 0
   let touchdown = false
@@ -50,7 +50,9 @@ export const ButtonProvider = (props: ButtonProviderProps) => {
    *
    * @param event The mouse event triggered by user interaction.
    */
-  const handleClick: ButtonProviderProps['onClick'] = async (event: any) => {
+  const handleClick: ButtonRootProps['onClick'] = async (event: any) => {
+    console.log('handleClick', event)
+
     // skip touch event
     // skip anchor event because it will navigate to the href
     if (event.pointerType === 'touch' || defaultProps.type === 'anchor') {
@@ -88,7 +90,7 @@ export const ButtonProvider = (props: ButtonProviderProps) => {
   //   // defaultProps.onDoubleClick?.(event)
   // }
 
-  const handleTouchStart: ButtonProviderProps['onTouchStart'] = (event) => {
+  const handleTouchStart: ButtonRootProps['onTouchStart'] = (event) => {
     touchdown = true
     // pass original event to parent
     defaultProps.onTouchStart?.(event)
@@ -99,7 +101,7 @@ export const ButtonProvider = (props: ButtonProviderProps) => {
    * @param event
    * @returns
    */
-  const handleTouchEnd: ButtonProviderProps['onTouchEnd'] = (event) => {
+  const handleTouchEnd: ButtonRootProps['onTouchEnd'] = (event) => {
     // pass original event to parent
     defaultProps.onTouchEnd?.(event)
 
@@ -191,7 +193,7 @@ export const ButtonProvider = (props: ButtonProviderProps) => {
     return (loading() !== 'false' || defaultProps.disabled) ?? false
   })
 
-  const buttonContextValue = createMemo((): ButtonContextProps => {
+  const value = createMemo((): ButtonContextValue => {
     return {
       disabled: disabled(),
       href: href(),
@@ -202,9 +204,7 @@ export const ButtonProvider = (props: ButtonProviderProps) => {
     }
   })
 
-  return (
-    <ButtonContext.Provider value={[buttonContextValue, {handleClick, handleTouchEnd, handleTouchStart}]}>
-      {props.children}
-    </ButtonContext.Provider>
-  )
+  const context: ButtonContextProps = {handleClick, handleTouchEnd, handleTouchStart, value}
+
+  return <ButtonContext.Provider value={context}>{props.children}</ButtonContext.Provider>
 }

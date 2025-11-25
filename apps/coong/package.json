@@ -16,7 +16,7 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@lottiefiles/dotlottie-solid": "^0.2.1",
+    "@lottiefiles/dotlottie-solid": "^0.5.8",
     "@solidjs/meta": "^0.29.4",
     "@solidjs/router": "^0.15.3",
     "@solidjs/start": "^1.2.0",
@@ -25,7 +25,6 @@
     "@trpc/server": "^11.1.0",
     "@unocss/reset": "^0.65.1",
     "@vercel/analytics": "^1.5.0",
-    "@winter-love/lodash": "workspace:*",
     "@winter-love/solid-components": "workspace:*",
     "@winter-love/solid-use": "workspace:*",
     "@winter-love/sw": "workspace:*",
@@ -33,7 +32,7 @@
     "@winter-love/utils": "workspace:*",
     "class-variance-authority": "^0.7.1",
     "cookie": "^1.0.2",
-    "cross-env": "^7.0.3",
+    "cross-env": "^10.1.0",
     "drizzle-orm": "^0.43.1",
     "h3": "^1.15.1",
     "ipx": "^3.0.3",
@@ -45,10 +44,10 @@
     "solid-js": "^1.9.9",
     "standardized-audio-context": "^25.3.77",
     "ufo": "^1.6.1",
-    "unocss": "^0.65.1",
+    "unocss": "^66.5.9",
     "vinxi": "^0.5.3",
     "vite": "^6.1.0",
-    "zod": "^3.24.2"
+    "zod": "^4.1.13"
   },
   "devDependencies": {
     "@iconify-json/hugeicons": "^1.2.3",

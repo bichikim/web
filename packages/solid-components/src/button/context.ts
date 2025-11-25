@@ -2,7 +2,7 @@ import {Accessor, createContext, JSX} from 'solid-js'
 
 export type ButtonTag = 'button' | 'a'
 
-export interface ButtonContextProps {
+export interface ButtonContextValue {
   disabled: boolean
   href?: string
   /**
@@ -15,29 +15,28 @@ export interface ButtonContextProps {
   tag: ButtonTag
 }
 
-export interface ButtonContextActions {
+export interface ButtonContextProps {
   handleClick: JSX.EventHandler<HTMLButtonElement, MouseEvent | TouchEvent>
   handleTouchEnd: JSX.EventHandler<HTMLButtonElement, TouchEvent>
   handleTouchStart: JSX.EventHandler<HTMLButtonElement, TouchEvent>
+  value: Accessor<ButtonContextValue>
 }
 
-export const ButtonContext = createContext<[Accessor<ButtonContextProps>, ButtonContextActions]>([
-  () => ({
+export const ButtonContext = createContext<ButtonContextProps>({
+  handleClick: () => {
+    throw new Error('not implemented')
+  },
+  handleTouchEnd: () => {
+    throw new Error('not implemented')
+  },
+  handleTouchStart: () => {
+    throw new Error('not implemented')
+  },
+  value: () => ({
     disabled: false,
     loading: 'false' as const,
     loadingAnimation: 'false' as const,
     loadingProcess: undefined,
     tag: 'button' as const,
   }),
-  {
-    handleClick: () => {
-      throw new Error('not implemented')
-    },
-    handleTouchEnd: () => {
-      throw new Error('not implemented')
-    },
-    handleTouchStart: () => {
-      throw new Error('not implemented')
-    },
-  },
-])
+})
