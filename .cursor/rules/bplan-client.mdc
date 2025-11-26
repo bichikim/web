@@ -1,7 +1,6 @@
 ---
-description: 
-globs: 
-alwaysApply: true
+globs: apps/coong/*
+alwaysApply: false
 ---
 # BPlan Client Application Guidelines
 
