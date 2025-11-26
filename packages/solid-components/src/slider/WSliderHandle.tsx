@@ -1,4 +1,4 @@
-import {stopPropagation, sx, useDrag, ValidStyle} from '@winter-love/solid-use'
+import {stopPropagation, useDrag, useStyles, StyleType} from '@winter-love/solid-use'
 import {createMemo, createSignal, splitProps, ValidComponent} from 'solid-js'
 import {Dynamic, DynamicProps} from 'solid-js/web'
 import {POSITION_VAR} from 'src/css-var'
@@ -7,7 +7,7 @@ import {useSliderContext} from './slider-context'
 import {cx} from 'class-variance-authority'
 
 type InnerProps = {
-  style?: ValidStyle
+  style?: StyleType
 }
 
 export type WSliderHandleProps<T extends ValidComponent> = InnerProps & DynamicProps<T>
@@ -78,6 +78,8 @@ export const WSliderHandle = <T extends ValidComponent>(props: WSliderHandleProp
     sliderContext.setPercent(position / (containerSize - size))
   })
 
+  const style = useStyles(() => [handleStyle(), innerProps.style])
+
   return (
     <Dynamic
       {...restProps}
@@ -89,7 +91,7 @@ export const WSliderHandle = <T extends ValidComponent>(props: WSliderHandleProp
       aria-valuenow={sliderAriaContext().valuenow}
       tabindex="0"
       ref={setHandelElement}
-      style={sx(innerProps.style, handleStyle())}
+      style={style()}
       onClick={stopPropagation()}
     >
       {props.children}

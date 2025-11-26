@@ -2,7 +2,7 @@ import {type JSX, type Accessor, createMemo} from 'solid-js'
 
 export type StyleType = JSX.CSSProperties | string | undefined
 
-const toStringStyle = (style: JSX.CSSProperties) => {
+export const toStringStyle = (style: JSX.CSSProperties) => {
   let result = ''
 
   for (const [key, value] of Object.entries(style)) {
@@ -12,7 +12,7 @@ const toStringStyle = (style: JSX.CSSProperties) => {
   return result
 }
 
-const sx = (style: StyleType) => {
+export const sx = (style: StyleType) => {
   if (typeof style === 'string' || style === undefined) {
     return style
   }

@@ -86,8 +86,9 @@ const meta = {
     onTouchEnd: fn(),
     onTouchStart: fn(),
   },
+  // tags: ['autodocs'],
   component: HButton,
-  title: 'Solid/Components/Button/HButton',
+  title: 'Solid/Components/Button',
 } satisfies Meta<typeof HButton>
 
 export default meta

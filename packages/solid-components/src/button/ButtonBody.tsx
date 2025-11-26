@@ -1,7 +1,7 @@
 import {ButtonContext} from './context'
 import {Dynamic} from 'solid-js/web'
-import {ComponentProps, createMemo, splitProps, useContext, createEffect} from 'solid-js'
-import {useStyles} from '../use/use-styles'
+import {ComponentProps, createMemo, useContext} from 'solid-js'
+import {useStyles} from '@winter-love/solid-use'
 
 export interface ButtonBodyProps
   extends Omit<ComponentProps<'button'>, 'onClick' | 'onTouchEnd' | 'onDblClick' | 'onTouchStart' | 'type'> {
