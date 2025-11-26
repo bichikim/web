@@ -16,6 +16,7 @@ py-[calc(_.25rem+_var(--var-padding-offset,_0px))] px-[calc(_var(--var-padding,_
  var-padding=.75rem relative"
   data-loading="false"
   data-loading-animation="false"
+  style=""
 >
   Test Button
 </button>
@@ -37,6 +38,7 @@ py-[calc(_.25rem+_var(--var-padding-offset,_0px))] px-[calc(_var(--var-padding,_
  var-padding=.75rem relative"
   data-loading="false"
   data-loading-animation="false"
+  style=""
 >
   Color Button
 </button>
@@ -58,6 +60,7 @@ py-[calc(_.25rem+_var(--var-padding-offset,_0px))] px-[calc(_var(--var-padding,_
  var-padding=.75rem relative"
   data-loading="false"
   data-loading-animation="false"
+  style=""
 >
   Color Button
 </button>
@@ -79,6 +82,7 @@ py-[calc(_.25rem+_var(--var-padding-offset,_0px))] px-[calc(_var(--var-padding,_
  var-padding=.75rem relative"
   data-loading="false"
   data-loading-animation="false"
+  style=""
 >
   Color Button
 </button>
@@ -100,6 +104,7 @@ py-[calc(_.25rem+_var(--var-padding-offset,_0px))] px-[calc(_var(--var-padding,_
  var-padding=.75rem relative"
   data-loading="false"
   data-loading-animation="false"
+  style=""
 >
   Color Button
 </button>
@@ -121,6 +126,7 @@ py-[calc(_.25rem+_var(--var-padding-offset,_0px))] px-[calc(_var(--var-padding,_
  var-padding=.75rem relative"
   data-loading="false"
   data-loading-animation="false"
+  style=""
 >
   Color Button
 </button>
@@ -142,6 +148,7 @@ py-[calc(_.25rem+_var(--var-padding-offset,_0px))] px-[calc(_var(--var-padding,_
  var-padding=.75rem relative"
   data-loading="false"
   data-loading-animation="false"
+  style=""
 >
   Color Button
 </button>
@@ -163,6 +170,7 @@ py-[calc(_.25rem+_var(--var-padding-offset,_0px))] px-[calc(_var(--var-padding,_
  var-padding=.75rem relative"
   data-loading="false"
   data-loading-animation="false"
+  style=""
 >
   Color Button
 </button>
@@ -184,6 +192,7 @@ py-[calc(_.25rem+_var(--var-padding-offset,_0px))] px-[calc(_var(--var-padding,_
  var-padding=.75rem relative"
   data-loading="false"
   data-loading-animation="false"
+  style=""
 >
   Color Button
 </button>
@@ -205,6 +214,7 @@ py-[calc(_.25rem+_var(--var-padding-offset,_0px))] px-[calc(_var(--var-padding,_
  var-padding=.75rem relative"
   data-loading="false"
   data-loading-animation="false"
+  style=""
 >
   Color Button
 </button>
@@ -228,6 +238,7 @@ py-[calc(_.25rem+_var(--var-padding-offset,_0px))] px-[calc(_var(--var-padding,_
  var-padding=.25rem relative"
   data-loading="false"
   data-loading-animation="false"
+  style=""
 >
   Styled Button
 </button>
@@ -250,6 +261,7 @@ py-[calc(_.25rem+_var(--var-padding-offset,_0px))] px-[calc(_var(--var-padding,_
   data-loading="true"
   data-loading-animation="true"
   disabled=""
+  style=""
 >
   Loading Button
 </button>
@@ -294,6 +306,7 @@ py-[calc(_0.75rem+_var(--var-padding-offset,_0px))] px-[calc(_var(--var-padding,
  var-padding=1.25rem relative"
   data-loading="false"
   data-loading-animation="false"
+  style=""
 >
   Size Button
 </button>
@@ -315,6 +328,7 @@ py-[calc(_.25rem+_var(--var-padding-offset,_0px))] px-[calc(_var(--var-padding,_
  var-padding=.75rem relative"
   data-loading="false"
   data-loading-animation="false"
+  style=""
 >
   Size Button
 </button>
@@ -336,6 +350,7 @@ py-[calc(_.1rem+_var(--var-padding-offset,_0px))] px-[calc(_var(--var-padding,_0
  var-padding=.25rem relative"
   data-loading="false"
   data-loading-animation="false"
+  style=""
 >
   Size Button
 </button>
