@@ -10,9 +10,9 @@
   "type": "module",
   "exports": {
     ".": {
+      "types": "./dist/index/index.d.ts",
       "solid": "./dist/index/index.jsx",
       "import": "./dist/index/index.module.js",
-      "types": "./dist/index/index.d.ts",
       "browser": "./dist/index/index.module.js",
       "require": "./dist/index/index.common.js",
       "node": "./dist/index/index.common.js"
