@@ -36,6 +36,13 @@
       "when": 1764841537054,
       "tag": "0004_handy_thunderbird",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1764842125668,
+      "tag": "0005_special_tyrannus",
+      "breakpoints": true
     }
   ]
 }
