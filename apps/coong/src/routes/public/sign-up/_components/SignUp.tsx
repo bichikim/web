@@ -24,7 +24,7 @@ export const SignUp = () => {
       setError(error.message)
     } else {
       // Check if email confirmation is required
-      navigate('/login')
+      navigate('/public/sign-in')
     }
 
     setLoading(false)

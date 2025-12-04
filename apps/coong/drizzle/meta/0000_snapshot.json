@@ -1,5 +1,5 @@
 {
-  "id": "e7c1a126-7efa-4997-a88e-f28a14861d77",
+  "id": "b3d55f73-f037-454e-8753-eaee2ff8bd6c",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -535,25 +535,6 @@
       "checkConstraints": {},
       "isRLSEnabled": true
     },
-    "public.table": {
-      "name": "table",
-      "schema": "",
-      "columns": {
-        "serial": {
-          "name": "serial",
-          "type": "serial",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
     "public.user_anniversaries": {
       "name": "user_anniversaries",
       "schema": "",
@@ -747,7 +728,7 @@
           "to": [
             "authenticated"
           ],
-          "withCheck": "EXISTS (\n    SELECT 1 FROM $1\n    WHERE \"user_roles\".\"owner_id\" = auth.uid()\n    AND \"user_roles\".\"role\" = '$admin'\n  )"
+          "withCheck": "EXISTS (\n    SELECT 1 FROM \"user_roles\"\n    WHERE \"user_roles\".\"owner_id\" = auth.uid()\n    AND \"user_roles\".\"role\" = '$admin'\n  )"
         },
         "user_roles_update_policy": {
           "name": "user_roles_update_policy",
@@ -756,8 +737,8 @@
           "to": [
             "authenticated"
           ],
-          "using": "EXISTS (\n    SELECT 1 FROM $1\n    WHERE \"user_roles\".\"owner_id\" = auth.uid()\n    AND \"user_roles\".\"role\" = '$admin'\n  )",
-          "withCheck": "EXISTS (\n    SELECT 1 FROM $1\n    WHERE \"user_roles\".\"owner_id\" = auth.uid()\n    AND \"user_roles\".\"role\" = '$admin'\n  )"
+          "using": "EXISTS (\n    SELECT 1 FROM \"user_roles\"\n    WHERE \"user_roles\".\"owner_id\" = auth.uid()\n    AND \"user_roles\".\"role\" = '$admin'\n  )",
+          "withCheck": "EXISTS (\n    SELECT 1 FROM \"user_roles\"\n    WHERE \"user_roles\".\"owner_id\" = auth.uid()\n    AND \"user_roles\".\"role\" = '$admin'\n  )"
         },
         "user_roles_delete_policy": {
           "name": "user_roles_delete_policy",
@@ -766,7 +747,7 @@
           "to": [
             "authenticated"
           ],
-          "using": "EXISTS (\n    SELECT 1 FROM $1\n    WHERE \"user_roles\".\"owner_id\" = auth.uid()\n    AND \"user_roles\".\"role\" = '$admin'\n  )"
+          "using": "EXISTS (\n    SELECT 1 FROM \"user_roles\"\n    WHERE \"user_roles\".\"owner_id\" = auth.uid()\n    AND \"user_roles\".\"role\" = '$admin'\n  )"
         },
         "user_roles_select_policy": {
           "name": "user_roles_select_policy",

@@ -46,10 +46,6 @@ CREATE TABLE "profiles" (
 );
 --> statement-breakpoint
 ALTER TABLE "profiles" ENABLE ROW LEVEL SECURITY;--> statement-breakpoint
-CREATE TABLE "table" (
-	"serial" serial NOT NULL
-);
---> statement-breakpoint
 CREATE TABLE "user_anniversaries" (
 	"date" date NOT NULL,
 	"description" text,
@@ -150,21 +146,21 @@ CREATE POLICY "user_anniversaries_update_policy" ON "user_anniversaries" AS PERM
 CREATE POLICY "user_anniversaries_delete_policy" ON "user_anniversaries" AS PERMISSIVE FOR DELETE TO "authenticated" USING ("user_anniversaries"."owner_id" = auth.uid());--> statement-breakpoint
 CREATE POLICY "user_anniversaries_select_policy" ON "user_anniversaries" AS PERMISSIVE FOR SELECT TO "authenticated" USING ("user_anniversaries"."owner_id" = auth.uid());--> statement-breakpoint
 CREATE POLICY "user_roles_insert_policy" ON "user_roles" AS PERMISSIVE FOR INSERT TO "authenticated" WITH CHECK (EXISTS (
-    SELECT 1 FROM $1
+    SELECT 1 FROM "user_roles"
     WHERE "user_roles"."owner_id" = auth.uid()
     AND "user_roles"."role" = '$admin'
   ));--> statement-breakpoint
 CREATE POLICY "user_roles_update_policy" ON "user_roles" AS PERMISSIVE FOR UPDATE TO "authenticated" USING (EXISTS (
-    SELECT 1 FROM $1
+    SELECT 1 FROM "user_roles"
     WHERE "user_roles"."owner_id" = auth.uid()
     AND "user_roles"."role" = '$admin'
   )) WITH CHECK (EXISTS (
-    SELECT 1 FROM $1
+    SELECT 1 FROM "user_roles"
     WHERE "user_roles"."owner_id" = auth.uid()
     AND "user_roles"."role" = '$admin'
   ));--> statement-breakpoint
 CREATE POLICY "user_roles_delete_policy" ON "user_roles" AS PERMISSIVE FOR DELETE TO "authenticated" USING (EXISTS (
-    SELECT 1 FROM $1
+    SELECT 1 FROM "user_roles"
     WHERE "user_roles"."owner_id" = auth.uid()
     AND "user_roles"."role" = '$admin'
   ));--> statement-breakpoint

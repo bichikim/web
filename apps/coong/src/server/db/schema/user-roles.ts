@@ -16,9 +16,9 @@ export const createAdminOnlyCondition = <
   table: SchemaSelf<TTableName, TColumnsMap>,
 ) => {
   return sql`EXISTS (
-    SELECT 1 FROM ${table}
-    WHERE ${table.ownerId} = auth.uid()
-    AND ${table.role} = '$admin'
+    SELECT 1 FROM "user_roles"
+    WHERE "user_roles"."owner_id" = auth.uid()
+    AND "user_roles"."role" = '$admin'
   )`
 }
 
