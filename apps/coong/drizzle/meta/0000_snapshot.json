@@ -1,9 +1,107 @@
 {
-  "id": "2cc30ebb-df75-446d-bfb9-92d1ba900c90",
+  "id": "e7c1a126-7efa-4997-a88e-f28a14861d77",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
+    "public.anniversary_people": {
+      "name": "anniversary_people",
+      "schema": "",
+      "columns": {
+        "anniversary_id": {
+          "name": "anniversary_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "person_id": {
+          "name": "person_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "anniversary_people_anniversary_id_user_anniversaries_id_fk": {
+          "name": "anniversary_people_anniversary_id_user_anniversaries_id_fk",
+          "tableFrom": "anniversary_people",
+          "tableTo": "user_anniversaries",
+          "columnsFrom": [
+            "anniversary_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "anniversary_people_person_id_people_id_fk": {
+          "name": "anniversary_people_person_id_people_id_fk",
+          "tableFrom": "anniversary_people",
+          "tableTo": "people",
+          "columnsFrom": [
+            "person_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "anniversary_people_anniversary_id_person_id_pk": {
+          "name": "anniversary_people_anniversary_id_person_id_pk",
+          "columns": [
+            "anniversary_id",
+            "person_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "anniversary_people_insert_policy": {
+          "name": "anniversary_people_insert_policy",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "authenticated"
+          ],
+          "withCheck": "EXISTS (\n        SELECT 1 FROM \"user_anniversaries\"\n        WHERE \"user_anniversaries\".\"id\" = \"anniversary_people\".\"anniversary_id\"\n        AND \"user_anniversaries\".\"owner_id\" = auth.uid()\n      )"
+        },
+        "anniversary_people_update_policy": {
+          "name": "anniversary_people_update_policy",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "EXISTS (\n        SELECT 1 FROM \"user_anniversaries\"\n        WHERE \"user_anniversaries\".\"id\" = \"anniversary_people\".\"anniversary_id\"\n        AND \"user_anniversaries\".\"owner_id\" = auth.uid()\n      )",
+          "withCheck": "EXISTS (\n        SELECT 1 FROM \"user_anniversaries\"\n        WHERE \"user_anniversaries\".\"id\" = \"anniversary_people\".\"anniversary_id\"\n        AND \"user_anniversaries\".\"owner_id\" = auth.uid()\n      )"
+        },
+        "anniversary_people_delete_policy": {
+          "name": "anniversary_people_delete_policy",
+          "as": "PERMISSIVE",
+          "for": "DELETE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "EXISTS (\n        SELECT 1 FROM \"user_anniversaries\"\n        WHERE \"user_anniversaries\".\"id\" = \"anniversary_people\".\"anniversary_id\"\n        AND \"user_anniversaries\".\"owner_id\" = auth.uid()\n      )"
+        },
+        "anniversary_people_select_policy": {
+          "name": "anniversary_people_select_policy",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "EXISTS (\n        SELECT 1 FROM \"user_anniversaries\"\n        WHERE \"user_anniversaries\".\"id\" = \"anniversary_people\".\"anniversary_id\"\n        AND \"user_anniversaries\".\"owner_id\" = auth.uid()\n      )"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
     "public.music_posts_comments": {
       "name": "music_posts_comments",
       "schema": "",
@@ -224,8 +322,8 @@
       "checkConstraints": {},
       "isRLSEnabled": true
     },
-    "public.profiles": {
-      "name": "profiles",
+    "public.people": {
+      "name": "people",
       "schema": "",
       "columns": {
         "age": {
@@ -234,6 +332,102 @@
           "primaryKey": false,
           "notNull": false
         },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "owner_id": {
+          "name": "owner_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "phone": {
+          "name": "phone",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "people_insert_policy": {
+          "name": "people_insert_policy",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "authenticated"
+          ],
+          "withCheck": "EXISTS (\n        SELECT 1 FROM profiles\n        WHERE profiles.id = \"people\".\"owner_id\"\n        AND profiles.id = auth.uid()\n      )"
+        },
+        "people_update_policy": {
+          "name": "people_update_policy",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "EXISTS (\n        SELECT 1 FROM profiles\n        WHERE profiles.id = \"people\".\"owner_id\"\n        AND profiles.id = auth.uid()\n      )",
+          "withCheck": "EXISTS (\n        SELECT 1 FROM profiles\n        WHERE profiles.id = \"people\".\"owner_id\"\n        AND profiles.id = auth.uid()\n      )"
+        },
+        "people_delete_policy": {
+          "name": "people_delete_policy",
+          "as": "PERMISSIVE",
+          "for": "DELETE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "EXISTS (\n        SELECT 1 FROM profiles\n        WHERE profiles.id = \"people\".\"owner_id\"\n        AND profiles.id = auth.uid()\n      )"
+        },
+        "people_select_policy": {
+          "name": "people_select_policy",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "EXISTS (\n        SELECT 1 FROM profiles\n        WHERE profiles.id = \"people\".\"owner_id\"\n        AND profiles.id = auth.uid()\n      )"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
+    "public.profiles": {
+      "name": "profiles",
+      "schema": "",
+      "columns": {
         "id": {
           "name": "id",
           "type": "uuid",
@@ -246,11 +440,11 @@
           "primaryKey": false,
           "notNull": false
         },
-        "name": {
-          "name": "name",
-          "type": "text",
+        "person_id": {
+          "name": "person_id",
+          "type": "uuid",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "created_at": {
           "name": "created_at",
@@ -276,6 +470,19 @@
           "schemaTo": "auth",
           "columnsFrom": [
             "id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "profiles_person_id_people_id_fk": {
+          "name": "profiles_person_id_people_id_fk",
+          "tableFrom": "profiles",
+          "tableTo": "people",
+          "columnsFrom": [
+            "person_id"
           ],
           "columnsTo": [
             "id"
@@ -322,7 +529,7 @@
           "to": [
             "authenticated"
           ],
-          "using": "true"
+          "using": "EXISTS (\n    SELECT 1 FROM \"profiles\"\n    WHERE \"profiles\".\"id\" = auth.uid()\n  )"
         }
       },
       "checkConstraints": {},
@@ -346,6 +553,136 @@
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
+    },
+    "public.user_anniversaries": {
+      "name": "user_anniversaries",
+      "schema": "",
+      "columns": {
+        "date": {
+          "name": "date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "is_lunar": {
+          "name": "is_lunar",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "owner_id": {
+          "name": "owner_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "remind_days_before": {
+          "name": "remind_days_before",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "repeat_type": {
+          "name": "repeat_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'yearly'"
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "user_anniversaries_owner_id_profiles_id_fk": {
+          "name": "user_anniversaries_owner_id_profiles_id_fk",
+          "tableFrom": "user_anniversaries",
+          "tableTo": "profiles",
+          "columnsFrom": [
+            "owner_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "user_anniversaries_insert_policy": {
+          "name": "user_anniversaries_insert_policy",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "authenticated"
+          ],
+          "withCheck": "\"user_anniversaries\".\"owner_id\" = auth.uid()"
+        },
+        "user_anniversaries_update_policy": {
+          "name": "user_anniversaries_update_policy",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "\"user_anniversaries\".\"owner_id\" = auth.uid()",
+          "withCheck": "\"user_anniversaries\".\"owner_id\" = auth.uid()"
+        },
+        "user_anniversaries_delete_policy": {
+          "name": "user_anniversaries_delete_policy",
+          "as": "PERMISSIVE",
+          "for": "DELETE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "\"user_anniversaries\".\"owner_id\" = auth.uid()"
+        },
+        "user_anniversaries_select_policy": {
+          "name": "user_anniversaries_select_policy",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "\"user_anniversaries\".\"owner_id\" = auth.uid()"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": true
     },
     "public.user_roles": {
       "name": "user_roles",
@@ -396,15 +733,53 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "policies": {},
+      "policies": {
+        "user_roles_insert_policy": {
+          "name": "user_roles_insert_policy",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "authenticated"
+          ],
+          "withCheck": "EXISTS (\n    SELECT 1 FROM $1\n    WHERE \"user_roles\".\"owner_id\" = auth.uid()\n    AND \"user_roles\".\"role\" = '$admin'\n  )"
+        },
+        "user_roles_update_policy": {
+          "name": "user_roles_update_policy",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "EXISTS (\n    SELECT 1 FROM $1\n    WHERE \"user_roles\".\"owner_id\" = auth.uid()\n    AND \"user_roles\".\"role\" = '$admin'\n  )",
+          "withCheck": "EXISTS (\n    SELECT 1 FROM $1\n    WHERE \"user_roles\".\"owner_id\" = auth.uid()\n    AND \"user_roles\".\"role\" = '$admin'\n  )"
+        },
+        "user_roles_delete_policy": {
+          "name": "user_roles_delete_policy",
+          "as": "PERMISSIVE",
+          "for": "DELETE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "EXISTS (\n    SELECT 1 FROM $1\n    WHERE \"user_roles\".\"owner_id\" = auth.uid()\n    AND \"user_roles\".\"role\" = '$admin'\n  )"
+        },
+        "user_roles_select_policy": {
+          "name": "user_roles_select_policy",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "\"user_roles\".\"owner_id\" = auth.uid()"
+        }
+      },
       "checkConstraints": {},
-      "isRLSEnabled": false
+      "isRLSEnabled": true
     }
   },
   "enums": {},

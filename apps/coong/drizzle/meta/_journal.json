@@ -5,43 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1764642628306,
-      "tag": "0000_dizzy_professor_monster",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1765000000000,
-      "tag": "0001_prevent_user_metadata_update",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1764840332368,
-      "tag": "0002_lean_rhino",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1764840948440,
-      "tag": "0003_yielding_korath",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1764841537054,
-      "tag": "0004_handy_thunderbird",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1764842125668,
-      "tag": "0005_special_tyrannus",
+      "when": 1764846840237,
+      "tag": "0000_bright_guardsmen",
       "breakpoints": true
     }
   ]
