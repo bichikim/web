@@ -40,9 +40,6 @@ export default defineConfig({
     ],
     resolve: {
       alias: {
-        // fix @tonejs/midi is not module js
-        // '@tonejs/midi': fileURLToPath(new URL('node_modules/@tonejs/midi/src/Midi.ts', import.meta.url)),
-
         // root source path alias
         src: fileURLToPath(new URL('src', import.meta.url)),
       },
