@@ -1,4 +1,13 @@
+import {useAuth} from 'src/requests/auth'
+import {createEffect} from 'solid-js'
+
 export default function HomePage() {
+  const user = useAuth()
+
+  createEffect(() => {
+    console.log(user.data)
+  })
+
   return (
     <main class="flex flex-col gap-2 p-4 justify-center items-center h-full">
       <h1 class="text-4xl font-bold">Welcome to Coong World</h1>

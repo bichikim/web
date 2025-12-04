@@ -12,7 +12,7 @@ const {pluginOptions: generateSw, cleanUp: cleanUpGenerateSw} = generateSwWithCl
 })
 
 export default defineConfig({
-  // middleware: 'src/middleware/index.ts',
+  middleware: 'src/middleware/index.ts',
   server: {
     hooks: {
       close: async () => {

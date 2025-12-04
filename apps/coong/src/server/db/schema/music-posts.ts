@@ -1,7 +1,7 @@
 import {pgPolicy, pgTable, text, uuid} from 'drizzle-orm/pg-core'
 import {relations, sql} from 'drizzle-orm'
 import {authenticatedRole} from 'drizzle-orm/supabase'
-import {profiles} from './users'
+import {profiles} from './profiles'
 import {timestamps} from '../fragments'
 
 export const musicPosts = pgTable(

@@ -34,10 +34,10 @@ export const getDatabaseUrl = (): string => {
 }
 
 export const getSupabaseUrl = (): string => {
-  const url = import.meta.env.COONG_POSTGRES_URL ?? process.env.COONG_POSTGRES_URL
+  const url = import.meta.env.POSTGRES_URL ?? process.env.POSTGRES_URL
 
   if (typeof url !== 'string') {
-    throw new TypeError('COONG_POSTGRES_URL is not set')
+    throw new TypeError('POSTGRES_URL is not set')
   }
 
   return url
@@ -57,4 +57,15 @@ export const getGithubClient = () => {
   }
 
   return {clientId, clientSecret}
+}
+
+export const getSupabaseClientKeys = () => {
+  const url = import.meta.env.VITE_SUPABASE_URL ?? process.env.VITE_SUPABASE_URL
+  const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? process.env.VITE_SUPABASE_PUBLISHABLE_KEY
+
+  if (typeof url !== 'string' || typeof key !== 'string') {
+    throw new TypeError('VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY is not set')
+  }
+
+  return {key, url}
 }
