@@ -13,30 +13,33 @@ import {FontImport} from './components/font-import/FontImport'
 import {queryClient} from 'src/utils/query'
 import {QueryClientProvider} from '@tanstack/solid-query'
 import 'solid-devtools'
+import {AuthProvider} from 'src/store/auth'
 
 export default function App() {
   const isClient = useIsClient()
 
   return (
     <QueryClientProvider client={queryClient}>
-      <SToastProvider>
-        <ServiceWorkerProvider src="/sw.js">
-          <Router
-            root={(props) => (
-              <MetaProvider>
-                <Title>Coong</Title>
-                <Suspense>{props.children}</Suspense>
-              </MetaProvider>
-            )}
-          >
-            <FileRoutes />
-          </Router>
-          <Show when={isClient()}>
-            <ReloadPrompt pageReload={true} />
-          </Show>
-        </ServiceWorkerProvider>
-      </SToastProvider>
-      <FontImport />
+      <AuthProvider>
+        <SToastProvider>
+          <ServiceWorkerProvider src="/sw.js">
+            <Router
+              root={(props) => (
+                <MetaProvider>
+                  <Title>Coong</Title>
+                  <Suspense>{props.children}</Suspense>
+                </MetaProvider>
+              )}
+            >
+              <FileRoutes />
+            </Router>
+            <Show when={isClient()}>
+              <ReloadPrompt pageReload={true} />
+            </Show>
+          </ServiceWorkerProvider>
+        </SToastProvider>
+        <FontImport />
+      </AuthProvider>
     </QueryClientProvider>
   )
 }

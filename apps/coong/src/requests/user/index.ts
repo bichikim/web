@@ -3,7 +3,7 @@ import {useSupabase} from 'src/use/supabase'
 
 export const AUTH_QUERY_KEY = 'auth'
 
-export const useAuth = () => {
+export const useUser = () => {
   const supabase = useSupabase()
 
   const query = useQuery(() => ({
