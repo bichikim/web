@@ -15,6 +15,27 @@
       "when": 1765000000000,
       "tag": "0001_prevent_user_metadata_update",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1764840332368,
+      "tag": "0002_lean_rhino",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1764840948440,
+      "tag": "0003_yielding_korath",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1764841537054,
+      "tag": "0004_handy_thunderbird",
+      "breakpoints": true
     }
   ]
 }

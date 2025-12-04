@@ -1,20 +1,22 @@
-import {integer, pgPolicy, pgTable, text, uuid} from 'drizzle-orm/pg-core'
+import {pgPolicy, pgTable, text, uuid} from 'drizzle-orm/pg-core'
 import {relations, sql} from 'drizzle-orm'
 import {timestamps} from '../fragments'
 import {authenticatedRole, authUid, authUsers} from 'drizzle-orm/supabase'
 import {musicPostComments, musicPosts} from './music-posts'
 import {createOwnerOnlyCondition, createMemberOnlyCondition} from '../policies'
+import {people} from './people'
 
 export const profiles = pgTable(
   'profiles',
   {
-    age: integer(),
     id: uuid()
       .primaryKey()
       .notNull()
       .references(() => authUsers.id, {onDelete: 'cascade'}),
     image: text(),
-    name: text(),
+    personId: uuid()
+      .notNull()
+      .references(() => people.id, {onDelete: 'cascade'}),
     ...timestamps,
   },
   (table) => [
@@ -46,7 +48,11 @@ export const profiles = pgTable(
   ],
 ).enableRLS()
 
-export const usersRelations = relations(profiles, ({many}) => ({
+export const usersRelations = relations(profiles, ({one, many}) => ({
   musicPostComments: many(musicPostComments),
   musicPosts: many(musicPosts),
+  person: one(people, {
+    fields: [profiles.personId],
+    references: [people.id],
+  }),
 }))

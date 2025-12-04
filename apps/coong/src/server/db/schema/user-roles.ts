@@ -60,7 +60,7 @@ export const userRoles = pgTable(
       pgPolicy('user_roles_select_policy', {
         for: 'select',
         to: authenticatedRole,
-        using: sql`${createOwnerOnlyCondition(table, 'ownerId')} OR ${createAdminOnlyCondition(table)}`,
+        using: sql`${createOwnerOnlyCondition(table, 'ownerId')}`,
       }),
     ]
   },
