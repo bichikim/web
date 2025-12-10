@@ -1,21 +1,16 @@
 import {useQuery} from '@tanstack/solid-query'
 import {useSupabase} from 'src/use/supabase'
+import {createSupabase} from 'src/utils/supabase'
+import {query} from '@solidjs/router'
 
 export const AUTH_QUERY_KEY = 'auth'
 
-export const useUser = () => {
-  const supabase = useSupabase()
+export const userQuery = query(async () => {
+  const supabase = createSupabase()
 
-  const query = useQuery(() => ({
-    queryFn: async () => {
-      const {
-        data: {user},
-      } = await supabase.auth.getUser()
+  const {
+    data: {user},
+  } = await supabase.auth.getUser()
 
-      return user
-    },
-    queryKey: [AUTH_QUERY_KEY],
-  }))
-
-  return query
-}
+  return user
+}, 'auth/user')

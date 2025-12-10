@@ -439,7 +439,7 @@ importers:
         specifier: ^0.31.7
         version: 0.31.7
       solid-devtools:
-        specifier: ^0.34.3
+        specifier: ^0.34.4
         version: 0.34.4(solid-js@1.9.10)(vite@6.4.1(@types/node@24.10.1)(jiti@2.6.1)(terser@5.44.1)(yaml@2.8.1))
 
   apps/image-server:

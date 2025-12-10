@@ -15,6 +15,13 @@
       "when": 1765339443383,
       "tag": "0001_condemned_mojo",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1765349517515,
+      "tag": "0002_ordinary_kate_bishop",
+      "breakpoints": true
     }
   ]
 }

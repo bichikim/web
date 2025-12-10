@@ -1,16 +1,18 @@
 import {createSupabase} from 'src/utils/supabase'
 import {action} from '@solidjs/router'
 
-export const signOutAction = action(async () => {
+export const changePasswordAction = action(async (newPassword: string) => {
   'use server'
 
   const supabase = createSupabase()
 
-  const {error, data} = await supabase.auth.signOut()
+  const {data, error} = await supabase.auth.updateUser({
+    password: newPassword,
+  })
 
   if (error) {
     throw new Error(error.message)
   }
 
   return data
-}, 'auth/sign-out')
+}, 'auth/change-password')

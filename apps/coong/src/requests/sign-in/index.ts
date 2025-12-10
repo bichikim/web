@@ -1,21 +1,22 @@
 import {useMutation} from '@tanstack/solid-query'
 import {createSupabase} from 'src/utils/supabase'
+import {action} from '@solidjs/router'
 
-export const useSignIn = () => {
+export const signInAction = action(async ({email, password}: {email: string; password: string}) => {
+  'use server'
+
   const supabase = createSupabase()
 
-  return useMutation(() => ({
-    mutationFn: async ({email, password}: {email: string; password: string}) => {
-      const {data, error} = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
+  const {data, error} = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  })
 
-      if (error) {
-        throw new Error(error.message)
-      }
+  if (error) {
+    throw new Error(error.message)
+  }
 
-      return data
-    },
-  }))
-}
+  console.log('data', data)
+
+  return data
+}, 'auth/sign-in')

@@ -19,10 +19,7 @@ export const createSupabaseServer = (event: RequestEvent) => {
       setAll(cookiesToSet) {
         cookiesToSet.forEach(({name, value, options}) => {
           try {
-            event.nativeEvent.node.res.appendHeader(
-              'Set-Cookie',
-              `${name}=${value}; Path=/; HttpOnly; SameSite=Lax; Secure`,
-            )
+            event.nativeEvent.node.res.appendHeader('Set-Cookie', `${name}=${value}; Path=/; SameSite=Lax; Secure`)
           } catch (e) {
             // ignore
           }

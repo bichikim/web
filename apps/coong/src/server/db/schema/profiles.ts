@@ -1,4 +1,4 @@
-import {pgPolicy, pgTable, text, uuid} from 'drizzle-orm/pg-core'
+import {pgPolicy, pgTable, text, timestamp, uuid} from 'drizzle-orm/pg-core'
 import {relations, sql} from 'drizzle-orm'
 import {timestamps} from '../fragments'
 import {authenticatedRole, authUid, authUsers} from 'drizzle-orm/supabase'
@@ -9,6 +9,7 @@ import {people} from './people'
 export const profiles = pgTable(
   'profiles',
   {
+    deletedAt: timestamp(),
     id: uuid()
       .primaryKey()
       .notNull()
