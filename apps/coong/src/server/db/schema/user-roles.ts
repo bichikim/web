@@ -17,7 +17,7 @@ export const createAdminOnlyCondition = <
 ) => {
   return sql`EXISTS (
     SELECT 1 FROM "user_roles"
-    WHERE "user_roles"."owner_id" = auth.uid()
+    WHERE "user_roles"."owner_id" = (select auth.uid())
     AND "user_roles"."role" = '$admin'
   )`
 }

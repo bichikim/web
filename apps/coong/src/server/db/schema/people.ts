@@ -22,7 +22,7 @@ export const people = pgTable(
       withCheck: sql`EXISTS (
         SELECT 1 FROM profiles
         WHERE profiles.id = ${table.ownerId}
-        AND profiles.id = auth.uid()
+        AND profiles.id = (select auth.uid())
       )`,
     }),
     // RLS policy for update: only allow if ownerId matches auth.uid() via profiles
@@ -32,12 +32,12 @@ export const people = pgTable(
       using: sql`EXISTS (
         SELECT 1 FROM profiles
         WHERE profiles.id = ${table.ownerId}
-        AND profiles.id = auth.uid()
+        AND profiles.id = (select auth.uid())
       )`,
       withCheck: sql`EXISTS (
         SELECT 1 FROM profiles
         WHERE profiles.id = ${table.ownerId}
-        AND profiles.id = auth.uid()
+        AND profiles.id = (select auth.uid())
       )`,
     }),
     // RLS policy for delete: only allow if ownerId matches auth.uid() via profiles
@@ -47,7 +47,7 @@ export const people = pgTable(
       using: sql`EXISTS (
         SELECT 1 FROM profiles
         WHERE profiles.id = ${table.ownerId}
-        AND profiles.id = auth.uid()
+        AND profiles.id = (select auth.uid())
       )`,
     }),
     // RLS policy for select: only allow owner to read their people
@@ -57,7 +57,7 @@ export const people = pgTable(
       using: sql`EXISTS (
         SELECT 1 FROM profiles
         WHERE profiles.id = ${table.ownerId}
-        AND profiles.id = auth.uid()
+        AND profiles.id = (select auth.uid())
       )`,
     }),
   ],

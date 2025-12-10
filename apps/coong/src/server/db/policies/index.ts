@@ -19,7 +19,7 @@ export const createOwnerOnlyCondition = <
   table: SchemaSelf<TTableName, TColumnsMap>,
   uidFieldKey: keyof TColumnsMap,
 ) => {
-  return sql`${table[uidFieldKey]} = auth.uid()`
+  return sql`${table[uidFieldKey]} = (select auth.uid())`
 }
 
 export const createAllowAllCondition = () => {
@@ -29,6 +29,6 @@ export const createAllowAllCondition = () => {
 export const createMemberOnlyCondition = (): SQL<boolean> => {
   return sql`EXISTS (
     SELECT 1 FROM ${profiles}
-    WHERE ${profiles.id} = auth.uid()
+    WHERE ${profiles.id} = (select auth.uid())
   )`
 }

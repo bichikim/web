@@ -23,7 +23,7 @@ export const anniversaryPeople = pgTable(
       withCheck: sql`EXISTS (
         SELECT 1 FROM ${userAnniversaries}
         WHERE ${userAnniversaries.id} = ${table.anniversaryId}
-        AND ${userAnniversaries.ownerId} = auth.uid()
+        AND ${userAnniversaries.ownerId} = (select auth.uid())
       )`,
     }),
     // RLS policy for update: only allow if anniversary ownerId matches auth.uid()
@@ -33,12 +33,12 @@ export const anniversaryPeople = pgTable(
       using: sql`EXISTS (
         SELECT 1 FROM ${userAnniversaries}
         WHERE ${userAnniversaries.id} = ${table.anniversaryId}
-        AND ${userAnniversaries.ownerId} = auth.uid()
+        AND ${userAnniversaries.ownerId} = (select auth.uid())
       )`,
       withCheck: sql`EXISTS (
         SELECT 1 FROM ${userAnniversaries}
         WHERE ${userAnniversaries.id} = ${table.anniversaryId}
-        AND ${userAnniversaries.ownerId} = auth.uid()
+        AND ${userAnniversaries.ownerId} = (select auth.uid())
       )`,
     }),
     // RLS policy for delete: only allow if anniversary ownerId matches auth.uid()
@@ -48,7 +48,7 @@ export const anniversaryPeople = pgTable(
       using: sql`EXISTS (
         SELECT 1 FROM ${userAnniversaries}
         WHERE ${userAnniversaries.id} = ${table.anniversaryId}
-        AND ${userAnniversaries.ownerId} = auth.uid()
+        AND ${userAnniversaries.ownerId} = (select auth.uid())
       )`,
     }),
     // RLS policy for select: only allow if anniversary ownerId matches auth.uid()
@@ -58,7 +58,7 @@ export const anniversaryPeople = pgTable(
       using: sql`EXISTS (
         SELECT 1 FROM ${userAnniversaries}
         WHERE ${userAnniversaries.id} = ${table.anniversaryId}
-        AND ${userAnniversaries.ownerId} = auth.uid()
+        AND ${userAnniversaries.ownerId} = (select auth.uid())
       )`,
     }),
   ],

@@ -20,20 +20,20 @@ export const musicPosts = pgTable(
     pgPolicy('music_posts_insert_policy', {
       for: 'insert',
       to: authenticatedRole,
-      withCheck: sql`${table.authorId} = auth.uid()`,
+      withCheck: sql`${table.authorId} = (select auth.uid())`,
     }),
     // RLS policy for update: only allow if authorId matches auth.uid()
     pgPolicy('music_posts_update_policy', {
       for: 'update',
       to: authenticatedRole,
-      using: sql`${table.authorId} = auth.uid()`,
-      withCheck: sql`${table.authorId} = auth.uid()`,
+      using: sql`${table.authorId} = (select auth.uid())`,
+      withCheck: sql`${table.authorId} = (select auth.uid())`,
     }),
     // RLS policy for delete: only allow if authorId matches auth.uid()
     pgPolicy('music_posts_delete_policy', {
       for: 'delete',
       to: authenticatedRole,
-      using: sql`${table.authorId} = auth.uid()`,
+      using: sql`${table.authorId} = (select auth.uid())`,
     }),
     // RLS policy for select: allow all authenticated users to read
     pgPolicy('music_posts_select_policy', {
@@ -70,20 +70,20 @@ export const musicPostComments = pgTable(
     pgPolicy('music_post_comments_insert_policy', {
       for: 'insert',
       to: authenticatedRole,
-      withCheck: sql`${table.authorId} = auth.uid()`,
+      withCheck: sql`${table.authorId} = (select auth.uid())`,
     }),
     // RLS policy for update: only allow if authorId matches auth.uid()
     pgPolicy('music_post_comments_update_policy', {
       for: 'update',
       to: authenticatedRole,
-      using: sql`${table.authorId} = auth.uid()`,
-      withCheck: sql`${table.authorId} = auth.uid()`,
+      using: sql`${table.authorId} = (select auth.uid())`,
+      withCheck: sql`${table.authorId} = (select auth.uid())`,
     }),
     // RLS policy for delete: only allow if authorId matches auth.uid()
     pgPolicy('music_post_comments_delete_policy', {
       for: 'delete',
       to: authenticatedRole,
-      using: sql`${table.authorId} = auth.uid()`,
+      using: sql`${table.authorId} = (select auth.uid())`,
     }),
     // RLS policy for select: allow all authenticated users to read
     pgPolicy('music_post_comments_select_policy', {
