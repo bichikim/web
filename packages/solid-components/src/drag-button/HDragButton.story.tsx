@@ -1,5 +1,5 @@
 import {HDragButton, HDragButtonProps} from './HDragButton'
-import type {Meta, StoryObj} from 'storybook-solidjs'
+import type {Meta, StoryObj} from 'storybook-solidjs-vite'
 import {expect, fireEvent, fn, within} from '@storybook/test'
 import {DragButtonAside} from './DragButtonAside'
 import {DragButtonContent} from './DragButtonContent'

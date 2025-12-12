@@ -1,7 +1,7 @@
 import {useStorage} from '@winter-love/solid-use'
 import {createSignal} from 'solid-js'
 import {createPlayer} from 'src/create-player'
-import {Meta, StoryObj} from 'storybook-solidjs'
+import {Meta, StoryObj} from 'storybook-solidjs-vite'
 import * as publicData from './_demo-data/public'
 import * as publicDataData from './_demo-data/public-data'
 import * as publicDrmData from './_demo-data/public-drm'
@@ -85,6 +85,7 @@ export const Root = (props: RootProps) => {
 
 const meta: Meta<typeof Root> = {
   component: Root,
+  title: 'Player/Player',
 }
 
 export default meta

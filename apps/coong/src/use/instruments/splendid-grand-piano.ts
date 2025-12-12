@@ -67,7 +67,6 @@ export type StopFn = (time?: number) => any
 
 export type SplendidGrandPianoContextProps = [Accessor<SplendidGrandPianoState>, SplendidGrandPianoController]
 
-// eslint-disable-next-line max-lines-per-function
 export const createSplendidGrandPiano = (
   options: Omit<SplendidGrandPianoOptions, 'onEnded' | 'onStart'> = {},
 ): [Accessor<SplendidGrandPianoState>, SplendidGrandPianoController] => {
@@ -226,7 +225,6 @@ export const createSplendidGrandPiano = (
           return
         }
 
-        // eslint-disable-next-line max-nested-callbacks
         setState((prev) => ({
           ...prev,
           loaded: true,
@@ -366,7 +364,6 @@ export const SplendidGrandPianoContext = createContext<SplendidGrandPianoContext
     addEventListener: () => {
       //
     },
-    // eslint-disable-next-line unicorn/consistent-function-scoping
     down: () => () => null,
     play: () => Promise.resolve(),
     removeEventListener: () => {

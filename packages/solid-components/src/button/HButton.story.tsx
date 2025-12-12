@@ -1,6 +1,19 @@
 import {HButton} from './'
-import {Meta, StoryObj} from 'storybook-solidjs'
+import {Meta, StoryObj} from 'storybook-solidjs-vite'
 import {expect, fireEvent, fn, within} from '@storybook/test'
+
+const defaultButtonClass = `:uno:
+inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 font-semibold text-white
+bg-blue-600 shadow-lg hover:bg-blue-500 active:bg-blue-700
+focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2
+focus-visible:ring-blue-400 transition-colors duration-200
+bg-[linear-gradient(90deg,_rgba(37,99,235,1)_var(--var-progress-percent,_0%),_rgba(59,130,246,1)_var(--var-progress-percent,_0%))]
+disabled:opacity-60 disabled:cursor-not-allowed
+data-[loading=true]:bg-slate-500 data-[loading=true]:text-white
+data-[loading=true]:shadow-inner data-[loading=true]:cursor-wait
+data-[loading-animation=true]:animate-pulse
+data-[loading-animation=true]:bg-blue-500
+data-[loading-animation=true]:shadow-blue-400/40`
 
 const meta = {
   argTypes: {
@@ -67,18 +80,15 @@ const meta = {
   },
   args: {
     children: 'Click me',
-    class: [
-      'bg-gray-100 p-2 rounded-md text-4',
-      'data-[loading=true]:bg-yellow-500',
-      'data-[loading=true]:opacity-[var(--var-progress-percent)]',
-    ].join(' '),
+    class: defaultButtonClass,
     onClick: fn(),
     onDoubleClick: fn(),
     onTouchEnd: fn(),
     onTouchStart: fn(),
   },
+  // tags: ['autodocs'],
   component: HButton,
-  title: 'Solid/Components/Button/HButton',
+  title: 'Solid/Components/Button',
 } satisfies Meta<typeof HButton>
 
 export default meta
@@ -89,6 +99,7 @@ export const Default: Story = {}
 
 export const Click: Story = {
   play: async ({canvasElement, args}) => {
+    args.onClick.mockClear()
     const canvas = within(canvasElement)
     const button = canvas.getByRole('button', {name: 'Click me'})
 
@@ -99,6 +110,7 @@ export const Click: Story = {
 
 export const TouchStart: Story = {
   play: async ({canvasElement, args}) => {
+    args.onTouchStart.mockClear()
     const canvas = within(canvasElement)
     const button = canvas.getByRole('button', {name: 'Click me'})
 
@@ -109,6 +121,7 @@ export const TouchStart: Story = {
 
 export const TouchEnd: Story = {
   play: async ({canvasElement, args}) => {
+    args.onTouchEnd.mockClear()
     const canvas = within(canvasElement)
     const button = canvas.getByRole('button', {name: 'Click me'})
 
@@ -119,6 +132,7 @@ export const TouchEnd: Story = {
 
 export const DoubleClick: Story = {
   play: async ({canvasElement, args}) => {
+    args.onDoubleClick.mockClear()
     const canvas = within(canvasElement)
     const button = canvas.getByRole('button', {name: 'Click me'})
 
@@ -133,6 +147,7 @@ export const DoubleClick: Story = {
 
 export const DoubleClickWithTouch: Story = {
   play: async ({canvasElement, args}) => {
+    args.onDoubleClick.mockClear()
     const canvas = within(canvasElement)
     const button = canvas.getByRole('button', {name: 'Click me'})
 
@@ -162,7 +177,7 @@ export const LoadingProcess: Story = {
     const canvas = within(canvasElement)
     const button = canvas.getByRole('button', {name: 'Click me'})
 
-    expect(button).toHaveAttribute('data-loading', 'loop')
+    expect(button).toHaveAttribute('data-loading', 'true')
   },
 }
 
@@ -172,8 +187,17 @@ export const AutoLoading: Story = {
     children: 'Click me to trigger loading automatically',
     onClick: async () => {
       await new Promise((resolve) => {
-        setTimeout(resolve, 1000)
+        setTimeout(resolve, 2000)
       })
+    },
+  },
+}
+
+export const OverrideStyle: Story = {
+  args: {
+    loading: 50,
+    style: {
+      color: 'red',
     },
   },
 }

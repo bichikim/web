@@ -1,4 +1,4 @@
-import {DragType, stopPropagation, sx, useDrag, ValidStyle} from '@winter-love/solid-use'
+import {DragType, stopPropagation, useStyles, useDrag, StyleType} from '@winter-love/solid-use'
 import {createMemo, createSignal, splitProps, ValidComponent} from 'solid-js'
 import {Dynamic, DynamicProps} from 'solid-js/web'
 import {POSITION_VAR, SIZE_VAR} from '../css-var'
@@ -6,7 +6,7 @@ import {useScrollBar} from './scroll-bar-context'
 import {useScrollContext} from './scroll-context'
 
 interface InnerProps {
-  style?: ValidStyle
+  style?: StyleType
 }
 
 export type WScrollHandleProps<T extends ValidComponent> = InnerProps & DynamicProps<T>
@@ -73,6 +73,8 @@ export const WScrollHandle = <T extends ValidComponent>(props: WScrollHandleProp
     setScroll(Math.max(nextScrollPosition, 0))
   })
 
+  const style = useStyles(() => [handleStyle(), innerProps.style])
+
   return (
     <Dynamic
       tabindex="0"
@@ -84,7 +86,7 @@ export const WScrollHandle = <T extends ValidComponent>(props: WScrollHandleProp
       aria-valuemin="0"
       aria-valuemax={scrollBar().scrollSize}
       role="scrollbar"
-      style={sx(handleStyle(), innerProps.style)}
+      style={style()}
       onClick={stopPropagation()}
     >
       {props.children}

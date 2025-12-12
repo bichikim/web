@@ -1,7 +1,7 @@
 // SAuroraText.story
 
 import {SAuroraText} from './SAuroraText'
-import {Meta} from 'storybook-solidjs'
+import {Meta} from 'storybook-solidjs-vite'
 
 const meta: Meta = {
   argTypes: {
@@ -23,7 +23,7 @@ const meta: Meta = {
       `,
   },
   component: SAuroraText,
-  title: 'BPlan/Components/Text/SAuroraText',
+  title: 'Coong/Components/Text/SAuroraText',
 }
 
 export default meta

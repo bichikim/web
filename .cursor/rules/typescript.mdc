@@ -1,7 +1,6 @@
 ---
-description:
-globs:
-alwaysApply: true
+globs: *.tsx,*.ts
+alwaysApply: false
 ---
 # Typescript Writing Guidelines
 

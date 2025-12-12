@@ -1,6 +1,6 @@
 import {useContext} from 'solid-js'
 import {LabelContent, LabelContext, LabelProvider} from './Label'
-import type {Meta, StoryObj} from 'storybook-solidjs'
+import type {Meta, StoryObj} from 'storybook-solidjs-vite'
 
 const LabelContextConsumer = () => {
   const labelContext = useContext(LabelContext)

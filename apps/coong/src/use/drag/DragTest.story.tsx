@@ -1,4 +1,4 @@
-import type {Meta, StoryObj} from 'storybook-solidjs'
+import type {Meta, StoryObj} from 'storybook-solidjs-vite'
 import {createSignal, Show} from 'solid-js'
 import {useDrag} from './index'
 
@@ -45,7 +45,7 @@ const meta = {
     layout: 'centered',
   },
   tags: ['autodocs'],
-  title: 'Hooks/useDrag',
+  title: 'Coong/Use/useDrag',
 } satisfies Meta<typeof DragTestComponent>
 
 export default meta

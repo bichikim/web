@@ -1,4 +1,4 @@
-import type {Meta, StoryObj} from 'storybook-solidjs'
+import type {Meta, StoryObj} from 'storybook-solidjs-vite'
 import {useContext} from 'solid-js'
 import {createUuid} from '@winter-love/utils'
 import {fn} from '@storybook/test'
@@ -9,7 +9,7 @@ const uuid = createUuid()
 
 const meta = {
   component: SToastProvider,
-  title: 'BPlan/Components/SToast',
+  title: 'Coong/Components/SToast',
 } satisfies Meta<typeof SToastProvider>
 
 export default meta

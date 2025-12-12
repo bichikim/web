@@ -10,13 +10,15 @@ import {SToastProvider} from 'src/components/toast'
 import {ServiceWorkerProvider} from 'src/components/service-worker'
 import {MetaProvider, Title} from '@solidjs/meta'
 import {FontImport} from './components/font-import/FontImport'
+import {queryClient} from 'src/utils/query'
+import {QueryClientProvider} from '@tanstack/solid-query'
 import 'solid-devtools'
 
 export default function App() {
   const isClient = useIsClient()
 
   return (
-    <>
+    <QueryClientProvider client={queryClient}>
       <SToastProvider>
         <ServiceWorkerProvider src="/sw.js">
           <Router
@@ -35,6 +37,6 @@ export default function App() {
         </ServiceWorkerProvider>
       </SToastProvider>
       <FontImport />
-    </>
+    </QueryClientProvider>
   )
 }

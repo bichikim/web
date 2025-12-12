@@ -1,4 +1,4 @@
-import type {Meta, StoryObj} from 'storybook-solidjs'
+import type {Meta, StoryObj} from 'storybook-solidjs-vite'
 import {ToastProvider} from './ToastProvider'
 import {useContext} from 'solid-js'
 import {createTimeout, ToastContext} from './context'

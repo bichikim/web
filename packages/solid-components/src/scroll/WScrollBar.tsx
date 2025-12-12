@@ -1,4 +1,4 @@
-import {sx, ValidStyle} from '@winter-love/solid-use'
+import {useStyles, StyleType} from '@winter-love/solid-use'
 import {createMemo, mergeProps, splitProps, ValidComponent} from 'solid-js'
 import {Dynamic, DynamicProps} from 'solid-js/web'
 import {PERCENT_VAR} from '../css-var'
@@ -8,7 +8,7 @@ import {ScrollBarType} from './types'
 
 type InnerProps = {
   barType?: ScrollBarType
-  style?: ValidStyle
+  style?: StyleType
   thickness?: string
 }
 
@@ -89,14 +89,11 @@ export const WScrollBar = <T extends ValidComponent>(props: WScrollBarProps<T>) 
     scrollContext.setScroll(innerProps.barType, (scrollSize - containerSize) * clickedPercent)
   }
 
+  const style = useStyles(() => [scrollBarStyle(), innerProps.style])
+
   return (
     <ScrollBarContext.Provider value={scrollBarContext}>
-      <Dynamic
-        {...restProps}
-        data-show={scrollBarState().show}
-        style={sx(scrollBarStyle(), innerProps.style)}
-        onClick={onClick}
-      />
+      <Dynamic {...restProps} data-show={scrollBarState().show} style={style()} onClick={onClick} />
     </ScrollBarContext.Provider>
   )
 }

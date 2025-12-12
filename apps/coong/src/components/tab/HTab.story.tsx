@@ -1,4 +1,4 @@
-import type {Meta, StoryObj} from 'storybook-solidjs'
+import type {Meta, StoryObj} from 'storybook-solidjs-vite'
 import {HTabProvider, HTabProviderProps} from './HTabProvider'
 import {HTabContent} from './HTabContent'
 import {HTabButton} from './HTabButton'
@@ -40,7 +40,7 @@ const meta = {
   parameters: {
     layout: 'centered',
   },
-  title: 'BPlan/Components/Tab/HTab',
+  title: 'Coong/Components/Tab/HTab',
 } satisfies Meta<typeof Template>
 
 export default meta

@@ -1,4 +1,4 @@
-import type {Meta, StoryObj} from 'storybook-solidjs'
+import type {Meta, StoryObj} from 'storybook-solidjs-vite'
 import {cva} from 'class-variance-authority'
 import {createSignal} from 'solid-js'
 
@@ -22,7 +22,7 @@ const Container = () => {
 
   return (
     <div class={rootStyle({size: size()})}>
-      <div class="@md:bg-yellow-400 @sm:bg-red-400 @[10rem]:bg-green-400 w-50 h-50 rd-2"></div>
+      <div class="@md:bg-yellow-400 @sm:bg-red-400 @[10rem]:bg-green-400 w-50 h-50 rd-2" />
       <div class="flex gap-2">
         <button onClick={() => setSize('md')}>md</button>
         <button onClick={() => setSize('sm')}>sm</button>
@@ -34,7 +34,7 @@ const Container = () => {
 
 const meta = {
   component: Container,
-  title: 'BPlan/Components/HiddenPanel/Container',
+  title: 'Coong/Components/HiddenPanel/Container',
 } satisfies Meta<typeof Container>
 
 export default meta

@@ -1,7 +1,6 @@
 ---
-description: 
-globs: 
-alwaysApply: true
+description: git_commit_message
+alwaysApply: false
 ---
 # Git commit rules
 

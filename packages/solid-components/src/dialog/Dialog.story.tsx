@@ -1,4 +1,4 @@
-import {Meta, StoryObj} from 'storybook-solidjs'
+import {Meta, StoryObj} from 'storybook-solidjs-vite'
 import {DialogProvider} from './DialogProvider'
 import {fn} from '@storybook/test'
 

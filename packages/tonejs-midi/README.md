@@ -1,31 +1,30 @@
 # Solid Use
 
-## 파라미터 전달 룰
+## Parameter Passing Rule
 
 ### Element
 
-Element 는 최소한 모양을 전달 받는다 없는 값은 null 로 한다
-다른 파라미터와 마찬가지로 MaybeAccessor 를 사용한다
-js 기본 함수들이 null 을 리턴한다 window.querySelector 등
+When accepting an Element as a parameter, always allow for the absence of a value using `null`. Do not use `undefined` or require a non-null value. As with other parameters, use `MaybeAccessor`. Most JS APIs (e.g., `window.querySelector`) return `null` if no element is found.
 
-Do This
+**Do This:**
 ```ts
 import {MaybeAccessor} from 'src/use'
-const useFoo = (element: MayBeAccessor<Element | null>) => {
+const useFoo = (element: MaybeAccessor<Element | null>) => {
   // do something
 }
 ```
 
-Don't Do This
+**Don't Do This:**
 ```ts
 import {MaybeAccessor} from 'src/use'
-const useFoo = (element: MayBeAccessor<Element | undefined>) => {
+const useFoo = (element: MaybeAccessor<Element | undefined>) => {
   // do something
 }
-const useBar = (element: MayBeAccessor<Element>) => {
+const useBar = (element: MaybeAccessor<Element>) => {
   // do something
 }
 const useJohn = (element: Element) => {
   // do something
 }
 ```
+
