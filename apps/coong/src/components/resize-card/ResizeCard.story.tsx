@@ -1,4 +1,4 @@
-import {Meta, StoryObj} from 'storybook-solidjs'
+import {Meta, StoryObj} from 'storybook-solidjs-vite'
 import {ResizeCard} from './'
 import {ResizeCardProviderProps} from './ResizeCardProvider'
 import {cva} from 'class-variance-authority'
@@ -75,7 +75,7 @@ const meta = {
   parameters: {
     layout: 'centered',
   },
-  title: 'BPlan/Components/ResizeCard',
+  title: 'Coong/Components/ResizeCard',
 } satisfies Meta
 
 export default meta

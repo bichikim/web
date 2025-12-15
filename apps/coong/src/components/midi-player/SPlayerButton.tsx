@@ -14,7 +14,7 @@ export interface SPlayerButtonProps extends Pick<SButtonProps, 'class' | 'childr
  *
  * @example
  * ```tsx
- * <SPlayerButton onClick={(e) => console.log('Player button clicked!', e)}>
+ * <SPlayerButton onClick={(e) => console.info('Player button clicked!', e)}>
  *   Play
  * </SPlayerButton>
  * ```

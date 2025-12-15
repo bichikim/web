@@ -1,4 +1,4 @@
-import type {Meta, StoryObj} from 'storybook-solidjs'
+import type {Meta, StoryObj} from 'storybook-solidjs-vite'
 import {IntersectionDemo} from './IntersectionDemo'
 
 const meta = {
@@ -17,7 +17,7 @@ const meta = {
     threshold: 0.5,
   },
   component: IntersectionDemo,
-  title: 'Hooks/useIntersection',
+  title: 'Coong/Use/useIntersection',
 } satisfies Meta<typeof IntersectionDemo>
 
 export default meta

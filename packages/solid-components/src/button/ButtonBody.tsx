@@ -1,6 +1,7 @@
 import {ButtonContext} from './context'
 import {Dynamic} from 'solid-js/web'
 import {ComponentProps, createMemo, useContext} from 'solid-js'
+import {useStyles} from '@winter-love/solid-use'
 
 export interface ButtonBodyProps
   extends Omit<ComponentProps<'button'>, 'onClick' | 'onTouchEnd' | 'onDblClick' | 'onTouchStart' | 'type'> {
@@ -8,30 +9,30 @@ export interface ButtonBodyProps
 }
 
 export const ButtonBody = (props: ButtonBodyProps) => {
-  const [buttonContextValue, {handleClick, handleTouchEnd, handleTouchStart}] = useContext(ButtonContext)
+  const {handleClick, handleTouchEnd, handleTouchStart, value} = useContext(ButtonContext)
 
   const tag = createMemo(() => {
-    return buttonContextValue().tag
+    return value().tag
   })
 
   const loading = createMemo(() => {
-    const {loading} = buttonContextValue()
+    const {loading} = value()
 
     return loading
   })
 
   const loadingAnimation = createMemo(() => {
-    const {loadingAnimation} = buttonContextValue()
+    const {loadingAnimation} = value()
 
     return loadingAnimation
   })
 
   const href = createMemo(() => {
-    return buttonContextValue().href
+    return value().href
   })
 
   const style = createMemo(() => {
-    const {loadingProcess} = buttonContextValue()
+    const {loadingProcess} = value()
 
     if (typeof loadingProcess === 'number') {
       return {
@@ -40,8 +41,10 @@ export const ButtonBody = (props: ButtonBodyProps) => {
     }
   })
 
+  const styles = useStyles(() => [style(), props.style])
+
   const disabled = createMemo(() => {
-    return buttonContextValue().disabled
+    return value().disabled
   })
 
   return (
@@ -55,7 +58,7 @@ export const ButtonBody = (props: ButtonBodyProps) => {
       href={href()}
       data-loading={loading()}
       data-loading-animation={loadingAnimation()}
-      style={style()}
+      style={styles()}
       disabled={disabled()}
     >
       {props.children}

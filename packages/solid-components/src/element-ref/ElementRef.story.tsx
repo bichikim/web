@@ -1,6 +1,6 @@
 import {createSignal} from 'solid-js'
 import {ElementRef} from './ElementRef'
-import type {Meta, StoryObj} from 'storybook-solidjs'
+import type {Meta, StoryObj} from 'storybook-solidjs-vite'
 
 const meta = {
   component: ElementRef,

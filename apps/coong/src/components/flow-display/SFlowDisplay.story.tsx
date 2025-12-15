@@ -1,4 +1,4 @@
-import type {Meta, StoryObj} from 'storybook-solidjs'
+import type {Meta, StoryObj} from 'storybook-solidjs-vite'
 import {SFlowDisplay, SFlowDisplayProps} from '.'
 
 const meta = {
@@ -15,7 +15,7 @@ const meta = {
     },
   },
   component: SFlowDisplay,
-  title: 'BPlan/Components/FlowDisplay',
+  title: 'Coong/Components/FlowDisplay',
 } satisfies Meta<typeof SFlowDisplay>
 
 export default meta

@@ -18,7 +18,7 @@ export interface SPlayerProps extends Omit<SPlayerControllerProps, 'onSelect' | 
  *   initMusics={[]}
  *   pianoController={pianoController}
  *   pianoState={pianoState}
- *   onMusicsChange={(musics) => console.log('Playlist changed:', musics)}
+ *   onMusicsChange={(musics) => console.info('Playlist changed:', musics)}
  * />
  * ```
  *

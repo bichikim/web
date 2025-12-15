@@ -29,3 +29,13 @@ const useJohn = (element: Element) => {
   // do something
 }
 ```
+
+```tsx
+<FooRoot>
+  <ForInput />
+  <FooBody />
+  <FooLabel />
+  <FooContent />
+  <FooIndicator />
+</FooRoot>
+```

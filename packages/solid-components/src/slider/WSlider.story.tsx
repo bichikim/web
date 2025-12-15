@@ -1,4 +1,4 @@
-import {Meta, StoryObj} from 'storybook-solidjs'
+import {Meta, StoryObj} from 'storybook-solidjs-vite'
 import {WSlider} from './'
 
 const meta = {

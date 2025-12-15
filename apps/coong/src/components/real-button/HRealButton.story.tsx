@@ -1,4 +1,4 @@
-import {Meta, StoryObj} from 'storybook-solidjs'
+import {Meta, StoryObj} from 'storybook-solidjs-vite'
 import {HRealButton} from './HRealButton'
 import {useGlobalTouchEmitter} from 'src/components/real-button/use-global-touch'
 
@@ -16,7 +16,7 @@ const Root = (props: any) => {
 
 const meta = {
   component: Root,
-  title: 'BPlan/components/real-button/HRealButton',
+  title: 'Coong/components/real-button/HRealButton',
 } satisfies Meta<typeof HRealButton>
 
 // storybook meta

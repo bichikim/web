@@ -1,0 +1,5 @@
+# Code Review Checklist – Duplicate Logic Spotlight
+
+- List any logic that could be replaced with existing helpers from es-toolkit.
+- Call out logic blocks that appear multiple times and warrant extraction into a shared utility under packages/utils.
+- Flag any other duplicated or repetitive logic that deserves consolidation or further review.

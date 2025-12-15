@@ -1,7 +1,6 @@
 ---
-description:
-globs:
-alwaysApply: true
+globs: *.story.tsx,*.stories.tsx
+alwaysApply: false
 ---
 # Storybook Writing Guidelines for Solid.js Components
 

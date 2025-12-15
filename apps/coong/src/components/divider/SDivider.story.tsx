@@ -1,9 +1,9 @@
-import {Meta, StoryObj} from 'storybook-solidjs'
+import {Meta, StoryObj} from 'storybook-solidjs-vite'
 import {SDivider} from './SDivider'
 
 const meta: Meta<typeof SDivider> = {
   component: SDivider,
-  title: 'Bplan/Components/SDivider',
+  title: 'Coong/Components/SDivider',
 }
 
 export default meta

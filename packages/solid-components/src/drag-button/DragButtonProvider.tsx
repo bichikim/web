@@ -1,10 +1,10 @@
-import {Button, ButtonProviderProps} from '../button'
+import {Button, ButtonRootProps} from '../button'
 import {createMemo, mergeProps, splitProps} from 'solid-js'
 import {Position} from '@winter-love/utils'
 import {DragButtonContext, DragButtonContextProps} from './context'
 import {useDrag} from './drag'
 
-export interface DragButtonProviderProps extends Omit<ButtonProviderProps, 'onClick'> {
+export interface DragButtonProviderProps extends Omit<ButtonRootProps, 'onClick'> {
   allowBottom?: boolean
   allowTop?: boolean
   clickAllowMoveSize?: number
@@ -126,9 +126,9 @@ export const DragButtonProvider = (props: DragButtonProviderProps) => {
         },
       ]}
     >
-      <Button.Provider {...restProps} onTouchStart={handleTouchStart}>
+      <Button.Root {...restProps} onTouchStart={handleTouchStart}>
         {props.children}
-      </Button.Provider>
+      </Button.Root>
     </DragButtonContext.Provider>
   )
 }

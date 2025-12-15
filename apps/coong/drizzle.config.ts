@@ -7,7 +7,7 @@ export default defineConfig({
    */
   casing: 'snake_case',
   dbCredentials: {
-    url: process.env.COONG_POSTGRES_URL!,
+    url: process.env.POSTGRES_URL!,
   },
   /**
    * postgres is Vercel x Supabase

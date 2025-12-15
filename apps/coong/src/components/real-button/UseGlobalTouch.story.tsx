@@ -1,5 +1,5 @@
 import {createUniqueId, JSX} from 'solid-js'
-import {Meta, StoryObj} from 'storybook-solidjs'
+import {Meta, StoryObj} from 'storybook-solidjs-vite'
 import {ELEMENT_IDENTIFIER_GLOBAL_TOUCH, useGlobalDown, useGlobalTouchEmitter} from './use-global-touch'
 
 export interface UseGlobalTouchProps extends JSX.HTMLAttributes<HTMLButtonElement> {}
@@ -30,7 +30,7 @@ const Root = () => {
 
 const meta = {
   component: Root,
-  title: 'BPlan/components/real-button/UseGlobalTouch',
+  title: 'Coong/components/real-button/UseGlobalTouch',
 } satisfies Meta<typeof Root>
 
 // storybook meta

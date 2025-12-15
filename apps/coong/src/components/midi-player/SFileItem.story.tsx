@@ -1,4 +1,4 @@
-import type {Meta, StoryObj} from 'storybook-solidjs'
+import type {Meta, StoryObj} from 'storybook-solidjs-vite'
 import {fn} from '@storybook/test'
 import {SFileItem} from './SFileItem'
 
@@ -61,7 +61,7 @@ const meta = {
       default: 'white',
     },
   },
-  title: 'BPlan/Components/MidiPlayer/SFileItem',
+  title: 'Coong/Components/MidiPlayer/SFileItem',
 } satisfies Meta<typeof SFileItem>
 
 export default meta

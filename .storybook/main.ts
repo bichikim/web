@@ -3,7 +3,6 @@ import type {StorybookConfig} from 'storybook-solidjs-vite'
 
 export default <StorybookConfig>{
   addons: [
-    '@storybook/addon-essentials',
     '@storybook/addon-onboarding',
     '@storybook/addon-docs',
     '@storybook/addon-a11y',
