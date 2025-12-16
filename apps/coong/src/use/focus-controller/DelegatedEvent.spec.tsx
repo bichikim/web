@@ -1,7 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
-import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
+import {describe, expect, it, vi} from 'vitest'
 import {renderHook, render, fireEvent} from '@solidjs/testing-library'
 import {useContext} from 'solid-js'
 import {DelegatedEventContext, useDelegatedEmitHandler, useDelegatedOn, DelegatedEventProvider} from './DelegatedEvent'
@@ -35,7 +35,6 @@ describe('DelegatedEventProvider', () => {
     ))
     expect(providedContext).toBeDefined()
     expect(providedContext.delegatedEventMap).toBeInstanceOf(Map)
-    expect(typeof providedContext.prefix).toBe('string')
     expect(providedContext.isFake).toBe(false)
   })
 
@@ -44,16 +43,19 @@ describe('DelegatedEventProvider', () => {
 
     expect(result.isFake).toBe(true)
     expect(result.delegatedEventMap).toBeInstanceOf(Map)
-    expect(typeof result.prefix).toBe('string')
   })
 })
 
 describe('useDelegatedEmitHandler', () => {
   it('should emit event', () => {
-    const prefix = 'test-prefix'
     const channel = 'test-channel'
     const key = 'test-key'
     const value = 'test-value'
+
+    vi.mocked(createDelegatedEvent).mockReturnValue({
+      delegatedEventMap: new Map(),
+      unsubscribe: vi.fn(),
+    })
 
     const MockChild = () => {
       const emit = useDelegatedEmitHandler()
@@ -62,47 +64,50 @@ describe('useDelegatedEmitHandler', () => {
     }
 
     const {container} = render(() => (
-      <DelegatedEventProvider initialEventNamePrefix={prefix}>
+      <DelegatedEventProvider>
         <MockChild />
       </DelegatedEventProvider>
     ))
 
     fireEvent.click(container.querySelector('button')!)
-    expect(delegatedEmit).toHaveBeenCalledWith(channel, key, value, prefix)
+    expect(delegatedEmit).toHaveBeenCalledWith(channel, key, value)
   })
 })
 
 describe('useDelegatedOn', () => {
   it('should add listener', () => {
     const addListener = vi.fn()
-    const unsubscribe = vi.fn()
+    const removeListener = vi.fn()
 
     vi.mocked(delegatedOn).mockReturnValue({
       addListener,
-      unsubscribe,
+      removeListener,
     })
-    const prefix = 'test-prefix'
     const channel = 'test-channel'
     const key = 'test-key'
-    const value = 'test-value'
     const listener = vi.fn()
 
+    vi.mocked(createDelegatedEvent).mockReturnValue({
+      delegatedEventMap: new Map(),
+      unsubscribe: vi.fn(),
+    })
+
     const MockChild = () => {
-      useDelegatedOn(channel, key, listener)
+      useDelegatedOn(channel, key, () => listener)
 
       return null
     }
 
     const {unmount} = render(() => (
-      <DelegatedEventProvider initialEventNamePrefix={prefix}>
+      <DelegatedEventProvider>
         <MockChild />
       </DelegatedEventProvider>
     ))
 
-    expect(delegatedOn).toHaveBeenCalledWith(new Map(), channel, key, listener, prefix)
+    expect(delegatedOn).toHaveBeenCalledWith(expect.any(Map), channel, key, listener, expect.any(Function))
     expect(addListener).toHaveBeenCalled()
-    expect(unsubscribe).not.toHaveBeenCalled()
+    expect(removeListener).not.toHaveBeenCalled()
     unmount()
-    expect(unsubscribe).toHaveBeenCalled()
+    expect(removeListener).toHaveBeenCalled()
   })
 })
