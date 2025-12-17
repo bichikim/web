@@ -24,6 +24,8 @@ export interface UseStorageOptions<T> extends StorageOptions {
 }
 
 /**
+ * todo solidstart 에서 쿠키가 지금 구현 방법으로는 동작하지 않음 수정 해야된다
+ * 가능 하다면 apps/coong 에서 직접 구현하거나 cookie 가져오는 방법이 있는 함수를 전달하는 방법으로 해결해야함
  * Storage hook function type
  * @template T Type of value to store
  * @param kind Storage type ('cookie' | 'local' | 'session')
