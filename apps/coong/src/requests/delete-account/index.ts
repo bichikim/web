@@ -4,7 +4,7 @@ import {db} from 'src/server/db'
 import {profiles} from 'src/server/db/schema/profiles'
 import {eq} from 'drizzle-orm'
 
-export const deleteAccountAction = action(async () => {
+export const fetchDeleteAccount = async () => {
   'use server'
 
   const supabase = createSupabase()
@@ -35,4 +35,6 @@ export const deleteAccountAction = action(async () => {
   }
 
   return {success: true}
-}, 'auth/delete-account')
+}
+
+export const deleteAccountAction = action(fetchDeleteAccount, 'auth/delete-account')

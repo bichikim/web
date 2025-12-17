@@ -1,1 +1,1 @@
-export * from './ReloadPrompt'
+export {ReloadPrompt as default} from './ReloadPrompt'

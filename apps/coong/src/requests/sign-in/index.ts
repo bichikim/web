@@ -2,7 +2,7 @@ import {useMutation} from '@tanstack/solid-query'
 import {createSupabase} from 'src/utils/supabase'
 import {action} from '@solidjs/router'
 
-export const signInAction = action(async ({email, password}: {email: string; password: string}) => {
+export const fetchSignIn = async ({email, password}: {email: string; password: string}) => {
   'use server'
 
   const supabase = createSupabase()
@@ -19,4 +19,6 @@ export const signInAction = action(async ({email, password}: {email: string; pas
   console.log('data', data)
 
   return data
-}, 'auth/sign-in')
+}
+
+export const signInAction = action(fetchSignIn, 'auth/sign-in')

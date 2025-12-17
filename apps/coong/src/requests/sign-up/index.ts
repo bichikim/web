@@ -1,7 +1,7 @@
 import {action} from '@solidjs/router'
 import {createSupabase} from 'src/utils/supabase'
 
-export const signUpAction = action(async ({email, password}: {email: string; password: string}) => {
+export const fetchSignUp = async ({email, password}: {email: string; password: string}) => {
   'use server'
 
   const supabase = createSupabase()
@@ -16,4 +16,6 @@ export const signUpAction = action(async ({email, password}: {email: string; pas
   }
 
   return data
-}, 'auth/sign-up')
+}
+
+export const signUpAction = action(fetchSignUp, 'auth/sign-up')

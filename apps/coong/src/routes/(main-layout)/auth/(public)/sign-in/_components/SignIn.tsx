@@ -3,22 +3,21 @@ import {useSupabase} from 'src/use/supabase'
 import {useNavigate} from '@solidjs/router'
 import {useAuth} from 'src/store/auth'
 
-export const SignIn = () => {
-  const {signInWithPassword, signInError, user, loading} = useAuth()
-  const navigate = useNavigate()
-  const [email, setEmail] = createSignal('')
-  const [password, setPassword] = createSignal('')
+export interface SignInProps {
+  email: string
+  error: Error | null
+  loading: boolean
+  onLogin: () => Promise<void>
+  onUpdateEmail: (email: string) => void
+  onUpdatePassword: (password: string) => void
+  password: string
+}
 
+export const SignIn = (props: SignInProps) => {
   const handleLogin = async (e: Event) => {
     e.preventDefault()
-    await signInWithPassword(email(), password())
+    await props.onLogin()
   }
-
-  createEffect(() => {
-    if (user()) {
-      navigate('/')
-    }
-  })
 
   return (
     <div class="flex flex-col items-center justify-center min-h-screen bg-gray-100">
@@ -28,26 +27,26 @@ export const SignIn = () => {
           <input
             type="email"
             placeholder="Email"
-            value={email()}
-            onInput={(e) => setEmail(e.currentTarget.value)}
+            value={props.email}
+            onInput={(e) => props.onUpdateEmail(e.currentTarget.value)}
             class="p-2 border rounded"
             required
           />
           <input
             type="password"
             placeholder="Password"
-            value={password()}
-            onInput={(e) => setPassword(e.currentTarget.value)}
+            value={props.password}
+            onInput={(e) => props.onUpdatePassword(e.currentTarget.value)}
             class="p-2 border rounded"
             required
           />
-          {signInError() && <p class="text-red-500 text-sm">{signInError()?.message}</p>}
+          {props.error && <p class="text-red-500 text-sm">{props.error?.message}</p>}
           <button
             type="submit"
-            disabled={loading()}
+            disabled={props.loading}
             class="p-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
           >
-            {loading() ? 'Loading...' : 'Sign In'}
+            {props.loading ? 'Loading...' : 'Sign In'}
           </button>
         </form>
         <div class="mt-4 text-center">

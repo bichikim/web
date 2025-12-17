@@ -1,7 +1,7 @@
 import {createSupabase} from 'src/utils/supabase'
 import {action} from '@solidjs/router'
 
-export const signOutAction = action(async () => {
+export const fetchSignOut = async () => {
   'use server'
 
   const supabase = createSupabase()
@@ -13,4 +13,6 @@ export const signOutAction = action(async () => {
   }
 
   return data
-}, 'auth/sign-out')
+}
+
+export const signOutAction = action(fetchSignOut, 'auth/sign-out')

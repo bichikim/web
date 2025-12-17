@@ -6,7 +6,7 @@ import {updateUserMetadataAction} from 'src/requests/update-user-metadata'
 export default function HomePage() {
   const {user, signOut} = useAuth()
 
-  const email = createMemo(() => user()?.user_metadata.email ?? '')
+  const email = createMemo(() => user()?.user_metadata?.email ?? '')
 
   const isSignedIn = createMemo(() => user() !== null)
 

@@ -6,9 +6,10 @@ import {signOutAction} from 'src/requests/sign-out'
 import {changePasswordAction} from 'src/requests/change-password'
 import {resetPasswordAction} from 'src/requests/reset-password'
 import {useSubmission, useAction, revalidate, createAsync} from '@solidjs/router'
+import {withHandyQuery} from 'src/use/handy-query'
 
 const AuthContext = createContext<{
-  changePassword: (newPassword: string) => Promise<void>
+  changePassword: (newPassword: string) => Promise<User | null>
   changePasswordError: Accessor<Error | null>
   loading: Accessor<boolean>
   resetPassword: (email: string) => Promise<void>
@@ -19,7 +20,7 @@ const AuthContext = createContext<{
   signOutError: Accessor<Error | null>
   user: Accessor<User | null>
 }>({
-  changePassword: () => Promise.resolve(),
+  changePassword: () => Promise.resolve(null),
   changePasswordError: () => null,
   loading: () => false,
   resetPassword: () => Promise.resolve(),
@@ -35,22 +36,10 @@ export interface AuthProviderProps {
   children: JSX.Element
 }
 
-export const useUserQuery = () => {
-  const data = createAsync(() => userQuery())
-
-  const refetch = () => {
-    console.log('refetching user')
-    revalidate(userQuery.key)
-  }
-
-  return {
-    data,
-    refetch,
-  }
-}
+export const useUserQuery = withHandyQuery(userQuery)
 
 export function AuthProvider(props: AuthProviderProps) {
-  const userQuery = useUserQuery()
+  const userQuery = useUserQuery({emptyValue: null})
   const signInSubmission = useSubmission(signInAction)
   const _signInAction = useAction(signInAction)
   const signOutSubmission = useSubmission(signOutAction)

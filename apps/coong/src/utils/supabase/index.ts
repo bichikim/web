@@ -1,12 +1,13 @@
 import {createBrowserClient} from '@supabase/ssr'
+import type {SupabaseClient} from '@supabase/supabase-js'
 import {createSupabaseServer} from './supabase-server'
-import {isServer, getRequestEvent} from 'solid-js/web'
+import {getRequestEvent} from 'solid-js/web'
 import {getSupabaseClientKeys} from 'src/env/self'
 
-export const createSupabase = () => {
+export const createSupabase = (): SupabaseClient<any, string> => {
   const {key, url} = getSupabaseClientKeys()
 
-  if (isServer) {
+  if (import.meta.env.SSR) {
     const event = getRequestEvent()
 
     if (!event) {
