@@ -7,6 +7,7 @@ import {
   ParentProps,
   untrack,
   useContext,
+  Show,
 } from 'solid-js'
 import {freeze, getWindow} from '@winter-love/utils'
 
@@ -111,10 +112,16 @@ export const ServiceWorkerContext = createContext<Readonly<ServiceWorkerContextV
     }) as const,
   {
     handleSkipUpdate: () => {
-      throw new Error('handleSkipUpdate is not implemented')
+      if (import.meta.env.PROD) {
+        throw new Error('handleSkipUpdate is not implemented')
+      }
     },
     handleSkipWaiting: () => {
-      throw new Error('handleSkipWaiting is not implemented')
+      if (import.meta.env.PROD) {
+        throw new Error('handleSkipWaiting is not implemented')
+      }
+
+      return Promise.resolve(true)
     },
   },
 ])
@@ -126,8 +133,13 @@ export interface ServiceWorkerProviderProps extends ParentProps {
 export const ServiceWorkerProvider = (props: ServiceWorkerProviderProps) => {
   const source = untrack(() => props.src)
   const context = createServiceWorker(source)
+  const isProd = import.meta.env.PROD
 
-  return <ServiceWorkerContext.Provider value={context}>{props.children}</ServiceWorkerContext.Provider>
+  return (
+    <Show when={isProd} fallback={props.children}>
+      <ServiceWorkerContext.Provider value={context}>{props.children}</ServiceWorkerContext.Provider>
+    </Show>
+  )
 }
 
 export const useServiceWorker = (): Readonly<ServiceWorkerContextValue> => {

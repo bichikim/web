@@ -14,6 +14,11 @@ declare module '*.json' {
   export default value
 }
 
+declare module '*.lottie' {
+  const src: string
+  export default src
+}
+
 import type {User, SupabaseClient} from '@supabase/supabase-js'
 
 declare module '@solidjs/start/server' {

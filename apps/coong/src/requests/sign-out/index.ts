@@ -6,13 +6,11 @@ export const fetchSignOut = async () => {
 
   const supabase = createSupabase()
 
-  const {error, data} = await supabase.auth.signOut()
+  const {error} = await supabase.auth.signOut()
 
   if (error) {
     throw new Error(error.message)
   }
-
-  return data
 }
 
 export const signOutAction = action(fetchSignOut, 'auth/sign-out')

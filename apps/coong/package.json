@@ -27,8 +27,6 @@
     "@supabase/supabase-js": "^2.86.0",
     "@tanstack/solid-query": "^5.90.14",
     "@tonejs/midi": "^2.0.28",
-    "@trpc/client": "^11.8.0",
-    "@trpc/server": "^11.8.0",
     "@unocss/reset": "^0.65.1",
     "@vercel/analytics": "^1.5.0",
     "@winter-love/solid-components": "workspace:*",

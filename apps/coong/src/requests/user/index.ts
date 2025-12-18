@@ -1,5 +1,3 @@
-import {useQuery} from '@tanstack/solid-query'
-import {useSupabase} from 'src/use/supabase'
 import {createSupabase} from 'src/utils/supabase'
 import {query} from '@solidjs/router'
 

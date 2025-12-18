@@ -61,10 +61,10 @@ export const useMidiFileInput = (element: MaybeAccessor<HTMLElement | null>, opt
               return null
             }
 
-            return notes.map((track): SampleStart => {
+            return notes.map((track: SampleStart): SampleStart => {
               return {
                 duration: track.duration,
-                note: track.name,
+                note: track.name ?? track.note,
                 time: track.time,
                 velocity: track.velocity,
               }

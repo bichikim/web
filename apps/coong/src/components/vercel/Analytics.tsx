@@ -29,7 +29,8 @@ export const Analytics = () => {
 
     pageview({
       path: `${location.pathname}${connectChar}${search}`,
-      route: computeRoute(location.pathname, params),
+      // this params use for log so it doesn't matter the type
+      route: computeRoute(location.pathname, params as any),
     })
   })
 

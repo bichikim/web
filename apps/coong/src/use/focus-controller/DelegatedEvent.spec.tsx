@@ -1,14 +1,14 @@
 /**
  * @vitest-environment jsdom
  */
-import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
-import {renderHook, render, fireEvent} from '@solidjs/testing-library'
+import {describe, expect, it, vi} from 'vitest'
+import {fireEvent, render, renderHook} from '@solidjs/testing-library'
 import {useContext} from 'solid-js'
 import {DelegatedEventContext, useDelegatedEmitHandler, useDelegatedOn, DelegatedEventProvider} from './DelegatedEvent'
 import {createDelegatedEvent, delegatedEmit, delegatedOn} from 'src/utils/focus-controller/delegated-event'
 
 vi.mock('src/utils/focus-controller/delegated-event', () => ({
-  DEFAULT_CHANNEL_PREFIX: '$$channel__',
+  DEFAULT_CHANNEL_PREFIX: '',
   createDelegatedEvent: vi.fn(),
   delegatedEmit: vi.fn(),
   delegatedOn: vi.fn(),
@@ -16,11 +16,10 @@ vi.mock('src/utils/focus-controller/delegated-event', () => ({
 
 describe('DelegatedEventProvider', () => {
   it('should provide context values', () => {
-    vi.mocked(createDelegatedEvent).mockReturnValue({
-      delegatedEventMap: new Map(),
-      unsubscribe: vi.fn(),
-    })
-    let providedContext: any = undefined
+    const delegatedEventMap = new Map()
+
+    vi.mocked(createDelegatedEvent).mockReturnValue({delegatedEventMap, unsubscribe: vi.fn()})
+    let providedContext: unknown = undefined
 
     const MockChild = () => {
       providedContext = useContext(DelegatedEventContext)
@@ -34,9 +33,9 @@ describe('DelegatedEventProvider', () => {
       </DelegatedEventProvider>
     ))
     expect(providedContext).toBeDefined()
-    expect(providedContext.delegatedEventMap).toBeInstanceOf(Map)
-    expect(typeof providedContext.prefix).toBe('string')
-    expect(providedContext.isFake).toBe(false)
+    expect((providedContext as any).delegatedEventMap).toBe(delegatedEventMap)
+    expect((providedContext as any).delegatedEventMap).toBeInstanceOf(Map)
+    expect((providedContext as any).isFake).toBe(false)
   })
 
   it('should provide fake context', () => {
@@ -44,13 +43,11 @@ describe('DelegatedEventProvider', () => {
 
     expect(result.isFake).toBe(true)
     expect(result.delegatedEventMap).toBeInstanceOf(Map)
-    expect(typeof result.prefix).toBe('string')
   })
 })
 
 describe('useDelegatedEmitHandler', () => {
   it('should emit event', () => {
-    const prefix = 'test-prefix'
     const channel = 'test-channel'
     const key = 'test-key'
     const value = 'test-value'
@@ -62,47 +59,52 @@ describe('useDelegatedEmitHandler', () => {
     }
 
     const {container} = render(() => (
-      <DelegatedEventProvider initialEventNamePrefix={prefix}>
+      <DelegatedEventProvider>
         <MockChild />
       </DelegatedEventProvider>
     ))
 
     fireEvent.click(container.querySelector('button')!)
-    expect(delegatedEmit).toHaveBeenCalledWith(channel, key, value, prefix)
+    expect(delegatedEmit).toHaveBeenCalledWith(channel, key, value)
   })
 })
 
 describe('useDelegatedOn', () => {
-  it('should add listener', () => {
+  it('should add listener and cleanup on unmount', async () => {
     const addListener = vi.fn()
-    const unsubscribe = vi.fn()
+    const removeListener = vi.fn()
 
     vi.mocked(delegatedOn).mockReturnValue({
       addListener,
-      unsubscribe,
+      removeListener,
     })
-    const prefix = 'test-prefix'
     const channel = 'test-channel'
     const key = 'test-key'
-    const value = 'test-value'
     const listener = vi.fn()
+    const unsubscribe = vi.fn()
+    const delegatedEventMap = new Map()
+
+    vi.mocked(createDelegatedEvent).mockReturnValue({delegatedEventMap, unsubscribe})
 
     const MockChild = () => {
-      useDelegatedOn(channel, key, listener)
+      useDelegatedOn(channel, key, () => listener)
 
       return null
     }
 
     const {unmount} = render(() => (
-      <DelegatedEventProvider initialEventNamePrefix={prefix}>
+      <DelegatedEventProvider>
         <MockChild />
       </DelegatedEventProvider>
     ))
 
-    expect(delegatedOn).toHaveBeenCalledWith(new Map(), channel, key, listener, prefix)
+    await Promise.resolve()
+    expect(delegatedOn).toHaveBeenCalledWith(delegatedEventMap, channel, key, listener, expect.any(Function))
     expect(addListener).toHaveBeenCalled()
+    expect(removeListener).not.toHaveBeenCalled()
     expect(unsubscribe).not.toHaveBeenCalled()
     unmount()
+    expect(removeListener).toHaveBeenCalled()
     expect(unsubscribe).toHaveBeenCalled()
   })
 })

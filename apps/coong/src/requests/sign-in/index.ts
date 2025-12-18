@@ -1,4 +1,3 @@
-import {useMutation} from '@tanstack/solid-query'
 import {createSupabase} from 'src/utils/supabase'
 import {action} from '@solidjs/router'
 

@@ -1,4 +1,3 @@
-import type {ResponseMiddleware, RequestMiddleware} from '@solidjs/start/middleware'
 import {createMiddleware} from '@solidjs/start/middleware'
 
 export type MiddlewareFragment = Parameters<typeof createMiddleware>[0]
