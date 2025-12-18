@@ -9,13 +9,16 @@ export const cspMiddleware = createMiddlewareFragment({
 
     const csp = `
       default-src 'self';
-      script-src 'self' 'nonce-${nonce}';
+      img-src 'self' data:;
+      script-src 'nonce-${nonce}' 'strict-dynamic' '${import.meta.env.PROD ? 'unsafe-eval' : 'unsafe-inline'}';
+      style-src ${import.meta.env.PROD ? `'nonce-${nonce}'` : `'unsafe-inline'`};
       object-src 'none';
       base-uri 'none';
       frame-ancestors 'none';
       form-action 'self';
-    `
+    `.replace(/\s+/g, ' ')
 
-    // event.response.headers.set('Content-Security-Policy', csp)
+    console.log('csp', csp)
+    event.response.headers.set('Content-Security-Policy', csp)
   },
 })
