@@ -1,8 +1,8 @@
 import {createMiddlewareFragment} from 'src/utils/middleware-helper'
 import {json} from '@solidjs/router'
+import {TRUSTED_ORIGINS} from 'src/middleware/consts'
 
 const SAFE_METHODS = ['GET', 'HEAD', 'OPTIONS', 'TRACE']
-const TRUSTED_ORIGINS = ['http://localhost:3000', 'https://coong.io']
 
 /**
  * CSRF middleware to protect against CSRF attacks.
