@@ -63,7 +63,7 @@ export default function MusicLayout(props: RouteSectionProps) {
     return location.pathname === PIANO_PATH ? 'music' : 'piano'
   })
 
-  const [musics, setMusics] = useStorage<MusicInfo[]>('local', getStorageKey('piano-musics-default'), {
+  const [musics, setMusics] = useStorage('local', getStorageKey('piano-musics-default'), {
     active: isActiveStore,
     enforceValue: preset()?.musics,
     initValue: [],

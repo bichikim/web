@@ -1,6 +1,7 @@
 import {createServerClient, parseCookieHeader} from '@supabase/ssr'
 import {getSupabaseClientKeys} from 'src/env/self'
 import type {RequestEvent} from 'solid-js/web'
+import {setCookie} from 'vinxi/http'
 
 export const createSupabaseServer = (event: RequestEvent) => {
   const {key, url} = getSupabaseClientKeys()
@@ -18,11 +19,12 @@ export const createSupabaseServer = (event: RequestEvent) => {
       },
       setAll(cookiesToSet) {
         cookiesToSet.forEach(({name, value, options}) => {
-          try {
-            event.nativeEvent.node.res.appendHeader('Set-Cookie', `${name}=${value}; Path=/; SameSite=Lax; Secure`)
-          } catch (e) {
-            // ignore
-          }
+          setCookie(event.nativeEvent, name, value, {
+            path: '/',
+            sameSite: 'lax',
+            secure: import.meta.env.PROD,
+            ...options,
+          })
         })
       },
     },

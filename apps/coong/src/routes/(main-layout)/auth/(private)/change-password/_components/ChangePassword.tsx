@@ -1,6 +1,7 @@
 import {createSignal, Show} from 'solid-js'
 import {useNavigate} from '@solidjs/router'
 import {useAuth} from 'src/store/auth'
+import {HOME_PATH} from 'src/utils/route-names'
 
 export const ChangePassword = () => {
   const navigate = useNavigate()
@@ -20,9 +21,8 @@ export const ChangePassword = () => {
 
     try {
       const result = await changePassword(newPwd)
-      console.log(result)
 
-      navigate('/')
+      navigate(HOME_PATH)
     } catch (err) {
       setError(err instanceof Error ? err.message : '패스워드 변경에 실패했습니다.')
     }

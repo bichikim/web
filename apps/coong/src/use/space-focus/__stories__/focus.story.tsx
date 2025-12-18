@@ -111,7 +111,6 @@ const FocusPlaygroundBody: Component<FocusPlaygroundProps> = (props) => {
   }
 
   const handleDirection = (direction: Direction, options: {transient?: boolean} = {}) => {
-    console.log('handleDirection', direction, options)
     focusController?.moveFocus(direction)
     setActiveDirection(direction)
 

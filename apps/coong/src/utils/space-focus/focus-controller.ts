@@ -35,13 +35,9 @@ export const createFocusController = (onCallback: (rect: FocusRect, focused: boo
       return null
     }
 
-    console.log('moveFocus__', direction, currentRect)
-
     const siblingRects = getSiblingRects(currentRect)
 
     const nextRect = jumpFocus(currentRect, Array.from(siblingRects), direction)
-
-    console.log('moveFocus___', nextRect)
 
     if (nextRect) {
       onChange(nextRect)

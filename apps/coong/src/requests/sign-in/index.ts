@@ -16,8 +16,6 @@ export const fetchSignIn = async ({email, password}: {email: string; password: s
     throw new Error(error.message)
   }
 
-  console.log('data', data)
-
   return data
 }
 
