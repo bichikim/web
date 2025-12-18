@@ -7,6 +7,8 @@ const supabaseOrigin = new URL(getSupabaseClientKeys().url).origin
 const connectSrc = [
   //
   `'self'`,
+  // Dev-only: allow sourcemaps and HMR connections.
+  ...(import.meta.env.PROD ? [] : [`data:`, `ws:`, `wss:`]),
   // @vercel/analytics
   `https://vitals.vercel-insights.com`,
   // supabase for browser operations (realtime, storage, etc.)
