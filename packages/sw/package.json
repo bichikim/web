@@ -9,9 +9,11 @@
   },
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs"
     },
     "./sw": {
+      "types": "./dist/sw.d.ts",
       "import": "./dist/sw.mjs"
     },
     "./*": "./*"
