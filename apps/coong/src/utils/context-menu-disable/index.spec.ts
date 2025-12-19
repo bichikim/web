@@ -2,15 +2,15 @@
  * @vitest-environment jsdom
  */
 import {describe, expect, it, vi, afterEach} from 'vitest'
-import {createDisableContextMenu, OFF_CONTEXT_MENU_FLAG} from './index'
+import {createContextMenuDisable, OFF_CONTEXT_MENU_FLAG} from './index'
 
-describe('createDisableContextMenu', () => {
+describe('createContextMenuDisable', () => {
   afterEach(() => {
     window[OFF_CONTEXT_MENU_FLAG] = undefined
   })
 
   it('should disable context menu when off is true', () => {
-    const disableContextMenu = createDisableContextMenu()
+    const disableContextMenu = createContextMenuDisable()
     const addEventListenerSpy = vi.spyOn(window, 'addEventListener')
     const preventDefaultSpy = vi.spyOn(MouseEvent.prototype, 'preventDefault')
     const stopPropagationSpy = vi.spyOn(MouseEvent.prototype, 'stopPropagation')
@@ -32,7 +32,7 @@ describe('createDisableContextMenu', () => {
   })
 
   it('should enable context menu when off is false', () => {
-    const disableContextMenu = createDisableContextMenu()
+    const disableContextMenu = createContextMenuDisable()
     const removeEventListenerSpy = vi.spyOn(window, 'removeEventListener')
 
     // First disable
@@ -45,7 +45,7 @@ describe('createDisableContextMenu', () => {
   })
 
   it('should not add listener if already disabled', () => {
-    const disableContextMenu = createDisableContextMenu()
+    const disableContextMenu = createContextMenuDisable()
     const addEventListenerSpy = vi.spyOn(window, 'addEventListener')
 
     // First disable
@@ -57,7 +57,7 @@ describe('createDisableContextMenu', () => {
   })
 
   it('should not remove listener if not disabled', () => {
-    const disableContextMenu = createDisableContextMenu()
+    const disableContextMenu = createContextMenuDisable()
     const removeEventListenerSpy = vi.spyOn(window, 'removeEventListener')
 
     // Try to enable without disabling first

@@ -21,7 +21,7 @@ declare global {
  * it won't disable the context menu if the flag is already set
  * @experimental
  */
-export const createDisableContextMenu = () => {
+export const createContextMenuDisable = () => {
   return (off: boolean) => {
     const window = getWindow()
 

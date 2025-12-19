@@ -2,11 +2,11 @@
  * @vitest-environment node
  */
 import {describe, expect, it} from 'vitest'
-import {createDisableContextMenu} from './index'
+import {createContextMenuDisable} from './index'
 
-describe('createDisableContextMenu in node environment', () => {
+describe('createContextMenuDisable in node environment', () => {
   it('should not throw error when window is not available', () => {
-    const disableContextMenu = createDisableContextMenu()
+    const disableContextMenu = createContextMenuDisable()
 
     expect(() => disableContextMenu(true)).not.toThrow()
     expect(() => disableContextMenu(false)).not.toThrow()

@@ -4,11 +4,13 @@ import {SAuroraText} from 'src/components/text'
 import {useAuth} from 'src/store/auth'
 import {clientOnly} from '@solidjs/start'
 import {useLocation, useNavigate} from '@solidjs/router'
-import {createSignal, createEffect, onMount, Show} from 'solid-js'
+import {onMount, Show} from 'solid-js'
 import {HOME_PATH} from 'src/utils/route-names'
+import {queryToString} from 'src/utils/query-params'
 import {cva} from 'class-variance-authority'
+import {useCountdown} from 'src/use/countdown'
 
-const LottieClient = clientOnly(() =>
+const ClientOnlyLottie = clientOnly(() =>
   import('src/components/lottie/Lottie').then((mod) => ({
     default: mod.Lottie,
   })),
@@ -32,66 +34,6 @@ const titleStyle = cva('text-3xl font-bold text-dark', {
   },
 })
 
-const queryToString = (query: string[] | string): string => {
-  if (Array.isArray(query)) {
-    return query.join(',')
-  }
-
-  return String(query)
-}
-
-const useAnimationInterval = (callback: () => void) => {
-  const [start, setStart] = createSignal(false)
-  let interval: any
-
-  createEffect(() => {
-    const _start = start()
-
-    if (!_start) {
-      return
-    }
-
-    const animationFrame = () => {
-      callback()
-      requestAnimationFrame(animationFrame)
-    }
-
-    interval = requestAnimationFrame(animationFrame)
-
-    return () => cancelAnimationFrame(interval)
-  })
-
-  return {
-    start: () => setStart(true),
-    stop: () => setStart(false),
-  }
-}
-
-const useStartNavigate = (wait: number, navigate: () => void) => {
-  const [startTime, setStartTime] = createSignal(0)
-  const [count, setCount] = createSignal(wait)
-
-  const interval = useAnimationInterval(() => {
-    setCount(wait - (Date.now() - startTime()))
-
-    if (count() <= 0) {
-      setCount(0)
-      navigate()
-    }
-  })
-
-  const start = () => {
-    setStartTime(Date.now())
-    interval.start()
-  }
-
-  return {
-    ...interval,
-    count,
-    start,
-  }
-}
-
 export default function VerifyEmail() {
   const {user, exchangeCodeForSection, exchangeCodeForSectionError, loading} = useAuth()
 
@@ -99,7 +41,7 @@ export default function VerifyEmail() {
   const {code} = location.query
   const navigate = useNavigate()
 
-  const afterNavigate = useStartNavigate(20_000, () => navigate(HOME_PATH))
+  const afterNavigate = useCountdown(20_000, () => navigate(HOME_PATH))
 
   onMount(async () => {
     if (!code) {
@@ -126,7 +68,7 @@ export default function VerifyEmail() {
       }}
     >
       <div class="absolute top--10rem left-0 right-0 bottom-0">
-        <LottieClient src={tada} play="autoplay" loop />
+        <ClientOnlyLottie src={tada} play="autoplay" loop />
       </div>
       <div class="flex flex-col items-center justify-center absolute top-0 bottom-0 left-0 right-0">
         <h1 class={titleStyle({loading: loading()})}>Verified your email</h1>

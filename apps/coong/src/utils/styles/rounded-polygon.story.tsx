@@ -1,14 +1,14 @@
-import {rounededPolygon, RounededPolygonProps} from './clip-path'
+import {roundedPolygon, RoundedPolygonProps} from './rounded-polygon'
 import {Meta, StoryObj} from 'storybook-solidjs-vite'
 
-const Template = (props: RounededPolygonProps & {height: number; width: number}) => {
+const Template = (props: RoundedPolygonProps & {height: number; width: number}) => {
   return (
     <>
       <div
         class="test"
         style={{
           'background-color': 'red',
-          'clip-path': rounededPolygon({
+          'clip-path': roundedPolygon({
             bottomLeft: props.bottomLeft,
             bottomRight: props.bottomRight,
             padding: props.padding,
@@ -31,7 +31,7 @@ const meta = {
     width: {control: 'number'},
   },
   component: Template,
-  title: 'Coong/Utils/Styles/ClipPath',
+  title: 'Coong/Utils/Styles/RoundedPolygon',
 } satisfies Meta<typeof Template>
 
 export default meta
@@ -49,3 +49,4 @@ export const Default: Story = {
     width: 150,
   },
 }
+

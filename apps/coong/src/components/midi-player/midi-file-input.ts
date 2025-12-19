@@ -1,6 +1,6 @@
 import {createMemo, createSignal, onCleanup} from 'solid-js'
 import {MaybeAccessor, resolveAccessor, useEvent} from '@winter-love/solid-use'
-import {loadMidi} from 'src/utils/read-midi'
+import {loadMidi} from 'src/utils/midi-reader'
 import {getWindow, isNotNull, ONE_MB, TEN} from '@winter-love/utils'
 import type {Midi} from '@winter-love/tonejs-midi'
 import {MusicInfo} from 'src/components/midi-player/SFileItem'
