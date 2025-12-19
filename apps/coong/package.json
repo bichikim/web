@@ -37,6 +37,7 @@
     "@winter-love/utils": "workspace:*",
     "class-variance-authority": "^0.7.1",
     "cookie": "^1.0.2",
+    "cookie-es": "^2.0.0",
     "cross-env": "^10.1.0",
     "drizzle-orm": "^0.44.7",
     "h3": "^1.15.1",
