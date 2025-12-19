@@ -1,5 +1,6 @@
 import {createEffect, createSignal, onCleanup} from 'solid-js'
 import tadaJson from './tada.json?url'
+import {Lottie} from 'src/components/lottie/Lottie'
 
 /**
  * lazy load lottie-web
@@ -11,32 +12,5 @@ const getLottie = async () => {
 }
 
 export const TadaDemo = () => {
-  const [element, setElement] = createSignal<HTMLDivElement | null>(null)
-
-  /**
-   * client side load lottie
-   */
-  createEffect(async () => {
-    const lottie = await getLottie()
-
-    const _element = element()
-
-    if (!_element) {
-      return
-    }
-
-    const animation = lottie.loadAnimation({
-      autoplay: true,
-      container: _element,
-      loop: true,
-      path: tadaJson,
-      renderer: 'svg',
-    })
-
-    onCleanup(() => {
-      animation.destroy()
-    })
-  })
-
-  return <div class="w-50 h-50" ref={setElement}></div>
+  return <Lottie src={tadaJson} play="autoplay" loop />
 }

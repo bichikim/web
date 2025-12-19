@@ -1,4 +1,4 @@
-export const pianoKeys = {
+export const pianoShortcuts = {
   'key-piano-flat': [
     'block b-solid b-#ccc rd-t-0 inline-flex overflow-hidden b-b-2px',
     'focus-visible:outline-black focus-visible:outline-auto focus-visible:outline-2px',

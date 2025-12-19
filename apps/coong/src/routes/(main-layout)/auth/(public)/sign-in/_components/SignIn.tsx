@@ -1,7 +1,4 @@
-import {createSignal, createEffect} from 'solid-js'
-import {useSupabase} from 'src/use/supabase'
-import {useNavigate} from '@solidjs/router'
-import {useAuth} from 'src/store/auth'
+import {SIGN_UP_PATH} from 'src/utils/route-names'
 
 export interface SignInProps {
   email: string
@@ -28,6 +25,7 @@ export const SignIn = (props: SignInProps) => {
             type="email"
             placeholder="Email"
             value={props.email}
+            autocomplete="email"
             onInput={(e) => props.onUpdateEmail(e.currentTarget.value)}
             class="p-2 border rounded"
             required
@@ -35,6 +33,7 @@ export const SignIn = (props: SignInProps) => {
           <input
             type="password"
             placeholder="Password"
+            autocomplete="current-password"
             value={props.password}
             onInput={(e) => props.onUpdatePassword(e.currentTarget.value)}
             class="p-2 border rounded"
@@ -50,7 +49,7 @@ export const SignIn = (props: SignInProps) => {
           </button>
         </form>
         <div class="mt-4 text-center">
-          <a href="/public/sign-up" class="text-blue-500 hover:underline">
+          <a href={SIGN_UP_PATH} class="text-blue-500 hover:underline">
             Don't have an account? Sign Up
           </a>
         </div>

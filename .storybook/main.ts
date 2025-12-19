@@ -45,6 +45,7 @@ export default <StorybookConfig>{
   },
   async viteFinal(config) {
     return mergeConfig(config, {
+      assetsInclude: ['**/*.lottie'],
       define: {
         'process.env': {},
       },

@@ -5,7 +5,8 @@ import transformerCompileClass from './transformer-class'
 import {defineUsefulConfig} from 'unocss-preset-useful'
 import {presetVariable} from '@winter-love/unocss-preset-var'
 import * as theme from '@unocss/preset-uno/theme'
-import {pianoKeys} from './piano'
+import {pianoShortcuts} from './piano'
+import {auroraShortcuts} from './aurora'
 const HUNDRED = 100
 
 const toNumber = (value: string, defaultValue: number): number => {
@@ -97,8 +98,9 @@ export default defineUsefulConfig(
         },
       ],
     ],
+    // keep aurora animation
     safelist: ['animate-aurora'],
-    shortcuts: [pianoKeys],
+    shortcuts: [pianoShortcuts, auroraShortcuts],
     theme: {
       animation: {
         counts: {
@@ -114,12 +116,10 @@ export default defineUsefulConfig(
         keyframes: {
           aurora: `
             {0% { background-position: 0% 50%; }
-             100% { background-position: 100% 50%; }}`,
+             100% { background-position: 133.333% 50%; }}`,
           blink: '{0%, 100% { opacity: 0.5; } 50% { opacity: 1; }}',
-          slide:
-            '{0% { transform: translateX(-100%); } 100% { transform: translateX(100%); }}',
-          'slide-text':
-            '{0% { transform: translateX(0%); } 100% { transform: translateX(-50%); }}',
+          slide: '{0% { transform: translateX(-100%); } 100% { transform: translateX(100%); }}',
+          'slide-text': '{0% { transform: translateX(0%); } 100% { transform: translateX(-50%); }}',
         },
       },
       boxShadow: {
@@ -135,8 +135,7 @@ export default defineUsefulConfig(
         'sharp-down':
           'inset 0px -1px 1px rgb(255 255 255 / 40%), 0 1px 0px rgb(0 0 0 / 80%),' +
           ' 0 2px 2px rgb(0 0 0 / 40%), 0 -1px 0px #000',
-        'sharp-key':
-          'inset 0px -1px 2px rgb(255 255 255 / 40%), 0 2px 3px rgb(0 0 0 / 40%)',
+        'sharp-key': 'inset 0px -1px 2px rgb(255 255 255 / 40%), 0 2px 3px rgb(0 0 0 / 40%)',
       },
       breakpoints: {
         md: '768px',

@@ -16,7 +16,7 @@ const meta = {
     color: {
       control: 'select',
       description: 'Button variant',
-      options: ['primary', 'secondary', 'default', 'transparent', 'error', 'warning', 'info', 'success'],
+      options: ['primary', 'secondary', 'default', 'transparent', 'error', 'warning', 'info', 'success', 'aurora'],
       table: {
         category: 'Props',
         defaultValue: {summary: 'primary'},
@@ -119,7 +119,7 @@ export const OverrideClass: Story = {
   },
 }
 
-export const Primary: Story = {
+export const PrimaryColor: Story = {
   args: {
     children: 'primary button',
     color: 'primary',
@@ -127,7 +127,7 @@ export const Primary: Story = {
   },
 }
 
-export const Secondary: Story = {
+export const SecondaryColor: Story = {
   args: {
     children: 'secondary button',
     color: 'secondary',
@@ -135,7 +135,7 @@ export const Secondary: Story = {
   },
 }
 
-export const Error: Story = {
+export const ErrorColor: Story = {
   args: {
     children: 'error button',
     color: 'error',
@@ -143,7 +143,7 @@ export const Error: Story = {
   },
 }
 
-export const Warning: Story = {
+export const WarningColor: Story = {
   args: {
     children: 'warning button',
     color: 'warning',
@@ -151,10 +151,18 @@ export const Warning: Story = {
   },
 }
 
-export const Default: Story = {
+export const DefaultColor: Story = {
   args: {
     children: 'default button',
     color: 'default',
+    size: 'md',
+  },
+}
+
+export const AuroraColor: Story = {
+  args: {
+    children: 'aurora button',
+    color: 'aurora',
     size: 'md',
   },
 }

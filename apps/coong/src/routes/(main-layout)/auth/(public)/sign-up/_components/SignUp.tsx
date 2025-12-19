@@ -1,34 +1,28 @@
-import {createSignal} from 'solid-js'
-import {createSupabase} from 'src/utils/supabase'
+import {createSignal, createMemo} from 'solid-js'
 import {useNavigate} from '@solidjs/router'
+import {SIGN_IN_PATH} from 'src/utils/route-names'
+import {signUpAction} from 'src/requests/sign-up'
+import {useSubmission, useAction} from '@solidjs/router'
 
 export const SignUp = () => {
-  const supabase = createSupabase()
+  const signUpSubmission = useSubmission(signUpAction)
+  const _signUpAction = useAction(signUpAction)
   const navigate = useNavigate()
   const [email, setEmail] = createSignal('')
   const [password, setPassword] = createSignal('')
-  const [loading, setLoading] = createSignal(false)
-  const [error, setError] = createSignal<string | null>(null)
 
   const handleSignUp = async (e: Event) => {
     e.preventDefault()
-    setLoading(true)
-    setError(null)
 
-    const {error} = await supabase.auth.signUp({
+    await _signUpAction({
       email: email(),
       password: password(),
     })
-
-    if (error) {
-      setError(error.message)
-    } else {
-      // Check if email confirmation is required
-      navigate('/public/sign-in')
-    }
-
-    setLoading(false)
+    navigate(SIGN_IN_PATH)
   }
+
+  const error = createMemo(() => signUpSubmission.error)
+  const loading = createMemo(() => signUpSubmission.pending)
 
   return (
     <div class="flex flex-col items-center justify-center min-h-screen bg-gray-100">
@@ -39,6 +33,7 @@ export const SignUp = () => {
             type="email"
             placeholder="Email"
             value={email()}
+            autocomplete="email"
             onInput={(e) => setEmail(e.currentTarget.value)}
             class="p-2 border rounded"
             required
@@ -46,6 +41,7 @@ export const SignUp = () => {
           <input
             type="password"
             placeholder="Password"
+            autocomplete="new-password"
             value={password()}
             onInput={(e) => setPassword(e.currentTarget.value)}
             class="p-2 border rounded"
