@@ -20,6 +20,7 @@ before:inset-0 before:bg-[linear-gradient(to_bottom,#ffffff_0px,#ffffff_30%,rgba
 `
 
 const emailStyle = `:uno:
+mt-1rem
 text-2xl font-bold var-aurora-color-1=#00c2ff var-aurora-color-2=#33ff8c var-aurora-color-3=#ffc640 var-aurora-color-4=#e54cff
 `
 
@@ -131,11 +132,10 @@ export default function VerifyEmail() {
         <h1 class={titleStyle({loading: loading()})}>Verified your email</h1>
         <Show
           when={user()}
-          fallback={<span class="i-tabler-loader-2 animate-spin text-2xl text-gray-400 block w-2rem h-2rem" />}
+          fallback={<span class="i-tabler-loader-2 animate-spin text-2xl text-gray-400 block w-2rem h-2rem mt-1rem" />}
         >
           <SAuroraText class={emailStyle}>{user()?.email}</SAuroraText>
         </Show>
-        <span class="text-sm text-gray-500">{code}</span>
         <Show when={user()}>
           <span class="text-sm text-gray-500">
             <Show when={code} fallback={'Go to the '}>

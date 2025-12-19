@@ -46,10 +46,10 @@ export const useUserQuery = withHandyQuery(userQuery)
 export function AuthProvider(props: AuthProviderProps) {
   const userQuery = useUserQuery({emptyValue: null})
   const signInSubmission = useSubmission(signInAction)
-  const _signInAction = useAction(signInAction)
+  const signInActionSubmit = useAction(signInAction)
   const signOutSubmission = useSubmission(signOutAction)
-  const _signOutAction = useAction(signOutAction)
-  const exchangeCodeForSection = useAction(exchangeCodeForSectionAction)
+  const signOutActionSubmit = useAction(signOutAction)
+  const exchangeCodeForSectionSubmit = useAction(exchangeCodeForSectionAction)
   const exchangeCodeForSectionSubmission = useSubmission(exchangeCodeForSectionAction)
   const changePassword = useAction(changePasswordAction)
   const changePasswordSubmission = useSubmission(changePasswordAction)
@@ -63,17 +63,17 @@ export function AuthProvider(props: AuthProviderProps) {
   const exchangeCodeForSectionError = createMemo(() => exchangeCodeForSectionSubmission.error)
 
   const signInWithPassword = async (email: string, password: string) => {
-    await _signInAction({email, password})
+    await signInActionSubmit({email, password})
     await userQuery.refetch()
   }
 
   const signOut = async () => {
-    await _signOutAction()
+    await signOutActionSubmit()
     await userQuery.refetch()
   }
 
   const _exchangeCodeForSection = async (code: string) => {
-    const data = await exchangeCodeForSectionAction(code)
+    const data = await exchangeCodeForSectionSubmit(code)
 
     await userQuery.refetch()
 
