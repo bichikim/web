@@ -29,9 +29,9 @@
   },
   "dependencies": {
     "@floating-ui/dom": "^1.6.12",
-    "@winter-love/lodash": "workspace:*",
     "@winter-love/utils": "workspace:*",
     "class-variance-authority": "^0.7.1",
+    "es-toolkit": "^1.43.0",
     "solid-js": "^1.9.4"
   },
   "devDependencies": {

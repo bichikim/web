@@ -1,4 +1,4 @@
-import {debounce, DebounceSettings} from '@winter-love/lodash'
+import {debounce} from 'es-toolkit/compat'
 import {createSignal} from 'solid-js'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 import {renderHook} from '@solidjs/testing-library'
@@ -6,8 +6,14 @@ import {createUseWait} from './'
 
 const callback = vi.fn()
 
-vi.mock('@winter-love/lodash', async () => {
-  const actual: any = await vi.importActual('@winter-love/lodash')
+type DebounceSettings = {
+  leading?: boolean
+  maxWait?: number
+  trailing?: boolean
+}
+
+vi.mock('es-toolkit/compat', async () => {
+  const actual: any = await vi.importActual('es-toolkit/compat')
 
   return {
     ...actual,
