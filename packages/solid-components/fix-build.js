@@ -7,8 +7,8 @@ console.log(modulePathBody, modulePath)
 
 const code = readFileSync(modulePathBody, 'utf8')
 
+// fix local import file extensions has bug
 const removedNodeNextPluginCode = code.replace(
-  // eslint-disable-next-line require-unicode-regexp
   /{\n\s*name: "fix-import-extensions",\n(.|\n)*emit\(\);\n\s*}\n\s*},/,
   '',
 )
