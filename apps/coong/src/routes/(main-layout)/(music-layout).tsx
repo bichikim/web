@@ -1,8 +1,9 @@
 import {RouteSectionProps, useLocation, useNavigate, useSearchParams} from '@solidjs/router'
 import {useStorage} from '@winter-love/solid-use'
-import {createMemo, createResource} from 'solid-js'
+import {createMemo, createResource, createEffect} from 'solid-js'
 import {LinkType, MusicInfo, SettingContext, SettingData, SHiddenPlayer} from 'src/components/midi-player'
 import {emitAllIds} from 'src/components/real-button/use-global-touch'
+import {useCookieStorage} from 'src/use/storage'
 import {useCookie} from 'src/use/cookie'
 import {createSplendidGrandPiano, SplendidGrandPianoContext} from 'src/use/instruments'
 import {getStorageKey} from 'src/utils/storage-key'
@@ -45,6 +46,7 @@ const MUSIC_PATH = '/musics'
 
 export default function MusicLayout(props: RouteSectionProps) {
   const [splendidGrandPiano, splendidGrandPianoController] = createSplendidGrandPiano({
+    baseUrl: '/instruments/splendid-grand-piano',
     onEmitInstrument: emitAllIds,
   })
   const [searchParams] = useSearchParams<{preset?: string}>()
@@ -52,11 +54,16 @@ export default function MusicLayout(props: RouteSectionProps) {
   const location = useLocation()
   const navigate = useNavigate()
 
-  const [settingData, setSettingData] = useCookie<SettingData>(getStorageKey('piano-setting'), {
+  const [settingData, setSettingData] = useCookieStorage<SettingData>(getStorageKey('piano-setting'), {
     keepPlayList: true,
     pianoSize: 100,
     showKeyName: false,
   })
+
+  createEffect(() => {
+    console.log('settingData', settingData())
+  })
+  console.log('settingData1', settingData())
   const isActiveStore = createMemo(() => Boolean(settingData().keepPlayList))
 
   const linkType = createMemo(() => {
