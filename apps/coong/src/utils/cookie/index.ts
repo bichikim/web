@@ -1,6 +1,6 @@
 import jsCookie from 'js-cookie'
-import {setCookie as setServerCookie, getCookie as getServerCookie} from 'vinxi/http'
 import {CookieSerializeOptions} from 'cookie-es'
+import {setCookie as _setServerCookie, getCookie as _getServerCookie} from 'vinxi/http'
 
 const normalizeSameSite = (sameSite: CookieSerializeOptions['sameSite']): Cookies.CookieAttributes['sameSite'] => {
   if (sameSite === true) {
@@ -31,4 +31,13 @@ export const getClientCookie = (name: string) => {
   return jsCookie.get(name)
 }
 
-export {setServerCookie, getServerCookie}
+export const setServerCookie = (name: string, value: string, options?: CookieSerializeOptions) => {
+  'use server'
+  _setServerCookie(name, value, options)
+}
+
+export const getServerCookie = (name: string) => {
+  'use server'
+
+  return _getServerCookie(name)
+}
