@@ -7,10 +7,11 @@ module.exports = function vueSvgLoader(svg) {
   const {svgo: svgoConfig} = getOptions(this) || {}
 
   if (svgoConfig !== false) {
-    ;({data} = optimize(svg, {
+    const {data} = optimize(svg, {
       path: this.resourcePath,
       ...svgoConfig,
-    }))
+    })
+    svg = data
   }
 
   return `<template>${svg}</template>`
