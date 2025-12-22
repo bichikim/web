@@ -1,67 +1,110 @@
 import {CookieSerializeOptions} from 'cookie-es'
-import {createSignal, createEffect, onMount, Accessor, Setter} from 'solid-js'
-import {getClientCookie, getServerCookie, setClientCookie, setServerCookie} from 'src/utils/cookie'
+import {createSignal, onMount, Accessor, Setter, Signal} from 'solid-js'
+import {getClientCookie, getServerCookie, setServerCookie, setClientCookie} from 'src/utils/cookie'
+import {createEffectInitialize} from 'src/use/effect-initialize'
+import {isServer} from 'solid-js/web'
 
 const getCookieValue = (key: string) => {
-  if (import.meta.env.SSR) {
+  if (isServer) {
     return getServerCookie(key)
   }
 
   return getClientCookie(key)
 }
 
-export const useCookieStorage = (
+const setCookieValue = (key: string, value: string, options?: CookieSerializeOptions) => {
+  if (import.meta.env.SSR) {
+    setServerCookie(key, value, options)
+  } else {
+    setClientCookie(key, value, options)
+  }
+}
+
+const serialize = (value: any): string => {
+  if (typeof value === 'string') {
+    return value
+  }
+
+  try {
+    return JSON.stringify(value)
+  } catch {
+    return String(value)
+  }
+}
+
+const deserialize = <T>(value: string | null | undefined, initValue: T): T => {
+  if (value === null || value === undefined) {
+    return initValue
+  }
+
+  try {
+    return JSON.parse(value) as T
+  } catch {
+    return value as T
+  }
+}
+
+export const useCookieStorage = <T>(
   key: string,
-  initValue: any,
+  initValue: T,
   options?: Accessor<CookieSerializeOptions>,
-): [Accessor<any>, Setter<any>] => {
-  const [value, setValue] = createSignal(getCookieValue(key) ?? initValue)
+): Signal<T> => {
+  const [value, setValue] = createSignal<T>(deserialize(getCookieValue(key), initValue))
 
-  createEffect(() => {
-    const _value = value()
-    const _options = options?.()
+  createEffectInitialize((isInitialMount) => {
+    const serializedValue = serialize(value())
 
-    if (import.meta.env.SSR) {
-      setServerCookie(key, _value, _options)
-    } else {
-      setClientCookie(key, _value, _options)
+    if (isInitialMount) {
+      return
     }
+
+    setCookieValue(key, serializedValue, options?.())
   })
 
   return [value, setValue]
 }
 
-export const useClientStorage = (
-  kind: 'local' | 'session',
-  key: string,
-  initValue: any,
-): [Accessor<any>, Setter<any>] => {
-  const [value, setValue] = createSignal(initValue)
+export const useClientStorage = <T>(kind: 'local' | 'session', key: string, initValue: T): [Accessor<T>, Setter<T>] => {
+  const [value, setValue] = createSignal<T>(initValue)
 
+  // get client storage value when mounted
   onMount(() => {
+    // remove code in SSR
     if (import.meta.env.SSR) {
       return
     }
 
-    const _value = kind === 'local' ? localStorage.getItem(key) : sessionStorage.getItem(key)
+    // take client storage
+    const storage = kind === 'local' ? localStorage : sessionStorage
+    const storedValue = storage.getItem(key)
 
-    if (_value) {
-      setValue(_value)
+    // if no value, skip
+    if (storedValue === null) {
+      return
     }
+
+    const deserializedValue = deserialize(storedValue, initValue)
+
+    setValue(() => deserializedValue)
   })
 
-  createEffect(() => {
+  createEffectInitialize((isInitialMount) => {
     const _value = value()
 
+    // remove code in SSR
     if (import.meta.env.SSR) {
       return
     }
 
-    if (kind === 'local') {
-      localStorage.setItem(key, _value)
-    } else {
-      sessionStorage.setItem(key, _value)
+    // Skip initial effect to avoid overwriting storage with initValue
+    if (isInitialMount) {
+      return
     }
+
+    const storage = kind === 'local' ? localStorage : sessionStorage
+    const serializedValue = serialize(_value)
+
+    storage.setItem(key, serializedValue)
   })
 
   return [value, setValue]
@@ -72,7 +115,7 @@ export function useStorage<T>(
   key: string,
   initValue: T,
   options?: Accessor<CookieSerializeOptions>,
-): [Accessor<any>, Setter<any>]
+): [Accessor<T>, Setter<T>]
 
 export function useStorage<T>(kind: 'local' | 'session', key: string, initValue: T): [Accessor<T>, Setter<T>]
 
