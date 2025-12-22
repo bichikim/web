@@ -28,7 +28,7 @@ const getNoteFromName = (name: string | number) => {
   return noteMatchMap.get(String(name)) ?? name
 }
 
-export type SplendidGrandPianoOptions = Partial<Omit<SplendidGrandPianoConfig, 'notesToLoad' | 'baseUrl'>> & {
+export type SplendidGrandPianoOptions = Partial<Omit<SplendidGrandPianoConfig, 'notesToLoad'>> & {
   onEmitInstrument?(ids: Set<string>, payload: OnEmitInstrumentPayload): void
 }
 
