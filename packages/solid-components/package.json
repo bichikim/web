@@ -33,7 +33,6 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "@winter-love/lodash": "workspace:*",
     "@winter-love/solid-use": "workspace:*",
     "@winter-love/utils": "workspace:*",
     "class-variance-authority": "^0.7.1",
