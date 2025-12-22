@@ -4,7 +4,7 @@ import {createSupabaseServer} from './supabase-server'
 import {getRequestEvent} from 'solid-js/web'
 import {getSupabaseClientKeys} from 'src/env/self'
 
-export const createSupabase = (): SupabaseClient<any, string> => {
+export const createSupabase = (): SupabaseClient<Database> => {
   const {key, url} = getSupabaseClientKeys()
 
   if (import.meta.env.SSR) {
@@ -21,7 +21,7 @@ export const createSupabase = (): SupabaseClient<any, string> => {
     return createSupabaseServer(event)
   }
 
-  return createBrowserClient(url, key)
+  return createBrowserClient<Database>(url, key)
 }
 
 export * from './supabase-server'

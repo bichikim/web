@@ -1,6 +1,7 @@
 
 dist
 .solid
+.supabase
 .output
 .vercel
 .netlify
