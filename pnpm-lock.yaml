@@ -728,22 +728,6 @@ importers:
         specifier: ^6.3.5
         version: 6.4.1(@types/node@24.10.1)(jiti@2.6.1)(terser@5.44.1)(yaml@2.8.1)
 
-  packages/unijs:
-    dependencies:
-      alien-signals:
-        specifier: ^2.0.5
-        version: 2.0.8
-    devDependencies:
-      '@unocss/preset-wind3':
-        specifier: ^66.3.3
-        version: 66.5.9
-      '@winter-love/vite-lib-config':
-        specifier: workspace:*
-        version: link:../vite-lib-config
-      unocss:
-        specifier: ^66.3.3
-        version: 66.5.9(postcss@8.5.6)(vite@6.4.1(@types/node@25.0.3)(jiti@2.6.1)(terser@5.44.1)(yaml@2.8.1))
-
   packages/unocss-config:
     dependencies:
       '@unocss/core':
@@ -4577,9 +4561,6 @@ packages:
 
   alien-signals@0.4.14:
     resolution: {integrity: sha512-itUAVzhczTmP2U5yX67xVpsbbOiquusbWVyA9N+sy6+r6YVbFkahXvNCeEPWEOMhwDYwbVbGHFkVL03N9I5g+Q==}
-
-  alien-signals@2.0.8:
-    resolution: {integrity: sha512-844G1VLkk0Pe2SJjY0J8vp8ADI73IM4KliNu2OGlYzWpO28NexEUvjHTcFjFX3VXoiUtwTbHxLNI9ImkcoBqzA==}
 
   ansi-align@3.0.1:
     resolution: {integrity: sha512-IOfwwBF5iczOjp/WeY4YxyjqAFMQoZufdQWDd19SEExbVLNXqvpzSJ/M7Za4/sCPmQ0+GRquoA7bGcINcxew6w==}
@@ -14901,8 +14882,6 @@ snapshots:
       uri-js: 4.4.1
 
   alien-signals@0.4.14: {}
-
-  alien-signals@2.0.8: {}
 
   ansi-align@3.0.1:
     dependencies:
