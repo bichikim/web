@@ -1,5 +1,4 @@
 import {createMemo, createSignal, JSX, mergeProps, ParentProps} from 'solid-js'
-import {now} from '@winter-love/lodash'
 import {ButtonContext, ButtonContextProps, ButtonContextValue} from './context'
 
 export type ButtonType = 'button' | 'anchor' | 'anchor-button'
@@ -60,7 +59,7 @@ export const ButtonRoot = (props: ButtonRootProps) => {
     }
 
     const _doubleClickGap = defaultProps.doubleClickGap
-    const newClickTime = now()
+    const newClickTime = Date.now()
 
     if (newClickTime - clickTime < _doubleClickGap) {
       defaultProps.onDoubleClick?.(event)
@@ -111,7 +110,7 @@ export const ButtonRoot = (props: ButtonRootProps) => {
     }
 
     const _doubleClickGap = defaultProps.doubleClickGap
-    const newClickTime = now()
+    const newClickTime = Date.now()
 
     if (touchdown) {
       defaultProps.onClick?.(event)

@@ -1,6 +1,6 @@
 import {createMemo, createSignal, onCleanup} from 'solid-js'
 import {MaybeAccessor, resolveAccessor, useEvent} from '@winter-love/solid-use'
-import {loadMidi} from 'src/utils/read-midi'
+import {loadMidi} from 'src/utils/midi-reader'
 import {getWindow, isNotNull, ONE_MB, TEN} from '@winter-love/utils'
 import type {Midi} from '@winter-love/tonejs-midi'
 import {MusicInfo} from 'src/components/midi-player/SFileItem'
@@ -61,10 +61,10 @@ export const useMidiFileInput = (element: MaybeAccessor<HTMLElement | null>, opt
               return null
             }
 
-            return notes.map((track): SampleStart => {
+            return notes.map((track: SampleStart): SampleStart => {
               return {
                 duration: track.duration,
-                note: track.name,
+                note: track.name ?? track.note,
                 time: track.time,
                 velocity: track.velocity,
               }

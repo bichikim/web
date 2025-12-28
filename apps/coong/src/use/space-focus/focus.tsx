@@ -85,8 +85,7 @@ export const useFocus = (
   useDelegatedOn(
     FOCUS_CHANNEL,
     id,
-    nonAccessor((value) => {
-      console.log('useDelegatedOn', value)
+    nonAccessor((value: {focused: boolean}) => {
       setIsFocused(value?.focused ?? false)
     }),
   )

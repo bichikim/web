@@ -1,7 +1,7 @@
 import {ComponentProps, createEffect, createMemo, createSignal, Show, splitProps} from 'solid-js'
 import {cva} from 'class-variance-authority'
 import {getWindow, HUNDRED} from '@winter-love/utils'
-import {sx, useEvent} from '@winter-love/solid-use'
+import {sx, useEvent, useStyles} from '@winter-love/solid-use'
 
 export interface SFlowDisplayProps extends ComponentProps<'span'> {
   move?: boolean
@@ -65,18 +65,15 @@ export const SFlowDisplay = (props: SFlowDisplayProps) => {
     setWidth(textElement()?.getBoundingClientRect().width ?? 0)
   })
 
+  const style = useStyles(() => [
+    {
+      'animation-duration': `${duration()}s`,
+    },
+    innerProps.style,
+  ])
+
   return (
-    <span
-      {...restProps}
-      ref={setElement}
-      class={rootStyle({class: innerProps.class, move: isMove()})}
-      style={sx(
-        {
-          'animation-duration': `${duration()}s`,
-        },
-        innerProps.style,
-      )}
-    >
+    <span {...restProps} ref={setElement} class={rootStyle({class: innerProps.class, move: isMove()})} style={style()}>
       <span ref={setTextElement}>{props.children}</span>
       <Show when={isMove()}>
         <span>{props.children}</span>

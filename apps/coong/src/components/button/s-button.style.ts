@@ -7,6 +7,9 @@ c-[var(--var-text-color)] b-[var(--var-color)] focus-visible:outline-[var(--var-
 `
 
 const colorVariants = {
+  aurora: `:uno:
+   color-var-text-color=white var-color=transparent var-focus-bg=black var-muted-color=gray-400 var-semi-muted-color=gray-300 var-semi-focus-bg=gray-200
+   var-aurora-color-1=#00c2ff var-aurora-color-2=#33ff8c var-aurora-color-3=#ffc640 var-aurora-color-4=#e54cff`,
   default: `:uno: color-var-text-color=black var-color=gray-100 var-focus-bg=black var-muted-color=gray-400 var-semi-muted-color=gray-300 var-semi-focus-bg=white`,
   error: `:uno: color-var-text-color=white  var-color=red-400 var-focus-bg=red-700 var-muted-color=red-200 var-semi-muted-color=red-300 var-semi-focus-bg=red-500`,
   info: `:uno: color-var-text-color=white var-color=sky-400 var-focus-bg=sky-700 var-muted-color=sky-200 var-semi-muted-color=sky-300 var-semi-focus-bg=sky-500`,
@@ -72,6 +75,22 @@ export const buttonStyles = cva([buttonBase, buttonLoading], {
       fit: false,
       size: 'lg',
     },
+    {
+      className: ['aurora'],
+      color: 'aurora',
+    },
+    {
+      className: [':uno: bg-[var(--var-color)] hover:enabled:b-[--var-color]'],
+      color: ['default', 'error', 'info', 'primary', 'secondary', 'success', 'transparent', 'warning'],
+      flat: true,
+    },
+    {
+      className: [
+        ':uno: shadow-sm bg-[radial-gradient(at_90%_30%,_var(--var-color)_50%,_var(--var-muted-color)_130%)]',
+      ],
+      color: ['default', 'error', 'info', 'primary', 'secondary', 'success', 'transparent', 'warning'],
+      flat: false,
+    },
   ],
   defaultVariants: {
     color: 'default',
@@ -90,8 +109,8 @@ export const buttonStyles = cva([buttonBase, buttonLoading], {
       true: '',
     },
     flat: {
-      false: ':uno: shadow-sm bg-[radial-gradient(at_90%_30%,_var(--var-color)_50%,_var(--var-muted-color)_130%)]',
-      true: ':uno: bg-[var(--var-color)] hover:enabled:b-[--var-color]',
+      false: '',
+      true: '',
     },
     glass: {
       false: '',

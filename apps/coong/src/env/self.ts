@@ -1,6 +1,6 @@
 export const getSelfUrl = () => {
   // find env and use for client case and ssr case
-  const urlFromEnv = import.meta.env.VITE_API_URL
+  const urlFromEnv = import.meta.env.DEV ? undefined : import.meta.env.VITE_API_URL
 
   if (urlFromEnv) {
     return urlFromEnv

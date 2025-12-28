@@ -1,9 +1,9 @@
 import {RouteSectionProps, useLocation, useNavigate, useSearchParams} from '@solidjs/router'
 import {useStorage} from '@winter-love/solid-use'
-import {createMemo, createResource} from 'solid-js'
+import {createMemo, createResource, createEffect} from 'solid-js'
 import {LinkType, MusicInfo, SettingContext, SettingData, SHiddenPlayer} from 'src/components/midi-player'
 import {emitAllIds} from 'src/components/real-button/use-global-touch'
-import {useCookie} from 'src/use/cookie'
+import {useCookieStorage} from 'src/use/storage'
 import {createSplendidGrandPiano, SplendidGrandPianoContext} from 'src/use/instruments'
 import {getStorageKey} from 'src/utils/storage-key'
 import {getSelfUrl} from 'src/env'
@@ -45,6 +45,7 @@ const MUSIC_PATH = '/musics'
 
 export default function MusicLayout(props: RouteSectionProps) {
   const [splendidGrandPiano, splendidGrandPianoController] = createSplendidGrandPiano({
+    baseUrl: '/instruments/splendid-grand-piano',
     onEmitInstrument: emitAllIds,
   })
   const [searchParams] = useSearchParams<{preset?: string}>()
@@ -52,18 +53,23 @@ export default function MusicLayout(props: RouteSectionProps) {
   const location = useLocation()
   const navigate = useNavigate()
 
-  const [settingData, setSettingData] = useCookie<SettingData>(getStorageKey('piano-setting'), {
+  const [settingData, setSettingData] = useCookieStorage<SettingData>(getStorageKey('piano-setting'), {
     keepPlayList: true,
     pianoSize: 100,
     showKeyName: false,
   })
+
+  createEffect(() => {
+    console.log('settingData', settingData())
+  })
+  console.log('settingData1', settingData())
   const isActiveStore = createMemo(() => Boolean(settingData().keepPlayList))
 
   const linkType = createMemo(() => {
     return location.pathname === PIANO_PATH ? 'music' : 'piano'
   })
 
-  const [musics, setMusics] = useStorage<MusicInfo[]>('local', getStorageKey('piano-musics-default'), {
+  const [musics, setMusics] = useStorage('local', getStorageKey('piano-musics-default'), {
     active: isActiveStore,
     enforceValue: preset()?.musics,
     initValue: [],

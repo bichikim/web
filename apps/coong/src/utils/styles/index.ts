@@ -1,1 +1,1 @@
-export * from './clip-path'
+export * from './rounded-polygon'

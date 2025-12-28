@@ -1,9 +1,7 @@
 import {CacheStorage, DrumMachine, SplendidGrandPiano, type SplendidGrandPianoConfig} from 'smplr'
 import {HUNDRED} from '@winter-love/utils'
 
-export type SplendidGrandPianoOptions = Partial<
-  Omit<SplendidGrandPianoConfig, 'notesToLoad' | 'baseUrl' | 'storage'>
-> & {
+export type SplendidGrandPianoOptions = Partial<Omit<SplendidGrandPianoConfig, 'notesToLoad' | 'storage'>> & {
   onEnded?: (payload: ExtendedSampleStart) => void
   onStart?: (payload: ExtendedSampleStart) => void
 }

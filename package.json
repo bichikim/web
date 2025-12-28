@@ -34,7 +34,8 @@
     "test:storybook": "test-storybook",
     "test:storybook:watch": "test-storybook --watch",
     "test:vitest": "vitest run",
-    "test:vitest:watch": "vitest watch"
+    "test:vitest:watch": "vitest watch",
+    "test:vitest:watch:t": "vitest watch apps/coong/src/use/storage/index.spec.ts"
   },
   "browserslist": [
     "last 10 Chrome versions",
@@ -108,7 +109,7 @@
     "vite-plugin-static-copy": "^3.1.2",
     "vitest": "^4.0.15"
   },
-  "packageManager": "pnpm@10.21.0",
+  "packageManager": "pnpm@10.26.1",
   "engines": {
     "node": ">= 22",
     "pnpm": ">= 6.17"

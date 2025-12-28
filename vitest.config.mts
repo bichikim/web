@@ -3,8 +3,6 @@ import {fileURLToPath, URL} from 'node:url'
 import {defineConfig} from 'vitest/config'
 import solid from 'vite-plugin-solid'
 
-const resolvePath = (url: string) => fileURLToPath(new URL(url, import.meta.url))
-
 export default defineConfig({
   build: {
     target: 'esnext',
@@ -18,18 +16,12 @@ export default defineConfig({
         },
       },
 
-      // osPathDelimiter: process.platform === 'win32' ? '\\' : '/',
+      separator: process.platform === 'win32' ? '\\' : '/',
       root: fileURLToPath(new URL('./', import.meta.url)),
       // sourceRoot: 'src',
-      workspacePaths: [/\/coong\//u, /\/packages\//u],
+      workspacePaths: [/\/apps\//u, /\/packages\//u],
     }),
   ],
-  // resolve: {
-  //   alias: {
-  //     '@winter-love/solid/test': resolvePath('packages/solid/src/test'),
-  //     '@winter-love/solid/use': resolvePath('packages/solid/src/use'),
-  //   },
-  // },
   resolve: {
     // for solidjs testing
     conditions: ['development', 'browser'],

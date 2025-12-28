@@ -2,11 +2,7 @@ import {createSupabase} from 'src/utils/supabase'
 import {action} from '@solidjs/router'
 import {getSelfUrl} from 'src/env/self'
 
-/**
- * Send password reset email to user
- * @param email - User's email address
- */
-export const resetPasswordAction = action(async (email: string) => {
+export const fetchResetPassword = async (email: string): Promise<void> => {
   'use server'
 
   const supabase = createSupabase()
@@ -20,6 +16,10 @@ export const resetPasswordAction = action(async (email: string) => {
   if (error) {
     throw new Error(error.message)
   }
+}
 
-  return data
-}, 'auth/reset-password')
+/**
+ * Send password reset email to user
+ * @param email - User's email address
+ */
+export const resetPasswordAction = action(fetchResetPassword, 'auth/reset-password')

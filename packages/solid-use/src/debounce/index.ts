@@ -1,5 +1,10 @@
 import {createUseWait} from 'src/wait'
-import {debounce, DebouncedFunc} from '@winter-love/lodash'
+import {debounce} from 'es-toolkit/compat'
+
+type DebouncedFunc<T extends (...args: any) => any> = T & {
+  cancel: () => void
+  flush: () => ReturnType<T>
+}
 
 export const useDebounce = createUseWait(() => {
   let flag: undefined | DebouncedFunc<(...args: any) => any>
@@ -15,7 +20,7 @@ export const useDebounce = createUseWait(() => {
         },
         wait,
         options,
-      )
+      ) as DebouncedFunc<(...args: any) => any>
     },
     execute: (args) => {
       flag?.(...args)

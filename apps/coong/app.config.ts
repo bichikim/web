@@ -21,6 +21,7 @@ export default defineConfig({
     },
   },
   vite: {
+    assetsInclude: ['**/*.lottie'],
     plugins: [
       devtools({
         autoname: true,

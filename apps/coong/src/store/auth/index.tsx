@@ -6,10 +6,14 @@ import {signOutAction} from 'src/requests/sign-out'
 import {changePasswordAction} from 'src/requests/change-password'
 import {resetPasswordAction} from 'src/requests/reset-password'
 import {useSubmission, useAction, revalidate, createAsync} from '@solidjs/router'
+import {withHandyQuery} from 'src/use/handy-query'
+import {exchangeCodeForSectionAction} from 'src/requests/exchange-code-for-section'
 
 const AuthContext = createContext<{
-  changePassword: (newPassword: string) => Promise<void>
+  changePassword: (newPassword: string) => Promise<User | null>
   changePasswordError: Accessor<Error | null>
+  exchangeCodeForSection: (code: string) => Promise<User | null>
+  exchangeCodeForSectionError: Accessor<Error | null>
   loading: Accessor<boolean>
   resetPassword: (email: string) => Promise<void>
   resetPasswordError: Accessor<Error | null>
@@ -19,8 +23,10 @@ const AuthContext = createContext<{
   signOutError: Accessor<Error | null>
   user: Accessor<User | null>
 }>({
-  changePassword: () => Promise.resolve(),
+  changePassword: () => Promise.resolve(null),
   changePasswordError: () => null,
+  exchangeCodeForSection: () => Promise.resolve(null),
+  exchangeCodeForSectionError: () => null,
   loading: () => false,
   resetPassword: () => Promise.resolve(),
   resetPasswordError: () => null,
@@ -35,26 +41,16 @@ export interface AuthProviderProps {
   children: JSX.Element
 }
 
-export const useUserQuery = () => {
-  const data = createAsync(() => userQuery())
-
-  const refetch = () => {
-    console.log('refetching user')
-    revalidate(userQuery.key)
-  }
-
-  return {
-    data,
-    refetch,
-  }
-}
+export const useUserQuery = withHandyQuery(userQuery)
 
 export function AuthProvider(props: AuthProviderProps) {
-  const userQuery = useUserQuery()
+  const userQuery = useUserQuery({emptyValue: null})
   const signInSubmission = useSubmission(signInAction)
-  const _signInAction = useAction(signInAction)
+  const signInActionSubmit = useAction(signInAction)
   const signOutSubmission = useSubmission(signOutAction)
-  const _signOutAction = useAction(signOutAction)
+  const signOutActionSubmit = useAction(signOutAction)
+  const exchangeCodeForSectionSubmit = useAction(exchangeCodeForSectionAction)
+  const exchangeCodeForSectionSubmission = useSubmission(exchangeCodeForSectionAction)
   const changePassword = useAction(changePasswordAction)
   const changePasswordSubmission = useSubmission(changePasswordAction)
   const resetPassword = useAction(resetPasswordAction)
@@ -64,15 +60,24 @@ export function AuthProvider(props: AuthProviderProps) {
   const signOutError = createMemo(() => signOutSubmission.error)
   const changePasswordError = createMemo(() => changePasswordSubmission.error)
   const resetPasswordError = createMemo(() => resetPasswordSubmission.error)
+  const exchangeCodeForSectionError = createMemo(() => exchangeCodeForSectionSubmission.error)
 
   const signInWithPassword = async (email: string, password: string) => {
-    await _signInAction({email, password})
-    userQuery.refetch()
+    await signInActionSubmit({email, password})
+    await userQuery.refetch()
   }
 
   const signOut = async () => {
-    await _signOutAction()
-    userQuery.refetch()
+    await signOutActionSubmit()
+    await userQuery.refetch()
+  }
+
+  const _exchangeCodeForSection = async (code: string) => {
+    const data = await exchangeCodeForSectionSubmit(code)
+
+    await userQuery.refetch()
+
+    return data
   }
 
   const loading = createMemo(
@@ -80,7 +85,8 @@ export function AuthProvider(props: AuthProviderProps) {
       signInSubmission.pending ||
       signOutSubmission.pending ||
       Boolean(changePasswordSubmission.pending) ||
-      Boolean(resetPasswordSubmission.pending),
+      Boolean(resetPasswordSubmission.pending) ||
+      Boolean(exchangeCodeForSectionSubmission.pending),
   )
 
   return (
@@ -88,6 +94,8 @@ export function AuthProvider(props: AuthProviderProps) {
       value={{
         changePassword,
         changePasswordError,
+        exchangeCodeForSection: _exchangeCodeForSection,
+        exchangeCodeForSectionError,
         loading,
         resetPassword,
         resetPasswordError,

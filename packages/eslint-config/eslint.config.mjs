@@ -143,11 +143,6 @@ const sharedConfig = {
       },
     ],
 
-    // 'n/no-missing-import': 'off',
-    // 'n/no-unpublished-import': 'off',
-    // /**
-    //  * Disable es-syntax check because the code is transpiled
-    //  */
     // 'n/no-unsupported-features/es-syntax': 'off',
     // 'no-array-constructor': 'error',
     // 'no-buffer-constructor': 'error',
@@ -292,6 +287,7 @@ const sharedConfig = {
     'format/wrap-iife': 'error',
 
     'format/yield-star-spacing': ['error', {before: true}],
+
     // 'line-comment-position': ['warn', {position: 'above'}],
     // 'max-len': [
     //   'error',
@@ -306,7 +302,15 @@ const sharedConfig = {
     // 'max-statements': ['error', {max: 40}],
     // 'max-statements-per-line': ['error', {max: 2}],
     'n/no-extraneous-import': 'off',
+
     'n/no-missing-import': 'off',
+    // 'n/no-missing-import': 'off',
+    // 'n/no-unpublished-import': 'off',
+
+    'n/no-unsupported-features/node-builtins': ['error', {version: '>=22.0.0'}],
+    // /**
+    //  * Disable es-syntax check because the code is transpiled
+    //  */
     'solid/reactivity': 'off',
     'sort-export-all/sort-export-all': 'warn',
     // 'sort-imports': [

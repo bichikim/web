@@ -7,7 +7,7 @@ export default defineConfig({
     // Vite Plugins
     monorepoAlias({
       root: fileURLToPath(new URL('./', import.meta.url)),
-      workspacePaths: [/\/coong\//u, /\/packages\//u],
+      workspacePaths: [/\/apps\//u, /\/packages\//u],
     }) as any,
   ],
 })

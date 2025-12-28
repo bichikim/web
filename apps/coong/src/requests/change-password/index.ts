@@ -1,7 +1,8 @@
 import {createSupabase} from 'src/utils/supabase'
 import {action} from '@solidjs/router'
+import type {User} from '@supabase/supabase-js'
 
-export const changePasswordAction = action(async (newPassword: string) => {
+export const fetchChangePassword = async (newPassword: string): Promise<User | null> => {
   'use server'
 
   const supabase = createSupabase()
@@ -14,5 +15,7 @@ export const changePasswordAction = action(async (newPassword: string) => {
     throw new Error(error.message)
   }
 
-  return data
-}, 'auth/change-password')
+  return data.user
+}
+
+export const changePasswordAction = action(fetchChangePassword, 'auth/change-password')
