@@ -1,8 +1,8 @@
-import {splitProps} from 'solid-js'
+import {splitProps, ValidComponent} from 'solid-js'
 import {ButtonBody, ButtonBodyProps} from './ButtonBody'
 import {ButtonRoot, ButtonRootProps} from './ButtonRoot'
 
-export type HButtonProps = ButtonBodyProps & ButtonRootProps
+export type HButtonProps<T extends ValidComponent> = ButtonBodyProps<T> & ButtonRootProps
 
 /**
  * A customizable button component that triggers a click event when a touch event occurs.
@@ -26,7 +26,7 @@ export type HButtonProps = ButtonBodyProps & ButtonRootProps
  * @prop {JSX.EventHandler<HTMLButtonElement, MouseEvent | TouchEvent>} [onDoubleClick] - Event handler for double click/tap events.
  * @prop {JSX.EventHandler<HTMLButtonElement, TouchEvent>} [onTouchEnd] - Event handler for the `touchend` event.
  */
-export const HButton = (props: HButtonProps) => {
+export const HButton = <T extends ValidComponent>(props: HButtonProps<T>) => {
   const [innerProps, restProps] = splitProps(props, [
     'autoLoading',
     'disabled',
@@ -39,11 +39,12 @@ export const HButton = (props: HButtonProps) => {
     'onTouchStart',
     'preventLoadingDisabled',
     'type',
+    'as',
   ])
 
   return (
     <ButtonRoot {...innerProps}>
-      <ButtonBody {...restProps}>{props.children}</ButtonBody>
+      <ButtonBody {...(restProps as ButtonBodyProps<T>)}>{props.children}</ButtonBody>
     </ButtonRoot>
   )
 }

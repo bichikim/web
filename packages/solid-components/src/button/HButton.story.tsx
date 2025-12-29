@@ -17,6 +17,22 @@ data-[loading-animation=true]:shadow-blue-400/40`
 
 const meta = {
   argTypes: {
+    as: {
+      control: 'text',
+      description: 'Render as an arbitrary HTML tag (e.g. "button", "a", "div")',
+      table: {
+        category: 'Props',
+        defaultValue: {summary: 'undefined'},
+      },
+    },
+    autoLoading: {
+      control: 'boolean',
+      description: 'Whether the button is auto loading or not',
+      table: {
+        category: 'Props',
+        defaultValue: {summary: 'false'},
+      },
+    },
     disabled: {
       control: 'boolean',
       description: 'Whether the button is disabled or not',
@@ -77,16 +93,32 @@ const meta = {
       },
       type: {name: 'function', required: false},
     },
+    type: {
+      control: 'select',
+      description: 'Button type',
+      options: ['button', 'anchor', 'anchor-button'],
+      table: {
+        category: 'Props',
+        defaultValue: {summary: 'button'},
+      },
+    },
+    preventLoadingDisabled: {
+      control: 'boolean',
+      description: 'Whether the button is prevent loading disabled or not',
+      table: {
+        category: 'Props',
+        defaultValue: {summary: 'false'},
+      },
+    },
   },
   args: {
     children: 'Click me',
     class: defaultButtonClass,
-    onClick: fn(),
-    onDoubleClick: fn(),
+    onClick: fn(() => console.log('clicked')),
+    onDoubleClick: fn(() => console.log('double clicked')),
     onTouchEnd: fn(),
     onTouchStart: fn(),
   },
-  // tags: ['autodocs'],
   component: HButton,
   title: 'Solid/Components/Button',
 } satisfies Meta<typeof HButton>
@@ -199,5 +231,35 @@ export const OverrideStyle: Story = {
     style: {
       color: 'red',
     },
+  },
+}
+
+export const AsDiv: Story = {
+  args: {
+    as: 'div',
+    children: 'Rendered as <div>',
+  },
+  play: async ({canvasElement}) => {
+    const canvas = within(canvasElement)
+
+    const el = canvas.getByText('Rendered as <div>')
+
+    expect(el.tagName).toBe('DIV')
+  },
+}
+
+export const AsAnchor: Story = {
+  args: {
+    as: 'a',
+    children: 'Rendered as <a>',
+    href: '#',
+  },
+  play: async ({canvasElement}) => {
+    const canvas = within(canvasElement)
+
+    const el = canvas.getByRole('link', {name: 'Rendered as <a>'})
+
+    expect(el.tagName).toBe('A')
+    expect(el).toHaveAttribute('href')
   },
 }

@@ -1,9 +1,11 @@
 import {createMemo, createSignal, JSX, mergeProps, ParentProps} from 'solid-js'
 import {ButtonContext, ButtonContextProps, ButtonContextValue} from './context'
+import {useDoubleClick} from './double-click'
 
 export type ButtonType = 'button' | 'anchor' | 'anchor-button'
 
 export interface ButtonRootProps extends ParentProps {
+  as?: keyof JSX.IntrinsicElements
   /**
    * If true, the button will change to loading state when clicked.
    */
@@ -12,11 +14,10 @@ export interface ButtonRootProps extends ParentProps {
   doubleClickGap?: number
   href?: string
   loading?: boolean | number
-  onClick?: JSX.EventHandler<HTMLButtonElement, MouseEvent | TouchEvent>
-  onDoubleClick?: JSX.EventHandler<HTMLButtonElement, MouseEvent | TouchEvent>
-  onFocusEnter?: (event: KeyboardEvent) => void
-  onTouchEnd?: JSX.EventHandler<HTMLButtonElement, TouchEvent>
-  onTouchStart?: JSX.EventHandler<HTMLButtonElement, TouchEvent>
+  onClick?: (event: MouseEvent | TouchEvent) => void
+  onDoubleClick?: (event: MouseEvent | TouchEvent) => void
+  onTouchEnd?: (event: TouchEvent) => void
+  onTouchStart?: (event: TouchEvent) => void
   preventLoadingDisabled?: boolean
   type?: ButtonType
 }
@@ -24,10 +25,6 @@ export interface ButtonRootProps extends ParentProps {
 const DEFAULT_DOUBLE_CLICK_GAP = 250
 
 export const ButtonRoot = (props: ButtonRootProps) => {
-  // Previous click time used to check if current click is a double click
-  let clickTime = 0
-  let touchdown = false
-
   const defaultProps = mergeProps(
     {
       autoLoading: false,
@@ -38,93 +35,24 @@ export const ButtonRoot = (props: ButtonRootProps) => {
     props,
   )
 
+  const {handleClick, handleTouchEnd, handleTouchStart} = useDoubleClick(() => ({
+    // anchor use href to navigate
+    active: defaultProps.type !== 'anchor',
+    doubleClickGap: defaultProps.doubleClickGap,
+    onClick: defaultProps.onClick,
+    onDoubleClick: defaultProps.onDoubleClick,
+    onLoading: (value: boolean) => {
+      setAutoLoading(value)
+    },
+    onTouchEnd: defaultProps.onTouchEnd,
+    onTouchStart: defaultProps.onTouchStart,
+  }))
+
   /**
    * number: loading process percentage
    * boolean: auto loading state
    */
   const [autoLoading, setAutoLoading] = createSignal<number | boolean>(false)
-
-  /**
-   * Handles the `click` event for the button component and forwards it to the parent component.
-   *
-   * @param event The mouse event triggered by user interaction.
-   */
-  const handleClick: ButtonRootProps['onClick'] = async (event: any) => {
-    console.log('handleClick', event)
-
-    // skip touch event
-    // skip anchor event because it will navigate to the href
-    if (event.pointerType === 'touch' || defaultProps.type === 'anchor') {
-      return
-    }
-
-    const _doubleClickGap = defaultProps.doubleClickGap
-    const newClickTime = Date.now()
-
-    if (newClickTime - clickTime < _doubleClickGap) {
-      defaultProps.onDoubleClick?.(event)
-
-      return
-    }
-
-    clickTime = newClickTime
-    setAutoLoading(true)
-    await defaultProps.onClick?.(event)
-    setAutoLoading(false)
-  }
-
-  /**
-   * Handles the `doubleClick` event for the button component and forwards it to the parent component.
-   * @param event The mouse event triggered by user interaction.
-   */
-  // const handleDoubleClick: ButtonProviderProps['onDoubleClick'] = (event) => {
-  //   console.log('handleDoubleClick', event)
-
-  //   // skip anchor event because it will navigate to the href
-  //   if (defaultProps.type === 'anchor') {
-  //     //
-  //   }
-
-  //   // pass original event to parent
-  //   // defaultProps.onDoubleClick?.(event)
-  // }
-
-  const handleTouchStart: ButtonRootProps['onTouchStart'] = (event) => {
-    touchdown = true
-    // pass original event to parent
-    defaultProps.onTouchStart?.(event)
-  }
-
-  /**
-   * Touch devices do not trigger double click events, so we need to calculate the touch events directly to trigger double click events.
-   * @param event
-   * @returns
-   */
-  const handleTouchEnd: ButtonRootProps['onTouchEnd'] = (event) => {
-    // pass original event to parent
-    defaultProps.onTouchEnd?.(event)
-
-    // anchor use href to navigate
-    if (defaultProps.type === 'anchor') {
-      return
-    }
-
-    const _doubleClickGap = defaultProps.doubleClickGap
-    const newClickTime = Date.now()
-
-    if (touchdown) {
-      defaultProps.onClick?.(event)
-    }
-
-    if (touchdown && newClickTime - clickTime < _doubleClickGap) {
-      defaultProps.onDoubleClick?.(event)
-
-      return
-    }
-
-    touchdown = false
-    clickTime = newClickTime
-  }
 
   const href = createMemo(() => {
     switch (defaultProps.type) {
@@ -135,6 +63,10 @@ export const ButtonRoot = (props: ButtonRootProps) => {
   })
 
   const tag = createMemo(() => {
+    if (defaultProps.as) {
+      return defaultProps.as
+    }
+
     switch (defaultProps.type) {
       case 'anchor': {
         return 'a'

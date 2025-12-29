@@ -1,14 +1,15 @@
 import {ButtonContext} from './context'
-import {Dynamic} from 'solid-js/web'
-import {ComponentProps, createMemo, useContext} from 'solid-js'
+import {Dynamic, DynamicProps} from 'solid-js/web'
+import {createMemo, ParentProps, useContext, ValidComponent} from 'solid-js'
 import {useStyles} from '@winter-love/solid-use'
 
-export interface ButtonBodyProps
-  extends Omit<ComponentProps<'button'>, 'onClick' | 'onTouchEnd' | 'onDblClick' | 'onTouchStart' | 'type'> {
-  //
-}
+export type ButtonBodyProps<T extends ValidComponent> = Omit<DynamicProps<T>, 'component' | 'children' | 'class'> &
+  ParentProps & {
+    class?: string
+    component?: T
+  }
 
-export const ButtonBody = (props: ButtonBodyProps) => {
+export const ButtonBody = <T extends ValidComponent>(props: ButtonBodyProps<T>) => {
   const {handleClick, handleTouchEnd, handleTouchStart, value} = useContext(ButtonContext)
 
   const tag = createMemo(() => {

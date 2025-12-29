@@ -1,7 +1,5 @@
 import {Accessor, createContext, JSX} from 'solid-js'
 
-export type ButtonTag = 'button' | 'a'
-
 export interface ButtonContextValue {
   disabled: boolean
   href?: string
@@ -12,7 +10,7 @@ export interface ButtonContextValue {
   loading: 'true' | 'false'
   loadingAnimation: 'true' | 'false'
   loadingProcess?: number
-  tag: ButtonTag
+  tag: keyof JSX.IntrinsicElements
 }
 
 export interface ButtonContextProps {
