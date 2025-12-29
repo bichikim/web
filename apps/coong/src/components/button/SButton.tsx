@@ -1,9 +1,9 @@
-import {cva} from 'class-variance-authority'
-import {Component, createMemo, splitProps} from 'solid-js'
+import {Component, splitProps, ValidComponent} from 'solid-js'
 import {HButton, HButtonProps} from '@winter-love/solid-components'
-import {buttonStyles, SButtonStyleProps} from './s-button.style'
+import {containerStyles, ContainerStyleProps} from '../container/container.style'
 
-export type SButtonProps = HButtonProps & Omit<SButtonStyleProps, 'loadingAnimation' | 'loading'>
+export type SButtonProps<T extends ValidComponent = 'button'> = HButtonProps<T> &
+  Omit<ContainerStyleProps, 'loadingAnimation' | 'loading'>
 
 export const SButton: Component<SButtonProps> = (props) => {
   const [innerProps, restProps] = splitProps(props, [
@@ -13,6 +13,7 @@ export const SButton: Component<SButtonProps> = (props) => {
     'color',
     'flat',
     'outline',
+    'wild',
     'children',
     'fit',
     'preventLoadingPulse',
@@ -21,15 +22,17 @@ export const SButton: Component<SButtonProps> = (props) => {
   return (
     <HButton
       {...restProps}
-      class={buttonStyles({
+      class={containerStyles({
         class: innerProps.class ?? 'relative',
         color: innerProps.color,
+        cursor: true,
         fit: innerProps.fit,
         flat: innerProps.flat,
         glass: innerProps.glass,
         outline: innerProps.outline,
         preventLoadingPulse: innerProps.preventLoadingPulse,
         size: innerProps.size,
+        wild: innerProps.wild ?? true,
       })}
     >
       {innerProps.children}

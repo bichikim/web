@@ -30,6 +30,14 @@ const meta = {
         defaultValue: {summary: 'false'},
       },
     },
+    doubleClickGap: {
+      control: 'number',
+      description: 'The gap between clicks to consider a double click',
+      table: {
+        category: 'Props',
+        defaultValue: {summary: '250'},
+      },
+    },
     fit: {
       control: 'boolean',
       description: 'Whether the button is fit or not',
@@ -54,6 +62,14 @@ const meta = {
         defaultValue: {summary: 'false'},
       },
     },
+    href: {
+      control: 'text',
+      description: 'Button href link',
+      table: {
+        category: 'Props',
+        defaultValue: {summary: 'undefined'},
+      },
+    },
     loading: {
       control: 'boolean',
       description: 'Whether the button is loading or not',
@@ -66,15 +82,29 @@ const meta = {
       description: 'Click event handler',
       table: {
         category: 'Events',
-        defaultValue: {summary: 'undefined'},
       },
+      type: {name: 'function', required: false},
     },
     onDoubleClick: {
       description: 'Double click event handler',
       table: {
         category: 'Events',
-        defaultValue: {summary: 'undefined'},
       },
+      type: {name: 'function', required: false},
+    },
+    onTouchEnd: {
+      description: 'Touch end event handler',
+      table: {
+        category: 'Events',
+      },
+      type: {name: 'function', required: false},
+    },
+    onTouchStart: {
+      description: 'Touch start event handler',
+      table: {
+        category: 'Events',
+      },
+      type: {name: 'function', required: false},
     },
     outline: {
       control: 'boolean',
@@ -92,13 +122,30 @@ const meta = {
         defaultValue: {summary: 'false'},
       },
     },
+    preventLoadingPulse: {
+      control: 'boolean',
+      description: 'Whether the button is prevent loading pulse or not',
+      table: {
+        category: 'Props',
+        defaultValue: {summary: 'false'},
+      },
+    },
     size: {
       control: 'select',
       description: 'Button size',
-      options: ['sm', 'md', 'lg'],
+      options: ['sm', 'md', 'lg', 'xl', 'xs'],
       table: {
         category: 'Props',
         defaultValue: {summary: 'md'},
+      },
+    },
+    type: {
+      control: 'select',
+      description: 'Button type',
+      options: ['button', 'anchor', 'anchor-button'],
+      table: {
+        category: 'Props',
+        defaultValue: {summary: 'button'},
       },
     },
   },
