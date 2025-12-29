@@ -61,6 +61,8 @@ const sharedConfig = {
         varsIgnorePattern: '^_+$',
       },
     ],
+
+    curly: ['error', 'all'],
     // 'accessor-pairs': 'error',
     'format/array-bracket-newline': ['error', 'consistent'],
     'format/array-bracket-spacing': ['error', 'never'],
