@@ -5,7 +5,10 @@
   "type": "module",
   "scripts": {
     "build": "vinxi build",
+    "build:spa": " cross-env SPA=true vinxi build",
     "db:check": "drizzle-kit check",
+    "preview": "node -r dotenv/config ./.output/server/index.mjs",
+    "preview:spa": "node scripts/preview-proxy.mjs",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
@@ -15,7 +18,6 @@
     "lint:fix": "cross-env NODE_ENV=script eslint src",
     "prepare": "pnpm run supabase:gen-types",
     "start": "node ./.output/server/index.mjs",
-    "start:local": "node -r dotenv/config ./.output/server/index.mjs",
     "supabase:gen-types": "node scripts/gen-supabase-types.mjs",
     "type-check": "tsc --noEmit"
   },

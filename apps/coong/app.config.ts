@@ -11,6 +11,8 @@ const {pluginOptions: generateSw, cleanUp: cleanUpGenerateSw} = generateSwWithCl
   root: fileURLToPath(new URL('.', import.meta.url)),
 })
 
+const isSpa = process.env.SPA === 'true'
+
 export default defineConfig({
   middleware: 'src/middleware/index.ts',
   server: {
@@ -20,6 +22,7 @@ export default defineConfig({
       },
     },
   },
+  ssr: !isSpa,
   vite: {
     assetsInclude: ['**/*.lottie'],
     plugins: [
