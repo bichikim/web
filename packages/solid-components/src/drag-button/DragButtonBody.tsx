@@ -1,9 +1,9 @@
-import {createMemo, useContext} from 'solid-js'
+import {createMemo, useContext, type JSX} from 'solid-js'
 import {Button, ButtonBodyProps} from '../button'
 import {DragButtonContext} from './context'
 import {DRAG_BUTTON_VAR_DRAG_X} from './const'
 
-export interface DragButtonBodyProps extends ButtonBodyProps {
+export interface DragButtonBodyProps extends ButtonBodyProps<'button'> {
   //
 }
 
@@ -21,7 +21,7 @@ export const DragButtonBody = (props: DragButtonBodyProps) => {
   })
 
   return (
-    <Button.Body {...props} onMouseDown={handleMouseDown} style={style()}>
+    <Button.Body {...props} component="button" onMouseDown={handleMouseDown} style={style()}>
       {props.children}
     </Button.Body>
   )
