@@ -1,4 +1,4 @@
-import {createServer} from 'node:http'
+import {createServer, type IncomingMessage, type ServerResponse} from 'node:http'
 import {readFile, stat} from 'node:fs/promises'
 import {fileURLToPath} from 'node:url'
 import {dirname, join, extname} from 'node:path'
@@ -18,8 +18,8 @@ const serverScriptPath = join(projectRoot, '.output', 'server', 'index.mjs')
 /**
  * Get MIME type from file extension
  */
-function getMimeType(ext) {
-  const mimeTypes = {
+function getMimeType(ext: string): string {
+  const mimeTypes: Record<string, string> = {
     '.css': 'text/css',
     '.eot': 'application/vnd.ms-fontobject',
     '.gif': 'image/gif',
@@ -54,8 +54,10 @@ function getMimeType(ext) {
 /**
  * Serve static file or return null if not found
  */
-async function serveStatic(req, res) {
-  const url = new URL(req.url, `http://${req.headers.host}`)
+async function serveStatic(req: IncomingMessage, res: ServerResponse): Promise<boolean> {
+  const requestUrl = req.url ?? '/'
+  const host = req.headers.host ?? 'localhost'
+  const url = new URL(requestUrl, `http://${host}`)
   let filePath = join(publicDir, url.pathname === '/' ? 'index.html' : url.pathname)
 
   try {
@@ -86,24 +88,25 @@ async function serveStatic(req, res) {
 /**
  * Proxy request to server
  */
-async function proxyToServer(req, targetPath) {
-  const proxyUrl = `${SERVER_URL}${targetPath}${req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : ''}`
+async function proxyToServer(req: IncomingMessage, targetPath: string): Promise<Response> {
+  const requestUrl = req.url ?? '/'
+  const search = requestUrl.includes('?') ? requestUrl.substring(requestUrl.indexOf('?')) : ''
+  const proxyUrl = `${SERVER_URL}${targetPath}${search}`
 
   const headers = new Headers()
 
   for (const [key, value] of Object.entries(req.headers)) {
-    if (value) {
-      headers.set(key, Array.isArray(value) ? value.join(', ') : value)
-    }
+    if (typeof value === 'string') headers.set(key, value)
+    else if (Array.isArray(value)) headers.set(key, value.join(', '))
   }
 
-  let body = null
+  let body: Buffer | undefined
 
   if (req.method !== 'GET' && req.method !== 'HEAD') {
-    body = await new Promise((resolve, reject) => {
-      const chunks = []
+    body = await new Promise<Buffer>((resolve, reject) => {
+      const chunks: Buffer[] = []
 
-      req.on('data', (chunk) => chunks.push(chunk))
+      req.on('data', (chunk: Buffer) => chunks.push(chunk))
       req.on('end', () => resolve(Buffer.concat(chunks)))
       req.on('error', reject)
     })
@@ -118,8 +121,10 @@ async function proxyToServer(req, targetPath) {
   return proxyReq
 }
 
-const server = createServer(async (req, res) => {
-  const url = new URL(req.url, `http://${req.headers.host}`)
+const server = createServer(async (req: IncomingMessage, res: ServerResponse) => {
+  const requestUrl = req.url ?? '/'
+  const host = req.headers.host ?? 'localhost'
+  const url = new URL(requestUrl, `http://${host}`)
   const pathname = url.pathname
 
   try {

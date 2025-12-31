@@ -1,7 +1,8 @@
 import 'dotenv/config'
-import {execSync} from 'child_process'
 import {fileURLToPath} from 'url'
 import {dirname, join} from 'path'
+import {mkdir} from 'fs/promises'
+import {$} from 'execa'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -13,14 +14,18 @@ if (!projectId) {
   throw new Error('SUPABASE_PROJECT_ID is not set in .env file')
 }
 
-const outputPath = join(projectRoot, '.supabase/supabase.ts')
+const supabaseDir = join(projectRoot, '.supabase')
+const outputPath = join(supabaseDir, 'supabase.ts')
 
 try {
-  execSync(`pnpm dlx supabase gen types typescript --project-id ${projectId} --schema public > ${outputPath}`, {
+  await mkdir(supabaseDir, {recursive: true})
+
+  await $({
     cwd: projectRoot,
-    stdio: 'inherit',
-  })
+    stderr: 'inherit',
+    stdout: {file: outputPath},
+  })`pnpm dlx supabase gen types typescript --project-id ${projectId} --schema public`
   console.log(`✅ Types generated successfully at ${outputPath}`)
 } catch (error) {
-  throw new Error(`Error generating types: ${error.message}`)
+  throw new Error(`Error generating types: ${(error as Error)?.message}`)
 }

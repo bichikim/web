@@ -20,5 +20,14 @@
     },
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "vite.config.mts", ".supabase/**/*.ts"]
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    ".supabase/**/*.ts",
+    "app.config.ts",
+    "drizzle.config.ts",
+    "pwa-assets.config.ts",
+    "playwright.config.ts",
+    "uno.config.ts"
+  ]
 }

@@ -1,5 +1,14 @@
-import 'dotenv/config'
+import dotenv from 'dotenv'
 import {defineConfig} from 'drizzle-kit'
+import path from 'node:path'
+import {fileURLToPath} from 'node:url'
+
+const configDir = fileURLToPath(new URL('.', import.meta.url))
+
+dotenv.config({
+  override: true,
+  path: path.resolve(configDir, process.env.DOTENV ?? '.env'),
+})
 
 export default defineConfig({
   /**
