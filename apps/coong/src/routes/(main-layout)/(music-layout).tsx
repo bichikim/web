@@ -9,6 +9,13 @@ import {getStorageKey} from 'src/utils/storage-key'
 import {getSelfUrl} from 'src/env'
 import {MidiPlayerProvider} from 'src/components/midi-player/context'
 import {Analytics} from 'src/components/vercel'
+import {RouteDefinition} from '@solidjs/router'
+
+export const route = {
+  info: {
+    public: true,
+  },
+} satisfies RouteDefinition
 
 interface Data {
   musics: MusicInfo[]

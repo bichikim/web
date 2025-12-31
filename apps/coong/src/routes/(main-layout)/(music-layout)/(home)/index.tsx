@@ -1,8 +1,14 @@
 import {useAuth} from 'src/store/auth'
 import {createEffect, createMemo, Show} from 'solid-js'
-import {useAction} from '@solidjs/router'
+import {RouteDefinition, useAction} from '@solidjs/router'
 import {updateUserMetadataAction} from 'src/requests/update-user-metadata'
 import {SIGN_IN_PATH, SIGN_UP_PATH, RESET_PASSWORD_PATH, CHANGE_PASSWORD_PATH} from 'src/utils/route-names'
+
+export const route = {
+  info: {
+    public: true,
+  },
+} satisfies RouteDefinition
 
 export default function HomePage() {
   const {user, signOut} = useAuth()
