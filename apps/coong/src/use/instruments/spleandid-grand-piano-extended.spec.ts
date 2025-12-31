@@ -22,7 +22,18 @@ vi.mock('smplr', () => {
     },
   } as AudioContext
 
+  class MockSplendidGrandPiano {
+    context = mockAudioContext
+    start = vi.fn(() => vi.fn())
+    stop = vi.fn()
+
+    __setCurrentTime(time: number) {
+      _currentTime = time
+    }
+  }
+
   return {
+    __esModule: true,
     CacheStorage: class {
       get() {
         return Promise.resolve(null)
@@ -31,14 +42,7 @@ vi.mock('smplr', () => {
         return Promise.resolve()
       }
     },
-    SplendidGrandPiano: vi.fn().mockImplementation(() => ({
-      __setCurrentTime: (time: number) => {
-        _currentTime = time
-      },
-      context: mockAudioContext,
-      start: vi.fn(() => vi.fn()),
-      stop: vi.fn(),
-    })),
+    SplendidGrandPiano: MockSplendidGrandPiano,
   }
 })
 

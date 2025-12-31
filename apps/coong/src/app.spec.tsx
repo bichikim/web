@@ -11,6 +11,14 @@ vi.mock('virtual:uno.css', () => ({}))
 vi.mock('./global.css', () => ({}))
 vi.mock('solid-devtools', () => ({}))
 
+vi.mock('src/utils/query', async () => {
+  const {QueryClient} = await import('@tanstack/solid-query')
+
+  return {
+    queryClient: new QueryClient(),
+  }
+})
+
 // Mock @solidjs/router
 vi.mock('@solidjs/router', () => ({
   Router: vi.fn((props: any) => {
