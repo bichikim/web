@@ -3,6 +3,10 @@ import {useAuth} from 'src/store/auth'
 import {createMemo} from 'solid-js'
 import {SIGN_IN_PATH} from 'src/utils/route-names'
 
+/**
+ * A custom hook that checks if the user is signed in and redirects to the sign in page if not.
+ * @returns
+ */
 const useAuthGuard = () => {
   const navigate = useNavigate()
   const {user} = useAuth()

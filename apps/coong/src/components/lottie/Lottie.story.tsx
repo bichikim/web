@@ -1,6 +1,6 @@
 import type {Meta, StoryObj} from 'storybook-solidjs-vite'
 import tadaJson from './tada.json?url'
-import tadaLottie from './tada.lottie'
+import tadaLottie from './tada.lottie?url'
 import {Lottie} from './Lottie'
 import {fn} from '@storybook/test'
 
