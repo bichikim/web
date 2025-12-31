@@ -201,7 +201,7 @@ importers:
         version: 8.5.1(@microsoft/api-extractor@7.55.1(@types/node@20.11.18))(jiti@2.6.1)(postcss@8.5.6)(typescript@5.9.3)(yaml@2.8.1)
       turbo:
         specifier: latest
-        version: 2.6.2
+        version: 2.7.2
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -313,7 +313,7 @@ importers:
         version: 0.15.4(solid-js@1.9.10)
       '@solidjs/start':
         specifier: ^1.2.0
-        version: 1.2.0(@testing-library/jest-dom@6.9.1)(solid-js@1.9.10)(vinxi@0.5.8(@types/node@25.0.3)(db0@0.3.4(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.7)))(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.7))(encoding@0.1.13)(ioredis@5.8.2)(jiti@2.6.1)(terser@5.44.1)(xml2js@0.6.2)(yaml@2.8.1))(vite@6.4.1(@types/node@25.0.3)(jiti@2.6.1)(terser@5.44.1)(yaml@2.8.1))
+        version: 1.2.0(@testing-library/jest-dom@6.9.1)(solid-js@1.9.10)(vinxi@0.5.8(@types/node@20.11.18)(db0@0.3.4(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.7)))(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.7))(encoding@0.1.13)(ioredis@5.8.2)(jiti@2.6.1)(terser@5.44.1)(xml2js@0.6.2)(yaml@2.8.1))(vite@6.4.1(@types/node@20.11.18)(jiti@2.6.1)(terser@5.44.1)(yaml@2.8.1))
       '@supabase/ssr':
         specifier: ^0.8.0
         version: 0.8.0(@supabase/supabase-js@2.86.0)
@@ -362,6 +362,9 @@ importers:
       drizzle-orm:
         specifier: ^0.44.7
         version: 0.44.7(gel@2.2.0)(postgres@3.4.7)
+      es-toolkit:
+        specifier: ^1.43.0
+        version: 1.43.0
       h3:
         specifier: ^1.15.1
         version: 1.15.4
@@ -394,13 +397,13 @@ importers:
         version: 1.6.1
       unocss:
         specifier: ^66.5.9
-        version: 66.5.9(postcss@8.5.6)(vite@6.4.1(@types/node@25.0.3)(jiti@2.6.1)(terser@5.44.1)(yaml@2.8.1))
+        version: 66.5.9(postcss@8.5.6)(vite@6.4.1(@types/node@20.11.18)(jiti@2.6.1)(terser@5.44.1)(yaml@2.8.1))
       vinxi:
         specifier: ^0.5.3
-        version: 0.5.8(@types/node@25.0.3)(db0@0.3.4(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.7)))(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.7))(encoding@0.1.13)(ioredis@5.8.2)(jiti@2.6.1)(terser@5.44.1)(xml2js@0.6.2)(yaml@2.8.1)
+        version: 0.5.8(@types/node@20.11.18)(db0@0.3.4(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.7)))(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.7))(encoding@0.1.13)(ioredis@5.8.2)(jiti@2.6.1)(terser@5.44.1)(xml2js@0.6.2)(yaml@2.8.1)
       vite:
         specifier: ^6.1.0
-        version: 6.4.1(@types/node@25.0.3)(jiti@2.6.1)(terser@5.44.1)(yaml@2.8.1)
+        version: 6.4.1(@types/node@20.11.18)(jiti@2.6.1)(terser@5.44.1)(yaml@2.8.1)
       zod:
         specifier: ^4.1.13
         version: 4.1.13
@@ -411,18 +414,24 @@ importers:
       '@iconify-json/tabler':
         specifier: ^1.2.13
         version: 1.2.23
+      '@playwright/test':
+        specifier: ^1.57.0
+        version: 1.57.0
       '@qwik.dev/partytown':
         specifier: ^0.11.1
         version: 0.11.2
       '@types/js-cookie':
         specifier: ^3.0.6
         version: 3.0.6
+      '@types/node':
+        specifier: 20.11.18
+        version: 20.11.18
       '@vite-pwa/assets-generator':
         specifier: ^1.0.0
         version: 1.0.2
       '@vitejs/plugin-legacy':
         specifier: ^3.0.0
-        version: 3.0.2(terser@5.44.1)(vite@6.4.1(@types/node@25.0.3)(jiti@2.6.1)(terser@5.44.1)(yaml@2.8.1))
+        version: 3.0.2(terser@5.44.1)(vite@6.4.1(@types/node@20.11.18)(jiti@2.6.1)(terser@5.44.1)(yaml@2.8.1))
       '@winter-love/unocss-config':
         specifier: workspace:*
         version: link:../../packages/unocss-config
@@ -438,9 +447,15 @@ importers:
       drizzle-kit:
         specifier: ^0.31.7
         version: 0.31.7
+      execa:
+        specifier: ^9.6.1
+        version: 9.6.1
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       solid-devtools:
         specifier: ^0.34.4
-        version: 0.34.4(solid-js@1.9.10)(vite@6.4.1(@types/node@25.0.3)(jiti@2.6.1)(terser@5.44.1)(yaml@2.8.1))
+        version: 0.34.4(solid-js@1.9.10)(vite@6.4.1(@types/node@20.11.18)(jiti@2.6.1)(terser@5.44.1)(yaml@2.8.1))
 
   apps/image-server:
     dependencies:
@@ -3122,6 +3137,11 @@ packages:
   '@pkgr/core@0.2.9':
     resolution: {integrity: sha512-QNqXyfVS2wm9hweSYD2O7F0G06uurj9kZ96TRQE5Y9hU7+tgdZwIkbAKc5Ocy1HxEY2kuDQa6cQ1WRs/O5LFKA==}
     engines: {node: ^12.20.0 || ^14.18.0 || >=16.0.0}
+
+  '@playwright/test@1.57.0':
+    resolution: {integrity: sha512-6TyEnHgd6SArQO8UO2OMTxshln3QMWBtPGrOCgs3wVEmQmwyuNtB10IZMfmYDE0riwNR1cu4q+pPcxMVtaG3TA==}
+    engines: {node: '>=18'}
+    hasBin: true
 
   '@polka/url@0.5.0':
     resolution: {integrity: sha512-oZLYFEAzUKyi3SKnXvj32ZCEGH6RDnao7COuCVhDydMS9NrCSVXhM79VaKyP5+Zc33m0QXEd2DN3UkU7OsHcfw==}
@@ -6280,6 +6300,10 @@ packages:
     resolution: {integrity: sha512-VyhnebXciFV2DESc+p6B+y0LjSm0krU4OgJN44qFAhBY0TJ+1V61tYD2+wHusZ6F9n5K+vl8k0sTy7PEfV4qpg==}
     engines: {node: '>=16.17'}
 
+  execa@9.6.1:
+    resolution: {integrity: sha512-9Be3ZoN4LmYR90tUoVu2te2BsbzHfhJyfEiAVfz7N5/zv+jduIfLrV2xdQXOHbaD6KgpGdO9PRPM1Y4Q9QkPkA==}
+    engines: {node: ^18.19.0 || >=20.5.0}
+
   expand-template@2.0.3:
     resolution: {integrity: sha512-XYfuKMvj4O35f/pOXLObndIRvyQ+/+6AhODh+OKWj9S9498pHHn/IMszH+gt0fBCRWMNfk1ZSp5x3AifmnI2vg==}
     engines: {node: '>=6'}
@@ -6340,6 +6364,10 @@ packages:
   figures@3.2.0:
     resolution: {integrity: sha512-yaduQFRKLXYOGgEn6AZau90j3ggSOyiqXU0F9JZfeXYhNa+Jk4X+s45A2zg5jns87GAFa34BBm2kXw4XpNcbdg==}
     engines: {node: '>=8'}
+
+  figures@6.1.0:
+    resolution: {integrity: sha512-d+l3qxjSesT4V7v2fh+QnmFnUWv9lSpjarhShNTgBOfA0ttejbQUAlHLitbjkoRiDulW0OPoQPYIGhIC8ohejg==}
+    engines: {node: '>=18'}
 
   file-entry-cache@8.0.0:
     resolution: {integrity: sha512-XXTUwCvisa5oacNGRP9SfNtYBNAMi+RPwBFmblZEF7N7swHYQS6/Zfk7SRwx4D5j3CH211YNRco1DEMNVfZCnQ==}
@@ -6483,6 +6511,11 @@ packages:
 
   fs.realpath@1.0.0:
     resolution: {integrity: sha512-OO0pH2lK6a0hZnAdau5ItzHPI6pUlvI7jMVnxUQRtw4owF2wk8lOSabtGDCTP4Ggrg2MbGnWO9X8K1t4+fGMDw==}
+
+  fsevents@2.3.2:
+    resolution: {integrity: sha512-xiqMQR4xAeHTuB9uWm+fFRcIOgKBMiOBP+eXiyT7jsgVCq1bkVygt00oASowB7EdtpOHaaPgKt812P9ab+DDKA==}
+    engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
+    os: [darwin]
 
   fsevents@2.3.3:
     resolution: {integrity: sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==}
@@ -6821,6 +6854,10 @@ packages:
     resolution: {integrity: sha512-AXcZb6vzzrFAUE61HnN4mpLqd/cSIwNQjtNWR0euPm6y0iqx3G4gOXaIDdtdDwZmhwe82LA6+zinmW4UBWVePQ==}
     engines: {node: '>=16.17.0'}
 
+  human-signals@8.0.1:
+    resolution: {integrity: sha512-eKCa6bwnJhvxj14kZk5NCPc6Hb6BdsU9DZcOnmQKSnO1VKrfV0zCvtttPZUsBvjmNDn8rpcJfpwSYnHBjc95MQ==}
+    engines: {node: '>=18.18.0'}
+
   iceberg-js@0.8.0:
     resolution: {integrity: sha512-kmgmea2nguZEvRqW79gDqNXyxA3OS5WIgMVffrHpqXV4F/J4UmNIw2vstixioLTNSkd5rFB8G0s3Lwzogm6OFw==}
     engines: {node: '>=20.0.0'}
@@ -7065,6 +7102,10 @@ packages:
     resolution: {integrity: sha512-yvkRyxmFKEOQ4pNXCmJG5AEQNlXJS5LaONXo5/cLdTZdWvsZ1ioJEonLGAosKlMWE8lwUy/bJzMjcw8az73+Fg==}
     engines: {node: '>=0.10.0'}
 
+  is-plain-obj@4.1.0:
+    resolution: {integrity: sha512-+Pgi+vMuUNkJyExiMBt5IlFoMyKnr5zhJ4Uspz58WOhBF5QoIZkFyNHIbBAtHwzVAgk5RtndVNsDRN61/mmDqg==}
+    engines: {node: '>=12'}
+
   is-plain-object@2.0.4:
     resolution: {integrity: sha512-h5PpgXkWitc38BBMYawTYMWJHFZJVnBquFE57xFpjB8pJFiF6gZ+bU+WyI/yqXiFR5mdLsgYNaPe8uao6Uv9Og==}
     engines: {node: '>=0.10.0'}
@@ -7109,6 +7150,10 @@ packages:
   is-unicode-supported@0.1.0:
     resolution: {integrity: sha512-knxG2q4UC3u8stRGyAVJCOdxFmv5DZiRcdlIaAQXAbSfJya+OhopNotLQrstBhququ4ZpuKbDc/8S6mgXgPFPw==}
     engines: {node: '>=10'}
+
+  is-unicode-supported@2.1.0:
+    resolution: {integrity: sha512-mE00Gnza5EEB3Ds0HfMyllZzbBrmLOX3vfWoj9A9PEnTfratQ/BcaJOuMhnkhjXvb2+FkY3VuHqtAGpTPmglFQ==}
+    engines: {node: '>=18'}
 
   is-upper-case@1.1.2:
     resolution: {integrity: sha512-GQYSJMgfeAmVwh9ixyk888l7OIhNAGKtY6QA+IrWlu9MDTCaXmeozOZ2S9Knj7bQwBO/H6J2kb+pbyTUiMNbsw==}
@@ -8007,6 +8052,10 @@ packages:
     resolution: {integrity: sha512-ppwTtiJZq0O/ai0z7yfudtBpWIoxM8yE6nHi1X47eFR2EWORqfbu6CnPlNsjeN683eT0qG6H/Pyf9fCcvjnnnQ==}
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
 
+  npm-run-path@6.0.0:
+    resolution: {integrity: sha512-9qny7Z9DsQU8Ou39ERsPU4OZQlSTP47ShQzuKZ6PRXpYLtIFgl/DEBYEXKlvcEa+9tHVcK8CF81Y2V72qaZhWA==}
+    engines: {node: '>=18'}
+
   nth-check@2.1.1:
     resolution: {integrity: sha512-lqjrjmaOoAnWfMmBPL+XNnynZh2+swxiX3WUE0s4yEHI6m+AwrK2UZOimIRl3X/4QctVqS8AiZjFqyOGrMXb/w==}
 
@@ -8212,6 +8261,10 @@ packages:
     resolution: {integrity: sha512-ayCKvm/phCGxOkYRSCM82iDwct8/EonSEgCSxWxD7ve6jHggsFl4fZVQBPRNgQoKiuV/odhFrGzQXZwbifC8Rg==}
     engines: {node: '>=8'}
 
+  parse-ms@4.0.0:
+    resolution: {integrity: sha512-TXfryirbmq34y8QBwgqCVLi+8oA3oWx2eAnSn62ITyEhEYaWRlVZ2DvMM9eZbMs/RfxPu/PK/aBLyGj4IrqMHw==}
+    engines: {node: '>=18'}
+
   parse-path@7.1.0:
     resolution: {integrity: sha512-EuCycjZtfPcjWk7KTksnJ5xPMvWGA/6i4zrLYhRG0hGvC3GPU/jGUj3Cy+ZR0v30duV3e23R95T1lE2+lsndSw==}
 
@@ -8353,6 +8406,16 @@ packages:
 
   pkg-types@2.3.0:
     resolution: {integrity: sha512-SIqCzDRg0s9npO5XQ3tNZioRY1uK06lA41ynBC1YmFTmnY6FjUjVt6s4LoADmwoig1qqD0oK8h1p/8mlMx8Oig==}
+
+  playwright-core@1.57.0:
+    resolution: {integrity: sha512-agTcKlMw/mjBWOnD6kFZttAAGHgi/Nw0CZ2o6JqWSbMlI219lAFLZZCyqByTsvVAJq5XA5H8cA6PrvBRpBWEuQ==}
+    engines: {node: '>=18'}
+    hasBin: true
+
+  playwright@1.57.0:
+    resolution: {integrity: sha512-ilYQj1s8sr2ppEJ2YVadYBN0Mb3mdo9J0wQ+UuDhzYqURwSoW4n1Xs5vs7ORwgDGmyEh33tRMeS8KhdkMoLXQw==}
+    engines: {node: '>=18'}
+    hasBin: true
 
   plur@4.0.0:
     resolution: {integrity: sha512-4UGewrYgqDFw9vV6zNV+ADmPAUAfJPKtGvb/VdpQAx25X5f3xXdGdyOEVFwkl8Hl/tl7+xbeHqSEM+D5/TirUg==}
@@ -8621,6 +8684,10 @@ packages:
   pretty-format@29.7.0:
     resolution: {integrity: sha512-Pdlw/oPxN+aXdmM9R00JVC9WVFoCLTKJvDVLgmJ+qAffBMxsV85l/Lu7sNx4zSzPyoL2euImuEwHhOXdEgNFZQ==}
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
+
+  pretty-ms@9.3.0:
+    resolution: {integrity: sha512-gjVS5hOP+M3wMm5nmNOucbIrqudzs9v/57bWRHQWLYklXqoXKrVfYW2W9+glfGsqtPgpiz5WwyEEB+ksXIx3gQ==}
+    engines: {node: '>=18'}
 
   proc-log@4.2.0:
     resolution: {integrity: sha512-g8+OnU/L2v+wyiVK+D5fA34J7EH8jZ8DDlvwhRCMxmMj7UCBvxiO1mGeN+36JXIKF4zevU4kRBd8lVgG9vLelA==}
@@ -9431,6 +9498,10 @@ packages:
     resolution: {integrity: sha512-dOESqjYr96iWYylGObzd39EuNTa5VJxyvVAEm5Jnh7KGo75V43Hk1odPQkNDyXNmUR6k+gEiDVXnjB8HJ3crXw==}
     engines: {node: '>=12'}
 
+  strip-final-newline@4.0.0:
+    resolution: {integrity: sha512-aulFJcD6YK8V1G7iRB5tigAP4TsHBZZrOV8pjV++zdUwmeV8uzbY7yn6h9MswN62adStNZFuCIx4haBnRuMDaw==}
+    engines: {node: '>=18'}
+
   strip-indent@3.0.0:
     resolution: {integrity: sha512-laJTa3Jb+VQpaC6DseHhF7dXVqHTfJPCRDaEbid/drOhgitgYku/letMUqOXFoWV0zIIUbjpdH2t+tYj4bQMRQ==}
     engines: {node: '>=8'}
@@ -9801,38 +9872,38 @@ packages:
   tunnel-agent@0.6.0:
     resolution: {integrity: sha512-McnNiV1l8RYeY8tBgEpuodCC1mLUdbSN+CYBL7kJsJNInOP8UjDDEwdk6Mw60vdLLrr5NHKZhMAOSrR2NZuQ+w==}
 
-  turbo-darwin-64@2.6.2:
-    resolution: {integrity: sha512-nF9d/YAyrNkyXn9lp3ZtgXPb7fZsik3cUNe/sBvUO0G5YezUS/kDYYw77IdjizDzairz8pL2ITCTUreG2d5iZQ==}
+  turbo-darwin-64@2.7.2:
+    resolution: {integrity: sha512-dxY3X6ezcT5vm3coK6VGixbrhplbQMwgNsCsvZamS/+/6JiebqW9DKt4NwpgYXhDY2HdH00I7FWs3wkVuan4rA==}
     cpu: [x64]
     os: [darwin]
 
-  turbo-darwin-arm64@2.6.2:
-    resolution: {integrity: sha512-mmm0jFaVramST26XE1Lk2qjkjvLJHOe9f3TFjqY+aByjMK/ZmKE5WFPuCWo4L3xhwx+16T37rdPP//76loB3oA==}
+  turbo-darwin-arm64@2.7.2:
+    resolution: {integrity: sha512-1bXmuwPLqNFt3mzrtYcVx1sdJ8UYb124Bf48nIgcpMCGZy3kDhgxNv1503kmuK/37OGOZbsWSQFU4I08feIuSg==}
     cpu: [arm64]
     os: [darwin]
 
-  turbo-linux-64@2.6.2:
-    resolution: {integrity: sha512-IUMHjkVRJDUABGpi+iS1Le59aOl5DX88U5UT/mKaE7nNEjG465+a8UtYno56cZnLP+C6BkX4I93LFgYf9syjGQ==}
+  turbo-linux-64@2.7.2:
+    resolution: {integrity: sha512-kP+TiiMaiPugbRlv57VGLfcjFNsFbo8H64wMBCPV2270Or2TpDCBULMzZrvEsvWFjT3pBFvToYbdp8/Kw0jAQg==}
     cpu: [x64]
     os: [linux]
 
-  turbo-linux-arm64@2.6.2:
-    resolution: {integrity: sha512-0qQdZiimMUZj2Gfq87thYu0E02NaNcsB3lcEK/TD70Zzi7AxQoxye664Gis0Uao2j2L9/+05wC2btZ7SoFX3Gw==}
+  turbo-linux-arm64@2.7.2:
+    resolution: {integrity: sha512-VDJwQ0+8zjAfbyY6boNaWfP6RIez4ypKHxwkuB6SrWbOSk+vxTyW5/hEjytTwK8w/TsbKVcMDyvpora8tEsRFw==}
     cpu: [arm64]
     os: [linux]
 
-  turbo-windows-64@2.6.2:
-    resolution: {integrity: sha512-BmMfFmt0VaoZL4NbtDq/dzGfjHsPoGU2+vFiZtkiYsttHY3fd/Dmgnu9PuRyJN1pv2M22q88rXO+dqYRHztLMw==}
+  turbo-windows-64@2.7.2:
+    resolution: {integrity: sha512-rPjqQXVnI6A6oxgzNEE8DNb6Vdj2Wwyhfv3oDc+YM3U9P7CAcBIlKv/868mKl4vsBtz4ouWpTQNXG8vljgJO+w==}
     cpu: [x64]
     os: [win32]
 
-  turbo-windows-arm64@2.6.2:
-    resolution: {integrity: sha512-0r4s4M/FgLxfjrdLPdqQUur8vZAtaWEi4jhkQ6wCIN2xzA9aee9IKwM53w7CQcjaLvWhT0AU7LTQHjFaHwxiKw==}
+  turbo-windows-arm64@2.7.2:
+    resolution: {integrity: sha512-tcnHvBhO515OheIFWdxA+qUvZzNqqcHbLVFc1+n+TJ1rrp8prYicQtbtmsiKgMvr/54jb9jOabU62URAobnB7g==}
     cpu: [arm64]
     os: [win32]
 
-  turbo@2.6.2:
-    resolution: {integrity: sha512-LiQAFS6iWvnY8ViGtoPgduWBeuGH9B32XR4p8H8jxU5PudwyHiiyf1jQW0fCC8gCCTz9itkIbqZLIyUu5AG33w==}
+  turbo@2.7.2:
+    resolution: {integrity: sha512-5JIA5aYBAJSAhrhbyag1ZuMSgUZnHtI+Sq3H8D3an4fL8PeF+L1yYvbEJg47akP1PFfATMf5ehkqFnxfkmuwZQ==}
     hasBin: true
 
   type-check@0.4.0:
@@ -10670,6 +10741,10 @@ packages:
   yocto-queue@0.1.0:
     resolution: {integrity: sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==}
     engines: {node: '>=10'}
+
+  yoctocolors@2.1.2:
+    resolution: {integrity: sha512-CzhO+pFNo8ajLM2d2IW/R93ipy99LWjtwblvC1RsoSUMZgyLbYFr221TnSNT7GjGdYui6P459mw9JH/g/zW2ug==}
+    engines: {node: '>=18'}
 
   yoga-layout-prebuilt@1.10.0:
     resolution: {integrity: sha512-YnOmtSbv4MTf7RGJMK0FvZ+KD8OEe/J5BNnR0GHhD8J/XcG/Qvxgszm0Un6FTHWW4uHlTgP0IztiXQnGyIR45g==}
@@ -12936,6 +13011,10 @@ snapshots:
 
   '@pkgr/core@0.2.9': {}
 
+  '@playwright/test@1.57.0':
+    dependencies:
+      playwright: 1.57.0
+
   '@polka/url@0.5.0': {}
 
   '@polka/url@1.0.0-next.29': {}
@@ -13366,6 +13445,30 @@ snapshots:
     dependencies:
       solid-js: 1.9.10
 
+  '@solidjs/start@1.2.0(@testing-library/jest-dom@6.9.1)(solid-js@1.9.10)(vinxi@0.5.8(@types/node@20.11.18)(db0@0.3.4(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.7)))(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.7))(encoding@0.1.13)(ioredis@5.8.2)(jiti@2.6.1)(terser@5.44.1)(xml2js@0.6.2)(yaml@2.8.1))(vite@6.4.1(@types/node@20.11.18)(jiti@2.6.1)(terser@5.44.1)(yaml@2.8.1))':
+    dependencies:
+      '@tanstack/server-functions-plugin': 1.121.21(vite@6.4.1(@types/node@20.11.18)(jiti@2.6.1)(terser@5.44.1)(yaml@2.8.1))
+      '@vinxi/plugin-directives': 0.5.1(vinxi@0.5.8(@types/node@20.11.18)(db0@0.3.4(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.7)))(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.7))(encoding@0.1.13)(ioredis@5.8.2)(jiti@2.6.1)(terser@5.44.1)(xml2js@0.6.2)(yaml@2.8.1))
+      '@vinxi/server-components': 0.5.1(vinxi@0.5.8(@types/node@20.11.18)(db0@0.3.4(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.7)))(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.7))(encoding@0.1.13)(ioredis@5.8.2)(jiti@2.6.1)(terser@5.44.1)(xml2js@0.6.2)(yaml@2.8.1))
+      cookie-es: 2.0.0
+      defu: 6.1.4
+      error-stack-parser: 2.1.4
+      html-to-image: 1.11.13
+      radix3: 1.1.2
+      seroval: 1.4.0
+      seroval-plugins: 1.4.0(seroval@1.4.0)
+      shiki: 1.29.2
+      source-map-js: 1.2.1
+      terracotta: 1.0.6(solid-js@1.9.10)
+      tinyglobby: 0.2.15
+      vinxi: 0.5.8(@types/node@20.11.18)(db0@0.3.4(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.7)))(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.7))(encoding@0.1.13)(ioredis@5.8.2)(jiti@2.6.1)(terser@5.44.1)(xml2js@0.6.2)(yaml@2.8.1)
+      vite-plugin-solid: 2.11.10(@testing-library/jest-dom@6.9.1)(solid-js@1.9.10)(vite@6.4.1(@types/node@20.11.18)(jiti@2.6.1)(terser@5.44.1)(yaml@2.8.1))
+    transitivePeerDependencies:
+      - '@testing-library/jest-dom'
+      - solid-js
+      - supports-color
+      - vite
+
   '@solidjs/start@1.2.0(@testing-library/jest-dom@6.9.1)(solid-js@1.9.10)(vinxi@0.5.8(@types/node@25.0.3)(db0@0.3.4(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.7)))(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.7))(encoding@0.1.13)(ioredis@5.8.2)(jiti@2.6.1)(terser@5.44.1)(xml2js@0.6.2)(yaml@2.8.1))(vite@6.4.1(@types/node@25.0.3)(jiti@2.6.1)(terser@5.44.1)(yaml@2.8.1))':
     dependencies:
       '@tanstack/server-functions-plugin': 1.121.21(vite@6.4.1(@types/node@25.0.3)(jiti@2.6.1)(terser@5.44.1)(yaml@2.8.1))
@@ -13571,6 +13674,19 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
+  '@tanstack/directive-functions-plugin@1.121.21(vite@6.4.1(@types/node@20.11.18)(jiti@2.6.1)(terser@5.44.1)(yaml@2.8.1))':
+    dependencies:
+      '@babel/code-frame': 7.26.2
+      '@babel/core': 7.28.5
+      '@babel/traverse': 7.28.5
+      '@babel/types': 7.28.5
+      '@tanstack/router-utils': 1.139.0
+      babel-dead-code-elimination: 1.0.10
+      tiny-invariant: 1.3.3
+      vite: 6.4.1(@types/node@20.11.18)(jiti@2.6.1)(terser@5.44.1)(yaml@2.8.1)
+    transitivePeerDependencies:
+      - supports-color
+
   '@tanstack/directive-functions-plugin@1.121.21(vite@6.4.1(@types/node@25.0.3)(jiti@2.6.1)(terser@5.44.1)(yaml@2.8.1))':
     dependencies:
       '@babel/code-frame': 7.26.2
@@ -13598,6 +13714,22 @@ snapshots:
       tinyglobby: 0.2.15
     transitivePeerDependencies:
       - supports-color
+
+  '@tanstack/server-functions-plugin@1.121.21(vite@6.4.1(@types/node@20.11.18)(jiti@2.6.1)(terser@5.44.1)(yaml@2.8.1))':
+    dependencies:
+      '@babel/code-frame': 7.26.2
+      '@babel/core': 7.28.5
+      '@babel/plugin-syntax-jsx': 7.27.1(@babel/core@7.28.5)
+      '@babel/plugin-syntax-typescript': 7.27.1(@babel/core@7.28.5)
+      '@babel/template': 7.27.2
+      '@babel/traverse': 7.28.5
+      '@babel/types': 7.28.5
+      '@tanstack/directive-functions-plugin': 1.121.21(vite@6.4.1(@types/node@20.11.18)(jiti@2.6.1)(terser@5.44.1)(yaml@2.8.1))
+      babel-dead-code-elimination: 1.0.10
+      tiny-invariant: 1.3.3
+    transitivePeerDependencies:
+      - supports-color
+      - vite
 
   '@tanstack/server-functions-plugin@1.121.21(vite@6.4.1(@types/node@25.0.3)(jiti@2.6.1)(terser@5.44.1)(yaml@2.8.1))':
     dependencies:
@@ -13766,7 +13898,7 @@ snapshots:
   '@types/body-parser@1.19.6':
     dependencies:
       '@types/connect': 3.4.38
-      '@types/node': 24.10.1
+      '@types/node': 25.0.3
 
   '@types/braces@3.0.5': {}
 
@@ -13777,7 +13909,7 @@ snapshots:
 
   '@types/connect@3.4.38':
     dependencies:
-      '@types/node': 24.10.1
+      '@types/node': 25.0.3
 
   '@types/deep-eql@4.0.2': {}
 
@@ -13790,7 +13922,7 @@ snapshots:
 
   '@types/express-serve-static-core@4.19.7':
     dependencies:
-      '@types/node': 24.10.1
+      '@types/node': 25.0.3
       '@types/qs': 6.14.0
       '@types/range-parser': 1.2.7
       '@types/send': 1.2.1
@@ -13805,7 +13937,7 @@ snapshots:
   '@types/glob@7.2.0':
     dependencies:
       '@types/minimatch': 6.0.0
-      '@types/node': 24.10.1
+      '@types/node': 25.0.3
 
   '@types/hast@3.0.4':
     dependencies:
@@ -13848,7 +13980,7 @@ snapshots:
 
   '@types/node-fetch@2.6.13':
     dependencies:
-      '@types/node': 24.10.1
+      '@types/node': 25.0.3
       form-data: 4.0.5
 
   '@types/node@20.11.18':
@@ -13888,16 +14020,16 @@ snapshots:
   '@types/send@0.17.6':
     dependencies:
       '@types/mime': 1.3.5
-      '@types/node': 24.10.1
+      '@types/node': 25.0.3
 
   '@types/send@1.2.1':
     dependencies:
-      '@types/node': 24.10.1
+      '@types/node': 25.0.3
 
   '@types/serve-static@1.15.10':
     dependencies:
       '@types/http-errors': 2.0.5
-      '@types/node': 24.10.1
+      '@types/node': 25.0.3
       '@types/send': 0.17.6
 
   '@types/serviceworker@0.0.111': {}
@@ -13914,7 +14046,7 @@ snapshots:
 
   '@types/through@0.0.33':
     dependencies:
-      '@types/node': 24.10.1
+      '@types/node': 25.0.3
 
   '@types/tinycolor2@1.4.6': {}
 
@@ -13924,7 +14056,7 @@ snapshots:
 
   '@types/ws@8.18.1':
     dependencies:
-      '@types/node': 24.10.1
+      '@types/node': 25.0.3
 
   '@types/yoga-layout@1.9.2': {}
 
@@ -14080,6 +14212,14 @@ snapshots:
       vite: 6.4.1(@types/node@25.0.3)(jiti@2.6.1)(terser@5.44.1)(yaml@2.8.1)
     transitivePeerDependencies:
       - vue
+
+  '@unocss/astro@66.5.9(vite@6.4.1(@types/node@20.11.18)(jiti@2.6.1)(terser@5.44.1)(yaml@2.8.1))':
+    dependencies:
+      '@unocss/core': 66.5.9
+      '@unocss/reset': 66.5.9
+      '@unocss/vite': 66.5.9(vite@6.4.1(@types/node@20.11.18)(jiti@2.6.1)(terser@5.44.1)(yaml@2.8.1))
+    optionalDependencies:
+      vite: 6.4.1(@types/node@20.11.18)(jiti@2.6.1)(terser@5.44.1)(yaml@2.8.1)
 
   '@unocss/astro@66.5.9(vite@6.4.1(@types/node@25.0.3)(jiti@2.6.1)(terser@5.44.1)(yaml@2.8.1))':
     dependencies:
@@ -14482,6 +14622,19 @@ snapshots:
     transitivePeerDependencies:
       - vue
 
+  '@unocss/vite@66.5.9(vite@6.4.1(@types/node@20.11.18)(jiti@2.6.1)(terser@5.44.1)(yaml@2.8.1))':
+    dependencies:
+      '@jridgewell/remapping': 2.3.5
+      '@unocss/config': 66.5.9
+      '@unocss/core': 66.5.9
+      '@unocss/inspector': 66.5.9
+      chokidar: 3.6.0
+      magic-string: 0.30.21
+      pathe: 2.0.3
+      tinyglobby: 0.2.15
+      unplugin-utils: 0.3.1
+      vite: 6.4.1(@types/node@20.11.18)(jiti@2.6.1)(terser@5.44.1)(yaml@2.8.1)
+
   '@unocss/vite@66.5.9(vite@6.4.1(@types/node@25.0.3)(jiti@2.6.1)(terser@5.44.1)(yaml@2.8.1))':
     dependencies:
       '@jridgewell/remapping': 2.3.5
@@ -14539,6 +14692,19 @@ snapshots:
       untun: 0.1.3
       uqr: 0.1.2
 
+  '@vinxi/plugin-directives@0.5.1(vinxi@0.5.8(@types/node@20.11.18)(db0@0.3.4(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.7)))(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.7))(encoding@0.1.13)(ioredis@5.8.2)(jiti@2.6.1)(terser@5.44.1)(xml2js@0.6.2)(yaml@2.8.1))':
+    dependencies:
+      '@babel/parser': 7.28.5
+      acorn: 8.15.0
+      acorn-jsx: 5.3.2(acorn@8.15.0)
+      acorn-loose: 8.5.2
+      acorn-typescript: 1.4.13(acorn@8.15.0)
+      astring: 1.9.0
+      magicast: 0.2.11
+      recast: 0.23.11
+      tslib: 2.8.1
+      vinxi: 0.5.8(@types/node@20.11.18)(db0@0.3.4(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.7)))(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.7))(encoding@0.1.13)(ioredis@5.8.2)(jiti@2.6.1)(terser@5.44.1)(xml2js@0.6.2)(yaml@2.8.1)
+
   '@vinxi/plugin-directives@0.5.1(vinxi@0.5.8(@types/node@25.0.3)(db0@0.3.4(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.7)))(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.7))(encoding@0.1.13)(ioredis@5.8.2)(jiti@2.6.1)(terser@5.44.1)(xml2js@0.6.2)(yaml@2.8.1))':
     dependencies:
       '@babel/parser': 7.28.5
@@ -14551,6 +14717,17 @@ snapshots:
       recast: 0.23.11
       tslib: 2.8.1
       vinxi: 0.5.8(@types/node@25.0.3)(db0@0.3.4(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.7)))(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.7))(encoding@0.1.13)(ioredis@5.8.2)(jiti@2.6.1)(terser@5.44.1)(xml2js@0.6.2)(yaml@2.8.1)
+
+  '@vinxi/server-components@0.5.1(vinxi@0.5.8(@types/node@20.11.18)(db0@0.3.4(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.7)))(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.7))(encoding@0.1.13)(ioredis@5.8.2)(jiti@2.6.1)(terser@5.44.1)(xml2js@0.6.2)(yaml@2.8.1))':
+    dependencies:
+      '@vinxi/plugin-directives': 0.5.1(vinxi@0.5.8(@types/node@20.11.18)(db0@0.3.4(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.7)))(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.7))(encoding@0.1.13)(ioredis@5.8.2)(jiti@2.6.1)(terser@5.44.1)(xml2js@0.6.2)(yaml@2.8.1))
+      acorn: 8.15.0
+      acorn-loose: 8.5.2
+      acorn-typescript: 1.4.13(acorn@8.15.0)
+      astring: 1.9.0
+      magicast: 0.2.11
+      recast: 0.23.11
+      vinxi: 0.5.8(@types/node@20.11.18)(db0@0.3.4(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.7)))(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.7))(encoding@0.1.13)(ioredis@5.8.2)(jiti@2.6.1)(terser@5.44.1)(xml2js@0.6.2)(yaml@2.8.1)
 
   '@vinxi/server-components@0.5.1(vinxi@0.5.8(@types/node@25.0.3)(db0@0.3.4(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.7)))(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.7))(encoding@0.1.13)(ioredis@5.8.2)(jiti@2.6.1)(terser@5.44.1)(xml2js@0.6.2)(yaml@2.8.1))':
     dependencies:
@@ -14576,7 +14753,7 @@ snapshots:
       - bare-buffer
       - react-native-b4a
 
-  '@vitejs/plugin-legacy@3.0.2(terser@5.44.1)(vite@6.4.1(@types/node@25.0.3)(jiti@2.6.1)(terser@5.44.1)(yaml@2.8.1))':
+  '@vitejs/plugin-legacy@3.0.2(terser@5.44.1)(vite@6.4.1(@types/node@20.11.18)(jiti@2.6.1)(terser@5.44.1)(yaml@2.8.1))':
     dependencies:
       '@babel/standalone': 7.28.5
       core-js: 3.47.0
@@ -14584,7 +14761,7 @@ snapshots:
       regenerator-runtime: 0.13.11
       systemjs: 6.15.1
       terser: 5.44.1
-      vite: 6.4.1(@types/node@25.0.3)(jiti@2.6.1)(terser@5.44.1)(yaml@2.8.1)
+      vite: 6.4.1(@types/node@20.11.18)(jiti@2.6.1)(terser@5.44.1)(yaml@2.8.1)
 
   '@vitest/coverage-v8@4.0.8(vitest@3.2.4(@types/node@20.11.18)(happy-dom@16.8.1)(jsdom@26.1.0)(terser@5.44.1))':
     dependencies:
@@ -15461,7 +15638,7 @@ snapshots:
 
   chrome-launcher@0.15.2:
     dependencies:
-      '@types/node': 24.10.1
+      '@types/node': 25.0.3
       escape-string-regexp: 4.0.0
       is-wsl: 2.2.0
       lighthouse-logger: 1.4.2
@@ -16653,9 +16830,9 @@ snapshots:
   execa@5.0.0:
     dependencies:
       cross-spawn: 7.0.6
-      get-stream: 6.0.0
+      get-stream: 6.0.1
       human-signals: 2.1.0
-      is-stream: 2.0.0
+      is-stream: 2.0.1
       merge-stream: 2.0.0
       npm-run-path: 4.0.1
       onetime: 5.1.2
@@ -16697,6 +16874,21 @@ snapshots:
       onetime: 6.0.0
       signal-exit: 4.1.0
       strip-final-newline: 3.0.0
+
+  execa@9.6.1:
+    dependencies:
+      '@sindresorhus/merge-streams': 4.0.0
+      cross-spawn: 7.0.6
+      figures: 6.1.0
+      get-stream: 9.0.1
+      human-signals: 8.0.1
+      is-plain-obj: 4.1.0
+      is-stream: 4.0.1
+      npm-run-path: 6.0.0
+      pretty-ms: 9.3.0
+      signal-exit: 4.1.0
+      strip-final-newline: 4.0.0
+      yoctocolors: 2.1.2
 
   expand-template@2.0.3: {}
 
@@ -16782,6 +16974,10 @@ snapshots:
   figures@3.2.0:
     dependencies:
       escape-string-regexp: 1.0.5
+
+  figures@6.1.0:
+    dependencies:
+      is-unicode-supported: 2.1.0
 
   file-entry-cache@8.0.0:
     dependencies:
@@ -16923,6 +17119,9 @@ snapshots:
       minipass: 7.1.2
 
   fs.realpath@1.0.0: {}
+
+  fsevents@2.3.2:
+    optional: true
 
   fsevents@2.3.3:
     optional: true
@@ -17345,6 +17544,8 @@ snapshots:
 
   human-signals@5.0.0: {}
 
+  human-signals@8.0.1: {}
+
   iceberg-js@0.8.0: {}
 
   ico-endec@0.1.6: {}
@@ -17648,6 +17849,8 @@ snapshots:
 
   is-plain-obj@1.1.0: {}
 
+  is-plain-obj@4.1.0: {}
+
   is-plain-object@2.0.4:
     dependencies:
       isobject: 3.0.1
@@ -17686,6 +17889,8 @@ snapshots:
       which-typed-array: 1.1.19
 
   is-unicode-supported@0.1.0: {}
+
+  is-unicode-supported@2.1.0: {}
 
   is-upper-case@1.1.2:
     dependencies:
@@ -18783,6 +18988,11 @@ snapshots:
     dependencies:
       path-key: 4.0.0
 
+  npm-run-path@6.0.0:
+    dependencies:
+      path-key: 4.0.0
+      unicorn-magic: 0.3.0
+
   nth-check@2.1.1:
     dependencies:
       boolbase: 1.0.0
@@ -19099,6 +19309,8 @@ snapshots:
       json-parse-even-better-errors: 2.3.1
       lines-and-columns: 1.2.4
 
+  parse-ms@4.0.0: {}
+
   parse-path@7.1.0:
     dependencies:
       protocols: 2.0.2
@@ -19209,6 +19421,14 @@ snapshots:
       confbox: 0.2.2
       exsolve: 1.0.8
       pathe: 2.0.3
+
+  playwright-core@1.57.0: {}
+
+  playwright@1.57.0:
+    dependencies:
+      playwright-core: 1.57.0
+    optionalDependencies:
+      fsevents: 2.3.2
 
   plur@4.0.0:
     dependencies:
@@ -19449,6 +19669,10 @@ snapshots:
       '@jest/schemas': 29.6.3
       ansi-styles: 5.2.0
       react-is: 18.3.1
+
+  pretty-ms@9.3.0:
+    dependencies:
+      parse-ms: 4.0.0
 
   proc-log@4.2.0: {}
 
@@ -20233,6 +20457,19 @@ snapshots:
       ip-address: 10.1.0
       smart-buffer: 4.2.0
 
+  solid-devtools@0.34.4(solid-js@1.9.10)(vite@6.4.1(@types/node@20.11.18)(jiti@2.6.1)(terser@5.44.1)(yaml@2.8.1)):
+    dependencies:
+      '@babel/core': 7.28.5
+      '@babel/plugin-syntax-typescript': 7.27.1(@babel/core@7.28.5)
+      '@babel/types': 7.28.5
+      '@solid-devtools/debugger': 0.28.1(solid-js@1.9.10)
+      '@solid-devtools/shared': 0.20.0(solid-js@1.9.10)
+      solid-js: 1.9.10
+    optionalDependencies:
+      vite: 6.4.1(@types/node@20.11.18)(jiti@2.6.1)(terser@5.44.1)(yaml@2.8.1)
+    transitivePeerDependencies:
+      - supports-color
+
   solid-devtools@0.34.4(solid-js@1.9.10)(vite@6.4.1(@types/node@25.0.3)(jiti@2.6.1)(terser@5.44.1)(yaml@2.8.1)):
     dependencies:
       '@babel/core': 7.28.5
@@ -20432,6 +20669,8 @@ snapshots:
   strip-final-newline@2.0.0: {}
 
   strip-final-newline@3.0.0: {}
+
+  strip-final-newline@4.0.0: {}
 
   strip-indent@3.0.0:
     dependencies:
@@ -20864,32 +21103,32 @@ snapshots:
     dependencies:
       safe-buffer: 5.2.1
 
-  turbo-darwin-64@2.6.2:
+  turbo-darwin-64@2.7.2:
     optional: true
 
-  turbo-darwin-arm64@2.6.2:
+  turbo-darwin-arm64@2.7.2:
     optional: true
 
-  turbo-linux-64@2.6.2:
+  turbo-linux-64@2.7.2:
     optional: true
 
-  turbo-linux-arm64@2.6.2:
+  turbo-linux-arm64@2.7.2:
     optional: true
 
-  turbo-windows-64@2.6.2:
+  turbo-windows-64@2.7.2:
     optional: true
 
-  turbo-windows-arm64@2.6.2:
+  turbo-windows-arm64@2.7.2:
     optional: true
 
-  turbo@2.6.2:
+  turbo@2.7.2:
     optionalDependencies:
-      turbo-darwin-64: 2.6.2
-      turbo-darwin-arm64: 2.6.2
-      turbo-linux-64: 2.6.2
-      turbo-linux-arm64: 2.6.2
-      turbo-windows-64: 2.6.2
-      turbo-windows-arm64: 2.6.2
+      turbo-darwin-64: 2.7.2
+      turbo-darwin-arm64: 2.7.2
+      turbo-linux-64: 2.7.2
+      turbo-linux-arm64: 2.7.2
+      turbo-windows-64: 2.7.2
+      turbo-windows-arm64: 2.7.2
 
   type-check@0.4.0:
     dependencies:
@@ -21192,6 +21431,33 @@ snapshots:
       - supports-color
       - vue
 
+  unocss@66.5.9(postcss@8.5.6)(vite@6.4.1(@types/node@20.11.18)(jiti@2.6.1)(terser@5.44.1)(yaml@2.8.1)):
+    dependencies:
+      '@unocss/astro': 66.5.9(vite@6.4.1(@types/node@20.11.18)(jiti@2.6.1)(terser@5.44.1)(yaml@2.8.1))
+      '@unocss/cli': 66.5.9
+      '@unocss/core': 66.5.9
+      '@unocss/postcss': 66.5.9(postcss@8.5.6)
+      '@unocss/preset-attributify': 66.5.9
+      '@unocss/preset-icons': 66.5.9
+      '@unocss/preset-mini': 66.5.9
+      '@unocss/preset-tagify': 66.5.9
+      '@unocss/preset-typography': 66.5.9
+      '@unocss/preset-uno': 66.5.9
+      '@unocss/preset-web-fonts': 66.5.9
+      '@unocss/preset-wind': 66.5.9
+      '@unocss/preset-wind3': 66.5.9
+      '@unocss/preset-wind4': 66.5.9
+      '@unocss/transformer-attributify-jsx': 66.5.9
+      '@unocss/transformer-compile-class': 66.5.9
+      '@unocss/transformer-directives': 66.5.9
+      '@unocss/transformer-variant-group': 66.5.9
+      '@unocss/vite': 66.5.9(vite@6.4.1(@types/node@20.11.18)(jiti@2.6.1)(terser@5.44.1)(yaml@2.8.1))
+    optionalDependencies:
+      vite: 6.4.1(@types/node@20.11.18)(jiti@2.6.1)(terser@5.44.1)(yaml@2.8.1)
+    transitivePeerDependencies:
+      - postcss
+      - supports-color
+
   unocss@66.5.9(postcss@8.5.6)(vite@6.4.1(@types/node@25.0.3)(jiti@2.6.1)(terser@5.44.1)(yaml@2.8.1)):
     dependencies:
       '@unocss/astro': 66.5.9(vite@6.4.1(@types/node@25.0.3)(jiti@2.6.1)(terser@5.44.1)(yaml@2.8.1))
@@ -21357,6 +21623,87 @@ snapshots:
     dependencies:
       '@types/unist': 3.0.3
       vfile-message: 4.0.3
+
+  vinxi@0.5.8(@types/node@20.11.18)(db0@0.3.4(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.7)))(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.7))(encoding@0.1.13)(ioredis@5.8.2)(jiti@2.6.1)(terser@5.44.1)(xml2js@0.6.2)(yaml@2.8.1):
+    dependencies:
+      '@babel/core': 7.28.5
+      '@babel/plugin-syntax-jsx': 7.27.1(@babel/core@7.28.5)
+      '@babel/plugin-syntax-typescript': 7.27.1(@babel/core@7.28.5)
+      '@types/micromatch': 4.0.10
+      '@vinxi/listhen': 1.5.6
+      boxen: 8.0.1
+      chokidar: 4.0.3
+      citty: 0.1.6
+      consola: 3.4.2
+      crossws: 0.3.5
+      dax-sh: 0.43.2
+      defu: 6.1.4
+      es-module-lexer: 1.7.0
+      esbuild: 0.25.12
+      get-port-please: 3.2.0
+      h3: 1.15.3
+      hookable: 5.5.3
+      http-proxy: 1.18.1
+      micromatch: 4.0.8
+      nitropack: 2.12.9(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.7))(encoding@0.1.13)(xml2js@0.6.2)
+      node-fetch-native: 1.6.7
+      path-to-regexp: 6.3.0
+      pathe: 1.1.2
+      radix3: 1.1.2
+      resolve: 1.22.11
+      serve-placeholder: 2.0.2
+      serve-static: 1.16.2
+      tinyglobby: 0.2.15
+      ufo: 1.6.1
+      unctx: 2.4.1
+      unenv: 1.10.0
+      unstorage: 1.17.3(db0@0.3.4(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.7)))(ioredis@5.8.2)
+      vite: 6.4.1(@types/node@20.11.18)(jiti@2.6.1)(terser@5.44.1)(yaml@2.8.1)
+      zod: 3.25.76
+    transitivePeerDependencies:
+      - '@azure/app-configuration'
+      - '@azure/cosmos'
+      - '@azure/data-tables'
+      - '@azure/identity'
+      - '@azure/keyvault-secrets'
+      - '@azure/storage-blob'
+      - '@capacitor/preferences'
+      - '@deno/kv'
+      - '@electric-sql/pglite'
+      - '@libsql/client'
+      - '@netlify/blobs'
+      - '@planetscale/database'
+      - '@types/node'
+      - '@upstash/redis'
+      - '@vercel/blob'
+      - '@vercel/functions'
+      - '@vercel/kv'
+      - aws4fetch
+      - bare-abort-controller
+      - better-sqlite3
+      - db0
+      - debug
+      - drizzle-orm
+      - encoding
+      - idb-keyval
+      - ioredis
+      - jiti
+      - less
+      - lightningcss
+      - mysql2
+      - react-native-b4a
+      - rolldown
+      - sass
+      - sass-embedded
+      - sqlite3
+      - stylus
+      - sugarss
+      - supports-color
+      - terser
+      - tsx
+      - uploadthing
+      - xml2js
+      - yaml
 
   vinxi@0.5.8(@types/node@25.0.3)(db0@0.3.4(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.7)))(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.7))(encoding@0.1.13)(ioredis@5.8.2)(jiti@2.6.1)(terser@5.44.1)(xml2js@0.6.2)(yaml@2.8.1):
     dependencies:
@@ -21946,6 +22293,8 @@ snapshots:
   yn@3.1.1: {}
 
   yocto-queue@0.1.0: {}
+
+  yoctocolors@2.1.2: {}
 
   yoga-layout-prebuilt@1.10.0:
     dependencies:
