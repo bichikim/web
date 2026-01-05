@@ -1,20 +1,20 @@
-import {RouteSectionProps, useNavigate} from '@solidjs/router'
+import {RouteSectionProps} from '@solidjs/router'
 import {useAuth} from 'src/store/auth'
 import {createMemo} from 'solid-js'
-import {SIGN_IN_PATH} from 'src/utils/route-names'
+import {useNameNavigate} from 'src/components/anchor/nameNavigate'
 
 /**
  * A custom hook that checks if the user is signed in and redirects to the sign in page if not.
  * @returns
  */
 const useAuthGuard = () => {
-  const navigate = useNavigate()
+  const navigate = useNameNavigate()
   const {user} = useAuth()
 
   const isSignedIn = createMemo(() => user() !== null)
 
   if (!isSignedIn()) {
-    return navigate(SIGN_IN_PATH)
+    return navigate('sign-in')
   }
 }
 

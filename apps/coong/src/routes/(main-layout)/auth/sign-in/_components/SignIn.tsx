@@ -1,4 +1,4 @@
-import {SIGN_UP_PATH} from 'src/utils/route-names'
+import {HAnchor} from 'src/components/anchor/HAnchor'
 
 export interface SignInProps {
   email: string
@@ -49,9 +49,9 @@ export const SignIn = (props: SignInProps) => {
           </button>
         </form>
         <div class="mt-4 text-center">
-          <a href={SIGN_UP_PATH} class="text-blue-500 hover:underline">
+          <HAnchor hrefName="sign-up" class="text-blue-500 hover:underline">
             Don't have an account? Sign Up
-          </a>
+          </HAnchor>
         </div>
       </div>
     </div>

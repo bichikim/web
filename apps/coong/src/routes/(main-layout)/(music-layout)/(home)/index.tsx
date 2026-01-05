@@ -1,8 +1,8 @@
 import {useAuth} from 'src/store/auth'
-import {createEffect, createMemo, Show} from 'solid-js'
+import {createMemo, Show} from 'solid-js'
 import {RouteDefinition, useAction} from '@solidjs/router'
 import {updateUserMetadataAction} from 'src/requests/update-user-metadata'
-import {SIGN_IN_PATH, SIGN_UP_PATH, RESET_PASSWORD_PATH, CHANGE_PASSWORD_PATH} from 'src/utils/route-names'
+import {HAnchor} from 'src/components/anchor/HAnchor'
 
 export const route = {
   info: {
@@ -44,32 +44,32 @@ export default function HomePage() {
             </button>
           </li>
           <li class="">
-            <a class="text-7 underline" href="/piano">
+            <HAnchor hrefName="piano" class="text-7 underline">
               <span class="text-7 i-tabler:piano">icon</span>
               Piano
-            </a>
+            </HAnchor>
           </li>
           <li class="">
-            <a class="text-7 underline" href="/musics">
+            <HAnchor hrefName="musics" class="text-7 underline">
               <span class="text-7 i-tabler:music-plus">icon</span>
               Musics
-            </a>
+            </HAnchor>
           </li>
           <Show
             when={isSignedIn()}
             fallback={
               <>
                 <li class="">
-                  <a class="text-7 underline" href={SIGN_IN_PATH}>
+                  <HAnchor hrefName="sign-in" class="text-7 underline">
                     <span class="text-7 i-tabler:login">icon</span>
                     Sign In
-                  </a>
+                  </HAnchor>
                 </li>
                 <li class="">
-                  <a class="text-7 underline" href={RESET_PASSWORD_PATH}>
+                  <HAnchor hrefName="reset-password" class="text-7 underline">
                     <span class="text-7 i-tabler:mail">icon</span>
                     Reset Password
-                  </a>
+                  </HAnchor>
                 </li>
               </>
             }
@@ -81,10 +81,10 @@ export default function HomePage() {
               </button>
             </li>
             <li class="">
-              <a class="text-7 underline" href={CHANGE_PASSWORD_PATH}>
+              <HAnchor hrefName="change-password" class="text-7 underline">
                 <span class="text-7 i-tabler:lock">icon</span>
                 Change Password
-              </a>
+              </HAnchor>
             </li>
           </Show>
         </ul>

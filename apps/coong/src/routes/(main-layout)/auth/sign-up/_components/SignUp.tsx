@@ -1,24 +1,32 @@
 import {createSignal, createMemo} from 'solid-js'
-import {useNavigate} from '@solidjs/router'
-import {SIGN_IN_PATH} from 'src/utils/route-names'
 import {signUpAction} from 'src/requests/sign-up'
 import {useSubmission, useAction} from '@solidjs/router'
+import {useHRouterName} from 'src/components/anchor/HRouterName'
+import {useNameNavigate} from 'src/components/anchor/nameNavigate'
 
 export const SignUp = () => {
   const signUpSubmission = useSubmission(signUpAction)
   const _signUpAction = useAction(signUpAction)
-  const navigate = useNavigate()
+  const navigate = useNameNavigate()
+  const routerName = useHRouterName()
   const [email, setEmail] = createSignal('')
   const [password, setPassword] = createSignal('')
 
-  const handleSignUp = async (e: Event) => {
-    e.preventDefault()
+  const handleSignUp = async (event: Event) => {
+    event.preventDefault()
+
+    const verifyEmailPath = routerName()['verify-email']
+
+    if (!verifyEmailPath) {
+      throw new Error('Verify email path not found')
+    }
 
     await _signUpAction({
       email: email(),
       password: password(),
+      redirectTo: verifyEmailPath,
     })
-    navigate(SIGN_IN_PATH)
+    navigate('sign-in')
   }
 
   const error = createMemo(() => signUpSubmission.error)

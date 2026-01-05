@@ -1,13 +1,12 @@
 import {SignIn} from './_components/SignIn'
 import {useAuth} from 'src/store/auth'
-import {useNavigate} from '@solidjs/router'
 import {createSignal} from 'solid-js'
-import {HOME_PATH} from 'src/utils/route-names'
 import {createEffect} from 'solid-js'
+import {useNameNavigate} from 'src/components/anchor/nameNavigate'
 
 export default function Login() {
   const {signInWithPassword, signInError, user, loading} = useAuth()
-  const navigate = useNavigate()
+  const navigate = useNameNavigate()
   const [email, setEmail] = createSignal('')
   const [password, setPassword] = createSignal('')
 
@@ -17,7 +16,7 @@ export default function Login() {
 
   createEffect(() => {
     if (user()) {
-      navigate(HOME_PATH)
+      navigate('home')
     }
   })
 

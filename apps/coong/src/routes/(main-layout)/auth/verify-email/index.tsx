@@ -5,10 +5,11 @@ import {useAuth} from 'src/store/auth'
 import {clientOnly} from '@solidjs/start'
 import {useLocation, useNavigate} from '@solidjs/router'
 import {onMount, Show} from 'solid-js'
-import {HOME_PATH} from 'src/utils/route-names'
 import {queryToString} from 'src/utils/query-params'
 import {cva} from 'class-variance-authority'
 import {useCountdown} from 'src/use/countdown'
+import {useNameNavigate} from 'src/components/anchor/nameNavigate'
+import {HAnchor} from 'src/components/anchor/HAnchor'
 
 const ClientOnlyLottie = clientOnly(() =>
   import('src/components/lottie/Lottie').then((mod) => ({
@@ -39,9 +40,9 @@ export default function VerifyEmail() {
 
   const location = useLocation()
   const {code} = location.query
-  const navigate = useNavigate()
+  const navigate = useNameNavigate()
 
-  const afterNavigate = useCountdown(20_000, () => navigate(HOME_PATH))
+  const afterNavigate = useCountdown(20_000, () => navigate('home'))
 
   onMount(async () => {
     if (!code) {
@@ -83,9 +84,9 @@ export default function VerifyEmail() {
             <Show when={code} fallback={'Go to the '}>
               Redirecting to the{' '}
             </Show>
-            <a href={HOME_PATH} class="text-gray-700 underline font-bold text-lg">
+            <HAnchor hrefName="home" class="text-gray-700 underline font-bold text-lg">
               Root page
-            </a>{' '}
+            </HAnchor>{' '}
             <Show when={code}>in {countSeconds()} seconds</Show>
           </span>
         </Show>
