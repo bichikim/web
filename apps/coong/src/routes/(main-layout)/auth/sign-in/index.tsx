@@ -3,6 +3,13 @@ import {useAuth} from 'src/store/auth'
 import {createSignal} from 'solid-js'
 import {createEffect} from 'solid-js'
 import {useNameNavigate} from 'src/components/anchor/nameNavigate'
+import {RouteDefinition} from '@solidjs/router'
+
+export const route = {
+  info: {
+    public: 'no-credentials',
+  },
+} satisfies RouteDefinition
 
 export default function Login() {
   const {signInWithPassword, signInError, user, loading} = useAuth()

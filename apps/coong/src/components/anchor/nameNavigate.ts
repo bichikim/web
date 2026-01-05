@@ -11,6 +11,8 @@ export const useNameNavigate = (): NameNavigator => {
   const navigate = useNavigate()
 
   return (name: string | number, options?: Partial<NavigateOptions>) => {
+    console.log('!!name', name)
+
     if (typeof name === 'number') {
       navigate(name)
 
@@ -18,6 +20,8 @@ export const useNameNavigate = (): NameNavigator => {
     }
 
     const href = routerName()[name]
+
+    console.log('!!href', href)
 
     if (href) {
       navigate(href, options)

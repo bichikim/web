@@ -1,7 +1,7 @@
 import {$ as _$} from 'execa'
 import process from 'node:process'
 
-const $ = _$({stdio: 'inherit'})
+const $ = _$({stderr: 'inherit', stdio: 'inherit'})
 
 async function main() {
   // start supabase if not running

@@ -2,7 +2,7 @@ import 'dotenv/config'
 import {fileURLToPath} from 'url'
 import {dirname, join} from 'path'
 import {mkdir} from 'fs/promises'
-import {$} from 'execa'
+import {$ as _$} from 'execa'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -17,14 +17,11 @@ if (!projectId) {
 const supabaseDir = join(projectRoot, '.supabase')
 const outputPath = join(supabaseDir, 'supabase.ts')
 
+const $ = _$({cwd: projectRoot, stderr: 'inherit', stdout: {file: outputPath}})
+
 try {
   await mkdir(supabaseDir, {recursive: true})
-
-  await $({
-    cwd: projectRoot,
-    stderr: 'inherit',
-    stdout: {file: outputPath},
-  })`pnpm dlx supabase gen types typescript --project-id ${projectId} --schema public`
+  await $`pnpm dlx supabase gen types typescript --project-id ${projectId} --schema public`
   console.log(`✅ Types generated successfully at ${outputPath}`)
 } catch (error) {
   throw new Error(`Error generating types: ${(error as Error)?.message}`)

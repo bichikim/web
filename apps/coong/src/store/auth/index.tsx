@@ -1,4 +1,4 @@
-import {Accessor, createContext, createMemo, useContext, type JSX} from 'solid-js'
+import {Accessor, createContext, createMemo, createSignal, useContext, type JSX, Show} from 'solid-js'
 import type {User} from '@supabase/supabase-js'
 import {userQuery} from 'src/requests/user'
 import {signInAction} from 'src/requests/sign-in'
@@ -8,6 +8,7 @@ import {resetPasswordAction} from 'src/requests/reset-password'
 import {useSubmission, useAction, revalidate, createAsync} from '@solidjs/router'
 import {withHandyQuery} from 'src/use/handy-query'
 import {exchangeCodeForSectionAction} from 'src/requests/exchange-code-for-section'
+import {isServer} from 'solid-js/web'
 
 const AuthContext = createContext<{
   changePassword: (newPassword: string) => Promise<User | null>
@@ -17,6 +18,7 @@ const AuthContext = createContext<{
   loading: Accessor<boolean>
   resetPassword: (email: string) => Promise<void>
   resetPasswordError: Accessor<Error | null>
+  restoreLoading: Accessor<boolean>
   signInError: Accessor<Error | null>
   signInWithPassword: (email: string, password: string) => Promise<void>
   signOut: () => Promise<void>
@@ -30,6 +32,7 @@ const AuthContext = createContext<{
   loading: () => false,
   resetPassword: () => Promise.resolve(),
   resetPasswordError: () => null,
+  restoreLoading: () => false,
   signInError: () => null,
   signInWithPassword: () => Promise.resolve(),
   signOut: () => Promise.resolve(),
@@ -44,7 +47,7 @@ export interface AuthProviderProps {
 export const useUserQuery = withHandyQuery(userQuery)
 
 export function AuthProvider(props: AuthProviderProps) {
-  const userQuery = useUserQuery({emptyValue: null})
+  const userQuery = useUserQuery({initialValue: null})
   const signInSubmission = useSubmission(signInAction)
   const signInActionSubmit = useAction(signInAction)
   const signOutSubmission = useSubmission(signOutAction)
@@ -82,6 +85,7 @@ export function AuthProvider(props: AuthProviderProps) {
 
   const loading = createMemo(
     () =>
+      userQuery.loading() ||
       signInSubmission.pending ||
       signOutSubmission.pending ||
       Boolean(changePasswordSubmission.pending) ||
@@ -99,6 +103,7 @@ export function AuthProvider(props: AuthProviderProps) {
         loading,
         resetPassword,
         resetPasswordError,
+        restoreLoading: userQuery.loading,
         signInError,
         signInWithPassword,
         signOut,

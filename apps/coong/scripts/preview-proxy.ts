@@ -85,6 +85,10 @@ async function serveStatic(req: IncomingMessage, res: ServerResponse): Promise<b
   }
 }
 
+const isArrayBufferUint8Array = (buffer: any): buffer is Uint8Array<ArrayBuffer> => {
+  return buffer?.buffer instanceof ArrayBuffer
+}
+
 /**
  * Proxy request to server
  */
@@ -96,18 +100,36 @@ async function proxyToServer(req: IncomingMessage, targetPath: string): Promise<
   const headers = new Headers()
 
   for (const [key, value] of Object.entries(req.headers)) {
-    if (typeof value === 'string') headers.set(key, value)
-    else if (Array.isArray(value)) headers.set(key, value.join(', '))
+    if (typeof value === 'string') {
+      headers.set(key, value)
+    } else if (Array.isArray(value)) {
+      headers.set(key, value.join(', '))
+    }
   }
 
-  let body: Buffer | undefined
+  let body: Uint8Array<ArrayBuffer> | undefined
 
   if (req.method !== 'GET' && req.method !== 'HEAD') {
-    body = await new Promise<Buffer>((resolve, reject) => {
-      const chunks: Buffer[] = []
+    body = await new Promise<Uint8Array<ArrayBuffer>>((resolve, reject) => {
+      const chunks: Uint8Array<ArrayBuffer>[] = []
 
-      req.on('data', (chunk: Buffer) => chunks.push(chunk))
-      req.on('end', () => resolve(Buffer.concat(chunks)))
+      req.on('data', (chunk: Buffer) => {
+        if (!isArrayBufferUint8Array(chunk)) {
+          return
+        }
+
+        chunks.push(chunk)
+      })
+
+      req.on('end', () => {
+        const buf = Buffer.concat(chunks)
+
+        if (!isArrayBufferUint8Array(buf)) {
+          return
+        }
+
+        resolve(new Uint8Array<ArrayBuffer>(buf.buffer, buf.byteOffset, buf.byteLength))
+      })
       req.on('error', reject)
     })
   }
