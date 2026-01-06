@@ -16,8 +16,8 @@ export default defineConfig({
         },
       },
 
-      separator: process.platform === 'win32' ? '\\' : '/',
       root: fileURLToPath(new URL('./', import.meta.url)),
+      separator: process.platform === 'win32' ? '\\' : '/',
       // sourceRoot: 'src',
       workspacePaths: [/\/apps\//u, /\/packages\//u],
     }),
