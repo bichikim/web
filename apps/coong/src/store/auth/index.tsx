@@ -46,7 +46,7 @@ export interface AuthProviderProps {
 export const useUserQuery = withHandyQuery(userQuery)
 
 export function AuthProvider(props: AuthProviderProps) {
-  const userQuery = useUserQuery({initialValue: null})
+  const userQuery = useUserQuery({deferStream: true, initialValue: null})
   const signInSubmission = useSubmission(signInAction)
   const signInActionSubmit = useAction(signInAction)
   const signOutSubmission = useSubmission(signOutAction)

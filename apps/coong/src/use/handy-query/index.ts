@@ -10,6 +10,7 @@ export interface HandyQueryResult<TData> {
 }
 
 export interface HandyQueryOptions<TData> {
+  deferStream?: boolean
   initialValue?: TData
   name?: string
 }
@@ -70,6 +71,7 @@ export const withHandyQuery = <T extends (...args: any) => any>(query: CachedFun
         return result
       },
       {
+        deferStream: _options?.deferStream,
         initialValue: _options?.initialValue,
         name: options?.name as any,
       },
@@ -82,8 +84,6 @@ export const withHandyQuery = <T extends (...args: any) => any>(query: CachedFun
     }
 
     const loading = createMemo(() => pending())
-
-    console.log('data', Boolean(data()), loading())
 
     return {data, loading, refetch}
   }
