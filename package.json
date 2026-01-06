@@ -15,7 +15,8 @@
     "check-types": "turbo check-types",
     "chromatic": "nve 20.18.1 pnpm dlx chromatic --project-token=chpt_b4b4c6198bbdeda",
     "clean": "lerna clean --yes && pnpm dlx rimraf node_modules",
-    "dev:android": "ionic cap run android -l --external --open",
+    "dev:storybook": "storybook dev -p 6006",
+    "dev:storybook:https": "storybook dev --https --ssl-cert .cert/localhost.crt --ssl-key .cert/localhost.key -p 5555",
     "format:package.json": "pnpm dlx sort-package-json \"package.json\" \"packages/*/package.json\" \"apps/*/package.json\" ",
     "generate": "turbo gen",
     "postinstall": "pnpm run format:package.json",
@@ -26,15 +27,11 @@
     "publish:beta": "lerna publish from-package --preid beta --dist-tag beta",
     "publish:next": "lerna publish from-package --preid next --dist-tag next",
     "publish:patch": "lerna publish patch --no-private",
-    "start:local-docker": "docker-compose -f local/docker-compose.yml up -d",
-    "storybook": "storybook dev -p 6006",
-    "storybook:https": "storybook dev --https --ssl-cert .cert/localhost.crt --ssl-key .cert/localhost.key -p 5555",
     "test": "vitest run",
     "test:storybook": "test-storybook",
     "test:storybook:watch": "test-storybook --watch",
     "test:vitest": "vitest run",
-    "test:vitest:watch": "vitest watch",
-    "test:vitest:watch:t": "vitest watch apps/coong/src/use/storage/index.spec.ts"
+    "test:vitest:watch": "vitest watch"
   },
   "browserslist": [
     "last 10 Chrome versions",
@@ -110,7 +107,7 @@
   },
   "packageManager": "pnpm@10.26.1",
   "engines": {
-    "node": ">= 22",
+    "node": "22",
     "pnpm": ">= 6.17"
   },
   "pnpm": {
