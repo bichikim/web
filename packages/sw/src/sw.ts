@@ -2,10 +2,8 @@
 
 const CACHE_NAME = 'coong-cache'
 
-// eslint-disable-next-line camelcase
 declare const __inject_code__: string[]
 
-// eslint-disable-next-line camelcase
 const APP_FILES = __inject_code__
 const {origin: originPath} = self.location
 const apiPath = `${originPath}/api/`
@@ -96,7 +94,6 @@ const createCacheFirst = async (event: FetchEvent) => {
 }
 
 const includes = (array: any[], value: any) => {
-  // eslint-disable-next-line unicorn/prefer-includes
   return array.indexOf(value) !== -1
 }
 

@@ -1,5 +1,2 @@
-export * from './SCard'
 export * from './HCard'
-
-
-
+export * from './SCard'

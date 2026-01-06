@@ -4,6 +4,6 @@ declare module 'shaka-player' {
   export default shaka
 }
 
-declare module'shaka-player/dist/shaka-player.compiled.debug' {
+declare module 'shaka-player/dist/shaka-player.compiled.debug' {
   export default shaka
 }

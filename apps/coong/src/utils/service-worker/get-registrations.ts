@@ -1,3 +1,4 @@
+/* eslint-disable n/no-unsupported-features/node-builtins */
 import {getWindow} from '@winter-love/utils'
 
 export const getRegistrations = async (): Promise<readonly ServiceWorkerRegistration[]> => {

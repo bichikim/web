@@ -11,7 +11,6 @@ export const useIntersection = (target: Accessor<HTMLElement | undefined>, optio
     }
 
     const observer = new IntersectionObserver((entries) => {
-      // eslint-disable-next-line unicorn/no-array-for-each
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
           setIsIntersecting(true)

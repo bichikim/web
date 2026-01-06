@@ -93,6 +93,14 @@ const meta = {
       },
       type: {name: 'function', required: false},
     },
+    preventLoadingDisabled: {
+      control: 'boolean',
+      description: 'Whether the button is prevent loading disabled or not',
+      table: {
+        category: 'Props',
+        defaultValue: {summary: 'false'},
+      },
+    },
     type: {
       control: 'select',
       description: 'Button type',
@@ -100,14 +108,6 @@ const meta = {
       table: {
         category: 'Props',
         defaultValue: {summary: 'button'},
-      },
-    },
-    preventLoadingDisabled: {
-      control: 'boolean',
-      description: 'Whether the button is prevent loading disabled or not',
-      table: {
-        category: 'Props',
-        defaultValue: {summary: 'false'},
       },
     },
   },

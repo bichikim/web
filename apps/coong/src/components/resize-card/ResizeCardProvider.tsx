@@ -110,7 +110,6 @@ export const ResizeCardProvider = (props: ResizeCardProviderProps) => {
     updateType = type
   }
 
-  // eslint-disable-next-line max-statements, complexity
   const updateSize = (position: Position) => {
     const _maxSize = props.maxSize
     const _minSize = props.minSize

@@ -31,7 +31,6 @@ export const useMidiFileInput = (element: MaybeAccessor<HTMLElement | null>, opt
     const promiseList: Promise<{midi: Midi; name: string} | undefined>[] = []
 
     // FileList 는 이터레이블이 아닙니다
-    // eslint-disable-next-line unicorn/no-for-loop
     for (let index = 0; index < files.length; index += 1) {
       const file = files[index]
 

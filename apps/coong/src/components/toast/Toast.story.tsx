@@ -42,7 +42,7 @@ const DemoContent = () => {
     setMessage({
       clickToClose: true,
       id,
-      // eslint-disable-next-line max-len
+
       message: `This is a notification message that will not disappear until closed ${id} This is a notification message that will not disappear until closed`,
       title: 'Message Title',
     })

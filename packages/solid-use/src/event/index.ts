@@ -1,3 +1,4 @@
+/* eslint-disable n/no-unsupported-features/node-builtins */
 import {MaybeAccessor} from 'src/types'
 import {resolveAccessor} from 'src/resolve-accessor'
 import {createEffect, onCleanup} from 'solid-js'

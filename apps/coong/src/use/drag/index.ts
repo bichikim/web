@@ -22,7 +22,9 @@ export const useDrag = (element: MaybeAccessor<HTMLElement | null>) => {
   }
 
   const handleMouseMove = (e: MouseEvent) => {
-    if (!isDragging()) return
+    if (!isDragging()) {
+      return
+    }
 
     const newX = e.clientX - startX
     const newY = e.clientY - startY

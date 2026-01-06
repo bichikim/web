@@ -49,4 +49,3 @@ export const Default: Story = {
     width: 150,
   },
 }
-

@@ -13,7 +13,7 @@ export const requestIdleCallbackPolyfill = (callback: IdleRequestCallback, optio
 
         callback({
           didTimeout: true,
-          // eslint-disable-next-line no-magic-numbers
+
           timeRemaining: () => Math.max(0, 50 - (Date.now() - start)),
         })
       }
@@ -26,7 +26,7 @@ export const requestIdleCallbackPolyfill = (callback: IdleRequestCallback, optio
 
     callback({
       didTimeout: false,
-      // eslint-disable-next-line no-magic-numbers
+
       timeRemaining: () => Math.max(0, 50 - (Date.now() - start)),
     })
   }, 1)

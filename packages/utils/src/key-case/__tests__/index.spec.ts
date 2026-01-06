@@ -1,4 +1,3 @@
-/* eslint-disable camelcase */
 import {assertType, describe, expect, it} from 'vitest'
 import {createKeyCase, createSnakeCase} from '../'
 

@@ -26,4 +26,3 @@ export const useAnimationFrame = (callback: () => void) => {
     stop: () => setStart(false),
   }
 }
-

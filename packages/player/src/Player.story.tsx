@@ -26,7 +26,6 @@ const getUrl = async (
     return {url: data}
   }
 
-  // eslint-disable-next-line n/no-unsupported-features/node-builtins
   return fetch(
     `https://apis.wavve.com/fz/streaming?contentid=${data.id}&contenttype=${data.type}&credential=${apiCredential}`,
   )

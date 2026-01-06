@@ -91,7 +91,9 @@ export const getDeepPosition = (
 
   const {key: _key} = splitIDKey(key)
 
-  if (_key === '') return []
+  if (_key === '') {
+    return []
+  }
 
   const positions: Position[] = []
   const posStrArr = _key.split(connector)

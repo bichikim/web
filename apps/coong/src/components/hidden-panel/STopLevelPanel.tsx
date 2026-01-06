@@ -39,10 +39,10 @@ export const STopLevelPanel = (props: STopLevelPanelProps) => {
               <SPlayerPanel class="w-140 h-80 bg-white top-0 left-0 rd-2 backdrop-blur-sm bg-opacity-90" />
             </Tab.Content>
             <Tab.Content name="setting">
-              <div class="w-180 h-50 bg-white top-0 left-0 rd-2 backdrop-blur-sm bg-opacity-90"></div>
+              <div class="w-180 h-50 bg-white top-0 left-0 rd-2 backdrop-blur-sm bg-opacity-90" />
             </Tab.Content>
             <Tab.Content name="user">
-              <div class="w-180 h-50 bg-white top-0 left-0 rd-2 backdrop-blur-sm bg-opacity-90"></div>
+              <div class="w-180 h-50 bg-white top-0 left-0 rd-2 backdrop-blur-sm bg-opacity-90" />
             </Tab.Content>
           </SHiddenContent>
         </div>

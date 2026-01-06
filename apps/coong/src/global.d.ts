@@ -1,8 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /// <reference types="@solidjs/start/env" />
 /// <reference types="vite/client" />
 /// <reference types="vitest" />
 /// <reference types="@testing-library/jest-dom/vitest" />
-
 
 declare module '~icons/*' {
   const icon: any
