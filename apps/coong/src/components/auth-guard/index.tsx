@@ -1,7 +1,5 @@
-import {RouteSectionProps} from '@solidjs/router'
 import {useAuth} from 'src/store/auth'
 import {createMemo, untrack, JSX} from 'solid-js'
-import {useLocation} from '@solidjs/router'
 import {useCurrentMatches, RouteMatch, RouteDefinition as _RouteDefinition} from '@solidjs/router'
 import {useNameNavigate} from 'src/components/anchor/nameNavigate'
 
@@ -42,35 +40,40 @@ const isAllow = (match: RouteMatch, authorized: boolean): IsAllowAllResult => {
 }
 
 export const isAllowAll = (matches: RouteMatch[], authorized: boolean): IsAllowAllResult => {
-  for (const match of matches) {
-    const result = isAllow(match, authorized)
+  const results = matches.map((match) => isAllow(match, authorized))
 
-    if (!result.allow) {
-      return result
-    }
-  }
+  const disAllowIndex = results.findIndex((result) => !result.allow)
+  const reason = disAllowIndex !== -1 ? results[disAllowIndex].reason : 'public'
 
   return {
-    allow: true,
-    reason: 'public',
+    allow: disAllowIndex === -1,
+    reason,
   }
 }
 
 export const useAuthGuard = () => {
   const {user, restoreLoading} = useAuth()
   const navigate = useNameNavigate()
-  const location = useLocation()
   const matches = useCurrentMatches()
 
   const allPublic = createMemo(() => isAllowAll(matches(), user() !== null))
 
   const handleRedirectSignIn = () => {
-    console.log('redirecting to sign in')
     navigate('sign-in')
   }
 
-  if (untrack(() => !restoreLoading() && !allPublic().allow)) {
-    handleRedirectSignIn()
+  const handleRedirectHome = () => {
+    navigate('home')
+  }
+
+  const _allPublic = untrack(() => allPublic())
+
+  if (untrack(() => !restoreLoading() && !_allPublic.allow)) {
+    if (_allPublic.reason === 'only-unauthorized') {
+      handleRedirectHome()
+    } else {
+      handleRedirectSignIn()
+    }
   }
 }
 
