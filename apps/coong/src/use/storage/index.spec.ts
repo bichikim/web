@@ -14,15 +14,24 @@ vi.mock('src/utils/cookie', () => ({
   setServerCookie: vi.fn(),
 }))
 
+const isServerMock = vi.hoisted(() => ({value: false}))
+
+// Mock Solid's SSR flag
+vi.mock('solid-js/web', async () => {
+  const actual = await vi.importActual<typeof import('solid-js/web')>('solid-js/web')
+
+  return {
+    ...actual,
+    get isServer() {
+      return isServerMock.value
+    },
+  }
+})
+
 describe('useCookieStorage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    // Mock SSR to false for client-side tests
-    vi.stubGlobal('import.meta.env', {SSR: false})
-  })
-
-  afterEach(() => {
-    vi.unstubAllGlobals()
+    isServerMock.value = false
   })
 
   it('should initialize with initValue when cookie does not exist', () => {
@@ -104,6 +113,8 @@ describe('useClientStorage', () => {
   let sessionStorageMock: Storage
 
   beforeEach(() => {
+    isServerMock.value = false
+
     localStorageMock = {
       clear: vi.fn(),
       getItem: vi.fn(),
@@ -131,12 +142,10 @@ describe('useClientStorage', () => {
       value: sessionStorageMock,
       writable: true,
     })
-    vi.stubGlobal('import.meta.env', {SSR: false})
   })
 
   afterEach(() => {
     vi.clearAllMocks()
-    vi.unstubAllGlobals()
   })
 
   it('should initialize with initValue when localStorage is empty', async () => {
@@ -248,11 +257,7 @@ describe('useClientStorage', () => {
 describe('useStorage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.stubGlobal('import.meta.env', {SSR: false})
-  })
-
-  afterEach(() => {
-    vi.unstubAllGlobals()
+    isServerMock.value = false
   })
 
   it('should use cookie storage when kind is cookie', () => {

@@ -13,7 +13,7 @@ const getCookieValue = (key: string) => {
 }
 
 const setCookieValue = (key: string, value: string, options?: CookieSerializeOptions) => {
-  if (import.meta.env.SSR) {
+  if (isServer) {
     setServerCookie(key, value, options)
   } else {
     setClientCookie(key, value, options)
@@ -70,7 +70,7 @@ export const useClientStorage = <T>(kind: 'local' | 'session', key: string, init
   // get client storage value when mounted
   onMount(() => {
     // remove code in SSR
-    if (import.meta.env.SSR) {
+    if (isServer) {
       return
     }
 
@@ -92,7 +92,7 @@ export const useClientStorage = <T>(kind: 'local' | 'session', key: string, init
     const _value = value()
 
     // remove code in SSR
-    if (import.meta.env.SSR) {
+    if (isServer) {
       return
     }
 
