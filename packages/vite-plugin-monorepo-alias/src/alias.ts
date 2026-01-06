@@ -149,6 +149,11 @@ export const createAlias = (options: ResolveIdOptions): Plugin => {
         return source
       }
 
+      // skip virtual imports
+      if (source.startsWith('virtual:')) {
+        return source
+      }
+
       const normalizedImporter = normalizePath(importer, separator)
 
       const importerInfo = matchWorkspace(normalizedRoot, workspaceRegexList, normalizedImporter)
