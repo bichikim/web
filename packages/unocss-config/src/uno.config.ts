@@ -23,7 +23,7 @@ export default defineUsefulConfig(
   {
     attributify: false,
     remToPx: false,
-    theme,
+    theme: theme as any,
   },
   {
     content: {

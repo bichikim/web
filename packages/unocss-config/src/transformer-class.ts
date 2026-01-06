@@ -1,4 +1,3 @@
-/* eslint-disable require-unicode-regexp */
 import {escapeRegExp, expandVariantGroup, type SourceCodeTransformer} from '@unocss/core'
 
 export interface CompileClassOptions {
@@ -64,9 +63,7 @@ export interface CompileClassOptions {
   trigger?: string | RegExp
 }
 
-export default function transformerCompileClass(
-  options: CompileClassOptions = {},
-): SourceCodeTransformer {
+export default function transformerCompileClass(options: CompileClassOptions = {}): SourceCodeTransformer {
   const {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
@@ -82,14 +79,12 @@ export default function transformerCompileClass(
   // Provides backwards compatibility. We either accept a trigger string which
   // gets turned into a regexp (like previously) or a regex literal directly.
   const regexp =
-    typeof trigger === 'string'
-      ? new RegExp(`(["'\`])${escapeRegExp(trigger)}\\s([^\\1]*?)\\1`, 'g')
-      : trigger
+    typeof trigger === 'string' ? new RegExp(`(["'\`])${escapeRegExp(trigger)}\\s([^\\1]*?)\\1`, 'g') : trigger
 
   return {
     enforce: 'pre',
     name: '@unocss/transformer-compile-class',
-    // eslint-disable-next-line id-length
+
     async transform(s, _, {uno, tokens, invalidate}) {
       const matches = [...s.original.matchAll(regexp)]
 
@@ -101,23 +96,17 @@ export default function transformerCompileClass(
 
       for (const match of matches) {
         let body =
-          // eslint-disable-next-line no-magic-numbers
-          match.length === 4 && match.groups
-            ? expandVariantGroup(match[3].trim())
-            : expandVariantGroup(match[2].trim())
+          match.length === 4 && match.groups ? expandVariantGroup(match[3].trim()) : expandVariantGroup(match[2].trim())
 
         const start = match.index!
         const replacements: any[] = []
 
         if (keepUnknown) {
-          // eslint-disable-next-line no-await-in-loop
           const result = await Promise.all(
             body
               .split(/\s+/)
               .filter(Boolean)
-              .map(
-                async (index) => [index, Boolean(await uno.parseToken(index))] as const,
-              ),
+              .map(async (index) => [index, Boolean(await uno.parseToken(index))] as const),
           )
           const known = result.filter(([, matched]) => matched).map(([index]) => index)
           const unknown = result.filter(([, matched]) => !matched).map(([index]) => index)
@@ -149,7 +138,6 @@ export default function transformerCompileClass(
 
             if (existing && existing[1] !== body) {
               throw new Error(
-                // eslint-disable-next-line max-len
                 `Duplicated compile class name "${className}". One is "${body}" and the other is "${existing[1]}". Please choose different class name or set 'alwaysHash' to 'true'.`,
               )
             }
@@ -182,17 +170,12 @@ export default function transformerCompileClass(
 function hash(string_: string) {
   let index
   let l
-  // eslint-disable-next-line unicorn/number-literal-case
   let hval = 0x81_1c_9d_c5
 
-  // eslint-disable-next-line no-plusplus
   for (index = 0, l = string_.length; index < l; index++) {
-    // eslint-disable-next-line no-bitwise, unicorn/prefer-code-point
     hval ^= string_.charCodeAt(index)
-    // eslint-disable-next-line no-bitwise, no-magic-numbers
     hval += (hval << 1) + (hval << 4) + (hval << 7) + (hval << 8) + (hval << 24)
   }
 
-  // eslint-disable-next-line no-bitwise, no-magic-numbers
   return `00000${(hval >>> 0).toString(36)}`.slice(-6)
 }
