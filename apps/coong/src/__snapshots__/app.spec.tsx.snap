@@ -18,9 +18,13 @@ exports[`App > should match snapshot 1`] = `
           Coong
         </title>
         <div
-          data-testid="file-routes"
+          data-testid="suspense"
         >
-          File Routes
+          <div
+            data-testid="file-routes"
+          >
+            File Routes
+          </div>
         </div>
       </div>
       <div

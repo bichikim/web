@@ -11,11 +11,12 @@ vi.mock('virtual:uno.css', () => ({}))
 vi.mock('./global.css', () => ({}))
 vi.mock('solid-devtools', () => ({}))
 
-vi.mock('src/utils/query', async () => {
-  const {QueryClient} = await import('@tanstack/solid-query')
+vi.mock('solid-js', async () => {
+  const actual = await vi.importActual<typeof import('solid-js')>('solid-js')
 
   return {
-    queryClient: new QueryClient(),
+    ...actual,
+    Suspense: vi.fn((props: any) => <div data-testid="suspense">{props.children}</div>),
   }
 })
 
@@ -27,6 +28,18 @@ vi.mock('@solidjs/router', () => ({
     }
 
     return props.children
+  }),
+}))
+
+// Mock @solidjs/start
+vi.mock('@solidjs/start', () => ({
+  clientOnly: vi.fn((loader: () => Promise<any>) => {
+    // Return a component that renders the mocked reload-prompt
+    return (props: any) => (
+      <div data-testid="reload-prompt" data-page-reload={props.pageReload}>
+        Reload Prompt
+      </div>
+    )
   }),
 }))
 
@@ -44,15 +57,6 @@ vi.mock('@solidjs/meta', () => ({
 // Mock @winter-love/solid-use
 vi.mock('@winter-love/solid-use', () => ({
   useIsClient: vi.fn(() => () => true),
-}))
-
-// Mock src/components/reload-prompt
-vi.mock('src/components/reload-prompt', () => ({
-  ReloadPrompt: vi.fn((props: any) => (
-    <div data-testid="reload-prompt" data-page-reload={props.pageReload}>
-      Reload Prompt
-    </div>
-  )),
 }))
 
 // Mock src/components/toast
