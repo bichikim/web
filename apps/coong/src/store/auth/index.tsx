@@ -1,14 +1,13 @@
-import {Accessor, createContext, createMemo, createSignal, useContext, type JSX, Show} from 'solid-js'
+import {Accessor, createContext, createMemo, useContext, type JSX} from 'solid-js'
 import type {User} from '@supabase/supabase-js'
 import {userQuery} from 'src/requests/user'
 import {signInAction} from 'src/requests/sign-in'
 import {signOutAction} from 'src/requests/sign-out'
 import {changePasswordAction} from 'src/requests/change-password'
 import {resetPasswordAction} from 'src/requests/reset-password'
-import {useSubmission, useAction, revalidate, createAsync} from '@solidjs/router'
+import {useSubmission, useAction} from '@solidjs/router'
 import {withHandyQuery} from 'src/use/handy-query'
 import {exchangeCodeForSectionAction} from 'src/requests/exchange-code-for-section'
-import {isServer} from 'solid-js/web'
 
 const AuthContext = createContext<{
   changePassword: (newPassword: string) => Promise<User | null>
@@ -58,7 +57,7 @@ export function AuthProvider(props: AuthProviderProps) {
   const changePasswordSubmission = useSubmission(changePasswordAction)
   const resetPassword = useAction(resetPasswordAction)
   const resetPasswordSubmission = useSubmission(resetPasswordAction)
-  const user = createMemo(() => userQuery.data())
+  const user = createMemo(() => userQuery.data() ?? null)
   const signInError = createMemo(() => signInSubmission.error)
   const signOutError = createMemo(() => signOutSubmission.error)
   const changePasswordError = createMemo(() => changePasswordSubmission.error)
