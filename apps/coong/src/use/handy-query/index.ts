@@ -1,9 +1,10 @@
-import {type CachedFunction, revalidate} from '@solidjs/router'
-import {createMemo, createResource, type Accessor, type Resource} from 'solid-js'
+import {type CachedFunction, revalidate, createAsync} from '@solidjs/router'
+import {createMemo, type Accessor, untrack, createSignal} from 'solid-js'
 import {resolveAccessor} from '@winter-love/solid-use'
+import {toArray} from '@winter-love/utils'
 
 export interface HandyQueryResult<TData> {
-  data: Resource<TData | undefined>
+  data: () => TData | undefined
   loading: Accessor<boolean>
   refetch: () => Promise<TData | undefined>
 }
@@ -21,6 +22,23 @@ export const withHandyQuery = <T extends (...args: any) => any>(query: CachedFun
     return typeof value === 'function' || Array.isArray(value)
   }
 
+  const getParams = (
+    argsOrOptions?: HandyQueryOptions<TData> | Accessor<TArgs | undefined> | TArgs,
+    options?: HandyQueryOptions<TData>,
+  ) => {
+    if (isArgsOrAccessor(argsOrOptions)) {
+      return {
+        args: argsOrOptions,
+        options,
+      }
+    }
+
+    return {
+      args: undefined,
+      options,
+    }
+  }
+
   function useHandyQuery(): HandyQueryResult<TData>
   function useHandyQuery(options: HandyQueryOptions<TData>): HandyQueryResult<TData>
   function useHandyQuery(
@@ -33,48 +51,39 @@ export const withHandyQuery = <T extends (...args: any) => any>(query: CachedFun
     options?: HandyQueryOptions<TData>,
   ): HandyQueryResult<TData> {
     // no args case
-    if (!isArgsOrAccessor(argsOrOptions)) {
-      const [data, action] = createResource(() => query(), {
-        initialValue: argsOrOptions?.initialValue,
-        name: options?.name as any,
-      })
+    const [pending, setPending] = createSignal(false)
 
-      const refetch = async () => {
-        await revalidate(query.key, false)
+    const {args, options: _options} = getParams(argsOrOptions, options)
 
-        return await action.refetch()
-      }
+    const argsAccessor = resolveAccessor(args)
 
-      const loading = createMemo(() => data.loading)
+    const data = createAsync(
+      async () => {
+        const args = toArray(argsAccessor())
 
-      return {data, loading, refetch}
-    }
+        setPending(true)
 
-    // args case
-    const argsAccessor = resolveAccessor(argsOrOptions)
+        const result = await query(...args)
 
-    const [data, action] = createResource(
-      () => argsAccessor() ?? false,
-      (args) => query(...args),
+        setPending(false)
+
+        return result
+      },
       {
-        initialValue: options?.initialValue,
+        initialValue: _options?.initialValue,
         name: options?.name as any,
       },
     )
 
     const refetch = async () => {
-      const args = argsAccessor()
+      await revalidate(query.key, false)
 
-      if (!args) {
-        return undefined
-      }
-
-      await revalidate(query.keyFor(...args), false)
-
-      return await action.refetch()
+      return untrack(() => data())
     }
 
-    const loading = createMemo(() => data.loading)
+    const loading = createMemo(() => pending())
+
+    console.log('data', Boolean(data()), loading())
 
     return {data, loading, refetch}
   }
