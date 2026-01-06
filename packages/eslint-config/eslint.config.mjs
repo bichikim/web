@@ -1,7 +1,7 @@
 import js from '@eslint/js'
 import stylistic from '@stylistic/eslint-plugin'
 import stylisticTs from '@stylistic/eslint-plugin-ts'
-import jsonc from 'eslint-plugin-jsonc'
+// import jsonc from 'eslint-plugin-jsonc'
 import nodePlugin from 'eslint-plugin-n'
 import oxlint from 'eslint-plugin-oxlint'
 import prettierRecommended from 'eslint-plugin-prettier/recommended'
@@ -375,16 +375,16 @@ export default [
       },
     },
   ),
-  {
-    files: ['**/*.json', '**/*.jsonc'],
-    language: 'json/json',
-    plugins: {
-      'sort-keys-fix': sortKeys,
-    },
-    rules: {
-      'sort-keys-fix/sort-keys-fix': ['warn', 'asc', {natural: true}],
-    },
-  },
-  ...jsonc.configs['flat/recommended-with-jsonc'],
+  // {
+  //   files: ['**/*.json', '**/*.jsonc'],
+  //   language: 'json/json',
+  //   plugins: {
+  //     'sort-keys-fix': sortKeys,
+  //   },
+  //   rules: {
+  //     'sort-keys-fix/sort-keys-fix': ['warn', 'asc', {natural: true}],
+  //   },
+  // },
+  // ...jsonc.configs['flat/recommended-with-jsonc'],
   ...oxlint.buildFromOxlintConfig({}),
 ]
