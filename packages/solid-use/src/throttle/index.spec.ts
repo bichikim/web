@@ -1,11 +1,17 @@
 import {useThrottle} from './'
-import {describe, expect, it, vi} from 'vitest'
-import {useFakeTimers} from 'sinon'
+import {describe, expect, it, vi, beforeEach, afterEach} from 'vitest'
 import {renderHook} from '@solidjs/testing-library'
 
 describe('useThrottle', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
   it('should throttle calling the callback function', () => {
-    const timer = useFakeTimers()
     const options = {leading: true}
     const args = ['hello']
     const callback = vi.fn()
@@ -14,11 +20,12 @@ describe('useThrottle', () => {
     throttle.execute(...args)
     expect(callback).toHaveBeenCalledTimes(1)
     throttle.execute(...args)
-    timer.tick(50)
+    vi.advanceTimersByTime(50)
     expect(callback).toHaveBeenCalledTimes(1)
     throttle.execute(...args)
-    timer.tick(50)
+    vi.advanceTimersByTime(50)
+    expect(callback).toHaveBeenCalledTimes(1)
+    vi.advanceTimersByTime(50)
     expect(callback).toHaveBeenCalledTimes(2)
-    timer.restore()
   })
 })
