@@ -1,1 +1,3 @@
-export const TRUSTED_ORIGINS = ['https://coong.io', ...(import.meta.env.PROD ? [] : ['http://localhost:3000'])]
+import {getSelfUrl} from 'src/env/self'
+
+export const TRUSTED_ORIGINS = [getSelfUrl()]
