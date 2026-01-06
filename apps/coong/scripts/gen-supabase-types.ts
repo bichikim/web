@@ -20,10 +20,12 @@ const outputPath = join(supabaseDir, 'supabase.ts')
 const $ = _$({cwd: projectRoot, stderr: 'inherit', stdout: {file: outputPath}})
 
 try {
-  await mkdir(supabaseDir, {recursive: true})
-  await $`pnpm dlx supabase login`
-  await $`pnpm dlx supabase gen types typescript --project-id ${projectId} --schema public`
-  console.log(`✅ Types generated successfully at ${outputPath}`)
+  if (process.env.SUPABASE_ACCESS_TOKEN) {
+    await mkdir(supabaseDir, {recursive: true})
+    await $`pnpm dlx supabase login`
+    await $`pnpm dlx supabase gen types typescript --project-id ${projectId} --schema public`
+    console.log(`✅ Types generated successfully at ${outputPath}`)
+  }
 } catch (error) {
   throw new Error(`Error generating types: ${(error as Error)?.message}`)
 }
