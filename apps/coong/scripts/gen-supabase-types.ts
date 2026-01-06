@@ -10,17 +10,13 @@ const projectRoot = join(__dirname, '..')
 
 const projectId = process.env.SUPABASE_PROJECT_ID
 
-if (!projectId) {
-  throw new Error('SUPABASE_PROJECT_ID is not set in .env file')
-}
-
 const supabaseDir = join(projectRoot, '.supabase')
 const outputPath = join(supabaseDir, 'supabase.ts')
 
 const $ = _$({cwd: projectRoot, stderr: 'inherit', stdout: {file: outputPath}})
 
 try {
-  if (process.env.SUPABASE_ACCESS_TOKEN) {
+  if (projectId && process.env.SUPABASE_ACCESS_TOKEN) {
     await mkdir(supabaseDir, {recursive: true})
     await $`pnpm dlx supabase login`
     await $`pnpm dlx supabase gen types typescript --project-id ${projectId} --schema public`
