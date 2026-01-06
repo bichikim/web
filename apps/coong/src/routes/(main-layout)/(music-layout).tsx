@@ -66,10 +66,6 @@ export default function MusicLayout(props: RouteSectionProps) {
     showKeyName: false,
   })
 
-  createEffect(() => {
-    console.log('settingData', settingData())
-  })
-  console.log('settingData1', settingData())
   const isActiveStore = createMemo(() => Boolean(settingData().keepPlayList))
 
   const linkType = createMemo(() => {
