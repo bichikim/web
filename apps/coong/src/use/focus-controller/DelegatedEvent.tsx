@@ -6,6 +6,7 @@ import {
   DEFAULT_CHANNEL_PREFIX,
   type DelegatedEventMap,
 } from 'src/utils/focus-controller/delegated-event'
+import {isServer} from 'solid-js/web'
 import {type MaybeAccessor, resolveAccessor} from '@winter-love/solid-use'
 import {getDocument} from '@winter-love/utils'
 
@@ -45,8 +46,11 @@ export const useDelegatedEmitHandler = () => {
   const {isFake} = useContext(DelegatedEventContext)
 
   // only warn on client side
-  if (isFake && !import.meta.env.SSR) {
-    console.warn('DelegatedEventContext is not provided')
+  if (!isServer) {
+    // this code is removed at build time in server code
+    if (isFake) {
+      console.warn('DelegatedEventContext is not provided')
+    }
   }
 
   return (channel: string, key: string, value: any) => {
@@ -85,8 +89,11 @@ export const useDelegatedOn = (
   const listenerAccessor = resolveAccessor(listener)
 
   // only warn on client side
-  if (isFake && !import.meta.env.SSR) {
-    console.warn('DelegatedEventContext is not provided')
+  if (!isServer) {
+    // this code is removed at build time in server code
+    if (isFake) {
+      console.warn('DelegatedEventContext is not provided')
+    }
   }
 
   createEffect(() => {
@@ -104,7 +111,8 @@ export const useDelegatedOn = (
       target,
     )
 
-    if (!import.meta.env.SSR) {
+    if (!isServer) {
+      // this code is removed at build time in server code
       addListener()
     }
 
