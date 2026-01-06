@@ -1,8 +1,9 @@
 import {createSignal, createEffect, untrack, onCleanup, Show} from 'solid-js'
 import {LottieSharedProps} from './types'
 import {DotLottie} from '@lottiefiles/dotlottie-web'
+import {isServer} from 'solid-js/web'
 
-if (import.meta.env.STORYBOOK !== 'true' || !import.meta.env.SSR) {
+if (import.meta.env.STORYBOOK !== 'true' || !isServer) {
   // set the wasm url for the dotlottie-web library
   // prevent the library from loading the wasm file from the remote url
   DotLottie.setWasmUrl('/wasm/dot-lottie-player.wasm')
