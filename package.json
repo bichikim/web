@@ -11,7 +11,7 @@
   "scripts": {
     "build:android": "ionic cap build android",
     "build:docs": "vitepress build docs",
-    "build-storybook": "storybook build",
+    "build:storybook": "storybook build",
     "check-types": "turbo check-types",
     "chromatic": "nve 20.18.1 pnpm dlx chromatic --project-token=chpt_b4b4c6198bbdeda",
     "clean": "lerna clean --yes && pnpm dlx rimraf node_modules",
