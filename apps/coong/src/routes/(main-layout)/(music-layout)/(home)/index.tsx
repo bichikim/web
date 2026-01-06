@@ -55,6 +55,12 @@ export default function HomePage() {
               Musics
             </HAnchor>
           </li>
+          <li class="">
+            <HAnchor hrefName="sign-in" class="text-7 underline">
+              <span class="text-7 i-tabler:music-plus">icon</span>
+              Sign In Test
+            </HAnchor>
+          </li>
           <Show
             when={isSignedIn()}
             fallback={
