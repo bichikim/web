@@ -7,7 +7,7 @@ import {
   getNextPosition,
   getNextPositionByDirectionName,
   getParentPosition,
-} from './deep-position'
+} from '../deep-position'
 
 describe('deep-position', () => {
   describe('getNextPosition', () => {

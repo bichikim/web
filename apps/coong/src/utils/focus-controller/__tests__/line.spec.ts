@@ -1,7 +1,7 @@
 import {describe, expect, it} from 'vitest'
-import type {Direction} from './direction'
-import type {Position} from './deep-position'
-import {createLine, generateLine} from './line'
+import type {Direction} from '../direction'
+import type {Position} from '../deep-position'
+import {createLine, generateLine} from '../line'
 
 describe('generateLine', () => {
   it('should yield points starting after the origin by default', () => {
@@ -43,3 +43,4 @@ describe('createLine', () => {
     expect(nextPoint()).toEqual({x: 2, y: 2})
   })
 })
+

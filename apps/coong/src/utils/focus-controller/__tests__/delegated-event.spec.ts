@@ -8,7 +8,7 @@ import {
   delegatedEmitHandler,
   DEFAULT_CHANNEL_PREFIX,
   type DelegatedEventMap,
-} from './delegated-event'
+} from '../delegated-event'
 
 const CHANNEL_NAME = 'test-event'
 
@@ -340,3 +340,4 @@ describe('delegated-event', () => {
     })
   })
 })
+

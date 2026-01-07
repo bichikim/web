@@ -28,10 +28,10 @@ import {
   savePreviousDeepPosition,
   findNextDeepPosition,
   isPreventMoveFocus,
-} from './position-map'
-import {getDirection} from './direction'
-import type {Direction} from './direction'
-import {type DeepPosition, DEFAULT_KEY_OPTIONS, getDeepPositionKey} from './deep-position'
+} from '../position-map'
+import {getDirection} from '../direction'
+import type {Direction} from '../direction'
+import {type DeepPosition, DEFAULT_KEY_OPTIONS, getDeepPositionKey} from '../deep-position'
 
 describe('position-map', () => {
   describe('createPositionMap', () => {
@@ -1324,3 +1324,4 @@ describe('position-map', () => {
     })
   })
 })
+

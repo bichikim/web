@@ -1,7 +1,7 @@
 import {describe, expect, it} from 'vitest'
-import type {Direction} from './direction'
-import type {Position} from './deep-position'
-import {createTornado, generateTornado} from './tornado'
+import type {Direction} from '../direction'
+import type {Position} from '../deep-position'
+import {createTornado, generateTornado} from '../tornado'
 
 describe('generateTornado', () => {
   it('should generate spiral points within provided range', () => {
@@ -82,3 +82,4 @@ describe('createTornado', () => {
     expect(nextPosition()).toEqual({x: 6, y: 6})
   })
 })
+

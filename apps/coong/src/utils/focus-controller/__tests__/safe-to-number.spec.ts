@@ -1,5 +1,5 @@
 import {describe, expect, it} from 'vitest'
-import {safeToNumber} from './safe-to-number'
+import {safeToNumber} from '../safe-to-number'
 
 describe('safeToNumber', () => {
   it('should convert valid number string to number', () => {
@@ -50,3 +50,4 @@ describe('safeToNumber', () => {
     expect(safeToNumber('invalid', null)).toBeNull()
   })
 })
+
