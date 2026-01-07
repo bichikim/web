@@ -97,10 +97,10 @@ describe('DelegatedEvent', () => {
 
     mocks.createDelegatedEvent.mockReturnValue({delegatedEventMap, unsubscribe: vi.fn()})
 
-    let emit: ((channel: string, key: string, value: unknown) => void) | undefined = undefined
-
     const MockChild = () => {
-      emit = useDelegatedEmitHandler()
+      const emit = useDelegatedEmitHandler()
+
+      emit('test-channel', 'test-key', 'test-value')
 
       return null
     }
@@ -112,7 +112,6 @@ describe('DelegatedEvent', () => {
         },
       }),
     )
-    emit?.('test-channel', 'test-key', 'test-value')
     expect(mocks.delegatedEmit).toHaveBeenCalledWith('test-channel', 'test-key', 'test-value')
     expect(warnSpy).not.toHaveBeenCalled()
   })
@@ -120,30 +119,28 @@ describe('DelegatedEvent', () => {
   it('useDelegatedEmitHandler should warn when provider is missing on client', async () => {
     const {useDelegatedEmitHandler} = await importSubject({isServer: false})
 
-    let emit: ((channel: string, key: string, value: unknown) => void) | undefined = undefined
-
     render(() => {
-      emit = useDelegatedEmitHandler()
+      const emit = useDelegatedEmitHandler()
+
+      emit('c', 'k', 'v')
 
       return null
     })
     expect(warnSpy).toHaveBeenCalledWith('DelegatedEventContext is not provided')
-    emit?.('c', 'k', 'v')
     expect(mocks.delegatedEmit).toHaveBeenCalledWith('c', 'k', 'v')
   })
 
   it('useDelegatedEmitHandler should not warn on server', async () => {
     const {useDelegatedEmitHandler} = await importSubject({isServer: true})
 
-    let emit: ((channel: string, key: string, value: unknown) => void) | undefined = undefined
-
     render(() => {
-      emit = useDelegatedEmitHandler()
+      const emit = useDelegatedEmitHandler()
+
+      emit('c', 'k', 'v')
 
       return null
     })
     expect(warnSpy).not.toHaveBeenCalled()
-    emit?.('c', 'k', 'v')
     expect(mocks.delegatedEmit).toHaveBeenCalledWith('c', 'k', 'v')
   })
 
