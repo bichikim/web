@@ -2,7 +2,7 @@
  * @vitest-environment node
  */
 import {describe, expect, it} from 'vitest'
-import {createContextMenuDisable} from './index'
+import {createContextMenuDisable} from '../index'
 
 describe('createContextMenuDisable in node environment', () => {
   it('should not throw error when window is not available', () => {
