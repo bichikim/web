@@ -106,6 +106,39 @@ describe('useCookieStorage', () => {
     })
     cleanup()
   })
+
+  it('should use server cookie utilities when isServer is true', async () => {
+    isServerMock.value = true
+    vi.mocked(cookieUtils.getServerCookie).mockReturnValue(undefined)
+
+    const {result, cleanup} = renderHook(() => useCookieStorage('test-key', 'init'))
+
+    expect(cookieUtils.getServerCookie).toHaveBeenCalledWith('test-key')
+    expect(result[0]()).toBe('init')
+    result[1]('new-value')
+
+    await waitFor(() => {
+      expect(cookieUtils.setServerCookie).toHaveBeenCalledWith('test-key', 'new-value', undefined)
+      expect(cookieUtils.setClientCookie).not.toHaveBeenCalled()
+    })
+    cleanup()
+  })
+
+  it('should fall back to String(value) when cookie serialization fails', async () => {
+    vi.mocked(cookieUtils.getClientCookie).mockReturnValue(undefined)
+
+    const {result, cleanup} = renderHook(() => useCookieStorage('test-key', {}))
+
+    const circular: Record<string, unknown> = {}
+
+    circular.self = circular
+    result[1](circular)
+
+    await waitFor(() => {
+      expect(cookieUtils.setClientCookie).toHaveBeenCalledWith('test-key', String(circular), undefined)
+    })
+    cleanup()
+  })
 })
 
 describe('useClientStorage', () => {
@@ -252,6 +285,40 @@ describe('useClientStorage', () => {
     })
     cleanup()
   })
+
+  it('should not touch client storage when isServer is true', async () => {
+    isServerMock.value = true
+    vi.mocked(localStorageMock.getItem).mockReturnValue('stored-value')
+
+    const {result, cleanup} = renderHook(() => useClientStorage('local', 'test-key', 'default-value'))
+
+    await waitFor(() => {
+      expect(result[0]()).toBe('default-value')
+    })
+    expect(localStorageMock.getItem).not.toHaveBeenCalled()
+    expect(localStorageMock.setItem).not.toHaveBeenCalled()
+    cleanup()
+  })
+
+  it('should fall back to String(value) when localStorage serialization fails', async () => {
+    vi.mocked(localStorageMock.getItem).mockReturnValue(null)
+
+    const {result, cleanup} = renderHook(() => useClientStorage('local', 'test-key', {}))
+
+    await waitFor(() => {
+      expect(result[0]()).toEqual({})
+    })
+
+    const circular: Record<string, unknown> = {}
+
+    circular.self = circular
+    result[1](circular)
+
+    await waitFor(() => {
+      expect(localStorageMock.setItem).toHaveBeenCalledWith('test-key', String(circular))
+    })
+    cleanup()
+  })
 })
 
 describe('useStorage', () => {
@@ -331,4 +398,3 @@ describe('useStorage', () => {
     cleanup()
   })
 })
-
