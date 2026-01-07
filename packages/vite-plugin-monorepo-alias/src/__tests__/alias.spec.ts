@@ -51,6 +51,12 @@ describe('getAliasId', () => {
     expect(result).toBe('src/utils/index.ts')
   })
 
+  it('should use default empty alias list when alias is omitted', () => {
+    const result = getAliasId('src/index.ts')
+
+    expect(result).toBe('src/index.ts')
+  })
+
   it('should return original source when no alias matched', () => {
     const result = getAliasId('src/index.ts', [[/^#utils/u, 'src/utils']])
 
@@ -164,6 +170,21 @@ describe('matchWorkspace', () => {
 })
 
 describe('createAlias', () => {
+  it('should use default options (workspacePaths/alias/root/separator) and return source when no workspacePaths configured', async () => {
+    const plugin: any = createAlias({})
+    const resolve = vi.fn(() => Promise.resolve({id: 'resolved'}))
+
+    const result = await plugin.resolveId.call(
+      {resolve},
+      'src/index.ts',
+      '/Users/user-name/Documents/Apps/web/packages/vite-plugin-monorepo-alias/src/foo.ts',
+      undefined,
+    )
+
+    expect(result).toBe('src/index.ts')
+    expect(resolve).not.toHaveBeenCalled()
+  })
+
   it('should return source when importer is undefined', async () => {
     const plugin: any = createAlias({root: '/Users/user-name/Documents/Apps/web', workspacePaths: ['packages/']})
     const resolve = vi.fn(() => Promise.resolve({id: 'resolved'}))
@@ -362,5 +383,3 @@ describe('normalizeAliasTree', () => {
     })
   })
 })
-
-
