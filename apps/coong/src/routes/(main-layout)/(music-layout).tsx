@@ -8,7 +8,6 @@ import {createSplendidGrandPiano, SplendidGrandPianoContext} from 'src/use/instr
 import {getStorageKey} from 'src/utils/storage-key'
 import {getSelfUrl} from 'src/env'
 import {MidiPlayerProvider} from 'src/components/midi-player/context'
-import {Analytics} from 'src/components/vercel'
 import {RouteDefinition} from '@solidjs/router'
 
 export const route = {
@@ -117,8 +116,6 @@ export default function MusicLayout(props: RouteSectionProps) {
           </MidiPlayerProvider>
         </SplendidGrandPianoContext.Provider>
       </SettingContext.Provider>
-      {/* Analytics use solidjs/route so it should be here */}
-      <Analytics />
     </>
   )
 }

@@ -2,7 +2,11 @@ import {RouteSectionProps, RouteDefinition as _RouteDefinition, RouteMatch} from
 import {AuthProvider} from 'src/store/auth'
 import {HRouterNameProvider} from 'src/components/anchor/HRouterName'
 import {AuthGuard, RouteDefinition} from 'src/components/auth-guard'
-import {Suspense} from 'solid-js'
+import {clientOnly} from '@solidjs/start'
+
+const Analytics = clientOnly(() =>
+  import('src/components/vercel/Analytics').then((module) => ({default: module.Analytics})),
+)
 
 const routerName = {
   'change-password': '/auth/change-password',
@@ -27,6 +31,7 @@ export default function MainLayout(props: RouteSectionProps) {
       <AuthProvider>
         <AuthGuard>{props.children}</AuthGuard>
       </AuthProvider>
+      <Analytics />
     </HRouterNameProvider>
   )
 }
