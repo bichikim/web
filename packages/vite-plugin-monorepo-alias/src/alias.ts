@@ -145,12 +145,11 @@ export const createAlias = (options: ResolveIdOptions): Plugin => {
   return {
     name: 'monorepo-alias',
     resolveId(this: any, source, importer, resolveOptions) {
-      if (!importer) {
+      if (!importer || source.startsWith('virtual:')) {
         return source
       }
 
-      // skip virtual imports (including Vite internal virtual modules with null byte prefix)
-      if (source.startsWith('virtual:') || source.includes('\0')) {
+      if (source.includes('\0')) {
         return null
       }
 
