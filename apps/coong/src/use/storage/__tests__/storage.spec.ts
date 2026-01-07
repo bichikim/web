@@ -4,7 +4,7 @@
 import {describe, expect, it, vi, beforeEach, afterEach} from 'vitest'
 import {renderHook, waitFor} from '@solidjs/testing-library'
 import * as cookieUtils from 'src/utils/cookie'
-import {useCookieStorage, useClientStorage, useStorage} from './'
+import {useCookieStorage, useClientStorage, useStorage} from '../'
 
 // Mock cookie utilities
 vi.mock('src/utils/cookie', () => ({
@@ -331,3 +331,4 @@ describe('useStorage', () => {
     cleanup()
   })
 })
+

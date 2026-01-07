@@ -1,27 +1,79 @@
-import {createEffect, createSignal} from 'solid-js'
+import {createEffect, createMemo, createSignal, onCleanup} from 'solid-js'
 
-export const useAnimationFrame = (callback: () => void) => {
+export interface UseAnimationFrameOptions {
+  /** Target FPS limit. If not set, runs at display refresh rate */
+  fps?: number
+}
+
+/**
+ * A Solid.js hook that manages a requestAnimationFrame loop.
+ *
+ * @param callback - Called on each frame with deltaTime (ms since last frame)
+ * @param options - Configuration options
+ *
+ * @example
+ * ```tsx
+ * // Basic usage - runs at display refresh rate
+ * const {start, stop} = useAnimationFrame((deltaTime) => {
+ *   position += velocity * deltaTime
+ * })
+ *
+ * // With FPS limit
+ * const {start} = useAnimationFrame(
+ *   (deltaTime) => update(deltaTime),
+ *   {fps: 30}
+ * )
+ * ```
+ */
+export const useAnimationFrame = (callback: (deltaTime: number) => void, options?: UseAnimationFrameOptions) => {
+  const targetInterval = options?.fps ? 1000 / options.fps : 0
+
   const [start, setStart] = createSignal(false)
-  let interval: any
+  let frameId: number | undefined
+  let lastTime: number | undefined
 
   createEffect(() => {
-    const _start = start()
+    const isRunning = start()
 
-    if (!_start) {
+    if (!isRunning) {
       return
     }
 
-    const animationFrame = () => {
-      callback()
-      requestAnimationFrame(animationFrame)
+    const animationFrame = (timestamp: number) => {
+      // Initialize lastTime on first frame
+      if (lastTime === undefined) {
+        lastTime = timestamp
+      }
+
+      const deltaTime = timestamp - lastTime
+
+      // FPS limiting: skip if not enough time has passed
+      if (targetInterval > 0 && deltaTime < targetInterval) {
+        frameId = requestAnimationFrame(animationFrame)
+
+        return
+      }
+
+      lastTime = timestamp
+      callback(deltaTime)
+      frameId = requestAnimationFrame(animationFrame)
     }
 
-    interval = requestAnimationFrame(animationFrame)
+    frameId = requestAnimationFrame(animationFrame)
 
-    return () => cancelAnimationFrame(interval)
+    onCleanup(() => {
+      if (frameId !== undefined) {
+        cancelAnimationFrame(frameId)
+      }
+
+      lastTime = undefined
+    })
   })
 
+  const isRunning = createMemo(() => start())
+
   return {
+    isRunning,
     start: () => setStart(true),
     stop: () => setStart(false),
   }

@@ -7,8 +7,8 @@ import {
   PlayOptions,
   TARGET_ID_KEY,
   USER_PLAY_FLAG_KEY,
-} from './splendid-grand-piano-extended'
-import {getAudioContext} from './prepare-audio-context'
+} from '../splendid-grand-piano-extended'
+import {getAudioContext} from '../prepare-audio-context'
 
 vi.mock('smplr', () => {
   let _currentTime = 33
@@ -46,7 +46,7 @@ vi.mock('smplr', () => {
   }
 })
 
-vi.mock('./prepare-audio-context', () => {
+vi.mock('../prepare-audio-context', () => {
   const mockAudioContext = {
     currentTime: 33,
     resume: () => {
@@ -248,3 +248,4 @@ describe('createSplendidGrandPianoExtended', () => {
     })
   })
 })
+

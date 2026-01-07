@@ -4,7 +4,7 @@
 import {describe, expect, it, vi} from 'vitest'
 import {createSignal} from 'solid-js'
 import {renderHook} from '@solidjs/testing-library'
-import {createEffectInitialize} from './index'
+import {createEffectInitialize} from '../index'
 
 describe('createEffectInitialize', () => {
   it('should call effect with true on first execution', () => {
@@ -71,3 +71,4 @@ describe('createEffectInitialize', () => {
     cleanup()
   })
 })
+
