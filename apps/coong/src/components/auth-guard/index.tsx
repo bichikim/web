@@ -5,7 +5,15 @@ import {useNameNavigate} from 'src/components/anchor/nameNavigate'
 
 export interface RouteDefinition extends _RouteDefinition {
   info: {
-    public: 'only-unauthorized' | true
+    /**
+     * Controls route access based on user authentication status.
+     *
+     * - `true`: Accessible to everyone (public route)
+     * - `false`: Requires authentication (private route, redirects to sign-in if not logged in)
+     * - `'only-unauthorized'`: Only accessible when NOT logged in (e.g., sign-in, sign-up pages)
+     *   - Logged-in users are redirected to home
+     */
+    public: 'only-unauthorized' | boolean
   }
 }
 
