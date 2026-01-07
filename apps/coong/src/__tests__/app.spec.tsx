@@ -3,12 +3,12 @@
  */
 import {describe, expect, it, vi, beforeEach} from 'vitest'
 import {render} from '@solidjs/testing-library'
-import App from './app'
+import App from '../app'
 
 // Mock all CSS imports
 vi.mock('@unocss/reset/tailwind.css', () => ({}))
 vi.mock('virtual:uno.css', () => ({}))
-vi.mock('./global.css', () => ({}))
+vi.mock('../global.css', () => ({}))
 vi.mock('solid-devtools', () => ({}))
 
 vi.mock('solid-js', async () => {
@@ -74,7 +74,7 @@ vi.mock('src/components/service-worker', () => ({
 }))
 
 // Mock ./components/font-import/FontImport
-vi.mock('./components/font-import/FontImport', () => ({
+vi.mock('../components/font-import/FontImport', () => ({
   FontImport: vi.fn(() => <div data-testid="font-import">Font Import</div>),
 }))
 
