@@ -3,7 +3,7 @@
  */
 import {describe, expect, it, vi} from 'vitest'
 import {fireEvent, render} from '@solidjs/testing-library'
-import {SButton, type SButtonProps} from './SButton'
+import {SButton, type SButtonProps} from '../SButton'
 
 describe('SButton', () => {
   it('should render children', () => {
@@ -107,3 +107,4 @@ describe('SButton', () => {
     expect(getByRole('button')).toHaveClass('custom-class')
   })
 })
+

@@ -4,7 +4,7 @@
 import {describe, expect, it} from 'vitest'
 import {render} from '@solidjs/testing-library'
 // import userEvent from '@testing-library/user-event'
-import {SText} from './SText'
+import {SText} from '../SText'
 
 describe('SText', () => {
   it('should render', () => {
@@ -25,3 +25,4 @@ describe('SText', () => {
     expect(getByText('Hello')).toMatchSnapshot()
   })
 })
+

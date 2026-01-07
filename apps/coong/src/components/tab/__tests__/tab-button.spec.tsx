@@ -1,7 +1,7 @@
 import {describe, expect, it, vi} from 'vitest'
-import {useTabButton} from './tab-button'
+import {useTabButton} from '../tab-button'
 import {renderHook} from '@solidjs/testing-library'
-import {HTabProvider} from './HTabProvider'
+import {HTabProvider} from '../HTabProvider'
 
 describe('use-tab-button', () => {
   it('should render', () => {
@@ -54,3 +54,4 @@ describe('use-tab-button', () => {
     consoleWarnSpy.mockRestore()
   })
 })
+
