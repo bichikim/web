@@ -18,8 +18,6 @@ export default function App() {
     <>
       <SToastProvider>
         <ServiceWorkerProvider src="/sw.js">
-          {/* router name provider for HAnchor component */}
-
           <Router
             root={(props) => (
               <MetaProvider>
