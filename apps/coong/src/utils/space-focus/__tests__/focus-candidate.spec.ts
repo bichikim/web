@@ -6,8 +6,8 @@ import {
   scoreAngleCandidate,
   moveFocus,
   jumpFocus,
-} from './focus-candidate'
-import {type FocusRect, type Direction, createFocusRect as _createFocusRect, type Rect} from './focus-store'
+} from '../focus-candidate'
+import {type FocusRect, type Direction, createFocusRect as _createFocusRect, type Rect} from '../focus-store'
 
 const createRect = (left: number, top: number, right: number, bottom: number): Rect => {
   return {
@@ -430,3 +430,4 @@ describe('focus-candidate', () => {
     })
   })
 })
+
