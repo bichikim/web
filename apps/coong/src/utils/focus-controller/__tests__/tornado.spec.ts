@@ -69,6 +69,34 @@ describe('generateTornado', () => {
       {x: 4, y: -4},
     ])
   })
+
+  it('should not include origin when includeOrigin is false', () => {
+    const origin: Position = {x: 0, y: 0}
+    const iterator = generateTornado(origin, 2, 1, false)
+
+    expect(iterator.next().value).toEqual({x: 1, y: 0})
+  })
+
+  it('should return empty sequence when range is not large enough and includeOrigin is false', () => {
+    const origin: Position = {x: 10, y: 20}
+    const points = Array.from(generateTornado(origin, 1, 1, false))
+
+    expect(points).toEqual([])
+  })
+
+  it('should return only origin when range is not large enough and includeOrigin is true', () => {
+    const origin: Position = {x: 10, y: 20}
+    const points = Array.from(generateTornado(origin, 1, 1, true))
+
+    expect(points).toEqual([origin])
+  })
+
+  it('should use default parameters when range/gap/includeOrigin are not provided', () => {
+    const origin: Position = {x: 0, y: 0}
+    const iterator = generateTornado(origin)
+
+    expect(iterator.next().value).toEqual({x: 1, y: 0})
+  })
 })
 
 describe('createTornado', () => {
@@ -81,5 +109,20 @@ describe('createTornado', () => {
     expect(nextPosition()).toEqual({x: 6, y: 5})
     expect(nextPosition()).toEqual({x: 6, y: 6})
   })
-})
 
+  it('should use default parameters when range/gap/includeOrigin are not provided', () => {
+    const origin: Position = {x: 5, y: 5}
+    const direction: Direction = {x: 1, y: 0}
+    const nextPosition = createTornado(origin, direction)
+
+    expect(nextPosition()).toEqual({x: 6, y: 5})
+  })
+
+  it('should return undefined when the underlying generator is exhausted', () => {
+    const origin: Position = {x: 0, y: 0}
+    const direction: Direction = {x: 1, y: 0}
+    const nextPosition = createTornado(origin, direction, 1, 1, false)
+
+    expect(nextPosition()).toBeUndefined()
+  })
+})
