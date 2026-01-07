@@ -15,6 +15,8 @@ import {ServiceWorkerProvider} from 'src/components/service-worker'
 import {MetaProvider, Title} from '@solidjs/meta'
 import {FontImport} from './components/font-import/FontImport'
 
+// no-way to test 'import(...) because clientOnly is mocked
+/* istanbul ignore next -- @preserve */
 const ReloadPrompt = clientOnly(() => import('src/components/reload-prompt'))
 
 /**
