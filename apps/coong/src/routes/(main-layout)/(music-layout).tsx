@@ -49,6 +49,11 @@ absolute top-0 left-0 right-0 bottom-0 flex  flex-col justify-end items-end poin
 const PIANO_PATH = '/piano'
 const MUSIC_PATH = '/musics'
 
+/**
+ * 음악 레이아웃 입니다
+ * @param props
+ * @returns
+ */
 export default function MusicLayout(props: RouteSectionProps) {
   const [splendidGrandPiano, splendidGrandPianoController] = createSplendidGrandPiano({
     baseUrl: '/instruments/splendid-grand-piano',
