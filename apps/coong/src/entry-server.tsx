@@ -2,11 +2,6 @@
 // noinspection HtmlRequiredTitleElement
 
 import {createHandler, StartServer} from '@solidjs/start/server'
-import {getRequestEvent} from 'solid-js/web'
-
-const getNonce = () => {
-  return getRequestEvent()?.locals?.nonce as string | undefined
-}
 
 export default createHandler(
   () => (
@@ -37,6 +32,7 @@ export default createHandler(
       }}
     />
   ),
+  // CSP nonce: Solid Start adds nonce attribute to style and script tags
   (event) => ({
     nonce: event.locals.nonce,
   }),
