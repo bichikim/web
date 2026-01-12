@@ -52,9 +52,23 @@ export const createConfig = ({
         },
         rollupOptions: {
           external: [...depsKey, ...external],
-          output: {
-            plugins: rollupOutputPlugins,
-          },
+          output: [
+            // ESM: 여러 파일로
+            {
+              entryFileNames: '[name].mjs',
+              format: 'es',
+              plugins: rollupOutputPlugins,
+              preserveModules: true,
+              preserveModulesRoot: 'src',
+            },
+            // CJS: 한 파일로
+            {
+              entryFileNames: 'index.cjs',
+              exports: 'named',
+              format: 'cjs',
+              plugins: rollupOutputPlugins,
+            },
+          ],
         },
         target,
       },
