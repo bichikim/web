@@ -14,11 +14,10 @@
     "dev": "vinxi dev",
     "dev:e2e": "jiti scripts/e2e-prepare.ts",
     "lint": "cross-env NODE_ENV=script eslint src",
-    "lint:fix": "cross-env NODE_ENV=script eslint src",
+    "lint:fix": "cross-env NODE_ENV=script eslint src --fix",
     "prepare": "pnpm run supabase:gen-types",
     "preview": "node -r dotenv/config ./.output/server/index.mjs",
     "preview:spa": "jiti scripts/preview-proxy.ts",
-    "start": "node ./.output/server/index.mjs",
     "supabase:gen-types": "jiti scripts/gen-supabase-types.ts",
     "type-check": "tsc --noEmit"
   },
