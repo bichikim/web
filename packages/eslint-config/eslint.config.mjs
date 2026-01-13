@@ -192,7 +192,7 @@ export default [
       'id-length': [
         'error',
         {
-          exceptions: ['_', 'x', 'y', 'z', 'p', 'm', 'h', 'w', 'b', 't', 'l', 'r'],
+          exceptions: ['_', 'x', 'y', 'z', 'p', 'm', 'h', 'w', 'b', 't', 'l', 'r', '$'],
         },
       ],
       // 'import/named': 'off',
@@ -388,7 +388,7 @@ export default [
           },
         },
       ],
-      'unicorn/import-style': 'warn',
+      'unicorn/import-style': 'off',
       'unicorn/new-for-builtins': 'off',
       'unicorn/no-array-callback-reference': 'off',
       'unicorn/no-null': 'off',
@@ -400,6 +400,7 @@ export default [
           ignore: [
             //
             String.raw`\.spec$`,
+            String.raw`-?e2e-?`,
           ],
           replacements: {
             arg: false,
@@ -408,8 +409,10 @@ export default [
             attr: false,
             attrs: false,
             db: false,
+            dir: false,
             doc: false,
             docs: false,
+            e2e: false,
             env: false,
             fn: false,
             func: false,
@@ -455,9 +458,10 @@ export default [
         },
       },
   {
-    files: ['**/*.spec.ts'],
+    files: ['**/*.spec.ts', '**/*.spec.tsx'],
     rules: {
       'id-length': 'off',
+      'max-lines': 'off',
       'max-lines-per-function': 'off',
       'max-nested-callbacks': 'off',
       'no-magic-numbers': 'off',
