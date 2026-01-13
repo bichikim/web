@@ -1,7 +1,7 @@
 /**
  * Vite automatically injects the imported CSS into <head> as a <style> tag.
  */
-const createFontImport = (href: string) => {
+const createFontImport = () => {
   let fontLoadPromise: Promise<unknown> | null = null
 
   return () => {
@@ -9,10 +9,11 @@ const createFontImport = (href: string) => {
       return fontLoadPromise
     }
 
-    fontLoadPromise = import(href)
+    // do not use dynamic import because
+    fontLoadPromise = import('pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css')
 
     return fontLoadPromise
   }
 }
 
-export const fontImport = createFontImport('pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css')
+export const fontImport = createFontImport()
