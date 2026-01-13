@@ -1,3 +1,6 @@
+/**
+ * e2e mode will use.env.e2e file automatically
+ */
 import {defineConfig} from '@solidjs/start/config'
 import UnoCSS from 'unocss/vite'
 import {fileURLToPath} from 'node:url'
@@ -11,6 +14,7 @@ const {pluginOptions: generateSw, cleanUp: cleanUpGenerateSw} = generateSwWithCl
   root: fileURLToPath(new URL('.', import.meta.url)),
 })
 
+// Retrieve whether to build in SPA mode from the environment variable
 const isSpa = process.env.SPA === 'true'
 
 export default defineConfig({
@@ -24,8 +28,14 @@ export default defineConfig({
   },
   ssr: !isSpa,
   vite: {
+    /**
+     // Include .lottie files as assets during build
+     */
     assetsInclude: ['**/*.lottie'],
     plugins: [
+      /**
+       // The solid-devtools plugin only runs in development mode
+       */
       devtools({
         autoname: true,
         locator: {
@@ -33,7 +43,9 @@ export default defineConfig({
           targetIDE: 'vscode' as any,
         },
       }),
-      //
+      /**
+       // The UnoCSS plugin is configured to use the uno.config.ts file by default.
+       */
       UnoCSS(),
       generateSw as any,
       legacy({

@@ -12,7 +12,7 @@ async function main() {
   // // migrate e2e database
   await $`cross-env DOTENV=.env.e2e drizzle-kit migrate`
   // // start e2e server
-  await $`vinxi dev --port 22222 -- --mode e2e`
+  await $`vinxi dev --port 22222 --mode e2e`
 }
 
 main().catch((error) => {

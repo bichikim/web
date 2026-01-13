@@ -3,8 +3,10 @@ import {defineConfig} from 'drizzle-kit'
 import path from 'node:path'
 import {fileURLToPath} from 'node:url'
 
+// Get the directory of the current file
 const configDir = fileURLToPath(new URL('.', import.meta.url))
 
+// Load environment variables from the .env (process.env.DOTENV) file
 dotenv.config({
   override: true,
   path: path.resolve(configDir, process.env.DOTENV ?? '.env'),
