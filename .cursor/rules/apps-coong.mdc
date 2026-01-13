@@ -2,32 +2,15 @@
 globs: apps/coong/*
 alwaysApply: false
 ---
-# BPlan Client Application Guidelines
+# Coong Client Application Guidelines
 
 Project path: apps/bplan-client
 
 ## Project Overview
-BPlan Client is a Solid Start SSR application that follows a specific structure and conventions.
+Coong Client is a Solid Start SSR application that follows a specific structure and conventions.
 
 ## Directory Structure
-```
-/
-├── src/                  # Source code
-│   ├── components/       # Reusable UI components
-│   ├── env/              # Environment configuration
-│   ├── middleware/       # Request/response middleware
-│   ├── routes/           # File-based routing
-│   ├── server/           # Server-side code
-│   ├── use/              # Custom hooks and composables
-│   ├── utils/            # Utility functions
-│   ├── types/            # TypeScript type definitions
-│   ├── env/              # Environment configuration
-│   ├── App.tsx           # Root application component
-│   ├── entry-client.tsx  # Client-side entry point
-│   └── entry-server.tsx  # Server-side entry point
-├── public/               # Static assets
-└── .env                  # Environment variables
-```
+See each folder’s `README.md` for a description of that folder.
 
 ## Coding Standards
 
@@ -45,8 +28,8 @@ component-name/
 ```
 
 ### API Structure
-- All API requests should use tRPC API calls, except for some existing RESTful API calls
-- All API endpoints should be created using tRPC, except for some existing RESTful APIs
+- All API requests must use SolidStart `query` or `action`; keep existing RESTful API calls only when already in place
+- Implement new server logic via SolidStart server functions (e.g. `query`/`action`); add `'use server'` inside the function when possible
 
 ### Routing
 - Routes are file-based in `src/routes/`
@@ -56,10 +39,79 @@ component-name/
 - Use TypeScript strictly
 - Define interfaces for all data structures
 - Avoid `any` type usage
+- Avoid type assertions like `as Foo`
 - Use proper type imports/exports
 
-### Important Notes
+### Solid Reactivity Notes
 - Implement proper code splitting but never split Solidjs props
+  - BAD (breaks reactivity by splitting props):
+    ```tsx
+    interface Props {
+      count: number
+    }
+
+    export function Counter(props: Props) {
+      const { count } = props
+      return <div>{count}</div>
+    }
+    ```
+  - GOOD (keep props reactive):
+    ```tsx
+    interface Props {
+      count: number
+    }
+
+    export function Counter(props: Props) {
+      return <div>{props.count}</div>
+    }
+    ```
+  - If splitting is unavoidable, use Solid's `splitProps`:
+    ```tsx
+    import { splitProps } from "solid-js"
+
+    interface Props {
+      count: number
+      class?: string
+    }
+
+    export function Counter(props: Props) {
+      const [local, rest] = splitProps(props, ["count", "class"])
+      return (
+        <div class={local.class} {...rest}>
+          {local.count}
+        </div>
+      )
+    }
+    ```
+
+
+- In Solid, `createEffect` cleanup must use `onCleanup(() => ...)` inside the effect (do not `return` a cleanup function)
+  - BAD (do not `return` a cleanup function):
+    ```tsx
+    import { createEffect } from "solid-js"
+
+    export function Example() {
+      createEffect(() => {
+        const id = window.setInterval(() => {}, 1000)
+        return () => window.clearInterval(id)
+      })
+
+      return null
+    }
+    ```
+  - GOOD (use `onCleanup` inside the effect):
+    ```tsx
+    import { createEffect, onCleanup } from "solid-js"
+
+    export function Example() {
+      createEffect(() => {
+        const id = window.setInterval(() => {}, 1000)
+        onCleanup(() => window.clearInterval(id))
+      })
+
+      return null
+    }
+    ```
 
 ### Environment Configuration
 - Follow the `.env.example` template
