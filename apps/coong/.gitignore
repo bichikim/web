@@ -31,3 +31,6 @@ Thumbs.db
 
 
 vite.config.timestamp_*
+
+# logs
+test-results/
