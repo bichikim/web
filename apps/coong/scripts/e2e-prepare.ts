@@ -1,9 +1,10 @@
 import {$ as _$} from 'execa'
 import process from 'node:process'
 
-const $ = _$({stderr: 'inherit', stdio: 'inherit'})
+const $ = _$({stdio: 'inherit'})
 
 async function main() {
+  await $`pnpm dlx supabase stop`
   // start supabase if not running
   await $`pnpm dlx supabase start`
   // reset supabase database
