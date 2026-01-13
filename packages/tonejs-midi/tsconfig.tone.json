@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "target": "es2022",
+    "module": "esnext",
+    "moduleResolution": "node",
+    "outDir": "es-tone",
+    "declaration": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "lib": ["es2022", "dom"]
+  },
+  "include": [
+    "node_modules/@tonejs/midi/src/**/*.ts"
+  ]
+}
