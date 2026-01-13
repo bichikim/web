@@ -1,7 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
-import {describe, expect, it, vi, afterEach} from 'vitest'
+import {afterEach, describe, expect, it, vi} from 'vitest'
 import {createContextMenuDisable, OFF_CONTEXT_MENU_FLAG} from '../index'
 
 describe('createContextMenuDisable', () => {

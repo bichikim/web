@@ -52,11 +52,11 @@ const ASSET_EXTENSIONS = new Set([
 const isAssetRequestPathname = memoize((pathname: string): boolean => {
   const lastDotIndex = pathname.lastIndexOf('.')
 
-  if (lastDotIndex < 0) {
+  if (lastDotIndex === -1) {
     return false
   }
 
-  const ext = pathname.slice(lastDotIndex + 1).toLowerCase()
+  const extension = pathname.slice(lastDotIndex + 1).toLowerCase()
 
-  return ASSET_EXTENSIONS.has(ext)
+  return ASSET_EXTENSIONS.has(extension)
 })

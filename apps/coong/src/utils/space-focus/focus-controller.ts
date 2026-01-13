@@ -1,4 +1,4 @@
-import {FocusRect, getSiblingRects, createFocusRect, type Direction} from './focus-store'
+import {createFocusRect, type Direction, FocusRect, getSiblingRects} from './focus-store'
 import {jumpFocus} from './focus-candidate'
 
 export interface FocusController {
@@ -37,7 +37,7 @@ export const createFocusController = (onCallback: (rect: FocusRect, focused: boo
 
     const siblingRects = getSiblingRects(currentRect)
 
-    const nextRect = jumpFocus(currentRect, Array.from(siblingRects), direction)
+    const nextRect = jumpFocus(currentRect, [...siblingRects], direction)
 
     if (nextRect) {
       onChange(nextRect)

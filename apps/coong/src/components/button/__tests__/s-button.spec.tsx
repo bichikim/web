@@ -107,4 +107,3 @@ describe('SButton', () => {
     expect(getByRole('button')).toHaveClass('custom-class')
   })
 })
-

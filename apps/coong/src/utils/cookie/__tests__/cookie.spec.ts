@@ -1,10 +1,10 @@
 /**
  * @vitest-environment jsdom
  */
-import {describe, expect, it, vi, beforeEach} from 'vitest'
+import {beforeEach, describe, expect, it, vi} from 'vitest'
 import jsCookie from 'js-cookie'
 import * as vinxiHttp from 'vinxi/http'
-import {setClientCookie, getClientCookie, setServerCookie, getServerCookie} from '../'
+import {getClientCookie, getServerCookie, setClientCookie, setServerCookie} from '../'
 
 vi.mock('js-cookie')
 vi.mock('vinxi/http')
@@ -187,4 +187,3 @@ describe('cookie utils', () => {
     })
   })
 })
-

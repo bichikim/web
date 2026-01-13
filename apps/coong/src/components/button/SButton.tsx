@@ -1,6 +1,6 @@
 import {Component, splitProps, ValidComponent} from 'solid-js'
 import {HButton, HButtonProps} from '@winter-love/solid-components'
-import {containerStyles, ContainerStyleProps} from '../container/container.style'
+import {ContainerStyleProps, containerStyles} from '../container/container.style'
 
 export type SButtonProps<T extends ValidComponent = 'button'> = HButtonProps<T> &
   Omit<ContainerStyleProps, 'loadingAnimation' | 'loading'>

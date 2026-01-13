@@ -17,12 +17,12 @@ const createScheduleFontLoad = (): (() => void) => {
 
     isScheduled = true
 
-    if (typeof requestIdleCallback !== 'undefined') {
-      requestIdleCallback(() => fontImport())
-    } else {
+    if (typeof requestIdleCallback === 'undefined') {
       requestAnimationFrame(() => {
         setTimeout(() => fontImport(), 0)
       })
+    } else {
+      requestIdleCallback(() => fontImport())
     }
   }
 }

@@ -1,10 +1,10 @@
-import {delegatedOn, DelegatedEventMap, delegatedEmit} from './delegated-event'
+import {delegatedEmit, DelegatedEventMap, delegatedOn} from './delegated-event'
 import {
   type DeepPosition,
+  DEFAULT_ID,
+  DEFAULT_KEY_OPTIONS,
   getDeepPositionKey,
   type KeyDeepPositionOptions,
-  DEFAULT_KEY_OPTIONS,
-  DEFAULT_ID,
 } from './deep-position'
 
 export type DelegatedFocusOnOptions = KeyDeepPositionOptions

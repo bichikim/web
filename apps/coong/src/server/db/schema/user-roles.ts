@@ -3,7 +3,7 @@ import {sql} from 'drizzle-orm'
 import {authenticatedRole} from 'drizzle-orm/supabase'
 import {timestamps} from '../fragments'
 import {profiles} from './profiles'
-import {type SchemaSelf, type PgColumnBuilderBase, createOwnerOnlyCondition} from '../policies'
+import {createOwnerOnlyCondition, type PgColumnBuilderBase, type SchemaSelf} from '../policies'
 
 /**
  * Creates SQL condition that checks if the current user has "$admin" role
@@ -15,11 +15,13 @@ export const createAdminOnlyCondition = <
 >(
   table: SchemaSelf<TTableName, TColumnsMap>,
 ) => {
-  return sql`EXISTS (
-    SELECT 1 FROM "user_roles"
-    WHERE "user_roles"."owner_id" = (select auth.uid())
-    AND "user_roles"."role" = '$admin'
-  )`
+  return sql`
+    EXISTS (
+        SELECT 1 FROM "user_roles"
+        WHERE "user_roles"."owner_id" = (select auth.uid())
+        AND "user_roles"."role" = '$admin'
+      )
+  `
 }
 
 // Role type

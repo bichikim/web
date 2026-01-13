@@ -1,5 +1,5 @@
-import {createEffect, createSignal, onCleanup, untrack, Show, type JSX} from 'solid-js'
-import type {LottiePlayer, AnimationItem} from 'lottie-web'
+import {createEffect, createSignal, type JSX, onCleanup, Show, untrack} from 'solid-js'
+import type {AnimationItem, LottiePlayer} from 'lottie-web'
 import type {LottieSharedProps} from './types'
 
 const getLottie = async () => {
@@ -25,11 +25,9 @@ export const LottieJson = (props: LottieJsonProps) => {
   createEffect(() => {
     const _lottieModule = lottieModule()
     const _element = element()
-    const _autoplay = untrack(() => (props.play === 'autoplay' ? true : false))
+    const _autoplay = untrack(() => props.play === 'autoplay')
     const _loop = untrack(() => props.loop ?? false)
     const _path = props.src
-
-    console.log('lottieModule', _lottieModule, _element, _autoplay, _loop, _path)
 
     if (!_lottieModule || !_element) {
       return

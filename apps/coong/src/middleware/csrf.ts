@@ -2,7 +2,7 @@ import {createMiddlewareFragment} from 'src/utils/middleware-helper'
 import {json} from '@solidjs/router'
 import {TRUSTED_ORIGINS} from 'src/middleware/consts'
 
-const SAFE_METHODS = ['GET', 'HEAD', 'OPTIONS', 'TRACE']
+const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS', 'TRACE'])
 
 /**
  * CSRF middleware to protect against CSRF attacks.
@@ -15,7 +15,7 @@ export const csrfMiddleware = createMiddlewareFragment({
     const {request, response} = event
 
     // If the request method is safe, skip the CSRF check.
-    if (SAFE_METHODS.includes(request.method)) {
+    if (SAFE_METHODS.has(request.method)) {
       return
     }
 

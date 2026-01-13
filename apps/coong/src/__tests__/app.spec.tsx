@@ -1,7 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
-import {describe, expect, it, vi, beforeEach} from 'vitest'
+import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {render} from '@solidjs/testing-library'
 import App from '../app'
 

@@ -1,4 +1,3 @@
-/* eslint-disable n/no-unsupported-features/node-builtins */
 import {Accessor, createEffect, onCleanup, onMount} from 'solid-js'
 
 export interface MediaSessionProps {

@@ -1,9 +1,8 @@
 import {createBrowserClient} from '@supabase/ssr'
 import type {SupabaseClient} from '@supabase/supabase-js'
 import {createSupabaseServer} from './supabase-server'
-import {getRequestEvent} from 'solid-js/web'
+import {getRequestEvent, isServer} from 'solid-js/web'
 import {getSupabaseClientKeys} from 'src/env/self'
-import {isServer} from 'solid-js/web'
 
 export const createSupabase = (): SupabaseClient<Database> => {
   const {key, url} = getSupabaseClientKeys()

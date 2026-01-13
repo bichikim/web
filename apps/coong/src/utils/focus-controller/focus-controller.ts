@@ -1,18 +1,18 @@
 import {
-  type PositionMap,
-  type JumpOptions,
-  type MoveOptions,
-  type PreventMoveFocusOptions,
-  jumpDeepPosition,
-  moveDeepPosition,
   createPositionMap,
-  savePreviousDeepPosition,
-  updateDeepPositionPayload,
   getDeepPositionInfoWithKey,
   hasDeepPositionWithKey,
-  registerDeepPositionRecursively,
-  unregisterDeepPositionRecursively,
   isPreventMoveFocus,
+  jumpDeepPosition,
+  type JumpOptions,
+  moveDeepPosition,
+  type MoveOptions,
+  type PositionMap,
+  type PreventMoveFocusOptions,
+  registerDeepPositionRecursively,
+  savePreviousDeepPosition,
+  unregisterDeepPositionRecursively,
+  updateDeepPositionPayload,
 } from './position-map'
 import {type DeepPosition, getDeepPositionKey} from './deep-position'
 import type {Direction} from './direction'

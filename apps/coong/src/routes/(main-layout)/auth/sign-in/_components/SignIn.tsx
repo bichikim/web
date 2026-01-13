@@ -11,8 +11,8 @@ export interface SignInProps {
 }
 
 export const SignIn = (props: SignInProps) => {
-  const handleLogin = async (e: Event) => {
-    e.preventDefault()
+  const handleLogin = async (event: Event) => {
+    event.preventDefault()
     await props.onLogin()
   }
 
@@ -26,7 +26,7 @@ export const SignIn = (props: SignInProps) => {
             placeholder="Email"
             value={props.email}
             autocomplete="email"
-            onInput={(e) => props.onUpdateEmail(e.currentTarget.value)}
+            onInput={(event) => props.onUpdateEmail(event.currentTarget.value)}
             class="p-2 border rounded"
             required
           />
@@ -35,7 +35,7 @@ export const SignIn = (props: SignInProps) => {
             placeholder="Password"
             autocomplete="current-password"
             value={props.password}
-            onInput={(e) => props.onUpdatePassword(e.currentTarget.value)}
+            onInput={(event) => props.onUpdatePassword(event.currentTarget.value)}
             class="p-2 border rounded"
             required
           />

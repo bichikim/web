@@ -17,9 +17,11 @@ const connectSrc = [
   .filter(Boolean)
   .join(' ')
 
+const RANDOM_BYTES_LENGTH = 16
+
 export const cspMiddleware = createMiddlewareFragment({
   onRequest: async (event) => {
-    const nonce = randomBytes(16).toString('base64')
+    const nonce = randomBytes(RANDOM_BYTES_LENGTH).toString('base64')
 
     event.locals.nonce = nonce
 
@@ -38,7 +40,7 @@ export const cspMiddleware = createMiddlewareFragment({
       base-uri 'none';
       frame-ancestors 'none';
       form-action 'self';
-    `.replace(/\s+/g, ' ')
+    `.replaceAll(/\s+/gu, ' ')
 
     event.response.headers.set('Content-Security-Policy', csp)
   },

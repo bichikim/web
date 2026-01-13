@@ -1,8 +1,8 @@
-import {createSignal, createMemo} from 'solid-js'
+import {createMemo, createSignal} from 'solid-js'
 import {signUpAction} from 'src/requests/sign-up'
-import {useSubmission, useAction} from '@solidjs/router'
+import {useAction, useSubmission} from '@solidjs/router'
 import {useHRouterName} from 'src/components/anchor/HRouterName'
-import {useNameNavigate} from 'src/components/anchor/nameNavigate'
+import {useNameNavigate} from 'src/components/anchor/name-navigator'
 
 export const SignUp = () => {
   const signUpSubmission = useSubmission(signUpAction)
@@ -42,7 +42,7 @@ export const SignUp = () => {
             placeholder="Email"
             value={email()}
             autocomplete="email"
-            onInput={(e) => setEmail(e.currentTarget.value)}
+            onInput={(event) => setEmail(event.currentTarget.value)}
             class="p-2 border rounded"
             required
           />
@@ -51,7 +51,7 @@ export const SignUp = () => {
             placeholder="Password"
             autocomplete="new-password"
             value={password()}
-            onInput={(e) => setPassword(e.currentTarget.value)}
+            onInput={(event) => setPassword(event.currentTarget.value)}
             class="p-2 border rounded"
             required
           />

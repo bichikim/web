@@ -1,7 +1,7 @@
 import {cva} from 'class-variance-authority'
 import {mergeProps, splitProps, ValidComponent} from 'solid-js'
 import {HCard, HCardProps} from './HCard'
-import {containerStyles, ContainerStyleProps} from '../container/container.style'
+import {ContainerStyleProps, containerStyles} from '../container/container.style'
 
 const cardBaseStyle = `:uno:
 relative bg-white rd-2 flex flex-col gap-2 duration-150

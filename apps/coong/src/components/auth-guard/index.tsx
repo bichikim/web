@@ -1,7 +1,7 @@
 import {useAuth} from 'src/store/auth'
-import {createMemo, untrack, JSX} from 'solid-js'
-import {useCurrentMatches, RouteMatch, RouteDefinition as _RouteDefinition} from '@solidjs/router'
-import {useNameNavigate} from 'src/components/anchor/nameNavigate'
+import {createMemo, JSX, untrack} from 'solid-js'
+import {RouteDefinition as _RouteDefinition, RouteMatch, useCurrentMatches} from '@solidjs/router'
+import {useNameNavigate} from 'src/components/anchor/name-navigator'
 
 export interface RouteDefinition extends _RouteDefinition {
   info: {
@@ -51,7 +51,7 @@ export const isAllowAll = (matches: RouteMatch[], authorized: boolean): IsAllowA
   const results = matches.map((match) => isAllow(match, authorized))
 
   const disAllowIndex = results.findIndex((result) => !result.allow)
-  const reason = disAllowIndex !== -1 ? results[disAllowIndex].reason : 'public'
+  const reason = disAllowIndex === -1 ? 'public' : results[disAllowIndex].reason
 
   return {
     allow: disAllowIndex === -1,

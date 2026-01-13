@@ -6,7 +6,7 @@ import 'virtual:uno.css'
 import './global.css'
 // solid devtools run only in dev mode
 import 'solid-devtools'
-import {Router, RouteDefinition as _RouteDefinition} from '@solidjs/router'
+import {RouteDefinition as _RouteDefinition, Router} from '@solidjs/router'
 import {FileRoutes} from '@solidjs/start/router'
 import {clientOnly} from '@solidjs/start'
 import {Suspense} from 'solid-js'

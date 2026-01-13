@@ -1,5 +1,5 @@
-import {type Direction, type FocusRect, type Rect} from './focus-store'
-import {getSiblingRects, getUpdatedRect} from './focus-store'
+/* eslint-disable no-magic-numbers */
+import {type Direction, type FocusRect, getSiblingRects, getUpdatedRect, type Rect} from './focus-store'
 
 export const verticalOverlap = (from: Rect, to: Rect): number => {
   return Math.min(from.bottom, to.bottom) - Math.max(from.top, to.top)
@@ -11,16 +11,25 @@ export const horizontalOverlap = (from: Rect, to: Rect): number => {
 
 export const filterCandidate = (from: Rect, to: Rect, direction: Direction): boolean => {
   switch (direction) {
-    case 'right':
+    case 'right': {
       return to.cx > from.cx && verticalOverlap(from, to) > 0
-    case 'left':
+    }
+
+    case 'left': {
       return to.cx < from.cx && verticalOverlap(from, to) > 0
-    case 'down':
+    }
+
+    case 'down': {
       return to.cy > from.cy && horizontalOverlap(from, to) > 0
-    case 'up':
+    }
+
+    case 'up': {
       return to.cy < from.cy && horizontalOverlap(from, to) > 0
-    default:
+    }
+
+    default: {
       return false
+    }
   }
 }
 
@@ -44,7 +53,7 @@ export const filterCandidates = (from: FocusRect, to: FocusRect[], direction: Di
   })
 }
 
-const EXCLUDED_SCORE = -10000
+const EXCLUDED_SCORE = -10_000
 
 export const scoreAngleCandidate = (
   from: FocusRect,
@@ -69,22 +78,29 @@ export const scoreAngleCandidate = (
   let secondary = 0
 
   switch (direction) {
-    case 'right':
+    case 'right': {
       primary = dx
       secondary = Math.abs(dy)
       break
-    case 'left':
+    }
+
+    case 'left': {
       primary = -dx
       secondary = Math.abs(dy)
       break
-    case 'down':
+    }
+
+    case 'down': {
       primary = dy
       secondary = Math.abs(dx)
       break
-    case 'up':
+    }
+
+    case 'up': {
       primary = -dy
       secondary = Math.abs(dx)
       break
+    }
   }
 
   // 주축(primary)이 0 이하 → 해당 방향이 아님
@@ -93,7 +109,7 @@ export const scoreAngleCandidate = (
   }
 
   // 전체 거리
-  const dist = Math.hypot(dx, dy)
+  const distribution = Math.hypot(dx, dy)
 
   // 각도 penalty (0~1 비율)
   // 각도가 클수록 (즉, 더 사선일수록) secondary/primary 비율이 올라감
@@ -107,9 +123,14 @@ export const scoreAngleCandidate = (
   // 스코어 = 주축 가중 + 보조축 패널티 + 거리 패널티
   // 가중치는 원하는 UX에 맞게 조정 가능
   const score =
-    10000 / primary - // 주축 가까울수록 높은 점수
-    secondary * 2 - // 사선으로 벗어난 정도 패널티
-    dist * 0.1 // 전체 거리 패널티
+    // 주축 가까울수록 높은 점수
+
+    10_000 / primary -
+    // 사선으로 벗어난 정도 패널티
+    secondary * 2 -
+    // 전체 거리 패널티
+
+    distribution * 0.1
 
   return score
 }
@@ -125,10 +146,10 @@ export const moveFocus = (from: FocusRect, to: FocusRect[], direction: Direction
   let maxScore = -Infinity
   let maxIndex = -1
 
-  for (let i = 0; i < scores.length; i++) {
-    if (scores[i] > maxScore) {
-      maxScore = scores[i]
-      maxIndex = i
+  for (const [index, score] of scores.entries()) {
+    if (score > maxScore) {
+      maxScore = score
+      maxIndex = index
     }
   }
 
@@ -146,7 +167,7 @@ export const moveFocus = (from: FocusRect, to: FocusRect[], direction: Direction
     return nextRect
   }
 
-  return moveFocus(from, Array.from(nextRect.children), direction)
+  return moveFocus(from, [...nextRect.children], direction)
 }
 
 export const jumpFocus = (from: FocusRect, to: FocusRect[], direction: Direction): FocusRect | null => {
@@ -156,7 +177,7 @@ export const jumpFocus = (from: FocusRect, to: FocusRect[], direction: Direction
     return nextRect
   }
 
-  const parent = from.parent
+  const {parent} = from
 
   if (!parent) {
     return null
@@ -168,5 +189,5 @@ export const jumpFocus = (from: FocusRect, to: FocusRect[], direction: Direction
     return null
   }
 
-  return jumpFocus(from, Array.from(siblingRects), direction)
+  return jumpFocus(from, [...siblingRects], direction)
 }

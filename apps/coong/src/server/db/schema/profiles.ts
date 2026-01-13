@@ -3,7 +3,7 @@ import {relations, sql} from 'drizzle-orm'
 import {timestamps} from '../fragments'
 import {authenticatedRole, authUid, authUsers} from 'drizzle-orm/supabase'
 import {musicPostComments, musicPosts} from './music-posts'
-import {createOwnerOnlyCondition, createMemberOnlyCondition} from '../policies'
+import {createMemberOnlyCondition, createOwnerOnlyCondition} from '../policies'
 import {people} from './people'
 
 export const profiles = pgTable(

@@ -22,7 +22,13 @@ vi.mock('src/utils/focus-controller/delegated-event', () => {
   }
 })
 
-const importSubject = async (options: {isServer: boolean} = {isServer: false}) => {
+interface ImportSubjectOptions {
+  isServer?: boolean
+}
+
+const importSubject = async (options: ImportSubjectOptions = {}) => {
+  const {isServer = false} = options
+
   vi.resetModules()
 
   vi.doMock('solid-js/web', async () => {
@@ -30,11 +36,11 @@ const importSubject = async (options: {isServer: boolean} = {isServer: false}) =
 
     return {
       ...actual,
-      isServer: options.isServer,
+      isServer: isServer,
     }
   })
 
-  return await import('../DelegatedEvent')
+  return import('../DelegatedEvent')
 }
 
 describe('DelegatedEvent', () => {
@@ -58,7 +64,7 @@ describe('DelegatedEvent', () => {
 
     mocks.createDelegatedEvent.mockReturnValue({delegatedEventMap, unsubscribe})
 
-    let providedContext: unknown = undefined
+    let providedContext: unknown
 
     const MockChild = () => {
       providedContext = useContext(DelegatedEventContext)

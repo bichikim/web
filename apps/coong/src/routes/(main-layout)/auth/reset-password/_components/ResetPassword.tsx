@@ -6,14 +6,14 @@ export const ResetPassword = () => {
   const [email, setEmail] = createSignal('')
   const [success, setSuccess] = createSignal(false)
 
-  const handleResetPassword = async (e: Event) => {
-    e.preventDefault()
+  const handleResetPassword = async (event: Event) => {
+    event.preventDefault()
     setSuccess(false)
 
     try {
       await resetPassword(email())
       setSuccess(true)
-    } catch (err) {
+    } catch {
       // Error is handled by resetPasswordError
     }
   }
@@ -44,7 +44,7 @@ export const ResetPassword = () => {
                 type="email"
                 placeholder="이메일을 입력하세요"
                 value={email()}
-                onInput={(e) => setEmail(e.currentTarget.value)}
+                onInput={(event) => setEmail(event.currentTarget.value)}
                 class="w-full p-2 border rounded"
                 required
               />

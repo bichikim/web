@@ -5,6 +5,8 @@ export interface UseAnimationFrameOptions {
   fps?: number
 }
 
+const SECONDS_TO_MILLISECONDS = 1000
+
 /**
  * A Solid.js hook that manages a requestAnimationFrame loop.
  *
@@ -26,7 +28,7 @@ export interface UseAnimationFrameOptions {
  * ```
  */
 export const useAnimationFrame = (callback: (deltaTime: number) => void, options?: UseAnimationFrameOptions) => {
-  const targetInterval = options?.fps ? 1000 / options.fps : 0
+  const targetInterval = options?.fps ? SECONDS_TO_MILLISECONDS / options.fps : 0
 
   const [start, setStart] = createSignal(false)
   let frameId: number | undefined

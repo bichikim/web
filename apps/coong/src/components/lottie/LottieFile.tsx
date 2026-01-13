@@ -1,4 +1,4 @@
-import {createSignal, createEffect, untrack, onCleanup, Show} from 'solid-js'
+import {createEffect, createSignal, onCleanup, Show, untrack} from 'solid-js'
 import {LottieSharedProps} from './types'
 import {DotLottie} from '@lottiefiles/dotlottie-web'
 import {isServer} from 'solid-js/web'

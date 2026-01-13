@@ -1,13 +1,13 @@
 import type {Meta, StoryObj} from 'storybook-solidjs-vite'
 import {
-  For,
-  createMemo,
-  createSignal,
-  mergeProps,
-  splitProps,
   type Component,
   type ComponentProps,
+  createMemo,
+  createSignal,
+  For,
+  mergeProps,
   onMount,
+  splitProps,
 } from 'solid-js'
 import {cva} from 'class-variance-authority'
 import {DelegatedEventProvider} from 'src/use/focus-controller/DelegatedEvent'
@@ -16,7 +16,8 @@ import {FocusControllerProvider, FocusGroupWithElement, useFocus, useFocusContro
 import type {Direction, PreventMoveOptions} from 'src/utils/space-focus/focus-store'
 
 const focusTileStyles = cva(
-  ':uno: h-80px w-80px flex flex-col items-center justify-center rounded-lg border-2 text-sm font-semibold transition-colors duration-200',
+  `:uno: h-80px w-80px flex flex-col items-center justify-center rounded-lg
+  border-2 text-sm font-semibold transition-colors duration-200`,
   {
     defaultVariants: {
       focused: false,
@@ -97,7 +98,7 @@ const FocusPlaygroundBody: Component<FocusPlaygroundProps> = (props) => {
 
   const preventMove = createMemo<PreventMoveOptions | undefined>(() => {
     if (!innerProps.lockVertical) {
-      return undefined
+      return
     }
 
     return {

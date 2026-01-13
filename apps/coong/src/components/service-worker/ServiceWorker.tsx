@@ -5,9 +5,9 @@ import {
   createSignal,
   onCleanup,
   ParentProps,
+  Show,
   untrack,
   useContext,
-  Show,
 } from 'solid-js'
 import {freeze, getWindow} from '@winter-love/utils'
 
@@ -133,10 +133,10 @@ export interface ServiceWorkerProviderProps extends ParentProps {
 export const ServiceWorkerProvider = (props: ServiceWorkerProviderProps) => {
   const source = untrack(() => props.src)
   const context = createServiceWorker(source)
-  const isProd = import.meta.env.PROD
+  const isProduction = import.meta.env.PROD
 
   return (
-    <Show when={isProd} fallback={props.children}>
+    <Show when={isProduction} fallback={props.children}>
       <ServiceWorkerContext.Provider value={context}>{props.children}</ServiceWorkerContext.Provider>
     </Show>
   )

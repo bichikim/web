@@ -4,8 +4,8 @@ import {useFocus} from './focus'
 import type {DeepPosition} from 'src/utils/focus-controller/deep-position'
 import {SolidWindow} from './SolidWindow'
 import {cva} from 'class-variance-authority'
-import {Show, createSignal, type JSX} from 'solid-js'
-import {getDirection, type DirectionName} from 'src/utils/focus-controller/direction'
+import {createSignal, type JSX, Show} from 'solid-js'
+import {type DirectionName, getDirection} from 'src/utils/focus-controller/direction'
 import {KeyCap} from './KeyCap'
 
 const focusStyles = cva('border-2  rounded-md p-2 text-sm c-black flex items-center', {
@@ -232,39 +232,53 @@ export const FocusControllerSampleBody = (props: FocusControllerSampleBodyProps)
 
   const onKeyDown = (event: KeyboardEvent) => {
     switch (event.key) {
-      case 'ArrowUp':
+      case 'ArrowUp': {
         setDownUpKey(true)
         handleDirection('up')
         break
-      case 'ArrowDown':
+      }
+
+      case 'ArrowDown': {
         setDownDownKey(true)
         handleDirection('down')
         break
-      case 'ArrowLeft':
+      }
+
+      case 'ArrowLeft': {
         setDownLeftKey(true)
         handleDirection('left')
         break
-      case 'ArrowRight':
+      }
+
+      case 'ArrowRight': {
         setDownRightKey(true)
         handleDirection('right')
         break
+      }
     }
   }
 
   const onKeyUp = (event: KeyboardEvent) => {
     switch (event.key) {
-      case 'ArrowUp':
+      case 'ArrowUp': {
         setDownUpKey(false)
         break
-      case 'ArrowDown':
+      }
+
+      case 'ArrowDown': {
         setDownDownKey(false)
         break
-      case 'ArrowRight':
+      }
+
+      case 'ArrowRight': {
         setDownRightKey(false)
         break
-      case 'ArrowLeft':
+      }
+
+      case 'ArrowLeft': {
         setDownLeftKey(false)
         break
+      }
     }
   }
 

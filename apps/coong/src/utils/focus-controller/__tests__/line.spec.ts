@@ -8,7 +8,7 @@ describe('generateLine', () => {
     const origin: Position = {x: 2, y: 3}
     const direction: Direction = {x: 1, y: 0}
 
-    const points = Array.from(generateLine(origin, direction, 4))
+    const points = [...generateLine(origin, direction, 4)]
 
     expect(points).toEqual([
       {x: 3, y: 4},
@@ -21,7 +21,7 @@ describe('generateLine', () => {
     const origin: Position = {x: -1, y: -1}
     const direction: Direction = {x: 0, y: 1}
 
-    const points = Array.from(generateLine(origin, direction, 3, true))
+    const points = [...generateLine(origin, direction, 3, true)]
 
     expect(points).toEqual([
       {x: -1, y: -1},
@@ -43,4 +43,3 @@ describe('createLine', () => {
     expect(nextPoint()).toEqual({x: 2, y: 2})
   })
 })
-

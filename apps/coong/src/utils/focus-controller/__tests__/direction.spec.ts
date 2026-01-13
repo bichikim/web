@@ -1,5 +1,5 @@
 import {describe, expect, it} from 'vitest'
-import {getDirection, directionNameMap, type DirectionName} from '../direction'
+import {type DirectionName, directionNameMap, getDirection} from '../direction'
 
 describe('direction', () => {
   describe('directionNameMap', () => {
@@ -53,4 +53,3 @@ describe('direction', () => {
     })
   })
 })
-

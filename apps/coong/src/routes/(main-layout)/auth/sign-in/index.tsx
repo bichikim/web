@@ -1,8 +1,7 @@
 import {SignIn} from './_components/SignIn'
 import {useAuth} from 'src/store/auth'
-import {createSignal} from 'solid-js'
-import {createEffect} from 'solid-js'
-import {useNameNavigate} from 'src/components/anchor/nameNavigate'
+import {createEffect, createSignal} from 'solid-js'
+import {useNameNavigate} from 'src/components/anchor/name-navigator'
 import {RouteDefinition} from '@solidjs/router'
 
 export const route = {

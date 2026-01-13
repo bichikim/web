@@ -25,4 +25,3 @@ describe('SText', () => {
     expect(getByText('Hello')).toMatchSnapshot()
   })
 })
-

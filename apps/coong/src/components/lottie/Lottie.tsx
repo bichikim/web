@@ -1,7 +1,7 @@
 import {LottieJson} from './LottieJson'
 import {LottieFile} from './LottieFile'
 import type {LottieSharedProps} from './types'
-import {Show, mergeProps} from 'solid-js'
+import {Show} from 'solid-js'
 
 export type LottieProps = LottieSharedProps & {
   type?: 'json' | 'file'

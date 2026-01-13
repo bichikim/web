@@ -6,7 +6,7 @@ import {createTornado, generateTornado} from '../tornado'
 describe('generateTornado', () => {
   it('should generate spiral points within provided range', () => {
     const origin: Position = {x: 0, y: 0}
-    const points = Array.from(generateTornado(origin, 3, 1, true))
+    const points = [...generateTornado(origin, 3, 1, true)]
 
     expect(points).toEqual([
       {x: 0, y: 0},
@@ -39,7 +39,7 @@ describe('generateTornado', () => {
 
   it('should respect the configured gap between generated points', () => {
     const origin: Position = {x: 0, y: 0}
-    const points = Array.from(generateTornado(origin, 5, 2, true))
+    const points = [...generateTornado(origin, 5, 2, true)]
 
     expect(points).toEqual([
       {x: 0, y: 0},
@@ -79,14 +79,14 @@ describe('generateTornado', () => {
 
   it('should return empty sequence when range is not large enough and includeOrigin is false', () => {
     const origin: Position = {x: 10, y: 20}
-    const points = Array.from(generateTornado(origin, 1, 1, false))
+    const points = [...generateTornado(origin, 1, 1, false)]
 
     expect(points).toEqual([])
   })
 
   it('should return only origin when range is not large enough and includeOrigin is true', () => {
     const origin: Position = {x: 10, y: 20}
-    const points = Array.from(generateTornado(origin, 1, 1, true))
+    const points = [...generateTornado(origin, 1, 1, true)]
 
     expect(points).toEqual([origin])
   })

@@ -4,7 +4,7 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import {render} from '@solidjs/testing-library'
 import {createComponent} from 'solid-js'
-import {getDeepPositionKey, type DeepPosition} from 'src/utils/focus-controller/deep-position'
+import {type DeepPosition, getDeepPositionKey} from 'src/utils/focus-controller/deep-position'
 
 const mocks = vi.hoisted(() => {
   return {
@@ -62,7 +62,7 @@ const createFocusControllerMock = () => {
   }
 }
 
-const importSubject = async (options?: {useContextReturnsNull?: boolean}) => {
+const importSubject = (options?: {useContextReturnsNull?: boolean}) => {
   vi.resetModules()
 
   if (options?.useContextReturnsNull === true) {
@@ -76,7 +76,7 @@ const importSubject = async (options?: {useContextReturnsNull?: boolean}) => {
     })
   }
 
-  return await import('../focus')
+  return import('../focus')
 }
 
 describe('useFocus', () => {
@@ -141,13 +141,13 @@ describe('useFocus', () => {
 
     await Promise.resolve()
 
-    if (api == null || captured == null) {
+    if (api === null || captured === null) {
       throw new Error('useFocus test setup failed')
     }
 
-    const listener = captured.listener()
+    const listener = captured?.listener()
 
-    if (listener == null) {
+    if (listener === null) {
       throw new Error('useFocus delegated listener is missing')
     }
 
@@ -197,26 +197,26 @@ describe('useFocus', () => {
   it('should update focused state and payload from delegated events', async () => {
     const {api, listener, unmount} = await setupWithProvider()
 
-    expect(api.isFocused()).toBe(false)
-    expect(api.payload()).toBe(null)
+    expect(api?.isFocused()).toBe(false)
+    expect(api?.payload()).toBe(null)
 
     const payload1 = {hello: 'world'}
 
     listener({focused: true, payload: payload1})
-    expect(api.isFocused()).toBe(true)
-    expect(api.payload()).toEqual(payload1)
+    expect(api?.isFocused()).toBe(true)
+    expect(api?.payload()).toEqual(payload1)
     listener({focused: false, payload: {ignored: true}})
-    expect(api.isFocused()).toBe(false)
-    expect(api.payload()).toBe(null)
+    expect(api?.isFocused()).toBe(false)
+    expect(api?.payload()).toBe(null)
     unmount()
   })
 
   it('should proxy setIsFocused to focusController.setFocus', async () => {
     const {api, deepPosition, focusController, unmount} = await setupWithProvider()
 
-    api.setIsFocused(true)
+    api?.setIsFocused(true)
     expect(focusController.setFocus).toHaveBeenCalledWith(deepPosition)
-    api.setIsFocused(false)
+    api?.setIsFocused(false)
     expect(focusController.setFocus).toHaveBeenCalledWith([])
     unmount()
   })
@@ -226,12 +226,12 @@ describe('useFocus', () => {
       await setupWithProvider()
 
     expect(mocks.useDelegatedOn).toHaveBeenCalledTimes(1)
-    expect(captured.channel()).toBe(FOCUS_CONTROLLER_CHANNEL)
-    expect(captured.options).toEqual({globalMap})
+    expect(captured?.channel()).toBe(FOCUS_CONTROLLER_CHANNEL)
+    expect(captured?.options).toEqual({globalMap})
 
     const expectedKey = getDeepPositionKey(deepPosition, {...keyOptions, id})
 
-    expect(captured.key()).toBe(expectedKey)
+    expect(captured?.key()).toBe(expectedKey)
     unmount()
   })
 

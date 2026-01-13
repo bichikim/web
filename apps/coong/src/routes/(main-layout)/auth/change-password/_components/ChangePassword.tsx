@@ -1,18 +1,18 @@
 import {createSignal, Show} from 'solid-js'
 import {useAuth} from 'src/store/auth'
-import {useNameNavigate} from 'src/components/anchor/nameNavigate'
+import {useNameNavigate} from 'src/components/anchor/name-navigator'
 
 export const ChangePassword = () => {
   const navigate = useNameNavigate()
-  const {changePassword, changePasswordError, loading} = useAuth()
+  const {changePassword, loading} = useAuth()
   const [newPassword, setNewPassword] = createSignal('')
   const [confirmPassword, setConfirmPassword] = createSignal('')
   const [showNewPassword, setShowNewPassword] = createSignal(false)
   const [showConfirmPassword, setShowConfirmPassword] = createSignal(false)
   const [error, setError] = createSignal<string | null>(null)
 
-  const handleChangePassword = async (e: Event) => {
-    e.preventDefault()
+  const handleChangePassword = async (event: Event) => {
+    event.preventDefault()
     setError(null)
 
     const newPwd = newPassword()
@@ -22,8 +22,8 @@ export const ChangePassword = () => {
       const result = await changePassword(newPwd)
 
       navigate('home')
-    } catch (err) {
-      setError(err instanceof Error ? err.message : '패스워드 변경에 실패했습니다.')
+    } catch (error_) {
+      setError(error_ instanceof Error ? error_.message : '패스워드 변경에 실패했습니다.')
     }
   }
 
@@ -42,7 +42,7 @@ export const ChangePassword = () => {
                 type={showNewPassword() ? 'text' : 'password'}
                 placeholder="새 패스워드를 입력하세요"
                 value={newPassword()}
-                onInput={(e) => setNewPassword(e.currentTarget.value)}
+                onInput={(event) => setNewPassword(event.currentTarget.value)}
                 class="w-full p-2 pr-10 border rounded"
                 required
                 minLength={6}
@@ -67,7 +67,7 @@ export const ChangePassword = () => {
                 type={showConfirmPassword() ? 'text' : 'password'}
                 placeholder="새 패스워드를 다시 입력하세요"
                 value={confirmPassword()}
-                onInput={(e) => setConfirmPassword(e.currentTarget.value)}
+                onInput={(event) => setConfirmPassword(event.currentTarget.value)}
                 class="w-full p-2 pr-10 border rounded"
                 required
                 minLength={6}

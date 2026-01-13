@@ -43,7 +43,8 @@ const DemoContent = () => {
       clickToClose: true,
       id,
 
-      message: `This is a notification message that will not disappear until closed ${id} This is a notification message that will not disappear until closed`,
+      message: `This is a notification message that will not disappear until closed ${id}
+       This is a notification message that will not disappear until closed`,
       title: 'Message Title',
     })
   }

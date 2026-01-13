@@ -19,46 +19,56 @@ export const people = pgTable(
     pgPolicy('people_insert_policy', {
       for: 'insert',
       to: authenticatedRole,
-      withCheck: sql`EXISTS (
-        SELECT 1 FROM profiles
-        WHERE profiles.id = ${table.ownerId}
-        AND profiles.id = (select auth.uid())
-      )`,
+      withCheck: sql`
+        EXISTS (
+                SELECT 1 FROM profiles
+                WHERE profiles.id = ${table.ownerId}
+                AND profiles.id = (select auth.uid())
+              )
+      `,
     }),
     // RLS policy for update: only allow if ownerId matches auth.uid() via profiles
     pgPolicy('people_update_policy', {
       for: 'update',
       to: authenticatedRole,
-      using: sql`EXISTS (
-        SELECT 1 FROM profiles
-        WHERE profiles.id = ${table.ownerId}
-        AND profiles.id = (select auth.uid())
-      )`,
-      withCheck: sql`EXISTS (
-        SELECT 1 FROM profiles
-        WHERE profiles.id = ${table.ownerId}
-        AND profiles.id = (select auth.uid())
-      )`,
+      using: sql`
+        EXISTS (
+                SELECT 1 FROM profiles
+                WHERE profiles.id = ${table.ownerId}
+                AND profiles.id = (select auth.uid())
+              )
+      `,
+      withCheck: sql`
+        EXISTS (
+                SELECT 1 FROM profiles
+                WHERE profiles.id = ${table.ownerId}
+                AND profiles.id = (select auth.uid())
+              )
+      `,
     }),
     // RLS policy for delete: only allow if ownerId matches auth.uid() via profiles
     pgPolicy('people_delete_policy', {
       for: 'delete',
       to: authenticatedRole,
-      using: sql`EXISTS (
-        SELECT 1 FROM profiles
-        WHERE profiles.id = ${table.ownerId}
-        AND profiles.id = (select auth.uid())
-      )`,
+      using: sql`
+        EXISTS (
+                SELECT 1 FROM profiles
+                WHERE profiles.id = ${table.ownerId}
+                AND profiles.id = (select auth.uid())
+              )
+      `,
     }),
     // RLS policy for select: only allow owner to read their people
     pgPolicy('people_select_policy', {
       for: 'select',
       to: authenticatedRole,
-      using: sql`EXISTS (
-        SELECT 1 FROM profiles
-        WHERE profiles.id = ${table.ownerId}
-        AND profiles.id = (select auth.uid())
-      )`,
+      using: sql`
+        EXISTS (
+                SELECT 1 FROM profiles
+                WHERE profiles.id = ${table.ownerId}
+                AND profiles.id = (select auth.uid())
+              )
+      `,
     }),
   ],
 ).enableRLS()

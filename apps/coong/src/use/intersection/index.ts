@@ -11,13 +11,13 @@ export const useIntersection = (target: Accessor<HTMLElement | undefined>, optio
     }
 
     const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
+      for (const entry of entries) {
         if (entry.isIntersecting) {
           setIsIntersecting(true)
         } else {
           setIsIntersecting(false)
         }
-      })
+      }
     }, options)
 
     observer.observe(_target)

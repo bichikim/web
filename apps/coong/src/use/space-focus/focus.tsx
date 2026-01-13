@@ -1,21 +1,21 @@
 import {
   Accessor,
+  createContext,
+  createEffect,
+  createMemo,
   createSignal,
   createUniqueId,
-  createEffect,
-  untrack,
-  createContext,
-  useContext,
-  createMemo,
   type JSX,
   onCleanup,
   Setter,
+  untrack,
+  useContext,
 } from 'solid-js'
-import {resolveAccessor, MaybeAccessor, nonAccessor} from '@winter-love/solid-use'
-import {FocusRect, PreventMoveOptions, createFocusRect, type Direction} from 'src/utils/space-focus/focus-store'
+import {MaybeAccessor, nonAccessor, resolveAccessor} from '@winter-love/solid-use'
+import {createFocusRect, FocusRect, PreventMoveOptions} from 'src/utils/space-focus/focus-store'
 import {measureLayout} from 'src/utils/space-focus/measure-layout'
 import {createFocusController, type FocusController} from 'src/utils/space-focus/focus-controller'
-import {useDelegatedOn, useDelegatedEmitHandler} from 'src/use/focus-controller/DelegatedEvent'
+import {useDelegatedEmitHandler, useDelegatedOn} from 'src/use/focus-controller/DelegatedEvent'
 
 const FocusGroupContext = createContext<Accessor<FocusRect | null>>(() => null)
 export const FocusControllerContext = createContext<FocusController | null>(null)
@@ -57,6 +57,7 @@ export const useFocusGroup = (
       setFocusRect((prev) => {
         prev.isDirty = true
         prev.parent = parent
+        // eslint-disable-next-line max-nested-callbacks
         prev.getRect = () => untrack(() => measureLayout(_element))
         prev.isInactive = isInactive ?? false
         prev.preventMove = preventMove ?? {}

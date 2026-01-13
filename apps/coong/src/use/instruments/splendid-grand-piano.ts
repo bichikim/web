@@ -1,3 +1,4 @@
+/* eslint-disable max-nested-callbacks */
 import {getWindow} from '@winter-love/utils'
 import {DrumMachine, type SplendidGrandPianoConfig} from 'smplr'
 import {Accessor, createContext, createEffect, createMemo, createSignal, onCleanup, untrack} from 'solid-js'
@@ -67,6 +68,7 @@ export type StopFn = (time?: number) => any
 
 export type SplendidGrandPianoContextProps = [Accessor<SplendidGrandPianoState>, SplendidGrandPianoController]
 
+// eslint-disable-next-line max-lines-per-function
 export const createSplendidGrandPiano = (
   options: Omit<SplendidGrandPianoOptions, 'onEnded' | 'onStart'> = {},
 ): [Accessor<SplendidGrandPianoState>, SplendidGrandPianoController] => {
@@ -364,6 +366,7 @@ export const SplendidGrandPianoContext = createContext<SplendidGrandPianoContext
     addEventListener: () => {
       //
     },
+    // eslint-disable-next-line unicorn/consistent-function-scoping
     down: () => () => null,
     play: () => Promise.resolve(),
     removeEventListener: () => {

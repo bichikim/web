@@ -20,46 +20,56 @@ export const anniversaryPeople = pgTable(
     pgPolicy('anniversary_people_insert_policy', {
       for: 'insert',
       to: authenticatedRole,
-      withCheck: sql`EXISTS (
-        SELECT 1 FROM ${userAnniversaries}
-        WHERE ${userAnniversaries.id} = ${table.anniversaryId}
-        AND ${userAnniversaries.ownerId} = (select auth.uid())
-      )`,
+      withCheck: sql`
+        EXISTS (
+                SELECT 1 FROM ${userAnniversaries}
+                WHERE ${userAnniversaries.id} = ${table.anniversaryId}
+                AND ${userAnniversaries.ownerId} = (select auth.uid())
+              )
+      `,
     }),
     // RLS policy for update: only allow if anniversary ownerId matches auth.uid()
     pgPolicy('anniversary_people_update_policy', {
       for: 'update',
       to: authenticatedRole,
-      using: sql`EXISTS (
-        SELECT 1 FROM ${userAnniversaries}
-        WHERE ${userAnniversaries.id} = ${table.anniversaryId}
-        AND ${userAnniversaries.ownerId} = (select auth.uid())
-      )`,
-      withCheck: sql`EXISTS (
-        SELECT 1 FROM ${userAnniversaries}
-        WHERE ${userAnniversaries.id} = ${table.anniversaryId}
-        AND ${userAnniversaries.ownerId} = (select auth.uid())
-      )`,
+      using: sql`
+        EXISTS (
+                SELECT 1 FROM ${userAnniversaries}
+                WHERE ${userAnniversaries.id} = ${table.anniversaryId}
+                AND ${userAnniversaries.ownerId} = (select auth.uid())
+              )
+      `,
+      withCheck: sql`
+        EXISTS (
+                SELECT 1 FROM ${userAnniversaries}
+                WHERE ${userAnniversaries.id} = ${table.anniversaryId}
+                AND ${userAnniversaries.ownerId} = (select auth.uid())
+              )
+      `,
     }),
     // RLS policy for delete: only allow if anniversary ownerId matches auth.uid()
     pgPolicy('anniversary_people_delete_policy', {
       for: 'delete',
       to: authenticatedRole,
-      using: sql`EXISTS (
-        SELECT 1 FROM ${userAnniversaries}
-        WHERE ${userAnniversaries.id} = ${table.anniversaryId}
-        AND ${userAnniversaries.ownerId} = (select auth.uid())
-      )`,
+      using: sql`
+        EXISTS (
+                SELECT 1 FROM ${userAnniversaries}
+                WHERE ${userAnniversaries.id} = ${table.anniversaryId}
+                AND ${userAnniversaries.ownerId} = (select auth.uid())
+              )
+      `,
     }),
     // RLS policy for select: only allow if anniversary ownerId matches auth.uid()
     pgPolicy('anniversary_people_select_policy', {
       for: 'select',
       to: authenticatedRole,
-      using: sql`EXISTS (
-        SELECT 1 FROM ${userAnniversaries}
-        WHERE ${userAnniversaries.id} = ${table.anniversaryId}
-        AND ${userAnniversaries.ownerId} = (select auth.uid())
-      )`,
+      using: sql`
+        EXISTS (
+                SELECT 1 FROM ${userAnniversaries}
+                WHERE ${userAnniversaries.id} = ${table.anniversaryId}
+                AND ${userAnniversaries.ownerId} = (select auth.uid())
+              )
+      `,
     }),
   ],
 ).enableRLS()

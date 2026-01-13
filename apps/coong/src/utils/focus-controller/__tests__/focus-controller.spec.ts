@@ -1,7 +1,7 @@
 import {describe, expect, it, vi} from 'vitest'
 import {createFocusController} from '../focus-controller'
 import {getDirection} from '../direction'
-import {getDeepPositionKey, type DeepPosition} from '../deep-position'
+import {type DeepPosition, getDeepPositionKey} from '../deep-position'
 import {getDeepPositionInfoWithKey, hasDeepPosition, isPreventMoveFocus} from '../position-map'
 
 const ROOT_KEY = getDeepPositionKey([])
@@ -206,4 +206,3 @@ describe('focus-controller', () => {
     expect(onChangeFocus).toHaveBeenNthCalledWith(2, next, true)
   })
 })
-

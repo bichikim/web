@@ -1,6 +1,7 @@
+/* eslint-disable no-magic-numbers */
 import {cva} from 'class-variance-authority'
-import {createSignal, For, createMemo, mergeProps, splitProps, type Component} from 'solid-js'
-import {type FocusRect, type Direction} from '../focus-store'
+import {type Component, createMemo, createSignal, For, mergeProps, splitProps} from 'solid-js'
+import {type Direction, type FocusRect} from '../focus-store'
 import {filterCandidates, moveFocus, scoreAngleCandidate} from '../focus-candidate'
 
 const BOX_SIZE = 50
@@ -69,16 +70,16 @@ const DraggableBox: Component<DraggableBoxProps> = (props) => {
   let ref: HTMLDivElement | undefined
   const [isDragging, setIsDragging] = createSignal(false)
 
-  const handleMouseDown = (e: MouseEvent) => {
+  const handleMouseDown = (event: MouseEvent) => {
     setIsDragging(true)
-    const startX = e.clientX
-    const startY = e.clientY
+    const startX = event.clientX
+    const startY = event.clientY
     const startLeft = innerProps.rect?.rect?.left ?? 0
     const startTop = innerProps.rect?.rect?.top ?? 0
 
-    const handleMouseMove = (e: MouseEvent) => {
-      const dx = e.clientX - startX
-      const dy = e.clientY - startY
+    const handleMouseMove = (event: MouseEvent) => {
+      const dx = event.clientX - startX
+      const dy = event.clientY - startY
 
       innerProps.onDrag(startLeft + dx, startTop + dy)
     }
@@ -173,20 +174,20 @@ export const FocusCandidateVisualizer: Component = () => {
   })
 
   const scores = createMemo(() => {
-    const s: Record<string, number> = {}
+    const scores: Record<string, number> = {}
 
-    candidates().forEach((c) => {
-      s[c.id] = scoreAngleCandidate(fromRect(), c, direction(), 0.5)
-    })
+    for (const candidate of candidates()) {
+      scores[candidate.id] = scoreAngleCandidate(fromRect(), candidate, direction(), 0.5)
+    }
 
-    return s
+    return scores
   })
 
   return (
     <div class=":uno: p-20px">
       <div class=":uno: mb-10px">
         <label>Direction: </label>
-        <select value={direction()} onChange={(e) => setDirection(e.currentTarget.value as Direction)}>
+        <select value={direction()} onChange={(event) => setDirection(event.currentTarget.value as Direction)}>
           <option value="up">Up</option>
           <option value="down">Down</option>
           <option value="left">Left</option>
@@ -196,11 +197,11 @@ export const FocusCandidateVisualizer: Component = () => {
       <div class=":uno: b-1 b-solid b-#ccc h-500px overflow-hidden relative w-500px">
         <DraggableBox rect={fromRect()} color="lightblue" isFrom onDrag={updateFromRect} />
         <For each={candidates()}>
-          {(candidate, i) => (
+          {(candidate, index) => (
             <DraggableBox
               rect={candidate}
               color={filteredCandidates().includes(candidate) ? 'lightgreen' : '#eee'}
-              onDrag={(x, y) => updateCandidate(i(), x, y)}
+              onDrag={(x, y) => updateCandidate(index(), x, y)}
               score={scores()[candidate.id]}
               isTarget={target() === candidate}
             />

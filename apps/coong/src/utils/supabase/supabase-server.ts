@@ -18,13 +18,13 @@ export const createSupabaseServer = (event: RequestEvent): SupabaseClient<Databa
         }))
       },
       setAll(cookiesToSet) {
-        cookiesToSet.forEach(({name, value, options}) => {
+        for (const {name, value, options} of cookiesToSet) {
           try {
             event.nativeEvent.node.res.appendHeader('Set-Cookie', `${name}=${value}; Path=/; SameSite=Lax; Secure`)
-          } catch (e) {
+          } catch {
             // ignore
           }
-        })
+        }
       },
     },
   })

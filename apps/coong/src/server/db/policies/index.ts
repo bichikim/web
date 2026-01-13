@@ -1,6 +1,5 @@
-import {type BuildExtraConfigColumns} from 'drizzle-orm'
+import {type BuildExtraConfigColumns, type SQL, sql} from 'drizzle-orm'
 import {type PgColumnBuilderBase} from 'drizzle-orm/pg-core'
-import {sql, type SQL} from 'drizzle-orm'
 import {profiles} from '../schema/profiles'
 
 export type SchemaSelf<
@@ -27,8 +26,10 @@ export const createAllowAllCondition = () => {
 }
 
 export const createMemberOnlyCondition = (): SQL<boolean> => {
-  return sql`EXISTS (
-    SELECT 1 FROM ${profiles}
-    WHERE ${profiles.id} = (select auth.uid())
-  )`
+  return sql`
+    EXISTS (
+        SELECT 1 FROM ${profiles}
+        WHERE ${profiles.id} = (select auth.uid())
+      )
+  `
 }

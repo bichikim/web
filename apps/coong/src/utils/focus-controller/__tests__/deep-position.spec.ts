@@ -1,12 +1,12 @@
 import {describe, expect, it} from 'vitest'
 import {
   type DeepPosition,
-  type Position,
   getDeepPosition,
   getDeepPositionKey,
   getNextPosition,
   getNextPositionByDirectionName,
   getParentPosition,
+  type Position,
 } from '../deep-position'
 
 describe('deep-position', () => {

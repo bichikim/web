@@ -1,4 +1,4 @@
-import {RouteSectionProps, RouteDefinition as _RouteDefinition} from '@solidjs/router'
+import {RouteDefinition as _RouteDefinition, RouteSectionProps} from '@solidjs/router'
 import {AuthProvider} from 'src/store/auth'
 import {HRouterNameProvider} from 'src/components/anchor/HRouterName'
 import {AuthGuard, RouteDefinition} from 'src/components/auth-guard'

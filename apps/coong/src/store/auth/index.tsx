@@ -1,16 +1,16 @@
-import {Accessor, createContext, createMemo, useContext, type JSX} from 'solid-js'
+import {Accessor, createContext, createMemo, type JSX, useContext} from 'solid-js'
 import type {User} from '@supabase/supabase-js'
 import {userQuery} from 'src/requests/user'
 import {signInAction} from 'src/requests/sign-in'
 import {signOutAction} from 'src/requests/sign-out'
 import {changePasswordAction} from 'src/requests/change-password'
 import {resetPasswordAction} from 'src/requests/reset-password'
-import {useSubmission, useAction} from '@solidjs/router'
+import {useAction, useSubmission} from '@solidjs/router'
 import {withHandyQuery} from 'src/use/handy-query'
 import {exchangeCodeForSectionAction} from 'src/requests/exchange-code-for-section'
 
 const AuthContext = createContext<{
-  changePassword: (newPassword: string) => Promise<User | null>
+  changePassword(newPassword: string): Promise<User | null>
   changePasswordError: Accessor<Error | null>
   exchangeCodeForSection: (code: string) => Promise<User | null>
   exchangeCodeForSectionError: Accessor<Error | null>

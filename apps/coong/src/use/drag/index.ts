@@ -1,5 +1,5 @@
-import {createSignal, createEffect, onCleanup} from 'solid-js'
-import {resolveAccessor, MaybeAccessor} from '@winter-love/solid-use'
+import {createEffect, createSignal, onCleanup} from 'solid-js'
+import {MaybeAccessor, resolveAccessor} from '@winter-love/solid-use'
 
 export const useDrag = (element: MaybeAccessor<HTMLElement | null>) => {
   const elementAccessor = resolveAccessor(element)
@@ -9,25 +9,25 @@ export const useDrag = (element: MaybeAccessor<HTMLElement | null>) => {
   let startX = 0
   let startY = 0
 
-  const handleMouseDown = (e: MouseEvent) => {
-    e.preventDefault()
+  const handleMouseDown = (event: MouseEvent) => {
+    event.preventDefault()
     setIsDragging(true)
 
     const element = elementAccessor()
 
     if (element) {
-      startX = e.clientX - position().x
-      startY = e.clientY - position().y
+      startX = event.clientX - position().x
+      startY = event.clientY - position().y
     }
   }
 
-  const handleMouseMove = (e: MouseEvent) => {
+  const handleMouseMove = (event: MouseEvent) => {
     if (!isDragging()) {
       return
     }
 
-    const newX = e.clientX - startX
-    const newY = e.clientY - startY
+    const newX = event.clientX - startX
+    const newY = event.clientY - startY
 
     setPosition({x: newX, y: newY})
   }

@@ -1,7 +1,7 @@
 import 'dotenv/config'
-import {fileURLToPath} from 'url'
-import {dirname, join} from 'path'
-import {mkdir} from 'fs/promises'
+import {fileURLToPath} from 'node:url'
+import {dirname, join} from 'node:path'
+import {mkdir} from 'node:fs/promises'
 import {$ as _$} from 'execa'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -20,7 +20,7 @@ try {
     await mkdir(supabaseDir, {recursive: true})
     await $`pnpm dlx supabase login`
     await $`pnpm dlx supabase gen types typescript --project-id ${projectId} --schema public`
-    console.log(`✅ Types generated successfully at ${outputPath}`)
+    console.info(`✅ Types generated successfully at ${outputPath}`)
   }
 } catch (error) {
   throw new Error(`Error generating types: ${(error as Error)?.message}`)

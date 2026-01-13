@@ -1,13 +1,12 @@
-/* eslint-disable n/no-unsupported-features/node-builtins */
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import {
   addListener,
   createDelegatedEvent,
-  delegatedEmit,
-  delegatedOn,
-  delegatedEmitHandler,
   DEFAULT_CHANNEL_PREFIX,
+  delegatedEmit,
+  delegatedEmitHandler,
   type DelegatedEventMap,
+  delegatedOn,
 } from '../delegated-event'
 
 const CHANNEL_NAME = 'test-event'
@@ -15,12 +14,16 @@ const CHANNEL_NAME = 'test-event'
 describe('delegated-event', () => {
   beforeEach(() => {
     // Clear any existing event listeners
-    document.removeEventListener(CHANNEL_NAME, () => {})
+    document.removeEventListener(CHANNEL_NAME, () => {
+      // empty
+    })
   })
 
   afterEach(() => {
     // Clean up any remaining event listeners
-    document.removeEventListener(CHANNEL_NAME, () => {})
+    document.removeEventListener(CHANNEL_NAME, () => {
+      // empty
+    })
   })
 
   describe('createDelegatedEvent', () => {
@@ -340,4 +343,3 @@ describe('delegated-event', () => {
     })
   })
 })
-

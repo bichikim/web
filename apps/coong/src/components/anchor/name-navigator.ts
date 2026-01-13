@@ -1,5 +1,5 @@
 import {useHRouterName} from './HRouterName'
-import {useNavigate, type NavigateOptions} from '@solidjs/router'
+import {type NavigateOptions, useNavigate} from '@solidjs/router'
 
 export interface NameNavigator {
   (name: string, options?: Partial<NavigateOptions>): void

@@ -1,5 +1,6 @@
 import {Accessor, createContext, createEffect, createSignal, ParentProps, untrack} from 'solid-js'
 import {Position, Size} from '@winter-love/utils'
+import {getResizeDelta, type ResizeType} from './resize-delta'
 
 export interface ResizeCardContextValue {
   setElement: (element: HTMLElement | undefined) => void
@@ -28,7 +29,7 @@ export const ResizeCardContext = createContext<ResizeCardContextValue>({
   },
 })
 
-export type ResizeType = 'up' | 'down' | 'left' | 'right' | 'up-left' | 'up-right' | 'down-left' | 'down-right'
+export type {ResizeType} from './resize-delta'
 
 export interface ResizeCardProviderProps extends ParentProps {
   maxSize?: Partial<Size>
@@ -117,58 +118,7 @@ export const ResizeCardProvider = (props: ResizeCardProviderProps) => {
     if (!startPosition || !startSize) {
       return
     }
-    let addX = 0
-    let addY = 0
-
-    switch (updateType) {
-      case 'up': {
-        addY = -1
-        addX = 0
-        break
-      }
-
-      case 'down': {
-        addY = 1
-        addX = 0
-        break
-      }
-
-      case 'left': {
-        addX = -1
-        addY = 0
-        break
-      }
-
-      case 'right': {
-        addX = 1
-        addY = 0
-        break
-      }
-
-      case 'up-left': {
-        addX = -1
-        addY = -1
-        break
-      }
-
-      case 'up-right': {
-        addX = 1
-        addY = -1
-        break
-      }
-
-      case 'down-left': {
-        addX = -1
-        addY = 1
-        break
-      }
-
-      case 'down-right': {
-        addX = 1
-        addY = 1
-        break
-      }
-    }
+    const {addX, addY} = getResizeDelta(updateType)
     const x = position.x - startPosition.x
     const y = position.y - startPosition.y
     let height = (startSize.height ?? 0) + y * addY

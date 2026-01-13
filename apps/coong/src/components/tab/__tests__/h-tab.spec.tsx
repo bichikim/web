@@ -75,4 +75,3 @@ describe('HTabButton', () => {
     expect(button).toHaveClass('custom-class')
   })
 })
-

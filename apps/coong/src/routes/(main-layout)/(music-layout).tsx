@@ -1,6 +1,6 @@
-import {RouteSectionProps, useLocation, useNavigate, useSearchParams} from '@solidjs/router'
+import {type RouteDefinition, RouteSectionProps, useLocation, useNavigate, useSearchParams} from '@solidjs/router'
 import {useStorage} from '@winter-love/solid-use'
-import {createMemo, createResource, createEffect} from 'solid-js'
+import {createEffect, createMemo, createResource} from 'solid-js'
 import {LinkType, MusicInfo, SettingContext, SettingData, SHiddenPlayer} from 'src/components/midi-player'
 import {emitAllIds} from 'src/components/real-button/use-global-touch'
 import {useCookieStorage} from 'src/use/storage'
@@ -8,7 +8,6 @@ import {createSplendidGrandPiano, SplendidGrandPianoContext} from 'src/use/instr
 import {getStorageKey} from 'src/utils/storage-key'
 import {getSelfUrl} from 'src/env'
 import {MidiPlayerProvider} from 'src/components/midi-player/context'
-import {RouteDefinition} from '@solidjs/router'
 
 export const route = {
   info: {

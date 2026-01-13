@@ -1,4 +1,4 @@
-import {createContext, createMemo, createSignal, type JSX, type Accessor, useContext} from 'solid-js'
+import {type Accessor, createContext, createMemo, createSignal, type JSX, useContext} from 'solid-js'
 
 export const HRouterNameContext = createContext<Accessor<Record<string, string>>>(() => ({}))
 

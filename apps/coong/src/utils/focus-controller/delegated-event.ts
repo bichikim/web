@@ -1,4 +1,3 @@
-/* eslint-disable n/no-unsupported-features/node-builtins */
 import {getDocument} from '@winter-love/utils'
 
 export const NONE_CUSTOM_EVENT_KEY = 'none-custom-event-key'
@@ -33,7 +32,7 @@ const createNewDelegatedPayload = (eventName: string, target: () => any = getDoc
 
   const delegatedListener = (event: Event) => {
     const _event = event as any
-    const detail = _event.detail
+    const {detail} = _event
     const isCustomEvent = typeof detail === 'object' && detail !== null
     const key = isCustomEvent ? _event.detail?.key : NONE_CUSTOM_EVENT_KEY
     const value = isCustomEvent ? _event.detail?.value : _event

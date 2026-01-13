@@ -1,3 +1,4 @@
+/* eslint-disable no-magic-numbers */
 import tada from './_components/tada.json?url'
 import bg from './_components/bg.png'
 import {SAuroraText} from 'src/components/text'
@@ -8,23 +9,25 @@ import {onMount, Show} from 'solid-js'
 import {queryToString} from 'src/utils/query-params'
 import {cva} from 'class-variance-authority'
 import {useCountdown} from 'src/use/countdown'
-import {useNameNavigate} from 'src/components/anchor/nameNavigate'
+import {useNameNavigate} from 'src/components/anchor/name-navigator'
 import {HAnchor} from 'src/components/anchor/HAnchor'
 
 const ClientOnlyLottie = clientOnly(() =>
-  import('src/components/lottie/Lottie').then((mod) => ({
-    default: mod.Lottie,
+  import('src/components/lottie/Lottie').then((module_) => ({
+    default: module_.Lottie,
   })),
 )
 
 const rootStyle = `:uno:
 elative flex flex-col items-center justify-center h-screen before:content-[''] before:absolute
-before:inset-0 before:bg-[linear-gradient(to_bottom,#ffffff_0px,#ffffff_30%,rgba(255,255,255,0.4)_100%)] before:pointer-events-none
+before:inset-0 before:bg-[linear-gradient(to_bottom,#ffffff_0px,#ffffff_30%,rgba(255,255,255,0.4)_100%)]
+ before:pointer-events-none
 `
 
 const emailStyle = `:uno:
 mt-1rem
-text-2xl font-bold var-aurora-color-1=#00c2ff var-aurora-color-2=#33ff8c var-aurora-color-3=#ffc640 var-aurora-color-4=#e54cff
+text-2xl font-bold var-aurora-color-1=#00c2ff var-aurora-color-2=#33ff8c var-aurora-color-3=#ffc640
+ var-aurora-color-4=#e54cff
 `
 
 const titleStyle = cva('text-3xl font-bold text-dark', {

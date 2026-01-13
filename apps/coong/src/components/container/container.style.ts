@@ -3,21 +3,31 @@ import {cva, VariantProps} from 'class-variance-authority'
 const containerBase = `:uno:
 font-medium inline-flex items-center justify-center gap-2 focus-visible:outline-3 focus-visible:outline-solid
 select-none outline-offset--3 overflow-hidden min-w-max text-shadow-lg text-shadow-color-[var(--var-semi-focus-bg)]
-c-[var(--var-text-color)] b-[var(--var-color)] focus-visible:outline-[var(--var-focus-bg)] disabled:c-[var(--var-muted-color)] before:to-[var(--var-semi-focus-bg)]
+c-[var(--var-text-color)] b-[var(--var-color)] focus-visible:outline-[var(--var-focus-bg)]
+ disabled:c-[var(--var-muted-color)] before:to-[var(--var-semi-focus-bg)]
 `
 
 const colorVariants = {
   aurora: `:uno:
-   color-var-text-color=white var-color=transparent var-focus-bg=black var-muted-color=gray-400 var-semi-muted-color=gray-300 var-semi-focus-bg=gray-200
+   color-var-text-color=white var-color=transparent var-focus-bg=black var-muted-color=gray-400
+    var-semi-muted-color=gray-300 var-semi-focus-bg=gray-200
    var-aurora-color-1=#00c2ff var-aurora-color-2=#33ff8c var-aurora-color-3=#ffc640 var-aurora-color-4=#e54cff`,
-  default: `:uno: color-var-text-color=black var-color=gray-100 var-focus-bg=black var-muted-color=gray-400 var-semi-muted-color=gray-300 var-semi-focus-bg=white`,
-  error: `:uno: color-var-text-color=white  var-color=red-400 var-focus-bg=red-700 var-muted-color=red-200 var-semi-muted-color=red-300 var-semi-focus-bg=red-500`,
-  info: `:uno: color-var-text-color=white var-color=sky-400 var-focus-bg=sky-700 var-muted-color=sky-200 var-semi-muted-color=sky-300 var-semi-focus-bg=sky-500`,
-  primary: `:uno: color-var-text-color=white var-color=blue-400 var-focus-bg=blue-700 var-muted-color=blue-200 var-semi-muted-color=white var-semi-focus-bg=blue-500`,
-  secondary: `:uno: color-var-text-color=white var-color=indigo-400 var-focus-bg=indigo-700 var-muted-color=indigo-200 var-semi-muted-color=white var-semi-focus-bg=indigo-500`,
-  success: `:uno: color-var-text-color=white var-color=green-400 var-focus-bg=green-700 var-muted-color=green-200 var-semi-muted-color=green-300 var-semi-focus-bg=green-500`,
-  transparent: `:uno: color-var-text-color=black var-color=transparent var-focus-bg=black var-muted-color=gray-400 var-semi-muted-color=gray-300 var-semi-focus-bg=gray-200`,
-  warning: `:uno: color-var-text-color=white var-color=orange-400 var-focus-bg=orange-700 var-muted-color=orange-200 var-semi-muted-color=orange-300 var-semi-focus-bg=orange-500`,
+  default: `:uno: color-var-text-color=black var-color=gray-100 var-focus-bg=black var-muted-color=gray-400
+   var-semi-muted-color=gray-300 var-semi-focus-bg=white`,
+  error: `:uno: color-var-text-color=white  var-color=red-400 var-focus-bg=red-700 var-muted-color=red-200
+   var-semi-muted-color=red-300 var-semi-focus-bg=red-500`,
+  info: `:uno: color-var-text-color=white var-color=sky-400 var-focus-bg=sky-700 var-muted-color=sky-200
+   var-semi-muted-color=sky-300 var-semi-focus-bg=sky-500`,
+  primary: `:uno: color-var-text-color=white var-color=blue-400 var-focus-bg=blue-700 var-muted-color=blue-200
+   var-semi-muted-color=white var-semi-focus-bg=blue-500`,
+  secondary: `:uno: color-var-text-color=white var-color=indigo-400 var-focus-bg=indigo-700 var-muted-color=indigo-200
+   var-semi-muted-color=white var-semi-focus-bg=indigo-500`,
+  success: `:uno: color-var-text-color=white var-color=green-400 var-focus-bg=green-700 var-muted-color=green-200
+   var-semi-muted-color=green-300 var-semi-focus-bg=green-500`,
+  transparent: `:uno: color-var-text-color=black var-color=transparent var-focus-bg=black var-muted-color=gray-400
+   var-semi-muted-color=gray-300 var-semi-focus-bg=gray-200`,
+  warning: `:uno: color-var-text-color=white var-color=orange-400 var-focus-bg=orange-700 var-muted-color=orange-200
+   var-semi-muted-color=orange-300 var-semi-focus-bg=orange-500`,
 }
 
 const sizeVariants = {
@@ -40,19 +50,24 @@ p-[calc(_var(--var-padding,_0px)+_var(--var-padding-offset,_0px))] rd-xs text-xs
 
 const sizeWildVariants = {
   lg: `:uno:
-py-[calc(_0.75rem+_var(--var-padding-offset,_0px))] px-[calc(_var(--var-padding,_0px)+_var(--var-padding-offset,_0px))] rd-lg text-lg
+py-[calc(_0.75rem+_var(--var-padding-offset,_0px))] px-[calc(_var(--var-padding,_0px)+_var(--var-padding-offset,_0px))]
+ rd-lg text-lg
 `,
   md: `:uno:
-py-[calc(_.25rem+_var(--var-padding-offset,_0px))] px-[calc(_var(--var-padding,_0px)+_var(--var-padding-offset,_0px))] rd-md text-base
+py-[calc(_.25rem+_var(--var-padding-offset,_0px))] px-[calc(_var(--var-padding,_0px)+_var(--var-padding-offset,_0px))]
+ rd-md text-base
 `,
   sm: `:uno:
-py-[calc(_.1rem+_var(--var-padding-offset,_0px))] px-[calc(_var(--var-padding,_0px)+_var(--var-padding-offset,_0px))] rd-sm text-sm
+py-[calc(_.1rem+_var(--var-padding-offset,_0px))] px-[calc(_var(--var-padding,_0px)+_var(--var-padding-offset,_0px))]
+ rd-sm text-sm
 `,
   xl: `:uno:
-py-[calc(_1rem+_var(--var-padding-offset,_0px))] px-[calc(_var(--var-padding,_0px)+_var(--var-padding-offset,_0px))] rd-xl text-xl
+py-[calc(_1rem+_var(--var-padding-offset,_0px))] px-[calc(_var(--var-padding,_0px)+_var(--var-padding-offset,_0px))]
+ rd-xl text-xl
 `,
   xs: `:uno:
-py-[calc(_.05rem+_var(--var-padding-offset,_0px))] px-[calc(_var(--var-padding,_0px)+_var(--var-padding-offset,_0px))] rd-xs text-xs
+py-[calc(_.05rem+_var(--var-padding-offset,_0px))] px-[calc(_var(--var-padding,_0px)+_var(--var-padding-offset,_0px))]
+ rd-xs text-xs
 `,
 }
 

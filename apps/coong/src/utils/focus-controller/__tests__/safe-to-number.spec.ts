@@ -50,4 +50,3 @@ describe('safeToNumber', () => {
     expect(safeToNumber('invalid', null)).toBeNull()
   })
 })
-

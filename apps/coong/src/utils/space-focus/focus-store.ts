@@ -73,7 +73,10 @@ export const createFocusRect = (
 
 export const recursivelyMarkDirty = (focusRect: FocusRect): void => {
   focusRect.isDirty = true
-  focusRect.children.forEach(recursivelyMarkDirty)
+
+  for (const child of focusRect.children) {
+    recursivelyMarkDirty(child)
+  }
 }
 
 export const getUpdatedRect = (rect: FocusRect): FocusRect => {

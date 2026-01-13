@@ -1,5 +1,5 @@
 import {StringToNumber} from 'lodash'
-import {type Direction, getDirection, type DirectionName} from './direction'
+import {type Direction, type DirectionName, getDirection} from './direction'
 import {safeToNumber} from './safe-to-number'
 
 export interface Position {
@@ -96,14 +96,14 @@ export const getDeepPosition = (
   }
 
   const positions: Position[] = []
-  const posStrArr = _key.split(connector)
+  const posStringArray = _key.split(connector)
 
-  for (const posStr of posStrArr) {
-    const [xStr, yStr] = posStr.split(separator)
-    const x = safeToNumber(xStr)
-    const y = safeToNumber(yStr)
+  for (const posString of posStringArray) {
+    const [xString, yString] = posString.split(separator)
+    const x = safeToNumber(xString)
+    const y = safeToNumber(yString)
 
-    if (x == null || y == null) {
+    if (x === null || y === null) {
       return null
     }
 

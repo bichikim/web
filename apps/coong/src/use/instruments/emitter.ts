@@ -30,7 +30,6 @@ export const createEmitter = <EventName extends string, EVentMap extends Record<
       return
     }
 
-    // eslint-disable-next-line n/no-unsupported-features/node-builtins
     const listenerAdepter = (event: CustomEvent) => {
       listener(event.detail)
     }
@@ -63,7 +62,6 @@ export const createEmitter = <EventName extends string, EVentMap extends Record<
       return
     }
 
-    // eslint-disable-next-line n/no-unsupported-features/node-builtins
     const customEvent = new CustomEvent(eventNameRecipe(event), {detail: payload})
 
     window.dispatchEvent(customEvent)

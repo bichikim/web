@@ -1,15 +1,15 @@
 import {
-  getDeepPositionKey,
-  DEFAULT_CONNECTOR,
-  DEFAULT_SEPARATOR,
-  DEFAULT_KEY_OPTIONS,
-  DEFAULT_ID,
   type DeepPosition,
-  type KeyDeepPositionOptions,
+  DEFAULT_CONNECTOR,
+  DEFAULT_ID,
+  DEFAULT_KEY_OPTIONS,
+  DEFAULT_SEPARATOR,
+  getDeepPositionKey,
   getNextPosition,
   getParentPosition,
-  type Position,
+  type KeyDeepPositionOptions,
   type KeyOptions,
+  type Position,
 } from './deep-position'
 import type {Direction} from './direction'
 
@@ -176,9 +176,9 @@ export const registerDeepPositionRecursively = (
     registerDeepPosition(positionMap, targetDeepPosition, payload, options)
   }
 
-  deepPositionList.forEach((deepPosition) => {
+  for (const deepPosition of deepPositionList) {
     registerDeepPosition(positionMap, deepPosition, {}, options)
-  })
+  }
 }
 
 export const registerDeepPosition = (
@@ -259,7 +259,7 @@ export const unregisterDeepPositionRecursively = (
     return unregisterDeepPosition(positionMap, deepPosition, options)
   })
 
-  return results.every((result) => result)
+  return results.every(Boolean)
 }
 
 export const updateDeepPositionPayload = (
@@ -327,7 +327,7 @@ export const moveDeepPosition = (
   let nextDeepPosition: DeepPosition = deepPosition
   const {limit = DEFAULT_MAX_SEARCH_LENGTH} = options
 
-  for (let tryCount = 0; tryCount < limit; tryCount++) {
+  for (let tryCount = 0; tryCount < limit; tryCount += 1) {
     const newNextDeepPosition = getNextDeepPosition(nextDeepPosition, deepIndex, direction)
 
     if (newNextDeepPosition === null) {
@@ -407,9 +407,10 @@ export const restoreDeepPosition = (
   positionMap: PositionMap,
   deepPosition: DeepPosition,
   deepIndex: number,
-  direction: Direction = {x: 0, y: 0},
+  direction?: Direction,
   options: FillOptions = DEFAULT_FILL_OPTIONS,
 ): DeepPosition | null => {
+  const _direction = direction ?? {x: 0, y: 0}
   const _deepPosition = [...deepPosition]
 
   _deepPosition.splice(deepIndex, _deepPosition.length)
@@ -419,23 +420,25 @@ export const restoreDeepPosition = (
 
   nextDeepPosition[deepIndex] = previousPosition
 
-  return findNextDeepPosition(positionMap, nextDeepPosition, deepIndex, direction, options)
+  return findNextDeepPosition(positionMap, nextDeepPosition, deepIndex, _direction, options)
 }
 
 export const fillPreviousDeepPosition = (
   positionMap: PositionMap,
   deepPosition: DeepPosition,
   startDeepIndex: number,
-  direction: Direction = {x: 0, y: 0},
+  direction?: Direction,
   deepPositionLength: number = deepPosition.length,
   options: FillOptions = DEFAULT_FILL_OPTIONS,
+  // eslint-disable-next-line max-params
 ): DeepPosition => {
+  const _direction = direction ?? {x: 0, y: 0}
   const {limitOverDepth = DEFAULT_LIMIT_OVER_DEPTH} = options
   let nextDeepPosition: DeepPosition = deepPosition
   let deepIndex = startDeepIndex
 
   while (deepIndex < deepPositionLength) {
-    const newNextDeepPosition = restoreDeepPosition(positionMap, nextDeepPosition, deepIndex, direction, options)
+    const newNextDeepPosition = restoreDeepPosition(positionMap, nextDeepPosition, deepIndex, _direction, options)
 
     // fill 할 위치가 없을 경우 없는 위치 상위 부모 죄표까지만 반환
     if (newNextDeepPosition === null) {
@@ -479,7 +482,7 @@ export const jumpDeepPosition = (
 
   const currentDeepPosition = [...deepPosition]
 
-  for (let deepIndex = deepPosition.length - 1; deepIndex >= jumpLimitIndex; deepIndex--) {
+  for (let deepIndex = deepPosition.length - 1; deepIndex >= jumpLimitIndex; deepIndex -= 1) {
     const nextDeepPosition = moveDeepPosition(positionMap, currentDeepPosition, deepIndex, direction, options)
 
     if (nextDeepPosition) {

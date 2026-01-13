@@ -1,14 +1,13 @@
 import {createContext, type JSX, untrack, useContext} from 'solid-js'
-import {FocusController, createFocusController} from 'src/utils/focus-controller/focus-controller'
+import {createFocusController, FocusController} from 'src/utils/focus-controller/focus-controller'
 import {createUuid} from '@winter-love/utils'
-import {DelegatedEventContext, DelegatedEventProvider} from './DelegatedEvent'
+import {DelegatedEventContext, useDelegatedEmitHandler} from './DelegatedEvent'
 import {
-  getDeepPositionKey,
   type DeepPosition,
-  type KeyOptions,
+  getDeepPositionKey,
   type KeyDeepPositionOptions,
+  type KeyOptions,
 } from 'src/utils/focus-controller/deep-position'
-import {useDelegatedEmitHandler} from './DelegatedEvent'
 
 export interface FocusControllerContextValue {
   readonly focusController: FocusController

@@ -6,8 +6,8 @@ export function* generateLine(point: Position, direction: Direction, range: numb
 
   const start = includeOrigin ? 0 : 1
 
-  for (let i = start; i < range; i++) {
-    yield {x: startX + i, y: startY + i}
+  for (let index = start; index < range; index += 1) {
+    yield {x: startX + index, y: startY + index}
   }
 }
 

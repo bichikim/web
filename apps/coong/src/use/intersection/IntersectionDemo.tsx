@@ -1,3 +1,4 @@
+/* eslint-disable no-magic-numbers */
 import {createSignal} from 'solid-js'
 import {useIntersection} from './index'
 

@@ -1,7 +1,8 @@
+/* eslint-disable no-console */
 import {createServer, type IncomingMessage, type ServerResponse} from 'node:http'
 import {readFile, stat} from 'node:fs/promises'
 import {fileURLToPath} from 'node:url'
-import {dirname, join, extname} from 'node:path'
+import {dirname, extname, join} from 'node:path'
 import {spawn} from 'node:child_process'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -9,8 +10,10 @@ const __dirname = dirname(__filename)
 const projectRoot = join(__dirname, '..')
 const publicDir = join(projectRoot, '.output', 'public')
 
-const CLIENT_PORT = Number(process.env.CLIENT_PORT) || 3000
-const SERVER_PORT = Number(process.env.SERVER_PORT) || 4000
+const DEFAULT_CLIENT_PORT = 3000
+const DEFAULT_SERVER_PORT = 4000
+const CLIENT_PORT = Number(process.env.CLIENT_PORT) || DEFAULT_CLIENT_PORT
+const SERVER_PORT = Number(process.env.SERVER_PORT) || DEFAULT_SERVER_PORT
 const SERVER_URL = `http://localhost:${SERVER_PORT}`
 
 const serverScriptPath = join(projectRoot, '.output', 'server', 'index.mjs')
@@ -18,7 +21,7 @@ const serverScriptPath = join(projectRoot, '.output', 'server', 'index.mjs')
 /**
  * Get MIME type from file extension
  */
-function getMimeType(ext: string): string {
+function getMimeType(extension: string): string {
   const mimeTypes: Record<string, string> = {
     '.css': 'text/css',
     '.eot': 'application/vnd.ms-fontobject',
@@ -48,7 +51,7 @@ function getMimeType(ext: string): string {
     '.zip': 'application/zip',
   }
 
-  return mimeTypes[ext.toLowerCase()] || 'application/octet-stream'
+  return mimeTypes[extension.toLowerCase()] || 'application/octet-stream'
 }
 
 /**
@@ -70,8 +73,8 @@ async function serveStatic(req: IncomingMessage, res: ServerResponse): Promise<b
     }
 
     const content = await readFile(filePath)
-    const ext = extname(filePath)
-    const contentType = getMimeType(ext)
+    const extension = extname(filePath)
+    const contentType = getMimeType(extension)
 
     res.setHeader('Content-Type', contentType)
     res.setHeader('Content-Length', content.length)
@@ -79,7 +82,7 @@ async function serveStatic(req: IncomingMessage, res: ServerResponse): Promise<b
     res.end(content)
 
     return true
-  } catch (err) {
+  } catch {
     // File not found
     return false
   }
@@ -94,7 +97,7 @@ const isArrayBufferUint8Array = (buffer: any): buffer is Uint8Array<ArrayBuffer>
  */
 async function proxyToServer(req: IncomingMessage, targetPath: string): Promise<Response> {
   const requestUrl = req.url ?? '/'
-  const search = requestUrl.includes('?') ? requestUrl.substring(requestUrl.indexOf('?')) : ''
+  const search = requestUrl.includes('?') ? requestUrl.slice(Math.max(0, requestUrl.indexOf('?'))) : ''
   const proxyUrl = `${SERVER_URL}${targetPath}${search}`
 
   const headers = new Headers()
@@ -147,7 +150,7 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
   const requestUrl = req.url ?? '/'
   const host = req.headers.host ?? 'localhost'
   const url = new URL(requestUrl, `http://${host}`)
-  const pathname = url.pathname
+  const {pathname} = url
 
   try {
     // Proxy requests to /_server
@@ -155,9 +158,10 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
       const proxyRes = await proxyToServer(req, pathname)
 
       // Copy response headers
-      proxyRes.headers.forEach((value, key) => {
+      for (const [key, value] of proxyRes.headers.entries()) {
         res.setHeader(key, value)
-      })
+      }
+
       res.statusCode = proxyRes.status
       res.statusMessage = proxyRes.statusText
 
@@ -183,15 +187,15 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
         res.setHeader('Content-Length', content.length)
         res.statusCode = 200
         res.end(content)
-      } catch (err) {
+      } catch {
         // If index.html doesn't exist, return 404
         res.statusCode = 404
         res.setHeader('Content-Type', 'text/plain')
         res.end('Not Found')
       }
     }
-  } catch (err) {
-    console.error('Request error:', err)
+  } catch (error) {
+    console.error('Request error:', error)
 
     if (!res.headersSent) {
       res.statusCode = 500
@@ -200,32 +204,50 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
   }
 })
 
+const INTERNAL_SERVER_ERROR_STATUS = 500
+
+const DEFAULT_TIMEOUT = 1000
+
 /**
  * Check if server is already running
  */
 async function isServerRunning() {
   try {
-    const response = await fetch(SERVER_URL, {signal: AbortSignal.timeout(1000)})
+    const response = await fetch(SERVER_URL, {signal: AbortSignal.timeout(DEFAULT_TIMEOUT)})
 
-    return response.ok || response.status < 500
+    return response.ok || response.status < INTERNAL_SERVER_ERROR_STATUS
   } catch {
     return false
   }
 }
 
+const DEFAULT_MAX_ATTEMPTS = 30
+const DEFAULT_DELAY = 1000
+
+const sleep = (ms: number) =>
+  new Promise<void>((resolve) => {
+    setTimeout(resolve, ms)
+  })
+
 /**
  * Wait for server to be ready
  */
-async function waitForServer(maxAttempts = 30, delay = 1000) {
-  for (let i = 0; i < maxAttempts; i++) {
+async function waitForServer(maxAttempts = DEFAULT_MAX_ATTEMPTS, delay = DEFAULT_DELAY) {
+  const attempt = async (index: number): Promise<boolean> => {
     if (await isServerRunning()) {
       return true
     }
 
-    await new Promise((resolve) => setTimeout(resolve, delay))
+    if (index >= maxAttempts - 1) {
+      return false
+    }
+
+    await sleep(delay)
+
+    return attempt(index + 1)
   }
 
-  return false
+  return attempt(0)
 }
 
 /**
@@ -243,17 +265,17 @@ function startBackendServer() {
     stdio: 'inherit',
   })
 
-  serverProcess.on('error', (err) => {
-    console.error(`❌ Failed to start backend server: ${err.message}`)
-    // eslint-disable-next-line n/no-process-exit
-    process.exit(1)
+  serverProcess.on('error', (error) => {
+    console.error(`❌ Failed to start backend server: ${error.message}`)
+
+    throw new Error('Failed to start backend server')
   })
 
   serverProcess.on('exit', (code) => {
     if (code !== null && code !== 0) {
       console.error(`❌ Backend server exited with code ${code}`)
-      // eslint-disable-next-line n/no-process-exit
-      process.exit(1)
+
+      throw new Error('Backend server exited with code')
     }
   })
 
@@ -282,7 +304,9 @@ async function main() {
   // Check if server is already running
   const isRunning = await isServerRunning()
 
-  if (!isRunning) {
+  if (isRunning) {
+    console.log(`✅ Backend server is already running`)
+  } else {
     // Start backend server
     startBackendServer()
     // Wait for server to be ready
@@ -291,13 +315,11 @@ async function main() {
 
     if (!isReady) {
       console.error(`❌ Server failed to start within timeout`)
-      // eslint-disable-next-line n/no-process-exit
-      process.exit(1)
+
+      throw new Error('Server failed to start within timeout')
     }
 
     console.log(`✅ Backend server is ready`)
-  } else {
-    console.log(`✅ Backend server is already running`)
   }
 
   // Start proxy server
@@ -307,8 +329,7 @@ async function main() {
   })
 }
 
-main().catch((err) => {
-  console.error('❌ Failed to start:', err)
-  // eslint-disable-next-line n/no-process-exit
-  process.exit(1)
+main().catch((error) => {
+  console.error('❌ Failed to start:', error)
+  throw new Error('Failed to start')
 })

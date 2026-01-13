@@ -1,7 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
-import {describe, expect, it, vi, beforeEach, afterEach} from 'vitest'
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import {renderHook, waitFor} from '@solidjs/testing-library'
 import {useAnimationFrame} from '../'
 
@@ -33,7 +33,10 @@ describe('useAnimationFrame', () => {
     const callbacks = [...rafCallbacks]
 
     rafCallbacks = []
-    callbacks.forEach((cb) => cb(timestamp))
+
+    for (const callback of callbacks) {
+      callback(timestamp)
+    }
   }
 
   it('should not start animation loop by default', () => {
@@ -146,7 +149,8 @@ describe('useAnimationFrame', () => {
       expect(requestAnimationFrame).toHaveBeenCalled()
     })
     flushRaf(100)
-    expect(callback).toHaveBeenCalledWith(0) // First frame, deltaTime = 0
+    // First frame, deltaTime = 0
+    expect(callback).toHaveBeenCalledWith(0)
     result.stop()
 
     await waitFor(() => {

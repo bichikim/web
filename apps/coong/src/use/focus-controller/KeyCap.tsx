@@ -1,4 +1,5 @@
-import {createMemo, type JSX, createSignal} from 'solid-js'
+/* eslint-disable max-len */
+import {createMemo, createSignal, type JSX} from 'solid-js'
 import {cva} from 'class-variance-authority'
 
 const keyCapBase = `

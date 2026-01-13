@@ -8,13 +8,13 @@ export const measureLayout = (element: HTMLElement | null): Rect | null => {
   // offset 기반 측정 (transform 영향 X, 레이아웃 기준)
   let x = 0
   let y = 0
-  let el: HTMLElement | null = element
+  let _element: HTMLElement | null = element
 
   // offsetParent 체인을 타고 올라가면서 위치 누적
-  while (el) {
-    x += el.offsetLeft - el.scrollLeft
-    y += el.offsetTop - el.scrollTop
-    el = el.offsetParent as HTMLElement | null
+  while (_element) {
+    x += _element.offsetLeft - _element.scrollLeft
+    y += _element.offsetTop - _element.scrollTop
+    _element = _element.offsetParent as HTMLElement | null
   }
 
   const width = element.offsetWidth

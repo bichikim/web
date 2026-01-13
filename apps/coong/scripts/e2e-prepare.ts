@@ -14,7 +14,7 @@ async function main() {
   await $`vinxi dev --port 22222 -- --mode e2e`
 }
 
-main().catch((err) => {
-  console.error(err)
+main().catch((error) => {
+  console.error(error)
   process.exitCode = 1
 })

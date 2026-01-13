@@ -1,4 +1,4 @@
-import {describe, expect, it, vi, beforeEach} from 'vitest'
+import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {
   createPositionMap,
   DEFAULT_FILL_OPTIONS,
@@ -6,31 +6,30 @@ import {
   DEFAULT_MAX_SEARCH_LENGTH,
   DEFAULT_MOVE_OPTIONS,
   fillPreviousDeepPosition,
+  findNextDeepPosition,
   getDeepPositionInfo,
   getDeepPositionInfoWithKey,
   getNextDeepPosition,
   getParentInfo,
   getPreviousPosition,
+  getRecursiveDeepPosition,
   hasDeepPosition,
   hasDeepPositionAsSelf,
   hasDeepPositionWithKey,
+  isPreventMoveFocus,
   jumpDeepPosition,
   moveDeepPosition,
   registerDeepPosition,
+  registerDeepPositionRecursively,
   registerDeepPositionWithKey,
   restoreDeepPosition,
+  savePreviousDeepPosition,
   unregisterDeepPosition,
+  unregisterDeepPositionRecursively,
   unregisterDeepPositionWithKey,
   updateDeepPositionPayloadWithKey,
-  getRecursiveDeepPosition,
-  registerDeepPositionRecursively,
-  unregisterDeepPositionRecursively,
-  savePreviousDeepPosition,
-  findNextDeepPosition,
-  isPreventMoveFocus,
 } from '../position-map'
-import {getDirection} from '../direction'
-import type {Direction} from '../direction'
+import {type Direction, getDirection} from '../direction'
 import {type DeepPosition, DEFAULT_KEY_OPTIONS, getDeepPositionKey} from '../deep-position'
 
 describe('position-map', () => {
@@ -990,7 +989,7 @@ describe('position-map', () => {
         {
           defaultPosition: {x: 5, y: 5},
         },
-      ) // ?
+      )
 
       expect(result).toEqual([
         {x: 0, y: 0},
@@ -1044,7 +1043,7 @@ describe('position-map', () => {
         {x: 0, y: 0},
         {x: 1, y: 1},
         {x: 0, y: 0},
-      ]) // ?
+      ])
 
       const result = fillPreviousDeepPosition(positionMap, deepPosition, 2)
 
@@ -1324,4 +1323,3 @@ describe('position-map', () => {
     })
   })
 })
-

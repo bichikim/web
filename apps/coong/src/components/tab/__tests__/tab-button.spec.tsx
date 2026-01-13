@@ -54,4 +54,3 @@ describe('use-tab-button', () => {
     consoleWarnSpy.mockRestore()
   })
 })
-
