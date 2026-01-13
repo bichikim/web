@@ -9,7 +9,7 @@ const createFontImport = () => {
       return fontLoadPromise
     }
 
-    // do not use dynamic import because
+    // do not use dynamic import because vite handle this as style tag injection
     fontLoadPromise = import('pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css')
 
     return fontLoadPromise
