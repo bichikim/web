@@ -33,14 +33,34 @@ const isOriginPath = (url: string) => startsWith(url, `${originPath}/`) || url =
 
 const isApiPath = (url: string) => startsWith(url, apiPath)
 
-const createNetworkFirst = async (event: FetchEvent, cache: RequestCache = 'default') => {
+/**
+ * Cache control header values for HTTP caching
+ */
+type CacheControlValue = 'no-cache' | 'no-store' | 'max-age=0' | 'must-revalidate'
+
+/**
+ * Creates a network-first caching strategy
+ * @param event - The fetch event
+ * @param cacheOption - Request cache option for fetch API
+ * @param cacheControl - Cache-Control header value (optional)
+ */
+const createNetworkFirst = async (
+  event: FetchEvent,
+  cacheOption: RequestCache = 'default',
+  cacheControl?: CacheControlValue,
+) => {
   const headers = new Headers()
 
-  headers.append('cache-control', cache)
-  headers.append('pragma', cache)
+  if (cacheControl) {
+    headers.append('cache-control', cacheControl)
+    headers.append('pragma', cacheControl)
+  }
 
   try {
-    const response = await fetch(event.request, {headers})
+    const response = await fetch(event.request, {
+      headers,
+      cache: cacheOption,
+    })
     const cache = await caches.open(CACHE_NAME)
 
     await cache.put(event.request, response.clone())
@@ -93,17 +113,13 @@ const createCacheFirst = async (event: FetchEvent) => {
   return response
 }
 
-const includes = (array: any[], value: any) => {
-  return array.indexOf(value) !== -1
-}
-
 // Handle service worker install event
 self.addEventListener('install', (event) => {
-  event.waitUntil(() => {
+  event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      cache.addAll(APP_FILES)
-    })
-  })
+      return cache.addAll(APP_FILES)
+    }),
+  )
 })
 
 self.addEventListener('message', (event) => {
@@ -130,7 +146,7 @@ self.addEventListener('fetch', (event: FetchEvent) => {
   const destination: RequestDestination[] = ['style', 'script', 'worker', 'manifest', 'document']
 
   // Use network request for document navigation, otherwise use cache request
-  if (includes(destination, event.request.destination)) {
+  if (destination.includes(event.request.destination)) {
     event.respondWith(createNetworkFirst(event))
 
     return

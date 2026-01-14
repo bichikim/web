@@ -2,7 +2,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import {fileURLToPath} from 'node:url'
 import {getInstallFiles} from './get-install-files'
-import type {Plugin} from 'vite'
+import type {Plugin, ResolvedConfig} from 'vite'
 
 export const INJECT_TARGET = '__inject_code__'
 export const libraryRoot = path.dirname(fileURLToPath(new URL(import.meta.url)))
@@ -33,9 +33,16 @@ export const generateSwWithCleanUp = (
   options: GenerateSwPluginOptions,
 ): {cleanUp: () => Promise<void>; pluginOptions: Plugin} => {
   const {publicPath = 'public', root} = options
-  let _config: any | undefined
+
+  // SolidStart extends ResolvedConfig with router property
+  type SolidStartConfig = ResolvedConfig & {
+    router: {type: string; outDir: string}
+  }
+
+  let _config: SolidStartConfig | undefined
 
   const cleanUp = async () => {
+    if (!_config) return
     await fs.promises.rm(path.join(root ?? _config.root, publicPath, 'sw.js'), {force: true})
   }
 
@@ -55,9 +62,19 @@ export const generateSwWithCleanUp = (
           cwd: '',
         })
       },
-      configResolved(config: any) {
-        if (config.router.type === 'client' && config.mode === 'production') {
-          _config = config
+      configResolved(config: ResolvedConfig) {
+        // Type guard to check if config has router property (SolidStart extension)
+        if (
+          'router' in config &&
+          typeof config.router === 'object' &&
+          config.router !== null &&
+          'type' in config.router &&
+          'outDir' in config.router
+        ) {
+          const solidStartConfig = config as SolidStartConfig
+          if (solidStartConfig.router.type === 'client' && config.mode === 'production') {
+            _config = solidStartConfig
+          }
         }
       },
       name: 'generate-sw',
