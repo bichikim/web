@@ -6,11 +6,11 @@ import path from 'node:path'
 import {fileURLToPath} from 'node:url'
 
 vi.mock('glob', async () => {
-  const modeuls: any = await vi.importActual('glob')
+  const modules: any = await vi.importActual('glob')
 
   return {
-    ...modeuls,
-    glob: vi.fn(modeuls.glob),
+    ...modules,
+    glob: vi.fn(modules.glob),
   }
 })
 
@@ -23,9 +23,9 @@ describe('getFilesFromPath', () => {
     const emptyPath = '/path/with/no/files'
     const mockFiles: string[] = []
 
-    const result = await getFilesFromPath(emptyPath)
-
     vi.mocked(glob).mockImplementationOnce(() => Promise.resolve(mockFiles))
+
+    const result = await getFilesFromPath(emptyPath)
 
     expect(glob).toHaveBeenCalledWith('**/*', {
       cwd: emptyPath,
