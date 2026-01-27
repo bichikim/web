@@ -1,7 +1,8 @@
 # Winter Love Project
 
 ## Documents
-https://bichikim.github.io/web WIP
+
+<https://bichikim.github.io/web> WIP
 
 ## Install dependencies
 
@@ -11,6 +12,7 @@ pnpm i
 ```
 
 ## Recommended global dependencies
+
 - rimraf
 - lerna
 
@@ -28,7 +30,7 @@ Coong everywhere
 
 ## Web types in Web Storm
 
-Gen: https://www.npmjs.com/package/vue-docgen-web-types
+Gen: <https://www.npmjs.com/package/vue-docgen-web-types>
 
 ## Wallaby.js
 
@@ -39,9 +41,9 @@ This repository contributors are welcome to use
 test results immediately as you type, and see the results in
 your editor right next to your code.
 
-## Turborepo 
+## Turborepo
 
-### run generate 
+### run generate
 
 ```shell
 turbo gen
@@ -56,7 +58,8 @@ vitest: 2.0.5
 vite: 5.4.11
 
 ### Solidjs storybook module is not defined error
-refer to: https://github.com/storybookjs/solidjs/pull/19
+
+refer to: <https://github.com/storybookjs/solidjs/pull/19>
 
 fixed version until solidjs team fixes the issue
 nodejs: 20.x.x
