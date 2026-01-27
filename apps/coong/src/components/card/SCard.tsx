@@ -9,18 +9,6 @@ b-1 b-white shadow-md max-w-full md:max-w-180 w-[calc(100vw-.5rem)] p-2
 h-full max-h-max
 `
 
-const cardStyle = cva(cardBaseStyle, {
-  defaultVariants: {
-    glass: true,
-  },
-  variants: {
-    glass: {
-      false: 'bg-opacity-100',
-      true: 'bg-opacity-90 backdrop-blur-sm',
-    },
-  },
-})
-
 export type SCardProps<T extends ValidComponent = 'div'> = HCardProps<T> & ContainerStyleProps
 
 export const SCard = <T extends ValidComponent = 'div'>(props: SCardProps<T>) => {
