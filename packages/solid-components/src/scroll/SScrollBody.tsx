@@ -8,9 +8,9 @@ interface InnerProps {
   style?: StyleType
 }
 
-export type WScrollBodyProps<T extends ValidComponent> = InnerProps & DynamicProps<T>
+export type SScrollBodyProps<T extends ValidComponent> = InnerProps & DynamicProps<T>
 
-export const WScrollBody = <T extends ValidComponent>(props: WScrollBodyProps<T>) => {
+export const SScrollBody = <T extends ValidComponent>(props: SScrollBodyProps<T>) => {
   const {setScrollBodyElement, value: ScrollValue} = useScrollContext()
   const scrollId = createMemo(() => ScrollValue().id)
 

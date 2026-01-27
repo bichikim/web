@@ -10,7 +10,7 @@ type InnerProps = {
   style?: StyleType
 }
 
-export type WSliderHandleProps<T extends ValidComponent> = InnerProps & DynamicProps<T>
+export type SSliderHandleProps<T extends ValidComponent> = InnerProps & DynamicProps<T>
 
 const toRangeValue = (value: number, min: number, max: number) => {
   if (value > max) {
@@ -24,9 +24,9 @@ const toRangeValue = (value: number, min: number, max: number) => {
   return value
 }
 
-export const wSliderHandleClassName = 'w-slider-handle'
+export const sSliderHandleClassName = 's-slider-handle'
 
-export const WSliderHandle = <T extends ValidComponent>(props: WSliderHandleProps<T>) => {
+export const SSliderHandle = <T extends ValidComponent>(props: SSliderHandleProps<T>) => {
   const [innerProps, restProps] = splitProps(props, ['style']) as unknown as [Required<InnerProps>, DynamicProps<T>]
   const sliderContext = useSliderContext()
   const sliderAriaContext = useSliderAriaContext()
@@ -83,7 +83,7 @@ export const WSliderHandle = <T extends ValidComponent>(props: WSliderHandleProp
   return (
     <Dynamic
       {...restProps}
-      class={cx(props.class, wSliderHandleClassName)}
+      class={cx(props.class, sSliderHandleClassName)}
       role="slider"
       aria-orientation={sliderContext.value().type}
       aria-valuemin={sliderAriaContext().valuemin}

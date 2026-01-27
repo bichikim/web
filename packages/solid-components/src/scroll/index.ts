@@ -1,18 +1,18 @@
-import {WScrollRoot} from './WScrollRoot'
-import {WScrollBody} from './WScrollBody'
-import {WScrollBar} from './WScrollBar'
-import {WScrollHandle} from '../scroll/WScrollHandle'
+import {SScrollRoot} from './SScrollRoot'
+import {SScrollBody} from './SScrollBody'
+import {SScrollBar} from './SScrollBar'
+import {SScrollHandle} from '../scroll/SScrollHandle'
 
-const WScroll = {
-  Bar: WScrollBar,
-  Body: WScrollBody,
-  Handle: WScrollHandle,
-  Root: WScrollRoot,
+const SScroll = {
+  Bar: SScrollBar,
+  Body: SScrollBody,
+  Handle: SScrollHandle,
+  Root: SScrollRoot,
 }
 
-export {WScroll}
+export {SScroll}
 
-export {type WScrollRootProps} from './WScrollRoot'
-export {type WScrollBodyProps} from './WScrollBody'
-export {type WScrollBarProps} from './WScrollBar'
-export {type WScrollHandleProps} from './WScrollHandle'
+export {type SScrollRootProps} from './SScrollRoot'
+export {type SScrollBodyProps} from './SScrollBody'
+export {type SScrollBarProps} from './SScrollBar'
+export {type SScrollHandleProps} from './SScrollHandle'

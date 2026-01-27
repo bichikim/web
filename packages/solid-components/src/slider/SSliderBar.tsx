@@ -3,9 +3,9 @@ import {Dynamic, DynamicProps} from 'solid-js/web'
 import {BAR_PERCENT} from '../css-var'
 import {useSliderContext} from './slider-context'
 
-export type WSliderBarProps<T extends ValidComponent> = DynamicProps<T>
+export type SSliderBarProps<T extends ValidComponent> = DynamicProps<T>
 
-export const WSliderBar = <T extends ValidComponent>(props: WSliderBarProps<T>) => {
+export const SSliderBar = <T extends ValidComponent>(props: SSliderBarProps<T>) => {
   const sliderContext = useSliderContext()
 
   const onClick = (event: MouseEvent) => {

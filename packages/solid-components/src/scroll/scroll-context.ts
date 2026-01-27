@@ -12,7 +12,7 @@ export interface ScrollState {
   scrollWidth: number
 }
 
-export interface WScrollContextProps {
+export interface SScrollContextProps {
   /**
    * move the scroll by a set amount and direction
    * @param type direction to be changed
@@ -24,10 +24,10 @@ export interface WScrollContextProps {
    */
   setScroll: (type: ScrollBarType, scrollPosition: number) => void
   setScrollBodyElement: Setter<HTMLElement | null>
-  value: Accessor<WScrollValue>
+  value: Accessor<SScrollValue>
 }
 
-export interface WScrollValue extends ScrollState {
+export interface SScrollValue extends ScrollState {
   id: string
   percentX: number
   percentY: number
@@ -35,9 +35,9 @@ export interface WScrollValue extends ScrollState {
   showYBar: boolean
 }
 
-export const ScrollContext = createContext<WScrollContextProps>()
+export const ScrollContext = createContext<SScrollContextProps>()
 
-export const useScrollContext = (): WScrollContextProps => {
+export const useScrollContext = (): SScrollContextProps => {
   const context = useContext(ScrollContext)
 
   if (context === undefined) {

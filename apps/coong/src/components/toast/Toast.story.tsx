@@ -7,14 +7,6 @@ import {createTimeout, ToastContext} from '@winter-love/solid-components'
 
 const uuid = createUuid()
 
-const meta = {
-  component: SToastProvider,
-  title: 'Coong/Components/SToast',
-} satisfies Meta<typeof SToastProvider>
-
-export default meta
-type Story = StoryObj<typeof meta>
-
 const DemoContent = () => {
   const {setMessage} = useContext(ToastContext)
 
@@ -118,10 +110,21 @@ const DemoContent = () => {
   )
 }
 
+const meta = {
+  component: DemoContent,
+  decorators: [
+    (Story) => (
+      <SToastProvider>
+        <Story />
+      </SToastProvider>
+    ),
+  ],
+  title: 'Coong/Components/SToast',
+} satisfies Meta<typeof DemoContent>
+
+export default meta
+type Story = StoryObj<typeof meta>
+
 export const Primary: Story = {
-  render: () => (
-    <SToastProvider>
-      <DemoContent />
-    </SToastProvider>
-  ),
+  render: () => <DemoContent />,
 }

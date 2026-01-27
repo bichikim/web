@@ -9,9 +9,9 @@ interface InnerProps {
   style?: StyleType
 }
 
-export type WScrollHandleProps<T extends ValidComponent> = InnerProps & DynamicProps<T>
+export type SScrollHandleProps<T extends ValidComponent> = InnerProps & DynamicProps<T>
 
-export const WScrollHandle = <T extends ValidComponent>(props: WScrollHandleProps<T>) => {
+export const SScrollHandle = <T extends ValidComponent>(props: SScrollHandleProps<T>) => {
   const scrollBar = useScrollBar()
   const [element, setElement] = createSignal<HTMLElement | null>(null)
   const scrollContext = useScrollContext()

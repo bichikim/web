@@ -1,14 +1,14 @@
 import {createMemo, createSignal} from 'solid-js'
 import {signUpAction} from 'src/requests/sign-up'
 import {useAction, useSubmission} from '@solidjs/router'
-import {useHRouterName} from 'src/components/anchor/HRouterName'
+import {useRouterName} from 'src/components/anchor/RouterNameProvider'
 import {useNameNavigate} from 'src/components/anchor/name-navigator'
 
 export const SignUp = () => {
   const signUpSubmission = useSubmission(signUpAction)
   const _signUpAction = useAction(signUpAction)
   const navigate = useNameNavigate()
-  const routerName = useHRouterName()
+  const routerName = useRouterName()
   const [email, setEmail] = createSignal('')
   const [password, setPassword] = createSignal('')
 

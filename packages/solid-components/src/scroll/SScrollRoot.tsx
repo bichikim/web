@@ -4,9 +4,9 @@ import {ScrollContext} from './scroll-context'
 import {useScrollState} from './scroll-state'
 import {ScrollBarType} from './types'
 
-export type WScrollRootProps<T extends ValidComponent> = DynamicProps<T>
+export type SScrollRootProps<T extends ValidComponent> = DynamicProps<T>
 
-export const WScrollRoot = <T extends ValidComponent>(props: WScrollRootProps<T>) => {
+export const SScrollRoot = <T extends ValidComponent>(props: SScrollRootProps<T>) => {
   const [scrollBodyElement, setScrollBodyElement] = createSignal<HTMLElement | null>(null)
   const nativeScrollState = useScrollState(scrollBodyElement)
   const scrollId = createUniqueId()

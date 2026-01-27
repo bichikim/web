@@ -12,9 +12,9 @@ type InnerProps = {
   thickness?: string
 }
 
-export type WScrollBarProps<T extends ValidComponent> = InnerProps & DynamicProps<T>
+export type SScrollBarProps<T extends ValidComponent> = InnerProps & DynamicProps<T>
 
-export const WScrollBar = <T extends ValidComponent>(props: WScrollBarProps<T>) => {
+export const SScrollBar = <T extends ValidComponent>(props: SScrollBarProps<T>) => {
   const defaultProps = mergeProps({barType: 'vertical' as const, component: 'div'}, props)
 
   const [innerProps, restProps] = splitProps(defaultProps, ['thickness', 'barType', 'style']) as unknown as [

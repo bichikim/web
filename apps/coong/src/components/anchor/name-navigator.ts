@@ -1,4 +1,4 @@
-import {useHRouterName} from './HRouterName'
+import {useRouterName} from './RouterNameProvider'
 import {type NavigateOptions, useNavigate} from '@solidjs/router'
 
 export interface NameNavigator {
@@ -7,7 +7,7 @@ export interface NameNavigator {
 }
 
 export const useNameNavigate = (): NameNavigator => {
-  const routerName = useHRouterName()
+  const routerName = useRouterName()
   const navigate = useNavigate()
 
   return (name: string | number, options?: Partial<NavigateOptions>) => {

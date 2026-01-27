@@ -1,13 +1,13 @@
-import {WSliderRoot} from './WSliderRoot'
-import {WSliderBar} from './WSliderBar'
-import {WSliderHandle} from './WSliderHandle'
+import {SSliderRoot} from './SSliderRoot'
+import {SSliderBar} from './SSliderBar'
+import {SSliderHandle} from './SSliderHandle'
 
-export const WSlider = {
-  Bar: WSliderBar,
-  Handle: WSliderHandle,
-  Root: WSliderRoot,
+export const SSlider = {
+  Bar: SSliderBar,
+  Handle: SSliderHandle,
+  Root: SSliderRoot,
 }
 
-export {type WSliderRootProps, WSliderRoot} from './WSliderRoot'
-export {type WSliderBarProps, WSliderBar} from './WSliderBar'
-export {type WSliderHandleProps, WSliderHandle} from './WSliderHandle'
+export {type SSliderRootProps, SSliderRoot} from './SSliderRoot'
+export {type SSliderBarProps, SSliderBar} from './SSliderBar'
+export {type SSliderHandleProps, SSliderHandle} from './SSliderHandle'

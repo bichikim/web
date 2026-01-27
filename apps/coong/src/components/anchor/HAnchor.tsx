@@ -1,6 +1,6 @@
 import {A, AnchorProps} from '@solidjs/router'
 import {createMemo, splitProps} from 'solid-js'
-import {useHRouterName} from './HRouterName'
+import {useRouterName} from './RouterNameProvider'
 
 export interface HAnchorProps extends Omit<AnchorProps, 'href'> {
   href?: string
@@ -8,7 +8,7 @@ export interface HAnchorProps extends Omit<AnchorProps, 'href'> {
 }
 
 export const HAnchor = (props: HAnchorProps) => {
-  const routerName = useHRouterName()
+  const routerName = useRouterName()
   const [innerProps, restProps] = splitProps(props, ['hrefName', 'href'])
 
   const href = createMemo(() => {
@@ -28,5 +28,5 @@ export const HAnchor = (props: HAnchorProps) => {
     return _href ?? ''
   })
 
-  return <A {...props} href={href()} />
+  return <A {...restProps} href={href()} />
 }
