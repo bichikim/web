@@ -1,4 +1,5 @@
 # Basic Structure
+
 ```tsx
 import {type JSX, splitProps, type ValidComponent} from 'solid-js'
 import {cva} from 'class-variance-authority'
@@ -44,4 +45,3 @@ export const Button = (props: ButtonProps) => {
 }
 
 ```
-

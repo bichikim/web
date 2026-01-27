@@ -1,6 +1,7 @@
 # Initial props with default values
 
 ## Example
+
 ```tsx
 import {createSignal, untrack} from 'solid-js'
 
@@ -25,4 +26,3 @@ const Counter = (props: CounterProps) => {
   )
 }
 ```
-

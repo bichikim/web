@@ -5,12 +5,14 @@ alwaysApply: false
 # Git commit rules
 
 ## Type
+
 - `update`: New feature or update feture
 - `docs`: Documentation changes
 - `refactor`: Code refactoring, test code or add Storybook
 - `chore`: Build process or package manager modifications, CI configuration changes
 
 ## Subject Rules
+
 - Keep it under 80 characters
 - Use present tense
 - Don't end with a period
@@ -18,6 +20,7 @@ alwaysApply: false
 - For long changes, use a list format with bullet points after the main subject
 
 ## Body Rules
+
 - Optional
 - Explain what and why vs. how
 - Wrap at 72 characters
@@ -25,18 +28,21 @@ alwaysApply: false
 - For multiple changes, use bullet points
 
 ## Important Guidelines
+
 - You must write commit messages in English
 - If changes are too many to fit in 80 characters, split into a list format
 
 ## Examples
 
 Short format:
-```
+
+```text
 update - add authentication component
 ```
 
 List format for multiple changes:
-```
+
+```text
 update - implement user authentication and profile features
 
 - Add OAuth2 login flow with Google and GitHub

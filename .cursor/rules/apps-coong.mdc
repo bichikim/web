@@ -7,18 +7,22 @@ alwaysApply: false
 Project path: apps/bplan-client
 
 ## Project Overview
+
 Coong Client is a Solid Start SSR application that follows a specific structure and conventions.
 
 ## Directory Structure
+
 See each folder’s `README.md` for a description of that folder.
 
 ## Coding Standards
 
 ### Component Structure
+
 - Components should be placed in `src/components/`
 - Each component should have its own directory with the following structure:
 - All components must be Solid.js components
-```
+
+```text
 component-name/
 ├── index.ts           # Export file for components, types, and hooks
 ├── Component1.tsx     # Component implementation
@@ -28,14 +32,17 @@ component-name/
 ```
 
 ### API Structure
+
 - All API requests must use SolidStart `query` or `action`; keep existing RESTful API calls only when already in place
 - Implement new server logic via SolidStart server functions (e.g. `query`/`action`); add `'use server'` inside the function when possible
 
 ### Routing
+
 - Routes are file-based in `src/routes/`
 - Implement proper error boundaries
 
 ### Type Safety
+
 - Use TypeScript strictly
 - Define interfaces for all data structures
 - Avoid `any` type usage
@@ -43,8 +50,10 @@ component-name/
 - Use proper type imports/exports
 
 ### Solid Reactivity Notes
+
 - Implement proper code splitting but never split Solidjs props
   - BAD (breaks reactivity by splitting props):
+
     ```tsx
     interface Props {
       count: number
@@ -55,7 +64,9 @@ component-name/
       return <div>{count}</div>
     }
     ```
+
   - GOOD (keep props reactive):
+
     ```tsx
     interface Props {
       count: number
@@ -65,7 +76,9 @@ component-name/
       return <div>{props.count}</div>
     }
     ```
+
   - If splitting is unavoidable, use Solid's `splitProps`:
+
     ```tsx
     import { splitProps } from "solid-js"
 
@@ -84,9 +97,9 @@ component-name/
     }
     ```
 
-
 - In Solid, `createEffect` cleanup must use `onCleanup(() => ...)` inside the effect (do not `return` a cleanup function)
   - BAD (do not `return` a cleanup function):
+
     ```tsx
     import { createEffect } from "solid-js"
 
@@ -99,7 +112,9 @@ component-name/
       return null
     }
     ```
+
   - GOOD (use `onCleanup` inside the effect):
+
     ```tsx
     import { createEffect, onCleanup } from "solid-js"
 
@@ -114,27 +129,33 @@ component-name/
     ```
 
 ### Environment Configuration
+
 - Follow the `.env.example` template
 - Document all environment variables
 
 ### Error Handling
+
 - Implement proper error boundaries
 - Use consistent error handling patterns
 
 ### Testing
+
 - Write unit tests for components
 - Write integration tests for API endpoints
 - Implement E2E tests for critical flows
 
 ### Build and Deployment
+
 - Use `pnpm` for package management
 - Follow semantic versioning
 - Document deployment procedures
 
 ## Deployment Environment
+
 - This project is deployed on Vercel
 
 ## Best Practices
+
 1. Follow functional programming principles
 2. Keep components small and focused
 3. Use proper TypeScript types
@@ -148,11 +169,13 @@ component-name/
 11. Keep dependencies up to date
 
 ## Security Guidelines
+
 1. Implement proper authentication
-3. Sanitize user inputs
-5. Follow security best practices
+2. Sanitize user inputs
+3. Follow security best practices
 
 ## Documentation
+
 - Document all components
 - Document API endpoints
 - Keep README up to date

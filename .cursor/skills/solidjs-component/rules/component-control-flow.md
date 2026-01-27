@@ -1,6 +1,7 @@
 # Control Flow
 
-# For (keyed list iteration )
+## For (keyed list iteration)
+
 ```tsx
 import {createSignal, For} from 'solid-js'
 
@@ -30,7 +31,8 @@ export const TodoList = () => {
 }
 
 ```
-# Index Non-keyed list iteration 
+
+## Index Non-keyed list iteration
 
 ```tsx
 import {createSignal, Index} from 'solid-js'

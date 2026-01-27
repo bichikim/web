@@ -3,6 +3,8 @@ name: Write Solid.js Component TSX
 description: How to write Solid.js component tsx files
 ---
 
+# Solidjs Component
+
 ## File naming rules
 
 See `rules/file-naming-rules.md`

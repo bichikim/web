@@ -3,13 +3,17 @@ name: Storybook skill for Solid.js
 description: Generates a Solid.js Storybook story file  (*.story.tsx).
 ---
 
+# Storybook skill for Solid.js
+
 ## File Placement
+
 - Co-locate stories with the component
 - Naming: `ComponentName.story.tsx`
 
 ## Examples
 
 ### Minimal Example
+
 ```tsx
 import type {Meta, StoryObj} from 'storybook-solidjs-vite'
 import {Button} from './Button'
@@ -48,5 +52,6 @@ export const Variants: Story = {args: {variant: 'secondary'}}
 See `examples/router-decorator.md`
 
 ## Testing + A11y
+
 - Include interactions for complex behaviors
 - Ensure accessibility coverage
