@@ -28,4 +28,4 @@
 
 ## Technologies under review
 
-https://www.triplit.dev/
+<https://www.triplit.dev/>
