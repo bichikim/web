@@ -151,20 +151,12 @@ const meta = {
   },
   args: {onClick: fn(), onDoubleClick: fn()},
   component: SButton,
+  tags: ['autodocs'],
   title: 'Coong/Components/SButton',
 } satisfies Meta<typeof SButton>
 
 export default meta
 type Story = StoryObj<typeof meta>
-
-export const OverrideClass: Story = {
-  args: {
-    children: 'primary button',
-    class: 'absolute left-20 top-20',
-    color: 'primary',
-    size: 'md',
-  },
-}
 
 export const PrimaryColor: Story = {
   args: {
@@ -178,6 +170,15 @@ export const SecondaryColor: Story = {
   args: {
     children: 'secondary button',
     color: 'secondary',
+    size: 'md',
+  },
+}
+
+export const OverrideClass: Story = {
+  args: {
+    children: 'primary button',
+    class: 'animate-bounce',
+    color: 'primary',
     size: 'md',
   },
 }
