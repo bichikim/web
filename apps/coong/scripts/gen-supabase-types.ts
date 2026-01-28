@@ -23,5 +23,9 @@ try {
     console.info(`✅ Types generated successfully at ${outputPath}`)
   }
 } catch (error) {
-  throw new Error(`Error generating types: ${(error as Error)?.message}`)
+  // eslint-disable-next-line no-console
+  console.error(`❌ Error generating types: ${(error as Error)?.message}`)
+  // skip error
+  // eslint-disable-next-line n/no-process-exit, unicorn/no-process-exit
+  process.exit(0)
 }
