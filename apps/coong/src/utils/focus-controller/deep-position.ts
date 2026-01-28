@@ -1,4 +1,3 @@
-import {StringToNumber} from 'lodash'
 import {type Direction, type DirectionName, getDirection} from './direction'
 import {safeToNumber} from './safe-to-number'
 
