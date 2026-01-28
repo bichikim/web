@@ -493,7 +493,6 @@ export default [
       '**/*.md',
       '**/*.d.ts',
       'apps/server/src/prisma/type-graphql/**/*',
-      'packages/lodash/src/lodash/**/*',
       '**/__generated__/**/*',
       'docs/.vitepress/cache/**/*',
       'apps/coong-client/android/**/*',

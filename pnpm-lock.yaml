@@ -7,7 +7,6 @@ settings:
 overrides:
   '@unocss/core@<65.4.0': 65.4.0
   '@winter-love/eslint-config': workspace:*
-  '@winter-love/lodash': workspace:*
   '@winter-love/solid': workspace:*
   '@winter-love/solid-components': workspace:*
   '@winter-love/solid-test': workspace:*
@@ -31,7 +30,6 @@ overrides:
   glob-parent@<5.1.2: 5.1.2
   immer@<9.0.6: 9.0.6
   json5@<1.0.2: 1.0.2
-  lodash@<4.17.21: 4.17.21
   minimist@<1.2.6: 1.2.6
   moment@<2.29.2: 2.29.2
   node-fetch@<2.6.7: 2.6.7
@@ -97,9 +95,6 @@ importers:
       '@turbo/gen':
         specifier: ^2.3.3
         version: 2.6.1(@types/node@20.11.18)(typescript@5.9.3)
-      '@types/lodash':
-        specifier: ^4.17.14
-        version: 4.17.21
       '@types/node':
         specifier: 20.11.18
         version: 20.11.18
@@ -154,9 +149,6 @@ importers:
       lerna:
         specifier: ^8.1.9
         version: 8.2.4(@types/node@20.11.18)(encoding@0.1.13)
-      lodash:
-        specifier: ^4.17.21
-        version: 4.17.21
       loki:
         specifier: ^0.35.1
         version: 0.35.1(@types/react@19.2.7)
@@ -305,6 +297,9 @@ importers:
       '@lottiefiles/dotlottie-web':
         specifier: ^0.58.1
         version: 0.58.1
+      '@solid-primitives/resource':
+        specifier: ^0.4.3
+        version: 0.4.3(solid-js@1.9.10)
       '@solidjs/meta':
         specifier: ^0.29.4
         version: 0.29.4(solid-js@1.9.10)
@@ -683,21 +678,12 @@ importers:
 
   packages/sw:
     dependencies:
-      '@winter-love/utils':
-        specifier: workspace:*
-        version: link:../utils
       commander:
         specifier: ^13.0.0
         version: 13.1.0
-      core-js:
-        specifier: ^3.42.0
-        version: 3.47.0
       glob:
         specifier: ^11.0.1
         version: 11.1.0
-      solid-js:
-        specifier: ^1.9.3
-        version: 1.9.10
     devDependencies:
       '@babel/preset-env':
         specifier: ^7.26.0
@@ -880,9 +866,9 @@ importers:
       dotenv:
         specifier: latest
         version: 17.2.3
-      lodash:
-        specifier: 4.17.21
-        version: 4.17.21
+      es-toolkit:
+        specifier: ^1.44.0
+        version: 1.44.0
       vite:
         specifier: ^6
         version: 6.4.1(@types/node@25.0.3)(jiti@2.6.1)(terser@5.44.1)(yaml@2.8.1)
@@ -3506,6 +3492,11 @@ packages:
     peerDependencies:
       solid-js: ^1.6.12
 
+  '@solid-primitives/resource@0.4.3':
+    resolution: {integrity: sha512-bu9z9yORJLZPJzrPSuL+yfhq/8WFWNI4EPTz2j9NeMym1WlZFGH0j0hGULRJY3/1PeQeWayEc0bM+X/8ICHVBQ==}
+    peerDependencies:
+      solid-js: ^1.6.0
+
   '@solid-primitives/rootless@1.5.2':
     resolution: {integrity: sha512-9HULb0QAzL2r47CCad0M+NKFtQ+LrGGNHZfteX/ThdGvKIg2o2GYhBooZubTCd/RTu2l2+Nw4s+dEfiDGvdrrQ==}
     peerDependencies:
@@ -3870,9 +3861,6 @@ packages:
 
   '@types/json-schema@7.0.15':
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
-
-  '@types/lodash@4.17.21':
-    resolution: {integrity: sha512-FOvQ0YPD5NOfPgMzJihoT+Za5pdkDJWcbpuj1DjaKZIr/gxodQjY/uWEFlTNqW2ugXHUiL8lRQgw63dzKHZdeQ==}
 
   '@types/mdast@4.0.4':
     resolution: {integrity: sha512-kGaNbPh1k7AFzgpud/gMdvIm5xuECykRR+JnWKQno9TAXVa6WIVCGTPvYGekIDL4uwCZQSYbUxNBSb1aUo79oA==}
@@ -6036,6 +6024,9 @@ packages:
 
   es-toolkit@1.43.0:
     resolution: {integrity: sha512-SKCT8AsWvYzBBuUqMk4NPwFlSdqLpJwmy6AP322ERn8W2YLIB6JBXnwMI2Qsh2gfphT3q7EKAxKb23cvFHFwKA==}
+
+  es-toolkit@1.44.0:
+    resolution: {integrity: sha512-6penXeZalaV88MM3cGkFZZfOoLGWshWWfdy0tWw/RlVVyhvMaWSBTOvXNeiW3e5FwdS5ePW0LGEu17zT139ktg==}
 
   esbuild-register@3.6.0:
     resolution: {integrity: sha512-H2/S7Pm8a9CL1uhp9OvjwrBh5Pvx0H8qVOxNu8Wed9Y7qv56MPtq+GGM8RJpq6glYJn9Wspr8uw7l55uyinNeg==}
@@ -13489,6 +13480,10 @@ snapshots:
       '@solid-primitives/utils': 6.3.2(solid-js@1.9.10)
       solid-js: 1.9.10
 
+  '@solid-primitives/resource@0.4.3(solid-js@1.9.10)':
+    dependencies:
+      solid-js: 1.9.10
+
   '@solid-primitives/rootless@1.5.2(solid-js@1.9.10)':
     dependencies:
       '@solid-primitives/utils': 6.3.2(solid-js@1.9.10)
@@ -14030,8 +14025,6 @@ snapshots:
   '@types/js-cookie@3.0.6': {}
 
   '@types/json-schema@7.0.15': {}
-
-  '@types/lodash@4.17.21': {}
 
   '@types/mdast@4.0.4':
     dependencies:
@@ -16511,6 +16504,8 @@ snapshots:
   es-toolkit@1.42.0: {}
 
   es-toolkit@1.43.0: {}
+
+  es-toolkit@1.44.0: {}
 
   esbuild-register@3.6.0(esbuild@0.25.12):
     dependencies:

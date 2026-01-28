@@ -1,4 +1,4 @@
-import lodash from 'lodash'
+import {camelCase} from 'es-toolkit/compat'
 import {readFileSync} from 'node:fs'
 import path from 'node:path'
 import {defineConfig} from 'vite'
@@ -48,7 +48,7 @@ export const createConfig = ({
             ...newEntry,
           },
           formats: ['es', 'cjs'],
-          name: lodash.camelCase(name),
+          name: camelCase(name),
         },
         rollupOptions: {
           external: [...depsKey, ...external],
