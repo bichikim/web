@@ -1,7 +1,7 @@
 import {useAuth} from 'src/store/auth'
 import {createMemo, Show} from 'solid-js'
 import {RouteDefinition, useAction} from '@solidjs/router'
-import {updateUserMetadataAction} from 'src/requests/update-user-metadata'
+import {updateUserMetadataAction} from 'src/requests/auth/update-user-metadata'
 import {HAnchor} from 'src/components/anchor/HAnchor'
 
 export const route = {
