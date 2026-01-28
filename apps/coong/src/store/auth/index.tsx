@@ -1,13 +1,13 @@
 import {Accessor, createContext, createMemo, type JSX, useContext} from 'solid-js'
 import type {User} from '@supabase/supabase-js'
-import {userQuery} from 'src/requests/user'
-import {signInAction} from 'src/requests/sign-in'
-import {signOutAction} from 'src/requests/sign-out'
-import {changePasswordAction} from 'src/requests/change-password'
-import {resetPasswordAction} from 'src/requests/reset-password'
+import {userQuery} from 'src/requests/auth/user'
+import {signInAction} from 'src/requests/auth/sign-in'
+import {signOutAction} from 'src/requests/auth/sign-out'
+import {changePasswordAction} from 'src/requests/auth/change-password'
+import {resetPasswordAction} from 'src/requests/auth/reset-password'
 import {useAction, useSubmission} from '@solidjs/router'
 import {withHandyQuery} from 'src/use/handy-query'
-import {exchangeCodeForSectionAction} from 'src/requests/exchange-code-for-section'
+import {exchangeCodeForSectionAction} from 'src/requests/auth/exchange-code-for-section'
 
 const AuthContext = createContext<{
   changePassword(newPassword: string): Promise<User | null>
@@ -64,17 +64,26 @@ export function AuthProvider(props: AuthProviderProps) {
   const resetPasswordError = createMemo(() => resetPasswordSubmission.error)
   const exchangeCodeForSectionError = createMemo(() => exchangeCodeForSectionSubmission.error)
 
+  /**
+   * Sign in with email and password
+   */
   const signInWithPassword = async (email: string, password: string) => {
     await signInActionSubmit({email, password})
     await userQuery.refetch()
   }
 
+  /**
+   * Sign out
+   */
   const signOut = async () => {
     await signOutActionSubmit()
     await userQuery.refetch()
   }
 
-  const _exchangeCodeForSection = async (code: string) => {
+  /**
+   * Exchange code for section
+   */
+  const exchangeCodeForSection = async (code: string) => {
     const data = await exchangeCodeForSectionSubmit(code)
 
     await userQuery.refetch()
@@ -97,7 +106,7 @@ export function AuthProvider(props: AuthProviderProps) {
       value={{
         changePassword,
         changePasswordError,
-        exchangeCodeForSection: _exchangeCodeForSection,
+        exchangeCodeForSection,
         exchangeCodeForSectionError,
         loading,
         resetPassword,
