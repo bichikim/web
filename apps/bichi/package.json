@@ -24,6 +24,7 @@
     "cross-env": "^10.1.0",
     "lottie-web": "^5.13.0",
     "solid-js": "^1.9.9",
+    "three": "^0.129.0",
     "ufo": "^1.6.1",
     "unocss": "^66.5.9",
     "vinxi": "^0.5.3",
@@ -33,6 +34,7 @@
   "devDependencies": {
     "@iconify-json/hugeicons": "^1.2.3",
     "@iconify-json/tabler": "^1.2.13",
+    "@types/three": "^0.182.0",
     "@winter-love/vite-lib-config": "workspace:*",
     "solid-devtools": "^0.34.4",
     "typescript": "^5.9.3",
