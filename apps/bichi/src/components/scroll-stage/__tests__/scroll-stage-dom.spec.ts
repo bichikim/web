@@ -1,5 +1,4 @@
 import {beforeEach, describe, expect, it} from 'vitest'
-
 import {
   applyScrollDomTransforms,
   attachCanvasToBody,
@@ -18,10 +17,11 @@ describe('scroll-stage-dom', () => {
   it('finds scroll stage elements', () => {
     const content = document.createElement('div')
     const scrollContent = document.createElement('div')
+
     scrollContent.className = 'scroll__content'
     const lineElement = document.createElement('div')
-    lineElement.className = 'layout__line'
 
+    lineElement.className = 'layout__line'
     content.append(scrollContent, lineElement)
 
     const elements = getScrollStageElements(content)
@@ -34,6 +34,7 @@ describe('scroll-stage-dom', () => {
   it('returns null when required elements are missing', () => {
     const content = document.createElement('div')
     const scrollContent = document.createElement('div')
+
     scrollContent.className = 'scroll__content'
     content.append(scrollContent)
 
@@ -46,7 +47,6 @@ describe('scroll-stage-dom', () => {
     const lineElement = document.createElement('div')
 
     initializeLineElement(lineElement)
-
     expect(lineElement.style.transformOrigin).toBe('left')
   })
 
@@ -54,8 +54,7 @@ describe('scroll-stage-dom', () => {
     const scrollContentElement = document.createElement('div')
     const lineElement = document.createElement('div')
 
-    applyScrollDomTransforms({scrollContentElement, lineElement}, 120, 0.4)
-
+    applyScrollDomTransforms({lineElement, scrollContentElement}, 120, 0.4)
     expect(scrollContentElement.style.transform).toBe('translateY(-120px)')
     expect(lineElement.style.transform).toBe('scaleX(0.4)')
   })
@@ -70,7 +69,6 @@ describe('scroll-stage-dom', () => {
 
     attachCanvasToBody(canvas)
     expect(document.body.firstChild).toBe(canvas)
-
     removeCanvasFromBody(canvas)
     expect(document.body.contains(canvas)).toBe(false)
   })

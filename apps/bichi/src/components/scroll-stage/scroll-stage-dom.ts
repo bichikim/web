@@ -1,6 +1,6 @@
 export interface ScrollStageElements {
-  scrollContentElement: HTMLElement
   lineElement: HTMLElement
+  scrollContentElement: HTMLElement
 }
 
 export function getScrollStageElements(contentElement: HTMLElement): ScrollStageElements | null {

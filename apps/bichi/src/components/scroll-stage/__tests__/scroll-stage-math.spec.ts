@@ -1,5 +1,4 @@
 import {describe, expect, it} from 'vitest'
-
 import {clamp, lerp} from '../scroll-stage-math'
 
 describe('scroll-stage-math', () => {

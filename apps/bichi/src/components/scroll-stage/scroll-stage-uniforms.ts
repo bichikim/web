@@ -1,5 +1,4 @@
 import * as THREE from 'three'
-
 import {lerp} from './scroll-stage-math'
 import {EASE_MULTIPLIER, SETTINGS, type UniformKey} from './scroll-stage-settings'
 
@@ -39,6 +38,7 @@ export function createUniformAnimator(material: THREE.ShaderMaterial, ease: numb
     for (const key of Object.keys(SETTINGS) as UniformKey[]) {
       const setting = SETTINGS[key]
       const target = setting.start + normalized * (setting.end - setting.start)
+
       values[key] = lerp(values[key], target, ease * EASE_MULTIPLIER)
       material.uniforms[key].value = values[key]
     }

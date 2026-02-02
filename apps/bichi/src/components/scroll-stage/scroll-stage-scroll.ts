@@ -22,8 +22,8 @@ export interface ScrollState {
 
 export interface ScrollStateOptions {
   ease?: number
-  softThreshold?: number
   setBodyHeight?: (height: number) => void
+  softThreshold?: number
 }
 
 export interface ScrollStateController {
@@ -39,6 +39,7 @@ export function createScrollState(
   options: ScrollStateOptions = {},
 ): ScrollStateController {
   let viewport: Viewport = {height: window.innerHeight, width: window.innerWidth}
+
   const state: ScrollState = {
     metrics: {hard: 0, height: 0, limit: 0, normalized: 0, soft: 0},
     running: false,
@@ -59,7 +60,8 @@ export function createScrollState(
   }
 
   const updatePosition = (scrollY: number) => {
-    const metrics = state.metrics
+    const {metrics} = state
+
     metrics.hard = clamp(0, metrics.limit, scrollY)
     metrics.soft = lerp(metrics.soft, metrics.hard, ease)
 
@@ -73,6 +75,7 @@ export function createScrollState(
   const onScroll = () => {
     if (!state.running) {
       state.running = true
+
       requestAnimationFrame(() => {
         state.running = false
       })

@@ -1,5 +1,4 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest'
-
 import {createWebglStage} from '../scroll-stage-webgl'
 import {MOBILE_SCALE} from '../scroll-stage-settings'
 
@@ -16,8 +15,6 @@ vi.mock('three', () => {
     setSize = vi.fn()
     forceContextLoss = vi.fn()
     dispose = vi.fn()
-
-    constructor() {}
   }
 
   class PerspectiveCamera {
@@ -46,13 +43,9 @@ vi.mock('three', () => {
   class Mesh {
     rotation = {x: 0, y: 0}
     scale = {set: vi.fn()}
-
-    constructor() {}
   }
 
-  class Color {
-    constructor() {}
-  }
+  class Color {}
 
   class Clock {
     getElapsedTime = vi.fn(() => 0)
@@ -90,7 +83,6 @@ describe('scroll-stage-webgl', () => {
     const updateProjectionMatrix = stage.camera.updateProjectionMatrix as unknown as ReturnType<typeof vi.fn>
 
     stage.resize({height: 500, width: 1000})
-
     expect(setSize).toHaveBeenCalledWith(1000, 500)
     expect(setPixelRatio).toHaveBeenCalled()
     expect(updateProjectionMatrix).toHaveBeenCalled()
@@ -103,7 +95,6 @@ describe('scroll-stage-webgl', () => {
 
     stage.updateScale({height: 700, width: 320})
     stage.updateScale({height: 600, width: 900})
-
     expect(scaleSet).toHaveBeenNthCalledWith(1, MOBILE_SCALE, MOBILE_SCALE, MOBILE_SCALE)
     expect(scaleSet).toHaveBeenNthCalledWith(2, 1, 1, 1)
   })
@@ -116,7 +107,6 @@ describe('scroll-stage-webgl', () => {
     const disposeRenderer = stage.renderer.dispose as unknown as ReturnType<typeof vi.fn>
 
     stage.dispose()
-
     expect(disposeGeometry).toHaveBeenCalled()
     expect(disposeMaterial).toHaveBeenCalled()
     expect(forceContextLoss).toHaveBeenCalled()

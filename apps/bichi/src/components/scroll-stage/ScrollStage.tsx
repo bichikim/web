@@ -34,9 +34,11 @@ export function ScrollStage(props: ScrollStageProps) {
 
     let viewport: Viewport = {height: window.innerHeight, width: window.innerWidth}
     const scrollState = createScrollState(elements.scrollContentElement, {ease: EASE})
+
     scrollState.setViewport(viewport)
 
     const stage = createWebglStage(viewport)
+
     attachCanvasToBody(stage.canvas)
 
     const uniformAnimator = createUniformAnimator(stage.material, EASE)
@@ -68,7 +70,7 @@ export function ScrollStage(props: ScrollStageProps) {
       stage.resize(viewport)
     }
 
-    const onScroll = scrollState.onScroll
+    const {onScroll} = scrollState
 
     scrollState.updateSizes()
     onResize()

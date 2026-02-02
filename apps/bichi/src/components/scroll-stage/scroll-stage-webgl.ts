@@ -1,5 +1,4 @@
 import * as THREE from 'three'
-
 import fragmentShader from '../../shaders/fragment.glsl?raw'
 import vertexShader from '../../shaders/vertex.glsl?raw'
 import {
@@ -18,19 +17,20 @@ export interface WebglStage {
   camera: THREE.PerspectiveCamera
   canvas: HTMLCanvasElement
   clock: THREE.Clock
+  dispose: () => void
   geometry: THREE.IcosahedronGeometry
   material: THREE.ShaderMaterial
   mesh: THREE.Mesh
-  renderer: THREE.WebGLRenderer
-  scene: THREE.Scene
-  dispose: () => void
   render: () => void
+  renderer: THREE.WebGLRenderer
   resize: (viewport: Viewport) => void
+  scene: THREE.Scene
   updateScale: (viewport: Viewport) => void
 }
 
 export function createWebglStage(viewport: Viewport): WebglStage {
   const scene = new THREE.Scene()
+
   scene.background = new THREE.Color(0x00_00_00)
   const renderer = new THREE.WebGLRenderer({alpha: true, antialias: true})
   const canvas = renderer.domElement
@@ -73,6 +73,7 @@ export function createWebglStage(viewport: Viewport): WebglStage {
   const updateScale = (nextViewport: Viewport) => {
     if (nextViewport.width < nextViewport.height) {
       mesh.scale.set(MOBILE_SCALE, MOBILE_SCALE, MOBILE_SCALE)
+
       return
     }
 
@@ -86,5 +87,5 @@ export function createWebglStage(viewport: Viewport): WebglStage {
     renderer.dispose()
   }
 
-  return {camera, canvas, clock, geometry, material, mesh, renderer, scene, dispose, render, resize, updateScale}
+  return {camera, canvas, clock, dispose, geometry, material, mesh, render, renderer, resize, scene, updateScale}
 }

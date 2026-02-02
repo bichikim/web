@@ -1,7 +1,5 @@
 import {describe, expect, it} from 'vitest'
-
 import type {ShaderMaterial} from 'three'
-
 import {createMaterialUniforms, createUniformAnimator, createUniformValues} from '../scroll-stage-uniforms'
 
 describe('scroll-stage-uniforms', () => {
@@ -34,7 +32,6 @@ describe('scroll-stage-uniforms', () => {
     const animator = createUniformAnimator(material, 0.5)
 
     animator.update(1)
-
     expect(animator.values.uFrequency).toBe(4)
     expect(animator.values.uDeepPurple).toBe(0)
     expect(animator.values.uOpacity).toBe(0.66)
