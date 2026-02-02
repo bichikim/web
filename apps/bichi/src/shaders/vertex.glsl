@@ -27,7 +27,7 @@ vec4 permute(vec4 x)
 
 vec4 taylorInvSqrt(vec4 r)
 {
-  return 1.79284291400159 - 0.85373472095314 * r;
+  return 1.79284291400159 - 0.8537347209514 * r;
 }
 
 vec3 fade(vec3 t) {
@@ -128,6 +128,8 @@ uniform float uDensity;
 uniform float uStrength;
 
 varying float vDistortion;
+varying vec3 vNormal;
+varying vec3 vWorldPosition;
 
 void main() {
   float distortion = pnoise(normal * uDensity, vec3(10.)) * uStrength;
@@ -137,6 +139,8 @@ void main() {
   pos = rotateY(pos, angle);
 
   vDistortion = distortion;
+  vNormal = normalize(normalMatrix * normal);
+  vWorldPosition = (modelMatrix * vec4(pos, 1.)).xyz;
 
   gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.);
 }

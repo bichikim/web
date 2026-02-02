@@ -9,26 +9,28 @@ export interface UniformAnimator {
 
 export interface UniformValues extends Record<UniformKey, number> {}
 
-export function createMaterialUniforms(): Record<UniformKey, THREE.IUniform<number>> {
-  return {
-    uAmplitude: {value: SETTINGS.uAmplitude.start},
-    uDeepPurple: {value: SETTINGS.uDeepPurple.start},
-    uDensity: {value: SETTINGS.uDensity.start},
-    uFrequency: {value: SETTINGS.uFrequency.start},
-    uOpacity: {value: SETTINGS.uOpacity.start},
-    uStrength: {value: SETTINGS.uStrength.start},
+export interface TimeUniform {
+  value: number
+}
+
+export function createMaterialUniforms(): Record<UniformKey, THREE.IUniform<number>> & {uTime: TimeUniform} {
+  const uniforms = {} as Record<UniformKey, THREE.IUniform<number>>
+
+  for (const key of Object.keys(SETTINGS) as UniformKey[]) {
+    uniforms[key] = {value: SETTINGS[key].start}
   }
+
+  return {...uniforms, uTime: {value: 0}}
 }
 
 export function createUniformValues(): UniformValues {
-  return {
-    uAmplitude: SETTINGS.uAmplitude.start,
-    uDeepPurple: SETTINGS.uDeepPurple.start,
-    uDensity: SETTINGS.uDensity.start,
-    uFrequency: SETTINGS.uFrequency.start,
-    uOpacity: SETTINGS.uOpacity.start,
-    uStrength: SETTINGS.uStrength.start,
+  const values = {} as UniformValues
+
+  for (const key of Object.keys(SETTINGS) as UniformKey[]) {
+    values[key] = SETTINGS[key].start
   }
+
+  return values
 }
 
 export function createUniformAnimator(material: THREE.ShaderMaterial, ease: number): UniformAnimator {

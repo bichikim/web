@@ -19,7 +19,12 @@ export default createHandler(() => (
           <link rel="manifest" href="/manifest.json" />
           {assets}
         </head>
-        <body>
+        <body
+          style={{
+            minHeight: '100vh',
+            background: 'linear-gradient(to bottom, #f1f5f9 0%, #e0e7ff 100%)',
+          }}
+        >
           <div id="root">{children}</div>
           {scripts}
         </body>

@@ -1,7 +1,6 @@
-import {lazy, Show, Suspense} from 'solid-js'
-import {isServer} from 'solid-js/web'
+import {clientOnly} from '@solidjs/start'
 
-const ScrollStage = lazy(() =>
+const ScrollStage = clientOnly(() =>
   import('../../components/scroll-stage/ScrollStage').then((m) => ({
     default: m.ScrollStage,
   })),
@@ -18,7 +17,7 @@ export default function HomePage() {
           contentRef = element
         }}
       >
-        <div class="scroll__content text-white">
+        <div class="scroll__content text-slate-900">
           <section class="section min-h-screen flex flex-col justify-center px-8 py-24">
             <span class="section__title-number text-6xl font-bold opacity-60">01</span>
             <h2 class="section__title-text mt-2 text-4xl font-bold">Logma</h2>
@@ -34,7 +33,7 @@ export default function HomePage() {
               href="#"
               class={
                 'section__button mt-8 inline-block rounded-full border-2 ' +
-                'border-current px-6 py-3 font-medium transition hover:bg-white hover:text-black'
+                'border-current px-6 py-3 font-medium transition hover:bg-slate-900 hover:text-white'
               }
             >
               Discover
@@ -56,7 +55,7 @@ export default function HomePage() {
               href="#"
               class={
                 'section__button mt-8 inline-block rounded-full border-2 ' +
-                'border-current px-6 py-3 font-medium transition hover:bg-white hover:text-black'
+                'border-current px-6 py-3 font-medium transition hover:bg-slate-900 hover:text-white'
               }
             >
               Discover
@@ -77,7 +76,7 @@ export default function HomePage() {
               href="#"
               class={
                 'section__button mt-8 inline-block rounded-full border-2 ' +
-                'border-current px-6 py-3 font-medium transition hover:bg-white hover:text-black'
+                'border-current px-6 py-3 font-medium transition hover:bg-slate-900 hover:text-white'
               }
             >
               Discover
@@ -86,16 +85,12 @@ export default function HomePage() {
         </div>
 
         <div
-          class="layout__line fixed left-0 top-0 h-1 w-full origin-left bg-white"
+          class="layout__line fixed left-0 top-0 h-1 w-full origin-left bg-slate-900"
           style={{'transform-origin': 'left'}}
         />
       </div>
 
-      <Show when={!isServer}>
-        <Suspense fallback={null}>
-          <ScrollStage contentRef={() => contentRef} />
-        </Suspense>
-      </Show>
+      <ScrollStage contentRef={() => contentRef} fallback={null} />
     </>
   )
 }
