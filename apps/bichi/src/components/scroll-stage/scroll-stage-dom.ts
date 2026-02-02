@@ -32,7 +32,7 @@ const SECTION_TITLE_SELECTOR = '.section__title-text'
 
 /**
  * Returns the title of the section whose center is closest to the viewport center.
- * Used to drive the 3D text behind the glass (Logma, Naos, Chara, etc.).
+ * Used to drive the 3D text behind the glass (About, Work, Contact, etc.).
  */
 export function getCenteredSectionTitle(scrollContentElement: HTMLElement): string {
   const sections = scrollContentElement.querySelectorAll<HTMLElement>('.section')
@@ -58,7 +58,8 @@ export function getCenteredSectionTitle(scrollContentElement: HTMLElement): stri
 
     if (distance < closestDistance) {
       closestDistance = distance
-      closestTitle = (titleEl.textContent ?? '').trim() || DEFAULT_STAGE_TITLE
+      closestTitle =
+      (titleEl.dataset.sectionTitle ?? (titleEl.textContent ?? '').trim()) || DEFAULT_STAGE_TITLE
     }
   }
 

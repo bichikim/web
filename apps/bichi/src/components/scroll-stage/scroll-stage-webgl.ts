@@ -141,7 +141,7 @@ function createParticles(THREE: typeof import('three')): {
  * Creates a 3D plane with text drawn via canvas texture (no FontLoader).
  * Positioned behind the glass mesh for refraction verification.
  * Text uses a linear gradient (slate → indigo → violet) for CD-like iridescence.
- * updateText() redraws the canvas so the 3D text can switch to section titles (Logma, Naos, Chara).
+ * updateText() redraws the canvas so the 3D text can switch to section titles (About, Work, Contact).
  */
 function createTextPlane(THREE: typeof import('three')): TextMeshRef | null {
   const canvas = document.createElement('canvas')
