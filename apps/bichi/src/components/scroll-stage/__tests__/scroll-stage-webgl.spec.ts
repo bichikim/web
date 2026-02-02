@@ -73,7 +73,7 @@ describe('scroll-stage-webgl', () => {
     const stage = createWebglStage({height: 600, width: 800})
 
     expect(stage.canvas.classList.contains('webgl')).toBe(true)
-    expect(stage.canvas.style.cssText).toContain('position:fixed')
+    expect(stage.canvas.style.cssText).toContain('position: fixed')
   })
 
   it('resizes renderer and camera', () => {
