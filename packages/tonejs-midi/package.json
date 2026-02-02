@@ -35,7 +35,7 @@
     "@tonejs/midi": "^2.0.28",
     "@types/node": "^24.9.1",
     "@winter-love/vite-lib-config": "workspace:*",
-    "vite": "^6.3.5"
+    "vite": "^7.0.8"
   },
   "publishConfig": {
     "access": "public"
