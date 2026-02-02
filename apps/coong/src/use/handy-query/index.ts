@@ -15,6 +15,11 @@ export interface HandyQueryOptions<TData> {
   name?: string
 }
 
+/**
+ *
+ * @example
+ * const useUserQuery = withHandyQuery(userQuery)
+ */
 export const withHandyQuery = <T extends (...args: any) => any>(query: CachedFunction<T>) => {
   type TArgs = Parameters<typeof query>
   type TData = Awaited<ReturnType<typeof query>>
@@ -40,6 +45,13 @@ export const withHandyQuery = <T extends (...args: any) => any>(query: CachedFun
     }
   }
 
+  /**
+   * @example
+   * const {data, loading, refetch} = useHandyQuery({deferStream: true, initialValue: null})
+   * const {data, loading, refetch} = useHandyQuery(args)
+   * const {data, loading, refetch} = useHandyQuery(args, {deferStream: true, initialValue: null})
+   * const {data, loading, refetch} = useHandyQuery(args, {deferStream: true, initialValue: null})
+   */
   function useHandyQuery(): HandyQueryResult<TData>
   function useHandyQuery(options: HandyQueryOptions<TData>): HandyQueryResult<TData>
   function useHandyQuery(
@@ -58,6 +70,7 @@ export const withHandyQuery = <T extends (...args: any) => any>(query: CachedFun
 
     const argsAccessor = resolveAccessor(args)
 
+    // todo createAsync 와 createResource 가 cleanup 이 되는지 확인해 보자
     const data = createAsync(
       async () => {
         const args = toArray(argsAccessor())

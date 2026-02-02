@@ -20,7 +20,7 @@ export default defineConfig({
   },
   webServer: USE_E2E_SERVER
     ? {
-        command: 'pnpm run dev:e2e',
+        command: 'vinxi dev --port 22222 --mode e2e',
         reuseExistingServer: !process.env.CI,
         stdout: 'pipe',
         timeout: TEN_SECONDS,
