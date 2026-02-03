@@ -42,7 +42,7 @@
     "preview": "vite build -c vite.preview.config.mts"
   },
   "dependencies": {
-    "vite": "^6.3.5"
+    "vite": "^7.0.8"
   },
   "devDependencies": {
     "@types/node": "^22.10.1",
