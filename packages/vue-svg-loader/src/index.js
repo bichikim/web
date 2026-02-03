@@ -6,13 +6,14 @@ const {getOptions} = require('loader-utils')
 module.exports = function vueSvgLoader(svg) {
   const {svgo: svgoConfig} = getOptions(this) || {}
 
+  let content = svg
   if (svgoConfig !== false) {
     const {data} = optimize(svg, {
       path: this.resourcePath,
       ...svgoConfig,
     })
-    svg = data
+    content = data
   }
 
-  return `<template>${svg}</template>`
+  return `<template>${content}</template>`
 }
