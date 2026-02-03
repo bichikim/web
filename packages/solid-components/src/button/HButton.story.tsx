@@ -1,6 +1,6 @@
 import {HButton} from './'
 import {Meta, StoryObj} from 'storybook-solidjs-vite'
-import {expect, fireEvent, fn, within} from '@storybook/test'
+import {expect, fireEvent, fn, within} from 'storybook/test'
 
 const defaultButtonClass = `:uno:
 inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 font-semibold text-white

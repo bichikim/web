@@ -1,7 +1,7 @@
 import type {Meta, StoryObj} from 'storybook-solidjs-vite'
 import {useContext} from 'solid-js'
 import {createUuid} from '@winter-love/utils'
-import {fn} from '@storybook/test'
+import {fn} from 'storybook/test'
 import {SToastProvider} from './SToastProvider'
 import {createTimeout, ToastContext} from '@winter-love/solid-components'
 

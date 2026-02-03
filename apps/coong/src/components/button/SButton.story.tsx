@@ -1,5 +1,5 @@
 import type {Meta, StoryObj} from 'storybook-solidjs-vite'
-import {fn} from '@storybook/test'
+import {fn} from 'storybook/test'
 import {SButton} from './SButton'
 import {createEffect, createSignal, onCleanup} from 'solid-js'
 

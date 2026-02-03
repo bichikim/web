@@ -1,5 +1,5 @@
 import type {Meta, StoryObj} from 'storybook-solidjs-vite'
-import {fn} from '@storybook/test'
+import {fn} from 'storybook/test'
 import {SFileItem} from './SFileItem'
 
 const meta = {

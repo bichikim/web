@@ -1,6 +1,7 @@
-import {defineWorkspace} from 'vitest/config'
+import type {TestProjectConfiguration} from 'vitest/config'
 
 /**
  * Workspace is resolved in the loop
  */
-export default defineWorkspace(['./vitest.config.mts'])
+const workspace: TestProjectConfiguration[] = ['./vitest.config.mts']
+export default workspace

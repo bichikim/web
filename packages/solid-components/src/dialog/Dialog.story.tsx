@@ -1,6 +1,6 @@
 import {Meta, StoryObj} from 'storybook-solidjs-vite'
 import {DialogProvider} from './DialogProvider'
-import {fn} from '@storybook/test'
+import {fn} from 'storybook/test'
 
 const meta = {
   argTypes: {

@@ -2,7 +2,7 @@ import type {Meta, StoryObj} from 'storybook-solidjs-vite'
 import tadaJson from './tada.json?url'
 import tadaLottie from './tada.lottie?url'
 import {LottieFile} from './LottieFile'
-import {fn} from '@storybook/test'
+import {fn} from 'storybook/test'
 
 const meta = {
   argTypes: {

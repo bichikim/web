@@ -1,7 +1,7 @@
 import {createSignal, Show} from 'solid-js'
 import {Meta, StoryObj} from 'storybook-solidjs-vite'
 import {useEvent} from './'
-import {expect, userEvent, within} from '@storybook/test'
+import {expect, userEvent, within} from 'storybook/test'
 
 interface EventProps {
   show?: boolean

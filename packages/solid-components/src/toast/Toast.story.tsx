@@ -3,7 +3,7 @@ import {ToastProvider} from './ToastProvider'
 import {useContext} from 'solid-js'
 import {createTimeout, ToastContext} from './context'
 import {createUuid} from '@winter-love/utils'
-import {fn} from '@storybook/test'
+import {fn} from 'storybook/test'
 import {Toast} from './index'
 import {HButton} from '../button'
 const uuid = createUuid()

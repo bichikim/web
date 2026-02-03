@@ -17,7 +17,7 @@ description: Generates a Solid.js Storybook story file  (*.story.tsx).
 ```tsx
 import type {Meta, StoryObj} from 'storybook-solidjs-vite'
 import {Button} from './Button'
-import {fn} from '@storybook/test'
+import {fn} from 'storybook/test'
 
 const meta = {
   title: 'Coong/Components/Button',
