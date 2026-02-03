@@ -1,0 +1,13 @@
+# CodeQL configuration (root)
+# https://docs.github.com/en/code-security/code-scanning/managing-your-code-scanning-configuration/editing-your-configuration-of-default-setup
+
+name: "CodeQL config"
+
+paths-ignore:
+  - "**/node_modules"
+  - "**/dist"
+  - "**/build"
+  - "**/.turbo"
+  - "**/coverage"
+  - "**/*.test.ts"
+  - "**/*.spec.ts"
