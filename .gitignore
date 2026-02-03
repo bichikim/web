@@ -42,6 +42,7 @@ lerna-debug.log*
 .env
 
 # IDEs and editors
+.trunk
 .idea
 .fleet
 *.suo
