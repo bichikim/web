@@ -21,11 +21,11 @@ describe('trimFirstSlash / trimLastSlash', () => {
   })
 
   it('should trim a single leading backslash', () => {
-    expect(trimFirstSlash('\\packages', '')).toBe('packages')
+    expect(trimFirstSlash(String.raw`\packages`, '')).toBe('packages')
   })
 
   it('should trim a single trailing backslash', () => {
-    expect(trimLastSlash('C:\\packages\\', '')).toBe('C:\\packages')
+    expect(trimLastSlash('C:\\packages\\', '')).toBe(String.raw`C:\packages`)
   })
 })
 
@@ -67,6 +67,13 @@ describe('getAliasId', () => {
 describe('normalizeAliasKey / normalizeAliasTreeKey', () => {
   it('should normalize alias key to regex', () => {
     expect(normalizeAliasKey('#utils')).toEqual(/^#utils/u)
+  })
+
+  it('should escape regex metacharacters in alias key so only literal path matches', () => {
+    const key = normalizeAliasKey('src/utils')
+
+    expect('src/utils/index.ts'.replace(key, '')).toBe('/index.ts')
+    expect('srcXutils/index.ts'.replace(key, '')).toBe('srcXutils/index.ts')
   })
 
   it('should normalize alias tree key to /.../', () => {
@@ -170,7 +177,7 @@ describe('matchWorkspace', () => {
 })
 
 describe('createAlias', () => {
-  it('should use default options (workspacePaths/alias/root/separator) and return source when no workspacePaths configured', async () => {
+  it('returns source when workspacePaths is not configured', async () => {
     const plugin: any = createAlias({})
     const resolve = vi.fn(() => Promise.resolve({id: 'resolved'}))
 
@@ -210,7 +217,7 @@ describe('createAlias', () => {
     expect(resolve).not.toHaveBeenCalled()
   })
 
-  it('should return null when source includes \\0', async () => {
+  it(String.raw`should return null when source includes \0`, async () => {
     const plugin: any = createAlias({root: '/Users/user-name/Documents/Apps/web', workspacePaths: ['packages/']})
     const resolve = vi.fn(() => Promise.resolve({id: 'resolved'}))
 
