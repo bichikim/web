@@ -37,4 +37,3 @@ module.exports = {
 ## Options
 
 - `svgo`: SVGO configuration object. Set to `false` to disable optimization.
-
