@@ -50,10 +50,38 @@ const getCropSize = (width: number, maxSize: number, height?: number): Size => {
   }
 }
 
+const clampSize = (width: number | undefined, height: number | undefined, maxSize: number): Size => {
+  const hasWidth = typeof width === 'number' && Number.isFinite(width)
+  const hasHeight = typeof height === 'number' && Number.isFinite(height)
+
+  if (!hasWidth && !hasHeight) {
+    return {height: 0, width: 0}
+  }
+
+  if (!hasWidth) {
+    const nextHeight = Math.min(height as number, maxSize)
+
+    return {height: nextHeight, width: 0}
+  }
+
+  if (!hasHeight) {
+    const nextWidth = Math.min(width as number, maxSize)
+
+    return {height: 0, width: nextWidth}
+  }
+
+  const scale = Math.min(maxSize / (width as number), maxSize / (height as number), 1)
+
+  return {
+    height: Math.round((height as number) * scale),
+    width: Math.round((width as number) * scale),
+  }
+}
+
 export const imageTransform = (options: ImageTransformOptions = {}): RequestHandler => {
   const {maxSize = MAX_SIZE} = options
 
-  return async (req, _, next) => {
+  return async (req, res, next) => {
     const {query} = req
     const {w, h, c, q} = query
 
@@ -67,7 +95,16 @@ export const imageTransform = (options: ImageTransformOptions = {}): RequestHand
       width: query.width ?? w,
     })
 
-    await validate(options)
+    const validationErrors = await validate(options)
+
+    if (validationErrors.length > 0) {
+      res.status(400).json({
+        errors: validationErrors,
+        message: 'Invalid image transform parameters',
+      })
+
+      return
+    }
     const {height, width, crop, position, quality, format} = options
 
     const image = imageContext.use(req)
@@ -86,7 +123,11 @@ export const imageTransform = (options: ImageTransformOptions = {}): RequestHand
         position: position,
       })
     } else {
-      transformer.resize(width, height, {
+      const clamped = clampSize(width, height, maxSize)
+      const clampedWidth = clamped.width > 0 ? clamped.width : undefined
+      const clampedHeight = clamped.height > 0 ? clamped.height : undefined
+
+      transformer.resize(clampedWidth, clampedHeight, {
         fit: 'inside',
         withoutEnlargement: true,
       })
