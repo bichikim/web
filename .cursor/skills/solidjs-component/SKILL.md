@@ -23,6 +23,10 @@ See `rules/component-state-structure.md`
 
 See `rules/component-initial-prop.md`
 
+### component variable name rules
+
+See `rules/component-variable-name.md`
+
 ## Resources
 
 ### context7 mcp

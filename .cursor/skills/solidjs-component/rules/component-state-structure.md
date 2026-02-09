@@ -8,6 +8,9 @@ export interface CounterButtonProps {
 }
 
 export const CounterButton = (props: CounterButtonProps) => {
+  /**
+   * @see https://docs.solidjs.com/reference/basic-reactivity/create-signal
+   */
   const [count, setCount] = createSignal(0)
   const handleClick = () => setCount((value) => value + 1)
 
