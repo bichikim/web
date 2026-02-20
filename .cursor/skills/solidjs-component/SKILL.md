@@ -1,6 +1,6 @@
 ---
-name: Write Solid.js Component TSX
-description: How to write Solid.js component tsx files
+name: solidjs-component
+description: Applies project conventions for Solid.js component structure, naming, state, and styling. Use when writing or editing .tsx component files.
 ---
 
 # Solidjs Component
@@ -23,16 +23,12 @@ See `rules/component-state-structure.md`
 
 See `rules/component-initial-prop.md`
 
-### component variable name rules
+### Component variable name rules
 
 See `rules/component-variable-name.md`
 
 ## Resources
 
-### context7 mcp
+- context7 mcp -> Use this MCP as the highest priority reference source.
 
-Use this MCP as the highest priority reference source.
-
-### references.md
-
-See references/reference.md for official documentation links.
+official documentation links -> ./references/reference.md

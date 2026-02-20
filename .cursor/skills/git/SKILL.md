@@ -1,12 +1,13 @@
 ---
-description: git_commit_message
-alwaysApply: false
+name: git
+description: Applies project Git commit message conventions. Use when writing commit messages, reviewing staged changes, or when the user asks for git commit help.
 ---
-# Git commit rules
+
+# Git Commit Rules
 
 ## Type
 
-- `update`: New feature or update feture
+- `update`: New feature or update feature
 - `docs`: Documentation changes
 - `refactor`: Code refactoring, test code or add Storybook
 - `chore`: Build process or package manager modifications, CI configuration changes

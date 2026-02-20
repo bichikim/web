@@ -1,9 +1,0 @@
----
-globs: *.spec.ts,*.spec.tsx
-alwaysApply: false
----
-# Test Writing Guidelines
-
-The test file name must be in the format `foo-bar.spec.ts`
-
-If possible, use the wallaby mcp to verify test execution.
