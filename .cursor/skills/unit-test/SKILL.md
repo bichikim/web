@@ -5,6 +5,20 @@ description: Applies project unit test conventions with Vitest and @solidjs/test
 
 # Typescript
 
+## Workflow
+
+1. If existing tests exist, verify test results (priority: 1. use wallaby-mcp 2. run vitest command) and fix any errors first
+2. Add tests
+3. Verify test results (priority: 1. use wallaby-mcp 2. run vitest command) and run until all tests pass
+4. Verify coverage (priority: 1. use wallaby-mcp 2. run vitest command)
+5. Add test cases aiming for 100% coverage (if coverage cannot be achieved due to code specifics, add ignore comments and document the reason)
+6. Fix lint issues (use `eslint --fix` for auto-fix when possible)
+
+## Notes
+
+- Do not modify the code under test; if modification is required, explain the reason instead of modifying and end the conversation
+- If the target code has multiple functions, separate them with `describe` blocks
+
 ## Test Framework
 
 - Use Vitest
