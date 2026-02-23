@@ -4,6 +4,8 @@
 
 공룡을 클릭하면 Buy Me a Coffee 후원자 메시지가 랜덤으로 표시됩니다.
 
+[ifuckinghatejira.com](https://ifuckinghatejira.com/)에 영감을 받아 제작 중입니다.
+
 > **개발 중** — AI를 활용한 개발 방법 개선 연구용 프로젝트입니다.
 
 ## Tech Stack
