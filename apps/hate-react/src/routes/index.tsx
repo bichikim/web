@@ -1,6 +1,7 @@
+import {Icon} from '@iconify-icon/solid'
 import {Title} from '@solidjs/meta'
-import {Show, Suspense} from 'solid-js'
-import {SDinosaurTrigger} from 'src/components/dinosaur-trigger'
+import {Suspense} from 'solid-js'
+import {SHamsterTrigger} from 'src/components/hamster-trigger'
 import {SFooterLinks} from 'src/components/footer-links'
 import {SOpinionDisplay} from 'src/components/opinion-display'
 import {SHomeLayout} from 'src/components/page-layout'
@@ -21,15 +22,25 @@ export default function HomePage() {
   return (
     <SHomeLayout>
       <Title>I fucking hate React.</Title>
-      <p class="text-lg mb-8">Click on the dinosaur for an honest opinion.</p>
 
-      <SDinosaurTrigger onClick={goToNext} />
+      <div class="fixed inset-0 flex items-center justify-center pointer-events-none z-0">
+        <p class="flex items-center gap-3 text-4xl font-bold text-white">
+          <Icon icon="mingcute:traffic-cone-fill" width="2.5em" height="2.5em" />
+          Under construction.
+        </p>
+      </div>
 
-      <Suspense fallback={<p class="mt-12 text-gray-400">Loading opinions...</p>}>
-        <SOpinionDisplay message={currentMessage()} variant={messages().length === 0 ? 'empty' : 'default'} />
-      </Suspense>
+      <div class="opacity-15 pointer-events-none select-none">
+        <p class="text-lg mb-8">Click on the hamster for an honest opinion.</p>
 
-      <SFooterLinks links={FOOTER_LINKS} separator="or" />
+        <SHamsterTrigger onClick={goToNext} class="w-30rem h-30rem" />
+
+        <Suspense fallback={<p class="mt-12 text-gray-400">Loading opinions...</p>}>
+          <SOpinionDisplay message={currentMessage()} variant={messages().length === 0 ? 'empty' : 'default'} />
+        </Suspense>
+
+        <SFooterLinks links={FOOTER_LINKS} separator="or" />
+      </div>
     </SHomeLayout>
   )
 }

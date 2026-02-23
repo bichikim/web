@@ -1,6 +1,6 @@
 import type {JSX, ParentProps} from 'solid-js'
 
-export interface HDinosaurTriggerProps extends ParentProps {
+export interface HHamsterTriggerProps extends ParentProps {
   class?: string
   onClick?: (event: MouseEvent) => void
 }
@@ -8,7 +8,7 @@ export interface HDinosaurTriggerProps extends ParentProps {
 /**
  * Headless: Wraps children, invokes onClick on click (prevents default on anchor)
  */
-export const HDinosaurTrigger = (props: HDinosaurTriggerProps): JSX.Element => {
+export const HHamsterTrigger = (props: HHamsterTriggerProps): JSX.Element => {
   const handleClick = (event: MouseEvent) => {
     event.preventDefault()
     props.onClick?.(event)

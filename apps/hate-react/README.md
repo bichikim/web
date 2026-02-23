@@ -2,7 +2,7 @@
 
 "I fucking hate React." — A Solid.js web app for sharing honest opinions from people who relate.
 
-Click on the dinosaur to see random supporter messages from Buy Me a Coffee.
+Click on the hamster to see random supporter messages from Buy Me a Coffee.
 
 Inspired by [ifuckinghatejira.com](https://ifuckinghatejira.com/).
 
