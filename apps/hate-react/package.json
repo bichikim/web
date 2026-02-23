@@ -1,0 +1,32 @@
+{
+  "name": "@apps/hate-react",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vinxi build",
+    "dev": "vinxi dev",
+    "lint": "cross-env NODE_ENV=script eslint src",
+    "lint:fix": "cross-env NODE_ENV=script eslint src --fix",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@solidjs/meta": "^0.29.4",
+    "@solidjs/router": "^0.15.3",
+    "@solidjs/start": "^1.2.0",
+    "@unocss/reset": "^0.65.1",
+    "class-variance-authority": "^0.7.1",
+    "solid-js": "^1.9.9",
+    "unocss": "^66.5.9",
+    "vinxi": "^0.5.3",
+    "vite": "^7.0.8"
+  },
+  "devDependencies": {
+    "@types/node": "20.11.18",
+    "@winter-love/unocss-config": "workspace:*",
+    "cross-env": "^10.1.0"
+  },
+  "engines": {
+    "node": "22"
+  }
+}
