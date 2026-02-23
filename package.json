@@ -84,7 +84,7 @@
     "reflect-metadata": "^0.2.2",
     "sinon": "^19.0.2",
     "solid-js": "^1.9.9",
-    "storybook": "10.0.7",
+    "storybook": "10.1.10",
     "storybook-solidjs-vite": "10.0.5",
     "ts-patch": "3.3.0",
     "tsconfig-paths": "4.2.0",
