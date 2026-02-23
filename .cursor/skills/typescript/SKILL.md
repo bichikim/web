@@ -10,11 +10,33 @@ description: Applies project TypeScript conventions for naming, formatting, typi
 - Use PascalCase for Class, Interface and Type
 - Use camelCase for variables, function and method
 - Use UPPER_SNAKE_CASE for CONSTANTS
+- Do not abbreviate variable names (e.g. use `event` not `e`, `value` not `v`)
+- Variable names may be composed of up to 3 words
+- When nesting (object, callback, loop, etc.), do not repeat the outer name in inner variables (e.g. inside `user.profile` use `name` not `userName`)
+
+## Code Writing Order
+
+1. Write code
+2. Run `eslint --fix` for formatting and lint auto-fix (ESLint includes Prettier)
 
 ## Format
 
-- Always check .prettierrc.yaml at project root and follow its settings when writing
-- Never write comments on the right side of code; always write above the target code
+### Comment placement
+
+Never write comments on the right side of code; always write above the target code.
+
+```ts
+// ok
+// 5 minutes
+const CACHE_MAX_AGE = 300
+
+// nope
+const CACHE_MAX_AGE = 300 // 5 minutes
+```
+
+### type & value import
+
+Do not duplicate the import source when importing type and value from the same module — use `import {type Foo, bar} from './foo'` not separate lines.
 
 ## Typing
 
