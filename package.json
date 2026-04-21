@@ -103,8 +103,8 @@
   },
   "packageManager": "pnpm@10.26.1",
   "engines": {
-    "node": "22",
-    "pnpm": ">= 6.17"
+    "node": ">=22 <23",
+    "pnpm": ">=10 <11"
   },
   "pnpm": {
     "overrides": {

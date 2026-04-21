@@ -81,6 +81,6 @@
     "solid-devtools": "^0.34.4"
   },
   "engines": {
-    "node": "22"
+    "node": ">=22 <23"
   }
 }
