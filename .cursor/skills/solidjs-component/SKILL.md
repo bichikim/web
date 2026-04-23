@@ -27,6 +27,10 @@ See `rules/component-initial-prop.md`
 
 See `rules/component-variable-name.md`
 
+### Optional / absent values in createSignal
+
+See `rules/component-signal-empty-value.md`
+
 ## Solid Reactivity Notes
 
 - Implement proper code splitting but never split Solidjs props
