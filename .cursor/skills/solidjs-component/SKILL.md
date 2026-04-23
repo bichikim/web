@@ -31,6 +31,16 @@ See `rules/component-variable-name.md`
 
 See `rules/component-signal-empty-value.md`
 
+### Conditional, switch, and list rendering
+
+Use SolidJS built-in control-flow components from `solid-js` instead of ad-hoc `&&`, nested ternaries, or `.map()` when you need reactive branching or keyed lists:
+
+- **Conditional rendering:** `<Show>` (`when`, optional `fallback`)
+- **Switch rendering:** `<Switch>` with `<Match>` children (`when` per branch)
+- **Repeated list rendering:** `<For>` (`each`, keyed item tracking)
+
+
+
 ## Solid Reactivity Notes
 
 - Implement proper code splitting but never split Solidjs props
