@@ -1,4 +1,4 @@
-import {DEFAULT_WORKING_DIRECTORY} from '@/utils/agent-page'
+import {DEFAULT_WORKING_DIRECTORY} from '@/utils/agent-defaults'
 
 export interface BuildAgentStreamRequestBodyInput {
   readonly conversationId: string

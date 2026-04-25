@@ -1,12 +1,12 @@
-export interface ConsumeSseStreamArguments {
+import {normalizeNewlines} from '@/utils/normalize-newlines'
+
+export interface ConsumeSseStreamOptions {
   readonly response: Response
   readonly onRawBlock: (rawBlock: string) => void
 }
 
-const normalizeNewlines = (text: string) => text.replaceAll('\r\n', '\n').replaceAll('\r', '\n')
-
-export const consumeSseStream = async (arguments_: ConsumeSseStreamArguments): Promise<void> => {
-  const reader = arguments_.response.body?.getReader()
+export const consumeSseStream = async (options: ConsumeSseStreamOptions): Promise<void> => {
+  const reader = options.response.body?.getReader()
 
   if (!reader) {
     throw new Error('응답 스트림을 읽을 수 없습니다.')
@@ -23,7 +23,7 @@ export const consumeSseStream = async (arguments_: ConsumeSseStreamArguments): P
     while (separatorIndex !== -1) {
       const rawBlock = buffer.slice(0, separatorIndex)
       buffer = buffer.slice(separatorIndex + 2)
-      arguments_.onRawBlock(rawBlock)
+      options.onRawBlock(rawBlock)
 
       separatorIndex = buffer.indexOf('\n\n')
     }
@@ -48,6 +48,6 @@ export const consumeSseStream = async (arguments_: ConsumeSseStreamArguments): P
   const trailing = normalizeNewlines(buffer)
 
   if (trailing.trim().length > 0) {
-    arguments_.onRawBlock(trailing)
+    options.onRawBlock(trailing)
   }
 }

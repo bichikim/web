@@ -1,3 +1,5 @@
+import {normalizeNewlines} from '@/utils/normalize-newlines'
+
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null
 
@@ -41,7 +43,7 @@ export const createAgentSessionIdStdoutParser = (
 
   return {
     onStdoutChunk(chunk: string) {
-      buffer += chunk.replaceAll('\r\n', '\n').replaceAll('\r', '\n')
+      buffer += normalizeNewlines(chunk)
       const lines = buffer.split('\n')
       buffer = lines.pop() ?? ''
 

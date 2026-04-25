@@ -1,4 +1,4 @@
-const normalizeNewlines = (text: string) => text.replaceAll('\r\n', '\n').replaceAll('\r', '\n')
+import {normalizeNewlines} from '@/utils/normalize-newlines'
 
 export interface AgentJsonStdoutReducerState {
   readonly lineBuffer: string
@@ -57,14 +57,12 @@ const applyStreamJsonLine = (
     let delta = ''
 
     for (const item of content) {
-      if (typeof item !== 'object' || item === null) {
-        continue
-      }
+      if (typeof item === 'object' && item !== null) {
+        const block = item as {type?: unknown; text?: unknown}
 
-      const block = item as {type?: unknown; text?: unknown}
-
-      if (block.type === 'text' && typeof block.text === 'string') {
-        delta += block.text
+        if (block.type === 'text' && typeof block.text === 'string') {
+          delta += block.text
+        }
       }
     }
 

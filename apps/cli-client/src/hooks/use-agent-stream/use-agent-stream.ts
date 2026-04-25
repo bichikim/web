@@ -5,7 +5,7 @@ import {
   feedAgentJsonStdoutChunk,
   flushAgentJsonStdoutBuffer,
 } from '@/utils/agent-json-stdout-display'
-import {postAgentSseStream} from '@/utils/agent-stream'
+import {postAgentSseStream} from '@/hooks/use-agent-stream/agent-stream'
 import {parseHttpErrorBody, resolveRequestUrl} from '@/utils/agent-page'
 import {hasProcessFailureIndicators} from '@/hooks/use-agent-stream/has-process-failure-indicators'
 import {truncateWithEllipsis} from '@/utils/truncate-with-ellipsis'
