@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["import", "typescript", "unicorn", "vitest", "@prettier/plugin-oxc"],
+  "plugins": ["import", "typescript", "unicorn", "vitest"],
   "env": {
     "browser": true
   },
@@ -35,7 +35,7 @@
         "id-length": [
           "error",
           {
-            "exceptions": ["_", "x", "y", "z", "p", "m", "h", "w", "b", "t", "l", "r"]
+            "exceptions": ["_", "x", "y", "z"]
           }
         ],
         "max-lines-per-function": [
@@ -64,7 +64,6 @@
         "no-nonoctal-decimal-escape": "error",
         "no-new-wrappers": "error",
         "no-new-require": "error",
-        "no-new-object": "error",
         "no-new-func": "error",
         "no-negated-condition": "error",
         "no-multi-str": "error",
@@ -101,7 +100,6 @@
         "no-with": "error",
         "no-void": "error",
         "typescript/triple-slash-reference": "off",
-        "unicorn/import-style": "warn",
         "unicorn/no-document-cookie": "off",
         "unicorn/new-for-builtins": "off",
         "unicorn/no-array-callback-reference": "off",
@@ -115,40 +113,7 @@
         "prefer-numeric-literals": "error",
         "prefer-exponentiation-operator": "warn",
         "prefer-spread": "error",
-        "unicorn/prefer-top-level-await": "off",
-        "unicorn/prevent-abbreviations": [
-          "warn",
-          {
-            "ignore": ["\\.spec$"],
-            "replacements": {
-              "arg": false,
-              "args": false,
-              "as": false,
-              "attr": false,
-              "attrs": false,
-              "db": false,
-              "doc": false,
-              "docs": false,
-              "env": false,
-              "fn": false,
-              "func": false,
-              "nav": false,
-              "net": false,
-              "obj": false,
-              "param": false,
-              "params": false,
-              "pkg": false,
-              "prev": false,
-              "prop": false,
-              "props": false,
-              "ref": false,
-              "refs": false,
-              "req": false,
-              "res": false,
-              "src": false
-            }
-          }
-        ]
+        "unicorn/prefer-top-level-await": "off"
       }
     },
     {

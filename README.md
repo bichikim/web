@@ -18,7 +18,7 @@ pnpm i
 
 ## Winter Love packages
 
-refer to packages/* README.md each project folder
+refer to packages/\* README.md each project folder
 
 ## ☄ Coong
 
