@@ -83,7 +83,9 @@ export const useDelegatedOn = (
   options: UseDelegatedOnOptions = {},
 ) => {
   const {target = getDocument, globalMap = false} = options
-  const {delegatedEventMap, isFake} = globalMap ? useGlobalDelegatedEventMap(target) : useContext(DelegatedEventContext)
+  const {delegatedEventMap, isFake} = globalMap
+    ? useGlobalDelegatedEventMap(target)
+    : useContext(DelegatedEventContext)
   const channelAccessor = resolveAccessor(channel)
   const keyAccessor = resolveAccessor(key)
   const listenerAccessor = resolveAccessor(listener)

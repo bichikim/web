@@ -9,4 +9,6 @@ export type ScrollIntoView = (target: Element, options?: StandardBehaviorOptions
 const document = getDocument()
 
 export const scrollIntoView: ScrollIntoView =
-  document && 'scrollBehavior' in document.documentElement.style ? _scrollIntoView : (smoothScrollIntoView as any)
+  document && 'scrollBehavior' in document.documentElement.style
+    ? _scrollIntoView
+    : (smoothScrollIntoView as any)

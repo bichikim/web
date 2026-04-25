@@ -30,7 +30,10 @@ const DragTestComponent = () => {
   })
 
   return (
-    <div ref={setParentElement} class="relative w-100 h-96 bg-gray-100 border-2 border-dashed border-gray-300 p-4">
+    <div
+      ref={setParentElement}
+      class="relative w-100 h-96 bg-gray-100 border-2 border-dashed border-gray-300 p-4"
+    >
       <div class="mb-4 p-3 bg-white rounded shadow">
         <h3 class="text-lg font-semibold mb-2">Drag Test Component</h3>
         <div class="space-y-2 text-sm">

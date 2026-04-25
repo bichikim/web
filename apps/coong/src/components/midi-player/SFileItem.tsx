@@ -29,7 +29,8 @@ export interface MusicInfo extends PlayOptions {
   selected?: boolean
 }
 
-export interface SFileItemProps extends Omit<DragButtonBodyProps, 'id' | 'name' | 'onPlay' | 'onSelect'>, MusicInfo {
+export interface SFileItemProps
+  extends Omit<DragButtonBodyProps, 'id' | 'name' | 'onPlay' | 'onSelect'>, MusicInfo {
   dragExecuteSize?: number
   index?: number
   onDelete?: (id: string) => void
@@ -126,7 +127,9 @@ export const SFileItem = (props: SFileItemProps) => {
     }
   }
 
-  const progress = createMemo(() => ((innerProps.playedTime ?? 0) / (innerProps.totalDuration ?? 1)) * HUNDRED)
+  const progress = createMemo(
+    () => ((innerProps.playedTime ?? 0) / (innerProps.totalDuration ?? 1)) * HUNDRED,
+  )
 
   const handleDelete = () => {
     innerProps.onDelete?.(innerProps.id)
@@ -197,7 +200,9 @@ export const SFileItem = (props: SFileItemProps) => {
             <span class="inline-block i-tabler:chevrons-right absolute text-gray-500 left-3" />
           </Show>
           <span class="relative inline-block text-gray b-r-solid b-r-.25 b-r-gray-300 pr-2">
-            <span class={indexStyle({playing: showPlayingIcon()})}>{(innerProps.index ?? 0) + 1}</span>
+            <span class={indexStyle({playing: showPlayingIcon()})}>
+              {(innerProps.index ?? 0) + 1}
+            </span>
           </span>
 
           <span class="relative inline-flex gap-1 flex-grow-1 flex-shrink-1 items-center overflow-hidden">

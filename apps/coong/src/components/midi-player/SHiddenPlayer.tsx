@@ -19,7 +19,8 @@ import {useWindowSize} from './window-size'
 import {SplendidGrandPianoState} from 'src/use/instruments/splendid-grand-piano'
 
 export interface SHiddenPlayerProps
-  extends Omit<SPlayerProps, 'onPlaying' | 'onPlay' | 'isShow'>,
+  extends
+    Omit<SPlayerProps, 'onPlaying' | 'onPlay' | 'isShow'>,
     Omit<JSX.HTMLAttributes<HTMLElement>, 'onPlay'>,
     ParentProps {
   component?: ValidComponent
@@ -187,7 +188,12 @@ export const SHiddenPlayer = (props: SHiddenPlayerProps) => {
             <div {...preventGlobalTouchAttrs()} class={handleUpKeyStyle}>
               <span class="i-hugeicons:equal-sign c-gray-400 w-full h-full block" />
             </div>
-            <ResizeCard.Handle {...preventGlobalTouchAttrs()} tabIndex="-1" resizeType="up" class={handleUpStyle} />
+            <ResizeCard.Handle
+              {...preventGlobalTouchAttrs()}
+              tabIndex="-1"
+              resizeType="up"
+              class={handleUpStyle}
+            />
           </Show>
         </section>
       </ResizeCard.Body>

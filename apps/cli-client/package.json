@@ -1,0 +1,34 @@
+{
+  "name": "@apps/cli-client",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite",
+    "lint": "cross-env NODE_ENV=script eslint src",
+    "preview": "vite preview",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@solidjs/router": "^0.15.4",
+    "es-toolkit": "^1.46.0",
+    "ofetch": "^1.5.1",
+    "solid-js": "^1.9.9"
+  },
+  "devDependencies": {
+    "@apps/cli-server": "workspace:*",
+    "@iconify-json/solar": "^1.2.5",
+    "@types/node": "20.11.18",
+    "@unocss/reset": "^66.5.9",
+    "@unocss/vite": "^66.5.9",
+    "typescript": "^5.9.3",
+    "unocss": "^66.5.9",
+    "unplugin-icons": "^22.5.0",
+    "vite": "^7.0.8",
+    "vite-plugin-solid": "^2.11.8"
+  },
+  "engines": {
+    "node": ">=22 <23"
+  }
+}

@@ -1,6 +1,14 @@
 import {Dynamic, DynamicProps} from 'solid-js/web'
 import {ResizeCardContext} from './ResizeCardProvider'
-import {createEffect, createMemo, createSignal, onCleanup, onMount, useContext, ValidComponent} from 'solid-js'
+import {
+  createEffect,
+  createMemo,
+  createSignal,
+  onCleanup,
+  onMount,
+  useContext,
+  ValidComponent,
+} from 'solid-js'
 
 export type ResizeCardBodyProps<T extends ValidComponent> = DynamicProps<T>
 

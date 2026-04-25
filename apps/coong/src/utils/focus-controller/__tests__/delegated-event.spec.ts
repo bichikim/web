@@ -42,7 +42,9 @@ describe('delegated-event', () => {
 
       addListener(delegatedEventMap, CHANNEL_NAME, keyName, listener)
       unsubscribe()
-      document.dispatchEvent(new CustomEvent(CHANNEL_NAME, {detail: {key: keyName, value: eventValue}}))
+      document.dispatchEvent(
+        new CustomEvent(CHANNEL_NAME, {detail: {key: keyName, value: eventValue}}),
+      )
       expect(listener).not.toHaveBeenCalled()
     })
   })
@@ -70,7 +72,9 @@ describe('delegated-event', () => {
       const listener = vi.fn()
 
       addListener(delegatedEventMap, CHANNEL_NAME, keyName, listener)
-      document.dispatchEvent(new CustomEvent(CHANNEL_NAME, {detail: {key: keyName, value: eventValue}}))
+      document.dispatchEvent(
+        new CustomEvent(CHANNEL_NAME, {detail: {key: keyName, value: eventValue}}),
+      )
       expect(listener).toHaveBeenCalledWith(eventValue)
     })
 
@@ -86,11 +90,15 @@ describe('delegated-event', () => {
       addListener(delegatedEventMap, CHANNEL_A, keyName, listenerA)
       addListener(delegatedEventMap, CHANNEL_B, keyName, listenerB)
       // Emit event for channel-a only listenerA should be called
-      document.dispatchEvent(new CustomEvent(CHANNEL_A, {detail: {key: keyName, value: eventValue}}))
+      document.dispatchEvent(
+        new CustomEvent(CHANNEL_A, {detail: {key: keyName, value: eventValue}}),
+      )
       expect(listenerA).toHaveBeenCalledWith(eventValue)
       expect(listenerB).not.toHaveBeenCalled()
       // Emit event for channel-b only listenerB should be called
-      document.dispatchEvent(new CustomEvent(CHANNEL_B, {detail: {key: keyName, value: eventValue}}))
+      document.dispatchEvent(
+        new CustomEvent(CHANNEL_B, {detail: {key: keyName, value: eventValue}}),
+      )
       expect(listenerB).toHaveBeenCalledWith(eventValue)
     })
 
@@ -104,10 +112,14 @@ describe('delegated-event', () => {
 
       addListener(delegatedEventMap, CHANNEL_NAME, keyName1, listener1)
       addListener(delegatedEventMap, CHANNEL_NAME, keyName2, listener2)
-      document.dispatchEvent(new CustomEvent(CHANNEL_NAME, {detail: {key: keyName1, value: eventValue}}))
+      document.dispatchEvent(
+        new CustomEvent(CHANNEL_NAME, {detail: {key: keyName1, value: eventValue}}),
+      )
       expect(listener1).toHaveBeenCalledWith(eventValue)
       expect(listener2).not.toHaveBeenCalled()
-      document.dispatchEvent(new CustomEvent(CHANNEL_NAME, {detail: {key: keyName2, value: eventValue}}))
+      document.dispatchEvent(
+        new CustomEvent(CHANNEL_NAME, {detail: {key: keyName2, value: eventValue}}),
+      )
       expect(listener2).toHaveBeenCalledWith(eventValue)
       expect(listener1).toHaveBeenCalledTimes(1)
     })
@@ -122,7 +134,9 @@ describe('delegated-event', () => {
 
       addListener(delegatedEventMap, CHANNEL_NAME, keyName, listener, () => customTarget)
       expect(addEventListenerSpy).toHaveBeenCalledWith(CHANNEL_NAME, expect.any(Function))
-      customTarget.dispatchEvent(new CustomEvent(CHANNEL_NAME, {detail: {key: keyName, value: eventValue}}))
+      customTarget.dispatchEvent(
+        new CustomEvent(CHANNEL_NAME, {detail: {key: keyName, value: eventValue}}),
+      )
       expect(listener).toHaveBeenCalledWith(eventValue)
       addEventListenerSpy.mockRestore()
     })
@@ -137,7 +151,9 @@ describe('delegated-event', () => {
 
       addListener(delegatedEventMap, CHANNEL_NAME, keyName, listener, () => customTarget)
       expect(documentAddEventListenerSpy).not.toHaveBeenCalled()
-      document.dispatchEvent(new CustomEvent(CHANNEL_NAME, {detail: {key: keyName, value: eventValue}}))
+      document.dispatchEvent(
+        new CustomEvent(CHANNEL_NAME, {detail: {key: keyName, value: eventValue}}),
+      )
       expect(listener).not.toHaveBeenCalled()
       documentAddEventListenerSpy.mockRestore()
     })
@@ -155,7 +171,9 @@ describe('delegated-event', () => {
 
       delegatedPayload?.unsubscribe()
       expect(removeEventListenerSpy).toHaveBeenCalledWith(CHANNEL_NAME, expect.any(Function))
-      customTarget.dispatchEvent(new CustomEvent(CHANNEL_NAME, {detail: {key: keyName, value: eventValue}}))
+      customTarget.dispatchEvent(
+        new CustomEvent(CHANNEL_NAME, {detail: {key: keyName, value: eventValue}}),
+      )
       expect(listener).not.toHaveBeenCalled()
       removeEventListenerSpy.mockRestore()
     })
@@ -238,7 +256,12 @@ describe('delegated-event', () => {
       const delegatedEventMap: DelegatedEventMap = new Map()
       const listener = vi.fn()
 
-      const {removeListener, addListener} = delegatedOn(delegatedEventMap, CHANNEL_NAME, keyName, listener)
+      const {removeListener, addListener} = delegatedOn(
+        delegatedEventMap,
+        CHANNEL_NAME,
+        keyName,
+        listener,
+      )
 
       addListener()
       removeListener()
@@ -253,11 +276,19 @@ describe('delegated-event', () => {
       const customTarget = document.createElement('div')
       const addEventListenerSpy = vi.spyOn(customTarget, 'addEventListener')
 
-      const {addListener} = delegatedOn(delegatedEventMap, CHANNEL_NAME, keyName, listener, () => customTarget)
+      const {addListener} = delegatedOn(
+        delegatedEventMap,
+        CHANNEL_NAME,
+        keyName,
+        listener,
+        () => customTarget,
+      )
 
       addListener()
       expect(addEventListenerSpy).toHaveBeenCalledWith(CHANNEL_NAME, expect.any(Function))
-      customTarget.dispatchEvent(new CustomEvent(CHANNEL_NAME, {detail: {key: keyName, value: eventValue}}))
+      customTarget.dispatchEvent(
+        new CustomEvent(CHANNEL_NAME, {detail: {key: keyName, value: eventValue}}),
+      )
       expect(listener).toHaveBeenCalledWith(eventValue)
       addEventListenerSpy.mockRestore()
     })
@@ -270,14 +301,22 @@ describe('delegated-event', () => {
       const customTarget = document.createElement('div')
       const removeEventListenerSpy = vi.spyOn(customTarget, 'removeEventListener')
 
-      const {addListener} = delegatedOn(delegatedEventMap, CHANNEL_NAME, keyName, listener, () => customTarget)
+      const {addListener} = delegatedOn(
+        delegatedEventMap,
+        CHANNEL_NAME,
+        keyName,
+        listener,
+        () => customTarget,
+      )
 
       addListener()
       const delegatedPayload = delegatedEventMap.get(CHANNEL_NAME)
 
       delegatedPayload?.unsubscribe()
       expect(removeEventListenerSpy).toHaveBeenCalledWith(CHANNEL_NAME, expect.any(Function))
-      customTarget.dispatchEvent(new CustomEvent(CHANNEL_NAME, {detail: {key: keyName, value: eventValue}}))
+      customTarget.dispatchEvent(
+        new CustomEvent(CHANNEL_NAME, {detail: {key: keyName, value: eventValue}}),
+      )
       expect(listener).not.toHaveBeenCalled()
       removeEventListenerSpy.mockRestore()
     })
@@ -326,7 +365,12 @@ describe('delegated-event', () => {
         keyName1,
         listener1,
       )
-      const {addListener: addListener2} = delegatedOn(delegatedEventMap, CHANNEL_NAME, keyName2, listener2)
+      const {addListener: addListener2} = delegatedOn(
+        delegatedEventMap,
+        CHANNEL_NAME,
+        keyName2,
+        listener2,
+      )
 
       addListener1()
       addListener2()

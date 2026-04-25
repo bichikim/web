@@ -53,7 +53,9 @@ export const ChangePassword = () => {
                 class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
                 aria-label={showNewPassword() ? '패스워드 숨기기' : '패스워드 표시하기'}
               >
-                <span class={`text-xl ${showNewPassword() ? 'i-tabler:eye-off' : 'i-tabler:eye'}`} />
+                <span
+                  class={`text-xl ${showNewPassword() ? 'i-tabler:eye-off' : 'i-tabler:eye'}`}
+                />
               </button>
             </div>
           </div>
@@ -78,7 +80,9 @@ export const ChangePassword = () => {
                 class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
                 aria-label={showConfirmPassword() ? '패스워드 숨기기' : '패스워드 표시하기'}
               >
-                <span class={`text-xl ${showConfirmPassword() ? 'i-tabler:eye-off' : 'i-tabler:eye'}`} />
+                <span
+                  class={`text-xl ${showConfirmPassword() ? 'i-tabler:eye-off' : 'i-tabler:eye'}`}
+                />
               </button>
             </div>
           </div>

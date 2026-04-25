@@ -16,7 +16,10 @@ export const STypeIcon = (props: MTypeIconProps) => {
 
   return (
     <Show when={props.name}>
-      <span {...restProps} class={cx('text-4 rd-1 px-.5 pb-.5 h-5 leading-5', color(), innerProps.class)}>
+      <span
+        {...restProps}
+        class={cx('text-4 rd-1 px-.5 pb-.5 h-5 leading-5', color(), innerProps.class)}
+      >
         {props.name}
       </span>
     </Show>

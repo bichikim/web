@@ -155,7 +155,10 @@ export const createFocusController = (
     const {ignorePreventMoveFocus = false} = options
 
     // 지금 포커스 좌표가 direction 으로 이동할 수 없는 경우 이동하지 않습니다.
-    if (!ignorePreventMoveFocus && isPreventMoveFocus(_positionMap, _deepPosition, direction, options)) {
+    if (
+      !ignorePreventMoveFocus &&
+      isPreventMoveFocus(_positionMap, _deepPosition, direction, options)
+    ) {
       return null
     }
 

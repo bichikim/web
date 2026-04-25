@@ -9,7 +9,9 @@ export interface Subscribe<Value> {
   update: (value: ((value: Value | undefined) => Value) | Value) => void
 }
 
-export const createSubscribe = <Value extends NotFunction>(initValue: () => Value): Subscribe<Value> => {
+export const createSubscribe = <Value extends NotFunction>(
+  initValue: () => Value,
+): Subscribe<Value> => {
   let _value: Value
   const _poll = new Set<(value: Value) => void>()
 

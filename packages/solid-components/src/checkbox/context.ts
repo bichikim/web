@@ -11,7 +11,9 @@ export interface CheckboxContextActions {
   handleToggleChecked: () => void
 }
 
-export const CheckboxContext = createContext<[Accessor<CheckboxContextProps>, CheckboxContextActions]>([
+export const CheckboxContext = createContext<
+  [Accessor<CheckboxContextProps>, CheckboxContextActions]
+>([
   () => ({
     checked: false,
     disabled: false,

@@ -68,7 +68,10 @@ export const SSetting = (props: SSettingProps) => {
   return (
     <div
       {...restProps}
-      class={cx('flex flex-col gap-2 bg-white rd-2 p-2 box-border flex flex-col justify-end', innerProps.class)}
+      class={cx(
+        'flex flex-col gap-2 bg-white rd-2 p-2 box-border flex flex-col justify-end',
+        innerProps.class,
+      )}
     >
       <SSettingItem
         label="Show key name"
@@ -93,7 +96,9 @@ export const SSetting = (props: SSettingProps) => {
       />
       <div class="flex justify-end w-full gap-2 items-center">
         <span class="text-5 md:text-7 text-gray-500 flex-grow-1 pt-3 leading-6">Setting</span>
-        <span class="text-5 md:text-5 text-gray-500 flex-shrink-0 flex-grow-0 leading-5">click to close -&gt;</span>
+        <span class="text-5 md:text-5 text-gray-500 flex-shrink-0 flex-grow-0 leading-5">
+          click to close -&gt;
+        </span>
         <SPlayerButton class="min-w-11 min-h-9 bg-gray-100" onClick={handleClose}>
           <span class="i-tabler:x text-8 inline-block" />
         </SPlayerButton>

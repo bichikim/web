@@ -61,7 +61,9 @@ const createEmptyFocusController = (): FocusControllerContextValue => {
   }
 }
 
-export const FocusControllerContext = createContext<FocusControllerContextValue>(createEmptyFocusController())
+export const FocusControllerContext = createContext<FocusControllerContextValue>(
+  createEmptyFocusController(),
+)
 
 const getUuid = createUuid()
 

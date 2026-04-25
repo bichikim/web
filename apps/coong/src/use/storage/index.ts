@@ -64,7 +64,11 @@ export const useCookieStorage = <T>(
   return [value, setValue]
 }
 
-export const useClientStorage = <T>(kind: 'local' | 'session', key: string, initValue: T): [Accessor<T>, Setter<T>] => {
+export const useClientStorage = <T>(
+  kind: 'local' | 'session',
+  key: string,
+  initValue: T,
+): [Accessor<T>, Setter<T>] => {
   const [value, setValue] = createSignal<T>(initValue)
 
   // get client storage value when mounted
@@ -117,9 +121,18 @@ export function useStorage<T>(
   options?: Accessor<CookieSerializeOptions>,
 ): [Accessor<T>, Setter<T>]
 
-export function useStorage<T>(kind: 'local' | 'session', key: string, initValue: T): [Accessor<T>, Setter<T>]
+export function useStorage<T>(
+  kind: 'local' | 'session',
+  key: string,
+  initValue: T,
+): [Accessor<T>, Setter<T>]
 
-export function useStorage<T>(kind: any, key: string, initValue: T, options?: any): [Accessor<T>, Setter<T>] {
+export function useStorage<T>(
+  kind: any,
+  key: string,
+  initValue: T,
+  options?: any,
+): [Accessor<T>, Setter<T>] {
   if (kind === 'cookie') {
     return useCookieStorage(key, initValue, options)
   }

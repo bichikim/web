@@ -1,7 +1,10 @@
 import {getWindow} from 'src/get-window'
 import {requestIdleCallbackPolyfill} from './polyfill'
 
-export const requestIdleCallback = (callback: IdleRequestCallback, options?: IdleRequestOptions): (() => void) => {
+export const requestIdleCallback = (
+  callback: IdleRequestCallback,
+  options?: IdleRequestOptions,
+): (() => void) => {
   const window = getWindow()
 
   if (window?.requestIdleCallback === undefined) {

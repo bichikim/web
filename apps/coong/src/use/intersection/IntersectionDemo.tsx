@@ -22,7 +22,9 @@ export const IntersectionDemo = (props: {rootMargin?: string; threshold?: number
         ref={setTarget}
         class={`h-32 p-4 transition-colors duration-300 ${isIntersecting() ? 'bg-green-200' : 'bg-red-200'}`}
       >
-        <p>This element is {isIntersecting() ? 'intersecting' : 'not intersecting'} with the viewport</p>
+        <p>
+          This element is {isIntersecting() ? 'intersecting' : 'not intersecting'} with the viewport
+        </p>
         <p class="text-sm text-gray-600">
           Threshold: {props.threshold || 0.5} | Root Margin: {props.rootMargin || '0px'}
         </p>

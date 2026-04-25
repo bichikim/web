@@ -6,7 +6,9 @@ import {cdnBuild, cdnBuildWithCleanUp} from './build'
 import {cdnServe} from './serve'
 import type {CdnOptions} from './types'
 
-export const cdnWithCleanUp = (options?: CdnOptions): {cleanUp: () => Promise<void>; pluginOptions: Plugin[]} => {
+export const cdnWithCleanUp = (
+  options?: CdnOptions,
+): {cleanUp: () => Promise<void>; pluginOptions: Plugin[]} => {
   const {pluginOptions, cleanUp} = cdnBuildWithCleanUp(options)
 
   return {

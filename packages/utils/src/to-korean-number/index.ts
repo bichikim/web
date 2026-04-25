@@ -96,4 +96,5 @@ export const toKoreanNumberFn = ({
     joinFp(joinGroup),
   )
 
-export const toKoreanNumber = (value?: unknown, options?: NumberToKoreanOptions) => toKoreanNumberFn(options)(value)
+export const toKoreanNumber = (value?: unknown, options?: NumberToKoreanOptions) =>
+  toKoreanNumberFn(options)(value)

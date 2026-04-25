@@ -4,7 +4,10 @@ import {getStorageKey} from 'src/utils/storage-key'
 // restore scroll
 
 export const useRestoreScroll = (element: Accessor<HTMLElement | null>) => {
-  const [savedScrollLeft, setSavedScrollLeft] = useStorage<number | null>('local', getStorageKey('piano-scroll-left'))
+  const [savedScrollLeft, setSavedScrollLeft] = useStorage<number | null>(
+    'local',
+    getStorageKey('piano-scroll-left'),
+  )
 
   onMount(() => {
     const _element = element()

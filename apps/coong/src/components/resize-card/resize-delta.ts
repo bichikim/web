@@ -1,4 +1,12 @@
-export type ResizeType = 'up' | 'down' | 'left' | 'right' | 'up-left' | 'up-right' | 'down-left' | 'down-right'
+export type ResizeType =
+  | 'up'
+  | 'down'
+  | 'left'
+  | 'right'
+  | 'up-left'
+  | 'up-right'
+  | 'down-left'
+  | 'down-right'
 
 export const getResizeDelta = (type: ResizeType | undefined) => {
   switch (type) {

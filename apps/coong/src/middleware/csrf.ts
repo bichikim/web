@@ -26,7 +26,10 @@ export const csrfMiddleware = createMiddlewareFragment({
     if (origin) {
       const parsedOrigin = new URL(origin)
 
-      if (parsedOrigin.origin === requestUrl.origin || TRUSTED_ORIGINS.includes(parsedOrigin.origin)) {
+      if (
+        parsedOrigin.origin === requestUrl.origin ||
+        TRUSTED_ORIGINS.includes(parsedOrigin.origin)
+      ) {
         return
       }
 
@@ -49,7 +52,10 @@ export const csrfMiddleware = createMiddlewareFragment({
         return json({error: 'Unauthorized'}, {status: 403})
       }
 
-      if (parsedReferer.origin !== requestUrl.host && !TRUSTED_ORIGINS.includes(parsedReferer.origin)) {
+      if (
+        parsedReferer.origin !== requestUrl.host &&
+        !TRUSTED_ORIGINS.includes(parsedReferer.origin)
+      ) {
         return json({error: 'Unauthorized'}, {status: 403})
       }
     }

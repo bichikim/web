@@ -15,10 +15,10 @@ export const useDoubleClick = (payload: Accessor<DoubleClickPayload>) => {
   let clickTime = 0
   let touchdown = false
 
-  const handleClick: (event: MouseEvent | TouchEvent, useTouchEvent?: boolean) => Promise<void> = async (
-    event: any,
-    useTouchEvent = false,
-  ) => {
+  const handleClick: (
+    event: MouseEvent | TouchEvent,
+    useTouchEvent?: boolean,
+  ) => Promise<void> = async (event: any, useTouchEvent = false) => {
     const {
       active,
       onClick,

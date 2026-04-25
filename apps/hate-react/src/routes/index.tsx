@@ -36,7 +36,10 @@ export default function HomePage() {
         <SHamsterTrigger onClick={goToNext} class="w-30rem h-30rem" />
 
         <Suspense fallback={<p class="mt-12 text-gray-400">Loading opinions...</p>}>
-          <SOpinionDisplay message={currentMessage()} variant={messages().length === 0 ? 'empty' : 'default'} />
+          <SOpinionDisplay
+            message={currentMessage()}
+            variant={messages().length === 0 ? 'empty' : 'default'}
+          />
         </Suspense>
 
         <SFooterLinks links={FOOTER_LINKS} separator="or" />

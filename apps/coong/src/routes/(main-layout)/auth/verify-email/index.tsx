@@ -78,7 +78,9 @@ export default function VerifyEmail() {
         <h1 class={titleStyle({loading: loading()})}>Verified your email</h1>
         <Show
           when={user()}
-          fallback={<span class="i-tabler-loader-2 animate-spin text-2xl text-gray-400 block w-2rem h-2rem mt-1rem" />}
+          fallback={
+            <span class="i-tabler-loader-2 animate-spin text-2xl text-gray-400 block w-2rem h-2rem mt-1rem" />
+          }
         >
           <SAuroraText class={emailStyle}>{user()?.email}</SAuroraText>
         </Show>

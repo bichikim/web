@@ -1,4 +1,6 @@
-export const toStringStyle = (target: string | undefined | null | Record<string, string | number> | string[]) => {
+export const toStringStyle = (
+  target: string | undefined | null | Record<string, string | number> | string[],
+) => {
   if (!target) {
     return ''
   }

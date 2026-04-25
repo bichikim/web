@@ -1,5 +1,12 @@
 import {MutableMessageAction, ToastActionContext} from './context'
-import {createMemo, createSignal, mergeProps, splitProps, useContext, ValidComponent} from 'solid-js'
+import {
+  createMemo,
+  createSignal,
+  mergeProps,
+  splitProps,
+  useContext,
+  ValidComponent,
+} from 'solid-js'
 import {Dynamic, DynamicProps} from 'solid-js/web'
 
 export type ToastActionProps<T extends ValidComponent> = Partial<DynamicProps<T>>
@@ -39,7 +46,12 @@ export const ToastAction = <T extends ValidComponent>(props: ToastActionProps<T>
   })
 
   return (
-    <Dynamic component={innerProps.component} {...restProps} {...receivedProps} onClick={handleClick}>
+    <Dynamic
+      component={innerProps.component}
+      {...restProps}
+      {...receivedProps}
+      onClick={handleClick}
+    >
       {receivedLabel()}
     </Dynamic>
   )

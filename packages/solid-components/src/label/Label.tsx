@@ -1,5 +1,12 @@
 import {freeze} from '@winter-love/utils'
-import {Accessor, createContext, createMemo, createUniqueId, ParentProps, useContext} from 'solid-js'
+import {
+  Accessor,
+  createContext,
+  createMemo,
+  createUniqueId,
+  ParentProps,
+  useContext,
+} from 'solid-js'
 import {ComponentProps} from 'solid-js/types/render/component'
 
 export type LabelProviderProps = {targetId?: string} & ParentProps

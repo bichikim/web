@@ -54,12 +54,16 @@ describe('focus-controller', () => {
     focusController.setFocus(first)
     expect(onChangeFocus).toHaveBeenNthCalledWith(1, [], false)
     expect(onChangeFocus).toHaveBeenNthCalledWith(2, first, true)
-    expect(getDeepPositionInfoWithKey(focusController.positionMap, ROOT_KEY)?.previousChildPosition).toBeUndefined()
+    expect(
+      getDeepPositionInfoWithKey(focusController.positionMap, ROOT_KEY)?.previousChildPosition,
+    ).toBeUndefined()
     onChangeFocus.mockClear()
     focusController.setFocus(second)
     expect(onChangeFocus).toHaveBeenNthCalledWith(1, first, false)
     expect(onChangeFocus).toHaveBeenNthCalledWith(2, second, true)
-    expect(getDeepPositionInfoWithKey(focusController.positionMap, ROOT_KEY)?.previousChildPosition).toEqual(first[0])
+    expect(
+      getDeepPositionInfoWithKey(focusController.positionMap, ROOT_KEY)?.previousChildPosition,
+    ).toEqual(first[0])
   })
 
   it('should move deep position', () => {
@@ -100,8 +104,12 @@ describe('focus-controller', () => {
 
     focusController.registerFocus(deepPosition)
     focusController.setPreventMoveFocus(deepPosition, {right: true})
-    expect(isPreventMoveFocus(focusController.positionMap, deepPosition, getDirection('right'))).toBe(true)
-    expect(isPreventMoveFocus(focusController.positionMap, deepPosition, getDirection('left'))).toBe(false)
+    expect(
+      isPreventMoveFocus(focusController.positionMap, deepPosition, getDirection('right')),
+    ).toBe(true)
+    expect(
+      isPreventMoveFocus(focusController.positionMap, deepPosition, getDirection('left')),
+    ).toBe(false)
   })
 
   it('should set previous focus deep position', () => {
@@ -115,12 +123,16 @@ describe('focus-controller', () => {
     focusController.setPreviousFocus(deepPosition)
     const parentKey = getDeepPositionKey([{x: 0, y: 0}])
 
-    expect(getDeepPositionInfoWithKey(focusController.positionMap, parentKey)?.previousChildPosition).toEqual({
+    expect(
+      getDeepPositionInfoWithKey(focusController.positionMap, parentKey)?.previousChildPosition,
+    ).toEqual({
       x: 1,
       y: 1,
     })
 
-    expect(getDeepPositionInfoWithKey(focusController.positionMap, ROOT_KEY)?.previousChildPosition).toEqual({
+    expect(
+      getDeepPositionInfoWithKey(focusController.positionMap, ROOT_KEY)?.previousChildPosition,
+    ).toEqual({
       x: 0,
       y: 0,
     })
@@ -178,9 +190,13 @@ describe('focus-controller', () => {
     focusController.registerFocus(first)
     focusController.registerFocus(second)
     focusController.setFocus(first)
-    expect(getDeepPositionInfoWithKey(focusController.positionMap, ROOT_KEY)?.previousChildPosition).toBeUndefined()
+    expect(
+      getDeepPositionInfoWithKey(focusController.positionMap, ROOT_KEY)?.previousChildPosition,
+    ).toBeUndefined()
     focusController.setFocus(second, {preventSavePreviousFocus: true})
-    expect(getDeepPositionInfoWithKey(focusController.positionMap, ROOT_KEY)?.previousChildPosition).toBeUndefined()
+    expect(
+      getDeepPositionInfoWithKey(focusController.positionMap, ROOT_KEY)?.previousChildPosition,
+    ).toBeUndefined()
   })
 
   it('moves focus when prevent move is ignored', () => {
@@ -199,7 +215,9 @@ describe('focus-controller', () => {
     expect(blocked).toBeNull()
     expect(onChangeFocus).toHaveBeenCalledTimes(2)
     onChangeFocus.mockClear()
-    const result = focusController.moveFocus(getDirection('right'), {ignorePreventMoveFocus: true})
+    const result = focusController.moveFocus(getDirection('right'), {
+      ignorePreventMoveFocus: true,
+    })
 
     expect(result).toEqual(next)
     expect(onChangeFocus).toHaveBeenNthCalledWith(1, start, false)

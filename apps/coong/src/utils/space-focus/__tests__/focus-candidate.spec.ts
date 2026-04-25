@@ -7,7 +7,12 @@ import {
   scoreAngleCandidate,
   verticalOverlap,
 } from '../focus-candidate'
-import {createFocusRect as _createFocusRect, type Direction, type FocusRect, type Rect} from '../focus-store'
+import {
+  createFocusRect as _createFocusRect,
+  type Direction,
+  type FocusRect,
+  type Rect,
+} from '../focus-store'
 
 const createRect = (left: number, top: number, right: number, bottom: number): Rect => {
   return {
@@ -303,13 +308,16 @@ describe('focus-candidate', () => {
       ['left', createFocusRect(-20, 0, -10, 10)],
       ['down', createFocusRect(0, 20, 10, 30)],
       ['up', createFocusRect(0, -20, 10, -10)],
-    ] as const)('should return valid score for %s direction', (direction: Direction, to: FocusRect) => {
-      const from = createFocusRect(0, 0, 10, 10)
+    ] as const)(
+      'should return valid score for %s direction',
+      (direction: Direction, to: FocusRect) => {
+        const from = createFocusRect(0, 0, 10, 10)
 
-      const score = scoreAngleCandidate(from, to, direction, 0.5)
+        const score = scoreAngleCandidate(from, to, direction, 0.5)
 
-      expect(score).toBeGreaterThan(-10_000)
-    })
+        expect(score).toBeGreaterThan(-10_000)
+      },
+    )
   })
 
   describe('moveFocus', () => {
@@ -372,15 +380,18 @@ describe('focus-candidate', () => {
       ['left', createFocusRect(-20, 0, -10, 10)],
       ['down', createFocusRect(0, 20, 10, 30)],
       ['up', createFocusRect(0, -20, 10, -10)],
-    ] as const)('should return candidate for %s direction', (direction: Direction, candidate: FocusRect) => {
-      const from = createFocusRect(0, 0, 10, 10)
-      const to = [candidate]
+    ] as const)(
+      'should return candidate for %s direction',
+      (direction: Direction, candidate: FocusRect) => {
+        const from = createFocusRect(0, 0, 10, 10)
+        const to = [candidate]
 
-      const result = moveFocus(from, to, direction)
+        const result = moveFocus(from, to, direction)
 
-      expect(result).not.toBeNull()
-      expect(result?.id).toBe(candidate.id)
-    })
+        expect(result).not.toBeNull()
+        expect(result?.id).toBe(candidate.id)
+      },
+    )
 
     it('should handle multiple candidates and select the best one', () => {
       const from = createFocusRect(0, 0, 10, 10)

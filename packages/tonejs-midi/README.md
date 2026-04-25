@@ -7,6 +7,7 @@
 When accepting an Element as a parameter, always allow for the absence of a value using `null`. Do not use `undefined` or require a non-null value. As with other parameters, use `MaybeAccessor`. Most JS APIs (e.g., `window.querySelector`) return `null` if no element is found.
 
 **Do This:**
+
 ```ts
 import {MaybeAccessor} from 'src/use'
 const useFoo = (element: MaybeAccessor<Element | null>) => {
@@ -15,6 +16,7 @@ const useFoo = (element: MaybeAccessor<Element | null>) => {
 ```
 
 **Don't Do This:**
+
 ```ts
 import {MaybeAccessor} from 'src/use'
 const useFoo = (element: MaybeAccessor<Element | undefined>) => {
@@ -27,4 +29,3 @@ const useJohn = (element: Element) => {
   // do something
 }
 ```
-

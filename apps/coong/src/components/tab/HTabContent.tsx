@@ -16,7 +16,12 @@ export const HTabContent = (props: HTabContentProps) => {
   const tabId = createMemo(() => getId(id, innerProps.name))
 
   return (
-    <div {...restProps} role="tabpanel" data-state={isActive() ? 'active' : 'inactive'} aria-labelledby={tabId()}>
+    <div
+      {...restProps}
+      role="tabpanel"
+      data-state={isActive() ? 'active' : 'inactive'}
+      aria-labelledby={tabId()}
+    >
       <Show when={isActive()}>{innerProps.children}</Show>
     </div>
   )

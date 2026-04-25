@@ -44,7 +44,9 @@ export const emitAllIds = (ids: Set<string>, payload: OnEmitInstrumentPayload) =
   for (const id of ids) {
     const eventName = generateGlobalTouchEventName(id)
 
-    window.dispatchEvent(new CustomEvent(eventName, {detail: {channelName, down: isDown, renderOnly}}))
+    window.dispatchEvent(
+      new CustomEvent(eventName, {detail: {channelName, down: isDown, renderOnly}}),
+    )
   }
 }
 
@@ -258,9 +260,13 @@ export const useGlobalDown = (id: string): Accessor<DownEventPayload> => {
   })
   const eventName = generateGlobalTouchEventName(id)
 
-  useEvent(getWindow, eventName, ({detail: {down, renderOnly, channelName}}: CustomEvent<DownEventPayload>) => {
-    setIsDown({channelName, down, renderOnly})
-  })
+  useEvent(
+    getWindow,
+    eventName,
+    ({detail: {down, renderOnly, channelName}}: CustomEvent<DownEventPayload>) => {
+      setIsDown({channelName, down, renderOnly})
+    },
+  )
 
   return isDown
 }

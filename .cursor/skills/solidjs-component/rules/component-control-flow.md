@@ -29,7 +29,6 @@ export const TodoList = () => {
     </ul>
   )
 }
-
 ```
 
 ## Index Non-keyed list iteration
@@ -53,5 +52,4 @@ export const TodoList = () => {
     </ul>
   )
 }
-
 ```

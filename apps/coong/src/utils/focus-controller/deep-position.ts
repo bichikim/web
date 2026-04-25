@@ -32,7 +32,10 @@ export const DEFAULT_KEY_DEEP_POSITION_OPTIONS: Required<KeyDeepPositionOptions>
 
 export type DeepPosition = Position[]
 
-export const getNextPositionByDirectionName = (position: Position, directionName: DirectionName) => {
+export const getNextPositionByDirectionName = (
+  position: Position,
+  directionName: DirectionName,
+) => {
   return getNextPosition(position, getDirection(directionName))
 }
 

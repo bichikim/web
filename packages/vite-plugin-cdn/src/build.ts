@@ -33,7 +33,10 @@ export const cdnBuildWithCleanUp = (
 
   const cleanUp = async () => {
     try {
-      await fs.promises.rm(path.join(root ?? config.root, publicPath, prefix), {force: true, recursive: true})
+      await fs.promises.rm(path.join(root ?? config.root, publicPath, prefix), {
+        force: true,
+        recursive: true,
+      })
     } catch {
       // skip
     }
@@ -47,7 +50,11 @@ export const cdnBuildWithCleanUp = (
           return
         }
 
-        writeModuleMap = createWriteModuleMap(path.join(root ?? config.root, publicPath), sourceMap, prefix)
+        writeModuleMap = createWriteModuleMap(
+          path.join(root ?? config.root, publicPath),
+          sourceMap,
+          prefix,
+        )
         const modules = await fetchModules(writeModuleMap, getModule)
 
         await Promise.all(

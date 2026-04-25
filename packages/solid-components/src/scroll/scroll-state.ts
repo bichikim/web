@@ -6,7 +6,9 @@ import {ScrollState} from './scroll-context'
  * Whenever scrolls and elements are registered or changed, various scroll-related signal states are updated
  * @param element
  */
-export const useScrollState = (element: MaybeAccessor<HTMLElement | null>): Accessor<ScrollState> => {
+export const useScrollState = (
+  element: MaybeAccessor<HTMLElement | null>,
+): Accessor<ScrollState> => {
   const elementAccessor = resolveAccessor(element)
 
   const [nativeScrollState, updateNativeScrollState] = createManualMemo(() => {

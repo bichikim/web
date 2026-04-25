@@ -288,7 +288,11 @@ export const FocusControllerSampleBody = (props: FocusControllerSampleBodyProps)
 
       <SolidWindow onKeyDown={onKeyDown} onKeyUp={onKeyUp} globalMap={props.globalMap} />
       <div class="flex gap-2 justify-center">
-        <KeyCap childClassName="i-tabler:caret-up-filled" pressed={downUpKey()} onClick={() => handleDirection('up')} />
+        <KeyCap
+          childClassName="i-tabler:caret-up-filled"
+          pressed={downUpKey()}
+          onClick={() => handleDirection('up')}
+        />
       </div>
       <div class="flex gap-2 justify-center">
         <KeyCap

@@ -24,7 +24,12 @@ export const SCard = <T extends ValidComponent = 'div'>(props: SCardProps<T>) =>
   return (
     <HCard
       {...restProps}
-      class={containerStyles({class: innerProps.class, cursor: false, glass: innerProps.glass, size: innerProps.size})}
+      class={containerStyles({
+        class: innerProps.class,
+        cursor: false,
+        glass: innerProps.glass,
+        size: innerProps.size,
+      })}
     />
   )
 }

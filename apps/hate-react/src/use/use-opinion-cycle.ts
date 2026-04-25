@@ -8,7 +8,8 @@ const DEFAULT_MESSAGE =
 /**
  * Get next index in circular fashion
  */
-const nextIndex = (current: number, length: number): number => (length <= 0 ? 0 : (current + 1) % length)
+const nextIndex = (current: number, length: number): number =>
+  length <= 0 ? 0 : (current + 1) % length
 
 /**
  * Get message at index, or default if empty

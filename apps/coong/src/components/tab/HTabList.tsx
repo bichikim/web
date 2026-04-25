@@ -1,7 +1,10 @@
 import {ComponentProps, JSX, VoidComponent} from 'solid-js'
 import {Dynamic, DynamicProps} from 'solid-js/web'
 
-export type HTabListProps<T extends VoidComponent> = Omit<DynamicProps<T>, 'component' | 'children' | 'class'> & {
+export type HTabListProps<T extends VoidComponent> = Omit<
+  DynamicProps<T>,
+  'component' | 'children' | 'class'
+> & {
   children?: JSX.Element
   class?: string
   component?: T

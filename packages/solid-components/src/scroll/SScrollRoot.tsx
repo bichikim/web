@@ -14,9 +14,11 @@ export const SScrollRoot = <T extends ValidComponent>(props: SScrollRootProps<T>
   const scrollValue = createMemo(() => {
     const state = nativeScrollState()
 
-    const percentX = state.scrollLeft > 0 ? state.scrollLeft / (state.scrollWidth - state.containerWidth) : 0
+    const percentX =
+      state.scrollLeft > 0 ? state.scrollLeft / (state.scrollWidth - state.containerWidth) : 0
 
-    const percentY = state.scrollTop > 0 ? state.scrollTop / (state.scrollHeight - state.containerHeight) : 0
+    const percentY =
+      state.scrollTop > 0 ? state.scrollTop / (state.scrollHeight - state.containerHeight) : 0
     const showXBar = state.scrollWidth > state.containerWidth
     const showYBar = state.scrollHeight > state.containerHeight
 

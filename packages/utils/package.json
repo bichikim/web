@@ -3,9 +3,9 @@
   "version": "1.0.37",
   "description": "Useful javascript utils",
   "keywords": [
+    "functional",
     "typescript",
-    "utils",
-    "functional"
+    "utils"
   ],
   "repository": "git@github.com:winter-love/web.git",
   "license": "MIT",

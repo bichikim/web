@@ -1,7 +1,9 @@
 import {getWindow} from '@winter-love/utils'
 import {Accessor, createMemo} from 'solid-js'
 
-export const useTargetElement = (target: Accessor<HTMLElement | string | null>): Accessor<HTMLElement | null> => {
+export const useTargetElement = (
+  target: Accessor<HTMLElement | string | null>,
+): Accessor<HTMLElement | null> => {
   return createMemo((): HTMLElement | null => {
     const targetValue = target()
     const window = getWindow()

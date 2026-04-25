@@ -20,6 +20,7 @@ Place your code in the `use` directory when:
 If a function can be used 100% outside of Solid.js (i.e., it doesn't depend on any Solid.js primitives or reactive features), it should be placed in the `utils` directory instead.
 
 **Example:**
+
 - `use/cookie/index.ts` - Uses `createSignal` and handles reactive cookie state
 - `utils/cookie/index.ts` - Pure functions for reading/writing cookies without reactivity
 

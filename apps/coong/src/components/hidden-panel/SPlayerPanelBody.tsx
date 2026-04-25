@@ -34,7 +34,12 @@ export const SPlayerPanelBody = (props: SPlayerPanelBodyProps) => {
     <ResizeCard.Provider preventWidthResize maxSize={{height: maxHeight()}}>
       <ResizeCard.Body {...restProps} component="div">
         {restProps.children}
-        <ResizeCard.Handle {...preventGlobalTouchAttrs()} tabIndex="-1" resizeType="up" class={handleUpStyle} />
+        <ResizeCard.Handle
+          {...preventGlobalTouchAttrs()}
+          tabIndex="-1"
+          resizeType="up"
+          class={handleUpStyle}
+        />
       </ResizeCard.Body>
     </ResizeCard.Provider>
   )

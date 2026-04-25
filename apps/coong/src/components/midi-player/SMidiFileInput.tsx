@@ -3,8 +3,10 @@ import {cva} from 'class-variance-authority'
 import {MusicInfo} from 'src/components/midi-player/SFileItem'
 import {useMidiFileInput} from './midi-file-input'
 
-export interface HMidiFileInputProps
-  extends Omit<JSX.InputHTMLAttributes<HTMLInputElement>, 'accept' | 'type' | 'onTouchEnd' | 'onClick'> {
+export interface HMidiFileInputProps extends Omit<
+  JSX.InputHTMLAttributes<HTMLInputElement>,
+  'accept' | 'type' | 'onTouchEnd' | 'onClick'
+> {
   onAdd?: (value: MusicInfo[]) => void
   onClick?: (event: PointerEvent) => void
   //

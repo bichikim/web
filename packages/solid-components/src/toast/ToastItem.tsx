@@ -36,7 +36,9 @@ export const ToastItem = (props: ToastItemProps) => {
 
   return (
     <Dynamic {...props} component={rootTag()} onClick={handleClick}>
-      <ToastActionsContext.Provider value={actionsContext()}>{props.children}</ToastActionsContext.Provider>
+      <ToastActionsContext.Provider value={actionsContext()}>
+        {props.children}
+      </ToastActionsContext.Provider>
     </Dynamic>
   )
 }

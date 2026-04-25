@@ -23,7 +23,12 @@ const iconStyle = cva('block text-8', {
 export const SRepeatButton = (props: SRepeatButtonProps) => {
   const defaultProps = mergeProps({repeat: 'no' as const}, props)
 
-  const [innerProps, restProps] = splitProps(defaultProps, ['onClick', 'onChangeRepeat', 'repeat', 'hasManyItems'])
+  const [innerProps, restProps] = splitProps(defaultProps, [
+    'onClick',
+    'onChangeRepeat',
+    'repeat',
+    'hasManyItems',
+  ])
   const repeatLoopOrder: RepeatType[] = ['no', 'one', 'all']
 
   const handelChangeRepeat = () => {
@@ -59,7 +64,11 @@ export const SRepeatButton = (props: SRepeatButtonProps) => {
   })
 
   return (
-    <SPlayerButton {...restProps} onClick={handelChangeRepeat} title={`repeat ${innerProps.repeat}`}>
+    <SPlayerButton
+      {...restProps}
+      onClick={handelChangeRepeat}
+      title={`repeat ${innerProps.repeat}`}
+    >
       <span class={iconStyle({repeat: innerProps.repeat})} />
     </SPlayerButton>
   )

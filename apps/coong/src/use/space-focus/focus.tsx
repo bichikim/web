@@ -115,7 +115,9 @@ export const FocusGroup = (props: FocusGroupProps) => {
   })
   const [focusGroup] = useFocusGroup(element)
 
-  return <FocusGroupContext.Provider value={focusGroup}>{props.children}</FocusGroupContext.Provider>
+  return (
+    <FocusGroupContext.Provider value={focusGroup}>{props.children}</FocusGroupContext.Provider>
+  )
 }
 
 export interface FocusGroupWithElementProps {
@@ -137,7 +139,11 @@ export interface FocusControllerProviderProps {
 export const FocusControllerProvider = (props: FocusControllerProviderProps) => {
   const focusController = useFocusController()
 
-  return <FocusControllerContext.Provider value={focusController}>{props.children}</FocusControllerContext.Provider>
+  return (
+    <FocusControllerContext.Provider value={focusController}>
+      {props.children}
+    </FocusControllerContext.Provider>
+  )
 }
 
 export const useFocusControllerContext = () => {

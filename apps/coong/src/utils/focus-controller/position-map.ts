@@ -105,7 +105,8 @@ export interface UnregisterDeepPositionKeyOptions {
   cleanUpWhenZero?: boolean
 }
 
-export interface UnregisterDeepPositionOptions extends UnregisterDeepPositionKeyOptions, KeyOptions {
+export interface UnregisterDeepPositionOptions
+  extends UnregisterDeepPositionKeyOptions, KeyOptions {
   //
 }
 
@@ -128,7 +129,11 @@ export const hasDeepPositionAsSelf = (
   deepPosition: DeepPosition,
   options: KeyDeepPositionOptions = DEFAULT_KEY_OPTIONS,
 ) => {
-  return hasDeepPositionWithKey(positionMap, getDeepPositionKey(deepPosition, options), 'countAsSelf')
+  return hasDeepPositionWithKey(
+    positionMap,
+    getDeepPositionKey(deepPosition, options),
+    'countAsSelf',
+  )
 }
 
 export const hasDeepPositionWithKey = (
@@ -187,7 +192,12 @@ export const registerDeepPosition = (
   payload: DeepPositionPayload = {},
   options: RegisterDeepPositionOptions = DEFAULT_KEY_OPTIONS,
 ) => {
-  return registerDeepPositionWithKey(positionMap, getDeepPositionKey(deepPosition, options), payload, options)
+  return registerDeepPositionWithKey(
+    positionMap,
+    getDeepPositionKey(deepPosition, options),
+    payload,
+    options,
+  )
 }
 
 export const registerDeepPositionWithKey = (
@@ -218,7 +228,11 @@ export const unregisterDeepPosition = (
   deepPosition: DeepPosition,
   options: UnregisterDeepPositionOptions = DEFAULT_KEY_OPTIONS,
 ) => {
-  return unregisterDeepPositionWithKey(positionMap, getDeepPositionKey(deepPosition, options), options)
+  return unregisterDeepPositionWithKey(
+    positionMap,
+    getDeepPositionKey(deepPosition, options),
+    options,
+  )
 }
 
 export const unregisterDeepPositionWithKey = (
@@ -292,7 +306,11 @@ export const updateDeepPositionPayloadWithKey = (
   })
 }
 
-export const getNextDeepPosition = (deepPosition: DeepPosition, deepIndex: number, direction: Direction) => {
+export const getNextDeepPosition = (
+  deepPosition: DeepPosition,
+  deepIndex: number,
+  direction: Direction,
+) => {
   if (deepIndex < 0 || deepIndex >= deepPosition.length) {
     return null
   }
@@ -369,7 +387,10 @@ export const getDeepPositionInfo = (
   return getDeepPositionInfoWithKey(positionMap, getDeepPositionKey(deepPosition, options))
 }
 
-export const getDeepPositionInfoWithKey = (positionMap: PositionMap, key: string): DeepPositionInfo | undefined => {
+export const getDeepPositionInfoWithKey = (
+  positionMap: PositionMap,
+  key: string,
+): DeepPositionInfo | undefined => {
   return positionMap.get(key)
 }
 
@@ -438,7 +459,13 @@ export const fillPreviousDeepPosition = (
   let deepIndex = startDeepIndex
 
   while (deepIndex < deepPositionLength) {
-    const newNextDeepPosition = restoreDeepPosition(positionMap, nextDeepPosition, deepIndex, _direction, options)
+    const newNextDeepPosition = restoreDeepPosition(
+      positionMap,
+      nextDeepPosition,
+      deepIndex,
+      _direction,
+      options,
+    )
 
     // fill 할 위치가 없을 경우 없는 위치 상위 부모 죄표까지만 반환
     if (newNextDeepPosition === null) {
@@ -457,10 +484,17 @@ export const fillPreviousDeepPosition = (
   }
 
   // 더 깊이 찾는다
-  return fillPreviousDeepPosition(positionMap, nextDeepPosition, deepIndex, direction, deepPositionLength + 1, {
-    ...options,
-    limitOverDepth: limitOverDepth - 1,
-  })
+  return fillPreviousDeepPosition(
+    positionMap,
+    nextDeepPosition,
+    deepIndex,
+    direction,
+    deepPositionLength + 1,
+    {
+      ...options,
+      limitOverDepth: limitOverDepth - 1,
+    },
+  )
 }
 
 /**
@@ -483,7 +517,13 @@ export const jumpDeepPosition = (
   const currentDeepPosition = [...deepPosition]
 
   for (let deepIndex = deepPosition.length - 1; deepIndex >= jumpLimitIndex; deepIndex -= 1) {
-    const nextDeepPosition = moveDeepPosition(positionMap, currentDeepPosition, deepIndex, direction, options)
+    const nextDeepPosition = moveDeepPosition(
+      positionMap,
+      currentDeepPosition,
+      deepIndex,
+      direction,
+      options,
+    )
 
     if (nextDeepPosition) {
       return fillPreviousDeepPosition(
@@ -519,7 +559,9 @@ export const savePreviousDeepPosition = (
 
     const targetKey = getDeepPositionKey(_targetDeepPosition, options)
 
-    updateDeepPositionPayloadWithKey(positionMap, targetKey, {previousChildPosition: previousPosition})
+    updateDeepPositionPayloadWithKey(positionMap, targetKey, {
+      previousChildPosition: previousPosition,
+    })
   }
 }
 

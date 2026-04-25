@@ -86,7 +86,11 @@ describe('useCookieStorage', () => {
     result[1](newValue)
 
     await waitFor(() => {
-      expect(cookieUtils.setClientCookie).toHaveBeenCalledWith('test-key', JSON.stringify(newValue), undefined)
+      expect(cookieUtils.setClientCookie).toHaveBeenCalledWith(
+        'test-key',
+        JSON.stringify(newValue),
+        undefined,
+      )
     })
     cleanup()
   })
@@ -97,7 +101,9 @@ describe('useCookieStorage', () => {
     const options = {maxAge: 3600, path: '/'}
     const optionsAccessor = () => options
 
-    const {result, cleanup} = renderHook(() => useCookieStorage('test-key', 'init', optionsAccessor))
+    const {result, cleanup} = renderHook(() =>
+      useCookieStorage('test-key', 'init', optionsAccessor),
+    )
 
     result[1]('new-value')
 
@@ -135,7 +141,11 @@ describe('useCookieStorage', () => {
     result[1](circular)
 
     await waitFor(() => {
-      expect(cookieUtils.setClientCookie).toHaveBeenCalledWith('test-key', String(circular), undefined)
+      expect(cookieUtils.setClientCookie).toHaveBeenCalledWith(
+        'test-key',
+        String(circular),
+        undefined,
+      )
     })
     cleanup()
   })
@@ -184,7 +194,9 @@ describe('useClientStorage', () => {
   it('should initialize with initValue when localStorage is empty', async () => {
     vi.mocked(localStorageMock.getItem).mockReturnValue(null)
 
-    const {result, cleanup} = renderHook(() => useClientStorage('local', 'test-key', 'default-value'))
+    const {result, cleanup} = renderHook(() =>
+      useClientStorage('local', 'test-key', 'default-value'),
+    )
 
     await waitFor(() => {
       expect(result[0]()).toBe('default-value')
@@ -197,7 +209,9 @@ describe('useClientStorage', () => {
 
     vi.mocked(localStorageMock.getItem).mockReturnValue(storedValue)
 
-    const {result, cleanup} = renderHook(() => useClientStorage('local', 'test-key', 'default-value'))
+    const {result, cleanup} = renderHook(() =>
+      useClientStorage('local', 'test-key', 'default-value'),
+    )
 
     await waitFor(() => {
       expect(result[0]()).toBe(storedValue)
@@ -290,7 +304,9 @@ describe('useClientStorage', () => {
     isServerMock.value = true
     vi.mocked(localStorageMock.getItem).mockReturnValue('stored-value')
 
-    const {result, cleanup} = renderHook(() => useClientStorage('local', 'test-key', 'default-value'))
+    const {result, cleanup} = renderHook(() =>
+      useClientStorage('local', 'test-key', 'default-value'),
+    )
 
     await waitFor(() => {
       expect(result[0]()).toBe('default-value')
@@ -388,7 +404,9 @@ describe('useStorage', () => {
     const options = {maxAge: 3600, path: '/'}
     const optionsAccessor = () => options
 
-    const {result, cleanup} = renderHook(() => useStorage('cookie', 'test-key', 'init', optionsAccessor))
+    const {result, cleanup} = renderHook(() =>
+      useStorage('cookie', 'test-key', 'init', optionsAccessor),
+    )
 
     result[1]('new-value')
 

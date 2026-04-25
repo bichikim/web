@@ -4,7 +4,7 @@ description: Check test status and debug failing tests using Wallaby.js real-tim
 compatibility: Requires Wallaby.js VS Code extension installed and running
 metadata:
   author: wallaby.js
-  version: "1.0"
+  version: '1.0'
 ---
 
 # Wallaby Testing Skill
@@ -25,22 +25,22 @@ Check test status and debug failing tests using Wallaby.js real-time test execut
 
 Use these tools to gather test information:
 
- | Tool | Purpose |
- | ------ | --------- |
- | `wallaby_failingTests` | Get all failing tests with errors and stack traces |
- | `wallaby_failingTestsForFile` | Get failing tests for a specific file |
- | `wallaby_allTests` | Get all tests (useful when there are no failures but you need test IDs) |
- | `wallaby_allTestsForFile` | Get tests covering/executing a specific file |
- | `wallaby_failingTestsForFileAndLine` | Get failing tests covering/executing a specific file and line |
- | `wallaby_allTestsForFileAndLine` | Get tests covering a specific line |
- | `wallaby_runtimeValues` | Inspect variable values at a code location |
- | `wallaby_runtimeValuesByTest` | Get runtime values for a specific test |
- | `wallaby_coveredLinesForFile` | Get coverage data for a file |
- | `wallaby_coveredLinesForTest` | Get lines covered by a specific test |
- | `wallaby_testById` | Get detailed test data by ID |
- | `wallaby_updateTestSnapshots` | Update snapshots for a test |
- | `wallaby_updateFileSnapshots` | Update all snapshots in a file |
- | `wallaby_updateProjectSnapshots` | Update all snapshots in the project |
+| Tool                                 | Purpose                                                                 |
+| ------------------------------------ | ----------------------------------------------------------------------- |
+| `wallaby_failingTests`               | Get all failing tests with errors and stack traces                      |
+| `wallaby_failingTestsForFile`        | Get failing tests for a specific file                                   |
+| `wallaby_allTests`                   | Get all tests (useful when there are no failures but you need test IDs) |
+| `wallaby_allTestsForFile`            | Get tests covering/executing a specific file                            |
+| `wallaby_failingTestsForFileAndLine` | Get failing tests covering/executing a specific file and line           |
+| `wallaby_allTestsForFileAndLine`     | Get tests covering a specific line                                      |
+| `wallaby_runtimeValues`              | Inspect variable values at a code location                              |
+| `wallaby_runtimeValuesByTest`        | Get runtime values for a specific test                                  |
+| `wallaby_coveredLinesForFile`        | Get coverage data for a file                                            |
+| `wallaby_coveredLinesForTest`        | Get lines covered by a specific test                                    |
+| `wallaby_testById`                   | Get detailed test data by ID                                            |
+| `wallaby_updateTestSnapshots`        | Update snapshots for a test                                             |
+| `wallaby_updateFileSnapshots`        | Update all snapshots in a file                                          |
+| `wallaby_updateProjectSnapshots`     | Update all snapshots in the project                                     |
 
 ### What Inputs These Tools Need
 
@@ -112,10 +112,10 @@ User: "The calculator test is failing"
    Error shows: "expected 4, got 5" in multiply function
 2. (Optional) Call wallaby_coveredLinesForTest(testId) → Skip if error is clear
 3. (Optional) Call wallaby_runtimeValues(file, line, expression) → Skip if cause is obvious
-4. Analyze: multiply used + instead of *
-5. Fix: Change + to * in calculator.js
+4. Analyze: multiply used + instead of \*
+5. Fix: Change + to \* in calculator.js
 6. Call wallaby_failingTests → Confirm no failures remain
-</example>
+   </example>
 
 ## Best Practices
 

@@ -39,8 +39,6 @@ Use SolidJS built-in control-flow components from `solid-js` instead of ad-hoc `
 - **Switch rendering:** `<Switch>` with `<Match>` children (`when` per branch)
 - **Repeated list rendering:** `<For>` (`each`, keyed item tracking)
 
-
-
 ## Solid Reactivity Notes
 
 - Implement proper code splitting but never split Solidjs props
@@ -52,7 +50,7 @@ Use SolidJS built-in control-flow components from `solid-js` instead of ad-hoc `
     }
 
     export function Counter(props: Props) {
-      const { count } = props
+      const {count} = props
       return <div>{count}</div>
     }
     ```
@@ -72,7 +70,7 @@ Use SolidJS built-in control-flow components from `solid-js` instead of ad-hoc `
   - If splitting is unavoidable, use Solid's `splitProps`:
 
     ```tsx
-    import { splitProps } from "solid-js"
+    import {splitProps} from 'solid-js'
 
     interface Props {
       count: number
@@ -80,7 +78,7 @@ Use SolidJS built-in control-flow components from `solid-js` instead of ad-hoc `
     }
 
     export function Counter(props: Props) {
-      const [local, rest] = splitProps(props, ["count", "class"])
+      const [local, rest] = splitProps(props, ['count', 'class'])
       return (
         <div class={local.class} {...rest}>
           {local.count}
@@ -93,7 +91,7 @@ Use SolidJS built-in control-flow components from `solid-js` instead of ad-hoc `
   - BAD (do not `return` a cleanup function):
 
     ```tsx
-    import { createEffect } from "solid-js"
+    import {createEffect} from 'solid-js'
 
     export function Example() {
       createEffect(() => {
@@ -108,7 +106,7 @@ Use SolidJS built-in control-flow components from `solid-js` instead of ad-hoc `
   - GOOD (use `onCleanup` inside the effect):
 
     ```tsx
-    import { createEffect, onCleanup } from "solid-js"
+    import {createEffect, onCleanup} from 'solid-js'
 
     export function Example() {
       createEffect(() => {

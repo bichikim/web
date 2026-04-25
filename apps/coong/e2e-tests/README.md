@@ -3,6 +3,7 @@
 This app supports dev/E2E-only Supabase mocking for SSR by injecting a mocked client into `event.locals.supabase`.
 
 ## How it works
+
 - The middleware `src/middleware/supabase-mock.ts` reads the request header `x-supabase-mock`.
 - It accepts either:
   - `preset:<id>` (e.g. `preset:signedIn`)
@@ -13,23 +14,26 @@ This app supports dev/E2E-only Supabase mocking for SSR by injecting a mocked cl
 ## Header examples
 
 ### Preset
+
 - `x-supabase-mock: preset:signedIn`
 - `x-supabase-mock: preset:signedOut`
 
 ### base64(json)
+
 JSON:
 
 ```json
 {
   "mode": "error",
   "mocks": {
-    "auth.getUser": { "user": { "id": "u1", "email": "user@example.com" } },
-    "auth.signInWithPassword": { "session": { "access_token": "t" }, "user": { "id": "u1" } }
+    "auth.getUser": {"user": {"id": "u1", "email": "user@example.com"}},
+    "auth.signInWithPassword": {"session": {"access_token": "t"}, "user": {"id": "u1"}}
   }
 }
 ```
 
 Send as:
+
 - `x-supabase-mock: <base64(json)>`
 
 ## Playwright usage snippet
@@ -45,5 +49,3 @@ test('SSR render with mocked supabase', async ({page}) => {
   await page.goto('/')
 })
 ```
-
-

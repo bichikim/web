@@ -32,7 +32,9 @@ export interface DragListItemContextProps {
 
 export const DragListItemContext = createContext<DragListItemContextProps>()
 
-export const DragListItemProvider = <T extends ValidComponent>(props: DragListItemProviderProps) => {
+export const DragListItemProvider = <T extends ValidComponent>(
+  props: DragListItemProviderProps,
+) => {
   const context = useContext(DragListContext)
 
   const handleDragStart = (event: MouseEvent) => {

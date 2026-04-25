@@ -1,7 +1,11 @@
 import {createSignal} from 'solid-js'
 import {useAnimationFrame, type UseAnimationFrameOptions} from 'src/use/animation-frame'
 
-export const useCountdown = (wait: number, callback: () => void, options?: UseAnimationFrameOptions) => {
+export const useCountdown = (
+  wait: number,
+  callback: () => void,
+  options?: UseAnimationFrameOptions,
+) => {
   const [startTime, setStartTime] = createSignal(0)
   const [count, setCount] = createSignal(wait)
 

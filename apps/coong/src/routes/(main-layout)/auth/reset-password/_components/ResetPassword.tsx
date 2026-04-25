@@ -27,7 +27,9 @@ export const ResetPassword = () => {
           fallback={
             <div class="text-center">
               <p class="text-green-600 mb-4">이메일로 패스워드 재설정 링크를 전송했습니다.</p>
-              <p class="text-sm text-gray-600 mb-4">이메일을 확인하고 링크를 클릭하여 새 패스워드를 설정하세요.</p>
+              <p class="text-sm text-gray-600 mb-4">
+                이메일을 확인하고 링크를 클릭하여 새 패스워드를 설정하세요.
+              </p>
               <a href="/public/sign-in" class="text-blue-500 hover:underline">
                 로그인 페이지로 돌아가기
               </a>

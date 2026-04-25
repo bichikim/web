@@ -2,8 +2,10 @@ import {createUniqueId, JSX, Match, splitProps, Switch} from 'solid-js'
 
 export type SSettingItemType = 'switch' | 'slider' | 'button'
 
-export interface SSettingItemProps<T extends SSettingItemType>
-  extends Omit<JSX.HTMLAttributes<HTMLDivElement>, 'onClick'> {
+export interface SSettingItemProps<T extends SSettingItemType> extends Omit<
+  JSX.HTMLAttributes<HTMLDivElement>,
+  'onClick'
+> {
   label: string
   max?: T extends 'slider' ? number : never
   min?: T extends 'slider' ? number : never

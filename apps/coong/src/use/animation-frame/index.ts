@@ -27,7 +27,10 @@ const SECONDS_TO_MILLISECONDS = 1000
  * )
  * ```
  */
-export const useAnimationFrame = (callback: (deltaTime: number) => void, options?: UseAnimationFrameOptions) => {
+export const useAnimationFrame = (
+  callback: (deltaTime: number) => void,
+  options?: UseAnimationFrameOptions,
+) => {
   const targetInterval = options?.fps ? SECONDS_TO_MILLISECONDS / options.fps : 0
 
   const [start, setStart] = createSignal(false)

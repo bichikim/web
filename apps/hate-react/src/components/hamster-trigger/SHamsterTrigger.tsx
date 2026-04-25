@@ -16,7 +16,11 @@ export const SHamsterTrigger = (props: SHamsterTriggerProps) => {
   const [local, rest] = splitProps(props, ['onClick', 'class'])
 
   return (
-    <HHamsterTrigger {...rest} class={cx(hamsterTriggerStyles(), local.class)} onClick={local.onClick}>
+    <HHamsterTrigger
+      {...rest}
+      class={cx(hamsterTriggerStyles(), local.class)}
+      onClick={local.onClick}
+    >
       <img src={hamsterPng} alt="hamster" class="w-full h-full object-cover" />
     </HHamsterTrigger>
   )

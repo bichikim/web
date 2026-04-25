@@ -7,7 +7,11 @@ import type {Plugin, ResolvedConfig} from 'vite'
 export const INJECT_TARGET = '__inject_code__'
 export const libraryRoot = path.dirname(fileURLToPath(new URL(import.meta.url)))
 
-export type CacheStrategy = 'network-first' | 'cache-first' | 'stale-while-revalidate' | 'network-only'
+export type CacheStrategy =
+  | 'network-first'
+  | 'cache-first'
+  | 'stale-while-revalidate'
+  | 'network-only'
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error' | 'silent'
 
@@ -102,7 +106,10 @@ const applyTemplate = (
 }
 
 /** Generate a service worker file from the template. */
-export const generateSW = async (distribution: string, options: GenerateSWOptions): Promise<void> => {
+export const generateSW = async (
+  distribution: string,
+  options: GenerateSWOptions,
+): Promise<void> => {
   const {
     assets,
     assetsRoot,
@@ -185,7 +192,9 @@ export const generateSW = async (distribution: string, options: GenerateSWOption
     if (error instanceof Error && error.message.includes('Failed to')) {
       throw error
     }
-    throw new Error(`Service worker generation failed: ${error instanceof Error ? error.message : String(error)}`)
+    throw new Error(
+      `Service worker generation failed: ${error instanceof Error ? error.message : String(error)}`,
+    )
   }
 }
 
@@ -271,7 +280,11 @@ export const generateSwWithCleanUp = (
           )
         }
 
-        if (isSolidStartConfig(config) && config.router.type === 'client' && config.mode === 'production') {
+        if (
+          isSolidStartConfig(config) &&
+          config.router.type === 'client' &&
+          config.mode === 'production'
+        ) {
           _config = config
         }
       },

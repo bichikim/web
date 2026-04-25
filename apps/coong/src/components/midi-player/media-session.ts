@@ -9,7 +9,10 @@ export interface MediaSessionProps {
 
 const DEFAULT_ALLOWED_EXTENSIONS = ['png', 'jpg', 'jpeg']
 
-const getExtension = (type: string, allowedExtensions: string[] = DEFAULT_ALLOWED_EXTENSIONS): string | null => {
+const getExtension = (
+  type: string,
+  allowedExtensions: string[] = DEFAULT_ALLOWED_EXTENSIONS,
+): string | null => {
   const extension = type.split('/').pop()
 
   if (!extension) {
@@ -96,7 +99,10 @@ const ACTION_HANDLER_KEY = Symbol('action-handler')
 
 type ActionHandlerInfo = Record<MediaSessionAction, boolean>
 
-const useActionHandler = (action: MediaSessionAction, handler: MediaSessionActionHandler | null) => {
+const useActionHandler = (
+  action: MediaSessionAction,
+  handler: MediaSessionActionHandler | null,
+) => {
   onMount(() => {
     const prevInfo: ActionHandlerInfo = (window as any)[ACTION_HANDLER_KEY] ?? {}
 
@@ -130,7 +136,10 @@ const useActionHandler = (action: MediaSessionAction, handler: MediaSessionActio
   })
 }
 
-export const useMediaMetadata = (props: Accessor<MediaSessionProps>, options: MediaSessionOptions = {}) => {
+export const useMediaMetadata = (
+  props: Accessor<MediaSessionProps>,
+  options: MediaSessionOptions = {},
+) => {
   createEffect(() => {
     if (!navigator.mediaSession) {
       return

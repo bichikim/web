@@ -88,7 +88,12 @@ describe('position-map', () => {
       const positionMap = createPositionMap()
       const deepPosition: DeepPosition = [{x: 1, y: 1}]
 
-      registerDeepPositionWithKey(positionMap, getDeepPositionKey(deepPosition), {}, {asSelf: false})
+      registerDeepPositionWithKey(
+        positionMap,
+        getDeepPositionKey(deepPosition),
+        {},
+        {asSelf: false},
+      )
       expect(hasDeepPositionAsSelf(positionMap, deepPosition)).toBe(false)
     })
   })
@@ -178,8 +183,13 @@ describe('position-map', () => {
         {x: 3, y: 3},
       ]
 
-      registerDeepPositionRecursively(positionMap, deepPosition, {previousChildPosition: {x: 4, y: 4}})
-      expect(getDeepPositionInfo(positionMap, deepPosition)?.previousChildPosition).toEqual({x: 4, y: 4})
+      registerDeepPositionRecursively(positionMap, deepPosition, {
+        previousChildPosition: {x: 4, y: 4},
+      })
+      expect(getDeepPositionInfo(positionMap, deepPosition)?.previousChildPosition).toEqual({
+        x: 4,
+        y: 4,
+      })
 
       expect(
         getDeepPositionInfo(positionMap, [
@@ -187,7 +197,9 @@ describe('position-map', () => {
           {x: 2, y: 2},
         ])?.previousChildPosition,
       ).toBeUndefined()
-      expect(getDeepPositionInfo(positionMap, [{x: 1, y: 1}])?.previousChildPosition).toBeUndefined()
+      expect(
+        getDeepPositionInfo(positionMap, [{x: 1, y: 1}])?.previousChildPosition,
+      ).toBeUndefined()
       expect(getDeepPositionInfo(positionMap, [])?.previousChildPosition).toBeUndefined()
     })
 
@@ -426,7 +438,10 @@ describe('position-map', () => {
       registerDeepPositionWithKey(positionMap, key)
       unregisterDeepPositionWithKey(positionMap, key, {cleanUpWhenZero: true})
       expect(hasDeepPositionWithKey(positionMap, key)).toBe(true)
-      expect(getDeepPositionInfoWithKey(positionMap, key)?.previousChildPosition).toEqual({x: 0, y: 0})
+      expect(getDeepPositionInfoWithKey(positionMap, key)?.previousChildPosition).toEqual({
+        x: 0,
+        y: 0,
+      })
       unregisterDeepPositionWithKey(positionMap, key, {cleanUpWhenZero: true})
       expect(hasDeepPositionWithKey(positionMap, key)).toBe(false)
       expect(getDeepPositionInfoWithKey(positionMap, key)?.previousChildPosition).toBeUndefined()
@@ -468,16 +483,25 @@ describe('position-map', () => {
         {x: 2, y: 2},
       ]
 
-      registerDeepPositionRecursively(positionMap, deepPosition, {previousChildPosition: {x: 0, y: 0}})
+      registerDeepPositionRecursively(positionMap, deepPosition, {
+        previousChildPosition: {x: 0, y: 0},
+      })
       registerDeepPositionRecursively(positionMap, deepPosition)
       unregisterDeepPositionRecursively(positionMap, deepPosition, {cleanUpWhenZero: true})
       expect(hasDeepPosition(positionMap, deepPosition)).toBe(true)
       expect(hasDeepPosition(positionMap, [{x: 1, y: 1}])).toBe(true)
-      expect(getDeepPositionInfo(positionMap, deepPosition)?.previousChildPosition).toEqual({x: 0, y: 0})
-      expect(getDeepPositionInfo(positionMap, [{x: 1, y: 1}])?.previousChildPosition).toBeUndefined()
+      expect(getDeepPositionInfo(positionMap, deepPosition)?.previousChildPosition).toEqual({
+        x: 0,
+        y: 0,
+      })
+      expect(
+        getDeepPositionInfo(positionMap, [{x: 1, y: 1}])?.previousChildPosition,
+      ).toBeUndefined()
       unregisterDeepPositionRecursively(positionMap, deepPosition, {cleanUpWhenZero: true})
       expect(getDeepPositionInfo(positionMap, deepPosition)?.previousChildPosition).toBeUndefined()
-      expect(getDeepPositionInfo(positionMap, [{x: 1, y: 1}])?.previousChildPosition).toBeUndefined()
+      expect(
+        getDeepPositionInfo(positionMap, [{x: 1, y: 1}])?.previousChildPosition,
+      ).toBeUndefined()
     })
 
     it('should unregister a deep position with cleanUpInfo options', () => {
@@ -488,16 +512,22 @@ describe('position-map', () => {
         {x: 2, y: 2},
       ]
 
-      registerDeepPositionRecursively(positionMap, deepPosition, {previousChildPosition: {x: 0, y: 0}})
+      registerDeepPositionRecursively(positionMap, deepPosition, {
+        previousChildPosition: {x: 0, y: 0},
+      })
       registerDeepPositionRecursively(positionMap, deepPosition)
       unregisterDeepPositionRecursively(positionMap, deepPosition, {cleanUpInfo: true})
       expect(hasDeepPosition(positionMap, deepPosition)).toBe(true)
       expect(hasDeepPosition(positionMap, [{x: 1, y: 1}])).toBe(true)
       expect(getDeepPositionInfo(positionMap, deepPosition)?.previousChildPosition).toBeUndefined()
-      expect(getDeepPositionInfo(positionMap, [{x: 1, y: 1}])?.previousChildPosition).toBeUndefined()
+      expect(
+        getDeepPositionInfo(positionMap, [{x: 1, y: 1}])?.previousChildPosition,
+      ).toBeUndefined()
       unregisterDeepPositionRecursively(positionMap, deepPosition, {cleanUpInfo: true})
       expect(getDeepPositionInfo(positionMap, deepPosition)?.previousChildPosition).toBeUndefined()
-      expect(getDeepPositionInfo(positionMap, [{x: 1, y: 1}])?.previousChildPosition).toBeUndefined()
+      expect(
+        getDeepPositionInfo(positionMap, [{x: 1, y: 1}])?.previousChildPosition,
+      ).toBeUndefined()
     })
   })
 
@@ -854,7 +884,9 @@ describe('position-map', () => {
         {x: 2, y: 2},
       ]
 
-      registerDeepPositionRecursively(positionMap, parentPosition, {previousChildPosition: {x: 2, y: 2}})
+      registerDeepPositionRecursively(positionMap, parentPosition, {
+        previousChildPosition: {x: 2, y: 2},
+      })
       registerDeepPositionRecursively(positionMap, nextPosition)
 
       const result = restoreDeepPosition(positionMap, deepPosition, 1)
@@ -909,7 +941,9 @@ describe('position-map', () => {
 
       registerDeepPositionRecursively(positionMap, nextPosition)
       registerDeepPositionRecursively(positionMap, deepPosition)
-      registerDeepPositionRecursively(positionMap, parent, {previousChildPosition: {x: 4, y: 4}})
+      registerDeepPositionRecursively(positionMap, parent, {
+        previousChildPosition: {x: 4, y: 4},
+      })
 
       const result = fillPreviousDeepPosition(positionMap, deepPosition, 2)
 
@@ -942,7 +976,9 @@ describe('position-map', () => {
         {x: 0, y: 0},
       ]
 
-      registerDeepPositionRecursively(positionMap, parent, {previousChildPosition: {x: 4, y: 4}})
+      registerDeepPositionRecursively(positionMap, parent, {
+        previousChildPosition: {x: 4, y: 4},
+      })
       registerDeepPositionRecursively(positionMap, nextPosition)
 
       const result = fillPreviousDeepPosition(positionMap, deepPosition, 2)
@@ -977,7 +1013,9 @@ describe('position-map', () => {
         {x: 8, y: 5},
       ]
 
-      registerDeepPositionRecursively(positionMap, parent, {previousChildPosition: {x: 4, y: 4}})
+      registerDeepPositionRecursively(positionMap, parent, {
+        previousChildPosition: {x: 4, y: 4},
+      })
       registerDeepPositionRecursively(positionMap, nextPosition)
 
       const result = fillPreviousDeepPosition(
@@ -1018,7 +1056,11 @@ describe('position-map', () => {
 
       const result = fillPreviousDeepPosition(positionMap, deepPosition, 1)
 
-      expect(result).toEqual([{x: 0, y: 0}, DEFAULT_FILL_OPTIONS.defaultPosition, DEFAULT_FILL_OPTIONS.defaultPosition])
+      expect(result).toEqual([
+        {x: 0, y: 0},
+        DEFAULT_FILL_OPTIONS.defaultPosition,
+        DEFAULT_FILL_OPTIONS.defaultPosition,
+      ])
     })
 
     it('should fill more deep position when full filled deep position is not found', () => {
@@ -1132,7 +1174,9 @@ describe('position-map', () => {
       const direction: Direction = getDirection('right')
 
       registerDeepPositionRecursively(positionMap, nextPosition)
-      registerDeepPositionRecursively(positionMap, parent1, {previousChildPosition: {x: 5, y: 5}})
+      registerDeepPositionRecursively(positionMap, parent1, {
+        previousChildPosition: {x: 5, y: 5},
+      })
 
       const result = jumpDeepPosition(positionMap, deepPosition, direction)
 
@@ -1151,7 +1195,9 @@ describe('position-map', () => {
       const direction: Direction = getDirection('right')
 
       registerDeepPositionRecursively(positionMap, nextPosition)
-      registerDeepPositionRecursively(positionMap, parent1, {previousChildPosition: {x: 5, y: 5}})
+      registerDeepPositionRecursively(positionMap, parent1, {
+        previousChildPosition: {x: 5, y: 5},
+      })
 
       const result = jumpDeepPosition(positionMap, deepPosition, direction)
 
@@ -1247,8 +1293,14 @@ describe('position-map', () => {
       ]
 
       savePreviousDeepPosition(positionMap, deepPosition)
-      expect(getDeepPositionInfoWithKey(positionMap, '::?')?.previousChildPosition).toEqual({x: 0, y: 0})
-      expect(getDeepPositionInfoWithKey(positionMap, '0,0::?')?.previousChildPosition).toEqual({x: 1, y: 1})
+      expect(getDeepPositionInfoWithKey(positionMap, '::?')?.previousChildPosition).toEqual({
+        x: 0,
+        y: 0,
+      })
+      expect(getDeepPositionInfoWithKey(positionMap, '0,0::?')?.previousChildPosition).toEqual({
+        x: 1,
+        y: 1,
+      })
     })
 
     it('should not save empty deep position', () => {

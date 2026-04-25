@@ -15,4 +15,7 @@ export const fetchExchangeCodeForSection = async (code: string) => {
   return data.user
 }
 
-export const exchangeCodeForSectionAction = action(fetchExchangeCodeForSection, 'auth/exchange-code-for-section')
+export const exchangeCodeForSectionAction = action(
+  fetchExchangeCodeForSection,
+  'auth/exchange-code-for-section',
+)

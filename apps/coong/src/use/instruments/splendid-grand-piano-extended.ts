@@ -1,7 +1,9 @@
 import {CacheStorage, DrumMachine, SplendidGrandPiano, type SplendidGrandPianoConfig} from 'smplr'
 import {HUNDRED} from '@winter-love/utils'
 
-export type SplendidGrandPianoOptions = Partial<Omit<SplendidGrandPianoConfig, 'notesToLoad' | 'storage'>> & {
+export type SplendidGrandPianoOptions = Partial<
+  Omit<SplendidGrandPianoConfig, 'notesToLoad' | 'storage'>
+> & {
   onEnded?: (payload: ExtendedSampleStart) => void
   onStart?: (payload: ExtendedSampleStart) => void
 }
@@ -41,8 +43,10 @@ export interface PlayOptions {
   totalDuration: number
 }
 
-export interface SplendidGrandPianoExtended
-  extends Omit<SplendidGrandPiano, 'start' | 'stop' | 'onEnded' | 'onStart' | 'buffers' | 'output' | 'loaded'> {
+export interface SplendidGrandPianoExtended extends Omit<
+  SplendidGrandPiano,
+  'start' | 'stop' | 'onEnded' | 'onStart' | 'buffers' | 'output' | 'loaded'
+> {
   readonly __original: Readonly<SplendidGrandPiano>
   readonly down: (key: string | number | SampleStart) => StopFn
   readonly getLeftTime: () => number

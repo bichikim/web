@@ -46,7 +46,11 @@ function AsyncComponent() {
 
 export function ResourceKata() {
   return (
-    <ErrorBoundary fallback={(error, reset) => <div onClick={reset}>Error: {error.toString()}. Click to retry.</div>}>
+    <ErrorBoundary
+      fallback={(error, reset) => (
+        <div onClick={reset}>Error: {error.toString()}. Click to retry.</div>
+      )}
+    >
       <Suspense fallback={<div>Loading...</div>}>
         <AsyncComponent />
       </Suspense>

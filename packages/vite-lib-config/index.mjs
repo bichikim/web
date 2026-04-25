@@ -30,14 +30,19 @@ export const createConfig = ({
   plugins = [],
   rollupOutputPlugins = [],
 } = {}) => {
-  const _packageJson = packageJson ?? JSON.parse(readFileSync(path.join(root, 'package.json'), 'utf8'))
+  const _packageJson =
+    packageJson ?? JSON.parse(readFileSync(path.join(root, 'package.json'), 'utf8'))
 
   const {dependencies = {}, name} = _packageJson ?? {}
   const depsKey = Object.keys(dependencies)
 
-  const newEntry = Object.fromEntries(Object.entries(entry).map(([key, value]) => [key, path.join(root, value)]))
+  const newEntry = Object.fromEntries(
+    Object.entries(entry).map(([key, value]) => [key, path.join(root, value)]),
+  )
 
-  const newAlias = Object.fromEntries(Object.entries(alias).map(([key, value]) => [key, path.join(root, value)]))
+  const newAlias = Object.fromEntries(
+    Object.entries(alias).map(([key, value]) => [key, path.join(root, value)]),
+  )
 
   return defineConfig(() => {
     return {
@@ -104,4 +109,5 @@ export const createConfig = ({
   })
 }
 
-export const targets = 'chrome >= 55, safari >= 11.3, firefox >= 53, opera >= 42, edge >= 15, last 2 versions, not dead'
+export const targets =
+  'chrome >= 55, safari >= 11.3, firefox >= 53, opera >= 42, edge >= 15, last 2 versions, not dead'

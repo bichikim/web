@@ -37,7 +37,10 @@ const Floating = () => {
       </button>
       <div class="h-400px w-200px overflow-auto relative bg-gray-100 border-2 border-dashed border-gray-300">
         <div class="h-1200px w-500px bg-transparent relative">
-          <div ref={setReference} class="w-100px h-50px bg-blue absolute left-200px top-500px c-white p-2 rd-4">
+          <div
+            ref={setReference}
+            class="w-100px h-50px bg-blue absolute left-200px top-500px c-white p-2 rd-4"
+          >
             reference
           </div>
           <Show when={show()}>

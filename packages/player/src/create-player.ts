@@ -99,7 +99,9 @@ export const createPlayer = (
     return player?.destroy() ?? Promise.reject(new Error('You should init a video element'))
   }
 
-  const setState = (state: ((state: PlayerStateMutable) => PlayerStateMutable) | PlayerStateMutable) => {
+  const setState = (
+    state: ((state: PlayerStateMutable) => PlayerStateMutable) | PlayerStateMutable,
+  ) => {
     if (typeof state === 'function') {
       _setState((prev) => {
         const element = videoElement()

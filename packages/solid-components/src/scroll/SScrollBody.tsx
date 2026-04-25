@@ -14,7 +14,10 @@ export const SScrollBody = <T extends ValidComponent>(props: SScrollBodyProps<T>
   const {setScrollBodyElement, value: ScrollValue} = useScrollContext()
   const scrollId = createMemo(() => ScrollValue().id)
 
-  const [innerProps, restProps] = splitProps(props, ['style']) as unknown as [InnerProps, DynamicProps<T>]
+  const [innerProps, restProps] = splitProps(props, ['style']) as unknown as [
+    InnerProps,
+    DynamicProps<T>,
+  ]
 
   const percentStyle = createMemo(() => {
     const {percentX, percentY} = ScrollValue()

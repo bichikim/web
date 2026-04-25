@@ -27,7 +27,10 @@ export type DelegatedEventPayload = {
  */
 export type DelegatedEventMap = Map<string, DelegatedEventPayload>
 
-const createNewDelegatedPayload = (eventName: string, target: () => any = getDocument): DelegatedEventPayload => {
+const createNewDelegatedPayload = (
+  eventName: string,
+  target: () => any = getDocument,
+): DelegatedEventPayload => {
   const keyMap = new Map()
 
   const delegatedListener = (event: Event) => {
@@ -63,7 +66,8 @@ export const addListener = (
   listener: (value: any) => void,
   target: () => any = getDocument,
 ) => {
-  const delegatedPayload = delegatedEventMap.get(eventName) ?? createNewDelegatedPayload(eventName, target)
+  const delegatedPayload =
+    delegatedEventMap.get(eventName) ?? createNewDelegatedPayload(eventName, target)
 
   delegatedEventMap.set(eventName, delegatedPayload)
 

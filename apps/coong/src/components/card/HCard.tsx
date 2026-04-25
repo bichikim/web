@@ -1,7 +1,10 @@
 import {ParentProps, splitProps, ValidComponent} from 'solid-js'
 import {Dynamic, DynamicProps} from 'solid-js/web'
 
-export type HCardProps<T extends ValidComponent = 'div'> = Omit<DynamicProps<T>, 'component' | 'children' | 'class'> &
+export type HCardProps<T extends ValidComponent = 'div'> = Omit<
+  DynamicProps<T>,
+  'component' | 'children' | 'class'
+> &
   ParentProps & {
     /**
      * Render target element/component.

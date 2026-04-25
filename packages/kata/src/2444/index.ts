@@ -21,9 +21,7 @@ export const renderHalfDiamond = (
     const _index = opposite ? count - index - 1 : index
 
     return (
-      repeatString(padding, ' ') +
-      renderRaw(count, _index * 2 + 1) +
-      repeatString(padding, ' ')
+      repeatString(padding, ' ') + renderRaw(count, _index * 2 + 1) + repeatString(padding, ' ')
     )
   }).join('\n')
 }

@@ -39,11 +39,10 @@ jobs:
           # key: ${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
           key: ${{ runner.os }}
           restore-keys: |
-            ${{ runner.os }}    
+            ${{ runner.os }}
 
       - name: Install Dependencies
         run: pnpm install
-
 
       - name: Test
         run: pnpm run test
@@ -146,12 +145,12 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: pnpm run build:@coong/server
 
-#      - name: Archive Production Artifact
-#        uses: actions/upload-artifact@master
-#        with:
-#          name: dist-server
-#          path: |
-#            coong/server/.keystone
+      #      - name: Archive Production Artifact
+      #        uses: actions/upload-artifact@master
+      #        with:
+      #          name: dist-server
+      #          path: |
+      #            coong/server/.keystone
 
       - name: Changed files
         uses: tj-actions/changed-files@v41
@@ -223,7 +222,7 @@ jobs:
     needs: build-server
     runs-on: ubuntu-latest
     # only dev
-#    if: ${{ github.ref == 'refs/heads/dev' && needs.build-server.outputs.run_job == 'true' }}
+    #    if: ${{ github.ref == 'refs/heads/dev' && needs.build-server.outputs.run_job == 'true' }}
     env:
       GCP_SERVICE_NAME: coong-back-end-dev
       GCP_IAMGE_NAME: gcr.io/${{ secrets.GCP_PROJECT_ID }}/coong-back-end-dev
@@ -231,11 +230,11 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@master
 
-#      - name: Download Artifact
-#        uses: actions/download-artifact@master
-#        with:
-#          name: dist-server
-#          path: coong/server/.keystone
+      #      - name: Download Artifact
+      #        uses: actions/download-artifact@master
+      #        with:
+      #          name: dist-server
+      #          path: coong/server/.keystone
 
       - name: Setup Cloud SDK
         uses: google-github-actions/setup-gcloud@v1.0.1
@@ -347,7 +346,7 @@ jobs:
     needs: build-client
     runs-on: ubuntu-latest
     # only dev
-#    if: ${{ github.ref == 'refs/heads/dev' && needs.build-client.outputs.run_job == 'true' }}
+    #    if: ${{ github.ref == 'refs/heads/dev' && needs.build-client.outputs.run_job == 'true' }}
     env:
       GCP_SERVICE_NAME: coong-dev
       GCP_IAMGE_NAME: gcr.io/${{ secrets.GCP_PROJECT_ID }}/coong-dev

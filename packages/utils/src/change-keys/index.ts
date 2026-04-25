@@ -4,7 +4,11 @@
  * @param transform 리턴 값으로 키가 변경 됩니다
  * @param deep 얼마나 깊게 탐색에서 키를 변결 할지 -1 는 무제한 입니다
  */
-export const changeKeys = <T>(value: T, transform: (value: keyof any) => keyof any, deep: number = -1): T => {
+export const changeKeys = <T>(
+  value: T,
+  transform: (value: keyof any) => keyof any,
+  deep: number = -1,
+): T => {
   const isEnterDeeply = deep > 0 || deep < 0
 
   if (typeof value !== 'object' || value === null || !isEnterDeeply) {

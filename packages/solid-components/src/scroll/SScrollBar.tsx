@@ -17,10 +17,11 @@ export type SScrollBarProps<T extends ValidComponent> = InnerProps & DynamicProp
 export const SScrollBar = <T extends ValidComponent>(props: SScrollBarProps<T>) => {
   const defaultProps = mergeProps({barType: 'vertical' as const, component: 'div'}, props)
 
-  const [innerProps, restProps] = splitProps(defaultProps, ['thickness', 'barType', 'style']) as unknown as [
-    Required<InnerProps>,
-    DynamicProps<T>,
-  ]
+  const [innerProps, restProps] = splitProps(defaultProps, [
+    'thickness',
+    'barType',
+    'style',
+  ]) as unknown as [Required<InnerProps>, DynamicProps<T>]
   const scrollContext = useScrollContext()
 
   const scrollBarState = createMemo(() => {

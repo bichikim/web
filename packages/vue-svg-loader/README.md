@@ -24,13 +24,13 @@ module.exports = {
             options: {
               svgo: {
                 // SVGO options
-              }
-            }
-          }
-        ]
-      }
-    ]
-  }
+              },
+            },
+          },
+        ],
+      },
+    ],
+  },
 }
 ```
 

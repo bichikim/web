@@ -141,9 +141,15 @@ export type FunctionObject<T extends Record<string, AnyFunction>> = {
 export type ArrayOrOne<T> = T extends (infer P)[] ? P[] : [T]
 
 // ->
-export type DropParametersFunction<T extends (...args: any) => any> = AnyFunction<DropParameters<T>, ReturnType<T>>
+export type DropParametersFunction<T extends (...args: any) => any> = AnyFunction<
+  DropParameters<T>,
+  ReturnType<T>
+>
 
-export type DropRightParametersFunction<T extends (...args: any) => any> = AnyFunction<DropParameters<T>, ReturnType<T>>
+export type DropRightParametersFunction<T extends (...args: any) => any> = AnyFunction<
+  DropParameters<T>,
+  ReturnType<T>
+>
 
 export type Keyof<R> = R extends Record<infer P, any> ? P : never
 

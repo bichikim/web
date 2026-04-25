@@ -8,4 +8,5 @@ export interface HOpinionDisplayProps extends ParentProps {
 /**
  * Headless: Renders message and invokes onNext when triggered (e.g. by child click)
  */
-export const HOpinionDisplay = (props: HOpinionDisplayProps): JSX.Element => props.children as JSX.Element
+export const HOpinionDisplay = (props: HOpinionDisplayProps): JSX.Element =>
+  props.children as JSX.Element

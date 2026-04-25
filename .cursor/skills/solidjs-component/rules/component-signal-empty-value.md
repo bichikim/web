@@ -18,16 +18,14 @@ const [message, setMessage] = createSignal<string | null>(null)
 조건부 렌더링은 Solid에서 **`Show`** 컴포넌트 사용이 권장됩니다. `when`에는 **`message()`가 아니라 시그널 getter인 `message`**를 넘겨 구독하도록 하고, 자식을 함수로 두면 그 인자로 현재 값을 받아 `message()`를 반복 호출하지 않아도 됩니다.
 
 ```tsx
-import { Show, createSignal } from 'solid-js'
+import {Show, createSignal} from 'solid-js'
 
 export function OptionalMessageBanner() {
   const [message, setMessage] = createSignal<string | null>(null)
 
   return (
     <>
-      <Show when={message}>
-        {(msg) => <p>{msg}</p>}
-      </Show>
+      <Show when={message}>{(msg) => <p>{msg}</p>}</Show>
     </>
   )
 }

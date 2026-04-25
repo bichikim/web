@@ -12,7 +12,7 @@
     "db:studio": "drizzle-kit studio",
     "db:up": "drizzle-kit up",
     "dev": "vinxi dev",
-    "lint": "cross-env NODE_ENV=script eslint src",
+    "lint": "eslint src",
     "lint:fix": "cross-env NODE_ENV=script eslint src --fix",
     "prepare": "pnpm run supabase:gen-types",
     "prepare:e2e-local-supabase": "jiti scripts/prepare-local-e2e.ts",

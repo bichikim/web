@@ -70,7 +70,10 @@ export const createEmitter = <Event>(options: EmitterOptions = {}) => {
   }
 
   return {
-    addEventListener: (listener: (event: Event) => void, channel: string | symbol = NONE_CHANNEL_KEY) => {
+    addEventListener: (
+      listener: (event: Event) => void,
+      channel: string | symbol = NONE_CHANNEL_KEY,
+    ) => {
       const _listeners = getChannel(channel)
 
       _listeners.add(listener)
@@ -80,7 +83,10 @@ export const createEmitter = <Event>(options: EmitterOptions = {}) => {
         started = true
       }
     },
-    removeEventListener: (listener: (event: Event) => void, channel: string | symbol = NONE_CHANNEL_KEY) => {
+    removeEventListener: (
+      listener: (event: Event) => void,
+      channel: string | symbol = NONE_CHANNEL_KEY,
+    ) => {
       const _listeners = getChannel(channel)
 
       _listeners.delete(listener)

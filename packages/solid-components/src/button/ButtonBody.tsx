@@ -3,7 +3,10 @@ import {Dynamic, DynamicProps} from 'solid-js/web'
 import {createMemo, ParentProps, useContext, ValidComponent} from 'solid-js'
 import {useStyles} from '@winter-love/solid-use'
 
-export type ButtonBodyProps<T extends ValidComponent> = Omit<DynamicProps<T>, 'component' | 'children' | 'class'> &
+export type ButtonBodyProps<T extends ValidComponent> = Omit<
+  DynamicProps<T>,
+  'component' | 'children' | 'class'
+> &
   ParentProps & {
     class?: string
     component?: T

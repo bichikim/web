@@ -11,5 +11,11 @@ export type CheckboxIndicatorProps<T extends ValidComponent> = DynamicProps<T>
 export const CheckboxIndicator = <T extends ValidComponent>(props: CheckboxIndicatorProps<T>) => {
   const [checkboxContext] = useContext(CheckboxContext)
 
-  return <Dynamic {...props} data-checked={checkboxContext().checked} data-disabled={checkboxContext().disabled} />
+  return (
+    <Dynamic
+      {...props}
+      data-checked={checkboxContext().checked}
+      data-disabled={checkboxContext().disabled}
+    />
+  )
 }

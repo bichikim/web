@@ -2,18 +2,21 @@ import type {Meta, StoryObj} from 'storybook-solidjs-vite'
 import {cva} from 'class-variance-authority'
 import {createSignal} from 'solid-js'
 
-const rootStyle = cva('h-100 bg-blue-400 top-0 left-0 rd-2 backdrop-blur-sm bg-opacity-90 @container', {
-  defaultVariants: {
-    size: 'custom',
-  },
-  variants: {
-    size: {
-      custom: 'w-10rem',
-      md: 'w-28rem',
-      sm: 'w-24rem',
+const rootStyle = cva(
+  'h-100 bg-blue-400 top-0 left-0 rd-2 backdrop-blur-sm bg-opacity-90 @container',
+  {
+    defaultVariants: {
+      size: 'custom',
+    },
+    variants: {
+      size: {
+        custom: 'w-10rem',
+        md: 'w-28rem',
+        sm: 'w-24rem',
+      },
     },
   },
-})
+)
 
 type Size = 'custom' | 'md' | 'sm'
 

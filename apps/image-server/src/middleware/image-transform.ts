@@ -50,7 +50,11 @@ const getCropSize = (width: number, maxSize: number, height?: number): Size => {
   }
 }
 
-const clampSize = (width: number | undefined, height: number | undefined, maxSize: number): Size => {
+const clampSize = (
+  width: number | undefined,
+  height: number | undefined,
+  maxSize: number,
+): Size => {
   const hasWidth = typeof width === 'number' && Number.isFinite(width)
   const hasHeight = typeof height === 'number' && Number.isFinite(height)
 

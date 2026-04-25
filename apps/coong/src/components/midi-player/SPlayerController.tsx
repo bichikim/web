@@ -10,8 +10,10 @@ import {SSeeker} from './SSeeker'
 
 export type LinkType = 'piano' | 'music'
 
-export interface SPlayerControllerProps
-  extends Omit<JSX.HTMLAttributes<HTMLElement>, 'onPlay' | 'onSelect' | 'onPlaying'> {
+export interface SPlayerControllerProps extends Omit<
+  JSX.HTMLAttributes<HTMLElement>,
+  'onPlay' | 'onSelect' | 'onPlaying'
+> {
   isSuspend?: boolean
   linkType?: LinkType
   onAddItem?: (payload: MusicInfo[]) => void
@@ -62,7 +64,9 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
 
   const isPlayingButton = createMemo(() => {
     return (
-      !isSuspend() && innerProps.playingId === innerProps.selectedId && innerProps.playedTime < innerProps.totalDuration
+      !isSuspend() &&
+      innerProps.playingId === innerProps.selectedId &&
+      innerProps.playedTime < innerProps.totalDuration
     )
   })
 
@@ -121,7 +125,11 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
         onSeek={innerProps.onSeek}
       />
       <section class="flex gap-2 flex-shrink-0 flex-grow-0">
-        <SPlayerButton class="min-w-11" onClick={handlePlayOrPause} title={isPlayingButton() ? 'play' : 'pause'}>
+        <SPlayerButton
+          class="min-w-11"
+          onClick={handlePlayOrPause}
+          title={isPlayingButton() ? 'play' : 'pause'}
+        >
           <span class={playStyle({isPlaying: isPlayingButton()})} />
         </SPlayerButton>
         <SPlayerButton class="min-w-11 min-h-9" onClick={innerProps.onStop} title="stop">
@@ -142,7 +150,10 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
           title={innerProps.linkType === 'music' ? 'get music more' : 'piano'}
         >
           <span
-            class={cx('block text-9', innerProps.linkType === 'music' ? 'i-tabler:music-plus' : 'i-tabler:piano')}
+            class={cx(
+              'block text-9',
+              innerProps.linkType === 'music' ? 'i-tabler:music-plus' : 'i-tabler:piano',
+            )}
           />
         </SPlayerButton>
         <SPlayerButton class="min-w-11" onClick={innerProps.onSetting} title="setting">

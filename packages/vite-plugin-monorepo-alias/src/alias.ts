@@ -247,17 +247,22 @@ export const createAlias = (options: ResolveIdOptions): Plugin => {
 
       const targetAlias = _alias[importerInfo.relativeWorkspaceRoot] ?? _alias['/DEFAULT/']
 
-      const updatedId = denormalizePath(`${importerInfo.workspaceRoot}/${getAliasId(source, targetAlias)}`, separator)
+      const updatedId = denormalizePath(
+        `${importerInfo.workspaceRoot}/${getAliasId(source, targetAlias)}`,
+        separator,
+      )
 
-      return this.resolve(updatedId, importer, {skipSelf: true, ...resolveOptions}).then((resolved) => {
-        if (resolved) {
-          return resolved
-        }
+      return this.resolve(updatedId, importer, {skipSelf: true, ...resolveOptions}).then(
+        (resolved) => {
+          if (resolved) {
+            return resolved
+          }
 
-        return {
-          id: updatedId,
-        }
-      })
+          return {
+            id: updatedId,
+          }
+        },
+      )
     },
   }
 }

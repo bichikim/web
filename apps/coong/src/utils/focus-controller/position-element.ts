@@ -19,7 +19,12 @@ export const getElementLine = (
   includeOrigin: boolean = false,
 ) => {
   const elementRect = elementFrom.getBoundingClientRect()
-  const line = createLine({x: elementRect.top, y: elementRect.left}, direction, range, includeOrigin)
+  const line = createLine(
+    {x: elementRect.top, y: elementRect.left},
+    direction,
+    range,
+    includeOrigin,
+  )
 
   return line
 }

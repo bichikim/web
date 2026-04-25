@@ -19,7 +19,10 @@ export interface DragButtonProviderProps extends Omit<ButtonRootProps, 'onClick'
 
 const getExecutePosition = (
   position: Position,
-  options: Pick<DragButtonProviderProps, 'allowBottom' | 'allowTop' | 'preventLeft' | 'preventRight'>,
+  options: Pick<
+    DragButtonProviderProps,
+    'allowBottom' | 'allowTop' | 'preventLeft' | 'preventRight'
+  >,
 ) => {
   let {x, y} = position
   const {allowBottom, allowTop, preventLeft, preventRight} = options
@@ -40,7 +43,10 @@ const getExecutePosition = (
 }
 
 export const DragButtonProvider = (props: DragButtonProviderProps) => {
-  const defaultProps = mergeProps({clickAllowMoveSize: 10, dragEndSize: 50, dragExecuteSize: 50}, props)
+  const defaultProps = mergeProps(
+    {clickAllowMoveSize: 10, dragEndSize: 50, dragExecuteSize: 50},
+    props,
+  )
 
   const [innerProps, restProps] = splitProps(defaultProps, [
     'dragExecuteSize',

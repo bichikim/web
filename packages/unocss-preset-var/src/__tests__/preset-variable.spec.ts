@@ -7,7 +7,9 @@ describe('createVariableMatcher', () => {
   it('should work with color', async () => {
     const matcher = createVariableMatcher('--un')
 
-    expect(matcher(['', 'foo', 'red-400'], {generator: await createGenerator(), theme} as any)).toEqual({
+    expect(
+      matcher(['', 'foo', 'red-400'], {generator: await createGenerator(), theme} as any),
+    ).toEqual({
       '--un-foo': 'rgb(248 113 113 / var(--un-bg-opacity, 1))',
     })
   })
@@ -28,8 +30,10 @@ describe('createVariableMatcher', () => {
   it('should work with number', async () => {
     const matcher = createVariableMatcher('--un')
 
-    expect(matcher(['', 'foo', '100'], {generator: await createGenerator(), theme} as any)).toEqual({
-      '--un-foo': '100',
-    })
+    expect(matcher(['', 'foo', '100'], {generator: await createGenerator(), theme} as any)).toEqual(
+      {
+        '--un-foo': '100',
+      },
+    )
   })
 })

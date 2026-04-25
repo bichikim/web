@@ -106,7 +106,8 @@ describe('getWorkspaceRegex', () => {
       workspacePath: /packages\//u,
     },
   ])('should return regex', ({workspacePath}) => {
-    const path = '/Users/user-name/Documents/Apps/web/packages/vite-plugin-monorepo-alias/src/index.ts'
+    const path =
+      '/Users/user-name/Documents/Apps/web/packages/vite-plugin-monorepo-alias/src/index.ts'
     const result = getWorkspaceRegex(workspacePath)
 
     const [first, last] = path.split(result)
@@ -193,7 +194,10 @@ describe('createAlias', () => {
   })
 
   it('should return source when importer is undefined', async () => {
-    const plugin: any = createAlias({root: '/Users/user-name/Documents/Apps/web', workspacePaths: ['packages/']})
+    const plugin: any = createAlias({
+      root: '/Users/user-name/Documents/Apps/web',
+      workspacePaths: ['packages/'],
+    })
     const resolve = vi.fn(() => Promise.resolve({id: 'resolved'}))
 
     const result = await plugin.resolveId.call({resolve}, 'src/index.ts', undefined, {})
@@ -203,7 +207,10 @@ describe('createAlias', () => {
   })
 
   it('should return source when source is virtual module', async () => {
-    const plugin: any = createAlias({root: '/Users/user-name/Documents/Apps/web', workspacePaths: ['packages/']})
+    const plugin: any = createAlias({
+      root: '/Users/user-name/Documents/Apps/web',
+      workspacePaths: ['packages/'],
+    })
     const resolve = vi.fn(() => Promise.resolve({id: 'resolved'}))
 
     const result = await plugin.resolveId.call(
@@ -218,7 +225,10 @@ describe('createAlias', () => {
   })
 
   it(String.raw`should return null when source includes \0`, async () => {
-    const plugin: any = createAlias({root: '/Users/user-name/Documents/Apps/web', workspacePaths: ['packages/']})
+    const plugin: any = createAlias({
+      root: '/Users/user-name/Documents/Apps/web',
+      workspacePaths: ['packages/'],
+    })
     const resolve = vi.fn(() => Promise.resolve({id: 'resolved'}))
 
     const result = await plugin.resolveId.call(
@@ -233,7 +243,10 @@ describe('createAlias', () => {
   })
 
   it('should return source when importer is outside of configured workspace', async () => {
-    const plugin: any = createAlias({root: '/Users/user-name/Documents/Apps/web', workspacePaths: ['packages/']})
+    const plugin: any = createAlias({
+      root: '/Users/user-name/Documents/Apps/web',
+      workspacePaths: ['packages/'],
+    })
     const resolve = vi.fn(() => Promise.resolve({id: 'resolved'}))
 
     const result = await plugin.resolveId.call(
@@ -250,7 +263,8 @@ describe('createAlias', () => {
   it.each([
     {
       id: '/Users/user-name/Documents/Apps/web/packages/vite-plugin-monorepo-alias/src/index.ts',
-      importer: '/Users/user-name/Documents/Apps/web/packages/vite-plugin-monorepo-alias/src/foo.ts',
+      importer:
+        '/Users/user-name/Documents/Apps/web/packages/vite-plugin-monorepo-alias/src/foo.ts',
       root: '/Users/user-name/Documents/Apps/web',
       separator: '/',
       workspacePaths: ['packages/'],
@@ -302,7 +316,8 @@ describe('createAlias', () => {
 
     const resolve = vi.fn(() => Promise.resolve({id: ''}))
 
-    const importer = '/Users/user-name/Documents/Apps/web/packages/vite-plugin-monorepo-alias/src/foo.ts'
+    const importer =
+      '/Users/user-name/Documents/Apps/web/packages/vite-plugin-monorepo-alias/src/foo.ts'
     const source = '#utils/index.ts'
 
     const returned = await resolveId.call(
@@ -331,7 +346,8 @@ describe('createAlias', () => {
     const {resolveId} = result
     const resolve = vi.fn(() => Promise.resolve(null))
 
-    const importer = '/Users/user-name/Documents/Apps/web/packages/vite-plugin-monorepo-alias/src/foo.ts'
+    const importer =
+      '/Users/user-name/Documents/Apps/web/packages/vite-plugin-monorepo-alias/src/foo.ts'
     const source = 'src/index.ts'
 
     const returned = await resolveId.call({resolve}, source, importer, {})
@@ -350,7 +366,8 @@ describe('createAlias', () => {
     const {resolveId} = result
     const resolve = vi.fn(() => Promise.resolve({id: 'resolved'}))
 
-    const importer = '/Users/user-name/Documents/Apps/web/packages/vite-plugin-monorepo-alias/src/foo.ts'
+    const importer =
+      '/Users/user-name/Documents/Apps/web/packages/vite-plugin-monorepo-alias/src/foo.ts'
     const source = 'src/index.ts'
 
     await resolveId.call({resolve}, source, importer, {custom: 'value', skipSelf: false})

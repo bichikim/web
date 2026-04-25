@@ -7,7 +7,9 @@ export interface FocusController {
   readonly setFocus: (rect: FocusRect | null) => void
 }
 
-export const createFocusController = (onCallback: (rect: FocusRect, focused: boolean) => void): FocusController => {
+export const createFocusController = (
+  onCallback: (rect: FocusRect, focused: boolean) => void,
+): FocusController => {
   const rootRect = createFocusRect('root', null, () => null)
   let currentRect: FocusRect | null = null
 

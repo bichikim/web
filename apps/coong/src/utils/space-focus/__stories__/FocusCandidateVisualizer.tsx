@@ -65,7 +65,14 @@ const draggableBoxStyles = cva(draggableBoxBase, {
 const DraggableBox: Component<DraggableBoxProps> = (props) => {
   const propsWithDefaults = mergeProps({isFrom: false, isTarget: false}, props)
 
-  const [innerProps] = splitProps(propsWithDefaults, ['color', 'isFrom', 'isTarget', 'onDrag', 'rect', 'score'])
+  const [innerProps] = splitProps(propsWithDefaults, [
+    'color',
+    'isFrom',
+    'isTarget',
+    'onDrag',
+    'rect',
+    'score',
+  ])
 
   let ref: HTMLDivElement | undefined
   const [isDragging, setIsDragging] = createSignal(false)
@@ -187,7 +194,10 @@ export const FocusCandidateVisualizer: Component = () => {
     <div class=":uno: p-20px">
       <div class=":uno: mb-10px">
         <label>Direction: </label>
-        <select value={direction()} onChange={(event) => setDirection(event.currentTarget.value as Direction)}>
+        <select
+          value={direction()}
+          onChange={(event) => setDirection(event.currentTarget.value as Direction)}
+        >
           <option value="up">Up</option>
           <option value="down">Down</option>
           <option value="left">Left</option>

@@ -12,7 +12,12 @@ import {
 import {cva} from 'class-variance-authority'
 import {DelegatedEventProvider} from 'src/use/focus-controller/DelegatedEvent'
 import {KeyCap} from 'src/use/focus-controller/KeyCap'
-import {FocusControllerProvider, FocusGroupWithElement, useFocus, useFocusControllerContext} from '../focus'
+import {
+  FocusControllerProvider,
+  FocusGroupWithElement,
+  useFocus,
+  useFocusControllerContext,
+} from '../focus'
 import type {Direction, PreventMoveOptions} from 'src/utils/space-focus/focus-store'
 
 const focusTileStyles = cva(
@@ -55,7 +60,11 @@ export interface FocusTileProps extends ComponentProps<'button'> {
 
 const FocusTile: Component<FocusTileProps> = (props) => {
   const propsWithDefaults = mergeProps({inactive: false}, props)
-  const [innerProps, restProps] = splitProps(propsWithDefaults, ['inactive', 'label', 'preventMove'])
+  const [innerProps, restProps] = splitProps(propsWithDefaults, [
+    'inactive',
+    'label',
+    'preventMove',
+  ])
   const [element, setElement] = createSignal<HTMLElement | null>(null)
 
   const [isFocused, setFocused] = useFocus(element, () => ({
@@ -171,8 +180,8 @@ const FocusPlaygroundBody: Component<FocusPlaygroundProps> = (props) => {
       </div>
       <div class=":uno: flex flex-col gap-8px">
         <p class="text-sm text-gray-500">
-          Click any tile or use the arrow keys below to move the shared focus. The center tile can optionally block
-          vertical moves via the args.
+          Click any tile or use the arrow keys below to move the shared focus. The center tile can
+          optionally block vertical moves via the args.
         </p>
         <div class=":uno: flex flex-col gap-8px self-center">
           <div class="flex justify-center">

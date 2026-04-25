@@ -1,6 +1,9 @@
 import {Accessor, createEffect, createSignal, onCleanup} from 'solid-js'
 
-export const useIntersection = (target: Accessor<HTMLElement | undefined>, options: IntersectionObserverInit) => {
+export const useIntersection = (
+  target: Accessor<HTMLElement | undefined>,
+  options: IntersectionObserverInit,
+) => {
   const [isIntersecting, setIsIntersecting] = createSignal(false)
 
   createEffect(() => {

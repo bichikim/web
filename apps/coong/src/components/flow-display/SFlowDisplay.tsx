@@ -73,7 +73,12 @@ export const SFlowDisplay = (props: SFlowDisplayProps) => {
   ])
 
   return (
-    <span {...restProps} ref={setElement} class={rootStyle({class: innerProps.class, move: isMove()})} style={style()}>
+    <span
+      {...restProps}
+      ref={setElement}
+      class={rootStyle({class: innerProps.class, move: isMove()})}
+      style={style()}
+    >
       <span ref={setTextElement}>{props.children}</span>
       <Show when={isMove()}>
         <span>{props.children}</span>

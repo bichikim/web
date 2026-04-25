@@ -11,7 +11,10 @@ export interface BmcSupporterResponse {
 /**
  * Fetch supporters from Buy Me a Coffee API
  */
-export const fetchSupporters = async (accessToken: string, page = 1): Promise<BmcSupporterResponse> => {
+export const fetchSupporters = async (
+  accessToken: string,
+  page = 1,
+): Promise<BmcSupporterResponse> => {
   const url = `${BMC_API_BASE}/supporters?page=${page}`
 
   const response = await fetch(url, {

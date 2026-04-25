@@ -29,7 +29,11 @@ const App = () => {
     /**
      * @see https://docs.solidjs.com/reference/components/error-boundary
      */
-    <ErrorBoundary fallback={(error, reset) => <div onClick={reset}>Error: {error.toString()}. Click to retry.</div>}>
+    <ErrorBoundary
+      fallback={(error, reset) => (
+        <div onClick={reset}>Error: {error.toString()}. Click to retry.</div>
+      )}
+    >
       {/* @see https://docs.solidjs.com/reference/components/suspense */}
       <Suspense fallback={<div>Loading...</div>}>
         <AsyncComponent />
@@ -37,5 +41,4 @@ const App = () => {
     </ErrorBoundary>
   )
 }
-
 ```

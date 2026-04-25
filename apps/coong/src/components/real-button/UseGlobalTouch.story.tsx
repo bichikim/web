@@ -1,6 +1,10 @@
 import {createUniqueId, JSX} from 'solid-js'
 import {Meta, StoryObj} from 'storybook-solidjs-vite'
-import {ELEMENT_IDENTIFIER_GLOBAL_TOUCH, useGlobalDown, useGlobalTouchEmitter} from './use-global-touch'
+import {
+  ELEMENT_IDENTIFIER_GLOBAL_TOUCH,
+  useGlobalDown,
+  useGlobalTouchEmitter,
+} from './use-global-touch'
 
 export interface UseGlobalTouchProps extends JSX.HTMLAttributes<HTMLButtonElement> {}
 

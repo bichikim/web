@@ -9,6 +9,7 @@ Element 는 최소한 모양을 전달 받는다 없는 값은 null 로 한다
 js 기본 함수들이 null 을 리턴한다 window.querySelector 등
 
 Do This
+
 ```ts
 import {MaybeAccessor} from 'src/use'
 const useFoo = (element: MayBeAccessor<Element | null>) => {
@@ -17,6 +18,7 @@ const useFoo = (element: MayBeAccessor<Element | null>) => {
 ```
 
 Don't Do This
+
 ```ts
 import {MaybeAccessor} from 'src/use'
 const useFoo = (element: MayBeAccessor<Element | undefined>) => {

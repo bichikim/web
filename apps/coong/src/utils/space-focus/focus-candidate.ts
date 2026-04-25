@@ -1,5 +1,11 @@
 /* eslint-disable no-magic-numbers */
-import {type Direction, type FocusRect, getSiblingRects, getUpdatedRect, type Rect} from './focus-store'
+import {
+  type Direction,
+  type FocusRect,
+  getSiblingRects,
+  getUpdatedRect,
+  type Rect,
+} from './focus-store'
 
 export const verticalOverlap = (from: Rect, to: Rect): number => {
   return Math.min(from.bottom, to.bottom) - Math.max(from.top, to.top)
@@ -33,7 +39,11 @@ export const filterCandidate = (from: Rect, to: Rect, direction: Direction): boo
   }
 }
 
-export const filterCandidates = (from: FocusRect, to: FocusRect[], direction: Direction): FocusRect[] => {
+export const filterCandidates = (
+  from: FocusRect,
+  to: FocusRect[],
+  direction: Direction,
+): FocusRect[] => {
   const _from = getUpdatedRect(from)
   const fromRect = _from.rect
 
@@ -135,7 +145,11 @@ export const scoreAngleCandidate = (
   return score
 }
 
-export const moveFocus = (from: FocusRect, to: FocusRect[], direction: Direction): FocusRect | null => {
+export const moveFocus = (
+  from: FocusRect,
+  to: FocusRect[],
+  direction: Direction,
+): FocusRect | null => {
   const candidates = filterCandidates(from, to, direction)
 
   if (candidates.length === 0) {
@@ -170,7 +184,11 @@ export const moveFocus = (from: FocusRect, to: FocusRect[], direction: Direction
   return moveFocus(from, [...nextRect.children], direction)
 }
 
-export const jumpFocus = (from: FocusRect, to: FocusRect[], direction: Direction): FocusRect | null => {
+export const jumpFocus = (
+  from: FocusRect,
+  to: FocusRect[],
+  direction: Direction,
+): FocusRect | null => {
   const nextRect = moveFocus(from, to, direction)
 
   if (nextRect) {

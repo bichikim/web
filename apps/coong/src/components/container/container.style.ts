@@ -195,14 +195,32 @@ export const containerStyles = cva([containerBase, loading], {
     },
     {
       className: [':uno: bg-[var(--var-color)] hover:enabled:b-[--var-color]'],
-      color: ['default', 'error', 'info', 'primary', 'secondary', 'success', 'transparent', 'warning'],
+      color: [
+        'default',
+        'error',
+        'info',
+        'primary',
+        'secondary',
+        'success',
+        'transparent',
+        'warning',
+      ],
       flat: true,
     },
     {
       className: [
         ':uno: shadow-sm bg-[radial-gradient(at_90%_30%,_var(--var-color)_50%,_var(--var-muted-color)_130%)]',
       ],
-      color: ['default', 'error', 'info', 'primary', 'secondary', 'success', 'transparent', 'warning'],
+      color: [
+        'default',
+        'error',
+        'info',
+        'primary',
+        'secondary',
+        'success',
+        'transparent',
+        'warning',
+      ],
       flat: false,
     },
     // << colors

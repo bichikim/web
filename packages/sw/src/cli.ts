@@ -2,26 +2,59 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import {Option, program} from 'commander'
-import {type CachePriorityConfig, type CacheStrategyConfig, type GenerateSWOptions, type LogLevel} from './index'
+import {
+  type CachePriorityConfig,
+  type CacheStrategyConfig,
+  type GenerateSWOptions,
+  type LogLevel,
+} from './index'
 
 const assetOption = new Option('-a, --assets <path>', 'Path to collecting asset directory')
 const assetsRootOption = new Option('-r, --assets-root <path>', 'Path to assets root')
 const cwdOptions = new Option('-c, --cwd <path>', 'Path to project root')
 const cacheNameOption = new Option('--cache-name <name>', 'Custom cache name')
-const cacheVersionOption = new Option('--cache-version <number>', 'Cache version number').argParser(Number)
-const cacheMaxEntriesOption = new Option('--cache-max-entries <number>', 'Maximum cache entries').argParser(Number)
-const cacheMaxAgeOption = new Option('--cache-max-age <seconds>', 'Cache max age in seconds').argParser(Number)
+const cacheVersionOption = new Option('--cache-version <number>', 'Cache version number').argParser(
+  Number,
+)
+const cacheMaxEntriesOption = new Option(
+  '--cache-max-entries <number>',
+  'Maximum cache entries',
+).argParser(Number)
+const cacheMaxAgeOption = new Option(
+  '--cache-max-age <seconds>',
+  'Cache max age in seconds',
+).argParser(Number)
 const cacheStrategiesOption = new Option('--cache-strategies <json>', 'Cache strategy config JSON')
 const cachePrioritiesOption = new Option('--cache-priorities <json>', 'Cache priority config JSON')
-const logLevelOption = new Option('--log-level <level>', 'Log level (debug, info, warn, error, silent)')
+const logLevelOption = new Option(
+  '--log-level <level>',
+  'Log level (debug, info, warn, error, silent)',
+)
 const logEndpointOption = new Option('--log-endpoint <url>', 'Log endpoint URL')
-const logSampleRateOption = new Option('--log-sample-rate <number>', 'Log sample rate (0-1)').argParser(Number)
+const logSampleRateOption = new Option(
+  '--log-sample-rate <number>',
+  'Log sample rate (0-1)',
+).argParser(Number)
 const envOption = new Option('--env <mode>', 'Environment mode (development or production)')
 const swTemplateOption = new Option('--sw-template <path>', 'Custom sw.mjs template path')
 
 const logLevels = new Set<LogLevel>(['debug', 'info', 'warn', 'error', 'silent'])
-const cacheStrategyKeys = new Set(['document', 'script', 'style', 'worker', 'manifest', 'image', 'font', 'default'])
-const cacheStrategyValues = new Set(['network-first', 'cache-first', 'stale-while-revalidate', 'network-only'])
+const cacheStrategyKeys = new Set([
+  'document',
+  'script',
+  'style',
+  'worker',
+  'manifest',
+  'image',
+  'font',
+  'default',
+])
+const cacheStrategyValues = new Set([
+  'network-first',
+  'cache-first',
+  'stale-while-revalidate',
+  'network-only',
+])
 
 class CLIError extends Error {
   constructor(
@@ -45,7 +78,10 @@ const parseEnvFile = (content: string) => {
       if (key) {
         let value = rest.join('=').trim()
 
-        if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+        if (
+          (value.startsWith('"') && value.endsWith('"')) ||
+          (value.startsWith("'") && value.endsWith("'"))
+        ) {
           value = value.slice(1, -1)
         }
 
@@ -139,7 +175,8 @@ const resolveNumber = (value: unknown, label: string): number | undefined => {
   return numberValue
 }
 
-const resolveEnvMode = (options: GenerateSWOptions) => options.env ?? process.env.NODE_ENV ?? 'production'
+const resolveEnvMode = (options: GenerateSWOptions) =>
+  options.env ?? process.env.NODE_ENV ?? 'production'
 
 const resolveLogLevelOption = (optionValue: LogLevel | undefined, envValue: string | undefined) => {
   let resolved: LogLevel | undefined
@@ -153,7 +190,10 @@ const resolveLogLevelOption = (optionValue: LogLevel | undefined, envValue: stri
   return resolved
 }
 
-const resolveCacheStrategiesOption = (optionValue: CacheStrategyConfig | undefined, envValue: string | undefined) => {
+const resolveCacheStrategiesOption = (
+  optionValue: CacheStrategyConfig | undefined,
+  envValue: string | undefined,
+) => {
   let resolved: CacheStrategyConfig | undefined
 
   if (optionValue) {
@@ -165,7 +205,10 @@ const resolveCacheStrategiesOption = (optionValue: CacheStrategyConfig | undefin
   return resolved
 }
 
-const resolveCachePrioritiesOption = (optionValue: CachePriorityConfig | undefined, envValue: string | undefined) => {
+const resolveCachePrioritiesOption = (
+  optionValue: CachePriorityConfig | undefined,
+  envValue: string | undefined,
+) => {
   let resolved: CachePriorityConfig | undefined
 
   if (optionValue) {
@@ -182,7 +225,10 @@ const buildResolvedOptions = async (options: GenerateSWOptions) => {
   const envMode = resolveEnvMode(options)
   const envValues = await loadEnvFiles(cwd, envMode)
 
-  const resolvedCacheVersion = resolveNumber(options.cacheVersion ?? envValues.SW_CACHE_VERSION, 'Cache version')
+  const resolvedCacheVersion = resolveNumber(
+    options.cacheVersion ?? envValues.SW_CACHE_VERSION,
+    'Cache version',
+  )
 
   const resolvedCacheMaxEntries = resolveNumber(
     options.cacheMaxEntries ?? envValues.SW_CACHE_MAX_ENTRIES,
@@ -193,16 +239,28 @@ const buildResolvedOptions = async (options: GenerateSWOptions) => {
     options.cacheMaxAgeSeconds ?? envValues.SW_CACHE_MAX_AGE,
     'Cache max age',
   )
-  const resolvedLogSampleRate = resolveNumber(options.logSampleRate ?? envValues.SW_LOG_SAMPLE_RATE, 'Log sample rate')
+  const resolvedLogSampleRate = resolveNumber(
+    options.logSampleRate ?? envValues.SW_LOG_SAMPLE_RATE,
+    'Log sample rate',
+  )
   const resolvedLogLevel = resolveLogLevelOption(options.logLevel, envValues.SW_LOG_LEVEL)
-  const resolvedCacheStrategies = resolveCacheStrategiesOption(options.cacheStrategies, envValues.SW_CACHE_STRATEGIES)
-  const resolvedCachePriorities = resolveCachePrioritiesOption(options.cachePriorities, envValues.SW_CACHE_PRIORITIES)
+  const resolvedCacheStrategies = resolveCacheStrategiesOption(
+    options.cacheStrategies,
+    envValues.SW_CACHE_STRATEGIES,
+  )
+  const resolvedCachePriorities = resolveCachePrioritiesOption(
+    options.cachePriorities,
+    envValues.SW_CACHE_PRIORITIES,
+  )
 
   if (resolvedCacheVersion !== undefined && resolvedCacheVersion < 1) {
     throw new CLIError('Cache version must be a positive number')
   }
 
-  if (resolvedLogSampleRate !== undefined && (resolvedLogSampleRate < 0 || resolvedLogSampleRate > 1)) {
+  if (
+    resolvedLogSampleRate !== undefined &&
+    (resolvedLogSampleRate < 0 || resolvedLogSampleRate > 1)
+  ) {
     throw new CLIError('Log sample rate must be between 0 and 1')
   }
 

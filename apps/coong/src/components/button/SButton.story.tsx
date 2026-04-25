@@ -16,7 +16,17 @@ const meta = {
     color: {
       control: 'select',
       description: 'Button variant',
-      options: ['primary', 'secondary', 'default', 'transparent', 'error', 'warning', 'info', 'success', 'aurora'],
+      options: [
+        'primary',
+        'secondary',
+        'default',
+        'transparent',
+        'error',
+        'warning',
+        'info',
+        'success',
+        'aurora',
+      ],
       table: {
         category: 'Props',
         defaultValue: {summary: 'primary'},

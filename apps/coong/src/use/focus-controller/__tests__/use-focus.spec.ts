@@ -40,7 +40,11 @@ const isNonAccessorFunction = (value: unknown): value is AnyFn => {
 }
 
 const resolveMaybeAccessor = <T>(value: unknown): (() => T) => {
-  if (typeof value === 'function' && isNonAccessorFunction(value) === false && (value as AnyFn).length === 0) {
+  if (
+    typeof value === 'function' &&
+    isNonAccessorFunction(value) === false &&
+    (value as AnyFn).length === 0
+  ) {
     return value as () => T
   }
 
@@ -112,14 +116,16 @@ describe('useFocus', () => {
         }
       | undefined
 
-    mocks.useDelegatedOn.mockImplementation((channel: unknown, key: unknown, listener: unknown, options: unknown) => {
-      captured = {
-        channel: resolveMaybeAccessor(channel),
-        key: resolveMaybeAccessor(key),
-        listener: resolveMaybeAccessor(listener),
-        options,
-      }
-    })
+    mocks.useDelegatedOn.mockImplementation(
+      (channel: unknown, key: unknown, listener: unknown, options: unknown) => {
+        captured = {
+          channel: resolveMaybeAccessor(channel),
+          key: resolveMaybeAccessor(key),
+          listener: resolveMaybeAccessor(listener),
+          options,
+        }
+      },
+    )
 
     const {unmount} = render(() =>
       createComponent(FocusControllerContext.Provider, {

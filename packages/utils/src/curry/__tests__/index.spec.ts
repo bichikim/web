@@ -90,7 +90,9 @@ describe('type check', () => {
     const foo = (a: string, b: number, c: boolean) => `${a} ${b} ${c}`
     const curryFoo = curry(foo)
 
-    expectTypeOf(curryFoo).parameters.toEqualTypeOf<[string] | [string, number] | [string, number, boolean]>()
+    expectTypeOf(curryFoo).parameters.toEqualTypeOf<
+      [string] | [string, number] | [string, number, boolean]
+    >()
     const partial1 = curryFoo('foo')
 
     expectTypeOf(partial1).parameters.toEqualTypeOf<[number] | [number, boolean]>()
@@ -109,7 +111,9 @@ describe('type check', () => {
     const foo = (a: string, b: number, c?: boolean) => `${a} ${b} ${c}`
     const curryFoo = curry(foo)
 
-    expectTypeOf(curryFoo).parameters.toEqualTypeOf<[string] | [string, number] | [string, number, boolean?]>()
+    expectTypeOf(curryFoo).parameters.toEqualTypeOf<
+      [string] | [string, number] | [string, number, boolean?]
+    >()
     const partial1 = curryFoo('foo')
 
     expectTypeOf(partial1).parameters.toEqualTypeOf<[number] | [number, boolean?]>()
@@ -144,7 +148,8 @@ describe('curryReverse', () => {
   })
 
   it('should curry function 4', () => {
-    const foo = (name: string, age: number, gender: string, hobby: string) => `${name} ${age} ${gender} ${hobby}`
+    const foo = (name: string, age: number, gender: string, hobby: string) =>
+      `${name} ${age} ${gender} ${hobby}`
     const curryFoo = curryReverse(foo)
 
     expect(curryFoo('drink')('male')(10)('bar')).toBe('bar 10 male drink')
@@ -166,15 +171,33 @@ describe('curryReverse', () => {
   })
 
   it('should curry function 6', () => {
-    const foo = (name: string, age: number, gender: string, hobby: string, job: string, dream: string) =>
-      `${name} ${age} ${gender} ${hobby} ${job} ${dream}`
+    const foo = (
+      name: string,
+      age: number,
+      gender: string,
+      hobby: string,
+      job: string,
+      dream: string,
+    ) => `${name} ${age} ${gender} ${hobby} ${job} ${dream}`
     const curryFoo = curryReverse(foo)
 
-    expect(curryFoo('rich')('developer')('drink')('male')(10)('bar')).toBe('bar 10 male drink developer rich')
-    expect(curryFoo('rich', 'developer')('drink')('male')(10)('bar')).toBe('bar 10 male drink developer rich')
-    expect(curryFoo('rich', 'developer', 'drink')('male')(10)('bar')).toBe('bar 10 male drink developer rich')
-    expect(curryFoo('rich', 'developer', 'drink', 'male')(10)('bar')).toBe('bar 10 male drink developer rich')
-    expect(curryFoo('rich', 'developer', 'drink', 'male', 10)('bar')).toBe('bar 10 male drink developer rich')
-    expect(curryFoo('rich', 'developer', 'drink', 'male', 10, 'bar')).toBe('bar 10 male drink developer rich')
+    expect(curryFoo('rich')('developer')('drink')('male')(10)('bar')).toBe(
+      'bar 10 male drink developer rich',
+    )
+    expect(curryFoo('rich', 'developer')('drink')('male')(10)('bar')).toBe(
+      'bar 10 male drink developer rich',
+    )
+    expect(curryFoo('rich', 'developer', 'drink')('male')(10)('bar')).toBe(
+      'bar 10 male drink developer rich',
+    )
+    expect(curryFoo('rich', 'developer', 'drink', 'male')(10)('bar')).toBe(
+      'bar 10 male drink developer rich',
+    )
+    expect(curryFoo('rich', 'developer', 'drink', 'male', 10)('bar')).toBe(
+      'bar 10 male drink developer rich',
+    )
+    expect(curryFoo('rich', 'developer', 'drink', 'male', 10, 'bar')).toBe(
+      'bar 10 male drink developer rich',
+    )
   })
 })

@@ -21,5 +21,9 @@ export const HTabProvider = (props: HTabProviderProps) => {
     setTabValue(props.activeTab ?? 'default')
   })
 
-  return <TabContext.Provider value={{id, setTabValue, tabValue: tabValue}}>{props.children}</TabContext.Provider>
+  return (
+    <TabContext.Provider value={{id, setTabValue, tabValue: tabValue}}>
+      {props.children}
+    </TabContext.Provider>
+  )
 }

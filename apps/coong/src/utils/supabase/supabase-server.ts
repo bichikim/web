@@ -20,7 +20,10 @@ export const createSupabaseServer = (event: RequestEvent): SupabaseClient<Databa
       setAll(cookiesToSet) {
         for (const {name, value, options} of cookiesToSet) {
           try {
-            event.nativeEvent.node.res.appendHeader('Set-Cookie', `${name}=${value}; Path=/; SameSite=Lax; Secure`)
+            event.nativeEvent.node.res.appendHeader(
+              'Set-Cookie',
+              `${name}=${value}; Path=/; SameSite=Lax; Secure`,
+            )
           } catch {
             // ignore
           }

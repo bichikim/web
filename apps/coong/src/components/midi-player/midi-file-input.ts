@@ -14,7 +14,10 @@ export interface MidiFileInputOptions {
   onClick?: (event: PointerEvent) => void
 }
 
-export const useMidiFileInput = (element: MaybeAccessor<HTMLElement | null>, options: MidiFileInputOptions = {}) => {
+export const useMidiFileInput = (
+  element: MaybeAccessor<HTMLElement | null>,
+  options: MidiFileInputOptions = {},
+) => {
   const inputElement = resolveAccessor(element)
   const [isFocused, setIsFocused] = createSignal(false)
   const [isTouchStart, setIsTouchStart] = createSignal(false)

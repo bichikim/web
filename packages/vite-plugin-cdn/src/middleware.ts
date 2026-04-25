@@ -3,7 +3,11 @@ import parse from '@polka/url'
 import type {Module, OverrideHeaders} from './types'
 import {DEFAULT_PREFIX, standardOverrideHeaders, standardUrlMapper} from './share'
 
-export type SimpleHandleFunction = (req: IncomingMessage, res: ServerResponse, next: () => void) => void
+export type SimpleHandleFunction = (
+  req: IncomingMessage,
+  res: ServerResponse,
+  next: () => void,
+) => void
 
 export type GetModule = (url: string) => Promise<Module | null>
 

@@ -27,12 +27,8 @@
           "name": "anniversary_people_anniversary_id_user_anniversaries_id_fk",
           "tableFrom": "anniversary_people",
           "tableTo": "user_anniversaries",
-          "columnsFrom": [
-            "anniversary_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["anniversary_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -40,12 +36,8 @@
           "name": "anniversary_people_person_id_people_id_fk",
           "tableFrom": "anniversary_people",
           "tableTo": "people",
-          "columnsFrom": [
-            "person_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["person_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -53,10 +45,7 @@
       "compositePrimaryKeys": {
         "anniversary_people_anniversary_id_person_id_pk": {
           "name": "anniversary_people_anniversary_id_person_id_pk",
-          "columns": [
-            "anniversary_id",
-            "person_id"
-          ]
+          "columns": ["anniversary_id", "person_id"]
         }
       },
       "uniqueConstraints": {},
@@ -65,18 +54,14 @@
           "name": "anniversary_people_insert_policy",
           "as": "PERMISSIVE",
           "for": "INSERT",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "withCheck": "EXISTS (\n        SELECT 1 FROM \"user_anniversaries\"\n        WHERE \"user_anniversaries\".\"id\" = \"anniversary_people\".\"anniversary_id\"\n        AND \"user_anniversaries\".\"owner_id\" = (select auth.uid())\n      )"
         },
         "anniversary_people_update_policy": {
           "name": "anniversary_people_update_policy",
           "as": "PERMISSIVE",
           "for": "UPDATE",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "EXISTS (\n        SELECT 1 FROM \"user_anniversaries\"\n        WHERE \"user_anniversaries\".\"id\" = \"anniversary_people\".\"anniversary_id\"\n        AND \"user_anniversaries\".\"owner_id\" = (select auth.uid())\n      )",
           "withCheck": "EXISTS (\n        SELECT 1 FROM \"user_anniversaries\"\n        WHERE \"user_anniversaries\".\"id\" = \"anniversary_people\".\"anniversary_id\"\n        AND \"user_anniversaries\".\"owner_id\" = (select auth.uid())\n      )"
         },
@@ -84,18 +69,14 @@
           "name": "anniversary_people_delete_policy",
           "as": "PERMISSIVE",
           "for": "DELETE",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "EXISTS (\n        SELECT 1 FROM \"user_anniversaries\"\n        WHERE \"user_anniversaries\".\"id\" = \"anniversary_people\".\"anniversary_id\"\n        AND \"user_anniversaries\".\"owner_id\" = (select auth.uid())\n      )"
         },
         "anniversary_people_select_policy": {
           "name": "anniversary_people_select_policy",
           "as": "PERMISSIVE",
           "for": "SELECT",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "EXISTS (\n        SELECT 1 FROM \"user_anniversaries\"\n        WHERE \"user_anniversaries\".\"id\" = \"anniversary_people\".\"anniversary_id\"\n        AND \"user_anniversaries\".\"owner_id\" = (select auth.uid())\n      )"
         }
       },
@@ -151,12 +132,8 @@
           "name": "music_posts_comments_author_id_profiles_id_fk",
           "tableFrom": "music_posts_comments",
           "tableTo": "profiles",
-          "columnsFrom": [
-            "author_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["author_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -164,12 +141,8 @@
           "name": "music_posts_comments_post_id_music_posts_id_fk",
           "tableFrom": "music_posts_comments",
           "tableTo": "music_posts",
-          "columnsFrom": [
-            "post_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["post_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -181,18 +154,14 @@
           "name": "music_post_comments_insert_policy",
           "as": "PERMISSIVE",
           "for": "INSERT",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "withCheck": "\"music_posts_comments\".\"author_id\" = (select auth.uid())"
         },
         "music_post_comments_update_policy": {
           "name": "music_post_comments_update_policy",
           "as": "PERMISSIVE",
           "for": "UPDATE",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "\"music_posts_comments\".\"author_id\" = (select auth.uid())",
           "withCheck": "\"music_posts_comments\".\"author_id\" = (select auth.uid())"
         },
@@ -200,18 +169,14 @@
           "name": "music_post_comments_delete_policy",
           "as": "PERMISSIVE",
           "for": "DELETE",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "\"music_posts_comments\".\"author_id\" = (select auth.uid())"
         },
         "music_post_comments_select_policy": {
           "name": "music_post_comments_select_policy",
           "as": "PERMISSIVE",
           "for": "SELECT",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "true"
         }
       },
@@ -268,12 +233,8 @@
           "name": "music_posts_author_id_profiles_id_fk",
           "tableFrom": "music_posts",
           "tableTo": "profiles",
-          "columnsFrom": [
-            "author_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["author_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -285,18 +246,14 @@
           "name": "music_posts_insert_policy",
           "as": "PERMISSIVE",
           "for": "INSERT",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "withCheck": "\"music_posts\".\"author_id\" = (select auth.uid())"
         },
         "music_posts_update_policy": {
           "name": "music_posts_update_policy",
           "as": "PERMISSIVE",
           "for": "UPDATE",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "\"music_posts\".\"author_id\" = (select auth.uid())",
           "withCheck": "\"music_posts\".\"author_id\" = (select auth.uid())"
         },
@@ -304,18 +261,14 @@
           "name": "music_posts_delete_policy",
           "as": "PERMISSIVE",
           "for": "DELETE",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "\"music_posts\".\"author_id\" = (select auth.uid())"
         },
         "music_posts_select_policy": {
           "name": "music_posts_select_policy",
           "as": "PERMISSIVE",
           "for": "SELECT",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "true"
         }
       },
@@ -387,18 +340,14 @@
           "name": "people_insert_policy",
           "as": "PERMISSIVE",
           "for": "INSERT",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "withCheck": "EXISTS (\n        SELECT 1 FROM profiles\n        WHERE profiles.id = \"people\".\"owner_id\"\n        AND profiles.id = (select auth.uid())\n      )"
         },
         "people_update_policy": {
           "name": "people_update_policy",
           "as": "PERMISSIVE",
           "for": "UPDATE",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "EXISTS (\n        SELECT 1 FROM profiles\n        WHERE profiles.id = \"people\".\"owner_id\"\n        AND profiles.id = (select auth.uid())\n      )",
           "withCheck": "EXISTS (\n        SELECT 1 FROM profiles\n        WHERE profiles.id = \"people\".\"owner_id\"\n        AND profiles.id = (select auth.uid())\n      )"
         },
@@ -406,18 +355,14 @@
           "name": "people_delete_policy",
           "as": "PERMISSIVE",
           "for": "DELETE",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "EXISTS (\n        SELECT 1 FROM profiles\n        WHERE profiles.id = \"people\".\"owner_id\"\n        AND profiles.id = (select auth.uid())\n      )"
         },
         "people_select_policy": {
           "name": "people_select_policy",
           "as": "PERMISSIVE",
           "for": "SELECT",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "EXISTS (\n        SELECT 1 FROM profiles\n        WHERE profiles.id = \"people\".\"owner_id\"\n        AND profiles.id = (select auth.uid())\n      )"
         }
       },
@@ -474,12 +419,8 @@
           "tableFrom": "profiles",
           "tableTo": "users",
           "schemaTo": "auth",
-          "columnsFrom": [
-            "id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -487,12 +428,8 @@
           "name": "profiles_person_id_people_id_fk",
           "tableFrom": "profiles",
           "tableTo": "people",
-          "columnsFrom": [
-            "person_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["person_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -504,18 +441,14 @@
           "name": "profiles_insert_policy",
           "as": "PERMISSIVE",
           "for": "INSERT",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "withCheck": "\"profiles\".\"id\" = (select auth.uid())"
         },
         "profiles_update_policy": {
           "name": "profiles_update_policy",
           "as": "PERMISSIVE",
           "for": "UPDATE",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "\"profiles\".\"id\" = (select auth.uid())",
           "withCheck": "\"profiles\".\"id\" = (select auth.uid())"
         },
@@ -523,18 +456,14 @@
           "name": "profiles_delete_policy",
           "as": "PERMISSIVE",
           "for": "DELETE",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "\"profiles\".\"id\" = (select auth.uid())"
         },
         "profiles_select_policy": {
           "name": "profiles_select_policy",
           "as": "PERMISSIVE",
           "for": "SELECT",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "EXISTS (\n    SELECT 1 FROM \"profiles\"\n    WHERE \"profiles\".\"id\" = (select auth.uid())\n  )"
         }
       },
@@ -617,12 +546,8 @@
           "name": "user_anniversaries_owner_id_profiles_id_fk",
           "tableFrom": "user_anniversaries",
           "tableTo": "profiles",
-          "columnsFrom": [
-            "owner_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["owner_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -634,18 +559,14 @@
           "name": "user_anniversaries_insert_policy",
           "as": "PERMISSIVE",
           "for": "INSERT",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "withCheck": "\"user_anniversaries\".\"owner_id\" = (select auth.uid())"
         },
         "user_anniversaries_update_policy": {
           "name": "user_anniversaries_update_policy",
           "as": "PERMISSIVE",
           "for": "UPDATE",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "\"user_anniversaries\".\"owner_id\" = (select auth.uid())",
           "withCheck": "\"user_anniversaries\".\"owner_id\" = (select auth.uid())"
         },
@@ -653,18 +574,14 @@
           "name": "user_anniversaries_delete_policy",
           "as": "PERMISSIVE",
           "for": "DELETE",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "\"user_anniversaries\".\"owner_id\" = (select auth.uid())"
         },
         "user_anniversaries_select_policy": {
           "name": "user_anniversaries_select_policy",
           "as": "PERMISSIVE",
           "for": "SELECT",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "\"user_anniversaries\".\"owner_id\" = (select auth.uid())"
         }
       },
@@ -714,12 +631,8 @@
           "name": "user_roles_owner_id_profiles_id_fk",
           "tableFrom": "user_roles",
           "tableTo": "profiles",
-          "columnsFrom": [
-            "owner_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["owner_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -731,18 +644,14 @@
           "name": "user_roles_insert_policy",
           "as": "PERMISSIVE",
           "for": "INSERT",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "withCheck": "EXISTS (\n    SELECT 1 FROM \"user_roles\"\n    WHERE \"user_roles\".\"owner_id\" = (select auth.uid())\n    AND \"user_roles\".\"role\" = '$admin'\n  )"
         },
         "user_roles_update_policy": {
           "name": "user_roles_update_policy",
           "as": "PERMISSIVE",
           "for": "UPDATE",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "EXISTS (\n    SELECT 1 FROM \"user_roles\"\n    WHERE \"user_roles\".\"owner_id\" = (select auth.uid())\n    AND \"user_roles\".\"role\" = '$admin'\n  )",
           "withCheck": "EXISTS (\n    SELECT 1 FROM \"user_roles\"\n    WHERE \"user_roles\".\"owner_id\" = (select auth.uid())\n    AND \"user_roles\".\"role\" = '$admin'\n  )"
         },
@@ -750,18 +659,14 @@
           "name": "user_roles_delete_policy",
           "as": "PERMISSIVE",
           "for": "DELETE",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "EXISTS (\n    SELECT 1 FROM \"user_roles\"\n    WHERE \"user_roles\".\"owner_id\" = (select auth.uid())\n    AND \"user_roles\".\"role\" = '$admin'\n  )"
         },
         "user_roles_select_policy": {
           "name": "user_roles_select_policy",
           "as": "PERMISSIVE",
           "for": "SELECT",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "\"user_roles\".\"owner_id\" = (select auth.uid())"
         }
       },

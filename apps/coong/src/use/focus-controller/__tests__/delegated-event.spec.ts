@@ -58,7 +58,9 @@ describe('DelegatedEvent', () => {
   })
 
   it('DelegatedEventProvider should provide context values and cleanup on unmount', async () => {
-    const {DelegatedEventContext, DelegatedEventProvider} = await importSubject({isServer: false})
+    const {DelegatedEventContext, DelegatedEventProvider} = await importSubject({
+      isServer: false,
+    })
     const delegatedEventMap = new Map()
     const unsubscribe = vi.fn()
 
@@ -98,7 +100,9 @@ describe('DelegatedEvent', () => {
   })
 
   it('useDelegatedEmitHandler should emit event inside provider (no warn)', async () => {
-    const {DelegatedEventProvider, useDelegatedEmitHandler} = await importSubject({isServer: false})
+    const {DelegatedEventProvider, useDelegatedEmitHandler} = await importSubject({
+      isServer: false,
+    })
     const delegatedEventMap = new Map()
 
     mocks.createDelegatedEvent.mockReturnValue({delegatedEventMap, unsubscribe: vi.fn()})
@@ -191,7 +195,9 @@ describe('DelegatedEvent', () => {
   })
 
   it('useGlobalDelegatedEventMap should use getDocument as default target', async () => {
-    const {DELEGATED_EVENT_KEYS, useGlobalDelegatedEventMap} = await importSubject({isServer: false})
+    const {DELEGATED_EVENT_KEYS, useGlobalDelegatedEventMap} = await importSubject({
+      isServer: false,
+    })
     const delegatedEventMap = new Map()
     const unsubscribe = vi.fn()
 
@@ -270,7 +276,13 @@ describe('DelegatedEvent', () => {
     )
 
     await Promise.resolve()
-    expect(mocks.delegatedOn).toHaveBeenCalledWith(delegatedEventMap, channel, key, listener, expect.any(Function))
+    expect(mocks.delegatedOn).toHaveBeenCalledWith(
+      delegatedEventMap,
+      channel,
+      key,
+      listener,
+      expect.any(Function),
+    )
     expect(addListener).toHaveBeenCalledTimes(1)
     expect(removeListener).not.toHaveBeenCalled()
     expect(unsubscribe).not.toHaveBeenCalled()
@@ -285,7 +297,10 @@ describe('DelegatedEvent', () => {
     const removeListener = vi.fn()
 
     mocks.delegatedOn.mockReturnValue({addListener, removeListener})
-    mocks.createDelegatedEvent.mockReturnValue({delegatedEventMap: new Map(), unsubscribe: vi.fn()})
+    mocks.createDelegatedEvent.mockReturnValue({
+      delegatedEventMap: new Map(),
+      unsubscribe: vi.fn(),
+    })
 
     const listener = vi.fn()
 

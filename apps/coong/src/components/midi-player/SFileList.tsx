@@ -3,7 +3,10 @@ import {createEffect, createSignal, createUniqueId, For, JSX, Show, splitProps} 
 import {MusicInfo, SFileItem} from './SFileItem'
 import {useMidiFileInput} from './midi-file-input'
 
-export interface SFileListProps extends Omit<JSX.HTMLAttributes<HTMLDivElement>, 'onSelect' | 'onPlay'> {
+export interface SFileListProps extends Omit<
+  JSX.HTMLAttributes<HTMLDivElement>,
+  'onSelect' | 'onPlay'
+> {
   /**
    * Currently suspended
    */
@@ -75,9 +78,10 @@ export const SFileList = (props: SFileListProps) => {
   const [element, setElement] = createSignal<HTMLDivElement | null>(null)
   const [inputElement, setInputElement] = createSignal<HTMLInputElement | null>(null)
 
-  const {handleInputFiles, handleDragOver, handleDragLeave, handleDrop, isDragOver} = useMidiFileInput(inputElement, {
-    onAdd: props.onAdd,
-  })
+  const {handleInputFiles, handleDragOver, handleDragLeave, handleDrop, isDragOver} =
+    useMidiFileInput(inputElement, {
+      onAdd: props.onAdd,
+    })
 
   const [innerProps, restProps] = splitProps(props, [
     'list',
@@ -166,7 +170,12 @@ export const SFileList = (props: SFileListProps) => {
           }}
         />
       </Show>
-      <section role="list" ref={setElement} class={fileListStyle({isDragOver: isDragOver()})} onScroll={handleScroll}>
+      <section
+        role="list"
+        ref={setElement}
+        class={fileListStyle({isDragOver: isDragOver()})}
+        onScroll={handleScroll}
+      >
         <For each={innerProps.list}>
           {(item, index) => (
             <SFileItem

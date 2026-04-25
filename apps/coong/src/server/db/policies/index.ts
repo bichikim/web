@@ -9,7 +9,9 @@ export type SchemaSelf<
 
 export {type PgColumnBuilderBase} from 'drizzle-orm/pg-core'
 
-export type SchemaFn = (table: SchemaSelf<string, Record<string, PgColumnBuilderBase>>) => SQL<unknown>
+export type SchemaFn = (
+  table: SchemaSelf<string, Record<string, PgColumnBuilderBase>>,
+) => SQL<unknown>
 
 export const createOwnerOnlyCondition = <
   TTableName extends string,

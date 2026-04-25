@@ -26,14 +26,20 @@ export const YOnlyScroll: Story = {
         barType="vertical"
         class="bg-green left-var top-0 right-0 w-0.5rem h-full absolute data-[show=false]:hidden"
       >
-        <SScroll.Handle component="div" class="absolute bg-red right-0 top-var-position w-full h-var-size" />
+        <SScroll.Handle
+          component="div"
+          class="absolute bg-red right-0 top-var-position w-full h-var-size"
+        />
       </SScroll.Bar>
       <SScroll.Bar
         component="div"
         barType="horizontal"
         class="bg-green left-0 bottom-0 w-full h-0.5rem absolute data-[show=false]:hidden"
       >
-        <SScroll.Handle component="div" class="absolute bg-red left-var-position w-var-size h-full" />
+        <SScroll.Handle
+          component="div"
+          class="absolute bg-red left-var-position w-var-size h-full"
+        />
       </SScroll.Bar>
     </SScroll.Root>
   ),
@@ -65,7 +71,12 @@ export const XYScroll: Story = {
           class="absolute left-0 top-var-position h-var-size @hover-outline outline-3 outline-black
             rd-0.5rem select-none data-[state=move]:outline"
         >
-          <img draggable="false" src={zombieGif} alt="zombe" class="h-full rd-0.5rem overflow-hidden" />
+          <img
+            draggable="false"
+            src={zombieGif}
+            alt="zombe"
+            class="h-full rd-0.5rem overflow-hidden"
+          />
         </SScroll.Handle>
       </SScroll.Bar>
       <SScroll.Bar

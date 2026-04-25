@@ -10,7 +10,9 @@ export interface DragButtonContextAction {
   handleTouchStart: (event: TouchEvent) => void
 }
 
-export const DragButtonContext = createContext<[Accessor<DragButtonContextProps>, DragButtonContextAction]>([
+export const DragButtonContext = createContext<
+  [Accessor<DragButtonContextProps>, DragButtonContextAction]
+>([
   () => ({dragX: 0, dragY: 0}),
   {
     handleMouseDown: () => {

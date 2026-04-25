@@ -17,7 +17,7 @@ description: Applies project TypeScript conventions for naming, formatting, typi
 ## Code Writing Order
 
 1. Write code
-2. Run `eslint --fix` for formatting and lint auto-fix (ESLint includes Prettier)
+2. Run `oxlint --fix` for lint auto-fix
 
 ## Format
 
@@ -38,6 +38,23 @@ const CACHE_MAX_AGE = 300 // 5 minutes
 
 Do not duplicate the import source when importing type and value from the same module — use `import {type Foo, bar} from './foo'` not separate lines.
 
+### Object parameter (props / options)
+
+- For Solid-style hook functions whose name starts with `use`, the single object parameter should be `props: FooBarProps` (match the type name to the hook: `{HookName}Props`).
+- For shared utils, the single object parameter should be `options: FooBarOptions` (match the type name to the function: `{FunctionName}Options`).
+
+```ts
+// hooks
+export const useMyFeature = (props: MyFeatureProps) => {
+  /* ... */
+}
+
+// utils
+export const formatUserLabel = (options: FormatUserLabelOptions) => {
+  /* ... */
+}
+```
+
 ## Typing
 
 - Define types with `interface`; use `type` only when interface cannot express it
@@ -50,43 +67,25 @@ Do not duplicate the import source when importing type and value from the same m
 
 ## Code Patterns
 
-### undefined check
+### Single responsibility (functions)
 
-```ts
-let name: string | undefined
-if (name === undefined) {
-  // ...
-}
-```
+- Prefer one function, one reason to change: split **access** (e.g. read last element), **guards / predicates**, and **transforms** (e.g. map or copy-and-update) when they are mixed in one place.
+- Build target behavior through function composition: first reuse existing single-purpose shared functions when they fit, then add the smallest new focused functions needed and compose them into the goal function.
+- Extract small, named single-purpose functions when the same sub-step appears in more than one caller or when the name makes the main flow read as steps, not mechanics.
+- Do not create meaningless wrapper or blob functions: every extracted function must represent a clear concept in the composition and improve readability, reuse, or testability.
 
-### null check
+### Undefined checks
 
-```ts
-let name: string | null = null
-if (name === null) {
-  // ...
-}
-```
+./cdde-patters/undefined-check.md
 
-### type guard
+### Null checks
 
-- Use type guard functions in the form `(value: unknown): value is Type` when handling unknown
-- Use existing utils like isNotUndefined, isAccessor, isPromise; create new ones if none exist
+./cdde-patters/null-check.md
 
-```ts
-// packages/utils/src/is-not-undefined/index.ts
-export const isNotUndefined = <T>(value: T): value is NotUndefined<T> => value !== undefined
-```
+### Type guards
 
-### type & script import
+./cdde-patters/type-guard.md
 
-- Do not duplicate the import source when importing type and value from the same module
+### Type + value import pattern
 
-```ts
-// ok
-import {type Foo, runFoo} from './foo'
-
-// nope
-import type {Bar} from './bar'
-import {runBar} from './bar'
-```
+./cdde-patters/type-and-value-import.md

@@ -10,5 +10,10 @@ export default defineConfig({
       name: 'vite-plugin-monorepo-alias',
     },
   },
-  plugins: [createAlias({root: fileURLToPath(new URL('../../', import.meta.url)), workspacePaths: ['packages/']})],
+  plugins: [
+    createAlias({
+      root: fileURLToPath(new URL('../../', import.meta.url)),
+      workspacePaths: ['packages/'],
+    }),
+  ],
 })

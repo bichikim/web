@@ -1,6 +1,6 @@
 # No types case
 
-모노레포의 각 패키지 루트의 ./src 또는  프로젝트 루트에 global.d.ts 를 만들거나 수정하여 아래과 같이 먼저 시도
+모노레포의 각 패키지 루트의 ./src 또는 프로젝트 루트에 global.d.ts 를 만들거나 수정하여 아래과 같이 먼저 시도
 
 ## vite/client 전역 타임이 필요한 경우
 
@@ -18,5 +18,4 @@
 declare module 'shaka-player' {
   export default shaka
 }
-
 ```

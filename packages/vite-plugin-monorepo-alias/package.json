@@ -3,11 +3,11 @@
   "version": "1.0.37",
   "description": "vite monorepo alias plugin",
   "keywords": [
-    "vitest",
+    "alias",
+    "monorepo",
     "storybook-vite",
     "vite",
-    "monorepo",
-    "alias"
+    "vitest"
   ],
   "repository": "git@github.com:winter-love/web.git",
   "license": "MIT",

@@ -36,7 +36,9 @@ describe('createInverseOrderParameters', () => {
   })
 
   it('should support void parameters (3 params)', () => {
-    const targetFunction = vi.fn((foo: string, age?: number, info?: {name: string}) => `${foo}, ${age} ${info?.name}`)
+    const targetFunction = vi.fn(
+      (foo: string, age?: number, info?: {name: string}) => `${foo}, ${age} ${info?.name}`,
+    )
     const inverseOrderedFunction = createInverseOrderParameters(targetFunction)
     const result = inverseOrderedFunction(undefined, undefined, 'foo')
 

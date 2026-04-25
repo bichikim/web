@@ -13,7 +13,9 @@ export const HPianoFlatSet = (_props: HPianoFlatSetProps) => {
   return (
     <div {...attrs}>
       <For each={flatSet}>
-        {(item) => <KeyContext.Provider value={{...item, disabled}}>{props.children}</KeyContext.Provider>}
+        {(item) => (
+          <KeyContext.Provider value={{...item, disabled}}>{props.children}</KeyContext.Provider>
+        )}
       </For>
     </div>
   )

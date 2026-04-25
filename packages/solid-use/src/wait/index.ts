@@ -5,7 +5,12 @@ import {createEffect} from 'solid-js'
 export interface WaitSource<Options extends Record<string, any>> {
   cancel: () => void
   create?: (callback: (...args: any) => void, wait: number, options?: Partial<Options>) => void
-  execute: (args: any, callback: (...args: any) => void, wait: number, options?: Partial<Options>) => void
+  execute: (
+    args: any,
+    callback: (...args: any) => void,
+    wait: number,
+    options?: Partial<Options>,
+  ) => void
   /**
    * stop wait and call callback function
    * @param callback
@@ -21,7 +26,9 @@ export interface WaitReturn<Args extends any[]> {
   flush: () => void
 }
 
-export const createUseWait = <Options extends Record<string, any>>(creator: WaitCreator<Options>) => {
+export const createUseWait = <Options extends Record<string, any>>(
+  creator: WaitCreator<Options>,
+) => {
   return <Args extends any[]>(
     callback: (...args: Args) => void,
     wait: MaybeAccessor<number>,

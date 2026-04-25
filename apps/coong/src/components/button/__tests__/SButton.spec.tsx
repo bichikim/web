@@ -92,7 +92,9 @@ describe('SButton', () => {
 
   it('should call onDoubleClick', async () => {
     const handleDoubleClick = vi.fn()
-    const {getByRole} = render(() => <SButton onDoubleClick={handleDoubleClick}>DoubleClick</SButton>)
+    const {getByRole} = render(() => (
+      <SButton onDoubleClick={handleDoubleClick}>DoubleClick</SButton>
+    ))
 
     const button = getByRole('button')
 

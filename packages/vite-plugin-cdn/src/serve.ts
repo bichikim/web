@@ -23,7 +23,11 @@ const findMiddlewareIndex = (stack: Connect.ServerStackItem[], names: string | s
   return -1
 }
 
-const afterMiddleware = (middlewares: Connect.Server, names: string | string[], middlewareName: string) => {
+const afterMiddleware = (
+  middlewares: Connect.Server,
+  names: string | string[],
+  middlewareName: string,
+) => {
   const targetMiddlewareIndex = findMiddlewareIndex(middlewares.stack, names)
 
   const viteCdnMiddlewareIndex = findMiddlewareIndex(middlewares.stack, middlewareName)
@@ -50,7 +54,11 @@ export const cdnServe = (options: CdnOptions = {}): Plugin => {
     // },
     configureServer({middlewares}) {
       middlewares.use(createCdnMiddleware(getModule, overrideHeaders, sourceMap, prefix))
-      afterMiddleware(middlewares, ['viteServePublicMiddleware', 'viteTransformMiddleware'], MIDDLEWARE_NAME)
+      afterMiddleware(
+        middlewares,
+        ['viteServePublicMiddleware', 'viteTransformMiddleware'],
+        MIDDLEWARE_NAME,
+      )
     },
     name: 'vite-plugin-cdn:serve',
   }

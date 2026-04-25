@@ -26,19 +26,19 @@ pnpm dev
 
 Create a `.env` file based on `.env.example`.
 
-| Variable | Description |
-| -------- | ----------- |
-| `BUYMEACOFFEE_ACCESS_TOKEN` | Buy Me a Coffee API token (optional) |
-| `BUYMEACOFFEE_USERNAME` | Buy Me a Coffee username (optional) |
-| `VITE_BMC_USERNAME` | Buy Me a Coffee link username (default: `ifuckinghatereact`) |
+| Variable                    | Description                                                  |
+| --------------------------- | ------------------------------------------------------------ |
+| `BUYMEACOFFEE_ACCESS_TOKEN` | Buy Me a Coffee API token (optional)                         |
+| `BUYMEACOFFEE_USERNAME`     | Buy Me a Coffee username (optional)                          |
+| `VITE_BMC_USERNAME`         | Buy Me a Coffee link username (default: `ifuckinghatereact`) |
 
 Returns an empty message list if no token is provided.
 
 ## Scripts
 
-| Command | Description |
-| ------- | ----------- |
-| `pnpm dev` | Start development server |
-| `pnpm build` | Production build |
-| `pnpm lint` | Run ESLint |
-| `pnpm type-check` | TypeScript type check |
+| Command           | Description              |
+| ----------------- | ------------------------ |
+| `pnpm dev`        | Start development server |
+| `pnpm build`      | Production build         |
+| `pnpm lint`       | Run ESLint               |
+| `pnpm type-check` | TypeScript type check    |

@@ -2,7 +2,9 @@ import jsCookie from 'js-cookie'
 import {CookieSerializeOptions} from 'cookie-es'
 import {getCookie as _getServerCookie, setCookie as _setServerCookie} from 'vinxi/http'
 
-const normalizeSameSite = (sameSite: CookieSerializeOptions['sameSite']): Cookies.CookieAttributes['sameSite'] => {
+const normalizeSameSite = (
+  sameSite: CookieSerializeOptions['sameSite'],
+): Cookies.CookieAttributes['sameSite'] => {
   if (sameSite === true) {
     return 'strict'
   }

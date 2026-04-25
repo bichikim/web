@@ -137,7 +137,9 @@ export const ServiceWorkerProvider = (props: ServiceWorkerProviderProps) => {
 
   return (
     <Show when={isProduction} fallback={props.children}>
-      <ServiceWorkerContext.Provider value={context}>{props.children}</ServiceWorkerContext.Provider>
+      <ServiceWorkerContext.Provider value={context}>
+        {props.children}
+      </ServiceWorkerContext.Provider>
     </Show>
   )
 }

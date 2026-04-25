@@ -63,7 +63,9 @@ export interface CompileClassOptions {
   trigger?: string | RegExp
 }
 
-export default function transformerCompileClass(options: CompileClassOptions = {}): SourceCodeTransformer {
+export default function transformerCompileClass(
+  options: CompileClassOptions = {},
+): SourceCodeTransformer {
   const {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
@@ -79,7 +81,9 @@ export default function transformerCompileClass(options: CompileClassOptions = {
   // Provides backwards compatibility. We either accept a trigger string which
   // gets turned into a regexp (like previously) or a regex literal directly.
   const regexp =
-    typeof trigger === 'string' ? new RegExp(`(["'\`])${escapeRegExp(trigger)}\\s([^\\1]*?)\\1`, 'g') : trigger
+    typeof trigger === 'string'
+      ? new RegExp(`(["'\`])${escapeRegExp(trigger)}\\s([^\\1]*?)\\1`, 'g')
+      : trigger
 
   return {
     enforce: 'pre',
@@ -96,7 +100,9 @@ export default function transformerCompileClass(options: CompileClassOptions = {
 
       for (const match of matches) {
         let body =
-          match.length === 4 && match.groups ? expandVariantGroup(match[3].trim()) : expandVariantGroup(match[2].trim())
+          match.length === 4 && match.groups
+            ? expandVariantGroup(match[3].trim())
+            : expandVariantGroup(match[2].trim())
 
         const start = match.index!
         const replacements: any[] = []

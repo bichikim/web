@@ -6,7 +6,9 @@ export const resolveAccessor = <T>(value: MaybeAccessor<T>): Accessor<T> => {
   return isAccessor(value) ? value : () => value
 }
 
-export const resolveAccessors = <T extends MaybeAccessors>(value: T): Accessor<AccessorsValue<T>> => {
+export const resolveAccessors = <T extends MaybeAccessors>(
+  value: T,
+): Accessor<AccessorsValue<T>> => {
   if (Array.isArray(value)) {
     const accessors = value.map((value) => resolveAccessor(value))
 

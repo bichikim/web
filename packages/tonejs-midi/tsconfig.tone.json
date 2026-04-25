@@ -10,7 +10,5 @@
     "allowSyntheticDefaultImports": true,
     "lib": ["es2022", "dom"]
   },
-  "include": [
-    "node_modules/@tonejs/midi/src/**/*.ts"
-  ]
+  "include": ["node_modules/@tonejs/midi/src/**/*.ts"]
 }

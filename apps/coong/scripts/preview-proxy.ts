@@ -97,7 +97,9 @@ const isArrayBufferUint8Array = (buffer: any): buffer is Uint8Array<ArrayBuffer>
  */
 async function proxyToServer(req: IncomingMessage, targetPath: string): Promise<Response> {
   const requestUrl = req.url ?? '/'
-  const search = requestUrl.includes('?') ? requestUrl.slice(Math.max(0, requestUrl.indexOf('?'))) : ''
+  const search = requestUrl.includes('?')
+    ? requestUrl.slice(Math.max(0, requestUrl.indexOf('?')))
+    : ''
   const proxyUrl = `${SERVER_URL}${targetPath}${search}`
 
   const headers = new Headers()

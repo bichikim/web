@@ -38,9 +38,7 @@ export type ContextLogic = (req: Request, res: Response, next: () => void) => an
 export interface Context<T = any> {
   [TYPE_CONTEXT]?: T
   key: symbol | string
-  provide: (
-    logic: ContextLogic,
-  ) => (req: Request, res: Response, next: () => void) => void
+  provide: (logic: ContextLogic) => (req: Request, res: Response, next: () => void) => void
 }
 
 export const createContext = <T>(defaultValue?: T): Context<T> => {
@@ -79,10 +77,7 @@ export const createStaticContextLogic = (value: MaybeFunction<any>) => {
   }
 }
 
-export const provideContext = (
-  key: symbol | string | Context,
-  logic: (req, res, next) => any,
-) => {
+export const provideContext = (key: symbol | string | Context, logic: (req, res, next) => any) => {
   const _key = getKey(key)
 
   return async (req, res, next) => {

@@ -27,7 +27,10 @@ const toRangeValue = (value: number, min: number, max: number) => {
 export const sSliderHandleClassName = 's-slider-handle'
 
 export const SSliderHandle = <T extends ValidComponent>(props: SSliderHandleProps<T>) => {
-  const [innerProps, restProps] = splitProps(props, ['style']) as unknown as [Required<InnerProps>, DynamicProps<T>]
+  const [innerProps, restProps] = splitProps(props, ['style']) as unknown as [
+    Required<InnerProps>,
+    DynamicProps<T>,
+  ]
   const sliderContext = useSliderContext()
   const sliderAriaContext = useSliderAriaContext()
   const [handelElement, setHandelElement] = createSignal<HTMLElement | null>(null)
@@ -70,7 +73,9 @@ export const SSliderHandle = <T extends ValidComponent>(props: SSliderHandleProp
     const {x: relativeX, y: relativeY} = payload.relativePoint
 
     const position = toRangeValue(
-      barType === 'horizontal' ? currentX - relativeX - containerPosition : currentY - relativeY - containerPosition,
+      barType === 'horizontal'
+        ? currentX - relativeX - containerPosition
+        : currentY - relativeY - containerPosition,
       0,
       containerSize - size,
     )

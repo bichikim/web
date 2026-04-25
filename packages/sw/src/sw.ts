@@ -95,7 +95,9 @@ const resolvedLogLevel: LogLevel = SW_CONFIG.logLevel ?? (ENV === 'development' 
 const resolvedLogEndpoint = SW_CONFIG.logEndpoint
 
 const resolvedLogSampleRate =
-  typeof SW_CONFIG.logSampleRate === 'number' ? Math.min(1, Math.max(0, SW_CONFIG.logSampleRate)) : 1
+  typeof SW_CONFIG.logSampleRate === 'number'
+    ? Math.min(1, Math.max(0, SW_CONFIG.logSampleRate))
+    : 1
 
 const notifyClients = async (message: Record<string, unknown>) => {
   const clients = await self.clients.matchAll({includeUncontrolled: true, type: 'window'})
@@ -213,7 +215,9 @@ const writeCacheMetadata = async (metadata: CacheMetadata): Promise<void> => {
   )
 }
 
-const normalizeDestination = (destination: RequestDestination | ''): RequestDestination | 'default' => {
+const normalizeDestination = (
+  destination: RequestDestination | '',
+): RequestDestination | 'default' => {
   if (!destination) {
     return 'default'
   }
@@ -235,7 +239,10 @@ const resolvePriority = (destination: RequestDestination | 'default', url: strin
   return basePriority
 }
 
-const pruneMetadataEntries = async (cache: Cache, metadata: CacheMetadata): Promise<CacheMetadata> => {
+const pruneMetadataEntries = async (
+  cache: Cache,
+  metadata: CacheMetadata,
+): Promise<CacheMetadata> => {
   const requests = await cache.keys()
   const existingUrls = new Set(requests.map((request) => request.url))
   const nextMetadata: CacheMetadata = {}
@@ -253,7 +260,10 @@ const pruneMetadataEntries = async (cache: Cache, metadata: CacheMetadata): Prom
   return nextMetadata
 }
 
-const removeExpiredEntries = async (cache: Cache, metadata: CacheMetadata): Promise<CacheMetadata> => {
+const removeExpiredEntries = async (
+  cache: Cache,
+  metadata: CacheMetadata,
+): Promise<CacheMetadata> => {
   if (!SW_CONFIG.cacheMaxAgeSeconds) {
     return metadata
   }
@@ -353,7 +363,11 @@ const updateCacheState = async (
   await trimCache(cache, freshMetadata)
 }
 
-const getCachedResponse = async (cache: Cache, request: Request, destination: RequestDestination | 'default') => {
+const getCachedResponse = async (
+  cache: Cache,
+  request: Request,
+  destination: RequestDestination | 'default',
+) => {
   const response = await cache.match(request)
 
   if (!response) {
@@ -476,7 +490,10 @@ const createCacheFirst = async (event: FetchEvent, destination: RequestDestinati
   return response
 }
 
-const createStaleWhileRevalidate = async (event: FetchEvent, destination: RequestDestination | 'default') => {
+const createStaleWhileRevalidate = async (
+  event: FetchEvent,
+  destination: RequestDestination | 'default',
+) => {
   const cache = await caches.open(CACHE_NAME)
   const cachedResponse = await getCachedResponse(cache, event.request, destination)
 

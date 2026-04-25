@@ -1,7 +1,15 @@
 /* eslint-disable max-nested-callbacks */
 import {getWindow} from '@winter-love/utils'
 import {DrumMachine, type SplendidGrandPianoConfig} from 'smplr'
-import {Accessor, createContext, createEffect, createMemo, createSignal, onCleanup, untrack} from 'solid-js'
+import {
+  Accessor,
+  createContext,
+  createEffect,
+  createMemo,
+  createSignal,
+  onCleanup,
+  untrack,
+} from 'solid-js'
 import {getAudioContext} from 'src/use/instruments/prepare-audio-context'
 import {createEmitter, EmitterListener} from './emitter'
 import {useIsCleanup} from '@winter-love/solid-use'
@@ -47,14 +55,13 @@ export interface SplendidGrandPianoState {
   totalDuration: number
 }
 
-export interface SplendidGrandPianoController
-  extends EmitterListener<
-    PianoEvent,
-    {
-      end: SampleStart
-      start: SampleStart
-    }
-  > {
+export interface SplendidGrandPianoController extends EmitterListener<
+  PianoEvent,
+  {
+    end: SampleStart
+    start: SampleStart
+  }
+> {
   down(key: number | string | SampleStart): StopFn
   play(options: PlayOptions, startFrom?: number): void
   resume(): void
@@ -66,7 +73,10 @@ export interface SplendidGrandPianoController
 
 export type StopFn = (time?: number) => any
 
-export type SplendidGrandPianoContextProps = [Accessor<SplendidGrandPianoState>, SplendidGrandPianoController]
+export type SplendidGrandPianoContextProps = [
+  Accessor<SplendidGrandPianoState>,
+  SplendidGrandPianoController,
+]
 
 // eslint-disable-next-line max-lines-per-function
 export const createSplendidGrandPiano = (

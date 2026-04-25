@@ -67,6 +67,9 @@ export const encodeQueryRecord = (
 /**
  * @deprecated
  */
-export const toQueryString = (record: Record<string, string | number | boolean>, options?: ToQueryStringOptions) => {
+export const toQueryString = (
+  record: Record<string, string | number | boolean>,
+  options?: ToQueryStringOptions,
+) => {
   return joinStringQueries(encodeQueryRecord(record, options))
 }

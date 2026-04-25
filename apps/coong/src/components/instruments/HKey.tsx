@@ -16,7 +16,13 @@ export interface HKeyProps extends HRealButtonProps {
 export const HKey = (props: HKeyProps) => {
   const {onDown: onKeyDown, onUp: onKeyUp, down} = useContext(PianoContext)
 
-  const [innerProps, restProps] = splitProps(props, ['key', 'name', 'effectClass', 'children', 'showKeyName'])
+  const [innerProps, restProps] = splitProps(props, [
+    'key',
+    'name',
+    'effectClass',
+    'children',
+    'showKeyName',
+  ])
   const {key, disabled, name} = useContext(KeyContext)
 
   function handleDown() {
@@ -54,7 +60,10 @@ export const HKey = (props: HKeyProps) => {
       title={`${innerProps.name} key ${key}`}
     >
       <SKeyEffect
-        class={cx(':uno: absolute top--4 left-0 w-full h-full pointer-events-none', innerProps.effectClass)}
+        class={cx(
+          ':uno: absolute top--4 left-0 w-full h-full pointer-events-none',
+          innerProps.effectClass,
+        )}
       />
       <Show when={innerProps.showKeyName}>
         <span class="mb-2">{name}</span>

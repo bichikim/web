@@ -34,7 +34,9 @@ const findTouch = (list: TouchList, identifier: number) => {
 
 const DEFAULT_DRAG_END_SIZE = 50
 
-export const useDrag = (props: MaybeAccessor<DragProps>): readonly [Accessor<Position>, UseDragActions] => {
+export const useDrag = (
+  props: MaybeAccessor<DragProps>,
+): readonly [Accessor<Position>, UseDragActions] => {
   const innerProps = resolveAccessor(props)
   const [drag, setDrag] = createSignal<DragData>({started: {identifier: -1, x: 0, y: 0}})
 

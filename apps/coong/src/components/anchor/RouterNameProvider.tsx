@@ -12,7 +12,9 @@ export const RouterNameProvider = (props: RouterNameProviderProps) => {
     return props.routerName
   })
 
-  return <RouterNameContext.Provider value={routerName}>{props.children}</RouterNameContext.Provider>
+  return (
+    <RouterNameContext.Provider value={routerName}>{props.children}</RouterNameContext.Provider>
+  )
 }
 
 export const useRouterName = () => {

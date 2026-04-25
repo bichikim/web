@@ -4,7 +4,10 @@ import {createSignal, useContext} from 'solid-js'
 import {MidiPlayerContext} from 'src/components/midi-player/context'
 import {PageMeta} from 'src/components/page-meta'
 
-const linkStyle = cx('cursor-pointer text-6 flex items-center text-black mt-5 underline', 'text-center')
+const linkStyle = cx(
+  'cursor-pointer text-6 flex items-center text-black mt-5 underline',
+  'text-center',
+)
 
 const getSample = async () => {
   const response = await fetch('/api/preset/hidden-teenieping')
@@ -51,8 +54,14 @@ export default function MusicPage() {
         <a href="/piano" class={linkStyle}>
           Go to piano <span class=":uno: h-6 w-6 inline-block bg-black i-tabler:piano" />
         </a>
-        <button class="mt-2 flex items-center gap-1" onClick={handleGetSample} disabled={isLoading()}>
-          <SAuroraText class={effectTextStyle({isLoading: isLoading()})}>Get Sample Midi files</SAuroraText>
+        <button
+          class="mt-2 flex items-center gap-1"
+          onClick={handleGetSample}
+          disabled={isLoading()}
+        >
+          <SAuroraText class={effectTextStyle({isLoading: isLoading()})}>
+            Get Sample Midi files
+          </SAuroraText>
         </button>
       </main>
     </>
