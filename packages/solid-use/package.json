@@ -28,15 +28,15 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "@floating-ui/dom": "^1.6.12",
+    "@floating-ui/dom": "^1.7.6",
     "@winter-love/utils": "workspace:*",
     "class-variance-authority": "^0.7.1",
-    "es-toolkit": "^1.43.0",
-    "solid-js": "^1.9.4"
+    "es-toolkit": "^1.46.1",
+    "solid-js": "^1.9.12"
   },
   "devDependencies": {
     "@winter-love/vite-lib-config": "workspace:*",
-    "vite": "^7.0.8"
+    "vite": "^7.3.2"
   },
   "publishConfig": {
     "access": "public"

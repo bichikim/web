@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "loader-utils": "^3.3.1",
-    "svgo": "^4.0.0"
+    "svgo": "^4.0.1"
   },
   "gitHead": "162bc0badb2b0932df3c9dc51cc1ff7af3587140"
 }

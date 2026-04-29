@@ -33,9 +33,9 @@
   },
   "devDependencies": {
     "@tonejs/midi": "^2.0.28",
-    "@types/node": "^24.9.1",
+    "@types/node": "^24.12.2",
     "@winter-love/vite-lib-config": "workspace:*",
-    "vite": "^7.0.8"
+    "vite": "^7.3.2"
   },
   "publishConfig": {
     "access": "public"

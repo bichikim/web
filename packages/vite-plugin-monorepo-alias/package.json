@@ -42,10 +42,10 @@
     "preview": "vite build -c vite.preview.config.mts"
   },
   "dependencies": {
-    "vite": "^7.0.8"
+    "vite": "^7.3.2"
   },
   "devDependencies": {
-    "@types/node": "^22.10.1",
+    "@types/node": "^22.19.17",
     "@winter-love/vite-lib-config": "workspace:*"
   },
   "publishConfig": {
