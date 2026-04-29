@@ -18,6 +18,12 @@ export const DEFAULT_AGENT_CLI_ARGS = [
 export const clearEmptyItems = (args: (string | undefined)[]): string[] =>
   args.filter((item): item is string => item !== undefined && item !== '')
 
+const isPathInsideDirectory = (directory: string, candidate: string): boolean => {
+  const relativePath = path.relative(directory, candidate)
+
+  return relativePath === '' || (!relativePath.startsWith('..') && !path.isAbsolute(relativePath))
+}
+
 export const hasExplicitSessionControl = (
   subcommand: string | undefined,
   args: readonly string[],
@@ -38,19 +44,21 @@ export const resolveCliWorkingDirectory = ({
   requestedDirectory: string | undefined
   workspaceRoot: string
 }): string => {
+  const resolvedWorkspaceRoot = path.resolve(workspaceRoot)
+
   if (requestedDirectory === undefined || requestedDirectory === '/') {
-    return workspaceRoot
+    return resolvedWorkspaceRoot
   }
 
-  if (requestedDirectory.startsWith('/')) {
-    return path.resolve(workspaceRoot, `.${requestedDirectory}`)
+  const resolvedWorkingDirectory = requestedDirectory.startsWith('/')
+    ? path.resolve(resolvedWorkspaceRoot, `.${requestedDirectory}`)
+    : path.resolve(resolvedWorkspaceRoot, requestedDirectory)
+
+  if (!isPathInsideDirectory(resolvedWorkspaceRoot, resolvedWorkingDirectory)) {
+    throw new Error('`workingDirectory` must stay within AGENT_WORKSPACE_ROOT.')
   }
 
-  if (path.isAbsolute(requestedDirectory)) {
-    return requestedDirectory
-  }
-
-  return path.resolve(workspaceRoot, requestedDirectory)
+  return resolvedWorkingDirectory
 }
 
 export const getPersistedSessionId = (conversationId: string | undefined): string | undefined => {
