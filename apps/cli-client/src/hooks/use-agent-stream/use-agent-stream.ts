@@ -75,6 +75,7 @@ export const useAgentStream = (properties: UseAgentStreamProperties) => {
     let stderrOutput = ''
     let exitCode: number | null = null
     let exitSignalText = ''
+    let streamConsumed = false
     let sessionIdParser: ReturnType<typeof createAgentSessionIdStdoutParser> | undefined
 
     try {
@@ -164,6 +165,8 @@ export const useAgentStream = (properties: UseAgentStreamProperties) => {
 
         return
       }
+
+      streamConsumed = true
     } catch (error) {
       activeController = undefined
       properties.setStatus('idle')
@@ -228,11 +231,13 @@ export const useAgentStream = (properties: UseAgentStreamProperties) => {
             stderrOutput,
           }),
         )
-      } else if (!controller.signal.aborted) {
+      } else if (streamConsumed && !controller.signal.aborted) {
         properties.clearResumeSessionId()
       }
 
-      properties.setStatus('done')
+      if (streamConsumed || controller.signal.aborted) {
+        properties.setStatus('done')
+      }
     }
   }
 
