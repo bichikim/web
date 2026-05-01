@@ -138,7 +138,6 @@ describe('useAgentStream', () => {
       vi.fn().mockResolvedValue(
         createSseResponse([
           'event: stdout\ndata: {"type":"assistant","message":{"content":[{"type":"text","text":"done"}]}}\n\n',
-          'event: exit\ndata: {"code":0,"signal":null}\n\n',
         ]),
       ),
     )
