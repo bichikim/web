@@ -12,8 +12,8 @@ import {
   DEFAULT_AGENT_CLI,
   DEFAULT_AGENT_CLI_ARGS,
   getPersistedSessionId,
-  resolveCliWorkingDirectory,
   setPersistedSessionId,
+  tryResolveCliWorkingDirectory,
 } from '../utils/agent-cli'
 import {readAgentSessionHistory} from '../utils/agent-session-history'
 import {
@@ -115,10 +115,16 @@ agentRoute.post('/', sValidator('json', agentPostBodySchema), async (context) =>
   if (workspaceRoot === undefined || workspaceRoot.trim() === '') {
     throw new Error('AGENT_WORKSPACE_ROOT is required.')
   }
-  const cliWorkingDirectory = resolveCliWorkingDirectory({
+  const resolvedCliWorkingDirectory = tryResolveCliWorkingDirectory({
     requestedDirectory: workingDirectory,
     workspaceRoot,
   })
+
+  if ('error' in resolvedCliWorkingDirectory) {
+    return context.json({error: resolvedCliWorkingDirectory.error}, 400)
+  }
+
+  const cliWorkingDirectory = resolvedCliWorkingDirectory.workingDirectory
   const persistedSessionId =
     resumeSessionId !== undefined && resumeSessionId.trim().length > 0
       ? resumeSessionId.trim()
@@ -192,10 +198,16 @@ agentRoute.get(
       throw new Error('AGENT_WORKSPACE_ROOT is required.')
     }
 
-    const resolvedWorkingDirectory = resolveCliWorkingDirectory({
+    const resolvedWorkingDirectoryResult = tryResolveCliWorkingDirectory({
       requestedDirectory: workingDirectory,
       workspaceRoot,
     })
+
+    if ('error' in resolvedWorkingDirectoryResult) {
+      return context.json({error: resolvedWorkingDirectoryResult.error}, 400)
+    }
+
+    const resolvedWorkingDirectory = resolvedWorkingDirectoryResult.workingDirectory
 
     try {
       const transcriptPath = await resolveAgentSessionJsonlFilePath({
@@ -230,10 +242,16 @@ agentRoute.get('/sessions', sValidator('query', sessionsQuerySchema), async (con
     throw new Error('AGENT_WORKSPACE_ROOT is required.')
   }
 
-  const resolvedWorkingDirectory = resolveCliWorkingDirectory({
+  const resolvedWorkingDirectoryResult = tryResolveCliWorkingDirectory({
     requestedDirectory: workingDirectory,
     workspaceRoot,
   })
+
+  if ('error' in resolvedWorkingDirectoryResult) {
+    return context.json({error: resolvedWorkingDirectoryResult.error}, 400)
+  }
+
+  const resolvedWorkingDirectory = resolvedWorkingDirectoryResult.workingDirectory
 
   try {
     const sessions = await listSessionsByWorkingDirectory(workspaceRoot, resolvedWorkingDirectory)

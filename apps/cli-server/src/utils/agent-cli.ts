@@ -15,6 +15,17 @@ export const DEFAULT_AGENT_CLI_ARGS = [
   'stream-json',
 ]
 
+const isPathInsideWorkspace = (workspaceRoot: string, targetPath: string): boolean => {
+  const relativePath = path.relative(workspaceRoot, targetPath)
+
+  return (
+    relativePath === '' ||
+    (!relativePath.startsWith(`..${path.sep}`) &&
+      relativePath !== '..' &&
+      !path.isAbsolute(relativePath))
+  )
+}
+
 export const clearEmptyItems = (args: (string | undefined)[]): string[] =>
   args.filter((item): item is string => item !== undefined && item !== '')
 
@@ -38,19 +49,32 @@ export const resolveCliWorkingDirectory = ({
   requestedDirectory: string | undefined
   workspaceRoot: string
 }): string => {
+  const resolvedWorkspaceRoot = path.resolve(workspaceRoot)
+
   if (requestedDirectory === undefined || requestedDirectory === '/') {
-    return workspaceRoot
+    return resolvedWorkspaceRoot
   }
 
-  if (requestedDirectory.startsWith('/')) {
-    return path.resolve(workspaceRoot, `.${requestedDirectory}`)
+  const resolvedDirectory = requestedDirectory.startsWith('/')
+    ? path.resolve(resolvedWorkspaceRoot, `.${requestedDirectory}`)
+    : path.resolve(resolvedWorkspaceRoot, requestedDirectory)
+
+  if (!isPathInsideWorkspace(resolvedWorkspaceRoot, resolvedDirectory)) {
+    throw new Error('`workingDirectory` must stay within the workspace root.')
   }
 
-  if (path.isAbsolute(requestedDirectory)) {
-    return requestedDirectory
-  }
+  return resolvedDirectory
+}
 
-  return path.resolve(workspaceRoot, requestedDirectory)
+export const tryResolveCliWorkingDirectory = (options: {
+  readonly requestedDirectory: string | undefined
+  readonly workspaceRoot: string
+}): {readonly workingDirectory: string} | {readonly error: string} => {
+  try {
+    return {workingDirectory: resolveCliWorkingDirectory(options)}
+  } catch (error) {
+    return {error: error instanceof Error ? error.message : String(error)}
+  }
 }
 
 export const getPersistedSessionId = (conversationId: string | undefined): string | undefined => {
