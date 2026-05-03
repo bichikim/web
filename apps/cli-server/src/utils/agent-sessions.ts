@@ -2,6 +2,7 @@ import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import type {AgentStreamEvent} from '../types'
+import {isPathInsideDirectory} from './safe-path'
 
 interface RawSessionFile {
   readonly sessionId: string
@@ -20,6 +21,7 @@ export interface AgentSessionSummary {
 const CURSOR_PROJECTS_DIRECTORY = path.join(os.homedir(), '.cursor', 'projects')
 
 const MAX_SESSION_TITLE_LENGTH = 120
+const SAFE_SESSION_ID_PATTERN = /^[\w-]+$/u
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null
@@ -82,6 +84,9 @@ const resolveTranscriptDirectory = (workspacePath: string): string =>
     'agent-transcripts',
   )
 
+export const isSafeAgentSessionId = (sessionId: string): boolean =>
+  SAFE_SESSION_ID_PATTERN.test(sessionId)
+
 const hasTranscriptDirectory = async (workspacePath: string): Promise<boolean> => {
   const transcriptDirectory = resolveTranscriptDirectory(workspacePath)
 
@@ -124,6 +129,16 @@ export const resolveWorkspaceWithTranscripts = async ({
 }): Promise<string> => {
   const resolvedWorkspaceRoot = path.resolve(workspaceRoot)
   const workingDirectoryResolved = path.resolve(workingDirectory)
+
+  if (
+    !isPathInsideDirectory({
+      directoryPath: resolvedWorkspaceRoot,
+      targetPath: workingDirectoryResolved,
+    })
+  ) {
+    return resolvedWorkspaceRoot
+  }
+
   const ancestorPathList = collectAncestorPaths(workingDirectoryResolved, resolvedWorkspaceRoot)
   const transcriptChecks = await Promise.all(
     ancestorPathList.map((directoryPath) => hasTranscriptDirectory(directoryPath)),
@@ -219,7 +234,12 @@ export const listSessionsByWorkingDirectory = async (
   const resolvedWorkingDirectory = path.resolve(workingDirectory)
 
   return summaries.filter(
-    (summary) => summary.cwd === null || summary.cwd.startsWith(resolvedWorkingDirectory),
+    (summary) =>
+      summary.cwd === null ||
+      isPathInsideDirectory({
+        directoryPath: resolvedWorkingDirectory,
+        targetPath: summary.cwd,
+      }),
   )
 }
 
@@ -232,12 +252,20 @@ export const resolveAgentSessionJsonlFilePath = async ({
   workingDirectory: string
   sessionId: string
 }): Promise<string | undefined> => {
+  if (!isSafeAgentSessionId(sessionId)) {
+    return
+  }
+
   const workspaceForTranscripts = await resolveWorkspaceWithTranscripts({
     workingDirectory,
     workspaceRoot,
   })
   const transcriptDirectory = resolveTranscriptDirectory(workspaceForTranscripts)
   const filePath = path.join(transcriptDirectory, sessionId, `${sessionId}.jsonl`)
+
+  if (!isPathInsideDirectory({directoryPath: transcriptDirectory, targetPath: filePath})) {
+    return
+  }
 
   try {
     const stats = await fs.stat(filePath)

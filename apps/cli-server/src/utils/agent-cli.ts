@@ -1,4 +1,5 @@
 import path from 'node:path'
+import {isPathInsideDirectory} from './safe-path'
 
 const RESUME_FLAG_PREFIX = '--resume='
 const conversationSessionMap = new Map<string, string>()
@@ -39,18 +40,23 @@ export const resolveCliWorkingDirectory = ({
   workspaceRoot: string
 }): string => {
   if (requestedDirectory === undefined || requestedDirectory === '/') {
-    return workspaceRoot
+    return path.resolve(workspaceRoot)
   }
 
-  if (requestedDirectory.startsWith('/')) {
-    return path.resolve(workspaceRoot, `.${requestedDirectory}`)
+  const resolvedDirectory = requestedDirectory.startsWith('/')
+    ? path.resolve(workspaceRoot, `.${requestedDirectory}`)
+    : path.resolve(workspaceRoot, requestedDirectory)
+
+  if (
+    !isPathInsideDirectory({
+      directoryPath: workspaceRoot,
+      targetPath: resolvedDirectory,
+    })
+  ) {
+    throw new Error('Working directory must stay inside the workspace root.')
   }
 
-  if (path.isAbsolute(requestedDirectory)) {
-    return requestedDirectory
-  }
-
-  return path.resolve(workspaceRoot, requestedDirectory)
+  return resolvedDirectory
 }
 
 export const getPersistedSessionId = (conversationId: string | undefined): string | undefined => {
