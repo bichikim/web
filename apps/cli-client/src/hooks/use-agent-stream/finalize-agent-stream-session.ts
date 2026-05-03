@@ -4,7 +4,10 @@ import {updateLastMessageContentByRole} from '@/hooks/use-agent-stream/update-la
 import {composeAgentStreamFailureErrorMessage} from './compose-agent-stream-failure-error-message'
 import {finalizeAssistantMessageContent} from '@/hooks/use-agent-stream/finalize-assistant-message-content'
 import type {AgentStreamLoopMutable} from '@/hooks/use-agent-stream/create-agent-post-stream-handlers'
-import type {AgentStreamControl, UseAgentStreamProperties} from '@/hooks/use-agent-stream/use-agent-stream-types'
+import type {
+  AgentStreamControl,
+  UseAgentStreamProperties,
+} from '@/hooks/use-agent-stream/use-agent-stream-types'
 
 export interface FinalizeAgentStreamSessionOptions {
   readonly controller: AbortController
@@ -14,9 +17,7 @@ export interface FinalizeAgentStreamSessionOptions {
   readonly streamControl: AgentStreamControl
 }
 
-export const finalizeAgentStreamSession = (
-  options: FinalizeAgentStreamSessionOptions,
-): void => {
+export const finalizeAgentStreamSession = (options: FinalizeAgentStreamSessionOptions): void => {
   const {controller, mutable, properties, requestUrl, streamControl} = options
 
   mutable.sessionIdParser!.flush()

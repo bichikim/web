@@ -555,7 +555,7 @@ export type CurryReverse<F extends (...args: any[]) => any> = F extends (arg1: a
               ? CurriedFunction7R<F>
               : any
 
-export function curryReverse<F extends(...args: any[]) => any>(
+export function curryReverse<F extends (...args: any[]) => any>(
   target: F,
   length: number = target.length,
   args: unknown[] = [],

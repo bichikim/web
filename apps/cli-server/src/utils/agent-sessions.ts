@@ -36,8 +36,8 @@ const workspacePathToProjectKey = (workspacePath: string): string =>
 
 const sanitizeSessionTitle = (value: string): string =>
   value
-    .replace(/<[^>]+>/ug, ' ')
-    .replaceAll(/\s+/ug, ' ')
+    .replace(/<[^>]+>/gu, ' ')
+    .replaceAll(/\s+/gu, ' ')
     .trim()
     .slice(0, MAX_SESSION_TITLE_LENGTH)
 

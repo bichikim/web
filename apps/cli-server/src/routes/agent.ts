@@ -219,7 +219,10 @@ agentRoute.get(
 
       return context.json({messages})
     } catch {
-      return context.json({error: '세션 기록을 읽는 중 오류가 발생했습니다.'}, HTTP_STATUS_INTERNAL_SERVER_ERROR)
+      return context.json(
+        {error: '세션 기록을 읽는 중 오류가 발생했습니다.'},
+        HTTP_STATUS_INTERNAL_SERVER_ERROR,
+      )
     }
   },
 )

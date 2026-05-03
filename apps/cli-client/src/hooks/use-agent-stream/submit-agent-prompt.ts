@@ -1,6 +1,4 @@
-import {
-  createInitialAgentJsonStdoutReducerState,
-} from '@/utils/agent-json-stdout-display'
+import {createInitialAgentJsonStdoutReducerState} from '@/utils/agent-json-stdout-display'
 import {postAgentSseStream} from '@/hooks/use-agent-stream/agent-stream'
 import {parseHttpErrorBody, resolveRequestUrl} from '@/utils/agent-page'
 import {
@@ -31,9 +29,7 @@ const resetAgentStreamToIdle = (
   properties.setStatus('idle')
 }
 
-export const submitAgentPrompt = async (
-  options: SubmitAgentPromptOptions,
-): Promise<void> => {
+export const submitAgentPrompt = async (options: SubmitAgentPromptOptions): Promise<void> => {
   const {event, promptText, properties, streamControl, updateLastAssistantContent} = options
 
   event.preventDefault()

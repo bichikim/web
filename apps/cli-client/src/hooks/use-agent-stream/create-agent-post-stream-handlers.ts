@@ -25,9 +25,7 @@ export interface CreateAgentPostStreamHandlersOptions {
   readonly updateLastAssistantContent: (content: string) => void
 }
 
-export const createAgentPostStreamHandlers = (
-  options: CreateAgentPostStreamHandlersOptions,
-) => {
+export const createAgentPostStreamHandlers = (options: CreateAgentPostStreamHandlersOptions) => {
   const {mutable, properties, trimmed, updateLastAssistantContent} = options
 
   return () => {

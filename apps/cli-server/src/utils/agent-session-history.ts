@@ -15,15 +15,15 @@ const normalizeLineBreaks = (value: string): string =>
 
 const stripWrapperTags = (value: string): string =>
   value
-    .replace(/<[^>]+>/ug, ' ')
-    .replaceAll(/\s+/ug, ' ')
+    .replace(/<[^>]+>/gu, ' ')
+    .replaceAll(/\s+/gu, ' ')
     .trim()
 
 // Cursor가 transcript에 남기는 민감/내부 구간 마커(원문은 저장하지 않음)
 const stripRedactedMarkers = (value: string): string =>
   value
-    .replace(/\s*\[REDACTED\]\s*/ug, ' ')
-    .replace(/\s{2,}/ug, ' ')
+    .replace(/\s*\[REDACTED\]\s*/gu, ' ')
+    .replace(/\s{2,}/gu, ' ')
     .trim()
 
 const extractTextFromMessagePayload = (message: unknown): string => {

@@ -103,9 +103,7 @@ const forEachWorkspaceMatch = (
   path: string,
   callback: (matchedPath: string, index: number) => boolean | void,
 ): void => {
-  const flags = workspacePath.flags.includes('g')
-    ? workspacePath.flags
-    : `${workspacePath.flags}g`
+  const flags = workspacePath.flags.includes('g') ? workspacePath.flags : `${workspacePath.flags}g`
   const pattern = new RegExp(workspacePath.source, flags)
 
   let searchStart = 0

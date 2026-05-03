@@ -1,7 +1,7 @@
 import type {Direction} from './direction'
 import type {Position} from './deep-position'
 
-export function *generateLine(
+export function* generateLine(
   point: Position,
   direction: Direction,
   range: number,

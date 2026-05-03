@@ -1,6 +1,7 @@
 {
   "name": "@winter-love/vite-plugin-monorepo-alias",
   "version": "1.0.38",
+  "gitHead": "d2b83a5ae925fd122a6f46c99d743ede11b86c2f",
   "description": "vite monorepo alias plugin",
   "keywords": [
     "alias",
@@ -9,9 +10,19 @@
     "vite",
     "vitest"
   ],
-  "repository": "git@github.com:winter-love/web.git",
   "license": "MIT",
   "author": "bichi@live.co.kr",
+  "repository": "git@github.com:winter-love/web.git",
+  "source": "src/index.ts",
+  "files": [
+    "dist/*",
+    "*.d.ts"
+  ],
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "unpkg": "dist/index.global.js",
+  "jsdelivr": "dist/index.global.js",
   "exports": {
     ".": {
       "import": "./dist/index.mjs",
@@ -23,16 +34,9 @@
       "require": "./dist/plugin.js"
     }
   },
-  "main": "dist/index.js",
-  "jsdelivr": "dist/index.global.js",
-  "unpkg": "dist/index.global.js",
-  "module": "dist/index.mjs",
-  "source": "src/index.ts",
-  "types": "dist/index.d.ts",
-  "files": [
-    "dist/*",
-    "*.d.ts"
-  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "vite build",
     "check-types": "tsc --noEmit",
@@ -42,16 +46,12 @@
     "publish": "npm publish"
   },
   "dependencies": {
-    "vite": "^7.0.8"
+    "vite": "^7.3.2"
   },
   "devDependencies": {
-    "@types/node": "^22.10.1",
+    "@types/node": "^22.19.17",
     "@winter-love/vite-lib-config": "workspace:*"
   },
-  "publishConfig": {
-    "access": "public"
-  },
-  "gitHead": "d2b83a5ae925fd122a6f46c99d743ede11b86c2f",
   "stage": "alpha",
   "tsup": {
     "entry": [

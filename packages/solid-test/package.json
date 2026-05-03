@@ -6,17 +6,20 @@
     "type": "git",
     "url": "https://github.com/bichikim/web.git"
   },
+  "files": [
+    "dist/*"
+  ],
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "exports": {
     ".": {
       "import": "./dist/index.mjs"
     },
     "./*": "./*"
   },
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "files": [
-    "dist/*"
-  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "vite build",
     "prepare": "vite build",
@@ -25,13 +28,10 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "solid-js": "^1.9.3"
+    "solid-js": "^1.9.12"
   },
   "devDependencies": {
     "@winter-love/vite-lib-config": "workspace:*",
-    "vite": "^7.0.8"
-  },
-  "publishConfig": {
-    "access": "public"
+    "vite": "^7.3.2"
   }
 }
