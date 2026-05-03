@@ -1,16 +1,20 @@
-import cookieJs, {CookieAttributes} from 'js-cookie'
+import cookieJs from 'js-cookie'
 import {jsonStringify} from 'src/json-stringfy'
 import {jsonParse} from 'src/json-parse'
 import {getDocument} from 'src/get-document'
 
 export type StorageAndCookieKind = 'local' | 'session' | 'cookie'
 export type StorageKind = 'local' | 'session'
-export type CookieStorageOptions = CookieAttributes
+export type CookieStorageOptions = NonNullable<Parameters<typeof cookieJs.set>[2]>
 export interface StorageOptions {
   /**
    * @default null
    */
   defaultValue?: any
+}
+
+export interface SetAnyStorageItemOptions extends StorageOptions, CookieStorageOptions {
+  raw?: boolean
 }
 
 export const getCookieItem = (key: string, defaultValue: any = null, raw: boolean = false) => {
@@ -111,12 +115,14 @@ export const setAnyStorageItem = (
   kind: StorageAndCookieKind,
   key: string,
   value: any,
-  options?: CookieStorageOptions,
-  raw: boolean = false,
+  options?: SetAnyStorageItemOptions,
 ) => {
+  const raw = options?.raw ?? false
+
   switch (kind) {
     case 'cookie': {
-      return setCookieItem(key, value, options, raw)
+      const {raw: _rawOmitted, ...cookieAttributes} = options ?? {}
+      return setCookieItem(key, value, cookieAttributes, raw)
     }
 
     case 'local': {
@@ -172,7 +178,7 @@ export function storage(kind: StorageAndCookieKind, options: Record<string, any>
   }
 
   const set = (key: string, value: any, raw: boolean = false) => {
-    return setAnyStorageItem(kind, key, value, options, raw)
+    return setAnyStorageItem(kind, key, value, {...options, raw})
   }
 
   return {get, set}

@@ -45,11 +45,11 @@ export const createContext = <T>(defaultValue?: T): Context<T> => {
   const key = Symbol('context-key')
 
   return {
-    [TYPE_CONTEXT]: defaultValue ?? null,
     key,
     provide: (logic) => {
       return provideContext(key, logic)
     },
+    [TYPE_CONTEXT]: defaultValue ?? null,
   }
 }
 

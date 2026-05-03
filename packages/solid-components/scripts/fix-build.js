@@ -1,3 +1,5 @@
+// oxlint-disable eslint-js/require-unicode-regexp
+// oxlint-disable eslint-js/prefer-named-capture-group
 import {readFileSync, writeFileSync} from 'node:fs'
 const modulePath = await import.meta.resolve('rollup-preset-solid')
 

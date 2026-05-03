@@ -4,7 +4,7 @@ import type {Position} from './deep-position'
 const DEFAULT_GAP = 1
 const DEFAULT_RANGE = 20
 
-export function* generateTornado(
+export function *generateTornado(
   point: Position,
   range: number = DEFAULT_RANGE,
   gap: number = DEFAULT_GAP,
@@ -38,13 +38,18 @@ export function* generateTornado(
   }
 }
 
+export interface CreateTornadoOptions {
+  gap?: number
+  includeOrigin?: boolean
+  range?: number
+}
+
 export const createTornado = (
   position: Position,
   direction: Direction,
-  range: number = DEFAULT_RANGE,
-  gap: number = DEFAULT_GAP,
-  includeOrigin: boolean = false,
+  options?: CreateTornadoOptions,
 ) => {
+  const {range = DEFAULT_RANGE, gap = DEFAULT_GAP, includeOrigin = false} = options ?? {}
   const points = generateTornado(position, range, gap, includeOrigin)
 
   return () => {

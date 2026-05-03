@@ -1,3 +1,6 @@
+// oxlint-disable id-length
+// oxlint-disable no-magic-numbers
+// oxlint-disable max-params
 interface CurriedFunction0<R> {
   (): R
 }
@@ -229,7 +232,7 @@ export function curry(
   }
 }
 
-export type ObjectInfer<T> = T extends {[key: string]: infer U} ? {[P in keyof T]: T[P]} : T
+export type ObjectInfer<T> = T extends {[key: string]: any} ? {[P in keyof T]: T[P]} : T
 
 export interface CurriedFunction2T1R<F extends (arg1: any, arg2: any) => any> {
   (t1: Parameters<F>[0]): ReturnType<F>
@@ -552,7 +555,7 @@ export type CurryReverse<F extends (...args: any[]) => any> = F extends (arg1: a
               ? CurriedFunction7R<F>
               : any
 
-export function curryReverse<F extends (...args: any[]) => any>(
+export function curryReverse<F extends(...args: any[]) => any>(
   target: F,
   length: number = target.length,
   args: unknown[] = [],

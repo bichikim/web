@@ -22,11 +22,14 @@ import {
 } from '../utils/agent-sessions'
 import {forwardStreamsToSse} from '../utilis/forward-streams-to-sse'
 
+const HTTP_STATUS_INTERNAL_SERVER_ERROR = 500
+const HTTP_STATUS_BAD_REQUEST = 400
+const HTTP_STATUS_NOT_FOUND = 404
 /** `POST /agent` — body: `{ "prompt": string, "conversationId"?: string, "workingDirectory"?: string, "resumeSessionId"?: string, "subcommand"?: string, "args"?: string[] }`, 응답: `text/event-stream` (SSE). */
 export const agentRoute = new Hono()
 
 const agentPostBodySchema = z.object({
-  prompt: z.string().trim().min(1, '`prompt` field is required (non-empty string).'),
+  args: z.array(z.string()).optional(),
   conversationId: z.preprocess((value) => {
     if (value === undefined || value === null) {
       return
@@ -44,7 +47,8 @@ const agentPostBodySchema = z.object({
 
     return trimmed
   }, z.string().min(1).optional()),
-  workingDirectory: z.preprocess((value) => {
+  prompt: z.string().trim().min(1, '`prompt` field is required (non-empty string).'),
+  resumeSessionId: z.preprocess((value) => {
     if (value === undefined || value === null) {
       return
     }
@@ -78,8 +82,7 @@ const agentPostBodySchema = z.object({
 
     return trimmed
   }, z.string().min(1).optional()),
-  args: z.array(z.string()).optional(),
-  resumeSessionId: z.preprocess((value) => {
+  workingDirectory: z.preprocess((value) => {
     if (value === undefined || value === null) {
       return
     }
@@ -123,7 +126,7 @@ agentRoute.post('/', sValidator('json', agentPostBodySchema), async (context) =>
     resumeSessionId !== undefined && resumeSessionId.trim().length > 0
       ? resumeSessionId.trim()
       : getPersistedSessionId(conversationId)
-  const resumeArgs = buildResumeArgs({persistedSessionId, subcommand, args})
+  const resumeArgs = buildResumeArgs({args, persistedSessionId, subcommand})
   const cliArgs = clearEmptyItems([
     subcommand,
     ...DEFAULT_AGENT_CLI_ARGS,
@@ -181,7 +184,7 @@ agentRoute.get(
     const sessionId = context.req.param('sessionId')?.trim() ?? ''
 
     if (sessionId === '') {
-      return context.json({error: '`sessionId` path segment is required.'}, 400)
+      return context.json({error: '`sessionId` path segment is required.'}, HTTP_STATUS_BAD_REQUEST)
     }
 
     const {workingDirectory} = context.req.valid('query')
@@ -199,24 +202,24 @@ agentRoute.get(
 
     try {
       const transcriptPath = await resolveAgentSessionJsonlFilePath({
-        workspaceRoot,
-        workingDirectory: resolvedWorkingDirectory,
         sessionId,
+        workingDirectory: resolvedWorkingDirectory,
+        workspaceRoot,
       })
 
       if (transcriptPath === undefined) {
-        return context.json({error: '세션 로그를 찾을 수 없습니다.'}, 404)
+        return context.json({error: '세션 로그를 찾을 수 없습니다.'}, HTTP_STATUS_NOT_FOUND)
       }
 
       const messages = await readAgentSessionHistory({
-        workspaceRoot,
-        workingDirectory: resolvedWorkingDirectory,
         sessionId,
+        workingDirectory: resolvedWorkingDirectory,
+        workspaceRoot,
       })
 
       return context.json({messages})
     } catch {
-      return context.json({error: '세션 기록을 읽는 중 오류가 발생했습니다.'}, 500)
+      return context.json({error: '세션 기록을 읽는 중 오류가 발생했습니다.'}, HTTP_STATUS_INTERNAL_SERVER_ERROR)
     }
   },
 )

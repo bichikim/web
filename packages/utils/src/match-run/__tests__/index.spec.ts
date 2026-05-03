@@ -69,8 +69,8 @@ describe('matchRun', () => {
     [z, 'Default'],
   ])('should return %s when value is %s', (value, expected) => {
     const matches = {
-      '1': (v) => `Matched 1: ${v}`,
-      '2': (v) => `Matched 2: ${v}`,
+      1: (v) => `Matched 1: ${v}`,
+      2: (v) => `Matched 2: ${v}`,
       A: (v) => `Matched A: ${v}`,
       B: (v) => `Matched B: ${v}`,
       default: () => `Default`,

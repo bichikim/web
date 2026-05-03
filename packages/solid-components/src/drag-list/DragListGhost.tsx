@@ -1,7 +1,6 @@
 import {DragListGhostContext} from './DragListGhostProvider'
-import {useContext, ValidComponent, Show, onMount, onCleanup} from 'solid-js'
-import {Dynamic, DynamicProps, Portal} from 'solid-js/web'
-import {getDocument} from '@winter-love/utils'
+import {useContext, ValidComponent} from 'solid-js'
+import {Dynamic, DynamicProps} from 'solid-js/web'
 
 export type DragListGhostProps<T extends ValidComponent> = DynamicProps<T>
 

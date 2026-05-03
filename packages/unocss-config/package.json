@@ -14,7 +14,8 @@
     "dist/*"
   ],
   "scripts": {
-    "build": "vite build"
+    "build": "vite build",
+    "prepare": "vite build"
   },
   "dependencies": {
     "@unocss/core": "^66.5.9",

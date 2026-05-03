@@ -3,6 +3,10 @@ import {fn} from 'storybook/test'
 import {SFileItem} from './SFileItem'
 
 const meta = {
+  args: {
+    onDelete: fn(),
+    onPlay: fn(),
+  },
   argTypes: {
     ext: {
       control: 'text',
@@ -50,10 +54,6 @@ const meta = {
         defaultValue: {summary: 'false'},
       },
     },
-  },
-  args: {
-    onDelete: fn(),
-    onPlay: fn(),
   },
   component: SFileItem,
   parameters: {

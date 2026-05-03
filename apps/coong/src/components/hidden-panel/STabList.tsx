@@ -17,7 +17,7 @@ const rootStyle = cva('absolute top-1 left--8 flex flex-col gap-2 items-center',
 })
 
 export const STabList = (props: STabListProps) => {
-  const {isOpen, setIsOpen} = useContext(SHiddenPanelContext)
+  const {isOpen} = useContext(SHiddenPanelContext)
 
   return (
     <Tab.List {...props} class={rootStyle({class: props.class, isOpen: isOpen()})}>

@@ -1,13 +1,6 @@
-import {cva} from 'class-variance-authority'
 import {mergeProps, splitProps, ValidComponent} from 'solid-js'
 import {HCard, HCardProps} from './HCard'
 import {ContainerStyleProps, containerStyles} from '../container/container.style'
-
-const cardBaseStyle = `:uno:
-relative bg-white rd-2 flex flex-col gap-2 duration-150
-b-1 b-white shadow-md max-w-full md:max-w-180 w-[calc(100vw-.5rem)] p-2
-h-full max-h-max
-`
 
 export type SCardProps<T extends ValidComponent = 'div'> = HCardProps<T> & ContainerStyleProps
 

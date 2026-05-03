@@ -8,13 +8,13 @@ import {STabList} from './STabList'
 import {STabButton} from './STabButton'
 import {SPlayerPanel} from './SPlayerPanel'
 
-export interface STopLevelPanelProps extends SHiddenPanelProviderProps {
-  //
-}
+// export interface STopLevelPanelProps extends SHiddenPanelProviderProps {
+//   //
+// }
 
-type TabValue = 'player' | 'setting' | 'user'
+// type TabValue = 'player' | 'setting' | 'user'
 
-export const STopLevelPanel = (props: STopLevelPanelProps) => {
+export const STopLevelPanel = () => {
   const {isPlaying} = useContext(MidiPlayerContext)
 
   return (

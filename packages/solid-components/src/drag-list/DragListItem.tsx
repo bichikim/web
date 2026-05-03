@@ -1,19 +1,19 @@
 import {DragListItemContext} from './DragListItemProvider'
 import {
   Accessor,
-  useContext,
-  ValidComponent,
-  type JSX,
   children,
-  createSignal,
   createMemo,
+  createSignal,
+  type JSX,
   onCleanup,
   Show,
+  useContext,
+  ValidComponent,
 } from 'solid-js'
 import {Dynamic, DynamicProps} from 'solid-js/web'
 import {useEvent} from '@winter-love/solid-use'
-import {getWindow, getDocument} from '@winter-love/utils'
-import {DragListContext} from './DragListProvider'
+import {getDocument, getWindow} from '@winter-love/utils'
+import {DEFAULT_DRAG_LIST_DURATION_MS, DragListContext} from './DragListProvider'
 import {DragListGhostProvider} from './DragListGhostProvider'
 import {createRenderGhost} from './render-ghost'
 
@@ -80,7 +80,7 @@ export const DragListItem = <T extends ValidComponent>(props: DragListItemProps<
 
     renderGhost.destroy(
       {
-        duration: listContext?.duration() ?? 100,
+        duration: listContext?.duration() ?? DEFAULT_DRAG_LIST_DURATION_MS,
         easing: listContext?.easing() ?? 'ease-in-out',
         position: {x: rect.x, y: rect.y},
       },
@@ -154,7 +154,7 @@ export const DragListItem = <T extends ValidComponent>(props: DragListItemProps<
       {resolvedChildren()}
       {/* 드레그 중 랜더링 포지션을 넘겨 줘야한다 */}
       <DragListGhostProvider
-        duration={listContext?.duration() ?? 100}
+        duration={listContext?.duration() ?? DEFAULT_DRAG_LIST_DURATION_MS}
         easing={listContext?.easing() ?? 'ease-in-out'}
         isDragging={isDragging()}
       >

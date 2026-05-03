@@ -48,9 +48,9 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
   const innerProps = mergeProps(
     {
       linkType: 'piano' as const,
-      playList: [],
       playedTime: 0,
       playingId: '',
+      playList: [],
       repeat: 'no' as const,
       selectedId: '',
       totalDuration: 0,

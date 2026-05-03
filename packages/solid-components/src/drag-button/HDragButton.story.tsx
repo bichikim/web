@@ -32,6 +32,16 @@ const Template = (args: HDragButtonProps) => {
 }
 
 const meta = {
+  args: {
+    dragEndSize: 50,
+    dragExecuteSize: 50,
+    onClick: fn(),
+    onDoubleClick: fn(),
+    onLeftExecute: fn(),
+    onRightExecute: fn(),
+    onTouchEnd: fn(),
+    onTouchStart: fn(),
+  },
   argTypes: {
     dragEndSize: {
       control: {type: 'number'},
@@ -47,16 +57,6 @@ const meta = {
     onRightExecute: {
       action: '오른쪽으로 드래그 실행',
     },
-  },
-  args: {
-    dragEndSize: 50,
-    dragExecuteSize: 50,
-    onClick: fn(),
-    onDoubleClick: fn(),
-    onLeftExecute: fn(),
-    onRightExecute: fn(),
-    onTouchEnd: fn(),
-    onTouchStart: fn(),
   },
   component: Template,
   parameters: {

@@ -46,11 +46,11 @@ interface AgentHeaderProperties {
 
 export function AgentHeader(properties: AgentHeaderProperties) {
   const titleText = () =>
-    properties.sessionTitle !== null && properties.sessionTitle !== ''
+    (properties.sessionTitle !== null && properties.sessionTitle !== ''
       ? properties.sessionTitle
-      : '—'
+      : '—')
   const idText = () =>
-    properties.sessionId !== null && properties.sessionId !== '' ? properties.sessionId : '—'
+    (properties.sessionId !== null && properties.sessionId !== '' ? properties.sessionId : '—')
 
   return (
     <header class="shrink-0 pt-4 pb-3 mb-2 border-b border-[#273244]">

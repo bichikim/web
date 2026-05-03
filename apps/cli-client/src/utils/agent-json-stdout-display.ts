@@ -7,20 +7,20 @@ export interface AgentJsonStdoutReducerState {
 }
 
 export const createInitialAgentJsonStdoutReducerState = (): AgentJsonStdoutReducerState => ({
-  lineBuffer: '',
   accumulatedAssistant: '',
   display: '',
+  lineBuffer: '',
 })
 
-const applyStreamJsonLine = (
-  accumulatedAssistant: string,
-  display: string,
-  line: string,
-): {accumulatedAssistant: string; display: string} => {
-  const trimmed = line.trim()
+type StreamJsonRecord = {
+  readonly type: string
+  readonly message?: unknown
+  readonly result?: unknown
+}
 
+const parseStreamJsonRecord = (trimmed: string): StreamJsonRecord | null => {
   if (trimmed === '') {
-    return {accumulatedAssistant, display}
+    return null
   }
 
   let parsed: unknown
@@ -28,54 +28,75 @@ const applyStreamJsonLine = (
   try {
     parsed = JSON.parse(trimmed) as unknown
   } catch {
-    return {accumulatedAssistant, display}
+    return null
   }
 
   if (typeof parsed !== 'object' || parsed === null) {
-    return {accumulatedAssistant, display}
+    return null
   }
 
   const record = parsed as {type?: unknown; message?: unknown; result?: unknown}
 
   if (typeof record.type !== 'string') {
+    return null
+  }
+
+  return record as StreamJsonRecord
+}
+
+const extractAssistantTextDelta = (message: unknown): string | null => {
+  if (typeof message !== 'object' || message === null || !('content' in message)) {
+    return null
+  }
+
+  const {content} = message as {content: unknown}
+
+  if (!Array.isArray(content)) {
+    return null
+  }
+
+  let delta = ''
+
+  for (const item of content) {
+    if (typeof item === 'object' && item !== null) {
+      const block = item as {type?: unknown; text?: unknown}
+
+      if (block.type === 'text' && typeof block.text === 'string') {
+        delta += block.text
+      }
+    }
+  }
+
+  return delta === '' ? null : delta
+}
+
+const mergeAssistantAccumulated = (accumulatedAssistant: string, delta: string): string => {
+  return accumulatedAssistant.length > 0 && delta.startsWith(accumulatedAssistant)
+    ? delta
+    : accumulatedAssistant + delta
+}
+
+const applyStreamJsonLine = (
+  accumulatedAssistant: string,
+  display: string,
+  line: string,
+): {accumulatedAssistant: string; display: string} => {
+  const record = parseStreamJsonRecord(line.trim())
+
+  if (record === null) {
     return {accumulatedAssistant, display}
   }
 
   if (record.type === 'assistant') {
-    const message = record.message
+    const delta = extractAssistantTextDelta(record.message)
 
-    if (typeof message !== 'object' || message === null || !('content' in message)) {
-      return {accumulatedAssistant, display}
-    }
-
-    const content = (message as {content: unknown}).content
-
-    if (!Array.isArray(content)) {
-      return {accumulatedAssistant, display}
-    }
-
-    let delta = ''
-
-    for (const item of content) {
-      if (typeof item === 'object' && item !== null) {
-        const block = item as {type?: unknown; text?: unknown}
-
-        if (block.type === 'text' && typeof block.text === 'string') {
-          delta += block.text
-        }
-      }
-    }
-
-    if (delta === '') {
+    if (delta === null) {
       return {accumulatedAssistant, display}
     }
 
     // 스트림이 토큰 델타를 이어 보내다가, 마지막에 전체 문장을 다시 담은 assistant 이벤트를 보내는 경우가 있음.
     // 이 경우 `accumulated + delta`로 붙이면 문장이 두 번 나온다 → delta가 누적 접두사로 시작하면 스냅샷으로 치환.
-    const nextAccumulated =
-      accumulatedAssistant.length > 0 && delta.startsWith(accumulatedAssistant)
-        ? delta
-        : accumulatedAssistant + delta
+    const nextAccumulated = mergeAssistantAccumulated(accumulatedAssistant, delta)
 
     return {accumulatedAssistant: nextAccumulated, display: nextAccumulated}
   }
@@ -101,22 +122,19 @@ export const feedAgentJsonStdoutChunk = (
   chunk: string,
 ): AgentJsonStdoutReducerState => {
   let lineBuffer = state.lineBuffer + normalizeNewlines(chunk)
-  let accumulatedAssistant = state.accumulatedAssistant
-  let display = state.display
+  let {accumulatedAssistant} = state
+  let {display} = state
 
   const lines = lineBuffer.split('\n')
   lineBuffer = lines.pop() ?? ''
 
   for (const line of lines) {
-    const next = applyStreamJsonLine(accumulatedAssistant, display, line)
-
-    accumulatedAssistant = next.accumulatedAssistant
-    display = next.display
+    ;({accumulatedAssistant, display} = applyStreamJsonLine(accumulatedAssistant, display, line))
   }
 
   return {
-    lineBuffer,
     accumulatedAssistant,
     display,
+    lineBuffer,
   }
 }

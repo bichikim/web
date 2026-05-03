@@ -37,9 +37,9 @@
     "build": "vite build",
     "check-types": "tsc --noEmit",
     "dev": "vite build --watch --minify false",
-    "lint": "cross-env NODE_ENV=script eslint src",
-    "lint:fix": "cross-env NODE_ENV=script eslint src --fix",
-    "preview": "vite build -c vite.preview.config.mts"
+    "prepare": "vite build",
+    "preview": "vite build -c vite.preview.config.mts",
+    "publish": "npm publish"
   },
   "dependencies": {
     "vite": "^7.0.8"

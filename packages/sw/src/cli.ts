@@ -69,7 +69,7 @@ class CLIError extends Error {
 const parseEnvFile = (content: string) => {
   const env: Record<string, string> = {}
 
-  for (const rawLine of content.split(/\r?\n/)) {
+  for (const rawLine of content.split(/\r?\n/u)) {
     const line = rawLine.trim()
 
     if (line && !line.startsWith('#')) {

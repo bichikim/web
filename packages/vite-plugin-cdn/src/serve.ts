@@ -3,10 +3,6 @@ import {createGetModule} from './share'
 import type {Connect, Plugin} from 'vite'
 import {createCdnMiddleware, MIDDLEWARE_NAME} from './middleware'
 
-const createEmptyMap = (modules: string[]) => {
-  return Object.fromEntries(modules.map((module) => [module, null]))
-}
-
 const findMiddlewareIndex = (stack: Connect.ServerStackItem[], names: string | string[]) => {
   const nameList = Array.isArray(names) ? names : [names]
 

@@ -1,5 +1,6 @@
-/* eslint-disable max-lines */
 /// <reference types="@types/serviceworker" />
+// oxlint-disable eslint-js/camelcase
+/* eslint-disable max-lines */
 /* eslint-disable no-console */
 
 type CacheStrategy = 'network-first' | 'cache-first' | 'stale-while-revalidate' | 'network-only'
@@ -72,6 +73,8 @@ const CACHE_NAME = __CACHE_NAME__ === undefined ? 'coong-cache-v1' : __CACHE_NAM
 const CACHE_VERSION = __CACHE_VERSION__ === undefined ? 1 : __CACHE_VERSION__
 const ENV = __SW_ENV__ === undefined ? 'production' : __SW_ENV__
 const SW_CONFIG: ServiceWorkerConfig = __SW_CONFIG__ === undefined ? {} : __SW_CONFIG__
+
+const MILLISECONDS_PER_SECOND = 1000
 
 // Build-time injection: array of app asset paths used for precache.
 // eslint-disable-next-line camelcase
@@ -269,7 +272,7 @@ const removeExpiredEntries = async (
   }
 
   const now = Date.now()
-  const maxAgeMs = SW_CONFIG.cacheMaxAgeSeconds * 1000
+  const maxAgeMs = SW_CONFIG.cacheMaxAgeSeconds * MILLISECONDS_PER_SECOND
   const nextMetadata: CacheMetadata = {...metadata}
 
   const expiredUrls = Object.entries(metadata)
@@ -378,7 +381,7 @@ const getCachedResponse = async (
   const entry = metadata[request.url]
 
   if (SW_CONFIG.cacheMaxAgeSeconds && entry) {
-    const maxAgeMs = SW_CONFIG.cacheMaxAgeSeconds * 1000
+    const maxAgeMs = SW_CONFIG.cacheMaxAgeSeconds * MILLISECONDS_PER_SECOND
 
     if (Date.now() - entry.cachedAt > maxAgeMs) {
       await cache.delete(request)

@@ -159,6 +159,7 @@ describe('curryReverse', () => {
   })
 
   it('should curry function 5', () => {
+    // oxlint-disable-next-line max-params
     const foo = (name: string, age: number, gender: string, hobby: string, job: string) =>
       `${name} ${age} ${gender} ${hobby} ${job}`
     const curryFoo = curryReverse(foo)

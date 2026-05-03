@@ -10,33 +10,34 @@ import {
 } from 'src/player/types'
 import {createShakaPlayer} from './player/shaka'
 
+const getState = (videoElement?: HTMLVideoElement | null): PlayerState => {
+  if (!videoElement) {
+    return {
+      currentTime: 0,
+      duration: 0,
+      muted: false,
+      paused: true,
+      seeking: false,
+      volume: 1,
+    }
+  }
+
+  return {
+    currentTime: videoElement.currentTime,
+    duration: videoElement.duration,
+    muted: videoElement.muted,
+    paused: videoElement.paused,
+    seeking: videoElement.seeking,
+    volume: videoElement.volume,
+  }
+}
+
 export const createPlayer = (
   videoElement: Accessor<HTMLVideoElement | null>,
   options: PlayerAPiOptions = {},
 ): [Accessor<PlayerState>, Setter<PlayerStateMutable>, PlayerApi] => {
   let player: PlayerLoadApi | undefined
 
-  const getState = (videoElement?: HTMLVideoElement | null): PlayerState => {
-    if (!videoElement) {
-      return {
-        currentTime: 0,
-        duration: 0,
-        muted: false,
-        paused: true,
-        seeking: false,
-        volume: 1,
-      }
-    }
-
-    return {
-      currentTime: videoElement.currentTime,
-      duration: videoElement.duration,
-      muted: videoElement.muted,
-      paused: videoElement.paused,
-      seeking: videoElement.seeking,
-      volume: videoElement.volume,
-    }
-  }
   const [state, _setState] = createSignal<PlayerState>(getState(videoElement()))
 
   createEffect(() => {

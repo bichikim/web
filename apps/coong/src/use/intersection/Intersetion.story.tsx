@@ -2,6 +2,10 @@ import type {Meta, StoryObj} from 'storybook-solidjs-vite'
 import {IntersectionDemo} from './IntersectionDemo'
 
 const meta = {
+  args: {
+    rootMargin: '0px',
+    threshold: 0.5,
+  },
   argTypes: {
     rootMargin: {
       control: 'text',
@@ -11,10 +15,6 @@ const meta = {
       control: {max: 1, min: 0, step: 0.1, type: 'range'},
       description: 'Threshold value for intersection detection (0-1)',
     },
-  },
-  args: {
-    rootMargin: '0px',
-    threshold: 0.5,
   },
   component: IntersectionDemo,
   title: 'Coong/Use/useIntersection',

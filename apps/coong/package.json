@@ -73,7 +73,6 @@
     "@vitejs/plugin-legacy": "^3.0.0",
     "@winter-love/unocss-config": "workspace:*",
     "@winter-love/vite-lib-config": "workspace:*",
-    "@winter-love/vite-plugin-cdn": "workspace:*",
     "dotenv": "^16.4.7",
     "drizzle-kit": "^0.31.7",
     "execa": "^9.6.1",

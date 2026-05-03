@@ -34,10 +34,10 @@ function parseResponse(
     const _cacheControl = response.headers.get('cache-control')
 
     if (_cacheControl) {
-      const m = _cacheControl.match(/max-age=(\d+)/u)
+      const m = _cacheControl.match(/max-age=(?<maxAge>\d+)/u)
 
-      if (m && m[1]) {
-        maxAge = Number.parseInt(m[1], 10)
+      if (m?.groups?.maxAge) {
+        maxAge = Number.parseInt(m.groups.maxAge, 10)
       }
     }
   }

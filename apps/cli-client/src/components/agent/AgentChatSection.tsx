@@ -39,6 +39,17 @@ const FIELD_SHARED = [
 
 const PRE = 'm-0 whitespace-pre-wrap break-words font-mono text-[0.85rem] leading-[1.45]'
 
+const FORM_FOOTER = [
+  'shrink-0',
+  'flex',
+  'flex-col',
+  'gap-2',
+  'pt-2',
+  'pb-[max(0.75rem,env(safe-area-inset-bottom))]',
+  'border-t',
+  'border-[#273244]',
+].join(' ')
+
 const bubbleUser = [
   'max-w-[min(85%,36rem)]',
   'ml-auto',
@@ -139,10 +150,7 @@ export function AgentChatSection(properties: AgentChatSectionProperties) {
         }
       />
 
-      <form
-        class="shrink-0 flex flex-col gap-2 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] border-t border-[#273244]"
-        onSubmit={properties.onSubmitPrompt}
-      >
+      <form class={FORM_FOOTER} onSubmit={properties.onSubmitPrompt}>
         <textarea
           id="prompt-input"
           class={`${FIELD_SHARED} resize-none min-h-[5.5rem] max-h-40 px-[0.85rem] py-3`}

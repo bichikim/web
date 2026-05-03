@@ -1,4 +1,4 @@
-import {type JSX, type Accessor, createMemo} from 'solid-js'
+import {type Accessor, createMemo, type JSX} from 'solid-js'
 
 export type StyleType = JSX.CSSProperties | string | undefined
 

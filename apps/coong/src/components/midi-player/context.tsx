@@ -6,6 +6,7 @@ import {
   createSignal,
   mergeProps,
   ParentProps,
+  Setter,
   untrack,
   useContext,
 } from 'solid-js'
@@ -80,9 +81,9 @@ export const MidiPlayerContext = createContext<MidiPlayerContextProps>({
   },
   isPlaying: () => false,
   isSuspend: () => false,
-  playList: () => [],
   playedTime: () => 0,
   playingId: () => '',
+  playList: () => [],
   repeat: () => 'no' as const,
   selectedId: () => '',
   totalDuration: () => 0,
@@ -92,21 +93,35 @@ export const useMidiPlayer = () => {
   return useContext(MidiPlayerContext)
 }
 
-export const MidiPlayerProvider = (props: MidiPlayerProviderProps) => {
-  const defaultProps = mergeProps(
-    {
-      playState: {
-        leftTime: 0,
-        loaded: false,
-        playedTime: 0,
-        playingId: '',
-        startedAt: 0,
-        suspended: false,
-        totalDuration: 0,
-      },
-    },
-    props,
-  )
+interface MergedMidiPlayerProviderProps extends MidiPlayerProviderProps {
+  playState: SplendidGrandPianoState
+}
+
+interface UseMidiPlayerCoreProps {
+  defaultProps: MergedMidiPlayerProviderProps
+}
+
+interface MidiPlayerCore {
+  defaultProps: MergedMidiPlayerProviderProps
+  handleAddPlayItem: (payload: MusicInfo[]) => void
+  handleChangeRepeat: (value: RepeatType) => void
+  handleDelete: (id: string) => void
+  handleMusicsChange: () => void
+  handleResume: () => void
+  handleSeek: (time: number) => void
+  handleSelect: (id: string) => void
+  handleStop: () => Promise<void>
+  handleSuspend: () => void
+  handleTryRepeat: () => void
+  playList: Accessor<MusicInfo[]>
+  playMusicById: (id: string) => void
+  repeat: Accessor<RepeatType>
+  selectedId: Accessor<string>
+  setPlayList: Setter<MusicInfo[]>
+}
+
+function useMidiPlayerCore(props: UseMidiPlayerCoreProps): MidiPlayerCore {
+  const {defaultProps} = props
 
   const [playList, setPlayList] = createSignal<MusicInfo[]>(
     untrack(() => defaultProps.initMusics ?? []),
@@ -131,7 +146,6 @@ export const MidiPlayerProvider = (props: MidiPlayerProviderProps) => {
   }
 
   const handleAddPlayItem = (payload: MusicInfo[]) => {
-    // first select
     if (playList().length === 0 && payload.length > 0) {
       setSelectedId(payload[0].id)
     }
@@ -146,7 +160,7 @@ export const MidiPlayerProvider = (props: MidiPlayerProviderProps) => {
     setSelectedId(id)
   }
 
-  const handlePlay = (id: string) => {
+  const playMusicById = (id: string) => {
     const info = playList().find((item) => item.id === id)
 
     if (!info) {
@@ -194,25 +208,19 @@ export const MidiPlayerProvider = (props: MidiPlayerProviderProps) => {
     setRepeat(value)
   }
 
-  const isEnd = createMemo(() => {
-    const {playingId, totalDuration, playedTime} = defaultProps.playState
-
-    return Boolean(playingId) && totalDuration <= playedTime
-  })
-
-  const getNextItem = (id: string, repeat: RepeatType) => {
+  const getNextItem = (id: string, repeatValue: RepeatType) => {
     const _playLoad = playList()
     const index = _playLoad.findIndex((item) => item.id === id)
 
     if (index === -1) {
-      return repeat === 'all' ? _playLoad[0] : undefined
+      return repeatValue === 'all' ? _playLoad[0] : undefined
     }
 
     const nextIndex = index + 1
     const item = _playLoad[nextIndex]
 
     if (!item) {
-      return repeat === 'all' ? _playLoad[0] : undefined
+      return repeatValue === 'all' ? _playLoad[0] : undefined
     }
 
     return item
@@ -222,7 +230,7 @@ export const MidiPlayerProvider = (props: MidiPlayerProviderProps) => {
     const _repeat = repeat()
 
     if (_repeat === 'one' && defaultProps.playState.playingId) {
-      handlePlay(defaultProps.playState.playingId)
+      playMusicById(defaultProps.playState.playingId)
 
       return
     }
@@ -238,9 +246,50 @@ export const MidiPlayerProvider = (props: MidiPlayerProviderProps) => {
     defaultProps.pianoController?.seek(time)
   }
 
+  return {
+    defaultProps,
+    handleAddPlayItem,
+    handleChangeRepeat,
+    handleDelete,
+    handleResume,
+    handleSeek,
+    handleSelect,
+    handleStop,
+    handleSuspend,
+    handleTryRepeat,
+    playList,
+    playMusicById,
+    repeat,
+    selectedId,
+    setPlayList,
+  }
+}
+
+interface UseMidiPlayerDerivedProps {
+  core: MidiPlayerCore
+}
+
+interface MidiPlayerDerived {
+  isPlaying: Accessor<boolean>
+  isSuspend: Accessor<boolean>
+  playedTime: Accessor<number>
+  playingId: Accessor<string>
+  totalDuration: Accessor<number>
+}
+
+function useMidiPlayerDerived(props: UseMidiPlayerDerivedProps): MidiPlayerDerived {
+  const {core} = props
+  const {defaultProps} = core
+
+  const isEnd = createMemo(() => {
+    const {playingId, totalDuration, playedTime} = defaultProps.playState
+
+    return Boolean(playingId) && totalDuration <= playedTime
+  })
+
   createEffect(() => {
     if (isEnd()) {
-      handleTryRepeat()
+      core.handleTryRepeat()
     }
 
     return isEnd()
@@ -274,37 +323,65 @@ export const MidiPlayerProvider = (props: MidiPlayerProviderProps) => {
     const musics = defaultProps.initMusics ?? []
 
     if (musics.length > 0) {
-      setPlayList(musics)
+      core.setPlayList(musics)
     }
   })
 
-  const contextValue = {
-    handleAddPlayItem,
-    handleChangeRepeat,
-    handleDelete,
+  return {
+    isPlaying,
+    isSuspend,
+    playedTime,
+    playingId,
+    totalDuration,
+  }
+}
+
+export const MidiPlayerProvider = (props: MidiPlayerProviderProps) => {
+  const defaultProps = mergeProps(
+    {
+      playState: {
+        leftTime: 0,
+        loaded: false,
+        playedTime: 0,
+        playingId: '',
+        startedAt: 0,
+        suspended: false,
+        totalDuration: 0,
+      },
+    },
+    props,
+  ) as MergedMidiPlayerProviderProps
+
+  const core = useMidiPlayerCore({defaultProps})
+  const derived = useMidiPlayerDerived({core})
+
+  const contextValue: MidiPlayerContextProps = {
+    handleAddPlayItem: core.handleAddPlayItem,
+    handleChangeRepeat: core.handleChangeRepeat,
+    handleDelete: core.handleDelete,
     handlePlay: (id?: string) => {
-      const _id = id ?? selectedId()
+      const _id = id ?? core.selectedId()
 
       if (!_id) {
         return
       }
 
-      handlePlay(_id)
+      core.playMusicById(_id)
     },
-    handleResume,
-    handleSeek,
-    handleSelect,
-    handleStop,
-    handleSuspend,
-    handleTryRepeat,
-    isPlaying,
-    isSuspend,
-    playList,
-    playedTime,
-    playingId,
-    repeat,
-    selectedId,
-    totalDuration,
+    handleResume: core.handleResume,
+    handleSeek: core.handleSeek,
+    handleSelect: core.handleSelect,
+    handleStop: core.handleStop,
+    handleSuspend: core.handleSuspend,
+    handleTryRepeat: core.handleTryRepeat,
+    isPlaying: derived.isPlaying,
+    isSuspend: derived.isSuspend,
+    playedTime: derived.playedTime,
+    playingId: derived.playingId,
+    playList: core.playList,
+    repeat: core.repeat,
+    selectedId: core.selectedId,
+    totalDuration: derived.totalDuration,
   }
 
   return (

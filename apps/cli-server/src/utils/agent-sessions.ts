@@ -19,6 +19,8 @@ export interface AgentSessionSummary {
 
 const CURSOR_PROJECTS_DIRECTORY = path.join(os.homedir(), '.cursor', 'projects')
 
+const MAX_SESSION_TITLE_LENGTH = 120
+
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null
 
@@ -34,10 +36,44 @@ const workspacePathToProjectKey = (workspacePath: string): string =>
 
 const sanitizeSessionTitle = (value: string): string =>
   value
-    .replace(/<[^>]+>/g, ' ')
-    .replaceAll(/\s+/g, ' ')
+    .replace(/<[^>]+>/ug, ' ')
+    .replaceAll(/\s+/ug, ' ')
     .trim()
-    .slice(0, 120)
+    .slice(0, MAX_SESSION_TITLE_LENGTH)
+
+const mergeTranscriptEventIntoSessionState = (
+  event: Record<string, unknown>,
+  state: {sessionCwd: string | null; title: string},
+): void => {
+  if (event.type === 'system' && event.subtype === 'init' && typeof event.cwd === 'string') {
+    state.sessionCwd = event.cwd
+  }
+
+  if (event.role === 'user' && state.title === 'Untitled') {
+    const contentList = (event.message as {content?: unknown})?.content
+
+    if (Array.isArray(contentList)) {
+      state.title = parseFirstUserTextTitle(contentList) ?? state.title
+    }
+  }
+}
+
+const parseFirstUserTextTitle = (contentList: readonly unknown[]): string | undefined => {
+  for (const contentItem of contentList) {
+    if (
+      isRecord(contentItem) &&
+      contentItem.type === 'text' &&
+      typeof contentItem.text === 'string'
+    ) {
+      const cleaned = sanitizeSessionTitle(contentItem.text)
+      if (cleaned !== '') {
+        return cleaned
+      }
+    }
+  }
+
+  return undefined
+}
 
 const resolveTranscriptDirectory = (workspacePath: string): string =>
   path.join(
@@ -57,22 +93,14 @@ const hasTranscriptDirectory = async (workspacePath: string): Promise<boolean> =
   }
 }
 
-export const resolveWorkspaceWithTranscripts = async ({
-  workspaceRoot,
-  workingDirectory,
-}: {
-  workspaceRoot: string
-  workingDirectory: string
-}): Promise<string> => {
-  const resolvedWorkspaceRoot = path.resolve(workspaceRoot)
-  let current = path.resolve(workingDirectory)
+const collectAncestorPaths = (from: string, stopAt: string): string[] => {
+  const resolvedStopAt = path.resolve(stopAt)
+  const paths: string[] = []
+  let current = path.resolve(from)
 
   while (true) {
-    if (await hasTranscriptDirectory(current)) {
-      return current
-    }
-
-    if (current === resolvedWorkspaceRoot) {
+    paths.push(current)
+    if (current === resolvedStopAt) {
       break
     }
 
@@ -84,32 +112,58 @@ export const resolveWorkspaceWithTranscripts = async ({
     current = parent
   }
 
+  return paths
+}
+
+export const resolveWorkspaceWithTranscripts = async ({
+  workspaceRoot,
+  workingDirectory,
+}: {
+  workspaceRoot: string
+  workingDirectory: string
+}): Promise<string> => {
+  const resolvedWorkspaceRoot = path.resolve(workspaceRoot)
+  const workingDirectoryResolved = path.resolve(workingDirectory)
+  const ancestorPathList = collectAncestorPaths(workingDirectoryResolved, resolvedWorkspaceRoot)
+  const transcriptChecks = await Promise.all(
+    ancestorPathList.map((directoryPath) => hasTranscriptDirectory(directoryPath)),
+  )
+  const foundIndex = transcriptChecks.findIndex(Boolean)
+
+  if (foundIndex >= 0) {
+    return ancestorPathList[foundIndex]!
+  }
+
   return resolvedWorkspaceRoot
 }
 
 const listSessionFiles = async (transcriptDirectory: string): Promise<RawSessionFile[]> => {
   const directoryEntries = await fs.readdir(transcriptDirectory, {withFileTypes: true})
-  const collected: RawSessionFile[] = []
+  const sessionDirectories = directoryEntries.filter((directoryEntry) =>
+    directoryEntry.isDirectory(),
+  )
 
-  for (const directoryEntry of directoryEntries) {
-    if (!directoryEntry.isDirectory()) {
-      continue
-    }
+  const sessionFilesOrUndefined = await Promise.all(
+    sessionDirectories.map(async (directoryEntry) => {
+      const sessionId = directoryEntry.name
+      const filePath = path.join(transcriptDirectory, sessionId, `${sessionId}.jsonl`)
 
-    const sessionId = directoryEntry.name
-    const filePath = path.join(transcriptDirectory, sessionId, `${sessionId}.jsonl`)
+      try {
+        const stats = await fs.stat(filePath)
+        if (!stats.isFile()) {
+          return undefined
+        }
 
-    try {
-      const stats = await fs.stat(filePath)
-      if (!stats.isFile()) {
-        continue
+        return {filePath, sessionId, updatedAt: stats.mtime} as const
+      } catch {
+        return undefined
       }
+    }),
+  )
 
-      collected.push({sessionId, filePath, updatedAt: stats.mtime})
-    } catch {
-      continue
-    }
-  }
+  const collected = sessionFilesOrUndefined.filter(
+    (sessionFile): sessionFile is RawSessionFile => sessionFile !== undefined,
+  )
 
   return collected.sort(
     (sessionA, sessionB) => sessionB.updatedAt.getTime() - sessionA.updatedAt.getTime(),
@@ -120,60 +174,31 @@ const extractSessionSummary = async (sessionFile: RawSessionFile): Promise<Agent
   const fileContent = await fs.readFile(sessionFile.filePath, 'utf8')
   const lines = normalizeLineBreaks(fileContent).split('\n')
 
-  let title = 'Untitled'
-  let sessionCwd: string | null = null
+  const state = {sessionCwd: null as string | null, title: 'Untitled'}
 
   for (const line of lines) {
     const trimmedLine = line.trim()
-    if (trimmedLine === '') {
-      continue
-    }
-
-    try {
-      const event = JSON.parse(trimmedLine) as AgentStreamEvent | Record<string, unknown>
-      if (!isRecord(event)) {
-        continue
-      }
-
-      if (event.type === 'system' && event.subtype === 'init' && typeof event.cwd === 'string') {
-        sessionCwd = event.cwd
-      }
-
-      if (event.role === 'user' && title === 'Untitled') {
-        const contentList = (event.message as {content?: unknown})?.content
-
-        if (Array.isArray(contentList)) {
-          for (const contentItem of contentList) {
-            if (
-              !isRecord(contentItem) ||
-              contentItem.type !== 'text' ||
-              typeof contentItem.text !== 'string'
-            ) {
-              continue
-            }
-
-            const cleaned = sanitizeSessionTitle(contentItem.text)
-            if (cleaned !== '') {
-              title = cleaned
-              break
-            }
-          }
+    if (trimmedLine !== '') {
+      try {
+        const event = JSON.parse(trimmedLine) as AgentStreamEvent | Record<string, unknown>
+        if (isRecord(event)) {
+          mergeTranscriptEventIntoSessionState(event, state)
         }
+      } catch {
+        // ignore malformed line
       }
-    } catch {
-      continue
-    }
 
-    if (sessionCwd !== null && title !== 'Untitled') {
-      break
+      if (state.sessionCwd !== null && state.title !== 'Untitled') {
+        break
+      }
     }
   }
 
   return {
     conversationId: sessionFile.sessionId,
+    cwd: state.sessionCwd,
     sessionId: sessionFile.sessionId,
-    title,
-    cwd: sessionCwd,
+    title: state.title,
     updatedAt: sessionFile.updatedAt.toISOString(),
   }
 }
@@ -183,8 +208,8 @@ export const listSessionsByWorkingDirectory = async (
   workingDirectory: string,
 ): Promise<readonly AgentSessionSummary[]> => {
   const workspaceForTranscripts = await resolveWorkspaceWithTranscripts({
-    workspaceRoot,
     workingDirectory,
+    workspaceRoot,
   })
   const transcriptDirectory = resolveTranscriptDirectory(workspaceForTranscripts)
   const sessionFiles = await listSessionFiles(transcriptDirectory)
@@ -208,8 +233,8 @@ export const resolveAgentSessionJsonlFilePath = async ({
   sessionId: string
 }): Promise<string | undefined> => {
   const workspaceForTranscripts = await resolveWorkspaceWithTranscripts({
-    workspaceRoot,
     workingDirectory,
+    workspaceRoot,
   })
   const transcriptDirectory = resolveTranscriptDirectory(workspaceForTranscripts)
   const filePath = path.join(transcriptDirectory, sessionId, `${sessionId}.jsonl`)
@@ -222,6 +247,6 @@ export const resolveAgentSessionJsonlFilePath = async ({
 
     return filePath
   } catch {
-    return
+    // missing or unreadable session file
   }
 }

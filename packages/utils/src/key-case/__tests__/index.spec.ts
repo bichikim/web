@@ -131,6 +131,7 @@ describe('createSnakeCaseMatch function', () => {
     const originalObject = {
       foo_age: 30,
       foo_member: {
+        // oxlint-disable-next-line eslint-js/camelcase
         bar_member: {
           number_id: 2,
           number_name: 'Bar',

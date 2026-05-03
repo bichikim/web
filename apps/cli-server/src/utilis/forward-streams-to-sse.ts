@@ -2,7 +2,7 @@ import {type Result, type Subprocess} from 'execa'
 import {type SSEStreamingApi} from 'hono/streaming'
 
 const encodeChunk = (chunk: string | Uint8Array) =>
-  typeof chunk === 'string' ? chunk : Buffer.from(chunk).toString('utf8')
+  (typeof chunk === 'string' ? chunk : Buffer.from(chunk).toString('utf8'))
 
 /**
  * stdout/stderr 청크를 SSE 로 보냄. 두 스트림은 병렬로 읽음.

@@ -1,14 +1,14 @@
 import {DragListContext} from './DragListProvider'
 import {
-  ParentProps,
-  useContext,
-  createContext,
-  ValidComponent,
-  splitProps,
-  createMemo,
   Accessor,
+  createContext,
+  createMemo,
   createSignal,
   onCleanup,
+  ParentProps,
+  splitProps,
+  useContext,
+  ValidComponent,
 } from 'solid-js'
 import {getDocument} from '@winter-love/utils'
 
@@ -41,6 +41,7 @@ export const DragListItemProvider = <T extends ValidComponent>(
     context?.onDragStart(props.index)
   }
 
+  // oxlint-disable-next-line unicorn/consistent-function-scoping
   const handleDrag = (event: MouseEvent) => {
     // skip
   }

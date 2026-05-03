@@ -158,10 +158,10 @@ describe('useFocus', () => {
     }
 
     return {
-      FOCUS_CONTROLLER_CHANNEL,
       api,
       captured,
       deepPosition,
+      FOCUS_CONTROLLER_CHANNEL,
       focusController,
       globalMap,
       id,

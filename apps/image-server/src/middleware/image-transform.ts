@@ -28,6 +28,8 @@ interface Size {
 
 const MAX_SIZE = 2000
 
+const HTTP_STATUS_BAD_REQUEST = 400
+
 const getCropSize = (width: number, maxSize: number, height?: number): Size => {
   const _height = height ?? width
 
@@ -102,7 +104,7 @@ export const imageTransform = (options: ImageTransformOptions = {}): RequestHand
     const validationErrors = await validate(options)
 
     if (validationErrors.length > 0) {
-      res.status(400).json({
+      res.status(HTTP_STATUS_BAD_REQUEST).json({
         errors: validationErrors,
         message: 'Invalid image transform parameters',
       })
