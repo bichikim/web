@@ -1,5 +1,5 @@
 import {ComponentProps, Show, useContext} from 'solid-js'
-import {SHiddenPanelContext, SHiddenPanelProvider} from './SHiddenPanelProvider'
+import {SHiddenPanelContext} from './SHiddenPanelProvider'
 
 export interface SHiddenContentProps extends ComponentProps<'div'> {
   //

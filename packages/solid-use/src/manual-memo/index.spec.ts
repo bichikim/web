@@ -10,6 +10,7 @@ describe('manualMemo', () => {
 
     const {
       result: [value, forceUpdate],
+      // oxlint-disable-next-line eslint-js/no-mixed-operators
     } = renderHook(() => createManualMemo(() => source() * 2 + nunReactiveValue))
 
     expect(value()).toBe(3)

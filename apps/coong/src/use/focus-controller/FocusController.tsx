@@ -5,7 +5,6 @@ import {DelegatedEventContext, useDelegatedEmitHandler} from './DelegatedEvent'
 import {
   type DeepPosition,
   getDeepPositionKey,
-  type KeyDeepPositionOptions,
   type KeyOptions,
 } from 'src/utils/focus-controller/deep-position'
 

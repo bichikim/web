@@ -88,12 +88,12 @@ export const createSplendidGrandPianoExtended = (
       [CHANNEL_NAME_KEY]: channelName,
       [ORIGINAL_NOTE_KEY]: note,
       [PLAY_STARTED_AT_KEY]: _piano.context.currentTime,
-      [TARGET_ID_KEY]: id,
-      [USER_PLAY_FLAG_KEY]: isUserStart,
       stopId: isUserStart
         ? getUserInputStopId(note)
         : `${channelName ?? ''}${channelName === undefined ? '' : '|'}${note}`,
+      [TARGET_ID_KEY]: id,
       time: time + _piano.context.currentTime,
+      [USER_PLAY_FLAG_KEY]: isUserStart,
       velocity: velocity * HUNDRED,
     } as any)
   }

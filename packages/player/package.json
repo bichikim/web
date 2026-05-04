@@ -7,6 +7,11 @@
     "type": "git",
     "url": "https://github.com/bichikim/web.git"
   },
+  "files": [
+    "dist/*"
+  ],
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -14,27 +19,21 @@
     },
     "./*": "./*"
   },
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "files": [
-    "dist/*"
-  ],
   "scripts": {
     "build": "vite build",
+    "prepare": "vite build",
     "check-types": "tsc --noEmit",
-    "lint": "cross-env NODE_ENV=script eslint src",
-    "lint:fix": "cross-env NODE_ENV=script eslint src --fix",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
     "@winter-love/solid-use": "workspace:*",
     "@winter-love/utils": "workspace:*",
-    "shaka-player": "^4.12.4",
-    "solid-js": "^1.9.3"
+    "shaka-player": "^4.16.29",
+    "solid-js": "^1.9.12"
   },
   "devDependencies": {
     "@winter-love/vite-lib-config": "workspace:*",
-    "vite": "^7.0.8",
-    "vite-plugin-dts": "^4.5.3"
+    "vite": "^7.3.2",
+    "vite-plugin-dts": "^4.5.4"
   }
 }

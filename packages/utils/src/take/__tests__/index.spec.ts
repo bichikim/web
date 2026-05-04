@@ -1,7 +1,7 @@
 import {take, takeFn} from '../'
 import {describe, expect, it} from 'vitest'
 
-export type ObjectInfer<T> = T extends {[key: string]: infer U} ? {[P in keyof T]: T[P]} : T
+export type ObjectInfer<T> = T extends {[key: string]: any} ? {[P in keyof T]: T[P]} : T
 
 describe('takeFn', () => {
   it('should return 2 items (curry)', () => {

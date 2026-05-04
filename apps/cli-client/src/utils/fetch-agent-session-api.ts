@@ -96,9 +96,9 @@ export const fetchSessionHistory = async ({
     const messages = Array.isArray(body.messages)
       ? body.messages.filter(isHistoryMessageRow).map(
           (row): ChatMessage => ({
+            content: row.content,
             id: row.id,
             role: row.role,
-            content: row.content,
           }),
         )
       : []

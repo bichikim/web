@@ -74,6 +74,7 @@ const DraggableBox: Component<DraggableBoxProps> = (props) => {
     'score',
   ])
 
+  // oxlint-disable-next-line no-unassigned-vars
   let ref: HTMLDivElement | undefined
   const [isDragging, setIsDragging] = createSignal(false)
 

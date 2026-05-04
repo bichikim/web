@@ -1,6 +1,6 @@
 import {readConfiguredAgentPostUrl} from '@/utils/agent-defaults'
 
-const LOCAL_HOST_PREFIX_PATTERN = /^(localhost|127\.0\.0\.1)(:\d+)?(\/.*)?$/i
+const LOCAL_HOST_PREFIX_PATTERN = /^(?:localhost|127\.0\.0\.1)(?::\d+)?(?:\/.*)?$/iu
 
 const isAbsoluteHttpUrl = (value: string): boolean => {
   try {

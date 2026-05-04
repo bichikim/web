@@ -247,6 +247,7 @@ const FocusPlaygroundArgsStory = (props: FocusPlaygroundProps) => {
 }
 
 const meta = {
+  args: {},
   argTypes: {
     inactiveTiles: {
       control: 'check',
@@ -256,7 +257,6 @@ const meta = {
       control: 'boolean',
     },
   },
-  args: {},
   component: FocusPlaygroundStory,
   parameters: {
     layout: 'centered',

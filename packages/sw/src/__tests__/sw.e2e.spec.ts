@@ -18,7 +18,7 @@ describe('service worker e2e', () => {
       "const CACHE_NAME = typeof __CACHE_NAME__ === 'undefined' ? 'coong-cache-v1' : __CACHE_NAME__",
       "const CACHE_VERSION = typeof __CACHE_VERSION__ === 'undefined' ? 1 : __CACHE_VERSION__",
       "const ENV = typeof __SW_ENV__ === 'undefined' ? 'production' : __SW_ENV__",
-      'const SW_CONFIG = typeof __SW_CONFIG__ === \"undefined\" ? {} : __SW_CONFIG__',
+      'const SW_CONFIG = typeof __SW_CONFIG__ === "undefined" ? {} : __SW_CONFIG__',
       'const APP_FILES = __inject_code__',
       "self.addEventListener('install', (event) => {",
       '  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_FILES)))',
@@ -32,10 +32,10 @@ describe('service worker e2e', () => {
       await generateSW('sw.js', {
         assets: '**/*',
         assetsRoot: 'assets',
-        cacheName: 'test-cache',
         cacheMaxEntries: 50,
-        swTemplatePath: templatePath,
+        cacheName: 'test-cache',
         cwd: tmpDir,
+        swTemplatePath: templatePath,
       })
 
       const swCode = await fs.promises.readFile(path.join(tmpDir, 'sw.js'), 'utf8')
@@ -44,26 +44,9 @@ describe('service worker e2e', () => {
       const cacheStorage = new Map<string, Map<string, Response>>()
 
       const caches = {
-        open: async (name: string) => {
-          const store = cacheStorage.get(name) ?? new Map<string, Response>()
-          cacheStorage.set(name, store)
-          return {
-            addAll: async (requests: string[]) => {
-              for (const request of requests) {
-                store.set(request, new Response('ok'))
-              }
-            },
-            match: async (request: Request) => store.get(request.url),
-            put: async (request: Request, response: Response) => {
-              store.set(request.url, response)
-            },
-            // eslint-disable-next-line unicorn/prefer-spread
-            keys: async () => Array.from(store.keys()).map((url) => new Request(url)),
-          }
-        },
+        delete: async (name: string) => cacheStorage.delete(name),
         // eslint-disable-next-line unicorn/prefer-spread
         keys: async () => Array.from(cacheStorage.keys()),
-        delete: async (name: string) => cacheStorage.delete(name),
         match: async (request: Request) => {
           // eslint-disable-next-line unicorn/prefer-spread
           for (const store of Array.from(cacheStorage.values())) {
@@ -74,31 +57,48 @@ describe('service worker e2e', () => {
           }
           return undefined
         },
+        open: async (name: string) => {
+          const store = cacheStorage.get(name) ?? new Map<string, Response>()
+          cacheStorage.set(name, store)
+          return {
+            addAll: async (requests: string[]) => {
+              for (const request of requests) {
+                store.set(request, new Response('ok'))
+              }
+            },
+            keys: async () => Array.from(store.keys()).map((url) => new Request(url)),
+            match: async (request: Request) => store.get(request.url),
+            // eslint-disable-next-line unicorn/prefer-spread
+            put: async (request: Request, response: Response) => {
+              store.set(request.url, response)
+            },
+          }
+        },
       }
 
       const clients = {
-        matchAll: async () => [],
         claim: async () => undefined,
+        matchAll: async () => [],
       }
 
       const self = {
-        location: {origin: 'https://example.com'},
-        clients,
         addEventListener: (type: string, handler: (event: any) => void) => {
           listeners.set(type, handler)
         },
+        clients,
+        location: {origin: 'https://example.com'},
         skipWaiting: () => undefined,
       }
 
       const context = {
-        self,
         caches,
-        fetch: async () => new Response('ok'),
-        Response,
-        Request,
-        Headers,
-        URL,
         console,
+        fetch: async () => new Response('ok'),
+        Headers,
+        Request,
+        Response,
+        self,
+        URL,
       }
 
       vm.runInNewContext(swCode, context)

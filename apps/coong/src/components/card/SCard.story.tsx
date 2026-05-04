@@ -3,6 +3,10 @@ import {SCard, SCardProps} from './SCard'
 import {SButton} from '../button/SButton'
 
 const meta: Meta<SCardProps> = {
+  args: {
+    children: 'Card',
+    glass: true,
+  },
   argTypes: {
     glass: {
       control: 'boolean',
@@ -11,10 +15,6 @@ const meta: Meta<SCardProps> = {
         category: 'Props',
       },
     },
-  },
-  args: {
-    children: 'Card',
-    glass: true,
   },
   component: SCard,
   title: 'Coong/Components/SCard',

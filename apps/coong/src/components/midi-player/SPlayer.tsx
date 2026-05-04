@@ -1,4 +1,4 @@
-import {Show, useContext} from 'solid-js'
+import {useContext} from 'solid-js'
 import {SPlayerController, SPlayerControllerProps} from './SPlayerController'
 import {MidiPlayerContext} from './context'
 

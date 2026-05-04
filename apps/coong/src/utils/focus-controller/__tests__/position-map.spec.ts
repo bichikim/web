@@ -1,4 +1,4 @@
-import {beforeEach, describe, expect, it, vi} from 'vitest'
+import {describe, expect, it} from 'vitest'
 import {
   createPositionMap,
   DEFAULT_FILL_OPTIONS,
@@ -629,7 +629,12 @@ describe('position-map', () => {
 
       registerDeepPosition(positionMap, nextPosition)
 
-      const result = moveDeepPosition(positionMap, deepPosition, 0, direction)
+      const result = moveDeepPosition({
+        deepIndex: 0,
+        deepPosition,
+        direction,
+        positionMap,
+      })
 
       expect(result).toEqual(nextPosition)
     })
@@ -639,7 +644,13 @@ describe('position-map', () => {
       const deepPosition: DeepPosition = [{x: 0, y: 0}]
       const direction: Direction = getDirection('right')
 
-      const result = moveDeepPosition(positionMap, deepPosition, 0, direction, {limit: 5})
+      const result = moveDeepPosition({
+        deepIndex: 0,
+        deepPosition,
+        direction,
+        options: {limit: 5},
+        positionMap,
+      })
 
       expect(result).toBeNull()
     })
@@ -652,7 +663,13 @@ describe('position-map', () => {
 
       registerDeepPosition(positionMap, targetPosition)
 
-      const result = moveDeepPosition(positionMap, deepPosition, 0, direction, {limit: 5})
+      const result = moveDeepPosition({
+        deepIndex: 0,
+        deepPosition,
+        direction,
+        options: {limit: 5},
+        positionMap,
+      })
 
       expect(result).toEqual(targetPosition)
     })
@@ -665,7 +682,13 @@ describe('position-map', () => {
 
       registerDeepPosition(positionMap, targetPosition)
 
-      const result = moveDeepPosition(positionMap, deepPosition, 0, direction, {limit: 5})
+      const result = moveDeepPosition({
+        deepIndex: 0,
+        deepPosition,
+        direction,
+        options: {limit: 5},
+        positionMap,
+      })
 
       expect(result).toBeNull()
     })
@@ -678,7 +701,12 @@ describe('position-map', () => {
 
       registerDeepPosition(positionMap, nextPosition)
 
-      const result = moveDeepPosition(positionMap, deepPosition, 0, direction)
+      const result = moveDeepPosition({
+        deepIndex: 0,
+        deepPosition,
+        direction,
+        positionMap,
+      })
 
       expect(result).toEqual(nextPosition)
     })
@@ -696,7 +724,12 @@ describe('position-map', () => {
       const direction: Direction = getDirection('right')
 
       registerDeepPositionRecursively(positionMap, deepPosition)
-      const result = findNextDeepPosition(positionMap, deepPosition, 2, direction)
+      const result = findNextDeepPosition({
+        deepIndex: 2,
+        deepPosition,
+        direction,
+        positionMap,
+      })
 
       expect(result).toEqual(deepPosition)
     })
@@ -719,7 +752,12 @@ describe('position-map', () => {
 
       registerDeepPositionRecursively(positionMap, nextPosition)
 
-      const result = findNextDeepPosition(positionMap, deepPosition, 2, direction)
+      const result = findNextDeepPosition({
+        deepIndex: 2,
+        deepPosition,
+        direction,
+        positionMap,
+      })
 
       expect(result).toEqual(nextPosition)
     })
@@ -945,7 +983,11 @@ describe('position-map', () => {
         previousChildPosition: {x: 4, y: 4},
       })
 
-      const result = fillPreviousDeepPosition(positionMap, deepPosition, 2)
+      const result = fillPreviousDeepPosition({
+        deepPosition,
+        positionMap,
+        startDeepIndex: 2,
+      })
 
       expect(result).toEqual([
         {x: 0, y: 0},
@@ -981,7 +1023,11 @@ describe('position-map', () => {
       })
       registerDeepPositionRecursively(positionMap, nextPosition)
 
-      const result = fillPreviousDeepPosition(positionMap, deepPosition, 2)
+      const result = fillPreviousDeepPosition({
+        deepPosition,
+        positionMap,
+        startDeepIndex: 2,
+      })
 
       expect(result).toEqual([
         {x: 0, y: 0},
@@ -1018,16 +1064,16 @@ describe('position-map', () => {
       })
       registerDeepPositionRecursively(positionMap, nextPosition)
 
-      const result = fillPreviousDeepPosition(
-        positionMap,
+      const result = fillPreviousDeepPosition({
         deepPosition,
-        2,
-        getDirection('right'),
-        deepPosition.length,
-        {
+        deepPositionLength: deepPosition.length,
+        direction: getDirection('right'),
+        options: {
           defaultPosition: {x: 5, y: 5},
         },
-      )
+        positionMap,
+        startDeepIndex: 2,
+      })
 
       expect(result).toEqual([
         {x: 0, y: 0},
@@ -1054,7 +1100,11 @@ describe('position-map', () => {
 
       registerDeepPositionRecursively(positionMap, nextPosition)
 
-      const result = fillPreviousDeepPosition(positionMap, deepPosition, 1)
+      const result = fillPreviousDeepPosition({
+        deepPosition,
+        positionMap,
+        startDeepIndex: 1,
+      })
 
       expect(result).toEqual([
         {x: 0, y: 0},
@@ -1081,13 +1131,17 @@ describe('position-map', () => {
 
       registerDeepPositionRecursively(positionMap, nextPosition)
 
-      const result1 = hasDeepPosition(positionMap, [
+      hasDeepPosition(positionMap, [
         {x: 0, y: 0},
         {x: 1, y: 1},
         {x: 0, y: 0},
       ])
 
-      const result = fillPreviousDeepPosition(positionMap, deepPosition, 2)
+      const result = fillPreviousDeepPosition({
+        deepPosition,
+        positionMap,
+        startDeepIndex: 2,
+      })
 
       expect(result).toEqual([
         {x: 0, y: 0},

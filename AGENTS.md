@@ -27,7 +27,6 @@ This is a pnpm + Turborepo monorepo (`@winter-love/web`). The main app is **Coon
 
 ### Gotchas
 
-- The `.env` template file in `apps/coong` is named `.env.exmaple` (typo is intentional in the repo — do not rename).
-- For local dev without a real Supabase instance, copy `apps/coong/.env.e2e` to `apps/coong/.env`. Database-dependent features (auth, user data) will error at runtime but the app starts and renders.
+- Env variable reference: `apps/coong/.env.example`. For local dev without a real Supabase instance, copy `apps/coong/.env.e2e` to `apps/coong/.env`. Database-dependent features (auth, user data) will error at runtime but the app starts and renders.
 - Shared library packages must be built before apps work. This happens automatically via pnpm's `prepare` lifecycle, but if you clean `node_modules` or delete `dist/` folders you must run `pnpm prepare` again.
 - `@winter-love/utils` lint has pre-existing errors (camelcase, max-params) — these are not regressions.

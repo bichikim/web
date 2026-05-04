@@ -15,15 +15,15 @@ const normalizeLineBreaks = (value: string): string =>
 
 const stripWrapperTags = (value: string): string =>
   value
-    .replace(/<[^>]+>/g, ' ')
-    .replaceAll(/\s+/g, ' ')
+    .replace(/<[^>]+>/gu, ' ')
+    .replaceAll(/\s+/gu, ' ')
     .trim()
 
 // Cursor가 transcript에 남기는 민감/내부 구간 마커(원문은 저장하지 않음)
 const stripRedactedMarkers = (value: string): string =>
   value
-    .replace(/\s*\[REDACTED\]\s*/g, ' ')
-    .replace(/\s{2,}/g, ' ')
+    .replace(/\s*\[REDACTED\]\s*/gu, ' ')
+    .replace(/\s{2,}/gu, ' ')
     .trim()
 
 const extractTextFromMessagePayload = (message: unknown): string => {
@@ -31,7 +31,7 @@ const extractTextFromMessagePayload = (message: unknown): string => {
     return ''
   }
 
-  const content = message.content
+  const {content} = message
 
   if (!Array.isArray(content)) {
     return ''
@@ -40,11 +40,7 @@ const extractTextFromMessagePayload = (message: unknown): string => {
   const parts: string[] = []
 
   for (const item of content) {
-    if (!isRecord(item)) {
-      continue
-    }
-
-    if (item.type === 'text' && typeof item.text === 'string') {
+    if (isRecord(item) && item.type === 'text' && typeof item.text === 'string') {
       parts.push(item.text)
     }
   }
@@ -64,8 +60,39 @@ const resolveChatRole = (event: Record<string, unknown>): 'user' | 'assistant' |
   if (event.type === 'assistant') {
     return 'assistant'
   }
+}
 
-  return
+const collectMessageIfValid = ({
+  collected,
+  lineIndex,
+  parsed,
+  sessionId,
+}: {
+  collected: AgentHistoryChatMessage[]
+  lineIndex: number
+  parsed: unknown
+  sessionId: string
+}): void => {
+  if (!isRecord(parsed)) {
+    return
+  }
+
+  const role = resolveChatRole(parsed)
+  if (role === undefined) {
+    return
+  }
+
+  const messagePayload = parsed.message
+  const content = extractTextFromMessagePayload(messagePayload)
+  if (content === '') {
+    return
+  }
+
+  collected.push({
+    content,
+    id: `${sessionId}-${String(lineIndex)}`,
+    role,
+  })
 }
 
 export const readAgentSessionHistory = async ({
@@ -78,9 +105,9 @@ export const readAgentSessionHistory = async ({
   sessionId: string
 }): Promise<readonly AgentHistoryChatMessage[]> => {
   const filePath = await resolveAgentSessionJsonlFilePath({
-    workspaceRoot,
-    workingDirectory,
     sessionId,
+    workingDirectory,
+    workspaceRoot,
   })
 
   if (filePath === undefined) {
@@ -97,42 +124,16 @@ export const readAgentSessionHistory = async ({
 
     if (trimmedLine === '') {
       lineIndex += 1
-      continue
+    } else {
+      try {
+        const parsed = JSON.parse(trimmedLine) as unknown
+        collectMessageIfValid({collected, lineIndex, parsed, sessionId})
+      } catch {
+        // ignore malformed line
+      }
+
+      lineIndex += 1
     }
-
-    try {
-      const parsed = JSON.parse(trimmedLine) as unknown
-
-      if (!isRecord(parsed)) {
-        lineIndex += 1
-        continue
-      }
-
-      const role = resolveChatRole(parsed)
-
-      if (role === undefined) {
-        lineIndex += 1
-        continue
-      }
-
-      const messagePayload = parsed.message
-      const content = extractTextFromMessagePayload(messagePayload)
-
-      if (content === '') {
-        lineIndex += 1
-        continue
-      }
-
-      collected.push({
-        id: `${sessionId}-${String(lineIndex)}`,
-        role,
-        content,
-      })
-    } catch {
-      // ignore malformed line
-    }
-
-    lineIndex += 1
   }
 
   return collected

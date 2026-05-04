@@ -15,6 +15,7 @@ import {
 import {useAgentSessions} from '@/hooks/use-agent-sessions'
 import {useAgentStream} from '@/hooks/use-agent-stream'
 
+// oxlint-disable-next-line max-lines-per-function
 export default function AgentPage(_properties: RouteSectionProps) {
   const [promptText, setPromptText] = createSignal('')
   const [postUrl, setPostUrl] = createSignal(loadInitialPostUrl())
@@ -39,7 +40,7 @@ export default function AgentPage(_properties: RouteSectionProps) {
       const root = scrollRoot
 
       if (root !== undefined) {
-        root.scrollTo({top: root.scrollHeight, behavior: 'smooth'})
+        root.scrollTo({behavior: 'smooth', top: root.scrollHeight})
       }
     })
   }
@@ -54,27 +55,27 @@ export default function AgentPage(_properties: RouteSectionProps) {
   }
 
   const {abortRun, submitPrompt: runPrompt} = useAgentStream({
-    getPostUrl: postUrl,
-    getWorkingDirectory: workingDirectory,
-    getConversationId: conversationId,
-    getResumeSessionId: () => resumeSessionId(),
     clearResumeSessionId,
+    getConversationId: conversationId,
     getMessages: messages,
+    getPostUrl: postUrl,
+    getResumeSessionId: () => resumeSessionId(),
+    getWorkingDirectory: workingDirectory,
+    setCurrentSessionId,
+    setCurrentSessionTitle,
     setMessages,
     setPromptText,
     setStatus,
     setStreamError,
-    setCurrentSessionId,
-    setCurrentSessionTitle,
   })
 
   const {openSessionsPopup} = useAgentSessions({
     getPostUrl: postUrl,
     getWorkingDirectory: workingDirectory,
-    setIsSessionsOpen,
-    setSessionsError,
     setIsSessionsLoading,
+    setIsSessionsOpen,
     setSessions,
+    setSessionsError,
   })
 
   const updatePostUrl = (value: string) => {
@@ -111,8 +112,8 @@ export default function AgentPage(_properties: RouteSectionProps) {
 
     const result = await fetchSessionHistory({
       postUrl: postUrl(),
-      workingDirectory: workingDirectory(),
       sessionId: session.sessionId,
+      workingDirectory: workingDirectory(),
     })
 
     if ('error' in result) {
@@ -169,7 +170,7 @@ export default function AgentPage(_properties: RouteSectionProps) {
             return
           }
 
-          void openSessionsPopup()
+          openSessionsPopup()
         }}
         onClickSettings={() => setIsSettingsOpen((previous) => !previous)}
       />
@@ -196,7 +197,7 @@ export default function AgentPage(_properties: RouteSectionProps) {
           error={sessionsError()}
           onClose={() => setIsSessionsOpen(false)}
           onSelectSession={(session) => {
-            void handleSelectSession(session)
+            handleSelectSession(session)
           }}
         />
 

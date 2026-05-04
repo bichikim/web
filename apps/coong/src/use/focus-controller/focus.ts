@@ -1,4 +1,4 @@
-import {createEffect, createMemo, createSignal, onMount, useContext} from 'solid-js'
+import {createMemo, createSignal, onMount, useContext} from 'solid-js'
 import {MaybeAccessor, nonAccessor, resolveAccessor} from '@winter-love/solid-use'
 import {type DeepPosition, getDeepPositionKey} from 'src/utils/focus-controller/deep-position'
 import {FOCUS_CONTROLLER_CHANNEL, FocusControllerContext} from './FocusController'

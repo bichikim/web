@@ -24,6 +24,7 @@ export const withHandyQuery = <T extends (...args: any) => any>(query: CachedFun
   type TArgs = Parameters<typeof query>
   type TData = Awaited<ReturnType<typeof query>>
 
+  // oxlint-disable-next-line unicorn/consistent-function-scoping
   const isArgsOrAccessor = (value: unknown): value is Accessor<TArgs | undefined> | TArgs => {
     return typeof value === 'function' || Array.isArray(value)
   }

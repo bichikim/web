@@ -1,16 +1,26 @@
 {
   "name": "@winter-love/utils",
-  "version": "1.0.37",
+  "version": "1.0.38",
+  "gitHead": "d2b83a5ae925fd122a6f46c99d743ede11b86c2f",
   "description": "Useful javascript utils",
   "keywords": [
     "functional",
     "typescript",
     "utils"
   ],
-  "repository": "git@github.com:winter-love/web.git",
   "license": "MIT",
   "author": "bichi@live.co.kr",
+  "repository": "git@github.com:winter-love/web.git",
+  "source": "src/index.ts",
+  "files": [
+    "dist/*"
+  ],
   "sideEffects": false,
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "unpkg": "dist/index.global.js",
+  "jsdelivr": "dist/index.global.js",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -23,24 +33,17 @@
       "default": "./dist/*/index.mjs"
     }
   },
-  "main": "dist/index.js",
-  "jsdelivr": "dist/index.global.js",
-  "unpkg": "dist/index.global.js",
-  "module": "dist/index.mjs",
-  "source": "src/index.ts",
-  "types": "dist/index.d.ts",
-  "files": [
-    "dist/*"
-  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "vite build",
     "check-types": "tsc --noEmit",
-    "dev": "vite build --watch --minify false",
-    "lint": "cross-env NODE_ENV=script eslint src",
-    "lint:fix": "cross-env NODE_ENV=script eslint src --fix"
+    "prepare": "vite build",
+    "dev": "vite build --watch --minify false"
   },
   "dependencies": {
-    "es-toolkit": "^1.41.0",
+    "es-toolkit": "^1.46.1",
     "safe-stable-stringify": "^2.5.0",
     "scroll-into-view-if-needed": "^3.1.0",
     "smooth-scroll-into-view-if-needed": "^2.0.2"
@@ -49,13 +52,23 @@
     "@types/js-cookie": "^3.0.6",
     "@winter-love/vite-lib-config": "workspace:*",
     "js-cookie": "^3.0.5",
-    "micro-memoize": "^4.1.2",
+    "micro-memoize": "^4.2.0",
     "tsd": "^0.31.2",
     "typescript": "^5.9.3",
-    "vite": "^7.0.8"
+    "vite": "^7.3.2"
   },
-  "publishConfig": {
-    "access": "public"
-  },
-  "gitHead": "d2b83a5ae925fd122a6f46c99d743ede11b86c2f"
+  "tsup": {
+    "entry": [
+      "src/index.ts"
+    ],
+    "clean": true,
+    "format": [
+      "cjs",
+      "esm",
+      "iife"
+    ],
+    "outDir": "dist",
+    "sourcemap": true,
+    "splitting": false
+  }
 }

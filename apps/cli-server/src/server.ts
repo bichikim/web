@@ -20,9 +20,9 @@ export type AppType = typeof app
 app.use(
   '*',
   cors({
-    origin: '*',
-    allowMethods: ['GET', 'POST', 'OPTIONS'],
     allowHeaders: ['Content-Type'],
+    allowMethods: ['GET', 'POST', 'OPTIONS'],
+    origin: '*',
   }),
 )
 app.route('/health', healthRoute)

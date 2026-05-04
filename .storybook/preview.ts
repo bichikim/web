@@ -1,3 +1,5 @@
+// oxlint-disable eslint-js/require-unicode-regexp
+// oxlint-disable eslint-js/prefer-named-capture-group
 import type {Preview} from 'storybook-solidjs-vite'
 import 'virtual:uno.css'
 

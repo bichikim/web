@@ -4,6 +4,7 @@ import {SButton} from './SButton'
 import {createEffect, createSignal, onCleanup} from 'solid-js'
 
 const meta = {
+  args: {onClick: fn(), onDoubleClick: fn()},
   argTypes: {
     autoLoading: {
       control: 'boolean',
@@ -159,7 +160,6 @@ const meta = {
       },
     },
   },
-  args: {onClick: fn(), onDoubleClick: fn()},
   component: SButton,
   tags: ['autodocs'],
   title: 'Coong/Components/SButton',

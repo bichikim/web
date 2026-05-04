@@ -2,7 +2,6 @@ import type {Meta, StoryObj} from 'storybook-solidjs-vite'
 import {DragList} from './DragList'
 import {createSignal, onCleanup, Show} from 'solid-js'
 import {DragListItem} from './DragListItem'
-import {DragListGhost} from './DragListGhost'
 import {cva, cx} from 'class-variance-authority'
 
 const createInterval = (callback: () => void) => {
@@ -21,7 +20,8 @@ const createInterval = (callback: () => void) => {
 }
 
 const itemStyle = cx(
-  'w-10rem h-2rem bg-blue-500 data-[dragging=true]:opacity-0 select-none cursor-grab rd-md p-1 data-[list-dragging=true]:cursor-unset',
+  'w-10rem h-2rem bg-blue-500 data-[dragging=true]:opacity-0 select-none cursor-grab rd-md p-1',
+  'data-[list-dragging=true]:cursor-unset',
   'c-white',
 )
 

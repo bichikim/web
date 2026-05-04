@@ -13,5 +13,6 @@ export function toBytesSize(bytes: number, unit: number = DEFAULT_BYTES_SIZE): s
     return `${bytes} ${sizes[index]}`
   }
 
+  // oxlint-disable-next-line eslint-js/no-mixed-operators
   return `${(bytes / unit ** index).toFixed(1)} ${sizes[index]}`
 }

@@ -1,6 +1,6 @@
 import {DragListProvider, DragListProviderProps} from './DragListProvider'
 import {DragLoop} from './DragLoop'
-import {type JSX, ValidComponent, splitProps} from 'solid-js'
+import {type JSX, splitProps, ValidComponent} from 'solid-js'
 import {Dynamic, DynamicProps} from 'solid-js/web'
 
 export type DragListProps<
