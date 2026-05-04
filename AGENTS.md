@@ -8,7 +8,7 @@ This is a pnpm + Turborepo monorepo (`@winter-love/web`). The main app is **Coon
 
 ### Prerequisites
 
-- Node.js 22, pnpm 10.26.1 (both specified in `package.json` `engines` / `packageManager`)
+- Node.js 22, pnpm 10.33.2 (both specified in `package.json` `engines` / `packageManager`)
 - `pnpm install` runs `postinstall` (sorts package.json) and `prepare` (builds all `@winter-love/*` packages via Turborepo) automatically
 
 ### Running services
@@ -16,7 +16,7 @@ This is a pnpm + Turborepo monorepo (`@winter-love/web`). The main app is **Coon
 | Service   | Command                          | Port | Notes                                                                      |
 | --------- | -------------------------------- | ---- | -------------------------------------------------------------------------- |
 | Coong App | `pnpm dev` (in `apps/coong`)     | 3000 | Requires `.env` — copy from `.env.e2e` for local dev without real Supabase |
-| Storybook | `pnpm dev:storybook` (from root) | 6006 | Component explorer for all Solid.js packages                               |
+| Storybook | `pnpm storybook:dev` (from root) | 6006 | Component explorer for all Solid.js packages                               |
 
 ### Key commands
 
