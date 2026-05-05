@@ -17,6 +17,7 @@ import {
 } from '../utils/agent-cli'
 import {readAgentSessionHistory} from '../utils/agent-session-history'
 import {
+  isAgentSessionIdPathSafe,
   listSessionsByWorkingDirectory,
   resolveAgentSessionJsonlFilePath,
 } from '../utils/agent-sessions'
@@ -185,6 +186,10 @@ agentRoute.get(
 
     if (sessionId === '') {
       return context.json({error: '`sessionId` path segment is required.'}, HTTP_STATUS_BAD_REQUEST)
+    }
+
+    if (!isAgentSessionIdPathSafe(sessionId)) {
+      return context.json({error: '`sessionId` path segment is invalid.'}, HTTP_STATUS_BAD_REQUEST)
     }
 
     const {workingDirectory} = context.req.valid('query')

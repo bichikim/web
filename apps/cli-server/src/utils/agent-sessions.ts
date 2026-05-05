@@ -20,6 +20,7 @@ export interface AgentSessionSummary {
 const CURSOR_PROJECTS_DIRECTORY = path.join(os.homedir(), '.cursor', 'projects')
 
 const MAX_SESSION_TITLE_LENGTH = 120
+const SESSION_ID_PATH_SEPARATOR_PATTERN = /[/\\\0]/u
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null
@@ -81,6 +82,38 @@ const resolveTranscriptDirectory = (workspacePath: string): string =>
     workspacePathToProjectKey(workspacePath),
     'agent-transcripts',
   )
+
+export const isAgentSessionIdPathSafe = (sessionId: string): boolean => {
+  const trimmed = sessionId.trim()
+
+  return (
+    trimmed !== '' &&
+    trimmed !== '.' &&
+    trimmed !== '..' &&
+    !SESSION_ID_PATH_SEPARATOR_PATTERN.test(trimmed)
+  )
+}
+
+const resolveSessionFilePath = ({
+  transcriptDirectory,
+  sessionId,
+}: {
+  transcriptDirectory: string
+  sessionId: string
+}): string | undefined => {
+  if (!isAgentSessionIdPathSafe(sessionId)) {
+    return
+  }
+
+  const filePath = path.join(transcriptDirectory, sessionId, `${sessionId}.jsonl`)
+  const relativePath = path.relative(transcriptDirectory, filePath)
+
+  if (relativePath.startsWith('..') || path.isAbsolute(relativePath)) {
+    return
+  }
+
+  return filePath
+}
 
 const hasTranscriptDirectory = async (workspacePath: string): Promise<boolean> => {
   const transcriptDirectory = resolveTranscriptDirectory(workspacePath)
@@ -237,7 +270,11 @@ export const resolveAgentSessionJsonlFilePath = async ({
     workspaceRoot,
   })
   const transcriptDirectory = resolveTranscriptDirectory(workspaceForTranscripts)
-  const filePath = path.join(transcriptDirectory, sessionId, `${sessionId}.jsonl`)
+  const filePath = resolveSessionFilePath({sessionId, transcriptDirectory})
+
+  if (filePath === undefined) {
+    return
+  }
 
   try {
     const stats = await fs.stat(filePath)
