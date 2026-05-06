@@ -1,10 +1,10 @@
 import {afterEach, describe, expect, it, vi} from 'vitest'
-import type {ChatMessage} from '@/components/agent/AgentChatSection'
-import {submitAgentPrompt} from '@/hooks/use-agent-stream/submit-agent-prompt'
+import type {ChatMessage} from '../../../components/agent/AgentChatSection'
+import {submitAgentPrompt} from '../submit-agent-prompt'
 import type {
   AgentStreamControl,
   UseAgentStreamProperties,
-} from '@/hooks/use-agent-stream/use-agent-stream-types'
+} from '../use-agent-stream-types'
 
 const createSubmitEvent = (): Event & {currentTarget: HTMLFormElement} =>
   ({
