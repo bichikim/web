@@ -5,6 +5,7 @@ export interface PostSseStreamOptions {
   readonly url: string
   readonly body: unknown
   readonly signal?: AbortSignal
+  readonly onResponseOk?: () => Promise<void> | void
   readonly onRawBlock: (rawBlock: string) => void
 }
 
@@ -22,7 +23,7 @@ export type PostSseStreamResult = PostSseStreamConsumed | PostSseStreamHttpError
 export const postSseStream = async (
   options: PostSseStreamOptions,
 ): Promise<PostSseStreamResult> => {
-  const {body, fetch: fetchRequest, onRawBlock, signal, url} = options
+  const {body, fetch: fetchRequest, onRawBlock, onResponseOk, signal, url} = options
 
   const response = await fetchRequest(url, {
     body: JSON.stringify(body),
@@ -35,6 +36,7 @@ export const postSseStream = async (
     return {response, status: 'http-error'}
   }
 
+  await onResponseOk?.()
   await consumeSseStream({onRawBlock, response})
 
   return {status: 'consumed'}

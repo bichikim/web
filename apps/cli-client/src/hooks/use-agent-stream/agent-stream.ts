@@ -65,15 +65,22 @@ export type PostAgentSseStreamResult = PostSseStreamResult
 export const postAgentSseStream = async (
   arguments_: PostAgentSseStreamArguments,
 ): Promise<PostAgentSseStreamResult> => {
-  const handlers = await arguments_.createHandlers()
+  let handlers: AgentStreamHandlers | undefined
 
   return postSseStream({
     body: arguments_.body,
     fetch,
+    onResponseOk: async () => {
+      handlers = await arguments_.createHandlers()
+    },
     onRawBlock: (rawBlock) => {
       const parsed = parseSseEventBlock(rawBlock)
 
       if (parsed !== undefined) {
+        if (handlers === undefined) {
+          throw new Error('SSE 핸들러가 초기화되지 않았습니다.')
+        }
+
         dispatchSseMessage(parsed, handlers)
       }
     },
