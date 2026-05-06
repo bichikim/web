@@ -70,9 +70,6 @@ export const postAgentSseStream = async (
   return postSseStream({
     body: arguments_.body,
     fetch,
-    onResponseOk: async () => {
-      handlers = await arguments_.createHandlers()
-    },
     onRawBlock: (rawBlock) => {
       const parsed = parseSseEventBlock(rawBlock)
 
@@ -83,6 +80,9 @@ export const postAgentSseStream = async (
 
         dispatchSseMessage(parsed, handlers)
       }
+    },
+    onResponseOk: async () => {
+      handlers = await arguments_.createHandlers()
     },
     signal: arguments_.signal,
     url: arguments_.url,
