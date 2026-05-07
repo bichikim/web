@@ -7,4 +7,10 @@ describe('cleanObject', () => {
 
     expect(result).toEqual({foo: 'foo'})
   })
+
+  it('should preserve falsy values except undefined', () => {
+    const result = cleanObject({empty: '', falsy: false, missing: undefined, zero: 0})
+
+    expect(result).toEqual({empty: '', falsy: false, zero: 0})
+  })
 })

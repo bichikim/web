@@ -1,5 +1,5 @@
 import {describe, expect, it} from 'vitest'
-import {addEm, addPx, addRem, addUnit} from '../'
+import {addEm, addPx, addRem, addUnit, addUnitRight} from '../'
 
 describe('addUnit', () => {
   it('should return unit string with number', () => {
@@ -24,6 +24,10 @@ describe('addUnit', () => {
 
   it('should return unit string without unit', () => {
     expect(addUnit(1)).toEqual('1')
+  })
+
+  it('should support direct right-call with zero values', () => {
+    expect(addUnitRight('px', 0)).toEqual('0px')
   })
 })
 
