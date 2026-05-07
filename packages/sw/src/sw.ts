@@ -69,10 +69,10 @@ declare const __SW_ENV__: 'development' | 'production' | undefined
 // eslint-disable-next-line camelcase
 declare const __inject_code__: string[]
 
-const CACHE_NAME = __CACHE_NAME__ === undefined ? 'coong-cache-v1' : __CACHE_NAME__
-const CACHE_VERSION = __CACHE_VERSION__ === undefined ? 1 : __CACHE_VERSION__
-const ENV = __SW_ENV__ === undefined ? 'production' : __SW_ENV__
-const SW_CONFIG: ServiceWorkerConfig = __SW_CONFIG__ === undefined ? {} : __SW_CONFIG__
+const CACHE_NAME = typeof __CACHE_NAME__ === 'undefined' ? 'coong-cache-v1' : __CACHE_NAME__
+const CACHE_VERSION = typeof __CACHE_VERSION__ === 'undefined' ? 1 : __CACHE_VERSION__
+const ENV = typeof __SW_ENV__ === 'undefined' ? 'production' : __SW_ENV__
+const SW_CONFIG: ServiceWorkerConfig = typeof __SW_CONFIG__ === 'undefined' ? {} : __SW_CONFIG__
 
 const MILLISECONDS_PER_SECOND = 1000
 
@@ -366,6 +366,30 @@ const updateCacheState = async (
   await trimCache(cache, freshMetadata)
 }
 
+const isCacheableResponse = (response: Response) => {
+  return response.ok && response.type !== 'opaque'
+}
+
+const putCacheableResponse = async (
+  cache: Cache,
+  request: Request,
+  response: Response,
+  destination: RequestDestination | 'default',
+) => {
+  if (!isCacheableResponse(response)) {
+    emitLog('debug', 'Skipped non-cacheable response', {
+      status: response.status,
+      type: response.type,
+      url: request.url,
+    })
+
+    return
+  }
+
+  await cache.put(request, response.clone())
+  await updateCacheState(cache, request.url, destination, true)
+}
+
 const getCachedResponse = async (
   cache: Cache,
   request: Request,
@@ -409,31 +433,37 @@ const createNetworkFirst = async (
   requestOptions: NetworkRequestOptions = {},
   cacheControl?: CacheControlValue,
 ) => {
-  const headers = new Headers()
+  const fetchOptions: RequestInit = {}
 
-  if (cacheControl) {
-    headers.append('cache-control', cacheControl)
-    headers.append('pragma', cacheControl)
+  if (cacheControl || requestOptions.headers) {
+    const headers = new Headers(event.request.headers)
+
+    if (cacheControl) {
+      headers.set('cache-control', cacheControl)
+      headers.set('pragma', cacheControl)
+    }
+
+    if (requestOptions.headers) {
+      const optionHeaders = new Headers(requestOptions.headers)
+
+      // eslint-disable-next-line unicorn/prefer-spread
+      for (const [key, value] of Array.from(optionHeaders.entries())) {
+        headers.set(key, value)
+      }
+    }
+
+    fetchOptions.headers = headers
   }
 
-  if (requestOptions.headers) {
-    const optionHeaders = new Headers(requestOptions.headers)
-
-    // eslint-disable-next-line unicorn/prefer-spread
-    for (const [key, value] of Array.from(optionHeaders.entries())) {
-      headers.append(key, value)
-    }
+  if (requestOptions.cache) {
+    fetchOptions.cache = requestOptions.cache
   }
 
   try {
-    const response = await fetch(event.request, {
-      cache: requestOptions.cache || 'default',
-      headers,
-    })
+    const response = await fetch(event.request, fetchOptions)
     const cache = await caches.open(CACHE_NAME)
 
-    await cache.put(event.request, response.clone())
-    await updateCacheState(cache, event.request.url, destination, true)
+    await putCacheableResponse(cache, event.request, response, destination)
 
     return response
   } catch (error) {
@@ -487,8 +517,7 @@ const createCacheFirst = async (event: FetchEvent, destination: RequestDestinati
 
   const response = await fetch(event.request)
 
-  await cache.put(event.request, response.clone())
-  await updateCacheState(cache, event.request.url, destination, true)
+  await putCacheableResponse(cache, event.request, response, destination)
 
   return response
 }
@@ -502,8 +531,7 @@ const createStaleWhileRevalidate = async (
 
   const updatePromise = fetch(event.request)
     .then(async (response) => {
-      await cache.put(event.request, response.clone())
-      await updateCacheState(cache, event.request.url, destination, true)
+      await putCacheableResponse(cache, event.request, response, destination)
 
       return response
     })
@@ -515,6 +543,8 @@ const createStaleWhileRevalidate = async (
     })
 
   if (cachedResponse) {
+    event.waitUntil(updatePromise)
+
     return cachedResponse
   }
 

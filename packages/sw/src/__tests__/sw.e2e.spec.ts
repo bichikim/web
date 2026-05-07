@@ -2,8 +2,99 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import vm from 'node:vm'
+import ts from 'typescript'
 import {describe, expect, it} from 'vitest'
 import {generateSW} from '../index'
+
+const compileServiceWorkerTemplate = async (appFiles: string[] = ['/file.txt']) => {
+  const swSource = await fs.promises.readFile(path.join(import.meta.dirname, '..', 'sw.ts'), 'utf8')
+  const {outputText} = ts.transpileModule(swSource, {
+    compilerOptions: {
+      module: ts.ModuleKind.None,
+      target: ts.ScriptTarget.ES2022,
+    },
+  })
+
+  return outputText.replaceAll('__inject_code__', JSON.stringify(appFiles))
+}
+
+const createServiceWorkerContext = (
+  fetchHandler: (request: any, init?: RequestInit) => Promise<Response>,
+) => {
+  const listeners: Map<string, (event: any) => void> = new Map()
+  const cacheStorage = new Map<string, Map<string, Response>>()
+  const requestUrl = (request: Request | string | {url: string}) => {
+    if (typeof request === 'string') {
+      return request
+    }
+
+    return request.url
+  }
+
+  const caches = {
+    delete: async (name: string) => cacheStorage.delete(name),
+    keys: async () => Array.from(cacheStorage.keys()),
+    match: async (request: Request | string | {url: string}) => {
+      const url = requestUrl(request)
+
+      for (const store of cacheStorage.values()) {
+        const response = store.get(url)
+
+        if (response) {
+          return response
+        }
+      }
+
+      return undefined
+    },
+    open: async (name: string) => {
+      const store = cacheStorage.get(name) ?? new Map<string, Response>()
+      cacheStorage.set(name, store)
+
+      return {
+        addAll: async (requests: string[]) => {
+          for (const request of requests) {
+            store.set(new URL(request, 'https://example.com').toString(), new Response('ok'))
+          }
+        },
+        delete: async (request: Request | string | {url: string}) =>
+          store.delete(requestUrl(request)),
+        keys: async () => Array.from(store.keys()).map((url) => new Request(url)),
+        match: async (request: Request | string | {url: string}) => store.get(requestUrl(request)),
+        put: async (request: Request | string | {url: string}, response: Response) => {
+          store.set(requestUrl(request), response)
+        },
+      }
+    },
+  }
+
+  const clients = {
+    claim: async () => undefined,
+    matchAll: async () => [],
+  }
+
+  const self = {
+    addEventListener: (type: string, handler: (event: any) => void) => {
+      listeners.set(type, handler)
+    },
+    clients,
+    location: {origin: 'https://example.com'},
+    skipWaiting: () => undefined,
+  }
+
+  const context = {
+    caches,
+    console,
+    fetch: fetchHandler,
+    Headers,
+    Request,
+    Response,
+    self,
+    URL,
+  }
+
+  return {cacheStorage, context, listeners}
+}
 
 describe('service worker e2e', () => {
   it('registers lifecycle handlers and precaches assets', async () => {
@@ -121,5 +212,69 @@ describe('service worker e2e', () => {
     } finally {
       await fs.promises.rm(tmpDir, {force: true, recursive: true})
     }
+  })
+
+  it('runs generated template without optional globals', async () => {
+    const swCode = await compileServiceWorkerTemplate()
+    const {cacheStorage, context, listeners} = createServiceWorkerContext(
+      async () => new Response('ok'),
+    )
+
+    expect(() => vm.runInNewContext(swCode, context)).not.toThrow()
+
+    const installHandler = listeners.get('install')
+    let installPromise: Promise<void> | undefined
+
+    installHandler?.({
+      waitUntil: (promise: Promise<void>) => {
+        installPromise = promise
+      },
+    })
+
+    await installPromise
+
+    expect(cacheStorage.get('coong-cache-v1')?.has('https://example.com/file.txt')).toBe(true)
+  })
+
+  it('keeps stale-while-revalidate refresh alive and avoids caching failed responses', async () => {
+    const swCode = await compileServiceWorkerTemplate()
+    const fetchCalls: Array<{init?: RequestInit; request: any}> = []
+    const {cacheStorage, context, listeners} = createServiceWorkerContext(async (request, init) => {
+      fetchCalls.push({init, request})
+
+      return new Response('server error', {status: 500})
+    })
+
+    vm.runInNewContext(swCode, context)
+
+    const appCache = new Map<string, Response>()
+    appCache.set('https://example.com/image.png', new Response('cached image'))
+    cacheStorage.set('coong-cache-v1', appCache)
+
+    const fetchHandler = listeners.get('fetch')
+    const request = {
+      destination: 'image',
+      headers: new Headers({accept: 'image/png'}),
+      method: 'GET',
+      url: 'https://example.com/image.png',
+    }
+    let responsePromise: Promise<Response> | undefined
+    let refreshPromise: Promise<void> | undefined
+
+    fetchHandler?.({
+      request,
+      respondWith: (promise: Promise<Response>) => {
+        responsePromise = promise
+      },
+      waitUntil: (promise: Promise<void>) => {
+        refreshPromise = promise
+      },
+    })
+
+    await expect(responsePromise).resolves.toHaveProperty('status', 200)
+    await refreshPromise
+
+    expect(fetchCalls).toHaveLength(1)
+    expect(appCache.get('https://example.com/image.png')?.status).toBe(200)
   })
 })
