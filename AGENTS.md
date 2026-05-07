@@ -8,7 +8,7 @@ This is a pnpm + Turborepo monorepo (`@winter-love/web`). The main app is **Coon
 
 ### Prerequisites
 
-- Node.js 22, pnpm 10.26.1 (both specified in `package.json` `engines` / `packageManager`)
+- Node.js 22 or newer, pnpm 10.26.1 (both specified in `package.json` `engines` / `packageManager`)
 - `pnpm install` runs `postinstall` (sorts package.json) and `prepare` (builds all `@winter-love/*` packages via Turborepo) automatically
 
 ### Running services

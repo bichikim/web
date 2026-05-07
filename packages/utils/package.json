@@ -39,19 +39,19 @@
     "dev": "vite build --watch --minify false"
   },
   "dependencies": {
-    "es-toolkit": "^1.46.1",
+    "es-toolkit": "catalog:",
     "safe-stable-stringify": "^2.5.0",
     "scroll-into-view-if-needed": "^3.1.0",
     "smooth-scroll-into-view-if-needed": "^2.0.2"
   },
   "devDependencies": {
-    "@types/js-cookie": "^3.0.6",
+    "@types/js-cookie": "catalog:",
     "@winter-love/vite-lib-config": "workspace:*",
-    "js-cookie": "^3.0.5",
+    "js-cookie": "catalog:",
     "micro-memoize": "^4.2.0",
     "tsd": "^0.31.2",
-    "typescript": "^5.9.3",
-    "vite": "^7.3.2"
+    "typescript": "catalog:",
+    "vite": "catalog:"
   },
   "tsup": {
     "entry": [

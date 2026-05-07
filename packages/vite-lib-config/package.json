@@ -19,10 +19,10 @@
     "./*": "./*"
   },
   "devDependencies": {
-    "dotenv": "latest",
-    "es-toolkit": "^1.46.1",
-    "vite": "^7.3.2",
-    "vite-plugin-dts": "^4.5.4",
-    "vite-plugin-solid": "^2.11.12"
+    "dotenv": "catalog:",
+    "es-toolkit": "catalog:",
+    "vite": "catalog:",
+    "vite-plugin-dts": "catalog:",
+    "vite-plugin-solid": "catalog:"
   }
 }

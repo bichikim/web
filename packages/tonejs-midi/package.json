@@ -34,9 +34,9 @@
     "midi-file": "^1.2.4"
   },
   "devDependencies": {
-    "@tonejs/midi": "^2.0.28",
-    "@types/node": "^24.12.2",
+    "@tonejs/midi": "catalog:",
+    "@types/node": "catalog:",
     "@winter-love/vite-lib-config": "workspace:*",
-    "vite": "^7.3.2"
+    "vite": "catalog:"
   }
 }

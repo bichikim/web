@@ -86,7 +86,7 @@
     "last 5 Opera versions"
   ],
   "engines": {
-    "node": ">=22 <23",
+    "node": ">=22",
     "pnpm": ">=10 <11"
   },
   "packageManager": "pnpm@10.33.2",
