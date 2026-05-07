@@ -5,6 +5,7 @@ import {serve} from '@hono/node-server'
 import {Hono} from 'hono'
 import {cors} from 'hono/cors'
 import {agentRoute, countryRoute, healthRoute, homeRoute} from './routes'
+import {resolveAllowedCorsOrigin} from './utils/cors-origin'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -13,7 +14,9 @@ const envPath = path.resolve(__dirname, '../.env')
 dotenv.config({path: envPath})
 
 const DEFAULT_PORT = 3040
+const DEFAULT_HOSTNAME = '127.0.0.1'
 const port = Number(process.env.PORT ?? DEFAULT_PORT)
+const hostname = process.env.HOST ?? DEFAULT_HOSTNAME
 
 export const app = new Hono()
 export type AppType = typeof app
@@ -22,7 +25,7 @@ app.use(
   cors({
     allowHeaders: ['Content-Type'],
     allowMethods: ['GET', 'POST', 'OPTIONS'],
-    origin: '*',
+    origin: resolveAllowedCorsOrigin,
   }),
 )
 app.route('/health', healthRoute)
@@ -33,10 +36,11 @@ app.route('/', homeRoute)
 const server = serve(
   {
     fetch: app.fetch,
+    hostname,
     port,
   },
   (info) => {
-    console.info(`cli-server listening on http://localhost:${String(info.port)}`)
+    console.info(`cli-server listening on http://${hostname}:${String(info.port)}`)
   },
 )
 
