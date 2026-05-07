@@ -8,7 +8,5 @@ export const resolveAllowedCorsOrigin = (origin: string): string | undefined => 
     if (ALLOWED_PROTOCOLS.has(url.protocol) && LOOPBACK_HOSTNAMES.has(url.hostname)) {
       return origin
     }
-  } catch {
-    return
-  }
+  } catch {}
 }
