@@ -20,10 +20,10 @@
     "format": "oxfmt",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
-    "test": "vitest run",
+    "test": "vitest run --reporter=dot",
     "test:storybook": "test-storybook",
     "test:storybook:watch": "test-storybook --watch",
-    "test:vitest": "vitest run",
+    "test:vitest": "vitest run --reporter=dot",
     "test:vitest:watch": "vitest watch"
   },
   "devDependencies": {
