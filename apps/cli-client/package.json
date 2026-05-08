@@ -8,7 +8,7 @@
     "dev": "vite",
     "lint": "cross-env NODE_ENV=script eslint src",
     "preview": "vite preview",
-    "type-check": "tsc --noEmit"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@solidjs/router": "catalog:",

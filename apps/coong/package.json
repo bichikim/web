@@ -21,7 +21,7 @@
     "supabase:gen-types": "jiti scripts/gen-supabase-types.ts",
     "test:e2e": "playwright test",
     "test:e2e-ui": "playwright test --ui",
-    "type-check": "tsc --noEmit"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@lottiefiles/dotlottie-solid": "^0.5.15",

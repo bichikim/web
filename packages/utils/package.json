@@ -34,7 +34,7 @@
   },
   "scripts": {
     "build": "vite build",
-    "check-types": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
     "prepare": "vite build",
     "dev": "vite build --watch --minify false"
   },
