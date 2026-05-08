@@ -32,12 +32,12 @@
   "dependencies": {
     "@floating-ui/dom": "^1.7.6",
     "@winter-love/utils": "workspace:*",
-    "class-variance-authority": "^0.7.1",
-    "es-toolkit": "^1.46.1",
-    "solid-js": "^1.9.12"
+    "class-variance-authority": "catalog:",
+    "es-toolkit": "catalog:",
+    "solid-js": "catalog:"
   },
   "devDependencies": {
     "@winter-love/vite-lib-config": "workspace:*",
-    "vite": "^7.3.2"
+    "vite": "catalog:"
   }
 }

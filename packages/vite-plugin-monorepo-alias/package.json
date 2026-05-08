@@ -46,10 +46,10 @@
     "publish": "npm publish"
   },
   "dependencies": {
-    "vite": "^7.3.2"
+    "vite": "catalog:"
   },
   "devDependencies": {
-    "@types/node": "^22.19.17",
+    "@types/node": "catalog:",
     "@winter-love/vite-lib-config": "workspace:*"
   },
   "stage": "alpha",

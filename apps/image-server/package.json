@@ -12,21 +12,21 @@
     "@winter-love/utils": "workspace:*",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.4",
-    "dotenv": "^16.6.1",
+    "dotenv": "catalog:",
     "express": "^4.22.1",
     "got": "^14.6.6",
     "qs": "^6.15.1",
     "reflect-metadata": "^0.2.2",
     "sharp": "^0.33.5",
-    "ufo": "^1.6.4"
+    "ufo": "catalog:"
   },
   "devDependencies": {
     "@types/express": "^4.17.25",
-    "@types/node": "^22.19.17",
+    "@types/node": "catalog:",
     "cross-env": "^7.0.3",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
     "tsconfig-paths": "^4.2.0",
-    "typescript": "^5.9.3"
+    "typescript": "catalog:"
   }
 }

@@ -29,11 +29,11 @@
     "@winter-love/solid-use": "workspace:*",
     "@winter-love/utils": "workspace:*",
     "shaka-player": "^4.16.29",
-    "solid-js": "^1.9.12"
+    "solid-js": "catalog:"
   },
   "devDependencies": {
     "@winter-love/vite-lib-config": "workspace:*",
-    "vite": "^7.3.2",
-    "vite-plugin-dts": "^4.5.4"
+    "vite": "catalog:",
+    "vite-plugin-dts": "catalog:"
   }
 }

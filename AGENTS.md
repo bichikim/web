@@ -8,7 +8,7 @@ This is a pnpm + Turborepo monorepo (`@winter-love/web`). The main app is **Coon
 
 ### Prerequisites
 
-- Node.js 22, pnpm 10.26.1 (both specified in `package.json` `engines` / `packageManager`)
+- Node.js 22 or newer, pnpm 10.26.1 (both specified in `package.json` `engines` / `packageManager`)
 - `pnpm install` runs `postinstall` (sorts package.json) and `prepare` (builds all `@winter-love/*` packages via Turborepo) automatically
 
 ### Running services
@@ -21,7 +21,7 @@ This is a pnpm + Turborepo monorepo (`@winter-love/web`). The main app is **Coon
 ### Key commands
 
 - **Lint**: `pnpm lint` (runs `turbo lint` across all packages) — note: `@winter-love/utils` has pre-existing lint errors
-- **Test**: `pnpm test` (runs `vitest run` across all packages)
+- **Test**: `pnpm test` (runs `vitest run` across all packages) — the full Vitest suite can legitimately take about 180 seconds to finish, so wait up to ~200 seconds before assuming it is hung or manually stopping it.
 - **Build packages**: `pnpm prepare` (runs `turbo build --filter=@winter-love/*`)
 - **Type check (Coong)**: `pnpm type-check` in `apps/coong`
 
