@@ -1,7 +1,7 @@
-import {afterEach, describe, expect, it} from 'vitest'
+import {describe, expect, it} from 'vitest'
 import {HTabButton} from '../HTabButton'
 import {HTabContent} from '../HTabContent'
-import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
+import {render, screen} from '@solidjs/testing-library'
 import userEvent from '@testing-library/user-event'
 import {HTabProvider} from '../HTabProvider'
 

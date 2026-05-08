@@ -1,3 +1,4 @@
+// oxlint-disable eslint-js/prefer-named-capture-group
 import {presetIcons, presetUno, toEscapedSelector} from 'unocss'
 import presetLegacyCompat from '@unocss/preset-legacy-compat'
 import transformerVariantGroup from '@unocss/transformer-variant-group'

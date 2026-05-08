@@ -1,5 +1,5 @@
 import type {Meta, StoryObj} from 'storybook-solidjs-vite'
-import {createSignal, Show} from 'solid-js'
+import {createSignal} from 'solid-js'
 import {useDrag} from './index'
 
 const DragTestComponent = () => {

@@ -13,6 +13,7 @@ export const createAdminOnlyCondition = <
   TTableName extends string,
   TColumnsMap extends Record<string, PgColumnBuilderBase>,
 >(
+  // oxlint-disable-next-line no-unused-vars
   table: SchemaSelf<TTableName, TColumnsMap>,
 ) => {
   return sql`

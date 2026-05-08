@@ -12,6 +12,20 @@ describe('toQueryString', () => {
     expect(result).toBe('?bar=_bar&foo=_foo&john=_john')
   })
 
+  it('should return a query string with custom encoders', () => {
+    const result = toQueryString(
+      {
+        foo: '_foo',
+      },
+      {
+        encodeKey: (key) => `key:${key}`,
+        encodeValue: (value) => `value:${value}`,
+      },
+    )
+
+    expect(result).toBe('?key:foo=value:_foo')
+  })
+
   it('should return a query string with sorting', () => {
     const result = toQueryString(
       {
@@ -22,7 +36,7 @@ describe('toQueryString', () => {
         bar: '_bar',
       },
       {
-        sort: (aValue: string, b: string) => (aValue > b ? 1 : -1),
+        sort: ([aKey], [bKey]) => (aKey > bKey ? 1 : -1),
       },
     )
 

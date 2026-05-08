@@ -9,7 +9,7 @@ export const changeKeys = <T>(
   transform: (value: keyof any) => keyof any,
   deep: number = -1,
 ): T => {
-  const isEnterDeeply = deep > 0 || deep < 0
+  const isEnterDeeply = deep !== 0
 
   if (typeof value !== 'object' || value === null || !isEnterDeeply) {
     return value

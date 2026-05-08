@@ -1,5 +1,5 @@
 import {getStyle} from '../get-style'
-const scrollRegex = /(auto|scroll)/u
+const scrollRegex = /(?:auto|scroll)/u
 
 export const isScrollable = (element: Element) => {
   return scrollRegex.test(

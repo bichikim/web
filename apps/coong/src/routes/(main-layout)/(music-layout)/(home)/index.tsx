@@ -20,7 +20,7 @@ export default function HomePage() {
   const updateUserMetadata = useAction(updateUserMetadataAction)
 
   const handleUpdateUserMetadata = async () => {
-    const result = await updateUserMetadata({
+    await updateUserMetadata({
       metadata: {
         message: 'test message',
       },

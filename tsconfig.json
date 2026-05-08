@@ -5,7 +5,7 @@
     "jsxImportSource": "solid-js",
     "target": "ESNext",
     "module": "ESNext",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "allowJs": true,
@@ -21,6 +21,5 @@
     "skipLibCheck": true,
     "skipDefaultLibCheck": true
   },
-  "include": ["apps/**/*.ts", "packages/**/*.mts", "**/*.md", "*.mts", "*.ts", "vitest.setup.ts"],
   "exclude": ["node_modules", ".output", ".server"]
 }

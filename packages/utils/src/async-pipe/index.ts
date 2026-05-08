@@ -1,3 +1,5 @@
+// oxlint-disable max-params
+// oxlint-disable id-length
 import {reduce} from 'src/reduce'
 import {toValue} from 'src/to-value'
 import {MaybeFunction, MaybePromise} from 'src/types'

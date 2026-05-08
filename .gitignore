@@ -102,3 +102,5 @@ docs/.vitepress/dist
 # opencode
 .opencode/
 opencode.jsonc
+
+.pnpm-store

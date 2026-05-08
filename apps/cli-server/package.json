@@ -15,16 +15,16 @@
     "start": "node dist/server.js"
   },
   "dependencies": {
-    "@hono/node-server": "^2.0.0",
+    "@hono/node-server": "^2.0.1",
     "@hono/standard-validator": "^0.2.2",
-    "dotenv": "^16.4.7",
-    "execa": "^9.6.1",
-    "hono": "^4.12.14",
-    "zod": "^4.1.13"
+    "dotenv": "catalog:",
+    "execa": "catalog:",
+    "hono": "^4.12.16",
+    "zod": "catalog:"
   },
   "devDependencies": {
-    "@types/node": "^22.10.1",
-    "tsx": "^4.19.3",
-    "typescript": "^5.9.3"
+    "@types/node": "catalog:",
+    "tsx": "^4.21.0",
+    "typescript": "catalog:"
   }
 }

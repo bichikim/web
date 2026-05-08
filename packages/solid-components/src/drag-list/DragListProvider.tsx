@@ -1,12 +1,14 @@
 import {
-  createContext,
-  ParentProps,
   Accessor,
-  createSignal,
-  createMemo,
+  createContext,
   createEffect,
+  createMemo,
+  createSignal,
+  ParentProps,
   untrack,
 } from 'solid-js'
+
+export const DEFAULT_DRAG_LIST_DURATION_MS = 100
 
 export interface DragListProviderProps<T extends readonly any[]> extends ParentProps {
   /**
@@ -141,7 +143,7 @@ export const DragListProvider = <T extends readonly any[]>(props: DragListProvid
       return null
     }
 
-    const targetItem = _list.splice(_draggingIndex, 1)[0]
+    const [targetItem] = _list.splice(_draggingIndex, 1)
 
     _list.splice(_dragOverIndex, 0, targetItem)
 
@@ -220,7 +222,7 @@ export const DragListProvider = <T extends readonly any[]>(props: DragListProvid
    * Accessor functions for providing context values
    */
   const duration = createMemo(() => {
-    return props.duration ?? 100
+    return props.duration ?? DEFAULT_DRAG_LIST_DURATION_MS
   })
 
   /**
@@ -233,8 +235,8 @@ export const DragListProvider = <T extends readonly any[]>(props: DragListProvid
   return (
     <DragListContext.Provider
       value={{
-        dragOverIndex,
         draggingIndex,
+        dragOverIndex,
         duration,
         easing,
         list,

@@ -9,6 +9,10 @@ const ROUTER_NAME_MAP = {
 }
 
 const meta = {
+  args: {
+    children: 'Home',
+    hrefName: 'home',
+  },
   argTypes: {
     children: {
       control: 'text',
@@ -25,10 +29,6 @@ const meta = {
       description: 'Router name key',
       table: {category: 'Props'},
     },
-  },
-  args: {
-    children: 'Home',
-    hrefName: 'home',
   },
   component: HAnchor,
   decorators: [

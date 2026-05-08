@@ -10,7 +10,7 @@ declare module '~icons/*' {
 }
 
 declare module '*.json' {
-  const value: Object
+  const value: object
   export default value
 }
 

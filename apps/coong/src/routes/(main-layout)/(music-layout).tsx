@@ -6,7 +6,7 @@ import {
   useSearchParams,
 } from '@solidjs/router'
 import {useStorage} from '@winter-love/solid-use'
-import {createEffect, createMemo, createResource} from 'solid-js'
+import {createMemo, createResource} from 'solid-js'
 import {
   LinkType,
   MusicInfo,

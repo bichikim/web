@@ -1,3 +1,4 @@
+// oxlint-disable max-params
 import {getDocument} from '@winter-love/utils'
 
 export const NONE_CUSTOM_EVENT_KEY = 'none-custom-event-key'

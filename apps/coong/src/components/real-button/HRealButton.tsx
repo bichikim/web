@@ -70,10 +70,10 @@ export const HRealButton = (props: HRealButtonProps) => {
     const down = isDown().down || innerProps.renderDown
 
     return {
-      [ELEMENT_IDENTIFIER_GLOBAL_TOUCH]: targetId,
-      [ELEMENT_IDENTIFIER_REAL_BUTTON_STATE]: down ? 'down' : 'up',
       'aria-pressed': down,
       class: `select-none ${innerProps.class}`,
+      [ELEMENT_IDENTIFIER_GLOBAL_TOUCH]: targetId,
+      [ELEMENT_IDENTIFIER_REAL_BUTTON_STATE]: down ? 'down' : 'up',
     }
   })
 

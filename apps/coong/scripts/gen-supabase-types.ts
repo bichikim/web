@@ -13,6 +13,7 @@ const projectId = process.env.SUPABASE_PROJECT_ID
 const supabaseDir = join(projectRoot, '.supabase')
 const outputPath = join(supabaseDir, 'supabase.ts')
 
+// oxlint-disable-next-line id-length
 const $ = _$({cwd: projectRoot, stderr: 'inherit', stdout: {file: outputPath}})
 
 try {

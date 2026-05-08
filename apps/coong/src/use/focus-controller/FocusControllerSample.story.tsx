@@ -1,5 +1,4 @@
 import type {Meta, StoryObj} from 'storybook-solidjs-vite'
-import type {DeepPosition} from 'src/utils/focus-controller/deep-position'
 import {
   FocusControllerSampleBody,
   FocusControllerSampleContainer,
@@ -40,12 +39,12 @@ export interface FocusControllerSampleStoryProps {
 }
 
 const meta = {
+  args: {},
   argTypes: {
     globalMap: {
       control: 'boolean',
     },
   },
-  args: {},
   component: FocusControllerSample,
   parameters: {
     layout: 'centered',

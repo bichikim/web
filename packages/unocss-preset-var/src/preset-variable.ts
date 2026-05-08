@@ -1,3 +1,4 @@
+// oxlint-disable eslint-js/prefer-named-capture-group
 import type {DynamicMatcher} from 'unocss'
 import {definePreset, RuleContext} from '@unocss/core'
 import {parseCssColor} from '@unocss/rule-utils'

@@ -9,7 +9,7 @@ export const fetchResetPassword = async (email: string): Promise<void> => {
   const baseUrl = getSelfUrl()
   const redirectTo = `${baseUrl}/public/change-password`
 
-  const {data, error} = await supabase.auth.resetPasswordForEmail(email, {
+  const {error} = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo,
   })
 

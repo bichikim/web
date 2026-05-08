@@ -13,7 +13,7 @@ describe('getInstallFiles', () => {
     await fs.promises.writeFile(path.join(assetsRoot, 'nested', 'file.js'), '')
 
     try {
-      const result = await getInstallFiles({cwd: tmpDir, root: 'assets', files: '**/*'})
+      const result = await getInstallFiles({cwd: tmpDir, files: '**/*', root: 'assets'})
       expect(result.sort()).toEqual(['/file.txt', '/nested/file.js'])
     } finally {
       await fs.promises.rm(tmpDir, {force: true, recursive: true})

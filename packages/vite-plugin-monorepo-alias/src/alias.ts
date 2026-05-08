@@ -91,7 +91,46 @@ export interface MatchWorkspaceResult {
 }
 
 /**
+ * Finds every occurrence of {@link workspacePath} in {@link path}.
+ *
+ * Unlike {@link String.prototype.matchAll}, restarts the search at `match.index + 1` after each
+ * hit so matches are found even when they **share a slash** (e.g. `.../web/apps/coong/` — the
+ * `/` between `web` and `apps` ends `/apps/web/` and would start `/apps/coong/`, so plain
+ * `matchAll` skips the second segment).
+ */
+const forEachWorkspaceMatch = (
+  workspacePath: RegExp,
+  path: string,
+  callback: (matchedPath: string, index: number) => boolean | void,
+): void => {
+  const flags = workspacePath.flags.includes('g') ? workspacePath.flags : `${workspacePath.flags}g`
+  const pattern = new RegExp(workspacePath.source, flags)
+
+  let searchStart = 0
+
+  while (searchStart <= path.length) {
+    pattern.lastIndex = searchStart
+    const match = pattern.exec(path)
+
+    if (!match) {
+      break
+    }
+
+    const [matchedPath] = match
+    const {index} = match
+
+    if (callback(matchedPath, index)) {
+      break
+    }
+
+    searchStart = index + 1
+  }
+}
+
+/**
  * Finds the first workspace that contains the given path. Order of `workspacePaths` matters.
+ * When a pattern matches multiple times (e.g. `/apps/foo/` inside `.../apps/web/.../apps/coong/`),
+ * uses the first match whose path prefix equals `root` (the monorepo root).
  * @param root - Project root path.
  * @param workspacePaths - RegExps from `getWorkspaceRegexList`.
  * @param path - Normalized absolute path to test.
@@ -102,21 +141,31 @@ export const matchWorkspace = (
   workspacePaths: RegExp[],
   path: string,
 ): MatchWorkspaceResult | undefined => {
+  const normalizedRoot = trimLastSlash(root, '')
+
   for (const workspacePath of workspacePaths) {
-    const result = path.match(workspacePath)
+    let found: MatchWorkspaceResult | undefined
 
-    if (result) {
-      const [matchedPath] = result
-      const [rootPath, relativePath] = path.split(matchedPath)
+    forEachWorkspaceMatch(workspacePath, path, (matchedPath, index) => {
+      const rootPath = path.slice(0, index)
+      const relativePath = path.slice(index + matchedPath.length)
 
-      if (typeof relativePath === 'string' && rootPath === trimLastSlash(root, '')) {
-        return {
+      if (rootPath === normalizedRoot) {
+        found = {
           relativePath,
           relativeWorkspaceRoot: matchedPath,
           root,
           workspaceRoot: `${rootPath}${trimLastSlash(matchedPath, '')}`,
         }
+
+        return true
       }
+
+      return false
+    })
+
+    if (found) {
+      return found
     }
   }
 

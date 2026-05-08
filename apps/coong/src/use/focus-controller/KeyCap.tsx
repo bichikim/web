@@ -1,3 +1,4 @@
+// oxlint-disable eslint-js/max-len
 /* eslint-disable max-len */
 import {createMemo, createSignal, type JSX} from 'solid-js'
 import {cva} from 'class-variance-authority'

@@ -42,6 +42,13 @@ export const createAgentSessionIdStdoutParser = (
   let buffer = ''
 
   return {
+    flush() {
+      if (tryParseSessionIdLine(buffer, setSessionId)) {
+        return
+      }
+
+      buffer = ''
+    },
     onStdoutChunk(chunk: string) {
       buffer += normalizeNewlines(chunk)
       const lines = buffer.split('\n')
@@ -52,13 +59,6 @@ export const createAgentSessionIdStdoutParser = (
           return
         }
       }
-    },
-    flush() {
-      if (tryParseSessionIdLine(buffer, setSessionId)) {
-        return
-      }
-
-      buffer = ''
     },
   }
 }

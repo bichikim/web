@@ -4,7 +4,7 @@ import {useNameNavigate} from 'src/components/anchor/name-navigator'
 
 export const ChangePassword = () => {
   const navigate = useNameNavigate()
-  const {changePassword, loading} = useAuth()
+  const {loading} = useAuth()
   const [newPassword, setNewPassword] = createSignal('')
   const [confirmPassword, setConfirmPassword] = createSignal('')
   const [showNewPassword, setShowNewPassword] = createSignal(false)
@@ -15,11 +15,11 @@ export const ChangePassword = () => {
     event.preventDefault()
     setError(null)
 
-    const newPwd = newPassword()
-    const confirmPwd = confirmPassword()
+    // const newPwd = newPassword()
+    // const confirmPwd = confirmPassword()
 
     try {
-      const result = await changePassword(newPwd)
+      // const result = await changePassword(newPwd)
 
       navigate('home')
     } catch (error_) {

@@ -36,7 +36,12 @@ export function SettingsModal(properties: SettingsModalProperties) {
             aria-label="설정 닫기"
             onClick={properties.onClose}
           />
-          <section class="absolute left-1/2 top-[4.75rem] w-[min(720px,calc(100vw-1.5rem))] -translate-x-1/2 rounded-[12px] border border-[#2c3642] bg-[#0f1823] p-3">
+          <section
+            class={
+              'absolute left-1/2 top-[4.75rem] w-[min(720px,calc(100vw-1.5rem))] ' +
+              '-translate-x-1/2 rounded-[12px] border border-[#2c3642] bg-[#0f1823] p-3'
+            }
+          >
             <h2 class="mt-0 mb-2 text-[0.9rem] font-[650]">설정</h2>
             <label for="post-url-input" class="mb-1 block text-[0.78rem] text-[#8b99a8]">
               요청 API 주소

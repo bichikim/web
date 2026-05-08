@@ -1,13 +1,19 @@
 {
   "name": "@winter-love/solid-components",
-  "version": "1.0.37",
+  "version": "1.0.38",
   "description": "",
   "repository": {
     "type": "git",
     "url": "https://github.com/bichikim/web.git"
   },
-  "sideEffects": false,
+  "files": [
+    "dist/*"
+  ],
   "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index/index.common.js",
+  "module": "./dist/index/index.module.js",
+  "types": "./dist/index/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index/index.d.ts",
@@ -18,37 +24,30 @@
       "node": "./dist/index/index.common.js"
     }
   },
-  "main": "./dist/index/index.common.js",
-  "module": "./dist/index/index.module.js",
-  "types": "./dist/index/index.d.ts",
-  "files": [
-    "dist/*"
-  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "node scripts/fix-build.js && rollup -c rollup.config.js && tspc -p tsconfig.build.json",
-    "check-types": "tsc --noEmit",
+    "prepare": "pnpm run build",
+    "typecheck": "tsc --noEmit",
     "dev": "node scripts/fix-build.js && concurrently \"rollup -c rollup.config.js --watch\" \"tsc -p tsconfig.build.json --watch\"",
-    "lint": "cross-env NODE_ENV=script eslint src",
-    "lint:fix": "cross-env NODE_ENV=script eslint src --fix",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
     "@winter-love/solid-use": "workspace:*",
     "@winter-love/utils": "workspace:*",
-    "class-variance-authority": "^0.7.1",
-    "solid-js": "^1.9.3"
+    "class-variance-authority": "catalog:",
+    "solid-js": "catalog:"
   },
   "devDependencies": {
     "@rollup/plugin-alias": "^5.1.1",
-    "@types/node": "^25.0.3",
+    "@types/node": "catalog:",
     "@winter-love/vite-lib-config": "workspace:*",
     "concurrently": "^9.2.1",
-    "rollup": "^4.32.1",
+    "rollup": "^4.60.2",
     "rollup-preset-solid": "^3.0.0",
     "ts-patch": "^3.3.0",
-    "typescript-transform-paths": "^3.5.4"
-  },
-  "publishConfig": {
-    "access": "public"
+    "typescript-transform-paths": "^3.5.6"
   }
 }

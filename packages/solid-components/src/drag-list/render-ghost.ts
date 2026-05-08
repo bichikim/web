@@ -1,5 +1,7 @@
-import {Accessor, onCleanup, createEffect} from 'solid-js'
+import {Accessor, createEffect, onCleanup} from 'solid-js'
 import {getDocument} from '@winter-love/utils'
+
+const DEFAULT_GHOST_ANIMATION_DURATION_MS = 100
 
 export interface DestroyGhostOptions {
   duration?: number
@@ -69,7 +71,7 @@ export const createRenderGhost = (isActive: Accessor<boolean>) => {
             top: `${position.y}px`,
           },
           {
-            duration: options.duration ?? 100,
+            duration: options.duration ?? DEFAULT_GHOST_ANIMATION_DURATION_MS,
             easing: options.easing ?? 'ease-in-out',
           },
         )

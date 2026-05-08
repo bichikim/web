@@ -6,11 +6,13 @@ A four-bar lick and a day movin' fast.
 That steel guitar hums low and true,
 This ain't the chorus — it’s the intro, through and through.`
 
+const HTTP_STATUS_OK = 200
+
 /** `GET /country` */
 export const countryRoute = new Hono()
 
 countryRoute.get('/', (context) => {
-  return context.text(COUNTRY_MUSIC_INTRO, 200, {
+  return context.text(COUNTRY_MUSIC_INTRO, HTTP_STATUS_OK, {
     'Content-Type': 'text/plain; charset=utf-8',
   })
 })

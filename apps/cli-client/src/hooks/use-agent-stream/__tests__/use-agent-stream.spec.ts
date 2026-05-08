@@ -33,14 +33,20 @@ const createSseResponse = (blocks: readonly string[]): Response => {
 
 const createErroredSseResponse = (): Response => {
   const encoder = new TextEncoder()
+  let didEnqueue = false
 
   return new Response(
     new ReadableStream({
-      start(controller) {
+      pull(controller) {
+        if (didEnqueue) {
+          controller.error(new Error('stream failed'))
+          return
+        }
+
         controller.enqueue(
           encoder.encode('event: stdout\ndata: {"type":"assistant","message":{"content":[{"type":"text","text":"partial"}]}}\n\n'),
         )
-        controller.error(new Error('stream failed'))
+        didEnqueue = true
       },
     }),
     {status: 200},

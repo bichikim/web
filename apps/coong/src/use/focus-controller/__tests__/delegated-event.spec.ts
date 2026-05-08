@@ -15,8 +15,8 @@ const mocks = vi.hoisted(() => {
 
 vi.mock('src/utils/focus-controller/delegated-event', () => {
   return {
-    DEFAULT_CHANNEL_PREFIX: '',
     createDelegatedEvent: mocks.createDelegatedEvent,
+    DEFAULT_CHANNEL_PREFIX: '',
     delegatedEmit: mocks.delegatedEmit,
     delegatedOn: mocks.delegatedOn,
   }

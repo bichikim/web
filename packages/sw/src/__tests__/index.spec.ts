@@ -17,7 +17,7 @@ describe('generateSW', () => {
       "const CACHE_NAME = typeof __CACHE_NAME__ === 'undefined' ? 'coong-cache-v1' : __CACHE_NAME__",
       "const CACHE_VERSION = typeof __CACHE_VERSION__ === 'undefined' ? 1 : __CACHE_VERSION__",
       "const ENV = typeof __SW_ENV__ === 'undefined' ? 'production' : __SW_ENV__",
-      'const SW_CONFIG = typeof __SW_CONFIG__ === \"undefined\" ? {} : __SW_CONFIG__',
+      'const SW_CONFIG = typeof __SW_CONFIG__ === "undefined" ? {} : __SW_CONFIG__',
       'const APP_FILES = __inject_code__',
     ].join('\n')
 
@@ -27,13 +27,13 @@ describe('generateSW', () => {
       await generateSW('sw.js', {
         assets: '**/*',
         assetsRoot: 'assets',
+        cacheMaxEntries: 10,
         cacheName: 'test-cache',
         cacheVersion: 2,
-        cacheMaxEntries: 10,
-        logLevel: 'debug',
-        env: 'development',
-        swTemplatePath: templatePath,
         cwd: tmpDir,
+        env: 'development',
+        logLevel: 'debug',
+        swTemplatePath: templatePath,
       })
 
       const outputPath = path.join(tmpDir, 'sw.js')

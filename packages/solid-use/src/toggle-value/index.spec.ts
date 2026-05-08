@@ -20,8 +20,8 @@ describe('toggleValue', () => {
       return {
         setToggleValue,
         setValue,
-        toggleValueAccessor,
         toggledValue: toggleValue(valueAccessor, toggleValueAccessor),
+        toggleValueAccessor,
       }
     })
 

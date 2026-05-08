@@ -8,6 +8,7 @@ describe('is-array', () => {
     expect(isArray(['foo', 'bar'])).toBe(true)
     expect(isArray([null, undefined])).toBe(true)
     expect(isArray([{foo: 'bar'}])).toBe(true)
+    // oxlint-disable-next-line unicorn/no-new-array
     expect(isArray(new Array(3))).toBe(true)
   })
 
