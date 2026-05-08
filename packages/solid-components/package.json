@@ -30,7 +30,7 @@
   "scripts": {
     "build": "node scripts/fix-build.js && rollup -c rollup.config.js && tspc -p tsconfig.build.json",
     "prepare": "pnpm run build",
-    "check-types": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
     "dev": "node scripts/fix-build.js && concurrently \"rollup -c rollup.config.js --watch\" \"tsc -p tsconfig.build.json --watch\"",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

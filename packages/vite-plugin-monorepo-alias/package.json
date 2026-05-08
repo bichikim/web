@@ -39,7 +39,7 @@
   },
   "scripts": {
     "build": "vite build",
-    "check-types": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
     "dev": "vite build --watch --minify false",
     "prepare": "vite build",
     "preview": "vite build -c vite.preview.config.mts",

@@ -29,7 +29,7 @@
   "scripts": {
     "build": "vite build",
     "prepare": "vite build",
-    "check-types": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
     "start": "node dist/cli.js build -r 'test/assets' -a '**/*' ./node_modules/sw.js",
     "test": "vitest run"
   },
