@@ -20,12 +20,32 @@ export interface AgentSessionSummary {
 const CURSOR_PROJECTS_DIRECTORY = path.join(os.homedir(), '.cursor', 'projects')
 
 const MAX_SESSION_TITLE_LENGTH = 120
+const SESSION_ID_PATH_SEPARATOR_PATTERN = /[/\\]/u
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null
 
 const normalizeLineBreaks = (value: string): string =>
   value.replaceAll('\r\n', '\n').replaceAll('\r', '\n')
+
+const isInsideDirectory = (parentDirectory: string, childPath: string): boolean => {
+  const relativePath = path.relative(parentDirectory, childPath)
+
+  return (
+    relativePath === '' ||
+    (relativePath !== '..' &&
+      !relativePath.startsWith(`..${path.sep}`) &&
+      !path.isAbsolute(relativePath))
+  )
+}
+
+const isSafeSessionId = (sessionId: string): boolean =>
+  sessionId !== '' &&
+  sessionId !== '.' &&
+  sessionId !== '..' &&
+  !SESSION_ID_PATH_SEPARATOR_PATTERN.test(sessionId) &&
+  !path.isAbsolute(sessionId) &&
+  !path.win32.isAbsolute(sessionId)
 
 const workspacePathToProjectKey = (workspacePath: string): string =>
   path
@@ -81,6 +101,27 @@ const resolveTranscriptDirectory = (workspacePath: string): string =>
     workspacePathToProjectKey(workspacePath),
     'agent-transcripts',
   )
+
+const resolveSessionTranscriptFilePath = ({
+  sessionId,
+  transcriptDirectory,
+}: {
+  sessionId: string
+  transcriptDirectory: string
+}): string | undefined => {
+  if (!isSafeSessionId(sessionId)) {
+    return
+  }
+
+  const resolvedTranscriptDirectory = path.resolve(transcriptDirectory)
+  const filePath = path.resolve(resolvedTranscriptDirectory, sessionId, `${sessionId}.jsonl`)
+
+  if (!isInsideDirectory(resolvedTranscriptDirectory, filePath)) {
+    return
+  }
+
+  return filePath
+}
 
 const hasTranscriptDirectory = async (workspacePath: string): Promise<boolean> => {
   const transcriptDirectory = resolveTranscriptDirectory(workspacePath)
@@ -237,7 +278,11 @@ export const resolveAgentSessionJsonlFilePath = async ({
     workspaceRoot,
   })
   const transcriptDirectory = resolveTranscriptDirectory(workspaceForTranscripts)
-  const filePath = path.join(transcriptDirectory, sessionId, `${sessionId}.jsonl`)
+  const filePath = resolveSessionTranscriptFilePath({sessionId, transcriptDirectory})
+
+  if (filePath === undefined) {
+    return
+  }
 
   try {
     const stats = await fs.stat(filePath)
