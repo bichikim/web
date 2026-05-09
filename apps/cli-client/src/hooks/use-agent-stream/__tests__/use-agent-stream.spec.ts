@@ -56,14 +56,20 @@ const createErroredSseResponse = (): Response => {
 const createAbortControlledSseResponse = (signal: AbortSignal | null | undefined) => {
   const encoder = new TextEncoder()
   let didAbort = false
+  let didEnqueue = false
   let streamController: ReadableStreamDefaultController<Uint8Array> | undefined
   const response = new Response(
     new ReadableStream({
-      start(controller) {
+      pull(controller) {
         streamController = controller
+        if (didEnqueue) {
+          return
+        }
+
         controller.enqueue(
           encoder.encode('event: stdout\ndata: {"type":"assistant","message":{"content":[{"type":"text","text":"partial"}]}}\n\n'),
         )
+        didEnqueue = true
         signal?.addEventListener(
           'abort',
           () => {
