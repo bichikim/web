@@ -88,12 +88,6 @@ const createAbortControlledSseResponse = (signal: AbortSignal | null | undefined
   }
 }
 
-const waitForStreamTurn = async (): Promise<void> => {
-  await new Promise((resolve) => {
-    setTimeout(resolve, 0)
-  })
-}
-
 const createHookHarness = () => {
   let messages: ChatMessage[] = []
   let promptText = 'keep me'
@@ -224,9 +218,8 @@ describe('useAgentStream', () => {
     const harness = createHookHarness()
 
     const firstSubmit = harness.submitPrompt({event: createSubmitEvent(), promptText: 'first'})
-    await waitForStreamTurn()
 
-    expect(harness.getMessages().at(-1)?.content).toBe('partial')
+    await expect.poll(() => harness.getMessages().at(-1)?.content).toBe('partial')
 
     const secondSubmit = harness.submitPrompt({event: createSubmitEvent(), promptText: 'second'})
     await secondSubmit
