@@ -50,7 +50,10 @@ export const submitAgentPrompt = async (options: SubmitAgentPromptOptions): Prom
 
   streamControl.activeController = controller
 
+  // `createHandlers` runs before fetch resolves, so later HTTP/read failures still
+  // enter finalization. Keep success-only cleanup gated until the stream fully ends.
   const mutable: AgentStreamLoopMutable = {
+    didConsumeStream: false,
     exitCode: null,
     exitSignalText: '',
     sessionIdParser: undefined,
@@ -99,7 +102,12 @@ export const submitAgentPrompt = async (options: SubmitAgentPromptOptions): Prom
       } catch (error) {
         properties.setStreamError(error instanceof Error ? error.message : String(error))
       }
+
+      return
     }
+
+    // Only this path means the SSE reader consumed the response without throwing.
+    mutable.didConsumeStream = true
   } catch (error) {
     resetAgentStreamToIdle(streamControl, properties)
 
