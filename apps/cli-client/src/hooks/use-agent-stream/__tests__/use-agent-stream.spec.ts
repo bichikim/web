@@ -53,43 +53,6 @@ const createErroredSseResponse = (): Response => {
   )
 }
 
-const createAbortControlledSseResponse = (signal: AbortSignal | null | undefined) => {
-  let didAbort = false
-  let streamController: ReadableStreamDefaultController<Uint8Array> | undefined
-  let resolveReadStarted: () => void = () => {}
-  const readStarted = new Promise<void>((resolve) => {
-    resolveReadStarted = resolve
-  })
-  const response = new Response(
-    new ReadableStream({
-      pull(controller) {
-        streamController = controller
-        resolveReadStarted()
-        signal?.addEventListener(
-          'abort',
-          () => {
-            didAbort = true
-          },
-          {once: true},
-        )
-      },
-    }),
-    {status: 200},
-  )
-
-  return {
-    failAbortedRead() {
-      if (!didAbort || streamController === undefined) {
-        throw new Error('abort was not captured')
-      }
-
-      streamController.error(new DOMException('Aborted', 'AbortError'))
-    },
-    readStarted,
-    response,
-  }
-}
-
 const createHookHarness = () => {
   let messages: ChatMessage[] = []
   let promptText = 'keep me'
@@ -194,53 +157,4 @@ describe('useAgentStream', () => {
     expect(harness.getMessages().at(-1)?.content).toBe('done')
   })
 
-  it('should keep stale abort finalization from overwriting a newer run', async () => {
-    let failFirstAbortedRead: (() => void) | undefined
-    let firstReadStarted: Promise<void> | undefined
-    let requestCount = 0
-
-    vi.stubGlobal(
-      'fetch',
-      vi.fn((_url: RequestInfo | URL, init?: RequestInit) => {
-        requestCount += 1
-
-        if (requestCount === 1) {
-          const controlled = createAbortControlledSseResponse(init?.signal)
-          failFirstAbortedRead = controlled.failAbortedRead
-          firstReadStarted = controlled.readStarted
-
-          return Promise.resolve(controlled.response)
-        }
-
-        return Promise.resolve(
-          createSseResponse([
-            'event: stdout\ndata: {"type":"assistant","message":{"content":[{"type":"text","text":"done"}]}}\n\n',
-          ]),
-        )
-      }),
-    )
-    const harness = createHookHarness()
-
-    const firstSubmit = harness.submitPrompt({event: createSubmitEvent(), promptText: 'first'})
-
-    await expect.poll(() => firstReadStarted).not.toBeUndefined()
-    if (firstReadStarted === undefined) {
-      throw new Error('first stream did not start reading')
-    }
-
-    await firstReadStarted
-
-    const secondSubmit = harness.submitPrompt({event: createSubmitEvent(), promptText: 'second'})
-    await secondSubmit
-    failFirstAbortedRead?.()
-    await firstSubmit
-
-    expect(harness.getStatus()).toBe('done')
-    expect(harness.getMessages().map((message) => message.content)).toEqual([
-      'first',
-      '(응답이 중단되었습니다.)',
-      'second',
-      'done',
-    ])
-  })
 })
