@@ -18,28 +18,35 @@ export interface SubmitAgentPromptOptions {
   readonly promptText: string
   readonly properties: UseAgentStreamProperties
   readonly streamControl: AgentStreamControl
-  readonly updateLastAssistantContent: (content: string) => void
 }
 
 const resetAgentStreamToIdle = (
   streamControl: AgentStreamControl,
   properties: UseAgentStreamProperties,
+  runId: number,
 ): void => {
+  if (streamControl.runId !== runId) {
+    return
+  }
+
   streamControl.activeController = undefined
   properties.setStatus('idle')
 }
 
 export const submitAgentPrompt = async (options: SubmitAgentPromptOptions): Promise<void> => {
-  const {event, promptText, properties, streamControl, updateLastAssistantContent} = options
+  const {event, promptText, properties, streamControl} = options
 
   event.preventDefault()
   streamControl.activeController?.abort()
   streamControl.activeController = undefined
+  streamControl.runId += 1
+  const runId = streamControl.runId
 
   const trimmed = promptText.trim()
 
   if (trimmed === '') {
     properties.setStreamError('메시지를 입력해 주세요.')
+    properties.setStatus('idle')
     return
   }
 
@@ -53,6 +60,7 @@ export const submitAgentPrompt = async (options: SubmitAgentPromptOptions): Prom
   // `createHandlers` runs before fetch resolves, so later HTTP/read failures still
   // enter finalization. Keep success-only cleanup gated until the stream fully ends.
   const mutable: AgentStreamLoopMutable = {
+    assistantMessageId: undefined,
     didConsumeStream: false,
     exitCode: null,
     exitSignalText: '',
@@ -69,7 +77,9 @@ export const submitAgentPrompt = async (options: SubmitAgentPromptOptions): Prom
     if ('error' in resolvedRequestUrl) {
       properties.setStreamError(resolvedRequestUrl.error)
       properties.setStatus('idle')
-      streamControl.activeController = undefined
+      if (streamControl.runId === runId) {
+        streamControl.activeController = undefined
+      }
       return
     }
 
@@ -87,15 +97,20 @@ export const submitAgentPrompt = async (options: SubmitAgentPromptOptions): Prom
       createHandlers: createAgentPostStreamHandlers({
         mutable,
         properties,
+        runId,
+        streamControl,
         trimmed,
-        updateLastAssistantContent,
       }),
       signal: controller.signal,
       url: requestUrl,
     })
 
     if (streamResult.status === 'http-error') {
-      resetAgentStreamToIdle(streamControl, properties)
+      resetAgentStreamToIdle(streamControl, properties, runId)
+
+      if (streamControl.runId !== runId) {
+        return
+      }
 
       try {
         properties.setStreamError(await parseHttpErrorBody(streamResult.response))
@@ -109,7 +124,7 @@ export const submitAgentPrompt = async (options: SubmitAgentPromptOptions): Prom
     // Only this path means the SSE reader consumed the response without throwing.
     mutable.didConsumeStream = true
   } catch (error) {
-    resetAgentStreamToIdle(streamControl, properties)
+    resetAgentStreamToIdle(streamControl, properties, runId)
 
     if (error instanceof DOMException && error.name === 'AbortError') {
       console.log(
@@ -117,6 +132,10 @@ export const submitAgentPrompt = async (options: SubmitAgentPromptOptions): Prom
           ? '[agent] fetch aborted before response'
           : '[agent] stream read aborted',
       )
+      return
+    }
+
+    if (streamControl.runId !== runId) {
       return
     }
 
@@ -140,6 +159,7 @@ export const submitAgentPrompt = async (options: SubmitAgentPromptOptions): Prom
         mutable,
         properties,
         requestUrl,
+        runId,
         streamControl,
       })
     }
