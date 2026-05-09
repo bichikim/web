@@ -20,12 +20,31 @@ export interface SubmitAgentPromptOptions {
   readonly streamControl: AgentStreamControl
 }
 
+interface HandleAgentHttpErrorOptions {
+  readonly properties: UseAgentStreamProperties
+  readonly response: Response
+  readonly runId: number
+  readonly streamControl: AgentStreamControl
+}
+
+interface HandleAgentStreamErrorOptions {
+  readonly error: unknown
+  readonly mutable: AgentStreamLoopMutable
+  readonly properties: UseAgentStreamProperties
+  readonly requestUrl: string
+  readonly runId: number
+  readonly streamControl: AgentStreamControl
+}
+
+const isLatestAgentRun = (streamControl: AgentStreamControl, runId: number): boolean =>
+  streamControl.runId === runId
+
 const resetAgentStreamToIdle = (
   streamControl: AgentStreamControl,
   properties: UseAgentStreamProperties,
   runId: number,
 ): void => {
-  if (streamControl.runId !== runId) {
+  if (!isLatestAgentRun(streamControl, runId)) {
     return
   }
 
@@ -33,14 +52,85 @@ const resetAgentStreamToIdle = (
   properties.setStatus('idle')
 }
 
-export const submitAgentPrompt = async (options: SubmitAgentPromptOptions): Promise<void> => {
-  const {event, promptText, properties, streamControl} = options
-
+const startNextAgentRun = ({
+  event,
+  streamControl,
+}: {
+  readonly event: Event & {currentTarget: HTMLFormElement}
+  readonly streamControl: AgentStreamControl
+}): number => {
   event.preventDefault()
   streamControl.activeController?.abort()
   streamControl.activeController = undefined
   streamControl.runId += 1
-  const runId = streamControl.runId
+
+  const {runId} = streamControl
+
+  return runId
+}
+
+const createAgentStreamLoopMutable = (): AgentStreamLoopMutable => ({
+  assistantMessageId: undefined,
+  didConsumeStream: false,
+  exitCode: null,
+  exitSignalText: '',
+  sessionIdParser: undefined,
+  stderrOutput: '',
+  stdoutJsonState: createInitialAgentJsonStdoutReducerState(),
+})
+
+const handleAgentHttpError = async (options: HandleAgentHttpErrorOptions): Promise<void> => {
+  const {properties, response, runId, streamControl} = options
+
+  resetAgentStreamToIdle(streamControl, properties, runId)
+
+  if (!isLatestAgentRun(streamControl, runId)) {
+    return
+  }
+
+  try {
+    properties.setStreamError(await parseHttpErrorBody(response))
+  } catch (error) {
+    properties.setStreamError(error instanceof Error ? error.message : String(error))
+  }
+}
+
+const handleAgentStreamError = (options: HandleAgentStreamErrorOptions): void => {
+  const {error, mutable, properties, requestUrl, runId, streamControl} = options
+
+  resetAgentStreamToIdle(streamControl, properties, runId)
+
+  if (error instanceof DOMException && error.name === 'AbortError') {
+    console.log(
+      mutable.sessionIdParser === undefined
+        ? '[agent] fetch aborted before response'
+        : '[agent] stream read aborted',
+    )
+    return
+  }
+
+  if (!isLatestAgentRun(streamControl, runId)) {
+    return
+  }
+
+  const reason = error instanceof Error ? error.message : String(error)
+
+  if (mutable.sessionIdParser === undefined) {
+    properties.setStreamError(
+      composeAgentFetchNetworkErrorMessage({
+        postUrlFallback: properties.getPostUrl(),
+        reason,
+        requestUrl,
+      }),
+    )
+  } else {
+    properties.setStreamError(reason)
+  }
+}
+
+export const submitAgentPrompt = async (options: SubmitAgentPromptOptions): Promise<void> => {
+  const {event, promptText, properties, streamControl} = options
+  const runId = startNextAgentRun({event, streamControl})
 
   const trimmed = promptText.trim()
 
@@ -57,17 +147,7 @@ export const submitAgentPrompt = async (options: SubmitAgentPromptOptions): Prom
 
   streamControl.activeController = controller
 
-  // `createHandlers` runs before fetch resolves, so later HTTP/read failures still
-  // enter finalization. Keep success-only cleanup gated until the stream fully ends.
-  const mutable: AgentStreamLoopMutable = {
-    assistantMessageId: undefined,
-    didConsumeStream: false,
-    exitCode: null,
-    exitSignalText: '',
-    sessionIdParser: undefined,
-    stderrOutput: '',
-    stdoutJsonState: createInitialAgentJsonStdoutReducerState(),
-  }
+  const mutable = createAgentStreamLoopMutable()
 
   let requestUrl = ''
 
@@ -77,7 +157,7 @@ export const submitAgentPrompt = async (options: SubmitAgentPromptOptions): Prom
     if ('error' in resolvedRequestUrl) {
       properties.setStreamError(resolvedRequestUrl.error)
       properties.setStatus('idle')
-      if (streamControl.runId === runId) {
+      if (isLatestAgentRun(streamControl, runId)) {
         streamControl.activeController = undefined
       }
       return
@@ -106,52 +186,19 @@ export const submitAgentPrompt = async (options: SubmitAgentPromptOptions): Prom
     })
 
     if (streamResult.status === 'http-error') {
-      resetAgentStreamToIdle(streamControl, properties, runId)
-
-      if (streamControl.runId !== runId) {
-        return
-      }
-
-      try {
-        properties.setStreamError(await parseHttpErrorBody(streamResult.response))
-      } catch (error) {
-        properties.setStreamError(error instanceof Error ? error.message : String(error))
-      }
-
+      await handleAgentHttpError({
+        properties,
+        response: streamResult.response,
+        runId,
+        streamControl,
+      })
       return
     }
 
     // Only this path means the SSE reader consumed the response without throwing.
     mutable.didConsumeStream = true
   } catch (error) {
-    resetAgentStreamToIdle(streamControl, properties, runId)
-
-    if (error instanceof DOMException && error.name === 'AbortError') {
-      console.log(
-        mutable.sessionIdParser === undefined
-          ? '[agent] fetch aborted before response'
-          : '[agent] stream read aborted',
-      )
-      return
-    }
-
-    if (streamControl.runId !== runId) {
-      return
-    }
-
-    const reason = error instanceof Error ? error.message : String(error)
-
-    if (mutable.sessionIdParser === undefined) {
-      properties.setStreamError(
-        composeAgentFetchNetworkErrorMessage({
-          postUrlFallback: properties.getPostUrl(),
-          reason,
-          requestUrl,
-        }),
-      )
-    } else {
-      properties.setStreamError(reason)
-    }
+    handleAgentStreamError({error, mutable, properties, requestUrl, runId, streamControl})
   } finally {
     if (mutable.sessionIdParser !== undefined) {
       finalizeAgentStreamSession({
