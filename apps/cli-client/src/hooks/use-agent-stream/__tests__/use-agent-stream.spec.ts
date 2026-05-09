@@ -54,22 +54,17 @@ const createErroredSseResponse = (): Response => {
 }
 
 const createAbortControlledSseResponse = (signal: AbortSignal | null | undefined) => {
-  const encoder = new TextEncoder()
   let didAbort = false
-  let didEnqueue = false
   let streamController: ReadableStreamDefaultController<Uint8Array> | undefined
+  let resolveReadStarted: () => void = () => {}
+  const readStarted = new Promise<void>((resolve) => {
+    resolveReadStarted = resolve
+  })
   const response = new Response(
     new ReadableStream({
       pull(controller) {
         streamController = controller
-        if (didEnqueue) {
-          return
-        }
-
-        controller.enqueue(
-          encoder.encode('event: stdout\ndata: {"type":"assistant","message":{"content":[{"type":"text","text":"partial"}]}}\n\n'),
-        )
-        didEnqueue = true
+        resolveReadStarted()
         signal?.addEventListener(
           'abort',
           () => {
@@ -90,6 +85,7 @@ const createAbortControlledSseResponse = (signal: AbortSignal | null | undefined
 
       streamController.error(new DOMException('Aborted', 'AbortError'))
     },
+    readStarted,
     response,
   }
 }
@@ -200,6 +196,7 @@ describe('useAgentStream', () => {
 
   it('should keep stale abort finalization from overwriting a newer run', async () => {
     let failFirstAbortedRead: (() => void) | undefined
+    let firstReadStarted: Promise<void> | undefined
     let requestCount = 0
 
     vi.stubGlobal(
@@ -210,6 +207,7 @@ describe('useAgentStream', () => {
         if (requestCount === 1) {
           const controlled = createAbortControlledSseResponse(init?.signal)
           failFirstAbortedRead = controlled.failAbortedRead
+          firstReadStarted = controlled.readStarted
 
           return Promise.resolve(controlled.response)
         }
@@ -225,7 +223,12 @@ describe('useAgentStream', () => {
 
     const firstSubmit = harness.submitPrompt({event: createSubmitEvent(), promptText: 'first'})
 
-    await expect.poll(() => harness.getMessages().at(-1)?.content).toBe('partial')
+    await expect.poll(() => firstReadStarted).not.toBeUndefined()
+    if (firstReadStarted === undefined) {
+      throw new Error('first stream did not start reading')
+    }
+
+    await firstReadStarted
 
     const secondSubmit = harness.submitPrompt({event: createSubmitEvent(), promptText: 'second'})
     await secondSubmit
@@ -235,7 +238,7 @@ describe('useAgentStream', () => {
     expect(harness.getStatus()).toBe('done')
     expect(harness.getMessages().map((message) => message.content)).toEqual([
       'first',
-      'partial\n\n(응답이 중단되었습니다.)',
+      '(응답이 중단되었습니다.)',
       'second',
       'done',
     ])
