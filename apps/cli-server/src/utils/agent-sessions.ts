@@ -29,6 +29,21 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 const normalizeLineBreaks = (value: string): string =>
   value.replaceAll('\r\n', '\n').replaceAll('\r', '\n')
 
+export const isSafeAgentSessionId = (sessionId: string): boolean => {
+  const trimmed = sessionId.trim()
+
+  return (
+    trimmed !== '' &&
+    trimmed !== '.' &&
+    trimmed !== '..' &&
+    !trimmed.includes(NULL_CHARACTER) &&
+    !trimmed.includes('/') &&
+    !trimmed.includes('\\') &&
+    !path.isAbsolute(trimmed) &&
+    !path.win32.isAbsolute(trimmed)
+  )
+}
+
 const workspacePathToProjectKey = (workspacePath: string): string =>
   path
     .resolve(workspacePath)
@@ -84,33 +99,21 @@ const resolveTranscriptDirectory = (workspacePath: string): string =>
     'agent-transcripts',
   )
 
-export const isSafeAgentSessionId = (sessionId: string): boolean => {
-  const trimmed = sessionId.trim()
-
-  return (
-    trimmed !== '' &&
-    trimmed !== '.' &&
-    trimmed !== '..' &&
-    !trimmed.includes('/') &&
-    !trimmed.includes('\\') &&
-    !trimmed.includes(NULL_CHARACTER)
-  )
-}
-
-const resolveSessionFilePath = ({
-  transcriptDirectory,
+const resolveSessionTranscriptFilePath = ({
   sessionId,
+  transcriptDirectory,
 }: {
-  transcriptDirectory: string
   sessionId: string
+  transcriptDirectory: string
 }): string | undefined => {
   if (!isSafeAgentSessionId(sessionId)) {
     return
   }
 
-  const filePath = path.join(transcriptDirectory, sessionId, `${sessionId}.jsonl`)
+  const resolvedTranscriptDirectory = path.resolve(transcriptDirectory)
+  const filePath = path.resolve(resolvedTranscriptDirectory, sessionId, `${sessionId}.jsonl`)
 
-  if (!isPathInsideDirectory({directoryPath: transcriptDirectory, targetPath: filePath})) {
+  if (!isPathInsideDirectory({directoryPath: resolvedTranscriptDirectory, targetPath: filePath})) {
     return
   }
 
@@ -287,7 +290,7 @@ export const resolveAgentSessionJsonlFilePath = async ({
     workspaceRoot,
   })
   const transcriptDirectory = resolveTranscriptDirectory(workspaceForTranscripts)
-  const filePath = resolveSessionFilePath({sessionId, transcriptDirectory})
+  const filePath = resolveSessionTranscriptFilePath({sessionId, transcriptDirectory})
 
   if (filePath === undefined) {
     return
