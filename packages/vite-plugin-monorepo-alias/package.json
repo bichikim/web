@@ -39,17 +39,17 @@
   },
   "scripts": {
     "build": "vite build",
-    "check-types": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
     "dev": "vite build --watch --minify false",
     "prepare": "vite build",
     "preview": "vite build -c vite.preview.config.mts",
     "publish": "npm publish"
   },
   "dependencies": {
-    "vite": "^7.3.2"
+    "vite": "catalog:"
   },
   "devDependencies": {
-    "@types/node": "^22.19.17",
+    "@types/node": "catalog:",
     "@winter-love/vite-lib-config": "workspace:*"
   },
   "stage": "alpha",

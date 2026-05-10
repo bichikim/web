@@ -51,9 +51,14 @@ export const finalizeAgentStreamSession = (options: FinalizeAgentStreamSessionOp
         stderrOutput: mutable.stderrOutput,
       }),
     )
-  } else if (!controller.signal.aborted) {
+  } else if (mutable.didConsumeStream && !controller.signal.aborted) {
+    // Resume state is user recovery data; keep it when HTTP/read errors stop the run.
     properties.clearResumeSessionId()
   }
 
-  properties.setStatus('done')
+  // Failed requests are reset to idle before this cleanup runs; do not mask them
+  // as completed just because handlers were initialized.
+  if (mutable.didConsumeStream) {
+    properties.setStatus('done')
+  }
 }

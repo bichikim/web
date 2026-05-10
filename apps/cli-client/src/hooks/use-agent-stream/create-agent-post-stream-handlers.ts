@@ -11,6 +11,7 @@ import {SESSION_TITLE_TRUNCATE_MAX_LENGTH} from '@/hooks/use-agent-stream/sessio
 import type {UseAgentStreamProperties} from '@/hooks/use-agent-stream/use-agent-stream-types'
 
 export interface AgentStreamLoopMutable {
+  didConsumeStream: boolean
   exitCode: number | null
   exitSignalText: string
   sessionIdParser: ReturnType<typeof createAgentSessionIdStdoutParser> | undefined

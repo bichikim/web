@@ -30,19 +30,19 @@
   "scripts": {
     "build": "node scripts/fix-build.js && rollup -c rollup.config.js && tspc -p tsconfig.build.json",
     "prepare": "pnpm run build",
-    "check-types": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
     "dev": "node scripts/fix-build.js && concurrently \"rollup -c rollup.config.js --watch\" \"tsc -p tsconfig.build.json --watch\"",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
     "@winter-love/solid-use": "workspace:*",
     "@winter-love/utils": "workspace:*",
-    "class-variance-authority": "^0.7.1",
-    "solid-js": "^1.9.12"
+    "class-variance-authority": "catalog:",
+    "solid-js": "catalog:"
   },
   "devDependencies": {
     "@rollup/plugin-alias": "^5.1.1",
-    "@types/node": "^25.6.0",
+    "@types/node": "catalog:",
     "@winter-love/vite-lib-config": "workspace:*",
     "concurrently": "^9.2.1",
     "rollup": "^4.60.2",
