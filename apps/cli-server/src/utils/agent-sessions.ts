@@ -20,13 +20,39 @@ export interface AgentSessionSummary {
 const CURSOR_PROJECTS_DIRECTORY = path.join(os.homedir(), '.cursor', 'projects')
 
 const MAX_SESSION_TITLE_LENGTH = 120
-const SESSION_ID_PATH_SEPARATOR_PATTERN = /[/\\\0]/u
+const NULL_CHARACTER = String.fromCharCode(0)
+const SESSION_ID_PATH_SEPARATOR_PATTERN = /[/\\]/u
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null
 
 const normalizeLineBreaks = (value: string): string =>
   value.replaceAll('\r\n', '\n').replaceAll('\r', '\n')
+
+const isInsideDirectory = (parentDirectory: string, childPath: string): boolean => {
+  const relativePath = path.relative(parentDirectory, childPath)
+
+  return (
+    relativePath === '' ||
+    (relativePath !== '..' &&
+      !relativePath.startsWith(`..${path.sep}`) &&
+      !path.isAbsolute(relativePath))
+  )
+}
+
+export const isSafeAgentSessionId = (sessionId: string): boolean => {
+  const trimmed = sessionId.trim()
+
+  return (
+    trimmed !== '' &&
+    trimmed !== '.' &&
+    trimmed !== '..' &&
+    !trimmed.includes(NULL_CHARACTER) &&
+    !SESSION_ID_PATH_SEPARATOR_PATTERN.test(trimmed) &&
+    !path.isAbsolute(trimmed) &&
+    !path.win32.isAbsolute(trimmed)
+  )
+}
 
 const workspacePathToProjectKey = (workspacePath: string): string =>
   path
@@ -83,32 +109,21 @@ const resolveTranscriptDirectory = (workspacePath: string): string =>
     'agent-transcripts',
   )
 
-export const isSafeAgentSessionId = (sessionId: string): boolean => {
-  const trimmed = sessionId.trim()
-
-  return (
-    trimmed !== '' &&
-    trimmed !== '.' &&
-    trimmed !== '..' &&
-    !SESSION_ID_PATH_SEPARATOR_PATTERN.test(trimmed)
-  )
-}
-
-const resolveSessionFilePath = ({
-  transcriptDirectory,
+const resolveSessionTranscriptFilePath = ({
   sessionId,
+  transcriptDirectory,
 }: {
-  transcriptDirectory: string
   sessionId: string
+  transcriptDirectory: string
 }): string | undefined => {
   if (!isSafeAgentSessionId(sessionId)) {
     return
   }
 
-  const filePath = path.join(transcriptDirectory, sessionId, `${sessionId}.jsonl`)
-  const relativePath = path.relative(transcriptDirectory, filePath)
+  const resolvedTranscriptDirectory = path.resolve(transcriptDirectory)
+  const filePath = path.resolve(resolvedTranscriptDirectory, sessionId, `${sessionId}.jsonl`)
 
-  if (relativePath.startsWith('..') || path.isAbsolute(relativePath)) {
+  if (!isInsideDirectory(resolvedTranscriptDirectory, filePath)) {
     return
   }
 
@@ -270,12 +285,8 @@ export const resolveAgentSessionJsonlFilePath = async ({
     workspaceRoot,
   })
 
-  if (!isSafeAgentSessionId(sessionId)) {
-    return
-  }
-
   const transcriptDirectory = resolveTranscriptDirectory(workspaceForTranscripts)
-  const filePath = resolveSessionFilePath({sessionId, transcriptDirectory})
+  const filePath = resolveSessionTranscriptFilePath({sessionId, transcriptDirectory})
 
   if (filePath === undefined) {
     return
