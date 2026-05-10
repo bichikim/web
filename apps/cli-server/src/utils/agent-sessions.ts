@@ -21,7 +21,7 @@ export interface AgentSessionSummary {
 const CURSOR_PROJECTS_DIRECTORY = path.join(os.homedir(), '.cursor', 'projects')
 
 const MAX_SESSION_TITLE_LENGTH = 120
-const SESSION_ID_PATH_SEPARATOR_PATTERN = /[/\\\u0000]/u
+const NULL_CHARACTER = String.fromCharCode(0)
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null
@@ -91,7 +91,9 @@ export const isSafeAgentSessionId = (sessionId: string): boolean => {
     trimmed !== '' &&
     trimmed !== '.' &&
     trimmed !== '..' &&
-    !SESSION_ID_PATH_SEPARATOR_PATTERN.test(trimmed)
+    !trimmed.includes('/') &&
+    !trimmed.includes('\\') &&
+    !trimmed.includes(NULL_CHARACTER)
   )
 }
 
