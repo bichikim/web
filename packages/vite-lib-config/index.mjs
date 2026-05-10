@@ -66,12 +66,14 @@ export const createConfig = ({
               preserveModules: true,
               preserveModulesRoot: 'src',
             },
-            // CJS: 한 파일로
+            // CJS: ESM과 동일한 디렉터리 구조로 (서브패스 require 대응)
             {
-              entryFileNames: 'index.cjs',
+              entryFileNames: '[name].js',
               exports: 'named',
               format: 'cjs',
               plugins: rollupOutputPlugins,
+              preserveModules: true,
+              preserveModulesRoot: 'src',
             },
           ],
         },

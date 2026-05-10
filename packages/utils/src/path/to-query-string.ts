@@ -4,7 +4,10 @@ import {joinStringQueries} from './join-string-queries'
 export interface ToQueryStringOptions {
   encodeKey?: EncodeQueryKey
   encodeValue?: EncodeQueryValue
-  sort?: (aKey, bKey) => number
+  sort?: (
+    aEntry: [string, string | number | boolean],
+    bEntry: [string, string | number | boolean],
+  ) => number
 }
 
 export type EncodeQueryKey = (key?: string | undefined) => string
@@ -61,7 +64,7 @@ export const encodeQueryRecord = (
     entries = entries.sort(sort)
   }
 
-  return entries.map(([key, value]) => encodeQueryItem(key, value))
+  return entries.map(([key, value]) => encodeQueryItem(key, value, options))
 }
 
 /**

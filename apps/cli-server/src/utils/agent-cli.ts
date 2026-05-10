@@ -1,6 +1,8 @@
 import path from 'node:path'
+import {isPathInsideDirectory} from './safe-path'
 
 const RESUME_FLAG_PREFIX = '--resume='
+const WORKING_DIRECTORY_ERROR_MESSAGE = 'workingDirectory must stay within AGENT_WORKSPACE_ROOT.'
 const conversationSessionMap = new Map<string, string>()
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -38,19 +40,26 @@ export const resolveCliWorkingDirectory = ({
   requestedDirectory: string | undefined
   workspaceRoot: string
 }): string => {
+  const resolvedWorkspaceRoot = path.resolve(workspaceRoot)
+
   if (requestedDirectory === undefined || requestedDirectory === '/') {
-    return workspaceRoot
+    return resolvedWorkspaceRoot
   }
 
-  if (requestedDirectory.startsWith('/')) {
-    return path.resolve(workspaceRoot, `.${requestedDirectory}`)
+  const resolvedDirectory = requestedDirectory.startsWith('/')
+    ? path.resolve(resolvedWorkspaceRoot, `.${requestedDirectory}`)
+    : path.resolve(resolvedWorkspaceRoot, requestedDirectory)
+
+  if (
+    !isPathInsideDirectory({
+      directoryPath: resolvedWorkspaceRoot,
+      targetPath: resolvedDirectory,
+    })
+  ) {
+    throw new RangeError(WORKING_DIRECTORY_ERROR_MESSAGE)
   }
 
-  if (path.isAbsolute(requestedDirectory)) {
-    return requestedDirectory
-  }
-
-  return path.resolve(workspaceRoot, requestedDirectory)
+  return resolvedDirectory
 }
 
 export const getPersistedSessionId = (conversationId: string | undefined): string | undefined => {

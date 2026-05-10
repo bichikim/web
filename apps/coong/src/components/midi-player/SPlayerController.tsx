@@ -143,7 +143,7 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
         />
         <SMidiFileInput class="min-w-11" onAdd={handleAddPlayItem} />
         <SPlayerButton
-          type="anchor-button"
+          type="button"
           tabIndex="0"
           class="min-w-11"
           onClick={handleLink}
