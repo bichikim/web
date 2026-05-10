@@ -1,6 +1,8 @@
 import path from 'node:path'
+import {isPathInsideDirectory} from './safe-path'
 
 const RESUME_FLAG_PREFIX = '--resume='
+const WORKING_DIRECTORY_ERROR_MESSAGE = 'workingDirectory must stay within AGENT_WORKSPACE_ROOT.'
 const conversationSessionMap = new Map<string, string>()
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -17,31 +19,6 @@ export const DEFAULT_AGENT_CLI_ARGS = [
 
 export const clearEmptyItems = (args: (string | undefined)[]): string[] =>
   args.filter((item): item is string => item !== undefined && item !== '')
-
-const isInsideDirectory = (parentDirectory: string, childDirectory: string): boolean => {
-  const relativePath = path.relative(parentDirectory, childDirectory)
-
-  return (
-    relativePath === '' ||
-    (relativePath !== '..' &&
-      !relativePath.startsWith(`..${path.sep}`) &&
-      !path.isAbsolute(relativePath))
-  )
-}
-
-const assertInsideWorkspace = ({
-  workspaceRoot,
-  resolvedDirectory,
-}: {
-  workspaceRoot: string
-  resolvedDirectory: string
-}): void => {
-  const resolvedWorkspaceRoot = path.resolve(workspaceRoot)
-
-  if (!isInsideDirectory(resolvedWorkspaceRoot, resolvedDirectory)) {
-    throw new RangeError('workingDirectory must stay within AGENT_WORKSPACE_ROOT.')
-  }
-}
 
 export const hasExplicitSessionControl = (
   subcommand: string | undefined,
@@ -69,15 +46,18 @@ export const resolveCliWorkingDirectory = ({
     return resolvedWorkspaceRoot
   }
 
-  let resolvedDirectory: string
+  const resolvedDirectory = requestedDirectory.startsWith('/')
+    ? path.resolve(resolvedWorkspaceRoot, `.${requestedDirectory}`)
+    : path.resolve(resolvedWorkspaceRoot, requestedDirectory)
 
-  if (requestedDirectory.startsWith('/')) {
-    resolvedDirectory = path.resolve(resolvedWorkspaceRoot, `.${requestedDirectory}`)
-  } else {
-    resolvedDirectory = path.resolve(resolvedWorkspaceRoot, requestedDirectory)
+  if (
+    !isPathInsideDirectory({
+      directoryPath: resolvedWorkspaceRoot,
+      targetPath: resolvedDirectory,
+    })
+  ) {
+    throw new RangeError(WORKING_DIRECTORY_ERROR_MESSAGE)
   }
-
-  assertInsideWorkspace({resolvedDirectory, workspaceRoot: resolvedWorkspaceRoot})
 
   return resolvedDirectory
 }

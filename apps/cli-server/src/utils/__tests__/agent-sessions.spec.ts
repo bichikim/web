@@ -2,7 +2,11 @@ import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import {afterEach, describe, expect, it} from 'vitest'
-import {isSafeAgentSessionId, resolveAgentSessionJsonlFilePath} from '../agent-sessions'
+import {
+  isSafeAgentSessionId,
+  resolveAgentSessionJsonlFilePath,
+  resolveWorkspaceWithTranscripts,
+} from '../agent-sessions'
 
 const createdPaths: string[] = []
 
@@ -53,6 +57,18 @@ describe('isSafeAgentSessionId', () => {
 
   it('should accept normal session identifiers', () => {
     expect(isSafeAgentSessionId('session-123_abc')).toBe(true)
+    expect(isSafeAgentSessionId('123e4567-e89b-12d3-a456-426614174000')).toBe(true)
+  })
+})
+
+describe('resolveWorkspaceWithTranscripts', () => {
+  it('should ignore working directories outside the workspace root', async () => {
+    await expect(
+      resolveWorkspaceWithTranscripts({
+        workingDirectory: '/tmp/outside-project',
+        workspaceRoot: '/workspace/project',
+      }),
+    ).resolves.toBe(path.resolve('/workspace/project'))
   })
 })
 

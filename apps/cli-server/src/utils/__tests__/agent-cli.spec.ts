@@ -32,4 +32,10 @@ describe('resolveCliWorkingDirectory', () => {
       resolveCliWorkingDirectory({requestedDirectory: 'project/../../outside', workspaceRoot}),
     ).toThrow('workingDirectory must stay within AGENT_WORKSPACE_ROOT.')
   })
+
+  it('should reject virtual absolute paths that escape the workspace root', () => {
+    expect(() =>
+      resolveCliWorkingDirectory({requestedDirectory: '/../outside', workspaceRoot}),
+    ).toThrow('workingDirectory must stay within AGENT_WORKSPACE_ROOT.')
+  })
 })
