@@ -3,6 +3,7 @@ import {SPiano} from 'src/components/instruments'
 import {SettingContext} from 'src/components/midi-player'
 import {SplendidGrandPianoContext} from 'src/use/instruments'
 import {SScale} from 'src/components/scale'
+import {RouteDefinition} from '@solidjs/router'
 import {HUNDRED} from '@winter-love/utils'
 import {ToastContext} from '@winter-love/solid-components'
 import {useRestoreScroll} from 'src/use/restore-scroll'
@@ -20,6 +21,12 @@ const getSample = async () => {
 export interface HomePageProps {
   presetTitle?: string
 }
+
+export const route = {
+  info: {
+    public: true,
+  },
+} satisfies RouteDefinition
 
 export default function HomePage() {
   const pageName = 'Piano'

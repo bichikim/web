@@ -10,7 +10,7 @@ import {
   onCleanup,
   untrack,
 } from 'solid-js'
-import {getAudioContext} from 'src/use/instruments/prepare-audio-context'
+import {getAudioContext, prepareAudioContext} from 'src/use/instruments/prepare-audio-context'
 import {createEmitter, EmitterListener} from './emitter'
 import {useIsCleanup} from '@winter-love/solid-use'
 import {
@@ -82,7 +82,7 @@ export type SplendidGrandPianoContextProps = [
 export const createSplendidGrandPiano = (
   options: Omit<SplendidGrandPianoOptions, 'onEnded' | 'onStart'> = {},
 ): [Accessor<SplendidGrandPianoState>, SplendidGrandPianoController] => {
-  const _audioContext = getAudioContext()
+  const [audioContext, setAudioContext] = createSignal<AudioContext | undefined>(getAudioContext())
 
   let _playablePiano: SplendidGrandPianoExtended | undefined
 
@@ -117,6 +117,12 @@ export const createSplendidGrandPiano = (
   const isEnd = createMemo(() => state().leftTime <= 0)
 
   const isPlaying = createMemo(() => state().playingId !== '' && !state().suspended && !isEnd())
+
+  createEffect(() => {
+    const cleanUpPrepareAudioContext = prepareAudioContext(setAudioContext)
+
+    onCleanup(cleanUpPrepareAudioContext)
+  })
 
   const handelEnded = (payload: ExtendedSampleStart) => {
     if (payload[USER_PLAY_FLAG_KEY]) {
@@ -222,15 +228,18 @@ export const createSplendidGrandPiano = (
    * - If another component unmounts during piano loading, stops piano and removes event listeners
    */
   createEffect(() => {
+    const currentAudioContext = audioContext()
+
     untrack(() => {
       const window = getWindow()
 
-      if (!window || !_audioContext || isCleanup()) {
+      if (!window || !currentAudioContext || isCleanup()) {
         return
       }
-      const playablePiano = createChannelPiano(_audioContext)
+      const playablePiano = createChannelPiano(currentAudioContext)
 
       _playablePiano = playablePiano
+      currentAudioContext.addEventListener('statechange', handleStateChange)
 
       _playablePiano.load.then(() => {
         if (isCleanup()) {
@@ -251,7 +260,7 @@ export const createSplendidGrandPiano = (
         piano.stop()
       }
 
-      _audioContext?.removeEventListener('statechange', handleStateChange)
+      currentAudioContext?.removeEventListener('statechange', handleStateChange)
       _autoPianoMap.clear()
       _playablePiano = undefined
     })
@@ -298,8 +307,9 @@ export const createSplendidGrandPiano = (
 
   const play = (payload: PlayOptions) => {
     const {id, midi, totalDuration} = payload
+    const currentAudioContext = audioContext()
 
-    if (!midi || !_audioContext) {
+    if (!midi || !currentAudioContext) {
       return
     }
 

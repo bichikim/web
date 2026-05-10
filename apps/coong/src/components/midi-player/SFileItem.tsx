@@ -219,7 +219,7 @@ export const SFileItem = (props: SFileItemProps) => {
           </span>
           <STypeIcon class="flex-shrink-0" name={innerProps.ext} />
           <Show when={isMidi()}>
-            <span class="w-5 h-5 c-black flex-shrink-0 i-tabler:piano" />
+            <span class="relative w-5 h-5 c-black flex-shrink-0 i-tabler:piano" />
           </Show>
           <Show when={showAiIcon()}>
             <span class={aiIconStyle({generated: Boolean(innerProps.generated)})}>

@@ -277,4 +277,85 @@ describe('service worker e2e', () => {
     expect(fetchCalls).toHaveLength(1)
     expect(appCache.get('https://example.com/image.png')?.status).toBe(200)
   })
+
+  it('does not cache html fallback responses for subresources', async () => {
+    const swCode = await compileServiceWorkerTemplate()
+    const {cacheStorage, context, listeners} = createServiceWorkerContext(async () => {
+      return new Response('<!doctype html>', {
+        headers: {'content-type': 'text/html'},
+      })
+    })
+
+    vm.runInNewContext(swCode, context)
+
+    const fetchHandler = listeners.get('fetch')
+    const request = {
+      destination: 'script',
+      headers: new Headers({accept: 'text/javascript'}),
+      method: 'GET',
+      url: 'https://example.com/missing.js',
+    }
+    let responsePromise: Promise<Response> | undefined
+
+    fetchHandler?.({
+      request,
+      respondWith: (promise: Promise<Response>) => {
+        responsePromise = promise
+      },
+    })
+
+    await expect(responsePromise).resolves.toHaveProperty('status', 200)
+
+    expect(cacheStorage.get('coong-cache-v1')?.has('https://example.com/missing.js')).not.toBe(
+      true,
+    )
+  })
+
+  it('does not handle Vercel internal requests', async () => {
+    const swCode = await compileServiceWorkerTemplate()
+    const {context, listeners} = createServiceWorkerContext(async () => new Response('ok'))
+
+    vm.runInNewContext(swCode, context)
+
+    const fetchHandler = listeners.get('fetch')
+    let handled = false
+
+    fetchHandler?.({
+      request: {
+        destination: 'script',
+        headers: new Headers(),
+        method: 'GET',
+        url: 'https://example.com/_vercel/insights/script.js',
+      },
+      respondWith: () => {
+        handled = true
+      },
+    })
+
+    expect(handled).toBe(false)
+  })
+
+  it('does not handle instrument asset requests', async () => {
+    const swCode = await compileServiceWorkerTemplate()
+    const {context, listeners} = createServiceWorkerContext(async () => new Response('ok'))
+
+    vm.runInNewContext(swCode, context)
+
+    const fetchHandler = listeners.get('fetch')
+    let handled = false
+
+    fetchHandler?.({
+      request: {
+        destination: '',
+        headers: new Headers(),
+        method: 'GET',
+        url: 'https://example.com/instruments/splendid-grand-piano/PP-D%230.ogg',
+      },
+      respondWith: () => {
+        handled = true
+      },
+    })
+
+    expect(handled).toBe(false)
+  })
 })

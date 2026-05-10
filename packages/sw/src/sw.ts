@@ -121,6 +121,38 @@ const notifyClients = async (message: Record<string, unknown>) => {
 const isOriginPath = (url: string) => url.startsWith(`${originPath}/`) || url === originPath
 
 const isApiPath = (url: string) => url.startsWith(apiPath)
+
+const isInstrumentPath = (url: string) => {
+  return new URL(url).pathname.startsWith('/instruments/')
+}
+
+const isVercelInternalPath = (url: string) => {
+  return new URL(url).pathname.startsWith('/_vercel/')
+}
+
+const htmlFallbackSensitiveExtensions = new Set([
+  '.css',
+  '.js',
+  '.json',
+  '.m4a',
+  '.mp3',
+  '.ogg',
+  '.wasm',
+  '.wav',
+  '.webm',
+])
+
+const getUrlExtension = (url: string) => {
+  const {pathname} = new URL(url)
+  const lastSlashIndex = pathname.lastIndexOf('/')
+  const lastDotIndex = pathname.lastIndexOf('.')
+
+  if (lastDotIndex <= lastSlashIndex) {
+    return ''
+  }
+
+  return pathname.slice(lastDotIndex).toLowerCase()
+}
 /**
  * Cache control header values for HTTP caching
  */
@@ -374,8 +406,26 @@ const updateCacheState = async (
   await trimCache(cache, freshMetadata)
 }
 
-const isCacheableResponse = (response: Response) => {
-  return response.ok && response.type !== 'opaque'
+const isCacheableResponse = (
+  request: Request,
+  response: Response,
+  destination: RequestDestination | 'default',
+) => {
+  if (!response.ok || response.type === 'opaque') {
+    return false
+  }
+
+  const contentType = response.headers.get('content-type') ?? ''
+
+  if (!contentType.includes('text/html')) {
+    return true
+  }
+
+  if (destination === 'document') {
+    return true
+  }
+
+  return !htmlFallbackSensitiveExtensions.has(getUrlExtension(request.url))
 }
 
 const putCacheableResponse = async (
@@ -384,8 +434,10 @@ const putCacheableResponse = async (
   response: Response,
   destination: RequestDestination | 'default',
 ) => {
-  if (!isCacheableResponse(response)) {
+  if (!isCacheableResponse(request, response, destination)) {
     emitLog('debug', 'Skipped non-cacheable response', {
+      contentType: response.headers.get('content-type'),
+      destination,
       status: response.status,
       type: response.type,
       url: request.url,
@@ -632,7 +684,7 @@ self.addEventListener('fetch', (event: FetchEvent) => {
     return
   }
 
-  if (!isOriginPath(url) || isApiPath(url)) {
+  if (!isOriginPath(url) || isApiPath(url) || isInstrumentPath(url) || isVercelInternalPath(url)) {
     return
   }
 

@@ -3,11 +3,6 @@ import {memoize} from 'es-toolkit'
 
 export const preventStaticRequest = createMiddlewareFragment({
   onRequest: async (event) => {
-    // only run in development
-    if (import.meta.env.PROD) {
-      return
-    }
-
     const {request} = event
 
     const {pathname} = new URL(request.url)
