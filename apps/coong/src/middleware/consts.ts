@@ -1,3 +1,3 @@
-import {getSelfUrl} from 'src/env/self'
+import {getSelfUrl} from 'src/env'
 
 export const TRUSTED_ORIGINS = [getSelfUrl()]

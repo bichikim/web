@@ -1,6 +1,6 @@
 import {action} from '@solidjs/router'
 import {createSupabase} from 'src/utils/supabase'
-import {getSelfUrl} from 'src/env/self'
+import {getSelfUrl} from 'src/env'
 import {joinURL} from 'ufo'
 
 export interface SignUpPayload {
