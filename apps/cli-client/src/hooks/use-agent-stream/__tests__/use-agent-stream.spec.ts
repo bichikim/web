@@ -1,7 +1,14 @@
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
-import type {ChatMessage} from '@/components/agent/AgentChatSection'
-import {useAgentStream} from '@/hooks/use-agent-stream/use-agent-stream'
+import type {ChatMessage} from '../../../components/agent/AgentChatSection'
+import {useAgentStream} from '../use-agent-stream'
+
+const PARTIAL_STDOUT_BLOCK =
+  'event: stdout\n' +
+  'data: {"type":"assistant","message":{"content":[{"type":"text","text":"partial"}]}}\n\n'
+const DONE_STDOUT_BLOCK =
+  'event: stdout\n' +
+  'data: {"type":"assistant","message":{"content":[{"type":"text","text":"done"}]}}\n\n'
 
 const createSubmitEvent = (): Event & {currentTarget: HTMLFormElement} => {
   const form = document.createElement('form')
@@ -44,7 +51,7 @@ const createErroredSseResponse = (): Response => {
         }
 
         controller.enqueue(
-          encoder.encode('event: stdout\ndata: {"type":"assistant","message":{"content":[{"type":"text","text":"partial"}]}}\n\n'),
+          encoder.encode(PARTIAL_STDOUT_BLOCK),
         )
         didEnqueue = true
       },
@@ -63,12 +70,18 @@ const createHookHarness = () => {
   const clearResumeSessionId = vi.fn()
 
   const hook = useAgentStream({
-    getPostUrl: () => '/agent',
-    getWorkingDirectory: () => '/workspace',
-    getConversationId: () => 'conversation-id',
-    getResumeSessionId: () => 'resume-session-id',
     clearResumeSessionId,
+    getConversationId: () => 'conversation-id',
     getMessages: () => messages,
+    getPostUrl: () => '/agent',
+    getResumeSessionId: () => 'resume-session-id',
+    getWorkingDirectory: () => '/workspace',
+    setCurrentSessionId: (value) => {
+      currentSessionId = value
+    },
+    setCurrentSessionTitle: (value) => {
+      currentSessionTitle = value
+    },
     setMessages: (setter) => {
       messages = setter(messages)
     },
@@ -80,12 +93,6 @@ const createHookHarness = () => {
     },
     setStreamError: (value) => {
       streamError = value
-    },
-    setCurrentSessionId: (value) => {
-      currentSessionId = value
-    },
-    setCurrentSessionTitle: (value) => {
-      currentSessionTitle = value
     },
   })
 
@@ -142,9 +149,7 @@ describe('useAgentStream', () => {
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue(
-        createSseResponse([
-          'event: stdout\ndata: {"type":"assistant","message":{"content":[{"type":"text","text":"done"}]}}\n\n',
-        ]),
+        createSseResponse([DONE_STDOUT_BLOCK]),
       ),
     )
     const harness = createHookHarness()
@@ -156,4 +161,5 @@ describe('useAgentStream', () => {
     expect(harness.clearResumeSessionId).toHaveBeenCalledTimes(1)
     expect(harness.getMessages().at(-1)?.content).toBe('done')
   })
+
 })

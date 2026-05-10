@@ -12,6 +12,7 @@ export default defineConfig({
     monorepoAlias({
       alias: {
         DEFAULT: {
+          '@': 'src',
           src: 'src',
         },
         'packages/vite-plugin-monorepo-alias': {

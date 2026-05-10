@@ -1,5 +1,4 @@
 import {submitAgentPrompt} from '@/hooks/use-agent-stream/submit-agent-prompt'
-import {updateLastMessageContentByRole} from '@/hooks/use-agent-stream/update-last-message-content-by-role'
 import type {
   AgentStreamControl,
   UseAgentStreamProperties,
@@ -10,12 +9,7 @@ export type {UseAgentStreamProperties} from '@/hooks/use-agent-stream/use-agent-
 export const useAgentStream = (properties: UseAgentStreamProperties) => {
   const streamControl: AgentStreamControl = {
     activeController: undefined,
-  }
-
-  const updateLastAssistantContent = (content: string) => {
-    properties.setMessages((previous) =>
-      updateLastMessageContentByRole(previous, 'assistant', content),
-    )
+    runId: 0,
   }
 
   const abortRun = () => {
@@ -35,7 +29,6 @@ export const useAgentStream = (properties: UseAgentStreamProperties) => {
       promptText,
       properties,
       streamControl,
-      updateLastAssistantContent,
     })
   }
 
