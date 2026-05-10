@@ -69,10 +69,18 @@ declare const __SW_ENV__: 'development' | 'production' | undefined
 // eslint-disable-next-line camelcase
 declare const __inject_code__: string[]
 
-const CACHE_NAME = typeof __CACHE_NAME__ === 'undefined' ? 'coong-cache-v1' : __CACHE_NAME__
-const CACHE_VERSION = typeof __CACHE_VERSION__ === 'undefined' ? 1 : __CACHE_VERSION__
-const ENV = typeof __SW_ENV__ === 'undefined' ? 'production' : __SW_ENV__
-const SW_CONFIG: ServiceWorkerConfig = typeof __SW_CONFIG__ === 'undefined' ? {} : __SW_CONFIG__
+const getOptionalBuildValue = <T>(readValue: () => T | undefined, fallback: T): T => {
+  try {
+    return readValue() ?? fallback
+  } catch {
+    return fallback
+  }
+}
+
+const CACHE_NAME = getOptionalBuildValue(() => __CACHE_NAME__, 'coong-cache-v1')
+const CACHE_VERSION = getOptionalBuildValue(() => __CACHE_VERSION__, 1)
+const ENV = getOptionalBuildValue(() => __SW_ENV__, 'production')
+const SW_CONFIG: ServiceWorkerConfig = getOptionalBuildValue(() => __SW_CONFIG__, {})
 
 const MILLISECONDS_PER_SECOND = 1000
 
