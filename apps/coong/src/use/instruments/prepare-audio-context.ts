@@ -1,38 +1,98 @@
 import {getWindow} from '@winter-love/utils'
 import {AudioContext as StandardizedAudioContext} from 'standardized-audio-context'
+
 let __audioContext: AudioContext | undefined
+let __isActivationListenerRegistered = false
+
+const audioContextListeners = new Set<(audioContext: AudioContext) => void>()
+
+const activationEvents = ['pointerdown', 'keydown', 'touchstart'] as const
+const activationListenerOptions = {capture: true, passive: true} as const
 
 export const getAudioContext = (): AudioContext | undefined => {
-  const window = getWindow()
+  return __audioContext
+}
 
-  if (__audioContext) {
-    return __audioContext
+const removeActivationListeners = (window: Window, activateAudioContext: () => void) => {
+  for (const eventName of activationEvents) {
+    window.removeEventListener(eventName, activateAudioContext, activationListenerOptions)
   }
 
-  if (!window) {
+  __isActivationListenerRegistered = false
+}
+
+const playSilentBuffer = (audioContext: AudioContext) => {
+  const source = audioContext.createBufferSource()
+
+  source.buffer = audioContext.createBuffer(1, 1, audioContext.sampleRate)
+  source.connect(audioContext.destination)
+  source.start(0)
+}
+
+const createAudioContext = (): AudioContext => {
+  if (!__audioContext) {
+    const audioContext = new StandardizedAudioContext() as any
+
+    __audioContext = audioContext
+
+    return audioContext
+  }
+
+  return __audioContext
+}
+
+const notifyAudioContextListeners = (audioContext: AudioContext) => {
+  for (const listener of audioContextListeners) {
+    listener(audioContext)
+  }
+}
+
+const registerActivationListeners = (window: Window) => {
+  if (__isActivationListenerRegistered) {
     return
   }
 
-  __audioContext = new StandardizedAudioContext() as any
+  __isActivationListenerRegistered = true
 
   const activateAudioContext = () => {
-    if (__audioContext) {
-      __audioContext.resume()
-      const source = __audioContext.createBufferSource()
+    const audioContext = createAudioContext()
 
-      source.connect(__audioContext.destination)
-      source.start()
-    }
-
-    window.removeEventListener('touchstart', activateAudioContext)
-    window.removeEventListener('mousedown', activateAudioContext)
-    window.removeEventListener('mousemove', activateAudioContext)
+    audioContext.resume().catch(() => {
+      //
+    })
+    playSilentBuffer(audioContext)
+    removeActivationListeners(window, activateAudioContext)
+    notifyAudioContextListeners(audioContext)
   }
 
-  // any action can active audio context
-  window.addEventListener('touchstart', activateAudioContext)
-  window.addEventListener('mousedown', activateAudioContext)
-  window.addEventListener('mousemove', activateAudioContext)
+  for (const eventName of activationEvents) {
+    window.addEventListener(eventName, activateAudioContext, activationListenerOptions)
+  }
+}
 
-  return __audioContext
+export const prepareAudioContext = (listener: (audioContext: AudioContext) => void): (() => void) => {
+  const audioContext = getAudioContext()
+
+  if (audioContext) {
+    listener(audioContext)
+
+    return () => {
+      //
+    }
+  }
+
+  const window = getWindow()
+
+  if (!window) {
+    return () => {
+      //
+    }
+  }
+
+  audioContextListeners.add(listener)
+  registerActivationListeners(window)
+
+  return () => {
+    audioContextListeners.delete(listener)
+  }
 }

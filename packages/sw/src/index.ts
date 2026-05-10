@@ -65,6 +65,27 @@ export interface GenerateSwPluginOptions {
   swTemplatePath?: string
 }
 
+export interface VinxiAppLike {
+  config: {
+    routers: Array<{
+      name?: string
+      plugins?: (...args: unknown[]) => Plugin[] | Promise<Plugin[]>
+      type?: string
+    }>
+  }
+  hooks: {
+    hook: (name: string, handler: () => Promise<void> | void) => void
+  }
+}
+
+export interface GenerateSwWithCleanUpResult {
+  cleanUp: () => Promise<void>
+  installBuildHooks: (app: VinxiAppLike) => void
+  pluginOptions: Plugin
+}
+
+export type InstallSwBuildHooksResult = GenerateSwWithCleanUpResult
+
 const normalizeEnv = (env?: string): 'development' | 'production' => {
   return env === 'development' ? 'development' : 'production'
 }
@@ -203,7 +224,7 @@ export const generateSW = async (
  */
 export const generateSwWithCleanUp = (
   options: GenerateSwPluginOptions,
-): {cleanUp: () => Promise<void>; pluginOptions: Plugin} => {
+): GenerateSwWithCleanUpResult => {
   const {
     publicPath = 'public',
     root,
@@ -231,24 +252,48 @@ export const generateSwWithCleanUp = (
   }
 
   let _config: SolidStartConfig | undefined
+  let generatedSwPath: string | undefined
 
-  const cleanUp = async () => {
+  const getSwOutPath = () => {
+    if (root) {
+      return path.join(root, publicPath, 'sw.js')
+    }
+
     if (!_config) {
       return
     }
 
-    await fs.promises.rm(path.join(root ?? _config.root, publicPath, 'sw.js'), {force: true})
+    return path.join(_config.root, publicPath, 'sw.js')
+  }
+
+  const cleanUp = async () => {
+    const swOutPath = generatedSwPath ?? getSwOutPath()
+
+    if (!swOutPath) {
+      return
+    }
+
+    await fs.promises.rm(swOutPath, {force: true})
+  }
+
+  const installBuildHooks = (app: VinxiAppLike) => {
+    app.hooks.hook('app:build:nitro:assets:copy:end', cleanUp)
   }
 
   return {
     cleanUp,
+    installBuildHooks,
     pluginOptions: {
       async closeBundle() {
         if (!_config) {
           return
         }
         const {outDir} = _config.router
-        const swOutPath = path.join(root ?? _config.root, publicPath, 'sw.js')
+        const swOutPath = getSwOutPath()
+
+        if (!swOutPath) {
+          return
+        }
 
         await generateSW(swOutPath, {
           assets: assetsPattern,
@@ -266,6 +311,8 @@ export const generateSwWithCleanUp = (
           logSampleRate,
           swTemplatePath,
         })
+
+        generatedSwPath = swOutPath
       },
       configResolved(config: ResolvedConfig) {
         // oxlint-disable-next-line unicorn/consistent-function-scoping
@@ -292,4 +339,26 @@ export const generateSwWithCleanUp = (
       name: 'generate-sw',
     },
   }
+}
+
+export const installSwBuildHooks = (
+  app: VinxiAppLike,
+  options: GenerateSwPluginOptions,
+): InstallSwBuildHooksResult => {
+  const result = generateSwWithCleanUp(options)
+
+  for (const router of app.config.routers) {
+    if (router.type === 'client' || router.name === 'client') {
+      const previousPlugins = router.plugins
+
+      router.plugins = async (...args: unknown[]) => [
+        result.pluginOptions,
+        ...((await previousPlugins?.(...args)) ?? []),
+      ]
+    }
+  }
+
+  result.installBuildHooks(app)
+
+  return result
 }

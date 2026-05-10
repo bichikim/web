@@ -2,7 +2,7 @@
 import {createServer, type IncomingMessage, type ServerResponse} from 'node:http'
 import {readFile, stat} from 'node:fs/promises'
 import {fileURLToPath} from 'node:url'
-import {dirname, extname, join} from 'node:path'
+import {dirname, extname, join, relative, resolve} from 'node:path'
 import {spawn} from 'node:child_process'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -17,6 +17,28 @@ const SERVER_PORT = Number(process.env.SERVER_PORT) || DEFAULT_SERVER_PORT
 const SERVER_URL = `http://localhost:${SERVER_PORT}`
 
 const serverScriptPath = join(projectRoot, '.output', 'server', 'index.mjs')
+const immutableCacheExtensions = new Set([
+  '.css',
+  '.eot',
+  '.gif',
+  '.jpeg',
+  '.jpg',
+  '.js',
+  '.m4a',
+  '.mp3',
+  '.mp4',
+  '.ogg',
+  '.otf',
+  '.png',
+  '.svg',
+  '.ttf',
+  '.wasm',
+  '.wav',
+  '.webm',
+  '.webp',
+  '.woff',
+  '.woff2',
+])
 
 /**
  * Get MIME type from file extension
@@ -54,6 +76,63 @@ function getMimeType(extension: string): string {
   return mimeTypes[extension.toLowerCase()] || 'application/octet-stream'
 }
 
+function getCacheControl(pathname: string, extension: string): string | undefined {
+  if (pathname === '/sw.js') {
+    return 'no-cache'
+  }
+
+  if (pathname === '/manifest.json') {
+    return 'public, max-age=300, stale-while-revalidate=86400'
+  }
+
+  if (extension === '.html') {
+    return 'public, max-age=0, must-revalidate'
+  }
+
+  if (pathname.startsWith('/_build/assets/') || immutableCacheExtensions.has(extension)) {
+    return 'public, immutable, max-age=31536000'
+  }
+}
+
+function toPublicFilePath(pathname: string): string | undefined {
+  let decodedPathname: string
+
+  try {
+    decodedPathname = decodeURIComponent(pathname)
+  } catch {
+    return
+  }
+
+  const relativePath = decodedPathname === '/' ? 'index.html' : decodedPathname.replace(/^\/+/u, '')
+  const filePath = resolve(publicDir, relativePath)
+  const pathFromPublicDir = relative(publicDir, filePath)
+
+  if (pathFromPublicDir.startsWith('..') || pathFromPublicDir === '') {
+    return
+  }
+
+  return filePath
+}
+
+function shouldServeSpaFallback(req: IncomingMessage, pathname: string): boolean {
+  if (req.method !== 'GET' && req.method !== 'HEAD') {
+    return false
+  }
+
+  if (extname(pathname)) {
+    return false
+  }
+
+  return req.headers.accept?.includes('text/html') ?? true
+}
+
+function sendNotFound(res: ServerResponse) {
+  res.statusCode = 404
+  res.setHeader('Content-Type', 'text/plain')
+  res.setHeader('Cache-Control', 'no-cache')
+  res.end('Not Found')
+}
+
 /**
  * Serve static file or return null if not found
  */
@@ -61,25 +140,33 @@ async function serveStatic(req: IncomingMessage, res: ServerResponse): Promise<b
   const requestUrl = req.url ?? '/'
   const host = req.headers.host ?? 'localhost'
   const url = new URL(requestUrl, `http://${host}`)
-  let filePath = join(publicDir, url.pathname === '/' ? 'index.html' : url.pathname)
+  let filePath = toPublicFilePath(url.pathname)
+
+  if (!filePath) {
+    return false
+  }
 
   try {
     const stats = await stat(filePath)
 
     if (!stats.isFile()) {
       // If it's a directory, try index.html
-      filePath = join(filePath, 'index.html')
+      filePath = resolve(filePath, 'index.html')
       await stat(filePath)
     }
 
     const content = await readFile(filePath)
     const extension = extname(filePath)
     const contentType = getMimeType(extension)
+    const cacheControl = getCacheControl(url.pathname, extension)
 
     res.setHeader('Content-Type', contentType)
     res.setHeader('Content-Length', content.length)
+    if (cacheControl) {
+      res.setHeader('Cache-Control', cacheControl)
+    }
     res.statusCode = 200
-    res.end(content)
+    res.end(req.method === 'HEAD' ? undefined : content)
 
     return true
   } catch {
@@ -180,6 +267,12 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
 
     // If static file not found, serve index.html for SPA routing
     if (!served) {
+      if (!shouldServeSpaFallback(req, pathname)) {
+        sendNotFound(res)
+
+        return
+      }
+
       const indexPath = join(publicDir, 'index.html')
 
       try {
@@ -187,13 +280,12 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
 
         res.setHeader('Content-Type', 'text/html')
         res.setHeader('Content-Length', content.length)
+        res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate')
         res.statusCode = 200
-        res.end(content)
+        res.end(req.method === 'HEAD' ? undefined : content)
       } catch {
         // If index.html doesn't exist, return 404
-        res.statusCode = 404
-        res.setHeader('Content-Type', 'text/plain')
-        res.end('Not Found')
+        sendNotFound(res)
       }
     }
   } catch (error) {

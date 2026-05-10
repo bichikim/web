@@ -13,7 +13,15 @@ export function getBasePath(): string | undefined {
   }
 }
 
+const isAnalyticsEnabled = () => {
+  return import.meta.env.VITE_ENABLE_ANALYTICS === 'true' || import.meta.env.VERCEL === '1'
+}
+
 export const Analytics = () => {
+  if (!isAnalyticsEnabled()) {
+    return null
+  }
+
   const location = useLocation()
   const params = useParams()
 

@@ -34,7 +34,9 @@ export const cspMiddleware = createMiddlewareFragment({
       default-src 'self';
       img-src 'self' data:;
       script-src 'nonce-${nonce}' 'strict-dynamic' 'unsafe-eval' ${import.meta.env.PROD ? '' : `'unsafe-inline'`};
-      style-src ${import.meta.env.PROD ? `'self' 'nonce-${nonce}'` : `'unsafe-inline'`};
+      style-src ${import.meta.env.PROD ? `'self' 'nonce-${nonce}' 'unsafe-inline'` : `'unsafe-inline'`};
+      style-src-elem ${import.meta.env.PROD ? `'self' 'nonce-${nonce}' 'unsafe-inline'` : `'unsafe-inline'`};
+      style-src-attr 'unsafe-inline';
       connect-src ${connectSrc};
       object-src 'none';
       base-uri 'none';

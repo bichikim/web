@@ -4,25 +4,32 @@
 import {defineConfig} from '@solidjs/start/config'
 import UnoCSS from 'unocss/vite'
 import {fileURLToPath} from 'node:url'
-import {generateSwWithCleanUp} from '@winter-love/sw'
+import {installSwBuildHooks} from '@winter-love/sw'
 import {targets} from '@winter-love/vite-lib-config'
 import legacy from '@vitejs/plugin-legacy'
 import devtools from 'solid-devtools/vite'
 
-const {pluginOptions: generateSw, cleanUp: cleanUpGenerateSw} = generateSwWithCleanUp({
-  publicPath: 'public',
-  root: fileURLToPath(new URL('.', import.meta.url)),
-})
-
 // Retrieve whether to build in SPA mode from the environment variable
 const isSpa = process.env.SPA === 'true'
 
-export default defineConfig({
+const app = defineConfig({
   middleware: 'src/middleware/index.ts',
   server: {
-    hooks: {
-      close: async () => {
-        await cleanUpGenerateSw()
+    routeRules: {
+      '/': {
+        headers: {
+          'cache-control': 'public, max-age=0, must-revalidate',
+        },
+      },
+      '/manifest.json': {
+        headers: {
+          'cache-control': 'public, max-age=300, stale-while-revalidate=86400',
+        },
+      },
+      '/sw.js': {
+        headers: {
+          'cache-control': 'no-cache',
+        },
       },
     },
   },
@@ -47,7 +54,6 @@ export default defineConfig({
        // The UnoCSS plugin is configured to use the uno.config.ts file by default.
        */
       UnoCSS(),
-      generateSw as any,
       legacy({
         // plugin-legacy overrode 'build.target'. warning
         // I won't change build.target, so I'll ignore this warning
@@ -62,3 +68,10 @@ export default defineConfig({
     },
   },
 })
+
+installSwBuildHooks(app, {
+  publicPath: 'public',
+  root: fileURLToPath(new URL('.', import.meta.url)),
+})
+
+export default app

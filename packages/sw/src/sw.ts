@@ -69,10 +69,18 @@ declare const __SW_ENV__: 'development' | 'production' | undefined
 // eslint-disable-next-line camelcase
 declare const __inject_code__: string[]
 
-const CACHE_NAME = __CACHE_NAME__ === undefined ? 'coong-cache-v1' : __CACHE_NAME__
-const CACHE_VERSION = __CACHE_VERSION__ === undefined ? 1 : __CACHE_VERSION__
-const ENV = __SW_ENV__ === undefined ? 'production' : __SW_ENV__
-const SW_CONFIG: ServiceWorkerConfig = __SW_CONFIG__ === undefined ? {} : __SW_CONFIG__
+const getOptionalBuildValue = <T>(readValue: () => T | undefined, fallback: T): T => {
+  try {
+    return readValue() ?? fallback
+  } catch {
+    return fallback
+  }
+}
+
+const CACHE_NAME = getOptionalBuildValue(() => __CACHE_NAME__, 'coong-cache-v1')
+const CACHE_VERSION = getOptionalBuildValue(() => __CACHE_VERSION__, 1)
+const ENV = getOptionalBuildValue(() => __SW_ENV__, 'production')
+const SW_CONFIG: ServiceWorkerConfig = getOptionalBuildValue(() => __SW_CONFIG__, {})
 
 const MILLISECONDS_PER_SECOND = 1000
 
@@ -113,6 +121,38 @@ const notifyClients = async (message: Record<string, unknown>) => {
 const isOriginPath = (url: string) => url.startsWith(`${originPath}/`) || url === originPath
 
 const isApiPath = (url: string) => url.startsWith(apiPath)
+
+const isInstrumentPath = (url: string) => {
+  return new URL(url).pathname.startsWith('/instruments/')
+}
+
+const isVercelInternalPath = (url: string) => {
+  return new URL(url).pathname.startsWith('/_vercel/')
+}
+
+const htmlFallbackSensitiveExtensions = new Set([
+  '.css',
+  '.js',
+  '.json',
+  '.m4a',
+  '.mp3',
+  '.ogg',
+  '.wasm',
+  '.wav',
+  '.webm',
+])
+
+const getUrlExtension = (url: string) => {
+  const {pathname} = new URL(url)
+  const lastSlashIndex = pathname.lastIndexOf('/')
+  const lastDotIndex = pathname.lastIndexOf('.')
+
+  if (lastDotIndex <= lastSlashIndex) {
+    return ''
+  }
+
+  return pathname.slice(lastDotIndex).toLowerCase()
+}
 /**
  * Cache control header values for HTTP caching
  */
@@ -366,6 +406,50 @@ const updateCacheState = async (
   await trimCache(cache, freshMetadata)
 }
 
+const isCacheableResponse = (
+  request: Request,
+  response: Response,
+  destination: RequestDestination | 'default',
+) => {
+  if (!response.ok || response.type === 'opaque') {
+    return false
+  }
+
+  const contentType = response.headers.get('content-type') ?? ''
+
+  if (!contentType.includes('text/html')) {
+    return true
+  }
+
+  if (destination === 'document') {
+    return true
+  }
+
+  return !htmlFallbackSensitiveExtensions.has(getUrlExtension(request.url))
+}
+
+const putCacheableResponse = async (
+  cache: Cache,
+  request: Request,
+  response: Response,
+  destination: RequestDestination | 'default',
+) => {
+  if (!isCacheableResponse(request, response, destination)) {
+    emitLog('debug', 'Skipped non-cacheable response', {
+      contentType: response.headers.get('content-type'),
+      destination,
+      status: response.status,
+      type: response.type,
+      url: request.url,
+    })
+
+    return
+  }
+
+  await cache.put(request, response.clone())
+  await updateCacheState(cache, request.url, destination, true)
+}
+
 const getCachedResponse = async (
   cache: Cache,
   request: Request,
@@ -409,31 +493,37 @@ const createNetworkFirst = async (
   requestOptions: NetworkRequestOptions = {},
   cacheControl?: CacheControlValue,
 ) => {
-  const headers = new Headers()
+  const fetchOptions: RequestInit = {}
 
-  if (cacheControl) {
-    headers.append('cache-control', cacheControl)
-    headers.append('pragma', cacheControl)
+  if (cacheControl || requestOptions.headers) {
+    const headers = new Headers(event.request.headers)
+
+    if (cacheControl) {
+      headers.set('cache-control', cacheControl)
+      headers.set('pragma', cacheControl)
+    }
+
+    if (requestOptions.headers) {
+      const optionHeaders = new Headers(requestOptions.headers)
+
+      // eslint-disable-next-line unicorn/prefer-spread
+      for (const [key, value] of Array.from(optionHeaders.entries())) {
+        headers.set(key, value)
+      }
+    }
+
+    fetchOptions.headers = headers
   }
 
-  if (requestOptions.headers) {
-    const optionHeaders = new Headers(requestOptions.headers)
-
-    // eslint-disable-next-line unicorn/prefer-spread
-    for (const [key, value] of Array.from(optionHeaders.entries())) {
-      headers.append(key, value)
-    }
+  if (requestOptions.cache) {
+    fetchOptions.cache = requestOptions.cache
   }
 
   try {
-    const response = await fetch(event.request, {
-      cache: requestOptions.cache || 'default',
-      headers,
-    })
+    const response = await fetch(event.request, fetchOptions)
     const cache = await caches.open(CACHE_NAME)
 
-    await cache.put(event.request, response.clone())
-    await updateCacheState(cache, event.request.url, destination, true)
+    await putCacheableResponse(cache, event.request, response, destination)
 
     return response
   } catch (error) {
@@ -487,8 +577,7 @@ const createCacheFirst = async (event: FetchEvent, destination: RequestDestinati
 
   const response = await fetch(event.request)
 
-  await cache.put(event.request, response.clone())
-  await updateCacheState(cache, event.request.url, destination, true)
+  await putCacheableResponse(cache, event.request, response, destination)
 
   return response
 }
@@ -502,8 +591,7 @@ const createStaleWhileRevalidate = async (
 
   const updatePromise = fetch(event.request)
     .then(async (response) => {
-      await cache.put(event.request, response.clone())
-      await updateCacheState(cache, event.request.url, destination, true)
+      await putCacheableResponse(cache, event.request, response, destination)
 
       return response
     })
@@ -515,6 +603,8 @@ const createStaleWhileRevalidate = async (
     })
 
   if (cachedResponse) {
+    event.waitUntil(updatePromise)
+
     return cachedResponse
   }
 
@@ -594,7 +684,7 @@ self.addEventListener('fetch', (event: FetchEvent) => {
     return
   }
 
-  if (!isOriginPath(url) || isApiPath(url)) {
+  if (!isOriginPath(url) || isApiPath(url) || isInstrumentPath(url) || isVercelInternalPath(url)) {
     return
   }
 
