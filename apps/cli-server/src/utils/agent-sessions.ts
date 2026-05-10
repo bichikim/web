@@ -20,6 +20,7 @@ export interface AgentSessionSummary {
 const CURSOR_PROJECTS_DIRECTORY = path.join(os.homedir(), '.cursor', 'projects')
 
 const MAX_SESSION_TITLE_LENGTH = 120
+const NULL_CHARACTER = String.fromCharCode(0)
 const SESSION_ID_PATH_SEPARATOR_PATTERN = /[/\\]/u
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -39,13 +40,19 @@ const isInsideDirectory = (parentDirectory: string, childPath: string): boolean 
   )
 }
 
-const isSafeSessionId = (sessionId: string): boolean =>
-  sessionId !== '' &&
-  sessionId !== '.' &&
-  sessionId !== '..' &&
-  !SESSION_ID_PATH_SEPARATOR_PATTERN.test(sessionId) &&
-  !path.isAbsolute(sessionId) &&
-  !path.win32.isAbsolute(sessionId)
+export const isSafeAgentSessionId = (sessionId: string): boolean => {
+  const trimmed = sessionId.trim()
+
+  return (
+    trimmed !== '' &&
+    trimmed !== '.' &&
+    trimmed !== '..' &&
+    !trimmed.includes(NULL_CHARACTER) &&
+    !SESSION_ID_PATH_SEPARATOR_PATTERN.test(trimmed) &&
+    !path.isAbsolute(trimmed) &&
+    !path.win32.isAbsolute(trimmed)
+  )
+}
 
 const workspacePathToProjectKey = (workspacePath: string): string =>
   path
@@ -109,7 +116,7 @@ const resolveSessionTranscriptFilePath = ({
   sessionId: string
   transcriptDirectory: string
 }): string | undefined => {
-  if (!isSafeSessionId(sessionId)) {
+  if (!isSafeAgentSessionId(sessionId)) {
     return
   }
 
@@ -122,8 +129,6 @@ const resolveSessionTranscriptFilePath = ({
 
   return filePath
 }
-
-export const isSafeAgentSessionId = isSafeSessionId
 
 const hasTranscriptDirectory = async (workspacePath: string): Promise<boolean> => {
   const transcriptDirectory = resolveTranscriptDirectory(workspacePath)
