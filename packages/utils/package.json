@@ -27,7 +27,33 @@
       "import": "./dist/index.mjs",
       "require": "./dist/index.js"
     },
-    "./*": "./*"
+    "./path/*": {
+      "types": "./dist/path/*.d.ts",
+      "import": "./dist/path/*.mjs",
+      "require": "./dist/path/*.js",
+      "default": "./dist/path/*.mjs"
+    },
+    "./promise/*": {
+      "types": "./dist/promise/*/index.d.ts",
+      "import": "./dist/promise/*/index.mjs",
+      "require": "./dist/promise/*/index.js",
+      "default": "./dist/promise/*/index.mjs"
+    },
+    "./request-idle-callback/*": {
+      "types": "./dist/request-idle-callback/*.d.ts",
+      "import": "./dist/request-idle-callback/*.mjs",
+      "require": "./dist/request-idle-callback/*.js",
+      "default": "./dist/request-idle-callback/*.mjs"
+    },
+    "./types/*": {
+      "types": "./dist/types/*.d.ts"
+    },
+    "./*": {
+      "types": "./dist/*/index.d.ts",
+      "import": "./dist/*/index.mjs",
+      "require": "./dist/*/index.js",
+      "default": "./dist/*/index.mjs"
+    }
   },
   "publishConfig": {
     "access": "public"

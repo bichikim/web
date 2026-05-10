@@ -2,7 +2,7 @@ import {createSignal, Show} from 'solid-js'
 import {useAuth} from 'src/store/auth'
 
 export const ResetPassword = () => {
-  const {resetPassword, resetPasswordError, loading} = useAuth()
+  const {resetPassword} = useAuth()
   const [email, setEmail] = createSignal('')
   const [success, setSuccess] = createSignal(false)
 
@@ -51,15 +51,15 @@ export const ResetPassword = () => {
                 required
               />
             </div>
-            <Show when={resetPasswordError()}>
-              <p class="text-red-500 text-sm">{resetPasswordError()?.message}</p>
+            <Show when={null}>
+              <p class="text-red-500 text-sm">null</p>
             </Show>
             <button
               type="submit"
-              disabled={loading()}
+              disabled={false}
               class="p-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
             >
-              {loading() ? '전송 중...' : '재설정 링크 전송'}
+              {'재설정 링크 전송'}
             </button>
           </form>
           <div class="mt-4 text-center">

@@ -147,13 +147,13 @@ describe('useFocus', () => {
 
     await Promise.resolve()
 
-    if (api === null || captured === null) {
+    if (api === undefined || captured === undefined) {
       throw new Error('useFocus test setup failed')
     }
 
-    const listener = captured?.listener()
+    const listener = captured.listener()
 
-    if (listener === null) {
+    if (listener === undefined) {
       throw new Error('useFocus delegated listener is missing')
     }
 

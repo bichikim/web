@@ -123,6 +123,8 @@ const resolveSessionTranscriptFilePath = ({
   return filePath
 }
 
+export const isSafeAgentSessionId = isSafeSessionId
+
 const hasTranscriptDirectory = async (workspacePath: string): Promise<boolean> => {
   const transcriptDirectory = resolveTranscriptDirectory(workspacePath)
 
@@ -277,6 +279,7 @@ export const resolveAgentSessionJsonlFilePath = async ({
     workingDirectory,
     workspaceRoot,
   })
+
   const transcriptDirectory = resolveTranscriptDirectory(workspaceForTranscripts)
   const filePath = resolveSessionTranscriptFilePath({sessionId, transcriptDirectory})
 

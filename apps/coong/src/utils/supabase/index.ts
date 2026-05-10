@@ -1,5 +1,5 @@
 import {createBrowserClient} from '@supabase/ssr'
-import type {SupabaseClient} from '@supabase/supabase-js'
+import type {Database, SupabaseClient} from '@supabase/supabase-js'
 import {createSupabaseServer} from './supabase-server'
 import {getRequestEvent, isServer} from 'solid-js/web'
 import {getSupabaseClientKeys} from 'src/env/self'

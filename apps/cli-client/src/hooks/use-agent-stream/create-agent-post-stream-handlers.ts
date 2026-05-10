@@ -8,9 +8,15 @@ import {truncateWithEllipsis} from '@/utils/truncate-with-ellipsis'
 import {createAgentSessionIdStdoutParser} from '@/hooks/use-agent-stream/create-agent-session-id-stdout-parser'
 import type {AgentExitPayload} from '@/hooks/use-agent-stream/parse-agent-exit-event-data'
 import {SESSION_TITLE_TRUNCATE_MAX_LENGTH} from '@/hooks/use-agent-stream/session-title-truncate-max-length'
-import type {UseAgentStreamProperties} from '@/hooks/use-agent-stream/use-agent-stream-types'
+import {updateMessageContentById} from '@/hooks/use-agent-stream/update-message-content-by-id'
+import type {
+  AgentStreamControl,
+  UseAgentStreamProperties,
+} from '@/hooks/use-agent-stream/use-agent-stream-types'
 
 export interface AgentStreamLoopMutable {
+  assistantMessageId: string | undefined
+  didConsumeStream: boolean
   exitCode: number | null
   exitSignalText: string
   sessionIdParser: ReturnType<typeof createAgentSessionIdStdoutParser> | undefined
@@ -21,12 +27,13 @@ export interface AgentStreamLoopMutable {
 export interface CreateAgentPostStreamHandlersOptions {
   readonly mutable: AgentStreamLoopMutable
   readonly properties: UseAgentStreamProperties
+  readonly runId: number
+  readonly streamControl: AgentStreamControl
   readonly trimmed: string
-  readonly updateLastAssistantContent: (content: string) => void
 }
 
 export const createAgentPostStreamHandlers = (options: CreateAgentPostStreamHandlersOptions) => {
-  const {mutable, properties, trimmed, updateLastAssistantContent} = options
+  const {mutable, properties, runId, streamControl, trimmed} = options
 
   return () => {
     const userMessage: ChatMessage = {
@@ -49,9 +56,14 @@ export const createAgentPostStreamHandlers = (options: CreateAgentPostStreamHand
 
     properties.setMessages((previous) => [...previous, userMessage, assistantMessage])
     properties.setPromptText('')
+    mutable.assistantMessageId = assistantMessage.id
     mutable.stdoutJsonState = createInitialAgentJsonStdoutReducerState()
 
     const parser = createAgentSessionIdStdoutParser((sessionId) => {
+      if (streamControl.runId !== runId) {
+        return
+      }
+
       properties.setCurrentSessionId(sessionId)
     })
 
@@ -74,7 +86,9 @@ export const createAgentPostStreamHandlers = (options: CreateAgentPostStreamHand
       onStdout: (chunk: string) => {
         parser.onStdoutChunk(chunk)
         mutable.stdoutJsonState = feedAgentJsonStdoutChunk(mutable.stdoutJsonState, chunk)
-        updateLastAssistantContent(mutable.stdoutJsonState.display)
+        properties.setMessages((previous) =>
+          updateMessageContentById(previous, assistantMessage.id, mutable.stdoutJsonState.display),
+        )
       },
     }
   }

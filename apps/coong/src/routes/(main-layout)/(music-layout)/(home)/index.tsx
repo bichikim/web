@@ -1,8 +1,7 @@
 import {useAuth} from 'src/store/auth'
 import {createMemo, Show} from 'solid-js'
-import {RouteDefinition, useAction} from '@solidjs/router'
+import {A, RouteDefinition, useAction} from '@solidjs/router'
 import {updateUserMetadataAction} from 'src/requests/auth/update-user-metadata'
-import {HAnchor} from 'src/components/anchor/HAnchor'
 
 export const route = {
   info: {
@@ -44,38 +43,38 @@ export default function HomePage() {
             </button>
           </li>
           <li class="">
-            <HAnchor hrefName="piano" class="text-7 underline">
+            <A href="/piano" class="text-7 underline">
               <span class="text-7 i-tabler:piano">icon</span>
               Piano
-            </HAnchor>
+            </A>
           </li>
           <li class="">
-            <HAnchor hrefName="musics" class="text-7 underline">
+            <A href="/musics" class="text-7 underline">
               <span class="text-7 i-tabler:music-plus">icon</span>
               Musics
-            </HAnchor>
+            </A>
           </li>
           <li class="">
-            <HAnchor hrefName="sign-in" class="text-7 underline">
+            <A href="/auth/sign-in" class="text-7 underline">
               <span class="text-7 i-tabler:music-plus">icon</span>
               Sign In Test
-            </HAnchor>
+            </A>
           </li>
           <Show
             when={isSignedIn()}
             fallback={
               <>
                 <li class="">
-                  <HAnchor hrefName="sign-in" class="text-7 underline">
+                  <A href="/auth/sign-in" class="text-7 underline">
                     <span class="text-7 i-tabler:login">icon</span>
                     Sign In
-                  </HAnchor>
+                  </A>
                 </li>
                 <li class="">
-                  <HAnchor hrefName="reset-password" class="text-7 underline">
+                  <A href="/auth/reset-password" class="text-7 underline">
                     <span class="text-7 i-tabler:mail">icon</span>
                     Reset Password
-                  </HAnchor>
+                  </A>
                 </li>
               </>
             }
@@ -87,10 +86,16 @@ export default function HomePage() {
               </button>
             </li>
             <li class="">
-              <HAnchor hrefName="change-password" class="text-7 underline">
+              <A href="/auth/change-password" class="text-7 underline">
                 <span class="text-7 i-tabler:lock">icon</span>
                 Change Password
-              </HAnchor>
+              </A>
+            </li>
+            <li class="">
+              <A href="/auth/delete-account" class="text-7 underline text-red-600">
+                <span class="text-7 i-tabler:user-off">icon</span>
+                Delete Account
+              </A>
             </li>
           </Show>
         </ul>

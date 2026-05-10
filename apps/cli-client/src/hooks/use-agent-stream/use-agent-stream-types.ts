@@ -17,4 +17,5 @@ export interface UseAgentStreamProperties {
 
 export interface AgentStreamControl {
   activeController: AbortController | undefined
+  runId: number
 }
