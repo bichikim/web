@@ -21,7 +21,7 @@ export interface AgentSessionSummary {
 const CURSOR_PROJECTS_DIRECTORY = path.join(os.homedir(), '.cursor', 'projects')
 
 const MAX_SESSION_TITLE_LENGTH = 120
-const SESSION_ID_PATH_SEPARATOR_PATTERN = /[/\\\0]/u
+const SESSION_ID_PATH_SEPARATOR_PATTERN = /[/\\\u0000]/u
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null
