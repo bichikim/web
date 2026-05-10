@@ -1,6 +1,6 @@
 import {createServerClient, parseCookieHeader, serializeCookieHeader} from '@supabase/ssr'
 import type {Database, SupabaseClient} from '@supabase/supabase-js'
-import {getSupabaseClientKeys} from 'src/env/self'
+import {getSupabaseClientKeys} from 'src/env'
 import type {RequestEvent} from 'solid-js/web'
 
 export const createSupabaseServer = (event: RequestEvent): SupabaseClient<Database> => {

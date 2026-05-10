@@ -1,6 +1,6 @@
 import {drizzle} from 'drizzle-orm/postgres-js'
 import postgres from 'postgres'
-import {getSupabaseUrl} from 'src/env'
+import {getPostgresUrl} from 'src/env'
 
-const client = postgres(getSupabaseUrl())
+const client = postgres(getPostgresUrl())
 export const db = drizzle({casing: 'snake_case', client})
