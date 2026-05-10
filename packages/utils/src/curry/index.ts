@@ -555,6 +555,7 @@ export type CurryReverse<F extends (...args: any[]) => any> = F extends (arg1: a
               ? CurriedFunction7R<F>
               : any
 
+// oxlint-disable-next-line eslint-js/space-before-function-paren
 export function curryReverse<F extends (...args: any[]) => any>(
   target: F,
   length: number = target.length,

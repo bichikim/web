@@ -1,5 +1,5 @@
-import {createServerClient, parseCookieHeader} from '@supabase/ssr'
-import type {SupabaseClient} from '@supabase/supabase-js'
+import {createServerClient, parseCookieHeader, serializeCookieHeader} from '@supabase/ssr'
+import type {Database, SupabaseClient} from '@supabase/supabase-js'
 import {getSupabaseClientKeys} from 'src/env/self'
 import type {RequestEvent} from 'solid-js/web'
 
@@ -22,10 +22,10 @@ export const createSupabaseServer = (event: RequestEvent): SupabaseClient<Databa
           try {
             event.nativeEvent.node.res.appendHeader(
               'Set-Cookie',
-              `${name}=${value}; Path=/; SameSite=Lax; Secure`,
+              serializeCookieHeader(name, value, options),
             )
           } catch {
-            // ignore
+            // ignore — headers may already be sent
           }
         }
       },

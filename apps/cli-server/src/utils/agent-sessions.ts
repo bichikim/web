@@ -21,7 +21,7 @@ export interface AgentSessionSummary {
 const CURSOR_PROJECTS_DIRECTORY = path.join(os.homedir(), '.cursor', 'projects')
 
 const MAX_SESSION_TITLE_LENGTH = 120
-const SAFE_SESSION_ID_PATTERN = /^[\w-]+$/u
+const SESSION_ID_PATH_SEPARATOR_PATTERN = /[/\\\0]/u
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null
@@ -84,8 +84,36 @@ const resolveTranscriptDirectory = (workspacePath: string): string =>
     'agent-transcripts',
   )
 
-export const isSafeAgentSessionId = (sessionId: string): boolean =>
-  SAFE_SESSION_ID_PATTERN.test(sessionId)
+export const isSafeAgentSessionId = (sessionId: string): boolean => {
+  const trimmed = sessionId.trim()
+
+  return (
+    trimmed !== '' &&
+    trimmed !== '.' &&
+    trimmed !== '..' &&
+    !SESSION_ID_PATH_SEPARATOR_PATTERN.test(trimmed)
+  )
+}
+
+const resolveSessionFilePath = ({
+  transcriptDirectory,
+  sessionId,
+}: {
+  transcriptDirectory: string
+  sessionId: string
+}): string | undefined => {
+  if (!isSafeAgentSessionId(sessionId)) {
+    return
+  }
+
+  const filePath = path.join(transcriptDirectory, sessionId, `${sessionId}.jsonl`)
+
+  if (!isPathInsideDirectory({directoryPath: transcriptDirectory, targetPath: filePath})) {
+    return
+  }
+
+  return filePath
+}
 
 const hasTranscriptDirectory = async (workspacePath: string): Promise<boolean> => {
   const transcriptDirectory = resolveTranscriptDirectory(workspacePath)
@@ -252,18 +280,14 @@ export const resolveAgentSessionJsonlFilePath = async ({
   workingDirectory: string
   sessionId: string
 }): Promise<string | undefined> => {
-  if (!isSafeAgentSessionId(sessionId)) {
-    return
-  }
-
   const workspaceForTranscripts = await resolveWorkspaceWithTranscripts({
     workingDirectory,
     workspaceRoot,
   })
   const transcriptDirectory = resolveTranscriptDirectory(workspaceForTranscripts)
-  const filePath = path.join(transcriptDirectory, sessionId, `${sessionId}.jsonl`)
+  const filePath = resolveSessionFilePath({sessionId, transcriptDirectory})
 
-  if (!isPathInsideDirectory({directoryPath: transcriptDirectory, targetPath: filePath})) {
+  if (filePath === undefined) {
     return
   }
 

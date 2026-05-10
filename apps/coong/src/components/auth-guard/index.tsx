@@ -1,7 +1,12 @@
-import {useAuth} from 'src/store/auth'
-import {createMemo, JSX, untrack} from 'solid-js'
-import {RouteDefinition as _RouteDefinition, RouteMatch, useCurrentMatches} from '@solidjs/router'
-import {useNameNavigate} from 'src/components/anchor/name-navigator'
+import {createMemo, JSX, Show} from 'solid-js'
+import {
+  RouteDefinition as _RouteDefinition,
+  createAsync,
+  Navigate,
+  RouteMatch,
+  useCurrentMatches,
+} from '@solidjs/router'
+import {userQuery} from 'src/requests/auth/user'
 
 export interface RouteDefinition extends _RouteDefinition {
   info: {
@@ -60,33 +65,19 @@ export const isAllowAll = (matches: RouteMatch[], authorized: boolean): IsAllowA
 }
 
 export const useAuthGuard = () => {
-  const {user, restoreLoading} = useAuth()
-  const navigate = useNameNavigate()
+  const user = createAsync(() => userQuery(), {deferStream: true})
   const matches = useCurrentMatches()
 
   const allPublic = createMemo(() => isAllowAll(matches(), user() !== null))
 
-  const handleRedirectSignIn = () => {
-    navigate('sign-in')
-  }
-
-  const handleRedirectHome = () => {
-    navigate('home')
-  }
-
-  const _allPublic = untrack(() => allPublic())
-
-  if (untrack(() => !restoreLoading() && !_allPublic.allow)) {
-    if (_allPublic.reason === 'only-unauthorized') {
-      handleRedirectHome()
-    } else {
-      handleRedirectSignIn()
-    }
-  }
+  return createMemo(() => allPublic().allow)
 }
 
 export const AuthGuard = (props: {children: JSX.Element}) => {
-  useAuthGuard()
-
-  return <>{props.children}</>
+  const isAllowed = useAuthGuard()
+  return (
+    <Show when={isAllowed()} fallback={<Navigate href="/auth/sign-in" />}>
+      {props.children}
+    </Show>
+  )
 }

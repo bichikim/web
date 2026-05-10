@@ -8,57 +8,56 @@ import {
   resolveWorkspaceWithTranscripts,
 } from '../agent-sessions'
 
-const createdPathList: string[] = []
+const createdPaths: string[] = []
 
-const toProjectKey = (workspacePath: string): string =>
+const workspacePathToProjectKey = (workspacePath: string): string =>
   path
     .resolve(workspacePath)
     .split(path.sep)
     .filter((segment) => segment !== '')
     .join('-')
 
-const createTranscriptFile = async ({
-  sessionId,
-  workspaceRoot,
-}: {
-  readonly sessionId: string
+const createWorkspaceWithTranscriptDirectory = async (): Promise<{
+  readonly transcriptDirectory: string
   readonly workspaceRoot: string
-}): Promise<string> => {
+}> => {
+  const workspaceRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'agent-sessions-'))
   const transcriptDirectory = path.join(
     os.homedir(),
     '.cursor',
     'projects',
-    toProjectKey(workspaceRoot),
+    workspacePathToProjectKey(workspaceRoot),
     'agent-transcripts',
-    sessionId,
   )
-  const transcriptPath = path.join(transcriptDirectory, `${sessionId}.jsonl`)
 
+  createdPaths.push(workspaceRoot, path.dirname(transcriptDirectory))
   await fs.mkdir(transcriptDirectory, {recursive: true})
-  await fs.writeFile(transcriptPath, '', 'utf8')
-  createdPathList.push(transcriptPath)
 
-  return transcriptPath
+  return {transcriptDirectory, workspaceRoot}
 }
 
 afterEach(async () => {
   await Promise.all(
-    createdPathList
-      .splice(0)
-      .map((createdPath) => fs.rm(path.dirname(createdPath), {recursive: true})),
+    createdPaths.splice(0).map(async (createdPath) => {
+      await fs.rm(createdPath, {force: true, recursive: true})
+    }),
   )
 })
 
 describe('isSafeAgentSessionId', () => {
-  it('should allow agent session identifiers', () => {
-    expect(isSafeAgentSessionId('123e4567-e89b-12d3-a456-426614174000')).toBe(true)
-    expect(isSafeAgentSessionId('session_123')).toBe(true)
+  it('should reject values that can escape a path segment', () => {
+    expect(isSafeAgentSessionId('')).toBe(false)
+    expect(isSafeAgentSessionId('.')).toBe(false)
+    expect(isSafeAgentSessionId('..')).toBe(false)
+    expect(isSafeAgentSessionId('../leaked')).toBe(false)
+    expect(isSafeAgentSessionId('nested/session')).toBe(false)
+    expect(isSafeAgentSessionId('nested\\session')).toBe(false)
+    expect(isSafeAgentSessionId('session\0id')).toBe(false)
   })
 
-  it('should reject path traversal segments', () => {
-    expect(isSafeAgentSessionId('../secret')).toBe(false)
-    expect(isSafeAgentSessionId('..\\secret')).toBe(false)
-    expect(isSafeAgentSessionId('session.jsonl')).toBe(false)
+  it('should accept normal session identifiers', () => {
+    expect(isSafeAgentSessionId('session-123_abc')).toBe(true)
+    expect(isSafeAgentSessionId('123e4567-e89b-12d3-a456-426614174000')).toBe(true)
   })
 })
 
@@ -74,30 +73,37 @@ describe('resolveWorkspaceWithTranscripts', () => {
 })
 
 describe('resolveAgentSessionJsonlFilePath', () => {
-  it('should reject unsafe session identifiers before resolving a transcript path', async () => {
-    const workspaceRoot = '/workspace/project'
-    const transcriptPath = await resolveAgentSessionJsonlFilePath({
-      sessionId: '../secret',
-      workingDirectory: workspaceRoot,
-      workspaceRoot,
-    })
+  it('should resolve an existing session transcript inside the transcript directory', async () => {
+    const {transcriptDirectory, workspaceRoot} = await createWorkspaceWithTranscriptDirectory()
+    const sessionId = 'session-123'
+    const transcriptPath = path.join(transcriptDirectory, sessionId, `${sessionId}.jsonl`)
 
-    expect(transcriptPath).toBeUndefined()
+    await fs.mkdir(path.dirname(transcriptPath), {recursive: true})
+    await fs.writeFile(transcriptPath, '{}\n')
+
+    await expect(
+      resolveAgentSessionJsonlFilePath({
+        sessionId,
+        workingDirectory: workspaceRoot,
+        workspaceRoot,
+      }),
+    ).resolves.toBe(transcriptPath)
   })
 
-  it('should resolve safe session identifiers inside the transcript directory', async () => {
-    const workspaceRoot = path.join(os.tmpdir(), 'agent-session-test-workspace')
-    const sessionId = '123e4567-e89b-12d3-a456-426614174000'
-    const expectedPath = await createTranscriptFile({
-      sessionId,
-      workspaceRoot,
-    })
-    const transcriptPath = await resolveAgentSessionJsonlFilePath({
-      sessionId,
-      workingDirectory: workspaceRoot,
-      workspaceRoot,
-    })
+  it('should not resolve path traversal session identifiers', async () => {
+    const {transcriptDirectory, workspaceRoot} = await createWorkspaceWithTranscriptDirectory()
+    const sessionId = '../leaked'
+    const escapedPath = path.join(transcriptDirectory, sessionId, `${sessionId}.jsonl`)
 
-    expect(transcriptPath).toBe(expectedPath)
+    await fs.mkdir(path.dirname(escapedPath), {recursive: true})
+    await fs.writeFile(escapedPath, '{}\n')
+
+    await expect(
+      resolveAgentSessionJsonlFilePath({
+        sessionId,
+        workingDirectory: workspaceRoot,
+        workspaceRoot,
+      }),
+    ).resolves.toBeUndefined()
   })
 })

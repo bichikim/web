@@ -1,12 +1,11 @@
-import {JSX, mergeProps, splitProps} from 'solid-js'
+import {mergeProps, splitProps} from 'solid-js'
 import {SButton, SButtonProps} from 'src/components/button'
 
 export interface SPlayerButtonProps extends Pick<
   SButtonProps,
-  'class' | 'children' | 'title' | 'type' | 'tabIndex'
+  'class' | 'children' | 'title' | 'type' | 'tabIndex' | 'onClick'
 > {
   href?: string
-  onClick?: JSX.EventHandler<HTMLElement, MouseEvent | TouchEvent>
 }
 
 /**
@@ -30,7 +29,7 @@ export const SPlayerButton = (props: SPlayerButtonProps) => {
 
   const [innerProps, restProps] = splitProps(defaultProps, ['class', 'type', 'onClick'])
 
-  const handelClick: SPlayerButtonProps['onClick'] = (event) => {
+  const handleClick = (event: MouseEvent | TouchEvent) => {
     innerProps.onClick?.(event)
   }
 
@@ -43,7 +42,7 @@ export const SPlayerButton = (props: SPlayerButtonProps) => {
       fit
       color="default"
       class={innerProps.class}
-      onClick={handelClick}
+      onClick={handleClick}
       type={innerProps.type}
     >
       {props.children}

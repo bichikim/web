@@ -4,13 +4,12 @@ import bg from './_components/bg.png'
 import {SAuroraText} from 'src/components/text'
 import {useAuth} from 'src/store/auth'
 import {clientOnly} from '@solidjs/start'
-import {useLocation} from '@solidjs/router'
+import {useLocation, useNavigate, A, RouteDefinition} from '@solidjs/router'
 import {onMount, Show} from 'solid-js'
 import {queryToString} from 'src/utils/query-params'
 import {cva} from 'class-variance-authority'
 import {useCountdown} from 'src/use/countdown'
-import {useNameNavigate} from 'src/components/anchor/name-navigator'
-import {HAnchor} from 'src/components/anchor/HAnchor'
+import type {EmailOtpType} from '@supabase/supabase-js'
 
 const ClientOnlyLottie = clientOnly(() =>
   import('src/components/lottie/Lottie').then((module_) => ({
@@ -38,21 +37,54 @@ const titleStyle = cva('text-3xl font-bold text-dark', {
   },
 })
 
-export default function VerifyEmail() {
-  const {user, exchangeCodeForSection, exchangeCodeForSectionError, loading} = useAuth()
+export const route = {
+  info: {
+    public: true,
+  },
+} satisfies RouteDefinition
+
+const ALLOWED_OTP_TYPES: ReadonlySet<EmailOtpType> = new Set([
+  'signup',
+  'invite',
+  'magiclink',
+  'recovery',
+  'email_change',
+  'email',
+])
+
+const isEmailOtpType = (value: string): value is EmailOtpType => {
+  return (ALLOWED_OTP_TYPES as ReadonlySet<string>).has(value)
+}
+
+export default function VerifyEmailPage() {
+  const {user, verifyOtp} = useAuth()
 
   const location = useLocation()
-  const {code} = location.query
-  const navigate = useNameNavigate()
+  const {token_hash: tokenHashParameter, type: typeParameter} = location.query
+  const navigate = useNavigate()
 
-  const afterNavigate = useCountdown(20_000, () => navigate('home'))
+  const afterNavigate = useCountdown(20_000, () => navigate('/'))
+
+  const tokenHash = () => (tokenHashParameter ? queryToString(tokenHashParameter) : '')
+  const otpType = (): EmailOtpType | null => {
+    if (!typeParameter) {
+      return null
+    }
+    const value = queryToString(typeParameter)
+
+    return isEmailOtpType(value) ? value : null
+  }
 
   onMount(async () => {
-    if (!code) {
+    const hash = tokenHash()
+    const type = otpType()
+
+    if (!hash || !type) {
       return
     }
 
-    await exchangeCodeForSection(queryToString(code))
+    // oxlint-disable-next-line eslint-js/camelcase
+    await verifyOtp({token_hash: hash, type})
     afterNavigate.start()
   })
 
@@ -75,7 +107,7 @@ export default function VerifyEmail() {
         <ClientOnlyLottie src={tada} play="autoplay" loop />
       </div>
       <div class="flex flex-col items-center justify-center absolute top-0 bottom-0 left-0 right-0">
-        <h1 class={titleStyle({loading: loading()})}>Verified your email</h1>
+        <h1 class={titleStyle({loading: false})}>Verified your email</h1>
         <Show
           when={user()}
           fallback={
@@ -86,13 +118,13 @@ export default function VerifyEmail() {
         </Show>
         <Show when={user()}>
           <span class="text-sm text-gray-500">
-            <Show when={code} fallback={'Go to the '}>
+            <Show when={tokenHash()} fallback={'Go to the '}>
               Redirecting to the{' '}
             </Show>
-            <HAnchor hrefName="home" class="text-gray-700 underline font-bold text-lg">
+            <A href="/" class="text-gray-700 underline font-bold text-lg">
               Root page
-            </HAnchor>{' '}
-            <Show when={code}>in {countSeconds()} seconds</Show>
+            </A>{' '}
+            <Show when={tokenHash()}>in {countSeconds()} seconds</Show>
           </span>
         </Show>
       </div>

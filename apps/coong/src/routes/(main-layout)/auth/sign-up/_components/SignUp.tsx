@@ -1,32 +1,23 @@
 import {createMemo, createSignal} from 'solid-js'
 import {signUpAction} from 'src/requests/auth/sign-up'
-import {useAction, useSubmission} from '@solidjs/router'
-import {useRouterName} from 'src/components/anchor/RouterNameProvider'
-import {useNameNavigate} from 'src/components/anchor/name-navigator'
+import {A, useAction, useNavigate, useSubmission} from '@solidjs/router'
 
 export const SignUp = () => {
   const signUpSubmission = useSubmission(signUpAction)
   const _signUpAction = useAction(signUpAction)
-  const navigate = useNameNavigate()
-  const routerName = useRouterName()
+  const navigate = useNavigate()
   const [email, setEmail] = createSignal('')
   const [password, setPassword] = createSignal('')
 
   const handleSignUp = async (event: Event) => {
     event.preventDefault()
 
-    const verifyEmailPath = routerName()['verify-email']
-
-    if (!verifyEmailPath) {
-      throw new Error('Verify email path not found')
-    }
-
     await _signUpAction({
       email: email(),
       password: password(),
-      redirectTo: verifyEmailPath,
+      redirectTo: '/auth/verify-email',
     })
-    navigate('sign-in')
+    navigate('/auth/sign-in')
   }
 
   const error = createMemo(() => signUpSubmission.error)
@@ -65,9 +56,9 @@ export const SignUp = () => {
           </button>
         </form>
         <div class="mt-4 text-center">
-          <a href="/login" class="text-blue-500 hover:underline">
+          <A href="/auth/sign-in" class="text-blue-500 hover:underline">
             Already have an account? Sign In
-          </a>
+          </A>
         </div>
       </div>
     </div>

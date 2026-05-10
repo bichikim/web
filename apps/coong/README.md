@@ -5,7 +5,7 @@
 - **Setup**
   - **`pnpm prepare`**: 설치/준비 단계에서 Supabase 타입 생성 실행
   - **`pnpm supabase:gen-types`**: Supabase 타입 생성
-  - **`pnpm type-check`**: TypeScript 타입 체크만 수행
+  - **`pnpm typecheck`**: TypeScript 타입 체크만 수행
 - **Dev**
   - **`pnpm dev`**: 개발 서버 실행
 - **Build**

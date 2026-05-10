@@ -1,42 +1,37 @@
-import {Accessor, createContext, createMemo, type JSX, useContext} from 'solid-js'
+import {createContext, type JSX, useContext} from 'solid-js'
 import type {User} from '@supabase/supabase-js'
 import {userQuery} from 'src/requests/auth/user'
-import {signInAction} from 'src/requests/auth/sign-in'
+import {Session, signInAction} from 'src/requests/auth/sign-in'
 import {signOutAction} from 'src/requests/auth/sign-out'
 import {changePasswordAction} from 'src/requests/auth/change-password'
 import {resetPasswordAction} from 'src/requests/auth/reset-password'
-import {useAction, useSubmission} from '@solidjs/router'
+import {deleteAccountAction} from 'src/requests/auth/delete-account'
+import {AccessorWithLatest, createAsync, useAction} from '@solidjs/router'
 import {withHandyQuery} from 'src/use/handy-query'
-import {exchangeCodeForSectionAction} from 'src/requests/auth/exchange-code-for-section'
+import {verifyOtpAction, type VerifyOtpPayload} from 'src/requests/auth/verify-otp'
 
-const AuthContext = createContext<{
+export interface AuthContext {
   changePassword(newPassword: string): Promise<User | null>
-  changePasswordError: Accessor<Error | null>
-  exchangeCodeForSection: (code: string) => Promise<User | null>
-  exchangeCodeForSectionError: Accessor<Error | null>
-  loading: Accessor<boolean>
+  deleteAccount: () => Promise<{success: boolean}>
   resetPassword: (email: string) => Promise<void>
-  resetPasswordError: Accessor<Error | null>
-  restoreLoading: Accessor<boolean>
-  signInError: Accessor<Error | null>
-  signInWithPassword: (email: string, password: string) => Promise<void>
+  signInWithPassword: (params: {
+    email: string
+    password: string
+  }) => Promise<{user: User | null; session: Session | null}>
   signOut: () => Promise<void>
-  signOutError: Accessor<Error | null>
-  user: Accessor<User | null>
-}>({
+  user: AccessorWithLatest<User | null | undefined>
+  verifyOtp: (payload: VerifyOtpPayload) => Promise<User | null>
+}
+
+const AuthContext = createContext<AuthContext>({
   changePassword: () => Promise.resolve(null),
-  changePasswordError: () => null,
-  exchangeCodeForSection: () => Promise.resolve(null),
-  exchangeCodeForSectionError: () => null,
-  loading: () => false,
+  deleteAccount: () => Promise.resolve({success: false}),
   resetPassword: () => Promise.resolve(),
-  resetPasswordError: () => null,
-  restoreLoading: () => false,
-  signInError: () => null,
-  signInWithPassword: () => Promise.resolve(),
+  signInWithPassword: (params: {email: string; password: string}) =>
+    Promise.resolve({session: null, user: null}),
   signOut: () => Promise.resolve(),
-  signOutError: () => null,
-  user: () => null,
+  user: (Object.assign(() => null, {latest: null})) satisfies AccessorWithLatest<User | null | undefined>,
+  verifyOtp: () => Promise.resolve(null),
 })
 
 export interface AuthProviderProps {
@@ -46,77 +41,24 @@ export interface AuthProviderProps {
 export const useUserQuery = withHandyQuery(userQuery)
 
 export function AuthProvider(props: AuthProviderProps) {
-  const userQuery = useUserQuery({deferStream: true, initialValue: null})
-  const signInSubmission = useSubmission(signInAction)
-  const signInActionSubmit = useAction(signInAction)
-  const signOutSubmission = useSubmission(signOutAction)
-  const signOutActionSubmit = useAction(signOutAction)
-  const exchangeCodeForSectionSubmit = useAction(exchangeCodeForSectionAction)
-  const exchangeCodeForSectionSubmission = useSubmission(exchangeCodeForSectionAction)
+  const user = createAsync(() => userQuery(), {deferStream: true})
   const changePassword = useAction(changePasswordAction)
-  const changePasswordSubmission = useSubmission(changePasswordAction)
+  const verifyOtp = useAction(verifyOtpAction)
   const resetPassword = useAction(resetPasswordAction)
-  const resetPasswordSubmission = useSubmission(resetPasswordAction)
-  const user = createMemo(() => userQuery.data() ?? null)
-  const signInError = createMemo(() => signInSubmission.error)
-  const signOutError = createMemo(() => signOutSubmission.error)
-  const changePasswordError = createMemo(() => changePasswordSubmission.error)
-  const resetPasswordError = createMemo(() => resetPasswordSubmission.error)
-  const exchangeCodeForSectionError = createMemo(() => exchangeCodeForSectionSubmission.error)
-
-  /**
-   * Sign in with email and password
-   */
-  const signInWithPassword = async (email: string, password: string) => {
-    await signInActionSubmit({email, password})
-    await userQuery.refetch()
-  }
-
-  /**
-   * Sign out
-   */
-  const signOut = async () => {
-    await signOutActionSubmit()
-    await userQuery.refetch()
-  }
-
-  /**
-   * Exchange code for section
-   */
-  const exchangeCodeForSection = async (code: string) => {
-    const data = await exchangeCodeForSectionSubmit(code)
-
-    await userQuery.refetch()
-
-    return data
-  }
-
-  const loading = createMemo(
-    () =>
-      userQuery.loading() ||
-      signInSubmission.pending ||
-      signOutSubmission.pending ||
-      Boolean(changePasswordSubmission.pending) ||
-      Boolean(resetPasswordSubmission.pending) ||
-      Boolean(exchangeCodeForSectionSubmission.pending),
-  )
+  const signInWithPassword = useAction(signInAction)
+  const signOut = useAction(signOutAction)
+  const deleteAccount = useAction(deleteAccountAction)
 
   return (
     <AuthContext.Provider
       value={{
         changePassword,
-        changePasswordError,
-        exchangeCodeForSection,
-        exchangeCodeForSectionError,
-        loading,
+        deleteAccount,
         resetPassword,
-        resetPasswordError,
-        restoreLoading: userQuery.loading,
-        signInError,
         signInWithPassword,
         signOut,
-        signOutError,
         user,
+        verifyOtp,
       }}
     >
       {props.children}
