@@ -14,11 +14,6 @@ export default defineConfig(({mode}) => {
   const cliServerPort = Number(env.VITE_CLI_SERVER_PORT ?? DEFAULT_CLI_SERVER_PORT)
 
   return {
-    resolve: {
-      alias: {
-        '@': path.resolve(projectRootDir, 'src'),
-      },
-    },
     plugins: [
       UnoCSS(),
       Icons({
@@ -26,11 +21,16 @@ export default defineConfig(({mode}) => {
       }),
       solid(),
     ],
+    resolve: {
+      alias: {
+        '@': path.resolve(projectRootDir, 'src'),
+      },
+    },
     server: {
       proxy: {
         '/agent': {
-          target: `http://localhost:${String(cliServerPort)}`,
           changeOrigin: true,
+          target: `http://localhost:${String(cliServerPort)}`,
         },
       },
     },

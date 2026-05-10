@@ -55,20 +55,20 @@ const Template = (args: ResizeCardProviderProps & {maxContentSize?: boolean}) =>
 }
 
 const meta = {
-  argTypes: {
-    maxSize: {
-      control: false,
-    },
-    minSize: {
-      control: false,
-    },
-  },
   args: {
     maxSize: {
       height: 400,
     },
     minSize: {
       height: 150,
+    },
+  },
+  argTypes: {
+    maxSize: {
+      control: false,
+    },
+    minSize: {
+      control: false,
     },
   },
   component: Template,

@@ -103,7 +103,11 @@ describe('createTornado', () => {
   it('should return successive points from the underlying generator', () => {
     const origin: Position = {x: 5, y: 5}
     const direction: Direction = {x: 1, y: 0}
-    const nextPosition = createTornado(origin, direction, 3, 1, true)
+    const nextPosition = createTornado(origin, direction, {
+      gap: 1,
+      includeOrigin: true,
+      range: 3,
+    })
 
     expect(nextPosition()).toEqual({x: 5, y: 5})
     expect(nextPosition()).toEqual({x: 6, y: 5})
@@ -121,7 +125,11 @@ describe('createTornado', () => {
   it('should return undefined when the underlying generator is exhausted', () => {
     const origin: Position = {x: 0, y: 0}
     const direction: Direction = {x: 1, y: 0}
-    const nextPosition = createTornado(origin, direction, 1, 1, false)
+    const nextPosition = createTornado(origin, direction, {
+      gap: 1,
+      includeOrigin: false,
+      range: 1,
+    })
 
     expect(nextPosition()).toBeUndefined()
   })

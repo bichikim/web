@@ -1,6 +1,7 @@
 import {$ as _$} from 'execa'
 import process from 'node:process'
 
+// oxlint-disable-next-line id-length
 const $ = _$({stdio: 'inherit'})
 
 async function main() {

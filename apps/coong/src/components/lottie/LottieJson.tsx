@@ -1,4 +1,4 @@
-import {createEffect, createSignal, type JSX, onCleanup, Show, untrack} from 'solid-js'
+import {createEffect, createSignal, onCleanup, Show, untrack} from 'solid-js'
 import type {AnimationItem, LottiePlayer} from 'lottie-web'
 import type {LottieSharedProps} from './types'
 

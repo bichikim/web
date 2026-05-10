@@ -1,6 +1,7 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "globalDependencies": ["**/.env.*local"],
+  "globalPassThroughEnv": ["COREPACK_HOME"],
   "globalEnv": [
     "VITE_API_URL",
     "VITE_APP_URL",
@@ -20,8 +21,8 @@
       "cache": false,
       "persistent": true
     },
-    "check-types": {
-      "dependsOn": ["^check-types"],
+    "typecheck": {
+      "dependsOn": ["^typecheck"],
       "inputs": ["src/**/*.tsx", "src/**/*.ts"]
     },
     "lint": {

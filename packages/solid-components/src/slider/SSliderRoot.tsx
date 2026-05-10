@@ -20,6 +20,7 @@ export const SSliderRoot = (_props: SSliderRootProps) => {
     return {
       valuemax: String(props.max),
       valuemin: String(props.min),
+      // oxlint-disable-next-line eslint-js/no-mixed-operators
       valuenow: String((props.max - props.min) * context.value().percent + props.min),
     }
   })

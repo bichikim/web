@@ -1,6 +1,6 @@
 import type {Meta, StoryObj} from 'storybook-solidjs-vite'
-import {createSignal, createMemo, Show} from 'solid-js'
-import {useDrag, type DragPayload} from './'
+import {createMemo, createSignal} from 'solid-js'
+import {type DragPayload, useDrag} from './'
 
 const DragTestComponent = () => {
   const [parentElement, setParentElement] = createSignal<HTMLElement | null>(null)

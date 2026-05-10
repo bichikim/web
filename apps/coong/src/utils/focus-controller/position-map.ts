@@ -1,7 +1,8 @@
+// oxlint-disable max-lines
+// oxlint-disable max-params
 import {
   type DeepPosition,
   DEFAULT_CONNECTOR,
-  DEFAULT_ID,
   DEFAULT_KEY_OPTIONS,
   DEFAULT_SEPARATOR,
   getDeepPositionKey,
@@ -111,6 +112,23 @@ export interface UnregisterDeepPositionOptions
 }
 
 export type PositionMap = Map<string, DeepPositionInfo>
+
+export interface MoveDeepPositionArgs {
+  deepIndex: number
+  deepPosition: DeepPosition
+  direction: Direction
+  options?: MoveOptions
+  positionMap: PositionMap
+}
+
+export interface FillPreviousDeepPositionArgs {
+  deepPosition: DeepPosition
+  deepPositionLength?: number
+  direction?: Direction
+  options?: FillOptions
+  positionMap: PositionMap
+  startDeepIndex: number
+}
 
 export const createPositionMap = (): PositionMap => {
   return new Map<string, DeepPositionInfo>()
@@ -335,13 +353,13 @@ export const getNextDeepPosition = (
  * @param connector - The connector between positions.
  * @returns The moved deep position or null if not found.
  */
-export const moveDeepPosition = (
-  positionMap: PositionMap,
-  deepPosition: DeepPosition,
-  deepIndex: number,
-  direction: Direction,
-  options: MoveOptions = DEFAULT_MOVE_OPTIONS,
-): DeepPosition | null => {
+export const moveDeepPosition = ({
+  deepIndex,
+  deepPosition,
+  direction,
+  options = DEFAULT_MOVE_OPTIONS,
+  positionMap,
+}: MoveDeepPositionArgs): DeepPosition | null => {
   let nextDeepPosition: DeepPosition = deepPosition
   const {limit = DEFAULT_MAX_SEARCH_LENGTH} = options
 
@@ -365,18 +383,24 @@ export const moveDeepPosition = (
 /**
  * deepPosition 이 존제할 경우엔 deepPosition 그대로 반환 아니라면 다음 deepPosition 을 찾는다
  */
-export const findNextDeepPosition = (
-  positionMap: PositionMap,
-  deepPosition: DeepPosition,
-  deepIndex: number,
-  direction: Direction,
-  options: MoveOptions = DEFAULT_MOVE_OPTIONS,
-) => {
+export const findNextDeepPosition = ({
+  deepIndex,
+  deepPosition,
+  direction,
+  options = DEFAULT_MOVE_OPTIONS,
+  positionMap,
+}: MoveDeepPositionArgs) => {
   if (hasDeepPosition(positionMap, deepPosition, options)) {
     return deepPosition
   }
 
-  return moveDeepPosition(positionMap, deepPosition, deepIndex, direction, options)
+  return moveDeepPosition({
+    deepIndex,
+    deepPosition,
+    direction,
+    options,
+    positionMap,
+  })
 }
 
 export const getDeepPositionInfo = (
@@ -441,18 +465,23 @@ export const restoreDeepPosition = (
 
   nextDeepPosition[deepIndex] = previousPosition
 
-  return findNextDeepPosition(positionMap, nextDeepPosition, deepIndex, _direction, options)
+  return findNextDeepPosition({
+    deepIndex,
+    deepPosition: nextDeepPosition,
+    direction: _direction,
+    options,
+    positionMap,
+  })
 }
 
-export const fillPreviousDeepPosition = (
-  positionMap: PositionMap,
-  deepPosition: DeepPosition,
-  startDeepIndex: number,
-  direction?: Direction,
-  deepPositionLength: number = deepPosition.length,
-  options: FillOptions = DEFAULT_FILL_OPTIONS,
-  // eslint-disable-next-line max-params
-): DeepPosition => {
+export const fillPreviousDeepPosition = ({
+  deepPosition,
+  deepPositionLength = deepPosition.length,
+  direction,
+  options = DEFAULT_FILL_OPTIONS,
+  positionMap,
+  startDeepIndex,
+}: FillPreviousDeepPositionArgs): DeepPosition => {
   const _direction = direction ?? {x: 0, y: 0}
   const {limitOverDepth = DEFAULT_LIMIT_OVER_DEPTH} = options
   let nextDeepPosition: DeepPosition = deepPosition
@@ -484,17 +513,17 @@ export const fillPreviousDeepPosition = (
   }
 
   // 더 깊이 찾는다
-  return fillPreviousDeepPosition(
-    positionMap,
-    nextDeepPosition,
-    deepIndex,
+  return fillPreviousDeepPosition({
+    deepPosition: nextDeepPosition,
+    deepPositionLength: deepPositionLength + 1,
     direction,
-    deepPositionLength + 1,
-    {
+    options: {
       ...options,
       limitOverDepth: limitOverDepth - 1,
     },
-  )
+    positionMap,
+    startDeepIndex: deepIndex,
+  })
 }
 
 /**
@@ -517,23 +546,23 @@ export const jumpDeepPosition = (
   const currentDeepPosition = [...deepPosition]
 
   for (let deepIndex = deepPosition.length - 1; deepIndex >= jumpLimitIndex; deepIndex -= 1) {
-    const nextDeepPosition = moveDeepPosition(
-      positionMap,
-      currentDeepPosition,
+    const nextDeepPosition = moveDeepPosition({
       deepIndex,
+      deepPosition: currentDeepPosition,
       direction,
       options,
-    )
+      positionMap,
+    })
 
     if (nextDeepPosition) {
-      return fillPreviousDeepPosition(
-        positionMap,
-        nextDeepPosition,
-        deepIndex + 1,
+      return fillPreviousDeepPosition({
+        deepPosition: nextDeepPosition,
+        deepPositionLength: deepPosition.length,
         direction,
-        deepPosition.length,
         options,
-      )
+        positionMap,
+        startDeepIndex: deepIndex + 1,
+      })
     }
 
     currentDeepPosition.pop()
@@ -547,7 +576,6 @@ export const savePreviousDeepPosition = (
   deepPosition: DeepPosition,
   options: KeyOptions = DEFAULT_KEY_OPTIONS,
 ) => {
-  const {separator = DEFAULT_SEPARATOR, connector = DEFAULT_CONNECTOR} = options
   const deepPositionList = getRecursiveDeepPosition(deepPosition)
 
   // remove root deep position

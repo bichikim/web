@@ -1,36 +1,37 @@
 {
   "name": "@winter-love/solid-test",
-  "version": "1.0.36",
+  "version": "1.0.38",
   "description": "",
   "repository": {
     "type": "git",
     "url": "https://github.com/bichikim/web.git"
   },
+  "files": [
+    "dist/*"
+  ],
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "exports": {
     ".": {
       "import": "./dist/index.mjs"
     },
     "./*": "./*"
   },
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "files": [
-    "dist/*"
-  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "vite build",
+    "prepare": "vite build",
     "lint": "cross-env NODE_ENV=script eslint src",
     "lint:fix": "cross-env NODE_ENV=script eslint src --fix",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "solid-js": "^1.9.3"
+    "solid-js": "catalog:"
   },
   "devDependencies": {
     "@winter-love/vite-lib-config": "workspace:*",
-    "vite": "^7.0.8"
-  },
-  "publishConfig": {
-    "access": "public"
+    "vite": "catalog:"
   }
 }

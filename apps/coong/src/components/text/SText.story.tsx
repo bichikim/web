@@ -2,6 +2,11 @@ import {SText, STextProps} from './SText'
 import type {Meta, StoryObj} from 'storybook-solidjs-vite'
 
 const meta: Meta<STextProps> = {
+  args: {
+    children: 'Hello',
+    class: 'bg-white',
+    size: 'md',
+  },
   argTypes: {
     size: {
       control: {
@@ -9,11 +14,6 @@ const meta: Meta<STextProps> = {
         type: 'select',
       },
     },
-  },
-  args: {
-    children: 'Hello',
-    class: 'bg-white',
-    size: 'md',
   },
   component: SText,
   title: 'Coong/Components/SText',

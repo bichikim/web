@@ -1,7 +1,6 @@
-import {DragListProvider, DragListProviderProps} from './DragListProvider'
+import {DragListContext, DragListProvider, DragListProviderProps} from './DragListProvider'
 import {Dynamic, DynamicProps} from 'solid-js/web'
-import {For, ValidComponent, Accessor, type JSX, useContext} from 'solid-js'
-import {DragListContext} from './DragListProvider'
+import {Accessor, For, type JSX, useContext, ValidComponent} from 'solid-js'
 import {DragListItemProvider} from './DragListItemProvider'
 
 export type DragLoopProps<T extends readonly any[]> = {

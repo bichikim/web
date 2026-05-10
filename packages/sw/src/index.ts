@@ -268,6 +268,7 @@ export const generateSwWithCleanUp = (
         })
       },
       configResolved(config: ResolvedConfig) {
+        // oxlint-disable-next-line unicorn/consistent-function-scoping
         function isSolidStartConfig(config: ResolvedConfig): config is SolidStartConfig {
           return (
             'router' in config &&

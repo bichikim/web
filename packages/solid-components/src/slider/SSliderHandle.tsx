@@ -1,4 +1,4 @@
-import {stopPropagation, useDrag, useStyles, StyleType} from '@winter-love/solid-use'
+import {stopPropagation, StyleType, useDrag, useStyles} from '@winter-love/solid-use'
 import {createMemo, createSignal, splitProps, ValidComponent} from 'solid-js'
 import {Dynamic, DynamicProps} from 'solid-js/web'
 import {POSITION_VAR} from 'src/css-var'

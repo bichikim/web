@@ -10,11 +10,18 @@ export interface ChannelFilter {
   pick?: (string | symbol)[]
 }
 
+const triggerEach = (listeners: Set<(event: Event) => void>, event: Event) => {
+  const promises = [...listeners.values()].map((listener) => listener(event))
+
+  return Promise.all(promises)
+}
+
 export const createEmitter = <Event>(options: EmitterOptions = {}) => {
   let started = false
   const {end, start} = options
   const _channels = new Map<string | symbol, Set<(event: Event) => void>>()
 
+  // oxlint-disable-next-line unicorn/consistent-function-scoping
   const triggerEach = (listeners: Set<(event: Event) => void>, event: Event) => {
     const promises = [...listeners.values()].map((listener) => listener(event))
 

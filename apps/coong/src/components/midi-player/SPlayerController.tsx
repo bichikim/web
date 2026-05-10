@@ -48,9 +48,9 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
   const innerProps = mergeProps(
     {
       linkType: 'piano' as const,
-      playList: [],
       playedTime: 0,
       playingId: '',
+      playList: [],
       repeat: 'no' as const,
       selectedId: '',
       totalDuration: 0,
@@ -143,7 +143,7 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
         />
         <SMidiFileInput class="min-w-11" onAdd={handleAddPlayItem} />
         <SPlayerButton
-          type="anchor-button"
+          type="button"
           tabIndex="0"
           class="min-w-11"
           onClick={handleLink}

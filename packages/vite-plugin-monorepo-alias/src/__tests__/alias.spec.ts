@@ -175,6 +175,24 @@ describe('matchWorkspace', () => {
       workspaceRoot: '/Users/user-name/Documents/Apps/web/packages/vite-plugin-monorepo-alias',
     })
   })
+
+  it('should use the apps workspace after /apps/web/ in the repo root path (Vitest-style root)', () => {
+    const root = '/Users/bichi/apps/web'
+    const appsWorkspace = getWorkspaceRegexString('apps')
+
+    const result = matchWorkspace(
+      root,
+      [appsWorkspace],
+      '/Users/bichi/apps/web/apps/coong/src/use/storage/index.ts',
+    )
+
+    expect(result).toEqual({
+      relativePath: 'src/use/storage/index.ts',
+      relativeWorkspaceRoot: '/apps/coong/',
+      root,
+      workspaceRoot: '/Users/bichi/apps/web/apps/coong',
+    })
+  })
 })
 
 describe('createAlias', () => {

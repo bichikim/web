@@ -12,8 +12,10 @@ export interface ToUnitRight {
   (unit: string, value: any): string
 }
 
-export const addUnitRight: ToUnitRight = (unit?: string, value?: any): any => {
-  if (value) {
+export const addUnitRight: ToUnitRight = (...args: [string?] | [string, any]): any => {
+  const [unit, value] = args
+
+  if (args.length > 1) {
     return addUnit(value, unit)
   }
 

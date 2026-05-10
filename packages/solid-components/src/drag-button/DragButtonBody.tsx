@@ -1,4 +1,4 @@
-import {createMemo, useContext, type JSX} from 'solid-js'
+import {createMemo, useContext} from 'solid-js'
 import {Button, ButtonBodyProps} from '../button'
 import {DragButtonContext} from './context'
 import {DRAG_BUTTON_VAR_DRAG_X} from './const'

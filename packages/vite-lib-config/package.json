@@ -7,6 +7,8 @@
     "type": "git",
     "url": "https://github.com/project-sharp-one/project-1.git"
   },
+  "main": "index.mjs",
+  "types": "index.d.ts",
   "exports": {
     ".": {
       "import": "./index.mjs"
@@ -16,13 +18,11 @@
     },
     "./*": "./*"
   },
-  "main": "index.mjs",
-  "types": "index.d.ts",
   "devDependencies": {
-    "dotenv": "latest",
-    "es-toolkit": "^1.44.0",
-    "vite": "^7",
-    "vite-plugin-dts": "^4.5.3",
-    "vite-plugin-solid": "^2.11.0"
+    "dotenv": "catalog:",
+    "es-toolkit": "catalog:",
+    "vite": "catalog:",
+    "vite-plugin-dts": "catalog:",
+    "vite-plugin-solid": "catalog:"
   }
 }

@@ -11,6 +11,10 @@ export default defineConfig({
     solid() as any,
     monorepoAlias({
       alias: {
+        DEFAULT: {
+          '@': 'src',
+          src: 'src',
+        },
         'packages/vite-plugin-monorepo-alias': {
           '#test': 'src/test',
         },
@@ -18,7 +22,6 @@ export default defineConfig({
 
       root: fileURLToPath(new URL('./', import.meta.url)),
       separator: process.platform === 'win32' ? '\\' : '/',
-      // sourceRoot: 'src',
       workspacePaths: [/\/apps\//u, /\/packages\//u],
     }),
   ],

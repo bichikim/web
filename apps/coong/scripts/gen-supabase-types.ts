@@ -9,14 +9,16 @@ const __dirname = dirname(__filename)
 const projectRoot = join(__dirname, '..')
 
 const projectId = process.env.SUPABASE_PROJECT_ID
+const accessToken = process.env.SUPABASE_ACCESS_TOKEN
 
 const supabaseDir = join(projectRoot, '.supabase')
 const outputPath = join(supabaseDir, 'supabase.ts')
 
+// oxlint-disable-next-line id-length
 const $ = _$({cwd: projectRoot, stderr: 'inherit', stdout: {file: outputPath}})
 
 try {
-  if (projectId && process.env.SUPABASE_ACCESS_TOKEN) {
+  if (projectId && accessToken) {
     await mkdir(supabaseDir, {recursive: true})
     await $`pnpm dlx supabase login`
     await $`pnpm dlx supabase gen types typescript --project-id ${projectId} --schema public`

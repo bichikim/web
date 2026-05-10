@@ -1,3 +1,6 @@
+/** Idle period budget (ms) used when emulating `requestIdleCallback` deadlines. */
+const IDLE_DEADLINE_MS = 50
+
 export const requestIdleCallbackPolyfill = (
   callback: IdleRequestCallback,
   options: IdleRequestOptions = {},
@@ -17,7 +20,7 @@ export const requestIdleCallbackPolyfill = (
         callback({
           didTimeout: true,
 
-          timeRemaining: () => Math.max(0, 50 - (Date.now() - start)),
+          timeRemaining: () => Math.max(0, IDLE_DEADLINE_MS - (Date.now() - start)),
         })
       }
     }, timeout)
@@ -30,7 +33,7 @@ export const requestIdleCallbackPolyfill = (
     callback({
       didTimeout: false,
 
-      timeRemaining: () => Math.max(0, 50 - (Date.now() - start)),
+      timeRemaining: () => Math.max(0, IDLE_DEADLINE_MS - (Date.now() - start)),
     })
   }, 1)
 

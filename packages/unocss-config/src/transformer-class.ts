@@ -1,3 +1,12 @@
+// oxlint-disable no-control-regex
+// oxlint-disable eslint-js/max-len
+// oxlint-disable no-await-in-loop
+// oxlint-disable id-length
+// oxlint-disable eslint-js/require-unicode-regexp
+// oxlint-disable eslint-js/prefer-named-capture-group
+// oxlint-disable no-magic-numbers
+// oxlint-disable no-bitwise
+// oxlint-disable no-plusplus
 import {escapeRegExp, expandVariantGroup, type SourceCodeTransformer} from '@unocss/core'
 
 export interface CompileClassOptions {

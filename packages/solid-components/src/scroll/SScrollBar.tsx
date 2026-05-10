@@ -1,4 +1,4 @@
-import {useStyles, StyleType} from '@winter-love/solid-use'
+import {StyleType, useStyles} from '@winter-love/solid-use'
 import {createMemo, mergeProps, splitProps, ValidComponent} from 'solid-js'
 import {Dynamic, DynamicProps} from 'solid-js/web'
 import {PERCENT_VAR} from '../css-var'

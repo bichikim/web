@@ -1,33 +1,17 @@
 import {createSupabase} from 'src/utils/supabase'
 import {action} from '@solidjs/router'
-import {db} from 'src/server/db'
-import {profiles} from 'src/server/db/schema/profiles'
-import {eq} from 'drizzle-orm'
 
 export const fetchDeleteAccount = async () => {
   'use server'
 
   const supabase = createSupabase()
 
-  // Get current user
-  const {
-    data: {user},
-    error: getUserError,
-  } = await supabase.auth.getUser()
+  const {error: deleteError} = await supabase.rpc('delete_account')
 
-  if (getUserError || !user) {
-    throw new Error('Unauthorized')
+  if (deleteError) {
+    throw new Error(deleteError.message)
   }
 
-  // Update deleted_at instead of deleting the user
-  await db
-    .update(profiles)
-    .set({
-      deletedAt: new Date(),
-    })
-    .where(eq(profiles.id, user.id))
-
-  // Sign out the user after marking account as deleted
   const {error: signOutError} = await supabase.auth.signOut()
 
   if (signOutError) {

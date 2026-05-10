@@ -5,7 +5,6 @@ import {
   createMemo,
   createSignal,
   onCleanup,
-  onMount,
   useContext,
   ValidComponent,
 } from 'solid-js'

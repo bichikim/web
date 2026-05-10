@@ -1,0 +1,7 @@
+{
+  "name": "@winter-love/oxlint-plugins",
+  "version": "0.0.1",
+  "private": true,
+  "type": "commonjs",
+  "main": "index.js"
+}

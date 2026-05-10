@@ -1,6 +1,6 @@
 import {describe, expect, it} from 'vitest'
 import {isAccessor, nonAccessor} from './'
-import {createSignal, createMemo} from 'solid-js'
+import {createSignal} from 'solid-js'
 
 describe('is-accessor', () => {
   it.each([

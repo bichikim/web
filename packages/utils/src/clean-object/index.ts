@@ -10,6 +10,6 @@ const {entries, fromEntries} = Object
  */
 export const cleanObject = pipe(
   (value: PureObject) => entries(value),
-  (value) => value.filter(([_, value]) => Boolean(value)),
+  (value) => value.filter(([, value]) => value !== undefined),
   fromEntries,
 )

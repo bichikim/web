@@ -38,7 +38,7 @@ export default <StorybookConfig>{
     reactDocgen: 'react-docgen-typescript',
     reactDocgenTypescriptOptions: {
       // 👇 Default prop filter, which excludes props from node_modules
-      propFilter: (prop: any) => (prop.parent ? !/node_modules/.test(prop.parent.fileName) : true),
+      propFilter: (prop: any) => (prop.parent ? !/node_modules/u.test(prop.parent.fileName) : true),
 
       shouldExtractLiteralValuesFromEnum: true,
     },

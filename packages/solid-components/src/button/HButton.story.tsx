@@ -1,3 +1,4 @@
+// oxlint-disable eslint-js/max-len
 import {HButton} from './'
 import {Meta, StoryObj} from 'storybook-solidjs-vite'
 import {expect, fireEvent, fn, within} from 'storybook/test'
@@ -16,6 +17,14 @@ data-[loading-animation=true]:bg-blue-500
 data-[loading-animation=true]:shadow-blue-400/40`
 
 const meta = {
+  args: {
+    children: 'Click me',
+    class: defaultButtonClass,
+    onClick: fn(() => console.log('clicked')),
+    onDoubleClick: fn(() => console.log('double clicked')),
+    onTouchEnd: fn(),
+    onTouchStart: fn(),
+  },
   argTypes: {
     as: {
       control: 'text',
@@ -110,14 +119,6 @@ const meta = {
         defaultValue: {summary: 'button'},
       },
     },
-  },
-  args: {
-    children: 'Click me',
-    class: defaultButtonClass,
-    onClick: fn(() => console.log('clicked')),
-    onDoubleClick: fn(() => console.log('double clicked')),
-    onTouchEnd: fn(),
-    onTouchStart: fn(),
   },
   component: HButton,
   title: 'Solid/Components/Button',

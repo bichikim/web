@@ -12,7 +12,7 @@ const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS', 'TRACE'])
  */
 export const csrfMiddleware = createMiddlewareFragment({
   onRequest: async (event) => {
-    const {request, response} = event
+    const {request} = event
 
     // If the request method is safe, skip the CSRF check.
     if (SAFE_METHODS.has(request.method)) {
@@ -53,7 +53,7 @@ export const csrfMiddleware = createMiddlewareFragment({
       }
 
       if (
-        parsedReferer.origin !== requestUrl.host &&
+        parsedReferer.origin !== requestUrl.origin &&
         !TRUSTED_ORIGINS.includes(parsedReferer.origin)
       ) {
         return json({error: 'Unauthorized'}, {status: 403})

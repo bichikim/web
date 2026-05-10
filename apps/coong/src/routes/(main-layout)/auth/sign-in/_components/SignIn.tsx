@@ -1,4 +1,4 @@
-import {HAnchor} from 'src/components/anchor/HAnchor'
+import {A} from '@solidjs/router'
 
 export interface SignInProps {
   email: string
@@ -49,9 +49,9 @@ export const SignIn = (props: SignInProps) => {
           </button>
         </form>
         <div class="mt-4 text-center">
-          <HAnchor hrefName="sign-up" class="text-blue-500 hover:underline">
+          <A href="/auth/sign-up" class="text-blue-500 hover:underline">
             Don't have an account? Sign Up
-          </HAnchor>
+          </A>
         </div>
       </div>
     </div>

@@ -1,3 +1,4 @@
+// oxlint-disable eslint-js/max-len
 import {For, Show} from 'solid-js'
 import type {AgentSessionSummary} from '@/components/agent/types'
 

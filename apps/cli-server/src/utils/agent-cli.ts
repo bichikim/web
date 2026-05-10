@@ -1,6 +1,8 @@
 import path from 'node:path'
+import {isPathInsideDirectory} from './safe-path'
 
 const RESUME_FLAG_PREFIX = '--resume='
+const WORKING_DIRECTORY_ERROR_MESSAGE = 'workingDirectory must stay within AGENT_WORKSPACE_ROOT.'
 const conversationSessionMap = new Map<string, string>()
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -14,17 +16,6 @@ export const DEFAULT_AGENT_CLI_ARGS = [
   '--output-format',
   'stream-json',
 ]
-
-const isPathInsideWorkspace = (workspaceRoot: string, targetPath: string): boolean => {
-  const relativePath = path.relative(workspaceRoot, targetPath)
-
-  return (
-    relativePath === '' ||
-    (!relativePath.startsWith(`..${path.sep}`) &&
-      relativePath !== '..' &&
-      !path.isAbsolute(relativePath))
-  )
-}
 
 export const clearEmptyItems = (args: (string | undefined)[]): string[] =>
   args.filter((item): item is string => item !== undefined && item !== '')
@@ -59,22 +50,16 @@ export const resolveCliWorkingDirectory = ({
     ? path.resolve(resolvedWorkspaceRoot, `.${requestedDirectory}`)
     : path.resolve(resolvedWorkspaceRoot, requestedDirectory)
 
-  if (!isPathInsideWorkspace(resolvedWorkspaceRoot, resolvedDirectory)) {
-    throw new Error('`workingDirectory` must stay within the workspace root.')
+  if (
+    !isPathInsideDirectory({
+      directoryPath: resolvedWorkspaceRoot,
+      targetPath: resolvedDirectory,
+    })
+  ) {
+    throw new RangeError(WORKING_DIRECTORY_ERROR_MESSAGE)
   }
 
   return resolvedDirectory
-}
-
-export const tryResolveCliWorkingDirectory = (options: {
-  readonly requestedDirectory: string | undefined
-  readonly workspaceRoot: string
-}): {readonly workingDirectory: string} | {readonly error: string} => {
-  try {
-    return {workingDirectory: resolveCliWorkingDirectory(options)}
-  } catch (error) {
-    return {error: error instanceof Error ? error.message : String(error)}
-  }
 }
 
 export const getPersistedSessionId = (conversationId: string | undefined): string | undefined => {
