@@ -1,8 +1,7 @@
 import {SignIn} from './_components/SignIn'
 import {useAuth} from 'src/store/auth'
 import {createEffect, createSignal} from 'solid-js'
-import {useNameNavigate} from 'src/components/anchor/name-navigator'
-import {RouteDefinition} from '@solidjs/router'
+import {RouteDefinition, useNavigate} from '@solidjs/router'
 
 export const route = {
   info: {
@@ -11,26 +10,26 @@ export const route = {
 } satisfies RouteDefinition
 
 export default function Login() {
-  const {signInWithPassword, signInError, user, loading} = useAuth()
-  const navigate = useNameNavigate()
+  const {signInWithPassword, user} = useAuth()
+  const navigate = useNavigate()
   const [email, setEmail] = createSignal('')
   const [password, setPassword] = createSignal('')
 
   const handleLogin = async () => {
-    await signInWithPassword(email(), password())
+    await signInWithPassword({email: email(), password: password()})
   }
 
   createEffect(() => {
     if (user()) {
-      navigate('home')
+      navigate('/')
     }
   })
 
   return (
     <SignIn
       email={email()}
-      error={signInError()}
-      loading={loading()}
+      error={null}
+      loading={false}
       onLogin={handleLogin}
       onUpdateEmail={setEmail}
       onUpdatePassword={setPassword}

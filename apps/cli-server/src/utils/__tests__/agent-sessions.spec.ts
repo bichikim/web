@@ -2,7 +2,7 @@ import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import {afterEach, describe, expect, it} from 'vitest'
-import {isAgentSessionIdPathSafe, resolveAgentSessionJsonlFilePath} from '../agent-sessions'
+import {isSafeAgentSessionId, resolveAgentSessionJsonlFilePath} from '../agent-sessions'
 
 const createdPaths: string[] = []
 
@@ -40,19 +40,19 @@ afterEach(async () => {
   )
 })
 
-describe('isAgentSessionIdPathSafe', () => {
+describe('isSafeAgentSessionId', () => {
   it('should reject values that can escape a path segment', () => {
-    expect(isAgentSessionIdPathSafe('')).toBe(false)
-    expect(isAgentSessionIdPathSafe('.')).toBe(false)
-    expect(isAgentSessionIdPathSafe('..')).toBe(false)
-    expect(isAgentSessionIdPathSafe('../leaked')).toBe(false)
-    expect(isAgentSessionIdPathSafe('nested/session')).toBe(false)
-    expect(isAgentSessionIdPathSafe('nested\\session')).toBe(false)
-    expect(isAgentSessionIdPathSafe('session\0id')).toBe(false)
+    expect(isSafeAgentSessionId('')).toBe(false)
+    expect(isSafeAgentSessionId('.')).toBe(false)
+    expect(isSafeAgentSessionId('..')).toBe(false)
+    expect(isSafeAgentSessionId('../leaked')).toBe(false)
+    expect(isSafeAgentSessionId('nested/session')).toBe(false)
+    expect(isSafeAgentSessionId('nested\\session')).toBe(false)
+    expect(isSafeAgentSessionId('session\0id')).toBe(false)
   })
 
   it('should accept normal session identifiers', () => {
-    expect(isAgentSessionIdPathSafe('session-123')).toBe(true)
+    expect(isSafeAgentSessionId('session-123_abc')).toBe(true)
   })
 })
 

@@ -83,7 +83,7 @@ const resolveTranscriptDirectory = (workspacePath: string): string =>
     'agent-transcripts',
   )
 
-export const isAgentSessionIdPathSafe = (sessionId: string): boolean => {
+export const isSafeAgentSessionId = (sessionId: string): boolean => {
   const trimmed = sessionId.trim()
 
   return (
@@ -101,7 +101,7 @@ const resolveSessionFilePath = ({
   transcriptDirectory: string
   sessionId: string
 }): string | undefined => {
-  if (!isAgentSessionIdPathSafe(sessionId)) {
+  if (!isSafeAgentSessionId(sessionId)) {
     return
   }
 
@@ -269,6 +269,11 @@ export const resolveAgentSessionJsonlFilePath = async ({
     workingDirectory,
     workspaceRoot,
   })
+
+  if (!isSafeAgentSessionId(sessionId)) {
+    return
+  }
+
   const transcriptDirectory = resolveTranscriptDirectory(workspaceForTranscripts)
   const filePath = resolveSessionFilePath({sessionId, transcriptDirectory})
 

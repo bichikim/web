@@ -27,31 +27,57 @@
       "import": "./dist/index.mjs",
       "require": "./dist/index.js"
     },
-    "./*": "./*"
+    "./path/*": {
+      "types": "./dist/path/*.d.ts",
+      "import": "./dist/path/*.mjs",
+      "require": "./dist/path/*.js",
+      "default": "./dist/path/*.mjs"
+    },
+    "./promise/*": {
+      "types": "./dist/promise/*/index.d.ts",
+      "import": "./dist/promise/*/index.mjs",
+      "require": "./dist/promise/*/index.js",
+      "default": "./dist/promise/*/index.mjs"
+    },
+    "./request-idle-callback/*": {
+      "types": "./dist/request-idle-callback/*.d.ts",
+      "import": "./dist/request-idle-callback/*.mjs",
+      "require": "./dist/request-idle-callback/*.js",
+      "default": "./dist/request-idle-callback/*.mjs"
+    },
+    "./types/*": {
+      "types": "./dist/types/*.d.ts"
+    },
+    "./*": {
+      "types": "./dist/*/index.d.ts",
+      "import": "./dist/*/index.mjs",
+      "require": "./dist/*/index.js",
+      "default": "./dist/*/index.mjs"
+    }
   },
   "publishConfig": {
     "access": "public"
   },
   "scripts": {
     "build": "vite build",
-    "check-types": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
     "prepare": "vite build",
     "dev": "vite build --watch --minify false"
   },
   "dependencies": {
-    "es-toolkit": "^1.46.1",
+    "es-toolkit": "catalog:",
     "safe-stable-stringify": "^2.5.0",
     "scroll-into-view-if-needed": "^3.1.0",
     "smooth-scroll-into-view-if-needed": "^2.0.2"
   },
   "devDependencies": {
-    "@types/js-cookie": "^3.0.6",
+    "@types/js-cookie": "catalog:",
     "@winter-love/vite-lib-config": "workspace:*",
-    "js-cookie": "^3.0.5",
+    "js-cookie": "catalog:",
     "micro-memoize": "^4.2.0",
     "tsd": "^0.31.2",
-    "typescript": "^5.9.3",
-    "vite": "^7.3.2"
+    "typescript": "catalog:",
+    "vite": "catalog:"
   },
   "tsup": {
     "entry": [

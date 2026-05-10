@@ -1,30 +1,11 @@
 import {RouteDefinition as _RouteDefinition, RouteSectionProps} from '@solidjs/router'
 import {AuthProvider} from 'src/store/auth'
-import {RouterNameProvider} from 'src/components/anchor/RouterNameProvider'
 import {AuthGuard, RouteDefinition} from 'src/components/auth-guard'
 import {clientOnly} from '@solidjs/start'
 
 const Analytics = clientOnly(() =>
   import('src/components/vercel/Analytics').then((module) => ({default: module.Analytics})),
 )
-
-/**
- * Route name mapping for the application.
- * This object maps semantic route names to their actual URL paths.
- * Used by RouterNameProvider to enable type-safe, named routing throughout the app.
- * Components can use useRouterName() hook to access these mappings and navigate by name instead of hardcoded paths.
- */
-const routerName = {
-  'change-password': '/auth/change-password',
-  home: '/',
-  musics: '/musics',
-  piano: '/piano',
-  'reset-password': '/auth/reset-password',
-  'sign-in': '/auth/sign-in',
-  'sign-up': '/auth/sign-up',
-  'verify-email': '/auth/verify-email',
-}
-
 /**
  * Solid start route definition
  */
@@ -40,11 +21,11 @@ export const route = {
  */
 export default function MainLayout(props: RouteSectionProps) {
   return (
-    <RouterNameProvider routerName={routerName}>
+    <>
       <AuthProvider>
         <AuthGuard>{props.children}</AuthGuard>
       </AuthProvider>
       <Analytics />
-    </RouterNameProvider>
+    </>
   )
 }

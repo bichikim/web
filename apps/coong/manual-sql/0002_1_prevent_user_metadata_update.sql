@@ -32,10 +32,9 @@ BEGIN
     RETURN NEW;
   END IF;
 
-  -- Check if user_metadata.metadata field is being changed
-  -- If user_metadata is NULL, treat as empty object
-  old_value := COALESCE(OLD.user_metadata, '{}'::jsonb);
-  new_value := COALESCE(NEW.user_metadata, '{}'::jsonb);
+  -- auth.users stores app/API "user metadata" in raw_user_meta_data (not user_metadata)
+  old_value := COALESCE(OLD.raw_user_meta_data, '{}'::jsonb);
+  new_value := COALESCE(NEW.raw_user_meta_data, '{}'::jsonb);
 
   -- If the metadata field is being changed, check permissions
   -- Use -> instead of ->> to compare JSONB objects properly

@@ -41,4 +41,4 @@ Returns an empty message list if no token is provided.
 | `pnpm dev`        | Start development server |
 | `pnpm build`      | Production build         |
 | `pnpm lint`       | Run ESLint               |
-| `pnpm type-check` | TypeScript type check    |
+| `pnpm typecheck` | TypeScript type check    |
