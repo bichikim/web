@@ -1,6 +1,12 @@
 packages:
   - packages/*
   - apps/*
+allowBuilds:
+  '@parcel/watcher': true
+  core-js: true
+  esbuild: true
+  nx: true
+  sharp: true
 onlyBuiltDependencies:
   - '@parcel/watcher'
   - '@swc/core'

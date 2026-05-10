@@ -21,6 +21,10 @@ declare module '*.lottie' {
 
 import type {User, SupabaseClient} from '@supabase/supabase-js'
 
+declare module '@supabase/supabase-js' {
+  export type Database = import('../.supabase/supabase').Database
+}
+
 declare module '@solidjs/start/server' {
   interface RequestEventLocals {
     user?: User | null

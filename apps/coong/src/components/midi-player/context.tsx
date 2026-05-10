@@ -251,6 +251,7 @@ function useMidiPlayerCore(props: UseMidiPlayerCoreProps): MidiPlayerCore {
     handleAddPlayItem,
     handleChangeRepeat,
     handleDelete,
+    handleMusicsChange,
     handleResume,
     handleSeek,
     handleSelect,

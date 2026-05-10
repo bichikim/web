@@ -1,10 +1,9 @@
 import {createSignal, Show} from 'solid-js'
 import {useAuth} from 'src/store/auth'
-import {useNameNavigate} from 'src/components/anchor/name-navigator'
+import {useNavigate} from '@solidjs/router'
 
 export const ChangePassword = () => {
-  const navigate = useNameNavigate()
-  const {loading} = useAuth()
+  const navigate = useNavigate()
   const [newPassword, setNewPassword] = createSignal('')
   const [confirmPassword, setConfirmPassword] = createSignal('')
   const [showNewPassword, setShowNewPassword] = createSignal(false)
@@ -91,10 +90,10 @@ export const ChangePassword = () => {
           </Show>
           <button
             type="submit"
-            disabled={loading()}
+            disabled={false}
             class="p-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
           >
-            {loading() ? '변경 중...' : '패스워드 변경'}
+            {'패스워드 변경'}
           </button>
         </form>
         <div class="mt-4 text-center">
