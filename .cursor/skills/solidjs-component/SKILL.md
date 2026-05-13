@@ -118,6 +118,21 @@ Use SolidJS built-in control-flow components from `solid-js` instead of ad-hoc `
     }
     ```
 
+## DOM refs (`ref`)
+
+**Default:** `createSignal` + `ref={setElement}` for DOM handles—matches this repo and satisfies Oxlint `no-unassigned-vars` (explicit assignment).
+
+   ```tsx
+   import {createSignal} from 'solid-js'
+
+   function Example() {
+     const [el, setEl] = createSignal<HTMLDivElement | undefined>()
+     const handleClick = () => el()?.focus()
+
+     return <div ref={setEl} onClick={handleClick} />
+   }
+   ```
+
 ## Resources
 
 - context7 mcp -> Use this MCP as the highest priority reference source.
