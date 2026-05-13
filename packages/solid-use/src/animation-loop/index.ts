@@ -11,8 +11,8 @@ export const useAnimationLoop = createUseLoop<{__never__?: never}, [DOMHighResTi
   }
 
   const start = (callback: (...args: any) => void) => {
-    flag = requestAnimationFrame(() => {
-      callback()
+    flag = requestAnimationFrame((timestamp) => {
+      callback(timestamp)
       start(callback)
     })
   }

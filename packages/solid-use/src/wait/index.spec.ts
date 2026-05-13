@@ -113,11 +113,7 @@ describe('waitFactory', () => {
     setWaitTime(150)
     vi.advanceTimersByTime(200)
 
-    if (leading) {
-      expect(callback).toHaveBeenCalledTimes(0)
-    } else {
-      expect(callback).toHaveBeenCalledTimes(1)
-    }
+    expect(callback).toHaveBeenCalledTimes(0)
 
     callback.mockClear()
     result.execute()
@@ -137,6 +133,44 @@ describe('waitFactory', () => {
       expect(callback).toHaveBeenCalledTimes(1)
     }
 
+    vi.useRealTimers()
+  })
+
+  it('should cancel the active wait when disposed', () => {
+    vi.useFakeTimers()
+    const callback = vi.fn()
+    const cancel = vi.fn()
+
+    const disposableWait = createUseWait<Record<string, unknown>>(() => {
+      let flag: ReturnType<typeof setTimeout> | undefined
+
+      return {
+        cancel: () => {
+          cancel()
+          clearTimeout(flag)
+        },
+        execute: (args, callback, wait) => {
+          flag = setTimeout(callback, wait, ...args)
+        },
+        flush: () => {},
+      }
+    })
+
+    const {
+      result: {wait},
+      cleanup,
+    } = renderHook(() => {
+      const wait = disposableWait(callback, 100)
+
+      return {wait}
+    })
+
+    wait.execute('hello')
+    cleanup()
+    vi.advanceTimersByTime(101)
+
+    expect(cancel).toHaveBeenCalledTimes(1)
+    expect(callback).not.toHaveBeenCalled()
     vi.useRealTimers()
   })
 

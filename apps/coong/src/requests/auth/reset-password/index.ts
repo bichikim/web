@@ -1,6 +1,6 @@
 import {createSupabase} from 'src/utils/supabase'
 import {action} from '@solidjs/router'
-import {getSelfUrl} from 'src/env/self'
+import {getSelfUrl} from 'src/env'
 
 export const fetchResetPassword = async (email: string): Promise<void> => {
   'use server'
