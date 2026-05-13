@@ -70,7 +70,9 @@ const registerActivationListeners = (window: Window) => {
   }
 }
 
-export const prepareAudioContext = (listener: (audioContext: AudioContext) => void): (() => void) => {
+export const prepareAudioContext = (
+  listener: (audioContext: AudioContext) => void,
+): (() => void) => {
   const audioContext = getAudioContext()
 
   if (audioContext) {
