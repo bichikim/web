@@ -31,6 +31,25 @@ See `rules/component-variable-name.md`
 
 See `rules/component-signal-empty-value.md`
 
+### Multi-part `class` strings (`cx`)
+
+See `rules/component-class-cx.md`
+
+### DOM refs (`ref`)
+
+**Default:** `createSignal` + `ref={setElement}` for DOM handles—matches this repo and satisfies Oxlint `no-unassigned-vars` (explicit assignment).
+
+   ```tsx
+   import {createSignal} from 'solid-js'
+
+   function Example() {
+     const [el, setEl] = createSignal<HTMLDivElement | undefined>()
+     const handleClick = () => el()?.focus()
+
+     return <div ref={setEl} onClick={handleClick} />
+   }
+   ```
+
 ### Conditional, switch, and list rendering
 
 Use SolidJS built-in control-flow components from `solid-js` instead of ad-hoc `&&`, nested ternaries, or `.map()` when you need reactive branching or keyed lists:
@@ -117,21 +136,6 @@ Use SolidJS built-in control-flow components from `solid-js` instead of ad-hoc `
       return null
     }
     ```
-
-## DOM refs (`ref`)
-
-**Default:** `createSignal` + `ref={setElement}` for DOM handles—matches this repo and satisfies Oxlint `no-unassigned-vars` (explicit assignment).
-
-   ```tsx
-   import {createSignal} from 'solid-js'
-
-   function Example() {
-     const [el, setEl] = createSignal<HTMLDivElement | undefined>()
-     const handleClick = () => el()?.focus()
-
-     return <div ref={setEl} onClick={handleClick} />
-   }
-   ```
 
 ## Resources
 
