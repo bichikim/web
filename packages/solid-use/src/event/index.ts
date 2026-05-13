@@ -6,7 +6,7 @@ import {createEffect, onCleanup} from 'solid-js'
 export interface Emitter {
   addEventListener(type: string, listener: EventListener, options?: AddEventListenerOptions): void
 
-  removeEventListener(type: string, listener: EventListener): void
+  removeEventListener(type: string, listener: EventListener, options?: EventListenerOptions): void
 }
 
 export interface OnEvent {
@@ -50,7 +50,7 @@ export const useEvent: OnEvent = (
     element?.addEventListener(type, listener, options)
 
     onCleanup(() => {
-      element?.removeEventListener(type, listener)
+      element?.removeEventListener(type, listener, options)
     })
 
     return element

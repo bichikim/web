@@ -975,6 +975,9 @@ importers:
       '@winter-love/vite-lib-config':
         specifier: workspace:*
         version: link:../vite-lib-config
+      cross-env:
+        specifier: 'catalog:'
+        version: 10.1.0
       vite:
         specifier: 'catalog:'
         version: 7.3.2(@types/node@25.6.0)(jiti@2.6.1)(terser@5.46.2)(tsx@4.21.0)(yaml@2.8.1)
