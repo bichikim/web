@@ -43,8 +43,11 @@ describe('useAnimationLoop', () => {
     expect(requestAnimationFrame).toHaveBeenCalled()
     expect(callback).not.toHaveBeenCalled()
     expect(animationTrigger.changed).toBe(1)
-    animationTrigger.run()
+    const timestamp = 123.45
+
+    animationTrigger.target?.(timestamp)
     expect(callback).toHaveBeenCalledTimes(1)
+    expect(callback).toHaveBeenCalledWith(timestamp)
     expect(animationTrigger.changed).toBe(2)
   })
 

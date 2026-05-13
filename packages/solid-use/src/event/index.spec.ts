@@ -45,6 +45,7 @@ describe('onEvent', () => {
     const target = document.createElement('div')
 
     vi.spyOn(target, 'addEventListener')
+    vi.spyOn(target, 'removeEventListener')
 
     const callback = vi.fn()
     const options = {capture: true, passive: true}
@@ -58,5 +59,6 @@ describe('onEvent', () => {
     await flushPromises()
     expect(target.addEventListener).toHaveBeenCalledWith('click', expect.any(Function), options)
     dispose()
+    expect(target.removeEventListener).toHaveBeenCalledWith('click', expect.any(Function), options)
   })
 })

@@ -32,6 +32,7 @@
   "devDependencies": {
     "@types/node-fetch": "^2.6.13",
     "@winter-love/vite-lib-config": "workspace:*",
+    "cross-env": "catalog:",
     "vite": "catalog:"
   }
 }
