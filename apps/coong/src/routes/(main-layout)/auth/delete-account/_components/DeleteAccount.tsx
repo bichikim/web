@@ -64,8 +64,8 @@ export const DeleteAccount = () => {
           </div>
           <div>
             <label for="confirm-text" class="block text-sm font-medium mb-1">
-              계속하시려면 <span class="font-bold text-red-600">{CONFIRM_PHRASE}</span>{' '}
-              문구를 입력하세요.
+              계속하시려면 <span class="font-bold text-red-600">{CONFIRM_PHRASE}</span> 문구를
+              입력하세요.
             </label>
             <input
               id="confirm-text"

@@ -30,7 +30,9 @@ const AuthContext = createContext<AuthContext>({
   signInWithPassword: (params: {email: string; password: string}) =>
     Promise.resolve({session: null, user: null}),
   signOut: () => Promise.resolve(),
-  user: (Object.assign(() => null, {latest: null})) satisfies AccessorWithLatest<User | null | undefined>,
+  user: Object.assign(() => null, {latest: null}) satisfies AccessorWithLatest<
+    User | null | undefined
+  >,
   verifyOtp: () => Promise.resolve(null),
 })
 

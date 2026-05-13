@@ -4,7 +4,7 @@ import bg from './_components/bg.png'
 import {SAuroraText} from 'src/components/text'
 import {useAuth} from 'src/store/auth'
 import {clientOnly} from '@solidjs/start'
-import {useLocation, useNavigate, A, RouteDefinition} from '@solidjs/router'
+import {A, RouteDefinition, useLocation, useNavigate} from '@solidjs/router'
 import {onMount, Show} from 'solid-js'
 import {queryToString} from 'src/utils/query-params'
 import {cva} from 'class-variance-authority'
@@ -83,8 +83,7 @@ export default function VerifyEmailPage() {
       return
     }
 
-    // oxlint-disable-next-line eslint-js/camelcase
-    await verifyOtp({token_hash: hash, type})
+    await verifyOtp({tokenHash: hash, type})
     afterNavigate.start()
   })
 
