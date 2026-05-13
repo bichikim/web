@@ -1,6 +1,6 @@
 import {resolveAccessor} from 'src/resolve-accessor'
 import {MaybeAccessor} from 'src/types'
-import {createEffect} from 'solid-js'
+import {createEffect, onCleanup} from 'solid-js'
 
 export interface WaitSource<Options extends Record<string, any>> {
   cancel: () => void
@@ -44,9 +44,9 @@ export const createUseWait = <Options extends Record<string, any>>(
 
       source.create?.(callback, wait, options)
 
-      return () => {
+      onCleanup(() => {
         source.cancel()
-      }
+      })
     })
 
     return {
