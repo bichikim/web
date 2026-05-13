@@ -50,6 +50,12 @@ function Example() {
 }
 ```
 
+Keep refs inside the component and lift only the values and events the parent needs. Do not pass the DOM through a `ref` prop; pass what the parent needs through callbacks at the appropriate time (e.g. click, toggle).
+
+### Event callbacks vs readonly accessors (`on*`)
+
+See `rules/component-event-callback-naming.md`
+
 ### Conditional, switch, and list rendering
 
 Use SolidJS built-in control-flow components from `solid-js` instead of ad-hoc `&&`, nested ternaries, or `.map()` when you need reactive branching or keyed lists:

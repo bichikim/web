@@ -67,6 +67,12 @@ export const formatUserLabel = (options: FormatUserLabelOptions) => {
 
 ## Code Patterns
 
+### Constants placement
+
+- Keep constants at the site of use; extract to a shared file only when used in multiple places.
+- For single-use constants, keep them local unless module boundaries, external contracts, shared types, environment or config, test sharing, or file size require extraction.
+- Do not preemptively extract constants in anticipation of future reuse.
+
 ### Single responsibility (functions)
 
 - Prefer one function, one reason to change: split **access** (e.g. read last element), **guards / predicates**, and **transforms** (e.g. map or copy-and-update) when they are mixed in one place.
