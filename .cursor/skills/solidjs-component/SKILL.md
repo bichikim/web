@@ -39,16 +39,16 @@ See `rules/component-class-cx.md`
 
 **Default:** `createSignal` + `ref={setElement}` for DOM handles—matches this repo and satisfies Oxlint `no-unassigned-vars` (explicit assignment).
 
-   ```tsx
-   import {createSignal} from 'solid-js'
+```tsx
+import {createSignal} from 'solid-js'
 
-   function Example() {
-     const [el, setEl] = createSignal<HTMLDivElement | undefined>()
-     const handleClick = () => el()?.focus()
+function Example() {
+  const [el, setEl] = createSignal<HTMLDivElement | undefined>()
+  const handleClick = () => el()?.focus()
 
-     return <div ref={setEl} onClick={handleClick} />
-   }
-   ```
+  return <div ref={setEl} onClick={handleClick} />
+}
+```
 
 ### Conditional, switch, and list rendering
 
