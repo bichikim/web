@@ -306,9 +306,7 @@ describe('service worker e2e', () => {
 
     await expect(responsePromise).resolves.toHaveProperty('status', 200)
 
-    expect(cacheStorage.get('coong-cache-v1')?.has('https://example.com/missing.js')).not.toBe(
-      true,
-    )
+    expect(cacheStorage.get('coong-cache-v1')?.has('https://example.com/missing.js')).not.toBe(true)
   })
 
   it('does not handle Vercel internal requests', async () => {

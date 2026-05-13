@@ -50,9 +50,7 @@ const createErroredSseResponse = (): Response => {
           return
         }
 
-        controller.enqueue(
-          encoder.encode(PARTIAL_STDOUT_BLOCK),
-        )
+        controller.enqueue(encoder.encode(PARTIAL_STDOUT_BLOCK))
         didEnqueue = true
       },
     }),
@@ -146,12 +144,7 @@ describe('useAgentStream', () => {
   })
 
   it('should clear the resume session only after consuming a successful stream', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue(
-        createSseResponse([DONE_STDOUT_BLOCK]),
-      ),
-    )
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(createSseResponse([DONE_STDOUT_BLOCK])))
     const harness = createHookHarness()
 
     await harness.submitPrompt({event: createSubmitEvent(), promptText: 'hello'})
@@ -161,5 +154,4 @@ describe('useAgentStream', () => {
     expect(harness.clearResumeSessionId).toHaveBeenCalledTimes(1)
     expect(harness.getMessages().at(-1)?.content).toBe('done')
   })
-
 })

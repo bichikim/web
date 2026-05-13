@@ -1,5 +1,10 @@
 # AGENTS.md
 
+## Required after changes
+
+1. Fix oxlint errors
+2. Run oxfmt (`pnpm format`)
+
 ## Cursor Cloud specific instructions
 
 ### Overview
