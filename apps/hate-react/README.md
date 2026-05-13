@@ -36,9 +36,9 @@ Returns an empty message list if no token is provided.
 
 ## Scripts
 
-| Command           | Description              |
-| ----------------- | ------------------------ |
-| `pnpm dev`        | Start development server |
-| `pnpm build`      | Production build         |
-| `pnpm lint`       | Run ESLint               |
+| Command          | Description              |
+| ---------------- | ------------------------ |
+| `pnpm dev`       | Start development server |
+| `pnpm build`     | Production build         |
+| `pnpm lint`      | Run ESLint               |
 | `pnpm typecheck` | TypeScript type check    |
