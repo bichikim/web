@@ -5,7 +5,7 @@ description: Applies project unit test conventions with Vitest and @solidjs/test
 
 # Unit Test
 
-작업에 해당하는 섹션의 참조 파일을 먼저 열고 적용한다.
+Open and apply the reference files for the relevant section before working.
 
 ## Core Rules
 
