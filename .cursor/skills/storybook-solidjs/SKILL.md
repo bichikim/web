@@ -5,64 +5,16 @@ description: Generates Solid.js Storybook story files (*.story.tsx). Use when cr
 
 # Storybook skill for Solid.js
 
-## File Placement
+작업에 해당하는 섹션의 참조 파일을 먼저 열고 적용한다.
 
-- Co-locate stories with the component
-- Naming: `ComponentName.story.tsx`
+## Core Rules
 
-## Examples
-
-### Minimal Example
-
-```tsx
-import type {Meta, StoryObj} from 'storybook-solidjs-vite'
-import {Button} from './Button'
-import {fn} from 'storybook/test'
-
-const meta = {
-  title: 'Coong/Components/Button',
-  component: Button,
-  argTypes: {
-    size: {
-      control: 'select',
-      options: ['sm', 'md', 'lg'],
-      table: {category: 'Props'},
-    },
-    onClick: {
-      table: {category: 'Events'},
-      type: {name: 'function', required: false},
-    },
-  },
-  args: {
-    children: 'Button',
-    onClick: fn(),
-    size: 'md',
-  },
-} satisfies Meta<typeof Button>
-
-export default meta
-type Story = StoryObj<typeof meta>
-
-export const Default: Story = {}
-export const Variants: Story = {args: {variant: 'secondary'}}
-```
-
-### When storying a component that consumes context
-
-See `examples/router-decorator.md`
-
-## Storybook title rules
-
-### Format
-
-{Source}/{Category}/{SubPath?}/{ComponentName}
-
-- **Source**: package or app name (PascalCase)
-- **Category**: e.g. `Components`, `Use`, `Utils`, `Kata` (PascalCase)
-- **SubPath**: (optional) subgroup, e.g. `MidiPlayer`, `HiddenPanel`
-- **ComponentName**: component or hook name (PascalCase)
-
-## Testing + A11y
-
-- Include interactions for complex behaviors
-- Ensure accessibility coverage
+1. Co-locate stories with the component and name them `ComponentName.story.tsx`.
+2. Use `storybook-solidjs-vite` `Meta` and `StoryObj` types.
+3. Define `argTypes` for relevant props and events.
+4. Use `fn()` from `storybook/test` for event handler args.
+5. Include interactions for complex behaviors.
+6. Ensure accessibility coverage for interactive stories.
+7. See ./examples/minimal-story.md for the base story shape.
+8. See ./examples/router-decorator.md when storying a component that consumes router context.
+9. See ./rules/title-rules.md for Storybook title formatting.

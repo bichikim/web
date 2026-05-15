@@ -5,93 +5,17 @@ description: Applies project TypeScript conventions for naming, formatting, typi
 
 # Typescript
 
-## Naming Conventions
+작업에 해당하는 섹션의 참조 파일을 먼저 열고 적용한다.
 
-- Use PascalCase for Class, Interface and Type
-- Use camelCase for variables, function and method
-- Use UPPER_SNAKE_CASE for CONSTANTS
-- Do not abbreviate variable names (e.g. use `event` not `e`, `value` not `v`)
-- Variable names may be composed of up to 3 words
-- When nesting (object, callback, loop, etc.), do not repeat the outer name in inner variables (e.g. inside `user.profile` use `name` not `userName`)
+## Core Rules
 
-## Code Writing Order
-
-1. Write code
-2. Run `oxlint --fix` for lint auto-fix
-
-## Format
-
-### Comment placement
-
-Never write comments on the right side of code; always write above the target code.
-
-```ts
-// ok
-// 5 minutes
-const CACHE_MAX_AGE = 300
-
-// nope
-const CACHE_MAX_AGE = 300 // 5 minutes
-```
-
-### type & value import
-
-Do not duplicate the import source when importing type and value from the same module — use `import {type Foo, bar} from './foo'` not separate lines.
-
-### Object parameter (props / options)
-
-- For Solid-style hook functions whose name starts with `use`, the single object parameter should be `props: FooBarProps` (match the type name to the hook: `{HookName}Props`).
-- For shared utils, the single object parameter should be `options: FooBarOptions` (match the type name to the function: `{FunctionName}Options`).
-
-```ts
-// hooks
-export const useMyFeature = (props: MyFeatureProps) => {
-  /* ... */
-}
-
-// utils
-export const formatUserLabel = (options: FormatUserLabelOptions) => {
-  /* ... */
-}
-```
-
-## Typing
-
-- Define types with `interface`; use `type` only when interface cannot express it
-- Keep object type nesting depth to at most one level
-- Avoid `any`; prefer `unknown` with type guards
-- Prefer `satisfies` over `as` (type assertion); `as const` is an exception
-- Use `as const` + union instead of `enum`
-- Use `readonly` for immutable data whenever possible
-- When types are missing in a module — see `./rules/no-types.md`
-
-## Code Patterns
-
-### Constants placement
-
-- Keep constants at the site of use; extract to a shared file only when used in multiple places.
-- For single-use constants, keep them local unless module boundaries, external contracts, shared types, environment or config, test sharing, or file size require extraction.
-- Do not preemptively extract constants in anticipation of future reuse.
-
-### Single responsibility (functions)
-
-- Prefer one function, one reason to change: split **access** (e.g. read last element), **guards / predicates**, and **transforms** (e.g. map or copy-and-update) when they are mixed in one place.
-- Build target behavior through function composition: first reuse existing single-purpose shared functions when they fit, then add the smallest new focused functions needed and compose them into the goal function.
-- Extract small, named single-purpose functions when the same sub-step appears in more than one caller or when the name makes the main flow read as steps, not mechanics.
-- Do not create meaningless wrapper or blob functions: every extracted function must represent a clear concept in the composition and improve readability, reuse, or testability.
-
-### Undefined checks
-
-./cdde-patters/undefined-check.md
-
-### Null checks
-
-./cdde-patters/null-check.md
-
-### Type guards
-
-./cdde-patters/type-guard.md
-
-### Type + value import pattern
-
-./cdde-patters/type-and-value-import.md
+1. Use PascalCase for classes, interfaces, and types; camelCase for variables, functions, and methods; UPPER_SNAKE_CASE for constants.
+2. Do not abbreviate variable names, keep them to at most three words, and avoid repeating outer object names in nested variables.
+3. Define object shapes with `interface`; use `type` only when `interface` cannot express the type.
+4. Avoid `any`; prefer `unknown` with type guards, `satisfies` over `as`, `as const` plus unions over `enum`, and `readonly` for immutable data.
+5. Keep constants at the site of use unless they are genuinely shared or part of a boundary, contract, config, type, test, or file-size concern.
+6. Split mixed responsibilities into focused access, guard, predicate, and transform functions that improve readability, reuse, or testability.
+7. Run `oxlint --fix` after writing code, then fix remaining lint issues.
+8. See ./rules/comment-placement.md and ./rules/object-parameter.md for formatting and parameter naming examples.
+9. See ./rules/no-types.md when module types are missing.
+10. See ./code-patterns/undefined-check.md, ./code-patterns/null-check.md, ./code-patterns/type-guard.md, and ./code-patterns/type-and-value-import.md for code patterns.

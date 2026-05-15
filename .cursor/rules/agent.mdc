@@ -7,15 +7,21 @@ alwaysApply: true
 
 ## Information
 
-If you are less than 80% confident before starting, search for information using the internet or MCP (context7), then respond.
+Search for information using the internet or MCP (context7) only when:
+
+- you need to confirm current API or library behavior,
+- the task involves security, legal, deployment, or another area where recency is important, or
+- the user explicitly asks you to search.
+
+For simple codebase questions and internal implementation work, search the existing code first.
 
 ## Response
 
-After responding, cross-verify the provided information again using the internet or MCP (context7).
+After responding, cross-verify the provided information again using the internet or MCP (context7) only for high-risk changes or answers that depend on current information.
 
 ## Revision
 
-Clearly verify and fix TypeScript issues, lint problems, and import issues. When making modifications, always search for the latest information using the internet or MCP (context7) first before proceeding.
+Clearly verify and fix TypeScript issues, lint problems, and import issues. When making modifications, search for the latest information using the internet or MCP (context7) only when current API/library behavior, security, legal, deployment, or another recency-sensitive concern matters.
 Reference the package.json version information rather than using the latest versions.
 
 ## Code Writing

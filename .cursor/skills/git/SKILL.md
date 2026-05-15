@@ -5,50 +5,14 @@ description: Applies project Git commit message conventions. Use when writing co
 
 # Git Commit Rules
 
-## Type
+작업에 해당하는 섹션의 참조 파일을 먼저 열고 적용한다.
 
-- `update`: New feature or update feature
-- `docs`: Documentation changes
-- `refactor`: Code refactoring, test code or add Storybook
-- `chore`: Build process or package manager modifications, CI configuration changes
+## Core Rules
 
-## Subject Rules
-
-- Keep it under 80 characters
-- Use present tense
-- Don't end with a period
-- Use imperative mood
-- For long changes, use a list format with bullet points after the main subject
-
-## Body Rules
-
-- Optional
-- Explain what and why vs. how
-- Wrap at 72 characters
-- Use blank line to separate from subject
-- For multiple changes, use bullet points
-
-## Important Guidelines
-
-- You must write commit messages in English
-- If changes are too many to fit in 80 characters, split into a list format
-
-## Examples
-
-Short format:
-
-```text
-update - add authentication component
-```
-
-List format for multiple changes:
-
-```text
-update - implement user authentication and profile features
-
-- Add OAuth2 login flow with Google and GitHub
-- Create user profile management dashboard
-- Implement session handling and token refresh
-- Add protected route wrapper for authenticated pages
-- Set up user preferences storage and sync
-```
+1. Use one of these types: `update`, `docs`, `refactor`, or `chore`.
+2. Write commit messages in English.
+3. Keep the subject under 80 characters, present tense, imperative mood, and without a trailing period.
+4. Add a body only when it clarifies what changed and why; wrap body lines at 72 characters.
+5. For changes too broad for one short subject, use a short subject plus bullet list body.
+6. Use blank lines to separate the subject from the body.
+7. See ./examples/commit-message.md for short and multi-change examples.

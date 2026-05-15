@@ -5,146 +5,16 @@ description: Applies project conventions for Solid.js component structure, namin
 
 # Solidjs Component
 
-## File naming rules
+작업에 해당하는 섹션의 참조 파일을 먼저 열고 적용한다.
 
-See `rules/file-naming-rules.md`
+## Core Rules
 
-## Component Structure
-
-### Basic Structure and Styling
-
-See `rules/component-basic-structure.md`
-
-### Structure With createSignal State
-
-See `rules/component-state-structure.md`
-
-### Initial props with default values
-
-See `rules/component-initial-prop.md`
-
-### Component variable name rules
-
-See `rules/component-variable-name.md`
-
-### Optional / absent values in createSignal
-
-See `rules/component-signal-empty-value.md`
-
-### Multi-part `class` strings (`cx`)
-
-See `rules/component-class-cx.md`
-
-### DOM refs (`ref`)
-
-**Default:** `createSignal` + `ref={setElement}` for DOM handles—matches this repo and satisfies Oxlint `no-unassigned-vars` (explicit assignment).
-
-```tsx
-import {createSignal} from 'solid-js'
-
-function Example() {
-  const [el, setEl] = createSignal<HTMLDivElement | undefined>()
-  const handleClick = () => el()?.focus()
-
-  return <div ref={setEl} onClick={handleClick} />
-}
-```
-
-Keep refs inside the component and lift only the values and events the parent needs. Do not pass the DOM through a `ref` prop; pass what the parent needs through callbacks at the appropriate time (e.g. click, toggle).
-
-### Event callbacks vs readonly accessors (`on*`)
-
-See `rules/component-event-callback-naming.md`
-
-### Conditional, switch, and list rendering
-
-Use SolidJS built-in control-flow components from `solid-js` instead of ad-hoc `&&`, nested ternaries, or `.map()` when you need reactive branching or keyed lists:
-
-- **Conditional rendering:** `<Show>` (`when`, optional `fallback`)
-- **Switch rendering:** `<Switch>` with `<Match>` children (`when` per branch)
-- **Repeated list rendering:** `<For>` (`each`, keyed item tracking)
-
-## Solid Reactivity Notes
-
-- Implement proper code splitting but never split Solidjs props
-  - BAD (breaks reactivity by splitting props):
-
-    ```tsx
-    interface Props {
-      count: number
-    }
-
-    export function Counter(props: Props) {
-      const {count} = props
-      return <div>{count}</div>
-    }
-    ```
-
-  - GOOD (keep props reactive):
-
-    ```tsx
-    interface Props {
-      count: number
-    }
-
-    export function Counter(props: Props) {
-      return <div>{props.count}</div>
-    }
-    ```
-
-  - If splitting is unavoidable, use Solid's `splitProps`:
-
-    ```tsx
-    import {splitProps} from 'solid-js'
-
-    interface Props {
-      count: number
-      class?: string
-    }
-
-    export function Counter(props: Props) {
-      const [local, rest] = splitProps(props, ['count', 'class'])
-      return (
-        <div class={local.class} {...rest}>
-          {local.count}
-        </div>
-      )
-    }
-    ```
-
-- In Solid, `createEffect` cleanup must use `onCleanup(() => ...)` inside the effect (do not `return` a cleanup function)
-  - BAD (do not `return` a cleanup function):
-
-    ```tsx
-    import {createEffect} from 'solid-js'
-
-    export function Example() {
-      createEffect(() => {
-        const id = window.setInterval(() => {}, 1000)
-        return () => window.clearInterval(id)
-      })
-
-      return null
-    }
-    ```
-
-  - GOOD (use `onCleanup` inside the effect):
-
-    ```tsx
-    import {createEffect, onCleanup} from 'solid-js'
-
-    export function Example() {
-      createEffect(() => {
-        const id = window.setInterval(() => {}, 1000)
-        onCleanup(() => window.clearInterval(id))
-      })
-
-      return null
-    }
-    ```
-
-## Resources
-
-- context7 mcp -> Use this MCP as the highest priority reference source.
-
-official documentation links -> ./references/reference.md
+1. Follow file naming, component structure, state structure, initial prop, variable naming, signal empty value, and `cx` class rules. See ./rules/file-naming-rules.md, ./rules/component-basic-structure.md, ./rules/component-state-structure.md, ./rules/component-initial-prop.md, ./rules/component-variable-name.md, ./rules/component-signal-empty-value.md, and ./rules/component-class-cx.md.
+2. Use `createSignal` plus `ref={setElement}` for DOM handles and keep DOM refs inside the component. See ./rules/dom-ref.md.
+3. Distinguish event callbacks from readonly accessors when naming `on*` props. See ./rules/component-event-callback-naming.md.
+4. Use SolidJS built-in control-flow components from `solid-js`; preserve `<For>` vs `<Index>` based on list identity and update pattern. See ./rules/component-control-flow.md.
+5. Use `<Suspense>` for async loading fallbacks and `<ErrorBoundary>` for recoverable render or resource failures. See ./rules/component-suspense-error-boundary.md.
+6. Never destructure Solid props directly; use `splitProps` only when splitting is unavoidable. See ./rules/reactivity-notes.md.
+7. Use `onCleanup` inside `createEffect`; do not return cleanup functions from the effect. See ./rules/reactivity-notes.md.
+8. Use context7 MCP as the highest-priority reference source when current SolidJS documentation is needed.
+9. See ./references/reference.md for official documentation links.
