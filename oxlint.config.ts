@@ -146,7 +146,7 @@ export default defineConfig({
     'eslint-js/func-call-spacing': ['error', 'never'],
     'eslint-js/function-call-argument-newline': ['error', 'consistent'],
     'eslint-js/function-paren-newline': 'off',
-    'eslint-js/generator-star-spacing': ['error', {after: false, before: true}],
+    'eslint-js/generator-star-spacing': ['error', {after: true, before: false}],
     'eslint-js/indent': 'off',
     'eslint-js/jsx-quotes': ['error', 'prefer-double'],
     'eslint-js/key-spacing': ['error', {afterColon: true, beforeColon: false, mode: 'strict'}],
