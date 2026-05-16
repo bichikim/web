@@ -1,5 +1,5 @@
 import {createSignal} from 'solid-js'
-import {sync} from './'
+import {createSync} from './'
 import {describe, expect, it} from 'vitest'
 import {renderHook} from '@solidjs/testing-library'
 
@@ -8,7 +8,7 @@ describe('manualMemo', () => {
     const {
       result: [value],
       cleanup,
-    } = renderHook(() => sync(123))
+    } = renderHook(() => createSync(123))
 
     expect(value()).toBe(123)
     cleanup()
@@ -28,7 +28,7 @@ describe('manualMemo', () => {
       return {
         setSource,
         source,
-        sync: sync(source),
+        sync: createSync(source),
       }
     })
 
