@@ -7,6 +7,10 @@ Review the target code for correctness risks and maintainability. When relevant,
 - Perform the review within the **explicit scope** (files, PR diff, functions/modules, etc.). If a scope is provided, go deep only within that boundary.
 - If the **scope is empty or unclear, do not start reviewing**. Ask once more which files, commits, or features should be included.
 
+## Before you review
+
+Identify what kind of code is in scope, find matching skills under `.cursor/skills/`, and **read them before writing any findings**.
+
 ## Review Rules
 
 1. Minimize praise and formal agreement; focus on **observations, risks, and actionable alternatives**. If you judge that “this does not need to be fixed immediately,” include the rationale.

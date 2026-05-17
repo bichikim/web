@@ -1,9 +1,9 @@
 ---
-name: solidjs-component
-description: Applies project conventions for Solid.js component structure, naming, state, and styling. Use when writing or editing .tsx component files.
+name: solidjs
+description: Applies project conventions for Solid.js components, custom hooks, reactivity, and styling. Use when writing or editing Solid.js .tsx/.ts files.
 ---
 
-# Solidjs Component
+# Solid.js
 
 Open and apply the reference files for the relevant section before working.
 
@@ -16,5 +16,6 @@ Open and apply the reference files for the relevant section before working.
 5. Use `<Suspense>` for async loading fallbacks and `<ErrorBoundary>` for recoverable render or resource failures. See ./rules/component-suspense-error-boundary.md.
 6. Never destructure Solid props directly; use `splitProps` only when splitting is unavoidable. See ./rules/reactivity-notes.md.
 7. Use `onCleanup` inside `createEffect`; do not return cleanup functions from the effect. See ./rules/reactivity-notes.md.
-8. Use context7 MCP as the highest-priority reference source when current SolidJS documentation is needed.
-9. See ./references/reference.md for official documentation links.
+8. Do not track user callbacks in custom hooks (`createEffect`, `createMemo`, etc.). This is not React: the component body does not re-run on every update, and callback bodies should read signals/accessors at invocation time for latest values. Track reactive hook inputs (for example `wait`, `options`) instead. See ./rules/reactivity-notes.md.
+9. Use context7 MCP as the highest-priority reference source when current SolidJS documentation is needed.
+10. See ./references/reference.md for official documentation links.

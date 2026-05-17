@@ -78,3 +78,22 @@ export function Example() {
   return null
 }
 ```
+
+## Custom hook callbacks
+
+Do not add the user's `callback` argument to `createEffect` (or similar) dependency tracking in custom hooks such as debounce, throttle, or timeout helpers.
+
+Solid is not React: the owning component body does not re-execute on every reactive update, and a stable callback reference is normal. Latest values come from **reads inside the callback when it runs** (signals, accessors, stores), not from recreating the callback on each change.
+
+Track reactive **hook configuration** instead (for example `wait`, `options` accessors).
+
+```ts
+// Good: callback reads latest query when the debounced fn fires
+const debounced = useDebounce(() => {
+  saveDraft(query())
+}, 300)
+
+// Avoid: capturing a non-reactive snapshot outside the callback
+const id = route.params.id
+useDebounce(() => fetch(id), 300) // `id` can stay stale; read reactively inside the callback
+```
