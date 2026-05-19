@@ -1,3 +1,9 @@
+---
+name: critical-review
+description: Review code for correctness risks, maintainability, security, and lifecycle issues with severity-tagged findings.
+disable-model-invocation: true
+---
+
 # Critical Review
 
 Review the target code for correctness risks and maintainability. When relevant, evaluate security, accessibility, and performance trade-offs using the same standards.
@@ -9,7 +15,7 @@ Review the target code for correctness risks and maintainability. When relevant,
 
 ## Before you review
 
-Identify what kind of code is in scope, find matching skills under `.cursor/skills/`, and **read them before writing any findings**.
+Identify what kind of code is in scope, find matching skills under `.agents/skills/`, and **read them before writing any findings**.
 
 ## Review Rules
 

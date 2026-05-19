@@ -1,5 +1,9 @@
 # AGENTS.md
 
+## Code quality
+
+All structural design and code in this repository must be written at **enterprise grade** — maintainability, scalability, clear separation of concerns, robust error handling, and consistent patterns across the codebase.
+
 ## Required after changes
 
 1. Fix oxlint errors
