@@ -6,7 +6,7 @@ import {signOutAction} from 'src/requests/auth/sign-out'
 import {changePasswordAction} from 'src/requests/auth/change-password'
 import {resetPasswordAction} from 'src/requests/auth/reset-password'
 import {deleteAccountAction} from 'src/requests/auth/delete-account'
-import {AccessorWithLatest, createAsync, useAction} from '@solidjs/router'
+import {AccessorWithLatest, createAsync, revalidate, useAction} from '@solidjs/router'
 import {withHandyQuery} from 'src/use/handy-query'
 import {verifyOtpAction, type VerifyOtpPayload} from 'src/requests/auth/verify-otp'
 
@@ -45,11 +45,44 @@ export const useUserQuery = withHandyQuery(userQuery)
 export function AuthProvider(props: AuthProviderProps) {
   const user = createAsync(() => userQuery(), {deferStream: true})
   const changePassword = useAction(changePasswordAction)
-  const verifyOtp = useAction(verifyOtpAction)
+  const runVerifyOtp = useAction(verifyOtpAction)
   const resetPassword = useAction(resetPasswordAction)
-  const signInWithPassword = useAction(signInAction)
-  const signOut = useAction(signOutAction)
-  const deleteAccount = useAction(deleteAccountAction)
+  const runSignInWithPassword = useAction(signInAction)
+  const runSignOut = useAction(signOutAction)
+  const runDeleteAccount = useAction(deleteAccountAction)
+
+  const revalidateUser = async () => {
+    await revalidate(userQuery.key)
+  }
+
+  const verifyOtp: AuthContext['verifyOtp'] = async (payload) => {
+    const user = await runVerifyOtp(payload)
+
+    await revalidateUser()
+
+    return user
+  }
+
+  const signInWithPassword: AuthContext['signInWithPassword'] = async (params) => {
+    const result = await runSignInWithPassword(params)
+
+    await revalidateUser()
+
+    return result
+  }
+
+  const signOut: AuthContext['signOut'] = async () => {
+    await runSignOut()
+    await revalidateUser()
+  }
+
+  const deleteAccount: AuthContext['deleteAccount'] = async () => {
+    const result = await runDeleteAccount()
+
+    await revalidateUser()
+
+    return result
+  }
 
   return (
     <AuthContext.Provider
