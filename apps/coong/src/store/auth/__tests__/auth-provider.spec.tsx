@@ -3,7 +3,7 @@
  */
 import {render} from '@solidjs/testing-library'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
-import {AuthProvider, type AuthContext, useAuth} from '../index'
+import {type AuthContext, AuthProvider, useAuth} from '../index'
 
 const routerMocks = vi.hoisted(() => {
   const actionHandlers = {
