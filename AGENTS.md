@@ -2,20 +2,32 @@
 
 ## Code quality
 
-All structural design and code in this repository must be written at **enterprise grade** — maintainability, scalability, clear separation of concerns, robust error handling, and consistent patterns across the codebase.
+**Enterprise-grade** code: maintainability, scalability, separation of concerns, robust error handling, consistent patterns.
 
 ## Required after changes
 
 1. Fix oxlint errors
 2. Run oxfmt (`pnpm format`)
 
-## Cursor Cloud specific instructions
+## Comments
 
-pnpm + Turborepo (`@winter-love/web`). **Coong** `apps/coong` (SolidStart SSR) · **Storybook** at repo root. Node ≥22, pnpm 10.x (`package.json` `engines` / `packageManager`). `pnpm install` runs workspace `prepare` scripts (package builds; Coong runs Supabase type gen).
+Function JSDoc: contract (what) only; call sites: intent (why) only.
 
-- **Coong** — `pnpm dev` in `apps/coong` (:3000). Copy `apps/coong/.env.e2e` → `.env` for dev without Supabase (see `.env.example`).
-- **Storybook** — `pnpm storybook:dev` at root (:6006).
+## AI work context (`AI_NOTE`)
 
-**Commands:** `pnpm lint` (oxlint) · `pnpm test` · `pnpm -r prepare` (rebuild workspace packages) · `pnpm typecheck` in `apps/coong`
+Chat context is volatile. When **why** isn't obvious from code, leave a minimal in-code note for later agents.
 
-**Gotchas:** Without Supabase, auth/DB features error but the app renders. Re-run `pnpm -r prepare` after cleaning `node_modules` or `dist/`.
+- Format: `// AI_NOTE - …` or `/* AI_NOTE - … */`
+- Content: decision + reason (constraints, rejected approach, non-obvious tradeoff); not a changelog
+- Scope: cross-session gaps only; skip self-explanatory code
+
+## Cursor Cloud
+
+pnpm + Turborepo (`@winter-love/web`) · Node ≥22 · pnpm 10.x (`package.json`). `pnpm install` runs workspace `prepare` (package builds; Coong Supabase type gen).
+
+- **Coong** — `apps/coong` (SolidStart SSR). `pnpm dev` (:3000). Copy `apps/coong/.env.e2e` → `.env` for dev without Supabase (see `.env.example`).
+- **Storybook** — root. `pnpm storybook:dev` (:6006).
+
+**Commands:** `pnpm lint` · `pnpm test` · `pnpm -r prepare` · `pnpm typecheck` (`apps/coong`)
+
+**Gotcha:** Without Supabase, auth/DB features error but the app renders. Re-run `pnpm -r prepare` after cleaning `node_modules` or `dist/`.
