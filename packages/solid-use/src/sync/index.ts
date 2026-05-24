@@ -17,4 +17,3 @@ export const createSync = <T>(value: MaybeAccessor<T>): Signal<T> => {
 
   return [getValue, setValue]
 }
-
