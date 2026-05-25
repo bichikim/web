@@ -13,6 +13,8 @@ Create a new PR using the steps below.
 3. Push the branch to the remote.
 4. Create a PR with `dev` as the base branch.
 
+Unless the user explicitly asks for a ready (non-draft) PR, create it as a **draft**.
+
 If the current branch is not `dev`, use it as-is and run steps 2-4 above.
 
 Generate the PR title automatically based on the changes.
