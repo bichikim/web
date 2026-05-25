@@ -6,24 +6,48 @@ disable-model-invocation: true
 
 # Critical Review
 
-Review the target code for correctness risks and maintainability. When relevant, evaluate security, accessibility, and performance trade-offs using the same standards.
+Review target code against **enterprise-grade** expectations (correctness, maintainability, scalability, separation of concerns, robust error handling, consistent patterns). When relevant, apply the same bar to security, accessibility, and performance.
 
 ## Scope
 
-- Perform the review within the **explicit scope** (files, PR diff, functions/modules, etc.). If a scope is provided, go deep only within that boundary.
-- If the **scope is empty or unclear, do not start reviewing**. Ask once more which files, commits, or features should be included.
+- Review only the **explicit scope** (files, PR diff, modules, etc.); go deep inside that boundary.
+- **Empty or unclear scope** → do not review; ask once which files, commits, or features to include.
 
 ## Before you review
 
-Identify what kind of code is in scope, find matching skills under `.agents/skills/`, and **read them before writing any findings**.
+Identify code type in scope, find matching `.agents/skills/`, and **read them before any findings**.
 
 ## Review Rules
 
-1. Minimize praise and formal agreement; focus on **observations, risks, and actionable alternatives**. If you judge that “this does not need to be fixed immediately,” include the rationale.
-2. Critique should be **evidence-based rigor**, not a harsh tone. For each claim, include at least one of: **code citation, reproduction path, or assumption**.
-3. Assign a **severity** to each issue. Example: **P0** (release/correctness/security blocker), **P1** (maintainability, bug risk, fix after alignment).
-4. **Number each issue** in order (1, 2, 3, …) at the start of the heading or list item so follow-up modification commands can refer to them by number (e.g. “fix items 2 and 5”).
-5. Review from the perspective of a **developer who uses this code**. Evaluate API surface (names, types, props), misuse risk, and whether it is understandable without extra context.
-6. Check whether logic can be **decomposed and composed**. Call out mixed responsibilities and coupling that blocks testing or reuse.
-7. Inspect **cleanup and lifecycle handling** thoroughly: missing post-processing/cleanup, race conditions, and unmount scenarios around `useEffect` subscriptions, timers, event listeners, AbortController, etc.
-8. Include **example code** in improvement suggestions. **Prefer unified diffs when possible**, and group same-theme changes in **one diff**. For trivial one-line edits, an **inline code block** is enough.
+1. **No praise or positive commentary** — only **risks, defects, and actionable alternatives**.
+2. **Evidence-based** critique: each claim needs a **code citation, reproduction path, or stated assumption**.
+3. Tag **severity** per issue (e.g. **P0** release/correctness/security blocker; **P1** maintainability, bug risk, fix after alignment).
+4. Review as a **consumer**: API surface (names, types, props), misuse risk, clarity without extra context.
+5. Check **decomposition/composition**; flag mixed responsibilities and coupling that blocks tests or reuse.
+6. **Lifecycle/cleanup**: teardown gaps, races, dispose on unmount (`createEffect`/`onMount` + `onCleanup`; subscriptions, timers, listeners, `AbortController`). Solid: see `solidjs` — cleanup via `onCleanup`, not a returned function from `createEffect`.
+7. Every finding needs a **concrete fix path** (what to change and why), not only a description of the current code. Ship **example code** with that path; prefer **unified diffs** (one diff per theme). Trivial one-liners: inline block only.
+
+## Output
+
+Use this structure every time. **Number findings** (`1`, `2`, `3`, …) so follow-ups can reference them (e.g. “fix 2 and 5”).
+
+**Prioritize fix guidance over exposition.** Keep Risk/Evidence short; spend depth on how to improve the code.
+
+### Summary
+
+2–3 sentences: scope reviewed, overall risk, whether any **P0** exists. If no P0/P1 findings, say so explicitly.
+
+### Findings
+
+One block per issue, in severity order (P0 before P1). Repeat for each numbered item:
+
+#### {N}. [{severity}] {short title}
+
+- **Risk:** what breaks or degrades (brief)
+- **Evidence:** code citation, reproduction path, or stated assumption (brief)
+- **Fix:** what to change, why it helps, and tradeoffs if any — this is the main content
+- **Example:** drop-in snippet or unified diff implementing **Fix**; add comments on **non-obvious** lines explaining *why* (intent), not what the syntax does. Skip noise comments and narrating obvious code. Match `AGENTS.md` comment style when the snippet is production-shaped (JSDoc = contract; `//` = why at the decision point)
+
+### Out of scope (optional)
+
+Brief bullets only for material issues outside the requested boundary — no deep review.
