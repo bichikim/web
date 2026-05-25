@@ -1,10 +1,6 @@
-module.exports = () => {
-  return {
-    autoDetect: true,
-    testFramework: {
-      // it does not work
-      // arguments: '--selectProjects unit-test',
-      configFile: './vitest.config.mts',
-    },
-  }
-}
+export default () => ({
+  autoDetect: true,
+  testFramework: {
+    configFile: './vitest.config.mts',
+  },
+})
