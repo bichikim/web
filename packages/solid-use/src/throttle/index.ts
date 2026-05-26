@@ -1,32 +1,58 @@
 import {throttle} from 'es-toolkit/compat'
-import {createUseWait} from 'src/wait'
+import {MaybeAccessor} from 'src/types'
+import {resolveAccessor} from 'src/resolve-accessor'
+import {createEffect, onCleanup} from 'solid-js'
 
-type DebouncedFunc<T extends (...args: any) => any> = T & {
-  cancel: () => void
-  flush: () => ReturnType<T>
-}
+export type ThrottleSettings = NonNullable<Parameters<typeof throttle>[2]>
+export type ThrottledFunc<T extends (...args: any) => any> = ReturnType<typeof throttle<T>>
 
-export const useThrottle = createUseWait(() => {
-  let flag: undefined | DebouncedFunc<(...args: any) => any>
+export const createThrottle = <T extends (...args: any) => any>(
+  callback: T,
+  throttleMs: MaybeAccessor<number>,
+  options: MaybeAccessor<ThrottleSettings> = {},
+) => {
+  const throttleMsAccessor = resolveAccessor(throttleMs)
+  const optionsAccessor = resolveAccessor(options)
+  let throttleInstance: ThrottledFunc<T> | null = null
+  let shouldExecute: Parameters<T> | null = null
+
+  createEffect(() => {
+    const ms = throttleMsAccessor()
+    const options = optionsAccessor()
+    throttleInstance = throttle(callback, ms, options)
+
+    if (shouldExecute) {
+      throttleInstance(...shouldExecute)
+      shouldExecute = null
+    }
+
+    onCleanup(() => {
+      throttleInstance?.cancel()
+      throttleInstance = null
+    })
+  })
+
+  onCleanup(() => {
+    shouldExecute = null
+  })
 
   return {
     cancel: () => {
-      flag?.cancel()
+      shouldExecute = null
+      throttleInstance?.cancel()
     },
-    create: (callback, wait, options) => {
-      flag = throttle(
-        (...args) => {
-          callback(...args)
-        },
-        wait,
-        options,
-      ) as DebouncedFunc<(...args: any) => any>
-    },
-    execute: (args) => {
-      flag?.(...args)
+    execute: (...args: Parameters<T>) => {
+      // 최초 createEffect 전에 여러번 execute 될 경우 마지막 execute 만 실행됩니다
+      if (!throttleInstance) {
+        shouldExecute = args
+        return
+      }
+      throttleInstance(...args)
     },
     flush: () => {
-      flag?.flush()
+      throttleInstance?.flush()
     },
   }
-})
+}
+
+export const useThrottle = createThrottle

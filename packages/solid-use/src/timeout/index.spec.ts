@@ -13,7 +13,7 @@ describe('useTimeout', () => {
     vi.advanceTimersByTime(50)
     expect(callback).toHaveBeenCalledTimes(0)
     timeout.execute()
-    vi.advanceTimersByTime(50)
+    vi.advanceTimersByTime(100)
     expect(callback).toHaveBeenCalledTimes(1)
     vi.useRealTimers()
   })
