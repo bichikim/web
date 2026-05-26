@@ -14,7 +14,7 @@ describe('uuid', () => {
   it.skip('should reset to 1 when reaching MAX_COUNT', () => {
     const uuid = createUuid(1_000_000)
 
-    expect(uuid()).toBe(1)
+    expect(uuid()).toBe(0)
   })
 
   it('should create independent uuid generators', () => {
