@@ -2,6 +2,9 @@
   "name": "@winter-love/oxlint-plugins",
   "version": "0.0.1",
   "private": true,
-  "type": "commonjs",
-  "main": "index.js"
+  "type": "module",
+  "main": "index.mjs",
+  "exports": {
+    ".": "./index.mjs"
+  }
 }

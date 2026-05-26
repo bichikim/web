@@ -18,11 +18,41 @@ export default defineConfig({
       name: 'sort-keys-fix',
       specifier: '@winter-love/oxlint-plugins',
     },
+    {
+      name: 'solid',
+      specifier: 'eslint-plugin-solid',
+    },
   ],
   overrides: [
+    // eslint-plugin-solid configs/typescript (JSX/TSX only)
+    {
+      files: ['**/*.{tsx,jsx}'],
+      rules: {
+        'solid/components-return-once': 'warn',
+        'solid/event-handlers': 'warn',
+        'solid/imports': 'warn',
+        'solid/jsx-no-duplicate-props': 'error',
+        'solid/jsx-no-script-url': 'error',
+        'solid/jsx-no-undef': ['error', {typescriptEnabled: true}],
+        'solid/jsx-uses-vars': 'error',
+        'solid/no-array-handlers': 'off',
+        'solid/no-destructure': 'error',
+        'solid/no-innerhtml': 'error',
+        'solid/no-proxy-apis': 'off',
+        'solid/no-react-deps': 'warn',
+        'solid/no-react-specific-props': 'warn',
+        'solid/no-unknown-namespaces': 'off',
+        'solid/prefer-classlist': 'off',
+        'solid/prefer-for': 'error',
+        'solid/prefer-show': 'off',
+        'solid/reactivity': 'warn',
+        'solid/self-closing-comp': 'warn',
+        'solid/style-prop': 'warn',
+      },
+    },
     // test mock files
     {
-      files: ['**/__mocks__/**/*.ts'],
+      files: ['**/__mocks__/**/*.{ts,mts,js,mjs}'],
       rules: {
         'max-classes-per-file': 'off',
         'unicorn/consistent-function-scoping': 'off',
@@ -31,7 +61,7 @@ export default defineConfig({
     },
     // storybook files
     {
-      files: ['**/*.story.{ts,tsx,js,jsx}'],
+      files: ['**/*.story.{ts,mts,tsx,js,mjs,jsx}'],
       rules: {
         'no-magic-numbers': 'off',
         'unicorn/consistent-function-scoping': 'off',
@@ -39,7 +69,7 @@ export default defineConfig({
     },
     // test files
     {
-      files: ['**/*.spec.{ts,tsx,js,jsx}', '**/*.e2e.{ts,tsx,js,jsx}'],
+      files: ['**/*.spec.{ts,mts,tsx,js,mjs,jsx}', '**/*.e2e.{ts,mts,tsx,js,mjs,jsx}'],
       rules: {
         '@typescript-eslint/no-unused-vars': 'off',
         '@typescript-eslint/no-var-requires': 'off',
@@ -85,8 +115,9 @@ export default defineConfig({
         'no-magic-numbers': 'off',
       },
     },
+    // @winter-love/oxlint-plugins — ESLint rule implementation; relax rules that conflict with AST idioms or rule metadata.
     {
-      files: ['packages/oxlint-plugins/**/*.js'],
+      files: ['packages/oxlint-plugins/**/*.{js,mjs}'],
       rules: {
         'id-length': 'off',
         'max-params': 'off',
