@@ -6,14 +6,8 @@
 
 type Length<T extends readonly any[]> = T['length']
 
-type TupleKey<T extends readonly any[]> = Exclude<keyof T, keyof any[]>
-
-type OptionalTupleKey<T extends readonly any[]> = {
-  [K in TupleKey<T>]: [] extends Pick<T, K> ? K : never
-}[TupleKey<T>]
-
 type RuntimeRequiredTuple<T extends readonly any[]> = {
-  [K in keyof T]-?: K extends OptionalTupleKey<T> ? T[K] | undefined : T[K]
+  [K in keyof T as K]-?: undefined extends T[K] ? T[K] | undefined : T[K]
 }
 
 export type ObjectInfer<T> = T extends {[key: string]: any} ? {[P in keyof T]: T[P]} : T
