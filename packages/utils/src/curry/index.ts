@@ -6,9 +6,7 @@
 
 type Length<T extends readonly any[]> = T['length']
 
-type RuntimeRequiredTuple<T extends readonly any[]> = {
-  [K in keyof T as K]-?: undefined extends T[K] ? T[K] | undefined : T[K]
-}
+type RuntimeRequiredTuple<T extends readonly any[]> = Required<T>
 
 export type ObjectInfer<T> = T extends {[key: string]: any} ? {[P in keyof T]: T[P]} : T
 

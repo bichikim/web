@@ -138,8 +138,8 @@ describe('curryReverse', () => {
     expect(curryFoo(10, 'foo')).toBe('foo 10')
   })
 
-  it('should curry optional parameters when omitted explicitly', () => {
-    const foo = (name: string, age?: number) => `${name} ${age}`
+  it('should curry explicit undefined placeholders', () => {
+    const foo = (name: string, age: number | undefined) => `${name} ${age}`
     const curryFoo = curryReverse(foo)
 
     expect(curryFoo(undefined)('foo')).toBe('foo undefined')
@@ -224,7 +224,7 @@ describe('curryReverse type check', () => {
     const foo = (a?: string) => `${a}`
     const curryFoo = curryReverse(foo)
 
-    expectTypeOf(curryFoo).parameters.toEqualTypeOf<[string | undefined]>()
+    expectTypeOf(curryFoo).parameters.toEqualTypeOf<[string]>()
     expectTypeOf(curryFoo).returns.toEqualTypeOf<string>()
   })
 
@@ -247,42 +247,38 @@ describe('curryReverse type check', () => {
     const foo = (a: string, b?: number) => `${a} ${b}`
     const curryFoo = curryReverse(foo)
 
-    expectTypeOf(curryFoo).parameters.toEqualTypeOf<
-      [number | undefined] | [number | undefined, string]
-    >()
+    expectTypeOf(curryFoo).parameters.toEqualTypeOf<[number] | [number, string]>()
 
-    const partial0 = curryFoo(undefined)
+    // @ts-expect-error curryReverse runtime does not skip declared parameters.
+    curryFoo()
+
+    const partial0 = curryFoo(10)
 
     expectTypeOf(partial0).parameters.toEqualTypeOf<[string]>()
     expectTypeOf(partial0).returns.toEqualTypeOf<string>()
 
-    const partial1 = curryFoo(10)
+    const partial1 = curryFoo(10, 'foo')
 
-    expectTypeOf(partial1).parameters.toEqualTypeOf<[string]>()
-    expectTypeOf(partial1).returns.toEqualTypeOf<string>()
-
-    expectTypeOf(curryFoo(10, 'foo')).toEqualTypeOf<string>()
+    expectTypeOf(partial1).toEqualTypeOf<string>()
   })
 
   it('should be expected type of a?, b? parameters', () => {
     const foo = (a?: string, b?: number) => `${a} ${b}`
     const curryFoo = curryReverse(foo)
 
-    expectTypeOf(curryFoo).parameters.toEqualTypeOf<
-      [number | undefined] | [number | undefined, string | undefined]
-    >()
+    expectTypeOf(curryFoo).parameters.toEqualTypeOf<[number] | [number, string]>()
 
-    const partial0 = curryFoo(undefined)
+    // @ts-expect-error curryReverse runtime does not skip declared parameters.
+    curryFoo()
 
-    expectTypeOf(partial0).parameters.toEqualTypeOf<[string | undefined]>()
+    const partial0 = curryFoo(10)
+
+    expectTypeOf(partial0).parameters.toEqualTypeOf<[string]>()
     expectTypeOf(partial0).returns.toEqualTypeOf<string>()
 
-    const partial1 = curryFoo(10)
+    const partial1 = curryFoo(10, 'foo')
 
-    expectTypeOf(partial1).parameters.toEqualTypeOf<[string | undefined]>()
-    expectTypeOf(partial1).returns.toEqualTypeOf<string>()
-
-    expectTypeOf(curryFoo(10, 'foo')).toEqualTypeOf<string>()
+    expectTypeOf(partial1).toEqualTypeOf<string>()
   })
 
   it('should be expected type of a, b, c parameters', () => {
@@ -311,7 +307,7 @@ describe('curryReverse type check', () => {
     const curryFoo = curryReverse(foo)
 
     expectTypeOf(curryFoo).parameters.toEqualTypeOf<
-      [boolean | undefined] | [boolean | undefined, number] | [boolean | undefined, number, string]
+      [boolean] | [boolean, number] | [boolean, number, string]
     >()
 
     const partial1 = curryFoo(true)
