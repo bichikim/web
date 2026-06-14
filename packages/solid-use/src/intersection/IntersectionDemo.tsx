@@ -1,14 +1,14 @@
 /* eslint-disable no-magic-numbers */
-import {createSignal} from 'solid-js'
-import {useIntersection} from './index'
+import {createMemo, createSignal} from 'solid-js'
+import {useIntersection} from './'
 
 export const IntersectionDemo = (props: {rootMargin?: string; threshold?: number}) => {
-  const [target, setTarget] = createSignal<HTMLDivElement>()
+  const [target, setTarget] = createSignal<HTMLDivElement | null>(null)
 
-  const isIntersecting = useIntersection(target, {
+  const isIntersecting = useIntersection(target, () => ({
     rootMargin: props.rootMargin || '0px',
     threshold: props.threshold || 0.5,
-  })
+  }))
 
   return (
     <div class="h-96 overflow-auto border border-gray-300 p-4">

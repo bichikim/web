@@ -17,7 +17,7 @@ const meta = {
     },
   },
   component: IntersectionDemo,
-  title: 'Coong/Use/useIntersection',
+  title: 'Solid/Use/useIntersection',
 } satisfies Meta<typeof IntersectionDemo>
 
 export default meta
