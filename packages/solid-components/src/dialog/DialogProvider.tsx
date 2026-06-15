@@ -1,6 +1,6 @@
 import {ParentProps, Show} from 'solid-js'
 import {Portal} from 'solid-js/web'
-import {Close} from 'src/close'
+import {Close} from '../close'
 
 export interface DialogProviderProps extends ParentProps {
   onShowChange?: (value: boolean) => void

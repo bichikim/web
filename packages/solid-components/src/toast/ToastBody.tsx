@@ -1,7 +1,7 @@
 import {ComponentProps, For, useContext} from 'solid-js'
 import {ToastContentContext, ToastContext, ToastInnerContext} from './context'
 import {Portal} from 'solid-js/web'
-import {Close} from 'src/close'
+import {Close} from '../close'
 
 export interface ToastBodyProps extends ComponentProps<'div'> {
   //

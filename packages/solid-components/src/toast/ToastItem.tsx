@@ -1,5 +1,5 @@
 import {ToastActionsContext, ToastContentContext} from './context'
-import {useClose} from 'src/close'
+import {useClose} from '../close'
 import {ComponentProps, createMemo, useContext} from 'solid-js'
 import {Dynamic} from 'solid-js/web'
 
