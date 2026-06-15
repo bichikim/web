@@ -11,7 +11,7 @@ describe('curry', () => {
   })
 })
 
-describe('type check', () => {
+describe('curry type check', () => {
   it('should be expected type of none parameters', () => {
     const foo = () => 'foo'
     const curryFoo = curry(foo)
@@ -200,5 +200,121 @@ describe('curryReverse', () => {
     expect(curryFoo('rich', 'developer', 'drink', 'male', 10, 'bar')).toBe(
       'bar 10 male drink developer rich',
     )
+  })
+})
+
+describe('curryReverse type check', () => {
+  it('should be expected type of a parameter', () => {
+    const foo = (a: string) => `${a}`
+    const curryFoo = curryReverse(foo)
+
+    expectTypeOf(curryFoo).parameters.toEqualTypeOf<[string]>()
+    expectTypeOf(curryFoo).returns.toEqualTypeOf<string>()
+  })
+
+  it('should be expected type of a? parameter', () => {
+    const foo = (a?: string) => `${a}`
+    const curryFoo = curryReverse(foo)
+
+    expectTypeOf(curryFoo).parameters.toEqualTypeOf<[string?]>()
+    expectTypeOf(curryFoo).returns.toEqualTypeOf<string>()
+  })
+
+  it('should be expected type of a, b parameters', () => {
+    const foo = (a: string, b: number) => `${a} ${b}`
+    const curryFoo = curryReverse(foo)
+
+    expectTypeOf(curryFoo).parameters.toEqualTypeOf<[number] | [number, string]>()
+    const partial1 = curryFoo(10)
+
+    expectTypeOf(partial1).parameters.toEqualTypeOf<[string]>()
+    expectTypeOf(partial1).returns.toEqualTypeOf<string>()
+
+    const partial2 = curryFoo(10, 'foo')
+
+    expectTypeOf(partial2).toEqualTypeOf<string>()
+  })
+
+  it('should be expected type of a, b? parameters', () => {
+    const foo = (a: string, b?: number) => `${a} ${b}`
+    const curryFoo = curryReverse(foo)
+
+    const partial0 = curryFoo()
+
+    expectTypeOf(partial0('foo')).toEqualTypeOf<string>()
+
+    const partial1 = curryFoo(10)
+
+    expectTypeOf(partial1).parameters.toEqualTypeOf<[string]>()
+    expectTypeOf(partial1).returns.toEqualTypeOf<string>()
+
+    expectTypeOf(curryFoo(10, 'foo')).toEqualTypeOf<string>()
+  })
+
+  it('should be expected type of a?, b? parameters', () => {
+    const foo = (a?: string, b?: number) => `${a} ${b}`
+    const curryFoo = curryReverse(foo)
+
+    const partial0 = curryFoo()
+
+    expectTypeOf(partial0()).toEqualTypeOf<string>()
+    expectTypeOf(partial0('foo')).toEqualTypeOf<string>()
+
+    const partial1 = curryFoo(10)
+
+    expectTypeOf(partial1).parameters.toEqualTypeOf<[string?]>()
+    expectTypeOf(partial1).returns.toEqualTypeOf<string>()
+
+    expectTypeOf(curryFoo(10, 'foo')).toEqualTypeOf<string>()
+  })
+
+  it('should be expected type of a, b, c parameters', () => {
+    const foo = (a: string, b: number, c: boolean) => `${a} ${b} ${c}`
+    const curryFoo = curryReverse(foo)
+
+    expectTypeOf(curryFoo).parameters.toEqualTypeOf<
+      [boolean] | [boolean, number] | [boolean, number, string]
+    >()
+    const partial1 = curryFoo(true)
+
+    expectTypeOf(partial1).parameters.toEqualTypeOf<[number] | [number, string]>()
+
+    const partial2 = partial1(0)
+
+    expectTypeOf(partial2).parameters.toEqualTypeOf<[string]>()
+    expectTypeOf(partial2).returns.toEqualTypeOf<string>()
+
+    const partial3 = partial1(0, 'foo')
+
+    expectTypeOf(partial3).toEqualTypeOf<string>()
+  })
+
+  it('should be expected type of a, b, c? parameters', () => {
+    const foo = (a: string, b: number, c?: boolean) => `${a} ${b} ${c}`
+    const curryFoo = curryReverse(foo)
+
+    const partial1 = curryFoo(true)
+
+    expectTypeOf(partial1).parameters.toEqualTypeOf<[number, string] | [number?]>()
+
+    const partial2 = partial1(0)
+
+    expectTypeOf(partial2).parameters.toEqualTypeOf<[string]>()
+    expectTypeOf(partial2).returns.toEqualTypeOf<string>()
+
+    const partial3 = partial1(0, 'foo')
+
+    expectTypeOf(partial3).toEqualTypeOf<string>()
+  })
+
+  it('should be expected type of value and optional unit', () => {
+    const addUnit = (value: unknown, unit: string = '') => `${value}${unit}`
+    const addUnitFn = curryReverse(addUnit, 2)
+
+    const partial = addUnitFn('px')
+
+    expectTypeOf(partial).parameters.toEqualTypeOf<[unknown]>()
+    expectTypeOf(partial).returns.toEqualTypeOf<string>()
+    expectTypeOf(addUnitFn('px', 0)).toEqualTypeOf<string>()
   })
 })

@@ -9,40 +9,32 @@
 
 ## Code quality
 
-All structural design and code in this repository must be written at **enterprise grade** — maintainability, scalability, clear separation of concerns, robust error handling, and consistent patterns across the codebase.
+**Enterprise-grade** code: maintainability, scalability, separation of concerns, robust error handling, consistent patterns.
 
 ## Required after changes
 
 1. Fix oxlint errors
 2. Run oxfmt (`pnpm format`)
 
-## Cursor Cloud specific instructions
+## Comments
 
-### Overview
+Function JSDoc: contract (what) only; call sites: intent (why) only.
 
-This is a pnpm + Turborepo monorepo (`@winter-love/web`). The main app is **Coong** (`apps/coong`) — a SolidStart SSR app. There is also a root-level **Storybook** for component development.
+## AI work context (`AI_NOTE`)
 
-### Prerequisites
+Chat context is volatile. When **why** isn't obvious from code, leave a minimal in-code note for later agents.
 
-- Node.js 22 or newer, pnpm 10.26.1 (both specified in `package.json` `engines` / `packageManager`)
-- `pnpm install` runs `postinstall` (sorts package.json) and `prepare` (builds all `@winter-love/*` packages via Turborepo) automatically
+- Format: `// AI_NOTE - …` or `/* AI_NOTE - … */`
+- Content: decision + reason (constraints, rejected approach, non-obvious tradeoff); not a changelog
+- Scope: cross-session gaps only; skip self-explanatory code
 
-### Running services
+## Cursor Cloud
 
-| Service   | Command                          | Port | Notes                                                                      |
-| --------- | -------------------------------- | ---- | -------------------------------------------------------------------------- |
-| Coong App | `pnpm dev` (in `apps/coong`)     | 3000 | Requires `.env` — copy from `.env.e2e` for local dev without real Supabase |
-| Storybook | `pnpm dev:storybook` (from root) | 6006 | Component explorer for all Solid.js packages                               |
+pnpm + Turborepo (`@winter-love/web`) · Node ≥22 · pnpm 10.x (`package.json`). `pnpm install` runs workspace `prepare` (package builds; Coong Supabase type gen).
 
-### Key commands
+- **Coong** — `apps/coong` (SolidStart SSR). `pnpm dev` (:3000). Copy `apps/coong/.env.e2e` → `.env` for dev without Supabase (see `.env.example`).
+- **Storybook** — root. `pnpm storybook:dev` (:6006).
 
-- **Lint**: `pnpm lint` (runs `turbo lint` across all packages) — note: `@winter-love/utils` has pre-existing lint errors
-- **Test**: `pnpm test` (runs `vitest run` across all packages) — the full Vitest suite can legitimately take about 180 seconds to finish, so wait up to ~200 seconds before assuming it is hung or manually stopping it.
-- **Build packages**: `pnpm prepare` (runs `turbo build --filter=@winter-love/*`)
-- **Type check (Coong)**: `pnpm typecheck` in `apps/coong`
+**Commands:** `pnpm lint` · `pnpm test` · `pnpm -r prepare` · `pnpm typecheck` (`apps/coong`)
 
-### Gotchas
-
-- Env variable reference: `apps/coong/.env.example`. For local dev without a real Supabase instance, copy `apps/coong/.env.e2e` to `apps/coong/.env`. Database-dependent features (auth, user data) will error at runtime but the app starts and renders.
-- Shared library packages must be built before apps work. This happens automatically via pnpm's `prepare` lifecycle, but if you clean `node_modules` or delete `dist/` folders you must run `pnpm prepare` again.
-- `@winter-love/utils` lint has pre-existing errors (camelcase, max-params) — these are not regressions.
+**Gotcha:** Without Supabase, auth/DB features error but the app renders. Re-run `pnpm -r prepare` after cleaning `node_modules` or `dist/`.

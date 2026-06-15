@@ -1,5 +1,15 @@
-import {describe, expect, it} from 'vitest'
-import {addEm, addPx, addRem, addUnit, addUnitRight} from '../'
+import {describe, expect, expectTypeOf, it} from 'vitest'
+import {addEm, addPx, addRem, addUnit, addUnitFn, addUnitRight} from '../'
+
+describe('addUnitFn type check', () => {
+  it('should match reverse-curried addUnit', () => {
+    const partial = addUnitFn('px')
+
+    expectTypeOf(partial).parameters.toEqualTypeOf<[unknown]>()
+    expectTypeOf(partial).returns.toEqualTypeOf<string>()
+    expectTypeOf(addUnitFn('px', 1)).toEqualTypeOf<string>()
+  })
+})
 
 describe('addUnit', () => {
   it('should return unit string with number', () => {

@@ -24,6 +24,7 @@
     "vinxi",
     "Vite"
   ],
+  "eslint.enable": false,
   "oxc.enable": true,
   "[typescript]": {
     "editor.defaultFormatter": "oxc.oxc-vscode"

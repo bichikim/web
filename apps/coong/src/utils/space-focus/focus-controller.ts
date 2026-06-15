@@ -27,7 +27,10 @@ export const createFocusController = (
       return
     }
 
-    onCallback(rect, false)
+    if (currentRect) {
+      onCallback(currentRect, false)
+    }
+
     currentRect = rect
     onCallback(rect, true)
   }

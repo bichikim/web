@@ -1,30 +1,19 @@
 import {toNumber} from 'src/to-number'
+import {curryReverse} from 'src/curry'
 
-export const addUnit = (value: any, unit: string = ''): string => {
+export const addUnit = (value: unknown, unit: string = ''): string => {
   const numberValue = toNumber(value)
 
   return `${numberValue}${unit}`
 }
 
-export interface ToUnitRight {
-  (unit?: string): (value: any) => string
+// Default `unit` makes `Function#length` 1; arity 2 is required for partial application.
+export const addUnitFn = curryReverse(addUnit, 2)
 
-  (unit: string, value: any): string
-}
+export const addUnitRight = addUnitFn
 
-export const addUnitRight: ToUnitRight = (...args: [string?] | [string, any]): any => {
-  const [unit, value] = args
+export const addPx = addUnitFn('px')
 
-  if (args.length > 1) {
-    return addUnit(value, unit)
-  }
+export const addEm = addUnitFn('em')
 
-  return (value: any) => {
-    return addUnit(value, unit)
-  }
-}
-
-export const addPx = addUnitRight('px')
-export const addEm = addUnitRight('em')
-
-export const addRem = addUnitRight('rem')
+export const addRem = addUnitFn('rem')
