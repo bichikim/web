@@ -1,4 +1,4 @@
-import {useClose} from 'src/close'
+import {useClose} from '../close'
 import {Dynamic, DynamicProps} from 'solid-js/web'
 import {ValidComponent} from 'solid-js'
 

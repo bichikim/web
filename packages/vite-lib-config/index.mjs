@@ -33,8 +33,9 @@ export const createConfig = ({
   const _packageJson =
     packageJson ?? JSON.parse(readFileSync(path.join(root, 'package.json'), 'utf8'))
 
-  const {dependencies = {}, name} = _packageJson ?? {}
-  const depsKey = Object.keys(dependencies)
+  const {dependencies = {}, name, peerDependencies = {}} = _packageJson ?? {}
+  const depsKey = [...Object.keys(dependencies), ...Object.keys(peerDependencies)]
+  const externalIds = [...depsKey, ...external]
 
   const newEntry = Object.fromEntries(
     Object.entries(entry).map(([key, value]) => [key, path.join(root, value)]),
@@ -56,7 +57,8 @@ export const createConfig = ({
           name: camelCase(name),
         },
         rollupOptions: {
-          external: [...depsKey, ...external],
+          external: (id) =>
+            externalIds.some((externalId) => id === externalId || id.startsWith(`${externalId}/`)),
           output: [
             // ESM: 여러 파일로
             {

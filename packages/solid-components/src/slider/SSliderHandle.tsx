@@ -1,7 +1,7 @@
 import {stopPropagation, StyleType, useDrag, useStyles} from '@winter-love/solid-use'
 import {createMemo, createSignal, splitProps, ValidComponent} from 'solid-js'
 import {Dynamic, DynamicProps} from 'solid-js/web'
-import {POSITION_VAR} from 'src/css-var'
+import {POSITION_VAR} from '../css-var'
 import {useSliderAriaContext} from './slider-aria-context'
 import {useSliderContext} from './slider-context'
 import {cx} from 'class-variance-authority'

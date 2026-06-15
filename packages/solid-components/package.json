@@ -7,31 +7,31 @@
     "url": "https://github.com/bichikim/web.git"
   },
   "files": [
-    "dist/*"
+    "dist/*",
+    "src/*"
   ],
   "type": "module",
   "sideEffects": false,
-  "main": "./dist/index/index.common.js",
-  "module": "./dist/index/index.module.js",
-  "types": "./dist/index/index.d.ts",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index/index.d.ts",
-      "solid": "./dist/index/index.jsx",
-      "import": "./dist/index/index.module.js",
-      "browser": "./dist/index/index.module.js",
-      "require": "./dist/index/index.common.js",
-      "node": "./dist/index/index.common.js"
+      "types": "./dist/index.d.ts",
+      "solid": "./src/index.tsx",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
     }
   },
   "publishConfig": {
     "access": "public"
   },
   "scripts": {
-    "build": "node scripts/fix-build.js && rollup -c rollup.config.js && tspc -p tsconfig.build.json",
-    "prepare": "pnpm run build",
+    "build": "vite build",
+    "build:dev": "vite build --minify false",
+    "prepare": "vite build",
     "typecheck": "tsc --noEmit",
-    "dev": "node scripts/fix-build.js && concurrently \"rollup -c rollup.config.js --watch\" \"tsc -p tsconfig.build.json --watch\"",
+    "dev": "vite build --watch",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
@@ -41,13 +41,8 @@
     "solid-js": "catalog:"
   },
   "devDependencies": {
-    "@rollup/plugin-alias": "^5.1.1",
     "@types/node": "catalog:",
     "@winter-love/vite-lib-config": "workspace:*",
-    "concurrently": "^9.2.1",
-    "rollup": "^4.60.2",
-    "rollup-preset-solid": "^3.0.0",
-    "ts-patch": "^3.3.0",
-    "typescript-transform-paths": "^3.5.6"
+    "vite": "catalog:"
   }
 }
