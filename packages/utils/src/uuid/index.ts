@@ -1,9 +1,9 @@
 const MAX_COUNT = 1_000_000
 
 /**
- * 
- * @param startFrom 
- * @returns 
+ *
+ * @param startFrom
+ * @returns
  */
 export const createUuid = (startFrom = 0) => {
   let uuid = startFrom
