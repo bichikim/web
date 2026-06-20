@@ -1,0 +1,43 @@
+{
+  "name": "@winter-love/block-suite",
+  "version": "0.0.1",
+  "description": "SolidJS bindings for BlockSuite editors",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bichikim/web.git"
+  },
+  "files": [
+    "dist/*"
+  ],
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs"
+    },
+    "./*": "./*"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "vite build",
+    "build:dev": "vite build --minify false",
+    "dev": "vite build --watch",
+    "prepare": "vite build",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@blocksuite/block-std": "0.19.5",
+    "@blocksuite/blocks": "0.19.5",
+    "@blocksuite/store": "0.19.5",
+    "solid-js": "catalog:",
+    "y-websocket": "2.1.0",
+    "yjs": "13.6.31"
+  },
+  "devDependencies": {
+    "@winter-love/vite-lib-config": "workspace:*",
+    "vite": "catalog:"
+  }
+}

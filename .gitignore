@@ -104,3 +104,4 @@ docs/.vitepress/dist
 opencode.jsonc
 
 .pnpm-store
+.worktrees
