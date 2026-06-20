@@ -24,10 +24,10 @@ vi.mock('solid-js', async () => {
 vi.mock('@solidjs/router', () => ({
   Router: vi.fn((props: any) => {
     if (props.root) {
-      return props.root({children: props.children})
+      return props.root({children: <>{props.children}</>})
     }
 
-    return props.children
+    return <>{props.children}</>
   }),
 }))
 

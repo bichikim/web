@@ -1,7 +1,8 @@
 import {RouteDefinition as _RouteDefinition, RouteSectionProps} from '@solidjs/router'
 import {AuthProvider} from 'src/store/auth'
-import {AuthGuard, RouteDefinition} from 'src/components/auth-guard'
+import {AuthGuard} from 'src/components/auth-guard'
 import {clientOnly} from '@solidjs/start'
+import {RouteMeta} from 'src/components/page-meta'
 
 const Analytics = clientOnly(() =>
   import('src/components/vercel/Analytics').then((module) => ({default: module.Analytics})),
@@ -22,6 +23,7 @@ export const route = {
 export default function MainLayout(props: RouteSectionProps) {
   return (
     <>
+      <RouteMeta />
       <AuthProvider>
         <AuthGuard>{props.children}</AuthGuard>
       </AuthProvider>

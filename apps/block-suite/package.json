@@ -1,0 +1,28 @@
+{
+  "name": "@apps/block-suite",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@winter-love/blocks": "workspace:*",
+    "solid-js": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "@unocss/reset": "catalog:",
+    "@unocss/vite": "catalog:",
+    "typescript": "catalog:",
+    "unocss": "catalog:",
+    "vite": "catalog:",
+    "vite-plugin-solid": "catalog:"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
