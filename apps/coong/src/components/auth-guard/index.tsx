@@ -1,4 +1,4 @@
-import {createMemo, JSX, Match, Show, Switch} from 'solid-js'
+import {createMemo, JSX, Show} from 'solid-js'
 import {
   RouteDefinition as _RouteDefinition,
   createAsync,
@@ -6,10 +6,10 @@ import {
   useCurrentMatches,
 } from '@solidjs/router'
 import {userQuery} from 'src/requests/auth/user'
-import {evaluateRouteAccess, resolveAuthSession} from './allow'
+import {evaluateRouteAccess, resolveAuthRedirectUrl, resolveAuthSession} from './allow'
 
 export type {AuthSessionState, IsAllowAllResult, NotAllowType, RouteAccessResult} from './allow'
-export {evaluateRouteAccess, isAllowAll, resolveAuthSession} from './allow'
+export {evaluateRouteAccess, isAllowAll, resolveAuthRedirectUrl, resolveAuthSession} from './allow'
 
 export const useAuthGuard = () => {
   const user = createAsync(() => userQuery(), {deferStream: true})
@@ -38,21 +38,16 @@ export const AuthGuard = (props: AuthGuardProps) => {
   const routeAccess = useAuthGuard()
   const signInUrl = createMemo(() => props.signInUrl ?? '/auth/sign-in')
   const homeUrl = createMemo(() => props.homeUrl ?? '/')
+  const redirectUrl = createMemo(() =>
+    resolveAuthRedirectUrl(routeAccess(), {
+      homeUrl: homeUrl(),
+      signInUrl: signInUrl(),
+    }),
+  )
+
   return (
     <Show when={!routeAccess().pending} fallback={props.pending ?? null}>
-      <Show
-        when={routeAccess().allow}
-        fallback={
-          <Switch>
-            <Match when={routeAccess().reason === 'only-unauthorized'}>
-              <Navigate href={homeUrl()} />
-            </Match>
-            <Match when={routeAccess().reason === 'authorized'}>
-              <Navigate href={signInUrl()} />
-            </Match>
-          </Switch>
-        }
-      >
+      <Show when={routeAccess().allow} fallback={<Navigate href={redirectUrl() ?? signInUrl()} />}>
         {props.children}
       </Show>
     </Show>
