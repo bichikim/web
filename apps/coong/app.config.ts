@@ -2,6 +2,7 @@
  * e2e mode will use.env.e2e file automatically
  */
 import {defineConfig} from '@solidjs/start/config'
+import {loadEnv} from 'vite'
 import UnoCSS from 'unocss/vite'
 import {fileURLToPath} from 'node:url'
 import {installSwBuildHooks} from '@winter-love/sw'
@@ -10,6 +11,13 @@ import legacy from '@vitejs/plugin-legacy'
 import devtools from 'solid-devtools/vite'
 
 // Retrieve whether to build in SPA mode from the environment variable
+const appRoot = fileURLToPath(new URL('.', import.meta.url))
+const env = loadEnv(process.env.NODE_ENV ?? 'development', appRoot, 'VITE_')
+const allowedHosts =
+  env.VITE_DEV_ALLOWED_HOSTS?.split(',')
+    .map((host) => host.trim())
+    .filter(Boolean) ?? []
+
 const isSpa = process.env.SPA === 'true'
 
 const app = defineConfig({
@@ -66,12 +74,15 @@ const app = defineConfig({
         src: fileURLToPath(new URL('src', import.meta.url)),
       },
     },
+    server: {
+      allowedHosts,
+    },
   },
 })
 
 installSwBuildHooks(app, {
   publicPath: 'public',
-  root: fileURLToPath(new URL('.', import.meta.url)),
+  root: appRoot,
 })
 
 export default app
