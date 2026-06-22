@@ -46,7 +46,7 @@ const createDataVariant = (name: string, selector: string): Variant => {
 
     return {
       matcher: matcher.slice(prefix.length),
-      selector: (input) => selector.replace('&', input),
+      selector: (input) => selector.replaceAll('&', input),
     }
   }
 }
@@ -203,7 +203,6 @@ export default defineUsefulConfig(
     // keep aurora animation
     safelist: ['animate-aurora'],
     shortcuts: [pianoShortcuts, auroraShortcuts],
-    variants: createKobalteVariants(),
     theme: {
       animation: {
         counts: {
@@ -253,5 +252,6 @@ export default defineUsefulConfig(
       transformerVariantGroup(),
       transformerCompileClass(),
     ] as any,
+    variants: createKobalteVariants(),
   } as any,
 ) as any
