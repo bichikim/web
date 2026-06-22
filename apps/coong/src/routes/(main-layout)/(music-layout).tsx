@@ -6,7 +6,7 @@ import {
   useSearchParams,
 } from '@solidjs/router'
 import {useStorage} from '@winter-love/solid-use'
-import {createMemo, createResource} from 'solid-js'
+import {createEffect, createMemo, createResource} from 'solid-js'
 import {
   LinkType,
   MusicInfo,
@@ -87,9 +87,16 @@ export default function MusicLayout(props: RouteSectionProps) {
 
   const [musics, setMusics] = useStorage('local', getStorageKey('piano-musics-default'), {
     active: isActiveStore,
-    enforceValue: preset()?.musics,
     initValue: [],
     mounted: true,
+  })
+
+  createEffect(() => {
+    const presetMusics = preset()?.musics
+
+    if (presetMusics && presetMusics.length > 0) {
+      setMusics(presetMusics)
+    }
   })
 
   const handleSettingDataChange = (data: SettingData) => {
