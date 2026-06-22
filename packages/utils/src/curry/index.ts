@@ -2,9 +2,11 @@
 // oxlint-disable no-magic-numbers
 // oxlint-disable max-params
 
-/* AI_NOTE - CurriedFunction{N}[Opt{K}][R]: N = original arity; T0..T(n-1) = Parameters order; OptK = K trailing optionals; R = reverse curry (right-to-left). */
+/* AI_NOTE - CurriedFunction{N}[Opt{K}]: N = original arity; T0..T(n-1) = Parameters order; OptK = K trailing optionals; R suffix = reverse curry (right-to-left). */
 
 type Length<T extends readonly any[]> = T['length']
+
+type RuntimeRequiredTuple<T extends readonly any[]> = Required<T>
 
 export type ObjectInfer<T> = T extends {[key: string]: any} ? {[P in keyof T]: T[P]} : T
 
@@ -126,48 +128,12 @@ export interface CurriedFunction2R<T0, T1, R> {
   <U extends T1, V extends T0>(t1: U, t2: V): R
 }
 
-export interface CurriedFunction2ROpt1<T0, T1, R> {
-  <U extends T1>(t1?: U): CurriedFunction1<T0, R>
-
-  <U extends T1, V extends T0>(t1: U, t2: V): R
-}
-
-export interface CurriedFunction2ROpt2<T0, T1, R> {
-  <U extends T1>(t1?: U): CurriedFunction1Opt1<T0, R>
-
-  <U extends T1, V extends T0>(t1?: U, t2?: V): R
-}
-
 export interface CurriedFunction3R<T0, T1, T2, R> {
   <U extends T2>(t1: U): CurriedFunction2R<T0, T1, R>
 
   <U extends T2, V extends T1>(t1: U, t2: V): CurriedFunction1<T0, R>
 
   <U extends T2, V extends T1, W extends T0>(t1: U, t2: V, t3: W): R
-}
-
-export interface CurriedFunction3ROpt1<T0, T1, T2, R> {
-  <U extends T2>(t1: U): CurriedFunction2ROpt1<T0, T1, R>
-
-  <U extends T2, V extends T1>(t1: U, t2: V): CurriedFunction1Opt1<T0, R>
-
-  <U extends T2, V extends T1, W extends T0>(t1: U, t2: V, t3?: W): R
-}
-
-export interface CurriedFunction3ROpt2<T0, T1, T2, R> {
-  <U extends T2>(t1: U): CurriedFunction2ROpt2<T0, T1, R>
-
-  <U extends T2, V extends T1>(t1: U, t2?: V): CurriedFunction1Opt1<T0, R>
-
-  <U extends T2, V extends T1, W extends T0>(t1: U, t2?: V, t3?: W): R
-}
-
-export interface CurriedFunction3ROpt3<T0, T1, T2, R> {
-  <U extends T2>(t1?: U): CurriedFunction2ROpt2<T0, T1, R>
-
-  <U extends T2, V extends T1>(t1?: U, t2?: V): CurriedFunction1Opt1<T0, R>
-
-  <U extends T2, V extends T1, W extends T0>(t1?: U, t2?: V, t3?: W): R
 }
 
 export interface CurriedFunction4R<T0, T1, T2, T3, R> {
@@ -178,46 +144,6 @@ export interface CurriedFunction4R<T0, T1, T2, T3, R> {
   <U extends T3, V extends T2, W extends T1>(t1: U, t2: V, t3: W): CurriedFunction1<T0, R>
 
   <U extends T3, V extends T2, W extends T1, X extends T0>(t1: U, t2: V, t3: W, t4: X): R
-}
-
-export interface CurriedFunction4ROpt1<T0, T1, T2, T3, R> {
-  <U extends T3>(t1: U): CurriedFunction3ROpt1<T0, T1, T2, R>
-
-  <U extends T3, V extends T2>(t1: U, t2: V): CurriedFunction2ROpt1<T0, T1, R>
-
-  <U extends T3, V extends T2, W extends T1>(t1: U, t2: V, t3: W): CurriedFunction1Opt1<T0, R>
-
-  <U extends T3, V extends T2, W extends T1, X extends T0>(t1: U, t2: V, t3: W, t4?: X): R
-}
-
-export interface CurriedFunction4ROpt2<T0, T1, T2, T3, R> {
-  <U extends T3>(t1: U): CurriedFunction3ROpt2<T0, T1, T2, R>
-
-  <U extends T3, V extends T2>(t1: U, t2: V): CurriedFunction2ROpt2<T0, T1, R>
-
-  <U extends T3, V extends T2, W extends T1>(t1: U, t2: V, t3?: W): CurriedFunction1Opt1<T0, R>
-
-  <U extends T3, V extends T2, W extends T1, X extends T0>(t1: U, t2: V, t3?: W, t4?: X): R
-}
-
-export interface CurriedFunction4ROpt3<T0, T1, T2, T3, R> {
-  <U extends T3>(t1: U): CurriedFunction3ROpt3<T0, T1, T2, R>
-
-  <U extends T3, V extends T2>(t1: U, t2?: V): CurriedFunction2ROpt2<T0, T1, R>
-
-  <U extends T3, V extends T2, W extends T1>(t1: U, t2?: V, t3?: W): CurriedFunction1Opt1<T0, R>
-
-  <U extends T3, V extends T2, W extends T1, X extends T0>(t1: U, t2?: V, t3?: W, t4?: X): R
-}
-
-export interface CurriedFunction4ROpt4<T0, T1, T2, T3, R> {
-  <U extends T3>(t1?: U): CurriedFunction3ROpt3<T0, T1, T2, R>
-
-  <U extends T3, V extends T2>(t1?: U, t2?: V): CurriedFunction2ROpt2<T0, T1, R>
-
-  <U extends T3, V extends T2, W extends T1>(t1?: U, t2?: V, t3?: W): CurriedFunction1Opt1<T0, R>
-
-  <U extends T3, V extends T2, W extends T1, X extends T0>(t1?: U, t2?: V, t3?: W, t4?: X): R
 }
 
 export interface CurriedFunction5R<T0, T1, T2, T3, T4, R> {
@@ -329,42 +255,27 @@ export interface CurriedFunction7R<T0, T1, T2, T3, T4, T5, T6, R> {
   ): R
 }
 
-export type ReverseCurry<T extends readonly any[], R> =
+type ReverseCurryByRuntimeLength<T extends readonly any[], R> =
   Length<T> extends 1
     ? CurriedFunction1<T[0], R>
-    : Length<T> extends 0 | 1
-      ? CurriedFunction1Opt1<T[0], R>
-      : Length<T> extends 2
-        ? CurriedFunction2R<T[0], T[1], R>
-        : Length<T> extends 2 | 1
-          ? CurriedFunction2ROpt1<T[0], T[1], R>
-          : Length<T> extends 2 | 1 | 0
-            ? CurriedFunction2ROpt2<T[0], T[1], R>
-            : Length<T> extends 3
-              ? CurriedFunction3R<T[0], T[1], T[2], R>
-              : Length<T> extends 3 | 2
-                ? CurriedFunction3ROpt1<T[0], T[1], T[2], R>
-                : Length<T> extends 3 | 2 | 1
-                  ? CurriedFunction3ROpt2<T[0], T[1], T[2], R>
-                  : Length<T> extends 3 | 2 | 1 | 0
-                    ? CurriedFunction3ROpt3<T[0], T[1], T[2], R>
-                    : Length<T> extends 4
-                      ? CurriedFunction4R<T[0], T[1], T[2], T[3], R>
-                      : Length<T> extends 4 | 3
-                        ? CurriedFunction4ROpt1<T[0], T[1], T[2], T[3], R>
-                        : Length<T> extends 4 | 3 | 2
-                          ? CurriedFunction4ROpt2<T[0], T[1], T[2], T[3], R>
-                          : Length<T> extends 4 | 3 | 2 | 1
-                            ? CurriedFunction4ROpt3<T[0], T[1], T[2], T[3], R>
-                            : Length<T> extends 4 | 3 | 2 | 1 | 0
-                              ? CurriedFunction4ROpt4<T[0], T[1], T[2], T[3], R>
-                              : Length<T> extends 5
-                                ? CurriedFunction5R<T[0], T[1], T[2], T[3], T[4], R>
-                                : Length<T> extends 6
-                                  ? CurriedFunction6R<T[0], T[1], T[2], T[3], T[4], T[5], R>
-                                  : Length<T> extends 7
-                                    ? CurriedFunction7R<T[0], T[1], T[2], T[3], T[4], T[5], T[6], R>
-                                    : never
+    : Length<T> extends 2
+      ? CurriedFunction2R<T[0], T[1], R>
+      : Length<T> extends 3
+        ? CurriedFunction3R<T[0], T[1], T[2], R>
+        : Length<T> extends 4
+          ? CurriedFunction4R<T[0], T[1], T[2], T[3], R>
+          : Length<T> extends 5
+            ? CurriedFunction5R<T[0], T[1], T[2], T[3], T[4], R>
+            : Length<T> extends 6
+              ? CurriedFunction6R<T[0], T[1], T[2], T[3], T[4], T[5], R>
+              : Length<T> extends 7
+                ? CurriedFunction7R<T[0], T[1], T[2], T[3], T[4], T[5], T[6], R>
+                : never
+
+export type ReverseCurry<T extends readonly any[], R> = ReverseCurryByRuntimeLength<
+  RuntimeRequiredTuple<T>,
+  R
+>
 
 export type CurryReverse<F extends (...args: any[]) => any> = ReverseCurry<
   Parameters<F>,
