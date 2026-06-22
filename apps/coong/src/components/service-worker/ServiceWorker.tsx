@@ -64,7 +64,7 @@ export const createServiceWorker = (path: string): Readonly<ServiceWorkerContext
     setState((prev) => ({...prev, state: 'skip-update'}))
   }
 
-  createEffect(async () => {
+  createEffect(() => {
     const window = getWindow()
     const {navigator} = window || {}
     const {serviceWorker} = navigator || {}
@@ -73,11 +73,14 @@ export const createServiceWorker = (path: string): Readonly<ServiceWorkerContext
       return
     }
 
-    const registration = await serviceWorker.register(path)
-
-    _registration = registration
+    let registration: ServiceWorkerRegistration | undefined
+    let cancelled = false
 
     const statechange = () => {
+      if (!registration) {
+        return
+      }
+
       if (registration.installing) {
         setState((prev) => ({...prev, state: 'installing'}))
       } else if (registration.waiting) {
@@ -89,15 +92,32 @@ export const createServiceWorker = (path: string): Readonly<ServiceWorkerContext
 
     const updatefound = () => {
       setState((prev) => ({...prev, state: 'installing'}))
-      registration.installing?.addEventListener('statechange', statechange)
+      registration?.installing?.addEventListener('statechange', statechange)
     }
 
-    registration.addEventListener('updatefound', updatefound)
-    registration.addEventListener('statechange', statechange)
+    const startRegistration = () => {
+      serviceWorker.register(path).then((reg) => {
+        if (cancelled) {
+          return
+        }
+
+        registration = reg
+        _registration = reg
+
+        reg.addEventListener('updatefound', updatefound)
+        reg.addEventListener('statechange', statechange)
+      })
+    }
+
+    startRegistration()
 
     onCleanup(() => {
-      registration.removeEventListener('updatefound', updatefound)
-      registration.removeEventListener('statechange', statechange)
+      cancelled = true
+
+      if (registration) {
+        registration.removeEventListener('updatefound', updatefound)
+        registration.removeEventListener('statechange', statechange)
+      }
     })
   })
 

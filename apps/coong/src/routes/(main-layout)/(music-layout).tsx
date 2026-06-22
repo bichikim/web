@@ -18,7 +18,6 @@ import {emitAllIds} from 'src/components/real-button/use-global-touch'
 import {useCookieStorage} from 'src/use/storage'
 import {createSplendidGrandPiano, SplendidGrandPianoContext} from 'src/use/instruments'
 import {getStorageKey} from 'src/utils/storage-key'
-import {getSelfUrl} from 'src/env'
 import {MidiPlayerProvider} from 'src/components/midi-player/context'
 
 export const route = {
@@ -39,18 +38,14 @@ const getPreset = async (id?: string): Promise<Data | undefined> => {
     return
   }
 
-  return fetch(`${getSelfUrl()}/api/preset/${id}`).then((res) => {
-    if (res.ok) {
-      return res.json()
-    }
+  const {getPresetData} = await import('src/server/preset')
 
-    return {musics: [], title: 'Unknown'}
-  })
+  return getPresetData(id)
 }
 
 const layoutStyle = `:uno:
 absolute overflow-hidden top-0 left-0 bottom-0 right-0 before:content-[""] before:absolute before:top-0
-before:bottom-0 before:left-0 before:right-0 before:pattern-a before:pointer-events-none
+before:bottom-0 before:left-0 before:right-0 before:pointer-events-none
 `
 
 const navGroupStyle = `:uno:

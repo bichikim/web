@@ -1,6 +1,9 @@
 import {createMemo, createSignal, Show} from 'solid-js'
 import {A, useNavigate} from '@solidjs/router'
 import {useAuth} from 'src/store/auth'
+import {AuthSubmitButton} from '../../_components/AuthSubmitButton'
+import {AuthSurface} from '../../_components/AuthSurface'
+import {AuthTextField} from '../../_components/AuthTextField'
 
 const CONFIRM_PHRASE = '회원 탈퇴'
 
@@ -37,64 +40,56 @@ export const DeleteAccount = () => {
   }
 
   return (
-    <div class="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-      <div class="p-8 bg-white rounded-lg shadow-md w-96">
-        <h1 class="text-2xl font-bold mb-6 text-center text-red-600">회원 탈퇴</h1>
-        <div class="mb-4 p-3 bg-red-50 border border-red-200 rounded text-sm text-red-700">
-          <p class="font-medium mb-2">탈퇴 시 주의사항</p>
-          <ul class="list-disc list-inside space-y-1">
-            <li>계정과 연결된 모든 데이터가 비활성화됩니다.</li>
-            <li>저장된 음악과 설정에 더 이상 접근할 수 없습니다.</li>
-            <li>이 작업은 되돌릴 수 없습니다.</li>
-          </ul>
-        </div>
-        <form onSubmit={handleDelete} class="flex flex-col gap-4">
-          <div>
-            <label for="account-email" class="block text-sm font-medium mb-1">
-              이메일
-            </label>
-            <input
-              id="account-email"
-              type="email"
-              value={email()}
-              class="w-full p-2 border rounded bg-gray-100 text-gray-600"
-              readOnly
-              disabled
-            />
-          </div>
-          <div>
-            <label for="confirm-text" class="block text-sm font-medium mb-1">
-              계속하시려면 <span class="font-bold text-red-600">{CONFIRM_PHRASE}</span> 문구를
-              입력하세요.
-            </label>
-            <input
-              id="confirm-text"
-              type="text"
-              placeholder={CONFIRM_PHRASE}
-              value={confirmText()}
-              onInput={(event) => setConfirmText(event.currentTarget.value)}
-              class="w-full p-2 border rounded"
-              autocomplete="off"
-              required
-            />
-          </div>
-          <Show when={error()}>
-            <p class="text-red-500 text-sm">{error()}</p>
-          </Show>
-          <button
-            type="submit"
-            disabled={!canSubmit()}
-            class="p-2 bg-red-500 text-white rounded hover:bg-red-600 disabled:opacity-50"
-          >
-            {pending() ? '탈퇴 처리 중...' : '회원 탈퇴'}
-          </button>
-        </form>
-        <div class="mt-4 text-center">
-          <A href="/" class="text-blue-500 hover:underline">
+    <AuthSurface
+      title="회원 탈퇴"
+      titleClass="text-#d13b3b"
+      footer={
+        <div class=":uno: mt-4 text-center">
+          <A href="/" class=":uno: text-#4b5bdc no-underline hover:underline">
             홈으로 돌아가기
           </A>
         </div>
+      }
+    >
+      <div class=":uno: mb-4 rounded-2 border border-#d13b3b/20 bg-#fff4f4 p-3 text-3.5 text-#b92f2f">
+        <p class=":uno: mb-2 mt-0 font-800">탈퇴 시 주의사항</p>
+        <ul class=":uno: m-0 list-inside list-disc space-y-1 pl-0">
+          <li>계정과 연결된 모든 데이터가 비활성화됩니다.</li>
+          <li>저장된 음악과 설정에 더 이상 접근할 수 없습니다.</li>
+          <li>이 작업은 되돌릴 수 없습니다.</li>
+        </ul>
       </div>
-    </div>
+      <form onSubmit={handleDelete} class=":uno: flex flex-col gap-4">
+        <AuthTextField
+          id="account-email"
+          type="email"
+          label="이메일"
+          value={email()}
+          readOnly
+          disabled
+        />
+        <AuthTextField
+          id="confirm-text"
+          type="text"
+          label={
+            <>
+              계속하시려면 <span class=":uno: font-900 text-#d13b3b">{CONFIRM_PHRASE}</span> 문구를
+              입력하세요.
+            </>
+          }
+          placeholder={CONFIRM_PHRASE}
+          value={confirmText()}
+          onChange={setConfirmText}
+          autocomplete="off"
+          required
+        />
+        <Show when={error()}>
+          <p class=":uno: m-0 text-3.5 text-#d13b3b">{error()}</p>
+        </Show>
+        <AuthSubmitButton disabled={!canSubmit()}>
+          {pending() ? '탈퇴 처리 중...' : '회원 탈퇴'}
+        </AuthSubmitButton>
+      </form>
+    </AuthSurface>
   )
 }
