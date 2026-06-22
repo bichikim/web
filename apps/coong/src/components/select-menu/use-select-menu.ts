@@ -1,10 +1,14 @@
 import {type Accessor, createEffect, createSignal, createUniqueId, onCleanup} from 'solid-js'
-import {type SelectMenuItemRegistration} from './select-menu-item'
 import {type SelectMenuAnchorRect, toSelectMenuAnchorRect} from './select-menu-anchor-rect'
 import {createSelectMenuKeyboard} from './select-menu-keyboard'
 import {computeSelectMenuPosition} from './select-menu-position'
 
 export type {SelectMenuAnchorRect} from './select-menu-anchor-rect'
+
+export interface SelectMenuItemRegistration {
+  disabled: Accessor<boolean>
+  element: HTMLElement
+}
 
 export interface UseSelectMenuProps {
   anchorGapPx?: number

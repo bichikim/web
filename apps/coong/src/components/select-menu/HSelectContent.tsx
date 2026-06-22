@@ -1,5 +1,5 @@
-import {type Accessor, type JSX, splitProps, useContext} from 'solid-js'
-import {SelectMenuContext} from './context'
+import {DropdownMenu} from '@kobalte/core/dropdown-menu'
+import {type Accessor, type JSX, splitProps} from 'solid-js'
 import type {SelectMenuController} from './use-select-menu'
 
 export interface HSelectContentProps extends Omit<
@@ -15,7 +15,7 @@ export interface HSelectContentProps extends Omit<
   popover?: 'auto' | 'manual'
 }
 
-/** Headless popover panel (Popover API) positioned from the trigger. */
+/** Kobalte-backed menu content. */
 export const HSelectContent = (props: HSelectContentProps) => {
   const [local, contentProps] = splitProps(props, [
     'children',
@@ -29,57 +29,22 @@ export const HSelectContent = (props: HSelectContentProps) => {
     'role',
     'top',
   ])
-  const context = useContext(SelectMenuContext)
-
-  const menuController = () => {
-    if (local.controller) {
-      return local.controller
-    }
-
-    if (!context) {
-      throw new Error('HSelectContent requires HSelectRoot or a controller prop')
-    }
-
-    return context.controller
-  }
-  const popoverMode = () => local.popover ?? 'auto'
-
-  const handleRef = (element: HTMLDivElement) => {
-    menuController().registerPanel(element)
-  }
-
-  const handleToggle: JSX.EventHandler<HTMLDivElement, ToggleEvent> = (event) => {
-    menuController().onPanelToggle()
-
-    if (typeof local.onToggle === 'function') {
-      local.onToggle(event)
-    }
-  }
-
-  const handleKeyDown: JSX.EventHandler<HTMLDivElement, KeyboardEvent> = (event) => {
-    menuController().handleContentKeyDown(event)
-
-    if (typeof local.onKeyDown === 'function') {
-      local.onKeyDown(event)
-    }
-  }
 
   return (
-    <div
-      {...contentProps}
-      ref={handleRef}
-      id={local.id ?? menuController().listId}
-      popover={popoverMode()}
-      role={local.role ?? 'menu'}
-      class={local.class}
-      style={{
-        left: `${local.left?.() ?? menuController().left()}px`,
-        top: `${local.top?.() ?? menuController().top()}px`,
-      }}
-      onKeyDown={handleKeyDown}
-      onToggle={handleToggle}
-    >
-      {local.children}
-    </div>
+    <DropdownMenu.Portal>
+      <DropdownMenu.Content
+        {...contentProps}
+        id={local.id}
+        role={local.role ?? 'menu'}
+        class={local.class}
+        style={{
+          left: local.left ? `${local.left()}px` : undefined,
+          top: local.top ? `${local.top()}px` : undefined,
+        }}
+        onKeyDown={local.onKeyDown}
+      >
+        {local.children}
+      </DropdownMenu.Content>
+    </DropdownMenu.Portal>
   )
 }

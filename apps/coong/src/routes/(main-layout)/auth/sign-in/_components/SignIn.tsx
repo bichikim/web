@@ -1,4 +1,7 @@
 import {A} from '@solidjs/router'
+import {AuthSubmitButton} from '../../_components/AuthSubmitButton'
+import {AuthSurface} from '../../_components/AuthSurface'
+import {AuthTextField} from '../../_components/AuthTextField'
 
 export interface SignInProps {
   email: string
@@ -17,43 +20,42 @@ export const SignIn = (props: SignInProps) => {
   }
 
   return (
-    <div class="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-      <div class="p-8 bg-white rounded-lg shadow-md w-96">
-        <h1 class="text-2xl font-bold mb-6 text-center">Sign In</h1>
-        <form onSubmit={handleLogin} class="flex flex-col gap-4">
-          <input
-            type="email"
-            placeholder="Email"
-            value={props.email}
-            autocomplete="email"
-            onInput={(event) => props.onUpdateEmail(event.currentTarget.value)}
-            class="p-2 border rounded"
-            required
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            autocomplete="current-password"
-            value={props.password}
-            onInput={(event) => props.onUpdatePassword(event.currentTarget.value)}
-            class="p-2 border rounded"
-            required
-          />
-          {props.error && <p class="text-red-500 text-sm">{props.error?.message}</p>}
-          <button
-            type="submit"
-            disabled={props.loading}
-            class="p-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
-          >
-            {props.loading ? 'Loading...' : 'Sign In'}
-          </button>
-        </form>
-        <div class="mt-4 text-center">
-          <A href="/auth/sign-up" class="text-blue-500 hover:underline">
+    <AuthSurface
+      title="Sign In"
+      footer={
+        <div class=":uno: mt-4 text-center">
+          <A href="/auth/sign-up" class=":uno: text-#4b5bdc no-underline hover:underline">
             Don't have an account? Sign Up
           </A>
         </div>
-      </div>
-    </div>
+      }
+    >
+      <form onSubmit={handleLogin} class=":uno: flex flex-col gap-4">
+        <AuthTextField
+          id="sign-in-email"
+          type="email"
+          label="Email"
+          placeholder="Email"
+          value={props.email}
+          autocomplete="email"
+          onChange={props.onUpdateEmail}
+          required
+        />
+        <AuthTextField
+          id="sign-in-password"
+          type="password"
+          label="Password"
+          placeholder="Password"
+          autocomplete="current-password"
+          value={props.password}
+          onChange={props.onUpdatePassword}
+          required
+        />
+        {props.error && <p class=":uno: m-0 text-3.5 text-#d13b3b">{props.error?.message}</p>}
+        <AuthSubmitButton disabled={props.loading}>
+          {props.loading ? 'Loading...' : 'Sign In'}
+        </AuthSubmitButton>
+      </form>
+    </AuthSurface>
   )
 }

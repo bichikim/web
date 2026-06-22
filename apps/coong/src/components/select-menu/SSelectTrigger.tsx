@@ -1,29 +1,21 @@
-import {type JSX, splitProps} from 'solid-js'
+import {cx} from 'class-variance-authority'
+import {splitProps} from 'solid-js'
 import {HSelectTrigger, type HSelectTriggerSelfProps} from './HSelectTrigger'
-import {SSelectButton} from './SSelectButton'
 
 export interface SSelectTriggerProps extends HSelectTriggerSelfProps {}
+
+const triggerClass = cx(
+  ':uno: flex h-9 cursor-pointer items-center gap-1 rounded-full border-0',
+  'bg-transparent px-3 text-3.5 font-600 text-#101114',
+)
 
 /** Styled trigger wired to `HSelectRoot`. */
 export const SSelectTrigger = (props: SSelectTriggerProps) => {
   const [local, triggerProps] = splitProps(props, ['children', 'class'])
 
   return (
-    <HSelectTrigger>
-      {(trigger): JSX.Element => (
-        <SSelectButton
-          {...triggerProps}
-          class={local.class}
-          aria-controls={trigger['aria-controls']}
-          aria-expanded={trigger['aria-expanded']}
-          aria-haspopup={trigger['aria-haspopup']}
-          onClick={trigger.onClick}
-          onPointerDown={trigger.onPointerDown}
-          onPointerEnter={trigger.onPointerEnter}
-        >
-          {local.children}
-        </SSelectButton>
-      )}
+    <HSelectTrigger {...triggerProps} class={cx(triggerClass, local.class)}>
+      {local.children}
     </HSelectTrigger>
   )
 }

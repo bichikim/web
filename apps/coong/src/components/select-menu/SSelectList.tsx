@@ -12,7 +12,7 @@ export interface SSelectListProps extends Omit<HSelectContentProps, 'class'> {
 }
 
 const defaultPanelClass = cx(
-  ':uno: fixed m-0 w-56 rounded-3 border-0 bg-white p-1 text-left',
+  ':uno: z-50 m-0 w-56 rounded-3 border-0 bg-white p-1 text-left',
   'shadow-[0_12px_30px_rgba(17,18,22,0.14)] ring-1 ring-black/8 backdrop:bg-transparent',
 )
 

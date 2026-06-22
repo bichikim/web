@@ -3,7 +3,7 @@ import {
   getEnabledMenuItemElements,
   isMenuNavigationKey,
 } from './select-menu-focus'
-import type {SelectMenuItemRegistration} from './select-menu-item'
+import type {SelectMenuItemRegistration} from './use-select-menu'
 
 export const createSelectMenuKeyboard = (options: {
   getFocusedElement: () => HTMLElement | undefined

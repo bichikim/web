@@ -1,41 +1,20 @@
-import {type ParentProps, untrack} from 'solid-js'
-import {SelectMenuContext} from './context'
-import {type UseSelectMenuProps, useSelectMenu} from './use-select-menu'
+import {DropdownMenu} from '@kobalte/core/dropdown-menu'
+import {type ParentProps} from 'solid-js'
+import type {UseSelectMenuProps} from './use-select-menu'
+
+const DEFAULT_ANCHOR_GAP_PX = 8
 
 export interface HSelectRootProps extends ParentProps, UseSelectMenuProps {}
 
-/** Root provider for headless select / menu primitives. */
+/** Kobalte-backed root for menu/select-like primitives. */
 export const HSelectRoot = (props: HSelectRootProps) => {
-  const [menuProps, childrenProps] = splitSelectRootProps(props)
-  const controller = useSelectMenu(untrack(() => menuProps))
-
   return (
-    <SelectMenuContext.Provider value={{controller}}>
-      {childrenProps.children}
-    </SelectMenuContext.Provider>
+    <DropdownMenu
+      gutter={props.anchorGapPx ?? DEFAULT_ANCHOR_GAP_PX}
+      placement="bottom-start"
+      onOpenChange={props.onOpenChange}
+    >
+      {props.children}
+    </DropdownMenu>
   )
-}
-
-const splitSelectRootProps = (props: HSelectRootProps) => {
-  const {
-    anchorGapPx,
-    children,
-    focusOnOpen,
-    listWidthPx,
-    onAnchorRectChange,
-    onOpenChange,
-    viewportPaddingPx,
-  } = props
-
-  return [
-    {
-      anchorGapPx,
-      focusOnOpen,
-      listWidthPx,
-      onAnchorRectChange,
-      onOpenChange,
-      viewportPaddingPx,
-    },
-    {children},
-  ] as const
 }
