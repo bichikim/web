@@ -1,5 +1,12 @@
 # AGENTS.md
 
+## Interaction
+
+- **Questions**: If the user is asking a question (not requesting a change), answer in chat only — do not modify code or files.
+- **Examples**: If the user asks to see an example, provide it in the chat response only — do not create or edit files to demonstrate it.
+- **Action requests**: If the user asks you to do something (e.g. "해줘", "만들어줘", "수정해줘"), treat it as a work request and start the task — modify code or files as needed.
+- **Documentation**: When asked to add or write docs, keep it brief and concise—avoid verbosity and repeating the same points—without omitting essential meaning.
+
 ## Code quality
 
 **Enterprise-grade** code: maintainability, scalability, separation of concerns, robust error handling, consistent patterns.

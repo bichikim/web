@@ -3,7 +3,7 @@ import {RouteDefinition} from '@solidjs/router'
 
 export const route = {
   info: {
-    public: true,
+    public: 'only-unauthorized',
   },
 } satisfies RouteDefinition
 

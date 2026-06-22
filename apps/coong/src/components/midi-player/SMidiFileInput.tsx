@@ -55,8 +55,8 @@ export const SMidiFileInput = (props: HMidiFileInputProps) => {
     handleInputClick,
     handleTouchStart,
   } = useMidiFileInput(inputElement, {
-    onAdd: props.onAdd,
-    onClick: props.onClick,
+    onAdd: (value) => innerProps.onAdd?.(value),
+    onClick: (event) => innerProps.onClick?.(event),
   })
 
   return (

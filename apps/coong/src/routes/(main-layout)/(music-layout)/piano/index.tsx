@@ -8,7 +8,6 @@ import {HUNDRED} from '@winter-love/utils'
 import {ToastContext} from '@winter-love/solid-components'
 import {useRestoreScroll} from 'src/use/restore-scroll'
 import ogImage from './og-image.png'
-import {PageMeta} from 'src/components/page-meta'
 import {useStorage} from '@winter-love/solid-use'
 import {MidiPlayerContext} from 'src/components/midi-player/context'
 
@@ -24,6 +23,11 @@ export interface HomePageProps {
 
 export const route = {
   info: {
+    meta: {
+      description: 'Play the piano or enjoy AI-powered piano performances',
+      image: ogImage,
+      title: 'Piano',
+    },
     public: true,
   },
 } satisfies RouteDefinition
@@ -121,7 +125,6 @@ export default function HomePage() {
 
   return (
     <>
-      <PageMeta pageName={pageName} description={description} image={ogImage} />
       <main
         class=":uno: relative h-full overflow-y-hidden pt-0 px-2 flex flex-col overflow-x-auto inline-block"
         ref={setMainElement}

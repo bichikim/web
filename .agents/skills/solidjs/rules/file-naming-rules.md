@@ -1,6 +1,9 @@
 # Solidjs Component file naming rules
 
-- Use PascalCase for component filenames (match component name).
+- Component files must use `PascalCase.tsx`.
+- Component filenames must match the exported public component name.
+- Keep one public component per component file.
+- Do not name component files after helper, adapter, wrapper, or implementation roles.
 - Prefix conventions:
   - `S` for styled components.
   - `H` for headless components; may include minimal normalize styles.
