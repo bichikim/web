@@ -61,6 +61,21 @@ export const resolveAuthSession = (user: unknown): AuthSessionState => {
   return 'authenticated'
 }
 
+export const resolveAuthRedirectUrl = (
+  routeAccess: Pick<RouteAccessResult, 'allow' | 'pending' | 'reason'>,
+  options: {homeUrl: string; signInUrl: string},
+): string | null => {
+  if (routeAccess.pending || routeAccess.allow) {
+    return null
+  }
+
+  if (routeAccess.reason === 'only-unauthorized') {
+    return options.homeUrl
+  }
+
+  return options.signInUrl
+}
+
 export const evaluateRouteAccess = (
   matches: RouteMatch[],
   session: AuthSessionState,

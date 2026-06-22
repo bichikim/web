@@ -1,4 +1,4 @@
-import {toNumber} from '../'
+import {toNumber, toNumberOrUndefined} from '../'
 import {describe, expect, it} from 'vitest'
 
 describe('to-number', () => {
@@ -30,5 +30,31 @@ describe('to-number', () => {
     const result = toNumber(20)
 
     expect(result).toBe(20)
+  })
+})
+
+describe('to-number-or-undefined', () => {
+  it('should return number if value is a number', () => {
+    const result = toNumberOrUndefined(20)
+
+    expect(result).toBe(20)
+  })
+
+  it('should return undefined if value is not a number', () => {
+    const result = toNumberOrUndefined('foo')
+
+    expect(result).toBeUndefined()
+  })
+
+  it('should return undefined if value is a function', () => {
+    const result = toNumberOrUndefined(() => 'foo')
+
+    expect(result).toBeUndefined()
+  })
+
+  it('should return undefined if value is an object', () => {
+    const result = toNumberOrUndefined({name: 'foo'})
+
+    expect(result).toBeUndefined()
   })
 })
