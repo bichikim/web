@@ -1,0 +1,29 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "allowJs": false,
+    "baseUrl": ".",
+    "declaration": false,
+    "declarationMap": false,
+    "emitDeclarationOnly": false,
+    "jsx": "preserve",
+    "jsxImportSource": "solid-js",
+    "noEmit": false,
+    "noEmitOnError": true,
+    "outDir": "./dist/solid",
+    "rootDir": "./src",
+    "sourceMap": false
+  },
+  "exclude": [
+    "node_modules",
+    "dist",
+    "src/**/*.story.ts",
+    "src/**/*.story.tsx",
+    "src/**/*.spec.ts",
+    "src/**/*.spec.tsx",
+    "src/**/*.test.ts",
+    "src/**/*.test.tsx"
+  ],
+  "extends": "./tsconfig.json",
+  "include": ["src/**/*.ts", "src/**/*.tsx"]
+}

@@ -7,8 +7,7 @@
     "url": "https://github.com/bichikim/web.git"
   },
   "files": [
-    "dist/*",
-    "src/*"
+    "dist/*"
   ],
   "type": "module",
   "sideEffects": false,
@@ -18,7 +17,7 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "solid": "./src/index.tsx",
+      "solid": "./dist/solid/index.jsx",
       "import": "./dist/index.mjs",
       "require": "./dist/index.js"
     }
@@ -27,11 +26,12 @@
     "access": "public"
   },
   "scripts": {
-    "build": "vite build",
-    "build:dev": "vite build --minify false",
-    "prepare": "vite build",
+    "build": "vite build && tsc -p tsconfig.solid.json",
+    "build:dev": "vite build --minify false && tsc -p tsconfig.solid.json",
+    "build:solid": "tsc -p tsconfig.solid.json",
+    "prepare": "pnpm run build",
     "typecheck": "tsc --noEmit",
-    "dev": "vite build --watch",
+    "dev": "concurrently \"vite build --watch\" \"tsc -p tsconfig.solid.json --watch\"",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
@@ -43,6 +43,7 @@
   "devDependencies": {
     "@types/node": "catalog:",
     "@winter-love/vite-lib-config": "workspace:*",
+    "concurrently": "^9.2.1",
     "vite": "catalog:"
   }
 }
