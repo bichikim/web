@@ -15,7 +15,7 @@ export const HHamsterTrigger = (props: HHamsterTriggerProps): JSX.Element => {
   }
 
   return (
-    <a href="#" class={props.class} onclick={handleClick} role="button" tabindex={0}>
+    <a href="#" class={props.class} onClick={handleClick} role="button" tabindex={0}>
       {props.children}
     </a>
   )

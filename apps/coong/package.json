@@ -25,6 +25,7 @@
   },
   "dependencies": {
     "@floating-ui/dom": "^1.7.6",
+    "@kobalte/core": "^0.13.11",
     "@lottiefiles/dotlottie-solid": "^0.5.15",
     "@lottiefiles/dotlottie-web": "^0.58.1",
     "@solid-primitives/resource": "^0.4.3",

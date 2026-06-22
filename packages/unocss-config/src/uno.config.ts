@@ -1,5 +1,5 @@
 // oxlint-disable eslint-js/prefer-named-capture-group
-import {presetIcons, presetUno, toEscapedSelector} from 'unocss'
+import {presetIcons, presetUno, toEscapedSelector, type Variant} from 'unocss'
 import presetLegacyCompat from '@unocss/preset-legacy-compat'
 import transformerVariantGroup from '@unocss/transformer-variant-group'
 import transformerCompileClass from './transformer-class'
@@ -9,6 +9,107 @@ import * as theme from '@unocss/preset-uno/theme'
 import {pianoShortcuts} from './piano'
 import {auroraShortcuts} from './aurora'
 const HUNDRED = 100
+
+const kobalteStates = [
+  'valid',
+  'invalid',
+  'required',
+  'disabled',
+  'readonly',
+  'checked',
+  'indeterminate',
+  'selected',
+  'pressed',
+  'expanded',
+  'opened',
+  'closed',
+  'highlighted',
+  'current',
+  'placeholder-shown',
+  'visible',
+  'animate',
+]
+
+const kobalteOrientations = ['horizontal', 'vertical']
+
+const kobalteSwipeStates = ['start', 'move', 'cancel', 'end']
+
+const kobalteSwipeDirections = ['up', 'down', 'left', 'right']
+
+const createDataVariant = (name: string, selector: string): Variant => {
+  return (matcher) => {
+    const prefix = `${name}:`
+
+    if (!matcher.startsWith(prefix)) {
+      return
+    }
+
+    return {
+      matcher: matcher.slice(prefix.length),
+      selector: (input) => selector.replaceAll('&', input),
+    }
+  }
+}
+
+const createKobalteVariants = (): Variant[] => {
+  const variants: Variant[] = []
+
+  for (const state of kobalteStates) {
+    variants.push(createDataVariant(`ui-${state}`, `&[data-${state}]`))
+    variants.push(createDataVariant(`ui-not-${state}`, `&:not([data-${state}])`))
+    variants.push(createDataVariant(`ui-group-${state}`, `.group[data-${state}] &`))
+    variants.push(createDataVariant(`ui-peer-${state}`, `.peer[data-${state}] ~ &`))
+  }
+
+  for (const orientation of kobalteOrientations) {
+    variants.push(createDataVariant(`ui-${orientation}`, `&[data-orientation='${orientation}']`))
+    variants.push(
+      createDataVariant(`ui-not-${orientation}`, `&:not([data-orientation='${orientation}'])`),
+    )
+    variants.push(
+      createDataVariant(`ui-group-${orientation}`, `.group[data-orientation='${orientation}'] &`),
+    )
+    variants.push(
+      createDataVariant(`ui-peer-${orientation}`, `.peer[data-orientation='${orientation}'] ~ &`),
+    )
+  }
+
+  for (const state of kobalteSwipeStates) {
+    variants.push(createDataVariant(`ui-swipe-${state}`, `&[data-swipe='${state}']`))
+    variants.push(createDataVariant(`ui-not-swipe-${state}`, `&:not([data-swipe='${state}'])`))
+    variants.push(createDataVariant(`ui-group-swipe-${state}`, `.group[data-swipe='${state}'] &`))
+    variants.push(createDataVariant(`ui-peer-swipe-${state}`, `.peer[data-swipe='${state}'] ~ &`))
+  }
+
+  for (const direction of kobalteSwipeDirections) {
+    variants.push(
+      createDataVariant(
+        `ui-swipe-direction-${direction}`,
+        `&[data-swipe-direction='${direction}']`,
+      ),
+    )
+    variants.push(
+      createDataVariant(
+        `ui-not-swipe-direction-${direction}`,
+        `&:not([data-swipe-direction='${direction}'])`,
+      ),
+    )
+    variants.push(
+      createDataVariant(
+        `ui-group-swipe-direction-${direction}`,
+        `.group[data-swipe-direction='${direction}'] &`,
+      ),
+    )
+    variants.push(
+      createDataVariant(
+        `ui-peer-swipe-direction-${direction}`,
+        `.peer[data-swipe-direction='${direction}'] ~ &`,
+      ),
+    )
+  }
+
+  return variants
+}
 
 const toNumber = (value: string, defaultValue: number): number => {
   const result = Number(value)
@@ -151,5 +252,6 @@ export default defineUsefulConfig(
       transformerVariantGroup(),
       transformerCompileClass(),
     ] as any,
+    variants: createKobalteVariants(),
   } as any,
 ) as any

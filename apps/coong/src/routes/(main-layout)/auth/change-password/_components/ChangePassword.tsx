@@ -1,6 +1,14 @@
 import {createSignal, Show} from 'solid-js'
-import {useAuth} from 'src/store/auth'
 import {useNavigate} from '@solidjs/router'
+import {AuthSubmitButton} from '../../_components/AuthSubmitButton'
+import {AuthSurface} from '../../_components/AuthSurface'
+import {AuthTextField} from '../../_components/AuthTextField'
+
+const passwordVisibilityButtonClass = `:uno:
+absolute right-2 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 cursor-pointer items-center justify-center
+rounded-2 border-0 bg-transparent text-#6f7682 outline-none hover:bg-black/5 hover:text-#101114
+focus-visible:ring-2 focus-visible:ring-#111216/16
+`
 
 export const ChangePassword = () => {
   const navigate = useNavigate()
@@ -27,81 +35,66 @@ export const ChangePassword = () => {
   }
 
   return (
-    <div class="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-      <div class="p-8 bg-white rounded-lg shadow-md w-96">
-        <h1 class="text-2xl font-bold mb-6 text-center">패스워드 변경</h1>
-        <form onSubmit={handleChangePassword} class="flex flex-col gap-4">
-          <div>
-            <label for="new-password" class="block text-sm font-medium mb-1">
-              새 패스워드
-            </label>
-            <div class="relative">
-              <input
-                id="new-password"
-                type={showNewPassword() ? 'text' : 'password'}
-                placeholder="새 패스워드를 입력하세요"
-                value={newPassword()}
-                onInput={(event) => setNewPassword(event.currentTarget.value)}
-                class="w-full p-2 pr-10 border rounded"
-                required
-                minLength={6}
-              />
-              <button
-                type="button"
-                onClick={() => setShowNewPassword(!showNewPassword())}
-                class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
-                aria-label={showNewPassword() ? '패스워드 숨기기' : '패스워드 표시하기'}
-              >
-                <span
-                  class={`text-xl ${showNewPassword() ? 'i-tabler:eye-off' : 'i-tabler:eye'}`}
-                />
-              </button>
-            </div>
-          </div>
-          <div>
-            <label for="confirm-password" class="block text-sm font-medium mb-1">
-              패스워드 확인
-            </label>
-            <div class="relative">
-              <input
-                id="confirm-password"
-                type={showConfirmPassword() ? 'text' : 'password'}
-                placeholder="새 패스워드를 다시 입력하세요"
-                value={confirmPassword()}
-                onInput={(event) => setConfirmPassword(event.currentTarget.value)}
-                class="w-full p-2 pr-10 border rounded"
-                required
-                minLength={6}
-              />
-              <button
-                type="button"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword())}
-                class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
-                aria-label={showConfirmPassword() ? '패스워드 숨기기' : '패스워드 표시하기'}
-              >
-                <span
-                  class={`text-xl ${showConfirmPassword() ? 'i-tabler:eye-off' : 'i-tabler:eye'}`}
-                />
-              </button>
-            </div>
-          </div>
-          <Show when={error()}>
-            <p class="text-red-500 text-sm">{error()}</p>
-          </Show>
-          <button
-            type="submit"
-            disabled={false}
-            class="p-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
-          >
-            {'패스워드 변경'}
-          </button>
-        </form>
-        <div class="mt-4 text-center">
-          <a href="/" class="text-blue-500 hover:underline">
+    <AuthSurface
+      title="패스워드 변경"
+      footer={
+        <div class=":uno: mt-4 text-center">
+          <a href="/" class=":uno: text-#4b5bdc no-underline hover:underline">
             홈으로 돌아가기
           </a>
         </div>
-      </div>
-    </div>
+      }
+    >
+      <form onSubmit={handleChangePassword} class=":uno: flex flex-col gap-4">
+        <AuthTextField
+          id="new-password"
+          type={showNewPassword() ? 'text' : 'password'}
+          label="새 패스워드"
+          placeholder="새 패스워드를 입력하세요"
+          value={newPassword()}
+          onChange={setNewPassword}
+          required
+          minLength={6}
+          trailing={
+            <button
+              type="button"
+              onClick={() => setShowNewPassword(!showNewPassword())}
+              class={passwordVisibilityButtonClass}
+              aria-label={showNewPassword() ? '패스워드 숨기기' : '패스워드 표시하기'}
+            >
+              <span
+                class={`:uno: h-5 w-5 ${showNewPassword() ? 'i-tabler:eye-off' : 'i-tabler:eye'}`}
+              />
+            </button>
+          }
+        />
+        <AuthTextField
+          id="confirm-password"
+          type={showConfirmPassword() ? 'text' : 'password'}
+          label="패스워드 확인"
+          placeholder="새 패스워드를 다시 입력하세요"
+          value={confirmPassword()}
+          onChange={setConfirmPassword}
+          required
+          minLength={6}
+          trailing={
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword())}
+              class={passwordVisibilityButtonClass}
+              aria-label={showConfirmPassword() ? '패스워드 숨기기' : '패스워드 표시하기'}
+            >
+              <span
+                class={`:uno: h-5 w-5 ${showConfirmPassword() ? 'i-tabler:eye-off' : 'i-tabler:eye'}`}
+              />
+            </button>
+          }
+        />
+        <Show when={error()}>
+          <p class=":uno: m-0 text-3.5 text-#d13b3b">{error()}</p>
+        </Show>
+        <AuthSubmitButton>{'패스워드 변경'}</AuthSubmitButton>
+      </form>
+    </AuthSurface>
   )
 }

@@ -1,14 +1,5 @@
-import {type ComponentProps, type JSX, Show, createMemo, splitProps} from 'solid-js'
-import {type UseSelectMenuItemOptions, useSelectMenuItem} from './select-menu-item'
-
-export interface HSelectItemPassArg {
-  'data-disabled': string | undefined
-  'data-focused': string | undefined
-  disabled: boolean
-  onClick: JSX.EventHandler<HTMLElement, MouseEvent>
-  role: 'menuitem'
-  tabIndex: number
-}
+import {DropdownMenu} from '@kobalte/core/dropdown-menu'
+import {type ComponentProps, type JSX, splitProps} from 'solid-js'
 
 export interface HSelectItemSelfProps extends Omit<ComponentProps<'button'>, 'children' | 'role'> {
   children: JSX.Element
@@ -17,63 +8,25 @@ export interface HSelectItemSelfProps extends Omit<ComponentProps<'button'>, 'ch
   onSelect?: () => void
 }
 
-export interface HSelectItemPassProps extends UseSelectMenuItemOptions {
-  children: (arg: HSelectItemPassArg) => JSX.Element
-}
+export interface HSelectItemProps extends HSelectItemSelfProps {}
 
-export type HSelectItemProps = HSelectItemSelfProps | HSelectItemPassProps
-
-/** Headless menu item with roving tabindex and optional close-on-select. */
+/** Kobalte-backed menu item with optional close-on-select. */
 export const HSelectItem = (props: HSelectItemProps) => {
-  const [innerProps, restProps] = splitProps(props as HSelectItemSelfProps, [
+  const [innerProps, restProps] = splitProps(props, [
     'children',
     'closeOnSelect',
     'disabled',
     'onSelect',
   ])
-  const {itemProps, setElement} = useSelectMenuItem({
-    closeOnSelect: innerProps.closeOnSelect,
-    disabled: innerProps.disabled,
-    onSelect: innerProps.onSelect,
-  })
-
-  const itemArg = createMemo<HSelectItemPassArg>(() => ({
-    'data-disabled': itemProps()['data-disabled'] as string | undefined,
-    'data-focused': itemProps()['data-focused'] as string | undefined,
-    disabled: innerProps.disabled ?? false,
-    onClick: itemProps().onClick as JSX.EventHandler<HTMLElement, MouseEvent>,
-    role: 'menuitem',
-    tabIndex: itemProps().tabIndex as number,
-  }))
-
-  const children = createMemo(() => {
-    if (typeof props.children === 'function') {
-      return props.children(itemArg())
-    }
-
-    return props.children
-  })
 
   return (
-    <Show
-      when={typeof props.children === 'function'}
-      fallback={
-        <button
-          {...restProps}
-          ref={setElement}
-          type={restProps.type ?? 'button'}
-          role="menuitem"
-          disabled={innerProps.disabled}
-          tabIndex={itemArg().tabIndex}
-          data-disabled={itemArg()['data-disabled']}
-          data-focused={itemArg()['data-focused']}
-          onClick={itemArg().onClick}
-        >
-          {children()}
-        </button>
-      }
+    <DropdownMenu.Item
+      {...restProps}
+      disabled={innerProps.disabled}
+      closeOnSelect={innerProps.closeOnSelect}
+      onSelect={innerProps.onSelect}
     >
-      {children()}
-    </Show>
+      {innerProps.children}
+    </DropdownMenu.Item>
   )
 }

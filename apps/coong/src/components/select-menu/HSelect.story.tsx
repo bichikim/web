@@ -70,23 +70,12 @@ export const StyledCompound: Story = {
   ),
 }
 
-export const RenderPropTrigger: Story = {
+export const CustomTrigger: Story = {
   render: () => (
     <HSelectRoot>
       <div class=":uno: min-h-80 p-8">
-        <HSelectTrigger>
-          {(trigger) => (
-            <button
-              type="button"
-              class=":uno: rounded-full bg-#101114 px-4 py-2 text-3.5 font-600 text-white"
-              aria-controls={trigger['aria-controls']}
-              aria-expanded={trigger['aria-expanded']}
-              aria-haspopup={trigger['aria-haspopup']}
-              onClick={trigger.onClick}
-            >
-              {trigger.isOpen ? 'Close' : 'Open'} custom trigger
-            </button>
-          )}
+        <HSelectTrigger class=":uno: rounded-full bg-#101114 px-4 py-2 text-3.5 font-600 text-white">
+          Open custom trigger
         </HSelectTrigger>
         <SSelectList>
           <SSelectItem onSelect={fn()}>Custom trigger item</SSelectItem>
