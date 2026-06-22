@@ -1,6 +1,6 @@
 import {describe, expect, it} from 'vitest'
 import type {RouteMatch} from '@solidjs/router'
-import {evaluateRouteAccess, isAllowAll, resolveAuthSession} from '../allow'
+import {evaluateRouteAccess, isAllowAll, resolveAuthRedirectUrl, resolveAuthSession} from '../allow'
 
 const createMatch = (publicValue: boolean | 'only-unauthorized'): RouteMatch =>
   ({
@@ -44,6 +44,26 @@ describe('evaluateRouteAccess', () => {
       reason: 'public',
       session: 'unauthenticated',
     })
+  })
+})
+
+describe('resolveAuthRedirectUrl', () => {
+  const urls = {homeUrl: '/', signInUrl: '/auth/sign-in'}
+
+  it('should not redirect while the session is loading', () => {
+    expect(resolveAuthRedirectUrl({allow: false, pending: true, reason: 'public'}, urls)).toBeNull()
+  })
+
+  it('should redirect unauthenticated users from private routes to sign-in', () => {
+    expect(resolveAuthRedirectUrl({allow: false, pending: false, reason: 'public'}, urls)).toBe(
+      '/auth/sign-in',
+    )
+  })
+
+  it('should redirect authenticated users from only-unauthorized routes to home', () => {
+    expect(
+      resolveAuthRedirectUrl({allow: false, pending: false, reason: 'only-unauthorized'}, urls),
+    ).toBe('/')
   })
 })
 
