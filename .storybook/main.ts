@@ -34,8 +34,6 @@ export default <StorybookConfig>{
     '../packages/solid-use/src/**/*.story.@(js|jsx|mjs|ts|tsx)',
     '../packages/player/src/**/*.story.@(js|jsx|mjs|ts|tsx)',
     '../packages/utils/src/**/*.story.@(js|jsx|mjs|ts|tsx)',
-    '../packages/block-suite/src/**/*.story.@(js|jsx|mjs|ts|tsx)',
-    '../packages/blocks/src/**/*.story.@(js|jsx|mjs|ts|tsx)',
   ],
   typescript: {
     reactDocgen: 'react-docgen-typescript',
