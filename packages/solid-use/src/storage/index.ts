@@ -4,7 +4,7 @@ import {
   setAnyStorageItem,
   StorageOptions,
 } from '@winter-love/utils'
-import {Accessor, createSignal, onMount, Setter} from 'solid-js'
+import {Accessor, createEffect, createSignal, onMount, Setter} from 'solid-js'
 import {resolveAccessor} from 'src/resolve-accessor'
 import {MaybeAccessor} from 'src/types'
 
@@ -15,8 +15,9 @@ export interface UseStorageOptions<T> extends StorageOptions {
   active?: MaybeAccessor<boolean>
   /**
    * Value that will be enforced regardless of stored value. When set, this value will override any existing value in storage.
+   * Accepts an accessor for values that resolve after mount (e.g. async resources).
    */
-  enforceValue?: T
+  enforceValue?: MaybeAccessor<T | undefined>
   /**
    * initial value to use when no stored value exists
    */
@@ -57,18 +58,36 @@ export const useStorage: UseStorage = (
   key: any,
   options: Record<string, any> = {},
 ): StorageReturn<any> => {
-  const {mounted, enforceValue, initValue = null, active = true} = options
+  const {mounted, initValue = null, active = true} = options
+  const hasEnforceValueOption = 'enforceValue' in options
+  const enforceValueAccessor = hasEnforceValueOption
+    ? resolveAccessor(options.enforceValue as MaybeAccessor<T | undefined>)
+    : null
   const keyAccessor = resolveAccessor(key)
   const beforeValue = mounted ? null : getAnyStorageItem(kind, keyAccessor(), initValue)
   const [value, _setValue] = createSignal(beforeValue)
   const activeAccessor = resolveAccessor(active)
   let isMounted = false
 
+  if (enforceValueAccessor) {
+    createEffect(() => {
+      const enforced = enforceValueAccessor()
+
+      if (enforced !== undefined) {
+        setValue(enforced)
+      }
+    })
+  }
+
   onMount(() => {
-    if (enforceValue) {
-      setValue(enforceValue)
+    if (enforceValueAccessor) {
+      const enforced = enforceValueAccessor()
+
+      if (enforced !== undefined) {
+        setValue(enforced)
+      }
+      // AI_NOTE - Skip storage read while enforceValue is configured but still unresolved (async).
     } else if (mounted) {
-      // once
       setValue(() => getAnyStorageItem(kind, keyAccessor(), initValue))
     }
 

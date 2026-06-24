@@ -4,7 +4,7 @@
 
 import {afterEach, describe, expect, it, vi} from 'vitest'
 import {useStorage} from './'
-import {createRoot} from 'solid-js'
+import {createRoot, createSignal} from 'solid-js'
 import {getAnyStorageItem, setAnyStorageItem} from '@winter-love/utils'
 
 vi.mock('@winter-love/utils', () => ({
@@ -102,6 +102,28 @@ describe('useStorage local', () => {
 
     expect(getAnyStorageItem).toHaveBeenNthCalledWith(1, 'local', key, null)
     expect(value()).toBe(enforceValue)
+    dispose()
+  })
+
+  it('should apply enforceValue when it becomes available after mount', () => {
+    const key = 'key'
+    const storeValue = 'store-value'
+    const enforcedValue = 'enforced-value'
+
+    vi.mocked(getAnyStorageItem).mockReturnValueOnce(storeValue)
+
+    const {dispose, setEnforce, value} = createRoot((dispose) => {
+      const [enforce, setEnforce] = createSignal<string | undefined>(undefined)
+      const [value] = useStorage('local', key, {enforceValue: enforce, mounted: true})
+
+      return {dispose, setEnforce, value}
+    })
+
+    expect(getAnyStorageItem).not.toHaveBeenCalled()
+    expect(value()).toBe(null)
+
+    setEnforce(enforcedValue)
+    expect(value()).toBe(enforcedValue)
     dispose()
   })
 
