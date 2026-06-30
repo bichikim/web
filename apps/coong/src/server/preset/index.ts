@@ -15,6 +15,21 @@ const presetMap: Record<string, Preset> = {
   },
 }
 
+export const isKnownPresetId = (id: string): boolean => {
+  return id in presetMap
+}
+
+export const getPresetEnforceMusics = (
+  id: string | undefined,
+  preset: Preset | undefined,
+): MusicInfo[] | undefined => {
+  if (!id || !preset || !isKnownPresetId(id)) {
+    return undefined
+  }
+
+  return preset.musics
+}
+
 export const getPresetData = (id: string): Preset => {
   return presetMap[id] ?? UNKNOWN_PRESET
 }

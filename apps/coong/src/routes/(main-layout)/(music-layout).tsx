@@ -18,6 +18,7 @@ import {emitAllIds} from 'src/components/real-button/use-global-touch'
 import {useCookieStorage} from 'src/use/storage'
 import {createSplendidGrandPiano, SplendidGrandPianoContext} from 'src/use/instruments'
 import {getStorageKey} from 'src/utils/storage-key'
+import {getPresetEnforceMusics} from 'src/server/preset'
 import {MidiPlayerProvider} from 'src/components/midi-player/context'
 
 export const route = {
@@ -87,7 +88,8 @@ export default function MusicLayout(props: RouteSectionProps) {
 
   const [musics, setMusics] = useStorage('local', getStorageKey('piano-musics-default'), {
     active: isActiveStore,
-    enforceValue: preset()?.musics,
+    // AI_NOTE - unknown ?preset= must not pass [] as enforceValue; empty arrays are truthy in useStorage
+    enforceValue: getPresetEnforceMusics(searchParams.preset, preset()),
     initValue: [],
     mounted: true,
   })
