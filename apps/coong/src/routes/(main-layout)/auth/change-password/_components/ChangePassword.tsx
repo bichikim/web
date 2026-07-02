@@ -1,5 +1,6 @@
 import {createSignal, Show} from 'solid-js'
 import {useNavigate} from '@solidjs/router'
+import {useAuth} from 'src/store/auth'
 import {AuthSubmitButton} from '../../_components/AuthSubmitButton'
 import {AuthSurface} from '../../_components/AuthSurface'
 import {AuthTextField} from '../../_components/AuthTextField'
@@ -12,25 +13,35 @@ focus-visible:ring-2 focus-visible:ring-#111216/16
 
 export const ChangePassword = () => {
   const navigate = useNavigate()
+  const {changePassword} = useAuth()
   const [newPassword, setNewPassword] = createSignal('')
   const [confirmPassword, setConfirmPassword] = createSignal('')
   const [showNewPassword, setShowNewPassword] = createSignal(false)
   const [showConfirmPassword, setShowConfirmPassword] = createSignal(false)
   const [error, setError] = createSignal<string | null>(null)
+  const [loading, setLoading] = createSignal(false)
 
   const handleChangePassword = async (event: Event) => {
     event.preventDefault()
     setError(null)
 
-    // const newPwd = newPassword()
-    // const confirmPwd = confirmPassword()
+    const newPwd = newPassword()
+    const confirmPwd = confirmPassword()
+
+    if (newPwd !== confirmPwd) {
+      setError('패스워드가 일치하지 않습니다.')
+      return
+    }
+
+    setLoading(true)
 
     try {
-      // const result = await changePassword(newPwd)
-
-      navigate('home')
+      await changePassword(newPwd)
+      navigate('/')
     } catch (error_) {
       setError(error_ instanceof Error ? error_.message : '패스워드 변경에 실패했습니다.')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -93,7 +104,9 @@ export const ChangePassword = () => {
         <Show when={error()}>
           <p class=":uno: m-0 text-3.5 text-#d13b3b">{error()}</p>
         </Show>
-        <AuthSubmitButton>{'패스워드 변경'}</AuthSubmitButton>
+        <AuthSubmitButton disabled={loading()}>
+          {loading() ? '변경 중...' : '패스워드 변경'}
+        </AuthSubmitButton>
       </form>
     </AuthSurface>
   )
