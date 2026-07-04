@@ -1,0 +1,4 @@
+interface:
+  display_name: '한국어 개발 문장 정제'
+  short_description: '한국어 응답과 개발 문장을 자연스럽고 명확하게 정제'
+  default_prompt: 'Use $refine-korean-dev-writing whenever an agent responds in Korean or refines Korean developer-facing text.'
