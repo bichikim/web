@@ -9,6 +9,7 @@ import {onMount, Show} from 'solid-js'
 import {queryToString} from 'src/utils/query-params'
 import {cva} from 'class-variance-authority'
 import {useCountdown} from 'src/use/countdown'
+import {CHANGE_PASSWORD_PATH} from 'src/requests/auth/reset-password/redirect-url'
 import type {EmailOtpType} from '@supabase/supabase-js'
 
 const ClientOnlyLottie = clientOnly(() =>
@@ -84,6 +85,12 @@ export default function VerifyEmailPage() {
     }
 
     await verifyOtp({tokenHash: hash, type})
+
+    if (type === 'recovery') {
+      navigate(CHANGE_PASSWORD_PATH, {replace: true})
+      return
+    }
+
     afterNavigate.start()
   })
 
