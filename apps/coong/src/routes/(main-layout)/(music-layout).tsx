@@ -6,7 +6,7 @@ import {
   useSearchParams,
 } from '@solidjs/router'
 import {useStorage} from '@winter-love/solid-use'
-import {createMemo, createResource} from 'solid-js'
+import {createEffect, createMemo, createResource} from 'solid-js'
 import {
   LinkType,
   MusicInfo,
@@ -18,6 +18,7 @@ import {emitAllIds} from 'src/components/real-button/use-global-touch'
 import {useCookieStorage} from 'src/use/storage'
 import {createSplendidGrandPiano, SplendidGrandPianoContext} from 'src/use/instruments'
 import {getStorageKey} from 'src/utils/storage-key'
+import {getPresetEnforceMusics} from 'src/server/preset'
 import {MidiPlayerProvider} from 'src/components/midi-player/context'
 
 export const route = {
@@ -85,11 +86,23 @@ export default function MusicLayout(props: RouteSectionProps) {
     return location.pathname === PIANO_PATH ? 'music' : 'piano'
   })
 
-  const [musics, setMusics] = useStorage('local', getStorageKey('piano-musics-default'), {
-    active: isActiveStore,
-    enforceValue: preset()?.musics,
-    initValue: [],
-    mounted: true,
+  const [musics, setMusics] = useStorage<MusicInfo[]>(
+    'local',
+    getStorageKey('piano-musics-default'),
+    {
+      active: isActiveStore,
+      initValue: [],
+      mounted: true,
+    },
+  )
+
+  // AI_NOTE - preset loads async; only known presets may override the saved playlist
+  createEffect(() => {
+    const presetMusics = getPresetEnforceMusics(searchParams.preset, preset())
+
+    if (presetMusics !== undefined) {
+      setMusics(presetMusics)
+    }
   })
 
   const handleSettingDataChange = (data: SettingData) => {
