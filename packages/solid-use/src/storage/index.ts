@@ -67,7 +67,7 @@ export const useStorage: UseStorage = (
   onMount(() => {
     if (enforceValue) {
       setValue(enforceValue)
-    } else if (mounted) {
+    } else if (mounted && activeAccessor()) {
       // once
       setValue(() => getAnyStorageItem(kind, keyAccessor(), initValue))
     }
