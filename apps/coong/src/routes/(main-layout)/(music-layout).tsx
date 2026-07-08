@@ -6,7 +6,7 @@ import {
   useSearchParams,
 } from '@solidjs/router'
 import {useStorage} from '@winter-love/solid-use'
-import {createMemo, createResource} from 'solid-js'
+import {createEffect, createMemo, createResource} from 'solid-js'
 import {
   LinkType,
   MusicInfo,
@@ -86,12 +86,23 @@ export default function MusicLayout(props: RouteSectionProps) {
     return location.pathname === PIANO_PATH ? 'music' : 'piano'
   })
 
-  const [musics, setMusics] = useStorage('local', getStorageKey('piano-musics-default'), {
-    active: isActiveStore,
-    // AI_NOTE - unknown ?preset= must not pass [] as enforceValue; empty arrays are truthy in useStorage
-    enforceValue: getPresetEnforceMusics(searchParams.preset, preset()),
-    initValue: [],
-    mounted: true,
+  const [musics, setMusics] = useStorage<MusicInfo[]>(
+    'local',
+    getStorageKey('piano-musics-default'),
+    {
+      active: isActiveStore,
+      initValue: [],
+      mounted: true,
+    },
+  )
+
+  // AI_NOTE - preset loads async; only known presets may override the saved playlist
+  createEffect(() => {
+    const presetMusics = getPresetEnforceMusics(searchParams.preset, preset())
+
+    if (presetMusics !== undefined) {
+      setMusics(presetMusics)
+    }
   })
 
   const handleSettingDataChange = (data: SettingData) => {
