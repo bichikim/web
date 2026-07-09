@@ -67,7 +67,8 @@ export default function MusicLayout(props: RouteSectionProps) {
     onEmitInstrument: emitAllIds,
   })
   const [searchParams] = useSearchParams<{preset?: string}>()
-  const [preset] = createResource(() => getPreset(searchParams.preset))
+  const presetId = createMemo(() => searchParams.preset)
+  const [preset] = createResource(presetId, getPreset)
   const location = useLocation()
   const navigate = useNavigate()
 

@@ -23,7 +23,7 @@ export const getPresetEnforceMusics = (
   id: string | undefined,
   preset: Preset | undefined,
 ): MusicInfo[] | undefined => {
-  if (!id || !preset || !isKnownPresetId(id)) {
+  if (!id || !preset || !isKnownPresetId(id) || preset === UNKNOWN_PRESET) {
     return undefined
   }
 
