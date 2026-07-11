@@ -27,6 +27,11 @@ export const getPresetEnforceMusics = (
     return undefined
   }
 
+  // AI_NOTE - reject stale UNKNOWN_PRESET when preset id changes via client navigation
+  if (preset.title === UNKNOWN_PRESET.title) {
+    return undefined
+  }
+
   return preset.musics
 }
 
