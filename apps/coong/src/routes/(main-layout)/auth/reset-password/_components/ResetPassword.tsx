@@ -8,16 +8,18 @@ export const ResetPassword = () => {
   const {resetPassword} = useAuth()
   const [email, setEmail] = createSignal('')
   const [success, setSuccess] = createSignal(false)
+  const [error, setError] = createSignal<string | null>(null)
 
   const handleResetPassword = async (event: Event) => {
     event.preventDefault()
     setSuccess(false)
+    setError(null)
 
     try {
       await resetPassword(email())
       setSuccess(true)
-    } catch {
-      // Error is handled by resetPasswordError
+    } catch (error_) {
+      setError(error_ instanceof Error ? error_.message : '패스워드 재설정에 실패했습니다.')
     }
   }
 
@@ -47,8 +49,8 @@ export const ResetPassword = () => {
             onChange={setEmail}
             required
           />
-          <Show when={null}>
-            <p class=":uno: m-0 text-3.5 text-#d13b3b">null</p>
+          <Show when={error()}>
+            <p class=":uno: m-0 text-3.5 text-#d13b3b">{error()}</p>
           </Show>
           <AuthSubmitButton>{'재설정 링크 전송'}</AuthSubmitButton>
         </form>
