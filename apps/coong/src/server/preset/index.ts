@@ -2,14 +2,16 @@ import hiddenTeenieping from 'src/routes/api/preset/hidden-teenieping.json'
 import {type MusicInfo} from 'src/components/midi-player/SFileItem'
 
 export interface Preset {
+  id: string
   musics: MusicInfo[]
   title: string
 }
 
-const UNKNOWN_PRESET: Preset = {musics: [], title: 'Unknown Preset'}
+const UNKNOWN_PRESET: Preset = {id: '', musics: [], title: 'Unknown Preset'}
 
 const presetMap: Record<string, Preset> = {
   'hidden-teenieping': {
+    id: 'hidden-teenieping',
     musics: hiddenTeenieping,
     title: 'Hidden Teenieping',
   },
@@ -23,7 +25,7 @@ export const getPresetEnforceMusics = (
   id: string | undefined,
   preset: Preset | undefined,
 ): MusicInfo[] | undefined => {
-  if (!id || !preset || !isKnownPresetId(id)) {
+  if (!id || !preset || !isKnownPresetId(id) || preset.id !== id) {
     return undefined
   }
 

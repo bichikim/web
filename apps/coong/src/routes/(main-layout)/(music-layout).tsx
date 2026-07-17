@@ -18,7 +18,7 @@ import {emitAllIds} from 'src/components/real-button/use-global-touch'
 import {useCookieStorage} from 'src/use/storage'
 import {createSplendidGrandPiano, SplendidGrandPianoContext} from 'src/use/instruments'
 import {getStorageKey} from 'src/utils/storage-key'
-import {getPresetEnforceMusics} from 'src/server/preset'
+import {getPresetEnforceMusics, type Preset} from 'src/server/preset'
 import {MidiPlayerProvider} from 'src/components/midi-player/context'
 
 export const route = {
@@ -27,12 +27,7 @@ export const route = {
   },
 } satisfies RouteDefinition
 
-interface Data {
-  musics: MusicInfo[]
-  title: string
-}
-
-const getPreset = async (id?: string): Promise<Data | undefined> => {
+const getPreset = async (id?: string): Promise<Preset | undefined> => {
   'use server'
 
   if (!id) {
@@ -98,7 +93,13 @@ export default function MusicLayout(props: RouteSectionProps) {
 
   // AI_NOTE - preset loads async; only known presets may override the saved playlist
   createEffect(() => {
-    const presetMusics = getPresetEnforceMusics(searchParams.preset, preset())
+    const presetId = searchParams.preset
+
+    if (!presetId || preset.state !== 'ready') {
+      return
+    }
+
+    const presetMusics = getPresetEnforceMusics(presetId, preset())
 
     if (presetMusics !== undefined) {
       setMusics(presetMusics)

@@ -5,7 +5,7 @@ import {SAuroraText} from 'src/components/text'
 import {useAuth} from 'src/store/auth'
 import {clientOnly} from '@solidjs/start'
 import {A, RouteDefinition, useLocation, useNavigate} from '@solidjs/router'
-import {onMount, Show} from 'solid-js'
+import {onMount, Show, createSignal} from 'solid-js'
 import {queryToString} from 'src/utils/query-params'
 import {cva} from 'class-variance-authority'
 import {useCountdown} from 'src/use/countdown'
@@ -59,6 +59,8 @@ const isEmailOtpType = (value: string): value is EmailOtpType => {
 
 export default function VerifyEmailPage() {
   const {user, verifyOtp} = useAuth()
+  const [verifyError, setVerifyError] = createSignal<string | null>(null)
+  const [isVerifying, setIsVerifying] = createSignal(false)
 
   const location = useLocation()
   const {token_hash: tokenHashParameter, type: typeParameter} = location.query
@@ -84,7 +86,16 @@ export default function VerifyEmailPage() {
       return
     }
 
-    await verifyOtp({tokenHash: hash, type})
+    setIsVerifying(true)
+
+    try {
+      await verifyOtp({tokenHash: hash, type})
+    } catch (error_) {
+      setVerifyError(error_ instanceof Error ? error_.message : '이메일 인증에 실패했습니다.')
+      return
+    } finally {
+      setIsVerifying(false)
+    }
 
     if (type === 'recovery') {
       navigate(CHANGE_PASSWORD_PATH, {replace: true})
@@ -113,25 +124,40 @@ export default function VerifyEmailPage() {
         <ClientOnlyLottie src={tada} play="autoplay" loop />
       </div>
       <div class="flex flex-col items-center justify-center absolute top-0 bottom-0 left-0 right-0">
-        <h1 class={titleStyle({loading: false})}>Verified your email</h1>
         <Show
-          when={user()}
+          when={!verifyError()}
           fallback={
-            <span class="i-tabler-loader-2 animate-spin text-2xl text-gray-400 block w-2rem h-2rem mt-1rem" />
+            <>
+              <h1 class={titleStyle({loading: false})}>이메일 인증에 실패했습니다</h1>
+              <p class=":uno: mt-4 text-center text-3.5 text-#d13b3b">{verifyError()}</p>
+              <A href="/auth/sign-in" class=":uno: mt-4 text-#4b5bdc no-underline hover:underline">
+                로그인 페이지로 돌아가기
+              </A>
+            </>
           }
         >
-          <SAuroraText class={emailStyle}>{user()?.email}</SAuroraText>
-        </Show>
-        <Show when={user()}>
-          <span class="text-sm text-gray-500">
-            <Show when={tokenHash()} fallback={'Go to the '}>
-              Redirecting to the{' '}
-            </Show>
-            <A href="/" class="text-gray-700 underline font-bold text-lg">
-              Root page
-            </A>{' '}
-            <Show when={tokenHash()}>in {countSeconds()} seconds</Show>
-          </span>
+          <h1 class={titleStyle({loading: isVerifying()})}>
+            {isVerifying() ? '이메일 인증 중…' : 'Verified your email'}
+          </h1>
+          <Show
+            when={user()}
+            fallback={
+              <span class="i-tabler-loader-2 animate-spin text-2xl text-gray-400 block w-2rem h-2rem mt-1rem" />
+            }
+          >
+            <SAuroraText class={emailStyle}>{user()?.email}</SAuroraText>
+          </Show>
+          <Show when={user()}>
+            <span class="text-sm text-gray-500">
+              <Show when={tokenHash()} fallback={'Go to the '}>
+                Redirecting to the{' '}
+              </Show>
+              <A href="/" class="text-gray-700 underline font-bold text-lg">
+                Root page
+              </A>{' '}
+              <Show when={tokenHash()}>in {countSeconds()} seconds</Show>
+            </span>
+          </Show>
         </Show>
       </div>
     </div>
