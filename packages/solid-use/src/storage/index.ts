@@ -70,6 +70,8 @@ export const useStorage: UseStorage = (
     } else if (mounted && activeAccessor()) {
       // once
       setValue(() => getAnyStorageItem(kind, keyAccessor(), initValue))
+    } else if (mounted) {
+      setValue(initValue)
     }
 
     isMounted = true
