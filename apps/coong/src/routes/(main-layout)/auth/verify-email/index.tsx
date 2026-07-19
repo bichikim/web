@@ -5,7 +5,7 @@ import {SAuroraText} from 'src/components/text'
 import {useAuth} from 'src/store/auth'
 import {clientOnly} from '@solidjs/start'
 import {A, RouteDefinition, useLocation, useNavigate} from '@solidjs/router'
-import {onMount, Show} from 'solid-js'
+import {createSignal, onMount, Show} from 'solid-js'
 import {queryToString} from 'src/utils/query-params'
 import {cva} from 'class-variance-authority'
 import {useCountdown} from 'src/use/countdown'
@@ -57,8 +57,12 @@ const isEmailOtpType = (value: string): value is EmailOtpType => {
   return (ALLOWED_OTP_TYPES as ReadonlySet<string>).has(value)
 }
 
+type VerificationStatus = 'idle' | 'verifying' | 'success' | 'error'
+
 export default function VerifyEmailPage() {
   const {user, verifyOtp} = useAuth()
+  const [verificationStatus, setVerificationStatus] = createSignal<VerificationStatus>('idle')
+  const [verificationError, setVerificationError] = createSignal<string | null>(null)
 
   const location = useLocation()
   const {token_hash: tokenHashParameter, type: typeParameter} = location.query
@@ -81,17 +85,27 @@ export default function VerifyEmailPage() {
     const type = otpType()
 
     if (!hash || !type) {
+      setVerificationStatus('error')
+      setVerificationError('유효하지 않은 인증 링크입니다.')
       return
     }
 
-    await verifyOtp({tokenHash: hash, type})
+    setVerificationStatus('verifying')
 
-    if (type === 'recovery') {
-      navigate(CHANGE_PASSWORD_PATH, {replace: true})
-      return
+    try {
+      await verifyOtp({tokenHash: hash, type})
+      setVerificationStatus('success')
+
+      if (type === 'recovery') {
+        navigate(CHANGE_PASSWORD_PATH, {replace: true})
+        return
+      }
+
+      afterNavigate.start()
+    } catch (error) {
+      setVerificationStatus('error')
+      setVerificationError(error instanceof Error ? error.message : '이메일 인증에 실패했습니다.')
     }
-
-    afterNavigate.start()
   })
 
   const countSeconds = () => {
@@ -113,25 +127,43 @@ export default function VerifyEmailPage() {
         <ClientOnlyLottie src={tada} play="autoplay" loop />
       </div>
       <div class="flex flex-col items-center justify-center absolute top-0 bottom-0 left-0 right-0">
-        <h1 class={titleStyle({loading: false})}>Verified your email</h1>
         <Show
-          when={user()}
+          when={verificationStatus() !== 'error'}
           fallback={
-            <span class="i-tabler-loader-2 animate-spin text-2xl text-gray-400 block w-2rem h-2rem mt-1rem" />
+            <>
+              <h1 class={titleStyle({loading: false})}>인증에 실패했습니다</h1>
+              <p class="text-sm text-#d13b3b mt-1rem text-center px-1rem">{verificationError()}</p>
+              <A
+                href="/auth/reset-password"
+                class="text-gray-700 underline font-bold text-lg mt-1rem"
+              >
+                패스워드 재설정 다시 시도
+              </A>
+            </>
           }
         >
-          <SAuroraText class={emailStyle}>{user()?.email}</SAuroraText>
-        </Show>
-        <Show when={user()}>
-          <span class="text-sm text-gray-500">
-            <Show when={tokenHash()} fallback={'Go to the '}>
-              Redirecting to the{' '}
-            </Show>
-            <A href="/" class="text-gray-700 underline font-bold text-lg">
-              Root page
-            </A>{' '}
-            <Show when={tokenHash()}>in {countSeconds()} seconds</Show>
-          </span>
+          <h1 class={titleStyle({loading: verificationStatus() === 'verifying'})}>
+            Verified your email
+          </h1>
+          <Show
+            when={verificationStatus() === 'success' && user()}
+            fallback={
+              <span class="i-tabler-loader-2 animate-spin text-2xl text-gray-400 block w-2rem h-2rem mt-1rem" />
+            }
+          >
+            <SAuroraText class={emailStyle}>{user()?.email}</SAuroraText>
+          </Show>
+          <Show when={verificationStatus() === 'success' && user()}>
+            <span class="text-sm text-gray-500">
+              <Show when={tokenHash()} fallback={'Go to the '}>
+                Redirecting to the{' '}
+              </Show>
+              <A href="/" class="text-gray-700 underline font-bold text-lg">
+                Root page
+              </A>{' '}
+              <Show when={tokenHash()}>in {countSeconds()} seconds</Show>
+            </span>
+          </Show>
         </Show>
       </div>
     </div>
