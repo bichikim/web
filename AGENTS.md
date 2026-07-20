@@ -33,6 +33,12 @@ Chat context is volatile. When **why** isn't obvious from code, leave a minimal 
 - Content: decision + reason (constraints, rejected approach, non-obvious tradeoff); not a changelog
 - Scope: cross-session gaps only; skip self-explanatory code
 
+## GitHub CLI authentication
+
+- `gh` credentials are stored in the macOS Keychain and may appear invalid in the default sandbox.
+- If `gh auth status` fails in the sandbox, retry the command with escalated permissions before asking the user to authenticate again.
+- Ask the user to run `gh auth login` only when authentication also fails with escalated permissions.
+
 ## Cursor Cloud
 
 pnpm + Turborepo (`@winter-love/web`) · Node ≥22 · pnpm 10.x (`package.json`). `pnpm install` runs workspace `prepare` (package builds; Coong Supabase type gen).
