@@ -1,0 +1,159 @@
+import {spawn} from 'node:child_process'
+import {mkdtemp, rm, writeFile} from 'node:fs/promises'
+import {tmpdir} from 'node:os'
+import {join} from 'node:path'
+import {afterEach, describe, expect, it} from 'vitest'
+
+const SCRIPT_PATH = join(process.cwd(), '.agents/skills/skill-diet/scripts/validate-skill.js')
+const TEMP_PREFIX = 'skill-validator-'
+const SUCCESS_EXIT_CODE = 0
+const FAILURE_EXIT_CODE = 1
+
+const tempDirectories: string[] = []
+
+interface CommandResult {
+  readonly code: number | null
+  readonly stderr: string
+  readonly stdout: string
+}
+
+describe('validate-skill', () => {
+  afterEach(async () => {
+    await Promise.all(
+      tempDirectories.splice(0).map((directory) => rm(directory, {force: true, recursive: true})),
+    )
+  })
+
+  it('should accept a valid skill frontmatter', async () => {
+    const skillDirectory = await createSkill(`---
+name: valid-skill
+description: Keep this skill small and useful.
+---
+
+# Valid Skill
+`)
+
+    const result = await runValidator(skillDirectory)
+
+    expect(result).toEqual({
+      code: SUCCESS_EXIT_CODE,
+      stderr: '',
+      stdout: 'Skill is valid!\n',
+    })
+  })
+
+  it('should print usage when the skill directory is missing', async () => {
+    const result = await runValidator()
+
+    expect(result).toEqual({
+      code: FAILURE_EXIT_CODE,
+      stderr: 'Usage: node scripts/validate-skill.js <skill_directory>\n',
+      stdout: '',
+    })
+  })
+
+  it('should reject a missing SKILL.md file', async () => {
+    const skillDirectory = await createTempDirectory()
+
+    const result = await runValidator(skillDirectory)
+
+    expect(result).toMatchObject({
+      code: FAILURE_EXIT_CODE,
+      stderr: 'SKILL.md not found\n',
+    })
+  })
+
+  it('should reject unknown frontmatter keys', async () => {
+    const skillDirectory = await createSkill(`---
+name: valid-skill
+description: Keep this skill small and useful.
+unknown: value
+---
+`)
+
+    const result = await runValidator(skillDirectory)
+
+    expect(result).toMatchObject({
+      code: FAILURE_EXIT_CODE,
+    })
+    expect(result.stderr).toContain('Unexpected key(s) in SKILL.md frontmatter: unknown.')
+  })
+
+  it('should reject invalid skill names', async () => {
+    const skillDirectory = await createSkill(`---
+name: Invalid Skill
+description: Keep this skill small and useful.
+---
+`)
+
+    const result = await runValidator(skillDirectory)
+
+    expect(result).toMatchObject({
+      code: FAILURE_EXIT_CODE,
+      stderr:
+        "Name 'Invalid Skill' should be hyphen-case (lowercase letters, digits, and hyphens only)\n",
+    })
+  })
+
+  it('should reject descriptions with angle brackets', async () => {
+    const skillDirectory = await createSkill(`---
+name: valid-skill
+description: Use <placeholder> text.
+---
+`)
+
+    const result = await runValidator(skillDirectory)
+
+    expect(result).toMatchObject({
+      code: FAILURE_EXIT_CODE,
+      stderr: 'Description cannot contain angle brackets (< or >)\n',
+    })
+  })
+})
+
+async function createSkill(content: string) {
+  const directory = await createTempDirectory()
+
+  await writeFile(join(directory, 'SKILL.md'), content)
+
+  return directory
+}
+
+async function createTempDirectory() {
+  const directory = await mkdtemp(join(tmpdir(), TEMP_PREFIX))
+
+  tempDirectories.push(directory)
+
+  return directory
+}
+
+async function runValidator(skillDirectory?: string): Promise<CommandResult> {
+  const args = skillDirectory ? [SCRIPT_PATH, skillDirectory] : [SCRIPT_PATH]
+
+  return new Promise((resolve) => {
+    const child = spawn(process.execPath, args, {
+      stdio: ['ignore', 'pipe', 'pipe'],
+    })
+    let stdout = ''
+    let stderr = ''
+
+    child.stdout.setEncoding('utf8')
+    child.stderr.setEncoding('utf8')
+
+    child.stdout.on('data', (chunk: string) => {
+      stdout += chunk
+    })
+
+    child.stderr.on('data', (chunk: string) => {
+      stderr += chunk
+    })
+
+    child.on('close', (code) => {
+      resolve({
+        code,
+        stderr,
+        stdout,
+      })
+    })
+  })
+}
