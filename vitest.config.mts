@@ -31,7 +31,11 @@ export default defineConfig({
   },
   test: {
     environment: 'jsdom',
-    include: ['packages/*/src/**/*.spec.?(c|m)[jt]s?(x)', 'apps/*/src/**/*.spec.?(c|m)[jt]s?(x)'],
+    include: [
+      'packages/*/src/**/*.spec.?(c|m)[jt]s?(x)',
+      'apps/*/src/**/*.spec.?(c|m)[jt]s?(x)',
+      '.agents/skills/*/scripts/**/*.spec.ts',
+    ],
     setupFiles: ['./vitest.setup.ts'],
   },
 })
