@@ -11,6 +11,11 @@
 
 **Enterprise-grade** code: maintainability, scalability, separation of concerns, robust error handling, consistent patterns.
 
+## Worktree initialization
+
+- Start new worktrees from the latest `origin/dev` commit.
+- Do not automatically merge, rebase, or reset an existing worktree with in-progress changes.
+
 ## Required after changes
 
 1. Fix oxlint errors
