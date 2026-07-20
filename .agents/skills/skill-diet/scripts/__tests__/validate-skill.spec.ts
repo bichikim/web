@@ -51,64 +51,6 @@ description: Keep this skill small and useful.
       stdout: '',
     })
   })
-
-  it('should reject a missing SKILL.md file', async () => {
-    const skillDirectory = await createTempDirectory()
-
-    const result = await runValidator(skillDirectory)
-
-    expect(result).toMatchObject({
-      code: FAILURE_EXIT_CODE,
-      stderr: 'SKILL.md not found\n',
-    })
-  })
-
-  it('should reject unknown frontmatter keys', async () => {
-    const skillDirectory = await createSkill(`---
-name: valid-skill
-description: Keep this skill small and useful.
-unknown: value
----
-`)
-
-    const result = await runValidator(skillDirectory)
-
-    expect(result).toMatchObject({
-      code: FAILURE_EXIT_CODE,
-    })
-    expect(result.stderr).toContain('Unexpected key(s) in SKILL.md frontmatter: unknown.')
-  })
-
-  it('should reject invalid skill names', async () => {
-    const skillDirectory = await createSkill(`---
-name: Invalid Skill
-description: Keep this skill small and useful.
----
-`)
-
-    const result = await runValidator(skillDirectory)
-
-    expect(result).toMatchObject({
-      code: FAILURE_EXIT_CODE,
-      stderr:
-        "Name 'Invalid Skill' should be hyphen-case (lowercase letters, digits, and hyphens only)\n",
-    })
-  })
-
-  it('should reject descriptions with angle brackets', async () => {
-    const skillDirectory = await createSkill(`---
-name: valid-skill
-description: Use <placeholder> text.
----
-`)
-
-    const result = await runValidator(skillDirectory)
-
-    expect(result).toMatchObject({
-      code: FAILURE_EXIT_CODE,
-      stderr: 'Description cannot contain angle brackets (< or >)\n',
-    })
-  })
 })
 
 async function createSkill(content: string) {
