@@ -133,12 +133,21 @@ export default function VerifyEmailPage() {
             <>
               <h1 class={titleStyle({loading: false})}>인증에 실패했습니다</h1>
               <p class="text-sm text-#d13b3b mt-1rem text-center px-1rem">{verificationError()}</p>
-              <A
-                href="/auth/reset-password"
-                class="text-gray-700 underline font-bold text-lg mt-1rem"
+              <Show
+                when={otpType() === 'recovery'}
+                fallback={
+                  <A href="/auth/sign-in" class="text-gray-700 underline font-bold text-lg mt-1rem">
+                    로그인 페이지로 돌아가기
+                  </A>
+                }
               >
-                패스워드 재설정 다시 시도
-              </A>
+                <A
+                  href="/auth/reset-password"
+                  class="text-gray-700 underline font-bold text-lg mt-1rem"
+                >
+                  패스워드 재설정 다시 시도
+                </A>
+              </Show>
             </>
           }
         >

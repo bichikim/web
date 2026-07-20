@@ -2,13 +2,13 @@
  * @vitest-environment jsdom
  */
 import {beforeEach, describe, expect, it, vi} from 'vitest'
-import {render, waitFor} from '@solidjs/testing-library'
+import {render, screen, waitFor} from '@solidjs/testing-library'
 import VerifyEmailPage from '../index'
 import {CHANGE_PASSWORD_PATH} from 'src/requests/auth/reset-password/redirect-url'
 
 const navigate = vi.fn()
 const verifyOtp = vi.fn()
-const locationQuery = vi.fn(() => ({
+const locationQuery = vi.fn((): {token_hash?: string; type?: string} => ({
   token_hash: 'recovery-hash',
   type: 'recovery',
 }))
@@ -80,6 +80,22 @@ describe('VerifyEmailPage', () => {
       expect(getByText('패스워드 재설정 다시 시도')).toBeInTheDocument()
     })
 
+    expect(navigate).not.toHaveBeenCalled()
+  })
+
+  it('should return non-recovery verification failures to sign-in', async () => {
+    locationQuery.mockReturnValue({
+      token_hash: 'signup-hash',
+      type: 'signup',
+    })
+    verifyOtp.mockRejectedValueOnce(new Error('Token has expired or is invalid'))
+
+    render(() => <VerifyEmailPage />)
+
+    const signInLink = await screen.findByRole('link', {name: '로그인 페이지로 돌아가기'})
+
+    expect(signInLink).toHaveAttribute('href', '/auth/sign-in')
+    expect(screen.queryByText('패스워드 재설정 다시 시도')).not.toBeInTheDocument()
     expect(navigate).not.toHaveBeenCalled()
   })
 
