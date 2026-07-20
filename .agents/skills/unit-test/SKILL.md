@@ -13,7 +13,7 @@ Open and apply the reference files for the relevant section before working.
 2. Use Vitest, and use `@solidjs/testing-library` for Solid.js DOM tests.
 3. Place tests in the target directory's `__tests__` folder and name files `{targetFileName}.spec.ts`.
 4. Start test names with `should`, and split multi-function targets with `describe` blocks.
-5. Do not modify the code under test; if a production change is required, explain why instead of changing it.
+5. Do not modify the code under test by default. If the target is hard to unit test because logic is embedded in CLI, UI, I/O, or lifecycle code, ask whether to first extract the behavior into pure, importable logic functions, then test those functions and keep only smoke coverage for the wrapper.
 6. For DOM tests, add `/** @vitest-environment jsdom */` at the top of the file.
 7. Aim for 100% coverage; when impossible, add ignore comments and document the reason.
 8. Verify tests and coverage after changes, then fix lint issues.

@@ -11,6 +11,11 @@
 
 **Enterprise-grade** code: maintainability, scalability, separation of concerns, robust error handling, consistent patterns.
 
+## Worktree initialization
+
+- Start new worktrees from the latest `origin/dev` commit.
+- Do not automatically merge, rebase, or reset an existing worktree with in-progress changes.
+
 ## Required after changes
 
 1. Fix oxlint errors
@@ -27,6 +32,12 @@ Chat context is volatile. When **why** isn't obvious from code, leave a minimal 
 - Format: `// AI_NOTE - …` or `/* AI_NOTE - … */`
 - Content: decision + reason (constraints, rejected approach, non-obvious tradeoff); not a changelog
 - Scope: cross-session gaps only; skip self-explanatory code
+
+## GitHub CLI authentication
+
+- `gh` credentials are stored in the macOS Keychain and may appear invalid in the default sandbox.
+- If `gh auth status` fails in the sandbox, retry the command with escalated permissions before asking the user to authenticate again.
+- Ask the user to run `gh auth login` only when authentication also fails with escalated permissions.
 
 ## Cursor Cloud
 
