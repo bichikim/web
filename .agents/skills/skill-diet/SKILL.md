@@ -17,7 +17,7 @@ Repeat until the next deletion would change behavior:
 2. Mark what must survive: trigger wording, safety constraints, project-specific rules, resource routing, output contract, and one boundary example if needed.
 3. Delete everything else: history, rationale, duplicated examples, long reference summaries, generic advice, aspirational wording, and examples that do not change decisions.
 4. Re-read the smaller skill as if seeing it for the first time.
-5. Run the smallest available validation. For standard skills, use `quick_validate.py`; for repo changes, also run required format/lint commands.
+5. Run the smallest validation available in the project. For repo changes, also run required format/lint commands.
 
 ## Delete Instead
 
