@@ -105,6 +105,38 @@ describe('useStorage local', () => {
     dispose()
   })
 
+  it('should skip localStorage read on mount when active is false', () => {
+    const key = 'key'
+    const initValue: string[] = []
+
+    const {dispose, value} = createRoot((dispose) => {
+      const [value] = useStorage('local', key, {active: false, initValue, mounted: true})
+
+      return {dispose, value}
+    })
+
+    expect(getAnyStorageItem).not.toHaveBeenCalled()
+    expect(value()).toBe(initValue)
+    dispose()
+  })
+
+  it('should read localStorage on mount when active is true', () => {
+    const key = 'key'
+    const storeValue = 'store-value'
+
+    vi.mocked(getAnyStorageItem).mockReturnValueOnce(storeValue)
+
+    const {dispose, value} = createRoot((dispose) => {
+      const [value] = useStorage('local', key, {active: true, mounted: true})
+
+      return {dispose, value}
+    })
+
+    expect(getAnyStorageItem).toHaveBeenCalledWith('local', key, null)
+    expect(value()).toBe(storeValue)
+    dispose()
+  })
+
   it('should update and save value to store when setValue is called', () => {
     const key = 'key'
     const storeValue = 'store-value'

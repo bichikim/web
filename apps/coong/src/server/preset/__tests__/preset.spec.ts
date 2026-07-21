@@ -31,4 +31,10 @@ describe('getPresetEnforceMusics', () => {
   it('should return undefined when preset data is missing', () => {
     expect(getPresetEnforceMusics('hidden-teenieping', undefined)).toBeUndefined()
   })
+
+  it('should return undefined when preset data does not match the requested id', () => {
+    const stalePreset = getPresetData('not-a-real-preset')
+
+    expect(getPresetEnforceMusics('hidden-teenieping', stalePreset)).toBeUndefined()
+  })
 })
