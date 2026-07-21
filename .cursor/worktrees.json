@@ -1,6 +1,7 @@
 {
   "setup-worktree": [
-    "cp \"$ROOT_WORKTREE_PATH/apps/coong/.env\" apps/coong/.env",
+    "[ -f \"$ROOT_WORKTREE_PATH/apps/coong/.env\" ] && cp \"$ROOT_WORKTREE_PATH/apps/coong/.env\" apps/coong/.env || true",
+    "[ -d \"$ROOT_WORKTREE_PATH/.turbo\" ] && cp -R \"$ROOT_WORKTREE_PATH/.turbo\" .turbo || true",
     "pnpm install"
   ]
 }
