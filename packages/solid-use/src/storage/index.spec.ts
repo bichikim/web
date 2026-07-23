@@ -4,7 +4,7 @@
 
 import {afterEach, describe, expect, it, vi} from 'vitest'
 import {useStorage} from './'
-import {createRoot} from 'solid-js'
+import {createRoot, createSignal} from 'solid-js'
 import {getAnyStorageItem, setAnyStorageItem} from '@winter-love/utils'
 
 vi.mock('@winter-love/utils', () => ({
@@ -134,6 +134,27 @@ describe('useStorage local', () => {
 
     expect(getAnyStorageItem).toHaveBeenCalledWith('local', key, null)
     expect(value()).toBe(storeValue)
+    dispose()
+  })
+
+  it('should re-hydrate from localStorage when active becomes true after mount', () => {
+    const key = 'key'
+    const storedValue = 'stored-value'
+    const initValue = 'init-value'
+
+    vi.mocked(getAnyStorageItem).mockReturnValueOnce(storedValue)
+
+    const {dispose, value} = createRoot((dispose) => {
+      const [active, setActive] = createSignal(false)
+      const [value] = useStorage('local', key, {active, initValue, mounted: true})
+
+      setActive(true)
+
+      return {dispose, value}
+    })
+
+    expect(getAnyStorageItem).toHaveBeenCalledWith('local', key, initValue)
+    expect(value()).toBe(storedValue)
     dispose()
   })
 
