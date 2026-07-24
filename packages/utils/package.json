@@ -60,8 +60,9 @@
   },
   "scripts": {
     "build": "vite build",
+    "build:dev": "vite build --minify false",
+    "prepare-build": "pnpm run build:dev",
     "typecheck": "tsc --noEmit",
-    "prepare": "vite build",
     "dev": "vite build --watch --minify false"
   },
   "dependencies": {

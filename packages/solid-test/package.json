@@ -22,7 +22,7 @@
   },
   "scripts": {
     "build": "vite build",
-    "prepare": "vite build",
+    "prepare-build": "pnpm run build",
     "lint": "oxlint src",
     "lint:fix": "oxlint src --fix",
     "test": "echo \"Error: no test specified\" && exit 1"

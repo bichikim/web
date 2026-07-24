@@ -29,7 +29,7 @@
     "build": "vite build && tsc -p tsconfig.solid.json",
     "build:dev": "vite build --minify false && tsc -p tsconfig.solid.json",
     "build:solid": "tsc -p tsconfig.solid.json",
-    "prepare": "pnpm run build",
+    "prepare-build": "pnpm run build",
     "typecheck": "tsc --noEmit",
     "dev": "concurrently \"vite build --watch\" \"tsc -p tsconfig.solid.json --watch\"",
     "test": "echo \"Error: no test specified\" && exit 1"

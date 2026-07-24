@@ -23,8 +23,8 @@
   },
   "scripts": {
     "build": "vite build",
-    "prepare": "vite build",
     "build:dev": "vite build --minify false",
+    "prepare-build": "pnpm run build:dev",
     "typecheck": "tsc --noEmit",
     "dev": "vite build --watch"
   },
