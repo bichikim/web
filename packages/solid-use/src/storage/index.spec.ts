@@ -144,15 +144,14 @@ describe('useStorage local', () => {
 
     vi.mocked(getAnyStorageItem).mockReturnValueOnce(storedValue)
 
-    const {dispose, value} = createRoot((dispose) => {
+    const {dispose, setActive, value} = createRoot((dispose) => {
       const [active, setActive] = createSignal(false)
       const [value] = useStorage('local', key, {active, initValue, mounted: true})
 
-      setActive(true)
-
-      return {dispose, value}
+      return {dispose, setActive, value}
     })
 
+    setActive(true)
     expect(getAnyStorageItem).toHaveBeenCalledWith('local', key, initValue)
     expect(value()).toBe(storedValue)
     dispose()
