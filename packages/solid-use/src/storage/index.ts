@@ -64,6 +64,7 @@ export const useStorage: UseStorage = (
   const activeAccessor = resolveAccessor(active)
   let isMounted = false
   let wasActive = false
+  let dirtyWhileInactive = false
 
   onMount(() => {
     if (enforceValue) {
@@ -79,7 +80,7 @@ export const useStorage: UseStorage = (
     isMounted = true
   })
 
-  // AI_NOTE - re-hydrate when active flips true after mount; mount skips read when inactive
+  // AI_NOTE - re-hydrate when active flips true after mount unless edited while inactive
   createEffect(() => {
     const isActive = activeAccessor()
 
@@ -88,7 +89,12 @@ export const useStorage: UseStorage = (
     }
 
     if (isActive && !wasActive && mounted) {
-      _setValue(() => getAnyStorageItem(kind, keyAccessor(), initValue))
+      if (dirtyWhileInactive) {
+        setAnyStorageItem(kind, keyAccessor(), value(), options)
+        dirtyWhileInactive = false
+      } else {
+        _setValue(() => getAnyStorageItem(kind, keyAccessor(), initValue))
+      }
     }
 
     wasActive = isActive
@@ -97,8 +103,13 @@ export const useStorage: UseStorage = (
   const setValue: any = (_value) => {
     const result = _setValue(_value)
 
+    if (isMounted && !activeAccessor()) {
+      dirtyWhileInactive = true
+    }
+
     if (isMounted && activeAccessor()) {
       setAnyStorageItem(kind, keyAccessor(), value(), options)
+      dirtyWhileInactive = false
     }
 
     return result

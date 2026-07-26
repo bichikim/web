@@ -157,6 +157,66 @@ describe('useStorage local', () => {
     dispose()
   })
 
+  it('should persist in-memory value when active becomes true after inactive edits', () => {
+    const key = 'key'
+    const storedValue = 'stored-value'
+    const editedValue = 'edited-value'
+    const initValue = 'init-value'
+
+    vi.mocked(getAnyStorageItem).mockReturnValue(storedValue)
+
+    const {dispose, setActive, setValue, value} = createRoot((dispose) => {
+      const [active, setActive] = createSignal(false)
+      const [value, setValue] = useStorage('local', key, {active, initValue, mounted: true})
+
+      return {dispose, setActive, setValue, value}
+    })
+
+    setValue(editedValue)
+    expect(getAnyStorageItem).not.toHaveBeenCalled()
+    expect(value()).toBe(editedValue)
+
+    setActive(true)
+    expect(getAnyStorageItem).not.toHaveBeenCalled()
+    expect(setAnyStorageItem).toHaveBeenCalledWith('local', key, editedValue, {
+      active: expect.any(Function),
+      initValue,
+      mounted: true,
+    })
+    expect(value()).toBe(editedValue)
+    dispose()
+  })
+
+  it('should not resurrect stale storage after clearing value while inactive', () => {
+    const key = 'key'
+    const storedValue = ['a', 'b', 'c']
+    const initValue: string[] = []
+
+    vi.mocked(getAnyStorageItem).mockReturnValueOnce(storedValue).mockReturnValueOnce(storedValue)
+
+    const {dispose, setActive, setValue, value} = createRoot((dispose) => {
+      const [active, setActive] = createSignal(true)
+      const [value, setValue] = useStorage('local', key, {active, initValue, mounted: true})
+
+      return {dispose, setActive, setValue, value}
+    })
+
+    expect(value()).toEqual(storedValue)
+
+    setActive(false)
+    setValue([])
+    expect(value()).toEqual([])
+
+    setActive(true)
+    expect(value()).toEqual([])
+    expect(setAnyStorageItem).toHaveBeenCalledWith('local', key, [], {
+      active: expect.any(Function),
+      initValue,
+      mounted: true,
+    })
+    dispose()
+  })
+
   it('should update and save value to store when setValue is called', () => {
     const key = 'key'
     const storeValue = 'store-value'
