@@ -579,6 +579,18 @@ importers:
         specifier: 'catalog:'
         version: 5.9.3
 
+  apps/sidebuy-api:
+    devDependencies:
+      '@types/node':
+        specifier: 'catalog:'
+        version: 22.19.17
+      tsx:
+        specifier: ^4.21.0
+        version: 4.21.0
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+
   packages/oxlint-plugins: {}
 
   packages/player:
