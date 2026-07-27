@@ -2,6 +2,6 @@ import {defineBuildConfig} from 'unbuild'
 
 export default defineBuildConfig({
   clean: true,
-  declaration: 'node16',
+  declaration: 'compatible',
   entries: ['src/index'],
 })

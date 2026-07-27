@@ -12,7 +12,7 @@
   "scripts": {
     "storybook:build": "storybook build",
     "typecheck": "turbo typecheck",
-    "chromatic": "nve 20.18.1 pnpm dlx chromatic --project-token=chpt_b4b4c6198bbdeda",
+    "chromatic": "pnpm dlx chromatic --project-token=chpt_b4b4c6198bbdeda",
     "clean": "lerna clean --yes && pnpm dlx rimraf node_modules",
     "storybook:dev": "storybook dev -p 6006",
     "dev:storybook:https": "storybook dev --https --ssl-cert .cert/localhost.crt --ssl-key .cert/localhost.key -p 5555",
@@ -41,7 +41,7 @@
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/user-event": "^14.6.1",
     "@turbo/gen": "^2.9.8",
-    "@types/node": "20.11.18",
+    "@types/node": "catalog:",
     "@unocss/vite": "^66.6.8",
     "@vitest/coverage-v8": "4.0.8",
     "@winter-love/oxlint-plugins": "workspace:*",
