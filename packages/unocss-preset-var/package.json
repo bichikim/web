@@ -14,7 +14,7 @@
   },
   "scripts": {
     "build": "unbuild",
-    "prepare": "unbuild"
+    "prepare-build": "pnpm run build"
   },
   "dependencies": {
     "@unocss/core": "catalog:",

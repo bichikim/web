@@ -13,9 +13,31 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "inputs": ["src/**/*.tsx", "src/**/*.ts", "src/**/*.css"],
-      "outputs": ["dist/**"],
+      "inputs": [
+        "src/**/*.tsx",
+        "src/**/*.ts",
+        "src/**/*.css",
+        "package.json",
+        "vite.config.*",
+        "tsconfig.*"
+      ],
+      "outputs": ["dist/**", "es-tone/**"],
       "passThroughEnv": []
+    },
+    "prepare-build": {
+      "dependsOn": ["^prepare-build"],
+      "inputs": [
+        "src/**/*.tsx",
+        "src/**/*.ts",
+        "src/**/*.css",
+        "package.json",
+        "vite.config.*",
+        "tsconfig.*",
+        ".env"
+      ],
+      "outputs": ["dist/**", "es-tone/**", ".supabase/**"],
+      "env": ["SUPABASE_PROJECT_ID"],
+      "passThroughEnv": ["SUPABASE_ACCESS_TOKEN"]
     },
     "dev": {
       "cache": false,
@@ -23,11 +45,11 @@
     },
     "typecheck": {
       "dependsOn": ["^typecheck"],
-      "inputs": ["src/**/*.tsx", "src/**/*.ts"]
+      "inputs": ["src/**/*.tsx", "src/**/*.ts", "package.json", "tsconfig.*"]
     },
     "lint": {
       "dependsOn": ["^lint"],
-      "inputs": ["src/**/*.tsx", "src/**/*.ts", "src/**/*.css"]
+      "inputs": ["src/**/*.tsx", "src/**/*.ts", "src/**/*.css", "package.json", "tsconfig.*"]
     }
   }
 }

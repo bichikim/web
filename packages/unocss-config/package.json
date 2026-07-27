@@ -15,7 +15,7 @@
   },
   "scripts": {
     "build": "vite build",
-    "prepare": "vite build"
+    "prepare-build": "pnpm run build"
   },
   "dependencies": {
     "@unocss/core": "catalog:",

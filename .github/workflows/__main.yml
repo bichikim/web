@@ -87,7 +87,7 @@ jobs:
           key: ${{ runner.os }}-libraies-${{ hashFiles('packages/**/*.ts') }}
 
       - name: Install Dependencies
-        run: pnpm install --ignore-scripts
+        run: pnpm install
 
       - name: Build
         run: pnpm run build:@coong/client

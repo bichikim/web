@@ -39,9 +39,9 @@
   },
   "scripts": {
     "build": "vite build",
+    "prepare-build": "pnpm run build",
     "typecheck": "tsc --noEmit",
     "dev": "vite build --watch --minify false",
-    "prepare": "vite build",
     "preview": "vite build -c vite.preview.config.mts",
     "publish": "npm publish"
   },

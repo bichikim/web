@@ -14,7 +14,7 @@
     "dev": "vinxi dev --host",
     "lint": "oxlint src",
     "lint:fix": "oxlint src --fix",
-    "prepare": "pnpm run supabase:gen-types",
+    "prepare-build": "pnpm run supabase:gen-types",
     "prepare:e2e-local-supabase": "jiti scripts/prepare-local-e2e.ts",
     "preview": "node -r dotenv/config ./.output/server/index.mjs",
     "preview:spa": "jiti scripts/preview-proxy.ts",
