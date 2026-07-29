@@ -137,6 +137,32 @@ describe('useStorage local', () => {
     dispose()
   })
 
+  it('should persist in-memory value when active becomes true after inactive edits', () => {
+    const key = 'key'
+    const editedValue = 'edited-while-inactive'
+    const initValue = 'init-value'
+
+    const {dispose, setActive, setValue, value} = createRoot((dispose) => {
+      const [active, setActive] = createSignal(false)
+      const [value, setValue] = useStorage('local', key, {active, initValue, mounted: true})
+
+      return {dispose, setActive, setValue, value}
+    })
+
+    setValue(editedValue)
+    setActive(true)
+
+    expect(getAnyStorageItem).not.toHaveBeenCalled()
+    expect(setAnyStorageItem).toHaveBeenCalledWith(
+      'local',
+      key,
+      editedValue,
+      expect.objectContaining({initValue, mounted: true}),
+    )
+    expect(value()).toBe(editedValue)
+    dispose()
+  })
+
   it('should re-hydrate from localStorage when active becomes true after mount', () => {
     const key = 'key'
     const storedValue = 'stored-value'
