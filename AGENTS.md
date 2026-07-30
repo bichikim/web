@@ -11,6 +11,13 @@
 
 **Enterprise-grade** code: maintainability, scalability, separation of concerns, robust error handling, consistent patterns.
 
+## Package exports
+
+- Prefer broad subpath exports: consumers may import any distributable module.
+- Exposing the internal module structure is not a design flaw in this repository.
+- Do not add export allowlists, proxy entrypoints, or compatibility layers solely to hide or restrict module paths. Missing exports create more consumer workarounds, coordination, and migration cost than the theoretical encapsulation benefit.
+- Restrict an export only for a concrete security, runtime, or packaging constraint.
+
 ## Worktree initialization
 
 - Start new worktrees from the latest `origin/dev` commit.
