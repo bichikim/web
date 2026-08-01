@@ -48,7 +48,7 @@ Chat context is volatile. When **why** isn't obvious from code, leave a minimal 
 
 ## Cursor Cloud
 
-pnpm + Turborepo (`@winter-love/web`) · Node ≥22 · pnpm 11.x (`package.json`). `pnpm install` runs root `postinstall` → `turbo prepare-build --env-mode=loose` (package builds; Coong Supabase type gen; Turbo-cached). `--env-mode=loose` is required so pnpm 11 verify-deps does not re-enter `pnpm install` → postinstall.
+pnpm + Turborepo (`@winter-love/web`) · Node ≥22 · pnpm 11.x (`package.json`). `pnpm install` runs root `postinstall` → `turbo prepare-build --env-mode=loose` (package builds; Coong Supabase type gen; Turbo-cached). `optimisticRepeatInstall: false` in `pnpm-workspace.yaml` so postinstall still runs when Already up to date. `--env-mode=loose` avoids pnpm 11 verify-deps re-entering `pnpm install` → postinstall.
 
 - **Coong** — `apps/coong` (SolidStart SSR). `pnpm dev` (:3000). Copy `apps/coong/.env.e2e` → `.env` for dev without Supabase (see `.env.example`).
 - **Storybook** — root. `pnpm storybook:dev` (:6006).
