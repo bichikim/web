@@ -21,7 +21,7 @@
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
     "test": "vitest run --reporter=dot",
-    "postinstall": "turbo prepare-build --concurrency=3",
+    "postinstall": "turbo prepare-build --concurrency=1",
     "test:storybook": "test-storybook",
     "test:storybook:watch": "test-storybook --watch",
     "test:vitest": "vitest run --reporter=dot",
