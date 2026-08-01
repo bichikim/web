@@ -61,7 +61,7 @@
   "scripts": {
     "build": "vite build",
     "build:dev": "vite build --minify false",
-    "prepare-build": "pnpm run build:dev",
+    "prepare-build": "pnpm run build",
     "typecheck": "tsc --noEmit",
     "dev": "vite build --watch --minify false"
   },
