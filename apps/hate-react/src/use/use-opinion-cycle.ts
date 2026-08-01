@@ -9,7 +9,7 @@ const DEFAULT_MESSAGE =
  * Get next index in circular fashion
  */
 const nextIndex = (current: number, length: number): number =>
-  length <= 0 ? 0 : (current + 1) % length
+  (length <= 0 ? 0 : (current + 1) % length)
 
 /**
  * Get message at index, or default if empty
@@ -17,7 +17,7 @@ const nextIndex = (current: number, length: number): number =>
 const getMessageAt =
   (messages: string[], fallback: string) =>
   (index: number): string =>
-    messages.length > 0 ? (messages[index] ?? fallback) : fallback
+    (messages.length > 0 ? (messages[index] ?? fallback) : fallback)
 
 /**
  * Opinion cycle state and handlers
