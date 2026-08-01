@@ -21,7 +21,7 @@
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
     "test": "vitest run --reporter=dot",
-    "postinstall": "turbo prepare-build --env-mode=loose",
+    "prepare": "turbo prepare-build --env-mode=loose",
     "test:storybook": "test-storybook",
     "test:storybook:watch": "test-storybook --watch",
     "test:vitest": "vitest run --reporter=dot",
