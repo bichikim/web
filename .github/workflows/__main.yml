@@ -5,7 +5,7 @@ on:
       - freeze
 env:
   PNPM_VERSION: 7.1.0
-  NODE_VERSION: 16
+  NODE_VERSION: 22
 jobs:
   # Test Job
   test:
@@ -16,7 +16,7 @@ jobs:
         uses: actions/checkout@master
 
       - name: Setup Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v6
         with:
           node-version: ${{ env.NODE_VERSION }}
 
@@ -61,7 +61,7 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v6
         with:
           node-version: ${{ env.NODE_VERSION }}
 
@@ -120,7 +120,7 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v6
         with:
           node-version: ${{ env.NODE_VERSION }}
 

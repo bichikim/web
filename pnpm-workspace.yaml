@@ -1,6 +1,8 @@
 packages:
   - packages/*
   - apps/*
+# AI_NOTE - default optimisticRepeatInstall skips root postinstall when Already up to date; we always need prepare-build.
+optimisticRepeatInstall: false
 autoInstallPeers: true
 publicHoistPattern:
   - typescript
@@ -35,6 +37,7 @@ catalog:
   execa: ^9.6.1
   js-cookie: ^3.0.5
   solid-js: ^1.9.12
+  tsx: ^4.21.0
   typescript: ^5.9.3
   ufo: ^1.6.4
   unocss: ^66.6.8

@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "build": "rimraf ./dist && ttsc",
-    "dev": "ts-node-dev --clear -r tsconfig-paths/register src/run.ts"
+    "dev": "tsx watch src/run.ts"
   },
   "dependencies": {
     "@winter-love/utils": "workspace:*",
@@ -24,9 +24,7 @@
     "@types/express": "^4.17.25",
     "@types/node": "catalog:",
     "cross-env": "^7.0.3",
-    "ts-node": "^10.9.2",
-    "ts-node-dev": "^2.0.0",
-    "tsconfig-paths": "^4.2.0",
+    "tsx": "catalog:",
     "typescript": "catalog:"
   }
 }

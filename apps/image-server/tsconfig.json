@@ -18,12 +18,6 @@
     "lib": ["esnext", "esnext.asynciterable", "scripthost"],
     "plugins": [{"transform": "@zerollup/ts-transform-paths"}]
   },
-  "ts-node": {
-    "compilerOptions": {
-      "target": "ES2015",
-      "module": "CommonJS"
-    }
-  },
   "include": [
     "src/**/*.ts",
     "src/**/*.d.ts",

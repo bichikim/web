@@ -1,5 +1,5 @@
-import {createEffect, createSignal, onCleanup, Show, untrack} from 'solid-js'
-import type {AnimationItem, LottiePlayer} from 'lottie-web'
+import {createEffect, createResource, createSignal, onCleanup, Show, untrack} from 'solid-js'
+import type {AnimationItem} from 'lottie-web'
 import type {LottieSharedProps} from './types'
 
 const getLottie = async () => {
@@ -12,15 +12,9 @@ export type LottieJsonProps = LottieSharedProps
 
 export const LottieJson = (props: LottieJsonProps) => {
   const [element, setElement] = createSignal<HTMLDivElement | null>(null)
-  const [lottieModule, setLottieModule] = createSignal<LottiePlayer | null>(null)
+  const [lottieModule] = createResource(getLottie)
   const [animation, setAnimation] = createSignal<AnimationItem | null>(null)
   const [lottieLoading, setLottieLoading] = createSignal(false)
-
-  createEffect(async () => {
-    const _lottie = await getLottie()
-
-    setLottieModule(_lottie)
-  })
 
   createEffect(() => {
     const _lottieModule = lottieModule()
