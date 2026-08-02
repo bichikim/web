@@ -93,12 +93,8 @@ const parseEnvFile = (content: string) => {
   return env
 }
 
-const loadEnvFiles = async (cwd: string, mode: string | undefined) => {
-  const candidates = ['.env', '.env.local']
-
-  if (mode) {
-    candidates.push(`.env.${mode}`, `.env.${mode}.local`)
-  }
+const loadEnvFiles = async (cwd: string, mode: string) => {
+  const candidates = ['.env', '.env.local', `.env.${mode}`, `.env.${mode}.local`]
 
   const env: Record<string, string> = {}
 
@@ -288,7 +284,7 @@ const logResolvedOptions = (arg: string, resolvedOptions: GenerateSWOptions) => 
   console.info(`Output: ${arg}`)
   console.info(`Assets: ${resolvedOptions.assets}`)
   console.info(`Assets root: ${resolvedOptions.assetsRoot}`)
-  console.info(`Working directory: ${resolvedOptions.cwd || process.cwd()}`)
+  console.info(`Working directory: ${resolvedOptions.cwd}`)
 
   if (resolvedOptions.cacheName) {
     console.info(`Cache name: ${resolvedOptions.cacheName}`)

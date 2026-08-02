@@ -7,15 +7,38 @@ import {describe, expect, it} from 'vitest'
 import {generateSW} from '../index'
 
 const compileServiceWorkerTemplate = async (appFiles: string[] = ['/file.txt']) => {
-  const swSource = await fs.promises.readFile(path.join(import.meta.dirname, '..', 'sw.ts'), 'utf8')
-  const {outputText} = ts.transpileModule(swSource, {
-    compilerOptions: {
-      module: ts.ModuleKind.None,
-      target: ts.ScriptTarget.ES2022,
-    },
-  })
+  const modules = new Set<string>()
+  const chunks: string[] = []
+  const entryPath = path.join(import.meta.dirname, '..', 'sw.ts')
 
-  return outputText.replaceAll('__inject_code__', JSON.stringify(appFiles))
+  const bundleModule = async (modulePath: string): Promise<void> => {
+    if (modules.has(modulePath)) {
+      return
+    }
+
+    modules.add(modulePath)
+    const source = await fs.promises.readFile(modulePath, 'utf8')
+    const localImportPattern = /(?:^|\n)import[\s\S]*?from\s+['"](\.[^'"]+)['"];?\s*(?=\n|$)/gu
+    const imports = Array.from(source.matchAll(localImportPattern))
+
+    await Promise.all(
+      imports.map((match) => bundleModule(path.join(path.dirname(modulePath), `${match[1]}.ts`))),
+    )
+
+    const sourceWithoutImports = source.replaceAll(localImportPattern, '\n')
+    const {outputText} = ts.transpileModule(sourceWithoutImports, {
+      compilerOptions: {
+        module: ts.ModuleKind.ESNext,
+        target: ts.ScriptTarget.ES2022,
+      },
+    })
+
+    chunks.push(outputText.replaceAll(/^export\s+/gmu, ''))
+  }
+
+  await bundleModule(entryPath)
+
+  return chunks.join('\n').replaceAll('__inject_code__', JSON.stringify(appFiles))
 }
 
 const createServiceWorkerContext = (
@@ -97,7 +120,7 @@ const createServiceWorkerContext = (
 }
 
 describe('service worker e2e', () => {
-  it('registers lifecycle handlers and precaches assets', async () => {
+  it('should register lifecycle handlers and precache assets', async () => {
     const tmpDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'sw-e2e-'))
     const assetsRoot = path.join(tmpDir, 'assets')
     const templatePath = path.join(tmpDir, 'sw.mjs')
@@ -214,7 +237,7 @@ describe('service worker e2e', () => {
     }
   })
 
-  it('runs generated template without optional globals', async () => {
+  it('should run the generated template without optional globals', async () => {
     const swCode = await compileServiceWorkerTemplate()
     const {cacheStorage, context, listeners} = createServiceWorkerContext(
       async () => new Response('ok'),
@@ -236,7 +259,7 @@ describe('service worker e2e', () => {
     expect(cacheStorage.get('coong-cache-v1')?.has('https://example.com/file.txt')).toBe(true)
   })
 
-  it('keeps stale-while-revalidate refresh alive and avoids caching failed responses', async () => {
+  it('should keep stale-while-revalidate refresh alive and avoid caching failed responses', async () => {
     const swCode = await compileServiceWorkerTemplate()
     const fetchCalls: Array<{init?: RequestInit; request: any}> = []
     const {cacheStorage, context, listeners} = createServiceWorkerContext(async (request, init) => {
@@ -278,7 +301,7 @@ describe('service worker e2e', () => {
     expect(appCache.get('https://example.com/image.png')?.status).toBe(200)
   })
 
-  it('does not cache html fallback responses for subresources', async () => {
+  it('should not cache html fallback responses for subresources', async () => {
     const swCode = await compileServiceWorkerTemplate()
     const {cacheStorage, context, listeners} = createServiceWorkerContext(async () => {
       return new Response('<!doctype html>', {
@@ -309,7 +332,7 @@ describe('service worker e2e', () => {
     expect(cacheStorage.get('coong-cache-v1')?.has('https://example.com/missing.js')).not.toBe(true)
   })
 
-  it('does not handle Vercel internal requests', async () => {
+  it('should not handle Vercel internal requests', async () => {
     const swCode = await compileServiceWorkerTemplate()
     const {context, listeners} = createServiceWorkerContext(async () => new Response('ok'))
 
@@ -333,7 +356,7 @@ describe('service worker e2e', () => {
     expect(handled).toBe(false)
   })
 
-  it('does not handle instrument asset requests', async () => {
+  it('should not handle instrument asset requests', async () => {
     const swCode = await compileServiceWorkerTemplate()
     const {context, listeners} = createServiceWorkerContext(async () => new Response('ok'))
 
@@ -355,5 +378,34 @@ describe('service worker e2e', () => {
     })
 
     expect(handled).toBe(false)
+  })
+
+  it('should clear only caches owned by the service worker', async () => {
+    const swCode = await compileServiceWorkerTemplate()
+    const {cacheStorage, context, listeners} = createServiceWorkerContext(
+      async () => new Response('ok'),
+    )
+
+    cacheStorage.set('coong-cache-v1', new Map())
+    cacheStorage.set('coong-cache-v1-meta', new Map())
+    cacheStorage.set('unrelated-cache', new Map())
+
+    vm.runInNewContext(swCode, context)
+
+    const messageHandler = listeners.get('message')
+    let clearPromise: Promise<void> | undefined
+
+    messageHandler?.({
+      data: {type: 'CLEAR_CACHE'},
+      waitUntil: (promise: Promise<void>) => {
+        clearPromise = promise
+      },
+    })
+
+    await clearPromise
+
+    expect(cacheStorage.has('coong-cache-v1')).toBe(false)
+    expect(cacheStorage.has('coong-cache-v1-meta')).toBe(false)
+    expect(cacheStorage.has('unrelated-cache')).toBe(true)
   })
 })

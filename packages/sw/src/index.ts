@@ -2,33 +2,23 @@ import fs from 'node:fs'
 import path from 'node:path'
 import {fileURLToPath} from 'node:url'
 import {getInstallFiles} from './get-install-files'
+import type {
+  CachePriorityConfig,
+  CacheStrategyConfig,
+  LogLevel,
+  ServiceWorkerConfig,
+} from './runtime/types'
+export type {
+  CachePriorityConfig,
+  CacheStrategy,
+  CacheStrategyConfig,
+  LogLevel,
+  ServiceWorkerConfig,
+} from './runtime/types'
 import type {Plugin, ResolvedConfig} from 'vite'
 
 export const INJECT_TARGET = '__inject_code__'
 export const libraryRoot = path.dirname(fileURLToPath(new URL(import.meta.url)))
-
-export type CacheStrategy =
-  | 'network-first'
-  | 'cache-first'
-  | 'stale-while-revalidate'
-  | 'network-only'
-
-export type LogLevel = 'debug' | 'info' | 'warn' | 'error' | 'silent'
-
-export type CacheStrategyConfig = Partial<Record<RequestDestination | 'default', CacheStrategy>>
-
-export type CachePriorityConfig = Partial<Record<RequestDestination | 'default', number>>
-
-/** Service worker runtime configuration injected into the template. */
-export interface ServiceWorkerConfig {
-  cacheMaxAgeSeconds?: number
-  cacheMaxEntries?: number
-  cachePriorities?: CachePriorityConfig
-  cacheStrategies?: CacheStrategyConfig
-  logEndpoint?: string
-  logLevel?: LogLevel
-  logSampleRate?: number
-}
 
 /** Options for generating the service worker output. */
 export interface GenerateSWOptions {
@@ -91,7 +81,9 @@ const normalizeEnv = (env?: string): 'development' | 'production' => {
 }
 
 const normalizeConfig = (config: ServiceWorkerConfig): ServiceWorkerConfig => {
-  const normalized: ServiceWorkerConfig = {...config}
+  const normalized = Object.fromEntries(
+    Object.entries(config).filter(([, value]) => value !== undefined),
+  ) as ServiceWorkerConfig
 
   if (normalized.cacheStrategies && Object.keys(normalized.cacheStrategies).length === 0) {
     delete normalized.cacheStrategies
@@ -289,11 +281,7 @@ export const generateSwWithCleanUp = (
           return
         }
         const {outDir} = _config.router
-        const swOutPath = getSwOutPath()
-
-        if (!swOutPath) {
-          return
-        }
+        const swOutPath = path.join(_config.root, publicPath, 'sw.js')
 
         await generateSW(swOutPath, {
           assets: assetsPattern,

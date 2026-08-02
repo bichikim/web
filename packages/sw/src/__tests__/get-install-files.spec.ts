@@ -5,7 +5,7 @@ import {describe, expect, it} from 'vitest'
 import {getInstallFiles} from '../get-install-files'
 
 describe('getInstallFiles', () => {
-  it('returns install files with leading slash', async () => {
+  it('should return install files with a leading slash', async () => {
     const tmpDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'sw-install-'))
     const assetsRoot = path.join(tmpDir, 'assets')
     await fs.promises.mkdir(path.join(assetsRoot, 'nested'), {recursive: true})
