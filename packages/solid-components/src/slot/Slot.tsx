@@ -34,5 +34,7 @@ export interface SlotContext extends SlotProps {
  * @returns {JSXElement} A JSX element representing the slot.
  */
 export const Slot = (props: SlotProps) => {
-  return mergeProps({[SLOT_KEY]: true}, props) as unknown as JSXElement
+  const slotProps = mergeProps({[SLOT_KEY]: true}, props)
+
+  return slotProps as unknown as JSXElement
 }

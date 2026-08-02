@@ -131,8 +131,11 @@ describe('useSelectMenu', () => {
       height: 32,
       left: 100,
       right: 324,
+      toJSON: expect.any(Function),
       top: 8,
       width: 224,
+      x: 100,
+      y: 8,
     })
   })
 

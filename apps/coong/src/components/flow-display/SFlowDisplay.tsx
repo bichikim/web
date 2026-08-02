@@ -61,9 +61,13 @@ export const SFlowDisplay = (props: SFlowDisplayProps) => {
     return null
   })
 
-  useEvent(globalTarget, 'resize', () => {
-    setWidth(textElement()?.getBoundingClientRect().width ?? 0)
-  })
+  useEvent(
+    () => globalTarget(),
+    'resize',
+    () => {
+      setWidth(textElement()?.getBoundingClientRect().width ?? 0)
+    },
+  )
 
   const style = useStyles(() => [
     {

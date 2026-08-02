@@ -1,4 +1,4 @@
-import {children, createComputed, JSXElement, on} from 'solid-js'
+import {type Accessor, children, createComputed, JSXElement, on} from 'solid-js'
 import {createStore} from 'solid-js/store'
 import {SLOT_KEY, SlotContext} from '../slot/Slot'
 
@@ -6,13 +6,13 @@ import {SLOT_KEY, SlotContext} from '../slot/Slot'
  * A hook for using slots.
  * This hook analyzes child elements and categorizes them into named slots and a default slot.
  *
- * @param {JSXElement} _children - The child elements to analyze
+ * @param {Accessor<JSXElement>} childrenAccessor - The child elements to analyze
  * @returns {Record<string, JSXElement>} An object of slots categorized by name
  *
  * @example
  * ```tsx
  * const Component = (props: { children?: JSXElement }) => {
- *   const slots = useSlots(props.children);
+ *   const slots = useSlots(() => props.children);
  *
  *   return (
  *     <div>
@@ -31,8 +31,8 @@ import {SLOT_KEY, SlotContext} from '../slot/Slot'
  * </Component>
  * ```
  */
-export const useSlots = (_children: JSXElement) => {
-  const parts = children(() => _children)
+export const useSlots = (childrenAccessor: Accessor<JSXElement>) => {
+  const parts = children(childrenAccessor)
   const [slots, setSlots] = createStore<Record<string, JSXElement>>({})
 
   createComputed(

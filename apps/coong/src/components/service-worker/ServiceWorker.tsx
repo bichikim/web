@@ -121,7 +121,7 @@ export const createServiceWorker = (path: string): Readonly<ServiceWorkerContext
     })
   })
 
-  return freeze([state, {handleSkipUpdate, handleSkipWaiting}])
+  return freeze([untrack(() => state), {handleSkipUpdate, handleSkipWaiting}])
 }
 
 export const ServiceWorkerContext = createContext<Readonly<ServiceWorkerContextValue>>([

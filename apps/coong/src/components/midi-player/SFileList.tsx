@@ -80,7 +80,7 @@ export const SFileList = (props: SFileListProps) => {
 
   const {handleInputFiles, handleDragOver, handleDragLeave, handleDrop, isDragOver} =
     useMidiFileInput(inputElement, {
-      onAdd: props.onAdd,
+      onAdd: (items) => props.onAdd?.(items),
     })
 
   const [innerProps, restProps] = splitProps(props, [

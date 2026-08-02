@@ -1,4 +1,4 @@
-import {createMemo, ParentProps} from 'solid-js'
+import {createMemo, ParentProps, untrack} from 'solid-js'
 import {CloseContext, CloseContextValue} from './context'
 import {freeze} from '@winter-love/utils'
 
@@ -14,7 +14,7 @@ export const CloseProvider = (props: CloseProviderProps) => {
 
   const show = createMemo(() => Boolean(props.show))
 
-  const context: CloseContextValue = freeze([show, {handleShow}])
+  const context: CloseContextValue = freeze([untrack(() => show), {handleShow}])
 
   return <CloseContext.Provider value={context}>{props.children}</CloseContext.Provider>
 }

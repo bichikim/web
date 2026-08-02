@@ -8,6 +8,7 @@ import {
   JSX,
   ParentProps,
   splitProps,
+  untrack,
 } from 'solid-js'
 import {ELEMENT_IDENTIFIER_GLOBAL_TOUCH, useGlobalDown} from './use-global-touch'
 import {DownEventPayload} from './types'
@@ -46,7 +47,7 @@ export const HRealButton = (props: HRealButtonProps) => {
   const [innerProps, restProps] = splitProps(props, ['onDown', 'onUp', 'renderDown', 'class', 'id'])
   const id = createUniqueId()
 
-  const targetId = `${innerProps.id ?? id}`
+  const targetId = untrack(() => `${innerProps.id ?? id}`)
   const isDown = useGlobalDown(targetId)
   let mounted = false
 

@@ -66,10 +66,10 @@ export const ResizeCardHandle = (props: ResizeCardHandleProps) => {
 
   const globalTarget = createMemo(() => (isStart() ? getWindow() : null))
 
-  useEvent(globalTarget, 'mousemove', handleMouseMove)
-  useEvent(globalTarget, 'mouseup', handleMouseUp)
-  useEvent(globalTarget, 'touchmove', handleTouchMove)
-  useEvent(globalTarget, 'touchend', handleTouchEnd)
+  useEvent(() => globalTarget(), 'mousemove', handleMouseMove)
+  useEvent(() => globalTarget(), 'mouseup', handleMouseUp)
+  useEvent(() => globalTarget(), 'touchmove', handleTouchMove)
+  useEvent(() => globalTarget(), 'touchend', handleTouchEnd)
 
   return (
     <button {...restProps} onMouseDown={handleMouseDown} onTouchStart={handleTouchStart}>

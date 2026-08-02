@@ -41,7 +41,7 @@ export const DragListItem = <T extends ValidComponent>(props: DragListItemProps<
   })
 
   const shouldRenderCloneGhost = createMemo(() => ghostChildren.toArray().length === 0)
-  const renderGhost = createRenderGhost(shouldRenderCloneGhost)
+  const renderGhost = createRenderGhost(() => shouldRenderCloneGhost())
 
   const listContext = useContext(DragListContext)
   const [isDragging, setIsDragging] = createSignal(false)
@@ -135,11 +135,11 @@ export const DragListItem = <T extends ValidComponent>(props: DragListItemProps<
   /**
    * drag 상태일 경우에 한해 pointermove 이벤트 구독
    */
-  useEvent(globalTarget, 'pointermove', handlePointerMove)
+  useEvent(() => globalTarget(), 'pointermove', handlePointerMove)
   /**
    * drag 상태일 경우에 한해 pointerup 이벤트 구독
    */
-  useEvent(globalTarget, 'pointerup', handlePointerUp)
+  useEvent(() => globalTarget(), 'pointerup', handlePointerUp)
 
   return (
     <Dynamic
