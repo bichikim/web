@@ -1,16 +1,20 @@
 ---
 name: cleanup-branches
 description: >
-  Delete remote and matching local git branches whose PR is already merged and
-  that have no remaining commits or file changes. Use when the user asks to
-  clean up, prune, or delete merged branches (브랜치 정리, cleanup branches,
-  delete merged branches).
+  Plan and (only after user confirmation) delete remote and matching local git
+  branches whose PR is already merged and that have no remaining commits or
+  file changes. Use when the user asks to clean up, prune, or delete merged
+  branches (브랜치 정리, cleanup branches, delete merged branches).
 ---
 
 # Cleanup branches
 
-원격지에 이미 PR이 합쳐져서 커밋 또는 변경된 파일이 없는 브랜치를 지운다.
-원격과 같은 로컬 브랜치가 있으면 함께 지운다. `main` / `dev` 는 절대 지우지 않는다.
+Delete remote branches whose PR is already merged and that have no leftover
+commits or file changes. Delete matching local branches too. Never delete
+`main` or `dev`.
+
+**Plan first.** Show what would be deleted; delete only after the user
+explicitly asks to delete.
 
 ## Rules
 
@@ -30,15 +34,17 @@ Never force-push or rewrite history. Use `git branch -D` only after the merged-P
 
 1. `git fetch --prune origin`
 2. Candidates: remote heads under `origin` (exclude `main`/`dev`/`HEAD`), plus local-only branches with the same checks
-3. Safe remote → `git push origin --delete <branch>`
-4. Matching safe local → `git branch -D <branch>`
-5. Report:
+3. **Plan (default):** report would-delete vs skipped. Do **not** run `git push --delete` or `git branch -D`.
+4. Stop and wait. Delete only when the user explicitly asks to delete.
+5. **Delete (after confirmation only):** safe remote → `git push origin --delete <branch>`; matching safe local → `git branch -D <branch>`; report removed vs skipped.
 
 ```
-Removed:
+Would delete:
 - origin/<branch> — merged PR #<n>
 - <branch> (local) — matched origin / merged PR #<n>
 
 Skipped:
 - <branch> — <reason>
 ```
+
+After confirmation, use the same shape with `Removed:` instead of `Would delete:`.
