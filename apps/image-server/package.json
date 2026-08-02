@@ -17,7 +17,7 @@
     "got": "^14.6.6",
     "qs": "^6.15.1",
     "reflect-metadata": "^0.2.2",
-    "sharp": "^0.33.5",
+    "sharp": "^0.35.0",
     "ufo": "catalog:"
   },
   "devDependencies": {
