@@ -1,5 +1,5 @@
 // todo support array & object
-import {trim} from 'es-toolkit/compat'
+import {trim} from 'es-toolkit/string'
 
 // URLSearchParams 를 쓴느 것이 더 좋을까 ?
 export interface ToQueryRecodeOptions {

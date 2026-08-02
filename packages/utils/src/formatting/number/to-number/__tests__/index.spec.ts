@@ -31,6 +31,12 @@ describe('to-number', () => {
 
     expect(result).toBe(20)
   })
+
+  it('should return the fallback with a symbol', () => {
+    const result = toNumber(Symbol('value'), 20)
+
+    expect(result).toBe(20)
+  })
 })
 
 describe('to-number-or-undefined', () => {
@@ -54,6 +60,16 @@ describe('to-number-or-undefined', () => {
 
   it('should return undefined if value is an object', () => {
     const result = toNumberOrUndefined({name: 'foo'})
+
+    expect(result).toBeUndefined()
+  })
+
+  it('should return undefined if number conversion throws', () => {
+    const result = toNumberOrUndefined({
+      valueOf: () => {
+        throw new Error('conversion failed')
+      },
+    })
 
     expect(result).toBeUndefined()
   })

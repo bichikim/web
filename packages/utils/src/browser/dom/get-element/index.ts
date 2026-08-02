@@ -1,4 +1,4 @@
-import {isNil} from 'es-toolkit/compat'
+import {isNil} from 'es-toolkit/predicate'
 
 export const getElement = (value?: Element | string | null): null | Element | undefined => {
   if (isNil(value)) {

@@ -1,4 +1,4 @@
-import {trim} from 'es-toolkit/compat'
+import {trim} from 'es-toolkit/string'
 import {joinStringQueries} from './join-string-queries'
 
 export interface ToQueryStringOptions {

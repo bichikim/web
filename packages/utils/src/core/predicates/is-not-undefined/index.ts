@@ -1,3 +1,4 @@
+import {isUndefined} from 'es-toolkit/predicate'
 import {NotUndefined} from 'src/core/types/shared'
 
 /**
@@ -13,4 +14,4 @@ import {NotUndefined} from 'src/core/types/shared'
  * }
  * ```
  */
-export const isNotUndefined = <T>(value: T): value is NotUndefined<T> => value !== undefined
+export const isNotUndefined = <T>(value: T): value is NotUndefined<T> => !isUndefined(value)

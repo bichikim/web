@@ -1,5 +1,5 @@
 import {getWindow} from 'src/browser/dom/get-window'
-import {isUndefined} from 'src/core/predicates/is-undefined'
+import {isUndefined} from 'es-toolkit/predicate'
 
 export const isWindow = (value: any): value is Window => {
   const window = getWindow()

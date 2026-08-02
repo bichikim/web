@@ -1,11 +1,7 @@
-import {chunk, compact, flow, join, last, map, reverse} from 'es-toolkit/compat'
-import {flipArgsFactory} from 'src/core/functions/be-factory'
+import {chunk, compact, last} from 'es-toolkit/array'
 import {freeze} from 'src/core/functions/freeze'
 import {toNumber} from 'src/formatting/number/to-number'
 
-const chunkFp = flipArgsFactory(chunk)
-const mapFp = flipArgsFactory(map)
-const joinFp = flipArgsFactory(join)
 const _numberNames = freeze(['0', '일', '이', '삼', '사', '오', '육', '칠', '팔', '구'])
 
 const _numberUnitNames = freeze(['', '만', '억', '조', '경', '해', '자', '양', '구', '간', '정'])
@@ -79,22 +75,26 @@ export const toKoreanNumberFn = ({
   joinString = '',
   firstOne = false,
   joinGroup = '',
-}: NumberToKoreanOptions = {}) =>
-  flow(
-    anyToStringArray,
-    mode === 'all' ? mapFp((value) => _numberNames[Number(value)]) : (value) => value,
-    reverse,
-    chunkFp(KoreanChunk),
-    mode === 'number'
-      ? mapFp(removeUselessZero)
-      : mapFp((value: string[], index: number, array: string[][]) =>
-          addSmallNumberUnit(value, !firstOne || index < array.length - 1),
-        ),
-    mapFp((value: string[], index: number) => addNumberUnit(value, index)),
-    mapFp((value: string[]) => compact(value).reverse().join(joinString)),
-    reverse,
-    joinFp(joinGroup),
-  )
+}: NumberToKoreanOptions = {}) => {
+  return (value: unknown) => {
+    const numberStrings = anyToStringArray(value)
+    const numberNames =
+      mode === 'all' ? numberStrings.map((item) => _numberNames[Number(item)]) : numberStrings
+    const numberGroups = chunk(numberNames.reverse(), KoreanChunk)
+    const smallUnitGroups =
+      mode === 'number'
+        ? numberGroups.map(removeUselessZero)
+        : numberGroups.map((group, index, groups) =>
+            addSmallNumberUnit(group, !firstOne || index < groups.length - 1),
+          )
+
+    return smallUnitGroups
+      .map(addNumberUnit)
+      .map((group) => compact(group).reverse().join(joinString))
+      .reverse()
+      .join(joinGroup)
+  }
+}
 
 export const toKoreanNumber = (value?: unknown, options?: NumberToKoreanOptions) =>
   toKoreanNumberFn(options)(value)

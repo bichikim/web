@@ -1,5 +1,5 @@
 import {MaybeArray} from 'src/core/types/shared'
-import {isNil} from 'es-toolkit/compat'
+import {isNil} from 'es-toolkit/predicate'
 
 /**
  * return an array always

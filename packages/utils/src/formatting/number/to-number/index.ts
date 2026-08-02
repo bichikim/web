@@ -1,9 +1,15 @@
-import {toNumber as _toNumber} from 'es-toolkit/compat'
-
 export const toNumberOrUndefined = (value?: unknown): number | undefined => {
-  const number = _toNumber(value)
+  if (typeof value === 'symbol') {
+    return undefined
+  }
 
-  return Number.isNaN(number) ? undefined : number
+  try {
+    const number = Number(value)
+
+    return Number.isNaN(number) ? undefined : number
+  } catch {
+    return undefined
+  }
 }
 
 export const toNumber = (value?: unknown, failValue: number = 0): number => {
