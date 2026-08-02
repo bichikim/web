@@ -30,22 +30,3 @@ export const reduce: Reduce = (...args: any[]): any => {
     return _reduce(list, iteratee, initialValue)
   }
 }
-
-export interface ReduceOp {
-  <T, R>(iteratee: ReduceIteratee<T, R>, initialValue?: R): (list: T[]) => R
-
-  <T, R>(iteratee: ReduceIteratee<T, R>, initialValue: R, list: T[]): R
-}
-
-// retype with ReduceOp
-export const reduceOp: ReduceOp = (...args: any[]): any => {
-  const [iteratee, initialValue, list] = args
-
-  if (args.length > 2) {
-    return _reduce(list, iteratee, initialValue)
-  }
-
-  return (list) => {
-    return _reduce(list, iteratee, initialValue)
-  }
-}
