@@ -1,11 +1,11 @@
 ---
 name: typescript-conventions
-description: Applies project TypeScript conventions for naming, formatting, typing, and code patterns. Use when writing or editing .ts or .tsx files.
+description: Applies project TypeScript conventions and library-grade module boundaries. Use when writing or editing .ts/.tsx files, designing exported APIs or cross-layer contracts, creating reusable modules, or refactoring dependencies between features, packages, services, and adapters.
 ---
 
 # Typescript
 
-Open and apply the reference files for the relevant section before working. Solid component structure, reactivity, and JSX conventions: solidjs skill (also triggers on Solid `.tsx` / `.ts`).
+Open and apply the reference files for the relevant section before working. For exported APIs, reusable modules, or cross-layer changes, read [rules/library-boundaries.md](rules/library-boundaries.md) before editing. Solid component structure, reactivity, and JSX conventions: solidjs skill (also triggers on Solid `.tsx` / `.ts`).
 
 ## Core Rules
 
