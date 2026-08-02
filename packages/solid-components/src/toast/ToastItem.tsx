@@ -1,4 +1,4 @@
-import {ToastActionsContext, ToastContentContext} from './context'
+import {ToastActionsContext, type ToastActionsContextValue, ToastContentContext} from './context'
 import {useClose} from '../close'
 import {ComponentProps, createMemo, useContext} from 'solid-js'
 import {Dynamic} from 'solid-js/web'
@@ -23,20 +23,16 @@ export const ToastItem = (props: ToastItemProps) => {
     return 'div'
   })
 
-  const actionsContext = createMemo(() => {
-    if (message.clickToClose) {
-      return
-    }
-
-    return {
-      actions: message.actions,
-      id: message.id,
-    }
-  })
+  const actionsContext: ToastActionsContextValue = message.clickToClose
+    ? undefined
+    : {
+        actions: message.actions,
+        id: message.id,
+      }
 
   return (
     <Dynamic {...props} component={rootTag()} onClick={handleClick}>
-      <ToastActionsContext.Provider value={actionsContext()}>
+      <ToastActionsContext.Provider value={actionsContext}>
         {props.children}
       </ToastActionsContext.Provider>
     </Dynamic>

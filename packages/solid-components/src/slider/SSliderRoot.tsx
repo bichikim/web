@@ -14,7 +14,7 @@ export const SSliderRoot = (_props: SSliderRootProps) => {
   const typeAccessor = createMemo(() => {
     return props.type ?? 'horizontal'
   })
-  const context = useSlider(typeAccessor)
+  const context = useSlider(() => typeAccessor())
 
   const ariaContext = createMemo((): SliderAriaContextValue => {
     return {

@@ -7,7 +7,7 @@ export interface SlotParentProps {
 }
 
 const SlotComponent = (props: SlotParentProps) => {
-  const slots = useSlots(props.children)
+  const slots = useSlots(() => props.children)
 
   return (
     <div>

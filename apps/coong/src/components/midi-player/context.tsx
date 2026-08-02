@@ -97,10 +97,6 @@ interface MergedMidiPlayerProviderProps extends MidiPlayerProviderProps {
   playState: SplendidGrandPianoState
 }
 
-interface UseMidiPlayerCoreProps {
-  defaultProps: MergedMidiPlayerProviderProps
-}
-
 interface MidiPlayerCore {
   defaultProps: MergedMidiPlayerProviderProps
   handleAddPlayItem: (payload: MusicInfo[]) => void
@@ -120,9 +116,7 @@ interface MidiPlayerCore {
   setPlayList: Setter<MusicInfo[]>
 }
 
-function useMidiPlayerCore(props: UseMidiPlayerCoreProps): MidiPlayerCore {
-  const {defaultProps} = props
-
+function useMidiPlayerCore(defaultProps: MergedMidiPlayerProviderProps): MidiPlayerCore {
   const [playList, setPlayList] = createSignal<MusicInfo[]>(
     untrack(() => defaultProps.initMusics ?? []),
   )
@@ -266,10 +260,6 @@ function useMidiPlayerCore(props: UseMidiPlayerCoreProps): MidiPlayerCore {
   }
 }
 
-interface UseMidiPlayerDerivedProps {
-  core: MidiPlayerCore
-}
-
 interface MidiPlayerDerived {
   isPlaying: Accessor<boolean>
   isSuspend: Accessor<boolean>
@@ -278,8 +268,7 @@ interface MidiPlayerDerived {
   totalDuration: Accessor<number>
 }
 
-function useMidiPlayerDerived(props: UseMidiPlayerDerivedProps): MidiPlayerDerived {
-  const {core} = props
+function useMidiPlayerDerived(core: MidiPlayerCore): MidiPlayerDerived {
   const {defaultProps} = core
 
   const isEnd = createMemo(() => {
@@ -353,8 +342,8 @@ export const MidiPlayerProvider = (props: MidiPlayerProviderProps) => {
     props,
   ) as MergedMidiPlayerProviderProps
 
-  const core = useMidiPlayerCore({defaultProps})
-  const derived = useMidiPlayerDerived({core})
+  const core = useMidiPlayerCore(defaultProps)
+  const derived = useMidiPlayerDerived(core)
 
   const contextValue: MidiPlayerContextProps = {
     handleAddPlayItem: core.handleAddPlayItem,

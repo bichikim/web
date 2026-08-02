@@ -5,5 +5,5 @@ export interface SMusicMoreProps extends ParentProps {
 }
 
 export const SMusicMore = (props: SMusicMoreProps) => {
-  return props.children
+  return <>{props.children}</>
 }

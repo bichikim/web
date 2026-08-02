@@ -18,7 +18,7 @@ export interface SPlayerPanelBodyProps extends ComponentProps<'div'> {
 
 export const SPlayerPanelBody = (props: SPlayerPanelBodyProps) => {
   const activeResize = createMemo(() => props.isActive ?? false)
-  const windowSize = useWindowSize({height: 500, width: 800}, activeResize)
+  const windowSize = useWindowSize({height: 500, width: 800}, () => activeResize())
 
   const defaultProps = mergeProps(props, {
     maxPercent: 0.8,

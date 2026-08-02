@@ -55,8 +55,8 @@ export interface KeyCapProps {
 }
 
 export const KeyCap = (props: KeyCapProps) => {
-  const [innerPressed, setInnerPressed] = createSignal(props.pressed)
-  const pressed = createMemo(() => innerPressed() || props.pressed)
+  const [innerPressed, setInnerPressed] = createSignal(false)
+  const pressed = createMemo(() => innerPressed() || Boolean(props.pressed))
 
   const borderColor = createMemo(() => props.borderColor || 'rgba(0, 0, 0, 0.5)')
   const borderWidth = createMemo(() => props.borderWidth || '2px')

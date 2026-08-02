@@ -113,7 +113,7 @@ export const FocusGroup = (props: FocusGroupProps) => {
   const element = createMemo(() => {
     return props.element
   })
-  const [focusGroup] = useFocusGroup(element)
+  const [focusGroup] = useFocusGroup(() => element())
 
   return (
     <FocusGroupContext.Provider value={focusGroup}>{props.children}</FocusGroupContext.Provider>
