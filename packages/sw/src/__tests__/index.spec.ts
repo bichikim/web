@@ -5,7 +5,7 @@ import {describe, expect, it} from 'vitest'
 import {generateSW} from '../index'
 
 describe('generateSW', () => {
-  it('writes service worker with injected config', async () => {
+  it('should write a service worker with injected config', async () => {
     const tmpDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'sw-generate-'))
     const assetsRoot = path.join(tmpDir, 'assets')
     const templatePath = path.join(tmpDir, 'sw.mjs')
