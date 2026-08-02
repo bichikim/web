@@ -5,46 +5,33 @@ description: Reduce an existing Codex skill to its minimum useful form, extract 
 
 # Skill Diet
 
-## Goal
-
-Shrink a skill until only durable behavior remains. Prefer deletion when the skill only repeats general model ability, AGENTS.md rules, or non-actionable advice. Cut and condense aggressively — outcome parity (step 5) is the safety net, so do not keep text "just in case."
+Shrink a skill to durable behavior only. Cut aggressively — outcome parity is the safety net. Prefer deleting the skill when it only repeats general model ability, AGENTS.md, or non-actionable advice.
 
 ## Loop
 
-Repeat until the next deletion or extraction would change behavior:
+Repeat until the next cut would change behavior:
 
 1. Name the skill's real job in one sentence.
-2. Mark what must survive in `SKILL.md`: trigger wording, safety constraints, project-specific rules, resource routing, output contract, and one boundary example if needed.
-3. Split the rest into delete vs extract. Bias toward bold deletes and tighter wording; restore only if step 5 fails:
-   - Delete: history, rationale, duplicated examples, long reference summaries, generic advice, aspirational wording, and examples that do not change decisions.
-   - Extract: useful context the model should not load on every run (long examples, pattern catalogs, deep references, edge-case tables). Move it to a sibling file and leave only a when-to-open link in `SKILL.md`.
-4. Re-read the smaller skill as if seeing it for the first time. Confirm linked files are opened only when the link's condition matches.
-5. Check outcome parity: for the skill's real job (step 1), walk 1–3 typical invocations and confirm the reduced skill still yields the same decisions, constraints, routing, and output contract as before. If parity breaks, restore the missing rule or tighten an extract link — do not ship a smaller skill that changes results. Prefer mental walkthroughs; if a check creates temporary files or other side effects, revert them before finishing — leave no leftover artifacts from parity checks.
-6. Run the smallest validation available. If this skill's script is available, run `node scripts/validate-skill.js <skill_directory>`. For repo changes, also run required format/lint commands.
+2. Keep in `SKILL.md` only: trigger wording, safety constraints, project-specific rules, resource routing, output contract, and one boundary example if needed.
+3. Delete the rest, or extract situational context behind a when-to-open link:
+   - Delete: history, rationale, duplicated/non-decisive examples, long reference summaries, generic or aspirational advice.
+   - Extract: long examples, pattern catalogs, deep references, edge-case tables.
+4. Re-read as a first-time reader. Linked files open only when their condition matches.
+5. Outcome parity: walk 1–3 typical invocations; confirm same decisions, constraints, routing, and output contract. If not, restore the missing rule or tighten a link. Prefer mental walkthroughs; revert any temporary side effects before finishing.
+6. Validate: `node scripts/validate-skill.js <skill_directory>` when available. For repo changes, also run required format/lint.
 
-## Extract On Demand
+## Extract
 
-Prefer extraction over inlining when content helps only in some invocations.
+When content helps only some invocations, move it beside the skill (`rules/`, `examples/`, `references/`, or a named `.md`). In `SKILL.md`, leave only a one-line conditional link — e.g. `See ./rules/foo.md when …`. Do not summarize the extracted body. Links stay one level deep from `SKILL.md`.
 
-- Put extracted files beside the skill (`rules/`, `examples/`, `references/`, or a named `.md`).
-- In `SKILL.md`, keep a one-line conditional link only — e.g. `See ./rules/foo.md when …`. Do not paste or summarize the extracted body.
-- Keep links one level deep from `SKILL.md`. Do not chain reference → reference.
-- Match this repo's pattern: core rules stay in `SKILL.md`; detail lives behind `See ./…` links the agent opens when relevant.
+## Delete the skill
 
-## Delete Instead
+Delete the whole skill folder (and state why) when all are true:
 
-Delete the skill if all are true:
-
-- No durable trigger is needed.
-- No project- or domain-specific rule remains.
-- No reusable resource routing remains.
-- The remaining behavior is already covered by system, developer, AGENTS.md, or normal model ability.
-
-When deleting, remove the whole skill folder and state the reason.
-
-## Keep
-
-Keep in `SKILL.md` only rules that prevent a likely future mistake. Keep inline examples only when they define a boundary the model may otherwise miss. Everything else useful but situational goes behind a link.
+- No durable trigger needed
+- No project-/domain-specific rule remains
+- No reusable resource routing remains
+- Remaining behavior is already covered by system, AGENTS.md, or normal model ability
 
 ## Output
 
