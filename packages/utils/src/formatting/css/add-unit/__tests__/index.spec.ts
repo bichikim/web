@@ -40,8 +40,26 @@ describe('addUnit', () => {
     expect(addUnit([1, 2], 'px')).toEqual('')
   })
 
+  it.each([null, '', '   ', [], false, true])(
+    'should return empty string with unsupported coercible value %j',
+    (value) => {
+      expect(addUnit(value, 'px')).toBe('')
+    },
+  )
+
   it('should return empty string when formatted value is not finite', () => {
     expect(addUnit(Number.POSITIVE_INFINITY, 'px')).toEqual('')
+  })
+
+  it.each([Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY, -1, 1.5, 309])(
+    'should return empty string with invalid decimal places %s',
+    (decimalPlaces) => {
+      expect(addUnit(1, 'px', decimalPlaces)).toBe('')
+    },
+  )
+
+  it('should return empty string when rounding overflows', () => {
+    expect(addUnit(Number.MAX_VALUE, 'px', 3)).toBe('')
   })
 
   it('should return unit string without unit', () => {
