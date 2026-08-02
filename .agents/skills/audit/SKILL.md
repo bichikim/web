@@ -15,6 +15,6 @@ Analyze project vulnerabilities using `pnpm audit` and attempt to resolve them.
 3. Only attempt updates when a fix version is available in the vulnerability info.
 4. Stop when no resolution is possible.
 5. Ignore `<0.0.0` and similar placeholders — no fix version exists yet.
-6. For deep vulnerabilities that cannot be resolved (e.g. `lerna>rimraf` version is vulnerable), report them instead of attempting to fix.
+6. For deep vulnerabilities that cannot be resolved (e.g. a transitive dep has no fixed release), report them instead of attempting to fix.
 
 After resolution attempts, run `pnpm audit` again and summarize what was fixed and what remains.

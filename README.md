@@ -11,11 +11,6 @@
 pnpm i
 ```
 
-## Recommended global dependencies
-
-- rimraf
-- lerna
-
 ## Winter Love packages
 
 refer to packages/\* README.md each project folder
