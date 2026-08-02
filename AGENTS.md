@@ -11,6 +11,12 @@
 
 **Enterprise-grade** code: maintainability, scalability, separation of concerns, robust error handling, consistent patterns.
 
+## Proportionate future-proofing
+
+- Include a foreseeable future need now when the implementation and complexity costs are small.
+- Explicitly state the future need being covered and why the added effort is small.
+- Do not use future-proofing to justify speculative abstractions with uncertain value.
+
 ## Worktree initialization
 
 - Start new worktrees from the latest `origin/dev` commit.
