@@ -13,7 +13,7 @@
   "repository": "git@github.com:winter-love/web.git",
   "source": "src/index.ts",
   "files": [
-    "dist/*"
+    "dist"
   ],
   "sideEffects": false,
   "main": "dist/index.js",
@@ -27,26 +27,26 @@
       "import": "./dist/index.mjs",
       "require": "./dist/index.js"
     },
-    "./path/*": {
-      "types": "./dist/path/*.d.ts",
-      "import": "./dist/path/*.mjs",
-      "require": "./dist/path/*.js",
-      "default": "./dist/path/*.mjs"
+    "./browser/scheduling/request-idle-callback/*": {
+      "types": "./dist/browser/scheduling/request-idle-callback/*.d.ts",
+      "import": "./dist/browser/scheduling/request-idle-callback/*.mjs",
+      "require": "./dist/browser/scheduling/request-idle-callback/*.js",
+      "default": "./dist/browser/scheduling/request-idle-callback/*.mjs"
     },
-    "./promise/*": {
-      "types": "./dist/promise/*/index.d.ts",
-      "import": "./dist/promise/*/index.mjs",
-      "require": "./dist/promise/*/index.js",
-      "default": "./dist/promise/*/index.mjs"
+    "./core/types/shared/*": {
+      "types": "./dist/core/types/shared/*.d.ts"
     },
-    "./request-idle-callback/*": {
-      "types": "./dist/request-idle-callback/*.d.ts",
-      "import": "./dist/request-idle-callback/*.mjs",
-      "require": "./dist/request-idle-callback/*.js",
-      "default": "./dist/request-idle-callback/*.mjs"
+    "./data/path/url/*": {
+      "types": "./dist/data/path/url/*.d.ts",
+      "import": "./dist/data/path/url/*.mjs",
+      "require": "./dist/data/path/url/*.js",
+      "default": "./dist/data/path/url/*.mjs"
     },
-    "./types/*": {
-      "types": "./dist/types/*.d.ts"
+    "./domain/spatial-navigation/neighbor/*": {
+      "types": "./dist/domain/spatial-navigation/neighbor/*.d.ts",
+      "import": "./dist/domain/spatial-navigation/neighbor/*.mjs",
+      "require": "./dist/domain/spatial-navigation/neighbor/*.js",
+      "default": "./dist/domain/spatial-navigation/neighbor/*.mjs"
     },
     "./*": {
       "types": "./dist/*/index.d.ts",
@@ -61,7 +61,7 @@
   "scripts": {
     "build": "vite build",
     "build:dev": "vite build --minify false",
-    "prepare-build": "pnpm run build:dev",
+    "prepare-build": "pnpm run build",
     "typecheck": "tsc --noEmit",
     "dev": "vite build --watch --minify false"
   },

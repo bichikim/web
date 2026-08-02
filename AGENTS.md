@@ -11,6 +11,13 @@
 
 **Enterprise-grade** code: maintainability, scalability, separation of concerns, robust error handling, consistent patterns.
 
+## Package exports
+
+- Prefer broad subpath exports: consumers may import any distributable module.
+- Exposing the internal module structure is not a design flaw in this repository.
+- Do not add export allowlists, proxy entrypoints, or compatibility layers solely to hide or restrict module paths. Missing exports create more consumer workarounds, coordination, and migration cost than the theoretical encapsulation benefit.
+- Restrict an export only for a concrete security, runtime, or packaging constraint.
+
 ## Worktree initialization
 
 - Start new worktrees from the latest `origin/dev` commit.
@@ -41,7 +48,7 @@ Chat context is volatile. When **why** isn't obvious from code, leave a minimal 
 
 ## Cursor Cloud
 
-pnpm + Turborepo (`@winter-love/web`) · Node ≥22 · pnpm 11.x (`package.json`). `pnpm install` runs root `postinstall` → `turbo prepare-build` (package builds; Coong Supabase type gen; Turbo-cached).
+pnpm + Turborepo (`@winter-love/web`) · Node ≥22 · pnpm 11.x (`package.json`). `pnpm install` runs root `postinstall` → `turbo prepare-build --env-mode=loose` (package builds; Coong Supabase type gen; Turbo-cached). `optimisticRepeatInstall: false` in `pnpm-workspace.yaml` so postinstall still runs when Already up to date. `--env-mode=loose` avoids pnpm 11 verify-deps re-entering `pnpm install` → postinstall.
 
 - **Coong** — `apps/coong` (SolidStart SSR). `pnpm dev` (:3000). Copy `apps/coong/.env.e2e` → `.env` for dev without Supabase (see `.env.example`).
 - **Storybook** — root. `pnpm storybook:dev` (:6006).
