@@ -1,4 +1,4 @@
-import {camelCase} from 'es-toolkit/compat'
+import {camelCase} from 'es-toolkit/string'
 import {readFileSync} from 'node:fs'
 import path from 'node:path'
 import {defineConfig} from 'vite'
@@ -54,7 +54,7 @@ export const createConfig = ({
             ...newEntry,
           },
           formats: ['es', 'cjs'],
-          name: camelCase(name),
+          name: camelCase(name ?? ''),
         },
         rollupOptions: {
           external: (id) =>

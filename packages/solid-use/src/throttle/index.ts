@@ -1,10 +1,9 @@
-import {throttle} from 'es-toolkit/compat'
 import {MaybeAccessor} from 'src/types'
 import {resolveAccessor} from 'src/resolve-accessor'
+import {throttle, type ThrottledFunc, type ThrottleSettings} from 'src/internal/throttle'
 import {createEffect, onCleanup} from 'solid-js'
 
-export type ThrottleSettings = NonNullable<Parameters<typeof throttle>[2]>
-export type ThrottledFunc<T extends (...args: any) => any> = ReturnType<typeof throttle<T>>
+export type {ThrottledFunc, ThrottleSettings}
 
 export const createThrottle = <T extends (...args: any) => any>(
   callback: T,

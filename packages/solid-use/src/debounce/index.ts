@@ -1,10 +1,9 @@
-import {debounce} from 'es-toolkit/compat'
 import {MaybeAccessor} from 'src/types'
 import {resolveAccessor} from 'src/resolve-accessor'
+import {debounce, type DebouncedFunc, type DebounceSettings} from 'src/internal/debounce'
 import {createEffect, onCleanup} from 'solid-js'
 
-export type DebounceSettings = NonNullable<Parameters<typeof debounce>[2]>
-export type DebouncedFunc<T extends (...args: any) => any> = ReturnType<typeof debounce<T>>
+export type {DebouncedFunc, DebounceSettings}
 
 export const createDebounce = <T extends (...args: any) => any>(
   callback: T,

@@ -15,3 +15,7 @@ TypeScript utilities grouped by responsibility and runtime.
 ## Public API
 
 All distributable modules are intentionally available through subpath exports. The module structure is part of the public surface.
+
+## es-toolkit imports
+
+Do not import from `es-toolkit/compat`. Use modern category subpaths such as `es-toolkit/array`, `es-toolkit/function`, `es-toolkit/predicate`, and `es-toolkit/string`. If no modern API exists, use a native platform API or a local implementation that preserves the package contract.

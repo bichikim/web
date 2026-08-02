@@ -1,4 +1,4 @@
-import {isNil} from 'es-toolkit/compat'
+import {isNil} from 'es-toolkit/predicate'
 
 export type ToBePromiseType<T> = T extends {
   catch: (...arg: any) => any
@@ -8,6 +8,11 @@ export type ToBePromiseType<T> = T extends {
   ? Promise<U>
   : never
 
+/**
+ * Promise-like 객체인지 확인합니다.
+ *
+ * `then`, `catch`, `finally` 메서드를 모두 가진 객체를 검사합니다.
+ */
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 export const isPromise = <T>(value: T): value is ToBePromiseType<T> => {
