@@ -7,8 +7,22 @@ script = "cd "
 
 [setup.darwin]
 script = '''
+# AI_NOTE - Refresh base `dev` before entering the new worktree so setup starts from latest origin/dev (AGENTS.md).
+SOURCE_TREE_PATH="${CODEX_SOURCE_TREE_PATH:-}"
+if [ -n "$SOURCE_TREE_PATH" ]; then
+  git -C "$SOURCE_TREE_PATH" fetch origin
+  # Fast-forward local `dev` only; ignore when diverged or unavailable.
+  git -C "$SOURCE_TREE_PATH" fetch origin dev:dev || true
+fi
+
 cd "$CODEX_WORKTREE_PATH"
-REPOSITORY_PATH="$(dirname "$(git rev-parse --git-common-dir)")"
+REPOSITORY_PATH="${CODEX_SOURCE_TREE_PATH:-$(dirname "$(git rev-parse --git-common-dir)")}"
+
+# New worktree with no local commits/changes: align onto latest origin/dev.
+if [ -z "$(git status --porcelain)" ] && [ "$(git rev-list --count origin/dev..HEAD 2>/dev/null || echo 1)" -eq 0 ]; then
+  git reset --hard origin/dev
+fi
+
 if [ -f "$REPOSITORY_PATH/apps/coong/.env" ]; then
   cp "$REPOSITORY_PATH/apps/coong/.env" apps/coong/.env
 fi
