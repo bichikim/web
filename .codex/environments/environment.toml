@@ -12,6 +12,10 @@ REPOSITORY_PATH="$(dirname "$(git rev-parse --git-common-dir)")"
 if [ -f "$REPOSITORY_PATH/apps/coong/.env" ]; then
   cp "$REPOSITORY_PATH/apps/coong/.env" apps/coong/.env
 fi
+# Mirror .cursor/worktrees.json: reuse main worktree Turbo cache before install/prepare-build.
+if [ -d "$REPOSITORY_PATH/.turbo" ]; then
+  cp -R "$REPOSITORY_PATH/.turbo" .turbo
+fi
 pnpm install
 git config user.name "kimbichi"
 git config user.email "bichi@live.co.kr"
