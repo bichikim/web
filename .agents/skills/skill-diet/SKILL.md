@@ -7,7 +7,7 @@ description: Reduce an existing Codex skill to its minimum useful form, extract 
 
 ## Goal
 
-Shrink a skill until only durable behavior remains. Prefer deletion when the skill only repeats general model ability, AGENTS.md rules, or non-actionable advice.
+Shrink a skill until only durable behavior remains. Prefer deletion when the skill only repeats general model ability, AGENTS.md rules, or non-actionable advice. Cut and condense aggressively — outcome parity (step 5) is the safety net, so do not keep text "just in case."
 
 ## Loop
 
@@ -15,11 +15,11 @@ Repeat until the next deletion or extraction would change behavior:
 
 1. Name the skill's real job in one sentence.
 2. Mark what must survive in `SKILL.md`: trigger wording, safety constraints, project-specific rules, resource routing, output contract, and one boundary example if needed.
-3. Split the rest into delete vs extract:
+3. Split the rest into delete vs extract. Bias toward bold deletes and tighter wording; restore only if step 5 fails:
    - Delete: history, rationale, duplicated examples, long reference summaries, generic advice, aspirational wording, and examples that do not change decisions.
    - Extract: useful context the model should not load on every run (long examples, pattern catalogs, deep references, edge-case tables). Move it to a sibling file and leave only a when-to-open link in `SKILL.md`.
 4. Re-read the smaller skill as if seeing it for the first time. Confirm linked files are opened only when the link's condition matches.
-5. Check outcome parity: for the skill's real job (step 1), walk 1–3 typical invocations and confirm the reduced skill still yields the same decisions, constraints, routing, and output contract as before. If parity breaks, restore the missing rule or tighten an extract link — do not ship a smaller skill that changes results.
+5. Check outcome parity: for the skill's real job (step 1), walk 1–3 typical invocations and confirm the reduced skill still yields the same decisions, constraints, routing, and output contract as before. If parity breaks, restore the missing rule or tighten an extract link — do not ship a smaller skill that changes results. Prefer mental walkthroughs; if a check creates temporary files or other side effects, revert them before finishing — leave no leftover artifacts from parity checks.
 6. Run the smallest validation available. If this skill's script is available, run `node scripts/validate-skill.js <skill_directory>`. For repo changes, also run required format/lint commands.
 
 ## Extract On Demand
