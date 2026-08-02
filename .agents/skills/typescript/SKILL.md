@@ -5,7 +5,7 @@ description: Applies project TypeScript conventions for naming, formatting, typi
 
 # Typescript
 
-Open and apply the reference files for the relevant section before working.
+Open and apply the reference files for the relevant section before working. Solid component structure, reactivity, and JSX conventions: solidjs skill (also triggers on Solid `.tsx` / `.ts`).
 
 ## Core Rules
 
