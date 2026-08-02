@@ -16,7 +16,7 @@ Remove only when all are true; otherwise skip and say why:
 
 1. Not the current worktree or the primary checkout
 2. Clean: `git -C <path> status --porcelain` empty
-3. HEAD is on a PR (open or merged): some PR `headRefOid` has HEAD as ancestor (`git merge-base --is-ancestor`)
+3. HEAD is on a PR (open, merged, or closed): some PR `headRefOid` has HEAD as ancestor (`git merge-base --is-ancestor`)
 
 Never use `git worktree remove --force` unless the user asks.
 
