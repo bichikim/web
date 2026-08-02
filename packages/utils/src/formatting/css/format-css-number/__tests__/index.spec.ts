@@ -34,4 +34,15 @@ describe('formatCssNumber', () => {
     expect(formatCssNumber(Number.POSITIVE_INFINITY)).toBeUndefined()
     expect(formatCssNumber(Number.NEGATIVE_INFINITY)).toBeUndefined()
   })
+
+  it.each([Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY, -1, 1.5, 309])(
+    'should return undefined for invalid decimal places %s',
+    (decimalPlaces) => {
+      expect(formatCssNumber(1, decimalPlaces)).toBeUndefined()
+    },
+  )
+
+  it('should return undefined when rounding overflows', () => {
+    expect(formatCssNumber(Number.MAX_VALUE, 3)).toBeUndefined()
+  })
 })
