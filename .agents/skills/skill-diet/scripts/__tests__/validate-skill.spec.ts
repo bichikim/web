@@ -1,4 +1,5 @@
 import {spawn} from 'node:child_process'
+import {once} from 'node:events'
 import {mkdtemp, rm, writeFile} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
@@ -71,31 +72,28 @@ async function createTempDirectory() {
 
 async function runValidator(skillDirectory?: string): Promise<CommandResult> {
   const args = skillDirectory ? [SCRIPT_PATH, skillDirectory] : [SCRIPT_PATH]
+  // AI_NOTE - Avoid stdio tuple overload (ChildProcessByStdio); its EventEmitter methods are missing under some @types/node resolutions.
+  const child = spawn(process.execPath, args)
+  let stdout = ''
+  let stderr = ''
 
-  return new Promise((resolve) => {
-    const child = spawn(process.execPath, args, {
-      stdio: ['ignore', 'pipe', 'pipe'],
-    })
-    let stdout = ''
-    let stderr = ''
+  child.stdin.end()
+  child.stdout.setEncoding('utf8')
+  child.stderr.setEncoding('utf8')
 
-    child.stdout.setEncoding('utf8')
-    child.stderr.setEncoding('utf8')
-
-    child.stdout.on('data', (chunk: string) => {
-      stdout += chunk
-    })
-
-    child.stderr.on('data', (chunk: string) => {
-      stderr += chunk
-    })
-
-    child.on('close', (code) => {
-      resolve({
-        code,
-        stderr,
-        stdout,
-      })
-    })
+  child.stdout.on('data', (chunk: string) => {
+    stdout += chunk
   })
+
+  child.stderr.on('data', (chunk: string) => {
+    stderr += chunk
+  })
+
+  const [code] = (await once(child, 'close')) as [number | null]
+
+  return {
+    code,
+    stderr,
+    stdout,
+  }
 }

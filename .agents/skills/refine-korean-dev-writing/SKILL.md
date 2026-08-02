@@ -1,43 +1,87 @@
 ---
 name: refine-korean-dev-writing
-description: Always use when Codex or an agent responds in Korean or writes, edits, summarizes, translates, or reviews Korean text. Refine Korean into natural, neutral, technically clear wording while preserving meaning; remove harsh tone, unclear slang, unnecessary transliteration, translationese, and ambiguous developer jargon. Applies to ordinary chat and developer-facing reviews, issues, PRs, commits, releases, incidents, docs, Slack messages, and UI copy.
+description: Write and refine Korean text in developer contexts — code comments, AIDEV-NOTE anchors, commit messages, PR descriptions, review replies, design docs, memory notes — so it reads as natural, grammatical Korean a native engineer would write, not as awkward literal translation, broken word order, or forced metaphor. Use whenever producing Korean prose for engineering work, and especially self-review Korean output before finalizing.
 ---
 
 # Refine Korean Dev Writing
 
-## Core Rule
+개발 맥락에서 쓰는 한국어를, **한국인 개발자가 실제로 쓸 법한 자연스럽고 문법에 맞는 문장**으로 만든다. 번역투·어순 오류·억지 비유를 걷어내는 것이 목적이다.
 
-Use this skill for every Korean response or Korean text output. Keep the user's meaning intact and make the Korean natural, neutral, concise, and technically clear.
+## 언제 쓰나
 
-Do not add a visible "refinement" section to ordinary answers. Apply the rules silently unless the user explicitly asks for sentence refinement or comparison.
+코드 주석, `AIDEV-NOTE`, 커밋 메시지, PR 본문·리뷰 답글, 설계 문서, 메모리 노트 등 **엔지니어링용 한국어 산문을 생성할 때.** 특히 출력 직전에 **스스로 검토(self-review)**하는 용도로 반드시 통과시킨다.
 
-## Rules
+## 핵심 원칙
 
-- Preserve facts, scope, severity, responsibility, uncertainty, numbers, dates, versions, file paths, identifiers, commands, logs, API names, and error messages.
-- Do not soften real failures: keep bug, regression, outage, incident, security risk, data loss, and ownership clear.
-- Do not add causes, intent, or solutions that the source text does not support.
-- Replace personal judgment with observable code or system behavior.
-- Replace aggressive or blaming tone with neutral, direct wording.
-- Turn accusatory questions into intent checks.
-- Replace unclear developer slang with specific behavior or state.
-- Replace unnecessary English transliteration when Korean is clearer.
-- Keep necessary technical terms, official product names, protocol names, code terms, and team-standard terms.
+**"이 문장을 한국인 시니어 개발자가 코드리뷰에 쓸까?"** 를 소리 내어 읽으며 자문한다. 어색하면 고친다.
 
-## Quick Mapping
+- 영어 구조를 그대로 옮기지 말고 **한국어 어순·조사로 다시 쓴다.**
+- 비유를 억지로 문법에 우겨넣지 않는다. 뜻이 먼저, 수사는 그다음.
+- 짧고 평이하게. 한 문장에 개념 하나.
 
-- 왜 이렇게 했나요? -> 이 구현 의도를 확인하고 싶습니다.
-- 핸들링 -> 처리
-- 컨펌 -> 확인 / 승인
-- 워딩 -> 표현 / 문구
-- 박았다 -> 추가했다 / 고정했다 / 하드코딩했다
-- 뻗었다 -> 응답하지 않는다 / 중단되었다
-- 터졌다 -> 실패했다 / 예외가 발생했다 / 장애가 발생했다
-- 이상하게 돈다 -> 의도와 다르게 동작한다
-- 갈아엎다 -> 구조를 크게 변경하다 / 다시 설계하다
-- 배선 -> 연결 / 연결 흐름 / 의존성 연결
+## 1. 어순·조사·서술어 (문법 붕괴 방지)
 
-## Output
+가장 흔한 실패는 서술어를 뒤에 억지로 붙여 비문을 만드는 것이다.
 
-For normal Korean replies, answer directly in the refined style.
+| ❌ 비문 | ✅ 자연스럽게 |
+| --- | --- |
+| CDN 뒤라 헤더가 깎여 못 통과 | CDN이 헤더를 제거해서 테스트가 통과하지 못한다 |
+| 이 값은 서버가 안 내려줘서 파싱 실패됨 | 서버가 이 값을 내려주지 않아 파싱에 실패한다 |
+| 캐시되면 stale 셸이 서빙 | 캐시되면 오래된 셸이 서빙된다 |
+| 재현할 입력이 없어 못 잡음 | 재현할 입력이 없어 잡지 못한다 |
 
-When the user asks to refine text, return only the refined sentence unless they ask for reasons, alternatives, or before/after comparison.
+규칙:
+- `못 통과`(X) → `통과하지 못한다`(O). 부정 `못/안`은 서술어를 완성해서 붙인다.
+- 서술어를 생략하려면 명사형으로 깔끔히 끝낸다: `…통과 실패`, `…파싱 불가`. 어중간하게 자르지 않는다.
+- 피동을 남발하지 않는다: `서빙`(명사만 덩그러니) → `서빙된다`.
+
+## 2. 번역투(translationese) 제거
+
+| ❌ 번역투 | ✅ 한국어답게 |
+| --- | --- |
+| ~에 대한 처리를 수행한다 | ~을 처리한다 |
+| 에러가 발생되어진다 | 에러가 발생한다 |
+| 이 함수는 X를 가진다 (has) | 이 함수에는 X가 있다 / 이 함수는 X를 받는다 |
+| ~하는 것이 가능하다 | ~할 수 있다 |
+| 위에서 언급된 바와 같이 | 앞서 말했듯이 / 위처럼 |
+| ~를 위하여 사용되어진다 | ~에 쓰인다 |
+| 그것은 ~임을 의미한다 | 즉 ~라는 뜻이다 |
+
+- 이중 피동(`되어진다`, `불려진다`) 금지 → `된다`, `불린다`.
+- 불필요한 `~에 대해/~에 관하여` 줄이기.
+- 무생물 주어 + `가지다(has)` 지양.
+
+## 3. 기술 용어 — 과잉 번역 금지
+
+이미 굳은 외래어는 그대로 둔다. 억지 순화가 오히려 어색하다.
+
+- 그대로: 헤더, 캐시, 파이프라인, 렌더, 마이그레이션, 커밋, 훅, 페이로드, 스캐폴드
+- 굳이 바꾸지 말 것: `헤더` → "머리말"(X), `캐시` → "임시저장"(X)
+- 단, 문장 연결은 한국어로: "cache-control 헤더가 **내려온다/붙는다/제거된다**"처럼 서술어는 한국어.
+- 영문 식별자·코드는 그대로: `no-store`, `E2E_NO_SERVER`, `window.env`.
+
+## 4. 문체(register) 일관성
+
+한 문서 안에서 어투를 섞지 않는다.
+
+- **코드 주석·`AIDEV-NOTE`·커밋 요약:** 음슴체/해라체로 간결하게. `…한다`, `…하지 않는다`, `…삭제 예정`.
+- **PR 본문·리뷰 답글:** 설명체(`합니다`/`~이다`) 중 하나로 통일. 한 글에서 `합니다`와 `한다`를 오가지 않는다.
+- 문장 끝을 통일: 목록 항목은 전부 명사형이나 전부 `~한다`로 맞춘다.
+
+## 5. 맥락별 요령
+
+- **주석/AIDEV-NOTE:** 짧은 한 줄. 배경 서사·묘비주석 금지. 비직관적 이유만 남긴다.
+- **커밋 메시지:** 제목은 명령형 요약(`[AI]` 태그 규칙 따르기), 본문은 *왜*를 설명. 한국어 본문도 어순 검토.
+- **PR 본문:** 표·불릿으로 구조화하되 각 항목의 서술어를 완성한다. `~함`, `~됨`을 섞지 말고 통일.
+- **리뷰 답글:** 단정과 근거를 분리. "A다. 근거는 B다." 영어 논문 어투(`~라는 점에서 주목할 만하다`) 지양.
+
+## 6. 마무리 체크리스트
+
+출력 전 이 4개를 통과시킨다.
+
+1. **소리 내어 읽어** 걸리는 데가 없는가? (걸리면 비문)
+2. 모든 서술어가 완성돼 있는가? (`못 X`, 명사 나열로 끊긴 곳 없나)
+3. 번역투(이중피동·`~에 대해`·무생물 has)가 없는가?
+4. 문체·문장끝이 문서 전체에서 일관적인가?
+
+하나라도 걸리면 그 문장만 다시 쓴다. 전체를 갈아엎지 말고 **걸린 문장만 국소 수정**한다.
