@@ -1,7 +1,7 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "globalDependencies": ["**/.env.*local"],
-  "globalPassThroughEnv": ["COREPACK_HOME"],
+  "globalPassThroughEnv": ["COREPACK_HOME", "pnpm_config_verify_deps_before_run"],
   "globalEnv": [
     "VITE_API_URL",
     "VITE_APP_URL",
@@ -13,28 +13,12 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "inputs": [
-        "src/**/*.tsx",
-        "src/**/*.ts",
-        "src/**/*.css",
-        "package.json",
-        "vite.config.*",
-        "tsconfig.*"
-      ],
-      "outputs": ["dist/**", "es-tone/**"],
-      "passThroughEnv": []
+      "inputs": ["$TURBO_DEFAULT$", "!.output/**"],
+      "outputs": ["dist/**", "es-tone/**", ".output/**"]
     },
     "prepare-build": {
       "dependsOn": ["^prepare-build"],
-      "inputs": [
-        "src/**/*.tsx",
-        "src/**/*.ts",
-        "src/**/*.css",
-        "package.json",
-        "vite.config.*",
-        "tsconfig.*",
-        ".env"
-      ],
+      "inputs": ["$TURBO_DEFAULT$", "!.output/**", ".env"],
       "outputs": ["dist/**", "es-tone/**", ".supabase/**"],
       "env": ["SUPABASE_PROJECT_ID"],
       "passThroughEnv": ["SUPABASE_ACCESS_TOKEN"]
@@ -45,11 +29,10 @@
     },
     "typecheck": {
       "dependsOn": ["^typecheck"],
-      "inputs": ["src/**/*.tsx", "src/**/*.ts", "package.json", "tsconfig.*"]
+      "inputs": ["$TURBO_DEFAULT$"]
     },
     "lint": {
-      "dependsOn": ["^lint"],
-      "inputs": ["src/**/*.tsx", "src/**/*.ts", "src/**/*.css", "package.json", "tsconfig.*"]
+      "inputs": ["$TURBO_DEFAULT$", "oxlint.config.*"]
     }
   }
 }
