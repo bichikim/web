@@ -2,8 +2,11 @@ import {isPromise} from 'src/core/predicates/is-promise'
 
 export type CallbackifyHandle<S> = (error: unknown, value?: S | undefined) => unknown
 
-export const callbackify = <S>(action: () => Promise<S> | S, handle: CallbackifyHandle<S>) => {
-  let result
+export const callbackify = <S>(
+  action: () => Promise<S> | S,
+  handle: CallbackifyHandle<S>,
+): Promise<void> | S | undefined => {
+  let result: Promise<S> | S
 
   try {
     result = action()
@@ -14,16 +17,21 @@ export const callbackify = <S>(action: () => Promise<S> | S, handle: Callbackify
   }
 
   if (isPromise(result)) {
-    return result
-      .then((data: any) => {
+    const promiseResult = result as Promise<S>
+
+    return promiseResult.then(
+      (data) => {
         handle(undefined, data)
-      })
-      .catch((error) => {
+      },
+      (error: unknown) => {
         handle(error)
-      })
+      },
+    )
   }
 
-  handle(undefined, result)
+  const syncResult = result as S
 
-  return result
+  handle(undefined, syncResult)
+
+  return syncResult
 }

@@ -1,17 +1,17 @@
 import type {Meta, StoryObj} from 'storybook-solidjs-vite'
 import {useContext} from 'solid-js'
-import {createUuid} from '@winter-love/utils'
+import {createMonotonicId} from '@winter-love/utils'
 import {fn} from 'storybook/test'
 import {SToastProvider} from './SToastProvider'
 import {createTimeout, ToastContext} from '@winter-love/solid-components'
 
-const uuid = createUuid()
+const generateId = createMonotonicId()
 
 const DemoContent = () => {
   const {setMessage} = useContext(ToastContext)
 
   const handleAddTimeout = () => {
-    const id = uuid()
+    const id = generateId()
 
     setMessage({
       actions: [
@@ -29,7 +29,7 @@ const DemoContent = () => {
   }
 
   const handleAddWait = () => {
-    const id = uuid()
+    const id = generateId()
 
     setMessage({
       clickToClose: true,
@@ -42,7 +42,7 @@ const DemoContent = () => {
   }
 
   const handleActions = () => {
-    const id = uuid()
+    const id = generateId()
 
     const setLoadingMessage = () => {
       setMessage({

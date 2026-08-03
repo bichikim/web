@@ -8,7 +8,7 @@ export const requestIdleCallbackPolyfill = (
   const {timeout} = options
   const start = Date.now()
   let didExecute = false
-  let timeoutId: any
+  let timeoutId: ReturnType<typeof setTimeout> | undefined
 
   if (timeout !== undefined) {
     timeoutId = setTimeout(() => {

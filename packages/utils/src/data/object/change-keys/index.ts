@@ -21,15 +21,18 @@ export const changeKeys = <T>(
     }) as any
   }
 
-  return Object.fromEntries(
-    Object.entries(value).map(([key, item]) => {
+  const entries = Reflect.ownKeys(value)
+    .filter((key) => Object.prototype.propertyIsEnumerable.call(value, key))
+    .map((key) => {
+      const item = Reflect.get(value, key)
       const newKey = transform(key)
 
       const newItem = typeof item === 'object' ? changeKeys(item, transform, deep - 1) : item
 
       return [newKey, newItem]
-    }),
-  ) as any
+    })
+
+  return Object.fromEntries(entries) as any
 }
 
 export interface ChangeKeysRight {

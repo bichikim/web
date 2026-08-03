@@ -1,11 +1,12 @@
 import {chunk, compact, last} from 'es-toolkit/array'
 import {freeze} from 'src/core/functions/freeze'
-import {toNumber} from 'src/formatting/number/to-number'
 
 const _numberNames = freeze(['0', '일', '이', '삼', '사', '오', '육', '칠', '팔', '구'])
 
 const _numberUnitNames = freeze(['', '만', '억', '조', '경', '해', '자', '양', '구', '간', '정'])
 const _smallNumberUnitNames = freeze(['', '십', '백', '천'])
+const INTEGER_REGEX = /^[+-]?\d+$/u
+const KOREAN_CHUNK_SIZE = 4
 
 export type NumberToKoreanMode = 'all' | 'unit-number' | 'number'
 
@@ -28,6 +29,42 @@ export interface NumberToKoreanOptions {
    * @default all
    */
   mode?: NumberToKoreanMode
+}
+
+interface NormalizedInteger {
+  readonly digits: string
+  readonly negative: boolean
+}
+
+const normalizeInteger = (value: unknown): NormalizedInteger | undefined => {
+  let text: string
+
+  if (typeof value === 'bigint') {
+    text = value.toString()
+  } else if (typeof value === 'number') {
+    if (!Number.isSafeInteger(value)) {
+      return undefined
+    }
+
+    text = String(value)
+  } else if (typeof value === 'string') {
+    text = value.trim()
+  } else {
+    return undefined
+  }
+
+  if (!INTEGER_REGEX.test(text)) {
+    return undefined
+  }
+
+  const negative = text.startsWith('-')
+  const unsignedText = /^[+-]/u.test(text) ? text.slice(1) : text
+  const digits = unsignedText.replace(/^0+(?=\d)/u, '')
+
+  return {
+    digits,
+    negative: negative && digits !== '0',
+  }
 }
 
 const removeUselessZero = (value: string[]): string[] => {
@@ -67,9 +104,6 @@ const addNumberUnit = (value: string[], index: number): string[] => {
 
   return value
 }
-const anyToStringArray = (value: unknown) => [...toNumber(value).toString()]
-const KoreanChunk = 4
-
 export const toKoreanNumberFn = ({
   mode = 'all',
   joinString = '',
@@ -77,10 +111,27 @@ export const toKoreanNumberFn = ({
   joinGroup = '',
 }: NumberToKoreanOptions = {}) => {
   return (value: unknown) => {
-    const numberStrings = anyToStringArray(value)
+    const normalizedInteger = normalizeInteger(value)
+
+    if (normalizedInteger === undefined) {
+      return ''
+    }
+
+    const {digits, negative} = normalizedInteger
+
+    if (digits === '0') {
+      return mode === 'all' ? '영' : '0'
+    }
+
+    const numberStrings = [...digits]
     const numberNames =
       mode === 'all' ? numberStrings.map((item) => _numberNames[Number(item)]) : numberStrings
-    const numberGroups = chunk(numberNames.reverse(), KoreanChunk)
+    const numberGroups = chunk(numberNames.reverse(), KOREAN_CHUNK_SIZE)
+
+    if (numberGroups.length > _numberUnitNames.length) {
+      return ''
+    }
+
     const smallUnitGroups =
       mode === 'number'
         ? numberGroups.map(removeUselessZero)
@@ -88,11 +139,17 @@ export const toKoreanNumberFn = ({
             addSmallNumberUnit(group, !firstOne || index < groups.length - 1),
           )
 
-    return smallUnitGroups
+    const result = smallUnitGroups
       .map(addNumberUnit)
       .map((group) => compact(group).reverse().join(joinString))
       .reverse()
       .join(joinGroup)
+
+    if (!negative) {
+      return result
+    }
+
+    return `${mode === 'all' ? '마이너스' : '-'}${result}`
   }
 }
 

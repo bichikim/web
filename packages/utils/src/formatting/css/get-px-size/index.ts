@@ -1,8 +1,8 @@
-const unitRegex = /^[+-]?(?:[0-9]{1,10})|(?:\.[0-9]{1,10})px$/u
+const unitRegex = /^[+-]?(?:\d+(?:\.\d+)?|\.\d+)(?:px)?$/u
 
 export const getPxSize = (size: number | string, failBakeValue = 0) => {
   if (typeof size === 'number') {
-    return size
+    return Number.isFinite(size) ? size : failBakeValue
   }
 
   let _size = size.trim()

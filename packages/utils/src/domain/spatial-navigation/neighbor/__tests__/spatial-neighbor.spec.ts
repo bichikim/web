@@ -255,6 +255,13 @@ describe('spatial-neighbor', () => {
       expect(selectBestDirectionalCandidate(from, 'right', targets)?.id).toBe('close')
     })
 
+    it('should keep an eligible candidate whose finite score is very low', () => {
+      const from = box(0, 0, 10, 10)
+      const farTarget = box(1_000_000, 0, 10, 10)
+
+      expect(selectBestDirectionalCandidate(from, 'right', [farTarget])).toBe(farTarget)
+    })
+
     it('should respect a custom angle limit from options', () => {
       const from = box(0, 0, 10, 10)
       const offset = box(20, 5, 10, 10)

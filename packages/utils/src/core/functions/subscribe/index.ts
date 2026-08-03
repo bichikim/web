@@ -1,4 +1,4 @@
-import {NotFunction} from 'src/core/types/shared'
+import {AnyFunction} from 'src/core/types/shared'
 
 export type UnsubscribeFunc<Value> = () => Value | undefined
 export type SubscribeCallback<Value> = (value: Value) => unknown
@@ -9,8 +9,8 @@ export interface Subscribe<Value> {
   update: (value: ((value: Value | undefined) => Value) | Value) => void
 }
 
-export const createSubscribe = <Value extends NotFunction>(
-  initValue: () => Value,
+export const createSubscribe = <Value>(
+  initValue: Value extends AnyFunction ? never : () => Value,
 ): Subscribe<Value> => {
   let _value: Value
   const _poll = new Set<(value: Value) => void>()
@@ -39,7 +39,14 @@ export const createSubscribe = <Value extends NotFunction>(
   }
 
   const update = (value: ((value: Value | undefined) => Value) | Value) => {
-    _value = typeof value === 'function' ? value(_value) : value
+    if (typeof value === 'function') {
+      const updateValue = value as (currentValue: Value | undefined) => Value
+
+      _value = updateValue(_value)
+    } else {
+      _value = value
+    }
+
     listener(_value)
   }
 

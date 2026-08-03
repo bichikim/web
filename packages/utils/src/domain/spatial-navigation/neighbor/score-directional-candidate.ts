@@ -4,8 +4,8 @@ import {type Box, defaultSpatialNeighborOptions, type Direction} from './types'
 const PRIMARY_DISTANCE_SCALE = 10_000
 const DISTRIBUTION_PENALTY = 0.1
 
-/** 후보 제외를 나타내는 점수. select 단계에서 이 값 이하 후보는 무시한다. */
-export const EXCLUDED_SCORE = -PRIMARY_DISTANCE_SCALE
+/** 후보 제외를 나타내는 점수. 유효한 유한 점수와 충돌하지 않는다. */
+export const EXCLUDED_SCORE = Number.NEGATIVE_INFINITY
 
 // AI_NOTE - Coong space-focus scoreAngleCandidate 휴리스틱을 x,y,w,h Box API로 이식.
 

@@ -2,17 +2,24 @@ import {toNumberOrUndefined} from 'src/formatting/number/to-number'
 import {curryReverse} from 'src/core/functions/curry'
 import {formatCssNumber} from 'src/formatting/css/format-css-number'
 const DEFAULT_DECIMAL_PLACES = 3
+const CSS_NUMBER_REGEX = /^[+-]?(?:\d+(?:\.\d+)?|\.\d+)(?:e[+-]?\d+)?$/iu
 
 const parseCssNumber = (value: unknown): number | undefined => {
   if (typeof value === 'number') {
     return value
   }
 
-  if (typeof value !== 'string' || value.trim() === '') {
+  if (typeof value !== 'string') {
     return undefined
   }
 
-  return toNumberOrUndefined(value)
+  const trimmedValue = value.trim()
+
+  if (!CSS_NUMBER_REGEX.test(trimmedValue)) {
+    return undefined
+  }
+
+  return toNumberOrUndefined(trimmedValue)
 }
 
 /**

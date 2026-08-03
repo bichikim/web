@@ -1,6 +1,6 @@
 import {createContext, type JSX, untrack, useContext} from 'solid-js'
 import {createFocusController, FocusController} from 'src/utils/focus-controller/focus-controller'
-import {createUuid} from '@winter-love/utils'
+import {createMonotonicId} from '@winter-love/utils'
 import {DelegatedEventContext, useDelegatedEmitHandler} from './DelegatedEvent'
 import {
   type DeepPosition,
@@ -64,12 +64,12 @@ export const FocusControllerContext = createContext<FocusControllerContextValue>
   createEmptyFocusController(),
 )
 
-const getUuid = createUuid()
+const generateId = createMonotonicId()
 
 export const FOCUS_CONTROLLER_CHANNEL = 'focus-controller'
 
 export const FocusControllerProvider = (props: FocusControllerProviderProps) => {
-  const id = untrack(() => props.id ?? `id${String(getUuid())}`)
+  const id = untrack(() => props.id ?? `id${String(generateId())}`)
   const globalMap = untrack(() => props.globalMap ?? false)
 
   const keyOptions = untrack(() => ({

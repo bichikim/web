@@ -10,7 +10,10 @@ export const toStringStyle = (
   }
 
   if (Array.isArray(target)) {
-    return target.join(';')
+    return target
+      .filter((style) => style.length > 0)
+      .map((style) => (style.trimEnd().endsWith(';') ? style : `${style};`))
+      .join('')
   }
 
   return Object.entries(target).reduce((result, [key, value]) => {

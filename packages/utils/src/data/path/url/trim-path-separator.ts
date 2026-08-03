@@ -1,5 +1,11 @@
 export const createDedupSeparatorRegExp = (separator: string = '/') => {
-  return RegExp(`[${separator}]+`, 'giu')
+  if (separator.length === 0) {
+    throw new RangeError('separator must not be empty')
+  }
+
+  const escapedSeparator = separator.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&')
+
+  return RegExp(`(?:${escapedSeparator})+`, 'gu')
 }
 const MAX_URL_LENGTH = 300
 

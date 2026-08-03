@@ -5,8 +5,8 @@ export type NullToUndefined<T> = T extends null ? undefined : T
  * @param value - 값
  * @returns not null T
  */
-export const toNotNull = <T>(value: any): NullToUndefined<T> => {
-  return value ?? undefined
+export const toNotNull = <T>(value: T): NullToUndefined<T> => {
+  return (value ?? undefined) as NullToUndefined<T>
 }
 
 /**

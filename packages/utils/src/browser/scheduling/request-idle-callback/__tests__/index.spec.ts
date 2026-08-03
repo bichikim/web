@@ -21,6 +21,16 @@ describe('requestIdleCallback', () => {
     expect(callback).toBeCalled()
   })
 
+  it('should allow cancellation when only requestIdleCallback is available', () => {
+    vi.mocked(getWindow).mockReturnValueOnce({
+      requestIdleCallback: vi.fn(() => 1),
+    } as any)
+
+    const cancel = requestIdleCallback(vi.fn())
+
+    expect(cancel).not.toThrow()
+  })
+
   it('should use polyfill when there is no requestIdleCallback', () => {
     const callback = vi.fn()
 

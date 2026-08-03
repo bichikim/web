@@ -2,11 +2,11 @@ import type {Meta, StoryObj} from 'storybook-solidjs-vite'
 import {ToastProvider} from './ToastProvider'
 import {useContext} from 'solid-js'
 import {createTimeout, ToastContext} from './context'
-import {createUuid} from '@winter-love/utils'
+import {createMonotonicId} from '@winter-love/utils'
 import {fn} from 'storybook/test'
 import {Toast} from './index'
 import {HButton} from '../button'
-const uuid = createUuid()
+const generateId = createMonotonicId()
 
 const meta = {
   component: ToastProvider,
@@ -29,7 +29,7 @@ const DemoContent = () => {
         },
       ],
       closeHook: createTimeout(3000),
-      id: uuid(),
+      id: generateId(),
       message: 'Show notification with timeout',
     })
   }
@@ -43,7 +43,7 @@ const DemoContent = () => {
           type: 'click',
         },
       ],
-      id: uuid(),
+      id: generateId(),
       message: 'Show notification close on action click',
     })
   }
@@ -51,7 +51,7 @@ const DemoContent = () => {
   const handleClickToClose = () => {
     setMessage({
       clickToClose: true,
-      id: uuid(),
+      id: generateId(),
       message: 'Show notification close on click',
     })
   }
@@ -79,7 +79,7 @@ const DemoContent = () => {
           type: 'click',
         },
       ],
-      id: uuid(),
+      id: generateId(),
       message: 'Show notification with actions',
     })
   }

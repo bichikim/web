@@ -14,6 +14,8 @@ export const requestIdleCallback = (
   const id = window.requestIdleCallback(callback, options)
 
   return () => {
-    window.cancelIdleCallback(id)
+    if (typeof window.cancelIdleCallback === 'function') {
+      window.cancelIdleCallback(id)
+    }
   }
 }

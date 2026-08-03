@@ -10,12 +10,6 @@ export interface ChannelFilter {
   pick?: (string | symbol)[]
 }
 
-const triggerEach = (listeners: Set<(event: Event) => void>, event: Event) => {
-  const promises = [...listeners.values()].map((listener) => listener(event))
-
-  return Promise.all(promises)
-}
-
 export const createEmitter = <Event>(options: EmitterOptions = {}) => {
   let started = false
   const {end, start} = options
@@ -94,11 +88,17 @@ export const createEmitter = <Event>(options: EmitterOptions = {}) => {
       listener: (event: Event) => void,
       channel: string | symbol = NONE_CHANNEL_KEY,
     ) => {
-      const _listeners = getChannel(channel)
+      const listeners = _channels.get(channel)
 
-      _listeners.delete(listener)
+      if (!listeners?.delete(listener)) {
+        return
+      }
 
-      if (_listeners.size === 0 && started) {
+      if (listeners.size === 0) {
+        _channels.delete(channel)
+      }
+
+      if (_channels.size === 0 && started) {
         end?.()
         started = false
       }

@@ -1,6 +1,6 @@
 import {expectType} from 'tsd'
 import {describe, it} from 'vitest'
-import {ArrayLength, ClassFunction, DropParameters} from '../'
+import {ArrayLength, ClassFunction, DropParameters, DropRightParametersFunction} from '../'
 
 describe('language', () => {
   describe('DropParameters', () => {
@@ -24,6 +24,15 @@ describe('language', () => {
       }
 
       expectType<2>(typeTest(foo))
+    })
+  })
+
+  describe('DropRightParametersFunction', () => {
+    it('should remove the last function parameter', () => {
+      type Source = (name: string, count: number) => boolean
+      type Result = DropRightParametersFunction<Source>
+
+      expectType<(name: string) => boolean>({} as Result)
     })
   })
 
