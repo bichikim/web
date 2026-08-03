@@ -1,5 +1,11 @@
 export const createTrimPathRegExp = (pathSeparator: string = '/') => {
-  return RegExp(`^[${pathSeparator}]+|[${pathSeparator}]+$`, 'giu')
+  if (pathSeparator.length === 0) {
+    throw new RangeError('pathSeparator must not be empty')
+  }
+
+  const escapedSeparator = pathSeparator.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&')
+
+  return RegExp(`^(?:${escapedSeparator})+|(?:${escapedSeparator})+$`, 'gu')
 }
 
 const MAX_URL_LENGTH = 300

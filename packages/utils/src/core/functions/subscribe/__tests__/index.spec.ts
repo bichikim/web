@@ -26,4 +26,17 @@ describe('createSubscribe', () => {
 
     expect(getSubscribeValue(eventSubscribe)).toBe('john')
   })
+
+  it('should support bigint values without treating them as updater functions', () => {
+    const eventSubscribe = createSubscribe(() => 1n)
+
+    eventSubscribe.update(2n)
+
+    expect(getSubscribeValue(eventSubscribe)).toBe(2n)
+  })
+
+  it('should reject function values at compile time', () => {
+    // @ts-expect-error Function values are ambiguous with the update callback contract.
+    createSubscribe(() => () => 'value')
+  })
 })

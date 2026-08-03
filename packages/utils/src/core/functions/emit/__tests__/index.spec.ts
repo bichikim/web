@@ -83,4 +83,30 @@ describe('createEmitter', () => {
     expect(callback1).toHaveBeenCalledTimes(3)
     expect(callback2).toHaveBeenCalledTimes(3)
   })
+
+  it('should end only after listeners from every channel are removed', () => {
+    const end = vi.fn()
+    const emitter = createEmitter({end})
+    const first = vi.fn()
+    const second = vi.fn()
+
+    emitter.addEventListener(first, 'first')
+    emitter.addEventListener(second, 'second')
+    emitter.removeEventListener(first, 'first')
+    expect(end).not.toHaveBeenCalled()
+
+    emitter.removeEventListener(second, 'second')
+    expect(end).toHaveBeenCalledTimes(1)
+  })
+
+  it('should ignore removal from an unknown channel', () => {
+    const end = vi.fn()
+    const emitter = createEmitter({end})
+    const listener = vi.fn()
+
+    emitter.addEventListener(listener, 'active')
+    emitter.removeEventListener(listener, 'missing')
+
+    expect(end).not.toHaveBeenCalled()
+  })
 })

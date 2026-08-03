@@ -147,7 +147,7 @@ export type DropParametersFunction<T extends (...args: any) => any> = AnyFunctio
 >
 
 export type DropRightParametersFunction<T extends (...args: any) => any> = AnyFunction<
-  DropParameters<T>,
+  DropRightParameters<T>,
   ReturnType<T>
 >
 

@@ -10,8 +10,8 @@ export interface ToQueryStringOptions {
   ) => number
 }
 
-export type EncodeQueryKey = (key?: string | undefined) => string
-export type EncodeQueryValue = (value: unknown) => string
+export type EncodeQueryKey = (key: string) => string
+export type EncodeQueryValue = (value: string | number | boolean) => string
 
 const TRIM_QUERY_REGEX = /^[?&]/u
 /**

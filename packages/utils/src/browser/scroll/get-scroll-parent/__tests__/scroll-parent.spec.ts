@@ -34,4 +34,13 @@ describe('getScrollParent', () => {
 
     expect(getScrollParent(childNotScroll)).toBe(window)
   })
+
+  it('should return window after traversing a connected non-scrollable tree', () => {
+    const child = document.createElement('div')
+
+    document.body.append(child)
+
+    expect(getScrollParent(child)).toBe(window)
+    child.remove()
+  })
 })

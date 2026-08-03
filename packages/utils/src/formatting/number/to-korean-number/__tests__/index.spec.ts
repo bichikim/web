@@ -73,4 +73,29 @@ describe('to-korean-number', () => {
 
     expect(result).toBe('7억6005만720')
   })
+
+  it('should format zero according to the selected mode', () => {
+    expect(toKoreanNumber(0)).toBe('영')
+    expect(toKoreanNumber('000', {mode: 'number'})).toBe('0')
+  })
+
+  it('should preserve exact integer strings beyond Number precision', () => {
+    expect(toKoreanNumber('9007199254740993', {mode: 'number'})).toBe('9007조1992억5474만993')
+  })
+
+  it('should preserve the sign for negative integers', () => {
+    expect(toKoreanNumber(-720)).toBe('마이너스칠백이십')
+    expect(toKoreanNumber(-720, {mode: 'number'})).toBe('-720')
+  })
+
+  it.each([undefined, null, true, 1.5, Number.POSITIVE_INFINITY, '1.5', 'not-a-number'])(
+    'should return an empty string for unsupported value %s',
+    (value) => {
+      expect(toKoreanNumber(value)).toBe('')
+    },
+  )
+
+  it('should return an empty string when the integer exceeds supported Korean units', () => {
+    expect(toKoreanNumber('1'.repeat(45))).toBe('')
+  })
 })

@@ -9,6 +9,7 @@ describe('getSize', () => {
 
   it('should return number size with number string', () => {
     expect(getPxSize('100')).toBe(100)
+    expect(getPxSize('12345678901')).toBe(12_345_678_901)
   })
 
   it('should return number size with ??px size string', () => {
@@ -30,4 +31,18 @@ describe('getSize', () => {
   it('should return failBakeValue with unknown size', () => {
     expect(getPxSize('  fa ', 10)).toBe(10)
   })
+
+  it.each(['100rem', '100px-extra', '100.1.2px', '1e2px'])(
+    'should reject malformed or unsupported size %s',
+    (size) => {
+      expect(getPxSize(size, 10)).toBe(10)
+    },
+  )
+
+  it.each([Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY])(
+    'should return the fallback for non-finite number %s',
+    (size) => {
+      expect(getPxSize(size, 10)).toBe(10)
+    },
+  )
 })

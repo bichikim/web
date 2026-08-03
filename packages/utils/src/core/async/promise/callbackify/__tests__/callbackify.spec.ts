@@ -40,4 +40,17 @@ describe('callbackify', () => {
     expect(callback).toHaveBeenCalled()
     expect(callback).toHaveBeenCalledWith(new Error('foo'))
   })
+
+  it('should not invoke the callback twice when the callback throws', async () => {
+    const callbackError = new Error('callback failed')
+    const callback = vi.fn(() => {
+      throw callbackError
+    })
+
+    const result = callbackify(() => Promise.resolve('foo'), callback)
+
+    await expect(result).rejects.toBe(callbackError)
+    expect(callback).toHaveBeenCalledTimes(1)
+    expect(callback).toHaveBeenCalledWith(undefined, 'foo')
+  })
 })

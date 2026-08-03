@@ -32,6 +32,13 @@ describe('addUnit', () => {
     expect(addUnit('1px', 'px')).toEqual('')
   })
 
+  it.each(['0x10', '0b10', '1_000', '1 0', '1.'])(
+    'should reject non-CSS numeric string %s',
+    (value) => {
+      expect(addUnit(value, 'px')).toBe('')
+    },
+  )
+
   it('should return empty string with object', () => {
     expect(addUnit({foo: 'foo'}, 'px')).toEqual('')
   })

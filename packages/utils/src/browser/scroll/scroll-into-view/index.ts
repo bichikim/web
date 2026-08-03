@@ -6,9 +6,18 @@ export type {StandardBehaviorOptions} from 'scroll-into-view-if-needed'
 
 export type ScrollIntoView = (target: Element, options?: StandardBehaviorOptions) => void
 
-const document = getDocument()
+export const scrollIntoView: ScrollIntoView = (target, options) => {
+  const document = getDocument()
 
-export const scrollIntoView: ScrollIntoView =
-  document && 'scrollBehavior' in document.documentElement.style
-    ? _scrollIntoView
-    : (smoothScrollIntoView as any)
+  if (document && 'scrollBehavior' in document.documentElement.style) {
+    _scrollIntoView(target, options)
+    return
+  }
+
+  if (options === undefined) {
+    smoothScrollIntoView(target)
+    return
+  }
+
+  smoothScrollIntoView(target, options)
+}

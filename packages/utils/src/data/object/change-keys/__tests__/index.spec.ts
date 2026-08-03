@@ -75,4 +75,13 @@ describe('change-keys', () => {
       },
     })
   })
+
+  it('should transform enumerable symbol keys', () => {
+    const sourceKey = Symbol('source')
+    const targetKey = Symbol('target')
+
+    expect(
+      changeKeys({[sourceKey]: 'value'}, (key) => (key === sourceKey ? targetKey : key)),
+    ).toEqual({[targetKey]: 'value'})
+  })
 })

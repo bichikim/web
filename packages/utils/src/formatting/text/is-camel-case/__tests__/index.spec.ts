@@ -8,6 +8,8 @@ describe('isCamelcase', () => {
     expect(isCamelCase('foo1ar')).toBe(true)
     expect(isCamelCase('fooB1ar')).toBe(true)
     expect(isCamelCase('foobar')).toBe(true)
+    expect(isCamelCase('a')).toBe(true)
+    expect(isCamelCase('foo1')).toBe(true)
   })
 
   it('should return false without camelcase string', () => {
@@ -17,5 +19,6 @@ describe('isCamelcase', () => {
     expect(isCamelCase('foo_1ar')).toBe(false)
     expect(isCamelCase('foo&1ar')).toBe(false)
     expect(isCamelCase('1fooBar')).toBe(false)
+    expect(isCamelCase(`${'a'.repeat(300)}-invalid`)).toBe(false)
   })
 })

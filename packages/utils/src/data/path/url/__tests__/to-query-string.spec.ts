@@ -42,4 +42,8 @@ describe('toQueryString', () => {
 
     expect(result).toBe('?bar=_bar&foo=_foo&john=_john')
   })
+
+  it('should return an empty string for an empty record', () => {
+    expect(toQueryString({})).toBe('')
+  })
 })

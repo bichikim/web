@@ -31,7 +31,11 @@ const trimQueryKey = (key: string) => {
 /**
  * @deprecated
  */
-export const decodeQueryItem = (key: string, value: string, options: ToQueryRecodeOptions = {}) => {
+export const decodeQueryItem = (
+  key: string,
+  value: string = '',
+  options: ToQueryRecodeOptions = {},
+) => {
   const {decodeKey = decodeQueryKey, decodeValue = decodeQueryValue} = options
 
   return [decodeKey(trimQueryKey(key)), decodeValue(value)]
@@ -43,10 +47,20 @@ export const decodeQueryItem = (key: string, value: string, options: ToQueryReco
 export const toQueryRecord = (query: string, options?: ToQueryRecodeOptions) => {
   const trimmedQuery: string = query.replace(/^\?/u, '')
 
+  if (trimmedQuery === '') {
+    return {}
+  }
+
   const entries = trimmedQuery
     .split('&')
     .map((item: string) => {
-      return item.split('=', 2)
+      const separatorIndex = item.indexOf('=')
+
+      if (separatorIndex === -1) {
+        return [item, '']
+      }
+
+      return [item.slice(0, separatorIndex), item.slice(separatorIndex + 1)]
     })
     .map(([key, value]) => decodeQueryItem(key, value, options))
 

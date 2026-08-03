@@ -1,5 +1,5 @@
 import {toUndefined} from '../'
-import {describe, expect, it} from 'vitest'
+import {describe, expect, expectTypeOf, it} from 'vitest'
 
 describe('to-undefined', () => {
   it('should return undefined with null', () => {
@@ -18,5 +18,6 @@ describe('to-undefined', () => {
     const result = toUndefined(555)
 
     expect(result).toBe(555)
+    expectTypeOf(result).toEqualTypeOf<number>()
   })
 })

@@ -26,4 +26,24 @@ describe('promisify', () => {
 
     return expect(runner(1)).rejects.toEqual(2)
   })
+
+  it('should preserve the receiver when promisifying a method', () => {
+    const source = {
+      offset: 2,
+      run(this: {offset: number}, count: number, callback: (error: null, data: number) => void) {
+        callback(null, this.offset + count)
+      },
+    }
+    const runner = promisify(source.run)
+
+    return expect(runner.call(source, 3)).resolves.toBe(5)
+  })
+
+  it('should reject any explicitly provided non-null error value', () => {
+    const runner = promisify((callback: (error: false, data?: string) => void) => {
+      callback(false)
+    })
+
+    return expect(runner()).rejects.toBe(false)
+  })
 })

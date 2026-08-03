@@ -8,6 +8,8 @@ describe('isPascalCase', () => {
     expect(isPascalCase('Foo1ar')).toBe(true)
     expect(isPascalCase('FooB1ar')).toBe(true)
     expect(isPascalCase('Foobar')).toBe(true)
+    expect(isPascalCase('A')).toBe(true)
+    expect(isPascalCase('Foo1')).toBe(true)
   })
 
   it('should return false with pascal case string', () => {
@@ -17,5 +19,6 @@ describe('isPascalCase', () => {
     expect(isPascalCase('Foo_1ar')).toBe(false)
     expect(isPascalCase('Foo&1ar')).toBe(false)
     expect(isPascalCase('1fooBar')).toBe(false)
+    expect(isPascalCase(`F${'a'.repeat(299)}-invalid`)).toBe(false)
   })
 })
