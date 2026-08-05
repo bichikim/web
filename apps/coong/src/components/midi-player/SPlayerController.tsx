@@ -128,7 +128,7 @@ export const SPlayerController = (props: SPlayerControllerProps) => {
         <SPlayerButton
           class="min-w-11"
           onClick={handlePlayOrPause}
-          title={isPlayingButton() ? 'play' : 'pause'}
+          title={isPlayingButton() ? 'pause' : 'play'}
         >
           <span class={playStyle({isPlaying: isPlayingButton()})} />
         </SPlayerButton>

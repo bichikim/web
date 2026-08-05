@@ -13,7 +13,27 @@ export interface DoubleClickPayload {
 
 export const useDoubleClick = (payload: Accessor<DoubleClickPayload>) => {
   let clickTime = 0
+  let pendingCount = 0
   let touchdown = false
+
+  const runHandler = async (
+    handler: (event: MouseEvent | TouchEvent) => void,
+    event: MouseEvent | TouchEvent,
+    onLoading: (value: boolean) => void,
+  ) => {
+    pendingCount += 1
+    onLoading(true)
+
+    try {
+      await handler(event)
+    } finally {
+      pendingCount -= 1
+
+      if (pendingCount === 0) {
+        onLoading(false)
+      }
+    }
+  }
 
   const handleClick: (
     event: MouseEvent | TouchEvent,
@@ -36,9 +56,7 @@ export const useDoubleClick = (payload: Accessor<DoubleClickPayload>) => {
       const nextClickTime = Date.now()
 
       if (nextClickTime - clickTime < doubleClickGap) {
-        onLoading(true)
-        await onDoubleClick(event)
-        onLoading(false)
+        await runHandler(onDoubleClick, event, onLoading)
 
         return
       }
@@ -47,9 +65,7 @@ export const useDoubleClick = (payload: Accessor<DoubleClickPayload>) => {
     }
 
     if (onClick) {
-      onLoading(true)
-      await onClick(event)
-      onLoading(false)
+      await runHandler(onClick, event, onLoading)
     }
   }
 

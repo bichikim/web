@@ -179,6 +179,10 @@ export const matchWorkspace = (
  * @returns Resolved path if a prefix matched, otherwise `source` unchanged.
  */
 export const getAliasId = (source: string, alias: [RegExp, string][] = []) => {
+  return matchAliasId(source, alias) ?? source
+}
+
+const matchAliasId = (source: string, alias: [RegExp, string][] = []): string | undefined => {
   for (const [key, value] of alias) {
     const path = source.replace(key, '')
 
@@ -186,8 +190,6 @@ export const getAliasId = (source: string, alias: [RegExp, string][] = []) => {
       return `${value}${path}`
     }
   }
-
-  return source
 }
 
 /**
@@ -203,7 +205,7 @@ const escapeRegex = (literal: string): string =>
  * @returns RegExp matching `^${path}`.
  */
 export const normalizeAliasKey = (path: string) => {
-  return new RegExp(`^${escapeRegex(path)}`, 'u')
+  return new RegExp(`^${escapeRegex(path)}(?=/|$)`, 'u')
 }
 
 /**
@@ -295,11 +297,13 @@ export const createAlias = (options: ResolveIdOptions): Plugin => {
       }
 
       const targetAlias = _alias[importerInfo.relativeWorkspaceRoot] ?? _alias['/DEFAULT/']
+      const aliasId = matchAliasId(source, targetAlias)
 
-      const updatedId = denormalizePath(
-        `${importerInfo.workspaceRoot}/${getAliasId(source, targetAlias)}`,
-        separator,
-      )
+      if (aliasId === undefined) {
+        return null
+      }
+
+      const updatedId = denormalizePath(`${importerInfo.workspaceRoot}/${aliasId}`, separator)
 
       return this.resolve(updatedId, importer, {skipSelf: true, ...resolveOptions}).then(
         (resolved) => {

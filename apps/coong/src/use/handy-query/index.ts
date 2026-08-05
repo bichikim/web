@@ -66,6 +66,7 @@ export const withHandyQuery = <T extends (...args: any) => any>(query: CachedFun
   ): HandyQueryResult<TData> {
     // no args case
     const [pending, setPending] = createSignal(false)
+    let pendingCount = 0
 
     const {args, options: _options} = getParams(argsOrOptions, options)
 
@@ -76,18 +77,20 @@ export const withHandyQuery = <T extends (...args: any) => any>(query: CachedFun
       async () => {
         const args = toArray(argsAccessor())
 
+        pendingCount += 1
         setPending(true)
 
-        const result = await query(...args)
-
-        setPending(false)
-
-        return result
+        try {
+          return await query(...args)
+        } finally {
+          pendingCount -= 1
+          setPending(pendingCount > 0)
+        }
       },
       {
         deferStream: _options?.deferStream,
         initialValue: _options?.initialValue,
-        name: options?.name as any,
+        name: _options?.name as any,
       },
     )
 

@@ -4,6 +4,14 @@ import {TRUSTED_ORIGINS} from 'src/middleware/consts'
 
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS', 'TRACE'])
 
+const parseUrlHeader = (value: string): URL | undefined => {
+  try {
+    return new URL(value)
+  } catch {
+    return undefined
+  }
+}
+
 /**
  * CSRF middleware to protect against CSRF attacks.
  * @see https://docs.solidjs.com/solid-start/guides/security#csrf-cross-site-request-forgery
@@ -24,11 +32,11 @@ export const csrfMiddleware = createMiddlewareFragment({
 
     // If we have an Origin header, check it against our allowlist.
     if (origin) {
-      const parsedOrigin = new URL(origin)
+      const parsedOrigin = parseUrlHeader(origin)
 
       if (
-        parsedOrigin.origin === requestUrl.origin ||
-        TRUSTED_ORIGINS.includes(parsedOrigin.origin)
+        parsedOrigin &&
+        (parsedOrigin.origin === requestUrl.origin || TRUSTED_ORIGINS.includes(parsedOrigin.origin))
       ) {
         return
       }
@@ -46,9 +54,9 @@ export const csrfMiddleware = createMiddlewareFragment({
         return json({error: 'Unauthorized'}, {status: 403})
       }
 
-      const parsedReferer = new URL(referer)
+      const parsedReferer = parseUrlHeader(referer)
 
-      if (parsedReferer.protocol !== 'https:') {
+      if (!parsedReferer || parsedReferer.protocol !== 'https:') {
         return json({error: 'Unauthorized'}, {status: 403})
       }
 

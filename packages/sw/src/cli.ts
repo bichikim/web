@@ -24,8 +24,14 @@ const cacheMaxAgeOption = new Option(
   '--cache-max-age <seconds>',
   'Cache max age in seconds',
 ).argParser(Number)
-const cacheStrategiesOption = new Option('--cache-strategies <json>', 'Cache strategy config JSON')
-const cachePrioritiesOption = new Option('--cache-priorities <json>', 'Cache priority config JSON')
+const cacheStrategiesOption = new Option(
+  '--cache-strategies <json>',
+  'Cache strategy config JSON',
+).argParser(parseCacheStrategiesArgument)
+const cachePrioritiesOption = new Option(
+  '--cache-priorities <json>',
+  'Cache priority config JSON',
+).argParser(parseCachePrioritiesArgument)
 const logLevelOption = new Option(
   '--log-level <level>',
   'Log level (debug, info, warn, error, silent)',
@@ -102,13 +108,13 @@ const loadEnvFiles = async (cwd: string, mode: string) => {
     .map((filename) => path.join(cwd, filename))
     .filter((filePath) => fs.existsSync(filePath))
 
-  await Promise.all(
-    existingFiles.map(async (filePath) => {
-      const content = await fs.promises.readFile(filePath, 'utf8')
-
-      Object.assign(env, parseEnvFile(content))
-    }),
+  const contents = await Promise.all(
+    existingFiles.map((filePath) => fs.promises.readFile(filePath, 'utf8')),
   )
+
+  for (const content of contents) {
+    Object.assign(env, parseEnvFile(content))
+  }
 
   return env
 }
@@ -155,6 +161,14 @@ const validateCachePriorities = (value: CachePriorityConfig): CachePriorityConfi
   }
 
   return value
+}
+
+function parseCacheStrategiesArgument(value: string): CacheStrategyConfig {
+  return validateCacheStrategies(parseJsonOption(value, '--cache-strategies'))
+}
+
+function parseCachePrioritiesArgument(value: string): CachePriorityConfig {
+  return validateCachePriorities(parseJsonOption(value, '--cache-priorities'))
 }
 
 const resolveNumber = (value: unknown, label: string): number | undefined => {

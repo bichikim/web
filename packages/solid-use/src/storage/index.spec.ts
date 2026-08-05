@@ -105,6 +105,79 @@ describe('useStorage local', () => {
     dispose()
   })
 
+  it.each([false, 0, ''])('should enforce and persist the falsy value %j', (enforceValue) => {
+    const key = 'key'
+
+    vi.mocked(getAnyStorageItem).mockReturnValueOnce('stored-value')
+
+    const {dispose, value} = createRoot((dispose) => {
+      const [value] = useStorage('local', key, {enforceValue})
+
+      return {dispose, value}
+    })
+
+    expect(value()).toBe(enforceValue)
+    expect(setAnyStorageItem).toHaveBeenCalledWith(
+      'local',
+      key,
+      enforceValue,
+      expect.objectContaining({enforceValue}),
+    )
+    dispose()
+  })
+
+  it('should persist an enforced value when storage becomes active', () => {
+    const {dispose, setActive, value} = createRoot((dispose) => {
+      const [active, setActive] = createSignal(false)
+      const [value] = useStorage('local', 'key', {active, enforceValue: false})
+
+      return {dispose, setActive, value}
+    })
+
+    expect(value()).toBe(false)
+    expect(setAnyStorageItem).not.toHaveBeenCalled()
+
+    setActive(true)
+
+    expect(setAnyStorageItem).toHaveBeenCalledWith(
+      'local',
+      'key',
+      false,
+      expect.objectContaining({enforceValue: false}),
+    )
+    dispose()
+  })
+
+  it('should rehydrate when a reactive key changes and persist to the new key', () => {
+    vi.mocked(getAnyStorageItem)
+      .mockReturnValueOnce('first-value')
+      .mockReturnValueOnce('second-value')
+
+    const {dispose, setKey, setValue, value} = createRoot((dispose) => {
+      const [key, setKey] = createSignal('first-key')
+      const [value, setValue] = useStorage('local', key)
+
+      return {dispose, setKey, setValue, value}
+    })
+
+    expect(value()).toBe('first-value')
+
+    setKey('second-key')
+
+    expect(getAnyStorageItem).toHaveBeenLastCalledWith('local', 'second-key', null)
+    expect(value()).toBe('second-value')
+
+    setValue('updated-second-value')
+
+    expect(setAnyStorageItem).toHaveBeenLastCalledWith(
+      'local',
+      'second-key',
+      'updated-second-value',
+      {},
+    )
+    dispose()
+  })
+
   it('should skip localStorage read on mount when active is false', () => {
     const key = 'key'
     const initValue: string[] = []

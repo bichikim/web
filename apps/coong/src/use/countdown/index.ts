@@ -8,17 +8,30 @@ export const useCountdown = (
 ) => {
   const [startTime, setStartTime] = createSignal(0)
   const [count, setCount] = createSignal(wait)
+  let completed = false
 
   const interval = useAnimationFrame(() => {
-    setCount(wait - (Date.now() - startTime()))
-
-    if (count() <= 0) {
-      setCount(0)
-      callback()
+    if (completed) {
+      return
     }
+
+    const remaining = wait - (Date.now() - startTime())
+
+    if (remaining <= 0) {
+      completed = true
+      setCount(0)
+      interval.stop()
+      callback()
+
+      return
+    }
+
+    setCount(remaining)
   }, options)
 
   const start = () => {
+    completed = false
+    setCount(wait)
     setStartTime(Date.now())
     interval.start()
   }

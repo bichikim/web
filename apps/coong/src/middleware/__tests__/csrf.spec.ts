@@ -54,4 +54,19 @@ describe('csrfMiddleware', () => {
 
     expect(response?.status).toBe(403)
   })
+
+  it.each([
+    {header: 'Origin', value: 'null'},
+    {header: 'Origin', value: 'not-a-url'},
+    {header: 'Referer', value: 'not-a-url'},
+  ])('should reject a malformed $header header', async ({header, value}) => {
+    const request = new Request('https://coong.example/api/profile', {
+      headers: {[header]: value},
+      method: 'POST',
+    })
+
+    const response = await runCsrfMiddleware(request)
+
+    expect(response?.status).toBe(403)
+  })
 })

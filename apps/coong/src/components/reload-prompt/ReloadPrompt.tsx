@@ -37,7 +37,7 @@ export const ReloadPrompt = (props: ReloadPromptProps) => {
             type: 'click',
           },
         ],
-        closeHook: async (close) => {
+        closeHook: (close) => {
           close()
         },
         id,

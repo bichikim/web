@@ -59,41 +59,84 @@ export const useStorage: UseStorage = (
 ): StorageReturn<any> => {
   const {mounted, enforceValue, initValue = null, active = true} = options
   const keyAccessor = resolveAccessor(key)
-  const beforeValue = mounted ? null : getAnyStorageItem(kind, keyAccessor(), initValue)
+  const initialKey = keyAccessor()
+  const beforeValue = mounted ? null : getAnyStorageItem(kind, initialKey, initValue)
   const [value, _setValue] = createSignal(beforeValue)
   const activeAccessor = resolveAccessor(active)
+  const hasEnforcedValue = Object.hasOwn(options, 'enforceValue')
   let isMounted = false
   let wasActive = false
   let dirtyWhileInactive = false
+  let currentKey = initialKey
 
   onMount(() => {
-    if (enforceValue) {
-      setValue(enforceValue)
+    const isActive = activeAccessor()
+    currentKey = keyAccessor()
+
+    if (hasEnforcedValue) {
+      _setValue(() => enforceValue)
+
+      if (isActive) {
+        setAnyStorageItem(kind, currentKey, enforceValue, options)
+      }
     } else if (mounted && activeAccessor()) {
       // once
-      setValue(() => getAnyStorageItem(kind, keyAccessor(), initValue))
+      _setValue(() => getAnyStorageItem(kind, currentKey, initValue))
     } else if (mounted) {
-      setValue(initValue)
+      _setValue(() => initValue)
     }
 
-    wasActive = activeAccessor()
+    wasActive = isActive
     isMounted = true
   })
 
   // AI_NOTE - re-hydrate when active flips true after mount unless value changed while inactive
   createEffect(() => {
     const isActive = activeAccessor()
+    const nextKey = keyAccessor()
 
-    if (!isMounted || enforceValue) {
+    if (!isMounted) {
+      return
+    }
+
+    if (nextKey !== currentKey) {
+      currentKey = nextKey
+      dirtyWhileInactive = false
+
+      if (hasEnforcedValue) {
+        _setValue(() => enforceValue)
+
+        if (isActive) {
+          setAnyStorageItem(kind, currentKey, enforceValue, options)
+        }
+      } else if (isActive) {
+        _setValue(() => getAnyStorageItem(kind, currentKey, initValue))
+      } else {
+        _setValue(() => initValue)
+      }
+
+      wasActive = isActive
+
+      return
+    }
+
+    if (hasEnforcedValue) {
+      if (isActive && !wasActive) {
+        _setValue(() => enforceValue)
+        setAnyStorageItem(kind, currentKey, enforceValue, options)
+      }
+
+      wasActive = isActive
+
       return
     }
 
     if (isActive && !wasActive && mounted) {
       if (dirtyWhileInactive) {
-        setAnyStorageItem(kind, keyAccessor(), value(), options)
+        setAnyStorageItem(kind, currentKey, value(), options)
         dirtyWhileInactive = false
       } else {
-        _setValue(() => getAnyStorageItem(kind, keyAccessor(), initValue))
+        _setValue(() => getAnyStorageItem(kind, currentKey, initValue))
       }
     }
 
@@ -104,7 +147,7 @@ export const useStorage: UseStorage = (
     const result = _setValue(_value)
 
     if (isMounted && activeAccessor()) {
-      setAnyStorageItem(kind, keyAccessor(), value(), options)
+      setAnyStorageItem(kind, currentKey, value(), options)
     } else if (isMounted) {
       dirtyWhileInactive = true
     }

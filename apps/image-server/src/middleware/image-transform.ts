@@ -88,63 +88,67 @@ export const imageTransform = (options: ImageTransformOptions = {}): RequestHand
   const {maxSize = MAX_SIZE} = options
 
   return async (req, res, next) => {
-    const {query} = req
-    const {w, h, c, q} = query
+    try {
+      const {query} = req
+      const {w, h, c, q} = query
 
-    const formatReqContext = formatContext.use(req)
+      const formatReqContext = formatContext.use(req)
 
-    const options = plainToInstance(ImageTransform, {
-      crop: query.crop ?? c,
-      format: formatReqContext,
-      height: query.height ?? h,
-      quality: query.quality ?? q,
-      width: query.width ?? w,
-    })
-
-    const validationErrors = await validate(options)
-
-    if (validationErrors.length > 0) {
-      res.status(HTTP_STATUS_BAD_REQUEST).json({
-        errors: validationErrors,
-        message: 'Invalid image transform parameters',
+      const options = plainToInstance(ImageTransform, {
+        crop: query.crop ?? c,
+        format: formatReqContext,
+        height: query.height ?? h,
+        quality: query.quality ?? q,
+        width: query.width ?? w,
       })
 
-      return
-    }
-    const {height, width, crop, position, quality, format} = options
+      const validationErrors = await validate(options)
 
-    const image = imageContext.use(req)
+      if (validationErrors.length > 0) {
+        res.status(HTTP_STATUS_BAD_REQUEST).json({
+          errors: validationErrors,
+          message: 'Invalid image transform parameters',
+        })
 
-    if (!image) {
-      return next()
-    }
+        return
+      }
+      const {height, width, crop, position, quality, format} = options
 
-    const transformer = sharp(image).rotate()
+      const image = imageContext.use(req)
 
-    if (crop && width) {
-      const size = getCropSize(width, maxSize, height)
+      if (!image) {
+        return next()
+      }
 
-      transformer.resize(size.width, size.height, {
-        fit: crop,
-        position: position,
+      const transformer = sharp(image).rotate()
+
+      if (crop && width) {
+        const size = getCropSize(width, maxSize, height)
+
+        transformer.resize(size.width, size.height, {
+          fit: crop,
+          position: position,
+        })
+      } else {
+        const clamped = clampSize(width, height, maxSize)
+        const clampedWidth = clamped.width > 0 ? clamped.width : undefined
+        const clampedHeight = clamped.height > 0 ? clamped.height : undefined
+
+        transformer.resize(clampedWidth, clampedHeight, {
+          fit: 'inside',
+          withoutEnlargement: true,
+        })
+      }
+
+      const transformedImage = await transformer.toFormat(format, {quality}).toBuffer()
+
+      imageTransformContext.provide(req, {
+        format,
+        image: transformedImage,
       })
-    } else {
-      const clamped = clampSize(width, height, maxSize)
-      const clampedWidth = clamped.width > 0 ? clamped.width : undefined
-      const clampedHeight = clamped.height > 0 ? clamped.height : undefined
-
-      transformer.resize(clampedWidth, clampedHeight, {
-        fit: 'inside',
-        withoutEnlargement: true,
-      })
+      next()
+    } catch (error) {
+      next(error)
     }
-
-    const transformedImage = await transformer.toFormat(format, {quality}).toBuffer()
-
-    imageTransformContext.provide(req, {
-      format,
-      image: transformedImage,
-    })
-    next()
   }
 }

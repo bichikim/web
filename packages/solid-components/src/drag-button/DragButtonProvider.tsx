@@ -35,7 +35,7 @@ const getExecutePosition = (
 
   if (y > 0 && !allowTop) {
     y = 0
-  } else if (y < 0 && allowBottom) {
+  } else if (y < 0 && !allowBottom) {
     y = 0
   }
 
@@ -80,7 +80,7 @@ export const DragButtonProvider = (props: DragButtonProviderProps) => {
     } else if (x < _dragExecuteSize * -1) {
       handleRightExecute()
     } else {
-      handleClick(event)
+      handleClick(event, data)
     }
   }
 
@@ -91,9 +91,9 @@ export const DragButtonProvider = (props: DragButtonProviderProps) => {
     onEnd: handleEnd,
   }))
 
-  const handleClick = (event: MouseEvent | TouchEvent) => {
-    const dragX = Math.abs(dragPosition().x)
-    const dragY = Math.abs(dragPosition().y)
+  const handleClick = (event: MouseEvent | TouchEvent, position: Position = dragPosition()) => {
+    const dragX = Math.abs(position.x)
+    const dragY = Math.abs(position.y)
 
     if (dragX < innerProps.clickAllowMoveSize && dragY < innerProps.clickAllowMoveSize) {
       innerProps.onClick?.(event)

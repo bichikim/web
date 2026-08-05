@@ -34,6 +34,17 @@ const findTouch = (list: TouchList, identifier: number) => {
 
 const DEFAULT_DRAG_END_SIZE = 50
 
+const clampDragPosition = (current: Position | undefined, dragEndSize: number): Position => {
+  if (!dragEndSize) {
+    return {x: 0, y: 0}
+  }
+
+  return {
+    x: Math.max(-dragEndSize, Math.min(current?.x ?? 0, dragEndSize)),
+    y: Math.max(-dragEndSize, Math.min(current?.y ?? 0, dragEndSize)),
+  }
+}
+
 export const useDrag = (
   props: MaybeAccessor<DragProps>,
 ): readonly [Accessor<Position>, UseDragActions] => {
@@ -41,30 +52,9 @@ export const useDrag = (
   const [drag, setDrag] = createSignal<DragData>({started: {identifier: -1, x: 0, y: 0}})
 
   const position = createMemo((): Position => {
-    const {current} = drag()
-    let x = current?.x ?? 0
-    let y = current?.y ?? 0
-
     const {dragEndSize = DEFAULT_DRAG_END_SIZE} = innerProps()
 
-    if (!dragEndSize) {
-      return {x: 0, y: 0}
-    }
-
-    if (dragEndSize < x) {
-      x = dragEndSize
-    } else if (x < dragEndSize * -1) {
-      x = dragEndSize * -1
-    }
-
-    if (dragEndSize < y) {
-      y = dragEndSize
-    } else if (y < dragEndSize * -1) {
-      y = dragEndSize * -1
-    }
-
-    // console.log(x, y)
-    return {x, y}
+    return clampDragPosition(drag().current, dragEndSize)
   })
 
   const identifier = createMemo(() => drag().started.identifier)
@@ -89,6 +79,10 @@ export const useDrag = (
       innerProps().onEnd?.(event, data)
     }
 
+    handleCancel()
+  }
+
+  const handleCancel = () => {
     setDrag({
       current: undefined,
       started: {identifier: -1, x: 0, y: 0},
@@ -209,9 +203,12 @@ export const useDrag = (
   }
 
   useEvent(globalElement, 'touchend', handleTouchEnd)
+  useEvent(globalElement, 'touchcancel', handleCancel)
   useEvent(globalElement, 'touchmove', handleTouchMove)
   useEvent(globalElement, 'pointerup', handlePointerUp)
+  useEvent(globalElement, 'pointercancel', handleCancel)
   useEvent(globalElement, 'mousemove', handleMouseMove)
+  useEvent(globalElement, 'blur', handleCancel)
 
   return freeze([
     position,

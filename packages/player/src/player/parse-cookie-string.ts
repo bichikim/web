@@ -7,12 +7,10 @@ export const parseCookieString = (cookieString: string): [string, string][] => {
     return []
   }
 
-  const cookieArray = cookieString.split(';')
-
-  // foreach cookieArray split by '=' and trim and return key value array
-  return cookieArray.map((item) => {
-    const key = item.split('=')[0].trim()
-    const value = item.split('=')[1]?.trim() ?? ''
+  return cookieString.split(';').map((item) => {
+    const separatorIndex = item.indexOf('=')
+    const key = (separatorIndex === -1 ? item : item.slice(0, separatorIndex)).trim()
+    const value = (separatorIndex === -1 ? '' : item.slice(separatorIndex + 1)).trim()
 
     return [key, value]
   })

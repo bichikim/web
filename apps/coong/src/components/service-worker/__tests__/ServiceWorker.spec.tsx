@@ -58,21 +58,28 @@ const createMockRegistration = (): MockRegistration => {
   return registration
 }
 
-const createMockWindow = (register: ServiceWorkerContainer['register']): Window =>
-  ({
-    navigator: {
-      serviceWorker: {
-        register,
-      },
-    },
-  }) as unknown as Window
-
 const createMockServiceWorker = () => {
   const register = vi.fn<(path: string) => Promise<ServiceWorkerRegistration>>()
+  const listeners = new Map<string, Set<EventListener>>()
+  const serviceWorker = {
+    addEventListener: vi.fn((type: string, listener: EventListener) => {
+      const eventListeners = listeners.get(type) ?? new Set<EventListener>()
 
-  vi.mocked(getWindow).mockReturnValue(createMockWindow(register))
+      eventListeners.add(listener)
+      listeners.set(type, eventListeners)
+    }),
+    emit(type: string) {
+      listeners.get(type)?.forEach((listener) => listener(new Event(type)))
+    },
+    register,
+    removeEventListener: vi.fn((type: string, listener: EventListener) => {
+      listeners.get(type)?.delete(listener)
+    }),
+  }
 
-  return register
+  vi.mocked(getWindow).mockReturnValue({navigator: {serviceWorker}} as unknown as Window)
+
+  return {register, serviceWorker}
 }
 
 const renderCreateServiceWorker = (path = '/sw.js') => {
@@ -110,7 +117,7 @@ describe('createServiceWorker', () => {
   })
 
   it('should skip registration in development', () => {
-    const register = createMockServiceWorker()
+    const {register} = createMockServiceWorker()
 
     renderCreateServiceWorker('/sw.js')
 
@@ -120,7 +127,7 @@ describe('createServiceWorker', () => {
   it('should register the service worker with the given path in production', async () => {
     vi.stubEnv('DEV', false)
 
-    const register = createMockServiceWorker()
+    const {register} = createMockServiceWorker()
     const registration = createMockRegistration()
 
     register.mockResolvedValue(asServiceWorkerRegistration(registration))
@@ -132,20 +139,44 @@ describe('createServiceWorker', () => {
     expect(register).toHaveBeenCalledWith('/sw.js')
   })
 
+  it('should expose a registration failure without an unhandled rejection', async () => {
+    vi.stubEnv('DEV', false)
+
+    const {register} = createMockServiceWorker()
+    register.mockRejectedValue(new Error('offline'))
+
+    const {getContext} = renderCreateServiceWorker('/sw.js')
+    await flushPromises()
+
+    expect(getContext()[0]()).toEqual({offline: true, state: 'error'})
+  })
+
+  it('should expose an existing waiting worker immediately after registration', async () => {
+    vi.stubEnv('DEV', false)
+
+    const {register} = createMockServiceWorker()
+    const registration = createMockRegistration()
+    registration.waiting = {} as ServiceWorker
+    register.mockResolvedValue(asServiceWorkerRegistration(registration))
+
+    const {getContext} = renderCreateServiceWorker('/sw.js')
+    await flushPromises()
+
+    expect(getContext()[0]().state).toBe('waiting')
+  })
+
   it('should update state to active when the registration becomes active', async () => {
     vi.stubEnv('DEV', false)
 
-    const register = createMockServiceWorker()
+    const {register} = createMockServiceWorker()
     const registration = createMockRegistration()
 
+    registration.active = {} as ServiceWorker
     register.mockResolvedValue(asServiceWorkerRegistration(registration))
 
     const {getContext} = renderCreateServiceWorker('/sw.js')
 
     await flushPromises()
-
-    registration.active = {} as ServiceWorker
-    registration.emit('statechange')
 
     expect(getContext()[0]().state).toBe('active')
   })
@@ -153,7 +184,7 @@ describe('createServiceWorker', () => {
   it('should update state to installing when an update is found', async () => {
     vi.stubEnv('DEV', false)
 
-    const register = createMockServiceWorker()
+    const {register} = createMockServiceWorker()
     const registration = createMockRegistration()
 
     register.mockResolvedValue(asServiceWorkerRegistration(registration))
@@ -170,7 +201,7 @@ describe('createServiceWorker', () => {
   it('should remove registration listeners on cleanup', async () => {
     vi.stubEnv('DEV', false)
 
-    const register = createMockServiceWorker()
+    const {register} = createMockServiceWorker()
     const registration = createMockRegistration()
 
     register.mockResolvedValue(asServiceWorkerRegistration(registration))
@@ -190,17 +221,13 @@ describe('createServiceWorker', () => {
       'updatefound',
       expect.any(Function),
     )
-    expect(registration.removeEventListener).toHaveBeenCalledWith(
-      'statechange',
-      expect.any(Function),
-    )
   })
 
   it('should ignore registration results that resolve after cleanup', async () => {
     vi.stubEnv('DEV', false)
 
     let resolveRegistration: (registration: MockRegistration) => void = () => {}
-    const register = createMockServiceWorker()
+    const {register} = createMockServiceWorker()
 
     register.mockImplementation(
       () =>
@@ -245,18 +272,15 @@ describe('createServiceWorker', () => {
   it('should post SKIP_WAITING when a waiting worker exists', async () => {
     vi.stubEnv('DEV', false)
 
-    const register = createMockServiceWorker()
+    const {register, serviceWorker} = createMockServiceWorker()
     const registration = createMockRegistration()
     const postMessage = vi.fn()
-    let onStateChange: (() => void) | undefined
 
     registration.waiting = {
-      addEventListener: vi.fn((event, listener) => {
-        if (event === 'statechange') {
-          onStateChange = listener as () => void
-        }
-      }),
+      addEventListener: vi.fn(),
       postMessage,
+      removeEventListener: vi.fn(),
+      state: 'installed',
     } as unknown as ServiceWorker
 
     register.mockResolvedValue(asServiceWorkerRegistration(registration))
@@ -269,8 +293,7 @@ describe('createServiceWorker', () => {
 
     expect(postMessage).toHaveBeenCalledWith({type: 'SKIP_WAITING'})
 
-    registration.active = {} as ServiceWorker
-    onStateChange?.()
+    serviceWorker.emit('controllerchange')
 
     return expect(skipWaiting).resolves.toBe(true)
   })
@@ -278,7 +301,7 @@ describe('createServiceWorker', () => {
   it('should set skip-update state from handleSkipUpdate when a waiting worker exists', async () => {
     vi.stubEnv('DEV', false)
 
-    const register = createMockServiceWorker()
+    const {register} = createMockServiceWorker()
     const registration = createMockRegistration()
 
     registration.waiting = {} as ServiceWorker

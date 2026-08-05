@@ -11,19 +11,35 @@ export interface DestroyGhostOptions {
 
 export const createRenderGhost = (isActive: Accessor<boolean>) => {
   let ghostElement: (HTMLElement & {x: number; y: number}) | null = null
+  let ghostAnimation: Animation | null = null
+  let removedCallback: (() => void) | undefined
 
-  const handleCleanup = () => {
-    if (ghostElement) {
-      document.body.style.cursor = 'auto'
-      ghostElement.remove()
+  const removeGhost = (notifyRemoved: boolean) => {
+    const element = ghostElement
+    const callback = removedCallback
+
+    ghostAnimation?.cancel()
+    ghostAnimation = null
+    ghostElement = null
+    removedCallback = undefined
+
+    if (element) {
+      element.ownerDocument.body.style.cursor = 'auto'
+      element.remove()
+    }
+
+    if (notifyRemoved) {
+      callback?.()
     }
   }
 
-  onCleanup(handleCleanup)
+  onCleanup(() => {
+    removeGhost(false)
+  })
 
   createEffect(() => {
     if (!isActive()) {
-      handleCleanup()
+      removeGhost(true)
     }
   })
 
@@ -39,6 +55,7 @@ export const createRenderGhost = (isActive: Accessor<boolean>) => {
         return
       }
 
+      removeGhost(false)
       ghostElement = element.cloneNode(true) as HTMLElement & {x: number; y: number}
       ghostElement.x = relativePosition.x
       ghostElement.y = relativePosition.y
@@ -59,28 +76,47 @@ export const createRenderGhost = (isActive: Accessor<boolean>) => {
       }
 
       if (!ghostElement) {
+        removed?.()
+
         return
       }
+
+      ghostAnimation?.cancel()
+      ghostAnimation = null
+      removedCallback = undefined
+
       const position = options.position ?? {x: ghostElement.x, y: ghostElement.y}
       const element = ghostElement
+      const animation = element.animate(
+        {
+          left: `${position.x}px`,
+          top: `${position.y}px`,
+        },
+        {
+          duration: options.duration ?? DEFAULT_GHOST_ANIMATION_DURATION_MS,
+          easing: options.easing ?? 'ease-in-out',
+        },
+      )
 
-      element
-        .animate(
-          {
-            left: `${position.x}px`,
-            top: `${position.y}px`,
-          },
-          {
-            duration: options.duration ?? DEFAULT_GHOST_ANIMATION_DURATION_MS,
-            easing: options.easing ?? 'ease-in-out',
-          },
-        )
-        .addEventListener('finish', () => {
-          document.body.style.cursor = 'auto'
+      ghostAnimation = animation
+      removedCallback = removed
+
+      animation.addEventListener(
+        'finish',
+        () => {
+          if (ghostAnimation !== animation) {
+            return
+          }
+
+          ghostAnimation = null
+          ghostElement = null
+          removedCallback = undefined
+          element.ownerDocument.body.style.cursor = 'auto'
           element.remove()
           removed?.()
-        })
-      ghostElement = null
+        },
+        {once: true},
+      )
     },
     update: (position: {x: number; y: number}) => {
       if (!isActive()) {

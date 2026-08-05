@@ -11,7 +11,13 @@ import {
 } from 'solid-js'
 import {freeze, getWindow} from '@winter-love/utils'
 
-type ServiceWorkerState = 'active' | 'installing' | 'waiting' | 'initializing' | 'skip-update'
+type ServiceWorkerState =
+  | 'active'
+  | 'error'
+  | 'installing'
+  | 'waiting'
+  | 'initializing'
+  | 'skip-update'
 
 export interface ServiceWorkerInfo {
   offline: boolean
@@ -32,28 +38,47 @@ export const createServiceWorker = (path: string): Readonly<ServiceWorkerContext
     state: 'initializing',
   })
   let _registration: ServiceWorkerRegistration | undefined
+  let cancelPendingSkipWaiting: (() => void) | undefined
+  let pendingSkipWaiting: Promise<boolean> | undefined
 
   const handleSkipWaiting = () => {
-    return new Promise<boolean>((resolve, reject) => {
-      if (!_registration || !_registration.waiting) {
-        resolve(true)
+    if (pendingSkipWaiting) {
+      return pendingSkipWaiting
+    }
 
-        return
+    const serviceWorker = getWindow()?.navigator.serviceWorker
+    const waitingWorker = _registration?.waiting
+
+    if (!serviceWorker || !waitingWorker) {
+      return Promise.resolve(true)
+    }
+
+    pendingSkipWaiting = new Promise<boolean>((resolve) => {
+      const finish = (didActivate: boolean) => {
+        serviceWorker.removeEventListener('controllerchange', handleControllerChange)
+        waitingWorker.removeEventListener('statechange', handleStateChange)
+        cancelPendingSkipWaiting = undefined
+        pendingSkipWaiting = undefined
+        resolve(didActivate)
       }
 
-      _registration.waiting.addEventListener('statechange', () => {
-        if (!_registration) {
-          reject(new Error('Service worker registration not found'))
+      const handleControllerChange = () => {
+        finish(true)
+      }
 
-          return
+      const handleStateChange = () => {
+        if (waitingWorker.state === 'redundant') {
+          finish(false)
         }
+      }
 
-        if (_registration.active) {
-          resolve(true)
-        }
-      })
-      _registration.waiting.postMessage({type: 'SKIP_WAITING'})
+      serviceWorker.addEventListener('controllerchange', handleControllerChange, {once: true})
+      waitingWorker.addEventListener('statechange', handleStateChange)
+      cancelPendingSkipWaiting = () => finish(false)
+      waitingWorker.postMessage({type: 'SKIP_WAITING'})
     })
+
+    return pendingSkipWaiting
   }
 
   const handleSkipUpdate = () => {
@@ -74,9 +99,10 @@ export const createServiceWorker = (path: string): Readonly<ServiceWorkerContext
     }
 
     let registration: ServiceWorkerRegistration | undefined
+    let installingWorker: ServiceWorker | null = null
     let cancelled = false
 
-    const statechange = () => {
+    const syncState = () => {
       if (!registration) {
         return
       }
@@ -90,13 +116,26 @@ export const createServiceWorker = (path: string): Readonly<ServiceWorkerContext
       }
     }
 
-    const updatefound = () => {
-      setState((prev) => ({...prev, state: 'installing'}))
-      registration?.installing?.addEventListener('statechange', statechange)
+    const detachInstallingWorker = () => {
+      installingWorker?.removeEventListener('statechange', syncState)
+      installingWorker = null
     }
 
-    const startRegistration = () => {
-      serviceWorker.register(path).then((reg) => {
+    const attachInstallingWorker = () => {
+      detachInstallingWorker()
+      installingWorker = registration?.installing ?? null
+      installingWorker?.addEventListener('statechange', syncState)
+    }
+
+    const updatefound = () => {
+      setState((prev) => ({...prev, state: 'installing'}))
+      attachInstallingWorker()
+    }
+
+    const startRegistration = async () => {
+      try {
+        const reg = await serviceWorker.register(path)
+
         if (cancelled) {
           return
         }
@@ -105,8 +144,13 @@ export const createServiceWorker = (path: string): Readonly<ServiceWorkerContext
         _registration = reg
 
         reg.addEventListener('updatefound', updatefound)
-        reg.addEventListener('statechange', statechange)
-      })
+        attachInstallingWorker()
+        syncState()
+      } catch {
+        if (!cancelled) {
+          setState({offline: true, state: 'error'})
+        }
+      }
     }
 
     startRegistration()
@@ -116,8 +160,11 @@ export const createServiceWorker = (path: string): Readonly<ServiceWorkerContext
 
       if (registration) {
         registration.removeEventListener('updatefound', updatefound)
-        registration.removeEventListener('statechange', statechange)
       }
+
+      detachInstallingWorker()
+      cancelPendingSkipWaiting?.()
+      _registration = undefined
     })
   })
 

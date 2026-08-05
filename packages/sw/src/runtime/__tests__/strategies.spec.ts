@@ -25,6 +25,7 @@ describe('createStrategyHandlers', () => {
     get = vi.fn<CacheStore['get']>()
     log = vi.fn<Logger>()
     put = vi.fn<CacheStore['put']>()
+    put.mockResolvedValue(undefined)
     cacheStore = {get, put}
     vi.stubGlobal('fetch', fetchMock)
   })
@@ -63,6 +64,23 @@ describe('createStrategyHandlers', () => {
       expect.objectContaining({error: 'offline'}),
     )
     expect(log).toHaveBeenCalledWith('info', 'Served from cache after network error', {
+      url: event.request.url,
+    })
+  })
+
+  it('should return a network-first response when cache persistence fails', async () => {
+    const networkResponse = new Response('network')
+    const {event, waitUntil} = createFetchEvent('https://example.com/app.js')
+    const handlers = createStrategyHandlers({cacheStore, log})
+
+    fetchMock.mockResolvedValue(networkResponse)
+    put.mockRejectedValue(new Error('cache unavailable'))
+
+    await expect(handlers['network-first'](event, 'script')).resolves.toBe(networkResponse)
+    await waitUntil.mock.calls[0]?.[0]
+
+    expect(log).toHaveBeenCalledWith('warn', 'Failed to cache network response', {
+      error: 'cache unavailable',
       url: event.request.url,
     })
   })
@@ -124,6 +142,21 @@ describe('createStrategyHandlers', () => {
 
     expect(response).toBe(networkResponse)
     expect(put).toHaveBeenCalledWith(event.request, networkResponse, 'image')
+  })
+
+  it('should return a cache-first network response when cache persistence fails', async () => {
+    const networkResponse = new Response('network')
+    const {event, waitUntil} = createFetchEvent('https://example.com/image.png')
+    const handlers = createStrategyHandlers({cacheStore, log})
+
+    get.mockResolvedValue(undefined)
+    fetchMock.mockResolvedValue(networkResponse)
+    put.mockRejectedValue(new Error('quota exceeded'))
+
+    await expect(handlers['cache-first'](event, 'image')).resolves.toBe(networkResponse)
+    await waitUntil.mock.calls[0]?.[0]
+
+    expect(fetchMock).toHaveBeenCalledOnce()
   })
 
   it('should keep a stale-while-revalidate refresh alive', async () => {

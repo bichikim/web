@@ -39,12 +39,15 @@ export const useAnimationFrame = (
 
   createEffect(() => {
     const isRunning = start()
+    let cancelled = false
 
     if (!isRunning) {
       return
     }
 
     const animationFrame = (timestamp: number) => {
+      frameId = undefined
+
       // Initialize lastTime on first frame
       if (lastTime === undefined) {
         lastTime = timestamp
@@ -54,19 +57,26 @@ export const useAnimationFrame = (
 
       // FPS limiting: skip if not enough time has passed
       if (targetInterval > 0 && deltaTime < targetInterval) {
-        frameId = requestAnimationFrame(animationFrame)
+        if (!cancelled) {
+          frameId = requestAnimationFrame(animationFrame)
+        }
 
         return
       }
 
       lastTime = timestamp
       callback(deltaTime)
-      frameId = requestAnimationFrame(animationFrame)
+
+      if (!cancelled) {
+        frameId = requestAnimationFrame(animationFrame)
+      }
     }
 
     frameId = requestAnimationFrame(animationFrame)
 
     onCleanup(() => {
+      cancelled = true
+
       if (frameId !== undefined) {
         cancelAnimationFrame(frameId)
       }
