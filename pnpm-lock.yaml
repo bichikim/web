@@ -573,6 +573,52 @@ importers:
         specifier: 'catalog:'
         version: 5.9.3
 
+  apps/pomo:
+    dependencies:
+      '@kobalte/core':
+        specifier: ^0.13.11
+        version: 0.13.11(solid-js@1.9.12)
+      '@solidjs/meta':
+        specifier: 'catalog:'
+        version: 0.29.4(solid-js@1.9.12)
+      '@solidjs/router':
+        specifier: 'catalog:'
+        version: 0.15.4(solid-js@1.9.12)
+      '@solidjs/start':
+        specifier: 'catalog:'
+        version: 1.3.2(@testing-library/jest-dom@6.9.1)(solid-js@1.9.12)(vinxi@0.5.11(@types/node@22.19.17)(db0@0.3.4(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.9)))(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.9))(encoding@0.1.13)(idb-keyval@6.2.5)(ioredis@5.10.1)(jiti@2.6.1)(oxc-parser@0.124.0(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0))(terser@5.46.2)(tsx@4.21.0)(xml2js@0.6.2)(yaml@2.8.1))(vite@7.3.2(@types/node@22.19.17)(jiti@2.6.1)(terser@5.46.2)(tsx@4.21.0)(yaml@2.8.1))
+      '@unocss/reset':
+        specifier: 'catalog:'
+        version: 66.6.8
+      class-variance-authority:
+        specifier: 'catalog:'
+        version: 0.7.1
+      cross-env:
+        specifier: 'catalog:'
+        version: 10.1.0
+      solid-js:
+        specifier: 'catalog:'
+        version: 1.9.12
+      unocss:
+        specifier: 'catalog:'
+        version: 66.6.8(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(vite@7.3.2(@types/node@22.19.17)(jiti@2.6.1)(terser@5.46.2)(tsx@4.21.0)(yaml@2.8.1))
+      vinxi:
+        specifier: 'catalog:'
+        version: 0.5.11(@types/node@22.19.17)(db0@0.3.4(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.9)))(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.9))(encoding@0.1.13)(idb-keyval@6.2.5)(ioredis@5.10.1)(jiti@2.6.1)(oxc-parser@0.124.0(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0))(terser@5.46.2)(tsx@4.21.0)(xml2js@0.6.2)(yaml@2.8.1)
+      vite:
+        specifier: 'catalog:'
+        version: 7.3.2(@types/node@22.19.17)(jiti@2.6.1)(terser@5.46.2)(tsx@4.21.0)(yaml@2.8.1)
+      zod:
+        specifier: 'catalog:'
+        version: 4.4.2
+    devDependencies:
+      '@types/node':
+        specifier: 'catalog:'
+        version: 22.19.17
+      '@winter-love/unocss-config':
+        specifier: workspace:*
+        version: link:../../packages/unocss-config
+
   apps/sidebuy-api:
     dependencies:
       '@t3-oss/env-core':
