@@ -1,0 +1,37 @@
+{
+  "name": "@apps/pomo",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "pnpm run build:web",
+    "build:apps-in-toss": "cross-env POMO_BUILD_TARGET=apps-in-toss vinxi build",
+    "build:web": "vinxi build",
+    "dev": "vinxi dev --host",
+    "lint": "oxlint src",
+    "lint:fix": "oxlint src --fix",
+    "preview:web": "node .output/server/index.mjs",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@kobalte/core": "^0.13.11",
+    "@solidjs/meta": "catalog:",
+    "@solidjs/router": "catalog:",
+    "@solidjs/start": "catalog:",
+    "@unocss/reset": "catalog:",
+    "class-variance-authority": "catalog:",
+    "cross-env": "catalog:",
+    "solid-js": "catalog:",
+    "unocss": "catalog:",
+    "vinxi": "catalog:",
+    "vite": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "@winter-love/unocss-config": "workspace:*"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

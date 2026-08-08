@@ -22,3 +22,16 @@ Open and apply the reference files for the relevant section before working. For 
 11. See ./rules/no-types.md when module types are missing.
 12. See ./code-patterns/type-guard.md when handling `unknown` or writing type guards.
 13. See ./code-patterns/type-and-value-import.md when importing both a type and a value from the same module.
+
+## `src/features` Layout
+
+Apply this layout only under `src/features`. Keep a feature in `index.ts` when one file is enough.
+
+```text
+src/features/<feature>/
+├─ index.ts
+├─ a.ts      # when needed
+└─ b.ts      # when needed
+```
+
+When splitting files, make `index.ts` use or export each sibling module; re-exporting is not required.
