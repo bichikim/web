@@ -52,6 +52,16 @@ Chat context is volatile. When **why** isn't obvious from code, leave a minimal 
 - If `gh auth status` fails in the sandbox, retry the command with escalated permissions before asking the user to authenticate again.
 - Ask the user to run `gh auth login` only when authentication also fails with escalated permissions.
 
+## Dependency installation
+
+When dependency installation is required:
+
+- Do not run `pnpm install` or `pnpm i` inside the sandbox first.
+- Always request escalated execution for `pnpm install` or `pnpm i` from the first attempt.
+- Use the global pnpm store.
+- Do not create or use a local `.pnpm-store`.
+- Do not add `store-dir=.pnpm-store` to `.npmrc`.
+
 ## Cursor Cloud
 
 pnpm + Turborepo (`@winter-love/web`) · Node ≥22 · pnpm 11.x (`package.json`). `pnpm install` runs root `postinstall` → `turbo prepare-build` (package builds; Coong Supabase type gen; Turbo-cached). `optimisticRepeatInstall: false` in `pnpm-workspace.yaml` so postinstall still runs when Already up to date. `globalPassThroughEnv` includes `pnpm_config_verify_deps_before_run` so Turbo strict mode does not strip pnpm 11’s lifecycle marker (which would re-enter `pnpm install` → postinstall).
