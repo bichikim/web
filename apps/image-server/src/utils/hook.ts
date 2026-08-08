@@ -29,7 +29,13 @@ export const setErrorHandler = (errorHandler: ErrorHandler) => {
 }
 
 export const useReq = (): Request => {
-  return _reqHookMap.get(_currentId)
+  const request = _reqHookMap.get(_currentId)
+
+  if (!request) {
+    throw new Error('Request context not found')
+  }
+
+  return request
 }
 
 export const TYPE_CONTEXT = Symbol('type-context')
@@ -49,7 +55,7 @@ export const createContext = <T>(defaultValue?: T): Context<T> => {
     provide: (logic) => {
       return provideContext(key, logic)
     },
-    [TYPE_CONTEXT]: defaultValue ?? null,
+    [TYPE_CONTEXT]: defaultValue,
   }
 }
 

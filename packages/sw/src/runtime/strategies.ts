@@ -25,6 +25,21 @@ export interface StrategyOptions {
 const getErrorMessage = (error: unknown) => (error instanceof Error ? error.message : String(error))
 
 export const createStrategyHandlers = (options: StrategyOptions): StrategyHandlers => {
+  const cacheResponse = (
+    event: ServiceWorkerFetchEvent,
+    response: Response,
+    destination: CacheDestination,
+  ): void => {
+    event.waitUntil(
+      options.cacheStore.put(event.request, response, destination).catch((error) => {
+        options.log('warn', 'Failed to cache network response', {
+          error: getErrorMessage(error),
+          url: event.request.url,
+        })
+      }),
+    )
+  }
+
   const createNetworkFirst = async (
     event: ServiceWorkerFetchEvent,
     destination: CacheDestination,
@@ -32,7 +47,7 @@ export const createStrategyHandlers = (options: StrategyOptions): StrategyHandle
     try {
       const response = await fetch(event.request)
 
-      await options.cacheStore.put(event.request, response, destination)
+      cacheResponse(event, response, destination)
 
       return response
     } catch (error) {
@@ -85,7 +100,7 @@ export const createStrategyHandlers = (options: StrategyOptions): StrategyHandle
 
     const response = await fetch(event.request)
 
-    await options.cacheStore.put(event.request, response, destination)
+    cacheResponse(event, response, destination)
 
     return response
   }
@@ -96,8 +111,8 @@ export const createStrategyHandlers = (options: StrategyOptions): StrategyHandle
   ): Promise<Response> => {
     const cachedResponse = await options.cacheStore.get(event.request, destination)
     const updatePromise = fetch(event.request)
-      .then(async (response) => {
-        await options.cacheStore.put(event.request, response, destination)
+      .then((response) => {
+        cacheResponse(event, response, destination)
 
         return response
       })

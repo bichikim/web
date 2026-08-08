@@ -6,16 +6,27 @@ import type {GenerateSWOptions} from '../index'
 
 type CliAction = (output: string, options: GenerateSWOptions) => Promise<void>
 type ProcessHandler = (...arguments_: never[]) => void
+interface CliOption {
+  readonly flags: string
+  parser?: (value: string) => unknown
+}
 
 const mocks = vi.hoisted(() => {
-  const state = {action: undefined as CliAction | undefined}
+  const state = {
+    action: undefined as CliAction | undefined,
+    options: [] as CliOption[],
+  }
   const command = {
     action: vi.fn((action: CliAction) => {
       state.action = action
 
       return command
     }),
-    addOption: vi.fn(() => command),
+    addOption: vi.fn((option: CliOption) => {
+      state.options.push(option)
+
+      return command
+    }),
     argument: vi.fn(() => command),
   }
   const program = {
@@ -33,12 +44,16 @@ const mocks = vi.hoisted(() => {
 
 vi.mock('commander', () => ({
   Option: class {
+    parser?: (value: string) => unknown
+
     constructor(
       readonly flags: string,
       readonly description: string,
     ) {}
 
-    argParser(): this {
+    argParser(parser: (value: string) => unknown): this {
+      this.parser = parser
+
       return this
     }
   },
@@ -206,6 +221,44 @@ describe('service worker CLI', () => {
         logLevel: 'debug',
       }),
     )
+  })
+
+  it('should apply env files in deterministic override order', async () => {
+    const files = [
+      ['.env', 'base'],
+      ['.env.local', 'local'],
+      ['.env.development', 'mode'],
+      ['.env.development.local', 'mode-local'],
+    ] as const
+
+    await Promise.all(
+      files.map(([filename, value]) =>
+        fs.promises.writeFile(path.join(tmpDir, filename), `SW_CACHE_NAME=${value}`),
+      ),
+    )
+
+    await action('sw.js', requiredOptions({env: 'development'}))
+
+    expect(mocks.generateSW).toHaveBeenCalledWith(
+      'sw.js',
+      expect.objectContaining({cacheName: 'mode-local'}),
+    )
+  })
+
+  it('should parse and validate JSON command options', () => {
+    const strategies = mocks.state.options.find((option) =>
+      option.flags.startsWith('--cache-strategies'),
+    )
+    const priorities = mocks.state.options.find((option) =>
+      option.flags.startsWith('--cache-priorities'),
+    )
+
+    expect(strategies?.parser?.('{"image":"cache-first"}')).toEqual({image: 'cache-first'})
+    expect(priorities?.parser?.('{"image":3}')).toEqual({image: 3})
+    expect(() => strategies?.parser?.('{"image":"unknown"}')).toThrow(
+      'Invalid cache strategy value: unknown',
+    )
+    expect(() => priorities?.parser?.('invalid')).toThrow('Invalid JSON for --cache-priorities')
   })
 
   it.each([

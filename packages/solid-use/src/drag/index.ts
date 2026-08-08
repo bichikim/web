@@ -57,6 +57,7 @@ export const useDrag = (
     }
 
     setStartPoints(points)
+    currentPoint = points.point
     setPointDown(true)
 
     callback('start', {
@@ -67,6 +68,10 @@ export const useDrag = (
   })
 
   const onMoveEnd = () => {
+    if (!pointDown()) {
+      return
+    }
+
     const {point, relativePoint} = startPoints()
 
     setPointDown(false)
@@ -80,6 +85,9 @@ export const useDrag = (
 
   useEvent(toggleValue(getWindow, pointDown, null), 'mouseup', onMoveEnd)
   useEvent(toggleValue(getWindow, pointDown, null), 'touchend', onMoveEnd)
+  useEvent(toggleValue(getWindow, pointDown, null), 'pointercancel', onMoveEnd)
+  useEvent(toggleValue(getWindow, pointDown, null), 'touchcancel', onMoveEnd)
+  useEvent(toggleValue(getWindow, pointDown, null), 'blur', onMoveEnd)
 
   const onMove = (x: number, y: number) => {
     const {point, relativePoint, parentPosition} = startPoints()

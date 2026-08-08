@@ -2,9 +2,11 @@ import {Accessor, createContext, Setter} from 'solid-js'
 
 export const createTimeout = (timeout: number) => {
   return (callback: () => void) => {
-    setTimeout(() => {
+    const timeoutId = setTimeout(() => {
       callback()
     }, timeout)
+
+    return () => clearTimeout(timeoutId)
   }
 }
 
@@ -37,7 +39,7 @@ export interface Message {
    * Close when clicked
    */
   clickToClose?: boolean
-  closeHook?: (close: () => void) => void
+  closeHook?: (close: () => void) => (() => void) | void
   id: string | number
   message: string
   title?: string

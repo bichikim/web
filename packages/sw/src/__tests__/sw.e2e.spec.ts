@@ -319,15 +319,20 @@ describe('service worker e2e', () => {
       url: 'https://example.com/missing.js',
     }
     let responsePromise: Promise<Response> | undefined
+    let cachePromise: Promise<void> | undefined
 
     fetchHandler?.({
       request,
       respondWith: (promise: Promise<Response>) => {
         responsePromise = promise
       },
+      waitUntil: (promise: Promise<void>) => {
+        cachePromise = promise
+      },
     })
 
     await expect(responsePromise).resolves.toHaveProperty('status', 200)
+    await cachePromise
 
     expect(cacheStorage.get('coong-cache-v1')?.has('https://example.com/missing.js')).not.toBe(true)
   })

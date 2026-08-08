@@ -13,16 +13,31 @@ export default function Login() {
   const {signInWithPassword} = useAuth()
   const [email, setEmail] = createSignal('')
   const [password, setPassword] = createSignal('')
+  const [error, setError] = createSignal<Error | null>(null)
+  const [loading, setLoading] = createSignal(false)
 
   const handleLogin = async () => {
-    await signInWithPassword({email: email(), password: password()})
+    if (loading()) {
+      return
+    }
+
+    setError(null)
+    setLoading(true)
+
+    try {
+      await signInWithPassword({email: email(), password: password()})
+    } catch (loginError) {
+      setError(loginError instanceof Error ? loginError : new Error('Sign in failed'))
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
     <SignIn
       email={email()}
-      error={null}
-      loading={false}
+      error={error()}
+      loading={loading()}
       onLogin={handleLogin}
       onUpdateEmail={setEmail}
       onUpdatePassword={setPassword}

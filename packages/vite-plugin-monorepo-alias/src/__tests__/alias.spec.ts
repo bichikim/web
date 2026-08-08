@@ -62,11 +62,17 @@ describe('getAliasId', () => {
 
     expect(result).toBe('src/index.ts')
   })
+
+  it('should not match an alias that is only a partial segment prefix', () => {
+    const result = getAliasId('srcset/index.ts', [[normalizeAliasKey('src'), 'source']])
+
+    expect(result).toBe('srcset/index.ts')
+  })
 })
 
 describe('normalizeAliasKey / normalizeAliasTreeKey', () => {
   it('should normalize alias key to regex', () => {
-    expect(normalizeAliasKey('#utils')).toEqual(/^#utils/u)
+    expect(normalizeAliasKey('#utils')).toEqual(/^#utils(?=\/|$)/u)
   })
 
   it('should escape regex metacharacters in alias key so only literal path matches', () => {
@@ -278,6 +284,21 @@ describe('createAlias', () => {
     expect(resolve).not.toHaveBeenCalled()
   })
 
+  it('should ignore imports that do not match a configured alias', async () => {
+    const plugin: any = createAlias({
+      root: '/Users/user-name/Documents/Apps/web',
+      workspacePaths: ['packages/'],
+    })
+    const resolve = vi.fn(() => Promise.resolve(null))
+    const importer =
+      '/Users/user-name/Documents/Apps/web/packages/vite-plugin-monorepo-alias/src/foo.ts'
+
+    const result = await plugin.resolveId.call({resolve}, 'solid-js', importer, {})
+
+    expect(result).toBeNull()
+    expect(resolve).not.toHaveBeenCalled()
+  })
+
   it.each([
     {
       id: '/Users/user-name/Documents/Apps/web/packages/vite-plugin-monorepo-alias/src/index.ts',
@@ -406,8 +427,8 @@ describe('normalizeAlias', () => {
     })
 
     expect(result).toEqual([
-      [/^#components/u, 'src/components'],
-      [/^#utils/u, 'src/utils'],
+      [/^#components(?=\/|$)/u, 'src/components'],
+      [/^#utils(?=\/|$)/u, 'src/utils'],
     ])
   })
 })
@@ -421,7 +442,7 @@ describe('normalizeAliasTree', () => {
     })
 
     expect(result).toEqual({
-      '/packages/web/': [[/^#utils/u, 'src/utils']],
+      '/packages/web/': [[/^#utils(?=\/|$)/u, 'src/utils']],
     })
   })
 })

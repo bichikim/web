@@ -19,7 +19,7 @@ export type LottieFileProps = LottieSharedProps
 export const LottieFile = (props: LottieFileProps) => {
   const [canvas, setCanvas] = createSignal<HTMLCanvasElement | null>(null)
   const [dotLottie, setDotLottie] = createSignal<DotLottie | null>(null)
-  const [lottieLoading, setLottieLoading] = createSignal(false)
+  const [lottieLoading, setLottieLoading] = createSignal(true)
 
   createEffect(() => {
     const _canvas = canvas()
@@ -31,6 +31,8 @@ export const LottieFile = (props: LottieFileProps) => {
     if (!_canvas) {
       return
     }
+
+    setLottieLoading(true)
 
     const dotLottie = new DotLottie({
       autoplay: _autoPlay,
@@ -136,8 +138,9 @@ export const LottieFile = (props: LottieFileProps) => {
   }
 
   return (
-    <Show when={isLoaded()} fallback={props.fallback}>
+    <>
       <canvas class="w-full h-full" ref={setCanvas} />
-    </Show>
+      <Show when={!isLoaded()}>{props.fallback}</Show>
+    </>
   )
 }

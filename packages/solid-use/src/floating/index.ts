@@ -28,38 +28,67 @@ export const useFloating = <T extends ReferenceElement = ReferenceElement>(
     x: 0,
     y: 0,
   })
+  const [isPositioned, setIsPositioned] = createSignal(false)
+  let updateVersion = 0
 
   const update = async () => {
     const {floating, options, reference} = updatePayload()
+    updateVersion += 1
+    const version = updateVersion
+    setIsPositioned(false)
+    const {
+      autoUpdate: _autoUpdate,
+      onError,
+      open = true,
+      transform: _transform,
+      ...positionOptions
+    } = options
 
-    if (floating && reference) {
-      setPosition(await computePosition(reference, floating, options))
+    if (!open || !floating || !reference) {
+      return
+    }
+
+    try {
+      const nextPosition = await computePosition(reference, floating, positionOptions)
+
+      if (version !== updateVersion) {
+        return
+      }
+
+      setPosition(nextPosition)
+      setIsPositioned(true)
+    } catch (error) {
+      if (version === updateVersion) {
+        onError?.(error)
+      }
     }
   }
 
   createEffect(() => {
     const {floating, options, reference} = updatePayload()
+    let cleanup: (() => void) | undefined
 
+    setIsPositioned(false)
     update()
 
-    if (floating && reference) {
+    if (options.open !== false && floating && reference) {
       const {autoUpdate} = options
 
       if (autoUpdate) {
-        const cleanup = autoUpdate(reference, floating, update)
-
-        return onCleanup(() => {
-          cleanup?.()
-        })
+        cleanup = autoUpdate(reference, floating, update)
       }
     }
+
+    onCleanup(() => {
+      updateVersion += 1
+      cleanup?.()
+    })
   })
 
   return createMemo(() => {
     return {
       ...position(),
-      isPositioned: true,
-      // isPositioned: !position.loading,
+      isPositioned: isPositioned(),
     }
   })
 }

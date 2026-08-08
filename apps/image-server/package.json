@@ -5,7 +5,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "rimraf ./dist && ttsc",
+    "build": "node --eval \"require('node:fs').rmSync('dist', {force: true, recursive: true})\" && tsc -p tsconfig.json",
     "dev": "tsx watch src/run.ts"
   },
   "dependencies": {

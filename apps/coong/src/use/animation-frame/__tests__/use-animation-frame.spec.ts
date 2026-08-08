@@ -79,6 +79,22 @@ describe('useAnimationFrame', () => {
     cleanup()
   })
 
+  it('should not schedule another frame when stopped by the callback', async () => {
+    let stop: () => void = () => undefined
+    const callback = vi.fn(() => stop())
+    const hook = renderHook(() => useAnimationFrame(callback))
+    const {result} = hook
+    stop = result.stop
+
+    result.start()
+    await waitFor(() => expect(requestAnimationFrame).toHaveBeenCalledTimes(1))
+    flushRaf(0)
+
+    expect(callback).toHaveBeenCalledOnce()
+    expect(requestAnimationFrame).toHaveBeenCalledTimes(1)
+    hook.cleanup()
+  })
+
   it('should call callback with deltaTime on each frame', async () => {
     const callback = vi.fn()
     const {result, cleanup} = renderHook(() => useAnimationFrame(callback))

@@ -10,6 +10,7 @@ import {
 export interface FloatingOptions<T extends ReferenceElement = ReferenceElement> {
   autoUpdate?: (reference: T, floating: FloatingElement, update: () => void) => () => void
   middleware?: Middleware[]
+  onError?: (error: unknown) => void
   open?: boolean
   placement?: Placement
   strategy?: Strategy

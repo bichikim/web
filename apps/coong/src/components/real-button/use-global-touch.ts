@@ -149,6 +149,12 @@ export const useGlobalTouchEmitter = (options: UseGlobalTouchEmitterOptions = {}
   let mouseDown: boolean = false
   const {topLevelElementOnly: takeFirst = false, preventTouchContext} = options
 
+  const releaseAll = () => {
+    mouseDown = false
+    emitAllIds(savedDownIds, {isDown: false})
+    savedDownIds.clear()
+  }
+
   if (preventTouchContext) {
     useEvent(getWindow, 'contextmenu', (event: any) => {
       event.preventDefault()
@@ -162,7 +168,7 @@ export const useGlobalTouchEmitter = (options: UseGlobalTouchEmitterOptions = {}
     }
 
     mouseDown = true
-    const {ids} = getPointedIds({x: event.pageX, y: event.pageY}, takeFirst)
+    const {ids} = getPointedIds({x: event.clientX, y: event.clientY}, takeFirst)
 
     emitAllIds(ids, {isDown: true})
 
@@ -178,18 +184,18 @@ export const useGlobalTouchEmitter = (options: UseGlobalTouchEmitterOptions = {}
       return
     }
 
-    mouseDown = false
-    //
-    emitAllIds(savedDownIds, {isDown: false})
-    savedDownIds.clear()
+    releaseAll()
   })
+
+  useEvent(getWindow, 'pointercancel', releaseAll)
+  useEvent(getWindow, 'blur', releaseAll)
 
   useEvent(getWindow, 'pointermove', (event: PointerEvent) => {
     if (event.pointerType === 'touch' || !mouseDown) {
       return
     }
 
-    const {ids} = getPointedIds({x: event.pageX, y: event.pageY}, takeFirst)
+    const {ids} = getPointedIds({x: event.clientX, y: event.clientY}, takeFirst)
     const downIds = new Set(ids)
     const upIds = new Set(savedDownIds)
 
@@ -251,6 +257,7 @@ export const useGlobalTouchEmitter = (options: UseGlobalTouchEmitterOptions = {}
 
   useEvent(getWindow, 'touchmove', updateDownIds)
   useEvent(getWindow, 'touchend', updateDownIds)
+  useEvent(getWindow, 'touchcancel', releaseAll)
 }
 
 export const useGlobalDown = (id: string): Accessor<DownEventPayload> => {

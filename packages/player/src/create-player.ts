@@ -1,5 +1,5 @@
 import {useEvent} from '@winter-love/solid-use'
-import {Accessor, createEffect, createSignal, Setter} from 'solid-js'
+import {Accessor, createEffect, createSignal, onCleanup, Setter} from 'solid-js'
 import {
   LoadOptions,
   PlayerApi,
@@ -37,6 +37,16 @@ export const createPlayer = (
   options: PlayerAPiOptions = {},
 ): [Accessor<PlayerState>, Setter<PlayerStateMutable>, PlayerApi] => {
   let player: PlayerLoadApi | undefined
+  const destroyedPlayers = new WeakSet<PlayerLoadApi>()
+
+  const destroyPlayer = async (target: PlayerLoadApi): Promise<void> => {
+    if (destroyedPlayers.has(target)) {
+      return
+    }
+
+    destroyedPlayers.add(target)
+    await target.destroy()
+  }
 
   const [state, _setState] = createSignal<PlayerState>(getState(videoElement()))
 
@@ -49,7 +59,7 @@ export const createPlayer = (
 
     const {api = 'shaka'} = options
 
-    setState(getState(element))
+    _setState(getState(element))
 
     switch (api) {
       case 'shaka': {
@@ -62,6 +72,20 @@ export const createPlayer = (
         player = createShakaPlayer(element, options)
       }
     }
+
+    const currentPlayer = player
+
+    onCleanup(() => {
+      if (!currentPlayer) {
+        return
+      }
+
+      if (player === currentPlayer) {
+        player = undefined
+      }
+
+      destroyPlayer(currentPlayer).catch(() => undefined)
+    })
   })
 
   const update = (event: Event) => {
@@ -96,37 +120,42 @@ export const createPlayer = (
     return player.load(url, options)
   }
 
-  const destroy = (): Promise<any> => {
-    return player?.destroy() ?? Promise.reject(new Error('You should init a video element'))
+  const destroy = (): Promise<void> => {
+    const currentPlayer = player
+
+    if (!currentPlayer) {
+      return Promise.reject(new Error('You should init a video element'))
+    }
+
+    player = undefined
+
+    return destroyPlayer(currentPlayer)
   }
 
-  const setState = (
+  const setState: Setter<PlayerStateMutable> = (
     state: ((state: PlayerStateMutable) => PlayerStateMutable) | PlayerStateMutable,
   ) => {
-    if (typeof state === 'function') {
-      _setState((prev) => {
-        const element = videoElement()
-        const newState = state(prev)
+    return _setState((previousState) => {
+      const element = videoElement()
+      const newState = typeof state === 'function' ? state(previousState) : state
 
-        if (element) {
-          for (const [key, value] of Object.entries(newState)) {
-            element[key] = value
-          }
-        }
+      if (element) {
+        element.currentTime = newState.currentTime
+        element.muted = newState.muted
+        element.volume = newState.volume
 
-        return {
-          ...prev,
-          ...newState,
+        if (newState.paused) {
+          element.pause()
+        } else {
+          element.play().catch(() => undefined)
         }
-      })
-    } else {
-      _setState((prev) => {
-        return {
-          ...prev,
-          ...state,
-        }
-      })
-    }
+      }
+
+      return {
+        ...previousState,
+        ...newState,
+      }
+    })
   }
 
   return [

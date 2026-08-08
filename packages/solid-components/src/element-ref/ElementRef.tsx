@@ -8,7 +8,9 @@ export type ElementRefProps<T extends ValidComponent> = DynamicProps<T>
  */
 export const ElementRef = <T extends ValidComponent>(props: DynamicProps<T>) => {
   onCleanup(() => {
-    props.ref(null)
+    if (typeof props.ref === 'function') {
+      props.ref(null)
+    }
   })
 
   return <Dynamic {...props} />

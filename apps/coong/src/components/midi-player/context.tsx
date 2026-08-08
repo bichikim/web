@@ -114,6 +114,7 @@ interface MidiPlayerCore {
   repeat: Accessor<RepeatType>
   selectedId: Accessor<string>
   setPlayList: Setter<MusicInfo[]>
+  setSelectedId: Setter<string>
 }
 
 function useMidiPlayerCore(defaultProps: MergedMidiPlayerProviderProps): MidiPlayerCore {
@@ -257,6 +258,7 @@ function useMidiPlayerCore(defaultProps: MergedMidiPlayerProviderProps): MidiPla
     repeat,
     selectedId,
     setPlayList,
+    setSelectedId,
   }
 }
 
@@ -312,8 +314,10 @@ function useMidiPlayerDerived(core: MidiPlayerCore): MidiPlayerDerived {
   createEffect(() => {
     const musics = defaultProps.initMusics ?? []
 
-    if (musics.length > 0) {
-      core.setPlayList(musics)
+    core.setPlayList(musics)
+
+    if (!musics.some((music) => music.id === core.selectedId())) {
+      core.setSelectedId(musics[0]?.id ?? '')
     }
   })
 
