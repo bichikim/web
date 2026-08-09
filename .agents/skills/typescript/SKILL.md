@@ -1,6 +1,6 @@
 ---
 name: typescript-conventions
-description: Applies project TypeScript conventions and library-grade module boundaries. Use when writing or editing .ts/.tsx files, designing exported APIs or cross-layer contracts, creating reusable modules, or refactoring dependencies between features, packages, services, and adapters.
+description: Applies project TypeScript conventions, functional error contracts, and library-grade module boundaries. Use when writing or editing .ts/.tsx files, designing exported APIs or cross-layer contracts, creating reusable modules, handling errors across adapters or workers, or refactoring dependencies between features, packages, services, and adapters.
 ---
 
 # Typescript
@@ -22,6 +22,15 @@ Open and apply the reference files for the relevant section before working. For 
 11. See ./rules/no-types.md when module types are missing.
 12. See ./code-patterns/type-guard.md when handling `unknown` or writing type guards.
 13. See ./code-patterns/type-and-value-import.md when importing both a type and a value from the same module.
+
+## Functional Error Design
+
+1. Model expected, recoverable failures as a discriminated `Result<T, E>`; use `Promise<Result<T, E>>` for asynchronous APIs.
+2. Reserve `throw` and rejected promises for programming defects or failures outside the declared contract. Catch third-party exceptions once at the nearest adapter boundary and normalize `unknown` into a domain error.
+3. Define domain errors as discriminated unions with stable machine-readable codes and exhaustive `never` checks. Keep user-facing messages out of domain and transport errors.
+4. Send plain serializable error DTOs across Worker, network, or storage boundaries. Preserve the original cause only for local diagnostics and telemetry.
+5. Represent cancellation separately from failure, and encode retryability only when callers can act on it. Retry transient failures; do not retry validation or contract failures.
+6. Do not wrap every private helper in `Result`; apply it where callers can recover, branch, retry, or propagate meaningfully.
 
 ## `src/features` Layout
 

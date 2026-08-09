@@ -1,0 +1,201 @@
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
+
+import {createSupertonicClient} from '../client'
+import type {SupertonicWorkerOutput} from '../messages'
+
+const SAMPLE_RATE = 24_000
+const GENERATION_TIME = 850
+
+class FakeWorker {
+  static current: FakeWorker | null = null
+
+  readonly postMessage = vi.fn()
+  readonly terminate = vi.fn()
+  readonly #listeners = new Map<
+    string,
+    Array<(event: MessageEvent<SupertonicWorkerOutput>) => void>
+  >()
+
+  constructor() {
+    FakeWorker.current = this
+  }
+
+  addEventListener(type: string, listener: (event: MessageEvent<SupertonicWorkerOutput>) => void) {
+    const listeners = this.#listeners.get(type) ?? []
+    listeners.push(listener)
+    this.#listeners.set(type, listeners)
+  }
+
+  emitMessage(message: SupertonicWorkerOutput) {
+    for (const listener of this.#listeners.get('message') ?? []) {
+      listener({data: message} as MessageEvent<SupertonicWorkerOutput>)
+    }
+  }
+
+  emitError() {
+    for (const listener of this.#listeners.get('error') ?? []) {
+      listener({} as MessageEvent<SupertonicWorkerOutput>)
+    }
+  }
+}
+
+const getWorker = () => {
+  const worker = FakeWorker.current
+
+  if (worker === null) {
+    throw new Error('Worker가 생성되지 않았습니다.')
+  }
+
+  return worker
+}
+
+beforeEach(() => {
+  FakeWorker.current = null
+  vi.stubGlobal('Worker', FakeWorker)
+})
+
+afterEach(() => {
+  vi.unstubAllGlobals()
+  vi.clearAllMocks()
+})
+
+describe('createSupertonicClient', () => {
+  it('should initialize the selected model and forward progress and status events', async () => {
+    const onProgress = vi.fn()
+    const onStatus = vi.fn()
+    const client = createSupertonicClient()
+    const worker = getWorker()
+    const initialization = client.initialize({modelId: 'int8', onProgress, onStatus})
+
+    expect(worker.postMessage).toHaveBeenCalledWith({modelId: 'int8', type: 'initialize'})
+    worker.emitMessage({
+      progress: {fileName: '모델', loadedBytes: 1, totalBytes: 2},
+      type: 'progress',
+    })
+    worker.emitMessage({message: '확인 중', type: 'status'})
+    worker.emitMessage({backend: 'wasm', type: 'ready'})
+    expect(await initialization).toEqual({ok: true, value: undefined})
+
+    expect(onProgress).toHaveBeenCalledWith({fileName: '모델', loadedBytes: 1, totalBytes: 2})
+    expect(onStatus).toHaveBeenCalledWith('확인 중')
+  })
+
+  it('should resolve generated audio and return a failure for concurrent requests', async () => {
+    const client = createSupertonicClient()
+    const worker = getWorker()
+    const generation = client.generate({text: '안녕', voiceId: 'F1'})
+
+    expect(await client.generate({text: '다시', voiceId: 'F2'})).toEqual({
+      error: {code: 'generation-busy', phase: 'generate', retryable: true},
+      ok: false,
+    })
+    const samples = Float32Array.of(0.1)
+    worker.emitMessage({
+      generationTime: GENERATION_TIME,
+      requestId: 1,
+      sampleRate: SAMPLE_RATE,
+      samples,
+      type: 'result',
+    })
+
+    expect(await generation).toEqual({
+      ok: true,
+      value: {
+        generationTime: GENERATION_TIME,
+        sampleRate: SAMPLE_RATE,
+        samples,
+      },
+    })
+    expect(worker.postMessage).toHaveBeenCalledWith({
+      requestId: 1,
+      speed: 1.05,
+      text: '안녕',
+      type: 'generate',
+      voiceId: 'F1',
+    })
+  })
+
+  it('should route structured initialization and generation failures to pending operations', async () => {
+    const client = createSupertonicClient()
+    const worker = getWorker()
+    const initialization = client.initialize({
+      modelId: 'full',
+      onProgress: vi.fn(),
+      onStatus: vi.fn(),
+    })
+    const initializationError = {
+      backend: 'wasm' as const,
+      code: 'backend-failed' as const,
+      detail: '초기화 실패',
+      phase: 'initialize' as const,
+      retryable: false,
+    }
+    worker.emitMessage({error: initializationError, requestId: null, type: 'error'})
+    expect(await initialization).toEqual({error: initializationError, ok: false})
+
+    const generation = client.generate({text: '안녕', voiceId: 'M1'})
+    const generationError = {
+      code: 'worker-failed' as const,
+      detail: '생성 실패',
+      phase: 'generate' as const,
+      retryable: true as const,
+    }
+    worker.emitMessage({error: generationError, requestId: 1, type: 'error'})
+    expect(await generation).toEqual({error: generationError, ok: false})
+  })
+
+  it('should reject pending work on worker failure and terminate after disposal', async () => {
+    const client = createSupertonicClient()
+    const worker = getWorker()
+    const initialization = client.initialize({
+      modelId: 'full',
+      onProgress: vi.fn(),
+      onStatus: vi.fn(),
+    })
+    worker.emitError()
+    expect(await initialization).toEqual({
+      error: {
+        code: 'worker-failed',
+        detail: 'Worker 실행 오류',
+        phase: 'initialize',
+        retryable: true,
+      },
+      ok: false,
+    })
+
+    client.dispose()
+    expect(worker.postMessage).toHaveBeenCalledWith({type: 'dispose'})
+    worker.emitMessage({type: 'disposed'})
+    expect(worker.terminate).toHaveBeenCalledTimes(1)
+  })
+
+  it('should resolve pending generation as cancelled on disposal', async () => {
+    const client = createSupertonicClient()
+    const generation = client.generate({text: '안녕', voiceId: 'F1'})
+
+    client.dispose()
+
+    expect(await generation).toEqual({
+      error: {code: 'cancelled', phase: 'generate', retryable: false},
+      ok: false,
+    })
+  })
+
+  it('should resolve pending generation as a Worker failure when the Worker crashes', async () => {
+    const client = createSupertonicClient()
+    const worker = getWorker()
+    const generation = client.generate({text: '안녕', voiceId: 'F1'})
+
+    worker.emitError()
+
+    expect(await generation).toEqual({
+      error: {
+        code: 'worker-failed',
+        detail: 'Worker 실행 오류',
+        phase: 'generate',
+        retryable: true,
+      },
+      ok: false,
+    })
+  })
+})
