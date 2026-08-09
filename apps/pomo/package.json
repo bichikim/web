@@ -21,6 +21,7 @@
     "@unocss/reset": "catalog:",
     "class-variance-authority": "catalog:",
     "cross-env": "catalog:",
+    "onnxruntime-web": "1.23.2",
     "solid-js": "catalog:",
     "unocss": "catalog:",
     "vinxi": "catalog:",

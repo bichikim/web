@@ -1,0 +1,240 @@
+// oxlint-disable eslint-js/camelcase -- Supertonic ONNX tensor names and model JSON fields are fixed external contracts.
+// oxlint-disable no-await-in-loop -- Every denoising step consumes the result of the previous step.
+import {InferenceSession, Tensor} from 'onnxruntime-web/all'
+import {z} from 'zod'
+
+import type {InvalidModelDataError} from './errors'
+import {failureResult, type Result, successResult} from './result'
+
+const configSchema = z.object({
+  ae: z.object({base_chunk_size: z.number(), sample_rate: z.number()}),
+  ttl: z.object({chunk_compress_factor: z.number(), latent_dim: z.number()}),
+})
+const indexerSchema = z.array(z.number().int())
+const voiceFieldSchema = z.object({data: z.unknown(), dims: z.array(z.number().int().positive())})
+const voiceSchema = z.object({style_dp: voiceFieldSchema, style_ttl: voiceFieldSchema})
+const MINIMUM_RANDOM_VALUE = 0.0001
+const BOX_MULLER_SCALE = -2
+
+export interface SupertonicSessions {
+  readonly durationPredictor: InferenceSession
+  readonly textEncoder: InferenceSession
+  readonly vectorEstimator: InferenceSession
+  readonly vocoder: InferenceSession
+}
+
+export interface SupertonicVoice {
+  readonly durationStyle: Tensor
+  readonly speechStyle: Tensor
+}
+
+interface GenerateAudioOptions {
+  readonly onProgress: (step: number, total: number) => void
+  readonly speed: number
+  readonly text: string
+  readonly voice: SupertonicVoice
+}
+
+const createDataError = (asset: InvalidModelDataError['asset']): InvalidModelDataError => ({
+  asset,
+  code: 'invalid-model-data',
+  phase: 'validate',
+  retryable: false,
+})
+
+const flattenNumbers = (value: unknown): Result<ReadonlyArray<number>, InvalidModelDataError> => {
+  if (typeof value === 'number') {
+    return successResult([value])
+  }
+
+  if (!Array.isArray(value)) {
+    return failureResult(createDataError('voice'))
+  }
+
+  const numbers: Array<number> = []
+
+  for (const item of value) {
+    const result = flattenNumbers(item)
+
+    if (!result.ok) {
+      return result
+    }
+
+    numbers.push(...result.value)
+  }
+
+  return successResult(numbers)
+}
+
+const createFloatTensor = (values: ReadonlyArray<number>, dimensions: ReadonlyArray<number>) =>
+  new Tensor('float32', Float32Array.from(values), Array.from(dimensions))
+
+export const parseSupertonicConfig = (
+  value: unknown,
+): Result<SupertonicConfig, InvalidModelDataError> => {
+  const result = configSchema.safeParse(value)
+  return result.success ? successResult(result.data) : failureResult(createDataError('config'))
+}
+
+export const parseSupertonicIndexer = (
+  value: unknown,
+): Result<SupertonicIndexer, InvalidModelDataError> => {
+  const result = indexerSchema.safeParse(value)
+  return result.success ? successResult(result.data) : failureResult(createDataError('indexer'))
+}
+
+export const parseSupertonicVoice = (
+  value: unknown,
+): Result<SupertonicVoice, InvalidModelDataError> => {
+  const parsedVoice = voiceSchema.safeParse(value)
+
+  if (!parsedVoice.success) {
+    return failureResult(createDataError('voice'))
+  }
+
+  const durationData = flattenNumbers(parsedVoice.data.style_dp.data)
+  const speechData = flattenNumbers(parsedVoice.data.style_ttl.data)
+
+  if (!durationData.ok) {
+    return durationData
+  }
+
+  if (!speechData.ok) {
+    return speechData
+  }
+
+  return successResult({
+    durationStyle: createFloatTensor(durationData.value, parsedVoice.data.style_dp.dims),
+    speechStyle: createFloatTensor(speechData.value, parsedVoice.data.style_ttl.dims),
+  })
+}
+
+type SupertonicConfig = z.infer<typeof configSchema>
+type SupertonicIndexer = z.infer<typeof indexerSchema>
+
+const preprocessText = (input: string) => {
+  let text = input
+    .normalize('NFKD')
+    .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{1F1E6}-\u{1F1FF}]+/gu, '')
+    .replace(/[–‑—]/gu, '-')
+    .replace(/[[\]_|/#→←]/gu, ' ')
+    .replace(/[“”]/gu, '"')
+    .replace(/[‘’´`]/gu, "'")
+    .replace(/[♥☆♡©\\]/gu, '')
+    .replace(/\s+/gu, ' ')
+    .trim()
+
+  if (!/[.!?;:,'")\]}…。」』】〉》›»]$/u.test(text)) {
+    text += '.'
+  }
+
+  return `<ko>${text}</ko>`
+}
+
+const createTextInput = (text: string, indexer: SupertonicIndexer) => {
+  const characters = Array.from(preprocessText(text))
+  const ids = characters.map((character) => {
+    const codePoint = character.codePointAt(0)
+
+    if (codePoint === undefined || codePoint >= indexer.length) {
+      return -1
+    }
+
+    return indexer[codePoint] ?? -1
+  })
+  const textIds = new Tensor('int64', BigInt64Array.from(ids, BigInt), [1, ids.length])
+  const textMask = new Tensor('float32', new Float32Array(ids.length).fill(1), [1, 1, ids.length])
+
+  return {textIds, textMask}
+}
+
+const getFloatData = (tensor: Tensor) => {
+  if (!(tensor.data instanceof Float32Array)) {
+    throw new Error('Supertonic 모델이 예상하지 못한 결과를 반환했어요.')
+  }
+
+  return tensor.data
+}
+
+const createNoise = (length: number) => {
+  const noise = new Float32Array(length)
+
+  for (let index = 0; index < length; index += 1) {
+    const firstRandom = Math.max(MINIMUM_RANDOM_VALUE, Math.random())
+    const secondRandom = Math.random()
+    noise[index] =
+      Math.sqrt(BOX_MULLER_SCALE * Math.log(firstRandom)) *
+      Math.cos(-BOX_MULLER_SCALE * Math.PI * secondRandom)
+  }
+
+  return noise
+}
+
+export class SupertonicEngine {
+  readonly #config: SupertonicConfig
+  readonly #indexer: SupertonicIndexer
+  readonly #sessions: SupertonicSessions
+
+  constructor(config: SupertonicConfig, indexer: SupertonicIndexer, sessions: SupertonicSessions) {
+    this.#config = config
+    this.#indexer = indexer
+    this.#sessions = sessions
+  }
+
+  get sampleRate() {
+    return this.#config.ae.sample_rate
+  }
+
+  async generate(options: GenerateAudioOptions): Promise<Float32Array> {
+    const {textIds, textMask} = createTextInput(options.text, this.#indexer)
+    const durationResult = await this.#sessions.durationPredictor.run({
+      style_dp: options.voice.durationStyle,
+      text_ids: textIds,
+      text_mask: textMask,
+    })
+    const durationData = getFloatData(durationResult.duration)
+    const duration = durationData[0] / options.speed
+    const textResult = await this.#sessions.textEncoder.run({
+      style_ttl: options.voice.speechStyle,
+      text_ids: textIds,
+      text_mask: textMask,
+    })
+
+    const chunkSize = this.#config.ae.base_chunk_size * this.#config.ttl.chunk_compress_factor
+    const latentLength = Math.ceil((duration * this.sampleRate) / chunkSize)
+    const latentDimension = this.#config.ttl.latent_dim * this.#config.ttl.chunk_compress_factor
+    const latentShape = [1, latentDimension, latentLength]
+    const latentMask = new Tensor('float32', new Float32Array(latentLength).fill(1), [
+      1,
+      1,
+      latentLength,
+    ])
+    const totalSteps = 8
+    const totalStepTensor = new Tensor('float32', Float32Array.of(totalSteps), [1])
+    const latent = createNoise(latentDimension * latentLength)
+
+    for (let step = 0; step < totalSteps; step += 1) {
+      options.onProgress(step + 1, totalSteps)
+      const result = await this.#sessions.vectorEstimator.run({
+        current_step: new Tensor('float32', Float32Array.of(step), [1]),
+        latent_mask: latentMask,
+        noisy_latent: new Tensor('float32', latent, latentShape),
+        style_ttl: options.voice.speechStyle,
+        text_emb: textResult.text_emb,
+        text_mask: textMask,
+        total_step: totalStepTensor,
+      })
+      latent.set(getFloatData(result.denoised_latent))
+    }
+
+    const vocoderResult = await this.#sessions.vocoder.run({
+      latent: new Tensor('float32', latent, latentShape),
+    })
+    const samples = getFloatData(vocoderResult.wav_tts)
+    return samples.slice(0, Math.floor(this.sampleRate * duration))
+  }
+
+  async release() {
+    await Promise.all(Object.values(this.#sessions).map((session) => session.release()))
+  }
+}
