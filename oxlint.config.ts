@@ -7,9 +7,12 @@ export default defineConfig({
     builtin: true,
     node: true,
   },
-  ignorePatterns: ['apps/*/dist/*', 'packages/*/dist/*'],
+  ignorePatterns: ['apps/*/dist/**', 'packages/*/dist/**'],
   jsPlugins: [
-    'oxlint-plugin-eslint',
+    {
+      name: 'eslint-js',
+      specifier: 'oxlint-plugin-eslint',
+    },
     {
       name: 'sort-export-all',
       specifier: 'eslint-plugin-sort-export-all',
@@ -75,7 +78,6 @@ export default defineConfig({
         '@typescript-eslint/no-var-requires': 'off',
         'eslint-js/camelcase': 'off',
         'eslint-js/no-magic-numbers': 'off',
-        // 'eslint-js/no-invalid-this': 'off',
         'eslint-js/no-mixed-operators': 'off',
         'eslint-js/prefer-named-capture-group': 'off',
         'eslint-js/require-unicode-regexp': 'off',
@@ -87,7 +89,6 @@ export default defineConfig({
         'max-params': 'off',
         'max-statements': 'off',
         'no-control-regex': 'off',
-        // 'no-mixed-operators': 'off',
         'no-empty-function': 'off',
         'no-magic-numbers': 'off',
         'no-unassigned-vars': 'off',
@@ -102,18 +103,12 @@ export default defineConfig({
         'unicorn/no-useless-undefined': 'off',
       },
     },
-    // js files
+    // JS files
     {
       files: ['**/*.js'],
       rules: {
         '@typescript-eslint/no-var-requires': 'off',
         'unicorn/prefer-module': 'off',
-      },
-    },
-    {
-      files: ['.eslintrc.js'],
-      rules: {
-        'no-magic-numbers': 'off',
       },
     },
     // @winter-love/oxlint-plugins — ESLint rule implementation; relax rules that conflict with AST idioms or rule metadata.
@@ -209,9 +204,7 @@ export default defineConfig({
     'eslint-js/no-extra-parens': ['error', 'functions'],
     'eslint-js/no-floating-decimal': 'error',
     'eslint-js/no-implicit-globals': 'off',
-    // 'eslint-js/no-invalid-this': 'error',
     'eslint-js/no-magic-numbers': 'off',
-    // 'eslint-js/no-mixed-operators': 'error',
     'eslint-js/no-mixed-spaces-and-tabs': 'error',
     'eslint-js/no-multi-spaces': 'error',
     'eslint-js/no-multiple-empty-lines': ['error', {max: 1, maxEOF: 1}],
@@ -365,5 +358,4 @@ export default defineConfig({
     'unicorn/prefer-ternary': 'off',
     yoda: 'error',
   },
-  settings: {},
 })
