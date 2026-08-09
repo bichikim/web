@@ -1,9 +1,11 @@
 import type {NeedleEngineWebComponent} from '@needle-tools/engine'
 import {cx} from 'class-variance-authority'
-import {createEffect, createSignal, onCleanup, onMount, Show} from 'solid-js'
+import {createSignal, onMount, Show} from 'solid-js'
+
+import {type CharacterRendererStatus, useCharacterRenderer} from '../features/character-renderer'
 
 const DEFAULT_MODEL_URL = '/models/blender/scene.glb?integration=1'
-const MAXIMUM_PROGRESS = 100
+const DEFAULT_MODEL_NAME = 'Blender · character-studio.blend'
 const VIEWER_CLASSES = cx(
   'relative min-h-105 overflow-hidden rounded-7 border border-white/10 bg-#111820',
   'shadow-[0_30px_100px_rgba(0,0,0,0.35)] lg:min-h-155',
@@ -37,12 +39,10 @@ const RESET_BUTTON_CLASSES = cx(
   'transition hover:bg-white/5 hover:text-white',
 )
 
-type ViewerStatus = 'booting' | 'error' | 'loading' | 'ready'
-
 interface CharacterViewerProps {
   readonly onEngineReady: (element: NeedleEngineWebComponent) => void
   readonly progress: number
-  readonly status: ViewerStatus
+  readonly status: CharacterRendererStatus
 }
 
 interface CharacterControlsProps {
@@ -54,7 +54,7 @@ interface CharacterControlsProps {
   readonly urlInput: string
 }
 
-const getStatusLabel = (status: ViewerStatus, progress: number) => {
+const getStatusLabel = (status: CharacterRendererStatus, progress: number) => {
   if (status === 'booting') {
     return '3D 엔진 준비 중'
   }
@@ -176,73 +176,17 @@ const CharacterControls = (props: CharacterControlsProps) => (
 )
 
 export const CharacterStudio = () => {
-  const [engineElement, setEngineElement] = createSignal<NeedleEngineWebComponent | null>(null)
-  const [modelUrl, setModelUrl] = createSignal(DEFAULT_MODEL_URL)
-  const [modelName, setModelName] = createSignal('Blender · character-studio.blend')
   const [urlInput, setUrlInput] = createSignal('')
-  const [status, setStatus] = createSignal<ViewerStatus>('booting')
-  const [progress, setProgress] = createSignal(0)
-  let activeObjectUrl: string | null = null
+  const renderer = useCharacterRenderer({
+    defaultModelName: DEFAULT_MODEL_NAME,
+    defaultModelUrl: DEFAULT_MODEL_URL,
+  })
 
   onMount(() => {
-    import('@needle-tools/engine').then(() => setStatus('loading')).catch(() => setStatus('error'))
-  })
-
-  createEffect(() => {
-    const element = engineElement()
-
-    if (element === null) {
-      return
-    }
-
-    const handleLoadStart = () => {
-      setProgress(0)
-      setStatus('loading')
-    }
-    const handleProgress: EventListener = (event) => {
-      if (event instanceof CustomEvent) {
-        const detail = event.detail as {totalProgress01: number}
-        setProgress(Math.round(detail.totalProgress01 * MAXIMUM_PROGRESS))
-      }
-    }
-    const handleLoadFinished = () => {
-      setProgress(MAXIMUM_PROGRESS)
-      setStatus('ready')
-    }
-
-    element.addEventListener('loadstart', handleLoadStart)
-    element.addEventListener('progress', handleProgress)
-    element.addEventListener('loadfinished', handleLoadFinished)
-    onCleanup(() => {
-      element.removeEventListener('loadstart', handleLoadStart)
-      element.removeEventListener('progress', handleProgress)
-      element.removeEventListener('loadfinished', handleLoadFinished)
+    renderer.prepare().catch((error: unknown) => {
+      console.error('Unexpected character renderer preparation failure', error)
     })
   })
-
-  createEffect(() => {
-    const element = engineElement()
-
-    if (element !== null) {
-      element.setAttribute('src', modelUrl())
-    }
-  })
-
-  onCleanup(() => {
-    if (activeObjectUrl !== null) {
-      URL.revokeObjectURL(activeObjectUrl)
-    }
-  })
-
-  const replaceModel = (url: string, name: string) => {
-    if (activeObjectUrl !== null) {
-      URL.revokeObjectURL(activeObjectUrl)
-      activeObjectUrl = null
-    }
-
-    setModelName(name)
-    setModelUrl(url)
-  }
 
   const handleFileChange = (event: Event & {currentTarget: HTMLInputElement}) => {
     const file = event.currentTarget.files?.[0]
@@ -251,9 +195,7 @@ export const CharacterStudio = () => {
       return
     }
 
-    const objectUrl = URL.createObjectURL(file)
-    replaceModel(objectUrl, file.name)
-    activeObjectUrl = objectUrl
+    renderer.loadFile(file)
     event.currentTarget.value = ''
   }
 
@@ -265,21 +207,25 @@ export const CharacterStudio = () => {
     event.preventDefault()
     const url = urlInput().trim()
 
-    if (url.length > 0) {
-      replaceModel(url, 'Blender / 외부 GLB')
+    if (renderer.loadUrl(url)) {
+      setUrlInput('')
     }
   }
 
   const handleDefaultModelClick = () => {
     setUrlInput('')
-    replaceModel(DEFAULT_MODEL_URL, 'Blender · character-studio.blend')
+    renderer.loadDefaultModel()
   }
 
   return (
     <section class="grid gap-5 lg:grid-cols-[minmax(0,1fr)_22rem]">
-      <CharacterViewer onEngineReady={setEngineElement} progress={progress()} status={status()} />
+      <CharacterViewer
+        onEngineReady={renderer.attachElement}
+        progress={renderer.progress()}
+        status={renderer.status()}
+      />
       <CharacterControls
-        modelName={modelName()}
+        modelName={renderer.modelName()}
         onDefaultModelClick={handleDefaultModelClick}
         onFileChange={handleFileChange}
         onUrlInput={handleUrlInput}
