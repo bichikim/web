@@ -32,7 +32,6 @@ class TestRenderElement implements CharacterRenderElement {
   }
   readonly listeners = new Map<string, Set<EventListener>>()
   readonly sceneNode: {raycastAllowed?: boolean} = {}
-  readonly setAttribute = vi.fn()
 
   addEventListener(type: string, listener: EventListener) {
     const listeners = this.listeners.get(type) ?? new Set<EventListener>()
@@ -73,7 +72,7 @@ const createRendererRoot = (runtime: CharacterRendererRuntime): CharacterRendere
 }
 
 describe('useCharacterRenderer', () => {
-  it('should prepare the engine and bind the default model to the render element', async () => {
+  it('should prepare the engine and expose the default model URL', async () => {
     const runtime = createRuntime()
     const renderer = createRendererRoot(runtime)
     const element = new TestRenderElement()
@@ -83,7 +82,7 @@ describe('useCharacterRenderer', () => {
 
     expect(runtime.loadEngine).toHaveBeenCalledTimes(1)
     expect(renderer.controller.status()).toBe('loading')
-    expect(element.setAttribute).toHaveBeenCalledWith('src', '/character.glb')
+    expect(renderer.controller.modelUrl()).toBe('/character.glb')
     renderer.dispose()
   })
 
@@ -124,11 +123,11 @@ describe('useCharacterRenderer', () => {
 
     expect(renderer.controller.loadUrl('   ')).toBe(false)
     expect(renderer.controller.loadUrl(' https://example.com/hero.glb ')).toBe(true)
-    expect(element.setAttribute).toHaveBeenLastCalledWith('src', 'https://example.com/hero.glb')
+    expect(renderer.controller.modelUrl()).toBe('https://example.com/hero.glb')
 
     renderer.controller.loadDefaultModel()
     expect(renderer.controller.modelName()).toBe('기본 캐릭터')
-    expect(element.setAttribute).toHaveBeenLastCalledWith('src', '/character.glb')
+    expect(renderer.controller.modelUrl()).toBe('/character.glb')
     renderer.dispose()
   })
 

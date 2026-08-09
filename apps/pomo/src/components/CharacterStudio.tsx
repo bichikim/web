@@ -40,6 +40,7 @@ const RESET_BUTTON_CLASSES = cx(
 )
 
 interface CharacterViewerProps {
+  readonly modelUrl: string
   readonly onEngineReady: (element: NeedleEngineWebComponent) => void
   readonly progress: number
   readonly status: CharacterRendererStatus
@@ -98,6 +99,7 @@ const CharacterViewer = (props: CharacterViewerProps) => (
         environment-image="studio"
         loading-style="dark"
         ref={props.onEngineReady}
+        src={props.modelUrl}
         tone-mapping="agx"
       />
     </Show>
@@ -220,6 +222,7 @@ export const CharacterStudio = () => {
   return (
     <section class="grid gap-5 lg:grid-cols-[minmax(0,1fr)_22rem]">
       <CharacterViewer
+        modelUrl={renderer.modelUrl()}
         onEngineReady={renderer.attachElement}
         progress={renderer.progress()}
         status={renderer.status()}

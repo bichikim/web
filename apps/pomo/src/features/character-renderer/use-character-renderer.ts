@@ -18,7 +18,6 @@ export interface CharacterRenderElement {
   readonly addEventListener: (type: string, listener: EventListener) => void
   readonly context?: CharacterRenderContext
   readonly removeEventListener: (type: string, listener: EventListener) => void
-  readonly setAttribute: (name: string, value: string) => void
 }
 
 export interface CharacterRendererRuntime {
@@ -40,6 +39,7 @@ export interface CharacterRendererController {
   readonly loadFile: (file: File) => void
   readonly loadUrl: (url: string) => boolean
   readonly modelName: Accessor<string>
+  readonly modelUrl: Accessor<string>
   readonly prepare: () => Promise<void>
   readonly progress: Accessor<number>
   readonly status: Accessor<CharacterRendererStatus>
@@ -184,10 +184,6 @@ export const useCharacterRenderer = (
     })
   })
 
-  createEffect(() => {
-    element()?.setAttribute('src', modelUrl())
-  })
-
   onCleanup(releaseObjectUrl)
 
   return {
@@ -196,6 +192,7 @@ export const useCharacterRenderer = (
     loadFile,
     loadUrl,
     modelName,
+    modelUrl,
     prepare,
     progress,
     status,
