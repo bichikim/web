@@ -86,10 +86,11 @@ describe('useCharacterRenderer', () => {
     renderer.dispose()
   })
 
-  it('should report render progress and readiness from engine events', () => {
+  it('should report render progress and readiness from engine events', async () => {
     const renderer = createRendererRoot(createRuntime())
     const element = new TestRenderElement()
     renderer.controller.attachElement(element)
+    await renderer.controller.prepare()
 
     element.dispatch('progress', new CustomEvent('progress', {detail: {totalProgress01: 0.42}}))
     expect(renderer.controller.progress()).toBe(42)
@@ -133,17 +134,16 @@ describe('useCharacterRenderer', () => {
 
   it('should expose engine loading failures and allow a retry', async () => {
     const runtime = createRuntime()
-    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
-    runtime.loadEngine.mockRejectedValueOnce(new Error('엔진 로드 실패'))
+    const loadError = new Error('엔진 로드 실패')
+    runtime.loadEngine.mockRejectedValueOnce(loadError)
     const renderer = createRendererRoot(runtime)
 
-    await renderer.controller.prepare()
+    await expect(renderer.controller.prepare()).rejects.toBe(loadError)
     expect(renderer.controller.status()).toBe('error')
 
     await renderer.controller.prepare()
     expect(renderer.controller.status()).toBe('loading')
     expect(runtime.loadEngine).toHaveBeenCalledTimes(2)
-    consoleError.mockRestore()
     renderer.dispose()
   })
 

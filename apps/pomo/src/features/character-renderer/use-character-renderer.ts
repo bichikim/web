@@ -1,4 +1,6 @@
-import {type Accessor, createEffect, createSignal, onCleanup} from 'solid-js'
+import {type Accessor, createEffect, createMemo, createSignal, onCleanup} from 'solid-js'
+
+import {useAsyncTask} from '../async-task'
 
 const MAXIMUM_PROGRESS = 100
 
@@ -79,10 +81,23 @@ export const useCharacterRenderer = (
   const [element, setElement] = createSignal<CharacterRenderElement | null>(null)
   const [modelUrl, setModelUrl] = createSignal(props.defaultModelUrl)
   const [modelName, setModelName] = createSignal(props.defaultModelName)
-  const [status, setStatus] = createSignal<CharacterRendererStatus>('booting')
+  const [renderStatus, setRenderStatus] = createSignal<'loading' | 'ready'>('loading')
   const [progress, setProgress] = createSignal(0)
+  const preparation = useAsyncTask({concurrency: 'exhaust', task: () => runtime.loadEngine()})
+  const status = createMemo<CharacterRendererStatus>(() => {
+    const preparationState = preparation.state()
+
+    if (preparationState.status === 'error') {
+      return 'error'
+    }
+
+    if (preparationState.status === 'success') {
+      return renderStatus()
+    }
+
+    return 'booting'
+  })
   let activeObjectUrl: string | null = null
-  let preparationPromise: Promise<void> | null = null
 
   const releaseObjectUrl = () => {
     if (activeObjectUrl !== null) {
@@ -98,30 +113,11 @@ export const useCharacterRenderer = (
   }
 
   const prepare = () => {
-    if (preparationPromise !== null) {
-      return preparationPromise
-    }
-
-    if (status() !== 'booting' && status() !== 'error') {
+    if (preparation.state().status === 'success') {
       return Promise.resolve()
     }
 
-    setStatus('booting')
-    const nextPreparation = runtime
-      .loadEngine()
-      .then(() => {
-        setStatus('loading')
-      })
-      .catch((error: unknown) => {
-        console.error('Unexpected character renderer failure', error)
-        setStatus('error')
-      })
-      .finally(() => {
-        preparationPromise = null
-      })
-    preparationPromise = nextPreparation
-
-    return nextPreparation
+    return preparation.execute()
   }
 
   const loadFile = (file: File) => {
@@ -152,7 +148,7 @@ export const useCharacterRenderer = (
 
     const handleLoadStart = () => {
       setProgress(0)
-      setStatus('loading')
+      setRenderStatus('loading')
     }
     const handleProgress: EventListener = (event) => {
       const nextProgress = getLoadProgress(event)
@@ -171,7 +167,7 @@ export const useCharacterRenderer = (
       }
 
       setProgress(MAXIMUM_PROGRESS)
-      setStatus('ready')
+      setRenderStatus('ready')
     }
 
     currentElement.addEventListener('loadstart', handleLoadStart)
