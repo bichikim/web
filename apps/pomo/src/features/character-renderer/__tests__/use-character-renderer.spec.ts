@@ -23,7 +23,15 @@ const createDeferred = () => {
 }
 
 class TestRenderElement implements CharacterRenderElement {
+  readonly context = {
+    scene: {
+      traverse: vi.fn((callback: (node: {raycastAllowed?: boolean}) => void) => {
+        callback(this.sceneNode)
+      }),
+    },
+  }
   readonly listeners = new Map<string, Set<EventListener>>()
+  readonly sceneNode: {raycastAllowed?: boolean} = {}
   readonly setAttribute = vi.fn()
 
   addEventListener(type: string, listener: EventListener) {
@@ -90,6 +98,7 @@ describe('useCharacterRenderer', () => {
     element.dispatch('loadfinished', new Event('loadfinished'))
     expect(renderer.controller.progress()).toBe(100)
     expect(renderer.controller.status()).toBe('ready')
+    expect(element.sceneNode.raycastAllowed).toBe(false)
     renderer.dispose()
   })
 

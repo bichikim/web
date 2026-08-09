@@ -4,7 +4,7 @@ import {createSignal, onMount, Show} from 'solid-js'
 
 import {type CharacterRendererStatus, useCharacterRenderer} from '../features/character-renderer'
 
-const DEFAULT_MODEL_URL = '/models/blender/scene.glb?integration=1'
+const DEFAULT_MODEL_URL = '/models/blender/scene.glb?integration=2'
 const DEFAULT_MODEL_NAME = 'Blender · character-studio.blend'
 const VIEWER_CLASSES = cx(
   'relative min-h-105 overflow-hidden rounded-7 border border-white/10 bg-#111820',

@@ -4,8 +4,19 @@ const MAXIMUM_PROGRESS = 100
 
 export type CharacterRendererStatus = 'booting' | 'error' | 'loading' | 'ready'
 
+interface CharacterSceneNode {
+  raycastAllowed?: boolean
+}
+
+interface CharacterRenderContext {
+  readonly scene?: {
+    readonly traverse: (callback: (node: CharacterSceneNode) => void) => void
+  }
+}
+
 export interface CharacterRenderElement {
   readonly addEventListener: (type: string, listener: EventListener) => void
+  readonly context?: CharacterRenderContext
   readonly removeEventListener: (type: string, listener: EventListener) => void
   readonly setAttribute: (name: string, value: string) => void
 }
@@ -17,6 +28,7 @@ export interface CharacterRendererRuntime {
 }
 
 export interface UseCharacterRendererProps {
+  readonly allowModelInteraction?: boolean
   readonly defaultModelName: string
   readonly defaultModelUrl: string
   readonly runtime?: CharacterRendererRuntime
@@ -150,6 +162,14 @@ export const useCharacterRenderer = (
       }
     }
     const handleLoadFinished = () => {
+      if (props.allowModelInteraction !== true) {
+        // AI_NOTE - The preview only needs orbit controls. Disabling model raycasts avoids
+        // Needle's BVH worker, whose bare worker URL is not rewritten by Vinxi dev builds.
+        currentElement.context?.scene?.traverse((node) => {
+          node.raycastAllowed = false
+        })
+      }
+
       setProgress(MAXIMUM_PROGRESS)
       setStatus('ready')
     }
