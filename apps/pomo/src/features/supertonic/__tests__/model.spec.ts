@@ -20,6 +20,12 @@ describe('Supertonic model manifest', () => {
       {id: 'int8', preferredBackend: 'wasm', size: INT8_MODEL_SIZE},
     ])
     expect(SUPERTONIC_MODELS.every((model) => model.files.length === 4)).toBe(true)
+    expect(SUPERTONIC_MODELS.every((model) => model.speechPolicy)).toBe(true)
+    expect(getSupertonicModel('full').speechPolicy).toMatchObject({
+      considerSplitLength: 120,
+      maximumLength: 200,
+      recommendedLength: 150,
+    })
   })
 
   it('should resolve version-pinned model and shared asset URLs', () => {

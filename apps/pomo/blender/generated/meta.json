@@ -1,0 +1,13 @@
+{
+  "gzip": false,
+  "useRapier": true,
+  "generator": "Needle Engine for Blender 5.2.0 LTS (Addon 1.4.4)",
+  "meta": {
+    "title": "character-studio",
+    "description": "Built with Needle Engine for Blender: https://needle.tools",
+    "image": "include/poster.webp"
+  },
+  "license": {
+    "team": "0"
+  }
+}

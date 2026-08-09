@@ -1,9 +1,15 @@
 import {type Accessor, createMemo, createSignal, onCleanup, type Setter, untrack} from 'solid-js'
 
+import {createSupertonicAudioPlayer, type SupertonicAudioPlayer} from './audio-player'
 import {createSupertonicClient} from './client'
 import {getSupertonicErrorMessage} from './error-message'
 import type {SupertonicError} from './errors'
-import type {SupertonicAudio, SupertonicProgress} from './messages'
+import type {
+  SupertonicAudio,
+  SupertonicAudioChunk,
+  SupertonicGenerationEvent,
+  SupertonicProgress,
+} from './messages'
 import {
   getSupertonicModel,
   type SupertonicModel,
@@ -48,6 +54,11 @@ export interface SupertonicVoiceResult {
   readonly url: string
 }
 
+export interface SupertonicVoiceChunkResult extends SupertonicVoiceResult {
+  readonly index: number
+  readonly total: number
+}
+
 interface InitializeVoiceLabClientOptions {
   readonly modelId: SupertonicModelId
   readonly onProgress: (progress: SupertonicProgress) => void
@@ -61,13 +72,14 @@ interface GenerateVoiceLabClientOptions {
 
 export interface SupertonicVoiceLabClient {
   dispose: () => void
-  generate: (
+  generateStream: (
     options: GenerateVoiceLabClientOptions,
-  ) => Promise<Result<SupertonicAudio, SupertonicError>>
+  ) => AsyncGenerator<Result<SupertonicGenerationEvent, SupertonicError>>
   initialize: (options: InitializeVoiceLabClientOptions) => Promise<Result<void, SupertonicError>>
 }
 
 export interface SupertonicVoiceLabRuntime {
+  readonly createAudioPlayer: () => SupertonicAudioPlayer
   readonly createAudioUrl: (audio: SupertonicAudio) => string
   readonly createClient: () => SupertonicVoiceLabClient
   readonly revokeAudioUrl: (url: string) => void
@@ -83,6 +95,7 @@ export interface UseSupertonicVoiceLabProps {
 export interface SupertonicVoiceLabController {
   readonly canGenerate: Accessor<boolean>
   readonly canPrepare: Accessor<boolean>
+  readonly chunks: Accessor<ReadonlyArray<SupertonicVoiceChunkResult>>
   readonly errorMessage: Accessor<string | null>
   readonly generate: () => Promise<void>
   readonly isBusy: Accessor<boolean>
@@ -120,6 +133,10 @@ interface VoiceLabClientReference {
   current: SupertonicVoiceLabClient | null
 }
 
+interface AudioPlayerReference {
+  current: SupertonicAudioPlayer | null
+}
+
 interface CreatePrepareOptions {
   readonly clientReference: VoiceLabClientReference
   readonly isBusy: Accessor<boolean>
@@ -129,17 +146,22 @@ interface CreatePrepareOptions {
 }
 
 interface CreateGenerateOptions {
+  readonly audioPlayerReference: AudioPlayerReference
   readonly clientReference: VoiceLabClientReference
+  readonly clearAudioChunks: (modelId: SupertonicModelId) => void
   readonly isBusy: Accessor<boolean>
   readonly isModelReady: Accessor<boolean>
-  readonly selectedModelId: Accessor<SupertonicModelId>
+  readonly runtime: SupertonicVoiceLabRuntime
+  readonly selectedModel: Accessor<SupertonicModel>
   readonly selectedVoiceId: Accessor<SupertonicVoiceId>
   readonly setAudioResult: (audio: SupertonicAudio, modelId: SupertonicModelId) => void
+  readonly setAudioChunk: (audio: SupertonicAudioChunk, modelId: SupertonicModelId) => void
   readonly setState: Setter<SupertonicVoiceLabState>
   readonly text: Accessor<string>
 }
 
 const DEFAULT_RUNTIME: SupertonicVoiceLabRuntime = {
+  createAudioPlayer: createSupertonicAudioPlayer,
   createAudioUrl: (audio) => URL.createObjectURL(createWaveBlob(audio.samples, audio.sampleRate)),
   createClient: createSupertonicClient,
   revokeAudioUrl: (url) => URL.revokeObjectURL(url),
@@ -159,7 +181,7 @@ const getProgressPercentage = (progress: SupertonicProgress) =>
 
 const revokeAudioUrls = (
   runtime: SupertonicVoiceLabRuntime,
-  audioUrls: ReadonlyMap<SupertonicModelId, string>,
+  audioUrls: ReadonlyMap<unknown, string>,
 ) => {
   for (const url of audioUrls.values()) {
     runtime.revokeAudioUrl(url)
@@ -279,7 +301,7 @@ const createPrepare = (options: CreatePrepareOptions) => async () => {
 const createGenerate = (options: CreateGenerateOptions) => async () => {
   const currentClient = options.clientReference.current
   const currentText = options.text().trim()
-  const modelId = options.selectedModelId()
+  const model = options.selectedModel()
 
   if (
     currentClient === null ||
@@ -290,34 +312,54 @@ const createGenerate = (options: CreateGenerateOptions) => async () => {
     return
   }
 
-  options.setState({message: '음성을 생성하고 있어요.', status: 'generating'})
+  options.audioPlayerReference.current?.dispose()
+  const audioPlayer = options.runtime.createAudioPlayer()
+  options.audioPlayerReference.current = audioPlayer
+  options.clearAudioChunks(model.id)
+  options.setState({message: '첫 번째 음성 청크를 만들고 있어요.', status: 'generating'})
 
   try {
-    const result = await currentClient.generate({
+    for await (const result of currentClient.generateStream({
       text: currentText,
       voiceId: options.selectedVoiceId(),
+    })) {
+      if (options.clientReference.current !== currentClient) {
+        audioPlayer.dispose()
+        return
+      }
+
+      if (!result.ok) {
+        audioPlayer.finish()
+        options.setState({
+          errorMessage: getSupertonicErrorMessage(result.error),
+          isModelReady: true,
+          message: '음성 생성에 실패했어요.',
+          status: 'error',
+        })
+        return
+      }
+
+      if (result.value.type === 'chunk') {
+        const {audio} = result.value
+        options.setAudioChunk(audio, model.id)
+        audioPlayer.enqueue(audio, model.speechPolicy.silenceDuration)
+        options.setState({
+          message: `${audio.index + 1}/${audio.total} 청크가 완성되어 바로 재생하고 있어요.`,
+          status: 'generating',
+        })
+      } else {
+        options.setAudioResult(result.value.audio, model.id)
+      }
+    }
+
+    audioPlayer.finish()
+    options.setState({
+      message: '모든 청크와 합쳐진 WAV가 완성됐어요.',
+      status: 'complete',
     })
-
-    if (options.clientReference.current !== currentClient) {
-      return
-    }
-
-    if (result.ok) {
-      options.setAudioResult(result.value, modelId)
-      options.setState({
-        message: '음성이 완성됐어요. 재생하거나 WAV 파일로 내려받을 수 있어요.',
-        status: 'complete',
-      })
-    } else {
-      options.setState({
-        errorMessage: getSupertonicErrorMessage(result.error),
-        isModelReady: true,
-        message: '음성 생성에 실패했어요.',
-        status: 'error',
-      })
-    }
   } catch (error: unknown) {
     if (options.clientReference.current === currentClient) {
+      audioPlayer.dispose()
       reportUnexpectedError(error)
       options.setState({
         errorMessage: '음성을 생성하는 중 예상하지 못한 문제가 발생했어요.',
@@ -345,8 +387,11 @@ export const useSupertonicVoiceLab = (
     status: 'unprepared',
   })
   const [results, setResults] = createSignal<ReadonlyArray<SupertonicVoiceResult>>([])
+  const [chunks, setChunks] = createSignal<ReadonlyArray<SupertonicVoiceChunkResult>>([])
   const audioUrls = new Map<SupertonicModelId, string>()
+  const chunkAudioUrls = new Map<string, string>()
   const clientReference: VoiceLabClientReference = {current: null}
+  const audioPlayerReference: AudioPlayerReference = {current: null}
 
   const selectedModel = createMemo(() => getSupertonicModel(selectedModelId()))
   const {canGenerate, canPrepare, errorMessage, isBusy, isModelReady, progress, statusMessage} =
@@ -371,9 +416,44 @@ export const useSupertonicVoiceLab = (
     ])
   }
 
+  const setAudioChunk = (audio: SupertonicAudioChunk, modelId: SupertonicModelId) => {
+    const key = `${modelId}:${audio.index}`
+    const previousUrl = chunkAudioUrls.get(key)
+
+    if (previousUrl !== undefined) {
+      runtime.revokeAudioUrl(previousUrl)
+    }
+
+    const result = {
+      generationTime: audio.generationTime,
+      index: audio.index,
+      modelId,
+      total: audio.total,
+      url: runtime.createAudioUrl(audio),
+    }
+    chunkAudioUrls.set(key, result.url)
+    setChunks((currentChunks) => [
+      ...currentChunks.filter((item) => item.modelId !== modelId || item.index !== audio.index),
+      result,
+    ])
+  }
+
+  const clearAudioChunks = (modelId: SupertonicModelId) => {
+    const matchingChunks = chunks().filter((item) => item.modelId === modelId)
+
+    for (const chunk of matchingChunks) {
+      chunkAudioUrls.delete(`${modelId}:${chunk.index}`)
+      runtime.revokeAudioUrl(chunk.url)
+    }
+
+    setChunks((currentChunks) => currentChunks.filter((item) => item.modelId !== modelId))
+  }
+
   onCleanup(() => {
     disposeVoiceLabClient(clientReference)
+    audioPlayerReference.current?.dispose()
     revokeAudioUrls(runtime, audioUrls)
+    revokeAudioUrls(runtime, chunkAudioUrls)
   })
 
   const selectModel = (modelId: SupertonicModelId) => {
@@ -382,6 +462,8 @@ export const useSupertonicVoiceLab = (
     }
 
     disposeVoiceLabClient(clientReference)
+    audioPlayerReference.current?.dispose()
+    audioPlayerReference.current = null
     setSelectedModelId(modelId)
     setState({
       message: `${getSupertonicModel(modelId).label} 모델을 준비해 비교할 수 있어요.`,
@@ -393,11 +475,15 @@ export const useSupertonicVoiceLab = (
   const setText = (nextText: string) => setTextSignal(nextText)
   const prepare = createPrepare({clientReference, isBusy, runtime, selectedModel, setState})
   const generate = createGenerate({
+    audioPlayerReference,
+    clearAudioChunks,
     clientReference,
     isBusy,
     isModelReady,
-    selectedModelId,
+    runtime,
+    selectedModel,
     selectedVoiceId,
+    setAudioChunk,
     setAudioResult,
     setState,
     text,
@@ -406,6 +492,7 @@ export const useSupertonicVoiceLab = (
   return {
     canGenerate,
     canPrepare,
+    chunks,
     errorMessage,
     generate,
     isBusy,

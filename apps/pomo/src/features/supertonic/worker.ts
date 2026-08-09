@@ -4,6 +4,7 @@
 
 import {env, InferenceSession} from 'onnxruntime-web/all'
 
+import {joinAudioChunks} from './audio'
 import {
   parseSupertonicConfig,
   parseSupertonicIndexer,
@@ -31,6 +32,7 @@ import {
   type SupertonicVoiceId,
 } from './model'
 import {failureResult, type Result, successResult} from './result'
+import {splitSpeechText} from './text-chunking'
 
 const workerScope = self as DedicatedWorkerGlobalScope
 const voiceCache = new Map<SupertonicVoiceId, SupertonicVoice>()
@@ -38,6 +40,7 @@ const REQUEST_TIMEOUT_STATUS = 408
 const TOO_MANY_REQUESTS_STATUS = 429
 const SERVER_ERROR_STATUS = 500
 let engine: SupertonicEngine | null = null
+let activeModel: SupertonicModel | null = null
 let activeAbortController: AbortController | null = null
 
 type MutableSupertonicSessions = {
@@ -307,6 +310,7 @@ const initialize = async (model: SupertonicModel): Promise<Result<Backend, Super
     }
 
     engine = new SupertonicEngine(configResult.value, indexerResult.value, sessions)
+    activeModel = model
     return successResult(backend)
   } finally {
     if (activeAbortController === abortController) {
@@ -347,7 +351,7 @@ const getVoice = async (
 const generate = async (
   message: Extract<SupertonicWorkerInput, {type: 'generate'}>,
 ): Promise<Result<GeneratedAudio, SupertonicError>> => {
-  if (engine === null) {
+  if (engine === null || activeModel === null) {
     return failureResult({
       code: 'model-not-ready',
       phase: 'generate',
@@ -356,6 +360,7 @@ const generate = async (
   }
 
   const currentEngine = engine
+  const currentModel = activeModel
   const abortController = new AbortController()
   activeAbortController = abortController
   const startedAt = performance.now()
@@ -367,13 +372,43 @@ const generate = async (
       return voiceResult
     }
 
-    const samples = await currentEngine.generate({
-      onProgress: (step, total) => {
-        postMessage({message: `음성을 다듬는 중 ${step}/${total}`, type: 'status'})
-      },
-      speed: message.speed,
-      text: message.text,
-      voice: voiceResult.value,
+    const textChunks = splitSpeechText(message.text, currentModel.speechPolicy)
+    const audioChunks: Array<Float32Array> = []
+
+    for (const [chunkIndex, text] of textChunks.entries()) {
+      const chunkNumber = chunkIndex + 1
+      const chunkStartedAt = performance.now()
+      const samples = await currentEngine.generate({
+        onProgress: (step, total) => {
+          postMessage({
+            message: `음성 ${chunkNumber}/${textChunks.length} 다듬는 중 ${step}/${total}`,
+            type: 'status',
+          })
+        },
+        speed: message.speed,
+        text,
+        voice: voiceResult.value,
+      })
+      audioChunks.push(samples)
+      postMessage({
+        generationTime: Math.round(performance.now() - chunkStartedAt),
+        index: chunkIndex,
+        requestId: message.requestId,
+        sampleRate: currentEngine.sampleRate,
+        samples,
+        total: textChunks.length,
+        type: 'chunk',
+      })
+
+      if (abortController.signal.aborted) {
+        return failureResult(createCancelledError('generate'))
+      }
+    }
+
+    const samples = joinAudioChunks({
+      chunks: audioChunks,
+      sampleRate: currentEngine.sampleRate,
+      silenceDuration: currentModel.speechPolicy.silenceDuration,
     })
 
     if (abortController.signal.aborted) {
@@ -445,6 +480,7 @@ workerScope.onmessage = async (event: MessageEvent<SupertonicWorkerInput>) => {
       activeAbortController?.abort()
       await engine?.release()
       engine = null
+      activeModel = null
       voiceCache.clear()
       postMessage({type: 'disposed'})
     }

@@ -4,6 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "blender:export": "blender --background blender/character-studio.blend --python-expr \"import bpy; bpy.ops.needle_scene.export(immediate=True)\"",
+    "blender:open": "blender blender/character-studio.blend",
     "build": "pnpm run build:web",
     "build:apps-in-toss": "cross-env POMO_BUILD_TARGET=apps-in-toss vinxi build",
     "build:web": "vinxi build",
@@ -15,6 +17,7 @@
   },
   "dependencies": {
     "@kobalte/core": "^0.13.11",
+    "@needle-tools/engine": "5.1.10",
     "@solidjs/meta": "catalog:",
     "@solidjs/router": "catalog:",
     "@solidjs/start": "catalog:",
@@ -23,6 +26,7 @@
     "cross-env": "catalog:",
     "onnxruntime-web": "1.23.2",
     "solid-js": "catalog:",
+    "three": "npm:@needle-tools/three@0.169.19",
     "unocss": "catalog:",
     "vinxi": "catalog:",
     "vite": "catalog:",

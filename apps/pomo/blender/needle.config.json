@@ -1,0 +1,6 @@
+{
+  "assetsDirectory": "../public/models/blender",
+  "buildDirectory": "../.output/public",
+  "codegenDirectory": "generated",
+  "scriptsDirectory": "scripts"
+}

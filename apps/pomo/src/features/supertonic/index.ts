@@ -4,11 +4,18 @@ export type {
   InitializeSupertonicOptions,
   SupertonicClient,
 } from './client'
+export {createSupertonicAudioPlayer} from './audio-player'
+export type {SupertonicAudioPlayer} from './audio-player'
 export {getSupertonicErrorMessage} from './error-message'
 export type {SupertonicError, SupertonicPhase} from './errors'
-export type {SupertonicAudio} from './messages'
+export type {SupertonicAudio, SupertonicAudioChunk, SupertonicGenerationEvent} from './messages'
 export {getSupertonicModel, SUPERTONIC_MODELS, SUPERTONIC_VOICES} from './model'
-export type {SupertonicModel, SupertonicModelId, SupertonicVoiceId} from './model'
+export type {
+  SupertonicModel,
+  SupertonicModelId,
+  SupertonicSpeechPolicy,
+  SupertonicVoiceId,
+} from './model'
 export {createWaveBlob} from './wav'
 export {failureResult, successResult} from './result'
 export type {FailureResult, Result, SuccessResult} from './result'
@@ -18,6 +25,7 @@ export type {
   SupertonicVoiceLabController,
   SupertonicVoiceLabRuntime,
   SupertonicVoiceLabState,
+  SupertonicVoiceChunkResult,
   SupertonicVoiceResult,
   UseSupertonicVoiceLabProps,
 } from './use-supertonic-voice-lab'

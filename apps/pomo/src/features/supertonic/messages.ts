@@ -13,6 +13,15 @@ export interface SupertonicAudio {
   readonly samples: Float32Array
 }
 
+export interface SupertonicAudioChunk extends SupertonicAudio {
+  readonly index: number
+  readonly total: number
+}
+
+export type SupertonicGenerationEvent =
+  | {readonly audio: SupertonicAudioChunk; readonly type: 'chunk'}
+  | {readonly audio: SupertonicAudio; readonly type: 'complete'}
+
 export type SupertonicWorkerInput =
   | {readonly modelId: SupertonicModelId; readonly type: 'initialize'}
   | {
@@ -27,6 +36,15 @@ export type SupertonicWorkerInput =
 export type SupertonicWorkerOutput =
   | {readonly progress: SupertonicProgress; readonly type: 'progress'}
   | {readonly backend: 'wasm' | 'webgpu'; readonly type: 'ready'}
+  | {
+      readonly generationTime: number
+      readonly index: number
+      readonly requestId: number
+      readonly sampleRate: number
+      readonly samples: Float32Array
+      readonly total: number
+      readonly type: 'chunk'
+    }
   | {
       readonly generationTime: number
       readonly requestId: number
