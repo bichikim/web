@@ -1,3 +1,4 @@
+// oxlint-disable require-yield -- Rejection coverage needs an async generator that fails before its first value.
 import {createRoot} from 'solid-js'
 import {describe, expect, it, vi} from 'vitest'
 
@@ -9,6 +10,7 @@ import {
   type SupertonicVoiceLabRuntime,
   useSupertonicVoiceLab,
 } from '../index'
+import type {SupertonicAudioPlayer} from '../audio-player'
 
 const SAMPLE_RATE = 24_000
 const GENERATION_TIME = 1_200
@@ -33,9 +35,20 @@ const createAudio = () => ({
   samples: Float32Array.of(0),
 })
 
+const createAudioChunk = () => ({...createAudio(), index: 0, total: 1})
+
+const createTestAudioPlayer = (): SupertonicAudioPlayer => ({
+  dispose: vi.fn(),
+  enqueue: vi.fn(),
+  finish: vi.fn(),
+})
+
 const createClient = (): SupertonicVoiceLabClient => ({
   dispose: vi.fn(),
-  generate: vi.fn(async () => successResult(createAudio())),
+  generateStream: vi.fn(async function* generateStream() {
+    yield successResult({audio: createAudioChunk(), type: 'chunk' as const})
+    yield successResult({audio: createAudio(), type: 'complete' as const})
+  }),
   initialize: vi.fn(async (options) => {
     options.onProgress({fileName: '모델', loadedBytes: 1, totalBytes: 2})
     return successResult(undefined)
@@ -45,6 +58,7 @@ const createClient = (): SupertonicVoiceLabClient => ({
 const createRuntime = (
   clients: ReadonlyArray<SupertonicVoiceLabClient>,
 ): SupertonicVoiceLabRuntime & {
+  readonly createAudioPlayer: ReturnType<typeof vi.fn>
   readonly createAudioUrl: ReturnType<typeof vi.fn>
   readonly revokeAudioUrl: ReturnType<typeof vi.fn>
 } => {
@@ -55,8 +69,10 @@ const createRuntime = (
     return `blob:voice-${audioIndex}`
   })
   const revokeAudioUrl = vi.fn()
+  const createAudioPlayer = vi.fn(createTestAudioPlayer)
 
   return {
+    createAudioPlayer,
     createAudioUrl,
     createClient: () => {
       const client = clients[clientIndex]
@@ -96,10 +112,22 @@ describe('useSupertonicVoiceLab', () => {
     await voiceLab.controller.generate()
 
     expect(client.initialize).toHaveBeenCalledWith(expect.objectContaining({modelId: 'int8'}))
-    expect(client.generate).toHaveBeenCalledWith({text: '테스트 문장', voiceId: 'M3'})
+    expect(client.generateStream).toHaveBeenCalledWith({text: '테스트 문장', voiceId: 'M3'})
+    const audioPlayer = runtime.createAudioPlayer.mock.results[0]?.value as SupertonicAudioPlayer
+    expect(audioPlayer.enqueue).toHaveBeenCalledWith(createAudioChunk(), 0.3)
+    expect(audioPlayer.finish).toHaveBeenCalledTimes(1)
     expect(voiceLab.controller.state().status).toBe('complete')
+    expect(voiceLab.controller.chunks()).toEqual([
+      {
+        generationTime: GENERATION_TIME,
+        index: 0,
+        modelId: 'int8',
+        total: 1,
+        url: 'blob:voice-1',
+      },
+    ])
     expect(voiceLab.controller.results()).toEqual([
-      {generationTime: GENERATION_TIME, modelId: 'int8', url: 'blob:voice-1'},
+      {generationTime: GENERATION_TIME, modelId: 'int8', url: 'blob:voice-2'},
     ])
 
     voiceLab.dispose()
@@ -148,18 +176,18 @@ describe('useSupertonicVoiceLab', () => {
 
   it('should ignore generation before preparation and expose generation failures after preparation', async () => {
     const client = createClient()
-    vi.mocked(client.generate).mockResolvedValueOnce(
-      failureResult({
-        code: 'worker-failed',
+    vi.mocked(client.generateStream).mockImplementationOnce(async function* failedGeneration() {
+      yield failureResult({
+        code: 'worker-failed' as const,
         detail: '생성 실패',
-        phase: 'generate',
-        retryable: true,
-      }),
-    )
+        phase: 'generate' as const,
+        retryable: true as const,
+      })
+    })
     const voiceLab = createVoiceLabRoot(createRuntime([client]))
 
     await voiceLab.controller.generate()
-    expect(client.generate).not.toHaveBeenCalled()
+    expect(client.generateStream).not.toHaveBeenCalled()
 
     await voiceLab.controller.prepare()
     await voiceLab.controller.generate()
@@ -258,7 +286,9 @@ describe('useSupertonicVoiceLab', () => {
   it('should contain unexpected generation rejections at the UI boundary', async () => {
     const client = createClient()
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
-    vi.mocked(client.generate).mockRejectedValueOnce(new Error('계약 밖 생성 오류'))
+    vi.mocked(client.generateStream).mockImplementationOnce(async function* rejectedGeneration() {
+      throw new Error('계약 밖 생성 오류')
+    })
     const voiceLab = createVoiceLabRoot(createRuntime([client]))
 
     await voiceLab.controller.prepare()

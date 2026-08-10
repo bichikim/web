@@ -7,13 +7,14 @@ import {
   SUPERTONIC_VOICES,
   type SupertonicModel,
   type SupertonicModelId,
+  type SupertonicVoiceChunkResult,
   type SupertonicVoiceId,
   type SupertonicVoiceLabState,
   type SupertonicVoiceResult,
   useSupertonicVoiceLab,
 } from '../features/supertonic'
 
-const MAXIMUM_TEXT_LENGTH = 180
+const MAXIMUM_TEXT_LENGTH = 3000
 const BYTES_PER_MEGABYTE = 1_000_000
 const MILLISECONDS_PER_SECOND = 1000
 const INITIAL_TEXT = '오늘도 서두르지 말고, 한 번에 하나씩 집중해 볼까요?'
@@ -66,7 +67,12 @@ interface AudioResultsProps {
   readonly results: ReadonlyArray<SupertonicVoiceResult>
 }
 
+interface AudioChunksProps {
+  readonly chunks: ReadonlyArray<SupertonicVoiceChunkResult>
+}
+
 interface VoiceFieldsProps {
+  readonly model: SupertonicModel
   readonly onTextInput: (event: InputEvent & {currentTarget: HTMLTextAreaElement}) => void
   readonly onVoiceChange: (event: Event & {currentTarget: HTMLSelectElement}) => void
   readonly selectedVoiceId: SupertonicVoiceId
@@ -190,7 +196,7 @@ const AudioResults = (props: AudioResultsProps) => (
           return (
             <div class="grid gap-3 rounded-4 border border-#9ed6bb/20 bg-#9ed6bb/6 p-4">
               <div class="flex items-center justify-between gap-3 text-sm">
-                <span class="font-650 text-#b8e8d0">{model.label} 결과</span>
+                <span class="font-650 text-#b8e8d0">{model.label} 최종 합본</span>
                 <span class="text-xs text-#9fbaad">
                   {(result.generationTime / MILLISECONDS_PER_SECOND).toFixed(1)}초
                 </span>
@@ -207,6 +213,34 @@ const AudioResults = (props: AudioResultsProps) => (
           )
         }}
       </For>
+    </div>
+  </Show>
+)
+
+const AudioChunks = (props: AudioChunksProps) => (
+  <Show when={props.chunks.length > 0}>
+    <div class="grid gap-3">
+      <div class="flex items-center justify-between gap-3">
+        <span class="text-sm font-650 text-#eee5ef">실시간 생성 청크</span>
+        <span class="text-xs text-#9f93a7">완성되는 순서대로 자동 재생</span>
+      </div>
+      <div class="grid gap-3 sm:grid-cols-2">
+        <For each={props.chunks}>
+          {(chunk) => (
+            <div class="grid gap-2 rounded-4 border border-white/8 bg-white/3 p-3">
+              <div class="flex items-center justify-between text-xs">
+                <span class="font-650 text-#d9cfdd">
+                  {getSupertonicModel(chunk.modelId).label} · 청크 {chunk.index + 1}/{chunk.total}
+                </span>
+                <span class="text-#8f8297">
+                  {(chunk.generationTime / MILLISECONDS_PER_SECOND).toFixed(1)}초
+                </span>
+              </div>
+              <audio class="h-9 w-full" controls preload="metadata" src={chunk.url} />
+            </div>
+          )}
+        </For>
+      </div>
     </div>
   </Show>
 )
@@ -257,6 +291,11 @@ const VoiceFields = (props: VoiceFieldsProps) => (
         placeholder="캐릭터가 말할 문장을 입력하세요"
         value={props.text}
       />
+      <p class="m-0 text-xs leading-5 text-#8f8297">
+        {props.model.label} 모델은 {props.model.speechPolicy.considerSplitLength}자부터 문장 경계를
+        살피고, 약 {props.model.speechPolicy.recommendedLength}자로 나누며{' '}
+        {props.model.speechPolicy.maximumLength}자를 넘기지 않아요.
+      </p>
     </label>
   </>
 )
@@ -300,12 +339,14 @@ export const VoiceGenerator = () => {
         />
 
         <VoiceFields
+          model={voiceLab.selectedModel()}
           onTextInput={handleTextInput}
           onVoiceChange={handleVoiceChange}
           selectedVoiceId={voiceLab.selectedVoiceId()}
           text={voiceLab.text()}
         />
 
+        <AudioChunks chunks={voiceLab.chunks()} />
         <AudioResults results={voiceLab.results()} />
         <VoiceActions
           canGenerate={voiceLab.canGenerate()}

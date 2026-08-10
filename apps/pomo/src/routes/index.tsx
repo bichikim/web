@@ -1,28 +1,80 @@
 import {Title} from '@solidjs/meta'
+import {A} from '@solidjs/router'
 import {cx} from 'class-variance-authority'
 
-import {VoiceGenerator} from '../components/VoiceGenerator'
-
 const MAIN_CLASSES = cx(
-  'relative grid min-h-dvh place-items-center overflow-x-hidden',
-  'bg-#17131f px-5 py-10 text-#f8edf1 sm:px-8',
+  'relative grid min-h-dvh place-items-center overflow-hidden',
+  'bg-#17131f px-5 py-12 text-#f8edf1 sm:px-8',
+)
+const CARD_CLASSES = cx(
+  'group grid min-h-60 content-between overflow-hidden rounded-7 border border-white/10 p-6',
+  'bg-white/4 text-inherit no-underline shadow-[0_24px_70px_rgba(5,2,10,0.28)]',
+  'transition hover:-translate-y-1 hover:border-#f2a7b8/35 hover:bg-white/7',
 )
 const BACKGROUND_CLASSES = cx(
   'pointer-events-none absolute inset-0',
-  'bg-[radial-gradient(circle_at_50%_20%,#594560_0%,#2a2135_36%,#17131f_72%)]',
-)
-const GLOW_CLASSES = cx(
-  'pointer-events-none absolute left-[8%] top-[18%] h-2 w-2 rounded-full',
-  'bg-#f2a7b8/60 shadow-[0_0_30px_8px_rgba(242,167,184,0.22)]',
+  'bg-[radial-gradient(circle_at_50%_10%,#624b68_0%,#2a2135_36%,#17131f_72%)]',
 )
 
 export default function HomePage() {
   return (
     <main class={MAIN_CLASSES}>
-      <Title>Pomo — Voice Lab</Title>
+      <Title>Pomo — Creative Labs</Title>
       <div class={BACKGROUND_CLASSES} />
-      <div class={GLOW_CLASSES} />
-      <VoiceGenerator />
+      <section class="relative w-full max-w-5xl">
+        <header class="max-w-2xl">
+          <p class="m-0 text-xs font-750 tracking-[0.28em] text-#f2a7b8 uppercase">
+            Pomo creative labs
+          </p>
+          <h1 class="mb-0 mt-4 text-4xl font-800 tracking--0.045em sm:text-6xl">
+            캐릭터를 만들고,
+            <br />
+            목소리를 입혀 보세요
+          </h1>
+          <p class="mb-0 mt-5 max-w-xl text-base leading-7 text-#bdb2c4 sm:text-lg">
+            각 기능은 독립된 주소에서 실험할 수 있어요. 먼저 3D 캐릭터를 확인하거나 기기 안에서
+            음성을 생성해 보세요.
+          </p>
+        </header>
+
+        <div class="mt-10 grid gap-4 md:grid-cols-2">
+          <A class={CARD_CLASSES} href="/character">
+            <div class="flex items-start justify-between gap-5">
+              <div>
+                <p class="m-0 text-xs font-700 tracking-[0.2em] text-#9ed6bb uppercase">
+                  Needle Engine · Blender
+                </p>
+                <h2 class="mb-0 mt-3 text-2xl font-750">3D 캐릭터 스튜디오</h2>
+                <p class="mb-0 mt-3 max-w-sm text-sm leading-6 text-#aaa0b1">
+                  GLB 캐릭터를 렌더링하고 Blender에서 내보낸 모델로 바로 교체해요.
+                </p>
+              </div>
+              <span class="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-#9ed6bb/12 text-xl text-#b8e8d0">
+                ◇
+              </span>
+            </div>
+            <span class="mt-8 text-sm font-700 text-#b8e8d0">3D 실험실 열기 →</span>
+          </A>
+
+          <A class={CARD_CLASSES} href="/voice">
+            <div class="flex items-start justify-between gap-5">
+              <div>
+                <p class="m-0 text-xs font-700 tracking-[0.2em] text-#f2a7b8 uppercase">
+                  Supertonic 3 · On-device
+                </p>
+                <h2 class="mb-0 mt-3 text-2xl font-750">음성 생성 스튜디오</h2>
+                <p class="mb-0 mt-3 max-w-sm text-sm leading-6 text-#aaa0b1">
+                  기존 음성 생성 흐름을 독립된 페이지에서 준비하고 검증해요.
+                </p>
+              </div>
+              <span class="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-#f2a7b8/12 text-xl text-#ffc0ce">
+                ♪
+              </span>
+            </div>
+            <span class="mt-8 text-sm font-700 text-#ffc0ce">음성 실험실 열기 →</span>
+          </A>
+        </div>
+      </section>
     </main>
   )
 }

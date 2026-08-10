@@ -29,12 +29,30 @@ export interface SupertonicModel {
   readonly label: string
   readonly preferredBackend: 'wasm' | 'webgpu'
   readonly size: number
+  readonly speechPolicy: SupertonicSpeechPolicy
+}
+
+export interface SupertonicSpeechPolicy {
+  readonly considerSplitLength: number
+  readonly locale: string
+  readonly maximumLength: number
+  readonly recommendedLength: number
+  readonly silenceDuration: number
 }
 
 const FULL_MODEL_REVISION = '3cadd1e'
 const FULL_MODEL_BASE_URL = `https://huggingface.co/Supertone/supertonic-3/resolve/${FULL_MODEL_REVISION}`
 const INT8_MODEL_REVISION = 'cca5a0e6c96e1d2c720986bf7e75fcc81dee3ae4'
 const INT8_MODEL_BASE_URL = `https://huggingface.co/csukuangfj2/sherpa-onnx-supertonic-3-tts-int8-2026-05-11/resolve/${INT8_MODEL_REVISION}`
+
+// AI_NOTE - 120 is Supertonic's Korean auto-chunk value; 150/200 reflect observed browser quality degradation before outright failure.
+const KOREAN_SPEECH_POLICY: SupertonicSpeechPolicy = {
+  considerSplitLength: 120,
+  locale: 'ko',
+  maximumLength: 200,
+  recommendedLength: 150,
+  silenceDuration: 0.3,
+}
 
 const FULL_MODEL_FILES: ReadonlyArray<SupertonicModelFile> = [
   {
@@ -103,6 +121,7 @@ export const SUPERTONIC_MODELS = [
     label: 'Full',
     preferredBackend: 'webgpu',
     size: getModelSize(FULL_MODEL_FILES),
+    speechPolicy: KOREAN_SPEECH_POLICY,
   },
   {
     baseUrl: INT8_MODEL_BASE_URL,
@@ -112,6 +131,7 @@ export const SUPERTONIC_MODELS = [
     label: 'INT8',
     preferredBackend: 'wasm',
     size: getModelSize(INT8_MODEL_FILES),
+    speechPolicy: KOREAN_SPEECH_POLICY,
   },
 ] as const satisfies ReadonlyArray<SupertonicModel>
 

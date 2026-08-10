@@ -115,6 +115,66 @@ describe('createSupertonicClient', () => {
     })
   })
 
+  it('should yield each completed chunk before the final combined audio', async () => {
+    const client = createSupertonicClient()
+    const worker = getWorker()
+    const stream = client.generateStream({text: '긴 대사', voiceId: 'F1'})
+    const firstEvent = stream.next()
+    const chunkSamples = Float32Array.of(0.1, 0.2)
+    worker.emitMessage({
+      generationTime: 300,
+      index: 0,
+      requestId: 1,
+      sampleRate: SAMPLE_RATE,
+      samples: chunkSamples,
+      total: 2,
+      type: 'chunk',
+    })
+
+    expect(await firstEvent).toEqual({
+      done: false,
+      value: {
+        ok: true,
+        value: {
+          audio: {
+            generationTime: 300,
+            index: 0,
+            sampleRate: SAMPLE_RATE,
+            samples: chunkSamples,
+            total: 2,
+          },
+          type: 'chunk',
+        },
+      },
+    })
+
+    const finalEvent = stream.next()
+    const combinedSamples = Float32Array.of(0.1, 0.2, 0, 0.3)
+    worker.emitMessage({
+      generationTime: GENERATION_TIME,
+      requestId: 1,
+      sampleRate: SAMPLE_RATE,
+      samples: combinedSamples,
+      type: 'result',
+    })
+
+    expect(await finalEvent).toEqual({
+      done: false,
+      value: {
+        ok: true,
+        value: {
+          audio: {
+            generationTime: GENERATION_TIME,
+            sampleRate: SAMPLE_RATE,
+            samples: combinedSamples,
+          },
+          type: 'complete',
+        },
+      },
+    })
+    expect(await stream.next()).toEqual({done: true, value: undefined})
+  })
+
   it('should route structured initialization and generation failures to pending operations', async () => {
     const client = createSupertonicClient()
     const worker = getWorker()

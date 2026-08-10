@@ -1,5 +1,12 @@
 # Third-party notices
 
+## Robot Expressive
+
+The default 3D preview uses `RobotExpressive.glb`, created by Tomás Laulhé and modified for
+glTF by Don McCurdy. The model is dedicated to the public domain under CC0 1.0.
+
+## Supertonic
+
 The Supertonic inference flow is adapted from the official
 [`supertone-inc/supertonic`](https://github.com/supertone-inc/supertonic) browser example.
 The Full profile downloads the original Supertonic 3 model, and the INT8 profile downloads the
