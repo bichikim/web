@@ -20,7 +20,6 @@ const $ = _$({cwd: projectRoot, stderr: 'inherit', stdout: {file: outputPath}})
 try {
   if (projectId && accessToken) {
     await mkdir(supabaseDir, {recursive: true})
-    await $`pnpm dlx supabase login`
     await $`pnpm dlx supabase gen types typescript --project-id ${projectId} --schema public`
     console.info(`✅ Types generated successfully at ${outputPath}`)
   }
