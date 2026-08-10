@@ -3,13 +3,15 @@ import {needlePlugins} from '@needle-tools/engine/vite'
 import UnoCSS from 'unocss/vite'
 
 const isAppsInToss = process.env.POMO_BUILD_TARGET === 'apps-in-toss'
-const needleEnginePlugins = await needlePlugins()
+const needleEnginePlugins = await needlePlugins(undefined, undefined, {
+  ai: {install: false},
+})
 
 export default defineConfig({
   server: isAppsInToss
     ? {
         prerender: {
-          routes: ['/', '/character', '/voice'],
+          routes: ['/', '/character', '/dialogue', '/voice'],
         },
         preset: 'static',
       }
