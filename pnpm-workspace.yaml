@@ -119,4 +119,5 @@ allowBuilds:
   'nx': true
   'sharp': true
   leveldown: false
+  onnxruntime-node: false
   protobufjs: false

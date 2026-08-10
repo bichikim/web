@@ -16,3 +16,4 @@ Open and apply the linked rule for the task. TypeScript naming, typing, formatti
 5. Built-in control flow (`Show` / `Switch` / `Match` / `For` / `Index`); Suspense + ErrorBoundary for async/errors. See ./rules/component-control-flow.md and ./rules/component-suspense-error-boundary.md.
 6. Props: never destructure; `splitProps` only when needed. Effects: `onCleanup` inside `createEffect`. Hooks: do not track user callbacks — track config inputs; read signals at callback time. See ./rules/reactivity-notes.md.
 7. Current SolidJS docs: context7 MCP first.
+8. In SolidStart, apply the `solidstart` skill before accessing browser globals. Do not initialize reactive state from environment-dependent globals outside a `clientOnly` or `onMount` boundary.

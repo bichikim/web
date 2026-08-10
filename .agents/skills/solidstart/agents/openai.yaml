@@ -1,4 +1,4 @@
 interface:
   display_name: 'SolidStart'
-  short_description: 'SolidStart 서버 함수와 Query·Action 분리 규칙'
-  default_prompt: 'Use $solidstart to implement separated SolidStart queries, actions, and server functions.'
+  short_description: 'SolidStart SSR·클라이언트 경계와 서버 함수 규칙'
+  default_prompt: 'Use $solidstart to implement correct SSR, browser-only, query, action, and server-function boundaries.'

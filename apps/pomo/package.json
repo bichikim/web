@@ -16,6 +16,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@huggingface/transformers": "4.0.0-next.11",
     "@kobalte/core": "^0.13.11",
     "@needle-tools/engine": "5.1.10",
     "@solidjs/meta": "catalog:",

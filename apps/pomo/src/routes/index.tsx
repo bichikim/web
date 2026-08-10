@@ -73,6 +73,29 @@ export default function HomePage() {
             </div>
             <span class="mt-8 text-sm font-700 text-#ffc0ce">음성 실험실 열기 →</span>
           </A>
+
+          <A class={CARD_CLASSES} href="/dialogue">
+            <div class="flex items-start justify-between gap-5">
+              <div>
+                <p class="m-0 text-xs font-700 tracking-[0.2em] text-#9ed6bb uppercase">
+                  Qwen3.5 0.8B–4B · WebGPU
+                </p>
+                <h2 class="mb-0 mt-3 text-2xl font-750">답변 생성 실험실</h2>
+                <p class="mb-0 mt-3 max-w-sm text-sm leading-6 text-#aaa0b1">
+                  한 번의 요청에 사려 깊은 한 사람이 자연스러운 존댓말로 충분히 답해요.
+                </p>
+              </div>
+              <span
+                class={cx(
+                  'grid h-11 w-11 shrink-0 place-items-center rounded-full bg-#9ed6bb/12',
+                  'text-sm font-800 text-#b8e8d0',
+                )}
+              >
+                Aa
+              </span>
+            </div>
+            <span class="mt-8 text-sm font-700 text-#b8e8d0">답변 실험실 열기 →</span>
+          </A>
         </div>
       </section>
     </main>
