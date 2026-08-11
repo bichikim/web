@@ -14,6 +14,7 @@ import {
   type SupertonicVoiceResult,
   useSupertonicVoiceLab,
 } from '../features/supertonic'
+import {getVoiceGenderLabel} from './voice-labels'
 import {VOICE_TEST_SCRIPTS} from './voice-test-scripts'
 
 const MAXIMUM_TEXT_LENGTH = 3000
@@ -393,7 +394,7 @@ const VoiceFields = (props: VoiceFieldsProps) => {
             <For each={SUPERTONIC_VOICES}>
               {(voice) => (
                 <option value={voice.id}>
-                  {voice.label} · {voice.gender === 'female' ? '여성' : '남성'} ({voice.id})
+                  {voice.label} · {getVoiceGenderLabel(voice.gender)} ({voice.id})
                 </option>
               )}
             </For>

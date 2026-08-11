@@ -1,3 +1,12 @@
+export type SupertonicVoiceGender = 'female' | 'male' | 'neutral'
+
+interface SupertonicVoiceDefinition {
+  readonly gender: SupertonicVoiceGender
+  readonly id: string
+  readonly label: string
+  readonly path?: string
+}
+
 export const SUPERTONIC_VOICES = [
   {gender: 'female', id: 'F1', label: 'Sarah'},
   {gender: 'female', id: 'F2', label: 'Lily'},
@@ -9,7 +18,14 @@ export const SUPERTONIC_VOICES = [
   {gender: 'male', id: 'M3', label: 'Robert'},
   {gender: 'male', id: 'M4', label: 'Sam'},
   {gender: 'male', id: 'M5', label: 'Daniel'},
-] as const
+  // AI_NOTE - Pomo One is a user-consented local asset; omit source metadata to avoid exposing personal file paths.
+  {
+    gender: 'neutral',
+    id: 'P1',
+    label: 'Pomo One',
+    path: '/voice-styles/pomo-one.json',
+  },
+] as const satisfies ReadonlyArray<SupertonicVoiceDefinition>
 
 export type SupertonicVoiceId = (typeof SUPERTONIC_VOICES)[number]['id']
 export type SupertonicModelId = (typeof SUPERTONIC_MODELS)[number]['id']
@@ -150,7 +166,14 @@ export const getSupertonicModelFileUrl = (model: SupertonicModel, file: Superton
 
 export const getSupertonicAssetUrl = (path: string) => `${FULL_MODEL_BASE_URL}/${path}`
 
-export const getSupertonicVoiceUrl = (voiceId: SupertonicVoiceId) =>
-  getSupertonicAssetUrl(`voice_styles/${voiceId}.json`)
+export const getSupertonicVoiceUrl = (voiceId: SupertonicVoiceId) => {
+  const voice = SUPERTONIC_VOICES.find((item) => item.id === voiceId)
+
+  if (voice === undefined) {
+    throw new Error(`지원하지 않는 Supertonic 목소리입니다: ${voiceId}`)
+  }
+
+  return 'path' in voice ? voice.path : getSupertonicAssetUrl(`voice_styles/${voice.id}.json`)
+}
 
 export const SUPERTONIC_ORT_WASM_URL = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.23.2/dist/'

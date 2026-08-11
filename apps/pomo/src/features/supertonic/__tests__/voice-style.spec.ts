@@ -1,8 +1,18 @@
+import {readFileSync} from 'node:fs'
+import {resolve} from 'node:path'
+
 import {describe, expect, it} from 'vitest'
 
 import {parseSupertonicVoiceStyle} from '../index'
 
 describe('parseSupertonicVoiceStyle', () => {
+  it('should parse the bundled Pomo One voice style', () => {
+    const assetPath = resolve('apps/pomo/public/voice-styles/pomo-one.json')
+    const value: unknown = JSON.parse(readFileSync(assetPath, 'utf8'))
+
+    expect(parseSupertonicVoiceStyle(value)).toMatchObject({ok: true})
+  })
+
   it('should normalize nested voice-style tensors into serializable fields', () => {
     expect(
       parseSupertonicVoiceStyle({
