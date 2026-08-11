@@ -6,7 +6,6 @@ import {
   parseSupertonicVoiceStyle,
   SUPERTONIC_MODELS,
   SUPERTONIC_VOICES,
-  type SupertonicModel,
   type SupertonicModelId,
   type SupertonicVoiceChunkResult,
   type SupertonicVoiceId,
@@ -15,15 +14,14 @@ import {
   useSupertonicVoiceLab,
 } from '../features/supertonic'
 import {VOICE_TEST_SCRIPTS} from './voice-test-scripts'
+import {type ImportedVoice, VoiceDropZone} from './VoiceDropZone'
 
 const MAXIMUM_TEXT_LENGTH = 3000
 const MAXIMUM_FILE_SIZE = 2_000_000
-const BYTES_PER_KILOBYTE = 1000
 const BYTES_PER_MEGABYTE = 1_000_000
 const MILLISECONDS_PER_SECOND = 1000
 const INITIAL_TEXT = '오늘도 서두르지 말고, 한 번에 하나씩 집중해 볼까요?'
 const formatModelSize = (size: number) => `${Math.round(size / BYTES_PER_MEGABYTE)}MB`
-const formatFileSize = (size: number) => `${Math.ceil(size / BYTES_PER_KILOBYTE)}KB`
 const SECTION_CLASSES = cx(
   'relative w-full max-w-3xl overflow-hidden rounded-8 border border-white/10',
   'bg-#211a2b/88 p-5 shadow-[0_28px_100px_rgba(5,2,10,0.45)] backdrop-blur-xl sm:p-8',
@@ -45,14 +43,6 @@ const BUTTON_CLASSES = cx(
 
 type GenerationStatus = SupertonicVoiceLabState['status']
 
-interface ModelStatusProps {
-  readonly errorMessage: string | null
-  readonly model: SupertonicModel
-  readonly progress: number
-  readonly status: GenerationStatus
-  readonly statusMessage: string
-}
-
 interface ModelPickerProps {
   readonly disabled: boolean
   readonly onModelChange: (modelId: SupertonicModelId) => void
@@ -62,9 +52,11 @@ interface ModelPickerProps {
 interface VoiceActionsProps {
   readonly canGenerate: boolean
   readonly canPrepare: boolean
+  readonly errorMessage: string | null
   readonly isModelReady: boolean
   readonly onGenerate: () => void
   readonly onPrepare: () => void
+  readonly progress: number
   readonly status: GenerationStatus
 }
 
@@ -79,28 +71,13 @@ interface AudioChunksProps {
 interface VoiceFieldsProps {
   readonly disabled: boolean
   readonly fileError: string | null
-  readonly hasPermission: boolean
   readonly importedVoice: ImportedVoice | null
-  readonly model: SupertonicModel
   readonly onFileSelect: (file: File | undefined) => Promise<void>
-  readonly onPermissionChange: JSX.EventHandler<HTMLInputElement, Event>
   readonly onSampleSelect: (text: string) => void
   readonly onTextInput: (event: InputEvent & {currentTarget: HTMLTextAreaElement}) => void
   readonly onVoiceChange: (event: Event & {currentTarget: HTMLSelectElement}) => void
   readonly selectedVoiceId: SupertonicVoiceId
   readonly text: string
-}
-
-interface ImportedVoice {
-  readonly name: string
-  readonly size: number
-}
-
-interface VoiceDropZoneProps {
-  readonly disabled: boolean
-  readonly fileError: string | null
-  readonly importedVoice: ImportedVoice | null
-  readonly onFileSelect: (file: File | undefined) => Promise<void>
 }
 
 const VoiceHeader = () => (
@@ -120,40 +97,6 @@ const VoiceHeader = () => (
       ♪
     </div>
   </header>
-)
-
-const ModelStatus = (props: ModelStatusProps) => (
-  <div aria-live="polite" class="rounded-4 border border-white/8 bg-white/4 p-4">
-    <div class="flex items-center justify-between gap-4 text-sm">
-      <span class="font-650 text-#eee5ef">Supertonic 3 · {props.model.label}</span>
-      <span class="text-xs text-#9f93a7">
-        {props.status === 'preparing' ? `${props.progress}%` : formatModelSize(props.model.size)}
-      </span>
-    </div>
-    <Show when={props.status === 'preparing'}>
-      <div
-        aria-label={`모델 준비 ${props.progress}%`}
-        aria-valuemax="100"
-        aria-valuemin="0"
-        aria-valuenow={props.progress}
-        class="mt-3 h-1.5 overflow-hidden rounded-full bg-white/8"
-        role="progressbar"
-      >
-        <div
-          class="h-full rounded-full bg-#f2a7b8 transition-[width]"
-          style={{width: `${props.progress}%`}}
-        />
-      </div>
-    </Show>
-    <p
-      class={cx(
-        'mb-0 mt-2 text-xs leading-5',
-        props.status === 'error' ? 'text-#ff9aa8' : 'text-#9f93a7',
-      )}
-    >
-      {props.errorMessage ?? props.statusMessage}
-    </p>
-  </div>
 )
 
 const ModelPicker = (props: ModelPickerProps) => (
@@ -192,7 +135,7 @@ const ModelPicker = (props: ModelPickerProps) => (
 )
 
 const VoiceActions = (props: VoiceActionsProps) => (
-  <div class="flex justify-end">
+  <div class="grid justify-items-end gap-2">
     <button
       class={BUTTON_CLASSES}
       disabled={props.isModelReady ? !props.canGenerate : !props.canPrepare}
@@ -200,13 +143,20 @@ const VoiceActions = (props: VoiceActionsProps) => (
       type="button"
     >
       {props.status === 'preparing'
-        ? '모델 준비 중…'
+        ? `모델 준비 중… ${props.progress}%`
         : props.status === 'generating'
           ? '음성 만드는 중…'
           : props.isModelReady
             ? '음성 만들기'
             : 'Supertonic 준비하기'}
     </button>
+    <Show when={props.errorMessage}>
+      {(message) => (
+        <p aria-live="polite" class="m-0 text-right text-xs text-#ff9aa8" role="alert">
+          {message()}
+        </p>
+      )}
+    </Show>
   </div>
 )
 
@@ -220,7 +170,7 @@ const AudioResults = (props: AudioResultsProps) => (
           return (
             <div class="grid gap-3 rounded-4 border border-#9ed6bb/20 bg-#9ed6bb/6 p-4">
               <div class="flex items-center justify-between gap-3 text-sm">
-                <span class="font-650 text-#b8e8d0">{model.label} 최종 합본</span>
+                <span class="font-650 text-#b8e8d0">{model.label} · AI 생성 음성</span>
                 <span class="text-xs text-#9fbaad">
                   {(result.generationTime / MILLISECONDS_PER_SECOND).toFixed(1)}초
                 </span>
@@ -254,7 +204,7 @@ const AudioChunks = (props: AudioChunksProps) => (
             <div class="grid gap-2 rounded-4 border border-white/8 bg-white/3 p-3">
               <div class="flex items-center justify-between text-xs">
                 <span class="font-650 text-#d9cfdd">
-                  {getSupertonicModel(chunk.modelId).label} · 청크 {chunk.index + 1}/{chunk.total}
+                  AI 생성 음성 · 청크 {chunk.index + 1}/{chunk.total}
                 </span>
                 <span class="text-#8f8297">
                   {(chunk.generationTime / MILLISECONDS_PER_SECOND).toFixed(1)}초
@@ -268,100 +218,6 @@ const AudioChunks = (props: AudioChunksProps) => (
     </div>
   </Show>
 )
-
-const VoiceDropZone = (props: VoiceDropZoneProps) => {
-  const [isDragging, setIsDragging] = createSignal(false)
-  let dragDepth = 0
-
-  const handleFileChange: JSX.EventHandler<HTMLInputElement, Event> = (event) => {
-    const file = event.currentTarget.files?.[0]
-    event.currentTarget.value = ''
-    props.onFileSelect(file)
-  }
-  const handleDragEnter: JSX.EventHandler<HTMLLabelElement, DragEvent> = (event) => {
-    event.preventDefault()
-
-    if (!props.disabled) {
-      dragDepth += 1
-      setIsDragging(true)
-    }
-  }
-  const handleDragOver: JSX.EventHandler<HTMLLabelElement, DragEvent> = (event) => {
-    event.preventDefault()
-    const {dataTransfer} = event
-
-    if (dataTransfer !== null) {
-      dataTransfer.dropEffect = props.disabled ? 'none' : 'copy'
-    }
-  }
-  const handleDragLeave: JSX.EventHandler<HTMLLabelElement, DragEvent> = (event) => {
-    event.preventDefault()
-    dragDepth = Math.max(0, dragDepth - 1)
-
-    if (dragDepth === 0) {
-      setIsDragging(false)
-    }
-  }
-  const handleDrop: JSX.EventHandler<HTMLLabelElement, DragEvent> = (event) => {
-    event.preventDefault()
-    const file = event.dataTransfer?.files[0]
-    dragDepth = 0
-    setIsDragging(false)
-
-    if (!props.disabled && file !== undefined) {
-      props.onFileSelect(file)
-    }
-  }
-
-  return (
-    <div class="grid gap-2.5">
-      <span class="text-sm font-650 text-#eee5ef">커스텀 목소리 JSON</span>
-      <label
-        class={cx(
-          'grid min-h-24 place-items-center rounded-4 border border-dashed p-4 text-center transition',
-          isDragging()
-            ? 'border-#f2a7b8 bg-#f2a7b8/12'
-            : 'border-white/14 bg-white/3 hover:border-#f2a7b8/55',
-          props.disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer',
-        )}
-        onDragEnter={handleDragEnter}
-        onDragLeave={handleDragLeave}
-        onDragOver={handleDragOver}
-        onDrop={handleDrop}
-      >
-        <input
-          accept="application/json,.json"
-          class="sr-only"
-          disabled={props.disabled}
-          onChange={handleFileChange}
-          type="file"
-        />
-        <span>
-          <span class="block text-sm font-700 text-#eee5ef">
-            {isDragging() ? '여기에 놓아 가져오기' : 'JSON 파일을 놓거나 클릭해 선택'}
-          </span>
-          <span class="mt-1 block text-xs leading-5 text-#8f8297">
-            최대 2MB · 파일과 대사는 서버로 전송하지 않음
-          </span>
-        </span>
-      </label>
-      <Show when={props.importedVoice}>
-        {(voice) => (
-          <p class="m-0 rounded-4 border border-#9ed6bb/20 bg-#9ed6bb/6 px-4 py-3 text-sm text-#b8e8d0">
-            <span class="font-700">{voice().name}</span> · {formatFileSize(voice().size)} 선택됨
-          </p>
-        )}
-      </Show>
-      <Show when={props.fileError}>
-        {(message) => (
-          <p aria-live="polite" class="m-0 text-sm leading-6 text-#ff9aa8" role="alert">
-            {message()}
-          </p>
-        )}
-      </Show>
-    </div>
-  )
-}
 
 const VoiceFields = (props: VoiceFieldsProps) => {
   const selectedScriptId = () =>
@@ -401,7 +257,10 @@ const VoiceFields = (props: VoiceFieldsProps) => {
               {(voice) => <option value="custom">커스텀 · {voice().name}</option>}
             </Show>
           </select>
-          <span class="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-#8f8297">
+          <span
+            aria-hidden="true"
+            class="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-#8f8297"
+          >
             ▾
           </span>
         </div>
@@ -417,38 +276,28 @@ const VoiceFields = (props: VoiceFieldsProps) => {
         onFileSelect={props.onFileSelect}
       />
 
-      <Show when={props.importedVoice !== null}>
-        <label
-          class={cx(
-            'flex items-start gap-3 rounded-4 border border-white/8 bg-white/3 p-4',
-            'text-sm leading-6 text-#bdb2c4',
-          )}
-        >
-          <input
-            checked={props.hasPermission}
-            class="mt-1 h-4 w-4 accent-#f2a7b8"
-            disabled={props.disabled}
-            onChange={(event) => props.onPermissionChange(event)}
-            type="checkbox"
-          />
-          <span>이 목소리를 사용할 본인 또는 권리자의 허락을 받았습니다.</span>
-        </label>
-      </Show>
-
       <label class="grid gap-2 text-xs font-650 text-#bdb2c4" for="voice-test-script">
         테스트 대사 빠른 선택
-        <select
-          class={cx(VOICE_SELECT_CLASSES, 'h-11')}
-          disabled={props.disabled}
-          id="voice-test-script"
-          onChange={handleScriptChange}
-          value={selectedScriptId()}
-        >
-          <option value="">직접 편집</option>
-          <For each={VOICE_TEST_SCRIPTS}>
-            {(script) => <option value={script.id}>{script.label}</option>}
-          </For>
-        </select>
+        <div class="relative">
+          <select
+            class={cx(VOICE_SELECT_CLASSES, 'h-11')}
+            disabled={props.disabled}
+            id="voice-test-script"
+            onChange={handleScriptChange}
+            value={selectedScriptId()}
+          >
+            <option value="">직접 편집</option>
+            <For each={VOICE_TEST_SCRIPTS}>
+              {(script) => <option value={script.id}>{script.label}</option>}
+            </For>
+          </select>
+          <span
+            aria-hidden="true"
+            class="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-#8f8297"
+          >
+            ▾
+          </span>
+        </div>
       </label>
 
       <label class="grid gap-2.5">
@@ -466,11 +315,6 @@ const VoiceFields = (props: VoiceFieldsProps) => {
           placeholder="캐릭터가 말할 문장을 입력하세요"
           value={props.text}
         />
-        <p class="m-0 text-xs leading-5 text-#8f8297">
-          {props.model.label} 모델은 {props.model.speechPolicy.considerSplitLength}자부터 문장
-          경계를 살피고, 약 {props.model.speechPolicy.recommendedLength}자로 나누며{' '}
-          {props.model.speechPolicy.maximumLength}자를 넘기지 않아요.
-        </p>
       </label>
     </>
   )
@@ -480,7 +324,6 @@ export const VoiceGenerator = () => {
   const voiceLab = useSupertonicVoiceLab({initialText: INITIAL_TEXT})
   const [importedVoice, setImportedVoice] = createSignal<ImportedVoice | null>(null)
   const [fileError, setFileError] = createSignal<string | null>(null)
-  const [hasPermission, setHasPermission] = createSignal(false)
   let fileSelectionId = 0
 
   const handleModelChange = (modelId: SupertonicModelId) => {
@@ -498,7 +341,6 @@ export const VoiceGenerator = () => {
       fileSelectionId += 1
       setImportedVoice(null)
       setFileError(null)
-      setHasPermission(false)
       voiceLab.selectVoice(voice.id)
     }
   }
@@ -536,7 +378,6 @@ export const VoiceGenerator = () => {
       }
 
       setImportedVoice({name: file.name, size: file.size})
-      setHasPermission(false)
       voiceLab.selectCustomVoice(voiceStyle.value)
     } catch {
       if (currentSelectionId === fileSelectionId) {
@@ -544,11 +385,6 @@ export const VoiceGenerator = () => {
       }
     }
   }
-  const handlePermissionChange: JSX.EventHandler<HTMLInputElement, Event> = (event) => {
-    setHasPermission(event.currentTarget.checked)
-  }
-  const canGenerate = () => voiceLab.canGenerate() && (importedVoice() === null || hasPermission())
-
   return (
     <section class={SECTION_CLASSES}>
       <div class="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-#ed91aa/12 blur-3xl" />
@@ -560,22 +396,12 @@ export const VoiceGenerator = () => {
           onModelChange={handleModelChange}
           selectedModelId={voiceLab.selectedModelId()}
         />
-        <ModelStatus
-          errorMessage={voiceLab.errorMessage()}
-          model={voiceLab.selectedModel()}
-          progress={voiceLab.progress()}
-          status={voiceLab.state().status}
-          statusMessage={voiceLab.statusMessage()}
-        />
 
         <VoiceFields
           disabled={voiceLab.isBusy()}
           fileError={fileError()}
-          hasPermission={hasPermission()}
           importedVoice={importedVoice()}
-          model={voiceLab.selectedModel()}
           onFileSelect={handleFileSelect}
-          onPermissionChange={handlePermissionChange}
           onSampleSelect={voiceLab.setText}
           onTextInput={handleTextInput}
           onVoiceChange={handleVoiceChange}
@@ -586,11 +412,13 @@ export const VoiceGenerator = () => {
         <AudioChunks chunks={voiceLab.chunks()} />
         <AudioResults results={voiceLab.results()} />
         <VoiceActions
-          canGenerate={canGenerate()}
+          canGenerate={voiceLab.canGenerate()}
           canPrepare={voiceLab.canPrepare()}
+          errorMessage={voiceLab.errorMessage()}
           isModelReady={voiceLab.isModelReady()}
           onGenerate={voiceLab.generate}
           onPrepare={voiceLab.prepare}
+          progress={voiceLab.progress()}
           status={voiceLab.state().status}
         />
       </div>

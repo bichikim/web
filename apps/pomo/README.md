@@ -15,3 +15,7 @@ pnpm --filter @apps/pomo typecheck
 - `build:apps-in-toss`: 앱인토스 패키징 전 단계인 SSG 빌드 (`.output/public`)
 
 기술 및 제품 결정은 [`plan/development.md`](./plan/development.md)에서 확인한다.
+외부 코드·모델·데이터·에셋의 라이선스와 배포 조건은
+[`THIRD_PARTY_NOTICES.md`](./THIRD_PARTY_NOTICES.md)에서 관리한다.
+츠쿠요미짱 코퍼스로 AI 음성을 학습·배포할 때의 상세 조건은
+[`licenses/TSUKUYOMI_CORPUS.md`](./licenses/TSUKUYOMI_CORPUS.md)에서 확인한다.

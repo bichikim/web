@@ -1,6 +1,5 @@
 export {useCharacterRenderer} from './use-character-renderer'
 export type {
-  CharacterRenderElement,
   CharacterRendererController,
   CharacterRendererRuntime,
   CharacterRendererStatus,

@@ -1,125 +1,64 @@
-import {type Accessor, createEffect, createMemo, createSignal, onCleanup} from 'solid-js'
-
-import {useAsyncTask} from '../async-task'
+import {type Accessor, createSignal, onCleanup} from 'solid-js'
 
 const MAXIMUM_PROGRESS = 100
 
-export type CharacterRendererStatus = 'booting' | 'error' | 'loading' | 'ready'
-
-interface CharacterSceneNode {
-  raycastAllowed?: boolean
-}
-
-interface CharacterRenderContext {
-  readonly scene?: {
-    readonly traverse: (callback: (node: CharacterSceneNode) => void) => void
-  }
-}
-
-export interface CharacterRenderElement {
-  readonly addEventListener: (type: string, listener: EventListener) => void
-  readonly context?: CharacterRenderContext
-  readonly removeEventListener: (type: string, listener: EventListener) => void
-}
+export type CharacterRendererStatus = 'error' | 'loading' | 'ready'
 
 export interface CharacterRendererRuntime {
   readonly createObjectUrl: (file: File) => string
-  readonly loadEngine: () => Promise<void>
   readonly revokeObjectUrl: (url: string) => void
 }
 
 export interface UseCharacterRendererProps {
-  readonly allowModelInteraction?: boolean
   readonly defaultModelName: string
   readonly defaultModelUrl: string
   readonly runtime?: CharacterRendererRuntime
 }
 
 export interface CharacterRendererController {
-  readonly attachElement: (element: CharacterRenderElement) => void
+  readonly handleLoadError: () => void
+  readonly handleLoadProgress: (progress: number) => void
+  readonly handleLoadStart: () => void
+  readonly handleLoadSuccess: () => void
   readonly loadDefaultModel: () => void
   readonly loadFile: (file: File) => void
   readonly loadUrl: (url: string) => boolean
   readonly modelName: Accessor<string>
   readonly modelUrl: Accessor<string>
-  readonly prepare: () => Promise<void>
   readonly progress: Accessor<number>
   readonly status: Accessor<CharacterRendererStatus>
 }
 
 const DEFAULT_RUNTIME: CharacterRendererRuntime = {
   createObjectUrl: (file) => URL.createObjectURL(file),
-  loadEngine: async () => {
-    await import('@needle-tools/engine')
-  },
   revokeObjectUrl: (url) => URL.revokeObjectURL(url),
-}
-
-const getLoadProgress = (event: Event) => {
-  if (!(event instanceof CustomEvent)) {
-    return null
-  }
-
-  const {detail} = event
-
-  if (
-    typeof detail !== 'object' ||
-    detail === null ||
-    !('totalProgress01' in detail) ||
-    typeof detail.totalProgress01 !== 'number'
-  ) {
-    return null
-  }
-
-  return Math.round(Math.min(1, Math.max(0, detail.totalProgress01)) * MAXIMUM_PROGRESS)
 }
 
 export const useCharacterRenderer = (
   props: UseCharacterRendererProps,
 ): CharacterRendererController => {
   const runtime = props.runtime ?? DEFAULT_RUNTIME
-  const [element, setElement] = createSignal<CharacterRenderElement | null>(null)
   const [modelUrl, setModelUrl] = createSignal(props.defaultModelUrl)
   const [modelName, setModelName] = createSignal(props.defaultModelName)
-  const [renderStatus, setRenderStatus] = createSignal<'loading' | 'ready'>('loading')
   const [progress, setProgress] = createSignal(0)
-  const preparation = useAsyncTask({concurrency: 'exhaust', task: () => runtime.loadEngine()})
-  const status = createMemo<CharacterRendererStatus>(() => {
-    const preparationState = preparation.state()
-
-    switch (preparationState.status) {
-      case 'error':
-        return 'error'
-      case 'idle':
-      case 'pending':
-        return 'booting'
-      case 'success':
-        return renderStatus()
-    }
-
-    preparationState satisfies never
-  })
+  const [status, setStatus] = createSignal<CharacterRendererStatus>('loading')
   let activeObjectUrl: string | null = null
 
   const releaseObjectUrl = () => {
-    if (activeObjectUrl !== null) {
-      runtime.revokeObjectUrl(activeObjectUrl)
-      activeObjectUrl = null
+    if (activeObjectUrl === null) {
+      return
     }
+
+    runtime.revokeObjectUrl(activeObjectUrl)
+    activeObjectUrl = null
   }
 
   const replaceModel = (url: string, name: string) => {
     releaseObjectUrl()
     setModelName(name)
     setModelUrl(url)
-  }
-
-  const prepare = () => {
-    if (preparation.state().status === 'success') {
-      return Promise.resolve()
-    }
-
-    return preparation.execute()
+    setProgress(0)
+    setStatus('loading')
   }
 
   const loadFile = (file: File) => {
@@ -141,57 +80,34 @@ export const useCharacterRenderer = (
 
   const loadDefaultModel = () => replaceModel(props.defaultModelUrl, props.defaultModelName)
 
-  createEffect(() => {
-    const currentElement = element()
+  const handleLoadProgress = (nextProgress: number) => {
+    setProgress(Math.round(Math.min(MAXIMUM_PROGRESS, Math.max(0, nextProgress))))
+  }
 
-    if (currentElement === null) {
-      return
-    }
+  const handleLoadStart = () => {
+    setProgress(0)
+    setStatus('loading')
+  }
 
-    const handleLoadStart = () => {
-      setProgress(0)
-      setRenderStatus('loading')
-    }
-    const handleProgress: EventListener = (event) => {
-      const nextProgress = getLoadProgress(event)
+  const handleLoadSuccess = () => {
+    setProgress(MAXIMUM_PROGRESS)
+    setStatus('ready')
+  }
 
-      if (nextProgress !== null) {
-        setProgress(nextProgress)
-      }
-    }
-    const handleLoadFinished = () => {
-      if (props.allowModelInteraction !== true) {
-        // AI_NOTE - The preview only needs orbit controls. Disabling model raycasts avoids
-        // Needle's BVH worker, whose bare worker URL is not rewritten by Vinxi dev builds.
-        currentElement.context?.scene?.traverse((node) => {
-          node.raycastAllowed = false
-        })
-      }
-
-      setProgress(MAXIMUM_PROGRESS)
-      setRenderStatus('ready')
-    }
-
-    currentElement.addEventListener('loadstart', handleLoadStart)
-    currentElement.addEventListener('progress', handleProgress)
-    currentElement.addEventListener('loadfinished', handleLoadFinished)
-    onCleanup(() => {
-      currentElement.removeEventListener('loadstart', handleLoadStart)
-      currentElement.removeEventListener('progress', handleProgress)
-      currentElement.removeEventListener('loadfinished', handleLoadFinished)
-    })
-  })
+  const handleLoadError = () => setStatus('error')
 
   onCleanup(releaseObjectUrl)
 
   return {
-    attachElement: setElement,
+    handleLoadError,
+    handleLoadProgress,
+    handleLoadStart,
+    handleLoadSuccess,
     loadDefaultModel,
     loadFile,
     loadUrl,
     modelName,
     modelUrl,
-    prepare,
     progress,
     status,
   }
