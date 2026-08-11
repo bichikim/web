@@ -30,6 +30,8 @@ export const focusMenuItemByOffset = (
   return nextElement
 }
 
-export const isMenuNavigationKey = (key: string): boolean => {
+export type MenuNavigationKey = 'ArrowDown' | 'ArrowUp' | 'End' | 'Home'
+
+export const isMenuNavigationKey = (key: string): key is MenuNavigationKey => {
   return key === 'ArrowDown' || key === 'ArrowUp' || key === 'Home' || key === 'End'
 }

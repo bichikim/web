@@ -39,18 +39,26 @@ interface NormalizedInteger {
 const normalizeInteger = (value: unknown): NormalizedInteger | undefined => {
   let text: string
 
-  if (typeof value === 'bigint') {
-    text = value.toString()
-  } else if (typeof value === 'number') {
-    if (!Number.isSafeInteger(value)) {
-      return undefined
-    }
+  switch (typeof value) {
+    case 'bigint':
+      text = value.toString()
+      break
+    case 'number':
+      if (!Number.isSafeInteger(value)) {
+        return undefined
+      }
 
-    text = String(value)
-  } else if (typeof value === 'string') {
-    text = value.trim()
-  } else {
-    return undefined
+      text = String(value)
+      break
+    case 'string':
+      text = value.trim()
+      break
+    case 'boolean':
+    case 'function':
+    case 'object':
+    case 'symbol':
+    case 'undefined':
+      return undefined
   }
 
   if (!INTEGER_REGEX.test(text)) {
