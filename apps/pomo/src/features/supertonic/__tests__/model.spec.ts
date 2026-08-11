@@ -46,6 +46,12 @@ describe('Supertonic model manifest', () => {
   it('should expose all fixed voices and reject unsupported model identifiers at runtime', () => {
     expect(SUPERTONIC_VOICES).toHaveLength(VOICE_COUNT)
     expect(new Set(SUPERTONIC_VOICES.map((voice) => voice.id)).size).toBe(VOICE_COUNT)
+    expect(SUPERTONIC_VOICES).toContainEqual({
+      gender: 'female',
+      id: 'P1',
+      label: '지안',
+      path: '/voice-styles/pomo-one.json',
+    })
     expect(() => Reflect.apply(getSupertonicModel, null, ['unknown'])).toThrow(
       '지원하지 않는 Supertonic 모델입니다',
     )

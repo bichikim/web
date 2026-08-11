@@ -1,4 +1,4 @@
-export type SupertonicVoiceGender = 'female' | 'male' | 'neutral'
+type SupertonicVoiceGender = 'female' | 'male'
 
 interface SupertonicVoiceDefinition {
   readonly gender: SupertonicVoiceGender
@@ -18,11 +18,11 @@ export const SUPERTONIC_VOICES = [
   {gender: 'male', id: 'M3', label: 'Robert'},
   {gender: 'male', id: 'M4', label: 'Sam'},
   {gender: 'male', id: 'M5', label: 'Daniel'},
-  // AI_NOTE - Pomo One is a user-consented local asset; omit source metadata to avoid exposing personal file paths.
+  // AI_NOTE - Jian is a user-consented local asset; omit source metadata to avoid exposing personal file paths.
   {
-    gender: 'neutral',
+    gender: 'female',
     id: 'P1',
-    label: 'Pomo One',
+    label: '지안',
     path: '/voice-styles/pomo-one.json',
   },
 ] as const satisfies ReadonlyArray<SupertonicVoiceDefinition>

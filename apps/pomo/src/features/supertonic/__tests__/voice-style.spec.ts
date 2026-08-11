@@ -6,7 +6,7 @@ import {describe, expect, it} from 'vitest'
 import {parseSupertonicVoiceStyle} from '../index'
 
 describe('parseSupertonicVoiceStyle', () => {
-  it('should parse the bundled Pomo One voice style', () => {
+  it('should parse the bundled Jian voice style', () => {
     const assetPath = resolve('apps/pomo/public/voice-styles/pomo-one.json')
     const value: unknown = JSON.parse(readFileSync(assetPath, 'utf8'))
 
