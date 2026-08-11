@@ -28,7 +28,7 @@ Supertonic 3의 BigScience OpenRAIL-M License를 기준으로 다음 항목을 �
 
 ## 실행과 저장
 
-TTS 모델 로딩과 추론은 전용 Web Worker에서 실행한다. 메인 스레드는 SolidStart UI와 Needle Engine 렌더링을 담당하고, Worker는 합성된 음성 데이터를 영속 저장 호환 계층으로 전달한다. TTS 작업은 낮은 우선순위 큐에서 한 번에 하나씩 순차 실행한다.
+TTS 모델 로딩과 추론은 전용 Web Worker에서 실행한다. 메인 스레드는 SolidStart UI와 Babylon.js 렌더링을 담당하고, Worker는 합성된 음성 데이터를 영속 저장 호환 계층으로 전달한다. TTS 작업은 낮은 우선순위 큐에서 한 번에 하나씩 순차 실행한다.
 
 사용자가 작성한 대사는 외부 서버로 전송하지 않는다. 앱인토스 실제 WebView에서 모델 로딩 시간, 합성 속도, 메모리 사용량과 3D 장면 동시 실행을 검증한다.
 

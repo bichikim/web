@@ -42,7 +42,7 @@ export default function HomePage() {
             <div class="flex items-start justify-between gap-5">
               <div>
                 <p class="m-0 text-xs font-700 tracking-[0.2em] text-#9ed6bb uppercase">
-                  Needle Engine · Blender
+                  Babylon.js · Blender
                 </p>
                 <h2 class="mb-0 mt-3 text-2xl font-750">3D 캐릭터 스튜디오</h2>
                 <p class="mb-0 mt-3 max-w-sm text-sm leading-6 text-#aaa0b1">

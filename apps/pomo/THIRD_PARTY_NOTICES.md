@@ -16,18 +16,24 @@ Pomo가 배포하거나 실행 중 내려받는 외부 소프트웨어, 모델, 
 
 ## 배포·실행 항목
 
-| 항목                                                                                                | Pomo에서의 사용                                            | 라이선스                         | 필요한 조치                                                                                                                 |
-| --------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- | -------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| [RobotExpressive](https://github.com/mrdoob/three.js/tree/dev/examples/models/gltf/RobotExpressive) | `public/models/RobotExpressive.glb`, Blender 장면의 캐릭터 | CC0 1.0                          | 의무 없음. Tomás Laulhé 제작, Don McCurdy 수정 사실을 보존한다.                                                             |
-| [Ninomaru Teien](https://polyhaven.com/a/ninomaru_teien)                                            | `public/models/blender/forest.exr`, Blender 장면 환경광    | CC0 1.0                          | 의무 없음. Poly Haven 및 Greg Zaal 출처를 보존한다.                                                                         |
-| [Needle Engine](https://needle.tools/eula)                                                          | 3D 장면 실행 및 Blender 내보내기                           | Needle Engine EULA               | 오픈소스가 아니다. 상용·프로덕션 배포 전 Free 자격 또는 별도 허가를 확인한다.                                               |
-| [Needle MaterialX](https://polyformproject.org/licenses/noncommercial/1.0.0/)                       | Needle Engine의 런타임 의존성                              | PolyForm Noncommercial 1.0.0     | 상용 목적으로 사용할 수 없다. 배포 시 약관 또는 약관 URL을 함께 제공하고, 상용 출시 전 대체·제외 또는 별도 허가를 확인한다. |
-| [Qwen3.5 ONNX](https://huggingface.co/onnx-community/Qwen3.5-0.8B-ONNX) 0.8B, 2B, 4B                | 브라우저 내 텍스트 생성                                    | Apache-2.0                       | 모델 저장소의 LICENSE·NOTICE와 저작권 고지를 배포물에 보존한다.                                                             |
-| [Supertonic 3](https://huggingface.co/Supertone/supertonic-3) Full 및 INT8                          | 브라우저 내 음성 합성                                      | 모델: OpenRAIL-M, 예제 코드: MIT | 모델 사용 제한과 고지 의무를 따른다. INT8은 sherpa-onnx용 양자화 배포본이다.                                                |
-| [츠쿠요미짱 코퍼스](./licenses/TSUKUYOMI_CORPUS.md)                                                 | 자체 AI 음성 모델 학습 및 생성 음원 사용(프로토타입 예정)  | 츠쿠요미짱 코퍼스 전용 이용약관  | 제품 크레딧, 출력 용도 제한, 재배포 제한을 적용한다. 다른 캐릭터 전용 모델은 사전 서면 허락을 확보한다.                     |
+| 항목                                                                                                | Pomo에서의 사용                                            | 라이선스                         | 필요한 조치                                                                                             |
+| --------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| [RobotExpressive](https://github.com/mrdoob/three.js/tree/dev/examples/models/gltf/RobotExpressive) | `public/models/RobotExpressive.glb`, Blender 장면의 캐릭터 | CC0 1.0                          | 의무 없음. Tomás Laulhé 제작, Don McCurdy 수정 사실을 보존한다.                                         |
+| [Ninomaru Teien](https://polyhaven.com/a/ninomaru_teien)                                            | `public/models/blender/forest.exr`, Blender 장면 환경광    | CC0 1.0                          | 의무 없음. Poly Haven 및 Greg Zaal 출처를 보존한다.                                                     |
+| [Babylon.js](https://github.com/BabylonJS/Babylon.js/blob/master/license.md)                        | 3D 장면 실행 및 표준 GLB 로딩                              | Apache-2.0                       | 저작권·라이선스 고지를 배포물에 보존한다.                                                               |
+| [Qwen3.5 ONNX](https://huggingface.co/onnx-community/Qwen3.5-0.8B-ONNX) 0.8B, 2B, 4B                | 브라우저 내 텍스트 생성                                    | Apache-2.0                       | 모델 저장소의 LICENSE·NOTICE와 저작권 고지를 배포물에 보존한다.                                         |
+| [Supertonic 3](https://huggingface.co/Supertone/supertonic-3) Full 및 INT8                          | 브라우저 내 음성 합성                                      | 모델: OpenRAIL-M, 예제 코드: MIT | 모델 사용 제한과 고지 의무를 따른다. INT8은 sherpa-onnx용 양자화 배포본이다.                            |
+| [츠쿠요미짱 코퍼스](./licenses/TSUKUYOMI_CORPUS.md)                                                 | 자체 AI 음성 모델 학습 및 생성 음원 사용(프로토타입 예정)  | 츠쿠요미짱 코퍼스 전용 이용약관  | 제품 크레딧, 출력 용도 제한, 재배포 제한을 적용한다. 다른 캐릭터 전용 모델은 사전 서면 허락을 확보한다. |
 
 `scene.glb`는 Pomo의 Blender 프로젝트에서 생성하지만 RobotExpressive 모델과 Ninomaru
 Teien HDRI를 포함하거나 참조하므로 두 원본의 조건도 함께 적용된다.
+
+## 검토 후 제외한 3D 항목
+
+- Needle Engine과 Needle MaterialX는 현재 Pomo의 의존성 및 배포물에 포함하지 않는다. 상용 조건과
+  비상업 제한을 다시 검토하고 별도 도입 결정을 내리기 전에는 사용하지 않는다.
+- Three.js, PlayCanvas와 Godot Web은 Babylon.js로 해결하기 어려운 요구가 생길 때만 대안으로
+  재검토한다.
 
 ## 츠쿠요미짱 코퍼스 운영 조건
 
