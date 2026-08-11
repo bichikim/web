@@ -6,7 +6,6 @@ import {
   parseSupertonicVoiceStyle,
   SUPERTONIC_MODELS,
   SUPERTONIC_VOICES,
-  type SupertonicModel,
   type SupertonicModelId,
   type SupertonicVoiceChunkResult,
   type SupertonicVoiceId,
@@ -44,14 +43,6 @@ const BUTTON_CLASSES = cx(
 
 type GenerationStatus = SupertonicVoiceLabState['status']
 
-interface ModelStatusProps {
-  readonly errorMessage: string | null
-  readonly model: SupertonicModel
-  readonly progress: number
-  readonly status: GenerationStatus
-  readonly statusMessage: string
-}
-
 interface ModelPickerProps {
   readonly disabled: boolean
   readonly onModelChange: (modelId: SupertonicModelId) => void
@@ -61,9 +52,11 @@ interface ModelPickerProps {
 interface VoiceActionsProps {
   readonly canGenerate: boolean
   readonly canPrepare: boolean
+  readonly errorMessage: string | null
   readonly isModelReady: boolean
   readonly onGenerate: () => void
   readonly onPrepare: () => void
+  readonly progress: number
   readonly status: GenerationStatus
 }
 
@@ -106,40 +99,6 @@ const VoiceHeader = () => (
   </header>
 )
 
-const ModelStatus = (props: ModelStatusProps) => (
-  <div aria-live="polite" class="rounded-4 border border-white/8 bg-white/4 p-4">
-    <div class="flex items-center justify-between gap-4 text-sm">
-      <span class="font-650 text-#eee5ef">Supertonic 3 · {props.model.label}</span>
-      <span class="text-xs text-#9f93a7">
-        {props.status === 'preparing' ? `${props.progress}%` : formatModelSize(props.model.size)}
-      </span>
-    </div>
-    <Show when={props.status === 'preparing'}>
-      <div
-        aria-label={`모델 준비 ${props.progress}%`}
-        aria-valuemax="100"
-        aria-valuemin="0"
-        aria-valuenow={props.progress}
-        class="mt-3 h-1.5 overflow-hidden rounded-full bg-white/8"
-        role="progressbar"
-      >
-        <div
-          class="h-full rounded-full bg-#f2a7b8 transition-[width]"
-          style={{width: `${props.progress}%`}}
-        />
-      </div>
-    </Show>
-    <p
-      class={cx(
-        'mb-0 mt-2 text-xs leading-5',
-        props.status === 'error' ? 'text-#ff9aa8' : 'text-#9f93a7',
-      )}
-    >
-      {props.errorMessage ?? props.statusMessage}
-    </p>
-  </div>
-)
-
 const ModelPicker = (props: ModelPickerProps) => (
   <fieldset class="grid gap-2.5 border-0 p-0">
     <legend class="text-sm font-650 text-#eee5ef">모델 타입</legend>
@@ -176,7 +135,7 @@ const ModelPicker = (props: ModelPickerProps) => (
 )
 
 const VoiceActions = (props: VoiceActionsProps) => (
-  <div class="flex justify-end">
+  <div class="grid justify-items-end gap-2">
     <button
       class={BUTTON_CLASSES}
       disabled={props.isModelReady ? !props.canGenerate : !props.canPrepare}
@@ -184,13 +143,20 @@ const VoiceActions = (props: VoiceActionsProps) => (
       type="button"
     >
       {props.status === 'preparing'
-        ? '모델 준비 중…'
+        ? `모델 준비 중… ${props.progress}%`
         : props.status === 'generating'
           ? '음성 만드는 중…'
           : props.isModelReady
             ? '음성 만들기'
             : 'Supertonic 준비하기'}
     </button>
+    <Show when={props.errorMessage}>
+      {(message) => (
+        <p aria-live="polite" class="m-0 text-right text-xs text-#ff9aa8" role="alert">
+          {message()}
+        </p>
+      )}
+    </Show>
   </div>
 )
 
@@ -419,13 +385,6 @@ export const VoiceGenerator = () => {
           onModelChange={handleModelChange}
           selectedModelId={voiceLab.selectedModelId()}
         />
-        <ModelStatus
-          errorMessage={voiceLab.errorMessage()}
-          model={voiceLab.selectedModel()}
-          progress={voiceLab.progress()}
-          status={voiceLab.state().status}
-          statusMessage={voiceLab.statusMessage()}
-        />
 
         <VoiceFields
           disabled={voiceLab.isBusy()}
@@ -444,9 +403,11 @@ export const VoiceGenerator = () => {
         <VoiceActions
           canGenerate={voiceLab.canGenerate()}
           canPrepare={voiceLab.canPrepare()}
+          errorMessage={voiceLab.errorMessage()}
           isModelReady={voiceLab.isModelReady()}
           onGenerate={voiceLab.generate}
           onPrepare={voiceLab.prepare}
+          progress={voiceLab.progress()}
           status={voiceLab.state().status}
         />
       </div>
