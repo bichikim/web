@@ -69,6 +69,12 @@ describe('Supertonic parsers', () => {
         style_ttl: {data: [0], dims: [1]},
       }),
     ).toMatchObject({error: {asset: 'voice', code: 'invalid-model-data'}, ok: false})
+    expect(
+      parseSupertonicVoice({
+        style_dp: {data: [0], dims: [1, 2]},
+        style_ttl: {data: [0], dims: [1]},
+      }),
+    ).toMatchObject({error: {asset: 'voice', code: 'invalid-model-data'}, ok: false})
   })
 })
 

@@ -1,10 +1,10 @@
-import type {NeedleEngineWebComponent} from '@needle-tools/engine'
+import {clientOnly} from '@solidjs/start'
 import {cx} from 'class-variance-authority'
-import {createSignal, onMount, Show} from 'solid-js'
+import {createSignal, Show} from 'solid-js'
 
 import {type CharacterRendererStatus, useCharacterRenderer} from '../features/character-renderer'
 
-const DEFAULT_MODEL_URL = '/models/blender/scene.glb?integration=2'
+const DEFAULT_MODEL_URL = '/models/blender/scene.glb?renderer=babylon-1'
 const DEFAULT_MODEL_NAME = 'Blender · character-studio.blend'
 const VIEWER_CLASSES = cx(
   'relative min-h-105 overflow-hidden rounded-7 border border-white/10 bg-#111820',
@@ -39,9 +39,14 @@ const RESET_BUTTON_CLASSES = cx(
   'transition hover:bg-white/5 hover:text-white',
 )
 
-interface CharacterViewerProps {
+const CharacterCanvas = clientOnly(() => import('./CharacterCanvas'), {lazy: true})
+
+interface CharacterViewportProps {
   readonly modelUrl: string
-  readonly onEngineReady: (element: NeedleEngineWebComponent) => void
+  readonly onLoadError: () => void
+  readonly onLoadProgress: (progress: number) => void
+  readonly onLoadStart: () => void
+  readonly onLoadSuccess: () => void
   readonly progress: number
   readonly status: CharacterRendererStatus
 }
@@ -56,10 +61,6 @@ interface CharacterControlsProps {
 }
 
 const getStatusLabel = (status: CharacterRendererStatus, progress: number) => {
-  if (status === 'booting') {
-    return '3D 엔진 준비 중'
-  }
-
   if (status === 'loading') {
     return `모델 로딩 ${progress}%`
   }
@@ -71,37 +72,34 @@ const getStatusLabel = (status: CharacterRendererStatus, progress: number) => {
   return '렌더링 중'
 }
 
-const CharacterViewer = (props: CharacterViewerProps) => (
+const CharacterViewport = (props: CharacterViewportProps) => (
   <div class={VIEWER_CLASSES}>
-    <Show
-      fallback={
-        <div class="grid min-h-105 place-items-center p-8 text-center lg:min-h-155">
-          <div>
-            <div class="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-white/15 border-t-#a9e5d2" />
-            <p class="mb-0 mt-4 text-sm text-#aab5bd">
-              {props.status === 'error'
-                ? '이 브라우저에서 3D 엔진을 시작하지 못했어요.'
-                : 'Needle Engine을 준비하고 있어요.'}
-            </p>
-          </div>
+    <CharacterCanvas
+      modelUrl={props.modelUrl}
+      onLoadError={props.onLoadError}
+      onLoadProgress={props.onLoadProgress}
+      onLoadStart={props.onLoadStart}
+      onLoadSuccess={props.onLoadSuccess}
+    />
+    <Show when={props.status !== 'ready'}>
+      <div
+        class={cx(
+          'pointer-events-none absolute inset-0 grid min-h-105 place-items-center',
+          'bg-#111820/72 p-8 text-center backdrop-blur-sm lg:min-h-155',
+        )}
+      >
+        <div>
+          <div
+            class="mx-auto h-10 w-10 rounded-full border-2 border-white/15 border-t-#a9e5d2"
+            classList={{'animate-spin': props.status === 'loading'}}
+          />
+          <p class="mb-0 mt-4 text-sm text-#aab5bd">
+            {props.status === 'error'
+              ? '이 브라우저에서 3D 모델을 불러오지 못했어요.'
+              : 'Babylon.js 렌더러를 준비하고 있어요.'}
+          </p>
         </div>
-      }
-      when={props.status === 'loading' || props.status === 'ready'}
-    >
-      <needle-engine
-        auto-fit="true"
-        auto-rotate="true"
-        autoplay="true"
-        background-color="#111820"
-        camera-controls="true"
-        class="absolute inset-0 h-full w-full"
-        contact-shadows="true"
-        environment-image="studio"
-        loading-style="dark"
-        ref={props.onEngineReady}
-        src={props.modelUrl}
-        tone-mapping="agx"
-      />
+      </div>
     </Show>
 
     <div class={STATUS_CLASSES}>
@@ -122,7 +120,7 @@ const CharacterControls = (props: CharacterControlsProps) => (
       <p class="m-0 text-xs font-750 tracking-[0.22em] text-#8bd8c0 uppercase">3D character lab</p>
       <h1 class="mb-0 mt-3 text-2xl font-800 tracking--0.03em">Blender 캐릭터 연결</h1>
       <p class="mb-0 mt-3 text-sm leading-6 text-#9ba8b1">
-        Needle Engine으로 GLB를 렌더링해요. Blender에서 내보낸 파일을 선택하면 즉시 교체됩니다.
+        Babylon.js로 표준 GLB를 렌더링해요. Blender에서 내보낸 파일을 선택하면 즉시 교체됩니다.
       </p>
     </header>
 
@@ -146,7 +144,7 @@ const CharacterControls = (props: CharacterControlsProps) => (
 
     <form class="grid gap-2" onSubmit={(event) => props.onUrlSubmit(event)}>
       <label class="text-sm font-650 text-#d9e1e6" for="character-model-url">
-        GLB 또는 Needle Cloud URL
+        GLB URL
       </label>
       <input
         class={INPUT_CLASSES}
@@ -168,9 +166,9 @@ const CharacterControls = (props: CharacterControlsProps) => (
     <div class="border-t border-white/8 pt-5">
       <h2 class="m-0 text-sm font-750 text-#d9e1e6">Blender 연결 순서</h2>
       <ol class="mb-0 mt-3 grid gap-2 pl-5 text-xs leading-5 text-#8f9ca5">
-        <li>Needle Engine Exporter 애드온 설치</li>
-        <li>카메라에 OrbitControls 추가</li>
-        <li>장면을 GLB 또는 Needle Cloud로 내보내기</li>
+        <li>Blender에서 장면과 애니메이션 제작</li>
+        <li>File → Export → glTF 2.0 선택</li>
+        <li>장면을 표준 GLB로 내보내기</li>
         <li>위 파일/URL 입력으로 이 페이지에서 검증</li>
       </ol>
     </div>
@@ -182,12 +180,6 @@ export const CharacterStudio = () => {
   const renderer = useCharacterRenderer({
     defaultModelName: DEFAULT_MODEL_NAME,
     defaultModelUrl: DEFAULT_MODEL_URL,
-  })
-
-  onMount(() => {
-    renderer.prepare().catch((error: unknown) => {
-      console.error('Unexpected character renderer preparation failure', error)
-    })
   })
 
   const handleFileChange = (event: Event & {currentTarget: HTMLInputElement}) => {
@@ -221,9 +213,12 @@ export const CharacterStudio = () => {
 
   return (
     <section class="grid gap-5 lg:grid-cols-[minmax(0,1fr)_22rem]">
-      <CharacterViewer
+      <CharacterViewport
         modelUrl={renderer.modelUrl()}
-        onEngineReady={renderer.attachElement}
+        onLoadError={renderer.handleLoadError}
+        onLoadProgress={renderer.handleLoadProgress}
+        onLoadStart={renderer.handleLoadStart}
+        onLoadSuccess={renderer.handleLoadSuccess}
         progress={renderer.progress()}
         status={renderer.status()}
       />

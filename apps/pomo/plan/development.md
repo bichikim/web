@@ -8,7 +8,7 @@
 | ------------ | -------------------------------------------------------- |
 | 애플리케이션 | SolidStart, Solid 반응형 프리미티브                      |
 | UI           | UnoCSS, CVA, Kobalte                                     |
-| 3D           | Needle Engine, Blender                                   |
+| 3D           | Babylon.js, Blender                                      |
 | 오디오·TTS   | Web Audio API, sherpa-onnx, Supertonic 3 INT8            |
 | 데이터       | 플랫폼 저장소 어댑터, Dexie.js, IndexedDB, Zod           |
 | 품질         | Oxlint, Oxfmt, Vitest, Solid Testing Library, Playwright |

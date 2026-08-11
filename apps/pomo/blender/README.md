@@ -2,9 +2,8 @@
 
 1. Run `pnpm --filter @apps/pomo blender:open`.
 2. Edit `character-studio.blend` and save it.
-3. Needle Exporter writes `public/models/blender/scene.glb`; `/character` reloads it after a browser refresh.
+3. Run `pnpm --filter @apps/pomo blender:export` to create `public/models/blender/scene.glb`.
+4. Refresh `/character` to verify the GLB with Babylon.js.
 
-For a headless export, run `pnpm --filter @apps/pomo blender:export`.
-
-The Blender project is intentionally isolated from the SolidStart root so generated Needle metadata
-does not participate in the app's server-side rendering pipeline.
+The export script uses Blender's standard glTF 2.0 exporter and includes animations. Keep the
+Blender project isolated from the SolidStart root; only the generated GLB is served by the app.

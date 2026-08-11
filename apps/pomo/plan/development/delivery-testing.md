@@ -37,7 +37,7 @@ Vercel 서버 함수는 환경별 CORS 허용 출처 목록만 허용한다. 앱
 
 Vercel Preview Deployment는 운영 Public Blob의 검증된 TTS 모델과 manifest를 읽기 전용으로 사용하며 모델을 업로드하거나 동기화하지 않는다.
 
-일반 브라우저 사용자는 SSR 배포 주소로 접속한다. 앱인토스와 브라우저는 UI, Needle Engine 장면, Query·Action과 서버 함수 구현을 공유한다.
+일반 브라우저 사용자는 SSR 배포 주소로 접속한다. 앱인토스와 브라우저는 UI, Babylon.js 장면, Query·Action과 서버 함수 구현을 공유한다.
 
 ## 앱인토스 환경
 

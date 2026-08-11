@@ -6,6 +6,13 @@ import {env, InferenceSession} from 'onnxruntime-web/all'
 
 import {joinAudioChunks} from './audio'
 import {
+  createModelStorage,
+  loadModelResource,
+  type ModelStorageError,
+  reportModelStorageError,
+} from '../model-storage'
+import {
+  createSupertonicVoice,
   parseSupertonicConfig,
   parseSupertonicIndexer,
   parseSupertonicVoice,
@@ -21,7 +28,7 @@ import {
   type SupertonicError,
   type WorkerFailedError,
 } from './errors'
-import type {SupertonicWorkerInput, SupertonicWorkerOutput} from './messages'
+import type {SupertonicVoiceSource, SupertonicWorkerInput, SupertonicWorkerOutput} from './messages'
 import {
   getSupertonicAssetUrl,
   getSupertonicModel,
@@ -35,6 +42,7 @@ import {failureResult, type Result, successResult} from './result'
 import {splitSpeechText} from './text-chunking'
 
 const workerScope = self as DedicatedWorkerGlobalScope
+const modelStorage = createModelStorage()
 const voiceCache = new Map<SupertonicVoiceId, SupertonicVoice>()
 const REQUEST_TIMEOUT_STATUS = 408
 const TOO_MANY_REQUESTS_STATUS = 429
@@ -69,6 +77,14 @@ interface GeneratedAudio {
 }
 
 type Backend = 'wasm' | 'webgpu'
+
+const finishCacheWrite = async (cacheWrite: Promise<Result<void, ModelStorageError>>) => {
+  const result = await cacheWrite
+
+  if (!result.ok) {
+    reportModelStorageError(result.error)
+  }
+}
 
 const postMessage = (
   message: SupertonicWorkerOutput,
@@ -123,14 +139,22 @@ const fetchBuffer = async (
   options: FetchBufferOptions,
 ): Promise<Result<ArrayBuffer, CancelledError | DownloadFailedError>> => {
   try {
-    const response = await fetch(options.url, {cache: 'force-cache', signal: options.signal})
+    const resource = await loadModelResource({
+      onStorageError: reportModelStorageError,
+      signal: options.signal,
+      storage: modelStorage,
+      url: options.url,
+    })
+    const {response} = resource
 
     if (!response.ok) {
       return failureResult(createDownloadError(options, response.status))
     }
 
     if (response.body === null) {
-      return successResult(await response.arrayBuffer())
+      const buffer = await response.arrayBuffer()
+      await finishCacheWrite(resource.cacheWrite)
+      return successResult(buffer)
     }
 
     const reader = response.body.getReader()
@@ -164,6 +188,7 @@ const fetchBuffer = async (
       offset += chunk.byteLength
     }
 
+    await finishCacheWrite(resource.cacheWrite)
     return successResult(buffer.buffer)
   } catch (error: unknown) {
     return failureResult(
@@ -223,13 +248,21 @@ const fetchJson = async (
   options: FetchJsonOptions,
 ): Promise<Result<unknown, CancelledError | DownloadFailedError>> => {
   try {
-    const response = await fetch(options.url, {cache: 'force-cache', signal: options.signal})
+    const resource = await loadModelResource({
+      onStorageError: reportModelStorageError,
+      signal: options.signal,
+      storage: modelStorage,
+      url: options.url,
+    })
+    const {response} = resource
 
     if (!response.ok) {
       return failureResult(createDownloadError(options, response.status))
     }
 
-    return successResult(await response.json())
+    const value: unknown = await response.json()
+    await finishCacheWrite(resource.cacheWrite)
+    return successResult(value)
   } catch (error: unknown) {
     return failureResult(
       isAbortError(error) ? createCancelledError('download') : createDownloadError(options, null),
@@ -320,19 +353,23 @@ const initialize = async (model: SupertonicModel): Promise<Result<Backend, Super
 }
 
 const getVoice = async (
-  voiceId: SupertonicVoiceId,
+  voice: SupertonicVoiceSource,
   signal: AbortSignal,
 ): Promise<Result<SupertonicVoice, SupertonicError>> => {
-  const cachedVoice = voiceCache.get(voiceId)
+  if (voice.kind === 'custom') {
+    return successResult(createSupertonicVoice(voice.value))
+  }
+
+  const cachedVoice = voiceCache.get(voice.id)
 
   if (cachedVoice !== undefined) {
     return successResult(cachedVoice)
   }
 
   const response = await fetchJson({
-    fileName: `${voiceId} 목소리`,
+    fileName: `${voice.id} 목소리`,
     signal,
-    url: getSupertonicVoiceUrl(voiceId),
+    url: getSupertonicVoiceUrl(voice.id),
   })
 
   if (!response.ok) {
@@ -342,7 +379,7 @@ const getVoice = async (
   const voiceResult = parseSupertonicVoice(response.value)
 
   if (voiceResult.ok) {
-    voiceCache.set(voiceId, voiceResult.value)
+    voiceCache.set(voice.id, voiceResult.value)
   }
 
   return voiceResult
@@ -366,7 +403,7 @@ const generate = async (
   const startedAt = performance.now()
 
   try {
-    const voiceResult = await getVoice(message.voiceId, abortController.signal)
+    const voiceResult = await getVoice(message.voice, abortController.signal)
 
     if (!voiceResult.ok) {
       return voiceResult
@@ -433,57 +470,65 @@ workerScope.onmessage = async (event: MessageEvent<SupertonicWorkerInput>) => {
   const message = event.data
 
   try {
-    if (message.type === 'initialize') {
-      let model: SupertonicModel
+    switch (message.type) {
+      case 'dispose':
+        activeAbortController?.abort()
+        await engine?.release()
+        engine = null
+        activeModel = null
+        voiceCache.clear()
+        postMessage({type: 'disposed'})
+        return
+      case 'generate': {
+        const result = await generate(message)
 
-      try {
-        model = getSupertonicModel(message.modelId)
-      } catch {
-        postMessage({
-          error: {
-            code: 'invalid-model',
-            modelId: message.modelId,
-            phase: 'initialize',
-            retryable: false,
-          },
-          requestId: null,
-          type: 'error',
-        })
+        if (result.ok) {
+          postMessage(
+            {
+              generationTime: result.value.generationTime,
+              requestId: message.requestId,
+              sampleRate: result.value.sampleRate,
+              samples: result.value.samples,
+              type: 'result',
+            },
+            [result.value.samples.buffer],
+          )
+        } else {
+          postMessage({error: result.error, requestId: message.requestId, type: 'error'})
+        }
         return
       }
+      case 'initialize': {
+        let model: SupertonicModel
 
-      const result = await initialize(model)
+        try {
+          model = getSupertonicModel(message.modelId)
+        } catch {
+          postMessage({
+            error: {
+              code: 'invalid-model',
+              modelId: message.modelId,
+              phase: 'initialize',
+              retryable: false,
+            },
+            requestId: null,
+            type: 'error',
+          })
+          return
+        }
 
-      if (result.ok) {
-        postMessage({backend: result.value, type: 'ready'})
-      } else {
-        postMessage({error: result.error, requestId: null, type: 'error'})
+        const result = await initialize(model)
+
+        if (result.ok) {
+          postMessage({backend: result.value, type: 'ready'})
+        } else {
+          postMessage({error: result.error, requestId: null, type: 'error'})
+        }
+        return
       }
-    } else if (message.type === 'generate') {
-      const result = await generate(message)
-
-      if (result.ok) {
-        postMessage(
-          {
-            generationTime: result.value.generationTime,
-            requestId: message.requestId,
-            sampleRate: result.value.sampleRate,
-            samples: result.value.samples,
-            type: 'result',
-          },
-          [result.value.samples.buffer],
-        )
-      } else {
-        postMessage({error: result.error, requestId: message.requestId, type: 'error'})
-      }
-    } else {
-      activeAbortController?.abort()
-      await engine?.release()
-      engine = null
-      activeModel = null
-      voiceCache.clear()
-      postMessage({type: 'disposed'})
     }
+
+    message satisfies never
   } catch (error: unknown) {
     postMessage({
       error: createWorkerError(message.type === 'generate' ? 'generate' : 'initialize', error),
