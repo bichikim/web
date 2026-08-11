@@ -74,29 +74,6 @@ export default function HomePage() {
             <span class="mt-8 text-sm font-700 text-#ffc0ce">음성 실험실 열기 →</span>
           </A>
 
-          <A class={CARD_CLASSES} href="/custom-voice">
-            <div class="flex items-start justify-between gap-5">
-              <div>
-                <p class="m-0 text-xs font-700 tracking-[0.2em] text-#f2a7b8 uppercase">
-                  Supertonic 3 · On-device
-                </p>
-                <h2 class="mb-0 mt-3 text-2xl font-750">커스텀 목소리 실험실</h2>
-                <p class="mb-0 mt-3 max-w-sm text-sm leading-6 text-#aaa0b1">
-                  목소리 스타일 JSON을 기기에 불러와 대사를 온디바이스로 합성해요.
-                </p>
-              </div>
-              <span
-                class={cx(
-                  'grid h-11 w-11 shrink-0 place-items-center rounded-full',
-                  'bg-#f2a7b8/12 text-xl text-#ffc0ce',
-                )}
-              >
-                ≋
-              </span>
-            </div>
-            <span class="mt-8 text-sm font-700 text-#ffc0ce">커스텀 음성 열기 →</span>
-          </A>
-
           <A class={CARD_CLASSES} href="/dialogue">
             <div class="flex items-start justify-between gap-5">
               <div>
