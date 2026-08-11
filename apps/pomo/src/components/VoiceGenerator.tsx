@@ -249,7 +249,8 @@ const VoiceFields = (props: VoiceFieldsProps) => {
             <For each={SUPERTONIC_VOICES}>
               {(voice) => (
                 <option value={voice.id}>
-                  {voice.label} · {voice.gender === 'female' ? '여성' : '남성'} ({voice.id})
+                  {voice.label} · {voice.gender === 'female' ? '여성' : '남성'}
+                  <Show when={voice.recommended}> (추천)</Show>
                 </option>
               )}
             </For>

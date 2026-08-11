@@ -49,8 +49,17 @@ describe('Supertonic model manifest', () => {
     expect(SUPERTONIC_VOICES[0]).toMatchObject({
       gender: 'female',
       id: 'Yuna',
-      label: 'Yuna (추천)',
+      label: 'Yuna',
+      recommended: true,
+      url: '/voice_styles/Yuna.json',
     })
+    expect(SUPERTONIC_VOICES.find((voice) => voice.id === 'F1')).toMatchObject({
+      recommended: false,
+      url: expect.stringContaining('/voice_styles/F1.json'),
+    })
+    expect(() => Reflect.apply(getSupertonicVoiceUrl, null, ['unknown'])).toThrow(
+      '지원하지 않는 Supertonic 목소리입니다',
+    )
     expect(() => Reflect.apply(getSupertonicModel, null, ['unknown'])).toThrow(
       '지원하지 않는 Supertonic 모델입니다',
     )
