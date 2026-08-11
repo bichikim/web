@@ -28,6 +28,11 @@ Pomo가 배포하거나 실행 중 내려받는 외부 소프트웨어, 모델, 
 `scene.glb`는 Pomo의 Blender 프로젝트에서 생성하지만 RobotExpressive 모델과 Ninomaru
 Teien HDRI를 포함하거나 참조하므로 두 원본의 조건도 함께 적용된다.
 
+Supertonic Full 모델은 공식 저장소의 `3cadd1e` 리비전을 사용한다. INT8 모델은 이를 양자화한
+`csukuangfj2/sherpa-onnx-supertonic-3-tts-int8-2026-05-11` 저장소의
+`cca5a0e6c96e1d2c720986bf7e75fcc81dee3ae4` 리비전이며, 파일명과 제품 UI에 `INT8` 변경 사실을
+표시한다. 두 모델 모두 동일한 OpenRAIL-M 이용 제한과 고지를 적용한다.
+
 ## 검토 후 제외한 3D 항목
 
 - Needle Engine과 Needle MaterialX는 현재 Pomo의 의존성 및 배포물에 포함하지 않는다. 상용 조건과

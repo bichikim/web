@@ -335,6 +335,18 @@ export const VoiceGenerator = () => {
   const [hasAcceptedTerms, setHasAcceptedTerms] = createSignal(false)
   const voiceLab = useSupertonicVoiceLab({initialText: INITIAL_TEXT})
 
+  const handleGenerate = () => {
+    if (hasAcceptedTerms()) {
+      voiceLab.generate()
+    }
+  }
+
+  const handlePrepare = () => {
+    if (hasAcceptedTerms()) {
+      voiceLab.prepare()
+    }
+  }
+
   const handleModelChange = (modelId: SupertonicModelId) => {
     voiceLab.selectModel(modelId)
   }
@@ -389,8 +401,8 @@ export const VoiceGenerator = () => {
           canPrepare={voiceLab.canPrepare()}
           hasAcceptedTerms={hasAcceptedTerms()}
           isModelReady={voiceLab.isModelReady()}
-          onGenerate={voiceLab.generate}
-          onPrepare={voiceLab.prepare}
+          onGenerate={handleGenerate}
+          onPrepare={handlePrepare}
           status={voiceLab.state().status}
         />
       </div>

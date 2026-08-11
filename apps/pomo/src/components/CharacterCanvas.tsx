@@ -93,12 +93,21 @@ const CharacterCanvas = (props: CharacterCanvasProps) => {
       return
     }
 
-    const engine = new Engine(
-      renderCanvas,
-      true,
-      {powerPreference: 'high-performance', preserveDrawingBuffer: false, stencil: true},
-      true,
-    )
+    let engine: Engine
+
+    try {
+      engine = new Engine(
+        renderCanvas,
+        true,
+        {powerPreference: 'high-performance', preserveDrawingBuffer: false, stencil: true},
+        true,
+      )
+    } catch (error: unknown) {
+      console.error('Babylon.js engine initialization failed', error)
+      props.onLoadError()
+      return
+    }
+
     const scene = new Scene(engine)
     scene.clearColor = Color4.FromHexString('#111820ff')
 
@@ -186,6 +195,7 @@ const CharacterCanvas = (props: CharacterCanvasProps) => {
           }
 
           console.error('Babylon.js character model loading failed', error)
+          unloadModel()
           onLoadError()
         })
 

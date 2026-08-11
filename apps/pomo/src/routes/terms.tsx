@@ -153,7 +153,7 @@ export default function TermsPage() {
                 Supertonic 3의 모델 사용에는 원문 라이선스가 우선 적용됩니다. 자세한 조건은{' '}
                 <a
                   class="font-650 text-#ffc0ce underline underline-offset-3"
-                  href="https://huggingface.co/Supertone/supertonic-3/blob/main/LICENSE"
+                  href="https://huggingface.co/Supertone/supertonic-3/blob/3cadd1e/LICENSE"
                   rel="noreferrer"
                   target="_blank"
                 >
