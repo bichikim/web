@@ -257,7 +257,10 @@ const VoiceFields = (props: VoiceFieldsProps) => {
               {(voice) => <option value="custom">커스텀 · {voice().name}</option>}
             </Show>
           </select>
-          <span class="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-#8f8297">
+          <span
+            aria-hidden="true"
+            class="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-#8f8297"
+          >
             ▾
           </span>
         </div>
@@ -275,18 +278,26 @@ const VoiceFields = (props: VoiceFieldsProps) => {
 
       <label class="grid gap-2 text-xs font-650 text-#bdb2c4" for="voice-test-script">
         테스트 대사 빠른 선택
-        <select
-          class={cx(VOICE_SELECT_CLASSES, 'h-11')}
-          disabled={props.disabled}
-          id="voice-test-script"
-          onChange={handleScriptChange}
-          value={selectedScriptId()}
-        >
-          <option value="">직접 편집</option>
-          <For each={VOICE_TEST_SCRIPTS}>
-            {(script) => <option value={script.id}>{script.label}</option>}
-          </For>
-        </select>
+        <div class="relative">
+          <select
+            class={cx(VOICE_SELECT_CLASSES, 'h-11')}
+            disabled={props.disabled}
+            id="voice-test-script"
+            onChange={handleScriptChange}
+            value={selectedScriptId()}
+          >
+            <option value="">직접 편집</option>
+            <For each={VOICE_TEST_SCRIPTS}>
+              {(script) => <option value={script.id}>{script.label}</option>}
+            </For>
+          </select>
+          <span
+            aria-hidden="true"
+            class="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-#8f8297"
+          >
+            ▾
+          </span>
+        </div>
       </label>
 
       <label class="grid gap-2.5">
