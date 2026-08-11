@@ -1,5 +1,5 @@
 // oxlint-disable no-await-in-loop, no-loop-func, no-unmodified-loop-condition -- Stream consumers intentionally wait for each Worker chunk notification.
-import type {SupertonicError, WorkerFailedError} from './errors'
+import type {CancelledError, SupertonicError, WorkerFailedError} from './errors'
 import type {
   SupertonicAudio,
   SupertonicAudioChunk,
@@ -30,6 +30,7 @@ interface PendingRequest {
 }
 
 export interface SupertonicClient {
+  readonly cancelGeneration: () => void
   readonly dispose: () => void
   readonly generate: (
     options: GenerateSupertonicOptions,
@@ -44,6 +45,11 @@ export interface SupertonicClient {
 
 const DEFAULT_SPEECH_SPEED = 1.05
 const ignoreChunk = () => undefined
+const createCancelledError = (phase: CancelledError['phase']): CancelledError => ({
+  code: 'cancelled',
+  phase,
+  retryable: false,
+})
 const getAudioChunk = (
   message: Extract<SupertonicWorkerOutput, {readonly type: 'chunk'}>,
 ): SupertonicAudioChunk => ({
@@ -62,10 +68,6 @@ export const createSupertonicClient = (): SupertonicClient => {
   let onProgress: ((progress: SupertonicProgress) => void) | null = null
   let onStatus: ((message: string) => void) | null = null
   let pendingRequest: PendingRequest | null = null
-
-  const postMessage = (message: SupertonicWorkerInput) => {
-    worker.postMessage(message)
-  }
 
   const resolveFailures = (error: WorkerFailedError) => {
     initializeResolve?.(failureResult(error))
@@ -137,7 +139,7 @@ export const createSupertonicClient = (): SupertonicClient => {
 
     return new Promise((resolve) => {
       initializeResolve = resolve
-      postMessage({modelId, type: 'initialize'})
+      worker.postMessage({modelId, type: 'initialize'} satisfies SupertonicWorkerInput)
     })
   }
 
@@ -160,17 +162,23 @@ export const createSupertonicClient = (): SupertonicClient => {
 
     return new Promise((resolve) => {
       pendingRequest = {onChunk, resolve}
-      postMessage({
+      worker.postMessage({
         requestId,
         speed: options.speed ?? DEFAULT_SPEECH_SPEED,
         text: options.text,
         type: 'generate',
         voice: options.voice,
-      })
+      } satisfies SupertonicWorkerInput)
     })
   }
 
   const generate: SupertonicClient['generate'] = (options) => generateRequest(options, ignoreChunk)
+
+  const cancelGeneration = () => {
+    if (pendingRequest !== null) {
+      worker.postMessage({type: 'cancel-generation'} satisfies SupertonicWorkerInput)
+    }
+  }
 
   async function* generateStream(
     options: GenerateSupertonicOptions,
@@ -210,12 +218,12 @@ export const createSupertonicClient = (): SupertonicClient => {
   }
 
   const dispose = () => {
-    postMessage({type: 'dispose'})
-    initializeResolve?.(failureResult({code: 'cancelled', phase: 'initialize', retryable: false}))
-    pendingRequest?.resolve(failureResult({code: 'cancelled', phase: 'generate', retryable: false}))
+    worker.postMessage({type: 'dispose'} satisfies SupertonicWorkerInput)
+    initializeResolve?.(failureResult(createCancelledError('initialize')))
+    pendingRequest?.resolve(failureResult(createCancelledError('generate')))
     initializeResolve = null
     pendingRequest = null
   }
 
-  return {dispose, generate, generateStream, initialize}
+  return {cancelGeneration, dispose, generate, generateStream, initialize}
 }
