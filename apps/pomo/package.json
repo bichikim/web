@@ -10,6 +10,7 @@
     "build:apps-in-toss": "cross-env POMO_BUILD_TARGET=apps-in-toss vinxi build",
     "build:web": "vinxi build",
     "dev": "vinxi dev --host",
+    "licenses:list": "node scripts/list-licenses.mjs",
     "lint": "oxlint src",
     "lint:fix": "oxlint src --fix",
     "preview:web": "node .output/server/index.mjs",

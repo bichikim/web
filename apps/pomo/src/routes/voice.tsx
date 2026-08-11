@@ -24,9 +24,14 @@ export default function VoicePage() {
       <div class={BACKGROUND_CLASSES} />
       <div class={GLOW_CLASSES} />
       <div class="relative grid w-full max-w-3xl gap-4">
-        <A class="w-fit text-sm font-650 text-#bdb2c4 no-underline hover:text-white" href="/">
-          ← 실험실 목록
-        </A>
+        <nav class="flex items-center justify-between gap-4" aria-label="음성 생성 탐색">
+          <A class="text-sm font-650 text-#bdb2c4 no-underline hover:text-white" href="/">
+            ← 실험실 목록
+          </A>
+          <A class="text-xs font-650 text-#8f8297 no-underline hover:text-white" href="/terms">
+            이용약관 초안
+          </A>
+        </nav>
         <VoiceGenerator />
       </div>
     </main>

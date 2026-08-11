@@ -115,6 +115,12 @@ export default function HomePage() {
             <span class="mt-8 text-sm font-700 text-#ffc0ce">채팅 열기 →</span>
           </A>
         </div>
+
+        <footer class="mt-8 flex justify-end">
+          <A class="text-xs font-650 text-#8f8297 no-underline hover:text-white" href="/terms">
+            서비스 이용약관 초안
+          </A>
+        </footer>
       </section>
     </main>
   )
