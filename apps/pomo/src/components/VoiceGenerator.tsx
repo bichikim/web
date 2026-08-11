@@ -79,7 +79,6 @@ interface VoiceFieldsProps {
   readonly disabled: boolean
   readonly fileError: string | null
   readonly importedVoice: ImportedVoice | null
-  readonly model: SupertonicModel
   readonly onFileSelect: (file: File | undefined) => Promise<void>
   readonly onSampleSelect: (text: string) => void
   readonly onTextInput: (event: InputEvent & {currentTarget: HTMLTextAreaElement}) => void
@@ -339,11 +338,6 @@ const VoiceFields = (props: VoiceFieldsProps) => {
           placeholder="캐릭터가 말할 문장을 입력하세요"
           value={props.text}
         />
-        <p class="m-0 text-xs leading-5 text-#8f8297">
-          {props.model.label} 모델은 {props.model.speechPolicy.considerSplitLength}자부터 문장
-          경계를 살피고, 약 {props.model.speechPolicy.recommendedLength}자로 나누며{' '}
-          {props.model.speechPolicy.maximumLength}자를 넘기지 않아요.
-        </p>
       </label>
     </>
   )
@@ -437,7 +431,6 @@ export const VoiceGenerator = () => {
           disabled={voiceLab.isBusy()}
           fileError={fileError()}
           importedVoice={importedVoice()}
-          model={voiceLab.selectedModel()}
           onFileSelect={handleFileSelect}
           onSampleSelect={voiceLab.setText}
           onTextInput={handleTextInput}
