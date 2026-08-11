@@ -18,6 +18,7 @@ const MILLISECONDS_PER_SECOND = 1000
 const INITIAL_TEXT = '오늘도 서두르지 말고, 한 번에 하나씩 집중해 볼까요?'
 const TEST_SCRIPTS = [
   {
+    id: 'intellectual-humility',
     label: '내가 틀릴 수도 있다',
     text: [
       [
@@ -45,6 +46,7 @@ const TEST_SCRIPTS = [
     ].join('\n\n'),
   },
   {
+    id: 'responsible-apology',
     label: '책임 있는 인정과 사과',
     text: [
       [
@@ -74,6 +76,7 @@ const TEST_SCRIPTS = [
     ].join('\n\n'),
   },
   {
+    id: 'cost-benefit-balance',
     label: '비용과 효과의 균형',
     text: [
       [
@@ -107,6 +110,7 @@ const TEST_SCRIPTS = [
     ].join('\n\n'),
   },
   {
+    id: 'vision-to-execution',
     label: '비전과 실행의 연결',
     text: [
       [
@@ -304,111 +308,117 @@ const ModelSection = (props: ModelSectionProps) => (
   </section>
 )
 
-const SpeechSection = (props: SpeechSectionProps) => (
-  <section aria-labelledby="speech-heading" class="grid gap-4">
-    <div>
-      <p class="m-0 text-xs font-700 text-#f2a7b8">3단계</p>
-      <h2 class="mb-0 mt-1 text-lg font-700" id="speech-heading">
-        대사 합성하기
-      </h2>
-    </div>
-    <div class="grid gap-3">
-      <span class="flex items-center justify-between text-sm font-650">
-        <label for="custom-voice-text">테스트 대사</label>
-        <span class="text-xs font-500 text-#8f8297">
-          {props.voiceLab.text().length} / {MAXIMUM_TEXT_LENGTH}
+const SpeechSection = (props: SpeechSectionProps) => {
+  const selectedScriptId = () =>
+    TEST_SCRIPTS.find((script) => script.text === props.voiceLab.text())?.id ?? ''
+  const handleScriptChange: JSX.EventHandler<HTMLSelectElement, Event> = (event) => {
+    const script = TEST_SCRIPTS.find((item) => item.id === event.currentTarget.value)
+
+    if (script !== undefined) {
+      props.onSampleSelect(script.text)
+    }
+  }
+
+  return (
+    <section aria-labelledby="speech-heading" class="grid gap-4">
+      <div>
+        <p class="m-0 text-xs font-700 text-#f2a7b8">3단계</p>
+        <h2 class="mb-0 mt-1 text-lg font-700" id="speech-heading">
+          대사 합성하기
+        </h2>
+      </div>
+      <div class="grid gap-3">
+        <span class="flex items-center justify-between text-sm font-650">
+          <label for="custom-voice-text">테스트 대사</label>
+          <span class="text-xs font-500 text-#8f8297">
+            {props.voiceLab.text().length} / {MAXIMUM_TEXT_LENGTH}
+          </span>
         </span>
-      </span>
-      <div class="flex flex-wrap items-center gap-2">
-        <span class="mr-1 text-xs text-#8f8297">빠른 선택</span>
-        <For each={TEST_SCRIPTS}>
-          {(script) => {
-            const isSelected = () => props.voiceLab.text() === script.text
-
-            return (
-              <button
-                aria-pressed={isSelected()}
-                class={cx(
-                  'rounded-full border px-3 py-2 text-xs font-650 transition',
-                  isSelected()
-                    ? 'border-#f2a7b8/65 bg-#f2a7b8/12 text-#ffc0ce'
-                    : 'border-white/10 bg-white/4 text-#bdb2c4 hover:bg-white/8',
-                  'disabled:cursor-not-allowed disabled:opacity-40',
-                )}
-                disabled={props.voiceLab.isBusy()}
-                onClick={() => props.onSampleSelect(script.text)}
-                type="button"
-              >
-                {script.label}
-              </button>
-            )
-          }}
-        </For>
+        <label class="grid gap-2 text-xs font-650 text-#bdb2c4" for="custom-voice-script">
+          빠른 선택
+          <select
+            class={cx(
+              FIELD_CLASSES,
+              'h-11 cursor-pointer text-sm disabled:cursor-not-allowed disabled:opacity-40',
+            )}
+            disabled={props.voiceLab.isBusy()}
+            id="custom-voice-script"
+            onChange={handleScriptChange}
+            value={selectedScriptId()}
+          >
+            <option value="">직접 편집</option>
+            <For each={TEST_SCRIPTS}>
+              {(script) => <option value={script.id}>{script.label}</option>}
+            </For>
+          </select>
+        </label>
+        <textarea
+          class={cx(FIELD_CLASSES, 'min-h-36 resize-none p-4 leading-7')}
+          disabled={props.voiceLab.isBusy()}
+          id="custom-voice-text"
+          maxlength={MAXIMUM_TEXT_LENGTH}
+          onInput={(event) => props.onTextInput(event)}
+          value={props.voiceLab.text()}
+        />
       </div>
-      <textarea
-        class={cx(FIELD_CLASSES, 'min-h-36 resize-none p-4 leading-7')}
-        disabled={props.voiceLab.isBusy()}
-        id="custom-voice-text"
-        maxlength={MAXIMUM_TEXT_LENGTH}
-        onInput={(event) => props.onTextInput(event)}
-        value={props.voiceLab.text()}
-      />
-    </div>
-    <label
-      class={cx(
-        'flex items-start gap-3 rounded-4 border border-white/8 bg-white/3 p-4',
-        'text-sm leading-6 text-#bdb2c4',
-      )}
-    >
-      <input
-        checked={props.hasPermission()}
-        class="mt-1 h-4 w-4 accent-#f2a7b8"
-        disabled={!props.hasVoice() || props.voiceLab.isBusy()}
-        onChange={(event) => props.onPermissionChange(event)}
-        type="checkbox"
-      />
-      <span>이 목소리를 사용할 본인 또는 권리자의 허락을 받았습니다.</span>
-    </label>
-
-    <Show when={props.hasVoice() && props.voiceLab.results().length > 0}>
-      <div class="grid gap-3 sm:grid-cols-2">
-        <For each={props.voiceLab.results()}>
-          {(result) => (
-            <div class="grid gap-3 rounded-4 border border-#9ed6bb/20 bg-#9ed6bb/6 p-4">
-              <div class="flex items-center justify-between gap-3 text-sm">
-                <span class="font-650 text-#b8e8d0">
-                  {getSupertonicModel(result.modelId).label} 결과
-                </span>
-                <span class="text-xs text-#9fbaad">
-                  {(result.generationTime / MILLISECONDS_PER_SECOND).toFixed(1)}초
-                </span>
-              </div>
-              <audio class="h-10 w-full" controls preload="metadata" src={result.url} />
-              <a
-                class="justify-self-end text-xs font-650 text-#b8e8d0 underline"
-                download={`pomo-custom-voice-${result.modelId}.wav`}
-                href={result.url}
-              >
-                WAV 다운로드
-              </a>
-            </div>
-          )}
-        </For>
-      </div>
-    </Show>
-
-    <div class="flex justify-end">
-      <button
-        class={PRIMARY_BUTTON_CLASSES}
-        disabled={!props.canGenerate()}
-        onClick={() => props.voiceLab.generate()}
-        type="button"
+      <label
+        class={cx(
+          'flex items-start gap-3 rounded-4 border border-white/8 bg-white/3 p-4',
+          'text-sm leading-6 text-#bdb2c4',
+        )}
       >
-        {props.voiceLab.state().status === 'generating' ? '음성 만드는 중…' : '커스텀 음성 만들기'}
-      </button>
-    </div>
-  </section>
-)
+        <input
+          checked={props.hasPermission()}
+          class="mt-1 h-4 w-4 accent-#f2a7b8"
+          disabled={!props.hasVoice() || props.voiceLab.isBusy()}
+          onChange={(event) => props.onPermissionChange(event)}
+          type="checkbox"
+        />
+        <span>이 목소리를 사용할 본인 또는 권리자의 허락을 받았습니다.</span>
+      </label>
+
+      <Show when={props.hasVoice() && props.voiceLab.results().length > 0}>
+        <div class="grid gap-3 sm:grid-cols-2">
+          <For each={props.voiceLab.results()}>
+            {(result) => (
+              <div class="grid gap-3 rounded-4 border border-#9ed6bb/20 bg-#9ed6bb/6 p-4">
+                <div class="flex items-center justify-between gap-3 text-sm">
+                  <span class="font-650 text-#b8e8d0">
+                    {getSupertonicModel(result.modelId).label} 결과
+                  </span>
+                  <span class="text-xs text-#9fbaad">
+                    {(result.generationTime / MILLISECONDS_PER_SECOND).toFixed(1)}초
+                  </span>
+                </div>
+                <audio class="h-10 w-full" controls preload="metadata" src={result.url} />
+                <a
+                  class="justify-self-end text-xs font-650 text-#b8e8d0 underline"
+                  download={`pomo-custom-voice-${result.modelId}.wav`}
+                  href={result.url}
+                >
+                  WAV 다운로드
+                </a>
+              </div>
+            )}
+          </For>
+        </div>
+      </Show>
+
+      <div class="flex justify-end">
+        <button
+          class={PRIMARY_BUTTON_CLASSES}
+          disabled={!props.canGenerate()}
+          onClick={() => props.voiceLab.generate()}
+          type="button"
+        >
+          {props.voiceLab.state().status === 'generating'
+            ? '음성 만드는 중…'
+            : '커스텀 음성 만들기'}
+        </button>
+      </div>
+    </section>
+  )
+}
 
 export default function CustomVoiceStudio() {
   const voiceLab = useSupertonicVoiceLab({initialText: INITIAL_TEXT})
