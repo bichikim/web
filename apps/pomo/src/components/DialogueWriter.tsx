@@ -1,15 +1,10 @@
 import {cx} from 'class-variance-authority'
 import {Show} from 'solid-js'
 
-import {
-  getQwenModel,
-  type QwenDialogueWriterController,
-  type QwenModelDefinition,
-  useQwenDialogueWriter,
-} from '../features/qwen-dialogue'
+import {type DialogueWriterController, useDialogueWriter} from '../features/dialogue-writer'
+import {getTextModel, type TextModelDefinition} from '../features/text-generation'
 
 const MAXIMUM_REQUEST_LENGTH = 800
-const MAXIMUM_PROGRESS = 100
 const INITIAL_REQUEST = '삶의 행복에 대해 이야기해줘'
 const SECTION_CLASSES = cx(
   'relative w-full overflow-hidden rounded-8 border border-white/10',
@@ -34,7 +29,7 @@ const DirectAnswerHeader = () => (
   <header class="relative flex items-start justify-between gap-5">
     <div>
       <p class="m-0 text-xs font-700 tracking-[0.24em] text-#9ed6bb uppercase">
-        Qwen direct answer lab
+        Local direct answer lab
       </p>
       <h1 class="mb-0 mt-3 text-2xl font-750 tracking--0.02em sm:text-3xl">
         같은 요청으로 세 모델을 비교해 보세요
@@ -50,7 +45,7 @@ const DirectAnswerHeader = () => (
 )
 
 interface ModelStatusProps {
-  readonly model: QwenModelDefinition
+  readonly model: TextModelDefinition
   readonly percentage: number
   readonly status:
     | 'complete'
@@ -152,50 +147,58 @@ const DirectAnswerOutput = (props: DirectAnswerOutputProps) => (
   </section>
 )
 
-const isModelReady = (writer: QwenDialogueWriterController) => {
-  const currentState = writer.state()
-  return (
-    currentState.status === 'complete' ||
-    currentState.status === 'generating' ||
-    currentState.status === 'ready' ||
-    (currentState.status === 'error' && currentState.modelReady)
-  )
-}
-
-const getModelProgress = (writer: QwenDialogueWriterController) => {
-  const currentState = writer.state()
-  return currentState.status === 'loading'
-    ? currentState.percentage
-    : isModelReady(writer)
-      ? MAXIMUM_PROGRESS
-      : 0
-}
-
 interface ModelPanelProps {
   readonly disabled: boolean
-  readonly model: QwenModelDefinition
+  readonly model: TextModelDefinition
   readonly onActivate: () => void
-  readonly writer: QwenDialogueWriterController
+  readonly writer: DialogueWriterController
+}
+
+const activateModel = (
+  writer: DialogueWriterController,
+  otherWriters: ReadonlyArray<DialogueWriterController>,
+) => {
+  if (writer.isModelReady()) {
+    writer.generate()
+    return
+  }
+
+  for (const otherWriter of otherWriters) {
+    otherWriter.release()
+  }
+  writer.prepare()
 }
 
 const ModelPanel = (props: ModelPanelProps) => {
-  const isReady = () => isModelReady(props.writer)
   const canActivate = () =>
-    !props.disabled && (isReady() ? props.writer.canGenerate() : props.writer.canPrepare())
+    !props.disabled &&
+    (props.writer.isModelReady() ? props.writer.canGenerate() : props.writer.canPrepare())
   const buttonLabel = () => {
     const {status} = props.writer.state()
 
-    if (status === 'loading') {
-      return '모델 준비 중…'
-    }
-    if (status === 'generating') {
-      return '답변 만드는 중…'
-    }
-    if (isReady()) {
-      return '이 모델로 답변 만들기'
+    switch (status) {
+      case 'loading': {
+        return '모델 준비 중…'
+      }
+      case 'generating': {
+        return '답변 만드는 중…'
+      }
+      case 'complete':
+      case 'ready': {
+        return '이 모델로 답변 만들기'
+      }
+      case 'error': {
+        return props.writer.isModelReady()
+          ? '이 모델로 답변 만들기'
+          : `${props.model.label} 준비하기`
+      }
+      case 'idle':
+      case 'unsupported': {
+        return `${props.model.label} 준비하기`
+      }
     }
 
-    return `${props.model.label} 준비하기`
+    status satisfies never
   }
 
   return (
@@ -203,7 +206,7 @@ const ModelPanel = (props: ModelPanelProps) => {
       <div>
         <ModelStatus
           model={props.model}
-          percentage={getModelProgress(props.writer)}
+          percentage={props.writer.progress()}
           status={props.writer.state().status}
           statusMessage={props.writer.statusMessage()}
         />
@@ -232,49 +235,28 @@ const ModelPanel = (props: ModelPanelProps) => {
 }
 
 const DialogueWriter = () => {
-  const compactModel = getQwenModel('qwen-0.8b')
-  const qualityModel = getQwenModel('qwen-2b')
-  const largerModel = getQwenModel('qwen-4b')
-  const compactWriter = useQwenDialogueWriter({
+  const compactModel = getTextModel('qwen-0.8b')
+  const qualityModel = getTextModel('qwen-2b')
+  const largerModel = getTextModel('qwen-4b')
+  const compactWriter = useDialogueWriter({
     initialRequest: INITIAL_REQUEST,
     modelId: compactModel.id,
   })
-  const qualityWriter = useQwenDialogueWriter({
+  const qualityWriter = useDialogueWriter({
     initialRequest: INITIAL_REQUEST,
     modelId: qualityModel.id,
   })
-  const largerWriter = useQwenDialogueWriter({
+  const largerWriter = useDialogueWriter({
     initialRequest: INITIAL_REQUEST,
     modelId: largerModel.id,
   })
-  const isBusy = () => {
-    const statuses = [
-      compactWriter.state().status,
-      qualityWriter.state().status,
-      largerWriter.state().status,
-    ]
-    return statuses.some((status) => status === 'generating' || status === 'loading')
-  }
+  const writers = [compactWriter, qualityWriter, largerWriter]
+  const isBusy = () => writers.some((writer) => writer.isBusy())
 
   const handleRequestInput = (event: InputEvent & {currentTarget: HTMLTextAreaElement}) => {
     compactWriter.setRequest(event.currentTarget.value)
     qualityWriter.setRequest(event.currentTarget.value)
     largerWriter.setRequest(event.currentTarget.value)
-  }
-
-  const activateModel = (
-    writer: QwenDialogueWriterController,
-    otherWriters: ReadonlyArray<QwenDialogueWriterController>,
-  ) => {
-    if (isModelReady(writer)) {
-      writer.generate()
-      return
-    }
-
-    for (const otherWriter of otherWriters) {
-      otherWriter.release()
-    }
-    writer.prepare()
   }
 
   return (

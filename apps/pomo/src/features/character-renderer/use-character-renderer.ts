@@ -87,15 +87,17 @@ export const useCharacterRenderer = (
   const status = createMemo<CharacterRendererStatus>(() => {
     const preparationState = preparation.state()
 
-    if (preparationState.status === 'error') {
-      return 'error'
+    switch (preparationState.status) {
+      case 'error':
+        return 'error'
+      case 'idle':
+      case 'pending':
+        return 'booting'
+      case 'success':
+        return renderStatus()
     }
 
-    if (preparationState.status === 'success') {
-      return renderStatus()
-    }
-
-    return 'booting'
+    preparationState satisfies never
   })
   let activeObjectUrl: string | null = null
 

@@ -10,6 +10,16 @@ export interface LifecycleOptions {
   notifyClients: (message: Record<string, unknown>) => Promise<void>
 }
 
+type LifecycleMessage = {readonly type: 'CLEAR_CACHE'} | {readonly type: 'SKIP_WAITING'}
+
+const isLifecycleMessage = (value: unknown): value is LifecycleMessage => {
+  if (typeof value !== 'object' || value === null || !('type' in value)) {
+    return false
+  }
+
+  return value.type === 'CLEAR_CACHE' || value.type === 'SKIP_WAITING'
+}
+
 const isOwnedCacheName = (name: string, options: LifecycleOptions) => {
   if (name === options.cacheName || name === options.cacheMetadataName) {
     return true
@@ -72,19 +82,22 @@ export const registerLifecycleHandlers = (options: LifecycleOptions): void => {
   })
 
   self.addEventListener('message', (event: ExtendableMessageEvent) => {
-    if (!event.data) {
+    const message: unknown = event.data
+
+    if (!isLifecycleMessage(message)) {
       return
     }
 
-    if (event.data.type === 'SKIP_WAITING') {
-      options.log('info', 'Received skip waiting message')
-      self.skipWaiting()
-
-      return
+    switch (message.type) {
+      case 'CLEAR_CACHE':
+        event.waitUntil(clearCaches())
+        return
+      case 'SKIP_WAITING':
+        options.log('info', 'Received skip waiting message')
+        self.skipWaiting()
+        return
     }
 
-    if (event.data.type === 'CLEAR_CACHE') {
-      event.waitUntil(clearCaches())
-    }
+    message satisfies never
   })
 }
