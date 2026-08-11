@@ -11,7 +11,7 @@ import {
 
 const FULL_MODEL_SIZE = 398_075_273
 const INT8_MODEL_SIZE = 144_508_203
-const VOICE_COUNT = 10
+const VOICE_COUNT = 11
 
 describe('Supertonic model manifest', () => {
   it('should expose full and INT8 profiles with independent execution policies', () => {
@@ -40,11 +40,17 @@ describe('Supertonic model manifest', () => {
       '/Supertone/supertonic-3/resolve/3cadd1e/onnx/tts.json',
     )
     expect(getSupertonicVoiceUrl('F2')).toContain('/voice_styles/F2.json')
+    expect(getSupertonicVoiceUrl('Yuna')).toBe('/voice_styles/Yuna.json')
   })
 
   it('should expose all fixed voices and reject unsupported model identifiers at runtime', () => {
     expect(SUPERTONIC_VOICES).toHaveLength(VOICE_COUNT)
     expect(new Set(SUPERTONIC_VOICES.map((voice) => voice.id)).size).toBe(VOICE_COUNT)
+    expect(SUPERTONIC_VOICES[0]).toMatchObject({
+      gender: 'female',
+      id: 'Yuna',
+      label: 'Yuna (추천)',
+    })
     expect(() => Reflect.apply(getSupertonicModel, null, ['unknown'])).toThrow(
       '지원하지 않는 Supertonic 모델입니다',
     )

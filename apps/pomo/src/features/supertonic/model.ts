@@ -1,4 +1,5 @@
 export const SUPERTONIC_VOICES = [
+  {gender: 'female', id: 'Yuna', label: 'Yuna (추천)'},
   {gender: 'female', id: 'F1', label: 'Sarah'},
   {gender: 'female', id: 'F2', label: 'Lily'},
   {gender: 'female', id: 'F3', label: 'Jessica'},
@@ -151,6 +152,8 @@ export const getSupertonicModelFileUrl = (model: SupertonicModel, file: Superton
 export const getSupertonicAssetUrl = (path: string) => `${FULL_MODEL_BASE_URL}/${path}`
 
 export const getSupertonicVoiceUrl = (voiceId: SupertonicVoiceId) =>
-  getSupertonicAssetUrl(`voice_styles/${voiceId}.json`)
+  voiceId === 'Yuna'
+    ? '/voice_styles/Yuna.json'
+    : getSupertonicAssetUrl(`voice_styles/${voiceId}.json`)
 
 export const SUPERTONIC_ORT_WASM_URL = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.23.2/dist/'

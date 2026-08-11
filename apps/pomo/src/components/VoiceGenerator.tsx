@@ -101,7 +101,7 @@ const VoiceHeader = () => (
 
 const ModelPicker = (props: ModelPickerProps) => (
   <fieldset class="grid gap-2.5 border-0 p-0">
-    <legend class="text-sm font-650 text-#eee5ef">모델 타입</legend>
+    <legend class="mb-2.5 text-sm font-650 text-#eee5ef">모델 타입</legend>
     <div class="grid grid-cols-2 gap-3">
       <For each={SUPERTONIC_MODELS}>
         {(model) => {
@@ -264,9 +264,6 @@ const VoiceFields = (props: VoiceFieldsProps) => {
             ▾
           </span>
         </div>
-        <p class="m-0 text-xs leading-5 text-#8f8297">
-          기본 목소리 10종을 고르거나 아래에서 커스텀 스타일을 불러올 수 있어요.
-        </p>
       </label>
 
       <VoiceDropZone
