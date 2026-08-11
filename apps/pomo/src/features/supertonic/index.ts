@@ -8,7 +8,12 @@ export {createSupertonicAudioPlayer} from './audio-player'
 export type {SupertonicAudioPlayer} from './audio-player'
 export {getSupertonicErrorMessage} from './error-message'
 export type {SupertonicError, SupertonicPhase} from './errors'
-export type {SupertonicAudio, SupertonicAudioChunk, SupertonicGenerationEvent} from './messages'
+export type {
+  SupertonicAudio,
+  SupertonicAudioChunk,
+  SupertonicGenerationEvent,
+  SupertonicVoiceSource,
+} from './messages'
 export {getSupertonicModel, SUPERTONIC_MODELS, SUPERTONIC_VOICES} from './model'
 export type {
   SupertonicModel,
@@ -29,3 +34,5 @@ export type {
   SupertonicVoiceResult,
   UseSupertonicVoiceLabProps,
 } from './use-supertonic-voice-lab'
+export {parseSupertonicVoiceStyle} from './voice-style'
+export type {SupertonicVoiceStyle} from './voice-style'

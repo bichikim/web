@@ -9,6 +9,7 @@ import type {
   SupertonicAudioChunk,
   SupertonicGenerationEvent,
   SupertonicProgress,
+  SupertonicVoiceSource,
 } from './messages'
 import {
   getSupertonicModel,
@@ -18,6 +19,7 @@ import {
 } from './model'
 import type {Result} from './result'
 import {createWaveBlob} from './wav'
+import type {SupertonicVoiceStyle} from './voice-style'
 
 const MAXIMUM_PROGRESS = 100
 const DEFAULT_MODEL_ID: SupertonicModelId = 'full'
@@ -67,7 +69,7 @@ interface InitializeVoiceLabClientOptions {
 
 interface GenerateVoiceLabClientOptions {
   readonly text: string
-  readonly voiceId: SupertonicVoiceId
+  readonly voice: SupertonicVoiceSource
 }
 
 export interface SupertonicVoiceLabClient {
@@ -103,6 +105,7 @@ export interface SupertonicVoiceLabController {
   readonly prepare: () => Promise<void>
   readonly progress: Accessor<number>
   readonly results: Accessor<ReadonlyArray<SupertonicVoiceResult>>
+  readonly selectCustomVoice: (voiceStyle: SupertonicVoiceStyle) => void
   readonly selectModel: (modelId: SupertonicModelId) => void
   readonly selectVoice: (voiceId: SupertonicVoiceId) => void
   readonly selectedModel: Accessor<SupertonicModel>
@@ -153,7 +156,7 @@ interface CreateGenerateOptions {
   readonly isModelReady: Accessor<boolean>
   readonly runtime: SupertonicVoiceLabRuntime
   readonly selectedModel: Accessor<SupertonicModel>
-  readonly selectedVoiceId: Accessor<SupertonicVoiceId>
+  readonly selectedVoice: Accessor<SupertonicVoiceSource>
   readonly setAudioResult: (audio: SupertonicAudio, modelId: SupertonicModelId) => void
   readonly setAudioChunk: (audio: SupertonicAudioChunk, modelId: SupertonicModelId) => void
   readonly setState: Setter<SupertonicVoiceLabState>
@@ -321,7 +324,7 @@ const createGenerate = (options: CreateGenerateOptions) => async () => {
   try {
     for await (const result of currentClient.generateStream({
       text: currentText,
-      voiceId: options.selectedVoiceId(),
+      voice: options.selectedVoice(),
     })) {
       if (options.clientReference.current !== currentClient) {
         audioPlayer.dispose()
@@ -382,6 +385,10 @@ export const useSupertonicVoiceLab = (
   const [text, setTextSignal] = createSignal(initialText)
   const [selectedModelId, setSelectedModelId] = createSignal(initialModelId)
   const [selectedVoiceId, setSelectedVoiceId] = createSignal(initialVoiceId)
+  const [selectedVoice, setSelectedVoice] = createSignal<SupertonicVoiceSource>({
+    id: initialVoiceId,
+    kind: 'preset',
+  })
   const [state, setState] = createSignal<SupertonicVoiceLabState>({
     message: getInitialMessage(),
     status: 'unprepared',
@@ -449,6 +456,15 @@ export const useSupertonicVoiceLab = (
     setChunks((currentChunks) => currentChunks.filter((item) => item.modelId !== modelId))
   }
 
+  const clearGeneratedAudio = () => {
+    revokeAudioUrls(runtime, audioUrls)
+    revokeAudioUrls(runtime, chunkAudioUrls)
+    audioUrls.clear()
+    chunkAudioUrls.clear()
+    setResults([])
+    setChunks([])
+  }
+
   onCleanup(() => {
     disposeVoiceLabClient(clientReference)
     audioPlayerReference.current?.dispose()
@@ -471,7 +487,21 @@ export const useSupertonicVoiceLab = (
     })
   }
 
-  const selectVoice = (voiceId: SupertonicVoiceId) => setSelectedVoiceId(voiceId)
+  const selectVoice = (voiceId: SupertonicVoiceId) => {
+    const currentVoice = selectedVoice()
+
+    if (currentVoice.kind === 'preset' && currentVoice.id === voiceId) {
+      return
+    }
+
+    clearGeneratedAudio()
+    setSelectedVoiceId(voiceId)
+    setSelectedVoice({id: voiceId, kind: 'preset'})
+  }
+  const selectCustomVoice = (voiceStyle: SupertonicVoiceStyle) => {
+    clearGeneratedAudio()
+    setSelectedVoice({kind: 'custom', value: voiceStyle})
+  }
   const setText = (nextText: string) => setTextSignal(nextText)
   const prepare = createPrepare({clientReference, isBusy, runtime, selectedModel, setState})
   const generate = createGenerate({
@@ -482,7 +512,7 @@ export const useSupertonicVoiceLab = (
     isModelReady,
     runtime,
     selectedModel,
-    selectedVoiceId,
+    selectedVoice,
     setAudioChunk,
     setAudioResult,
     setState,
@@ -500,6 +530,7 @@ export const useSupertonicVoiceLab = (
     prepare,
     progress,
     results,
+    selectCustomVoice,
     selectedModel,
     selectedModelId,
     selectedVoiceId,

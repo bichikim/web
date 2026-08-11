@@ -112,7 +112,10 @@ describe('useSupertonicVoiceLab', () => {
     await voiceLab.controller.generate()
 
     expect(client.initialize).toHaveBeenCalledWith(expect.objectContaining({modelId: 'int8'}))
-    expect(client.generateStream).toHaveBeenCalledWith({text: '테스트 문장', voiceId: 'M3'})
+    expect(client.generateStream).toHaveBeenCalledWith({
+      text: '테스트 문장',
+      voice: {id: 'M3', kind: 'preset'},
+    })
     const audioPlayer = runtime.createAudioPlayer.mock.results[0]?.value as SupertonicAudioPlayer
     expect(audioPlayer.enqueue).toHaveBeenCalledWith(createAudioChunk(), 0.3)
     expect(audioPlayer.finish).toHaveBeenCalledTimes(1)
@@ -132,6 +135,44 @@ describe('useSupertonicVoiceLab', () => {
 
     voiceLab.dispose()
     expect(runtime.revokeAudioUrl).toHaveBeenCalledWith('blob:voice-1')
+  })
+
+  it('should generate with an imported custom voice source', async () => {
+    const client = createClient()
+    const voiceLab = createVoiceLabRoot(createRuntime([client]))
+    const customVoice = {
+      duration: {data: [1], dimensions: [1]},
+      speech: {data: [2], dimensions: [1]},
+    }
+
+    voiceLab.controller.selectCustomVoice(customVoice)
+    await voiceLab.controller.prepare()
+    await voiceLab.controller.generate()
+
+    expect(client.generateStream).toHaveBeenCalledWith({
+      text: '테스트 문장',
+      voice: {kind: 'custom', value: customVoice},
+    })
+    voiceLab.dispose()
+  })
+
+  it('should clear generated audio when the selected voice changes', async () => {
+    const client = createClient()
+    const runtime = createRuntime([client])
+    const voiceLab = createVoiceLabRoot(runtime)
+
+    await voiceLab.controller.prepare()
+    await voiceLab.controller.generate()
+    voiceLab.controller.selectCustomVoice({
+      duration: {data: [1], dimensions: [1]},
+      speech: {data: [2], dimensions: [1]},
+    })
+
+    expect(voiceLab.controller.results()).toEqual([])
+    expect(voiceLab.controller.chunks()).toEqual([])
+    expect(runtime.revokeAudioUrl).toHaveBeenCalledWith('blob:voice-1')
+    expect(runtime.revokeAudioUrl).toHaveBeenCalledWith('blob:voice-2')
+    voiceLab.dispose()
   })
 
   it('should preserve generated results while replacing the active model session', async () => {

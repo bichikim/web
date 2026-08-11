@@ -5,14 +5,13 @@ import {z} from 'zod'
 
 import type {InvalidModelDataError} from './errors'
 import {failureResult, type Result, successResult} from './result'
+import {parseSupertonicVoiceStyle, type SupertonicVoiceStyle} from './voice-style'
 
 const configSchema = z.object({
   ae: z.object({base_chunk_size: z.number(), sample_rate: z.number()}),
   ttl: z.object({chunk_compress_factor: z.number(), latent_dim: z.number()}),
 })
 const indexerSchema = z.array(z.number().int())
-const voiceFieldSchema = z.object({data: z.unknown(), dims: z.array(z.number().int().positive())})
-const voiceSchema = z.object({style_dp: voiceFieldSchema, style_ttl: voiceFieldSchema})
 const MINIMUM_RANDOM_VALUE = 0.0001
 const BOX_MULLER_SCALE = -2
 
@@ -42,32 +41,13 @@ const createDataError = (asset: InvalidModelDataError['asset']): InvalidModelDat
   retryable: false,
 })
 
-const flattenNumbers = (value: unknown): Result<ReadonlyArray<number>, InvalidModelDataError> => {
-  if (typeof value === 'number') {
-    return successResult([value])
-  }
-
-  if (!Array.isArray(value)) {
-    return failureResult(createDataError('voice'))
-  }
-
-  const numbers: Array<number> = []
-
-  for (const item of value) {
-    const result = flattenNumbers(item)
-
-    if (!result.ok) {
-      return result
-    }
-
-    numbers.push(...result.value)
-  }
-
-  return successResult(numbers)
-}
-
 const createFloatTensor = (values: ReadonlyArray<number>, dimensions: ReadonlyArray<number>) =>
   new Tensor('float32', Float32Array.from(values), Array.from(dimensions))
+
+export const createSupertonicVoice = (style: SupertonicVoiceStyle): SupertonicVoice => ({
+  durationStyle: createFloatTensor(style.duration.data, style.duration.dimensions),
+  speechStyle: createFloatTensor(style.speech.data, style.speech.dimensions),
+})
 
 export const parseSupertonicConfig = (
   value: unknown,
@@ -86,27 +66,13 @@ export const parseSupertonicIndexer = (
 export const parseSupertonicVoice = (
   value: unknown,
 ): Result<SupertonicVoice, InvalidModelDataError> => {
-  const parsedVoice = voiceSchema.safeParse(value)
+  const voiceStyle = parseSupertonicVoiceStyle(value)
 
-  if (!parsedVoice.success) {
-    return failureResult(createDataError('voice'))
+  if (!voiceStyle.ok) {
+    return voiceStyle
   }
 
-  const durationData = flattenNumbers(parsedVoice.data.style_dp.data)
-  const speechData = flattenNumbers(parsedVoice.data.style_ttl.data)
-
-  if (!durationData.ok) {
-    return durationData
-  }
-
-  if (!speechData.ok) {
-    return speechData
-  }
-
-  return successResult({
-    durationStyle: createFloatTensor(durationData.value, parsedVoice.data.style_dp.dims),
-    speechStyle: createFloatTensor(speechData.value, parsedVoice.data.style_ttl.dims),
-  })
+  return successResult(createSupertonicVoice(voiceStyle.value))
 }
 
 type SupertonicConfig = z.infer<typeof configSchema>

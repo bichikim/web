@@ -72,6 +72,7 @@ interface AudioChunksProps {
 }
 
 interface VoiceFieldsProps {
+  readonly disabled: boolean
   readonly model: SupertonicModel
   readonly onTextInput: (event: InputEvent & {currentTarget: HTMLTextAreaElement}) => void
   readonly onVoiceChange: (event: Event & {currentTarget: HTMLSelectElement}) => void
@@ -257,6 +258,7 @@ const VoiceFields = (props: VoiceFieldsProps) => (
       <div class="relative">
         <select
           class={VOICE_SELECT_CLASSES}
+          disabled={props.disabled}
           onChange={(event) => props.onVoiceChange(event)}
           value={props.selectedVoiceId}
         >
@@ -286,6 +288,7 @@ const VoiceFields = (props: VoiceFieldsProps) => (
       </span>
       <textarea
         class={TEXTAREA_CLASSES}
+        disabled={props.disabled}
         maxlength={MAXIMUM_TEXT_LENGTH}
         onInput={(event) => props.onTextInput(event)}
         placeholder="캐릭터가 말할 문장을 입력하세요"
@@ -339,6 +342,7 @@ export const VoiceGenerator = () => {
         />
 
         <VoiceFields
+          disabled={voiceLab.isBusy()}
           model={voiceLab.selectedModel()}
           onTextInput={handleTextInput}
           onVoiceChange={handleVoiceChange}
