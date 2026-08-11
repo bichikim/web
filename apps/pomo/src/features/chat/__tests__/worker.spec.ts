@@ -101,6 +101,7 @@ describe('chat worker', () => {
         summary: '',
       },
       modelId: 'qwen-4b',
+      refineAnswer: true,
       replyId: 'reply-1',
       type: 'generate',
     })
@@ -114,6 +115,10 @@ describe('chat worker', () => {
       )
     })
     expect(transformers.generate).toHaveBeenCalledTimes(1)
+    expect(worker.postMessage).toHaveBeenCalledWith({
+      draft: {content: '작은 성공을 하나씩 쌓아 보세요.', id: 'reply-1'},
+      type: 'draft',
+    })
     expect(worker.postMessage).not.toHaveBeenCalledWith({type: 'refining'})
   })
 
@@ -135,6 +140,7 @@ describe('chat worker', () => {
         summary: '',
       },
       modelId: 'qwen-4b',
+      refineAnswer: true,
       replyId: 'reply-1',
       type: 'generate',
     })
@@ -150,8 +156,84 @@ describe('chat worker', () => {
       )
     })
     expect(worker.postMessage).toHaveBeenCalledWith({type: 'refining'})
+    expect(worker.postMessage).toHaveBeenCalledWith({
+      draft: {
+        content: '첫 문장은 유지해요. 작은 성공一次次 쌓아 보세요. 마지막 문장도 유지해요.',
+        id: 'reply-1',
+      },
+      type: 'draft',
+    })
     expect(transformers.generate).toHaveBeenLastCalledWith(
       expect.objectContaining({suppress_tokens: [2]}),
+    )
+  })
+
+  it('should skip refinement and complete with the original draft when disabled', async () => {
+    transformers.generate.mockImplementationOnce(async (options: MockGenerateOptions) => {
+      options.streamer.emit('다듬지 않은 人生 답변이에요.')
+    })
+    const worker = await loadWorker()
+
+    worker.dispatch({
+      context: {
+        messages: [{content: '바로 답해 줘', id: 'user-1', role: 'user'}],
+        summary: '',
+      },
+      modelId: 'qwen-4b',
+      refineAnswer: false,
+      replyId: 'reply-1',
+      type: 'generate',
+    })
+
+    await vi.waitFor(() => {
+      expect(worker.postMessage).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          message: expect.objectContaining({content: '다듬지 않은 人生 답변이에요.'}),
+          type: 'complete',
+        }),
+      )
+    })
+    expect(transformers.generate).toHaveBeenCalledTimes(1)
+    expect(worker.postMessage).not.toHaveBeenCalledWith({type: 'refining'})
+  })
+
+  it('should enforce the answer limit in streaming and completed output', async () => {
+    transformers.generate.mockImplementationOnce(async (options: MockGenerateOptions) => {
+      options.streamer.emit('가'.repeat(300))
+    })
+    const worker = await loadWorker()
+
+    worker.dispatch({
+      context: {
+        messages: [{content: '아주 길게 답해 줘', id: 'user-1', role: 'user'}],
+        summary: '',
+      },
+      modelId: 'qwen-4b',
+      refineAnswer: false,
+      replyId: 'reply-1',
+      type: 'generate',
+    })
+
+    await vi.waitFor(() => {
+      expect(worker.postMessage).toHaveBeenLastCalledWith(
+        expect.objectContaining({type: 'complete'}),
+      )
+    })
+    const responses = worker.postMessage.mock.calls.map(([response]) => response)
+    const streamedText = responses
+      .filter((response) => response.type === 'token')
+      .map((response) => response.text)
+      .join('')
+    const completeResponse = responses.find((response) => response.type === 'complete')
+
+    expect(Array.from(streamedText)).toHaveLength(240)
+    expect(completeResponse).toEqual(
+      expect.objectContaining({
+        message: expect.objectContaining({content: `${'가'.repeat(239)}…`}),
+      }),
+    )
+    expect(transformers.generate).toHaveBeenCalledWith(
+      expect.objectContaining({max_new_tokens: 256}),
     )
   })
 })

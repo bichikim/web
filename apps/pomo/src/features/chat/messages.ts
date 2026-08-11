@@ -18,9 +18,15 @@ export interface ChatContext {
   readonly summary: string
 }
 
+export interface ChatAnswerDraft {
+  readonly content: string
+  readonly id: string
+}
+
 export interface GenerateChatRequest {
   readonly context: ChatContext
   readonly modelId: TextModelId
+  readonly refineAnswer: boolean
   readonly replyId: string
   readonly type: 'generate'
 }
@@ -41,6 +47,11 @@ export interface ChatRefiningResponse {
   readonly type: 'refining'
 }
 
+export interface ChatDraftResponse {
+  readonly draft: ChatAnswerDraft
+  readonly type: 'draft'
+}
+
 export interface ChatCompleteResponse {
   readonly context: ChatContext
   readonly contextTokens: number
@@ -52,6 +63,7 @@ export interface ChatCompleteResponse {
 export type ChatWorkerResponse =
   | ChatCompactingResponse
   | ChatCompleteResponse
+  | ChatDraftResponse
   | ChatRefiningResponse
   | ChatStartedResponse
   | TextGenerationErrorResponse

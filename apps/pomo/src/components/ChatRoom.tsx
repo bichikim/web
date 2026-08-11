@@ -2,6 +2,8 @@ import {cx} from 'class-variance-authority'
 import {createEffect, createSignal, For, Show} from 'solid-js'
 
 import {type ChatController, type ChatMessage, useChat} from '../features/chat'
+import {type ChatVoiceController, useChatVoice} from '../features/chat-voice'
+import {createStreamingSpeechBuffer} from '../features/chat-voice/streaming-speech-buffer'
 import {useKoreanTextSegments} from '../features/korean-text-postprocessor'
 import {getTextModel} from '../features/text-generation'
 import {KoreanTextRenderer} from './KoreanTextRenderer'
@@ -18,6 +20,7 @@ const BUTTON_CLASSES = cx(
 )
 
 interface ChatBubbleProps {
+  readonly isVoiceGenerating: boolean
   readonly message: ChatMessage
 }
 
@@ -43,6 +46,16 @@ const ChatBubble = (props: ChatBubbleProps) => (
     <span class="sr-only">{props.message.role === 'user' ? '나' : '모델'}: </span>
     <Show fallback={props.message.content} when={props.message.role === 'assistant'}>
       <ProcessedKoreanText text={props.message.content} />
+      <Show when={props.isVoiceGenerating}>
+        <span
+          aria-hidden="true"
+          class={cx(
+            'ml-2 inline-block h-3.5 w-3.5 animate-spin rounded-full border-2',
+            'border-#9ed6bb/30 border-t-#9ed6bb align-middle',
+          )}
+        />
+        <span class="sr-only">답변 음성 생성 중</span>
+      </Show>
     </Show>
   </article>
 )
@@ -80,56 +93,85 @@ const ChatHeader = (props: {readonly modelLabel: string}) => (
 interface ChatTranscriptProps {
   readonly chat: ChatController
   readonly setMessageList: (element: HTMLDivElement) => void
+  readonly voice: ChatVoiceController
 }
 
-const ChatTranscript = (props: ChatTranscriptProps) => (
-  <div
-    aria-live="polite"
-    class="max-h-[58dvh] min-h-96 overflow-y-auto px-5 py-6 sm:px-7"
-    ref={props.setMessageList}
-  >
-    <Show
-      fallback={
-        <div class="grid h-full min-h-80 place-items-center text-center">
-          <div class="max-w-sm">
-            <div
+const ChatTranscript = (props: ChatTranscriptProps) => {
+  const voiceMessageId = () => {
+    if (!props.voice.isGenerating()) {
+      return null
+    }
+
+    return props.chat.messages().at(-1)?.id ?? null
+  }
+
+  return (
+    <div
+      aria-live="polite"
+      class="max-h-[58dvh] min-h-96 overflow-y-auto px-5 py-6 sm:px-7"
+      ref={props.setMessageList}
+    >
+      <Show
+        fallback={
+          <div class="grid h-full min-h-80 place-items-center text-center">
+            <div class="max-w-sm">
+              <div
+                class={cx(
+                  'mx-auto grid h-14 w-14 place-items-center rounded-full bg-#9ed6bb/12',
+                  'text-lg font-800 text-#b8e8d0',
+                )}
+              >
+                Q
+              </div>
+              <h2 class="mb-0 mt-5 text-xl font-720">새 대화를 시작해 보세요</h2>
+              <p class="mb-0 mt-2 text-sm leading-6 text-#918697">
+                예를 들어 이름이나 취향을 알려 준 뒤, 몇 차례 대화하고 다시 물어볼 수 있어요.
+              </p>
+            </div>
+          </div>
+        }
+        when={props.chat.messages().length > 0}
+      >
+        <div class="grid content-end gap-4">
+          <For each={props.chat.messages()}>
+            {(message) => (
+              <ChatBubble isVoiceGenerating={message.id === voiceMessageId()} message={message} />
+            )}
+          </For>
+          <Show when={props.chat.streamingText().length > 0 || props.chat.isBusy()}>
+            <article
               class={cx(
-                'mx-auto grid h-14 w-14 place-items-center rounded-full bg-#9ed6bb/12',
-                'text-lg font-800 text-#b8e8d0',
+                'mr-auto max-w-[86%] whitespace-pre-wrap rounded-6 rounded-bl-2 bg-white/7',
+                'px-4 py-3 text-[15px] leading-7 text-#eee5ef sm:max-w-[76%]',
               )}
             >
-              Q
-            </div>
-            <h2 class="mb-0 mt-5 text-xl font-720">새 대화를 시작해 보세요</h2>
-            <p class="mb-0 mt-2 text-sm leading-6 text-#918697">
-              예를 들어 이름이나 취향을 알려 준 뒤, 몇 차례 대화하고 다시 물어볼 수 있어요.
-            </p>
-          </div>
+              <ProcessedKoreanText text={props.chat.streamingText()} />
+              <span
+                aria-hidden="true"
+                class="ml-1 inline-block h-4 w-0.5 animate-pulse bg-#9ed6bb"
+              />
+              <span class="sr-only">답변 작성 중</span>
+              <Show when={props.voice.isGenerating()}>
+                <span
+                  aria-hidden="true"
+                  class={cx(
+                    'ml-2 inline-block h-3.5 w-3.5 animate-spin rounded-full border-2',
+                    'border-#9ed6bb/30 border-t-#9ed6bb align-middle',
+                  )}
+                />
+                <span class="sr-only">답변 음성 생성 중</span>
+              </Show>
+            </article>
+          </Show>
         </div>
-      }
-      when={props.chat.messages().length > 0}
-    >
-      <div class="grid content-end gap-4">
-        <For each={props.chat.messages()}>{(message) => <ChatBubble message={message} />}</For>
-        <Show when={props.chat.streamingText().length > 0 || props.chat.isBusy()}>
-          <article
-            class={cx(
-              'mr-auto max-w-[86%] whitespace-pre-wrap rounded-6 rounded-bl-2 bg-white/7',
-              'px-4 py-3 text-[15px] leading-7 text-#eee5ef sm:max-w-[76%]',
-            )}
-          >
-            <ProcessedKoreanText text={props.chat.streamingText()} />
-            <span aria-hidden="true" class="ml-1 inline-block h-4 w-0.5 animate-pulse bg-#9ed6bb" />
-            <span class="sr-only">답변 작성 중</span>
-          </article>
-        </Show>
-      </div>
-    </Show>
-  </div>
-)
+      </Show>
+    </div>
+  )
+}
 
 interface ChatComposerProps {
   readonly chat: ChatController
+  readonly onSend: () => void
 }
 
 const ChatComposer = (props: ChatComposerProps) => {
@@ -138,12 +180,12 @@ const ChatComposer = (props: ChatComposerProps) => {
   }
   const handleSubmit = (event: SubmitEvent) => {
     event.preventDefault()
-    props.chat.send()
+    props.onSend()
   }
   const handleDraftKeyDown = (event: KeyboardEvent & {currentTarget: HTMLTextAreaElement}) => {
     if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
       event.preventDefault()
-      props.chat.send()
+      props.onSend()
     }
   }
 
@@ -185,7 +227,14 @@ const ChatComposer = (props: ChatComposerProps) => {
 
 interface ContextSidebarProps {
   readonly chat: ChatController
+  readonly disableRefining: boolean
   readonly modelLabel: string
+  readonly onClear: () => void
+  readonly onDisableRefiningChange: (disabled: boolean) => void
+  readonly onPrepare: () => void
+  readonly onSpeakBeforeRefiningChange: (enabled: boolean) => void
+  readonly speakBeforeRefining: boolean
+  readonly voice: ChatVoiceController
 }
 
 const ContextSidebar = (props: ContextSidebarProps) => (
@@ -215,14 +264,73 @@ const ContextSidebar = (props: ContextSidebarProps) => (
       {props.chat.statusMessage()}
     </p>
 
+    <div class="mt-3 rounded-4 border border-white/8 bg-white/4 p-3">
+      <div class="flex items-center justify-between gap-3">
+        <span class="text-xs font-700 text-#eee5ef">답변 음성</span>
+        <Show when={props.voice.isPlaying()}>
+          <button
+            class={cx(
+              'rounded-full border border-#f2a7b8/35 bg-#f2a7b8/10 px-3 py-1',
+              'text-xs font-700 text-#ffc0ce hover:bg-#f2a7b8/18',
+            )}
+            onClick={() => props.voice.stop()}
+            type="button"
+          >
+            재생 중지
+          </button>
+        </Show>
+      </div>
+      <p aria-live="polite" class="mb-0 mt-2 text-xs leading-5 text-#bdb2c4">
+        {props.voice.statusMessage()}
+      </p>
+      <label class="mt-3 flex cursor-pointer items-start gap-2 border-t border-white/8 pt-3">
+        <input
+          checked={props.speakBeforeRefining}
+          class="mt-0.5 h-4 w-4 accent-#9ed6bb"
+          onChange={(event) => props.onSpeakBeforeRefiningChange(event.currentTarget.checked)}
+          type="checkbox"
+        />
+        <span>
+          <span class="block text-xs font-700 text-#eee5ef">리파이닝 전에 말하기</span>
+          <span class="mt-1 block text-[11px] leading-4 text-#918697">
+            완성된 문장부터 읽고, 다듬어진 답변은 다시 읽지 않아요.
+          </span>
+        </span>
+      </label>
+      <label class="mt-3 flex cursor-pointer items-start gap-2 border-t border-white/8 pt-3">
+        <input
+          checked={props.disableRefining}
+          class="mt-0.5 h-4 w-4 accent-#f2a7b8"
+          onChange={(event) => props.onDisableRefiningChange(event.currentTarget.checked)}
+          type="checkbox"
+        />
+        <span>
+          <span class="block text-xs font-700 text-#eee5ef">리파이닝 끄기</span>
+          <span class="mt-1 block text-[11px] leading-4 text-#918697">
+            두 번째 생성 단계를 건너뛰며 외국어 문자가 남을 수 있어요.
+          </span>
+        </span>
+      </label>
+    </div>
+
     <Show when={!props.chat.isModelReady()}>
       <button
         class={cx(BUTTON_CLASSES, 'mt-4 w-full bg-#f2a7b8 text-#2a1720 hover:bg-#ffc0ce')}
         disabled={!props.chat.canPrepare()}
-        onClick={() => props.chat.prepare()}
+        onClick={() => props.onPrepare()}
         type="button"
       >
         {props.chat.state().status === 'loading' ? '모델 준비 중…' : `${props.modelLabel} 준비하기`}
+      </button>
+    </Show>
+
+    <Show when={props.chat.isModelReady() && props.voice.canPrepare()}>
+      <button
+        class={cx(BUTTON_CLASSES, 'mt-3 w-full bg-#f2a7b8 text-#2a1720 hover:bg-#ffc0ce')}
+        onClick={() => props.voice.prepare()}
+        type="button"
+      >
+        답변 음성 다시 준비하기
       </button>
     </Show>
 
@@ -232,7 +340,7 @@ const ContextSidebar = (props: ContextSidebarProps) => (
         'mt-3 w-full border border-white/10 bg-white/4 text-#d9cfdd hover:bg-white/8',
       )}
       disabled={!props.chat.canClear()}
-      onClick={() => props.chat.clear()}
+      onClick={() => props.onClear()}
       type="button"
     >
       새 대화
@@ -247,15 +355,70 @@ const ContextSidebar = (props: ContextSidebarProps) => (
 const ChatRoom = () => {
   const model = getTextModel('qwen-4b')
   const chat = useChat({modelId: model.id})
+  const voice = useChatVoice()
+  const speechBuffer = createStreamingSpeechBuffer({locale: 'ko'})
   const [messageList, setMessageList] = createSignal<HTMLDivElement>()
+  const [disableRefining, setDisableRefining] = createSignal(false)
+  const [speakBeforeRefining, setSpeakBeforeRefining] = createSignal(false)
+  let spokenMessageId: string | null = null
+  let speakDraftForReply = false
+
+  const handleSend = () => {
+    if (!chat.canSend()) {
+      return
+    }
+
+    voice.arm()
+    speechBuffer.reset()
+    speakDraftForReply = speakBeforeRefining()
+    chat.send({refineAnswer: !disableRefining()})
+  }
+  const handlePrepare = () => {
+    chat.prepare()
+    voice.prepare().catch(console.error)
+  }
+  const handleClear = () => {
+    voice.stop()
+    chat.clear()
+  }
 
   createEffect(() => {
-    chat.messages()
-    chat.streamingText()
+    const messages = chat.messages()
+    const answerDraft = chat.answerDraft()
+    const streamingText = chat.streamingText()
     const element = messageList()
     queueMicrotask(() => {
       element?.scrollTo({behavior: 'smooth', top: element.scrollHeight})
     })
+
+    const latestMessage = messages.at(-1)
+
+    if (speakDraftForReply) {
+      for (const sentence of speechBuffer.update(streamingText)) {
+        voice.speak(sentence).catch(console.error)
+      }
+
+      if (answerDraft !== null && answerDraft.id !== spokenMessageId) {
+        const remainingText = speechBuffer.flush(
+          streamingText.length > 0 ? streamingText : answerDraft.content,
+        )
+
+        if (remainingText !== null) {
+          voice.speak(remainingText).catch(console.error)
+        }
+
+        voice.finish()
+        spokenMessageId = answerDraft.id
+      }
+
+      return
+    }
+
+    if (latestMessage?.role === 'assistant' && latestMessage.id !== spokenMessageId) {
+      spokenMessageId = latestMessage.id
+      voice.speak(latestMessage.content).catch(console.error)
+      voice.finish()
+    }
   })
 
   return (
@@ -264,10 +427,20 @@ const ChatRoom = () => {
 
       <div class="grid min-h-[68dvh] lg:grid-cols-[minmax(0,1fr)_17rem]">
         <div class="grid min-h-0 grid-rows-[1fr_auto]">
-          <ChatTranscript chat={chat} setMessageList={setMessageList} />
-          <ChatComposer chat={chat} />
+          <ChatTranscript chat={chat} setMessageList={setMessageList} voice={voice} />
+          <ChatComposer chat={chat} onSend={handleSend} />
         </div>
-        <ContextSidebar chat={chat} modelLabel={model.label} />
+        <ContextSidebar
+          chat={chat}
+          disableRefining={disableRefining()}
+          modelLabel={model.label}
+          onClear={handleClear}
+          onDisableRefiningChange={setDisableRefining}
+          onPrepare={handlePrepare}
+          onSpeakBeforeRefiningChange={setSpeakBeforeRefining}
+          speakBeforeRefining={speakBeforeRefining()}
+          voice={voice}
+        />
       </div>
     </section>
   )

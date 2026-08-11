@@ -6,16 +6,28 @@ export interface SupertonicAudioPlayer {
   readonly finish: () => void
 }
 
+export interface CreateSupertonicAudioPlayerOptions {
+  readonly onPlaybackEnd?: () => void
+}
+
 /** Creates a click-activated Web Audio queue that plays generated chunks in order. */
-export const createSupertonicAudioPlayer = (): SupertonicAudioPlayer => {
+export const createSupertonicAudioPlayer = (
+  options: CreateSupertonicAudioPlayerOptions = {},
+): SupertonicAudioPlayer => {
   const context = new AudioContext()
   const sources = new Set<AudioBufferSourceNode>()
   let finished = false
+  let playbackEndReported = false
   let nextStartTime = context.currentTime
 
   const closeIfFinished = () => {
     if (finished && sources.size === 0 && context.state !== 'closed') {
       context.close().catch(() => undefined)
+    }
+
+    if (finished && sources.size === 0 && !playbackEndReported) {
+      playbackEndReported = true
+      options.onPlaybackEnd?.()
     }
   }
 

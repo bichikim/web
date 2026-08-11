@@ -1,7 +1,7 @@
 import {type Accessor, createMemo, createSignal, onCleanup, untrack} from 'solid-js'
 
 import {type ChatClient, createChatClient, type CreateChatClientOptions} from './client'
-import type {ChatContext, ChatMessage, ChatWorkerResponse} from './messages'
+import type {ChatAnswerDraft, ChatContext, ChatMessage, ChatWorkerResponse} from './messages'
 import {supportsWebGpu} from '../text-generation/environment'
 import {createLazyClient} from '../text-generation/lazy-client'
 import {getTextModel, type TextModelId} from '../text-generation/model'
@@ -53,6 +53,7 @@ export interface ChatRuntime {
 }
 
 export interface ChatController {
+  readonly answerDraft: Accessor<ChatAnswerDraft | null>
   readonly canClear: Accessor<boolean>
   readonly canPrepare: Accessor<boolean>
   readonly canSend: Accessor<boolean>
@@ -63,12 +64,16 @@ export interface ChatController {
   readonly isModelReady: Accessor<boolean>
   readonly messages: Accessor<ReadonlyArray<ChatMessage>>
   readonly prepare: () => void
-  readonly send: () => void
+  readonly send: (options?: SendChatOptions) => void
   readonly setDraft: (draft: string) => void
   readonly state: Accessor<ChatState>
   readonly statusMessage: Accessor<string>
   readonly streamingText: Accessor<string>
   readonly summaryCount: Accessor<number>
+}
+
+export interface SendChatOptions {
+  readonly refineAnswer?: boolean
 }
 
 const EMPTY_CONTEXT: ChatContext = {messages: [], summary: ''}
@@ -142,6 +147,7 @@ export const useChat = (props: UseChatProps): ChatController => {
   const modelId = untrack(() => props.modelId)
   const runtime = untrack(() => props.runtime ?? DEFAULT_RUNTIME)
   const [context, setContext] = createSignal<ChatContext>(EMPTY_CONTEXT)
+  const [answerDraft, setAnswerDraft] = createSignal<ChatAnswerDraft | null>(null)
   const [messages, setMessages] = createSignal<ReadonlyArray<ChatMessage>>([])
   const [draft, setDraft] = createSignal('')
   const [streamingText, setStreamingText] = createSignal('')
@@ -179,6 +185,9 @@ export const useChat = (props: UseChatProps): ChatController => {
         pendingUser = null
         setState({status: 'ready'})
         return
+      case 'draft':
+        setAnswerDraft(response.draft)
+        return
       case 'error': {
         const modelReady = !response.restartRequired && isModelReady()
 
@@ -197,6 +206,7 @@ export const useChat = (props: UseChatProps): ChatController => {
         }
 
         setStreamingText('')
+        setAnswerDraft(null)
         setState({message: response.message, modelReady, status: 'error'})
         return
       }
@@ -234,7 +244,7 @@ export const useChat = (props: UseChatProps): ChatController => {
     clientOwner.get().prepare()
   }
 
-  const send = () => {
+  const send = (options: SendChatOptions = {}) => {
     if (!canSend()) {
       return
     }
@@ -249,9 +259,12 @@ export const useChat = (props: UseChatProps): ChatController => {
     setMessages((value) => [...value, userMessage])
     setContext(nextContext)
     setDraft('')
+    setAnswerDraft(null)
     setStreamingText('')
     setState({status: 'generating'})
-    clientOwner.get().generate(nextContext, runtime.createId())
+    clientOwner.get().generate(nextContext, runtime.createId(), {
+      refineAnswer: options.refineAnswer ?? true,
+    })
   }
 
   const clear = () => {
@@ -260,6 +273,7 @@ export const useChat = (props: UseChatProps): ChatController => {
     }
 
     setContext(EMPTY_CONTEXT)
+    setAnswerDraft(null)
     setMessages([])
     setStreamingText('')
     setContextTokens(0)
@@ -269,6 +283,7 @@ export const useChat = (props: UseChatProps): ChatController => {
   onCleanup(clientOwner.dispose)
 
   return {
+    answerDraft,
     canClear,
     canPrepare,
     canSend,

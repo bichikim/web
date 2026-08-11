@@ -250,6 +250,26 @@ describe('createSupertonicClient', () => {
     })
   })
 
+  it('should request generation cancellation without disposing the model', async () => {
+    const client = createSupertonicClient()
+    const worker = getWorker()
+    const generation = client.generate({text: '안녕', voice: {id: 'F1', kind: 'preset'}})
+
+    client.cancelGeneration()
+
+    expect(worker.postMessage).toHaveBeenCalledWith({type: 'cancel-generation'})
+    expect(worker.postMessage).not.toHaveBeenCalledWith({type: 'dispose'})
+    worker.emitMessage({
+      error: {code: 'cancelled', phase: 'generate', retryable: false},
+      requestId: 1,
+      type: 'error',
+    })
+    expect(await generation).toEqual({
+      error: {code: 'cancelled', phase: 'generate', retryable: false},
+      ok: false,
+    })
+  })
+
   it('should resolve pending generation as a Worker failure when the Worker crashes', async () => {
     const client = createSupertonicClient()
     const worker = getWorker()
