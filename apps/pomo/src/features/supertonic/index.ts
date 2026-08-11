@@ -19,6 +19,7 @@ export type {
   SupertonicModel,
   SupertonicModelId,
   SupertonicSpeechPolicy,
+  SupertonicVoice,
   SupertonicVoiceId,
 } from './model'
 export {createWaveBlob} from './wav'

@@ -1,19 +1,3 @@
-export const SUPERTONIC_VOICES = [
-  {gender: 'female', id: 'F1', label: 'Sarah'},
-  {gender: 'female', id: 'F2', label: 'Lily'},
-  {gender: 'female', id: 'F3', label: 'Jessica'},
-  {gender: 'female', id: 'F4', label: 'Olivia'},
-  {gender: 'female', id: 'F5', label: 'Emily'},
-  {gender: 'male', id: 'M1', label: 'Alex'},
-  {gender: 'male', id: 'M2', label: 'James'},
-  {gender: 'male', id: 'M3', label: 'Robert'},
-  {gender: 'male', id: 'M4', label: 'Sam'},
-  {gender: 'male', id: 'M5', label: 'Daniel'},
-] as const
-
-export type SupertonicVoiceId = (typeof SUPERTONIC_VOICES)[number]['id']
-export type SupertonicModelId = (typeof SUPERTONIC_MODELS)[number]['id']
-
 export interface SupertonicModelFile {
   readonly key: 'durationPredictor' | 'textEncoder' | 'vectorEstimator' | 'vocoder'
   readonly name: string
@@ -40,10 +24,103 @@ export interface SupertonicSpeechPolicy {
   readonly silenceDuration: number
 }
 
+export interface SupertonicVoice {
+  readonly gender: 'female' | 'male'
+  readonly id: string
+  readonly label: string
+  readonly recommended: boolean
+  readonly url: string
+}
+
 const FULL_MODEL_REVISION = '3cadd1e'
 const FULL_MODEL_BASE_URL = `https://huggingface.co/Supertone/supertonic-3/resolve/${FULL_MODEL_REVISION}`
 const INT8_MODEL_REVISION = 'cca5a0e6c96e1d2c720986bf7e75fcc81dee3ae4'
 const INT8_MODEL_BASE_URL = `https://huggingface.co/csukuangfj2/sherpa-onnx-supertonic-3-tts-int8-2026-05-11/resolve/${INT8_MODEL_REVISION}`
+
+export const getSupertonicAssetUrl = (path: string) => `${FULL_MODEL_BASE_URL}/${path}`
+
+export const SUPERTONIC_VOICES = [
+  {
+    gender: 'female',
+    id: 'Yuna',
+    label: 'Yuna',
+    recommended: true,
+    url: '/voice_styles/Yuna.json',
+  },
+  {
+    gender: 'female',
+    id: 'F1',
+    label: 'Sarah',
+    recommended: false,
+    url: getSupertonicAssetUrl('voice_styles/F1.json'),
+  },
+  {
+    gender: 'female',
+    id: 'F2',
+    label: 'Lily',
+    recommended: false,
+    url: getSupertonicAssetUrl('voice_styles/F2.json'),
+  },
+  {
+    gender: 'female',
+    id: 'F3',
+    label: 'Jessica',
+    recommended: false,
+    url: getSupertonicAssetUrl('voice_styles/F3.json'),
+  },
+  {
+    gender: 'female',
+    id: 'F4',
+    label: 'Olivia',
+    recommended: false,
+    url: getSupertonicAssetUrl('voice_styles/F4.json'),
+  },
+  {
+    gender: 'female',
+    id: 'F5',
+    label: 'Emily',
+    recommended: false,
+    url: getSupertonicAssetUrl('voice_styles/F5.json'),
+  },
+  {
+    gender: 'male',
+    id: 'M1',
+    label: 'Alex',
+    recommended: false,
+    url: getSupertonicAssetUrl('voice_styles/M1.json'),
+  },
+  {
+    gender: 'male',
+    id: 'M2',
+    label: 'James',
+    recommended: false,
+    url: getSupertonicAssetUrl('voice_styles/M2.json'),
+  },
+  {
+    gender: 'male',
+    id: 'M3',
+    label: 'Robert',
+    recommended: false,
+    url: getSupertonicAssetUrl('voice_styles/M3.json'),
+  },
+  {
+    gender: 'male',
+    id: 'M4',
+    label: 'Sam',
+    recommended: false,
+    url: getSupertonicAssetUrl('voice_styles/M4.json'),
+  },
+  {
+    gender: 'male',
+    id: 'M5',
+    label: 'Daniel',
+    recommended: false,
+    url: getSupertonicAssetUrl('voice_styles/M5.json'),
+  },
+] as const satisfies ReadonlyArray<SupertonicVoice>
+
+export type SupertonicVoiceId = (typeof SUPERTONIC_VOICES)[number]['id']
+export type SupertonicModelId = (typeof SUPERTONIC_MODELS)[number]['id']
 
 // AI_NOTE - 120 is Supertonic's Korean auto-chunk value; 150/200 reflect observed browser quality degradation before outright failure.
 const KOREAN_SPEECH_POLICY: SupertonicSpeechPolicy = {
@@ -148,9 +225,14 @@ export const getSupertonicModel = (modelId: SupertonicModelId): SupertonicModel 
 export const getSupertonicModelFileUrl = (model: SupertonicModel, file: SupertonicModelFile) =>
   `${model.baseUrl}/${file.path}`
 
-export const getSupertonicAssetUrl = (path: string) => `${FULL_MODEL_BASE_URL}/${path}`
+export const getSupertonicVoiceUrl = (voiceId: SupertonicVoiceId) => {
+  const voice = SUPERTONIC_VOICES.find((item) => item.id === voiceId)
 
-export const getSupertonicVoiceUrl = (voiceId: SupertonicVoiceId) =>
-  getSupertonicAssetUrl(`voice_styles/${voiceId}.json`)
+  if (voice === undefined) {
+    throw new Error(`지원하지 않는 Supertonic 목소리입니다: ${voiceId}`)
+  }
+
+  return voice.url
+}
 
 export const SUPERTONIC_ORT_WASM_URL = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.23.2/dist/'

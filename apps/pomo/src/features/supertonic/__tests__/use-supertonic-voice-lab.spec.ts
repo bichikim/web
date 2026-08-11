@@ -99,6 +99,13 @@ const createVoiceLabRoot = (runtime: SupertonicVoiceLabRuntime): VoiceLabTestRoo
 }
 
 describe('useSupertonicVoiceLab', () => {
+  it('should select Yuna as the initial voice', () => {
+    const voiceLab = createVoiceLabRoot(createRuntime([createClient()]))
+
+    expect(voiceLab.controller.selectedVoiceId()).toBe('Yuna')
+    voiceLab.dispose()
+  })
+
   it('should prepare and generate audio with the selected model and voice', async () => {
     const client = createClient()
     const runtime = createRuntime([client])
