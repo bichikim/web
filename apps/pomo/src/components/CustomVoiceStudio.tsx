@@ -170,7 +170,7 @@ interface VoiceFileSectionProps {
   readonly disabled: Accessor<boolean>
   readonly fileError: Accessor<string | null>
   readonly importedVoice: Accessor<ImportedVoice | null>
-  readonly onFileChange: JSX.EventHandler<HTMLInputElement, Event>
+  readonly onFileSelect: (file: File | undefined) => Promise<void>
 }
 
 interface ModelSectionProps {
@@ -191,49 +191,105 @@ interface SpeechSectionProps {
 const formatModelSize = (size: number) => `${Math.round(size / BYTES_PER_MEGABYTE)}MB`
 const formatFileSize = (size: number) => `${Math.ceil(size / BYTES_PER_KILOBYTE)}KB`
 
-const VoiceFileSection = (props: VoiceFileSectionProps) => (
-  <section aria-labelledby="voice-file-heading" class="grid gap-3">
-    <div>
-      <p class="m-0 text-xs font-700 text-#f2a7b8">1단계</p>
-      <h2 class="mb-0 mt-1 text-lg font-700" id="voice-file-heading">
-        목소리 스타일 가져오기
-      </h2>
-    </div>
-    <label
-      class={cx(
-        'grid min-h-28 place-items-center rounded-5 border border-dashed',
-        'border-white/18 bg-white/3 p-5 text-center transition hover:border-#f2a7b8/55',
-        props.disabled() ? 'cursor-not-allowed opacity-50' : 'cursor-pointer',
-      )}
-    >
-      <input
-        accept="application/json,.json"
-        class="sr-only"
-        disabled={props.disabled()}
-        onChange={(event) => props.onFileChange(event)}
-        type="file"
-      />
-      <span>
-        <span class="block text-sm font-700 text-#eee5ef">Supertonic 3 JSON 선택</span>
-        <span class="mt-1 block text-xs leading-5 text-#8f8297">최대 2MB · 기기에서만 읽음</span>
-      </span>
-    </label>
-    <Show when={props.importedVoice()}>
-      {(voice) => (
-        <p class="m-0 rounded-4 border border-#9ed6bb/20 bg-#9ed6bb/6 px-4 py-3 text-sm text-#b8e8d0">
-          <span class="font-700">{voice().name}</span> · {formatFileSize(voice().size)} 준비됨
-        </p>
-      )}
-    </Show>
-    <Show when={props.fileError()}>
-      {(message) => (
-        <p aria-live="polite" class="m-0 text-sm leading-6 text-#ff9aa8" role="alert">
-          {message()}
-        </p>
-      )}
-    </Show>
-  </section>
-)
+const VoiceFileSection = (props: VoiceFileSectionProps) => {
+  const [isDragging, setIsDragging] = createSignal(false)
+  let dragDepth = 0
+
+  const handleFileChange: JSX.EventHandler<HTMLInputElement, Event> = (event) => {
+    const file = event.currentTarget.files?.[0]
+    event.currentTarget.value = ''
+    props.onFileSelect(file)
+  }
+  const handleDragEnter: JSX.EventHandler<HTMLLabelElement, DragEvent> = (event) => {
+    event.preventDefault()
+
+    if (!props.disabled()) {
+      dragDepth += 1
+      setIsDragging(true)
+    }
+  }
+  const handleDragOver: JSX.EventHandler<HTMLLabelElement, DragEvent> = (event) => {
+    event.preventDefault()
+    const {dataTransfer} = event
+
+    if (dataTransfer !== null) {
+      dataTransfer.dropEffect = props.disabled() ? 'none' : 'copy'
+    }
+  }
+  const handleDragLeave: JSX.EventHandler<HTMLLabelElement, DragEvent> = (event) => {
+    event.preventDefault()
+    dragDepth = Math.max(0, dragDepth - 1)
+
+    if (dragDepth === 0) {
+      setIsDragging(false)
+    }
+  }
+  const handleDrop: JSX.EventHandler<HTMLLabelElement, DragEvent> = (event) => {
+    event.preventDefault()
+    const {dataTransfer} = event
+    const file = dataTransfer?.files[0]
+    dragDepth = 0
+    setIsDragging(false)
+
+    if (!props.disabled() && file !== undefined) {
+      props.onFileSelect(file)
+    }
+  }
+
+  return (
+    <section aria-labelledby="voice-file-heading" class="grid gap-3">
+      <div>
+        <p class="m-0 text-xs font-700 text-#f2a7b8">1단계</p>
+        <h2 class="mb-0 mt-1 text-lg font-700" id="voice-file-heading">
+          목소리 스타일 가져오기
+        </h2>
+      </div>
+      <label
+        class={cx(
+          'grid min-h-28 place-items-center rounded-5 border border-dashed p-5 text-center transition',
+          isDragging()
+            ? 'border-#f2a7b8 bg-#f2a7b8/12'
+            : 'border-white/18 bg-white/3 hover:border-#f2a7b8/55',
+          props.disabled() ? 'cursor-not-allowed opacity-50' : 'cursor-pointer',
+        )}
+        onDragEnter={handleDragEnter}
+        onDragLeave={handleDragLeave}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+      >
+        <input
+          accept="application/json,.json"
+          class="sr-only"
+          disabled={props.disabled()}
+          onChange={handleFileChange}
+          type="file"
+        />
+        <span>
+          <span class="block text-sm font-700 text-#eee5ef">
+            {isDragging() ? '여기에 놓아 가져오기' : 'JSON 파일을 놓거나 클릭해 선택'}
+          </span>
+          <span class="mt-1 block text-xs leading-5 text-#8f8297">
+            Supertonic 3 JSON · 최대 2MB · 기기에서만 읽음
+          </span>
+        </span>
+      </label>
+      <Show when={props.importedVoice()}>
+        {(voice) => (
+          <p class="m-0 rounded-4 border border-#9ed6bb/20 bg-#9ed6bb/6 px-4 py-3 text-sm text-#b8e8d0">
+            <span class="font-700">{voice().name}</span> · {formatFileSize(voice().size)} 준비됨
+          </p>
+        )}
+      </Show>
+      <Show when={props.fileError()}>
+        {(message) => (
+          <p aria-live="polite" class="m-0 text-sm leading-6 text-#ff9aa8" role="alert">
+            {message()}
+          </p>
+        )}
+      </Show>
+    </section>
+  )
+}
 
 const ModelSection = (props: ModelSectionProps) => (
   <section aria-labelledby="model-heading" class="grid gap-3">
@@ -427,10 +483,9 @@ export default function CustomVoiceStudio() {
   const [hasPermission, setHasPermission] = createSignal(false)
   let fileSelectionId = 0
 
-  const handleFileChange: JSX.EventHandler<HTMLInputElement, Event> = async (event) => {
+  const handleFileSelect = async (file: File | undefined) => {
     fileSelectionId += 1
     const currentSelectionId = fileSelectionId
-    const file = event.currentTarget.files?.[0]
     setImportedVoice(null)
     setFileError(null)
     setHasPermission(false)
@@ -507,7 +562,7 @@ export default function CustomVoiceStudio() {
           disabled={voiceLab.isBusy}
           fileError={fileError}
           importedVoice={importedVoice}
-          onFileChange={handleFileChange}
+          onFileSelect={handleFileSelect}
         />
         <ModelSection onModelChange={voiceLab.selectModel} voiceLab={voiceLab} />
         <SpeechSection
