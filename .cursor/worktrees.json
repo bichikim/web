@@ -1,10 +1,10 @@
 {
   "setup-worktree": [
     "git -C \"$ROOT_WORKTREE_PATH\" fetch origin",
-    "git -C \"$ROOT_WORKTREE_PATH\" fetch origin dev:dev || true",
+    "if [ \"$(git -C \"$ROOT_WORKTREE_PATH\" branch --show-current)\" = \"dev\" ] && [ -z \"$(git -C \"$ROOT_WORKTREE_PATH\" status --porcelain)\" ] && git -C \"$ROOT_WORKTREE_PATH\" merge-base --is-ancestor HEAD origin/dev; then git -C \"$ROOT_WORKTREE_PATH\" merge --ff-only origin/dev && (cd \"$ROOT_WORKTREE_PATH\" && pnpm install --frozen-lockfile); fi",
     "if [ -z \"$(git status --porcelain)\" ] && [ \"$(git rev-list --count origin/dev..HEAD 2>/dev/null || echo 1)\" -eq 0 ]; then git reset --hard origin/dev; fi",
     "[ -f \"$ROOT_WORKTREE_PATH/apps/coong/.env\" ] && cp \"$ROOT_WORKTREE_PATH/apps/coong/.env\" apps/coong/.env || true",
     "[ -d \"$ROOT_WORKTREE_PATH/.turbo\" ] && cp -R \"$ROOT_WORKTREE_PATH/.turbo\" .turbo || true",
-    "pnpm install"
+    "pnpm install --frozen-lockfile"
   ]
 }
