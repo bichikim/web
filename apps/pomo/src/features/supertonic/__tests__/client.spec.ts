@@ -83,9 +83,9 @@ describe('createSupertonicClient', () => {
   it('should resolve generated audio and return a failure for concurrent requests', async () => {
     const client = createSupertonicClient()
     const worker = getWorker()
-    const generation = client.generate({text: '안녕', voiceId: 'F1'})
+    const generation = client.generate({text: '안녕', voice: {id: 'F1', kind: 'preset'}})
 
-    expect(await client.generate({text: '다시', voiceId: 'F2'})).toEqual({
+    expect(await client.generate({text: '다시', voice: {id: 'F2', kind: 'preset'}})).toEqual({
       error: {code: 'generation-busy', phase: 'generate', retryable: true},
       ok: false,
     })
@@ -111,14 +111,23 @@ describe('createSupertonicClient', () => {
       speed: 1.05,
       text: '안녕',
       type: 'generate',
-      voiceId: 'F1',
+      voice: {id: 'F1', kind: 'preset'},
     })
   })
 
   it('should yield each completed chunk before the final combined audio', async () => {
     const client = createSupertonicClient()
     const worker = getWorker()
-    const stream = client.generateStream({text: '긴 대사', voiceId: 'F1'})
+    const stream = client.generateStream({
+      text: '긴 대사',
+      voice: {
+        kind: 'custom',
+        value: {
+          duration: {data: [0.1], dimensions: [1]},
+          speech: {data: [0.2], dimensions: [1]},
+        },
+      },
+    })
     const firstEvent = stream.next()
     const chunkSamples = Float32Array.of(0.1, 0.2)
     worker.emitMessage({
@@ -193,7 +202,7 @@ describe('createSupertonicClient', () => {
     worker.emitMessage({error: initializationError, requestId: null, type: 'error'})
     expect(await initialization).toEqual({error: initializationError, ok: false})
 
-    const generation = client.generate({text: '안녕', voiceId: 'M1'})
+    const generation = client.generate({text: '안녕', voice: {id: 'M1', kind: 'preset'}})
     const generationError = {
       code: 'worker-failed' as const,
       detail: '생성 실패',
@@ -231,7 +240,7 @@ describe('createSupertonicClient', () => {
 
   it('should resolve pending generation as cancelled on disposal', async () => {
     const client = createSupertonicClient()
-    const generation = client.generate({text: '안녕', voiceId: 'F1'})
+    const generation = client.generate({text: '안녕', voice: {id: 'F1', kind: 'preset'}})
 
     client.dispose()
 
@@ -244,7 +253,7 @@ describe('createSupertonicClient', () => {
   it('should resolve pending generation as a Worker failure when the Worker crashes', async () => {
     const client = createSupertonicClient()
     const worker = getWorker()
-    const generation = client.generate({text: '안녕', voiceId: 'F1'})
+    const generation = client.generate({text: '안녕', voice: {id: 'F1', kind: 'preset'}})
 
     worker.emitError()
 

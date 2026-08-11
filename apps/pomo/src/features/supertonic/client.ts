@@ -5,10 +5,11 @@ import type {
   SupertonicAudioChunk,
   SupertonicGenerationEvent,
   SupertonicProgress,
+  SupertonicVoiceSource,
   SupertonicWorkerInput,
   SupertonicWorkerOutput,
 } from './messages'
-import type {SupertonicModelId, SupertonicVoiceId} from './model'
+import type {SupertonicModelId} from './model'
 import {failureResult, type Result, successResult} from './result'
 
 export interface InitializeSupertonicOptions {
@@ -20,7 +21,7 @@ export interface InitializeSupertonicOptions {
 export interface GenerateSupertonicOptions {
   readonly speed?: number
   readonly text: string
-  readonly voiceId: SupertonicVoiceId
+  readonly voice: SupertonicVoiceSource
 }
 
 interface PendingRequest {
@@ -164,7 +165,7 @@ export const createSupertonicClient = (): SupertonicClient => {
         speed: options.speed ?? DEFAULT_SPEECH_SPEED,
         text: options.text,
         type: 'generate',
-        voiceId: options.voiceId,
+        voice: options.voice,
       })
     })
   }

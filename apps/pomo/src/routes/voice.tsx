@@ -24,9 +24,11 @@ export default function VoicePage() {
       <div class={BACKGROUND_CLASSES} />
       <div class={GLOW_CLASSES} />
       <div class="relative grid w-full max-w-3xl gap-4">
-        <A class="w-fit text-sm font-650 text-#bdb2c4 no-underline hover:text-white" href="/">
-          ← 실험실 목록
-        </A>
+        <nav>
+          <A class="text-sm font-650 text-#bdb2c4 no-underline hover:text-white" href="/">
+            ← 실험실 목록
+          </A>
+        </nav>
         <VoiceGenerator />
       </div>
     </main>
