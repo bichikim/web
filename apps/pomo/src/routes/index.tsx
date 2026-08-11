@@ -96,6 +96,24 @@ export default function HomePage() {
             </div>
             <span class="mt-8 text-sm font-700 text-#b8e8d0">답변 실험실 열기 →</span>
           </A>
+
+          <A class={CARD_CLASSES} href="/chat">
+            <div class="flex items-start justify-between gap-5">
+              <div>
+                <p class="m-0 text-xs font-700 tracking-[0.2em] text-#f2a7b8 uppercase">
+                  Qwen3.5-4B · Context memory
+                </p>
+                <h2 class="mb-0 mt-3 text-2xl font-750">온디바이스 채팅</h2>
+                <p class="mb-0 mt-3 max-w-sm text-sm leading-6 text-#aaa0b1">
+                  오래된 대화를 기억 메모로 압축하면서 브라우저 안에서 대화를 이어 가요.
+                </p>
+              </div>
+              <span class="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-#f2a7b8/12 text-xl text-#ffc0ce">
+                ◌
+              </span>
+            </div>
+            <span class="mt-8 text-sm font-700 text-#ffc0ce">채팅 열기 →</span>
+          </A>
         </div>
       </section>
     </main>
