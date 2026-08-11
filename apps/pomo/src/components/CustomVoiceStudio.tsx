@@ -16,6 +16,35 @@ const BYTES_PER_KILOBYTE = 1000
 const BYTES_PER_MEGABYTE = 1_000_000
 const MILLISECONDS_PER_SECOND = 1000
 const INITIAL_TEXT = '오늘도 서두르지 말고, 한 번에 하나씩 집중해 볼까요?'
+const TEST_SCRIPTS = [
+  {
+    label: '내가 틀릴 수도 있다',
+    text: [
+      [
+        '사람은 누구나 자신의 생각이 옳다고 느끼는 경향이 있다.',
+        '이미 내린 판단을 뒷받침하는 정보에는 쉽게 동의하지만, 반대되는 의견은 불편하게 받아들이기도 한다.',
+        '이러한 성향은 자연스러운 것이지만, 중요한 결정을 내릴 때는 시야를 좁히고 실수를 키우는 원인이 될 수 있다.',
+      ].join(' '),
+      [
+        '그래서 판단을 시작할 때 “내가 틀렸다면 어떤 부분이 틀렸을까?”라고 스스로에게 질문해볼 필요가 있다.',
+        '내가 놓친 정보는 없는지, 경험이나 감정에 지나치게 의존하고 있지는 않은지,',
+        '상대방의 입장에서는 상황이 어떻게 보일지를 살펴보는 것이다.',
+        '이는 자신의 생각을 무조건 의심하거나 자신감을 버리라는 뜻이 아니다.',
+        '오히려 결론을 확정하기 전에 판단의 빈틈을 점검하는 과정에 가깝다.',
+      ].join(' '),
+      [
+        '이러한 태도는 다른 사람의 의견을 받아들이는 방식도 바꿔준다.',
+        '반대 의견을 나에 대한 공격으로 여기기보다, 내가 발견하지 못한 위험을 알려주는 정보로 활용할 수 있기 때문이다.',
+        '필요하다면 기존의 판단을 수정하고, 근거가 충분하다면 처음의 생각을 더욱 확신할 수도 있다.',
+      ].join(' '),
+      [
+        '“내가 틀릴 수도 있다”는 생각은 우유부단함이 아니라 더 정확한 결정을 위한 지적 겸손이다.',
+        '자신의 판단을 한 번 더 점검하는 습관은 결정의 균형을 잡아주며,',
+        '더 나은 선택으로 이어질 가능성을 높여준다.',
+      ].join(' '),
+    ].join('\n\n'),
+  },
+]
 const SECTION_CLASSES = cx(
   'relative overflow-hidden rounded-8 border border-white/10 bg-#211a2b/88 p-5',
   'shadow-[0_28px_100px_rgba(5,2,10,0.45)] backdrop-blur-xl sm:p-8',
@@ -56,6 +85,7 @@ interface SpeechSectionProps {
   readonly hasPermission: Accessor<boolean>
   readonly hasVoice: Accessor<boolean>
   readonly onPermissionChange: JSX.EventHandler<HTMLInputElement, Event>
+  readonly onSampleSelect: (text: string) => void
   readonly onTextInput: JSX.EventHandler<HTMLTextAreaElement, InputEvent>
   readonly voiceLab: SupertonicVoiceLabController
 }
@@ -188,21 +218,48 @@ const SpeechSection = (props: SpeechSectionProps) => (
         대사 합성하기
       </h2>
     </div>
-    <label class="grid gap-2">
+    <div class="grid gap-3">
       <span class="flex items-center justify-between text-sm font-650">
-        테스트 대사
+        <label for="custom-voice-text">테스트 대사</label>
         <span class="text-xs font-500 text-#8f8297">
           {props.voiceLab.text().length} / {MAXIMUM_TEXT_LENGTH}
         </span>
       </span>
+      <div class="flex flex-wrap items-center gap-2">
+        <span class="mr-1 text-xs text-#8f8297">빠른 선택</span>
+        <For each={TEST_SCRIPTS}>
+          {(script) => {
+            const isSelected = () => props.voiceLab.text() === script.text
+
+            return (
+              <button
+                aria-pressed={isSelected()}
+                class={cx(
+                  'rounded-full border px-3 py-2 text-xs font-650 transition',
+                  isSelected()
+                    ? 'border-#f2a7b8/65 bg-#f2a7b8/12 text-#ffc0ce'
+                    : 'border-white/10 bg-white/4 text-#bdb2c4 hover:bg-white/8',
+                  'disabled:cursor-not-allowed disabled:opacity-40',
+                )}
+                disabled={props.voiceLab.isBusy()}
+                onClick={() => props.onSampleSelect(script.text)}
+                type="button"
+              >
+                {script.label}
+              </button>
+            )
+          }}
+        </For>
+      </div>
       <textarea
         class={cx(FIELD_CLASSES, 'min-h-36 resize-none p-4 leading-7')}
         disabled={props.voiceLab.isBusy()}
+        id="custom-voice-text"
         maxlength={MAXIMUM_TEXT_LENGTH}
         onInput={(event) => props.onTextInput(event)}
         value={props.voiceLab.text()}
       />
-    </label>
+    </div>
     <label
       class={cx(
         'flex items-start gap-3 rounded-4 border border-white/8 bg-white/3 p-4',
@@ -354,6 +411,7 @@ export default function CustomVoiceStudio() {
           hasPermission={hasPermission}
           hasVoice={hasVoice}
           onPermissionChange={handlePermissionChange}
+          onSampleSelect={voiceLab.setText}
           onTextInput={handleTextInput}
           voiceLab={voiceLab}
         />
