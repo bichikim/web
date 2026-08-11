@@ -1,9 +1,10 @@
 import {A} from '@solidjs/router'
 import {cx} from 'class-variance-authority'
-import {createSignal, For, Show} from 'solid-js'
+import {createSignal, For, type JSX, Show} from 'solid-js'
 
 import {
   getSupertonicModel,
+  parseSupertonicVoiceStyle,
   SUPERTONIC_MODELS,
   SUPERTONIC_VOICES,
   type SupertonicModel,
@@ -14,8 +15,11 @@ import {
   type SupertonicVoiceResult,
   useSupertonicVoiceLab,
 } from '../features/supertonic'
+import {VOICE_TEST_SCRIPTS} from './voice-test-scripts'
+import {type ImportedVoice, VoiceDropZone} from './VoiceDropZone'
 
 const MAXIMUM_TEXT_LENGTH = 3000
+const MAXIMUM_FILE_SIZE = 2_000_000
 const BYTES_PER_MEGABYTE = 1_000_000
 const MILLISECONDS_PER_SECOND = 1000
 const INITIAL_TEXT = '오늘도 서두르지 말고, 한 번에 하나씩 집중해 볼까요?'
@@ -74,7 +78,14 @@ interface AudioChunksProps {
 }
 
 interface VoiceFieldsProps {
+  readonly disabled: boolean
+  readonly fileError: string | null
+  readonly hasPermission: boolean
+  readonly importedVoice: ImportedVoice | null
   readonly model: SupertonicModel
+  readonly onFileSelect: (file: File | undefined) => Promise<void>
+  readonly onPermissionChange: JSX.EventHandler<HTMLInputElement, Event>
+  readonly onSampleSelect: (text: string) => void
   readonly onTextInput: (event: InputEvent & {currentTarget: HTMLTextAreaElement}) => void
   readonly onVoiceChange: (event: Event & {currentTarget: HTMLSelectElement}) => void
   readonly selectedVoiceId: SupertonicVoiceId
@@ -96,7 +107,7 @@ const VoiceHeader = () => (
         캐릭터의 목소리를 만들어 보세요
       </h1>
       <p class="mb-0 mt-3 max-w-xl text-sm leading-6 text-#bdb2c4 sm:text-base">
-        대사를 입력하면 Supertonic 3가 기기 안에서 한국어 음성을 만들어요.
+        기본 목소리를 고르거나 목소리 스타일 JSON을 불러와 기기 안에서 한국어 음성을 만들어요.
       </p>
     </div>
     <div class="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-#f2a7b8 text-xl text-#2d1723">
@@ -276,67 +287,130 @@ const AudioChunks = (props: AudioChunksProps) => (
   </Show>
 )
 
-const VoiceFields = (props: VoiceFieldsProps) => (
-  <>
-    <label class="grid gap-2.5">
-      <span class="flex items-center justify-between text-sm font-650 text-#eee5ef">
-        목소리
-        <span class="rounded-full bg-white/6 px-2.5 py-1 text-xs font-500 text-#bdb2c4">
-          Supertonic 3 · 한국어
+const VoiceFields = (props: VoiceFieldsProps) => {
+  const selectedScriptId = () =>
+    VOICE_TEST_SCRIPTS.find((script) => script.text === props.text)?.id ?? ''
+  const handleScriptChange: JSX.EventHandler<HTMLSelectElement, Event> = (event) => {
+    const script = VOICE_TEST_SCRIPTS.find((item) => item.id === event.currentTarget.value)
+
+    if (script !== undefined) {
+      props.onSampleSelect(script.text)
+    }
+  }
+
+  return (
+    <>
+      <label class="grid gap-2.5">
+        <span class="flex items-center justify-between text-sm font-650 text-#eee5ef">
+          목소리
+          <span class="rounded-full bg-white/6 px-2.5 py-1 text-xs font-500 text-#bdb2c4">
+            Supertonic 3 · 한국어
+          </span>
         </span>
-      </span>
-      <div class="relative">
-        <select
-          class={VOICE_SELECT_CLASSES}
-          onChange={(event) => props.onVoiceChange(event)}
-          value={props.selectedVoiceId}
+        <div class="relative">
+          <select
+            class={VOICE_SELECT_CLASSES}
+            disabled={props.disabled}
+            onChange={(event) => props.onVoiceChange(event)}
+            value={props.importedVoice === null ? props.selectedVoiceId : 'custom'}
+          >
+            <For each={SUPERTONIC_VOICES}>
+              {(voice) => (
+                <option value={voice.id}>
+                  {voice.label} · {voice.gender === 'female' ? '여성' : '남성'} ({voice.id})
+                </option>
+              )}
+            </For>
+            <Show when={props.importedVoice}>
+              {(voice) => <option value="custom">커스텀 · {voice().name}</option>}
+            </Show>
+          </select>
+          <span class="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-#8f8297">
+            ▾
+          </span>
+        </div>
+        <p class="m-0 text-xs leading-5 text-#8f8297">
+          기본 목소리 10종을 고르거나 아래에서 커스텀 스타일을 불러올 수 있어요.
+        </p>
+      </label>
+
+      <VoiceDropZone
+        disabled={props.disabled}
+        fileError={props.fileError}
+        importedVoice={props.importedVoice}
+        onFileSelect={props.onFileSelect}
+      />
+
+      <Show when={props.importedVoice !== null}>
+        <label
+          class={cx(
+            'flex items-start gap-3 rounded-4 border border-white/8 bg-white/3 p-4',
+            'text-sm leading-6 text-#bdb2c4',
+          )}
         >
-          <For each={SUPERTONIC_VOICES}>
-            {(voice) => (
-              <option value={voice.id}>
-                {voice.label} · {voice.gender === 'female' ? '여성' : '남성'} ({voice.id})
-              </option>
-            )}
+          <input
+            checked={props.hasPermission}
+            class="mt-1 h-4 w-4 accent-#f2a7b8"
+            disabled={props.disabled}
+            onChange={(event) => props.onPermissionChange(event)}
+            type="checkbox"
+          />
+          <span>이 목소리를 사용할 본인 또는 권리자의 허락을 받았습니다.</span>
+        </label>
+      </Show>
+
+      <label class="grid gap-2 text-xs font-650 text-#bdb2c4" for="voice-test-script">
+        테스트 대사 빠른 선택
+        <select
+          class={cx(VOICE_SELECT_CLASSES, 'h-11')}
+          disabled={props.disabled}
+          id="voice-test-script"
+          onChange={handleScriptChange}
+          value={selectedScriptId()}
+        >
+          <option value="">직접 편집</option>
+          <For each={VOICE_TEST_SCRIPTS}>
+            {(script) => <option value={script.id}>{script.label}</option>}
           </For>
         </select>
-        <span class="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-#8f8297">
-          ▾
-        </span>
-      </div>
-      <p class="m-0 text-xs leading-5 text-#8f8297">
-        여성 5종, 남성 5종을 지원해요. 선택한 보이스 데이터는 필요할 때 한 번만 불러옵니다.
-      </p>
-    </label>
+      </label>
 
-    <label class="grid gap-2.5">
-      <span class="flex items-center justify-between text-sm font-650 text-#eee5ef">
-        대사
-        <span class="text-xs font-500 text-#8f8297">
-          {props.text.length} / {MAXIMUM_TEXT_LENGTH}
+      <label class="grid gap-2.5">
+        <span class="flex items-center justify-between text-sm font-650 text-#eee5ef">
+          대사
+          <span class="text-xs font-500 text-#8f8297">
+            {props.text.length} / {MAXIMUM_TEXT_LENGTH}
+          </span>
         </span>
-      </span>
-      <textarea
-        class={TEXTAREA_CLASSES}
-        maxlength={MAXIMUM_TEXT_LENGTH}
-        onInput={(event) => props.onTextInput(event)}
-        placeholder="캐릭터가 말할 문장을 입력하세요"
-        value={props.text}
-      />
-      <p class="m-0 text-xs leading-5 text-#8f8297">
-        {props.model.label} 모델은 {props.model.speechPolicy.considerSplitLength}자부터 문장 경계를
-        살피고, 약 {props.model.speechPolicy.recommendedLength}자로 나누며{' '}
-        {props.model.speechPolicy.maximumLength}자를 넘기지 않아요.
-      </p>
-    </label>
-  </>
-)
+        <textarea
+          class={TEXTAREA_CLASSES}
+          disabled={props.disabled}
+          maxlength={MAXIMUM_TEXT_LENGTH}
+          onInput={(event) => props.onTextInput(event)}
+          placeholder="캐릭터가 말할 문장을 입력하세요"
+          value={props.text}
+        />
+        <p class="m-0 text-xs leading-5 text-#8f8297">
+          {props.model.label} 모델은 {props.model.speechPolicy.considerSplitLength}자부터 문장
+          경계를 살피고, 약 {props.model.speechPolicy.recommendedLength}자로 나누며{' '}
+          {props.model.speechPolicy.maximumLength}자를 넘기지 않아요.
+        </p>
+      </label>
+    </>
+  )
+}
 
 export const VoiceGenerator = () => {
   const [hasAcceptedTerms, setHasAcceptedTerms] = createSignal(false)
   const voiceLab = useSupertonicVoiceLab({initialText: INITIAL_TEXT})
+  const [importedVoice, setImportedVoice] = createSignal<ImportedVoice | null>(null)
+  const [fileError, setFileError] = createSignal<string | null>(null)
+  const [hasPermission, setHasPermission] = createSignal(false)
+  let fileSelectionId = 0
+  const hasVoiceUsagePermission = () => importedVoice() === null || hasPermission()
 
   const handleGenerate = () => {
-    if (hasAcceptedTerms()) {
+    if (hasAcceptedTerms() && hasVoiceUsagePermission()) {
       voiceLab.generate()
     }
   }
@@ -359,9 +433,59 @@ export const VoiceGenerator = () => {
     const voice = SUPERTONIC_VOICES.find((item) => item.id === event.currentTarget.value)
 
     if (voice !== undefined) {
+      fileSelectionId += 1
+      setImportedVoice(null)
+      setFileError(null)
+      setHasPermission(false)
       voiceLab.selectVoice(voice.id)
     }
   }
+  const handleFileSelect = async (file: File | undefined) => {
+    fileSelectionId += 1
+    const currentSelectionId = fileSelectionId
+    setFileError(null)
+
+    if (file === undefined) {
+      return
+    }
+
+    if (!file.name.toLowerCase().endsWith('.json')) {
+      setFileError('Supertonic 3 목소리 스타일 JSON 파일을 선택해 주세요.')
+      return
+    }
+
+    if (file.size > MAXIMUM_FILE_SIZE) {
+      setFileError('목소리 JSON은 2MB보다 작아야 해요.')
+      return
+    }
+
+    try {
+      const value: unknown = JSON.parse(await file.text())
+
+      if (currentSelectionId !== fileSelectionId) {
+        return
+      }
+
+      const voiceStyle = parseSupertonicVoiceStyle(value)
+
+      if (!voiceStyle.ok) {
+        setFileError('Supertonic 3 목소리 스타일 형식과 맞지 않는 JSON이에요.')
+        return
+      }
+
+      setImportedVoice({name: file.name, size: file.size})
+      setHasPermission(false)
+      voiceLab.selectCustomVoice(voiceStyle.value)
+    } catch {
+      if (currentSelectionId === fileSelectionId) {
+        setFileError('JSON 파일을 읽지 못했어요. 파일이 손상되지 않았는지 확인해 주세요.')
+      }
+    }
+  }
+  const handlePermissionChange: JSX.EventHandler<HTMLInputElement, Event> = (event) => {
+    setHasPermission(event.currentTarget.checked)
+  }
+  const canGenerate = () => voiceLab.canGenerate() && hasVoiceUsagePermission()
 
   return (
     <section class={SECTION_CLASSES}>
@@ -383,7 +507,14 @@ export const VoiceGenerator = () => {
         />
 
         <VoiceFields
+          disabled={voiceLab.isBusy()}
+          fileError={fileError()}
+          hasPermission={hasPermission()}
+          importedVoice={importedVoice()}
           model={voiceLab.selectedModel()}
+          onFileSelect={handleFileSelect}
+          onPermissionChange={handlePermissionChange}
+          onSampleSelect={voiceLab.setText}
           onTextInput={handleTextInput}
           onVoiceChange={handleVoiceChange}
           selectedVoiceId={voiceLab.selectedVoiceId()}
@@ -397,7 +528,7 @@ export const VoiceGenerator = () => {
           onAcceptedTermsChange={setHasAcceptedTerms}
         />
         <VoiceActions
-          canGenerate={voiceLab.canGenerate()}
+          canGenerate={canGenerate()}
           canPrepare={voiceLab.canPrepare()}
           hasAcceptedTerms={hasAcceptedTerms()}
           isModelReady={voiceLab.isModelReady()}

@@ -12,6 +12,7 @@ import {
   reportModelStorageError,
 } from '../model-storage'
 import {
+  createSupertonicVoice,
   parseSupertonicConfig,
   parseSupertonicIndexer,
   parseSupertonicVoice,
@@ -27,7 +28,7 @@ import {
   type SupertonicError,
   type WorkerFailedError,
 } from './errors'
-import type {SupertonicWorkerInput, SupertonicWorkerOutput} from './messages'
+import type {SupertonicVoiceSource, SupertonicWorkerInput, SupertonicWorkerOutput} from './messages'
 import {
   getSupertonicAssetUrl,
   getSupertonicModel,
@@ -352,19 +353,23 @@ const initialize = async (model: SupertonicModel): Promise<Result<Backend, Super
 }
 
 const getVoice = async (
-  voiceId: SupertonicVoiceId,
+  voice: SupertonicVoiceSource,
   signal: AbortSignal,
 ): Promise<Result<SupertonicVoice, SupertonicError>> => {
-  const cachedVoice = voiceCache.get(voiceId)
+  if (voice.kind === 'custom') {
+    return successResult(createSupertonicVoice(voice.value))
+  }
+
+  const cachedVoice = voiceCache.get(voice.id)
 
   if (cachedVoice !== undefined) {
     return successResult(cachedVoice)
   }
 
   const response = await fetchJson({
-    fileName: `${voiceId} 목소리`,
+    fileName: `${voice.id} 목소리`,
     signal,
-    url: getSupertonicVoiceUrl(voiceId),
+    url: getSupertonicVoiceUrl(voice.id),
   })
 
   if (!response.ok) {
@@ -374,7 +379,7 @@ const getVoice = async (
   const voiceResult = parseSupertonicVoice(response.value)
 
   if (voiceResult.ok) {
-    voiceCache.set(voiceId, voiceResult.value)
+    voiceCache.set(voice.id, voiceResult.value)
   }
 
   return voiceResult
@@ -398,7 +403,7 @@ const generate = async (
   const startedAt = performance.now()
 
   try {
-    const voiceResult = await getVoice(message.voiceId, abortController.signal)
+    const voiceResult = await getVoice(message.voice, abortController.signal)
 
     if (!voiceResult.ok) {
       return voiceResult
