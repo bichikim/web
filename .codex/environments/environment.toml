@@ -7,12 +7,16 @@ script = "cd "
 
 [setup.darwin]
 script = '''
-# AI_NOTE - Refresh base `dev` before entering the new worktree so setup starts from latest origin/dev (AGENTS.md).
+# AI_NOTE - Warm dependencies and Turbo outputs in a clean source `dev` so new worktrees can reuse them.
 SOURCE_TREE_PATH="${CODEX_SOURCE_TREE_PATH:-}"
 if [ -n "$SOURCE_TREE_PATH" ]; then
   git -C "$SOURCE_TREE_PATH" fetch origin
-  # Fast-forward local `dev` only; ignore when diverged or unavailable.
-  git -C "$SOURCE_TREE_PATH" fetch origin dev:dev || true
+  if [ "$(git -C "$SOURCE_TREE_PATH" branch --show-current)" = "dev" ] &&
+    [ -z "$(git -C "$SOURCE_TREE_PATH" status --porcelain)" ] &&
+    git -C "$SOURCE_TREE_PATH" merge-base --is-ancestor HEAD origin/dev; then
+    git -C "$SOURCE_TREE_PATH" merge --ff-only origin/dev
+    (cd "$SOURCE_TREE_PATH" && pnpm install --frozen-lockfile)
+  fi
 fi
 
 cd "$CODEX_WORKTREE_PATH"
@@ -30,7 +34,7 @@ fi
 if [ -d "$REPOSITORY_PATH/.turbo" ]; then
   cp -R "$REPOSITORY_PATH/.turbo" .turbo
 fi
-pnpm install
+pnpm install --frozen-lockfile
 git config user.name "kimbichi"
 git config user.email "bichi@live.co.kr"
 '''

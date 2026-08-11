@@ -44,6 +44,15 @@ export interface SupertonicClient {
 
 const DEFAULT_SPEECH_SPEED = 1.05
 const ignoreChunk = () => undefined
+const getAudioChunk = (
+  message: Extract<SupertonicWorkerOutput, {readonly type: 'chunk'}>,
+): SupertonicAudioChunk => ({
+  generationTime: message.generationTime,
+  index: message.index,
+  sampleRate: message.sampleRate,
+  samples: message.samples,
+  total: message.total,
+})
 
 /** Creates an isolated Supertonic Worker client and owns it until disposal. */
 export const createSupertonicClient = (): SupertonicClient => {
@@ -68,41 +77,45 @@ export const createSupertonicClient = (): SupertonicClient => {
   }
 
   const handleMessage = (message: SupertonicWorkerOutput) => {
-    if (message.type === 'progress') {
-      onProgress?.(message.progress)
-    } else if (message.type === 'status') {
-      onStatus?.(message.message)
-    } else if (message.type === 'ready') {
-      initializeResolve?.(successResult(undefined))
-      initializeResolve = null
-    } else if (message.type === 'chunk') {
-      pendingRequest?.onChunk({
-        generationTime: message.generationTime,
-        index: message.index,
-        sampleRate: message.sampleRate,
-        samples: message.samples,
-        total: message.total,
-      })
-    } else if (message.type === 'result') {
-      pendingRequest?.resolve(
-        successResult({
-          generationTime: message.generationTime,
-          sampleRate: message.sampleRate,
-          samples: message.samples,
-        }),
-      )
-      pendingRequest = null
-    } else if (message.type === 'error') {
-      if (message.requestId === null) {
-        initializeResolve?.(failureResult(message.error))
+    switch (message.type) {
+      case 'chunk':
+        pendingRequest?.onChunk(getAudioChunk(message))
+        return
+      case 'disposed':
+        worker.terminate()
+        return
+      case 'error':
+        if (message.requestId === null) {
+          initializeResolve?.(failureResult(message.error))
+          initializeResolve = null
+        } else {
+          pendingRequest?.resolve(failureResult(message.error))
+          pendingRequest = null
+        }
+        return
+      case 'progress':
+        onProgress?.(message.progress)
+        return
+      case 'ready':
+        initializeResolve?.(successResult(undefined))
         initializeResolve = null
-      } else {
-        pendingRequest?.resolve(failureResult(message.error))
+        return
+      case 'result':
+        pendingRequest?.resolve(
+          successResult({
+            generationTime: message.generationTime,
+            sampleRate: message.sampleRate,
+            samples: message.samples,
+          }),
+        )
         pendingRequest = null
-      }
-    } else {
-      worker.terminate()
+        return
+      case 'status':
+        onStatus?.(message.message)
+        return
     }
+
+    message satisfies never
   }
 
   worker.addEventListener('message', (event: MessageEvent<SupertonicWorkerOutput>) => {
