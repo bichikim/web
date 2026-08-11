@@ -1,4 +1,3 @@
-import {A} from '@solidjs/router'
 import {cx} from 'class-variance-authority'
 import {createSignal, For, type JSX, Show} from 'solid-js'
 
@@ -62,7 +61,6 @@ interface ModelPickerProps {
 interface VoiceActionsProps {
   readonly canGenerate: boolean
   readonly canPrepare: boolean
-  readonly hasAcceptedTerms: boolean
   readonly isModelReady: boolean
   readonly onGenerate: () => void
   readonly onPrepare: () => void
@@ -80,21 +78,14 @@ interface AudioChunksProps {
 interface VoiceFieldsProps {
   readonly disabled: boolean
   readonly fileError: string | null
-  readonly hasPermission: boolean
   readonly importedVoice: ImportedVoice | null
   readonly model: SupertonicModel
   readonly onFileSelect: (file: File | undefined) => Promise<void>
-  readonly onPermissionChange: JSX.EventHandler<HTMLInputElement, Event>
   readonly onSampleSelect: (text: string) => void
   readonly onTextInput: (event: InputEvent & {currentTarget: HTMLTextAreaElement}) => void
   readonly onVoiceChange: (event: Event & {currentTarget: HTMLSelectElement}) => void
   readonly selectedVoiceId: SupertonicVoiceId
   readonly text: string
-}
-
-interface UsageAgreementProps {
-  readonly hasAcceptedTerms: boolean
-  readonly onAcceptedTermsChange: (hasAcceptedTerms: boolean) => void
 }
 
 const VoiceHeader = () => (
@@ -189,9 +180,7 @@ const VoiceActions = (props: VoiceActionsProps) => (
   <div class="flex justify-end">
     <button
       class={BUTTON_CLASSES}
-      disabled={
-        !props.hasAcceptedTerms || (props.isModelReady ? !props.canGenerate : !props.canPrepare)
-      }
+      disabled={props.isModelReady ? !props.canGenerate : !props.canPrepare}
       onClick={() => (props.isModelReady ? props.onGenerate() : props.onPrepare())}
       type="button"
     >
@@ -203,28 +192,6 @@ const VoiceActions = (props: VoiceActionsProps) => (
             ? '음성 만들기'
             : 'Supertonic 준비하기'}
     </button>
-  </div>
-)
-
-const UsageAgreement = (props: UsageAgreementProps) => (
-  <div class="rounded-4 border border-white/8 bg-white/3 p-4">
-    <div class="flex items-start gap-3">
-      <input
-        checked={props.hasAcceptedTerms}
-        class="mt-0.5 h-4 w-4 shrink-0 accent-#f2a7b8"
-        id="voice-terms-agreement"
-        onChange={(event) => props.onAcceptedTermsChange(event.currentTarget.checked)}
-        type="checkbox"
-      />
-      <div class="grid gap-1">
-        <label class="text-sm leading-6 text-#d9cfdd" for="voice-terms-agreement">
-          AI 음성 생성 금지 용도를 확인했으며 이용약관에 동의합니다.
-        </label>
-        <A class="w-fit text-xs font-650 text-#ffc0ce underline" href="/terms">
-          Pomo 서비스 이용약관 초안 보기
-        </A>
-      </div>
-    </div>
   </div>
 )
 
@@ -341,24 +308,6 @@ const VoiceFields = (props: VoiceFieldsProps) => {
         onFileSelect={props.onFileSelect}
       />
 
-      <Show when={props.importedVoice !== null}>
-        <label
-          class={cx(
-            'flex items-start gap-3 rounded-4 border border-white/8 bg-white/3 p-4',
-            'text-sm leading-6 text-#bdb2c4',
-          )}
-        >
-          <input
-            checked={props.hasPermission}
-            class="mt-1 h-4 w-4 accent-#f2a7b8"
-            disabled={props.disabled}
-            onChange={(event) => props.onPermissionChange(event)}
-            type="checkbox"
-          />
-          <span>이 목소리를 사용할 본인 또는 권리자의 허락을 받았습니다.</span>
-        </label>
-      </Show>
-
       <label class="grid gap-2 text-xs font-650 text-#bdb2c4" for="voice-test-script">
         테스트 대사 빠른 선택
         <select
@@ -401,25 +350,10 @@ const VoiceFields = (props: VoiceFieldsProps) => {
 }
 
 export const VoiceGenerator = () => {
-  const [hasAcceptedTerms, setHasAcceptedTerms] = createSignal(false)
   const voiceLab = useSupertonicVoiceLab({initialText: INITIAL_TEXT})
   const [importedVoice, setImportedVoice] = createSignal<ImportedVoice | null>(null)
   const [fileError, setFileError] = createSignal<string | null>(null)
-  const [hasPermission, setHasPermission] = createSignal(false)
   let fileSelectionId = 0
-  const hasVoiceUsagePermission = () => importedVoice() === null || hasPermission()
-
-  const handleGenerate = () => {
-    if (hasAcceptedTerms() && hasVoiceUsagePermission()) {
-      voiceLab.generate()
-    }
-  }
-
-  const handlePrepare = () => {
-    if (hasAcceptedTerms()) {
-      voiceLab.prepare()
-    }
-  }
 
   const handleModelChange = (modelId: SupertonicModelId) => {
     voiceLab.selectModel(modelId)
@@ -436,7 +370,6 @@ export const VoiceGenerator = () => {
       fileSelectionId += 1
       setImportedVoice(null)
       setFileError(null)
-      setHasPermission(false)
       voiceLab.selectVoice(voice.id)
     }
   }
@@ -474,7 +407,6 @@ export const VoiceGenerator = () => {
       }
 
       setImportedVoice({name: file.name, size: file.size})
-      setHasPermission(false)
       voiceLab.selectCustomVoice(voiceStyle.value)
     } catch {
       if (currentSelectionId === fileSelectionId) {
@@ -482,11 +414,6 @@ export const VoiceGenerator = () => {
       }
     }
   }
-  const handlePermissionChange: JSX.EventHandler<HTMLInputElement, Event> = (event) => {
-    setHasPermission(event.currentTarget.checked)
-  }
-  const canGenerate = () => voiceLab.canGenerate() && hasVoiceUsagePermission()
-
   return (
     <section class={SECTION_CLASSES}>
       <div class="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-#ed91aa/12 blur-3xl" />
@@ -509,11 +436,9 @@ export const VoiceGenerator = () => {
         <VoiceFields
           disabled={voiceLab.isBusy()}
           fileError={fileError()}
-          hasPermission={hasPermission()}
           importedVoice={importedVoice()}
           model={voiceLab.selectedModel()}
           onFileSelect={handleFileSelect}
-          onPermissionChange={handlePermissionChange}
           onSampleSelect={voiceLab.setText}
           onTextInput={handleTextInput}
           onVoiceChange={handleVoiceChange}
@@ -523,17 +448,12 @@ export const VoiceGenerator = () => {
 
         <AudioChunks chunks={voiceLab.chunks()} />
         <AudioResults results={voiceLab.results()} />
-        <UsageAgreement
-          hasAcceptedTerms={hasAcceptedTerms()}
-          onAcceptedTermsChange={setHasAcceptedTerms}
-        />
         <VoiceActions
-          canGenerate={canGenerate()}
+          canGenerate={voiceLab.canGenerate()}
           canPrepare={voiceLab.canPrepare()}
-          hasAcceptedTerms={hasAcceptedTerms()}
           isModelReady={voiceLab.isModelReady()}
-          onGenerate={handleGenerate}
-          onPrepare={handlePrepare}
+          onGenerate={voiceLab.generate}
+          onPrepare={voiceLab.prepare}
           status={voiceLab.state().status}
         />
       </div>
