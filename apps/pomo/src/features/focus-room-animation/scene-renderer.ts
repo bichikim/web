@@ -25,6 +25,10 @@ export interface FocusRoomSceneState {
   readonly time: FocusRoomTime
 }
 
+export interface FocusRoomSceneRendererOptions {
+  readonly onLoadingChange?: (isLoading: boolean) => void
+}
+
 interface EyeAsset {
   readonly closed: string
   readonly half: string
@@ -118,9 +122,12 @@ const reportError = (error: unknown) => {
   globalThis.reportError(error)
 }
 
+const ignoreLoadingChange = () => undefined
+
 export class FocusRoomSceneRenderer {
   readonly #application = new Application()
   readonly #host: HTMLDivElement
+  readonly #onLoadingChange: (isLoading: boolean) => void
   readonly #parallax: ParallaxController
   #applicationReady = false
   #currentDepthSource: string | null = null
@@ -139,13 +146,15 @@ export class FocusRoomSceneRenderer {
   #requestedDepthSource: string | null = null
   #requestedSource: string | null = null
   #sceneReady = false
+  #settledFrame: number | null = null
   #scheduler: BlinkScheduler | null = null
   #state: FocusRoomSceneState | null = null
   #transitionFrame: number | null = null
   #transitionVersion = 0
 
-  constructor(host: HTMLDivElement) {
+  constructor(host: HTMLDivElement, options: FocusRoomSceneRendererOptions = {}) {
     this.#host = host
+    this.#onLoadingChange = options.onLoadingChange ?? ignoreLoadingChange
     this.#parallax = new ParallaxController(host, (x, y) => {
       this.#depthFilter?.setPointerOffset(x, y)
       this.#application.render()
@@ -153,6 +162,7 @@ export class FocusRoomSceneRenderer {
   }
 
   async initialize(state: FocusRoomSceneState) {
+    this.#startLoading()
     this.#state = state
     await this.#application.init({
       antialias: false,
@@ -191,15 +201,16 @@ export class FocusRoomSceneRenderer {
     this.#initialized = true
     const latestState = this.#state
 
+    this.#parallax.start()
+    this.#application.render()
+    this.#finishLoadingAfterPaint()
+
     if (
       latestState !== null &&
       !this.#isCurrentScene(latestState.source, latestState.depthSource)
     ) {
       this.#transitionTo(latestState.source, latestState.depthSource).catch(reportError)
     }
-
-    this.#parallax.start()
-    this.#application.render()
   }
 
   update(state: FocusRoomSceneState) {
@@ -227,6 +238,7 @@ export class FocusRoomSceneRenderer {
       this.#cancelTransition()
       this.#sceneReady = true
       this.#application.render()
+      this.#finishLoadingAfterPaint()
     }
   }
 
@@ -239,6 +251,7 @@ export class FocusRoomSceneRenderer {
     this.#transitionVersion += 1
     this.#eyeSequence += 1
     this.#cancelTransition()
+    this.#cancelSettledFrame()
     this.#parallax.destroy()
     this.#scheduler?.destroy()
     this.#scheduler = null
@@ -403,6 +416,7 @@ export class FocusRoomSceneRenderer {
     }
 
     const version = this.#transitionVersion + 1
+    this.#startLoading()
     this.#transitionVersion = version
     this.#requestedSource = source
     this.#requestedDepthSource = depthSource
@@ -437,6 +451,7 @@ export class FocusRoomSceneRenderer {
         this.#requestedSource = null
         this.#requestedDepthSource = null
         this.#sceneReady = this.#currentScene !== null
+        this.#onLoadingChange(false)
       }
 
       throw error
@@ -492,6 +507,8 @@ export class FocusRoomSceneRenderer {
     this.#depthFilter?.finishDepthTransition()
     releaseTextureGroup(previousTextures)
     this.#scheduler?.start()
+    this.#application.render()
+    this.#finishLoadingAfterPaint()
   }
 
   #cancelTransition() {
@@ -509,6 +526,31 @@ export class FocusRoomSceneRenderer {
 
     if (this.#currentScene !== null) {
       this.#currentScene.alpha = 1
+    }
+  }
+
+  #startLoading() {
+    this.#cancelSettledFrame()
+    this.#onLoadingChange(true)
+  }
+
+  #finishLoadingAfterPaint() {
+    this.#cancelSettledFrame()
+    this.#settledFrame = window.requestAnimationFrame(() => {
+      this.#settledFrame = window.requestAnimationFrame(() => {
+        this.#settledFrame = null
+
+        if (!this.#destroyed) {
+          this.#onLoadingChange(false)
+        }
+      })
+    })
+  }
+
+  #cancelSettledFrame() {
+    if (this.#settledFrame !== null) {
+      window.cancelAnimationFrame(this.#settledFrame)
+      this.#settledFrame = null
     }
   }
 

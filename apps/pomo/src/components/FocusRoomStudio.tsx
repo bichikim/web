@@ -1,19 +1,19 @@
 import {clientOnly} from '@solidjs/start'
 import {cx} from 'class-variance-authority'
-import {createMemo, createSignal, For} from 'solid-js'
+import {createMemo, createSignal, For, Show} from 'solid-js'
 
-import dayReadingImage from '../../assets/concept-art/focus-room-day-reading-concept.png'
-import dayReadingGazeImage from '../../assets/concept-art/focus-room-day-reading-user-gaze-concept.png'
-import dayTypingImage from '../../assets/concept-art/focus-room-day-typing-concept.png'
-import dayTypingGazeImage from '../../assets/concept-art/focus-room-day-typing-user-gaze-concept.png'
-import dayWritingImage from '../../assets/concept-art/focus-room-day-writing-concept.png'
-import dayWritingGazeImage from '../../assets/concept-art/focus-room-day-writing-user-gaze-concept.png'
-import nightReadingImage from '../../assets/concept-art/focus-room-night-reading-concept.png'
-import nightReadingGazeImage from '../../assets/concept-art/focus-room-night-reading-user-gaze-concept.png'
-import nightTypingImage from '../../assets/concept-art/focus-room-night-typing-concept.png'
-import nightTypingGazeImage from '../../assets/concept-art/focus-room-night-typing-user-gaze-concept.png'
-import nightWritingImage from '../../assets/concept-art/focus-room-night-desk-concept.png'
-import nightWritingGazeImage from '../../assets/concept-art/focus-room-night-writing-user-gaze-concept.png'
+import dayReadingImage from '../../assets/concept-art/focus-room-day-reading-concept.webp'
+import dayReadingGazeImage from '../../assets/concept-art/focus-room-day-reading-user-gaze-concept.webp'
+import dayTypingImage from '../../assets/concept-art/focus-room-day-typing-concept.webp'
+import dayTypingGazeImage from '../../assets/concept-art/focus-room-day-typing-user-gaze-concept.webp'
+import dayWritingImage from '../../assets/concept-art/focus-room-day-writing-concept.webp'
+import dayWritingGazeImage from '../../assets/concept-art/focus-room-day-writing-user-gaze-concept.webp'
+import nightReadingImage from '../../assets/concept-art/focus-room-night-reading-concept.webp'
+import nightReadingGazeImage from '../../assets/concept-art/focus-room-night-reading-user-gaze-concept.webp'
+import nightTypingImage from '../../assets/concept-art/focus-room-night-typing-concept.webp'
+import nightTypingGazeImage from '../../assets/concept-art/focus-room-night-typing-user-gaze-concept.webp'
+import nightWritingImage from '../../assets/concept-art/focus-room-night-desk-concept.webp'
+import nightWritingGazeImage from '../../assets/concept-art/focus-room-night-writing-user-gaze-concept.webp'
 import dayReadingDepth from '../../assets/focus-room-depth/depth-day-reading.png'
 import dayReadingGazeDepth from '../../assets/focus-room-depth/depth-day-reading-user-gaze.png'
 import dayTypingDepth from '../../assets/focus-room-depth/depth-day-typing.png'
@@ -196,6 +196,7 @@ export const FocusRoomStudio = () => {
   const [time, setTime] = createSignal<SceneTime>('day')
   const [activity, setActivity] = createSignal<SceneActivity>('reading')
   const [gaze, setGaze] = createSignal<SceneGaze>('focused')
+  const [isSceneLoading, setIsSceneLoading] = createSignal(true)
   const selectedScene = createMemo(() => getSceneAsset(time(), activity(), gaze()))
 
   return (
@@ -218,9 +219,31 @@ export const FocusRoomStudio = () => {
           activity={activity()}
           depthSource={selectedScene().depthSource}
           gaze={gaze()}
+          onLoadingChange={setIsSceneLoading}
           source={selectedScene().source}
           time={time()}
         />
+
+        <Show when={isSceneLoading()}>
+          <div
+            aria-live="polite"
+            class="pointer-events-none absolute inset-0 z-20 grid place-items-center bg-#17130f/24"
+            role="status"
+          >
+            <span
+              class={cx(
+                'flex items-center gap-3 rounded-full bg-black/56 px-5 py-3',
+                'text-sm font-650 text-white shadow-lg backdrop-blur-md',
+              )}
+            >
+              <span
+                aria-hidden="true"
+                class="size-5 animate-spin rounded-full border-2 border-white/28 border-t-#e8c795"
+              />
+              장면을 불러오는 중
+            </span>
+          </div>
+        </Show>
       </figure>
     </section>
   )

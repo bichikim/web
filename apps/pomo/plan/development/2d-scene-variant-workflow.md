@@ -153,7 +153,8 @@ pnpm lint
 
 ## 관련 자산과 스크립트
 
-- 런타임 최종 이미지 12장: `assets/concept-art/focus-room-*.png`
+- 편집 원본 이미지 12장: `assets/concept-art/focus-room-*.png`
+- 런타임 압축 이미지 12장: `assets/concept-art/focus-room-*.webp`
 - 눈 깜박임 레이어: `assets/focus-room-animation/eyes-*.png`
 - 로컬 중간 산출물: `.temp/pomo-focus-room/`
 - 머리 정규화 스크립트: `scripts/normalize-focus-room-day-heads.mjs`
@@ -200,3 +201,14 @@ python scripts/create-focus-room-depth-maps.py \
 ```
 
 생성 설정과 원본 SHA-256은 `assets/focus-room-depth/manifest.json`에 기록한다. 런타임은 생성 모델을 포함하지 않고 완성된 8-bit grayscale PNG만 로드한다.
+
+## 11. 런타임 장면을 거의 무손실로 압축한다
+
+원본 PNG는 AI 재편집과 depth-map 재생성을 위해 보존하고, 페이지에는 WebP near-lossless 95를 사용한다. 대표 낮·밤 4장 측정에서 원본 12.0MB가 4.6MB로 줄었고 평균 MAE는 0.29/255, PSNR은 53.6dB였다. 더 작은 일반 WebP q95와 AVIF q90은 오차가 3배 이상 커서 사용하지 않는다.
+
+```bash
+cd apps/pomo
+node scripts/compress-focus-room-scenes.mjs
+```
+
+PixiJS 로딩 표시는 장면 PNG/WebP의 네트워크·디코딩뿐 아니라 depth texture와 눈 texture 로드, stage 합성과 전환까지 포함한다. `Application.render()` 뒤 두 번의 animation frame을 지난 후에만 완료 처리해 합성 프레임이 실제 화면에 나오기 전에 로더가 사라지지 않게 한다.
