@@ -83,7 +83,8 @@ describe('createSupertonicClient', () => {
   it('should resolve generated audio and return a failure for concurrent requests', async () => {
     const client = createSupertonicClient()
     const worker = getWorker()
-    const generation = client.generate({text: '안녕', voice: {id: 'F1', kind: 'preset'}})
+    const text = '**네, 좋아요.**'
+    const generation = client.generate({text, voice: {id: 'F1', kind: 'preset'}})
 
     expect(await client.generate({text: '다시', voice: {id: 'F2', kind: 'preset'}})).toEqual({
       error: {code: 'generation-busy', phase: 'generate', retryable: true},
@@ -108,11 +109,52 @@ describe('createSupertonicClient', () => {
     })
     expect(worker.postMessage).toHaveBeenCalledWith({
       requestId: 1,
-      speed: 1.05,
-      text: '안녕',
+      speed: 0.8,
+      text,
       type: 'generate',
       voice: {id: 'F1', kind: 'preset'},
     })
+  })
+
+  it('should keep normal speed for longer speech and preserve an explicit speed', async () => {
+    const client = createSupertonicClient()
+    const worker = getWorker()
+    const voice = {id: 'F1' as const, kind: 'preset' as const}
+    const longText = '일이삼사오육칠팔구십일'
+    const longGeneration = client.generate({text: longText, voice})
+
+    expect(worker.postMessage).toHaveBeenLastCalledWith({
+      requestId: 1,
+      speed: 1.05,
+      text: longText,
+      type: 'generate',
+      voice,
+    })
+    worker.emitMessage({
+      generationTime: GENERATION_TIME,
+      requestId: 1,
+      sampleRate: SAMPLE_RATE,
+      samples: Float32Array.of(0.1),
+      type: 'result',
+    })
+    await longGeneration
+
+    const explicitGeneration = client.generate({speed: 1.2, text: '짧은 말', voice})
+    expect(worker.postMessage).toHaveBeenLastCalledWith({
+      requestId: 2,
+      speed: 1.2,
+      text: '짧은 말',
+      type: 'generate',
+      voice,
+    })
+    worker.emitMessage({
+      generationTime: GENERATION_TIME,
+      requestId: 2,
+      sampleRate: SAMPLE_RATE,
+      samples: Float32Array.of(0.1),
+      type: 'result',
+    })
+    await explicitGeneration
   })
 
   it('should yield each completed chunk before the final combined audio', async () => {

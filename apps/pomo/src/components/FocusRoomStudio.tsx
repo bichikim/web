@@ -1,19 +1,31 @@
 import {clientOnly} from '@solidjs/start'
 import {cx} from 'class-variance-authority'
-import {createMemo, createSignal, For} from 'solid-js'
+import {createMemo, createSignal, For, Show} from 'solid-js'
 
-import dayReadingImage from '../../assets/concept-art/focus-room-day-reading-concept.png'
-import dayReadingGazeImage from '../../assets/concept-art/focus-room-day-reading-user-gaze-concept.png'
-import dayTypingImage from '../../assets/concept-art/focus-room-day-typing-concept.png'
-import dayTypingGazeImage from '../../assets/concept-art/focus-room-day-typing-user-gaze-concept.png'
-import dayWritingImage from '../../assets/concept-art/focus-room-day-writing-concept.png'
-import dayWritingGazeImage from '../../assets/concept-art/focus-room-day-writing-user-gaze-concept.png'
-import nightReadingImage from '../../assets/concept-art/focus-room-night-reading-concept.png'
-import nightReadingGazeImage from '../../assets/concept-art/focus-room-night-reading-user-gaze-concept.png'
-import nightTypingImage from '../../assets/concept-art/focus-room-night-typing-concept.png'
-import nightTypingGazeImage from '../../assets/concept-art/focus-room-night-typing-user-gaze-concept.png'
-import nightWritingImage from '../../assets/concept-art/focus-room-night-desk-concept.png'
-import nightWritingGazeImage from '../../assets/concept-art/focus-room-night-writing-user-gaze-concept.png'
+import dayReadingImage from '../../assets/concept-art/focus-room-day-reading-concept.webp'
+import dayReadingGazeImage from '../../assets/concept-art/focus-room-day-reading-user-gaze-concept.webp'
+import dayTypingImage from '../../assets/concept-art/focus-room-day-typing-concept.webp'
+import dayTypingGazeImage from '../../assets/concept-art/focus-room-day-typing-user-gaze-concept.webp'
+import dayWritingImage from '../../assets/concept-art/focus-room-day-writing-concept.webp'
+import dayWritingGazeImage from '../../assets/concept-art/focus-room-day-writing-user-gaze-concept.webp'
+import nightReadingImage from '../../assets/concept-art/focus-room-night-reading-concept.webp'
+import nightReadingGazeImage from '../../assets/concept-art/focus-room-night-reading-user-gaze-concept.webp'
+import nightTypingImage from '../../assets/concept-art/focus-room-night-typing-concept.webp'
+import nightTypingGazeImage from '../../assets/concept-art/focus-room-night-typing-user-gaze-concept.webp'
+import nightWritingImage from '../../assets/concept-art/focus-room-night-desk-concept.webp'
+import nightWritingGazeImage from '../../assets/concept-art/focus-room-night-writing-user-gaze-concept.webp'
+import dayReadingDepth from '../../assets/focus-room-depth/depth-day-reading.png'
+import dayReadingGazeDepth from '../../assets/focus-room-depth/depth-day-reading-user-gaze.png'
+import dayTypingDepth from '../../assets/focus-room-depth/depth-day-typing.png'
+import dayTypingGazeDepth from '../../assets/focus-room-depth/depth-day-typing-user-gaze.png'
+import dayWritingDepth from '../../assets/focus-room-depth/depth-day-writing.png'
+import dayWritingGazeDepth from '../../assets/focus-room-depth/depth-day-writing-user-gaze.png'
+import nightReadingDepth from '../../assets/focus-room-depth/depth-night-reading.png'
+import nightReadingGazeDepth from '../../assets/focus-room-depth/depth-night-reading-user-gaze.png'
+import nightTypingDepth from '../../assets/focus-room-depth/depth-night-typing.png'
+import nightTypingGazeDepth from '../../assets/focus-room-depth/depth-night-typing-user-gaze.png'
+import nightWritingDepth from '../../assets/focus-room-depth/depth-night-desk.png'
+import nightWritingGazeDepth from '../../assets/focus-room-depth/depth-night-writing-user-gaze.png'
 
 const FocusRoomSceneCanvas = clientOnly(() => import('./FocusRoomSceneCanvas.client'), {
   lazy: true,
@@ -38,6 +50,7 @@ type SceneActivity = (typeof ACTIVITY_OPTIONS)[number]['value']
 type SceneGaze = (typeof GAZE_OPTIONS)[number]['value']
 
 interface SceneAsset {
+  readonly depthSource: string
   readonly label: string
   readonly source: string
 }
@@ -61,6 +74,19 @@ const SCENE_SOURCES = {
     reading: {focused: nightReadingImage, user: nightReadingGazeImage},
     typing: {focused: nightTypingImage, user: nightTypingGazeImage},
     writing: {focused: nightWritingImage, user: nightWritingGazeImage},
+  },
+} satisfies Record<SceneTime, Record<SceneActivity, Record<SceneGaze, string>>>
+
+const DEPTH_SOURCES = {
+  day: {
+    reading: {focused: dayReadingDepth, user: dayReadingGazeDepth},
+    typing: {focused: dayTypingDepth, user: dayTypingGazeDepth},
+    writing: {focused: dayWritingDepth, user: dayWritingGazeDepth},
+  },
+  night: {
+    reading: {focused: nightReadingDepth, user: nightReadingGazeDepth},
+    typing: {focused: nightTypingDepth, user: nightTypingGazeDepth},
+    writing: {focused: nightWritingDepth, user: nightWritingGazeDepth},
   },
 } satisfies Record<SceneTime, Record<SceneActivity, Record<SceneGaze, string>>>
 
@@ -92,6 +118,7 @@ const getSceneAsset = (time: SceneTime, activity: SceneActivity, gaze: SceneGaze
   const gazeLabel = findLabel(GAZE_OPTIONS, gaze)
 
   return {
+    depthSource: DEPTH_SOURCES[time][activity][gaze],
     label: `${timeLabel} · ${activityLabel} · ${gazeLabel}`,
     source: SCENE_SOURCES[time][activity][gaze],
   }
@@ -169,7 +196,16 @@ export const FocusRoomStudio = () => {
   const [time, setTime] = createSignal<SceneTime>('day')
   const [activity, setActivity] = createSignal<SceneActivity>('reading')
   const [gaze, setGaze] = createSignal<SceneGaze>('focused')
+  const [isSceneLoading, setIsSceneLoading] = createSignal(true)
+  const [hasSceneRendered, setHasSceneRendered] = createSignal(false)
   const selectedScene = createMemo(() => getSceneAsset(time(), activity(), gaze()))
+  const handleLoadingChange = (isLoading: boolean) => {
+    setIsSceneLoading(isLoading)
+
+    if (!isLoading) {
+      setHasSceneRendered(true)
+    }
+  }
 
   return (
     <section aria-label="포커스 룸" class="relative h-dvh w-full overflow-hidden">
@@ -189,10 +225,40 @@ export const FocusRoomStudio = () => {
       >
         <FocusRoomSceneCanvas
           activity={activity()}
+          depthSource={selectedScene().depthSource}
           gaze={gaze()}
+          onLoadingChange={handleLoadingChange}
           source={selectedScene().source}
           time={time()}
         />
+
+        <Show when={isSceneLoading()}>
+          <div
+            aria-live="polite"
+            class={cx(
+              'pointer-events-none absolute z-20',
+              hasSceneRendered()
+                ? 'bottom-38 left-4 sm:bottom-6 sm:left-6'
+                : 'inset-0 grid place-items-center bg-#17130f/24',
+            )}
+            role="status"
+          >
+            <span
+              class={cx(
+                'flex items-center gap-3 rounded-full bg-black/56 px-5 py-3',
+                'text-sm font-650 text-white shadow-lg backdrop-blur-md',
+              )}
+            >
+              <span
+                aria-hidden="true"
+                class="size-5 animate-spin rounded-full border-2 border-white/28 border-t-#e8c795"
+              />
+              <Show when={hasSceneRendered()} fallback="장면을 불러오는 중">
+                장면 전환 중
+              </Show>
+            </span>
+          </div>
+        </Show>
       </figure>
     </section>
   )

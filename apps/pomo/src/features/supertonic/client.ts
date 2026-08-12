@@ -44,7 +44,14 @@ export interface SupertonicClient {
 }
 
 const DEFAULT_SPEECH_SPEED = 1.05
+const SHORT_SPEECH_SPEED = 0.8
+const MAXIMUM_SHORT_SPEECH_LENGTH = 10
+const SPEECH_CHARACTER_PATTERN = /[\p{L}\p{N}]/gu
 const ignoreChunk = () => undefined
+const getSpeechLength = (text: string) => text.match(SPEECH_CHARACTER_PATTERN)?.length ?? 0
+// AI_NOTE - Speed 0.8 preserved the first word in repeated short-reply trials; count only spoken characters so formatting does not bypass the mitigation.
+const getSpeechSpeed = (text: string) =>
+  getSpeechLength(text) <= MAXIMUM_SHORT_SPEECH_LENGTH ? SHORT_SPEECH_SPEED : DEFAULT_SPEECH_SPEED
 const createCancelledError = (phase: CancelledError['phase']): CancelledError => ({
   code: 'cancelled',
   phase,
@@ -164,7 +171,7 @@ export const createSupertonicClient = (): SupertonicClient => {
       pendingRequest = {onChunk, resolve}
       worker.postMessage({
         requestId,
-        speed: options.speed ?? DEFAULT_SPEECH_SPEED,
+        speed: options.speed ?? getSpeechSpeed(options.text),
         text: options.text,
         type: 'generate',
         voice: options.voice,

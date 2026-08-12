@@ -1,11 +1,13 @@
-import {createEffect, createSignal, on, onCleanup, onMount} from 'solid-js'
+import {createEffect, createSignal, on, onCleanup, onMount, untrack} from 'solid-js'
 
 import {
   FocusRoomSceneRenderer,
   type FocusRoomSceneState,
 } from '../features/focus-room-animation/scene-renderer'
 
-export interface FocusRoomSceneCanvasProps extends FocusRoomSceneState {}
+export interface FocusRoomSceneCanvasProps extends FocusRoomSceneState {
+  readonly onLoadingChange: (isLoading: boolean) => void
+}
 
 export default function FocusRoomSceneCanvas(props: FocusRoomSceneCanvasProps) {
   const [canvasHost, setCanvasHost] = createSignal<HTMLDivElement>()
@@ -13,6 +15,7 @@ export default function FocusRoomSceneCanvas(props: FocusRoomSceneCanvasProps) {
 
   const getSceneState = (): FocusRoomSceneState => ({
     activity: props.activity,
+    depthSource: props.depthSource,
     gaze: props.gaze,
     source: props.source,
     time: props.time,
@@ -25,8 +28,10 @@ export default function FocusRoomSceneCanvas(props: FocusRoomSceneCanvasProps) {
       return
     }
 
-    renderer = new FocusRoomSceneRenderer(host)
-    renderer.initialize(getSceneState()).catch((error: unknown) => {
+    const onLoadingChange = untrack(() => props.onLoadingChange)
+    renderer = new FocusRoomSceneRenderer(host, {onLoadingChange})
+    renderer.initialize(untrack(getSceneState)).catch((error: unknown) => {
+      onLoadingChange(false)
       globalThis.reportError(error)
     })
 
@@ -38,7 +43,7 @@ export default function FocusRoomSceneCanvas(props: FocusRoomSceneCanvasProps) {
 
   createEffect(
     on(
-      () => [props.activity, props.gaze, props.source, props.time] as const,
+      () => [props.activity, props.depthSource, props.gaze, props.source, props.time] as const,
       () => {
         renderer?.update(getSceneState())
       },

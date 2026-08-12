@@ -153,7 +153,9 @@ pnpm lint
 
 ## 관련 자산과 스크립트
 
-- 런타임 최종 이미지 12장: `assets/concept-art/focus-room-*.png`
+- 편집 원본 이미지 12장: `assets/concept-art/focus-room-*.png`
+- 원본 무결성 체크섬: `assets/concept-art/focus-room-originals.sha256`
+- 런타임 압축 이미지 12장: `assets/concept-art/focus-room-*.webp`
 - 눈 깜박임 레이어: `assets/focus-room-animation/eyes-*.png`
 - 로컬 중간 산출물: `.temp/pomo-focus-room/`
 - 머리 정규화 스크립트: `scripts/normalize-focus-room-day-heads.mjs`
@@ -185,3 +187,36 @@ night-user-closed.png
 ```bash
 POMO_BLINK_SOURCE_DIRECTORY=<로컬 생성본 폴더> node scripts/create-focus-room-blink-assets.mjs
 ```
+
+## 10. 장면 전체에 깊이 변형을 적용한다
+
+깊이 효과는 눈 레이어와 배경을 따로 변형하지 않는다. 장면과 눈을 같은 PixiJS stage에 합성하고, stage 전체에 깊이 필터를 한 번만 적용한다. 장면마다 `DA3MONO-LARGE`로 만든 깊이맵을 연결하며 전환 중에는 장면 alpha와 깊이맵 혼합 비율을 함께 변경한다.
+
+깊이맵은 필터 내부 렌더 타깃의 `vTextureCoord`가 아니라 원본 장면의 정규화 좌표인 `aPosition`으로 샘플링한다. PixiJS 필터 렌더 타깃에는 여유 영역이 생길 수 있어서 `vTextureCoord`를 사용하면 깊이 경계가 좌우로 밀린다.
+
+```bash
+python scripts/create-focus-room-depth-maps.py \
+  --da3-source <Depth-Anything-3 저장소> \
+  --input-dir assets/concept-art \
+  --output-dir assets/focus-room-depth
+```
+
+생성 설정과 원본 SHA-256은 `assets/focus-room-depth/manifest.json`에 기록한다. 런타임은 생성 모델을 포함하지 않고 완성된 8-bit grayscale PNG만 로드한다.
+
+## 11. 런타임 장면을 고품질로 압축한다
+
+원본 PNG는 AI 재편집과 depth-map 재생성을 위해 보존하고, 페이지에는 WebP quality 95를 사용한다. 대표 장면에서 원본 3.4MB가 298KB로 줄었고 평균 MAE는 1.09/255, PSNR은 44.7dB였다. 실제 PixiJS 합성 화면에서 품질을 확인한 뒤 전체 장면에 같은 설정을 적용했다.
+
+원본 PNG는 WebP 생성 입력이자 보관 자산이다. 이름을 바꾸거나 덮어쓰지 않으며, 변경 전후에 다음 명령으로 체크섬을 검증한다.
+
+```bash
+cd apps/pomo/assets/concept-art
+shasum -a 256 -c focus-room-originals.sha256
+```
+
+```bash
+cd apps/pomo
+node scripts/compress-focus-room-scenes.mjs
+```
+
+PixiJS 로딩 표시는 장면 PNG/WebP의 네트워크·디코딩뿐 아니라 depth texture와 눈 texture 로드, stage 합성과 전환까지 포함한다. `Application.render()` 뒤 두 번의 animation frame을 지난 후에만 완료 처리해 합성 프레임이 실제 화면에 나오기 전에 로더가 사라지지 않게 한다.
