@@ -30,15 +30,15 @@ AI 편집은 자연스러운 손, 팔, 책과 노트북처럼 형태가 크게 �
 
 사용자가 수정하지 말라고 지정한 시간대나 상태는 대상 목록에서 제외한다. 제외 자산은 작업 전에 SHA-256 해시를 기록하고 작업 뒤에 같은 값인지 확인한다.
 
-## 2. 기존 자산을 보존한다
+## 2. 작업 중에는 기존 자산을 임시 보존한다
 
-현재 자산을 덮어쓰기 전에 버전 폴더에 원본을 복사한다.
+현재 자산을 덮어쓰기 전에 Git에서 무시하는 로컬 임시 폴더에 원본을 복사한다.
 
 ```text
-assets/concept-art/pre-<작업명>-v<번호>/
+.temp/pomo-focus-room/<작업명>/pre-v<번호>/
 ```
 
-선택한 결과와 생성 중간 산출물도 별도 버전 폴더에 저장한다. 실패한 결과는 현재 자산에 반영하지 않고 `rejected-*` 폴더로 격리한다. 덮어쓴 파일만 남기면 실패 원인을 비교하거나 이전 버전으로 돌아갈 수 없다.
+선택한 결과와 생성 중간 산출물도 같은 임시 작업 폴더에 저장한다. 실패한 결과는 현재 자산에 반영하지 않고 `rejected-*` 폴더로 격리한다. 최종 결과를 확정한 뒤에는 실제 페이지에서 import하는 이미지만 `assets/concept-art/`에 두고, 원본·마스크·레이어·실패본은 커밋하지 않는다. 이미 커밋한 결과의 이전 버전은 Git 기록에서 복구한다.
 
 ## 3. 마스터 장면을 하나만 선택한다
 
@@ -108,7 +108,7 @@ AI는 프롬프트로 고정해도 머리 크기, 위치와 회전각을 미세�
 - 타이핑 사용자 보기 → 글쓰기 사용자 보기 머리 사용
 - 글쓰기 집중, 타이핑 집중과 밤 전체 → 수정하지 않음
 
-정규화 결과와 마스크는 `assets/concept-art/mechanical-day-head-lock-v6/`에 보관한다.
+정규화 결과와 마스크는 `.temp/pomo-focus-room/mechanical-day-head-lock-v6/`에서 검수한다. 검수에 통과한 최종 이미지만 `assets/concept-art/`의 런타임 파일에 반영한다.
 
 ## 7. 실패했던 접근
 
@@ -153,10 +153,8 @@ pnpm lint
 
 ## 관련 자산과 스크립트
 
-- AI로 배경을 고정한 낮 세트: `assets/concept-art/ai-day-scene-lock-v5/`
-- 머리를 정규화한 최종 세트: `assets/concept-art/mechanical-day-head-lock-v6/`
-- v6 적용 전 보존본: `assets/concept-art/pre-mechanical-day-head-lock-v6/`
+- 런타임 최종 이미지 12장: `assets/concept-art/focus-room-*.png`
+- 로컬 중간 산출물: `.temp/pomo-focus-room/`
 - 머리 정규화 스크립트: `scripts/normalize-focus-room-day-heads.mjs`
-- 이전 얼굴 합성 실험: `scripts/compose-focus-room-gaze.mjs`
 
 새 행동을 추가할 때도 새 장면 전체를 생성하지 않는다. 기존 시간대 마스터에서 행동 영역만 편집하고, 기존 기준 머리를 마지막에 정규화하는 순서를 유지한다.

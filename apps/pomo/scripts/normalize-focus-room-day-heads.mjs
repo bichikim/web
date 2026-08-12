@@ -7,7 +7,10 @@ const require = createRequire(path.resolve(process.cwd(), '../image-server/packa
 const sharp = require('sharp')
 
 const conceptArtDirectory = path.resolve(process.cwd(), 'assets/concept-art')
-const outputDirectory = path.join(conceptArtDirectory, 'mechanical-day-head-lock-v6')
+const outputDirectory = path.resolve(
+  process.cwd(),
+  '../../.temp/pomo-focus-room/mechanical-day-head-lock-v6',
+)
 const layerDirectory = path.join(outputDirectory, 'layers')
 const imageWidth = 1672
 const imageHeight = 941
