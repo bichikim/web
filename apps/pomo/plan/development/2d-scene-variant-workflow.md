@@ -154,6 +154,7 @@ pnpm lint
 ## 관련 자산과 스크립트
 
 - 편집 원본 이미지 12장: `assets/concept-art/focus-room-*.png`
+- 원본 무결성 체크섬: `assets/concept-art/focus-room-originals.sha256`
 - 런타임 압축 이미지 12장: `assets/concept-art/focus-room-*.webp`
 - 눈 깜박임 레이어: `assets/focus-room-animation/eyes-*.png`
 - 로컬 중간 산출물: `.temp/pomo-focus-room/`
@@ -205,6 +206,13 @@ python scripts/create-focus-room-depth-maps.py \
 ## 11. 런타임 장면을 고품질로 압축한다
 
 원본 PNG는 AI 재편집과 depth-map 재생성을 위해 보존하고, 페이지에는 WebP quality 95를 사용한다. 대표 장면에서 원본 3.4MB가 298KB로 줄었고 평균 MAE는 1.09/255, PSNR은 44.7dB였다. 실제 PixiJS 합성 화면에서 품질을 확인한 뒤 전체 장면에 같은 설정을 적용했다.
+
+원본 PNG는 WebP 생성 입력이자 보관 자산이다. 이름을 바꾸거나 덮어쓰지 않으며, 변경 전후에 다음 명령으로 체크섬을 검증한다.
+
+```bash
+cd apps/pomo/assets/concept-art
+shasum -a 256 -c focus-room-originals.sha256
+```
 
 ```bash
 cd apps/pomo
