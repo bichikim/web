@@ -28,6 +28,7 @@
     "class-variance-authority": "catalog:",
     "cross-env": "catalog:",
     "onnxruntime-web": "1.23.2",
+    "pixi.js": "^8.19.0",
     "solid-js": "catalog:",
     "unocss": "catalog:",
     "vinxi": "catalog:",

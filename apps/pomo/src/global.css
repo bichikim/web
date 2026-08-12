@@ -39,3 +39,8 @@ a {
   outline: 2px solid #f2a7b8;
   outline-offset: 3px;
 }
+
+.pomo-scene-media {
+  /* AI_NOTE - Keep the combined PixiJS scene canvas on the right-shifted crop anchor. */
+  object-position: 60% center;
+}
