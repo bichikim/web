@@ -14,6 +14,18 @@ import nightTypingImage from '../../assets/concept-art/focus-room-night-typing-c
 import nightTypingGazeImage from '../../assets/concept-art/focus-room-night-typing-user-gaze-concept.png'
 import nightWritingImage from '../../assets/concept-art/focus-room-night-desk-concept.png'
 import nightWritingGazeImage from '../../assets/concept-art/focus-room-night-writing-user-gaze-concept.png'
+import dayReadingDepth from '../../assets/focus-room-depth/depth-day-reading.png'
+import dayReadingGazeDepth from '../../assets/focus-room-depth/depth-day-reading-user-gaze.png'
+import dayTypingDepth from '../../assets/focus-room-depth/depth-day-typing.png'
+import dayTypingGazeDepth from '../../assets/focus-room-depth/depth-day-typing-user-gaze.png'
+import dayWritingDepth from '../../assets/focus-room-depth/depth-day-writing.png'
+import dayWritingGazeDepth from '../../assets/focus-room-depth/depth-day-writing-user-gaze.png'
+import nightReadingDepth from '../../assets/focus-room-depth/depth-night-reading.png'
+import nightReadingGazeDepth from '../../assets/focus-room-depth/depth-night-reading-user-gaze.png'
+import nightTypingDepth from '../../assets/focus-room-depth/depth-night-typing.png'
+import nightTypingGazeDepth from '../../assets/focus-room-depth/depth-night-typing-user-gaze.png'
+import nightWritingDepth from '../../assets/focus-room-depth/depth-night-desk.png'
+import nightWritingGazeDepth from '../../assets/focus-room-depth/depth-night-writing-user-gaze.png'
 
 const FocusRoomSceneCanvas = clientOnly(() => import('./FocusRoomSceneCanvas.client'), {
   lazy: true,
@@ -38,6 +50,7 @@ type SceneActivity = (typeof ACTIVITY_OPTIONS)[number]['value']
 type SceneGaze = (typeof GAZE_OPTIONS)[number]['value']
 
 interface SceneAsset {
+  readonly depthSource: string
   readonly label: string
   readonly source: string
 }
@@ -61,6 +74,19 @@ const SCENE_SOURCES = {
     reading: {focused: nightReadingImage, user: nightReadingGazeImage},
     typing: {focused: nightTypingImage, user: nightTypingGazeImage},
     writing: {focused: nightWritingImage, user: nightWritingGazeImage},
+  },
+} satisfies Record<SceneTime, Record<SceneActivity, Record<SceneGaze, string>>>
+
+const DEPTH_SOURCES = {
+  day: {
+    reading: {focused: dayReadingDepth, user: dayReadingGazeDepth},
+    typing: {focused: dayTypingDepth, user: dayTypingGazeDepth},
+    writing: {focused: dayWritingDepth, user: dayWritingGazeDepth},
+  },
+  night: {
+    reading: {focused: nightReadingDepth, user: nightReadingGazeDepth},
+    typing: {focused: nightTypingDepth, user: nightTypingGazeDepth},
+    writing: {focused: nightWritingDepth, user: nightWritingGazeDepth},
   },
 } satisfies Record<SceneTime, Record<SceneActivity, Record<SceneGaze, string>>>
 
@@ -92,6 +118,7 @@ const getSceneAsset = (time: SceneTime, activity: SceneActivity, gaze: SceneGaze
   const gazeLabel = findLabel(GAZE_OPTIONS, gaze)
 
   return {
+    depthSource: DEPTH_SOURCES[time][activity][gaze],
     label: `${timeLabel} · ${activityLabel} · ${gazeLabel}`,
     source: SCENE_SOURCES[time][activity][gaze],
   }
@@ -189,6 +216,7 @@ export const FocusRoomStudio = () => {
       >
         <FocusRoomSceneCanvas
           activity={activity()}
+          depthSource={selectedScene().depthSource}
           gaze={gaze()}
           source={selectedScene().source}
           time={time()}

@@ -185,3 +185,18 @@ night-user-closed.png
 ```bash
 POMO_BLINK_SOURCE_DIRECTORY=<로컬 생성본 폴더> node scripts/create-focus-room-blink-assets.mjs
 ```
+
+## 10. 장면 전체에 깊이 변형을 적용한다
+
+깊이 효과는 눈 레이어와 배경을 따로 변형하지 않는다. 장면과 눈을 같은 PixiJS stage에 합성하고, stage 전체에 깊이 필터를 한 번만 적용한다. 장면마다 `DA3MONO-LARGE`로 만든 깊이맵을 연결하며 전환 중에는 장면 alpha와 깊이맵 혼합 비율을 함께 변경한다.
+
+깊이맵은 필터 내부 렌더 타깃의 `vTextureCoord`가 아니라 원본 장면의 정규화 좌표인 `aPosition`으로 샘플링한다. PixiJS 필터 렌더 타깃에는 여유 영역이 생길 수 있어서 `vTextureCoord`를 사용하면 깊이 경계가 좌우로 밀린다.
+
+```bash
+python scripts/create-focus-room-depth-maps.py \
+  --da3-source <Depth-Anything-3 저장소> \
+  --input-dir assets/concept-art \
+  --output-dir assets/focus-room-depth
+```
+
+생성 설정과 원본 SHA-256은 `assets/focus-room-depth/manifest.json`에 기록한다. 런타임은 생성 모델을 포함하지 않고 완성된 8-bit grayscale PNG만 로드한다.
