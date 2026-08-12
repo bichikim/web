@@ -202,9 +202,9 @@ python scripts/create-focus-room-depth-maps.py \
 
 생성 설정과 원본 SHA-256은 `assets/focus-room-depth/manifest.json`에 기록한다. 런타임은 생성 모델을 포함하지 않고 완성된 8-bit grayscale PNG만 로드한다.
 
-## 11. 런타임 장면을 거의 무손실로 압축한다
+## 11. 런타임 장면을 고품질로 압축한다
 
-원본 PNG는 AI 재편집과 depth-map 재생성을 위해 보존하고, 페이지에는 WebP near-lossless 95를 사용한다. 대표 낮·밤 4장 측정에서 원본 12.0MB가 4.6MB로 줄었고 평균 MAE는 0.29/255, PSNR은 53.6dB였다. 더 작은 일반 WebP q95와 AVIF q90은 오차가 3배 이상 커서 사용하지 않는다.
+원본 PNG는 AI 재편집과 depth-map 재생성을 위해 보존하고, 페이지에는 WebP quality 95를 사용한다. 대표 장면에서 원본 3.4MB가 298KB로 줄었고 평균 MAE는 1.09/255, PSNR은 44.7dB였다. 실제 PixiJS 합성 화면에서 품질을 확인한 뒤 전체 장면에 같은 설정을 적용했다.
 
 ```bash
 cd apps/pomo

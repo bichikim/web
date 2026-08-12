@@ -16,10 +16,10 @@ await Promise.all(
     const temporaryPath = `${outputPath}.tmp`
 
     await sharp(sourcePath)
-      .webp({effort: 6, nearLossless: true, quality: 95, smartSubsample: true})
+      .webp({effort: 6, quality: 95, smartSubsample: true})
       .toFile(temporaryPath)
     await rename(temporaryPath, outputPath)
   }),
 )
 
-console.log(`Compressed ${sceneNames.length} focus-room scenes with near-lossless WebP.`)
+console.log(`Compressed ${sceneNames.length} focus-room scenes with WebP quality 95.`)
