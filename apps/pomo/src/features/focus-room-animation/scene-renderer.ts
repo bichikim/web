@@ -1,4 +1,4 @@
-import {Application, Assets, Sprite, type Texture} from 'pixi.js'
+import {Application, Sprite, type Texture} from 'pixi.js'
 
 import dayFocusedClosedImage from '../../../assets/focus-room-animation/eyes-day-focused-closed.png'
 import dayFocusedHalfImage from '../../../assets/focus-room-animation/eyes-day-focused-half.png'
@@ -10,6 +10,8 @@ import nightUserClosedImage from '../../../assets/focus-room-animation/eyes-nigh
 import nightUserHalfImage from '../../../assets/focus-room-animation/eyes-night-user-half.png'
 import {type BlinkScheduler, createBlinkScheduler} from './blink-scheduler'
 import {DepthParallaxFilter} from './depth-parallax-filter'
+import {ParallaxController} from './parallax-controller'
+import {acquireTextureGroup, releaseTextureGroup, type TextureLease} from './texture-leases'
 
 export type FocusRoomActivity = 'reading' | 'typing' | 'writing'
 export type FocusRoomGaze = 'focused' | 'user'
@@ -67,10 +69,6 @@ const EYE_ASSETS = {
 const HALF_FRAME_DURATION = 48
 const CLOSED_FRAME_DURATION = 72
 const SCENE_TRANSITION_DURATION = 600
-const PARALLAX_EASING = 0.12
-const PARALLAX_MAXIMUM_X = 9
-const PARALLAX_MAXIMUM_Y = 6
-const PARALLAX_SETTLE_DISTANCE = 0.01
 const EYE_SOURCES = [
   dayFocusedHalfImage,
   dayFocusedClosedImage,
@@ -123,39 +121,21 @@ const reportError = (error: unknown) => {
 export class FocusRoomSceneRenderer {
   readonly #application = new Application()
   readonly #host: HTMLDivElement
-  readonly #loadedDepths = new Set<string>()
-  readonly #loadedScenes = new Set<string>()
-  readonly #handlePointerLeave = () => {
-    this.#targetParallaxX = 0
-    this.#targetParallaxY = 0
-    this.#requestParallaxFrame()
-  }
-  readonly #handlePointerMove = (event: PointerEvent) => {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      return
-    }
-
-    const horizontalPosition = (event.clientX / window.innerWidth) * 2 - 1
-    const verticalPosition = (event.clientY / window.innerHeight) * 2 - 1
-    this.#targetParallaxX = horizontalPosition * PARALLAX_MAXIMUM_X
-    this.#targetParallaxY = verticalPosition * PARALLAX_MAXIMUM_Y
-    this.#requestParallaxFrame()
-  }
+  readonly #parallax: ParallaxController
+  #applicationReady = false
   #currentDepthSource: string | null = null
-  #currentParallaxX = 0
-  #currentParallaxY = 0
   #currentScene: Sprite | null = null
   #currentSource: string | null = null
+  #currentTextures: readonly TextureLease[] = []
   #destroyed = false
   #depthFilter: DepthParallaxFilter | null = null
   #eyeSequence = 0
   #eyeSprite: Sprite | null = null
   #eyeTextures: EyeTextures | null = null
+  #eyeTextureLeases: readonly TextureLease[] = []
   #incomingScene: Sprite | null = null
-  #incomingDepthSource: string | null = null
-  #incomingSource: string | null = null
+  #incomingTextures: readonly TextureLease[] = []
   #initialized = false
-  #parallaxFrame: number | null = null
   #requestedDepthSource: string | null = null
   #requestedSource: string | null = null
   #sceneReady = false
@@ -163,11 +143,13 @@ export class FocusRoomSceneRenderer {
   #state: FocusRoomSceneState | null = null
   #transitionFrame: number | null = null
   #transitionVersion = 0
-  #targetParallaxX = 0
-  #targetParallaxY = 0
 
   constructor(host: HTMLDivElement) {
     this.#host = host
+    this.#parallax = new ParallaxController(host, (x, y) => {
+      this.#depthFilter?.setPointerOffset(x, y)
+      this.#application.render()
+    })
   }
 
   async initialize(state: FocusRoomSceneState) {
@@ -181,33 +163,42 @@ export class FocusRoomSceneRenderer {
       resolution: 1,
       width: 1672,
     })
+    this.#applicationReady = true
 
     if (this.#destroyed) {
       this.#application.destroy(true)
+      this.#applicationReady = false
       return
     }
 
-    this.#initialized = true
     this.#application.stage.sortableChildren = true
     this.#application.canvas.setAttribute('aria-hidden', 'true')
     this.#application.canvas.className =
       'pomo-scene-media absolute inset-0 h-full w-full object-cover'
     this.#host.append(this.#application.canvas)
 
-    await Promise.all([this.#loadInitialScene(state.source, state.depthSource), this.#loadEyes()])
+    try {
+      await Promise.all([this.#loadInitialScene(state.source, state.depthSource), this.#loadEyes()])
+    } catch (error: unknown) {
+      this.destroy()
+      throw error
+    }
 
     if (this.#destroyed) {
       return
     }
 
+    this.#initialized = true
     const latestState = this.#state
 
-    if (latestState !== null && latestState.source !== this.#currentSource) {
+    if (
+      latestState !== null &&
+      !this.#isCurrentScene(latestState.source, latestState.depthSource)
+    ) {
       this.#transitionTo(latestState.source, latestState.depthSource).catch(reportError)
     }
 
-    window.addEventListener('pointermove', this.#handlePointerMove, {passive: true})
-    window.addEventListener('blur', this.#handlePointerLeave)
+    this.#parallax.start()
     this.#application.render()
   }
 
@@ -224,7 +215,7 @@ export class FocusRoomSceneRenderer {
   }
 
   #syncScene(source: string, depthSource: string) {
-    if (source !== this.#currentSource) {
+    if (!this.#isCurrentScene(source, depthSource)) {
       this.#transitionTo(source, depthSource).catch(reportError)
       return
     }
@@ -235,7 +226,6 @@ export class FocusRoomSceneRenderer {
       this.#requestedDepthSource = null
       this.#cancelTransition()
       this.#sceneReady = true
-      this.#pruneSceneTextures()
       this.#application.render()
     }
   }
@@ -249,54 +239,49 @@ export class FocusRoomSceneRenderer {
     this.#transitionVersion += 1
     this.#eyeSequence += 1
     this.#cancelTransition()
-    window.removeEventListener('pointermove', this.#handlePointerMove)
-    window.removeEventListener('blur', this.#handlePointerLeave)
-    if (this.#parallaxFrame !== null) {
-      window.cancelAnimationFrame(this.#parallaxFrame)
-      this.#parallaxFrame = null
-    }
+    this.#parallax.destroy()
     this.#scheduler?.destroy()
     this.#scheduler = null
 
-    if (this.#initialized) {
+    this.#currentScene?.removeFromParent()
+    this.#currentScene?.destroy()
+    this.#currentScene = null
+    this.#eyeSprite?.removeFromParent()
+    this.#eyeSprite?.destroy()
+    this.#eyeSprite = null
+    this.#application.stage.filters = null
+    this.#depthFilter?.destroy()
+    this.#depthFilter = null
+
+    if (this.#applicationReady) {
       this.#application.destroy(true)
+      this.#applicationReady = false
     }
 
-    for (const source of this.#loadedScenes) {
-      this.#unloadScene(source)
-    }
-
-    for (const source of this.#loadedDepths) {
-      this.#unloadDepth(source)
-    }
-
-    if (this.#eyeTextures !== null) {
-      Assets.unload([...EYE_SOURCES]).catch(reportError)
-    }
+    releaseTextureGroup(this.#currentTextures)
+    releaseTextureGroup(this.#eyeTextureLeases)
+    this.#currentTextures = []
+    this.#eyeTextureLeases = []
+    this.#eyeTextures = null
   }
 
   async #loadInitialScene(source: string, depthSource: string) {
-    const [texture, depthTexture] = await Promise.all([
-      Assets.load<Texture>(source),
-      Assets.load<Texture>(depthSource),
-    ])
-    this.#loadedScenes.add(source)
-    this.#loadedDepths.add(depthSource)
+    const textures = await acquireTextureGroup([source, depthSource])
 
     if (this.#destroyed) {
-      this.#unloadScene(source)
-      this.#unloadDepth(depthSource)
+      releaseTextureGroup(textures)
       return
     }
 
-    const sprite = new Sprite(texture)
+    const sprite = new Sprite(textures[0].texture)
     sprite.zIndex = 0
     this.#application.stage.addChild(sprite)
-    this.#depthFilter = new DepthParallaxFilter(depthTexture)
+    this.#depthFilter = new DepthParallaxFilter(textures[1].texture)
     this.#application.stage.filters = [this.#depthFilter]
     this.#currentDepthSource = depthSource
     this.#currentScene = sprite
     this.#currentSource = source
+    this.#currentTextures = textures
     this.#sceneReady = true
   }
 
@@ -310,25 +295,44 @@ export class FocusRoomSceneRenderer {
       nightFocusedClosed,
       nightUserHalf,
       nightUserClosed,
-    ] = await Promise.all(EYE_SOURCES.map(async (source) => Assets.load<Texture>(source)))
+    ] = await acquireTextureGroup(EYE_SOURCES)
 
     if (this.#destroyed) {
-      Assets.unload([...EYE_SOURCES]).catch(reportError)
+      releaseTextureGroup([
+        dayFocusedHalf,
+        dayFocusedClosed,
+        dayUserHalf,
+        dayUserClosed,
+        nightFocusedHalf,
+        nightFocusedClosed,
+        nightUserHalf,
+        nightUserClosed,
+      ])
       return
     }
 
-    this.#eyeSprite = new Sprite(dayFocusedHalf)
+    this.#eyeTextureLeases = [
+      dayFocusedHalf,
+      dayFocusedClosed,
+      dayUserHalf,
+      dayUserClosed,
+      nightFocusedHalf,
+      nightFocusedClosed,
+      nightUserHalf,
+      nightUserClosed,
+    ]
+    this.#eyeSprite = new Sprite(dayFocusedHalf.texture)
     this.#eyeSprite.visible = false
     this.#eyeSprite.zIndex = 2
     this.#application.stage.addChild(this.#eyeSprite)
     this.#eyeTextures = {
       day: {
-        focused: {closed: dayFocusedClosed, half: dayFocusedHalf},
-        user: {closed: dayUserClosed, half: dayUserHalf},
+        focused: {closed: dayFocusedClosed.texture, half: dayFocusedHalf.texture},
+        user: {closed: dayUserClosed.texture, half: dayUserHalf.texture},
       },
       night: {
-        focused: {closed: nightFocusedClosed, half: nightFocusedHalf},
-        user: {closed: nightUserClosed, half: nightUserHalf},
+        focused: {closed: nightFocusedClosed.texture, half: nightFocusedHalf.texture},
+        user: {closed: nightUserClosed.texture, half: nightUserHalf.texture},
       },
     }
     this.#scheduler = createBlinkScheduler({
@@ -394,7 +398,7 @@ export class FocusRoomSceneRenderer {
   }
 
   async #transitionTo(source: string, depthSource: string) {
-    if (source === this.#currentSource || source === this.#requestedSource) {
+    if (this.#isRequestedScene(source, depthSource)) {
       return
     }
 
@@ -406,31 +410,29 @@ export class FocusRoomSceneRenderer {
     this.#sceneReady = false
     this.#renderEye('open')
     this.#cancelTransition()
-    this.#pruneSceneTextures()
+    this.#application.render()
 
     try {
-      const [texture, depthTexture] = await Promise.all([
-        Assets.load<Texture>(source),
-        Assets.load<Texture>(depthSource),
-      ])
-      this.#loadedScenes.add(source)
-      this.#loadedDepths.add(depthSource)
+      const textures = await acquireTextureGroup([source, depthSource])
 
       if (this.#destroyed || version !== this.#transitionVersion) {
-        this.#pruneSceneTextures()
+        releaseTextureGroup(textures)
         return
       }
 
-      const sprite = new Sprite(texture)
+      const sprite = new Sprite(textures[0].texture)
       sprite.alpha = 0
       sprite.zIndex = 1
       this.#incomingScene = sprite
-      this.#incomingSource = source
-      this.#incomingDepthSource = depthSource
-      this.#depthFilter?.setDepthTransition(depthTexture)
+      this.#incomingTextures = textures
+      this.#depthFilter?.setDepthTransition(textures[1].texture)
       this.#application.stage.addChild(sprite)
       this.#animateTransition(source, depthSource, sprite, version)
     } catch (error: unknown) {
+      if (this.#destroyed || version !== this.#transitionVersion) {
+        return
+      }
+
       if (version === this.#transitionVersion) {
         this.#requestedSource = null
         this.#requestedDepthSource = null
@@ -442,7 +444,7 @@ export class FocusRoomSceneRenderer {
   }
 
   #animateTransition(source: string, depthSource: string, sprite: Sprite, version: number) {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    if (this.#parallax.prefersReducedMotion) {
       sprite.alpha = 1
       this.#depthFilter?.setDepthMix(1)
       this.#application.render()
@@ -473,22 +475,23 @@ export class FocusRoomSceneRenderer {
   }
 
   #finishTransition(source: string, depthSource: string, sprite: Sprite) {
+    const previousTextures = this.#currentTextures
     this.#currentScene?.removeFromParent()
     this.#currentScene?.destroy()
     sprite.zIndex = 0
     this.#currentScene = sprite
     this.#currentSource = source
     this.#currentDepthSource = depthSource
+    this.#currentTextures = this.#incomingTextures
     this.#incomingScene = null
-    this.#incomingSource = null
-    this.#incomingDepthSource = null
+    this.#incomingTextures = []
     this.#requestedSource = null
     this.#requestedDepthSource = null
     this.#transitionFrame = null
     this.#sceneReady = true
     this.#depthFilter?.finishDepthTransition()
+    releaseTextureGroup(previousTextures)
     this.#scheduler?.start()
-    this.#pruneSceneTextures()
   }
 
   #cancelTransition() {
@@ -500,71 +503,20 @@ export class FocusRoomSceneRenderer {
     this.#incomingScene?.removeFromParent()
     this.#incomingScene?.destroy()
     this.#incomingScene = null
-    this.#incomingSource = null
-    this.#incomingDepthSource = null
     this.#depthFilter?.cancelDepthTransition()
+    releaseTextureGroup(this.#incomingTextures)
+    this.#incomingTextures = []
 
     if (this.#currentScene !== null) {
       this.#currentScene.alpha = 1
     }
   }
 
-  #pruneSceneTextures() {
-    for (const source of this.#loadedScenes) {
-      const isActive =
-        source === this.#currentSource ||
-        source === this.#incomingSource ||
-        source === this.#requestedSource
-
-      if (!isActive) {
-        this.#unloadScene(source)
-      }
-    }
-
-    for (const source of this.#loadedDepths) {
-      const isActive =
-        source === this.#currentDepthSource ||
-        source === this.#incomingDepthSource ||
-        source === this.#requestedDepthSource
-
-      if (!isActive) {
-        this.#unloadDepth(source)
-      }
-    }
+  #isCurrentScene(source: string, depthSource: string) {
+    return source === this.#currentSource && depthSource === this.#currentDepthSource
   }
 
-  #unloadScene(source: string) {
-    this.#loadedScenes.delete(source)
-    Assets.unload(source).catch(reportError)
-  }
-
-  #unloadDepth(source: string) {
-    this.#loadedDepths.delete(source)
-    Assets.unload(source).catch(reportError)
-  }
-
-  #requestParallaxFrame() {
-    if (this.#parallaxFrame !== null || this.#destroyed) {
-      return
-    }
-
-    this.#parallaxFrame = window.requestAnimationFrame(() => this.#renderParallaxFrame())
-  }
-
-  #renderParallaxFrame() {
-    this.#parallaxFrame = null
-    const horizontalDistance = this.#targetParallaxX - this.#currentParallaxX
-    const verticalDistance = this.#targetParallaxY - this.#currentParallaxY
-    this.#currentParallaxX += horizontalDistance * PARALLAX_EASING
-    this.#currentParallaxY += verticalDistance * PARALLAX_EASING
-    this.#depthFilter?.setPointerOffset(this.#currentParallaxX, this.#currentParallaxY)
-    this.#application.render()
-
-    if (
-      Math.abs(horizontalDistance) > PARALLAX_SETTLE_DISTANCE ||
-      Math.abs(verticalDistance) > PARALLAX_SETTLE_DISTANCE
-    ) {
-      this.#requestParallaxFrame()
-    }
+  #isRequestedScene(source: string, depthSource: string) {
+    return source === this.#requestedSource && depthSource === this.#requestedDepthSource
   }
 }
