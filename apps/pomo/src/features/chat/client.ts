@@ -9,8 +9,12 @@ export interface CreateChatClientOptions {
 
 export interface ChatClient {
   readonly dispose: () => void
-  readonly generate: (context: ChatContext, replyId: string) => void
+  readonly generate: (context: ChatContext, replyId: string, options?: GenerateChatOptions) => void
   readonly prepare: () => void
+}
+
+export interface GenerateChatOptions {
+  readonly refineAnswer?: boolean
 }
 
 /** Owns the browser model Worker for one chat session. */
@@ -31,8 +35,14 @@ export const createChatClient = (options: CreateChatClientOptions): ChatClient =
 
   return {
     dispose: transport.dispose,
-    generate: (context, replyId) =>
-      transport.send({context, modelId: options.modelId, replyId, type: 'generate'}),
+    generate: (context, replyId, generateOptions = {}) =>
+      transport.send({
+        context,
+        modelId: options.modelId,
+        refineAnswer: generateOptions.refineAnswer ?? true,
+        replyId,
+        type: 'generate',
+      }),
     prepare: () => transport.send({modelId: options.modelId, type: 'prepare'}),
   }
 }

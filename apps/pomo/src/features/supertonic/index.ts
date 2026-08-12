@@ -5,7 +5,7 @@ export type {
   SupertonicClient,
 } from './client'
 export {createSupertonicAudioPlayer} from './audio-player'
-export type {SupertonicAudioPlayer} from './audio-player'
+export type {CreateSupertonicAudioPlayerOptions, SupertonicAudioPlayer} from './audio-player'
 export {getSupertonicErrorMessage} from './error-message'
 export type {SupertonicError, SupertonicPhase} from './errors'
 export type {
@@ -19,6 +19,7 @@ export type {
   SupertonicModel,
   SupertonicModelId,
   SupertonicSpeechPolicy,
+  SupertonicVoice,
   SupertonicVoiceId,
 } from './model'
 export {createWaveBlob} from './wav'

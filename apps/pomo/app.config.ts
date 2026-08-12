@@ -7,7 +7,7 @@ export default defineConfig({
   server: isAppsInToss
     ? {
         prerender: {
-          routes: ['/', '/character', '/chat', '/dialogue', '/terms', '/voice'],
+          routes: ['/', '/character', '/chat', '/dialogue', '/speech-to-text', '/terms', '/voice'],
         },
         preset: 'static',
       }

@@ -36,6 +36,7 @@ export type SupertonicWorkerInput =
       readonly type: 'generate'
       readonly voice: SupertonicVoiceSource
     }
+  | {readonly type: 'cancel-generation'}
   | {readonly type: 'dispose'}
 
 export type SupertonicWorkerOutput =

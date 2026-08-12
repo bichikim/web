@@ -114,6 +114,24 @@ export default function HomePage() {
             </div>
             <span class="mt-8 text-sm font-700 text-#ffc0ce">채팅 열기 →</span>
           </A>
+
+          <A class={CARD_CLASSES} href="/speech-to-text">
+            <div class="flex items-start justify-between gap-5">
+              <div>
+                <p class="m-0 text-xs font-700 tracking-[0.2em] text-#9ed6bb uppercase">
+                  Whisper tiny · WebGPU / WASM
+                </p>
+                <h2 class="mb-0 mt-3 text-2xl font-750">한국어 받아쓰기</h2>
+                <p class="mb-0 mt-3 max-w-sm text-sm leading-6 text-#aaa0b1">
+                  마이크로 녹음한 한국어를 서버 전송 없이 브라우저 안에서 글로 바꿔요.
+                </p>
+              </div>
+              <span class="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-#9ed6bb/12 text-xl text-#b8e8d0">
+                ●
+              </span>
+            </div>
+            <span class="mt-8 text-sm font-700 text-#b8e8d0">받아쓰기 실험실 열기 →</span>
+          </A>
         </div>
 
         <footer class="mt-8 flex justify-end">

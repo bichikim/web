@@ -18,10 +18,16 @@ import {
 } from '../text-generation'
 import {partitionChatHistory} from './context'
 import type {ChatContext, ChatMessage, ChatWorkerRequest, ChatWorkerResponse} from './messages'
-import {createChatMessages, createSummaryMessages} from './prompt'
+import {
+  createChatMessages,
+  createSummaryMessages,
+  limitChatAnswer,
+  MAXIMUM_CHAT_ANSWER_CHARACTERS,
+  takeChatAnswerPrefix,
+} from './prompt'
 
 const CONTEXT_COMPACTION_TOKENS = 4608
-const MAXIMUM_ANSWER_TOKENS = 768
+const MAXIMUM_ANSWER_TOKENS = 256
 const MAXIMUM_SUMMARY_TOKENS = 384
 const workerScope = self as DedicatedWorkerGlobalScope
 
@@ -148,19 +154,38 @@ const compactContext = async (context: ChatContext): Promise<CompactedContext> =
   }
 }
 
-const generateAnswer = async (modelId: TextModelId, context: ChatContext, replyId: string) => {
-  await textRuntime.prepare(modelId)
+interface GenerateAnswerOptions {
+  readonly context: ChatContext
+  readonly modelId: TextModelId
+  readonly refineAnswer: boolean
+  readonly replyId: string
+}
 
-  const compacted = await compactContext(context)
+const generateAnswer = async (options: GenerateAnswerOptions) => {
+  await textRuntime.prepare(options.modelId)
+
+  const compacted = await compactContext(options.context)
   const contextTokens = await countPromptTokens(compacted.context)
+  let streamedCharacters = 0
   sendResponse({contextTokens, type: 'started', wasCompacted: compacted.wasCompacted})
-  const generatedText = await generateText({
+  const rawGeneratedText = await generateText({
     maximumTokens: MAXIMUM_ANSWER_TOKENS,
     messages: createChatMessages(compacted.context),
-    onToken: (token) => sendResponse({text: token, type: 'token'}),
+    onToken: (token) => {
+      const remainingCharacters = MAXIMUM_CHAT_ANSWER_CHARACTERS - streamedCharacters
+      const visibleText = takeChatAnswerPrefix(token, remainingCharacters)
+
+      if (visibleText.length > 0) {
+        streamedCharacters += Array.from(visibleText).length
+        sendResponse({text: visibleText, type: 'token'})
+      }
+    },
   })
-  const text = await refineKoreanAnswer(generatedText)
-  const message: ChatMessage = {content: text, id: replyId, role: 'assistant'}
+  const generatedText = limitChatAnswer(rawGeneratedText)
+  sendResponse({draft: {content: generatedText, id: options.replyId}, type: 'draft'})
+  const refinedText = options.refineAnswer ? await refineKoreanAnswer(generatedText) : generatedText
+  const text = limitChatAnswer(refinedText)
+  const message: ChatMessage = {content: text, id: options.replyId, role: 'assistant'}
 
   sendResponse({
     context: {
@@ -177,7 +202,7 @@ const generateAnswer = async (modelId: TextModelId, context: ChatContext, replyI
 const handleRequest = (request: ChatWorkerRequest): Promise<void> => {
   switch (request.type) {
     case 'generate':
-      return generateAnswer(request.modelId, request.context, request.replyId)
+      return generateAnswer(request)
     case 'prepare':
       return prepareModel(request.modelId)
   }

@@ -23,7 +23,7 @@ import type {SupertonicVoiceStyle} from './voice-style'
 
 const MAXIMUM_PROGRESS = 100
 const DEFAULT_MODEL_ID: SupertonicModelId = 'full'
-const DEFAULT_VOICE_ID: SupertonicVoiceId = 'F1'
+const DEFAULT_VOICE_ID: SupertonicVoiceId = 'Yuna'
 
 interface UnpreparedState {
   readonly message: string

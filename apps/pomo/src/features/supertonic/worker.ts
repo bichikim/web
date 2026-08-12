@@ -50,6 +50,7 @@ const SERVER_ERROR_STATUS = 500
 let engine: SupertonicEngine | null = null
 let activeModel: SupertonicModel | null = null
 let activeAbortController: AbortController | null = null
+let activeGenerationAbortController: AbortController | null = null
 
 type MutableSupertonicSessions = {
   -readonly [Key in keyof SupertonicSessions]?: SupertonicSessions[Key]
@@ -400,6 +401,7 @@ const generate = async (
   const currentModel = activeModel
   const abortController = new AbortController()
   activeAbortController = abortController
+  activeGenerationAbortController = abortController
   const startedAt = performance.now()
 
   try {
@@ -463,6 +465,10 @@ const generate = async (
     if (activeAbortController === abortController) {
       activeAbortController = null
     }
+
+    if (activeGenerationAbortController === abortController) {
+      activeGenerationAbortController = null
+    }
   }
 }
 
@@ -471,6 +477,9 @@ workerScope.onmessage = async (event: MessageEvent<SupertonicWorkerInput>) => {
 
   try {
     switch (message.type) {
+      case 'cancel-generation':
+        activeGenerationAbortController?.abort()
+        return
       case 'dispose':
         activeAbortController?.abort()
         await engine?.release()
