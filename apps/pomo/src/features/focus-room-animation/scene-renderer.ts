@@ -8,9 +8,14 @@ import nightFocusedClosedImage from '../../../assets/focus-room-animation/eyes-n
 import nightFocusedHalfImage from '../../../assets/focus-room-animation/eyes-night-focused-half.png'
 import nightUserClosedImage from '../../../assets/focus-room-animation/eyes-night-user-closed.png'
 import nightUserHalfImage from '../../../assets/focus-room-animation/eyes-night-user-half.png'
+import steamImage1 from '../../../assets/focus-room-animation/steam-ai-1.png'
+import steamImage2 from '../../../assets/focus-room-animation/steam-ai-2.png'
+import steamImage3 from '../../../assets/focus-room-animation/steam-ai-3.png'
+import steamImage4 from '../../../assets/focus-room-animation/steam-ai-4.png'
 import {type BlinkScheduler, createBlinkScheduler} from './blink-scheduler'
 import {DepthParallaxFilter} from './depth-parallax-filter'
 import {ParallaxController} from './parallax-controller'
+import {SteamParticleSystem} from './steam-particle-system'
 import {acquireTextureGroup, releaseTextureGroup, type TextureLease} from './texture-leases'
 
 export type FocusRoomActivity = 'reading' | 'typing' | 'writing'
@@ -73,6 +78,7 @@ const EYE_ASSETS = {
 const HALF_FRAME_DURATION = 48
 const CLOSED_FRAME_DURATION = 72
 const SCENE_TRANSITION_DURATION = 600
+const STEAM_PARALLAX_DEPTH = 0.55
 const EYE_SOURCES = [
   dayFocusedHalfImage,
   dayFocusedClosedImage,
@@ -83,6 +89,7 @@ const EYE_SOURCES = [
   nightUserHalfImage,
   nightUserClosedImage,
 ] as const
+const STEAM_SOURCES = [steamImage1, steamImage2, steamImage3, steamImage4] as const
 const EYE_OFFSETS = {
   day: {
     focused: {
@@ -151,6 +158,8 @@ export class FocusRoomSceneRenderer {
   #settledFrame: number | null = null
   #scheduler: BlinkScheduler | null = null
   #state: FocusRoomSceneState | null = null
+  #steam: SteamParticleSystem | null = null
+  #steamTextureLeases: readonly TextureLease[] = []
   #transitionFrame: number | null = null
   #transitionVersion = 0
 
@@ -159,6 +168,7 @@ export class FocusRoomSceneRenderer {
     this.#onLoadingChange = options.onLoadingChange ?? ignoreLoadingChange
     this.#parallax = new ParallaxController(host, (x, y) => {
       this.#depthFilter?.setPointerOffset(x, y)
+      this.#steam?.setParallaxOffset(-x * STEAM_PARALLAX_DEPTH, -y * STEAM_PARALLAX_DEPTH)
       this.#application.render()
     })
   }
@@ -190,7 +200,11 @@ export class FocusRoomSceneRenderer {
     this.#application.stage.addChild(this.#sceneLayer, this.#eyeLayer)
 
     try {
-      await Promise.all([this.#loadInitialScene(state.source, state.depthSource), this.#loadEyes()])
+      await Promise.all([
+        this.#loadInitialScene(state.source, state.depthSource),
+        this.#loadEyes(),
+        this.#loadSteam(),
+      ])
     } catch (error: unknown) {
       this.destroy()
       throw error
@@ -204,6 +218,7 @@ export class FocusRoomSceneRenderer {
     const latestState = this.#state
 
     this.#parallax.start()
+    this.#steam?.start()
     this.#application.render()
     this.#finishLoadingAfterPaint()
 
@@ -260,13 +275,14 @@ export class FocusRoomSceneRenderer {
 
     this.#currentScene?.removeFromParent()
     this.#currentScene?.destroy()
-    this.#currentScene = null
     this.#eyeSprite?.removeFromParent()
     this.#eyeSprite?.destroy()
     this.#eyeSprite = null
-    this.#application.stage.filters = null
+    this.#steam?.destroy()
+    this.#sceneLayer.filters = null
     this.#depthFilter?.destroy()
     this.#depthFilter = null
+    this.#sceneLayer.destroy()
 
     if (this.#applicationReady) {
       this.#application.destroy(true)
@@ -275,8 +291,10 @@ export class FocusRoomSceneRenderer {
 
     releaseTextureGroup(this.#currentTextures)
     releaseTextureGroup(this.#eyeTextureLeases)
+    releaseTextureGroup(this.#steamTextureLeases)
     this.#currentTextures = []
     this.#eyeTextureLeases = []
+    this.#steamTextureLeases = []
     this.#eyeTextures = null
   }
 
@@ -291,7 +309,7 @@ export class FocusRoomSceneRenderer {
     const sprite = new Sprite(textures[0].texture)
     this.#sceneLayer.addChild(sprite)
     this.#depthFilter = new DepthParallaxFilter(textures[1].texture)
-    this.#application.stage.filters = [this.#depthFilter]
+    this.#sceneLayer.filters = [this.#depthFilter]
     this.#currentDepthSource = depthSource
     this.#currentScene = sprite
     this.#currentSource = source
@@ -354,6 +372,23 @@ export class FocusRoomSceneRenderer {
       onBlink: () => this.#playBlink(),
     })
     this.#scheduler.start()
+  }
+
+  async #loadSteam() {
+    const textures = await acquireTextureGroup(STEAM_SOURCES)
+
+    if (this.#destroyed) {
+      releaseTextureGroup(textures)
+      return
+    }
+
+    this.#steamTextureLeases = textures
+    this.#steam = new SteamParticleSystem({
+      onRender: () => this.#application.render(),
+      prefersReducedMotion: this.#parallax.prefersReducedMotion,
+      textures: textures.map((lease) => lease.texture),
+    })
+    this.#application.stage.addChild(this.#steam.container)
   }
 
   #renderEye(state: EyeState) {
