@@ -40,27 +40,7 @@ a {
   outline-offset: 3px;
 }
 
-@keyframes pomo-scene-fade {
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
-  }
-}
-
-.pomo-scene-incoming {
-  opacity: 0;
-  will-change: opacity;
-}
-
-.pomo-scene-fading {
-  animation: pomo-scene-fade 600ms ease-in-out forwards;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .pomo-scene-fading {
-    animation-duration: 1ms;
-  }
+.pomo-scene-media {
+  /* AI_NOTE - Keep the combined PixiJS scene canvas on the right-shifted crop anchor. */
+  object-position: 60% center;
 }

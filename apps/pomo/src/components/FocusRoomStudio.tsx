@@ -1,6 +1,6 @@
 import {clientOnly} from '@solidjs/start'
 import {cx} from 'class-variance-authority'
-import {createEffect, createMemo, createSignal, For, Show, untrack} from 'solid-js'
+import {createMemo, createSignal, For} from 'solid-js'
 
 import dayReadingImage from '../../assets/concept-art/focus-room-day-reading-concept.png'
 import dayReadingGazeImage from '../../assets/concept-art/focus-room-day-reading-user-gaze-concept.png'
@@ -15,7 +15,7 @@ import nightTypingGazeImage from '../../assets/concept-art/focus-room-night-typi
 import nightWritingImage from '../../assets/concept-art/focus-room-night-desk-concept.png'
 import nightWritingGazeImage from '../../assets/concept-art/focus-room-night-writing-user-gaze-concept.png'
 
-const FocusRoomBlinkOverlay = clientOnly(() => import('./FocusRoomBlinkOverlay.client'), {
+const FocusRoomSceneCanvas = clientOnly(() => import('./FocusRoomSceneCanvas.client'), {
   lazy: true,
 })
 
@@ -36,7 +36,6 @@ const GAZE_OPTIONS = [
 type SceneTime = (typeof TIME_OPTIONS)[number]['value']
 type SceneActivity = (typeof ACTIVITY_OPTIONS)[number]['value']
 type SceneGaze = (typeof GAZE_OPTIONS)[number]['value']
-type TransitionPhase = 'fading' | 'idle' | 'loading'
 
 interface SceneAsset {
   readonly label: string
@@ -124,20 +123,17 @@ const SceneToolbar = (props: SceneToolbarProps) => {
   }
 
   return (
-    <header class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-      <div class="max-w-2xl">
-        <p class="m-0 text-xs font-750 tracking-[0.22em] text-#d9b98a uppercase">
-          2D character room
-        </p>
-        <h1 class="mb-0 mt-3 text-3xl font-800 tracking--0.035em sm:text-4xl" id="focus-room-title">
-          포커스 룸
-        </h1>
-        <p class="mb-0 mt-3 text-sm leading-6 text-#c9c0b5 sm:text-base">
-          시간대와 행동, 시선을 바꿔 캐릭터 장면을 비교해 보세요.
-        </p>
-      </div>
-
-      <div class="flex flex-wrap gap-2" role="group" aria-label="장면 설정">
+    <div
+      class={cx(
+        'absolute inset-x-4 bottom-4 z-30 flex justify-end sm:inset-x-auto',
+        'sm:bottom-auto sm:right-7 sm:top-6',
+      )}
+    >
+      <div
+        class="flex flex-wrap justify-end gap-2 rounded-5 bg-black/34 p-3 backdrop-blur-xl"
+        role="group"
+        aria-label="장면 설정"
+      >
         <label class="grid gap-1.5 text-xs font-650 text-#c9c0b5">
           시간대
           <select class={SELECT_CLASSES} onChange={handleTimeChange} value={props.time}>
@@ -165,7 +161,7 @@ const SceneToolbar = (props: SceneToolbarProps) => {
           </select>
         </label>
       </div>
-    </header>
+    </div>
   )
 }
 
@@ -174,48 +170,9 @@ export const FocusRoomStudio = () => {
   const [activity, setActivity] = createSignal<SceneActivity>('reading')
   const [gaze, setGaze] = createSignal<SceneGaze>('focused')
   const selectedScene = createMemo(() => getSceneAsset(time(), activity(), gaze()))
-  const [currentScene, setCurrentScene] = createSignal(untrack(selectedScene))
-  const [incomingScene, setIncomingScene] = createSignal<SceneAsset | null>(null)
-  const [transitionPhase, setTransitionPhase] = createSignal<TransitionPhase>('idle')
-
-  createEffect(() => {
-    const nextScene = selectedScene()
-    const current = currentScene()
-
-    if (nextScene.source === current.source) {
-      setIncomingScene(null)
-      setTransitionPhase('idle')
-      return
-    }
-
-    setTransitionPhase('loading')
-    setIncomingScene(nextScene)
-  })
-
-  const handleIncomingLoad = () => {
-    if (transitionPhase() === 'loading') {
-      setTransitionPhase('fading')
-    }
-  }
-
-  const handleIncomingAnimationEnd = () => {
-    if (transitionPhase() !== 'fading') {
-      return
-    }
-
-    const incoming = incomingScene()
-
-    if (incoming === null) {
-      return
-    }
-
-    setCurrentScene(incoming)
-    setIncomingScene(null)
-    setTransitionPhase('idle')
-  }
 
   return (
-    <section aria-labelledby="focus-room-title" class="grid gap-5">
+    <section aria-label="포커스 룸" class="relative h-dvh w-full overflow-hidden">
       <SceneToolbar
         activity={activity()}
         gaze={gaze()}
@@ -227,60 +184,15 @@ export const FocusRoomStudio = () => {
 
       <figure
         aria-label={selectedScene().label}
-        class={cx(
-          'relative m-0 aspect-[1672/941] overflow-hidden rounded-5 border border-white/10 bg-#17130f',
-          'shadow-[0_32px_100px_rgba(0,0,0,0.38)] sm:rounded-7',
-        )}
+        class="relative m-0 h-full w-full overflow-hidden bg-#17130f"
         role="img"
       >
-        <img
-          alt=""
-          class="absolute inset-0 h-full w-full object-cover"
-          height="941"
-          src={currentScene().source}
-          width="1672"
-        />
-
-        <Show when={incomingScene()}>
-          {(scene) => (
-            <img
-              alt=""
-              class="pomo-scene-incoming absolute inset-0 h-full w-full object-cover"
-              classList={{
-                'pomo-scene-fading': transitionPhase() === 'fading',
-              }}
-              height="941"
-              onAnimationEnd={handleIncomingAnimationEnd}
-              onLoad={handleIncomingLoad}
-              src={scene().source}
-              width="1672"
-            />
-          )}
-        </Show>
-
-        <FocusRoomBlinkOverlay
+        <FocusRoomSceneCanvas
           activity={activity()}
           gaze={gaze()}
-          sceneReady={transitionPhase() === 'idle'}
+          source={selectedScene().source}
           time={time()}
         />
-
-        <div
-          class={cx(
-            'pointer-events-none absolute inset-x-0 bottom-0 h-24',
-            'bg-gradient-to-t from-black/38 to-transparent',
-          )}
-        />
-        <figcaption
-          aria-live="polite"
-          class={cx(
-            'pointer-events-none absolute bottom-4 left-4 rounded-full border border-white/12',
-            'bg-black/42 px-3 py-2 text-xs font-650 text-white/88 backdrop-blur-md',
-            'sm:bottom-5 sm:left-5',
-          )}
-        >
-          {selectedScene().label}
-        </figcaption>
       </figure>
     </section>
   )
