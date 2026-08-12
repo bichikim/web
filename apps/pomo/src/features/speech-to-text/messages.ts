@@ -1,7 +1,9 @@
 import type {SpeechRecognitionError} from './errors'
+import type {SpeechModelId} from './models'
 import type {SpeechBackend} from './recognizer'
 
 export interface PrepareSpeechRequest {
+  readonly modelId: SpeechModelId
   readonly preferredBackend: SpeechBackend
   readonly requestId: number
   readonly type: 'prepare'
@@ -10,6 +12,7 @@ export interface PrepareSpeechRequest {
 export interface TranscribeSpeechRequest {
   readonly audio: Float32Array
   readonly language: string
+  readonly modelId: SpeechModelId
   readonly preferredBackend: SpeechBackend
   readonly requestId: number
   readonly type: 'transcribe'

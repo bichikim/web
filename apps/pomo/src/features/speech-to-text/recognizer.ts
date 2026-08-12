@@ -1,4 +1,5 @@
 import type {SpeechRecognitionError} from './errors'
+import type {SpeechModelId} from './models'
 import type {SpeechResult} from './result'
 
 export type SpeechBackend = 'wasm' | 'webgpu'
@@ -25,6 +26,7 @@ export interface SpeechRecognizer {
 }
 
 export interface CreateSpeechRecognizerOptions {
+  readonly modelId: SpeechModelId
   readonly onBackendChange: (backend: SpeechBackend) => void
   readonly onProgress: (progress: number) => void
   readonly preferredBackend: SpeechBackend

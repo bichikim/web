@@ -10,10 +10,17 @@ import {
 
 import {createBrowserSpeechRecorder} from './browser-recorder'
 import {createSpeechRecognizer} from './client'
+import {createEndpointTranscription, type EndpointTranscription} from './endpoint-transcription'
 import {getSpeechErrorMessage, type SpeechCaptureError} from './errors'
 import type {SpeechRecorder, SpeechRecording} from './recorder'
+import {DEFAULT_SPEECH_MODEL_ID, type SpeechModelId} from './models'
 import type {CreateSpeechRecognizerOptions, SpeechBackend, SpeechRecognizer} from './recognizer'
-import {createSpeechModelOwner, type SpeechModelState} from './speech-model-owner'
+import {
+  createSpeechModelOwner,
+  type SpeechModelOwner,
+  type SpeechModelState,
+} from './speech-model-owner'
+import {appendSpeechTranscript} from './transcript'
 
 const MAXIMUM_PROGRESS = 100
 const MILLISECONDS_PER_SECOND = 1000
@@ -30,6 +37,10 @@ export interface SpeechToTextRuntime {
 }
 
 export interface UseSpeechToTextProps {
+  readonly accumulateText?: boolean
+  readonly endpointing?: Accessor<boolean>
+  readonly modelId?: SpeechModelId
+  readonly onTranscript?: (text: string) => void
   readonly runtime?: SpeechToTextRuntime
 }
 
@@ -55,16 +66,6 @@ const DEFAULT_RUNTIME: SpeechToTextRuntime = {
   createRecognizer: createSpeechRecognizer,
   createRecorder: createBrowserSpeechRecorder,
   getPreferredBackend,
-}
-
-const appendTranscript = (current: string, next: string) => {
-  const trimmedText = next.trim()
-
-  if (trimmedText.length === 0) {
-    return current
-  }
-
-  return current.trim().length === 0 ? trimmedText : `${current.trimEnd()} ${trimmedText}`
 }
 
 const getModelProgress = (state: SpeechModelState) => {
@@ -103,8 +104,145 @@ const createRecordingTimer = (setElapsedTime: Setter<number>) => {
   return {start, stop}
 }
 
+interface RecorderReference {
+  current: SpeechRecorder | null
+}
+
+interface RecordingReference {
+  current: SpeechRecording | null
+}
+
+interface CreateRecordingActionsOptions {
+  readonly activity: Accessor<SpeechActivity>
+  readonly endpointing: Accessor<boolean>
+  readonly endpointTranscription: EndpointTranscription
+  readonly isDisposed: () => boolean
+  readonly modelOwner: SpeechModelOwner
+  readonly onCaptureFailure: (error: SpeechCaptureError) => void
+  readonly recorder: RecorderReference
+  readonly recording: RecordingReference
+  readonly setActivity: Setter<SpeechActivity>
+  readonly setErrorMessage: Setter<string | null>
+  readonly setModelState: Setter<SpeechModelState>
+  readonly timer: ReturnType<typeof createRecordingTimer>
+  readonly transcribeAudio: (audio: Float32Array) => Promise<void>
+}
+
+const createRecordingActions = (options: CreateRecordingActionsOptions) => {
+  let endpointingActive = false
+
+  const startRecording = async () => {
+    if (options.activity() !== 'idle' || options.recorder.current === null) {
+      return
+    }
+
+    options.setActivity('requesting')
+    options.setErrorMessage(null)
+
+    const result = await options.recorder.current.start()
+
+    if (options.isDisposed()) {
+      if (result.ok) {
+        result.value.cancel()
+      }
+      return
+    }
+
+    if (!result.ok) {
+      options.onCaptureFailure(result.error)
+      return
+    }
+
+    options.recording.current = result.value
+    endpointingActive = options.endpointing()
+
+    if (endpointingActive) {
+      options.endpointTranscription.start(result.value)
+    }
+
+    options.setActivity('recording')
+    options.timer.start()
+
+    options.modelOwner.prepare().catch((error: unknown) => {
+      if (!options.isDisposed()) {
+        options.setModelState({status: 'idle'})
+        options.setErrorMessage(error instanceof Error ? error.message : '음성 인식 모델 준비 오류')
+      }
+    })
+  }
+
+  const stopRecording = async () => {
+    const activeRecording = options.recording.current
+
+    if (options.activity() !== 'recording' || activeRecording === null) {
+      return
+    }
+
+    options.timer.stop()
+    options.setActivity('processing')
+    options.setErrorMessage(null)
+    const shouldTranscribeEndpoints = endpointingActive
+    endpointingActive = false
+    const audioResult = shouldTranscribeEndpoints
+      ? await options.endpointTranscription.stop(activeRecording)
+      : await activeRecording.stop()
+
+    if (options.isDisposed() || options.recording.current !== activeRecording) {
+      return
+    }
+
+    options.recording.current = null
+
+    if (!audioResult.ok) {
+      options.onCaptureFailure(audioResult.error)
+      return
+    }
+
+    if (!shouldTranscribeEndpoints && audioResult.value.length < MINIMUM_SAMPLE_COUNT) {
+      options.onCaptureFailure({code: 'capture-too-short', retryable: true})
+      return
+    }
+
+    if (!shouldTranscribeEndpoints) {
+      await options.transcribeAudio(audioResult.value)
+    }
+
+    if (!options.isDisposed()) {
+      options.setActivity('idle')
+    }
+  }
+
+  const toggleRecording = () => {
+    const currentActivity = options.activity()
+
+    if (currentActivity === 'recording') {
+      stopRecording().catch((error: unknown) => {
+        if (!options.isDisposed()) {
+          options.setErrorMessage(error instanceof Error ? error.message : '음성 처리 오류')
+          options.setActivity('idle')
+        }
+      })
+      return
+    }
+
+    if (currentActivity === 'idle') {
+      startRecording().catch((error: unknown) => {
+        if (!options.isDisposed()) {
+          options.setErrorMessage(error instanceof Error ? error.message : '마이크 실행 오류')
+          options.setActivity('idle')
+        }
+      })
+    }
+  }
+
+  return {startRecording, stopRecording, toggleRecording}
+}
+
 export const useSpeechToText = (props: UseSpeechToTextProps = {}): SpeechToTextController => {
   const runtime = untrack(() => props.runtime ?? DEFAULT_RUNTIME)
+  const accumulateText = untrack(() => props.accumulateText ?? true)
+  const modelId = untrack(() => props.modelId ?? DEFAULT_SPEECH_MODEL_ID)
+  const endpointing = untrack(() => props.endpointing ?? (() => false))
   const [activity, setActivity] = createSignal<SpeechActivity>('checking')
   const [backend, setBackend] = createSignal<SpeechBackend | null>(null)
   const [elapsedTime, setElapsedTime] = createSignal(0)
@@ -115,13 +253,14 @@ export const useSpeechToText = (props: UseSpeechToTextProps = {}): SpeechToTextC
   const modelProgress = createMemo(() => getModelProgress(modelState()))
 
   let disposed = false
-  let recorder: SpeechRecorder | null = null
-  let recording: SpeechRecording | null = null
+  const recorder: RecorderReference = {current: null}
+  const recording: RecordingReference = {current: null}
   const timer = createRecordingTimer(setElapsedTime)
   const modelOwner = createSpeechModelOwner({
     createRecognizer: runtime.createRecognizer,
     isDisposed: () => disposed,
     language: TRANSCRIPTION_LANGUAGE,
+    modelId,
     onBackendChange: setBackend,
     onError: (error) => setErrorMessage(getSpeechErrorMessage(error)),
     onStateChange: setModelState,
@@ -129,108 +268,65 @@ export const useSpeechToText = (props: UseSpeechToTextProps = {}): SpeechToTextC
   })
 
   const handleCaptureFailure = (error: SpeechCaptureError) => {
+    timer.stop()
     setErrorMessage(getSpeechErrorMessage(error))
     setActivity('idle')
   }
 
-  const startRecording = async () => {
-    if (activity() !== 'idle' || recorder === null) {
+  const transcribeAudio = async (audio: Float32Array) => {
+    if (audio.length < MINIMUM_SAMPLE_COUNT) {
       return
     }
 
-    setActivity('requesting')
-    setErrorMessage(null)
-    const result = await recorder.start()
+    const transcriptionResult = await modelOwner.transcribe(audio)
 
-    if (disposed) {
-      if (result.ok) {
-        result.value.cancel()
+    if (disposed || !transcriptionResult.ok) {
+      return
+    }
+
+    const transcript = transcriptionResult.value.text.trim()
+
+    if (transcript.length > 0) {
+      if (accumulateText) {
+        setText((current) => appendSpeechTranscript(current, transcript))
       }
-      return
+      props.onTranscript?.(transcript)
     }
+  }
 
-    if (!result.ok) {
-      handleCaptureFailure(result.error)
-      return
-    }
-
-    recording = result.value
-    setActivity('recording')
-    timer.start()
-    modelOwner.prepare().catch((error: unknown) => {
+  const endpointTranscription = createEndpointTranscription({
+    isDisposed: () => disposed,
+    onCaptureFailure: (error) => {
+      recording.current = null
+      handleCaptureFailure(error)
+    },
+    onUnexpectedError: (error) => {
       if (!disposed) {
-        setModelState({status: 'idle'})
-        setErrorMessage(error instanceof Error ? error.message : '음성 인식 모델 준비 오류')
+        setErrorMessage(error instanceof Error ? error.message : '음성 처리 오류')
       }
-    })
-  }
+    },
+    transcribeAudio,
+  })
 
-  const stopRecording = async () => {
-    const activeRecording = recording
-
-    if (activity() !== 'recording' || activeRecording === null) {
-      return
-    }
-
-    recording = null
-    timer.stop()
-    setActivity('processing')
-    setErrorMessage(null)
-    const audioResult = await activeRecording.stop()
-
-    if (disposed) {
-      return
-    }
-
-    if (!audioResult.ok) {
-      handleCaptureFailure(audioResult.error)
-      return
-    }
-
-    if (audioResult.value.length < MINIMUM_SAMPLE_COUNT) {
-      handleCaptureFailure({code: 'capture-too-short', retryable: true})
-      return
-    }
-
-    const transcriptionResult = await modelOwner.transcribe(audioResult.value)
-
-    if (disposed) {
-      return
-    }
-
-    if (transcriptionResult.ok) {
-      setText((current) => appendTranscript(current, transcriptionResult.value.text))
-    }
-
-    setActivity('idle')
-  }
-
-  const toggleRecording = () => {
-    const currentActivity = activity()
-
-    if (currentActivity === 'recording') {
-      stopRecording().catch((error: unknown) => {
-        if (!disposed) {
-          setErrorMessage(error instanceof Error ? error.message : '음성 처리 오류')
-          setActivity('idle')
-        }
-      })
-      return
-    }
-
-    if (currentActivity === 'idle') {
-      startRecording().catch((error: unknown) => {
-        if (!disposed) {
-          setErrorMessage(error instanceof Error ? error.message : '마이크 실행 오류')
-          setActivity('idle')
-        }
-      })
-    }
-  }
+  const recordingActions = createRecordingActions({
+    activity,
+    endpointing,
+    endpointTranscription,
+    isDisposed: () => disposed,
+    modelOwner,
+    onCaptureFailure: handleCaptureFailure,
+    recorder,
+    recording,
+    setActivity,
+    setErrorMessage,
+    setModelState,
+    timer,
+    transcribeAudio,
+  })
 
   onMount(() => {
-    recorder = runtime.createRecorder()
-    const supported = recorder.isSupported()
+    recorder.current = runtime.createRecorder()
+    const supported = recorder.current.isSupported()
     setIsSupported(supported)
     setBackend(runtime.getPreferredBackend())
     setActivity('idle')
@@ -243,8 +339,9 @@ export const useSpeechToText = (props: UseSpeechToTextProps = {}): SpeechToTextC
   onCleanup(() => {
     disposed = true
     timer.stop()
-    recording?.cancel()
-    recording = null
+    recording.current?.cancel()
+    recording.current = null
+    endpointTranscription.dispose()
     modelOwner.dispose()
   })
 
@@ -257,9 +354,9 @@ export const useSpeechToText = (props: UseSpeechToTextProps = {}): SpeechToTextC
     modelProgress,
     modelState,
     setText,
-    startRecording,
-    stopRecording,
+    startRecording: recordingActions.startRecording,
+    stopRecording: recordingActions.stopRecording,
     text,
-    toggleRecording,
+    toggleRecording: recordingActions.toggleRecording,
   }
 }

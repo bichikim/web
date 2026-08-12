@@ -74,7 +74,12 @@ describe('speech recognition worker', () => {
       },
     )
     const worker = await loadWorker()
-    worker.dispatch({preferredBackend: 'webgpu', requestId: 7, type: 'prepare'})
+    worker.dispatch({
+      modelId: 'whisper-base',
+      preferredBackend: 'webgpu',
+      requestId: 7,
+      type: 'prepare',
+    })
 
     await vi.waitFor(() => {
       expect(worker.postMessage).toHaveBeenCalledWith({
@@ -85,6 +90,11 @@ describe('speech recognition worker', () => {
     })
     expect(worker.postMessage).toHaveBeenCalledWith({backend: 'wasm', type: 'backend-changed'})
     expect(worker.postMessage).toHaveBeenCalledWith({progress: 55, type: 'loading'})
+    expect(transformers.pipeline).toHaveBeenLastCalledWith(
+      'automatic-speech-recognition',
+      'onnx-community/whisper-base',
+      expect.objectContaining({device: 'wasm'}),
+    )
   })
 
   it('should transcribe the requested language and return the matching request id', async () => {
@@ -93,6 +103,7 @@ describe('speech recognition worker', () => {
     worker.dispatch({
       audio,
       language: 'korean',
+      modelId: 'whisper-tiny',
       preferredBackend: 'wasm',
       requestId: 12,
       type: 'transcribe',
@@ -115,7 +126,12 @@ describe('speech recognition worker', () => {
   it('should return a structured model failure for the originating request', async () => {
     transformers.pipeline.mockRejectedValue(new Error('모델 다운로드 실패'))
     const worker = await loadWorker()
-    worker.dispatch({preferredBackend: 'wasm', requestId: 21, type: 'prepare'})
+    worker.dispatch({
+      modelId: 'whisper-tiny',
+      preferredBackend: 'wasm',
+      requestId: 21,
+      type: 'prepare',
+    })
 
     await vi.waitFor(() => {
       expect(worker.postMessage).toHaveBeenCalledWith({
@@ -129,5 +145,33 @@ describe('speech recognition worker', () => {
         type: 'error',
       })
     })
+  })
+
+  it('should run a Korean Moonshine model without Whisper generation options', async () => {
+    const worker = await loadWorker()
+    const audio = Float32Array.of(0.1, 0.2)
+    worker.dispatch({
+      audio,
+      language: 'korean',
+      modelId: 'moonshine-tiny-ko',
+      preferredBackend: 'wasm',
+      requestId: 31,
+      type: 'transcribe',
+    })
+
+    await vi.waitFor(() => {
+      expect(worker.postMessage).toHaveBeenCalledWith({
+        backend: 'wasm',
+        requestId: 31,
+        text: '안녕하세요',
+        type: 'complete',
+      })
+    })
+    expect(transformers.pipeline).toHaveBeenCalledWith(
+      'automatic-speech-recognition',
+      'onnx-community/moonshine-tiny-ko-ONNX',
+      expect.objectContaining({device: 'wasm'}),
+    )
+    expect(transformers.transcribe).toHaveBeenCalledWith(audio)
   })
 })

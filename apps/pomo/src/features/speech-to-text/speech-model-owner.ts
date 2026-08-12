@@ -1,4 +1,5 @@
 import type {SpeechRecognitionError} from './errors'
+import type {SpeechModelId} from './models'
 import type {
   CreateSpeechRecognizerOptions,
   SpeechBackend,
@@ -28,6 +29,7 @@ export interface CreateSpeechModelOwnerOptions {
   readonly createRecognizer: (options: CreateSpeechRecognizerOptions) => SpeechRecognizer
   readonly isDisposed: () => boolean
   readonly language: string
+  readonly modelId: SpeechModelId
   readonly onBackendChange: (backend: SpeechBackend) => void
   readonly onError: (error: SpeechRecognitionError) => void
   readonly onStateChange: (state: SpeechModelState) => void
@@ -75,6 +77,7 @@ export const createSpeechModelOwner = (
 
   const getRecognizer = () => {
     recognizer ??= options.createRecognizer({
+      modelId: options.modelId,
       onBackendChange: options.onBackendChange,
       onProgress: (progress) => {
         if (!options.isDisposed()) {
