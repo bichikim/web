@@ -154,7 +154,32 @@ pnpm lint
 ## 관련 자산과 스크립트
 
 - 런타임 최종 이미지 12장: `assets/concept-art/focus-room-*.png`
+- 눈 깜박임 레이어: `assets/focus-room-animation/eyes-*.png`
 - 로컬 중간 산출물: `.temp/pomo-focus-room/`
 - 머리 정규화 스크립트: `scripts/normalize-focus-room-day-heads.mjs`
+- 눈 레이어 추출 스크립트: `scripts/create-focus-room-blink-assets.mjs`
 
 새 행동을 추가할 때도 새 장면 전체를 생성하지 않는다. 기존 시간대 마스터에서 행동 영역만 편집하고, 기존 기준 머리를 마지막에 정규화하는 순서를 유지한다.
+
+## 9. 눈 깜박임 레이어를 추가한다
+
+눈 깜박임은 장면 전체를 새 이미지로 교체하지 않는다. 집중 시선과 사용자 보기 상태마다 기준 장면 한 장을 정하고, AI에는 눈꺼풀만 `half`와 `closed` 상태로 바꾸도록 요청한다. 생성본에서 눈 주위의 작은 영역만 추출한 뒤 가장자리를 흐린 투명 PNG로 만든다.
+
+런타임에서는 기존 12장을 배경 겸 `body`로 유지한다. PixiJS 투명 캔버스에 현재 시선 상태의 눈 패치만 올리고 `open → half → closed → half → open` 순서로 texture를 교체한다. 장면 전환 중에는 눈 레이어를 숨긴다. 배경·몸·얼굴 크기를 다시 생성하거나 합성하지 않으므로 기존 자산의 픽셀은 바뀌지 않는다.
+
+눈 레이어를 다시 만들 때는 AI 생성본을 런타임 자산 폴더에 보관하지 않는다. 로컬 폴더에서 다음 이름으로 준비하고 추출 스크립트만 실행한다.
+
+```text
+focused-half.png
+focused-closed.png
+user-half.png
+user-closed.png
+night-focused-half.png
+night-focused-closed.png
+night-user-half.png
+night-user-closed.png
+```
+
+```bash
+POMO_BLINK_SOURCE_DIRECTORY=<로컬 생성본 폴더> node scripts/create-focus-room-blink-assets.mjs
+```

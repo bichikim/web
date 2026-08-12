@@ -18,7 +18,7 @@ export default function FocusRoomPage() {
           <A class="text-sm font-650 text-#c9c0b5 no-underline hover:text-white" href="/">
             ← 실험실 목록
           </A>
-          <span class="text-xs font-650 text-#8f8377">12 scenes</span>
+          <span class="text-xs font-650 text-#8f8377">12 scenes · PixiJS blink</span>
         </nav>
         <FocusRoomStudio />
       </div>

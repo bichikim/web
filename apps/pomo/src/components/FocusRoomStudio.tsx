@@ -1,3 +1,4 @@
+import {clientOnly} from '@solidjs/start'
 import {cx} from 'class-variance-authority'
 import {createEffect, createMemo, createSignal, For, Show, untrack} from 'solid-js'
 
@@ -13,6 +14,10 @@ import nightTypingImage from '../../assets/concept-art/focus-room-night-typing-c
 import nightTypingGazeImage from '../../assets/concept-art/focus-room-night-typing-user-gaze-concept.png'
 import nightWritingImage from '../../assets/concept-art/focus-room-night-desk-concept.png'
 import nightWritingGazeImage from '../../assets/concept-art/focus-room-night-writing-user-gaze-concept.png'
+
+const FocusRoomBlinkOverlay = clientOnly(() => import('./FocusRoomBlinkOverlay.client'), {
+  lazy: true,
+})
 
 const TIME_OPTIONS = [
   {label: '낮', value: 'day'},
@@ -252,6 +257,13 @@ export const FocusRoomStudio = () => {
             />
           )}
         </Show>
+
+        <FocusRoomBlinkOverlay
+          activity={activity()}
+          gaze={gaze()}
+          sceneReady={transitionPhase() === 'idle'}
+          time={time()}
+        />
 
         <div
           class={cx(
