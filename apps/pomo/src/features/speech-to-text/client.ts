@@ -69,6 +69,18 @@ const sendRequest = (
   transfer: Array<Transferable> = [],
 ) => worker.postMessage(request, transfer)
 
+const sendPrepareRequest = (
+  worker: Worker,
+  options: CreateSpeechRecognizerOptions,
+  requestId: number,
+) =>
+  sendRequest(worker, {
+    modelId: options.modelId,
+    preferredBackend: options.preferredBackend,
+    requestId,
+    type: 'prepare',
+  })
+
 /** Creates an isolated speech recognizer and owns its Worker until disposal. */
 export const createSpeechRecognizer = (
   options: CreateSpeechRecognizerOptions,
@@ -189,7 +201,7 @@ export const createSpeechRecognizer = (
 
     preparePromise = new Promise((resolve) => {
       pendingPrepare = {requestId, resolve}
-      sendRequest(worker, {preferredBackend: options.preferredBackend, requestId, type: 'prepare'})
+      sendPrepareRequest(worker, options, requestId)
     })
     return preparePromise
   }
@@ -215,6 +227,7 @@ export const createSpeechRecognizer = (
         {
           audio: transferableAudio,
           language: transcriptionOptions.language,
+          modelId: options.modelId,
           preferredBackend: options.preferredBackend,
           requestId,
           type: 'transcribe',

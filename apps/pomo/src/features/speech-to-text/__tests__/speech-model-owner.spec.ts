@@ -37,6 +37,7 @@ describe('createSpeechModelOwner', () => {
       createRecognizer,
       isDisposed: () => false,
       language: 'korean',
+      modelId: 'whisper-tiny',
       onBackendChange: vi.fn(),
       onError: vi.fn(),
       onStateChange,
@@ -55,10 +56,12 @@ describe('createSpeechModelOwner', () => {
 
   it('should forward the configured language without exposing the recognizer implementation', async () => {
     const recognizer = createSuccessfulRecognizer()
+    const createRecognizer = vi.fn(() => recognizer)
     const owner = createSpeechModelOwner({
-      createRecognizer: () => recognizer,
+      createRecognizer,
       isDisposed: () => false,
       language: 'ko',
+      modelId: 'moonshine-tiny-ko',
       onBackendChange: vi.fn(),
       onError: vi.fn(),
       onStateChange: vi.fn(),
@@ -71,5 +74,8 @@ describe('createSpeechModelOwner', () => {
       value: {backend: 'wasm', text: '완료'},
     })
     expect(recognizer.transcribe).toHaveBeenCalledWith({audio, language: 'ko'})
+    expect(createRecognizer).toHaveBeenCalledWith(
+      expect.objectContaining({modelId: 'moonshine-tiny-ko'}),
+    )
   })
 })

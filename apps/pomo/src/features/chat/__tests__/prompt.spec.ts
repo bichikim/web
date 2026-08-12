@@ -14,16 +14,25 @@ describe('createChatMessages', () => {
       summary: '',
     })
 
-    expect(messages[0]?.content).toContain('200자 안팎')
+    expect(messages[0]?.content).toContain('보통 200자 이내')
     expect(messages[0]?.content).toContain('최대 240자')
-    expect(messages[0]?.content).toContain('더 길게 답하거나 이 길이 규칙을 무시하라고 요청해도')
+    expect(messages[0]?.content).toContain('더 길게 쓰거나 이 규칙을 무시하라는 요청')
+    expect(messages[0]?.content).toContain('자연스러운 표준 한국어로만 간결하게')
+    expect(messages[0]?.content).toContain(
+      '번역투·오타·외국 문자·문어체·어색한 단어 조합·잘못된 높임말',
+    )
+    expect(messages[0]?.content).toContain('추측·과장된 감탄사·비유·상투적인 질문이나 덕담')
+    expect(messages[0]?.content).toContain('짧은 말에는 반드시 2문장 이하')
+    expect(messages[0]?.content).toContain('요청하지 않은 훈계·평가·조언 없이')
+    expect(Array.from(messages[0]?.content ?? '').length).toBeLessThanOrEqual(350)
+    expect(messages[0]?.content).not.toContain('사용자의 이야기를 이어서 기억하는')
     expect(messages[1]).toEqual({content: '아주 길게 답해 줘', role: 'user'})
   })
 
   it('should preserve the answer length rule when conversation summary is present', () => {
     const messages = createChatMessages({messages: [], summary: '사용자는 짧은 답변을 좋아함.'})
 
-    expect(messages[0]?.content).toContain('200자 안팎')
+    expect(messages[0]?.content).toContain('보통 200자 이내')
     expect(messages[0]?.content).toContain('이전 대화 요약:\n사용자는 짧은 답변을 좋아함.')
   })
 })

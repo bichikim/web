@@ -2,12 +2,12 @@ import {decodeSpeechRecording, type SpeechAudioDecoder} from './audio'
 import type {SpeechCaptureError} from './errors'
 import type {SpeechRecorder, SpeechRecording} from './recorder'
 import {speechFailure, type SpeechResult, speechSuccess} from './result'
+import {createBrowserSpeechEndDetector, type SpeechEndDetector} from './speech-end-detector'
 
 export interface CreateBrowserSpeechRecorderOptions {
   readonly decodeRecording?: SpeechAudioDecoder
+  readonly createSpeechEndDetector?: (stream: MediaStream) => SpeechEndDetector | null
 }
-
-const ignoreStopResult = (_result: SpeechResult<Float32Array, SpeechCaptureError>) => undefined
 
 const createCaptureError = (error: unknown): SpeechCaptureError => {
   if (error instanceof DOMException && error.name === 'NotAllowedError') {
@@ -30,87 +30,204 @@ const isRecordingSupported = () =>
   typeof navigator.mediaDevices?.getUserMedia === 'function' &&
   typeof MediaRecorder !== 'undefined'
 
+interface RecordingSegment {
+  readonly cancel: (onStopped: () => void) => void
+  readonly stop: (onStopped: () => void) => Promise<SpeechResult<Float32Array, SpeechCaptureError>>
+}
+
+interface CreateRecordingSegmentOptions {
+  readonly decodeRecording: SpeechAudioDecoder
+  readonly stream: MediaStream
+}
+
+const ignoreAudioResult = (_result: SpeechResult<Float32Array, SpeechCaptureError>) => undefined
+const getBusyResult = (): Promise<SpeechResult<Float32Array, SpeechCaptureError>> =>
+  Promise.resolve(speechFailure({code: 'capture-busy', retryable: true}))
+
+const createRecordingSegment = (options: CreateRecordingSegmentOptions): RecordingSegment => {
+  const recorder = new MediaRecorder(options.stream)
+  const chunks: Array<Blob> = []
+  let cancelled = false
+  let stopped = false
+  let resolveStop: (result: SpeechResult<Float32Array, SpeechCaptureError>) => void =
+    ignoreAudioResult
+  const stopResult = new Promise<SpeechResult<Float32Array, SpeechCaptureError>>((resolve) => {
+    resolveStop = resolve
+  })
+
+  recorder.addEventListener('dataavailable', (event) => {
+    if (event.data.size > 0) {
+      chunks.push(event.data)
+    }
+  })
+  recorder.start()
+
+  const finish = (onStopped: () => void) => {
+    if (stopped) {
+      return
+    }
+
+    stopped = true
+    recorder.addEventListener(
+      'stop',
+      () => {
+        onStopped()
+
+        if (cancelled) {
+          resolveStop(speechFailure({code: 'capture-cancelled', retryable: true}))
+          return
+        }
+
+        const recording = new Blob(chunks, {type: recorder.mimeType})
+        options
+          .decodeRecording(recording)
+          .then((audio) => resolveStop(speechSuccess(audio)))
+          .catch((error: unknown) => resolveStop(speechFailure(createCaptureError(error))))
+      },
+      {once: true},
+    )
+    recorder.stop()
+  }
+
+  return {
+    cancel: (onStopped) => {
+      cancelled = true
+      finish(onStopped)
+    },
+    stop: (onStopped) => {
+      finish(onStopped)
+      return stopResult
+    },
+  }
+}
+
 /** Creates a recorder that owns at most one microphone stream at a time. */
 export const createBrowserSpeechRecorder = (
   options: CreateBrowserSpeechRecorderOptions = {},
 ): SpeechRecorder => {
   const decodeRecording = options.decodeRecording ?? decodeSpeechRecording
-  let active = false
+  let activeSession: symbol | null = null
 
   const start = async (): Promise<SpeechResult<SpeechRecording, SpeechCaptureError>> => {
     if (!isRecordingSupported()) {
       return speechFailure({code: 'unsupported', retryable: false})
     }
 
-    if (active) {
+    if (activeSession !== null) {
       return speechFailure({code: 'capture-busy', retryable: true})
     }
 
-    active = true
+    const session = Symbol('speech-recording')
+    activeSession = session
     let stream: MediaStream | null = null
 
     try {
       const acquiredStream = await navigator.mediaDevices.getUserMedia({audio: true})
       stream = acquiredStream
-      const recorder = new MediaRecorder(acquiredStream)
-      const chunks: Array<Blob> = []
-      let cancelled = false
-      let resolveStop: (result: SpeechResult<Float32Array, SpeechCaptureError>) => void =
-        ignoreStopResult
-      const stopResult = new Promise<SpeechResult<Float32Array, SpeechCaptureError>>((resolve) => {
-        resolveStop = resolve
+      let closed = false
+      let currentSegment: RecordingSegment | null = createRecordingSegment({
+        decodeRecording,
+        stream: acquiredStream,
       })
+      let speechEndDetector: SpeechEndDetector | null = null
+      let speechEndDetectorInitialized = false
+      let segmentOperation: Promise<SpeechResult<Float32Array, SpeechCaptureError>> | null = null
+      let released = false
       const release = () => {
-        acquiredStream.getTracks().forEach((track) => track.stop())
-        active = false
-      }
-
-      recorder.addEventListener('dataavailable', (event) => {
-        if (event.data.size > 0) {
-          chunks.push(event.data)
+        if (!released) {
+          released = true
+          speechEndDetector?.dispose()
+          acquiredStream.getTracks().forEach((track) => track.stop())
         }
-      })
-      recorder.addEventListener(
-        'stop',
-        () => {
-          release()
 
-          if (cancelled) {
-            resolveStop(speechFailure({code: 'capture-cancelled', retryable: true}))
-            return
-          }
-
-          const recording = new Blob(chunks, {type: recorder.mimeType})
-          decodeRecording(recording)
-            .then((audio) => resolveStop(speechSuccess(audio)))
-            .catch((error: unknown) => resolveStop(speechFailure(createCaptureError(error))))
-        },
-        {once: true},
-      )
-      recorder.start()
+        if (activeSession === session) {
+          activeSession = null
+        }
+      }
 
       return speechSuccess({
         cancel: () => {
-          cancelled = true
+          if (!closed) {
+            closed = true
+            currentSegment?.cancel(release)
+            currentSegment = null
+          }
 
-          if (recorder.state === 'recording') {
-            recorder.stop()
-          } else {
+          if (segmentOperation !== null) {
             release()
-            resolveStop(speechFailure({code: 'capture-cancelled', retryable: true}))
           }
         },
-        stop: () => {
-          if (recorder.state === 'recording') {
-            recorder.stop()
+        onSpeechEnd: (handler) => {
+          if (!speechEndDetectorInitialized) {
+            speechEndDetectorInitialized = true
+
+            try {
+              speechEndDetector = (
+                options.createSpeechEndDetector ?? createBrowserSpeechEndDetector
+              )(acquiredStream)
+            } catch {
+              speechEndDetector = null
+            }
           }
 
-          return stopResult
+          return speechEndDetector?.subscribe(handler) ?? (() => undefined)
+        },
+        stop: () => {
+          const segment = currentSegment
+
+          if (closed || segment === null || segmentOperation !== null) {
+            return getBusyResult()
+          }
+
+          closed = true
+          currentSegment = null
+          return segment.stop(release)
+        },
+        takeSegment: () => {
+          const segment = currentSegment
+
+          if (closed || segment === null || segmentOperation !== null) {
+            return getBusyResult()
+          }
+
+          currentSegment = null
+          let rotationError: SpeechCaptureError | null = null
+          segmentOperation = segment
+            .stop(() => {
+              if (closed) {
+                release()
+                return
+              }
+
+              try {
+                currentSegment = createRecordingSegment({
+                  decodeRecording,
+                  stream: acquiredStream,
+                })
+              } catch (error) {
+                rotationError = createCaptureError(error)
+                closed = true
+                release()
+              }
+            })
+            .then((result) => {
+              if (rotationError !== null) {
+                return speechFailure(rotationError)
+              }
+
+              return closed ? speechFailure({code: 'capture-cancelled', retryable: true}) : result
+            })
+            .finally(() => {
+              segmentOperation = null
+            })
+          return segmentOperation
         },
       })
     } catch (error) {
       stream?.getTracks().forEach((track) => track.stop())
-      active = false
+      if (activeSession === session) {
+        activeSession = null
+      }
       return speechFailure(createCaptureError(error))
     }
   }

@@ -5,6 +5,11 @@ import {type ChatController, type ChatMessage, useChat} from '../features/chat'
 import {type ChatVoiceController, useChatVoice} from '../features/chat-voice'
 import {createStreamingSpeechBuffer} from '../features/chat-voice/streaming-speech-buffer'
 import {useKoreanTextSegments} from '../features/korean-text-postprocessor'
+import {
+  appendSpeechTranscript,
+  type SpeechToTextController,
+  useSpeechToText,
+} from '../features/speech-to-text'
 import {getTextModel} from '../features/text-generation'
 import {KoreanTextRenderer} from './KoreanTextRenderer'
 
@@ -171,10 +176,27 @@ const ChatTranscript = (props: ChatTranscriptProps) => {
 
 interface ChatComposerProps {
   readonly chat: ChatController
+  readonly endpointing: boolean
+  readonly onEndpointingChange: (enabled: boolean) => void
   readonly onSend: () => void
+  readonly onSpeechToggle: () => void
+  readonly speech: SpeechToTextController
 }
 
 const ChatComposer = (props: ChatComposerProps) => {
+  const isSpeechBusy = () => {
+    const activity = props.speech.activity()
+    return activity === 'checking' || activity === 'processing' || activity === 'requesting'
+  }
+  const isRecording = () => props.speech.activity() === 'recording'
+  const microphoneLabel = () => {
+    if (isRecording()) {
+      return '마이크 끄기'
+    }
+
+    return isSpeechBusy() ? '음성 처리 중…' : '음성 입력'
+  }
+  const sendButtonLabel = () => (isRecording() ? '마이크 끄고 보내기' : '보내기')
   const handleDraftInput = (event: InputEvent & {currentTarget: HTMLTextAreaElement}) => {
     props.chat.setDraft(event.currentTarget.value)
   }
@@ -211,16 +233,69 @@ const ChatComposer = (props: ChatComposerProps) => {
           value={props.chat.draft()}
         />
       </label>
-      <div class="mt-3 flex items-center justify-between gap-4">
-        <span class="text-xs text-#8f8297">Enter 전송 · Shift+Enter 줄바꿈</span>
-        <button
-          class={cx(BUTTON_CLASSES, 'bg-#9ed6bb text-#14251d hover:bg-#b8e8d0')}
-          disabled={!props.chat.canSend()}
-          type="submit"
-        >
-          보내기
-        </button>
+      <div class="mt-3 flex flex-wrap items-center justify-between gap-3">
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="text-xs text-#8f8297">Enter 전송 · Shift+Enter 줄바꿈</span>
+          <button
+            aria-pressed={props.endpointing}
+            class={cx(
+              'rounded-full border px-3 py-1 text-[11px] font-700 transition',
+              'disabled:cursor-not-allowed disabled:opacity-40',
+              props.endpointing
+                ? 'border-#9ed6bb/40 bg-#9ed6bb/12 text-#b8e8d0'
+                : 'border-white/10 bg-white/4 text-#918697 hover:bg-white/8',
+            )}
+            disabled={isRecording() || isSpeechBusy()}
+            onClick={() => props.onEndpointingChange(!props.endpointing)}
+            type="button"
+          >
+            말끝 감지 후 바로 입력 · {props.endpointing ? '켬' : '끔'}
+          </button>
+        </div>
+        <div class="flex items-center gap-2">
+          <button
+            aria-pressed={isRecording()}
+            class={cx(
+              BUTTON_CLASSES,
+              'border border-white/10 bg-white/5 text-#d9cfdd hover:bg-white/9',
+              isRecording() && 'border-#ff8e9e/35 bg-#ff8e9e/12 text-#ffb0bb',
+            )}
+            disabled={isSpeechBusy() || props.speech.isSupported() !== true}
+            onClick={() => props.onSpeechToggle()}
+            type="button"
+          >
+            {microphoneLabel()}
+          </button>
+          <button
+            class={cx(BUTTON_CLASSES, 'bg-#9ed6bb text-#14251d hover:bg-#b8e8d0')}
+            disabled={!isRecording() && (!props.chat.canSend() || isSpeechBusy())}
+            type="submit"
+          >
+            {sendButtonLabel()}
+          </button>
+        </div>
       </div>
+      <Show when={isRecording()}>
+        <p aria-live="polite" class="mb-0 mt-2 text-xs font-650 text-#ffb0bb">
+          마이크 듣는 중 · {props.speech.elapsedTime().toFixed(1)}초 ·{' '}
+          {props.endpointing
+            ? '말끝의 짧은 침묵을 감지하면 입력창에 바로 표시해요.'
+            : '마이크를 끄면 전체 음성을 인식해요.'}{' '}
+          마이크 끄기는 전송하지 않아요.
+        </p>
+      </Show>
+      <Show when={props.speech.modelState().status === 'loading'}>
+        <p aria-live="polite" class="mb-0 mt-2 text-xs text-#b8e8d0">
+          음성 인식 모델 준비 중 · {props.speech.modelProgress()}%
+        </p>
+      </Show>
+      <Show when={props.speech.errorMessage()}>
+        {(message) => (
+          <p aria-live="assertive" class="mb-0 mt-2 text-xs text-#ffb0bb" role="alert">
+            {message()}
+          </p>
+        )}
+      </Show>
     </form>
   )
 }
@@ -359,11 +434,22 @@ const ChatRoom = () => {
   const speechBuffer = createStreamingSpeechBuffer({locale: 'ko'})
   const [messageList, setMessageList] = createSignal<HTMLDivElement>()
   const [disableRefining, setDisableRefining] = createSignal(false)
+  const [endpointing, setEndpointing] = createSignal(false)
   const [speakBeforeRefining, setSpeakBeforeRefining] = createSignal(false)
   let spokenMessageId: string | null = null
   let speakDraftForReply = false
 
-  const handleSend = () => {
+  const speech = useSpeechToText({
+    accumulateText: false,
+    endpointing,
+    modelId: 'whisper-base',
+    onTranscript: (transcript) => {
+      const currentDraft = chat.draft()
+      chat.setDraft(appendSpeechTranscript(currentDraft, transcript).slice(0, MAXIMUM_DRAFT_LENGTH))
+    },
+  })
+
+  const sendDraft = () => {
     if (!chat.canSend()) {
       return
     }
@@ -373,6 +459,21 @@ const ChatRoom = () => {
     speakDraftForReply = speakBeforeRefining()
     chat.send({refineAnswer: !disableRefining()})
   }
+  const stopSpeechAndSend = () => {
+    speech.stopRecording().then(sendDraft).catch(console.error)
+  }
+  const handleSend = () => {
+    const speechActivity = speech.activity()
+
+    if (speechActivity === 'recording') {
+      stopSpeechAndSend()
+      return
+    }
+
+    if (speechActivity === 'idle') {
+      sendDraft()
+    }
+  }
   const handlePrepare = () => {
     chat.prepare()
     voice.prepare().catch(console.error)
@@ -380,6 +481,17 @@ const ChatRoom = () => {
   const handleClear = () => {
     voice.stop()
     chat.clear()
+  }
+  const handleSpeechToggle = () => {
+    const isRecording = speech.activity() === 'recording'
+    voice.stop()
+
+    if (isRecording) {
+      speech.stopRecording().catch(console.error)
+      return
+    }
+
+    speech.startRecording().catch(console.error)
   }
 
   createEffect(() => {
@@ -428,7 +540,14 @@ const ChatRoom = () => {
       <div class="grid min-h-[68dvh] lg:grid-cols-[minmax(0,1fr)_17rem]">
         <div class="grid min-h-0 grid-rows-[1fr_auto]">
           <ChatTranscript chat={chat} setMessageList={setMessageList} voice={voice} />
-          <ChatComposer chat={chat} onSend={handleSend} />
+          <ChatComposer
+            chat={chat}
+            endpointing={endpointing()}
+            onEndpointingChange={setEndpointing}
+            onSend={handleSend}
+            onSpeechToggle={handleSpeechToggle}
+            speech={speech}
+          />
         </div>
         <ContextSidebar
           chat={chat}

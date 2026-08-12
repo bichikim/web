@@ -60,6 +60,7 @@ describe('createSpeechRecognizer', () => {
     const onBackendChange = vi.fn()
     const onProgress = vi.fn()
     const recognizer = createSpeechRecognizer({
+      modelId: 'whisper-base',
       onBackendChange,
       onProgress,
       preferredBackend: 'webgpu',
@@ -70,7 +71,7 @@ describe('createSpeechRecognizer', () => {
 
     expect(worker.postMessage).toHaveBeenCalledTimes(1)
     expect(worker.postMessage).toHaveBeenCalledWith(
-      {preferredBackend: 'webgpu', requestId: 1, type: 'prepare'},
+      {modelId: 'whisper-base', preferredBackend: 'webgpu', requestId: 1, type: 'prepare'},
       [],
     )
     worker.emitMessage({progress: 45, type: 'loading'})
@@ -85,6 +86,7 @@ describe('createSpeechRecognizer', () => {
 
   it('should match transcription responses by request id and reject concurrent work', async () => {
     const recognizer = createSpeechRecognizer({
+      modelId: 'whisper-tiny',
       onBackendChange: vi.fn(),
       onProgress: vi.fn(),
       preferredBackend: 'wasm',
@@ -111,6 +113,7 @@ describe('createSpeechRecognizer', () => {
       {
         audio: expect.any(Float32Array),
         language: 'korean',
+        modelId: 'whisper-tiny',
         preferredBackend: 'wasm',
         requestId: 1,
         type: 'transcribe',
@@ -124,6 +127,7 @@ describe('createSpeechRecognizer', () => {
 
   it('should resolve pending work on worker failure and cancellation', async () => {
     const recognizer = createSpeechRecognizer({
+      modelId: 'moonshine-tiny-ko',
       onBackendChange: vi.fn(),
       onProgress: vi.fn(),
       preferredBackend: 'webgpu',

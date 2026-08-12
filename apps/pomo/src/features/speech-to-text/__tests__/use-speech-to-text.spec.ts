@@ -11,6 +11,7 @@ import {
   type SpeechToTextController,
   type SpeechToTextRuntime,
   useSpeechToText,
+  type UseSpeechToTextProps,
 } from '../index'
 
 interface SpeechTestRoot {
@@ -28,7 +29,9 @@ const createDeferred = <Value>() => {
 
 const createRecording = (): SpeechRecording => ({
   cancel: vi.fn(),
-  stop: vi.fn(async () => speechSuccess(new Float32Array(4_000))),
+  onSpeechEnd: vi.fn(() => () => undefined),
+  stop: vi.fn(async () => speechSuccess(new Float32Array(4_000).fill(0.1))),
+  takeSegment: vi.fn(async () => speechSuccess(new Float32Array(4_000).fill(0.1))),
 })
 
 const createRecognizer = (): SpeechRecognizer => ({
@@ -46,11 +49,14 @@ const createRuntime = (
   getPreferredBackend: vi.fn((): SpeechBackend => 'wasm'),
 })
 
-const createSpeechRoot = (runtime: SpeechToTextRuntime): SpeechTestRoot => {
+const createSpeechRoot = (
+  runtime: SpeechToTextRuntime,
+  props: Omit<UseSpeechToTextProps, 'runtime'> = {},
+): SpeechTestRoot => {
   let disposeRoot: () => void = () => undefined
   const controller = createRoot((dispose) => {
     disposeRoot = dispose
-    return useSpeechToText({runtime})
+    return useSpeechToText({...props, runtime})
   })
   return {controller, dispose: disposeRoot}
 }
@@ -89,10 +95,12 @@ describe('useSpeechToText', () => {
       start: vi.fn(async () => speechSuccess(recording)),
     }
     const recognizer = createRecognizer()
-    const root = createSpeechRoot(createRuntime(recorder, recognizer))
+    const onTranscript = vi.fn()
+    const root = createSpeechRoot(createRuntime(recorder, recognizer), {onTranscript})
 
     root.controller.setText('기존 문장')
     await root.controller.startRecording()
+    expect(onTranscript).not.toHaveBeenCalled()
     await root.controller.stopRecording()
 
     expect(recognizer.prepare).toHaveBeenCalledTimes(1)
@@ -101,9 +109,43 @@ describe('useSpeechToText', () => {
       language: 'korean',
     })
     expect(root.controller.text()).toBe('기존 문장 테스트 문장')
+    expect(onTranscript).toHaveBeenCalledWith('테스트 문장')
     expect(root.controller.activity()).toBe('idle')
     root.dispose()
     expect(recognizer.dispose).toHaveBeenCalledTimes(1)
+  })
+
+  it('should transcribe a detected speech segment without stopping the microphone', async () => {
+    let onSpeechEnd: () => void = () => undefined
+    const recording = createRecording()
+    vi.mocked(recording.onSpeechEnd).mockImplementation((handler) => {
+      onSpeechEnd = handler
+      return vi.fn()
+    })
+    const recorder: SpeechRecorder = {
+      isSupported: () => true,
+      start: vi.fn(async () => speechSuccess(recording)),
+    }
+    const recognizer = createRecognizer()
+    const onTranscript = vi.fn()
+    const root = createSpeechRoot(createRuntime(recorder, recognizer), {
+      endpointing: () => true,
+      onTranscript,
+    })
+
+    await root.controller.startRecording()
+    onSpeechEnd()
+
+    await vi.waitFor(() => expect(onTranscript).toHaveBeenCalledWith('테스트 문장'))
+    expect(recording.takeSegment).toHaveBeenCalledTimes(1)
+    expect(recording.stop).not.toHaveBeenCalled()
+    expect(root.controller.activity()).toBe('recording')
+
+    await root.controller.stopRecording()
+    expect(recording.stop).toHaveBeenCalledTimes(1)
+    expect(recognizer.transcribe).toHaveBeenCalledTimes(2)
+    expect(root.controller.activity()).toBe('idle')
+    root.dispose()
   })
 
   it('should expose capture and recognition failures as stable user states', async () => {

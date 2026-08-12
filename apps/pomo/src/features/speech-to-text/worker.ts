@@ -10,15 +10,16 @@ import {
 
 import type {SpeechRecognitionError, SpeechRecognitionPhase} from './errors'
 import type {SpeechWorkerRequest, SpeechWorkerResponse} from './messages'
+import {getSpeechModel, type SpeechModelDefinition, type SpeechModelId} from './models'
 import type {SpeechBackend} from './recognizer'
 
 const MAXIMUM_PROGRESS = 100
 const MINIMUM_PROGRESS = 0
-const MODEL_ID = 'onnx-community/whisper-tiny'
 const workerScope = self as DedicatedWorkerGlobalScope
 
 let transcriber: AutomaticSpeechRecognitionPipeline | null = null
 let activeBackend: SpeechBackend | null = null
+let activeModelId: SpeechModelId | null = null
 let preparePromise: Promise<SpeechBackend> | null = null
 
 const sendResponse = (response: SpeechWorkerResponse) => workerScope.postMessage(response)
@@ -48,35 +49,38 @@ const reportProgress = (progress: ProgressInfo) => {
   sendResponse({progress: percentage, type: 'loading'})
 }
 
-const loadTranscriber = async (backend: SpeechBackend) => {
-  const loadedTranscriber = await pipeline('automatic-speech-recognition', MODEL_ID, {
+const loadTranscriber = async (backend: SpeechBackend, model: SpeechModelDefinition) => {
+  const loadedTranscriber = await pipeline('automatic-speech-recognition', model.repositoryId, {
     device: backend,
     progress_callback: reportProgress,
   })
   transcriber = loadedTranscriber
   activeBackend = backend
+  activeModelId = model.id
   return backend
 }
 
-const prepareModel = async (preferredBackend: SpeechBackend) => {
-  if (transcriber !== null && activeBackend !== null) {
+const prepareModel = async (preferredBackend: SpeechBackend, modelId: SpeechModelId) => {
+  if (transcriber !== null && activeBackend !== null && activeModelId === modelId) {
     return activeBackend
   }
 
   if (preparePromise === null) {
+    const model = getSpeechModel(modelId)
     sendResponse({progress: MINIMUM_PROGRESS, type: 'loading'})
     preparePromise = (async () => {
       if (preferredBackend === 'webgpu') {
         try {
-          return await loadTranscriber('webgpu')
+          return await loadTranscriber('webgpu', model)
         } catch {
           transcriber = null
           activeBackend = null
+          activeModelId = null
           sendResponse({backend: 'wasm', type: 'backend-changed'})
         }
       }
 
-      return loadTranscriber('wasm')
+      return loadTranscriber('wasm', model)
     })()
   }
 
@@ -90,7 +94,7 @@ const prepareModel = async (preferredBackend: SpeechBackend) => {
 
 const prepare = async (request: Extract<SpeechWorkerRequest, {readonly type: 'prepare'}>) => {
   try {
-    const backend = await prepareModel(request.preferredBackend)
+    const backend = await prepareModel(request.preferredBackend, request.modelId)
     sendResponse({backend, requestId: request.requestId, type: 'ready'})
   } catch (error) {
     sendResponse({
@@ -105,7 +109,7 @@ const transcribe = async (request: Extract<SpeechWorkerRequest, {readonly type: 
   let backend: SpeechBackend
 
   try {
-    backend = await prepareModel(request.preferredBackend)
+    backend = await prepareModel(request.preferredBackend, request.modelId)
   } catch (error) {
     sendResponse({
       error: createModelError(error, 'transcribe'),
@@ -125,10 +129,14 @@ const transcribe = async (request: Extract<SpeechWorkerRequest, {readonly type: 
   }
 
   try {
-    const result = await transcriber(request.audio, {
-      language: request.language,
-      task: 'transcribe',
-    })
+    const model = getSpeechModel(request.modelId)
+    const result =
+      model.family === 'whisper'
+        ? await transcriber(request.audio, {
+            language: request.language,
+            task: 'transcribe',
+          })
+        : await transcriber(request.audio)
     sendResponse({
       backend,
       requestId: request.requestId,
