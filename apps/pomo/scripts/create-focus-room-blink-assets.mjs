@@ -1,7 +1,7 @@
 /* eslint-disable no-magic-numbers -- Bézier paths use measured scene coordinates. */
 // AI_NOTE - Bézier paths and pixel coordinates are measured from fixed 1672x941 scene masters.
 import {createRequire} from 'node:module'
-import {mkdir, rename} from 'node:fs/promises'
+import {mkdir, mkdtemp, rename, rm} from 'node:fs/promises'
 import path from 'node:path'
 
 const require = createRequire(path.resolve(process.cwd(), '../image-server/package.json'))
@@ -10,7 +10,6 @@ const sharp = require('sharp')
 const IMAGE_WIDTH = 1672
 const IMAGE_HEIGHT = 941
 const ASSET_DIRECTORY = path.resolve(process.cwd(), 'assets/focus-room-animation')
-const REFINE_EXISTING = process.argv.includes('--refine-existing')
 const USER_ONLY = process.argv.includes('--user-only')
 const FOCUSED_ONLY = process.argv.includes('--focused-only')
 const DAY_FOCUSED_FEATURE_PATHS = [
@@ -62,10 +61,12 @@ const NIGHT_USER_FEATURE_PATHS = [
 
 const sourceDirectory = process.env.POMO_BLINK_SOURCE_DIRECTORY
 
-if (!sourceDirectory && !REFINE_EXISTING) {
-  throw new Error(
-    'Set POMO_BLINK_SOURCE_DIRECTORY or pass --refine-existing to tighten current masks.',
-  )
+if (!sourceDirectory) {
+  throw new Error('Set POMO_BLINK_SOURCE_DIRECTORY to regenerate blink assets.')
+}
+
+if (USER_ONLY && FOCUSED_ONLY) {
+  throw new Error('Use either --user-only or --focused-only, not both.')
 }
 
 const sources = [
@@ -117,12 +118,16 @@ const createFeatureMask = ({height, width}, paths) =>
       .join('')}
   </svg>`)
 
-async function createLayer({featurePaths, name, patch, source, state}) {
+async function validateSource({name, source}) {
   const metadata = await sharp(source).metadata()
 
   if (metadata.width !== IMAGE_WIDTH || metadata.height !== IMAGE_HEIGHT) {
     throw new Error(`${name} source must be ${IMAGE_WIDTH}x${IMAGE_HEIGHT}.`)
   }
+}
+
+async function createLayer({destinationDirectory, featurePaths, name, patch, source, state}) {
+  await validateSource({name, source})
 
   const image = await sharp(source).extract(patch).png().toBuffer()
   const mask = featurePaths ? createFeatureMask(patch, featurePaths) : createFeatherMask(patch)
@@ -131,21 +136,7 @@ async function createLayer({featurePaths, name, patch, source, state}) {
     .ensureAlpha()
     .composite([{blend: 'dest-in', input: mask}])
     .png()
-    .toFile(path.join(ASSET_DIRECTORY, `eyes-${name}-${state}.png`))
-}
-
-async function refineLayer({featurePaths, name, patch, state}) {
-  if (!featurePaths) {
-    return
-  }
-
-  const assetPath = path.join(ASSET_DIRECTORY, `eyes-${name}-${state}.png`)
-  const temporaryPath = `${assetPath}.refined.png`
-  await sharp(assetPath)
-    .composite([{blend: 'dest-in', input: createFeatureMask(patch, featurePaths)}])
-    .png()
-    .toFile(temporaryPath)
-  await rename(temporaryPath, assetPath)
+    .toFile(path.join(destinationDirectory, `eyes-${name}-${state}.png`))
 }
 
 const activeSources = USER_ONLY
@@ -155,18 +146,28 @@ const activeSources = USER_ONLY
     : sources
 
 await mkdir(ASSET_DIRECTORY, {recursive: true})
-if (REFINE_EXISTING) {
-  await Promise.all(
-    activeSources.flatMap(({featurePaths, name, patch}) => [
-      refineLayer({featurePaths, name, patch, state: 'half'}),
-      refineLayer({featurePaths, name, patch, state: 'closed'}),
-    ]),
+const stagingDirectory = await mkdtemp(path.join(ASSET_DIRECTORY, '.staging-'))
+
+try {
+  const outputs = activeSources.flatMap(({closed, featurePaths, half, name, patch}) => [
+    {featurePaths, name, patch, source: half, state: 'half'},
+    {featurePaths, name, patch, source: closed, state: 'closed'},
+  ])
+  const generationResults = await Promise.allSettled(
+    outputs.map((output) => createLayer({...output, destinationDirectory: stagingDirectory})),
   )
-} else {
+  const generationFailure = generationResults.find((result) => result.status === 'rejected')
+
+  if (generationFailure) {
+    throw generationFailure.reason
+  }
+
   await Promise.all(
-    activeSources.flatMap(({closed, featurePaths, half, name, patch}) => [
-      createLayer({featurePaths, name, patch, source: half, state: 'half'}),
-      createLayer({featurePaths, name, patch, source: closed, state: 'closed'}),
-    ]),
+    outputs.map(({name, state}) => {
+      const fileName = `eyes-${name}-${state}.png`
+      return rename(path.join(stagingDirectory, fileName), path.join(ASSET_DIRECTORY, fileName))
+    }),
   )
+} finally {
+  await rm(stagingDirectory, {force: true, recursive: true})
 }

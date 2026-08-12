@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import tempfile
 from pathlib import Path
 
 import cv2
@@ -20,6 +21,7 @@ MODEL_ID = "depth-anything/DA3MONO-LARGE"
 MODEL_REVISION = "f465978e618db8cc79c83b8bbf24964857db1875"
 SCENE_PREFIX = "focus-room-"
 SCENE_SUFFIX = "-concept.png"
+MANIFEST_NAME = "manifest.json"
 
 
 def parse_arguments() -> argparse.Namespace:
@@ -81,47 +83,96 @@ def file_hash(source: Path) -> str:
     return digest.hexdigest()
 
 
+def load_existing_maps(output_dir: Path, process_resolution: int) -> dict[str, dict]:
+    manifest_path = output_dir / MANIFEST_NAME
+    if not manifest_path.exists():
+        raise ValueError("--only requires an existing complete manifest")
+
+    manifest = json.loads(manifest_path.read_text())
+    if manifest.get("model") != MODEL_ID or manifest.get("revision") != MODEL_REVISION:
+        raise ValueError("existing manifest uses a different model revision")
+    if manifest.get("processResolution") != process_resolution:
+        raise ValueError("--only must use the existing manifest process resolution")
+
+    return {entry["source"]: entry for entry in manifest.get("maps", [])}
+
+
 def main() -> None:
     arguments = parse_arguments()
-    device = select_device()
-    model, model_dir = load_model(arguments.da3_source, device)
-    sources = sorted(arguments.input_dir.glob(f"{SCENE_PREFIX}*{SCENE_SUFFIX}"))
+    all_sources = sorted(arguments.input_dir.glob(f"{SCENE_PREFIX}*{SCENE_SUFFIX}"))
+    if not all_sources:
+        raise ValueError(f"no {SCENE_PREFIX}*{SCENE_SUFFIX} scenes found")
+
+    sources = all_sources
+    existing_maps: dict[str, dict] = {}
     if arguments.only:
         selected = set(arguments.only)
         sources = [source for source in sources if source.stem in selected or source.name in selected]
+        matched = {source.stem for source in sources} | {source.name for source in sources}
+        unmatched = selected - matched
+        if unmatched:
+            raise ValueError(f"unknown --only scene(s): {', '.join(sorted(unmatched))}")
+        existing_maps = load_existing_maps(arguments.output_dir, arguments.process_resolution)
+        selected_names = {source.name for source in sources}
+        for source in all_sources:
+            existing_map = existing_maps.get(source.name)
+            depth_exists = existing_map and (
+                arguments.output_dir / existing_map["depth"]
+            ).exists()
+            source_matches = existing_map and existing_map.get("sourceSha256") == file_hash(source)
+            if source.name not in selected_names and (not depth_exists or not source_matches):
+                raise ValueError(f"stale unselected scene in manifest: {source.name}")
 
+    device = select_device()
+    model, model_dir = load_model(arguments.da3_source, device)
     arguments.output_dir.mkdir(parents=True, exist_ok=True)
     manifest = {
         "model": MODEL_ID,
         "revision": MODEL_REVISION,
         "checkpointSha256": file_hash(model_dir / "model.safetensors"),
         "processResolution": arguments.process_resolution,
-        "maps": [],
+        "maps": existing_maps,
     }
 
-    for source in sources:
-        prediction = model.inference(
-            [str(source)],
-            process_res=arguments.process_resolution,
-            process_res_method="upper_bound_resize",
-        )
-        source_image = Image.open(source)
-        depth = normalize_depth(prediction.depth[0])
-        depth_image = Image.fromarray(depth).resize(source_image.size, Image.Resampling.LANCZOS)
-        destination = arguments.output_dir / output_name(source)
-        depth_image.save(destination, optimize=True)
-        manifest["maps"].append(
-            {
+    with tempfile.TemporaryDirectory(
+        dir=arguments.output_dir, prefix=".staging-"
+    ) as temporary_directory:
+        staging_directory = Path(temporary_directory)
+
+        for source in sources:
+            prediction = model.inference(
+                [str(source)],
+                process_res=arguments.process_resolution,
+                process_res_method="upper_bound_resize",
+            )
+            with Image.open(source) as source_image:
+                source_size = source_image.size
+            depth = normalize_depth(prediction.depth[0])
+            depth_image = Image.fromarray(depth).resize(source_size, Image.Resampling.LANCZOS)
+            destination = staging_directory / output_name(source)
+            depth_image.save(destination, optimize=True)
+            manifest["maps"][source.name] = {
                 "depth": destination.name,
                 "source": source.name,
                 "sourceSha256": file_hash(source),
             }
-        )
-        print(f"generated {destination} on {device}")
+            print(f"generated {destination.name} on {device}")
 
-    (arguments.output_dir / "manifest.json").write_text(
-        json.dumps(manifest, indent=2, ensure_ascii=False) + "\n"
-    )
+        expected_sources = {source.name for source in all_sources}
+        manifest_sources = set(manifest["maps"])
+        if manifest_sources != expected_sources:
+            missing = ", ".join(sorted(expected_sources - manifest_sources))
+            extra = ", ".join(sorted(manifest_sources - expected_sources))
+            raise ValueError(f"manifest scene mismatch; missing=[{missing}], extra=[{extra}]")
+
+        manifest["maps"] = [manifest["maps"][source.name] for source in all_sources]
+        staged_manifest = staging_directory / MANIFEST_NAME
+        staged_manifest.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n")
+
+        for source in sources:
+            staged_depth = staging_directory / output_name(source)
+            staged_depth.replace(arguments.output_dir / staged_depth.name)
+        staged_manifest.replace(arguments.output_dir / MANIFEST_NAME)
 
 
 if __name__ == "__main__":
