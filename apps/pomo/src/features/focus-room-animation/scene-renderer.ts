@@ -94,7 +94,7 @@ const EYE_OFFSETS = {
   day: {
     focused: {
       reading: {x: 0, y: 0},
-      typing: {x: -2, y: 0},
+      typing: {x: 0, y: 0},
       writing: {x: 0, y: 0},
     },
     user: {
@@ -110,7 +110,7 @@ const EYE_OFFSETS = {
       writing: {x: 0, y: 0},
     },
     user: {
-      reading: {x: -11, y: -5},
+      reading: {x: 0, y: 0},
       typing: {x: 0, y: 0},
       writing: {x: 0, y: 0},
     },
@@ -133,6 +133,7 @@ const ignoreLoadingChange = () => undefined
 
 export class FocusRoomSceneRenderer {
   readonly #application = new Application()
+  readonly #eyeLayer = new Container()
   readonly #host: HTMLDivElement
   readonly #onLoadingChange: (isLoading: boolean) => void
   readonly #parallax: ParallaxController
@@ -192,12 +193,11 @@ export class FocusRoomSceneRenderer {
       return
     }
 
-    this.#application.stage.sortableChildren = true
-    this.#application.stage.addChild(this.#sceneLayer)
     this.#application.canvas.setAttribute('aria-hidden', 'true')
     this.#application.canvas.className =
       'pomo-scene-media absolute inset-0 h-full w-full object-cover'
     this.#host.append(this.#application.canvas)
+    this.#application.stage.addChild(this.#sceneLayer, this.#eyeLayer)
 
     try {
       await Promise.all([
@@ -355,8 +355,7 @@ export class FocusRoomSceneRenderer {
     ]
     this.#eyeSprite = new Sprite(dayFocusedHalf.texture)
     this.#eyeSprite.visible = false
-    this.#eyeSprite.zIndex = 2
-    this.#sceneLayer.addChild(this.#eyeSprite)
+    this.#eyeLayer.addChild(this.#eyeSprite)
     this.#eyeTextures = {
       day: {
         focused: {closed: dayFocusedClosed.texture, half: dayFocusedHalf.texture},
@@ -472,7 +471,6 @@ export class FocusRoomSceneRenderer {
 
       const sprite = new Sprite(textures[0].texture)
       sprite.alpha = 0
-      sprite.zIndex = 1
       this.#incomingScene = sprite
       this.#incomingTextures = textures
       this.#depthFilter?.setDepthTransition(textures[1].texture)
@@ -529,7 +527,6 @@ export class FocusRoomSceneRenderer {
     const previousTextures = this.#currentTextures
     this.#currentScene?.removeFromParent()
     this.#currentScene?.destroy()
-    sprite.zIndex = 0
     this.#currentScene = sprite
     this.#currentSource = source
     this.#currentDepthSource = depthSource
