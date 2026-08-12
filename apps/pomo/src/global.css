@@ -39,3 +39,28 @@ a {
   outline: 2px solid #f2a7b8;
   outline-offset: 3px;
 }
+
+@keyframes pomo-scene-fade {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.pomo-scene-incoming {
+  opacity: 0;
+  will-change: opacity;
+}
+
+.pomo-scene-fading {
+  animation: pomo-scene-fade 600ms ease-in-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pomo-scene-fading {
+    animation-duration: 1ms;
+  }
+}
