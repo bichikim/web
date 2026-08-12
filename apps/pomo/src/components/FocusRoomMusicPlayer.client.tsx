@@ -56,18 +56,36 @@ export default function FocusRoomMusicPlayerClient(props: FocusRoomMusicPlayerCl
   const [shuffleEnabled, setShuffleEnabled] = createSignal(false)
   const [levels, setLevels] = createSignal<readonly number[]>(IDLE_LEVELS)
   const currentTrack = createMemo(() => tracks()[currentIndex()])
+  const playlistRequest = new AbortController()
   let audioElement: HTMLAudioElement | undefined
   let audioContext: AudioContext | undefined
   let analyserNode: AnalyserNode | undefined
   let mediaSource: MediaElementAudioSourceNode | undefined
+  let spectrumData: Uint8Array<ArrayBuffer> | undefined
   let animationFrame: number | undefined
   let audioIsPlaying = false
+  let destroyed = false
   let shuffleQueue: number[] = []
   let shuffleHistory: number[] = []
 
   const handleAudioError = () => {
+    if (destroyed) {
+      return
+    }
+
     audioIsPlaying = false
     setIsPlaying(false)
+    handleAnalyserError()
+  }
+
+  const handleAnalyserError = () => {
+    if (animationFrame !== undefined) {
+      cancelAnimationFrame(animationFrame)
+      animationFrame = undefined
+    }
+    if (!destroyed) {
+      setLevels(IDLE_LEVELS)
+    }
   }
 
   const selectTrack = (options: SelectTrackOptions) => {
@@ -89,19 +107,21 @@ export default function FocusRoomMusicPlayerClient(props: FocusRoomMusicPlayerCl
       return
     }
 
-    audioContext ??= new AudioContext()
-    analyserNode ??= audioContext.createAnalyser()
-    analyserNode.fftSize = 128
-    analyserNode.smoothingTimeConstant = 0.78
+    const context = (audioContext ??= new AudioContext())
 
-    if (!mediaSource) {
-      mediaSource = audioContext.createMediaElementSource(audioElement)
-      mediaSource.connect(analyserNode)
-      analyserNode.connect(audioContext.destination)
+    if (context.state === 'suspended') {
+      await context.resume()
     }
 
-    if (audioContext.state === 'suspended') {
-      await audioContext.resume()
+    analyserNode ??= context.createAnalyser()
+    analyserNode.fftSize = 128
+    analyserNode.smoothingTimeConstant = 0.78
+    spectrumData ??= new Uint8Array(analyserNode.frequencyBinCount)
+
+    if (!mediaSource) {
+      mediaSource = context.createMediaElementSource(audioElement)
+      mediaSource.connect(analyserNode)
+      analyserNode.connect(context.destination)
     }
   }
 
@@ -110,13 +130,24 @@ export default function FocusRoomMusicPlayerClient(props: FocusRoomMusicPlayerCl
       return
     }
 
-    const spectrum = new Uint8Array(analyserNode.frequencyBinCount)
+    const spectrum = spectrumData
+
+    if (spectrum === undefined) {
+      return
+    }
+
     analyserNode.getByteFrequencyData(spectrum)
     const bucketSize = Math.max(1, Math.floor(spectrum.length / LEVEL_COUNT))
     const nextLevels = Array.from({length: LEVEL_COUNT}, (_, index) => {
       const start = index * bucketSize
-      const bucket = spectrum.slice(start, start + bucketSize)
-      const average = bucket.reduce((sum, value) => sum + value, 0) / bucket.length
+      const end = Math.min(spectrum.length, start + bucketSize)
+      let sum = 0
+
+      for (let spectrumIndex = start; spectrumIndex < end; spectrumIndex += 1) {
+        sum += spectrum[spectrumIndex]
+      }
+
+      const average = sum / Math.max(1, end - start)
 
       return Math.max(
         MINIMUM_LEVEL,
@@ -133,19 +164,24 @@ export default function FocusRoomMusicPlayerClient(props: FocusRoomMusicPlayerCl
     setIsPlaying(true)
     initializeAnalyser()
       .then(() => {
-        if (animationFrame) {
+        if (destroyed) {
+          return
+        }
+
+        if (animationFrame !== undefined) {
           cancelAnimationFrame(animationFrame)
         }
         updateLevels()
       })
-      .catch(handleAudioError)
+      .catch(handleAnalyserError)
   }
 
   const handlePause = () => {
     audioIsPlaying = false
     setIsPlaying(false)
-    if (animationFrame) {
+    if (animationFrame !== undefined) {
       cancelAnimationFrame(animationFrame)
+      animationFrame = undefined
     }
     setLevels(IDLE_LEVELS)
   }
@@ -277,24 +313,38 @@ export default function FocusRoomMusicPlayerClient(props: FocusRoomMusicPlayerCl
 
   onMount(() => {
     if (props.tracks === undefined) {
-      loadFocusRoomTracks().then(setLoadedTracks).catch(handleAudioError)
+      loadFocusRoomTracks({signal: playlistRequest.signal})
+        .then((nextTracks) => {
+          if (!destroyed) {
+            setLoadedTracks(nextTracks)
+          }
+        })
+        .catch((error: unknown) => {
+          if (!(error instanceof DOMException && error.name === 'AbortError')) {
+            handleAudioError()
+          }
+        })
     }
 
     audioElement?.addEventListener('play', handlePlay)
     audioElement?.addEventListener('pause', handlePause)
     audioElement?.addEventListener('ended', handleEnded)
+    audioElement?.addEventListener('error', handleAudioError)
   })
 
   onCleanup(() => {
-    if (animationFrame) {
+    destroyed = true
+    playlistRequest.abort()
+    if (animationFrame !== undefined) {
       cancelAnimationFrame(animationFrame)
     }
     audioElement?.removeEventListener('play', handlePlay)
     audioElement?.removeEventListener('pause', handlePause)
     audioElement?.removeEventListener('ended', handleEnded)
+    audioElement?.removeEventListener('error', handleAudioError)
     mediaSource?.disconnect()
     analyserNode?.disconnect()
-    audioContext?.close().catch(handleAudioError)
+    audioContext?.close().catch(() => undefined)
   })
 
   return (

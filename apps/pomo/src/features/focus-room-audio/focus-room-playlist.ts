@@ -13,6 +13,11 @@ interface FocusRoomPlaylist {
 
 export const FOCUS_ROOM_PLAYLIST_URL = '/data/focus-room-playlist.json'
 
+export interface LoadFocusRoomTracksOptions {
+  readonly playlistUrl?: string
+  readonly signal?: AbortSignal
+}
+
 const isString = (value: unknown): value is string => typeof value === 'string'
 
 const isFocusRoomTrack = (value: unknown): value is FocusRoomTrack => {
@@ -49,9 +54,11 @@ const isFocusRoomPlaylist = (value: unknown): value is FocusRoomPlaylist => {
 
 /** Loads and validates the public focus-room playlist. */
 export const loadFocusRoomTracks = async (
-  playlistUrl = FOCUS_ROOM_PLAYLIST_URL,
+  options: LoadFocusRoomTracksOptions = {},
 ): Promise<readonly FocusRoomTrack[]> => {
-  const response = await fetch(playlistUrl)
+  const response = await fetch(options.playlistUrl ?? FOCUS_ROOM_PLAYLIST_URL, {
+    signal: options.signal,
+  })
 
   if (!response.ok) {
     throw new Error(`Focus-room playlist request failed: ${response.status}`)
