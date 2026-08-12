@@ -197,7 +197,15 @@ export const FocusRoomStudio = () => {
   const [activity, setActivity] = createSignal<SceneActivity>('reading')
   const [gaze, setGaze] = createSignal<SceneGaze>('focused')
   const [isSceneLoading, setIsSceneLoading] = createSignal(true)
+  const [hasSceneRendered, setHasSceneRendered] = createSignal(false)
   const selectedScene = createMemo(() => getSceneAsset(time(), activity(), gaze()))
+  const handleLoadingChange = (isLoading: boolean) => {
+    setIsSceneLoading(isLoading)
+
+    if (!isLoading) {
+      setHasSceneRendered(true)
+    }
+  }
 
   return (
     <section aria-label="포커스 룸" class="relative h-dvh w-full overflow-hidden">
@@ -219,7 +227,7 @@ export const FocusRoomStudio = () => {
           activity={activity()}
           depthSource={selectedScene().depthSource}
           gaze={gaze()}
-          onLoadingChange={setIsSceneLoading}
+          onLoadingChange={handleLoadingChange}
           source={selectedScene().source}
           time={time()}
         />
@@ -227,7 +235,12 @@ export const FocusRoomStudio = () => {
         <Show when={isSceneLoading()}>
           <div
             aria-live="polite"
-            class="pointer-events-none absolute inset-0 z-20 grid place-items-center bg-#17130f/24"
+            class={cx(
+              'pointer-events-none absolute z-20',
+              hasSceneRendered()
+                ? 'bottom-38 left-4 sm:bottom-6 sm:left-6'
+                : 'inset-0 grid place-items-center bg-#17130f/24',
+            )}
             role="status"
           >
             <span
@@ -240,7 +253,9 @@ export const FocusRoomStudio = () => {
                 aria-hidden="true"
                 class="size-5 animate-spin rounded-full border-2 border-white/28 border-t-#e8c795"
               />
-              장면을 불러오는 중
+              <Show when={hasSceneRendered()} fallback="장면을 불러오는 중">
+                장면 전환 중
+              </Show>
             </span>
           </div>
         </Show>
