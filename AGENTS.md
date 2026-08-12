@@ -11,6 +11,12 @@
 
 **Enterprise-grade** code: maintainability, scalability, separation of concerns, robust error handling, consistent patterns.
 
+## Z-index
+
+- Do not use CSS `z-index`, including utility classes and rendering-library equivalents.
+- Resolve layering through DOM order, layout, and stacking-context structure instead.
+- If `z-index` appears unavoidable, explain why and obtain explicit user approval before using it.
+
 ## Proportionate future-proofing
 
 - Include a foreseeable future need now when the implementation and complexity costs are small.
