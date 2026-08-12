@@ -27,6 +27,7 @@
     "@unocss/reset": "catalog:",
     "class-variance-authority": "catalog:",
     "cross-env": "catalog:",
+    "media-chrome": "^4.19.2",
     "onnxruntime-web": "1.23.2",
     "pixi.js": "^8.19.0",
     "solid-js": "catalog:",
@@ -36,6 +37,7 @@
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@iconify-json/tabler": "^1.2.33",
     "@types/node": "catalog:",
     "@winter-love/unocss-config": "workspace:*"
   },

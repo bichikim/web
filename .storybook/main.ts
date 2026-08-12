@@ -26,6 +26,8 @@ export default <StorybookConfig>{
     },
   },
   stories: [
+    '../apps/pomo/src/**/*.mdx',
+    '../apps/pomo/src/**/*.story.@(js|jsx|mjs|ts|tsx)',
     '../apps/coong/src/**/*.mdx',
     '../apps/coong/src/**/*.story.@(js|jsx|mjs|ts|tsx)',
     '../packages/solid/src/**/*.mdx',

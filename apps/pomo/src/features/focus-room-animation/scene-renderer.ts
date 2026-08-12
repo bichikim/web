@@ -87,7 +87,7 @@ const EYE_OFFSETS = {
   day: {
     focused: {
       reading: {x: 0, y: 0},
-      typing: {x: -2, y: 0},
+      typing: {x: 0, y: 0},
       writing: {x: 0, y: 0},
     },
     user: {
@@ -103,7 +103,7 @@ const EYE_OFFSETS = {
       writing: {x: 0, y: 0},
     },
     user: {
-      reading: {x: -11, y: -5},
+      reading: {x: 0, y: 0},
       typing: {x: 0, y: 0},
       writing: {x: 0, y: 0},
     },

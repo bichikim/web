@@ -1,6 +1,6 @@
 import {clientOnly} from '@solidjs/start'
 import {cx} from 'class-variance-authority'
-import {createMemo, createSignal, For, Show} from 'solid-js'
+import {createMemo, createSignal, onCleanup, onMount, Show} from 'solid-js'
 
 import dayReadingImage from '../../assets/concept-art/focus-room-day-reading-concept.webp'
 import dayReadingGazeImage from '../../assets/concept-art/focus-room-day-reading-user-gaze-concept.webp'
@@ -26,26 +26,42 @@ import nightTypingDepth from '../../assets/focus-room-depth/depth-night-typing.p
 import nightTypingGazeDepth from '../../assets/focus-room-depth/depth-night-typing-user-gaze.png'
 import nightWritingDepth from '../../assets/focus-room-depth/depth-night-desk.png'
 import nightWritingGazeDepth from '../../assets/focus-room-depth/depth-night-writing-user-gaze.png'
+import {FocusRoomIconButton} from '../design-system/FocusRoomIconButton'
+import {FocusRoomIconSelect} from '../design-system/FocusRoomIconSelect'
+import {
+  getAutomaticScenePeriod,
+  getNextTimeMode,
+  resolveScenePeriod,
+  type ScenePeriod,
+  type SceneTimeMode,
+} from '../features/focus-room-time'
+import {FocusRoomMusicPlayer} from './FocusRoomMusicPlayer'
 
 const FocusRoomSceneCanvas = clientOnly(() => import('./FocusRoomSceneCanvas.client'), {
   lazy: true,
 })
+const AUTOMATIC_PERIOD_REFRESH = 60_000
 
-const TIME_OPTIONS = [
+const TIME_MODE_OPTIONS = [
+  {icon: 'i-tabler-sun', label: '낮', value: 'day'},
+  {icon: 'i-tabler-moon', label: '밤', value: 'night'},
+  {icon: 'i-tabler-sun-moon', label: '자동', value: 'auto'},
+] as const
+const TIME_LABELS = [
   {label: '낮', value: 'day'},
   {label: '밤', value: 'night'},
 ] as const
 const ACTIVITY_OPTIONS = [
-  {label: '책 읽기', value: 'reading'},
-  {label: '글쓰기', value: 'writing'},
-  {label: '노트북 타이핑', value: 'typing'},
+  {icon: 'i-tabler-book-2', label: '책 읽기', value: 'reading'},
+  {icon: 'i-tabler-pencil', label: '글쓰기', value: 'writing'},
+  {icon: 'i-tabler-keyboard', label: '노트북 타이핑', value: 'typing'},
 ] as const
 const GAZE_OPTIONS = [
-  {label: '작업에 집중', value: 'focused'},
-  {label: '사용자 보기', value: 'user'},
+  {icon: 'i-tabler-focus-2', label: '작업에 집중', value: 'focused'},
+  {icon: 'i-tabler-user-scan', label: '사용자 보기', value: 'user'},
 ] as const
 
-type SceneTime = (typeof TIME_OPTIONS)[number]['value']
+type SceneTime = ScenePeriod
 type SceneActivity = (typeof ACTIVITY_OPTIONS)[number]['value']
 type SceneGaze = (typeof GAZE_OPTIONS)[number]['value']
 
@@ -60,8 +76,9 @@ interface SceneToolbarProps {
   readonly gaze: SceneGaze
   readonly onActivityChange: (activity: SceneActivity) => void
   readonly onGazeChange: (gaze: SceneGaze) => void
-  readonly onTimeChange: (time: SceneTime) => void
+  readonly onTimeModeChange: (mode: SceneTimeMode) => void
   readonly time: SceneTime
+  readonly timeMode: SceneTimeMode
 }
 
 const SCENE_SOURCES = {
@@ -90,30 +107,13 @@ const DEPTH_SOURCES = {
   },
 } satisfies Record<SceneTime, Record<SceneActivity, Record<SceneGaze, string>>>
 
-const SELECT_CLASSES = cx(
-  'h-11 min-w-34 appearance-none rounded-full border border-white/14 bg-#15120f/78',
-  'px-4 pr-9 text-sm font-650 text-#fffaf1 shadow-sm outline-none backdrop-blur-xl',
-  'transition hover:border-white/28 focus:border-#d9b98a',
-  'bg-[linear-gradient(45deg,transparent_50%,#d9b98a_50%),linear-gradient(135deg,#d9b98a_50%,transparent_50%)]',
-  'bg-[position:calc(100%-17px)_19px,calc(100%-12px)_19px] bg-[size:5px_5px,5px_5px] bg-no-repeat',
-)
-
 const findLabel = <TValue extends string>(
   options: readonly {readonly label: string; readonly value: TValue}[],
   value: TValue,
 ) => options.find((option) => option.value === value)?.label ?? value
 
-const isSceneTime = (value: string): value is SceneTime =>
-  TIME_OPTIONS.some((option) => option.value === value)
-
-const isSceneActivity = (value: string): value is SceneActivity =>
-  ACTIVITY_OPTIONS.some((option) => option.value === value)
-
-const isSceneGaze = (value: string): value is SceneGaze =>
-  GAZE_OPTIONS.some((option) => option.value === value)
-
 const getSceneAsset = (time: SceneTime, activity: SceneActivity, gaze: SceneGaze): SceneAsset => {
-  const timeLabel = findLabel(TIME_OPTIONS, time)
+  const timeLabel = findLabel(TIME_LABELS, time)
   const activityLabel = findLabel(ACTIVITY_OPTIONS, activity)
   const gazeLabel = findLabel(GAZE_OPTIONS, gaze)
 
@@ -125,79 +125,55 @@ const getSceneAsset = (time: SceneTime, activity: SceneActivity, gaze: SceneGaze
 }
 
 const SceneToolbar = (props: SceneToolbarProps) => {
-  const handleTimeChange = (event: Event & {currentTarget: HTMLSelectElement}) => {
-    const {value} = event.currentTarget
+  const timeModeOption = () =>
+    TIME_MODE_OPTIONS.find((option) => option.value === props.timeMode) ?? TIME_MODE_OPTIONS[0]
+  const timeAccessibleLabel = () => {
+    const option = timeModeOption()
 
-    if (isSceneTime(value)) {
-      props.onTimeChange(value)
-    }
-  }
-
-  const handleActivityChange = (event: Event & {currentTarget: HTMLSelectElement}) => {
-    const {value} = event.currentTarget
-
-    if (isSceneActivity(value)) {
-      props.onActivityChange(value)
-    }
-  }
-
-  const handleGazeChange = (event: Event & {currentTarget: HTMLSelectElement}) => {
-    const {value} = event.currentTarget
-
-    if (isSceneGaze(value)) {
-      props.onGazeChange(value)
-    }
+    return option.value === 'auto'
+      ? `시간대 자동, 현재 ${findLabel(TIME_LABELS, props.time)}`
+      : `시간대 ${option.label}`
   }
 
   return (
     <div
       class={cx(
-        'absolute inset-x-4 bottom-4 z-30 flex justify-end sm:inset-x-auto',
-        'sm:bottom-auto sm:right-7 sm:top-6',
+        'absolute right-4 top-[calc(1rem+env(safe-area-inset-top))] flex justify-end',
+        'sm:right-7 sm:top-6',
       )}
     >
-      <div
-        class="flex flex-wrap justify-end gap-2 rounded-5 bg-black/34 p-3 backdrop-blur-xl"
-        role="group"
-        aria-label="장면 설정"
-      >
-        <label class="grid gap-1.5 text-xs font-650 text-#c9c0b5">
-          시간대
-          <select class={SELECT_CLASSES} onChange={handleTimeChange} value={props.time}>
-            <For each={TIME_OPTIONS}>
-              {(option) => <option value={option.value}>{option.label}</option>}
-            </For>
-          </select>
-        </label>
-
-        <label class="grid gap-1.5 text-xs font-650 text-#c9c0b5">
-          행동
-          <select class={SELECT_CLASSES} onChange={handleActivityChange} value={props.activity}>
-            <For each={ACTIVITY_OPTIONS}>
-              {(option) => <option value={option.value}>{option.label}</option>}
-            </For>
-          </select>
-        </label>
-
-        <label class="grid gap-1.5 text-xs font-650 text-#c9c0b5">
-          시선
-          <select class={SELECT_CLASSES} onChange={handleGazeChange} value={props.gaze}>
-            <For each={GAZE_OPTIONS}>
-              {(option) => <option value={option.value}>{option.label}</option>}
-            </For>
-          </select>
-        </label>
+      <div class="flex flex-wrap justify-end gap-2" role="group" aria-label="장면 설정">
+        <FocusRoomIconButton
+          accessibleLabel={timeAccessibleLabel()}
+          feedback={timeModeOption().label}
+          icon={timeModeOption().icon}
+          onPress={() => props.onTimeModeChange(getNextTimeMode(props.timeMode))}
+        />
+        <FocusRoomIconSelect
+          label="행동"
+          onChange={props.onActivityChange}
+          options={ACTIVITY_OPTIONS}
+          value={props.activity}
+        />
+        <FocusRoomIconSelect
+          label="시선"
+          onChange={props.onGazeChange}
+          options={GAZE_OPTIONS}
+          value={props.gaze}
+        />
       </div>
     </div>
   )
 }
 
 export const FocusRoomStudio = () => {
-  const [time, setTime] = createSignal<SceneTime>('day')
+  const [timeMode, setTimeMode] = createSignal<SceneTimeMode>('day')
+  const [automaticPeriod, setAutomaticPeriod] = createSignal<ScenePeriod>('day')
   const [activity, setActivity] = createSignal<SceneActivity>('reading')
   const [gaze, setGaze] = createSignal<SceneGaze>('focused')
   const [isSceneLoading, setIsSceneLoading] = createSignal(true)
   const [hasSceneRendered, setHasSceneRendered] = createSignal(false)
+  const time = createMemo(() => resolveScenePeriod(timeMode(), automaticPeriod()))
   const selectedScene = createMemo(() => getSceneAsset(time(), activity(), gaze()))
   const handleLoadingChange = (isLoading: boolean) => {
     setIsSceneLoading(isLoading)
@@ -207,17 +183,16 @@ export const FocusRoomStudio = () => {
     }
   }
 
+  onMount(() => {
+    const updateAutomaticPeriod = () => setAutomaticPeriod(getAutomaticScenePeriod(new Date()))
+    const timer = window.setInterval(updateAutomaticPeriod, AUTOMATIC_PERIOD_REFRESH)
+
+    updateAutomaticPeriod()
+    onCleanup(() => window.clearInterval(timer))
+  })
+
   return (
     <section aria-label="포커스 룸" class="relative h-dvh w-full overflow-hidden">
-      <SceneToolbar
-        activity={activity()}
-        gaze={gaze()}
-        onActivityChange={setActivity}
-        onGazeChange={setGaze}
-        onTimeChange={setTime}
-        time={time()}
-      />
-
       <figure
         aria-label={selectedScene().label}
         class="relative m-0 h-full w-full overflow-hidden bg-#17130f"
@@ -236,17 +211,17 @@ export const FocusRoomStudio = () => {
           <div
             aria-live="polite"
             class={cx(
-              'pointer-events-none absolute z-20',
+              'pointer-events-none absolute',
               hasSceneRendered()
-                ? 'bottom-38 left-4 sm:bottom-6 sm:left-6'
+                ? 'left-4 top-20 sm:bottom-24 sm:top-auto'
                 : 'inset-0 grid place-items-center bg-#17130f/24',
             )}
             role="status"
           >
             <span
               class={cx(
-                'flex items-center gap-3 rounded-full bg-black/56 px-5 py-3',
-                'text-sm font-650 text-white shadow-lg backdrop-blur-md',
+                'flex items-center gap-3 rounded-full bg-[var(--focus-room-glass)] px-5 py-3',
+                'focus-room-backdrop text-sm font-650 text-white shadow-lg',
               )}
             >
               <span
@@ -260,6 +235,17 @@ export const FocusRoomStudio = () => {
           </div>
         </Show>
       </figure>
+
+      <FocusRoomMusicPlayer />
+      <SceneToolbar
+        activity={activity()}
+        gaze={gaze()}
+        onActivityChange={setActivity}
+        onGazeChange={setGaze}
+        onTimeModeChange={setTimeMode}
+        time={time()}
+        timeMode={timeMode()}
+      />
     </section>
   )
 }
