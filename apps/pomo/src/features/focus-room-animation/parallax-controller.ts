@@ -1,20 +1,76 @@
+import {getOrientationAxes, getOrientationOffset, type OrientationAxes} from './device-orientation'
+
 const PARALLAX_EASING = 0.12
 const PARALLAX_MAXIMUM_X = 9
 const PARALLAX_MAXIMUM_Y = 6
 const PARALLAX_SETTLE_DISTANCE = 0.01
+const FULL_ROTATION_DEGREES = 360
+const SENSOR_FALLBACK_DELAY = 1_500
 
 type RenderOffset = (x: number, y: number) => void
 
 const clamp = (value: number) => Math.max(-1, Math.min(1, value))
 
+interface DeviceOrientationPermissionApi {
+  requestPermission?: () => Promise<'denied' | 'granted' | 'prompt'>
+}
+
+const getScreenAngle = () => {
+  const angle = globalThis.screen.orientation?.angle ?? globalThis.orientation ?? 0
+
+  return ((angle % FULL_ROTATION_DEGREES) + FULL_ROTATION_DEGREES) % FULL_ROTATION_DEGREES
+}
+
 export class ParallaxController {
   readonly #host: HTMLElement
   readonly #motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)')
+  readonly #preferDeviceOrientation =
+    window.matchMedia('(hover: none) and (pointer: coarse)').matches &&
+    'DeviceOrientationEvent' in window
   readonly #renderOffset: RenderOffset
-  readonly #handleMotionPreference = () => {
-    if (this.#motionPreference.matches) {
-      this.#reset(true)
+  readonly #handleDeviceOrientation = (event: DeviceOrientationEvent) => {
+    if (this.#motionPreference.matches || document.hidden) {
+      return
     }
+
+    const axes = getOrientationAxes(event.beta, event.gamma, getScreenAngle())
+
+    if (axes === null) {
+      return
+    }
+
+    if (this.#orientationBaseline === null) {
+      this.#clearSensorFallback()
+      this.#stopPointerInput()
+      this.#orientationBaseline = axes
+      this.#reset()
+      return
+    }
+
+    const offset = getOrientationOffset(axes, this.#orientationBaseline)
+    this.#targetX = offset.x * PARALLAX_MAXIMUM_X
+    this.#targetY = offset.y * PARALLAX_MAXIMUM_Y
+    this.#requestFrame()
+  }
+  readonly #handleMotionPreference = () => {
+    this.#orientationBaseline = null
+    this.#reset(true)
+  }
+  readonly #handleOrientationChange = () => {
+    this.#orientationBaseline = null
+    this.#reset()
+  }
+  readonly #handleVisibilityChange = () => {
+    if (document.hidden) {
+      this.#handleWindowBlur()
+    }
+  }
+  readonly #handleSensorActivation = () => {
+    this.#requestDeviceOrientation().catch(() => this.#startPointerInput())
+  }
+  readonly #handleWindowBlur = () => {
+    this.#orientationBaseline = null
+    this.#reset()
   }
   readonly #handlePointerLeave = () => {
     this.#reset()
@@ -39,7 +95,11 @@ export class ParallaxController {
   #currentX = 0
   #currentY = 0
   #destroyed = false
+  #deviceOrientationListening = false
   #frame: number | null = null
+  #orientationBaseline: OrientationAxes | null = null
+  #pointerListening = false
+  #sensorFallbackTimer: number | null = null
   #started = false
   #targetX = 0
   #targetY = 0
@@ -59,10 +119,27 @@ export class ParallaxController {
     }
 
     this.#started = true
-    window.addEventListener('pointermove', this.#handlePointerMove, {passive: true})
-    window.addEventListener('blur', this.#handlePointerLeave)
-    document.documentElement.addEventListener('pointerleave', this.#handlePointerLeave)
+    window.addEventListener('blur', this.#handleWindowBlur)
+    document.addEventListener('visibilitychange', this.#handleVisibilityChange)
     this.#motionPreference.addEventListener('change', this.#handleMotionPreference)
+
+    if (this.#preferDeviceOrientation) {
+      const orientationEvent = DeviceOrientationEvent as typeof DeviceOrientationEvent &
+        DeviceOrientationPermissionApi
+
+      if (orientationEvent.requestPermission === undefined) {
+        this.#startDeviceOrientation()
+      } else {
+        // AI_NOTE - iOS exposes motion permission only from a direct user gesture.
+        window.addEventListener('pointerdown', this.#handleSensorActivation, {
+          once: true,
+          passive: true,
+        })
+      }
+      return
+    }
+
+    this.#startPointerInput()
   }
 
   destroy() {
@@ -71,15 +148,78 @@ export class ParallaxController {
     }
 
     this.#destroyed = true
+    window.removeEventListener('deviceorientation', this.#handleDeviceOrientation)
+    window.removeEventListener('pointerdown', this.#handleSensorActivation)
+    window.removeEventListener('blur', this.#handleWindowBlur)
+    window.removeEventListener('orientationchange', this.#handleOrientationChange)
     window.removeEventListener('pointermove', this.#handlePointerMove)
-    window.removeEventListener('blur', this.#handlePointerLeave)
+    document.removeEventListener('visibilitychange', this.#handleVisibilityChange)
     document.documentElement.removeEventListener('pointerleave', this.#handlePointerLeave)
+    globalThis.screen.orientation?.removeEventListener('change', this.#handleOrientationChange)
     this.#motionPreference.removeEventListener('change', this.#handleMotionPreference)
+    this.#clearSensorFallback()
 
     if (this.#frame !== null) {
       window.cancelAnimationFrame(this.#frame)
       this.#frame = null
     }
+  }
+
+  async #requestDeviceOrientation() {
+    const orientationEvent = DeviceOrientationEvent as typeof DeviceOrientationEvent &
+      DeviceOrientationPermissionApi
+    const permission = await orientationEvent.requestPermission?.()
+
+    if (permission === 'granted') {
+      this.#startDeviceOrientation()
+      return
+    }
+
+    this.#startPointerInput()
+  }
+
+  #startDeviceOrientation() {
+    if (this.#deviceOrientationListening || this.#destroyed) {
+      return
+    }
+
+    this.#deviceOrientationListening = true
+    window.addEventListener('deviceorientation', this.#handleDeviceOrientation, {passive: true})
+    window.addEventListener('orientationchange', this.#handleOrientationChange, {passive: true})
+    globalThis.screen.orientation?.addEventListener('change', this.#handleOrientationChange)
+    this.#sensorFallbackTimer = window.setTimeout(
+      () => this.#startPointerInput(),
+      SENSOR_FALLBACK_DELAY,
+    )
+  }
+
+  #startPointerInput() {
+    if (this.#pointerListening || this.#destroyed) {
+      return
+    }
+
+    this.#pointerListening = true
+    window.addEventListener('pointermove', this.#handlePointerMove, {passive: true})
+    document.documentElement.addEventListener('pointerleave', this.#handlePointerLeave)
+  }
+
+  #stopPointerInput() {
+    if (!this.#pointerListening) {
+      return
+    }
+
+    this.#pointerListening = false
+    window.removeEventListener('pointermove', this.#handlePointerMove)
+    document.documentElement.removeEventListener('pointerleave', this.#handlePointerLeave)
+  }
+
+  #clearSensorFallback() {
+    if (this.#sensorFallbackTimer === null) {
+      return
+    }
+
+    window.clearTimeout(this.#sensorFallbackTimer)
+    this.#sensorFallbackTimer = null
   }
 
   #reset(immediate = false) {
