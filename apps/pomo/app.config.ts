@@ -27,6 +27,7 @@ const app = defineConfig({
             '/chat',
             '/dialogue',
             '/focus-room',
+            '/focus-room-dialogue',
             '/focus-room-layer-review',
             '/speech-to-text',
             '/terms',

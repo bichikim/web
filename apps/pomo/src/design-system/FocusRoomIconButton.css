@@ -8,7 +8,7 @@
   overflow: hidden;
   border-radius: var(--focus-room-radius-control);
   background: var(--focus-room-glass);
-  padding: 0 0.6875rem;
+  padding: 0 var(--focus-room-padding-md);
   color: var(--focus-room-text);
   box-shadow: var(--focus-room-shadow);
   outline: none;
@@ -21,7 +21,7 @@
 .focus-room-icon-button[data-size='small'] {
   height: var(--focus-room-control-height-small);
   min-width: var(--focus-room-control-height-small);
-  padding: 0 0.5rem;
+  padding: 0 var(--focus-room-padding-sm);
 }
 
 .focus-room-icon-button__icon {

@@ -25,7 +25,7 @@
   overflow: hidden;
   border-radius: 1rem;
   background: var(--focus-room-surface-strong);
-  padding: 0.375rem;
+  padding: var(--focus-room-padding-sm);
   color: var(--focus-room-text);
   box-shadow: var(--focus-room-shadow);
   transform-origin: var(--kb-select-content-transform-origin);
@@ -48,7 +48,7 @@
   align-items: center;
   gap: 0.625rem;
   border-radius: 0.75rem;
-  padding: 0.625rem 0.75rem;
+  padding: var(--focus-room-padding-sm) var(--focus-room-padding-md);
   color: var(--focus-room-text-muted);
   font-size: 0.875rem;
   font-weight: 600;

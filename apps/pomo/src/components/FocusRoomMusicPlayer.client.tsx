@@ -24,6 +24,8 @@ const REPEAT_MODES = [
 ] as const
 
 interface FocusRoomMusicPlayerClientProps {
+  readonly expanded?: boolean
+  readonly onExpandedChange?: (expanded: boolean) => void
   readonly tracks?: readonly FocusRoomTrack[]
 }
 
@@ -46,7 +48,8 @@ export default function FocusRoomMusicPlayerClient(props: FocusRoomMusicPlayerCl
   const [loadedTracks, setLoadedTracks] = createSignal<readonly FocusRoomTrack[]>(initialTracks)
   const tracks = () => props.tracks ?? loadedTracks()
   const [currentIndex, setCurrentIndex] = createSignal(initialState.currentIndex)
-  const [expanded, setExpanded] = createSignal(false)
+  const [internalExpanded, setInternalExpanded] = createSignal(false)
+  const expanded = () => props.expanded ?? internalExpanded()
   const [isPlaying, setIsPlaying] = createSignal(false)
   const [repeatMode, setRepeatMode] = createSignal<RepeatMode>('repeat-all')
   const [shuffleEnabled, setShuffleEnabled] = createSignal(true)
@@ -149,6 +152,16 @@ export default function FocusRoomMusicPlayerClient(props: FocusRoomMusicPlayerCl
 
   const toggleRepeatMode = (mode: Exclude<RepeatMode, 'none'>) => {
     setRepeatMode((currentMode) => (currentMode === mode ? 'none' : mode))
+  }
+
+  const toggleExpanded = () => {
+    const nextExpanded = !expanded()
+
+    if (props.expanded === undefined) {
+      setInternalExpanded(nextExpanded)
+    }
+
+    props.onExpandedChange?.(nextExpanded)
   }
 
   const selectChosenTrack = (index: number) => {
@@ -349,7 +362,7 @@ export default function FocusRoomMusicPlayerClient(props: FocusRoomMusicPlayerCl
               'focus-room-player__utility hover:bg-[var(--focus-room-secondary-soft)] ' +
               'text-[var(--focus-room-text-muted)] hover:text-[var(--focus-room-text)]'
             }
-            onClick={() => setExpanded((value) => !value)}
+            onClick={toggleExpanded}
             type="button"
           >
             <span
