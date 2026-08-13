@@ -36,6 +36,7 @@ import {
   type SceneTimeMode,
 } from '../features/focus-room-time'
 import {FocusRoomMusicPlayer} from './FocusRoomMusicPlayer'
+import {FocusRoomPomodoro} from './FocusRoomPomodoro'
 import {
   FOCUS_ROOM_ACTIVITY_OPTIONS,
   FOCUS_ROOM_GAZE_OPTIONS,
@@ -62,6 +63,7 @@ interface SceneAsset {
 interface SceneToolbarProps {
   readonly activity: FocusRoomActivity
   readonly gaze: FocusRoomGaze
+  readonly isSceneTransitioning: boolean
   readonly onActivityChange: (activity: FocusRoomActivity) => void
   readonly onGazeChange: (gaze: FocusRoomGaze) => void
   readonly onTimeModeChange: (mode: SceneTimeMode) => void
@@ -131,7 +133,8 @@ const SceneToolbar = (props: SceneToolbarProps) => {
   return (
     <div
       class={cx(
-        'absolute right-4 top-[calc(1rem+env(safe-area-inset-top))] flex justify-end',
+        'absolute right-4 top-[calc(1rem+env(safe-area-inset-top))]',
+        'flex flex-col items-end gap-2',
         'sm:right-7 sm:top-6',
       )}
     >
@@ -166,6 +169,12 @@ const SceneToolbar = (props: SceneToolbarProps) => {
           timeMode={props.timeMode}
         />
       </div>
+      <Show when={props.isSceneTransitioning}>
+        <span aria-live="polite" class="focus-room-backdrop focus-room-loading" role="status">
+          <span aria-hidden="true" class="focus-room-loading__spinner" />
+          장면 전환 중
+        </span>
+      </Show>
     </div>
   )
 }
@@ -177,6 +186,7 @@ export const FocusRoomStudio = () => {
   const [gaze, setGaze] = createSignal<FocusRoomGaze>('focused')
   const [isSceneLoading, setIsSceneLoading] = createSignal(true)
   const [hasSceneRendered, setHasSceneRendered] = createSignal(false)
+  const [isPomodoroOpen, setIsPomodoroOpen] = createSignal(false)
   const time = createMemo(() => resolveScenePeriod(timeMode(), automaticPeriod()))
   const selectedScene = createMemo(() => getSceneAsset(time(), activity(), gaze()))
   const handleLoadingChange = (isLoading: boolean) => {
@@ -211,34 +221,26 @@ export const FocusRoomStudio = () => {
           time={time()}
         />
 
-        <Show when={isSceneLoading()}>
+        <Show when={isSceneLoading() && !hasSceneRendered()}>
           <div
             aria-live="polite"
-            class={cx(
-              'pointer-events-none absolute',
-              hasSceneRendered()
-                ? cx(
-                    'left-[calc(1rem+env(safe-area-inset-left))]',
-                    'top-[calc(1rem+env(safe-area-inset-top))] sm:left-7 sm:top-6',
-                  )
-                : 'inset-0 grid place-items-center bg-#17130f/24',
-            )}
+            class="pointer-events-none absolute inset-0 grid place-items-center bg-#17130f/24"
             role="status"
           >
             <span class="focus-room-backdrop focus-room-loading">
               <span aria-hidden="true" class="focus-room-loading__spinner" />
-              <Show when={hasSceneRendered()} fallback="장면을 불러오는 중">
-                장면 전환 중
-              </Show>
+              장면을 불러오는 중
             </span>
           </div>
         </Show>
       </figure>
 
-      <FocusRoomMusicPlayer />
+      <FocusRoomPomodoro onOpenChange={setIsPomodoroOpen} />
+      <FocusRoomMusicPlayer isHidden={isPomodoroOpen()} />
       <SceneToolbar
         activity={activity()}
         gaze={gaze()}
+        isSceneTransitioning={isSceneLoading() && hasSceneRendered()}
         onActivityChange={setActivity}
         onGazeChange={setGaze}
         onTimeModeChange={setTimeMode}

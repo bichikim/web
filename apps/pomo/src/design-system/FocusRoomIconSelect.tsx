@@ -54,7 +54,7 @@ export const FocusRoomIconSelect = <TValue extends string>(
     >
       <Select.Trigger
         aria-label={`${props.label} ${selectedOption().label}`}
-        class="focus-room-backdrop focus-room-icon-select__trigger"
+        class="focus-room-backdrop focus-room-interactive-glass focus-room-icon-select__trigger"
       >
         <span aria-hidden="true" class={cx('size-5', selectedOption().icon)} />
         <span class="sr-only">{selectedOption().label}</span>
