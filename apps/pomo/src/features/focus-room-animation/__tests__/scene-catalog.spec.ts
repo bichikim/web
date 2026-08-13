@@ -61,7 +61,21 @@ describe('focus room scene catalog', () => {
       })
 
       if (eyeLayer?.motion?.kind === 'translation' && 'targets' in eyeLayer.motion) {
-        expect(eyeLayer.motion.targets).toHaveLength(9)
+        const origin = eyeLayer.motion.targets[0]
+        const horizontalDistances = new Set(
+          eyeLayer.motion.targets
+            .filter((target) => target.y === origin?.y)
+            .map((target) => Number(Math.abs(target.x - (origin?.x ?? 0)).toFixed(3))),
+        )
+        const verticalDistances = new Set(
+          eyeLayer.motion.targets
+            .filter((target) => target.x === origin?.x)
+            .map((target) => Number(Math.abs(target.y - (origin?.y ?? 0)).toFixed(3))),
+        )
+
+        expect(eyeLayer.motion.targets).toHaveLength(25)
+        expect(horizontalDistances).toEqual(new Set([0, 0.45, 0.9, 1.5]))
+        expect(verticalDistances).toEqual(new Set([0, 0.225, 0.45, 0.75]))
       }
     }
 
