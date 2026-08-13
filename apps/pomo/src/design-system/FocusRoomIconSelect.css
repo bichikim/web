@@ -17,16 +17,6 @@
     background-color 160ms ease;
 }
 
-.focus-room-icon-select__trigger:hover {
-  border-color: var(--focus-room-border-hover);
-  background: var(--focus-room-secondary-soft);
-}
-
-.focus-room-icon-select__trigger:focus-visible,
-.focus-room-icon-select__trigger[data-expanded] {
-  border-color: var(--focus-room-brass);
-}
-
 .focus-room-icon-select__content {
   width: max-content;
   min-width: 10rem;
