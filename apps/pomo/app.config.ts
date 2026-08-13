@@ -13,6 +13,7 @@ export default defineConfig({
             '/chat',
             '/dialogue',
             '/focus-room',
+            '/focus-room-layer-review',
             '/speech-to-text',
             '/terms',
             '/voice',

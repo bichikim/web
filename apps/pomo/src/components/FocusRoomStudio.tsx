@@ -35,6 +35,8 @@ import {
   type ScenePeriod,
   type SceneTimeMode,
 } from '../features/focus-room-time'
+import {DAY_WRITING_LAYER_SCENE} from '../features/focus-room-animation/day-writing-layer-scene'
+import type {PixiLayerSceneDefinition} from '../features/focus-room-animation/layer-scene'
 import {FocusRoomMusicPlayer} from './FocusRoomMusicPlayer'
 
 const FocusRoomSceneCanvas = clientOnly(() => import('./FocusRoomSceneCanvas.client'), {
@@ -68,6 +70,7 @@ type SceneGaze = (typeof GAZE_OPTIONS)[number]['value']
 interface SceneAsset {
   readonly depthSource: string
   readonly label: string
+  readonly layerScene: PixiLayerSceneDefinition | null
   readonly source: string
 }
 
@@ -120,6 +123,10 @@ const getSceneAsset = (time: SceneTime, activity: SceneActivity, gaze: SceneGaze
   return {
     depthSource: DEPTH_SOURCES[time][activity][gaze],
     label: `${timeLabel} · ${activityLabel} · ${gazeLabel}`,
+    layerScene:
+      time === 'day' && activity === 'writing' && gaze === 'focused'
+        ? DAY_WRITING_LAYER_SCENE
+        : null,
     source: SCENE_SOURCES[time][activity][gaze],
   }
 }
@@ -202,6 +209,7 @@ export const FocusRoomStudio = () => {
           activity={activity()}
           depthSource={selectedScene().depthSource}
           gaze={gaze()}
+          layerScene={selectedScene().layerScene}
           onLoadingChange={handleLoadingChange}
           source={selectedScene().source}
           time={time()}
