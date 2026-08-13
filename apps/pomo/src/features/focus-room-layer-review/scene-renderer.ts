@@ -21,12 +21,14 @@ export class FocusRoomLayerReviewRenderer {
   #applicationReady = false
   #destroyed = false
   #scene: PixiLayerScene | null = null
+  #state: FocusRoomLayerReviewState | null = null
 
   constructor(host: HTMLDivElement) {
     this.#host = host
   }
 
   async initialize(state: FocusRoomLayerReviewState) {
+    this.#state = state
     await this.#application.init({
       antialias: false,
       autoStart: false,
@@ -53,16 +55,28 @@ export class FocusRoomLayerReviewRenderer {
     })
     this.#scene = scene
     this.#application.stage.addChild(scene.container)
-    await scene.initialize(this.#toSceneState(state))
+    try {
+      await scene.initialize(this.#toSceneState(state))
+    } catch (error: unknown) {
+      this.destroy()
+      throw error
+    }
 
     if (this.#destroyed) {
       return
+    }
+
+    const latestState = this.#state
+
+    if (latestState !== null) {
+      scene.update(this.#toSceneState(latestState))
     }
 
     this.#application.render()
   }
 
   update(state: FocusRoomLayerReviewState) {
+    this.#state = state
     this.#scene?.update(this.#toSceneState(state))
   }
 
@@ -74,6 +88,7 @@ export class FocusRoomLayerReviewRenderer {
     this.#destroyed = true
     this.#scene?.destroy()
     this.#scene = null
+    this.#state = null
 
     if (this.#applicationReady) {
       this.#application.destroy(true)

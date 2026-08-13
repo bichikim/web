@@ -46,7 +46,6 @@ export class SteamParticleSystem {
   constructor(options: SteamParticleSystemOptions) {
     this.#onRender = options.onRender
     this.#prefersReducedMotion = options.prefersReducedMotion
-    this.container.zIndex = 3
     this.#particles = Array.from({length: PARTICLE_COUNT}, (_, index) => {
       const sprite = new Sprite(options.textures[index % options.textures.length])
       const phase = index / PARTICLE_COUNT

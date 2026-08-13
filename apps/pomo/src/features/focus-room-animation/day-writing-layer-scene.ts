@@ -22,6 +22,7 @@ export const DAY_WRITING_LAYER_SCENE = {
       source: baseImage,
     },
     {
+      attachmentId: 'eyes',
       channel: DAY_WRITING_LAYER_CHANNELS.head,
       id: 'head',
       motion: {

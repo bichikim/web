@@ -1,28 +1,22 @@
-/* eslint-disable max-lines -- AI_NOTE - This lifecycle orchestrator keeps scene transitions, eyes, depth, steam, and data-driven layer scenes synchronized; splitting it would fragment cancellation ownership. */
 import {Application, Container, Sprite, type Texture} from 'pixi.js'
 
-import dayFocusedClosedImage from '../../../assets/focus-room-animation/eyes-day-focused-closed-v2.png'
-import dayFocusedHalfImage from '../../../assets/focus-room-animation/eyes-day-focused-half-v2.png'
-import dayUserClosedImage from '../../../assets/focus-room-animation/eyes-day-user-closed.png'
-import dayUserHalfImage from '../../../assets/focus-room-animation/eyes-day-user-half.png'
-import nightFocusedClosedImage from '../../../assets/focus-room-animation/eyes-night-focused-closed.png'
-import nightFocusedHalfImage from '../../../assets/focus-room-animation/eyes-night-focused-half.png'
-import nightUserClosedImage from '../../../assets/focus-room-animation/eyes-night-user-closed.png'
-import nightUserHalfImage from '../../../assets/focus-room-animation/eyes-night-user-half.png'
 import steamImage1 from '../../../assets/focus-room-animation/steam-ai-1.png'
 import steamImage2 from '../../../assets/focus-room-animation/steam-ai-2.png'
 import steamImage3 from '../../../assets/focus-room-animation/steam-ai-3.png'
 import steamImage4 from '../../../assets/focus-room-animation/steam-ai-4.png'
-import {type BlinkScheduler, createBlinkScheduler} from './blink-scheduler'
 import {DepthParallaxFilter} from './depth-parallax-filter'
+import {
+  type FocusRoomActivity,
+  FocusRoomEyeController,
+  type FocusRoomGaze,
+  type FocusRoomTime,
+} from './eye-animation-controller'
 import {ParallaxController} from './parallax-controller'
 import {SteamParticleSystem} from './steam-particle-system'
 import {PixiLayerScene, type PixiLayerSceneDefinition} from './layer-scene'
 import {acquireTextureGroup, releaseTextureGroup, type TextureLease} from './texture-leases'
 
-export type FocusRoomActivity = 'reading' | 'typing' | 'writing'
-export type FocusRoomGaze = 'focused' | 'user'
-export type FocusRoomTime = 'day' | 'night'
+export type {FocusRoomActivity, FocusRoomGaze, FocusRoomTime} from './eye-animation-controller'
 
 export interface FocusRoomSceneState {
   readonly activity: FocusRoomActivity
@@ -37,96 +31,16 @@ export interface FocusRoomSceneRendererOptions {
   readonly onLoadingChange?: (isLoading: boolean) => void
 }
 
-interface EyeAsset {
-  readonly closed: string
-  readonly half: string
-  readonly left: number
-  readonly top: number
+interface PreparedScene {
+  readonly depthTexture: Texture
+  readonly layerScene: PixiLayerScene | null
+  readonly scene: Container
+  readonly textures: readonly TextureLease[]
 }
 
-type EyeState = 'closed' | 'half' | 'open'
-type EyeTextures = Record<FocusRoomTime, Record<FocusRoomGaze, Record<'closed' | 'half', Texture>>>
-
-const EYE_ASSETS = {
-  day: {
-    focused: {
-      closed: dayFocusedClosedImage,
-      half: dayFocusedHalfImage,
-      left: 850,
-      top: 250,
-    },
-    user: {
-      closed: dayUserClosedImage,
-      half: dayUserHalfImage,
-      left: 850,
-      top: 212,
-    },
-  },
-  night: {
-    focused: {
-      closed: nightFocusedClosedImage,
-      half: nightFocusedHalfImage,
-      left: 850,
-      top: 250,
-    },
-    user: {
-      closed: nightUserClosedImage,
-      half: nightUserHalfImage,
-      left: 842,
-      top: 206,
-    },
-  },
-} satisfies Record<FocusRoomTime, Record<FocusRoomGaze, EyeAsset>>
-
-const HALF_FRAME_DURATION = 48
-const CLOSED_FRAME_DURATION = 72
 const SCENE_TRANSITION_DURATION = 600
 const STEAM_PARALLAX_DEPTH = 0.55
-const EYE_SOURCES = [
-  dayFocusedHalfImage,
-  dayFocusedClosedImage,
-  dayUserHalfImage,
-  dayUserClosedImage,
-  nightFocusedHalfImage,
-  nightFocusedClosedImage,
-  nightUserHalfImage,
-  nightUserClosedImage,
-] as const
 const STEAM_SOURCES = [steamImage1, steamImage2, steamImage3, steamImage4] as const
-const EYE_OFFSETS = {
-  day: {
-    focused: {
-      reading: {x: 0, y: 0},
-      typing: {x: 0, y: 0},
-      writing: {x: 0, y: 0},
-    },
-    user: {
-      reading: {x: 0, y: 0},
-      typing: {x: 0, y: 0},
-      writing: {x: 0, y: 0},
-    },
-  },
-  night: {
-    focused: {
-      reading: {x: 4, y: 0},
-      typing: {x: -1, y: 0},
-      writing: {x: 0, y: 0},
-    },
-    user: {
-      reading: {x: 0, y: 0},
-      typing: {x: 0, y: 0},
-      writing: {x: 0, y: 0},
-    },
-  },
-} satisfies Record<
-  FocusRoomTime,
-  Record<FocusRoomGaze, Record<FocusRoomActivity, {readonly x: number; readonly y: number}>>
->
-
-const wait = (duration: number) =>
-  new Promise<void>((resolve) => {
-    window.setTimeout(resolve, duration)
-  })
 
 const reportError = (error: unknown) => {
   globalThis.reportError(error)
@@ -136,7 +50,7 @@ const ignoreLoadingChange = () => undefined
 
 export class FocusRoomSceneRenderer {
   readonly #application = new Application()
-  readonly #eyeLayer = new Container()
+  readonly #eyes: FocusRoomEyeController
   readonly #host: HTMLDivElement
   readonly #onLoadingChange: (isLoading: boolean) => void
   readonly #parallax: ParallaxController
@@ -150,10 +64,6 @@ export class FocusRoomSceneRenderer {
   #currentTextures: readonly TextureLease[] = []
   #destroyed = false
   #depthFilter: DepthParallaxFilter | null = null
-  #eyeSequence = 0
-  #eyeSprite: Sprite | null = null
-  #eyeTextures: EyeTextures | null = null
-  #eyeTextureLeases: readonly TextureLease[] = []
   #incomingLayerScene: PixiLayerScene | null = null
   #incomingLayerSceneId: string | null = null
   #incomingScene: Container | null = null
@@ -162,9 +72,7 @@ export class FocusRoomSceneRenderer {
   #requestedDepthSource: string | null = null
   #requestedLayerSceneId: string | null = null
   #requestedSource: string | null = null
-  #sceneReady = false
   #settledFrame: number | null = null
-  #scheduler: BlinkScheduler | null = null
   #state: FocusRoomSceneState | null = null
   #steam: SteamParticleSystem | null = null
   #steamTextureLeases: readonly TextureLease[] = []
@@ -174,6 +82,7 @@ export class FocusRoomSceneRenderer {
   constructor(host: HTMLDivElement, options: FocusRoomSceneRendererOptions = {}) {
     this.#host = host
     this.#onLoadingChange = options.onLoadingChange ?? ignoreLoadingChange
+    this.#eyes = new FocusRoomEyeController(() => this.#application.render())
     this.#parallax = new ParallaxController(host, (x, y) => {
       this.#depthFilter?.setPointerOffset(x, y)
       this.#steam?.setParallaxOffset(-x * STEAM_PARALLAX_DEPTH, -y * STEAM_PARALLAX_DEPTH)
@@ -206,12 +115,12 @@ export class FocusRoomSceneRenderer {
       'pomo-scene-media absolute inset-0 h-full w-full object-cover'
     this.#host.append(this.#application.canvas)
     this.#application.stage.addChild(this.#sceneLayer)
-    this.#sceneLayer.addChild(this.#eyeLayer)
+    this.#sceneLayer.addChild(this.#eyes.container)
 
     try {
       await Promise.all([
         this.#loadInitialScene(state.source, state.depthSource, state.layerScene),
-        this.#loadEyes(),
+        this.#eyes.initialize(state),
         this.#loadSteam(),
       ])
     } catch (error: unknown) {
@@ -228,6 +137,7 @@ export class FocusRoomSceneRenderer {
 
     this.#parallax.start()
     this.#steam?.start()
+    this.#eyes.setSceneReady(true)
     this.#application.render()
     this.#finishLoadingAfterPaint()
 
@@ -243,14 +153,11 @@ export class FocusRoomSceneRenderer {
 
   update(state: FocusRoomSceneState) {
     this.#state = state
-    this.#eyeSequence += 1
-    this.#renderEye('open')
+    this.#eyes.update(state)
 
     if (this.#initialized) {
       this.#syncScene(state.source, state.depthSource, state.layerScene)
     }
-
-    this.#scheduler?.start()
   }
 
   #syncScene(source: string, depthSource: string, layerScene: PixiLayerSceneDefinition | null) {
@@ -265,7 +172,7 @@ export class FocusRoomSceneRenderer {
       this.#requestedDepthSource = null
       this.#requestedLayerSceneId = null
       this.#cancelTransition()
-      this.#sceneReady = true
+      this.#eyes.setSceneReady(true)
       this.#application.render()
       this.#finishLoadingAfterPaint()
     }
@@ -278,17 +185,13 @@ export class FocusRoomSceneRenderer {
 
     this.#destroyed = true
     this.#transitionVersion += 1
-    this.#eyeSequence += 1
     this.#cancelTransition()
     this.#cancelSettledFrame()
     this.#parallax.destroy()
-    this.#scheduler?.destroy()
-    this.#scheduler = null
+    this.#sceneLayer.addChild(this.#eyes.container)
+    this.#eyes.destroy()
 
     this.#destroyCurrentScene()
-    this.#eyeSprite?.removeFromParent()
-    this.#eyeSprite?.destroy()
-    this.#eyeSprite = null
     this.#steam?.destroy()
     this.#sceneLayer.filters = null
     this.#depthFilter?.destroy()
@@ -301,12 +204,9 @@ export class FocusRoomSceneRenderer {
     }
 
     releaseTextureGroup(this.#currentTextures)
-    releaseTextureGroup(this.#eyeTextureLeases)
     releaseTextureGroup(this.#steamTextureLeases)
     this.#currentTextures = []
-    this.#eyeTextureLeases = []
     this.#steamTextureLeases = []
-    this.#eyeTextures = null
   }
 
   async #loadInitialScene(
@@ -314,92 +214,28 @@ export class FocusRoomSceneRenderer {
     depthSource: string,
     layerDefinition: PixiLayerSceneDefinition | null,
   ) {
-    const textures = await acquireTextureGroup(
-      layerDefinition === null ? [source, depthSource] : [depthSource],
-    )
+    const prepared = await this.#prepareScene(source, depthSource, layerDefinition)
 
-    if (this.#destroyed) {
-      releaseTextureGroup(textures)
+    if (prepared === null) {
       return
     }
 
-    const layerScene = await this.#createLayerScene(layerDefinition)
-
-    if (this.#destroyed) {
-      layerScene?.destroy()
-      releaseTextureGroup(textures)
-      return
+    try {
+      this.#addScene(prepared.scene, prepared.layerScene)
+      this.#depthFilter = new DepthParallaxFilter(prepared.depthTexture)
+    } catch (error: unknown) {
+      this.#placeEyes(null)
+      this.#destroyPreparedScene(prepared)
+      throw error
     }
 
-    const scene = layerScene?.container ?? new Sprite(textures[0].texture)
-    const depthTexture = textures[layerDefinition === null ? 1 : 0].texture
-    this.#addScene(scene)
-    this.#depthFilter = new DepthParallaxFilter(depthTexture)
     this.#sceneLayer.filters = [this.#depthFilter]
     this.#currentDepthSource = depthSource
-    this.#currentLayerScene = layerScene
+    this.#currentLayerScene = prepared.layerScene
     this.#currentLayerSceneId = layerDefinition?.id ?? null
-    this.#currentScene = scene
+    this.#currentScene = prepared.scene
     this.#currentSource = source
-    this.#currentTextures = textures
-    this.#sceneReady = true
-  }
-
-  async #loadEyes() {
-    const [
-      dayFocusedHalf,
-      dayFocusedClosed,
-      dayUserHalf,
-      dayUserClosed,
-      nightFocusedHalf,
-      nightFocusedClosed,
-      nightUserHalf,
-      nightUserClosed,
-    ] = await acquireTextureGroup(EYE_SOURCES)
-
-    if (this.#destroyed) {
-      releaseTextureGroup([
-        dayFocusedHalf,
-        dayFocusedClosed,
-        dayUserHalf,
-        dayUserClosed,
-        nightFocusedHalf,
-        nightFocusedClosed,
-        nightUserHalf,
-        nightUserClosed,
-      ])
-      return
-    }
-
-    this.#eyeTextureLeases = [
-      dayFocusedHalf,
-      dayFocusedClosed,
-      dayUserHalf,
-      dayUserClosed,
-      nightFocusedHalf,
-      nightFocusedClosed,
-      nightUserHalf,
-      nightUserClosed,
-    ]
-    this.#eyeSprite = new Sprite(dayFocusedHalf.texture)
-    this.#eyeSprite.visible = false
-    this.#eyeLayer.addChild(this.#eyeSprite)
-    this.#eyeTextures = {
-      day: {
-        focused: {closed: dayFocusedClosed.texture, half: dayFocusedHalf.texture},
-        user: {closed: dayUserClosed.texture, half: dayUserHalf.texture},
-      },
-      night: {
-        focused: {closed: nightFocusedClosed.texture, half: nightFocusedHalf.texture},
-        user: {closed: nightUserClosed.texture, half: nightUserHalf.texture},
-      },
-    }
-    this.#scheduler = createBlinkScheduler({
-      maximumDelay: 6_000,
-      minimumDelay: 2_000,
-      onBlink: () => this.#playBlink(),
-    })
-    this.#scheduler.start()
+    this.#currentTextures = prepared.textures
   }
 
   async #loadSteam() {
@@ -419,60 +255,6 @@ export class FocusRoomSceneRenderer {
     this.#application.stage.addChild(this.#steam.container)
   }
 
-  #renderEye(state: EyeState) {
-    const sceneState = this.#state
-
-    if (this.#eyeSprite === null || this.#eyeTextures === null || sceneState === null) {
-      return
-    }
-
-    if (state === 'open') {
-      this.#eyeSprite.visible = false
-    } else {
-      const asset = EYE_ASSETS[sceneState.time][sceneState.gaze]
-      const offset = EYE_OFFSETS[sceneState.time][sceneState.gaze][sceneState.activity]
-
-      this.#eyeSprite.texture = this.#eyeTextures[sceneState.time][sceneState.gaze][state]
-      this.#eyeSprite.position.set(asset.left + offset.x, asset.top + offset.y)
-      this.#eyeSprite.visible = true
-    }
-
-    this.#application.render()
-  }
-
-  async #playBlink() {
-    if (!this.#sceneReady) {
-      return
-    }
-
-    const sequence = this.#eyeSequence + 1
-    this.#eyeSequence = sequence
-    this.#renderEye('half')
-    await wait(HALF_FRAME_DURATION)
-
-    if (!this.#canContinueBlink(sequence)) {
-      return
-    }
-
-    this.#renderEye('closed')
-    await wait(CLOSED_FRAME_DURATION)
-
-    if (!this.#canContinueBlink(sequence)) {
-      return
-    }
-
-    this.#renderEye('half')
-    await wait(HALF_FRAME_DURATION)
-
-    if (this.#canContinueBlink(sequence)) {
-      this.#renderEye('open')
-    }
-  }
-
-  #canContinueBlink(sequence: number) {
-    return !this.#destroyed && this.#sceneReady && sequence === this.#eyeSequence
-  }
-
   async #transitionTo(
     source: string,
     depthSource: string,
@@ -488,44 +270,41 @@ export class FocusRoomSceneRenderer {
     this.#requestedSource = source
     this.#requestedDepthSource = depthSource
     this.#requestedLayerSceneId = layerDefinition?.id ?? null
-    this.#eyeSequence += 1
-    this.#sceneReady = false
-    this.#renderEye('open')
+    this.#eyes.setSceneReady(false)
     this.#cancelTransition()
     this.#application.render()
 
     try {
-      const textures = await acquireTextureGroup(
-        layerDefinition === null ? [source, depthSource] : [depthSource],
-      )
-      const layerScene = await this.#createLayerScene(layerDefinition)
+      const prepared = await this.#prepareScene(source, depthSource, layerDefinition)
 
-      if (this.#destroyed || version !== this.#transitionVersion) {
-        layerScene?.destroy()
-        releaseTextureGroup(textures)
+      if (prepared === null) {
         return
       }
 
-      const scene = layerScene?.container ?? new Sprite(textures[0].texture)
-      const depthTexture = textures[layerDefinition === null ? 1 : 0].texture
-      scene.alpha = 0
-      this.#incomingLayerScene = layerScene
+      if (version !== this.#transitionVersion) {
+        this.#destroyPreparedScene(prepared)
+        return
+      }
+
+      prepared.scene.alpha = 0
+      this.#incomingLayerScene = prepared.layerScene
       this.#incomingLayerSceneId = layerDefinition?.id ?? null
-      this.#incomingScene = scene
-      this.#incomingTextures = textures
-      this.#depthFilter?.setDepthTransition(depthTexture)
-      this.#addScene(scene)
-      this.#animateTransition(source, depthSource, scene, version)
+      this.#incomingScene = prepared.scene
+      this.#incomingTextures = prepared.textures
+      this.#depthFilter?.setDepthTransition(prepared.depthTexture)
+      this.#addScene(prepared.scene, prepared.layerScene)
+      this.#animateTransition(source, depthSource, prepared.scene, version)
     } catch (error: unknown) {
       if (this.#destroyed || version !== this.#transitionVersion) {
         return
       }
 
       if (version === this.#transitionVersion) {
+        this.#cancelTransition()
         this.#requestedSource = null
         this.#requestedDepthSource = null
         this.#requestedLayerSceneId = null
-        this.#sceneReady = this.#currentScene !== null
+        this.#eyes.setSceneReady(this.#currentScene !== null)
         this.#onLoadingChange(false)
       }
 
@@ -581,10 +360,9 @@ export class FocusRoomSceneRenderer {
     this.#requestedDepthSource = null
     this.#requestedLayerSceneId = null
     this.#transitionFrame = null
-    this.#sceneReady = true
+    this.#eyes.setSceneReady(true)
     this.#depthFilter?.finishDepthTransition()
     releaseTextureGroup(previousTextures)
-    this.#scheduler?.start()
     this.#application.render()
     this.#finishLoadingAfterPaint()
   }
@@ -595,6 +373,7 @@ export class FocusRoomSceneRenderer {
       this.#transitionFrame = null
     }
 
+    this.#placeEyes(this.#currentLayerScene)
     this.#destroyIncomingScene()
     this.#incomingScene = null
     this.#depthFilter?.cancelDepthTransition()
@@ -637,17 +416,72 @@ export class FocusRoomSceneRenderer {
     }
 
     const layerScene = new PixiLayerScene(definition, {
-      onRender: () => this.#application.render(),
+      onRender: () => {
+        if (!this.#destroyed) {
+          this.#application.render()
+        }
+      },
     })
-    await layerScene.initialize({animationEnabled: !this.#parallax.prefersReducedMotion})
+
+    try {
+      await layerScene.initialize({animationEnabled: !this.#parallax.prefersReducedMotion})
+    } catch (error: unknown) {
+      layerScene.destroy()
+      throw error
+    }
 
     return layerScene
   }
 
-  #addScene(scene: Container) {
+  async #prepareScene(
+    source: string,
+    depthSource: string,
+    definition: PixiLayerSceneDefinition | null,
+  ): Promise<PreparedScene | null> {
+    const textures = await acquireTextureGroup(
+      definition === null ? [source, depthSource] : [depthSource],
+    )
+
+    try {
+      const layerScene = await this.#createLayerScene(definition)
+
+      if (this.#destroyed) {
+        layerScene?.destroy()
+        releaseTextureGroup(textures)
+        return null
+      }
+
+      return {
+        depthTexture: textures[definition === null ? 1 : 0].texture,
+        layerScene,
+        scene: layerScene?.container ?? new Sprite(textures[0].texture),
+        textures,
+      }
+    } catch (error: unknown) {
+      releaseTextureGroup(textures)
+      throw error
+    }
+  }
+
+  #destroyPreparedScene(prepared: PreparedScene) {
+    if (prepared.layerScene === null) {
+      prepared.scene.destroy()
+    } else {
+      prepared.layerScene.destroy()
+    }
+
+    releaseTextureGroup(prepared.textures)
+  }
+
+  #addScene(scene: Container, layerScene: PixiLayerScene | null) {
     this.#sceneLayer.addChild(scene)
-    // AI_NOTE - Eyes must remain above scene pixels while sharing the scene depth filter.
-    this.#sceneLayer.addChild(this.#eyeLayer)
+    this.#placeEyes(layerScene)
+  }
+
+  #placeEyes(layerScene: PixiLayerScene | null) {
+    // AI_NOTE - A scene attachment lets blink pixels inherit head motion without sharing coordinates.
+    const parent = layerScene?.getAttachment('eyes') ?? this.#sceneLayer
+    parent.addChild(this.#eyes.container)
   }
 
   #destroyCurrentScene() {

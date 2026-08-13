@@ -43,6 +43,7 @@ export interface PixiScenePivotRotation {
 }
 
 export interface PixiSceneLayerDefinition {
+  readonly attachmentId?: string
   readonly channel?: string
   readonly id: string
   readonly motion?: PixiScenePivotRotation
@@ -123,6 +124,7 @@ export class PixiLayerScene {
   readonly #random: () => number
   readonly #ticker = new Ticker()
   #destroyed = false
+  #initialized = false
   #layers: readonly LayerInstance[] = []
   #textures: readonly TextureLease[] = []
 
@@ -134,6 +136,19 @@ export class PixiLayerScene {
   }
 
   async initialize(state: PixiLayerSceneState) {
+    if (this.#destroyed || this.#initialized) {
+      throw new Error(`Layer scene can only be initialized once: ${this.#definition.id}`)
+    }
+
+    this.#initialized = true
+
+    try {
+      this.#validateDefinition()
+    } catch (error: unknown) {
+      this.destroy()
+      throw error
+    }
+
     const layerSources = this.#definition.layers.map((layer) => layer.source)
     const maskSources = [
       ...new Set(
@@ -145,7 +160,14 @@ export class PixiLayerScene {
         ),
       ),
     ]
-    const textures = await acquireTextureGroup([...layerSources, ...maskSources])
+    let textures: readonly TextureLease[]
+
+    try {
+      textures = await acquireTextureGroup([...layerSources, ...maskSources])
+    } catch (error: unknown) {
+      this.destroy()
+      throw error
+    }
 
     if (this.#destroyed) {
       releaseTextureGroup(textures)
@@ -153,35 +175,44 @@ export class PixiLayerScene {
     }
 
     this.#textures = textures
-    const maskTextures = new Map<string, Texture>(
-      textures.slice(layerSources.length).map((lease) => [lease.source, lease.texture]),
-    )
-    this.#layers = this.#definition.layers.map((definition, index) => {
-      const container = new Container()
-      const sprite = new Sprite(textures[index].texture)
-      const {motion} = definition
+    const layers: LayerInstance[] = []
 
-      if (motion !== undefined) {
-        container.pivot.set(motion.center.x, motion.center.y)
-        container.position.set(motion.center.x, motion.center.y)
+    try {
+      this.#validateTextureSizes(textures, layerSources.length)
+      const maskTextures = new Map<string, Texture>(
+        textures.slice(layerSources.length).map((lease) => [lease.source, lease.texture]),
+      )
+
+      for (const [index, definition] of this.#definition.layers.entries()) {
+        const container = new Container()
+        const sprite = new Sprite(textures[index].texture)
+        const {motion} = definition
+
+        if (motion !== undefined) {
+          container.pivot.set(motion.center.x, motion.center.y)
+          container.position.set(motion.center.x, motion.center.y)
+        }
+
+        const pixelPushFilters = this.#createPushFilters(motion?.pixelPush ?? [], maskTextures)
+        sprite.filters = pixelPushFilters
+        container.addChild(sprite)
+        this.container.addChild(container)
+        layers.push({
+          container,
+          definition,
+          motion: motion === undefined ? null : this.#createMotionState(motion.travel),
+          pixelPushFilters,
+          sprite,
+        })
       }
 
-      const pixelPushFilters =
-        motion?.pixelPush?.map((effect) => this.#createPushFilter(effect, maskTextures)) ?? []
-      sprite.filters = pixelPushFilters
-
-      container.addChild(sprite)
-      this.container.addChild(container)
-
-      return {
-        container,
-        definition,
-        motion: motion === undefined ? null : this.#createMotionState(motion.travel),
-        pixelPushFilters,
-        sprite,
-      }
-    })
-    this.update(state)
+      this.#layers = layers
+      this.update(state)
+    } catch (error: unknown) {
+      this.#layers = layers
+      this.destroy()
+      throw error
+    }
   }
 
   update(state: PixiLayerSceneState) {
@@ -201,6 +232,10 @@ export class PixiLayerScene {
     }
 
     this.#onRender()
+  }
+
+  getAttachment(name: string) {
+    return this.#layers.find((layer) => layer.definition.attachmentId === name)?.container ?? null
   }
 
   destroy() {
@@ -300,6 +335,78 @@ export class PixiLayerScene {
       default: {
         const exhaustiveEffect: never = effect
         throw new Error(`Unsupported pixel-push effect: ${String(exhaustiveEffect)}`)
+      }
+    }
+  }
+
+  #createPushFilters(
+    effects: readonly PixiScenePushEffect[],
+    maskTextures: ReadonlyMap<string, Texture>,
+  ) {
+    const filters: PushFilter[] = []
+
+    try {
+      for (const effect of effects) {
+        filters.push(this.#createPushFilter(effect, maskTextures))
+      }
+
+      return filters
+    } catch (error: unknown) {
+      for (const filter of filters) {
+        filter.destroy()
+      }
+
+      throw error
+    }
+  }
+
+  #validateDefinition() {
+    if (this.#definition.width <= 0 || this.#definition.height <= 0) {
+      throw new Error(`Invalid scene dimensions: ${this.#definition.id}`)
+    }
+
+    const attachments = new Set<string>()
+    const layerIds = new Set<string>()
+
+    for (const layer of this.#definition.layers) {
+      if (layerIds.has(layer.id)) {
+        throw new Error(`Duplicate layer id: ${layer.id}`)
+      }
+
+      layerIds.add(layer.id)
+
+      if (layer.attachmentId !== undefined) {
+        if (layer.attachmentId.length === 0) {
+          throw new Error(`Empty layer attachment id: ${layer.id}`)
+        }
+
+        if (attachments.has(layer.attachmentId)) {
+          throw new Error(`Duplicate layer attachment: ${layer.attachmentId}`)
+        }
+
+        attachments.add(layer.attachmentId)
+      }
+
+      const travel = layer.motion?.travel
+
+      if (
+        travel !== undefined &&
+        (travel.minimumSeconds <= 0 || travel.maximumSeconds < travel.minimumSeconds)
+      ) {
+        throw new Error(`Invalid motion travel range for layer: ${layer.id}`)
+      }
+    }
+  }
+
+  #validateTextureSizes(textures: readonly TextureLease[], layerSourceCount: number) {
+    for (const [index, lease] of textures.entries()) {
+      const {height, width} = lease.texture
+
+      if (width !== this.#definition.width || height !== this.#definition.height) {
+        const sourceKind = index < layerSourceCount ? 'layer' : 'mask'
+        throw new Error(
+          `Invalid ${sourceKind} texture dimensions for ${lease.source}: ${width}x${height}`,
+        )
       }
     }
   }
