@@ -28,7 +28,9 @@ interface ReviewControlsProps {
   readonly onAnimationChange: (enabled: boolean) => void
   readonly onHandsChange: (visible: boolean) => void
   readonly onHeadChange: (visible: boolean) => void
+  readonly onHideAll: () => void
   readonly onReferenceChange: JSX.EventHandler<HTMLInputElement, InputEvent>
+  readonly onShowAll: () => void
   readonly referenceOpacity: number
   readonly referencePercentage: number
 }
@@ -104,10 +106,23 @@ const ReviewControls = (props: ReviewControlsProps) => (
     )}
     aria-label="레이어 검사 도구"
   >
-    <h2 class="m-0 text-lg font-750 text-#fffaf1">프리뷰 검사</h2>
-    <p class="mb-0 mt-1 text-xs leading-5 text-#a99fac">
-      미세 애니메이션은 장면마다 독립된 위치와 속도를 사용합니다.
-    </p>
+    <div class="flex items-center justify-between gap-3">
+      <div>
+        <h2 class="m-0 text-lg font-750 text-#fffaf1">
+          {props.isSeparatedScene ? '레이어' : '프리뷰 검사'}
+        </h2>
+        <p class="mb-0 mt-1 text-xs leading-5 text-#a99fac">
+          {props.isSeparatedScene
+            ? '체크를 해제하면 해당 파트가 숨겨집니다.'
+            : '미세 애니메이션은 장면마다 독립된 위치와 속도를 사용합니다.'}
+        </p>
+      </div>
+      <Show when={props.isSeparatedScene}>
+        <span class="rounded-full bg-#e8c795/12 px-3 py-1 text-xs font-700 text-#f2d3a7">
+          원본 픽셀
+        </span>
+      </Show>
+    </div>
 
     <label class="mt-4 flex cursor-pointer items-center justify-between gap-4 border-t border-white/8 pt-4">
       <span>
@@ -140,6 +155,23 @@ const ReviewControls = (props: ReviewControlsProps) => (
         />
       </div>
 
+      <div class="mt-4 grid grid-cols-2 gap-2">
+        <button
+          class="rounded-3 bg-#e8c795 px-3 py-2.5 text-sm font-750 text-#241b12 hover:bg-#f2d3a7"
+          onClick={() => props.onShowAll()}
+          type="button"
+        >
+          모두 표시
+        </button>
+        <button
+          class="rounded-3 bg-white/8 px-3 py-2.5 text-sm font-700 text-#e7dfe9 hover:bg-white/12"
+          onClick={() => props.onHideAll()}
+          type="button"
+        >
+          모두 숨김
+        </button>
+      </div>
+
       <div class="mt-4 border-t border-white/8 pt-4">
         <div class="flex items-center justify-between gap-4">
           <label class="text-sm font-700 text-#fffaf1" for="reference-opacity">
@@ -159,6 +191,9 @@ const ReviewControls = (props: ReviewControlsProps) => (
           type="range"
           value={props.referenceOpacity}
         />
+        <p class="mb-0 mt-2 text-xs leading-5 text-#a99fac">
+          값을 올리면 원본 장면이 위에 겹쳐져 가장자리 차이를 확인할 수 있습니다.
+        </p>
       </div>
     </Show>
   </aside>
@@ -188,6 +223,14 @@ export const FocusRoomLayerReview = () => {
     setHeadVisible(true)
     setHandsVisible(true)
     setReferenceOpacity(0)
+  }
+  const handleShowAll = () => {
+    setHeadVisible(true)
+    setHandsVisible(true)
+  }
+  const handleHideAll = () => {
+    setHeadVisible(false)
+    setHandsVisible(false)
   }
 
   return (
@@ -243,7 +286,9 @@ export const FocusRoomLayerReview = () => {
         onAnimationChange={setAnimationEnabled}
         onHandsChange={setHandsVisible}
         onHeadChange={setHeadVisible}
+        onHideAll={handleHideAll}
         onReferenceChange={handleReferenceChange}
+        onShowAll={handleShowAll}
         referenceOpacity={referenceOpacity()}
         referencePercentage={referencePercentage()}
       />
