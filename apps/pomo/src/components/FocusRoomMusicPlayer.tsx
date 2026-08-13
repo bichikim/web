@@ -4,4 +4,14 @@ const FocusRoomMusicPlayerClient = clientOnly(() => import('./FocusRoomMusicPlay
   lazy: true,
 })
 
-export const FocusRoomMusicPlayer = () => <FocusRoomMusicPlayerClient />
+export interface FocusRoomMusicPlayerProps {
+  readonly expanded: boolean
+  readonly onExpandedChange: (expanded: boolean) => void
+}
+
+export const FocusRoomMusicPlayer = (props: FocusRoomMusicPlayerProps) => (
+  <FocusRoomMusicPlayerClient
+    expanded={props.expanded}
+    onExpandedChange={(expanded) => props.onExpandedChange(expanded)}
+  />
+)

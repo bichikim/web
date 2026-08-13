@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 
 import {fireEvent, render, screen} from '@solidjs/testing-library'
+import {createSignal} from 'solid-js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import FocusRoomMusicPlayerClient from '../FocusRoomMusicPlayer.client'
@@ -72,5 +73,22 @@ describe('FocusRoomMusicPlayerClient', () => {
 
     const firstLevel = result.container.querySelector<HTMLElement>('.focus-room-level')
     expect(firstLevel?.style.opacity).toBe('0.76')
+  })
+
+  it('should notify a controlled owner when the player expansion changes', () => {
+    const [expanded, setExpanded] = createSignal(false)
+    const handleExpandedChange = vi.fn((nextExpanded: boolean) => setExpanded(nextExpanded))
+
+    render(() => (
+      <FocusRoomMusicPlayerClient
+        expanded={expanded()}
+        onExpandedChange={handleExpandedChange}
+        tracks={TRACKS}
+      />
+    ))
+    fireEvent.click(screen.getByRole('button', {name: '플레이어 펼치기'}))
+
+    expect(handleExpandedChange).toHaveBeenCalledWith(true)
+    expect(screen.getByRole('button', {name: '플레이어 접기'})).toBeTruthy()
   })
 })

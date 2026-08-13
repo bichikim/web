@@ -21,10 +21,32 @@
   --focus-room-control-height-medium: 2.75rem;
   --focus-room-radius-panel: 1.25rem;
   --focus-room-radius-control: 999px;
+  --focus-room-space-1: 0.25rem;
+  --focus-room-space-2: 0.5rem;
+  --focus-room-space-3: 0.75rem;
+  --focus-room-space-4: 1rem;
+  --focus-room-space-5: 1.25rem;
+  --focus-room-space-6: 1.5rem;
+  --focus-room-space-8: 2rem;
+  --focus-room-padding-xs: var(--focus-room-space-1);
+  --focus-room-padding-sm: var(--focus-room-space-2);
+  --focus-room-padding-md: var(--focus-room-space-3);
+  --focus-room-padding-lg: var(--focus-room-space-4);
+  --focus-room-padding-xl: var(--focus-room-space-5);
 }
 
 .focus-room-backdrop {
   border: 1px solid var(--focus-room-border);
   backdrop-filter: blur(var(--focus-room-backdrop-blur));
   -webkit-backdrop-filter: blur(var(--focus-room-backdrop-blur));
+}
+
+@media (width < 36rem) {
+  :root {
+    --focus-room-padding-xs: 0.125rem;
+    --focus-room-padding-sm: 0.25rem;
+    --focus-room-padding-md: 0.375rem;
+    --focus-room-padding-lg: 0.5rem;
+    --focus-room-padding-xl: 0.625rem;
+  }
 }

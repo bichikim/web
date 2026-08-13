@@ -7,9 +7,13 @@ export interface FocusRoomModalProps {
   readonly children: JSX.Element
   readonly description?: string
   readonly isOpen: boolean
+  readonly navigation?: JSX.Element
   readonly onCloseAutoFocus?: () => void
   readonly onOpenChange: (isOpen: boolean) => void
+  readonly placement?: 'center' | 'top'
+  readonly size?: 'regular' | 'wide'
   readonly title: string
+  readonly titleVisibility?: 'visible' | 'visually-hidden'
 }
 
 export const FocusRoomModal = (props: FocusRoomModalProps) => (
@@ -18,6 +22,8 @@ export const FocusRoomModal = (props: FocusRoomModalProps) => (
       <Dialog.Overlay class="focus-room-modal__overlay" />
       <Dialog.Content
         class="focus-room-backdrop focus-room-modal__content"
+        data-placement={props.placement ?? 'center'}
+        data-size={props.size ?? 'regular'}
         onCloseAutoFocus={(event) => {
           if (props.onCloseAutoFocus === undefined) {
             return
@@ -27,8 +33,12 @@ export const FocusRoomModal = (props: FocusRoomModalProps) => (
           props.onCloseAutoFocus()
         }}
       >
-        <header class="focus-room-modal__header">
-          <div class="min-w-0">
+        <header
+          class="focus-room-modal__header"
+          data-has-navigation={props.navigation === undefined ? undefined : ''}
+          data-title-visibility={props.titleVisibility ?? 'visible'}
+        >
+          <div class="focus-room-modal__heading">
             <Dialog.Title class="focus-room-modal__title">{props.title}</Dialog.Title>
             <Show when={props.description}>
               {(description) => (
@@ -38,6 +48,9 @@ export const FocusRoomModal = (props: FocusRoomModalProps) => (
               )}
             </Show>
           </div>
+          <Show when={props.navigation}>
+            {(navigation) => <div class="focus-room-modal__navigation">{navigation()}</div>}
+          </Show>
           <Dialog.CloseButton aria-label="닫기" class="focus-room-modal__close">
             <span aria-hidden="true" class="i-tabler-x size-5" />
           </Dialog.CloseButton>
