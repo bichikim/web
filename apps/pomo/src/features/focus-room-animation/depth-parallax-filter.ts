@@ -33,11 +33,20 @@ uniform highp vec4 uInputSize;
 uniform vec2 uPointerPixels;
 uniform float uDepthMix;
 
+float getDepthResponse(float proximity) {
+  float centeredDepth = proximity - 0.45;
+  float foregroundDepth = smoothstep(0.0, 0.55, max(centeredDepth, 0.0));
+  float backgroundDepth = smoothstep(0.0, 0.45, max(-centeredDepth, 0.0));
+  float foregroundResponse = pow(foregroundDepth, 1.35) * 0.18;
+  float backgroundResponse = pow(backgroundDepth, 0.85) * 0.65;
+  return foregroundResponse - backgroundResponse;
+}
+
 void main(void) {
   float currentDepth = texture(uDepthTexture, vDepthCoord).r;
   float nextDepth = texture(uNextDepthTexture, vDepthCoord).r;
   float proximity = mix(currentDepth, nextDepth, uDepthMix);
-  vec2 depthOffset = uInputSize.zw * uPointerPixels * (proximity - 0.45);
+  vec2 depthOffset = uInputSize.zw * uPointerPixels * getDepthResponse(proximity);
   vec2 sampleCoordinate = clamp(vTextureCoord + depthOffset, uInputClamp.xy, uInputClamp.zw);
   finalColor = texture(uTexture, sampleCoordinate);
 }
