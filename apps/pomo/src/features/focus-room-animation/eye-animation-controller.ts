@@ -9,11 +9,10 @@ import nightFocusedHalfImage from '../../../assets/focus-room-animation/eyes-nig
 import nightUserClosedImage from '../../../assets/focus-room-animation/eyes-night-user-closed.png'
 import nightUserHalfImage from '../../../assets/focus-room-animation/eyes-night-user-half.png'
 import {type BlinkScheduler, createBlinkScheduler} from './blink-scheduler'
+import type {FocusRoomActivity, FocusRoomGaze, FocusRoomTime} from './scene-catalog'
 import {acquireTextureGroup, releaseTextureGroup, type TextureLease} from './texture-leases'
 
-export type FocusRoomActivity = 'reading' | 'typing' | 'writing'
-export type FocusRoomGaze = 'focused' | 'user'
-export type FocusRoomTime = 'day' | 'night'
+export type {FocusRoomActivity, FocusRoomGaze, FocusRoomTime} from './scene-catalog'
 
 export interface FocusRoomEyeState {
   readonly activity: FocusRoomActivity

@@ -1,7 +1,13 @@
-import {clientOnly} from '@solidjs/start'
 import {A} from '@solidjs/router'
+import {clientOnly} from '@solidjs/start'
 import {cx} from 'class-variance-authority'
-import {createSignal, type JSX} from 'solid-js'
+import {createMemo, createSignal, For, type JSX, Show} from 'solid-js'
+
+import {
+  FOCUS_ROOM_SCENES,
+  type FocusRoomSceneCatalogEntry,
+  type FocusRoomSceneId,
+} from '../features/focus-room-animation/scene-catalog'
 
 const FocusRoomLayerReviewCanvas = clientOnly(() => import('./FocusRoomLayerReviewCanvas.client'), {
   lazy: true,
@@ -29,10 +35,11 @@ interface ReviewControlsProps {
 }
 
 const PANEL_CLASSES = cx(
-  'rounded-6 border border-white/10 bg-white/5',
-  'shadow-[0_24px_70px_rgba(5,2,10,0.24)]',
+  'rounded-6 border border-white/10 bg-#17131f/82',
+  'shadow-[0_24px_70px_rgba(5,2,10,0.24)] backdrop-blur-xl',
 )
 const PERCENT_SCALE = 100
+const INITIAL_SCENE_ID: FocusRoomSceneId = 'day-writing-focused'
 
 const LayerToggle = (props: LayerToggleProps) => {
   const handleChange: JSX.EventHandler<HTMLInputElement, Event> = (event) => {
@@ -40,7 +47,7 @@ const LayerToggle = (props: LayerToggleProps) => {
   }
 
   return (
-    <label class="flex cursor-pointer items-center justify-between gap-4 py-3">
+    <label class="flex cursor-pointer items-center justify-between gap-4 py-2.5">
       <span>
         <span class="block text-sm font-700 text-#fffaf1">{props.label}</span>
         <span class="mt-1 block text-xs leading-5 text-#a99fac">{props.description}</span>
@@ -55,12 +62,46 @@ const LayerToggle = (props: LayerToggleProps) => {
   )
 }
 
+const ScenePicker = (props: {
+  readonly onSelect: (id: FocusRoomSceneId) => void
+  readonly selectedId: FocusRoomSceneId
+}) => (
+  <nav
+    aria-label="프리뷰 장면"
+    class={cx(
+      PANEL_CLASSES,
+      'absolute inset-x-3 top-3 flex gap-2 overflow-x-auto p-2 sm:inset-x-6 sm:top-6',
+    )}
+  >
+    <For each={FOCUS_ROOM_SCENES}>
+      {(scene, index) => (
+        <button
+          aria-pressed={props.selectedId === scene.id}
+          class={cx(
+            'min-w-40 shrink-0 rounded-4 border px-3 py-2.5 text-left transition-colors',
+            props.selectedId === scene.id
+              ? 'border-#e8c795 bg-#e8c795 text-#241b12'
+              : 'border-white/8 bg-white/4 text-#e7dfe9 hover:bg-white/9',
+          )}
+          onClick={() => props.onSelect(scene.id)}
+          type="button"
+        >
+          <span class="block text-[10px] font-800 tracking-[0.14em] uppercase opacity-70">
+            preview {String(index() + 1).padStart(2, '0')}
+          </span>
+          <span class="mt-1 block text-xs font-750">{scene.label}</span>
+        </button>
+      )}
+    </For>
+  </nav>
+)
+
 const ReviewControls = (props: ReviewControlsProps) => (
   <aside
     class={cx(
       PANEL_CLASSES,
-      'absolute inset-x-3 bottom-3 max-h-[45dvh] overflow-auto bg-#17131f/88 p-5 backdrop-blur-xl',
-      'sm:inset-x-auto sm:bottom-6 sm:right-6 sm:w-80 lg:bottom-auto lg:top-6',
+      'absolute bottom-3 right-3 max-h-[calc(100dvh-7.75rem)] w-[min(20rem,calc(100%-1.5rem))]',
+      'overflow-auto p-4 sm:bottom-6 sm:right-6 sm:max-h-[calc(100dvh-8.75rem)] sm:p-5',
     )}
     aria-label="레이어 검사 도구"
   >
@@ -71,27 +112,47 @@ const ReviewControls = (props: ReviewControlsProps) => (
           체크를 해제하면 해당 파트가 숨겨집니다.
         </p>
       </div>
-      <span class="rounded-full bg-#e8c795/12 px-3 py-1 text-xs font-700 text-#f2d3a7">
+      <span class="shrink-0 whitespace-nowrap rounded-full bg-#e8c795/12 px-3 py-1 text-xs font-700 text-#f2d3a7">
         원본 픽셀
       </span>
     </div>
 
-    <div class="mt-4 divide-y divide-white/8">
+    <label
+      class={cx(
+        'mt-3 flex cursor-pointer items-center justify-between gap-4 border-t border-white/8 pt-3',
+        'sm:mt-4 sm:pt-4',
+      )}
+    >
+      <span>
+        <span class="block text-sm font-700 text-#fffaf1">미세 애니메이션</span>
+        <span class="mt-1 block text-xs leading-5 text-#a99fac">
+          머리 · 머리카락 · 손 랜덤 왕복
+        </span>
+      </span>
+      <input
+        checked={props.animationEnabled}
+        class="size-5 shrink-0 accent-#e8c795"
+        onChange={(event) => props.onAnimationChange(event.currentTarget.checked)}
+        type="checkbox"
+      />
+    </label>
+
+    <div class="mt-3 divide-y divide-white/8 border-t border-white/8 pt-1 sm:mt-4 sm:pt-2">
       <LayerToggle
         checked={props.headVisible}
-        description="얼굴, 머리카락, 목 연결부"
-        label="머리"
+        description="분리된 얼굴, 머리카락, 목 연결부"
+        label="머리 레이어"
         onChange={props.onHeadChange}
       />
       <LayerToggle
         checked={props.handsVisible}
-        description="양손, 팔목, 필기 펜"
-        label="손 + 팔목"
+        description="분리된 양손, 팔목, 필기 펜"
+        label="손 레이어"
         onChange={props.onHandsChange}
       />
     </div>
 
-    <div class="mt-4 grid grid-cols-2 gap-2">
+    <div class="mt-3 grid grid-cols-2 gap-2 sm:mt-4">
       <button
         class="rounded-3 bg-#e8c795 px-3 py-2.5 text-sm font-750 text-#241b12 hover:bg-#f2d3a7"
         onClick={() => props.onShowAll()}
@@ -108,24 +169,7 @@ const ReviewControls = (props: ReviewControlsProps) => (
       </button>
     </div>
 
-    <div class="mt-6 border-t border-white/8 pt-5">
-      <label class="flex cursor-pointer items-center justify-between gap-4">
-        <span>
-          <span class="block text-sm font-700 text-#fffaf1">미세 애니메이션</span>
-          <span class="mt-1 block text-xs leading-5 text-#a99fac">
-            머리 오뚜기 회전과 필기 오른손 회전
-          </span>
-        </span>
-        <input
-          checked={props.animationEnabled}
-          class="size-5 shrink-0 accent-#e8c795"
-          onChange={(event) => props.onAnimationChange(event.currentTarget.checked)}
-          type="checkbox"
-        />
-      </label>
-    </div>
-
-    <div class="mt-6 border-t border-white/8 pt-5">
+    <div class="mt-3 border-t border-white/8 pt-3 sm:mt-4 sm:pt-4">
       <div class="flex items-center justify-between gap-4">
         <label class="text-sm font-700 text-#fffaf1" for="reference-opacity">
           원본 오버레이
@@ -152,13 +196,29 @@ const ReviewControls = (props: ReviewControlsProps) => (
 )
 
 export const FocusRoomLayerReview = () => {
+  const [selectedId, setSelectedId] = createSignal<FocusRoomSceneId>(INITIAL_SCENE_ID)
   const [headVisible, setHeadVisible] = createSignal(true)
   const [handsVisible, setHandsVisible] = createSignal(true)
-  const [animationEnabled, setAnimationEnabled] = createSignal(false)
+  const [animationEnabled, setAnimationEnabled] = createSignal(true)
   const [referenceOpacity, setReferenceOpacity] = createSignal(0)
+  const selectedScene = createMemo<FocusRoomSceneCatalogEntry>(() => {
+    const scene = FOCUS_ROOM_SCENES.find((candidate) => candidate.id === selectedId())
+
+    if (scene === undefined) {
+      throw new Error(`Missing preview scene: ${selectedId()}`)
+    }
+
+    return scene
+  })
   const referencePercentage = () => Math.round(referenceOpacity() * PERCENT_SCALE)
   const handleReferenceChange: JSX.EventHandler<HTMLInputElement, InputEvent> = (event) => {
     setReferenceOpacity(event.currentTarget.valueAsNumber)
+  }
+  const handleSelect = (id: FocusRoomSceneId) => {
+    setSelectedId(id)
+    setHeadVisible(true)
+    setHandsVisible(true)
+    setReferenceOpacity(0)
   }
   const handleShowAll = () => {
     setHeadVisible(true)
@@ -171,41 +231,45 @@ export const FocusRoomLayerReview = () => {
 
   return (
     <section class="relative h-dvh w-full overflow-hidden bg-#17130f">
-      <figure
-        aria-label="낮 글쓰기 포커스 룸 파트 조합 결과"
-        class="absolute inset-0 m-0"
-        role="img"
-      >
-        <FocusRoomLayerReviewCanvas
-          animationEnabled={animationEnabled()}
-          fallback={
-            <div class="grid h-full place-items-center text-sm text-#a99fac">PixiJS 준비 중</div>
-          }
-          handsVisible={handsVisible()}
-          headVisible={headVisible()}
-          referenceOpacity={referenceOpacity()}
-        />
+      <figure aria-label={selectedScene().label} class="absolute inset-0 m-0" role="img">
+        <Show keyed when={selectedScene()}>
+          {(scene) => (
+            <FocusRoomLayerReviewCanvas
+              animationEnabled={animationEnabled()}
+              definition={scene.layerScene}
+              fallback={
+                <div class="grid h-full place-items-center text-sm text-#a99fac">
+                  PixiJS 준비 중
+                </div>
+              }
+              handsVisible={handsVisible()}
+              headVisible={headVisible()}
+              referenceOpacity={referenceOpacity()}
+            />
+          )}
+        </Show>
       </figure>
+
+      <ScenePicker onSelect={handleSelect} selectedId={selectedId()} />
 
       <header
         class={cx(
           PANEL_CLASSES,
-          'absolute left-3 top-3 max-w-[calc(100%-1.5rem)] bg-#17131f/78 px-4 py-3 backdrop-blur-xl',
-          'sm:left-6 sm:top-6 sm:max-w-xl sm:px-5 sm:py-4',
+          'absolute bottom-3 left-3 max-w-[calc(100%-1.5rem)] px-4 py-3 sm:bottom-6 sm:left-6 sm:max-w-xl',
         )}
       >
         <p class="m-0 text-[10px] font-750 tracking-[0.2em] text-#e8c795 uppercase">
-          PixiJS layer review
+          PixiJS 12 scene preview
         </p>
         <div class="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1">
           <h1 class="m-0 text-lg font-800 tracking--0.03em text-#fffaf1 sm:text-2xl">
-            낮 · 글쓰기 파트 조합
+            {selectedScene().label}
           </h1>
           <A class="text-xs font-700 text-#d7c7b3 no-underline hover:text-white" href="/focus-room">
             포커스 룸으로 →
           </A>
         </div>
-        <p class="mb-0 mt-1 text-xs text-#bdb2c4">1672 × 941 · preview base → head → hands</p>
+        <p class="mb-0 mt-1 text-xs text-#bdb2c4">1672 × 941 · 분리 레이어</p>
       </header>
 
       <ReviewControls

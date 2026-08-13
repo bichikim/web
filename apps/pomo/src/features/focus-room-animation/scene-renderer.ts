@@ -83,11 +83,15 @@ export class FocusRoomSceneRenderer {
     this.#host = host
     this.#onLoadingChange = options.onLoadingChange ?? ignoreLoadingChange
     this.#eyes = new FocusRoomEyeController(() => this.#application.render())
-    this.#parallax = new ParallaxController(host, (x, y) => {
-      this.#depthFilter?.setPointerOffset(x, y)
-      this.#steam?.setParallaxOffset(-x * STEAM_PARALLAX_DEPTH, -y * STEAM_PARALLAX_DEPTH)
-      this.#application.render()
-    })
+    this.#parallax = new ParallaxController(
+      host,
+      (x, y) => {
+        this.#depthFilter?.setPointerOffset(x, y)
+        this.#steam?.setParallaxOffset(-x * STEAM_PARALLAX_DEPTH, -y * STEAM_PARALLAX_DEPTH)
+        this.#application.render()
+      },
+      (prefersReducedMotion) => this.#setReducedMotion(prefersReducedMotion),
+    )
   }
 
   async initialize(state: FocusRoomSceneState) {
@@ -176,6 +180,34 @@ export class FocusRoomSceneRenderer {
       this.#application.render()
       this.#finishLoadingAfterPaint()
     }
+  }
+
+  #setReducedMotion(prefersReducedMotion: boolean) {
+    this.#currentLayerScene?.setAnimationEnabled(!prefersReducedMotion)
+    this.#incomingLayerScene?.setAnimationEnabled(!prefersReducedMotion)
+    this.#steam?.setReducedMotion(prefersReducedMotion)
+
+    const incomingScene = this.#incomingScene
+    const requestedSource = this.#requestedSource
+    const requestedDepthSource = this.#requestedDepthSource
+
+    if (
+      prefersReducedMotion &&
+      incomingScene !== null &&
+      requestedSource !== null &&
+      requestedDepthSource !== null
+    ) {
+      if (this.#transitionFrame !== null) {
+        window.cancelAnimationFrame(this.#transitionFrame)
+      }
+
+      incomingScene.alpha = 1
+      this.#depthFilter?.setDepthMix(1)
+      this.#finishTransition(requestedSource, requestedDepthSource, incomingScene)
+      return
+    }
+
+    this.#application.render()
   }
 
   destroy() {
