@@ -50,13 +50,13 @@
 }
 
 .focus-room-media-messages {
-  display: grid;
+  display: flex;
   width: min(36rem, 100%);
   min-height: 0;
   max-height: 100%;
   flex: 0 1 auto;
+  flex-direction: column;
   gap: var(--focus-room-space-3);
-  grid-template-rows: auto minmax(0, 1fr);
   overflow: hidden;
   pointer-events: none;
 }
