@@ -37,46 +37,62 @@ describe('FocusRoomPomodoro', () => {
   })
 
   it('should expose the timer state and primary controls through an accessible dialog', () => {
-    const onOpenChange = vi.fn()
-    render(() => <FocusRoomPomodoro onOpenChange={onOpenChange} />)
+    render(() => <FocusRoomPomodoro />)
 
-    const trigger = screen.getByRole('button', {
+    const quickControls = screen.getByRole('group', {name: '포모도로 간편 조작'})
+    const timeTrigger = within(quickControls).getByRole('button', {
       name: '포모도로 열기, 집중 준비, 25:00',
     })
-    expect(trigger.querySelector('.focus-room-pomodoro__trigger-status')).toBeNull()
-    const characterEmotion = trigger.querySelector('.focus-room-character-emotion')
+    expect(quickControls.querySelector('.focus-room-pomodoro__trigger-status')).toBeNull()
+    const characterEmotion = quickControls.querySelector('.focus-room-character-emotion')
+    const actionIndicator = quickControls.querySelector('.focus-room-pomodoro__action-indicator')
     expect(characterEmotion?.getAttribute('data-emotion')).toBe('focus')
     expect(characterEmotion?.hasAttribute('data-active')).toBe(false)
-    fireEvent.click(trigger)
+    expect(actionIndicator?.querySelector('.i-tabler-player-play')).toBeInstanceOf(HTMLElement)
 
-    expect(onOpenChange).toHaveBeenLastCalledWith(true)
+    fireEvent.click(within(quickControls).getByRole('button', {name: '집중 시작'}))
+    expect(within(quickControls).getByRole('button', {name: '일시정지'})).toBeDefined()
+    expect(characterEmotion?.getAttribute('data-active')).toBe('')
+    expect(actionIndicator?.querySelector('.i-tabler-player-pause')).toBeInstanceOf(HTMLElement)
+
+    fireEvent.click(within(quickControls).getByRole('button', {name: '일시정지'}))
+    expect(within(quickControls).getByRole('button', {name: '계속하기'})).toBeDefined()
+    expect(characterEmotion?.hasAttribute('data-active')).toBe(false)
+    expect(actionIndicator?.querySelector('.i-tabler-player-play')).toBeInstanceOf(HTMLElement)
+
+    fireEvent.click(timeTrigger)
+
     const dialog = screen.getByRole('dialog', {name: '포모도로'})
     expect(dialog.hidden).toBe(false)
     fireEvent.click(screen.getByRole('button', {name: '최초 포커스 적용'}))
-    expect(document.activeElement).toBe(screen.getByRole('button', {name: '집중 시작'}))
+    expect(document.activeElement).toBe(within(dialog).getByRole('button', {name: '계속하기'}))
     expect(screen.queryByText('집중 1/4 · 25분')).toBeNull()
     expect(screen.getByLabelText('4회 중 0회 집중 완료')).toBeDefined()
 
-    fireEvent.click(screen.getByRole('button', {name: '집중 시작'}))
-    expect(screen.getByRole('button', {name: '일시정지'})).toBeDefined()
+    fireEvent.click(within(dialog).getByRole('button', {name: '계속하기'}))
+    expect(within(dialog).getByRole('button', {name: '일시정지'})).toBeDefined()
     expect(screen.getByRole('button', {name: '현재 세션 종료'})).toBeDefined()
-    expect(screen.getByRole('button', {name: '포모도로 열기, 집중 중, 25:00'})).toBeDefined()
+    expect(
+      within(quickControls).getByRole('button', {name: '포모도로 열기, 집중 중, 25:00'}),
+    ).toBeDefined()
     expect(characterEmotion?.getAttribute('data-active')).toBe('')
 
     vi.advanceTimersByTime(1_000)
     expect(within(dialog).getByText('24:59')).toBeDefined()
 
-    fireEvent.click(screen.getByRole('button', {name: '일시정지'}))
-    expect(screen.getByRole('button', {name: '계속하기'})).toBeDefined()
+    fireEvent.click(within(dialog).getByRole('button', {name: '일시정지'}))
+    expect(within(dialog).getByRole('button', {name: '계속하기'})).toBeDefined()
     expect(characterEmotion?.hasAttribute('data-active')).toBe(false)
 
     fireEvent.click(screen.getByRole('button', {name: '현재 세션 종료'}))
-    expect(screen.getByRole('button', {name: '집중 시작'})).toBeDefined()
+    expect(within(dialog).getByRole('button', {name: '집중 시작'})).toBeDefined()
     expect(screen.queryByRole('button', {name: '현재 세션 종료'})).toBeNull()
 
     fireEvent.click(screen.getByRole('button', {name: '다음 단계로 이동'}))
-    expect(screen.getByRole('button', {name: '휴식 시작'})).toBeDefined()
-    expect(screen.getByRole('button', {name: '포모도로 열기, 휴식 준비, 05:00'})).toBeDefined()
+    expect(within(dialog).getByRole('button', {name: '휴식 시작'})).toBeDefined()
+    expect(
+      within(quickControls).getByRole('button', {name: '포모도로 열기, 휴식 준비, 05:00'}),
+    ).toBeDefined()
     expect(characterEmotion?.getAttribute('data-emotion')).toBe('rest')
     expect(screen.getByRole('button', {name: '세션 초기화'})).toBeDefined()
 
@@ -96,7 +112,9 @@ describe('FocusRoomPomodoro', () => {
     })
     fireEvent.click(screen.getByRole('button', {name: '설정 저장'}))
     expect(dialog.querySelector('.focus-room-pomodoro-panel__ring')).toBeDefined()
-    expect(screen.getByRole('button', {name: '포모도로 열기, 휴식 준비, 07:00'})).toBeDefined()
+    expect(
+      within(quickControls).getByRole('button', {name: '포모도로 열기, 휴식 준비, 07:00'}),
+    ).toBeDefined()
     expect(screen.getByRole('button', {name: /6세션 · 집중 30분/})).toBeDefined()
     expect(screen.getByLabelText('6회 중 1회 집중 완료')).toBeDefined()
 
@@ -104,12 +122,14 @@ describe('FocusRoomPomodoro', () => {
     expect(screen.getByRole('button', {name: '취소'})).toBeDefined()
     fireEvent.click(screen.getByRole('button', {name: '취소'}))
     fireEvent.click(screen.getByRole('button', {name: '세션 초기화'}))
-    expect(screen.getByRole('button', {name: '포모도로 열기, 집중 준비, 30:00'})).toBeDefined()
+    expect(
+      within(quickControls).getByRole('button', {name: '포모도로 열기, 집중 준비, 30:00'}),
+    ).toBeDefined()
     expect(dialog.querySelector('.focus-room-pomodoro-panel__ring')).toBeDefined()
     expect(screen.getByLabelText('6회 중 0회 집중 완료')).toBeDefined()
     expect(screen.queryByRole('button', {name: '세션 초기화'})).toBeNull()
 
     fireEvent.click(screen.getByRole('button', {name: '닫기'}))
-    expect(onOpenChange).toHaveBeenLastCalledWith(false)
+    expect(dialog.hidden).toBe(true)
   })
 })

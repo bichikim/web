@@ -148,7 +148,6 @@ const FocusRoomStudioContent = () => {
   const [isSceneLoading, setIsSceneLoading] = createSignal(true)
   const [hasSceneRendered, setHasSceneRendered] = createSignal(false)
   const [isPlayerExpanded, setIsPlayerExpanded] = createSignal(false)
-  const [isPomodoroOpen, setIsPomodoroOpen] = createSignal(false)
   const time = createMemo(() => resolveScenePeriod(timeMode(), automaticPeriod()))
   const selectedScene = createMemo(() => getSceneAsset(time(), activity(), gaze()))
   const handleLoadingChange = (isLoading: boolean) => {
@@ -198,7 +197,7 @@ const FocusRoomStudioContent = () => {
         </Show>
       </figure>
 
-      <FocusRoomPomodoro onOpenChange={setIsPomodoroOpen} />
+      <FocusRoomPomodoro />
       <div
         class="focus-room-media-dock"
         data-dialogue-active={
@@ -208,7 +207,6 @@ const FocusRoomStudioContent = () => {
       >
         <FocusRoomMusicPlayer
           expanded={isPlayerExpanded()}
-          isHidden={isPomodoroOpen()}
           onExpandedChange={setIsPlayerExpanded}
         />
         <FocusRoomDialoguePlayer />

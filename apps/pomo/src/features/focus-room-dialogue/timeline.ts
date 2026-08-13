@@ -14,6 +14,11 @@ export interface DialogueTimeline {
   readonly segments: ReadonlyArray<DialogueSegment>
 }
 
+export interface DialogueSegmentPosition {
+  readonly position: number
+  readonly text: string
+}
+
 /** Builds subtitle offsets from rendered PCM duration rather than synthesis elapsed time. */
 export const createDialogueTimeline = (
   options: CreateDialogueSegmentsOptions,
@@ -41,20 +46,28 @@ export const createDialogueTimeline = (
   return {durationMs: startMs, segments}
 }
 
+/** Returns the latest segment whose audio has started, including pauses before the next segment. */
+export const getDialoguePositionAtTime = (
+  segments: ReadonlyArray<DialogueSegment>,
+  currentTimeMs: number,
+): DialogueSegmentPosition | null => {
+  let activePosition: DialogueSegmentPosition | null = null
+  let position = 0
+
+  for (const segment of segments) {
+    if (segment.startMs > currentTimeMs) {
+      return activePosition
+    }
+
+    activePosition = {position, text: segment.text}
+    position += 1
+  }
+
+  return activePosition
+}
+
 /** Returns the latest line whose audio has started, including pauses before the next line. */
 export const getDialogueTextAtTime = (
   segments: ReadonlyArray<DialogueSegment>,
   currentTimeMs: number,
-): string | null => {
-  let activeText: string | null = null
-
-  for (const segment of segments) {
-    if (segment.startMs > currentTimeMs) {
-      return activeText
-    }
-
-    activeText = segment.text
-  }
-
-  return activeText
-}
+): string | null => getDialoguePositionAtTime(segments, currentTimeMs)?.text ?? null
