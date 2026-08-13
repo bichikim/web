@@ -25,7 +25,8 @@ const DAY_READING_EYE_FILL =
 const DAY_READING_EYE_BASE = 'focus-room-layers/day-reading-focused/layer-head-eye-base.png'
 const DAY_USER_EYE_FILL =
   'focus-room-source/layers/day-reading-user/workfiles/eye-base-candidate-a.png'
-const DAY_USER_EYE_LAYER = 'focus-room-layers/day-reading-user/layer-eye-irises.png'
+const DAY_USER_EYE_LAYER =
+  'focus-room-source/layers/day-reading-user/workfiles/layer-eye-irises-source.png'
 
 const irisPaths = [
   [
@@ -104,6 +105,7 @@ const isolatedIrisScenes = [
     head: 'focus-room-layers/night-reading-focused/layer-head.png',
     id: 'night-reading-focused',
     offsetX: 0,
+    writeEyeLayer: true,
   },
   {
     eye: 'focus-room-source/layers/night-reading-focused/workfiles/layer-eye-irises-source.png',
@@ -125,6 +127,7 @@ const isolatedIrisScenes = [
     head: 'focus-room-layers/night-reading-user/layer-head.png',
     id: 'night-reading-user',
     offsetX: 0,
+    writeEyeLayer: true,
   },
   {
     eye: 'focus-room-source/layers/night-reading-user/workfiles/layer-eye-irises-source.png',
@@ -183,6 +186,18 @@ async function writePng(image, outputPath, options) {
 
   await image.png(options).toFile(temporaryPath)
   await rename(temporaryPath, outputPath)
+}
+
+async function removeTransparentPixelColor(source) {
+  const {data, info} = await sharp(source).ensureAlpha().raw().toBuffer({resolveWithObject: true})
+
+  for (let offset = 0; offset < data.length; offset += RGBA_CHANNEL_COUNT) {
+    if (data[offset + ALPHA_CHANNEL_INDEX] === 0) {
+      data.fill(0, offset, offset + ALPHA_CHANNEL_INDEX)
+    }
+  }
+
+  return sharp(data, {raw: info}).png().toBuffer()
 }
 
 async function shiftLeft(source, pixels) {
@@ -358,6 +373,22 @@ async function createSceneAssets(scene) {
       path.join(runtimeDirectory, 'layer-head-eye-base.png'),
       {compressionLevel: 9, palette: true, quality: 100},
     ),
+    ...(scene.id === 'day-reading-focused'
+      ? [
+          writePng(
+            sharp(
+              await removeTransparentPixelColor(
+                path.join(
+                  ASSET_DIRECTORY,
+                  'focus-room-source/layers/day-reading-focused/workfiles/layer-eye-irises-source.png',
+                ),
+              ),
+            ),
+            path.join(runtimeDirectory, 'layer-eye-irises.png'),
+            {adaptiveFiltering: true, compressionLevel: 9},
+          ),
+        ]
+      : []),
   ])
 }
 
@@ -403,6 +434,15 @@ async function createUserSceneAssets(scene) {
       path.join(runtimeDirectory, 'layer-head-eye-base.png'),
       {compressionLevel: 9, palette: true, quality: 100},
     ),
+    ...(scene.id === 'day-reading-user'
+      ? [
+          writePng(
+            sharp(await removeTransparentPixelColor(eyeSource)),
+            path.join(runtimeDirectory, 'layer-eye-irises.png'),
+            {adaptiveFiltering: true, compressionLevel: 9},
+          ),
+        ]
+      : []),
   ])
 }
 
@@ -451,11 +491,15 @@ async function createIsolatedIrisSceneAssets(scene) {
     .toBuffer()
 
   await Promise.all([
-    writePng(sharp(cleanEyeLayer), path.join(runtimeDirectory, 'layer-eye-irises.png'), {
-      compressionLevel: 9,
-      palette: true,
-      quality: 100,
-    }),
+    ...(scene.writeEyeLayer === true
+      ? [
+          writePng(sharp(cleanEyeLayer), path.join(runtimeDirectory, 'layer-eye-irises.png'), {
+            compressionLevel: 9,
+            palette: true,
+            quality: 100,
+          }),
+        ]
+      : []),
     writePng(sharp(removalMask), path.join(sourceDirectory, 'mask-eye-removal.png')),
     writePng(sharp(eyeLayerMask), path.join(sourceDirectory, 'mask-eye-layer.png')),
     writePng(

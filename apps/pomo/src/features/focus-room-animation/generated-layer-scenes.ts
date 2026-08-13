@@ -41,25 +41,21 @@ import nightReadingUserLeftHand from '../../../assets/focus-room-layers/night-re
 import nightReadingUserRightHand from '../../../assets/focus-room-layers/night-reading-user/layer-hand-right.png'
 import nightReadingUserReference from '../../../assets/concept-art/focus-room-night-reading-user-gaze-concept.webp'
 import nightTypingFocusedBase from '../../../assets/focus-room-layers/night-typing-focused/base.webp'
-import nightTypingFocusedEyeIrises from '../../../assets/focus-room-layers/night-typing-focused/layer-eye-irises.png'
 import nightTypingFocusedHead from '../../../assets/focus-room-layers/night-typing-focused/layer-head-eye-base.png'
 import nightTypingFocusedLeftHand from '../../../assets/focus-room-layers/night-typing-focused/layer-hand-left.png'
 import nightTypingFocusedRightHand from '../../../assets/focus-room-layers/night-typing-focused/layer-hand-right.png'
 import nightTypingFocusedReference from '../../../assets/concept-art/focus-room-night-typing-concept.webp'
 import nightTypingUserBase from '../../../assets/focus-room-layers/night-typing-user/base.webp'
-import nightTypingUserEyeIrises from '../../../assets/focus-room-layers/night-typing-user/layer-eye-irises.png'
 import nightTypingUserHead from '../../../assets/focus-room-layers/night-typing-user/layer-head-eye-base.png'
 import nightTypingUserLeftHand from '../../../assets/focus-room-layers/night-typing-user/layer-hand-left.png'
 import nightTypingUserRightHand from '../../../assets/focus-room-layers/night-typing-user/layer-hand-right.png'
 import nightTypingUserReference from '../../../assets/concept-art/focus-room-night-typing-user-gaze-concept.webp'
 import nightWritingFocusedBase from '../../../assets/focus-room-layers/night-writing-focused/base.webp'
-import nightWritingFocusedEyeIrises from '../../../assets/focus-room-layers/night-writing-focused/layer-eye-irises.png'
 import nightWritingFocusedHead from '../../../assets/focus-room-layers/night-writing-focused/layer-head-eye-base.png'
 import nightWritingFocusedLeftHand from '../../../assets/focus-room-layers/night-writing-focused/layer-hand-left.png'
 import nightWritingFocusedRightHand from '../../../assets/focus-room-layers/night-writing-focused/layer-hand-right.png'
 import nightWritingFocusedReference from '../../../assets/concept-art/focus-room-night-desk-concept.webp'
 import nightWritingUserBase from '../../../assets/focus-room-layers/night-writing-user/base.webp'
-import nightWritingUserEyeIrises from '../../../assets/focus-room-layers/night-writing-user/layer-eye-irises.png'
 import nightWritingUserHead from '../../../assets/focus-room-layers/night-writing-user/layer-head-eye-base.png'
 import nightWritingUserLeftHand from '../../../assets/focus-room-layers/night-writing-user/layer-hand-left.png'
 import nightWritingUserRightHand from '../../../assets/focus-room-layers/night-writing-user/layer-hand-right.png'
@@ -450,7 +446,7 @@ export const GENERATED_LAYER_SCENES = {
         {x: -1.06, y: 0.53},
         {x: 1.06, y: 0.53},
       ],
-      nightTypingFocusedEyeIrises,
+      nightReadingFocusedEyeIrises,
     ),
   ),
   'night-typing-user': createSeparatedScene(
@@ -491,7 +487,7 @@ export const GENERATED_LAYER_SCENES = {
         {x: -1.06, y: 0.53},
         {x: 1.06, y: 0.53},
       ],
-      nightTypingUserEyeIrises,
+      nightReadingUserEyeIrises,
     ),
   ),
   'night-writing-focused': createSeparatedScene(
@@ -532,7 +528,7 @@ export const GENERATED_LAYER_SCENES = {
         {x: -1.06, y: 0.53},
         {x: 1.06, y: 0.53},
       ],
-      nightWritingFocusedEyeIrises,
+      nightReadingFocusedEyeIrises,
     ),
   ),
   'night-writing-user': createSeparatedScene(
@@ -573,7 +569,7 @@ export const GENERATED_LAYER_SCENES = {
         {x: -1.06, y: 0.53},
         {x: 1.06, y: 0.53},
       ],
-      nightWritingUserEyeIrises,
+      nightReadingUserEyeIrises,
     ),
   ),
 } as const satisfies Record<
