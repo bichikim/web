@@ -16,6 +16,7 @@ export default function FocusRoomLayerReviewCanvas(props: FocusRoomLayerReviewCa
 
   const getReviewState = (): FocusRoomLayerReviewState => ({
     animationEnabled: props.animationEnabled,
+    eyesVisible: props.eyesVisible,
     handsVisible: props.handsVisible,
     headVisible: props.headVisible,
     referenceOpacity: props.referenceOpacity,
@@ -44,6 +45,7 @@ export default function FocusRoomLayerReviewCanvas(props: FocusRoomLayerReviewCa
       () =>
         [
           props.animationEnabled,
+          props.eyesVisible,
           props.handsVisible,
           props.headVisible,
           props.referenceOpacity,

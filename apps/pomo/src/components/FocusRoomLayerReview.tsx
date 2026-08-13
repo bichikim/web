@@ -22,9 +22,11 @@ interface LayerToggleProps {
 
 interface ReviewControlsProps {
   readonly animationEnabled: boolean
+  readonly eyesVisible: boolean
   readonly handsVisible: boolean
   readonly headVisible: boolean
   readonly onAnimationChange: (enabled: boolean) => void
+  readonly onEyesChange: (visible: boolean) => void
   readonly onHandsChange: (visible: boolean) => void
   readonly onHeadChange: (visible: boolean) => void
   readonly onHideAll: () => void
@@ -39,7 +41,7 @@ const PANEL_CLASSES = cx(
   'shadow-[0_24px_70px_rgba(5,2,10,0.24)] backdrop-blur-xl',
 )
 const PERCENT_SCALE = 100
-const INITIAL_SCENE_ID: FocusRoomSceneId = 'day-writing-focused'
+const INITIAL_SCENE_ID: FocusRoomSceneId = 'day-reading-focused'
 
 const LayerToggle = (props: LayerToggleProps) => {
   const handleChange: JSX.EventHandler<HTMLInputElement, Event> = (event) => {
@@ -145,6 +147,12 @@ const ReviewControls = (props: ReviewControlsProps) => (
         onChange={props.onHeadChange}
       />
       <LayerToggle
+        checked={props.eyesVisible}
+        description="원본에서 분리한 홍채와 동공"
+        label="눈 레이어"
+        onChange={props.onEyesChange}
+      />
+      <LayerToggle
         checked={props.handsVisible}
         description="분리된 양손, 팔목, 필기 펜"
         label="손 레이어"
@@ -200,6 +208,7 @@ export const FocusRoomLayerReview = () => {
   const [headVisible, setHeadVisible] = createSignal(true)
   const [handsVisible, setHandsVisible] = createSignal(true)
   const [animationEnabled, setAnimationEnabled] = createSignal(true)
+  const [eyesVisible, setEyesVisible] = createSignal(true)
   const [referenceOpacity, setReferenceOpacity] = createSignal(0)
   const selectedScene = createMemo<FocusRoomSceneCatalogEntry>(() => {
     const scene = FOCUS_ROOM_SCENES.find((candidate) => candidate.id === selectedId())
@@ -217,15 +226,18 @@ export const FocusRoomLayerReview = () => {
   const handleSelect = (id: FocusRoomSceneId) => {
     setSelectedId(id)
     setHeadVisible(true)
+    setEyesVisible(true)
     setHandsVisible(true)
     setReferenceOpacity(0)
   }
   const handleShowAll = () => {
     setHeadVisible(true)
+    setEyesVisible(true)
     setHandsVisible(true)
   }
   const handleHideAll = () => {
     setHeadVisible(false)
+    setEyesVisible(false)
     setHandsVisible(false)
   }
 
@@ -237,6 +249,7 @@ export const FocusRoomLayerReview = () => {
             <FocusRoomLayerReviewCanvas
               animationEnabled={animationEnabled()}
               definition={scene.layerScene}
+              eyesVisible={eyesVisible()}
               fallback={
                 <div class="grid h-full place-items-center text-sm text-#a99fac">
                   PixiJS 준비 중
@@ -274,9 +287,11 @@ export const FocusRoomLayerReview = () => {
 
       <ReviewControls
         animationEnabled={animationEnabled()}
+        eyesVisible={eyesVisible()}
         handsVisible={handsVisible()}
         headVisible={headVisible()}
         onAnimationChange={setAnimationEnabled}
+        onEyesChange={setEyesVisible}
         onHandsChange={setHandsVisible}
         onHeadChange={setHeadVisible}
         onHideAll={handleHideAll}

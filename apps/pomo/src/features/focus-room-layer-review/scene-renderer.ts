@@ -5,6 +5,7 @@ import {FOCUS_ROOM_PREVIEW_CHANNELS} from '../focus-room-animation/scene-catalog
 
 export interface FocusRoomLayerReviewState {
   readonly animationEnabled: boolean
+  readonly eyesVisible: boolean
   readonly handsVisible: boolean
   readonly headVisible: boolean
   readonly referenceOpacity: number
@@ -104,6 +105,7 @@ export class FocusRoomLayerReviewRenderer {
     return {
       animationEnabled: state.animationEnabled,
       channels: {
+        [FOCUS_ROOM_PREVIEW_CHANNELS.eyes]: {visible: state.eyesVisible},
         [FOCUS_ROOM_PREVIEW_CHANNELS.hands]: {visible: state.handsVisible},
         [FOCUS_ROOM_PREVIEW_CHANNELS.head]: {visible: state.headVisible},
         [FOCUS_ROOM_PREVIEW_CHANNELS.reference]: {

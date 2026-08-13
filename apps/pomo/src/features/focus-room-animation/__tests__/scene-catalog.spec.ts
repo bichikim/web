@@ -23,7 +23,9 @@ describe('focus room scene catalog', () => {
 
   it('should use true separated layers instead of pixel distortion in every preview', () => {
     for (const scene of FOCUS_ROOM_SCENES) {
-      expect(scene.layerScene.layers).toHaveLength(5)
+      const expectedLayerCount = scene.id === 'day-reading-focused' ? 6 : 5
+
+      expect(scene.layerScene.layers).toHaveLength(expectedLayerCount)
       expect(scene.layerScene.layers.map((layer) => layer.id)).toContain('head')
       expect(
         scene.layerScene.layers.filter(
@@ -36,6 +38,17 @@ describe('focus room scene catalog', () => {
         ),
       ).toBe(true)
     }
+  })
+
+  it('should attach the focused reading irises to the moving head', () => {
+    const scene = getFocusRoomScene('day', 'reading', 'focused')
+    const eyeLayer = scene.layerScene.layers.find((layer) => layer.id === 'eye-irises')
+
+    expect(eyeLayer).toMatchObject({
+      channel: FOCUS_ROOM_PREVIEW_CHANNELS.eyes,
+      motion: {kind: 'translation'},
+      parentAttachmentId: 'eyes',
+    })
   })
 
   it('should expose the complete review panel channels for every preview', () => {
