@@ -31,14 +31,14 @@ export const FocusRoomDialoguePlayer = () => {
       <Show when={events.isEntryPlaybackBlocked()}>
         <button
           class="focus-room-dialogue-bubble focus-room-dialogue-bubble--play"
-          onClick={() => events.retryEntryPlayback()}
+          onClick={events.retryEntryPlayback}
           type="button"
         >
           <span aria-hidden="true" class="focus-room-dialogue-bubble__play-icon">
             <span class="i-tabler-volume size-5" />
           </span>
           <span>
-            <strong>입장 음성 재생</strong>
+            <strong>이벤트 메시지를 재생하려면 눌러 주세요</strong>
             <small>브라우저에서 차단된 소리를 시작해요.</small>
           </span>
         </button>

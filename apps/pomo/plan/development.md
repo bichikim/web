@@ -20,6 +20,7 @@
 | [아키텍처와 데이터](./development/architecture.md)                   | 플랫폼 호환 계층, 상태 관리, 영속 저장, 서버 함수와 Query·Action을 다룰 때 |
 | [온디바이스 TTS](./development/tts.md)                               | 음성 합성, 목소리, 모델 다운로드·검증·배포를 다룰 때                       |
 | [대화 제작과 이벤트 연결](./development/dialogue-events.md)          | 대화 편집 페이지, 음성 타임라인, 이벤트 연결과 말풍선을 다룰 때            |
+| [구독 피드 대화](./development/feed-dialogues.md)                    | 피드 동기화, 자동 음성 생성, 중단 복구와 만료 정리를 다룰 때               |
 | [타이머와 음악](./development/timer-audio.md)                        | 뽀모도로 상태, 음악 재생과 오디오 제어를 다룰 때                           |
 | [3D 장면과 상호작용](./development/3d.md)                            | 캐릭터, 애니메이션, 카메라, 3D UI와 성능을 다룰 때                         |
 | [2D 동일 장면 변형 제작](./development/2d-scene-variant-workflow.md) | 같은 배경에서 행동·시선만 다른 2D 이미지 세트를 제작할 때                  |

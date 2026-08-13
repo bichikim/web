@@ -11,7 +11,7 @@ const databaseMocks = vi.hoisted(() => {
   }
   const eventBindings = {
     delete: vi.fn(async () => undefined),
-    get: vi.fn(async () => undefined),
+    get: vi.fn<(key: string) => Promise<unknown>>(async () => undefined),
     put: vi.fn(async () => undefined),
   }
 
@@ -72,6 +72,66 @@ it('should finish metadata deletion when obsolete audio cleanup fails', async ()
   expect(reportStorageError).toHaveBeenCalledWith(storageError)
   repository.dispose()
   expect(databaseMocks.close).toHaveBeenCalledOnce()
+})
+
+it('should normalize a legacy entry binding to a dialogue sequence', async () => {
+  databaseMocks.eventBindings.get.mockResolvedValue({
+    dialogueId: 'legacy-dialogue',
+    event: 'room-enter',
+    version: 1,
+  })
+  const repository = createFocusRoomDialogueRepository()
+
+  await expect(repository.getEntryBinding()).resolves.toEqual({
+    dialogueIds: ['legacy-dialogue'],
+    event: 'room-enter',
+    version: 2,
+  })
+})
+
+it('should persist unique entry dialogues in their selected order', async () => {
+  databaseMocks.dialogues.get.mockResolvedValue({id: 'stored'})
+  const repository = createFocusRoomDialogueRepository()
+
+  await repository.setEntryBinding(['first', 'second', 'first'])
+
+  expect(databaseMocks.dialogues.get.mock.calls).toEqual([['first'], ['second']])
+  expect(databaseMocks.eventBindings.put).toHaveBeenCalledWith({
+    dialogueIds: ['first', 'second'],
+    event: 'room-enter',
+    version: 2,
+  })
+})
+
+it('should preserve remaining event dialogues when deleting one dialogue', async () => {
+  databaseMocks.dialogues.get.mockResolvedValue({
+    audioKey: 'first-audio',
+    createdAt: '2026-08-13T00:00:00.000Z',
+    durationMs: 1000,
+    id: 'first',
+    modelId: 'full',
+    segments: [{durationMs: 1000, index: 0, startMs: 0, text: '첫 대사'}],
+    text: '첫 대사',
+    updatedAt: '2026-08-13T00:00:00.000Z',
+    version: 1,
+    voiceId: 'Yuna',
+  })
+  databaseMocks.eventBindings.get.mockResolvedValue({
+    dialogueIds: ['first', 'second'],
+    event: 'room-enter',
+    version: 2,
+  })
+  storageMocks.delete.mockResolvedValue({ok: true, value: true})
+  const repository = createFocusRoomDialogueRepository()
+
+  await repository.deleteDialogue('first')
+
+  expect(databaseMocks.eventBindings.put).toHaveBeenCalledWith({
+    dialogueIds: ['second'],
+    event: 'room-enter',
+    version: 2,
+  })
+  expect(databaseMocks.eventBindings.delete).not.toHaveBeenCalled()
 })
 
 it('should roll back newly written audio when metadata persistence fails', async () => {

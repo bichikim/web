@@ -32,6 +32,7 @@ import {
   FocusRoomEventProvider,
   useFocusRoomEvents,
 } from '../features/focus-room-dialogue/FocusRoomEventContext'
+import {FocusRoomFeedProvider} from '../features/focus-room-feed'
 import {
   getAutomaticScenePeriod,
   getNextTimeMode,
@@ -42,6 +43,7 @@ import {
 import {DAY_WRITING_LAYER_SCENE} from '../features/focus-room-animation/day-writing-layer-scene'
 import type {PixiLayerSceneDefinition} from '../features/focus-room-animation/layer-scene'
 import {FocusRoomMusicPlayer} from './FocusRoomMusicPlayer'
+import {FocusRoomFeedStatus} from './FocusRoomFeedStatus'
 import {FocusRoomDialoguePlayer} from './FocusRoomDialoguePlayer'
 import {FocusRoomPomodoro} from './FocusRoomPomodoro'
 import {
@@ -263,7 +265,10 @@ const FocusRoomStudioContent = () => {
           isHidden={isPomodoroOpen()}
           onExpandedChange={setIsPlayerExpanded}
         />
-        <FocusRoomDialoguePlayer />
+        <div class="focus-room-media-messages">
+          <FocusRoomFeedStatus />
+          <FocusRoomDialoguePlayer />
+        </div>
       </div>
       <SceneToolbar
         activity={activity()}
@@ -281,6 +286,8 @@ const FocusRoomStudioContent = () => {
 
 export const FocusRoomStudio = () => (
   <FocusRoomEventProvider>
-    <FocusRoomStudioContent />
+    <FocusRoomFeedProvider>
+      <FocusRoomStudioContent />
+    </FocusRoomFeedProvider>
   </FocusRoomEventProvider>
 )

@@ -1,6 +1,8 @@
 import {defineConfig} from '@solidjs/start/config'
 import UnoCSS from 'unocss/vite'
 
+import {createDevFeedPlugin} from './src/features/dev-feed'
+
 const isAppsInToss = process.env.POMO_BUILD_TARGET === 'apps-in-toss'
 
 export default defineConfig({
@@ -28,6 +30,6 @@ export default defineConfig({
     optimizeDeps: {
       include: ['onnxruntime-web/all', 'zod'],
     },
-    plugins: [UnoCSS()],
+    plugins: [createDevFeedPlugin(), UnoCSS()],
   },
 })

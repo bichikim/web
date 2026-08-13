@@ -8,6 +8,7 @@ export interface FocusRoomSelectOption<TValue extends string> {
 }
 
 export interface FocusRoomSelectProps<TValue extends string> {
+  readonly accessibleLabel?: string
   readonly label: string
   readonly onChange: (value: TValue) => void
   readonly options: readonly FocusRoomSelectOption<TValue>[]
@@ -45,7 +46,10 @@ export const FocusRoomSelect = <TValue extends string>(props: FocusRoomSelectPro
       value={selectedOption()}
     >
       <Select.Label class="focus-room-select__label">{props.label}</Select.Label>
-      <Select.Trigger class="focus-room-backdrop focus-room-select__trigger">
+      <Select.Trigger
+        aria-label={props.accessibleLabel}
+        class="focus-room-backdrop focus-room-select__trigger"
+      >
         <Select.Value<FocusRoomSelectOption<TValue>>>
           {(state) => state.selectedOption().label}
         </Select.Value>

@@ -1,10 +1,11 @@
 import {DropdownMenu} from '@kobalte/core/dropdown-menu'
 import {Tabs} from '@kobalte/core/tabs'
 import {A} from '@solidjs/router'
-import {createSignal, For, onCleanup, Show} from 'solid-js'
+import {createMemo, createSignal, For, onCleanup, Show} from 'solid-js'
 
 import {useFocusRoomEvents} from '../features/focus-room-dialogue/FocusRoomEventContext'
 import type {FocusRoomDialogue} from '../features/focus-room-dialogue/schema'
+import {excludeFeedDialogues, useFocusRoomFeedContext} from '../features/focus-room-feed'
 import {SUPERTONIC_VOICES} from '../features/supertonic'
 import './FocusRoomDialogueSettings.css'
 
@@ -61,13 +62,32 @@ const getDialogueMetadata = (dialogue: FocusRoomDialogue) =>
 interface DialogueConnectionMenuProps {
   readonly dialogues: ReadonlyArray<FocusRoomDialogue>
   readonly disabled: boolean
-  readonly onChange: (dialogueId: string | null) => void
-  readonly selectedDialogueId: string | null
+  readonly onChange: (dialogueIds: ReadonlyArray<string>) => void
+  readonly selectedDialogueIds: ReadonlyArray<string>
 }
 
 const DialogueConnectionMenu = (props: DialogueConnectionMenuProps) => {
-  const selectedDialogue = () =>
-    props.dialogues.find((dialogue) => dialogue.id === props.selectedDialogueId) ?? null
+  const selectedDialogues = () =>
+    props.selectedDialogueIds.flatMap((dialogueId) => {
+      const dialogue = props.dialogues.find((item) => item.id === dialogueId)
+      return dialogue === undefined ? [] : [dialogue]
+    })
+  const triggerLabel = () => {
+    const selected = selectedDialogues()
+
+    if (selected.length === 0) {
+      return props.dialogues.length === 0 ? '대화 없음' : '대화 선택'
+    }
+
+    return selected.length === 1 ? selected[0]?.text : `${selected.length}개 대화 연속 재생`
+  }
+  const toggleDialogue = (dialogueId: string, isChecked: boolean) => {
+    const currentIds = props.selectedDialogueIds
+    const dialogueIds = isChecked
+      ? [...currentIds.filter((id) => id !== dialogueId), dialogueId]
+      : currentIds.filter((id) => id !== dialogueId)
+    props.onChange(dialogueIds)
+  }
 
   return (
     <DropdownMenu gutter={6} placement="bottom-end">
@@ -77,9 +97,11 @@ const DialogueConnectionMenu = (props: DialogueConnectionMenuProps) => {
       >
         <span
           class="focus-room-dialogue-settings__dialogue-trigger-text"
-          title={selectedDialogue()?.text}
+          title={selectedDialogues()
+            .map((dialogue) => dialogue.text)
+            .join('\n')}
         >
-          {selectedDialogue()?.text ?? (props.dialogues.length === 0 ? '대화 없음' : '대화 선택')}
+          {triggerLabel()}
         </span>
         <DropdownMenu.Icon class="focus-room-dialogue-settings__dialogue-icon">
           <span aria-hidden="true" class="i-tabler-chevron-down size-4" />
@@ -87,46 +109,36 @@ const DialogueConnectionMenu = (props: DialogueConnectionMenuProps) => {
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
         <DropdownMenu.Content class="focus-room-backdrop focus-room-dialogue-settings__dialogue-menu">
-          <DropdownMenu.RadioGroup
-            onChange={(dialogueId) => props.onChange(dialogueId === '' ? null : dialogueId)}
-            value={props.selectedDialogueId ?? ''}
+          <DropdownMenu.Item
+            class="focus-room-dialogue-settings__dialogue-item focus-room-dialogue-settings__dialogue-item--clear"
+            disabled={props.selectedDialogueIds.length === 0}
+            onSelect={() => props.onChange([])}
           >
-            <DropdownMenu.RadioItem
-              class="focus-room-dialogue-settings__dialogue-item"
-              closeOnSelect
-              value=""
-            >
-              <DropdownMenu.ItemIndicator
-                class="focus-room-dialogue-settings__dialogue-indicator"
-                forceMount
+            <span aria-hidden="true" class="i-tabler-unlink size-4" />
+            <span class="focus-room-dialogue-settings__dialogue-item-text">
+              <strong>모두 연결 해제</strong>
+            </span>
+          </DropdownMenu.Item>
+          <For each={props.dialogues}>
+            {(dialogue) => (
+              <DropdownMenu.CheckboxItem
+                checked={props.selectedDialogueIds.includes(dialogue.id)}
+                class="focus-room-dialogue-settings__dialogue-item"
+                onChange={(isChecked) => toggleDialogue(dialogue.id, isChecked)}
               >
-                <span aria-hidden="true" class="i-tabler-check size-3.5" />
-              </DropdownMenu.ItemIndicator>
-              <span class="focus-room-dialogue-settings__dialogue-item-text">
-                <strong>연결 안 함</strong>
-              </span>
-            </DropdownMenu.RadioItem>
-            <For each={props.dialogues}>
-              {(dialogue) => (
-                <DropdownMenu.RadioItem
-                  class="focus-room-dialogue-settings__dialogue-item"
-                  closeOnSelect
-                  value={dialogue.id}
+                <DropdownMenu.ItemIndicator
+                  class="focus-room-dialogue-settings__dialogue-indicator"
+                  forceMount
                 >
-                  <DropdownMenu.ItemIndicator
-                    class="focus-room-dialogue-settings__dialogue-indicator"
-                    forceMount
-                  >
-                    <span aria-hidden="true" class="i-tabler-check size-3.5" />
-                  </DropdownMenu.ItemIndicator>
-                  <span class="focus-room-dialogue-settings__dialogue-item-text">
-                    <strong title={dialogue.text}>{dialogue.text}</strong>
-                    <small>{getDialogueMetadata(dialogue)}</small>
-                  </span>
-                </DropdownMenu.RadioItem>
-              )}
-            </For>
-          </DropdownMenu.RadioGroup>
+                  <span aria-hidden="true" class="i-tabler-check size-3.5" />
+                </DropdownMenu.ItemIndicator>
+                <span class="focus-room-dialogue-settings__dialogue-item-text">
+                  <strong title={dialogue.text}>{dialogue.text}</strong>
+                  <small>{getDialogueMetadata(dialogue)}</small>
+                </span>
+              </DropdownMenu.CheckboxItem>
+            )}
+          </For>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu>
@@ -151,6 +163,10 @@ const DialoguePlaybackButton = (props: DialoguePlaybackButtonProps) => (
 // oxlint-disable-next-line eslint/max-lines-per-function -- Both tabs share one repository and audio playback lifecycle.
 export default function FocusRoomDialogueSettingsClient() {
   const events = useFocusRoomEvents()
+  const feeds = useFocusRoomFeedContext()
+  const savedDialogues = createMemo(() =>
+    excludeFeedDialogues(events.dialogues(), feeds.dialogues()),
+  )
   const [playingDialogueId, setPlayingDialogueId] = createSignal<string | null>(null)
   const [audioElement, setAudioElement] = createSignal<HTMLAudioElement | undefined>()
   const [message, setMessage] = createSignal<string | null>(null)
@@ -222,11 +238,11 @@ export default function FocusRoomDialogueSettingsClient() {
     }
   }
 
-  const handleEntryBinding = async (dialogueId: string | null) => {
+  const handleEntryBinding = async (dialogueIds: ReadonlyArray<string>) => {
     stopPlayback()
 
     try {
-      await events.setEntryDialogue(dialogueId)
+      await events.setEntryDialogues(dialogueIds)
       setMessage(null)
     } catch (error: unknown) {
       console.error('Failed to bind focus room entry dialogue.', error)
@@ -258,7 +274,7 @@ export default function FocusRoomDialogueSettingsClient() {
           <div class="focus-room-dialogue-settings__heading">
             <div>
               <h3 id="focus-room-events-title">이벤트별 대화</h3>
-              <p>이벤트가 발생할 때 재생할 대화를 하나 선택하세요.</p>
+              <p>여러 대화를 선택하면 선택한 순서대로 연속 재생해요.</p>
             </div>
           </div>
 
@@ -281,15 +297,17 @@ export default function FocusRoomDialogueSettingsClient() {
             >
               <For each={DIALOGUE_EVENTS}>
                 {(event) => {
-                  const selectedDialogueId = () =>
-                    event.id === 'entry' ? events.entryDialogueId() : null
-                  const selectedDialogue = () =>
-                    events.dialogues().find((dialogue) => dialogue.id === selectedDialogueId()) ??
-                    null
+                  const selectedDialogueIds = () =>
+                    event.id === 'entry' ? events.entryDialogueIds() : []
+                  const selectedDialogues = () =>
+                    selectedDialogueIds().flatMap((dialogueId) => {
+                      const dialogue = savedDialogues().find((item) => item.id === dialogueId)
+                      return dialogue === undefined ? [] : [dialogue]
+                    })
 
                   return (
                     <li
-                      data-connected={selectedDialogue() === null ? undefined : ''}
+                      data-connected={selectedDialogues().length === 0 ? undefined : ''}
                       data-disabled={event.enabled ? undefined : ''}
                     >
                       <div class="focus-room-dialogue-settings__event-heading">
@@ -308,24 +326,40 @@ export default function FocusRoomDialogueSettingsClient() {
                         <div class="focus-room-dialogue-settings__connection">
                           <span>대화 연결</span>
                           <DialogueConnectionMenu
-                            dialogues={events.dialogues()}
-                            disabled={!event.enabled || events.dialogues().length === 0}
-                            onChange={(dialogueId) => {
+                            dialogues={savedDialogues()}
+                            disabled={!event.enabled || savedDialogues().length === 0}
+                            onChange={(dialogueIds) => {
                               if (event.id === 'entry') {
-                                handleEntryBinding(dialogueId).catch((error: unknown) => {
+                                handleEntryBinding(dialogueIds).catch((error: unknown) => {
                                   console.error('Unexpected entry binding failure.', error)
                                 })
                               }
                             }}
-                            selectedDialogueId={selectedDialogueId()}
+                            selectedDialogueIds={selectedDialogueIds()}
                           />
                         </div>
                       </div>
 
-                      <Show when={selectedDialogue() === null}>
+                      <Show when={selectedDialogues().length > 0}>
+                        <ol
+                          aria-label={`${event.label} 대화 재생 순서`}
+                          class="focus-room-dialogue-settings__sequence"
+                        >
+                          <For each={selectedDialogues()}>
+                            {(dialogue, index) => (
+                              <li>
+                                <span>{index() + 1}</span>
+                                <p title={dialogue.text}>{dialogue.text}</p>
+                              </li>
+                            )}
+                          </For>
+                        </ol>
+                      </Show>
+
+                      <Show when={selectedDialogues().length === 0}>
                         <p class="focus-room-dialogue-settings__unconnected">
                           {event.enabled
-                            ? events.dialogues().length === 0
+                            ? savedDialogues().length === 0
                               ? '대화 탭에서 먼저 대화를 만들어 주세요.'
                               : '연결된 대화가 없어요.'
                             : '이 이벤트는 아직 준비 중이에요.'}
@@ -366,7 +400,7 @@ export default function FocusRoomDialogueSettingsClient() {
 
           <div class="focus-room-dialogue-settings__library-heading">
             <h4 id="focus-room-dialogue-library-list-title">저장된 대화</h4>
-            <span>{events.dialogues().length}개</span>
+            <span>{savedDialogues().length}개</span>
           </div>
 
           <Show when={events.isLoading()}>
@@ -378,7 +412,7 @@ export default function FocusRoomDialogueSettingsClient() {
 
           <Show when={!events.isLoading()}>
             <Show
-              when={events.dialogues().length > 0}
+              when={savedDialogues().length > 0}
               fallback={
                 <p class="focus-room-dialogue-settings__empty">
                   아직 저장된 대화가 없어요. 새 대화를 만들어 보세요.
@@ -389,7 +423,7 @@ export default function FocusRoomDialogueSettingsClient() {
                 aria-labelledby="focus-room-dialogue-library-list-title"
                 class="focus-room-dialogue-settings__list focus-room-dialogue-settings__list--library"
               >
-                <For each={events.dialogues()}>
+                <For each={savedDialogues()}>
                   {(dialogue) => (
                     <li>
                       <div

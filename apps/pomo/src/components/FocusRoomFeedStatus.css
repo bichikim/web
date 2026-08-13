@@ -1,0 +1,119 @@
+.focus-room-feed-status {
+  display: flex;
+  width: min(36rem, 100%);
+  box-sizing: border-box;
+  align-items: center;
+  gap: 0.75rem;
+  border: 1px solid rgb(255 255 255 / 16%);
+  border-radius: 1rem;
+  background: rgb(22 17 13 / 90%);
+  padding: 0.8rem 0.9rem;
+  color: var(--focus-room-text);
+  box-shadow: var(--focus-room-shadow);
+  pointer-events: auto;
+  backdrop-filter: blur(0.75rem);
+  -webkit-backdrop-filter: blur(0.75rem);
+}
+
+.focus-room-feed-status[data-state='ready'] {
+  border-color: rgb(217 185 138 / 44%);
+}
+
+.focus-room-feed-status[data-state='error'],
+.focus-room-feed-status[data-state='recovery'] {
+  border-color: rgb(232 174 114 / 42%);
+}
+
+.focus-room-feed-status > [class*='i-tabler'] {
+  flex: none;
+  color: var(--focus-room-brass);
+}
+
+.focus-room-feed-status__spinner {
+  width: 1rem;
+  height: 1rem;
+  box-sizing: border-box;
+  flex: none;
+  animation: focus-room-feed-spin 1s linear infinite;
+  border: 2px solid rgb(255 255 255 / 24%);
+  border-top-color: var(--focus-room-brass);
+  border-radius: 50%;
+}
+
+.focus-room-feed-status__copy {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+  gap: 0.15rem;
+}
+
+.focus-room-feed-status__copy strong,
+.focus-room-feed-status__copy small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.focus-room-feed-status__copy strong {
+  font-size: 0.78rem;
+}
+
+.focus-room-feed-status__copy small {
+  color: var(--focus-room-text-muted);
+  font-size: 0.68rem;
+}
+
+.focus-room-feed-status button {
+  min-height: 2rem;
+  flex: none;
+  cursor: pointer;
+  border: 1px solid var(--focus-room-border);
+  border-radius: var(--focus-room-radius-control);
+  background: var(--focus-room-secondary-soft);
+  padding: 0 var(--focus-room-padding-md);
+  color: var(--focus-room-text);
+  font: inherit;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.focus-room-feed-status button:hover {
+  border-color: var(--focus-room-brass);
+}
+
+.focus-room-feed-status button:focus-visible {
+  outline: 2px solid var(--focus-room-brass);
+  outline-offset: 2px;
+}
+
+.focus-room-feed-status__actions {
+  display: flex;
+  flex: none;
+  gap: 0.35rem;
+}
+
+@keyframes focus-room-feed-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (width < 34rem) {
+  .focus-room-feed-status[data-state='recovery'] {
+    flex-wrap: wrap;
+  }
+
+  .focus-room-feed-status[data-state='recovery'] .focus-room-feed-status__actions {
+    width: 100%;
+  }
+
+  .focus-room-feed-status[data-state='recovery'] button {
+    flex: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .focus-room-feed-status__spinner {
+    animation: none;
+  }
+}

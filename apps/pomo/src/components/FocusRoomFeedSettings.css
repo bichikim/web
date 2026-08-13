@@ -1,0 +1,414 @@
+.focus-room-feed-settings {
+  display: grid;
+  gap: 1.125rem;
+}
+
+.focus-room-feed-settings__heading h3,
+.focus-room-feed-settings__list-heading h4,
+.focus-room-feed-settings__recommendation-heading h4 {
+  margin: 0;
+  color: var(--focus-room-text);
+  font-size: 0.9375rem;
+  font-weight: 750;
+}
+
+.focus-room-feed-settings__heading p {
+  margin: 0.25rem 0 0;
+  color: var(--focus-room-text-muted);
+  font-size: 0.6875rem;
+  line-height: 1.5;
+}
+
+.focus-room-feed-settings__form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(8.5rem, auto) auto;
+  align-items: end;
+  gap: 0.75rem;
+}
+
+.focus-room-feed-settings__url-field {
+  display: grid;
+  min-width: 0;
+  gap: 0.375rem;
+}
+
+.focus-room-feed-settings__url-field > span {
+  color: var(--focus-room-text-muted);
+  font-size: 0.75rem;
+  font-weight: 650;
+  line-height: 1rem;
+}
+
+.focus-room-feed-settings__url-field input {
+  width: 100%;
+  height: var(--focus-room-control-height-medium);
+  box-sizing: border-box;
+  border: 1px solid var(--focus-room-border);
+  border-radius: var(--focus-room-radius-control);
+  background: var(--focus-room-surface);
+  padding: 0 var(--focus-room-padding-lg);
+  color: var(--focus-room-text);
+  font: inherit;
+  font-size: 0.8125rem;
+  outline: none;
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease;
+}
+
+.focus-room-feed-settings__url-field input::placeholder {
+  color: var(--focus-room-text-muted);
+  opacity: 0.7;
+}
+
+.focus-room-feed-settings__url-field input:hover {
+  border-color: var(--focus-room-border-hover);
+}
+
+.focus-room-feed-settings__url-field input:focus-visible {
+  border-color: var(--focus-room-brass);
+  outline: 2px solid var(--focus-room-brass);
+  outline-offset: 2px;
+}
+
+.focus-room-feed-settings__add,
+.focus-room-feed-settings__delete {
+  display: inline-flex;
+  height: var(--focus-room-control-height-medium);
+  box-sizing: border-box;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  border: 1px solid var(--focus-room-border);
+  border-radius: var(--focus-room-radius-control);
+  background: transparent;
+  padding: 0 var(--focus-room-padding-md);
+  color: var(--focus-room-text-muted);
+  font: inherit;
+  font-size: 0.7rem;
+  font-weight: 700;
+  transition:
+    border-color 140ms ease,
+    background-color 140ms ease,
+    color 140ms ease;
+}
+
+.focus-room-feed-settings__add {
+  border-color: var(--focus-room-brass);
+  color: var(--focus-room-text);
+}
+
+.focus-room-feed-settings__delete {
+  height: 2.5rem;
+}
+
+.focus-room-feed-settings__add:hover:not(:disabled),
+.focus-room-feed-settings__delete:hover {
+  background: var(--focus-room-secondary-soft);
+  color: var(--focus-room-text);
+}
+
+.focus-room-feed-settings__add:focus-visible,
+.focus-room-feed-settings__delete:focus-visible {
+  outline: 2px solid var(--focus-room-brass);
+  outline-offset: 2px;
+}
+
+.focus-room-feed-settings__add:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.focus-room-feed-settings__list-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  border-top: 1px solid var(--focus-room-border);
+  padding-top: var(--focus-room-padding-lg);
+}
+
+.focus-room-feed-settings__refresh {
+  display: inline-flex;
+  min-height: 2rem;
+  cursor: pointer;
+  align-items: center;
+  gap: 0.3rem;
+  margin-left: auto;
+  border: 1px solid var(--focus-room-border);
+  border-radius: var(--focus-room-radius-control);
+  background: transparent;
+  padding: 0 var(--focus-room-padding-md);
+  color: var(--focus-room-text-muted);
+  font: inherit;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.focus-room-feed-settings__refresh:hover {
+  border-color: var(--focus-room-brass);
+  color: var(--focus-room-text);
+}
+
+.focus-room-feed-settings__refresh:focus-visible {
+  outline: 2px solid var(--focus-room-brass);
+  outline-offset: 2px;
+}
+
+.focus-room-feed-settings__list-heading > span,
+.focus-room-feed-settings__recommendation-heading > span {
+  color: var(--focus-room-text-muted);
+  font-size: 0.6875rem;
+}
+
+.focus-room-feed-settings__list {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.focus-room-feed-settings__list > li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(8.5rem, auto) auto;
+  align-items: end;
+  gap: 0.75rem;
+  border: 1px solid rgb(255 255 255 / 6%);
+  border-radius: var(--focus-room-radius-panel);
+  background: rgb(255 255 255 / 3%);
+  padding: var(--focus-room-padding-md) var(--focus-room-padding-lg);
+}
+
+.focus-room-feed-settings__list > li[data-recommended] {
+  border-style: dashed;
+  border-color: rgb(214 181 133 / 28%);
+  background: rgb(214 181 133 / 4%);
+}
+
+.focus-room-feed-settings__recommendation-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.focus-room-feed-settings__address {
+  display: flex;
+  min-width: 0;
+  min-height: 2.5rem;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--focus-room-brass);
+}
+
+.focus-room-feed-settings__address-copy {
+  display: grid;
+  min-width: 0;
+  gap: 0.15rem;
+}
+
+.focus-room-feed-settings__address-copy strong,
+.focus-room-feed-settings__address-copy small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.focus-room-feed-settings__address-copy strong {
+  color: var(--focus-room-text);
+  font-size: 0.75rem;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.focus-room-feed-settings__address-copy small {
+  color: var(--focus-room-text-muted);
+  font-size: 0.625rem;
+  line-height: 1.4;
+}
+
+.focus-room-feed-settings__status,
+.focus-room-feed-settings__message,
+.focus-room-feed-settings__empty {
+  margin: 0;
+  border-radius: var(--focus-room-radius-panel);
+  background: rgb(255 255 255 / 3%);
+  padding: var(--focus-room-padding-xl);
+  color: var(--focus-room-text-muted);
+  font-size: 0.75rem;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.focus-room-feed-settings__dialogue-list,
+.focus-room-feed-settings__issue-list {
+  display: grid;
+  gap: 0.65rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.focus-room-feed-settings__dialogue-list > li,
+.focus-room-feed-settings__issue-list > li {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border: 1px solid rgb(255 255 255 / 6%);
+  border-radius: var(--focus-room-radius-panel);
+  background: rgb(255 255 255 / 3%);
+  padding: var(--focus-room-padding-md) var(--focus-room-padding-lg);
+}
+
+.focus-room-feed-settings__dialogue-copy,
+.focus-room-feed-settings__issue-list > li > span {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+  gap: 0.2rem;
+}
+
+.focus-room-feed-settings__dialogue-copy strong,
+.focus-room-feed-settings__issue-list strong {
+  overflow: hidden;
+  color: var(--focus-room-text);
+  font-size: 0.75rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.focus-room-feed-settings__dialogue-copy small,
+.focus-room-feed-settings__issue-list small {
+  color: var(--focus-room-text-muted);
+  font-size: 0.625rem;
+  line-height: 1.45;
+}
+
+.focus-room-feed-settings__listened-state {
+  color: var(--focus-room-brass);
+  font-weight: 700;
+}
+
+.focus-room-feed-settings__listened-state[data-listened] {
+  color: var(--focus-room-text-muted);
+}
+
+.focus-room-feed-settings__dialogue-actions {
+  display: flex;
+  flex: none;
+  gap: 0.4rem;
+}
+
+.focus-room-feed-settings__dialogue-actions a,
+.focus-room-feed-settings__dialogue-actions button,
+.focus-room-feed-settings__issue-list a {
+  display: inline-flex;
+  min-height: 2rem;
+  box-sizing: border-box;
+  cursor: pointer;
+  align-items: center;
+  border: 1px solid var(--focus-room-border);
+  border-radius: var(--focus-room-radius-control);
+  background: transparent;
+  padding: 0 var(--focus-room-padding-md);
+  color: var(--focus-room-text);
+  font: inherit;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.focus-room-feed-settings__dialogue-actions a:hover,
+.focus-room-feed-settings__dialogue-actions button:hover,
+.focus-room-feed-settings__issue-list a:hover {
+  border-color: var(--focus-room-brass);
+}
+
+.focus-room-feed-settings__dialogue-actions .focus-room-feed-settings__delete-confirm {
+  border-color: rgb(232 174 114 / 58%);
+  color: #ffd9bd;
+}
+
+.focus-room-feed-settings__dialogue-actions .focus-room-feed-settings__delete-confirm:hover {
+  border-color: #ffd9bd;
+  background: rgb(232 174 114 / 12%);
+}
+
+.focus-room-feed-settings__issue-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.focus-room-feed-settings__issue-heading h4 {
+  margin: 0;
+  color: var(--focus-room-text);
+  font-size: 0.8rem;
+}
+
+.focus-room-feed-settings__issue-heading span {
+  color: var(--focus-room-text-muted);
+  font-size: 0.6875rem;
+}
+
+.focus-room-feed-settings__issue-list > li {
+  border-color: rgb(232 174 114 / 22%);
+}
+
+.focus-room-feed-settings__empty {
+  border: 1px dashed var(--focus-room-border);
+}
+
+@media (width < 42rem) {
+  .focus-room-feed-settings__form,
+  .focus-room-feed-settings__list > li {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .focus-room-feed-settings__url-field,
+  .focus-room-feed-settings__address {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (width < 28rem) {
+  .focus-room-feed-settings__form,
+  .focus-room-feed-settings__list > li {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .focus-room-feed-settings__add,
+  .focus-room-feed-settings__delete {
+    width: 100%;
+  }
+
+  .focus-room-feed-settings__dialogue-list > li,
+  .focus-room-feed-settings__issue-list > li {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .focus-room-feed-settings__dialogue-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .focus-room-feed-settings__dialogue-actions a,
+  .focus-room-feed-settings__dialogue-actions button {
+    width: auto;
+    flex: 1 1 5rem;
+    justify-content: center;
+  }
+
+  .focus-room-feed-settings__issue-list a {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .focus-room-feed-settings__url-field input,
+  .focus-room-feed-settings__add,
+  .focus-room-feed-settings__delete {
+    transition: none;
+  }
+}

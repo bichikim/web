@@ -1,0 +1,160 @@
+import {createSignal, For, Show} from 'solid-js'
+
+import type {FocusRoomFeedController} from '../features/focus-room-feed'
+
+const MINUTES_PER_HOUR = 60
+const SECONDS_PER_MINUTE = 60
+const MILLISECONDS_PER_SECOND = 1000
+const HOUR_MS = MINUTES_PER_HOUR * SECONDS_PER_MINUTE * MILLISECONDS_PER_SECOND
+
+export interface FocusRoomFeedDialogueListProps {
+  readonly controller: FocusRoomFeedController
+}
+
+const formatPublishedAt = (value: string) =>
+  new Intl.DateTimeFormat('ko-KR', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(new Date(value))
+
+const formatRemaining = (value: string) => {
+  const hours = Math.max(0, Math.ceil((Date.parse(value) - Date.now()) / HOUR_MS))
+  return hours === 0 ? '다음 확인 때 정리' : `${hours}시간 후 정리`
+}
+
+export const FocusRoomFeedDialogueList = (props: FocusRoomFeedDialogueListProps) => {
+  const [pendingDeleteId, setPendingDeleteId] = createSignal<string | null>(null)
+  const [deleteError, setDeleteError] = createSignal<string | null>(null)
+  const handleListen = (dialogueId: string) => {
+    props.controller.listen(dialogueId).catch((error: unknown) => {
+      console.error('Failed to play saved feed dialogue.', error)
+    })
+  }
+  const handleDelete = async (dialogueId: string) => {
+    setDeleteError(null)
+
+    try {
+      await props.controller.onDeleteDialogue(dialogueId)
+      setPendingDeleteId(null)
+    } catch (error: unknown) {
+      console.error('Failed to delete saved feed dialogue.', error)
+      setDeleteError('피드 대화를 삭제하지 못했어요.')
+    }
+  }
+
+  return (
+    <>
+      <div class="focus-room-feed-settings__list-heading">
+        <h4 id="focus-room-feed-dialogues-title">피드 대화</h4>
+        <span>{props.controller.dialogues().length}개</span>
+        <button
+          class="focus-room-feed-settings__refresh"
+          onClick={() => props.controller.syncNow()}
+          type="button"
+        >
+          <span aria-hidden="true" class="i-tabler-refresh size-4" />
+          지금 확인
+        </button>
+      </div>
+      <Show
+        when={props.controller.dialogues().length > 0}
+        fallback={
+          <p class="focus-room-feed-settings__empty">
+            아직 완성된 피드 대화가 없어요. 새 항목을 확인하면 자동으로 만들어요.
+          </p>
+        }
+      >
+        <ul
+          aria-labelledby="focus-room-feed-dialogues-title"
+          class="focus-room-feed-settings__dialogue-list"
+        >
+          <For each={props.controller.dialogues()}>
+            {(item) => (
+              <li>
+                <span class="focus-room-feed-settings__dialogue-copy">
+                  <strong>{item.metadata.itemTitle}</strong>
+                  <small>
+                    {item.metadata.sourceTitle} · {formatPublishedAt(item.metadata.publishedAt)} ·{' '}
+                    <span
+                      class="focus-room-feed-settings__listened-state"
+                      data-listened={item.metadata.listenedAt === null ? undefined : ''}
+                    >
+                      {item.metadata.listenedAt === null ? '안 들음' : '들음'}
+                    </span>{' '}
+                    · {formatRemaining(item.metadata.expiresAt)}
+                  </small>
+                </span>
+                <span class="focus-room-feed-settings__dialogue-actions">
+                  <a href={item.metadata.sourceUrl} rel="noreferrer" target="_blank">
+                    원문
+                  </a>
+                  <button onClick={() => handleListen(item.dialogue.id)} type="button">
+                    {item.metadata.listenedAt === null ? '듣기' : '다시 듣기'}
+                  </button>
+                  <Show
+                    when={pendingDeleteId() === item.dialogue.id}
+                    fallback={
+                      <button
+                        aria-label={`${item.metadata.itemTitle} 피드 대화 삭제`}
+                        onClick={() => {
+                          setDeleteError(null)
+                          setPendingDeleteId(item.dialogue.id)
+                        }}
+                        type="button"
+                      >
+                        삭제
+                      </button>
+                    }
+                  >
+                    <button onClick={() => setPendingDeleteId(null)} type="button">
+                      취소
+                    </button>
+                    <button
+                      aria-label={`${item.metadata.itemTitle} 피드 대화 삭제 확인`}
+                      class="focus-room-feed-settings__delete-confirm"
+                      onClick={() => handleDelete(item.dialogue.id)}
+                      type="button"
+                    >
+                      삭제 확인
+                    </button>
+                  </Show>
+                </span>
+              </li>
+            )}
+          </For>
+        </ul>
+      </Show>
+      <Show when={deleteError()}>
+        {(message) => (
+          <p aria-live="polite" class="focus-room-feed-settings__message" role="status">
+            {message()}
+          </p>
+        )}
+      </Show>
+      <Show when={props.controller.issues().length > 0}>
+        <div class="focus-room-feed-settings__issue-heading">
+          <h4 id="focus-room-feed-issues-title">읽지 못한 항목</h4>
+          <span>{props.controller.issues().length}개</span>
+        </div>
+        <ul
+          aria-labelledby="focus-room-feed-issues-title"
+          class="focus-room-feed-settings__issue-list"
+        >
+          <For each={props.controller.issues()}>
+            {(item) => (
+              <li>
+                <span>
+                  <strong>{item.itemTitle}</strong>
+                  <small>{item.message}</small>
+                </span>
+                <a href={item.sourceUrl} rel="noreferrer" target="_blank">
+                  원문 보기
+                </a>
+              </li>
+            )}
+          </For>
+        </ul>
+      </Show>
+    </>
+  )
+}

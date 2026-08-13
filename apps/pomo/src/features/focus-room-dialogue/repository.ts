@@ -1,6 +1,5 @@
-import Dexie, {type Table} from 'dexie'
-
 import {createModelStorage, reportModelStorageError} from '../model-storage/storage'
+import {createFocusRoomDatabase} from './database'
 import {
   type DialogueEventBinding,
   dialogueEventBindingSchema,
@@ -9,13 +8,7 @@ import {
   focusRoomDialogueSchema,
 } from './schema'
 
-const DATABASE_NAME = 'pomo-focus-room'
 const AUDIO_CACHE_NAME = 'pomo-dialogue-audio-v1'
-
-interface DialogueDatabase extends Dexie {
-  readonly dialogues: Table<unknown, string>
-  readonly eventBindings: Table<unknown, string>
-}
 
 export interface SaveDialogueOptions {
   readonly audio?: Blob
@@ -30,20 +23,14 @@ export interface FocusRoomDialogueRepository {
   readonly getEntryBinding: () => Promise<DialogueEventBinding | null>
   readonly listDialogues: () => Promise<ReadonlyArray<FocusRoomDialogue>>
   readonly saveDialogue: (options: SaveDialogueOptions) => Promise<void>
-  readonly setEntryBinding: (dialogueId: string | null) => Promise<void>
-}
-
-const createDatabase = (): DialogueDatabase => {
-  const database = new Dexie(DATABASE_NAME) as DialogueDatabase
-  database.version(1).stores({dialogues: 'id, updatedAt', eventBindings: 'event'})
-  return database
+  readonly setEntryBinding: (dialogueIds: ReadonlyArray<string> | string | null) => Promise<void>
 }
 
 const getAudioPath = (audioKey: string) => `/__pomo/dialogue-audio/${audioKey}.wav`
 
 /** Creates a browser repository for local dialogue metadata and generated WAV files. */
 export const createFocusRoomDialogueRepository = (): FocusRoomDialogueRepository => {
-  const database = createDatabase()
+  const database = createFocusRoomDatabase()
   const audioStorage = createModelStorage({cacheName: AUDIO_CACHE_NAME})
   const deleteAudio = async (audioKey: string) => {
     const deletion = await audioStorage.delete(getAudioPath(audioKey))
@@ -60,14 +47,25 @@ export const createFocusRoomDialogueRepository = (): FocusRoomDialogueRepository
 
       await database.transaction('rw', database.dialogues, database.eventBindings, async () => {
         await database.dialogues.delete(dialogueId)
-        const binding = await database.eventBindings.get(FOCUS_ROOM_ENTRY_EVENT)
+        const storedBinding = await database.eventBindings.get(FOCUS_ROOM_ENTRY_EVENT)
 
-        if (
-          binding !== undefined &&
-          dialogueEventBindingSchema.parse(binding).dialogueId === dialogueId
-        ) {
-          await database.eventBindings.delete(FOCUS_ROOM_ENTRY_EVENT)
+        if (storedBinding === undefined) {
+          return
         }
+
+        const binding = dialogueEventBindingSchema.parse(storedBinding)
+        const dialogueIds = binding.dialogueIds.filter((id) => id !== dialogueId)
+
+        if (dialogueIds.length === binding.dialogueIds.length) {
+          return
+        }
+
+        if (dialogueIds.length === 0) {
+          await database.eventBindings.delete(FOCUS_ROOM_ENTRY_EVENT)
+          return
+        }
+
+        await database.eventBindings.put({...binding, dialogueIds})
       })
 
       if (parsedDialogue !== null) {
@@ -132,20 +130,28 @@ export const createFocusRoomDialogueRepository = (): FocusRoomDialogueRepository
         await deleteAudio(previousDialogue.audioKey)
       }
     },
-    async setEntryBinding(dialogueId) {
-      if (dialogueId === null) {
+    async setEntryBinding(dialogueIds) {
+      const requestedIds =
+        typeof dialogueIds === 'string' ? [dialogueIds] : dialogueIds === null ? [] : dialogueIds
+      const uniqueDialogueIds = [...new Set(requestedIds)]
+
+      if (uniqueDialogueIds.length === 0) {
         await database.eventBindings.delete(FOCUS_ROOM_ENTRY_EVENT)
         return
       }
 
-      if ((await database.dialogues.get(dialogueId)) === undefined) {
+      const storedDialogues = await Promise.all(
+        uniqueDialogueIds.map((dialogueId) => database.dialogues.get(dialogueId)),
+      )
+
+      if (storedDialogues.some((dialogue) => dialogue === undefined)) {
         throw new Error('연결할 대화를 찾을 수 없어요.')
       }
 
       await database.eventBindings.put({
-        dialogueId,
+        dialogueIds: uniqueDialogueIds,
         event: FOCUS_ROOM_ENTRY_EVENT,
-        version: 1,
+        version: 2,
       } satisfies DialogueEventBinding)
     },
   }

@@ -8,172 +8,53 @@ import {
   useContext,
 } from 'solid-js'
 
+import {
+  createEntryPlaybackController,
+  type PlayFocusRoomDialogueSequenceOptions,
+} from './entry-playback-controller'
 import type {FocusRoomDialogueRepository} from './repository'
 import type {FocusRoomDialogue} from './schema'
-import {getDialogueTextAtTime} from './timeline'
 
-const MILLISECONDS_PER_SECOND = 1000
+export type {PlayFocusRoomDialogueSequenceOptions} from './entry-playback-controller'
 
 export interface FocusRoomEventContextValue {
+  readonly activeDialogueId: Accessor<string | null>
   readonly activeText: Accessor<string | null>
   readonly deleteDialogue: (dialogueId: string) => Promise<void>
   readonly dialogues: Accessor<ReadonlyArray<FocusRoomDialogue>>
   readonly entryDialogueId: Accessor<string | null>
+  readonly entryDialogueIds: Accessor<ReadonlyArray<string>>
   readonly errorMessage: Accessor<string | null>
   readonly getAudio: (audioKey: string) => Promise<Blob | null>
+  readonly isDialogueScheduled: (dialogueId: string) => boolean
   readonly isEntryPlaybackBlocked: Accessor<boolean>
   readonly isLoading: Accessor<boolean>
   readonly onStopEntryPlayback: () => void
+  readonly playDialogue: (dialogueId: string) => Promise<void>
+  readonly playDialogueSequence: (options: PlayFocusRoomDialogueSequenceOptions) => Promise<void>
+  readonly refreshDialogues: () => Promise<void>
   readonly retryEntryPlayback: () => void
   readonly setEntryDialogue: (dialogueId: string | null) => Promise<void>
+  readonly setEntryDialogues: (dialogueIds: ReadonlyArray<string>) => Promise<void>
 }
 
 export interface FocusRoomEventProviderProps {
   readonly children: JSX.Element
 }
 
-interface EntryPlaybackController {
-  readonly activeDialogueId: () => string | null
-  readonly activeText: Accessor<string | null>
-  readonly dispose: () => void
-  readonly isBlocked: Accessor<boolean>
-  readonly prepare: (repository: FocusRoomDialogueRepository, dialogueId: string) => Promise<void>
-  readonly retry: () => void
-  readonly stop: () => void
-}
-
 const FocusRoomEventContext = createContext<FocusRoomEventContextValue>()
-
-const createEntryPlaybackController = (): EntryPlaybackController => {
-  const [activeText, setActiveText] = createSignal<string | null>(null)
-  const [isBlocked, setIsBlocked] = createSignal(false)
-  let animationFrame: number | null = null
-  let audio: HTMLAudioElement | null = null
-  let audioUrl: string | null = null
-  let dialogue: FocusRoomDialogue | null = null
-  let isAwaitingSceneInteraction = false
-  let isDisposed = false
-  let playbackRequestId = 0
-
-  const cancelFrame = () => {
-    if (animationFrame !== null) {
-      window.cancelAnimationFrame(animationFrame)
-      animationFrame = null
-    }
-  }
-
-  const updateSubtitle = () => {
-    if (audio === null || dialogue === null || audio.ended) {
-      cancelFrame()
-      return
-    }
-
-    setActiveText(
-      getDialogueTextAtTime(dialogue.segments, audio.currentTime * MILLISECONDS_PER_SECOND),
-    )
-    animationFrame = window.requestAnimationFrame(updateSubtitle)
-  }
-
-  const stop = () => {
-    playbackRequestId += 1
-    cancelFrame()
-    audio?.pause()
-    audio = null
-    dialogue = null
-    isAwaitingSceneInteraction = false
-    setIsBlocked(false)
-    setActiveText(null)
-
-    if (audioUrl !== null) {
-      URL.revokeObjectURL(audioUrl)
-      audioUrl = null
-    }
-  }
-
-  const start = async () => {
-    const currentAudio = audio
-
-    if (currentAudio === null || isDisposed) {
-      return
-    }
-
-    try {
-      await currentAudio.play()
-
-      if (audio !== currentAudio || isDisposed) {
-        return
-      }
-
-      isAwaitingSceneInteraction = false
-      setIsBlocked(false)
-      cancelFrame()
-      updateSubtitle()
-    } catch (error: unknown) {
-      if (audio !== currentAudio || isDisposed) {
-        return
-      }
-
-      if (error instanceof DOMException && error.name === 'NotAllowedError') {
-        isAwaitingSceneInteraction = true
-        setIsBlocked(true)
-        return
-      }
-
-      console.error('Failed to play focus room entry dialogue.', error)
-      stop()
-    }
-  }
-
-  return {
-    activeDialogueId: () => dialogue?.id ?? null,
-    activeText,
-    dispose() {
-      isDisposed = true
-      stop()
-    },
-    isBlocked,
-    async prepare(repository, dialogueId) {
-      stop()
-      const currentRequestId = playbackRequestId
-      const storedDialogue = await repository.getDialogue(dialogueId)
-
-      if (storedDialogue === null || isDisposed || currentRequestId !== playbackRequestId) {
-        return
-      }
-
-      const storedAudio = await repository.getAudio(storedDialogue.audioKey)
-
-      if (storedAudio === null || isDisposed || currentRequestId !== playbackRequestId) {
-        return
-      }
-
-      dialogue = storedDialogue
-      audioUrl = URL.createObjectURL(storedAudio)
-      audio = new Audio(audioUrl)
-      audio.addEventListener('ended', stop, {once: true})
-      await start()
-    },
-    retry() {
-      if (!isAwaitingSceneInteraction) {
-        return
-      }
-
-      start().catch((error: unknown) => {
-        console.error('Unexpected focus room dialogue playback failure.', error)
-      })
-    },
-    stop,
-  }
-}
 
 export const FocusRoomEventProvider = (props: FocusRoomEventProviderProps) => {
   const playback = createEntryPlaybackController()
   const [dialogues, setDialogues] = createSignal<ReadonlyArray<FocusRoomDialogue>>([])
-  const [entryDialogueId, setEntryDialogueId] = createSignal<string | null>(null)
+  const [entryDialogueIds, setEntryDialogueIds] = createSignal<ReadonlyArray<string>>([])
   const [errorMessage, setErrorMessage] = createSignal<string | null>(null)
   const [isLoading, setIsLoading] = createSignal(true)
   let repository: FocusRoomDialogueRepository | null = null
   let isDisposed = false
+  let entryBindingUpdate = Promise.resolve()
+  let entryBindingRevision = 0
+  let persistedEntryIds: ReadonlyArray<string> = []
 
   const getRepository = () => {
     if (repository === null) {
@@ -203,11 +84,21 @@ export const FocusRoomEventProvider = (props: FocusRoomEventProviderProps) => {
       }
 
       setDialogues(storedDialogues)
-      setEntryDialogueId(entryBinding?.dialogueId ?? null)
+      const storedEntryDialogueIds = entryBinding?.dialogueIds ?? []
+      persistedEntryIds = storedEntryDialogueIds
+      setEntryDialogueIds(storedEntryDialogueIds)
       setErrorMessage(null)
 
-      if (entryBinding !== null) {
-        await playback.prepare(currentRepository, entryBinding.dialogueId)
+      if (storedEntryDialogueIds.length > 0) {
+        playback
+          .playSequence(currentRepository, {
+            dialogueIds: storedEntryDialogueIds,
+            onDialogueStart: () => undefined,
+            onSequenceStop: () => undefined,
+          })
+          .catch((error: unknown) => {
+            console.error('Unexpected entry dialogue sequence failure.', error)
+          })
       }
     } catch (error: unknown) {
       if (isDisposed) {
@@ -224,8 +115,10 @@ export const FocusRoomEventProvider = (props: FocusRoomEventProviderProps) => {
   }
 
   const contextValue: FocusRoomEventContextValue = {
+    activeDialogueId: playback.activeDialogueId,
     activeText: playback.activeText,
     async deleteDialogue(dialogueId) {
+      await entryBindingUpdate.catch(() => undefined)
       await getRepository().deleteDialogue(dialogueId)
 
       if (isDisposed) {
@@ -236,30 +129,68 @@ export const FocusRoomEventProvider = (props: FocusRoomEventProviderProps) => {
         currentDialogues.filter((dialogue) => dialogue.id !== dialogueId),
       )
 
-      if (entryDialogueId() === dialogueId) {
-        setEntryDialogueId(null)
-      }
+      const remainingEntryIds = entryDialogueIds().filter((id) => id !== dialogueId)
+      entryBindingRevision += 1
+      persistedEntryIds = remainingEntryIds
+      setEntryDialogueIds(remainingEntryIds)
 
       if (playback.activeDialogueId() === dialogueId) {
-        playback.stop()
+        playback.cancel()
       }
     },
     dialogues,
-    entryDialogueId,
+    entryDialogueId: () => entryDialogueIds()[0] ?? null,
+    entryDialogueIds,
     errorMessage,
     getAudio: (audioKey) => getRepository().getAudio(audioKey),
+    isDialogueScheduled: playback.isDialogueScheduled,
     isEntryPlaybackBlocked: playback.isBlocked,
     isLoading,
     onStopEntryPlayback: playback.stop,
-    retryEntryPlayback: playback.retry,
-    async setEntryDialogue(dialogueId) {
-      await getRepository().setEntryBinding(dialogueId)
+    playDialogue: (dialogueId) => playback.prepare(getRepository(), dialogueId),
+    playDialogueSequence: (options) => playback.playSequence(getRepository(), options),
+    async refreshDialogues() {
+      await entryBindingUpdate.catch(() => undefined)
+      const refreshRevision = entryBindingRevision
+      const currentRepository = getRepository()
+      const [storedDialogues, entryBinding] = await Promise.all([
+        currentRepository.listDialogues(),
+        currentRepository.getEntryBinding(),
+      ])
 
-      if (isDisposed) {
-        return
+      if (!isDisposed) {
+        setDialogues(storedDialogues)
+
+        if (refreshRevision === entryBindingRevision) {
+          const storedEntryDialogueIds = entryBinding?.dialogueIds ?? []
+          persistedEntryIds = storedEntryDialogueIds
+          setEntryDialogueIds(storedEntryDialogueIds)
+        }
       }
+    },
+    retryEntryPlayback: playback.retry,
+    setEntryDialogue: (dialogueId) =>
+      contextValue.setEntryDialogues(dialogueId === null ? [] : [dialogueId]),
+    async setEntryDialogues(dialogueIds) {
+      const uniqueDialogueIds = [...new Set(dialogueIds)]
+      entryBindingRevision += 1
+      const currentRevision = entryBindingRevision
+      setEntryDialogueIds(uniqueDialogueIds)
+      const update = entryBindingUpdate
+        .catch(() => undefined)
+        .then(() => getRepository().setEntryBinding(uniqueDialogueIds))
+      entryBindingUpdate = update
 
-      setEntryDialogueId(dialogueId)
+      try {
+        await update
+        persistedEntryIds = uniqueDialogueIds
+      } catch (error: unknown) {
+        if (!isDisposed && currentRevision === entryBindingRevision) {
+          setEntryDialogueIds(persistedEntryIds)
+        }
+
+        throw error
+      }
     },
   }
 

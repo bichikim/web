@@ -279,6 +279,15 @@
   background: var(--focus-room-secondary-soft);
 }
 
+.focus-room-dialogue-settings__dialogue-item--clear {
+  color: var(--focus-room-text-muted);
+}
+
+.focus-room-dialogue-settings__dialogue-item--clear[data-disabled] {
+  cursor: default;
+  opacity: 0.45;
+}
+
 .focus-room-dialogue-settings__dialogue-indicator {
   display: inline-flex;
   width: 1rem;
@@ -286,7 +295,7 @@
   align-items: center;
   justify-content: center;
   border: 1px solid var(--focus-room-border);
-  border-radius: 50%;
+  border-radius: 0.25rem;
   color: transparent;
 }
 
@@ -319,6 +328,46 @@
 .focus-room-dialogue-settings__dialogue-item-text small {
   color: var(--focus-room-text-muted);
   font-size: 0.6rem;
+}
+
+.focus-room-dialogue-settings__sequence {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+  border-top: 1px solid var(--focus-room-border);
+  padding: var(--focus-room-padding-md) 0 0;
+  list-style: none;
+}
+
+.focus-room-dialogue-settings__sequence > li {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: 1.25rem minmax(0, 1fr);
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.focus-room-dialogue-settings__sequence > li > span {
+  display: grid;
+  width: 1.25rem;
+  height: 1.25rem;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--focus-room-secondary-soft);
+  color: var(--focus-room-brass);
+  font-size: 0.625rem;
+  font-weight: 750;
+}
+
+.focus-room-dialogue-settings__sequence p {
+  min-width: 0;
+  overflow: hidden;
+  margin: 0;
+  color: var(--focus-room-text-muted);
+  font-size: 0.6875rem;
+  line-height: 1.5;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 @keyframes focus-room-dialogue-menu-in {
