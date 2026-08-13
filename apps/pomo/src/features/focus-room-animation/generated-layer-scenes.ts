@@ -29,32 +29,38 @@ import dayWritingUserLeftHand from '../../../assets/focus-room-layers/day-writin
 import dayWritingUserRightHand from '../../../assets/focus-room-layers/day-writing-user/layer-hand-right.png'
 import dayWritingUserReference from '../../../assets/concept-art/focus-room-day-writing-user-gaze-concept.webp'
 import nightReadingFocusedBase from '../../../assets/focus-room-layers/night-reading-focused/base.webp'
-import nightReadingFocusedHead from '../../../assets/focus-room-layers/night-reading-focused/layer-head.png'
+import nightReadingFocusedEyeIrises from '../../../assets/focus-room-layers/night-reading-focused/layer-eye-irises.png'
+import nightReadingFocusedHead from '../../../assets/focus-room-layers/night-reading-focused/layer-head-eye-base.png'
 import nightReadingFocusedLeftHand from '../../../assets/focus-room-layers/night-reading-focused/layer-hand-left.png'
 import nightReadingFocusedRightHand from '../../../assets/focus-room-layers/night-reading-focused/layer-hand-right.png'
 import nightReadingFocusedReference from '../../../assets/concept-art/focus-room-night-reading-concept.webp'
 import nightReadingUserBase from '../../../assets/focus-room-layers/night-reading-user/base.webp'
-import nightReadingUserHead from '../../../assets/focus-room-layers/night-reading-user/layer-head.png'
+import nightReadingUserEyeIrises from '../../../assets/focus-room-layers/night-reading-user/layer-eye-irises.png'
+import nightReadingUserHead from '../../../assets/focus-room-layers/night-reading-user/layer-head-eye-base.png'
 import nightReadingUserLeftHand from '../../../assets/focus-room-layers/night-reading-user/layer-hand-left.png'
 import nightReadingUserRightHand from '../../../assets/focus-room-layers/night-reading-user/layer-hand-right.png'
 import nightReadingUserReference from '../../../assets/concept-art/focus-room-night-reading-user-gaze-concept.webp'
 import nightTypingFocusedBase from '../../../assets/focus-room-layers/night-typing-focused/base.webp'
-import nightTypingFocusedHead from '../../../assets/focus-room-layers/night-typing-focused/layer-head.png'
+import nightTypingFocusedEyeIrises from '../../../assets/focus-room-layers/night-typing-focused/layer-eye-irises.png'
+import nightTypingFocusedHead from '../../../assets/focus-room-layers/night-typing-focused/layer-head-eye-base.png'
 import nightTypingFocusedLeftHand from '../../../assets/focus-room-layers/night-typing-focused/layer-hand-left.png'
 import nightTypingFocusedRightHand from '../../../assets/focus-room-layers/night-typing-focused/layer-hand-right.png'
 import nightTypingFocusedReference from '../../../assets/concept-art/focus-room-night-typing-concept.webp'
 import nightTypingUserBase from '../../../assets/focus-room-layers/night-typing-user/base.webp'
-import nightTypingUserHead from '../../../assets/focus-room-layers/night-typing-user/layer-head.png'
+import nightTypingUserEyeIrises from '../../../assets/focus-room-layers/night-typing-user/layer-eye-irises.png'
+import nightTypingUserHead from '../../../assets/focus-room-layers/night-typing-user/layer-head-eye-base.png'
 import nightTypingUserLeftHand from '../../../assets/focus-room-layers/night-typing-user/layer-hand-left.png'
 import nightTypingUserRightHand from '../../../assets/focus-room-layers/night-typing-user/layer-hand-right.png'
 import nightTypingUserReference from '../../../assets/concept-art/focus-room-night-typing-user-gaze-concept.webp'
 import nightWritingFocusedBase from '../../../assets/focus-room-layers/night-writing-focused/base.webp'
-import nightWritingFocusedHead from '../../../assets/focus-room-layers/night-writing-focused/layer-head.png'
+import nightWritingFocusedEyeIrises from '../../../assets/focus-room-layers/night-writing-focused/layer-eye-irises.png'
+import nightWritingFocusedHead from '../../../assets/focus-room-layers/night-writing-focused/layer-head-eye-base.png'
 import nightWritingFocusedLeftHand from '../../../assets/focus-room-layers/night-writing-focused/layer-hand-left.png'
 import nightWritingFocusedRightHand from '../../../assets/focus-room-layers/night-writing-focused/layer-hand-right.png'
 import nightWritingFocusedReference from '../../../assets/concept-art/focus-room-night-desk-concept.webp'
 import nightWritingUserBase from '../../../assets/focus-room-layers/night-writing-user/base.webp'
-import nightWritingUserHead from '../../../assets/focus-room-layers/night-writing-user/layer-head.png'
+import nightWritingUserEyeIrises from '../../../assets/focus-room-layers/night-writing-user/layer-eye-irises.png'
+import nightWritingUserHead from '../../../assets/focus-room-layers/night-writing-user/layer-head-eye-base.png'
 import nightWritingUserLeftHand from '../../../assets/focus-room-layers/night-writing-user/layer-hand-left.png'
 import nightWritingUserRightHand from '../../../assets/focus-room-layers/night-writing-user/layer-hand-right.png'
 import nightWritingUserReference from '../../../assets/concept-art/focus-room-night-writing-user-gaze-concept.webp'
@@ -78,14 +84,17 @@ interface SeparatedSceneEyeLayer {
   readonly source: string
 }
 
-const createDayUserEyeLayer = (targets: readonly PixiScenePoint[]): SeparatedSceneEyeLayer => ({
+const createTranslationEyeLayer = (
+  targets: readonly PixiScenePoint[],
+  source = dayReadingUserEyeIrises,
+): SeparatedSceneEyeLayer => ({
   motion: {
     kind: 'translation',
     targets,
     transitionSeconds: 0.04,
     travel: {maximumSeconds: 3.2, minimumSeconds: 1.4},
   },
-  source: dayReadingUserEyeIrises,
+  source,
 })
 
 const createSeparatedScene = (
@@ -166,7 +175,7 @@ export const GENERATED_LAYER_SCENES = {
       rightHand: dayReadingUserRightHand,
     },
     {head: {x: 1050, y: 425}, leftHand: {x: 735, y: 710}, rightHand: {x: 1060, y: 730}},
-    createDayUserEyeLayer([
+    createTranslationEyeLayer([
       {x: 0, y: 0},
       {x: -0.45, y: 0},
       {x: 0.45, y: 0},
@@ -250,7 +259,7 @@ export const GENERATED_LAYER_SCENES = {
       rightHand: dayTypingUserRightHand,
     },
     {head: {x: 1045, y: 430}, leftHand: {x: 755, y: 710}, rightHand: {x: 1015, y: 725}},
-    createDayUserEyeLayer([
+    createTranslationEyeLayer([
       {x: 0, y: 0},
       {x: -0.45, y: 0},
       {x: 0.45, y: 0},
@@ -288,7 +297,7 @@ export const GENERATED_LAYER_SCENES = {
       rightHand: dayWritingUserRightHand,
     },
     {head: {x: 1050, y: 425}, leftHand: {x: 700, y: 690}, rightHand: {x: 1030, y: 715}},
-    createDayUserEyeLayer([
+    createTranslationEyeLayer([
       {x: 0, y: 0},
       {x: -0.45, y: 0},
       {x: 0.45, y: 0},
@@ -326,6 +335,41 @@ export const GENERATED_LAYER_SCENES = {
       rightHand: nightReadingFocusedRightHand,
     },
     {head: {x: 1050, y: 425}, leftHand: {x: 735, y: 710}, rightHand: {x: 1060, y: 730}},
+    {
+      motion: {
+        kind: 'translation',
+        targets: [
+          {x: 0, y: 0},
+          {x: -0.45, y: 0},
+          {x: 0.45, y: 0},
+          {x: 0, y: -0.225},
+          {x: 0, y: 0.225},
+          {x: -0.32, y: -0.16},
+          {x: 0.32, y: -0.16},
+          {x: -0.32, y: 0.16},
+          {x: 0.32, y: 0.16},
+          {x: -0.9, y: 0},
+          {x: 0.9, y: 0},
+          {x: 0, y: -0.45},
+          {x: 0, y: 0.45},
+          {x: -0.64, y: -0.32},
+          {x: 0.64, y: -0.32},
+          {x: -0.64, y: 0.32},
+          {x: 0.64, y: 0.32},
+          {x: -1.5, y: 0},
+          {x: 1.5, y: 0},
+          {x: 0, y: -0.75},
+          {x: 0, y: 0.75},
+          {x: -1.06, y: -0.53},
+          {x: 1.06, y: -0.53},
+          {x: -1.06, y: 0.53},
+          {x: 1.06, y: 0.53},
+        ],
+        transitionSeconds: 0.04,
+        travel: {maximumSeconds: 3.2, minimumSeconds: 1.4},
+      },
+      source: nightReadingFocusedEyeIrises,
+    },
   ),
   'night-reading-user': createSeparatedScene(
     'night-reading-user',
@@ -337,6 +381,36 @@ export const GENERATED_LAYER_SCENES = {
       rightHand: nightReadingUserRightHand,
     },
     {head: {x: 1050, y: 425}, leftHand: {x: 735, y: 710}, rightHand: {x: 1060, y: 730}},
+    createTranslationEyeLayer(
+      [
+        {x: 0, y: 0},
+        {x: -0.45, y: 0},
+        {x: 0.45, y: 0},
+        {x: 0, y: -0.225},
+        {x: 0, y: 0.225},
+        {x: -0.32, y: -0.16},
+        {x: 0.32, y: -0.16},
+        {x: -0.32, y: 0.16},
+        {x: 0.32, y: 0.16},
+        {x: -0.9, y: 0},
+        {x: 0.9, y: 0},
+        {x: 0, y: -0.45},
+        {x: 0, y: 0.45},
+        {x: -0.64, y: -0.32},
+        {x: 0.64, y: -0.32},
+        {x: -0.64, y: 0.32},
+        {x: 0.64, y: 0.32},
+        {x: -1.5, y: 0},
+        {x: 1.5, y: 0},
+        {x: 0, y: -0.75},
+        {x: 0, y: 0.75},
+        {x: -1.06, y: -0.53},
+        {x: 1.06, y: -0.53},
+        {x: -1.06, y: 0.53},
+        {x: 1.06, y: 0.53},
+      ],
+      nightReadingUserEyeIrises,
+    ),
   ),
   'night-typing-focused': createSeparatedScene(
     'night-typing-focused',
@@ -348,6 +422,36 @@ export const GENERATED_LAYER_SCENES = {
       rightHand: nightTypingFocusedRightHand,
     },
     {head: {x: 1045, y: 430}, leftHand: {x: 755, y: 710}, rightHand: {x: 1015, y: 725}},
+    createTranslationEyeLayer(
+      [
+        {x: 0, y: 0},
+        {x: -0.45, y: 0},
+        {x: 0.45, y: 0},
+        {x: 0, y: -0.225},
+        {x: 0, y: 0.225},
+        {x: -0.32, y: -0.16},
+        {x: 0.32, y: -0.16},
+        {x: -0.32, y: 0.16},
+        {x: 0.32, y: 0.16},
+        {x: -0.9, y: 0},
+        {x: 0.9, y: 0},
+        {x: 0, y: -0.45},
+        {x: 0, y: 0.45},
+        {x: -0.64, y: -0.32},
+        {x: 0.64, y: -0.32},
+        {x: -0.64, y: 0.32},
+        {x: 0.64, y: 0.32},
+        {x: -1.5, y: 0},
+        {x: 1.5, y: 0},
+        {x: 0, y: -0.75},
+        {x: 0, y: 0.75},
+        {x: -1.06, y: -0.53},
+        {x: 1.06, y: -0.53},
+        {x: -1.06, y: 0.53},
+        {x: 1.06, y: 0.53},
+      ],
+      nightTypingFocusedEyeIrises,
+    ),
   ),
   'night-typing-user': createSeparatedScene(
     'night-typing-user',
@@ -359,6 +463,36 @@ export const GENERATED_LAYER_SCENES = {
       rightHand: nightTypingUserRightHand,
     },
     {head: {x: 1045, y: 430}, leftHand: {x: 755, y: 710}, rightHand: {x: 1015, y: 725}},
+    createTranslationEyeLayer(
+      [
+        {x: 0, y: 0},
+        {x: -0.45, y: 0},
+        {x: 0.45, y: 0},
+        {x: 0, y: -0.225},
+        {x: 0, y: 0.225},
+        {x: -0.32, y: -0.16},
+        {x: 0.32, y: -0.16},
+        {x: -0.32, y: 0.16},
+        {x: 0.32, y: 0.16},
+        {x: -0.9, y: 0},
+        {x: 0.9, y: 0},
+        {x: 0, y: -0.45},
+        {x: 0, y: 0.45},
+        {x: -0.64, y: -0.32},
+        {x: 0.64, y: -0.32},
+        {x: -0.64, y: 0.32},
+        {x: 0.64, y: 0.32},
+        {x: -1.5, y: 0},
+        {x: 1.5, y: 0},
+        {x: 0, y: -0.75},
+        {x: 0, y: 0.75},
+        {x: -1.06, y: -0.53},
+        {x: 1.06, y: -0.53},
+        {x: -1.06, y: 0.53},
+        {x: 1.06, y: 0.53},
+      ],
+      nightTypingUserEyeIrises,
+    ),
   ),
   'night-writing-focused': createSeparatedScene(
     'night-writing-focused',
@@ -370,6 +504,36 @@ export const GENERATED_LAYER_SCENES = {
       rightHand: nightWritingFocusedRightHand,
     },
     {head: {x: 1050, y: 425}, leftHand: {x: 700, y: 690}, rightHand: {x: 1030, y: 715}},
+    createTranslationEyeLayer(
+      [
+        {x: 0, y: 0},
+        {x: -0.45, y: 0},
+        {x: 0.45, y: 0},
+        {x: 0, y: -0.225},
+        {x: 0, y: 0.225},
+        {x: -0.32, y: -0.16},
+        {x: 0.32, y: -0.16},
+        {x: -0.32, y: 0.16},
+        {x: 0.32, y: 0.16},
+        {x: -0.9, y: 0},
+        {x: 0.9, y: 0},
+        {x: 0, y: -0.45},
+        {x: 0, y: 0.45},
+        {x: -0.64, y: -0.32},
+        {x: 0.64, y: -0.32},
+        {x: -0.64, y: 0.32},
+        {x: 0.64, y: 0.32},
+        {x: -1.5, y: 0},
+        {x: 1.5, y: 0},
+        {x: 0, y: -0.75},
+        {x: 0, y: 0.75},
+        {x: -1.06, y: -0.53},
+        {x: 1.06, y: -0.53},
+        {x: -1.06, y: 0.53},
+        {x: 1.06, y: 0.53},
+      ],
+      nightWritingFocusedEyeIrises,
+    ),
   ),
   'night-writing-user': createSeparatedScene(
     'night-writing-user',
@@ -381,6 +545,36 @@ export const GENERATED_LAYER_SCENES = {
       rightHand: nightWritingUserRightHand,
     },
     {head: {x: 1050, y: 425}, leftHand: {x: 700, y: 690}, rightHand: {x: 1030, y: 715}},
+    createTranslationEyeLayer(
+      [
+        {x: 0, y: 0},
+        {x: -0.45, y: 0},
+        {x: 0.45, y: 0},
+        {x: 0, y: -0.225},
+        {x: 0, y: 0.225},
+        {x: -0.32, y: -0.16},
+        {x: 0.32, y: -0.16},
+        {x: -0.32, y: 0.16},
+        {x: 0.32, y: 0.16},
+        {x: -0.9, y: 0},
+        {x: 0.9, y: 0},
+        {x: 0, y: -0.45},
+        {x: 0, y: 0.45},
+        {x: -0.64, y: -0.32},
+        {x: 0.64, y: -0.32},
+        {x: -0.64, y: 0.32},
+        {x: 0.64, y: 0.32},
+        {x: -1.5, y: 0},
+        {x: 1.5, y: 0},
+        {x: 0, y: -0.75},
+        {x: 0, y: 0.75},
+        {x: -1.06, y: -0.53},
+        {x: 1.06, y: -0.53},
+        {x: -1.06, y: 0.53},
+        {x: 1.06, y: 0.53},
+      ],
+      nightWritingUserEyeIrises,
+    ),
   ),
 } as const satisfies Record<
   Exclude<FocusRoomSceneId, 'day-reading-focused' | 'day-writing-focused'>,
