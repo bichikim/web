@@ -83,7 +83,7 @@ describe('useChatVoice', () => {
     await chatVoice.controller.prepare()
     chatVoice.controller.arm()
     await chatVoice.controller.speak(' 안녕하세요. ')
-    chatVoice.controller.finish()
+    const playback = chatVoice.controller.finish()
 
     expect(client.initialize).toHaveBeenCalledWith(expect.objectContaining({modelId: 'full'}))
     expect(client.generateStream).toHaveBeenCalledWith({
@@ -95,6 +95,7 @@ describe('useChatVoice', () => {
     expect(chatVoice.controller.isPlaying()).toBe(true)
 
     players[0]?.end()
+    await playback
     expect(chatVoice.controller.isPlaying()).toBe(false)
     expect(chatVoice.controller.statusMessage()).toBe('답변 음성 재생을 마쳤어요.')
     chatVoice.dispose()
@@ -106,17 +107,60 @@ describe('useChatVoice', () => {
     const chatVoice = createTestRoot(runtime)
 
     chatVoice.controller.arm()
-    await chatVoice.controller.speak('준비 뒤 재생')
+    const speech = chatVoice.controller.speak('준비 뒤 재생')
     chatVoice.controller.finish()
     expect(client.generateStream).not.toHaveBeenCalled()
 
     await chatVoice.controller.prepare()
+    await speech
 
     expect(client.generateStream).toHaveBeenCalledWith({
       text: '준비 뒤 재생',
       voice: {id: 'Yuna', kind: 'preset'},
     })
     expect(players[0]?.enqueue).toHaveBeenCalledTimes(1)
+    chatVoice.dispose()
+  })
+
+  it('should share an in-flight model preparation with concurrent callers', async () => {
+    let releaseInitialization: () => void = () => undefined
+    const initialization = new Promise<void>((resolve) => {
+      releaseInitialization = resolve
+    })
+    const client = createClient()
+    vi.mocked(client.initialize).mockImplementationOnce(async () => {
+      await initialization
+      return successResult(undefined)
+    })
+    const {runtime} = createRuntime(client)
+    const chatVoice = createTestRoot(runtime)
+
+    const firstPreparation = chatVoice.controller.prepare()
+    const secondPreparation = chatVoice.controller.prepare()
+
+    expect(secondPreparation).toBe(firstPreparation)
+    expect(client.initialize).toHaveBeenCalledOnce()
+
+    releaseInitialization()
+    await Promise.all([firstPreparation, secondPreparation])
+
+    expect(chatVoice.controller.state().status).toBe('ready')
+    chatVoice.dispose()
+  })
+
+  it('should play an answer with the requested preset voice', async () => {
+    const client = createClient()
+    const {runtime} = createRuntime(client)
+    const chatVoice = createTestRoot(runtime)
+
+    await chatVoice.controller.prepare()
+    chatVoice.controller.arm()
+    await chatVoice.controller.speak('다른 목소리', 'M1')
+
+    expect(client.generateStream).toHaveBeenCalledWith({
+      text: '다른 목소리',
+      voice: {id: 'M1', kind: 'preset'},
+    })
     chatVoice.dispose()
   })
 
@@ -231,10 +275,45 @@ describe('useChatVoice', () => {
     chatVoice.dispose()
   })
 
+  it('should settle queued speech when the active generation fails', async () => {
+    let releaseFailure: () => void = () => undefined
+    const failureReady = new Promise<void>((resolve) => {
+      releaseFailure = resolve
+    })
+    const client = createClient()
+    vi.mocked(client.generateStream).mockImplementationOnce(async function* generateStream() {
+      await failureReady
+      yield failureResult({
+        code: 'worker-failed',
+        detail: '음성 생성 실패',
+        phase: 'generate',
+        retryable: true,
+      })
+    })
+    const {runtime} = createRuntime(client)
+    const chatVoice = createTestRoot(runtime)
+
+    await chatVoice.controller.prepare()
+    chatVoice.controller.arm()
+    const activeSpeech = chatVoice.controller.speak('실패할 문장')
+    const queuedSpeech = chatVoice.controller.speak('대기 중인 문장')
+    releaseFailure()
+
+    await Promise.all([activeSpeech, queuedSpeech])
+
+    expect(client.generateStream).toHaveBeenCalledOnce()
+    expect(chatVoice.controller.state().status).toBe('error')
+    chatVoice.dispose()
+  })
+
   it('should preserve sentence order in one continuous audio queue', async () => {
     let releaseFirstSentence: () => void = () => undefined
+    let releaseSecondSentence: () => void = () => undefined
     const firstSentenceReady = new Promise<void>((resolve) => {
       releaseFirstSentence = resolve
+    })
+    const secondSentenceReady = new Promise<void>((resolve) => {
+      releaseSecondSentence = resolve
     })
     const client = createClient()
     vi.mocked(client.generateStream)
@@ -244,6 +323,7 @@ describe('useChatVoice', () => {
         yield successResult({audio: createAudio(), type: 'complete' as const})
       })
       .mockImplementationOnce(async function* secondSentence() {
+        await secondSentenceReady
         yield successResult({audio: createAudioChunk(), type: 'chunk' as const})
         yield successResult({audio: createAudio(), type: 'complete' as const})
       })
@@ -254,9 +334,19 @@ describe('useChatVoice', () => {
     chatVoice.controller.arm()
     const firstSpeech = chatVoice.controller.speak('첫 문장입니다.')
     const secondSpeech = chatVoice.controller.speak('두 번째 문장입니다.')
+    let secondSpeechCompleted = false
+    secondSpeech.then(() => {
+      secondSpeechCompleted = true
+    })
     chatVoice.controller.finish()
     releaseFirstSentence()
-    await Promise.all([firstSpeech, secondSpeech])
+    await firstSpeech
+    await vi.waitFor(() => expect(client.generateStream).toHaveBeenCalledTimes(2))
+
+    expect(secondSpeechCompleted).toBe(false)
+
+    releaseSecondSentence()
+    await secondSpeech
     await vi.waitFor(() => expect(players[0]?.finish).toHaveBeenCalledTimes(1))
 
     expect(client.generateStream).toHaveBeenNthCalledWith(1, {

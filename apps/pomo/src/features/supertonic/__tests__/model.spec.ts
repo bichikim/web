@@ -4,7 +4,6 @@ import {
   getSupertonicAssetUrl,
   getSupertonicModel,
   getSupertonicModelFileUrl,
-  getSupertonicVoiceUrl,
   SUPERTONIC_MODELS,
   SUPERTONIC_VOICES,
 } from '../model'
@@ -39,8 +38,6 @@ describe('Supertonic model manifest', () => {
     expect(getSupertonicAssetUrl('onnx/tts.json')).toContain(
       '/Supertone/supertonic-3/resolve/3cadd1e/onnx/tts.json',
     )
-    expect(getSupertonicVoiceUrl('F2')).toContain('/voice_styles/F2.json')
-    expect(getSupertonicVoiceUrl('Yuna')).toBe('/voice_styles/Yuna.json')
   })
 
   it('should expose all fixed voices and reject unsupported model identifiers at runtime', () => {
@@ -51,15 +48,10 @@ describe('Supertonic model manifest', () => {
       id: 'Yuna',
       label: 'Yuna',
       recommended: true,
-      url: '/voice_styles/Yuna.json',
     })
     expect(SUPERTONIC_VOICES.find((voice) => voice.id === 'F1')).toMatchObject({
       recommended: false,
-      url: expect.stringContaining('/voice_styles/F1.json'),
     })
-    expect(() => Reflect.apply(getSupertonicVoiceUrl, null, ['unknown'])).toThrow(
-      '지원하지 않는 Supertonic 목소리입니다',
-    )
     expect(() => Reflect.apply(getSupertonicModel, null, ['unknown'])).toThrow(
       '지원하지 않는 Supertonic 모델입니다',
     )

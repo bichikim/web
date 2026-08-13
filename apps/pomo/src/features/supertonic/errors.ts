@@ -32,7 +32,7 @@ export interface GenerationBusyError extends SupertonicErrorBase {
 }
 
 export interface InvalidModelDataError extends SupertonicErrorBase {
-  readonly asset: 'config' | 'indexer' | 'voice'
+  readonly asset: 'config' | 'indexer' | 'manifest' | 'voice'
   readonly code: 'invalid-model-data'
   readonly phase: 'validate'
   readonly retryable: false

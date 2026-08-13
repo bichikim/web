@@ -10,6 +10,7 @@ import {
   type SupertonicAudioPlayer,
   type SupertonicClient,
   type SupertonicModelId,
+  type SupertonicVoiceId,
 } from '../supertonic'
 
 const MAXIMUM_PROGRESS = 100
@@ -62,11 +63,11 @@ export interface UseChatVoiceProps {
 export interface ChatVoiceController {
   readonly arm: () => void
   readonly canPrepare: Accessor<boolean>
-  readonly finish: () => void
+  readonly finish: () => Promise<void>
   readonly isGenerating: Accessor<boolean>
   readonly isPlaying: Accessor<boolean>
   readonly prepare: () => Promise<void>
-  readonly speak: (text: string) => Promise<void>
+  readonly speak: (text: string, voiceId?: SupertonicVoiceId) => Promise<void>
   readonly state: Accessor<ChatVoiceState>
   readonly statusMessage: Accessor<string>
   readonly stop: () => void
@@ -100,9 +101,9 @@ interface CreateSpeechQueueOptions {
 interface SpeechQueueController {
   readonly arm: () => void
   readonly dispose: () => void
-  readonly finish: () => void
+  readonly finish: () => Promise<void>
   readonly run: () => Promise<void>
-  readonly speak: (text: string) => Promise<void>
+  readonly speak: (text: string, voiceId?: SupertonicVoiceId) => Promise<void>
   readonly stop: () => void
 }
 
@@ -111,8 +112,48 @@ const DEFAULT_RUNTIME: ChatVoiceRuntime = {
   createClient: createSupertonicClient,
 }
 
+interface QueuedSpeech {
+  readonly onComplete: () => void
+  readonly text: string
+  readonly voiceId: SupertonicVoiceId
+}
+
+interface PlaybackCompletionController {
+  readonly complete: () => void
+  readonly reset: () => void
+  readonly wait: () => Promise<void>
+}
+
+const DEFAULT_VOICE_ID: SupertonicVoiceId = 'Yuna'
+
 const reportUnexpectedError = (error: unknown) => {
   console.error('Unexpected chat voice failure', error)
+}
+
+const completeQueuedSpeech = (speechQueue: Array<QueuedSpeech>) => {
+  for (const speech of speechQueue) {
+    speech.onComplete()
+  }
+
+  speechQueue.length = 0
+}
+
+const createPlaybackCompletion = (): PlaybackCompletionController => {
+  let completion = Promise.resolve()
+  let resolve: (() => void) | null = null
+
+  return {
+    complete: () => {
+      resolve?.()
+      resolve = null
+    },
+    reset: () => {
+      completion = new Promise<void>((complete) => {
+        resolve = complete
+      })
+    },
+    wait: () => completion,
+  }
 }
 
 const getStatusMessage = (state: ChatVoiceState) => {
@@ -135,66 +176,83 @@ const disposePlayer = (reference: PlayerReference) => {
   reference.current = null
 }
 
-const createPrepare = (options: CreatePrepareOptions) => async () => {
-  if (!options.canPrepare()) {
-    return
-  }
+const createPrepare = (options: CreatePrepareOptions) => {
+  let preparation: Promise<void> | null = null
 
-  options.clientReference.current?.dispose()
-  const client = options.runtime.createClient()
-  options.clientReference.current = client
-  options.setState({progress: 0, status: 'preparing'})
+  const run = async () => {
+    options.clientReference.current?.dispose()
+    const client = options.runtime.createClient()
+    options.clientReference.current = client
+    options.setState({progress: 0, status: 'preparing'})
 
-  const initializeOptions: InitializeSupertonicOptions = {
-    modelId: options.modelId,
-    onProgress: (progress) => {
-      if (options.clientReference.current === client) {
+    const initializeOptions: InitializeSupertonicOptions = {
+      modelId: options.modelId,
+      onProgress: (progress) => {
+        if (options.clientReference.current === client) {
+          options.setState({
+            progress: Math.min(
+              MAXIMUM_PROGRESS,
+              Math.round((progress.loadedBytes / progress.totalBytes) * MAXIMUM_PROGRESS),
+            ),
+            status: 'preparing',
+          })
+        }
+      },
+      onStatus: () => undefined,
+    }
+
+    try {
+      const result = await client.initialize(initializeOptions)
+
+      if (options.clientReference.current !== client) {
+        return
+      }
+
+      if (!result.ok) {
         options.setState({
-          progress: Math.min(
-            MAXIMUM_PROGRESS,
-            Math.round((progress.loadedBytes / progress.totalBytes) * MAXIMUM_PROGRESS),
-          ),
-          status: 'preparing',
+          message: getSupertonicErrorMessage(result.error),
+          modelReady: false,
+          status: 'error',
+        })
+        return
+      }
+
+      options.setState({message: '답변 음성 자동 재생 준비가 끝났어요.', status: 'ready'})
+      await options.runQueuedSpeech()
+    } catch (error: unknown) {
+      if (options.clientReference.current === client) {
+        reportUnexpectedError(error)
+        options.setState({
+          message: '답변 음성 모델을 준비하는 중 예상하지 못한 문제가 발생했어요.',
+          modelReady: false,
+          status: 'error',
         })
       }
-    },
-    onStatus: () => undefined,
+    }
   }
 
-  try {
-    const result = await client.initialize(initializeOptions)
-
-    if (options.clientReference.current !== client) {
-      return
+  return () => {
+    if (preparation !== null) {
+      return preparation
     }
 
-    if (!result.ok) {
-      options.setState({
-        message: getSupertonicErrorMessage(result.error),
-        modelReady: false,
-        status: 'error',
-      })
-      return
+    if (!options.canPrepare()) {
+      return Promise.resolve()
     }
 
-    options.setState({message: '답변 음성 자동 재생 준비가 끝났어요.', status: 'ready'})
-    await options.runQueuedSpeech()
-  } catch (error: unknown) {
-    if (options.clientReference.current === client) {
-      reportUnexpectedError(error)
-      options.setState({
-        message: '답변 음성 모델을 준비하는 중 예상하지 못한 문제가 발생했어요.',
-        modelReady: false,
-        status: 'error',
-      })
-    }
+    preparation = run().finally(() => {
+      preparation = null
+    })
+
+    return preparation
   }
 }
 
 const createSpeechQueue = (options: CreateSpeechQueueOptions): SpeechQueueController => {
   const armedPlayer: PlayerReference = {current: null}
   const activePlayer: PlayerReference = {current: null}
-  const speechQueue: Array<string> = []
+  const speechQueue: Array<QueuedSpeech> = []
+  const playbackCompletion = createPlaybackCompletion()
   let generation: Promise<void> | null = null
   let playerFinished = false
   let queueFinished = true
@@ -205,6 +263,7 @@ const createSpeechQueue = (options: CreateSpeechQueueOptions): SpeechQueueContro
       onPlaybackEnd: () => {
         if (session === playerSession) {
           activePlayer.current = null
+          playbackCompletion.complete()
           options.setState((currentState) =>
             currentState.status === 'speaking'
               ? {message: '답변 음성 재생을 마쳤어요.', status: 'ready'}
@@ -229,9 +288,9 @@ const createSpeechQueue = (options: CreateSpeechQueueOptions): SpeechQueueContro
 
   const run = () => {
     const client = options.clientReference.current
-    const text = speechQueue.at(0)
+    const speech = speechQueue.at(0)
 
-    if (generation !== null || client === null || text === undefined || !options.isModelReady()) {
+    if (generation !== null || client === null || speech === undefined || !options.isModelReady()) {
       return generation ?? Promise.resolve()
     }
 
@@ -249,16 +308,17 @@ const createSpeechQueue = (options: CreateSpeechQueueOptions): SpeechQueueContro
     generation = (async () => {
       try {
         for await (const result of client.generateStream({
-          text,
-          voice: {id: 'Yuna', kind: 'preset'},
+          text: speech.text,
+          voice: {id: speech.voiceId, kind: 'preset'},
         })) {
           if (session === playerSession) {
             if (!result.ok) {
-              speechQueue.length = 0
+              completeQueuedSpeech(speechQueue)
               queueFinished = true
               playerFinished = true
               activePlayer.current = null
               player.dispose()
+              playbackCompletion.complete()
               options.setState({
                 message: getSupertonicErrorMessage(result.error),
                 modelReady: true,
@@ -279,11 +339,12 @@ const createSpeechQueue = (options: CreateSpeechQueueOptions): SpeechQueueContro
         }
       } catch (error: unknown) {
         if (session === playerSession) {
-          speechQueue.length = 0
+          completeQueuedSpeech(speechQueue)
           queueFinished = true
           playerFinished = true
           activePlayer.current = null
           player.dispose()
+          playbackCompletion.complete()
           reportUnexpectedError(error)
           options.setState({
             message: '답변 음성을 만드는 중 예상하지 못한 문제가 발생했어요.',
@@ -292,6 +353,7 @@ const createSpeechQueue = (options: CreateSpeechQueueOptions): SpeechQueueContro
           })
         }
       } finally {
+        speech.onComplete()
         generation = null
         run().catch(reportUnexpectedError)
         finishPlayerIfReady()
@@ -303,7 +365,7 @@ const createSpeechQueue = (options: CreateSpeechQueueOptions): SpeechQueueContro
 
   const stop = () => {
     session += 1
-    speechQueue.length = 0
+    completeQueuedSpeech(speechQueue)
     playerFinished = true
     queueFinished = true
     if (generation !== null) {
@@ -311,6 +373,7 @@ const createSpeechQueue = (options: CreateSpeechQueueOptions): SpeechQueueContro
     }
     disposePlayer(armedPlayer)
     disposePlayer(activePlayer)
+    playbackCompletion.complete()
 
     if (options.isModelReady()) {
       options.setState({message: '답변 음성 재생을 중지했어요.', status: 'ready'})
@@ -321,28 +384,35 @@ const createSpeechQueue = (options: CreateSpeechQueueOptions): SpeechQueueContro
     stop()
     playerFinished = false
     queueFinished = false
+    playbackCompletion.reset()
     armedPlayer.current = createPlayer(session)
   }
 
-  const speak = async (text: string) => {
+  const speak = (text: string, voiceId: SupertonicVoiceId = DEFAULT_VOICE_ID) => {
     const normalizedText = text.trim()
 
-    if (normalizedText.length > 0) {
-      speechQueue.push(normalizedText)
-      await run()
+    if (normalizedText.length === 0) {
+      return Promise.resolve()
     }
+
+    return new Promise<void>((resolve) => {
+      speechQueue.push({onComplete: resolve, text: normalizedText, voiceId})
+      run().catch(reportUnexpectedError)
+    })
   }
 
   const finish = () => {
     queueFinished = true
     finishPlayerIfReady()
+    return playbackCompletion.wait()
   }
 
   const dispose = () => {
     session += 1
-    speechQueue.length = 0
+    completeQueuedSpeech(speechQueue)
     disposePlayer(armedPlayer)
     disposePlayer(activePlayer)
+    playbackCompletion.complete()
   }
 
   return {arm, dispose, finish, run, speak, stop}

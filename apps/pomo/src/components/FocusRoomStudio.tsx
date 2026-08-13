@@ -15,6 +15,7 @@ import {
   type ScenePeriod,
   type SceneTimeMode,
 } from '../features/focus-room-time'
+import {usePomoSay} from '../features/pomo-webmcp'
 import type {PixiLayerSceneDefinition} from '../features/focus-room-animation/layer-scene'
 import {getFocusRoomScene} from '../features/focus-room-animation/scene-catalog'
 import {FocusRoomMusicPlayer} from './FocusRoomMusicPlayer'
@@ -148,6 +149,7 @@ const FocusRoomStudioContent = () => {
   const [isSceneLoading, setIsSceneLoading] = createSignal(true)
   const [hasSceneRendered, setHasSceneRendered] = createSignal(false)
   const [isPlayerExpanded, setIsPlayerExpanded] = createSignal(false)
+  const pomoSay = usePomoSay({onBeforeSpeech: events.onStopEntryPlayback})
   const time = createMemo(() => resolveScenePeriod(timeMode(), automaticPeriod()))
   const selectedScene = createMemo(() => getSceneAsset(time(), activity(), gaze()))
   const handleLoadingChange = (isLoading: boolean) => {
@@ -201,7 +203,11 @@ const FocusRoomStudioContent = () => {
       <div
         class="focus-room-media-dock"
         data-dialogue-active={
-          events.activeText() === null && !events.isEntryPlaybackBlocked() ? undefined : ''
+          events.activeText() === null &&
+          pomoSay.speechText() === null &&
+          !events.isEntryPlaybackBlocked()
+            ? undefined
+            : ''
         }
         data-player-expanded={isPlayerExpanded() ? '' : undefined}
       >
@@ -209,7 +215,10 @@ const FocusRoomStudioContent = () => {
           expanded={isPlayerExpanded()}
           onExpandedChange={setIsPlayerExpanded}
         />
-        <FocusRoomDialoguePlayer />
+        <FocusRoomDialoguePlayer
+          externalText={pomoSay.speechText()}
+          onStopExternalSpeech={pomoSay.stop}
+        />
       </div>
       <SceneToolbar
         activity={activity()}

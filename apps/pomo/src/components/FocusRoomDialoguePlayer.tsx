@@ -3,8 +3,23 @@ import {For, Show} from 'solid-js'
 import {useFocusRoomEvents} from '../features/focus-room-dialogue/FocusRoomEventContext'
 import './FocusRoomDialoguePlayer.css'
 
-export const FocusRoomDialoguePlayer = () => {
+export interface FocusRoomDialoguePlayerProps {
+  readonly externalText?: string | null
+  readonly onStopExternalSpeech?: () => void
+}
+
+export const FocusRoomDialoguePlayer = (props: FocusRoomDialoguePlayerProps) => {
   const events = useFocusRoomEvents()
+  const isExternalSpeech = () => props.externalText !== undefined && props.externalText !== null
+  const text = () => props.externalText ?? events.activeText()
+  const handleStop = () => {
+    if (isExternalSpeech()) {
+      props.onStopExternalSpeech?.()
+      return
+    }
+
+    events.onStopEntryPlayback()
+  }
   const segmentPositions = () =>
     Array.from({length: events.activeSegmentCount()}, (_, position) => position)
   const progressLabel = () => {
@@ -21,14 +36,18 @@ export const FocusRoomDialoguePlayer = () => {
 
   return (
     <>
-      <Show when={events.activeText()}>
+      <Show when={text()}>
         {(text) => (
           <div class="focus-room-dialogue-bubble focus-room-static-focus-glass">
             <div class="focus-room-dialogue-bubble__header">
               <div class="focus-room-dialogue-bubble__speaker-group">
                 <span class="focus-room-dialogue-bubble__speaker">Pomo</span>
                 <Show
-                  when={events.activeSegmentCount() > 1 && events.activeSegmentPosition() !== null}
+                  when={
+                    !isExternalSpeech() &&
+                    events.activeSegmentCount() > 1 &&
+                    events.activeSegmentPosition() !== null
+                  }
                 >
                   <span
                     aria-label={progressLabel()}
@@ -47,11 +66,7 @@ export const FocusRoomDialoguePlayer = () => {
                   </span>
                 </Show>
               </div>
-              <button
-                class="focus-room-dialogue-bubble__stop"
-                onClick={events.onStopEntryPlayback}
-                type="button"
-              >
+              <button class="focus-room-dialogue-bubble__stop" onClick={handleStop} type="button">
                 <span aria-hidden="true" class="i-tabler-player-stop size-4" />
                 음성 중지
               </button>
@@ -62,7 +77,7 @@ export const FocusRoomDialoguePlayer = () => {
           </div>
         )}
       </Show>
-      <Show when={events.isEntryPlaybackBlocked()}>
+      <Show when={!isExternalSpeech() && events.isEntryPlaybackBlocked()}>
         <button
           class="focus-room-dialogue-bubble focus-room-dialogue-bubble--play focus-room-static-focus-glass"
           onClick={() => events.retryEntryPlayback()}
