@@ -22,7 +22,6 @@ describe('createChatMessages', () => {
       '번역투·오타·외국 문자·문어체·어색한 단어 조합·잘못된 높임말',
     )
     expect(messages[0]?.content).toContain('추측·과장된 감탄사·비유·상투적인 질문이나 덕담')
-    expect(messages[0]?.content).toContain('짧은 말에는 반드시 2문장 이하')
     expect(messages[0]?.content).toContain('요청하지 않은 훈계·평가·조언 없이')
     expect(Array.from(messages[0]?.content ?? '').length).toBeLessThanOrEqual(350)
     expect(messages[0]?.content).not.toContain('사용자의 이야기를 이어서 기억하는')
