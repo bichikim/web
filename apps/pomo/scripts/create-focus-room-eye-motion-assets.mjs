@@ -16,6 +16,22 @@ const scenes = [
     id: 'day-reading-focused',
     irisPaths: [
       [
+        'M910 315 C917 314 925 319 931 327',
+        'C936 334 936 340 933 343',
+        'C929 347 921 346 915 342',
+        'C909 338 906 331 906 324',
+        'C906 320 908 317 910 315 Z',
+      ].join(' '),
+      [
+        'M993 298 C1001 296 1008 301 1011 308',
+        'C1014 315 1013 323 1009 328',
+        'C1005 332 997 332 991 328',
+        'C985 324 982 316 983 309',
+        'C984 304 988 300 993 298 Z',
+      ].join(' '),
+    ],
+    removalPaths: [
+      [
         'M899 315 C905 308 916 308 926 314',
         'C936 320 940 334 936 343',
         'C932 352 921 354 910 349',
@@ -30,81 +46,23 @@ const scenes = [
         'C970 326 972 310 981 301 Z',
       ].join(' '),
     ],
-    highlights: [
-      {center: {x: 904, y: 324}, radius: 3},
-      {center: {x: 916, y: 320}, radius: 3},
-      {center: {x: 989, y: 315}, radius: 3},
-      {center: {x: 1003, y: 304}, radius: 4},
-    ],
-    irises: [
-      {center: {x: 916, y: 330}, radius: {x: 21, y: 23}},
-      {center: {x: 1002, y: 328}, radius: {x: 27, y: 32}},
-    ],
-    pupils: [
-      {center: {x: 916, y: 329}, radius: {x: 10, y: 13}},
-      {center: {x: 1001, y: 321}, radius: {x: 13, y: 17}},
-    ],
   },
 ]
 
-const createIrisMask = (scene) =>
+const createIrisMask = (scene) => createPathMask(scene.irisPaths, 0.4)
+
+const createRemovalMask = (scene) => createPathMask(scene.removalPaths, 0.55)
+
+const createPathMask = (paths, feather) =>
   sharp(
     Buffer.from(`<svg width="${IMAGE_WIDTH}" height="${IMAGE_HEIGHT}" xmlns="http://www.w3.org/2000/svg">
-      <defs><filter id="feather"><feGaussianBlur stdDeviation="0.55"/></filter></defs>
-      ${scene.irisPaths.map((irisPath) => `<path d="${irisPath}" fill="white" filter="url(#feather)"/>`).join('')}
+      ${paths.map((irisPath) => `<path d="${irisPath}" fill="white"/>`).join('')}
     </svg>`),
   )
     .greyscale()
-    .blur(0.55)
+    .blur(feather)
     .png()
     .toBuffer()
-
-const isInsideEllipse = (point, ellipse) => {
-  const x = (point.x - ellipse.center.x) / ellipse.radius.x
-  const y = (point.y - ellipse.center.y) / ellipse.radius.y
-  return x * x + y * y <= 1
-}
-
-const isInsideCircle = (point, circle) => {
-  const x = point.x - circle.center.x
-  const y = point.y - circle.center.y
-  return x * x + y * y <= circle.radius * circle.radius
-}
-
-async function createEyeLayerMask(scene, headSource) {
-  const {data, info} = await sharp(headSource)
-    .ensureAlpha()
-    .raw()
-    .toBuffer({resolveWithObject: true})
-  const mask = Buffer.alloc(IMAGE_WIDTH * IMAGE_HEIGHT)
-
-  for (let y = 0; y < IMAGE_HEIGHT; y += 1) {
-    for (let x = 0; x < IMAGE_WIDTH; x += 1) {
-      if (!scene.irises.some((iris) => isInsideEllipse({x, y}, iris))) {
-        continue
-      }
-
-      const index = y * IMAGE_WIDTH + x
-      const pixelIndex = index * info.channels
-      const red = data[pixelIndex]
-      const green = data[pixelIndex + 1]
-      const blue = data[pixelIndex + 2]
-      const point = {x, y}
-      const isBrownIris = red < 180 && red > green + 12 && green > blue + 4
-      const isPupil = scene.pupils.some((pupil) => isInsideEllipse(point, pupil))
-      const isHighlight = scene.highlights.some((highlight) => isInsideCircle(point, highlight))
-
-      if (isBrownIris || isPupil || isHighlight) {
-        mask[index] = 255
-      }
-    }
-  }
-
-  return sharp(mask, {raw: {channels: 1, height: IMAGE_HEIGHT, width: IMAGE_WIDTH}})
-    .blur(0.55)
-    .png()
-    .toBuffer()
-}
 
 async function createAlphaMask(mask) {
   const {data, info} = await sharp(mask).greyscale().raw().toBuffer({resolveWithObject: true})
@@ -148,8 +106,10 @@ async function createSceneAssets(scene) {
     mkdir(runtimeDirectory, {recursive: true}),
   ])
 
-  const removalMask = await createIrisMask(scene)
-  const eyeLayerMask = await createEyeLayerMask(scene, headSource)
+  const removalMask = await createRemovalMask(scene)
+  // AI_NOTE - A tight closed mask keeps the moving iris intact without
+  // carrying surrounding skin or lashes; removal stays wider to hide remnants.
+  const eyeLayerMask = await createIrisMask(scene)
   const removalAlphaMask = await createAlphaMask(removalMask)
   const eyeLayerAlphaMask = await createAlphaMask(eyeLayerMask)
   const candidate = await sharp(candidateSource)
@@ -170,7 +130,7 @@ async function createSceneAssets(scene) {
     sharp(headSource)
       .ensureAlpha()
       .composite([{blend: 'dest-in', input: eyeLayerAlphaMask}])
-      .png({compressionLevel: 9, palette: true, quality: 100})
+      .png({compressionLevel: 9})
       .toFile(path.join(runtimeDirectory, 'layer-eye-irises.png')),
   ])
 
