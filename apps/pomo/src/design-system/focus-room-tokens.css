@@ -17,6 +17,8 @@
   --focus-room-danger: #ef8a74;
   --focus-room-backdrop-blur: 8px;
   --focus-room-shadow: 0 18px 54px rgb(8 6 4 / 42%);
+  --focus-room-control-height-small: 2rem;
+  --focus-room-control-height-medium: 2.75rem;
   --focus-room-radius-panel: 1.25rem;
   --focus-room-radius-control: 999px;
 }

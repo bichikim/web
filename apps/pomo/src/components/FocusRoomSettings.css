@@ -1,0 +1,21 @@
+.focus-room-settings__content {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.focus-room-settings__scene {
+  display: grid;
+  gap: 1rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--focus-room-border);
+}
+
+.focus-room-settings__wake-lock {
+  min-height: 3rem;
+}
+
+@media (width >= 40rem) {
+  .focus-room-settings__scene {
+    display: none;
+  }
+}

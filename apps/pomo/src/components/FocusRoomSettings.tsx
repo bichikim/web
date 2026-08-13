@@ -2,10 +2,29 @@ import {createMemo, createSignal} from 'solid-js'
 
 import {FocusRoomIconButton} from '../design-system/FocusRoomIconButton'
 import {FocusRoomModal} from '../design-system/FocusRoomModal'
+import {FocusRoomRadioSwitch} from '../design-system/FocusRoomRadioSwitch'
 import {FocusRoomSwitch} from '../design-system/FocusRoomSwitch'
+import type {SceneTimeMode} from '../features/focus-room-time'
 import {useScreenWakeLock} from '../features/screen-wake-lock'
+import {
+  FOCUS_ROOM_ACTIVITY_OPTIONS,
+  FOCUS_ROOM_GAZE_OPTIONS,
+  FOCUS_ROOM_TIME_OPTIONS,
+  type FocusRoomActivity,
+  type FocusRoomGaze,
+} from './focus-room-scene-options'
+import './FocusRoomSettings.css'
 
-export const FocusRoomSettings = () => {
+export interface FocusRoomSettingsProps {
+  readonly activity: FocusRoomActivity
+  readonly gaze: FocusRoomGaze
+  readonly onActivityChange: (activity: FocusRoomActivity) => void
+  readonly onGazeChange: (gaze: FocusRoomGaze) => void
+  readonly onTimeModeChange: (timeMode: SceneTimeMode) => void
+  readonly timeMode: SceneTimeMode
+}
+
+export const FocusRoomSettings = (props: FocusRoomSettingsProps) => {
   const [isOpen, setIsOpen] = createSignal(false)
   const [triggerElement, setTriggerElement] = createSignal<HTMLButtonElement | null>(null)
   const wakeLock = useScreenWakeLock()
@@ -53,13 +72,36 @@ export const FocusRoomSettings = () => {
         onOpenChange={setIsOpen}
         title="설정"
       >
-        <FocusRoomSwitch
-          checked={wakeLock.isEnabled()}
-          description={wakeLockDescription()}
-          disabled={isWakeLockDisabled()}
-          label="화면 자동 꺼짐 방지"
-          onChange={wakeLock.onEnabledChange}
-        />
+        <div class="focus-room-settings__content">
+          <div class="focus-room-settings__scene">
+            <FocusRoomRadioSwitch
+              label="시간"
+              onChange={props.onTimeModeChange}
+              options={FOCUS_ROOM_TIME_OPTIONS}
+              value={props.timeMode}
+            />
+            <FocusRoomRadioSwitch
+              label="행동"
+              onChange={props.onActivityChange}
+              options={FOCUS_ROOM_ACTIVITY_OPTIONS}
+              value={props.activity}
+            />
+            <FocusRoomRadioSwitch
+              label="보기"
+              onChange={props.onGazeChange}
+              options={FOCUS_ROOM_GAZE_OPTIONS}
+              value={props.gaze}
+            />
+          </div>
+          <FocusRoomSwitch
+            checked={wakeLock.isEnabled()}
+            class="focus-room-settings__wake-lock"
+            description={wakeLockDescription()}
+            disabled={isWakeLockDisabled()}
+            label="화면 자동 꺼짐 방지"
+            onChange={wakeLock.onEnabledChange}
+          />
+        </div>
       </FocusRoomModal>
     </>
   )

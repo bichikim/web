@@ -5,11 +5,15 @@ import './FocusRoomIconButton.css'
 
 const FEEDBACK_DURATION = 1_400
 
+export type FocusRoomIconButtonSize = 'medium' | 'small'
+
 export interface FocusRoomIconButtonProps {
   readonly accessibleLabel: string
+  readonly class?: string
   readonly feedback: string
   readonly icon: string
   readonly onPress: (source: HTMLButtonElement) => void
+  readonly size?: FocusRoomIconButtonSize
 }
 
 export const FocusRoomIconButton = (props: FocusRoomIconButtonProps) => {
@@ -42,13 +46,14 @@ export const FocusRoomIconButton = (props: FocusRoomIconButtonProps) => {
   return (
     <button
       aria-label={props.accessibleLabel}
-      class="focus-room-backdrop focus-room-icon-button"
+      class={cx('focus-room-backdrop focus-room-icon-button', props.class)}
       data-feedback-visible={feedbackVisible() ? '' : undefined}
+      data-size={props.size ?? 'medium'}
       onClick={(event) => props.onPress(event.currentTarget)}
       title={props.accessibleLabel}
       type="button"
     >
-      <span aria-hidden="true" class={cx('focus-room-icon-button__icon size-5', props.icon)} />
+      <span aria-hidden="true" class={cx('focus-room-icon-button__icon', props.icon)} />
       <span aria-hidden="true" class="focus-room-icon-button__feedback">
         {props.feedback}
       </span>
