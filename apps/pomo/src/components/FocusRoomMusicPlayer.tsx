@@ -4,4 +4,12 @@ const FocusRoomMusicPlayerClient = clientOnly(() => import('./FocusRoomMusicPlay
   lazy: true,
 })
 
-export const FocusRoomMusicPlayer = () => <FocusRoomMusicPlayerClient />
+export interface FocusRoomMusicPlayerProps {
+  readonly isHidden?: boolean
+}
+
+export const FocusRoomMusicPlayer = (props: FocusRoomMusicPlayerProps) => (
+  <div hidden={props.isHidden}>
+    <FocusRoomMusicPlayerClient />
+  </div>
+)

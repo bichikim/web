@@ -1,6 +1,7 @@
 :root {
   --focus-room-canvas: #17130f;
   --focus-room-glass: rgb(10 10 10 / 68%);
+  --focus-room-glass-interactive: rgb(10 10 10 / 78%);
   --focus-room-surface: var(--focus-room-glass);
   --focus-room-surface-strong: var(--focus-room-glass);
   --focus-room-border: rgb(255 250 241 / 14%);
@@ -13,6 +14,8 @@
   --focus-room-secondary-soft: rgb(114 123 96 / 20%);
   --focus-room-moss: var(--focus-room-secondary);
   --focus-room-accent: #d86845;
+  --focus-room-accent-strong: #a94329;
+  --focus-room-accent-strong-hover: #b84f32;
   --focus-room-accent-soft: rgb(216 104 69 / 18%);
   --focus-room-danger: #ef8a74;
   --focus-room-backdrop-blur: 8px;
@@ -27,4 +30,15 @@
   border: 1px solid var(--focus-room-border);
   backdrop-filter: blur(var(--focus-room-backdrop-blur));
   -webkit-backdrop-filter: blur(var(--focus-room-backdrop-blur));
+}
+
+.focus-room-interactive-glass:hover {
+  border-color: var(--focus-room-border-hover);
+  background: var(--focus-room-glass-interactive);
+}
+
+.focus-room-interactive-glass:focus-visible,
+.focus-room-interactive-glass[data-expanded] {
+  border-color: var(--focus-room-brass);
+  background: var(--focus-room-glass-interactive);
 }
