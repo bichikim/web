@@ -36,6 +36,7 @@ import {
   type SceneTimeMode,
 } from '../features/focus-room-time'
 import {FocusRoomMusicPlayer} from './FocusRoomMusicPlayer'
+import {FocusRoomSettings} from './FocusRoomSettings'
 
 const FocusRoomSceneCanvas = clientOnly(() => import('./FocusRoomSceneCanvas.client'), {
   lazy: true,
@@ -161,6 +162,7 @@ const SceneToolbar = (props: SceneToolbarProps) => {
           options={GAZE_OPTIONS}
           value={props.gaze}
         />
+        <FocusRoomSettings />
       </div>
     </div>
   )

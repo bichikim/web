@@ -9,7 +9,7 @@ export interface FocusRoomIconButtonProps {
   readonly accessibleLabel: string
   readonly feedback: string
   readonly icon: string
-  readonly onPress: () => void
+  readonly onPress: (source: HTMLButtonElement) => void
 }
 
 export const FocusRoomIconButton = (props: FocusRoomIconButtonProps) => {
@@ -44,7 +44,7 @@ export const FocusRoomIconButton = (props: FocusRoomIconButtonProps) => {
       aria-label={props.accessibleLabel}
       class="focus-room-backdrop focus-room-icon-button"
       data-feedback-visible={feedbackVisible() ? '' : undefined}
-      onClick={() => props.onPress()}
+      onClick={(event) => props.onPress(event.currentTarget)}
       title={props.accessibleLabel}
       type="button"
     >
