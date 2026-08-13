@@ -31,6 +31,7 @@ export const DAY_READING_FOCUSED_LAYER_SCENE = {
       motion: {
         distance: {x: 1.5, y: 0.75},
         kind: 'translation',
+        transitionSeconds: 0.04,
         travel: {maximumSeconds: 2.8, minimumSeconds: 1.6},
       },
       parentAttachmentId: 'eyes',

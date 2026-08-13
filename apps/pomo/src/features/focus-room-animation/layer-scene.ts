@@ -286,7 +286,15 @@ export class PixiLayerScene {
     const {state} = motion
     state.elapsedSeconds += deltaSeconds
     const travelProgress = Math.min(1, state.elapsedSeconds / state.travelSeconds)
-    const easedProgress = (1 - Math.cos(travelProgress * Math.PI)) / 2
+    const transitionSeconds =
+      motion.definition.kind === 'translation' ? motion.definition.transitionSeconds : undefined
+    const transitionStart =
+      transitionSeconds === undefined ? 0 : state.travelSeconds - transitionSeconds
+    const activeProgress =
+      transitionSeconds === undefined
+        ? travelProgress
+        : clampUnit((state.elapsedSeconds - transitionStart) / transitionSeconds)
+    const easedProgress = (1 - Math.cos(activeProgress * Math.PI)) / 2
     const motionProgress = state.direction === 1 ? easedProgress : 1 - easedProgress
 
     if (motion.definition.kind === 'pivot-rotation') {
@@ -493,6 +501,14 @@ export class PixiLayerScene {
 
       if (travel.minimumSeconds <= 0 || travel.maximumSeconds < travel.minimumSeconds) {
         throw new Error(`Invalid motion travel range for layer: ${layerId}`)
+      }
+
+      if (
+        motion.kind === 'translation' &&
+        motion.transitionSeconds !== undefined &&
+        (motion.transitionSeconds <= 0 || motion.transitionSeconds > travel.minimumSeconds)
+      ) {
+        throw new Error(`Invalid translation transition for layer: ${layerId}`)
       }
 
       if (motion.kind === 'pixel-oscillation' && motion.effects.length === 0) {

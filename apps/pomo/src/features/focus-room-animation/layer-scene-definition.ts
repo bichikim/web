@@ -48,6 +48,7 @@ export interface PixiSceneTranslation {
   readonly channel?: string
   readonly distance: PixiScenePoint
   readonly kind: 'translation'
+  readonly transitionSeconds?: number
   readonly travel: PixiSceneTravelRange
 }
 
