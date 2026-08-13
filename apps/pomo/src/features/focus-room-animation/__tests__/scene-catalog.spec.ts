@@ -42,6 +42,11 @@ describe('focus room scene catalog', () => {
 
   it('should attach separated irises to supported heads', () => {
     const eyeMotionScenes = FOCUS_ROOM_SCENES
+    const expectedOriginX: Partial<Record<(typeof FOCUS_ROOM_SCENES)[number]['id'], number>> = {
+      'day-typing-focused': -1,
+      'night-typing-focused': -5,
+      'night-writing-focused': -4,
+    }
 
     expect(eyeMotionScenes).toHaveLength(12)
 
@@ -73,6 +78,8 @@ describe('focus room scene catalog', () => {
         )
 
         expect(eyeLayer.motion.targets).toHaveLength(25)
+        expect(origin?.x).toBe(expectedOriginX[scene.id] ?? 0)
+        expect(origin?.y).toBe(0)
         expect(horizontalDistances).toEqual(new Set([0, 0.45, 0.9, 1.5]))
         expect(verticalDistances).toEqual(new Set([0, 0.225, 0.45, 0.75]))
       }

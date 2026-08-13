@@ -329,6 +329,7 @@ export class PixiLayerScene {
 
   #initializeLayers(layers: readonly LayerInstance[], state: PixiLayerSceneState) {
     this.#layers = layers
+    this.#resetMotion()
     this.update(state)
   }
 

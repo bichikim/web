@@ -1,7 +1,7 @@
 import {A} from '@solidjs/router'
 import {clientOnly} from '@solidjs/start'
 import {cx} from 'class-variance-authority'
-import {createMemo, createSignal, For, type JSX, Show} from 'solid-js'
+import {createMemo, createSignal, For, type JSX} from 'solid-js'
 
 import {
   FOCUS_ROOM_SCENES,
@@ -244,23 +244,17 @@ export const FocusRoomLayerReview = () => {
   return (
     <section class="relative h-dvh w-full overflow-hidden bg-#17130f">
       <figure aria-label={selectedScene().label} class="absolute inset-0 m-0" role="img">
-        <Show keyed when={selectedScene()}>
-          {(scene) => (
-            <FocusRoomLayerReviewCanvas
-              animationEnabled={animationEnabled()}
-              definition={scene.layerScene}
-              eyesVisible={eyesVisible()}
-              fallback={
-                <div class="grid h-full place-items-center text-sm text-#a99fac">
-                  PixiJS 준비 중
-                </div>
-              }
-              handsVisible={handsVisible()}
-              headVisible={headVisible()}
-              referenceOpacity={referenceOpacity()}
-            />
-          )}
-        </Show>
+        <FocusRoomLayerReviewCanvas
+          animationEnabled={animationEnabled()}
+          definition={selectedScene().layerScene}
+          eyesVisible={eyesVisible()}
+          fallback={
+            <div class="grid h-full place-items-center text-sm text-#a99fac">PixiJS 준비 중</div>
+          }
+          handsVisible={handsVisible()}
+          headVisible={headVisible()}
+          referenceOpacity={referenceOpacity()}
+        />
       </figure>
 
       <ScenePicker onSelect={handleSelect} selectedId={selectedId()} />

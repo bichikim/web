@@ -30,15 +30,23 @@ export default function FocusRoomLayerReviewCanvas(props: FocusRoomLayerReviewCa
     }
 
     renderer = new FocusRoomLayerReviewRenderer(host, {definition: props.definition})
-    renderer.initialize(untrack(getReviewState)).catch((error: unknown) => {
-      globalThis.reportError(error)
-    })
+    renderer.initialize(untrack(getReviewState)).catch(globalThis.reportError)
 
     onCleanup(() => {
       renderer?.destroy()
       renderer = null
     })
   })
+
+  createEffect(
+    on(
+      () => props.definition,
+      (definition) => {
+        renderer?.replaceDefinition(definition).catch(globalThis.reportError)
+      },
+      {defer: true},
+    ),
+  )
 
   createEffect(
     on(
@@ -50,10 +58,13 @@ export default function FocusRoomLayerReviewCanvas(props: FocusRoomLayerReviewCa
           props.headVisible,
           props.referenceOpacity,
         ] as const,
-      () => renderer?.update(getReviewState()),
+      () => {
+        const state = getReviewState()
+        renderer?.update(state)
+      },
       {defer: true},
     ),
   )
 
-  return <div class="h-full w-full" ref={setCanvasHost} />
+  return <div class="relative h-full w-full" ref={setCanvasHost} />
 }
