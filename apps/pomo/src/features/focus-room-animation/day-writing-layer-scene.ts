@@ -1,16 +1,13 @@
-import baseImage from '../../../assets/focus-room-layers/day-writing-head-hands-removed/preview-base.png'
-import hairTipsMaskImage from '../../../assets/focus-room-layers/day-writing/layer-head-hair-tips-mask-v4.png'
-import headImage from '../../../assets/focus-room-layers/day-writing/layer-head.png'
-import restingHandImage from '../../../assets/focus-room-layers/day-writing/layer-resting-hand.png'
-import writingHandImage from '../../../assets/focus-room-layers/day-writing/layer-writing-hand.png'
-import referenceImage from '../../../assets/concept-art/focus-room-day-writing-concept.png'
+import referenceImage from '../../../assets/concept-art/focus-room-day-writing-concept.webp'
+import baseImage from '../../../assets/focus-room-layers/day-writing-focused/base.webp'
+import hairTipsMaskImage from '../../../assets/focus-room-layers/day-writing-focused/layer-head-hair-tips-mask-v4.png'
+import headImage from '../../../assets/focus-room-layers/day-writing-focused/layer-head.png'
+import restingHandImage from '../../../assets/focus-room-layers/day-writing-focused/layer-resting-hand.png'
+import writingHandImage from '../../../assets/focus-room-layers/day-writing-focused/layer-writing-hand.png'
 import type {PixiLayerSceneDefinition} from './layer-scene'
+import {FOCUS_ROOM_PREVIEW_CHANNELS} from './scene-catalog-channels'
 
-export const DAY_WRITING_LAYER_CHANNELS = {
-  hands: 'hands',
-  head: 'head',
-  reference: 'reference',
-} as const
+export const DAY_WRITING_LAYER_CHANNELS = FOCUS_ROOM_PREVIEW_CHANNELS
 
 export const DAY_WRITING_LAYER_SCENE = {
   background: '#17130f',

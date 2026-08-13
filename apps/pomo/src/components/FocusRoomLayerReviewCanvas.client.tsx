@@ -4,8 +4,11 @@ import {
   FocusRoomLayerReviewRenderer,
   type FocusRoomLayerReviewState,
 } from '../features/focus-room-layer-review/scene-renderer'
+import type {PixiLayerSceneDefinition} from '../features/focus-room-animation/layer-scene'
 
-export interface FocusRoomLayerReviewCanvasProps extends FocusRoomLayerReviewState {}
+export interface FocusRoomLayerReviewCanvasProps extends FocusRoomLayerReviewState {
+  readonly definition: PixiLayerSceneDefinition
+}
 
 export default function FocusRoomLayerReviewCanvas(props: FocusRoomLayerReviewCanvasProps) {
   const [canvasHost, setCanvasHost] = createSignal<HTMLDivElement>()
@@ -25,7 +28,7 @@ export default function FocusRoomLayerReviewCanvas(props: FocusRoomLayerReviewCa
       return
     }
 
-    renderer = new FocusRoomLayerReviewRenderer(host)
+    renderer = new FocusRoomLayerReviewRenderer(host, {definition: props.definition})
     renderer.initialize(untrack(getReviewState)).catch((error: unknown) => {
       globalThis.reportError(error)
     })

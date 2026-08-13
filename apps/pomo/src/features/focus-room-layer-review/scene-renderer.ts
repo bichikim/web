@@ -1,10 +1,7 @@
 import {Application} from 'pixi.js'
 
-import {
-  DAY_WRITING_LAYER_CHANNELS,
-  DAY_WRITING_LAYER_SCENE,
-} from '../focus-room-animation/day-writing-layer-scene'
-import {PixiLayerScene} from '../focus-room-animation/layer-scene'
+import {PixiLayerScene, type PixiLayerSceneDefinition} from '../focus-room-animation/layer-scene'
+import {FOCUS_ROOM_PREVIEW_CHANNELS} from '../focus-room-animation/scene-catalog'
 
 export interface FocusRoomLayerReviewState {
   readonly animationEnabled: boolean
@@ -13,18 +10,24 @@ export interface FocusRoomLayerReviewState {
   readonly referenceOpacity: number
 }
 
+export interface FocusRoomLayerReviewRendererOptions {
+  readonly definition: PixiLayerSceneDefinition
+}
+
 const clampOpacity = (value: number) => Math.min(1, Math.max(0, value))
 
 export class FocusRoomLayerReviewRenderer {
   readonly #application = new Application()
+  readonly #definition: PixiLayerSceneDefinition
   readonly #host: HTMLDivElement
   #applicationReady = false
   #destroyed = false
   #scene: PixiLayerScene | null = null
   #state: FocusRoomLayerReviewState | null = null
 
-  constructor(host: HTMLDivElement) {
+  constructor(host: HTMLDivElement, options: FocusRoomLayerReviewRendererOptions) {
     this.#host = host
+    this.#definition = options.definition
   }
 
   async initialize(state: FocusRoomLayerReviewState) {
@@ -32,11 +35,11 @@ export class FocusRoomLayerReviewRenderer {
     await this.#application.init({
       antialias: false,
       autoStart: false,
-      background: DAY_WRITING_LAYER_SCENE.background,
-      height: DAY_WRITING_LAYER_SCENE.height,
+      background: this.#definition.background,
+      height: this.#definition.height,
       preference: 'webgl',
       resolution: 1,
-      width: DAY_WRITING_LAYER_SCENE.width,
+      width: this.#definition.width,
     })
     this.#applicationReady = true
 
@@ -50,7 +53,7 @@ export class FocusRoomLayerReviewRenderer {
     this.#application.canvas.className = 'block h-full w-full object-cover object-center'
     this.#host.append(this.#application.canvas)
 
-    const scene = new PixiLayerScene(DAY_WRITING_LAYER_SCENE, {
+    const scene = new PixiLayerScene(this.#definition, {
       onRender: () => this.#application.render(),
     })
     this.#scene = scene
@@ -98,13 +101,12 @@ export class FocusRoomLayerReviewRenderer {
 
   #toSceneState(state: FocusRoomLayerReviewState) {
     const referenceOpacity = clampOpacity(state.referenceOpacity)
-
     return {
       animationEnabled: state.animationEnabled,
       channels: {
-        [DAY_WRITING_LAYER_CHANNELS.hands]: {visible: state.handsVisible},
-        [DAY_WRITING_LAYER_CHANNELS.head]: {visible: state.headVisible},
-        [DAY_WRITING_LAYER_CHANNELS.reference]: {
+        [FOCUS_ROOM_PREVIEW_CHANNELS.hands]: {visible: state.handsVisible},
+        [FOCUS_ROOM_PREVIEW_CHANNELS.head]: {visible: state.headVisible},
+        [FOCUS_ROOM_PREVIEW_CHANNELS.reference]: {
           opacity: referenceOpacity,
           visible: referenceOpacity > 0,
         },

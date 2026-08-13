@@ -153,8 +153,8 @@ pnpm lint
 
 ## 관련 자산과 스크립트
 
-- 편집 원본 이미지 12장: `assets/concept-art/focus-room-*.png`
-- 원본 무결성 체크섬: `assets/concept-art/focus-room-originals.sha256`
+- 편집 원본 이미지 12장: `assets/focus-room-source/concept-art/focus-room-*.png`
+- 원본 무결성 체크섬: `assets/focus-room-source/concept-art/focus-room-originals.sha256`
 - 런타임 압축 이미지 12장: `assets/concept-art/focus-room-*.webp`
 - 눈 깜박임 레이어: `assets/focus-room-animation/eyes-*.png`
 - 로컬 중간 산출물: `.temp/pomo-focus-room/`
@@ -197,7 +197,7 @@ POMO_BLINK_SOURCE_DIRECTORY=<로컬 생성본 폴더> node scripts/create-focus-
 ```bash
 python scripts/create-focus-room-depth-maps.py \
   --da3-source <Depth-Anything-3 저장소> \
-  --input-dir assets/concept-art \
+  --input-dir assets/focus-room-source/concept-art \
   --output-dir assets/focus-room-depth
 ```
 
@@ -210,13 +210,13 @@ python scripts/create-focus-room-depth-maps.py \
 원본 PNG는 WebP 생성 입력이자 보관 자산이다. 이름을 바꾸거나 덮어쓰지 않으며, 변경 전후에 다음 명령으로 체크섬을 검증한다.
 
 ```bash
-cd apps/pomo/assets/concept-art
+cd apps/pomo/assets/focus-room-source/concept-art
 shasum -a 256 -c focus-room-originals.sha256
 ```
 
 ```bash
 cd apps/pomo
-node scripts/compress-focus-room-scenes.mjs
+pnpm assets:compress-focus-room
 ```
 
 PixiJS 로딩 표시는 장면 PNG/WebP의 네트워크·디코딩뿐 아니라 depth texture와 눈 texture 로드, stage 합성과 전환까지 포함한다. `Application.render()` 뒤 두 번의 animation frame을 지난 후에만 완료 처리해 합성 프레임이 실제 화면에 나오기 전에 로더가 사라지지 않게 한다.
