@@ -14,6 +14,9 @@
 ## Z-index
 
 - Do not use CSS `z-index`, including utility classes and rendering-library equivalents.
+- This rule does not require floating UI to become inline or in-flow. Dropdowns, popovers, tooltips, and dialogs should retain their expected overlay behavior.
+- Prefer the platform top layer (`popover`, `dialog`), portals rendered later in the DOM, and headless components that handle positioning and focus without `z-index`.
+- Resolve remaining layering through DOM order, layout, and stacking-context structure. Do not replace a standard overlay with an inline expansion solely to avoid `z-index`.
 - Diagnose the actual painting or clipping cause before changing the DOM. Prefer the smallest suitable CSS or layout mechanism, including positioning, overflow, isolation and stacking contexts, flex/grid paint order, portal placement, or DOM order.
 - Do not default to structural changes when a local CSS property can solve the problem without harming semantics, accessibility, or responsive behavior.
 - If `z-index` appears unavoidable, explain why and obtain explicit user approval before using it.

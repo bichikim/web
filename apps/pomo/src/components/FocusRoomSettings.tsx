@@ -1,3 +1,4 @@
+import {Tabs} from '@kobalte/core/tabs'
 import {createMemo, createSignal} from 'solid-js'
 
 import {FocusRoomIconButton} from '../design-system/FocusRoomIconButton'
@@ -6,6 +7,7 @@ import {FocusRoomRadioSwitch} from '../design-system/FocusRoomRadioSwitch'
 import {FocusRoomSwitch} from '../design-system/FocusRoomSwitch'
 import type {SceneTimeMode} from '../features/focus-room-time'
 import {useScreenWakeLock} from '../features/screen-wake-lock'
+import {FocusRoomDialogueSettings} from './FocusRoomDialogueSettings'
 import {
   FOCUS_ROOM_ACTIVITY_OPTIONS,
   FOCUS_ROOM_GAZE_OPTIONS,
@@ -26,6 +28,7 @@ export interface FocusRoomSettingsProps {
 
 export const FocusRoomSettings = (props: FocusRoomSettingsProps) => {
   const [isOpen, setIsOpen] = createSignal(false)
+  const [activeTab, setActiveTab] = createSignal('general')
   const [triggerElement, setTriggerElement] = createSignal<HTMLButtonElement | null>(null)
   const wakeLock = useScreenWakeLock()
   const wakeLockDescription = createMemo(() => {
@@ -65,44 +68,67 @@ export const FocusRoomSettings = (props: FocusRoomSettingsProps) => {
         icon="i-tabler-settings"
         onPress={handleOpen}
       />
-      <FocusRoomModal
-        description="집중 환경에 맞게 포커스 룸을 설정하세요."
-        isOpen={isOpen()}
-        onCloseAutoFocus={handleCloseAutoFocus}
-        onOpenChange={setIsOpen}
-        title="설정"
-      >
-        <div class="focus-room-settings__content">
-          <div class="focus-room-settings__scene">
-            <FocusRoomRadioSwitch
-              label="시간"
-              onChange={props.onTimeModeChange}
-              options={FOCUS_ROOM_TIME_OPTIONS}
-              value={props.timeMode}
-            />
-            <FocusRoomRadioSwitch
-              label="행동"
-              onChange={props.onActivityChange}
-              options={FOCUS_ROOM_ACTIVITY_OPTIONS}
-              value={props.activity}
-            />
-            <FocusRoomRadioSwitch
-              label="보기"
-              onChange={props.onGazeChange}
-              options={FOCUS_ROOM_GAZE_OPTIONS}
-              value={props.gaze}
-            />
-          </div>
-          <FocusRoomSwitch
-            checked={wakeLock.isEnabled()}
-            class="focus-room-settings__wake-lock"
-            description={wakeLockDescription()}
-            disabled={isWakeLockDisabled()}
-            label="화면 자동 꺼짐 방지"
-            onChange={wakeLock.onEnabledChange}
-          />
-        </div>
-      </FocusRoomModal>
+      <Tabs value={activeTab()} onChange={setActiveTab}>
+        <FocusRoomModal
+          isOpen={isOpen()}
+          navigation={
+            <Tabs.List class="focus-room-settings__tabs" aria-label="설정 종류">
+              <Tabs.Trigger value="general">
+                <span aria-hidden="true" class="i-tabler-adjustments-horizontal size-4" />
+                <span>일반</span>
+              </Tabs.Trigger>
+              <Tabs.Trigger value="events">
+                <span aria-hidden="true" class="i-tabler-bolt size-4" />
+                <span>이벤트</span>
+              </Tabs.Trigger>
+              <Tabs.Trigger value="dialogue-library">
+                <span aria-hidden="true" class="i-tabler-message-circle size-4" />
+                <span>대화</span>
+              </Tabs.Trigger>
+            </Tabs.List>
+          }
+          onCloseAutoFocus={handleCloseAutoFocus}
+          onOpenChange={setIsOpen}
+          placement="top"
+          size="wide"
+          title="집중룸 설정"
+          titleVisibility="visually-hidden"
+        >
+          <Tabs.Content value="general">
+            <div class="focus-room-settings__content">
+              <div class="focus-room-settings__scene">
+                <FocusRoomRadioSwitch
+                  label="시간"
+                  onChange={props.onTimeModeChange}
+                  options={FOCUS_ROOM_TIME_OPTIONS}
+                  value={props.timeMode}
+                />
+                <FocusRoomRadioSwitch
+                  label="행동"
+                  onChange={props.onActivityChange}
+                  options={FOCUS_ROOM_ACTIVITY_OPTIONS}
+                  value={props.activity}
+                />
+                <FocusRoomRadioSwitch
+                  label="보기"
+                  onChange={props.onGazeChange}
+                  options={FOCUS_ROOM_GAZE_OPTIONS}
+                  value={props.gaze}
+                />
+              </div>
+              <FocusRoomSwitch
+                checked={wakeLock.isEnabled()}
+                class="focus-room-settings__wake-lock"
+                description={wakeLockDescription()}
+                disabled={isWakeLockDisabled()}
+                label="화면 자동 꺼짐 방지"
+                onChange={wakeLock.onEnabledChange}
+              />
+            </div>
+          </Tabs.Content>
+          <FocusRoomDialogueSettings />
+        </FocusRoomModal>
+      </Tabs>
     </>
   )
 }

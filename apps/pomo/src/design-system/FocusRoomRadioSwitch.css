@@ -14,7 +14,7 @@
 .focus-room-radio-switch__options {
   display: flex;
   gap: 0.25rem;
-  padding: 0.25rem;
+  padding: var(--focus-room-padding-xs);
   border: 1px solid var(--focus-room-border);
   border-radius: 0.875rem;
   background: rgb(4 4 3 / 28%);

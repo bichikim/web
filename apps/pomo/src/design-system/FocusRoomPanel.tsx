@@ -10,9 +10,9 @@ const panelStyles = cva(
     },
     variants: {
       padding: {
-        compact: 'p-2',
-        medium: 'p-3',
-        spacious: 'p-5',
+        compact: 'p-[var(--focus-room-padding-sm)]',
+        medium: 'p-[var(--focus-room-padding-md)]',
+        spacious: 'p-[var(--focus-room-padding-xl)]',
       },
       tone: {
         glass: 'bg-[var(--focus-room-surface)]',

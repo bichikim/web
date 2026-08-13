@@ -29,6 +29,10 @@ import nightWritingGazeDepth from '../../assets/focus-room-depth/depth-night-wri
 import {FocusRoomIconButton} from '../design-system/FocusRoomIconButton'
 import {FocusRoomIconSelect} from '../design-system/FocusRoomIconSelect'
 import {
+  FocusRoomEventProvider,
+  useFocusRoomEvents,
+} from '../features/focus-room-dialogue/FocusRoomEventContext'
+import {
   getAutomaticScenePeriod,
   getNextTimeMode,
   resolveScenePeriod,
@@ -38,6 +42,7 @@ import {
 import {DAY_WRITING_LAYER_SCENE} from '../features/focus-room-animation/day-writing-layer-scene'
 import type {PixiLayerSceneDefinition} from '../features/focus-room-animation/layer-scene'
 import {FocusRoomMusicPlayer} from './FocusRoomMusicPlayer'
+import {FocusRoomDialoguePlayer} from './FocusRoomDialoguePlayer'
 import {FocusRoomPomodoro} from './FocusRoomPomodoro'
 import {
   FOCUS_ROOM_ACTIVITY_OPTIONS,
@@ -186,13 +191,15 @@ const SceneToolbar = (props: SceneToolbarProps) => {
   )
 }
 
-export const FocusRoomStudio = () => {
+const FocusRoomStudioContent = () => {
+  const events = useFocusRoomEvents()
   const [timeMode, setTimeMode] = createSignal<SceneTimeMode>('day')
   const [automaticPeriod, setAutomaticPeriod] = createSignal<ScenePeriod>('day')
   const [activity, setActivity] = createSignal<FocusRoomActivity>('reading')
   const [gaze, setGaze] = createSignal<FocusRoomGaze>('focused')
   const [isSceneLoading, setIsSceneLoading] = createSignal(true)
   const [hasSceneRendered, setHasSceneRendered] = createSignal(false)
+  const [isPlayerExpanded, setIsPlayerExpanded] = createSignal(false)
   const [isPomodoroOpen, setIsPomodoroOpen] = createSignal(false)
   const time = createMemo(() => resolveScenePeriod(timeMode(), automaticPeriod()))
   const selectedScene = createMemo(() => getSceneAsset(time(), activity(), gaze()))
@@ -244,7 +251,20 @@ export const FocusRoomStudio = () => {
       </figure>
 
       <FocusRoomPomodoro onOpenChange={setIsPomodoroOpen} />
-      <FocusRoomMusicPlayer isHidden={isPomodoroOpen()} />
+      <div
+        class="focus-room-media-dock"
+        data-dialogue-active={
+          events.activeText() === null && !events.isEntryPlaybackBlocked() ? undefined : ''
+        }
+        data-player-expanded={isPlayerExpanded() ? '' : undefined}
+      >
+        <FocusRoomMusicPlayer
+          expanded={isPlayerExpanded()}
+          isHidden={isPomodoroOpen()}
+          onExpandedChange={setIsPlayerExpanded}
+        />
+        <FocusRoomDialoguePlayer />
+      </div>
       <SceneToolbar
         activity={activity()}
         gaze={gaze()}
@@ -258,3 +278,9 @@ export const FocusRoomStudio = () => {
     </section>
   )
 }
+
+export const FocusRoomStudio = () => (
+  <FocusRoomEventProvider>
+    <FocusRoomStudioContent />
+  </FocusRoomEventProvider>
+)

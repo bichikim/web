@@ -602,6 +602,9 @@ importers:
       cross-env:
         specifier: 'catalog:'
         version: 10.1.0
+      dexie:
+        specifier: ^4.4.4
+        version: 4.4.4
       media-chrome:
         specifier: ^4.19.2
         version: 4.19.2(react@19.2.5)
@@ -5538,6 +5541,9 @@ packages:
 
   devlop@1.1.0:
     resolution: {integrity: sha512-RWmIqhcFf1lRYBvNmr7qTNuyCt/7/ns2jbpp1+PalgE/rDQcBT0fioSMUpJ93irlUhC5hrg4cYqe6U+0ImW0rA==}
+
+  dexie@4.4.4:
+    resolution: {integrity: sha512-jIwsYI8Os2hgnqc6O49YwFDKGc5v5QjGx0wPVp543ip1F53VFAKMLthV2pQosQcVTv3eAskTWYspOx195PM0FQ==}
 
   diff-sequences@29.6.3:
     resolution: {integrity: sha512-EjePK1srD3P08o2j4f0ExnylqRs5B9tJjcp9t1krH2qRi8CCdsYfwe9JgSLurFBWwq4uOlipzfk5fHNvwFKr8Q==}
@@ -13414,6 +13420,8 @@ snapshots:
   devlop@1.1.0:
     dependencies:
       dequal: 2.0.3
+
+  dexie@4.4.4: {}
 
   diff-sequences@29.6.3: {}
 
