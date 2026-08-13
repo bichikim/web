@@ -23,7 +23,7 @@ describe('focus room scene catalog', () => {
 
   it('should use true separated layers instead of pixel distortion in every preview', () => {
     for (const scene of FOCUS_ROOM_SCENES) {
-      const expectedLayerCount = scene.time === 'day' && scene.gaze === 'focused' ? 6 : 5
+      const expectedLayerCount = scene.time === 'day' ? 6 : 5
 
       expect(scene.layerScene.layers).toHaveLength(expectedLayerCount)
       expect(scene.layerScene.layers.map((layer) => layer.id)).toContain('head')
@@ -40,14 +40,12 @@ describe('focus room scene catalog', () => {
     }
   })
 
-  it('should attach reusable irises only to daylight focused heads', () => {
-    const daylightFocusedScenes = FOCUS_ROOM_SCENES.filter(
-      (scene) => scene.time === 'day' && scene.gaze === 'focused',
-    )
+  it('should attach reusable irises only to daylight heads', () => {
+    const daylightScenes = FOCUS_ROOM_SCENES.filter((scene) => scene.time === 'day')
 
-    expect(daylightFocusedScenes).toHaveLength(3)
+    expect(daylightScenes).toHaveLength(6)
 
-    for (const scene of daylightFocusedScenes) {
+    for (const scene of daylightScenes) {
       const eyeLayer = scene.layerScene.layers.find((layer) => layer.id === 'eye-irises')
 
       expect(eyeLayer).toMatchObject({
@@ -80,11 +78,15 @@ describe('focus room scene catalog', () => {
       }
     }
 
-    for (const scene of FOCUS_ROOM_SCENES.filter(
-      (scene) => scene.time === 'night' || scene.gaze === 'user',
-    )) {
+    for (const scene of FOCUS_ROOM_SCENES.filter((scene) => scene.time === 'night')) {
       expect(scene.layerScene.layers.map((layer) => layer.id)).not.toContain('eye-irises')
     }
+
+    const daylightMotions = daylightScenes.map(
+      (scene) => scene.layerScene.layers.find((layer) => layer.id === 'eye-irises')?.motion,
+    )
+
+    expect(new Set(daylightMotions).size).toBe(daylightMotions.length)
   })
 
   it('should expose the complete review panel channels for every preview', () => {

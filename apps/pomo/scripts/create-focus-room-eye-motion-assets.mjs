@@ -1,5 +1,5 @@
 import {createRequire} from 'node:module'
-import {mkdir} from 'node:fs/promises'
+import {mkdir, rename} from 'node:fs/promises'
 import path from 'node:path'
 
 const require = createRequire(path.resolve(process.cwd(), '../image-server/package.json'))
@@ -12,10 +12,14 @@ const ALPHA_CHANNEL_INDEX = 3
 const OPAQUE_ALPHA = 255
 const REMOVAL_MASK_FEATHER = 0.55
 const EYE_LAYER_MASK_FEATHER = 0.4
+const MASK_DILATION_SIZE = 5
 const ASSET_DIRECTORY = path.resolve(process.cwd(), 'assets')
 const DAY_READING_EYE_FILL =
   'focus-room-source/layers/day-reading-focused/workfiles/eye-base-candidate-a.png'
 const DAY_READING_EYE_BASE = 'focus-room-layers/day-reading-focused/layer-head-eye-base.png'
+const DAY_USER_EYE_FILL =
+  'focus-room-source/layers/day-reading-user/workfiles/eye-base-candidate-a.png'
+const DAY_USER_EYE_LAYER = 'focus-room-layers/day-reading-user/layer-eye-irises.png'
 
 const irisPaths = [
   [
@@ -72,6 +76,21 @@ const scenes = [
   },
 ]
 
+const userScenes = [
+  {
+    head: 'focus-room-layers/day-reading-user/layer-head.png',
+    id: 'day-reading-user',
+  },
+  {
+    head: 'focus-room-layers/day-writing-user/layer-head.png',
+    id: 'day-writing-user',
+  },
+  {
+    head: 'focus-room-layers/day-typing-user/layer-head.png',
+    id: 'day-typing-user',
+  },
+]
+
 const createPathMask = (paths, feather, offsetX) =>
   sharp(
     Buffer.from(`<svg width="${IMAGE_WIDTH}" height="${IMAGE_HEIGHT}" xmlns="http://www.w3.org/2000/svg">
@@ -106,6 +125,13 @@ async function validateCanvasDimensions(source, label) {
   if (metadata.width !== IMAGE_WIDTH || metadata.height !== IMAGE_HEIGHT) {
     throw new Error(`${label} must be ${IMAGE_WIDTH}x${IMAGE_HEIGHT}: ${source}`)
   }
+}
+
+async function writePng(image, outputPath, options) {
+  const temporaryPath = `${outputPath}.tmp`
+
+  await image.png(options).toFile(temporaryPath)
+  await rename(temporaryPath, outputPath)
 }
 
 async function shiftLeft(source, pixels) {
@@ -161,16 +187,66 @@ async function createSceneAssets(scene) {
     .toBuffer()
 
   await Promise.all([
-    sharp(removalMask).toFile(path.join(sourceDirectory, 'mask-eye-removal.png')),
-    sharp(eyeLayerMask).toFile(path.join(sourceDirectory, 'mask-eye-layer.png')),
-    sharp(headSource)
-      .ensureAlpha()
-      .composite([{input: eyeFill}])
-      .png({compressionLevel: 9, palette: true, quality: 100})
-      .toFile(path.join(runtimeDirectory, 'layer-head-eye-base.png')),
+    writePng(sharp(removalMask), path.join(sourceDirectory, 'mask-eye-removal.png')),
+    writePng(sharp(eyeLayerMask), path.join(sourceDirectory, 'mask-eye-layer.png')),
+    writePng(
+      sharp(headSource)
+        .ensureAlpha()
+        .composite([{input: eyeFill}]),
+      path.join(runtimeDirectory, 'layer-head-eye-base.png'),
+      {compressionLevel: 9, palette: true, quality: 100},
+    ),
+  ])
+}
+
+async function createUserSceneAssets(scene) {
+  const fillSource = path.join(ASSET_DIRECTORY, DAY_USER_EYE_FILL)
+  const eyeSource = path.join(ASSET_DIRECTORY, DAY_USER_EYE_LAYER)
+  const headSource = path.join(ASSET_DIRECTORY, scene.head)
+  const sourceDirectory = path.join(ASSET_DIRECTORY, 'focus-room-source/layers', scene.id)
+  const runtimeDirectory = path.join(ASSET_DIRECTORY, 'focus-room-layers', scene.id)
+
+  await Promise.all([
+    validateCanvasDimensions(eyeSource, 'day user eye layer'),
+    validateCanvasDimensions(headSource, `${scene.id} head`),
+    mkdir(sourceDirectory, {recursive: true}),
+    mkdir(runtimeDirectory, {recursive: true}),
+  ])
+
+  const eyeLayerMask = await sharp(eyeSource).ensureAlpha().extractChannel('alpha').png().toBuffer()
+  const removalMask = await sharp(eyeLayerMask)
+    .convolve({
+      height: MASK_DILATION_SIZE,
+      kernel: Array.from({length: MASK_DILATION_SIZE ** 2}, () => 1),
+      width: MASK_DILATION_SIZE,
+    })
+    .blur(REMOVAL_MASK_FEATHER)
+    .png()
+    .toBuffer()
+  const removalAlphaMask = await createAlphaMask(removalMask)
+  const eyeFill = await sharp(fillSource)
+    .resize({fit: 'fill', height: IMAGE_HEIGHT, width: IMAGE_WIDTH})
+    .ensureAlpha()
+    .composite([{blend: 'dest-in', input: removalAlphaMask}])
+    .png()
+    .toBuffer()
+
+  await Promise.all([
+    writePng(sharp(removalMask), path.join(sourceDirectory, 'mask-eye-removal.png')),
+    writePng(sharp(eyeLayerMask), path.join(sourceDirectory, 'mask-eye-layer.png')),
+    writePng(
+      sharp(headSource)
+        .ensureAlpha()
+        .composite([{input: eyeFill}]),
+      path.join(runtimeDirectory, 'layer-head-eye-base.png'),
+      {compressionLevel: 9, palette: true, quality: 100},
+    ),
   ])
 }
 
 // The first scene creates the reusable daylight eye fill consumed by the other focused scenes.
 await createSceneAssets(scenes[0])
-await Promise.all(scenes.slice(1).map(createSceneAssets))
+await Promise.all([
+  ...scenes.slice(1).map(createSceneAssets),
+  ...userScenes.map(createUserSceneAssets),
+])

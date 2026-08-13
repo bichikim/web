@@ -7,7 +7,8 @@ import type {
 import {FOCUS_ROOM_PREVIEW_CHANNELS} from './scene-catalog-channels'
 
 import dayReadingUserBase from '../../../assets/focus-room-layers/day-reading-user/base.webp'
-import dayReadingUserHead from '../../../assets/focus-room-layers/day-reading-user/layer-head.png'
+import dayReadingUserEyeIrises from '../../../assets/focus-room-layers/day-reading-user/layer-eye-irises.png'
+import dayReadingUserHead from '../../../assets/focus-room-layers/day-reading-user/layer-head-eye-base.png'
 import dayReadingUserLeftHand from '../../../assets/focus-room-layers/day-reading-user/layer-hand-left.png'
 import dayReadingUserRightHand from '../../../assets/focus-room-layers/day-reading-user/layer-hand-right.png'
 import dayReadingUserReference from '../../../assets/concept-art/focus-room-day-reading-user-gaze-concept.webp'
@@ -18,12 +19,12 @@ import dayTypingFocusedRightHand from '../../../assets/focus-room-layers/day-typ
 import dayTypingFocusedReference from '../../../assets/concept-art/focus-room-day-typing-concept.webp'
 import dayFocusedEyeIrises from '../../../assets/focus-room-layers/day-reading-focused/layer-eye-irises.png'
 import dayTypingUserBase from '../../../assets/focus-room-layers/day-typing-user/base.webp'
-import dayTypingUserHead from '../../../assets/focus-room-layers/day-typing-user/layer-head.png'
+import dayTypingUserHead from '../../../assets/focus-room-layers/day-typing-user/layer-head-eye-base.png'
 import dayTypingUserLeftHand from '../../../assets/focus-room-layers/day-typing-user/layer-hand-left.png'
 import dayTypingUserRightHand from '../../../assets/focus-room-layers/day-typing-user/layer-hand-right.png'
 import dayTypingUserReference from '../../../assets/concept-art/focus-room-day-typing-user-gaze-concept.webp'
 import dayWritingUserBase from '../../../assets/focus-room-layers/day-writing-user/base.webp'
-import dayWritingUserHead from '../../../assets/focus-room-layers/day-writing-user/layer-head.png'
+import dayWritingUserHead from '../../../assets/focus-room-layers/day-writing-user/layer-head-eye-base.png'
 import dayWritingUserLeftHand from '../../../assets/focus-room-layers/day-writing-user/layer-hand-left.png'
 import dayWritingUserRightHand from '../../../assets/focus-room-layers/day-writing-user/layer-hand-right.png'
 import dayWritingUserReference from '../../../assets/concept-art/focus-room-day-writing-user-gaze-concept.webp'
@@ -76,6 +77,16 @@ interface SeparatedSceneEyeLayer {
   readonly motion: PixiSceneTargetTranslation
   readonly source: string
 }
+
+const createDayUserEyeLayer = (targets: readonly PixiScenePoint[]): SeparatedSceneEyeLayer => ({
+  motion: {
+    kind: 'translation',
+    targets,
+    transitionSeconds: 0.04,
+    travel: {maximumSeconds: 3.2, minimumSeconds: 1.4},
+  },
+  source: dayReadingUserEyeIrises,
+})
 
 const createSeparatedScene = (
   id: FocusRoomSceneId,
@@ -155,6 +166,33 @@ export const GENERATED_LAYER_SCENES = {
       rightHand: dayReadingUserRightHand,
     },
     {head: {x: 1050, y: 425}, leftHand: {x: 735, y: 710}, rightHand: {x: 1060, y: 730}},
+    createDayUserEyeLayer([
+      {x: 0, y: 0},
+      {x: -0.45, y: 0},
+      {x: 0.45, y: 0},
+      {x: 0, y: -0.225},
+      {x: 0, y: 0.225},
+      {x: -0.32, y: -0.16},
+      {x: 0.32, y: -0.16},
+      {x: -0.32, y: 0.16},
+      {x: 0.32, y: 0.16},
+      {x: -0.9, y: 0},
+      {x: 0.9, y: 0},
+      {x: 0, y: -0.45},
+      {x: 0, y: 0.45},
+      {x: -0.64, y: -0.32},
+      {x: 0.64, y: -0.32},
+      {x: -0.64, y: 0.32},
+      {x: 0.64, y: 0.32},
+      {x: -1.5, y: 0},
+      {x: 1.5, y: 0},
+      {x: 0, y: -0.75},
+      {x: 0, y: 0.75},
+      {x: -1.06, y: -0.53},
+      {x: 1.06, y: -0.53},
+      {x: -1.06, y: 0.53},
+      {x: 1.06, y: 0.53},
+    ]),
   ),
   'day-typing-focused': createSeparatedScene(
     'day-typing-focused',
@@ -212,6 +250,33 @@ export const GENERATED_LAYER_SCENES = {
       rightHand: dayTypingUserRightHand,
     },
     {head: {x: 1045, y: 430}, leftHand: {x: 755, y: 710}, rightHand: {x: 1015, y: 725}},
+    createDayUserEyeLayer([
+      {x: 0, y: 0},
+      {x: -0.45, y: 0},
+      {x: 0.45, y: 0},
+      {x: 0, y: -0.225},
+      {x: 0, y: 0.225},
+      {x: -0.32, y: -0.16},
+      {x: 0.32, y: -0.16},
+      {x: -0.32, y: 0.16},
+      {x: 0.32, y: 0.16},
+      {x: -0.9, y: 0},
+      {x: 0.9, y: 0},
+      {x: 0, y: -0.45},
+      {x: 0, y: 0.45},
+      {x: -0.64, y: -0.32},
+      {x: 0.64, y: -0.32},
+      {x: -0.64, y: 0.32},
+      {x: 0.64, y: 0.32},
+      {x: -1.5, y: 0},
+      {x: 1.5, y: 0},
+      {x: 0, y: -0.75},
+      {x: 0, y: 0.75},
+      {x: -1.06, y: -0.53},
+      {x: 1.06, y: -0.53},
+      {x: -1.06, y: 0.53},
+      {x: 1.06, y: 0.53},
+    ]),
   ),
   'day-writing-user': createSeparatedScene(
     'day-writing-user',
@@ -223,6 +288,33 @@ export const GENERATED_LAYER_SCENES = {
       rightHand: dayWritingUserRightHand,
     },
     {head: {x: 1050, y: 425}, leftHand: {x: 700, y: 690}, rightHand: {x: 1030, y: 715}},
+    createDayUserEyeLayer([
+      {x: 0, y: 0},
+      {x: -0.45, y: 0},
+      {x: 0.45, y: 0},
+      {x: 0, y: -0.225},
+      {x: 0, y: 0.225},
+      {x: -0.32, y: -0.16},
+      {x: 0.32, y: -0.16},
+      {x: -0.32, y: 0.16},
+      {x: 0.32, y: 0.16},
+      {x: -0.9, y: 0},
+      {x: 0.9, y: 0},
+      {x: 0, y: -0.45},
+      {x: 0, y: 0.45},
+      {x: -0.64, y: -0.32},
+      {x: 0.64, y: -0.32},
+      {x: -0.64, y: 0.32},
+      {x: 0.64, y: 0.32},
+      {x: -1.5, y: 0},
+      {x: 1.5, y: 0},
+      {x: 0, y: -0.75},
+      {x: 0, y: 0.75},
+      {x: -1.06, y: -0.53},
+      {x: 1.06, y: -0.53},
+      {x: -1.06, y: 0.53},
+      {x: 1.06, y: 0.53},
+    ]),
   ),
   'night-reading-focused': createSeparatedScene(
     'night-reading-focused',
