@@ -70,6 +70,12 @@ export interface FocusRoomDialogueEditorController {
   readonly voiceId: Accessor<SupertonicVoiceId>
 }
 
+interface GeneratedDialogueAudio {
+  readonly audio: Blob
+  readonly durationMs: number
+  readonly segments: ReadonlyArray<DialogueSegment>
+}
+
 const getGenerationKey = (modelId: SupertonicModelId, voiceId: SupertonicVoiceId, text: string) =>
   `${modelId}\u0000${voiceId}\u0000${text.trim()}`
 
@@ -138,7 +144,14 @@ export const useFocusRoomDialogueEditor = (
   let client: SupertonicClient | null = null
   let createdAt: string | null = null
   let generatedKey: string | null = null
+  let isDisposed = false
   let preparedModelId: SupertonicModelId | null = null
+
+  const setEditorState = (nextState: DialogueEditorState) => {
+    if (!isDisposed) {
+      setState(nextState)
+    }
+  }
 
   const isBusy = createMemo(() => {
     const {status} = state()
@@ -163,6 +176,10 @@ export const useFocusRoomDialogueEditor = (
   })
 
   const replaceAudio = (blob: Blob | null) => {
+    if (isDisposed) {
+      return
+    }
+
     revokeUrl(audioUrl())
     audioBlob = blob
     setAudioUrl(blob === null ? null : URL.createObjectURL(blob))
@@ -181,16 +198,24 @@ export const useFocusRoomDialogueEditor = (
     try {
       const dialogue = await repository.getDialogue(id)
 
+      if (isDisposed) {
+        return
+      }
+
       if (dialogue === null) {
-        setState({message: '저장된 대화를 찾을 수 없어요.', status: 'error'})
+        setEditorState({message: '저장된 대화를 찾을 수 없어요.', status: 'error'})
         return
       }
 
       const {audioKey: storedAudioKey, createdAt: storedCreatedAt} = dialogue
       const storedAudio = await repository.getAudio(storedAudioKey)
 
+      if (isDisposed) {
+        return
+      }
+
       if (storedAudio === null) {
-        setState({
+        setEditorState({
           message: '저장된 음성 파일을 찾을 수 없어요. 음성을 다시 만들어 주세요.',
           status: 'error',
         })
@@ -209,10 +234,14 @@ export const useFocusRoomDialogueEditor = (
       audioKey = storedAudioKey
       createdAt = storedCreatedAt
       generatedKey = getGenerationKey(dialogue.modelId, dialogue.voiceId, dialogue.text)
-      setState({message: '저장된 대화를 불러왔어요.', status: 'idle'})
+      setEditorState({message: '저장된 대화를 불러왔어요.', status: 'idle'})
     } catch (error: unknown) {
+      if (isDisposed) {
+        return
+      }
+
       console.error('Failed to load focus room dialogue.', error)
-      setState({message: '대화를 불러오지 못했어요.', status: 'error'})
+      setEditorState({message: '대화를 불러오지 못했어요.', status: 'error'})
     }
   }
 
@@ -229,6 +258,10 @@ export const useFocusRoomDialogueEditor = (
 
     loadDialogue(initialDialogueId)
       .then(() => {
+        if (isDisposed) {
+          return
+        }
+
         if (draft !== null && draft !== text()) {
           setText(draft)
           clearGeneratedAudio()
@@ -240,50 +273,132 @@ export const useFocusRoomDialogueEditor = (
   })
 
   onCleanup(() => {
+    isDisposed = true
     client?.dispose()
+    client = null
+    repository.dispose()
     revokeUrl(audioUrl())
   })
 
   const prepareModel = async (selectedModelId: SupertonicModelId) => {
     client?.dispose()
-    const nextClient = createSupertonicClient()
-    client = nextClient
-    setState({message: '음성 모델을 확인하고 있어요.', progress: 0, status: 'preparing'})
+    let nextClient: SupertonicClient
 
-    const result = await nextClient.initialize({
-      modelId: selectedModelId,
-      onProgress: (nextProgress) => {
-        if (client === nextClient) {
-          setState({
-            message: `${nextProgress.fileName} 준비 중…`,
-            progress: getProgress(nextProgress.loadedBytes, nextProgress.totalBytes),
-            status: 'preparing',
-          })
-        }
-      },
-      onStatus: (message) => {
-        if (client === nextClient) {
-          const currentState = state()
-          setState(
-            currentState.status === 'preparing'
-              ? {...currentState, message}
-              : {message, status: 'idle'},
-          )
-        }
-      },
-    })
-
-    if (client !== nextClient) {
+    try {
+      nextClient = createSupertonicClient()
+    } catch (error: unknown) {
+      client = null
+      preparedModelId = null
+      console.error('Failed to create focus room dialogue model client.', error)
+      setEditorState({message: '음성 모델을 시작하지 못했어요.', status: 'error'})
       return false
     }
 
-    if (!result.ok) {
-      setState({message: getSupertonicErrorMessage(result.error), status: 'error'})
+    client = nextClient
+    setEditorState({message: '음성 모델을 확인하고 있어요.', progress: 0, status: 'preparing'})
+
+    try {
+      const result = await nextClient.initialize({
+        modelId: selectedModelId,
+        onProgress: (nextProgress) => {
+          if (client === nextClient && !isDisposed) {
+            setEditorState({
+              message: `${nextProgress.fileName} 준비 중…`,
+              progress: getProgress(nextProgress.loadedBytes, nextProgress.totalBytes),
+              status: 'preparing',
+            })
+          }
+        },
+        onStatus: (message) => {
+          if (client === nextClient && !isDisposed) {
+            const currentState = state()
+            setEditorState({...currentState, message})
+          }
+        },
+      })
+
+      if (client !== nextClient || isDisposed) {
+        return false
+      }
+
+      if (!result.ok) {
+        setEditorState({message: getSupertonicErrorMessage(result.error), status: 'error'})
+        return false
+      }
+    } catch (error: unknown) {
+      if (client !== nextClient || isDisposed) {
+        return false
+      }
+
+      console.error('Failed to prepare focus room dialogue model.', error)
+      setEditorState({message: '음성 모델을 준비하지 못했어요.', status: 'error'})
       return false
     }
 
     preparedModelId = selectedModelId
     return true
+  }
+
+  const createDialogueAudio = async (
+    currentClient: SupertonicClient,
+    selectedModelId: SupertonicModelId,
+    selectedVoiceId: SupertonicVoiceId,
+    sourceText: string,
+  ): Promise<GeneratedDialogueAudio | null> => {
+    const selectedModel = getSupertonicModel(selectedModelId)
+    const textChunks = splitSpeechText(sourceText, selectedModel.speechPolicy)
+    const audioChunks: Array<SupertonicAudioChunk> = []
+    setEditorState({message: '첫 번째 음성 구간을 만들고 있어요.', status: 'generating'})
+
+    try {
+      for await (const result of currentClient.generateStream({
+        text: sourceText,
+        voice: {id: selectedVoiceId, kind: 'preset'},
+      })) {
+        if (client !== currentClient || isDisposed) {
+          return null
+        }
+
+        if (!result.ok) {
+          setEditorState({message: getSupertonicErrorMessage(result.error), status: 'error'})
+          return null
+        }
+
+        if (result.value.type === 'chunk') {
+          audioChunks.push(result.value.audio)
+          setEditorState({
+            message: `${result.value.audio.index + 1}/${result.value.audio.total} 음성 구간을 만들었어요.`,
+            status: 'generating',
+          })
+        } else {
+          const timeline = createDialogueTimeline({
+            audioChunks,
+            silenceDuration: selectedModel.speechPolicy.silenceDuration,
+            textChunks,
+          })
+
+          return {
+            audio: createWaveBlob(result.value.audio.samples, result.value.audio.sampleRate),
+            durationMs: timeline.durationMs,
+            segments: timeline.segments,
+          }
+        }
+      }
+    } catch (error: unknown) {
+      if (client !== currentClient || isDisposed) {
+        return null
+      }
+
+      console.error('Failed to generate focus room dialogue.', error)
+      setEditorState({message: '음성을 만들지 못했어요.', status: 'error'})
+      return null
+    }
+
+    setEditorState({
+      message: '완성된 음성을 받지 못했어요. 다시 시도해 주세요.',
+      status: 'error',
+    })
+    return null
   }
 
   const generate = async () => {
@@ -293,6 +408,7 @@ export const useFocusRoomDialogueEditor = (
 
     const selectedModelId = modelId()
     const sourceText = text().trim()
+    const selectedVoiceId = voiceId()
 
     if (sourceText.length === 0) {
       return
@@ -312,42 +428,30 @@ export const useFocusRoomDialogueEditor = (
       return
     }
 
-    const selectedModel = getSupertonicModel(selectedModelId)
-    const textChunks = splitSpeechText(sourceText, selectedModel.speechPolicy)
-    const audioChunks: Array<SupertonicAudioChunk> = []
-    setState({message: '첫 번째 음성 구간을 만들고 있어요.', status: 'generating'})
+    const generatedAudio = await createDialogueAudio(
+      currentClient,
+      selectedModelId,
+      selectedVoiceId,
+      sourceText,
+    )
 
-    for await (const result of currentClient.generateStream({
-      text: sourceText,
-      voice: {id: voiceId(), kind: 'preset'},
-    })) {
-      if (!result.ok) {
-        setState({message: getSupertonicErrorMessage(result.error), status: 'error'})
-        return
-      }
-
-      if (result.value.type === 'chunk') {
-        audioChunks.push(result.value.audio)
-        setState({
-          message: `${result.value.audio.index + 1}/${result.value.audio.total} 음성 구간을 만들었어요.`,
-          status: 'generating',
-        })
-      } else {
-        const timeline = createDialogueTimeline({
-          audioChunks,
-          silenceDuration: selectedModel.speechPolicy.silenceDuration,
-          textChunks,
-        })
-        replaceAudio(createWaveBlob(result.value.audio.samples, result.value.audio.sampleRate))
-        setSegments(timeline.segments)
-        setDurationMs(timeline.durationMs)
-        audioKey = crypto.randomUUID()
-        audioNeedsWrite = true
-        generatedKey = currentGenerationKey()
-      }
+    if (generatedAudio === null || isDisposed || client !== currentClient) {
+      return
     }
 
-    setState({message: '음성과 말풍선 타임라인을 만들었어요.', status: 'ready'})
+    try {
+      replaceAudio(generatedAudio.audio)
+      setSegments(generatedAudio.segments)
+      setDurationMs(generatedAudio.durationMs)
+      audioKey = crypto.randomUUID()
+      audioNeedsWrite = true
+      generatedKey = getGenerationKey(selectedModelId, selectedVoiceId, sourceText)
+      setEditorState({message: '음성과 말풍선 타임라인을 만들었어요.', status: 'ready'})
+    } catch (error: unknown) {
+      console.error('Failed to prepare generated focus room dialogue audio.', error)
+      clearGeneratedAudio()
+      setEditorState({message: '생성된 음성을 준비하지 못했어요.', status: 'error'})
+    }
   }
 
   const save = async () => {
@@ -355,7 +459,7 @@ export const useFocusRoomDialogueEditor = (
       return null
     }
 
-    setState({message: '대화를 기기에 저장하고 있어요.', status: 'saving'})
+    setEditorState({message: '대화를 기기에 저장하고 있어요.', status: 'saving'})
     const now = new Date().toISOString()
     const id = dialogueId() ?? crypto.randomUUID()
     const dialogueCreatedAt = createdAt ?? now
@@ -374,15 +478,24 @@ export const useFocusRoomDialogueEditor = (
 
     try {
       await repository.saveDialogue({audio: audioNeedsWrite ? audioBlob : undefined, dialogue})
+
+      if (isDisposed) {
+        return null
+      }
+
       audioNeedsWrite = false
       createdAt = dialogueCreatedAt
       setDialogueId(id)
       deleteDialogueDraft(draftKey)
-      setState({message: '대화를 저장했어요.', status: 'ready'})
+      setEditorState({message: '대화를 저장했어요.', status: 'ready'})
       return id
     } catch (error: unknown) {
+      if (isDisposed) {
+        return null
+      }
+
       console.error('Failed to save focus room dialogue.', error)
-      setState({message: '대화를 저장하지 못했어요.', status: 'error'})
+      setEditorState({message: '대화를 저장하지 못했어요.', status: 'error'})
       return null
     }
   }
@@ -397,7 +510,10 @@ export const useFocusRoomDialogueEditor = (
     preparedModelId = null
     setModelIdSignal(nextModelId)
     clearGeneratedAudio()
-    setState({message: '음성 만들기를 누르면 선택한 모델을 자동으로 준비해요.', status: 'idle'})
+    setEditorState({
+      message: '음성 만들기를 누르면 선택한 모델을 자동으로 준비해요.',
+      status: 'idle',
+    })
   }
   const setVoiceId = (nextVoiceId: SupertonicVoiceId) => {
     if (nextVoiceId !== voiceId()) {

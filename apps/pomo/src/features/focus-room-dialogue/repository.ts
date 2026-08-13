@@ -1,6 +1,6 @@
 import Dexie, {type Table} from 'dexie'
 
-import {createModelStorage} from '../model-storage/storage'
+import {createModelStorage, reportModelStorageError} from '../model-storage/storage'
 import {
   type DialogueEventBinding,
   dialogueEventBindingSchema,
@@ -24,6 +24,7 @@ export interface SaveDialogueOptions {
 
 export interface FocusRoomDialogueRepository {
   readonly deleteDialogue: (dialogueId: string) => Promise<void>
+  readonly dispose: () => void
   readonly getAudio: (audioKey: string) => Promise<Blob | null>
   readonly getDialogue: (dialogueId: string) => Promise<FocusRoomDialogue | null>
   readonly getEntryBinding: () => Promise<DialogueEventBinding | null>
@@ -44,6 +45,13 @@ const getAudioPath = (audioKey: string) => `/__pomo/dialogue-audio/${audioKey}.w
 export const createFocusRoomDialogueRepository = (): FocusRoomDialogueRepository => {
   const database = createDatabase()
   const audioStorage = createModelStorage({cacheName: AUDIO_CACHE_NAME})
+  const deleteAudio = async (audioKey: string) => {
+    const deletion = await audioStorage.delete(getAudioPath(audioKey))
+
+    if (!deletion.ok) {
+      reportModelStorageError(deletion.error)
+    }
+  }
 
   return {
     async deleteDialogue(dialogueId) {
@@ -63,12 +71,12 @@ export const createFocusRoomDialogueRepository = (): FocusRoomDialogueRepository
       })
 
       if (parsedDialogue !== null) {
-        const deletion = await audioStorage.delete(getAudioPath(parsedDialogue.audioKey))
-
-        if (!deletion.ok) {
-          throw new Error('대화 음성을 삭제하지 못했어요.', {cause: deletion.error.cause})
-        }
+        // AI_NOTE - IndexedDB 삭제가 이미 확정된 뒤이므로 캐시 정리 실패가 UI 삭제를 되돌린 것처럼 보이면 안 된다.
+        await deleteAudio(parsedDialogue.audioKey)
       }
+    },
+    dispose() {
+      database.close()
     },
     async getAudio(audioKey) {
       const result = await audioStorage.get(getAudioPath(audioKey))
@@ -110,10 +118,18 @@ export const createFocusRoomDialogueRepository = (): FocusRoomDialogueRepository
         throw new Error('새 대화 음성이 필요해요.')
       }
 
-      await database.dialogues.put(nextDialogue)
+      try {
+        await database.dialogues.put(nextDialogue)
+      } catch (error: unknown) {
+        if (options.audio !== undefined && previousDialogue?.audioKey !== nextDialogue.audioKey) {
+          await deleteAudio(nextDialogue.audioKey)
+        }
+
+        throw error
+      }
 
       if (previousDialogue !== null && previousDialogue.audioKey !== nextDialogue.audioKey) {
-        await audioStorage.delete(getAudioPath(previousDialogue.audioKey))
+        await deleteAudio(previousDialogue.audioKey)
       }
     },
     async setEntryBinding(dialogueId) {

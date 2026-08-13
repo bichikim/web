@@ -53,6 +53,7 @@ const createEntryPlaybackController = (): EntryPlaybackController => {
   let dialogue: FocusRoomDialogue | null = null
   let isAwaitingSceneInteraction = false
   let isDisposed = false
+  let playbackRequestId = 0
 
   const cancelFrame = () => {
     if (animationFrame !== null) {
@@ -74,6 +75,7 @@ const createEntryPlaybackController = (): EntryPlaybackController => {
   }
 
   const stop = () => {
+    playbackRequestId += 1
     cancelFrame()
     audio?.pause()
     audio = null
@@ -89,17 +91,28 @@ const createEntryPlaybackController = (): EntryPlaybackController => {
   }
 
   const start = async () => {
-    if (audio === null || isDisposed) {
+    const currentAudio = audio
+
+    if (currentAudio === null || isDisposed) {
       return
     }
 
     try {
-      await audio.play()
+      await currentAudio.play()
+
+      if (audio !== currentAudio || isDisposed) {
+        return
+      }
+
       isAwaitingSceneInteraction = false
       setIsBlocked(false)
       cancelFrame()
       updateSubtitle()
     } catch (error: unknown) {
+      if (audio !== currentAudio || isDisposed) {
+        return
+      }
+
       if (error instanceof DOMException && error.name === 'NotAllowedError') {
         isAwaitingSceneInteraction = true
         setIsBlocked(true)
@@ -107,6 +120,7 @@ const createEntryPlaybackController = (): EntryPlaybackController => {
       }
 
       console.error('Failed to play focus room entry dialogue.', error)
+      stop()
     }
   }
 
@@ -119,15 +133,17 @@ const createEntryPlaybackController = (): EntryPlaybackController => {
     },
     isBlocked,
     async prepare(repository, dialogueId) {
+      stop()
+      const currentRequestId = playbackRequestId
       const storedDialogue = await repository.getDialogue(dialogueId)
 
-      if (storedDialogue === null || isDisposed) {
+      if (storedDialogue === null || isDisposed || currentRequestId !== playbackRequestId) {
         return
       }
 
       const storedAudio = await repository.getAudio(storedDialogue.audioKey)
 
-      if (storedAudio === null || isDisposed) {
+      if (storedAudio === null || isDisposed || currentRequestId !== playbackRequestId) {
         return
       }
 
@@ -194,6 +210,10 @@ export const FocusRoomEventProvider = (props: FocusRoomEventProviderProps) => {
         await playback.prepare(currentRepository, entryBinding.dialogueId)
       }
     } catch (error: unknown) {
+      if (isDisposed) {
+        return
+      }
+
       console.error('Failed to initialize focus room events.', error)
       setErrorMessage('이벤트와 저장된 대화를 불러오지 못했어요.')
     } finally {
@@ -207,6 +227,11 @@ export const FocusRoomEventProvider = (props: FocusRoomEventProviderProps) => {
     activeText: playback.activeText,
     async deleteDialogue(dialogueId) {
       await getRepository().deleteDialogue(dialogueId)
+
+      if (isDisposed) {
+        return
+      }
+
       setDialogues((currentDialogues) =>
         currentDialogues.filter((dialogue) => dialogue.id !== dialogueId),
       )
@@ -229,6 +254,11 @@ export const FocusRoomEventProvider = (props: FocusRoomEventProviderProps) => {
     retryEntryPlayback: playback.retry,
     async setEntryDialogue(dialogueId) {
       await getRepository().setEntryBinding(dialogueId)
+
+      if (isDisposed) {
+        return
+      }
+
       setEntryDialogueId(dialogueId)
     },
   }
@@ -242,6 +272,7 @@ export const FocusRoomEventProvider = (props: FocusRoomEventProviderProps) => {
   onCleanup(() => {
     isDisposed = true
     playback.dispose()
+    repository?.dispose()
   })
 
   return (

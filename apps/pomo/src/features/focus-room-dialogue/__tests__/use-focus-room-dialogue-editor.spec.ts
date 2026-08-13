@@ -1,14 +1,21 @@
+// oxlint-disable require-yield -- Rejection coverage needs an async generator that fails before its first value.
 import {createRoot} from 'solid-js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {successResult, type SupertonicClient} from '../../supertonic'
+import type {FocusRoomDialogue} from '../schema'
 import {
   type FocusRoomDialogueEditorController,
   useFocusRoomDialogueEditor,
 } from '../use-focus-room-dialogue-editor'
 
 const supertonicMocks = vi.hoisted(() => ({createClient: vi.fn()}))
-const repositoryMocks = vi.hoisted(() => ({saveDialogue: vi.fn(async () => undefined)}))
+const repositoryMocks = vi.hoisted(() => ({
+  dispose: vi.fn(),
+  getAudio: vi.fn(),
+  getDialogue: vi.fn(),
+  saveDialogue: vi.fn(async () => undefined),
+}))
 
 vi.mock('../../supertonic', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../supertonic')>()
@@ -16,7 +23,7 @@ vi.mock('../../supertonic', async (importOriginal) => {
 })
 
 vi.mock('../repository', () => ({
-  createFocusRoomDialogueRepository: () => ({saveDialogue: repositoryMocks.saveDialogue}),
+  createFocusRoomDialogueRepository: () => repositoryMocks,
 }))
 
 interface DialogueEditorTestRoot {
@@ -48,17 +55,18 @@ const createClient = (calls: Array<string>): SupertonicClient => ({
   }),
 })
 
-const createEditorRoot = (): DialogueEditorTestRoot => {
+const createEditorRoot = (dialogueId: string | null = null): DialogueEditorTestRoot => {
   let disposeRoot: () => void = () => undefined
   const controller = createRoot((dispose) => {
     disposeRoot = dispose
-    return useFocusRoomDialogueEditor({dialogueId: () => null})
+    return useFocusRoomDialogueEditor({dialogueId: () => dialogueId})
   })
 
   return {controller, dispose: disposeRoot}
 }
 
 beforeEach(() => {
+  vi.clearAllMocks()
   sessionStorage.clear()
   vi.stubGlobal('URL', {
     createObjectURL: vi.fn(() => 'blob:dialogue'),
@@ -68,6 +76,7 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  vi.restoreAllMocks()
   vi.unstubAllGlobals()
 })
 
@@ -112,5 +121,119 @@ describe('useFocusRoomDialogueEditor', () => {
     expect(sessionStorage.getItem('pomo:focus-room-dialogue:draft:new')).toBeNull()
 
     editor.dispose()
+  })
+
+  it('should recover when model preparation rejects unexpectedly', async () => {
+    const client = createClient([])
+    vi.mocked(client.initialize).mockRejectedValueOnce(new Error('worker failed'))
+    supertonicMocks.createClient.mockReturnValue(client)
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    const editor = createEditorRoot()
+    editor.controller.setText('다시 시도할 수 있어야 하는 대사')
+
+    await editor.controller.generate()
+
+    expect(editor.controller.state()).toEqual({
+      message: '음성 모델을 준비하지 못했어요.',
+      status: 'error',
+    })
+    expect(editor.controller.canGenerate()).toBe(true)
+    expect(errorSpy).toHaveBeenCalledOnce()
+    editor.dispose()
+  })
+
+  it('should recover when the model worker cannot start', async () => {
+    supertonicMocks.createClient.mockImplementationOnce(() => {
+      throw new Error('worker blocked')
+    })
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    const editor = createEditorRoot()
+    editor.controller.setText('Worker를 다시 시작할 수 있어야 하는 대사')
+
+    await editor.controller.generate()
+
+    expect(editor.controller.state()).toEqual({
+      message: '음성 모델을 시작하지 못했어요.',
+      status: 'error',
+    })
+    expect(editor.controller.canGenerate()).toBe(true)
+    expect(errorSpy).toHaveBeenCalledOnce()
+    editor.dispose()
+  })
+
+  it('should recover when voice generation rejects unexpectedly', async () => {
+    const client = createClient([])
+    vi.mocked(client.generateStream).mockImplementationOnce(async function* rejectedGeneration() {
+      throw new Error('generation failed')
+    })
+    supertonicMocks.createClient.mockReturnValue(client)
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    const editor = createEditorRoot()
+    editor.controller.setText('생성 실패 후 다시 시도하는 대사')
+
+    await editor.controller.generate()
+
+    expect(editor.controller.state()).toEqual({message: '음성을 만들지 못했어요.', status: 'error'})
+    expect(editor.controller.canGenerate()).toBe(true)
+    expect(errorSpy).toHaveBeenCalledOnce()
+    editor.dispose()
+  })
+
+  it('should preserve the generating state when the worker reports progress', async () => {
+    const client = createClient([])
+    let reportStatus: (message: string) => void = () => undefined
+    vi.mocked(client.initialize).mockImplementationOnce(async (options) => {
+      reportStatus = options.onStatus
+      return successResult(undefined)
+    })
+    supertonicMocks.createClient.mockReturnValue(client)
+    const editor = createEditorRoot()
+    let statusDuringGeneration = ''
+    vi.mocked(client.generateStream).mockImplementationOnce(async function* generateStream() {
+      reportStatus('음성을 다듬고 있어요.')
+      statusDuringGeneration = editor.controller.state().status
+      yield successResult({
+        audio: {...createAudio(), index: 0, total: 1},
+        type: 'chunk' as const,
+      })
+      yield successResult({audio: createAudio(), type: 'complete' as const})
+    })
+    editor.controller.setText('진행 상태를 유지하는 대사')
+
+    await editor.controller.generate()
+
+    expect(statusDuringGeneration).toBe('generating')
+    expect(editor.controller.state().status).toBe('ready')
+    editor.dispose()
+  })
+
+  it('should ignore a dialogue load that finishes after disposal', async () => {
+    let resolveDialogue: (dialogue: FocusRoomDialogue) => void = () => undefined
+    const dialogueLoad = new Promise<FocusRoomDialogue>((resolve) => {
+      resolveDialogue = resolve
+    })
+    repositoryMocks.getDialogue.mockReturnValue(dialogueLoad)
+    const editor = createEditorRoot('stored-dialogue')
+    await Promise.resolve()
+    editor.dispose()
+
+    resolveDialogue({
+      audioKey: 'stored-audio',
+      createdAt: '2026-08-13T00:00:00.000Z',
+      durationMs: 1000,
+      id: 'stored-dialogue',
+      modelId: 'full',
+      segments: [{durationMs: 1000, index: 0, startMs: 0, text: '저장된 대사'}],
+      text: '저장된 대사',
+      updatedAt: '2026-08-13T00:00:00.000Z',
+      version: 1,
+      voiceId: 'Yuna',
+    })
+    await Promise.resolve()
+    await Promise.resolve()
+
+    expect(repositoryMocks.getAudio).not.toHaveBeenCalled()
+    expect(URL.createObjectURL).not.toHaveBeenCalled()
+    expect(repositoryMocks.dispose).toHaveBeenCalledOnce()
   })
 })
