@@ -1,5 +1,9 @@
 import type {FocusRoomSceneId} from './scene-catalog'
-import type {PixiLayerSceneDefinition, PixiScenePoint} from './layer-scene'
+import type {
+  PixiLayerSceneDefinition,
+  PixiScenePoint,
+  PixiSceneTargetTranslation,
+} from './layer-scene'
 import {FOCUS_ROOM_PREVIEW_CHANNELS} from './scene-catalog-channels'
 
 import dayReadingUserBase from '../../../assets/focus-room-layers/day-reading-user/base.webp'
@@ -8,10 +12,11 @@ import dayReadingUserLeftHand from '../../../assets/focus-room-layers/day-readin
 import dayReadingUserRightHand from '../../../assets/focus-room-layers/day-reading-user/layer-hand-right.png'
 import dayReadingUserReference from '../../../assets/concept-art/focus-room-day-reading-user-gaze-concept.webp'
 import dayTypingFocusedBase from '../../../assets/focus-room-layers/day-typing-focused/base.webp'
-import dayTypingFocusedHead from '../../../assets/focus-room-layers/day-typing-focused/layer-head.png'
+import dayTypingFocusedHead from '../../../assets/focus-room-layers/day-typing-focused/layer-head-eye-base.png'
 import dayTypingFocusedLeftHand from '../../../assets/focus-room-layers/day-typing-focused/layer-hand-left.png'
 import dayTypingFocusedRightHand from '../../../assets/focus-room-layers/day-typing-focused/layer-hand-right.png'
 import dayTypingFocusedReference from '../../../assets/concept-art/focus-room-day-typing-concept.webp'
+import dayFocusedEyeIrises from '../../../assets/focus-room-layers/day-reading-focused/layer-eye-irises.png'
 import dayTypingUserBase from '../../../assets/focus-room-layers/day-typing-user/base.webp'
 import dayTypingUserHead from '../../../assets/focus-room-layers/day-typing-user/layer-head.png'
 import dayTypingUserLeftHand from '../../../assets/focus-room-layers/day-typing-user/layer-hand-left.png'
@@ -67,10 +72,16 @@ interface SeparatedScenePivots {
   readonly rightHand: PixiScenePoint
 }
 
+interface SeparatedSceneEyeLayer {
+  readonly motion: PixiSceneTargetTranslation
+  readonly source: string
+}
+
 const createSeparatedScene = (
   id: FocusRoomSceneId,
   assets: SeparatedSceneAssets,
   pivots: SeparatedScenePivots,
+  eyeLayer?: SeparatedSceneEyeLayer,
 ): PixiLayerSceneDefinition => ({
   background: '#17130f',
   height: 941,
@@ -89,6 +100,17 @@ const createSeparatedScene = (
       },
       source: assets.head,
     },
+    ...(eyeLayer === undefined
+      ? []
+      : [
+          {
+            channel: FOCUS_ROOM_PREVIEW_CHANNELS.eyes,
+            id: 'eye-irises',
+            motion: eyeLayer.motion,
+            parentAttachmentId: 'eyes',
+            source: eyeLayer.source,
+          },
+        ]),
     {
       channel: FOCUS_ROOM_PREVIEW_CHANNELS.hands,
       id: 'left-hand',
@@ -144,6 +166,25 @@ export const GENERATED_LAYER_SCENES = {
       rightHand: dayTypingFocusedRightHand,
     },
     {head: {x: 1045, y: 430}, leftHand: {x: 760, y: 710}, rightHand: {x: 1015, y: 725}},
+    {
+      motion: {
+        kind: 'translation',
+        targets: [
+          {x: -1, y: 0},
+          {x: -1.45, y: 0},
+          {x: -0.55, y: 0},
+          {x: -1, y: -0.225},
+          {x: -1, y: 0.225},
+          {x: -1.32, y: -0.16},
+          {x: -0.68, y: -0.16},
+          {x: -1.32, y: 0.16},
+          {x: -0.68, y: 0.16},
+        ],
+        transitionSeconds: 0.04,
+        travel: {maximumSeconds: 2.8, minimumSeconds: 1.6},
+      },
+      source: dayFocusedEyeIrises,
+    },
   ),
   'day-typing-user': createSeparatedScene(
     'day-typing-user',

@@ -1,7 +1,8 @@
 import referenceImage from '../../../assets/concept-art/focus-room-day-writing-concept.webp'
+import eyeImage from '../../../assets/focus-room-layers/day-reading-focused/layer-eye-irises.png'
 import baseImage from '../../../assets/focus-room-layers/day-writing-focused/base.webp'
 import hairTipsMaskImage from '../../../assets/focus-room-layers/day-writing-focused/layer-head-hair-tips-mask-v4.png'
-import headImage from '../../../assets/focus-room-layers/day-writing-focused/layer-head.png'
+import headImage from '../../../assets/focus-room-layers/day-writing-focused/layer-head-eye-base.png'
 import restingHandImage from '../../../assets/focus-room-layers/day-writing-focused/layer-resting-hand.png'
 import writingHandImage from '../../../assets/focus-room-layers/day-writing-focused/layer-writing-hand.png'
 import type {PixiLayerSceneDefinition} from './layer-scene'
@@ -36,6 +37,28 @@ export const DAY_WRITING_LAYER_SCENE = {
         travel: {maximumSeconds: 2.3, minimumSeconds: 1.5},
       },
       source: headImage,
+    },
+    {
+      channel: DAY_WRITING_LAYER_CHANNELS.eyes,
+      id: 'eye-irises',
+      motion: {
+        kind: 'translation',
+        targets: [
+          {x: 0, y: 0},
+          {x: -0.45, y: 0},
+          {x: 0.45, y: 0},
+          {x: 0, y: -0.225},
+          {x: 0, y: 0.225},
+          {x: -0.32, y: -0.16},
+          {x: 0.32, y: -0.16},
+          {x: -0.32, y: 0.16},
+          {x: 0.32, y: 0.16},
+        ],
+        transitionSeconds: 0.04,
+        travel: {maximumSeconds: 2.8, minimumSeconds: 1.6},
+      },
+      parentAttachmentId: 'eyes',
+      source: eyeImage,
     },
     {
       channel: DAY_WRITING_LAYER_CHANNELS.hands,

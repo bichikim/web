@@ -23,7 +23,7 @@ describe('focus room scene catalog', () => {
 
   it('should use true separated layers instead of pixel distortion in every preview', () => {
     for (const scene of FOCUS_ROOM_SCENES) {
-      const expectedLayerCount = scene.id === 'day-reading-focused' ? 6 : 5
+      const expectedLayerCount = scene.time === 'day' && scene.gaze === 'focused' ? 6 : 5
 
       expect(scene.layerScene.layers).toHaveLength(expectedLayerCount)
       expect(scene.layerScene.layers.map((layer) => layer.id)).toContain('head')
@@ -40,28 +40,35 @@ describe('focus room scene catalog', () => {
     }
   })
 
-  it('should attach the focused reading irises to the moving head', () => {
-    const scene = getFocusRoomScene('day', 'reading', 'focused')
-    const eyeLayer = scene.layerScene.layers.find((layer) => layer.id === 'eye-irises')
+  it('should attach reusable irises only to daylight focused heads', () => {
+    const daylightFocusedScenes = FOCUS_ROOM_SCENES.filter(
+      (scene) => scene.time === 'day' && scene.gaze === 'focused',
+    )
 
-    expect(eyeLayer).toMatchObject({
-      channel: FOCUS_ROOM_PREVIEW_CHANNELS.eyes,
-      motion: {
-        kind: 'translation',
-        targets: expect.arrayContaining([
-          {x: -0.45, y: 0},
-          {x: 0.45, y: 0},
-          {x: 0, y: -0.225},
-          {x: 0, y: 0.225},
-        ]),
-        transitionSeconds: 0.04,
-      },
-      parentAttachmentId: 'eyes',
-    })
-    expect(eyeLayer?.motion).toMatchObject({targets: expect.any(Array)})
+    expect(daylightFocusedScenes).toHaveLength(3)
 
-    if (eyeLayer?.motion?.kind === 'translation' && 'targets' in eyeLayer.motion) {
-      expect(eyeLayer.motion.targets).toHaveLength(9)
+    for (const scene of daylightFocusedScenes) {
+      const eyeLayer = scene.layerScene.layers.find((layer) => layer.id === 'eye-irises')
+
+      expect(eyeLayer).toMatchObject({
+        channel: FOCUS_ROOM_PREVIEW_CHANNELS.eyes,
+        motion: {
+          kind: 'translation',
+          targets: expect.any(Array),
+          transitionSeconds: 0.04,
+        },
+        parentAttachmentId: 'eyes',
+      })
+
+      if (eyeLayer?.motion?.kind === 'translation' && 'targets' in eyeLayer.motion) {
+        expect(eyeLayer.motion.targets).toHaveLength(9)
+      }
+    }
+
+    for (const scene of FOCUS_ROOM_SCENES.filter(
+      (scene) => scene.time === 'night' || scene.gaze === 'user',
+    )) {
+      expect(scene.layerScene.layers.map((layer) => layer.id)).not.toContain('eye-irises')
     }
   })
 
