@@ -38,34 +38,22 @@ import {
 import {DAY_WRITING_LAYER_SCENE} from '../features/focus-room-animation/day-writing-layer-scene'
 import type {PixiLayerSceneDefinition} from '../features/focus-room-animation/layer-scene'
 import {FocusRoomMusicPlayer} from './FocusRoomMusicPlayer'
+import {
+  FOCUS_ROOM_ACTIVITY_OPTIONS,
+  FOCUS_ROOM_GAZE_OPTIONS,
+  FOCUS_ROOM_TIME_OPTIONS,
+  type FocusRoomActivity,
+  type FocusRoomGaze,
+} from './focus-room-scene-options'
+import {FocusRoomSettings} from './FocusRoomSettings'
+import './FocusRoomStudio.css'
 
 const FocusRoomSceneCanvas = clientOnly(() => import('./FocusRoomSceneCanvas.client'), {
   lazy: true,
 })
 const AUTOMATIC_PERIOD_REFRESH = 60_000
 
-const TIME_MODE_OPTIONS = [
-  {icon: 'i-tabler-sun', label: '낮', value: 'day'},
-  {icon: 'i-tabler-moon', label: '밤', value: 'night'},
-  {icon: 'i-tabler-sun-moon', label: '자동', value: 'auto'},
-] as const
-const TIME_LABELS = [
-  {label: '낮', value: 'day'},
-  {label: '밤', value: 'night'},
-] as const
-const ACTIVITY_OPTIONS = [
-  {icon: 'i-tabler-book-2', label: '책 읽기', value: 'reading'},
-  {icon: 'i-tabler-pencil', label: '글쓰기', value: 'writing'},
-  {icon: 'i-tabler-keyboard', label: '노트북 타이핑', value: 'typing'},
-] as const
-const GAZE_OPTIONS = [
-  {icon: 'i-tabler-focus-2', label: '작업에 집중', value: 'focused'},
-  {icon: 'i-tabler-user-scan', label: '사용자 보기', value: 'user'},
-] as const
-
 type SceneTime = ScenePeriod
-type SceneActivity = (typeof ACTIVITY_OPTIONS)[number]['value']
-type SceneGaze = (typeof GAZE_OPTIONS)[number]['value']
 
 interface SceneAsset {
   readonly depthSource: string
@@ -75,10 +63,10 @@ interface SceneAsset {
 }
 
 interface SceneToolbarProps {
-  readonly activity: SceneActivity
-  readonly gaze: SceneGaze
-  readonly onActivityChange: (activity: SceneActivity) => void
-  readonly onGazeChange: (gaze: SceneGaze) => void
+  readonly activity: FocusRoomActivity
+  readonly gaze: FocusRoomGaze
+  readonly onActivityChange: (activity: FocusRoomActivity) => void
+  readonly onGazeChange: (gaze: FocusRoomGaze) => void
   readonly onTimeModeChange: (mode: SceneTimeMode) => void
   readonly time: SceneTime
   readonly timeMode: SceneTimeMode
@@ -95,7 +83,7 @@ const SCENE_SOURCES = {
     typing: {focused: nightTypingImage, user: nightTypingGazeImage},
     writing: {focused: nightWritingImage, user: nightWritingGazeImage},
   },
-} satisfies Record<SceneTime, Record<SceneActivity, Record<SceneGaze, string>>>
+} satisfies Record<SceneTime, Record<FocusRoomActivity, Record<FocusRoomGaze, string>>>
 
 const DEPTH_SOURCES = {
   day: {
@@ -108,17 +96,21 @@ const DEPTH_SOURCES = {
     typing: {focused: nightTypingDepth, user: nightTypingGazeDepth},
     writing: {focused: nightWritingDepth, user: nightWritingGazeDepth},
   },
-} satisfies Record<SceneTime, Record<SceneActivity, Record<SceneGaze, string>>>
+} satisfies Record<SceneTime, Record<FocusRoomActivity, Record<FocusRoomGaze, string>>>
 
 const findLabel = <TValue extends string>(
   options: readonly {readonly label: string; readonly value: TValue}[],
   value: TValue,
 ) => options.find((option) => option.value === value)?.label ?? value
 
-const getSceneAsset = (time: SceneTime, activity: SceneActivity, gaze: SceneGaze): SceneAsset => {
-  const timeLabel = findLabel(TIME_LABELS, time)
-  const activityLabel = findLabel(ACTIVITY_OPTIONS, activity)
-  const gazeLabel = findLabel(GAZE_OPTIONS, gaze)
+const getSceneAsset = (
+  time: SceneTime,
+  activity: FocusRoomActivity,
+  gaze: FocusRoomGaze,
+): SceneAsset => {
+  const timeLabel = findLabel(FOCUS_ROOM_TIME_OPTIONS, time)
+  const activityLabel = findLabel(FOCUS_ROOM_ACTIVITY_OPTIONS, activity)
+  const gazeLabel = findLabel(FOCUS_ROOM_GAZE_OPTIONS, gaze)
 
   return {
     depthSource: DEPTH_SOURCES[time][activity][gaze],
@@ -133,12 +125,13 @@ const getSceneAsset = (time: SceneTime, activity: SceneActivity, gaze: SceneGaze
 
 const SceneToolbar = (props: SceneToolbarProps) => {
   const timeModeOption = () =>
-    TIME_MODE_OPTIONS.find((option) => option.value === props.timeMode) ?? TIME_MODE_OPTIONS[0]
+    FOCUS_ROOM_TIME_OPTIONS.find((option) => option.value === props.timeMode) ??
+    FOCUS_ROOM_TIME_OPTIONS[0]
   const timeAccessibleLabel = () => {
     const option = timeModeOption()
 
     return option.value === 'auto'
-      ? `시간대 자동, 현재 ${findLabel(TIME_LABELS, props.time)}`
+      ? `시간대 자동, 현재 ${findLabel(FOCUS_ROOM_TIME_OPTIONS, props.time)}`
       : `시간대 ${option.label}`
   }
 
@@ -152,21 +145,32 @@ const SceneToolbar = (props: SceneToolbarProps) => {
       <div class="flex flex-wrap justify-end gap-2" role="group" aria-label="장면 설정">
         <FocusRoomIconButton
           accessibleLabel={timeAccessibleLabel()}
+          class="focus-room-scene-control"
           feedback={timeModeOption().label}
           icon={timeModeOption().icon}
           onPress={() => props.onTimeModeChange(getNextTimeMode(props.timeMode))}
         />
         <FocusRoomIconSelect
+          class="focus-room-scene-control"
           label="행동"
           onChange={props.onActivityChange}
-          options={ACTIVITY_OPTIONS}
+          options={FOCUS_ROOM_ACTIVITY_OPTIONS}
           value={props.activity}
         />
         <FocusRoomIconSelect
-          label="시선"
+          class="focus-room-scene-control"
+          label="보기"
           onChange={props.onGazeChange}
-          options={GAZE_OPTIONS}
+          options={FOCUS_ROOM_GAZE_OPTIONS}
           value={props.gaze}
+        />
+        <FocusRoomSettings
+          activity={props.activity}
+          gaze={props.gaze}
+          onActivityChange={props.onActivityChange}
+          onGazeChange={props.onGazeChange}
+          onTimeModeChange={props.onTimeModeChange}
+          timeMode={props.timeMode}
         />
       </div>
     </div>
@@ -176,8 +180,8 @@ const SceneToolbar = (props: SceneToolbarProps) => {
 export const FocusRoomStudio = () => {
   const [timeMode, setTimeMode] = createSignal<SceneTimeMode>('day')
   const [automaticPeriod, setAutomaticPeriod] = createSignal<ScenePeriod>('day')
-  const [activity, setActivity] = createSignal<SceneActivity>('reading')
-  const [gaze, setGaze] = createSignal<SceneGaze>('focused')
+  const [activity, setActivity] = createSignal<FocusRoomActivity>('reading')
+  const [gaze, setGaze] = createSignal<FocusRoomGaze>('focused')
   const [isSceneLoading, setIsSceneLoading] = createSignal(true)
   const [hasSceneRendered, setHasSceneRendered] = createSignal(false)
   const time = createMemo(() => resolveScenePeriod(timeMode(), automaticPeriod()))
@@ -221,21 +225,16 @@ export const FocusRoomStudio = () => {
             class={cx(
               'pointer-events-none absolute',
               hasSceneRendered()
-                ? 'left-4 top-20 sm:bottom-24 sm:top-auto'
+                ? cx(
+                    'left-[calc(1rem+env(safe-area-inset-left))]',
+                    'top-[calc(1rem+env(safe-area-inset-top))] sm:left-7 sm:top-6',
+                  )
                 : 'inset-0 grid place-items-center bg-#17130f/24',
             )}
             role="status"
           >
-            <span
-              class={cx(
-                'flex items-center gap-3 rounded-full bg-[var(--focus-room-glass)] px-5 py-3',
-                'focus-room-backdrop text-sm font-650 text-white shadow-lg',
-              )}
-            >
-              <span
-                aria-hidden="true"
-                class="size-5 animate-spin rounded-full border-2 border-white/28 border-t-#e8c795"
-              />
+            <span class="focus-room-backdrop focus-room-loading">
+              <span aria-hidden="true" class="focus-room-loading__spinner" />
               <Show when={hasSceneRendered()} fallback="장면을 불러오는 중">
                 장면 전환 중
               </Show>

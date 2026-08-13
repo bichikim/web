@@ -8,19 +8,11 @@ import {
   type FocusRoomTrack,
   loadFocusRoomTracks,
 } from '../features/focus-room-audio/focus-room-playlist'
+import {createInitialPlaybackState} from '../features/focus-room-audio/initial-playback-state'
 import {type RepeatMode, resolveTrackEnd} from '../features/focus-room-audio/playback-policy'
 import {createShuffleQueue} from '../features/focus-room-audio/shuffle-queue'
+import {useFocusRoomAudioVisualizer} from '../features/focus-room-audio/use-focus-room-audio-visualizer'
 
-/* oxlint-disable eslint/no-magic-numbers -- Deliberate idle VU-meter silhouette. */
-const IDLE_LEVELS = [
-  18, 26, 36, 48, 38, 58, 74, 60, 42, 52, 70, 88, 72, 48, 60, 78, 62, 44, 56, 72, 52, 38, 28, 20,
-] as const
-/* oxlint-enable eslint/no-magic-numbers */
-const LEVEL_COUNT = IDLE_LEVELS.length
-const MINIMUM_LEVEL = 12
-const MAXIMUM_LEVEL = 100
-const BYTE_MAXIMUM = 255
-const LEVEL_GAIN = 112
 const ACTIVE_VISUALIZER_OPACITY = 0.76
 const IDLE_VISUALIZER_OPACITY = 0.34
 const SKIP_BUTTON_CLASSES =
@@ -44,48 +36,39 @@ interface SelectRandomTrackOptions {
   readonly shouldResume?: boolean
 }
 
+const isAbortError = (error: unknown) =>
+  error instanceof DOMException && error.name === 'AbortError'
+
 // oxlint-disable-next-line eslint/max-lines-per-function -- Media Chrome's control tree is one semantic unit.
 export default function FocusRoomMusicPlayerClient(props: FocusRoomMusicPlayerClientProps) {
   const initialTracks = untrack(() => props.tracks ?? [])
+  const initialState = createInitialPlaybackState({trackCount: initialTracks.length})
   const [loadedTracks, setLoadedTracks] = createSignal<readonly FocusRoomTrack[]>(initialTracks)
   const tracks = () => props.tracks ?? loadedTracks()
-  const [currentIndex, setCurrentIndex] = createSignal(0)
+  const [currentIndex, setCurrentIndex] = createSignal(initialState.currentIndex)
   const [expanded, setExpanded] = createSignal(false)
   const [isPlaying, setIsPlaying] = createSignal(false)
-  const [repeatMode, setRepeatMode] = createSignal<RepeatMode>('none')
-  const [shuffleEnabled, setShuffleEnabled] = createSignal(false)
-  const [levels, setLevels] = createSignal<readonly number[]>(IDLE_LEVELS)
+  const [repeatMode, setRepeatMode] = createSignal<RepeatMode>('repeat-all')
+  const [shuffleEnabled, setShuffleEnabled] = createSignal(true)
+  const visualizer = useFocusRoomAudioVisualizer()
   const currentTrack = createMemo(() => tracks()[currentIndex()])
   const playlistRequest = new AbortController()
   let audioElement: HTMLAudioElement | undefined
-  let audioContext: AudioContext | undefined
-  let analyserNode: AnalyserNode | undefined
-  let mediaSource: MediaElementAudioSourceNode | undefined
-  let spectrumData: Uint8Array<ArrayBuffer> | undefined
-  let animationFrame: number | undefined
-  let audioIsPlaying = false
   let destroyed = false
-  let shuffleQueue: number[] = []
+  let shuffleQueue = initialState.queue
   let shuffleHistory: number[] = []
 
-  const handleAudioError = () => {
+  const handleAudioError = (error?: unknown) => {
+    if (isAbortError(error)) {
+      return
+    }
+
     if (destroyed) {
       return
     }
 
-    audioIsPlaying = false
     setIsPlaying(false)
-    handleAnalyserError()
-  }
-
-  const handleAnalyserError = () => {
-    if (animationFrame !== undefined) {
-      cancelAnimationFrame(animationFrame)
-      animationFrame = undefined
-    }
-    if (!destroyed) {
-      setLevels(IDLE_LEVELS)
-    }
+    visualizer.stop()
   }
 
   const selectTrack = (options: SelectTrackOptions) => {
@@ -102,88 +85,16 @@ export default function FocusRoomMusicPlayerClient(props: FocusRoomMusicPlayerCl
     })
   }
 
-  const initializeAnalyser = async () => {
-    if (!audioElement) {
-      return
-    }
-
-    const context = (audioContext ??= new AudioContext())
-
-    if (context.state === 'suspended') {
-      await context.resume()
-    }
-
-    analyserNode ??= context.createAnalyser()
-    analyserNode.fftSize = 128
-    analyserNode.smoothingTimeConstant = 0.78
-    spectrumData ??= new Uint8Array(analyserNode.frequencyBinCount)
-
-    if (!mediaSource) {
-      mediaSource = context.createMediaElementSource(audioElement)
-      mediaSource.connect(analyserNode)
-      analyserNode.connect(context.destination)
-    }
-  }
-
-  const updateLevels = () => {
-    if (!analyserNode || !audioIsPlaying) {
-      return
-    }
-
-    const spectrum = spectrumData
-
-    if (spectrum === undefined) {
-      return
-    }
-
-    analyserNode.getByteFrequencyData(spectrum)
-    const bucketSize = Math.max(1, Math.floor(spectrum.length / LEVEL_COUNT))
-    const nextLevels = Array.from({length: LEVEL_COUNT}, (_, index) => {
-      const start = index * bucketSize
-      const end = Math.min(spectrum.length, start + bucketSize)
-      let sum = 0
-
-      for (let spectrumIndex = start; spectrumIndex < end; spectrumIndex += 1) {
-        sum += spectrum[spectrumIndex]
-      }
-
-      const average = sum / Math.max(1, end - start)
-
-      return Math.max(
-        MINIMUM_LEVEL,
-        Math.min(MAXIMUM_LEVEL, Math.round((average / BYTE_MAXIMUM) * LEVEL_GAIN)),
-      )
-    })
-
-    setLevels(nextLevels)
-    animationFrame = requestAnimationFrame(updateLevels)
-  }
-
   const handlePlay = () => {
-    audioIsPlaying = true
     setIsPlaying(true)
-    initializeAnalyser()
-      .then(() => {
-        if (destroyed) {
-          return
-        }
-
-        if (animationFrame !== undefined) {
-          cancelAnimationFrame(animationFrame)
-        }
-        updateLevels()
-      })
-      .catch(handleAnalyserError)
+    if (audioElement) {
+      visualizer.start(audioElement)
+    }
   }
 
   const handlePause = () => {
-    audioIsPlaying = false
     setIsPlaying(false)
-    if (animationFrame !== undefined) {
-      cancelAnimationFrame(animationFrame)
-      animationFrame = undefined
-    }
-    setLevels(IDLE_LEVELS)
+    visualizer.stop()
   }
 
   const resetShuffleQueue = (currentTrackIndex = currentIndex()) => {
@@ -314,15 +225,21 @@ export default function FocusRoomMusicPlayerClient(props: FocusRoomMusicPlayerCl
   onMount(() => {
     if (props.tracks === undefined) {
       loadFocusRoomTracks({signal: playlistRequest.signal})
+        // oxlint-disable-next-line solid/reactivity -- Completion must apply the user's latest shuffle choice.
         .then((nextTracks) => {
           if (!destroyed) {
+            if (shuffleEnabled()) {
+              const nextState = createInitialPlaybackState({trackCount: nextTracks.length})
+
+              setCurrentIndex(nextState.currentIndex)
+              shuffleQueue = nextState.queue
+              shuffleHistory = []
+            }
             setLoadedTracks(nextTracks)
           }
         })
         .catch((error: unknown) => {
-          if (!(error instanceof DOMException && error.name === 'AbortError')) {
-            handleAudioError()
-          }
+          handleAudioError(error)
         })
     }
 
@@ -335,16 +252,10 @@ export default function FocusRoomMusicPlayerClient(props: FocusRoomMusicPlayerCl
   onCleanup(() => {
     destroyed = true
     playlistRequest.abort()
-    if (animationFrame !== undefined) {
-      cancelAnimationFrame(animationFrame)
-    }
     audioElement?.removeEventListener('play', handlePlay)
     audioElement?.removeEventListener('pause', handlePause)
     audioElement?.removeEventListener('ended', handleEnded)
     audioElement?.removeEventListener('error', handleAudioError)
-    mediaSource?.disconnect()
-    analyserNode?.disconnect()
-    audioContext?.close().catch(() => undefined)
   })
 
   return (
@@ -388,7 +299,7 @@ export default function FocusRoomMusicPlayerClient(props: FocusRoomMusicPlayerCl
             aria-label="오디오 주파수 레벨"
             class="focus-room-player__visualizer absolute flex items-end gap-0.5"
           >
-            <For each={levels()}>
+            <For each={visualizer.levels()}>
               {(level) => (
                 <span
                   aria-hidden="true"

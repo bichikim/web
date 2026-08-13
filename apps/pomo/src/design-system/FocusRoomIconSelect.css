@@ -4,8 +4,8 @@
 
 .focus-room-icon-select__trigger {
   display: grid;
-  width: 2.75rem;
-  height: 2.75rem;
+  width: var(--focus-room-control-height-medium);
+  height: var(--focus-room-control-height-medium);
   place-items: center;
   border-radius: var(--focus-room-radius-control);
   background: var(--focus-room-glass);
