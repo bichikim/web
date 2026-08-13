@@ -4,8 +4,12 @@ export {FocusRoomEventProvider, useFocusRoomEvents} from './FocusRoomEventContex
 export type {FocusRoomEventContextValue, FocusRoomEventProviderProps} from './FocusRoomEventContext'
 export {dialogueEventBindingSchema, FOCUS_ROOM_ENTRY_EVENT, focusRoomDialogueSchema} from './schema'
 export type {DialogueEventBinding, DialogueSegment, FocusRoomDialogue} from './schema'
-export {createDialogueTimeline, getDialogueTextAtTime} from './timeline'
-export type {CreateDialogueSegmentsOptions, DialogueTimeline} from './timeline'
+export {createDialogueTimeline, getDialoguePositionAtTime, getDialogueTextAtTime} from './timeline'
+export type {
+  CreateDialogueSegmentsOptions,
+  DialogueSegmentPosition,
+  DialogueTimeline,
+} from './timeline'
 export {useFocusRoomDialogueEditor} from './use-focus-room-dialogue-editor'
 export type {
   DialogueEditorState,

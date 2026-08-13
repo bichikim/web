@@ -10,11 +10,13 @@ import {
 
 import type {FocusRoomDialogueRepository} from './repository'
 import type {FocusRoomDialogue} from './schema'
-import {getDialogueTextAtTime} from './timeline'
+import {getDialoguePositionAtTime} from './timeline'
 
 const MILLISECONDS_PER_SECOND = 1000
 
 export interface FocusRoomEventContextValue {
+  readonly activeSegmentCount: Accessor<number>
+  readonly activeSegmentPosition: Accessor<number | null>
   readonly activeText: Accessor<string | null>
   readonly deleteDialogue: (dialogueId: string) => Promise<void>
   readonly dialogues: Accessor<ReadonlyArray<FocusRoomDialogue>>
@@ -34,6 +36,8 @@ export interface FocusRoomEventProviderProps {
 
 interface EntryPlaybackController {
   readonly activeDialogueId: () => string | null
+  readonly activeSegmentCount: Accessor<number>
+  readonly activeSegmentPosition: Accessor<number | null>
   readonly activeText: Accessor<string | null>
   readonly dispose: () => void
   readonly isBlocked: Accessor<boolean>
@@ -45,6 +49,8 @@ interface EntryPlaybackController {
 const FocusRoomEventContext = createContext<FocusRoomEventContextValue>()
 
 const createEntryPlaybackController = (): EntryPlaybackController => {
+  const [activeSegmentCount, setActiveSegmentCount] = createSignal(0)
+  const [activeSegmentPosition, setActiveSegmentPosition] = createSignal<number | null>(null)
   const [activeText, setActiveText] = createSignal<string | null>(null)
   const [isBlocked, setIsBlocked] = createSignal(false)
   let animationFrame: number | null = null
@@ -68,20 +74,26 @@ const createEntryPlaybackController = (): EntryPlaybackController => {
       return
     }
 
-    setActiveText(
-      getDialogueTextAtTime(dialogue.segments, audio.currentTime * MILLISECONDS_PER_SECOND),
+    const activePosition = getDialoguePositionAtTime(
+      dialogue.segments,
+      audio.currentTime * MILLISECONDS_PER_SECOND,
     )
+    setActiveSegmentPosition(activePosition?.position ?? null)
+    setActiveText(activePosition?.text ?? null)
     animationFrame = window.requestAnimationFrame(updateSubtitle)
   }
 
   const stop = () => {
     playbackRequestId += 1
     cancelFrame()
+    audio?.removeEventListener('ended', stop)
     audio?.pause()
     audio = null
     dialogue = null
     isAwaitingSceneInteraction = false
     setIsBlocked(false)
+    setActiveSegmentCount(0)
+    setActiveSegmentPosition(null)
     setActiveText(null)
 
     if (audioUrl !== null) {
@@ -126,6 +138,8 @@ const createEntryPlaybackController = (): EntryPlaybackController => {
 
   return {
     activeDialogueId: () => dialogue?.id ?? null,
+    activeSegmentCount,
+    activeSegmentPosition,
     activeText,
     dispose() {
       isDisposed = true
@@ -148,6 +162,7 @@ const createEntryPlaybackController = (): EntryPlaybackController => {
       }
 
       dialogue = storedDialogue
+      setActiveSegmentCount(storedDialogue.segments.length)
       audioUrl = URL.createObjectURL(storedAudio)
       audio = new Audio(audioUrl)
       audio.addEventListener('ended', stop, {once: true})
@@ -224,6 +239,8 @@ export const FocusRoomEventProvider = (props: FocusRoomEventProviderProps) => {
   }
 
   const contextValue: FocusRoomEventContextValue = {
+    activeSegmentCount: playback.activeSegmentCount,
+    activeSegmentPosition: playback.activeSegmentPosition,
     activeText: playback.activeText,
     async deleteDialogue(dialogueId) {
       await getRepository().deleteDialogue(dialogueId)
