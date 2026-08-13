@@ -1,6 +1,6 @@
 import {describe, expect, it} from 'vitest'
 
-import {FOCUS_ROOM_SCENES, getFocusRoomScene} from '../scene-catalog'
+import {FOCUS_ROOM_PREVIEW_CHANNELS, FOCUS_ROOM_SCENES, getFocusRoomScene} from '../scene-catalog'
 
 describe('focus room scene catalog', () => {
   it('should provide all twelve unique scene combinations', () => {
@@ -32,5 +32,21 @@ describe('focus room scene catalog', () => {
         scene.layerScene.layers.some((layer) => (layer.motions?.length ?? 0) > 0),
       ),
     ).toBe(true)
+  })
+
+  it('should expose the complete review panel channels for every preview', () => {
+    for (const scene of FOCUS_ROOM_SCENES) {
+      const channels = scene.layerScene.layers.flatMap((layer) => [
+        ...(layer.channel === undefined ? [] : [layer.channel]),
+        ...(layer.motion?.channel === undefined ? [] : [layer.motion.channel]),
+        ...(layer.motions?.flatMap((motion) =>
+          motion.channel === undefined ? [] : [motion.channel],
+        ) ?? []),
+      ])
+
+      expect(channels).toContain(FOCUS_ROOM_PREVIEW_CHANNELS.head)
+      expect(channels).toContain(FOCUS_ROOM_PREVIEW_CHANNELS.hands)
+      expect(channels).toContain(FOCUS_ROOM_PREVIEW_CHANNELS.reference)
+    }
   })
 })

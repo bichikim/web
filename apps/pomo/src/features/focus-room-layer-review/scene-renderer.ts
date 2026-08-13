@@ -1,10 +1,7 @@
 import {Application} from 'pixi.js'
 
-import {
-  DAY_WRITING_LAYER_CHANNELS,
-  DAY_WRITING_LAYER_SCENE,
-} from '../focus-room-animation/day-writing-layer-scene'
 import {PixiLayerScene, type PixiLayerSceneDefinition} from '../focus-room-animation/layer-scene'
+import {FOCUS_ROOM_PREVIEW_CHANNELS} from '../focus-room-animation/scene-catalog'
 
 export interface FocusRoomLayerReviewState {
   readonly animationEnabled: boolean
@@ -104,18 +101,16 @@ export class FocusRoomLayerReviewRenderer {
 
   #toSceneState(state: FocusRoomLayerReviewState) {
     const referenceOpacity = clampOpacity(state.referenceOpacity)
-    const channels =
-      this.#definition.id === DAY_WRITING_LAYER_SCENE.id
-        ? {
-            [DAY_WRITING_LAYER_CHANNELS.hands]: {visible: state.handsVisible},
-            [DAY_WRITING_LAYER_CHANNELS.head]: {visible: state.headVisible},
-            [DAY_WRITING_LAYER_CHANNELS.reference]: {
-              opacity: referenceOpacity,
-              visible: referenceOpacity > 0,
-            },
-          }
-        : undefined
-
-    return {animationEnabled: state.animationEnabled, channels}
+    return {
+      animationEnabled: state.animationEnabled,
+      channels: {
+        [FOCUS_ROOM_PREVIEW_CHANNELS.hands]: {visible: state.handsVisible},
+        [FOCUS_ROOM_PREVIEW_CHANNELS.head]: {visible: state.headVisible},
+        [FOCUS_ROOM_PREVIEW_CHANNELS.reference]: {
+          opacity: referenceOpacity,
+          visible: referenceOpacity > 0,
+        },
+      },
+    }
   }
 }

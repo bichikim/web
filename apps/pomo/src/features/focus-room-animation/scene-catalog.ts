@@ -59,6 +59,11 @@ interface SceneSourcePair {
 
 const SCENE_WIDTH = 1672
 const SCENE_HEIGHT = 941
+export const FOCUS_ROOM_PREVIEW_CHANNELS = {
+  hands: 'hands',
+  head: 'head',
+  reference: 'reference',
+} as const
 const HEAD_TRAVEL = {maximumSeconds: 2.4, minimumSeconds: 1.45} satisfies PixiSceneTravelRange
 const HAIR_TRAVEL = {maximumSeconds: 1.8, minimumSeconds: 1.1} satisfies PixiSceneTravelRange
 const HAND_TRAVEL = {maximumSeconds: 1.35, minimumSeconds: 0.65} satisfies PixiSceneTravelRange
@@ -158,10 +163,12 @@ const LABELS = {
 } as const
 
 const createPixelMotion = (
+  channel: string,
   region: PixiSceneRectangle,
   distance: {readonly x: number; readonly y: number},
   travel: PixiSceneTravelRange,
 ): PixiSceneMotion => ({
+  channel,
   effects: [{distance, featherPixels: 42, kind: 'pixel-push', region}],
   kind: 'pixel-oscillation',
   travel,
@@ -179,10 +186,21 @@ const createPreviewScene = (
     {
       id: 'scene',
       motions: [
-        createPixelMotion(regions.head, {x: 1.8, y: -1.1}, HEAD_TRAVEL),
-        createPixelMotion(regions.hair, {x: -3.2, y: 0.8}, HAIR_TRAVEL),
+        createPixelMotion(
+          FOCUS_ROOM_PREVIEW_CHANNELS.head,
+          regions.head,
+          {x: 1.8, y: -1.1},
+          HEAD_TRAVEL,
+        ),
+        createPixelMotion(
+          FOCUS_ROOM_PREVIEW_CHANNELS.head,
+          regions.hair,
+          {x: -3.2, y: 0.8},
+          HAIR_TRAVEL,
+        ),
         ...regions.hands.map((region, index) =>
           createPixelMotion(
+            FOCUS_ROOM_PREVIEW_CHANNELS.hands,
             region,
             index === 0 ? {x: 2.4, y: 1.1} : {x: -1.8, y: 0.8},
             HAND_TRAVEL,
@@ -190,6 +208,12 @@ const createPreviewScene = (
         ),
       ],
       source,
+    },
+    {
+      channel: FOCUS_ROOM_PREVIEW_CHANNELS.reference,
+      id: 'reference',
+      source,
+      visible: false,
     },
   ],
   width: SCENE_WIDTH,

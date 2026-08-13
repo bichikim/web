@@ -108,20 +108,16 @@ const ReviewControls = (props: ReviewControlsProps) => (
   >
     <div class="flex items-center justify-between gap-3">
       <div>
-        <h2 class="m-0 text-lg font-750 text-#fffaf1">
-          {props.isSeparatedScene ? '레이어' : '프리뷰 검사'}
-        </h2>
+        <h2 class="m-0 text-lg font-750 text-#fffaf1">레이어</h2>
         <p class="mb-0 mt-1 text-xs leading-5 text-#a99fac">
           {props.isSeparatedScene
             ? '체크를 해제하면 해당 파트가 숨겨집니다.'
-            : '미세 애니메이션은 장면마다 독립된 위치와 속도를 사용합니다.'}
+            : '체크를 해제하면 해당 파트의 미세 동작이 멈춥니다.'}
         </p>
       </div>
-      <Show when={props.isSeparatedScene}>
-        <span class="rounded-full bg-#e8c795/12 px-3 py-1 text-xs font-700 text-#f2d3a7">
-          원본 픽셀
-        </span>
-      </Show>
+      <span class="shrink-0 whitespace-nowrap rounded-full bg-#e8c795/12 px-3 py-1 text-xs font-700 text-#f2d3a7">
+        원본 픽셀
+      </span>
     </div>
 
     <label
@@ -144,63 +140,65 @@ const ReviewControls = (props: ReviewControlsProps) => (
       />
     </label>
 
-    <Show when={props.isSeparatedScene}>
-      <div class="mt-3 divide-y divide-white/8 border-t border-white/8 pt-1 sm:mt-4 sm:pt-2">
-        <LayerToggle
-          checked={props.headVisible}
-          description="분리된 얼굴, 머리카락, 목 연결부"
-          label="머리 레이어"
-          onChange={props.onHeadChange}
-        />
-        <LayerToggle
-          checked={props.handsVisible}
-          description="분리된 양손, 팔목, 필기 펜"
-          label="손 레이어"
-          onChange={props.onHandsChange}
-        />
-      </div>
+    <div class="mt-3 divide-y divide-white/8 border-t border-white/8 pt-1 sm:mt-4 sm:pt-2">
+      <LayerToggle
+        checked={props.headVisible}
+        description={
+          props.isSeparatedScene
+            ? '분리된 얼굴, 머리카락, 목 연결부'
+            : '머리, 앞머리 영역 미세 동작'
+        }
+        label="머리 레이어"
+        onChange={props.onHeadChange}
+      />
+      <LayerToggle
+        checked={props.handsVisible}
+        description={props.isSeparatedScene ? '분리된 양손, 팔목, 필기 펜' : '양손 영역 미세 동작'}
+        label="손 레이어"
+        onChange={props.onHandsChange}
+      />
+    </div>
 
-      <div class="mt-3 grid grid-cols-2 gap-2 sm:mt-4">
-        <button
-          class="rounded-3 bg-#e8c795 px-3 py-2.5 text-sm font-750 text-#241b12 hover:bg-#f2d3a7"
-          onClick={() => props.onShowAll()}
-          type="button"
-        >
-          모두 표시
-        </button>
-        <button
-          class="rounded-3 bg-white/8 px-3 py-2.5 text-sm font-700 text-#e7dfe9 hover:bg-white/12"
-          onClick={() => props.onHideAll()}
-          type="button"
-        >
-          모두 숨김
-        </button>
-      </div>
+    <div class="mt-3 grid grid-cols-2 gap-2 sm:mt-4">
+      <button
+        class="rounded-3 bg-#e8c795 px-3 py-2.5 text-sm font-750 text-#241b12 hover:bg-#f2d3a7"
+        onClick={() => props.onShowAll()}
+        type="button"
+      >
+        모두 표시
+      </button>
+      <button
+        class="rounded-3 bg-white/8 px-3 py-2.5 text-sm font-700 text-#e7dfe9 hover:bg-white/12"
+        onClick={() => props.onHideAll()}
+        type="button"
+      >
+        모두 숨김
+      </button>
+    </div>
 
-      <div class="mt-3 border-t border-white/8 pt-3 sm:mt-4 sm:pt-4">
-        <div class="flex items-center justify-between gap-4">
-          <label class="text-sm font-700 text-#fffaf1" for="reference-opacity">
-            원본 오버레이
-          </label>
-          <output class="text-xs tabular-nums text-#e8c795" for="reference-opacity">
-            {props.referencePercentage}%
-          </output>
-        </div>
-        <input
-          class="mt-3 w-full accent-#e8c795"
-          id="reference-opacity"
-          max="1"
-          min="0"
-          onInput={(event) => props.onReferenceChange(event)}
-          step="0.05"
-          type="range"
-          value={props.referenceOpacity}
-        />
-        <p class="mb-0 mt-2 text-xs leading-5 text-#a99fac">
-          값을 올리면 원본 장면이 위에 겹쳐져 가장자리 차이를 확인할 수 있습니다.
-        </p>
+    <div class="mt-3 border-t border-white/8 pt-3 sm:mt-4 sm:pt-4">
+      <div class="flex items-center justify-between gap-4">
+        <label class="text-sm font-700 text-#fffaf1" for="reference-opacity">
+          원본 오버레이
+        </label>
+        <output class="text-xs tabular-nums text-#e8c795" for="reference-opacity">
+          {props.referencePercentage}%
+        </output>
       </div>
-    </Show>
+      <input
+        class="mt-3 w-full accent-#e8c795"
+        id="reference-opacity"
+        max="1"
+        min="0"
+        onInput={(event) => props.onReferenceChange(event)}
+        step="0.05"
+        type="range"
+        value={props.referenceOpacity}
+      />
+      <p class="mb-0 mt-2 text-xs leading-5 text-#a99fac">
+        값을 올리면 원본 장면이 위에 겹쳐져 가장자리 차이를 확인할 수 있습니다.
+      </p>
+    </div>
   </aside>
 )
 

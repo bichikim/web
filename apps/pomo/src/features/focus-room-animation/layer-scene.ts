@@ -35,6 +35,7 @@ export interface PixiSceneMaskedPixelPush {
 export type PixiScenePushEffect = PixiSceneMaskedPixelPush | PixiScenePixelPush
 
 export interface PixiScenePivotRotation {
+  readonly channel?: string
   readonly center: PixiScenePoint
   readonly degrees: number
   readonly kind: 'pivot-rotation'
@@ -43,6 +44,7 @@ export interface PixiScenePivotRotation {
 }
 
 export interface PixiScenePixelOscillation {
+  readonly channel?: string
   readonly effects: readonly PixiScenePushEffect[]
   readonly kind: 'pixel-oscillation'
   readonly travel: PixiSceneTravelRange
@@ -99,6 +101,7 @@ interface LayerInstance {
 
 interface MotionInstance {
   readonly definition: PixiSceneMotion
+  enabled: boolean
   readonly pixelPushFilters: readonly PushFilter[]
   readonly state: MotionState
 }
@@ -258,6 +261,17 @@ export class PixiLayerScene {
       layer.container.alpha =
         clampUnit(layer.definition.opacity ?? 1) * clampUnit(channelState?.opacity ?? 1)
       layer.container.visible = channelState?.visible ?? layer.definition.visible ?? true
+
+      for (const motion of layer.motions) {
+        const motionChannel = motion.definition.channel
+        const motionChannelState =
+          motionChannel === undefined ? undefined : state.channels?.[motionChannel]
+        motion.enabled = motionChannelState?.visible ?? true
+
+        if (!motion.enabled) {
+          this.#resetMotionInstance(layer, motion)
+        }
+      }
     }
 
     if (state.animationEnabled && this.#hasMotion()) {
@@ -301,7 +315,9 @@ export class PixiLayerScene {
 
     for (const layer of this.#layers) {
       for (const motion of layer.motions) {
-        this.#advanceMotion(layer, motion, deltaSeconds)
+        if (motion.enabled) {
+          this.#advanceMotion(layer, motion, deltaSeconds)
+        }
       }
     }
 
@@ -405,6 +421,7 @@ export class PixiLayerScene {
       for (const motion of motions) {
         instances.push({
           definition: motion,
+          enabled: true,
           pixelPushFilters: this.#createPushFilters(getMotionEffects(motion), maskTextures),
           state: this.#createMotionState(motion.travel),
         })
@@ -512,7 +529,7 @@ export class PixiLayerScene {
   }
 
   #hasMotion() {
-    return this.#layers.some((layer) => layer.motions.length > 0)
+    return this.#layers.some((layer) => layer.motions.some((motion) => motion.enabled))
   }
 
   #randomDuration(range: PixiSceneTravelRange) {
@@ -522,19 +539,23 @@ export class PixiLayerScene {
   #resetMotion() {
     for (const layer of this.#layers) {
       for (const motion of layer.motions) {
-        motion.state.direction = 1
-        motion.state.elapsedSeconds = 0
-        motion.state.travelSeconds = this.#randomDuration(motion.definition.travel)
-
-        if (motion.definition.kind === 'pivot-rotation') {
-          layer.container.position.set(motion.definition.center.x, motion.definition.center.y)
-          layer.container.rotation = 0
-        }
-
-        for (const filter of motion.pixelPushFilters) {
-          filter.setProgress(0)
-        }
+        this.#resetMotionInstance(layer, motion)
       }
+    }
+  }
+
+  #resetMotionInstance(layer: LayerInstance, motion: MotionInstance) {
+    motion.state.direction = 1
+    motion.state.elapsedSeconds = 0
+    motion.state.travelSeconds = this.#randomDuration(motion.definition.travel)
+
+    if (motion.definition.kind === 'pivot-rotation') {
+      layer.container.position.set(motion.definition.center.x, motion.definition.center.y)
+      layer.container.rotation = 0
+    }
+
+    for (const filter of motion.pixelPushFilters) {
+      filter.setProgress(0)
     }
   }
 }
