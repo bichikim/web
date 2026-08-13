@@ -71,7 +71,7 @@ export const DAY_WRITING_LAYER_SCENE = {
           {x: 1.06, y: 0.53},
         ],
         transitionSeconds: 0.04,
-        travel: {maximumSeconds: 2.8, minimumSeconds: 1.6},
+        travel: {maximumSeconds: 3.2, minimumSeconds: 1.4},
       },
       parentAttachmentId: 'eyes',
       source: eyeImage,

@@ -56,6 +56,7 @@ describe('focus room scene catalog', () => {
           kind: 'translation',
           targets: expect.any(Array),
           transitionSeconds: 0.04,
+          travel: {maximumSeconds: 3.2, minimumSeconds: 1.4},
         },
         parentAttachmentId: 'eyes',
       })

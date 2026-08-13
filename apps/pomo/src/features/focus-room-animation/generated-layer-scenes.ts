@@ -197,7 +197,7 @@ export const GENERATED_LAYER_SCENES = {
           {x: 0.06, y: 0.53},
         ],
         transitionSeconds: 0.04,
-        travel: {maximumSeconds: 2.8, minimumSeconds: 1.6},
+        travel: {maximumSeconds: 3.2, minimumSeconds: 1.4},
       },
       source: dayFocusedEyeIrises,
     },
