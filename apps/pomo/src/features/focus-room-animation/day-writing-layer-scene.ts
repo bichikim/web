@@ -5,12 +5,9 @@ import restingHandImage from '../../../assets/focus-room-layers/day-writing/laye
 import writingHandImage from '../../../assets/focus-room-layers/day-writing/layer-writing-hand.png'
 import referenceImage from '../../../assets/concept-art/focus-room-day-writing-concept.png'
 import type {PixiLayerSceneDefinition} from './layer-scene'
+import {FOCUS_ROOM_PREVIEW_CHANNELS} from './scene-catalog-channels'
 
-export const DAY_WRITING_LAYER_CHANNELS = {
-  hands: 'hands',
-  head: 'head',
-  reference: 'reference',
-} as const
+export const DAY_WRITING_LAYER_CHANNELS = FOCUS_ROOM_PREVIEW_CHANNELS
 
 export const DAY_WRITING_LAYER_SCENE = {
   background: '#17130f',

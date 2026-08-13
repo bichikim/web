@@ -24,7 +24,6 @@ interface ReviewControlsProps {
   readonly animationEnabled: boolean
   readonly handsVisible: boolean
   readonly headVisible: boolean
-  readonly isSeparatedScene: boolean
   readonly onAnimationChange: (enabled: boolean) => void
   readonly onHandsChange: (visible: boolean) => void
   readonly onHeadChange: (visible: boolean) => void
@@ -40,7 +39,7 @@ const PANEL_CLASSES = cx(
   'shadow-[0_24px_70px_rgba(5,2,10,0.24)] backdrop-blur-xl',
 )
 const PERCENT_SCALE = 100
-const SEPARATED_SCENE_ID: FocusRoomSceneId = 'day-writing-focused'
+const INITIAL_SCENE_ID: FocusRoomSceneId = 'day-writing-focused'
 
 const LayerToggle = (props: LayerToggleProps) => {
   const handleChange: JSX.EventHandler<HTMLInputElement, Event> = (event) => {
@@ -110,9 +109,7 @@ const ReviewControls = (props: ReviewControlsProps) => (
       <div>
         <h2 class="m-0 text-lg font-750 text-#fffaf1">레이어</h2>
         <p class="mb-0 mt-1 text-xs leading-5 text-#a99fac">
-          {props.isSeparatedScene
-            ? '체크를 해제하면 해당 파트가 숨겨집니다.'
-            : '체크를 해제하면 해당 파트의 미세 동작이 멈춥니다.'}
+          체크를 해제하면 해당 파트가 숨겨집니다.
         </p>
       </div>
       <span class="shrink-0 whitespace-nowrap rounded-full bg-#e8c795/12 px-3 py-1 text-xs font-700 text-#f2d3a7">
@@ -143,17 +140,13 @@ const ReviewControls = (props: ReviewControlsProps) => (
     <div class="mt-3 divide-y divide-white/8 border-t border-white/8 pt-1 sm:mt-4 sm:pt-2">
       <LayerToggle
         checked={props.headVisible}
-        description={
-          props.isSeparatedScene
-            ? '분리된 얼굴, 머리카락, 목 연결부'
-            : '머리, 앞머리 영역 미세 동작'
-        }
+        description="분리된 얼굴, 머리카락, 목 연결부"
         label="머리 레이어"
         onChange={props.onHeadChange}
       />
       <LayerToggle
         checked={props.handsVisible}
-        description={props.isSeparatedScene ? '분리된 양손, 팔목, 필기 펜' : '양손 영역 미세 동작'}
+        description="분리된 양손, 팔목, 필기 펜"
         label="손 레이어"
         onChange={props.onHandsChange}
       />
@@ -203,7 +196,7 @@ const ReviewControls = (props: ReviewControlsProps) => (
 )
 
 export const FocusRoomLayerReview = () => {
-  const [selectedId, setSelectedId] = createSignal<FocusRoomSceneId>(SEPARATED_SCENE_ID)
+  const [selectedId, setSelectedId] = createSignal<FocusRoomSceneId>(INITIAL_SCENE_ID)
   const [headVisible, setHeadVisible] = createSignal(true)
   const [handsVisible, setHandsVisible] = createSignal(true)
   const [animationEnabled, setAnimationEnabled] = createSignal(true)
@@ -276,16 +269,13 @@ export const FocusRoomLayerReview = () => {
             포커스 룸으로 →
           </A>
         </div>
-        <p class="mb-0 mt-1 text-xs text-#bdb2c4">
-          1672 × 941 · {selectedId() === SEPARATED_SCENE_ID ? '분리 레이어' : '영역 픽셀 레이어'}
-        </p>
+        <p class="mb-0 mt-1 text-xs text-#bdb2c4">1672 × 941 · 분리 레이어</p>
       </header>
 
       <ReviewControls
         animationEnabled={animationEnabled()}
         handsVisible={handsVisible()}
         headVisible={headVisible()}
-        isSeparatedScene={selectedId() === SEPARATED_SCENE_ID}
         onAnimationChange={setAnimationEnabled}
         onHandsChange={setHandsVisible}
         onHeadChange={setHeadVisible}
