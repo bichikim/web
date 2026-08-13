@@ -4,7 +4,6 @@ import {z} from 'zod'
 import {
   advancePomodoroTimer,
   createPomodoroTimerState,
-  getPomodoroPhaseDuration,
   getPomodoroProgress,
   getPomodoroRemainingSeconds,
   pausePomodoroTimer,
@@ -55,7 +54,6 @@ const timerConfigSchema = z.object({
 
 export interface PomodoroTimerController {
   readonly config: Accessor<PomodoroTimerConfig>
-  readonly durationSeconds: Accessor<number>
   readonly onConfigChange: (config: PomodoroTimerConfig) => void
   readonly onNextPhase: () => void
   readonly onPause: () => void
@@ -179,12 +177,10 @@ export const usePomodoroTimer = (): PomodoroTimerController => {
   const onReset = () => setState(resetPomodoroTimer(config()))
   const onStop = () => setState((currentState) => stopPomodoroTimer(currentState, config()))
   const remainingSeconds = createMemo(() => getPomodoroRemainingSeconds(state(), now()))
-  const durationSeconds = createMemo(() => getPomodoroPhaseDuration(state().phase, config()))
   const progress = createMemo(() => getPomodoroProgress(state(), now(), config()))
 
   return {
     config,
-    durationSeconds,
     onConfigChange,
     onNextPhase,
     onPause,

@@ -12,7 +12,6 @@ import {FocusRoomIconButton} from '../design-system/FocusRoomIconButton'
 import {FocusRoomModal} from '../design-system/FocusRoomModal'
 import {
   formatPomodoroTime,
-  POMODORO_TIMER_CONFIG,
   type PomodoroPhase,
   type PomodoroTimerState,
   usePomodoroTimer,
@@ -52,7 +51,6 @@ const PHASE_PRESENTATIONS = {
   },
 } as const satisfies Record<PomodoroPhase, PhasePresentation>
 const DEGREES_PER_CIRCLE = 360
-const SECONDS_PER_MINUTE = 60
 export interface FocusRoomPomodoroProps {
   readonly onOpenChange?: (isOpen: boolean) => void
 }
@@ -119,6 +117,7 @@ export const FocusRoomPomodoro = (props: FocusRoomPomodoroProps) => {
   const timer = usePomodoroTimer()
   const [isOpen, setIsOpen] = createSignal(false)
   const [isEditingDurations, setIsEditingDurations] = createSignal(false)
+  const [actionContainer, setActionContainer] = createSignal<HTMLDivElement | null>(null)
   const [triggerElement, setTriggerElement] = createSignal<HTMLButtonElement | null>(null)
   const phasePresentation = createMemo(() => PHASE_PRESENTATIONS[timer.state().phase])
   const statusLabel = createMemo(() => getStatusLabel(timer.state()))
@@ -162,6 +161,8 @@ export const FocusRoomPomodoro = (props: FocusRoomPomodoroProps) => {
     timer.onStart()
   }
   const handleCloseAutoFocus = () => triggerElement()?.focus()
+  const getInitialFocus = () =>
+    actionContainer()?.querySelector<HTMLButtonElement>('button') ?? null
 
   return (
     <>
@@ -184,6 +185,7 @@ export const FocusRoomPomodoro = (props: FocusRoomPomodoroProps) => {
       </div>
 
       <FocusRoomModal
+        getInitialFocus={getInitialFocus}
         headerMode="closeOnly"
         isOpen={isOpen()}
         onCloseAutoFocus={handleCloseAutoFocus}
@@ -221,7 +223,7 @@ export const FocusRoomPomodoro = (props: FocusRoomPomodoroProps) => {
             {phasePresentation().label}, {statusLabel()}
           </p>
 
-          <div class="focus-room-pomodoro-panel__actions">
+          <div class="focus-room-pomodoro-panel__actions" ref={setActionContainer}>
             <FocusRoomButton
               class="focus-room-pomodoro-panel__primary-action"
               icon={primaryIcon()}

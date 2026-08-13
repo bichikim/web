@@ -6,6 +6,7 @@ import './FocusRoomModal.css'
 export interface FocusRoomModalProps {
   readonly children: JSX.Element
   readonly description?: string
+  readonly getInitialFocus?: () => HTMLElement | null
   readonly headerMode?: 'closeOnly' | 'default'
   readonly isOpen: boolean
   readonly onCloseAutoFocus?: () => void
@@ -26,6 +27,16 @@ export const FocusRoomModal = (props: FocusRoomModalProps) => (
 
           event.preventDefault()
           props.onCloseAutoFocus()
+        }}
+        onOpenAutoFocus={(event) => {
+          const initialFocus = props.getInitialFocus?.()
+
+          if (initialFocus === undefined || initialFocus === null) {
+            return
+          }
+
+          event.preventDefault()
+          initialFocus.focus()
         }}
       >
         <header class="focus-room-modal__header" data-mode={props.headerMode ?? 'default'}>

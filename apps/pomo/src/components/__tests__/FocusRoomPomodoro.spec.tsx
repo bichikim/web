@@ -20,6 +20,9 @@ describe('FocusRoomPomodoro', () => {
         <div aria-label={props.title} hidden={!props.isOpen} role="dialog">
           <p>{props.description}</p>
           {props.children}
+          <button onClick={() => props.getInitialFocus?.()?.focus()} type="button">
+            최초 포커스 적용
+          </button>
           <button onClick={() => props.onOpenChange(false)} type="button">
             닫기
           </button>
@@ -49,6 +52,8 @@ describe('FocusRoomPomodoro', () => {
     expect(onOpenChange).toHaveBeenLastCalledWith(true)
     const dialog = screen.getByRole('dialog', {name: '포모도로'})
     expect(dialog.hidden).toBe(false)
+    fireEvent.click(screen.getByRole('button', {name: '최초 포커스 적용'}))
+    expect(document.activeElement).toBe(screen.getByRole('button', {name: '집중 시작'}))
     expect(screen.queryByText('집중 1/4 · 25분')).toBeNull()
     expect(screen.getByLabelText('4회 중 0회 집중 완료')).toBeDefined()
 
