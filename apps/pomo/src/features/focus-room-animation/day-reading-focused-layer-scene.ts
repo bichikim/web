@@ -1,8 +1,8 @@
-import baseImage from '../../../assets/focus-room-layers/day-reading-focused/base.png'
+import baseImage from '../../../assets/focus-room-layers/day-reading-focused/base.webp'
 import headImage from '../../../assets/focus-room-layers/day-reading-focused/layer-head.png'
 import leftHandImage from '../../../assets/focus-room-layers/day-reading-focused/layer-hand-left.png'
 import rightHandImage from '../../../assets/focus-room-layers/day-reading-focused/layer-hand-right.png'
-import referenceImage from '../../../assets/concept-art/focus-room-day-reading-concept.png'
+import referenceImage from '../../../assets/concept-art/focus-room-day-reading-concept.webp'
 import type {PixiLayerSceneDefinition} from './layer-scene'
 import {FOCUS_ROOM_PREVIEW_CHANNELS} from './scene-catalog-channels'
 

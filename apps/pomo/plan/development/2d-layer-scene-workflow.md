@@ -39,18 +39,22 @@ base
 
 작업 전에 원본 파일의 경로, 크기와 SHA-256을 기록한다. 사용자가 변경을 금지한 배경과 소품은 작업 뒤 해시 또는 픽셀 비교로 확인한다.
 
-중간 산출물은 `.temp/pomo-focus-room/<scene-id>/`에 보관하고, 실제 런타임에서 사용하는 최종 파일만 다음 경로에 둔다.
+일회성 중간 산출물은 `.temp/pomo-focus-room/<scene-id>/`에 둔다. 재편집에 필요한 원본 PNG, 마스크와 Krita 파일은 `assets/focus-room-source/`에 보관하며 런타임 코드에서 import하지 않는다. 실제 런타임에서 사용하는 최종 파일만 다음 경로에 둔다.
 
 ```text
 assets/focus-room-layers/<scene-id>/
-  base.png
+  base.webp
   layer-head.png
   layer-hand-left.png
   layer-hand-right.png
-  mask-*.png                 # 재현과 검수에 필요한 마스크만 선택적으로 보관
+
+assets/focus-room-source/layers/<scene-id>/
+  base.png
+  mask-*.png
+  workfiles/                 # Krita 원본과 재현에 필요한 중간 파일
 ```
 
-최종 파일을 덮어쓰기 전에 후보 파일을 별도로 만들고 원본 크기로 검수한다.
+최종 파일을 덮어쓰기 전에 후보 파일을 별도로 만들고 원본 크기로 검수한다. `focus-room-source`는 빌드 설정에서 import가 금지되어 있으므로 리뷰용 reference도 `concept-art`의 WebP를 사용한다.
 
 ## 3. 움직이는 파트의 마스크를 만든다
 
