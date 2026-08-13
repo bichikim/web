@@ -1,6 +1,6 @@
 import {RadioGroup} from '@kobalte/core/radio-group'
 import {cx} from 'class-variance-authority'
-import {For, Show} from 'solid-js'
+import {For, type JSX, Show} from 'solid-js'
 
 import './FocusRoomRadioSwitch.css'
 
@@ -18,6 +18,23 @@ export interface FocusRoomRadioSwitchProps<TValue extends string> {
   readonly value: TValue
 }
 
+const getNextOptionIndex = (key: string, currentIndex: number, optionCount: number) => {
+  switch (key) {
+    case 'ArrowDown':
+    case 'ArrowRight':
+      return (currentIndex + 1) % optionCount
+    case 'ArrowLeft':
+    case 'ArrowUp':
+      return (currentIndex - 1 + optionCount) % optionCount
+    case 'End':
+      return optionCount - 1
+    case 'Home':
+      return 0
+    default:
+      return null
+  }
+}
+
 export const FocusRoomRadioSwitch = <TValue extends string>(
   props: FocusRoomRadioSwitchProps<TValue>,
 ) => {
@@ -28,11 +45,34 @@ export const FocusRoomRadioSwitch = <TValue extends string>(
       props.onChange(selectedOption.value)
     }
   }
+  const handleKeyDown: JSX.EventHandler<HTMLDivElement, KeyboardEvent> = (event) => {
+    const radioInputs = [
+      ...event.currentTarget.querySelectorAll<HTMLInputElement>(
+        'input[type="radio"]:not(:disabled)',
+      ),
+    ]
+    const currentIndex = radioInputs.indexOf(event.target as HTMLInputElement)
+
+    if (currentIndex === -1 || radioInputs.length === 0) {
+      return
+    }
+
+    const nextIndex = getNextOptionIndex(event.key, currentIndex, radioInputs.length)
+    if (nextIndex === null) {
+      return
+    }
+
+    event.preventDefault()
+    const nextInput = radioInputs[nextIndex]
+    nextInput.focus()
+    nextInput.click()
+  }
 
   return (
     <RadioGroup
       class={cx('focus-room-radio-switch', props.class)}
       onChange={handleChange}
+      onKeyDown={handleKeyDown}
       orientation="horizontal"
       value={props.value}
     >
@@ -41,7 +81,10 @@ export const FocusRoomRadioSwitch = <TValue extends string>(
         <For each={props.options}>
           {(option) => (
             <RadioGroup.Item class="focus-room-radio-switch__item" value={option.value}>
-              <RadioGroup.ItemInput aria-label={option.label} />
+              <RadioGroup.ItemInput
+                aria-label={option.label}
+                class="focus-room-radio-switch__input"
+              />
               <RadioGroup.ItemControl class="focus-room-radio-switch__control">
                 <Show when={option.icon}>
                   {(icon) => (

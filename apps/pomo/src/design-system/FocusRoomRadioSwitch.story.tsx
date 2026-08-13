@@ -66,9 +66,16 @@ export const Default: Story = {
   play: async ({args, canvasElement}: RadioSwitchPlayContext) => {
     const canvas = within(canvasElement)
     const nightOption = canvas.getByRole('radio', {name: '밤'})
+    const automaticOption = canvas.getByRole('radio', {name: '자동'})
 
     await userEvent.click(nightOption)
     await expect(args.onChange).toHaveBeenCalledWith('night')
     await expect(nightOption).toBeChecked()
+
+    nightOption.focus()
+    await userEvent.keyboard('{ArrowRight}')
+    await expect(args.onChange).toHaveBeenCalledWith('auto')
+    await expect(automaticOption).toBeChecked()
+    await expect(automaticOption).toHaveFocus()
   },
 }
