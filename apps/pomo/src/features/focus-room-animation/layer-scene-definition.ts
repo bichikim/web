@@ -44,13 +44,22 @@ export interface PixiScenePixelOscillation {
   readonly travel: PixiSceneTravelRange
 }
 
-export interface PixiSceneTranslation {
+interface PixiSceneTranslationBase {
   readonly channel?: string
-  readonly distance: PixiScenePoint
   readonly kind: 'translation'
   readonly transitionSeconds?: number
   readonly travel: PixiSceneTravelRange
 }
+
+export interface PixiSceneDistanceTranslation extends PixiSceneTranslationBase {
+  readonly distance: PixiScenePoint
+}
+
+export interface PixiSceneTargetTranslation extends PixiSceneTranslationBase {
+  readonly targets: readonly PixiScenePoint[]
+}
+
+export type PixiSceneTranslation = PixiSceneDistanceTranslation | PixiSceneTargetTranslation
 
 export type PixiSceneMotion =
   | PixiScenePivotRotation

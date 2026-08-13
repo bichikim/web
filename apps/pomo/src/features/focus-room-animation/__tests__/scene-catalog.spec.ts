@@ -47,12 +47,22 @@ describe('focus room scene catalog', () => {
     expect(eyeLayer).toMatchObject({
       channel: FOCUS_ROOM_PREVIEW_CHANNELS.eyes,
       motion: {
-        distance: {x: 0.45, y: 0.225},
         kind: 'translation',
+        targets: expect.arrayContaining([
+          {x: -0.45, y: 0},
+          {x: 0.45, y: 0},
+          {x: 0, y: -0.225},
+          {x: 0, y: 0.225},
+        ]),
         transitionSeconds: 0.04,
       },
       parentAttachmentId: 'eyes',
     })
+    expect(eyeLayer?.motion).toMatchObject({targets: expect.any(Array)})
+
+    if (eyeLayer?.motion?.kind === 'translation' && 'targets' in eyeLayer.motion) {
+      expect(eyeLayer.motion.targets).toHaveLength(9)
+    }
   })
 
   it('should expose the complete review panel channels for every preview', () => {
