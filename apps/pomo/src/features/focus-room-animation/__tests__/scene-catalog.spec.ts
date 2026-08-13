@@ -46,7 +46,11 @@ describe('focus room scene catalog', () => {
 
     expect(eyeLayer).toMatchObject({
       channel: FOCUS_ROOM_PREVIEW_CHANNELS.eyes,
-      motion: {kind: 'translation', transitionSeconds: 0.04},
+      motion: {
+        distance: {x: 0.45, y: 0.225},
+        kind: 'translation',
+        transitionSeconds: 0.04,
+      },
       parentAttachmentId: 'eyes',
     })
   })

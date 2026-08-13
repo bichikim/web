@@ -29,7 +29,7 @@ export const DAY_READING_FOCUSED_LAYER_SCENE = {
       channel: FOCUS_ROOM_PREVIEW_CHANNELS.eyes,
       id: 'eye-irises',
       motion: {
-        distance: {x: 1.5, y: 0.75},
+        distance: {x: 0.45, y: 0.225},
         kind: 'translation',
         transitionSeconds: 0.04,
         travel: {maximumSeconds: 2.8, minimumSeconds: 1.6},
