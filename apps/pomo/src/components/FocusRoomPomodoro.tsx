@@ -10,6 +10,7 @@ import {
 } from '../design-system/FocusRoomCharacterEmotion'
 import {FocusRoomIconButton} from '../design-system/FocusRoomIconButton'
 import {FocusRoomModal} from '../design-system/FocusRoomModal'
+import {FocusRoomSwitch} from '../design-system/FocusRoomSwitch'
 import {
   formatPomodoroTime,
   type PomodoroPhase,
@@ -292,6 +293,14 @@ export const FocusRoomPomodoro = () => {
               />
             </Show>
           </div>
+
+          <FocusRoomSwitch
+            checked={timer.isAutoStartEnabled()}
+            class="focus-room-pomodoro-panel__auto-start"
+            description="타이머가 끝나면 다음 집중 또는 휴식을 바로 시작해요."
+            label="집중·휴식 자동 재생"
+            onChange={timer.onAutoStartChange}
+          />
 
           <FocusRoomPomodoroDurationEditor
             config={timer.config()}

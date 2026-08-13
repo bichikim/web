@@ -226,6 +226,14 @@
   color: var(--focus-room-danger);
 }
 
+.focus-room-pomodoro-panel__auto-start {
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 1rem;
+  border-top: 1px solid var(--focus-room-border);
+  padding-top: 1rem;
+}
+
 .focus-room-pomodoro-panel__routine {
   display: inline-flex;
   align-items: center;

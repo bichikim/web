@@ -106,6 +106,17 @@ describe('pausePomodoroTimer', () => {
       status: 'idle',
     })
   })
+
+  it('should pause the automatically started phase after the previous phase elapsed', () => {
+    const runningState = startPomodoroTimer(createPomodoroTimerState(CONFIG), 1_000)
+
+    expect(pausePomodoroTimer(runningState, 12_000, CONFIG, {autoStartNextPhase: true})).toEqual({
+      completedFocusSessions: 1,
+      phase: 'shortBreak',
+      remainingSeconds: 3,
+      status: 'paused',
+    })
+  })
 })
 
 describe('synchronizePomodoroTimer', () => {
@@ -164,6 +175,45 @@ describe('synchronizePomodoroTimer', () => {
       phase: 'focus',
       remainingSeconds: 10,
       status: 'idle',
+    })
+  })
+
+  it('should immediately start the next phase when automatic playback is enabled', () => {
+    const runningState = startPomodoroTimer(createPomodoroTimerState(CONFIG), 1_000)
+
+    expect(
+      synchronizePomodoroTimer(runningState, 11_000, CONFIG, {autoStartNextPhase: true}),
+    ).toEqual({
+      completedFocusSessions: 1,
+      endsAt: 15_000,
+      phase: 'shortBreak',
+      status: 'running',
+    })
+  })
+
+  it('should preserve the continuous timeline after multiple phases elapsed', () => {
+    const runningState = startPomodoroTimer(createPomodoroTimerState(CONFIG), 1_000)
+
+    expect(
+      synchronizePomodoroTimer(runningState, 16_000, CONFIG, {autoStartNextPhase: true}),
+    ).toEqual({
+      completedFocusSessions: 1,
+      endsAt: 25_000,
+      phase: 'focus',
+      status: 'running',
+    })
+  })
+
+  it('should skip complete cycles when restoring a timer after a long absence', () => {
+    const runningState = startPomodoroTimer(createPomodoroTimerState(CONFIG), 1_000)
+
+    expect(
+      synchronizePomodoroTimer(runningState, 30_012_000, CONFIG, {autoStartNextPhase: true}),
+    ).toEqual({
+      completedFocusSessions: 2_001,
+      endsAt: 30_015_000,
+      phase: 'shortBreak',
+      status: 'running',
     })
   })
 })
