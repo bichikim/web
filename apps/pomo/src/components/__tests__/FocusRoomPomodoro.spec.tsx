@@ -4,15 +4,39 @@ import {fireEvent, render, screen, within} from '@solidjs/testing-library'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {FocusRoomModal, type FocusRoomModalProps} from '../../design-system/FocusRoomModal'
+import type {FocusRoomSwitchProps} from '../../design-system/FocusRoomSwitch'
 import {FocusRoomPomodoro} from '../FocusRoomPomodoro'
 
+const bridgeStorageMocks = vi.hoisted(() => ({
+  getItem: vi.fn<(key: string) => Promise<string | null>>(),
+  setItem: vi.fn<(key: string, value: string) => Promise<void>>(),
+}))
+
+vi.mock('@apps-in-toss/web-bridge', () => ({
+  Storage: bridgeStorageMocks,
+}))
 vi.mock('../../design-system/FocusRoomModal', () => ({
   FocusRoomModal: vi.fn(),
+}))
+vi.mock('../../design-system/FocusRoomSwitch', () => ({
+  FocusRoomSwitch: (props: FocusRoomSwitchProps) => (
+    <label>
+      {props.label}
+      <input
+        checked={props.checked}
+        onChange={(event) => props.onChange(event.currentTarget.checked)}
+        role="switch"
+        type="checkbox"
+      />
+    </label>
+  ),
 }))
 
 describe('FocusRoomPomodoro', () => {
   beforeEach(() => {
     localStorage.clear()
+    bridgeStorageMocks.getItem.mockReset()
+    bridgeStorageMocks.setItem.mockReset()
     vi.useFakeTimers()
     vi.setSystemTime(new Date('2026-08-13T00:00:00.000Z'))
     vi.mocked(FocusRoomModal).mockImplementation((props: FocusRoomModalProps) => {
@@ -32,12 +56,14 @@ describe('FocusRoomPomodoro', () => {
   })
 
   afterEach(() => {
+    Reflect.deleteProperty(window, 'ReactNativeWebView')
     vi.clearAllMocks()
     vi.useRealTimers()
   })
 
-  it('should expose the timer state and primary controls through an accessible dialog', () => {
+  it('should expose the timer state and primary controls through an accessible dialog', async () => {
     render(() => <FocusRoomPomodoro />)
+    await vi.advanceTimersByTimeAsync(0)
 
     const quickControls = screen.getByRole('group', {name: '포모도로 간편 조작'})
     const timeTrigger = within(quickControls).getByRole('button', {
@@ -64,6 +90,10 @@ describe('FocusRoomPomodoro', () => {
 
     const dialog = screen.getByRole('dialog', {name: '포모도로'})
     expect(dialog.hidden).toBe(false)
+    expect(screen.getByRole('switch', {name: '집중·휴식 자동 재생'})).toHaveProperty(
+      'checked',
+      false,
+    )
     fireEvent.click(screen.getByRole('button', {name: '최초 포커스 적용'}))
     expect(document.activeElement).toBe(within(dialog).getByRole('button', {name: '계속하기'}))
     expect(screen.queryByText('집중 1/4 · 25분')).toBeNull()
@@ -131,5 +161,104 @@ describe('FocusRoomPomodoro', () => {
 
     fireEvent.click(screen.getByRole('button', {name: '닫기'}))
     expect(dialog.hidden).toBe(true)
+  })
+
+  it('should continuously play focus and break phases when automatic playback is enabled', async () => {
+    localStorage.setItem(
+      'pomo:timer-config:v1',
+      JSON.stringify({
+        focusSeconds: 1,
+        focusSessionsPerCycle: 2,
+        longBreakSeconds: 1,
+        shortBreakSeconds: 1,
+      }),
+    )
+    render(() => <FocusRoomPomodoro />)
+    await vi.advanceTimersByTimeAsync(0)
+
+    const quickControls = screen.getByRole('group', {name: '포모도로 간편 조작'})
+    fireEvent.click(
+      within(quickControls).getByRole('button', {
+        name: '포모도로 열기, 집중 준비, 00:01',
+      }),
+    )
+    const dialog = screen.getByRole('dialog', {name: '포모도로'})
+    const autoStartSwitch = screen.getByRole('switch', {name: '집중·휴식 자동 재생'})
+    fireEvent.click(autoStartSwitch)
+    expect(autoStartSwitch).toHaveProperty('checked', true)
+    expect(localStorage.getItem('pomo:timer-auto-start:v1')).toBe('true')
+
+    fireEvent.click(within(dialog).getByRole('button', {name: '집중 시작'}))
+    vi.advanceTimersByTime(1_000)
+    expect(
+      within(quickControls).getByRole('button', {name: '포모도로 열기, 휴식 중, 00:01'}),
+    ).toBeDefined()
+
+    vi.advanceTimersByTime(1_000)
+    expect(
+      within(quickControls).getByRole('button', {name: '포모도로 열기, 집중 중, 00:01'}),
+    ).toBeDefined()
+  })
+
+  it('should restore automatic playback after the app view is remounted', async () => {
+    const firstView = render(() => <FocusRoomPomodoro />)
+    const firstQuickControls = screen.getByRole('group', {name: '포모도로 간편 조작'})
+    fireEvent.click(
+      within(firstQuickControls).getByRole('button', {
+        name: '포모도로 열기, 집중 준비, 25:00',
+      }),
+    )
+    fireEvent.click(screen.getByRole('switch', {name: '집중·휴식 자동 재생'}))
+    firstView.unmount()
+
+    render(() => <FocusRoomPomodoro />)
+    await vi.advanceTimersByTimeAsync(0)
+    const restoredQuickControls = screen.getByRole('group', {name: '포모도로 간편 조작'})
+    fireEvent.click(
+      within(restoredQuickControls).getByRole('button', {
+        name: '포모도로 열기, 집중 준비, 25:00',
+      }),
+    )
+    const restoredSwitch = screen.getByRole('switch', {name: '집중·휴식 자동 재생'})
+
+    expect(restoredSwitch).toHaveProperty('checked', true)
+  })
+
+  it('should wait for the native preference before restoring an elapsed timer', async () => {
+    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+    localStorage.setItem(
+      'pomo:timer-config:v1',
+      JSON.stringify({
+        focusSeconds: 1,
+        focusSessionsPerCycle: 2,
+        longBreakSeconds: 1,
+        shortBreakSeconds: 1,
+      }),
+    )
+    localStorage.setItem(
+      'pomo:timer:v1',
+      JSON.stringify({
+        completedFocusSessions: 0,
+        endsAt: Date.now() + 1_000,
+        phase: 'focus',
+        status: 'running',
+      }),
+    )
+    let resolvePreference: (value: string | null) => void = () => undefined
+    bridgeStorageMocks.getItem.mockReturnValue(
+      new Promise((resolve) => {
+        resolvePreference = resolve
+      }),
+    )
+
+    render(() => <FocusRoomPomodoro />)
+    vi.advanceTimersByTime(1_500)
+    resolvePreference('true')
+    await vi.advanceTimersByTimeAsync(250)
+
+    const quickControls = screen.getByRole('group', {name: '포모도로 간편 조작'})
+    expect(
+      within(quickControls).getByRole('button', {name: '포모도로 열기, 휴식 중, 00:01'}),
+    ).toBeDefined()
   })
 })
