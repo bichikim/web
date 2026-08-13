@@ -251,3 +251,77 @@ it('should queue dialogues when one pomodoro transition emits end and start even
   expect(audioElements).toHaveLength(2)
   result.unmount()
 })
+
+it('should stop only stale entry playback when event bindings change', async () => {
+  const nextDialogue: FocusRoomDialogue = {
+    ...DIALOGUE,
+    audioKey: 'next-audio',
+    id: 'next-dialogue',
+    segments: [{durationMs: 1000, index: 0, startMs: 0, text: '새 입장 대사'}],
+    text: '새 입장 대사',
+  }
+  const audio = document.createElement('audio')
+  const repository = {
+    deleteDialogue: vi.fn(),
+    dispose: vi.fn(),
+    getAudio: vi.fn(async () => new Blob(['audio'])),
+    getDialogue: vi.fn(async (dialogueId: string) =>
+      dialogueId === nextDialogue.id ? nextDialogue : DIALOGUE,
+    ),
+    listDialogues: vi.fn(async () => [DIALOGUE, nextDialogue]),
+    listEventBindings: vi.fn(async () => [
+      {
+        dialogueId: DIALOGUE.id,
+        event: 'room-enter' as const,
+        version: 1 as const,
+      },
+    ]),
+    saveDialogue: vi.fn(),
+    setEventBinding: vi.fn(),
+  }
+  repositoryMocks.create.mockReturnValue(repository)
+  vi.stubGlobal(
+    'Audio',
+    vi.fn(function AudioMock() {
+      return audio
+    }),
+  )
+  vi.stubGlobal(
+    'requestAnimationFrame',
+    vi.fn(() => 1),
+  )
+  vi.stubGlobal('cancelAnimationFrame', vi.fn())
+  vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue()
+  const pause = vi.spyOn(HTMLMediaElement.prototype, 'pause')
+  const eventReference: {current?: FocusRoomEventContextValue} = {}
+  const Consumer = () => {
+    eventReference.current = useFocusRoomEvents()
+    return null
+  }
+  const result = render(() => (
+    <FocusRoomEventProvider>
+      <Consumer />
+    </FocusRoomEventProvider>
+  ))
+
+  await waitFor(() => expect(eventReference.current?.activeText()).toBe('입장 대사'))
+  const events = eventReference.current
+
+  if (events === undefined) {
+    throw new Error('Expected the focus room event context to be captured.')
+  }
+
+  pause.mockClear()
+  await events.setEventDialogue('focus-start', nextDialogue.id)
+  expect(events.activeText()).toBe('입장 대사')
+  expect(pause).not.toHaveBeenCalled()
+
+  await events.setEventDialogue('room-enter', nextDialogue.id)
+  expect(events.eventDialogueIds()['room-enter']).toBe(nextDialogue.id)
+  expect(events.activeText()).toBeNull()
+  expect(repository.setEventBinding).toHaveBeenCalledWith('room-enter', nextDialogue.id)
+  expect(repository.getDialogue).not.toHaveBeenCalledWith(nextDialogue.id)
+  expect(pause).toHaveBeenCalledOnce()
+
+  result.unmount()
+})

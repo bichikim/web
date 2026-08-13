@@ -356,6 +356,7 @@ export const FocusRoomEventProvider = (props: FocusRoomEventProviderProps) => {
     },
     retryDialoguePlayback: playback.retry,
     async setEventDialogue(eventId, dialogueId) {
+      const previousDialogueId = eventDialogueIds()[eventId]
       await getRepository().setEventBinding(eventId, dialogueId)
 
       if (isDisposed) {
@@ -371,6 +372,13 @@ export const FocusRoomEventProvider = (props: FocusRoomEventProviderProps) => {
 
         return {...currentBindings, [eventId]: dialogueId}
       })
+
+      if (
+        eventId === FOCUS_ROOM_ENTRY_EVENT &&
+        playback.activeDialogueId() === previousDialogueId
+      ) {
+        playback.stop()
+      }
     },
   }
 
