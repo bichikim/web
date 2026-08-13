@@ -4,7 +4,8 @@ import {createModelStorage, reportModelStorageError} from '../model-storage/stor
 import {
   type DialogueEventBinding,
   dialogueEventBindingSchema,
-  FOCUS_ROOM_ENTRY_EVENT,
+  type DialogueEventId,
+  FOCUS_ROOM_DIALOGUE_EVENTS,
   type FocusRoomDialogue,
   focusRoomDialogueSchema,
 } from './schema'
@@ -27,10 +28,10 @@ export interface FocusRoomDialogueRepository {
   readonly dispose: () => void
   readonly getAudio: (audioKey: string) => Promise<Blob | null>
   readonly getDialogue: (dialogueId: string) => Promise<FocusRoomDialogue | null>
-  readonly getEntryBinding: () => Promise<DialogueEventBinding | null>
+  readonly listEventBindings: () => Promise<ReadonlyArray<DialogueEventBinding>>
   readonly listDialogues: () => Promise<ReadonlyArray<FocusRoomDialogue>>
   readonly saveDialogue: (options: SaveDialogueOptions) => Promise<void>
-  readonly setEntryBinding: (dialogueId: string | null) => Promise<void>
+  readonly setEventBinding: (event: DialogueEventId, dialogueId: string | null) => Promise<void>
 }
 
 const createDatabase = (): DialogueDatabase => {
@@ -60,14 +61,22 @@ export const createFocusRoomDialogueRepository = (): FocusRoomDialogueRepository
 
       await database.transaction('rw', database.dialogues, database.eventBindings, async () => {
         await database.dialogues.delete(dialogueId)
-        const binding = await database.eventBindings.get(FOCUS_ROOM_ENTRY_EVENT)
+        const bindings = await Promise.all(
+          FOCUS_ROOM_DIALOGUE_EVENTS.map((event) => database.eventBindings.get(event)),
+        )
+        const bindingEvents: Array<DialogueEventId> = []
 
-        if (
-          binding !== undefined &&
-          dialogueEventBindingSchema.parse(binding).dialogueId === dialogueId
-        ) {
-          await database.eventBindings.delete(FOCUS_ROOM_ENTRY_EVENT)
+        for (const binding of bindings) {
+          if (binding !== undefined) {
+            const parsedBinding = dialogueEventBindingSchema.parse(binding)
+
+            if (parsedBinding.dialogueId === dialogueId) {
+              bindingEvents.push(parsedBinding.event)
+            }
+          }
         }
+
+        await Promise.all(bindingEvents.map((event) => database.eventBindings.delete(event)))
       })
 
       if (parsedDialogue !== null) {
@@ -91,13 +100,23 @@ export const createFocusRoomDialogueRepository = (): FocusRoomDialogueRepository
       const dialogue = await database.dialogues.get(dialogueId)
       return dialogue === undefined ? null : focusRoomDialogueSchema.parse(dialogue)
     },
-    async getEntryBinding() {
-      const binding = await database.eventBindings.get(FOCUS_ROOM_ENTRY_EVENT)
-      return binding === undefined ? null : dialogueEventBindingSchema.parse(binding)
-    },
     async listDialogues() {
       const dialogues = await database.dialogues.orderBy('updatedAt').reverse().toArray()
       return dialogues.map((dialogue) => focusRoomDialogueSchema.parse(dialogue))
+    },
+    async listEventBindings() {
+      const bindings = await Promise.all(
+        FOCUS_ROOM_DIALOGUE_EVENTS.map((event) => database.eventBindings.get(event)),
+      )
+      const parsedBindings: Array<DialogueEventBinding> = []
+
+      for (const binding of bindings) {
+        if (binding !== undefined) {
+          parsedBindings.push(dialogueEventBindingSchema.parse(binding))
+        }
+      }
+
+      return parsedBindings
     },
     async saveDialogue(options) {
       const nextDialogue = focusRoomDialogueSchema.parse(options.dialogue)
@@ -132,9 +151,9 @@ export const createFocusRoomDialogueRepository = (): FocusRoomDialogueRepository
         await deleteAudio(previousDialogue.audioKey)
       }
     },
-    async setEntryBinding(dialogueId) {
+    async setEventBinding(event, dialogueId) {
       if (dialogueId === null) {
-        await database.eventBindings.delete(FOCUS_ROOM_ENTRY_EVENT)
+        await database.eventBindings.delete(event)
         return
       }
 
@@ -144,7 +163,7 @@ export const createFocusRoomDialogueRepository = (): FocusRoomDialogueRepository
 
       await database.eventBindings.put({
         dialogueId,
-        event: FOCUS_ROOM_ENTRY_EVENT,
+        event,
         version: 1,
       } satisfies DialogueEventBinding)
     },

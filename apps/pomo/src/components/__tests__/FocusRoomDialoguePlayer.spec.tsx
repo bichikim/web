@@ -18,21 +18,22 @@ afterEach(() => {
 })
 
 it('should stop the current voice playback from the dialogue bubble', () => {
-  const onStopEntryPlayback = vi.fn()
+  const onStopDialoguePlayback = vi.fn()
   const events: FocusRoomEventContextValue = {
     activeSegmentCount: () => 3,
     activeSegmentPosition: () => 1,
     activeText: () => '집중을 시작해 볼까요?',
     deleteDialogue: vi.fn(async () => undefined),
     dialogues: () => [],
-    entryDialogueId: () => null,
     errorMessage: () => null,
+    eventDialogueIds: () => ({}),
     getAudio: vi.fn(async () => null),
-    isEntryPlaybackBlocked: () => false,
+    isDialoguePlaybackBlocked: () => false,
     isLoading: () => false,
-    onStopEntryPlayback,
-    retryEntryPlayback: vi.fn(),
-    setEntryDialogue: vi.fn(async () => undefined),
+    onStopDialoguePlayback,
+    playDialogueEvents: vi.fn(async () => undefined),
+    retryDialoguePlayback: vi.fn(),
+    setEventDialogue: vi.fn(async () => undefined),
   }
   vi.mocked(useFocusRoomEvents).mockReturnValue(events)
 
@@ -50,11 +51,11 @@ it('should stop the current voice playback from the dialogue bubble', () => {
   ).toHaveLength(2)
   fireEvent.click(screen.getByRole('button', {name: '음성 중지'}))
 
-  expect(onStopEntryPlayback).toHaveBeenCalledOnce()
+  expect(onStopDialoguePlayback).toHaveBeenCalledOnce()
 })
 
 it('should route the stop action to an external speech owner', () => {
-  const onStopEntryPlayback = vi.fn()
+  const onStopDialoguePlayback = vi.fn()
   const onStopExternalSpeech = vi.fn()
   const events: FocusRoomEventContextValue = {
     activeSegmentCount: () => 3,
@@ -62,14 +63,15 @@ it('should route the stop action to an external speech owner', () => {
     activeText: () => '기존 입장 대사',
     deleteDialogue: vi.fn(async () => undefined),
     dialogues: () => [],
-    entryDialogueId: () => null,
     errorMessage: () => null,
+    eventDialogueIds: () => ({}),
     getAudio: vi.fn(async () => null),
-    isEntryPlaybackBlocked: () => true,
+    isDialoguePlaybackBlocked: () => true,
     isLoading: () => false,
-    onStopEntryPlayback,
-    retryEntryPlayback: vi.fn(),
-    setEntryDialogue: vi.fn(async () => undefined),
+    onStopDialoguePlayback,
+    playDialogueEvents: vi.fn(async () => undefined),
+    retryDialoguePlayback: vi.fn(),
+    setEventDialogue: vi.fn(async () => undefined),
   }
   vi.mocked(useFocusRoomEvents).mockReturnValue(events)
 
@@ -83,34 +85,35 @@ it('should route the stop action to an external speech owner', () => {
 
   expect(screen.getByText('WebMCP 대사').textContent).toBe('WebMCP 대사')
   expect(screen.queryByRole('img', {name: /번째 대사 읽는 중/})).toBeNull()
-  expect(screen.queryByRole('button', {name: /입장 음성 재생/})).toBeNull()
+  expect(screen.queryByRole('button', {name: /이벤트 음성 재생/})).toBeNull()
   expect(onStopExternalSpeech).toHaveBeenCalledOnce()
-  expect(onStopEntryPlayback).not.toHaveBeenCalled()
+  expect(onStopDialoguePlayback).not.toHaveBeenCalled()
 })
 
 it('should keep the blocked playback action on the static focus surface', () => {
-  const retryEntryPlayback = vi.fn()
+  const retryDialoguePlayback = vi.fn()
   const events: FocusRoomEventContextValue = {
     activeSegmentCount: () => 0,
     activeSegmentPosition: () => null,
     activeText: () => null,
     deleteDialogue: vi.fn(async () => undefined),
     dialogues: () => [],
-    entryDialogueId: () => null,
     errorMessage: () => null,
+    eventDialogueIds: () => ({}),
     getAudio: vi.fn(async () => null),
-    isEntryPlaybackBlocked: () => true,
+    isDialoguePlaybackBlocked: () => true,
     isLoading: () => false,
-    onStopEntryPlayback: vi.fn(),
-    retryEntryPlayback,
-    setEntryDialogue: vi.fn(async () => undefined),
+    onStopDialoguePlayback: vi.fn(),
+    playDialogueEvents: vi.fn(async () => undefined),
+    retryDialoguePlayback,
+    setEventDialogue: vi.fn(async () => undefined),
   }
   vi.mocked(useFocusRoomEvents).mockReturnValue(events)
 
   render(() => <FocusRoomDialoguePlayer />)
-  const playbackButton = screen.getByRole('button', {name: /입장 음성 재생/})
+  const playbackButton = screen.getByRole('button', {name: /이벤트 음성 재생/})
 
   expect(playbackButton.classList.contains('focus-room-static-focus-glass')).toBe(true)
   fireEvent.click(playbackButton)
-  expect(retryEntryPlayback).toHaveBeenCalledOnce()
+  expect(retryDialoguePlayback).toHaveBeenCalledOnce()
 })
