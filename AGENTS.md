@@ -14,7 +14,8 @@
 ## Z-index
 
 - Do not use CSS `z-index`, including utility classes and rendering-library equivalents.
-- Resolve layering through DOM order, layout, and stacking-context structure instead.
+- Diagnose the actual painting or clipping cause before changing the DOM. Prefer the smallest suitable CSS or layout mechanism, including positioning, overflow, isolation and stacking contexts, flex/grid paint order, portal placement, or DOM order.
+- Do not default to structural changes when a local CSS property can solve the problem without harming semantics, accessibility, or responsive behavior.
 - If `z-index` appears unavoidable, explain why and obtain explicit user approval before using it.
 
 ## Proportionate future-proofing

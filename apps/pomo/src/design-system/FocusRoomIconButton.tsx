@@ -46,7 +46,10 @@ export const FocusRoomIconButton = (props: FocusRoomIconButtonProps) => {
   return (
     <button
       aria-label={props.accessibleLabel}
-      class={cx('focus-room-backdrop focus-room-icon-button', props.class)}
+      class={cx(
+        'focus-room-backdrop focus-room-interactive-glass focus-room-icon-button',
+        props.class,
+      )}
       data-feedback-visible={feedbackVisible() ? '' : undefined}
       data-size={props.size ?? 'medium'}
       onClick={(event) => props.onPress(event.currentTarget)}

@@ -37,6 +37,12 @@
   border-bottom: 1px solid var(--focus-room-border);
 }
 
+.focus-room-modal__header[data-mode='closeOnly'] {
+  justify-content: flex-end;
+  border-bottom: 0;
+  padding: 0.75rem 0.75rem 0;
+}
+
 .focus-room-modal__title {
   margin: 0;
   color: var(--focus-room-text);
