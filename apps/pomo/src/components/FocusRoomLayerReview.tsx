@@ -101,8 +101,8 @@ const ReviewControls = (props: ReviewControlsProps) => (
   <aside
     class={cx(
       PANEL_CLASSES,
-      'absolute bottom-3 right-3 max-h-[50dvh] w-[min(20rem,calc(100%-1.5rem))] overflow-auto p-5',
-      'sm:bottom-6 sm:right-6',
+      'absolute bottom-3 right-3 max-h-[calc(100dvh-7.75rem)] w-[min(20rem,calc(100%-1.5rem))]',
+      'overflow-auto p-4 sm:bottom-6 sm:right-6 sm:max-h-[calc(100dvh-8.75rem)] sm:p-5',
     )}
     aria-label="레이어 검사 도구"
   >
@@ -124,7 +124,12 @@ const ReviewControls = (props: ReviewControlsProps) => (
       </Show>
     </div>
 
-    <label class="mt-4 flex cursor-pointer items-center justify-between gap-4 border-t border-white/8 pt-4">
+    <label
+      class={cx(
+        'mt-3 flex cursor-pointer items-center justify-between gap-4 border-t border-white/8 pt-3',
+        'sm:mt-4 sm:pt-4',
+      )}
+    >
       <span>
         <span class="block text-sm font-700 text-#fffaf1">미세 애니메이션</span>
         <span class="mt-1 block text-xs leading-5 text-#a99fac">
@@ -140,7 +145,7 @@ const ReviewControls = (props: ReviewControlsProps) => (
     </label>
 
     <Show when={props.isSeparatedScene}>
-      <div class="mt-4 divide-y divide-white/8 border-t border-white/8 pt-2">
+      <div class="mt-3 divide-y divide-white/8 border-t border-white/8 pt-1 sm:mt-4 sm:pt-2">
         <LayerToggle
           checked={props.headVisible}
           description="분리된 얼굴, 머리카락, 목 연결부"
@@ -155,7 +160,7 @@ const ReviewControls = (props: ReviewControlsProps) => (
         />
       </div>
 
-      <div class="mt-4 grid grid-cols-2 gap-2">
+      <div class="mt-3 grid grid-cols-2 gap-2 sm:mt-4">
         <button
           class="rounded-3 bg-#e8c795 px-3 py-2.5 text-sm font-750 text-#241b12 hover:bg-#f2d3a7"
           onClick={() => props.onShowAll()}
@@ -172,7 +177,7 @@ const ReviewControls = (props: ReviewControlsProps) => (
         </button>
       </div>
 
-      <div class="mt-4 border-t border-white/8 pt-4">
+      <div class="mt-3 border-t border-white/8 pt-3 sm:mt-4 sm:pt-4">
         <div class="flex items-center justify-between gap-4">
           <label class="text-sm font-700 text-#fffaf1" for="reference-opacity">
             원본 오버레이
