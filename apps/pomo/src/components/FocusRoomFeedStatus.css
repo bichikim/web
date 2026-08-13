@@ -9,7 +9,7 @@
   background: rgb(22 17 13 / 90%);
   padding: 0.8rem 0.9rem;
   color: var(--focus-room-text);
-  box-shadow: var(--focus-room-shadow);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 8%);
   pointer-events: auto;
   backdrop-filter: blur(0.75rem);
   -webkit-backdrop-filter: blur(0.75rem);
