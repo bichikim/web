@@ -10,6 +10,7 @@ export interface FocusRoomIconSelectOption<TValue extends string> {
 }
 
 export interface FocusRoomIconSelectProps<TValue extends string> {
+  readonly class?: string
   readonly label: string
   readonly onChange: (value: TValue) => void
   readonly options: readonly FocusRoomIconSelectOption<TValue>[]
@@ -25,7 +26,7 @@ export const FocusRoomIconSelect = <TValue extends string>(
 
   return (
     <Select<FocusRoomIconSelectOption<TValue>>
-      class="focus-room-icon-select"
+      class={cx('focus-room-icon-select', props.class)}
       disallowEmptySelection
       gutter={6}
       itemComponent={(itemProps) => (

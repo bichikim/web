@@ -1,0 +1,45 @@
+.focus-room-loading {
+  display: flex;
+  height: var(--focus-room-control-height-small);
+  box-sizing: border-box;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: var(--focus-room-radius-control);
+  background: var(--focus-room-glass);
+  padding: 0 0.75rem;
+  color: var(--focus-room-text);
+  font-size: 0.75rem;
+  font-weight: 650;
+  line-height: 1rem;
+  box-shadow: var(--focus-room-shadow);
+}
+
+.focus-room-loading__spinner {
+  width: 1rem;
+  height: 1rem;
+  box-sizing: border-box;
+  flex: none;
+  animation: focus-room-loading-spin 1s linear infinite;
+  border: 2px solid rgb(255 255 255 / 28%);
+  border-top-color: var(--focus-room-brass);
+  border-radius: var(--focus-room-radius-control);
+}
+
+@keyframes focus-room-loading-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (width < 40rem) {
+  .focus-room-scene-control.focus-room-icon-button,
+  .focus-room-scene-control.focus-room-icon-select {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .focus-room-loading__spinner {
+    animation: none;
+  }
+}

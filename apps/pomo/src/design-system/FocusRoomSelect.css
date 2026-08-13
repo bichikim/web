@@ -13,7 +13,7 @@
 
 .focus-room-select__trigger {
   display: flex;
-  height: 2.75rem;
+  height: var(--focus-room-control-height-medium);
   width: 100%;
   align-items: center;
   justify-content: space-between;
