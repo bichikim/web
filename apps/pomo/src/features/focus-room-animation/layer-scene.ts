@@ -161,6 +161,7 @@ export class PixiLayerScene {
   readonly #onRender: () => void
   readonly #random: () => number
   readonly #ticker = new Ticker()
+  #animationEnabled = false
   #destroyed = false
   #initialized = false
   #layers: readonly LayerInstance[] = []
@@ -255,6 +256,8 @@ export class PixiLayerScene {
   }
 
   update(state: PixiLayerSceneState) {
+    this.#animationEnabled = state.animationEnabled
+
     for (const layer of this.#layers) {
       const {channel} = layer.definition
       const channelState = channel === undefined ? undefined : state.channels?.[channel]
@@ -266,7 +269,7 @@ export class PixiLayerScene {
         const motionChannel = motion.definition.channel
         const motionChannelState =
           motionChannel === undefined ? undefined : state.channels?.[motionChannel]
-        motion.enabled = motionChannelState?.visible ?? true
+        motion.enabled = layer.container.visible && (motionChannelState?.visible ?? true)
 
         if (!motion.enabled) {
           this.#resetMotionInstance(layer, motion)
@@ -274,14 +277,27 @@ export class PixiLayerScene {
       }
     }
 
-    if (state.animationEnabled && this.#hasMotion()) {
+    this.#syncTicker()
+    this.#onRender()
+  }
+
+  setAnimationEnabled(animationEnabled: boolean) {
+    if (animationEnabled === this.#animationEnabled) {
+      return
+    }
+
+    this.#animationEnabled = animationEnabled
+    this.#syncTicker()
+    this.#onRender()
+  }
+
+  #syncTicker() {
+    if (this.#animationEnabled && this.#hasMotion()) {
       this.#ticker.start()
     } else {
       this.#ticker.stop()
       this.#resetMotion()
     }
-
-    this.#onRender()
   }
 
   getAttachment(name: string) {

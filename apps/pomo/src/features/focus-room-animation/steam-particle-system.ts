@@ -38,9 +38,10 @@ export class SteamParticleSystem {
   readonly container = new Container()
   readonly #onRender: () => void
   readonly #particles: readonly SteamParticle[]
-  readonly #prefersReducedMotion: boolean
+  #prefersReducedMotion: boolean
   #destroyed = false
   #frame: number | null = null
+  #started = false
   #startedAt = 0
 
   constructor(options: SteamParticleSystemOptions) {
@@ -66,10 +67,11 @@ export class SteamParticleSystem {
   }
 
   start() {
-    if (this.#destroyed) {
+    if (this.#destroyed || this.#started) {
       return
     }
 
+    this.#started = true
     this.#startedAt = window.performance.now()
 
     if (this.#prefersReducedMotion) {
@@ -78,6 +80,32 @@ export class SteamParticleSystem {
       return
     }
 
+    this.#requestFrame()
+  }
+
+  setReducedMotion(prefersReducedMotion: boolean) {
+    if (this.#destroyed || prefersReducedMotion === this.#prefersReducedMotion) {
+      return
+    }
+
+    this.#prefersReducedMotion = prefersReducedMotion
+
+    if (!this.#started) {
+      return
+    }
+
+    if (this.#frame !== null) {
+      window.cancelAnimationFrame(this.#frame)
+      this.#frame = null
+    }
+
+    if (prefersReducedMotion) {
+      this.#renderParticles(MINIMUM_LIFETIME * 0.42)
+      this.#onRender()
+      return
+    }
+
+    this.#startedAt = window.performance.now()
     this.#requestFrame()
   }
 
