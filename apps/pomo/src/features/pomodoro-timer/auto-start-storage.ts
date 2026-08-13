@@ -39,27 +39,36 @@ const writeWebPreference = (isEnabled: boolean) => {
 
 /** Reads the auto-start preference from storage whose lifetime matches the current runtime. */
 export const readAutoStartPreference = async () => {
+  const webPreference = readWebPreference()
+
   if (!hasNativeBridge()) {
-    return readWebPreference()
+    return webPreference
   }
 
   try {
-    return parseAutoStart(await Storage.getItem(AUTO_START_STORAGE_KEY))
+    const storedValue = await Storage.getItem(AUTO_START_STORAGE_KEY)
+
+    if (storedValue === null) {
+      return webPreference
+    }
+
+    return parseAutoStart(storedValue)
   } catch {
-    return readWebPreference()
+    return webPreference
   }
 }
 
 /** Persists the auto-start preference until the host app or browser data is removed. */
 export const writeAutoStartPreference = async (isEnabled: boolean) => {
+  writeWebPreference(isEnabled)
+
   if (!hasNativeBridge()) {
-    writeWebPreference(isEnabled)
     return
   }
 
   try {
     await Storage.setItem(AUTO_START_STORAGE_KEY, JSON.stringify(isEnabled))
   } catch {
-    writeWebPreference(isEnabled)
+    // Browser storage is best-effort; the in-memory preference remains usable for this session.
   }
 }

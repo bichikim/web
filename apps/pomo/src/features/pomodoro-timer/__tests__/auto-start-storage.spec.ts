@@ -41,7 +41,17 @@ describe('auto-start-storage', () => {
 
     expect(await readAutoStartPreference()).toBe(true)
     expect(storageMocks.setItem).toHaveBeenCalledWith('pomo:timer-auto-start:v1', 'true')
-    expect(localStorage.getItem('pomo:timer-auto-start:v1')).toBeNull()
+    expect(localStorage.getItem('pomo:timer-auto-start:v1')).toBe('true')
+  })
+
+  it('should fall back to browser storage when native storage is empty', async () => {
+    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+    storageMocks.getItem.mockResolvedValue(null)
+    storageMocks.setItem.mockRejectedValue(new Error('native storage unavailable'))
+
+    await writeAutoStartPreference(true)
+
+    expect(await readAutoStartPreference()).toBe(true)
   })
 
   it('should fall back to browser storage when native storage fails', async () => {
