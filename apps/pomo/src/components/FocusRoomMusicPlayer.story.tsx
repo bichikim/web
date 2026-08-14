@@ -62,6 +62,6 @@ export const Expanded: Story = {
     const expandButton = canvas.getByRole('button', {name: '플레이어 펼치기'})
     await userEvent.click(expandButton)
     await expect(canvas.getByRole('button', {name: '플레이어 접기'})).toBeVisible()
-    await expect(canvas.getByText('Quiet Pages')).toBeVisible()
+    await expect(canvas.getByRole('button', {name: /Quiet Pages/u})).toBeVisible()
   },
 }

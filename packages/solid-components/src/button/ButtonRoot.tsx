@@ -55,10 +55,8 @@ export const ButtonRoot = (props: ButtonRootProps) => {
   const [autoLoading, setAutoLoading] = createSignal<number | boolean>(false)
 
   const href = createMemo(() => {
-    switch (defaultProps.type) {
-      case 'anchor': {
-        return defaultProps.href
-      }
+    if (defaultProps.as === 'a' || defaultProps.type === 'anchor') {
+      return defaultProps.href
     }
   })
 

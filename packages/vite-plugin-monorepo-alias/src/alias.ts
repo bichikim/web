@@ -281,7 +281,7 @@ export const createAlias = (options: ResolveIdOptions): Plugin => {
     name: 'monorepo-alias',
     resolveId(this: Rollup.PluginContext, source, importer, resolveOptions) {
       if (!importer || source.startsWith('virtual:')) {
-        return source
+        return null
       }
 
       if (source.includes('\0')) {
@@ -293,7 +293,7 @@ export const createAlias = (options: ResolveIdOptions): Plugin => {
       const importerInfo = matchWorkspace(normalizedRoot, workspaceRegexList, normalizedImporter)
 
       if (!importerInfo) {
-        return source
+        return null
       }
 
       const targetAlias = _alias[importerInfo.relativeWorkspaceRoot] ?? _alias['/DEFAULT/']

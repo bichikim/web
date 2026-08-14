@@ -1,7 +1,19 @@
 import {monorepoAlias} from '@winter-love/vite-plugin-monorepo-alias'
 import {fileURLToPath, URL} from 'node:url'
+import type {Plugin} from 'vite'
 import {defineConfig} from 'vitest/config'
 import solid from 'vite-plugin-solid'
+
+const virtualUnoCssId = '\0vitest:virtual-uno.css'
+const virtualUnoCssPlugin = {
+  load(id) {
+    return id === virtualUnoCssId ? '' : null
+  },
+  name: 'vitest-virtual-uno-css',
+  resolveId(source) {
+    return source === 'virtual:uno.css' ? virtualUnoCssId : null
+  },
+} satisfies Plugin
 
 export default defineConfig({
   // Vite 빌드 옵션 (테스트 시 모듈/번들 대상에 영향)
@@ -11,6 +23,8 @@ export default defineConfig({
   },
   // Vite/Vitest 플러그인 목록
   plugins: [
+    // AI_NOTE - Unit tests need a resolvable CSS module, while UnoCSS transformation rewrites class snapshots and trigger fixtures.
+    virtualUnoCssPlugin,
     solid() as any,
     monorepoAlias({
       // 패키지별 import 경로 별칭 (`@` → `src` 등)
