@@ -89,6 +89,7 @@ coverage
 
 .temp
 .cache
+.vitest-attachments
 .turbo
 .cert
 
