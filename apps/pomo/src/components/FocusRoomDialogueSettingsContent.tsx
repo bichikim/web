@@ -155,7 +155,7 @@ const DialoguePlaybackButton = (props: DialoguePlaybackButtonProps) => (
 )
 
 // oxlint-disable-next-line eslint/max-lines-per-function -- Both tabs share one repository and audio playback lifecycle.
-export default function FocusRoomDialogueSettingsClient() {
+export default function FocusRoomDialogueSettingsContent() {
   const events = useFocusRoomEvents()
   const [playingDialogueId, setPlayingDialogueId] = createSignal<string | null>(null)
   const [audioElement, setAudioElement] = createSignal<HTMLAudioElement | undefined>()

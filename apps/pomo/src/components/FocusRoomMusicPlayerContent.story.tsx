@@ -3,13 +3,13 @@ import type {Meta, StoryObj} from 'storybook-solidjs-vite'
 
 import dayReadingImage from '../../assets/concept-art/focus-room-day-reading-concept.webp'
 import '../design-system/focus-room-tokens.css'
-import FocusRoomMusicPlayerClient from './FocusRoomMusicPlayer.client'
+import FocusRoomMusicPlayerContent from './FocusRoomMusicPlayerContent'
 
 const meta = {
   args: {
     tracks: [],
   },
-  component: FocusRoomMusicPlayerClient,
+  component: FocusRoomMusicPlayerContent,
   decorators: [
     (Story) => (
       <main
@@ -24,7 +24,7 @@ const meta = {
     layout: 'fullscreen',
   },
   title: 'Pomo/Components/Focus Room/Music Player',
-} satisfies Meta<typeof FocusRoomMusicPlayerClient>
+} satisfies Meta<typeof FocusRoomMusicPlayerContent>
 
 export default meta
 type Story = StoryObj<typeof meta>

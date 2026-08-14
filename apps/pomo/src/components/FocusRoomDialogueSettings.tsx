@@ -1,8 +1,8 @@
 import {clientOnly} from '@solidjs/start'
 
-const FocusRoomDialogueSettingsClient = clientOnly(
-  () => import('./FocusRoomDialogueSettings.client'),
+const FocusRoomDialogueSettingsContent = clientOnly(
+  () => import('./FocusRoomDialogueSettingsContent'),
   {lazy: true},
 )
 
-export const FocusRoomDialogueSettings = () => <FocusRoomDialogueSettingsClient />
+export const FocusRoomDialogueSettings = () => <FocusRoomDialogueSettingsContent />
