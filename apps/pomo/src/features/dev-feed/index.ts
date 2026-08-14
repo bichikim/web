@@ -1,5 +1,7 @@
 import type {IncomingMessage, ServerResponse} from 'node:http'
 
+import {DEV_FEED_QUOTES} from './quotes'
+
 const FEED_INTERVAL_MINUTES = 5
 const FEED_HISTORY_SIZE = 12
 const MILLISECONDS_PER_MINUTE = 60_000
@@ -56,7 +58,24 @@ const getKoreaTimeLabel = (date: Date) => {
   const values = new Map(parts.map((part) => [part.type, part.value]))
   const month = Number(values.get('month'))
   const day = Number(values.get('day'))
-  return `${values.get('year')}년 ${month}월 ${day}일 ${values.get('hour')}시 ${values.get('minute')}분`
+  const hour = Number(values.get('hour'))
+  const minute = Number(values.get('minute'))
+  const timeParts = [hour === 0 ? null : `${hour}시`, minute === 0 ? null : `${minute}분`]
+    .filter((part) => part !== null)
+    .join(' ')
+  const dateLabel = `${values.get('year')}년 ${month}월 ${day}일`
+  return timeParts.length === 0 ? dateLabel : `${dateLabel} ${timeParts}`
+}
+
+const getFeedMessage = (publishedAt: Date) => {
+  const sequence = Math.floor(publishedAt.getTime() / FEED_INTERVAL_MILLISECONDS)
+  const quote = DEV_FEED_QUOTES.at(sequence % DEV_FEED_QUOTES.length)
+
+  if (quote === undefined) {
+    throw new Error('개발 피드 명언을 고르지 못했어요.')
+  }
+
+  return `“${quote.text}” — ${quote.source} · ${getKoreaTimeLabel(publishedAt)}`
 }
 
 const createFeedItems = (now: Date): ReadonlyArray<DevFeedItem> => {
@@ -66,7 +85,7 @@ const createFeedItems = (now: Date): ReadonlyArray<DevFeedItem> => {
   return Array.from({length: FEED_HISTORY_SIZE}, (_, index) => {
     const publishedAt = new Date(latestTimestamp - index * FEED_INTERVAL_MILLISECONDS)
     const id = publishedAt.toISOString()
-    return {id, message: `안녕하세요 ${getKoreaTimeLabel(publishedAt)}`, publishedAt}
+    return {id, message: getFeedMessage(publishedAt), publishedAt}
   })
 }
 
