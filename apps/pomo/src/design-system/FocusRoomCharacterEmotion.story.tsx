@@ -1,7 +1,7 @@
 import type {Meta, StoryObj} from 'storybook-solidjs-vite'
 
-import breakStatusIcon from '../../assets/pomodoro-status-icons/break-face.png'
-import focusStatusIcon from '../../assets/pomodoro-status-icons/focus-face.png'
+import breakStatusIcon from '../../assets/pomodoro-status-icons/break-face.webp'
+import focusStatusIcon from '../../assets/pomodoro-status-icons/focus-face.webp'
 import './focus-room-tokens.css'
 import {FocusRoomCharacterEmotion} from './FocusRoomCharacterEmotion'
 

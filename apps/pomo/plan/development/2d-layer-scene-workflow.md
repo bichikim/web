@@ -45,12 +45,13 @@ base
 ```text
 assets/focus-room-layers/<scene-id>/
   base.webp
-  layer-head.png
-  layer-hand-left.png
-  layer-hand-right.png
+  layer-head-eye-base.webp
+  layer-hand-left.webp
+  layer-hand-right.webp
 
 assets/focus-room-source/layers/<scene-id>/
   base.png
+  layer-*.png
   mask-*.png
   workfiles/                 # Krita 원본과 재현에 필요한 중간 파일
 ```
@@ -107,9 +108,9 @@ AI가 반환한 전체 이미지를 그대로 `base.png`로 사용하지 않는�
 
 ## 5. 원본 픽셀로 투명 레이어를 추출한다
 
-`layer-head.png`와 손 레이어는 원본 RGB에 해당 마스크를 alpha로 결합해 만든다. 새로 생성한 얼굴이나 손을 사용하면 원본과 색, 질감, 윤곽이 달라지므로 기본 전략으로 사용하지 않는다.
+원본 `layer-head.png`와 손 레이어는 원본 RGB에 해당 마스크를 alpha로 결합해 만든다. 새로 생성한 얼굴이나 손을 사용하면 원본과 색, 질감, 윤곽이 달라지므로 기본 전략으로 사용하지 않는다.
 
-각 파일은 원본과 같은 `1672×941` 투명 PNG다. 파트를 실제 크기로 crop한 작은 이미지를 사용하지 않는다. 전체 캔버스를 유지하면 모든 장면 데이터를 절대 좌표로 독립적으로 정의할 수 있고, 합성 과정에서 추가 위치 보정이 필요하지 않다.
+보관 원본은 원본과 같은 `1672×941` 투명 PNG이고 런타임에는 WebP로 생성한다. 파트를 실제 크기로 crop한 작은 이미지를 사용하지 않는다. 전체 캔버스를 유지하면 모든 장면 데이터를 절대 좌표로 독립적으로 정의할 수 있고, 합성 과정에서 추가 위치 보정이 필요하지 않다.
 
 다음 조건을 확인한다.
 
@@ -241,6 +242,7 @@ const scene = {
 마지막으로 다음 명령을 실행한다.
 
 ```bash
+pnpm --filter @apps/pomo assets:compress-focus-room
 pnpm format
 pnpm --filter @apps/pomo lint
 pnpm --filter @apps/pomo typecheck

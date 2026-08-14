@@ -156,7 +156,8 @@ pnpm lint
 - 편집 원본 이미지 12장: `assets/focus-room-source/concept-art/focus-room-*.png`
 - 원본 무결성 체크섬: `assets/focus-room-source/concept-art/focus-room-originals.sha256`
 - 런타임 압축 이미지 12장: `assets/concept-art/focus-room-*.webp`
-- 눈 깜박임 레이어: `assets/focus-room-animation/eyes-*.png`
+- 눈 깜박임 원본: `assets/focus-room-source/animation/eyes-*.png`
+- 런타임 눈 깜박임 레이어: `assets/focus-room-animation/eyes-*.webp`
 - 로컬 중간 산출물: `.temp/pomo-focus-room/`
 - 머리 정규화 스크립트: `scripts/normalize-focus-room-day-heads.mjs`
 - 눈 레이어 추출 스크립트: `scripts/create-focus-room-blink-assets.mjs`
@@ -171,7 +172,7 @@ pnpm lint
 
 눈 레이어 마스크는 눈만 감싸는 타원으로 만들지 않는다. 눈꺼풀과 함께 표정이 변하는 눈썹 전체를 포함하고, 눈썹 위에 겹쳐진 작은 머리카락 조각도 같은 경계 안에 둔다. 반대로 얼굴 외곽의 큰 앞머리는 제외해야 깜박일 때 머리 전체가 흔들리지 않는다. 마스크 가장자리가 눈썹을 자르지 않도록 원본 추출 영역에 위쪽 여백을 먼저 확보하고, 아래 경계는 속눈썹 바로 아래까지만 두어 볼과 코 주변이 움직이지 않게 한다. 두 눈 사이의 이마가 이어지지 않도록 좌우 마스크는 분리한다.
 
-눈 레이어를 다시 만들 때는 AI 생성본을 런타임 자산 폴더에 보관하지 않는다. 로컬 폴더에서 다음 이름으로 준비하고 추출 스크립트만 실행한다.
+눈 레이어를 다시 만들 때는 AI 생성본을 런타임 자산 폴더에 보관하지 않는다. 로컬 폴더에서 다음 이름으로 준비하고, 추출 후 런타임 WebP를 다시 생성한다.
 
 ```text
 focused-half.png
@@ -186,6 +187,7 @@ night-user-closed.png
 
 ```bash
 POMO_BLINK_SOURCE_DIRECTORY=<로컬 생성본 폴더> node scripts/create-focus-room-blink-assets.mjs
+pnpm assets:compress-focus-room
 ```
 
 ## 10. 장면 전체에 깊이 변형을 적용한다
@@ -198,14 +200,15 @@ POMO_BLINK_SOURCE_DIRECTORY=<로컬 생성본 폴더> node scripts/create-focus-
 python scripts/create-focus-room-depth-maps.py \
   --da3-source <Depth-Anything-3 저장소> \
   --input-dir assets/focus-room-source/concept-art \
-  --output-dir assets/focus-room-depth
+  --output-dir assets/focus-room-source/depth
+pnpm assets:compress-focus-room
 ```
 
-생성 설정과 원본 SHA-256은 `assets/focus-room-depth/manifest.json`에 기록한다. 런타임은 생성 모델을 포함하지 않고 완성된 8-bit grayscale PNG만 로드한다.
+생성 설정과 원본 SHA-256은 `assets/focus-room-source/depth/manifest.json`에 기록한다. 원본 8-bit grayscale PNG는 이 경로에 보존하고 런타임은 픽셀 값이 동일한 무손실 WebP만 로드한다.
 
 ## 11. 런타임 장면을 고품질로 압축한다
 
-원본 PNG는 AI 재편집과 depth-map 재생성을 위해 보존하고, 페이지에는 WebP quality 95를 사용한다. 대표 장면에서 원본 3.4MB가 298KB로 줄었고 평균 MAE는 1.09/255, PSNR은 44.7dB였다. 실제 PixiJS 합성 화면에서 품질을 확인한 뒤 전체 장면에 같은 설정을 적용했다.
+원본 PNG는 AI 재편집과 depth-map 재생성을 위해 보존하고, 장면과 베이스에는 WebP quality 95를 사용한다. 대표 장면에서 원본 3.4MB가 298KB로 줄었고 평균 MAE는 1.09/255, PSNR은 44.7dB였다. 알파 스프라이트는 alpha quality 100의 quality 95 WebP와 무손실 WebP 중 작은 결과를 사용하며, 깊이맵과 마스크는 무손실로 유지한다. 실제 PixiJS 합성 화면에서 품질을 확인한 뒤 같은 설정을 적용한다.
 
 원본 PNG는 WebP 생성 입력이자 보관 자산이다. 이름을 바꾸거나 덮어쓰지 않으며, 변경 전후에 다음 명령으로 체크섬을 검증한다.
 
@@ -219,4 +222,4 @@ cd apps/pomo
 pnpm assets:compress-focus-room
 ```
 
-PixiJS 로딩 표시는 장면 PNG/WebP의 네트워크·디코딩뿐 아니라 depth texture와 눈 texture 로드, stage 합성과 전환까지 포함한다. `Application.render()` 뒤 두 번의 animation frame을 지난 후에만 완료 처리해 합성 프레임이 실제 화면에 나오기 전에 로더가 사라지지 않게 한다.
+PixiJS 로딩 표시는 장면 WebP의 네트워크·디코딩뿐 아니라 depth texture와 눈 texture 로드, stage 합성과 전환까지 포함한다. `Application.render()` 뒤 두 번의 animation frame을 지난 후에만 완료 처리해 합성 프레임이 실제 화면에 나오기 전에 로더가 사라지지 않게 한다.
