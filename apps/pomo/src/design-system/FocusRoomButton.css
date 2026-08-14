@@ -1,0 +1,86 @@
+.focus-room-button {
+  display: inline-flex;
+  box-sizing: border-box;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 1px solid transparent;
+  border-radius: var(--focus-room-radius-control);
+  font-weight: 750;
+  line-height: 1rem;
+  outline: none;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
+}
+
+.focus-room-button--medium {
+  min-height: var(--focus-room-control-height-medium);
+  padding: 0.75rem 1.25rem;
+  font-size: 0.875rem;
+}
+
+.focus-room-button--small {
+  min-height: var(--focus-room-control-height-small);
+  padding: 0.5rem 0.875rem;
+  font-size: 0.75rem;
+}
+
+.focus-room-button--primary {
+  background: var(--focus-room-accent-strong);
+  color: white;
+  box-shadow:
+    0 8px 24px rgb(83 28 16 / 32%),
+    inset 0 1px 0 rgb(255 255 255 / 16%);
+}
+
+.focus-room-button--primary:hover {
+  background: var(--focus-room-accent-strong-hover);
+  transform: translateY(-1px);
+}
+
+.focus-room-button--secondary {
+  border-color: var(--focus-room-border);
+  background: var(--focus-room-secondary-soft);
+  color: var(--focus-room-text);
+}
+
+.focus-room-button--secondary:hover {
+  border-color: var(--focus-room-border-hover);
+  background: rgb(114 123 96 / 30%);
+}
+
+.focus-room-button--danger {
+  border-color: rgb(239 138 116 / 34%);
+  background: transparent;
+  color: var(--focus-room-danger);
+}
+
+.focus-room-button--danger:hover {
+  background: rgb(239 138 116 / 12%);
+}
+
+.focus-room-button:focus-visible {
+  box-shadow: 0 0 0 2px var(--focus-room-brass);
+}
+
+.focus-room-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  transform: none;
+}
+
+.focus-room-button__icon {
+  width: 1.125rem;
+  height: 1.125rem;
+  flex: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .focus-room-button {
+    transition: none;
+  }
+}

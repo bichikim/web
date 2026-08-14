@@ -13,14 +13,14 @@
 
 .focus-room-select__trigger {
   display: flex;
-  height: 2.75rem;
+  height: var(--focus-room-control-height-medium);
   width: 100%;
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
   border-radius: var(--focus-room-radius-control);
   background: var(--focus-room-surface);
-  padding: 0 1rem;
+  padding: 0 var(--focus-room-padding-lg);
   color: var(--focus-room-text);
   font-size: 0.875rem;
   font-weight: 650;
@@ -56,7 +56,7 @@
   overflow: hidden;
   border-radius: 1rem;
   background: var(--focus-room-surface-strong);
-  padding: 0.375rem;
+  padding: var(--focus-room-padding-sm);
   color: var(--focus-room-text);
   box-shadow: var(--focus-room-shadow);
   transform-origin: var(--kb-select-content-transform-origin);
@@ -79,7 +79,7 @@
   justify-content: space-between;
   gap: 0.75rem;
   border-radius: 0.75rem;
-  padding: 0.625rem 0.75rem;
+  padding: var(--focus-room-padding-sm) var(--focus-room-padding-md);
   color: var(--focus-room-text-muted);
   font-size: 0.875rem;
   font-weight: 600;

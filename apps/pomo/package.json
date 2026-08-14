@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "assets:compress-focus-room": "node scripts/compress-focus-room-scenes.mjs",
     "blender:export": "blender --background blender/character-studio.blend --python blender/export_glb.py",
     "blender:open": "blender blender/character-studio.blend",
     "build": "pnpm run build:web",
@@ -17,6 +18,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@apps-in-toss/bridge-core": "2.4.1",
+    "@apps-in-toss/web-bridge": "2.4.1",
     "@babylonjs/core": "9.18.0",
     "@babylonjs/loaders": "9.18.0",
     "@huggingface/transformers": "4.0.0-next.11",
@@ -27,6 +30,7 @@
     "@unocss/reset": "catalog:",
     "class-variance-authority": "catalog:",
     "cross-env": "catalog:",
+    "dexie": "^4.4.4",
     "media-chrome": "^4.19.2",
     "onnxruntime-web": "1.23.2",
     "pixi.js": "^8.19.0",

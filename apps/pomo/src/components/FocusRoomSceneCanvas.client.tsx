@@ -17,6 +17,7 @@ export default function FocusRoomSceneCanvas(props: FocusRoomSceneCanvasProps) {
     activity: props.activity,
     depthSource: props.depthSource,
     gaze: props.gaze,
+    layerScene: props.layerScene,
     source: props.source,
     time: props.time,
   })
@@ -43,7 +44,15 @@ export default function FocusRoomSceneCanvas(props: FocusRoomSceneCanvasProps) {
 
   createEffect(
     on(
-      () => [props.activity, props.depthSource, props.gaze, props.source, props.time] as const,
+      () =>
+        [
+          props.activity,
+          props.depthSource,
+          props.gaze,
+          props.layerScene,
+          props.source,
+          props.time,
+        ] as const,
       () => {
         renderer?.update(getSceneState())
       },

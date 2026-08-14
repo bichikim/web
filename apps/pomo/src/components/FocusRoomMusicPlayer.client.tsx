@@ -2,36 +2,33 @@ import 'media-chrome'
 import './FocusRoomMusicPlayer.css'
 
 import {cx} from 'class-variance-authority'
-import {createMemo, createSignal, For, onCleanup, onMount, Show, untrack} from 'solid-js'
+import {batch, createMemo, createSignal, For, onCleanup, onMount, Show, untrack} from 'solid-js'
 
 import {
   type FocusRoomTrack,
   loadFocusRoomTracks,
 } from '../features/focus-room-audio/focus-room-playlist'
+import {createInitialPlaybackState} from '../features/focus-room-audio/initial-playback-state'
 import {type RepeatMode, resolveTrackEnd} from '../features/focus-room-audio/playback-policy'
+import {resolvePlaybackRestore} from '../features/focus-room-audio/playback-restore'
+import {
+  type FocusRoomPlaybackState,
+  readFocusRoomPlayback,
+} from '../features/focus-room-audio/playback-storage'
 import {createShuffleQueue} from '../features/focus-room-audio/shuffle-queue'
+import {useFocusRoomAudioVisualizer} from '../features/focus-room-audio/use-focus-room-audio-visualizer'
+import {useFocusRoomPlaybackPersistence} from '../features/focus-room-audio/use-focus-room-playback-persistence'
+import {FocusRoomPlaybackModes} from './FocusRoomPlaybackModes'
+import {FocusRoomTrackList} from './FocusRoomTrackList'
 
-/* oxlint-disable eslint/no-magic-numbers -- Deliberate idle VU-meter silhouette. */
-const IDLE_LEVELS = [
-  18, 26, 36, 48, 38, 58, 74, 60, 42, 52, 70, 88, 72, 48, 60, 78, 62, 44, 56, 72, 52, 38, 28, 20,
-] as const
-/* oxlint-enable eslint/no-magic-numbers */
-const LEVEL_COUNT = IDLE_LEVELS.length
-const MINIMUM_LEVEL = 12
-const MAXIMUM_LEVEL = 100
-const BYTE_MAXIMUM = 255
-const LEVEL_GAIN = 112
 const ACTIVE_VISUALIZER_OPACITY = 0.76
 const IDLE_VISUALIZER_OPACITY = 0.34
 const SKIP_BUTTON_CLASSES =
   'focus-room-player__skip grid size-10 shrink-0 place-items-center rounded-full transition disabled:opacity-35'
 
-const REPEAT_MODES = [
-  {icon: 'i-tabler-repeat', label: '전체 반복', value: 'repeat-all'},
-  {icon: 'i-tabler-repeat-once', label: '한 곡 반복', value: 'repeat-one'},
-] as const
-
 interface FocusRoomMusicPlayerClientProps {
+  readonly expanded?: boolean
+  readonly onExpandedChange?: (expanded: boolean) => void
   readonly tracks?: readonly FocusRoomTrack[]
 }
 
@@ -44,146 +41,144 @@ interface SelectRandomTrackOptions {
   readonly shouldResume?: boolean
 }
 
-// oxlint-disable-next-line eslint/max-lines-per-function -- Media Chrome's control tree is one semantic unit.
+const isAbortError = (error: unknown) =>
+  error instanceof DOMException && error.name === 'AbortError'
+
+// oxlint-disable-next-line eslint/max-lines-per-function, eslint/max-statements -- Media Chrome's control tree is one semantic unit.
 export default function FocusRoomMusicPlayerClient(props: FocusRoomMusicPlayerClientProps) {
   const initialTracks = untrack(() => props.tracks ?? [])
+  const initialState = createInitialPlaybackState({trackCount: initialTracks.length})
   const [loadedTracks, setLoadedTracks] = createSignal<readonly FocusRoomTrack[]>(initialTracks)
   const tracks = () => props.tracks ?? loadedTracks()
-  const [currentIndex, setCurrentIndex] = createSignal(0)
-  const [expanded, setExpanded] = createSignal(false)
+  const [currentIndex, setCurrentIndex] = createSignal(initialState.currentIndex)
+  const [internalExpanded, setInternalExpanded] = createSignal(false)
+  const expanded = () => props.expanded ?? internalExpanded()
   const [isPlaying, setIsPlaying] = createSignal(false)
-  const [repeatMode, setRepeatMode] = createSignal<RepeatMode>('none')
-  const [shuffleEnabled, setShuffleEnabled] = createSignal(false)
-  const [levels, setLevels] = createSignal<readonly number[]>(IDLE_LEVELS)
+  const [repeatMode, setRepeatMode] = createSignal<RepeatMode>('repeat-all')
+  const [shuffleEnabled, setShuffleEnabled] = createSignal(true)
+  const visualizer = useFocusRoomAudioVisualizer()
   const currentTrack = createMemo(() => tracks()[currentIndex()])
   const playlistRequest = new AbortController()
   let audioElement: HTMLAudioElement | undefined
-  let audioContext: AudioContext | undefined
-  let analyserNode: AnalyserNode | undefined
-  let mediaSource: MediaElementAudioSourceNode | undefined
-  let spectrumData: Uint8Array<ArrayBuffer> | undefined
-  let animationFrame: number | undefined
-  let audioIsPlaying = false
   let destroyed = false
-  let shuffleQueue: number[] = []
+  let playbackRequestRevision = 0
+  let playbackRevision = 0
+  let shuffleQueue = initialState.queue
   let shuffleHistory: number[] = []
+  const playbackPersistence = useFocusRoomPlaybackPersistence({
+    currentTrack,
+    getAudioElement: () => audioElement,
+    isPlaying,
+  })
 
-  const handleAudioError = () => {
+  const initializePlayback = (
+    nextTracks: readonly FocusRoomTrack[],
+    storedPlayback: FocusRoomPlaybackState | null,
+  ) => {
+    const fallbackIndex =
+      storedPlayback === null
+        ? createInitialPlaybackState({trackCount: nextTracks.length}).currentIndex
+        : currentIndex()
+    const restoration = resolvePlaybackRestore({
+      fallbackIndex,
+      storedPlayback,
+      tracks: nextTracks,
+    })
+
+    playbackPersistence.setPendingPosition(restoration.playback)
+
+    batch(() => {
+      setLoadedTracks(nextTracks)
+      setCurrentIndex(restoration.currentIndex)
+    })
+    shuffleQueue = createShuffleQueue({
+      currentIndex: restoration.currentIndex,
+      trackCount: nextTracks.length,
+    })
+    shuffleHistory = []
+
+    if (restoration.shouldPersist && restoration.playback !== null) {
+      playbackPersistence.writePlayback(restoration.playback)
+    }
+
+    queueMicrotask(restorePendingPlayback)
+  }
+
+  const handleAudioError = (error?: unknown) => {
+    if (isAbortError(error)) {
+      return
+    }
+
     if (destroyed) {
       return
     }
 
-    audioIsPlaying = false
     setIsPlaying(false)
-    handleAnalyserError()
+    visualizer.stop()
+    playbackPersistence.persistCurrentPlayback()
   }
 
-  const handleAnalyserError = () => {
-    if (animationFrame !== undefined) {
-      cancelAnimationFrame(animationFrame)
-      animationFrame = undefined
+  const playAudio = () => {
+    const requestRevision = (playbackRequestRevision += 1)
+    audioElement?.play().catch((error: unknown) => {
+      if (requestRevision === playbackRequestRevision) {
+        handleAudioError(error)
+      }
+    })
+  }
+
+  const restorePendingPlayback = () => {
+    if (destroyed) {
+      return
     }
-    if (!destroyed) {
-      setLevels(IDLE_LEVELS)
+
+    const restoredPlayback = playbackPersistence.applyPendingPosition()
+
+    if (!restoredPlayback?.isPlaying) {
+      return
     }
+
+    playAudio()
   }
 
   const selectTrack = (options: SelectTrackOptions) => {
-    if (tracks().length === 0) {
+    const trackList = tracks()
+
+    if (trackList.length === 0) {
       return
     }
 
     const shouldResume = options.shouldResume ?? isPlaying()
-    setCurrentIndex((options.index + tracks().length) % tracks().length)
-    queueMicrotask(() => {
-      if (shouldResume) {
-        audioElement?.play().catch(handleAudioError)
-      }
-    })
-  }
-
-  const initializeAnalyser = async () => {
-    if (!audioElement) {
-      return
-    }
-
-    const context = (audioContext ??= new AudioContext())
-
-    if (context.state === 'suspended') {
-      await context.resume()
-    }
-
-    analyserNode ??= context.createAnalyser()
-    analyserNode.fftSize = 128
-    analyserNode.smoothingTimeConstant = 0.78
-    spectrumData ??= new Uint8Array(analyserNode.frequencyBinCount)
-
-    if (!mediaSource) {
-      mediaSource = context.createMediaElementSource(audioElement)
-      mediaSource.connect(analyserNode)
-      analyserNode.connect(context.destination)
-    }
-  }
-
-  const updateLevels = () => {
-    if (!analyserNode || !audioIsPlaying) {
-      return
-    }
-
-    const spectrum = spectrumData
-
-    if (spectrum === undefined) {
-      return
-    }
-
-    analyserNode.getByteFrequencyData(spectrum)
-    const bucketSize = Math.max(1, Math.floor(spectrum.length / LEVEL_COUNT))
-    const nextLevels = Array.from({length: LEVEL_COUNT}, (_, index) => {
-      const start = index * bucketSize
-      const end = Math.min(spectrum.length, start + bucketSize)
-      let sum = 0
-
-      for (let spectrumIndex = start; spectrumIndex < end; spectrumIndex += 1) {
-        sum += spectrum[spectrumIndex]
-      }
-
-      const average = sum / Math.max(1, end - start)
-
-      return Math.max(
-        MINIMUM_LEVEL,
-        Math.min(MAXIMUM_LEVEL, Math.round((average / BYTE_MAXIMUM) * LEVEL_GAIN)),
-      )
-    })
-
-    setLevels(nextLevels)
-    animationFrame = requestAnimationFrame(updateLevels)
+    const nextIndex = (options.index + trackList.length) % trackList.length
+    const nextTrack = trackList[nextIndex]
+    const nextPlayback = {isPlaying: shouldResume, positionSeconds: 0, trackId: nextTrack.id}
+    playbackRequestRevision += 1
+    playbackRevision += 1
+    playbackPersistence.setPendingPosition(nextPlayback)
+    setCurrentIndex(nextIndex)
+    playbackPersistence.writePlayback(nextPlayback)
+    queueMicrotask(restorePendingPlayback)
   }
 
   const handlePlay = () => {
-    audioIsPlaying = true
+    playbackRequestRevision += 1
+    playbackRevision += 1
     setIsPlaying(true)
-    initializeAnalyser()
-      .then(() => {
-        if (destroyed) {
-          return
-        }
-
-        if (animationFrame !== undefined) {
-          cancelAnimationFrame(animationFrame)
-        }
-        updateLevels()
-      })
-      .catch(handleAnalyserError)
+    if (audioElement) {
+      visualizer.start(audioElement)
+    }
+    playbackPersistence.persistCurrentPlayback()
   }
 
   const handlePause = () => {
-    audioIsPlaying = false
-    setIsPlaying(false)
-    if (animationFrame !== undefined) {
-      cancelAnimationFrame(animationFrame)
-      animationFrame = undefined
+    const wasPlaying = isPlaying()
+    if (wasPlaying) {
+      playbackRequestRevision += 1
+      playbackRevision += 1
     }
-    setLevels(IDLE_LEVELS)
+    setIsPlaying(false)
+    visualizer.stop()
+    playbackPersistence.persistCurrentPlayback()
   }
 
   const resetShuffleQueue = (currentTrackIndex = currentIndex()) => {
@@ -240,6 +235,16 @@ export default function FocusRoomMusicPlayerClient(props: FocusRoomMusicPlayerCl
     setRepeatMode((currentMode) => (currentMode === mode ? 'none' : mode))
   }
 
+  const toggleExpanded = () => {
+    const nextExpanded = !expanded()
+
+    if (props.expanded === undefined) {
+      setInternalExpanded(nextExpanded)
+    }
+
+    props.onExpandedChange?.(nextExpanded)
+  }
+
   const selectChosenTrack = (index: number) => {
     if (shuffleEnabled()) {
       resetShuffleQueue(index)
@@ -255,7 +260,16 @@ export default function FocusRoomMusicPlayerClient(props: FocusRoomMusicPlayerCl
     }
 
     audioElement.currentTime = 0
-    audioElement.play().catch(handleAudioError)
+    playbackRevision += 1
+    const track = currentTrack()
+    if (track !== undefined) {
+      playbackPersistence.writePlayback({isPlaying: true, positionSeconds: 0, trackId: track.id})
+    }
+    playAudio()
+  }
+
+  const handleSeeking = () => {
+    playbackRevision += 1
   }
 
   const selectNextTrack = () => {
@@ -312,39 +326,62 @@ export default function FocusRoomMusicPlayerClient(props: FocusRoomMusicPlayerCl
   }
 
   onMount(() => {
+    const restoreRevision = playbackRevision
+    const storedPlaybackRequest = readFocusRoomPlayback()
+
     if (props.tracks === undefined) {
       loadFocusRoomTracks({signal: playlistRequest.signal})
+        // oxlint-disable-next-line solid/reactivity -- Completion must apply the user's latest shuffle choice.
         .then((nextTracks) => {
-          if (!destroyed) {
-            setLoadedTracks(nextTracks)
+          if (destroyed) {
+            return
           }
+
+          initializePlayback(nextTracks, null)
+          // oxlint-disable-next-line solid/reactivity -- Late storage must respect the latest playback revision.
+          storedPlaybackRequest.then((storedPlayback) => {
+            if (!destroyed && playbackRevision === restoreRevision && storedPlayback !== null) {
+              initializePlayback(nextTracks, storedPlayback)
+            }
+          })
         })
         .catch((error: unknown) => {
-          if (!(error instanceof DOMException && error.name === 'AbortError')) {
-            handleAudioError()
-          }
+          handleAudioError(error)
         })
+    } else {
+      // oxlint-disable-next-line solid/reactivity -- Completion restores against the latest controlled tracks.
+      storedPlaybackRequest.then((storedPlayback) => {
+        if (!destroyed && playbackRevision === restoreRevision && storedPlayback !== null) {
+          initializePlayback(tracks(), storedPlayback)
+        }
+      })
     }
 
     audioElement?.addEventListener('play', handlePlay)
     audioElement?.addEventListener('pause', handlePause)
     audioElement?.addEventListener('ended', handleEnded)
     audioElement?.addEventListener('error', handleAudioError)
+    audioElement?.addEventListener('loadedmetadata', restorePendingPlayback)
+    audioElement?.addEventListener('seeking', handleSeeking)
+    audioElement?.addEventListener('seeked', playbackPersistence.persistCurrentPlayback)
+    audioElement?.addEventListener('timeupdate', playbackPersistence.persistPlaybackProgress)
+    window.addEventListener('pagehide', playbackPersistence.persistCurrentPlayback)
   })
 
   onCleanup(() => {
+    playbackPersistence.persistCurrentPlayback()
     destroyed = true
     playlistRequest.abort()
-    if (animationFrame !== undefined) {
-      cancelAnimationFrame(animationFrame)
-    }
     audioElement?.removeEventListener('play', handlePlay)
     audioElement?.removeEventListener('pause', handlePause)
     audioElement?.removeEventListener('ended', handleEnded)
     audioElement?.removeEventListener('error', handleAudioError)
-    mediaSource?.disconnect()
-    analyserNode?.disconnect()
-    audioContext?.close().catch(() => undefined)
+    audioElement?.removeEventListener('loadedmetadata', restorePendingPlayback)
+    audioElement?.removeEventListener('seeking', handleSeeking)
+    audioElement?.removeEventListener('seeked', playbackPersistence.persistCurrentPlayback)
+    audioElement?.removeEventListener('timeupdate', playbackPersistence.persistPlaybackProgress)
+    window.removeEventListener('pagehide', playbackPersistence.persistCurrentPlayback)
+    audioElement?.pause()
   })
 
   return (
@@ -388,7 +425,7 @@ export default function FocusRoomMusicPlayerClient(props: FocusRoomMusicPlayerCl
             aria-label="오디오 주파수 레벨"
             class="focus-room-player__visualizer absolute flex items-end gap-0.5"
           >
-            <For each={levels()}>
+            <For each={visualizer.levels()}>
               {(level) => (
                 <span
                   aria-hidden="true"
@@ -438,7 +475,7 @@ export default function FocusRoomMusicPlayerClient(props: FocusRoomMusicPlayerCl
               'focus-room-player__utility hover:bg-[var(--focus-room-secondary-soft)] ' +
               'text-[var(--focus-room-text-muted)] hover:text-[var(--focus-room-text)]'
             }
-            onClick={() => setExpanded((value) => !value)}
+            onClick={toggleExpanded}
             type="button"
           >
             <span
@@ -464,41 +501,12 @@ export default function FocusRoomMusicPlayerClient(props: FocusRoomMusicPlayerCl
             </div>
 
             <div class="grid grid-cols-[1fr_auto_1fr] items-center gap-3 px-1">
-              <div class="focus-room-player__modes flex w-fit items-center gap-0.5 rounded-full p-1">
-                <div class="contents" role="group" aria-label="반복 방식">
-                  <For each={REPEAT_MODES}>
-                    {(mode) => (
-                      <button
-                        aria-label={mode.label}
-                        aria-pressed={repeatMode() === mode.value}
-                        class={cx(
-                          'focus-room-player__mode grid size-8 place-items-center rounded-full transition',
-                          repeatMode() === mode.value && 'is-active',
-                        )}
-                        onClick={() => toggleRepeatMode(mode.value)}
-                        title={mode.label}
-                        type="button"
-                      >
-                        <span aria-hidden="true" class={cx(mode.icon, 'size-4')} />
-                      </button>
-                    )}
-                  </For>
-                </div>
-                <span aria-hidden="true" class="mx-0.5 h-5 w-px bg-[var(--focus-room-border)]" />
-                <button
-                  aria-label="랜덤 재생"
-                  aria-pressed={shuffleEnabled()}
-                  class={cx(
-                    'focus-room-player__mode grid size-8 place-items-center rounded-full transition',
-                    shuffleEnabled() && 'is-active',
-                  )}
-                  onClick={toggleShuffle}
-                  title="랜덤 재생"
-                  type="button"
-                >
-                  <span aria-hidden="true" class="i-tabler-arrows-shuffle size-4" />
-                </button>
-              </div>
+              <FocusRoomPlaybackModes
+                onRepeatModeChange={toggleRepeatMode}
+                onShuffleChange={toggleShuffle}
+                repeatMode={repeatMode()}
+                shuffleEnabled={shuffleEnabled()}
+              />
 
               <div class="flex items-center justify-center gap-1">
                 <button
@@ -540,32 +548,11 @@ export default function FocusRoomMusicPlayerClient(props: FocusRoomMusicPlayerCl
               </div>
             </div>
 
-            <Show when={tracks().length > 1}>
-              <ol class="focus-room-player__playlist mb-0 mt-3 grid max-h-38 list-none gap-1 overflow-auto p-1">
-                <For each={tracks()}>
-                  {(track, index) => (
-                    <li>
-                      <button
-                        aria-current={index() === currentIndex() ? 'true' : undefined}
-                        class={cx(
-                          'focus-room-player__track flex w-full items-center gap-3 rounded-3',
-                          'px-3 py-2.5 text-left text-xs transition',
-                          index() === currentIndex()
-                            ? 'bg-[var(--focus-room-accent-soft)] text-[var(--focus-room-text)]'
-                            : 'text-[var(--focus-room-text-muted)] hover:bg-[var(--focus-room-secondary-soft)]',
-                        )}
-                        onClick={() => selectChosenTrack(index())}
-                        type="button"
-                      >
-                        <span class="w-4 text-center tabular-nums">{index() + 1}</span>
-                        <span class="min-w-0 flex-1 truncate">{track.title}</span>
-                        <span class="truncate opacity-70">{track.artist}</span>
-                      </button>
-                    </li>
-                  )}
-                </For>
-              </ol>
-            </Show>
+            <FocusRoomTrackList
+              currentIndex={currentIndex()}
+              onTrackSelect={selectChosenTrack}
+              tracks={tracks()}
+            />
           </div>
         </Show>
       </media-controller>

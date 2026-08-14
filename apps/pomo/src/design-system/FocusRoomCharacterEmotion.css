@@ -1,0 +1,183 @@
+.focus-room-character-emotion {
+  position: relative;
+  display: inline-grid;
+  width: 3.5rem;
+  height: 3.5rem;
+  flex: none;
+  overflow: visible;
+  place-items: center;
+}
+
+.focus-room-character-emotion__image {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  filter: grayscale(1) drop-shadow(0 0.125rem 0.1875rem rgb(0 0 0 / 32%));
+  object-fit: contain;
+}
+
+.focus-room-character-emotion[data-active] .focus-room-character-emotion__image {
+  filter: drop-shadow(0 0.125rem 0.1875rem rgb(0 0 0 / 32%));
+}
+
+.focus-room-character-emotion__symbol {
+  --focus-room-emotion-outline: rgb(8 6 4 / 72%);
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 1.25rem;
+  height: 1.25rem;
+  color: #ffd968;
+  filter: drop-shadow(-0.125rem 0 0 var(--focus-room-emotion-outline))
+    drop-shadow(0.125rem 0 0 var(--focus-room-emotion-outline))
+    drop-shadow(0 -0.125rem 0 var(--focus-room-emotion-outline))
+    drop-shadow(0 0.125rem 0 var(--focus-room-emotion-outline))
+    drop-shadow(0 0 0.25rem rgb(255 204 82 / 52%));
+  opacity: 0;
+  pointer-events: none;
+  transform-origin: 50% 100%;
+}
+
+.focus-room-character-emotion[data-active][data-emotion='focus']
+  .focus-room-character-emotion__symbol {
+  top: -0.125rem;
+  right: 0.125rem;
+  opacity: 1;
+  transform-origin: 50% calc(100% - 0.125rem);
+  animation: focus-room-focus-glow 19s ease-in-out infinite;
+}
+
+.focus-room-character-emotion[data-active][data-emotion='rest']
+  .focus-room-character-emotion__symbol {
+  color: #f3c994;
+  filter: drop-shadow(-0.125rem 0 0 var(--focus-room-emotion-outline))
+    drop-shadow(0.125rem 0 0 var(--focus-room-emotion-outline))
+    drop-shadow(0 -0.125rem 0 var(--focus-room-emotion-outline))
+    drop-shadow(0 0.125rem 0 var(--focus-room-emotion-outline))
+    drop-shadow(0 0 0.1875rem rgb(243 201 148 / 36%));
+  opacity: 1;
+  animation: focus-room-rest-sway 2.4s ease-in-out infinite;
+}
+
+@keyframes focus-room-focus-glow {
+  0% {
+    transform: scale(0);
+  }
+
+  2% {
+    transform: translateY(-0.0625rem) rotate(-6deg) scale(1.12);
+  }
+
+  4%,
+  18% {
+    transform: none;
+  }
+
+  19% {
+    transform: scale(0.68);
+  }
+
+  20% {
+    transform: scale(0.28);
+  }
+
+  21% {
+    transform: scale(0);
+  }
+
+  22% {
+    transform: translate3d(-0.1875rem, 0.125rem, 0) scale(0);
+  }
+
+  24% {
+    transform: translate3d(-0.1875rem, 0.125rem, 0) rotate(-6deg) scale(1.12);
+  }
+
+  26%,
+  43% {
+    transform: translate3d(-0.1875rem, 0.125rem, 0) rotate(-4deg) scale(1);
+  }
+
+  44% {
+    transform: translate3d(-0.1875rem, 0.125rem, 0) rotate(-4deg) scale(0.68);
+  }
+
+  45% {
+    transform: translate3d(-0.1875rem, 0.125rem, 0) rotate(-4deg) scale(0.28);
+  }
+
+  46% {
+    transform: translate3d(-0.1875rem, 0.125rem, 0) rotate(-4deg) scale(0);
+  }
+
+  47% {
+    transform: translate3d(0.125rem, -0.1875rem, 0) scale(0);
+  }
+
+  49% {
+    transform: translate3d(0.125rem, -0.1875rem, 0) rotate(7deg) scale(1.12);
+  }
+
+  51%,
+  74% {
+    transform: translate3d(0.125rem, -0.1875rem, 0) rotate(5deg) scale(1);
+  }
+
+  75% {
+    transform: translate3d(0.125rem, -0.1875rem, 0) rotate(5deg) scale(0.68);
+  }
+
+  76% {
+    transform: translate3d(0.125rem, -0.1875rem, 0) rotate(5deg) scale(0.28);
+  }
+
+  77% {
+    transform: translate3d(0.125rem, -0.1875rem, 0) rotate(5deg) scale(0);
+  }
+
+  78% {
+    transform: translate3d(-0.0625rem, -0.0625rem, 0) scale(0);
+  }
+
+  80% {
+    transform: translate3d(-0.0625rem, -0.0625rem, 0) rotate(-5deg) scale(1.12);
+  }
+
+  82%,
+  97% {
+    transform: translate3d(-0.0625rem, -0.0625rem, 0) rotate(-2deg) scale(1);
+  }
+
+  98% {
+    transform: translate3d(-0.0625rem, -0.0625rem, 0) rotate(-2deg) scale(0.68);
+  }
+
+  99% {
+    transform: translate3d(-0.0625rem, -0.0625rem, 0) rotate(-2deg) scale(0.28);
+  }
+
+  100% {
+    transform: translate3d(-0.0625rem, -0.0625rem, 0) rotate(-2deg) scale(0);
+  }
+}
+
+@keyframes focus-room-rest-sway {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(-8deg);
+  }
+
+  50% {
+    transform: translate3d(0.0625rem, -0.125rem, 0) rotate(9deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .focus-room-character-emotion[data-active] .focus-room-character-emotion__symbol {
+    opacity: 1;
+    animation: none;
+    transform: none;
+  }
+}

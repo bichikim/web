@@ -2,32 +2,12 @@ import {clientOnly} from '@solidjs/start'
 import {cx} from 'class-variance-authority'
 import {createMemo, createSignal, onCleanup, onMount, Show} from 'solid-js'
 
-import dayReadingImage from '../../assets/concept-art/focus-room-day-reading-concept.webp'
-import dayReadingGazeImage from '../../assets/concept-art/focus-room-day-reading-user-gaze-concept.webp'
-import dayTypingImage from '../../assets/concept-art/focus-room-day-typing-concept.webp'
-import dayTypingGazeImage from '../../assets/concept-art/focus-room-day-typing-user-gaze-concept.webp'
-import dayWritingImage from '../../assets/concept-art/focus-room-day-writing-concept.webp'
-import dayWritingGazeImage from '../../assets/concept-art/focus-room-day-writing-user-gaze-concept.webp'
-import nightReadingImage from '../../assets/concept-art/focus-room-night-reading-concept.webp'
-import nightReadingGazeImage from '../../assets/concept-art/focus-room-night-reading-user-gaze-concept.webp'
-import nightTypingImage from '../../assets/concept-art/focus-room-night-typing-concept.webp'
-import nightTypingGazeImage from '../../assets/concept-art/focus-room-night-typing-user-gaze-concept.webp'
-import nightWritingImage from '../../assets/concept-art/focus-room-night-desk-concept.webp'
-import nightWritingGazeImage from '../../assets/concept-art/focus-room-night-writing-user-gaze-concept.webp'
-import dayReadingDepth from '../../assets/focus-room-depth/depth-day-reading.png'
-import dayReadingGazeDepth from '../../assets/focus-room-depth/depth-day-reading-user-gaze.png'
-import dayTypingDepth from '../../assets/focus-room-depth/depth-day-typing.png'
-import dayTypingGazeDepth from '../../assets/focus-room-depth/depth-day-typing-user-gaze.png'
-import dayWritingDepth from '../../assets/focus-room-depth/depth-day-writing.png'
-import dayWritingGazeDepth from '../../assets/focus-room-depth/depth-day-writing-user-gaze.png'
-import nightReadingDepth from '../../assets/focus-room-depth/depth-night-reading.png'
-import nightReadingGazeDepth from '../../assets/focus-room-depth/depth-night-reading-user-gaze.png'
-import nightTypingDepth from '../../assets/focus-room-depth/depth-night-typing.png'
-import nightTypingGazeDepth from '../../assets/focus-room-depth/depth-night-typing-user-gaze.png'
-import nightWritingDepth from '../../assets/focus-room-depth/depth-night-desk.png'
-import nightWritingGazeDepth from '../../assets/focus-room-depth/depth-night-writing-user-gaze.png'
 import {FocusRoomIconButton} from '../design-system/FocusRoomIconButton'
 import {FocusRoomIconSelect} from '../design-system/FocusRoomIconSelect'
+import {
+  FocusRoomEventProvider,
+  useFocusRoomEvents,
+} from '../features/focus-room-dialogue/FocusRoomEventContext'
 import {
   getAutomaticScenePeriod,
   getNextTimeMode,
@@ -35,144 +15,141 @@ import {
   type ScenePeriod,
   type SceneTimeMode,
 } from '../features/focus-room-time'
+import {usePomoSay} from '../features/pomo-webmcp'
+import type {PixiLayerSceneDefinition} from '../features/focus-room-animation/layer-scene'
+import {getFocusRoomScene} from '../features/focus-room-animation/scene-catalog'
 import {FocusRoomMusicPlayer} from './FocusRoomMusicPlayer'
+import {FocusRoomDialoguePlayer} from './FocusRoomDialoguePlayer'
+import {FocusRoomPomodoro} from './FocusRoomPomodoro'
+import {
+  FOCUS_ROOM_ACTIVITY_OPTIONS,
+  FOCUS_ROOM_GAZE_OPTIONS,
+  FOCUS_ROOM_TIME_OPTIONS,
+  type FocusRoomActivity,
+  type FocusRoomGaze,
+} from './focus-room-scene-options'
+import {FocusRoomSettings} from './FocusRoomSettings'
+import './FocusRoomStudio.css'
 
 const FocusRoomSceneCanvas = clientOnly(() => import('./FocusRoomSceneCanvas.client'), {
   lazy: true,
 })
 const AUTOMATIC_PERIOD_REFRESH = 60_000
 
-const TIME_MODE_OPTIONS = [
-  {icon: 'i-tabler-sun', label: '낮', value: 'day'},
-  {icon: 'i-tabler-moon', label: '밤', value: 'night'},
-  {icon: 'i-tabler-sun-moon', label: '자동', value: 'auto'},
-] as const
-const TIME_LABELS = [
-  {label: '낮', value: 'day'},
-  {label: '밤', value: 'night'},
-] as const
-const ACTIVITY_OPTIONS = [
-  {icon: 'i-tabler-book-2', label: '책 읽기', value: 'reading'},
-  {icon: 'i-tabler-pencil', label: '글쓰기', value: 'writing'},
-  {icon: 'i-tabler-keyboard', label: '노트북 타이핑', value: 'typing'},
-] as const
-const GAZE_OPTIONS = [
-  {icon: 'i-tabler-focus-2', label: '작업에 집중', value: 'focused'},
-  {icon: 'i-tabler-user-scan', label: '사용자 보기', value: 'user'},
-] as const
-
 type SceneTime = ScenePeriod
-type SceneActivity = (typeof ACTIVITY_OPTIONS)[number]['value']
-type SceneGaze = (typeof GAZE_OPTIONS)[number]['value']
 
 interface SceneAsset {
   readonly depthSource: string
   readonly label: string
+  readonly layerScene: PixiLayerSceneDefinition | null
   readonly source: string
 }
 
 interface SceneToolbarProps {
-  readonly activity: SceneActivity
-  readonly gaze: SceneGaze
-  readonly onActivityChange: (activity: SceneActivity) => void
-  readonly onGazeChange: (gaze: SceneGaze) => void
+  readonly activity: FocusRoomActivity
+  readonly gaze: FocusRoomGaze
+  readonly isSceneTransitioning: boolean
+  readonly onActivityChange: (activity: FocusRoomActivity) => void
+  readonly onGazeChange: (gaze: FocusRoomGaze) => void
   readonly onTimeModeChange: (mode: SceneTimeMode) => void
   readonly time: SceneTime
   readonly timeMode: SceneTimeMode
 }
-
-const SCENE_SOURCES = {
-  day: {
-    reading: {focused: dayReadingImage, user: dayReadingGazeImage},
-    typing: {focused: dayTypingImage, user: dayTypingGazeImage},
-    writing: {focused: dayWritingImage, user: dayWritingGazeImage},
-  },
-  night: {
-    reading: {focused: nightReadingImage, user: nightReadingGazeImage},
-    typing: {focused: nightTypingImage, user: nightTypingGazeImage},
-    writing: {focused: nightWritingImage, user: nightWritingGazeImage},
-  },
-} satisfies Record<SceneTime, Record<SceneActivity, Record<SceneGaze, string>>>
-
-const DEPTH_SOURCES = {
-  day: {
-    reading: {focused: dayReadingDepth, user: dayReadingGazeDepth},
-    typing: {focused: dayTypingDepth, user: dayTypingGazeDepth},
-    writing: {focused: dayWritingDepth, user: dayWritingGazeDepth},
-  },
-  night: {
-    reading: {focused: nightReadingDepth, user: nightReadingGazeDepth},
-    typing: {focused: nightTypingDepth, user: nightTypingGazeDepth},
-    writing: {focused: nightWritingDepth, user: nightWritingGazeDepth},
-  },
-} satisfies Record<SceneTime, Record<SceneActivity, Record<SceneGaze, string>>>
 
 const findLabel = <TValue extends string>(
   options: readonly {readonly label: string; readonly value: TValue}[],
   value: TValue,
 ) => options.find((option) => option.value === value)?.label ?? value
 
-const getSceneAsset = (time: SceneTime, activity: SceneActivity, gaze: SceneGaze): SceneAsset => {
-  const timeLabel = findLabel(TIME_LABELS, time)
-  const activityLabel = findLabel(ACTIVITY_OPTIONS, activity)
-  const gazeLabel = findLabel(GAZE_OPTIONS, gaze)
+const getSceneAsset = (
+  time: SceneTime,
+  activity: FocusRoomActivity,
+  gaze: FocusRoomGaze,
+): SceneAsset => {
+  const timeLabel = findLabel(FOCUS_ROOM_TIME_OPTIONS, time)
+  const activityLabel = findLabel(FOCUS_ROOM_ACTIVITY_OPTIONS, activity)
+  const gazeLabel = findLabel(FOCUS_ROOM_GAZE_OPTIONS, gaze)
+  const scene = getFocusRoomScene(time, activity, gaze)
 
   return {
-    depthSource: DEPTH_SOURCES[time][activity][gaze],
+    depthSource: scene.depthSource,
     label: `${timeLabel} · ${activityLabel} · ${gazeLabel}`,
-    source: SCENE_SOURCES[time][activity][gaze],
+    layerScene: scene.layerScene,
+    source: scene.source,
   }
 }
 
 const SceneToolbar = (props: SceneToolbarProps) => {
   const timeModeOption = () =>
-    TIME_MODE_OPTIONS.find((option) => option.value === props.timeMode) ?? TIME_MODE_OPTIONS[0]
+    FOCUS_ROOM_TIME_OPTIONS.find((option) => option.value === props.timeMode) ??
+    FOCUS_ROOM_TIME_OPTIONS[0]
   const timeAccessibleLabel = () => {
     const option = timeModeOption()
 
     return option.value === 'auto'
-      ? `시간대 자동, 현재 ${findLabel(TIME_LABELS, props.time)}`
+      ? `시간대 자동, 현재 ${findLabel(FOCUS_ROOM_TIME_OPTIONS, props.time)}`
       : `시간대 ${option.label}`
   }
 
   return (
     <div
       class={cx(
-        'absolute right-4 top-[calc(1rem+env(safe-area-inset-top))] flex justify-end',
+        'absolute right-4 top-[calc(1rem+env(safe-area-inset-top))]',
+        'flex flex-col items-end gap-2',
         'sm:right-7 sm:top-6',
       )}
     >
       <div class="flex flex-wrap justify-end gap-2" role="group" aria-label="장면 설정">
         <FocusRoomIconButton
           accessibleLabel={timeAccessibleLabel()}
+          class="focus-room-scene-control"
           feedback={timeModeOption().label}
           icon={timeModeOption().icon}
           onPress={() => props.onTimeModeChange(getNextTimeMode(props.timeMode))}
         />
         <FocusRoomIconSelect
+          class="focus-room-scene-control"
           label="행동"
           onChange={props.onActivityChange}
-          options={ACTIVITY_OPTIONS}
+          options={FOCUS_ROOM_ACTIVITY_OPTIONS}
           value={props.activity}
         />
         <FocusRoomIconSelect
-          label="시선"
+          class="focus-room-scene-control"
+          label="보기"
           onChange={props.onGazeChange}
-          options={GAZE_OPTIONS}
+          options={FOCUS_ROOM_GAZE_OPTIONS}
           value={props.gaze}
         />
+        <FocusRoomSettings
+          activity={props.activity}
+          gaze={props.gaze}
+          onActivityChange={props.onActivityChange}
+          onGazeChange={props.onGazeChange}
+          onTimeModeChange={props.onTimeModeChange}
+          timeMode={props.timeMode}
+        />
       </div>
+      <Show when={props.isSceneTransitioning}>
+        <span aria-live="polite" class="focus-room-backdrop focus-room-loading" role="status">
+          <span aria-hidden="true" class="focus-room-loading__spinner" />
+          장면 전환 중
+        </span>
+      </Show>
     </div>
   )
 }
 
-export const FocusRoomStudio = () => {
+const FocusRoomStudioContent = () => {
+  const events = useFocusRoomEvents()
   const [timeMode, setTimeMode] = createSignal<SceneTimeMode>('day')
   const [automaticPeriod, setAutomaticPeriod] = createSignal<ScenePeriod>('day')
-  const [activity, setActivity] = createSignal<SceneActivity>('reading')
-  const [gaze, setGaze] = createSignal<SceneGaze>('focused')
+  const [activity, setActivity] = createSignal<FocusRoomActivity>('reading')
+  const [gaze, setGaze] = createSignal<FocusRoomGaze>('focused')
   const [isSceneLoading, setIsSceneLoading] = createSignal(true)
   const [hasSceneRendered, setHasSceneRendered] = createSignal(false)
+  const [isPlayerExpanded, setIsPlayerExpanded] = createSignal(false)
+  const pomoSay = usePomoSay({onBeforeSpeech: events.onStopDialoguePlayback})
   const time = createMemo(() => resolveScenePeriod(timeMode(), automaticPeriod()))
   const selectedScene = createMemo(() => getSceneAsset(time(), activity(), gaze()))
   const handleLoadingChange = (isLoading: boolean) => {
@@ -181,6 +158,11 @@ export const FocusRoomStudio = () => {
     if (!isLoading) {
       setHasSceneRendered(true)
     }
+  }
+  const handlePomodoroEvents = (eventIds: Parameters<typeof events.playDialogueEvents>[0]) => {
+    events.playDialogueEvents(eventIds, pomoSay.stop).catch((error: unknown) => {
+      console.error('Unexpected pomodoro dialogue playback failure.', error)
+    })
   }
 
   onMount(() => {
@@ -202,44 +184,51 @@ export const FocusRoomStudio = () => {
           activity={activity()}
           depthSource={selectedScene().depthSource}
           gaze={gaze()}
+          layerScene={selectedScene().layerScene}
           onLoadingChange={handleLoadingChange}
           source={selectedScene().source}
           time={time()}
         />
 
-        <Show when={isSceneLoading()}>
+        <Show when={isSceneLoading() && !hasSceneRendered()}>
           <div
             aria-live="polite"
-            class={cx(
-              'pointer-events-none absolute',
-              hasSceneRendered()
-                ? 'left-4 top-20 sm:bottom-24 sm:top-auto'
-                : 'inset-0 grid place-items-center bg-#17130f/24',
-            )}
+            class="pointer-events-none absolute inset-0 grid place-items-center bg-#17130f/24"
             role="status"
           >
-            <span
-              class={cx(
-                'flex items-center gap-3 rounded-full bg-[var(--focus-room-glass)] px-5 py-3',
-                'focus-room-backdrop text-sm font-650 text-white shadow-lg',
-              )}
-            >
-              <span
-                aria-hidden="true"
-                class="size-5 animate-spin rounded-full border-2 border-white/28 border-t-#e8c795"
-              />
-              <Show when={hasSceneRendered()} fallback="장면을 불러오는 중">
-                장면 전환 중
-              </Show>
+            <span class="focus-room-backdrop focus-room-loading">
+              <span aria-hidden="true" class="focus-room-loading__spinner" />
+              장면을 불러오는 중
             </span>
           </div>
         </Show>
       </figure>
 
-      <FocusRoomMusicPlayer />
+      <FocusRoomPomodoro onEvents={handlePomodoroEvents} />
+      <div
+        class="focus-room-media-dock"
+        data-dialogue-active={
+          events.activeText() === null &&
+          pomoSay.speechText() === null &&
+          !events.isDialoguePlaybackBlocked()
+            ? undefined
+            : ''
+        }
+        data-player-expanded={isPlayerExpanded() ? '' : undefined}
+      >
+        <FocusRoomMusicPlayer
+          expanded={isPlayerExpanded()}
+          onExpandedChange={setIsPlayerExpanded}
+        />
+        <FocusRoomDialoguePlayer
+          externalText={pomoSay.speechText()}
+          onStopExternalSpeech={pomoSay.stop}
+        />
+      </div>
       <SceneToolbar
         activity={activity()}
         gaze={gaze()}
+        isSceneTransitioning={isSceneLoading() && hasSceneRendered()}
         onActivityChange={setActivity}
         onGazeChange={setGaze}
         onTimeModeChange={setTimeMode}
@@ -249,3 +238,9 @@ export const FocusRoomStudio = () => {
     </section>
   )
 }
+
+export const FocusRoomStudio = () => (
+  <FocusRoomEventProvider>
+    <FocusRoomStudioContent />
+  </FocusRoomEventProvider>
+)

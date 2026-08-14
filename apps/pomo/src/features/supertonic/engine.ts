@@ -75,8 +75,8 @@ export const parseSupertonicVoice = (
   return successResult(createSupertonicVoice(voiceStyle.value))
 }
 
-type SupertonicConfig = z.infer<typeof configSchema>
-type SupertonicIndexer = z.infer<typeof indexerSchema>
+export type SupertonicConfig = z.infer<typeof configSchema>
+export type SupertonicIndexer = z.infer<typeof indexerSchema>
 
 const preprocessText = (input: string) => {
   let text = input

@@ -1,14 +1,14 @@
 .focus-room-icon-button {
   display: inline-flex;
   box-sizing: border-box;
-  height: 2.75rem;
-  min-width: 2.75rem;
+  height: var(--focus-room-control-height-medium);
+  min-width: var(--focus-room-control-height-medium);
   align-items: center;
   justify-content: center;
   overflow: hidden;
   border-radius: var(--focus-room-radius-control);
   background: var(--focus-room-glass);
-  padding: 0 0.6875rem;
+  padding: 0 var(--focus-room-padding-md);
   color: var(--focus-room-text);
   box-shadow: var(--focus-room-shadow);
   outline: none;
@@ -18,18 +18,22 @@
     color 160ms ease;
 }
 
-.focus-room-icon-button:hover {
-  border-color: var(--focus-room-border-hover);
-  background: var(--focus-room-secondary-soft);
-}
-
-.focus-room-icon-button:focus-visible {
-  border-color: var(--focus-room-brass);
+.focus-room-icon-button[data-size='small'] {
+  height: var(--focus-room-control-height-small);
+  min-width: var(--focus-room-control-height-small);
+  padding: 0 var(--focus-room-padding-sm);
 }
 
 .focus-room-icon-button__icon {
+  width: 1.25rem;
+  height: 1.25rem;
   flex: none;
   color: var(--focus-room-brass);
+}
+
+.focus-room-icon-button[data-size='small'] .focus-room-icon-button__icon {
+  width: 1rem;
+  height: 1rem;
 }
 
 .focus-room-icon-button__feedback {
@@ -51,6 +55,10 @@
   max-width: 8rem;
   margin-left: 0.5rem;
   opacity: 1;
+}
+
+.focus-room-icon-button[data-size='small'] .focus-room-icon-button__feedback {
+  font-size: 0.75rem;
 }
 
 @media (prefers-reduced-motion: reduce) {

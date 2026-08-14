@@ -8,6 +8,7 @@ const FULL_ROTATION_DEGREES = 360
 const SENSOR_FALLBACK_DELAY = 1_500
 
 type RenderOffset = (x: number, y: number) => void
+type MotionPreferenceChange = (prefersReducedMotion: boolean) => void
 
 const clamp = (value: number) => Math.max(-1, Math.min(1, value))
 
@@ -28,6 +29,7 @@ export class ParallaxController {
     window.matchMedia('(hover: none) and (pointer: coarse)').matches &&
     'DeviceOrientationEvent' in window
   readonly #renderOffset: RenderOffset
+  readonly #onMotionPreferenceChange: MotionPreferenceChange
   readonly #handleDeviceOrientation = (event: DeviceOrientationEvent) => {
     if (this.#motionPreference.matches || document.hidden) {
       return
@@ -55,6 +57,7 @@ export class ParallaxController {
   readonly #handleMotionPreference = () => {
     this.#orientationBaseline = null
     this.#reset(true)
+    this.#onMotionPreferenceChange(this.#motionPreference.matches)
   }
   readonly #handleOrientationChange = () => {
     this.#orientationBaseline = null
@@ -104,9 +107,14 @@ export class ParallaxController {
   #targetX = 0
   #targetY = 0
 
-  constructor(host: HTMLElement, renderOffset: RenderOffset) {
+  constructor(
+    host: HTMLElement,
+    renderOffset: RenderOffset,
+    onMotionPreferenceChange: MotionPreferenceChange = () => undefined,
+  ) {
     this.#host = host
     this.#renderOffset = renderOffset
+    this.#onMotionPreferenceChange = onMotionPreferenceChange
   }
 
   get prefersReducedMotion() {

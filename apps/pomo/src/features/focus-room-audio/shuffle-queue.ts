@@ -1,5 +1,5 @@
 export interface CreateShuffleQueueOptions {
-  readonly currentIndex: number
+  readonly currentIndex?: number
   readonly trackCount: number
 }
 
