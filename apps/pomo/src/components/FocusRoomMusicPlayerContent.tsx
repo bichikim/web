@@ -26,7 +26,7 @@ const IDLE_VISUALIZER_OPACITY = 0.34
 const SKIP_BUTTON_CLASSES =
   'focus-room-player__skip grid size-10 shrink-0 place-items-center rounded-full transition disabled:opacity-35'
 
-interface FocusRoomMusicPlayerClientProps {
+interface FocusRoomMusicPlayerContentProps {
   readonly expanded?: boolean
   readonly onExpandedChange?: (expanded: boolean) => void
   readonly tracks?: readonly FocusRoomTrack[]
@@ -45,7 +45,7 @@ const isAbortError = (error: unknown) =>
   error instanceof DOMException && error.name === 'AbortError'
 
 // oxlint-disable-next-line eslint/max-lines-per-function, eslint/max-statements -- Media Chrome's control tree is one semantic unit.
-export default function FocusRoomMusicPlayerClient(props: FocusRoomMusicPlayerClientProps) {
+export default function FocusRoomMusicPlayerContent(props: FocusRoomMusicPlayerContentProps) {
   const initialTracks = untrack(() => props.tracks ?? [])
   const initialState = createInitialPlaybackState({trackCount: initialTracks.length})
   const [loadedTracks, setLoadedTracks] = createSignal<readonly FocusRoomTrack[]>(initialTracks)
@@ -270,6 +270,7 @@ export default function FocusRoomMusicPlayerClient(props: FocusRoomMusicPlayerCl
 
   const handleSeeking = () => {
     playbackRevision += 1
+    playbackPersistence.setPendingPosition(null)
   }
 
   const selectNextTrack = () => {

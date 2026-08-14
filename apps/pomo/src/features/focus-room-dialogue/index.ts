@@ -1,9 +1,24 @@
 export {createFocusRoomDialogueRepository} from './repository'
 export type {FocusRoomDialogueRepository, SaveDialogueOptions} from './repository'
 export {FocusRoomEventProvider, useFocusRoomEvents} from './FocusRoomEventContext'
-export type {FocusRoomEventContextValue, FocusRoomEventProviderProps} from './FocusRoomEventContext'
-export {dialogueEventBindingSchema, FOCUS_ROOM_ENTRY_EVENT, focusRoomDialogueSchema} from './schema'
-export type {DialogueEventBinding, DialogueSegment, FocusRoomDialogue} from './schema'
+export type {
+  FocusRoomEventContextValue,
+  FocusRoomEventProviderProps,
+  PlayFocusRoomDialogueSequenceOptions,
+} from './FocusRoomEventContext'
+export {
+  dialogueEventBindingSchema,
+  dialogueEventIdSchema,
+  FOCUS_ROOM_DIALOGUE_EVENTS,
+  FOCUS_ROOM_ENTRY_EVENT,
+  focusRoomDialogueSchema,
+} from './schema'
+export type {
+  DialogueEventBinding,
+  DialogueEventId,
+  DialogueSegment,
+  FocusRoomDialogue,
+} from './schema'
 export {createDialogueTimeline, getDialoguePositionAtTime, getDialogueTextAtTime} from './timeline'
 export type {
   CreateDialogueSegmentsOptions,
@@ -16,3 +31,19 @@ export type {
   FocusRoomDialogueEditorController,
   UseFocusRoomDialogueEditorProps,
 } from './use-focus-room-dialogue-editor'
+export {
+  AUTOMATIC_DIALOGUE_SETTINGS_CHANGED_EVENT,
+  createAutomaticDialogueSettingsRepository,
+  DEFAULT_AUTOMATIC_DIALOGUE_SETTINGS,
+} from './automatic-dialogue-settings'
+export type {
+  AutomaticDialogueSettings,
+  AutomaticDialogueSettingsRepository,
+  AutomaticDialogueSettingsStorage,
+} from './automatic-dialogue-settings'
+export {generateDialogueAudio} from './generate-dialogue-audio'
+export type {
+  GeneratedDialogueAudio,
+  GenerateDialogueAudioOptions,
+  GenerateDialogueAudioResult,
+} from './generate-dialogue-audio'

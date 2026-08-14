@@ -56,6 +56,10 @@ Chat context is volatile. When **why** isn't obvious from code, leave a minimal 
 - Content: decision + reason (constraints, rejected approach, non-obvious tradeoff); not a changelog
 - Scope: cross-session gaps only; skip self-explanatory code
 
+## Pull requests
+
+- Wait for required CI checks when appropriate, but do not wait for Vercel deployment checks to complete. Report pending Vercel checks and finish the task.
+
 ## GitHub CLI authentication
 
 - `gh` credentials are stored in the macOS Keychain and may appear invalid in the default sandbox.
