@@ -108,6 +108,23 @@ describe('FocusRoomMusicPlayerClient', () => {
     expect(screen.getByRole('button', {name: '플레이어 접기'})).toBeTruthy()
   })
 
+  it('should report the current track when selection changes', async () => {
+    const onTrackChange = vi.fn()
+    const result = render(() => (
+      <FocusRoomMusicPlayerClient onTrackChange={onTrackChange} tracks={TRACKS} />
+    ))
+    const audio = result.container.querySelector('audio')
+
+    if (!(audio instanceof HTMLAudioElement)) {
+      throw new TypeError('Expected the focus-room audio element to be rendered')
+    }
+
+    expect(onTrackChange).toHaveBeenLastCalledWith(TRACKS[1])
+    fireEvent(audio, new Event('ended'))
+    await Promise.resolve()
+    expect(onTrackChange).toHaveBeenLastCalledWith(TRACKS[2])
+  })
+
   it('should restore the saved track and playback position', async () => {
     localStorage.setItem(
       'pomo:focus-room-playback:v1',
