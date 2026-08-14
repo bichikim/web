@@ -233,6 +233,29 @@ describe('FocusRoomMusicPlayerContent', () => {
     expect(audio.currentTime).toBe(9)
   })
 
+  it('should not overwrite a same-track seek when metadata loads after restoration', async () => {
+    localStorage.setItem(
+      'pomo:focus-room-playback:v1',
+      JSON.stringify({isPlaying: false, positionSeconds: 22, savedAt: 1, trackId: 'three'}),
+    )
+    const result = render(() => <FocusRoomMusicPlayerClient tracks={TRACKS} />)
+    const audio = result.container.querySelector('audio')
+
+    if (!(audio instanceof HTMLAudioElement)) {
+      throw new TypeError('Expected the focus-room audio element to be rendered')
+    }
+
+    await Promise.resolve()
+    await Promise.resolve()
+    expect(audio.getAttribute('src')).toBe('/three.mp3')
+
+    audio.currentTime = 9
+    fireEvent(audio, new Event('seeking'))
+    fireEvent(audio, new Event('loadedmetadata'))
+
+    expect(audio.currentTime).toBe(9)
+  })
+
   it('should load the playlist without waiting for native storage', async () => {
     Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
     storageMocks.getItem.mockImplementationOnce(

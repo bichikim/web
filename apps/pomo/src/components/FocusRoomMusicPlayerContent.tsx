@@ -270,6 +270,7 @@ export default function FocusRoomMusicPlayerContent(props: FocusRoomMusicPlayerC
 
   const handleSeeking = () => {
     playbackRevision += 1
+    playbackPersistence.setPendingPosition(null)
   }
 
   const selectNextTrack = () => {
