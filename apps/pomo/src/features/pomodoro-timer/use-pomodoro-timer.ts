@@ -1,6 +1,8 @@
 import {type Accessor, createEffect, createMemo, createSignal, onCleanup, onMount} from 'solid-js'
 import {z} from 'zod'
 
+import {readAutoStartPreference, writeAutoStartPreference} from './auto-start-storage'
+import {getPomodoroTimerEvents, type PomodoroTimerEvent} from './events'
 import {
   advancePomodoroTimer,
   createPomodoroTimerState,
@@ -54,6 +56,8 @@ const timerConfigSchema = z.object({
 
 export interface PomodoroTimerController {
   readonly config: Accessor<PomodoroTimerConfig>
+  readonly isAutoStartEnabled: Accessor<boolean>
+  readonly onAutoStartChange: (isEnabled: boolean) => void
   readonly onConfigChange: (config: PomodoroTimerConfig) => void
   readonly onNextPhase: () => void
   readonly onPause: () => void
@@ -63,6 +67,10 @@ export interface PomodoroTimerController {
   readonly progress: Accessor<number>
   readonly remainingSeconds: Accessor<number>
   readonly state: Accessor<PomodoroTimerState>
+}
+
+export interface UsePomodoroTimerProps {
+  readonly onEvents?: (events: ReadonlyArray<PomodoroTimerEvent>) => void
 }
 
 const readStoredState = (): PomodoroTimerState | null => {
@@ -111,15 +119,31 @@ const writeStoredConfig = (config: PomodoroTimerConfig) => {
   }
 }
 
-export const usePomodoroTimer = (): PomodoroTimerController => {
+export const usePomodoroTimer = (props: UsePomodoroTimerProps = {}): PomodoroTimerController => {
+  let autoStartRevision = 0
   const [config, setConfig] = createSignal<PomodoroTimerConfig>(POMODORO_TIMER_CONFIG)
+  const [isAutoStartEnabled, setIsAutoStartEnabled] = createSignal(false)
   const [state, setState] = createSignal<PomodoroTimerState>(
     createPomodoroTimerState(POMODORO_TIMER_CONFIG),
   )
   const [now, setNow] = createSignal(0)
   const [isStorageReady, setIsStorageReady] = createSignal(false)
 
+  const applyState = (nextState: PomodoroTimerState) => {
+    const previousState = state()
+    setState(nextState)
+    const events = getPomodoroTimerEvents(previousState, nextState)
+
+    if (events.length > 0) {
+      props.onEvents?.(events)
+    }
+  }
+
   const refresh = () => {
+    if (!isStorageReady()) {
+      return
+    }
+
     const currentState = state()
 
     if (currentState.status !== 'running') {
@@ -128,23 +152,63 @@ export const usePomodoroTimer = (): PomodoroTimerController => {
 
     const currentTime = Date.now()
     setNow(currentTime)
-    setState(synchronizePomodoroTimer(currentState, currentTime, config()))
+    applyState(
+      synchronizePomodoroTimer(currentState, currentTime, config(), {
+        autoStartNextPhase: isAutoStartEnabled(),
+      }),
+    )
   }
 
   onMount(() => {
+    let isDisposed = false
     const currentTime = Date.now()
     const storedConfig = readStoredConfig() ?? POMODORO_TIMER_CONFIG
     const storedState = readStoredState() ?? createPomodoroTimerState(storedConfig)
+    const wasRunningAtMount = storedState.status === 'running' && storedState.endsAt > currentTime
 
     setConfig(storedConfig)
     setNow(currentTime)
-    setState(synchronizePomodoroTimer(storedState, currentTime, storedConfig))
-    setIsStorageReady(true)
+    setState(storedState)
+
+    const initializeAutoStart = async () => {
+      const initialRevision = autoStartRevision
+      const storedAutoStart = await readAutoStartPreference()
+
+      if (isDisposed) {
+        return
+      }
+
+      if (autoStartRevision === initialRevision) {
+        setIsAutoStartEnabled(storedAutoStart)
+      }
+
+      const autoStartNextPhase = isAutoStartEnabled()
+      const restoredAt = Date.now()
+      setNow(restoredAt)
+      const currentState = state()
+
+      if (currentState === storedState) {
+        const synchronizedState = synchronizePomodoroTimer(storedState, restoredAt, storedConfig, {
+          autoStartNextPhase,
+        })
+
+        if (wasRunningAtMount) {
+          applyState(synchronizedState)
+        } else {
+          setState(synchronizedState)
+        }
+      }
+
+      setIsStorageReady(true)
+    }
+
+    initializeAutoStart()
 
     const refreshTimer = window.setInterval(refresh, TIMER_REFRESH_INTERVAL)
     document.addEventListener('visibilitychange', refresh)
 
     onCleanup(() => {
+      isDisposed = true
       window.clearInterval(refreshTimer)
       document.removeEventListener('visibilitychange', refresh)
     })
@@ -162,25 +226,36 @@ export const usePomodoroTimer = (): PomodoroTimerController => {
   const onStart = () => {
     const currentTime = Date.now()
     setNow(currentTime)
-    setState((currentState) => startPomodoroTimer(currentState, currentTime))
+    applyState(startPomodoroTimer(state(), currentTime))
   }
   const onPause = () => {
     const currentTime = Date.now()
     setNow(currentTime)
-    setState((currentState) => pausePomodoroTimer(currentState, currentTime, config()))
+    applyState(
+      pausePomodoroTimer(state(), currentTime, config(), {
+        autoStartNextPhase: isAutoStartEnabled(),
+      }),
+    )
   }
   const onConfigChange = (nextConfig: PomodoroTimerConfig) => {
     setConfig(nextConfig)
-    setState((currentState) => stopPomodoroTimer(currentState, nextConfig))
+    applyState(stopPomodoroTimer(state(), nextConfig))
   }
-  const onNextPhase = () => setState((currentState) => advancePomodoroTimer(currentState, config()))
-  const onReset = () => setState(resetPomodoroTimer(config()))
-  const onStop = () => setState((currentState) => stopPomodoroTimer(currentState, config()))
+  const onAutoStartChange = (isEnabled: boolean) => {
+    autoStartRevision += 1
+    setIsAutoStartEnabled(isEnabled)
+    writeAutoStartPreference(isEnabled)
+  }
+  const onNextPhase = () => applyState(advancePomodoroTimer(state(), config()))
+  const onReset = () => applyState(resetPomodoroTimer(config()))
+  const onStop = () => applyState(stopPomodoroTimer(state(), config()))
   const remainingSeconds = createMemo(() => getPomodoroRemainingSeconds(state(), now()))
   const progress = createMemo(() => getPomodoroProgress(state(), now(), config()))
 
   return {
     config,
+    isAutoStartEnabled,
+    onAutoStartChange,
     onConfigChange,
     onNextPhase,
     onPause,

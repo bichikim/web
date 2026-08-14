@@ -1,30 +1,38 @@
 import {Application} from 'pixi.js'
 
-import {
-  DAY_WRITING_LAYER_CHANNELS,
-  DAY_WRITING_LAYER_SCENE,
-} from '../focus-room-animation/day-writing-layer-scene'
-import {PixiLayerScene} from '../focus-room-animation/layer-scene'
+import {PixiLayerScene, type PixiLayerSceneDefinition} from '../focus-room-animation/layer-scene'
+import {FOCUS_ROOM_PREVIEW_CHANNELS} from '../focus-room-animation/scene-catalog'
 
 export interface FocusRoomLayerReviewState {
   readonly animationEnabled: boolean
+  readonly eyesVisible: boolean
   readonly handsVisible: boolean
   readonly headVisible: boolean
   readonly referenceOpacity: number
+}
+
+export interface FocusRoomLayerReviewRendererOptions {
+  readonly definition: PixiLayerSceneDefinition
 }
 
 const clampOpacity = (value: number) => Math.min(1, Math.max(0, value))
 
 export class FocusRoomLayerReviewRenderer {
   readonly #application = new Application()
+  readonly #initialDefinition: PixiLayerSceneDefinition
   readonly #host: HTMLDivElement
   #applicationReady = false
+  #currentDefinitionId: string | null = null
   #destroyed = false
+  #incomingDefinitionId: string | null = null
+  #incomingScene: PixiLayerScene | null = null
+  #replacementVersion = 0
   #scene: PixiLayerScene | null = null
   #state: FocusRoomLayerReviewState | null = null
 
-  constructor(host: HTMLDivElement) {
+  constructor(host: HTMLDivElement, options: FocusRoomLayerReviewRendererOptions) {
     this.#host = host
+    this.#initialDefinition = options.definition
   }
 
   async initialize(state: FocusRoomLayerReviewState) {
@@ -32,11 +40,11 @@ export class FocusRoomLayerReviewRenderer {
     await this.#application.init({
       antialias: false,
       autoStart: false,
-      background: DAY_WRITING_LAYER_SCENE.background,
-      height: DAY_WRITING_LAYER_SCENE.height,
+      background: this.#initialDefinition.background,
+      height: this.#initialDefinition.height,
       preference: 'webgl',
       resolution: 1,
-      width: DAY_WRITING_LAYER_SCENE.width,
+      width: this.#initialDefinition.width,
     })
     this.#applicationReady = true
 
@@ -47,14 +55,11 @@ export class FocusRoomLayerReviewRenderer {
     }
 
     this.#application.canvas.setAttribute('aria-hidden', 'true')
-    this.#application.canvas.className = 'block h-full w-full object-cover object-center'
-    this.#host.append(this.#application.canvas)
+    this.#application.canvas.className =
+      'absolute inset-0 block h-full w-full object-cover object-center'
 
-    const scene = new PixiLayerScene(DAY_WRITING_LAYER_SCENE, {
-      onRender: () => this.#application.render(),
-    })
-    this.#scene = scene
-    this.#application.stage.addChild(scene.container)
+    const scene = this.#createScene(this.#initialDefinition)
+    this.#incomingScene = scene
     try {
       await scene.initialize(this.#toSceneState(state))
     } catch (error: unknown) {
@@ -66,6 +71,10 @@ export class FocusRoomLayerReviewRenderer {
       return
     }
 
+    this.#incomingScene = null
+    this.#scene = scene
+    this.#currentDefinitionId = this.#initialDefinition.id
+    this.#application.stage.addChild(scene.container)
     const latestState = this.#state
 
     if (latestState !== null) {
@@ -73,11 +82,67 @@ export class FocusRoomLayerReviewRenderer {
     }
 
     this.#application.render()
+    this.#host.append(this.#application.canvas)
   }
 
   update(state: FocusRoomLayerReviewState) {
     this.#state = state
     this.#scene?.update(this.#toSceneState(state))
+    this.#incomingScene?.update(this.#toSceneState(state))
+  }
+
+  async replaceDefinition(definition: PixiLayerSceneDefinition) {
+    if (this.#destroyed || definition.id === this.#incomingDefinitionId) {
+      return
+    }
+
+    if (definition.id === this.#currentDefinitionId) {
+      this.#replacementVersion += 1
+      this.#incomingDefinitionId = null
+      this.#incomingScene = null
+      return
+    }
+
+    const state = this.#state
+
+    if (state === null) {
+      return
+    }
+
+    const version = this.#replacementVersion + 1
+    this.#replacementVersion = version
+    const scene = this.#createScene(definition)
+    this.#incomingDefinitionId = definition.id
+    this.#incomingScene = scene
+
+    try {
+      await scene.initialize(this.#toSceneState(state))
+    } catch (error: unknown) {
+      if (this.#incomingScene === scene) {
+        this.#incomingDefinitionId = null
+        this.#incomingScene = null
+      }
+
+      if (!this.#destroyed && version === this.#replacementVersion) {
+        throw error
+      }
+
+      return
+    }
+
+    if (this.#destroyed || version !== this.#replacementVersion) {
+      scene.destroy()
+      return
+    }
+
+    const previousScene = this.#scene
+    this.#application.stage.addChild(scene.container)
+    this.#scene = scene
+    this.#incomingDefinitionId = null
+    this.#incomingScene = null
+    this.#currentDefinitionId = definition.id
+    this.#application.render()
+    previousScene?.destroy()
   }
 
   destroy() {
@@ -86,6 +151,10 @@ export class FocusRoomLayerReviewRenderer {
     }
 
     this.#destroyed = true
+    this.#replacementVersion += 1
+    this.#incomingDefinitionId = null
+    this.#incomingScene?.destroy()
+    this.#incomingScene = null
     this.#scene?.destroy()
     this.#scene = null
     this.#state = null
@@ -96,15 +165,25 @@ export class FocusRoomLayerReviewRenderer {
     }
   }
 
+  #createScene(definition: PixiLayerSceneDefinition) {
+    return new PixiLayerScene(definition, {
+      onRender: () => {
+        if (!this.#destroyed && this.#applicationReady) {
+          this.#application.render()
+        }
+      },
+    })
+  }
+
   #toSceneState(state: FocusRoomLayerReviewState) {
     const referenceOpacity = clampOpacity(state.referenceOpacity)
-
     return {
       animationEnabled: state.animationEnabled,
       channels: {
-        [DAY_WRITING_LAYER_CHANNELS.hands]: {visible: state.handsVisible},
-        [DAY_WRITING_LAYER_CHANNELS.head]: {visible: state.headVisible},
-        [DAY_WRITING_LAYER_CHANNELS.reference]: {
+        [FOCUS_ROOM_PREVIEW_CHANNELS.eyes]: {visible: state.eyesVisible},
+        [FOCUS_ROOM_PREVIEW_CHANNELS.hands]: {visible: state.handsVisible},
+        [FOCUS_ROOM_PREVIEW_CHANNELS.head]: {visible: state.headVisible},
+        [FOCUS_ROOM_PREVIEW_CHANNELS.reference]: {
           opacity: referenceOpacity,
           visible: referenceOpacity > 0,
         },

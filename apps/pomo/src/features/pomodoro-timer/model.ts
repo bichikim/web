@@ -42,6 +42,10 @@ export interface PomodoroRunningState extends PomodoroTimerStateBase {
 
 export type PomodoroTimerState = PomodoroIdleState | PomodoroPausedState | PomodoroRunningState
 
+export interface PomodoroSynchronizationOptions {
+  readonly autoStartNextPhase?: boolean
+}
+
 export const getPomodoroPhaseDuration = (
   phase: PomodoroPhase,
   config: PomodoroTimerConfig = POMODORO_TIMER_CONFIG,
@@ -101,16 +105,74 @@ export const advancePomodoroTimer = (
   return createIdleState(nextPhase, completedFocusSessions, config)
 }
 
+const skipWholeCycles = (
+  state: PomodoroRunningState,
+  now: number,
+  config: PomodoroTimerConfig,
+): PomodoroRunningState => {
+  const isCycleBoundary =
+    state.phase === 'focus' && state.completedFocusSessions % config.focusSessionsPerCycle === 0
+
+  if (!isCycleBoundary) {
+    return state
+  }
+
+  const cycleSeconds =
+    config.focusSessionsPerCycle * config.focusSeconds +
+    (config.focusSessionsPerCycle - 1) * config.shortBreakSeconds +
+    config.longBreakSeconds
+  const cycleMilliseconds = cycleSeconds * MILLISECONDS_PER_SECOND
+  const cycleCount = Math.floor((now - state.endsAt) / cycleMilliseconds)
+
+  if (cycleCount <= 0) {
+    return state
+  }
+
+  return {
+    ...state,
+    completedFocusSessions:
+      state.completedFocusSessions + cycleCount * config.focusSessionsPerCycle,
+    endsAt: state.endsAt + cycleCount * cycleMilliseconds,
+  }
+}
+
+const createRunningState = (
+  state: PomodoroIdleState | PomodoroPausedState,
+  now: number,
+): PomodoroRunningState => ({
+  completedFocusSessions: state.completedFocusSessions,
+  endsAt: now + state.remainingSeconds * MILLISECONDS_PER_SECOND,
+  phase: state.phase,
+  status: 'running',
+})
+
 export const synchronizePomodoroTimer = (
   state: PomodoroTimerState,
   now: number,
   config: PomodoroTimerConfig = POMODORO_TIMER_CONFIG,
+  options: PomodoroSynchronizationOptions = {},
 ): PomodoroTimerState => {
   if (state.status !== 'running' || state.endsAt > now) {
     return state
   }
 
-  return advancePomodoroTimer(state, config)
+  if (!options.autoStartNextPhase) {
+    return advancePomodoroTimer(state, config)
+  }
+
+  let currentState = state
+
+  while (currentState.status === 'running' && currentState.endsAt <= now) {
+    currentState = skipWholeCycles(currentState, now, config)
+
+    if (currentState.endsAt <= now) {
+      const nextStartTime = currentState.endsAt
+      const nextState = advancePomodoroTimer(currentState, config)
+      currentState = createRunningState(nextState, nextStartTime)
+    }
+  }
+
+  return currentState
 }
 
 export const startPomodoroTimer = (state: PomodoroTimerState, now: number): PomodoroTimerState => {
@@ -118,20 +180,16 @@ export const startPomodoroTimer = (state: PomodoroTimerState, now: number): Pomo
     return state
   }
 
-  return {
-    completedFocusSessions: state.completedFocusSessions,
-    endsAt: now + state.remainingSeconds * MILLISECONDS_PER_SECOND,
-    phase: state.phase,
-    status: 'running',
-  }
+  return createRunningState(state, now)
 }
 
 export const pausePomodoroTimer = (
   state: PomodoroTimerState,
   now: number,
   config: PomodoroTimerConfig = POMODORO_TIMER_CONFIG,
+  options: PomodoroSynchronizationOptions = {},
 ): PomodoroTimerState => {
-  const synchronizedState = synchronizePomodoroTimer(state, now, config)
+  const synchronizedState = synchronizePomodoroTimer(state, now, config, options)
 
   if (synchronizedState.status !== 'running') {
     return synchronizedState

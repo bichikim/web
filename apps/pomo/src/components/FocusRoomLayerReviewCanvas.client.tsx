@@ -4,8 +4,11 @@ import {
   FocusRoomLayerReviewRenderer,
   type FocusRoomLayerReviewState,
 } from '../features/focus-room-layer-review/scene-renderer'
+import type {PixiLayerSceneDefinition} from '../features/focus-room-animation/layer-scene'
 
-export interface FocusRoomLayerReviewCanvasProps extends FocusRoomLayerReviewState {}
+export interface FocusRoomLayerReviewCanvasProps extends FocusRoomLayerReviewState {
+  readonly definition: PixiLayerSceneDefinition
+}
 
 export default function FocusRoomLayerReviewCanvas(props: FocusRoomLayerReviewCanvasProps) {
   const [canvasHost, setCanvasHost] = createSignal<HTMLDivElement>()
@@ -13,6 +16,7 @@ export default function FocusRoomLayerReviewCanvas(props: FocusRoomLayerReviewCa
 
   const getReviewState = (): FocusRoomLayerReviewState => ({
     animationEnabled: props.animationEnabled,
+    eyesVisible: props.eyesVisible,
     handsVisible: props.handsVisible,
     headVisible: props.headVisible,
     referenceOpacity: props.referenceOpacity,
@@ -25,10 +29,8 @@ export default function FocusRoomLayerReviewCanvas(props: FocusRoomLayerReviewCa
       return
     }
 
-    renderer = new FocusRoomLayerReviewRenderer(host)
-    renderer.initialize(untrack(getReviewState)).catch((error: unknown) => {
-      globalThis.reportError(error)
-    })
+    renderer = new FocusRoomLayerReviewRenderer(host, {definition: props.definition})
+    renderer.initialize(untrack(getReviewState)).catch(globalThis.reportError)
 
     onCleanup(() => {
       renderer?.destroy()
@@ -38,17 +40,31 @@ export default function FocusRoomLayerReviewCanvas(props: FocusRoomLayerReviewCa
 
   createEffect(
     on(
-      () =>
-        [
-          props.animationEnabled,
-          props.handsVisible,
-          props.headVisible,
-          props.referenceOpacity,
-        ] as const,
-      () => renderer?.update(getReviewState()),
+      () => props.definition,
+      (definition) => {
+        renderer?.replaceDefinition(definition).catch(globalThis.reportError)
+      },
       {defer: true},
     ),
   )
 
-  return <div class="h-full w-full" ref={setCanvasHost} />
+  createEffect(
+    on(
+      () =>
+        [
+          props.animationEnabled,
+          props.eyesVisible,
+          props.handsVisible,
+          props.headVisible,
+          props.referenceOpacity,
+        ] as const,
+      () => {
+        const state = getReviewState()
+        renderer?.update(state)
+      },
+      {defer: true},
+    ),
+  )
+
+  return <div class="relative h-full w-full" ref={setCanvasHost} />
 }

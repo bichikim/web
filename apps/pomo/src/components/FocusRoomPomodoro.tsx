@@ -10,9 +10,11 @@ import {
 } from '../design-system/FocusRoomCharacterEmotion'
 import {FocusRoomIconButton} from '../design-system/FocusRoomIconButton'
 import {FocusRoomModal} from '../design-system/FocusRoomModal'
+import {FocusRoomSwitch} from '../design-system/FocusRoomSwitch'
 import {
   formatPomodoroTime,
   type PomodoroPhase,
+  type PomodoroTimerEvent,
   type PomodoroTimerState,
   usePomodoroTimer,
 } from '../features/pomodoro-timer'
@@ -51,9 +53,6 @@ const PHASE_PRESENTATIONS = {
   },
 } as const satisfies Record<PomodoroPhase, PhasePresentation>
 const DEGREES_PER_CIRCLE = 360
-export interface FocusRoomPomodoroProps {
-  readonly onOpenChange?: (isOpen: boolean) => void
-}
 
 interface PomodoroSessionProgressProps {
   readonly completedCount: number
@@ -61,6 +60,60 @@ interface PomodoroSessionProgressProps {
   readonly positions: readonly number[]
   readonly sessionCount: number
 }
+
+export interface FocusRoomPomodoroProps {
+  readonly onEvents?: (events: ReadonlyArray<PomodoroTimerEvent>) => void
+}
+
+interface PomodoroQuickControlsProps {
+  readonly characterEmotion: FocusRoomCharacterEmotionType
+  readonly characterImage: string
+  readonly isActive: boolean
+  readonly onOpen: (source: HTMLButtonElement) => void
+  readonly onPrimaryPress: () => void
+  readonly phase: PomodoroPhase
+  readonly primaryIcon: string
+  readonly primaryLabel: string
+  readonly statusLabel: string
+  readonly timeLabel: string
+}
+
+const PomodoroQuickControls = (props: PomodoroQuickControlsProps) => (
+  <div
+    aria-label="포모도로 간편 조작"
+    class="focus-room-backdrop focus-room-interactive-glass-group focus-room-pomodoro__trigger"
+    data-phase={props.phase}
+    role="group"
+  >
+    <button
+      aria-label={props.primaryLabel}
+      class="focus-room-interactive-glass-part focus-room-pomodoro__emotion-action"
+      onClick={() => props.onPrimaryPress()}
+      type="button"
+    >
+      <FocusRoomCharacterEmotion
+        active={props.isActive}
+        emotion={props.characterEmotion}
+        image={props.characterImage}
+      />
+      <span aria-hidden="true" class="focus-room-pomodoro__action-indicator">
+        <span class={cx(props.primaryIcon, 'focus-room-pomodoro__action-icon')} />
+      </span>
+    </button>
+    <button
+      aria-haspopup="dialog"
+      aria-label={`포모도로 열기, ${props.statusLabel}, ${props.timeLabel}`}
+      class={cx(
+        'focus-room-interactive-glass-group-trigger',
+        'focus-room-interactive-glass-part focus-room-pomodoro__time-action',
+      )}
+      onClick={(event) => props.onOpen(event.currentTarget)}
+      type="button"
+    >
+      <span class="focus-room-pomodoro__trigger-time">{props.timeLabel}</span>
+    </button>
+  </div>
+)
 
 const PomodoroSessionProgress = (props: PomodoroSessionProgressProps) => (
   <div class="focus-room-pomodoro-panel__session-row">
@@ -114,7 +167,7 @@ const getCompletedInCycle = (state: PomodoroTimerState, focusSessionsPerCycle: n
 }
 
 export const FocusRoomPomodoro = (props: FocusRoomPomodoroProps) => {
-  const timer = usePomodoroTimer()
+  const timer = usePomodoroTimer({onEvents: (events) => props.onEvents?.(events)})
   const [isOpen, setIsOpen] = createSignal(false)
   const [isEditingDurations, setIsEditingDurations] = createSignal(false)
   const [actionContainer, setActionContainer] = createSignal<HTMLDivElement | null>(null)
@@ -146,7 +199,6 @@ export const FocusRoomPomodoro = (props: FocusRoomPomodoroProps) => {
     if (!nextOpen) {
       setIsEditingDurations(false)
     }
-    props.onOpenChange?.(nextOpen)
   }
   const handleOpen = (source: HTMLButtonElement) => {
     setTriggerElement(source)
@@ -167,21 +219,18 @@ export const FocusRoomPomodoro = (props: FocusRoomPomodoroProps) => {
   return (
     <>
       <div class="focus-room-pomodoro">
-        <button
-          aria-haspopup="dialog"
-          aria-label={`포모도로 열기, ${statusLabel()}, ${timeLabel()}`}
-          class="focus-room-backdrop focus-room-interactive-glass focus-room-pomodoro__trigger"
-          data-phase={timer.state().phase}
-          onClick={(event) => handleOpen(event.currentTarget)}
-          type="button"
-        >
-          <FocusRoomCharacterEmotion
-            active={timer.state().status === 'running'}
-            emotion={phasePresentation().characterEmotion}
-            image={phasePresentation().characterImage}
-          />
-          <span class="focus-room-pomodoro__trigger-time">{timeLabel()}</span>
-        </button>
+        <PomodoroQuickControls
+          characterEmotion={phasePresentation().characterEmotion}
+          characterImage={phasePresentation().characterImage}
+          isActive={timer.state().status === 'running'}
+          onOpen={handleOpen}
+          onPrimaryPress={handlePrimaryPress}
+          phase={timer.state().phase}
+          primaryIcon={primaryIcon()}
+          primaryLabel={primaryLabel()}
+          statusLabel={statusLabel()}
+          timeLabel={timeLabel()}
+        />
       </div>
 
       <FocusRoomModal
@@ -249,6 +298,14 @@ export const FocusRoomPomodoro = (props: FocusRoomPomodoroProps) => {
               />
             </Show>
           </div>
+
+          <FocusRoomSwitch
+            checked={timer.isAutoStartEnabled()}
+            class="focus-room-pomodoro-panel__auto-start"
+            description="타이머가 끝나면 다음 집중 또는 휴식을 바로 시작해요."
+            label="집중·휴식 자동 재생"
+            onChange={timer.onAutoStartChange}
+          />
 
           <FocusRoomPomodoroDurationEditor
             config={timer.config()}

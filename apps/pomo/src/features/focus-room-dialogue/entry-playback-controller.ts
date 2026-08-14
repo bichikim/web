@@ -3,7 +3,7 @@ import {type Accessor, createSignal} from 'solid-js'
 
 import type {FocusRoomDialogueRepository} from './repository'
 import type {FocusRoomDialogue} from './schema'
-import {getDialogueTextAtTime} from './timeline'
+import {getDialoguePositionAtTime} from './timeline'
 
 const MILLISECONDS_PER_SECOND = 1000
 
@@ -15,6 +15,8 @@ export interface PlayFocusRoomDialogueSequenceOptions {
 
 export interface EntryPlaybackController {
   readonly activeDialogueId: () => string | null
+  readonly activeSegmentCount: Accessor<number>
+  readonly activeSegmentPosition: Accessor<number | null>
   readonly activeText: Accessor<string | null>
   readonly cancel: () => void
   readonly dispose: () => void
@@ -71,6 +73,8 @@ const failQueueRequest = (request: PlaybackQueueRequest, error: unknown) => {
 /** Owns one audio element and serializes event and feed dialogue requests. */
 // oxlint-disable-next-line eslint/max-lines-per-function -- One controller owns the audio element, queue, retry, and disposal lifecycle.
 export const createEntryPlaybackController = (): EntryPlaybackController => {
+  const [activeSegmentCount, setActiveSegmentCount] = createSignal(0)
+  const [activeSegmentPosition, setActiveSegmentPosition] = createSignal<number | null>(null)
   const [activeText, setActiveText] = createSignal<string | null>(null)
   const [isBlocked, setIsBlocked] = createSignal(false)
   let animationFrame: number | null = null
@@ -98,9 +102,12 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
       return
     }
 
-    setActiveText(
-      getDialogueTextAtTime(dialogue.segments, audio.currentTime * MILLISECONDS_PER_SECOND),
+    const activePosition = getDialoguePositionAtTime(
+      dialogue.segments,
+      audio.currentTime * MILLISECONDS_PER_SECOND,
     )
+    setActiveSegmentPosition(activePosition?.position ?? null)
+    setActiveText(activePosition?.text ?? null)
     animationFrame = window.requestAnimationFrame(updateSubtitle)
   }
 
@@ -117,6 +124,8 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
     dialogue = null
     isAwaitingSceneInteraction = false
     setIsBlocked(false)
+    setActiveSegmentCount(0)
+    setActiveSegmentPosition(null)
     setActiveText(null)
 
     if (audioUrl !== null) {
@@ -182,6 +191,7 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
     }
 
     dialogue = storedDialogue
+    setActiveSegmentCount(storedDialogue.segments.length)
     audioUrl = URL.createObjectURL(storedAudio)
     audio = new Audio(audioUrl)
     return audio
@@ -354,6 +364,8 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
 
   return {
     activeDialogueId: () => dialogue?.id ?? null,
+    activeSegmentCount,
+    activeSegmentPosition,
     activeText,
     cancel,
     dispose() {

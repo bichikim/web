@@ -4,7 +4,7 @@ import {A} from '@solidjs/router'
 import {createMemo, createSignal, For, onCleanup, Show} from 'solid-js'
 
 import {useFocusRoomEvents} from '../features/focus-room-dialogue/FocusRoomEventContext'
-import type {FocusRoomDialogue} from '../features/focus-room-dialogue/schema'
+import type {DialogueEventId, FocusRoomDialogue} from '../features/focus-room-dialogue/schema'
 import {excludeFeedDialogues, useFocusRoomFeedContext} from '../features/focus-room-feed'
 import {SUPERTONIC_VOICES} from '../features/supertonic'
 import './FocusRoomDialogueSettings.css'
@@ -12,11 +12,8 @@ import './FocusRoomDialogueSettings.css'
 const MILLISECONDS_PER_SECOND = 1000
 const SECONDS_PER_MINUTE = 60
 
-type DialogueEventId = 'break-start' | 'entry' | 'focus-start'
-
 interface DialogueEventDefinition {
   readonly description: string
-  readonly enabled: boolean
   readonly icon: string
   readonly id: DialogueEventId
   readonly label: string
@@ -25,24 +22,33 @@ interface DialogueEventDefinition {
 const DIALOGUE_EVENTS: ReadonlyArray<DialogueEventDefinition> = [
   {
     description: '집중룸을 열 때 한 번 재생',
-    enabled: true,
     icon: 'i-tabler-door-enter',
-    id: 'entry',
+    id: 'room-enter',
     label: '입장',
   },
   {
     description: '집중 시간이 시작될 때 재생',
-    enabled: false,
     icon: 'i-tabler-player-play',
     id: 'focus-start',
     label: '포모도르 집중 시작',
   },
   {
+    description: '집중 시간이 끝날 때 재생',
+    icon: 'i-tabler-player-stop',
+    id: 'focus-end',
+    label: '포모도르 집중 종료',
+  },
+  {
     description: '휴식 시간이 시작될 때 재생',
-    enabled: false,
     icon: 'i-tabler-coffee',
     id: 'break-start',
     label: '포모도르 휴식 시작',
+  },
+  {
+    description: '휴식 시간이 끝날 때 재생',
+    icon: 'i-tabler-alarm',
+    id: 'break-end',
+    label: '포모도르 휴식 종료',
   },
 ]
 
@@ -238,15 +244,18 @@ export default function FocusRoomDialogueSettingsClient() {
     }
   }
 
-  const handleEntryBinding = async (dialogueIds: ReadonlyArray<string>) => {
+  const handleEventBinding = async (
+    eventId: DialogueEventId,
+    dialogueIds: ReadonlyArray<string>,
+  ) => {
     stopPlayback()
 
     try {
-      await events.setEntryDialogues(dialogueIds)
+      await events.setEventDialogues(eventId, dialogueIds)
       setMessage(null)
     } catch (error: unknown) {
-      console.error('Failed to bind focus room entry dialogue.', error)
-      setMessage('입장 이벤트의 대화 연결을 변경하지 못했어요.')
+      console.error('Failed to bind focus room event dialogue.', error)
+      setMessage('이벤트의 대화 연결을 변경하지 못했어요.')
     }
   }
 
@@ -297,8 +306,7 @@ export default function FocusRoomDialogueSettingsClient() {
             >
               <For each={DIALOGUE_EVENTS}>
                 {(event) => {
-                  const selectedDialogueIds = () =>
-                    event.id === 'entry' ? events.entryDialogueIds() : []
+                  const selectedDialogueIds = () => events.eventDialogueIds()[event.id] ?? []
                   const selectedDialogues = () =>
                     selectedDialogueIds().flatMap((dialogueId) => {
                       const dialogue = savedDialogues().find((item) => item.id === dialogueId)
@@ -306,10 +314,7 @@ export default function FocusRoomDialogueSettingsClient() {
                     })
 
                   return (
-                    <li
-                      data-connected={selectedDialogues().length === 0 ? undefined : ''}
-                      data-disabled={event.enabled ? undefined : ''}
-                    >
+                    <li data-connected={selectedDialogues().length === 0 ? undefined : ''}>
                       <div class="focus-room-dialogue-settings__event-heading">
                         <span aria-hidden="true" class="focus-room-dialogue-settings__event-symbol">
                           <span class={`${event.icon} size-5`} />
@@ -317,9 +322,6 @@ export default function FocusRoomDialogueSettingsClient() {
                         <div>
                           <div>
                             <h5>{event.label}</h5>
-                            <Show when={!event.enabled}>
-                              <span>준비 중</span>
-                            </Show>
                           </div>
                           <p>{event.description}</p>
                         </div>
@@ -327,13 +329,11 @@ export default function FocusRoomDialogueSettingsClient() {
                           <span>대화 연결</span>
                           <DialogueConnectionMenu
                             dialogues={savedDialogues()}
-                            disabled={!event.enabled || savedDialogues().length === 0}
+                            disabled={savedDialogues().length === 0}
                             onChange={(dialogueIds) => {
-                              if (event.id === 'entry') {
-                                handleEntryBinding(dialogueIds).catch((error: unknown) => {
-                                  console.error('Unexpected entry binding failure.', error)
-                                })
-                              }
+                              handleEventBinding(event.id, dialogueIds).catch((error: unknown) => {
+                                console.error('Unexpected event binding failure.', error)
+                              })
                             }}
                             selectedDialogueIds={selectedDialogueIds()}
                           />
@@ -358,11 +358,9 @@ export default function FocusRoomDialogueSettingsClient() {
 
                       <Show when={selectedDialogues().length === 0}>
                         <p class="focus-room-dialogue-settings__unconnected">
-                          {event.enabled
-                            ? savedDialogues().length === 0
-                              ? '대화 탭에서 먼저 대화를 만들어 주세요.'
-                              : '연결된 대화가 없어요.'
-                            : '이 이벤트는 아직 준비 중이에요.'}
+                          {savedDialogues().length === 0
+                            ? '대화 탭에서 먼저 대화를 만들어 주세요.'
+                            : '연결된 대화가 없어요.'}
                         </p>
                       </Show>
                     </li>

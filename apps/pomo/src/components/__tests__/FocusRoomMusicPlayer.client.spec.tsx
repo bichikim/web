@@ -1,12 +1,19 @@
 /** @vitest-environment jsdom */
 
-import {fireEvent, render, screen} from '@solidjs/testing-library'
+import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import FocusRoomMusicPlayerClient from '../FocusRoomMusicPlayer.client'
 
 vi.mock('media-chrome', () => ({}))
+
+const storageMocks = vi.hoisted(() => ({
+  getItem: vi.fn<(key: string) => Promise<string | null>>(),
+  setItem: vi.fn<(key: string, value: string) => Promise<void>>(),
+}))
+
+vi.mock('@apps-in-toss/web-bridge', () => ({Storage: storageMocks}))
 
 const TRACKS = [
   {artist: 'Artist', durationSeconds: 1, id: 'one', source: '/one.mp3', title: 'One'},
@@ -16,11 +23,20 @@ const TRACKS = [
 
 describe('FocusRoomMusicPlayerClient', () => {
   beforeEach(() => {
+    localStorage.clear()
+    storageMocks.getItem.mockReset()
+    storageMocks.getItem.mockResolvedValue(null)
+    storageMocks.setItem.mockReset()
+    storageMocks.setItem.mockResolvedValue()
     vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue()
+    vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => undefined)
     vi.spyOn(Math, 'random').mockReturnValue(0)
   })
 
   afterEach(() => {
+    cleanup()
+    Reflect.deleteProperty(window, 'ReactNativeWebView')
+    vi.unstubAllGlobals()
     vi.restoreAllMocks()
   })
 
@@ -90,5 +106,265 @@ describe('FocusRoomMusicPlayerClient', () => {
 
     expect(handleExpandedChange).toHaveBeenCalledWith(true)
     expect(screen.getByRole('button', {name: '플레이어 접기'})).toBeTruthy()
+  })
+
+  it('should restore the saved track and playback position', async () => {
+    localStorage.setItem(
+      'pomo:focus-room-playback:v1',
+      JSON.stringify({positionSeconds: 22, savedAt: 1, trackId: 'three'}),
+    )
+    const result = render(() => <FocusRoomMusicPlayerClient tracks={TRACKS} />)
+    const audio = result.container.querySelector('audio')
+
+    if (!(audio instanceof HTMLAudioElement)) {
+      throw new TypeError('Expected the focus-room audio element to be rendered')
+    }
+
+    await Promise.resolve()
+    await Promise.resolve()
+    fireEvent(audio, new Event('loadedmetadata'))
+
+    expect(audio.getAttribute('src')).toBe('/three.mp3')
+    expect(audio.currentTime).toBe(22)
+  })
+
+  it('should resume playback when the saved track was playing', async () => {
+    localStorage.setItem(
+      'pomo:focus-room-playback:v1',
+      JSON.stringify({isPlaying: true, positionSeconds: 22, savedAt: 1, trackId: 'three'}),
+    )
+    const result = render(() => <FocusRoomMusicPlayerClient tracks={TRACKS} />)
+    const audio = result.container.querySelector('audio')
+
+    if (!(audio instanceof HTMLAudioElement)) {
+      throw new TypeError('Expected the focus-room audio element to be rendered')
+    }
+
+    await Promise.resolve()
+    await Promise.resolve()
+    fireEvent(audio, new Event('loadedmetadata'))
+
+    expect(HTMLMediaElement.prototype.play).toHaveBeenCalledOnce()
+  })
+
+  it('should remain paused when the browser blocks restored playback', async () => {
+    vi.mocked(HTMLMediaElement.prototype.play).mockRejectedValueOnce(
+      new DOMException('Playback requires user interaction', 'NotAllowedError'),
+    )
+    localStorage.setItem(
+      'pomo:focus-room-playback:v1',
+      JSON.stringify({isPlaying: true, positionSeconds: 22, savedAt: 1, trackId: 'three'}),
+    )
+    const result = render(() => <FocusRoomMusicPlayerClient tracks={TRACKS} />)
+    const audio = result.container.querySelector('audio')
+
+    if (!(audio instanceof HTMLAudioElement)) {
+      throw new TypeError('Expected the focus-room audio element to be rendered')
+    }
+
+    await Promise.resolve()
+    await Promise.resolve()
+    fireEvent(audio, new Event('loadedmetadata'))
+    await Promise.resolve()
+    await Promise.resolve()
+
+    expect(JSON.parse(localStorage.getItem('pomo:focus-room-playback:v1') ?? '')).toMatchObject({
+      isPlaying: false,
+      positionSeconds: 22,
+      trackId: 'three',
+    })
+  })
+
+  it('should not overwrite playback changed before native restoration finishes', async () => {
+    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+    let completeRead: ((value: string | null) => void) | undefined
+    storageMocks.getItem.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          completeRead = resolve
+        }),
+    )
+    localStorage.setItem(
+      'pomo:focus-room-playback:v1',
+      JSON.stringify({isPlaying: false, positionSeconds: 22, savedAt: 1, trackId: 'three'}),
+    )
+    const result = render(() => <FocusRoomMusicPlayerClient tracks={TRACKS} />)
+    const audio = result.container.querySelector('audio')
+
+    if (!(audio instanceof HTMLAudioElement)) {
+      throw new TypeError('Expected the focus-room audio element to be rendered')
+    }
+
+    fireEvent(audio, new Event('play'))
+    completeRead?.(null)
+    await Promise.resolve()
+    await Promise.resolve()
+
+    expect(audio.getAttribute('src')).toBe('/two.mp3')
+  })
+
+  it('should not overwrite a position sought before native restoration finishes', async () => {
+    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+    let completeRead: ((value: string | null) => void) | undefined
+    storageMocks.getItem.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          completeRead = resolve
+        }),
+    )
+    localStorage.setItem(
+      'pomo:focus-room-playback:v1',
+      JSON.stringify({isPlaying: false, positionSeconds: 22, savedAt: 1, trackId: 'three'}),
+    )
+    const result = render(() => <FocusRoomMusicPlayerClient tracks={TRACKS} />)
+    const audio = result.container.querySelector('audio')
+
+    if (!(audio instanceof HTMLAudioElement)) {
+      throw new TypeError('Expected the focus-room audio element to be rendered')
+    }
+
+    audio.currentTime = 9
+    fireEvent(audio, new Event('seeking'))
+    completeRead?.(null)
+    await Promise.resolve()
+    await Promise.resolve()
+
+    expect(audio.getAttribute('src')).toBe('/two.mp3')
+    expect(audio.currentTime).toBe(9)
+  })
+
+  it('should load the playlist without waiting for native storage', async () => {
+    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+    storageMocks.getItem.mockImplementationOnce(
+      () =>
+        new Promise(() => {
+          // Intentionally pending to reproduce an unresponsive native bridge.
+        }),
+    )
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        json: () => Promise.resolve({tracks: TRACKS, version: 1}),
+        ok: true,
+      }),
+    )
+    const result = render(() => <FocusRoomMusicPlayerClient />)
+    const audio = result.container.querySelector('audio')
+
+    if (!(audio instanceof HTMLAudioElement)) {
+      throw new TypeError('Expected the focus-room audio element to be rendered')
+    }
+
+    await Promise.resolve()
+    await Promise.resolve()
+    await Promise.resolve()
+
+    expect(audio.getAttribute('src')).toBe('/two.mp3')
+  })
+
+  it('should ignore an obsolete blocked-autoplay result after playback starts', async () => {
+    let rejectPlayback: ((error: DOMException) => void) | undefined
+    vi.mocked(HTMLMediaElement.prototype.play).mockImplementationOnce(
+      () =>
+        new Promise((_resolve, reject) => {
+          rejectPlayback = reject
+        }),
+    )
+    localStorage.setItem(
+      'pomo:focus-room-playback:v1',
+      JSON.stringify({isPlaying: true, positionSeconds: 22, savedAt: 1, trackId: 'three'}),
+    )
+    const result = render(() => <FocusRoomMusicPlayerClient tracks={TRACKS} />)
+    const audio = result.container.querySelector('audio')
+
+    if (!(audio instanceof HTMLAudioElement)) {
+      throw new TypeError('Expected the focus-room audio element to be rendered')
+    }
+
+    await Promise.resolve()
+    await Promise.resolve()
+    fireEvent(audio, new Event('play'))
+    rejectPlayback?.(new DOMException('Playback requires user interaction', 'NotAllowedError'))
+    await Promise.resolve()
+
+    expect(JSON.parse(localStorage.getItem('pomo:focus-room-playback:v1') ?? '')).toMatchObject({
+      isPlaying: true,
+      trackId: 'three',
+    })
+  })
+
+  it('should reset to the first track when the saved track is missing', async () => {
+    localStorage.setItem(
+      'pomo:focus-room-playback:v1',
+      JSON.stringify({positionSeconds: 22, savedAt: 1, trackId: 'removed'}),
+    )
+    const result = render(() => <FocusRoomMusicPlayerClient tracks={TRACKS} />)
+    const audio = result.container.querySelector('audio')
+
+    if (!(audio instanceof HTMLAudioElement)) {
+      throw new TypeError('Expected the focus-room audio element to be rendered')
+    }
+
+    await Promise.resolve()
+    await Promise.resolve()
+    fireEvent(audio, new Event('loadedmetadata'))
+    await Promise.resolve()
+
+    expect(audio.getAttribute('src')).toBe('/one.mp3')
+    expect(audio.currentTime).toBe(0)
+    expect(JSON.parse(localStorage.getItem('pomo:focus-room-playback:v1') ?? '')).toMatchObject({
+      positionSeconds: 0,
+      trackId: 'one',
+    })
+  })
+
+  it('should save progress periodically and immediately after seeking', async () => {
+    const result = render(() => <FocusRoomMusicPlayerClient tracks={TRACKS} />)
+    const audio = result.container.querySelector('audio')
+
+    if (!(audio instanceof HTMLAudioElement)) {
+      throw new TypeError('Expected the focus-room audio element to be rendered')
+    }
+
+    await Promise.resolve()
+    audio.currentTime = 7
+    fireEvent(audio, new Event('timeupdate'))
+    await Promise.resolve()
+    await Promise.resolve()
+    expect(JSON.parse(localStorage.getItem('pomo:focus-room-playback:v1') ?? '')).toMatchObject({
+      positionSeconds: 7,
+    })
+
+    audio.currentTime = 8
+    fireEvent(audio, new Event('timeupdate'))
+    await Promise.resolve()
+    expect(JSON.parse(localStorage.getItem('pomo:focus-room-playback:v1') ?? '')).toMatchObject({
+      positionSeconds: 7,
+    })
+
+    fireEvent(audio, new Event('seeked'))
+    await Promise.resolve()
+    await Promise.resolve()
+    expect(JSON.parse(localStorage.getItem('pomo:focus-room-playback:v1') ?? '')).toMatchObject({
+      positionSeconds: 8,
+    })
+  })
+
+  it('should stop detached audio without clearing its playing state', async () => {
+    const result = render(() => <FocusRoomMusicPlayerClient tracks={TRACKS} />)
+    const audio = result.container.querySelector('audio')
+
+    if (!(audio instanceof HTMLAudioElement)) {
+      throw new TypeError('Expected the focus-room audio element to be rendered')
+    }
+
+    fireEvent(audio, new Event('play'))
+    result.unmount()
+    await Promise.resolve()
+
+    expect(HTMLMediaElement.prototype.pause).toHaveBeenCalledOnce()
+    expect(JSON.parse(localStorage.getItem('pomo:focus-room-playback:v1') ?? '')).toMatchObject({
+      isPlaying: true,
+    })
   })
 })

@@ -75,18 +75,16 @@ it('should finish metadata deletion when obsolete audio cleanup fails', async ()
 })
 
 it('should normalize a legacy entry binding to a dialogue sequence', async () => {
-  databaseMocks.eventBindings.get.mockResolvedValue({
-    dialogueId: 'legacy-dialogue',
-    event: 'room-enter',
-    version: 1,
-  })
+  databaseMocks.eventBindings.get.mockImplementation(async (event: string) =>
+    event === 'room-enter'
+      ? {dialogueId: 'legacy-dialogue', event: 'room-enter', version: 1}
+      : undefined,
+  )
   const repository = createFocusRoomDialogueRepository()
 
-  await expect(repository.getEntryBinding()).resolves.toEqual({
-    dialogueIds: ['legacy-dialogue'],
-    event: 'room-enter',
-    version: 2,
-  })
+  await expect(repository.listEventBindings()).resolves.toEqual([
+    {dialogueIds: ['legacy-dialogue'], event: 'room-enter', version: 2},
+  ])
 })
 
 it('should persist unique entry dialogues in their selected order', async () => {
@@ -116,11 +114,11 @@ it('should preserve remaining event dialogues when deleting one dialogue', async
     version: 1,
     voiceId: 'Yuna',
   })
-  databaseMocks.eventBindings.get.mockResolvedValue({
-    dialogueIds: ['first', 'second'],
-    event: 'room-enter',
-    version: 2,
-  })
+  databaseMocks.eventBindings.get.mockImplementation(async (event: string) =>
+    event === 'room-enter'
+      ? {dialogueIds: ['first', 'second'], event: 'room-enter', version: 2}
+      : undefined,
+  )
   storageMocks.delete.mockResolvedValue({ok: true, value: true})
   const repository = createFocusRoomDialogueRepository()
 
@@ -158,4 +156,27 @@ it('should roll back newly written audio when metadata persistence fails', async
   )
 
   expect(storageMocks.delete).toHaveBeenCalledWith('/__pomo/dialogue-audio/new-audio.wav')
+})
+
+it('should persist and remove bindings for every supported dialogue event', async () => {
+  databaseMocks.dialogues.get.mockResolvedValue({id: 'dialogue-id'})
+  databaseMocks.eventBindings.get.mockImplementation(async (event: string) =>
+    event === 'focus-start'
+      ? {dialogueId: 'dialogue-id', event: 'focus-start', version: 1}
+      : undefined,
+  )
+  const repository = createFocusRoomDialogueRepository()
+
+  await expect(repository.listEventBindings()).resolves.toEqual([
+    {dialogueIds: ['dialogue-id'], event: 'focus-start', version: 2},
+  ])
+  await repository.setEventBinding('break-end', 'dialogue-id')
+  expect(databaseMocks.eventBindings.put).toHaveBeenCalledWith({
+    dialogueIds: ['dialogue-id'],
+    event: 'break-end',
+    version: 2,
+  })
+
+  await repository.setEventBinding('break-end', null)
+  expect(databaseMocks.eventBindings.delete).toHaveBeenCalledWith('break-end')
 })

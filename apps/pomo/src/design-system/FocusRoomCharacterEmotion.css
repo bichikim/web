@@ -14,8 +14,12 @@
   border: 0;
   border-radius: 0;
   background: transparent;
-  filter: drop-shadow(0 0.125rem 0.1875rem rgb(0 0 0 / 32%));
+  filter: grayscale(1) drop-shadow(0 0.125rem 0.1875rem rgb(0 0 0 / 32%));
   object-fit: contain;
+}
+
+.focus-room-character-emotion[data-active] .focus-room-character-emotion__image {
+  filter: drop-shadow(0 0.125rem 0.1875rem rgb(0 0 0 / 32%));
 }
 
 .focus-room-character-emotion__symbol {

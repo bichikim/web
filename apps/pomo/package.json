@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "assets:compress-focus-room": "node scripts/compress-focus-room-scenes.mjs",
     "blender:export": "blender --background blender/character-studio.blend --python blender/export_glb.py",
     "blender:open": "blender blender/character-studio.blend",
     "build": "pnpm run build:web",
@@ -17,6 +18,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@apps-in-toss/bridge-core": "2.4.1",
+    "@apps-in-toss/web-bridge": "2.4.1",
     "@babylonjs/core": "9.18.0",
     "@babylonjs/loaders": "9.18.0",
     "@huggingface/transformers": "4.0.0-next.11",

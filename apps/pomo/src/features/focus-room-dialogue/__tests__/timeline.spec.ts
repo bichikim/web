@@ -1,6 +1,6 @@
 import {describe, expect, it} from 'vitest'
 
-import {createDialogueTimeline, getDialogueTextAtTime} from '../timeline'
+import {createDialogueTimeline, getDialoguePositionAtTime, getDialogueTextAtTime} from '../timeline'
 
 describe('createDialogueTimeline', () => {
   it('should derive segment offsets from PCM duration and inter-chunk silence', () => {
@@ -69,5 +69,23 @@ describe('getDialogueTextAtTime', () => {
 
   it('should return null when no dialogue segment exists', () => {
     expect(getDialogueTextAtTime([], 0)).toBeNull()
+  })
+})
+
+describe('getDialoguePositionAtTime', () => {
+  const segments = [
+    {durationMs: 500, index: 4, startMs: 0, text: '첫 문장'},
+    {durationMs: 750, index: 8, startMs: 800, text: '두 번째 문장'},
+  ]
+
+  it('should return the array position rather than the stored segment index', () => {
+    expect(getDialoguePositionAtTime(segments, 800)).toEqual({
+      position: 1,
+      text: '두 번째 문장',
+    })
+  })
+
+  it('should return null when no dialogue segment exists', () => {
+    expect(getDialoguePositionAtTime([], 0)).toBeNull()
   })
 })

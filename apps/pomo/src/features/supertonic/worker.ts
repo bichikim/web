@@ -13,8 +13,6 @@ import {
 } from '../model-storage'
 import {
   createSupertonicVoice,
-  parseSupertonicConfig,
-  parseSupertonicIndexer,
   parseSupertonicVoice,
   SupertonicEngine,
   type SupertonicSessions,
@@ -30,10 +28,15 @@ import {
 } from './errors'
 import type {SupertonicVoiceSource, SupertonicWorkerInput, SupertonicWorkerOutput} from './messages'
 import {
+  getVoiceStyleUrl,
+  type InitializationAssets,
+  type ModelAssets,
+  parseInitializationAssets,
+} from './model-assets'
+import {
   getSupertonicAssetUrl,
   getSupertonicModel,
   getSupertonicModelFileUrl,
-  getSupertonicVoiceUrl,
   SUPERTONIC_ORT_WASM_URL,
   type SupertonicModel,
   type SupertonicVoiceId,
@@ -44,11 +47,13 @@ import {splitSpeechText} from './text-chunking'
 const workerScope = self as DedicatedWorkerGlobalScope
 const modelStorage = createModelStorage()
 const voiceCache = new Map<SupertonicVoiceId, SupertonicVoice>()
+const MODEL_ASSETS_PATH = '/model-assets.json'
 const REQUEST_TIMEOUT_STATUS = 408
 const TOO_MANY_REQUESTS_STATUS = 429
 const SERVER_ERROR_STATUS = 500
 let engine: SupertonicEngine | null = null
 let activeModel: SupertonicModel | null = null
+let activeModelAssets: ModelAssets | null = null
 let activeAbortController: AbortController | null = null
 let activeGenerationAbortController: AbortController | null = null
 
@@ -271,6 +276,67 @@ const fetchJson = async (
   }
 }
 
+const fetchModelAssets = async (
+  signal: AbortSignal,
+): Promise<Result<unknown, CancelledError | DownloadFailedError>> => {
+  const options: FetchJsonOptions = {
+    fileName: '모델 자산 설정',
+    signal,
+    url: new URL(MODEL_ASSETS_PATH, workerScope.location.origin).href,
+  }
+
+  try {
+    const response = await fetch(options.url, {cache: 'no-store', signal})
+
+    if (!response.ok) {
+      return failureResult(createDownloadError(options, response.status))
+    }
+
+    const value: unknown = await response.json()
+    return successResult(value)
+  } catch (error: unknown) {
+    return failureResult(
+      isAbortError(error) ? createCancelledError('download') : createDownloadError(options, null),
+    )
+  }
+}
+
+const loadInitializationAssets = async (
+  signal: AbortSignal,
+): Promise<Result<InitializationAssets, SupertonicError>> => {
+  const [assetsResponse, configResponse, indexerResponse] = await Promise.all([
+    fetchModelAssets(signal),
+    fetchJson({
+      fileName: '모델 설정',
+      signal,
+      url: getSupertonicAssetUrl('onnx/tts.json'),
+    }),
+    fetchJson({
+      fileName: '문자 인덱서',
+      signal,
+      url: getSupertonicAssetUrl('onnx/unicode_indexer.json'),
+    }),
+  ])
+
+  if (!assetsResponse.ok) {
+    return failureResult(assetsResponse.error)
+  }
+
+  if (!configResponse.ok) {
+    return failureResult(configResponse.error)
+  }
+
+  if (!indexerResponse.ok) {
+    return failureResult(indexerResponse.error)
+  }
+
+  return parseInitializationAssets({
+    config: configResponse.value,
+    indexer: indexerResponse.value,
+    modelAssets: assetsResponse.value,
+  })
+}
+
 const initialize = async (model: SupertonicModel): Promise<Result<Backend, SupertonicError>> => {
   const abortController = new AbortController()
   activeAbortController = abortController
@@ -282,6 +348,12 @@ const initialize = async (model: SupertonicModel): Promise<Result<Backend, Super
   let sessions: SupertonicSessions
 
   try {
+    const assetsResult = await loadInitializationAssets(abortController.signal)
+
+    if (!assetsResult.ok) {
+      return failureResult(assetsResult.error)
+    }
+
     let sessionResult = await loadSessions(backend, model, abortController.signal)
 
     if (
@@ -302,49 +374,16 @@ const initialize = async (model: SupertonicModel): Promise<Result<Backend, Super
     }
 
     sessions = sessionResult.value
-    const [configResponse, indexerResponse] = await Promise.all([
-      fetchJson({
-        fileName: '모델 설정',
-        signal: abortController.signal,
-        url: getSupertonicAssetUrl('onnx/tts.json'),
-      }),
-      fetchJson({
-        fileName: '문자 인덱서',
-        signal: abortController.signal,
-        url: getSupertonicAssetUrl('onnx/unicode_indexer.json'),
-      }),
-    ])
-
-    if (!configResponse.ok) {
-      await releaseSessions(sessions)
-      return failureResult(configResponse.error)
-    }
-
-    if (!indexerResponse.ok) {
-      await releaseSessions(sessions)
-      return failureResult(indexerResponse.error)
-    }
-
-    const configResult = parseSupertonicConfig(configResponse.value)
-    const indexerResult = parseSupertonicIndexer(indexerResponse.value)
-
-    if (!configResult.ok) {
-      await releaseSessions(sessions)
-      return failureResult(configResult.error)
-    }
-
-    if (!indexerResult.ok) {
-      await releaseSessions(sessions)
-      return failureResult(indexerResult.error)
-    }
 
     if (abortController.signal.aborted) {
       await releaseSessions(sessions)
       return failureResult(createCancelledError('initialize'))
     }
 
-    engine = new SupertonicEngine(configResult.value, indexerResult.value, sessions)
+    engine = new SupertonicEngine(assetsResult.value.config, assetsResult.value.indexer, sessions)
     activeModel = model
+    activeModelAssets = assetsResult.value.modelAssets
+    voiceCache.clear()
     return successResult(backend)
   } finally {
     if (activeAbortController === abortController) {
@@ -367,10 +406,18 @@ const getVoice = async (
     return successResult(cachedVoice)
   }
 
+  if (activeModelAssets === null) {
+    return failureResult({
+      code: 'model-not-ready',
+      phase: 'generate',
+      retryable: false,
+    })
+  }
+
   const response = await fetchJson({
     fileName: `${voice.id} 목소리`,
     signal,
-    url: getSupertonicVoiceUrl(voice.id),
+    url: getVoiceStyleUrl(activeModelAssets, voice.id),
   })
 
   if (!response.ok) {

@@ -6,10 +6,25 @@ export type {
   FocusRoomEventProviderProps,
   PlayFocusRoomDialogueSequenceOptions,
 } from './FocusRoomEventContext'
-export {dialogueEventBindingSchema, FOCUS_ROOM_ENTRY_EVENT, focusRoomDialogueSchema} from './schema'
-export type {DialogueEventBinding, DialogueSegment, FocusRoomDialogue} from './schema'
-export {createDialogueTimeline, getDialogueTextAtTime} from './timeline'
-export type {CreateDialogueSegmentsOptions, DialogueTimeline} from './timeline'
+export {
+  dialogueEventBindingSchema,
+  dialogueEventIdSchema,
+  FOCUS_ROOM_DIALOGUE_EVENTS,
+  FOCUS_ROOM_ENTRY_EVENT,
+  focusRoomDialogueSchema,
+} from './schema'
+export type {
+  DialogueEventBinding,
+  DialogueEventId,
+  DialogueSegment,
+  FocusRoomDialogue,
+} from './schema'
+export {createDialogueTimeline, getDialoguePositionAtTime, getDialogueTextAtTime} from './timeline'
+export type {
+  CreateDialogueSegmentsOptions,
+  DialogueSegmentPosition,
+  DialogueTimeline,
+} from './timeline'
 export {useFocusRoomDialogueEditor} from './use-focus-room-dialogue-editor'
 export type {
   DialogueEditorState,

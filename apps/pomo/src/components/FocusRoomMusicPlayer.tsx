@@ -6,15 +6,12 @@ const FocusRoomMusicPlayerClient = clientOnly(() => import('./FocusRoomMusicPlay
 
 export interface FocusRoomMusicPlayerProps {
   readonly expanded: boolean
-  readonly isHidden?: boolean
   readonly onExpandedChange: (expanded: boolean) => void
 }
 
 export const FocusRoomMusicPlayer = (props: FocusRoomMusicPlayerProps) => (
-  <div class="contents" hidden={props.isHidden}>
-    <FocusRoomMusicPlayerClient
-      expanded={props.expanded}
-      onExpandedChange={(expanded) => props.onExpandedChange(expanded)}
-    />
-  </div>
+  <FocusRoomMusicPlayerClient
+    expanded={props.expanded}
+    onExpandedChange={(expanded) => props.onExpandedChange(expanded)}
+  />
 )

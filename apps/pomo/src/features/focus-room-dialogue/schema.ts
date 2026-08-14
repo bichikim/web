@@ -1,6 +1,14 @@
 import {z} from 'zod'
 
+export const FOCUS_ROOM_DIALOGUE_EVENTS = [
+  'room-enter',
+  'focus-start',
+  'focus-end',
+  'break-start',
+  'break-end',
+] as const
 export const FOCUS_ROOM_ENTRY_EVENT = 'room-enter' as const
+export const dialogueEventIdSchema = z.enum(FOCUS_ROOM_DIALOGUE_EVENTS)
 
 const dialogueSegmentSchema = z.object({
   durationMs: z.number().nonnegative(),
@@ -24,12 +32,12 @@ export const focusRoomDialogueSchema = z.object({
 
 const legacyDialogueEventBindingSchema = z.object({
   dialogueId: z.string().min(1),
-  event: z.literal(FOCUS_ROOM_ENTRY_EVENT),
+  event: dialogueEventIdSchema,
   version: z.literal(1),
 })
 const currentDialogueEventBindingSchema = z.object({
   dialogueIds: z.array(z.string().min(1)).min(1).readonly(),
-  event: z.literal(FOCUS_ROOM_ENTRY_EVENT),
+  event: dialogueEventIdSchema,
   version: z.literal(2),
 })
 
@@ -46,3 +54,4 @@ export const dialogueEventBindingSchema = z
 
 export type DialogueSegment = z.infer<typeof dialogueSegmentSchema>
 export type FocusRoomDialogue = z.infer<typeof focusRoomDialogueSchema>
+export type DialogueEventId = z.infer<typeof dialogueEventIdSchema>

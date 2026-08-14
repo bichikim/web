@@ -2,7 +2,7 @@ import 'media-chrome'
 import './FocusRoomMusicPlayer.css'
 
 import {cx} from 'class-variance-authority'
-import {createMemo, createSignal, For, onCleanup, onMount, Show, untrack} from 'solid-js'
+import {batch, createMemo, createSignal, For, onCleanup, onMount, Show, untrack} from 'solid-js'
 
 import {
   type FocusRoomTrack,
@@ -10,18 +10,21 @@ import {
 } from '../features/focus-room-audio/focus-room-playlist'
 import {createInitialPlaybackState} from '../features/focus-room-audio/initial-playback-state'
 import {type RepeatMode, resolveTrackEnd} from '../features/focus-room-audio/playback-policy'
+import {resolvePlaybackRestore} from '../features/focus-room-audio/playback-restore'
+import {
+  type FocusRoomPlaybackState,
+  readFocusRoomPlayback,
+} from '../features/focus-room-audio/playback-storage'
 import {createShuffleQueue} from '../features/focus-room-audio/shuffle-queue'
 import {useFocusRoomAudioVisualizer} from '../features/focus-room-audio/use-focus-room-audio-visualizer'
+import {useFocusRoomPlaybackPersistence} from '../features/focus-room-audio/use-focus-room-playback-persistence'
+import {FocusRoomPlaybackModes} from './FocusRoomPlaybackModes'
+import {FocusRoomTrackList} from './FocusRoomTrackList'
 
 const ACTIVE_VISUALIZER_OPACITY = 0.76
 const IDLE_VISUALIZER_OPACITY = 0.34
 const SKIP_BUTTON_CLASSES =
   'focus-room-player__skip grid size-10 shrink-0 place-items-center rounded-full transition disabled:opacity-35'
-
-const REPEAT_MODES = [
-  {icon: 'i-tabler-repeat', label: '전체 반복', value: 'repeat-all'},
-  {icon: 'i-tabler-repeat-once', label: '한 곡 반복', value: 'repeat-one'},
-] as const
 
 interface FocusRoomMusicPlayerClientProps {
   readonly expanded?: boolean
@@ -41,7 +44,7 @@ interface SelectRandomTrackOptions {
 const isAbortError = (error: unknown) =>
   error instanceof DOMException && error.name === 'AbortError'
 
-// oxlint-disable-next-line eslint/max-lines-per-function -- Media Chrome's control tree is one semantic unit.
+// oxlint-disable-next-line eslint/max-lines-per-function, eslint/max-statements -- Media Chrome's control tree is one semantic unit.
 export default function FocusRoomMusicPlayerClient(props: FocusRoomMusicPlayerClientProps) {
   const initialTracks = untrack(() => props.tracks ?? [])
   const initialState = createInitialPlaybackState({trackCount: initialTracks.length})
@@ -58,8 +61,48 @@ export default function FocusRoomMusicPlayerClient(props: FocusRoomMusicPlayerCl
   const playlistRequest = new AbortController()
   let audioElement: HTMLAudioElement | undefined
   let destroyed = false
+  let playbackRequestRevision = 0
+  let playbackRevision = 0
   let shuffleQueue = initialState.queue
   let shuffleHistory: number[] = []
+  const playbackPersistence = useFocusRoomPlaybackPersistence({
+    currentTrack,
+    getAudioElement: () => audioElement,
+    isPlaying,
+  })
+
+  const initializePlayback = (
+    nextTracks: readonly FocusRoomTrack[],
+    storedPlayback: FocusRoomPlaybackState | null,
+  ) => {
+    const fallbackIndex =
+      storedPlayback === null
+        ? createInitialPlaybackState({trackCount: nextTracks.length}).currentIndex
+        : currentIndex()
+    const restoration = resolvePlaybackRestore({
+      fallbackIndex,
+      storedPlayback,
+      tracks: nextTracks,
+    })
+
+    playbackPersistence.setPendingPosition(restoration.playback)
+
+    batch(() => {
+      setLoadedTracks(nextTracks)
+      setCurrentIndex(restoration.currentIndex)
+    })
+    shuffleQueue = createShuffleQueue({
+      currentIndex: restoration.currentIndex,
+      trackCount: nextTracks.length,
+    })
+    shuffleHistory = []
+
+    if (restoration.shouldPersist && restoration.playback !== null) {
+      playbackPersistence.writePlayback(restoration.playback)
+    }
+
+    queueMicrotask(restorePendingPlayback)
+  }
 
   const handleAudioError = (error?: unknown) => {
     if (isAbortError(error)) {
@@ -72,32 +115,70 @@ export default function FocusRoomMusicPlayerClient(props: FocusRoomMusicPlayerCl
 
     setIsPlaying(false)
     visualizer.stop()
+    playbackPersistence.persistCurrentPlayback()
   }
 
-  const selectTrack = (options: SelectTrackOptions) => {
-    if (tracks().length === 0) {
-      return
-    }
-
-    const shouldResume = options.shouldResume ?? isPlaying()
-    setCurrentIndex((options.index + tracks().length) % tracks().length)
-    queueMicrotask(() => {
-      if (shouldResume) {
-        audioElement?.play().catch(handleAudioError)
+  const playAudio = () => {
+    const requestRevision = (playbackRequestRevision += 1)
+    audioElement?.play().catch((error: unknown) => {
+      if (requestRevision === playbackRequestRevision) {
+        handleAudioError(error)
       }
     })
   }
 
+  const restorePendingPlayback = () => {
+    if (destroyed) {
+      return
+    }
+
+    const restoredPlayback = playbackPersistence.applyPendingPosition()
+
+    if (!restoredPlayback?.isPlaying) {
+      return
+    }
+
+    playAudio()
+  }
+
+  const selectTrack = (options: SelectTrackOptions) => {
+    const trackList = tracks()
+
+    if (trackList.length === 0) {
+      return
+    }
+
+    const shouldResume = options.shouldResume ?? isPlaying()
+    const nextIndex = (options.index + trackList.length) % trackList.length
+    const nextTrack = trackList[nextIndex]
+    const nextPlayback = {isPlaying: shouldResume, positionSeconds: 0, trackId: nextTrack.id}
+    playbackRequestRevision += 1
+    playbackRevision += 1
+    playbackPersistence.setPendingPosition(nextPlayback)
+    setCurrentIndex(nextIndex)
+    playbackPersistence.writePlayback(nextPlayback)
+    queueMicrotask(restorePendingPlayback)
+  }
+
   const handlePlay = () => {
+    playbackRequestRevision += 1
+    playbackRevision += 1
     setIsPlaying(true)
     if (audioElement) {
       visualizer.start(audioElement)
     }
+    playbackPersistence.persistCurrentPlayback()
   }
 
   const handlePause = () => {
+    const wasPlaying = isPlaying()
+    if (wasPlaying) {
+      playbackRequestRevision += 1
+      playbackRevision += 1
+    }
     setIsPlaying(false)
     visualizer.stop()
+    playbackPersistence.persistCurrentPlayback()
   }
 
   const resetShuffleQueue = (currentTrackIndex = currentIndex()) => {
@@ -179,7 +260,16 @@ export default function FocusRoomMusicPlayerClient(props: FocusRoomMusicPlayerCl
     }
 
     audioElement.currentTime = 0
-    audioElement.play().catch(handleAudioError)
+    playbackRevision += 1
+    const track = currentTrack()
+    if (track !== undefined) {
+      playbackPersistence.writePlayback({isPlaying: true, positionSeconds: 0, trackId: track.id})
+    }
+    playAudio()
+  }
+
+  const handleSeeking = () => {
+    playbackRevision += 1
   }
 
   const selectNextTrack = () => {
@@ -236,39 +326,62 @@ export default function FocusRoomMusicPlayerClient(props: FocusRoomMusicPlayerCl
   }
 
   onMount(() => {
+    const restoreRevision = playbackRevision
+    const storedPlaybackRequest = readFocusRoomPlayback()
+
     if (props.tracks === undefined) {
       loadFocusRoomTracks({signal: playlistRequest.signal})
         // oxlint-disable-next-line solid/reactivity -- Completion must apply the user's latest shuffle choice.
         .then((nextTracks) => {
-          if (!destroyed) {
-            if (shuffleEnabled()) {
-              const nextState = createInitialPlaybackState({trackCount: nextTracks.length})
-
-              setCurrentIndex(nextState.currentIndex)
-              shuffleQueue = nextState.queue
-              shuffleHistory = []
-            }
-            setLoadedTracks(nextTracks)
+          if (destroyed) {
+            return
           }
+
+          initializePlayback(nextTracks, null)
+          // oxlint-disable-next-line solid/reactivity -- Late storage must respect the latest playback revision.
+          storedPlaybackRequest.then((storedPlayback) => {
+            if (!destroyed && playbackRevision === restoreRevision && storedPlayback !== null) {
+              initializePlayback(nextTracks, storedPlayback)
+            }
+          })
         })
         .catch((error: unknown) => {
           handleAudioError(error)
         })
+    } else {
+      // oxlint-disable-next-line solid/reactivity -- Completion restores against the latest controlled tracks.
+      storedPlaybackRequest.then((storedPlayback) => {
+        if (!destroyed && playbackRevision === restoreRevision && storedPlayback !== null) {
+          initializePlayback(tracks(), storedPlayback)
+        }
+      })
     }
 
     audioElement?.addEventListener('play', handlePlay)
     audioElement?.addEventListener('pause', handlePause)
     audioElement?.addEventListener('ended', handleEnded)
     audioElement?.addEventListener('error', handleAudioError)
+    audioElement?.addEventListener('loadedmetadata', restorePendingPlayback)
+    audioElement?.addEventListener('seeking', handleSeeking)
+    audioElement?.addEventListener('seeked', playbackPersistence.persistCurrentPlayback)
+    audioElement?.addEventListener('timeupdate', playbackPersistence.persistPlaybackProgress)
+    window.addEventListener('pagehide', playbackPersistence.persistCurrentPlayback)
   })
 
   onCleanup(() => {
+    playbackPersistence.persistCurrentPlayback()
     destroyed = true
     playlistRequest.abort()
     audioElement?.removeEventListener('play', handlePlay)
     audioElement?.removeEventListener('pause', handlePause)
     audioElement?.removeEventListener('ended', handleEnded)
     audioElement?.removeEventListener('error', handleAudioError)
+    audioElement?.removeEventListener('loadedmetadata', restorePendingPlayback)
+    audioElement?.removeEventListener('seeking', handleSeeking)
+    audioElement?.removeEventListener('seeked', playbackPersistence.persistCurrentPlayback)
+    audioElement?.removeEventListener('timeupdate', playbackPersistence.persistPlaybackProgress)
+    window.removeEventListener('pagehide', playbackPersistence.persistCurrentPlayback)
+    audioElement?.pause()
   })
 
   return (
@@ -388,41 +501,12 @@ export default function FocusRoomMusicPlayerClient(props: FocusRoomMusicPlayerCl
             </div>
 
             <div class="grid grid-cols-[1fr_auto_1fr] items-center gap-3 px-1">
-              <div class="focus-room-player__modes flex w-fit items-center gap-0.5 rounded-full p-1">
-                <div class="contents" role="group" aria-label="반복 방식">
-                  <For each={REPEAT_MODES}>
-                    {(mode) => (
-                      <button
-                        aria-label={mode.label}
-                        aria-pressed={repeatMode() === mode.value}
-                        class={cx(
-                          'focus-room-player__mode grid size-8 place-items-center rounded-full transition',
-                          repeatMode() === mode.value && 'is-active',
-                        )}
-                        onClick={() => toggleRepeatMode(mode.value)}
-                        title={mode.label}
-                        type="button"
-                      >
-                        <span aria-hidden="true" class={cx(mode.icon, 'size-4')} />
-                      </button>
-                    )}
-                  </For>
-                </div>
-                <span aria-hidden="true" class="mx-0.5 h-5 w-px bg-[var(--focus-room-border)]" />
-                <button
-                  aria-label="랜덤 재생"
-                  aria-pressed={shuffleEnabled()}
-                  class={cx(
-                    'focus-room-player__mode grid size-8 place-items-center rounded-full transition',
-                    shuffleEnabled() && 'is-active',
-                  )}
-                  onClick={toggleShuffle}
-                  title="랜덤 재생"
-                  type="button"
-                >
-                  <span aria-hidden="true" class="i-tabler-arrows-shuffle size-4" />
-                </button>
-              </div>
+              <FocusRoomPlaybackModes
+                onRepeatModeChange={toggleRepeatMode}
+                onShuffleChange={toggleShuffle}
+                repeatMode={repeatMode()}
+                shuffleEnabled={shuffleEnabled()}
+              />
 
               <div class="flex items-center justify-center gap-1">
                 <button
@@ -464,32 +548,11 @@ export default function FocusRoomMusicPlayerClient(props: FocusRoomMusicPlayerCl
               </div>
             </div>
 
-            <Show when={tracks().length > 1}>
-              <ol class="focus-room-player__playlist mb-0 mt-3 grid max-h-38 list-none gap-1 overflow-auto p-1">
-                <For each={tracks()}>
-                  {(track, index) => (
-                    <li>
-                      <button
-                        aria-current={index() === currentIndex() ? 'true' : undefined}
-                        class={cx(
-                          'focus-room-player__track flex w-full items-center gap-3 rounded-3',
-                          'px-3 py-2.5 text-left text-xs transition',
-                          index() === currentIndex()
-                            ? 'bg-[var(--focus-room-accent-soft)] text-[var(--focus-room-text)]'
-                            : 'text-[var(--focus-room-text-muted)] hover:bg-[var(--focus-room-secondary-soft)]',
-                        )}
-                        onClick={() => selectChosenTrack(index())}
-                        type="button"
-                      >
-                        <span class="w-4 text-center tabular-nums">{index() + 1}</span>
-                        <span class="min-w-0 flex-1 truncate">{track.title}</span>
-                        <span class="truncate opacity-70">{track.artist}</span>
-                      </button>
-                    </li>
-                  )}
-                </For>
-              </ol>
-            </Show>
+            <FocusRoomTrackList
+              currentIndex={currentIndex()}
+              onTrackSelect={selectChosenTrack}
+              tracks={tracks()}
+            />
           </div>
         </Show>
       </media-controller>
