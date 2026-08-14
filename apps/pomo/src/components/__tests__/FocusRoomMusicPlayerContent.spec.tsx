@@ -238,7 +238,7 @@ describe('FocusRoomMusicPlayerContent', () => {
       'pomo:focus-room-playback:v1',
       JSON.stringify({isPlaying: false, positionSeconds: 22, savedAt: 1, trackId: 'three'}),
     )
-    const result = render(() => <FocusRoomMusicPlayerClient tracks={TRACKS} />)
+    const result = render(() => <FocusRoomMusicPlayerContent tracks={TRACKS} />)
     const audio = result.container.querySelector('audio')
 
     if (!(audio instanceof HTMLAudioElement)) {

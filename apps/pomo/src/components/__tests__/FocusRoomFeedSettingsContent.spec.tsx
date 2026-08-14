@@ -6,12 +6,12 @@ import {For} from 'solid-js'
 import {beforeEach, expect, it, vi} from 'vitest'
 
 import {FocusRoomSelect} from '../../design-system/FocusRoomSelect'
-import FocusRoomFeedSettingsClient from '../FocusRoomFeedSettings.client'
+import FocusRoomFeedSettingsContent from '../FocusRoomFeedSettingsContent'
 
 vi.mock('@kobalte/core/tabs', () => ({Tabs: {Content: vi.fn()}}))
 vi.mock('../../design-system/FocusRoomSelect', () => ({FocusRoomSelect: vi.fn()}))
 
-const renderSettings = () => render(() => <FocusRoomFeedSettingsClient />)
+const renderSettings = () => render(() => <FocusRoomFeedSettingsContent />)
 
 beforeEach(() => {
   localStorage.clear()

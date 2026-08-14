@@ -67,7 +67,7 @@ const RecommendedFeedItem = (props: RecommendedFeedItemProps) => {
   )
 }
 
-export default function FocusRoomFeedSettingsClient() {
+export default function FocusRoomFeedSettingsContent() {
   const feeds = useFeedConnections()
   const runtime = useOptionalFocusRoomFeeds()
   const recommendedFeeds: ReadonlyArray<RecommendedFeed> = import.meta.env.DEV
