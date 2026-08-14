@@ -1,8 +1,10 @@
 import baseImage from '../../../assets/focus-room-layers/day-reading-focused/base.webp'
-import headImage from '../../../assets/focus-room-layers/day-reading-focused/layer-head.png'
+import eyeImage from '../../../assets/focus-room-layers/day-reading-focused/layer-eye-irises.png'
+import headImage from '../../../assets/focus-room-layers/day-reading-focused/layer-head-eye-base.png'
 import leftHandImage from '../../../assets/focus-room-layers/day-reading-focused/layer-hand-left.png'
 import rightHandImage from '../../../assets/focus-room-layers/day-reading-focused/layer-hand-right.png'
 import referenceImage from '../../../assets/concept-art/focus-room-day-reading-concept.webp'
+import {createEyeMotion} from './eye-motion'
 import type {PixiLayerSceneDefinition} from './layer-scene'
 import {FOCUS_ROOM_PREVIEW_CHANNELS} from './scene-catalog-channels'
 
@@ -23,6 +25,13 @@ export const DAY_READING_FOCUSED_LAYER_SCENE = {
         travel: {maximumSeconds: 2.4, minimumSeconds: 1.5},
       },
       source: headImage,
+    },
+    {
+      channel: FOCUS_ROOM_PREVIEW_CHANNELS.eyes,
+      id: 'eye-irises',
+      motion: createEyeMotion(),
+      parentAttachmentId: 'eyes',
+      source: eyeImage,
     },
     {
       channel: FOCUS_ROOM_PREVIEW_CHANNELS.hands,

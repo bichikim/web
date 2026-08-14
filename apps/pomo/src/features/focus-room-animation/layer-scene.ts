@@ -1,85 +1,39 @@
 import {Container, type Filter, Sprite, type Texture, Ticker} from 'pixi.js'
 
 import {MaskedPixelPushFilter} from './masked-pixel-push-filter'
+import {getLayerMotions, getMotionEffects} from './motion-definition'
+import {getMotionTarget, getNextMotionTarget} from './motion-targets'
 import {PixelPushFilter} from './pixel-push-filter'
 import {acquireTextureGroup, releaseTextureGroup, type TextureLease} from './texture-leases'
+import type {
+  PixiLayerSceneDefinition,
+  PixiLayerSceneState,
+  PixiSceneLayerDefinition,
+  PixiSceneMotion,
+  PixiScenePixelPush,
+  PixiScenePoint,
+  PixiScenePushEffect,
+  PixiSceneTravelRange,
+} from './layer-scene-definition'
 
-export interface PixiScenePoint {
-  readonly x: number
-  readonly y: number
-}
-
-export interface PixiSceneTravelRange {
-  readonly maximumSeconds: number
-  readonly minimumSeconds: number
-}
-
-export interface PixiSceneRectangle extends PixiScenePoint {
-  readonly height: number
-  readonly width: number
-}
-
-export interface PixiScenePixelPush {
-  readonly distance: PixiScenePoint
-  readonly featherPixels: number
-  readonly kind: 'pixel-push'
-  readonly region: PixiSceneRectangle
-}
-
-export interface PixiSceneMaskedPixelPush {
-  readonly distance: PixiScenePoint
-  readonly kind: 'masked-pixel-push'
-  readonly maskSource: string
-}
-
-export type PixiScenePushEffect = PixiSceneMaskedPixelPush | PixiScenePixelPush
-
-export interface PixiScenePivotRotation {
-  readonly channel?: string
-  readonly center: PixiScenePoint
-  readonly degrees: number
-  readonly kind: 'pivot-rotation'
-  readonly pixelPush?: readonly PixiScenePushEffect[]
-  readonly travel: PixiSceneTravelRange
-}
-
-export interface PixiScenePixelOscillation {
-  readonly channel?: string
-  readonly effects: readonly PixiScenePushEffect[]
-  readonly kind: 'pixel-oscillation'
-  readonly travel: PixiSceneTravelRange
-}
-
-export type PixiSceneMotion = PixiScenePivotRotation | PixiScenePixelOscillation
-
-export interface PixiSceneLayerDefinition {
-  readonly attachmentId?: string
-  readonly channel?: string
-  readonly id: string
-  readonly motion?: PixiSceneMotion
-  readonly motions?: readonly PixiSceneMotion[]
-  readonly opacity?: number
-  readonly source: string
-  readonly visible?: boolean
-}
-
-export interface PixiLayerSceneDefinition {
-  readonly background: string
-  readonly height: number
-  readonly id: string
-  readonly layers: readonly PixiSceneLayerDefinition[]
-  readonly width: number
-}
-
-export interface PixiSceneChannelState {
-  readonly opacity?: number
-  readonly visible?: boolean
-}
-
-export interface PixiLayerSceneState {
-  readonly animationEnabled: boolean
-  readonly channels?: Readonly<Record<string, PixiSceneChannelState>>
-}
+export type {
+  PixiLayerSceneDefinition,
+  PixiLayerSceneState,
+  PixiSceneChannelState,
+  PixiSceneDistanceTranslation,
+  PixiSceneLayerDefinition,
+  PixiSceneMaskedPixelPush,
+  PixiSceneMotion,
+  PixiScenePivotRotation,
+  PixiScenePixelOscillation,
+  PixiScenePixelPush,
+  PixiScenePoint,
+  PixiScenePushEffect,
+  PixiSceneRectangle,
+  PixiSceneTargetTranslation,
+  PixiSceneTranslation,
+  PixiSceneTravelRange,
+} from './layer-scene-definition'
 
 export interface PixiLayerSceneOptions {
   readonly onRender: () => void
@@ -87,8 +41,10 @@ export interface PixiLayerSceneOptions {
 }
 
 interface MotionState {
+  currentTarget: PixiScenePoint
   direction: 1 | -1
   elapsedSeconds: number
+  nextTarget: PixiScenePoint
   travelSeconds: number
 }
 
@@ -120,29 +76,7 @@ export interface CreateStaticLayerSceneOptions {
 
 const MILLISECONDS_PER_SECOND = 1000
 const DEGREES_PER_HALF_TURN = 180
-
 const clampUnit = (value: number) => Math.min(1, Math.max(0, value))
-
-const getLayerMotions = (layer: PixiSceneLayerDefinition) => {
-  if (layer.motion !== undefined) {
-    return [layer.motion]
-  }
-
-  return layer.motions ?? []
-}
-
-const getMotionEffects = (motion: PixiSceneMotion) => {
-  switch (motion.kind) {
-    case 'pivot-rotation':
-      return motion.pixelPush ?? []
-    case 'pixel-oscillation':
-      return motion.effects
-    default: {
-      const exhaustiveMotion: never = motion
-      throw new Error(`Unsupported scene motion: ${String(exhaustiveMotion)}`)
-    }
-  }
-}
 
 export const createStaticLayerScene = (
   options: CreateStaticLayerSceneOptions,
@@ -189,17 +123,7 @@ export class PixiLayerScene {
     }
 
     const layerSources = this.#definition.layers.map((layer) => layer.source)
-    const maskSources = [
-      ...new Set(
-        this.#definition.layers.flatMap((layer) =>
-          getLayerMotions(layer).flatMap((motion) =>
-            getMotionEffects(motion).flatMap((effect) =>
-              effect.kind === 'masked-pixel-push' ? [effect.maskSource] : [],
-            ),
-          ),
-        ),
-      ),
-    ]
+    const maskSources = this.#getMaskSources()
     let textures: readonly TextureLease[]
 
     try {
@@ -246,8 +170,9 @@ export class PixiLayerScene {
         })
       }
 
-      this.#layers = layers
-      this.update(state)
+      this.#attachChildLayers(layers)
+
+      this.#initializeLayers(layers, state)
     } catch (error: unknown) {
       this.#layers = layers
       this.destroy()
@@ -344,7 +269,15 @@ export class PixiLayerScene {
     const {state} = motion
     state.elapsedSeconds += deltaSeconds
     const travelProgress = Math.min(1, state.elapsedSeconds / state.travelSeconds)
-    const easedProgress = (1 - Math.cos(travelProgress * Math.PI)) / 2
+    const transitionSeconds =
+      motion.definition.kind === 'translation' ? motion.definition.transitionSeconds : undefined
+    const transitionStart =
+      transitionSeconds === undefined ? 0 : state.travelSeconds - transitionSeconds
+    const activeProgress =
+      transitionSeconds === undefined
+        ? travelProgress
+        : clampUnit((state.elapsedSeconds - transitionStart) / transitionSeconds)
+    const easedProgress = (1 - Math.cos(activeProgress * Math.PI)) / 2
     const motionProgress = state.direction === 1 ? easedProgress : 1 - easedProgress
 
     if (motion.definition.kind === 'pivot-rotation') {
@@ -352,22 +285,83 @@ export class PixiLayerScene {
         (motionProgress * (motion.definition.degrees * Math.PI)) / DEGREES_PER_HALF_TURN
     }
 
+    if (motion.definition.kind === 'translation') {
+      const {currentTarget, nextTarget} = state
+      const x = currentTarget.x + (nextTarget.x - currentTarget.x) * easedProgress
+      const y = currentTarget.y + (nextTarget.y - currentTarget.y) * easedProgress
+      layer.container.position.set(x, y)
+    }
+
     for (const filter of motion.pixelPushFilters) {
       filter.setProgress(motionProgress)
     }
 
     if (travelProgress === 1) {
-      state.direction = state.direction === 1 ? -1 : 1
+      if (motion.definition.kind === 'translation' && 'targets' in motion.definition) {
+        state.currentTarget = state.nextTarget
+        state.nextTarget = getNextMotionTarget(
+          motion.definition,
+          state.currentTarget,
+          state.direction,
+          this.#random,
+        )
+      } else {
+        state.direction = state.direction === 1 ? -1 : 1
+        state.currentTarget = state.nextTarget
+        state.nextTarget = getMotionTarget(motion.definition, state.direction)
+      }
       state.elapsedSeconds = 0
       state.travelSeconds = this.#randomDuration(motion.definition.travel)
     }
   }
 
-  #createMotionState(range: PixiSceneTravelRange): MotionState {
+  #createMotionState(motion: PixiSceneMotion): MotionState {
+    const currentTarget = getMotionTarget(motion, -1)
+
     return {
+      currentTarget,
       direction: 1,
       elapsedSeconds: 0,
-      travelSeconds: this.#randomDuration(range),
+      nextTarget: getNextMotionTarget(motion, currentTarget, 1, this.#random),
+      travelSeconds: this.#randomDuration(motion.travel),
+    }
+  }
+
+  #initializeLayers(layers: readonly LayerInstance[], state: PixiLayerSceneState) {
+    this.#layers = layers
+    this.#resetMotion()
+    this.update(state)
+  }
+
+  #getMaskSources() {
+    return [
+      ...new Set(
+        this.#definition.layers.flatMap((layer) =>
+          getLayerMotions(layer).flatMap((motion) =>
+            getMotionEffects(motion).flatMap((effect) =>
+              effect.kind === 'masked-pixel-push' ? [effect.maskSource] : [],
+            ),
+          ),
+        ),
+      ),
+    ]
+  }
+
+  #attachChildLayers(layers: readonly LayerInstance[]) {
+    const attachments = new Map(
+      layers.flatMap((layer) =>
+        layer.definition.attachmentId === undefined
+          ? []
+          : [[layer.definition.attachmentId, layer.container] as const],
+      ),
+    )
+
+    for (const layer of layers) {
+      const {parentAttachmentId} = layer.definition
+
+      if (parentAttachmentId !== undefined) {
+        attachments.get(parentAttachmentId)?.addChild(layer.container)
+      }
     }
   }
 
@@ -439,7 +433,7 @@ export class PixiLayerScene {
           definition: motion,
           enabled: true,
           pixelPushFilters: this.#createPushFilters(getMotionEffects(motion), maskTextures),
-          state: this.#createMotionState(motion.travel),
+          state: this.#createMotionState(motion),
         })
       }
 
@@ -486,6 +480,10 @@ export class PixiLayerScene {
         throw new Error(`Layer cannot define both motion and motions: ${layer.id}`)
       }
 
+      if (layer.parentAttachmentId !== undefined && !attachments.has(layer.parentAttachmentId)) {
+        throw new Error(`Missing parent layer attachment: ${layer.parentAttachmentId}`)
+      }
+
       const motions = getLayerMotions(layer)
       const pivotCount = motions.filter((motion) => motion.kind === 'pivot-rotation').length
 
@@ -503,6 +501,22 @@ export class PixiLayerScene {
 
       if (travel.minimumSeconds <= 0 || travel.maximumSeconds < travel.minimumSeconds) {
         throw new Error(`Invalid motion travel range for layer: ${layerId}`)
+      }
+
+      if (
+        motion.kind === 'translation' &&
+        motion.transitionSeconds !== undefined &&
+        (motion.transitionSeconds <= 0 || motion.transitionSeconds > travel.minimumSeconds)
+      ) {
+        throw new Error(`Invalid translation transition for layer: ${layerId}`)
+      }
+
+      if (
+        motion.kind === 'translation' &&
+        'targets' in motion &&
+        (motion.targets.length < 2 || new Set(motion.targets.map(({x, y}) => `${x}:${y}`)).size < 2)
+      ) {
+        throw new Error(`Translation targets must contain distinct positions: ${layerId}`)
       }
 
       if (motion.kind === 'pixel-oscillation' && motion.effects.length === 0) {
@@ -561,13 +575,20 @@ export class PixiLayerScene {
   }
 
   #resetMotionInstance(layer: LayerInstance, motion: MotionInstance) {
+    const currentTarget = getMotionTarget(motion.definition, -1)
     motion.state.direction = 1
     motion.state.elapsedSeconds = 0
+    motion.state.currentTarget = currentTarget
+    motion.state.nextTarget = getNextMotionTarget(motion.definition, currentTarget, 1, this.#random)
     motion.state.travelSeconds = this.#randomDuration(motion.definition.travel)
 
     if (motion.definition.kind === 'pivot-rotation') {
       layer.container.position.set(motion.definition.center.x, motion.definition.center.y)
       layer.container.rotation = 0
+    }
+
+    if (motion.definition.kind === 'translation') {
+      layer.container.position.set(currentTarget.x, currentTarget.y)
     }
 
     for (const filter of motion.pixelPushFilters) {

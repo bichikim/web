@@ -17,8 +17,9 @@
 base
   → 필요하면 움직이는 소품
   → head
+    → 움직이는 홍채·동공
+    → 눈 깜박임 패치
   → left hand / right hand
-  → 눈 깜박임 등 head에 부착되는 패치
   → 장면 전체 깊이 효과
 ```
 
@@ -197,6 +198,24 @@ const scene = {
 
 눈 깜박임 패치는 `attachmentId: 'eyes'`를 사용해 머리 움직임을 먼저 따라간 뒤 장면 전체 깊이 효과를 적용한다. 눈 패치가 머리카락까지 포함하면 깜박일 때 머리카락이 움직이므로, 양쪽 눈과 눈썹에 필요한 영역만 분리된 마스크로 추출한다.
 
+눈동자 이동은 머리 원본에서 홍채·동공·하이라이트만 추출하고, 같은 영역을 눈동자 없는 생성 결과로 채운 머리 베이스와 조합한다. 생성 결과 전체를 사용하지 않고 제거 마스크 안에서만 원본 머리에 합성한다. 제거 마스크는 홍채 잔상이 남지 않게 전체 윤곽을 덮고, 눈 레이어 추출 마스크는 피부·눈꺼풀·흰자가 움직이지 않게 더 좁게 만든다.
+
+```ts
+{
+  channel: 'eyes',
+  id: 'eye-irises',
+  motion: {
+    distance: {x: 1.5, y: 0.75},
+    kind: 'translation',
+    travel: {maximumSeconds: 2.8, minimumSeconds: 1.6},
+  },
+  parentAttachmentId: 'eyes',
+  source: eyeImage,
+}
+```
+
+`parentAttachmentId`로 머리에 붙이면 눈 이동 좌표는 해당 장면 안에서 독립적으로 유지하면서 머리 흔들림을 자동 상속한다. 깜박임 패치는 같은 머리 컨테이너에 나중에 추가되어 움직이는 눈동자 위를 덮는다.
+
 ## 9. 리뷰 페이지에서 검수한다
 
 `/focus-room-layer-review`에서 다음 순서로 확인한다.
@@ -233,6 +252,8 @@ pnpm --filter @apps/pomo typecheck
 - 공통 생성 장면 데이터: `src/features/focus-room-animation/generated-layer-scenes.ts`
 - 레이어 데이터 형식과 렌더러: `src/features/focus-room-animation/layer-scene.ts`
 - 특수 머리카락 움직임 예시: `src/features/focus-room-animation/day-writing-layer-scene.ts`
+- 눈동자 이동 예시: `src/features/focus-room-animation/day-reading-focused-layer-scene.ts`
+- 눈 자산 생성 스크립트: `scripts/create-focus-room-eye-motion-assets.mjs`
 - 리뷰 화면: `/focus-room-layer-review`
 - 실제 화면: `/focus-room`
 
