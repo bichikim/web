@@ -2,6 +2,7 @@ import {type Accessor, createEffect, createMemo, createSignal, onCleanup, onMoun
 import {z} from 'zod'
 
 import {readAutoStartPreference, writeAutoStartPreference} from './auto-start-storage'
+import {getPomodoroTimerEvents, type PomodoroTimerEvent} from './events'
 import {
   advancePomodoroTimer,
   createPomodoroTimerState,
@@ -68,6 +69,10 @@ export interface PomodoroTimerController {
   readonly state: Accessor<PomodoroTimerState>
 }
 
+export interface UsePomodoroTimerProps {
+  readonly onEvents?: (events: ReadonlyArray<PomodoroTimerEvent>) => void
+}
+
 const readStoredState = (): PomodoroTimerState | null => {
   try {
     const storedState = localStorage.getItem(STORAGE_KEY)
@@ -114,7 +119,7 @@ const writeStoredConfig = (config: PomodoroTimerConfig) => {
   }
 }
 
-export const usePomodoroTimer = (): PomodoroTimerController => {
+export const usePomodoroTimer = (props: UsePomodoroTimerProps = {}): PomodoroTimerController => {
   let autoStartRevision = 0
   const [config, setConfig] = createSignal<PomodoroTimerConfig>(POMODORO_TIMER_CONFIG)
   const [isAutoStartEnabled, setIsAutoStartEnabled] = createSignal(false)
@@ -123,6 +128,16 @@ export const usePomodoroTimer = (): PomodoroTimerController => {
   )
   const [now, setNow] = createSignal(0)
   const [isStorageReady, setIsStorageReady] = createSignal(false)
+
+  const applyState = (nextState: PomodoroTimerState) => {
+    const previousState = state()
+    setState(nextState)
+    const events = getPomodoroTimerEvents(previousState, nextState)
+
+    if (events.length > 0) {
+      props.onEvents?.(events)
+    }
+  }
 
   const refresh = () => {
     if (!isStorageReady()) {
@@ -137,7 +152,7 @@ export const usePomodoroTimer = (): PomodoroTimerController => {
 
     const currentTime = Date.now()
     setNow(currentTime)
-    setState(
+    applyState(
       synchronizePomodoroTimer(currentState, currentTime, config(), {
         autoStartNextPhase: isAutoStartEnabled(),
       }),
@@ -149,6 +164,7 @@ export const usePomodoroTimer = (): PomodoroTimerController => {
     const currentTime = Date.now()
     const storedConfig = readStoredConfig() ?? POMODORO_TIMER_CONFIG
     const storedState = readStoredState() ?? createPomodoroTimerState(storedConfig)
+    const wasRunningAtMount = storedState.status === 'running' && storedState.endsAt > currentTime
 
     setConfig(storedConfig)
     setNow(currentTime)
@@ -169,13 +185,20 @@ export const usePomodoroTimer = (): PomodoroTimerController => {
       const autoStartNextPhase = isAutoStartEnabled()
       const restoredAt = Date.now()
       setNow(restoredAt)
-      setState((currentState) =>
-        currentState === storedState
-          ? synchronizePomodoroTimer(storedState, restoredAt, storedConfig, {
-              autoStartNextPhase,
-            })
-          : currentState,
-      )
+      const currentState = state()
+
+      if (currentState === storedState) {
+        const synchronizedState = synchronizePomodoroTimer(storedState, restoredAt, storedConfig, {
+          autoStartNextPhase,
+        })
+
+        if (wasRunningAtMount) {
+          applyState(synchronizedState)
+        } else {
+          setState(synchronizedState)
+        }
+      }
+
       setIsStorageReady(true)
     }
 
@@ -203,29 +226,29 @@ export const usePomodoroTimer = (): PomodoroTimerController => {
   const onStart = () => {
     const currentTime = Date.now()
     setNow(currentTime)
-    setState((currentState) => startPomodoroTimer(currentState, currentTime))
+    applyState(startPomodoroTimer(state(), currentTime))
   }
   const onPause = () => {
     const currentTime = Date.now()
     setNow(currentTime)
-    setState((currentState) =>
-      pausePomodoroTimer(currentState, currentTime, config(), {
+    applyState(
+      pausePomodoroTimer(state(), currentTime, config(), {
         autoStartNextPhase: isAutoStartEnabled(),
       }),
     )
   }
   const onConfigChange = (nextConfig: PomodoroTimerConfig) => {
     setConfig(nextConfig)
-    setState((currentState) => stopPomodoroTimer(currentState, nextConfig))
+    applyState(stopPomodoroTimer(state(), nextConfig))
   }
   const onAutoStartChange = (isEnabled: boolean) => {
     autoStartRevision += 1
     setIsAutoStartEnabled(isEnabled)
     writeAutoStartPreference(isEnabled)
   }
-  const onNextPhase = () => setState((currentState) => advancePomodoroTimer(currentState, config()))
-  const onReset = () => setState(resetPomodoroTimer(config()))
-  const onStop = () => setState((currentState) => stopPomodoroTimer(currentState, config()))
+  const onNextPhase = () => applyState(advancePomodoroTimer(state(), config()))
+  const onReset = () => applyState(resetPomodoroTimer(config()))
+  const onStop = () => applyState(stopPomodoroTimer(state(), config()))
   const remainingSeconds = createMemo(() => getPomodoroRemainingSeconds(state(), now()))
   const progress = createMemo(() => getPomodoroProgress(state(), now(), config()))
 

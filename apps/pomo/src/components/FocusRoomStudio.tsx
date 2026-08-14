@@ -149,7 +149,7 @@ const FocusRoomStudioContent = () => {
   const [isSceneLoading, setIsSceneLoading] = createSignal(true)
   const [hasSceneRendered, setHasSceneRendered] = createSignal(false)
   const [isPlayerExpanded, setIsPlayerExpanded] = createSignal(false)
-  const pomoSay = usePomoSay({onBeforeSpeech: events.onStopEntryPlayback})
+  const pomoSay = usePomoSay({onBeforeSpeech: events.onStopDialoguePlayback})
   const time = createMemo(() => resolveScenePeriod(timeMode(), automaticPeriod()))
   const selectedScene = createMemo(() => getSceneAsset(time(), activity(), gaze()))
   const handleLoadingChange = (isLoading: boolean) => {
@@ -158,6 +158,11 @@ const FocusRoomStudioContent = () => {
     if (!isLoading) {
       setHasSceneRendered(true)
     }
+  }
+  const handlePomodoroEvents = (eventIds: Parameters<typeof events.playDialogueEvents>[0]) => {
+    events.playDialogueEvents(eventIds, pomoSay.stop).catch((error: unknown) => {
+      console.error('Unexpected pomodoro dialogue playback failure.', error)
+    })
   }
 
   onMount(() => {
@@ -199,13 +204,13 @@ const FocusRoomStudioContent = () => {
         </Show>
       </figure>
 
-      <FocusRoomPomodoro />
+      <FocusRoomPomodoro onEvents={handlePomodoroEvents} />
       <div
         class="focus-room-media-dock"
         data-dialogue-active={
           events.activeText() === null &&
           pomoSay.speechText() === null &&
-          !events.isEntryPlaybackBlocked()
+          !events.isDialoguePlaybackBlocked()
             ? undefined
             : ''
         }

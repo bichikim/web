@@ -11,7 +11,7 @@ const databaseMocks = vi.hoisted(() => {
   }
   const eventBindings = {
     delete: vi.fn(async () => undefined),
-    get: vi.fn(async () => undefined),
+    get: vi.fn<(event: string) => Promise<unknown>>(async () => undefined),
     put: vi.fn(async () => undefined),
   }
 
@@ -98,4 +98,27 @@ it('should roll back newly written audio when metadata persistence fails', async
   )
 
   expect(storageMocks.delete).toHaveBeenCalledWith('/__pomo/dialogue-audio/new-audio.wav')
+})
+
+it('should persist and remove bindings for every supported dialogue event', async () => {
+  databaseMocks.dialogues.get.mockResolvedValue({id: 'dialogue-id'})
+  databaseMocks.eventBindings.get.mockImplementation(async (event: string) =>
+    event === 'focus-start'
+      ? {dialogueId: 'dialogue-id', event: 'focus-start', version: 1}
+      : undefined,
+  )
+  const repository = createFocusRoomDialogueRepository()
+
+  await expect(repository.listEventBindings()).resolves.toEqual([
+    {dialogueId: 'dialogue-id', event: 'focus-start', version: 1},
+  ])
+  await repository.setEventBinding('break-end', 'dialogue-id')
+  expect(databaseMocks.eventBindings.put).toHaveBeenCalledWith({
+    dialogueId: 'dialogue-id',
+    event: 'break-end',
+    version: 1,
+  })
+
+  await repository.setEventBinding('break-end', null)
+  expect(databaseMocks.eventBindings.delete).toHaveBeenCalledWith('break-end')
 })

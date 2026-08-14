@@ -14,6 +14,7 @@ import {FocusRoomSwitch} from '../design-system/FocusRoomSwitch'
 import {
   formatPomodoroTime,
   type PomodoroPhase,
+  type PomodoroTimerEvent,
   type PomodoroTimerState,
   usePomodoroTimer,
 } from '../features/pomodoro-timer'
@@ -58,6 +59,10 @@ interface PomodoroSessionProgressProps {
   readonly onReset: () => void
   readonly positions: readonly number[]
   readonly sessionCount: number
+}
+
+export interface FocusRoomPomodoroProps {
+  readonly onEvents?: (events: ReadonlyArray<PomodoroTimerEvent>) => void
 }
 
 interface PomodoroQuickControlsProps {
@@ -161,8 +166,8 @@ const getCompletedInCycle = (state: PomodoroTimerState, focusSessionsPerCycle: n
   return state.completedFocusSessions % focusSessionsPerCycle
 }
 
-export const FocusRoomPomodoro = () => {
-  const timer = usePomodoroTimer()
+export const FocusRoomPomodoro = (props: FocusRoomPomodoroProps) => {
+  const timer = usePomodoroTimer({onEvents: (events) => props.onEvents?.(events)})
   const [isOpen, setIsOpen] = createSignal(false)
   const [isEditingDurations, setIsEditingDurations] = createSignal(false)
   const [actionContainer, setActionContainer] = createSignal<HTMLDivElement | null>(null)

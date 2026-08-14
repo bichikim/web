@@ -200,6 +200,32 @@ describe('FocusRoomPomodoro', () => {
     ).toBeDefined()
   })
 
+  it('should report focus and break lifecycle events without replaying starts on resume', async () => {
+    const onEvents = vi.fn()
+    render(() => <FocusRoomPomodoro onEvents={onEvents} />)
+    await vi.advanceTimersByTimeAsync(0)
+
+    const quickControls = screen.getByRole('group', {name: '포모도로 간편 조작'})
+    fireEvent.click(within(quickControls).getByRole('button', {name: '집중 시작'}))
+    expect(onEvents).toHaveBeenLastCalledWith(['focus-start'])
+
+    fireEvent.click(within(quickControls).getByRole('button', {name: '일시정지'}))
+    fireEvent.click(within(quickControls).getByRole('button', {name: '계속하기'}))
+    expect(onEvents).toHaveBeenCalledTimes(1)
+
+    fireEvent.click(screen.getByRole('button', {name: '포모도로 열기, 집중 중, 25:00'}))
+    const dialog = screen.getByRole('dialog', {name: '포모도로'})
+    fireEvent.click(within(dialog).getByRole('button', {name: '현재 세션 종료'}))
+    expect(onEvents).toHaveBeenLastCalledWith(['focus-end'])
+
+    fireEvent.click(within(dialog).getByRole('button', {name: '다음 단계로 이동'}))
+    fireEvent.click(within(dialog).getByRole('button', {name: '휴식 시작'}))
+    expect(onEvents).toHaveBeenLastCalledWith(['break-start'])
+
+    fireEvent.click(within(dialog).getByRole('button', {name: '현재 세션 종료'}))
+    expect(onEvents).toHaveBeenLastCalledWith(['break-end'])
+  })
+
   it('should restore automatic playback after the app view is remounted', async () => {
     const firstView = render(() => <FocusRoomPomodoro />)
     const firstQuickControls = screen.getByRole('group', {name: '포모도로 간편 조작'})
@@ -251,7 +277,8 @@ describe('FocusRoomPomodoro', () => {
       }),
     )
 
-    render(() => <FocusRoomPomodoro />)
+    const onEvents = vi.fn()
+    render(() => <FocusRoomPomodoro onEvents={onEvents} />)
     vi.advanceTimersByTime(1_500)
     resolvePreference('true')
     await vi.advanceTimersByTimeAsync(250)
@@ -260,5 +287,6 @@ describe('FocusRoomPomodoro', () => {
     expect(
       within(quickControls).getByRole('button', {name: '포모도로 열기, 휴식 중, 00:01'}),
     ).toBeDefined()
+    expect(onEvents).toHaveBeenCalledWith(['focus-end', 'break-start'])
   })
 })

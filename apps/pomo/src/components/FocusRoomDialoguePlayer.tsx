@@ -18,7 +18,7 @@ export const FocusRoomDialoguePlayer = (props: FocusRoomDialoguePlayerProps) => 
       return
     }
 
-    events.onStopEntryPlayback()
+    events.onStopDialoguePlayback()
   }
   const segmentPositions = () =>
     Array.from({length: events.activeSegmentCount()}, (_, position) => position)
@@ -77,17 +77,17 @@ export const FocusRoomDialoguePlayer = (props: FocusRoomDialoguePlayerProps) => 
           </div>
         )}
       </Show>
-      <Show when={!isExternalSpeech() && events.isEntryPlaybackBlocked()}>
+      <Show when={!isExternalSpeech() && events.isDialoguePlaybackBlocked()}>
         <button
           class="focus-room-dialogue-bubble focus-room-dialogue-bubble--play focus-room-static-focus-glass"
-          onClick={() => events.retryEntryPlayback()}
+          onClick={() => events.retryDialoguePlayback()}
           type="button"
         >
           <span aria-hidden="true" class="focus-room-dialogue-bubble__play-icon">
             <span class="i-tabler-volume size-5" />
           </span>
           <span>
-            <strong>입장 음성 재생</strong>
+            <strong>이벤트 음성 재생</strong>
             <small>브라우저에서 차단된 소리를 시작해요.</small>
           </span>
         </button>
