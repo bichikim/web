@@ -390,3 +390,54 @@ it('should refresh event bindings changed by another repository owner', async ()
   expect(events.entryDialogueIds()).toEqual(['second'])
   result.unmount()
 })
+
+it('should stop stale playback without replaying a changed event binding', async () => {
+  const entryDialogue = createDialogue('entry-dialogue', ['입장 대사'])
+  const nextDialogue = createDialogue('next-dialogue', ['새 입장 대사'])
+  const audio = document.createElement('audio')
+  const repository = createRepository(
+    [entryDialogue, nextDialogue],
+    [{dialogueIds: [entryDialogue.id], event: 'room-enter', version: 2}],
+  )
+  repositoryMocks.create.mockReturnValue(repository)
+  vi.stubGlobal(
+    'Audio',
+    vi.fn(function AudioMock() {
+      return audio
+    }),
+  )
+  vi.stubGlobal(
+    'requestAnimationFrame',
+    vi.fn(() => 1),
+  )
+  vi.stubGlobal('cancelAnimationFrame', vi.fn())
+  vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue()
+  const pause = vi.spyOn(HTMLMediaElement.prototype, 'pause')
+  const eventReference: {current?: FocusRoomEventContextValue} = {}
+  const Consumer = () => {
+    eventReference.current = useFocusRoomEvents()
+    return null
+  }
+  const result = render(() => (
+    <FocusRoomEventProvider>
+      <Consumer />
+    </FocusRoomEventProvider>
+  ))
+
+  await waitFor(() => expect(eventReference.current?.activeText()).toBe('입장 대사'))
+  const events = eventReference.current
+
+  if (events === undefined) {
+    throw new Error('Expected the focus room event context to be captured.')
+  }
+
+  pause.mockClear()
+  await events.setEventDialogue('room-enter', nextDialogue.id)
+  expect(events.eventDialogueIds()['room-enter']).toEqual([nextDialogue.id])
+  expect(events.activeText()).toBeNull()
+  expect(repository.setEventBinding).toHaveBeenCalledWith('room-enter', [nextDialogue.id])
+  expect(repository.getDialogue).not.toHaveBeenCalledWith(nextDialogue.id)
+  expect(pause).toHaveBeenCalledOnce()
+
+  result.unmount()
+})

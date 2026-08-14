@@ -194,6 +194,10 @@ export const FocusRoomEventProvider = (props: FocusRoomEventProviderProps) => {
     try {
       await update
       persistedBindings = updateEventBinding(persistedBindings, eventId, uniqueDialogueIds)
+
+      if (!isDisposed) {
+        playback.stop()
+      }
     } catch (error: unknown) {
       if (!isDisposed && currentRevision === bindingRevision) {
         setEventDialogueIds(persistedBindings)
