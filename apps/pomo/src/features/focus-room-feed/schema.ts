@@ -3,9 +3,13 @@ import {z} from 'zod'
 import {SUPERTONIC_VOICES, type SupertonicVoiceId} from '../supertonic'
 
 const MAXIMUM_FEED_URL_LENGTH = 2048
+export const DEFAULT_FEED_VOICE_ID = 'default'
 
-const supertonicVoiceIdSchema = z.custom<SupertonicVoiceId>((value) =>
-  SUPERTONIC_VOICES.some((voice) => voice.id === value),
+export type FeedVoiceId = typeof DEFAULT_FEED_VOICE_ID | SupertonicVoiceId
+
+const feedVoiceIdSchema = z.custom<FeedVoiceId>(
+  (value) =>
+    value === DEFAULT_FEED_VOICE_ID || SUPERTONIC_VOICES.some((voice) => voice.id === value),
 )
 const isSupportedFeedUrl = (value: string) => {
   try {
@@ -22,7 +26,7 @@ export interface FeedConnection {
   readonly updatedAt: string
   readonly url: string
   readonly version: 1
-  readonly voiceId: SupertonicVoiceId
+  readonly voiceId: FeedVoiceId
 }
 
 export const feedConnectionSchema: z.ZodType<FeedConnection> = z.object({
@@ -31,7 +35,7 @@ export const feedConnectionSchema: z.ZodType<FeedConnection> = z.object({
   updatedAt: z.string().datetime(),
   url: z.string().min(1).max(MAXIMUM_FEED_URL_LENGTH).refine(isSupportedFeedUrl),
   version: z.literal(1),
-  voiceId: supertonicVoiceIdSchema,
+  voiceId: feedVoiceIdSchema,
 })
 
 interface ValidFeedUrl {

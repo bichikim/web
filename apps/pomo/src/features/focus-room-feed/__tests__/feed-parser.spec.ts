@@ -50,6 +50,41 @@ it('should parse Atom links and content', () => {
   })
 })
 
+it('should parse RDF-style RSS items outside the channel element', () => {
+  const feed = parseFeedXml(
+    `<?xml version="1.0"?>
+      <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+        <channel><title>RDF 피드</title></channel>
+        <item><title>RDF 소식</title><link>https://example.com/rdf</link>
+          <description>요약</description></item>
+      </rdf:RDF>`,
+    'https://example.com/feed.rdf',
+  )
+
+  expect(feed.title).toBe('RDF 피드')
+  expect(feed.items[0]).toMatchObject({
+    id: 'https://example.com/rdf',
+    link: 'https://example.com/rdf',
+    title: 'RDF 소식',
+  })
+})
+
+it('should keep linkless feed items distinct with their title and publication time', () => {
+  const feed = parseFeedXml(
+    `<rss><channel><title>링크 없는 피드</title>
+      <item><title>첫 번째</title><pubDate>Fri, 14 Aug 2026 00:00:00 GMT</pubDate></item>
+      <item><title>두 번째</title><pubDate>Fri, 14 Aug 2026 00:05:00 GMT</pubDate></item>
+    </channel></rss>`,
+    'https://example.com/feed.xml',
+  )
+
+  expect(feed.items.map((item) => item.link)).toEqual(['', ''])
+  expect(feed.items.map((item) => item.id)).toEqual([
+    '첫 번째\u00002026-08-14T00:00:00.000Z',
+    '두 번째\u00002026-08-14T00:05:00.000Z',
+  ])
+})
+
 it('should extract article text without navigation or scripts', () => {
   expect(
     extractArticleText(

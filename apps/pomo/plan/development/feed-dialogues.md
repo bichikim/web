@@ -25,9 +25,9 @@
 
 ## 피드 연결 설정
 
-집중룸 설정에 `피드` 탭을 두고 사용자가 여러 피드 주소를 리스트로 추가한다. 각 연결에는 해당
-피드를 읽을 Supertonic 음성을 함께 선택하며, 저장된 목록에서도 음성을 변경하거나 연결을 삭제할
-수 있다.
+집중룸 설정에 `피드` 탭을 두고 사용자가 여러 피드 주소를 리스트로 추가한다. 음성 모델은 `대화`
+탭의 자동 음성 생성 설정을 공통으로 사용하고, 저장된 목록에서는 피드별 음성을 변경할 수 있다.
+피드 음성의 `기본값`은 대화 탭의 자동 음성 생성 목소리를 따라간다.
 
 ```ts
 interface FeedConnection {
@@ -36,7 +36,7 @@ interface FeedConnection {
   readonly updatedAt: string
   readonly url: string
   readonly version: 1
-  readonly voiceId: SupertonicVoiceId
+  readonly voiceId: 'default' | SupertonicVoiceId
 }
 ```
 
@@ -63,8 +63,8 @@ Atom http://localhost:<port>/__dev/feeds/atom.xml
 - 각 항목의 제목과 본문은 `안녕하세요 YYYY-MM-DD HH:mm:ss KST` 형식이다.
 - 같은 5분 구간에서는 항목 ID와 문서 내용이 유지되어 중복 감지 테스트가 가능하다.
 - 응답은 캐시하지 않아 매 요청에서 현재 5분 구간을 바로 반영한다.
-- 개발 환경의 빈 피드 목록에는 RSS와 Atom을 추천 피드로 표시한다. 각 추천 항목에서 음성을
-  선택하고 `추가`하면 일반 저장 피드 항목으로 전환되며, 추가하지 않은 추천 항목은 계속 표시한다.
+- 개발 환경의 빈 피드 목록에는 RSS와 Atom을 추천 피드로 표시한다. 추천 항목을 `추가`하면 기본값
+  음성으로 일반 저장 피드 항목으로 전환되며, 추가하지 않은 추천 항목은 계속 표시한다.
 
 ## 원문 정책
 

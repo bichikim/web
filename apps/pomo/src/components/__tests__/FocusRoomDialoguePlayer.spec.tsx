@@ -39,10 +39,12 @@ const createEvents = (
   refreshDialogues: vi.fn(async () => undefined),
   retryDialoguePlayback: vi.fn(),
   retryEntryPlayback: vi.fn(),
+  scheduledDialogueCount: () => 0,
   setEntryDialogue: vi.fn(async () => undefined),
   setEntryDialogues: vi.fn(async () => undefined),
   setEventDialogue: vi.fn(async () => undefined),
   setEventDialogues: vi.fn(async () => undefined),
+  skipDialoguePlayback: vi.fn(),
   ...overrides,
 })
 
@@ -52,12 +54,15 @@ afterEach(() => {
 
 it('should show segment progress and stop the current dialogue playback', () => {
   const onStopDialoguePlayback = vi.fn()
+  const skipDialoguePlayback = vi.fn()
   vi.mocked(useFocusRoomEvents).mockReturnValue(
     createEvents({
       activeSegmentCount: () => 3,
       activeSegmentPosition: () => 1,
       activeText: () => '집중을 시작해 볼까요?',
       onStopDialoguePlayback,
+      scheduledDialogueCount: () => 3,
+      skipDialoguePlayback,
     }),
   )
 
@@ -72,7 +77,9 @@ it('should show segment progress and stop the current dialogue playback', () => 
   expect(
     result.container.querySelectorAll('.focus-room-dialogue-bubble__progress-dot[data-complete]'),
   ).toHaveLength(2)
-  fireEvent.click(screen.getByRole('button', {name: '음성 중지'}))
+  fireEvent.click(screen.getByRole('button', {name: '대화 건너뛰기'}))
+  expect(skipDialoguePlayback).toHaveBeenCalledOnce()
+  fireEvent.click(screen.getByRole('button', {name: '3개 연결 음성 모두 중지'}))
   expect(onStopDialoguePlayback).toHaveBeenCalledOnce()
 })
 
@@ -95,10 +102,11 @@ it('should route the stop action to an external speech owner', () => {
       onStopExternalSpeech={onStopExternalSpeech}
     />
   ))
-  fireEvent.click(screen.getByRole('button', {name: '음성 중지'}))
+  fireEvent.click(screen.getByRole('button', {name: '1개 연결 음성 모두 중지'}))
 
   expect(screen.getByText('WebMCP 대사').textContent).toBe('WebMCP 대사')
   expect(screen.queryByRole('img', {name: /번째 대사 읽는 중/})).toBeNull()
+  expect(screen.queryByRole('button', {name: '대화 건너뛰기'})).toBeNull()
   expect(screen.queryByRole('button', {name: /이벤트 음성 재생/})).toBeNull()
   expect(onStopExternalSpeech).toHaveBeenCalledOnce()
   expect(onStopDialoguePlayback).not.toHaveBeenCalled()

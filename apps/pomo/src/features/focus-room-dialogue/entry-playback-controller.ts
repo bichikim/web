@@ -28,6 +28,8 @@ export interface EntryPlaybackController {
     options: PlayFocusRoomDialogueSequenceOptions,
   ) => Promise<void>
   readonly retry: () => void
+  readonly scheduledDialogueCount: Accessor<number>
+  readonly skip: () => void
   readonly stop: () => void
 }
 
@@ -40,6 +42,7 @@ interface PlaybackQueueRequest {
   readonly reject: (error: unknown) => void
   readonly repository: FocusRoomDialogueRepository
   readonly resolve: () => void
+  nextDialoguePosition: number
   settled: boolean
 }
 
@@ -77,6 +80,7 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
   const [activeSegmentPosition, setActiveSegmentPosition] = createSignal<number | null>(null)
   const [activeText, setActiveText] = createSignal<string | null>(null)
   const [isBlocked, setIsBlocked] = createSignal(false)
+  const [scheduledDialogueCount, setScheduledDialogueCount] = createSignal(0)
   let animationFrame: number | null = null
   let audio: HTMLAudioElement | null = null
   let audioUrl: string | null = null
@@ -88,6 +92,19 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
   let playbackGeneration = 0
   let resolveCompletion: ((completion: PlaybackCompletion) => void) | null = null
   const requestQueue: Array<PlaybackQueueRequest> = []
+
+  const updateScheduledDialogueCount = () => {
+    const activeCount =
+      activeRequest === null
+        ? 0
+        : activeRequest.dialogueIds.length - activeRequest.nextDialoguePosition
+    const queuedCount = requestQueue.reduce(
+      (count, request) => count + request.dialogueIds.length,
+      0,
+    )
+
+    setScheduledDialogueCount(activeCount + queuedCount)
+  }
 
   const cancelFrame = () => {
     if (animationFrame !== null) {
@@ -236,6 +253,18 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
       },
       {once: true},
     )
+    currentAudio.addEventListener(
+      'error',
+      () => {
+        if (audio !== currentAudio) {
+          return
+        }
+
+        settleCompletion('failed')
+        clearPlayback()
+      },
+      {once: true},
+    )
     await start()
     return completion
   }
@@ -244,11 +273,13 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
     request: PlaybackQueueRequest,
     generation: number,
   ): Promise<PlaybackCompletion> => {
-    for (const dialogueId of request.dialogueIds) {
+    for (const [position, dialogueId] of request.dialogueIds.entries()) {
       if (isDisposed || generation !== playbackGeneration) {
         return 'cancelled'
       }
 
+      request.nextDialoguePosition = position
+      updateScheduledDialogueCount()
       const completion = await playSequenceItem(
         request.repository,
         dialogueId,
@@ -259,6 +290,8 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
       switch (completion) {
         case 'ended':
         case 'missing':
+          request.nextDialoguePosition = position + 1
+          updateScheduledDialogueCount()
           break
         case 'cancelled':
         case 'failed':
@@ -276,6 +309,7 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
 
   const processQueueRequest = async (request: PlaybackQueueRequest) => {
     activeRequest = request
+    updateScheduledDialogueCount()
     const generation = playbackGeneration
 
     try {
@@ -291,6 +325,7 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
 
     if (activeRequest === request) {
       activeRequest = null
+      updateScheduledDialogueCount()
     }
   }
 
@@ -333,6 +368,7 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
     new Promise<void>((resolve, reject) => {
       requestQueue.push({
         dialogueIds: [...options.dialogueIds],
+        nextDialoguePosition: 0,
         onDialogueStart: options.onDialogueStart,
         onSequenceStop: options.onSequenceStop,
         reject,
@@ -340,6 +376,7 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
         resolve,
         settled: false,
       })
+      updateScheduledDialogueCount()
       drainQueue().catch((error: unknown) => {
         console.error('Unexpected dialogue queue failure.', error)
       })
@@ -351,6 +388,7 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
     const requests = activeRequest === null ? [...requestQueue] : [activeRequest, ...requestQueue]
     requestQueue.length = 0
     activeRequest = null
+    updateScheduledDialogueCount()
     finishPlayback(completion)
     requests.forEach((request) => {
       settleQueueRequest(request, notifyStop).catch((error: unknown) => {
@@ -360,6 +398,13 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
   }
 
   const cancel = () => finishQueue(false)
+  const skip = () => {
+    if (audio === null || isDisposed) {
+      return
+    }
+
+    finishPlayback('ended')
+  }
   const stop = () => finishQueue(true)
 
   return {
@@ -375,7 +420,8 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
     isBlocked,
     isDialogueScheduled: (dialogueId) =>
       dialogue?.id === dialogueId ||
-      activeRequest?.dialogueIds.includes(dialogueId) === true ||
+      activeRequest?.dialogueIds.slice(activeRequest.nextDialoguePosition).includes(dialogueId) ===
+        true ||
       requestQueue.some((request) => request.dialogueIds.includes(dialogueId)),
     playSequence: enqueue,
     prepare: (repository, dialogueId) =>
@@ -393,6 +439,8 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
         console.error('Unexpected focus room dialogue playback failure.', error)
       })
     },
+    scheduledDialogueCount,
+    skip,
     stop,
   }
 }

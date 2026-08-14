@@ -51,6 +51,8 @@ export interface FocusRoomEventContextValue {
   readonly refreshDialogues: () => Promise<void>
   readonly retryDialoguePlayback: () => void
   readonly retryEntryPlayback: () => void
+  readonly scheduledDialogueCount: Accessor<number>
+  readonly skipDialoguePlayback: () => void
   readonly setEntryDialogue: (dialogueId: string | null) => Promise<void>
   readonly setEntryDialogues: (dialogueIds: ReadonlyArray<string>) => Promise<void>
   readonly setEventDialogue: (eventId: DialogueEventId, dialogueId: string | null) => Promise<void>
@@ -303,12 +305,14 @@ export const FocusRoomEventProvider = (props: FocusRoomEventProviderProps) => {
     },
     retryDialoguePlayback: playback.retry,
     retryEntryPlayback: playback.retry,
+    scheduledDialogueCount: playback.scheduledDialogueCount,
     setEntryDialogue: (dialogueId) =>
       setEventDialogues(FOCUS_ROOM_ENTRY_EVENT, dialogueId === null ? [] : [dialogueId]),
     setEntryDialogues: (dialogueIds) => setEventDialogues(FOCUS_ROOM_ENTRY_EVENT, dialogueIds),
     setEventDialogue: (eventId, dialogueId) =>
       setEventDialogues(eventId, dialogueId === null ? [] : [dialogueId]),
     setEventDialogues,
+    skipDialoguePlayback: playback.skip,
   }
 
   onMount(() => {

@@ -1,18 +1,22 @@
 import {Tabs} from '@kobalte/core/tabs'
-import {createMemo, createSignal, For, Show} from 'solid-js'
+import {createMemo, For, Show} from 'solid-js'
 
 import {FocusRoomSelect, type FocusRoomSelectOption} from '../design-system/FocusRoomSelect'
 import {
+  DEFAULT_FEED_VOICE_ID,
   type FeedConnectionController,
+  type FeedVoiceId,
   useFeedConnections,
   useOptionalFocusRoomFeeds,
 } from '../features/focus-room-feed'
-import {SUPERTONIC_VOICES, type SupertonicVoiceId} from '../features/supertonic'
+import {SUPERTONIC_VOICES} from '../features/supertonic'
 import {FocusRoomFeedDialogueList} from './FocusRoomFeedDialogueList'
 import './FocusRoomFeedSettings.css'
 
-const VOICE_OPTIONS: ReadonlyArray<FocusRoomSelectOption<SupertonicVoiceId>> =
-  SUPERTONIC_VOICES.map((voice) => ({label: voice.label, value: voice.id}))
+const VOICE_OPTIONS: ReadonlyArray<FocusRoomSelectOption<FeedVoiceId>> = [
+  {label: '기본값', value: DEFAULT_FEED_VOICE_ID},
+  ...SUPERTONIC_VOICES.map((voice) => ({label: voice.label, value: voice.id})),
+]
 const RECOMMENDED_DEV_FEEDS = [
   {
     description: '5분마다 현재 시각으로 새 RSS 항목을 만들어요.',
@@ -41,8 +45,6 @@ interface RecommendedFeedItemProps {
 }
 
 const RecommendedFeedItem = (props: RecommendedFeedItemProps) => {
-  const [voiceId, setVoiceId] = createSignal<SupertonicVoiceId>('Yuna')
-
   return (
     <li data-recommended>
       <div class="focus-room-feed-settings__address">
@@ -52,17 +54,10 @@ const RecommendedFeedItem = (props: RecommendedFeedItemProps) => {
           <small>{props.feed.description}</small>
         </span>
       </div>
-      <FocusRoomSelect
-        accessibleLabel={props.feed.label}
-        label="음성"
-        onChange={setVoiceId}
-        options={VOICE_OPTIONS}
-        value={voiceId()}
-      />
       <button
         aria-label={`${props.feed.label} 추천 피드 추가`}
         class="focus-room-feed-settings__add"
-        onClick={() => props.onAdd(props.feed.url, voiceId())}
+        onClick={() => props.onAdd(props.feed.url)}
         type="button"
       >
         <span aria-hidden="true" class="i-tabler-plus size-4" />
@@ -96,7 +91,7 @@ export default function FocusRoomFeedSettingsClient() {
       <section class="focus-room-feed-settings" aria-labelledby="focus-room-feeds-title">
         <div class="focus-room-feed-settings__heading">
           <h3 id="focus-room-feeds-title">구독 피드</h3>
-          <p>피드 주소마다 새 글을 읽어 줄 음성을 선택하세요.</p>
+          <p>대화 탭의 공통 모델과 각 피드에 저장된 음성으로 새 글을 읽어 줘요.</p>
         </div>
 
         <form class="focus-room-feed-settings__form" onSubmit={handleSubmit}>
@@ -112,13 +107,6 @@ export default function FocusRoomFeedSettingsClient() {
               value={feeds.draftUrl()}
             />
           </label>
-          <FocusRoomSelect
-            accessibleLabel="새 피드"
-            label="음성"
-            onChange={feeds.onDraftVoiceChange}
-            options={VOICE_OPTIONS}
-            value={feeds.draftVoiceId()}
-          />
           <button class="focus-room-feed-settings__add" disabled={feeds.isLoading()} type="submit">
             <span aria-hidden="true" class="i-tabler-plus size-4" />
             추가
@@ -139,7 +127,7 @@ export default function FocusRoomFeedSettingsClient() {
             fallback={
               <Show when={availableRecommendations().length === 0}>
                 <p class="focus-room-feed-settings__empty">
-                  아직 저장된 피드가 없어요. 주소와 음성을 선택해 추가해 주세요.
+                  아직 저장된 피드가 없어요. 피드 주소를 추가해 주세요.
                 </p>
               </Show>
             }
@@ -155,7 +143,8 @@ export default function FocusRoomFeedSettingsClient() {
                       </span>
                     </div>
                     <FocusRoomSelect
-                      accessibleLabel={`${connection.url} 피드`}
+                      accessibleLabel={`${connection.url} 피드 음성`}
+                      hideLabel
                       label="음성"
                       onChange={(voiceId) => feeds.onVoiceChange(connection.id, voiceId)}
                       options={VOICE_OPTIONS}

@@ -1,4 +1,4 @@
-import {createSignal, For, Show} from 'solid-js'
+import {createMemo, createSignal, For, Show} from 'solid-js'
 
 import type {FocusRoomFeedController} from '../features/focus-room-feed'
 
@@ -6,6 +6,7 @@ const MINUTES_PER_HOUR = 60
 const SECONDS_PER_MINUTE = 60
 const MILLISECONDS_PER_SECOND = 1000
 const HOUR_MS = MINUTES_PER_HOUR * SECONDS_PER_MINUTE * MILLISECONDS_PER_SECOND
+const DIALOGUE_PAGE_SIZE = 20
 
 export interface FocusRoomFeedDialogueListProps {
   readonly controller: FocusRoomFeedController
@@ -23,8 +24,15 @@ const formatRemaining = (value: string) => {
 }
 
 export const FocusRoomFeedDialogueList = (props: FocusRoomFeedDialogueListProps) => {
+  const [visibleDialogueCount, setVisibleDialogueCount] = createSignal(DIALOGUE_PAGE_SIZE)
   const [pendingDeleteId, setPendingDeleteId] = createSignal<string | null>(null)
   const [deleteError, setDeleteError] = createSignal<string | null>(null)
+  const visibleDialogues = createMemo(() =>
+    props.controller.dialogues().slice(0, visibleDialogueCount()),
+  )
+  const hiddenDialogueCount = () =>
+    Math.max(0, props.controller.dialogues().length - visibleDialogueCount())
+  const nextDialogueCount = () => Math.min(DIALOGUE_PAGE_SIZE, hiddenDialogueCount())
   const handleListen = (dialogueId: string) => {
     props.controller.listen(dialogueId).catch((error: unknown) => {
       console.error('Failed to play saved feed dialogue.', error)
@@ -68,7 +76,7 @@ export const FocusRoomFeedDialogueList = (props: FocusRoomFeedDialogueListProps)
           aria-labelledby="focus-room-feed-dialogues-title"
           class="focus-room-feed-settings__dialogue-list"
         >
-          <For each={props.controller.dialogues()}>
+          <For each={visibleDialogues()}>
             {(item) => (
               <li>
                 <span class="focus-room-feed-settings__dialogue-copy">
@@ -123,6 +131,15 @@ export const FocusRoomFeedDialogueList = (props: FocusRoomFeedDialogueListProps)
             )}
           </For>
         </ul>
+        <Show when={hiddenDialogueCount() > 0}>
+          <button
+            class="focus-room-feed-settings__load-more"
+            onClick={() => setVisibleDialogueCount((count) => count + DIALOGUE_PAGE_SIZE)}
+            type="button"
+          >
+            이전 피드 대화 {nextDialogueCount()}개 더 보기
+          </button>
+        </Show>
       </Show>
       <Show when={deleteError()}>
         {(message) => (

@@ -1,6 +1,6 @@
 // oxlint-disable no-await-in-loop -- A response stream must be read and size-checked in order.
-import type {SupertonicModelId} from '../supertonic'
-import type {FeedConnection} from './schema'
+import type {SupertonicModelId, SupertonicVoiceId} from '../supertonic'
+import {DEFAULT_FEED_VOICE_ID, type FeedConnection} from './schema'
 import {
   type FeedDialogueJob,
   type FeedItemRecord,
@@ -38,6 +38,7 @@ export interface FeedFetcher {
 export interface SynchronizeFeedsOptions {
   readonly connections: ReadonlyArray<FeedConnection>
   readonly createId: () => string
+  readonly defaultVoiceId: SupertonicVoiceId
   readonly fetcher: FeedFetcher
   readonly modelId: SupertonicModelId
   readonly now: Date
@@ -150,6 +151,7 @@ const sortItems = (items: ReadonlyArray<ParsedFeedItem>) =>
 interface ProcessFeedItemOptions {
   readonly connection: FeedConnection
   readonly createId: () => string
+  readonly defaultVoiceId: SupertonicVoiceId
   readonly feedTitle: string
   readonly fetcher: FeedFetcher
   readonly item: ParsedFeedItem
@@ -238,7 +240,10 @@ const processFeedItem = async (options: ProcessFeedItemOptions): Promise<string 
     status: 'queued',
     updatedAt: options.nowIso,
     version: 1,
-    voiceId: options.connection.voiceId,
+    voiceId:
+      options.connection.voiceId === DEFAULT_FEED_VOICE_ID
+        ? options.defaultVoiceId
+        : options.connection.voiceId,
   } satisfies FeedDialogueJob
   await options.repository.queue(job, item)
   return jobId
@@ -329,6 +334,7 @@ const synchronizeConnection = async (
       processFeedItem({
         connection,
         createId: options.createId,
+        defaultVoiceId: options.defaultVoiceId,
         feedTitle: feed.title,
         fetcher: options.fetcher,
         item,

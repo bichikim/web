@@ -215,6 +215,68 @@ it('should append feed playback behind active event dialogues', async () => {
   result.unmount()
 })
 
+it('should reduce the connected count and skip only the active dialogue', async () => {
+  const dialogues = [createDialogue('first'), createDialogue('second'), createDialogue('third')]
+  const repository = createRepository(dialogues)
+  const audioElements = dialogues.map(() => document.createElement('audio'))
+  let audioIndex = 0
+  repositoryMocks.create.mockReturnValue(repository)
+  vi.stubGlobal(
+    'Audio',
+    vi.fn(function AudioMock() {
+      const audio = audioElements[audioIndex]
+      audioIndex += 1
+      return audio
+    }),
+  )
+  const playAudio = vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue()
+  const {events, result} = await renderContext()
+  const playback = events.playDialogueSequence({
+    dialogueIds: dialogues.map((dialogue) => dialogue.id),
+    onDialogueStart: vi.fn(),
+    onSequenceStop: vi.fn(),
+  })
+
+  await waitFor(() => expect(playAudio).toHaveBeenCalledTimes(1))
+  expect(events.scheduledDialogueCount()).toBe(3)
+  audioElements[0]?.dispatchEvent(new Event('ended'))
+  await waitFor(() => expect(playAudio).toHaveBeenCalledTimes(2))
+  expect(events.scheduledDialogueCount()).toBe(2)
+
+  events.skipDialoguePlayback()
+  await waitFor(() => expect(playAudio).toHaveBeenCalledTimes(3))
+  expect(events.scheduledDialogueCount()).toBe(1)
+  audioElements[2]?.dispatchEvent(new Event('ended'))
+  await playback
+
+  expect(events.scheduledDialogueCount()).toBe(0)
+  result.unmount()
+})
+
+it('should release a dialogue queue after a media playback error', async () => {
+  const dialogue = createDialogue('broken')
+  const repository = createRepository([dialogue])
+  const audio = document.createElement('audio')
+  repositoryMocks.create.mockReturnValue(repository)
+  vi.stubGlobal(
+    'Audio',
+    vi.fn(function AudioMock() {
+      return audio
+    }),
+  )
+  vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue()
+  const {events, result} = await renderContext()
+  const playback = events.playDialogue('broken')
+
+  await waitFor(() => expect(events.activeDialogueId()).toBe('broken'))
+  audio.dispatchEvent(new Event('error'))
+  await playback
+
+  expect(events.activeDialogueId()).toBeNull()
+  expect(events.scheduledDialogueCount()).toBe(0)
+  result.unmount()
+})
+
 it('should queue every dialogue from simultaneous pomodoro events', async () => {
   const dialogues = [createDialogue('focus-end'), createDialogue('break-start')]
   const repository = createRepository(dialogues, [

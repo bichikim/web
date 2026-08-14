@@ -32,7 +32,7 @@ beforeEach(() => {
   ))
 })
 
-it('should add, restore, and delete a feed connection with its voice', () => {
+it('should add, update, restore, and delete a feed connection with its voice', () => {
   const firstRender = renderSettings()
   const address = 'https://example.com/feed.xml'
 
@@ -42,8 +42,17 @@ it('should add, restore, and delete a feed connection with its voice', () => {
   fireEvent.click(screen.getByRole('button', {name: '추가'}))
 
   expect(screen.getByText(address)).toBeDefined()
-  expect(screen.getByText('피드 주소와 음성을 저장했어요.')).toBeDefined()
-  expect(localStorage.getItem('pomo:focus-room-feed-connections:v1')).toContain('"voiceId":"Yuna"')
+  expect(screen.getByText('피드 주소를 저장했어요.')).toBeDefined()
+  expect(screen.getByRole('option', {name: '기본값'})).toBeDefined()
+  expect(localStorage.getItem('pomo:focus-room-feed-connections:v1')).toContain(
+    '"voiceId":"default"',
+  )
+
+  fireEvent.change(screen.getByRole('combobox', {name: `음성 ${address} 피드 음성`}), {
+    target: {value: 'M2'},
+  })
+  expect(screen.getByText('피드 음성을 변경했어요.')).toBeDefined()
+  expect(localStorage.getItem('pomo:focus-room-feed-connections:v1')).toContain('"voiceId":"M2"')
 
   firstRender.unmount()
   renderSettings()
@@ -75,19 +84,16 @@ it('should replace an added recommendation with a stored feed item', () => {
   renderSettings()
   const recommendedAddress = new URL('/__dev/feeds/rss.xml', window.location.origin).href
 
-  expect(
-    screen.queryByText('아직 저장된 피드가 없어요. 주소와 음성을 선택해 추가해 주세요.'),
-  ).toBeNull()
+  expect(screen.queryByText('아직 저장된 피드가 없어요. 피드 주소를 추가해 주세요.')).toBeNull()
   expect(screen.getByText('Pomo 5분 RSS')).toBeDefined()
   expect(screen.getByText('Pomo 5분 Atom')).toBeDefined()
 
-  fireEvent.change(screen.getByRole('combobox', {name: '음성 Pomo 5분 RSS'}), {
-    target: {value: 'M2'},
-  })
   fireEvent.click(screen.getByRole('button', {name: 'Pomo 5분 RSS 추천 피드 추가'}))
 
   expect(screen.queryByText('Pomo 5분 RSS')).toBeNull()
   expect(screen.getByText('Pomo 5분 Atom')).toBeDefined()
   expect(screen.getByText(recommendedAddress)).toBeDefined()
-  expect(localStorage.getItem('pomo:focus-room-feed-connections:v1')).toContain('"voiceId":"M2"')
+  expect(localStorage.getItem('pomo:focus-room-feed-connections:v1')).toContain(
+    '"voiceId":"default"',
+  )
 })

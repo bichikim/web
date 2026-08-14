@@ -13,8 +13,9 @@ const CONNECTION: FeedConnection = {
   updatedAt: '2026-08-14T00:00:00.000Z',
   url: 'https://example.com/feed.xml',
   version: 1,
-  voiceId: 'Yuna',
+  voiceId: 'M2',
 }
+const DEFAULT_CONNECTION: FeedConnection = {...CONNECTION, id: 'feed-default', voiceId: 'default'}
 
 const createRepository = () => {
   const items: Array<FeedItemRecord> = []
@@ -63,6 +64,7 @@ it('should queue only the newest item on the first subscription sync', async () 
   const summary = await synchronizeFeeds({
     connections: [CONNECTION],
     createId: () => 'job-1',
+    defaultVoiceId: 'Yuna',
     fetcher: vi.fn(
       async () =>
         new Response(
@@ -72,14 +74,19 @@ it('should queue only the newest item on the first subscription sync', async () 
           ]),
         ),
     ),
-    modelId: 'full',
+    modelId: 'int8',
     now: new Date('2026-08-14T00:06:00.000Z'),
     repository,
   })
 
   expect(summary).toEqual({failures: [], queuedJobIds: ['job-1'], successfulConnections: 1})
   expect(jobs).toHaveLength(1)
-  expect(jobs[0]).toMatchObject({feedItemId: 'new', status: 'queued', voiceId: 'Yuna'})
+  expect(jobs[0]).toMatchObject({
+    feedItemId: 'new',
+    modelId: 'int8',
+    status: 'queued',
+    voiceId: 'M2',
+  })
   expect(items).toEqual(
     expect.arrayContaining([
       expect.objectContaining({feedItemId: 'old', status: 'ignored'}),
@@ -88,11 +95,28 @@ it('should queue only the newest item on the first subscription sync', async () 
   )
 })
 
+it('should resolve a default feed voice from the automatic dialogue settings', async () => {
+  const {jobs, repository} = createRepository()
+
+  await synchronizeFeeds({
+    connections: [DEFAULT_CONNECTION],
+    createId: () => 'default-voice-job',
+    defaultVoiceId: 'Yuna',
+    fetcher: vi.fn(async () => new Response(createRss([{id: 'new', minute: '05'}]))),
+    modelId: 'int8',
+    now: new Date('2026-08-14T00:06:00.000Z'),
+    repository,
+  })
+
+  expect(jobs[0]).toMatchObject({modelId: 'int8', voiceId: 'Yuna'})
+})
+
 it('should ignore feed items published more than three days ago', async () => {
   const {items, jobs, repository} = createRepository()
   const summary = await synchronizeFeeds({
     connections: [CONNECTION],
     createId: () => 'unused',
+    defaultVoiceId: 'Yuna',
     fetcher: vi.fn(
       async () =>
         new Response(`<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/">
@@ -100,7 +124,7 @@ it('should ignore feed items published more than three days ago', async () => {
           <link>https://example.com/stale</link><pubDate>Mon, 10 Aug 2026 00:00:00 GMT</pubDate>
           <content:encoded>지난 소식 본문</content:encoded></item></channel></rss>`),
     ),
-    modelId: 'full',
+    modelId: 'int8',
     now: new Date('2026-08-14T00:00:01.000Z'),
     repository,
   })
@@ -119,6 +143,7 @@ it('should accept a feed item published exactly three days ago', async () => {
   const summary = await synchronizeFeeds({
     connections: [CONNECTION],
     createId: () => 'job-at-cutoff',
+    defaultVoiceId: 'Yuna',
     fetcher: vi.fn(
       async () =>
         new Response(`<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/">
@@ -126,7 +151,7 @@ it('should accept a feed item published exactly three days ago', async () => {
           <link>https://example.com/cutoff</link><pubDate>Tue, 11 Aug 2026 00:00:00 GMT</pubDate>
           <content:encoded>3일 전 소식 본문</content:encoded></item></channel></rss>`),
     ),
-    modelId: 'full',
+    modelId: 'int8',
     now: new Date('2026-08-14T00:00:00.000Z'),
     repository,
   })
@@ -141,13 +166,14 @@ it('should retain an over-limit item without creating a partial speech job', asy
   await synchronizeFeeds({
     connections: [CONNECTION],
     createId: () => 'unused',
+    defaultVoiceId: 'Yuna',
     fetcher: vi.fn(
       async () =>
         new Response(
           `<rss xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel><title>긴 글</title><item><title>제목</title><guid>long</guid><link>https://example.com/long</link><content:encoded>${longText}</content:encoded></item></channel></rss>`,
         ),
     ),
-    modelId: 'full',
+    modelId: 'int8',
     now: new Date('2026-08-14T00:00:00.000Z'),
     repository,
   })
@@ -167,6 +193,7 @@ it('should queue every item published after the subscription was created', async
       nextId += 1
       return `job-${nextId}`
     },
+    defaultVoiceId: 'Yuna',
     fetcher: vi.fn(
       async () =>
         new Response(
@@ -176,7 +203,7 @@ it('should queue every item published after the subscription was created', async
           ]),
         ),
     ),
-    modelId: 'full',
+    modelId: 'int8',
     now: new Date('2026-08-14T00:11:00.000Z'),
     repository,
   })
@@ -198,8 +225,9 @@ it('should not treat the feed XML itself as an article document', async () => {
   await synchronizeFeeds({
     connections: [CONNECTION],
     createId: () => 'unused',
+    defaultVoiceId: 'Yuna',
     fetcher,
-    modelId: 'full',
+    modelId: 'int8',
     now: new Date('2026-08-14T00:06:00.000Z'),
     repository,
   })
@@ -217,13 +245,14 @@ it('should reject an oversized feed response before parsing it', async () => {
   const summary = await synchronizeFeeds({
     connections: [CONNECTION],
     createId: () => 'unused',
+    defaultVoiceId: 'Yuna',
     fetcher: vi.fn(
       async () =>
         new Response('<rss />', {
           headers: {'Content-Length': '2000001'},
         }),
     ),
-    modelId: 'full',
+    modelId: 'int8',
     now: new Date('2026-08-14T00:06:00.000Z'),
     repository,
   })

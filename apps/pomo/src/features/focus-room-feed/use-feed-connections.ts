@@ -1,24 +1,20 @@
 import {type Accessor, createSignal, onMount} from 'solid-js'
 
-import type {SupertonicVoiceId} from '../supertonic'
 import {createFeedConnectionRepository, type FeedConnectionRepository} from './repository'
-import {type FeedConnection, normalizeFeedUrl} from './schema'
+import {DEFAULT_FEED_VOICE_ID, type FeedConnection, normalizeFeedUrl} from './schema'
 
-const DEFAULT_VOICE_ID: SupertonicVoiceId = 'Yuna'
 export const FEED_CONNECTIONS_CHANGED_EVENT = 'pomo:focus-room-feed-connections-changed'
 
 export interface FeedConnectionController {
   readonly connections: Accessor<ReadonlyArray<FeedConnection>>
   readonly draftUrl: Accessor<string>
-  readonly draftVoiceId: Accessor<SupertonicVoiceId>
   readonly isLoading: Accessor<boolean>
   readonly message: Accessor<string | null>
   readonly onAdd: () => void
-  readonly onAddRecommendation: (url: string, voiceId: SupertonicVoiceId) => void
+  readonly onAddRecommendation: (url: string) => void
   readonly onDelete: (connectionId: string) => void
   readonly onDraftUrlChange: (url: string) => void
-  readonly onDraftVoiceChange: (voiceId: SupertonicVoiceId) => void
-  readonly onVoiceChange: (connectionId: string, voiceId: SupertonicVoiceId) => void
+  readonly onVoiceChange: (connectionId: string, voiceId: FeedConnection['voiceId']) => void
 }
 
 const requestPersistentStorage = () => {
@@ -37,7 +33,6 @@ const requestPersistentStorage = () => {
 export const useFeedConnections = (): FeedConnectionController => {
   const [connections, setConnections] = createSignal<ReadonlyArray<FeedConnection>>([])
   const [draftUrl, setDraftUrl] = createSignal('')
-  const [draftVoiceId, setDraftVoiceId] = createSignal<SupertonicVoiceId>(DEFAULT_VOICE_ID)
   const [isLoading, setIsLoading] = createSignal(true)
   const [message, setMessage] = createSignal<string | null>(null)
   let repository: FeedConnectionRepository | null = null
@@ -75,7 +70,7 @@ export const useFeedConnections = (): FeedConnectionController => {
     }
   })
 
-  const addConnection = (url: string, voiceId: SupertonicVoiceId) => {
+  const addConnection = (url: string) => {
     const normalizedUrl = normalizeFeedUrl(url)
 
     if (!normalizedUrl.ok) {
@@ -97,7 +92,7 @@ export const useFeedConnections = (): FeedConnectionController => {
       updatedAt: now,
       url: normalizedUrl.value,
       version: 1,
-      voiceId,
+      voiceId: DEFAULT_FEED_VOICE_ID,
     } satisfies FeedConnection
 
     if (!saveConnections([...currentConnections, connection])) {
@@ -108,12 +103,12 @@ export const useFeedConnections = (): FeedConnectionController => {
       requestPersistentStorage()
     }
 
-    setMessage('피드 주소와 음성을 저장했어요.')
+    setMessage('피드 주소를 저장했어요.')
     return true
   }
 
   const onAdd = () => {
-    if (addConnection(draftUrl(), draftVoiceId())) {
+    if (addConnection(draftUrl())) {
       setDraftUrl('')
     }
   }
@@ -126,10 +121,10 @@ export const useFeedConnections = (): FeedConnectionController => {
     }
   }
 
-  const onVoiceChange = (connectionId: string, voiceId: SupertonicVoiceId) => {
-    const now = new Date().toISOString()
+  const onVoiceChange = (connectionId: string, voiceId: FeedConnection['voiceId']) => {
+    const updatedAt = new Date().toISOString()
     const nextConnections = connections().map((connection) =>
-      connection.id === connectionId ? {...connection, updatedAt: now, voiceId} : connection,
+      connection.id === connectionId ? {...connection, updatedAt, voiceId} : connection,
     )
 
     if (saveConnections(nextConnections)) {
@@ -140,14 +135,12 @@ export const useFeedConnections = (): FeedConnectionController => {
   return {
     connections,
     draftUrl,
-    draftVoiceId,
     isLoading,
     message,
     onAdd,
     onAddRecommendation: addConnection,
     onDelete,
     onDraftUrlChange: setDraftUrl,
-    onDraftVoiceChange: setDraftVoiceId,
     onVoiceChange,
   }
 }

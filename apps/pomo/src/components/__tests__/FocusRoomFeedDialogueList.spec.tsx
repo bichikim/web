@@ -90,3 +90,22 @@ it('should distinguish listened feed dialogues from unlistened dialogues', () =>
   expect(screen.getByText('들음', {exact: true})).toBeDefined()
   expect(screen.getByRole('button', {name: '다시 듣기'})).toBeDefined()
 })
+
+it('should render saved feed dialogues in bounded pages', () => {
+  const dialogues = Array.from({length: 21}, (_, index) => ({
+    ...FEED_DIALOGUE,
+    dialogue: {...FEED_DIALOGUE.dialogue, id: `dialogue-${index}`},
+    metadata: {
+      ...FEED_DIALOGUE.metadata,
+      dialogueId: `dialogue-${index}`,
+      feedItemId: `item-${index}`,
+      itemTitle: `피드 소식 ${index}`,
+    },
+  }))
+  const {controller} = createController(dialogues)
+  render(() => <FocusRoomFeedDialogueList controller={controller} />)
+
+  expect(screen.getAllByRole('button', {name: '듣기'})).toHaveLength(20)
+  fireEvent.click(screen.getByRole('button', {name: '이전 피드 대화 1개 더 보기'}))
+  expect(screen.getAllByRole('button', {name: '듣기'})).toHaveLength(21)
+})

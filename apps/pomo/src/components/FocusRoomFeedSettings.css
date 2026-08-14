@@ -21,7 +21,7 @@
 
 .focus-room-feed-settings__form {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(8.5rem, auto) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: end;
   gap: 0.75rem;
 }
@@ -151,6 +151,30 @@
 }
 
 .focus-room-feed-settings__refresh:focus-visible {
+  outline: 2px solid var(--focus-room-brass);
+  outline-offset: 2px;
+}
+
+.focus-room-feed-settings__load-more {
+  min-height: 2.25rem;
+  cursor: pointer;
+  justify-self: center;
+  border: 1px solid var(--focus-room-border);
+  border-radius: var(--focus-room-radius-control);
+  background: transparent;
+  padding: 0 var(--focus-room-padding-lg);
+  color: var(--focus-room-text-muted);
+  font: inherit;
+  font-size: 0.6875rem;
+  font-weight: 700;
+}
+
+.focus-room-feed-settings__load-more:hover {
+  border-color: var(--focus-room-brass);
+  color: var(--focus-room-text);
+}
+
+.focus-room-feed-settings__load-more:focus-visible {
   outline: 2px solid var(--focus-room-brass);
   outline-offset: 2px;
 }

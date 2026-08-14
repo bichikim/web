@@ -22,13 +22,13 @@ const getChildText = (element: Element, names: ReadonlyArray<string>) =>
   findChild(element, names)?.textContent?.trim() ?? ''
 const resolveUrl = (value: string, baseUrl: string) => {
   if (value.length === 0) {
-    return baseUrl
+    return ''
   }
 
   try {
     return new URL(value, baseUrl).href
   } catch {
-    return baseUrl
+    return ''
   }
 }
 const getLink = (element: Element, baseUrl: string) => {
@@ -104,7 +104,8 @@ export const parseFeedXml = (xml: string, feedUrl: string): ParsedFeed => {
   const isAtom = root.localName.toLowerCase() === 'feed'
   const container = isAtom ? root : (findChild(root, ['channel']) ?? root)
   const itemName = isAtom ? 'entry' : 'item'
-  const itemElements = Array.from(container.getElementsByTagNameNS('*', itemName))
+  const itemScope = isAtom ? container : root
+  const itemElements = Array.from(itemScope.getElementsByTagNameNS('*', itemName))
   const title = getChildText(container, ['title']) || new URL(feedUrl).hostname
   const items = itemElements.map((element) => {
     const itemTitle = getChildText(element, ['title']) || '제목 없는 피드'

@@ -1,7 +1,12 @@
 // oxlint-disable no-await-in-loop -- Feed orchestration owns one model Worker and its persisted lifecycle.
 import {createMemo, createSignal, onCleanup, onMount} from 'solid-js'
 
-import {type FocusRoomDialogue, generateDialogueAudio} from '../focus-room-dialogue'
+import {
+  AUTOMATIC_DIALOGUE_SETTINGS_CHANGED_EVENT,
+  createAutomaticDialogueSettingsRepository as createAutomaticSettingsRepository,
+  type FocusRoomDialogue,
+  generateDialogueAudio,
+} from '../focus-room-dialogue'
 import {
   createFocusRoomDialogueRepository,
   type FocusRoomDialogueRepository,
@@ -15,7 +20,7 @@ import {
   getFeedItemRecordId,
 } from './feed-dialogue-schema'
 import {createFeedDialogueRepository, type FeedDialogueRepository} from './feed-dialogue-repository'
-import {isLegacyDevFeedFailure, isMalformedDevFeedDialogue} from './feed-dialogue-repair'
+import {repairStoredDevFeedDialogues} from './feed-dialogue-repair'
 import {createFeedConnectionRepository} from './repository'
 import {synchronizeFeeds} from './feed-sync'
 import {
@@ -26,15 +31,17 @@ import {
   type UseFocusRoomFeedsProps,
 } from './feed-controller'
 import {
+  deleteExpiredFeedDialogues,
+  discardFeedJobs,
+  loadFeedDialogueList,
+  loadFeedIssues,
+} from './feed-dialogue-lifecycle'
+import {
   createFeedFetcher,
-  DEFAULT_FEED_MODEL_ID,
   FEED_POLLING_INTERVAL_MS,
-  findRemovableExpiredDialogues,
   getFeedGenerationProgress,
 } from './feed-runtime'
 import {FEED_CONNECTIONS_CHANGED_EVENT} from './use-feed-connections'
-
-const MAXIMUM_PROGRESS = 100
 
 /** Owns live feed polling, durable recovery, speech generation, and expiry cleanup. */
 // oxlint-disable-next-line eslint/max-lines-per-function -- One hook owns a single disposable feed synchronization and model lifecycle.
@@ -75,16 +82,7 @@ export const useFocusRoomFeeds = (props: UseFocusRoomFeedsProps): FocusRoomFeedC
   }
   const reloadDialogues = async () => {
     const repositories = getRepositories()
-    const metadata = await repositories.feedRepository.listMetadata()
-    const loaded = await Promise.all(
-      metadata.map(async (item) => ({
-        dialogue: await repositories.dialogueRepository.getDialogue(item.dialogueId),
-        metadata: item,
-      })),
-    )
-    const available = loaded.flatMap((item) =>
-      item.dialogue === null ? [] : [{dialogue: item.dialogue, metadata: item.metadata}],
-    )
+    const available = await loadFeedDialogueList(repositories)
 
     if (isDisposed) {
       return
@@ -107,13 +105,10 @@ export const useFocusRoomFeeds = (props: UseFocusRoomFeedsProps): FocusRoomFeedC
   }
   const reloadIssues = async () => {
     const connections = createFeedConnectionRepository(window.localStorage).list()
-    const itemGroups = await Promise.all(
-      connections.map((connection) => getRepositories().feedRepository.listItems(connection.id)),
-    )
-    const nextIssues = itemGroups
-      .flat()
-      .filter((item) => item.status === 'failed' || item.status === 'too-long')
-      .sort((left, right) => Date.parse(right.updatedAt) - Date.parse(left.updatedAt))
+    const nextIssues = await loadFeedIssues({
+      connectionIds: connections.map((connection) => connection.id),
+      feedRepository: getRepositories().feedRepository,
+    })
 
     if (!isDisposed) {
       setIssues(nextIssues)
@@ -146,65 +141,51 @@ export const useFocusRoomFeeds = (props: UseFocusRoomFeedsProps): FocusRoomFeedC
   const markListened = (dialogueId: string) => markDialoguesListened([dialogueId])
   const repairMalformedDevDialogues = async () => {
     const repositories = getRepositories()
-    const metadata = await repositories.feedRepository.listMetadata()
-    const stored = await Promise.all(
-      metadata.map(async (item) => ({
-        dialogue: await repositories.dialogueRepository.getDialogue(item.dialogueId),
-        metadata: item,
-      })),
-    )
-    const malformed = stored.filter(
-      (item): item is FeedDialogueListItem =>
-        item.dialogue !== null &&
-        isMalformedDevFeedDialogue({dialogue: item.dialogue, metadata: item.metadata}),
-    )
+    const connections = createFeedConnectionRepository(window.localStorage).list()
+    const repairedCount = await repairStoredDevFeedDialogues({...repositories, connections})
 
-    await Promise.all(
-      malformed.map(async (item) => {
-        await repositories.dialogueRepository.deleteDialogue(item.dialogue.id)
-        await Promise.all([
-          repositories.feedRepository.removeMetadata(item.dialogue.id),
-          repositories.feedRepository.removeItem(
-            item.metadata.feedConnectionId,
-            item.metadata.feedItemId,
-          ),
-        ])
-      }),
-    )
-
-    if (malformed.length > 0) {
+    if (repairedCount > 0) {
       await props.events.refreshDialogues()
     }
-
-    const connections = createFeedConnectionRepository(window.localStorage).list()
-    const itemGroups = await Promise.all(
-      connections.map((connection) => repositories.feedRepository.listItems(connection.id)),
-    )
-    const legacyFailures = itemGroups.flat().filter(isLegacyDevFeedFailure)
-    await Promise.all(
-      legacyFailures.map((item) =>
-        repositories.feedRepository.removeItem(item.feedConnectionId, item.feedItemId),
-      ),
-    )
   }
   const cleanupExpiredDialogues = async (now: Date) => {
     const repositories = getRepositories()
-    const expired = await repositories.feedRepository.listExpiredMetadata(now.toISOString())
-    const removable = findRemovableExpiredDialogues({
-      expired,
+    const deletedCount = await deleteExpiredFeedDialogues({
+      ...repositories,
       isDialogueScheduled: props.events.isDialogueScheduled,
+      now,
     })
 
-    await Promise.all(
-      removable.map(async (metadata) => {
-        await repositories.dialogueRepository.deleteDialogue(metadata.dialogueId)
-        await repositories.feedRepository.removeMetadata(metadata.dialogueId)
-      }),
-    )
-
-    if (removable.length > 0) {
+    if (deletedCount > 0) {
       await Promise.all([reloadDialogues(), props.events.refreshDialogues()])
     }
+  }
+  const discardUnsubscribedJob = async (job: FeedDialogueJob) => {
+    const connections = createFeedConnectionRepository(window.localStorage).list()
+
+    if (connections.some((connection) => connection.id === job.feedConnectionId)) {
+      return false
+    }
+
+    await getRepositories().feedRepository.deleteJobs([job.id], new Date().toISOString())
+    await reloadRecovery()
+    return true
+  }
+  const discardJobsForMissingConnections = async (
+    connectionIds: ReadonlySet<string>,
+    updatedAt: string,
+  ) => {
+    const repository = getRepositories().feedRepository
+    const jobIds = await discardFeedJobs({connectionIds, feedRepository: repository, updatedAt})
+
+    if (jobIds.length === 0) {
+      return
+    }
+
+    const discardedIds = new Set(jobIds)
+    const remainingIds = scheduledJobIds.filter((jobId) => !discardedIds.has(jobId))
+    scheduledJobIds.splice(0, scheduledJobIds.length, ...remainingIds)
+    await reloadRecovery()
   }
   const prepareModel = async (modelId: SupertonicModelId) => {
     if (client !== null && preparedModelId === modelId) {
@@ -326,10 +307,18 @@ export const useFocusRoomFeeds = (props: UseFocusRoomFeedsProps): FocusRoomFeedC
     await Promise.all([reloadDialogues(), reloadIssues(), props.events.refreshDialogues()])
   }
   const generateJob = async (job: FeedDialogueJob) => {
+    if (await discardUnsubscribedJob(job)) {
+      return
+    }
+
     const repositories = getRepositories()
     const now = new Date().toISOString()
     await repositories.feedRepository.updateJob({...job, status: 'generating', updatedAt: now})
     const isPrepared = await prepareModel(job.modelId)
+
+    if (await discardUnsubscribedJob(job)) {
+      return
+    }
 
     if (!isPrepared || client === null) {
       await failJob(job, '피드 음성 모델을 준비하지 못했어요.')
@@ -349,7 +338,7 @@ export const useFocusRoomFeeds = (props: UseFocusRoomFeedsProps): FocusRoomFeedC
         if (client === currentClient && !isDisposed) {
           setFeedState({
             message: `${job.itemTitle} · ${completed}/${total} 구간 생성 중`,
-            progress: Math.round((completed / total) * MAXIMUM_PROGRESS),
+            progress: getFeedGenerationProgress(completed, total),
             status: 'generating',
           })
         }
@@ -358,7 +347,7 @@ export const useFocusRoomFeeds = (props: UseFocusRoomFeedsProps): FocusRoomFeedC
       voiceId: job.voiceId,
     })
 
-    if (isDisposed || client !== currentClient) {
+    if (isDisposed || client !== currentClient || (await discardUnsubscribedJob(job))) {
       return
     }
 
@@ -368,6 +357,15 @@ export const useFocusRoomFeeds = (props: UseFocusRoomFeedsProps): FocusRoomFeedC
     }
 
     await completeJob(job, generated)
+  }
+  const handleJobFailure = async (job: FeedDialogueJob, error: unknown) => {
+    console.error('Failed to process feed dialogue job.', error)
+
+    if (isDisposed || (await discardUnsubscribedJob(job))) {
+      return
+    }
+
+    await failJob(job, '피드 대화를 저장하지 못했어요.')
   }
   const runScheduledJobs = async () => {
     if (isGenerating || isDisposed) {
@@ -390,8 +388,7 @@ export const useFocusRoomFeeds = (props: UseFocusRoomFeedsProps): FocusRoomFeedC
           try {
             await generateJob(job)
           } catch (error: unknown) {
-            console.error('Failed to process feed dialogue job.', error)
-            await failJob(job, '피드 대화를 저장하지 못했어요.')
+            await handleJobFailure(job, error)
           }
         }
       }
@@ -429,26 +426,29 @@ export const useFocusRoomFeeds = (props: UseFocusRoomFeedsProps): FocusRoomFeedC
     try {
       const connectionRepository = createFeedConnectionRepository(window.localStorage)
       const connections = connectionRepository.list()
+      await discardJobsForMissingConnections(
+        new Set(connections.map((connection) => connection.id)),
+        now.toISOString(),
+      )
+      await cleanupExpiredDialogues(now)
+      await reloadIssues()
 
       if (connections.length === 0) {
         setFeedState({message: '설정에서 구독 피드를 추가해 주세요.', status: 'idle'})
         return
       }
 
+      const automaticSettings = createAutomaticSettingsRepository(window.localStorage).load()
       setFeedState({message: '새 피드를 확인하고 있어요…', progress: null, status: 'syncing'})
       const summary = await synchronizeFeeds({
         connections,
         createId: () => crypto.randomUUID(),
+        defaultVoiceId: automaticSettings.voiceId,
         fetcher: createFeedFetcher(),
-        modelId: DEFAULT_FEED_MODEL_ID,
+        modelId: automaticSettings.modelId,
         now,
         repository: getRepositories().feedRepository,
       })
-      await reloadIssues()
-
-      if (summary.successfulConnections > 0) {
-        await cleanupExpiredDialogues(now)
-      }
 
       if (summary.failures.length > 0) {
         setFeedState({
@@ -500,6 +500,7 @@ export const useFocusRoomFeeds = (props: UseFocusRoomFeedsProps): FocusRoomFeedC
 
     document.addEventListener('visibilitychange', handleVisibilityChange)
     window.addEventListener(FEED_CONNECTIONS_CHANGED_EVENT, handleConnectionChange)
+    window.addEventListener(AUTOMATIC_DIALOGUE_SETTINGS_CHANGED_EVENT, handleConnectionChange)
     initialize().catch((error: unknown) => {
       console.error('Failed to initialize focus room feeds.', error)
       setFeedState({message: '피드 기능을 시작하지 못했어요.', status: 'error'})
@@ -508,6 +509,7 @@ export const useFocusRoomFeeds = (props: UseFocusRoomFeedsProps): FocusRoomFeedC
       window.clearInterval(interval)
       document.removeEventListener('visibilitychange', handleVisibilityChange)
       window.removeEventListener(FEED_CONNECTIONS_CHANGED_EVENT, handleConnectionChange)
+      window.removeEventListener(AUTOMATIC_DIALOGUE_SETTINGS_CHANGED_EVENT, handleConnectionChange)
     })
   })
 
