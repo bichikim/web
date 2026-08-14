@@ -1,6 +1,6 @@
 import {clientOnly} from '@solidjs/start'
 
-const FocusRoomMusicPlayerClient = clientOnly(() => import('./FocusRoomMusicPlayer.client'), {
+const FocusRoomMusicPlayerContent = clientOnly(() => import('./FocusRoomMusicPlayerContent'), {
   lazy: true,
 })
 
@@ -10,7 +10,7 @@ export interface FocusRoomMusicPlayerProps {
 }
 
 export const FocusRoomMusicPlayer = (props: FocusRoomMusicPlayerProps) => (
-  <FocusRoomMusicPlayerClient
+  <FocusRoomMusicPlayerContent
     expanded={props.expanded}
     onExpandedChange={(expanded) => props.onExpandedChange(expanded)}
   />

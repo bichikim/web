@@ -9,7 +9,7 @@ import {
   type FocusRoomSceneId,
 } from '../features/focus-room-animation/scene-catalog'
 
-const FocusRoomLayerReviewCanvas = clientOnly(() => import('./FocusRoomLayerReviewCanvas.client'), {
+const FocusRoomLayerReviewCanvas = clientOnly(() => import('./FocusRoomLayerReviewCanvas'), {
   lazy: true,
 })
 

@@ -1,7 +1,7 @@
 import {clientOnly} from '@solidjs/start'
 
-const FocusRoomFeedSettingsClient = clientOnly(() => import('./FocusRoomFeedSettings.client'), {
+const FocusRoomFeedSettingsContent = clientOnly(() => import('./FocusRoomFeedSettingsContent'), {
   lazy: true,
 })
 
-export const FocusRoomFeedSettings = () => <FocusRoomFeedSettingsClient />
+export const FocusRoomFeedSettings = () => <FocusRoomFeedSettingsContent />

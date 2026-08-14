@@ -269,7 +269,7 @@ const AutomaticDialogueSettings = () => {
 }
 
 // oxlint-disable-next-line eslint/max-lines-per-function -- Both tabs share one repository and audio playback lifecycle.
-export default function FocusRoomDialogueSettingsClient() {
+export default function FocusRoomDialogueSettingsContent() {
   const events = useFocusRoomEvents()
   const feeds = useFocusRoomFeedContext()
   const savedDialogues = createMemo(() =>

@@ -33,7 +33,7 @@ import {
 import {FocusRoomSettings} from './FocusRoomSettings'
 import './FocusRoomStudio.css'
 
-const FocusRoomSceneCanvas = clientOnly(() => import('./FocusRoomSceneCanvas.client'), {
+const FocusRoomSceneCanvas = clientOnly(() => import('./FocusRoomSceneCanvas'), {
   lazy: true,
 })
 const AUTOMATIC_PERIOD_REFRESH = 60_000

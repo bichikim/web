@@ -2,10 +2,9 @@ import {Title} from '@solidjs/meta'
 import {useSearchParams} from '@solidjs/router'
 import {clientOnly} from '@solidjs/start'
 
-const FocusRoomDialogueEditor = clientOnly(
-  () => import('../components/FocusRoomDialogueEditor.client'),
-  {lazy: true},
-)
+const FocusRoomDialogueEditor = clientOnly(() => import('../components/FocusRoomDialogueEditor'), {
+  lazy: true,
+})
 
 export default function FocusRoomDialoguePage() {
   const [searchParams] = useSearchParams()
