@@ -61,7 +61,6 @@ const meta = {
   },
   component: SpatialNeighborFocusDemo,
   parameters: {
-    a11y: {element: '#root'},
     layout: 'centered',
   },
   title: 'Utils/SpatialNeighbor/SpatialNeighborFocus',

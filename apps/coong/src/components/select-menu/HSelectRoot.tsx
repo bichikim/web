@@ -1,10 +1,12 @@
 import {DropdownMenu} from '@kobalte/core/dropdown-menu'
 import {type ParentProps} from 'solid-js'
-import type {UseSelectMenuProps} from './use-select-menu'
 
 const DEFAULT_ANCHOR_GAP_PX = 8
 
-export interface HSelectRootProps extends ParentProps, UseSelectMenuProps {}
+export interface HSelectRootProps extends ParentProps {
+  anchorGapPx?: number
+  onOpenChange?: (isOpen: boolean) => void
+}
 
 /** Kobalte-backed root for menu/select-like primitives. */
 export const HSelectRoot = (props: HSelectRootProps) => {
