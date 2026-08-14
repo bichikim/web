@@ -10,4 +10,8 @@ export default () => ({
     // 테스트 실행 옵션은 루트 Vitest 설정을 그대로 쓴다
     configFile: './vitest.config.mts',
   },
+  tests: {
+    // 브라우저 기반 Storybook 회귀 검사는 Vitest CLI와 UI에서 실행한다.
+    override: (testPatterns) => [...testPatterns, '!**/*.story.*', '!**/*.stories.*'],
+  },
 })

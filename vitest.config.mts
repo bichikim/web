@@ -53,15 +53,25 @@ export default defineConfig({
   },
   // Vitest 테스트 실행 옵션
   test: {
-    // 테스트 런타임 환경 (DOM API 제공)
-    environment: 'jsdom',
-    // 테스트로 포함할 파일 glob 패턴
-    include: [
-      'packages/*/src/**/*.spec.?(c|m)[jt]s?(x)',
-      'apps/*/src/**/*.spec.?(c|m)[jt]s?(x)',
-      '.agents/skills/*/scripts/**/*.spec.ts',
+    // AI_NOTE - 패키지별 root는 중첩 worktree에서 monorepoAlias의 workspace 판별을 깨뜨리므로 모든 project가 저장소 root를 유지한다.
+    projects: [
+      {
+        extends: true,
+        test: {
+          // 테스트 런타임 환경 (DOM API 제공)
+          environment: 'jsdom',
+          // 테스트로 포함할 파일 glob 패턴
+          include: [
+            'packages/*/src/**/*.spec.?(c|m)[jt]s?(x)',
+            'apps/*/src/**/*.spec.?(c|m)[jt]s?(x)',
+            '.agents/skills/*/scripts/**/*.spec.ts',
+          ],
+          name: 'unit',
+          // 각 테스트 파일 실행 전 로드할 셋업 파일
+          setupFiles: ['./vitest.setup.ts'],
+        },
+      },
+      './vitest.storybook.config.mts',
     ],
-    // 각 테스트 파일 실행 전 로드할 셋업 파일
-    setupFiles: ['./vitest.setup.ts'],
   },
 })
