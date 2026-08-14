@@ -4,8 +4,10 @@ import {createMemo, createSignal} from 'solid-js'
 import {FocusRoomIconButton} from '../design-system/FocusRoomIconButton'
 import {FocusRoomModal} from '../design-system/FocusRoomModal'
 import {FocusRoomRadioSwitch} from '../design-system/FocusRoomRadioSwitch'
+import {FocusRoomSelect, type FocusRoomSelectOption} from '../design-system/FocusRoomSelect'
 import {FocusRoomSwitch} from '../design-system/FocusRoomSwitch'
 import type {SceneTimeMode} from '../features/focus-room-time'
+import type {ScreenSaverDelay} from '../features/screen-saver'
 import {useScreenWakeLock} from '../features/screen-wake-lock'
 import {FocusRoomDialogueSettings} from './FocusRoomDialogueSettings'
 import {FocusRoomFeedSettings} from './FocusRoomFeedSettings'
@@ -23,9 +25,19 @@ export interface FocusRoomSettingsProps {
   readonly gaze: FocusRoomGaze
   readonly onActivityChange: (activity: FocusRoomActivity) => void
   readonly onGazeChange: (gaze: FocusRoomGaze) => void
+  readonly onScreenSaverDelayChange: (delay: ScreenSaverDelay) => void
   readonly onTimeModeChange: (timeMode: SceneTimeMode) => void
+  readonly screenSaverDelay: ScreenSaverDelay
   readonly timeMode: SceneTimeMode
 }
+
+const SCREEN_SAVER_DELAY_OPTIONS = [
+  {label: '끄기', value: 'off'},
+  {label: '1분 후', value: '1m'},
+  {label: '10분 후', value: '10m'},
+  {label: '20분 후', value: '20m'},
+  {label: '1시간 후', value: '1h'},
+] satisfies readonly FocusRoomSelectOption<ScreenSaverDelay>[]
 
 export const FocusRoomSettings = (props: FocusRoomSettingsProps) => {
   const [isOpen, setIsOpen] = createSignal(false)
@@ -129,6 +141,18 @@ export const FocusRoomSettings = (props: FocusRoomSettingsProps) => {
                 label="화면 자동 꺼짐 방지"
                 onChange={wakeLock.onEnabledChange}
               />
+              <div class="focus-room-settings__screen-saver">
+                <FocusRoomSelect
+                  label="스크린 세이버"
+                  onChange={props.onScreenSaverDelayChange}
+                  options={SCREEN_SAVER_DELAY_OPTIONS}
+                  value={props.screenSaverDelay}
+                />
+                <p>
+                  조작이 없으면 화면을 검게 가려 밝은 고정 화면이 오래 노출되지 않게 해요. 화면을
+                  터치하거나 마우스를 움직이거나 클릭하면 바로 돌아옵니다.
+                </p>
+              </div>
             </div>
           </Tabs.Content>
           <FocusRoomFeedSettings />

@@ -2,7 +2,17 @@ import 'media-chrome'
 import './FocusRoomMusicPlayer.css'
 
 import {cx} from 'class-variance-authority'
-import {batch, createMemo, createSignal, For, onCleanup, onMount, Show, untrack} from 'solid-js'
+import {
+  batch,
+  createEffect,
+  createMemo,
+  createSignal,
+  For,
+  onCleanup,
+  onMount,
+  Show,
+  untrack,
+} from 'solid-js'
 
 import {
   type FocusRoomTrack,
@@ -29,6 +39,7 @@ const SKIP_BUTTON_CLASSES =
 interface FocusRoomMusicPlayerContentProps {
   readonly expanded?: boolean
   readonly onExpandedChange?: (expanded: boolean) => void
+  readonly onTrackChange?: (track: FocusRoomTrack | null) => void
   readonly tracks?: readonly FocusRoomTrack[]
 }
 
@@ -69,6 +80,11 @@ export default function FocusRoomMusicPlayerContent(props: FocusRoomMusicPlayerC
     currentTrack,
     getAudioElement: () => audioElement,
     isPlaying,
+  })
+
+  createEffect(() => {
+    const track = currentTrack() ?? null
+    untrack(() => props.onTrackChange)?.(track)
   })
 
   const initializePlayback = (

@@ -4,6 +4,7 @@ import {createMemo, createSignal, onCleanup, onMount, Show} from 'solid-js'
 
 import {FocusRoomIconButton} from '../design-system/FocusRoomIconButton'
 import {FocusRoomIconSelect} from '../design-system/FocusRoomIconSelect'
+import type {FocusRoomTrack} from '../features/focus-room-audio/focus-room-playlist'
 import {
   FocusRoomEventProvider,
   useFocusRoomEvents,
@@ -17,12 +18,13 @@ import {
   type SceneTimeMode,
 } from '../features/focus-room-time'
 import {usePomoSay} from '../features/pomo-webmcp'
+import {type ScreenSaverDelay, useScreenSaver} from '../features/screen-saver'
 import type {PixiLayerSceneDefinition} from '../features/focus-room-animation/layer-scene'
 import {getFocusRoomScene} from '../features/focus-room-animation/scene-catalog'
 import {FocusRoomMusicPlayer} from './FocusRoomMusicPlayer'
 import {FocusRoomFeedStatus} from './FocusRoomFeedStatus'
 import {FocusRoomDialoguePlayer} from './FocusRoomDialoguePlayer'
-import {FocusRoomPomodoro} from './FocusRoomPomodoro'
+import {FocusRoomPomodoro, type FocusRoomPomodoroPresentation} from './FocusRoomPomodoro'
 import {
   FOCUS_ROOM_ACTIVITY_OPTIONS,
   FOCUS_ROOM_GAZE_OPTIONS,
@@ -31,12 +33,18 @@ import {
   type FocusRoomGaze,
 } from './focus-room-scene-options'
 import {FocusRoomSettings} from './FocusRoomSettings'
+import {FocusRoomScreenSaver} from './FocusRoomScreenSaver'
 import './FocusRoomStudio.css'
 
 const FocusRoomSceneCanvas = clientOnly(() => import('./FocusRoomSceneCanvas'), {
   lazy: true,
 })
 const AUTOMATIC_PERIOD_REFRESH = 60_000
+const INITIAL_POMODORO_PRESENTATION = {
+  phaseLabel: '집중',
+  statusLabel: '집중 준비',
+  timeLabel: '25:00',
+} satisfies FocusRoomPomodoroPresentation
 
 type SceneTime = ScenePeriod
 
@@ -53,7 +61,9 @@ interface SceneToolbarProps {
   readonly isSceneTransitioning: boolean
   readonly onActivityChange: (activity: FocusRoomActivity) => void
   readonly onGazeChange: (gaze: FocusRoomGaze) => void
+  readonly onScreenSaverDelayChange: (delay: ScreenSaverDelay) => void
   readonly onTimeModeChange: (mode: SceneTimeMode) => void
+  readonly screenSaverDelay: ScreenSaverDelay
   readonly time: SceneTime
   readonly timeMode: SceneTimeMode
 }
@@ -128,7 +138,9 @@ const SceneToolbar = (props: SceneToolbarProps) => {
           gaze={props.gaze}
           onActivityChange={props.onActivityChange}
           onGazeChange={props.onGazeChange}
+          onScreenSaverDelayChange={props.onScreenSaverDelayChange}
           onTimeModeChange={props.onTimeModeChange}
+          screenSaverDelay={props.screenSaverDelay}
           timeMode={props.timeMode}
         />
       </div>
@@ -151,6 +163,10 @@ const FocusRoomStudioContent = () => {
   const [isSceneLoading, setIsSceneLoading] = createSignal(true)
   const [hasSceneRendered, setHasSceneRendered] = createSignal(false)
   const [isPlayerExpanded, setIsPlayerExpanded] = createSignal(false)
+  const [currentTrack, setCurrentTrack] = createSignal<FocusRoomTrack | null>(null)
+  const [pomodoroPresentation, setPomodoroPresentation] =
+    createSignal<FocusRoomPomodoroPresentation>(INITIAL_POMODORO_PRESENTATION)
+  const screenSaver = useScreenSaver()
   const pomoSay = usePomoSay({onBeforeSpeech: events.onStopDialoguePlayback})
   const time = createMemo(() => resolveScenePeriod(timeMode(), automaticPeriod()))
   const selectedScene = createMemo(() => getSceneAsset(time(), activity(), gaze()))
@@ -206,7 +222,10 @@ const FocusRoomStudioContent = () => {
         </Show>
       </figure>
 
-      <FocusRoomPomodoro onEvents={handlePomodoroEvents} />
+      <FocusRoomPomodoro
+        onEvents={handlePomodoroEvents}
+        onPresentationChange={setPomodoroPresentation}
+      />
       <div
         class="focus-room-media-dock"
         data-dialogue-active={
@@ -221,6 +240,7 @@ const FocusRoomStudioContent = () => {
         <FocusRoomMusicPlayer
           expanded={isPlayerExpanded()}
           onExpandedChange={setIsPlayerExpanded}
+          onTrackChange={setCurrentTrack}
         />
         <div class="focus-room-media-messages">
           <FocusRoomFeedStatus />
@@ -236,9 +256,20 @@ const FocusRoomStudioContent = () => {
         isSceneTransitioning={isSceneLoading() && hasSceneRendered()}
         onActivityChange={setActivity}
         onGazeChange={setGaze}
+        onScreenSaverDelayChange={screenSaver.onDelayChange}
         onTimeModeChange={setTimeMode}
+        screenSaverDelay={screenSaver.delay()}
         time={time()}
         timeMode={timeMode()}
+      />
+      <FocusRoomScreenSaver
+        isActive={screenSaver.isActive()}
+        onDismiss={screenSaver.onDismiss}
+        timer={{
+          status: pomodoroPresentation().statusLabel,
+          time: pomodoroPresentation().timeLabel,
+        }}
+        track={currentTrack()}
       />
     </section>
   )

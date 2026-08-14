@@ -1,5 +1,5 @@
 import {cx} from 'class-variance-authority'
-import {createMemo, createSignal, For, Show} from 'solid-js'
+import {createEffect, createMemo, createSignal, For, Show, untrack} from 'solid-js'
 
 import breakStatusIcon from '../../assets/pomodoro-status-icons/break-face.webp'
 import focusStatusIcon from '../../assets/pomodoro-status-icons/focus-face.webp'
@@ -63,6 +63,13 @@ interface PomodoroSessionProgressProps {
 
 export interface FocusRoomPomodoroProps {
   readonly onEvents?: (events: ReadonlyArray<PomodoroTimerEvent>) => void
+  readonly onPresentationChange?: (presentation: FocusRoomPomodoroPresentation) => void
+}
+
+export interface FocusRoomPomodoroPresentation {
+  readonly phaseLabel: string
+  readonly statusLabel: string
+  readonly timeLabel: string
 }
 
 interface PomodoroQuickControlsProps {
@@ -215,6 +222,16 @@ export const FocusRoomPomodoro = (props: FocusRoomPomodoroProps) => {
   const handleCloseAutoFocus = () => triggerElement()?.focus()
   const getInitialFocus = () =>
     actionContainer()?.querySelector<HTMLButtonElement>('button') ?? null
+
+  createEffect(() => {
+    const presentation = {
+      phaseLabel: phasePresentation().label,
+      statusLabel: statusLabel(),
+      timeLabel: timeLabel(),
+    } satisfies FocusRoomPomodoroPresentation
+
+    untrack(() => props.onPresentationChange)?.(presentation)
+  })
 
   return (
     <>

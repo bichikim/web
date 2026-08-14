@@ -59,6 +59,24 @@
   min-height: 3rem;
 }
 
+.focus-room-settings__screen-saver {
+  display: grid;
+  gap: 0.5rem;
+  padding-top: var(--focus-room-padding-lg);
+  border-top: 1px solid var(--focus-room-border);
+}
+
+.focus-room-settings__screen-saver .focus-room-select {
+  width: 100%;
+}
+
+.focus-room-settings__screen-saver p {
+  margin: 0;
+  color: var(--focus-room-text-muted);
+  font-size: 0.75rem;
+  line-height: 1.125rem;
+}
+
 @media (width >= 40rem) {
   .focus-room-settings__scene {
     display: none;

@@ -62,8 +62,15 @@ describe('FocusRoomPomodoro', () => {
   })
 
   it('should expose the timer state and primary controls through an accessible dialog', async () => {
-    render(() => <FocusRoomPomodoro />)
+    const onPresentationChange = vi.fn()
+    render(() => <FocusRoomPomodoro onPresentationChange={onPresentationChange} />)
     await vi.advanceTimersByTimeAsync(0)
+
+    expect(onPresentationChange).toHaveBeenLastCalledWith({
+      phaseLabel: '집중',
+      statusLabel: '집중 준비',
+      timeLabel: '25:00',
+    })
 
     const quickControls = screen.getByRole('group', {name: '포모도로 간편 조작'})
     const timeTrigger = within(quickControls).getByRole('button', {
@@ -109,6 +116,11 @@ describe('FocusRoomPomodoro', () => {
 
     vi.advanceTimersByTime(1_000)
     expect(within(dialog).getByText('24:59')).toBeDefined()
+    expect(onPresentationChange).toHaveBeenLastCalledWith({
+      phaseLabel: '집중',
+      statusLabel: '집중 중',
+      timeLabel: '24:59',
+    })
 
     fireEvent.click(within(dialog).getByRole('button', {name: '일시정지'}))
     expect(within(dialog).getByRole('button', {name: '계속하기'})).toBeDefined()
