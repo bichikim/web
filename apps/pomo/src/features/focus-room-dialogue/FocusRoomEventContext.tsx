@@ -362,6 +362,7 @@ export const FocusRoomEventProvider = (props: FocusRoomEventProviderProps) => {
         return
       }
 
+      playback.stop()
       setEventDialogueIds((currentBindings) => {
         if (dialogueId === null) {
           const nextBindings = {...currentBindings}
