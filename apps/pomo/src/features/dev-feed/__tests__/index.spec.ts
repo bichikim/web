@@ -12,7 +12,7 @@ describe('createDevFeedDocument', () => {
       origin: ORIGIN,
     })
 
-    expect(document).toContain('<title>안녕하세요 2026년 5월 4일 22시 30분</title>')
+    expect(document).toMatch(/<title>“[^”]+” — [^<]+ · 2026년 5월 4일 22시 30분<\/title>/u)
     expect(document).toContain('<pubDate>Mon, 04 May 2026 13:30:00 GMT</pubDate>')
     expect(document).toContain('href="http://localhost:3200/__dev/feeds/rss.xml"')
     expect(document.match(/<item>/gu)).toHaveLength(12)
@@ -37,8 +37,40 @@ describe('createDevFeedDocument', () => {
 
     expect(firstDocument).toBe(sameWindowDocument)
     expect(nextDocument).not.toBe(firstDocument)
-    expect(nextDocument).toContain('<title>안녕하세요 2026년 8월 14일 00시 10분</title>')
+    expect(nextDocument).toMatch(/<title>“[^”]+” — [^<]+ · 2026년 8월 14일 10분<\/title>/u)
     expect(nextDocument.match(/<entry>/gu)).toHaveLength(12)
+  })
+
+  it('should omit leading and zero-valued time components', () => {
+    const document = createDevFeedDocument({
+      format: 'atom',
+      now: new Date('2026-08-13T21:00:00.000Z'),
+      origin: ORIGIN,
+    })
+
+    expect(document).toMatch(/<title>[^<]+ · 2026년 8월 14일 6시<\/title>/u)
+    expect(document).not.toContain('2026년 8월 14일 06시 00분')
+  })
+
+  it('should show only the date at midnight on the hour', () => {
+    const document = createDevFeedDocument({
+      format: 'atom',
+      now: new Date('2026-08-13T15:00:00.000Z'),
+      origin: ORIGIN,
+    })
+
+    expect(document).toMatch(/<title>[^<]+ · 2026년 8월 14일<\/title>/u)
+  })
+
+  it('should select quotes for feed items published before the Unix epoch', () => {
+    const document = createDevFeedDocument({
+      format: 'rss',
+      now: new Date('1970-01-01T00:00:00.000Z'),
+      origin: ORIGIN,
+    })
+
+    expect(document.match(/<item>/gu)).toHaveLength(12)
+    expect(document).toMatch(/<title>“[^”]+” — [^<]+ · 1970년 1월 1일 9시<\/title>/u)
   })
 
   it('should escape the request origin in XML output', () => {
