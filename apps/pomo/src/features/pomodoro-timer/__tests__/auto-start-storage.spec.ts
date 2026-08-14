@@ -30,25 +30,46 @@ describe('auto-start-storage', () => {
     await writeAutoStartPreference(true)
 
     expect(await readAutoStartPreference()).toBe(true)
-    expect(JSON.parse(localStorage.getItem('pomo:timer-auto-start:v1') ?? '')).toEqual({
+    expect(JSON.parse(localStorage.getItem('pomo:timer-auto-start:v2') ?? '')).toEqual({
       isEnabled: true,
       savedAt: 20,
     })
     expect(storageMocks.setItem).not.toHaveBeenCalled()
   })
 
+  it('should read the legacy browser preference', async () => {
+    localStorage.setItem('pomo:timer-auto-start:v1', 'true')
+
+    expect(await readAutoStartPreference()).toBe(true)
+  })
+
+  it('should read the legacy native preference', async () => {
+    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+    storageMocks.getItem.mockImplementation(async (key) =>
+      key === 'pomo:timer-auto-start:v1' ? 'true' : null,
+    )
+
+    expect(await readAutoStartPreference()).toBe(true)
+    expect(storageMocks.getItem).toHaveBeenNthCalledWith(1, 'pomo:timer-auto-start:v2')
+    expect(storageMocks.getItem).toHaveBeenNthCalledWith(2, 'pomo:timer-auto-start:v1')
+  })
+
+  it('should ignore malformed browser preferences', async () => {
+    localStorage.setItem('pomo:timer-auto-start:v2', '{invalid')
+
+    expect(await readAutoStartPreference()).toBe(false)
+  })
+
   it('should mirror the latest preference to native storage', async () => {
     Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
-    storageMocks.getItem.mockResolvedValue(
-      JSON.stringify({isEnabled: true, savedAt: 20}),
-    )
+    storageMocks.getItem.mockResolvedValue(JSON.stringify({isEnabled: true, savedAt: 20}))
     storageMocks.setItem.mockResolvedValue()
 
     await writeAutoStartPreference(true)
 
     expect(await readAutoStartPreference()).toBe(true)
     const [storageKey, storedValue] = storageMocks.setItem.mock.calls[0] ?? []
-    expect(storageKey).toBe('pomo:timer-auto-start:v1')
+    expect(storageKey).toBe('pomo:timer-auto-start:v2')
     expect(JSON.parse(storedValue ?? '')).toEqual({isEnabled: true, savedAt: 20})
   })
 
@@ -74,7 +95,9 @@ describe('auto-start-storage', () => {
 
   it('should select a newer browser value when the native copy is stale', async () => {
     Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
-    storageMocks.getItem.mockResolvedValue('false')
+    storageMocks.getItem.mockImplementation(async (key) =>
+      key === 'pomo:timer-auto-start:v1' ? 'false' : null,
+    )
     storageMocks.setItem.mockRejectedValue(new Error('native storage unavailable'))
 
     await writeAutoStartPreference(true)
@@ -85,12 +108,10 @@ describe('auto-start-storage', () => {
   it('should select a newer native value', async () => {
     Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
     localStorage.setItem(
-      'pomo:timer-auto-start:v1',
+      'pomo:timer-auto-start:v2',
       JSON.stringify({isEnabled: false, savedAt: 10}),
     )
-    storageMocks.getItem.mockResolvedValue(
-      JSON.stringify({isEnabled: true, savedAt: 15}),
-    )
+    storageMocks.getItem.mockResolvedValue(JSON.stringify({isEnabled: true, savedAt: 15}))
 
     expect(await readAutoStartPreference()).toBe(true)
   })

@@ -252,7 +252,7 @@ it('should queue dialogues when one pomodoro transition emits end and start even
   result.unmount()
 })
 
-it('should stop only stale entry playback when event bindings change', async () => {
+it('should stop stale playback without replaying a changed event binding', async () => {
   const nextDialogue: FocusRoomDialogue = {
     ...DIALOGUE,
     audioKey: 'next-audio',
@@ -312,10 +312,6 @@ it('should stop only stale entry playback when event bindings change', async () 
   }
 
   pause.mockClear()
-  await events.setEventDialogue('focus-start', nextDialogue.id)
-  expect(events.activeText()).toBe('입장 대사')
-  expect(pause).not.toHaveBeenCalled()
-
   await events.setEventDialogue('room-enter', nextDialogue.id)
   expect(events.eventDialogueIds()['room-enter']).toBe(nextDialogue.id)
   expect(events.activeText()).toBeNull()

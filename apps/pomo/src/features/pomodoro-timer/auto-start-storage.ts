@@ -3,16 +3,15 @@
 import {Storage} from '@apps-in-toss/web-bridge'
 import {z} from 'zod'
 
-const AUTO_START_STORAGE_KEY = 'pomo:timer-auto-start:v1'
+const AUTO_START_STORAGE_KEY = 'pomo:timer-auto-start:v2'
+const LEGACY_AUTO_START_STORAGE_KEY = 'pomo:timer-auto-start:v1'
 let latestNativePreference: StoredPreference | null = null
 
-const storedPreferenceSchema = z.union([
-  z.boolean(),
-  z.object({
-    isEnabled: z.boolean(),
-    savedAt: z.number().finite().nonnegative(),
-  }),
-])
+const legacyPreferenceSchema = z.boolean()
+const storedPreferenceSchema = z.object({
+  isEnabled: z.boolean(),
+  savedAt: z.number().finite().nonnegative(),
+})
 
 interface StoredPreference {
   readonly isEnabled: boolean
@@ -27,15 +26,20 @@ const parsePreference = (storedValue: string | null): StoredPreference | null =>
   try {
     const result = storedPreferenceSchema.safeParse(JSON.parse(storedValue) as unknown)
 
-    if (!result.success) {
-      return null
-    }
+    return result.success ? result.data : null
+  } catch {
+    return null
+  }
+}
 
-    if (typeof result.data === 'boolean') {
-      return {isEnabled: result.data, savedAt: 0}
-    }
+const parseLegacyPreference = (storedValue: string | null): StoredPreference | null => {
+  if (storedValue === null) {
+    return null
+  }
 
-    return result.data
+  try {
+    const result = legacyPreferenceSchema.safeParse(JSON.parse(storedValue) as unknown)
+    return result.success ? {isEnabled: result.data, savedAt: 0} : null
   } catch {
     return null
   }
@@ -45,10 +49,23 @@ const hasNativeBridge = () => 'ReactNativeWebView' in window
 
 const readWebPreference = () => {
   try {
-    return parsePreference(localStorage.getItem(AUTO_START_STORAGE_KEY))
+    return (
+      parsePreference(localStorage.getItem(AUTO_START_STORAGE_KEY)) ??
+      parseLegacyPreference(localStorage.getItem(LEGACY_AUTO_START_STORAGE_KEY))
+    )
   } catch {
     return null
   }
+}
+
+const readNativePreference = async () => {
+  const preference = parsePreference(await Storage.getItem(AUTO_START_STORAGE_KEY))
+
+  if (preference !== null) {
+    return preference
+  }
+
+  return parseLegacyPreference(await Storage.getItem(LEGACY_AUTO_START_STORAGE_KEY))
 }
 
 const writeWebPreference = (preference: StoredPreference) => {
@@ -101,7 +118,7 @@ const writeNativePreference = async (preference: StoredPreference) => {
   await convergeNativePreference(preference)
 }
 
-/** Reads the auto-start preference from storage whose lifetime matches the current runtime. */
+/** Reads the latest auto-start preference saved by the app or browser runtime. */
 export const readAutoStartPreference = async () => {
   const webPreference = readWebPreference()
 
@@ -110,7 +127,7 @@ export const readAutoStartPreference = async () => {
   }
 
   try {
-    const nativePreference = parsePreference(await Storage.getItem(AUTO_START_STORAGE_KEY))
+    const nativePreference = await readNativePreference()
     return selectLatestPreference(webPreference, nativePreference)?.isEnabled ?? false
   } catch {
     return webPreference?.isEnabled ?? false
