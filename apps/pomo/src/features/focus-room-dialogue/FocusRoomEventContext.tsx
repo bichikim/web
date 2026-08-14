@@ -8,244 +8,108 @@ import {
   useContext,
 } from 'solid-js'
 
+import {
+  createEntryPlaybackController,
+  type PlayFocusRoomDialogueSequenceOptions,
+} from './entry-playback-controller'
 import type {FocusRoomDialogueRepository} from './repository'
-import {type DialogueEventId, FOCUS_ROOM_ENTRY_EVENT, type FocusRoomDialogue} from './schema'
-import {getDialoguePositionAtTime} from './timeline'
+import {
+  type DialogueEventBinding,
+  type DialogueEventId,
+  FOCUS_ROOM_ENTRY_EVENT,
+  type FocusRoomDialogue,
+} from './schema'
 
-const MILLISECONDS_PER_SECOND = 1000
+export type {PlayFocusRoomDialogueSequenceOptions} from './entry-playback-controller'
+
+type EventDialogueIds = Readonly<Partial<Record<DialogueEventId, ReadonlyArray<string>>>>
 
 export interface FocusRoomEventContextValue {
+  readonly activeDialogueId: Accessor<string | null>
   readonly activeSegmentCount: Accessor<number>
   readonly activeSegmentPosition: Accessor<number | null>
   readonly activeText: Accessor<string | null>
   readonly deleteDialogue: (dialogueId: string) => Promise<void>
   readonly dialogues: Accessor<ReadonlyArray<FocusRoomDialogue>>
-  readonly eventDialogueIds: Accessor<Readonly<Partial<Record<DialogueEventId, string>>>>
+  readonly entryDialogueId: Accessor<string | null>
+  readonly entryDialogueIds: Accessor<ReadonlyArray<string>>
   readonly errorMessage: Accessor<string | null>
+  readonly eventDialogueIds: Accessor<EventDialogueIds>
   readonly getAudio: (audioKey: string) => Promise<Blob | null>
   readonly isDialoguePlaybackBlocked: Accessor<boolean>
+  readonly isDialogueScheduled: (dialogueId: string) => boolean
+  readonly isEntryPlaybackBlocked: Accessor<boolean>
   readonly isLoading: Accessor<boolean>
   readonly onStopDialoguePlayback: () => void
+  readonly onStopEntryPlayback: () => void
+  readonly playDialogue: (dialogueId: string) => Promise<void>
   readonly playDialogueEvents: (
     eventIds: ReadonlyArray<DialogueEventId>,
     onBeforePlayback?: () => void,
   ) => Promise<void>
+  readonly playDialogueSequence: (options: PlayFocusRoomDialogueSequenceOptions) => Promise<void>
+  readonly refreshDialogues: () => Promise<void>
   readonly retryDialoguePlayback: () => void
+  readonly retryEntryPlayback: () => void
+  readonly scheduledDialogueCount: Accessor<number>
+  readonly skipDialoguePlayback: () => void
+  readonly setEntryDialogue: (dialogueId: string | null) => Promise<void>
+  readonly setEntryDialogues: (dialogueIds: ReadonlyArray<string>) => Promise<void>
   readonly setEventDialogue: (eventId: DialogueEventId, dialogueId: string | null) => Promise<void>
+  readonly setEventDialogues: (
+    eventId: DialogueEventId,
+    dialogueIds: ReadonlyArray<string>,
+  ) => Promise<void>
 }
 
 export interface FocusRoomEventProviderProps {
   readonly children: JSX.Element
 }
 
-interface DialoguePlaybackController {
-  readonly activeDialogueId: () => string | null
-  readonly activeSegmentCount: Accessor<number>
-  readonly activeSegmentPosition: Accessor<number | null>
-  readonly activeText: Accessor<string | null>
-  readonly dispose: () => void
-  readonly isBlocked: Accessor<boolean>
-  readonly prepare: (
-    repository: FocusRoomDialogueRepository,
-    dialogueIds: ReadonlyArray<string>,
-  ) => Promise<void>
-  readonly retry: () => void
-  readonly stop: () => void
-}
-
 const FocusRoomEventContext = createContext<FocusRoomEventContextValue>()
 
-const revokeAudioUrl = (audioUrl: string | null) => {
-  if (audioUrl !== null) {
-    URL.revokeObjectURL(audioUrl)
+const getEventDialogueIds = (bindings: ReadonlyArray<DialogueEventBinding>): EventDialogueIds =>
+  Object.fromEntries(bindings.map((binding) => [binding.event, binding.dialogueIds]))
+
+const removeDialogueFromBindings = (
+  bindings: EventDialogueIds,
+  dialogueId: string,
+): EventDialogueIds =>
+  Object.fromEntries(
+    Object.entries(bindings).flatMap(([eventId, dialogueIds]) => {
+      const remainingIds = dialogueIds.filter((id) => id !== dialogueId)
+      return remainingIds.length === 0 ? [] : [[eventId, remainingIds]]
+    }),
+  )
+
+const updateEventBinding = (
+  bindings: EventDialogueIds,
+  eventId: DialogueEventId,
+  dialogueIds: ReadonlyArray<string>,
+): EventDialogueIds => {
+  const nextBindings = {...bindings}
+
+  if (dialogueIds.length === 0) {
+    delete nextBindings[eventId]
+  } else {
+    nextBindings[eventId] = dialogueIds
   }
 
-  return null
+  return nextBindings
 }
 
-const createDialoguePlaybackController = (): DialoguePlaybackController => {
-  const [activeSegmentCount, setActiveSegmentCount] = createSignal(0)
-  const [activeSegmentPosition, setActiveSegmentPosition] = createSignal<number | null>(null)
-  const [activeText, setActiveText] = createSignal<string | null>(null)
-  const [isBlocked, setIsBlocked] = createSignal(false)
-  let animationFrame: number | null = null
-  let audio: HTMLAudioElement | null = null
-  let audioUrl: string | null = null
-  let endedHandler: (() => void) | null = null
-  let dialogue: FocusRoomDialogue | null = null
-  let isAwaitingSceneInteraction = false
-  let isDisposed = false
-  let pendingDialogueIds: Array<string> = []
-  let playbackRepository: FocusRoomDialogueRepository | null = null
-  let playbackRequestId = 0
-  const isPlaybackCancelled = (requestId: number) => isDisposed || requestId !== playbackRequestId
-
-  const cancelFrame = () => {
-    if (animationFrame !== null) {
-      window.cancelAnimationFrame(animationFrame)
-      animationFrame = null
-    }
-  }
-
-  const updateSubtitle = () => {
-    if (audio === null || dialogue === null || audio.ended) {
-      cancelFrame()
-      return
-    }
-
-    const activePosition = getDialoguePositionAtTime(
-      dialogue.segments,
-      audio.currentTime * MILLISECONDS_PER_SECOND,
-    )
-    setActiveSegmentPosition(activePosition?.position ?? null)
-    setActiveText(activePosition?.text ?? null)
-    animationFrame = window.requestAnimationFrame(updateSubtitle)
-  }
-
-  const releaseActivePlayback = () => {
-    cancelFrame()
-    if (endedHandler !== null) {
-      audio?.removeEventListener('ended', endedHandler)
-      endedHandler = null
-    }
-    audio?.pause()
-    audio = null
-    dialogue = null
-    isAwaitingSceneInteraction = false
-    setIsBlocked(false)
-    setActiveSegmentCount(0)
-    setActiveSegmentPosition(null)
-    setActiveText(null)
-
-    audioUrl = revokeAudioUrl(audioUrl)
-  }
-
-  const stop = () => {
-    playbackRequestId += 1
-    pendingDialogueIds = []
-    playbackRepository = null
-    releaseActivePlayback()
-  }
-
-  const playNext = async (requestId: number): Promise<void> => {
-    const currentRepository = playbackRepository
-    const dialogueId = pendingDialogueIds.shift()
-
-    if (currentRepository === null || dialogueId === undefined || isPlaybackCancelled(requestId)) {
-      return
-    }
-
-    const storedDialogue = await currentRepository.getDialogue(dialogueId)
-
-    if (isPlaybackCancelled(requestId)) {
-      return
-    }
-
-    if (storedDialogue === null) {
-      await playNext(requestId)
-      return
-    }
-
-    const storedAudio = await currentRepository.getAudio(storedDialogue.audioKey)
-
-    if (isPlaybackCancelled(requestId)) {
-      return
-    }
-
-    if (storedAudio === null) {
-      await playNext(requestId)
-      return
-    }
-
-    dialogue = storedDialogue
-    setActiveSegmentCount(storedDialogue.segments.length)
-    audioUrl = URL.createObjectURL(storedAudio)
-    audio = new Audio(audioUrl)
-    endedHandler = () => {
-      releaseActivePlayback()
-      playNext(requestId).catch((error: unknown) => {
-        console.error('Unexpected focus room dialogue playback failure.', error)
-        stop()
-      })
-    }
-    audio.addEventListener('ended', endedHandler, {once: true})
-    await start()
-  }
-
-  const start = async () => {
-    const currentAudio = audio
-
-    if (currentAudio === null || isDisposed) {
-      return
-    }
-
-    try {
-      await currentAudio.play()
-
-      if (audio !== currentAudio || isDisposed) {
-        return
-      }
-
-      isAwaitingSceneInteraction = false
-      setIsBlocked(false)
-      cancelFrame()
-      updateSubtitle()
-    } catch (error: unknown) {
-      if (audio !== currentAudio || isDisposed) {
-        return
-      }
-
-      if (error instanceof DOMException && error.name === 'NotAllowedError') {
-        isAwaitingSceneInteraction = true
-        setIsBlocked(true)
-        return
-      }
-
-      console.error('Failed to play focus room dialogue.', error)
-      stop()
-    }
-  }
-
-  return {
-    activeDialogueId: () => dialogue?.id ?? null,
-    activeSegmentCount,
-    activeSegmentPosition,
-    activeText,
-    dispose() {
-      isDisposed = true
-      stop()
-    },
-    isBlocked,
-    async prepare(repository, dialogueIds) {
-      stop()
-      const currentRequestId = playbackRequestId
-      playbackRepository = repository
-      pendingDialogueIds = [...dialogueIds]
-      await playNext(currentRequestId)
-    },
-    retry() {
-      if (!isAwaitingSceneInteraction) {
-        return
-      }
-
-      start().catch((error: unknown) => {
-        console.error('Unexpected focus room dialogue playback failure.', error)
-      })
-    },
-    stop,
-  }
-}
-
+// oxlint-disable-next-line eslint/max-lines-per-function -- One provider coordinates repository initialization, bindings, and queued playback lifecycle.
 export const FocusRoomEventProvider = (props: FocusRoomEventProviderProps) => {
-  const playback = createDialoguePlaybackController()
+  const playback = createEntryPlaybackController()
   const [dialogues, setDialogues] = createSignal<ReadonlyArray<FocusRoomDialogue>>([])
-  const [eventDialogueIds, setEventDialogueIds] = createSignal<
-    Readonly<Partial<Record<DialogueEventId, string>>>
-  >({})
+  const [eventDialogueIds, setEventDialogueIds] = createSignal<EventDialogueIds>({})
   const [errorMessage, setErrorMessage] = createSignal<string | null>(null)
   const [isLoading, setIsLoading] = createSignal(true)
   let repository: FocusRoomDialogueRepository | null = null
   let isDisposed = false
+  let bindingUpdate = Promise.resolve()
+  let bindingRevision = 0
+  let persistedBindings: EventDialogueIds = {}
   let resolveInitialization: (() => void) | null = null
   const initialization = new Promise<void>((resolve) => {
     resolveInitialization = resolve
@@ -278,15 +142,23 @@ export const FocusRoomEventProvider = (props: FocusRoomEventProviderProps) => {
         return
       }
 
+      const storedBindings = getEventDialogueIds(eventBindings)
       setDialogues(storedDialogues)
-      setEventDialogueIds(
-        Object.fromEntries(eventBindings.map((binding) => [binding.event, binding.dialogueId])),
-      )
+      persistedBindings = storedBindings
+      setEventDialogueIds(storedBindings)
       setErrorMessage(null)
 
-      const entryBinding = eventBindings.find((binding) => binding.event === FOCUS_ROOM_ENTRY_EVENT)
-      if (entryBinding !== undefined) {
-        await playback.prepare(currentRepository, [entryBinding.dialogueId])
+      const entryDialogueIds = storedBindings[FOCUS_ROOM_ENTRY_EVENT] ?? []
+      if (entryDialogueIds.length > 0) {
+        playback
+          .playSequence(currentRepository, {
+            dialogueIds: entryDialogueIds,
+            onDialogueStart: () => undefined,
+            onSequenceStop: () => undefined,
+          })
+          .catch((error: unknown) => {
+            console.error('Unexpected entry dialogue sequence failure.', error)
+          })
       }
     } catch (error: unknown) {
       if (isDisposed) {
@@ -304,11 +176,44 @@ export const FocusRoomEventProvider = (props: FocusRoomEventProviderProps) => {
     }
   }
 
+  const setEventDialogues = async (
+    eventId: DialogueEventId,
+    dialogueIds: ReadonlyArray<string>,
+  ) => {
+    const uniqueDialogueIds = [...new Set(dialogueIds)]
+    bindingRevision += 1
+    const currentRevision = bindingRevision
+    setEventDialogueIds((currentBindings) =>
+      updateEventBinding(currentBindings, eventId, uniqueDialogueIds),
+    )
+    const update = bindingUpdate
+      .catch(() => undefined)
+      .then(() => getRepository().setEventBinding(eventId, uniqueDialogueIds))
+    bindingUpdate = update
+
+    try {
+      await update
+      persistedBindings = updateEventBinding(persistedBindings, eventId, uniqueDialogueIds)
+
+      if (!isDisposed) {
+        playback.stop()
+      }
+    } catch (error: unknown) {
+      if (!isDisposed && currentRevision === bindingRevision) {
+        setEventDialogueIds(persistedBindings)
+      }
+
+      throw error
+    }
+  }
+
   const contextValue: FocusRoomEventContextValue = {
+    activeDialogueId: playback.activeDialogueId,
     activeSegmentCount: playback.activeSegmentCount,
     activeSegmentPosition: playback.activeSegmentPosition,
     activeText: playback.activeText,
     async deleteDialogue(dialogueId) {
+      await bindingUpdate.catch(() => undefined)
       await getRepository().deleteDialogue(dialogueId)
 
       if (isDisposed) {
@@ -318,61 +223,100 @@ export const FocusRoomEventProvider = (props: FocusRoomEventProviderProps) => {
       setDialogues((currentDialogues) =>
         currentDialogues.filter((dialogue) => dialogue.id !== dialogueId),
       )
+      bindingRevision += 1
+      const remainingBindings = removeDialogueFromBindings(eventDialogueIds(), dialogueId)
+      persistedBindings = remainingBindings
+      setEventDialogueIds(remainingBindings)
 
-      setEventDialogueIds((currentBindings) =>
-        Object.fromEntries(
-          Object.entries(currentBindings).filter(([, currentId]) => currentId !== dialogueId),
-        ),
-      )
-
-      if (playback.activeDialogueId() === dialogueId) {
-        playback.stop()
+      if (playback.isDialogueScheduled(dialogueId)) {
+        playback.cancel()
       }
     },
     dialogues,
+    entryDialogueId: () => eventDialogueIds()[FOCUS_ROOM_ENTRY_EVENT]?.[0] ?? null,
+    entryDialogueIds: () => eventDialogueIds()[FOCUS_ROOM_ENTRY_EVENT] ?? [],
     errorMessage,
     eventDialogueIds,
     getAudio: (audioKey) => getRepository().getAudio(audioKey),
     isDialoguePlaybackBlocked: playback.isBlocked,
+    isDialogueScheduled: playback.isDialogueScheduled,
+    isEntryPlaybackBlocked: playback.isBlocked,
     isLoading,
     onStopDialoguePlayback: playback.stop,
+    onStopEntryPlayback: playback.stop,
+    async playDialogue(dialogueId) {
+      if (repository === null) {
+        await initialization
+      }
+
+      if (!isDisposed && repository !== null) {
+        await playback.prepare(repository, dialogueId)
+      }
+    },
     async playDialogueEvents(eventIds, onBeforePlayback) {
-      await initialization
+      if (repository === null) {
+        await initialization
+      }
 
       if (isDisposed || repository === null) {
         return
       }
 
       const bindings = eventDialogueIds()
-      const dialogueIds = eventIds.flatMap((eventId) => {
-        const dialogueId = bindings[eventId]
-        return dialogueId === undefined ? [] : [dialogueId]
-      })
+      const dialogueIds = eventIds.flatMap((eventId) => bindings[eventId] ?? [])
 
       if (dialogueIds.length > 0) {
         onBeforePlayback?.()
-        await playback.prepare(getRepository(), dialogueIds)
+        await playback.playSequence(repository, {
+          dialogueIds,
+          onDialogueStart: () => undefined,
+          onSequenceStop: () => undefined,
+        })
       }
     },
-    retryDialoguePlayback: playback.retry,
-    async setEventDialogue(eventId, dialogueId) {
-      await getRepository().setEventBinding(eventId, dialogueId)
+    async playDialogueSequence(options) {
+      if (repository === null) {
+        await initialization
+      }
 
-      if (isDisposed) {
+      if (!isDisposed && repository !== null) {
+        await playback.playSequence(repository, options)
+      }
+    },
+    async refreshDialogues() {
+      await initialization
+      await bindingUpdate.catch(() => undefined)
+
+      if (isDisposed || repository === null) {
         return
       }
 
-      playback.stop()
-      setEventDialogueIds((currentBindings) => {
-        if (dialogueId === null) {
-          const nextBindings = {...currentBindings}
-          delete nextBindings[eventId]
-          return nextBindings
-        }
+      const refreshRevision = bindingRevision
+      const [storedDialogues, eventBindings] = await Promise.all([
+        repository.listDialogues(),
+        repository.listEventBindings(),
+      ])
 
-        return {...currentBindings, [eventId]: dialogueId}
-      })
+      if (!isDisposed) {
+        setDialogues(storedDialogues)
+
+        if (refreshRevision === bindingRevision) {
+          const storedBindings = getEventDialogueIds(eventBindings)
+          persistedBindings = storedBindings
+          setEventDialogueIds(storedBindings)
+        }
+      }
     },
+    retryDialoguePlayback: playback.retry,
+    retryEntryPlayback: playback.retry,
+    scheduledDialogueCount: playback.scheduledDialogueCount,
+    setEntryDialogue: (dialogueId) =>
+      setEventDialogues(FOCUS_ROOM_ENTRY_EVENT, dialogueId === null ? [] : [dialogueId]),
+    setEntryDialogues: (dialogueIds) => setEventDialogues(FOCUS_ROOM_ENTRY_EVENT, dialogueIds),
+    setEventDialogue: (eventId, dialogueId) =>
+      setEventDialogues(eventId, dialogueId === null ? [] : [dialogueId]),
+    setEventDialogues,
+    skipDialoguePlayback: playback.skip,
   }
 
   onMount(() => {

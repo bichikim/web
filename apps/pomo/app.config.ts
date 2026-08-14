@@ -1,6 +1,8 @@
 import {defineConfig} from '@solidjs/start/config'
 import UnoCSS from 'unocss/vite'
 
+import {createDevFeedPlugin} from './src/features/dev-feed'
+
 const isAppsInToss = process.env.POMO_BUILD_TARGET === 'apps-in-toss'
 const focusRoomSourcePattern = /[/\\]assets[/\\]focus-room-source[/\\]/u
 const focusRoomSourceGlob = 'focus-room-source/**'
@@ -42,7 +44,7 @@ const app = defineConfig({
     optimizeDeps: {
       include: ['onnxruntime-web/all', 'zod'],
     },
-    plugins: [excludeFocusRoomSourceAssets, UnoCSS()],
+    plugins: [createDevFeedPlugin(), excludeFocusRoomSourceAssets, UnoCSS()],
   },
 })
 

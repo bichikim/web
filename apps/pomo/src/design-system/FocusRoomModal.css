@@ -11,10 +11,12 @@
   position: fixed;
   top: 50%;
   left: 50%;
+  display: flex;
   box-sizing: border-box;
   width: min(calc(100vw - 2rem), 28rem);
   max-height: calc(100dvh - 2rem - env(safe-area-inset-top) - env(safe-area-inset-bottom));
-  overflow-y: auto;
+  flex-direction: column;
+  overflow: hidden;
   border-radius: var(--focus-room-radius-panel);
   background: var(--focus-room-surface-strong);
   color: var(--focus-room-text);
@@ -44,6 +46,7 @@
 
 .focus-room-modal__header {
   display: flex;
+  flex: none;
   align-items: flex-start;
   justify-content: space-between;
   gap: 1rem;
@@ -145,7 +148,12 @@
 }
 
 .focus-room-modal__body {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding: var(--focus-room-padding-xl);
+  scrollbar-color: rgb(255 250 241 / 24%) transparent;
+  scrollbar-width: thin;
 }
 
 @keyframes focus-room-modal-overlay-in {
