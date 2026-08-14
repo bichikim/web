@@ -1,6 +1,6 @@
 import {cx} from 'class-variance-authority'
 import type {Meta, StoryObj} from 'storybook-solidjs-vite'
-import {fn} from 'storybook/test'
+import {expect, fn, userEvent, within} from 'storybook/test'
 import {createSignal, onMount} from 'solid-js'
 import {HSelectRoot} from './HSelectRoot'
 import {SSelectButton} from './SSelectButton'
@@ -23,30 +23,40 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
+interface SelectListPlayContext {
+  readonly canvasElement: HTMLElement
+}
+
 export const Open: Story = {
+  play: async ({canvasElement}: SelectListPlayContext) => {
+    const menu = await within(canvasElement).findByRole('menu')
+
+    expect(menu).toBeVisible()
+    expect(menu.matches(':popover-open')).toBe(true)
+  },
   render: () => {
-    const listId = 'select-list-open-story'
+    const menu = useSelectMenu()
     const [left] = createSignal(24)
     const [top] = createSignal(24)
 
     onMount(() => {
-      document.getElementById(`${listId}-trigger`)?.click()
+      document.getElementById(`${menu.listId}-trigger`)?.click()
     })
 
     return (
       <div class=":uno: min-h-80 p-6">
         <button
-          id={`${listId}-trigger`}
+          id={`${menu.listId}-trigger`}
           type="button"
           class=":uno: sr-only"
-          popovertarget={listId}
           aria-hidden="true"
+          onClick={menu.handleTriggerClick}
         />
-        <SSelectList id={listId} left={left} top={top} onToggle={fn()}>
-          <button type="button" class={menuItemClass}>
+        <SSelectList controller={menu} id={menu.listId} left={left} top={top} onToggle={fn()}>
+          <button type="button" role="menuitem" class={menuItemClass}>
             First option
           </button>
-          <button type="button" class={menuItemClass}>
+          <button type="button" role="menuitem" class={menuItemClass}>
             Second option
           </button>
         </SSelectList>
@@ -56,26 +66,32 @@ export const Open: Story = {
 }
 
 export const WithCustomWidth: Story = {
+  play: async ({canvasElement}: SelectListPlayContext) => {
+    const menu = await within(canvasElement).findByRole('menu')
+
+    expect(menu).toBeVisible()
+    expect(getComputedStyle(menu).width).toBe('288px')
+  },
   render: () => {
-    const listId = 'select-list-custom-width-story'
+    const menu = useSelectMenu()
     const [left] = createSignal(24)
     const [top] = createSignal(24)
 
     onMount(() => {
-      document.getElementById(`${listId}-trigger`)?.click()
+      document.getElementById(`${menu.listId}-trigger`)?.click()
     })
 
     return (
       <div class=":uno: min-h-80 p-6">
         <button
-          id={`${listId}-trigger`}
+          id={`${menu.listId}-trigger`}
           type="button"
           class=":uno: sr-only"
-          popovertarget={listId}
           aria-hidden="true"
+          onClick={menu.handleTriggerClick}
         />
-        <SSelectList id={listId} class=":uno: w-72" left={left} top={top} onToggle={fn()}>
-          <button type="button" class={menuItemClass}>
+        <SSelectList controller={menu} id={menu.listId} left={left} top={top} widthPx={288}>
+          <button type="button" role="menuitem" class={menuItemClass}>
             Wider panel
           </button>
         </SSelectList>
@@ -100,10 +116,10 @@ export const PairedWithTrigger: Story = {
 
 export const PairedWithCustomWidth: Story = {
   render: () => (
-    <HSelectRoot listWidthPx={288}>
+    <HSelectRoot>
       <div class=":uno: min-h-80 p-8">
         <SSelectTrigger>Open wide menu</SSelectTrigger>
-        <SSelectList class=":uno: w-72">
+        <SSelectList widthPx={288}>
           <SSelectItem onSelect={fn()}>Wider panel</SSelectItem>
         </SSelectList>
       </div>
@@ -112,6 +128,18 @@ export const PairedWithCustomWidth: Story = {
 }
 
 export const LegacyController: Story = {
+  play: async ({canvasElement}: SelectListPlayContext) => {
+    const canvas = within(canvasElement)
+
+    await userEvent.click(canvas.getByRole('button', {name: 'Legacy wiring'}))
+
+    const menu = await canvas.findByRole('menu')
+
+    expect(menu).toBeVisible()
+
+    await userEvent.click(canvas.getByRole('menuitem', {name: 'Close menu'}))
+    expect(menu).not.toBeVisible()
+  },
   render: () => {
     const menu = useSelectMenu()
 
@@ -126,7 +154,9 @@ export const LegacyController: Story = {
           Legacy wiring
         </SSelectButton>
         <SSelectList controller={menu} id={menu.listId}>
-          <SSelectItem onSelect={menu.onHide}>Close menu</SSelectItem>
+          <button type="button" role="menuitem" class={menuItemClass} onClick={menu.onHide}>
+            Close menu
+          </button>
         </SSelectList>
       </div>
     )

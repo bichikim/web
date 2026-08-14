@@ -12,6 +12,9 @@ export const FocusRoomDialoguePlayer = (props: FocusRoomDialoguePlayerProps) => 
   const events = useFocusRoomEvents()
   const isExternalSpeech = () => props.externalText !== undefined && props.externalText !== null
   const text = () => props.externalText ?? events.activeText()
+  const connectedSpeechCount = () =>
+    isExternalSpeech() ? 1 : Math.max(1, events.scheduledDialogueCount())
+  const stopLabel = () => `${connectedSpeechCount()}개 연결 음성 모두 중지`
   const handleStop = () => {
     if (isExternalSpeech()) {
       props.onStopExternalSpeech?.()
@@ -20,6 +23,7 @@ export const FocusRoomDialoguePlayer = (props: FocusRoomDialoguePlayerProps) => 
 
     events.onStopDialoguePlayback()
   }
+  const handleSkip = () => events.skipDialoguePlayback()
   const segmentPositions = () =>
     Array.from({length: events.activeSegmentCount()}, (_, position) => position)
   const progressLabel = () => {
@@ -66,10 +70,28 @@ export const FocusRoomDialoguePlayer = (props: FocusRoomDialoguePlayerProps) => 
                   </span>
                 </Show>
               </div>
-              <button class="focus-room-dialogue-bubble__stop" onClick={handleStop} type="button">
-                <span aria-hidden="true" class="i-tabler-player-stop size-4" />
-                음성 중지
-              </button>
+              <div class="focus-room-dialogue-bubble__actions">
+                <Show when={!isExternalSpeech()}>
+                  <button
+                    aria-label="대화 건너뛰기"
+                    class="focus-room-dialogue-bubble__skip"
+                    onClick={handleSkip}
+                    type="button"
+                  >
+                    <span aria-hidden="true" class="i-tabler-player-track-next size-4" />
+                    대화 건너뛰기
+                  </button>
+                </Show>
+                <button
+                  aria-label={stopLabel()}
+                  class="focus-room-dialogue-bubble__stop"
+                  onClick={handleStop}
+                  type="button"
+                >
+                  <span aria-hidden="true" class="i-tabler-player-stop size-4" />
+                  {stopLabel()}
+                </button>
+              </div>
             </div>
             <p aria-live="polite" role="status">
               {text()}

@@ -9,6 +9,7 @@ import {
   FocusRoomEventProvider,
   useFocusRoomEvents,
 } from '../features/focus-room-dialogue/FocusRoomEventContext'
+import {FocusRoomFeedProvider} from '../features/focus-room-feed'
 import {
   getAutomaticScenePeriod,
   getNextTimeMode,
@@ -21,6 +22,7 @@ import {type ScreenSaverDelay, useScreenSaver} from '../features/screen-saver'
 import type {PixiLayerSceneDefinition} from '../features/focus-room-animation/layer-scene'
 import {getFocusRoomScene} from '../features/focus-room-animation/scene-catalog'
 import {FocusRoomMusicPlayer} from './FocusRoomMusicPlayer'
+import {FocusRoomFeedStatus} from './FocusRoomFeedStatus'
 import {FocusRoomDialoguePlayer} from './FocusRoomDialoguePlayer'
 import {FocusRoomPomodoro, type FocusRoomPomodoroPresentation} from './FocusRoomPomodoro'
 import {
@@ -34,7 +36,7 @@ import {FocusRoomSettings} from './FocusRoomSettings'
 import {FocusRoomScreenSaver} from './FocusRoomScreenSaver'
 import './FocusRoomStudio.css'
 
-const FocusRoomSceneCanvas = clientOnly(() => import('./FocusRoomSceneCanvas.client'), {
+const FocusRoomSceneCanvas = clientOnly(() => import('./FocusRoomSceneCanvas'), {
   lazy: true,
 })
 const AUTOMATIC_PERIOD_REFRESH = 60_000
@@ -240,10 +242,13 @@ const FocusRoomStudioContent = () => {
           onExpandedChange={setIsPlayerExpanded}
           onTrackChange={setCurrentTrack}
         />
-        <FocusRoomDialoguePlayer
-          externalText={pomoSay.speechText()}
-          onStopExternalSpeech={pomoSay.stop}
-        />
+        <div class="focus-room-media-messages">
+          <FocusRoomFeedStatus />
+          <FocusRoomDialoguePlayer
+            externalText={pomoSay.speechText()}
+            onStopExternalSpeech={pomoSay.stop}
+          />
+        </div>
       </div>
       <SceneToolbar
         activity={activity()}
@@ -272,6 +277,8 @@ const FocusRoomStudioContent = () => {
 
 export const FocusRoomStudio = () => (
   <FocusRoomEventProvider>
-    <FocusRoomStudioContent />
+    <FocusRoomFeedProvider>
+      <FocusRoomStudioContent />
+    </FocusRoomFeedProvider>
   </FocusRoomEventProvider>
 )

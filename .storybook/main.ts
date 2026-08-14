@@ -26,12 +26,8 @@ export default <StorybookConfig>{
     },
   },
   stories: [
-    '../apps/pomo/src/**/*.mdx',
     '../apps/pomo/src/**/*.story.@(js|jsx|mjs|ts|tsx)',
-    '../apps/coong/src/**/*.mdx',
     '../apps/coong/src/**/*.story.@(js|jsx|mjs|ts|tsx)',
-    '../packages/solid/src/**/*.mdx',
-    '../packages/solid/src/**/*.story.@(js|jsx|mjs|ts|tsx)',
     '../packages/solid-components/src/**/*.story.@(js|jsx|mjs|ts|tsx)',
     '../packages/solid-use/src/**/*.story.@(js|jsx|mjs|ts|tsx)',
     '../packages/player/src/**/*.story.@(js|jsx|mjs|ts|tsx)',

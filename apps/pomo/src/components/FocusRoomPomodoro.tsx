@@ -1,8 +1,8 @@
 import {cx} from 'class-variance-authority'
 import {createEffect, createMemo, createSignal, For, Show, untrack} from 'solid-js'
 
-import breakStatusIcon from '../../assets/pomodoro-status-icons/break-face.png'
-import focusStatusIcon from '../../assets/pomodoro-status-icons/focus-face.png'
+import breakStatusIcon from '../../assets/pomodoro-status-icons/break-face.webp'
+import focusStatusIcon from '../../assets/pomodoro-status-icons/focus-face.webp'
 import {FocusRoomButton} from '../design-system/FocusRoomButton'
 import {
   FocusRoomCharacterEmotion,

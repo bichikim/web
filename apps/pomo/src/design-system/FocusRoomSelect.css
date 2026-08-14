@@ -11,6 +11,16 @@
   line-height: 1rem;
 }
 
+.focus-room-select__label[data-visually-hidden] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 .focus-room-select__trigger {
   display: flex;
   height: var(--focus-room-control-height-medium);
@@ -41,6 +51,9 @@
 }
 
 .focus-room-select__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   flex: none;
   color: var(--focus-room-brass);
   transition: transform 160ms ease;

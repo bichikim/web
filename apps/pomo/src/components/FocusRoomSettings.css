@@ -6,6 +6,7 @@
 .focus-room-settings__tabs {
   display: flex;
   height: 100%;
+  overflow-x: auto;
 }
 
 .focus-room-settings__tabs button {

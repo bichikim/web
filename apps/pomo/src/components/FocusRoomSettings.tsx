@@ -10,6 +10,7 @@ import type {SceneTimeMode} from '../features/focus-room-time'
 import type {ScreenSaverDelay} from '../features/screen-saver'
 import {useScreenWakeLock} from '../features/screen-wake-lock'
 import {FocusRoomDialogueSettings} from './FocusRoomDialogueSettings'
+import {FocusRoomFeedSettings} from './FocusRoomFeedSettings'
 import {
   FOCUS_ROOM_ACTIVITY_OPTIONS,
   FOCUS_ROOM_GAZE_OPTIONS,
@@ -93,6 +94,10 @@ export const FocusRoomSettings = (props: FocusRoomSettingsProps) => {
                 <span aria-hidden="true" class="i-tabler-bolt size-4" />
                 <span>이벤트</span>
               </Tabs.Trigger>
+              <Tabs.Trigger value="feeds">
+                <span aria-hidden="true" class="i-tabler-rss size-4" />
+                <span>피드</span>
+              </Tabs.Trigger>
               <Tabs.Trigger value="dialogue-library">
                 <span aria-hidden="true" class="i-tabler-message-circle size-4" />
                 <span>대화</span>
@@ -150,6 +155,7 @@ export const FocusRoomSettings = (props: FocusRoomSettingsProps) => {
               </div>
             </div>
           </Tabs.Content>
+          <FocusRoomFeedSettings />
           <FocusRoomDialogueSettings />
         </FocusRoomModal>
       </Tabs>

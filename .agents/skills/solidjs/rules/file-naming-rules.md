@@ -3,6 +3,7 @@
 - Component files must use `PascalCase.tsx`.
 - Component filenames must match the exported public component name.
 - Keep one public component per component file.
+- Do not use a `.client` suffix; filenames do not create client-only runtime boundaries.
 - Do not name component files after helper, adapter, wrapper, or implementation roles.
 - Prefix conventions:
   - `S` for styled components.

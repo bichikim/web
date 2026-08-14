@@ -22,7 +22,7 @@ const BLUE_BRIGHTNESS_WEIGHT = 0.0722
 const ASSET_DIRECTORY = path.resolve(process.cwd(), 'assets')
 const DAY_READING_EYE_FILL =
   'focus-room-source/layers/day-reading-focused/workfiles/eye-base-candidate-a.png'
-const DAY_READING_EYE_BASE = 'focus-room-layers/day-reading-focused/layer-head-eye-base.png'
+const DAY_READING_EYE_BASE = 'focus-room-source/layers/day-reading-focused/layer-head-eye-base.png'
 const DAY_USER_EYE_FILL =
   'focus-room-source/layers/day-reading-user/workfiles/eye-base-candidate-a.png'
 const DAY_USER_EYE_LAYER =
@@ -65,19 +65,19 @@ const removalPaths = [
 const scenes = [
   {
     fill: DAY_READING_EYE_FILL,
-    head: 'focus-room-layers/day-reading-focused/layer-head.png',
+    head: 'focus-room-source/layers/day-reading-focused/layer-head.png',
     id: 'day-reading-focused',
     offsetX: 0,
   },
   {
     fill: DAY_READING_EYE_BASE,
-    head: 'focus-room-layers/day-writing-focused/layer-head.png',
+    head: 'focus-room-source/layers/day-writing-focused/layer-head.png',
     id: 'day-writing-focused',
     offsetX: 0,
   },
   {
     fill: DAY_READING_EYE_BASE,
-    head: 'focus-room-layers/day-typing-focused/layer-head.png',
+    head: 'focus-room-source/layers/day-typing-focused/layer-head.png',
     id: 'day-typing-focused',
     offsetX: -1,
   },
@@ -85,15 +85,15 @@ const scenes = [
 
 const userScenes = [
   {
-    head: 'focus-room-layers/day-reading-user/layer-head.png',
+    head: 'focus-room-source/layers/day-reading-user/layer-head.png',
     id: 'day-reading-user',
   },
   {
-    head: 'focus-room-layers/day-writing-user/layer-head.png',
+    head: 'focus-room-source/layers/day-writing-user/layer-head.png',
     id: 'day-writing-user',
   },
   {
-    head: 'focus-room-layers/day-typing-user/layer-head.png',
+    head: 'focus-room-source/layers/day-typing-user/layer-head.png',
     id: 'day-typing-user',
   },
 ]
@@ -102,7 +102,7 @@ const isolatedIrisScenes = [
   {
     eye: 'focus-room-source/layers/night-reading-focused/workfiles/layer-eye-irises-source.png',
     eyeBounds: {height: 90, left: 890, top: 280, width: 150},
-    head: 'focus-room-layers/night-reading-focused/layer-head.png',
+    head: 'focus-room-source/layers/night-reading-focused/layer-head.png',
     id: 'night-reading-focused',
     offsetX: 0,
     writeEyeLayer: true,
@@ -110,21 +110,21 @@ const isolatedIrisScenes = [
   {
     eye: 'focus-room-source/layers/night-reading-focused/workfiles/layer-eye-irises-source.png',
     eyeBounds: {height: 90, left: 890, top: 280, width: 150},
-    head: 'focus-room-layers/night-typing-focused/layer-head.png',
+    head: 'focus-room-source/layers/night-typing-focused/layer-head.png',
     id: 'night-typing-focused',
     offsetX: -5,
   },
   {
     eye: 'focus-room-source/layers/night-reading-focused/workfiles/layer-eye-irises-source.png',
     eyeBounds: {height: 90, left: 890, top: 280, width: 150},
-    head: 'focus-room-layers/night-writing-focused/layer-head.png',
+    head: 'focus-room-source/layers/night-writing-focused/layer-head.png',
     id: 'night-writing-focused',
     offsetX: -4,
   },
   {
     eye: 'focus-room-source/layers/night-reading-user/workfiles/layer-eye-irises-source.png',
     eyeBounds: {height: 130, left: 890, top: 230, width: 200},
-    head: 'focus-room-layers/night-reading-user/layer-head.png',
+    head: 'focus-room-source/layers/night-reading-user/layer-head.png',
     id: 'night-reading-user',
     offsetX: 0,
     writeEyeLayer: true,
@@ -132,14 +132,14 @@ const isolatedIrisScenes = [
   {
     eye: 'focus-room-source/layers/night-reading-user/workfiles/layer-eye-irises-source.png',
     eyeBounds: {height: 130, left: 890, top: 230, width: 200},
-    head: 'focus-room-layers/night-typing-user/layer-head.png',
+    head: 'focus-room-source/layers/night-typing-user/layer-head.png',
     id: 'night-typing-user',
     offsetX: 0,
   },
   {
     eye: 'focus-room-source/layers/night-reading-user/workfiles/layer-eye-irises-source.png',
     eyeBounds: {height: 130, left: 890, top: 230, width: 200},
-    head: 'focus-room-layers/night-writing-user/layer-head.png',
+    head: 'focus-room-source/layers/night-writing-user/layer-head.png',
     id: 'night-writing-user',
     offsetX: 0,
   },
@@ -344,12 +344,9 @@ async function createSceneAssets(scene) {
   const fillSource = path.join(ASSET_DIRECTORY, scene.fill)
   const headSource = path.join(ASSET_DIRECTORY, scene.head)
   const sourceDirectory = path.join(ASSET_DIRECTORY, 'focus-room-source/layers', scene.id)
-  const runtimeDirectory = path.join(ASSET_DIRECTORY, 'focus-room-layers', scene.id)
-
   await Promise.all([
     validateCanvasDimensions(headSource, `${scene.id} head`),
     mkdir(sourceDirectory, {recursive: true}),
-    mkdir(runtimeDirectory, {recursive: true}),
   ])
 
   const [removalMask, eyeLayerMask, shiftedFill] = await Promise.all([
@@ -370,7 +367,7 @@ async function createSceneAssets(scene) {
       sharp(headSource)
         .ensureAlpha()
         .composite([{input: eyeFill}]),
-      path.join(runtimeDirectory, 'layer-head-eye-base.png'),
+      path.join(sourceDirectory, 'layer-head-eye-base.png'),
       {compressionLevel: 9, palette: true, quality: 100},
     ),
     ...(scene.id === 'day-reading-focused'
@@ -384,7 +381,7 @@ async function createSceneAssets(scene) {
                 ),
               ),
             ),
-            path.join(runtimeDirectory, 'layer-eye-irises.png'),
+            path.join(sourceDirectory, 'layer-eye-irises.png'),
             {adaptiveFiltering: true, compressionLevel: 9},
           ),
         ]
@@ -397,13 +394,10 @@ async function createUserSceneAssets(scene) {
   const eyeSource = path.join(ASSET_DIRECTORY, DAY_USER_EYE_LAYER)
   const headSource = path.join(ASSET_DIRECTORY, scene.head)
   const sourceDirectory = path.join(ASSET_DIRECTORY, 'focus-room-source/layers', scene.id)
-  const runtimeDirectory = path.join(ASSET_DIRECTORY, 'focus-room-layers', scene.id)
-
   await Promise.all([
     validateCanvasDimensions(eyeSource, 'day user eye layer'),
     validateCanvasDimensions(headSource, `${scene.id} head`),
     mkdir(sourceDirectory, {recursive: true}),
-    mkdir(runtimeDirectory, {recursive: true}),
   ])
 
   const eyeLayerMask = await sharp(eyeSource).ensureAlpha().extractChannel('alpha').png().toBuffer()
@@ -431,14 +425,14 @@ async function createUserSceneAssets(scene) {
       sharp(headSource)
         .ensureAlpha()
         .composite([{input: eyeFill}]),
-      path.join(runtimeDirectory, 'layer-head-eye-base.png'),
+      path.join(sourceDirectory, 'layer-head-eye-base.png'),
       {compressionLevel: 9, palette: true, quality: 100},
     ),
     ...(scene.id === 'day-reading-user'
       ? [
           writePng(
             sharp(await removeTransparentPixelColor(eyeSource)),
-            path.join(runtimeDirectory, 'layer-eye-irises.png'),
+            path.join(sourceDirectory, 'layer-eye-irises.png'),
             {adaptiveFiltering: true, compressionLevel: 9},
           ),
         ]
@@ -450,13 +444,10 @@ async function createIsolatedIrisSceneAssets(scene) {
   const eyeSource = path.join(ASSET_DIRECTORY, scene.eye)
   const headSource = path.join(ASSET_DIRECTORY, scene.head)
   const sourceDirectory = path.join(ASSET_DIRECTORY, 'focus-room-source/layers', scene.id)
-  const runtimeDirectory = path.join(ASSET_DIRECTORY, 'focus-room-layers', scene.id)
-
   await Promise.all([
     validateCanvasDimensions(eyeSource, `${scene.id} eye layer`),
     validateCanvasDimensions(headSource, `${scene.id} head`),
     mkdir(sourceDirectory, {recursive: true}),
-    mkdir(runtimeDirectory, {recursive: true}),
   ])
 
   const eyeLayerLeft = scene.eyeBounds.left + scene.offsetX
@@ -493,7 +484,7 @@ async function createIsolatedIrisSceneAssets(scene) {
   await Promise.all([
     ...(scene.writeEyeLayer === true
       ? [
-          writePng(sharp(cleanEyeLayer), path.join(runtimeDirectory, 'layer-eye-irises.png'), {
+          writePng(sharp(cleanEyeLayer), path.join(sourceDirectory, 'layer-eye-irises.png'), {
             compressionLevel: 9,
             palette: true,
             quality: 100,
@@ -506,7 +497,7 @@ async function createIsolatedIrisSceneAssets(scene) {
       sharp(headSource)
         .ensureAlpha()
         .composite([{input: eyeFill}]),
-      path.join(runtimeDirectory, 'layer-head-eye-base.png'),
+      path.join(sourceDirectory, 'layer-head-eye-base.png'),
       {compressionLevel: 9, palette: true, quality: 100},
     ),
   ])

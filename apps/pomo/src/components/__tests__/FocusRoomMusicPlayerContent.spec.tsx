@@ -4,7 +4,7 @@ import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
-import FocusRoomMusicPlayerClient from '../FocusRoomMusicPlayer.client'
+import FocusRoomMusicPlayerContent from '../FocusRoomMusicPlayerContent'
 
 vi.mock('media-chrome', () => ({}))
 
@@ -21,7 +21,7 @@ const TRACKS = [
   {artist: 'Artist', durationSeconds: 1, id: 'three', source: '/three.mp3', title: 'Three'},
 ] as const
 
-describe('FocusRoomMusicPlayerClient', () => {
+describe('FocusRoomMusicPlayerContent', () => {
   beforeEach(() => {
     localStorage.clear()
     storageMocks.getItem.mockReset()
@@ -41,7 +41,7 @@ describe('FocusRoomMusicPlayerClient', () => {
   })
 
   it('should start a new shuffled cycle when repeat all is enabled', async () => {
-    const result = render(() => <FocusRoomMusicPlayerClient tracks={TRACKS} />)
+    const result = render(() => <FocusRoomMusicPlayerContent tracks={TRACKS} />)
     const audio = result.container.querySelector('audio')
 
     if (!(audio instanceof HTMLAudioElement)) {
@@ -74,7 +74,7 @@ describe('FocusRoomMusicPlayerClient', () => {
     vi.mocked(HTMLMediaElement.prototype.play).mockRejectedValueOnce(
       new DOMException('The play request was interrupted', 'AbortError'),
     )
-    const result = render(() => <FocusRoomMusicPlayerClient tracks={TRACKS} />)
+    const result = render(() => <FocusRoomMusicPlayerContent tracks={TRACKS} />)
     const audio = result.container.querySelector('audio')
 
     if (!(audio instanceof HTMLAudioElement)) {
@@ -96,7 +96,7 @@ describe('FocusRoomMusicPlayerClient', () => {
     const handleExpandedChange = vi.fn((nextExpanded: boolean) => setExpanded(nextExpanded))
 
     render(() => (
-      <FocusRoomMusicPlayerClient
+      <FocusRoomMusicPlayerContent
         expanded={expanded()}
         onExpandedChange={handleExpandedChange}
         tracks={TRACKS}
@@ -111,7 +111,7 @@ describe('FocusRoomMusicPlayerClient', () => {
   it('should report the current track when selection changes', async () => {
     const onTrackChange = vi.fn()
     const result = render(() => (
-      <FocusRoomMusicPlayerClient onTrackChange={onTrackChange} tracks={TRACKS} />
+      <FocusRoomMusicPlayerContent onTrackChange={onTrackChange} tracks={TRACKS} />
     ))
     const audio = result.container.querySelector('audio')
 
@@ -130,7 +130,7 @@ describe('FocusRoomMusicPlayerClient', () => {
       'pomo:focus-room-playback:v1',
       JSON.stringify({positionSeconds: 22, savedAt: 1, trackId: 'three'}),
     )
-    const result = render(() => <FocusRoomMusicPlayerClient tracks={TRACKS} />)
+    const result = render(() => <FocusRoomMusicPlayerContent tracks={TRACKS} />)
     const audio = result.container.querySelector('audio')
 
     if (!(audio instanceof HTMLAudioElement)) {
@@ -150,7 +150,7 @@ describe('FocusRoomMusicPlayerClient', () => {
       'pomo:focus-room-playback:v1',
       JSON.stringify({isPlaying: true, positionSeconds: 22, savedAt: 1, trackId: 'three'}),
     )
-    const result = render(() => <FocusRoomMusicPlayerClient tracks={TRACKS} />)
+    const result = render(() => <FocusRoomMusicPlayerContent tracks={TRACKS} />)
     const audio = result.container.querySelector('audio')
 
     if (!(audio instanceof HTMLAudioElement)) {
@@ -172,7 +172,7 @@ describe('FocusRoomMusicPlayerClient', () => {
       'pomo:focus-room-playback:v1',
       JSON.stringify({isPlaying: true, positionSeconds: 22, savedAt: 1, trackId: 'three'}),
     )
-    const result = render(() => <FocusRoomMusicPlayerClient tracks={TRACKS} />)
+    const result = render(() => <FocusRoomMusicPlayerContent tracks={TRACKS} />)
     const audio = result.container.querySelector('audio')
 
     if (!(audio instanceof HTMLAudioElement)) {
@@ -205,7 +205,7 @@ describe('FocusRoomMusicPlayerClient', () => {
       'pomo:focus-room-playback:v1',
       JSON.stringify({isPlaying: false, positionSeconds: 22, savedAt: 1, trackId: 'three'}),
     )
-    const result = render(() => <FocusRoomMusicPlayerClient tracks={TRACKS} />)
+    const result = render(() => <FocusRoomMusicPlayerContent tracks={TRACKS} />)
     const audio = result.container.querySelector('audio')
 
     if (!(audio instanceof HTMLAudioElement)) {
@@ -233,7 +233,7 @@ describe('FocusRoomMusicPlayerClient', () => {
       'pomo:focus-room-playback:v1',
       JSON.stringify({isPlaying: false, positionSeconds: 22, savedAt: 1, trackId: 'three'}),
     )
-    const result = render(() => <FocusRoomMusicPlayerClient tracks={TRACKS} />)
+    const result = render(() => <FocusRoomMusicPlayerContent tracks={TRACKS} />)
     const audio = result.container.querySelector('audio')
 
     if (!(audio instanceof HTMLAudioElement)) {
@@ -247,6 +247,29 @@ describe('FocusRoomMusicPlayerClient', () => {
     await Promise.resolve()
 
     expect(audio.getAttribute('src')).toBe('/two.mp3')
+    expect(audio.currentTime).toBe(9)
+  })
+
+  it('should not overwrite a same-track seek when metadata loads after restoration', async () => {
+    localStorage.setItem(
+      'pomo:focus-room-playback:v1',
+      JSON.stringify({isPlaying: false, positionSeconds: 22, savedAt: 1, trackId: 'three'}),
+    )
+    const result = render(() => <FocusRoomMusicPlayerContent tracks={TRACKS} />)
+    const audio = result.container.querySelector('audio')
+
+    if (!(audio instanceof HTMLAudioElement)) {
+      throw new TypeError('Expected the focus-room audio element to be rendered')
+    }
+
+    await Promise.resolve()
+    await Promise.resolve()
+    expect(audio.getAttribute('src')).toBe('/three.mp3')
+
+    audio.currentTime = 9
+    fireEvent(audio, new Event('seeking'))
+    fireEvent(audio, new Event('loadedmetadata'))
+
     expect(audio.currentTime).toBe(9)
   })
 
@@ -265,7 +288,7 @@ describe('FocusRoomMusicPlayerClient', () => {
         ok: true,
       }),
     )
-    const result = render(() => <FocusRoomMusicPlayerClient />)
+    const result = render(() => <FocusRoomMusicPlayerContent />)
     const audio = result.container.querySelector('audio')
 
     if (!(audio instanceof HTMLAudioElement)) {
@@ -291,7 +314,7 @@ describe('FocusRoomMusicPlayerClient', () => {
       'pomo:focus-room-playback:v1',
       JSON.stringify({isPlaying: true, positionSeconds: 22, savedAt: 1, trackId: 'three'}),
     )
-    const result = render(() => <FocusRoomMusicPlayerClient tracks={TRACKS} />)
+    const result = render(() => <FocusRoomMusicPlayerContent tracks={TRACKS} />)
     const audio = result.container.querySelector('audio')
 
     if (!(audio instanceof HTMLAudioElement)) {
@@ -315,7 +338,7 @@ describe('FocusRoomMusicPlayerClient', () => {
       'pomo:focus-room-playback:v1',
       JSON.stringify({positionSeconds: 22, savedAt: 1, trackId: 'removed'}),
     )
-    const result = render(() => <FocusRoomMusicPlayerClient tracks={TRACKS} />)
+    const result = render(() => <FocusRoomMusicPlayerContent tracks={TRACKS} />)
     const audio = result.container.querySelector('audio')
 
     if (!(audio instanceof HTMLAudioElement)) {
@@ -336,7 +359,7 @@ describe('FocusRoomMusicPlayerClient', () => {
   })
 
   it('should save progress periodically and immediately after seeking', async () => {
-    const result = render(() => <FocusRoomMusicPlayerClient tracks={TRACKS} />)
+    const result = render(() => <FocusRoomMusicPlayerContent tracks={TRACKS} />)
     const audio = result.container.querySelector('audio')
 
     if (!(audio instanceof HTMLAudioElement)) {
@@ -368,7 +391,7 @@ describe('FocusRoomMusicPlayerClient', () => {
   })
 
   it('should stop detached audio without clearing its playing state', async () => {
-    const result = render(() => <FocusRoomMusicPlayerClient tracks={TRACKS} />)
+    const result = render(() => <FocusRoomMusicPlayerContent tracks={TRACKS} />)
     const audio = result.container.querySelector('audio')
 
     if (!(audio instanceof HTMLAudioElement)) {

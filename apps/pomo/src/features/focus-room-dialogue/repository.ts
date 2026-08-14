@@ -1,22 +1,16 @@
-import Dexie, {type Table} from 'dexie'
-
 import {createModelStorage, reportModelStorageError} from '../model-storage/storage'
+import {createFocusRoomDatabase} from './database'
 import {
   type DialogueEventBinding,
   dialogueEventBindingSchema,
   type DialogueEventId,
   FOCUS_ROOM_DIALOGUE_EVENTS,
+  FOCUS_ROOM_ENTRY_EVENT,
   type FocusRoomDialogue,
   focusRoomDialogueSchema,
 } from './schema'
 
-const DATABASE_NAME = 'pomo-focus-room'
 const AUDIO_CACHE_NAME = 'pomo-dialogue-audio-v1'
-
-interface DialogueDatabase extends Dexie {
-  readonly dialogues: Table<unknown, string>
-  readonly eventBindings: Table<unknown, string>
-}
 
 export interface SaveDialogueOptions {
   readonly audio?: Blob
@@ -31,20 +25,18 @@ export interface FocusRoomDialogueRepository {
   readonly listEventBindings: () => Promise<ReadonlyArray<DialogueEventBinding>>
   readonly listDialogues: () => Promise<ReadonlyArray<FocusRoomDialogue>>
   readonly saveDialogue: (options: SaveDialogueOptions) => Promise<void>
-  readonly setEventBinding: (event: DialogueEventId, dialogueId: string | null) => Promise<void>
-}
-
-const createDatabase = (): DialogueDatabase => {
-  const database = new Dexie(DATABASE_NAME) as DialogueDatabase
-  database.version(1).stores({dialogues: 'id, updatedAt', eventBindings: 'event'})
-  return database
+  readonly setEntryBinding: (dialogueIds: ReadonlyArray<string> | string | null) => Promise<void>
+  readonly setEventBinding: (
+    event: DialogueEventId,
+    dialogueIds: ReadonlyArray<string> | string | null,
+  ) => Promise<void>
 }
 
 const getAudioPath = (audioKey: string) => `/__pomo/dialogue-audio/${audioKey}.wav`
 
 /** Creates a browser repository for local dialogue metadata and generated WAV files. */
 export const createFocusRoomDialogueRepository = (): FocusRoomDialogueRepository => {
-  const database = createDatabase()
+  const database = createFocusRoomDatabase()
   const audioStorage = createModelStorage({cacheName: AUDIO_CACHE_NAME})
   const deleteAudio = async (audioKey: string) => {
     const deletion = await audioStorage.delete(getAudioPath(audioKey))
@@ -52,6 +44,33 @@ export const createFocusRoomDialogueRepository = (): FocusRoomDialogueRepository
     if (!deletion.ok) {
       reportModelStorageError(deletion.error)
     }
+  }
+  const setEventBinding = async (
+    event: DialogueEventId,
+    dialogueIds: ReadonlyArray<string> | string | null,
+  ) => {
+    const requestedIds =
+      typeof dialogueIds === 'string' ? [dialogueIds] : dialogueIds === null ? [] : dialogueIds
+    const uniqueDialogueIds = [...new Set(requestedIds)]
+
+    if (uniqueDialogueIds.length === 0) {
+      await database.eventBindings.delete(event)
+      return
+    }
+
+    const storedDialogues = await Promise.all(
+      uniqueDialogueIds.map((dialogueId) => database.dialogues.get(dialogueId)),
+    )
+
+    if (storedDialogues.some((dialogue) => dialogue === undefined)) {
+      throw new Error('연결할 대화를 찾을 수 없어요.')
+    }
+
+    await database.eventBindings.put({
+      dialogueIds: uniqueDialogueIds,
+      event,
+      version: 2,
+    } satisfies DialogueEventBinding)
   }
 
   return {
@@ -64,19 +83,28 @@ export const createFocusRoomDialogueRepository = (): FocusRoomDialogueRepository
         const bindings = await Promise.all(
           FOCUS_ROOM_DIALOGUE_EVENTS.map((event) => database.eventBindings.get(event)),
         )
-        const bindingEvents: Array<DialogueEventId> = []
 
-        for (const binding of bindings) {
-          if (binding !== undefined) {
-            const parsedBinding = dialogueEventBindingSchema.parse(binding)
-
-            if (parsedBinding.dialogueId === dialogueId) {
-              bindingEvents.push(parsedBinding.event)
+        await Promise.all(
+          bindings.map(async (storedBinding) => {
+            if (storedBinding === undefined) {
+              return
             }
-          }
-        }
 
-        await Promise.all(bindingEvents.map((event) => database.eventBindings.delete(event)))
+            const binding = dialogueEventBindingSchema.parse(storedBinding)
+            const remainingIds = binding.dialogueIds.filter((id) => id !== dialogueId)
+
+            if (remainingIds.length === binding.dialogueIds.length) {
+              return
+            }
+
+            if (remainingIds.length === 0) {
+              await database.eventBindings.delete(binding.event)
+              return
+            }
+
+            await database.eventBindings.put({...binding, dialogueIds: remainingIds})
+          }),
+        )
       })
 
       if (parsedDialogue !== null) {
@@ -151,21 +179,9 @@ export const createFocusRoomDialogueRepository = (): FocusRoomDialogueRepository
         await deleteAudio(previousDialogue.audioKey)
       }
     },
-    async setEventBinding(event, dialogueId) {
-      if (dialogueId === null) {
-        await database.eventBindings.delete(event)
-        return
-      }
-
-      if ((await database.dialogues.get(dialogueId)) === undefined) {
-        throw new Error('연결할 대화를 찾을 수 없어요.')
-      }
-
-      await database.eventBindings.put({
-        dialogueId,
-        event,
-        version: 1,
-      } satisfies DialogueEventBinding)
+    async setEntryBinding(dialogueIds) {
+      await setEventBinding(FOCUS_ROOM_ENTRY_EVENT, dialogueIds)
     },
+    setEventBinding,
   }
 }

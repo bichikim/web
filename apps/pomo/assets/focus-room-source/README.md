@@ -1,10 +1,13 @@
 # Focus room source assets
 
-This directory stores editable, lossless source files only. Runtime code must import the compressed assets from `concept-art/` and `focus-room-layers/` instead.
+This directory stores editable, lossless source files only. Runtime code must import the generated WebP assets from the sibling runtime directories instead.
 
 - `concept-art/`: original scene PNGs and their checksums
-- `layers/<scene-id>/base.png`: lossless input for the runtime `base.webp`
+- `layers/<scene-id>/base.png` and `layer-*.png`: lossless inputs for runtime scene layers
 - `layers/<scene-id>/mask-*.png`: layer extraction and restoration masks
 - `layers/<scene-id>/workfiles/`: Krita files and retained production intermediates
+- `animation/`: lossless eye and steam animation inputs
+- `depth/`: exact 8-bit depth maps and their generation manifest
+- `status-icons/`: lossless Pomodoro status icon inputs
 
-Run `pnpm --filter @apps/pomo assets:compress-focus-room` after changing a source scene or base. The Vite configuration rejects imports from this directory so source files cannot enter a production bundle accidentally.
+Run `pnpm --filter @apps/pomo assets:compress-focus-room` after changing an image source. The compressor keeps depth maps and masks lossless, quality-checks alpha sprites before choosing a smaller high-quality WebP over lossless WebP, and removes stale generated outputs. The Vite configuration rejects imports from this directory so source files cannot enter a production bundle accidentally.

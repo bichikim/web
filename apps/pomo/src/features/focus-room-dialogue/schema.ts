@@ -30,13 +30,28 @@ export const focusRoomDialogueSchema = z.object({
   voiceId: z.enum(['Yuna', 'F1', 'F2', 'F3', 'F4', 'F5', 'M1', 'M2', 'M3', 'M4', 'M5']),
 })
 
-export const dialogueEventBindingSchema = z.object({
+const legacyDialogueEventBindingSchema = z.object({
   dialogueId: z.string().min(1),
   event: dialogueEventIdSchema,
   version: z.literal(1),
 })
+const currentDialogueEventBindingSchema = z.object({
+  dialogueIds: z.array(z.string().min(1)).min(1).readonly(),
+  event: dialogueEventIdSchema,
+  version: z.literal(2),
+})
+
+export type DialogueEventBinding = z.infer<typeof currentDialogueEventBindingSchema>
+
+export const dialogueEventBindingSchema = z
+  .union([legacyDialogueEventBindingSchema, currentDialogueEventBindingSchema])
+  .transform(
+    (binding): DialogueEventBinding =>
+      binding.version === 1
+        ? {dialogueIds: [binding.dialogueId], event: binding.event, version: 2}
+        : binding,
+  )
 
 export type DialogueSegment = z.infer<typeof dialogueSegmentSchema>
 export type FocusRoomDialogue = z.infer<typeof focusRoomDialogueSchema>
-export type DialogueEventBinding = z.infer<typeof dialogueEventBindingSchema>
 export type DialogueEventId = z.infer<typeof dialogueEventIdSchema>

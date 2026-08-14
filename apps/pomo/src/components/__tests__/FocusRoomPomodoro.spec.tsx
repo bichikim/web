@@ -198,7 +198,9 @@ describe('FocusRoomPomodoro', () => {
     const autoStartSwitch = screen.getByRole('switch', {name: '집중·휴식 자동 재생'})
     fireEvent.click(autoStartSwitch)
     expect(autoStartSwitch).toHaveProperty('checked', true)
-    expect(localStorage.getItem('pomo:timer-auto-start:v1')).toBe('true')
+    expect(JSON.parse(localStorage.getItem('pomo:timer-auto-start:v2') ?? '')).toMatchObject({
+      isEnabled: true,
+    })
 
     fireEvent.click(within(dialog).getByRole('button', {name: '집중 시작'}))
     vi.advanceTimersByTime(1_000)
