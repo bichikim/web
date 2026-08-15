@@ -6,7 +6,12 @@ import {
   type HistoryTargetDate,
   renderHistoryContentHtml,
 } from '../../features/history-generation'
-import {type Database, getDatabase} from '../database'
+import {
+  type Database,
+  getDatabase,
+  getTransactionalDatabase,
+  type TransactionalDatabase,
+} from '../database'
 import {
   feedChannels,
   historicalGenerationRuns,
@@ -194,7 +199,7 @@ export const findGenerationRun = async (
 
 const claimWebhookEvent = async (
   eventId: string,
-  database: Parameters<Parameters<Database['transaction']>[0]>[0],
+  database: Parameters<Parameters<TransactionalDatabase['transaction']>[0]>[0],
 ): Promise<boolean> => {
   const [inserted] = await database
     .insert(processedOpenAiWebhookEvents)
@@ -208,7 +213,7 @@ const claimWebhookEvent = async (
 /** Publishes a completed response atomically and ignores duplicate webhook events. */
 export const publishHistoryResponse = async (
   options: PublishResponseOptions,
-  database: Database = getDatabase(),
+  database: TransactionalDatabase = getTransactionalDatabase(),
 ): Promise<boolean> =>
   database.transaction(async (transaction) => {
     if (!(await claimWebhookEvent(options.eventId, transaction))) {
@@ -299,7 +304,7 @@ export const publishHistoryResponse = async (
 /** Records a terminal OpenAI event atomically and ignores duplicate delivery. */
 const finishHistoryResponse = async (
   options: FinishResponseOptions,
-  database: Database = getDatabase(),
+  database: TransactionalDatabase = getTransactionalDatabase(),
 ): Promise<boolean> =>
   database.transaction(async (transaction) => {
     if (!(await claimWebhookEvent(options.eventId, transaction))) {
@@ -319,7 +324,7 @@ export const failHistoryResponse = (
   eventId: string,
   responseId: string,
   message: string,
-  database: Database = getDatabase(),
+  database: TransactionalDatabase = getTransactionalDatabase(),
 ): Promise<boolean> =>
   finishHistoryResponse({eventId, message, responseId, status: 'failed'}, database)
 
@@ -328,7 +333,7 @@ export const rejectHistoryResponse = (
   eventId: string,
   responseId: string,
   message: string,
-  database: Database = getDatabase(),
+  database: TransactionalDatabase = getTransactionalDatabase(),
 ): Promise<boolean> =>
   finishHistoryResponse({eventId, message, responseId, status: 'rejected'}, database)
 
