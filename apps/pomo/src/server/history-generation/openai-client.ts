@@ -7,7 +7,7 @@ import {
   historyGenerationOpenAiOutputSchema,
   type HistorySourcePolicy,
   type HistoryTargetDate,
-} from '../../features/history-generation'
+} from 'src/features/history-generation'
 import {getOpenAiConfiguration, getOpenAiWebhookSecret} from '../ai/environment'
 
 export interface SubmitHistoryResponseOptions {

@@ -1,8 +1,8 @@
 import {cx} from 'class-variance-authority'
 import {createEffect, createMemo, createSignal, For, Show, untrack} from 'solid-js'
 
-import breakStatusIcon from '../../assets/pomodoro-status-icons/break-face.webp'
-import focusStatusIcon from '../../assets/pomodoro-status-icons/focus-face.webp'
+import breakStatusIcon from 'assets/pomodoro-status-icons/break-face.webp'
+import focusStatusIcon from 'assets/pomodoro-status-icons/focus-face.webp'
 import {PButton} from '../design-system/PButton'
 import {PCharacterEmotion, type PCharacterEmotionType} from '../design-system/PCharacterEmotion'
 import {PIconButton} from '../design-system/PIconButton'

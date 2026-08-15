@@ -15,7 +15,7 @@ const CLIENT_FALLBACK_CLASSES = cx(
   'w-full rounded-8 border border-white/10 bg-#211a2b/88 p-8',
   'text-sm text-#bdb2c4 shadow-[0_28px_100px_rgba(5,2,10,0.45)] backdrop-blur-xl',
 )
-const DialogueWriter = clientOnly(() => import('../../components/DialogueWriter'), {lazy: true})
+const DialogueWriter = clientOnly(() => import('src/components/DialogueWriter'), {lazy: true})
 
 export default function DirectAnswerPage() {
   return (

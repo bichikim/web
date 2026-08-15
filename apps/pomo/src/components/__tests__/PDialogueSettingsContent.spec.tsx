@@ -5,10 +5,10 @@ import {fireEvent, render, screen} from '@solidjs/testing-library'
 import type {JSX} from 'solid-js'
 import {beforeEach, expect, it, vi} from 'vitest'
 
-import {PSelect} from '../../design-system/PSelect'
-import {type PEventContextValue, usePEvents} from '../../features/focus-room-dialogue/PEventContext'
-import type {PDialogue} from '../../features/focus-room-dialogue/schema'
-import {type PFeedController, usePFeedContext} from '../../features/focus-room-feed'
+import {PSelect} from 'src/design-system/PSelect'
+import {type PEventContextValue, usePEvents} from 'src/features/focus-room-dialogue/PEventContext'
+import type {PDialogue} from 'src/features/focus-room-dialogue/schema'
+import {type PFeedController, usePFeedContext} from 'src/features/focus-room-feed'
 import PDialogueSettingsContent from '../PDialogueSettingsContent'
 
 vi.mock('@kobalte/core/tabs', () => ({Tabs: {Content: vi.fn()}}))
@@ -34,11 +34,11 @@ vi.mock('@solidjs/router', () => ({
     </a>
   ),
 }))
-vi.mock('../../design-system/PSelect', () => ({PSelect: vi.fn()}))
-vi.mock('../../features/focus-room-dialogue/PEventContext', () => ({
+vi.mock('src/design-system/PSelect', () => ({PSelect: vi.fn()}))
+vi.mock('src/features/focus-room-dialogue/PEventContext', () => ({
   usePEvents: vi.fn(),
 }))
-vi.mock('../../features/focus-room-feed', () => ({
+vi.mock('src/features/focus-room-feed', () => ({
   excludeFeedDialogues: (dialogues: ReadonlyArray<PDialogue>) => dialogues,
   usePFeedContext: vi.fn(),
 }))

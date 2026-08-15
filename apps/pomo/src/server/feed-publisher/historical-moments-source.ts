@@ -5,7 +5,7 @@ import type {
   HistoricalMomentQuery,
   HistoricalMomentRecord,
   HistoricalMomentSource,
-} from '../../features/feed-publisher/historical-moments-provider'
+} from 'src/features/feed-publisher/historical-moments-provider'
 import {getDatabase} from '../database'
 import {feedChannels, historicalMoments} from '../database/schema'
 

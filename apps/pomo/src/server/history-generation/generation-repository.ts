@@ -5,7 +5,7 @@ import {
   type HistoryGenerationOutput,
   type HistoryTargetDate,
   renderHistoryContentHtml,
-} from '../../features/history-generation'
+} from 'src/features/history-generation'
 import {
   type Database,
   getDatabase,

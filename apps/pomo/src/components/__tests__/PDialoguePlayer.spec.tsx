@@ -4,11 +4,11 @@ import {fireEvent, render, screen} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {afterEach, expect, it, vi} from 'vitest'
 
-import {type PEventContextValue, usePEvents} from '../../features/focus-room-dialogue/PEventContext'
-import type {DialogueSegmentMood} from '../../features/focus-room-dialogue/schema'
+import {type PEventContextValue, usePEvents} from 'src/features/focus-room-dialogue/PEventContext'
+import type {DialogueSegmentMood} from 'src/features/focus-room-dialogue/schema'
 import {PDialoguePlayer} from '../PDialoguePlayer'
 
-vi.mock('../../features/focus-room-dialogue/PEventContext', () => ({
+vi.mock('src/features/focus-room-dialogue/PEventContext', () => ({
   usePEvents: vi.fn(),
 }))
 

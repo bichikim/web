@@ -1,9 +1,9 @@
 import {Application, Container, Sprite, type Texture} from 'pixi.js'
 
-import steamImage1 from '../../../assets/focus-room-animation/steam-ai-1.webp'
-import steamImage2 from '../../../assets/focus-room-animation/steam-ai-2.webp'
-import steamImage3 from '../../../assets/focus-room-animation/steam-ai-3.webp'
-import steamImage4 from '../../../assets/focus-room-animation/steam-ai-4.webp'
+import steamImage1 from 'assets/focus-room-animation/steam-ai-1.webp'
+import steamImage2 from 'assets/focus-room-animation/steam-ai-2.webp'
+import steamImage3 from 'assets/focus-room-animation/steam-ai-3.webp'
+import steamImage4 from 'assets/focus-room-animation/steam-ai-4.webp'
 import {DepthParallaxFilter} from './depth-parallax-filter'
 import {PEyeController} from './eye-animation-controller'
 import {ParallaxController} from './parallax-controller'

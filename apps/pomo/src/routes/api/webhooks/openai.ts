@@ -1,7 +1,7 @@
 import type {APIEvent} from '@solidjs/start/server'
 
-import {handleOpenAiResponseEvent} from '../../../server/history-generation/handle-openai-webhook'
-import {unwrapOpenAiWebhook} from '../../../server/history-generation/openai-client'
+import {handleOpenAiResponseEvent} from 'src/server/history-generation/handle-openai-webhook'
+import {unwrapOpenAiWebhook} from 'src/server/history-generation/openai-client'
 
 const RESPONSE_EVENTS = new Set([
   'response.cancelled',

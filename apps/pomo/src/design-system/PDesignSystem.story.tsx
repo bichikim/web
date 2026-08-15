@@ -1,7 +1,7 @@
 import {For} from 'solid-js'
 import type {Meta, StoryObj} from 'storybook-solidjs-vite'
 
-import dayReadingImage from '../../assets/concept-art/focus-room-day-reading-concept.webp'
+import dayReadingImage from 'assets/concept-art/focus-room-day-reading-concept.webp'
 import {PPanel} from './PPanel'
 
 const SWATCHES = [

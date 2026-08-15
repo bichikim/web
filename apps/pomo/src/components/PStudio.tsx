@@ -2,7 +2,7 @@ import {clientOnly} from '@solidjs/start'
 import {cx} from 'class-variance-authority'
 import {createMemo, createSignal, onCleanup, onMount, Show, untrack} from 'solid-js'
 
-import smilingFaceSource from '../../assets/pomodoro-status-icons/break-face.webp'
+import smilingFaceSource from 'assets/pomodoro-status-icons/break-face.webp'
 import {PButton} from '../design-system/PButton'
 import {PIconButton} from '../design-system/PIconButton'
 import {PIconSelect} from '../design-system/PIconSelect'

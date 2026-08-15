@@ -1,7 +1,7 @@
 import type {APIEvent} from '@solidjs/start/server'
 
-import {isAuthorizedCronRequest} from '../../../server/cron/environment'
-import {startHistoryGeneration} from '../../../server/history-generation/start-generation'
+import {isAuthorizedCronRequest} from 'src/server/cron/environment'
+import {startHistoryGeneration} from 'src/server/history-generation/start-generation'
 
 const OK_STATUS = 200
 const ACCEPTED_STATUS = 202

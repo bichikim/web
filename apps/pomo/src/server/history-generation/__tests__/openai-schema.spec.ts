@@ -1,7 +1,7 @@
 import {zodTextFormat} from 'openai/helpers/zod'
 import {expect, it} from 'vitest'
 
-import {historyGenerationOpenAiOutputSchema} from '../../../features/history-generation'
+import {historyGenerationOpenAiOutputSchema} from 'src/features/history-generation'
 
 it('should convert the generation contract into a strict OpenAI response format', () => {
   const format = zodTextFormat(historyGenerationOpenAiOutputSchema, 'history_generation')

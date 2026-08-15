@@ -1,9 +1,9 @@
 import type {APIEvent} from '@solidjs/start/server'
 import {z} from 'zod'
 
-import type {HistoryTargetDate} from '../../../../features/history-generation'
-import {isAuthorizedCronRequest} from '../../../../server/cron/environment'
-import {startHistoryRegeneration} from '../../../../server/history-generation/start-regeneration'
+import type {HistoryTargetDate} from 'src/features/history-generation'
+import {isAuthorizedCronRequest} from 'src/server/cron/environment'
+import {startHistoryRegeneration} from 'src/server/history-generation/start-regeneration'
 
 const ACCEPTED_STATUS = 202
 const MIN_MOMENT_COUNT = 3
