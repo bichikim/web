@@ -100,7 +100,7 @@ it('should replace a mistyped article slug when its source ID uniquely matches',
   expect(result.moments[0]!.sections.context.sourceUrls[0]).toBe(searchedUrl)
 })
 
-it('should accept a trusted document beneath a configured seed URL', () => {
+it('should reject an unsearched document beneath a configured seed URL', () => {
   const output = createOutput()
   const trustedUrl = 'https://archive.example/on-this-day/august-15/verified-event'
   output.moments[0]!.sources[0]!.url = trustedUrl
@@ -117,7 +117,7 @@ it('should accept a trusted document beneath a configured seed URL', () => {
       targetDay: 15,
       targetMonth: 8,
     }),
-  ).not.toThrow()
+  ).toThrow('A generated source was not returned by OpenAI web search')
 })
 
 it('should reject a URL that did not come from OpenAI web search', () => {
@@ -148,4 +148,21 @@ it('should reject a moment from another calendar date', () => {
       targetMonth: 8,
     }),
   ).toThrow('A generated moment does not match the target month and day')
+})
+
+it('should reject a selected regeneration that changes a required title', () => {
+  const output = createOutput()
+  const requiredTitles = output.moments.map((moment) => moment.title)
+  output.moments[0]!.title = '1945년, 다른 역사적 사건'
+
+  expect(() =>
+    validateHistoryOutput({
+      outputText: JSON.stringify(output),
+      policy: POLICY,
+      requiredTitles,
+      searchSourceUrls: SOURCE_URLS,
+      targetDay: 15,
+      targetMonth: 8,
+    }),
+  ).toThrow('Generated moments do not match the required titles')
 })

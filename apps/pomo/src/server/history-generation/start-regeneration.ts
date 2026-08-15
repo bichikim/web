@@ -50,6 +50,7 @@ export const startHistoryRegeneration = async (
 ): Promise<StartRegenerationResult> => {
   const run = await dependencies.prepare({
     promptVersion: HISTORY_PROMPT_VERSION,
+    requiredTitles: options.requiredTitles,
     sourcePolicyVersion: HISTORY_SOURCE_POLICY.version,
     targetDate: options.targetDate,
   })

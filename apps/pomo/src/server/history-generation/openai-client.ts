@@ -41,6 +41,16 @@ export const submitHistoryResponse = async (
   options: SubmitHistoryResponseOptions,
 ): Promise<SubmittedHistoryResponse> => {
   const configuration = getOpenAiConfiguration()
+  const metadata: Record<string, string> = {
+    generation_run_id: options.generationRunId,
+    prompt_version: options.promptVersion,
+    source_policy_version: options.policy.version,
+  }
+
+  if (options.requiredTitles !== undefined) {
+    metadata.required_titles = JSON.stringify(options.requiredTitles)
+  }
+
   const response = await getOpenAiClient().responses.create({
     background: true,
     include: ['web_search_call.action.sources'],
@@ -49,11 +59,7 @@ export const submitHistoryResponse = async (
       requiredTitles: options.requiredTitles,
       targetDate: options.targetDate,
     }),
-    metadata: {
-      generation_run_id: options.generationRunId,
-      prompt_version: options.promptVersion,
-      source_policy_version: options.policy.version,
-    },
+    metadata,
     model: configuration.model,
     reasoning: {effort: configuration.reasoningEffort},
     service_tier: configuration.serviceTier,

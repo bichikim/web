@@ -48,9 +48,9 @@ describe('createFeedResponse', () => {
     expect(response.status).toBe(200)
     await expect(response.text()).resolves.toContain('<rss version="2.0"')
     expect(response.headers.get('Content-Type')).toBe('application/rss+xml; charset=utf-8')
-    expect(response.headers.get('Cache-Control')).toBe('public, max-age=900')
+    expect(response.headers.get('Cache-Control')).toBe('public, max-age=300')
     expect(response.headers.get('Vercel-CDN-Cache-Control')).toBe(
-      'public, s-maxage=21600, stale-while-revalidate=86400',
+      'public, s-maxage=300, stale-while-revalidate=60',
     )
     expect(response.headers.get('Vercel-Cache-Tag')).toBe('feed:today-in-history')
     expect(response.headers.get('ETag')).toMatch(/^"[\w-]+"$/u)

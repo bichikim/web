@@ -21,13 +21,14 @@ const OPTIONS = {
 
 it('should submit selected moments against the reopened daily run', async () => {
   const markSubmitted = vi.fn().mockResolvedValue(undefined)
+  const prepare = vi.fn().mockResolvedValue(RUN)
   const submit = vi.fn().mockResolvedValue({responseId: 'resp-radio'})
 
   await expect(
     startHistoryRegeneration(OPTIONS, {
       markFailed: vi.fn(),
       markSubmitted,
-      prepare: vi.fn().mockResolvedValue(RUN),
+      prepare,
       submit,
     }),
   ).resolves.toEqual({
@@ -36,6 +37,9 @@ it('should submit selected moments against the reopened daily run', async () => 
     status: 'submitted',
     targetDate: '2026-08-16',
   })
+  expect(prepare).toHaveBeenCalledWith(
+    expect.objectContaining({requiredTitles: OPTIONS.requiredTitles}),
+  )
   expect(submit).toHaveBeenCalledWith(
     expect.objectContaining({requiredTitles: OPTIONS.requiredTitles}),
   )

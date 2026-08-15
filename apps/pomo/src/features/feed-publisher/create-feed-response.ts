@@ -9,6 +9,8 @@ import {renderRss} from './render-rss'
 const BYTES_PER_KIBIBYTE = 1024
 const MAX_DOCUMENT_KIBIBYTES = 512
 const MAX_DOCUMENT_BYTES = MAX_DOCUMENT_KIBIBYTES * BYTES_PER_KIBIBYTE
+const CACHE_SECONDS = 300
+const STALE_SECONDS = 60
 const HTTP_STATUS_PERMANENT_REDIRECT = 308
 const HTTP_STATUS_METHOD_NOT_ALLOWED = 405
 const HTTP_STATUS_NOT_FOUND = 404
@@ -64,12 +66,13 @@ const createDocumentHeaders = (
   return {
     entityTag,
     headers: new Headers({
-      'Cache-Control': 'public, max-age=900',
+      'Cache-Control': `public, max-age=${CACHE_SECONDS}`,
       'Content-Type': getContentType(format),
       ETag: entityTag,
       'Last-Modified': new Date(updatedAt).toUTCString(),
       'Vercel-Cache-Tag': `feed:${slug}`,
-      'Vercel-CDN-Cache-Control': 'public, s-maxage=21600, stale-while-revalidate=86400',
+      // AI_NOTE - Calendar feeds change at Korean midnight without a publish event, so long CDN freshness can serve yesterday's entries.
+      'Vercel-CDN-Cache-Control': `public, s-maxage=${CACHE_SECONDS}, stale-while-revalidate=${STALE_SECONDS}`,
       'X-Content-Type-Options': 'nosniff',
     }),
   }

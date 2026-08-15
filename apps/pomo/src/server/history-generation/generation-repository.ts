@@ -47,11 +47,16 @@ interface CreateRunOptions {
   readonly targetDate: HistoryTargetDate
 }
 
+interface PrepareRerunOptions extends CreateRunOptions {
+  readonly requiredTitles: ReadonlyArray<string>
+}
+
 interface PublishResponseOptions {
   readonly eventId: string
   readonly generation: HistoryGenerationOutput
   readonly model: string
   readonly responseId: string
+  readonly replaceDate: boolean
   readonly searchSourceUrls: ReadonlyArray<string>
 }
 
@@ -156,13 +161,32 @@ export const prepareGenerationRun = async (
 
 /** Reopens an inactive daily run so its published moments can be regenerated. */
 export const prepareGenerationRerun = async (
-  options: CreateRunOptions,
+  options: PrepareRerunOptions,
   database: Database = getDatabase(),
 ): Promise<GenerationRun> => {
   const channelId = await getChannelId(database)
+  const selectedMoments = await database
+    .select({title: historicalMoments.title})
+    .from(historicalMoments)
+    .where(
+      and(
+        eq(historicalMoments.channelId, channelId),
+        eq(historicalMoments.eventMonth, options.targetDate.month),
+        eq(historicalMoments.eventDay, options.targetDate.day),
+        eq(historicalMoments.status, 'published'),
+        inArray(historicalMoments.title, [...options.requiredTitles]),
+      ),
+    )
+  const selectedTitles = new Set(selectedMoments.map((moment) => moment.title))
+
+  if (options.requiredTitles.some((title) => !selectedTitles.has(title))) {
+    throw new Error('Every regeneration title must match an existing published moment')
+  }
+
   const [updated] = await database
     .update(historicalGenerationRuns)
     .set({
+      attemptCount: MAX_GENERATION_ATTEMPTS,
       completedAt: null,
       errorMessage: null,
       openAiResponseId: null,
@@ -264,6 +288,26 @@ export const publishHistoryResponse = async (
     }
 
     const publishedAt = new Date()
+
+    if (options.replaceDate) {
+      const [firstMoment] = options.generation.moments
+
+      if (firstMoment === undefined) {
+        throw new Error('A generation must contain at least one historical moment')
+      }
+
+      await transaction
+        .update(historicalMoments)
+        .set({status: 'archived', updatedAt: publishedAt})
+        .where(
+          and(
+            eq(historicalMoments.channelId, run.channelId),
+            eq(historicalMoments.eventMonth, firstMoment.eventMonth),
+            eq(historicalMoments.eventDay, firstMoment.eventDay),
+            eq(historicalMoments.status, 'published'),
+          ),
+        )
+    }
 
     for (const moment of options.generation.moments) {
       const stableKey = createStableKey(moment)

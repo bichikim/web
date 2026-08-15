@@ -8,9 +8,32 @@ import {
 interface ValidateHistoryOutputOptions {
   readonly outputText: string
   readonly policy: HistorySourcePolicy
+  readonly requiredTitles?: ReadonlyArray<string>
   readonly searchSourceUrls: ReadonlyArray<string>
   readonly targetDay: number
   readonly targetMonth: number
+}
+
+const normalizeTitle = (value: string): string =>
+  value.normalize('NFKC').trim().toLocaleLowerCase('ko-KR')
+
+const requireSelectedTitles = (
+  moments: HistoryGenerationOutput['moments'],
+  requiredTitles: ReadonlyArray<string> | undefined,
+): void => {
+  if (requiredTitles === undefined) {
+    return
+  }
+
+  const actualTitles = moments.map((moment) => normalizeTitle(moment.title)).sort()
+  const expectedTitles = requiredTitles.map(normalizeTitle).sort()
+
+  if (
+    actualTitles.length !== expectedTitles.length ||
+    actualTitles.some((title, index) => title !== expectedTitles[index])
+  ) {
+    throw new TypeError('Generated moments do not match the required titles')
+  }
 }
 
 const normalizeUrl = (value: string): string => {
@@ -39,24 +62,7 @@ const getArticleIdentity = (value: string): string | undefined => {
   return articleId === undefined ? undefined : `${url.hostname}:${articleId}`
 }
 
-const isSeedDescendant = (value: string, seedUrls: ReadonlyArray<string>): boolean => {
-  const candidate = new URL(normalizeUrl(value))
-
-  return seedUrls.some((seedValue) => {
-    const seed = new URL(normalizeUrl(seedValue))
-    const seedPath = seed.pathname.replace(/\/$/u, '')
-
-    return (
-      candidate.origin === seed.origin &&
-      (candidate.pathname === seedPath || candidate.pathname.startsWith(`${seedPath}/`))
-    )
-  })
-}
-
-const createSourceResolver = (
-  searchSourceUrls: ReadonlyArray<string>,
-  seedUrls: ReadonlyArray<string>,
-) => {
+const createSourceResolver = (searchSourceUrls: ReadonlyArray<string>) => {
   const sourcesByUrl = new Map(searchSourceUrls.map((value) => [normalizeUrl(value), value]))
   const sourcesByArticleIdentity = new Map<string, Array<string>>()
 
@@ -86,10 +92,6 @@ const createSourceResolver = (
       return articleSources[0]!
     }
 
-    if (isSeedDescendant(value, seedUrls)) {
-      return value
-    }
-
     throw new TypeError(
       `A generated source was not returned by OpenAI web search: ${normalizedUrl}`,
     )
@@ -109,7 +111,8 @@ export const validateHistoryOutput = (
 ): HistoryGenerationOutput => {
   const parsedJson: unknown = JSON.parse(options.outputText)
   const output = historyGenerationOutputSchema.parse(parsedJson)
-  const resolveSource = createSourceResolver(options.searchSourceUrls, options.policy.seedUrls)
+  requireSelectedTitles(output.moments, options.requiredTitles)
+  const resolveSource = createSourceResolver(options.searchSourceUrls)
   const momentKeys = new Set<string>()
 
   for (const moment of output.moments) {
@@ -117,7 +120,7 @@ export const validateHistoryOutput = (
       throw new TypeError('A generated moment does not match the target month and day')
     }
 
-    const normalizedTitle = moment.title.normalize('NFKC').toLocaleLowerCase('ko-KR')
+    const normalizedTitle = normalizeTitle(moment.title)
     const momentKey = `${moment.historicalEra}:${moment.eventYear}:${normalizedTitle}`
 
     if (momentKeys.has(momentKey)) {

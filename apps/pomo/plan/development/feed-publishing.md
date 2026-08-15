@@ -34,7 +34,7 @@ Pomo 발행 기능
   `today-in-history`다. Auth와 관리 UI는 요구하지 않으며 콘텐츠 생성은 Vercel Cron과 OpenAI
   Webhook으로 자동화한다.
 - 공개 XML은 SolidStart API route가 `Response`로 반환한다. 서버 함수는 공개 XML 조회에 사용하지 않는다.
-- 기본 리더 캐시는 15분, Vercel CDN 캐시는 6시간, stale-while-revalidate는 24시간이다.
+- 기본 리더와 Vercel CDN 캐시는 5분, stale-while-revalidate는 1분이다.
 - 콘텐츠가 변경되면 `feed:<slug>` 태그만 무효화한다. 일반 발행 흐름에서 hard delete는 사용하지 않는다.
 - 웹용 Vercel 배포는 `build:web`을 사용한다. `build:apps-in-toss` 정적 빌드에는 서버 route를 요구하지 않는다.
 - 기본 Node.js Function을 사용한다. RSS 직렬화를 위해 Edge runtime이나 별도 Runtime Cache를 추가하지 않는다.
@@ -59,8 +59,8 @@ HEAD /feeds/:slug/atom.xml
 ### 응답 헤더
 
 ```http
-Cache-Control: public, max-age=900
-Vercel-CDN-Cache-Control: public, s-maxage=21600, stale-while-revalidate=86400
+Cache-Control: public, max-age=300
+Vercel-CDN-Cache-Control: public, s-maxage=300, stale-while-revalidate=60
 Vercel-Cache-Tag: feed:<slug>
 ETag: "<document-hash>"
 Last-Modified: <latest-feed-update>
@@ -73,9 +73,9 @@ X-Content-Type-Options: nosniff
 - `If-None-Match`가 현재 ETag와 같으면 `304`를 반환한다.
 - 공개 피드 응답에는 `Set-Cookie`, `private`, `no-store`, `no-cache`, `Vary: *`를 넣지 않는다.
 
-6시간 TTL은 캐시 태그 무효화가 누락됐을 때의 안전망이다. 정상 발행에서는 태그 무효화 후 다음
-요청이 기존 XML을 즉시 제공하면서 백그라운드 재검증하고, 이후 요청부터 새 XML을 제공한다. RSS
-리더 자체의 확인 주기를 포함한 일반적인 노출 목표는 발행 후 15~30분 이내다.
+5분 TTL은 날짜가 바뀔 때 별도 발행 이벤트가 없어도 전날 피드가 오래 남지 않게 하는 안전망이다.
+정상 발행에서는 태그 무효화 후 다음 요청이 최신 문서를 만든다. RSS 리더 자체의 확인 주기를 포함한
+일반적인 노출 목표는 발행 후 5~15분 이내다.
 
 ## 도메인 모델과 파일 배치
 
@@ -178,7 +178,7 @@ interface FeedProvider {
 
 ### 4. Vercel CDN 캐시
 
-1. 성공한 feed 응답에 15분 리더 캐시와 6시간 Vercel CDN 캐시 헤더를 설정한다.
+1. 성공한 feed 응답에 5분 리더·Vercel CDN 캐시와 1분 stale 헤더를 설정한다.
 2. RSS와 Atom 모두 `feed:<slug>` 태그를 사용한다.
 3. 오류 응답과 redirect에는 성공 문서용 장기 캐시를 적용하지 않는다.
 4. 공개 feed 처리 중 세션·쿠키·사용자별 분기와 Authorization을 읽지 않는다.
@@ -248,8 +248,8 @@ OpenAI 요청은 다음 조건을 따른다.
 - 허용하지 않은 도메인, HTML과 중복 사건이 없다.
 - stable key는 시대·연도·정규화 제목의 hash로 서버가 만든다.
 
-generation run에는 target date, 출처 정책 version, seed URL, OpenAI response ID와 반환된 source 목록을
-저장한다. 재시도와 품질 문제를 조사할 때 실제로 사용한 출처를 확인하기 위한 최소 기록이다.
+generation run에는 target date, prompt·출처 정책 version, OpenAI response ID와 반환된 source 목록을
+저장한다. 재시도와 품질 문제를 조사할 때 생성 조건과 실제 출처를 확인하기 위한 최소 기록이다.
 
 완료 조건: 서버가 외부 HTML을 가져오지 않고 OpenAI 검색 한 번으로 후보 탐색과 콘텐츠 가공을
 완료한다. 검색 미실행, 잘못된 날짜, 부족한 출처, 허용하지 않은 도메인과 임의로 만든 URL은 테스트에서
