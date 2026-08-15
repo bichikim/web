@@ -39,7 +39,24 @@ const getArticleIdentity = (value: string): string | undefined => {
   return articleId === undefined ? undefined : `${url.hostname}:${articleId}`
 }
 
-const createSourceResolver = (searchSourceUrls: ReadonlyArray<string>) => {
+const isSeedDescendant = (value: string, seedUrls: ReadonlyArray<string>): boolean => {
+  const candidate = new URL(normalizeUrl(value))
+
+  return seedUrls.some((seedValue) => {
+    const seed = new URL(normalizeUrl(seedValue))
+    const seedPath = seed.pathname.replace(/\/$/u, '')
+
+    return (
+      candidate.origin === seed.origin &&
+      (candidate.pathname === seedPath || candidate.pathname.startsWith(`${seedPath}/`))
+    )
+  })
+}
+
+const createSourceResolver = (
+  searchSourceUrls: ReadonlyArray<string>,
+  seedUrls: ReadonlyArray<string>,
+) => {
   const sourcesByUrl = new Map(searchSourceUrls.map((value) => [normalizeUrl(value), value]))
   const sourcesByArticleIdentity = new Map<string, Array<string>>()
 
@@ -69,6 +86,10 @@ const createSourceResolver = (searchSourceUrls: ReadonlyArray<string>) => {
       return articleSources[0]!
     }
 
+    if (isSeedDescendant(value, seedUrls)) {
+      return value
+    }
+
     throw new TypeError(
       `A generated source was not returned by OpenAI web search: ${normalizedUrl}`,
     )
@@ -88,7 +109,7 @@ export const validateHistoryOutput = (
 ): HistoryGenerationOutput => {
   const parsedJson: unknown = JSON.parse(options.outputText)
   const output = historyGenerationOutputSchema.parse(parsedJson)
-  const resolveSource = createSourceResolver(options.searchSourceUrls)
+  const resolveSource = createSourceResolver(options.searchSourceUrls, options.policy.seedUrls)
   const momentKeys = new Set<string>()
 
   for (const moment of output.moments) {

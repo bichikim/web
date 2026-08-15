@@ -100,6 +100,26 @@ it('should replace a mistyped article slug when its source ID uniquely matches',
   expect(result.moments[0]!.sections.context.sourceUrls[0]).toBe(searchedUrl)
 })
 
+it('should accept a trusted document beneath a configured seed URL', () => {
+  const output = createOutput()
+  const trustedUrl = 'https://archive.example/on-this-day/august-15/verified-event'
+  output.moments[0]!.sources[0]!.url = trustedUrl
+
+  for (const section of Object.values(output.moments[0]!.sections)) {
+    section.sourceUrls[0] = trustedUrl
+  }
+
+  expect(() =>
+    validateHistoryOutput({
+      outputText: JSON.stringify(output),
+      policy: {...POLICY, seedUrls: ['https://archive.example/on-this-day']},
+      searchSourceUrls: SOURCE_URLS,
+      targetDay: 15,
+      targetMonth: 8,
+    }),
+  ).not.toThrow()
+})
+
 it('should reject a URL that did not come from OpenAI web search', () => {
   const output = createOutput()
   output.moments[0]!.sources[0]!.url = 'https://archive.example/invented'
