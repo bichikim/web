@@ -60,6 +60,23 @@ it('should accept grounded moments for the requested calendar date', () => {
   ).toEqual(output)
 })
 
+it('should accept canonical variants of a searched source URL', () => {
+  const output = createOutput()
+  output.moments[0]!.sources[0]!.url = 'https://www.archive.example/a/?utm_source=openai#section'
+  output.moments[0]!.sections.context.sourceUrls[0] =
+    'https://www.archive.example/a/?utm_source=openai#section'
+
+  expect(() =>
+    validateHistoryOutput({
+      outputText: JSON.stringify(output),
+      policy: POLICY,
+      searchSourceUrls: SOURCE_URLS,
+      targetDay: 15,
+      targetMonth: 8,
+    }),
+  ).not.toThrow()
+})
+
 it('should reject a URL that did not come from OpenAI web search', () => {
   const output = createOutput()
   output.moments[0]!.sources[0]!.url = 'https://archive.example/invented'

@@ -15,7 +15,13 @@ interface ValidateHistoryOutputOptions {
 
 const normalizeUrl = (value: string): string => {
   const url = new URL(value)
+  url.hostname = url.hostname.replace(/^www\./u, '')
   url.hash = ''
+  url.search = ''
+
+  if (url.pathname !== '/') {
+    url.pathname = url.pathname.replace(/\/+$/u, '')
+  }
 
   return url.href
 }
@@ -77,7 +83,9 @@ export const validateHistoryOutput = (
       }
 
       if (!searchSources.has(normalizedUrl)) {
-        throw new TypeError('A generated source was not returned by OpenAI web search')
+        throw new TypeError(
+          `A generated source was not returned by OpenAI web search: ${normalizedUrl}`,
+        )
       }
 
       if (!momentSources.has(normalizedUrl)) {
