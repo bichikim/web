@@ -1,6 +1,7 @@
 import type {SupertonicSpeechPolicy} from './model'
 
-const PARAGRAPH_SEPARATOR = /\n+/u
+const PARAGRAPH_SEPARATOR = /(?:\r?\n)[^\S\r\n]*(?:\r?\n)+/u
+const LINE_BREAK = /\r?\n/u
 const BREAK_CHARACTER = /[\s,;:!?…。！？、，；：]/u
 
 const getCharacters = (text: string) => Array.from(text)
@@ -61,9 +62,10 @@ const splitOversizedText = (
 
 const getSentences = (paragraph: string, locale: string): ReadonlyArray<string> => {
   const segmenter = new Intl.Segmenter(locale, {granularity: 'sentence'})
-  return Array.from(segmenter.segment(paragraph), ({segment}) => segment.trim()).filter(
-    (sentence) => sentence.length > 0,
-  )
+  return paragraph
+    .split(LINE_BREAK)
+    .flatMap((line) => Array.from(segmenter.segment(line), ({segment}) => segment.trim()))
+    .filter((sentence) => sentence.length > 0)
 }
 
 const packSentences = (
@@ -82,10 +84,8 @@ const packSentences = (
 
   for (const sentence of sentences.flatMap((item) => splitOversizedText(item, policy))) {
     const candidate = currentChunk.length === 0 ? sentence : `${currentChunk} ${sentence}`
-    const currentLength = getCharacterLength(currentChunk)
     const candidateLength = getCharacterLength(candidate)
-    const shouldSplit =
-      currentLength >= policy.considerSplitLength && candidateLength > policy.recommendedLength
+    const shouldSplit = candidateLength > policy.recommendedLength
     const exceedsMaximum = candidateLength > policy.maximumLength
 
     if (currentChunk.length > 0 && (shouldSplit || exceedsMaximum)) {
