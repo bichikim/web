@@ -89,6 +89,7 @@ coverage
 
 .temp
 .cache
+apps/pomo/scripts/text-mood/embeddings.*.json
 .vitest-attachments
 .turbo
 .cert
