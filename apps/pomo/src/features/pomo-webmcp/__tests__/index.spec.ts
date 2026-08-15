@@ -2,7 +2,7 @@
 
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
-import {registerPomoSayTool} from '../index'
+import {registerPSayTool} from '../index'
 
 interface RegisteredTool {
   readonly execute: (input: unknown) => Promise<unknown>
@@ -35,16 +35,16 @@ const removeModelContext = () => {
 
 afterEach(removeModelContext)
 
-describe('registerPomoSayTool', () => {
+describe('registerPSayTool', () => {
   it('should skip registration when WebMCP is unavailable', () => {
-    return expect(registerPomoSayTool({document, speak: vi.fn()})).resolves.toBe(false)
+    return expect(registerPSayTool({document, speak: vi.fn()})).resolves.toBe(false)
   })
 
   it('should register pomo_say and speak with its default voice', async () => {
     const modelContext = createModelContext()
     const speak = vi.fn(async () => undefined)
 
-    await registerPomoSayTool({document, speak})
+    await registerPSayTool({document, speak})
 
     const tool = modelContext.getTool()
     const result = await tool.execute({text: '  새 소식이에요.  '})
@@ -58,7 +58,7 @@ describe('registerPomoSayTool', () => {
     const modelContext = createModelContext()
     const speak = vi.fn(async () => undefined)
 
-    await registerPomoSayTool({document, speak})
+    await registerPSayTool({document, speak})
     const tool = modelContext.getTool()
 
     const result = await tool.execute({text: '안녕하세요.', voice: 'Alex'})
@@ -71,7 +71,7 @@ describe('registerPomoSayTool', () => {
     const modelContext = createModelContext()
     const speak = vi.fn(async () => undefined)
 
-    await registerPomoSayTool({document, speak})
+    await registerPSayTool({document, speak})
     const tool = modelContext.getTool()
     const speech = tool.execute({text: '안녕하세요.', voice: 'M1'})
 

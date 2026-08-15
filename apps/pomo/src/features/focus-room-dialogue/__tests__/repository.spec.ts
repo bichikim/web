@@ -1,6 +1,6 @@
 import {beforeEach, expect, it, vi} from 'vitest'
 
-import {createFocusRoomDialogueRepository} from '../repository'
+import {createPDialogueRepository} from '../repository'
 
 const databaseMocks = vi.hoisted(() => {
   const dialogues = {
@@ -64,7 +64,7 @@ it('should finish metadata deletion when obsolete audio cleanup fails', async ()
     voiceId: 'Yuna',
   })
   storageMocks.delete.mockResolvedValue({error: storageError, ok: false})
-  const repository = createFocusRoomDialogueRepository()
+  const repository = createPDialogueRepository()
 
   await expect(repository.deleteDialogue('dialogue-id')).resolves.toBeUndefined()
 
@@ -80,7 +80,7 @@ it('should normalize a legacy entry binding to a dialogue sequence', async () =>
       ? {dialogueId: 'legacy-dialogue', event: 'room-enter', version: 1}
       : undefined,
   )
-  const repository = createFocusRoomDialogueRepository()
+  const repository = createPDialogueRepository()
 
   await expect(repository.listEventBindings()).resolves.toEqual([
     {dialogueIds: ['legacy-dialogue'], event: 'room-enter', version: 2},
@@ -89,7 +89,7 @@ it('should normalize a legacy entry binding to a dialogue sequence', async () =>
 
 it('should persist unique entry dialogues in their selected order', async () => {
   databaseMocks.dialogues.get.mockResolvedValue({id: 'stored'})
-  const repository = createFocusRoomDialogueRepository()
+  const repository = createPDialogueRepository()
 
   await repository.setEntryBinding(['first', 'second', 'first'])
 
@@ -120,7 +120,7 @@ it('should preserve remaining event dialogues when deleting one dialogue', async
       : undefined,
   )
   storageMocks.delete.mockResolvedValue({ok: true, value: true})
-  const repository = createFocusRoomDialogueRepository()
+  const repository = createPDialogueRepository()
 
   await repository.deleteDialogue('first')
 
@@ -137,7 +137,7 @@ it('should roll back newly written audio when metadata persistence fails', async
   databaseMocks.dialogues.put.mockRejectedValueOnce(new Error('database unavailable'))
   storageMocks.set.mockResolvedValue({ok: true, value: undefined})
   storageMocks.delete.mockResolvedValue({ok: true, value: true})
-  const repository = createFocusRoomDialogueRepository()
+  const repository = createPDialogueRepository()
   const dialogue = {
     audioKey: 'new-audio',
     createdAt: '2026-08-13T00:00:00.000Z',
@@ -165,7 +165,7 @@ it('should persist and remove bindings for every supported dialogue event', asyn
       ? {dialogueId: 'dialogue-id', event: 'focus-start', version: 1}
       : undefined,
   )
-  const repository = createFocusRoomDialogueRepository()
+  const repository = createPDialogueRepository()
 
   await expect(repository.listEventBindings()).resolves.toEqual([
     {dialogueIds: ['dialogue-id'], event: 'focus-start', version: 2},

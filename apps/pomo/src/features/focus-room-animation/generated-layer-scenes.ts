@@ -1,4 +1,4 @@
-import type {FocusRoomSceneId} from './scene-catalog'
+import type {PSceneId} from './scene-catalog'
 import type {PixiLayerSceneDefinition, PixiScenePoint} from './layer-scene'
 import {createEyeMotion} from './eye-motion'
 import {FOCUS_ROOM_PREVIEW_CHANNELS} from './scene-catalog-channels'
@@ -88,7 +88,7 @@ const createTranslationEyeLayer = (
 })
 
 const createSeparatedScene = (
-  id: FocusRoomSceneId,
+  id: PSceneId,
   assets: SeparatedSceneAssets,
   pivots: SeparatedScenePivots,
   eyeLayer?: SeparatedSceneEyeLayer,
@@ -344,6 +344,6 @@ export const GENERATED_LAYER_SCENES = {
     createTranslationEyeLayer(0, nightReadingUserEyeIrises),
   ),
 } as const satisfies Record<
-  Exclude<FocusRoomSceneId, 'day-reading-focused' | 'day-writing-focused'>,
+  Exclude<PSceneId, 'day-reading-focused' | 'day-writing-focused'>,
   PixiLayerSceneDefinition
 >

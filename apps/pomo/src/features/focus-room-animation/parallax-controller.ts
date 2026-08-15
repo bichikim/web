@@ -1,20 +1,32 @@
 import {getOrientationAxes, getOrientationOffset, type OrientationAxes} from './device-orientation'
+import type {PSceneMotionInput} from './scene-motion'
 
-const PARALLAX_EASING = 0.12
-const PARALLAX_MAXIMUM_X = 9
-const PARALLAX_MAXIMUM_Y = 6
-const PARALLAX_SETTLE_DISTANCE = 0.01
+const DRAG_RANGE_RATIO = 0.35
+const DRAG_RETURN_DELAY = 150
+const FOLLOW_TIME_CONSTANT = 180
 const FULL_ROTATION_DEGREES = 360
+const MAXIMUM_FRAME_DURATION = 64
+const PARALLAX_SETTLE_DISTANCE = 0.01
+const RETURN_TIME_CONSTANT = 320
 const SENSOR_FALLBACK_DELAY = 1_500
 
 type RenderOffset = (x: number, y: number) => void
+type MotionInputChange = (input: PSceneMotionInput) => void
 type MotionPreferenceChange = (prefersReducedMotion: boolean) => void
-
-const clamp = (value: number) => Math.max(-1, Math.min(1, value))
 
 interface DeviceOrientationPermissionApi {
   requestPermission?: () => Promise<'denied' | 'granted' | 'prompt'>
 }
+
+export interface ParallaxControllerOptions {
+  readonly inputMode?: PSceneMotionInput
+  readonly onInputModeChange?: MotionInputChange
+  readonly onMotionPreferenceChange?: MotionPreferenceChange
+}
+
+const clamp = (value: number) => Math.max(-1, Math.min(1, value))
+const getFrameEasing = (duration: number, timeConstant: number) =>
+  1 - Math.exp(-duration / timeConstant)
 
 const getScreenAngle = () => {
   const angle = globalThis.screen.orientation?.angle ?? globalThis.orientation ?? 0
@@ -25,13 +37,11 @@ const getScreenAngle = () => {
 export class ParallaxController {
   readonly #host: HTMLElement
   readonly #motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)')
-  readonly #preferDeviceOrientation =
-    window.matchMedia('(hover: none) and (pointer: coarse)').matches &&
-    'DeviceOrientationEvent' in window
   readonly #renderOffset: RenderOffset
+  readonly #onInputModeChange: MotionInputChange
   readonly #onMotionPreferenceChange: MotionPreferenceChange
   readonly #handleDeviceOrientation = (event: DeviceOrientationEvent) => {
-    if (this.#motionPreference.matches || document.hidden) {
+    if (this.#inputMode !== 'gyroscope' || this.#motionPreference.matches || document.hidden) {
       return
     }
 
@@ -43,16 +53,66 @@ export class ParallaxController {
 
     if (this.#orientationBaseline === null) {
       this.#clearSensorFallback()
-      this.#stopPointerInput()
+      this.#stopDragInput()
       this.#orientationBaseline = axes
       this.#reset()
       return
     }
 
     const offset = getOrientationOffset(axes, this.#orientationBaseline)
-    this.#targetX = offset.x * PARALLAX_MAXIMUM_X
-    this.#targetY = offset.y * PARALLAX_MAXIMUM_Y
+    this.#cancelDragReturn()
+    this.#isReturning = false
+    this.#targetX = offset.x
+    this.#targetY = offset.y
     this.#requestFrame()
+  }
+  readonly #handleDragEnd = (event: PointerEvent) => {
+    if (event.pointerId !== this.#activePointerId) {
+      return
+    }
+
+    this.#releasePointer(event.pointerId)
+    this.#activePointerId = null
+    this.#scheduleDragReturn()
+  }
+  readonly #handleDragMove = (event: PointerEvent) => {
+    if (
+      event.pointerId !== this.#activePointerId ||
+      this.#inputMode !== 'drag' ||
+      this.#motionPreference.matches
+    ) {
+      return
+    }
+
+    const bounds = this.#host.getBoundingClientRect()
+
+    if (bounds.width === 0 || bounds.height === 0) {
+      return
+    }
+
+    const horizontalDistance = (event.clientX - this.#dragStartX) / bounds.width
+    const verticalDistance = (event.clientY - this.#dragStartY) / bounds.height
+    this.#targetX = clamp(this.#dragStartOffsetX - horizontalDistance / DRAG_RANGE_RATIO)
+    this.#targetY = clamp(this.#dragStartOffsetY - verticalDistance / DRAG_RANGE_RATIO)
+    this.#requestFrame()
+    event.preventDefault()
+  }
+  readonly #handleDragStart = (event: PointerEvent) => {
+    if (event.button !== 0 || this.#inputMode !== 'drag' || this.#motionPreference.matches) {
+      return
+    }
+
+    this.#activePointerId = event.pointerId
+    this.#dragStartX = event.clientX
+    this.#dragStartY = event.clientY
+    this.#dragStartOffsetX = this.#currentX
+    this.#dragStartOffsetY = this.#currentY
+    this.#targetX = this.#currentX
+    this.#targetY = this.#currentY
+    this.#cancelDragReturn()
+    this.#isReturning = false
+    this.#host.setPointerCapture?.(event.pointerId)
+    event.preventDefault()
   }
   readonly #handleMotionPreference = () => {
     this.#orientationBaseline = null
@@ -63,45 +123,41 @@ export class ParallaxController {
     this.#orientationBaseline = null
     this.#reset()
   }
+  readonly #handleSensorActivation = () => {
+    this.#stopSensorActivation()
+    this.#requestDeviceOrientation().catch(() => this.#activateDragFallback())
+  }
   readonly #handleVisibilityChange = () => {
     if (document.hidden) {
       this.#handleWindowBlur()
     }
   }
-  readonly #handleSensorActivation = () => {
-    this.#requestDeviceOrientation().catch(() => this.#startPointerInput())
-  }
   readonly #handleWindowBlur = () => {
+    if (this.#activePointerId !== null) {
+      this.#releasePointer(this.#activePointerId)
+      this.#activePointerId = null
+    }
+
     this.#orientationBaseline = null
     this.#reset()
   }
-  readonly #handlePointerLeave = () => {
-    this.#reset()
-  }
-  readonly #handlePointerMove = (event: PointerEvent) => {
-    if (this.#motionPreference.matches) {
-      return
-    }
-
-    const bounds = this.#host.getBoundingClientRect()
-
-    if (bounds.width === 0 || bounds.height === 0) {
-      return
-    }
-
-    const horizontalPosition = clamp(((event.clientX - bounds.left) / bounds.width) * 2 - 1)
-    const verticalPosition = clamp(((event.clientY - bounds.top) / bounds.height) * 2 - 1)
-    this.#targetX = horizontalPosition * PARALLAX_MAXIMUM_X
-    this.#targetY = verticalPosition * PARALLAX_MAXIMUM_Y
-    this.#requestFrame()
-  }
+  #activePointerId: number | null = null
   #currentX = 0
   #currentY = 0
   #destroyed = false
   #deviceOrientationListening = false
+  #dragListening = false
+  #dragReturnTimer: number | null = null
+  #dragStartOffsetX = 0
+  #dragStartOffsetY = 0
+  #dragStartX = 0
+  #dragStartY = 0
   #frame: number | null = null
+  #inputMode: PSceneMotionInput
+  #isReturning = false
+  #lastFrameTime: number | null = null
   #orientationBaseline: OrientationAxes | null = null
-  #pointerListening = false
+  #sensorActivationListening = false
   #sensorFallbackTimer: number | null = null
   #started = false
   #targetX = 0
@@ -110,11 +166,13 @@ export class ParallaxController {
   constructor(
     host: HTMLElement,
     renderOffset: RenderOffset,
-    onMotionPreferenceChange: MotionPreferenceChange = () => undefined,
+    options: ParallaxControllerOptions = {},
   ) {
     this.#host = host
     this.#renderOffset = renderOffset
-    this.#onMotionPreferenceChange = onMotionPreferenceChange
+    this.#inputMode = options.inputMode ?? 'drag'
+    this.#onInputModeChange = options.onInputModeChange ?? (() => undefined)
+    this.#onMotionPreferenceChange = options.onMotionPreferenceChange ?? (() => undefined)
   }
 
   get prefersReducedMotion() {
@@ -130,24 +188,25 @@ export class ParallaxController {
     window.addEventListener('blur', this.#handleWindowBlur)
     document.addEventListener('visibilitychange', this.#handleVisibilityChange)
     this.#motionPreference.addEventListener('change', this.#handleMotionPreference)
+    this.#startInput()
+  }
 
-    if (this.#preferDeviceOrientation) {
-      const orientationEvent = DeviceOrientationEvent as typeof DeviceOrientationEvent &
-        DeviceOrientationPermissionApi
-
-      if (orientationEvent.requestPermission === undefined) {
-        this.#startDeviceOrientation()
-      } else {
-        // AI_NOTE - iOS exposes motion permission only from a direct user gesture.
-        window.addEventListener('pointerdown', this.#handleSensorActivation, {
-          once: true,
-          passive: true,
-        })
-      }
+  setInputMode(inputMode: PSceneMotionInput) {
+    if (inputMode === this.#inputMode) {
       return
     }
 
-    this.#startPointerInput()
+    this.#inputMode = inputMode
+    this.#orientationBaseline = null
+    this.#stopSensorActivation()
+    this.#stopDeviceOrientation()
+    this.#stopDragInput()
+    this.#clearSensorFallback()
+    this.#reset()
+
+    if (this.#started) {
+      this.#startInput()
+    }
   }
 
   destroy() {
@@ -156,21 +215,104 @@ export class ParallaxController {
     }
 
     this.#destroyed = true
-    window.removeEventListener('deviceorientation', this.#handleDeviceOrientation)
-    window.removeEventListener('pointerdown', this.#handleSensorActivation)
     window.removeEventListener('blur', this.#handleWindowBlur)
-    window.removeEventListener('orientationchange', this.#handleOrientationChange)
-    window.removeEventListener('pointermove', this.#handlePointerMove)
     document.removeEventListener('visibilitychange', this.#handleVisibilityChange)
-    document.documentElement.removeEventListener('pointerleave', this.#handlePointerLeave)
-    globalThis.screen.orientation?.removeEventListener('change', this.#handleOrientationChange)
     this.#motionPreference.removeEventListener('change', this.#handleMotionPreference)
+    this.#stopSensorActivation()
+    this.#stopDeviceOrientation()
+    this.#stopDragInput()
     this.#clearSensorFallback()
+    this.#cancelDragReturn()
 
     if (this.#frame !== null) {
       window.cancelAnimationFrame(this.#frame)
       this.#frame = null
     }
+
+    this.#lastFrameTime = null
+  }
+
+  #startInput() {
+    if (this.#inputMode === 'drag') {
+      this.#startDragInput()
+      return
+    }
+
+    this.#startGyroscopeInput()
+  }
+
+  #startDragInput() {
+    if (this.#dragListening || this.#destroyed) {
+      return
+    }
+
+    this.#dragListening = true
+    this.#host.addEventListener('pointerdown', this.#handleDragStart)
+    this.#host.addEventListener('pointermove', this.#handleDragMove)
+    this.#host.addEventListener('pointerup', this.#handleDragEnd)
+    this.#host.addEventListener('pointercancel', this.#handleDragEnd)
+  }
+
+  #stopDragInput() {
+    if (!this.#dragListening) {
+      return
+    }
+
+    this.#dragListening = false
+    this.#host.removeEventListener('pointerdown', this.#handleDragStart)
+    this.#host.removeEventListener('pointermove', this.#handleDragMove)
+    this.#host.removeEventListener('pointerup', this.#handleDragEnd)
+    this.#host.removeEventListener('pointercancel', this.#handleDragEnd)
+
+    if (this.#activePointerId !== null) {
+      this.#releasePointer(this.#activePointerId)
+      this.#activePointerId = null
+    }
+
+    this.#cancelDragReturn()
+  }
+
+  #releasePointer(pointerId: number) {
+    if (this.#host.hasPointerCapture?.(pointerId)) {
+      this.#host.releasePointerCapture(pointerId)
+    }
+  }
+
+  #startGyroscopeInput() {
+    if (!('DeviceOrientationEvent' in window)) {
+      this.#activateDragFallback()
+      return
+    }
+
+    const orientationEvent = DeviceOrientationEvent as typeof DeviceOrientationEvent &
+      DeviceOrientationPermissionApi
+
+    if (orientationEvent.requestPermission === undefined) {
+      this.#startDeviceOrientation()
+      return
+    }
+
+    this.#startSensorActivation()
+  }
+
+  #startSensorActivation() {
+    if (this.#sensorActivationListening || this.#destroyed) {
+      return
+    }
+
+    this.#sensorActivationListening = true
+    window.addEventListener('pointerdown', this.#handleSensorActivation, {passive: true})
+    window.addEventListener('pointerup', this.#handleSensorActivation, {passive: true})
+  }
+
+  #stopSensorActivation() {
+    if (!this.#sensorActivationListening) {
+      return
+    }
+
+    this.#sensorActivationListening = false
+    window.removeEventListener('pointerdown', this.#handleSensorActivation)
+    window.removeEventListener('pointerup', this.#handleSensorActivation)
   }
 
   async #requestDeviceOrientation() {
@@ -178,47 +320,58 @@ export class ParallaxController {
       DeviceOrientationPermissionApi
     const permission = await orientationEvent.requestPermission?.()
 
-    if (permission === 'granted') {
+    if (this.#destroyed || this.#inputMode !== 'gyroscope') {
+      return
+    }
+
+    if (permission === undefined || permission === 'granted') {
       this.#startDeviceOrientation()
       return
     }
 
-    this.#startPointerInput()
+    this.#activateDragFallback()
   }
 
   #startDeviceOrientation() {
-    if (this.#deviceOrientationListening || this.#destroyed) {
+    if (this.#deviceOrientationListening || this.#destroyed || this.#inputMode !== 'gyroscope') {
       return
     }
 
+    this.#stopSensorActivation()
     this.#deviceOrientationListening = true
     window.addEventListener('deviceorientation', this.#handleDeviceOrientation, {passive: true})
     window.addEventListener('orientationchange', this.#handleOrientationChange, {passive: true})
     globalThis.screen.orientation?.addEventListener('change', this.#handleOrientationChange)
     this.#sensorFallbackTimer = window.setTimeout(
-      () => this.#startPointerInput(),
+      () => this.#activateDragFallback(),
       SENSOR_FALLBACK_DELAY,
     )
   }
 
-  #startPointerInput() {
-    if (this.#pointerListening || this.#destroyed) {
+  #stopDeviceOrientation() {
+    if (!this.#deviceOrientationListening) {
       return
     }
 
-    this.#pointerListening = true
-    window.addEventListener('pointermove', this.#handlePointerMove, {passive: true})
-    document.documentElement.addEventListener('pointerleave', this.#handlePointerLeave)
+    this.#deviceOrientationListening = false
+    window.removeEventListener('deviceorientation', this.#handleDeviceOrientation)
+    window.removeEventListener('orientationchange', this.#handleOrientationChange)
+    globalThis.screen.orientation?.removeEventListener('change', this.#handleOrientationChange)
+    this.#orientationBaseline = null
   }
 
-  #stopPointerInput() {
-    if (!this.#pointerListening) {
+  #activateDragFallback() {
+    if (this.#destroyed) {
       return
     }
 
-    this.#pointerListening = false
-    window.removeEventListener('pointermove', this.#handlePointerMove)
-    document.documentElement.removeEventListener('pointerleave', this.#handlePointerLeave)
+    this.#inputMode = 'drag'
+    this.#stopSensorActivation()
+    this.#stopDeviceOrientation()
+    this.#clearSensorFallback()
+    this.#reset()
+    this.#startDragInput()
+    this.#onInputModeChange('drag')
   }
 
   #clearSensorFallback() {
@@ -230,7 +383,29 @@ export class ParallaxController {
     this.#sensorFallbackTimer = null
   }
 
+  #cancelDragReturn() {
+    if (this.#dragReturnTimer === null) {
+      return
+    }
+
+    window.clearTimeout(this.#dragReturnTimer)
+    this.#dragReturnTimer = null
+  }
+
+  #scheduleDragReturn() {
+    if (this.#dragReturnTimer !== null) {
+      return
+    }
+
+    this.#dragReturnTimer = window.setTimeout(() => {
+      this.#dragReturnTimer = null
+      this.#reset()
+    }, DRAG_RETURN_DELAY)
+  }
+
   #reset(immediate = false) {
+    this.#cancelDragReturn()
+    this.#isReturning = true
     this.#targetX = 0
     this.#targetY = 0
 
@@ -242,6 +417,8 @@ export class ParallaxController {
 
       this.#currentX = 0
       this.#currentY = 0
+      this.#isReturning = false
+      this.#lastFrameTime = null
       this.#renderOffset(0, 0)
       return
     }
@@ -254,21 +431,40 @@ export class ParallaxController {
       return
     }
 
-    this.#frame = window.requestAnimationFrame(() => this.#renderFrame())
+    this.#lastFrameTime ??= performance.now()
+    this.#frame = window.requestAnimationFrame((time) => this.#renderFrame(time))
   }
 
-  #renderFrame() {
+  #renderFrame(time: number) {
     this.#frame = null
+    const frameDuration = Math.min(
+      MAXIMUM_FRAME_DURATION,
+      Math.max(0, time - (this.#lastFrameTime ?? time)),
+    )
+    this.#lastFrameTime = time
+    const easing = getFrameEasing(
+      frameDuration,
+      this.#isReturning ? RETURN_TIME_CONSTANT : FOLLOW_TIME_CONSTANT,
+    )
     const horizontalDistance = this.#targetX - this.#currentX
     const verticalDistance = this.#targetY - this.#currentY
-    this.#currentX += horizontalDistance * PARALLAX_EASING
-    this.#currentY += verticalDistance * PARALLAX_EASING
+    this.#currentX += horizontalDistance * easing
+    this.#currentY += verticalDistance * easing
+
+    const shouldContinue =
+      Math.abs(this.#targetX - this.#currentX) > PARALLAX_SETTLE_DISTANCE ||
+      Math.abs(this.#targetY - this.#currentY) > PARALLAX_SETTLE_DISTANCE
+
+    if (!shouldContinue) {
+      this.#currentX = this.#targetX
+      this.#currentY = this.#targetY
+      this.#isReturning = false
+      this.#lastFrameTime = null
+    }
+
     this.#renderOffset(this.#currentX, this.#currentY)
 
-    if (
-      Math.abs(horizontalDistance) > PARALLAX_SETTLE_DISTANCE ||
-      Math.abs(verticalDistance) > PARALLAX_SETTLE_DISTANCE
-    ) {
+    if (shouldContinue) {
       this.#requestFrame()
     }
   }

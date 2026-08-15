@@ -1,6 +1,6 @@
 import {describe, expect, it} from 'vitest'
 
-import {FOCUS_ROOM_PREVIEW_CHANNELS, FOCUS_ROOM_SCENES, getFocusRoomScene} from '../scene-catalog'
+import {FOCUS_ROOM_PREVIEW_CHANNELS, FOCUS_ROOM_SCENES, getPScene} from '../scene-catalog'
 
 describe('focus room scene catalog', () => {
   it('should provide all twelve unique scene combinations', () => {
@@ -13,7 +13,7 @@ describe('focus room scene catalog', () => {
   it('should keep every scene definition independently addressable', () => {
     for (const scene of FOCUS_ROOM_SCENES) {
       expect(scene.layerScene.id).toContain(scene.id)
-      expect(getFocusRoomScene(scene.time, scene.activity, scene.gaze)).toBe(scene)
+      expect(getPScene(scene.time, scene.activity, scene.gaze)).toBe(scene)
     }
 
     const definitions = FOCUS_ROOM_SCENES.map((scene) => scene.layerScene)

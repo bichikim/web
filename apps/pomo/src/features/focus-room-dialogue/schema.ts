@@ -53,5 +53,5 @@ export const dialogueEventBindingSchema = z
   )
 
 export type DialogueSegment = z.infer<typeof dialogueSegmentSchema>
-export type FocusRoomDialogue = z.infer<typeof focusRoomDialogueSchema>
+export type PDialogue = z.infer<typeof focusRoomDialogueSchema>
 export type DialogueEventId = z.infer<typeof dialogueEventIdSchema>

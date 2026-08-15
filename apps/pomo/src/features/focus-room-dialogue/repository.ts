@@ -1,29 +1,29 @@
 import {createModelStorage, reportModelStorageError} from '../model-storage/storage'
-import {createFocusRoomDatabase} from './database'
+import {createPDatabase} from './database'
 import {
   type DialogueEventBinding,
   dialogueEventBindingSchema,
   type DialogueEventId,
   FOCUS_ROOM_DIALOGUE_EVENTS,
   FOCUS_ROOM_ENTRY_EVENT,
-  type FocusRoomDialogue,
   focusRoomDialogueSchema,
+  type PDialogue,
 } from './schema'
 
 const AUDIO_CACHE_NAME = 'pomo-dialogue-audio-v1'
 
 export interface SaveDialogueOptions {
   readonly audio?: Blob
-  readonly dialogue: FocusRoomDialogue
+  readonly dialogue: PDialogue
 }
 
-export interface FocusRoomDialogueRepository {
+export interface PDialogueRepository {
   readonly deleteDialogue: (dialogueId: string) => Promise<void>
   readonly dispose: () => void
   readonly getAudio: (audioKey: string) => Promise<Blob | null>
-  readonly getDialogue: (dialogueId: string) => Promise<FocusRoomDialogue | null>
+  readonly getDialogue: (dialogueId: string) => Promise<PDialogue | null>
   readonly listEventBindings: () => Promise<ReadonlyArray<DialogueEventBinding>>
-  readonly listDialogues: () => Promise<ReadonlyArray<FocusRoomDialogue>>
+  readonly listDialogues: () => Promise<ReadonlyArray<PDialogue>>
   readonly saveDialogue: (options: SaveDialogueOptions) => Promise<void>
   readonly setEntryBinding: (dialogueIds: ReadonlyArray<string> | string | null) => Promise<void>
   readonly setEventBinding: (
@@ -35,8 +35,8 @@ export interface FocusRoomDialogueRepository {
 const getAudioPath = (audioKey: string) => `/__pomo/dialogue-audio/${audioKey}.wav`
 
 /** Creates a browser repository for local dialogue metadata and generated WAV files. */
-export const createFocusRoomDialogueRepository = (): FocusRoomDialogueRepository => {
-  const database = createFocusRoomDatabase()
+export const createPDialogueRepository = (): PDialogueRepository => {
+  const database = createPDatabase()
   const audioStorage = createModelStorage({cacheName: AUDIO_CACHE_NAME})
   const deleteAudio = async (audioKey: string) => {
     const deletion = await audioStorage.delete(getAudioPath(audioKey))

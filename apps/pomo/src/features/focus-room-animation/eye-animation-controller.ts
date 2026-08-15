@@ -9,15 +9,15 @@ import nightFocusedHalfImage from '../../../assets/focus-room-animation/eyes-nig
 import nightUserClosedImage from '../../../assets/focus-room-animation/eyes-night-user-closed.webp'
 import nightUserHalfImage from '../../../assets/focus-room-animation/eyes-night-user-half.webp'
 import {type BlinkScheduler, createBlinkScheduler} from './blink-scheduler'
-import type {FocusRoomActivity, FocusRoomGaze, FocusRoomTime} from './scene-catalog'
+import type {PActivity, PGaze, PTime} from './scene-catalog'
 import {acquireTextureGroup, releaseTextureGroup, type TextureLease} from './texture-leases'
 
-export type {FocusRoomActivity, FocusRoomGaze, FocusRoomTime} from './scene-catalog'
+export type {PActivity, PGaze, PTime} from './scene-catalog'
 
-export interface FocusRoomEyeState {
-  readonly activity: FocusRoomActivity
-  readonly gaze: FocusRoomGaze
-  readonly time: FocusRoomTime
+export interface PEyeState {
+  readonly activity: PActivity
+  readonly gaze: PGaze
+  readonly time: PTime
 }
 
 interface EyeAsset {
@@ -28,7 +28,7 @@ interface EyeAsset {
 }
 
 type EyeFrame = 'closed' | 'half' | 'open'
-type EyeTextures = Record<FocusRoomTime, Record<FocusRoomGaze, Record<'closed' | 'half', Texture>>>
+type EyeTextures = Record<PTime, Record<PGaze, Record<'closed' | 'half', Texture>>>
 
 const EYE_ASSETS = {
   day: {
@@ -39,7 +39,7 @@ const EYE_ASSETS = {
     focused: {closed: nightFocusedClosedImage, half: nightFocusedHalfImage, left: 850, top: 250},
     user: {closed: nightUserClosedImage, half: nightUserHalfImage, left: 842, top: 206},
   },
-} satisfies Record<FocusRoomTime, Record<FocusRoomGaze, EyeAsset>>
+} satisfies Record<PTime, Record<PGaze, EyeAsset>>
 
 const EYE_OFFSETS = {
   day: {
@@ -51,8 +51,8 @@ const EYE_OFFSETS = {
     user: {reading: {x: 0, y: 0}, typing: {x: 0, y: 0}, writing: {x: 0, y: 0}},
   },
 } satisfies Record<
-  FocusRoomTime,
-  Record<FocusRoomGaze, Record<FocusRoomActivity, {readonly x: number; readonly y: number}>>
+  PTime,
+  Record<PGaze, Record<PActivity, {readonly x: number; readonly y: number}>>
 >
 
 const EYE_SOURCES = [
@@ -74,7 +74,7 @@ const wait = (duration: number) =>
   })
 
 /** Owns blink scheduling, eye textures, and the eye overlay container. */
-export class FocusRoomEyeController {
+export class PEyeController {
   readonly container = new Container()
   readonly #onRender: () => void
   #destroyed = false
@@ -82,7 +82,7 @@ export class FocusRoomEyeController {
   #scheduler: BlinkScheduler | null = null
   #sequence = 0
   #sprite: Sprite | null = null
-  #state: FocusRoomEyeState | null = null
+  #state: PEyeState | null = null
   #textureLeases: readonly TextureLease[] = []
   #textures: EyeTextures | null = null
 
@@ -90,7 +90,7 @@ export class FocusRoomEyeController {
     this.#onRender = onRender
   }
 
-  async initialize(state: FocusRoomEyeState) {
+  async initialize(state: PEyeState) {
     this.#state = state
     const leases = await acquireTextureGroup(EYE_SOURCES)
 
@@ -134,7 +134,7 @@ export class FocusRoomEyeController {
     }
   }
 
-  update(state: FocusRoomEyeState) {
+  update(state: PEyeState) {
     this.#state = state
     this.#sequence += 1
     this.#render('open')

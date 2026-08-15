@@ -13,13 +13,13 @@ const storedPlaybackSchema = z.object({
   trackId: z.string().min(1),
 })
 
-export interface FocusRoomPlaybackState {
+export interface PPlaybackState {
   readonly isPlaying: boolean
   readonly positionSeconds: number
   readonly trackId: string
 }
 
-interface StoredPlaybackState extends FocusRoomPlaybackState {
+interface StoredPlaybackState extends PPlaybackState {
   readonly savedAt: number
 }
 
@@ -69,7 +69,7 @@ const selectLatestPlayback = (
   return nativePlayback
 }
 
-const toPlaybackState = (state: StoredPlaybackState | null): FocusRoomPlaybackState | null => {
+const toPlaybackState = (state: StoredPlaybackState | null): PPlaybackState | null => {
   if (state === null) {
     return null
   }
@@ -106,7 +106,7 @@ const writeNativePlayback = async (state: StoredPlaybackState) => {
 }
 
 /** Reads the latest playback position saved by either the app or browser runtime. */
-export const readFocusRoomPlayback = async (): Promise<FocusRoomPlaybackState | null> => {
+export const readPPlayback = async (): Promise<PPlaybackState | null> => {
   const webPlayback = readWebPlayback()
 
   if (!hasNativeBridge()) {
@@ -122,7 +122,7 @@ export const readFocusRoomPlayback = async (): Promise<FocusRoomPlaybackState | 
 }
 
 /** Persists playback until the host app or browser data is removed. */
-export const writeFocusRoomPlayback = async (state: FocusRoomPlaybackState): Promise<void> => {
+export const writePPlayback = async (state: PPlaybackState): Promise<void> => {
   const storedState = {...state, savedAt: Date.now()} satisfies StoredPlaybackState
   writeWebPlayback(storedState)
 

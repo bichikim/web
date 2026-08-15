@@ -1,5 +1,5 @@
-import type {FocusRoomDialogue} from '../focus-room-dialogue'
-import type {FocusRoomDialogueRepository} from '../focus-room-dialogue/repository'
+import type {PDialogue} from '../focus-room-dialogue'
+import type {PDialogueRepository} from '../focus-room-dialogue/repository'
 import type {FeedConnection} from './schema'
 import type {FeedDialogueListItem} from './feed-controller'
 import type {FeedDialogueRepository} from './feed-dialogue-repository'
@@ -11,13 +11,13 @@ const LEAKED_ATOM_ID = 'urn:pomo:dev-feed:'
 const LEGACY_SELF_LINK_ERROR = '피드 항목이 원문 대신 피드 자체 주소를 가리키고 있어요.'
 
 export interface IsMalformedDevFeedDialogueOptions {
-  readonly dialogue: FocusRoomDialogue
+  readonly dialogue: PDialogue
   readonly metadata: FeedDialogueMetadata
 }
 
 export interface RepairStoredDevFeedDialoguesOptions {
   readonly connections: ReadonlyArray<FeedConnection>
-  readonly dialogueRepository: FocusRoomDialogueRepository
+  readonly dialogueRepository: PDialogueRepository
   readonly feedRepository: FeedDialogueRepository
 }
 

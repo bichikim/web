@@ -11,13 +11,13 @@ const MAXIMUM_LEVEL = 100
 const BYTE_MAXIMUM = 255
 const LEVEL_GAIN = 112
 
-export interface FocusRoomAudioVisualizer {
+export interface PAudioVisualizer {
   readonly levels: Accessor<readonly number[]>
   readonly start: (audioElement: HTMLAudioElement) => void
   readonly stop: () => void
 }
 
-export const useFocusRoomAudioVisualizer = (): FocusRoomAudioVisualizer => {
+export const usePAudioVisualizer = (): PAudioVisualizer => {
   const [levels, setLevels] = createSignal<readonly number[]>(IDLE_LEVELS)
   let audioContext: AudioContext | undefined
   let analyserNode: AnalyserNode | undefined

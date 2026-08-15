@@ -1,6 +1,6 @@
 import type {Accessor} from 'solid-js'
 
-import type {FocusRoomDialogue, FocusRoomEventContextValue} from '../focus-room-dialogue'
+import type {PDialogue, PEventContextValue} from '../focus-room-dialogue'
 import type {FeedDialogueJob, FeedDialogueMetadata, FeedItemRecord} from './feed-dialogue-schema'
 
 interface FeedIdleState {
@@ -19,14 +19,14 @@ interface FeedErrorState {
   readonly status: 'error'
 }
 
-export type FocusRoomFeedState = FeedActivityState | FeedErrorState | FeedIdleState
+export type PFeedState = FeedActivityState | FeedErrorState | FeedIdleState
 
 export interface FeedDialogueListItem {
-  readonly dialogue: FocusRoomDialogue
+  readonly dialogue: PDialogue
   readonly metadata: FeedDialogueMetadata
 }
 
-export interface FocusRoomFeedController {
+export interface PFeedController {
   readonly dialogues: Accessor<ReadonlyArray<FeedDialogueListItem>>
   readonly dismissRecovery: () => void
   readonly deleteRecovery: () => Promise<void>
@@ -38,13 +38,13 @@ export interface FocusRoomFeedController {
   readonly issues: Accessor<ReadonlyArray<FeedItemRecord>>
   readonly recoveryJobs: Accessor<ReadonlyArray<FeedDialogueJob>>
   readonly retryRecovery: () => Promise<void>
-  readonly state: Accessor<FocusRoomFeedState>
+  readonly state: Accessor<PFeedState>
   readonly syncNow: () => Promise<void>
   readonly unlistenedDialogues: Accessor<ReadonlyArray<FeedDialogueListItem>>
 }
 
-export interface UseFocusRoomFeedsProps {
-  readonly events: FocusRoomEventContextValue
+export interface UsePFeedsProps {
+  readonly events: PEventContextValue
 }
 
 export const findFeedNotificationDialogue = (items: ReadonlyArray<FeedDialogueListItem>) =>

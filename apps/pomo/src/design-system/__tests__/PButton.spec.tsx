@@ -1,0 +1,48 @@
+/** @vitest-environment jsdom */
+
+import {fireEvent, render} from '@solidjs/testing-library'
+import {describe, expect, it, vi} from 'vitest'
+
+import {PButton} from '../PButton'
+
+describe('PButton', () => {
+  it('should render a leading image and trailing icon', () => {
+    const result = render(() => (
+      <PButton
+        leadingImage="pomo-smile.png"
+        onPress={() => undefined}
+        tone="glass"
+        trailingIcon="i-tabler-arrow-right"
+      >
+        입장하기
+      </PButton>
+    ))
+    const button = result.getByRole('button', {name: '입장하기'})
+    const image = result.container.querySelector('[data-pomo-button-leading-image]')
+    const trailingIcon = result.container.querySelector('[data-pomo-button-trailing-icon]')
+
+    expect(button.tagName).toBe('BUTTON')
+    expect(image?.getAttribute('src')).toBe('pomo-smile.png')
+    expect(trailingIcon?.classList.contains('i-tabler-arrow-right')).toBe(true)
+  })
+
+  it('should emit the source button when pressed', () => {
+    const onPress = vi.fn()
+    const result = render(() => <PButton onPress={onPress}>시작</PButton>)
+    const button = result.getByRole('button', {name: '시작'})
+
+    fireEvent.click(button)
+
+    expect(onPress).toHaveBeenCalledWith(button)
+  })
+
+  it('should use an optional accessible label instead of compact visual text', () => {
+    const result = render(() => (
+      <PButton accessibleLabel="99개 모두 중지" onPress={() => undefined}>
+        99개
+      </PButton>
+    ))
+
+    expect(result.getByRole('button', {name: '99개 모두 중지'})).toBeDefined()
+  })
+})

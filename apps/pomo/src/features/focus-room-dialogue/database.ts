@@ -2,7 +2,7 @@ import Dexie, {type Table} from 'dexie'
 
 const DATABASE_NAME = 'pomo-focus-room'
 
-export interface FocusRoomDatabase extends Dexie {
+export interface PDatabase extends Dexie {
   readonly dialogues: Table<unknown, string>
   readonly eventBindings: Table<unknown, string>
   readonly feedDialogueJobs: Table<unknown, string>
@@ -11,8 +11,8 @@ export interface FocusRoomDatabase extends Dexie {
 }
 
 /** Opens the additive focus-room database shared by manual and feed dialogues. */
-export const createFocusRoomDatabase = (): FocusRoomDatabase => {
-  const database = new Dexie(DATABASE_NAME) as FocusRoomDatabase
+export const createPDatabase = (): PDatabase => {
+  const database = new Dexie(DATABASE_NAME) as PDatabase
 
   database.version(1).stores({dialogues: 'id, updatedAt', eventBindings: 'event'})
   database.version(2).stores({

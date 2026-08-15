@@ -2,7 +2,7 @@
 
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
-import {readFocusRoomPlayback, writeFocusRoomPlayback} from '../playback-storage'
+import {readPPlayback, writePPlayback} from '../playback-storage'
 
 const storageMocks = vi.hoisted(() => ({
   getItem: vi.fn<(key: string) => Promise<string | null>>(),
@@ -27,9 +27,9 @@ describe('playback-storage', () => {
   })
 
   it('should persist playback in browser storage', async () => {
-    await writeFocusRoomPlayback({isPlaying: true, positionSeconds: 12, trackId: 'track-one'})
+    await writePPlayback({isPlaying: true, positionSeconds: 12, trackId: 'track-one'})
 
-    expect(await readFocusRoomPlayback()).toEqual({
+    expect(await readPPlayback()).toEqual({
       isPlaying: true,
       positionSeconds: 12,
       trackId: 'track-one',
@@ -39,7 +39,7 @@ describe('playback-storage', () => {
   it('should ignore malformed playback data', async () => {
     localStorage.setItem('pomo:focus-room-playback:v1', '{invalid')
 
-    expect(await readFocusRoomPlayback()).toBeNull()
+    expect(await readPPlayback()).toBeNull()
   })
 
   it('should treat playback saved before autoplay support as paused', async () => {
@@ -48,7 +48,7 @@ describe('playback-storage', () => {
       JSON.stringify({positionSeconds: 4, savedAt: 10, trackId: 'legacy-track'}),
     )
 
-    expect(await readFocusRoomPlayback()).toEqual({
+    expect(await readPPlayback()).toEqual({
       isPlaying: false,
       positionSeconds: 4,
       trackId: 'legacy-track',
@@ -65,12 +65,12 @@ describe('playback-storage', () => {
       JSON.stringify({positionSeconds: 8, savedAt: 15, trackId: 'native-track'}),
     )
 
-    expect(await readFocusRoomPlayback()).toMatchObject({
+    expect(await readPPlayback()).toMatchObject({
       positionSeconds: 8,
       trackId: 'native-track',
     })
 
-    await writeFocusRoomPlayback({isPlaying: true, positionSeconds: 9, trackId: 'latest-track'})
+    await writePPlayback({isPlaying: true, positionSeconds: 9, trackId: 'latest-track'})
     const [storageKey, storedValue] = storageMocks.setItem.mock.calls[0] ?? []
     expect(storageKey).toBe('pomo:focus-room-playback:v1')
     expect(JSON.parse(storedValue ?? '')).toEqual({
@@ -91,12 +91,12 @@ describe('playback-storage', () => {
         }),
     )
 
-    const firstWrite = writeFocusRoomPlayback({
+    const firstWrite = writePPlayback({
       isPlaying: true,
       positionSeconds: 1,
       trackId: 'track-one',
     })
-    const secondWrite = writeFocusRoomPlayback({
+    const secondWrite = writePPlayback({
       isPlaying: false,
       positionSeconds: 2,
       trackId: 'track-two',
@@ -126,12 +126,12 @@ describe('playback-storage', () => {
         }),
     )
 
-    const firstWrite = writeFocusRoomPlayback({
+    const firstWrite = writePPlayback({
       isPlaying: true,
       positionSeconds: 1,
       trackId: 'track-one',
     })
-    const secondWrite = writeFocusRoomPlayback({
+    const secondWrite = writePPlayback({
       isPlaying: true,
       positionSeconds: 2,
       trackId: 'track-two',
@@ -144,7 +144,7 @@ describe('playback-storage', () => {
       expect(storageMocks.setItem).toHaveBeenCalledTimes(3)
     })
 
-    const thirdWrite = writeFocusRoomPlayback({
+    const thirdWrite = writePPlayback({
       isPlaying: false,
       positionSeconds: 3,
       trackId: 'track-three',
