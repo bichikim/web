@@ -18,6 +18,36 @@ describe('splitSpeechText', () => {
     ])
   })
 
+  it('should treat single line breaks as soft boundaries', () => {
+    expect(
+      splitSpeechText('아이고 \r\n 여기가 마지막인가\n이제 정말!! 조금만 힘내자', POLICY),
+    ).toEqual(['아이고 여기가 마지막인가 이제 정말!! 조금만 힘내자'])
+  })
+
+  it('should preserve blank lines as paragraph boundaries', () => {
+    expect(splitSpeechText('첫 번째 문단입니다.\n\n두 번째 문단입니다.', POLICY)).toEqual([
+      '첫 번째 문단입니다.',
+      '두 번째 문단입니다.',
+    ])
+  })
+
+  it('should not merge adjacent text beyond the recommended length', () => {
+    const shortLine = '가'.repeat(15)
+    const nextLine = '나'.repeat(POLICY.recommendedLength - shortLine.length)
+
+    expect(splitSpeechText(`${shortLine}\n${nextLine}`, POLICY)).toEqual([shortLine, nextLine])
+  })
+
+  it('should merge adjacent text through the recommended length', () => {
+    const shortLine = '가'.repeat(15)
+    const separatorLength = 1
+    const nextLine = '나'.repeat(POLICY.recommendedLength - shortLine.length - separatorLength)
+
+    expect(splitSpeechText(`${shortLine}\n${nextLine}`, POLICY)).toEqual([
+      `${shortLine} ${nextLine}`,
+    ])
+  })
+
   it('should prefer sentence boundaries after the split consideration length', () => {
     const firstSentence = `${'가'.repeat(124)}.`
     const secondSentence = `${'나'.repeat(39)}.`
@@ -42,5 +72,12 @@ describe('splitSpeechText', () => {
 
     expect(chunks[0]?.length).toBeLessThanOrEqual(POLICY.recommendedLength)
     expect(chunks.every((chunk) => chunk.length <= POLICY.maximumLength)).toBe(true)
+  })
+
+  it('should prefer a later word boundary over splitting a word', () => {
+    const firstPart = '가'.repeat(POLICY.recommendedLength + 10)
+    const secondPart = '나'.repeat(50)
+
+    expect(splitSpeechText(`${firstPart} ${secondPart}`, POLICY)).toEqual([firstPart, secondPart])
   })
 })
