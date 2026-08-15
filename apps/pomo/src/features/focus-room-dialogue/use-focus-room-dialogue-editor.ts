@@ -87,9 +87,11 @@ export const usePDialogueEditor = (props: UsePDialogueEditorProps): PDialogueEdi
     voiceId,
   } = createSpeechSelection()
   const {
+    abortOpusEncoding,
     audioUrl,
     durationMs,
     editableAudio,
+    opusEncodingSignal,
     regeneratingSegmentIndex,
     segments,
     setAudioUrl,
@@ -120,7 +122,6 @@ export const usePDialogueEditor = (props: UsePDialogueEditorProps): PDialogueEdi
       setState(nextState)
     }
   }
-
   const isBusy = createMemo(() => isDialogueEditorBusy(state()))
   const currentGenerationKey = () => getGenerationKey(language(), modelId(), voiceId(), text())
   const hasCurrentAudio = () => audioBlob !== null && generatedKey === currentGenerationKey()
@@ -147,7 +148,6 @@ export const usePDialogueEditor = (props: UsePDialogueEditorProps): PDialogueEdi
     audioBlob = blob
     setAudioUrl(blob === null ? null : URL.createObjectURL(blob))
   }
-
   const clearGeneratedAudio = (message: string | null = null) => {
     replaceAudio(null)
     setSegments([])
@@ -161,7 +161,6 @@ export const usePDialogueEditor = (props: UsePDialogueEditorProps): PDialogueEdi
       setEditorState({message, status: 'idle'})
     }
   }
-
   const loadDialogue = async (id: string) => {
     try {
       const dialogue = await repository.getDialogue(id)
@@ -249,6 +248,7 @@ export const usePDialogueEditor = (props: UsePDialogueEditorProps): PDialogueEdi
 
   onCleanup(() => {
     isDisposed = true
+    abortOpusEncoding()
     client?.dispose()
     client = null
     moodAnalyzer?.dispose()
@@ -517,10 +517,11 @@ export const usePDialogueEditor = (props: UsePDialogueEditorProps): PDialogueEdi
       const currentAudio = editableAudio()
       const storedAudio =
         audioNeedsWrite && currentAudio !== null
-          ? await createOpusBlob(
-              createDialogueAudioSamples(currentAudio, modelId()),
-              currentAudio.sampleRate,
-            )
+          ? await createOpusBlob({
+              sampleRate: currentAudio.sampleRate,
+              samples: createDialogueAudioSamples(currentAudio, modelId()),
+              signal: opusEncodingSignal,
+            })
           : undefined
       await repository.saveDialogue({audio: storedAudio, dialogue})
 

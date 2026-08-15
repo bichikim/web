@@ -19,10 +19,10 @@ it('should convert legacy mono PCM WAV samples to Opus', async () => {
   const opus = await compressLegacyWave(wave)
 
   expect(opus.type).toBe('audio/ogg; codecs=opus')
-  expect(opusMocks.create).toHaveBeenCalledWith(
-    expect.objectContaining({0: -1, 2: 0, 4: 1}),
-    24_000,
-  )
+  expect(opusMocks.create).toHaveBeenCalledWith({
+    sampleRate: 24_000,
+    samples: expect.objectContaining({0: -1, 2: 0, 4: 1}),
+  })
 })
 
 it('should pass legacy browser 44.1 kHz WAV audio to the Opus Worker', async () => {
@@ -30,7 +30,10 @@ it('should pass legacy browser 44.1 kHz WAV audio to the Opus Worker', async () 
 
   await compressLegacyWave(wave)
 
-  expect(opusMocks.create).toHaveBeenCalledWith(expect.any(Float32Array), 44_100)
+  expect(opusMocks.create).toHaveBeenCalledWith({
+    sampleRate: 44_100,
+    samples: expect.any(Float32Array),
+  })
 })
 
 it('should reject unsupported legacy audio', async () => {
