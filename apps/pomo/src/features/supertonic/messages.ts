@@ -1,4 +1,5 @@
 import type {SupertonicError} from './errors'
+import type {SupertonicLanguage} from './language'
 import type {SupertonicModelId, SupertonicVoiceId} from './model'
 import type {SupertonicVoiceStyle} from './voice-style'
 
@@ -30,6 +31,7 @@ export type SupertonicVoiceSource =
 export type SupertonicWorkerInput =
   | {readonly modelId: SupertonicModelId; readonly type: 'initialize'}
   | {
+      readonly language: SupertonicLanguage
       readonly requestId: number
       readonly speed: number
       readonly text: string

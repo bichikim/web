@@ -7,7 +7,11 @@ import {
   type UsePDialogueEditorProps,
   usePEvents,
 } from '../features/focus-room-dialogue'
-import {SUPERTONIC_MODELS, SUPERTONIC_VOICES} from '../features/supertonic'
+import {
+  SUPERTONIC_LANGUAGE_OPTIONS,
+  SUPERTONIC_MODELS,
+  SUPERTONIC_VOICES,
+} from '../features/supertonic'
 import {getPrimaryMood, getPrimaryMoodIcon} from '../features/text-mood'
 
 const MAXIMUM_TEXT_LENGTH = 3000
@@ -59,6 +63,13 @@ export default function PDialogueEditor(props: PDialogueEditorProps) {
 
     if (model !== undefined) {
       editor.setModelId(model.id)
+    }
+  }
+  const handleLanguageChange = (language: string) => {
+    const option = SUPERTONIC_LANGUAGE_OPTIONS.find((item) => item.value === language)
+
+    if (option !== undefined) {
+      editor.setLanguage(option.value)
     }
   }
   const handleVoiceChange = (voiceId: string) => {
@@ -120,6 +131,18 @@ export default function PDialogueEditor(props: PDialogueEditorProps) {
           </div>
 
           <div class="pomo-dialogue-editor__selects">
+            <label class="pomo-dialogue-editor__field">
+              <span>언어</span>
+              <select
+                disabled={isBusy()}
+                onChange={(event) => handleLanguageChange(event.currentTarget.value)}
+                value={editor.language()}
+              >
+                <For each={SUPERTONIC_LANGUAGE_OPTIONS}>
+                  {(language) => <option value={language.value}>{language.label}</option>}
+                </For>
+              </select>
+            </label>
             <label class="pomo-dialogue-editor__field">
               <span>모델</span>
               <select
@@ -194,7 +217,7 @@ export default function PDialogueEditor(props: PDialogueEditorProps) {
             <span>3</span>
             <div>
               <h2 id="dialogue-timeline-title">말풍선 타임라인</h2>
-              <p>각 문장은 시작 시간과 분석된 감정이 함께 표시돼요.</p>
+              <p>전체 음성을 새로 만든 현재 편집에서만 말풍선 음성을 다시 만들 수 있어요.</p>
             </div>
           </div>
 
@@ -208,7 +231,7 @@ export default function PDialogueEditor(props: PDialogueEditorProps) {
           >
             <ol class="pomo-dialogue-editor__segments">
               <For each={editor.segments()}>
-                {(segment) => (
+                {(segment, position) => (
                   <li>
                     <span>{formatDuration(segment.startMs)}</span>
                     <p>{segment.text}</p>
@@ -228,6 +251,24 @@ export default function PDialogueEditor(props: PDialogueEditorProps) {
                         )
                       }}
                     </Show>
+                    <button
+                      aria-label={`${position() + 1}번 말풍선 음성 다시 만들기`}
+                      class={cx(
+                        'pomo-dialogue-editor__button pomo-dialogue-editor__button--secondary',
+                        'pomo-dialogue-editor__segment-button',
+                      )}
+                      disabled={!editor.canRegenerateSegments()}
+                      onClick={() => editor.regenerateSegment(position())}
+                      title="전체 음성을 새로 만든 뒤 사용할 수 있어요."
+                      type="button"
+                    >
+                      <Show
+                        when={editor.regeneratingSegmentIndex() === position()}
+                        fallback="다시 만들기"
+                      >
+                        만드는 중…
+                      </Show>
+                    </button>
                   </li>
                 )}
               </For>

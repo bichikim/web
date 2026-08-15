@@ -165,7 +165,7 @@ export const POMO_DIALOGUE_EDITOR_STYLES = String.raw`
 
 .pomo-dialogue-editor__selects {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.75rem;
 }
 
@@ -250,12 +250,19 @@ export const POMO_DIALOGUE_EDITOR_STYLES = String.raw`
 
 .pomo-dialogue-editor__segments li {
   display: grid;
-  grid-template-columns: 3.5rem minmax(0, 1fr) 10rem;
+  grid-template-columns: 3.5rem minmax(0, 1fr) 10rem auto;
   align-items: center;
   gap: 0.75rem;
   border-radius: 0.75rem;
   background: rgb(255 255 255 / 4%);
   padding: 0.75rem;
+}
+
+.pomo-dialogue-editor__segment-button {
+  min-height: 2.25rem;
+  padding-inline: 0.9rem;
+  font-size: 0.75rem;
+  white-space: nowrap;
 }
 
 .pomo-dialogue-editor__segments span {
@@ -342,6 +349,11 @@ export const POMO_DIALOGUE_EDITOR_STYLES = String.raw`
 
   .pomo-dialogue-editor__mood {
     grid-column: 2;
+  }
+
+  .pomo-dialogue-editor__segment-button {
+    grid-column: 2;
+    justify-self: end;
   }
 
   .pomo-dialogue-editor__footer p {

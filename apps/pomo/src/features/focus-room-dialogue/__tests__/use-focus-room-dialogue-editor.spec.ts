@@ -68,7 +68,7 @@ const createAudio = () => ({
 const createClient = (calls: Array<string>): SupertonicClient => ({
   cancelGeneration: vi.fn(),
   dispose: vi.fn(),
-  generate: vi.fn(),
+  generate: vi.fn(async () => successResult(createAudio())),
   generateStream: vi.fn(async function* generateStream() {
     calls.push('generate')
     yield successResult({
@@ -139,15 +139,23 @@ describe('usePDialogueEditor', () => {
     supertonicMocks.createClient.mockReturnValue(client)
     const editor = createEditorRoot()
 
+    expect(editor.controller.language()).toBe('ko')
     expect(editor.controller.modelId()).toBe('full')
     expect(editor.controller.canGenerate()).toBe(false)
 
     editor.controller.setText('자동 준비 후 바로 생성하는 대사')
+    editor.controller.setLanguage('na')
     expect(editor.controller.canGenerate()).toBe(true)
 
     await editor.controller.generate()
     expect(calls).toEqual(['prepare', 'generate'])
     expect(client.initialize).toHaveBeenCalledWith(expect.objectContaining({modelId: 'full'}))
+    expect(client.generateStream).toHaveBeenCalledWith({
+      language: 'na',
+      speed: 1.05,
+      text: '자동 준비 후 바로 생성하는 대사',
+      voice: {id: 'Yuna', kind: 'preset'},
+    })
 
     await editor.controller.generate()
     expect(calls).toEqual(['prepare', 'generate', 'generate'])
@@ -156,8 +164,75 @@ describe('usePDialogueEditor', () => {
     expect(sessionStorage.getItem('pomo:focus-room-dialogue:draft:new')).not.toBeNull()
     await editor.controller.save()
     expect(repositoryMocks.saveDialogue).toHaveBeenCalledTimes(1)
+    expect(repositoryMocks.saveDialogue).toHaveBeenCalledWith(
+      expect.objectContaining({dialogue: expect.objectContaining({language: 'na'})}),
+    )
     expect(sessionStorage.getItem('pomo:focus-room-dialogue:draft:new')).toBeNull()
 
+    editor.dispose()
+  })
+
+  it('should regenerate one segment only after generating editable audio and encode Opus on save', async () => {
+    const client = createClient([])
+    const sourceText = '첫 번째 문장은 충분히 길어요.\n\n두 번째 문장도 충분히 길어요.'
+    vi.mocked(client.generateStream).mockImplementationOnce(async function* generateStream() {
+      yield successResult({
+        audio: {
+          generationTime: 1,
+          index: 0,
+          sampleRate: 10,
+          samples: Float32Array.of(0.1, 0.2),
+          total: 2,
+        },
+        type: 'chunk' as const,
+      })
+      yield successResult({
+        audio: {
+          generationTime: 1,
+          index: 1,
+          sampleRate: 10,
+          samples: Float32Array.of(0.3, 0.4),
+          total: 2,
+        },
+        type: 'chunk' as const,
+      })
+      yield successResult({
+        audio: {generationTime: 2, sampleRate: 10, samples: new Float32Array(7)},
+        type: 'complete' as const,
+      })
+    })
+    vi.mocked(client.generate).mockResolvedValueOnce(
+      successResult({generationTime: 1, sampleRate: 10, samples: new Float32Array(4)}),
+    )
+    supertonicMocks.createClient.mockReturnValue(client)
+    const editor = createEditorRoot()
+
+    editor.controller.setText(sourceText)
+    expect(editor.controller.canRegenerateSegments()).toBe(false)
+
+    await editor.controller.generate()
+
+    expect(editor.controller.canRegenerateSegments()).toBe(true)
+    expect(supertonicMocks.createOpusBlob).not.toHaveBeenCalled()
+
+    await editor.controller.regenerateSegment(0)
+
+    expect(client.generate).toHaveBeenCalledWith({
+      language: 'ko',
+      speed: 1.05,
+      text: '첫 번째 문장은 충분히 길어요.',
+      voice: {id: 'Yuna', kind: 'preset'},
+    })
+    expect(editor.controller.durationMs()).toBe(900)
+    expect(editor.controller.segments()[1]).toEqual(
+      expect.objectContaining({durationMs: 200, startMs: 700}),
+    )
+    expect(supertonicMocks.createOpusBlob).not.toHaveBeenCalled()
+
+    await editor.controller.save()
+
+    expect(supertonicMocks.createOpusBlob).toHaveBeenCalledWith(expect.any(Float32Array), 10)
+    expect(supertonicMocks.createOpusBlob.mock.calls[0]?.[0]).toHaveLength(9)
     editor.dispose()
   })
 
@@ -180,6 +255,36 @@ describe('usePDialogueEditor', () => {
           segments: [expect.objectContaining({mood: cheerfulAnalysis})],
         }),
       }),
+    )
+    editor.dispose()
+  })
+
+  it('should invalidate generated audio and status when the language changes', async () => {
+    const client = createClient([])
+    supertonicMocks.createClient.mockReturnValue(client)
+    const editor = createEditorRoot()
+    editor.controller.setText('언어 변경 전 대사')
+    await editor.controller.generate()
+
+    expect(editor.controller.canSave()).toBe(true)
+    expect(editor.controller.canRegenerateSegments()).toBe(true)
+    expect(editor.controller.state().status).toBe('ready')
+
+    editor.controller.setLanguage('en')
+
+    expect(editor.controller.audioUrl()).toBeNull()
+    expect(editor.controller.canSave()).toBe(false)
+    expect(editor.controller.canRegenerateSegments()).toBe(false)
+    expect(editor.controller.segments()).toEqual([])
+    expect(editor.controller.state()).toEqual({
+      message: '선택한 언어로 음성을 만들어 주세요.',
+      status: 'idle',
+    })
+
+    await editor.controller.generate()
+    expect(client.initialize).toHaveBeenCalledTimes(1)
+    expect(client.generateStream).toHaveBeenLastCalledWith(
+      expect.objectContaining({language: 'en'}),
     )
     editor.dispose()
   })
@@ -268,6 +373,33 @@ describe('usePDialogueEditor', () => {
     editor.dispose()
   })
 
+  it('should keep segment regeneration disabled for loaded compressed audio', async () => {
+    repositoryMocks.getDialogue.mockResolvedValueOnce({
+      audioKey: 'stored-audio',
+      createdAt: '2026-08-13T00:00:00.000Z',
+      durationMs: 1000,
+      id: 'stored-dialogue',
+      language: 'ko',
+      modelId: 'full',
+      segments: [{durationMs: 1000, index: 0, startMs: 0, text: '저장된 대사'}],
+      text: '저장된 대사',
+      updatedAt: '2026-08-13T00:00:00.000Z',
+      version: 1,
+      voiceId: 'Yuna',
+    } satisfies PDialogue)
+    repositoryMocks.getAudio.mockResolvedValueOnce(
+      new Blob(['stored'], {type: 'audio/ogg; codecs=opus'}),
+    )
+    const editor = createEditorRoot('stored-dialogue')
+
+    await vi.waitFor(() => expect(editor.controller.state().status).toBe('idle'))
+
+    expect(editor.controller.canSave()).toBe(true)
+    expect(editor.controller.segments()).toHaveLength(1)
+    expect(editor.controller.canRegenerateSegments()).toBe(false)
+    editor.dispose()
+  })
+
   it('should ignore a dialogue load that finishes after disposal', async () => {
     let resolveDialogue: (dialogue: PDialogue) => void = () => undefined
     const dialogueLoad = new Promise<PDialogue>((resolve) => {
@@ -283,6 +415,7 @@ describe('usePDialogueEditor', () => {
       createdAt: '2026-08-13T00:00:00.000Z',
       durationMs: 1000,
       id: 'stored-dialogue',
+      language: 'ko',
       modelId: 'full',
       segments: [{durationMs: 1000, index: 0, startMs: 0, text: '저장된 대사'}],
       text: '저장된 대사',

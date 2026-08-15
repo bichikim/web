@@ -4,6 +4,7 @@ import {InferenceSession, Tensor} from 'onnxruntime-web/all'
 import {z} from 'zod'
 
 import type {InvalidModelDataError} from './errors'
+import type {SupertonicLanguage} from './language'
 import {failureResult, type Result, successResult} from './result'
 import {parseSupertonicVoiceStyle, type SupertonicVoiceStyle} from './voice-style'
 
@@ -28,6 +29,7 @@ export interface SupertonicVoice {
 }
 
 interface GenerateAudioOptions {
+  readonly language: SupertonicLanguage
   readonly onProgress: (step: number, total: number) => void
   readonly speed: number
   readonly text: string
@@ -78,7 +80,7 @@ export const parseSupertonicVoice = (
 export type SupertonicConfig = z.infer<typeof configSchema>
 export type SupertonicIndexer = z.infer<typeof indexerSchema>
 
-const preprocessText = (input: string) => {
+const preprocessText = (input: string, language: SupertonicLanguage) => {
   let text = input
     .normalize('NFKD')
     .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{1F1E6}-\u{1F1FF}]+/gu, '')
@@ -94,11 +96,15 @@ const preprocessText = (input: string) => {
     text += '.'
   }
 
-  return `<ko>${text}</ko>`
+  return `<${language}>${text}</${language}>`
 }
 
-const createTextInput = (text: string, indexer: SupertonicIndexer) => {
-  const characters = Array.from(preprocessText(text))
+const createTextInput = (
+  text: string,
+  language: SupertonicLanguage,
+  indexer: SupertonicIndexer,
+) => {
+  const characters = Array.from(preprocessText(text, language))
   const ids = characters.map((character) => {
     const codePoint = character.codePointAt(0)
 
@@ -152,7 +158,7 @@ export class SupertonicEngine {
   }
 
   async generate(options: GenerateAudioOptions): Promise<Float32Array> {
-    const {textIds, textMask} = createTextInput(options.text, this.#indexer)
+    const {textIds, textMask} = createTextInput(options.text, options.language, this.#indexer)
     const durationResult = await this.#sessions.durationPredictor.run({
       style_dp: options.voice.durationStyle,
       text_ids: textIds,

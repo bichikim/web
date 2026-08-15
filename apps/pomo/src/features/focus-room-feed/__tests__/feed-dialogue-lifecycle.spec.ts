@@ -14,6 +14,7 @@ const DIALOGUE: PDialogue = {
   createdAt: '2026-08-14T00:00:00.000Z',
   durationMs: 1000,
   id: 'dialogue-1',
+  language: 'ko',
   modelId: 'int8',
   segments: [{durationMs: 1000, index: 0, startMs: 0, text: '안녕하세요'}],
   text: '안녕하세요',

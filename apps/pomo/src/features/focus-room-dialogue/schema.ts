@@ -1,6 +1,9 @@
 import {z} from 'zod'
 
+import {SUPERTONIC_LANGUAGES, type SupertonicLanguage} from '../supertonic/language'
 import {MOOD_MODIFIER_IDS, PRIMARY_MOOD_IDS} from '../text-mood/labels'
+
+export const DEFAULT_FOCUS_ROOM_DIALOGUE_LANGUAGE = 'ko' satisfies SupertonicLanguage
 
 export const FOCUS_ROOM_DIALOGUE_EVENTS = [
   'room-enter',
@@ -45,6 +48,7 @@ export const focusRoomDialogueSchema = z.object({
   createdAt: z.string().datetime(),
   durationMs: z.number().nonnegative(),
   id: z.string().min(1),
+  language: z.enum(SUPERTONIC_LANGUAGES).default(DEFAULT_FOCUS_ROOM_DIALOGUE_LANGUAGE),
   modelId: z.enum(['full', 'int8']),
   segments: z.array(dialogueSegmentSchema).min(1).readonly(),
   text: z.string().min(1),

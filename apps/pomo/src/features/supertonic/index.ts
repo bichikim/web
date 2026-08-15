@@ -1,4 +1,4 @@
-export {createSupertonicClient} from './client'
+export {createSupertonicClient, getSupertonicSpeechSpeed} from './client'
 export type {
   GenerateSupertonicOptions,
   InitializeSupertonicOptions,
@@ -8,6 +8,8 @@ export {createSupertonicAudioPlayer} from './audio-player'
 export type {CreateSupertonicAudioPlayerOptions, SupertonicAudioPlayer} from './audio-player'
 export {getSupertonicErrorMessage} from './error-message'
 export type {SupertonicError, SupertonicPhase} from './errors'
+export {SUPERTONIC_LANGUAGES, SUPERTONIC_LANGUAGE_OPTIONS} from './language'
+export type {SupertonicLanguage, SupertonicLanguageOption} from './language'
 export type {
   SupertonicAudio,
   SupertonicAudioChunk,

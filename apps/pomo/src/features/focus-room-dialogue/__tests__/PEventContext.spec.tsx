@@ -18,6 +18,7 @@ const createDialogue = (id: string, segments = [`대사 ${id}`]): PDialogue => (
   createdAt: '2026-08-13T00:00:00.000Z',
   durationMs: segments.length * 1000,
   id,
+  language: 'ko',
   modelId: 'full',
   segments: segments.map((text, index) => ({
     durationMs: 700,
