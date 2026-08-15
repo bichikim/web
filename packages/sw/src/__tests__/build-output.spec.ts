@@ -1,15 +1,13 @@
 /** @vitest-environment node */
 
-import {execFile} from 'node:child_process'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
-import {promisify} from 'node:util'
 import vm from 'node:vm'
+import {build} from 'vite'
 import {afterEach, describe, expect, it} from 'vitest'
 
 const temporaryDirectories: string[] = []
-const execFileAsync = promisify(execFile)
 
 type BuildListener = (event: unknown) => void
 
@@ -32,8 +30,10 @@ describe('service worker build output', () => {
 
     temporaryDirectories.push(outputDirectory)
 
-    await execFileAsync('pnpm', ['exec', 'vite', 'build', '--outDir', outputDirectory], {
-      cwd: packageRoot,
+    await build({
+      build: {emptyOutDir: true, outDir: outputDirectory},
+      logLevel: 'silent',
+      root: packageRoot,
     })
 
     const source = await fs.promises.readFile(outputPath, 'utf8')
