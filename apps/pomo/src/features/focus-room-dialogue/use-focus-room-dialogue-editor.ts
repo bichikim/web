@@ -1,8 +1,8 @@
 import {type Accessor, createMemo, createSignal, onCleanup, onMount, untrack} from 'solid-js'
 
 import {
+  createOpusBlob,
   createSupertonicClient,
-  createWaveBlob,
   getSupertonicErrorMessage,
   getSupertonicModel,
   type SupertonicAudioChunk,
@@ -11,8 +11,10 @@ import {
   type SupertonicVoiceId,
 } from '../supertonic'
 import {splitSpeechText} from '../supertonic/text-chunking'
+import {createTextMoodAnalyzer, type TextMoodAnalyzer, type TextMoodRuntime} from '../text-mood'
 import {createPDialogueRepository} from './repository'
 import {type DialogueSegment, type PDialogue} from './schema'
+import {analyzeDialogueSegmentMoods} from './segment-mood'
 import {createDialogueTimeline} from './timeline'
 
 const MAXIMUM_PROGRESS = 100
@@ -33,7 +35,7 @@ interface EditorProgressState {
 
 interface EditorBusyState {
   readonly message: string
-  readonly status: 'generating' | 'loading' | 'saving'
+  readonly status: 'analyzing' | 'generating' | 'loading' | 'saving'
 }
 
 interface EditorErrorState {
@@ -48,6 +50,7 @@ export type DialogueEditorState =
   | EditorProgressState
 
 export interface UsePDialogueEditorProps {
+  readonly moodRuntime?: TextMoodRuntime
   readonly dialogueId: Accessor<string | null>
 }
 
@@ -116,10 +119,13 @@ const revokeUrl = (url: string | null) => {
 const getProgress = (loadedBytes: number, totalBytes: number) =>
   Math.min(MAXIMUM_PROGRESS, Math.round((loadedBytes / totalBytes) * MAXIMUM_PROGRESS))
 
+const DEFAULT_MOOD_RUNTIME: TextMoodRuntime = {createAnalyzer: createTextMoodAnalyzer}
+
 /** Owns the browser-only lifecycle for editing, generating and persisting a dialogue. */
 // oxlint-disable-next-line eslint/max-lines-per-function -- The editor hook owns one disposable model, audio URL and persistence lifecycle.
 export const usePDialogueEditor = (props: UsePDialogueEditorProps): PDialogueEditorController => {
   const initialDialogueId = untrack(props.dialogueId)
+  const moodRuntime = untrack(() => props.moodRuntime ?? DEFAULT_MOOD_RUNTIME)
   const draftKey = getDialogueDraftKey(initialDialogueId)
   const repository = createPDialogueRepository()
   const [dialogueId, setDialogueId] = createSignal<string | null>(initialDialogueId)
@@ -143,6 +149,7 @@ export const usePDialogueEditor = (props: UsePDialogueEditorProps): PDialogueEdi
   let createdAt: string | null = null
   let generatedKey: string | null = null
   let isDisposed = false
+  let moodAnalyzer: TextMoodAnalyzer | null = null
   let preparedModelId: SupertonicModelId | null = null
 
   const setEditorState = (nextState: DialogueEditorState) => {
@@ -155,6 +162,7 @@ export const usePDialogueEditor = (props: UsePDialogueEditorProps): PDialogueEdi
     const {status} = state()
     return (
       status === 'generating' ||
+      status === 'analyzing' ||
       status === 'loading' ||
       status === 'preparing' ||
       status === 'saving'
@@ -274,6 +282,8 @@ export const usePDialogueEditor = (props: UsePDialogueEditorProps): PDialogueEdi
     isDisposed = true
     client?.dispose()
     client = null
+    moodAnalyzer?.dispose()
+    moodAnalyzer = null
     repository.dispose()
     revokeUrl(audioUrl())
   })
@@ -376,7 +386,7 @@ export const usePDialogueEditor = (props: UsePDialogueEditorProps): PDialogueEdi
           })
 
           return {
-            audio: createWaveBlob(result.value.audio.samples, result.value.audio.sampleRate),
+            audio: await createOpusBlob(result.value.audio.samples, result.value.audio.sampleRate),
             durationMs: timeline.durationMs,
             segments: timeline.segments,
           }
@@ -444,11 +454,48 @@ export const usePDialogueEditor = (props: UsePDialogueEditorProps): PDialogueEdi
       audioKey = crypto.randomUUID()
       audioNeedsWrite = true
       generatedKey = getGenerationKey(selectedModelId, selectedVoiceId, sourceText)
-      setEditorState({message: '음성과 말풍선 타임라인을 만들었어요.', status: 'ready'})
     } catch (error: unknown) {
       console.error('Failed to prepare generated focus room dialogue audio.', error)
       clearGeneratedAudio()
       setEditorState({message: '생성된 음성을 준비하지 못했어요.', status: 'error'})
+      return
+    }
+
+    try {
+      moodAnalyzer ??= moodRuntime.createAnalyzer({
+        onProgress: (nextProgress) => {
+          setEditorState({
+            message: `감정 분석 모델 준비 중 · ${nextProgress}%`,
+            status: 'analyzing',
+          })
+        },
+      })
+      const analyzedSegments = await analyzeDialogueSegmentMoods({
+        analyzer: moodAnalyzer,
+        onError: (error, segment) => {
+          console.warn(`Failed to analyze dialogue segment ${segment.index}.`, error)
+        },
+        onProgress: (current, total) => {
+          setEditorState({
+            message: `${current}/${total} 문장의 감정을 분석하고 있어요.`,
+            status: 'analyzing',
+          })
+        },
+        segments: generatedAudio.segments,
+      })
+
+      if (isDisposed || client !== currentClient) {
+        return
+      }
+
+      setSegments(analyzedSegments)
+      setEditorState({message: '음성과 문장별 감정 분석을 마쳤어요.', status: 'ready'})
+    } catch (error: unknown) {
+      console.warn('Failed to analyze focus room dialogue mood.', error)
+      setEditorState({
+        message: '음성은 만들었지만 일부 감정은 분석하지 못했어요.',
+        status: 'ready',
+      })
     }
   }
 

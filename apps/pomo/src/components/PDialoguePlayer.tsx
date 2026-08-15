@@ -2,10 +2,17 @@ import {createMemo, For, Show} from 'solid-js'
 
 import {PButton} from '../design-system/PButton'
 import {usePEvents} from '../features/focus-room-dialogue/PEventContext'
+import type {DialogueSegmentMood} from '../features/focus-room-dialogue/schema'
+import {getPrimaryMood, getPrimaryMoodIcon} from '../features/text-mood'
 
 export interface PDialoguePlayerProps {
   readonly externalText?: string | null
   readonly onStopExternalSpeech?: () => void
+}
+
+const getMoodPresentation = (mood: DialogueSegmentMood | null) => {
+  const definition = getPrimaryMood(mood?.primary.id ?? 'neutral')
+  return {definition, source: getPrimaryMoodIcon(definition.id)}
 }
 
 export const PDialoguePlayer = (props: PDialoguePlayerProps) => {
@@ -26,6 +33,14 @@ export const PDialoguePlayer = (props: PDialoguePlayerProps) => {
 
     return shouldKeepContainer ? previousText : null
   }, null)
+  const displayMood = createMemo<DialogueSegmentMood | null>((previousMood) => {
+    if (liveText() !== null) {
+      return isExternalSpeech() ? null : events.activeSegmentMood()
+    }
+
+    return displayText() === null ? null : previousMood
+  }, null)
+  const moodPresentation = createMemo(() => getMoodPresentation(displayMood()))
   const connectedSpeechCount = createMemo(() =>
     isExternalSpeech() ? 1 : Math.max(1, events.scheduledDialogueCount()),
   )
@@ -60,7 +75,11 @@ export const PDialoguePlayer = (props: PDialoguePlayerProps) => {
           <div class="pomo-dialogue-bubble pomo-static-focus-glass">
             <div class="pomo-dialogue-bubble__header">
               <div class="pomo-dialogue-bubble__speaker-group">
-                <span class="pomo-dialogue-bubble__speaker">Pomo</span>
+                <img
+                  alt={`${moodPresentation().definition.label} 감정`}
+                  class="pomo-dialogue-bubble__mood"
+                  src={moodPresentation().source}
+                />
                 <Show
                   when={
                     !isExternalSpeech() &&

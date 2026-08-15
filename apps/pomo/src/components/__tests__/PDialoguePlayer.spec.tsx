@@ -5,6 +5,7 @@ import {createSignal} from 'solid-js'
 import {afterEach, expect, it, vi} from 'vitest'
 
 import {type PEventContextValue, usePEvents} from '../../features/focus-room-dialogue/PEventContext'
+import type {DialogueSegmentMood} from '../../features/focus-room-dialogue/schema'
 import {PDialoguePlayer} from '../PDialoguePlayer'
 
 vi.mock('../../features/focus-room-dialogue/PEventContext', () => ({
@@ -14,15 +15,18 @@ vi.mock('../../features/focus-room-dialogue/PEventContext', () => ({
 const createEvents = (overrides: Partial<PEventContextValue> = {}): PEventContextValue => ({
   activeDialogueId: () => null,
   activeSegmentCount: () => 0,
+  activeSegmentMood: () => null,
   activeSegmentPosition: () => null,
   activeText: () => null,
   deleteDialogue: vi.fn(async () => undefined),
   dialogues: () => [],
+  enterFocusRoom: vi.fn(),
   entryDialogueId: () => null,
   entryDialogueIds: () => [],
   errorMessage: () => null,
   eventDialogueIds: () => ({}),
   getAudio: vi.fn(async () => null),
+  hasEnteredFocusRoom: () => true,
   isDialoguePlaybackBlocked: () => false,
   isDialogueScheduled: () => false,
   isEntryPlaybackBlocked: () => false,
@@ -44,6 +48,15 @@ const createEvents = (overrides: Partial<PEventContextValue> = {}): PEventContex
   ...overrides,
 })
 
+const cheerfulMood = {
+  margin: 0.7,
+  modifiers: [],
+  primary: {id: 'cheerful', probability: 0.85},
+  scores: [{id: 'cheerful', probability: 0.85}],
+  secondary: null,
+  uncertain: false,
+} satisfies DialogueSegmentMood
+
 afterEach(() => {
   vi.clearAllMocks()
 })
@@ -54,6 +67,7 @@ it('should show segment progress and stop the current dialogue playback', () => 
   vi.mocked(usePEvents).mockReturnValue(
     createEvents({
       activeSegmentCount: () => 3,
+      activeSegmentMood: () => cheerfulMood,
       activeSegmentPosition: () => 1,
       activeText: () => '집중을 시작해 볼까요?',
       onStopDialoguePlayback,
@@ -70,6 +84,8 @@ it('should show segment progress and stop the current dialogue playback', () => 
       ?.classList.contains('pomo-static-focus-glass'),
   ).toBe(true)
   expect(screen.getByRole('img', {name: '총 3개 중 2번째 대사 읽는 중'})).toBeDefined()
+  expect(screen.getByRole('img', {name: '밝음·즐거움 감정'})).toBeDefined()
+  expect(screen.queryByText('Pomo')).toBeNull()
   expect(
     result.container.querySelectorAll('.pomo-dialogue-bubble__progress-dot[data-complete]'),
   ).toHaveLength(2)
@@ -77,6 +93,16 @@ it('should show segment progress and stop the current dialogue playback', () => 
   expect(skipDialoguePlayback).toHaveBeenCalledOnce()
   fireEvent.click(screen.getByRole('button', {name: '3개 모두 중지'}))
   expect(onStopDialoguePlayback).toHaveBeenCalledOnce()
+})
+
+it('should show the neutral face when an active segment has no mood analysis', () => {
+  vi.mocked(usePEvents).mockReturnValue(
+    createEvents({activeText: () => '감정 분석 결과가 없는 대사'}),
+  )
+
+  render(() => <PDialoguePlayer />)
+
+  expect(screen.getByRole('img', {name: '중립 감정'})).toBeDefined()
 })
 
 it('should route the stop action to an external speech owner', () => {
@@ -98,6 +124,7 @@ it('should route the stop action to an external speech owner', () => {
   fireEvent.click(screen.getByRole('button', {name: '1개 모두 중지'}))
 
   expect(screen.getByText('WebMCP 대사').textContent).toBe('WebMCP 대사')
+  expect(screen.getByRole('img', {name: '중립 감정'})).toBeDefined()
   expect(screen.queryByRole('img', {name: /번째 대사 읽는 중/})).toBeNull()
   expect(screen.queryByRole('button', {name: '대화 건너뛰기'})).toBeNull()
   expect(screen.queryByRole('button', {name: /이벤트 음성 재생/})).toBeNull()

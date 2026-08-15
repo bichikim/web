@@ -433,7 +433,9 @@ export const POMO_DIALOGUE_SETTINGS_STYLES = String.raw`
 }
 
 .pomo-dialogue-settings__selected-dialogue--library {
-  align-items: flex-end;
+  container: pomo-dialogue-library-item / inline-size;
+  align-items: flex-start;
+  flex-direction: column;
   border-top: 0;
   padding-top: 0;
 }
@@ -480,6 +482,16 @@ export const POMO_DIALOGUE_SETTINGS_STYLES = String.raw`
 .pomo-dialogue-settings__actions .pomo-dialogue-settings__delete-confirm {
   border-color: rgb(239 135 120 / 50%);
   color: #f2a398;
+}
+
+@container pomo-dialogue-library-item (width < 19rem) {
+  .pomo-dialogue-settings__actions {
+    gap: 0.3rem;
+  }
+
+  .pomo-dialogue-settings__actions > :is(button, a) > [aria-hidden='true'] {
+    display: none;
+  }
 }
 
 .pomo-dialogue-settings__unconnected {

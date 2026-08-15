@@ -3,20 +3,51 @@ import {createRoot} from 'solid-js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {successResult, type SupertonicClient} from '../../supertonic'
+import {
+  type TextMoodAnalysis,
+  type TextMoodAnalyzer,
+  type TextMoodRuntime,
+  textMoodSuccess,
+} from '../../text-mood'
 import type {PDialogue} from '../schema'
 import {type PDialogueEditorController, usePDialogueEditor} from '../use-focus-room-dialogue-editor'
 
-const supertonicMocks = vi.hoisted(() => ({createClient: vi.fn()}))
+const supertonicMocks = vi.hoisted(() => ({
+  createClient: vi.fn(),
+  createOpusBlob: vi.fn(),
+}))
 const repositoryMocks = vi.hoisted(() => ({
   dispose: vi.fn(),
   getAudio: vi.fn(),
   getDialogue: vi.fn(),
   saveDialogue: vi.fn(async () => undefined),
 }))
+const moodAnalyzerMocks = {
+  analyze: vi.fn<TextMoodAnalyzer['analyze']>(),
+  dispose: vi.fn(),
+  prepare: vi.fn<TextMoodAnalyzer['prepare']>(),
+}
+const moodRuntime: TextMoodRuntime = {createAnalyzer: vi.fn(() => moodAnalyzerMocks)}
+
+const cheerfulAnalysis: TextMoodAnalysis = {
+  margin: 0.6,
+  modifiers: [],
+  primary: {id: 'cheerful', probability: 0.8},
+  scores: [
+    {id: 'cheerful', probability: 0.8},
+    {id: 'hopeful', probability: 0.2},
+  ],
+  secondary: {id: 'hopeful', probability: 0.2},
+  uncertain: false,
+}
 
 vi.mock('../../supertonic', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../supertonic')>()
-  return {...actual, createSupertonicClient: supertonicMocks.createClient}
+  return {
+    ...actual,
+    createOpusBlob: supertonicMocks.createOpusBlob,
+    createSupertonicClient: supertonicMocks.createClient,
+  }
 })
 
 vi.mock('../repository', () => ({
@@ -56,7 +87,7 @@ const createEditorRoot = (dialogueId: string | null = null): DialogueEditorTestR
   let disposeRoot: () => void = () => undefined
   const controller = createRoot((dispose) => {
     disposeRoot = dispose
-    return usePDialogueEditor({dialogueId: () => dialogueId})
+    return usePDialogueEditor({dialogueId: () => dialogueId, moodRuntime})
   })
 
   return {controller, dispose: disposeRoot}
@@ -64,6 +95,16 @@ const createEditorRoot = (dialogueId: string | null = null): DialogueEditorTestR
 
 beforeEach(() => {
   vi.clearAllMocks()
+  supertonicMocks.createOpusBlob.mockResolvedValue(
+    new Blob(['opus'], {type: 'audio/ogg; codecs=opus'}),
+  )
+  moodAnalyzerMocks.analyze.mockResolvedValue(
+    textMoodSuccess({
+      elapsedMilliseconds: 1,
+      status: 'insufficient',
+      sufficiency: {insufficient: true, probability: 0.8, threshold: 0.5},
+    }),
+  )
   sessionStorage.clear()
   vi.stubGlobal('URL', {
     createObjectURL: vi.fn(() => 'blob:dialogue'),
@@ -117,6 +158,29 @@ describe('usePDialogueEditor', () => {
     expect(repositoryMocks.saveDialogue).toHaveBeenCalledTimes(1)
     expect(sessionStorage.getItem('pomo:focus-room-dialogue:draft:new')).toBeNull()
 
+    editor.dispose()
+  })
+
+  it('should save complete mood analysis with the generated segment', async () => {
+    const client = createClient([])
+    supertonicMocks.createClient.mockReturnValue(client)
+    moodAnalyzerMocks.analyze.mockResolvedValueOnce(
+      textMoodSuccess({analysis: cheerfulAnalysis, elapsedMilliseconds: 12, status: 'complete'}),
+    )
+    const editor = createEditorRoot()
+    editor.controller.setText('오늘은 정말 신나는 날이야!')
+
+    await editor.controller.generate()
+    await editor.controller.save()
+
+    expect(editor.controller.segments()[0].mood).toEqual(cheerfulAnalysis)
+    expect(repositoryMocks.saveDialogue).toHaveBeenCalledWith(
+      expect.objectContaining({
+        dialogue: expect.objectContaining({
+          segments: [expect.objectContaining({mood: cheerfulAnalysis})],
+        }),
+      }),
+    )
     editor.dispose()
   })
 

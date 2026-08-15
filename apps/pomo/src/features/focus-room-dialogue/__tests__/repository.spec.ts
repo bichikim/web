@@ -32,6 +32,7 @@ const storageMocks = vi.hoisted(() => ({
   set: vi.fn(),
 }))
 const reportStorageError = vi.hoisted(() => vi.fn())
+const legacyAudioMocks = vi.hoisted(() => ({compress: vi.fn()}))
 
 vi.mock('dexie', () => ({
   default: function DexieMock() {
@@ -44,9 +45,17 @@ vi.mock('../../model-storage/storage', () => ({
   reportModelStorageError: reportStorageError,
 }))
 
+vi.mock('../compress-legacy-wave', () => ({compressLegacyWave: legacyAudioMocks.compress}))
+
 beforeEach(() => {
   vi.clearAllMocks()
   databaseMocks.version.mockReturnValue({stores: databaseMocks.stores})
+  storageMocks.delete.mockResolvedValue({ok: true, value: false})
+  storageMocks.get.mockResolvedValue({ok: true, value: null})
+  storageMocks.set.mockResolvedValue({ok: true, value: undefined})
+  legacyAudioMocks.compress.mockResolvedValue(
+    new Blob(['compressed'], {type: 'audio/ogg; codecs=opus'}),
+  )
 })
 
 it('should finish metadata deletion when obsolete audio cleanup fails', async () => {
@@ -70,6 +79,10 @@ it('should finish metadata deletion when obsolete audio cleanup fails', async ()
 
   expect(databaseMocks.dialogues.delete).toHaveBeenCalledWith('dialogue-id')
   expect(reportStorageError).toHaveBeenCalledWith(storageError)
+  expect(storageMocks.delete.mock.calls.map(([path]) => path)).toEqual([
+    '/__pomo/dialogue-audio/audio-key.opus',
+    '/__pomo/dialogue-audio/audio-key.wav',
+  ])
   repository.dispose()
   expect(databaseMocks.close).toHaveBeenCalledOnce()
 })
@@ -156,6 +169,110 @@ it('should roll back newly written audio when metadata persistence fails', async
   )
 
   expect(storageMocks.delete).toHaveBeenCalledWith('/__pomo/dialogue-audio/new-audio.wav')
+})
+
+it('should store new compressed audio as Opus', async () => {
+  databaseMocks.dialogues.get.mockResolvedValue(undefined)
+  const repository = createPDialogueRepository()
+  const dialogue = {
+    audioKey: 'compressed-audio',
+    createdAt: '2026-08-13T00:00:00.000Z',
+    durationMs: 1000,
+    id: 'compressed-dialogue',
+    modelId: 'full' as const,
+    segments: [{durationMs: 1000, index: 0, startMs: 0, text: '압축 대사'}],
+    text: '압축 대사',
+    updatedAt: '2026-08-13T00:00:00.000Z',
+    version: 1 as const,
+    voiceId: 'Yuna' as const,
+  }
+
+  await repository.saveDialogue({
+    audio: new Blob(['opus'], {type: 'audio/ogg; codecs=opus'}),
+    dialogue,
+  })
+
+  expect(storageMocks.set).toHaveBeenCalledWith(
+    '/__pomo/dialogue-audio/compressed-audio.opus',
+    expect.any(Response),
+  )
+})
+
+it('should prefer stored Opus audio without migrating legacy audio', async () => {
+  const opusAudio = new Blob(['opus'], {type: 'audio/ogg; codecs=opus'})
+  const wavAudio = new Blob(['wav'], {type: 'audio/wav'})
+  const repository = createPDialogueRepository()
+  storageMocks.get.mockImplementation(async (path: string) => ({
+    ok: true,
+    value: path.endsWith('.opus') ? new Response(opusAudio) : new Response(wavAudio),
+  }))
+
+  await expect(repository.getAudio('compressed')).resolves.toEqual(opusAudio)
+  expect(legacyAudioMocks.compress).not.toHaveBeenCalled()
+})
+
+it('should migrate legacy WAV audio to Opus when it is first read', async () => {
+  const wavAudio = new Blob(['wav'], {type: 'audio/wav'})
+  const compressedAudio = new Blob(['compressed'], {type: 'audio/ogg; codecs=opus'})
+  legacyAudioMocks.compress.mockResolvedValue(compressedAudio)
+  const repository = createPDialogueRepository()
+
+  storageMocks.get.mockImplementation(async (path: string) => ({
+    ok: true,
+    value: path.endsWith('.wav') ? new Response(wavAudio) : null,
+  }))
+  await expect(repository.getAudio('legacy')).resolves.toEqual(compressedAudio)
+  expect(legacyAudioMocks.compress).toHaveBeenCalledOnce()
+  expect(storageMocks.set).toHaveBeenCalledWith(
+    '/__pomo/dialogue-audio/legacy.opus',
+    expect.any(Response),
+  )
+  expect(storageMocks.delete).toHaveBeenCalledWith('/__pomo/dialogue-audio/legacy.wav')
+  expect(storageMocks.get.mock.calls.map(([path]) => path)).toEqual([
+    '/__pomo/dialogue-audio/legacy.opus',
+    '/__pomo/dialogue-audio/legacy.wav',
+  ])
+})
+
+it('should share one legacy migration between simultaneous audio reads', async () => {
+  const wavAudio = new Blob(['wav'], {type: 'audio/wav'})
+  let finishCompression: ((audio: Blob) => void) | undefined
+  legacyAudioMocks.compress.mockReturnValue(
+    new Promise<Blob>((resolve) => {
+      finishCompression = resolve
+    }),
+  )
+  storageMocks.get.mockImplementation(async (path: string) => ({
+    ok: true,
+    value: path.endsWith('.wav') ? new Response(wavAudio) : null,
+  }))
+  const repository = createPDialogueRepository()
+
+  const firstRead = repository.getAudio('legacy')
+  const secondRead = repository.getAudio('legacy')
+  await vi.waitFor(() => expect(legacyAudioMocks.compress).toHaveBeenCalledOnce())
+  const compressedAudio = new Blob(['compressed'], {type: 'audio/ogg; codecs=opus'})
+  finishCompression?.(compressedAudio)
+
+  await expect(Promise.all([firstRead, secondRead])).resolves.toEqual([
+    compressedAudio,
+    compressedAudio,
+  ])
+})
+
+it('should keep legacy WAV playback when compression fails', async () => {
+  const wavAudio = new Blob(['wav'], {type: 'audio/wav'})
+  legacyAudioMocks.compress.mockRejectedValue(new Error('encoder unavailable'))
+  storageMocks.get.mockImplementation(async (path: string) => ({
+    ok: true,
+    value: path.endsWith('.wav') ? new Response(wavAudio) : null,
+  }))
+  vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+  const repository = createPDialogueRepository()
+
+  await expect(repository.getAudio('legacy')).resolves.toEqual(wavAudio)
+  expect(storageMocks.set).not.toHaveBeenCalled()
+  expect(storageMocks.delete).not.toHaveBeenCalled()
 })
 
 it('should persist and remove bindings for every supported dialogue event', async () => {

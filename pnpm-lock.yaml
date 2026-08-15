@@ -626,6 +626,9 @@ importers:
       dexie:
         specifier: ^4.4.4
         version: 4.4.4
+      libopus-wasm:
+        specifier: 0.2.0
+        version: 0.2.0
       media-chrome:
         specifier: ^4.19.2
         version: 4.19.2(react@19.2.5)
@@ -9343,6 +9346,10 @@ packages:
   levn@0.4.1:
     resolution: {integrity: sha512-+bT2uH4E5LGE7h/n3evcS/sQlJXCpIp6ym8OWJ5eV6+67Dsql/LaaT7qJBAt2rzfoa/5QBGBhxDix1dMt2kQKQ==}
     engines: {node: '>= 0.8.0'}
+
+  libopus-wasm@0.2.0:
+    resolution: {integrity: sha512-x/2Gu1/C6L3IICY09zyfp984AWiOYjn53u4WfdY3yh+3KTzMN8Xkm77q3lenWMVIk5SnSzjGEkQT+VQMFHLBHQ==}
+    engines: {node: '>=20'}
 
   libphonenumber-js@1.12.42:
     resolution: {integrity: sha512-oKQFPTibqQwZZkChCDVMFVJXMZdyJNqDWZWYNn8BgyAaK/6yFJEowxCY0RVFirRyWP63hMRuKlkSEd9qlvbWXg==}
@@ -23395,6 +23402,8 @@ snapshots:
     dependencies:
       prelude-ls: 1.2.1
       type-check: 0.4.0
+
+  libopus-wasm@0.2.0: {}
 
   libphonenumber-js@1.12.42: {}
 
