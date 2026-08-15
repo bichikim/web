@@ -1,0 +1,2019 @@
+{
+  "dataset": {
+    "base": 240,
+    "hardExamples": 84,
+    "modifierTrain": 252,
+    "primaryTrain": 216,
+    "sufficiency": {
+      "test": 50,
+      "total": 422,
+      "train": 322,
+      "validation": 50
+    },
+    "test": 36,
+    "total": 324,
+    "train": 252,
+    "validation": 36
+  },
+  "insufficiencyMetrics": {
+    "configuration": {
+      "epochs": 220,
+      "hiddenSize": 12,
+      "kind": "mlp",
+      "learningRate": 0.006,
+      "regularization": 0.008
+    },
+    "positiveWeight": 7.05,
+    "test": {
+      "f1": 0.7692307692307693,
+      "falseNegative": 3,
+      "falsePositive": 0,
+      "falsePositiveRate": 0,
+      "precision": 1,
+      "recall": 0.625,
+      "threshold": 0.94,
+      "trueNegative": 42,
+      "truePositive": 5
+    },
+    "testPredictions": [
+      {
+        "actual": false,
+        "id": "cheerful-18",
+        "predicted": false,
+        "probability": 0.00284038
+      },
+      {
+        "actual": false,
+        "id": "cheerful-19",
+        "predicted": false,
+        "probability": 0.00176607
+      },
+      {
+        "actual": false,
+        "id": "cheerful-20",
+        "predicted": false,
+        "probability": 0.00570981
+      },
+      {
+        "actual": false,
+        "id": "calm-18",
+        "predicted": false,
+        "probability": 0.00136812
+      },
+      {
+        "actual": false,
+        "id": "calm-19",
+        "predicted": false,
+        "probability": 0.00224726
+      },
+      {
+        "actual": false,
+        "id": "calm-20",
+        "predicted": false,
+        "probability": 0.00151841
+      },
+      {
+        "actual": false,
+        "id": "warm-18",
+        "predicted": false,
+        "probability": 0.01298901
+      },
+      {
+        "actual": false,
+        "id": "warm-19",
+        "predicted": false,
+        "probability": 0.00232211
+      },
+      {
+        "actual": false,
+        "id": "warm-20",
+        "predicted": false,
+        "probability": 0.00435233
+      },
+      {
+        "actual": false,
+        "id": "hopeful-18",
+        "predicted": false,
+        "probability": 0.01417732
+      },
+      {
+        "actual": false,
+        "id": "hopeful-19",
+        "predicted": false,
+        "probability": 0.0173726
+      },
+      {
+        "actual": false,
+        "id": "hopeful-20",
+        "predicted": false,
+        "probability": 0.10075146
+      },
+      {
+        "actual": false,
+        "id": "dreamlike-18",
+        "predicted": false,
+        "probability": 0.00431336
+      },
+      {
+        "actual": false,
+        "id": "dreamlike-19",
+        "predicted": false,
+        "probability": 0.00291927
+      },
+      {
+        "actual": false,
+        "id": "dreamlike-20",
+        "predicted": false,
+        "probability": 0.01830697
+      },
+      {
+        "actual": false,
+        "id": "awe-18",
+        "predicted": false,
+        "probability": 0.00335801
+      },
+      {
+        "actual": false,
+        "id": "awe-19",
+        "predicted": false,
+        "probability": 0.01009053
+      },
+      {
+        "actual": false,
+        "id": "awe-20",
+        "predicted": false,
+        "probability": 0.04619369
+      },
+      {
+        "actual": false,
+        "id": "nostalgic-18",
+        "predicted": false,
+        "probability": 0.00928833
+      },
+      {
+        "actual": false,
+        "id": "nostalgic-19",
+        "predicted": false,
+        "probability": 0.00250328
+      },
+      {
+        "actual": false,
+        "id": "nostalgic-20",
+        "predicted": false,
+        "probability": 0.14328358
+      },
+      {
+        "actual": false,
+        "id": "sad-18",
+        "predicted": false,
+        "probability": 0.00142206
+      },
+      {
+        "actual": false,
+        "id": "sad-19",
+        "predicted": false,
+        "probability": 0.0040591
+      },
+      {
+        "actual": false,
+        "id": "sad-20",
+        "predicted": false,
+        "probability": 0.00451087
+      },
+      {
+        "actual": false,
+        "id": "anxious-18",
+        "predicted": false,
+        "probability": 0.00747821
+      },
+      {
+        "actual": false,
+        "id": "anxious-19",
+        "predicted": false,
+        "probability": 0.00178076
+      },
+      {
+        "actual": false,
+        "id": "anxious-20",
+        "predicted": false,
+        "probability": 0.01165804
+      },
+      {
+        "actual": false,
+        "id": "fearful-18",
+        "predicted": false,
+        "probability": 0.00326829
+      },
+      {
+        "actual": false,
+        "id": "fearful-19",
+        "predicted": false,
+        "probability": 0.00301761
+      },
+      {
+        "actual": false,
+        "id": "fearful-20",
+        "predicted": false,
+        "probability": 0.01795326
+      },
+      {
+        "actual": false,
+        "id": "angry-18",
+        "predicted": false,
+        "probability": 0.03692176
+      },
+      {
+        "actual": false,
+        "id": "angry-19",
+        "predicted": false,
+        "probability": 0.02022705
+      },
+      {
+        "actual": false,
+        "id": "angry-20",
+        "predicted": false,
+        "probability": 0.00252863
+      },
+      {
+        "actual": false,
+        "id": "neutral-18",
+        "predicted": false,
+        "probability": 0.02456359
+      },
+      {
+        "actual": false,
+        "id": "neutral-19",
+        "predicted": false,
+        "probability": 0.02445043
+      },
+      {
+        "actual": false,
+        "id": "neutral-20",
+        "predicted": false,
+        "probability": 0.03867217
+      },
+      {
+        "actual": false,
+        "id": "sufficient-test-001",
+        "predicted": false,
+        "probability": 0.03104864
+      },
+      {
+        "actual": false,
+        "id": "sufficient-test-002",
+        "predicted": false,
+        "probability": 0.89481145
+      },
+      {
+        "actual": false,
+        "id": "sufficient-test-003",
+        "predicted": false,
+        "probability": 0.93105397
+      },
+      {
+        "actual": false,
+        "id": "sufficient-test-004",
+        "predicted": false,
+        "probability": 0.00305764
+      },
+      {
+        "actual": false,
+        "id": "sufficient-test-005",
+        "predicted": false,
+        "probability": 0.73285699
+      },
+      {
+        "actual": false,
+        "id": "sufficient-test-006",
+        "predicted": false,
+        "probability": 0.02464155
+      },
+      {
+        "actual": true,
+        "id": "insufficient-test-001",
+        "predicted": false,
+        "probability": 0.93394374
+      },
+      {
+        "actual": true,
+        "id": "insufficient-test-002",
+        "predicted": true,
+        "probability": 0.95653021
+      },
+      {
+        "actual": true,
+        "id": "insufficient-test-003",
+        "predicted": true,
+        "probability": 0.98903363
+      },
+      {
+        "actual": true,
+        "id": "insufficient-test-004",
+        "predicted": true,
+        "probability": 0.97093729
+      },
+      {
+        "actual": true,
+        "id": "insufficient-test-005",
+        "predicted": false,
+        "probability": 0.91166593
+      },
+      {
+        "actual": true,
+        "id": "insufficient-test-006",
+        "predicted": false,
+        "probability": 0.92066427
+      },
+      {
+        "actual": true,
+        "id": "insufficient-test-007",
+        "predicted": true,
+        "probability": 0.98546676
+      },
+      {
+        "actual": true,
+        "id": "insufficient-test-008",
+        "predicted": true,
+        "probability": 0.94147256
+      }
+    ],
+    "validation": {
+      "f1": 0.8571428571428571,
+      "falseNegative": 2,
+      "falsePositive": 0,
+      "falsePositiveRate": 0,
+      "precision": 1,
+      "recall": 0.75,
+      "threshold": 0.94,
+      "trueNegative": 42,
+      "truePositive": 6
+    },
+    "validationPredictions": [
+      {
+        "actual": false,
+        "id": "cheerful-15",
+        "predicted": false,
+        "probability": 0.01247425
+      },
+      {
+        "actual": false,
+        "id": "cheerful-16",
+        "predicted": false,
+        "probability": 0.00493731
+      },
+      {
+        "actual": false,
+        "id": "cheerful-17",
+        "predicted": false,
+        "probability": 0.00117464
+      },
+      {
+        "actual": false,
+        "id": "calm-15",
+        "predicted": false,
+        "probability": 0.00190955
+      },
+      {
+        "actual": false,
+        "id": "calm-16",
+        "predicted": false,
+        "probability": 0.00415217
+      },
+      {
+        "actual": false,
+        "id": "calm-17",
+        "predicted": false,
+        "probability": 0.00176791
+      },
+      {
+        "actual": false,
+        "id": "warm-15",
+        "predicted": false,
+        "probability": 0.01536071
+      },
+      {
+        "actual": false,
+        "id": "warm-16",
+        "predicted": false,
+        "probability": 0.04922458
+      },
+      {
+        "actual": false,
+        "id": "warm-17",
+        "predicted": false,
+        "probability": 0.04511552
+      },
+      {
+        "actual": false,
+        "id": "hopeful-15",
+        "predicted": false,
+        "probability": 0.0066932
+      },
+      {
+        "actual": false,
+        "id": "hopeful-16",
+        "predicted": false,
+        "probability": 0.00370277
+      },
+      {
+        "actual": false,
+        "id": "hopeful-17",
+        "predicted": false,
+        "probability": 0.03866771
+      },
+      {
+        "actual": false,
+        "id": "dreamlike-15",
+        "predicted": false,
+        "probability": 0.00925116
+      },
+      {
+        "actual": false,
+        "id": "dreamlike-16",
+        "predicted": false,
+        "probability": 0.00687752
+      },
+      {
+        "actual": false,
+        "id": "dreamlike-17",
+        "predicted": false,
+        "probability": 0.00229737
+      },
+      {
+        "actual": false,
+        "id": "awe-15",
+        "predicted": false,
+        "probability": 0.00324319
+      },
+      {
+        "actual": false,
+        "id": "awe-16",
+        "predicted": false,
+        "probability": 0.00780414
+      },
+      {
+        "actual": false,
+        "id": "awe-17",
+        "predicted": false,
+        "probability": 0.01415789
+      },
+      {
+        "actual": false,
+        "id": "nostalgic-15",
+        "predicted": false,
+        "probability": 0.00849397
+      },
+      {
+        "actual": false,
+        "id": "nostalgic-16",
+        "predicted": false,
+        "probability": 0.00295586
+      },
+      {
+        "actual": false,
+        "id": "nostalgic-17",
+        "predicted": false,
+        "probability": 0.00357103
+      },
+      {
+        "actual": false,
+        "id": "sad-15",
+        "predicted": false,
+        "probability": 0.00183939
+      },
+      {
+        "actual": false,
+        "id": "sad-16",
+        "predicted": false,
+        "probability": 0.00098743
+      },
+      {
+        "actual": false,
+        "id": "sad-17",
+        "predicted": false,
+        "probability": 0.00162747
+      },
+      {
+        "actual": false,
+        "id": "anxious-15",
+        "predicted": false,
+        "probability": 0.00163092
+      },
+      {
+        "actual": false,
+        "id": "anxious-16",
+        "predicted": false,
+        "probability": 0.02442961
+      },
+      {
+        "actual": false,
+        "id": "anxious-17",
+        "predicted": false,
+        "probability": 0.00326075
+      },
+      {
+        "actual": false,
+        "id": "fearful-15",
+        "predicted": false,
+        "probability": 0.00179912
+      },
+      {
+        "actual": false,
+        "id": "fearful-16",
+        "predicted": false,
+        "probability": 0.00656256
+      },
+      {
+        "actual": false,
+        "id": "fearful-17",
+        "predicted": false,
+        "probability": 0.00358724
+      },
+      {
+        "actual": false,
+        "id": "angry-15",
+        "predicted": false,
+        "probability": 0.03161552
+      },
+      {
+        "actual": false,
+        "id": "angry-16",
+        "predicted": false,
+        "probability": 0.04291515
+      },
+      {
+        "actual": false,
+        "id": "angry-17",
+        "predicted": false,
+        "probability": 0.00245394
+      },
+      {
+        "actual": false,
+        "id": "neutral-15",
+        "predicted": false,
+        "probability": 0.00628694
+      },
+      {
+        "actual": false,
+        "id": "neutral-16",
+        "predicted": false,
+        "probability": 0.00823558
+      },
+      {
+        "actual": false,
+        "id": "neutral-17",
+        "predicted": false,
+        "probability": 0.03448162
+      },
+      {
+        "actual": false,
+        "id": "sufficient-validation-001",
+        "predicted": false,
+        "probability": 0.0026325
+      },
+      {
+        "actual": false,
+        "id": "sufficient-validation-002",
+        "predicted": false,
+        "probability": 0.55605952
+      },
+      {
+        "actual": false,
+        "id": "sufficient-validation-003",
+        "predicted": false,
+        "probability": 0.80062847
+      },
+      {
+        "actual": false,
+        "id": "sufficient-validation-004",
+        "predicted": false,
+        "probability": 0.00441161
+      },
+      {
+        "actual": false,
+        "id": "sufficient-validation-005",
+        "predicted": false,
+        "probability": 0.89364121
+      },
+      {
+        "actual": false,
+        "id": "sufficient-validation-006",
+        "predicted": false,
+        "probability": 0.00225778
+      },
+      {
+        "actual": true,
+        "id": "insufficient-validation-001",
+        "predicted": true,
+        "probability": 0.95196584
+      },
+      {
+        "actual": true,
+        "id": "insufficient-validation-002",
+        "predicted": true,
+        "probability": 0.95154807
+      },
+      {
+        "actual": true,
+        "id": "insufficient-validation-003",
+        "predicted": true,
+        "probability": 0.98445558
+      },
+      {
+        "actual": true,
+        "id": "insufficient-validation-004",
+        "predicted": false,
+        "probability": 0.34641271
+      },
+      {
+        "actual": true,
+        "id": "insufficient-validation-005",
+        "predicted": false,
+        "probability": 0.72509464
+      },
+      {
+        "actual": true,
+        "id": "insufficient-validation-006",
+        "predicted": true,
+        "probability": 0.98501549
+      },
+      {
+        "actual": true,
+        "id": "insufficient-validation-007",
+        "predicted": true,
+        "probability": 0.98188777
+      },
+      {
+        "actual": true,
+        "id": "insufficient-validation-008",
+        "predicted": true,
+        "probability": 0.97846006
+      }
+    ]
+  },
+  "modifierMetrics": {
+    "playful": {
+      "configuration": {
+        "epochs": 120,
+        "learningRate": 0.01,
+        "regularization": 0.004
+      },
+      "test": {
+        "f1": 0.5,
+        "falseNegative": 2,
+        "falsePositive": 0,
+        "falsePositiveRate": 0,
+        "precision": 1,
+        "recall": 0.3333333333333333,
+        "threshold": 0.25,
+        "trueNegative": 33,
+        "truePositive": 1
+      },
+      "testPredictions": [
+        {
+          "actual": false,
+          "id": "cheerful-18",
+          "predicted": false,
+          "probability": 0.10580605
+        },
+        {
+          "actual": false,
+          "id": "cheerful-19",
+          "predicted": false,
+          "probability": 0.07851451
+        },
+        {
+          "actual": true,
+          "id": "cheerful-20",
+          "predicted": true,
+          "probability": 0.32052182
+        },
+        {
+          "actual": false,
+          "id": "calm-18",
+          "predicted": false,
+          "probability": 0.06683617
+        },
+        {
+          "actual": false,
+          "id": "calm-19",
+          "predicted": false,
+          "probability": 0.04523701
+        },
+        {
+          "actual": false,
+          "id": "calm-20",
+          "predicted": false,
+          "probability": 0.1420678
+        },
+        {
+          "actual": false,
+          "id": "warm-18",
+          "predicted": false,
+          "probability": 0.05621819
+        },
+        {
+          "actual": false,
+          "id": "warm-19",
+          "predicted": false,
+          "probability": 0.12148192
+        },
+        {
+          "actual": true,
+          "id": "warm-20",
+          "predicted": false,
+          "probability": 0.11602678
+        },
+        {
+          "actual": false,
+          "id": "hopeful-18",
+          "predicted": false,
+          "probability": 0.12360258
+        },
+        {
+          "actual": false,
+          "id": "hopeful-19",
+          "predicted": false,
+          "probability": 0.18114606
+        },
+        {
+          "actual": true,
+          "id": "hopeful-20",
+          "predicted": false,
+          "probability": 0.23343672
+        },
+        {
+          "actual": false,
+          "id": "dreamlike-18",
+          "predicted": false,
+          "probability": 0.06174084
+        },
+        {
+          "actual": false,
+          "id": "dreamlike-19",
+          "predicted": false,
+          "probability": 0.05757675
+        },
+        {
+          "actual": false,
+          "id": "dreamlike-20",
+          "predicted": false,
+          "probability": 0.06880047
+        },
+        {
+          "actual": false,
+          "id": "awe-18",
+          "predicted": false,
+          "probability": 0.09230489
+        },
+        {
+          "actual": false,
+          "id": "awe-19",
+          "predicted": false,
+          "probability": 0.04171703
+        },
+        {
+          "actual": false,
+          "id": "awe-20",
+          "predicted": false,
+          "probability": 0.09708183
+        },
+        {
+          "actual": false,
+          "id": "nostalgic-18",
+          "predicted": false,
+          "probability": 0.12451367
+        },
+        {
+          "actual": false,
+          "id": "nostalgic-19",
+          "predicted": false,
+          "probability": 0.06546287
+        },
+        {
+          "actual": false,
+          "id": "nostalgic-20",
+          "predicted": false,
+          "probability": 0.13704185
+        },
+        {
+          "actual": false,
+          "id": "sad-18",
+          "predicted": false,
+          "probability": 0.03924893
+        },
+        {
+          "actual": false,
+          "id": "sad-19",
+          "predicted": false,
+          "probability": 0.06980564
+        },
+        {
+          "actual": false,
+          "id": "sad-20",
+          "predicted": false,
+          "probability": 0.16116843
+        },
+        {
+          "actual": false,
+          "id": "anxious-18",
+          "predicted": false,
+          "probability": 0.12932314
+        },
+        {
+          "actual": false,
+          "id": "anxious-19",
+          "predicted": false,
+          "probability": 0.1345152
+        },
+        {
+          "actual": false,
+          "id": "anxious-20",
+          "predicted": false,
+          "probability": 0.09149986
+        },
+        {
+          "actual": false,
+          "id": "fearful-18",
+          "predicted": false,
+          "probability": 0.06526246
+        },
+        {
+          "actual": false,
+          "id": "fearful-19",
+          "predicted": false,
+          "probability": 0.07393063
+        },
+        {
+          "actual": false,
+          "id": "fearful-20",
+          "predicted": false,
+          "probability": 0.05309726
+        },
+        {
+          "actual": false,
+          "id": "angry-18",
+          "predicted": false,
+          "probability": 0.11638472
+        },
+        {
+          "actual": false,
+          "id": "angry-19",
+          "predicted": false,
+          "probability": 0.23601731
+        },
+        {
+          "actual": false,
+          "id": "angry-20",
+          "predicted": false,
+          "probability": 0.08861321
+        },
+        {
+          "actual": false,
+          "id": "neutral-18",
+          "predicted": false,
+          "probability": 0.11353838
+        },
+        {
+          "actual": false,
+          "id": "neutral-19",
+          "predicted": false,
+          "probability": 0.17997941
+        },
+        {
+          "actual": false,
+          "id": "neutral-20",
+          "predicted": false,
+          "probability": 0.08270682
+        }
+      ],
+      "validation": {
+        "f1": 0.5714285714285715,
+        "falseNegative": 1,
+        "falsePositive": 2,
+        "falsePositiveRate": 0.06060606060606061,
+        "precision": 0.5,
+        "recall": 0.6666666666666666,
+        "threshold": 0.25,
+        "trueNegative": 31,
+        "truePositive": 2
+      },
+      "validationPredictions": [
+        {
+          "actual": false,
+          "id": "cheerful-15",
+          "predicted": false,
+          "probability": 0.13758182
+        },
+        {
+          "actual": true,
+          "id": "cheerful-16",
+          "predicted": true,
+          "probability": 0.26812518
+        },
+        {
+          "actual": false,
+          "id": "cheerful-17",
+          "predicted": false,
+          "probability": 0.12457361
+        },
+        {
+          "actual": false,
+          "id": "calm-15",
+          "predicted": false,
+          "probability": 0.06517922
+        },
+        {
+          "actual": false,
+          "id": "calm-16",
+          "predicted": false,
+          "probability": 0.07561373
+        },
+        {
+          "actual": false,
+          "id": "calm-17",
+          "predicted": false,
+          "probability": 0.20719595
+        },
+        {
+          "actual": false,
+          "id": "warm-15",
+          "predicted": false,
+          "probability": 0.14708378
+        },
+        {
+          "actual": true,
+          "id": "warm-16",
+          "predicted": true,
+          "probability": 0.25248741
+        },
+        {
+          "actual": false,
+          "id": "warm-17",
+          "predicted": false,
+          "probability": 0.23681094
+        },
+        {
+          "actual": false,
+          "id": "hopeful-15",
+          "predicted": false,
+          "probability": 0.05222358
+        },
+        {
+          "actual": false,
+          "id": "hopeful-16",
+          "predicted": true,
+          "probability": 0.26671193
+        },
+        {
+          "actual": false,
+          "id": "hopeful-17",
+          "predicted": false,
+          "probability": 0.1023956
+        },
+        {
+          "actual": false,
+          "id": "dreamlike-15",
+          "predicted": false,
+          "probability": 0.06772244
+        },
+        {
+          "actual": false,
+          "id": "dreamlike-16",
+          "predicted": false,
+          "probability": 0.04394869
+        },
+        {
+          "actual": false,
+          "id": "dreamlike-17",
+          "predicted": false,
+          "probability": 0.08140889
+        },
+        {
+          "actual": false,
+          "id": "awe-15",
+          "predicted": false,
+          "probability": 0.05963771
+        },
+        {
+          "actual": false,
+          "id": "awe-16",
+          "predicted": false,
+          "probability": 0.11886193
+        },
+        {
+          "actual": false,
+          "id": "awe-17",
+          "predicted": false,
+          "probability": 0.03604243
+        },
+        {
+          "actual": false,
+          "id": "nostalgic-15",
+          "predicted": false,
+          "probability": 0.11935113
+        },
+        {
+          "actual": false,
+          "id": "nostalgic-16",
+          "predicted": false,
+          "probability": 0.04378218
+        },
+        {
+          "actual": false,
+          "id": "nostalgic-17",
+          "predicted": false,
+          "probability": 0.11156889
+        },
+        {
+          "actual": false,
+          "id": "sad-15",
+          "predicted": false,
+          "probability": 0.11647732
+        },
+        {
+          "actual": false,
+          "id": "sad-16",
+          "predicted": false,
+          "probability": 0.1251553
+        },
+        {
+          "actual": false,
+          "id": "sad-17",
+          "predicted": false,
+          "probability": 0.06635616
+        },
+        {
+          "actual": false,
+          "id": "anxious-15",
+          "predicted": false,
+          "probability": 0.07394229
+        },
+        {
+          "actual": false,
+          "id": "anxious-16",
+          "predicted": false,
+          "probability": 0.1662336
+        },
+        {
+          "actual": false,
+          "id": "anxious-17",
+          "predicted": false,
+          "probability": 0.08252968
+        },
+        {
+          "actual": false,
+          "id": "fearful-15",
+          "predicted": false,
+          "probability": 0.08002793
+        },
+        {
+          "actual": false,
+          "id": "fearful-16",
+          "predicted": false,
+          "probability": 0.06361208
+        },
+        {
+          "actual": false,
+          "id": "fearful-17",
+          "predicted": false,
+          "probability": 0.08836623
+        },
+        {
+          "actual": false,
+          "id": "angry-15",
+          "predicted": false,
+          "probability": 0.13791356
+        },
+        {
+          "actual": false,
+          "id": "angry-16",
+          "predicted": false,
+          "probability": 0.13092925
+        },
+        {
+          "actual": false,
+          "id": "angry-17",
+          "predicted": false,
+          "probability": 0.08530124
+        },
+        {
+          "actual": false,
+          "id": "neutral-15",
+          "predicted": false,
+          "probability": 0.14062899
+        },
+        {
+          "actual": false,
+          "id": "neutral-16",
+          "predicted": true,
+          "probability": 0.27921287
+        },
+        {
+          "actual": true,
+          "id": "neutral-17",
+          "predicted": false,
+          "probability": 0.15828737
+        }
+      ]
+    },
+    "sarcastic": {
+      "configuration": {
+        "epochs": 120,
+        "learningRate": 0.01,
+        "regularization": 0.004
+      },
+      "test": {
+        "f1": 0.5,
+        "falseNegative": 1,
+        "falsePositive": 3,
+        "falsePositiveRate": 0.09090909090909091,
+        "precision": 0.4,
+        "recall": 0.6666666666666666,
+        "threshold": 0.2,
+        "trueNegative": 30,
+        "truePositive": 2
+      },
+      "testPredictions": [
+        {
+          "actual": false,
+          "id": "cheerful-18",
+          "predicted": false,
+          "probability": 0.13783848
+        },
+        {
+          "actual": false,
+          "id": "cheerful-19",
+          "predicted": false,
+          "probability": 0.0614672
+        },
+        {
+          "actual": false,
+          "id": "cheerful-20",
+          "predicted": false,
+          "probability": 0.18647808
+        },
+        {
+          "actual": false,
+          "id": "calm-18",
+          "predicted": false,
+          "probability": 0.04490796
+        },
+        {
+          "actual": false,
+          "id": "calm-19",
+          "predicted": false,
+          "probability": 0.02961404
+        },
+        {
+          "actual": false,
+          "id": "calm-20",
+          "predicted": false,
+          "probability": 0.10898036
+        },
+        {
+          "actual": false,
+          "id": "warm-18",
+          "predicted": false,
+          "probability": 0.06076418
+        },
+        {
+          "actual": false,
+          "id": "warm-19",
+          "predicted": true,
+          "probability": 0.28194799
+        },
+        {
+          "actual": false,
+          "id": "warm-20",
+          "predicted": false,
+          "probability": 0.0578873
+        },
+        {
+          "actual": false,
+          "id": "hopeful-18",
+          "predicted": false,
+          "probability": 0.16753697
+        },
+        {
+          "actual": false,
+          "id": "hopeful-19",
+          "predicted": false,
+          "probability": 0.08326824
+        },
+        {
+          "actual": false,
+          "id": "hopeful-20",
+          "predicted": true,
+          "probability": 0.2547016
+        },
+        {
+          "actual": false,
+          "id": "dreamlike-18",
+          "predicted": false,
+          "probability": 0.06710536
+        },
+        {
+          "actual": false,
+          "id": "dreamlike-19",
+          "predicted": false,
+          "probability": 0.02665947
+        },
+        {
+          "actual": false,
+          "id": "dreamlike-20",
+          "predicted": false,
+          "probability": 0.04902889
+        },
+        {
+          "actual": false,
+          "id": "awe-18",
+          "predicted": false,
+          "probability": 0.07715994
+        },
+        {
+          "actual": false,
+          "id": "awe-19",
+          "predicted": false,
+          "probability": 0.02721481
+        },
+        {
+          "actual": false,
+          "id": "awe-20",
+          "predicted": false,
+          "probability": 0.04212895
+        },
+        {
+          "actual": false,
+          "id": "nostalgic-18",
+          "predicted": false,
+          "probability": 0.06728166
+        },
+        {
+          "actual": false,
+          "id": "nostalgic-19",
+          "predicted": false,
+          "probability": 0.04806065
+        },
+        {
+          "actual": false,
+          "id": "nostalgic-20",
+          "predicted": false,
+          "probability": 0.11677373
+        },
+        {
+          "actual": true,
+          "id": "sad-18",
+          "predicted": false,
+          "probability": 0.06352888
+        },
+        {
+          "actual": false,
+          "id": "sad-19",
+          "predicted": false,
+          "probability": 0.07849253
+        },
+        {
+          "actual": false,
+          "id": "sad-20",
+          "predicted": false,
+          "probability": 0.10380817
+        },
+        {
+          "actual": false,
+          "id": "anxious-18",
+          "predicted": false,
+          "probability": 0.08716161
+        },
+        {
+          "actual": false,
+          "id": "anxious-19",
+          "predicted": false,
+          "probability": 0.17901851
+        },
+        {
+          "actual": false,
+          "id": "anxious-20",
+          "predicted": false,
+          "probability": 0.05719504
+        },
+        {
+          "actual": false,
+          "id": "fearful-18",
+          "predicted": false,
+          "probability": 0.0252326
+        },
+        {
+          "actual": false,
+          "id": "fearful-19",
+          "predicted": false,
+          "probability": 0.0601221
+        },
+        {
+          "actual": false,
+          "id": "fearful-20",
+          "predicted": false,
+          "probability": 0.04652402
+        },
+        {
+          "actual": false,
+          "id": "angry-18",
+          "predicted": true,
+          "probability": 0.20760992
+        },
+        {
+          "actual": true,
+          "id": "angry-19",
+          "predicted": true,
+          "probability": 0.47655472
+        },
+        {
+          "actual": false,
+          "id": "angry-20",
+          "predicted": false,
+          "probability": 0.03058014
+        },
+        {
+          "actual": false,
+          "id": "neutral-18",
+          "predicted": false,
+          "probability": 0.13120421
+        },
+        {
+          "actual": true,
+          "id": "neutral-19",
+          "predicted": true,
+          "probability": 0.25633847
+        },
+        {
+          "actual": false,
+          "id": "neutral-20",
+          "predicted": false,
+          "probability": 0.08267983
+        }
+      ],
+      "validation": {
+        "f1": 0.4444444444444444,
+        "falseNegative": 1,
+        "falsePositive": 4,
+        "falsePositiveRate": 0.12121212121212122,
+        "precision": 0.3333333333333333,
+        "recall": 0.6666666666666666,
+        "threshold": 0.2,
+        "trueNegative": 29,
+        "truePositive": 2
+      },
+      "validationPredictions": [
+        {
+          "actual": false,
+          "id": "cheerful-15",
+          "predicted": false,
+          "probability": 0.08135489
+        },
+        {
+          "actual": false,
+          "id": "cheerful-16",
+          "predicted": true,
+          "probability": 0.23484
+        },
+        {
+          "actual": false,
+          "id": "cheerful-17",
+          "predicted": true,
+          "probability": 0.23183982
+        },
+        {
+          "actual": false,
+          "id": "calm-15",
+          "predicted": false,
+          "probability": 0.10885218
+        },
+        {
+          "actual": false,
+          "id": "calm-16",
+          "predicted": false,
+          "probability": 0.06119178
+        },
+        {
+          "actual": false,
+          "id": "calm-17",
+          "predicted": false,
+          "probability": 0.14039485
+        },
+        {
+          "actual": false,
+          "id": "warm-15",
+          "predicted": false,
+          "probability": 0.0937439
+        },
+        {
+          "actual": false,
+          "id": "warm-16",
+          "predicted": false,
+          "probability": 0.16819383
+        },
+        {
+          "actual": false,
+          "id": "warm-17",
+          "predicted": false,
+          "probability": 0.11116426
+        },
+        {
+          "actual": false,
+          "id": "hopeful-15",
+          "predicted": false,
+          "probability": 0.05181966
+        },
+        {
+          "actual": false,
+          "id": "hopeful-16",
+          "predicted": false,
+          "probability": 0.16520347
+        },
+        {
+          "actual": false,
+          "id": "hopeful-17",
+          "predicted": false,
+          "probability": 0.08753533
+        },
+        {
+          "actual": false,
+          "id": "dreamlike-15",
+          "predicted": false,
+          "probability": 0.03005827
+        },
+        {
+          "actual": false,
+          "id": "dreamlike-16",
+          "predicted": false,
+          "probability": 0.04277625
+        },
+        {
+          "actual": false,
+          "id": "dreamlike-17",
+          "predicted": false,
+          "probability": 0.03627286
+        },
+        {
+          "actual": false,
+          "id": "awe-15",
+          "predicted": false,
+          "probability": 0.02449825
+        },
+        {
+          "actual": false,
+          "id": "awe-16",
+          "predicted": false,
+          "probability": 0.05174687
+        },
+        {
+          "actual": false,
+          "id": "awe-17",
+          "predicted": false,
+          "probability": 0.02758191
+        },
+        {
+          "actual": false,
+          "id": "nostalgic-15",
+          "predicted": false,
+          "probability": 0.06680004
+        },
+        {
+          "actual": false,
+          "id": "nostalgic-16",
+          "predicted": false,
+          "probability": 0.05605937
+        },
+        {
+          "actual": false,
+          "id": "nostalgic-17",
+          "predicted": false,
+          "probability": 0.05982425
+        },
+        {
+          "actual": false,
+          "id": "sad-15",
+          "predicted": false,
+          "probability": 0.05752837
+        },
+        {
+          "actual": false,
+          "id": "sad-16",
+          "predicted": false,
+          "probability": 0.09901514
+        },
+        {
+          "actual": true,
+          "id": "sad-17",
+          "predicted": true,
+          "probability": 0.20337723
+        },
+        {
+          "actual": false,
+          "id": "anxious-15",
+          "predicted": false,
+          "probability": 0.05953569
+        },
+        {
+          "actual": false,
+          "id": "anxious-16",
+          "predicted": true,
+          "probability": 0.20405084
+        },
+        {
+          "actual": false,
+          "id": "anxious-17",
+          "predicted": false,
+          "probability": 0.1293141
+        },
+        {
+          "actual": false,
+          "id": "fearful-15",
+          "predicted": false,
+          "probability": 0.04121991
+        },
+        {
+          "actual": false,
+          "id": "fearful-16",
+          "predicted": false,
+          "probability": 0.04020646
+        },
+        {
+          "actual": false,
+          "id": "fearful-17",
+          "predicted": false,
+          "probability": 0.0454043
+        },
+        {
+          "actual": false,
+          "id": "angry-15",
+          "predicted": true,
+          "probability": 0.20785346
+        },
+        {
+          "actual": true,
+          "id": "angry-16",
+          "predicted": true,
+          "probability": 0.22336861
+        },
+        {
+          "actual": true,
+          "id": "angry-17",
+          "predicted": false,
+          "probability": 0.13227451
+        },
+        {
+          "actual": false,
+          "id": "neutral-15",
+          "predicted": false,
+          "probability": 0.11510383
+        },
+        {
+          "actual": false,
+          "id": "neutral-16",
+          "predicted": false,
+          "probability": 0.19245691
+        },
+        {
+          "actual": false,
+          "id": "neutral-17",
+          "predicted": false,
+          "probability": 0.11825476
+        }
+      ]
+    }
+  },
+  "selectedPrimaryModel": "centroid",
+  "temperature": {
+    "loss": 1.116053916671094,
+    "temperature": 0.05
+  },
+  "testMetrics": {
+    "accuracy": 0.75,
+    "confusionMatrix": [
+      [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 2, 0, 0, 0, 0, 1, 0, 0, 0, 0],
+      [0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 1, 0],
+      [0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0],
+      [1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 0, 0],
+      [0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0],
+      [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 2]
+    ],
+    "labels": [
+      {
+        "f1": 0.8571428571428571,
+        "label": "cheerful",
+        "precision": 0.75,
+        "recall": 1,
+        "support": 3
+      },
+      {
+        "f1": 1,
+        "label": "calm",
+        "precision": 1,
+        "recall": 1,
+        "support": 3
+      },
+      {
+        "f1": 0.6666666666666666,
+        "label": "warm",
+        "precision": 0.6666666666666666,
+        "recall": 0.6666666666666666,
+        "support": 3
+      },
+      {
+        "f1": 0.6666666666666666,
+        "label": "hopeful",
+        "precision": 0.6666666666666666,
+        "recall": 0.6666666666666666,
+        "support": 3
+      },
+      {
+        "f1": 1,
+        "label": "dreamlike",
+        "precision": 1,
+        "recall": 1,
+        "support": 3
+      },
+      {
+        "f1": 0.8571428571428571,
+        "label": "awe",
+        "precision": 0.75,
+        "recall": 1,
+        "support": 3
+      },
+      {
+        "f1": 0.5,
+        "label": "nostalgic",
+        "precision": 1,
+        "recall": 0.3333333333333333,
+        "support": 3
+      },
+      {
+        "f1": 0.8571428571428571,
+        "label": "sad",
+        "precision": 0.75,
+        "recall": 1,
+        "support": 3
+      },
+      {
+        "f1": 0.4,
+        "label": "anxious",
+        "precision": 0.5,
+        "recall": 0.3333333333333333,
+        "support": 3
+      },
+      {
+        "f1": 0.3333333333333333,
+        "label": "fearful",
+        "precision": 0.3333333333333333,
+        "recall": 0.3333333333333333,
+        "support": 3
+      },
+      {
+        "f1": 0.8571428571428571,
+        "label": "angry",
+        "precision": 0.75,
+        "recall": 1,
+        "support": 3
+      },
+      {
+        "f1": 0.8,
+        "label": "neutral",
+        "precision": 1,
+        "recall": 0.6666666666666666,
+        "support": 3
+      }
+    ],
+    "macroF1": 0.7329365079365079,
+    "topTwoAccuracy": 0.8611111111111112
+  },
+  "uncertain": {
+    "accuracy": 0.7037037037037037,
+    "coverage": 0.75,
+    "score": 0.8162037037037038,
+    "threshold": 0.07500000000000001
+  },
+  "validationMetrics": {
+    "centroid": {
+      "accuracy": 0.5833333333333334,
+      "confusionMatrix": [
+        [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 2, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
+        [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 1, 2, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 1],
+        [0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0],
+        [0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1]
+      ],
+      "labels": [
+        {
+          "f1": 0.7499999999999999,
+          "label": "cheerful",
+          "precision": 0.6,
+          "recall": 1,
+          "support": 3
+        },
+        {
+          "f1": 0.8,
+          "label": "calm",
+          "precision": 1,
+          "recall": 0.6666666666666666,
+          "support": 3
+        },
+        {
+          "f1": 0,
+          "label": "warm",
+          "precision": 0,
+          "recall": 0,
+          "support": 3
+        },
+        {
+          "f1": 0.4,
+          "label": "hopeful",
+          "precision": 0.5,
+          "recall": 0.3333333333333333,
+          "support": 3
+        },
+        {
+          "f1": 0.7499999999999999,
+          "label": "dreamlike",
+          "precision": 0.6,
+          "recall": 1,
+          "support": 3
+        },
+        {
+          "f1": 0.4,
+          "label": "awe",
+          "precision": 0.5,
+          "recall": 0.3333333333333333,
+          "support": 3
+        },
+        {
+          "f1": 0.4,
+          "label": "nostalgic",
+          "precision": 0.5,
+          "recall": 0.3333333333333333,
+          "support": 3
+        },
+        {
+          "f1": 0.6,
+          "label": "sad",
+          "precision": 0.42857142857142855,
+          "recall": 1,
+          "support": 3
+        },
+        {
+          "f1": 0.8,
+          "label": "anxious",
+          "precision": 1,
+          "recall": 0.6666666666666666,
+          "support": 3
+        },
+        {
+          "f1": 0.5,
+          "label": "fearful",
+          "precision": 1,
+          "recall": 0.3333333333333333,
+          "support": 3
+        },
+        {
+          "f1": 1,
+          "label": "angry",
+          "precision": 1,
+          "recall": 1,
+          "support": 3
+        },
+        {
+          "f1": 0.3333333333333333,
+          "label": "neutral",
+          "precision": 0.3333333333333333,
+          "recall": 0.3333333333333333,
+          "support": 3
+        }
+      ],
+      "macroF1": 0.561111111111111,
+      "topTwoAccuracy": 0.8055555555555556
+    },
+    "logistic": {
+      "accuracy": 0.5555555555555556,
+      "confusionMatrix": [
+        [2, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0],
+        [0, 1, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 1, 2, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 2],
+        [0, 0, 0, 0, 0, 1, 0, 2, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0],
+        [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 2]
+      ],
+      "labels": [
+        {
+          "f1": 0.5,
+          "label": "cheerful",
+          "precision": 0.4,
+          "recall": 0.6666666666666666,
+          "support": 3
+        },
+        {
+          "f1": 0.8571428571428571,
+          "label": "calm",
+          "precision": 0.75,
+          "recall": 1,
+          "support": 3
+        },
+        {
+          "f1": 0,
+          "label": "warm",
+          "precision": 0,
+          "recall": 0,
+          "support": 3
+        },
+        {
+          "f1": 0.3333333333333333,
+          "label": "hopeful",
+          "precision": 0.3333333333333333,
+          "recall": 0.3333333333333333,
+          "support": 3
+        },
+        {
+          "f1": 0.5714285714285715,
+          "label": "dreamlike",
+          "precision": 0.5,
+          "recall": 0.6666666666666666,
+          "support": 3
+        },
+        {
+          "f1": 0.6666666666666666,
+          "label": "awe",
+          "precision": 0.6666666666666666,
+          "recall": 0.6666666666666666,
+          "support": 3
+        },
+        {
+          "f1": 0.5,
+          "label": "nostalgic",
+          "precision": 1,
+          "recall": 0.3333333333333333,
+          "support": 3
+        },
+        {
+          "f1": 0.6666666666666666,
+          "label": "sad",
+          "precision": 0.5,
+          "recall": 1,
+          "support": 3
+        },
+        {
+          "f1": 0.5,
+          "label": "anxious",
+          "precision": 1,
+          "recall": 0.3333333333333333,
+          "support": 3
+        },
+        {
+          "f1": 0,
+          "label": "fearful",
+          "precision": 0,
+          "recall": 0,
+          "support": 3
+        },
+        {
+          "f1": 1,
+          "label": "angry",
+          "precision": 1,
+          "recall": 1,
+          "support": 3
+        },
+        {
+          "f1": 0.5,
+          "label": "neutral",
+          "precision": 0.4,
+          "recall": 0.6666666666666666,
+          "support": 3
+        }
+      ],
+      "macroF1": 0.5079365079365079,
+      "topTwoAccuracy": 0.7777777777777778
+    },
+    "mlp": {
+      "accuracy": 0.5555555555555556,
+      "confusionMatrix": [
+        [2, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 2, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+        [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0],
+        [1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0],
+        [0, 1, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 2, 1, 0, 0, 0, 0, 0],
+        [0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 1, 2, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 1, 0, 2, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 2, 0, 1, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0],
+        [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2]
+      ],
+      "labels": [
+        {
+          "f1": 0.5,
+          "label": "cheerful",
+          "precision": 0.4,
+          "recall": 0.6666666666666666,
+          "support": 3
+        },
+        {
+          "f1": 0.5714285714285715,
+          "label": "calm",
+          "precision": 0.5,
+          "recall": 0.6666666666666666,
+          "support": 3
+        },
+        {
+          "f1": 0,
+          "label": "warm",
+          "precision": 0,
+          "recall": 0,
+          "support": 3
+        },
+        {
+          "f1": 0.5,
+          "label": "hopeful",
+          "precision": 1,
+          "recall": 0.3333333333333333,
+          "support": 3
+        },
+        {
+          "f1": 0.6666666666666666,
+          "label": "dreamlike",
+          "precision": 0.6666666666666666,
+          "recall": 0.6666666666666666,
+          "support": 3
+        },
+        {
+          "f1": 0.8,
+          "label": "awe",
+          "precision": 1,
+          "recall": 0.6666666666666666,
+          "support": 3
+        },
+        {
+          "f1": 0.25,
+          "label": "nostalgic",
+          "precision": 0.2,
+          "recall": 0.3333333333333333,
+          "support": 3
+        },
+        {
+          "f1": 0.5,
+          "label": "sad",
+          "precision": 0.4,
+          "recall": 0.6666666666666666,
+          "support": 3
+        },
+        {
+          "f1": 0.8,
+          "label": "anxious",
+          "precision": 1,
+          "recall": 0.6666666666666666,
+          "support": 3
+        },
+        {
+          "f1": 0.5,
+          "label": "fearful",
+          "precision": 1,
+          "recall": 0.3333333333333333,
+          "support": 3
+        },
+        {
+          "f1": 0.8571428571428571,
+          "label": "angry",
+          "precision": 0.75,
+          "recall": 1,
+          "support": 3
+        },
+        {
+          "f1": 0.8,
+          "label": "neutral",
+          "precision": 1,
+          "recall": 0.6666666666666666,
+          "support": 3
+        }
+      ],
+      "macroF1": 0.5621031746031745,
+      "topTwoAccuracy": 0.7777777777777778
+    }
+  }
+}

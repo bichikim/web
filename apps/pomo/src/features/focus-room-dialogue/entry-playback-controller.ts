@@ -1,13 +1,13 @@
 // oxlint-disable eslint/no-await-in-loop -- Dialogue audio must finish before the next queued item starts.
 import {type Accessor, createSignal} from 'solid-js'
 
-import type {FocusRoomDialogueRepository} from './repository'
-import type {FocusRoomDialogue} from './schema'
+import type {PDialogueRepository} from './repository'
+import type {DialogueSegmentMood, PDialogue} from './schema'
 import {getDialoguePositionAtTime} from './timeline'
 
 const MILLISECONDS_PER_SECOND = 1000
 
-export interface PlayFocusRoomDialogueSequenceOptions {
+export interface PlayPDialogueSequenceOptions {
   readonly dialogueIds: ReadonlyArray<string>
   readonly onDialogueStart: (dialogueId: string) => Promise<void> | void
   readonly onSequenceStop: (dialogueIds: ReadonlyArray<string>) => Promise<void> | void
@@ -16,16 +16,17 @@ export interface PlayFocusRoomDialogueSequenceOptions {
 export interface EntryPlaybackController {
   readonly activeDialogueId: () => string | null
   readonly activeSegmentCount: Accessor<number>
+  readonly activeSegmentMood: Accessor<DialogueSegmentMood | null>
   readonly activeSegmentPosition: Accessor<number | null>
   readonly activeText: Accessor<string | null>
   readonly cancel: () => void
   readonly dispose: () => void
   readonly isBlocked: Accessor<boolean>
   readonly isDialogueScheduled: (dialogueId: string) => boolean
-  readonly prepare: (repository: FocusRoomDialogueRepository, dialogueId: string) => Promise<void>
+  readonly prepare: (repository: PDialogueRepository, dialogueId: string) => Promise<void>
   readonly playSequence: (
-    repository: FocusRoomDialogueRepository,
-    options: PlayFocusRoomDialogueSequenceOptions,
+    repository: PDialogueRepository,
+    options: PlayPDialogueSequenceOptions,
   ) => Promise<void>
   readonly retry: () => void
   readonly scheduledDialogueCount: Accessor<number>
@@ -37,10 +38,10 @@ type PlaybackCompletion = 'cancelled' | 'ended' | 'failed' | 'missing' | 'stoppe
 
 interface PlaybackQueueRequest {
   readonly dialogueIds: ReadonlyArray<string>
-  readonly onDialogueStart: PlayFocusRoomDialogueSequenceOptions['onDialogueStart']
-  readonly onSequenceStop: PlayFocusRoomDialogueSequenceOptions['onSequenceStop']
+  readonly onDialogueStart: PlayPDialogueSequenceOptions['onDialogueStart']
+  readonly onSequenceStop: PlayPDialogueSequenceOptions['onSequenceStop']
   readonly reject: (error: unknown) => void
-  readonly repository: FocusRoomDialogueRepository
+  readonly repository: PDialogueRepository
   readonly resolve: () => void
   nextDialoguePosition: number
   settled: boolean
@@ -77,6 +78,7 @@ const failQueueRequest = (request: PlaybackQueueRequest, error: unknown) => {
 // oxlint-disable-next-line eslint/max-lines-per-function -- One controller owns the audio element, queue, retry, and disposal lifecycle.
 export const createEntryPlaybackController = (): EntryPlaybackController => {
   const [activeSegmentCount, setActiveSegmentCount] = createSignal(0)
+  const [activeSegmentMood, setActiveSegmentMood] = createSignal<DialogueSegmentMood | null>(null)
   const [activeSegmentPosition, setActiveSegmentPosition] = createSignal<number | null>(null)
   const [activeText, setActiveText] = createSignal<string | null>(null)
   const [isBlocked, setIsBlocked] = createSignal(false)
@@ -84,7 +86,7 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
   let animationFrame: number | null = null
   let audio: HTMLAudioElement | null = null
   let audioUrl: string | null = null
-  let dialogue: FocusRoomDialogue | null = null
+  let dialogue: PDialogue | null = null
   let activeRequest: PlaybackQueueRequest | null = null
   let isDraining = false
   let isAwaitingSceneInteraction = false
@@ -123,6 +125,9 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
       dialogue.segments,
       audio.currentTime * MILLISECONDS_PER_SECOND,
     )
+    const activeSegment =
+      activePosition === null ? undefined : dialogue.segments[activePosition.position]
+    setActiveSegmentMood(activeSegment?.mood ?? null)
     setActiveSegmentPosition(activePosition?.position ?? null)
     setActiveText(activePosition?.text ?? null)
     animationFrame = window.requestAnimationFrame(updateSubtitle)
@@ -142,6 +147,7 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
     isAwaitingSceneInteraction = false
     setIsBlocked(false)
     setActiveSegmentCount(0)
+    setActiveSegmentMood(null)
     setActiveSegmentPosition(null)
     setActiveText(null)
 
@@ -191,7 +197,7 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
   }
 
   const loadDialogue = async (
-    repository: FocusRoomDialogueRepository,
+    repository: PDialogueRepository,
     dialogueId: string,
     generation: number,
   ) => {
@@ -215,10 +221,10 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
   }
 
   const playSequenceItem = async (
-    repository: FocusRoomDialogueRepository,
+    repository: PDialogueRepository,
     dialogueId: string,
     generation: number,
-    onDialogueStart: PlayFocusRoomDialogueSequenceOptions['onDialogueStart'],
+    onDialogueStart: PlayPDialogueSequenceOptions['onDialogueStart'],
   ): Promise<PlaybackCompletion> => {
     const currentAudio = await loadDialogue(repository, dialogueId, generation)
 
@@ -361,10 +367,7 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
     }
   }
 
-  const enqueue = (
-    repository: FocusRoomDialogueRepository,
-    options: PlayFocusRoomDialogueSequenceOptions,
-  ) =>
+  const enqueue = (repository: PDialogueRepository, options: PlayPDialogueSequenceOptions) =>
     new Promise<void>((resolve, reject) => {
       requestQueue.push({
         dialogueIds: [...options.dialogueIds],
@@ -410,6 +413,7 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
   return {
     activeDialogueId: () => dialogue?.id ?? null,
     activeSegmentCount,
+    activeSegmentMood,
     activeSegmentPosition,
     activeText,
     cancel,

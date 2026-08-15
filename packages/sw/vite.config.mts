@@ -25,6 +25,7 @@ const createBaseConfig = createConfig({
       ],
     }),
   ],
+  root: import.meta.dirname,
 })
 
 // AI_NOTE - The generator copies only sw.mjs, so the service worker runtime must not depend on sibling chunks.

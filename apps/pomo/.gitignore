@@ -1,6 +1,8 @@
 # Build output
+.granite
 .output
 .vinxi
+*.ait
 
 # Environment files
 .env

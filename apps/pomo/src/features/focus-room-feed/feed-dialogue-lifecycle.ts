@@ -1,12 +1,12 @@
-import type {FocusRoomDialogueRepository} from '../focus-room-dialogue/repository'
+import type {PDialogueRepository} from '../focus-room-dialogue/repository'
 import type {FeedDialogueListItem} from './feed-controller'
 import type {FeedDialogueRepository} from './feed-dialogue-repository'
 import type {FeedItemRecord} from './feed-dialogue-schema'
 import {findRemovableExpiredDialogues} from './feed-runtime'
 
-interface DialogueDeleteRepository extends Pick<FocusRoomDialogueRepository, 'deleteDialogue'> {}
+interface DialogueDeleteRepository extends Pick<PDialogueRepository, 'deleteDialogue'> {}
 
-interface DialogueLookupRepository extends Pick<FocusRoomDialogueRepository, 'getDialogue'> {}
+interface DialogueLookupRepository extends Pick<PDialogueRepository, 'getDialogue'> {}
 
 interface FeedDialogueDeleteRepository extends Pick<
   FeedDialogueRepository,

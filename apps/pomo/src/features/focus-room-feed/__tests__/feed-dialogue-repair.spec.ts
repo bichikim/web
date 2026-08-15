@@ -1,10 +1,10 @@
 import {expect, it} from 'vitest'
 
-import type {FocusRoomDialogue} from '../../focus-room-dialogue'
+import type {PDialogue} from '../../focus-room-dialogue'
 import {isLegacyDevFeedFailure, isMalformedDevFeedDialogue} from '../feed-dialogue-repair'
 import type {FeedDialogueMetadata, FeedItemRecord} from '../feed-dialogue-schema'
 
-const DIALOGUE: FocusRoomDialogue = {
+const DIALOGUE: PDialogue = {
   audioKey: 'audio-1',
   createdAt: '2026-08-14T00:00:00.000Z',
   durationMs: 1000,

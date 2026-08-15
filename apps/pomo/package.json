@@ -8,7 +8,8 @@
     "blender:export": "blender --background blender/character-studio.blend --python blender/export_glb.py",
     "blender:open": "blender blender/character-studio.blend",
     "build": "pnpm run build:web",
-    "build:apps-in-toss": "cross-env POMO_BUILD_TARGET=apps-in-toss vinxi build",
+    "build:apps-in-toss-ssg": "cross-env POMO_BUILD_TARGET=apps-in-toss vinxi build",
+    "build:apps-in-toss-package": "ait build",
     "build:web": "vinxi build",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
@@ -17,7 +18,11 @@
     "licenses:list": "node scripts/list-licenses.mjs",
     "lint": "oxlint src",
     "lint:fix": "oxlint src --fix",
+    "prebuild:apps-in-toss-package": "node scripts/reset-apps-in-toss-output.mjs",
+    "prepare:apps-in-toss-package": "pnpm run build:apps-in-toss-ssg && node scripts/prepare-apps-in-toss-output.mjs",
+    "preview:apps-in-toss-ssg": "vite preview --host --outDir .output/public",
     "preview:web": "node .output/server/index.mjs",
+    "text-mood:train": "node scripts/text-mood/train.mjs",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -37,6 +42,7 @@
     "cross-env": "catalog:",
     "dexie": "^4.4.4",
     "drizzle-orm": "^0.44.7",
+    "libopus-wasm": "0.2.0",
     "media-chrome": "^4.19.2",
     "onnxruntime-web": "1.23.2",
     "openai": "^7.4.0",
@@ -48,6 +54,7 @@
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@apps-in-toss/web-framework": "2.4.1",
     "@iconify-json/tabler": "^1.2.33",
     "@types/node": "catalog:",
     "@winter-love/unocss-config": "workspace:*",

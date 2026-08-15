@@ -6,6 +6,7 @@ import type {JSX} from 'solid-js'
 type MediaChromeAttributes = JSX.HTMLAttributes<HTMLElement> & {
   readonly audio?: string
   readonly disabled?: boolean
+  readonly notooltip?: boolean
   readonly showduration?: string
 }
 

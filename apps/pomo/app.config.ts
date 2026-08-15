@@ -25,15 +25,17 @@ const app = defineConfig({
         prerender: {
           routes: [
             '/',
-            '/character',
-            '/chat',
-            '/dialogue',
+            '/dev',
+            '/dev/character',
+            '/dev/chat',
+            '/dev/dialogue',
+            '/dev/focus-room-layer-review',
+            '/dev/speech-to-text',
+            '/dev/text-mood',
+            '/dev/terms',
+            '/dev/voice',
             '/focus-room',
             '/focus-room-dialogue',
-            '/focus-room-layer-review',
-            '/speech-to-text',
-            '/terms',
-            '/voice',
           ],
         },
         preset: 'static',
@@ -45,6 +47,7 @@ const app = defineConfig({
       include: ['onnxruntime-web/all', 'zod'],
     },
     plugins: [createDevFeedPlugin(), excludeFocusRoomSourceAssets, UnoCSS()],
+    worker: {format: 'es'},
   },
 })
 

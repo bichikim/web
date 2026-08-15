@@ -2,11 +2,11 @@ import {Title} from '@solidjs/meta'
 import {useSearchParams} from '@solidjs/router'
 import {clientOnly} from '@solidjs/start'
 
-const FocusRoomDialogueEditor = clientOnly(() => import('../components/FocusRoomDialogueEditor'), {
+const PDialogueEditor = clientOnly(() => import('../components/PDialogueEditor'), {
   lazy: true,
 })
 
-export default function FocusRoomDialoguePage() {
+export default function PDialoguePage() {
   const [searchParams] = useSearchParams()
   const dialogueId = () => {
     const value = searchParams.dialogueId
@@ -16,7 +16,7 @@ export default function FocusRoomDialoguePage() {
   return (
     <>
       <Title>Pomo — 대화 만들기</Title>
-      <FocusRoomDialogueEditor dialogueId={dialogueId()} />
+      <PDialogueEditor dialogueId={dialogueId()} />
     </>
   )
 }

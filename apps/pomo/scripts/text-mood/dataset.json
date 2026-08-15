@@ -1,0 +1,1696 @@
+{
+  "schemaVersion": 1,
+  "items": [
+    {
+      "id": "cheerful-01",
+      "text": "햇살이 방 안 가득 들어오자 나도 모르게 콧노래가 나왔다.",
+      "primary": "cheerful",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "cheerful-02",
+      "text": "드디어 프로젝트가 끝났다. 다 같이 맛있는 걸 먹으러 가자! 오늘은 칼로리도 퇴근이다.",
+      "primary": "cheerful",
+      "modifiers": ["playful"],
+      "split": "train"
+    },
+    {
+      "id": "cheerful-03",
+      "text": "친구들의 웃음소리가 끊이지 않아 방 안이 금세 활기로 가득 찼다.",
+      "primary": "cheerful",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "cheerful-04",
+      "text": "강아지가 꼬리를 흔들며 달려왔다. 이렇게 격한 환영이면 간식세를 내야겠다.",
+      "primary": "cheerful",
+      "modifiers": ["playful"],
+      "split": "train"
+    },
+    {
+      "id": "cheerful-05",
+      "text": "신나는 음악이 나오자 모두 자리에서 일어나 박자를 맞췄다.",
+      "primary": "cheerful",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "cheerful-06",
+      "text": "오늘 축제에는 볼거리도 먹을거리도 넘쳐서 발걸음이 계속 빨라졌다.",
+      "primary": "cheerful",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "cheerful-07",
+      "text": "문을 열자 친구들이 생일 모자를 쓰고 빵 하고 나타났다.",
+      "primary": "cheerful",
+      "modifiers": ["playful"],
+      "split": "train"
+    },
+    {
+      "id": "cheerful-08",
+      "text": "내가 오늘만큼은 이 동네 춤왕이다. 반박은 내일 받겠습니다!",
+      "primary": "cheerful",
+      "modifiers": ["playful"],
+      "split": "train"
+    },
+    {
+      "id": "cheerful-09",
+      "text": "합격 소식을 듣는 순간 온몸에 힘이 솟고 세상이 환해 보였다.",
+      "primary": "cheerful",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "cheerful-10",
+      "text": "주방에서 맛있는 냄새가 퍼지자 가족들이 들뜬 얼굴로 모여들었다.",
+      "primary": "cheerful",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "cheerful-11",
+      "text": "비가 그치고 무지개가 뜨자 사람들은 휴대폰을 들고 환호했다.",
+      "primary": "cheerful",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "cheerful-12",
+      "text": "아이들은 물웅덩이를 첨벙거리며 세상에서 제일 재미있다는 듯 웃었다.",
+      "primary": "cheerful",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "cheerful-13",
+      "text": "기다리던 주말이다. 오늘은 하고 싶었던 일을 전부 해 볼 생각이다.",
+      "primary": "cheerful",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "cheerful-14",
+      "text": "버스를 놓쳤지만 좋아, 덕분에 아침 산책 당첨이다!",
+      "primary": "cheerful",
+      "modifiers": ["playful"],
+      "split": "train"
+    },
+    {
+      "id": "cheerful-15",
+      "text": "카페 문을 열자 익숙한 사람들이 반갑게 손을 흔들어 주었다.",
+      "primary": "cheerful",
+      "modifiers": [],
+      "split": "validation"
+    },
+    {
+      "id": "cheerful-16",
+      "text": "오늘따라 일이 술술 풀린다. 혹시 내가 몰래 천재가 된 건가?",
+      "primary": "cheerful",
+      "modifiers": ["playful"],
+      "split": "validation"
+    },
+    {
+      "id": "cheerful-17",
+      "text": "별일 없는 하루였지만 좋아하는 노래와 함께라서 충분히 즐거웠다.",
+      "primary": "cheerful",
+      "modifiers": [],
+      "split": "validation"
+    },
+    {
+      "id": "cheerful-18",
+      "text": "발표를 무사히 마치자 동료들이 박수를 치며 함께 기뻐해 줬다.",
+      "primary": "cheerful",
+      "modifiers": [],
+      "split": "test"
+    },
+    {
+      "id": "cheerful-19",
+      "text": "시원한 파도를 맞으며 달리니 웃음이 터지고 몸이 가벼워졌다.",
+      "primary": "cheerful",
+      "modifiers": [],
+      "split": "test"
+    },
+    {
+      "id": "cheerful-20",
+      "text": "작은 실수쯤이야 오늘의 웃긴 장면으로 저장하면 그만이지!",
+      "primary": "cheerful",
+      "modifiers": ["playful"],
+      "split": "test"
+    },
+
+    {
+      "id": "calm-01",
+      "text": "잔잔한 빗소리를 들으며 따뜻한 차를 천천히 마셨다.",
+      "primary": "calm",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "calm-02",
+      "text": "호수 표면은 바람 한 점 없이 고요했고 마음도 함께 가라앉았다.",
+      "primary": "calm",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "calm-03",
+      "text": "할 일을 모두 내려놓고 창가에 앉아 구름이 흐르는 모습을 바라봤다.",
+      "primary": "calm",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "calm-04",
+      "text": "서두를 필요는 없었다. 숨을 고르고 한 걸음씩 가면 된다.",
+      "primary": "calm",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "calm-05",
+      "text": "저녁 바람이 커튼을 살짝 흔들고 방 안에는 조용한 음악만 흘렀다.",
+      "primary": "calm",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "calm-06",
+      "text": "나무 그늘 아래 누우니 멀리서 새가 우는 소리만 희미하게 들렸다.",
+      "primary": "calm",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "calm-07",
+      "text": "오랜 목욕을 마치고 깨끗한 이불 속에 몸을 편안히 눕혔다.",
+      "primary": "calm",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "calm-08",
+      "text": "해 질 무렵 강변을 천천히 걷자 복잡했던 생각이 하나씩 사라졌다.",
+      "primary": "calm",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "calm-09",
+      "text": "책장을 넘기는 작은 소리와 시계 초침만이 조용한 오후를 채웠다.",
+      "primary": "calm",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "calm-10",
+      "text": "오늘은 아무 일정도 잡지 않고 마음이 가는 대로 쉬기로 했다.",
+      "primary": "calm",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "calm-11",
+      "text": "파도가 규칙적으로 밀려왔다 돌아가는 모습을 오래 바라보았다.",
+      "primary": "calm",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "calm-12",
+      "text": "깊게 숨을 들이마시고 내쉬자 굳어 있던 어깨가 천천히 풀렸다.",
+      "primary": "calm",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "calm-13",
+      "text": "햇볕이 잘 드는 마루에서 고양이는 세상 걱정 없이 잠들어 있었다.",
+      "primary": "calm",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "calm-14",
+      "text": "정원에 물을 주고 나니 흙냄새가 은은하게 올라와 마음이 차분해졌다.",
+      "primary": "calm",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "calm-15",
+      "text": "모든 소리를 끄고 앉아 있으니 방 안의 고요함이 편안하게 느껴졌다.",
+      "primary": "calm",
+      "modifiers": [],
+      "split": "validation"
+    },
+    {
+      "id": "calm-16",
+      "text": "기차는 일정한 리듬으로 달렸고 창밖의 들판은 느긋하게 흘러갔다.",
+      "primary": "calm",
+      "modifiers": [],
+      "split": "validation"
+    },
+    {
+      "id": "calm-17",
+      "text": "급한 일은 없으니 커피가 식기 전에 향부터 천천히 즐기기로 했다.",
+      "primary": "calm",
+      "modifiers": [],
+      "split": "validation"
+    },
+    {
+      "id": "calm-18",
+      "text": "포근한 오후 햇살 아래서 아무 생각 없이 눈을 감고 쉬었다.",
+      "primary": "calm",
+      "modifiers": [],
+      "split": "test"
+    },
+    {
+      "id": "calm-19",
+      "text": "산사의 풍경 소리가 맑게 번지고 주변은 다시 깊은 정적에 잠겼다.",
+      "primary": "calm",
+      "modifiers": [],
+      "split": "test"
+    },
+    {
+      "id": "calm-20",
+      "text": "바쁜 하루가 지나간 뒤 조용한 부엌에서 혼자 차를 우렸다.",
+      "primary": "calm",
+      "modifiers": [],
+      "split": "test"
+    },
+
+    {
+      "id": "warm-01",
+      "text": "추운 날 돌아오니 엄마가 말없이 따뜻한 국을 한 그릇 내어 주었다.",
+      "primary": "warm",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "warm-02",
+      "text": "괜찮아질 때까지 여기 있을게. 서두르지 않아도 돼.",
+      "primary": "warm",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "warm-03",
+      "text": "아이는 잠든 동생에게 이불을 덮어 주고 발끝으로 조용히 나왔다.",
+      "primary": "warm",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "warm-04",
+      "text": "오랜만에 만난 할머니의 손은 여전히 작고 따뜻했다.",
+      "primary": "warm",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "warm-05",
+      "text": "친구는 내 말을 끊지 않고 끝까지 들어 준 뒤 등을 토닥여 주었다.",
+      "primary": "warm",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "warm-06",
+      "text": "고생 많았지? 오늘은 내가 저녁도 하고 설거지도 맡을게. 대신 박수 세 번 부탁해.",
+      "primary": "warm",
+      "modifiers": ["playful"],
+      "split": "train"
+    },
+    {
+      "id": "warm-07",
+      "text": "작은 손편지에는 함께해서 다행이라는 문장이 정성스럽게 적혀 있었다.",
+      "primary": "warm",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "warm-08",
+      "text": "강아지는 아픈 주인의 곁을 떠나지 않고 조용히 몸을 기대고 있었다.",
+      "primary": "warm",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "warm-09",
+      "text": "네 편은 여기 한 명 확실히 있으니까 너무 혼자 버티지 마.",
+      "primary": "warm",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "warm-10",
+      "text": "아버지는 늦게 돌아온 딸을 위해 현관 불을 밤새 켜 두었다.",
+      "primary": "warm",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "warm-11",
+      "text": "쿠키 모양은 지도에 없을 만큼 자유로웠지만 나를 생각하며 만들었다니 마음이 녹았다.",
+      "primary": "warm",
+      "modifiers": ["playful"],
+      "split": "train"
+    },
+    {
+      "id": "warm-12",
+      "text": "우산이 하나뿐이라며 친구는 자연스럽게 내 쪽으로 더 기울여 주었다.",
+      "primary": "warm",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "warm-13",
+      "text": "오늘도 잘 버텼네, 우리 대단하다. 이제 푹 쉬자.",
+      "primary": "warm",
+      "modifiers": ["playful"],
+      "split": "train"
+    },
+    {
+      "id": "warm-14",
+      "text": "할아버지는 손주의 그림을 세상에서 가장 귀한 작품처럼 벽에 걸었다.",
+      "primary": "warm",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "warm-15",
+      "text": "낯선 이가 무거운 유모차를 함께 들어 주고 환하게 인사했다.",
+      "primary": "warm",
+      "modifiers": [],
+      "split": "validation"
+    },
+    {
+      "id": "warm-16",
+      "text": "이불 밖은 위험하니까 오늘은 내가 귤도 까서 가져다드리겠습니다.",
+      "primary": "warm",
+      "modifiers": ["playful"],
+      "split": "validation"
+    },
+    {
+      "id": "warm-17",
+      "text": "동료들은 지친 사람의 책상 위에 응원 쪽지와 간식을 놓아두었다.",
+      "primary": "warm",
+      "modifiers": [],
+      "split": "validation"
+    },
+    {
+      "id": "warm-18",
+      "text": "아이는 넘어진 친구의 무릎을 털어 주며 같이 천천히 걸었다.",
+      "primary": "warm",
+      "modifiers": [],
+      "split": "test"
+    },
+    {
+      "id": "warm-19",
+      "text": "네가 와 준 것만으로도 충분해. 아무 말 없이 있어도 괜찮아.",
+      "primary": "warm",
+      "modifiers": [],
+      "split": "test"
+    },
+    {
+      "id": "warm-20",
+      "text": "할머니가 떠 주신 목도리는 조금 삐뚤었지만 세상에 하나뿐인 명품이라 마음까지 따뜻했다.",
+      "primary": "warm",
+      "modifiers": ["playful"],
+      "split": "test"
+    },
+
+    {
+      "id": "hopeful-01",
+      "text": "아직 서툴지만 매일 조금씩 나아지고 있으니 언젠가는 해낼 수 있다.",
+      "primary": "hopeful",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "hopeful-02",
+      "text": "긴 겨울이 지나면 이 빈 화단에도 다시 새싹이 올라올 것이다.",
+      "primary": "hopeful",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "hopeful-03",
+      "text": "이번에는 실패했지만 무엇을 고쳐야 할지 알게 되었으니 다시 시작해 보자.",
+      "primary": "hopeful",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "hopeful-04",
+      "text": "먹구름 사이로 빛이 비치기 시작했고 비도 곧 그칠 것 같았다.",
+      "primary": "hopeful",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "hopeful-05",
+      "text": "작은 저축이지만 꾸준히 모으면 바라던 여행을 떠날 날이 올 것이다.",
+      "primary": "hopeful",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "hopeful-06",
+      "text": "결과는 아직 모르지만 준비한 만큼 좋은 기회가 찾아올 거라 믿는다.",
+      "primary": "hopeful",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "hopeful-07",
+      "text": "새 노트를 펼쳤다. 첫 장부터 명작이 나올 예정이니 펜만 잘 따라오면 된다.",
+      "primary": "hopeful",
+      "modifiers": ["playful"],
+      "split": "train"
+    },
+    {
+      "id": "hopeful-08",
+      "text": "서로 힘을 합친다면 지금 막막해 보이는 문제도 분명 풀 수 있다.",
+      "primary": "hopeful",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "hopeful-09",
+      "text": "면접장으로 가는 발걸음은 떨렸지만 새로운 시작을 생각하니 힘이 났다.",
+      "primary": "hopeful",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "hopeful-10",
+      "text": "오늘 심은 나무가 언젠가 누군가에게 넓은 그늘을 만들어 줄 것이다.",
+      "primary": "hopeful",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "hopeful-11",
+      "text": "조금 늦어도 괜찮아. 방향만 맞다면 결국 원하는 곳에 닿을 테니까.",
+      "primary": "hopeful",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "hopeful-12",
+      "text": "새로운 도시의 아침은 낯설었지만 길을 잃어도 탐험이라고 부르면 될 것 같았다.",
+      "primary": "hopeful",
+      "modifiers": ["playful"],
+      "split": "train"
+    },
+    {
+      "id": "hopeful-13",
+      "text": "빈 무대에 불이 켜지자 지금부터 무엇이든 시작할 수 있을 것 같았다.",
+      "primary": "hopeful",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "hopeful-14",
+      "text": "내일의 나는 오늘의 나보다 한 칸쯤 성장해 있을 예정입니다.",
+      "primary": "hopeful",
+      "modifiers": ["playful"],
+      "split": "train"
+    },
+    {
+      "id": "hopeful-15",
+      "text": "멀리 수평선이 밝아지는 것을 보니 긴 밤도 끝을 향하고 있었다.",
+      "primary": "hopeful",
+      "modifiers": [],
+      "split": "validation"
+    },
+    {
+      "id": "hopeful-16",
+      "text": "첫 주문은 하나뿐이었지만 가게 주인은 기쁜 마음으로 다음 손님을 준비했다.",
+      "primary": "hopeful",
+      "modifiers": [],
+      "split": "validation"
+    },
+    {
+      "id": "hopeful-17",
+      "text": "아직 답을 찾지는 못했어도 포기하지 않는 한 가능성은 남아 있다.",
+      "primary": "hopeful",
+      "modifiers": [],
+      "split": "validation"
+    },
+    {
+      "id": "hopeful-18",
+      "text": "긴 재활 끝에 한 걸음을 내딛자 다시 걸을 수 있다는 확신이 생겼다.",
+      "primary": "hopeful",
+      "modifiers": [],
+      "split": "test"
+    },
+    {
+      "id": "hopeful-19",
+      "text": "작은 아이디어가 사람들의 손을 거치며 현실이 되어 가기 시작했다.",
+      "primary": "hopeful",
+      "modifiers": [],
+      "split": "test"
+    },
+    {
+      "id": "hopeful-20",
+      "text": "오늘 심은 건 씨앗 하나지만 미래의 정원장 자리는 벌써 내 것이다.",
+      "primary": "hopeful",
+      "modifiers": ["playful"],
+      "split": "test"
+    },
+
+    {
+      "id": "dreamlike-01",
+      "text": "푸른 달빛 아래 유리로 된 고래가 구름 사이를 천천히 헤엄쳤다.",
+      "primary": "dreamlike",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "dreamlike-02",
+      "text": "안개 속 숲에서는 이름 모를 빛들이 숨을 쉬듯 켜졌다 꺼졌다.",
+      "primary": "dreamlike",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "dreamlike-03",
+      "text": "잠든 도시의 지붕 위로 은빛 물고기 떼가 조용히 흘러갔다.",
+      "primary": "dreamlike",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "dreamlike-04",
+      "text": "거울을 들여다보자 낯선 계절의 바다가 반대편에서 출렁이고 있었다.",
+      "primary": "dreamlike",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "dreamlike-05",
+      "text": "바람이 지나간 자리마다 작은 별꽃이 피었다가 금세 사라졌다.",
+      "primary": "dreamlike",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "dreamlike-06",
+      "text": "낡은 시계가 자정을 알리자 방 안의 그림자들이 천천히 춤을 추기 시작했다.",
+      "primary": "dreamlike",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "dreamlike-07",
+      "text": "끝없는 계단을 오를수록 하늘은 바다처럼 깊고 투명해졌다.",
+      "primary": "dreamlike",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "dreamlike-08",
+      "text": "눈을 감자 멀리서 누군가 부르는 목소리가 물결처럼 번져 왔다.",
+      "primary": "dreamlike",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "dreamlike-09",
+      "text": "새벽 안개는 골목을 삼키고 가로등만 둥근 섬처럼 떠 있게 했다.",
+      "primary": "dreamlike",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "dreamlike-10",
+      "text": "하얀 사슴이 문 앞에 서더니 별이 쏟아지는 길로 나를 이끌었다.",
+      "primary": "dreamlike",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "dreamlike-11",
+      "text": "낮게 울리는 종소리와 함께 오래된 궁전이 호수 위로 모습을 드러냈다.",
+      "primary": "dreamlike",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "dreamlike-12",
+      "text": "창문 밖에는 눈 대신 반짝이는 깃털이 소리 없이 내리고 있었다.",
+      "primary": "dreamlike",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "dreamlike-13",
+      "text": "기억 속의 방은 실제보다 넓었고 문을 열 때마다 다른 하늘이 나타났다.",
+      "primary": "dreamlike",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "dreamlike-14",
+      "text": "그녀의 노래가 끝나자 천장에 그려진 별자리들이 천천히 움직였다.",
+      "primary": "dreamlike",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "dreamlike-15",
+      "text": "보랏빛 구름 사이로 거대한 나비의 그림자가 유유히 지나갔다.",
+      "primary": "dreamlike",
+      "modifiers": [],
+      "split": "validation"
+    },
+    {
+      "id": "dreamlike-16",
+      "text": "바닷속 정원에는 투명한 나무들이 푸른 빛을 내며 자라고 있었다.",
+      "primary": "dreamlike",
+      "modifiers": [],
+      "split": "validation"
+    },
+    {
+      "id": "dreamlike-17",
+      "text": "익숙한 골목 끝에 처음 보는 문이 있었고 그 너머로 달빛이 흘러나왔다.",
+      "primary": "dreamlike",
+      "modifiers": [],
+      "split": "validation"
+    },
+    {
+      "id": "dreamlike-18",
+      "text": "구름으로 만든 기차가 소리 없이 밤하늘의 역에 도착했다.",
+      "primary": "dreamlike",
+      "modifiers": [],
+      "split": "test"
+    },
+    {
+      "id": "dreamlike-19",
+      "text": "손끝에서 피어난 작은 불빛이 나비가 되어 어둠 속으로 날아갔다.",
+      "primary": "dreamlike",
+      "modifiers": [],
+      "split": "test"
+    },
+    {
+      "id": "dreamlike-20",
+      "text": "숲의 가장 깊은 곳에서는 시간이 거꾸로 흐르는 샘물이 반짝였다.",
+      "primary": "dreamlike",
+      "modifiers": [],
+      "split": "test"
+    },
+
+    {
+      "id": "awe-01",
+      "text": "산 정상에 오르자 끝없이 이어진 운해가 발아래 펼쳐져 말문이 막혔다.",
+      "primary": "awe",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "awe-02",
+      "text": "수천 개의 별이 쏟아질 듯 빛나는 밤하늘을 처음으로 보았다.",
+      "primary": "awe",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "awe-03",
+      "text": "거대한 고래가 수면 위로 솟구치는 순간 배 위의 모두가 숨을 멈췄다.",
+      "primary": "awe",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "awe-04",
+      "text": "오케스트라의 마지막 화음이 울리자 객석은 잠시 완전한 침묵에 빠졌다.",
+      "primary": "awe",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "awe-05",
+      "text": "폭포는 절벽 전체를 흔들며 떨어졌고 물안개가 햇빛 속에서 무지개가 되었다.",
+      "primary": "awe",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "awe-06",
+      "text": "오래된 성당의 문을 열자 높다란 천장과 빛나는 스테인드글라스가 나타났다.",
+      "primary": "awe",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "awe-07",
+      "text": "로켓이 불꽃을 내뿜으며 하늘로 치솟자 사람들은 한동안 눈을 떼지 못했다.",
+      "primary": "awe",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "awe-08",
+      "text": "빙하의 푸른 균열은 상상보다 깊고 장엄해서 가까이 서기조차 조심스러웠다.",
+      "primary": "awe",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "awe-09",
+      "text": "현미경 속 작은 세포 하나가 정교하게 움직이는 모습이 믿기지 않았다.",
+      "primary": "awe",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "awe-10",
+      "text": "수백 마리의 새가 동시에 방향을 바꾸며 하늘에 거대한 파도를 만들었다.",
+      "primary": "awe",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "awe-11",
+      "text": "사막의 지평선 너머로 태양이 떠오르자 붉은 모래가 금빛으로 변했다.",
+      "primary": "awe",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "awe-12",
+      "text": "어린 연주자가 믿기 어려울 만큼 완벽한 선율을 들려주자 모두 감탄했다.",
+      "primary": "awe",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "awe-13",
+      "text": "깊은 동굴 안에는 건물만 한 수정 기둥들이 빛을 받아 반짝이고 있었다.",
+      "primary": "awe",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "awe-14",
+      "text": "바다를 가르며 떠오른 거대한 보름달이 온 풍경을 은빛으로 물들였다.",
+      "primary": "awe",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "awe-15",
+      "text": "처음 본 오로라는 초록빛 장막처럼 밤하늘 전체에서 흔들렸다.",
+      "primary": "awe",
+      "modifiers": [],
+      "split": "validation"
+    },
+    {
+      "id": "awe-16",
+      "text": "수십 년간 복원한 벽화가 공개되자 사람들은 세밀한 색채에 탄성을 질렀다.",
+      "primary": "awe",
+      "modifiers": [],
+      "split": "validation"
+    },
+    {
+      "id": "awe-17",
+      "text": "거대한 파도가 절벽에 부딪히는 소리는 땅과 가슴을 동시에 울렸다.",
+      "primary": "awe",
+      "modifiers": [],
+      "split": "validation"
+    },
+    {
+      "id": "awe-18",
+      "text": "망원경으로 토성의 고리를 직접 확인한 순간 우주의 크기가 실감났다.",
+      "primary": "awe",
+      "modifiers": [],
+      "split": "test"
+    },
+    {
+      "id": "awe-19",
+      "text": "협곡 끝에서 내려다본 대지는 한눈에 담을 수 없을 만큼 광대했다.",
+      "primary": "awe",
+      "modifiers": [],
+      "split": "test"
+    },
+    {
+      "id": "awe-20",
+      "text": "합창단의 목소리가 거대한 홀을 가득 채우자 온몸에 전율이 흘렀다.",
+      "primary": "awe",
+      "modifiers": [],
+      "split": "test"
+    },
+
+    {
+      "id": "nostalgic-01",
+      "text": "오래된 앨범을 펼치자 다시는 돌아갈 수 없는 여름의 냄새가 떠올랐다.",
+      "primary": "nostalgic",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "nostalgic-02",
+      "text": "텅 빈 운동장에는 우리가 늦도록 뛰놀던 날의 웃음소리가 남은 듯했다.",
+      "primary": "nostalgic",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "nostalgic-03",
+      "text": "낡은 라디오에서 그 노래가 나오자 오래전 헤어진 친구가 생각났다.",
+      "primary": "nostalgic",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "nostalgic-04",
+      "text": "고향역에 내리니 모든 것이 작아졌지만 익숙한 바람은 그대로였다.",
+      "primary": "nostalgic",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "nostalgic-05",
+      "text": "서랍 깊숙한 곳에서 빛바랜 영화표 두 장을 발견했다.",
+      "primary": "nostalgic",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "nostalgic-06",
+      "text": "해 질 무렵 혼자 걷는 길에서 문득 함께였던 발걸음을 떠올렸다.",
+      "primary": "nostalgic",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "nostalgic-07",
+      "text": "철거를 앞둔 학교 복도에는 이름 모를 아이들의 흔적만 남아 있었다.",
+      "primary": "nostalgic",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "nostalgic-08",
+      "text": "예전 번호로 전화를 걸 수 없다는 걸 알면서도 연락처를 지우지 못했다.",
+      "primary": "nostalgic",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "nostalgic-09",
+      "text": "할머니 댁 장롱에서 나던 비누 향이 가끔 아무 이유 없이 생각난다.",
+      "primary": "nostalgic",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "nostalgic-10",
+      "text": "친구들이 모두 떠난 바닷가에서 혼자 마지막 불꽃을 바라보았다.",
+      "primary": "nostalgic",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "nostalgic-11",
+      "text": "자주 가던 가게는 문을 닫았고 간판 자리만 햇빛에 바래 있었다.",
+      "primary": "nostalgic",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "nostalgic-12",
+      "text": "어릴 적 살던 집의 창문을 바라보니 낯선 사람의 화분이 놓여 있었다.",
+      "primary": "nostalgic",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "nostalgic-13",
+      "text": "계절이 바뀔 때마다 함께 걷던 사람의 뒷모습이 희미하게 떠오른다.",
+      "primary": "nostalgic",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "nostalgic-14",
+      "text": "그때는 평범했던 저녁 식사가 이제는 가장 그리운 장면이 되었다.",
+      "primary": "nostalgic",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "nostalgic-15",
+      "text": "졸업식 날 묻어 둔 편지를 읽으니 서툴렀던 꿈들이 하나씩 되살아났다.",
+      "primary": "nostalgic",
+      "modifiers": [],
+      "split": "validation"
+    },
+    {
+      "id": "nostalgic-16",
+      "text": "겨울 바다에 혼자 서 있으니 오래전 약속이 파도 소리와 함께 돌아왔다.",
+      "primary": "nostalgic",
+      "modifiers": [],
+      "split": "validation"
+    },
+    {
+      "id": "nostalgic-17",
+      "text": "익숙한 골목은 재개발로 사라졌고 기억 속 길만 여전히 이어졌다.",
+      "primary": "nostalgic",
+      "modifiers": [],
+      "split": "validation"
+    },
+    {
+      "id": "nostalgic-18",
+      "text": "오래 쓰지 않은 피아노 건반을 누르자 어머니가 가르쳐 준 곡이 떠올랐다.",
+      "primary": "nostalgic",
+      "modifiers": [],
+      "split": "test"
+    },
+    {
+      "id": "nostalgic-19",
+      "text": "떠나는 기차 창문 너머로 작은 고향역이 천천히 멀어졌다.",
+      "primary": "nostalgic",
+      "modifiers": [],
+      "split": "test"
+    },
+    {
+      "id": "nostalgic-20",
+      "text": "함께 찍은 사진 속 우리는 앞으로도 계속 만날 줄 알고 웃고 있었다.",
+      "primary": "nostalgic",
+      "modifiers": [],
+      "split": "test"
+    },
+
+    {
+      "id": "sad-01",
+      "text": "오랫동안 기다린 연락은 끝내 오지 않았고 휴대폰 화면만 어두워졌다.",
+      "primary": "sad",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "sad-02",
+      "text": "빈 병실 침대 위에는 주인을 잃은 안경만 조용히 놓여 있었다.",
+      "primary": "sad",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "sad-03",
+      "text": "아무리 애써도 달라지는 것이 없다는 생각에 모든 힘이 빠졌다.",
+      "primary": "sad",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "sad-04",
+      "text": "마지막 인사를 건네고 돌아서는 순간 참았던 눈물이 쏟아졌다.",
+      "primary": "sad",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "sad-05",
+      "text": "정성껏 준비한 결과물이 한순간에 사라져 한동안 아무 말도 할 수 없었다.",
+      "primary": "sad",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "sad-06",
+      "text": "사랑하던 고양이의 빈 방석을 볼 때마다 가슴 한쪽이 무너졌다.",
+      "primary": "sad",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "sad-07",
+      "text": "모두가 돌아간 뒤 혼자 남은 그는 불 꺼진 무대를 오래 바라봤다.",
+      "primary": "sad",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "sad-08",
+      "text": "미안하다는 말조차 전하지 못한 채 관계는 그렇게 끝나 버렸다.",
+      "primary": "sad",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "sad-09",
+      "text": "기대했던 소식 대신 불합격이라는 짧은 문장만 화면에 떠 있었다.",
+      "primary": "sad",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "sad-10",
+      "text": "사람은 이렇게 많은데 내 마음을 알아주는 이는 하나도 없네. 참 든든하다.",
+      "primary": "sad",
+      "modifiers": ["sarcastic"],
+      "split": "train"
+    },
+    {
+      "id": "sad-11",
+      "text": "열심히 지켜 온 가게의 문을 마지막으로 닫으며 주인은 고개를 숙였다.",
+      "primary": "sad",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "sad-12",
+      "text": "괜찮은 척 웃어 주니 다들 정말 괜찮은 줄 알았다. 참 편리해서 좋겠네.",
+      "primary": "sad",
+      "modifiers": ["sarcastic"],
+      "split": "train"
+    },
+    {
+      "id": "sad-13",
+      "text": "아무것도 하고 싶지 않아 하루 종일 커튼을 닫은 채 누워 있었다.",
+      "primary": "sad",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "sad-14",
+      "text": "잘됐네, 이제 기대할 것도 없으니 실망할 일도 없겠지.",
+      "primary": "sad",
+      "modifiers": ["sarcastic"],
+      "split": "train"
+    },
+    {
+      "id": "sad-15",
+      "text": "소중히 키운 화분이 완전히 말라 버린 것을 보고 마음이 먹먹해졌다.",
+      "primary": "sad",
+      "modifiers": [],
+      "split": "validation"
+    },
+    {
+      "id": "sad-16",
+      "text": "그 사람 없이 맞는 첫 생일은 축하 인사마저 허전하게 들렸다.",
+      "primary": "sad",
+      "modifiers": [],
+      "split": "validation"
+    },
+    {
+      "id": "sad-17",
+      "text": "노력한 시간이 전부 아무 의미도 없었다니, 참 값진 경험이라 눈물이 날 것 같다.",
+      "primary": "sad",
+      "modifiers": ["sarcastic"],
+      "split": "validation"
+    },
+    {
+      "id": "sad-18",
+      "text": "꿈을 포기하면 마음이 편해진다더니, 왜 눈물이 나는지는 아무도 설명하지 않았다.",
+      "primary": "sad",
+      "modifiers": ["sarcastic"],
+      "split": "test"
+    },
+    {
+      "id": "sad-19",
+      "text": "장례식장을 나서는 사람들의 발걸음은 무겁고 말이 없었다.",
+      "primary": "sad",
+      "modifiers": [],
+      "split": "test"
+    },
+    {
+      "id": "sad-20",
+      "text": "받는 사람 없는 편지를 끝까지 쓰고 조용히 서랍에 넣었다.",
+      "primary": "sad",
+      "modifiers": [],
+      "split": "test"
+    },
+
+    {
+      "id": "anxious-01",
+      "text": "면접 시간이 다가올수록 준비한 문장들이 머릿속에서 엉키기 시작했다.",
+      "primary": "anxious",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "anxious-02",
+      "text": "검사 결과를 기다리는 동안 복도의 작은 발소리에도 자꾸 고개가 돌아갔다.",
+      "primary": "anxious",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "anxious-03",
+      "text": "답장이 늦어질수록 혹시 내가 무언가 잘못 말했나 걱정이 커졌다.",
+      "primary": "anxious",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "anxious-04",
+      "text": "문을 잠갔는지 확인했는데도 엘리베이터를 타자 다시 불안해졌다.",
+      "primary": "anxious",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "anxious-05",
+      "text": "마감은 몇 시간 남지 않았고 화면의 빈 문서는 좀처럼 채워지지 않았다.",
+      "primary": "anxious",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "anxious-06",
+      "text": "낯선 번호로 전화가 계속 걸려 오자 좋지 않은 예감이 들었다.",
+      "primary": "anxious",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "anxious-07",
+      "text": "비행기가 흔들릴 때마다 손잡이를 쥔 손에 조금씩 힘이 들어갔다.",
+      "primary": "anxious",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "anxious-08",
+      "text": "발표 순서가 가까워지자 심장이 빨라지고 손끝이 차가워졌다.",
+      "primary": "anxious",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "anxious-09",
+      "text": "아이의 귀가 시간이 지났는데 연락이 닿지 않아 거실을 계속 서성였다.",
+      "primary": "anxious",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "anxious-10",
+      "text": "조용하던 기계에서 처음 듣는 경고음이 나기 시작했다.",
+      "primary": "anxious",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "anxious-11",
+      "text": "계약서에 서명하려니 놓친 조건이 있을 것 같아 같은 줄을 다시 읽었다.",
+      "primary": "anxious",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "anxious-12",
+      "text": "무슨 일이 생길 것 같은데 이유를 알 수 없어 잠이 오지 않았다.",
+      "primary": "anxious",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "anxious-13",
+      "text": "시험지를 받기 전 교실의 침묵이 평소보다 훨씬 무겁게 느껴졌다.",
+      "primary": "anxious",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "anxious-14",
+      "text": "통장 잔액과 예정된 지출을 번갈아 보며 한숨만 여러 번 쉬었다.",
+      "primary": "anxious",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "anxious-15",
+      "text": "의사가 잠시 이야기하자고 하자 머릿속에 나쁜 가능성들이 스쳐 갔다.",
+      "primary": "anxious",
+      "modifiers": [],
+      "split": "validation"
+    },
+    {
+      "id": "anxious-16",
+      "text": "중요한 파일을 보냈지만 첨부가 제대로 되었는지 계속 확인하게 됐다.",
+      "primary": "anxious",
+      "modifiers": [],
+      "split": "validation"
+    },
+    {
+      "id": "anxious-17",
+      "text": "창밖의 바람이 거세지면서 정전될까 봐 휴대폰 배터리를 확인했다.",
+      "primary": "anxious",
+      "modifiers": [],
+      "split": "validation"
+    },
+    {
+      "id": "anxious-18",
+      "text": "회의실 문 앞에서 예상치 못한 질문을 받으면 어쩌나 계속 생각했다.",
+      "primary": "anxious",
+      "modifiers": [],
+      "split": "test"
+    },
+    {
+      "id": "anxious-19",
+      "text": "택배가 배송 완료라는데 문 앞에는 아무것도 없어 마음이 급해졌다.",
+      "primary": "anxious",
+      "modifiers": [],
+      "split": "test"
+    },
+    {
+      "id": "anxious-20",
+      "text": "뒤에서 같은 발걸음 소리가 오래 따라와 자꾸 속도를 높이게 됐다.",
+      "primary": "anxious",
+      "modifiers": [],
+      "split": "test"
+    },
+
+    {
+      "id": "fearful-01",
+      "text": "불 꺼진 복도 끝에서 사람처럼 긴 그림자가 천천히 움직였다.",
+      "primary": "fearful",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "fearful-02",
+      "text": "문밖에서 손톱으로 벽을 긁는 듯한 소리가 멈추지 않았다.",
+      "primary": "fearful",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "fearful-03",
+      "text": "산길을 막아선 짐승이 낮게 으르렁거리며 한 걸음씩 다가왔다.",
+      "primary": "fearful",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "fearful-04",
+      "text": "지하실 문이 저절로 닫히고 계단 위의 불빛이 하나씩 꺼졌다.",
+      "primary": "fearful",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "fearful-05",
+      "text": "검은 물속에서 무언가 발목을 잡아 아래로 끌어당겼다.",
+      "primary": "fearful",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "fearful-06",
+      "text": "빈집인 줄 알았는데 이층 창문에서 누군가 나를 내려다보고 있었다.",
+      "primary": "fearful",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "fearful-07",
+      "text": "비상구는 잠겨 있었고 뒤쪽에서 무거운 발걸음이 빠르게 가까워졌다.",
+      "primary": "fearful",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "fearful-08",
+      "text": "전화기 너머에서 내 이름을 속삭이는 목소리는 분명 내 목소리였다.",
+      "primary": "fearful",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "fearful-09",
+      "text": "폭풍 속 배가 크게 기울자 차가운 바닷물이 갑판을 덮쳤다.",
+      "primary": "fearful",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "fearful-10",
+      "text": "낯선 남자가 골목 입구를 막고 말없이 주머니에 손을 넣었다.",
+      "primary": "fearful",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "fearful-11",
+      "text": "침대 밑에서 들리던 숨소리가 갑자기 바로 귓가로 옮겨 왔다.",
+      "primary": "fearful",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "fearful-12",
+      "text": "산불이 바람을 타고 번지며 붉은 불길이 집 가까이 다가오고 있었다.",
+      "primary": "fearful",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "fearful-13",
+      "text": "동굴 깊은 곳에서 들린 울음소리는 사람도 동물도 아닌 것 같았다.",
+      "primary": "fearful",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "fearful-14",
+      "text": "엘리베이터가 멈춘 뒤 층 표시가 존재하지 않는 숫자로 바뀌었다.",
+      "primary": "fearful",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "fearful-15",
+      "text": "창문을 두드리는 소리에 커튼을 열었지만 밖에는 아무도 없었다.",
+      "primary": "fearful",
+      "modifiers": [],
+      "split": "validation"
+    },
+    {
+      "id": "fearful-16",
+      "text": "구조물이 무너지는 굉음과 함께 천장에서 먼지와 돌조각이 떨어졌다.",
+      "primary": "fearful",
+      "modifiers": [],
+      "split": "validation"
+    },
+    {
+      "id": "fearful-17",
+      "text": "도망치던 발이 진흙에 빠졌고 뒤에서는 정체 모를 울음이 가까워졌다.",
+      "primary": "fearful",
+      "modifiers": [],
+      "split": "validation"
+    },
+    {
+      "id": "fearful-18",
+      "text": "거울 속의 나는 움직이지 않은 채 현실의 나를 바라보고 있었다.",
+      "primary": "fearful",
+      "modifiers": [],
+      "split": "test"
+    },
+    {
+      "id": "fearful-19",
+      "text": "경보음이 울리자 군중이 출구로 몰렸지만 셔터가 내려오기 시작했다.",
+      "primary": "fearful",
+      "modifiers": [],
+      "split": "test"
+    },
+    {
+      "id": "fearful-20",
+      "text": "손전등 불빛 너머로 셀 수 없이 많은 눈동자가 동시에 빛났다.",
+      "primary": "fearful",
+      "modifiers": [],
+      "split": "test"
+    },
+
+    {
+      "id": "angry-01",
+      "text": "몇 번이나 같은 문제를 말했는데 또 무시하다니 정말 화가 난다.",
+      "primary": "angry",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "angry-02",
+      "text": "남의 노력을 자기 성과인 것처럼 가져가는 행동은 도저히 용납할 수 없다.",
+      "primary": "angry",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "angry-03",
+      "text": "약속을 어긴 것도 모자라 거짓말까지 하니 더는 믿을 수가 없다.",
+      "primary": "angry",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "angry-04",
+      "text": "당장 그 물건 내려놔. 한 번만 더 손대면 가만있지 않을 거야.",
+      "primary": "angry",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "angry-05",
+      "text": "실수는 네가 해 놓고 왜 책임은 다른 사람에게 떠넘기는 거지?",
+      "primary": "angry",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "angry-06",
+      "text": "와, 회의에 한 시간 늦고도 사과 한마디 없다니 정말 대단하시네요.",
+      "primary": "angry",
+      "modifiers": ["sarcastic"],
+      "split": "train"
+    },
+    {
+      "id": "angry-07",
+      "text": "밤새 만든 파일을 확인도 하지 않고 지웠다는 말에 목소리가 높아졌다.",
+      "primary": "angry",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "angry-08",
+      "text": "그래, 다 망쳐 놓고 이제 와서 네 잘못은 하나도 없다는 거지?",
+      "primary": "angry",
+      "modifiers": ["sarcastic"],
+      "split": "train"
+    },
+    {
+      "id": "angry-09",
+      "text": "사람을 함부로 대하는 솜씨가 아주 훌륭하네요. 저는 더 이상 여기서 일하지 않겠습니다.",
+      "primary": "angry",
+      "modifiers": ["sarcastic"],
+      "split": "train"
+    },
+    {
+      "id": "angry-10",
+      "text": "규칙을 지킨 사람만 손해 보는 상황이 반복되니 분노가 치밀었다.",
+      "primary": "angry",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "angry-11",
+      "text": "참 완벽한 계획이네요. 시작하기도 전에 예산을 전부 써 버렸으니까요.",
+      "primary": "angry",
+      "modifiers": ["sarcastic"],
+      "split": "train"
+    },
+    {
+      "id": "angry-12",
+      "text": "내 가족에게 그런 말을 하고도 아무 일 없을 거라고 생각하지 마.",
+      "primary": "angry",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "angry-13",
+      "text": "부당한 결정이라는 걸 모두 아는데 누구도 책임지지 않는다고 했다.",
+      "primary": "angry",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "angry-14",
+      "text": "아주 친절하시네요. 도움이 필요할 때마다 꼭 자리를 비우시니 말이에요.",
+      "primary": "angry",
+      "modifiers": ["sarcastic"],
+      "split": "train"
+    },
+    {
+      "id": "angry-15",
+      "text": "동의 없이 내 물건을 가져간 행동에 대해 지금 당장 설명해.",
+      "primary": "angry",
+      "modifiers": [],
+      "split": "validation"
+    },
+    {
+      "id": "angry-16",
+      "text": "역시 믿고 맡길 만하군요. 중요한 자료를 통째로 잃어버렸으니.",
+      "primary": "angry",
+      "modifiers": ["sarcastic"],
+      "split": "validation"
+    },
+    {
+      "id": "angry-17",
+      "text": "사과는커녕 피해자를 탓하다니, 책임지는 태도가 정말 훌륭해서 참을 수가 없었다.",
+      "primary": "angry",
+      "modifiers": ["sarcastic"],
+      "split": "validation"
+    },
+    {
+      "id": "angry-18",
+      "text": "그만해. 더 이상 내 말을 왜곡해서 사람들을 속이지 마.",
+      "primary": "angry",
+      "modifiers": [],
+      "split": "test"
+    },
+    {
+      "id": "angry-19",
+      "text": "와, 남의 시간을 세 시간이나 버리게 하고 정말 효율적으로 일하시네요.",
+      "primary": "angry",
+      "modifiers": ["sarcastic"],
+      "split": "test"
+    },
+    {
+      "id": "angry-20",
+      "text": "경고를 계속 무시한 결과라니 화가 나서 주먹이 떨릴 정도였다.",
+      "primary": "angry",
+      "modifiers": [],
+      "split": "test"
+    },
+
+    {
+      "id": "neutral-01",
+      "text": "회의는 오후 두 시에 시작하며 참석자는 회의실로 모이면 된다.",
+      "primary": "neutral",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "neutral-02",
+      "text": "책상 위에는 노트북 한 대와 흰색 머그컵이 놓여 있다.",
+      "primary": "neutral",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "neutral-03",
+      "text": "서울에서 부산까지 고속열차로 약 두 시간 반이 걸린다.",
+      "primary": "neutral",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "neutral-04",
+      "text": "문서를 열고 오른쪽 상단의 저장 버튼을 선택한다.",
+      "primary": "neutral",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "neutral-05",
+      "text": "오늘 점심 메뉴는 또 비빔밥이네요. 선택지가 늘 한결같아서 고민할 필요가 없습니다.",
+      "primary": "neutral",
+      "modifiers": ["sarcastic"],
+      "split": "train"
+    },
+    {
+      "id": "neutral-06",
+      "text": "택배는 경비실에 보관되어 있고 수령 가능 시간은 오후 여섯 시까지다.",
+      "primary": "neutral",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "neutral-07",
+      "text": "이 파일에는 지난달 판매 내역이 날짜순으로 정리되어 있다.",
+      "primary": "neutral",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "neutral-08",
+      "text": "네, 아주 조금만 늦으셨네요. 달력이 하루 넘어갈 정도로요.",
+      "primary": "neutral",
+      "modifiers": ["sarcastic"],
+      "split": "train"
+    },
+    {
+      "id": "neutral-09",
+      "text": "화분에는 일주일에 한 번 물을 주고 직사광선은 피해야 한다.",
+      "primary": "neutral",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "neutral-10",
+      "text": "비밀번호를 또 잊으셨군요. 보안을 몸소 실천하시느라 접속도 막으셨습니다.",
+      "primary": "neutral",
+      "modifiers": ["sarcastic"],
+      "split": "train"
+    },
+    {
+      "id": "neutral-11",
+      "text": "오늘의 특별 업무는 의자와 한 몸이 되어 키보드를 두드리는 것입니다.",
+      "primary": "neutral",
+      "modifiers": ["playful"],
+      "split": "train"
+    },
+    {
+      "id": "neutral-12",
+      "text": "건물 출입구는 남쪽에 있으며 주차장은 지하 이층에 있다.",
+      "primary": "neutral",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "neutral-13",
+      "text": "신청서에는 이름과 연락처를 적은 뒤 하단에 서명하면 된다.",
+      "primary": "neutral",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "neutral-14",
+      "text": "컴퓨터가 또 멈췄네요. 역시 쉬는 시간만큼은 누구보다 잘 지킵니다.",
+      "primary": "neutral",
+      "modifiers": ["sarcastic"],
+      "split": "train"
+    },
+    {
+      "id": "neutral-15",
+      "text": "내일 기온은 오늘과 비슷하며 오후부터 구름이 많아질 예정이다.",
+      "primary": "neutral",
+      "modifiers": [],
+      "split": "validation"
+    },
+    {
+      "id": "neutral-16",
+      "text": "냉장고의 우유는 금요일까지이고 달걀은 여섯 개 남아 있다.",
+      "primary": "neutral",
+      "modifiers": [],
+      "split": "validation"
+    },
+    {
+      "id": "neutral-17",
+      "text": "회의 자료를 읽는 동안 제 영혼은 잠시 외출하도록 하겠습니다.",
+      "primary": "neutral",
+      "modifiers": ["playful"],
+      "split": "validation"
+    },
+    {
+      "id": "neutral-18",
+      "text": "도서관은 평일 아홉 시에 문을 열고 주말에는 한 시간 늦게 연다.",
+      "primary": "neutral",
+      "modifiers": [],
+      "split": "test"
+    },
+    {
+      "id": "neutral-19",
+      "text": "참 빠른 답장이네요. 계절이 두 번 바뀌기 전에 와서 다행입니다.",
+      "primary": "neutral",
+      "modifiers": ["sarcastic"],
+      "split": "test"
+    },
+    {
+      "id": "neutral-20",
+      "text": "파일 크기는 약 이십 메가바이트이고 이미지가 열두 장 포함되어 있다.",
+      "primary": "neutral",
+      "modifiers": [],
+      "split": "test"
+    }
+  ]
+}

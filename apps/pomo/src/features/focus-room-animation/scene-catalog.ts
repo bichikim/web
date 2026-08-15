@@ -29,20 +29,20 @@ import type {PixiLayerSceneDefinition} from './layer-scene'
 import {FOCUS_ROOM_PREVIEW_CHANNELS} from './scene-catalog-channels'
 export {FOCUS_ROOM_PREVIEW_CHANNELS} from './scene-catalog-channels'
 
-export type FocusRoomActivity = 'reading' | 'typing' | 'writing'
-export type FocusRoomGaze = 'focused' | 'user'
-export type FocusRoomTime = 'day' | 'night'
-export type FocusRoomSceneId = `${FocusRoomTime}-${FocusRoomActivity}-${FocusRoomGaze}`
+export type PActivity = 'reading' | 'typing' | 'writing'
+export type PGaze = 'focused' | 'user'
+export type PTime = 'day' | 'night'
+export type PSceneId = `${PTime}-${PActivity}-${PGaze}`
 
-export interface FocusRoomSceneCatalogEntry {
-  readonly activity: FocusRoomActivity
+export interface PSceneCatalogEntry {
+  readonly activity: PActivity
   readonly depthSource: string
-  readonly gaze: FocusRoomGaze
-  readonly id: FocusRoomSceneId
+  readonly gaze: PGaze
+  readonly id: PSceneId
   readonly label: string
   readonly layerScene: PixiLayerSceneDefinition
   readonly source: string
-  readonly time: FocusRoomTime
+  readonly time: PTime
 }
 
 interface SceneSourcePair {
@@ -79,7 +79,7 @@ const SCENE_SOURCES = {
       user: {depthSource: nightWritingGazeDepth, source: nightWritingGazeImage},
     },
   },
-} satisfies Record<FocusRoomTime, Record<FocusRoomActivity, Record<FocusRoomGaze, SceneSourcePair>>>
+} satisfies Record<PTime, Record<PActivity, Record<PGaze, SceneSourcePair>>>
 
 const LABELS = {
   activity: {reading: '책 읽기', typing: '노트북 타이핑', writing: '글쓰기'},
@@ -87,14 +87,14 @@ const LABELS = {
   time: {day: '낮', night: '밤'},
 } as const
 
-const TIMES: readonly FocusRoomTime[] = ['day', 'night']
-const ACTIVITIES: readonly FocusRoomActivity[] = ['reading', 'writing', 'typing']
-const GAZES: readonly FocusRoomGaze[] = ['focused', 'user']
+const TIMES: readonly PTime[] = ['day', 'night']
+const ACTIVITIES: readonly PActivity[] = ['reading', 'writing', 'typing']
+const GAZES: readonly PGaze[] = ['focused', 'user']
 
-export const FOCUS_ROOM_SCENES: readonly FocusRoomSceneCatalogEntry[] = TIMES.flatMap((time) =>
+export const FOCUS_ROOM_SCENES: readonly PSceneCatalogEntry[] = TIMES.flatMap((time) =>
   ACTIVITIES.flatMap((activity) =>
     GAZES.map((gaze) => {
-      const id: FocusRoomSceneId = `${time}-${activity}-${gaze}`
+      const id: PSceneId = `${time}-${activity}-${gaze}`
       const asset = SCENE_SOURCES[time][activity][gaze]
 
       return {
@@ -118,11 +118,7 @@ export const FOCUS_ROOM_SCENES: readonly FocusRoomSceneCatalogEntry[] = TIMES.fl
 
 const SCENE_BY_ID = new Map(FOCUS_ROOM_SCENES.map((scene) => [scene.id, scene]))
 
-export const getFocusRoomScene = (
-  time: FocusRoomTime,
-  activity: FocusRoomActivity,
-  gaze: FocusRoomGaze,
-) => {
+export const getPScene = (time: PTime, activity: PActivity, gaze: PGaze) => {
   const scene = SCENE_BY_ID.get(`${time}-${activity}-${gaze}`)
 
   if (scene === undefined) {

@@ -22,6 +22,7 @@ export type {
   SupertonicVoice,
   SupertonicVoiceId,
 } from './model'
+export {createOpusBlob} from './opus-client'
 export {createWaveBlob} from './wav'
 export {failureResult, successResult} from './result'
 export type {FailureResult, Result, SuccessResult} from './result'

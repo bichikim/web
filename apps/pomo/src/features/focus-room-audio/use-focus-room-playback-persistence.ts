@@ -1,35 +1,35 @@
 import type {Accessor} from 'solid-js'
 
-import type {FocusRoomTrack} from './focus-room-playlist'
-import {type FocusRoomPlaybackState, writeFocusRoomPlayback} from './playback-storage'
+import type {PTrack} from './focus-room-playlist'
+import {type PPlaybackState, writePPlayback} from './playback-storage'
 
 const PROGRESS_SAVE_INTERVAL_MILLISECONDS = 5_000
 
-export interface UseFocusRoomPlaybackPersistenceProps {
-  readonly currentTrack: Accessor<FocusRoomTrack | undefined>
+export interface UsePPlaybackPersistenceProps {
+  readonly currentTrack: Accessor<PTrack | undefined>
   readonly getAudioElement: Accessor<HTMLAudioElement | undefined>
   readonly isPlaying: Accessor<boolean>
 }
 
-export interface FocusRoomPlaybackPersistence {
-  readonly applyPendingPosition: () => FocusRoomPlaybackState | null
+export interface PPlaybackPersistence {
+  readonly applyPendingPosition: () => PPlaybackState | null
   readonly persistCurrentPlayback: () => void
   readonly persistPlaybackProgress: () => void
-  readonly setPendingPosition: (state: FocusRoomPlaybackState | null) => void
-  readonly writePlayback: (state: FocusRoomPlaybackState) => void
+  readonly setPendingPosition: (state: PPlaybackState | null) => void
+  readonly writePlayback: (state: PPlaybackState) => void
 }
 
-const writePlayback = (state: FocusRoomPlaybackState) => {
-  writeFocusRoomPlayback(state).catch(() => undefined)
+const writePlayback = (state: PPlaybackState) => {
+  writePPlayback(state).catch(() => undefined)
 }
 
-export const useFocusRoomPlaybackPersistence = (
-  props: UseFocusRoomPlaybackPersistenceProps,
-): FocusRoomPlaybackPersistence => {
-  let pendingPosition: FocusRoomPlaybackState | null = null
+export const usePPlaybackPersistence = (
+  props: UsePPlaybackPersistenceProps,
+): PPlaybackPersistence => {
+  let pendingPosition: PPlaybackState | null = null
   let lastProgressSavedAt = 0
 
-  const setPendingPosition = (state: FocusRoomPlaybackState | null) => {
+  const setPendingPosition = (state: PPlaybackState | null) => {
     pendingPosition = state
   }
 
