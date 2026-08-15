@@ -15,6 +15,7 @@
     "lint": "oxlint src",
     "lint:fix": "oxlint src --fix",
     "preview:web": "node .output/server/index.mjs",
+    "text-mood:train": "node scripts/text-mood/train.mjs",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

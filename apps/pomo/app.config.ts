@@ -32,6 +32,7 @@ const app = defineConfig({
             '/dev/focus-room-dialogue',
             '/dev/focus-room-layer-review',
             '/dev/speech-to-text',
+            '/dev/text-mood',
             '/dev/terms',
             '/dev/voice',
             '/focus-room',
