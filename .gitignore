@@ -104,3 +104,4 @@ opencode.jsonc
 
 .pnpm-store
 .worktrees
+.vercel
