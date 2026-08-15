@@ -6,8 +6,7 @@ import type {JSX} from 'solid-js'
 import {beforeEach, expect, it, vi} from 'vitest'
 
 import {PSelect} from 'src/design-system/PSelect'
-import {type PEventContextValue, usePEvents} from 'src/features/focus-room-dialogue/PEventContext'
-import type {PDialogue} from 'src/features/focus-room-dialogue/schema'
+import {type PDialogue, type PEventContextValue, usePEvents} from 'src/features/focus-room-dialogue'
 import {type PFeedController, usePFeedContext} from 'src/features/focus-room-feed'
 import PDialogueSettingsContent from '../PDialogueSettingsContent'
 
@@ -35,9 +34,13 @@ vi.mock('@solidjs/router', () => ({
   ),
 }))
 vi.mock('src/design-system/PSelect', () => ({PSelect: vi.fn()}))
-vi.mock('src/features/focus-room-dialogue/PEventContext', () => ({
-  usePEvents: vi.fn(),
-}))
+vi.mock('src/features/focus-room-dialogue', async () => {
+  const actual: typeof import('src/features/focus-room-dialogue') = await vi.importActual(
+    'src/features/focus-room-dialogue',
+  )
+
+  return {...actual, usePEvents: vi.fn()}
+})
 vi.mock('src/features/focus-room-feed', () => ({
   excludeFeedDialogues: (dialogues: ReadonlyArray<PDialogue>) => dialogues,
   usePFeedContext: vi.fn(),

@@ -3,7 +3,7 @@
 import {render, screen} from '@solidjs/testing-library'
 import {expect, it} from 'vitest'
 
-import type {TextMoodAnalysis} from 'src/features/text-mood/classifier'
+import type {TextMoodAnalysis} from 'src/features/text-mood'
 import {TextMoodAnalysisResult} from '../TextMoodAnalysisResult'
 
 const ANALYSIS: TextMoodAnalysis = {

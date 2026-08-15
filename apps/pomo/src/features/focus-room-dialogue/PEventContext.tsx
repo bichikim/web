@@ -23,6 +23,7 @@ import {
 } from './schema'
 
 export type {PlayPDialogueSequenceOptions} from './entry-playback-controller'
+export type {DialogueSegmentMood} from './schema'
 
 type EventDialogueIds = Readonly<Partial<Record<DialogueEventId, ReadonlyArray<string>>>>
 

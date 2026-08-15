@@ -13,6 +13,12 @@ import {
   type SupertonicVoiceId,
 } from '../supertonic'
 
+export {createStreamingSpeechBuffer} from './streaming-speech-buffer'
+export type {
+  CreateStreamingSpeechBufferOptions,
+  StreamingSpeechBuffer,
+} from './streaming-speech-buffer'
+
 const MAXIMUM_PROGRESS = 100
 // AI_NOTE - Full/WebGPU intentionally matches the voice lab's low latency despite sharing GPU memory with chat.
 const DEFAULT_MODEL_ID: SupertonicModelId = 'full'

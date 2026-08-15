@@ -4,14 +4,14 @@ import {
   getSupertonicErrorMessage,
   getSupertonicModel,
   getSupertonicSpeechSpeed,
+  joinAudioChunks,
+  splitSpeechText,
   type SupertonicAudioChunk,
   type SupertonicClient,
   type SupertonicLanguage,
   type SupertonicModelId,
   type SupertonicVoiceId,
 } from '../supertonic'
-import {joinAudioChunks} from '../supertonic/audio'
-import {splitSpeechText} from '../supertonic/text-chunking'
 import type {DialogueSegment} from './schema'
 import {createDialogueTimeline} from './timeline'
 

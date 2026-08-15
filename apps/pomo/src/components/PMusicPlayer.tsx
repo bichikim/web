@@ -1,6 +1,6 @@
 import {clientOnly} from '@solidjs/start'
 
-import type {PTrack} from '../features/focus-room-audio/focus-room-playlist'
+import type {PTrack} from '../features/focus-room-audio'
 
 const PMusicPlayerContent = clientOnly(() => import('./PMusicPlayerContent'), {
   lazy: true,

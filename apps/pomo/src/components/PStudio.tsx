@@ -6,8 +6,15 @@ import smilingFaceSource from 'assets/pomodoro-status-icons/break-face.webp'
 import {PButton} from '../design-system/PButton'
 import {PIconButton} from '../design-system/PIconButton'
 import {PIconSelect} from '../design-system/PIconSelect'
-import type {PTrack} from '../features/focus-room-audio/focus-room-playlist'
+import type {PTrack} from '../features/focus-room-audio'
 import {usePEvents} from '../features/focus-room-dialogue/PEventContext'
+import {
+  getPScene,
+  type PixiLayerSceneDefinition,
+  type PSceneMotionInput,
+  type PSceneMotionMode,
+  supportsPSceneGyroscope,
+} from '../features/focus-room-animation'
 import {
   getAutomaticScenePeriod,
   getNextTimeMode,
@@ -17,13 +24,6 @@ import {
 } from '../features/focus-room-time'
 import {usePSay} from '../features/pomo-webmcp'
 import {type ScreenSaverDelay, useScreenSaver} from '../features/screen-saver'
-import type {PixiLayerSceneDefinition} from '../features/focus-room-animation/layer-scene'
-import {getPScene} from '../features/focus-room-animation/scene-catalog'
-import {
-  type PSceneMotionInput,
-  type PSceneMotionMode,
-  supportsPSceneGyroscope,
-} from '../features/focus-room-animation/scene-motion'
 import {PMusicPlayer} from './PMusicPlayer'
 import {PFeedStatus} from './PFeedStatus'
 import {PDialoguePlayer} from './PDialoguePlayer'

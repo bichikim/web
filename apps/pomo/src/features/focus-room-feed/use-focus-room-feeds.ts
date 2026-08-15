@@ -4,13 +4,11 @@ import {createMemo, createSignal, onCleanup, onMount} from 'solid-js'
 import {
   AUTOMATIC_DIALOGUE_SETTINGS_CHANGED_EVENT,
   createAutomaticDialogueSettingsRepository as createAutomaticSettingsRepository,
+  createPDialogueRepository,
   generateCompressedDialogueAudio,
   type PDialogue,
-} from '../focus-room-dialogue'
-import {
-  createPDialogueRepository,
   type PDialogueRepository,
-} from '../focus-room-dialogue/repository'
+} from '../focus-room-dialogue'
 import {createSupertonicClient, type SupertonicClient, type SupertonicModelId} from '../supertonic'
 import {
   FEED_DIALOGUE_EXPIRATION_MS,

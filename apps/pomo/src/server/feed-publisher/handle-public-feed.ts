@@ -1,7 +1,6 @@
 import type {APIEvent} from '@solidjs/start/server'
 
-import type {FeedFormat} from 'src/features/feed-publisher/contract'
-import {createFeedResponse} from 'src/features/feed-publisher/create-feed-response'
+import {createFeedResponse, type FeedFormat} from 'src/features/feed-publisher'
 import {createPublicFeedRegistry} from './public-feed-registry'
 
 /** Handles a public feed route without reading session or user state. */

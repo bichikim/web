@@ -9,9 +9,10 @@ import {
   type AutomaticDialogueSettingsRepository,
   createAutomaticDialogueSettingsRepository,
   DEFAULT_AUTOMATIC_DIALOGUE_SETTINGS,
+  type DialogueEventId,
+  type PDialogue,
+  usePEvents,
 } from '../features/focus-room-dialogue'
-import {usePEvents} from '../features/focus-room-dialogue/PEventContext'
-import type {DialogueEventId, PDialogue} from '../features/focus-room-dialogue/schema'
 import {excludeFeedDialogues, usePFeedContext} from '../features/focus-room-feed'
 import {
   SUPERTONIC_MODELS,

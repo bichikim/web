@@ -1,7 +1,7 @@
 import {cx} from 'class-variance-authority'
 import {For} from 'solid-js'
 
-import type {RepeatMode} from '../features/focus-room-audio/playback-policy'
+import type {RepeatMode} from '../features/focus-room-audio'
 
 const REPEAT_MODES = [
   {icon: 'i-tabler-repeat', label: '전체 반복', value: 'repeat-all'},

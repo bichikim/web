@@ -6,6 +6,7 @@ export type {
 } from './client'
 export {createSupertonicAudioPlayer} from './audio-player'
 export type {CreateSupertonicAudioPlayerOptions, SupertonicAudioPlayer} from './audio-player'
+export {joinAudioChunks} from './audio'
 export {getSupertonicErrorMessage} from './error-message'
 export type {SupertonicError, SupertonicPhase} from './errors'
 export {SUPERTONIC_LANGUAGES, SUPERTONIC_LANGUAGE_OPTIONS} from './language'
@@ -25,6 +26,7 @@ export type {
   SupertonicVoiceId,
 } from './model'
 export {createOpusBlob} from './opus-client'
+export type {CreateOpusBlobOptions} from './opus-client'
 export {createWaveBlob} from './wav'
 export {failureResult, successResult} from './result'
 export type {FailureResult, Result, SuccessResult} from './result'
@@ -40,3 +42,4 @@ export type {
 } from './use-supertonic-voice-lab'
 export {parseSupertonicVoiceStyle} from './voice-style'
 export type {SupertonicVoiceStyle} from './voice-style'
+export {splitSpeechText} from './text-chunking'

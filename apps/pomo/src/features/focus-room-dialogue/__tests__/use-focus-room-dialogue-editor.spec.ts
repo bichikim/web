@@ -2,8 +2,7 @@
 import {createRoot} from 'solid-js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
-import {successResult, type SupertonicClient} from '../../supertonic'
-import type {CreateOpusBlobOptions} from '../../supertonic/opus-client'
+import {type CreateOpusBlobOptions, successResult, type SupertonicClient} from '../../supertonic'
 import {
   type TextMoodAnalysis,
   type TextMoodAnalyzer,
