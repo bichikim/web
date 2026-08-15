@@ -92,3 +92,9 @@ it('should extract article text without navigation or scripts', () => {
     ),
   ).toBe('제목본문 전체')
 })
+
+it('should exclude marked source links from the speech script', () => {
+  const content = `<p>역사 본문</p><footer data-pomo-speech="exclude"><p>출처</p><ol><li><a href="https://example.com/source">Example — 원문</a></li></ol></footer>`
+
+  expect(createFeedScript('오늘의 역사', content)).toBe('오늘의 역사\n\n역사 본문')
+})

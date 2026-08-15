@@ -22,5 +22,7 @@ export const renderHistoryContentHtml = (moment: HistoricalMomentDraft): string 
   const context = `<p>${escapeHtml(moment.sections.context.text)}</p>`
   const significance = escapeHtml(moment.sections.significance.text)
 
-  return `${event}${context}<p><strong>왜 기억할까</strong> ${significance}</p><p><strong>출처</strong></p><ol>${sources}</ol>`
+  const sourceList = `<footer data-pomo-speech="exclude"><p><strong>출처</strong></p><ol>${sources}</ol></footer>`
+
+  return `${event}${context}<p><strong>왜 기억할까</strong> ${significance}</p>${sourceList}`
 }
