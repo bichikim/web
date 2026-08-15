@@ -32,6 +32,7 @@
     "class-variance-authority": "catalog:",
     "cross-env": "catalog:",
     "dexie": "^4.4.4",
+    "libopus-wasm": "0.2.0",
     "media-chrome": "^4.19.2",
     "onnxruntime-web": "1.23.2",
     "pixi.js": "^8.19.0",

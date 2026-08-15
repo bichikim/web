@@ -18,6 +18,7 @@ export type {
 } from './client'
 export {getTextMoodErrorMessage} from './errors'
 export type {TextMoodError, TextMoodPhase} from './errors'
+export {getPrimaryMoodIcon} from './icons'
 export {
   getPrimaryMood,
   MOOD_MODIFIERS,

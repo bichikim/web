@@ -41,12 +41,13 @@ export const POMO_DIALOGUE_PLAYER_STYLES = String.raw`
   gap: var(--pomo-padding-xs);
 }
 
-.pomo-dialogue-bubble__speaker {
+.pomo-dialogue-bubble__mood {
   display: block;
-  color: var(--pomo-brass);
-  font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex: none;
+  object-fit: contain;
+  transform: scale(1.5556);
 }
 
 .pomo-dialogue-bubble__progress {

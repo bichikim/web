@@ -2,8 +2,13 @@ import {A, useNavigate} from '@solidjs/router'
 import {cx} from 'class-variance-authority'
 import {For, Show} from 'solid-js'
 
-import {usePDialogueEditor, type UsePDialogueEditorProps} from '../features/focus-room-dialogue'
+import {
+  usePDialogueEditor,
+  type UsePDialogueEditorProps,
+  usePEvents,
+} from '../features/focus-room-dialogue'
 import {SUPERTONIC_MODELS, SUPERTONIC_VOICES} from '../features/supertonic'
+import {getPrimaryMood, getPrimaryMoodIcon} from '../features/text-mood'
 
 const MAXIMUM_TEXT_LENGTH = 3000
 const MILLISECONDS_PER_SECOND = 1000
@@ -23,12 +28,14 @@ const formatDuration = (durationMs: number) => {
 // oxlint-disable-next-line eslint/max-lines-per-function -- The form follows one numbered authoring workflow and shares one controller.
 export default function PDialogueEditor(props: PDialogueEditorProps) {
   const navigate = useNavigate()
+  const events = usePEvents()
   const editorProps: UsePDialogueEditorProps = {dialogueId: () => props.dialogueId}
   const editor = usePDialogueEditor(editorProps)
   const isBusy = () => {
     const {status} = editor.state()
     return (
       status === 'generating' ||
+      status === 'analyzing' ||
       status === 'loading' ||
       status === 'preparing' ||
       status === 'saving'
@@ -38,6 +45,12 @@ export default function PDialogueEditor(props: PDialogueEditorProps) {
     const dialogueId = await editor.save()
 
     if (dialogueId !== null) {
+      try {
+        await events.refreshDialogues()
+      } catch (error: unknown) {
+        console.error('Failed to refresh saved focus room dialogues.', error)
+      }
+
       navigate('/')
     }
   }
@@ -62,7 +75,7 @@ export default function PDialogueEditor(props: PDialogueEditorProps) {
         <div>
           <p class="pomo-dialogue-editor__eyebrow">포커스 룸 대화</p>
           <h1>{props.dialogueId === null ? '새 대화 만들기' : '대화 편집하기'}</h1>
-          <p>긴 대사는 음성에 맞게 나뉘며, 각 구간의 텍스트가 말풍선에 순서대로 표시돼요.</p>
+          <p>긴 대사는 음성에 맞게 나뉘며, 각 구간의 텍스트와 감정이 말풍선에 순서대로 표시돼요.</p>
         </div>
         <A class="pomo-dialogue-editor__back" href="/">
           <span aria-hidden="true" class="i-tabler-arrow-left size-5" />
@@ -181,7 +194,7 @@ export default function PDialogueEditor(props: PDialogueEditorProps) {
             <span>3</span>
             <div>
               <h2 id="dialogue-timeline-title">말풍선 타임라인</h2>
-              <p>각 문장은 해당 음성 구간이 시작될 때 말풍선에 표시돼요.</p>
+              <p>각 문장은 시작 시간과 분석된 감정이 함께 표시돼요.</p>
             </div>
           </div>
 
@@ -199,6 +212,22 @@ export default function PDialogueEditor(props: PDialogueEditorProps) {
                   <li>
                     <span>{formatDuration(segment.startMs)}</span>
                     <p>{segment.text}</p>
+                    <Show when={segment.mood}>
+                      {(mood) => {
+                        const definition = getPrimaryMood(mood().primary.id)
+
+                        return (
+                          <div class="pomo-dialogue-editor__mood">
+                            <img
+                              alt=""
+                              aria-hidden="true"
+                              src={getPrimaryMoodIcon(definition.id)}
+                            />
+                            <span>{definition.label}</span>
+                          </div>
+                        )
+                      }}
+                    </Show>
                   </li>
                 )}
               </For>

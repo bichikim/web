@@ -29,13 +29,13 @@ const app = defineConfig({
             '/dev/character',
             '/dev/chat',
             '/dev/dialogue',
-            '/dev/focus-room-dialogue',
             '/dev/focus-room-layer-review',
             '/dev/speech-to-text',
             '/dev/text-mood',
             '/dev/terms',
             '/dev/voice',
             '/focus-room',
+            '/focus-room-dialogue',
           ],
         },
         preset: 'static',
@@ -47,6 +47,7 @@ const app = defineConfig({
       include: ['onnxruntime-web/all', 'zod'],
     },
     plugins: [createDevFeedPlugin(), excludeFocusRoomSourceAssets, UnoCSS()],
+    worker: {format: 'es'},
   },
 })
 

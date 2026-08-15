@@ -290,7 +290,7 @@ export const PSettings = (props: PSettingsProps) => {
             </div>
           </Tabs.Content>
           <PFeedSettings />
-          <PDialogueSettings />
+          <PDialogueSettings onRequestClose={() => setIsOpen(false)} />
         </PModal>
       </Tabs>
     </>

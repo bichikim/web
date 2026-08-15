@@ -1,5 +1,7 @@
 import {z} from 'zod'
 
+import {MOOD_MODIFIER_IDS, PRIMARY_MOOD_IDS} from '../text-mood/labels'
+
 export const FOCUS_ROOM_DIALOGUE_EVENTS = [
   'room-enter',
   'focus-start',
@@ -10,9 +12,30 @@ export const FOCUS_ROOM_DIALOGUE_EVENTS = [
 export const FOCUS_ROOM_ENTRY_EVENT = 'room-enter' as const
 export const dialogueEventIdSchema = z.enum(FOCUS_ROOM_DIALOGUE_EVENTS)
 
+const moodScoreSchema = z.object({
+  id: z.enum(PRIMARY_MOOD_IDS),
+  probability: z.number().min(0).max(1),
+})
+const moodModifierScoreSchema = z.object({
+  active: z.boolean(),
+  id: z.enum(MOOD_MODIFIER_IDS),
+  probability: z.number().min(0).max(1),
+  threshold: z.number().min(0).max(1),
+})
+
+export const dialogueSegmentMoodSchema = z.object({
+  margin: z.number().min(0).max(1),
+  modifiers: z.array(moodModifierScoreSchema).readonly(),
+  primary: moodScoreSchema,
+  scores: z.array(moodScoreSchema).min(1).readonly(),
+  secondary: moodScoreSchema.nullable(),
+  uncertain: z.boolean(),
+})
+
 const dialogueSegmentSchema = z.object({
   durationMs: z.number().nonnegative(),
   index: z.number().int().nonnegative(),
+  mood: dialogueSegmentMoodSchema.optional(),
   startMs: z.number().nonnegative(),
   text: z.string().min(1),
 })
@@ -53,5 +76,6 @@ export const dialogueEventBindingSchema = z
   )
 
 export type DialogueSegment = z.infer<typeof dialogueSegmentSchema>
+export type DialogueSegmentMood = z.infer<typeof dialogueSegmentMoodSchema>
 export type PDialogue = z.infer<typeof focusRoomDialogueSchema>
 export type DialogueEventId = z.infer<typeof dialogueEventIdSchema>

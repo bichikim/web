@@ -265,8 +265,12 @@ const AutomaticDialogueSettings = () => {
   )
 }
 
+export interface PDialogueSettingsContentProps {
+  readonly onRequestClose?: () => void
+}
+
 // oxlint-disable-next-line eslint/max-lines-per-function -- Both tabs share one repository and audio playback lifecycle.
-export default function PDialogueSettingsContent() {
+export default function PDialogueSettingsContent(props: PDialogueSettingsContentProps) {
   const events = usePEvents()
   const feeds = usePFeedContext()
   const savedDialogues = createMemo(() =>
@@ -341,6 +345,17 @@ export default function PDialogueSettingsContent() {
       console.error('Failed to play focus room dialogue.', error)
       setMessage('음성을 재생하지 못했어요.')
     }
+  }
+
+  const handleCharacterPlayback = (dialogue: PDialogue) => {
+    stopPlayback()
+    events.onStopDialoguePlayback()
+    const playback = events.playDialogue(dialogue.id)
+
+    props.onRequestClose?.()
+    playback.catch((error: unknown) => {
+      console.error('Failed to play saved dialogue through the character.', error)
+    })
   }
 
   const handleEventBinding = async (
@@ -483,7 +498,7 @@ export default function PDialogueSettingsContent() {
               <h3 id="pomo-dialogue-library-title">내 대화</h3>
               <p>저장된 대화를 듣거나 관리할 수 있어요.</p>
             </div>
-            <A class="pomo-dialogue-settings__create" href="/dev/focus-room-dialogue">
+            <A class="pomo-dialogue-settings__create" href="/focus-room-dialogue">
               <span aria-hidden="true" class="i-tabler-plus size-4" />
               새 대화
             </A>
@@ -532,8 +547,12 @@ export default function PDialogueSettingsContent() {
                             isPlaying={playingDialogueId() === dialogue.id}
                             onPress={() => handlePlayback(dialogue)}
                           />
+                          <button onClick={() => handleCharacterPlayback(dialogue)} type="button">
+                            <span aria-hidden="true" class="i-tabler-message-circle size-4" />
+                            캐릭터로 듣기
+                          </button>
                           <A
-                            href={`/dev/focus-room-dialogue?dialogueId=${encodeURIComponent(dialogue.id)}`}
+                            href={`/focus-room-dialogue?dialogueId=${encodeURIComponent(dialogue.id)}`}
                           >
                             <span aria-hidden="true" class="i-tabler-pencil size-4" />
                             편집

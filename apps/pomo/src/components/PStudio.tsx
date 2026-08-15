@@ -1,14 +1,13 @@
 import {clientOnly} from '@solidjs/start'
 import {cx} from 'class-variance-authority'
-import {createMemo, createSignal, onCleanup, onMount, Show} from 'solid-js'
+import {createMemo, createSignal, onCleanup, onMount, Show, untrack} from 'solid-js'
 
 import smilingFaceSource from '../../assets/pomodoro-status-icons/break-face.webp'
 import {PButton} from '../design-system/PButton'
 import {PIconButton} from '../design-system/PIconButton'
 import {PIconSelect} from '../design-system/PIconSelect'
 import type {PTrack} from '../features/focus-room-audio/focus-room-playlist'
-import {PEventProvider, usePEvents} from '../features/focus-room-dialogue/PEventContext'
-import {PFeedProvider} from '../features/focus-room-feed'
+import {usePEvents} from '../features/focus-room-dialogue/PEventContext'
 import {
   getAutomaticScenePeriod,
   getNextTimeMode,
@@ -84,6 +83,13 @@ interface PEntryProps {
 
 interface PSceneFallbackProps {
   readonly source: string
+}
+
+interface PStudioEventsProps {
+  readonly isPlayerExpanded: boolean
+  readonly onPlayerExpandedChange: (isExpanded: boolean) => void
+  readonly onPomodoroPresentationChange: (presentation: PPomodoroPresentation) => void
+  readonly onTrackChange: (track: PTrack | null) => void
 }
 
 const findLabel = <TValue extends string>(
@@ -210,7 +216,51 @@ const PSceneFallback = (props: PSceneFallbackProps) => (
   />
 )
 
-const PStudioContent = () => {
+const PStudioEvents = (props: PStudioEventsProps) => {
+  const events = usePEvents()
+  const pomoSay = usePSay({onBeforeSpeech: events.onStopDialoguePlayback})
+  const handlePomodoroEvents = (eventIds: Parameters<typeof events.playDialogueEvents>[0]) => {
+    events.playDialogueEvents(eventIds, pomoSay.stop).catch((error: unknown) => {
+      console.error('Unexpected pomodoro dialogue playback failure.', error)
+    })
+  }
+
+  return (
+    <>
+      <PPomodoro
+        onEvents={handlePomodoroEvents}
+        onPresentationChange={props.onPomodoroPresentationChange}
+      />
+      <div
+        class="pomo-media-dock"
+        data-dialogue-active={
+          events.activeText() === null &&
+          pomoSay.speechText() === null &&
+          !events.isDialoguePlaybackBlocked() &&
+          events.scheduledDialogueCount() === 0
+            ? undefined
+            : ''
+        }
+        data-player-expanded={props.isPlayerExpanded ? '' : undefined}
+      >
+        <PMusicPlayer
+          expanded={props.isPlayerExpanded}
+          onExpandedChange={props.onPlayerExpandedChange}
+          onTrackChange={props.onTrackChange}
+        />
+        <div class="pomo-media-messages">
+          <PFeedStatus />
+          <PDialoguePlayer
+            externalText={pomoSay.speechText()}
+            onStopExternalSpeech={pomoSay.stop}
+          />
+        </div>
+      </div>
+    </>
+  )
+}
+
+export const PStudio = () => {
   const events = usePEvents()
   const [timeMode, setTimeMode] = createSignal<SceneTimeMode>('day')
   const [automaticPeriod, setAutomaticPeriod] = createSignal<ScenePeriod>('day')
@@ -222,14 +272,15 @@ const PStudioContent = () => {
   const [isSceneLoading, setIsSceneLoading] = createSignal(true)
   const [hasSceneRendered, setHasSceneRendered] = createSignal(false)
   const [isPlayerExpanded, setIsPlayerExpanded] = createSignal(false)
-  const [hasEntered, setHasEntered] = createSignal(false)
-  const [isEntryVisible, setIsEntryVisible] = createSignal(true)
+  const hasEntered = events.hasEnteredFocusRoom
+  const [isEntryVisible, setIsEntryVisible] = createSignal(
+    untrack(() => !events.hasEnteredFocusRoom()),
+  )
   const [currentTrack, setCurrentTrack] = createSignal<PTrack | null>(null)
   const [pomodoroPresentation, setPomodoroPresentation] = createSignal<PPomodoroPresentation>(
     INITIAL_POMODORO_PRESENTATION,
   )
   const screenSaver = useScreenSaver()
-  const pomoSay = usePSay({onBeforeSpeech: events.onStopDialoguePlayback})
   const time = createMemo(() => resolveScenePeriod(timeMode(), automaticPeriod()))
   const selectedScene = createMemo(() => getSceneAsset(time(), activity(), gaze()))
   const handleLoadingChange = (isLoading: boolean) => {
@@ -239,17 +290,12 @@ const PStudioContent = () => {
       setHasSceneRendered(true)
     }
   }
-  const handlePomodoroEvents = (eventIds: Parameters<typeof events.playDialogueEvents>[0]) => {
-    events.playDialogueEvents(eventIds, pomoSay.stop).catch((error: unknown) => {
-      console.error('Unexpected pomodoro dialogue playback failure.', error)
-    })
-  }
   const handleEnter = () => {
     if (hasEntered()) {
       return
     }
 
-    setHasEntered(true)
+    events.enterFocusRoom()
   }
 
   onMount(() => {
@@ -304,49 +350,31 @@ const PStudioContent = () => {
       </figure>
 
       <div class="pomo-ui" hidden={!hasEntered()}>
-        <PPomodoro onEvents={handlePomodoroEvents} onPresentationChange={setPomodoroPresentation} />
-        <div
-          class="pomo-media-dock"
-          data-dialogue-active={
-            events.activeText() === null &&
-            pomoSay.speechText() === null &&
-            !events.isDialoguePlaybackBlocked() &&
-            events.scheduledDialogueCount() === 0
-              ? undefined
-              : ''
-          }
-          data-player-expanded={isPlayerExpanded() ? '' : undefined}
-        >
-          <PMusicPlayer
-            expanded={isPlayerExpanded()}
-            onExpandedChange={setIsPlayerExpanded}
+        <Show when={hasEntered()}>
+          <PStudioEvents
+            isPlayerExpanded={isPlayerExpanded()}
+            onPlayerExpandedChange={setIsPlayerExpanded}
+            onPomodoroPresentationChange={setPomodoroPresentation}
             onTrackChange={setCurrentTrack}
           />
-          <div class="pomo-media-messages">
-            <PFeedStatus />
-            <PDialoguePlayer
-              externalText={pomoSay.speechText()}
-              onStopExternalSpeech={pomoSay.stop}
-            />
-          </div>
-        </div>
-        <SceneToolbar
-          activity={activity()}
-          canUseGyroscope={canUseGyroscope()}
-          gaze={gaze()}
-          isSceneTransitioning={isSceneLoading() && hasSceneRendered()}
-          onActivityChange={setActivity}
-          onGazeChange={setGaze}
-          onMotionInputChange={setMotionInput}
-          onMotionModeChange={setMotionMode}
-          onScreenSaverDelayChange={screenSaver.onDelayChange}
-          onTimeModeChange={setTimeMode}
-          screenSaverDelay={screenSaver.delay()}
-          motionInput={motionInput()}
-          motionMode={motionMode()}
-          time={time()}
-          timeMode={timeMode()}
-        />
+          <SceneToolbar
+            activity={activity()}
+            canUseGyroscope={canUseGyroscope()}
+            gaze={gaze()}
+            isSceneTransitioning={isSceneLoading() && hasSceneRendered()}
+            onActivityChange={setActivity}
+            onGazeChange={setGaze}
+            onMotionInputChange={setMotionInput}
+            onMotionModeChange={setMotionMode}
+            onScreenSaverDelayChange={screenSaver.onDelayChange}
+            onTimeModeChange={setTimeMode}
+            screenSaverDelay={screenSaver.delay()}
+            motionInput={motionInput()}
+            motionMode={motionMode()}
+            time={time()}
+            timeMode={timeMode()}
+          />
+        </Show>
       </div>
       <Show when={isEntryVisible()}>
         <PEntry
@@ -367,11 +395,3 @@ const PStudioContent = () => {
     </section>
   )
 }
-
-export const PStudio = () => (
-  <PEventProvider>
-    <PFeedProvider>
-      <PStudioContent />
-    </PFeedProvider>
-  </PEventProvider>
-)

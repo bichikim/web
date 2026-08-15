@@ -2,7 +2,7 @@ import {Title} from '@solidjs/meta'
 import {useSearchParams} from '@solidjs/router'
 import {clientOnly} from '@solidjs/start'
 
-const PDialogueEditor = clientOnly(() => import('../../components/PDialogueEditor'), {
+const PDialogueEditor = clientOnly(() => import('../components/PDialogueEditor'), {
   lazy: true,
 })
 

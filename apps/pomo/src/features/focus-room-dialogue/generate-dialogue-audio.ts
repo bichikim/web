@@ -1,5 +1,5 @@
 import {
-  createWaveBlob,
+  createOpusBlob,
   getSupertonicErrorMessage,
   getSupertonicModel,
   type SupertonicAudioChunk,
@@ -39,7 +39,7 @@ export type GenerateDialogueAudioResult =
   | GenerateDialogueAudioFailure
   | GenerateDialogueAudioSuccess
 
-/** Generates a dialogue WAV and subtitle timeline using the same model contract as the editor. */
+/** Generates compressed dialogue audio and a subtitle timeline using the editor model contract. */
 export const generateDialogueAudio = async (
   options: GenerateDialogueAudioOptions,
 ): Promise<GenerateDialogueAudioResult> => {
@@ -69,7 +69,7 @@ export const generateDialogueAudio = async (
         return {
           ok: true,
           value: {
-            audio: createWaveBlob(result.value.audio.samples, result.value.audio.sampleRate),
+            audio: await createOpusBlob(result.value.audio.samples, result.value.audio.sampleRate),
             durationMs: timeline.durationMs,
             segments: timeline.segments,
           },
