@@ -32,6 +32,49 @@ const getAllowedDomain = (
 ): string | undefined =>
   allowedDomains.find((domain) => hostname === domain || hostname.endsWith(`.${domain}`))
 
+const getArticleIdentity = (value: string): string | undefined => {
+  const url = new URL(normalizeUrl(value))
+  const articleId = url.pathname.match(/-(?<articleId>\d{6,})$/u)?.groups?.articleId
+
+  return articleId === undefined ? undefined : `${url.hostname}:${articleId}`
+}
+
+const createSourceResolver = (searchSourceUrls: ReadonlyArray<string>) => {
+  const sourcesByUrl = new Map(searchSourceUrls.map((value) => [normalizeUrl(value), value]))
+  const sourcesByArticleIdentity = new Map<string, Array<string>>()
+
+  for (const value of searchSourceUrls) {
+    const identity = getArticleIdentity(value)
+
+    if (identity !== undefined) {
+      const sources = sourcesByArticleIdentity.get(identity) ?? []
+      sources.push(value)
+      sourcesByArticleIdentity.set(identity, sources)
+    }
+  }
+
+  return (value: string): string => {
+    const normalizedUrl = normalizeUrl(value)
+    const exactSource = sourcesByUrl.get(normalizedUrl)
+
+    if (exactSource !== undefined) {
+      return exactSource
+    }
+
+    const identity = getArticleIdentity(value)
+    const articleSources =
+      identity === undefined ? undefined : sourcesByArticleIdentity.get(identity)
+
+    if (articleSources?.length === 1) {
+      return articleSources[0]!
+    }
+
+    throw new TypeError(
+      `A generated source was not returned by OpenAI web search: ${normalizedUrl}`,
+    )
+  }
+}
+
 const getMomentSourceUrls = (moment: HistoricalMomentDraft): ReadonlyArray<string> => [
   ...moment.sources.map((source) => source.url),
   ...moment.sections.event.sourceUrls,
@@ -45,7 +88,7 @@ export const validateHistoryOutput = (
 ): HistoryGenerationOutput => {
   const parsedJson: unknown = JSON.parse(options.outputText)
   const output = historyGenerationOutputSchema.parse(parsedJson)
-  const searchSources = new Set(options.searchSourceUrls.map(normalizeUrl))
+  const resolveSource = createSourceResolver(options.searchSourceUrls)
   const momentKeys = new Set<string>()
 
   for (const moment of output.moments) {
@@ -61,6 +104,15 @@ export const validateHistoryOutput = (
     }
 
     momentKeys.add(momentKey)
+
+    for (const source of moment.sources) {
+      source.url = resolveSource(source.url)
+    }
+
+    for (const section of Object.values(moment.sections)) {
+      section.sourceUrls = section.sourceUrls.map(resolveSource)
+    }
+
     const momentSources = new Set(moment.sources.map((source) => normalizeUrl(source.url)))
     const publishers = new Set(
       moment.sources.map((source) => {
@@ -80,12 +132,6 @@ export const validateHistoryOutput = (
 
       if (getAllowedDomain(hostname, options.policy.allowedDomains) === undefined) {
         throw new TypeError(`A generated source uses a disallowed domain: ${hostname}`)
-      }
-
-      if (!searchSources.has(normalizedUrl)) {
-        throw new TypeError(
-          `A generated source was not returned by OpenAI web search: ${normalizedUrl}`,
-        )
       }
 
       if (!momentSources.has(normalizedUrl)) {

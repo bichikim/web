@@ -77,6 +77,29 @@ it('should accept canonical variants of a searched source URL', () => {
   ).not.toThrow()
 })
 
+it('should replace a mistyped article slug when its source ID uniquely matches', () => {
+  const output = createOutput()
+  const searchedUrl =
+    'https://www.archive.example/history/verified-article-title-180983782/?utm_source=openai'
+  const generatedUrl = 'https://archive.example/history/mistyped-title-180983782'
+  output.moments[0]!.sources[0]!.url = generatedUrl
+
+  for (const section of Object.values(output.moments[0]!.sections)) {
+    section.sourceUrls[0] = generatedUrl
+  }
+
+  const result = validateHistoryOutput({
+    outputText: JSON.stringify(output),
+    policy: POLICY,
+    searchSourceUrls: [searchedUrl, ...SOURCE_URLS],
+    targetDay: 15,
+    targetMonth: 8,
+  })
+
+  expect(result.moments[0]!.sources[0]!.url).toBe(searchedUrl)
+  expect(result.moments[0]!.sections.context.sourceUrls[0]).toBe(searchedUrl)
+})
+
 it('should reject a URL that did not come from OpenAI web search', () => {
   const output = createOutput()
   output.moments[0]!.sources[0]!.url = 'https://archive.example/invented'
