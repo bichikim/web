@@ -45,4 +45,14 @@ describe('PButton', () => {
 
     expect(result.getByRole('button', {name: '99개 모두 중지'})).toBeDefined()
   })
+
+  it('should forward an explicit button type', () => {
+    const result = render(() => (
+      <PButton onPress={() => undefined} type="submit">
+        저장
+      </PButton>
+    ))
+
+    expect(result.getByRole('button', {name: '저장'}).getAttribute('type')).toBe('submit')
+  })
 })

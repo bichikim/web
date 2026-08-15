@@ -25,7 +25,8 @@ export default defineConfig({
   plugins: [
     // AI_NOTE - Unit tests need a resolvable CSS module, while UnoCSS transformation rewrites class snapshots and trigger fixtures.
     virtualUnoCssPlugin,
-    solid() as any,
+    // AI_NOTE - HMR is inactive in tests; disabling its transform prevents synthetic refresh branches from lowering source coverage.
+    solid({hot: false}) as any,
     monorepoAlias({
       // 패키지별 import 경로 별칭 (`@` → `src` 등)
       alias: {
