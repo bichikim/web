@@ -349,7 +349,7 @@ importers:
         version: 0.15.4(solid-js@1.9.12)
       '@solidjs/start':
         specifier: 'catalog:'
-        version: 1.3.2(@testing-library/jest-dom@6.9.1)(solid-js@1.9.12)(vinxi@0.5.11(@types/node@22.19.17)(db0@0.3.4(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.9)))(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.9))(encoding@0.1.13)(idb-keyval@6.2.5)(ioredis@5.10.1)(jiti@2.6.1)(oxc-parser@0.127.0)(terser@5.46.2)(tsx@4.21.0)(xml2js@0.6.2)(yaml@2.8.1))(vite@7.3.2(@types/node@22.19.17)(jiti@2.6.1)(terser@5.46.2)(tsx@4.21.0)(yaml@2.8.1))
+        version: 1.3.2(@testing-library/jest-dom@6.9.1)(solid-js@1.9.12)(vinxi@0.5.11(@types/node@22.19.17)(@vercel/functions@3.9.3(ws@8.21.3))(db0@0.3.4(drizzle-orm@0.44.7(@neondatabase/serverless@1.1.0)(gel@2.2.0)(postgres@3.4.9)))(drizzle-orm@0.44.7(@neondatabase/serverless@1.1.0)(gel@2.2.0)(postgres@3.4.9))(encoding@0.1.13)(idb-keyval@6.2.5)(ioredis@5.10.1)(jiti@2.6.1)(oxc-parser@0.127.0)(terser@5.46.2)(tsx@4.21.0)(xml2js@0.6.2)(yaml@2.8.1))(vite@7.3.2(@types/node@22.19.17)(jiti@2.6.1)(terser@5.46.2)(tsx@4.21.0)(yaml@2.8.1))
       '@supabase/ssr':
         specifier: ^0.8.0
         version: 0.8.0(@supabase/supabase-js@2.105.1)
@@ -394,7 +394,7 @@ importers:
         version: 10.1.0
       drizzle-orm:
         specifier: ^0.44.7
-        version: 0.44.7(gel@2.2.0)(postgres@3.4.9)
+        version: 0.44.7(@neondatabase/serverless@1.1.0)(gel@2.2.0)(postgres@3.4.9)
       es-toolkit:
         specifier: 'catalog:'
         version: 1.46.1
@@ -403,7 +403,7 @@ importers:
         version: 1.15.11
       ipx:
         specifier: ^3.1.1
-        version: 3.1.1(db0@0.3.4(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.9)))(idb-keyval@6.2.5)(ioredis@5.10.1)
+        version: 3.1.1(@vercel/functions@3.9.3(ws@8.21.3))(db0@0.3.4(drizzle-orm@0.44.7(@neondatabase/serverless@1.1.0)(gel@2.2.0)(postgres@3.4.9)))(idb-keyval@6.2.5)(ioredis@5.10.1)
       js-cookie:
         specifier: 'catalog:'
         version: 3.0.5
@@ -436,7 +436,7 @@ importers:
         version: 66.6.8(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.3)(vite@7.3.2(@types/node@22.19.17)(jiti@2.6.1)(terser@5.46.2)(tsx@4.21.0)(yaml@2.8.1))
       vinxi:
         specifier: 'catalog:'
-        version: 0.5.11(@types/node@22.19.17)(db0@0.3.4(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.9)))(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.9))(encoding@0.1.13)(idb-keyval@6.2.5)(ioredis@5.10.1)(jiti@2.6.1)(oxc-parser@0.127.0)(terser@5.46.2)(tsx@4.21.0)(xml2js@0.6.2)(yaml@2.8.1)
+        version: 0.5.11(@types/node@22.19.17)(@vercel/functions@3.9.3(ws@8.21.3))(db0@0.3.4(drizzle-orm@0.44.7(@neondatabase/serverless@1.1.0)(gel@2.2.0)(postgres@3.4.9)))(drizzle-orm@0.44.7(@neondatabase/serverless@1.1.0)(gel@2.2.0)(postgres@3.4.9))(encoding@0.1.13)(idb-keyval@6.2.5)(ioredis@5.10.1)(jiti@2.6.1)(oxc-parser@0.127.0)(terser@5.46.2)(tsx@4.21.0)(xml2js@0.6.2)(yaml@2.8.1)
       vite:
         specifier: 'catalog:'
         version: 7.3.2(@types/node@22.19.17)(jiti@2.6.1)(terser@5.46.2)(tsx@4.21.0)(yaml@2.8.1)
@@ -503,7 +503,7 @@ importers:
         version: 0.15.4(solid-js@1.9.12)
       '@solidjs/start':
         specifier: 'catalog:'
-        version: 1.3.2(@testing-library/jest-dom@6.9.1)(solid-js@1.9.12)(vinxi@0.5.11(@types/node@22.19.17)(db0@0.3.4(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.9)))(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.9))(encoding@0.1.13)(idb-keyval@6.2.5)(ioredis@5.10.1)(jiti@2.6.1)(oxc-parser@0.127.0)(terser@5.46.2)(tsx@4.21.0)(xml2js@0.6.2)(yaml@2.8.1))(vite@7.3.2(@types/node@22.19.17)(jiti@2.6.1)(terser@5.46.2)(tsx@4.21.0)(yaml@2.8.1))
+        version: 1.3.2(@testing-library/jest-dom@6.9.1)(solid-js@1.9.12)(vinxi@0.5.11(@types/node@22.19.17)(@vercel/functions@3.9.3(ws@8.21.3))(db0@0.3.4(drizzle-orm@0.44.7(@neondatabase/serverless@1.1.0)(gel@2.2.0)(postgres@3.4.9)))(drizzle-orm@0.44.7(@neondatabase/serverless@1.1.0)(gel@2.2.0)(postgres@3.4.9))(encoding@0.1.13)(idb-keyval@6.2.5)(ioredis@5.10.1)(jiti@2.6.1)(oxc-parser@0.127.0)(terser@5.46.2)(tsx@4.21.0)(xml2js@0.6.2)(yaml@2.8.1))(vite@7.3.2(@types/node@22.19.17)(jiti@2.6.1)(terser@5.46.2)(tsx@4.21.0)(yaml@2.8.1))
       '@unocss/reset':
         specifier: 'catalog:'
         version: 66.6.8
@@ -518,7 +518,7 @@ importers:
         version: 66.6.8(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.3)(vite@7.3.2(@types/node@22.19.17)(jiti@2.6.1)(terser@5.46.2)(tsx@4.21.0)(yaml@2.8.1))
       vinxi:
         specifier: 'catalog:'
-        version: 0.5.11(@types/node@22.19.17)(db0@0.3.4(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.9)))(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.9))(encoding@0.1.13)(idb-keyval@6.2.5)(ioredis@5.10.1)(jiti@2.6.1)(oxc-parser@0.127.0)(terser@5.46.2)(tsx@4.21.0)(xml2js@0.6.2)(yaml@2.8.1)
+        version: 0.5.11(@types/node@22.19.17)(@vercel/functions@3.9.3(ws@8.21.3))(db0@0.3.4(drizzle-orm@0.44.7(@neondatabase/serverless@1.1.0)(gel@2.2.0)(postgres@3.4.9)))(drizzle-orm@0.44.7(@neondatabase/serverless@1.1.0)(gel@2.2.0)(postgres@3.4.9))(encoding@0.1.13)(idb-keyval@6.2.5)(ioredis@5.10.1)(jiti@2.6.1)(oxc-parser@0.127.0)(terser@5.46.2)(tsx@4.21.0)(xml2js@0.6.2)(yaml@2.8.1)
       vite:
         specifier: 'catalog:'
         version: 7.3.2(@types/node@22.19.17)(jiti@2.6.1)(terser@5.46.2)(tsx@4.21.0)(yaml@2.8.1)
@@ -602,6 +602,9 @@ importers:
       '@kobalte/core':
         specifier: ^0.13.11
         version: 0.13.11(solid-js@1.9.12)
+      '@neondatabase/serverless':
+        specifier: ^1.1.0
+        version: 1.1.0
       '@solidjs/meta':
         specifier: 'catalog:'
         version: 0.29.4(solid-js@1.9.12)
@@ -610,10 +613,13 @@ importers:
         version: 0.15.4(solid-js@1.9.12)
       '@solidjs/start':
         specifier: 'catalog:'
-        version: 1.3.2(@testing-library/jest-dom@6.9.1)(solid-js@1.9.12)(vinxi@0.5.11(@types/node@22.19.17)(db0@0.3.4(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.9)))(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.9))(encoding@0.1.13)(idb-keyval@6.2.5)(ioredis@5.10.1)(jiti@2.6.1)(oxc-parser@0.127.0)(terser@5.46.2)(tsx@4.21.0)(xml2js@0.6.2)(yaml@2.8.1))(vite@7.3.2(@types/node@22.19.17)(jiti@2.6.1)(terser@5.46.2)(tsx@4.21.0)(yaml@2.8.1))
+        version: 1.3.2(@testing-library/jest-dom@6.9.1)(solid-js@1.9.12)(vinxi@0.5.11(@types/node@22.19.17)(@vercel/functions@3.9.3(ws@8.21.3))(db0@0.3.4(drizzle-orm@0.44.7(@neondatabase/serverless@1.1.0)(gel@2.2.0)(postgres@3.4.9)))(drizzle-orm@0.44.7(@neondatabase/serverless@1.1.0)(gel@2.2.0)(postgres@3.4.9))(encoding@0.1.13)(idb-keyval@6.2.5)(ioredis@5.10.1)(jiti@2.6.1)(oxc-parser@0.127.0)(terser@5.46.2)(tsx@4.21.0)(xml2js@0.6.2)(yaml@2.8.1))(vite@7.3.2(@types/node@22.19.17)(jiti@2.6.1)(terser@5.46.2)(tsx@4.21.0)(yaml@2.8.1))
       '@unocss/reset':
         specifier: 'catalog:'
         version: 66.6.8
+      '@vercel/functions':
+        specifier: ^3.9.3
+        version: 3.9.3(ws@8.21.3)
       class-variance-authority:
         specifier: 'catalog:'
         version: 0.7.1
@@ -623,12 +629,18 @@ importers:
       dexie:
         specifier: ^4.4.4
         version: 4.4.4
+      drizzle-orm:
+        specifier: ^0.44.7
+        version: 0.44.7(@neondatabase/serverless@1.1.0)(gel@2.2.0)(postgres@3.4.9)
       media-chrome:
         specifier: ^4.19.2
         version: 4.19.2(react@19.2.5)
       onnxruntime-web:
         specifier: 1.23.2
         version: 1.23.2
+      openai:
+        specifier: ^7.4.0
+        version: 7.4.0(ws@8.21.3)(zod@4.4.2)
       pixi.js:
         specifier: ^8.19.0
         version: 8.19.0
@@ -640,7 +652,7 @@ importers:
         version: 66.6.8(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.3)(vite@7.3.2(@types/node@22.19.17)(jiti@2.6.1)(terser@5.46.2)(tsx@4.21.0)(yaml@2.8.1))
       vinxi:
         specifier: 'catalog:'
-        version: 0.5.11(@types/node@22.19.17)(db0@0.3.4(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.9)))(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.9))(encoding@0.1.13)(idb-keyval@6.2.5)(ioredis@5.10.1)(jiti@2.6.1)(oxc-parser@0.127.0)(terser@5.46.2)(tsx@4.21.0)(xml2js@0.6.2)(yaml@2.8.1)
+        version: 0.5.11(@types/node@22.19.17)(@vercel/functions@3.9.3(ws@8.21.3))(db0@0.3.4(drizzle-orm@0.44.7(@neondatabase/serverless@1.1.0)(gel@2.2.0)(postgres@3.4.9)))(drizzle-orm@0.44.7(@neondatabase/serverless@1.1.0)(gel@2.2.0)(postgres@3.4.9))(encoding@0.1.13)(idb-keyval@6.2.5)(ioredis@5.10.1)(jiti@2.6.1)(oxc-parser@0.127.0)(terser@5.46.2)(tsx@4.21.0)(xml2js@0.6.2)(yaml@2.8.1)
       vite:
         specifier: 'catalog:'
         version: 7.3.2(@types/node@22.19.17)(jiti@2.6.1)(terser@5.46.2)(tsx@4.21.0)(yaml@2.8.1)
@@ -657,6 +669,12 @@ importers:
       '@winter-love/unocss-config':
         specifier: workspace:*
         version: link:../../packages/unocss-config
+      dotenv:
+        specifier: 'catalog:'
+        version: 16.6.1
+      drizzle-kit:
+        specifier: ^0.31.10
+        version: 0.31.10
 
   apps/sidebuy-api:
     dependencies:
@@ -2944,6 +2962,10 @@ packages:
   '@neoconfetti/react@1.0.0':
     resolution: {integrity: sha512-klcSooChXXOzIm+SE5IISIAn3bYzYfPjbX7D7HoqZL84oAfgREeSg5vSIaSFH+DaGzzvImTyWe1OyrJ67vik4A==}
 
+  '@neondatabase/serverless@1.1.0':
+    resolution: {integrity: sha512-r3ZZhRjEcfEdKIZnoB1RusNgvHuaBRqfCzV4Gi+5A9yUX0S4HTws/ASWqt13wL4y4I+0rqsWGdA2w7EQXHi3+Q==}
+    engines: {node: '>=19.0.0'}
+
   '@nodelib/fs.scandir@2.1.5':
     resolution: {integrity: sha512-vq24Bq3ym5HEQm2NKCr3yXDwjc7vTsEThRDnkp2DK9p1uqLR+DHurm/NOTo0KG7HYHU7eppKZj3MyqYuMBf62g==}
     engines: {node: '>= 8'}
@@ -4844,10 +4866,33 @@ packages:
       vue-router:
         optional: true
 
+  '@vercel/cli-config@0.2.3':
+    resolution: {integrity: sha512-Ggh0Wmi92TUkUexmSUPkkDtvJmbjUr7IvF5T3FkSsWrXXs3GFzOujfxFpECdJZpux1JG4SWDv9BT4w++TDgD6A==}
+
+  '@vercel/cli-exec@1.0.1':
+    resolution: {integrity: sha512-g9XerViJ/paZujufXYcu5XYI2vU2rtB4sgdpjUHde5RnOkdmpu0ngH46LCFGHoPXO/C+qDPSczIHIRN+8Q2YKQ==}
+    engines: {node: '>= 18'}
+
+  '@vercel/functions@3.9.3':
+    resolution: {integrity: sha512-cbzTdASCZDnufrABc8oO00e/FqlqFFSdld+iGZPhrWBDHP4Pu8ESKKYIzASqYvbYYUIWujBvEa5LLCcZzm7WEw==}
+    engines: {node: '>= 20'}
+    peerDependencies:
+      '@aws-sdk/credential-provider-web-identity': '*'
+      ws: '>=8'
+    peerDependenciesMeta:
+      '@aws-sdk/credential-provider-web-identity':
+        optional: true
+      ws:
+        optional: true
+
   '@vercel/nft@1.5.0':
     resolution: {integrity: sha512-IWTDeIoWhQ7ZtRO/JRKH+jhmeQvZYhtGPmzw/QGDY+wDCQqfm25P9yIdoAFagu4fWsK4IwZXDFIjrmp5rRm/sA==}
     engines: {node: '>=20'}
     hasBin: true
+
+  '@vercel/oidc@3.8.4':
+    resolution: {integrity: sha512-FGNvVZ5pgX9FaBqkPt6VkYFZ6bWAMDzYi7nxW+1Xt+Z4fn5PuTULVwsxjKc+0uKhysyWBQmvsmM50Oh6C2/oMA==}
+    engines: {node: '>= 20'}
 
   '@vinxi/listhen@1.5.6':
     resolution: {integrity: sha512-WSN1z931BtasZJlgPp704zJFnQFRg7yzSjkm3MzAWQYe4uXFXlFr1hc5Ac2zae5/HDOz5x1/zDM5Cb54vTCnWw==}
@@ -6258,6 +6303,10 @@ packages:
     resolution: {integrity: sha512-mQw+2fkQbALzQ7V0MY0IqdnXNOeTtP4r0lN9z7AAawCXgqea7bDii20AYrIBrFd/Hx0M2Ocz6S111CaFkUcb0Q==}
     engines: {node: '>=0.8.x'}
 
+  execa@5.1.1:
+    resolution: {integrity: sha512-8uSpZZocAZRBAPIEINJj3Lo9HyGitllczc27Eh5YYojjMFMn8yHMDMaUHE2Jqfq05D/wucwI4JGURyXt1vchyg==}
+    engines: {node: '>=10'}
+
   execa@8.0.1:
     resolution: {integrity: sha512-VyhnebXciFV2DESc+p6B+y0LjSm0krU4OgJN44qFAhBY0TJ+1V61tYD2+wHusZ6F9n5K+vl8k0sTy7PEfV4qpg==}
     engines: {node: '>=16.17'}
@@ -6441,6 +6490,10 @@ packages:
   get-proto@1.0.1:
     resolution: {integrity: sha512-sTSfBjoXBp89JvIKIefqw7U2CCebsc74kiY6awiGogKtoSGbgjYE/G/+l9sF3MWFPNc9IcoOC4ODfKHfxFmp0g==}
     engines: {node: '>= 0.4'}
+
+  get-stream@6.0.1:
+    resolution: {integrity: sha512-ts6Wi+2j3jQjqi70w5AlN8DFnkSwC+MqmxEzdEALB2qXZYV3X/b1CTfgPLGJNMeAWxdPfU8FO1ms3NUfaHCPYg==}
+    engines: {node: '>=10'}
 
   get-stream@8.0.1:
     resolution: {integrity: sha512-VaUJspBffn/LMCJVoMvSAdmscJyS1auj5Zulnn5UoYcY531UWmdwhRWkcGKnGU93m5HSXP9LP2usOryrBtQowA==}
@@ -6628,6 +6681,10 @@ packages:
 
   httpxy@0.5.1:
     resolution: {integrity: sha512-JPhqYiixe1A1I+MXDewWDZqeudBGU8Q9jCHYN8ML+779RQzLjTi78HBvWz4jMxUD6h2/vUL12g4q/mFM0OUw1A==}
+
+  human-signals@2.1.0:
+    resolution: {integrity: sha512-B4FFZ6q/T2jhhksgkbEW3HBvWIfDW85snkQgawt07S7J5QXTk6BkNV+0yAeZrM5QpMAdYlocGoljn0sJ/WQkFw==}
+    engines: {node: '>=10.17.0'}
 
   human-signals@5.0.0:
     resolution: {integrity: sha512-AXcZb6vzzrFAUE61HnN4mpLqd/cSIwNQjtNWR0euPm6y0iqx3G4gOXaIDdtdDwZmhwe82LA6+zinmW4UBWVePQ==}
@@ -6867,6 +6924,9 @@ packages:
 
   jju@1.4.0:
     resolution: {integrity: sha512-8wb9Yw966OSxApiCt0K3yNJL8pnNeIv+OEq2YMidz4FKP6nonSRoOXc80iXY4JaN2FC11B9qsNmDsm+ZOfMROA==}
+
+  jose@5.10.0:
+    resolution: {integrity: sha512-s+3Al/p9g32Iq+oqXxkW//7jk2Vig6FF1CFqzVXoTUXt2qz89YWbL+OwS17NFYEvxC35n0FKeGO2LGYSxeM2Gg==}
 
   js-binary-schema-parser@2.0.3:
     resolution: {integrity: sha512-xezGJmOb4lk/M1ZZLTR/jaBHQ4gG/lqQnJqdIv4721DMggsa1bDVlHXNeHYogaIEHD9vCRv0fcL4hMA+Coarkg==}
@@ -7185,6 +7245,10 @@ packages:
     engines: {node: '>=16'}
     hasBin: true
 
+  mimic-fn@2.1.0:
+    resolution: {integrity: sha512-OqbOk5oEQeAZ8WXWydlu9HJjz9WVdEIvamMCcXmuqUYjTknH/sqsWvhQ3vgwKFRR1HpjvNBKQ37nbJgYzGqGcg==}
+    engines: {node: '>=6'}
+
   mimic-fn@4.0.0:
     resolution: {integrity: sha512-vqiC06CuhBTUdZH+RYl8sFrL096vA45Ok5ISO6sE/Mr1jRbGH4Csnhi8f3wKVl7x8mO4Au7Ir9D3Oyv1VYMFJw==}
     engines: {node: '>=12'}
@@ -7373,6 +7437,10 @@ packages:
     resolution: {integrity: sha512-JYc0DPlpGWB40kH5g07gGTrYuMqV653k3uBKY6uITPWds3M0ov3GaWGp9lbE3Bzngx8+XkfzgvASb9vk9JDFXQ==}
     engines: {node: '>=14.16'}
 
+  npm-run-path@4.0.1:
+    resolution: {integrity: sha512-S48WzZW777zhNIrn7gxOlISNAqi9ZC/uQFnRdbeIHhZhCA6UqpkOT8T1G7BvfdgP4Er8gF4sUbaS0i7QvIfCWw==}
+    engines: {node: '>=8'}
+
   npm-run-path@5.3.0:
     resolution: {integrity: sha512-ppwTtiJZq0O/ai0z7yfudtBpWIoxM8yE6nHi1X47eFR2EWORqfbu6CnPlNsjeN683eT0qG6H/Pyf9fCcvjnnnQ==}
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
@@ -7411,6 +7479,10 @@ packages:
   once@1.4.0:
     resolution: {integrity: sha512-lNaJgI+2Q5URQBkccEKHTQOPaXdUxnZZElQTZY0MFUAuaEqe1E+Nyvgdz/aIyNi6Z9MzO5dv1H8n58/GELp3+w==}
 
+  onetime@5.1.2:
+    resolution: {integrity: sha512-kbpaSSGJTWdAY5KPVeMOKXSrPtr8C8C7wodJbcsd51jRnmD+GZu8Y0VoU6Dm5Z4vWr0Ig/1NKuWRKf7j5aaYSg==}
+    engines: {node: '>=6'}
+
   onetime@6.0.0:
     resolution: {integrity: sha512-1FlR+gjXK7X+AsAHso35MnyN5KqGwJRi/31ft6x0M194ht7S+rWAvd7PHss9xSKMzE0asv1pyIHaJYq+BbacAQ==}
     engines: {node: '>=12'}
@@ -7445,9 +7517,34 @@ packages:
     resolution: {integrity: sha512-smsWv2LzFjP03xmvFoJ331ss6h+jixfA4UUV/Bsiyuu4YJPfN+FIQGOIiv4w9/+MoHkfkJ22UIaQWRVFRfH6Vw==}
     engines: {node: '>=20'}
 
+  openai@7.4.0:
+    resolution: {integrity: sha512-+C9Muit5x8j9R8ej8ZzVgKcrVDtqFqTy9gxFdov0EItLgU68zrJtF9ZeT0cyqJQW9S3PCJkdFgADtRGquRBtew==}
+    engines: {node: '>=22.0.0'}
+    peerDependencies:
+      '@aws-sdk/credential-provider-node': '>=3.972.0 <4'
+      '@smithy/hash-node': '>=4.3.0 <5'
+      '@smithy/signature-v4': '>=5.4.0 <6'
+      ws: ^8.18.0
+      zod: ^3.25 || ^4.0
+    peerDependenciesMeta:
+      '@aws-sdk/credential-provider-node':
+        optional: true
+      '@smithy/hash-node':
+        optional: true
+      '@smithy/signature-v4':
+        optional: true
+      ws:
+        optional: true
+      zod:
+        optional: true
+
   optionator@0.9.4:
     resolution: {integrity: sha512-6IpQ7mKUxRcZNLIObR0hz7lxsapSSIYNZJwXPGeF0mTVqGKFIXj1DQcMoT22S3ROcLyY/rz0PWaWZ9ayWmad9g==}
     engines: {node: '>= 0.8.0'}
+
+  os-paths@4.4.0:
+    resolution: {integrity: sha512-wrAwOeXp1RRMFfQY8Sy7VaGVmPocaLwSFOYCGKSyo8qmJ+/yaafCl5BCA1IQZWqFSRBrKDYFeR9d/VyQzfH/jg==}
+    engines: {node: '>= 6.0'}
 
   oxc-parser@0.124.0:
     resolution: {integrity: sha512-h07SFj/tp2U3cf3+LFX6MmOguQiM9ahwpGs0ZK5CGhgL8p4kk24etrJKsEzhXAvo7mfvoKTZooZ5MLKAPRmJ1g==}
@@ -8277,6 +8374,9 @@ packages:
   siginfo@2.0.0:
     resolution: {integrity: sha512-ybx0WO1/8bSBLEWXZvEd7gMW3Sn3JFlW3TvX1nREbDLRNQNaeNN8WK0meBwPdAaOI7TtRRRJn/Es1zhrrCHu7g==}
 
+  signal-exit@3.0.7:
+    resolution: {integrity: sha512-wnD2ZE+l+SPC/uoS0vXeE9L1+0wuaMqKlfz9AMUo38JsyLSBWSFcHR1Rri62LZc12vLr1gb3jl7iwQhgwpAbGQ==}
+
   signal-exit@4.1.0:
     resolution: {integrity: sha512-bzyZ1e88w9O1iNJbKnOlvYTrWPDl46O1bG0D3XInv+9tkPrxrN8jUUTiFlDkkmKWgn1M6CfIA13SuGqOa9Korw==}
     engines: {node: '>=14'}
@@ -8475,6 +8575,10 @@ packages:
   strip-bom@3.0.0:
     resolution: {integrity: sha512-vavAMRXOgBVNF6nyEEmL3DBK19iRpDcoIwW+swQ+CbGiu7lju6t+JklA1MHweoWtadgt4ISVUsXLyDq34ddcwA==}
     engines: {node: '>=4'}
+
+  strip-final-newline@2.0.0:
+    resolution: {integrity: sha512-BrpvfNAE3dcvq7ll3xVumzjKjZQ5tI1sEUIKr3Uoks0XUl45St3FlatVqef9prk4jRDzhW6WZg+3bk93y6pLjA==}
+    engines: {node: '>=6'}
 
   strip-final-newline@3.0.0:
     resolution: {integrity: sha512-dOESqjYr96iWYylGObzd39EuNTa5VJxyvVAEm5Jnh7KGo75V43Hk1odPQkNDyXNmUR6k+gEiDVXnjB8HJ3crXw==}
@@ -9331,6 +9435,14 @@ packages:
     resolution: {integrity: sha512-g/eziiSUNBSsdDJtCLB8bdYEUMj4jR7AGeUo96p/3dTafgjHhpF4RiCFPiRILwjQoDXx5MqkBr4fwWtR3Ky4Wg==}
     engines: {node: '>=20'}
 
+  xdg-app-paths@5.5.1:
+    resolution: {integrity: sha512-hI3flOB4PLZIy5prbtTpirobtPE2ZtZ52szO+2mM9Efp6ErM398La+C1lIpNWDfNoQk+6Lsi6nMcCwVB7pxeMQ==}
+    engines: {node: '>= 6.0'}
+
+  xdg-portable@7.3.0:
+    resolution: {integrity: sha512-sqMMuL1rc0FmMBOzCpd0yuy9trqF2yTTVe+E9ogwCSWQCdDEtQUwrZPT6AxqtsFGRNxycgncbP/xmOOSPw5ZUw==}
+    engines: {node: '>= 6.0'}
+
   xml-name-validator@5.0.0:
     resolution: {integrity: sha512-EvGK8EJ3DhaHfbRlETOWAS5pO9MZITeauHKJyb8wyajUfQUenkIg2MvLDTZ4T/TgIcm3HU0TFBgWWboAZ30UHg==}
     engines: {node: '>=18'}
@@ -9411,6 +9523,9 @@ packages:
   zip-stream@6.0.1:
     resolution: {integrity: sha512-zK7YHHz4ZXpW89AHXUPbQVGKI7uvkd3hzusTdotCg1UxyaVtg0zFJSTfW/Dq5f7OBBVnq6cZIaC8Ti4hb6dtCA==}
     engines: {node: '>= 14'}
+
+  zod@4.1.11:
+    resolution: {integrity: sha512-WPsqwxITS2tzx1bzhIKsEs19ABD5vmCVa4xBo2tq/SrV4RNZtfws1EnCWQXM6yh8bD08a1idvkB5MZSBiZsjwg==}
 
   zod@4.4.2:
     resolution: {integrity: sha512-IynmDyxsEsb9RKzO3J9+4SxXnl2FTFSzNBaKKaMV6tsSk0rw9gYw9gs+JFCq/qk2LCZ78KDwyj+Z289TijSkUw==}
@@ -11238,6 +11353,8 @@ snapshots:
 
   '@neoconfetti/react@1.0.0': {}
 
+  '@neondatabase/serverless@1.1.0': {}
+
   '@nodelib/fs.scandir@2.1.5':
     dependencies:
       '@nodelib/fs.stat': 2.0.5
@@ -12197,11 +12314,11 @@ snapshots:
     dependencies:
       solid-js: 1.9.12
 
-  '@solidjs/start@1.3.2(@testing-library/jest-dom@6.9.1)(solid-js@1.9.12)(vinxi@0.5.11(@types/node@22.19.17)(db0@0.3.4(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.9)))(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.9))(encoding@0.1.13)(idb-keyval@6.2.5)(ioredis@5.10.1)(jiti@2.6.1)(oxc-parser@0.127.0)(terser@5.46.2)(tsx@4.21.0)(xml2js@0.6.2)(yaml@2.8.1))(vite@7.3.2(@types/node@22.19.17)(jiti@2.6.1)(terser@5.46.2)(tsx@4.21.0)(yaml@2.8.1))':
+  '@solidjs/start@1.3.2(@testing-library/jest-dom@6.9.1)(solid-js@1.9.12)(vinxi@0.5.11(@types/node@22.19.17)(@vercel/functions@3.9.3(ws@8.21.3))(db0@0.3.4(drizzle-orm@0.44.7(@neondatabase/serverless@1.1.0)(gel@2.2.0)(postgres@3.4.9)))(drizzle-orm@0.44.7(@neondatabase/serverless@1.1.0)(gel@2.2.0)(postgres@3.4.9))(encoding@0.1.13)(idb-keyval@6.2.5)(ioredis@5.10.1)(jiti@2.6.1)(oxc-parser@0.127.0)(terser@5.46.2)(tsx@4.21.0)(xml2js@0.6.2)(yaml@2.8.1))(vite@7.3.2(@types/node@22.19.17)(jiti@2.6.1)(terser@5.46.2)(tsx@4.21.0)(yaml@2.8.1))':
     dependencies:
       '@tanstack/server-functions-plugin': 1.121.21(vite@7.3.2(@types/node@22.19.17)(jiti@2.6.1)(terser@5.46.2)(tsx@4.21.0)(yaml@2.8.1))
-      '@vinxi/plugin-directives': 0.5.1(vinxi@0.5.11(@types/node@22.19.17)(db0@0.3.4(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.9)))(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.9))(encoding@0.1.13)(idb-keyval@6.2.5)(ioredis@5.10.1)(jiti@2.6.1)(oxc-parser@0.127.0)(terser@5.46.2)(tsx@4.21.0)(xml2js@0.6.2)(yaml@2.8.1))
-      '@vinxi/server-components': 0.5.1(vinxi@0.5.11(@types/node@22.19.17)(db0@0.3.4(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.9)))(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.9))(encoding@0.1.13)(idb-keyval@6.2.5)(ioredis@5.10.1)(jiti@2.6.1)(oxc-parser@0.127.0)(terser@5.46.2)(tsx@4.21.0)(xml2js@0.6.2)(yaml@2.8.1))
+      '@vinxi/plugin-directives': 0.5.1(vinxi@0.5.11(@types/node@22.19.17)(@vercel/functions@3.9.3(ws@8.21.3))(db0@0.3.4(drizzle-orm@0.44.7(@neondatabase/serverless@1.1.0)(gel@2.2.0)(postgres@3.4.9)))(drizzle-orm@0.44.7(@neondatabase/serverless@1.1.0)(gel@2.2.0)(postgres@3.4.9))(encoding@0.1.13)(idb-keyval@6.2.5)(ioredis@5.10.1)(jiti@2.6.1)(oxc-parser@0.127.0)(terser@5.46.2)(tsx@4.21.0)(xml2js@0.6.2)(yaml@2.8.1))
+      '@vinxi/server-components': 0.5.1(vinxi@0.5.11(@types/node@22.19.17)(@vercel/functions@3.9.3(ws@8.21.3))(db0@0.3.4(drizzle-orm@0.44.7(@neondatabase/serverless@1.1.0)(gel@2.2.0)(postgres@3.4.9)))(drizzle-orm@0.44.7(@neondatabase/serverless@1.1.0)(gel@2.2.0)(postgres@3.4.9))(encoding@0.1.13)(idb-keyval@6.2.5)(ioredis@5.10.1)(jiti@2.6.1)(oxc-parser@0.127.0)(terser@5.46.2)(tsx@4.21.0)(xml2js@0.6.2)(yaml@2.8.1))
       cookie-es: 2.0.1
       defu: 6.1.7
       error-stack-parser: 2.1.4
@@ -12213,7 +12330,7 @@ snapshots:
       source-map-js: 1.2.1
       terracotta: 1.1.0(solid-js@1.9.12)
       tinyglobby: 0.2.16
-      vinxi: 0.5.11(@types/node@22.19.17)(db0@0.3.4(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.9)))(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.9))(encoding@0.1.13)(idb-keyval@6.2.5)(ioredis@5.10.1)(jiti@2.6.1)(oxc-parser@0.127.0)(terser@5.46.2)(tsx@4.21.0)(xml2js@0.6.2)(yaml@2.8.1)
+      vinxi: 0.5.11(@types/node@22.19.17)(@vercel/functions@3.9.3(ws@8.21.3))(db0@0.3.4(drizzle-orm@0.44.7(@neondatabase/serverless@1.1.0)(gel@2.2.0)(postgres@3.4.9)))(drizzle-orm@0.44.7(@neondatabase/serverless@1.1.0)(gel@2.2.0)(postgres@3.4.9))(encoding@0.1.13)(idb-keyval@6.2.5)(ioredis@5.10.1)(jiti@2.6.1)(oxc-parser@0.127.0)(terser@5.46.2)(tsx@4.21.0)(xml2js@0.6.2)(yaml@2.8.1)
       vite-plugin-solid: 2.11.12(@testing-library/jest-dom@6.9.1)(solid-js@1.9.12)(vite@7.3.2(@types/node@22.19.17)(jiti@2.6.1)(terser@5.46.2)(tsx@4.21.0)(yaml@2.8.1))
     transitivePeerDependencies:
       - '@testing-library/jest-dom'
@@ -12917,6 +13034,21 @@ snapshots:
       react: 19.2.5
       vue: 3.5.25(typescript@5.9.3)
 
+  '@vercel/cli-config@0.2.3':
+    dependencies:
+      xdg-app-paths: 5.5.1
+      zod: 4.1.11
+
+  '@vercel/cli-exec@1.0.1':
+    dependencies:
+      execa: 5.1.1
+
+  '@vercel/functions@3.9.3(ws@8.21.3)':
+    dependencies:
+      '@vercel/oidc': 3.8.4
+    optionalDependencies:
+      ws: 8.21.3
+
   '@vercel/nft@1.5.0(encoding@0.1.13)(rollup@4.60.3)':
     dependencies:
       '@mapbox/node-pre-gyp': 2.0.3(encoding@0.1.13)
@@ -12935,6 +13067,12 @@ snapshots:
       - encoding
       - rollup
       - supports-color
+
+  '@vercel/oidc@3.8.4':
+    dependencies:
+      '@vercel/cli-config': 0.2.3
+      '@vercel/cli-exec': 1.0.1
+      jose: 5.10.0
 
   '@vinxi/listhen@1.5.6':
     dependencies:
@@ -12956,7 +13094,7 @@ snapshots:
       untun: 0.1.3
       uqr: 0.1.3
 
-  '@vinxi/plugin-directives@0.5.1(vinxi@0.5.11(@types/node@22.19.17)(db0@0.3.4(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.9)))(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.9))(encoding@0.1.13)(idb-keyval@6.2.5)(ioredis@5.10.1)(jiti@2.6.1)(oxc-parser@0.127.0)(terser@5.46.2)(tsx@4.21.0)(xml2js@0.6.2)(yaml@2.8.1))':
+  '@vinxi/plugin-directives@0.5.1(vinxi@0.5.11(@types/node@22.19.17)(@vercel/functions@3.9.3(ws@8.21.3))(db0@0.3.4(drizzle-orm@0.44.7(@neondatabase/serverless@1.1.0)(gel@2.2.0)(postgres@3.4.9)))(drizzle-orm@0.44.7(@neondatabase/serverless@1.1.0)(gel@2.2.0)(postgres@3.4.9))(encoding@0.1.13)(idb-keyval@6.2.5)(ioredis@5.10.1)(jiti@2.6.1)(oxc-parser@0.127.0)(terser@5.46.2)(tsx@4.21.0)(xml2js@0.6.2)(yaml@2.8.1))':
     dependencies:
       '@babel/parser': 7.29.3
       acorn: 8.16.0
@@ -12967,18 +13105,18 @@ snapshots:
       magicast: 0.2.11
       recast: 0.23.11
       tslib: 2.8.1
-      vinxi: 0.5.11(@types/node@22.19.17)(db0@0.3.4(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.9)))(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.9))(encoding@0.1.13)(idb-keyval@6.2.5)(ioredis@5.10.1)(jiti@2.6.1)(oxc-parser@0.127.0)(terser@5.46.2)(tsx@4.21.0)(xml2js@0.6.2)(yaml@2.8.1)
+      vinxi: 0.5.11(@types/node@22.19.17)(@vercel/functions@3.9.3(ws@8.21.3))(db0@0.3.4(drizzle-orm@0.44.7(@neondatabase/serverless@1.1.0)(gel@2.2.0)(postgres@3.4.9)))(drizzle-orm@0.44.7(@neondatabase/serverless@1.1.0)(gel@2.2.0)(postgres@3.4.9))(encoding@0.1.13)(idb-keyval@6.2.5)(ioredis@5.10.1)(jiti@2.6.1)(oxc-parser@0.127.0)(terser@5.46.2)(tsx@4.21.0)(xml2js@0.6.2)(yaml@2.8.1)
 
-  '@vinxi/server-components@0.5.1(vinxi@0.5.11(@types/node@22.19.17)(db0@0.3.4(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.9)))(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.9))(encoding@0.1.13)(idb-keyval@6.2.5)(ioredis@5.10.1)(jiti@2.6.1)(oxc-parser@0.127.0)(terser@5.46.2)(tsx@4.21.0)(xml2js@0.6.2)(yaml@2.8.1))':
+  '@vinxi/server-components@0.5.1(vinxi@0.5.11(@types/node@22.19.17)(@vercel/functions@3.9.3(ws@8.21.3))(db0@0.3.4(drizzle-orm@0.44.7(@neondatabase/serverless@1.1.0)(gel@2.2.0)(postgres@3.4.9)))(drizzle-orm@0.44.7(@neondatabase/serverless@1.1.0)(gel@2.2.0)(postgres@3.4.9))(encoding@0.1.13)(idb-keyval@6.2.5)(ioredis@5.10.1)(jiti@2.6.1)(oxc-parser@0.127.0)(terser@5.46.2)(tsx@4.21.0)(xml2js@0.6.2)(yaml@2.8.1))':
     dependencies:
-      '@vinxi/plugin-directives': 0.5.1(vinxi@0.5.11(@types/node@22.19.17)(db0@0.3.4(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.9)))(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.9))(encoding@0.1.13)(idb-keyval@6.2.5)(ioredis@5.10.1)(jiti@2.6.1)(oxc-parser@0.127.0)(terser@5.46.2)(tsx@4.21.0)(xml2js@0.6.2)(yaml@2.8.1))
+      '@vinxi/plugin-directives': 0.5.1(vinxi@0.5.11(@types/node@22.19.17)(@vercel/functions@3.9.3(ws@8.21.3))(db0@0.3.4(drizzle-orm@0.44.7(@neondatabase/serverless@1.1.0)(gel@2.2.0)(postgres@3.4.9)))(drizzle-orm@0.44.7(@neondatabase/serverless@1.1.0)(gel@2.2.0)(postgres@3.4.9))(encoding@0.1.13)(idb-keyval@6.2.5)(ioredis@5.10.1)(jiti@2.6.1)(oxc-parser@0.127.0)(terser@5.46.2)(tsx@4.21.0)(xml2js@0.6.2)(yaml@2.8.1))
       acorn: 8.16.0
       acorn-loose: 8.5.2
       acorn-typescript: 1.4.13(acorn@8.16.0)
       astring: 1.9.0
       magicast: 0.2.11
       recast: 0.23.11
-      vinxi: 0.5.11(@types/node@22.19.17)(db0@0.3.4(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.9)))(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.9))(encoding@0.1.13)(idb-keyval@6.2.5)(ioredis@5.10.1)(jiti@2.6.1)(oxc-parser@0.127.0)(terser@5.46.2)(tsx@4.21.0)(xml2js@0.6.2)(yaml@2.8.1)
+      vinxi: 0.5.11(@types/node@22.19.17)(@vercel/functions@3.9.3(ws@8.21.3))(db0@0.3.4(drizzle-orm@0.44.7(@neondatabase/serverless@1.1.0)(gel@2.2.0)(postgres@3.4.9)))(drizzle-orm@0.44.7(@neondatabase/serverless@1.1.0)(gel@2.2.0)(postgres@3.4.9))(encoding@0.1.13)(idb-keyval@6.2.5)(ioredis@5.10.1)(jiti@2.6.1)(oxc-parser@0.127.0)(terser@5.46.2)(tsx@4.21.0)(xml2js@0.6.2)(yaml@2.8.1)
 
   '@vite-pwa/assets-generator@1.0.2':
     dependencies:
@@ -14015,9 +14153,9 @@ snapshots:
       '@deno/shim-deno': 0.19.2
       undici-types: 5.28.4
 
-  db0@0.3.4(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.9)):
+  db0@0.3.4(drizzle-orm@0.44.7(@neondatabase/serverless@1.1.0)(gel@2.2.0)(postgres@3.4.9)):
     optionalDependencies:
-      drizzle-orm: 0.44.7(gel@2.2.0)(postgres@3.4.9)
+      drizzle-orm: 0.44.7(@neondatabase/serverless@1.1.0)(gel@2.2.0)(postgres@3.4.9)
 
   de-indent@1.0.2: {}
 
@@ -14155,8 +14293,9 @@ snapshots:
       esbuild: 0.25.12
       tsx: 4.21.0
 
-  drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.9):
+  drizzle-orm@0.44.7(@neondatabase/serverless@1.1.0)(gel@2.2.0)(postgres@3.4.9):
     optionalDependencies:
+      '@neondatabase/serverless': 1.1.0
       gel: 2.2.0
       postgres: 3.4.9
 
@@ -14478,6 +14617,18 @@ snapshots:
 
   events@3.3.0: {}
 
+  execa@5.1.1:
+    dependencies:
+      cross-spawn: 7.0.6
+      get-stream: 6.0.1
+      human-signals: 2.1.0
+      is-stream: 2.0.1
+      merge-stream: 2.0.0
+      npm-run-path: 4.0.1
+      onetime: 5.1.2
+      signal-exit: 3.0.7
+      strip-final-newline: 2.0.0
+
   execa@8.0.1:
     dependencies:
       cross-spawn: 7.0.6
@@ -14700,6 +14851,8 @@ snapshots:
     dependencies:
       dunder-proto: 1.0.1
       es-object-atoms: 1.1.1
+
+  get-stream@6.0.1: {}
 
   get-stream@8.0.1: {}
 
@@ -14945,6 +15098,8 @@ snapshots:
 
   httpxy@0.5.1: {}
 
+  human-signals@2.1.0: {}
+
   human-signals@5.0.0: {}
 
   human-signals@8.0.1: {}
@@ -15013,7 +15168,7 @@ snapshots:
 
   ipaddr.js@1.9.1: {}
 
-  ipx@3.1.1(db0@0.3.4(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.9)))(idb-keyval@6.2.5)(ioredis@5.10.1):
+  ipx@3.1.1(@vercel/functions@3.9.3(ws@8.21.3))(db0@0.3.4(drizzle-orm@0.44.7(@neondatabase/serverless@1.1.0)(gel@2.2.0)(postgres@3.4.9)))(idb-keyval@6.2.5)(ioredis@5.10.1):
     dependencies:
       '@fastify/accept-negotiator': 2.0.1
       citty: 0.1.6
@@ -15029,7 +15184,7 @@ snapshots:
       sharp: 0.34.5
       svgo: 4.0.1
       ufo: 1.6.4
-      unstorage: 1.17.5(db0@0.3.4(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.9)))(idb-keyval@6.2.5)(ioredis@5.10.1)
+      unstorage: 1.17.5(@vercel/functions@3.9.3(ws@8.21.3))(db0@0.3.4(drizzle-orm@0.44.7(@neondatabase/serverless@1.1.0)(gel@2.2.0)(postgres@3.4.9)))(idb-keyval@6.2.5)(ioredis@5.10.1)
       xss: 1.0.15
     transitivePeerDependencies:
       - '@azure/app-configuration'
@@ -15166,6 +15321,8 @@ snapshots:
   jiti@2.6.1: {}
 
   jju@1.4.0: {}
+
+  jose@5.10.0: {}
 
   js-binary-schema-parser@2.0.3: {}
 
@@ -15488,6 +15645,8 @@ snapshots:
 
   mime@4.1.0: {}
 
+  mimic-fn@2.1.0: {}
+
   mimic-fn@4.0.0: {}
 
   mimic-response@3.1.0: {}
@@ -15586,7 +15745,7 @@ snapshots:
 
   negotiator@0.6.3: {}
 
-  nitropack@2.13.4(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.9))(encoding@0.1.13)(idb-keyval@6.2.5)(oxc-parser@0.127.0)(xml2js@0.6.2):
+  nitropack@2.13.4(@vercel/functions@3.9.3(ws@8.21.3))(drizzle-orm@0.44.7(@neondatabase/serverless@1.1.0)(gel@2.2.0)(postgres@3.4.9))(encoding@0.1.13)(idb-keyval@6.2.5)(oxc-parser@0.127.0)(xml2js@0.6.2):
     dependencies:
       '@cloudflare/kv-asset-handler': 0.4.2
       '@rollup/plugin-alias': 6.0.0(rollup@4.60.3)
@@ -15607,7 +15766,7 @@ snapshots:
       cookie-es: 2.0.1
       croner: 10.0.1
       crossws: 0.3.5
-      db0: 0.3.4(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.9))
+      db0: 0.3.4(drizzle-orm@0.44.7(@neondatabase/serverless@1.1.0)(gel@2.2.0)(postgres@3.4.9))
       defu: 6.1.7
       destr: 2.0.5
       dot-prop: 10.1.0
@@ -15653,7 +15812,7 @@ snapshots:
       unenv: 2.0.0-rc.24
       unimport: 6.2.0(oxc-parser@0.127.0)
       unplugin-utils: 0.3.1
-      unstorage: 1.17.5(db0@0.3.4(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.9)))(idb-keyval@6.2.5)(ioredis@5.10.1)
+      unstorage: 1.17.5(@vercel/functions@3.9.3(ws@8.21.3))(db0@0.3.4(drizzle-orm@0.44.7(@neondatabase/serverless@1.1.0)(gel@2.2.0)(postgres@3.4.9)))(idb-keyval@6.2.5)(ioredis@5.10.1)
       untyped: 2.0.0
       unwasm: 0.5.3
       youch: 4.1.1
@@ -15741,6 +15900,10 @@ snapshots:
 
   normalize-url@8.1.1: {}
 
+  npm-run-path@4.0.1:
+    dependencies:
+      path-key: 3.1.1
+
   npm-run-path@5.3.0:
     dependencies:
       path-key: 4.0.0
@@ -15777,6 +15940,10 @@ snapshots:
   once@1.4.0:
     dependencies:
       wrappy: 1.0.2
+
+  onetime@5.1.2:
+    dependencies:
+      mimic-fn: 2.1.0
 
   onetime@6.0.0:
     dependencies:
@@ -15834,6 +16001,11 @@ snapshots:
       powershell-utils: 0.1.0
       wsl-utils: 0.3.1
 
+  openai@7.4.0(ws@8.21.3)(zod@4.4.2):
+    optionalDependencies:
+      ws: 8.21.3
+      zod: 4.4.2
+
   optionator@0.9.4:
     dependencies:
       deep-is: 0.1.4
@@ -15842,6 +16014,8 @@ snapshots:
       prelude-ls: 1.2.1
       type-check: 0.4.0
       word-wrap: 1.2.5
+
+  os-paths@4.4.0: {}
 
   oxc-parser@0.124.0(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.3):
     dependencies:
@@ -16886,6 +17060,8 @@ snapshots:
 
   siginfo@2.0.0: {}
 
+  signal-exit@3.0.7: {}
+
   signal-exit@4.1.0: {}
 
   simple-concat@1.0.1: {}
@@ -17111,6 +17287,8 @@ snapshots:
       ansi-regex: 6.2.2
 
   strip-bom@3.0.0: {}
+
+  strip-final-newline@2.0.0: {}
 
   strip-final-newline@3.0.0: {}
 
@@ -17644,7 +17822,7 @@ snapshots:
       picomatch: 4.0.4
       webpack-virtual-modules: 0.6.2
 
-  unstorage@1.17.5(db0@0.3.4(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.9)))(idb-keyval@6.2.5)(ioredis@5.10.1):
+  unstorage@1.17.5(@vercel/functions@3.9.3(ws@8.21.3))(db0@0.3.4(drizzle-orm@0.44.7(@neondatabase/serverless@1.1.0)(gel@2.2.0)(postgres@3.4.9)))(idb-keyval@6.2.5)(ioredis@5.10.1):
     dependencies:
       anymatch: 3.1.3
       chokidar: 5.0.0
@@ -17655,7 +17833,8 @@ snapshots:
       ofetch: 1.5.1
       ufo: 1.6.4
     optionalDependencies:
-      db0: 0.3.4(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.9))
+      '@vercel/functions': 3.9.3(ws@8.21.3)
+      db0: 0.3.4(drizzle-orm@0.44.7(@neondatabase/serverless@1.1.0)(gel@2.2.0)(postgres@3.4.9))
       idb-keyval: 6.2.5
       ioredis: 5.10.1
 
@@ -17721,7 +17900,7 @@ snapshots:
       '@types/unist': 3.0.3
       vfile-message: 4.0.3
 
-  vinxi@0.5.11(@types/node@22.19.17)(db0@0.3.4(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.9)))(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.9))(encoding@0.1.13)(idb-keyval@6.2.5)(ioredis@5.10.1)(jiti@2.6.1)(oxc-parser@0.127.0)(terser@5.46.2)(tsx@4.21.0)(xml2js@0.6.2)(yaml@2.8.1):
+  vinxi@0.5.11(@types/node@22.19.17)(@vercel/functions@3.9.3(ws@8.21.3))(db0@0.3.4(drizzle-orm@0.44.7(@neondatabase/serverless@1.1.0)(gel@2.2.0)(postgres@3.4.9)))(drizzle-orm@0.44.7(@neondatabase/serverless@1.1.0)(gel@2.2.0)(postgres@3.4.9))(encoding@0.1.13)(idb-keyval@6.2.5)(ioredis@5.10.1)(jiti@2.6.1)(oxc-parser@0.127.0)(terser@5.46.2)(tsx@4.21.0)(xml2js@0.6.2)(yaml@2.8.1):
     dependencies:
       '@babel/core': 7.29.0
       '@babel/plugin-syntax-jsx': 7.28.6(@babel/core@7.29.0)
@@ -17742,7 +17921,7 @@ snapshots:
       hookable: 5.5.3
       http-proxy: 1.18.1
       micromatch: 4.0.8
-      nitropack: 2.13.4(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.9))(encoding@0.1.13)(idb-keyval@6.2.5)(oxc-parser@0.127.0)(xml2js@0.6.2)
+      nitropack: 2.13.4(@vercel/functions@3.9.3(ws@8.21.3))(drizzle-orm@0.44.7(@neondatabase/serverless@1.1.0)(gel@2.2.0)(postgres@3.4.9))(encoding@0.1.13)(idb-keyval@6.2.5)(oxc-parser@0.127.0)(xml2js@0.6.2)
       node-fetch-native: 1.6.7
       path-to-regexp: 6.3.0
       pathe: 1.1.2
@@ -17754,7 +17933,7 @@ snapshots:
       ufo: 1.6.4
       unctx: 2.5.0
       unenv: 1.10.0
-      unstorage: 1.17.5(db0@0.3.4(drizzle-orm@0.44.7(gel@2.2.0)(postgres@3.4.9)))(idb-keyval@6.2.5)(ioredis@5.10.1)
+      unstorage: 1.17.5(@vercel/functions@3.9.3(ws@8.21.3))(db0@0.3.4(drizzle-orm@0.44.7(@neondatabase/serverless@1.1.0)(gel@2.2.0)(postgres@3.4.9)))(idb-keyval@6.2.5)(ioredis@5.10.1)
       vite: 6.4.2(@types/node@22.19.17)(jiti@2.6.1)(terser@5.46.2)(tsx@4.21.0)(yaml@2.8.1)
       zod: 4.4.2
     transitivePeerDependencies:
@@ -18098,6 +18277,15 @@ snapshots:
       is-wsl: 3.1.1
       powershell-utils: 0.1.0
 
+  xdg-app-paths@5.5.1:
+    dependencies:
+      os-paths: 4.4.0
+      xdg-portable: 7.3.0
+
+  xdg-portable@7.3.0:
+    dependencies:
+      os-paths: 4.4.0
+
   xml-name-validator@5.0.0: {}
 
   xml2js@0.6.2:
@@ -18176,6 +18364,8 @@ snapshots:
       archiver-utils: 5.0.2
       compress-commons: 6.0.2
       readable-stream: 4.7.0
+
+  zod@4.1.11: {}
 
   zod@4.4.2: {}
 
