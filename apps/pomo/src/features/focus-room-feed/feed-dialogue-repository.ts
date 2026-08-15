@@ -1,4 +1,4 @@
-import {createFocusRoomDatabase, type FocusRoomDatabase} from '../focus-room-dialogue/database'
+import {createPDatabase, type PDatabase} from '../focus-room-dialogue/database'
 import {
   type FeedDialogueJob,
   feedDialogueJobSchema,
@@ -41,7 +41,7 @@ const parseMetadata = (values: ReadonlyArray<unknown>) =>
   values.map((value) => feedDialogueMetadataSchema.parse(value))
 
 const updateRecoverableJobs = async (
-  database: FocusRoomDatabase,
+  database: PDatabase,
   jobIds: ReadonlyArray<string>,
   updatedAt: string,
   status: 'dismissed' | 'queued',
@@ -73,7 +73,7 @@ const updateRecoverableJobs = async (
 
 /** Persists feed discovery and generation state beside compatible dialogue records. */
 export const createFeedDialogueRepository = (): FeedDialogueRepository => {
-  const database = createFocusRoomDatabase()
+  const database = createPDatabase()
 
   return {
     async complete(options) {

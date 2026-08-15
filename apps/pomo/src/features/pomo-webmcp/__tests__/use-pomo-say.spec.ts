@@ -10,7 +10,7 @@ import {
   type SupertonicAudioPlayer,
   type SupertonicClient,
 } from '../../supertonic'
-import {usePomoSay} from '../use-pomo-say'
+import {usePSay} from '../use-pomo-say'
 
 vi.mock('../../chat-voice', () => ({
   useChatVoice: vi.fn(),
@@ -105,7 +105,7 @@ afterEach(() => {
   vi.clearAllMocks()
 })
 
-describe('usePomoSay', () => {
+describe('usePSay', () => {
   it('should keep newer speech text while a superseded generation settles', async () => {
     let releaseFirstGeneration: () => void = () => undefined
     const firstGeneration = new Promise<void>((resolve) => {
@@ -126,7 +126,7 @@ describe('usePomoSay', () => {
       await vi.importActual<typeof import('../../chat-voice')>('../../chat-voice')
     vi.mocked(useChatVoice).mockImplementationOnce(() => actualChatVoice.useChatVoice({runtime}))
     const modelContext = createModelContext()
-    const {cleanup, result} = renderHook(() => usePomoSay({onBeforeSpeech: vi.fn()}))
+    const {cleanup, result} = renderHook(() => usePSay({onBeforeSpeech: vi.fn()}))
     await vi.waitFor(() => expect(modelContext.registerTool).toHaveBeenCalledOnce())
     const tool = modelContext.getTool()
 
@@ -167,7 +167,7 @@ describe('usePomoSay', () => {
     )
     vi.mocked(useChatVoice).mockReturnValue(voice)
     const onBeforeSpeech = vi.fn()
-    const {cleanup, result} = renderHook(() => usePomoSay({onBeforeSpeech}))
+    const {cleanup, result} = renderHook(() => usePSay({onBeforeSpeech}))
     await vi.waitFor(() => expect(modelContext.registerTool).toHaveBeenCalledOnce())
     const tool = modelContext.getTool()
 
@@ -195,7 +195,7 @@ describe('usePomoSay', () => {
     const voice = createVoice()
     vi.mocked(voice.speak).mockReturnValueOnce(speech)
     vi.mocked(useChatVoice).mockReturnValue(voice)
-    const {cleanup, result} = renderHook(() => usePomoSay({onBeforeSpeech: vi.fn()}))
+    const {cleanup, result} = renderHook(() => usePSay({onBeforeSpeech: vi.fn()}))
     await vi.waitFor(() => expect(modelContext.registerTool).toHaveBeenCalledOnce())
 
     const activeCall = modelContext.getTool().execute({text: '중지할 소식'})
@@ -220,7 +220,7 @@ describe('usePomoSay', () => {
         status: 'error',
       })
     vi.mocked(useChatVoice).mockReturnValue(voice)
-    const {cleanup, result} = renderHook(() => usePomoSay({onBeforeSpeech: vi.fn()}))
+    const {cleanup, result} = renderHook(() => usePSay({onBeforeSpeech: vi.fn()}))
     await vi.waitFor(() => expect(modelContext.registerTool).toHaveBeenCalledOnce())
 
     const failedCall = modelContext.getTool().execute({text: '실패할 소식'})
@@ -239,7 +239,7 @@ describe('usePomoSay', () => {
     const voice = createVoice()
     vi.mocked(voice.finish).mockReturnValueOnce(playback)
     vi.mocked(useChatVoice).mockReturnValue(voice)
-    const {cleanup} = renderHook(() => usePomoSay({onBeforeSpeech: vi.fn()}))
+    const {cleanup} = renderHook(() => usePSay({onBeforeSpeech: vi.fn()}))
     await vi.waitFor(() => expect(modelContext.registerTool).toHaveBeenCalledOnce())
 
     const toolCall = modelContext.getTool().execute({text: '끝까지 읽을 소식'})

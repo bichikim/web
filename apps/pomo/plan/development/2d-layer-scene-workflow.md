@@ -219,7 +219,7 @@ const scene = {
 
 ## 9. 리뷰 페이지에서 검수한다
 
-`/focus-room-layer-review`에서 다음 순서로 확인한다.
+`/dev/focus-room-layer-review`에서 다음 순서로 확인한다.
 
 1. 모든 레이어를 켠 상태에서 원본 오버레이를 올려 정렬을 확인한다.
 2. 머리 레이어만 끄고 베이스의 복원 범위와 잔상을 확인한다.
@@ -256,7 +256,7 @@ pnpm --filter @apps/pomo typecheck
 - 특수 머리카락 움직임 예시: `src/features/focus-room-animation/day-writing-layer-scene.ts`
 - 눈동자 이동 예시: `src/features/focus-room-animation/day-reading-focused-layer-scene.ts`
 - 눈 자산 생성 스크립트: `scripts/create-focus-room-eye-motion-assets.mjs`
-- 리뷰 화면: `/focus-room-layer-review`
+- 리뷰 화면: `/dev/focus-room-layer-review`
 - 실제 화면: `/focus-room`
 
 새 장면은 먼저 리뷰 화면에서 완성한 뒤 장면 카탈로그에 연결한다. 리뷰용 임시 보정과 실제 화면용 보정을 따로 만들지 않는다. 두 화면이 같은 `PixiLayerSceneDefinition`과 같은 이미지 자산을 사용해야 한다.

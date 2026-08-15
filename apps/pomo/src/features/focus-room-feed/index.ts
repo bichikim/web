@@ -5,12 +5,8 @@ export {DEFAULT_FEED_VOICE_ID, feedConnectionSchema, normalizeFeedUrl} from './s
 export type {FeedConnection, FeedVoiceId, NormalizeFeedUrlResult} from './schema'
 export {useFeedConnections} from './use-feed-connections'
 export type {FeedConnectionController} from './use-feed-connections'
-export {
-  FocusRoomFeedProvider,
-  useFocusRoomFeedContext,
-  useOptionalFocusRoomFeeds,
-} from './FocusRoomFeedContext'
-export type {FocusRoomFeedProviderProps} from './FocusRoomFeedContext'
+export {PFeedProvider, usePFeedContext, useOptionalPFeeds} from './PFeedContext'
+export type {PFeedProviderProps} from './PFeedContext'
 export type {
   FeedDialogueJob,
   FeedDialogueJobStatus,
@@ -20,8 +16,8 @@ export type {
 } from './feed-dialogue-schema'
 export type {
   FeedDialogueListItem,
-  FocusRoomFeedController,
-  FocusRoomFeedState,
-  UseFocusRoomFeedsProps,
+  PFeedController,
+  PFeedState,
+  UsePFeedsProps,
 } from './feed-controller'
 export {findFeedNotificationDialogue} from './feed-controller'

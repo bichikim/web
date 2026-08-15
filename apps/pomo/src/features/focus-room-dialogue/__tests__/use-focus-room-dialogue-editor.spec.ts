@@ -3,11 +3,8 @@ import {createRoot} from 'solid-js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {successResult, type SupertonicClient} from '../../supertonic'
-import type {FocusRoomDialogue} from '../schema'
-import {
-  type FocusRoomDialogueEditorController,
-  useFocusRoomDialogueEditor,
-} from '../use-focus-room-dialogue-editor'
+import type {PDialogue} from '../schema'
+import {type PDialogueEditorController, usePDialogueEditor} from '../use-focus-room-dialogue-editor'
 
 const supertonicMocks = vi.hoisted(() => ({createClient: vi.fn()}))
 const repositoryMocks = vi.hoisted(() => ({
@@ -23,11 +20,11 @@ vi.mock('../../supertonic', async (importOriginal) => {
 })
 
 vi.mock('../repository', () => ({
-  createFocusRoomDialogueRepository: () => repositoryMocks,
+  createPDialogueRepository: () => repositoryMocks,
 }))
 
 interface DialogueEditorTestRoot {
-  readonly controller: FocusRoomDialogueEditorController
+  readonly controller: PDialogueEditorController
   readonly dispose: () => void
 }
 
@@ -59,7 +56,7 @@ const createEditorRoot = (dialogueId: string | null = null): DialogueEditorTestR
   let disposeRoot: () => void = () => undefined
   const controller = createRoot((dispose) => {
     disposeRoot = dispose
-    return useFocusRoomDialogueEditor({dialogueId: () => dialogueId})
+    return usePDialogueEditor({dialogueId: () => dialogueId})
   })
 
   return {controller, dispose: disposeRoot}
@@ -80,7 +77,7 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-describe('useFocusRoomDialogueEditor', () => {
+describe('usePDialogueEditor', () => {
   it('should restore and update the new-dialogue draft for the current tab', async () => {
     const draftKey = 'pomo:focus-room-dialogue:draft:new'
     sessionStorage.setItem(draftKey, '새로고침 전에 작성한 대사')
@@ -208,8 +205,8 @@ describe('useFocusRoomDialogueEditor', () => {
   })
 
   it('should ignore a dialogue load that finishes after disposal', async () => {
-    let resolveDialogue: (dialogue: FocusRoomDialogue) => void = () => undefined
-    const dialogueLoad = new Promise<FocusRoomDialogue>((resolve) => {
+    let resolveDialogue: (dialogue: PDialogue) => void = () => undefined
+    const dialogueLoad = new Promise<PDialogue>((resolve) => {
       resolveDialogue = resolve
     })
     repositoryMocks.getDialogue.mockReturnValue(dialogueLoad)

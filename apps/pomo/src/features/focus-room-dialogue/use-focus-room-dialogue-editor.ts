@@ -11,8 +11,8 @@ import {
   type SupertonicVoiceId,
 } from '../supertonic'
 import {splitSpeechText} from '../supertonic/text-chunking'
-import {createFocusRoomDialogueRepository} from './repository'
-import {type DialogueSegment, type FocusRoomDialogue} from './schema'
+import {createPDialogueRepository} from './repository'
+import {type DialogueSegment, type PDialogue} from './schema'
 import {createDialogueTimeline} from './timeline'
 
 const MAXIMUM_PROGRESS = 100
@@ -47,11 +47,11 @@ export type DialogueEditorState =
   | EditorIdleState
   | EditorProgressState
 
-export interface UseFocusRoomDialogueEditorProps {
+export interface UsePDialogueEditorProps {
   readonly dialogueId: Accessor<string | null>
 }
 
-export interface FocusRoomDialogueEditorController {
+export interface PDialogueEditorController {
   readonly audioUrl: Accessor<string | null>
   readonly canGenerate: Accessor<boolean>
   readonly canSave: Accessor<boolean>
@@ -118,12 +118,10 @@ const getProgress = (loadedBytes: number, totalBytes: number) =>
 
 /** Owns the browser-only lifecycle for editing, generating and persisting a dialogue. */
 // oxlint-disable-next-line eslint/max-lines-per-function -- The editor hook owns one disposable model, audio URL and persistence lifecycle.
-export const useFocusRoomDialogueEditor = (
-  props: UseFocusRoomDialogueEditorProps,
-): FocusRoomDialogueEditorController => {
+export const usePDialogueEditor = (props: UsePDialogueEditorProps): PDialogueEditorController => {
   const initialDialogueId = untrack(props.dialogueId)
   const draftKey = getDialogueDraftKey(initialDialogueId)
-  const repository = createFocusRoomDialogueRepository()
+  const repository = createPDialogueRepository()
   const [dialogueId, setDialogueId] = createSignal<string | null>(initialDialogueId)
   const [text, setText] = createSignal('')
   const [modelId, setModelIdSignal] = createSignal<SupertonicModelId>(DEFAULT_MODEL_ID)
@@ -474,7 +472,7 @@ export const useFocusRoomDialogueEditor = (
       updatedAt: now,
       version: 1,
       voiceId: voiceId(),
-    } satisfies FocusRoomDialogue
+    } satisfies PDialogue
 
     try {
       await repository.saveDialogue({audio: audioNeedsWrite ? audioBlob : undefined, dialogue})

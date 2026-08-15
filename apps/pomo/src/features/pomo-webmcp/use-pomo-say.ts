@@ -1,15 +1,15 @@
 import {type Accessor, createSignal, onCleanup, onMount} from 'solid-js'
 
 import {useChatVoice} from '../chat-voice'
-import {type PomoSayRequest, registerPomoSayTool} from './register-pomo-say-tool'
+import {type PSayRequest, registerPSayTool} from './register-pomo-say-tool'
 
-export interface UsePomoSayProps {
+export interface UsePSayProps {
   readonly onBeforeSpeech: () => void
 }
 
-export type UsePomoSayOptions = UsePomoSayProps
+export type UsePSayOptions = UsePSayProps
 
-export interface PomoSayController {
+export interface PSayController {
   readonly speechText: Accessor<string | null>
   readonly stop: () => void
 }
@@ -17,7 +17,7 @@ export interface PomoSayController {
 const createCancelledError = () => new DOMException('Pomo speech was cancelled.', 'AbortError')
 
 /** Registers and owns the cancellable WebMCP speech lifecycle for Pomo. */
-export const usePomoSay = (props: UsePomoSayProps): PomoSayController => {
+export const usePSay = (props: UsePSayProps): PSayController => {
   const [speechText, setSpeechText] = createSignal<string | null>(null)
   const voice = useChatVoice()
   let speechSession = 0
@@ -28,7 +28,7 @@ export const usePomoSay = (props: UsePomoSayProps): PomoSayController => {
     }
   }
 
-  const speak = async (request: PomoSayRequest) => {
+  const speak = async (request: PSayRequest) => {
     speechSession += 1
     const activeSession = speechSession
     setSpeechText(request.text)
@@ -71,7 +71,7 @@ export const usePomoSay = (props: UsePomoSayProps): PomoSayController => {
 
   onMount(() => {
     const registration = new AbortController()
-    registerPomoSayTool({document, signal: registration.signal, speak}).catch((error: unknown) => {
+    registerPSayTool({document, signal: registration.signal, speak}).catch((error: unknown) => {
       console.error('Failed to register the Pomo WebMCP tool.', error)
     })
 

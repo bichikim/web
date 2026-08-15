@@ -3,7 +3,7 @@ import {Application} from 'pixi.js'
 import {PixiLayerScene, type PixiLayerSceneDefinition} from '../focus-room-animation/layer-scene'
 import {FOCUS_ROOM_PREVIEW_CHANNELS} from '../focus-room-animation/scene-catalog'
 
-export interface FocusRoomLayerReviewState {
+export interface PLayerReviewState {
   readonly animationEnabled: boolean
   readonly eyesVisible: boolean
   readonly handsVisible: boolean
@@ -11,13 +11,13 @@ export interface FocusRoomLayerReviewState {
   readonly referenceOpacity: number
 }
 
-export interface FocusRoomLayerReviewRendererOptions {
+export interface PLayerReviewRendererOptions {
   readonly definition: PixiLayerSceneDefinition
 }
 
 const clampOpacity = (value: number) => Math.min(1, Math.max(0, value))
 
-export class FocusRoomLayerReviewRenderer {
+export class PLayerReviewRenderer {
   readonly #application = new Application()
   readonly #initialDefinition: PixiLayerSceneDefinition
   readonly #host: HTMLDivElement
@@ -28,14 +28,14 @@ export class FocusRoomLayerReviewRenderer {
   #incomingScene: PixiLayerScene | null = null
   #replacementVersion = 0
   #scene: PixiLayerScene | null = null
-  #state: FocusRoomLayerReviewState | null = null
+  #state: PLayerReviewState | null = null
 
-  constructor(host: HTMLDivElement, options: FocusRoomLayerReviewRendererOptions) {
+  constructor(host: HTMLDivElement, options: PLayerReviewRendererOptions) {
     this.#host = host
     this.#initialDefinition = options.definition
   }
 
-  async initialize(state: FocusRoomLayerReviewState) {
+  async initialize(state: PLayerReviewState) {
     this.#state = state
     await this.#application.init({
       antialias: false,
@@ -85,7 +85,7 @@ export class FocusRoomLayerReviewRenderer {
     this.#host.append(this.#application.canvas)
   }
 
-  update(state: FocusRoomLayerReviewState) {
+  update(state: PLayerReviewState) {
     this.#state = state
     this.#scene?.update(this.#toSceneState(state))
     this.#incomingScene?.update(this.#toSceneState(state))
@@ -175,7 +175,7 @@ export class FocusRoomLayerReviewRenderer {
     })
   }
 
-  #toSceneState(state: FocusRoomLayerReviewState) {
+  #toSceneState(state: PLayerReviewState) {
     const referenceOpacity = clampOpacity(state.referenceOpacity)
     return {
       animationEnabled: state.animationEnabled,

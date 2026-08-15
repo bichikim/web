@@ -1,4 +1,4 @@
-export interface FocusRoomTrack {
+export interface PTrack {
   readonly artist: string
   readonly durationSeconds: number
   readonly id: string
@@ -6,21 +6,21 @@ export interface FocusRoomTrack {
   readonly title: string
 }
 
-interface FocusRoomPlaylist {
-  readonly tracks: readonly FocusRoomTrack[]
+interface PPlaylist {
+  readonly tracks: readonly PTrack[]
   readonly version: number
 }
 
 export const FOCUS_ROOM_PLAYLIST_URL = '/data/focus-room-playlist.json'
 
-export interface LoadFocusRoomTracksOptions {
+export interface LoadPTracksOptions {
   readonly playlistUrl?: string
   readonly signal?: AbortSignal
 }
 
 const isString = (value: unknown): value is string => typeof value === 'string'
 
-const isFocusRoomTrack = (value: unknown): value is FocusRoomTrack => {
+const isPTrack = (value: unknown): value is PTrack => {
   if (typeof value !== 'object' || value === null) {
     return false
   }
@@ -38,24 +38,18 @@ const isFocusRoomTrack = (value: unknown): value is FocusRoomTrack => {
   )
 }
 
-const isFocusRoomPlaylist = (value: unknown): value is FocusRoomPlaylist => {
+const isPPlaylist = (value: unknown): value is PPlaylist => {
   if (typeof value !== 'object' || value === null) {
     return false
   }
 
   const playlist = value as Record<string, unknown>
 
-  return (
-    playlist.version === 1 &&
-    Array.isArray(playlist.tracks) &&
-    playlist.tracks.every(isFocusRoomTrack)
-  )
+  return playlist.version === 1 && Array.isArray(playlist.tracks) && playlist.tracks.every(isPTrack)
 }
 
 /** Loads and validates the public focus-room playlist. */
-export const loadFocusRoomTracks = async (
-  options: LoadFocusRoomTracksOptions = {},
-): Promise<readonly FocusRoomTrack[]> => {
+export const loadPTracks = async (options: LoadPTracksOptions = {}): Promise<readonly PTrack[]> => {
   const response = await fetch(options.playlistUrl ?? FOCUS_ROOM_PLAYLIST_URL, {
     signal: options.signal,
   })
@@ -66,7 +60,7 @@ export const loadFocusRoomTracks = async (
 
   const playlist: unknown = await response.json()
 
-  if (!isFocusRoomPlaylist(playlist)) {
+  if (!isPPlaylist(playlist)) {
     throw new TypeError('Focus-room playlist has an invalid format')
   }
 

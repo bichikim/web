@@ -1,10 +1,10 @@
 import {expect, it} from 'vitest'
 
-import type {FocusRoomDialogue} from '../../focus-room-dialogue'
+import type {PDialogue} from '../../focus-room-dialogue'
 import {excludeFeedDialogues} from '../dialogue-library'
 import type {FeedDialogueListItem} from '../feed-controller'
 
-const createDialogue = (id: string, text: string): FocusRoomDialogue => ({
+const createDialogue = (id: string, text: string): PDialogue => ({
   audioKey: `audio-${id}`,
   createdAt: '2026-08-14T00:00:00.000Z',
   durationMs: 1000,

@@ -4,12 +4,12 @@ import {createMemo, createSignal, onCleanup, onMount} from 'solid-js'
 import {
   AUTOMATIC_DIALOGUE_SETTINGS_CHANGED_EVENT,
   createAutomaticDialogueSettingsRepository as createAutomaticSettingsRepository,
-  type FocusRoomDialogue,
   generateDialogueAudio,
+  type PDialogue,
 } from '../focus-room-dialogue'
 import {
-  createFocusRoomDialogueRepository,
-  type FocusRoomDialogueRepository,
+  createPDialogueRepository,
+  type PDialogueRepository,
 } from '../focus-room-dialogue/repository'
 import {createSupertonicClient, type SupertonicClient, type SupertonicModelId} from '../supertonic'
 import {
@@ -26,9 +26,9 @@ import {synchronizeFeeds} from './feed-sync'
 import {
   type FeedDialogueListItem,
   findFeedNotificationDialogue,
-  type FocusRoomFeedController,
-  type FocusRoomFeedState,
-  type UseFocusRoomFeedsProps,
+  type PFeedController,
+  type PFeedState,
+  type UsePFeedsProps,
 } from './feed-controller'
 import {
   deleteExpiredFeedDialogues,
@@ -45,7 +45,7 @@ import {FEED_CONNECTIONS_CHANGED_EVENT} from './use-feed-connections'
 
 /** Owns live feed polling, durable recovery, speech generation, and expiry cleanup. */
 // oxlint-disable-next-line eslint/max-lines-per-function -- One hook owns a single disposable feed synchronization and model lifecycle.
-export const useFocusRoomFeeds = (props: UseFocusRoomFeedsProps): FocusRoomFeedController => {
+export const usePFeeds = (props: UsePFeedsProps): PFeedController => {
   const [dialogues, setDialogues] = createSignal<ReadonlyArray<FeedDialogueListItem>>([])
   const unlistenedDialogues = createMemo(() =>
     dialogues().filter((item) => item.metadata.listenedAt === null),
@@ -54,11 +54,11 @@ export const useFocusRoomFeeds = (props: UseFocusRoomFeedsProps): FocusRoomFeedC
   const [isListening, setIsListening] = createSignal(false)
   const [issues, setIssues] = createSignal<ReadonlyArray<FeedItemRecord>>([])
   const [recoveryJobs, setRecoveryJobs] = createSignal<ReadonlyArray<FeedDialogueJob>>([])
-  const [state, setState] = createSignal<FocusRoomFeedState>({
+  const [state, setState] = createSignal<PFeedState>({
     message: '구독 피드를 기다리고 있어요.',
     status: 'idle',
   })
-  let dialogueRepository: FocusRoomDialogueRepository | null = null
+  let dialogueRepository: PDialogueRepository | null = null
   let feedRepository: FeedDialogueRepository | null = null
   let client: SupertonicClient | null = null
   let isDisposed = false
@@ -68,7 +68,7 @@ export const useFocusRoomFeeds = (props: UseFocusRoomFeedsProps): FocusRoomFeedC
   const scheduledJobIds: Array<string> = []
   const dismissedRecoveryIds = new Set<string>()
 
-  const setFeedState = (nextState: FocusRoomFeedState) => {
+  const setFeedState = (nextState: PFeedState) => {
     if (!isDisposed) {
       setState(nextState)
     }
@@ -274,7 +274,7 @@ export const useFocusRoomFeeds = (props: UseFocusRoomFeedsProps): FocusRoomFeedC
       updatedAt: nowIso,
       version: 1,
       voiceId: job.voiceId,
-    } satisfies FocusRoomDialogue
+    } satisfies PDialogue
     const metadata = {
       createdAt: nowIso,
       dialogueId,
@@ -469,7 +469,7 @@ export const useFocusRoomFeeds = (props: UseFocusRoomFeedsProps): FocusRoomFeedC
   }
 
   onMount(() => {
-    dialogueRepository = createFocusRoomDialogueRepository()
+    dialogueRepository = createPDialogueRepository()
     feedRepository = createFeedDialogueRepository()
     const initialize = async () => {
       await repairMalformedDevDialogues()
