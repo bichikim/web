@@ -1,8 +1,8 @@
 import {describe, expect, it} from 'vitest'
 
-import dataset from '../../../../scripts/text-mood/dataset.json'
-import hardExamples from '../../../../scripts/text-mood/hard-examples.json'
-import sufficiencyDataset from '../../../../scripts/text-mood/sufficiency-dataset.json'
+import dataset from 'scripts/text-mood/dataset.json'
+import hardExamples from 'scripts/text-mood/hard-examples.json'
+import sufficiencyDataset from 'scripts/text-mood/sufficiency-dataset.json'
 import {MOOD_MODIFIER_IDS, PRIMARY_MOOD_IDS} from '../index'
 
 const includesModifier = (modifiers: readonly string[], modifier: string) =>

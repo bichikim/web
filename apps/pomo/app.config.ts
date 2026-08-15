@@ -1,4 +1,5 @@
 import {defineConfig} from '@solidjs/start/config'
+import {fileURLToPath} from 'node:url'
 import UnoCSS from 'unocss/vite'
 
 import {createDevFeedPlugin} from './src/features/dev-feed'
@@ -47,6 +48,13 @@ const app = defineConfig({
       include: ['onnxruntime-web/all', 'zod'],
     },
     plugins: [createDevFeedPlugin(), excludeFocusRoomSourceAssets, UnoCSS()],
+    resolve: {
+      alias: {
+        assets: fileURLToPath(new URL('assets', import.meta.url)),
+        scripts: fileURLToPath(new URL('scripts', import.meta.url)),
+        src: fileURLToPath(new URL('src', import.meta.url)),
+      },
+    },
     worker: {format: 'es'},
   },
 })

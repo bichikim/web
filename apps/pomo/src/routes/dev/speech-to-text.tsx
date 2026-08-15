@@ -3,7 +3,7 @@ import {A} from '@solidjs/router'
 import {clientOnly} from '@solidjs/start'
 import {cx} from 'class-variance-authority'
 
-const SpeechToTextLab = clientOnly(() => import('../../components/SpeechToTextLab'), {lazy: true})
+const SpeechToTextLab = clientOnly(() => import('src/components/SpeechToTextLab'), {lazy: true})
 const MAIN_CLASSES = cx(
   'relative grid min-h-dvh place-items-center overflow-x-hidden',
   'bg-#17131f px-4 py-8 text-#f8edf1 sm:px-8 sm:py-12',

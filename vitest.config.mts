@@ -30,6 +30,12 @@ export default defineConfig({
     monorepoAlias({
       // 패키지별 import 경로 별칭 (`@` → `src` 등)
       alias: {
+        'apps/pomo': {
+          '@': 'src',
+          assets: 'assets',
+          scripts: 'scripts',
+          src: 'src',
+        },
         DEFAULT: {
           '@': 'src',
           src: 'src',

@@ -11,6 +11,10 @@
 
 **Enterprise-grade** code: maintainability, scalability, separation of concerns, robust error handling, consistent patterns.
 
+- When correcting AI behavior, use the lowest-prompt-cost instruction that preserves the outcome.
+- Evaluate changes in repository-wide context, prioritizing compatibility, reusability, and readability over local optimization.
+- Do not treat prevalence as evidence of quality; make decisions at the standard of top 5% expert judgment.
+
 ## Z-index
 
 - Do not use CSS `z-index`, including utility classes and rendering-library equivalents.

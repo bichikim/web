@@ -2,7 +2,7 @@ import {Title} from '@solidjs/meta'
 import {A} from '@solidjs/router'
 import {cx} from 'class-variance-authority'
 
-import {VoiceGenerator} from '../../components/VoiceGenerator'
+import {VoiceGenerator} from 'src/components/VoiceGenerator'
 
 const MAIN_CLASSES = cx(
   'relative grid min-h-dvh place-items-center overflow-x-hidden',

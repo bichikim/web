@@ -26,6 +26,7 @@ Open and apply the reference files for the relevant section before working. For 
 15. See ./rules/no-types.md when module types are missing.
 16. See ./code-patterns/type-guard.md when handling `unknown` or writing type guards.
 17. See ./code-patterns/type-and-value-import.md when importing both a type and a value from the same module.
+18. For every internal import, consider an available `src/*` alias and choose the shortest readable valid specifier.
 
 ## Functional Error Design
 

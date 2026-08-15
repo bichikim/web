@@ -1,7 +1,7 @@
 import {invalidateByTag} from '@vercel/functions'
 import {z, ZodError} from 'zod'
 
-import {HISTORY_SOURCE_POLICY, validateHistoryOutput} from '../../features/history-generation'
+import {HISTORY_SOURCE_POLICY, validateHistoryOutput} from 'src/features/history-generation'
 import {
   failHistoryResponse,
   findGenerationRun,

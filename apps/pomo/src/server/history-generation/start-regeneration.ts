@@ -2,7 +2,7 @@ import {
   HISTORY_PROMPT_VERSION,
   HISTORY_SOURCE_POLICY,
   type HistoryTargetDate,
-} from '../../features/history-generation'
+} from 'src/features/history-generation'
 import {
   markGenerationFailed,
   markGenerationSubmitted,

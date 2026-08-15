@@ -1,7 +1,7 @@
 import {expect, userEvent, within} from 'storybook/test'
 import type {Meta, StoryObj} from 'storybook-solidjs-vite'
 
-import dayReadingImage from '../../assets/concept-art/focus-room-day-reading-concept.webp'
+import dayReadingImage from 'assets/concept-art/focus-room-day-reading-concept.webp'
 import PMusicPlayerContent from './PMusicPlayerContent'
 
 const meta = {

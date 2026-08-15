@@ -1,7 +1,7 @@
 import type {APIEvent} from '@solidjs/start/server'
 
-import {isAuthorizedCronRequest} from '../../../../server/cron/environment'
-import {recoverHistoryGenerations} from '../../../../server/history-generation/recover-generations'
+import {isAuthorizedCronRequest} from 'src/server/cron/environment'
+import {recoverHistoryGenerations} from 'src/server/history-generation/recover-generations'
 
 export const GET = async (event: APIEvent): Promise<Response> => {
   if (!isAuthorizedCronRequest(event.request)) {

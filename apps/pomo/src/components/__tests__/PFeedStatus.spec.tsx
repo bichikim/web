@@ -7,10 +7,10 @@ import {
   type FeedDialogueListItem,
   type PFeedController,
   usePFeedContext,
-} from '../../features/focus-room-feed'
+} from 'src/features/focus-room-feed'
 import {PFeedStatus} from '../PFeedStatus'
 
-vi.mock('../../features/focus-room-feed', () => ({
+vi.mock('src/features/focus-room-feed', () => ({
   usePFeedContext: vi.fn(),
 }))
 

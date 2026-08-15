@@ -5,11 +5,11 @@ import {fireEvent, render, screen} from '@solidjs/testing-library'
 import {For} from 'solid-js'
 import {beforeEach, expect, it, vi} from 'vitest'
 
-import {PSelect} from '../../design-system/PSelect'
+import {PSelect} from 'src/design-system/PSelect'
 import PFeedSettingsContent from '../PFeedSettingsContent'
 
 vi.mock('@kobalte/core/tabs', () => ({Tabs: {Content: vi.fn()}}))
-vi.mock('../../design-system/PSelect', () => ({PSelect: vi.fn()}))
+vi.mock('src/design-system/PSelect', () => ({PSelect: vi.fn()}))
 
 const renderSettings = () => render(() => <PFeedSettingsContent />)
 
