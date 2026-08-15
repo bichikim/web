@@ -62,12 +62,12 @@ export const usePFeeds = (props: UsePFeedsProps): PFeedController => {
   let feedRepository: FeedDialogueRepository | null = null
   let client: SupertonicClient | null = null
   let isDisposed = false
+  const opusAbortController = new AbortController()
   let isGenerating = false
   let isSyncing = false
   let preparedModelId: SupertonicModelId | null = null
   const scheduledJobIds: Array<string> = []
   const dismissedRecoveryIds = new Set<string>()
-
   const setFeedState = (nextState: PFeedState) => {
     if (!isDisposed) {
       setState(nextState)
@@ -345,6 +345,7 @@ export const usePFeeds = (props: UsePFeedsProps): PFeedController => {
           })
         }
       },
+      signal: opusAbortController.signal,
       text: job.script,
       voiceId: job.voiceId,
     })
@@ -517,6 +518,7 @@ export const usePFeeds = (props: UsePFeedsProps): PFeedController => {
 
   onCleanup(() => {
     isDisposed = true
+    opusAbortController.abort()
     client?.cancelGeneration()
     client?.dispose()
     dialogueRepository?.dispose()

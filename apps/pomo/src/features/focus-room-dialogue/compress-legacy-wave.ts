@@ -93,5 +93,5 @@ const parseWavePcm = (buffer: ArrayBuffer): WavePcm => {
 /** Converts Pomo's legacy mono PCM WAV cache entry into Ogg Opus. */
 export const compressLegacyWave = async (audio: Blob): Promise<Blob> => {
   const wave = parseWavePcm(await readBlob(audio))
-  return createOpusBlob(wave.samples, wave.sampleRate)
+  return createOpusBlob({sampleRate: wave.sampleRate, samples: wave.samples})
 }

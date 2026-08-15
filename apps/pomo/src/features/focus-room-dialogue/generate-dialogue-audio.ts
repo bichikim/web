@@ -20,6 +20,7 @@ export interface GenerateDialogueAudioOptions {
   readonly language: SupertonicLanguage
   readonly modelId: SupertonicModelId
   readonly onChunk: (completed: number, total: number) => void
+  readonly signal?: AbortSignal
   readonly text: string
   readonly voiceId: SupertonicVoiceId
 }
@@ -150,10 +151,11 @@ export const generateCompressedDialogueAudio = async (
     return {
       ok: true,
       value: {
-        audio: await createOpusBlob(
-          createDialogueAudioSamples(generated.value, options.modelId),
-          generated.value.sampleRate,
-        ),
+        audio: await createOpusBlob({
+          sampleRate: generated.value.sampleRate,
+          samples: createDialogueAudioSamples(generated.value, options.modelId),
+          signal: options.signal,
+        }),
         durationMs: generated.value.durationMs,
         segments: generated.value.segments,
       },

@@ -3,6 +3,7 @@ import {createRoot} from 'solid-js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {successResult, type SupertonicClient} from '../../supertonic'
+import type {CreateOpusBlobOptions} from '../../supertonic/opus-client'
 import {
   type TextMoodAnalysis,
   type TextMoodAnalyzer,
@@ -231,9 +232,36 @@ describe('usePDialogueEditor', () => {
 
     await editor.controller.save()
 
-    expect(supertonicMocks.createOpusBlob).toHaveBeenCalledWith(expect.any(Float32Array), 10)
-    expect(supertonicMocks.createOpusBlob.mock.calls[0]?.[0]).toHaveLength(9)
+    expect(supertonicMocks.createOpusBlob).toHaveBeenCalledWith({
+      sampleRate: 10,
+      samples: expect.any(Float32Array),
+      signal: expect.any(AbortSignal),
+    })
+    expect(supertonicMocks.createOpusBlob.mock.calls[0]?.[0].samples).toHaveLength(9)
     editor.dispose()
+  })
+
+  it('should cancel pending Opus encoding when the editor is disposed', async () => {
+    const client = createClient([])
+    supertonicMocks.createClient.mockReturnValue(client)
+    supertonicMocks.createOpusBlob.mockImplementationOnce(
+      (options: CreateOpusBlobOptions) =>
+        new Promise((_resolve, reject) => {
+          options.signal?.addEventListener('abort', () => reject(options.signal?.reason), {
+            once: true,
+          })
+        }),
+    )
+    const editor = createEditorRoot()
+    editor.controller.setText('저장 중 화면을 나가는 대사')
+    await editor.controller.generate()
+
+    const saving = editor.controller.save()
+    await vi.waitFor(() => expect(supertonicMocks.createOpusBlob).toHaveBeenCalledOnce())
+    editor.dispose()
+
+    await expect(saving).resolves.toBeNull()
+    expect(repositoryMocks.saveDialogue).not.toHaveBeenCalled()
   })
 
   it('should save complete mood analysis with the generated segment', async () => {
