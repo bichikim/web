@@ -29,6 +29,7 @@ export const POMO_STUDIO_STYLES = String.raw`
 .pomo-ui {
   position: absolute;
   inset: 0;
+  pointer-events: none;
 }
 
 .pomo-entry {

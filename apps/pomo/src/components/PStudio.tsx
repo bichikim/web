@@ -126,7 +126,7 @@ const SceneToolbar = (props: SceneToolbarProps) => {
   return (
     <div
       class={cx(
-        'absolute right-4 top-[calc(1rem+env(safe-area-inset-top))]',
+        'pointer-events-auto absolute right-4 top-[calc(1rem+env(safe-area-inset-top))]',
         'flex flex-col items-end gap-2',
         'sm:right-7 sm:top-6',
       )}
