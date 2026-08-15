@@ -2,7 +2,6 @@ import {clientOnly} from '@solidjs/start'
 import {cx} from 'class-variance-authority'
 import {createMemo, createSignal, onCleanup, onMount, Show} from 'solid-js'
 
-import brandMarkSource from '../../assets/brand/pomo-orange-hairpin-brand-mark.webp'
 import smilingFaceSource from '../../assets/pomodoro-status-icons/break-face.webp'
 import {PButton} from '../design-system/PButton'
 import {PIconButton} from '../design-system/PIconButton'
@@ -78,7 +77,13 @@ interface SceneToolbarProps {
 }
 
 interface PEntryProps {
+  readonly isExiting: boolean
   readonly onEnter: () => void
+  readonly onExitComplete: () => void
+}
+
+interface PSceneFallbackProps {
+  readonly source: string
 }
 
 const findLabel = <TValue extends string>(
@@ -169,30 +174,40 @@ const SceneToolbar = (props: SceneToolbarProps) => {
 }
 
 const PEntry = (props: PEntryProps) => (
-  <section aria-label="Pomo 집중룸 입장" class="pomo-entry">
+  <section
+    aria-label="Pomo 집중룸 입장"
+    class="pomo-entry"
+    data-exiting={props.isExiting ? '' : undefined}
+    onAnimationEnd={(event) => {
+      if (event.target === event.currentTarget) {
+        props.onExitComplete()
+      }
+    }}
+  >
     <div class="pomo-entry__content">
-      <div class="pomo-entry__mark-stage">
-        <img
-          alt="Pomo의 주황 사각 핀"
-          class="pomo-entry__mark"
-          decoding="async"
-          fetchpriority="high"
-          height="1254"
-          src={brandMarkSource}
-          width="1254"
-        />
-      </div>
       <PButton
         class="pomo-entry__action"
+        disabled={props.isExiting}
         leadingImage={smilingFaceSource}
         onPress={() => props.onEnter()}
-        tone="glass"
+        tone="primary"
         trailingIcon="i-tabler-arrow-right"
       >
-        입장하기
+        포모와 시작하기
       </PButton>
     </div>
   </section>
+)
+
+const PSceneFallback = (props: PSceneFallbackProps) => (
+  <img
+    alt=""
+    aria-hidden="true"
+    class="absolute inset-0 h-full w-full object-cover"
+    decoding="async"
+    fetchpriority="high"
+    src={props.source}
+  />
 )
 
 const PStudioContent = () => {
@@ -208,6 +223,7 @@ const PStudioContent = () => {
   const [hasSceneRendered, setHasSceneRendered] = createSignal(false)
   const [isPlayerExpanded, setIsPlayerExpanded] = createSignal(false)
   const [hasEntered, setHasEntered] = createSignal(false)
+  const [isEntryVisible, setIsEntryVisible] = createSignal(true)
   const [currentTrack, setCurrentTrack] = createSignal<PTrack | null>(null)
   const [pomodoroPresentation, setPomodoroPresentation] = createSignal<PPomodoroPresentation>(
     INITIAL_POMODORO_PRESENTATION,
@@ -228,7 +244,13 @@ const PStudioContent = () => {
       console.error('Unexpected pomodoro dialogue playback failure.', error)
     })
   }
-  const handleEnter = () => setHasEntered(true)
+  const handleEnter = () => {
+    if (hasEntered()) {
+      return
+    }
+
+    setHasEntered(true)
+  }
 
   onMount(() => {
     const gyroscopeAvailable = supportsPSceneGyroscope()
@@ -251,6 +273,9 @@ const PStudioContent = () => {
         class="relative m-0 h-full w-full overflow-hidden bg-#17130f"
         role="img"
       >
+        <Show when={!hasSceneRendered()}>
+          <PSceneFallback source={selectedScene().source} />
+        </Show>
         <PSceneCanvas
           activity={activity()}
           depthSource={selectedScene().depthSource}
@@ -264,7 +289,7 @@ const PStudioContent = () => {
           time={time()}
         />
 
-        <Show when={isSceneLoading() && !hasSceneRendered()}>
+        <Show when={hasEntered() && isSceneLoading() && !hasSceneRendered()}>
           <div
             aria-live="polite"
             class="pointer-events-none absolute inset-0 grid place-items-center bg-#17130f/24"
@@ -323,8 +348,12 @@ const PStudioContent = () => {
           timeMode={timeMode()}
         />
       </div>
-      <Show when={!hasEntered()}>
-        <PEntry onEnter={handleEnter} />
+      <Show when={isEntryVisible()}>
+        <PEntry
+          isExiting={hasEntered()}
+          onEnter={handleEnter}
+          onExitComplete={() => setIsEntryVisible(false)}
+        />
       </Show>
       <PScreenSaver
         isActive={hasEntered() && screenSaver.isActive()}

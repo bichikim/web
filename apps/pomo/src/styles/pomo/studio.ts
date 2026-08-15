@@ -34,41 +34,40 @@ export const POMO_STUDIO_STYLES = String.raw`
 .pomo-entry {
   position: absolute;
   inset: 0;
-  display: grid;
-  background: rgb(7 5 4 / 62%);
-  backdrop-filter: blur(0.15rem) saturate(72%);
+  display: flex;
+  align-items: flex-end;
+  background: radial-gradient(
+    ellipse 125% 105% at 0% 108%,
+    rgb(7 5 4 / 94%) 0%,
+    rgb(7 5 4 / 82%) 28%,
+    rgb(7 5 4 / 58%) 54%,
+    rgb(7 5 4 / 30%) 74%,
+    transparent 92%
+  );
   color: #fff9f1;
-  place-items: center;
+}
+
+.pomo-entry[data-exiting] {
+  animation: pomo-entry-reveal-room 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  pointer-events: none;
 }
 
 .pomo-entry__content {
   display: flex;
-  width: min(100% - 2rem, 24rem);
+  width: min(calc(100% - 2rem - env(safe-area-inset-left)), 22rem);
   box-sizing: border-box;
   flex-direction: column;
-  align-items: center;
-  gap: clamp(2.25rem, 7vh, 4rem);
-  padding-block: max(2rem, env(safe-area-inset-top)) max(2rem, env(safe-area-inset-bottom));
+  align-items: flex-start;
+  gap: 1rem;
+  margin-block-end: calc(1.5rem + env(safe-area-inset-bottom));
+  margin-inline-start: calc(1rem + env(safe-area-inset-left));
 }
 
-.pomo-entry__mark-stage {
-  position: relative;
-  display: grid;
-  width: min(58vw, 16rem);
-  aspect-ratio: 1;
-  place-items: center;
-}
-
-.pomo-entry__mark {
-  position: relative;
-  width: 80%;
-  height: auto;
-  animation: pomo-entry-mark-breathe 5.6s ease-in-out infinite;
-  filter: drop-shadow(0 1.5rem 1.5rem rgb(0 0 0 / 42%));
-}
-
-.pomo-entry__action {
-  min-width: 9.5rem;
+button.pomo-entry__action {
+  min-width: min(17rem, 100%);
+  min-height: 3.5rem;
+  padding-inline: 1.5rem;
+  font-size: 0.9375rem;
 }
 
 .pomo-entry__action .pomo-button__leading-image {
@@ -146,14 +145,13 @@ export const POMO_STUDIO_STYLES = String.raw`
   }
 }
 
-@keyframes pomo-entry-mark-breathe {
-  0%,
-  100% {
-    transform: translateY(0) rotate(-0.5deg);
+@keyframes pomo-entry-reveal-room {
+  from {
+    opacity: 1;
   }
 
-  50% {
-    transform: translateY(-0.65rem) rotate(0.5deg);
+  to {
+    opacity: 0;
   }
 }
 
@@ -165,6 +163,11 @@ export const POMO_STUDIO_STYLES = String.raw`
 }
 
 @media (width >= 40rem) {
+  .pomo-entry__content {
+    margin-block-end: calc(2.5rem + env(safe-area-inset-bottom));
+    margin-inline-start: calc(2.5rem + env(safe-area-inset-left));
+  }
+
   .pomo-media-dock {
     right: max(1.5rem, env(safe-area-inset-right));
     bottom: max(1.5rem, calc(1.5rem + env(safe-area-inset-bottom)));
@@ -174,8 +177,8 @@ export const POMO_STUDIO_STYLES = String.raw`
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .pomo-entry__mark {
-    animation: none;
+  .pomo-entry[data-exiting] {
+    animation-duration: 1ms;
   }
 
   .pomo-media-dock .pomo-player-stage {
