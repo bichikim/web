@@ -487,6 +487,23 @@ it('should refresh event bindings changed by another repository owner', async ()
   result.unmount()
 })
 
+it('should play entry dialogue after the binding is configured after entering', async () => {
+  const dialogue = createDialogue('entry')
+  const repository = createRepository([dialogue])
+  repositoryMocks.create.mockReturnValue(repository)
+  vi.spyOn(HTMLMediaElement.prototype, 'play').mockRejectedValue(
+    new DOMException('Autoplay blocked', 'NotAllowedError'),
+  )
+
+  const {events, result} = await renderContext({enter: false})
+  events.enterFocusRoom()
+  expect(repository.getDialogue).not.toHaveBeenCalled()
+
+  await events.setEventDialogues('room-enter', [dialogue.id])
+  await waitFor(() => expect(repository.getDialogue).toHaveBeenCalledWith(dialogue.id))
+  result.unmount()
+})
+
 it('should stop stale playback without replaying a changed event binding', async () => {
   const entryDialogue = createDialogue('entry-dialogue', ['입장 대사'])
   const nextDialogue = createDialogue('next-dialogue', ['새 입장 대사'])
