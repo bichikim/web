@@ -1,5 +1,5 @@
 import {createHash} from 'node:crypto'
-import {and, eq, inArray, lt} from 'drizzle-orm'
+import {and, eq, inArray, isNull, lt} from 'drizzle-orm'
 
 import {
   type HistoryGenerationOutput,
@@ -23,6 +23,11 @@ import {
 const CHANNEL_SLUG = 'today-in-history'
 const MAX_RECOVERY_RUNS = 10
 const MAX_GENERATION_ATTEMPTS = 2
+const MINUTES_PER_STALE_PREPARING_DELAY = 30
+const SECONDS_PER_MINUTE = 60
+const MILLISECONDS_PER_SECOND = 1000
+const STALE_PREPARING_DELAY_MS =
+  MINUTES_PER_STALE_PREPARING_DELAY * SECONDS_PER_MINUTE * MILLISECONDS_PER_SECOND
 
 export interface GenerationRun {
   readonly id: string
@@ -156,6 +161,34 @@ export const prepareGenerationRun = async (
     }
   }
 
+  const stalePreparingBefore = new Date(Date.now() - STALE_PREPARING_DELAY_MS)
+
+  if (
+    existing.status === 'preparing' &&
+    existing.openAiResponseId === null &&
+    existing.updatedAt < stalePreparingBefore
+  ) {
+    const [reclaimed] = await database
+      .update(historicalGenerationRuns)
+      .set({
+        errorMessage: null,
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(historicalGenerationRuns.id, existing.id),
+          eq(historicalGenerationRuns.status, 'preparing'),
+          isNull(historicalGenerationRuns.openAiResponseId),
+          lt(historicalGenerationRuns.updatedAt, stalePreparingBefore),
+        ),
+      )
+      .returning()
+
+    if (reclaimed !== undefined) {
+      return {created: true, run: mapRun(reclaimed)}
+    }
+  }
+
   return {created: false, run: mapRun(existing)}
 }
 
@@ -281,10 +314,15 @@ export const publishHistoryResponse = async (
       .select()
       .from(historicalGenerationRuns)
       .where(eq(historicalGenerationRuns.openAiResponseId, options.responseId))
+      .for('update')
       .limit(1)
 
     if (run === undefined) {
       throw new Error(`Generation run not found for response: ${options.responseId}`)
+    }
+
+    if (run.status !== 'submitted') {
+      return false
     }
 
     const publishedAt = new Date()
@@ -388,10 +426,25 @@ const finishHistoryResponse = async (
       return false
     }
 
+    const [run] = await transaction
+      .select()
+      .from(historicalGenerationRuns)
+      .where(eq(historicalGenerationRuns.openAiResponseId, options.responseId))
+      .for('update')
+      .limit(1)
+
+    if (run === undefined) {
+      throw new Error(`Generation run not found for response: ${options.responseId}`)
+    }
+
+    if (run.status !== 'submitted') {
+      return false
+    }
+
     await transaction
       .update(historicalGenerationRuns)
       .set({errorMessage: options.message, status: options.status, updatedAt: new Date()})
-      .where(eq(historicalGenerationRuns.openAiResponseId, options.responseId))
+      .where(eq(historicalGenerationRuns.id, run.id))
 
     return true
   })
