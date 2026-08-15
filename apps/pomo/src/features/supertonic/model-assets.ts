@@ -10,7 +10,6 @@ import type {InvalidModelDataError} from './errors'
 import type {SupertonicVoiceId} from './model'
 import {failureResult, type Result, successResult} from './result'
 
-// TODO - Cloudflare zone 활성화 후 public/model-assets.json의 임시 r2.dev URL을 assets.pomofi.io로 교체한다.
 interface ModelAsset {
   readonly url: string
 }
