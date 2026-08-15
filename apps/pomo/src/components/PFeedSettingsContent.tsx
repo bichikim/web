@@ -16,6 +16,14 @@ const VOICE_OPTIONS: ReadonlyArray<PSelectOption<FeedVoiceId>> = [
   {label: '기본값', value: DEFAULT_FEED_VOICE_ID},
   ...SUPERTONIC_VOICES.map((voice) => ({label: voice.label, value: voice.id})),
 ]
+const RECOMMENDED_PUBLIC_FEEDS = [
+  {
+    description: '매일 오늘 있었던 역사적인 순간을 읽어 줘요.',
+    id: 'pomo-today-in-history',
+    label: '오늘의 역사',
+    path: '/feeds/today-in-history/rss.xml',
+  },
+] as const
 const RECOMMENDED_DEV_FEEDS = [
   {
     description: '5분마다 현재 시각으로 새 RSS 항목을 만들어요.',
@@ -69,12 +77,13 @@ const RecommendedFeedItem = (props: RecommendedFeedItemProps) => {
 export default function PFeedSettingsContent() {
   const feeds = useFeedConnections()
   const runtime = useOptionalPFeeds()
-  const recommendedFeeds: ReadonlyArray<RecommendedFeed> = import.meta.env.DEV
-    ? RECOMMENDED_DEV_FEEDS.map((feed) => ({
-        ...feed,
-        url: new URL(feed.path, window.location.origin).href,
-      }))
-    : []
+  const recommendations = import.meta.env.DEV
+    ? [...RECOMMENDED_PUBLIC_FEEDS, ...RECOMMENDED_DEV_FEEDS]
+    : RECOMMENDED_PUBLIC_FEEDS
+  const recommendedFeeds: ReadonlyArray<RecommendedFeed> = recommendations.map((feed) => ({
+    ...feed,
+    url: new URL(feed.path, window.location.origin).href,
+  }))
   const availableRecommendations = createMemo(() => {
     const storedUrls = new Set(feeds.connections().map((connection) => connection.url))
     return recommendedFeeds.filter((feed) => !storedUrls.has(feed.url))
@@ -167,7 +176,7 @@ export default function PFeedSettingsContent() {
           <Show when={availableRecommendations().length > 0}>
             <div class="pomo-feed-settings__recommendation-heading">
               <h4 id="pomo-feed-recommendations-title">추천 피드</h4>
-              <span>개발용</span>
+              <span>{availableRecommendations().length}개</span>
             </div>
             <ul aria-labelledby="pomo-feed-recommendations-title" class="pomo-feed-settings__list">
               <For each={availableRecommendations()}>

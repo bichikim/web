@@ -13,6 +13,33 @@
 | 데이터       | 플랫폼 저장소 어댑터, Dexie.js, IndexedDB, Zod           |
 | 품질         | Oxlint, Oxfmt, Vitest, Solid Testing Library, Playwright |
 
+## Neon 브랜치 매핑
+
+| 환경              | Neon 브랜치   | 설명                                            |
+| ----------------- | ------------- | ----------------------------------------------- |
+| Production        | production    | 운영 데이터와 Auth를 제공하는 기본 브랜치       |
+| Development 기준  | vercel-dev    | Vercel 연동이 만든 공유 development 브랜치      |
+| 로컬 격리 환경    | local-\*      | vercel-dev를 부모로 생성하는 작업별 임시 브랜치 |
+| Vercel PR Preview | preview-pr-\* | vercel-dev를 부모로 생성하는 PR별 임시 브랜치   |
+
+`vercel-dev`가 development 역할을 담당하므로 이름을 맞추기 위한 별도의 `development` 브랜치는
+만들지 않는다. 로컬 작업은 `local-1`, `local-2`처럼 구분하고 각 브랜치의 DB·Auth URL을
+로컬 환경변수에 연결한다.
+
+`local-*`는 생성할 때 30일 만료를 설정하고, 해당 로컬 작업공간을 없앨 때 바로 삭제한다. 계속
+사용할 때는 만료일을 갱신한다. `preview-pr-*`는 Vercel의 자동 정리를 사용하고 7일 만료를 보조
+안전장치로 둔다. 만료와 자동 정리는 `production`과 `vercel-dev`에 적용하지 않는다.
+
+### 로컬 DB 사용
+
+1. `apps/pomo/.env.example`을 `apps/pomo/.env`로 복사한다.
+2. `DATABASE_URL`에는 `local-*` 브랜치의 pooled URL을 넣는다.
+3. `DATABASE_URL_UNPOOLED`에는 같은 브랜치의 direct URL을 넣는다.
+4. `apps/pomo`에서 `pnpm db:migrate`를 실행한 뒤 `pnpm dev`로 시작한다.
+
+`.env`는 Git에서 제외한다. 로컬 DB 브랜치를 바꾸면 두 URL을 반드시 같은 브랜치의 값으로 함께
+교체한다.
+
 ## 세부 계획
 
 | 문서                                                                 | 읽는 경우                                                                  |
@@ -22,6 +49,7 @@
 | [온디바이스 TTS](./development/tts.md)                               | 음성 합성, 목소리, 모델 다운로드·검증·배포를 다룰 때                       |
 | [대화 제작과 이벤트 연결](./development/dialogue-events.md)          | 대화 편집 페이지, 음성 타임라인, 이벤트 연결과 말풍선을 다룰 때            |
 | [구독 피드 대화](./development/feed-dialogues.md)                    | 피드 동기화, 자동 음성 생성, 중단 복구와 만료 정리를 다룰 때               |
+| [자체 RSS·Atom 발행 서비스](./development/feed-publishing.md)        | Pomo가 여러 공개 피드를 발행하고 Vercel CDN 캐시를 구성할 때               |
 | [타이머와 음악](./development/timer-audio.md)                        | 뽀모도로 상태, 음악 재생과 오디오 제어를 다룰 때                           |
 | [3D 장면과 상호작용](./development/3d.md)                            | 캐릭터, 애니메이션, 카메라, 3D UI와 성능을 다룰 때                         |
 | [2D 동일 장면 변형 제작](./development/2d-scene-variant-workflow.md) | 같은 배경에서 행동·시선만 다른 2D 이미지 세트를 제작할 때                  |

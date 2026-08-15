@@ -2,6 +2,14 @@ import {beforeEach, expect, it, vi} from 'vitest'
 
 import {createPDialogueRepository} from '../repository'
 
+const readBlobAsText = (blob: Blob) =>
+  new Promise<string>((resolve, reject) => {
+    const reader = new FileReader()
+    reader.addEventListener('error', () => reject(reader.error))
+    reader.addEventListener('load', () => resolve(String(reader.result)))
+    reader.readAsText(blob)
+  })
+
 const databaseMocks = vi.hoisted(() => {
   const dialogues = {
     delete: vi.fn(async () => undefined),
@@ -199,15 +207,22 @@ it('should store new compressed audio as Opus', async () => {
 })
 
 it('should prefer stored Opus audio without migrating legacy audio', async () => {
-  const opusAudio = new Blob(['opus'], {type: 'audio/ogg; codecs=opus'})
-  const wavAudio = new Blob(['wav'], {type: 'audio/wav'})
   const repository = createPDialogueRepository()
-  storageMocks.get.mockImplementation(async (path: string) => ({
-    ok: true,
-    value: path.endsWith('.opus') ? new Response(opusAudio) : new Response(wavAudio),
-  }))
+  storageMocks.get.mockImplementation(async (path: string) => {
+    const isOpus = path.endsWith('.opus')
 
-  await expect(repository.getAudio('compressed')).resolves.toEqual(opusAudio)
+    return {
+      ok: true,
+      value: new Response(isOpus ? 'opus' : 'wav', {
+        headers: {'Content-Type': isOpus ? 'audio/ogg; codecs=opus' : 'audio/wav'},
+      }),
+    }
+  })
+
+  const audio = await repository.getAudio('compressed')
+
+  expect(audio?.type).toBe('audio/ogg;codecs=opus')
+  await expect(readBlobAsText(audio as Blob)).resolves.toBe('opus')
   expect(legacyAudioMocks.compress).not.toHaveBeenCalled()
 })
 
@@ -261,16 +276,20 @@ it('should share one legacy migration between simultaneous audio reads', async (
 })
 
 it('should keep legacy WAV playback when compression fails', async () => {
-  const wavAudio = new Blob(['wav'], {type: 'audio/wav'})
   legacyAudioMocks.compress.mockRejectedValue(new Error('encoder unavailable'))
   storageMocks.get.mockImplementation(async (path: string) => ({
     ok: true,
-    value: path.endsWith('.wav') ? new Response(wavAudio) : null,
+    value: path.endsWith('.wav')
+      ? new Response('wav', {headers: {'Content-Type': 'audio/wav'}})
+      : null,
   }))
   vi.spyOn(console, 'warn').mockImplementation(() => undefined)
   const repository = createPDialogueRepository()
 
-  await expect(repository.getAudio('legacy')).resolves.toEqual(wavAudio)
+  const audio = await repository.getAudio('legacy')
+
+  expect(audio?.type).toBe('audio/wav')
+  await expect(readBlobAsText(audio as Blob)).resolves.toBe('wav')
   expect(storageMocks.set).not.toHaveBeenCalled()
   expect(storageMocks.delete).not.toHaveBeenCalled()
 })
