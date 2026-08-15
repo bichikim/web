@@ -1,5 +1,5 @@
 import {createHash} from 'node:crypto'
-import {and, eq, lt} from 'drizzle-orm'
+import {and, eq, inArray, lt} from 'drizzle-orm'
 
 import {
   type HistoryGenerationOutput,
@@ -152,6 +152,39 @@ export const prepareGenerationRun = async (
   }
 
   return {created: false, run: mapRun(existing)}
+}
+
+/** Reopens an inactive daily run so its published moments can be regenerated. */
+export const prepareGenerationRerun = async (
+  options: CreateRunOptions,
+  database: Database = getDatabase(),
+): Promise<GenerationRun> => {
+  const channelId = await getChannelId(database)
+  const [updated] = await database
+    .update(historicalGenerationRuns)
+    .set({
+      completedAt: null,
+      errorMessage: null,
+      openAiResponseId: null,
+      promptVersion: options.promptVersion,
+      sourcePolicyVersion: options.sourcePolicyVersion,
+      status: 'preparing',
+      updatedAt: new Date(),
+    })
+    .where(
+      and(
+        eq(historicalGenerationRuns.channelId, channelId),
+        eq(historicalGenerationRuns.targetDate, options.targetDate.isoDate),
+        inArray(historicalGenerationRuns.status, ['completed', 'failed', 'rejected']),
+      ),
+    )
+    .returning()
+
+  if (updated === undefined) {
+    throw new Error(`Inactive generation run not found: ${options.targetDate.isoDate}`)
+  }
+
+  return mapRun(updated)
 }
 
 /** Associates an OpenAI background response with a prepared generation run. */

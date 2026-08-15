@@ -14,6 +14,7 @@ export interface SubmitHistoryResponseOptions {
   readonly generationRunId: string
   readonly policy: HistorySourcePolicy
   readonly promptVersion: string
+  readonly requiredTitles?: ReadonlyArray<string>
   readonly targetDate: HistoryTargetDate
 }
 
@@ -43,7 +44,11 @@ export const submitHistoryResponse = async (
   const response = await getOpenAiClient().responses.create({
     background: true,
     include: ['web_search_call.action.sources'],
-    input: buildHistoryPrompt({policy: options.policy, targetDate: options.targetDate}),
+    input: buildHistoryPrompt({
+      policy: options.policy,
+      requiredTitles: options.requiredTitles,
+      targetDate: options.targetDate,
+    }),
     metadata: {
       generation_run_id: options.generationRunId,
       prompt_version: options.promptVersion,

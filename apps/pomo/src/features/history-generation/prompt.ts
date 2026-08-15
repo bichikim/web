@@ -4,7 +4,18 @@ export const HISTORY_PROMPT_VERSION = 'today-in-history-v2-radio'
 
 interface BuildHistoryPromptOptions {
   readonly policy: HistorySourcePolicy
+  readonly requiredTitles?: ReadonlyArray<string>
   readonly targetDate: HistoryTargetDate
+}
+
+const buildSelectionRequirements = (requiredTitles: ReadonlyArray<string> | undefined): string => {
+  if (requiredTitles === undefined) {
+    return '- 서로 다른 시대·지역·분야에서 3~5개 사건을 선정한다.'
+  }
+
+  return `- 아래 ${requiredTitles.length}개 사건만 작성하고 다른 사건은 추가하지 않는다.
+- title은 아래 표기를 글자까지 정확히 유지한다.
+${requiredTitles.map((title) => `  - ${title}`).join('\n')}`
 }
 
 /** Builds the stable research and Korean editing instructions for one publication date. */
@@ -19,7 +30,7 @@ export const buildHistoryPrompt = (
 ${options.policy.seedUrls.map((url) => `- ${url}`).join('\n')}
 
 요구사항:
-- 서로 다른 시대·지역·분야에서 3~5개 사건을 선정한다.
+${buildSelectionRequirements(options.requiredTitles)}
 - 사건마다 서로 다른 publisher의 신뢰할 만한 출처 두 곳 이상으로 월·일, 연도와 핵심 사실을 확인한다.
 - 검색 도구가 반환한 정확한 HTTPS URL만 sources와 각 section의 sourceUrls에 사용한다.
 - title은 "{연도 표기}, {핵심 사건}" 형식이며 50자 이하로 작성한다.
