@@ -4,7 +4,7 @@ import {zodTextFormat} from 'openai/helpers/zod'
 
 import {
   buildHistoryPrompt,
-  historyGenerationOutputSchema,
+  historyGenerationOpenAiOutputSchema,
   type HistorySourcePolicy,
   type HistoryTargetDate,
 } from '../../features/history-generation'
@@ -54,7 +54,7 @@ export const submitHistoryResponse = async (
     service_tier: configuration.serviceTier,
     store: true,
     text: {
-      format: zodTextFormat(historyGenerationOutputSchema, 'history_generation'),
+      format: zodTextFormat(historyGenerationOpenAiOutputSchema, 'history_generation'),
       verbosity: 'low',
     },
     tool_choice: 'required',
