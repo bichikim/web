@@ -17,7 +17,12 @@ Repeat until the next cut would change behavior:
    - Delete: history, rationale, duplicated/non-decisive examples, long reference summaries, generic or aspirational advice.
    - Extract: long examples, pattern catalogs, deep references, edge-case tables.
 4. Re-read as a first-time reader. Linked files open only when their condition matches.
-5. Outcome parity: walk 1–3 typical invocations; confirm same decisions, constraints, routing, and output contract. If not, restore the missing rule or tighten a link. Prefer mental walkthroughs; revert any temporary side effects before finishing.
+5. Outcome parity:
+   - For wording-only edits, walk 1–3 typical invocations mentally.
+   - For behavior-affecting cuts, use two fresh agents with no conversation history. Give both the skill and raw task artifacts, never the expected answer or prior diagnosis.
+   - Use complementary cases: one checks that required behavior still appears; the other checks that boundaries hold without false positives or overreach. Add cases only for materially different modes.
+   - Compare decisions, constraints, routing, and output contracts. Restore missing rules or tighten links on failure. Revert temporary side effects.
+   - If fresh agents are unavailable, report that independent validation was not run; never describe a mental walkthrough as fresh validation.
 6. Validate: `node scripts/validate-skill.js <skill_directory>` when available. For repo changes, also run required format/lint.
 
 ## Extract

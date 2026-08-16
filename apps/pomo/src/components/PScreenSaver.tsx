@@ -1,5 +1,48 @@
 import {createEffect, onMount, Show} from 'solid-js'
 
+const CLASSES = {
+  screenSaver: [
+    'pomo-screen-saver w-screen max-w-[none] h-dvh max-h-[none] box-border m-0 border-0 bg-[#000]',
+    'pt-[max(1.5rem,_env(safe-area-inset-top))]',
+    'pr-[max(1.5rem,_env(safe-area-inset-right))]',
+    'pb-[max(1.5rem,_env(safe-area-inset-bottom))]',
+    'pl-[max(1.5rem,_env(safe-area-inset-left))]',
+    'text-[rgb(255_255_255_/_48%)] cursor-pointer outline-none overscroll-none',
+    '[&::backdrop]:bg-[#000]',
+  ].join(' '),
+  screenSaverContent: [
+    'pomo-screen-saver__content grid w-[min(calc(100%_-_4rem),_22rem)] justify-items-center gap-5',
+    'animate-[pomo-screen-saver-content-drift_48s_ease-in-out_infinite_alternate] text-center',
+    'motion-reduce:[animation-duration:64s]',
+    'motion-reduce:[animation-timing-function:steps(4,_jump-none)]',
+  ].join(' '),
+  screenSaverHint: [
+    'pomo-screen-saver__hint text-[rgb(255_255_255_/_46%)] text-xs leading-4.5 m-[0.5rem_0_0]',
+    'font-semibold',
+  ].join(' '),
+  screenSaverSafeArea: [
+    'pomo-screen-saver__safe-area absolute',
+    'top-[max(1.5rem,_env(safe-area-inset-top))]',
+    'right-[max(1.5rem,_env(safe-area-inset-right))]',
+    'bottom-[max(1.5rem,_env(safe-area-inset-bottom))]',
+    'left-[max(1.5rem,_env(safe-area-inset-left))]',
+    'grid place-items-center pointer-events-none',
+  ].join(' '),
+  screenSaverTimer: [
+    'pomo-screen-saver__timer grid justify-items-center gap-1',
+    '[&_>_span]:text-[rgb(255_255_255_/_46%)] [&_>_span]:text-xs [&_>_span]:font-semibold',
+    '[&_>_span]:leading-4.5 [&_>_strong]:text-[rgb(255_255_255_/_52%)]',
+    '[&_>_strong]:text-[clamp(3rem,_16vw,_5rem)] [&_>_strong]:tabular-nums',
+    '[&_>_strong]:font-[650] [&_>_strong]:tracking-[-0.04em] [&_>_strong]:leading-[1]',
+  ].join(' '),
+  screenSaverTrack: [
+    'pomo-screen-saver__track grid max-w-full gap-1 [&_>_p]:overflow-hidden [&_>_p]:m-0',
+    '[&_>_p]:text-[rgb(255_255_255_/_48%)] [&_>_p]:text-sm [&_>_p]:font-[650] [&_>_p]:leading-5',
+    '[&_>_p]:text-ellipsis [&_>_p]:whitespace-nowrap [&_>_span]:text-[rgb(255_255_255_/_46%)]',
+    '[&_>_span]:text-xs [&_>_span]:leading-4.5',
+  ].join(' '),
+} as const
+
 export interface PScreenSaverProps {
   readonly isActive?: boolean
   readonly onDismiss?: () => void
@@ -45,7 +88,7 @@ export const PScreenSaver = (props: PScreenSaverProps) => {
   return (
     <dialog
       aria-label="스크린 세이버"
-      class="pomo-screen-saver"
+      class={CLASSES.screenSaver}
       onCancel={(event) => {
         event.preventDefault()
         handleDismiss()
@@ -56,11 +99,11 @@ export const PScreenSaver = (props: PScreenSaverProps) => {
         dialogElement = element
       }}
     >
-      <div class="pomo-screen-saver__safe-area">
-        <div class="pomo-screen-saver__content">
+      <div class={CLASSES.screenSaverSafeArea}>
+        <div class={CLASSES.screenSaverContent}>
           <Show when={props.timer}>
             {(timer) => (
-              <section aria-label="포모도로 상태" class="pomo-screen-saver__timer">
+              <section aria-label="포모도로 상태" class={CLASSES.screenSaverTimer}>
                 <span>{timer().status}</span>
                 <strong>{timer().time}</strong>
               </section>
@@ -68,13 +111,13 @@ export const PScreenSaver = (props: PScreenSaverProps) => {
           </Show>
           <Show when={props.track}>
             {(track) => (
-              <section aria-label="현재 음악" class="pomo-screen-saver__track">
+              <section aria-label="현재 음악" class={CLASSES.screenSaverTrack}>
                 <p>{track().title}</p>
                 <span>{track().artist}</span>
               </section>
             )}
           </Show>
-          <p aria-hidden="true" class="pomo-screen-saver__hint">
+          <p aria-hidden="true" class={CLASSES.screenSaverHint}>
             터치하거나 마우스를 움직이거나 클릭하면 돌아가요
           </p>
         </div>

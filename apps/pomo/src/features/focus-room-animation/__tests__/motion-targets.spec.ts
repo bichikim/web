@@ -1,7 +1,11 @@
 import {describe, expect, it} from 'vitest'
 
-import type {PixiSceneTargetTranslation} from '../layer-scene-definition'
-import {getNextMotionTarget} from '../motion-targets'
+import type {
+  PixiSceneLoopingTranslation,
+  PixiSceneMotion,
+  PixiSceneTargetTranslation,
+} from '../layer-scene-definition'
+import {getMotionTarget, getNextMotionTarget} from '../motion-targets'
 
 const motion = {
   kind: 'translation',
@@ -28,5 +32,30 @@ describe('motion targets', () => {
     const currentTarget = motion.targets[2]
 
     expect(getNextMotionTarget(motion, currentTarget, 1, () => 0.5)).not.toEqual(currentTarget)
+  })
+
+  it('should keep a looping translation moving toward its terminal point', () => {
+    const loopingMotion = {
+      from: {x: -20, y: 2},
+      kind: 'looping-translation',
+      to: {x: 30, y: -2},
+      travel: {maximumSeconds: 30, minimumSeconds: 30},
+    } satisfies PixiSceneLoopingTranslation
+
+    expect(getNextMotionTarget(loopingMotion, loopingMotion.from, 1, () => 0.5)).toEqual(
+      loopingMotion.to,
+    )
+  })
+
+  it('should keep opacity pulses at the origin because they do not translate', () => {
+    const opacityMotion = {
+      kind: 'opacity-pulse',
+      maximumOpacity: 0.8,
+      minimumOpacity: 0.2,
+      travel: {maximumSeconds: 8, minimumSeconds: 4},
+    } satisfies PixiSceneMotion
+
+    expect(getMotionTarget(opacityMotion, -1)).toEqual({x: 0, y: 0})
+    expect(getNextMotionTarget(opacityMotion, {x: 0, y: 0}, 1, () => 0.5)).toEqual({x: 0, y: 0})
   })
 })

@@ -23,7 +23,14 @@ describe('focus room scene catalog', () => {
 
   it('should use true separated layers instead of pixel distortion in every preview', () => {
     for (const scene of FOCUS_ROOM_SCENES) {
-      const expectedLayerCount = 6
+      const expectedLayerCount =
+        scene.id === 'night-reading-focused'
+          ? 36
+          : scene.time === 'night'
+            ? 13
+            : scene.id === 'day-writing-focused'
+              ? 7
+              : 6
 
       expect(scene.layerScene.layers).toHaveLength(expectedLayerCount)
       expect(scene.layerScene.layers.map((layer) => layer.id)).toContain('head')
@@ -38,6 +45,122 @@ describe('focus room scene catalog', () => {
         ),
       ).toBe(true)
     }
+  })
+
+  it('should animate day-writing clouds behind a fixed sky mask', () => {
+    const cloudLayer = getPScene('day', 'writing', 'focused').layerScene.layers.find(
+      (layer) => layer.id === 'day-clouds',
+    )
+
+    expect(cloudLayer).toMatchObject({
+      maskSource: expect.stringContaining('sky-mask'),
+      motion: {
+        kind: 'looping-translation',
+        travel: {maximumSeconds: 32, minimumSeconds: 32},
+      },
+      opacity: 0.38,
+    })
+  })
+
+  it('should pulse all user-provided building layers at independent random intervals', () => {
+    const nightScenes = FOCUS_ROOM_SCENES.filter((scene) => scene.time === 'night')
+    const expectedSources = [
+      'building-lights/01',
+      'building-lights/02',
+      'building-lights/03',
+      'building-lights/04',
+      'building-lights/05',
+      'building-lights/06',
+      'building-lights/07',
+    ]
+
+    expect(nightScenes).toHaveLength(6)
+    for (const scene of nightScenes) {
+      const buildingLayers = scene.layerScene.layers.filter((layer) =>
+        layer.id.startsWith('building-lights-'),
+      )
+
+      expect(buildingLayers).toHaveLength(7)
+      expect(buildingLayers.map((layer) => layer.source)).toEqual(
+        expectedSources.map((source) => expect.stringContaining(source)),
+      )
+      for (const buildingLayer of buildingLayers) {
+        expect(buildingLayer.motion).toMatchObject({
+          kind: 'opacity-pulse',
+          maximumOpacity: 1,
+          minimumOpacity: 0,
+          transitionSeconds: 1,
+          travel: {maximumSeconds: 12, minimumSeconds: 2},
+        })
+      }
+    }
+    expect(
+      FOCUS_ROOM_SCENES.flatMap((scene) => scene.layerScene.layers).some((layer) =>
+        layer.id.startsWith('building-state-'),
+      ),
+    ).toBe(false)
+  })
+
+  it('should twinkle seventeen separate stars only in the night reading focused trial', () => {
+    const trialScene = getPScene('night', 'reading', 'focused')
+    const starLayers = trialScene.layerScene.layers.filter((layer) =>
+      layer.id.startsWith('sky-star-'),
+    )
+
+    expect(starLayers).toHaveLength(17)
+    expect(starLayers.map((layer) => layer.source)).toEqual(
+      Array.from({length: 17}, (_, index) =>
+        expect.stringContaining(`stars/${String(index + 1).padStart(2, '0')}`),
+      ),
+    )
+    for (const starLayer of starLayers) {
+      expect(starLayer.motion).toMatchObject({
+        fall: {maximumSeconds: 0.6, minimumSeconds: 0.25},
+        flashChance: 0.06,
+        flashFall: {maximumSeconds: 0.32, minimumSeconds: 0.12},
+        flashHold: {maximumSeconds: 0.12, minimumSeconds: 0.04},
+        flashRise: {maximumSeconds: 0.14, minimumSeconds: 0.05},
+        kind: 'opacity-twinkle',
+        maximumOpacity: 1,
+        minimumOpacity: 0,
+        rise: {maximumSeconds: 0.25, minimumSeconds: 0.1},
+        travel: {maximumSeconds: 6, minimumSeconds: 1.5},
+      })
+    }
+    expect(
+      FOCUS_ROOM_SCENES.filter((scene) => scene.id !== trialScene.id).every((scene) =>
+        scene.layerScene.layers.every((layer) => !layer.id.startsWith('sky-star-')),
+      ),
+    ).toBe(true)
+  })
+
+  it('should softly fade six faint background stars only in the night reading focused trial', () => {
+    const trialScene = getPScene('night', 'reading', 'focused')
+    const backgroundLayer = trialScene.layerScene.layers.find((layer) => layer.id === 'background')
+    const faintLayers = trialScene.layerScene.layers.filter((layer) =>
+      layer.id.startsWith('sky-faint-star-'),
+    )
+
+    expect(backgroundLayer?.source).toContain('background')
+    expect(
+      trialScene.layerScene.layers.every((layer) => layer.id !== 'sky-faint-stars-cleanup'),
+    ).toBe(true)
+    expect(faintLayers).toHaveLength(6)
+    for (const [index, faintLayer] of faintLayers.entries()) {
+      expect(faintLayer.source).toContain(`faint-stars/0${index + 1}`)
+      expect(faintLayer.motion).toMatchObject({
+        kind: 'opacity-pulse',
+        maximumOpacity: 1,
+        minimumOpacity: 0,
+        transitionSeconds: 1.6,
+        travel: {maximumSeconds: 12, minimumSeconds: 3},
+      })
+    }
+    expect(
+      FOCUS_ROOM_SCENES.filter((scene) => scene.id !== trialScene.id).every((scene) =>
+        scene.layerScene.layers.every((layer) => !layer.id.startsWith('sky-faint-star')),
+      ),
+    ).toBe(true)
   })
 
   it('should attach separated irises to supported heads', () => {

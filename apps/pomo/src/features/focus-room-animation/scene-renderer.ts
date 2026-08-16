@@ -1,9 +1,9 @@
 import {Application, Container, Sprite, type Texture} from 'pixi.js'
 
-import steamImage1 from 'assets/focus-room-animation/steam-ai-1.webp'
-import steamImage2 from 'assets/focus-room-animation/steam-ai-2.webp'
-import steamImage3 from 'assets/focus-room-animation/steam-ai-3.webp'
-import steamImage4 from 'assets/focus-room-animation/steam-ai-4.webp'
+import steamImage1 from './assets/animation/steam/01.webp'
+import steamImage2 from './assets/animation/steam/02.webp'
+import steamImage3 from './assets/animation/steam/03.webp'
+import steamImage4 from './assets/animation/steam/04.webp'
 import {DepthParallaxFilter} from './depth-parallax-filter'
 import {PEyeController} from './eye-animation-controller'
 import {ParallaxController} from './parallax-controller'
@@ -442,10 +442,6 @@ export class PSceneRenderer {
     this.#depthFilter?.cancelDepthTransition()
     releaseTextureGroup(this.#incomingTextures)
     this.#incomingTextures = []
-
-    if (this.#currentScene !== null) {
-      this.#currentScene.alpha = 1
-    }
   }
 
   #startLoading() {

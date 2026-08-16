@@ -1,8 +1,8 @@
 import {cx} from 'class-variance-authority'
 import {createEffect, createMemo, createSignal, For, Show, untrack} from 'solid-js'
 
-import breakStatusIcon from 'assets/pomodoro-status-icons/break-face.webp'
-import focusStatusIcon from 'assets/pomodoro-status-icons/focus-face.webp'
+import breakStatusIcon from './assets/pomodoro-status-icons/break.webp'
+import focusStatusIcon from './assets/pomodoro-status-icons/focus.webp'
 import {PButton} from '../design-system/PButton'
 import {PCharacterEmotion, type PCharacterEmotionType} from '../design-system/PCharacterEmotion'
 import {PIconButton} from '../design-system/PIconButton'
@@ -16,6 +16,71 @@ import {
   usePomodoroTimer,
 } from '../features/pomodoro-timer'
 import {PPomodoroDurationEditor} from './PPomodoroDurationEditor'
+
+const CLASSES = {
+  pomodoro: [
+    'pomo-pomodoro absolute top-[calc(1rem_+_env(safe-area-inset-top))]',
+    'left-[calc(1rem_+_env(safe-area-inset-left))] min-[40rem]:top-[1.5rem]',
+    'min-[40rem]:left-[1.75rem] pointer-events-auto',
+  ].join(' '),
+  pomodoroActionIcon: 'pomo-pomodoro__action-icon w-3 h-3',
+  pomodoroActionIndicator: [
+    'pomo-pomodoro__action-indicator absolute right-[-0.3125rem] bottom-[0] grid w-5 h-5',
+    '[border:1px_solid_rgb(255_250_241_/_72%)] rounded-full bg-[var(--pomo-text)]',
+    'shadow-[0_0.125rem_0.25rem_rgb(0_0_0_/_36%)] text-[var(--pomo-canvas)] place-items-center',
+    'pointer-events-none',
+  ].join(' '),
+  pomodoroEmotionAction: [
+    'pomo-pomodoro__emotion-action relative grid w-14 h-14 flex-none border-0 rounded-full',
+    'bg-transparent p-0 text-inherit cursor-pointer outline-none place-items-center',
+    'transition-[background-color_160ms_ease] motion-reduce:transition-[none]',
+  ].join(' '),
+  pomodoroPanel: [
+    'pomo-pomodoro-panel [--pomo-timer-phase:var(--pomo-accent)] flex items-center flex-col',
+    "[&[data-phase='longBreak']]:[--pomo-timer-phase:#8d9a77]",
+    "[&[data-phase='shortBreak']]:[--pomo-timer-phase:#8d9a77]",
+  ].join(' '),
+  pomodoroPanelActions: 'pomo-pomodoro-panel__actions flex w-full items-center gap-2.5 mt-4',
+  pomodoroPanelAutoStart: [
+    'pomo-pomodoro-panel__auto-start w-full box-border mt-4',
+    '[border-top:1px_solid_var(--pomo-border)] pt-4',
+  ].join(' '),
+  pomodoroPanelCompactAction: 'pomo-pomodoro-panel__compact-action shadow-none',
+  pomodoroPanelCompactActionDanger: [
+    'pomo-pomodoro-panel__compact-action--danger border-[rgb(239_138_116_/_34%)]',
+    '[&_.pomo-icon-button\\_\\_icon]:text-[var(--pomo-danger)]',
+  ].join(' '),
+  pomodoroPanelPrimaryAction: 'pomo-pomodoro-panel__primary-action min-w-0 flex-1',
+  pomodoroPanelSession: [
+    'pomo-pomodoro-panel__session w-2 h-2 [border:1px_solid_var(--pomo-border-hover)]',
+    'rounded-full bg-transparent [&[data-complete]]:border-[var(--pomo-timer-phase)]',
+    '[&[data-complete]]:bg-[var(--pomo-timer-phase)]',
+  ].join(' '),
+  pomodoroPanelSessionReset: [
+    'pomo-pomodoro-panel__session-reset inline-flex items-center gap-1 border-0 bg-transparent',
+    'p-1 text-[var(--pomo-text-muted)] cursor-pointer text-[0.625rem] leading-3.5',
+    '[&:hover]:text-[var(--pomo-danger)] [&:focus-visible]:text-[var(--pomo-danger)]',
+  ].join(' '),
+  pomodoroPanelSessionRow: 'pomo-pomodoro-panel__session-row flex items-center gap-2 mt-4',
+  pomodoroPanelSessions: 'pomo-pomodoro-panel__sessions flex gap-2',
+  pomodoroTimeAction: [
+    'pomo-pomodoro__time-action grid h-full min-w-13 border-0',
+    'rounded-[var(--pomo-radius-control)] bg-transparent p-[0_0.875rem_0_0.375rem] text-inherit',
+    'cursor-pointer outline-none place-items-center transition-[background-color_160ms_ease]',
+    'motion-reduce:transition-[none]',
+  ].join(' '),
+  pomodoroTrigger: [
+    'pomo-pomodoro__trigger inline-flex box-border h-[var(--pomo-control-height-medium)] min-w-27',
+    'items-center overflow-visible rounded-[var(--pomo-radius-control)] bg-[var(--pomo-glass)]',
+    'text-[var(--pomo-text)] shadow-[var(--pomo-shadow)]',
+    'transition-[border-color_160ms_ease,_background-color_160ms_ease]',
+    'motion-reduce:transition-[none]',
+  ].join(' '),
+  pomodoroTriggerTime: [
+    'pomo-pomodoro__trigger-time text-[var(--pomo-text)] text-sm tabular-nums font-extrabold',
+    'tracking-[0.025em] leading-4',
+  ].join(' '),
+} as const
 
 interface PhasePresentation {
   readonly characterEmotion: PCharacterEmotionType
@@ -84,13 +149,16 @@ interface PomodoroQuickControlsProps {
 const PomodoroQuickControls = (props: PomodoroQuickControlsProps) => (
   <div
     aria-label="포모도로 간편 조작"
-    class="pomo-backdrop pomo-interactive-glass-group pomo-pomodoro__trigger"
+    class={cx('pomo-backdrop pomo-interactive-glass-group', CLASSES.pomodoroTrigger)}
     data-phase={props.phase}
     role="group"
   >
     <button
       aria-label={props.primaryLabel}
-      class="pomo-interactive-glass-part pomo-strong-focus-ring pomo-pomodoro__emotion-action"
+      class={cx(
+        'pomo-interactive-glass-part pomo-strong-focus-ring',
+        CLASSES.pomodoroEmotionAction,
+      )}
       onClick={() => props.onPrimaryPress()}
       type="button"
     >
@@ -99,8 +167,8 @@ const PomodoroQuickControls = (props: PomodoroQuickControlsProps) => (
         emotion={props.characterEmotion}
         image={props.characterImage}
       />
-      <span aria-hidden="true" class="pomo-pomodoro__action-indicator">
-        <span class={cx(props.primaryIcon, 'pomo-pomodoro__action-icon')} />
+      <span aria-hidden="true" class={CLASSES.pomodoroActionIndicator}>
+        <span class={cx(props.primaryIcon, CLASSES.pomodoroActionIcon)} />
       </span>
     </button>
     <button
@@ -108,27 +176,27 @@ const PomodoroQuickControls = (props: PomodoroQuickControlsProps) => (
       aria-label={`포모도로 열기, ${props.statusLabel}, ${props.timeLabel}`}
       class={cx(
         'pomo-interactive-glass-group-trigger',
-        'pomo-interactive-glass-part pomo-strong-focus-ring pomo-pomodoro__time-action',
+        cx('pomo-interactive-glass-part pomo-strong-focus-ring', CLASSES.pomodoroTimeAction),
       )}
       onClick={(event) => props.onOpen(event.currentTarget)}
       type="button"
     >
-      <span class="pomo-pomodoro__trigger-time">{props.timeLabel}</span>
+      <span class={CLASSES.pomodoroTriggerTime}>{props.timeLabel}</span>
     </button>
   </div>
 )
 
 const PomodoroSessionProgress = (props: PomodoroSessionProgressProps) => (
-  <div class="pomo-pomodoro-panel__session-row">
+  <div class={CLASSES.pomodoroPanelSessionRow}>
     <div
       aria-label={`${props.sessionCount}회 중 ${props.completedCount}회 집중 완료`}
-      class="pomo-pomodoro-panel__sessions"
+      class={CLASSES.pomodoroPanelSessions}
     >
       <For each={props.positions}>
         {(position) => (
           <span
             aria-hidden="true"
-            class="pomo-pomodoro-panel__session"
+            class={CLASSES.pomodoroPanelSession}
             data-complete={position < props.completedCount ? '' : undefined}
           />
         )}
@@ -136,7 +204,7 @@ const PomodoroSessionProgress = (props: PomodoroSessionProgressProps) => (
     </div>
     <Show when={props.completedCount > 0}>
       <button
-        class="pomo-pomodoro-panel__session-reset"
+        class={CLASSES.pomodoroPanelSessionReset}
         onClick={() => props.onReset()}
         type="button"
       >
@@ -279,7 +347,7 @@ export const PPomodoro = (props: PPomodoroProps) => {
 
   return (
     <>
-      <div class="pomo-pomodoro">
+      <div class={CLASSES.pomodoro}>
         <PomodoroQuickControls
           characterEmotion={phasePresentation().characterEmotion}
           characterImage={phasePresentation().characterImage}
@@ -305,7 +373,7 @@ export const PPomodoro = (props: PPomodoroProps) => {
       >
         <section
           aria-label="포모도로 타이머"
-          class="pomo-pomodoro-panel"
+          class={CLASSES.pomodoroPanel}
           data-phase={timer.state().phase}
         >
           <Show when={!isEditingDurations()}>
@@ -328,9 +396,9 @@ export const PPomodoro = (props: PPomodoroProps) => {
             {phasePresentation().label}, {statusLabel()}
           </p>
 
-          <div class="pomo-pomodoro-panel__actions" ref={setActionContainer}>
+          <div class={CLASSES.pomodoroPanelActions} ref={setActionContainer}>
             <PButton
-              class="pomo-pomodoro-panel__primary-action"
+              class={CLASSES.pomodoroPanelPrimaryAction}
               icon={primaryIcon()}
               onPress={handlePrimaryPress}
               tone="primary"
@@ -339,7 +407,7 @@ export const PPomodoro = (props: PPomodoroProps) => {
             </PButton>
             <PIconButton
               accessibleLabel="다음 단계로 이동"
-              class="pomo-pomodoro-panel__compact-action"
+              class={CLASSES.pomodoroPanelCompactAction}
               feedback="다음 단계"
               icon="i-tabler-player-track-next"
               onPress={timer.onNextPhase}
@@ -347,7 +415,10 @@ export const PPomodoro = (props: PPomodoroProps) => {
             <Show when={timer.state().status !== 'idle'}>
               <PIconButton
                 accessibleLabel="현재 세션 종료"
-                class="pomo-pomodoro-panel__compact-action pomo-pomodoro-panel__compact-action--danger"
+                class={cx(
+                  CLASSES.pomodoroPanelCompactAction,
+                  CLASSES.pomodoroPanelCompactActionDanger,
+                )}
                 feedback="세션 종료"
                 icon="i-tabler-square"
                 onPress={timer.onStop}
@@ -357,7 +428,7 @@ export const PPomodoro = (props: PPomodoroProps) => {
 
           <PSwitch
             checked={timer.isAutoStartEnabled()}
-            class="pomo-pomodoro-panel__auto-start"
+            class={CLASSES.pomodoroPanelAutoStart}
             description="타이머가 끝나면 다음 집중 또는 휴식을 바로 시작해요."
             label="집중·휴식 자동 재생"
             onChange={timer.onAutoStartChange}

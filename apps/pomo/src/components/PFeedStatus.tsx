@@ -2,6 +2,33 @@ import {Show} from 'solid-js'
 
 import {PButton} from '../design-system/PButton'
 import {usePFeedContext} from '../features/focus-room-feed'
+import {cx} from 'class-variance-authority'
+
+const CLASSES = {
+  feedStatus: [
+    'pomo-feed-status flex w-[min(36rem,_100%)] box-border items-center gap-3',
+    'border border-solid rounded-2xl p-[0.8rem_0.9rem]',
+    'text-[var(--pomo-text)] shadow-[inset_0_1px_0_rgb(255_255_255_/_8%)] pointer-events-auto',
+    'backdrop-filter-[blur(0.75rem)] [-webkit-backdrop-filter:blur(0.75rem)]',
+    "[&_>_[class*='i-tabler']]:flex-none [&_>_[class*='i-tabler']]:text-[var(--pomo-brass)]",
+    "pomo-below-[34rem]:[&[data-state='recovery']]:flex-wrap",
+    "pomo-below-[34rem]:[&[data-state='recovery']_.pomo-feed-status\\_\\_actions]:w-full",
+    "pomo-below-[34rem]:[&[data-state='recovery']_.pomo-feed-status\\_\\_action]:flex-1",
+  ].join(' '),
+  feedStatusAction: 'pomo-feed-status__action flex-none whitespace-nowrap',
+  feedStatusActions: 'pomo-feed-status__actions flex flex-none gap-[0.35rem]',
+  feedStatusCopy: [
+    'pomo-feed-status__copy grid min-w-0 flex-1 gap-[0.15rem] [&_strong]:overflow-hidden',
+    '[&_strong]:text-ellipsis [&_strong]:whitespace-nowrap [&_small]:overflow-hidden',
+    '[&_small]:text-ellipsis [&_small]:whitespace-nowrap [&_strong]:text-[0.78rem]',
+    '[&_small]:text-[var(--pomo-text-muted)] [&_small]:text-[0.68rem]',
+  ].join(' '),
+  feedStatusSpinner: [
+    'pomo-feed-status__spinner w-4 h-4 box-border flex-none',
+    'animate-[pomo-feed-spin_1s_linear_infinite] [border:2px_solid_rgb(255_255_255_/_24%)]',
+    'border-t-[var(--pomo-brass)] rounded-full motion-reduce:animate-[none]',
+  ].join(' '),
+} as const
 
 export const PFeedStatus = () => {
   const feeds = usePFeedContext()
@@ -32,7 +59,7 @@ export const PFeedStatus = () => {
               <Show when={feeds.state().status !== 'idle'}>
                 <div
                   aria-live="polite"
-                  class="pomo-feed-status pomo-static-focus-glass"
+                  class={cx(CLASSES.feedStatus, 'pomo-static-focus-glass')}
                   data-state={feeds.state().status}
                   role="status"
                 >
@@ -41,10 +68,10 @@ export const PFeedStatus = () => {
                     class={
                       feeds.state().status === 'error'
                         ? 'i-tabler-alert-circle size-5'
-                        : 'pomo-feed-status__spinner'
+                        : CLASSES.feedStatusSpinner
                     }
                   />
-                  <span class="pomo-feed-status__copy">
+                  <span class={CLASSES.feedStatusCopy}>
                     <strong>
                       {feeds.state().status === 'error' ? '피드 확인 필요' : '피드 읽는 중'}
                     </strong>
@@ -52,7 +79,7 @@ export const PFeedStatus = () => {
                   </span>
                   <Show when={feeds.state().status === 'error'}>
                     <PButton
-                      class="pomo-feed-status__action"
+                      class={CLASSES.feedStatusAction}
                       onPress={feeds.syncNow}
                       size="small"
                       tone="secondary"
@@ -67,12 +94,12 @@ export const PFeedStatus = () => {
             {(ready) => (
               <div
                 aria-live="polite"
-                class="pomo-feed-status pomo-static-focus-glass"
+                class={cx(CLASSES.feedStatus, 'pomo-static-focus-glass')}
                 data-state="ready"
                 role="status"
               >
                 <span aria-hidden="true" class="i-tabler-rss size-5" />
-                <span class="pomo-feed-status__copy">
+                <span class={CLASSES.feedStatusCopy}>
                   <strong>
                     {feeds.unlistenedDialogues().length > 1
                       ? `새 피드 대화 ${feeds.unlistenedDialogues().length}개가 준비됐어요`
@@ -83,7 +110,7 @@ export const PFeedStatus = () => {
                   </small>
                 </span>
                 <PButton
-                  class="pomo-feed-status__action"
+                  class={CLASSES.feedStatusAction}
                   onPress={handleListenAll}
                   size="small"
                   tone="secondary"
@@ -97,18 +124,18 @@ export const PFeedStatus = () => {
       >
         <div
           aria-live="polite"
-          class="pomo-feed-status pomo-static-focus-glass"
+          class={cx(CLASSES.feedStatus, 'pomo-static-focus-glass')}
           data-state="recovery"
           role="status"
         >
           <span aria-hidden="true" class="i-tabler-refresh size-5" />
-          <span class="pomo-feed-status__copy">
+          <span class={CLASSES.feedStatusCopy}>
             <strong>미완성 피드 대화 {feeds.recoveryJobs().length}개</strong>
             <small>처음부터 다시 만들까요?</small>
           </span>
-          <span class="pomo-feed-status__actions">
+          <span class={CLASSES.feedStatusActions}>
             <PButton
-              class="pomo-feed-status__action"
+              class={CLASSES.feedStatusAction}
               onPress={handleRetry}
               size="small"
               tone="secondary"
@@ -116,7 +143,7 @@ export const PFeedStatus = () => {
               다시 만들기
             </PButton>
             <PButton
-              class="pomo-feed-status__action"
+              class={CLASSES.feedStatusAction}
               onPress={feeds.dismissRecovery}
               size="small"
               tone="secondary"
@@ -124,7 +151,7 @@ export const PFeedStatus = () => {
               나중에
             </PButton>
             <PButton
-              class="pomo-feed-status__action"
+              class={CLASSES.feedStatusAction}
               onPress={handleDelete}
               size="small"
               tone="danger"

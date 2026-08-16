@@ -5,16 +5,15 @@ import UnoCSS from 'unocss/vite'
 import {createDevFeedPlugin} from './src/features/dev-feed'
 
 const isAppsInToss = process.env.POMO_BUILD_TARGET === 'apps-in-toss'
-const focusRoomSourcePattern = /[/\\]assets[/\\]focus-room-source[/\\]/u
-const focusRoomSourceGlob = 'focus-room-source/**'
+const assetLibraryPattern = /[/\\]asset-library[/\\]/u
 
-const excludeFocusRoomSourceAssets = {
+const excludeArchivedAssets = {
   enforce: 'pre' as const,
-  name: 'exclude-focus-room-source-assets',
+  name: 'exclude-archived-assets',
   resolveId(source: string, importer: string | undefined) {
-    if (focusRoomSourcePattern.test(source)) {
+    if (assetLibraryPattern.test(source)) {
       throw new Error(
-        `Archived focus room source assets cannot be bundled: ${source} (imported by ${importer ?? 'unknown'})`,
+        `Archived assets cannot be bundled: ${source} (imported by ${importer ?? 'unknown'})`,
       )
     }
   },
@@ -47,10 +46,9 @@ const app = defineConfig({
     optimizeDeps: {
       include: ['onnxruntime-web/all', 'zod'],
     },
-    plugins: [createDevFeedPlugin(), excludeFocusRoomSourceAssets, UnoCSS()],
+    plugins: [createDevFeedPlugin(), excludeArchivedAssets, UnoCSS()],
     resolve: {
       alias: {
-        assets: fileURLToPath(new URL('assets', import.meta.url)),
         scripts: fileURLToPath(new URL('scripts', import.meta.url)),
         src: fileURLToPath(new URL('src', import.meta.url)),
       },
@@ -58,26 +56,5 @@ const app = defineConfig({
     worker: {format: 'es'},
   },
 })
-
-const excludeFocusRoomSourceFromServerAssets = ({nitro}: {nitro: {options: NitroOptions}}) => {
-  const sourceAsset = nitro.options.serverAssets.find(
-    ({baseName, dir}) => baseName === 'server' && dir.endsWith('/assets'),
-  )
-
-  if (sourceAsset && !sourceAsset.ignore?.includes(focusRoomSourceGlob)) {
-    sourceAsset.ignore = [...(sourceAsset.ignore ?? []), focusRoomSourceGlob]
-  }
-}
-
-interface NitroOptions {
-  readonly serverAssets: Array<{
-    readonly baseName: string
-    readonly dir: string
-    ignore?: string[]
-  }>
-}
-
-app.hooks.hook('app:build:nitro:config', excludeFocusRoomSourceFromServerAssets)
-app.hooks.hook('app:dev:nitro:config', excludeFocusRoomSourceFromServerAssets)
 
 export default app

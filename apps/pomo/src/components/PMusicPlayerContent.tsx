@@ -1,17 +1,4 @@
-import 'media-chrome'
-
-import {cx} from 'class-variance-authority'
-import {
-  batch,
-  createEffect,
-  createMemo,
-  createSignal,
-  For,
-  onCleanup,
-  onMount,
-  Show,
-  untrack,
-} from 'solid-js'
+import {batch, createEffect, createMemo, createSignal, onCleanup, onMount, untrack} from 'solid-js'
 
 import {
   createInitialPlaybackState,
@@ -26,17 +13,7 @@ import {
   usePAudioVisualizer,
   usePPlaybackPersistence,
 } from '../features/focus-room-audio'
-import {PPlaybackModes} from './PPlaybackModes'
-import {PTrackList} from './PTrackList'
-
-const ACTIVE_VISUALIZER_OPACITY = 0.76
-const IDLE_VISUALIZER_OPACITY = 0.34
-const SKIP_BUTTON_CLASSES = cx(
-  'pomo-player__skip grid size-10 shrink-0 place-items-center rounded-full transition',
-  'disabled:opacity-35 max-[28rem]:size-9',
-)
-const MEDIA_FOCUS_CLASSES =
-  'focus-visible:outline-none [--media-focus-box-shadow:inset_0_0_0_2px_var(--pomo-secondary)]'
+import {MusicPlayerView} from './MusicPlayerView'
 
 interface PMusicPlayerContentProps {
   readonly expanded?: boolean
@@ -404,195 +381,24 @@ export default function PMusicPlayerContent(props: PMusicPlayerContentProps) {
   })
 
   return (
-    <div
-      class={cx(
-        'pomo-player-stage absolute inset-x-[var(--pomo-padding-lg)]',
-        'bottom-[calc(var(--pomo-padding-lg)+env(safe-area-inset-bottom))]',
-        'sm:inset-x-auto sm:bottom-6 sm:left-6 sm:w-[min(29rem,calc(100vw-3rem))]',
-      )}
-    >
-      <media-controller
-        audio=""
-        class={cx(
-          'pomo-player pomo-player-shell relative w-full overflow-hidden',
-          'p-[var(--pomo-padding-sm)]',
-          'rounded-[var(--pomo-radius-panel)]',
-        )}
-      >
-        <audio
-          crossorigin="anonymous"
-          preload="metadata"
-          ref={(element) => {
-            audioElement = element
-          }}
-          slot="media"
-          src={currentTrack()?.source}
-        />
-
-        <div
-          aria-hidden="true"
-          class="pomo-player__base pomo-backdrop pointer-events-none absolute inset-0"
-        />
-
-        <div
-          class={cx(
-            'pomo-player__visualizer-frame pointer-events-none absolute',
-            'inset-x-0 top-0 overflow-hidden',
-            expanded() ? 'h-18' : 'bottom-0',
-          )}
-        >
-          <div
-            aria-label="오디오 주파수 레벨"
-            class="pomo-player__visualizer absolute flex items-end gap-0.5"
-          >
-            <For each={visualizer.levels()}>
-              {(level) => (
-                <span
-                  aria-hidden="true"
-                  class={cx(
-                    'pomo-level min-w-0 flex-1 rounded-t-full',
-                    'transition-[height,opacity] duration-75',
-                  )}
-                  style={{
-                    height: `${level}%`,
-                    opacity: isPlaying() ? ACTIVE_VISUALIZER_OPACITY : IDLE_VISUALIZER_OPACITY,
-                  }}
-                />
-              )}
-            </For>
-          </div>
-        </div>
-
-        <div
-          class={cx(
-            'pomo-player__summary relative flex min-h-16 items-center',
-            'gap-[var(--pomo-padding-md)] px-[var(--pomo-padding-sm)]',
-            'py-[var(--pomo-padding-sm)]',
-          )}
-        >
-          <media-play-button
-            aria-label="재생 또는 일시 정지"
-            aria-hidden={expanded() ? 'true' : undefined}
-            class={cx(
-              'pomo-player__play pomo-player__play--summary shrink-0',
-              expanded() && 'is-hidden',
-            )}
-            disabled={!currentTrack()}
-            tabindex={expanded() ? -1 : 0}
-          >
-            <span aria-hidden="true" class="i-tabler-player-play size-5" slot="play" />
-            <span aria-hidden="true" class="i-tabler-player-pause size-5" slot="pause" />
-          </media-play-button>
-
-          <div class="pomo-player__title relative min-w-0 flex-1 px-[var(--pomo-padding-sm)]">
-            <p class="pomo-player__track-title m-0 truncate">
-              {currentTrack()?.title ?? '집중 음악을 준비 중이에요'}
-            </p>
-            <p class="pomo-player__track-artist mb-0 mt-0.5 truncate">
-              {currentTrack()?.artist ?? 'MP3를 연결하면 이곳에서 재생돼요'}
-            </p>
-          </div>
-
-          <button
-            aria-expanded={expanded()}
-            aria-label={expanded() ? '플레이어 접기' : '플레이어 펼치기'}
-            class={
-              'relative grid size-9 shrink-0 place-items-center rounded-full transition ' +
-              'pomo-player__utility hover:bg-[var(--pomo-secondary-soft)] ' +
-              'text-[var(--pomo-text-muted)] hover:text-[var(--pomo-text)]'
-            }
-            onClick={toggleExpanded}
-            type="button"
-          >
-            <span
-              aria-hidden="true"
-              class={cx('size-4', expanded() ? 'i-tabler-chevron-down' : 'i-tabler-chevron-up')}
-            />
-          </button>
-        </div>
-
-        <Show when={expanded()}>
-          <div
-            class={cx(
-              'pomo-player__expanded relative px-[var(--pomo-padding-sm)]',
-              'pb-[var(--pomo-padding-sm)] pt-[var(--pomo-padding-md)]',
-              'rounded-b-[calc(var(--pomo-radius-panel)-0.5rem)]',
-            )}
-          >
-            <div class="mb-[var(--pomo-padding-md)] px-[var(--pomo-padding-xs)]">
-              <media-time-range class={MEDIA_FOCUS_CLASSES} />
-              <div
-                class={cx(
-                  'mt-[var(--pomo-padding-xs)] flex justify-end text-[10px]',
-                  'tabular-nums text-[var(--pomo-text-muted)]',
-                )}
-              >
-                <media-time-display class={MEDIA_FOCUS_CLASSES} showduration="" />
-              </div>
-            </div>
-
-            <div
-              class={cx(
-                'grid grid-cols-[1fr_auto_1fr] items-center gap-[var(--pomo-padding-sm)]',
-                'px-[var(--pomo-padding-xs)]',
-              )}
-            >
-              <PPlaybackModes
-                onRepeatModeChange={toggleRepeatMode}
-                onShuffleChange={toggleShuffle}
-                repeatMode={repeatMode()}
-                shuffleEnabled={shuffleEnabled()}
-              />
-
-              <div class="flex items-center justify-center gap-[var(--pomo-padding-xs)]">
-                <button
-                  aria-label="이전 곡"
-                  class={SKIP_BUTTON_CLASSES}
-                  disabled={tracks().length < 2}
-                  onClick={selectPreviousTrack}
-                  type="button"
-                >
-                  <span aria-hidden="true" class="i-tabler-player-track-prev size-4" />
-                </button>
-                <media-play-button
-                  aria-label="재생 또는 일시 정지"
-                  class="pomo-player__play pomo-player__play--large max-[28rem]:size-12"
-                  disabled={!currentTrack()}
-                  notooltip
-                >
-                  <span aria-hidden="true" class="i-tabler-player-play size-5" slot="play" />
-                  <span aria-hidden="true" class="i-tabler-player-pause size-5" slot="pause" />
-                </media-play-button>
-                <button
-                  aria-label="다음 곡"
-                  class={SKIP_BUTTON_CLASSES}
-                  disabled={tracks().length < 2}
-                  onClick={selectNextTrack}
-                  type="button"
-                >
-                  <span aria-hidden="true" class="i-tabler-player-track-next size-4" />
-                </button>
-              </div>
-
-              <div class="flex min-w-0 items-center justify-end gap-1">
-                <media-mute-button aria-label="음소거">
-                  <span aria-hidden="true" class="i-tabler-volume-off size-5" slot="off" />
-                  <span aria-hidden="true" class="i-tabler-volume-4 size-5" slot="low" />
-                  <span aria-hidden="true" class="i-tabler-volume-2 size-5" slot="medium" />
-                  <span aria-hidden="true" class="i-tabler-volume size-5" slot="high" />
-                </media-mute-button>
-                <media-volume-range aria-label="음량" />
-              </div>
-            </div>
-
-            <PTrackList
-              currentIndex={currentIndex()}
-              onTrackSelect={selectChosenTrack}
-              tracks={tracks()}
-            />
-          </div>
-        </Show>
-      </media-controller>
-    </div>
+    <MusicPlayerView
+      currentIndex={currentIndex()}
+      currentTrack={currentTrack()}
+      expanded={expanded()}
+      isPlaying={isPlaying()}
+      levels={visualizer.levels()}
+      onAudioElement={(element) => {
+        audioElement = element
+      }}
+      onExpandedChange={toggleExpanded}
+      onNextTrack={selectNextTrack}
+      onPreviousTrack={selectPreviousTrack}
+      onRepeatModeChange={toggleRepeatMode}
+      onShuffleChange={toggleShuffle}
+      onTrackSelect={selectChosenTrack}
+      repeatMode={repeatMode()}
+      shuffleEnabled={shuffleEnabled()}
+      tracks={tracks()}
+    />
   )
 }
