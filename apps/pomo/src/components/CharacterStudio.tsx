@@ -3,8 +3,9 @@ import {cx} from 'class-variance-authority'
 import {createSignal, Show} from 'solid-js'
 
 import {type CharacterRendererStatus, useCharacterRenderer} from '../features/character-renderer'
+import characterSceneSource from './assets/character-studio/scene.glb?url'
 
-const DEFAULT_MODEL_URL = '/models/blender/scene.glb?renderer=babylon-1'
+const DEFAULT_MODEL_URL = `${characterSceneSource}?renderer=babylon-1`
 const DEFAULT_MODEL_NAME = 'Blender · character-studio.blend'
 const VIEWER_CLASSES = cx(
   'relative min-h-105 overflow-hidden rounded-7 border border-white/10 bg-#111820',

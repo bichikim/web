@@ -11,6 +11,15 @@
 
 **Enterprise-grade** code: maintainability, scalability, separation of concerns, robust error handling, consistent patterns.
 
+## File naming
+
+- Do not repeat information already expressed by parent directories in filenames.
+- Name files by their role within the containing directory.
+- Apply this rule to source code, tests, documentation, configuration, scripts, and assets.
+- Prefer adding a meaningful subdirectory over repeating shared context across sibling filenames.
+- Keep authoring and generation details in archive filenames or metadata, not runtime filenames.
+- Example: prefer `night-reading-focused/building-lights/01.webp` over `night-reading-focused/layer-building-lights-window-minus-sky-1.webp`.
+
 ## Z-index
 
 - Do not use CSS `z-index`, including utility classes and rendering-library equivalents.

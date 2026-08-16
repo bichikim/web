@@ -1,0 +1,218 @@
+{
+  "1": {
+    "class_type": "LoadImage",
+    "inputs": {"image": "pomo-night-reading-faint-trial-source.png"}
+  },
+  "2": {
+    "class_type": "LoadImage",
+    "inputs": {"image": "pomo-faint-star-mask-combined.png"}
+  },
+  "3": {
+    "class_type": "ImageToMask",
+    "inputs": {"channel": "red", "image": ["2", 0]}
+  },
+  "4": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["1", 0],
+      "mask": ["3", 0],
+      "resize_source": false,
+      "source": ["1", 0],
+      "x": 4,
+      "y": 0
+    }
+  },
+  "5": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {"alpha": ["12", 0], "image": ["4", 0]}
+  },
+  "6": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "pomo-faint-star-trial/layer-faint-stars-clean-sky-v1",
+      "images": ["5", 0]
+    }
+  },
+  "7": {
+    "class_type": "MaskToImage",
+    "inputs": {"mask": ["3", 0]}
+  },
+  "8": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "pomo-faint-star-trial/faint-stars-mask-preview-v1",
+      "images": ["7", 0]
+    }
+  },
+  "9": {
+    "class_type": "EmptyImage",
+    "inputs": {"batch_size": 1, "color": 16711680, "height": 941, "width": 1672}
+  },
+  "10": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["1", 0],
+      "mask": ["3", 0],
+      "resize_source": false,
+      "source": ["9", 0],
+      "x": 0,
+      "y": 0
+    }
+  },
+  "11": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "pomo-faint-star-trial/faint-stars-mask-red-test-v1",
+      "images": ["10", 0]
+    }
+  },
+  "12": {
+    "class_type": "InvertMask",
+    "inputs": {"mask": ["3", 0]}
+  },
+  "13": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "pomo-faint-star-trial/base-faint-stars-removed-v1",
+      "images": ["4", 0]
+    }
+  },
+  "20": {
+    "class_type": "LoadImage",
+    "inputs": {"image": "pomo-faint-star-mask-01.png"}
+  },
+  "21": {
+    "class_type": "ImageToMask",
+    "inputs": {"channel": "red", "image": ["20", 0]}
+  },
+  "22": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {"alpha": ["24", 0], "image": ["1", 0]}
+  },
+  "23": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "pomo-faint-star-trial/layer-faint-star-01-v1",
+      "images": ["22", 0]
+    }
+  },
+  "24": {
+    "class_type": "InvertMask",
+    "inputs": {"mask": ["21", 0]}
+  },
+  "30": {
+    "class_type": "LoadImage",
+    "inputs": {"image": "pomo-faint-star-mask-02.png"}
+  },
+  "31": {
+    "class_type": "ImageToMask",
+    "inputs": {"channel": "red", "image": ["30", 0]}
+  },
+  "32": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {"alpha": ["34", 0], "image": ["1", 0]}
+  },
+  "33": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "pomo-faint-star-trial/layer-faint-star-02-v1",
+      "images": ["32", 0]
+    }
+  },
+  "34": {
+    "class_type": "InvertMask",
+    "inputs": {"mask": ["31", 0]}
+  },
+  "40": {
+    "class_type": "LoadImage",
+    "inputs": {"image": "pomo-faint-star-mask-03.png"}
+  },
+  "41": {
+    "class_type": "ImageToMask",
+    "inputs": {"channel": "red", "image": ["40", 0]}
+  },
+  "42": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {"alpha": ["44", 0], "image": ["1", 0]}
+  },
+  "43": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "pomo-faint-star-trial/layer-faint-star-03-v1",
+      "images": ["42", 0]
+    }
+  },
+  "44": {
+    "class_type": "InvertMask",
+    "inputs": {"mask": ["41", 0]}
+  },
+  "50": {
+    "class_type": "LoadImage",
+    "inputs": {"image": "pomo-faint-star-mask-04.png"}
+  },
+  "51": {
+    "class_type": "ImageToMask",
+    "inputs": {"channel": "red", "image": ["50", 0]}
+  },
+  "52": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {"alpha": ["54", 0], "image": ["1", 0]}
+  },
+  "53": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "pomo-faint-star-trial/layer-faint-star-04-v1",
+      "images": ["52", 0]
+    }
+  },
+  "54": {
+    "class_type": "InvertMask",
+    "inputs": {"mask": ["51", 0]}
+  },
+  "60": {
+    "class_type": "LoadImage",
+    "inputs": {"image": "pomo-faint-star-mask-05.png"}
+  },
+  "61": {
+    "class_type": "ImageToMask",
+    "inputs": {"channel": "red", "image": ["60", 0]}
+  },
+  "62": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {"alpha": ["64", 0], "image": ["1", 0]}
+  },
+  "63": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "pomo-faint-star-trial/layer-faint-star-05-v1",
+      "images": ["62", 0]
+    }
+  },
+  "64": {
+    "class_type": "InvertMask",
+    "inputs": {"mask": ["61", 0]}
+  },
+  "70": {
+    "class_type": "LoadImage",
+    "inputs": {"image": "pomo-faint-star-mask-06.png"}
+  },
+  "71": {
+    "class_type": "ImageToMask",
+    "inputs": {"channel": "red", "image": ["70", 0]}
+  },
+  "72": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {"alpha": ["74", 0], "image": ["1", 0]}
+  },
+  "73": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "pomo-faint-star-trial/layer-faint-star-06-v1",
+      "images": ["72", 0]
+    }
+  },
+  "74": {
+    "class_type": "InvertMask",
+    "inputs": {"mask": ["71", 0]}
+  }
+}

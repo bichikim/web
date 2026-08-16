@@ -1,7 +1,7 @@
 import {expect, fn, userEvent, within} from 'storybook/test'
 import type {Meta, StoryObj} from 'storybook-solidjs-vite'
 
-import smilingFaceSource from '../../assets/pomodoro-status-icons/break-face.webp'
+import smilingFaceSource from '../components/assets/pomodoro-status-icons/break.webp'
 import {PButton} from './PButton'
 
 interface ButtonPlayContext {
