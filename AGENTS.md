@@ -2,9 +2,8 @@
 
 ## Interaction
 
-- **Questions**: If the user is asking a question (not requesting a change), answer in chat only — do not modify code or files.
 - **Examples**: If the user asks to see an example, provide it in the chat response only — do not create or edit files to demonstrate it.
-- **Action requests**: If the user asks you to do something (e.g. "해줘", "만들어줘", "수정해줘"), treat it as a work request and start the task — modify code or files as needed.
+- **Work confirmation**: Before starting work, state the user's request as concrete intended actions. Start only after the user confirms that interpretation.
 - **Documentation**: When asked to add or write docs, keep it brief and concise—avoid verbosity and repeating the same points—without omitting essential meaning.
 
 ## Code quality
@@ -13,13 +12,8 @@
 
 ## Z-index
 
-- Do not use CSS `z-index`, including utility classes and rendering-library equivalents.
-- This rule does not require floating UI to become inline or in-flow. Dropdowns, popovers, tooltips, and dialogs should retain their expected overlay behavior.
-- Prefer the platform top layer (`popover`, `dialog`), portals rendered later in the DOM, and headless components that handle positioning and focus without `z-index`.
-- Resolve remaining layering through DOM order, layout, and stacking-context structure. Do not replace a standard overlay with an inline expansion solely to avoid `z-index`.
-- Diagnose the actual painting or clipping cause before changing the DOM. Prefer the smallest suitable CSS or layout mechanism, including positioning, overflow, isolation and stacking contexts, flex/grid paint order, portal placement, or DOM order.
-- Do not default to structural changes when a local CSS property can solve the problem without harming semantics, accessibility, or responsive behavior.
-- If `z-index` appears unavoidable, explain why and obtain explicit user approval before using it.
+- Do not use `z-index`, including utility classes and rendering-library equivalents. If it appears unavoidable, explain why and obtain explicit user approval.
+- Preserve overlay semantics, positioning, and focus; do not turn overlays into inline content. Diagnose painting or clipping first, then use the smallest suitable fix through the platform top layer, an existing portal or headless primitive, DOM order, overflow/layout, or stacking contexts.
 
 ## Proportionate future-proofing
 
@@ -29,10 +23,7 @@
 
 ## Package exports
 
-- Prefer broad subpath exports: consumers may import any distributable module.
-- Exposing the internal module structure is not a design flaw in this repository.
-- Do not add export allowlists, proxy entrypoints, or compatibility layers solely to hide or restrict module paths. Missing exports create more consumer workarounds, coordination, and migration cost than the theoretical encapsulation benefit.
-- Restrict an export only for a concrete security, runtime, or packaging constraint.
+- Prefer broad subpath exports for every distributable module; do not add allowlists, proxy entrypoints, or compatibility layers for encapsulation alone, and restrict exports only for concrete security, runtime, or packaging constraints.
 
 ## Worktree initialization
 
@@ -47,14 +38,6 @@
 ## Comments
 
 Function JSDoc: contract (what) only; call sites: intent (why) only.
-
-## AI work context (`AI_NOTE`)
-
-Chat context is volatile. When **why** isn't obvious from code, leave a minimal in-code note for later agents.
-
-- Format: `// AI_NOTE - …` or `/* AI_NOTE - … */`
-- Content: decision + reason (constraints, rejected approach, non-obvious tradeoff); not a changelog
-- Scope: cross-session gaps only; skip self-explanatory code
 
 ## Pull requests
 

@@ -7,7 +7,7 @@ script = "cd "
 
 [setup.darwin]
 script = '''
-# AI_NOTE - Retry source fetch briefly, then skip optional warming so GitHub failures cannot block setup.
+# Retry source fetch briefly, then skip optional warming so GitHub failures cannot block setup.
 SOURCE_TREE_PATH="${CODEX_SOURCE_TREE_PATH:-}"
 if [ -n "$SOURCE_TREE_PATH" ]; then
   FETCH_SUCCEEDED=false

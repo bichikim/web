@@ -38,6 +38,7 @@ import {
 } from './pomo-scene-options'
 import {PSettings} from './PSettings'
 import {PScreenSaver} from './PScreenSaver'
+import {useDialogueSceneGaze} from './use-dialogue-scene-gaze'
 
 const PSceneCanvas = clientOnly(() => import('./PSceneCanvas'), {
   lazy: true,
@@ -231,7 +232,8 @@ const PStudioContent = () => {
   const screenSaver = useScreenSaver()
   const pomoSay = usePSay({onBeforeSpeech: events.onStopDialoguePlayback})
   const time = createMemo(() => resolveScenePeriod(timeMode(), automaticPeriod()))
-  const selectedScene = createMemo(() => getSceneAsset(time(), activity(), gaze()))
+  const sceneGaze = useDialogueSceneGaze(gaze, events.isDialoguePlaying, pomoSay.isPlaying)
+  const selectedScene = createMemo(() => getSceneAsset(time(), activity(), sceneGaze()))
   const handleLoadingChange = (isLoading: boolean) => {
     setIsSceneLoading(isLoading)
 
@@ -245,11 +247,9 @@ const PStudioContent = () => {
     })
   }
   const handleEnter = () => {
-    if (hasEntered()) {
-      return
+    if (!hasEntered()) {
+      setHasEntered(true)
     }
-
-    setHasEntered(true)
   }
 
   onMount(() => {
@@ -279,7 +279,7 @@ const PStudioContent = () => {
         <PSceneCanvas
           activity={activity()}
           depthSource={selectedScene().depthSource}
-          gaze={gaze()}
+          gaze={sceneGaze()}
           layerScene={selectedScene().layerScene}
           motionInput={motionInput()}
           motionMode={motionMode()}
@@ -287,6 +287,7 @@ const PStudioContent = () => {
           onMotionInputChange={setMotionInput}
           source={selectedScene().source}
           time={time()}
+          viseme={pomoSay.speechText() === null ? events.activeViseme() : pomoSay.activeViseme()}
         />
 
         <Show when={hasEntered() && isSceneLoading() && !hasSceneRendered()}>
@@ -333,7 +334,7 @@ const PStudioContent = () => {
         <SceneToolbar
           activity={activity()}
           canUseGyroscope={canUseGyroscope()}
-          gaze={gaze()}
+          gaze={sceneGaze()}
           isSceneTransitioning={isSceneLoading() && hasSceneRendered()}
           onActivityChange={setActivity}
           onGazeChange={setGaze}

@@ -1,14 +1,19 @@
 import {Application} from 'pixi.js'
 
 import {PixiLayerScene, type PixiLayerSceneDefinition} from '../focus-room-animation/layer-scene'
+import {createFocusRoomLayerState} from '../focus-room-animation/scene-layer-state'
+import {FOCUS_ROOM_MOUTH_CHANNELS} from '../focus-room-animation/scene-catalog-channels'
 import {FOCUS_ROOM_PREVIEW_CHANNELS} from '../focus-room-animation/scene-catalog'
+import type {PViseme} from '../lip-sync'
 
 export interface PLayerReviewState {
   readonly animationEnabled: boolean
   readonly eyesVisible: boolean
   readonly handsVisible: boolean
   readonly headVisible: boolean
+  readonly mouthVisible: boolean
   readonly referenceOpacity: number
+  readonly viseme: PViseme
 }
 
 export interface PLayerReviewRendererOptions {
@@ -177,9 +182,20 @@ export class PLayerReviewRenderer {
 
   #toSceneState(state: PLayerReviewState) {
     const referenceOpacity = clampOpacity(state.referenceOpacity)
+    const mouthState = createFocusRoomLayerState(state.viseme, false)
     return {
       animationEnabled: state.animationEnabled,
       channels: {
+        ...mouthState.channels,
+        ...Object.fromEntries(
+          Object.entries(FOCUS_ROOM_MOUTH_CHANNELS).map(([viseme, channel]) => [
+            channel,
+            {
+              ...mouthState.channels?.[channel],
+              visible: state.mouthVisible && viseme === state.viseme,
+            },
+          ]),
+        ),
         [FOCUS_ROOM_PREVIEW_CHANNELS.eyes]: {visible: state.eyesVisible},
         [FOCUS_ROOM_PREVIEW_CHANNELS.hands]: {visible: state.handsVisible},
         [FOCUS_ROOM_PREVIEW_CHANNELS.head]: {visible: state.headVisible},

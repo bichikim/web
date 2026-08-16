@@ -1,4 +1,5 @@
 import type {SupertonicAudioChunk} from '../supertonic'
+import {createPVisemeTrack, getPCoarticulatedVisemeAtTime, type PViseme} from '../lip-sync'
 import type {DialogueSegment} from './schema'
 
 const MILLISECONDS_PER_SECOND = 1000
@@ -19,6 +20,26 @@ export interface DialogueSegmentPosition {
   readonly text: string
 }
 
+/** Resolves a persisted or legacy text-derived mouth shape against dialogue playback time. */
+export const getDialogueVisemeAtTime = (
+  segments: ReadonlyArray<DialogueSegment>,
+  currentTimeMs: number,
+): PViseme => {
+  const segment = segments.find(
+    (candidate) =>
+      currentTimeMs >= candidate.startMs &&
+      currentTimeMs < candidate.startMs + candidate.durationMs,
+  )
+
+  if (segment === undefined) {
+    return 'rest'
+  }
+
+  const visemes =
+    segment.visemes ?? createPVisemeTrack({durationMs: segment.durationMs, text: segment.text})
+  return getPCoarticulatedVisemeAtTime(visemes, currentTimeMs - segment.startMs)
+}
+
 /** Builds subtitle offsets from rendered PCM duration rather than synthesis elapsed time. */
 export const createDialogueTimeline = (
   options: CreateDialogueSegmentsOptions,
@@ -33,7 +54,13 @@ export const createDialogueTimeline = (
     }
 
     const durationMs = (audio.samples.length / audio.sampleRate) * MILLISECONDS_PER_SECOND
-    const segment = {durationMs, index, startMs, text}
+    const segment = {
+      durationMs,
+      index,
+      startMs,
+      text,
+      visemes: createPVisemeTrack({durationMs, text}),
+    }
     startMs += durationMs
 
     if (index < options.audioChunks.length - 1) {

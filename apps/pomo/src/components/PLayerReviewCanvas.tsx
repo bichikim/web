@@ -19,7 +19,9 @@ export default function PLayerReviewCanvas(props: PLayerReviewCanvasProps) {
     eyesVisible: props.eyesVisible,
     handsVisible: props.handsVisible,
     headVisible: props.headVisible,
+    mouthVisible: props.mouthVisible,
     referenceOpacity: props.referenceOpacity,
+    viseme: props.viseme,
   })
 
   onMount(() => {
@@ -56,7 +58,9 @@ export default function PLayerReviewCanvas(props: PLayerReviewCanvasProps) {
           props.eyesVisible,
           props.handsVisible,
           props.headVisible,
+          props.mouthVisible,
           props.referenceOpacity,
+          props.viseme,
         ] as const,
       () => {
         const state = getReviewState()

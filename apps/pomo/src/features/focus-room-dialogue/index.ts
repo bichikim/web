@@ -14,7 +14,12 @@ export {
   focusRoomDialogueSchema,
 } from './schema'
 export type {DialogueEventBinding, DialogueEventId, DialogueSegment, PDialogue} from './schema'
-export {createDialogueTimeline, getDialoguePositionAtTime, getDialogueTextAtTime} from './timeline'
+export {
+  createDialogueTimeline,
+  getDialoguePositionAtTime,
+  getDialogueTextAtTime,
+  getDialogueVisemeAtTime,
+} from './timeline'
 export type {
   CreateDialogueSegmentsOptions,
   DialogueSegmentPosition,

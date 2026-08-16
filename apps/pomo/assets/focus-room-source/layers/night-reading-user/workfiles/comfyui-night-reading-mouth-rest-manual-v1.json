@@ -1,0 +1,168 @@
+{
+  "1": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "00-rest-smile-original.png"
+    }
+  },
+  "2": {
+    "class_type": "PrimitiveBoundingBox",
+    "inputs": {
+      "x": 930,
+      "y": 270,
+      "width": 260,
+      "height": 180
+    }
+  },
+  "3": {
+    "class_type": "ImageCropV2",
+    "inputs": {
+      "image": ["1", 0],
+      "crop_region": ["2", 0]
+    }
+  },
+  "4": {
+    "class_type": "CropMask",
+    "inputs": {
+      "mask": ["1", 1],
+      "x": 930,
+      "y": 270,
+      "width": 260,
+      "height": 180
+    }
+  },
+  "5": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "manual-rest-mouth-cleanup-top-v1.png"
+    }
+  },
+  "6": {
+    "class_type": "ImageToMask",
+    "inputs": {
+      "channel": "red",
+      "image": ["5", 0]
+    }
+  },
+  "7": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["4", 0],
+      "source": ["6", 0],
+      "x": 0,
+      "y": 0,
+      "operation": "add"
+    }
+  },
+  "8": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["3", 0],
+      "alpha": ["7", 0]
+    }
+  },
+  "9": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "night-reading-mouth-rest-manual-v1-final",
+      "images": ["8", 0]
+    }
+  },
+  "10": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["7", 0]
+    }
+  },
+  "11": {
+    "class_type": "MaskToImage",
+    "inputs": {
+      "mask": ["10", 0]
+    }
+  },
+  "12": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "night-reading-mouth-rest-manual-v1-visible-mask",
+      "images": ["11", 0]
+    }
+  },
+  "13": {
+    "class_type": "EmptyImage",
+    "inputs": {
+      "width": 260,
+      "height": 180,
+      "batch_size": 1,
+      "color": 16711935
+    }
+  },
+  "14": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["13", 0],
+      "source": ["3", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["10", 0]
+    }
+  },
+  "15": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "night-reading-mouth-rest-manual-v1-magenta-preview",
+      "images": ["14", 0]
+    }
+  },
+  "16": {
+    "class_type": "EmptyImage",
+    "inputs": {
+      "width": 260,
+      "height": 180,
+      "batch_size": 1,
+      "color": 16777215
+    }
+  },
+  "17": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["16", 0],
+      "source": ["3", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["10", 0]
+    }
+  },
+  "18": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "night-reading-mouth-rest-manual-v1-white-preview",
+      "images": ["17", 0]
+    }
+  },
+  "19": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "layer-head-eye-base.png"
+    }
+  },
+  "20": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["19", 0],
+      "source": ["3", 0],
+      "x": 930,
+      "y": 270,
+      "resize_source": false,
+      "mask": ["10", 0]
+    }
+  },
+  "21": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "night-reading-mouth-rest-manual-v1-head-preview",
+      "images": ["20", 0]
+    }
+  }
+}

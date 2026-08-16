@@ -1,3 +1,8 @@
+import type {
+  PSceneMotionInput,
+  PSceneMotionMode,
+} from '../features/focus-room-animation/scene-motion'
+
 export const FOCUS_ROOM_TIME_OPTIONS = [
   {icon: 'i-tabler-sun', label: '낮', value: 'day'},
   {icon: 'i-tabler-moon', label: '밤', value: 'night'},
@@ -14,6 +19,13 @@ export const FOCUS_ROOM_GAZE_OPTIONS = [
   {icon: 'i-tabler-focus-2', label: '작업에 집중', value: 'focused'},
   {icon: 'i-tabler-user-scan', label: '사용자 보기', value: 'user'},
 ] as const
+
+export type PActivity = (typeof FOCUS_ROOM_ACTIVITY_OPTIONS)[number]['value']
+export type PGaze = (typeof FOCUS_ROOM_GAZE_OPTIONS)[number]['value']
+
+/** Resolves the rendered gaze without mutating the user's configured preference. */
+export const resolvePSceneGaze = (configuredGaze: PGaze, isDialogueActive: boolean): PGaze =>
+  isDialogueActive ? 'user' : configuredGaze
 
 export const P_SCENE_MOTION_OPTIONS = [
   {icon: 'i-tabler-3d-cube-sphere', label: '3D 깊이', value: 'depth'},
@@ -32,10 +44,3 @@ export const P_SCENE_MOTION_INPUT_OPTIONS = [
   readonly label: string
   readonly value: PSceneMotionInput
 }[]
-
-export type PActivity = (typeof FOCUS_ROOM_ACTIVITY_OPTIONS)[number]['value']
-export type PGaze = (typeof FOCUS_ROOM_GAZE_OPTIONS)[number]['value']
-import type {
-  PSceneMotionInput,
-  PSceneMotionMode,
-} from '../features/focus-room-animation/scene-motion'

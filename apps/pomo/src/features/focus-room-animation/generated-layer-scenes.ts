@@ -1,12 +1,19 @@
 import type {PSceneId} from './scene-catalog'
 import type {PixiLayerSceneDefinition, PixiScenePoint} from './layer-scene'
 import {createEyeMotion} from './eye-motion'
-import {FOCUS_ROOM_PREVIEW_CHANNELS} from './scene-catalog-channels'
+import {createMouthLayers, type PVisemeSources} from './mouth-layers'
+import {FOCUS_ROOM_JAW_CHANNEL, FOCUS_ROOM_PREVIEW_CHANNELS} from './scene-catalog-channels'
 
 import dayReadingUserBase from '../../../assets/focus-room-layers/day-reading-user/base.webp'
 import dayReadingUserEyeIrises from '../../../assets/focus-room-layers/day-reading-user/layer-eye-irises.webp'
 import dayReadingUserHead from '../../../assets/focus-room-layers/day-reading-user/layer-head-eye-base.webp'
 import dayReadingUserLeftHand from '../../../assets/focus-room-layers/day-reading-user/layer-hand-left.webp'
+import dayReadingUserMouthClosed from '../../../assets/focus-room-layers/day-reading-user/layer-mouth-closed.webp'
+import dayReadingUserMouthNarrow from '../../../assets/focus-room-layers/day-reading-user/layer-mouth-narrow.webp'
+import dayReadingUserMouthOpen from '../../../assets/focus-room-layers/day-reading-user/layer-mouth-open.webp'
+import dayReadingUserMouthRest from '../../../assets/focus-room-layers/day-reading-user/layer-mouth-rest.webp'
+import dayReadingUserMouthRound from '../../../assets/focus-room-layers/day-reading-user/layer-mouth-round.webp'
+import dayReadingUserMouthWide from '../../../assets/focus-room-layers/day-reading-user/layer-mouth-wide.webp'
 import dayReadingUserRightHand from '../../../assets/focus-room-layers/day-reading-user/layer-hand-right.webp'
 import dayReadingUserReference from '../../../assets/concept-art/focus-room-day-reading-user-gaze-concept.webp'
 import dayTypingFocusedBase from '../../../assets/focus-room-layers/day-typing-focused/base.webp'
@@ -35,6 +42,13 @@ import nightReadingUserBase from '../../../assets/focus-room-layers/night-readin
 import nightReadingUserEyeIrises from '../../../assets/focus-room-layers/night-reading-user/layer-eye-irises.webp'
 import nightReadingUserHead from '../../../assets/focus-room-layers/night-reading-user/layer-head-eye-base.webp'
 import nightReadingUserLeftHand from '../../../assets/focus-room-layers/night-reading-user/layer-hand-left.webp'
+import nightReadingJawMask from '../../../assets/focus-room-layers/night-reading-user/layer-mask-jaw-displacement.webp'
+import nightReadingUserMouthClosed from '../../../assets/focus-room-layers/night-reading-user/layer-mouth-closed.webp'
+import nightReadingUserMouthNarrow from '../../../assets/focus-room-layers/night-reading-user/layer-mouth-narrow.webp'
+import nightReadingUserMouthOpen from '../../../assets/focus-room-layers/night-reading-user/layer-mouth-open.webp'
+import nightReadingUserMouthRest from '../../../assets/focus-room-layers/night-reading-user/layer-mouth-rest.webp'
+import nightReadingUserMouthRound from '../../../assets/focus-room-layers/night-reading-user/layer-mouth-round.webp'
+import nightReadingUserMouthWide from '../../../assets/focus-room-layers/night-reading-user/layer-mouth-wide.webp'
 import nightReadingUserRightHand from '../../../assets/focus-room-layers/night-reading-user/layer-hand-right.webp'
 import nightReadingUserReference from '../../../assets/concept-art/focus-room-night-reading-user-gaze-concept.webp'
 import nightTypingFocusedBase from '../../../assets/focus-room-layers/night-typing-focused/base.webp'
@@ -61,7 +75,9 @@ import nightWritingUserReference from '../../../assets/concept-art/focus-room-ni
 interface SeparatedSceneAssets {
   readonly base: string
   readonly head: string
+  readonly headJawMask?: string
   readonly leftHand: string
+  readonly mouth?: PVisemeSources
   readonly reference: string
   readonly rightHand: string
 }
@@ -69,13 +85,37 @@ interface SeparatedSceneAssets {
 interface SeparatedScenePivots {
   readonly head: PixiScenePoint
   readonly leftHand: PixiScenePoint
+  readonly mouth?: MouthTransform
   readonly rightHand: PixiScenePoint
+}
+
+interface MouthTransform extends PixiScenePoint {
+  readonly rotationDegrees: number
 }
 
 interface SeparatedSceneEyeLayer {
   readonly motion: ReturnType<typeof createEyeMotion>
   readonly source: string
 }
+
+// Each time-of-day family shares one user-facing mouth set across reading, typing, and writing scenes.
+const DAY_USER_MOUTH_SOURCES = {
+  closed: dayReadingUserMouthClosed,
+  narrow: dayReadingUserMouthNarrow,
+  open: dayReadingUserMouthOpen,
+  rest: dayReadingUserMouthRest,
+  round: dayReadingUserMouthRound,
+  wide: dayReadingUserMouthWide,
+} satisfies PVisemeSources
+const NIGHT_USER_MOUTH_SOURCES = {
+  closed: nightReadingUserMouthClosed,
+  narrow: nightReadingUserMouthNarrow,
+  open: nightReadingUserMouthOpen,
+  rest: nightReadingUserMouthRest,
+  round: nightReadingUserMouthRound,
+  wide: nightReadingUserMouthWide,
+} satisfies PVisemeSources
+
 const NIGHT_TYPING_FOCUSED_EYE_ORIGIN_X = -5
 const NIGHT_WRITING_FOCUSED_EYE_ORIGIN_X = -4
 
@@ -109,6 +149,17 @@ const createSeparatedScene = (
         travel: {maximumSeconds: 2.4, minimumSeconds: 1.5},
       },
       source: assets.head,
+      statePixelPush:
+        assets.headJawMask === undefined
+          ? undefined
+          : {
+              channel: FOCUS_ROOM_JAW_CHANNEL,
+              effect: {
+                distance: {x: 0, y: 3},
+                kind: 'masked-pixel-push',
+                maskSource: assets.headJawMask,
+              },
+            },
     },
     ...(eyeLayer === undefined
       ? []
@@ -121,6 +172,14 @@ const createSeparatedScene = (
             source: eyeLayer.source,
           },
         ]),
+    ...(assets.mouth === undefined || pivots.mouth === undefined
+      ? []
+      : createMouthLayers({
+          parentAttachmentId: 'eyes',
+          position: pivots.mouth,
+          rotationDegrees: pivots.mouth.rotationDegrees,
+          sources: assets.mouth,
+        })),
     {
       channel: FOCUS_ROOM_PREVIEW_CHANNELS.hands,
       id: 'left-hand',
@@ -153,7 +212,7 @@ const createSeparatedScene = (
   width: 1672,
 })
 
-// AI_NOTE - Each scene owns its pivots so a future asset replacement cannot silently shift another scene.
+// Each scene owns its pivots so a future asset replacement cannot silently shift another scene.
 export const GENERATED_LAYER_SCENES = {
   'day-reading-user': createSeparatedScene(
     'day-reading-user',
@@ -161,10 +220,17 @@ export const GENERATED_LAYER_SCENES = {
       base: dayReadingUserBase,
       head: dayReadingUserHead,
       leftHand: dayReadingUserLeftHand,
+      mouth: DAY_USER_MOUTH_SOURCES,
       reference: dayReadingUserReference,
       rightHand: dayReadingUserRightHand,
     },
-    {head: {x: 1050, y: 425}, leftHand: {x: 735, y: 710}, rightHand: {x: 1060, y: 730}},
+    {
+      head: {x: 1050, y: 425},
+      leftHand: {x: 735, y: 710},
+      // Mouth assets retain the source head angle, so the lower-face crop stays unrotated.
+      mouth: {rotationDegrees: 0, x: 930, y: 285},
+      rightHand: {x: 1060, y: 730},
+    },
     createTranslationEyeLayer(),
   ),
   'day-typing-focused': createSeparatedScene(
@@ -219,10 +285,16 @@ export const GENERATED_LAYER_SCENES = {
       base: dayTypingUserBase,
       head: dayTypingUserHead,
       leftHand: dayTypingUserLeftHand,
+      mouth: DAY_USER_MOUTH_SOURCES,
       reference: dayTypingUserReference,
       rightHand: dayTypingUserRightHand,
     },
-    {head: {x: 1045, y: 430}, leftHand: {x: 755, y: 710}, rightHand: {x: 1015, y: 725}},
+    {
+      head: {x: 1045, y: 430},
+      leftHand: {x: 755, y: 710},
+      mouth: {rotationDegrees: 0, x: 930, y: 285},
+      rightHand: {x: 1015, y: 725},
+    },
     createTranslationEyeLayer(),
   ),
   'day-writing-user': createSeparatedScene(
@@ -231,10 +303,16 @@ export const GENERATED_LAYER_SCENES = {
       base: dayWritingUserBase,
       head: dayWritingUserHead,
       leftHand: dayWritingUserLeftHand,
+      mouth: DAY_USER_MOUTH_SOURCES,
       reference: dayWritingUserReference,
       rightHand: dayWritingUserRightHand,
     },
-    {head: {x: 1050, y: 425}, leftHand: {x: 700, y: 690}, rightHand: {x: 1030, y: 715}},
+    {
+      head: {x: 1050, y: 425},
+      leftHand: {x: 700, y: 690},
+      mouth: {rotationDegrees: 0, x: 930, y: 285},
+      rightHand: {x: 1030, y: 715},
+    },
     createTranslationEyeLayer(),
   ),
   'night-reading-focused': createSeparatedScene(
@@ -288,11 +366,18 @@ export const GENERATED_LAYER_SCENES = {
     {
       base: nightReadingUserBase,
       head: nightReadingUserHead,
+      headJawMask: nightReadingJawMask,
       leftHand: nightReadingUserLeftHand,
+      mouth: NIGHT_USER_MOUTH_SOURCES,
       reference: nightReadingUserReference,
       rightHand: nightReadingUserRightHand,
     },
-    {head: {x: 1050, y: 425}, leftHand: {x: 735, y: 710}, rightHand: {x: 1060, y: 730}},
+    {
+      head: {x: 1050, y: 425},
+      leftHand: {x: 735, y: 710},
+      mouth: {rotationDegrees: 0, x: 930, y: 270},
+      rightHand: {x: 1060, y: 730},
+    },
     createTranslationEyeLayer(0, nightReadingUserEyeIrises),
   ),
   'night-typing-focused': createSeparatedScene(
@@ -313,10 +398,16 @@ export const GENERATED_LAYER_SCENES = {
       base: nightTypingUserBase,
       head: nightTypingUserHead,
       leftHand: nightTypingUserLeftHand,
+      mouth: NIGHT_USER_MOUTH_SOURCES,
       reference: nightTypingUserReference,
       rightHand: nightTypingUserRightHand,
     },
-    {head: {x: 1045, y: 430}, leftHand: {x: 755, y: 710}, rightHand: {x: 1015, y: 725}},
+    {
+      head: {x: 1045, y: 430},
+      leftHand: {x: 755, y: 710},
+      mouth: {rotationDegrees: 0, x: 930, y: 270},
+      rightHand: {x: 1015, y: 725},
+    },
     createTranslationEyeLayer(0, nightReadingUserEyeIrises),
   ),
   'night-writing-focused': createSeparatedScene(
@@ -337,10 +428,16 @@ export const GENERATED_LAYER_SCENES = {
       base: nightWritingUserBase,
       head: nightWritingUserHead,
       leftHand: nightWritingUserLeftHand,
+      mouth: NIGHT_USER_MOUTH_SOURCES,
       reference: nightWritingUserReference,
       rightHand: nightWritingUserRightHand,
     },
-    {head: {x: 1050, y: 425}, leftHand: {x: 700, y: 690}, rightHand: {x: 1030, y: 715}},
+    {
+      head: {x: 1050, y: 425},
+      leftHand: {x: 700, y: 690},
+      mouth: {rotationDegrees: 0, x: 930, y: 270},
+      rightHand: {x: 1030, y: 715},
+    },
     createTranslationEyeLayer(0, nightReadingUserEyeIrises),
   ),
 } as const satisfies Record<

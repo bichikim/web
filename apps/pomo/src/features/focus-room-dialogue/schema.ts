@@ -1,5 +1,7 @@
 import {z} from 'zod'
 
+import {P_VISEMES} from '../lip-sync'
+
 export const FOCUS_ROOM_DIALOGUE_EVENTS = [
   'room-enter',
   'focus-start',
@@ -10,11 +12,18 @@ export const FOCUS_ROOM_DIALOGUE_EVENTS = [
 export const FOCUS_ROOM_ENTRY_EVENT = 'room-enter' as const
 export const dialogueEventIdSchema = z.enum(FOCUS_ROOM_DIALOGUE_EVENTS)
 
+const visemeCueSchema = z.object({
+  endMs: z.number().nonnegative(),
+  startMs: z.number().nonnegative(),
+  viseme: z.enum(P_VISEMES),
+})
+
 const dialogueSegmentSchema = z.object({
   durationMs: z.number().nonnegative(),
   index: z.number().int().nonnegative(),
   startMs: z.number().nonnegative(),
   text: z.string().min(1),
+  visemes: z.array(visemeCueSchema).readonly().optional(),
 })
 
 export const focusRoomDialogueSchema = z.object({

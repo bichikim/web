@@ -1,6 +1,11 @@
 import {describe, expect, it} from 'vitest'
 
-import {createDialogueTimeline, getDialoguePositionAtTime, getDialogueTextAtTime} from '../timeline'
+import {
+  createDialogueTimeline,
+  getDialoguePositionAtTime,
+  getDialogueTextAtTime,
+  getDialogueVisemeAtTime,
+} from '../timeline'
 
 describe('createDialogueTimeline', () => {
   it('should derive segment offsets from PCM duration and inter-chunk silence', () => {
@@ -28,8 +33,20 @@ describe('createDialogueTimeline', () => {
     expect(timeline).toEqual({
       durationMs: 1550,
       segments: [
-        {durationMs: 500, index: 0, startMs: 0, text: '첫 문장'},
-        {durationMs: 750, index: 1, startMs: 800, text: '두 번째 문장'},
+        {
+          durationMs: 500,
+          index: 0,
+          startMs: 0,
+          text: '첫 문장',
+          visemes: expect.any(Array),
+        },
+        {
+          durationMs: 750,
+          index: 1,
+          startMs: 800,
+          text: '두 번째 문장',
+          visemes: expect.any(Array),
+        },
       ],
     })
   })
@@ -87,5 +104,62 @@ describe('getDialoguePositionAtTime', () => {
 
   it('should return null when no dialogue segment exists', () => {
     expect(getDialoguePositionAtTime([], 0)).toBeNull()
+  })
+})
+
+describe('getDialogueVisemeAtTime', () => {
+  it('should resolve persisted cues relative to the active segment', () => {
+    expect(
+      getDialogueVisemeAtTime(
+        [
+          {
+            durationMs: 200,
+            index: 0,
+            startMs: 100,
+            text: '아',
+            visemes: [
+              {endMs: 100, startMs: 0, viseme: 'open'},
+              {endMs: 200, startMs: 100, viseme: 'rest'},
+            ],
+          },
+        ],
+        149,
+      ),
+    ).toBe('open')
+    expect(
+      getDialogueVisemeAtTime(
+        [
+          {
+            durationMs: 200,
+            index: 0,
+            startMs: 100,
+            text: '아',
+            visemes: [
+              {endMs: 100, startMs: 0, viseme: 'open'},
+              {endMs: 200, startMs: 100, viseme: 'rest'},
+            ],
+          },
+        ],
+        150,
+      ),
+    ).toBe('rest')
+  })
+
+  it('should derive cues for legacy segments without a stored track', () => {
+    expect(getDialogueVisemeAtTime([{durationMs: 200, index: 0, startMs: 0, text: '오'}], 50)).toBe(
+      'round',
+    )
+  })
+
+  it('should rest during inter-segment silence', () => {
+    expect(
+      getDialogueVisemeAtTime(
+        [
+          {durationMs: 100, index: 0, startMs: 0, text: '아'},
+          {durationMs: 100, index: 1, startMs: 200, text: '오'},
+        ],
+        150,
+      ),
+    ).toBe('rest')
   })
 })

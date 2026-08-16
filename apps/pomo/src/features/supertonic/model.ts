@@ -110,7 +110,7 @@ export const SUPERTONIC_VOICES = [
 export type SupertonicVoiceId = (typeof SUPERTONIC_VOICES)[number]['id']
 export type SupertonicModelId = (typeof SUPERTONIC_MODELS)[number]['id']
 
-// AI_NOTE - 120 is Supertonic's Korean auto-chunk value; 150/200 reflect observed browser quality degradation before outright failure.
+// 120 is Supertonic's Korean auto-chunk value; 150/200 reflect observed browser quality degradation before outright failure.
 const KOREAN_SPEECH_POLICY: SupertonicSpeechPolicy = {
   considerSplitLength: 120,
   locale: 'ko',
@@ -176,7 +176,7 @@ const INT8_MODEL_FILES: ReadonlyArray<SupertonicModelFile> = [
 const getModelSize = (files: ReadonlyArray<SupertonicModelFile>) =>
   files.reduce((total, file) => total + file.size, 0)
 
-// AI_NOTE - Keep both profiles: product decisions need side-by-side quality and latency evidence, not a forced quantized migration.
+// Keep both profiles: product decisions need side-by-side quality and latency evidence, not a forced quantized migration.
 export const SUPERTONIC_MODELS = [
   {
     baseUrl: FULL_MODEL_BASE_URL,

@@ -1,0 +1,44 @@
+{
+  "1": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "exec-041c149a-e078-4c62-9c9e-a0d4173c55af.png"
+    }
+  },
+  "2": {
+    "class_type": "ImageCrop",
+    "inputs": {
+      "image": ["1", 0],
+      "width": 260,
+      "height": 180,
+      "x": 930,
+      "y": 270
+    }
+  },
+  "3": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "layer-mouth-rest (1).png"
+    }
+  },
+  "4": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["2", 0],
+      "alpha": ["3", 1]
+    }
+  },
+  "5": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["4", 0],
+      "filename_prefix": "pomo_night_reading_mouth_closed_selected_b"
+    }
+  },
+  "6": {
+    "class_type": "MaskPreview",
+    "inputs": {
+      "mask": ["3", 1]
+    }
+  }
+}

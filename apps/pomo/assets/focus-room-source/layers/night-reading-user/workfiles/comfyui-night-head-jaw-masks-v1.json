@@ -1,0 +1,149 @@
+{
+  "1": {
+    "class_type": "LoadImage",
+    "inputs": {"image": "jaw-displacement-weight-source-v1.png"}
+  },
+  "2": {
+    "class_type": "ImageToMask",
+    "inputs": {"channel": "red", "image": ["1", 0]}
+  },
+  "3": {
+    "class_type": "LoadImage",
+    "inputs": {"image": "pomo-night-reading-head-eye-base.png"}
+  },
+  "4": {
+    "class_type": "InvertMask",
+    "inputs": {"mask": ["3", 1]}
+  },
+  "5": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["4", 0],
+      "operation": "multiply",
+      "source": ["2", 0],
+      "x": 0,
+      "y": 0
+    }
+  },
+  "6": {
+    "class_type": "FeatherMask",
+    "inputs": {"bottom": 2, "left": 2, "mask": ["5", 0], "right": 2, "top": 2}
+  },
+  "7": {
+    "class_type": "MaskToImage",
+    "inputs": {"mask": ["6", 0]}
+  },
+  "8": {
+    "class_type": "SaveImage",
+    "inputs": {"filename_prefix": "pomo/night-reading-head-jaw-mask-v1", "images": ["7", 0]}
+  },
+  "9": {
+    "class_type": "EmptyImage",
+    "inputs": {"batch_size": 1, "color": 65535, "height": 941, "width": 1672}
+  },
+  "10": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["3", 0],
+      "mask": ["6", 0],
+      "resize_source": false,
+      "source": ["9", 0],
+      "x": 0,
+      "y": 0
+    }
+  },
+  "11": {
+    "class_type": "SaveImage",
+    "inputs": {"filename_prefix": "pomo/night-reading-head-jaw-preview-v1", "images": ["10", 0]}
+  },
+  "12": {
+    "class_type": "LoadImage",
+    "inputs": {"image": "pomo-night-typing-head-eye-base.png"}
+  },
+  "13": {
+    "class_type": "InvertMask",
+    "inputs": {"mask": ["12", 1]}
+  },
+  "14": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["13", 0],
+      "operation": "multiply",
+      "source": ["2", 0],
+      "x": 0,
+      "y": 0
+    }
+  },
+  "15": {
+    "class_type": "FeatherMask",
+    "inputs": {"bottom": 2, "left": 2, "mask": ["14", 0], "right": 2, "top": 2}
+  },
+  "16": {
+    "class_type": "MaskToImage",
+    "inputs": {"mask": ["15", 0]}
+  },
+  "17": {
+    "class_type": "SaveImage",
+    "inputs": {"filename_prefix": "pomo/night-typing-head-jaw-mask-v1", "images": ["16", 0]}
+  },
+  "18": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["12", 0],
+      "mask": ["15", 0],
+      "resize_source": false,
+      "source": ["9", 0],
+      "x": 0,
+      "y": 0
+    }
+  },
+  "19": {
+    "class_type": "SaveImage",
+    "inputs": {"filename_prefix": "pomo/night-typing-head-jaw-preview-v1", "images": ["18", 0]}
+  },
+  "20": {
+    "class_type": "LoadImage",
+    "inputs": {"image": "pomo-night-writing-head-eye-base.png"}
+  },
+  "21": {
+    "class_type": "InvertMask",
+    "inputs": {"mask": ["20", 1]}
+  },
+  "22": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["21", 0],
+      "operation": "multiply",
+      "source": ["2", 0],
+      "x": 0,
+      "y": 0
+    }
+  },
+  "23": {
+    "class_type": "FeatherMask",
+    "inputs": {"bottom": 2, "left": 2, "mask": ["22", 0], "right": 2, "top": 2}
+  },
+  "24": {
+    "class_type": "MaskToImage",
+    "inputs": {"mask": ["23", 0]}
+  },
+  "25": {
+    "class_type": "SaveImage",
+    "inputs": {"filename_prefix": "pomo/night-writing-head-jaw-mask-v1", "images": ["24", 0]}
+  },
+  "26": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["20", 0],
+      "mask": ["23", 0],
+      "resize_source": false,
+      "source": ["9", 0],
+      "x": 0,
+      "y": 0
+    }
+  },
+  "27": {
+    "class_type": "SaveImage",
+    "inputs": {"filename_prefix": "pomo/night-writing-head-jaw-preview-v1", "images": ["26", 0]}
+  }
+}

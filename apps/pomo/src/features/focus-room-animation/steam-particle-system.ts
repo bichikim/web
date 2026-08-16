@@ -1,4 +1,4 @@
-/* eslint-disable no-magic-numbers -- AI_NOTE - Particle timing and placement are visually tuned against the fixed 1672x941 focus-room masters. */
+/* eslint-disable no-magic-numbers -- Particle timing and placement are visually tuned against the fixed 1672x941 focus-room masters. */
 import {Container, Sprite, type Texture} from 'pixi.js'
 
 interface SteamParticle {

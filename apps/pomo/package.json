@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "assets:compress-focus-room": "node scripts/compress-focus-room-scenes.mjs",
+    "assets:create-mouths": "node scripts/create-focus-room-mouth-assets.mjs",
     "blender:export": "blender --background blender/character-studio.blend --python blender/export_glb.py",
     "blender:open": "blender blender/character-studio.blend",
     "build": "pnpm run build:web",

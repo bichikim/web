@@ -90,7 +90,7 @@ describe('useChatVoice', () => {
       text: '안녕하세요.',
       voice: {id: 'Yuna', kind: 'preset'},
     })
-    expect(players[0]?.enqueue).toHaveBeenCalledWith(createAudioChunk(), 0.3)
+    expect(players[0]?.enqueue).toHaveBeenCalledWith(createAudioChunk(), 0.3, '안녕하세요.')
     expect(chatVoice.controller.isGenerating()).toBe(false)
     expect(chatVoice.controller.isPlaying()).toBe(true)
 
@@ -241,6 +241,7 @@ describe('useChatVoice', () => {
     const speech = chatVoice.controller.speak('생성 상태 확인')
 
     expect(chatVoice.controller.isGenerating()).toBe(true)
+    expect(chatVoice.controller.isPlaying()).toBe(false)
     releaseChunk()
     await speech
     chatVoice.controller.finish()

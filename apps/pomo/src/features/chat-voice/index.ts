@@ -10,11 +10,14 @@ import {
   type SupertonicAudioPlayer,
   type SupertonicClient,
   type SupertonicModelId,
+  type SupertonicSpeechPolicy,
   type SupertonicVoiceId,
 } from '../supertonic'
+import {type PViseme} from '../lip-sync'
+import {splitSpeechText} from '../supertonic/text-chunking'
 
 const MAXIMUM_PROGRESS = 100
-// AI_NOTE - Full/WebGPU intentionally matches the voice lab's low latency despite sharing GPU memory with chat.
+// Full/WebGPU intentionally matches the voice lab's low latency despite sharing GPU memory with chat.
 const DEFAULT_MODEL_ID: SupertonicModelId = 'full'
 
 interface UnpreparedState {
@@ -61,6 +64,7 @@ export interface UseChatVoiceProps {
 }
 
 export interface ChatVoiceController {
+  readonly activeViseme: Accessor<PViseme>
   readonly arm: () => void
   readonly canPrepare: Accessor<boolean>
   readonly finish: () => Promise<void>
@@ -95,7 +99,8 @@ interface CreateSpeechQueueOptions {
   readonly isModelReady: Accessor<boolean>
   readonly runtime: ChatVoiceRuntime
   readonly setState: Setter<ChatVoiceState>
-  readonly silenceDuration: number
+  readonly speechPolicy: SupertonicSpeechPolicy
+  readonly setViseme: Setter<PViseme>
 }
 
 interface SpeechQueueController {
@@ -122,6 +127,11 @@ interface PlaybackCompletionController {
   readonly complete: () => void
   readonly reset: () => void
   readonly wait: () => Promise<void>
+}
+
+interface QueuePlayerSession {
+  readonly current: () => number
+  readonly player: number
 }
 
 const DEFAULT_VOICE_ID: SupertonicVoiceId = 'Yuna'
@@ -155,6 +165,31 @@ const createPlaybackCompletion = (): PlaybackCompletionController => {
     wait: () => completion,
   }
 }
+
+const createQueueAudioPlayer = (
+  options: CreateSpeechQueueOptions,
+  activePlayer: PlayerReference,
+  playbackCompletion: PlaybackCompletionController,
+  session: QueuePlayerSession,
+) =>
+  options.runtime.createAudioPlayer({
+    onPlaybackEnd: () => {
+      if (session.current() === session.player) {
+        activePlayer.current = null
+        playbackCompletion.complete()
+        options.setState((currentState) =>
+          currentState.status === 'speaking'
+            ? {message: '답변 음성 재생을 마쳤어요.', status: 'ready'}
+            : currentState,
+        )
+      }
+    },
+    onVisemeChange: (viseme) => {
+      if (session.current() === session.player) {
+        options.setViseme(viseme)
+      }
+    },
+  })
 
 const getStatusMessage = (state: ChatVoiceState) => {
   switch (state.status) {
@@ -259,18 +294,9 @@ const createSpeechQueue = (options: CreateSpeechQueueOptions): SpeechQueueContro
   let session = 0
 
   const createPlayer = (playerSession: number) =>
-    options.runtime.createAudioPlayer({
-      onPlaybackEnd: () => {
-        if (session === playerSession) {
-          activePlayer.current = null
-          playbackCompletion.complete()
-          options.setState((currentState) =>
-            currentState.status === 'speaking'
-              ? {message: '답변 음성 재생을 마쳤어요.', status: 'ready'}
-              : currentState,
-          )
-        }
-      },
+    createQueueAudioPlayer(options, activePlayer, playbackCompletion, {
+      current: () => session,
+      player: playerSession,
     })
 
   const finishPlayerIfReady = () => {
@@ -306,6 +332,8 @@ const createSpeechQueue = (options: CreateSpeechQueueOptions): SpeechQueueContro
     })
 
     generation = (async () => {
+      const textChunks = splitSpeechText(speech.text, options.speechPolicy)
+
       try {
         for await (const result of client.generateStream({
           text: speech.text,
@@ -328,7 +356,11 @@ const createSpeechQueue = (options: CreateSpeechQueueOptions): SpeechQueueContro
             }
 
             if (result.value.type === 'chunk') {
-              player.enqueue(result.value.audio, options.silenceDuration)
+              player.enqueue(
+                result.value.audio,
+                options.speechPolicy.silenceDuration,
+                textChunks[result.value.audio.index] ?? speech.text,
+              )
               options.setState({
                 message: `${result.value.audio.index + 1}/${result.value.audio.total} 음성을 바로 재생하고 있어요.`,
                 phase: 'playing',
@@ -374,6 +406,7 @@ const createSpeechQueue = (options: CreateSpeechQueueOptions): SpeechQueueContro
     disposePlayer(armedPlayer)
     disposePlayer(activePlayer)
     playbackCompletion.complete()
+    options.setViseme('rest')
 
     if (options.isModelReady()) {
       options.setState({message: '답변 음성 재생을 중지했어요.', status: 'ready'})
@@ -413,6 +446,7 @@ const createSpeechQueue = (options: CreateSpeechQueueOptions): SpeechQueueContro
     disposePlayer(armedPlayer)
     disposePlayer(activePlayer)
     playbackCompletion.complete()
+    options.setViseme('rest')
   }
 
   return {arm, dispose, finish, run, speak, stop}
@@ -424,6 +458,7 @@ export const useChatVoice = (props: UseChatVoiceProps = {}): ChatVoiceController
   const runtime = untrack(() => props.runtime ?? DEFAULT_RUNTIME)
   const model = getSupertonicModel(modelId)
   const [state, setState] = createSignal<ChatVoiceState>({status: 'unprepared'})
+  const [activeViseme, setActiveViseme] = createSignal<PViseme>('rest')
   const clientReference: ClientReference = {current: null}
 
   const isModelReady = createMemo(() => {
@@ -441,7 +476,10 @@ export const useChatVoice = (props: UseChatVoiceProps = {}): ChatVoiceController
       (currentState.status === 'error' && !currentState.modelReady)
     )
   })
-  const isPlaying = createMemo(() => state().status === 'speaking')
+  const isPlaying = createMemo(() => {
+    const currentState = state()
+    return currentState.status === 'speaking' && currentState.phase === 'playing'
+  })
   const isGenerating = createMemo(() => {
     const currentState = state()
     return currentState.status === 'speaking' && currentState.phase === 'generating'
@@ -452,7 +490,8 @@ export const useChatVoice = (props: UseChatVoiceProps = {}): ChatVoiceController
     isModelReady,
     runtime,
     setState,
-    silenceDuration: model.speechPolicy.silenceDuration,
+    setViseme: setActiveViseme,
+    speechPolicy: model.speechPolicy,
   })
 
   const prepare = createPrepare({
@@ -471,6 +510,7 @@ export const useChatVoice = (props: UseChatVoiceProps = {}): ChatVoiceController
   })
 
   return {
+    activeViseme,
     arm: speechQueue.arm,
     canPrepare,
     finish: speechQueue.finish,

@@ -1,0 +1,13 @@
+<svg width="260" height="180" viewBox="0 0 260 180" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="feather" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="7" />
+    </filter>
+  </defs>
+  <rect width="260" height="180" fill="black" />
+  <path
+    d="M 52 89 C 59 81 73 78 91 76 C 111 75 132 78 142 86 C 147 98 141 112 130 118 C 111 125 76 122 58 114 C 49 106 47 96 52 89 Z"
+    fill="white"
+    filter="url(#feather)"
+  />
+</svg>

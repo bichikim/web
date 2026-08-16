@@ -1,4 +1,4 @@
-// AI_NOTE - web-bridge 2.4.1's app client entry imports bridge-core without a runtime dependency,
+// web-bridge 2.4.1's app client entry imports bridge-core without a runtime dependency,
 // so package.json must keep both packages pinned to the same version.
 import {Storage} from '@apps-in-toss/web-bridge'
 import {z} from 'zod'
@@ -86,7 +86,7 @@ export const readScreenSaverDelay = async (): Promise<ScreenSaverDelay> => {
 
 /** Persists the screen saver delay until the host app or browser data is removed. */
 export const writeScreenSaverDelay = async (delay: ScreenSaverDelay): Promise<void> => {
-  // AI_NOTE - Keep web storage authoritative so a failed native write cannot revive a stale value.
+  // Keep web storage authoritative so a failed native write cannot revive a stale value.
   preferenceWriteRevision += 1
   writeWebPreference(delay)
 

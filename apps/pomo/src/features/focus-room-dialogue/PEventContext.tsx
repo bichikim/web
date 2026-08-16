@@ -8,6 +8,7 @@ import {
   useContext,
 } from 'solid-js'
 
+import type {PViseme} from '../lip-sync'
 import {
   createEntryPlaybackController,
   type PlayPDialogueSequenceOptions,
@@ -29,6 +30,7 @@ export interface PEventContextValue {
   readonly activeSegmentCount: Accessor<number>
   readonly activeSegmentPosition: Accessor<number | null>
   readonly activeText: Accessor<string | null>
+  readonly activeViseme: Accessor<PViseme>
   readonly deleteDialogue: (dialogueId: string) => Promise<void>
   readonly dialogues: Accessor<ReadonlyArray<PDialogue>>
   readonly entryDialogueId: Accessor<string | null>
@@ -37,6 +39,7 @@ export interface PEventContextValue {
   readonly eventDialogueIds: Accessor<EventDialogueIds>
   readonly getAudio: (audioKey: string) => Promise<Blob | null>
   readonly isDialoguePlaybackBlocked: Accessor<boolean>
+  readonly isDialoguePlaying: Accessor<boolean>
   readonly isDialogueScheduled: (dialogueId: string) => boolean
   readonly isEntryPlaybackBlocked: Accessor<boolean>
   readonly isLoading: Accessor<boolean>
@@ -212,6 +215,7 @@ export const PEventProvider = (props: PEventProviderProps) => {
     activeSegmentCount: playback.activeSegmentCount,
     activeSegmentPosition: playback.activeSegmentPosition,
     activeText: playback.activeText,
+    activeViseme: playback.activeViseme,
     async deleteDialogue(dialogueId) {
       await bindingUpdate.catch(() => undefined)
       await getRepository().deleteDialogue(dialogueId)
@@ -239,6 +243,7 @@ export const PEventProvider = (props: PEventProviderProps) => {
     eventDialogueIds,
     getAudio: (audioKey) => getRepository().getAudio(audioKey),
     isDialoguePlaybackBlocked: playback.isBlocked,
+    isDialoguePlaying: playback.isPlaying,
     isDialogueScheduled: playback.isDialogueScheduled,
     isEntryPlaybackBlocked: playback.isBlocked,
     isLoading,

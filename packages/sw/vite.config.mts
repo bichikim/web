@@ -28,7 +28,7 @@ const createBaseConfig = createConfig({
   root: import.meta.dirname,
 })
 
-// AI_NOTE - The generator copies only sw.mjs, so the service worker runtime must not depend on sibling chunks.
+// The generator copies only sw.mjs, so the service worker runtime must not depend on sibling chunks.
 const createBaseConfigFactory = createBaseConfig as unknown as (
   env: ConfigEnv,
 ) => UserConfig | Promise<UserConfig>

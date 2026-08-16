@@ -40,6 +40,7 @@ const createModelContext = () => {
 }
 
 const createVoice = (): ChatVoiceController => ({
+  activeViseme: () => 'rest',
   arm: vi.fn(),
   canPrepare: () => true,
   finish: vi.fn(async () => undefined),

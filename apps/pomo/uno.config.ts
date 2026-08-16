@@ -141,15 +141,29 @@ export default {
     {
       'pomo-backdrop':
         'border border-solid border-[var(--pomo-border)] backdrop-blur-[var(--pomo-backdrop-blur)]',
-      'pomo-interactive-glass':
-        'hover:border-[var(--pomo-border-hover)] hover:bg-[var(--pomo-glass-interactive)] focus-visible:border-[var(--pomo-brass)] focus-visible:bg-[var(--pomo-glass-interactive)] ui-expanded:border-[var(--pomo-brass)] ui-expanded:bg-[var(--pomo-glass-interactive)]',
+      'pomo-interactive-glass': [
+        'hover:border-[var(--pomo-border-hover)] hover:bg-[var(--pomo-glass-interactive)]',
+        'focus-visible:border-[var(--pomo-brass)] focus-visible:bg-[var(--pomo-glass-interactive)]',
+        'ui-expanded:border-[var(--pomo-brass)] ui-expanded:bg-[var(--pomo-glass-interactive)]',
+      ].join(' '),
+      'pomo-interactive-glass-group': [
+        '[&:has(.pomo-interactive-glass-part:hover)]:border-[var(--pomo-border-hover)]',
+        '[&:has(.pomo-interactive-glass-part:focus-visible)]:border-[var(--pomo-brass)]',
+        '[&:has(.pomo-interactive-glass-part[data-expanded])]:border-[var(--pomo-brass)]',
+        '[&:has(.pomo-interactive-glass-group-trigger:hover)]:bg-[var(--pomo-glass-interactive)]',
+        '[&:has(.pomo-interactive-glass-group-trigger:focus-visible)]:bg-[var(--pomo-glass-interactive)]',
+        '[&:has(.pomo-interactive-glass-group-trigger[data-expanded])]:bg-[var(--pomo-glass-interactive)]',
+      ].join(' '),
+      'pomo-interactive-glass-part': [
+        '[&:not(.pomo-interactive-glass-group-trigger):hover]:bg-[var(--pomo-glass-interactive-overlay)]',
+        '[&:not(.pomo-interactive-glass-group-trigger):focus-visible]:bg-[var(--pomo-glass-interactive-overlay)]',
+        '[&:not(.pomo-interactive-glass-group-trigger)[data-expanded]]:bg-[var(--pomo-glass-interactive-overlay)]',
+      ].join(' '),
       'pomo-static-focus-glass': 'border-[var(--pomo-brass)] bg-[var(--pomo-glass-interactive)]',
-      'pomo-interactive-glass-part':
-        '[&:not(.pomo-interactive-glass-group-trigger):hover]:bg-[var(--pomo-glass-interactive-overlay)] [&:not(.pomo-interactive-glass-group-trigger):focus-visible]:bg-[var(--pomo-glass-interactive-overlay)] [&:not(.pomo-interactive-glass-group-trigger)[data-expanded]]:bg-[var(--pomo-glass-interactive-overlay)]',
-      'pomo-interactive-glass-group':
-        '[&:has(.pomo-interactive-glass-part:hover)]:border-[var(--pomo-border-hover)] [&:has(.pomo-interactive-glass-part:focus-visible)]:border-[var(--pomo-brass)] [&:has(.pomo-interactive-glass-part[data-expanded])]:border-[var(--pomo-brass)] [&:has(.pomo-interactive-glass-group-trigger:hover)]:bg-[var(--pomo-glass-interactive)] [&:has(.pomo-interactive-glass-group-trigger:focus-visible)]:bg-[var(--pomo-glass-interactive)] [&:has(.pomo-interactive-glass-group-trigger[data-expanded])]:bg-[var(--pomo-glass-interactive)]',
-      'pomo-strong-focus-ring':
-        'focus-visible:outline-3 focus-visible:outline-solid focus-visible:outline-offset-2 focus-visible:outline-[var(--pomo-brass)]',
+      'pomo-strong-focus-ring': [
+        'focus-visible:outline-3 focus-visible:outline-solid focus-visible:outline-offset-2',
+        'focus-visible:outline-[var(--pomo-brass)]',
+      ].join(' '),
     },
   ],
 }

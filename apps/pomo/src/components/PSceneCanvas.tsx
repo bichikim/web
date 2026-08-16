@@ -22,6 +22,7 @@ export default function PSceneCanvas(props: PSceneCanvasProps) {
     motionMode: props.motionMode,
     source: props.source,
     time: props.time,
+    viseme: props.viseme,
   })
 
   onMount(() => {
@@ -57,6 +58,7 @@ export default function PSceneCanvas(props: PSceneCanvasProps) {
           props.motionMode,
           props.source,
           props.time,
+          props.viseme,
         ] as const,
       () => {
         renderer?.update(getSceneState())

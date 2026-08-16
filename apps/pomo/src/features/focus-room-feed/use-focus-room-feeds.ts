@@ -561,7 +561,7 @@ export const usePFeeds = (props: UsePFeedsProps): PFeedController => {
         await props.events.playDialogueSequence({
           dialogueIds,
           onDialogueStart: markListened,
-          // AI_NOTE - A user stop dismisses the whole feed batch; cancellations and playback failures do not.
+          // A user stop dismisses the whole feed batch; cancellations and playback failures do not.
           onSequenceStop: markDialoguesListened,
         })
       } finally {

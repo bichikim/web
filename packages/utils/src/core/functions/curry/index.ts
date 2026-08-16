@@ -2,7 +2,7 @@
 // oxlint-disable no-magic-numbers
 // oxlint-disable max-params
 
-/* AI_NOTE - CurriedFunction{N}[Opt{K}]: N = original arity; T0..T(n-1) = Parameters order; OptK = K trailing optionals; R suffix = reverse curry (right-to-left). */
+/* CurriedFunction{N}[Opt{K}]: N = original arity; T0..T(n-1) = Parameters order; OptK = K trailing optionals; R suffix = reverse curry (right-to-left). */
 
 type Length<T extends readonly any[]> = T['length']
 
