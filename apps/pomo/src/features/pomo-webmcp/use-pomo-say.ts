@@ -1,13 +1,15 @@
-import {type Accessor, createEffect, createSignal, onCleanup, onMount} from 'solid-js'
+import {type Accessor, createSignal, onCleanup, onMount} from 'solid-js'
 
 import {useChatVoice} from '../chat-voice'
-import {type PomoSayRequest, registerPomoSayTool} from './register-pomo-say-tool'
+import {type PSayRequest, registerPSayTool} from './register-pomo-say-tool'
 
-export interface UsePomoSayOptions {
+export interface UsePSayProps {
   readonly onBeforeSpeech: () => void
 }
 
-export interface PomoSayController {
+export type UsePSayOptions = UsePSayProps
+
+export interface PSayController {
   readonly speechText: Accessor<string | null>
   readonly stop: () => void
 }
@@ -15,7 +17,7 @@ export interface PomoSayController {
 const createCancelledError = () => new DOMException('Pomo speech was cancelled.', 'AbortError')
 
 /** Registers and owns the cancellable WebMCP speech lifecycle for Pomo. */
-export const usePomoSay = (options: UsePomoSayOptions): PomoSayController => {
+export const usePSay = (props: UsePSayProps): PSayController => {
   const [speechText, setSpeechText] = createSignal<string | null>(null)
   const voice = useChatVoice()
   let speechSession = 0
@@ -26,31 +28,38 @@ export const usePomoSay = (options: UsePomoSayOptions): PomoSayController => {
     }
   }
 
-  const speak = async (request: PomoSayRequest) => {
+  const speak = async (request: PSayRequest) => {
     speechSession += 1
     const activeSession = speechSession
-    options.onBeforeSpeech()
-    await voice.prepare()
-    assertActive(activeSession)
-
-    const preparedState = voice.state()
-
-    if (preparedState.status === 'error') {
-      throw new Error(preparedState.message)
-    }
-
-    voice.arm()
-    const speech = voice.speak(request.text, request.voiceId)
     setSpeechText(request.text)
-    await speech
-    assertActive(activeSession)
-    await voice.finish()
-    assertActive(activeSession)
 
-    const completedState = voice.state()
+    try {
+      props.onBeforeSpeech()
+      await voice.prepare()
+      assertActive(activeSession)
 
-    if (completedState.status === 'error') {
-      throw new Error(completedState.message)
+      const preparedState = voice.state()
+
+      if (preparedState.status === 'error') {
+        throw new Error(preparedState.message)
+      }
+
+      voice.arm()
+      const speech = voice.speak(request.text, request.voiceId)
+      await speech
+      assertActive(activeSession)
+      await voice.finish()
+      assertActive(activeSession)
+
+      const completedState = voice.state()
+
+      if (completedState.status === 'error') {
+        throw new Error(completedState.message)
+      }
+    } finally {
+      if (activeSession === speechSession) {
+        setSpeechText(null)
+      }
     }
   }
 
@@ -62,7 +71,7 @@ export const usePomoSay = (options: UsePomoSayOptions): PomoSayController => {
 
   onMount(() => {
     const registration = new AbortController()
-    registerPomoSayTool({document, signal: registration.signal, speak}).catch((error: unknown) => {
+    registerPSayTool({document, signal: registration.signal, speak}).catch((error: unknown) => {
       console.error('Failed to register the Pomo WebMCP tool.', error)
     })
 
@@ -70,15 +79,6 @@ export const usePomoSay = (options: UsePomoSayOptions): PomoSayController => {
       speechSession += 1
       registration.abort()
     })
-  })
-
-  createEffect(() => {
-    const text = speechText()
-    const speechState = voice.state()
-
-    if (text !== null && speechState.status !== 'speaking') {
-      setSpeechText(null)
-    }
   })
 
   return {speechText, stop}

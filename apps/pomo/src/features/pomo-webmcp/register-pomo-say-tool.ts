@@ -20,20 +20,20 @@ interface ModelContext {
   ) => Promise<void>
 }
 
-export interface PomoSayRequest {
+export interface PSayRequest {
   readonly text: string
   readonly voiceId?: SupertonicVoiceId
 }
 
-interface ParsedPomoSayRequest {
-  readonly request: PomoSayRequest
+interface ParsedPSayRequest {
+  readonly request: PSayRequest
   readonly voiceName: string
 }
 
-export interface RegisterPomoSayToolOptions {
+export interface RegisterPSayToolOptions {
   readonly document: Document
   readonly signal?: AbortSignal
-  readonly speak: (request: PomoSayRequest) => Promise<void>
+  readonly speak: (request: PSayRequest) => Promise<void>
 }
 
 const isObject = (value: unknown): value is Record<PropertyKey, unknown> =>
@@ -52,7 +52,7 @@ const getModelContext = (document: Document): ModelContext | null => {
   return modelContext
 }
 
-const parsePomoSayRequest = (input: unknown): ParsedPomoSayRequest => {
+const parsePSayRequest = (input: unknown): ParsedPSayRequest => {
   if (!isObject(input) || typeof input.text !== 'string') {
     throw new TypeError('pomo_say에는 text 문자열이 필요합니다.')
   }
@@ -82,7 +82,7 @@ const parsePomoSayRequest = (input: unknown): ParsedPomoSayRequest => {
 }
 
 /** Registers Pomo's speech capability when the current browser supports WebMCP. */
-export const registerPomoSayTool = async (options: RegisterPomoSayToolOptions) => {
+export const registerPSayTool = async (options: RegisterPSayToolOptions) => {
   const modelContext = getModelContext(options.document)
 
   if (modelContext === null) {
@@ -94,7 +94,7 @@ export const registerPomoSayTool = async (options: RegisterPomoSayToolOptions) =
       annotations: {readOnlyHint: false},
       description: 'Pomo가 전달받은 텍스트를 화면의 말풍선에 표시하고 선택한 목소리로 읽습니다.',
       execute: async (input) => {
-        const {request, voiceName} = parsePomoSayRequest(input)
+        const {request, voiceName} = parsePSayRequest(input)
         await options.speak(request)
         return {spoken: true, voice: voiceName}
       },

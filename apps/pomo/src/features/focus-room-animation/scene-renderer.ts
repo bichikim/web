@@ -1,35 +1,21 @@
 import {Application, Container, Sprite, type Texture} from 'pixi.js'
 
-import steamImage1 from '../../../assets/focus-room-animation/steam-ai-1.png'
-import steamImage2 from '../../../assets/focus-room-animation/steam-ai-2.png'
-import steamImage3 from '../../../assets/focus-room-animation/steam-ai-3.png'
-import steamImage4 from '../../../assets/focus-room-animation/steam-ai-4.png'
+import steamImage1 from 'assets/focus-room-animation/steam-ai-1.webp'
+import steamImage2 from 'assets/focus-room-animation/steam-ai-2.webp'
+import steamImage3 from 'assets/focus-room-animation/steam-ai-3.webp'
+import steamImage4 from 'assets/focus-room-animation/steam-ai-4.webp'
 import {DepthParallaxFilter} from './depth-parallax-filter'
-import {
-  type FocusRoomActivity,
-  FocusRoomEyeController,
-  type FocusRoomGaze,
-  type FocusRoomTime,
-} from './eye-animation-controller'
+import {PEyeController} from './eye-animation-controller'
 import {ParallaxController} from './parallax-controller'
+import {createSceneTransitions, SCENE_HEIGHT, SCENE_WIDTH} from './scene-composite-transition'
+import {getPScenePanPosition} from './scene-motion'
+import type {PSceneRendererOptions, PSceneState} from './scene-state'
 import {SteamParticleSystem} from './steam-particle-system'
 import {PixiLayerScene, type PixiLayerSceneDefinition} from './layer-scene'
 import {acquireTextureGroup, releaseTextureGroup, type TextureLease} from './texture-leases'
 
-export type {FocusRoomActivity, FocusRoomGaze, FocusRoomTime} from './eye-animation-controller'
-
-export interface FocusRoomSceneState {
-  readonly activity: FocusRoomActivity
-  readonly depthSource: string
-  readonly gaze: FocusRoomGaze
-  readonly layerScene: PixiLayerSceneDefinition | null
-  readonly source: string
-  readonly time: FocusRoomTime
-}
-
-export interface FocusRoomSceneRendererOptions {
-  readonly onLoadingChange?: (isLoading: boolean) => void
-}
+export type {PSceneMotionInput} from './scene-motion'
+export type {PSceneState} from './scene-state'
 
 interface PreparedScene {
   readonly depthTexture: Texture
@@ -39,6 +25,8 @@ interface PreparedScene {
 }
 
 const SCENE_TRANSITION_DURATION = 600
+const DEPTH_PARALLAX_MAXIMUM_X = 9
+const DEPTH_PARALLAX_MAXIMUM_Y = 6
 const STEAM_PARALLAX_DEPTH = 0.55
 const STEAM_SOURCES = [steamImage1, steamImage2, steamImage3, steamImage4] as const
 
@@ -48,13 +36,14 @@ const reportError = (error: unknown) => {
 
 const ignoreLoadingChange = () => undefined
 
-export class FocusRoomSceneRenderer {
+export class PSceneRenderer {
   readonly #application = new Application()
-  readonly #eyes: FocusRoomEyeController
+  readonly #eyes: PEyeController
   readonly #host: HTMLDivElement
   readonly #onLoadingChange: (isLoading: boolean) => void
   readonly #parallax: ParallaxController
   readonly #sceneLayer = new Container()
+  readonly #sceneTransitions = createSceneTransitions(this.#application, this.#sceneLayer)
   #applicationReady = false
   #currentDepthSource: string | null = null
   #currentLayerScene: PixiLayerScene | null = null
@@ -69,42 +58,49 @@ export class FocusRoomSceneRenderer {
   #incomingScene: Container | null = null
   #incomingTextures: readonly TextureLease[] = []
   #initialized = false
+  #motionPositionX = 0
+  #motionPositionY = 0
   #requestedDepthSource: string | null = null
   #requestedLayerSceneId: string | null = null
   #requestedSource: string | null = null
   #settledFrame: number | null = null
-  #state: FocusRoomSceneState | null = null
+  #state: PSceneState | null = null
   #steam: SteamParticleSystem | null = null
   #steamTextureLeases: readonly TextureLease[] = []
   #transitionFrame: number | null = null
   #transitionVersion = 0
 
-  constructor(host: HTMLDivElement, options: FocusRoomSceneRendererOptions = {}) {
+  constructor(host: HTMLDivElement, options: PSceneRendererOptions = {}) {
     this.#host = host
     this.#onLoadingChange = options.onLoadingChange ?? ignoreLoadingChange
-    this.#eyes = new FocusRoomEyeController(() => this.#application.render())
+    this.#eyes = new PEyeController(() => this.#application.render())
     this.#parallax = new ParallaxController(
       host,
       (x, y) => {
-        this.#depthFilter?.setPointerOffset(x, y)
-        this.#steam?.setParallaxOffset(-x * STEAM_PARALLAX_DEPTH, -y * STEAM_PARALLAX_DEPTH)
+        this.#motionPositionX = x
+        this.#motionPositionY = y
+        this.#applySceneMotion()
         this.#application.render()
       },
-      (prefersReducedMotion) => this.#setReducedMotion(prefersReducedMotion),
+      {
+        onInputModeChange: options.onMotionInputChange,
+        onMotionPreferenceChange: (prefersReducedMotion) =>
+          this.#setReducedMotion(prefersReducedMotion),
+      },
     )
   }
 
-  async initialize(state: FocusRoomSceneState) {
+  async initialize(state: PSceneState) {
     this.#startLoading()
     this.#state = state
     await this.#application.init({
       antialias: false,
       autoStart: false,
       backgroundAlpha: 0,
-      height: 941,
+      height: SCENE_HEIGHT,
       preference: 'webgl',
       resolution: 1,
-      width: 1672,
+      width: SCENE_WIDTH,
     })
     this.#applicationReady = true
 
@@ -139,6 +135,7 @@ export class FocusRoomSceneRenderer {
     this.#initialized = true
     const latestState = this.#state
 
+    this.#parallax.setInputMode(latestState?.motionInput ?? 'drag')
     this.#parallax.start()
     this.#steam?.start()
     this.#eyes.setSceneReady(true)
@@ -155,13 +152,44 @@ export class FocusRoomSceneRenderer {
     }
   }
 
-  update(state: FocusRoomSceneState) {
+  update(state: PSceneState) {
+    const previousMotionInput = this.#state?.motionInput ?? 'drag'
+    const previousMotionMode = this.#state?.motionMode ?? 'depth'
     this.#state = state
     this.#eyes.update(state)
 
     if (this.#initialized) {
+      if (previousMotionInput !== (state.motionInput ?? 'drag')) {
+        this.#parallax.setInputMode(state.motionInput ?? 'drag')
+      }
+
+      if (previousMotionMode !== (state.motionMode ?? 'depth')) {
+        this.#applySceneMotion()
+        this.#application.render()
+      }
+
       this.#syncScene(state.source, state.depthSource, state.layerScene)
     }
+  }
+
+  #applySceneMotion() {
+    if ((this.#state?.motionMode ?? 'depth') === 'pan') {
+      this.#depthFilter?.setPointerOffset(0, 0)
+      this.#steam?.setParallaxOffset(0, 0)
+      this.#application.canvas.style.objectPosition = `${getPScenePanPosition(
+        this.#motionPositionX,
+      )}% center`
+      return
+    }
+
+    const depthOffsetX = this.#motionPositionX * DEPTH_PARALLAX_MAXIMUM_X
+    const depthOffsetY = this.#motionPositionY * DEPTH_PARALLAX_MAXIMUM_Y
+    this.#application.canvas.style.objectPosition = `${getPScenePanPosition(0)}% center`
+    this.#depthFilter?.setPointerOffset(depthOffsetX, depthOffsetY)
+    this.#steam?.setParallaxOffset(
+      -depthOffsetX * STEAM_PARALLAX_DEPTH,
+      -depthOffsetY * STEAM_PARALLAX_DEPTH,
+    )
   }
 
   #syncScene(source: string, depthSource: string, layerScene: PixiLayerSceneDefinition | null) {
@@ -201,7 +229,7 @@ export class FocusRoomSceneRenderer {
         window.cancelAnimationFrame(this.#transitionFrame)
       }
 
-      incomingScene.alpha = 1
+      this.#sceneTransitions.setProgress(1, this.#incomingScene)
       this.#depthFilter?.setDepthMix(1)
       this.#finishTransition(requestedSource, requestedDepthSource, incomingScene)
       return
@@ -318,13 +346,14 @@ export class FocusRoomSceneRenderer {
         return
       }
 
-      prepared.scene.alpha = 0
+      this.#sceneTransitions.capture(this.#currentScene)
       this.#incomingLayerScene = prepared.layerScene
       this.#incomingLayerSceneId = layerDefinition?.id ?? null
       this.#incomingScene = prepared.scene
       this.#incomingTextures = prepared.textures
       this.#depthFilter?.setDepthTransition(prepared.depthTexture)
       this.#addScene(prepared.scene, prepared.layerScene)
+      this.#sceneTransitions.start(prepared.scene)
       this.#animateTransition(source, depthSource, prepared.scene, version)
     } catch (error: unknown) {
       if (this.#destroyed || version !== this.#transitionVersion) {
@@ -346,7 +375,7 @@ export class FocusRoomSceneRenderer {
 
   #animateTransition(source: string, depthSource: string, scene: Container, version: number) {
     if (this.#parallax.prefersReducedMotion) {
-      scene.alpha = 1
+      this.#sceneTransitions.setProgress(1, this.#incomingScene)
       this.#depthFilter?.setDepthMix(1)
       this.#application.render()
       this.#finishTransition(source, depthSource, scene)
@@ -360,7 +389,7 @@ export class FocusRoomSceneRenderer {
       }
 
       const progress = Math.min(1, (timestamp - startedAt) / SCENE_TRANSITION_DURATION)
-      scene.alpha = progress
+      this.#sceneTransitions.setProgress(progress, this.#incomingScene)
       this.#depthFilter?.setDepthMix(progress)
       this.#application.render()
 
@@ -377,6 +406,7 @@ export class FocusRoomSceneRenderer {
 
   #finishTransition(source: string, depthSource: string, scene: Container) {
     const previousTextures = this.#currentTextures
+    this.#sceneTransitions.restore()
     this.#destroyCurrentScene()
     this.#currentScene = scene
     this.#currentLayerScene = this.#incomingLayerScene
@@ -406,6 +436,7 @@ export class FocusRoomSceneRenderer {
     }
 
     this.#placeEyes(this.#currentLayerScene)
+    this.#sceneTransitions.restore()
     this.#destroyIncomingScene()
     this.#incomingScene = null
     this.#depthFilter?.cancelDepthTransition()

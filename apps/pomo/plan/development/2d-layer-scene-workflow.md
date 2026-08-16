@@ -45,12 +45,13 @@ base
 ```text
 assets/focus-room-layers/<scene-id>/
   base.webp
-  layer-head.png
-  layer-hand-left.png
-  layer-hand-right.png
+  layer-head-eye-base.webp
+  layer-hand-left.webp
+  layer-hand-right.webp
 
 assets/focus-room-source/layers/<scene-id>/
   base.png
+  layer-*.png
   mask-*.png
   workfiles/                 # Krita 원본과 재현에 필요한 중간 파일
 ```
@@ -107,9 +108,9 @@ AI가 반환한 전체 이미지를 그대로 `base.png`로 사용하지 않는�
 
 ## 5. 원본 픽셀로 투명 레이어를 추출한다
 
-`layer-head.png`와 손 레이어는 원본 RGB에 해당 마스크를 alpha로 결합해 만든다. 새로 생성한 얼굴이나 손을 사용하면 원본과 색, 질감, 윤곽이 달라지므로 기본 전략으로 사용하지 않는다.
+원본 `layer-head.png`와 손 레이어는 원본 RGB에 해당 마스크를 alpha로 결합해 만든다. 새로 생성한 얼굴이나 손을 사용하면 원본과 색, 질감, 윤곽이 달라지므로 기본 전략으로 사용하지 않는다.
 
-각 파일은 원본과 같은 `1672×941` 투명 PNG다. 파트를 실제 크기로 crop한 작은 이미지를 사용하지 않는다. 전체 캔버스를 유지하면 모든 장면 데이터를 절대 좌표로 독립적으로 정의할 수 있고, 합성 과정에서 추가 위치 보정이 필요하지 않다.
+보관 원본은 원본과 같은 `1672×941` 투명 PNG이고 런타임에는 WebP로 생성한다. 파트를 실제 크기로 crop한 작은 이미지를 사용하지 않는다. 전체 캔버스를 유지하면 모든 장면 데이터를 절대 좌표로 독립적으로 정의할 수 있고, 합성 과정에서 추가 위치 보정이 필요하지 않다.
 
 다음 조건을 확인한다.
 
@@ -218,7 +219,7 @@ const scene = {
 
 ## 9. 리뷰 페이지에서 검수한다
 
-`/focus-room-layer-review`에서 다음 순서로 확인한다.
+`/dev/focus-room-layer-review`에서 다음 순서로 확인한다.
 
 1. 모든 레이어를 켠 상태에서 원본 오버레이를 올려 정렬을 확인한다.
 2. 머리 레이어만 끄고 베이스의 복원 범위와 잔상을 확인한다.
@@ -241,6 +242,7 @@ const scene = {
 마지막으로 다음 명령을 실행한다.
 
 ```bash
+pnpm --filter @apps/pomo assets:compress-focus-room
 pnpm format
 pnpm --filter @apps/pomo lint
 pnpm --filter @apps/pomo typecheck
@@ -254,7 +256,7 @@ pnpm --filter @apps/pomo typecheck
 - 특수 머리카락 움직임 예시: `src/features/focus-room-animation/day-writing-layer-scene.ts`
 - 눈동자 이동 예시: `src/features/focus-room-animation/day-reading-focused-layer-scene.ts`
 - 눈 자산 생성 스크립트: `scripts/create-focus-room-eye-motion-assets.mjs`
-- 리뷰 화면: `/focus-room-layer-review`
+- 리뷰 화면: `/dev/focus-room-layer-review`
 - 실제 화면: `/focus-room`
 
 새 장면은 먼저 리뷰 화면에서 완성한 뒤 장면 카탈로그에 연결한다. 리뷰용 임시 보정과 실제 화면용 보정을 따로 만들지 않는다. 두 화면이 같은 `PixiLayerSceneDefinition`과 같은 이미지 자산을 사용해야 한다.

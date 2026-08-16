@@ -1,12 +1,9 @@
 import {createRoot} from 'solid-js'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
-import {
-  type FocusRoomAudioVisualizer,
-  useFocusRoomAudioVisualizer,
-} from '../use-focus-room-audio-visualizer'
+import {type PAudioVisualizer, usePAudioVisualizer} from '../use-focus-room-audio-visualizer'
 
-describe('useFocusRoomAudioVisualizer', () => {
+describe('usePAudioVisualizer', () => {
   afterEach(() => {
     vi.restoreAllMocks()
     vi.unstubAllGlobals()
@@ -40,10 +37,10 @@ describe('useFocusRoomAudioVisualizer', () => {
     vi.stubGlobal('requestAnimationFrame', requestFrame)
 
     let dispose: () => void = () => undefined
-    let visualizer: FocusRoomAudioVisualizer | undefined
+    let visualizer: PAudioVisualizer | undefined
     createRoot((rootDispose) => {
       dispose = rootDispose
-      visualizer = useFocusRoomAudioVisualizer()
+      visualizer = usePAudioVisualizer()
     })
 
     visualizer?.start(document.createElement('audio'))

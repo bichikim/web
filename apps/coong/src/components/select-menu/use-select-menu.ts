@@ -35,6 +35,31 @@ export interface SelectMenuController {
   top: Accessor<number>
 }
 
+const createOpenFrameScheduler = (onFrame: () => void) => {
+  let frameId: number | undefined
+
+  const cancel = () => {
+    if (frameId === undefined) {
+      return
+    }
+
+    cancelAnimationFrame(frameId)
+    frameId = undefined
+  }
+
+  const schedule = () => {
+    cancel()
+    frameId = requestAnimationFrame(() => {
+      frameId = undefined
+      onFrame()
+    })
+  }
+
+  onCleanup(cancel)
+
+  return {cancel, schedule}
+}
+
 export const useSelectMenu = (props: UseSelectMenuProps = {}): SelectMenuController => {
   const listId = createUniqueId()
   const [isOpen, setIsOpen] = createSignal(false)
@@ -84,22 +109,25 @@ export const useSelectMenu = (props: UseSelectMenuProps = {}): SelectMenuControl
     applyAnchorRect(toSelectMenuAnchorRect(trigger.getBoundingClientRect()))
   }
 
+  const openFrame = createOpenFrameScheduler(() => {
+    notifyAnchorRectFromTrigger()
+    syncOpenState()
+
+    if (panelElement()?.matches(':popover-open') && focusOnOpen()) {
+      keyboard.focusFirstItem()
+    }
+  })
+
   const openFromTrigger = (trigger: HTMLButtonElement) => {
     setTriggerElement(trigger)
     applyAnchorRect(toSelectMenuAnchorRect(trigger.getBoundingClientRect()))
     panelElement()?.showPopover()
     syncOpenState()
-    requestAnimationFrame(() => {
-      notifyAnchorRectFromTrigger()
-      syncOpenState()
-
-      if (focusOnOpen()) {
-        keyboard.focusFirstItem()
-      }
-    })
+    openFrame.schedule()
   }
 
   const onHide = () => {
+    openFrame.cancel()
     panelElement()?.hidePopover()
     setFocusedElement(undefined)
     syncOpenState()
@@ -143,14 +171,12 @@ export const useSelectMenu = (props: UseSelectMenuProps = {}): SelectMenuControl
     syncOpenState()
 
     if (panelElement()?.matches(':popover-open')) {
-      requestAnimationFrame(() => {
-        notifyAnchorRectFromTrigger()
+      openFrame.schedule()
 
-        if (focusOnOpen()) {
-          keyboard.focusFirstItem()
-        }
-      })
+      return
     }
+
+    openFrame.cancel()
   }
 
   const registerItem = (registration: SelectMenuItemRegistration) => {

@@ -1,18 +1,61 @@
-export {createFocusRoomDialogueRepository} from './repository'
-export type {FocusRoomDialogueRepository, SaveDialogueOptions} from './repository'
-export {FocusRoomEventProvider, useFocusRoomEvents} from './FocusRoomEventContext'
-export type {FocusRoomEventContextValue, FocusRoomEventProviderProps} from './FocusRoomEventContext'
-export {dialogueEventBindingSchema, FOCUS_ROOM_ENTRY_EVENT, focusRoomDialogueSchema} from './schema'
-export type {DialogueEventBinding, DialogueSegment, FocusRoomDialogue} from './schema'
+export {createPDialogueRepository} from './repository'
+export type {PDialogueRepository, SaveDialogueOptions} from './repository'
+export {PEventProvider, usePEvents} from './PEventContext'
+export type {
+  PEventContextValue,
+  PEventProviderProps,
+  PlayPDialogueSequenceOptions,
+} from './PEventContext'
+export {
+  dialogueEventBindingSchema,
+  dialogueEventIdSchema,
+  dialogueSegmentMoodSchema,
+  FOCUS_ROOM_DIALOGUE_EVENTS,
+  FOCUS_ROOM_ENTRY_EVENT,
+  focusRoomDialogueSchema,
+} from './schema'
+export type {
+  DialogueEventBinding,
+  DialogueEventId,
+  DialogueSegment,
+  DialogueSegmentMood,
+  PDialogue,
+} from './schema'
+export {analyzeDialogueSegmentMoods} from './segment-mood'
+export type {AnalyzeDialogueSegmentMoodsOptions} from './segment-mood'
 export {createDialogueTimeline, getDialoguePositionAtTime, getDialogueTextAtTime} from './timeline'
 export type {
   CreateDialogueSegmentsOptions,
   DialogueSegmentPosition,
   DialogueTimeline,
 } from './timeline'
-export {useFocusRoomDialogueEditor} from './use-focus-room-dialogue-editor'
+export {usePDialogueEditor} from './use-focus-room-dialogue-editor'
 export type {
   DialogueEditorState,
-  FocusRoomDialogueEditorController,
-  UseFocusRoomDialogueEditorProps,
+  PDialogueEditorController,
+  UsePDialogueEditorProps,
 } from './use-focus-room-dialogue-editor'
+export {
+  AUTOMATIC_DIALOGUE_SETTINGS_CHANGED_EVENT,
+  createAutomaticDialogueSettingsRepository,
+  DEFAULT_AUTOMATIC_DIALOGUE_SETTINGS,
+} from './automatic-dialogue-settings'
+export type {
+  AutomaticDialogueSettings,
+  AutomaticDialogueSettingsRepository,
+  AutomaticDialogueSettingsStorage,
+} from './automatic-dialogue-settings'
+export {
+  createDialogueAudioSamples,
+  generateCompressedDialogueAudio,
+  generateDialogueAudio,
+  regenerateDialogueSegmentAudio,
+} from './generate-dialogue-audio'
+export type {
+  GeneratedCompressedDialogueAudio,
+  GeneratedDialogueAudio,
+  GenerateCompressedDialogueAudioResult,
+  GenerateDialogueAudioOptions,
+  GenerateDialogueAudioResult,
+  RegenerateDialogueSegmentAudioOptions,
+} from './generate-dialogue-audio'

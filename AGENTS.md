@@ -11,6 +11,17 @@
 
 **Enterprise-grade** code: maintainability, scalability, separation of concerns, robust error handling, consistent patterns.
 
+- When correcting AI behavior, use the lowest-prompt-cost instruction that preserves the outcome.
+- Evaluate changes in repository-wide context, prioritizing compatibility, reusability, and readability over local optimization.
+- Do not treat prevalence as evidence of quality; make decisions at the standard of top 5% expert judgment.
+
+## Evidence
+
+- Do not make factual or technical claims without showing the decisive evidence to the user.
+- Prefer evidence from the actual project and runtime over assumptions based on learned patterns.
+- When evidence is unavailable, run the smallest safe experiment that can answer the question.
+- If no evidence exists and no viable experiment is possible, do not infer or speculate. Tell the user that the answer cannot be verified and why.
+
 ## Z-index
 
 - Do not use CSS `z-index`, including utility classes and rendering-library equivalents.
@@ -55,6 +66,10 @@ Chat context is volatile. When **why** isn't obvious from code, leave a minimal 
 - Format: `// AI_NOTE - …` or `/* AI_NOTE - … */`
 - Content: decision + reason (constraints, rejected approach, non-obvious tradeoff); not a changelog
 - Scope: cross-session gaps only; skip self-explanatory code
+
+## Pull requests
+
+- Wait for required CI checks when appropriate, but do not wait for Vercel deployment checks to complete. Report pending Vercel checks and finish the task.
 
 ## GitHub CLI authentication
 

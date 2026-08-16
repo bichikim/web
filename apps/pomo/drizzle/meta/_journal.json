@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1786755602437,
+      "tag": "0000_sudden_klaw",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1786768852442,
+      "tag": "0001_seed_today_in_history_channel",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1786773717557,
+      "tag": "0002_fuzzy_praxagora",
+      "breakpoints": true
+    }
+  ]
+}

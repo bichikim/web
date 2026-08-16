@@ -80,7 +80,7 @@ describe('Supertonic parsers', () => {
 
 describe('SupertonicEngine', () => {
   it('should execute duration, text, eight denoising steps, and vocoder in order', async () => {
-    const durationRun = vi.fn(async () => ({
+    const durationRun = vi.fn(async (_feeds: Record<string, Tensor>) => ({
       duration: new Tensor('float32', Float32Array.of(1), [1]),
     }))
     const textRun = vi.fn(async () => ({
@@ -100,7 +100,7 @@ describe('SupertonicEngine', () => {
     }
     const engine = new SupertonicEngine(
       getResultValue(parseSupertonicConfig(createConfig())),
-      getResultValue(parseSupertonicIndexer(new Array(128).fill(0))),
+      getResultValue(parseSupertonicIndexer(Array.from({length: 128}, (_, index) => index))),
       sessions,
     )
     const onProgress = vi.fn()
@@ -111,8 +111,22 @@ describe('SupertonicEngine', () => {
       }),
     )
 
-    const samples = await engine.generate({onProgress, speed: 1, text: '안녕', voice})
+    const samples = await engine.generate({
+      language: 'en',
+      onProgress,
+      speed: 1,
+      text: 'Hello',
+      voice,
+    })
 
+    const durationInput = durationRun.mock.calls[0]?.[0]
+    const textIds = durationInput?.text_ids
+
+    if (!(textIds?.data instanceof BigInt64Array)) {
+      throw new Error('언어 태그가 텍스트 텐서에 포함되지 않았습니다.')
+    }
+
+    expect(String.fromCodePoint(...Array.from(textIds.data, Number))).toBe('<en>Hello.</en>')
     expect(durationRun).toHaveBeenCalledTimes(1)
     expect(textRun).toHaveBeenCalledTimes(1)
     expect(vectorRun).toHaveBeenCalledTimes(8)
@@ -154,7 +168,7 @@ describe('SupertonicEngine', () => {
     )
 
     await expect(
-      engine.generate({onProgress: vi.fn(), speed: 1, text: '안녕', voice}),
+      engine.generate({language: 'ko', onProgress: vi.fn(), speed: 1, text: '안녕', voice}),
     ).rejects.toThrow('Supertonic 모델이 예상하지 못한 결과를 반환했어요')
   })
 })

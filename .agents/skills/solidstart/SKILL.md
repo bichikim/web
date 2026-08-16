@@ -10,11 +10,12 @@ description: Apply this repository's SolidStart conventions for routes, SSR and 
 1. Classify code before implementation: server-safe, browser-only, or shared/isomorphic.
 2. Never derive SSR markup or initial reactive state from `window`, `document`, `navigator`, or `typeof ... !== 'undefined'`. Server output and the client's first hydration output must match.
 3. Wrap an interactive browser-only subtree with `clientOnly` from `@solidjs/start`. Keep browser globals and browser-only imports behind its dynamic import; render a stable server fallback.
+   The `clientOnly` call creates the runtime boundary; a `.client` filename suffix does not. Use a component name that describes its UI role instead.
 
 ```tsx
 import {clientOnly} from '@solidjs/start'
 
-const BrowserFeature = clientOnly(() => import('./BrowserFeature.client'), {lazy: true})
+const BrowserCanvas = clientOnly(() => import('./BrowserCanvas'), {lazy: true})
 ```
 
 4. Keep SSR when only a capability check is browser-dependent: initialize a neutral `checking` state, then check inside `onMount`. Never render `unsupported` from the server.

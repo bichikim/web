@@ -1,10 +1,14 @@
 /**
  * @vitest-environment jsdom
  */
-import {describe, expect, it, vi} from 'vitest'
+import {afterEach, describe, expect, it, vi} from 'vitest'
 import {render} from '@solidjs/testing-library'
 import {createComponent, createSignal, onMount} from 'solid-js'
 import {useSelectMenu} from '../use-select-menu'
+
+afterEach(() => {
+  vi.restoreAllMocks()
+})
 
 const renderSelectMenu = (options?: {onAnchorRectChange?: (rect: DOMRectReadOnly) => void}) => {
   const [getMenu, setMenu] = createSignal<ReturnType<typeof useSelectMenu> | undefined>()
@@ -248,6 +252,36 @@ describe('useSelectMenu', () => {
     menu?.handleTriggerPointerEnter(createPointerEnter(button))
 
     expect(list.showPopover).toHaveBeenCalledTimes(1)
+  })
+
+  it('should cancel pending open work when the menu closes', () => {
+    const requestFrame = vi.spyOn(window, 'requestAnimationFrame').mockReturnValue(42)
+    const cancelFrame = vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => {})
+    const menu = renderSelectMenu()()
+    const button = document.createElement('button')
+    const list = document.createElement('div')
+
+    list.showPopover = vi.fn()
+    list.hidePopover = vi.fn()
+    list.matches = vi.fn(() => false)
+    vi.spyOn(button, 'getBoundingClientRect').mockReturnValue({
+      bottom: 40,
+      height: 32,
+      left: 100,
+      right: 324,
+      toJSON: () => ({}),
+      top: 8,
+      width: 224,
+      x: 100,
+      y: 8,
+    })
+
+    menu?.registerPanel(list)
+    menu?.handleTriggerClick(createTriggerClick(button))
+    menu?.onHide()
+
+    expect(requestFrame).toHaveBeenCalledTimes(1)
+    expect(cancelFrame).toHaveBeenCalledWith(42)
   })
 
   it('should move focus with arrow keys inside the menu', () => {

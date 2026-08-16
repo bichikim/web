@@ -9,7 +9,7 @@ const sharp = require('sharp')
 
 const IMAGE_WIDTH = 1672
 const IMAGE_HEIGHT = 941
-const ASSET_DIRECTORY = path.resolve(process.cwd(), 'assets/focus-room-animation')
+const ASSET_DIRECTORY = path.resolve(process.cwd(), 'assets/focus-room-source/animation')
 const USER_ONLY = process.argv.includes('--user-only')
 const FOCUSED_ONLY = process.argv.includes('--focused-only')
 const DAY_FOCUSED_FEATURE_PATHS = [
@@ -76,6 +76,7 @@ const sources = [
     half: sourceDirectory && path.resolve(sourceDirectory, 'focused-half.png'),
     name: 'day-focused',
     patch: {height: 105, left: 850, top: 250, width: 285},
+    suffix: '-v2',
   },
   {
     closed: sourceDirectory && path.resolve(sourceDirectory, 'user-closed.png'),
@@ -126,7 +127,15 @@ async function validateSource({name, source}) {
   }
 }
 
-async function createLayer({destinationDirectory, featurePaths, name, patch, source, state}) {
+async function createLayer({
+  destinationDirectory,
+  featurePaths,
+  name,
+  patch,
+  source,
+  state,
+  suffix,
+}) {
   await validateSource({name, source})
 
   const image = await sharp(source).extract(patch).png().toBuffer()
@@ -136,7 +145,7 @@ async function createLayer({destinationDirectory, featurePaths, name, patch, sou
     .ensureAlpha()
     .composite([{blend: 'dest-in', input: mask}])
     .png()
-    .toFile(path.join(destinationDirectory, `eyes-${name}-${state}.png`))
+    .toFile(path.join(destinationDirectory, `eyes-${name}-${state}${suffix ?? ''}.png`))
 }
 
 const activeSources = USER_ONLY
@@ -149,9 +158,9 @@ await mkdir(ASSET_DIRECTORY, {recursive: true})
 const stagingDirectory = await mkdtemp(path.join(ASSET_DIRECTORY, '.staging-'))
 
 try {
-  const outputs = activeSources.flatMap(({closed, featurePaths, half, name, patch}) => [
-    {featurePaths, name, patch, source: half, state: 'half'},
-    {featurePaths, name, patch, source: closed, state: 'closed'},
+  const outputs = activeSources.flatMap(({closed, featurePaths, half, name, patch, suffix}) => [
+    {featurePaths, name, patch, source: half, state: 'half', suffix},
+    {featurePaths, name, patch, source: closed, state: 'closed', suffix},
   ])
   const generationResults = await Promise.allSettled(
     outputs.map((output) => createLayer({...output, destinationDirectory: stagingDirectory})),
@@ -163,8 +172,8 @@ try {
   }
 
   await Promise.all(
-    outputs.map(({name, state}) => {
-      const fileName = `eyes-${name}-${state}.png`
+    outputs.map(({name, state, suffix}) => {
+      const fileName = `eyes-${name}-${state}${suffix ?? ''}.png`
       return rename(path.join(stagingDirectory, fileName), path.join(ASSET_DIRECTORY, fileName))
     }),
   )

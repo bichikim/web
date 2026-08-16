@@ -2,6 +2,7 @@ import {mergeConfig} from 'vite'
 import type {StorybookConfig} from 'storybook-solidjs-vite'
 
 export default <StorybookConfig>{
+  // AI_NOTE - Story별 네트워크 상태를 재현할 수 있도록 MSW 도입을 검토 중이다.
   addons: [
     '@storybook/addon-onboarding',
     '@storybook/addon-docs',
@@ -26,12 +27,8 @@ export default <StorybookConfig>{
     },
   },
   stories: [
-    '../apps/pomo/src/**/*.mdx',
     '../apps/pomo/src/**/*.story.@(js|jsx|mjs|ts|tsx)',
-    '../apps/coong/src/**/*.mdx',
     '../apps/coong/src/**/*.story.@(js|jsx|mjs|ts|tsx)',
-    '../packages/solid/src/**/*.mdx',
-    '../packages/solid/src/**/*.story.@(js|jsx|mjs|ts|tsx)',
     '../packages/solid-components/src/**/*.story.@(js|jsx|mjs|ts|tsx)',
     '../packages/solid-use/src/**/*.story.@(js|jsx|mjs|ts|tsx)',
     '../packages/player/src/**/*.story.@(js|jsx|mjs|ts|tsx)',

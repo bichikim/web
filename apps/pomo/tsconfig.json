@@ -16,6 +16,8 @@
     "isolatedModules": true,
     "verbatimModuleSyntax": false,
     "paths": {
+      "assets/*": ["./assets/*"],
+      "scripts/*": ["./scripts/*"],
       "src/*": ["./src/*"]
     },
     "forceConsistentCasingInFileNames": true

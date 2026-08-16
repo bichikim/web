@@ -1,15 +1,15 @@
-import type {FocusRoomTrack} from './focus-room-playlist'
-import type {FocusRoomPlaybackState} from './playback-storage'
+import type {PTrack} from './focus-room-playlist'
+import type {PPlaybackState} from './playback-storage'
 
 export interface ResolvePlaybackRestoreOptions {
   readonly fallbackIndex: number
-  readonly storedPlayback: FocusRoomPlaybackState | null
-  readonly tracks: readonly FocusRoomTrack[]
+  readonly storedPlayback: PPlaybackState | null
+  readonly tracks: readonly PTrack[]
 }
 
 export interface PlaybackRestore {
   readonly currentIndex: number
-  readonly playback: FocusRoomPlaybackState | null
+  readonly playback: PPlaybackState | null
   readonly shouldPersist: boolean
 }
 

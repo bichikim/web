@@ -202,7 +202,7 @@ describe('matchWorkspace', () => {
 })
 
 describe('createAlias', () => {
-  it('returns source when workspacePaths is not configured', async () => {
+  it('does not resolve source when workspacePaths is not configured', async () => {
     const plugin: any = createAlias({})
     const resolve = vi.fn(() => Promise.resolve({id: 'resolved'}))
 
@@ -213,11 +213,11 @@ describe('createAlias', () => {
       undefined,
     )
 
-    expect(result).toBe('src/index.ts')
+    expect(result).toBeNull()
     expect(resolve).not.toHaveBeenCalled()
   })
 
-  it('should return source when importer is undefined', async () => {
+  it('should not resolve source when importer is undefined', async () => {
     const plugin: any = createAlias({
       root: '/Users/user-name/Documents/Apps/web',
       workspacePaths: ['packages/'],
@@ -226,11 +226,11 @@ describe('createAlias', () => {
 
     const result = await plugin.resolveId.call({resolve}, 'src/index.ts', undefined, {})
 
-    expect(result).toBe('src/index.ts')
+    expect(result).toBeNull()
     expect(resolve).not.toHaveBeenCalled()
   })
 
-  it('should return source when source is virtual module', async () => {
+  it('should not resolve source when source is virtual module', async () => {
     const plugin: any = createAlias({
       root: '/Users/user-name/Documents/Apps/web',
       workspacePaths: ['packages/'],
@@ -244,7 +244,7 @@ describe('createAlias', () => {
       {},
     )
 
-    expect(result).toBe('virtual:foo')
+    expect(result).toBeNull()
     expect(resolve).not.toHaveBeenCalled()
   })
 
@@ -266,7 +266,7 @@ describe('createAlias', () => {
     expect(resolve).not.toHaveBeenCalled()
   })
 
-  it('should return source when importer is outside of configured workspace', async () => {
+  it('should not resolve source when importer is outside of configured workspace', async () => {
     const plugin: any = createAlias({
       root: '/Users/user-name/Documents/Apps/web',
       workspacePaths: ['packages/'],
@@ -280,7 +280,7 @@ describe('createAlias', () => {
       {},
     )
 
-    expect(result).toBe('src/index.ts')
+    expect(result).toBeNull()
     expect(resolve).not.toHaveBeenCalled()
   })
 

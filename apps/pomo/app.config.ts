@@ -1,5 +1,8 @@
 import {defineConfig} from '@solidjs/start/config'
+import {fileURLToPath} from 'node:url'
 import UnoCSS from 'unocss/vite'
+
+import {createDevFeedPlugin} from './src/features/dev-feed'
 
 const isAppsInToss = process.env.POMO_BUILD_TARGET === 'apps-in-toss'
 const focusRoomSourcePattern = /[/\\]assets[/\\]focus-room-source[/\\]/u
@@ -23,15 +26,17 @@ const app = defineConfig({
         prerender: {
           routes: [
             '/',
-            '/character',
-            '/chat',
-            '/dialogue',
+            '/dev',
+            '/dev/character',
+            '/dev/chat',
+            '/dev/dialogue',
+            '/dev/focus-room-layer-review',
+            '/dev/speech-to-text',
+            '/dev/text-mood',
+            '/dev/terms',
+            '/dev/voice',
             '/focus-room',
             '/focus-room-dialogue',
-            '/focus-room-layer-review',
-            '/speech-to-text',
-            '/terms',
-            '/voice',
           ],
         },
         preset: 'static',
@@ -42,7 +47,15 @@ const app = defineConfig({
     optimizeDeps: {
       include: ['onnxruntime-web/all', 'zod'],
     },
-    plugins: [excludeFocusRoomSourceAssets, UnoCSS()],
+    plugins: [createDevFeedPlugin(), excludeFocusRoomSourceAssets, UnoCSS()],
+    resolve: {
+      alias: {
+        assets: fileURLToPath(new URL('assets', import.meta.url)),
+        scripts: fileURLToPath(new URL('scripts', import.meta.url)),
+        src: fileURLToPath(new URL('src', import.meta.url)),
+      },
+    },
+    worker: {format: 'es'},
   },
 })
 

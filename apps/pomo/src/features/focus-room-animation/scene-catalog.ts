@@ -1,27 +1,27 @@
-import dayReadingImage from '../../../assets/concept-art/focus-room-day-reading-concept.webp'
-import dayReadingGazeImage from '../../../assets/concept-art/focus-room-day-reading-user-gaze-concept.webp'
-import dayTypingImage from '../../../assets/concept-art/focus-room-day-typing-concept.webp'
-import dayTypingGazeImage from '../../../assets/concept-art/focus-room-day-typing-user-gaze-concept.webp'
-import dayWritingImage from '../../../assets/concept-art/focus-room-day-writing-concept.webp'
-import dayWritingGazeImage from '../../../assets/concept-art/focus-room-day-writing-user-gaze-concept.webp'
-import nightReadingImage from '../../../assets/concept-art/focus-room-night-reading-concept.webp'
-import nightReadingGazeImage from '../../../assets/concept-art/focus-room-night-reading-user-gaze-concept.webp'
-import nightTypingImage from '../../../assets/concept-art/focus-room-night-typing-concept.webp'
-import nightTypingGazeImage from '../../../assets/concept-art/focus-room-night-typing-user-gaze-concept.webp'
-import nightWritingImage from '../../../assets/concept-art/focus-room-night-desk-concept.webp'
-import nightWritingGazeImage from '../../../assets/concept-art/focus-room-night-writing-user-gaze-concept.webp'
-import dayReadingDepth from '../../../assets/focus-room-depth/depth-day-reading.png'
-import dayReadingGazeDepth from '../../../assets/focus-room-depth/depth-day-reading-user-gaze.png'
-import dayTypingDepth from '../../../assets/focus-room-depth/depth-day-typing.png'
-import dayTypingGazeDepth from '../../../assets/focus-room-depth/depth-day-typing-user-gaze.png'
-import dayWritingDepth from '../../../assets/focus-room-depth/depth-day-writing.png'
-import dayWritingGazeDepth from '../../../assets/focus-room-depth/depth-day-writing-user-gaze.png'
-import nightReadingDepth from '../../../assets/focus-room-depth/depth-night-reading.png'
-import nightReadingGazeDepth from '../../../assets/focus-room-depth/depth-night-reading-user-gaze.png'
-import nightTypingDepth from '../../../assets/focus-room-depth/depth-night-typing.png'
-import nightTypingGazeDepth from '../../../assets/focus-room-depth/depth-night-typing-user-gaze.png'
-import nightWritingDepth from '../../../assets/focus-room-depth/depth-night-desk.png'
-import nightWritingGazeDepth from '../../../assets/focus-room-depth/depth-night-writing-user-gaze.png'
+import dayReadingImage from 'assets/concept-art/focus-room-day-reading-concept.webp'
+import dayReadingGazeImage from 'assets/concept-art/focus-room-day-reading-user-gaze-concept.webp'
+import dayTypingImage from 'assets/concept-art/focus-room-day-typing-concept.webp'
+import dayTypingGazeImage from 'assets/concept-art/focus-room-day-typing-user-gaze-concept.webp'
+import dayWritingImage from 'assets/concept-art/focus-room-day-writing-concept.webp'
+import dayWritingGazeImage from 'assets/concept-art/focus-room-day-writing-user-gaze-concept.webp'
+import nightReadingImage from 'assets/concept-art/focus-room-night-reading-concept.webp'
+import nightReadingGazeImage from 'assets/concept-art/focus-room-night-reading-user-gaze-concept.webp'
+import nightTypingImage from 'assets/concept-art/focus-room-night-typing-concept.webp'
+import nightTypingGazeImage from 'assets/concept-art/focus-room-night-typing-user-gaze-concept.webp'
+import nightWritingImage from 'assets/concept-art/focus-room-night-desk-concept.webp'
+import nightWritingGazeImage from 'assets/concept-art/focus-room-night-writing-user-gaze-concept.webp'
+import dayReadingDepth from 'assets/focus-room-depth/depth-day-reading.webp'
+import dayReadingGazeDepth from 'assets/focus-room-depth/depth-day-reading-user-gaze.webp'
+import dayTypingDepth from 'assets/focus-room-depth/depth-day-typing.webp'
+import dayTypingGazeDepth from 'assets/focus-room-depth/depth-day-typing-user-gaze.webp'
+import dayWritingDepth from 'assets/focus-room-depth/depth-day-writing.webp'
+import dayWritingGazeDepth from 'assets/focus-room-depth/depth-day-writing-user-gaze.webp'
+import nightReadingDepth from 'assets/focus-room-depth/depth-night-reading.webp'
+import nightReadingGazeDepth from 'assets/focus-room-depth/depth-night-reading-user-gaze.webp'
+import nightTypingDepth from 'assets/focus-room-depth/depth-night-typing.webp'
+import nightTypingGazeDepth from 'assets/focus-room-depth/depth-night-typing-user-gaze.webp'
+import nightWritingDepth from 'assets/focus-room-depth/depth-night-desk.webp'
+import nightWritingGazeDepth from 'assets/focus-room-depth/depth-night-writing-user-gaze.webp'
 import {DAY_READING_FOCUSED_LAYER_SCENE} from './day-reading-focused-layer-scene'
 import {DAY_WRITING_LAYER_SCENE} from './day-writing-layer-scene'
 import {GENERATED_LAYER_SCENES} from './generated-layer-scenes'
@@ -29,20 +29,20 @@ import type {PixiLayerSceneDefinition} from './layer-scene'
 import {FOCUS_ROOM_PREVIEW_CHANNELS} from './scene-catalog-channels'
 export {FOCUS_ROOM_PREVIEW_CHANNELS} from './scene-catalog-channels'
 
-export type FocusRoomActivity = 'reading' | 'typing' | 'writing'
-export type FocusRoomGaze = 'focused' | 'user'
-export type FocusRoomTime = 'day' | 'night'
-export type FocusRoomSceneId = `${FocusRoomTime}-${FocusRoomActivity}-${FocusRoomGaze}`
+export type PActivity = 'reading' | 'typing' | 'writing'
+export type PGaze = 'focused' | 'user'
+export type PTime = 'day' | 'night'
+export type PSceneId = `${PTime}-${PActivity}-${PGaze}`
 
-export interface FocusRoomSceneCatalogEntry {
-  readonly activity: FocusRoomActivity
+export interface PSceneCatalogEntry {
+  readonly activity: PActivity
   readonly depthSource: string
-  readonly gaze: FocusRoomGaze
-  readonly id: FocusRoomSceneId
+  readonly gaze: PGaze
+  readonly id: PSceneId
   readonly label: string
   readonly layerScene: PixiLayerSceneDefinition
   readonly source: string
-  readonly time: FocusRoomTime
+  readonly time: PTime
 }
 
 interface SceneSourcePair {
@@ -79,7 +79,7 @@ const SCENE_SOURCES = {
       user: {depthSource: nightWritingGazeDepth, source: nightWritingGazeImage},
     },
   },
-} satisfies Record<FocusRoomTime, Record<FocusRoomActivity, Record<FocusRoomGaze, SceneSourcePair>>>
+} satisfies Record<PTime, Record<PActivity, Record<PGaze, SceneSourcePair>>>
 
 const LABELS = {
   activity: {reading: '책 읽기', typing: '노트북 타이핑', writing: '글쓰기'},
@@ -87,14 +87,14 @@ const LABELS = {
   time: {day: '낮', night: '밤'},
 } as const
 
-const TIMES: readonly FocusRoomTime[] = ['day', 'night']
-const ACTIVITIES: readonly FocusRoomActivity[] = ['reading', 'writing', 'typing']
-const GAZES: readonly FocusRoomGaze[] = ['focused', 'user']
+const TIMES: readonly PTime[] = ['day', 'night']
+const ACTIVITIES: readonly PActivity[] = ['reading', 'writing', 'typing']
+const GAZES: readonly PGaze[] = ['focused', 'user']
 
-export const FOCUS_ROOM_SCENES: readonly FocusRoomSceneCatalogEntry[] = TIMES.flatMap((time) =>
+export const FOCUS_ROOM_SCENES: readonly PSceneCatalogEntry[] = TIMES.flatMap((time) =>
   ACTIVITIES.flatMap((activity) =>
     GAZES.map((gaze) => {
-      const id: FocusRoomSceneId = `${time}-${activity}-${gaze}`
+      const id: PSceneId = `${time}-${activity}-${gaze}`
       const asset = SCENE_SOURCES[time][activity][gaze]
 
       return {
@@ -118,11 +118,7 @@ export const FOCUS_ROOM_SCENES: readonly FocusRoomSceneCatalogEntry[] = TIMES.fl
 
 const SCENE_BY_ID = new Map(FOCUS_ROOM_SCENES.map((scene) => [scene.id, scene]))
 
-export const getFocusRoomScene = (
-  time: FocusRoomTime,
-  activity: FocusRoomActivity,
-  gaze: FocusRoomGaze,
-) => {
+export const getPScene = (time: PTime, activity: PActivity, gaze: PGaze) => {
   const scene = SCENE_BY_ID.get(`${time}-${activity}-${gaze}`)
 
   if (scene === undefined) {

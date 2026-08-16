@@ -17,7 +17,7 @@ const headlessItemClass = cx(
 
 const Template = () => {
   return (
-    <HSelectRoot focusOnOpen>
+    <HSelectRoot>
       <div class=":uno: min-h-80 p-8">
         <HSelectTrigger
           class={`:uno: flex h-9 items-center gap-2 rounded-full border border-black/12

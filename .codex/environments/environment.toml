@@ -7,15 +7,25 @@ script = "cd "
 
 [setup.darwin]
 script = '''
-# AI_NOTE - Warm dependencies and Turbo outputs in a clean source `dev` so new worktrees can reuse them.
+# AI_NOTE - Retry source fetch briefly, then skip optional warming so GitHub failures cannot block setup.
 SOURCE_TREE_PATH="${CODEX_SOURCE_TREE_PATH:-}"
 if [ -n "$SOURCE_TREE_PATH" ]; then
-  git -C "$SOURCE_TREE_PATH" fetch origin
-  if [ "$(git -C "$SOURCE_TREE_PATH" branch --show-current)" = "dev" ] &&
-    [ -z "$(git -C "$SOURCE_TREE_PATH" status --porcelain)" ] &&
-    git -C "$SOURCE_TREE_PATH" merge-base --is-ancestor HEAD origin/dev; then
-    git -C "$SOURCE_TREE_PATH" merge --ff-only origin/dev
-    (cd "$SOURCE_TREE_PATH" && pnpm install --frozen-lockfile)
+  FETCH_SUCCEEDED=false
+  for FETCH_DELAY_SECONDS in 0 2 5; do
+    sleep "$FETCH_DELAY_SECONDS"
+    if git -C "$SOURCE_TREE_PATH" fetch origin; then
+      FETCH_SUCCEEDED=true
+      break
+    fi
+  done
+
+  if [ "$FETCH_SUCCEEDED" = true ]; then
+    if [ "$(git -C "$SOURCE_TREE_PATH" branch --show-current)" = "dev" ] &&
+      [ -z "$(git -C "$SOURCE_TREE_PATH" status --porcelain)" ] &&
+      git -C "$SOURCE_TREE_PATH" merge-base --is-ancestor HEAD origin/dev; then
+      git -C "$SOURCE_TREE_PATH" merge --ff-only origin/dev
+      (cd "$SOURCE_TREE_PATH" && pnpm install --frozen-lockfile)
+    fi
   fi
 fi
 
