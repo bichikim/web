@@ -1,7 +1,7 @@
 import {cx} from 'class-variance-authority'
 import {For, Show} from 'solid-js'
 
-import type {PTrack} from '../features/focus-room-audio/focus-room-playlist'
+import type {PTrack} from '../features/focus-room-audio'
 
 export interface PTrackListProps {
   readonly currentIndex: number

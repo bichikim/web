@@ -21,3 +21,10 @@ export type {
   UsePFeedsProps,
 } from './feed-controller'
 export {findFeedNotificationDialogue} from './feed-controller'
+export {
+  createFeedFetcher,
+  FEED_POLLING_INTERVAL_MS,
+  findRemovableExpiredDialogues,
+  getFeedGenerationProgress,
+} from './feed-runtime'
+export type {FindRemovableExpiredDialoguesOptions} from './feed-runtime'

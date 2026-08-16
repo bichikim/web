@@ -1,7 +1,7 @@
 import {cx} from 'class-variance-authority'
 import {createMemo, For, type JSX, Show} from 'solid-js'
 
-import {useTextMood} from '../features/text-mood/use-text-mood'
+import {useTextMood} from '../features/text-mood'
 import {TextMoodAnalysisResult} from './TextMoodAnalysisResult'
 import {TextMoodEvaluation} from './TextMoodEvaluation'
 import {TextMoodInsufficientResult} from './TextMoodInsufficientResult'

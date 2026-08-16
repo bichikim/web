@@ -9,5 +9,7 @@ export type {
   HistoricalMomentSource,
 } from './historical-moments-provider'
 export {createHistoricalMomentsProvider} from './historical-moments-provider'
+export {createFeedResponse} from './create-feed-response'
+export type {CreateFeedResponseOptions} from './create-feed-response'
 export {renderAtom} from './render-atom'
 export {renderRss} from './render-rss'

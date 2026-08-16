@@ -3,6 +3,7 @@ export const POMO_POMODORO_STYLES = String.raw`
   position: absolute;
   top: calc(1rem + env(safe-area-inset-top));
   left: calc(1rem + env(safe-area-inset-left));
+  pointer-events: auto;
 }
 
 .pomo-pomodoro__trigger {

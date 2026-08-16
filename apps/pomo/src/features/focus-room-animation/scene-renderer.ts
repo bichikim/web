@@ -14,6 +14,9 @@ import {SteamParticleSystem} from './steam-particle-system'
 import {PixiLayerScene, type PixiLayerSceneDefinition} from './layer-scene'
 import {acquireTextureGroup, releaseTextureGroup, type TextureLease} from './texture-leases'
 
+export type {PSceneMotionInput} from './scene-motion'
+export type {PSceneState} from './scene-state'
+
 interface PreparedScene {
   readonly depthTexture: Texture
   readonly layerScene: PixiLayerScene | null

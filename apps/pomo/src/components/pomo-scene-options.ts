@@ -35,7 +35,4 @@ export const P_SCENE_MOTION_INPUT_OPTIONS = [
 
 export type PActivity = (typeof FOCUS_ROOM_ACTIVITY_OPTIONS)[number]['value']
 export type PGaze = (typeof FOCUS_ROOM_GAZE_OPTIONS)[number]['value']
-import type {
-  PSceneMotionInput,
-  PSceneMotionMode,
-} from '../features/focus-room-animation/scene-motion'
+import type {PSceneMotionInput, PSceneMotionMode} from '../features/focus-room-animation'

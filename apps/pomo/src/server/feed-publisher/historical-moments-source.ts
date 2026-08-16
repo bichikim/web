@@ -6,8 +6,7 @@ import type {
   HistoricalMomentRecord,
   HistoricalMomentSource,
 } from 'src/features/feed-publisher/historical-moments-provider'
-import {getDatabase} from '../database'
-import {feedChannels, historicalMoments} from '../database/schema'
+import {feedChannels, getDatabase, historicalMoments} from '../database'
 
 const historicalMomentRowSchema = z.object({
   contentHtml: z.string().min(1),

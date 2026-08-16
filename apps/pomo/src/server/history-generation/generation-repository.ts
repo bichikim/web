@@ -8,17 +8,15 @@ import {
 } from 'src/features/history-generation'
 import {
   type Database,
+  feedChannels,
   getDatabase,
   getTransactionalDatabase,
-  type TransactionalDatabase,
-} from '../database'
-import {
-  feedChannels,
   historicalGenerationRuns,
   historicalMoments,
   historicalMomentSources,
   processedOpenAiWebhookEvents,
-} from '../database/schema'
+  type TransactionalDatabase,
+} from '../database'
 
 const CHANNEL_SLUG = 'today-in-history'
 const MAX_RECOVERY_RUNS = 10

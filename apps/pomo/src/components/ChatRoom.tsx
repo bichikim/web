@@ -2,8 +2,11 @@ import {cx} from 'class-variance-authority'
 import {createEffect, createSignal, For, Show} from 'solid-js'
 
 import {type ChatController, type ChatMessage, useChat} from '../features/chat'
-import {type ChatVoiceController, useChatVoice} from '../features/chat-voice'
-import {createStreamingSpeechBuffer} from '../features/chat-voice/streaming-speech-buffer'
+import {
+  type ChatVoiceController,
+  createStreamingSpeechBuffer,
+  useChatVoice,
+} from '../features/chat-voice'
 import {useKoreanTextSegments} from '../features/korean-text-postprocessor'
 import {
   appendSpeechTranscript,

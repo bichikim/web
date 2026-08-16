@@ -1,5 +1,4 @@
-import type {PDialogue} from '../focus-room-dialogue'
-import type {PDialogueRepository} from '../focus-room-dialogue/repository'
+import type {PDialogue, PDialogueRepository} from '../focus-room-dialogue'
 import type {FeedConnection} from './schema'
 import type {FeedDialogueListItem} from './feed-controller'
 import type {FeedDialogueRepository} from './feed-dialogue-repository'

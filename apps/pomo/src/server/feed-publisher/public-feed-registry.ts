@@ -1,5 +1,4 @@
-import {createFeedRegistry} from 'src/features/feed-publisher/feed-registry'
-import {createHistoricalMomentsProvider} from 'src/features/feed-publisher/historical-moments-provider'
+import {createFeedRegistry, createHistoricalMomentsProvider} from 'src/features/feed-publisher'
 import {historicalMomentsSource} from './historical-moments-source'
 
 interface PublicFeedEnvironment {

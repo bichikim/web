@@ -3,6 +3,8 @@ import {drizzle as drizzleServerless} from 'drizzle-orm/neon-serverless'
 import {getDatabaseUrl} from './environment'
 import * as schema from './schema'
 
+export * from './schema'
+
 const createDatabase = (connectionString: string) =>
   drizzleHttp(connectionString, {
     casing: 'snake_case',

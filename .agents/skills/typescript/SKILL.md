@@ -27,6 +27,7 @@ Open and apply the reference files for the relevant section before working. For 
 16. See ./code-patterns/type-guard.md when handling `unknown` or writing type guards.
 17. See ./code-patterns/type-and-value-import.md when importing both a type and a value from the same module.
 18. For every internal import, consider an available `src/*` alias and choose the shortest readable valid specifier.
+19. Outside a feature, use one feature entrypoint per file when its cohesive API can be re-exported safely; keep subpaths for internal implementation, runtime boundaries, side effects, or cycle avoidance.
 
 ## Functional Error Design
 

@@ -1,8 +1,7 @@
 import {createMemo, For, Show} from 'solid-js'
 
 import {PButton} from '../design-system/PButton'
-import {usePEvents} from '../features/focus-room-dialogue/PEventContext'
-import type {DialogueSegmentMood} from '../features/focus-room-dialogue/schema'
+import {type DialogueSegmentMood, usePEvents} from '../features/focus-room-dialogue/PEventContext'
 import {getPrimaryMood, getPrimaryMoodIcon} from '../features/text-mood'
 
 export interface PDialoguePlayerProps {

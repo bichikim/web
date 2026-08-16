@@ -1,7 +1,10 @@
 import {expect, it} from 'vitest'
 
-import {type FeedDialogueListItem, findFeedNotificationDialogue} from '..'
-import {findRemovableExpiredDialogues} from '../feed-runtime'
+import {
+  type FeedDialogueListItem,
+  findFeedNotificationDialogue,
+  findRemovableExpiredDialogues,
+} from '..'
 
 const createDialogue = (dialogueId: string, listenedAt: string | null): FeedDialogueListItem => ({
   dialogue: {
