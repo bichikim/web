@@ -108,40 +108,12 @@ const isolatedIrisScenes = [
     writeEyeLayer: true,
   },
   {
-    eye: 'focus-room-source/layers/night-reading-focused/workfiles/layer-eye-irises-source.png',
-    eyeBounds: {height: 90, left: 890, top: 280, width: 150},
-    head: 'focus-room-source/layers/night-typing-focused/layer-head.png',
-    id: 'night-typing-focused',
-    offsetX: -5,
-  },
-  {
-    eye: 'focus-room-source/layers/night-reading-focused/workfiles/layer-eye-irises-source.png',
-    eyeBounds: {height: 90, left: 890, top: 280, width: 150},
-    head: 'focus-room-source/layers/night-writing-focused/layer-head.png',
-    id: 'night-writing-focused',
-    offsetX: -4,
-  },
-  {
     eye: 'focus-room-source/layers/night-reading-user/workfiles/layer-eye-irises-source.png',
     eyeBounds: {height: 130, left: 890, top: 230, width: 200},
     head: 'focus-room-source/layers/night-reading-user/layer-head.png',
     id: 'night-reading-user',
     offsetX: 0,
     writeEyeLayer: true,
-  },
-  {
-    eye: 'focus-room-source/layers/night-reading-user/workfiles/layer-eye-irises-source.png',
-    eyeBounds: {height: 130, left: 890, top: 230, width: 200},
-    head: 'focus-room-source/layers/night-typing-user/layer-head.png',
-    id: 'night-typing-user',
-    offsetX: 0,
-  },
-  {
-    eye: 'focus-room-source/layers/night-reading-user/workfiles/layer-eye-irises-source.png',
-    eyeBounds: {height: 130, left: 890, top: 230, width: 200},
-    head: 'focus-room-source/layers/night-writing-user/layer-head.png',
-    id: 'night-writing-user',
-    offsetX: 0,
   },
 ]
 

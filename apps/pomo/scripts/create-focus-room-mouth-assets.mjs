@@ -52,7 +52,7 @@ const DAY_MOUTH_REMOVAL_PATH = [
 ].join(' ')
 // oxlint-disable-next-line id-length -- Sharp's color object uses r/g/b channel keys.
 const PREVIEW_BACKGROUND = {alpha: 0, b: 0, g: 0, r: 0}
-const SOURCE_DIRECTORY = path.resolve(process.cwd(), 'assets/focus-room-source/layers')
+const SOURCE_DIRECTORY = path.resolve(process.cwd(), 'asset-library/focus-room-source/layers')
 const SCENE_CONFIGS = {
   'day-reading-user': {
     eyeBaseSource: 'head-eye-base-with-rest-smile-source-v2.png',
@@ -66,26 +66,6 @@ const SCENE_CONFIGS = {
     version: 'v2',
   },
   'night-reading-user': {
-    eyeBaseSource: 'head-eye-base-with-rest-smile-source-v1.png',
-    maskOutput: 'mask-mouth-lower-face-v1.png',
-    mouthlessPreview: 'preview-mouthless-base-v1.png',
-    mouthlessSource: 'generated-head-mouthless-v1.png',
-    originalHeadSource: 'head-with-rest-smile-source-v1.png',
-    patch: {height: 180, left: 930, top: 270, width: 260},
-    previewOutput: 'preview-mouth-heads-v1.png',
-    version: 'v1',
-  },
-  'night-typing-user': {
-    eyeBaseSource: 'head-eye-base-with-rest-smile-source-v1.png',
-    maskOutput: 'mask-mouth-lower-face-v1.png',
-    mouthlessPreview: 'preview-mouthless-base-v1.png',
-    mouthlessSource: 'generated-head-mouthless-v1.png',
-    originalHeadSource: 'head-with-rest-smile-source-v1.png',
-    patch: {height: 180, left: 930, top: 270, width: 260},
-    previewOutput: 'preview-mouth-heads-v1.png',
-    version: 'v1',
-  },
-  'night-writing-user': {
     eyeBaseSource: 'head-eye-base-with-rest-smile-source-v1.png',
     maskOutput: 'mask-mouth-lower-face-v1.png',
     mouthlessPreview: 'preview-mouthless-base-v1.png',

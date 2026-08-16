@@ -9,6 +9,7 @@ import {PEyeController} from './eye-animation-controller'
 import {ParallaxController} from './parallax-controller'
 import {createSceneTransitions, SCENE_HEIGHT, SCENE_WIDTH} from './scene-composite-transition'
 import {getPScenePanPosition} from './scene-motion'
+import {SceneLoadingState} from './scene-loading-state'
 import type {PSceneRendererOptions, PSceneState} from './scene-state'
 import {createPSceneMouthController} from './scene-mouth-controller'
 import {SteamParticleSystem} from './steam-particle-system'
@@ -35,14 +36,12 @@ const reportError = (error: unknown) => {
   globalThis.reportError(error)
 }
 
-const ignoreLoadingChange = () => undefined
-
 export class PSceneRenderer {
   readonly #application = new Application()
   readonly #eyes: PEyeController
   readonly #host: HTMLDivElement
+  readonly #loading: SceneLoadingState
   readonly #mouth
-  readonly #onLoadingChange: (isLoading: boolean) => void
   readonly #parallax: ParallaxController
   readonly #sceneLayer = new Container()
   readonly #sceneTransitions = createSceneTransitions(this.#application, this.#sceneLayer)
@@ -65,7 +64,6 @@ export class PSceneRenderer {
   #requestedDepthSource: string | null = null
   #requestedLayerSceneId: string | null = null
   #requestedSource: string | null = null
-  #settledFrame: number | null = null
   #state: PSceneState | null = null
   #steam: SteamParticleSystem | null = null
   #steamTextureLeases: readonly TextureLease[] = []
@@ -74,7 +72,7 @@ export class PSceneRenderer {
 
   constructor(host: HTMLDivElement, options: PSceneRendererOptions = {}) {
     this.#host = host
-    this.#onLoadingChange = options.onLoadingChange ?? ignoreLoadingChange
+    this.#loading = new SceneLoadingState(options.onLoadingChange)
     this.#mouth = createPSceneMouthController(() => [
       this.#currentLayerScene,
       this.#incomingLayerScene,
@@ -97,7 +95,7 @@ export class PSceneRenderer {
   }
 
   async initialize(state: PSceneState) {
-    this.#startLoading()
+    this.#loading.start()
     this.#state = state
     await this.#application.init({
       antialias: false,
@@ -146,7 +144,7 @@ export class PSceneRenderer {
     this.#steam?.start()
     this.#eyes.setSceneReady(true)
     this.#application.render()
-    this.#finishLoadingAfterPaint()
+    this.#loading.finishAfterPaint()
 
     if (
       latestState !== null &&
@@ -215,7 +213,7 @@ export class PSceneRenderer {
       this.#cancelTransition()
       this.#eyes.setSceneReady(true)
       this.#application.render()
-      this.#finishLoadingAfterPaint()
+      this.#loading.finishAfterPaint()
     }
   }
 
@@ -258,7 +256,7 @@ export class PSceneRenderer {
     this.#transitionVersion += 1
     this.#cancelTransition()
     this.#mouth.destroy()
-    this.#cancelSettledFrame()
+    this.#loading.destroy()
     this.#parallax.destroy()
     this.#sceneLayer.addChild(this.#eyes.container)
     this.#eyes.destroy()
@@ -337,7 +335,7 @@ export class PSceneRenderer {
     }
 
     const version = this.#transitionVersion + 1
-    this.#startLoading()
+    this.#loading.start()
     this.#transitionVersion = version
     this.#requestedSource = source
     this.#requestedDepthSource = depthSource
@@ -378,7 +376,7 @@ export class PSceneRenderer {
         this.#requestedDepthSource = null
         this.#requestedLayerSceneId = null
         this.#eyes.setSceneReady(this.#currentScene !== null)
-        this.#onLoadingChange(false)
+        this.#loading.finish()
       }
 
       throw error
@@ -438,7 +436,7 @@ export class PSceneRenderer {
     this.#depthFilter?.finishDepthTransition()
     releaseTextureGroup(previousTextures)
     this.#application.render()
-    this.#finishLoadingAfterPaint()
+    this.#loading.finishAfterPaint()
   }
 
   #cancelTransition() {
@@ -454,31 +452,6 @@ export class PSceneRenderer {
     this.#depthFilter?.cancelDepthTransition()
     releaseTextureGroup(this.#incomingTextures)
     this.#incomingTextures = []
-  }
-
-  #startLoading() {
-    this.#cancelSettledFrame()
-    this.#onLoadingChange(true)
-  }
-
-  #finishLoadingAfterPaint() {
-    this.#cancelSettledFrame()
-    this.#settledFrame = window.requestAnimationFrame(() => {
-      this.#settledFrame = window.requestAnimationFrame(() => {
-        this.#settledFrame = null
-
-        if (!this.#destroyed) {
-          this.#onLoadingChange(false)
-        }
-      })
-    })
-  }
-
-  #cancelSettledFrame() {
-    if (this.#settledFrame !== null) {
-      window.cancelAnimationFrame(this.#settledFrame)
-      this.#settledFrame = null
-    }
   }
 
   async #createLayerScene(definition: PixiLayerSceneDefinition | null) {

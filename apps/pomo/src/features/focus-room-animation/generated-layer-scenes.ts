@@ -56,28 +56,23 @@ import nightReadingJawMask from './assets/layers/night-reading-user/layer-mask-j
 import nightReadingUserMouthClosed from './assets/layers/night-reading-user/layer-mouth-closed.webp'
 import nightReadingUserMouthNarrow from './assets/layers/night-reading-user/layer-mouth-narrow.webp'
 import nightReadingUserMouthOpen from './assets/layers/night-reading-user/layer-mouth-open.webp'
-import nightReadingUserMouthRest from './assets/layers/night-reading-user/layer-mouth-rest.webp'
 import nightReadingUserMouthRound from './assets/layers/night-reading-user/layer-mouth-round.webp'
 import nightReadingUserMouthWide from './assets/layers/night-reading-user/layer-mouth-wide.webp'
 import nightReadingUserRightHand from './assets/layers/night-reading-user/right-hand.webp'
 import nightReadingUserReference from './assets/concept-art/night-reading-user-gaze.webp'
 import nightTypingFocusedBase from './assets/layers/night-typing-focused/base.webp'
-import nightTypingFocusedHead from './assets/layers/night-typing-focused/head.webp'
 import nightTypingFocusedLeftHand from './assets/layers/night-typing-focused/left-hand.webp'
 import nightTypingFocusedRightHand from './assets/layers/night-typing-focused/right-hand.webp'
 import nightTypingFocusedReference from './assets/concept-art/night-typing.webp'
 import nightTypingUserBase from './assets/layers/night-typing-user/base.webp'
-import nightTypingUserHead from './assets/layers/night-typing-user/head.webp'
 import nightTypingUserLeftHand from './assets/layers/night-typing-user/left-hand.webp'
 import nightTypingUserRightHand from './assets/layers/night-typing-user/right-hand.webp'
 import nightTypingUserReference from './assets/concept-art/night-typing-user-gaze.webp'
 import nightWritingFocusedBase from './assets/layers/night-writing-focused/base.webp'
-import nightWritingFocusedHead from './assets/layers/night-writing-focused/head.webp'
 import nightWritingFocusedLeftHand from './assets/layers/night-writing-focused/left-hand.webp'
 import nightWritingFocusedRightHand from './assets/layers/night-writing-focused/right-hand.webp'
 import nightWritingFocusedReference from './assets/concept-art/night-writing.webp'
 import nightWritingUserBase from './assets/layers/night-writing-user/base.webp'
-import nightWritingUserHead from './assets/layers/night-writing-user/head.webp'
 import nightWritingUserLeftHand from './assets/layers/night-writing-user/left-hand.webp'
 import nightWritingUserRightHand from './assets/layers/night-writing-user/right-hand.webp'
 import nightWritingUserReference from './assets/concept-art/night-writing-user-gaze.webp'
@@ -124,13 +119,10 @@ const NIGHT_USER_MOUTH_SOURCES = {
   closed: nightReadingUserMouthClosed,
   narrow: nightReadingUserMouthNarrow,
   open: nightReadingUserMouthOpen,
-  rest: nightReadingUserMouthRest,
   round: nightReadingUserMouthRound,
   wide: nightReadingUserMouthWide,
 } satisfies PVisemeSources
 
-const NIGHT_TYPING_FOCUSED_EYE_ORIGIN_X = -5
-const NIGHT_WRITING_FOCUSED_EYE_ORIGIN_X = -4
 const NIGHT_BUILDING_LAYERS = [
   positionNightReadingLayer('building-lights-01', buildingLights01),
   positionNightReadingLayer('building-lights-02', buildingLights02),
@@ -455,20 +447,20 @@ export const GENERATED_LAYER_SCENES = {
     {
       base: nightTypingFocusedBase,
       buildingLayers: NIGHT_BUILDING_LAYERS,
-      head: nightTypingFocusedHead,
+      head: nightReadingFocusedHead,
       leftHand: nightTypingFocusedLeftHand,
       reference: nightTypingFocusedReference,
       rightHand: nightTypingFocusedRightHand,
     },
     {head: {x: 1045, y: 430}, leftHand: {x: 755, y: 710}, rightHand: {x: 1015, y: 725}},
-    createTranslationEyeLayer(NIGHT_TYPING_FOCUSED_EYE_ORIGIN_X, nightReadingFocusedEyeIrises),
+    createTranslationEyeLayer(0, nightReadingFocusedEyeIrises),
   ),
   'night-typing-user': createSeparatedScene(
     'night-typing-user',
     {
       base: nightTypingUserBase,
       buildingLayers: NIGHT_BUILDING_LAYERS,
-      head: nightTypingUserHead,
+      head: nightReadingUserHead,
       leftHand: nightTypingUserLeftHand,
       mouth: NIGHT_USER_MOUTH_SOURCES,
       reference: nightTypingUserReference,
@@ -487,20 +479,20 @@ export const GENERATED_LAYER_SCENES = {
     {
       base: nightWritingFocusedBase,
       buildingLayers: NIGHT_BUILDING_LAYERS,
-      head: nightWritingFocusedHead,
+      head: nightReadingFocusedHead,
       leftHand: nightWritingFocusedLeftHand,
       reference: nightWritingFocusedReference,
       rightHand: nightWritingFocusedRightHand,
     },
     {head: {x: 1050, y: 425}, leftHand: {x: 700, y: 690}, rightHand: {x: 1030, y: 715}},
-    createTranslationEyeLayer(NIGHT_WRITING_FOCUSED_EYE_ORIGIN_X, nightReadingFocusedEyeIrises),
+    createTranslationEyeLayer(0, nightReadingFocusedEyeIrises),
   ),
   'night-writing-user': createSeparatedScene(
     'night-writing-user',
     {
       base: nightWritingUserBase,
       buildingLayers: NIGHT_BUILDING_LAYERS,
-      head: nightWritingUserHead,
+      head: nightReadingUserHead,
       leftHand: nightWritingUserLeftHand,
       mouth: NIGHT_USER_MOUTH_SOURCES,
       reference: nightWritingUserReference,

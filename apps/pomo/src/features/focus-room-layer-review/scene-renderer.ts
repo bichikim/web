@@ -1,12 +1,13 @@
 import {Application} from 'pixi.js'
 
+import {PEyeController, type PEyeState} from '../focus-room-animation/eye-animation-controller'
 import {PixiLayerScene, type PixiLayerSceneDefinition} from '../focus-room-animation/layer-scene'
 import {createFocusRoomLayerState} from '../focus-room-animation/scene-layer-state'
 import {FOCUS_ROOM_MOUTH_CHANNELS} from '../focus-room-animation/scene-catalog-channels'
 import {FOCUS_ROOM_PREVIEW_CHANNELS} from '../focus-room-animation/scene-catalog'
 import type {PViseme} from '../lip-sync'
 
-export interface PLayerReviewState {
+export interface PLayerReviewState extends PEyeState {
   readonly animationEnabled: boolean
   readonly eyesVisible: boolean
   readonly handsVisible: boolean
@@ -24,6 +25,7 @@ const clampOpacity = (value: number) => Math.min(1, Math.max(0, value))
 
 export class PLayerReviewRenderer {
   readonly #application = new Application()
+  readonly #eyes: PEyeController
   readonly #initialDefinition: PixiLayerSceneDefinition
   readonly #host: HTMLDivElement
   #applicationReady = false
@@ -38,6 +40,7 @@ export class PLayerReviewRenderer {
   constructor(host: HTMLDivElement, options: PLayerReviewRendererOptions) {
     this.#host = host
     this.#initialDefinition = options.definition
+    this.#eyes = new PEyeController(() => this.#application.render())
   }
 
   async initialize(state: PLayerReviewState) {
@@ -66,7 +69,7 @@ export class PLayerReviewRenderer {
     const scene = this.#createScene(this.#initialDefinition)
     this.#incomingScene = scene
     try {
-      await scene.initialize(this.#toSceneState(state))
+      await Promise.all([scene.initialize(this.#toSceneState(state)), this.#eyes.initialize(state)])
     } catch (error: unknown) {
       this.destroy()
       throw error
@@ -80,18 +83,24 @@ export class PLayerReviewRenderer {
     this.#scene = scene
     this.#currentDefinitionId = this.#initialDefinition.id
     this.#application.stage.addChild(scene.container)
+    this.#placeEyes(scene)
     const latestState = this.#state
 
     if (latestState !== null) {
+      this.#eyes.update(latestState)
+      this.#syncEyes(latestState)
       scene.update(this.#toSceneState(latestState))
     }
 
+    this.#eyes.setSceneReady(true)
     this.#application.render()
     this.#host.append(this.#application.canvas)
   }
 
   update(state: PLayerReviewState) {
     this.#state = state
+    this.#eyes.update(state)
+    this.#syncEyes(state)
     this.#scene?.update(this.#toSceneState(state))
     this.#incomingScene?.update(this.#toSceneState(state))
   }
@@ -105,6 +114,7 @@ export class PLayerReviewRenderer {
       this.#replacementVersion += 1
       this.#incomingDefinitionId = null
       this.#incomingScene = null
+      this.#eyes.setSceneReady(true)
       return
     }
 
@@ -116,6 +126,7 @@ export class PLayerReviewRenderer {
 
     const version = this.#replacementVersion + 1
     this.#replacementVersion = version
+    this.#eyes.setSceneReady(false)
     const scene = this.#createScene(definition)
     this.#incomingDefinitionId = definition.id
     this.#incomingScene = scene
@@ -129,6 +140,7 @@ export class PLayerReviewRenderer {
       }
 
       if (!this.#destroyed && version === this.#replacementVersion) {
+        this.#eyes.setSceneReady(this.#scene !== null)
         throw error
       }
 
@@ -142,10 +154,12 @@ export class PLayerReviewRenderer {
 
     const previousScene = this.#scene
     this.#application.stage.addChild(scene.container)
+    this.#placeEyes(scene)
     this.#scene = scene
     this.#incomingDefinitionId = null
     this.#incomingScene = null
     this.#currentDefinitionId = definition.id
+    this.#eyes.setSceneReady(true)
     this.#application.render()
     previousScene?.destroy()
   }
@@ -160,6 +174,8 @@ export class PLayerReviewRenderer {
     this.#incomingDefinitionId = null
     this.#incomingScene?.destroy()
     this.#incomingScene = null
+    this.#eyes.container.removeFromParent()
+    this.#eyes.destroy()
     this.#scene?.destroy()
     this.#scene = null
     this.#state = null
@@ -178,6 +194,15 @@ export class PLayerReviewRenderer {
         }
       },
     })
+  }
+
+  #placeEyes(scene: PixiLayerScene) {
+    const parent = scene.getAttachment('eyes') ?? this.#application.stage
+    parent.addChild(this.#eyes.container)
+  }
+
+  #syncEyes(state: PLayerReviewState) {
+    this.#eyes.container.visible = state.eyesVisible
   }
 
   #toSceneState(state: PLayerReviewState) {

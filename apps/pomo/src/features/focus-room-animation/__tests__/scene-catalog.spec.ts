@@ -171,8 +171,6 @@ describe('focus room scene catalog', () => {
     const eyeMotionScenes = FOCUS_ROOM_SCENES
     const expectedOriginX: Partial<Record<(typeof FOCUS_ROOM_SCENES)[number]['id'], number>> = {
       'day-typing-focused': -1,
-      'night-typing-focused': -5,
-      'night-writing-focused': -4,
     }
 
     expect(eyeMotionScenes).toHaveLength(12)
@@ -219,15 +217,28 @@ describe('focus room scene catalog', () => {
     expect(new Set(eyeMotions).size).toBe(eyeMotions.length)
   })
 
-  it('should expose a complete mouth set for every user-facing scene', () => {
-    const userScenes = FOCUS_ROOM_SCENES.filter((scene) => scene.gaze === 'user')
+  it('should use the original night head smile for the rest viseme', () => {
+    const dayUserScenes = FOCUS_ROOM_SCENES.filter(
+      (scene) => scene.gaze === 'user' && scene.time === 'day',
+    )
+    const nightUserScenes = FOCUS_ROOM_SCENES.filter(
+      (scene) => scene.gaze === 'user' && scene.time === 'night',
+    )
 
-    expect(userScenes).toHaveLength(6)
+    expect(dayUserScenes).toHaveLength(3)
     expect(
-      userScenes.every(
+      dayUserScenes.every(
         (scene) =>
           scene.layerScene.layers.filter((layer) => layer.id.startsWith('mouth-')).length === 6,
       ),
+    ).toBe(true)
+    expect(nightUserScenes).toHaveLength(3)
+    expect(
+      nightUserScenes.every((scene) => {
+        const mouthLayers = scene.layerScene.layers.filter((layer) => layer.id.startsWith('mouth-'))
+
+        return mouthLayers.length === 5 && mouthLayers.every((layer) => layer.id !== 'mouth-rest')
+      }),
     ).toBe(true)
   })
 
@@ -264,6 +275,24 @@ describe('focus room scene catalog', () => {
     expect(readingSources).toBeDefined()
     expect(getMouthSources('night-typing-user')).toEqual(readingSources)
     expect(getMouthSources('night-writing-user')).toEqual(readingSources)
+  })
+
+  it('should share the original reading head across every night user-facing scene', () => {
+    const nightUserHeadSources = FOCUS_ROOM_SCENES.filter(
+      (scene) => scene.gaze === 'user' && scene.time === 'night',
+    ).map((scene) => scene.layerScene.layers.find((layer) => layer.id === 'head')?.source)
+
+    expect(nightUserHeadSources).toHaveLength(3)
+    expect(new Set(nightUserHeadSources).size).toBe(1)
+  })
+
+  it('should share the reading head across every night focused scene', () => {
+    const nightFocusedHeadSources = FOCUS_ROOM_SCENES.filter(
+      (scene) => scene.gaze === 'focused' && scene.time === 'night',
+    ).map((scene) => scene.layerScene.layers.find((layer) => layer.id === 'head')?.source)
+
+    expect(nightFocusedHeadSources).toHaveLength(3)
+    expect(new Set(nightFocusedHeadSources).size).toBe(1)
   })
 
   it('should expose the complete review panel channels for every preview', () => {

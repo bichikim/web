@@ -1,7 +1,7 @@
 import {A} from '@solidjs/router'
 import {clientOnly} from '@solidjs/start'
 import {cx} from 'class-variance-authority'
-import {createMemo, createSignal, For, type JSX} from 'solid-js'
+import {createMemo, createSignal, For, type JSX, Show} from 'solid-js'
 
 import {
   FOCUS_ROOM_SCENES,
@@ -28,6 +28,7 @@ interface ReviewControlsProps {
   readonly headVisible: boolean
   readonly mouthVisible: boolean
   readonly onAnimationChange: (enabled: boolean) => void
+  readonly onCollapse: () => void
   readonly onEyesChange: (visible: boolean) => void
   readonly onHandsChange: (visible: boolean) => void
   readonly onHeadChange: (visible: boolean) => void
@@ -114,6 +115,7 @@ const ScenePicker = (props: {
 
 const ReviewControls = (props: ReviewControlsProps) => (
   <aside
+    id="layer-review-controls"
     class={cx(
       PANEL_CLASSES,
       'absolute bottom-3 right-3 max-h-[calc(100dvh-7.75rem)] w-[min(20rem,calc(100%-1.5rem))]',
@@ -128,9 +130,25 @@ const ReviewControls = (props: ReviewControlsProps) => (
           체크를 해제하면 해당 파트가 숨겨집니다.
         </p>
       </div>
-      <span class="shrink-0 whitespace-nowrap rounded-full bg-#e8c795/12 px-3 py-1 text-xs font-700 text-#f2d3a7">
-        원본 픽셀
-      </span>
+      <div class="flex shrink-0 items-center gap-2">
+        <span class="whitespace-nowrap rounded-full bg-#e8c795/12 px-3 py-1 text-xs font-700 text-#f2d3a7">
+          원본 픽셀
+        </span>
+        <button
+          aria-controls="layer-review-controls"
+          aria-expanded="true"
+          aria-label="레이어 패널 축소"
+          class={cx(
+            'grid size-8 place-items-center rounded-full bg-white/8 text-#e7dfe9',
+            'hover:bg-white/14 hover:text-white',
+          )}
+          onClick={() => props.onCollapse()}
+          title="레이어 패널 축소"
+          type="button"
+        >
+          <span aria-hidden="true" class="i-tabler-layout-sidebar-right-collapse size-4" />
+        </button>
+      </div>
     </div>
 
     <label
@@ -241,6 +259,7 @@ const ReviewControls = (props: ReviewControlsProps) => (
 
 export const PLayerReview = () => {
   const [selectedId, setSelectedId] = createSignal<PSceneId>(INITIAL_SCENE_ID)
+  const [controlsExpanded, setControlsExpanded] = createSignal(true)
   const [headVisible, setHeadVisible] = createSignal(true)
   const [handsVisible, setHandsVisible] = createSignal(true)
   const [animationEnabled, setAnimationEnabled] = createSignal(true)
@@ -287,6 +306,7 @@ export const PLayerReview = () => {
     <section class="relative h-dvh w-full overflow-hidden bg-#17130f">
       <figure aria-label={selectedScene().label} class="absolute inset-0 m-0" role="img">
         <PLayerReviewCanvas
+          activity={selectedScene().activity}
           animationEnabled={animationEnabled()}
           definition={selectedScene().layerScene}
           eyesVisible={eyesVisible()}
@@ -295,8 +315,10 @@ export const PLayerReview = () => {
           }
           handsVisible={handsVisible()}
           headVisible={headVisible()}
+          gaze={selectedScene().gaze}
           mouthVisible={mouthVisible()}
           referenceOpacity={referenceOpacity()}
+          time={selectedScene().time}
           viseme={viseme()}
         />
       </figure>
@@ -323,25 +345,47 @@ export const PLayerReview = () => {
         <p class="mb-0 mt-1 text-xs text-#bdb2c4">1672 × 941 · 분리 레이어</p>
       </header>
 
-      <ReviewControls
-        animationEnabled={animationEnabled()}
-        eyesVisible={eyesVisible()}
-        handsVisible={handsVisible()}
-        headVisible={headVisible()}
-        mouthVisible={mouthVisible()}
-        onAnimationChange={setAnimationEnabled}
-        onEyesChange={setEyesVisible}
-        onHandsChange={setHandsVisible}
-        onHeadChange={setHeadVisible}
-        onHideAll={handleHideAll}
-        onMouthChange={setMouthVisible}
-        onReferenceChange={handleReferenceChange}
-        onShowAll={handleShowAll}
-        referenceOpacity={referenceOpacity()}
-        referencePercentage={referencePercentage()}
-        viseme={viseme()}
-        onVisemeChange={setViseme}
-      />
+      <Show
+        fallback={
+          <button
+            aria-controls="layer-review-controls"
+            aria-expanded="false"
+            aria-label="레이어 패널 확대"
+            class={cx(
+              PANEL_CLASSES,
+              'absolute bottom-3 right-3 grid size-12 place-items-center text-#f2d3a7',
+              'hover:bg-#211a24/92 hover:text-white sm:bottom-6 sm:right-6',
+            )}
+            onClick={() => setControlsExpanded(true)}
+            title="레이어 패널 확대"
+            type="button"
+          >
+            <span aria-hidden="true" class="i-tabler-layout-sidebar-right-expand size-5" />
+          </button>
+        }
+        when={controlsExpanded()}
+      >
+        <ReviewControls
+          animationEnabled={animationEnabled()}
+          eyesVisible={eyesVisible()}
+          handsVisible={handsVisible()}
+          headVisible={headVisible()}
+          mouthVisible={mouthVisible()}
+          onAnimationChange={setAnimationEnabled}
+          onCollapse={() => setControlsExpanded(false)}
+          onEyesChange={setEyesVisible}
+          onHandsChange={setHandsVisible}
+          onHeadChange={setHeadVisible}
+          onHideAll={handleHideAll}
+          onMouthChange={setMouthVisible}
+          onReferenceChange={handleReferenceChange}
+          onShowAll={handleShowAll}
+          onVisemeChange={setViseme}
+          referenceOpacity={referenceOpacity()}
+          referencePercentage={referencePercentage()}
+          viseme={viseme()}
+        />
+      </Show>
     </section>
   )
 }
