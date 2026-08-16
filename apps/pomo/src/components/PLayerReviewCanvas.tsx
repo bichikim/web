@@ -4,7 +4,7 @@ import {
   PLayerReviewRenderer,
   type PLayerReviewState,
 } from '../features/focus-room-layer-review/scene-renderer'
-import type {PixiLayerSceneDefinition} from '../features/focus-room-animation/layer-scene'
+import type {PixiLayerSceneDefinition} from '../features/focus-room-animation'
 
 export interface PLayerReviewCanvasProps extends PLayerReviewState {
   readonly definition: PixiLayerSceneDefinition

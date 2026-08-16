@@ -38,7 +38,7 @@ AI 편집은 자연스러운 손, 팔, 책과 노트북처럼 형태가 크게 �
 .temp/pomo-focus-room/<작업명>/pre-v<번호>/
 ```
 
-선택한 결과와 생성 중간 산출물도 같은 임시 작업 폴더에 저장한다. 실패한 결과는 현재 자산에 반영하지 않고 `rejected-*` 폴더로 격리한다. 최종 결과를 확정한 뒤에는 실제 페이지에서 import하는 이미지만 `assets/concept-art/`에 두고, 원본·마스크·레이어·실패본은 커밋하지 않는다. 이미 커밋한 결과의 이전 버전은 Git 기록에서 복구한다.
+선택한 결과와 생성 중간 산출물도 같은 임시 작업 폴더에 저장한다. 실패한 결과는 현재 자산에 반영하지 않고 `rejected-*` 폴더로 격리한다. 최종 결과를 확정한 뒤 편집 원본은 `asset-library/focus-room-source/`에 보관하고, 페이지가 import하는 압축 결과만 `src/features/focus-room-animation/assets/`에 생성한다. 실패본은 커밋하지 않으며 이전 버전은 Git 기록에서 복구한다.
 
 ## 3. 마스터 장면을 하나만 선택한다
 
@@ -108,7 +108,7 @@ AI는 프롬프트로 고정해도 머리 크기, 위치와 회전각을 미세�
 - 타이핑 사용자 보기 → 글쓰기 사용자 보기 머리 사용
 - 글쓰기 집중, 타이핑 집중과 밤 전체 → 수정하지 않음
 
-정규화 결과와 마스크는 `.temp/pomo-focus-room/mechanical-day-head-lock-v6/`에서 검수한다. 검수에 통과한 최종 이미지만 `assets/concept-art/`의 런타임 파일에 반영한다.
+정규화 결과와 마스크는 `.temp/pomo-focus-room/mechanical-day-head-lock-v6/`에서 검수한다. 통과한 결과를 `asset-library/focus-room-source/concept-art/`의 편집 원본에 반영한 뒤 압축 스크립트로 `src/features/focus-room-animation/assets/`를 갱신한다.
 
 ## 7. 실패했던 접근
 
@@ -153,11 +153,11 @@ pnpm lint
 
 ## 관련 자산과 스크립트
 
-- 편집 원본 이미지 12장: `assets/focus-room-source/concept-art/focus-room-*.png`
-- 원본 무결성 체크섬: `assets/focus-room-source/concept-art/focus-room-originals.sha256`
-- 런타임 압축 이미지 12장: `assets/concept-art/focus-room-*.webp`
-- 눈 깜박임 원본: `assets/focus-room-source/animation/eyes-*.png`
-- 런타임 눈 깜박임 레이어: `assets/focus-room-animation/eyes-*.webp`
+- 편집 원본 이미지 12장: `asset-library/focus-room-source/concept-art/focus-room-*.png`
+- 원본 무결성 체크섬: `asset-library/focus-room-source/concept-art/focus-room-originals.sha256`
+- 런타임 압축 이미지 12장: `src/features/focus-room-animation/assets/concept-art/*.webp`
+- 눈 깜박임 원본: `asset-library/focus-room-source/animation/eyes-*.png`
+- 런타임 눈 깜박임 레이어: `src/features/focus-room-animation/assets/animation/eyes/<scene-state>/*.webp`
 - 로컬 중간 산출물: `.temp/pomo-focus-room/`
 - 머리 정규화 스크립트: `scripts/normalize-focus-room-day-heads.mjs`
 - 눈 레이어 추출 스크립트: `scripts/create-focus-room-blink-assets.mjs`
@@ -199,12 +199,12 @@ pnpm assets:compress-focus-room
 ```bash
 python scripts/create-focus-room-depth-maps.py \
   --da3-source <Depth-Anything-3 저장소> \
-  --input-dir assets/focus-room-source/concept-art \
-  --output-dir assets/focus-room-source/depth
+  --input-dir asset-library/focus-room-source/concept-art \
+  --output-dir asset-library/focus-room-source/depth
 pnpm assets:compress-focus-room
 ```
 
-생성 설정과 원본 SHA-256은 `assets/focus-room-source/depth/manifest.json`에 기록한다. 원본 8-bit grayscale PNG는 이 경로에 보존하고 런타임은 픽셀 값이 동일한 무손실 WebP만 로드한다.
+생성 설정과 원본 SHA-256은 `asset-library/focus-room-source/depth/manifest.json`에 기록한다. 원본 8-bit grayscale PNG는 이 경로에 보존하고 런타임은 픽셀 값이 동일한 무손실 WebP만 로드한다.
 
 ## 11. 런타임 장면을 고품질로 압축한다
 
@@ -213,7 +213,7 @@ pnpm assets:compress-focus-room
 원본 PNG는 WebP 생성 입력이자 보관 자산이다. 이름을 바꾸거나 덮어쓰지 않으며, 변경 전후에 다음 명령으로 체크섬을 검증한다.
 
 ```bash
-cd apps/pomo/assets/focus-room-source/concept-art
+cd apps/pomo/asset-library/focus-room-source/concept-art
 shasum -a 256 -c focus-room-originals.sha256
 ```
 

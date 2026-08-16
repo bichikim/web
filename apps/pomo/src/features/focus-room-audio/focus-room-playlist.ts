@@ -11,7 +11,7 @@ interface PPlaylist {
   readonly version: number
 }
 
-export const FOCUS_ROOM_PLAYLIST_URL = '/data/focus-room-playlist.json'
+export const FOCUS_ROOM_PLAYLIST_URL = playlistSource
 
 export interface LoadPTracksOptions {
   readonly playlistUrl?: string
@@ -48,7 +48,7 @@ const isPPlaylist = (value: unknown): value is PPlaylist => {
   return playlist.version === 1 && Array.isArray(playlist.tracks) && playlist.tracks.every(isPTrack)
 }
 
-/** Loads and validates the public focus-room playlist. */
+/** Loads and validates the bundled focus-room playlist. */
 export const loadPTracks = async (options: LoadPTracksOptions = {}): Promise<readonly PTrack[]> => {
   const response = await fetch(options.playlistUrl ?? FOCUS_ROOM_PLAYLIST_URL, {
     signal: options.signal,
@@ -66,3 +66,4 @@ export const loadPTracks = async (options: LoadPTracksOptions = {}): Promise<rea
 
   return playlist.tracks
 }
+import playlistSource from './assets/playlist.json?url'

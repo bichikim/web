@@ -1,8 +1,10 @@
 import {createEffect, createSignal, on, onCleanup, onMount, untrack} from 'solid-js'
 
-import {PSceneRenderer} from '../features/focus-room-animation/scene-renderer'
-import type {PSceneMotionInput} from '../features/focus-room-animation/scene-motion'
-import type {PSceneState} from '../features/focus-room-animation/scene-state'
+import {
+  type PSceneMotionInput,
+  PSceneRenderer,
+  type PSceneState,
+} from '../features/focus-room-animation/scene-renderer'
 
 export interface PSceneCanvasProps extends PSceneState {
   readonly onLoadingChange?: (isLoading: boolean) => void

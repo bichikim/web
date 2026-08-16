@@ -120,6 +120,23 @@ describe('PMusicPlayerContent', () => {
     expect(playButtons[1]?.getAttribute('aria-label')).toBe('재생 또는 일시 정지')
   })
 
+  it('should leave the summary transition overridable for reduced motion', () => {
+    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />)
+    const summaryPlayButton = result.container.querySelector(
+      'media-play-button.pomo-player__play--summary',
+    )
+
+    if (!(summaryPlayButton instanceof HTMLElement)) {
+      throw new TypeError('Expected the Pomo summary play button to be rendered')
+    }
+
+    expect(summaryPlayButton.style.transition).toBe('')
+    expect(summaryPlayButton.style.getPropertyValue('--pomo-player-summary-transition')).toContain(
+      'width 260ms ease',
+    )
+    expect(summaryPlayButton.classList.contains('motion-reduce:transition-[none]')).toBe(true)
+  })
+
   it('should report the current track when selection changes', async () => {
     const onTrackChange = vi.fn()
     const result = render(() => (

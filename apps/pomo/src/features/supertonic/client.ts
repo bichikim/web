@@ -1,5 +1,6 @@
 // oxlint-disable no-await-in-loop, no-loop-func, no-unmodified-loop-condition -- Stream consumers intentionally wait for each Worker chunk notification.
 import type {CancelledError, SupertonicError, WorkerFailedError} from './errors'
+import {resolveSupertonicLanguage, type SupertonicLanguage} from './language'
 import type {
   SupertonicAudio,
   SupertonicAudioChunk,
@@ -19,6 +20,7 @@ export interface InitializeSupertonicOptions {
 }
 
 export interface GenerateSupertonicOptions {
+  readonly language?: SupertonicLanguage
   readonly speed?: number
   readonly text: string
   readonly voice: SupertonicVoiceSource
@@ -50,7 +52,7 @@ const SPEECH_CHARACTER_PATTERN = /[\p{L}\p{N}]/gu
 const ignoreChunk = () => undefined
 const getSpeechLength = (text: string) => text.match(SPEECH_CHARACTER_PATTERN)?.length ?? 0
 // Speed 0.8 preserved the first word in repeated short-reply trials; count only spoken characters so formatting does not bypass the mitigation.
-const getSpeechSpeed = (text: string) =>
+export const getSupertonicSpeechSpeed = (text: string) =>
   getSpeechLength(text) <= MAXIMUM_SHORT_SPEECH_LENGTH ? SHORT_SPEECH_SPEED : DEFAULT_SPEECH_SPEED
 const createCancelledError = (phase: CancelledError['phase']): CancelledError => ({
   code: 'cancelled',
@@ -170,8 +172,9 @@ export const createSupertonicClient = (): SupertonicClient => {
     return new Promise((resolve) => {
       pendingRequest = {onChunk, resolve}
       worker.postMessage({
+        language: options.language ?? resolveSupertonicLanguage(document.documentElement.lang),
         requestId,
-        speed: options.speed ?? getSpeechSpeed(options.text),
+        speed: options.speed ?? getSupertonicSpeechSpeed(options.text),
         text: options.text,
         type: 'generate',
         voice: options.voice,

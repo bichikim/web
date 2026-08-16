@@ -9,11 +9,20 @@ export type {
 export {
   dialogueEventBindingSchema,
   dialogueEventIdSchema,
+  dialogueSegmentMoodSchema,
   FOCUS_ROOM_DIALOGUE_EVENTS,
   FOCUS_ROOM_ENTRY_EVENT,
   focusRoomDialogueSchema,
 } from './schema'
-export type {DialogueEventBinding, DialogueEventId, DialogueSegment, PDialogue} from './schema'
+export type {
+  DialogueEventBinding,
+  DialogueEventId,
+  DialogueSegment,
+  DialogueSegmentMood,
+  PDialogue,
+} from './schema'
+export {analyzeDialogueSegmentMoods} from './segment-mood'
+export type {AnalyzeDialogueSegmentMoodsOptions} from './segment-mood'
 export {
   createDialogueTimeline,
   getDialoguePositionAtTime,
@@ -41,9 +50,17 @@ export type {
   AutomaticDialogueSettingsRepository,
   AutomaticDialogueSettingsStorage,
 } from './automatic-dialogue-settings'
-export {generateDialogueAudio} from './generate-dialogue-audio'
+export {
+  createDialogueAudioSamples,
+  generateCompressedDialogueAudio,
+  generateDialogueAudio,
+  regenerateDialogueSegmentAudio,
+} from './generate-dialogue-audio'
 export type {
+  GeneratedCompressedDialogueAudio,
   GeneratedDialogueAudio,
+  GenerateCompressedDialogueAudioResult,
   GenerateDialogueAudioOptions,
   GenerateDialogueAudioResult,
+  RegenerateDialogueSegmentAudioOptions,
 } from './generate-dialogue-audio'

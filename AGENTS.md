@@ -10,6 +10,26 @@
 
 **Enterprise-grade** code: maintainability, scalability, separation of concerns, robust error handling, consistent patterns.
 
+## File naming
+
+- Do not repeat information already expressed by parent directories in filenames.
+- Name files by their role within the containing directory.
+- Apply this rule to source code, tests, documentation, configuration, scripts, and assets.
+- Prefer adding a meaningful subdirectory over repeating shared context across sibling filenames.
+- Keep authoring and generation details in archive filenames or metadata, not runtime filenames.
+- Example: prefer `night-reading-focused/building-lights/01.webp` over `night-reading-focused/layer-building-lights-window-minus-sky-1.webp`.
+
+- When correcting AI behavior, use the lowest-prompt-cost instruction that preserves the outcome.
+- Evaluate changes in repository-wide context, prioritizing compatibility, reusability, and readability over local optimization.
+- Do not treat prevalence as evidence of quality; make decisions at the standard of top 5% expert judgment.
+
+## Evidence
+
+- Do not make factual or technical claims without showing the decisive evidence to the user.
+- Prefer evidence from the actual project and runtime over assumptions based on learned patterns.
+- When evidence is unavailable, run the smallest safe experiment that can answer the question.
+- If no evidence exists and no viable experiment is possible, do not infer or speculate. Tell the user that the answer cannot be verified and why.
+
 ## Z-index
 
 - Do not use `z-index`, including utility classes and rendering-library equivalents. If it appears unavoidable, explain why and obtain explicit user approval.

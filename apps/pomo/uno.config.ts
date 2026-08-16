@@ -1,20 +1,5 @@
 import baseConfig from '@winter-love/unocss-config'
-
-import {POMO_COMPONENT_PREFLIGHT} from './src/styles/pomo-component-preflight'
-
-const POMO_CONFIG_DEPENDENCIES = [
-  './src/styles/pomo-component-preflight.ts',
-  './src/styles/pomo/dialogue-editor.ts',
-  './src/styles/pomo/dialogue-player.ts',
-  './src/styles/pomo/dialogue-settings.ts',
-  './src/styles/pomo/feed-settings.ts',
-  './src/styles/pomo/feed-status.ts',
-  './src/styles/pomo/music-player.ts',
-  './src/styles/pomo/pomodoro.ts',
-  './src/styles/pomo/screen-saver.ts',
-  './src/styles/pomo/settings.ts',
-  './src/styles/pomo/studio.ts',
-] as const
+import type {Variant} from 'unocss'
 
 const POMO_PREFLIGHT = `
 :root {
@@ -116,6 +101,35 @@ const POMO_PREFLIGHT = `
   0%, 100% { transform: translate3d(0, 0, 0) rotate(-8deg); }
   50% { transform: translate3d(0.0625rem, -0.125rem, 0) rotate(9deg); }
 }
+
+@keyframes pomo-dialogue-menu-in {
+  from { opacity: 0; transform: scale(0.97) translateY(-0.2rem); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes pomo-dialogue-settings-spin {
+  to { transform: rotate(1turn); }
+}
+
+@keyframes pomo-feed-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pomo-screen-saver-content-drift {
+  0% { transform: translate(-2rem, -1.5rem); }
+  33% { transform: translate(1.75rem, -0.75rem); }
+  66% { transform: translate(-1rem, 1.5rem); }
+  100% { transform: translate(2rem, 0.75rem); }
+}
+
+@keyframes pomo-loading-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pomo-entry-reveal-room {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
 `
 
 const BASE_SHORTCUTS = Array.isArray(baseConfig.shortcuts)
@@ -124,16 +138,48 @@ const BASE_SHORTCUTS = Array.isArray(baseConfig.shortcuts)
     ? []
     : [baseConfig.shortcuts]
 
+const BASE_VARIANTS = Array.isArray(baseConfig.variants)
+  ? baseConfig.variants
+  : baseConfig.variants === undefined
+    ? []
+    : [baseConfig.variants]
+
+const POMO_BELOW_VARIANT: Variant = (matcher) => {
+  const match = /^pomo-below-\[(?<width>\d+(?:\.\d+)?(?:em|px|rem))\]:(?<utility>.+)$/u.exec(
+    matcher,
+  )
+
+  if (match?.groups === undefined) {
+    return
+  }
+
+  return {
+    matcher: match.groups.utility,
+    parent: `@media (width < ${match.groups.width})`,
+  }
+}
+
+const POMO_DIALOGUE_LIBRARY_COMPACT_VARIANT: Variant = (matcher) => {
+  const prefix = 'pomo-dialogue-library-compact:'
+
+  if (!matcher.startsWith(prefix)) {
+    return
+  }
+
+  return {
+    matcher: matcher.slice(prefix.length),
+    parent: '@container pomo-dialogue-library-item (width < 19rem)',
+  }
+}
+
+const joinShortcut = (...tokens: ReadonlyArray<string>): string => tokens.join(' ')
+
 export default {
   ...baseConfig,
-  configDeps: [...(baseConfig.configDeps ?? []), ...POMO_CONFIG_DEPENDENCIES],
   preflights: [
     ...(baseConfig.preflights ?? []),
     {
       getCSS: () => POMO_PREFLIGHT,
-    },
-    {
-      getCSS: () => POMO_COMPONENT_PREFLIGHT,
     },
   ],
   shortcuts: [
@@ -141,29 +187,35 @@ export default {
     {
       'pomo-backdrop':
         'border border-solid border-[var(--pomo-border)] backdrop-blur-[var(--pomo-backdrop-blur)]',
-      'pomo-interactive-glass': [
-        'hover:border-[var(--pomo-border-hover)] hover:bg-[var(--pomo-glass-interactive)]',
-        'focus-visible:border-[var(--pomo-brass)] focus-visible:bg-[var(--pomo-glass-interactive)]',
-        'ui-expanded:border-[var(--pomo-brass)] ui-expanded:bg-[var(--pomo-glass-interactive)]',
-      ].join(' '),
-      'pomo-interactive-glass-group': [
+      'pomo-interactive-glass': joinShortcut(
+        'hover:border-[var(--pomo-border-hover)]',
+        'hover:bg-[var(--pomo-glass-interactive)]',
+        'focus-visible:border-[var(--pomo-brass)]',
+        'focus-visible:bg-[var(--pomo-glass-interactive)]',
+        'ui-expanded:border-[var(--pomo-brass)]',
+        'ui-expanded:bg-[var(--pomo-glass-interactive)]',
+      ),
+      'pomo-interactive-glass-group': joinShortcut(
         '[&:has(.pomo-interactive-glass-part:hover)]:border-[var(--pomo-border-hover)]',
         '[&:has(.pomo-interactive-glass-part:focus-visible)]:border-[var(--pomo-brass)]',
         '[&:has(.pomo-interactive-glass-part[data-expanded])]:border-[var(--pomo-brass)]',
         '[&:has(.pomo-interactive-glass-group-trigger:hover)]:bg-[var(--pomo-glass-interactive)]',
         '[&:has(.pomo-interactive-glass-group-trigger:focus-visible)]:bg-[var(--pomo-glass-interactive)]',
         '[&:has(.pomo-interactive-glass-group-trigger[data-expanded])]:bg-[var(--pomo-glass-interactive)]',
-      ].join(' '),
-      'pomo-interactive-glass-part': [
+      ),
+      'pomo-interactive-glass-part': joinShortcut(
         '[&:not(.pomo-interactive-glass-group-trigger):hover]:bg-[var(--pomo-glass-interactive-overlay)]',
         '[&:not(.pomo-interactive-glass-group-trigger):focus-visible]:bg-[var(--pomo-glass-interactive-overlay)]',
         '[&:not(.pomo-interactive-glass-group-trigger)[data-expanded]]:bg-[var(--pomo-glass-interactive-overlay)]',
-      ].join(' '),
+      ),
       'pomo-static-focus-glass': 'border-[var(--pomo-brass)] bg-[var(--pomo-glass-interactive)]',
-      'pomo-strong-focus-ring': [
-        'focus-visible:outline-3 focus-visible:outline-solid focus-visible:outline-offset-2',
+      'pomo-strong-focus-ring': joinShortcut(
+        'focus-visible:outline-3',
+        'focus-visible:outline-solid',
+        'focus-visible:outline-offset-2',
         'focus-visible:outline-[var(--pomo-brass)]',
-      ].join(' '),
+      ),
     },
   ],
+  variants: [...BASE_VARIANTS, POMO_BELOW_VARIANT, POMO_DIALOGUE_LIBRARY_COMPACT_VARIANT],
 }

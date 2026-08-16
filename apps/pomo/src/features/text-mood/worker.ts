@@ -3,6 +3,7 @@
 // oxlint-disable eslint-js/camelcase -- Transformers.js option names are fixed external contracts.
 
 import {
+  env,
   type FeatureExtractionPipeline,
   pipeline,
   type ProgressInfo,
@@ -16,6 +17,12 @@ import {TEXT_MOOD_MODEL} from './model'
 const MAXIMUM_PROGRESS = 100
 const MINIMUM_PROGRESS = 0
 const workerScope = self as DedicatedWorkerGlobalScope
+
+// AI_NOTE - 감정 분석 런타임 자산은 외부 Hub fallback 없이 버전 고정된 Pomo R2 미러에서만 읽는다.
+env.allowLocalModels = false
+env.allowRemoteModels = true
+env.remoteHost = TEXT_MOOD_MODEL.assetHost
+env.remotePathTemplate = TEXT_MOOD_MODEL.assetPathTemplate
 
 let extractor: FeatureExtractionPipeline | null = null
 let preparePromise: Promise<void> | null = null

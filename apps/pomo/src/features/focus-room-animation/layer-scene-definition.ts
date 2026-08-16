@@ -3,6 +3,14 @@ export interface PixiScenePoint {
   readonly y: number
 }
 
+export interface CreateStaticLayerSceneOptions {
+  readonly background: string
+  readonly height: number
+  readonly id: string
+  readonly source: string
+  readonly width: number
+}
+
 export interface PixiSceneTravelRange {
   readonly maximumSeconds: number
   readonly minimumSeconds: number
@@ -49,6 +57,43 @@ export interface PixiScenePixelOscillation {
   readonly travel: PixiSceneTravelRange
 }
 
+export interface PixiSceneLoopingTranslation {
+  readonly channel?: string
+  readonly fade?: {
+    readonly edgeFraction: number
+    readonly minimumOpacity: number
+  }
+  readonly from: PixiScenePoint
+  readonly kind: 'looping-translation'
+  readonly phase?: number
+  readonly to: PixiScenePoint
+  readonly travel: PixiSceneTravelRange
+}
+
+export interface PixiSceneOpacityPulse {
+  readonly channel?: string
+  readonly kind: 'opacity-pulse'
+  readonly maximumOpacity: number
+  readonly minimumOpacity: number
+  readonly phase?: number
+  readonly transitionSeconds?: number
+  readonly travel: PixiSceneTravelRange
+}
+
+export interface PixiSceneOpacityTwinkle {
+  readonly channel?: string
+  readonly fall: PixiSceneTravelRange
+  readonly flashChance: number
+  readonly flashFall: PixiSceneTravelRange
+  readonly flashHold: PixiSceneTravelRange
+  readonly flashRise: PixiSceneTravelRange
+  readonly kind: 'opacity-twinkle'
+  readonly maximumOpacity: number
+  readonly minimumOpacity: number
+  readonly rise: PixiSceneTravelRange
+  readonly travel: PixiSceneTravelRange
+}
+
 interface PixiSceneTranslationBase {
   readonly channel?: string
   readonly kind: 'translation'
@@ -67,6 +112,9 @@ export interface PixiSceneTargetTranslation extends PixiSceneTranslationBase {
 export type PixiSceneTranslation = PixiSceneDistanceTranslation | PixiSceneTargetTranslation
 
 export type PixiSceneMotion =
+  | PixiSceneLoopingTranslation
+  | PixiSceneOpacityPulse
+  | PixiSceneOpacityTwinkle
   | PixiScenePivotRotation
   | PixiScenePixelOscillation
   | PixiSceneTranslation
@@ -75,6 +123,7 @@ export interface PixiSceneLayerDefinition {
   readonly attachmentId?: string
   readonly channel?: string
   readonly id: string
+  readonly maskSource?: string
   readonly motion?: PixiSceneMotion
   readonly motions?: readonly PixiSceneMotion[]
   readonly opacity?: number

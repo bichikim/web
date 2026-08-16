@@ -5,6 +5,7 @@
 import {env, InferenceSession} from 'onnxruntime-web/all'
 
 import {joinAudioChunks} from './audio'
+import modelAssetsSource from './assets/manifest.json?url'
 import {
   createModelStorage,
   loadModelResource,
@@ -47,7 +48,7 @@ import {splitSpeechText} from './text-chunking'
 const workerScope = self as DedicatedWorkerGlobalScope
 const modelStorage = createModelStorage()
 const voiceCache = new Map<SupertonicVoiceId, SupertonicVoice>()
-const MODEL_ASSETS_PATH = '/model-assets.json'
+const MODEL_ASSETS_PATH = modelAssetsSource
 const REQUEST_TIMEOUT_STATUS = 408
 const TOO_MANY_REQUESTS_STATUS = 429
 const SERVER_ERROR_STATUS = 500
@@ -465,6 +466,7 @@ const generate = async (
       const chunkNumber = chunkIndex + 1
       const chunkStartedAt = performance.now()
       const samples = await currentEngine.generate({
+        language: message.language,
         onProgress: (step, total) => {
           postMessage({
             message: `음성 ${chunkNumber}/${textChunks.length} 다듬는 중 ${step}/${total}`,

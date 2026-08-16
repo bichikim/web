@@ -40,23 +40,25 @@ base
 
 작업 전에 원본 파일의 경로, 크기와 SHA-256을 기록한다. 사용자가 변경을 금지한 배경과 소품은 작업 뒤 해시 또는 픽셀 비교로 확인한다.
 
-일회성 중간 산출물은 `.temp/pomo-focus-room/<scene-id>/`에 둔다. 재편집에 필요한 원본 PNG, 마스크와 Krita 파일은 `assets/focus-room-source/`에 보관하며 런타임 코드에서 import하지 않는다. 실제 런타임에서 사용하는 최종 파일만 다음 경로에 둔다.
+일회성 중간 산출물은 `.temp/pomo-focus-room/<scene-id>/`에 둔다. 재편집에 필요한 원본 PNG, 마스크와 Krita 파일은 `asset-library/focus-room-source/`에 보관한다. `asset-library/`의 파일은 런타임 코드에서 import하지 않는다.
+
+`assets/`는 Nitro가 서버 에셋으로 자동 포함하는 예약 경로이므로 다시 만들지 않는다. 실제 런타임 자산은 소비 기능과 가장 가까운 `src/**/assets/`에 두고 정적 또는 동적 import로 Vite 빌드에 포함한다.
 
 ```text
-assets/focus-room-layers/<scene-id>/
+src/features/focus-room-animation/assets/layers/<scene-id>/
   base.webp
-  layer-head-eye-base.webp
-  layer-hand-left.webp
-  layer-hand-right.webp
+  head.webp
+  left-hand.webp
+  right-hand.webp
 
-assets/focus-room-source/layers/<scene-id>/
+asset-library/focus-room-source/layers/<scene-id>/
   base.png
   layer-*.png
   mask-*.png
   workfiles/                 # Krita 원본과 재현에 필요한 중간 파일
 ```
 
-최종 파일을 덮어쓰기 전에 후보 파일을 별도로 만들고 원본 크기로 검수한다. `focus-room-source`는 빌드 설정에서 import가 금지되어 있으므로 리뷰용 reference도 `concept-art`의 WebP를 사용한다.
+최종 파일을 덮어쓰기 전에 후보 파일을 별도로 만들고 원본 크기로 검수한다. `asset-library`는 빌드 설정에서 import가 금지되어 있으므로 리뷰용 reference도 `src/features/focus-room-animation/assets/concept-art/`의 WebP를 사용한다.
 
 ## 3. 움직이는 파트의 마스크를 만든다
 

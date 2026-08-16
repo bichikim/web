@@ -121,3 +121,4 @@ allowBuilds:
   leveldown: false
   onnxruntime-node: false
   protobufjs: false
+  '@sentry/cli': false

@@ -14,15 +14,21 @@
 빌드 명령은 목적을 명확히 구분한다.
 
 ```text
-build:apps-in-toss  → SSG 빌드와 앱인토스 패키징
-build:web           → 브라우저용 SSR 빌드
+build:apps-in-toss-ssg      → 앱인토스용 SSG 빌드
+build:apps-in-toss-package  → SSG 빌드와 앱인토스 패키징
+build:web                    → 브라우저용 SSR 빌드
 ```
 
 앱인토스 SSG에는 서버 런타임과 비밀 값을 포함하지 않는다. 실행 중 필요한 서버 함수는 브라우저용 SSR 서버에 연결한다. 두 빌드는 같은 소스 리비전의 서버 함수 계약을 사용한다.
 
 앱인토스 SSG가 연결할 SSR 서버 주소는 빌드 환경 변수로 주입하며 개발, 미리보기와 운영 환경별로 구분한다.
 
-Vercel 서버 함수는 환경별 CORS 허용 출처 목록만 허용한다. 앱인토스 운영 출처 `https://<appName>.apps.tossmini.com`, QR 테스트 출처 `https://<appName>.private-apps.tossmini.com`와 필요한 개발 출처를 환경 변수로 관리한다.
+Vercel 서버 함수를 포함한 향후 HTTP API는 환경별 CORS 허용 출처 목록만 허용한다. 앱인토스 출처는 아래 두 개를 사용하며, Origin은 경로와 끝 `/`없이 정확히 비교한다.
+
+- 운영: `https://pomo-app.apps.tossmini.com`
+- 콘솔 QR 테스트: `https://pomo-app.private-apps.tossmini.com`
+
+Cloudflare R2 `pomofi-audio` 버킷은 `storage.pomofi.io` 사용자 지정 도메인으로 제공한다. 기존 웹과 로컬 개발 출처와 함께 위 두 출처의 `GET`, `HEAD`를 허용한다. 오디오 범위 요청을 위해 `Range` 요청 헤더와 `Accept-Ranges`, `Content-Length`, `Content-Range`, `Content-Type`, `ETag` 응답 헤더 노출을 유지한다.
 
 앱인토스 `.ait` 번들은 압축 해제 기준 100MB 이하로 유지한다. Supertonic 3 INT8 모델은 번들 용량 계산에서 제외되도록 원격 자산으로 분리한다.
 
@@ -41,7 +47,7 @@ Vercel Preview Deployment는 운영 Public Blob의 검증된 TTS 모델과 manif
 
 ## 앱인토스 환경
 
-앱인토스의 `webViewProps.type`은 `game`으로 설정해 더보기와 닫기 버튼으로 구성된 최소 내비게이션 바를 사용한다. Pomo 자체 헤더는 두지 않는다.
+앱인토스에서는 비게임 미니앱으로 실행하며 비게임 공통 내비게이션 바를 사용한다. Pomo 자체 헤더는 두지 않는다.
 
 앱인토스는 세로와 가로 화면을 모두 지원한다. 화면 방향이 바뀌면 타이머 상태를 유지하고 3D 카메라 구도와 HTML 조작 인터페이스를 화면 비율에 맞춰 다시 배치한다.
 

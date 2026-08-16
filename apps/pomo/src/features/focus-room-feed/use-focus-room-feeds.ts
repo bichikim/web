@@ -4,13 +4,11 @@ import {createMemo, createSignal, onCleanup, onMount} from 'solid-js'
 import {
   AUTOMATIC_DIALOGUE_SETTINGS_CHANGED_EVENT,
   createAutomaticDialogueSettingsRepository as createAutomaticSettingsRepository,
-  generateDialogueAudio,
-  type PDialogue,
-} from '../focus-room-dialogue'
-import {
   createPDialogueRepository,
+  generateCompressedDialogueAudio,
+  type PDialogue,
   type PDialogueRepository,
-} from '../focus-room-dialogue/repository'
+} from '../focus-room-dialogue'
 import {createSupertonicClient, type SupertonicClient, type SupertonicModelId} from '../supertonic'
 import {
   FEED_DIALOGUE_EXPIRATION_MS,
@@ -62,12 +60,12 @@ export const usePFeeds = (props: UsePFeedsProps): PFeedController => {
   let feedRepository: FeedDialogueRepository | null = null
   let client: SupertonicClient | null = null
   let isDisposed = false
+  const opusAbortController = new AbortController()
   let isGenerating = false
   let isSyncing = false
   let preparedModelId: SupertonicModelId | null = null
   const scheduledJobIds: Array<string> = []
   const dismissedRecoveryIds = new Set<string>()
-
   const setFeedState = (nextState: PFeedState) => {
     if (!isDisposed) {
       setState(nextState)
@@ -251,7 +249,7 @@ export const usePFeeds = (props: UsePFeedsProps): PFeedController => {
   }
   const completeJob = async (
     job: FeedDialogueJob,
-    generated: Awaited<ReturnType<typeof generateDialogueAudio>> & {readonly ok: true},
+    generated: Awaited<ReturnType<typeof generateCompressedDialogueAudio>> & {readonly ok: true},
   ) => {
     const repositories = getRepositories()
     const storedItem = await findItem(job)
@@ -268,6 +266,7 @@ export const usePFeeds = (props: UsePFeedsProps): PFeedController => {
       createdAt: nowIso,
       durationMs: generated.value.durationMs,
       id: dialogueId,
+      language: 'ko',
       modelId: job.modelId,
       segments: generated.value.segments,
       text: job.script,
@@ -331,8 +330,9 @@ export const usePFeeds = (props: UsePFeedsProps): PFeedController => {
       progress: null,
       status: 'generating',
     })
-    const generated = await generateDialogueAudio({
+    const generated = await generateCompressedDialogueAudio({
       client: currentClient,
+      language: 'ko',
       modelId: job.modelId,
       onChunk: (completed, total) => {
         if (client === currentClient && !isDisposed) {
@@ -343,6 +343,7 @@ export const usePFeeds = (props: UsePFeedsProps): PFeedController => {
           })
         }
       },
+      signal: opusAbortController.signal,
       text: job.script,
       voiceId: job.voiceId,
     })
@@ -515,6 +516,7 @@ export const usePFeeds = (props: UsePFeedsProps): PFeedController => {
 
   onCleanup(() => {
     isDisposed = true
+    opusAbortController.abort()
     client?.cancelGeneration()
     client?.dispose()
     dialogueRepository?.dispose()

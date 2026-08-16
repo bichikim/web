@@ -1,4 +1,9 @@
-import {createModelStorage, reportModelStorageError} from '../model-storage/storage'
+import {
+  createModelStorage,
+  type ModelStorage,
+  reportModelStorageError,
+} from '../model-storage/storage'
+import {compressLegacyWave} from './compress-legacy-wave'
 import {createPDatabase} from './database'
 import {
   type DialogueEventBinding,
@@ -11,6 +16,9 @@ import {
 } from './schema'
 
 const AUDIO_CACHE_NAME = 'pomo-dialogue-audio-v1'
+const AUDIO_FORMATS = ['opus', 'wav'] as const
+
+type AudioFormat = (typeof AUDIO_FORMATS)[number]
 
 export interface SaveDialogueOptions {
   readonly audio?: Blob
@@ -32,17 +40,83 @@ export interface PDialogueRepository {
   ) => Promise<void>
 }
 
-const getAudioPath = (audioKey: string) => `/__pomo/dialogue-audio/${audioKey}.wav`
+const getAudioFormat = (audio: Blob): AudioFormat =>
+  audio.type.startsWith('audio/ogg') ? 'opus' : 'wav'
 
-/** Creates a browser repository for local dialogue metadata and generated WAV files. */
-export const createPDialogueRepository = (): PDialogueRepository => {
-  const database = createPDatabase()
-  const audioStorage = createModelStorage({cacheName: AUDIO_CACHE_NAME})
-  const deleteAudio = async (audioKey: string) => {
-    const deletion = await audioStorage.delete(getAudioPath(audioKey))
+const getAudioPath = (audioKey: string, format: AudioFormat) =>
+  `/__pomo/dialogue-audio/${audioKey}.${format}`
+
+const getAudioMediaType = (audio: Blob, format: AudioFormat) =>
+  audio.type.length > 0 ? audio.type : format === 'opus' ? 'audio/ogg; codecs=opus' : 'audio/wav'
+
+interface MigrateLegacyAudioOptions {
+  readonly audioKey: string
+  readonly audioStorage: ModelStorage
+  readonly waveAudio: Blob
+}
+
+const migrateLegacyAudio = async (options: MigrateLegacyAudioOptions): Promise<Blob> => {
+  try {
+    const opusAudio = await compressLegacyWave(options.waveAudio)
+    const write = await options.audioStorage.set(
+      getAudioPath(options.audioKey, 'opus'),
+      new Response(opusAudio, {
+        headers: {'Content-Type': getAudioMediaType(opusAudio, 'opus')},
+      }),
+    )
+
+    if (!write.ok) {
+      reportModelStorageError(write.error)
+      return options.waveAudio
+    }
+
+    const deletion = await options.audioStorage.delete(getAudioPath(options.audioKey, 'wav'))
 
     if (!deletion.ok) {
       reportModelStorageError(deletion.error)
+    }
+
+    return opusAudio
+  } catch (error: unknown) {
+    console.warn('Failed to migrate legacy dialogue audio to Opus.', error)
+    return options.waveAudio
+  }
+}
+
+const createLegacyAudioMigrator = (audioStorage: ModelStorage) => {
+  const audioMigrations = new Map<string, Promise<Blob>>()
+
+  return (audioKey: string, waveAudio: Blob) => {
+    const pendingMigration = audioMigrations.get(audioKey)
+
+    if (pendingMigration !== undefined) {
+      return pendingMigration
+    }
+
+    const migration = migrateLegacyAudio({audioKey, audioStorage, waveAudio}).finally(() => {
+      if (audioMigrations.get(audioKey) === migration) {
+        audioMigrations.delete(audioKey)
+      }
+    })
+    audioMigrations.set(audioKey, migration)
+    return migration
+  }
+}
+
+/** Creates a browser repository for dialogue metadata and locally cached compressed audio. */
+export const createPDialogueRepository = (): PDialogueRepository => {
+  const database = createPDatabase()
+  const audioStorage = createModelStorage({cacheName: AUDIO_CACHE_NAME})
+  const getMigratedAudio = createLegacyAudioMigrator(audioStorage)
+  const deleteAudio = async (audioKey: string) => {
+    const deletions = await Promise.all(
+      AUDIO_FORMATS.map((format) => audioStorage.delete(getAudioPath(audioKey, format))),
+    )
+
+    for (const deletion of deletions) {
+      if (!deletion.ok) {
+        reportModelStorageError(deletion.error)
+      }
     }
   }
   const setEventBinding = async (
@@ -72,7 +146,6 @@ export const createPDialogueRepository = (): PDialogueRepository => {
       version: 2,
     } satisfies DialogueEventBinding)
   }
-
   return {
     async deleteDialogue(dialogueId) {
       const dialogue = await database.dialogues.get(dialogueId)
@@ -116,13 +189,26 @@ export const createPDialogueRepository = (): PDialogueRepository => {
       database.close()
     },
     async getAudio(audioKey) {
-      const result = await audioStorage.get(getAudioPath(audioKey))
+      const [opusResult, waveResult] = await Promise.all(
+        AUDIO_FORMATS.map((format) => audioStorage.get(getAudioPath(audioKey, format))),
+      )
 
-      if (!result.ok) {
-        throw new Error('대화 음성을 불러오지 못했어요.', {cause: result.error.cause})
+      if (opusResult?.ok === true && opusResult.value !== null) {
+        return opusResult.value.blob()
       }
 
-      return result.value === null ? null : result.value.blob()
+      if (waveResult?.ok === true && waveResult.value !== null) {
+        const waveAudio = await waveResult.value.blob()
+        return getMigratedAudio(audioKey, waveAudio)
+      }
+
+      const failed = [opusResult, waveResult].find((result) => result !== undefined && !result.ok)
+
+      if (failed !== undefined && !failed.ok) {
+        throw new Error('대화 음성을 불러오지 못했어요.', {cause: failed.error.cause})
+      }
+
+      return null
     },
     async getDialogue(dialogueId) {
       const dialogue = await database.dialogues.get(dialogueId)
@@ -153,9 +239,12 @@ export const createPDialogueRepository = (): PDialogueRepository => {
         previous === undefined ? null : focusRoomDialogueSchema.parse(previous)
 
       if (options.audio !== undefined) {
+        const audioFormat = getAudioFormat(options.audio)
         const write = await audioStorage.set(
-          getAudioPath(nextDialogue.audioKey),
-          new Response(options.audio, {headers: {'Content-Type': 'audio/wav'}}),
+          getAudioPath(nextDialogue.audioKey, audioFormat),
+          new Response(options.audio, {
+            headers: {'Content-Type': getAudioMediaType(options.audio, audioFormat)},
+          }),
         )
 
         if (!write.ok) {

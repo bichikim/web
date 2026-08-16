@@ -1,10 +1,11 @@
 /** @vitest-environment jsdom */
 
 import {render, waitFor} from '@solidjs/testing-library'
+import {type Accessor, createSignal} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 import {type PEventContextValue, PEventProvider, usePEvents} from '../PEventContext'
-import type {DialogueEventBinding, PDialogue} from '../schema'
+import type {DialogueEventBinding, DialogueSegmentMood, PDialogue} from '../schema'
 
 const repositoryMocks = vi.hoisted(() => ({create: vi.fn()}))
 
@@ -17,6 +18,7 @@ const createDialogue = (id: string, segments = [`대사 ${id}`]): PDialogue => (
   createdAt: '2026-08-13T00:00:00.000Z',
   durationMs: segments.length * 1000,
   id,
+  language: 'ko',
   modelId: 'full',
   segments: segments.map((text, index) => ({
     durationMs: 700,
@@ -28,6 +30,15 @@ const createDialogue = (id: string, segments = [`대사 ${id}`]): PDialogue => (
   updatedAt: '2026-08-13T00:00:00.000Z',
   version: 1,
   voiceId: 'Yuna',
+})
+
+const createMood = (id: DialogueSegmentMood['primary']['id']): DialogueSegmentMood => ({
+  margin: 0.8,
+  modifiers: [],
+  primary: {id, probability: 0.9},
+  scores: [{id, probability: 0.9}],
+  secondary: null,
+  uncertain: false,
 })
 
 const createRepository = (
@@ -47,14 +58,19 @@ const createRepository = (
   setEventBinding: vi.fn(),
 })
 
-const renderContext = async () => {
+interface RenderContextOptions {
+  readonly enter?: boolean
+  readonly isPlaybackEnabled?: Accessor<boolean>
+}
+
+const renderContext = async (options: RenderContextOptions = {}) => {
   const eventReference: {current?: PEventContextValue} = {}
   const Consumer = () => {
     eventReference.current = usePEvents()
     return null
   }
   const result = render(() => (
-    <PEventProvider>
+    <PEventProvider isPlaybackEnabled={options.isPlaybackEnabled?.()}>
       <Consumer />
     </PEventProvider>
   ))
@@ -62,6 +78,10 @@ const renderContext = async () => {
 
   if (eventReference.current === undefined) {
     throw new Error('Expected the focus room event context to be captured.')
+  }
+
+  if (options.enter ?? true) {
+    eventReference.current.enterFocusRoom()
   }
 
   return {events: eventReference.current, result}
@@ -80,6 +100,77 @@ afterEach(() => {
   vi.useRealTimers()
   vi.restoreAllMocks()
   vi.unstubAllGlobals()
+})
+
+it('should wait for explicit focus room entry before playing the greeting once', async () => {
+  const dialogue = createDialogue('entry')
+  const repository = createRepository(
+    [dialogue],
+    [{dialogueIds: [dialogue.id], event: 'room-enter', version: 2}],
+  )
+  repositoryMocks.create.mockReturnValue(repository)
+  vi.spyOn(HTMLMediaElement.prototype, 'play').mockRejectedValue(
+    new DOMException('Autoplay blocked', 'NotAllowedError'),
+  )
+
+  const {events, result} = await renderContext({enter: false})
+
+  expect(events.hasEnteredFocusRoom()).toBe(false)
+  expect(repository.getDialogue).not.toHaveBeenCalled()
+  events.enterFocusRoom()
+  await waitFor(() => expect(repository.getDialogue).toHaveBeenCalledWith(dialogue.id))
+  events.enterFocusRoom()
+  expect(repository.getDialogue).toHaveBeenCalledOnce()
+  expect(events.hasEnteredFocusRoom()).toBe(true)
+  result.unmount()
+})
+
+it('should cancel playback on the editor route and not replay entry after returning', async () => {
+  const [isPlaybackEnabled, setIsPlaybackEnabled] = createSignal(true)
+  const dialogue = createDialogue('entry')
+  const audio = document.createElement('audio')
+  const repository = createRepository(
+    [dialogue],
+    [{dialogueIds: [dialogue.id], event: 'room-enter', version: 2}],
+  )
+  repositoryMocks.create.mockReturnValue(repository)
+  vi.stubGlobal(
+    'Audio',
+    vi.fn(function AudioMock() {
+      return audio
+    }),
+  )
+  vi.stubGlobal(
+    'requestAnimationFrame',
+    vi.fn(() => 1),
+  )
+  vi.stubGlobal('cancelAnimationFrame', vi.fn())
+  const playAudio = vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue()
+  const pauseAudio = vi.spyOn(HTMLMediaElement.prototype, 'pause')
+
+  const {events, result} = await renderContext({isPlaybackEnabled})
+  await waitFor(() => expect(playAudio).toHaveBeenCalledOnce())
+  pauseAudio.mockClear()
+
+  setIsPlaybackEnabled(false)
+  await waitFor(() => expect(events.scheduledDialogueCount()).toBe(0))
+  expect(pauseAudio).toHaveBeenCalledOnce()
+  const onBeforePlayback = vi.fn()
+  await events.playDialogue(dialogue.id)
+  await events.playDialogueEvents(['room-enter'], onBeforePlayback)
+  await events.playDialogueSequence({
+    dialogueIds: [dialogue.id],
+    onDialogueStart: vi.fn(),
+    onSequenceStop: vi.fn(),
+  })
+  expect(repository.getDialogue).toHaveBeenCalledOnce()
+  expect(onBeforePlayback).not.toHaveBeenCalled()
+
+  setIsPlaybackEnabled(true)
+  await Promise.resolve()
+  expect(playAudio).toHaveBeenCalledOnce()
+  expect(events.hasEnteredFocusRoom()).toBe(true)
+  result.unmount()
 })
 
 it('should release entry audio after an unexpected playback failure', async () => {
@@ -182,7 +273,14 @@ it('should hold a speaking mouth between dialogues and rest 300ms after the fina
 })
 
 it('should expose the active segment position while audio advances', async () => {
-  const dialogue = createDialogue('entry', ['첫 대사', '두 번째 대사'])
+  const baseDialogue = createDialogue('entry', ['첫 대사', '두 번째 대사'])
+  const dialogue = {
+    ...baseDialogue,
+    segments: baseDialogue.segments.map((segment, index) => ({
+      ...segment,
+      mood: createMood(index === 0 ? 'cheerful' : 'sad'),
+    })),
+  } satisfies PDialogue
   const repository = createRepository(
     [dialogue],
     [{dialogueIds: [dialogue.id], event: 'room-enter', version: 2}],
@@ -209,11 +307,13 @@ it('should expose the active segment position while audio advances', async () =>
   const {events, result} = await renderContext()
   await waitFor(() => expect(events.activeText()).toBe('첫 대사'))
   expect(events.activeSegmentCount()).toBe(2)
+  expect(events.activeSegmentMood()?.primary.id).toBe('cheerful')
   expect(events.activeSegmentPosition()).toBe(0)
 
   audio.currentTime = 1
   frameCallback?.(0)
   expect(events.activeText()).toBe('두 번째 대사')
+  expect(events.activeSegmentMood()?.primary.id).toBe('sad')
   expect(events.activeSegmentPosition()).toBe(1)
   result.unmount()
 })
@@ -473,6 +573,8 @@ it('should stop stale playback without replaying a changed event binding', async
     </PEventProvider>
   ))
 
+  await waitFor(() => expect(eventReference.current?.isLoading()).toBe(false))
+  eventReference.current?.enterFocusRoom()
   await waitFor(() => expect(eventReference.current?.activeText()).toBe('입장 대사'))
   const events = eventReference.current
 

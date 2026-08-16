@@ -19,9 +19,21 @@ interface MockPipelineOptions {
 
 type WorkerMessageListener = (event: MessageEvent<TextMoodWorkerRequest>) => void
 
-const transformers = vi.hoisted(() => ({extract: vi.fn(), pipeline: vi.fn()}))
+const transformers = vi.hoisted(() => ({
+  env: {
+    allowLocalModels: true,
+    allowRemoteModels: false,
+    remoteHost: '',
+    remotePathTemplate: '',
+  },
+  extract: vi.fn(),
+  pipeline: vi.fn(),
+}))
 
-vi.mock('@huggingface/transformers', () => ({pipeline: transformers.pipeline}))
+vi.mock('@huggingface/transformers', () => ({
+  env: transformers.env,
+  pipeline: transformers.pipeline,
+}))
 
 const loadWorker = async () => {
   let messageListener: WorkerMessageListener | null = null
@@ -84,6 +96,12 @@ describe('text mood worker', () => {
       'Xenova/paraphrase-multilingual-MiniLM-L12-v2',
       expect.objectContaining({device: 'wasm', dtype: 'q8'}),
     )
+    expect(transformers.env).toEqual({
+      allowLocalModels: false,
+      allowRemoteModels: true,
+      remoteHost: 'https://pub-0e34511083544f8aaad14d0590013528.r2.dev/',
+      remotePathTemplate: 'models/text-mood/{model}/2c4055b12046f11709e9df2c122e59ffbdc2f900/',
+    })
   })
 
   it('should embed context and return a classified mood with elapsed time', async () => {

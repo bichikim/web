@@ -51,6 +51,7 @@ const getWorker = () => {
 
 beforeEach(() => {
   FakeWorker.current = null
+  document.documentElement.lang = 'ko-KR'
   vi.stubGlobal('Worker', FakeWorker)
 })
 
@@ -108,6 +109,7 @@ describe('createSupertonicClient', () => {
       },
     })
     expect(worker.postMessage).toHaveBeenCalledWith({
+      language: 'ko',
       requestId: 1,
       speed: 0.8,
       text,
@@ -124,6 +126,7 @@ describe('createSupertonicClient', () => {
     const longGeneration = client.generate({text: longText, voice})
 
     expect(worker.postMessage).toHaveBeenLastCalledWith({
+      language: 'ko',
       requestId: 1,
       speed: 1.05,
       text: longText,
@@ -141,6 +144,7 @@ describe('createSupertonicClient', () => {
 
     const explicitGeneration = client.generate({speed: 1.2, text: '짧은 말', voice})
     expect(worker.postMessage).toHaveBeenLastCalledWith({
+      language: 'ko',
       requestId: 2,
       speed: 1.2,
       text: '짧은 말',
@@ -155,6 +159,28 @@ describe('createSupertonicClient', () => {
       type: 'result',
     })
     await explicitGeneration
+  })
+
+  it('should prefer an explicitly selected language over the document language', async () => {
+    const client = createSupertonicClient()
+    const worker = getWorker()
+    const generation = client.generate({
+      language: 'na',
+      text: '언어 중립 대사',
+      voice: {id: 'F1', kind: 'preset'},
+    })
+
+    expect(worker.postMessage).toHaveBeenLastCalledWith(
+      expect.objectContaining({language: 'na', type: 'generate'}),
+    )
+    worker.emitMessage({
+      generationTime: GENERATION_TIME,
+      requestId: 1,
+      sampleRate: SAMPLE_RATE,
+      samples: Float32Array.of(0.1),
+      type: 'result',
+    })
+    await generation
   })
 
   it('should yield each completed chunk before the final combined audio', async () => {

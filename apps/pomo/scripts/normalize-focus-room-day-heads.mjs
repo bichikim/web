@@ -6,7 +6,10 @@ import path from 'node:path'
 const require = createRequire(path.resolve(process.cwd(), '../image-server/package.json'))
 const sharp = require('sharp')
 
-const conceptArtDirectory = path.resolve(process.cwd(), 'assets/concept-art')
+const conceptArtDirectory = path.resolve(
+  process.cwd(),
+  'asset-library/focus-room-source/concept-art',
+)
 const outputDirectory = path.resolve(
   process.cwd(),
   '../../.temp/pomo-focus-room/mechanical-day-head-lock-v6',

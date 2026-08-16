@@ -2,7 +2,7 @@ import {Title} from '@solidjs/meta'
 import {A} from '@solidjs/router'
 import {cx} from 'class-variance-authority'
 
-import {CharacterStudio} from '../../components/CharacterStudio'
+import {CharacterStudio} from 'src/components/CharacterStudio'
 
 const MAIN_CLASSES = cx(
   'relative min-h-dvh overflow-x-hidden bg-#0e1117 px-5 py-8 text-#f5f7fa sm:px-8',

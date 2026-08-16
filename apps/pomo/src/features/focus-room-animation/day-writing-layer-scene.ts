@@ -1,10 +1,12 @@
-import referenceImage from '../../../assets/concept-art/focus-room-day-writing-concept.webp'
-import eyeImage from '../../../assets/focus-room-layers/day-reading-focused/layer-eye-irises.webp'
-import baseImage from '../../../assets/focus-room-layers/day-writing-focused/base.webp'
-import hairTipsMaskImage from '../../../assets/focus-room-layers/day-writing-focused/layer-head-hair-tips-mask-v4.webp'
-import headImage from '../../../assets/focus-room-layers/day-writing-focused/layer-head-eye-base.webp'
-import restingHandImage from '../../../assets/focus-room-layers/day-writing-focused/layer-resting-hand.webp'
-import writingHandImage from '../../../assets/focus-room-layers/day-writing-focused/layer-writing-hand.webp'
+import referenceImage from './assets/concept-art/day-writing.webp'
+import eyeImage from './assets/layers/day-reading-focused/eyes.webp'
+import skyMaskImage from './assets/layers/day-writing-focused/sky-mask.webp'
+import baseImage from './assets/layers/day-writing-focused/base.webp'
+import cloudImage from './assets/layers/day-writing-focused/clouds.webp'
+import hairTipsMaskImage from './assets/layers/day-writing-focused/hair-tips-mask.webp'
+import headImage from './assets/layers/day-writing-focused/head.webp'
+import restingHandImage from './assets/layers/day-writing-focused/resting-hand.webp'
+import writingHandImage from './assets/layers/day-writing-focused/writing-hand.webp'
 import {createEyeMotion} from './eye-motion'
 import type {PixiLayerSceneDefinition} from './layer-scene'
 import {FOCUS_ROOM_PREVIEW_CHANNELS} from './scene-catalog-channels'
@@ -19,6 +21,20 @@ export const DAY_WRITING_LAYER_SCENE = {
     {
       id: 'background',
       source: baseImage,
+    },
+    {
+      id: 'day-clouds',
+      maskSource: skyMaskImage,
+      motion: {
+        fade: {edgeFraction: 0.18, minimumOpacity: 0.16},
+        from: {x: -26, y: 2},
+        kind: 'looping-translation',
+        phase: 0.24,
+        to: {x: 38, y: -2},
+        travel: {maximumSeconds: 32, minimumSeconds: 32},
+      },
+      opacity: 0.38,
+      source: cloudImage,
     },
     {
       attachmentId: 'eyes',

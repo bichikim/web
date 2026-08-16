@@ -7,10 +7,10 @@ import {
   type FeedDialogueListItem,
   type PFeedController,
   usePFeedContext,
-} from '../../features/focus-room-feed'
+} from 'src/features/focus-room-feed'
 import {PFeedStatus} from '../PFeedStatus'
 
-vi.mock('../../features/focus-room-feed', () => ({
+vi.mock('src/features/focus-room-feed', () => ({
   usePFeedContext: vi.fn(),
 }))
 
@@ -20,6 +20,7 @@ const READY_DIALOGUE: FeedDialogueListItem = {
     createdAt: '2026-08-14T00:00:00.000Z',
     durationMs: 1000,
     id: 'dialogue-1',
+    language: 'ko',
     modelId: 'full',
     segments: [{durationMs: 1000, index: 0, startMs: 0, text: '새 피드'}],
     text: '새 피드',

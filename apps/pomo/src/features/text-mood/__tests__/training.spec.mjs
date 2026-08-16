@@ -1,6 +1,6 @@
 import {describe, expect, it} from 'vitest'
 
-import {findInsufficiencyThreshold} from '../../../../scripts/text-mood/train.mjs'
+import {findInsufficiencyThreshold} from 'scripts/text-mood/train.mjs'
 
 const row = (probability, sufficient) => ({embedding: [probability], sufficient})
 const predict = ([probability]) => probability

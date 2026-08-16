@@ -16,6 +16,12 @@ import {
 import {type PViseme} from '../lip-sync'
 import {splitSpeechText} from '../supertonic/text-chunking'
 
+export {createStreamingSpeechBuffer} from './streaming-speech-buffer'
+export type {
+  CreateStreamingSpeechBufferOptions,
+  StreamingSpeechBuffer,
+} from './streaming-speech-buffer'
+
 const MAXIMUM_PROGRESS = 100
 // Full/WebGPU intentionally matches the voice lab's low latency despite sharing GPU memory with chat.
 const DEFAULT_MODEL_ID: SupertonicModelId = 'full'

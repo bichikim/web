@@ -4,4 +4,10 @@ const PDialogueSettingsContent = clientOnly(() => import('./PDialogueSettingsCon
   lazy: true,
 })
 
-export const PDialogueSettings = () => <PDialogueSettingsContent />
+export interface PDialogueSettingsProps {
+  readonly onRequestClose?: () => void
+}
+
+export const PDialogueSettings = (props: PDialogueSettingsProps) => (
+  <PDialogueSettingsContent onRequestClose={props.onRequestClose} />
+)

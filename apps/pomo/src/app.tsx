@@ -7,6 +7,8 @@ import {Router} from '@solidjs/router'
 import {FileRoutes} from '@solidjs/start/router'
 import {ErrorBoundary, Suspense} from 'solid-js'
 
+import {PFocusRoomLayout} from './components/PFocusRoomLayout'
+
 export default function App() {
   return (
     <Router
@@ -23,7 +25,9 @@ export default function App() {
               </main>
             )}
           >
-            <Suspense>{props.children}</Suspense>
+            <Suspense>
+              <PFocusRoomLayout>{props.children}</PFocusRoomLayout>
+            </Suspense>
           </ErrorBoundary>
         </MetaProvider>
       )}

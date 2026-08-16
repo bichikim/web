@@ -1,6 +1,7 @@
 import {
   type Accessor,
   createContext,
+  createEffect,
   createSignal,
   type JSX,
   onCleanup,
@@ -17,17 +18,20 @@ import type {PDialogueRepository} from './repository'
 import {
   type DialogueEventBinding,
   type DialogueEventId,
+  type DialogueSegmentMood,
   FOCUS_ROOM_ENTRY_EVENT,
   type PDialogue,
 } from './schema'
 
 export type {PlayPDialogueSequenceOptions} from './entry-playback-controller'
+export type {DialogueSegmentMood} from './schema'
 
 type EventDialogueIds = Readonly<Partial<Record<DialogueEventId, ReadonlyArray<string>>>>
 
 export interface PEventContextValue {
   readonly activeDialogueId: Accessor<string | null>
   readonly activeSegmentCount: Accessor<number>
+  readonly activeSegmentMood: Accessor<DialogueSegmentMood | null>
   readonly activeSegmentPosition: Accessor<number | null>
   readonly activeText: Accessor<string | null>
   readonly activeViseme: Accessor<PViseme>
@@ -38,6 +42,7 @@ export interface PEventContextValue {
   readonly errorMessage: Accessor<string | null>
   readonly eventDialogueIds: Accessor<EventDialogueIds>
   readonly getAudio: (audioKey: string) => Promise<Blob | null>
+  readonly hasEnteredFocusRoom: Accessor<boolean>
   readonly isDialoguePlaybackBlocked: Accessor<boolean>
   readonly isDialoguePlaying: Accessor<boolean>
   readonly isDialogueScheduled: (dialogueId: string) => boolean
@@ -45,6 +50,7 @@ export interface PEventContextValue {
   readonly isLoading: Accessor<boolean>
   readonly onStopDialoguePlayback: () => void
   readonly onStopEntryPlayback: () => void
+  readonly enterFocusRoom: () => void
   readonly playDialogue: (dialogueId: string) => Promise<void>
   readonly playDialogueEvents: (
     eventIds: ReadonlyArray<DialogueEventId>,
@@ -67,6 +73,7 @@ export interface PEventContextValue {
 
 export interface PEventProviderProps {
   readonly children: JSX.Element
+  readonly isPlaybackEnabled?: boolean
 }
 
 const PEventContext = createContext<PEventContextValue>()
@@ -107,11 +114,13 @@ export const PEventProvider = (props: PEventProviderProps) => {
   const [dialogues, setDialogues] = createSignal<ReadonlyArray<PDialogue>>([])
   const [eventDialogueIds, setEventDialogueIds] = createSignal<EventDialogueIds>({})
   const [errorMessage, setErrorMessage] = createSignal<string | null>(null)
+  const [hasEnteredFocusRoom, setHasEnteredFocusRoom] = createSignal(false)
   const [isLoading, setIsLoading] = createSignal(true)
   let repository: PDialogueRepository | null = null
   let isDisposed = false
   let bindingUpdate = Promise.resolve()
   let bindingRevision = 0
+  let hasStartedEntryPlayback = false
   let persistedBindings: EventDialogueIds = {}
   let resolveInitialization: (() => void) | null = null
   const initialization = new Promise<void>((resolve) => {
@@ -124,6 +133,35 @@ export const PEventProvider = (props: PEventProviderProps) => {
     }
 
     return repository
+  }
+
+  const isPlaybackEnabled = () => props.isPlaybackEnabled ?? true
+  const playEntryDialogue = () => {
+    if (
+      hasStartedEntryPlayback ||
+      !hasEnteredFocusRoom() ||
+      !isPlaybackEnabled() ||
+      repository === null
+    ) {
+      return
+    }
+
+    hasStartedEntryPlayback = true
+    const entryDialogueIds = eventDialogueIds()[FOCUS_ROOM_ENTRY_EVENT] ?? []
+
+    if (entryDialogueIds.length === 0) {
+      return
+    }
+
+    playback
+      .playSequence(repository, {
+        dialogueIds: entryDialogueIds,
+        onDialogueStart: () => undefined,
+        onSequenceStop: () => undefined,
+      })
+      .catch((error: unknown) => {
+        console.error('Unexpected entry dialogue sequence failure.', error)
+      })
   }
 
   const initializeEvents = async () => {
@@ -151,18 +189,7 @@ export const PEventProvider = (props: PEventProviderProps) => {
       setEventDialogueIds(storedBindings)
       setErrorMessage(null)
 
-      const entryDialogueIds = storedBindings[FOCUS_ROOM_ENTRY_EVENT] ?? []
-      if (entryDialogueIds.length > 0) {
-        playback
-          .playSequence(currentRepository, {
-            dialogueIds: entryDialogueIds,
-            onDialogueStart: () => undefined,
-            onSequenceStop: () => undefined,
-          })
-          .catch((error: unknown) => {
-            console.error('Unexpected entry dialogue sequence failure.', error)
-          })
-      }
+      playEntryDialogue()
     } catch (error: unknown) {
       if (isDisposed) {
         return
@@ -213,6 +240,7 @@ export const PEventProvider = (props: PEventProviderProps) => {
   const contextValue: PEventContextValue = {
     activeDialogueId: playback.activeDialogueId,
     activeSegmentCount: playback.activeSegmentCount,
+    activeSegmentMood: playback.activeSegmentMood,
     activeSegmentPosition: playback.activeSegmentPosition,
     activeText: playback.activeText,
     activeViseme: playback.activeViseme,
@@ -237,11 +265,20 @@ export const PEventProvider = (props: PEventProviderProps) => {
       }
     },
     dialogues,
+    enterFocusRoom() {
+      if (hasEnteredFocusRoom()) {
+        return
+      }
+
+      setHasEnteredFocusRoom(true)
+      playEntryDialogue()
+    },
     entryDialogueId: () => eventDialogueIds()[FOCUS_ROOM_ENTRY_EVENT]?.[0] ?? null,
     entryDialogueIds: () => eventDialogueIds()[FOCUS_ROOM_ENTRY_EVENT] ?? [],
     errorMessage,
     eventDialogueIds,
     getAudio: (audioKey) => getRepository().getAudio(audioKey),
+    hasEnteredFocusRoom,
     isDialoguePlaybackBlocked: playback.isBlocked,
     isDialoguePlaying: playback.isPlaying,
     isDialogueScheduled: playback.isDialogueScheduled,
@@ -250,20 +287,28 @@ export const PEventProvider = (props: PEventProviderProps) => {
     onStopDialoguePlayback: playback.stop,
     onStopEntryPlayback: playback.stop,
     async playDialogue(dialogueId) {
+      if (!isPlaybackEnabled()) {
+        return
+      }
+
       if (repository === null) {
         await initialization
       }
 
-      if (!isDisposed && repository !== null) {
+      if (!isDisposed && isPlaybackEnabled() && repository !== null) {
         await playback.prepare(repository, dialogueId)
       }
     },
     async playDialogueEvents(eventIds, onBeforePlayback) {
+      if (!isPlaybackEnabled()) {
+        return
+      }
+
       if (repository === null) {
         await initialization
       }
 
-      if (isDisposed || repository === null) {
+      if (isDisposed || !isPlaybackEnabled() || repository === null) {
         return
       }
 
@@ -280,11 +325,15 @@ export const PEventProvider = (props: PEventProviderProps) => {
       }
     },
     async playDialogueSequence(options) {
+      if (!isPlaybackEnabled()) {
+        return
+      }
+
       if (repository === null) {
         await initialization
       }
 
-      if (!isDisposed && repository !== null) {
+      if (!isDisposed && isPlaybackEnabled() && repository !== null) {
         await playback.playSequence(repository, options)
       }
     },
@@ -312,8 +361,16 @@ export const PEventProvider = (props: PEventProviderProps) => {
         }
       }
     },
-    retryDialoguePlayback: playback.retry,
-    retryEntryPlayback: playback.retry,
+    retryDialoguePlayback: () => {
+      if (isPlaybackEnabled()) {
+        playback.retry()
+      }
+    },
+    retryEntryPlayback: () => {
+      if (isPlaybackEnabled()) {
+        playback.retry()
+      }
+    },
     scheduledDialogueCount: playback.scheduledDialogueCount,
     setEntryDialogue: (dialogueId) =>
       setEventDialogues(FOCUS_ROOM_ENTRY_EVENT, dialogueId === null ? [] : [dialogueId]),
@@ -328,6 +385,15 @@ export const PEventProvider = (props: PEventProviderProps) => {
     initializeEvents().catch((error: unknown) => {
       console.error('Unexpected focus room event initialization failure.', error)
     })
+  })
+
+  createEffect(() => {
+    if (isPlaybackEnabled()) {
+      playEntryDialogue()
+    } else {
+      // AI_NOTE - Route suspension cancels without stop callbacks so queued feeds are not marked listened.
+      playback.cancel()
+    }
   })
 
   onCleanup(() => {

@@ -14,6 +14,9 @@ export const getMotionEffects = (motion: PixiSceneMotion) => {
       return motion.pixelPush ?? []
     case 'pixel-oscillation':
       return motion.effects
+    case 'looping-translation':
+    case 'opacity-pulse':
+    case 'opacity-twinkle':
     case 'translation':
       return []
     default: {

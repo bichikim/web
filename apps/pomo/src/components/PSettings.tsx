@@ -7,10 +7,7 @@ import {PRadioSwitch} from '../design-system/PRadioSwitch'
 import {PSelect, type PSelectOption} from '../design-system/PSelect'
 import {PSwitch} from '../design-system/PSwitch'
 import type {SceneTimeMode} from '../features/focus-room-time'
-import type {
-  PSceneMotionInput,
-  PSceneMotionMode,
-} from '../features/focus-room-animation/scene-motion'
+import type {PSceneMotionInput, PSceneMotionMode} from '../features/focus-room-animation'
 import type {ScreenSaverDelay} from '../features/screen-saver'
 import {useScreenWakeLock} from '../features/screen-wake-lock'
 import {PDialogueSettings} from './PDialogueSettings'
@@ -24,6 +21,20 @@ import {
   type PActivity,
   type PGaze,
 } from './pomo-scene-options'
+
+const CLASSES = {
+  settingsContent: 'pomo-settings__content grid gap-5',
+  settingsScene: [
+    'pomo-settings__scene grid gap-4 pb-[var(--pomo-padding-xl)]',
+    '[border-bottom:1px_solid_var(--pomo-border)] min-[40rem]:hidden',
+  ].join(' '),
+  settingsScreenSaver: [
+    'pomo-settings__screen-saver grid gap-2 pt-[var(--pomo-padding-lg)]',
+    '[border-top:1px_solid_var(--pomo-border)] [&_>_div]:w-full [&_p]:m-0',
+    '[&_p]:text-[var(--pomo-text-muted)] [&_p]:text-xs [&_p]:leading-4.5',
+  ].join(' '),
+  settingsWakeLock: 'pomo-settings__wake-lock min-h-12',
+} as const
 
 export interface PSettingsProps {
   readonly activity?: PActivity
@@ -225,8 +236,8 @@ export const PSettings = (props: PSettingsProps) => {
           titleVisibility="visually-hidden"
         >
           <Tabs.Content value="general">
-            <div class="pomo-settings__content">
-              <div class="pomo-settings__scene">
+            <div class={CLASSES.settingsContent}>
+              <div class={CLASSES.settingsScene}>
                 <PRadioSwitch
                   label="시간"
                   onChange={(timeMode) => props.onTimeModeChange?.(timeMode)}
@@ -269,13 +280,13 @@ export const PSettings = (props: PSettingsProps) => {
               </div>
               <PSwitch
                 checked={wakeLock.isEnabled()}
-                class="pomo-settings__wake-lock"
+                class={CLASSES.settingsWakeLock}
                 description={wakeLockDescription()}
                 disabled={isWakeLockDisabled()}
                 label="화면 자동 꺼짐 방지"
                 onChange={wakeLock.onEnabledChange}
               />
-              <div class="pomo-settings__screen-saver">
+              <div class={CLASSES.settingsScreenSaver}>
                 <PSelect
                   label="스크린 세이버"
                   onChange={(delay) => props.onScreenSaverDelayChange?.(delay)}
@@ -290,7 +301,7 @@ export const PSettings = (props: PSettingsProps) => {
             </div>
           </Tabs.Content>
           <PFeedSettings />
-          <PDialogueSettings />
+          <PDialogueSettings onRequestClose={() => setIsOpen(false)} />
         </PModal>
       </Tabs>
     </>

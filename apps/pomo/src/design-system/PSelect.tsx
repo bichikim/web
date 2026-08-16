@@ -21,13 +21,13 @@ export const PSelect = <TValue extends string>(props: PSelectProps<TValue>) => {
 
   return (
     <Select<PSelectOption<TValue>>
-      class="grid min-w-34 gap-1.5"
+      class="grid w-full min-w-0 gap-1.5"
       disallowEmptySelection
       gutter={6}
       itemComponent={(itemProps) => (
         <Select.Item
           class={
-            'flex min-h-10 cursor-pointer items-center justify-between gap-3 rounded-3 ' +
+            'flex min-h-10 min-w-0 cursor-pointer items-center justify-between gap-3 rounded-3 ' +
             'px-[var(--pomo-padding-md)] py-[var(--pomo-padding-sm)] text-sm font-600 leading-5 ' +
             'text-[var(--pomo-text-muted)] outline-none ' +
             'transition-[background-color_120ms_ease,color_120ms_ease] ' +
@@ -37,7 +37,9 @@ export const PSelect = <TValue extends string>(props: PSelectProps<TValue>) => {
           }
           item={itemProps.item}
         >
-          <Select.ItemLabel>{itemProps.item.rawValue.label}</Select.ItemLabel>
+          <Select.ItemLabel class="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
+            {itemProps.item.rawValue.label}
+          </Select.ItemLabel>
           <Select.ItemIndicator class="inline-flex flex-none text-[var(--pomo-accent)]">
             <span aria-hidden="true" class="i-tabler-check size-4" />
           </Select.ItemIndicator>
@@ -66,7 +68,8 @@ export const PSelect = <TValue extends string>(props: PSelectProps<TValue>) => {
       <Select.Trigger
         aria-label={props.accessibleLabel}
         class={
-          'pomo-backdrop group flex h-[var(--pomo-control-height-medium)] w-full items-center ' +
+          'pomo-backdrop group flex h-[var(--pomo-control-height-medium)] w-full min-w-0 ' +
+          'max-w-full items-center overflow-hidden ' +
           'justify-between gap-3 rounded-[var(--pomo-radius-control)] bg-[var(--pomo-surface)] ' +
           'px-[var(--pomo-padding-lg)] text-sm font-650 leading-5 text-[var(--pomo-text)] ' +
           'outline-none transition-[border-color_160ms_ease,background-color_160ms_ease] ' +
@@ -74,7 +77,9 @@ export const PSelect = <TValue extends string>(props: PSelectProps<TValue>) => {
           'ui-expanded:border-[var(--pomo-brass)] motion-reduce:transition-none'
         }
       >
-        <Select.Value<PSelectOption<TValue>>>
+        <Select.Value<
+          PSelectOption<TValue>
+        > class="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
           {(state) => state.selectedOption().label}
         </Select.Value>
         <Select.Icon
