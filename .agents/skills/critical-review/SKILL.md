@@ -1,6 +1,6 @@
 ---
 name: critical-review
-description: Review code for correctness risks, maintainability, security, and lifecycle issues with severity-tagged findings.
+description: Review code for correctness, maintainability, security, lifecycle, and performance issues only after verifying each finding's cause and concrete impact.
 disable-model-invocation: true
 ---
 
@@ -36,7 +36,12 @@ Identify code type in scope, find matching `.agents/skills/`, and **read them be
 ## Review Rules
 
 1. **No praise or positive commentary** — only **risks, defects, and actionable alternatives**.
-2. **Evidence-based** critique: each claim needs a **code citation, reproduction path, or stated assumption**.
+2. **Do not promote a suspicion to a finding until it is verified.**
+   - Treat warnings, large files, unusual code, and static-analysis output as investigation leads only.
+   - Form a falsifiable cause, choose a check that can disprove it, run that check, and record the result.
+   - Trace the relevant runtime boundary and load path. Distinguish browser, server, Worker, build-time, eager, and on-demand behavior instead of inferring one from another.
+   - For performance findings, measure the affected client artifact or runtime request. A server warning, raw source size, or `import()` alone does not prove client impact.
+   - If the cause, observed behavior, and concrete impact do not all connect, exclude it from Findings. Put a material unresolved lead under **Verification gaps** without severity or a fix claim.
 3. Tag **severity** per issue (e.g. **P0** release/correctness/security blocker; **P1** maintainability, bug risk, fix after alignment).
 4. Review as a **consumer**: API surface (names, types, props), misuse risk, clarity without extra context.
 5. Check **decomposition/composition**; flag mixed responsibilities and coupling that blocks tests or reuse.
@@ -47,7 +52,7 @@ Identify code type in scope, find matching `.agents/skills/`, and **read them be
 
 Use this structure every time. **Number findings** (`1`, `2`, `3`, …) so follow-ups can reference them (e.g. “fix 2 and 5”).
 
-**Prioritize fix guidance over exposition.** Keep Risk/Evidence short; spend depth on how to improve the code.
+**Prioritize fix guidance over exposition.** Keep Risk/Cause/Verification/Result short; spend depth on how to improve the code.
 
 ### Summary
 
@@ -60,9 +65,15 @@ One block per issue, in severity order (P0 before P1). Repeat for each numbered 
 #### {N}. [{severity}] {short title}
 
 - **Risk:** what breaks or degrades (brief)
-- **Evidence:** code citation, reproduction path, or stated assumption (brief)
+- **Cause:** the specific mechanism believed to produce the problem
+- **Verification:** how the cause was tested, including the relevant command, reproduction, trace, or measurement
+- **Result:** what was observed and how it proves both the cause and concrete impact
 - **Fix:** what to change, why it helps, and tradeoffs if any — this is the main content
 - **Example:** drop-in snippet or unified diff implementing **Fix**; add comments on **non-obvious** lines explaining _why_ (intent), not what the syntax does. Skip noise comments and narrating obvious code. Match `AGENTS.md` comment style when the snippet is production-shaped (JSDoc = contract; `//` = why at the decision point)
+
+### Verification gaps (optional)
+
+Number material leads that could not be proven. State exactly what evidence is missing. Do not assign severity, call them defects, or prescribe a fix.
 
 ### Out of scope (optional)
 
