@@ -124,11 +124,17 @@ beforeEach(() => {
 it('should play a saved dialogue once through the character without changing event bindings', () => {
   const onRequestClose = vi.fn()
   const events = createEvents()
+  const pauseAudio = vi
+    .spyOn(HTMLMediaElement.prototype, 'pause')
+    .mockImplementation(() => undefined)
+  const loadAudio = vi.spyOn(HTMLMediaElement.prototype, 'load').mockImplementation(() => undefined)
   vi.mocked(usePEvents).mockReturnValue(events)
 
   render(() => <PDialogueSettingsContent onRequestClose={onRequestClose} />)
   fireEvent.click(screen.getByRole('button', {name: '캐릭터로 듣기'}))
 
+  expect(pauseAudio).toHaveBeenCalledOnce()
+  expect(loadAudio).toHaveBeenCalledOnce()
   expect(events.onStopDialoguePlayback).toHaveBeenCalledOnce()
   expect(events.playDialogue).toHaveBeenCalledWith(DIALOGUE.id)
   expect(events.setEventDialogues).not.toHaveBeenCalled()
