@@ -1,5 +1,5 @@
 const BLOCKED_CONTENT_SELECTOR =
-  'script, style, noscript, nav, aside, form, button, iframe, svg, canvas, template'
+  'script, style, noscript, nav, aside, form, button, iframe, svg, canvas, template, [data-pomo-speech="exclude"]'
 
 export interface ParsedFeedItem {
   readonly content: string

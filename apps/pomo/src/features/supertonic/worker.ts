@@ -466,6 +466,7 @@ const generate = async (
       const chunkNumber = chunkIndex + 1
       const chunkStartedAt = performance.now()
       const samples = await currentEngine.generate({
+        language: message.language,
         onProgress: (step, total) => {
           postMessage({
             message: `음성 ${chunkNumber}/${textChunks.length} 다듬는 중 ${step}/${total}`,

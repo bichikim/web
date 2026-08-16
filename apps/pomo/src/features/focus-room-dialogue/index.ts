@@ -45,9 +45,17 @@ export type {
   AutomaticDialogueSettingsRepository,
   AutomaticDialogueSettingsStorage,
 } from './automatic-dialogue-settings'
-export {generateDialogueAudio} from './generate-dialogue-audio'
+export {
+  createDialogueAudioSamples,
+  generateCompressedDialogueAudio,
+  generateDialogueAudio,
+  regenerateDialogueSegmentAudio,
+} from './generate-dialogue-audio'
 export type {
+  GeneratedCompressedDialogueAudio,
   GeneratedDialogueAudio,
+  GenerateCompressedDialogueAudioResult,
   GenerateDialogueAudioOptions,
   GenerateDialogueAudioResult,
+  RegenerateDialogueSegmentAudioOptions,
 } from './generate-dialogue-audio'

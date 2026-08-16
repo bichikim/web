@@ -3,7 +3,7 @@ import {A} from '@solidjs/router'
 import {clientOnly} from '@solidjs/start'
 import {cx} from 'class-variance-authority'
 
-const ChatRoom = clientOnly(() => import('../../components/ChatRoom'), {lazy: true})
+const ChatRoom = clientOnly(() => import('src/components/ChatRoom'), {lazy: true})
 const MAIN_CLASSES = cx(
   'relative min-h-dvh overflow-x-hidden bg-#17131f px-4 py-7 text-#f8edf1 sm:px-7 sm:py-10',
 )

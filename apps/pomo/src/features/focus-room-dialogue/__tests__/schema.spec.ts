@@ -15,6 +15,25 @@ const baseDialogue = {
 } as const
 
 describe('focusRoomDialogueSchema', () => {
+  it('should migrate a stored dialogue without a language to Korean', () => {
+    const dialogue = focusRoomDialogueSchema.parse({
+      ...baseDialogue,
+      segments: [{durationMs: 1000, index: 0, startMs: 0, text: '반가워!'}],
+    })
+
+    expect(dialogue.language).toBe('ko')
+  })
+
+  it('should preserve a selected language including the neutral option', () => {
+    const dialogue = focusRoomDialogueSchema.parse({
+      ...baseDialogue,
+      language: 'na',
+      segments: [{durationMs: 1000, index: 0, startMs: 0, text: 'Hello!'}],
+    })
+
+    expect(dialogue.language).toBe('na')
+  })
+
   it('should keep legacy segments valid when mood is absent', () => {
     const dialogue = focusRoomDialogueSchema.parse({
       ...baseDialogue,

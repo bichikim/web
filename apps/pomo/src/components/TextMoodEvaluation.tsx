@@ -1,5 +1,4 @@
-import {TEXT_MOOD_CLASSIFIER_INFO} from '../features/text-mood/classifier-info'
-import {TEXT_MOOD_MODEL} from '../features/text-mood/model'
+import {TEXT_MOOD_CLASSIFIER_INFO, TEXT_MOOD_MODEL} from '../features/text-mood'
 
 const MAXIMUM_PERCENTAGE = 100
 const METRIC_DIGITS = 3

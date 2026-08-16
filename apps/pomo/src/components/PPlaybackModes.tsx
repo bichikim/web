@@ -1,7 +1,7 @@
 import {cx} from 'class-variance-authority'
 import {For} from 'solid-js'
 
-import type {RepeatMode} from '../features/focus-room-audio/playback-policy'
+import type {RepeatMode} from '../features/focus-room-audio'
 
 const CLASSES = {
   playerMode: [

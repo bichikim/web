@@ -5,10 +5,9 @@ import {fireEvent, render, screen} from '@solidjs/testing-library'
 import type {JSX} from 'solid-js'
 import {beforeEach, expect, it, vi} from 'vitest'
 
-import {PSelect} from '../../design-system/PSelect'
-import {type PEventContextValue, usePEvents} from '../../features/focus-room-dialogue/PEventContext'
-import type {PDialogue} from '../../features/focus-room-dialogue/schema'
-import {type PFeedController, usePFeedContext} from '../../features/focus-room-feed'
+import {PSelect} from 'src/design-system/PSelect'
+import {type PDialogue, type PEventContextValue, usePEvents} from 'src/features/focus-room-dialogue'
+import {type PFeedController, usePFeedContext} from 'src/features/focus-room-feed'
 import PDialogueSettingsContent from '../PDialogueSettingsContent'
 
 vi.mock('@kobalte/core/tabs', () => ({Tabs: {Content: vi.fn()}}))
@@ -34,11 +33,15 @@ vi.mock('@solidjs/router', () => ({
     </a>
   ),
 }))
-vi.mock('../../design-system/PSelect', () => ({PSelect: vi.fn()}))
-vi.mock('../../features/focus-room-dialogue/PEventContext', () => ({
-  usePEvents: vi.fn(),
-}))
-vi.mock('../../features/focus-room-feed', () => ({
+vi.mock('src/design-system/PSelect', () => ({PSelect: vi.fn()}))
+vi.mock('src/features/focus-room-dialogue', async () => {
+  const actual: typeof import('src/features/focus-room-dialogue') = await vi.importActual(
+    'src/features/focus-room-dialogue',
+  )
+
+  return {...actual, usePEvents: vi.fn()}
+})
+vi.mock('src/features/focus-room-feed', () => ({
   excludeFeedDialogues: (dialogues: ReadonlyArray<PDialogue>) => dialogues,
   usePFeedContext: vi.fn(),
 }))
@@ -48,6 +51,7 @@ const DIALOGUE: PDialogue = {
   createdAt: '2026-08-15T00:00:00.000Z',
   durationMs: 1000,
   id: 'saved-dialogue',
+  language: 'ko',
   modelId: 'full',
   segments: [{durationMs: 1000, index: 0, startMs: 0, text: '저장된 대화'}],
   text: '저장된 대화',

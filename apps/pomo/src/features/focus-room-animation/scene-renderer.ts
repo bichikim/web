@@ -6,13 +6,16 @@ import steamImage3 from './assets/animation/steam/03.webp'
 import steamImage4 from './assets/animation/steam/04.webp'
 import {DepthParallaxFilter} from './depth-parallax-filter'
 import {PEyeController} from './eye-animation-controller'
-import {FlattenedSceneTransition} from './flattened-scene-transition'
 import {ParallaxController} from './parallax-controller'
+import {createSceneTransitions, SCENE_HEIGHT, SCENE_WIDTH} from './scene-composite-transition'
 import {getPScenePanPosition} from './scene-motion'
 import type {PSceneRendererOptions, PSceneState} from './scene-state'
 import {SteamParticleSystem} from './steam-particle-system'
 import {PixiLayerScene, type PixiLayerSceneDefinition} from './layer-scene'
 import {acquireTextureGroup, releaseTextureGroup, type TextureLease} from './texture-leases'
+
+export type {PSceneMotionInput} from './scene-motion'
+export type {PSceneState} from './scene-state'
 
 interface PreparedScene {
   readonly depthTexture: Texture
@@ -40,6 +43,7 @@ export class PSceneRenderer {
   readonly #onLoadingChange: (isLoading: boolean) => void
   readonly #parallax: ParallaxController
   readonly #sceneLayer = new Container()
+  readonly #sceneTransitions = createSceneTransitions(this.#application, this.#sceneLayer)
   #applicationReady = false
   #currentDepthSource: string | null = null
   #currentLayerScene: PixiLayerScene | null = null
@@ -52,7 +56,6 @@ export class PSceneRenderer {
   #incomingLayerScene: PixiLayerScene | null = null
   #incomingLayerSceneId: string | null = null
   #incomingScene: Container | null = null
-  #incomingTransitionFilter: FlattenedSceneTransition | null = null
   #incomingTextures: readonly TextureLease[] = []
   #initialized = false
   #motionPositionX = 0
@@ -94,10 +97,10 @@ export class PSceneRenderer {
       antialias: false,
       autoStart: false,
       backgroundAlpha: 0,
-      height: 941,
+      height: SCENE_HEIGHT,
       preference: 'webgl',
       resolution: 1,
-      width: 1672,
+      width: SCENE_WIDTH,
     })
     this.#applicationReady = true
 
@@ -226,7 +229,7 @@ export class PSceneRenderer {
         window.cancelAnimationFrame(this.#transitionFrame)
       }
 
-      this.#incomingTransitionFilter!.setAlpha(1)
+      this.#sceneTransitions.setProgress(1, this.#incomingScene)
       this.#depthFilter?.setDepthMix(1)
       this.#finishTransition(requestedSource, requestedDepthSource, incomingScene)
       return
@@ -343,14 +346,14 @@ export class PSceneRenderer {
         return
       }
 
-      const transitionFilter = new FlattenedSceneTransition(prepared.scene)
+      this.#sceneTransitions.capture(this.#currentScene)
       this.#incomingLayerScene = prepared.layerScene
       this.#incomingLayerSceneId = layerDefinition?.id ?? null
       this.#incomingScene = prepared.scene
-      this.#incomingTransitionFilter = transitionFilter
       this.#incomingTextures = prepared.textures
       this.#depthFilter?.setDepthTransition(prepared.depthTexture)
       this.#addScene(prepared.scene, prepared.layerScene)
+      this.#sceneTransitions.start(prepared.scene)
       this.#animateTransition(source, depthSource, prepared.scene, version)
     } catch (error: unknown) {
       if (this.#destroyed || version !== this.#transitionVersion) {
@@ -372,7 +375,7 @@ export class PSceneRenderer {
 
   #animateTransition(source: string, depthSource: string, scene: Container, version: number) {
     if (this.#parallax.prefersReducedMotion) {
-      this.#incomingTransitionFilter!.setAlpha(1)
+      this.#sceneTransitions.setProgress(1, this.#incomingScene)
       this.#depthFilter?.setDepthMix(1)
       this.#application.render()
       this.#finishTransition(source, depthSource, scene)
@@ -386,7 +389,7 @@ export class PSceneRenderer {
       }
 
       const progress = Math.min(1, (timestamp - startedAt) / SCENE_TRANSITION_DURATION)
-      this.#incomingTransitionFilter!.setAlpha(progress)
+      this.#sceneTransitions.setProgress(progress, this.#incomingScene)
       this.#depthFilter?.setDepthMix(progress)
       this.#application.render()
 
@@ -403,8 +406,7 @@ export class PSceneRenderer {
 
   #finishTransition(source: string, depthSource: string, scene: Container) {
     const previousTextures = this.#currentTextures
-    this.#incomingTransitionFilter?.destroy()
-    this.#incomingTransitionFilter = null
+    this.#sceneTransitions.restore()
     this.#destroyCurrentScene()
     this.#currentScene = scene
     this.#currentLayerScene = this.#incomingLayerScene
@@ -434,8 +436,7 @@ export class PSceneRenderer {
     }
 
     this.#placeEyes(this.#currentLayerScene)
-    this.#incomingTransitionFilter?.destroy()
-    this.#incomingTransitionFilter = null
+    this.#sceneTransitions.restore()
     this.#destroyIncomingScene()
     this.#incomingScene = null
     this.#depthFilter?.cancelDepthTransition()

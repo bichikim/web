@@ -42,14 +42,14 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-it('should transfer a copy of PCM samples and resolve the encoded audio', async () => {
+it('should transfer owned PCM samples and resolve the encoded audio', async () => {
   const samples = Float32Array.of(0.1, 0.2)
-  const result = createOpusBlob(samples, 24_000)
+  const result = createOpusBlob({sampleRate: 24_000, samples})
   const [request, transfer] = workerMocks.postMessage.mock.calls[0] ?? []
 
   expect(request?.sampleRate).toBe(24_000)
   expect(request?.samples).not.toBe(samples)
-  expect(samples).toEqual(Float32Array.of(0.1, 0.2))
+  expect(request?.samples.buffer).toBe(samples.buffer)
   expect(transfer).toEqual([request?.samples.buffer])
 
   const audio = new Blob(['opus'], {type: 'audio/ogg; codecs=opus'})
@@ -60,11 +60,36 @@ it('should transfer a copy of PCM samples and resolve the encoded audio', async 
 })
 
 it('should reject an encoder error and terminate the Worker once', async () => {
-  const result = createOpusBlob(Float32Array.of(0.1), 24_000)
+  const result = createOpusBlob({sampleRate: 24_000, samples: Float32Array.of(0.1)})
 
   dispatch('message', new MessageEvent('message', {data: {detail: 'encode failed', type: 'error'}}))
   dispatch('error', new ErrorEvent('error', {message: 'late failure'}))
 
   await expect(result).rejects.toThrow('encode failed')
+  expect(workerMocks.terminate).toHaveBeenCalledOnce()
+})
+
+it('should terminate the Worker when encoding is aborted', async () => {
+  const abortController = new AbortController()
+  const result = createOpusBlob({
+    sampleRate: 24_000,
+    samples: Float32Array.of(0.1),
+    signal: abortController.signal,
+  })
+
+  abortController.abort()
+
+  await expect(result).rejects.toMatchObject({name: 'AbortError'})
+  expect(workerMocks.terminate).toHaveBeenCalledOnce()
+})
+
+it('should terminate the Worker when transferring samples fails', async () => {
+  workerMocks.postMessage.mockImplementationOnce(() => {
+    throw new DOMException('detached buffer', 'DataCloneError')
+  })
+
+  await expect(createOpusBlob({sampleRate: 24_000, samples: Float32Array.of(0.1)})).rejects.toThrow(
+    'detached buffer',
+  )
   expect(workerMocks.terminate).toHaveBeenCalledOnce()
 })

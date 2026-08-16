@@ -7,7 +7,7 @@ import {
   FOCUS_ROOM_SCENES,
   type PSceneCatalogEntry,
   type PSceneId,
-} from '../features/focus-room-animation/scene-catalog'
+} from '../features/focus-room-animation'
 
 const PLayerReviewCanvas = clientOnly(() => import('./PLayerReviewCanvas'), {
   lazy: true,

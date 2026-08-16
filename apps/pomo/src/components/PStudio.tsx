@@ -6,8 +6,15 @@ import smilingFaceSource from './assets/pomodoro-status-icons/break.webp'
 import {PButton} from '../design-system/PButton'
 import {PIconButton} from '../design-system/PIconButton'
 import {PIconSelect} from '../design-system/PIconSelect'
-import type {PTrack} from '../features/focus-room-audio/focus-room-playlist'
+import type {PTrack} from '../features/focus-room-audio'
 import {usePEvents} from '../features/focus-room-dialogue/PEventContext'
+import {
+  getPScene,
+  type PixiLayerSceneDefinition,
+  type PSceneMotionInput,
+  type PSceneMotionMode,
+  supportsPSceneGyroscope,
+} from '../features/focus-room-animation'
 import {
   getAutomaticScenePeriod,
   getNextTimeMode,
@@ -17,13 +24,6 @@ import {
 } from '../features/focus-room-time'
 import {usePSay} from '../features/pomo-webmcp'
 import {type ScreenSaverDelay, useScreenSaver} from '../features/screen-saver'
-import type {PixiLayerSceneDefinition} from '../features/focus-room-animation/layer-scene'
-import {getPScene} from '../features/focus-room-animation/scene-catalog'
-import {
-  type PSceneMotionInput,
-  type PSceneMotionMode,
-  supportsPSceneGyroscope,
-} from '../features/focus-room-animation/scene-motion'
 import {PMusicPlayer} from './PMusicPlayer'
 import {PFeedStatus} from './PFeedStatus'
 import {PDialoguePlayer} from './PDialoguePlayer'
@@ -101,7 +101,7 @@ const CLASSES = {
     'pomo-scene-control pomo-below-[40rem]:[&.pomo-icon-button]:hidden',
     'pomo-below-[40rem]:[&.pomo-icon-select]:hidden',
   ].join(' '),
-  ui: 'pomo-ui absolute inset-0',
+  ui: 'pomo-ui pointer-events-none absolute inset-0',
 } as const
 
 const ENTRY_STYLE: JSX.CSSProperties = {
@@ -207,7 +207,7 @@ const SceneToolbar = (props: SceneToolbarProps) => {
   return (
     <div
       class={cx(
-        'absolute right-4 top-[calc(1rem+env(safe-area-inset-top))]',
+        'pointer-events-auto absolute right-4 top-[calc(1rem+env(safe-area-inset-top))]',
         'flex flex-col items-end gap-2',
         'sm:right-7 sm:top-6',
       )}

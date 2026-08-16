@@ -1,13 +1,18 @@
 import {batch, createEffect, createMemo, createSignal, onCleanup, onMount, untrack} from 'solid-js'
 
-import {loadPTracks, type PTrack} from '../features/focus-room-audio/focus-room-playlist'
-import {createInitialPlaybackState} from '../features/focus-room-audio/initial-playback-state'
-import {type RepeatMode, resolveTrackEnd} from '../features/focus-room-audio/playback-policy'
-import {resolvePlaybackRestore} from '../features/focus-room-audio/playback-restore'
-import {type PPlaybackState, readPPlayback} from '../features/focus-room-audio/playback-storage'
-import {createShuffleQueue} from '../features/focus-room-audio/shuffle-queue'
-import {usePAudioVisualizer} from '../features/focus-room-audio/use-focus-room-audio-visualizer'
-import {usePPlaybackPersistence} from '../features/focus-room-audio/use-focus-room-playback-persistence'
+import {
+  createInitialPlaybackState,
+  createShuffleQueue,
+  loadPTracks,
+  type PPlaybackState,
+  type PTrack,
+  readPPlayback,
+  type RepeatMode,
+  resolvePlaybackRestore,
+  resolveTrackEnd,
+  usePAudioVisualizer,
+  usePPlaybackPersistence,
+} from '../features/focus-room-audio'
 import {MusicPlayerView} from './MusicPlayerView'
 
 interface PMusicPlayerContentProps {

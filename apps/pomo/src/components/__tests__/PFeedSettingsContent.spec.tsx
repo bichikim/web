@@ -5,11 +5,11 @@ import {fireEvent, render, screen} from '@solidjs/testing-library'
 import {For} from 'solid-js'
 import {beforeEach, expect, it, vi} from 'vitest'
 
-import {PSelect} from '../../design-system/PSelect'
+import {PSelect} from 'src/design-system/PSelect'
 import PFeedSettingsContent from '../PFeedSettingsContent'
 
 vi.mock('@kobalte/core/tabs', () => ({Tabs: {Content: vi.fn()}}))
-vi.mock('../../design-system/PSelect', () => ({PSelect: vi.fn()}))
+vi.mock('src/design-system/PSelect', () => ({PSelect: vi.fn()}))
 
 const renderSettings = () => render(() => <PFeedSettingsContent />)
 
@@ -83,10 +83,17 @@ it('should reject invalid and duplicate feed addresses', () => {
 it('should replace an added recommendation with a stored feed item', () => {
   renderSettings()
   const recommendedAddress = new URL('/__dev/feeds/rss.xml', window.location.origin).href
+  const historyAddress = new URL('/feeds/today-in-history/rss.xml', window.location.origin).href
 
   expect(screen.queryByText('아직 저장된 피드가 없어요. 피드 주소를 추가해 주세요.')).toBeNull()
+  expect(screen.getByText('오늘의 역사')).toBeDefined()
   expect(screen.getByText('Pomo 5분 RSS')).toBeDefined()
   expect(screen.getByText('Pomo 5분 Atom')).toBeDefined()
+
+  fireEvent.click(screen.getByRole('button', {name: '오늘의 역사 추천 피드 추가'}))
+
+  expect(screen.queryByText('오늘의 역사')).toBeNull()
+  expect(screen.getByText(historyAddress)).toBeDefined()
 
   fireEvent.click(screen.getByRole('button', {name: 'Pomo 5분 RSS 추천 피드 추가'}))
 

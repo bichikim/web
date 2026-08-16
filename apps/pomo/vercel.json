@@ -1,0 +1,12 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/today-in-history",
+      "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/cron/today-in-history/recover",
+      "schedule": "0 12 * * *"
+    }
+  ]
+}

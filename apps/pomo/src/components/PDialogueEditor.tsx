@@ -7,7 +7,11 @@ import {
   type UsePDialogueEditorProps,
   usePEvents,
 } from '../features/focus-room-dialogue'
-import {SUPERTONIC_MODELS, SUPERTONIC_VOICES} from '../features/supertonic'
+import {
+  SUPERTONIC_LANGUAGE_OPTIONS,
+  SUPERTONIC_MODELS,
+  SUPERTONIC_VOICES,
+} from '../features/supertonic'
 import {getPrimaryMood, getPrimaryMoodIcon} from '../features/text-mood'
 
 const CLASSES = {
@@ -32,6 +36,10 @@ const CLASSES = {
     'px-[1.2rem] font-[750] [&:disabled]:[cursor:not-allowed] [&:disabled]:[opacity:0.4]',
   ].join(' '),
   dialogueEditorButtonPrimary: 'pomo-dialogue-editor__button--primary bg-[#d6b585] text-[#241a12]',
+  dialogueEditorButtonSecondary: [
+    'pomo-dialogue-editor__button--secondary [border:1px_solid_rgb(255_255_255_/_14%)]',
+    'bg-transparent text-[#fffaf1]',
+  ].join(' '),
   dialogueEditorEmpty: [
     'pomo-dialogue-editor__empty m-0 text-[#ddd2c6] text-[0.85rem] leading-[1.6] rounded-xl',
     'bg-[rgb(255_255_255_/_3%)] p-6 text-center',
@@ -100,15 +108,19 @@ const CLASSES = {
     '[&_>_span]:font-extrabold [&_h2]:m-0 [&_h2]:text-[1.05rem] [&_p]:m-[0.3rem_0_0]',
     '[&_p]:text-[#ad9f90] [&_p]:text-[0.8rem] [&_p]:leading-[1.5]',
   ].join(' '),
+  dialogueEditorSegmentButton: [
+    'pomo-dialogue-editor__segment-button min-h-9 px-[0.9rem] text-xs whitespace-nowrap',
+    'pomo-below-[48rem]:[grid-column:2] pomo-below-[48rem]:justify-self-end',
+  ].join(' '),
   dialogueEditorSegments: [
     'pomo-dialogue-editor__segments grid gap-[0.6rem] m-0 p-0 list-none [&_li]:grid',
-    '[&_li]:grid-cols-[3.5rem_minmax(0,_1fr)_10rem] [&_li]:items-center [&_li]:gap-3',
+    '[&_li]:grid-cols-[3.5rem_minmax(0,_1fr)_10rem_auto] [&_li]:items-center [&_li]:gap-3',
     '[&_li]:rounded-xl [&_li]:bg-[rgb(255_255_255_/_4%)] [&_li]:p-3 [&_span]:text-[#d6b585]',
     '[&_span]:text-xs [&_span]:font-[750] [&_p]:m-0 [&_p]:text-[#ddd2c6] [&_p]:text-[0.85rem]',
     '[&_p]:leading-[1.6] pomo-below-[48rem]:[&_li]:grid-cols-[3.5rem_minmax(0,_1fr)]',
   ].join(' '),
   dialogueEditorSelects: [
-    'pomo-dialogue-editor__selects grid grid-cols-[repeat(2,_minmax(0,_1fr))] gap-3',
+    'pomo-dialogue-editor__selects grid grid-cols-[repeat(3,_minmax(0,_1fr))] gap-3',
     'pomo-below-[28rem]:grid-cols-[1fr]',
   ].join(' '),
   dialogueEditorStatus: [
@@ -172,6 +184,13 @@ export default function PDialogueEditor(props: PDialogueEditorProps) {
       editor.setModelId(model.id)
     }
   }
+  const handleLanguageChange = (language: string) => {
+    const option = SUPERTONIC_LANGUAGE_OPTIONS.find((item) => item.value === language)
+
+    if (option !== undefined) {
+      editor.setLanguage(option.value)
+    }
+  }
   const handleVoiceChange = (voiceId: string) => {
     const voice = SUPERTONIC_VOICES.find((item) => item.id === voiceId)
 
@@ -231,6 +250,18 @@ export default function PDialogueEditor(props: PDialogueEditorProps) {
           </div>
 
           <div class={CLASSES.dialogueEditorSelects}>
+            <label class={CLASSES.dialogueEditorField}>
+              <span>언어</span>
+              <select
+                disabled={isBusy()}
+                onChange={(event) => handleLanguageChange(event.currentTarget.value)}
+                value={editor.language()}
+              >
+                <For each={SUPERTONIC_LANGUAGE_OPTIONS}>
+                  {(language) => <option value={language.value}>{language.label}</option>}
+                </For>
+              </select>
+            </label>
             <label class={CLASSES.dialogueEditorField}>
               <span>모델</span>
               <select
@@ -306,7 +337,7 @@ export default function PDialogueEditor(props: PDialogueEditorProps) {
             <span>3</span>
             <div>
               <h2 id="dialogue-timeline-title">말풍선 타임라인</h2>
-              <p>각 문장은 시작 시간과 분석된 감정이 함께 표시돼요.</p>
+              <p>전체 음성을 새로 만든 현재 편집에서만 말풍선 음성을 다시 만들 수 있어요.</p>
             </div>
           </div>
 
@@ -320,7 +351,7 @@ export default function PDialogueEditor(props: PDialogueEditorProps) {
           >
             <ol class={CLASSES.dialogueEditorSegments}>
               <For each={editor.segments()}>
-                {(segment) => (
+                {(segment, position) => (
                   <li>
                     <span>{formatDuration(segment.startMs)}</span>
                     <p>{segment.text}</p>
@@ -340,6 +371,25 @@ export default function PDialogueEditor(props: PDialogueEditorProps) {
                         )
                       }}
                     </Show>
+                    <button
+                      aria-label={`${position() + 1}번 말풍선 음성 다시 만들기`}
+                      class={cx(
+                        CLASSES.dialogueEditorButton,
+                        CLASSES.dialogueEditorButtonSecondary,
+                        CLASSES.dialogueEditorSegmentButton,
+                      )}
+                      disabled={!editor.canRegenerateSegments()}
+                      onClick={() => editor.regenerateSegment(position())}
+                      title="전체 음성을 새로 만든 뒤 사용할 수 있어요."
+                      type="button"
+                    >
+                      <Show
+                        when={editor.regeneratingSegmentIndex() === position()}
+                        fallback="다시 만들기"
+                      >
+                        만드는 중…
+                      </Show>
+                    </button>
                   </li>
                 )}
               </For>

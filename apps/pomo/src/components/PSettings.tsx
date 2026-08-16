@@ -7,10 +7,7 @@ import {PRadioSwitch} from '../design-system/PRadioSwitch'
 import {PSelect, type PSelectOption} from '../design-system/PSelect'
 import {PSwitch} from '../design-system/PSwitch'
 import type {SceneTimeMode} from '../features/focus-room-time'
-import type {
-  PSceneMotionInput,
-  PSceneMotionMode,
-} from '../features/focus-room-animation/scene-motion'
+import type {PSceneMotionInput, PSceneMotionMode} from '../features/focus-room-animation'
 import type {ScreenSaverDelay} from '../features/screen-saver'
 import {useScreenWakeLock} from '../features/screen-wake-lock'
 import {PDialogueSettings} from './PDialogueSettings'

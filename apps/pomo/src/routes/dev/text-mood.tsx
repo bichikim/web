@@ -3,7 +3,7 @@ import {A} from '@solidjs/router'
 import {clientOnly} from '@solidjs/start'
 import {cx} from 'class-variance-authority'
 
-const TextMoodLab = clientOnly(() => import('../../components/TextMoodLab'), {lazy: true})
+const TextMoodLab = clientOnly(() => import('src/components/TextMoodLab'), {lazy: true})
 const MAIN_CLASSES = cx(
   'relative min-h-dvh overflow-x-hidden bg-#17131f px-4 py-8 text-#f8edf1',
   'sm:px-8 sm:py-12',

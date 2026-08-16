@@ -21,7 +21,7 @@ const CLASSES = {
   pomodoro: [
     'pomo-pomodoro absolute top-[calc(1rem_+_env(safe-area-inset-top))]',
     'left-[calc(1rem_+_env(safe-area-inset-left))] min-[40rem]:top-[1.5rem]',
-    'min-[40rem]:left-[1.75rem]',
+    'min-[40rem]:left-[1.75rem] pointer-events-auto',
   ].join(' '),
   pomodoroActionIcon: 'pomo-pomodoro__action-icon w-3 h-3',
   pomodoroActionIndicator: [

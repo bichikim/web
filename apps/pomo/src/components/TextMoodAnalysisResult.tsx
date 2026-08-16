@@ -1,8 +1,7 @@
 import {cx} from 'class-variance-authority'
 import {For, Show} from 'solid-js'
 
-import type {TextMoodAnalysis} from '../features/text-mood/classifier'
-import {getPrimaryMood, MOOD_MODIFIERS} from '../features/text-mood/labels'
+import {getPrimaryMood, MOOD_MODIFIERS, type TextMoodAnalysis} from '../features/text-mood'
 
 const MAXIMUM_PERCENTAGE = 100
 
