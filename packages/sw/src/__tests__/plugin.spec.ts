@@ -4,7 +4,12 @@ import path from 'node:path'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import type {Plugin, ResolvedConfig} from 'vite'
 import {getInstallFiles} from '../get-install-files'
-import {generateSwWithCleanUp, installSwBuildHooks, type VinxiAppLike} from '../index'
+import {
+  generateSwPlugin,
+  generateSwWithCleanUp,
+  installSwBuildHooks,
+  type VinxiAppLike,
+} from '../index'
 
 vi.mock('../get-install-files', () => ({getInstallFiles: vi.fn()}))
 
@@ -13,9 +18,16 @@ interface CallablePlugin {
   configResolved: (config: ResolvedConfig) => void
 }
 
+interface CallableEnvironmentPlugin {
+  applyToEnvironment: (environment: {name: string}) => boolean
+  closeBundle: (this: {environment: {config: ResolvedConfig}}) => Promise<void>
+}
+
 const asCallablePlugin = (plugin: Plugin): CallablePlugin => plugin as unknown as CallablePlugin
 const asResolvedConfig = (config: Record<string, unknown>): ResolvedConfig =>
   config as unknown as ResolvedConfig
+const asCallableEnvironmentPlugin = (plugin: Plugin): CallableEnvironmentPlugin =>
+  plugin as unknown as CallableEnvironmentPlugin
 
 describe('service worker build plugin', () => {
   let tmpDir: string
@@ -52,6 +64,25 @@ describe('service worker build plugin', () => {
     await result.cleanUp()
 
     await expect(fs.promises.stat(outputPath)).rejects.toThrow()
+  })
+
+  it('should generate a worker only for the Vite client environment', async () => {
+    const plugin = asCallableEnvironmentPlugin(
+      generateSwPlugin({assetsPattern: '**/*', swTemplatePath: templatePath}),
+    )
+    const config = asResolvedConfig({
+      build: {outDir: 'public'},
+      root: tmpDir,
+    })
+
+    expect(plugin.applyToEnvironment({name: 'client'})).toBe(true)
+    expect(plugin.applyToEnvironment({name: 'ssr'})).toBe(false)
+
+    await plugin.closeBundle.call({environment: {config}})
+
+    await expect(
+      fs.promises.readFile(path.join(tmpDir, 'public', 'sw.js'), 'utf8'),
+    ).resolves.toContain('["/app.js"]')
   })
 
   it('should generate and clean up the production client worker', async () => {

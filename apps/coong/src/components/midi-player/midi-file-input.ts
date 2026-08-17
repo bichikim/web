@@ -59,12 +59,12 @@ export const useMidiFileInput = (
               return null
             }
 
-            return notes.map((track: SampleStart): SampleStart => {
+            return notes.map((note): SampleStart => {
               return {
-                duration: track.duration,
-                note: track.name ?? track.note,
-                time: track.time,
-                velocity: track.velocity,
+                duration: note.duration,
+                note: note.name,
+                time: note.time,
+                velocity: note.velocity,
               }
             })
           })

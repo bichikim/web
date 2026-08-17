@@ -1,6 +1,9 @@
-import {createMiddleware} from '@solidjs/start/middleware'
+import type {RequestMiddleware, ResponseMiddleware} from '@solidjs/start/middleware'
 
-export type MiddlewareFragment = Parameters<typeof createMiddleware>[0]
+export interface MiddlewareFragment {
+  onBeforeResponse?: ResponseMiddleware | ResponseMiddleware[]
+  onRequest?: RequestMiddleware | RequestMiddleware[]
+}
 
 export const createMiddlewareFragment = (fragment: MiddlewareFragment): MiddlewareFragment => {
   return fragment
