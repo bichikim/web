@@ -108,11 +108,92 @@ describe('PMusicPlayerContent', () => {
     expect(screen.getByRole('button', {name: '플레이어 접기'})).toBeTruthy()
   })
 
+  it('should render state-specific progress presentations', () => {
+    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />)
+    const controller = result.container.querySelector('media-controller')
+    const playerBase = result.container.querySelector('.pomo-player__base')
+    const visualizerFrame = result.container.querySelector('.pomo-player__visualizer-frame')
+    const progressBar = result.container.querySelector('media-time-range')
+
+    if (
+      !(controller instanceof HTMLElement) ||
+      !(playerBase instanceof HTMLElement) ||
+      !(visualizerFrame instanceof HTMLElement) ||
+      !(progressBar instanceof HTMLElement)
+    ) {
+      throw new TypeError('Expected the Pomo player layers to be rendered')
+    }
+
+    expect(result.container.querySelectorAll('media-time-range')).toHaveLength(1)
+    expect(controller.classList.contains('overflow-hidden')).toBe(true)
+    expect(controller.classList.contains('overflow-visible')).toBe(false)
+    expect(controller.classList.contains('pb-0.5')).toBe(true)
+    expect(playerBase.classList.contains('rounded-panel')).toBe(true)
+    expect(visualizerFrame.classList.contains('overflow-hidden')).toBe(true)
+    expect(visualizerFrame.classList.contains('rounded-panel')).toBe(true)
+    expect(progressBar.classList.contains('flex')).toBe(true)
+    expect(progressBar.classList.contains('absolute')).toBe(true)
+    expect(progressBar.classList.contains('inset-0')).toBe(true)
+    expect(progressBar.classList.contains('h-full')).toBe(true)
+    expect(progressBar.classList.contains('w-full')).toBe(true)
+    expect(progressBar.classList.contains('pointer-events-none')).toBe(true)
+    expect(Reflect.get(progressBar, 'disabled')).toBe(true)
+    expect(progressBar.getAttribute('aria-hidden')).toBe('true')
+    expect(progressBar.classList.contains('[--media-range-track-height:100%]')).toBe(true)
+    expect(progressBar.classList.contains('[--media-range-bar-color:rgb(0_0_0_/_25%)]')).toBe(true)
+    expect(progressBar.classList.contains('[--media-time-range-buffered-color:transparent]')).toBe(
+      true,
+    )
+    expect(progressBar.classList.contains('[--media-range-track-background:transparent]')).toBe(
+      true,
+    )
+    expect(progressBar.classList.contains('[--media-range-padding:0px]')).toBe(true)
+    expect(progressBar.classList.contains('[--media-range-thumb-opacity:0]')).toBe(true)
+    expect(progressBar.classList.contains('hover:[--media-range-thumb-opacity:1]')).toBe(false)
+    expect(progressBar.classList.contains('focus-within:[--media-range-thumb-opacity:1]')).toBe(
+      false,
+    )
+
+    fireEvent.click(screen.getByRole('button', {name: '플레이어 펼치기'}))
+    const expandedProgressBar = result.container.querySelector('media-time-range')
+
+    if (!(expandedProgressBar instanceof HTMLElement)) {
+      throw new TypeError('Expected the expanded Pomo progress bar to be rendered')
+    }
+
+    expect(result.container.querySelectorAll('media-time-range')).toHaveLength(1)
+    expect(expandedProgressBar).not.toBe(progressBar)
+    expect(controller.classList.contains('overflow-hidden')).toBe(false)
+    expect(controller.classList.contains('overflow-visible')).toBe(true)
+    expect(controller.classList.contains('p-2')).toBe(true)
+    expect(visualizerFrame.classList.contains('rounded-panel')).toBe(false)
+    expect(visualizerFrame.classList.contains('rounded-t-panel')).toBe(true)
+    expect(expandedProgressBar.classList.contains('h-0.5')).toBe(true)
+    expect(expandedProgressBar.classList.contains('[--media-range-bar-color:#fffaf1]')).toBe(true)
+    expect(
+      expandedProgressBar.classList.contains(
+        '[--media-time-range-buffered-color:rgb(255_250_241_/_40%)]',
+      ),
+    ).toBe(true)
+    expect(
+      expandedProgressBar.classList.contains(
+        '[--media-range-track-background:rgb(255_250_241_/_22%)]',
+      ),
+    ).toBe(true)
+    expect(expandedProgressBar.classList.contains('hover:[--media-range-thumb-opacity:1]')).toBe(
+      true,
+    )
+    expect(
+      expandedProgressBar.classList.contains('focus-within:[--media-range-thumb-opacity:1]'),
+    ).toBe(true)
+  })
+
   it('should hide the expanded play button tooltip', () => {
     const result = render(() => <PMusicPlayerContent tracks={TRACKS} />)
 
     fireEvent.click(screen.getByRole('button', {name: '플레이어 펼치기'}))
 
+    expect(result.container.querySelector('media-time-display')).toBeNull()
     const playButtons = result.container.querySelectorAll('media-play-button')
     expect(playButtons).toHaveLength(2)
     expect(playButtons[0]?.hasAttribute('notooltip')).toBe(false)

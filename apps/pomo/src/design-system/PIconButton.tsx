@@ -62,8 +62,8 @@ export const PIconButton = (props: PIconButtonProps) => {
           'transition-[border-color_160ms_ease,background-color_160ms_ease,color_160ms_ease] ' +
           'motion-reduce:transition-none',
         (props.size ?? 'medium') === 'small'
-          ? 'h-control-sm min-w-control-sm px-2'
-          : 'h-control-md min-w-control-md px-3',
+          ? 'h-control-sm min-w-control-sm [padding-inline:0.4375rem]'
+          : 'h-control-md min-w-control-md [padding-inline:0.6875rem]',
         props.class,
       )}
       data-feedback-visible={feedbackVisible() ? '' : undefined}
