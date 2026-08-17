@@ -37,10 +37,13 @@
 - Treat current official documentation as binding for folder structure and code design. If existing or proposed code differs, disclose the difference and reason before implementation; do not deviate unless the user explicitly directs it.
 - If official documentation does not map directly to the code, analyze multiple analogous implementations from authoritative maintainers or projects, show the decisive evidence, and choose the best-supported pattern instead of inventing a familiar local design.
 
-## Z-index
+## Layering without z-index
 
-- Do not use `z-index`, including utility classes and rendering-library equivalents. If it appears unavoidable, explain why and obtain explicit user approval.
-- Preserve overlay semantics, positioning, and focus; do not turn overlays into inline content. Diagnose painting or clipping first, then use the smallest suitable fix through the platform top layer, an existing portal or headless primitive, DOM order, overflow/layout, or stacking contexts.
+- Preserve the requested visual composition and interaction behavior. The `z-index` restriction does not permit removing, flattening, inlining, relocating, or simplifying overlapping, floating, sticky, fixed, or overlay elements.
+- Do not use `z-index`, including utility classes and rendering-library equivalents.
+- When layering is required, reproduce the intended result by diagnosing painting and clipping first, then use the appropriate platform mechanism: the top layer, an existing portal or headless primitive, DOM order, overflow or containing-block correction, layout structure, or non-numeric stacking-context structure.
+- Treat the solution as complete only when the intended visual hierarchy, overlap and placement, clipping, pointer interaction, keyboard focus, and accessibility semantics are preserved in every relevant state.
+- If exact equivalence is impossible without `z-index`, do not silently weaken or abandon the design. Show the concrete blocker and obtain explicit user approval before using the smallest necessary `z-index`.
 
 ## Proportionate future-proofing
 
