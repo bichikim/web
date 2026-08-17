@@ -1,14 +1,20 @@
 import {Application} from 'pixi.js'
 
+import {PEyeController, type PEyeState} from '../focus-room-animation/eye-animation-controller'
 import {PixiLayerScene, type PixiLayerSceneDefinition} from '../focus-room-animation/layer-scene'
+import {createFocusRoomLayerState} from '../focus-room-animation/scene-layer-state'
+import {FOCUS_ROOM_MOUTH_CHANNELS} from '../focus-room-animation/scene-catalog-channels'
 import {FOCUS_ROOM_PREVIEW_CHANNELS} from '../focus-room-animation/scene-catalog'
+import type {PViseme} from '../lip-sync'
 
-export interface PLayerReviewState {
+export interface PLayerReviewState extends PEyeState {
   readonly animationEnabled: boolean
   readonly eyesVisible: boolean
   readonly handsVisible: boolean
   readonly headVisible: boolean
+  readonly mouthVisible: boolean
   readonly referenceOpacity: number
+  readonly viseme: PViseme
 }
 
 export interface PLayerReviewRendererOptions {
@@ -19,6 +25,7 @@ const clampOpacity = (value: number) => Math.min(1, Math.max(0, value))
 
 export class PLayerReviewRenderer {
   readonly #application = new Application()
+  readonly #eyes: PEyeController
   readonly #initialDefinition: PixiLayerSceneDefinition
   readonly #host: HTMLDivElement
   #applicationReady = false
@@ -26,6 +33,7 @@ export class PLayerReviewRenderer {
   #destroyed = false
   #incomingDefinitionId: string | null = null
   #incomingScene: PixiLayerScene | null = null
+  #pendingDefinition: PixiLayerSceneDefinition | null = null
   #replacementVersion = 0
   #scene: PixiLayerScene | null = null
   #state: PLayerReviewState | null = null
@@ -33,6 +41,7 @@ export class PLayerReviewRenderer {
   constructor(host: HTMLDivElement, options: PLayerReviewRendererOptions) {
     this.#host = host
     this.#initialDefinition = options.definition
+    this.#eyes = new PEyeController(() => this.#application.render())
   }
 
   async initialize(state: PLayerReviewState) {
@@ -57,42 +66,85 @@ export class PLayerReviewRenderer {
     this.#application.canvas.setAttribute('aria-hidden', 'true')
     this.#application.canvas.className =
       'absolute inset-0 block h-full w-full object-cover object-center'
+    this.#host.append(this.#application.canvas)
+    await this.#initializeFirstScene(state)
+  }
 
-    const scene = this.#createScene(this.#initialDefinition)
+  async #initializeFirstScene(state: PLayerReviewState) {
+    const definition = this.#pendingDefinition ?? this.#initialDefinition
+    const version = this.#replacementVersion
+    const scene = this.#createScene(definition)
+    this.#pendingDefinition = null
+    this.#incomingDefinitionId = definition.id
     this.#incomingScene = scene
-    try {
-      await scene.initialize(this.#toSceneState(state))
-    } catch (error: unknown) {
+    const [sceneInitialization, eyeInitialization] = await Promise.allSettled([
+      scene.initialize(this.#toSceneState(state)),
+      this.#eyes.initialize(state),
+    ])
+
+    if (eyeInitialization.status === 'rejected') {
+      scene.destroy()
       this.destroy()
-      throw error
+      throw eyeInitialization.reason
+    }
+
+    if (sceneInitialization.status === 'rejected') {
+      if (version !== this.#replacementVersion) {
+        scene.destroy()
+        return
+      }
+
+      this.destroy()
+      throw sceneInitialization.reason
     }
 
     if (this.#destroyed) {
       return
     }
 
+    if (version !== this.#replacementVersion) {
+      scene.destroy()
+      return
+    }
+
     this.#incomingScene = null
+    this.#incomingDefinitionId = null
     this.#scene = scene
-    this.#currentDefinitionId = this.#initialDefinition.id
+    this.#currentDefinitionId = definition.id
     this.#application.stage.addChild(scene.container)
+    this.#placeEyes(scene)
     const latestState = this.#state
 
     if (latestState !== null) {
+      this.#eyes.update(latestState)
+      this.#syncEyes(latestState)
       scene.update(this.#toSceneState(latestState))
     }
 
+    this.#eyes.setSceneReady(true)
     this.#application.render()
-    this.#host.append(this.#application.canvas)
   }
 
   update(state: PLayerReviewState) {
     this.#state = state
+    this.#eyes.update(state)
+    this.#syncEyes(state)
     this.#scene?.update(this.#toSceneState(state))
     this.#incomingScene?.update(this.#toSceneState(state))
   }
 
   async replaceDefinition(definition: PixiLayerSceneDefinition) {
-    if (this.#destroyed || definition.id === this.#incomingDefinitionId) {
+    if (this.#destroyed) {
+      return
+    }
+
+    if (!this.#applicationReady) {
+      this.#replacementVersion += 1
+      this.#pendingDefinition = definition
+      return
+    }
+
+    if (definition.id === this.#incomingDefinitionId) {
       return
     }
 
@@ -100,9 +152,14 @@ export class PLayerReviewRenderer {
       this.#replacementVersion += 1
       this.#incomingDefinitionId = null
       this.#incomingScene = null
+      this.#eyes.setSceneReady(true)
       return
     }
 
+    await this.#replaceReadyDefinition(definition)
+  }
+
+  async #replaceReadyDefinition(definition: PixiLayerSceneDefinition) {
     const state = this.#state
 
     if (state === null) {
@@ -111,6 +168,7 @@ export class PLayerReviewRenderer {
 
     const version = this.#replacementVersion + 1
     this.#replacementVersion = version
+    this.#eyes.setSceneReady(false)
     const scene = this.#createScene(definition)
     this.#incomingDefinitionId = definition.id
     this.#incomingScene = scene
@@ -124,6 +182,7 @@ export class PLayerReviewRenderer {
       }
 
       if (!this.#destroyed && version === this.#replacementVersion) {
+        this.#eyes.setSceneReady(this.#scene !== null)
         throw error
       }
 
@@ -137,10 +196,12 @@ export class PLayerReviewRenderer {
 
     const previousScene = this.#scene
     this.#application.stage.addChild(scene.container)
+    this.#placeEyes(scene)
     this.#scene = scene
     this.#incomingDefinitionId = null
     this.#incomingScene = null
     this.#currentDefinitionId = definition.id
+    this.#eyes.setSceneReady(true)
     this.#application.render()
     previousScene?.destroy()
   }
@@ -153,8 +214,11 @@ export class PLayerReviewRenderer {
     this.#destroyed = true
     this.#replacementVersion += 1
     this.#incomingDefinitionId = null
+    this.#pendingDefinition = null
     this.#incomingScene?.destroy()
     this.#incomingScene = null
+    this.#eyes.container.removeFromParent()
+    this.#eyes.destroy()
     this.#scene?.destroy()
     this.#scene = null
     this.#state = null
@@ -175,11 +239,31 @@ export class PLayerReviewRenderer {
     })
   }
 
+  #placeEyes(scene: PixiLayerScene) {
+    const parent = scene.getAttachment('eyes') ?? this.#application.stage
+    parent.addChild(this.#eyes.container)
+  }
+
+  #syncEyes(state: PLayerReviewState) {
+    this.#eyes.container.visible = state.eyesVisible
+  }
+
   #toSceneState(state: PLayerReviewState) {
     const referenceOpacity = clampOpacity(state.referenceOpacity)
+    const mouthState = createFocusRoomLayerState(state.viseme, false)
     return {
       animationEnabled: state.animationEnabled,
       channels: {
+        ...mouthState.channels,
+        ...Object.fromEntries(
+          Object.entries(FOCUS_ROOM_MOUTH_CHANNELS).map(([viseme, channel]) => [
+            channel,
+            {
+              ...mouthState.channels?.[channel],
+              visible: state.mouthVisible && viseme === state.viseme,
+            },
+          ]),
+        ),
         [FOCUS_ROOM_PREVIEW_CHANNELS.eyes]: {visible: state.eyesVisible},
         [FOCUS_ROOM_PREVIEW_CHANNELS.hands]: {visible: state.handsVisible},
         [FOCUS_ROOM_PREVIEW_CHANNELS.head]: {visible: state.headVisible},

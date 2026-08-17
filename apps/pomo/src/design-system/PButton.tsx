@@ -47,6 +47,7 @@ export interface PButtonProps extends VariantProps<typeof buttonClasses> {
   readonly disabled?: boolean
   readonly icon?: string
   readonly leadingImage?: string
+  readonly leadingImageClass?: string
   readonly onPress: (source: HTMLButtonElement) => void
   readonly trailingIcon?: string
   readonly type?: 'button' | 'reset' | 'submit'
@@ -65,7 +66,10 @@ export const PButton = (props: PButtonProps) => (
         <img
           alt=""
           aria-hidden="true"
-          class="pomo-button__leading-image size-6 flex-none object-contain"
+          class={cx(
+            'pomo-button__leading-image flex-none object-contain',
+            props.leadingImageClass ?? 'size-6',
+          )}
           data-pomo-button-leading-image=""
           src={source()}
         />

@@ -199,7 +199,7 @@ export default defineConfig({
     'eslint-js/max-statements-per-line': ['error', {max: 2}],
     'eslint-js/no-buffer-constructor': 'error',
     'eslint-js/no-catch-shadow': 'error',
-    // AI_NOTE - Oxfmt removes parentheses around conditional arrow bodies, so this rule cannot be satisfied after formatting.
+    // Oxfmt removes parentheses around conditional arrow bodies, so this rule cannot be satisfied after formatting.
     'eslint-js/no-confusing-arrow': 'off',
     'eslint-js/no-extra-parens': ['error', 'functions'],
     'eslint-js/no-floating-decimal': 'error',

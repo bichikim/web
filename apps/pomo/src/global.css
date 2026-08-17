@@ -41,6 +41,6 @@ a {
 }
 
 .pomo-scene-media {
-  /* AI_NOTE - Keep the combined PixiJS scene canvas on the right-shifted crop anchor. */
+  /* Keep the combined PixiJS scene canvas on the right-shifted crop anchor. */
   object-position: 60% center;
 }

@@ -90,7 +90,7 @@ export const useStorage: UseStorage = (
     isMounted = true
   })
 
-  // AI_NOTE - re-hydrate when active flips true after mount unless value changed while inactive
+  // Rehydrate when active flips true after mount unless value changed while inactive.
   createEffect(() => {
     const isActive = activeAccessor()
     const nextKey = keyAccessor()

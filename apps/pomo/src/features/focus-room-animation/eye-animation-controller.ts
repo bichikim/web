@@ -47,7 +47,7 @@ const EYE_OFFSETS = {
     user: {reading: {x: 0, y: 0}, typing: {x: 0, y: 0}, writing: {x: 0, y: 0}},
   },
   night: {
-    focused: {reading: {x: 4, y: 0}, typing: {x: -1, y: 0}, writing: {x: 0, y: 0}},
+    focused: {reading: {x: 4, y: 0}, typing: {x: 4, y: 0}, writing: {x: 4, y: 0}},
     user: {reading: {x: 0, y: 0}, typing: {x: 0, y: 0}, writing: {x: 0, y: 0}},
   },
 } satisfies Record<

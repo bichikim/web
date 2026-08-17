@@ -2,9 +2,10 @@
 
 ## Interaction
 
-- **Questions**: If the user is asking a question (not requesting a change), answer in chat only — do not modify code or files.
 - **Examples**: If the user asks to see an example, provide it in the chat response only — do not create or edit files to demonstrate it.
-- **Action requests**: If the user asks you to do something (e.g. "해줘", "만들어줘", "수정해줘"), treat it as a work request and start the task — modify code or files as needed.
+- **Intent analysis (mandatory)**: Before interpreting, use grammatical cues—particles, adverbs, comparisons—presuppositions, and dialogue context to reconstruct all contrasted or additive sides and the user's baseline: actual state, experience or memory, or prior dialogue. Preserve named entities and categories. If a reading leaves a cue unexplained, substitutes a related concept, or makes the user seem irrational, seek the coherent ordinary pragmatic reading before correcting them.
+  - “Starting with N, does X also move to Y?” presupposes that X was previously outside Y or handled differently in the user's experience; verify the actual state without replacing X. In the SolidStart example, retain server routes and their prior separate location—not API routes already in `src/routes`.
+- **Intent gate**: Before any answer or tool call, state the resulting concrete interpretation. Ask only if materially different interpretations remain. Proceed with questions and read-only verification after that statement; start state-changing work only after the user confirms the stated actions.
 - **Documentation**: When asked to add or write docs, keep it brief and concise—avoid verbosity and repeating the same points—without omitting essential meaning.
 
 ## Code quality
@@ -13,12 +14,10 @@
 
 ## File naming
 
-- Do not repeat information already expressed by parent directories in filenames.
-- Name files by their role within the containing directory.
-- Apply this rule to source code, tests, documentation, configuration, scripts, and assets.
-- Prefer adding a meaningful subdirectory over repeating shared context across sibling filenames.
+- Across source code, tests, documentation, configuration, scripts, and assets, name files by their role within the containing directory without repeating parent-directory context; use meaningful subdirectories for context shared by siblings.
 - Keep authoring and generation details in archive filenames or metadata, not runtime filenames.
-- Example: prefer `night-reading-focused/building-lights/01.webp` over `night-reading-focused/layer-building-lights-window-minus-sky-1.webp`.
+
+## Decision quality
 
 - When correcting AI behavior, use the lowest-prompt-cost instruction that preserves the outcome.
 - Evaluate changes in repository-wide context, prioritizing compatibility, reusability, and readability over local optimization.
@@ -27,19 +26,21 @@
 ## Evidence
 
 - Do not make factual or technical claims without showing the decisive evidence to the user.
+- Verify changeable external information from a current authoritative internet source in the same turn before claiming it; learned knowledge, prior conversation, and the repository's local state are not substitutes for current external evidence.
+- Before using any term, status, label, or qualifier to reach a conclusion, establish its exact meaning in context from authoritative evidence. Do not skip that meaning or infer consequences from familiarity or connotation; verify the consequence relevant to the user's question separately.
 - Prefer evidence from the actual project and runtime over assumptions based on learned patterns.
 - When evidence is unavailable, run the smallest safe experiment that can answer the question.
 - If no evidence exists and no viable experiment is possible, do not infer or speculate. Tell the user that the answer cannot be verified and why.
 
+## Architecture authority
+
+- Treat current official documentation as binding for folder structure and code design. If existing or proposed code differs, disclose the difference and reason before implementation; do not deviate unless the user explicitly directs it.
+- If official documentation does not map directly to the code, analyze multiple analogous implementations from authoritative maintainers or projects, show the decisive evidence, and choose the best-supported pattern instead of inventing a familiar local design.
+
 ## Z-index
 
-- Do not use CSS `z-index`, including utility classes and rendering-library equivalents.
-- This rule does not require floating UI to become inline or in-flow. Dropdowns, popovers, tooltips, and dialogs should retain their expected overlay behavior.
-- Prefer the platform top layer (`popover`, `dialog`), portals rendered later in the DOM, and headless components that handle positioning and focus without `z-index`.
-- Resolve remaining layering through DOM order, layout, and stacking-context structure. Do not replace a standard overlay with an inline expansion solely to avoid `z-index`.
-- Diagnose the actual painting or clipping cause before changing the DOM. Prefer the smallest suitable CSS or layout mechanism, including positioning, overflow, isolation and stacking contexts, flex/grid paint order, portal placement, or DOM order.
-- Do not default to structural changes when a local CSS property can solve the problem without harming semantics, accessibility, or responsive behavior.
-- If `z-index` appears unavoidable, explain why and obtain explicit user approval before using it.
+- Do not use `z-index`, including utility classes and rendering-library equivalents. If it appears unavoidable, explain why and obtain explicit user approval.
+- Preserve overlay semantics, positioning, and focus; do not turn overlays into inline content. Diagnose painting or clipping first, then use the smallest suitable fix through the platform top layer, an existing portal or headless primitive, DOM order, overflow/layout, or stacking contexts.
 
 ## Proportionate future-proofing
 
@@ -49,10 +50,7 @@
 
 ## Package exports
 
-- Prefer broad subpath exports: consumers may import any distributable module.
-- Exposing the internal module structure is not a design flaw in this repository.
-- Do not add export allowlists, proxy entrypoints, or compatibility layers solely to hide or restrict module paths. Missing exports create more consumer workarounds, coordination, and migration cost than the theoretical encapsulation benefit.
-- Restrict an export only for a concrete security, runtime, or packaging constraint.
+- Prefer broad subpath exports for every distributable module; do not add allowlists, proxy entrypoints, or compatibility layers for encapsulation alone, and restrict exports only for concrete security, runtime, or packaging constraints.
 
 ## Worktree initialization
 
@@ -67,14 +65,6 @@
 ## Comments
 
 Function JSDoc: contract (what) only; call sites: intent (why) only.
-
-## AI work context (`AI_NOTE`)
-
-Chat context is volatile. When **why** isn't obvious from code, leave a minimal in-code note for later agents.
-
-- Format: `// AI_NOTE - …` or `/* AI_NOTE - … */`
-- Content: decision + reason (constraints, rejected approach, non-obvious tradeoff); not a changelog
-- Scope: cross-session gaps only; skip self-explanatory code
 
 ## Pull requests
 

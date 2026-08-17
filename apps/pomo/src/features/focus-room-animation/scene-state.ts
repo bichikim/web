@@ -1,4 +1,5 @@
 import type {PActivity, PGaze, PTime} from './eye-animation-controller'
+import type {PViseme} from '../lip-sync'
 import type {PixiLayerSceneDefinition} from './layer-scene'
 import type {PSceneMotionInput, PSceneMotionMode} from './scene-motion'
 
@@ -11,6 +12,7 @@ export interface PSceneState {
   readonly motionMode?: PSceneMotionMode
   readonly source: string
   readonly time: PTime
+  readonly viseme: PViseme
 }
 
 export interface PSceneRendererOptions {

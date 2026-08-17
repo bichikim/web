@@ -7,7 +7,7 @@ export const setByPath = <T, P = any>(
   path: readonly PropertyKey[],
   value: P,
 ): void => {
-  // AI_NOTE - Paths may originate outside the process; inherited prototype paths must never be writable.
+  // Paths may originate outside the process; inherited prototype paths must never be writable.
   if (path.some((segment) => typeof segment === 'string' && UNSAFE_PATH_SEGMENTS.has(segment))) {
     return
   }

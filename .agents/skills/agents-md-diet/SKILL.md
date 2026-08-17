@@ -31,6 +31,10 @@ Minimize instructions without changing which rules apply to any task or path.
 - If fresh agents are unavailable, state that independent validation was not run.
 - Run repository format, lint, and dedicated instruction validation required by the applicable `AGENTS.md` files.
 
+## Completion gate
+
+Do not present the diet as complete until every workflow and validation step has run. If user confirmation is required before editing, label the proposal as unvalidated, obtain confirmation, then edit, validate with two fresh agents, run required checks, and report the results. If any step cannot run, explicitly report the skill as incomplete.
+
 ## Output
 
 Report:

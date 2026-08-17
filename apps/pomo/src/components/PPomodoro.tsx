@@ -48,7 +48,7 @@ const CLASSES = {
   pomodoroPanelCompactAction: 'pomo-pomodoro-panel__compact-action shadow-none',
   pomodoroPanelCompactActionDanger: [
     'pomo-pomodoro-panel__compact-action--danger border-[rgb(239_138_116_/_34%)]',
-    '[&_.pomo-icon-button\\_\\_icon]:text-[var(--pomo-danger)]',
+    '[&_[data-pomo-icon-button-icon]]:text-[var(--pomo-danger)]',
   ].join(' '),
   pomodoroPanelPrimaryAction: 'pomo-pomodoro-panel__primary-action min-w-0 flex-1',
   pomodoroPanelSession: [

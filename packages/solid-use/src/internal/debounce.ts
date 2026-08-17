@@ -12,7 +12,7 @@ export interface DebouncedFunc<T extends (...args: any[]) => any> {
   flush(): ReturnType<T> | undefined
 }
 
-// AI_NOTE - Preserve the published leading/trailing/maxWait contract while using the modern API.
+// Preserve the published leading/trailing/maxWait contract while using the modern API.
 export const debounce = <T extends (...args: any[]) => any>(
   func: T,
   debounceMs: number = 0,

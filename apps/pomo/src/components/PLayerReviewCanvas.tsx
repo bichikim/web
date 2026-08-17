@@ -15,11 +15,16 @@ export default function PLayerReviewCanvas(props: PLayerReviewCanvasProps) {
   let renderer: PLayerReviewRenderer | null = null
 
   const getReviewState = (): PLayerReviewState => ({
+    activity: props.activity,
     animationEnabled: props.animationEnabled,
     eyesVisible: props.eyesVisible,
+    gaze: props.gaze,
     handsVisible: props.handsVisible,
     headVisible: props.headVisible,
+    mouthVisible: props.mouthVisible,
     referenceOpacity: props.referenceOpacity,
+    time: props.time,
+    viseme: props.viseme,
   })
 
   onMount(() => {
@@ -53,10 +58,15 @@ export default function PLayerReviewCanvas(props: PLayerReviewCanvasProps) {
       () =>
         [
           props.animationEnabled,
+          props.activity,
           props.eyesVisible,
+          props.gaze,
           props.handsVisible,
           props.headVisible,
+          props.mouthVisible,
           props.referenceOpacity,
+          props.time,
+          props.viseme,
         ] as const,
       () => {
         const state = getReviewState()

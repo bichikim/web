@@ -33,8 +33,8 @@ const CLASSES = {
     '[&_button:focus-visible]:[outline-offset:2px]',
     '[&_a:focus-visible]:[outline:2px_solid_var(--pomo-brass)]',
     '[&_a:focus-visible]:[outline-offset:2px] flex flex-none flex-wrap gap-[0.4rem]',
-    '[&_.pomo-dialogue-settings\\_\\_delete-confirm]:border-[rgb(239_135_120_/_50%)]',
-    '[&_.pomo-dialogue-settings\\_\\_delete-confirm]:text-[#f2a398]',
+    '[&_[data-pomo-dialogue-delete-confirm]]:border-[rgb(239_135_120_/_50%)]',
+    '[&_[data-pomo-dialogue-delete-confirm]]:text-[#f2a398]',
     'pomo-dialogue-library-compact:gap-[0.3rem]',
     "pomo-dialogue-library-compact:[&_>_:is(button,_a)_>_[aria-hidden='true']]:hidden",
     'motion-reduce:[&_button]:transition-[none] motion-reduce:[&_a]:transition-[none]',
@@ -117,15 +117,11 @@ const CLASSES = {
   dialogueSettingsSelectedDialogue: [
     'pomo-dialogue-settings__selected-dialogue flex items-end justify-between gap-3',
     '[border-top:1px_solid_var(--pomo-border)] pt-[var(--pomo-padding-md)]',
-    'pomo-below-[32rem]:items-start pomo-below-[32rem]:flex-col',
+    'pomo-below-[36rem]:items-stretch pomo-below-[36rem]:flex-col',
   ].join(' '),
   dialogueSettingsSelectedDialogueLibrary: [
     'pomo-dialogue-settings__selected-dialogue--library',
-    '[container:pomo-dialogue-library-item_/_inline-size] items-start flex-col border-t-0 pt-0',
-    '[&_.pomo-dialogue-settings\\_\\_summary_p]:[display:-webkit-box]',
-    '[&_.pomo-dialogue-settings\\_\\_summary_p]:[-webkit-box-orient:vertical]',
-    '[&_.pomo-dialogue-settings\\_\\_summary_p]:[-webkit-line-clamp:3]',
-    '[&_.pomo-dialogue-settings\\_\\_summary_p]:[white-space:normal]',
+    '[container:pomo-dialogue-library-item_/_inline-size] border-t-0 pt-0',
   ].join(' '),
   dialogueSettingsSequence: [
     'pomo-dialogue-settings__sequence grid gap-[0.4rem] m-0',
@@ -138,11 +134,14 @@ const CLASSES = {
     '[&_p]:overflow-hidden [&_p]:m-0 [&_p]:text-[var(--pomo-text-muted)] [&_p]:text-[0.6875rem]',
     '[&_p]:leading-[1.5] [&_p]:text-ellipsis [&_p]:whitespace-nowrap',
   ].join(' '),
-  dialogueSettingsSummary: [
-    'pomo-dialogue-settings__summary min-w-0 flex-1 [&_p]:block [&_p]:min-w-0',
-    '[&_p]:overflow-hidden [&_p]:m-0 [&_p]:text-[var(--pomo-text)] [&_p]:text-xs [&_p]:font-[650]',
-    '[&_p]:leading-[1.5] [&_p]:text-ellipsis [&_p]:whitespace-nowrap [&_>_span]:block',
-    '[&_>_span]:mt-1 [&_>_span]:text-[var(--pomo-text-muted)] [&_>_span]:text-[0.625rem]',
+  dialogueSettingsSummary: 'pomo-dialogue-settings__summary min-w-0 flex-1',
+  dialogueSettingsSummaryLibraryText: [
+    'min-w-0 overflow-hidden m-0 text-[var(--pomo-text)] text-xs font-[650] leading-[1.5]',
+    'text-ellipsis [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:3]',
+    '[white-space:normal]',
+  ].join(' '),
+  dialogueSettingsSummaryMetadata: [
+    'block mt-1 text-[var(--pomo-text-muted)] text-[0.625rem]',
   ].join(' '),
   dialogueSettingsUnconnected: [
     'pomo-dialogue-settings__unconnected m-0 [border-top:1px_solid_var(--pomo-border)]',
@@ -498,8 +497,15 @@ export default function PDialogueSettingsContent(props: PDialogueSettingsContent
                         )}
                       >
                         <div class={CLASSES.dialogueSettingsSummary}>
-                          <p title={dialogue.text}>{dialogue.text}</p>
-                          <span>{getDialogueMetadata(dialogue)}</span>
+                          <p
+                            class={CLASSES.dialogueSettingsSummaryLibraryText}
+                            title={dialogue.text}
+                          >
+                            {dialogue.text}
+                          </p>
+                          <span class={CLASSES.dialogueSettingsSummaryMetadata}>
+                            {getDialogueMetadata(dialogue)}
+                          </span>
                         </div>
                         <div class={CLASSES.dialogueSettingsActions}>
                           <DialoguePlaybackButton
@@ -529,6 +535,7 @@ export default function PDialogueSettingsContent(props: PDialogueSettingsContent
                             </button>
                             <button
                               class="pomo-dialogue-settings__delete-confirm"
+                              data-pomo-dialogue-delete-confirm=""
                               onClick={() => handleDelete(dialogue)}
                               type="button"
                             >

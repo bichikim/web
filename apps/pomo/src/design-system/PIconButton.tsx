@@ -76,6 +76,7 @@ export const PIconButton = (props: PIconButtonProps) => {
           'pomo-icon-button__icon flex-none text-[var(--pomo-brass)]',
           (props.size ?? 'medium') === 'small' ? 'size-4' : 'size-5',
         )}
+        data-pomo-icon-button-icon=""
       />
       <span
         aria-hidden="true"

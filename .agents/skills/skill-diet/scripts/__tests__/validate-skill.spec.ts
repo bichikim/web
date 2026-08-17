@@ -72,7 +72,7 @@ async function createTempDirectory() {
 
 async function runValidator(skillDirectory?: string): Promise<CommandResult> {
   const args = skillDirectory ? [SCRIPT_PATH, skillDirectory] : [SCRIPT_PATH]
-  // AI_NOTE - Avoid stdio tuple overload (ChildProcessByStdio); its EventEmitter methods are missing under some @types/node resolutions.
+  // Avoid the stdio tuple overload: some @types/node resolutions omit its EventEmitter methods.
   const child = spawn(process.execPath, args)
   let stdout = ''
   let stderr = ''

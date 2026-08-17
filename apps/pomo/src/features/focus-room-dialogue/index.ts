@@ -23,7 +23,12 @@ export type {
 } from './schema'
 export {analyzeDialogueSegmentMoods} from './segment-mood'
 export type {AnalyzeDialogueSegmentMoodsOptions} from './segment-mood'
-export {createDialogueTimeline, getDialoguePositionAtTime, getDialogueTextAtTime} from './timeline'
+export {
+  createDialogueTimeline,
+  getDialoguePositionAtTime,
+  getDialogueTextAtTime,
+  getDialogueVisemeAtTime,
+} from './timeline'
 export type {
   CreateDialogueSegmentsOptions,
   DialogueSegmentPosition,

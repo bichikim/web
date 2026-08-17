@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
 import {Tabs} from '@kobalte/core/tabs'
-import {fireEvent, render, screen} from '@solidjs/testing-library'
+import {fireEvent, render, screen, within} from '@solidjs/testing-library'
 import type {JSX} from 'solid-js'
 import {beforeEach, expect, it, vi} from 'vitest'
 
@@ -66,6 +66,7 @@ const createEvents = (overrides: Partial<PEventContextValue> = {}): PEventContex
   activeSegmentMood: () => null,
   activeSegmentPosition: () => null,
   activeText: () => null,
+  activeViseme: () => 'rest',
   deleteDialogue: vi.fn(async () => undefined),
   dialogues: () => [DIALOGUE],
   enterFocusRoom: vi.fn(),
@@ -76,6 +77,7 @@ const createEvents = (overrides: Partial<PEventContextValue> = {}): PEventContex
   getAudio: vi.fn(async () => null),
   hasEnteredFocusRoom: () => true,
   isDialoguePlaybackBlocked: () => false,
+  isDialoguePlaying: () => false,
   isDialogueScheduled: () => false,
   isEntryPlaybackBlocked: () => false,
   isLoading: () => false,
@@ -119,6 +121,28 @@ beforeEach(() => {
   vi.mocked(Tabs.Content).mockImplementation((props) => <>{props.children}</>)
   vi.mocked(PSelect).mockImplementation(() => null)
   vi.mocked(usePFeedContext).mockReturnValue(createFeeds())
+})
+
+it('should keep saved dialogue content full-width with bounded text and actions', () => {
+  vi.mocked(usePEvents).mockReturnValue(createEvents())
+
+  render(() => <PDialogueSettingsContent />)
+
+  const library = screen.getByRole('list', {name: '저장된 대화'})
+  const summary = within(library).getByText(DIALOGUE.text)
+  const row = summary.closest('.pomo-dialogue-settings__selected-dialogue--library')
+  const listenButton = within(library).getByRole('button', {name: '듣기'})
+
+  expect(row?.className).toContain('pomo-below-[36rem]:items-stretch')
+  expect(summary.className).toContain('[-webkit-line-clamp:3]')
+  expect(listenButton.textContent).toBe('듣기')
+
+  fireEvent.click(within(library).getByRole('button', {name: '삭제'}))
+  expect(
+    within(library)
+      .getByRole('button', {name: '삭제 확인'})
+      .hasAttribute('data-pomo-dialogue-delete-confirm'),
+  ).toBe(true)
 })
 
 it('should play a saved dialogue once through the character without changing event bindings', () => {

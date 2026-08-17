@@ -1,5 +1,4 @@
-/* eslint-disable no-magic-numbers -- Bézier paths use measured scene coordinates. */
-// AI_NOTE - Bézier paths and pixel coordinates are measured from fixed 1672x941 scene masters.
+/* eslint-disable no-magic-numbers -- Bézier paths and pixel coordinates are measured from fixed 1672x941 scene masters. */
 import {createRequire} from 'node:module'
 import {mkdir, mkdtemp, rename, rm} from 'node:fs/promises'
 import path from 'node:path'

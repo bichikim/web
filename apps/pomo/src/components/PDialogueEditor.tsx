@@ -77,10 +77,10 @@ const CLASSES = {
     'pomo-dialogue-editor__header w-[min(100%,_68rem)] [margin-inline:auto] flex items-start',
     'justify-between gap-8 [padding-block:1rem_2rem] [&_h1]:m-0',
     '[&_h1]:text-[clamp(1.75rem,_4vw,_2.5rem)] [&_h1]:leading-[1.2]',
-    '[&_p:not(.pomo-dialogue-editor\\_\\_eyebrow)]:max-w-[42rem]',
-    '[&_p:not(.pomo-dialogue-editor\\_\\_eyebrow)]:m-[0.75rem_0_0]',
-    '[&_p:not(.pomo-dialogue-editor\\_\\_eyebrow)]:text-[#c8baaa]',
-    '[&_p:not(.pomo-dialogue-editor\\_\\_eyebrow)]:leading-[1.6] pomo-below-[48rem]:grid',
+    '[&_p:not([data-pomo-dialogue-editor-eyebrow])]:max-w-[42rem]',
+    '[&_p:not([data-pomo-dialogue-editor-eyebrow])]:m-[0.75rem_0_0]',
+    '[&_p:not([data-pomo-dialogue-editor-eyebrow])]:text-[#c8baaa]',
+    '[&_p:not([data-pomo-dialogue-editor-eyebrow])]:leading-[1.6] pomo-below-[48rem]:grid',
     'pomo-below-[48rem]:gap-4',
   ].join(' '),
   dialogueEditorLayout: [
@@ -203,7 +203,9 @@ export default function PDialogueEditor(props: PDialogueEditorProps) {
     <main class={CLASSES.dialogueEditor}>
       <header class={CLASSES.dialogueEditorHeader}>
         <div>
-          <p class={CLASSES.dialogueEditorEyebrow}>포커스 룸 대화</p>
+          <p class={CLASSES.dialogueEditorEyebrow} data-pomo-dialogue-editor-eyebrow="">
+            포커스 룸 대화
+          </p>
           <h1>{props.dialogueId === null ? '새 대화 만들기' : '대화 편집하기'}</h1>
           <p>긴 대사는 음성에 맞게 나뉘며, 각 구간의 텍스트와 감정이 말풍선에 순서대로 표시돼요.</p>
         </div>

@@ -36,6 +36,11 @@ export interface PixiSceneMaskedPixelPush {
 
 export type PixiScenePushEffect = PixiSceneMaskedPixelPush | PixiScenePixelPush
 
+export interface PixiSceneStatePixelPush {
+  readonly channel: string
+  readonly effect: PixiScenePushEffect
+}
+
 export interface PixiScenePivotRotation {
   readonly channel?: string
   readonly center: PixiScenePoint
@@ -124,7 +129,9 @@ export interface PixiSceneLayerDefinition {
   readonly opacity?: number
   readonly parentAttachmentId?: string
   readonly position?: PixiScenePoint
+  readonly rotationDegrees?: number
   readonly source: string
+  readonly statePixelPush?: PixiSceneStatePixelPush
   readonly visible?: boolean
 }
 
@@ -138,6 +145,7 @@ export interface PixiLayerSceneDefinition {
 
 export interface PixiSceneChannelState {
   readonly opacity?: number
+  readonly pixelPushProgress?: number
   readonly visible?: boolean
 }
 

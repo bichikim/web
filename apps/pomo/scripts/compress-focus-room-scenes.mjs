@@ -349,7 +349,7 @@ const removeStaleWebps = async ({directories, expectedPaths}) => {
   ).flat()
   const unexpectedPaths = stalePaths.filter((filePath) => !expectedPaths.has(filePath))
 
-  // AI_NOTE - Runtime WebPs are generated mirrors; pruning makes removed PNG sources fail at build instead of using stale output.
+  // Runtime WebPs are generated mirrors; pruning makes removed PNG sources fail at build instead of using stale output.
   await Promise.all(unexpectedPaths.map((filePath) => rm(filePath)))
 
   return unexpectedPaths.length
