@@ -11,7 +11,7 @@ interface PPlaylist {
   readonly version: number
 }
 
-export const FOCUS_ROOM_PLAYLIST_URL = playlistSource
+export const FOCUS_ROOM_PLAYLIST_URL = '/audio/playlist.json'
 
 export interface LoadPTracksOptions {
   readonly playlistUrl?: string
@@ -66,4 +66,3 @@ export const loadPTracks = async (options: LoadPTracksOptions = {}): Promise<rea
 
   return playlist.tracks
 }
-import playlistSource from './assets/playlist.json?url'

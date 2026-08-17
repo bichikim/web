@@ -213,4 +213,5 @@ export const getSupertonicModel = (modelId: SupertonicModelId): SupertonicModel 
 export const getSupertonicModelFileUrl = (model: SupertonicModel, file: SupertonicModelFile) =>
   `${model.baseUrl}/${file.path}`
 
+export const SUPERTONIC_MODEL_ASSETS_URL = '/models/supertonic-3/manifest.json'
 export const SUPERTONIC_ORT_WASM_URL = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.23.2/dist/'

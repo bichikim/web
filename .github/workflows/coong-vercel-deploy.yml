@@ -10,7 +10,7 @@ on:
 
 env:
   PNPM_VERSION: 9
-  NODE_VERSION: 22
+  NODE_VERSION: 24
   PROJECT_CLIENT_PATH: apps/coong-client
   ARTIFACT_CLIENT_NAME: dist-client
   TARGET_DEPLOY_BRANCH: release/coong

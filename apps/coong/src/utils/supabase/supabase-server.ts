@@ -20,10 +20,7 @@ export const createSupabaseServer = (event: RequestEvent): SupabaseClient<Databa
       setAll(cookiesToSet) {
         for (const {name, value, options} of cookiesToSet) {
           try {
-            event.nativeEvent.node.res.appendHeader(
-              'Set-Cookie',
-              serializeCookieHeader(name, value, options),
-            )
+            event.response.headers.append('Set-Cookie', serializeCookieHeader(name, value, options))
           } catch {
             // ignore — headers may already be sent
           }

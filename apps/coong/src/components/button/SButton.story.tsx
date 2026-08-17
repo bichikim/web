@@ -3,8 +3,10 @@ import {fn} from 'storybook/test'
 import {SButton} from './SButton'
 import {createEffect, createSignal, onCleanup} from 'solid-js'
 
+type ButtonHandler = (event: MouseEvent | TouchEvent) => Promise<void> | void
+
 const meta = {
-  args: {onClick: fn(), onDoubleClick: fn()},
+  args: {onClick: fn<ButtonHandler>(), onDoubleClick: fn<ButtonHandler>()},
   argTypes: {
     autoLoading: {
       control: 'boolean',
@@ -276,11 +278,11 @@ export const AutoLoading: Story = {
     autoLoading: true,
     children: 'Click me to trigger loading automatically',
     color: 'primary',
-    onClick: async () => {
+    onClick: fn<ButtonHandler>(async () => {
       await new Promise((resolve) => {
         setTimeout(resolve, 3000)
       })
-    },
+    }),
   },
 }
 

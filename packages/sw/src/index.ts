@@ -18,7 +18,8 @@ export type {
 import type {Plugin, ResolvedConfig} from 'vite'
 
 export const INJECT_TARGET = '__inject_code__'
-export const libraryRoot = path.dirname(fileURLToPath(new URL(import.meta.url)))
+export const libraryRoot =
+  typeof __dirname === 'string' ? __dirname : path.dirname(fileURLToPath(new URL(import.meta.url)))
 
 /** Options for generating the service worker output. */
 export interface GenerateSWOptions {
@@ -75,6 +76,55 @@ export interface GenerateSwWithCleanUpResult {
 }
 
 export type InstallSwBuildHooksResult = GenerateSwWithCleanUpResult
+
+/** Create a Vite Environment API plugin that writes the service worker into the client output. */
+export const generateSwPlugin = (options: GenerateSwPluginOptions): Plugin => {
+  const {
+    root,
+    assetsPattern = '_build/assets/**/*',
+    cacheName,
+    cacheVersion,
+    cacheStrategies,
+    cachePriorities,
+    cacheMaxEntries,
+    cacheMaxAgeSeconds,
+    logLevel,
+    logEndpoint,
+    logSampleRate,
+    env,
+    swTemplatePath,
+  } = options
+
+  return {
+    apply: 'build',
+    applyToEnvironment(environment) {
+      return environment.name === 'client'
+    },
+    async closeBundle() {
+      const {config} = this.environment
+      const configRoot = root ?? config.root
+      const assetsRoot = path.resolve(configRoot, config.build.outDir)
+
+      await generateSW('sw.js', {
+        assets: assetsPattern,
+        assetsRoot,
+        cacheMaxAgeSeconds,
+        cacheMaxEntries,
+        cacheName,
+        cachePriorities,
+        cacheStrategies,
+        cacheVersion,
+        cwd: assetsRoot,
+        env,
+        logEndpoint,
+        logLevel,
+        logSampleRate,
+        swTemplatePath,
+      })
+    },
+    name: 'generate-sw',
+  }
+}
 
 const normalizeEnv = (env?: string): 'development' | 'production' => {
   return env === 'development' ? 'development' : 'production'

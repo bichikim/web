@@ -9,13 +9,13 @@
     "blender:export": "blender --background blender/character-studio.blend --python blender/export_glb.py",
     "blender:open": "blender blender/character-studio.blend",
     "build": "pnpm run build:web",
-    "build:apps-in-toss-ssg": "cross-env POMO_BUILD_TARGET=apps-in-toss vinxi build",
+    "build:apps-in-toss-ssg": "cross-env POMO_BUILD_TARGET=apps-in-toss vite build",
     "build:apps-in-toss-package": "ait build",
-    "build:web": "vinxi build",
+    "build:web": "vite build",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
-    "dev": "vinxi dev --host",
+    "dev": "vite dev --host",
     "licenses:list": "node scripts/list-licenses.mjs",
     "lint": "oxlint src",
     "lint:fix": "oxlint src --fix",
@@ -45,12 +45,12 @@
     "drizzle-orm": "^0.44.7",
     "libopus-wasm": "0.2.0",
     "media-chrome": "^4.19.2",
+    "nitro": "catalog:",
     "onnxruntime-web": "1.23.2",
     "openai": "^7.4.0",
     "pixi.js": "^8.19.0",
     "solid-js": "catalog:",
     "unocss": "catalog:",
-    "vinxi": "catalog:",
     "vite": "catalog:",
     "zod": "catalog:"
   },
@@ -60,9 +60,11 @@
     "@types/node": "catalog:",
     "@winter-love/unocss-config": "workspace:*",
     "dotenv": "catalog:",
-    "drizzle-kit": "^0.31.10"
+    "drizzle-kit": "^0.31.10",
+    "jiti": "catalog:",
+    "rollup": "catalog:"
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=24"
   }
 }

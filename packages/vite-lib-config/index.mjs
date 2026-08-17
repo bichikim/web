@@ -53,7 +53,6 @@ export const createConfig = ({
             index: path.join(root, 'src/index.ts'),
             ...newEntry,
           },
-          formats: ['es', 'cjs'],
           name: camelCase(name ?? ''),
         },
         rollupOptions: {
