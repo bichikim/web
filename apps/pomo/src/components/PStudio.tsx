@@ -44,7 +44,7 @@ const CLASSES = {
   entry: [
     'pomo-entry absolute inset-0 flex items-end',
     'text-[#fff9f1]',
-    '[&[data-exiting]]:animate-[pomo-entry-reveal-room_700ms_cubic-bezier(0.22,_1,_0.36,_1)_both]',
+    '[&[data-exiting]]:animate-entry-reveal-room',
     '[&[data-exiting]]:pointer-events-none',
     'motion-reduce:[&[data-exiting]]:[animation-duration:1ms]',
   ].join(' '),
@@ -65,22 +65,20 @@ const CLASSES = {
     '[filter:drop-shadow(0_0.125rem_0.1875rem_rgb(0_0_0_/_32%))]',
   ].join(' '),
   loading: [
-    'pomo-loading flex h-[var(--pomo-control-height-small)] box-border items-center gap-2',
-    'rounded-[var(--pomo-radius-control)] bg-[var(--pomo-glass)] py-0 px-[var(--pomo-padding-md)]',
-    'text-[var(--pomo-text)] text-xs font-[650] leading-4 shadow-[var(--pomo-shadow)]',
+    'pomo-loading flex h-control-sm box-border items-center gap-2',
+    'rounded-control bg-surface py-0 px-3',
+    'text-foreground text-xs font-[650] leading-4 shadow-panel',
   ].join(' '),
   loadingSpinner: [
     'pomo-loading__spinner w-4 h-4 box-border flex-none',
-    'animate-[pomo-loading-spin_1s_linear_infinite] [border:2px_solid_rgb(255_255_255_/_28%)]',
-    'border-t-[var(--pomo-brass)] rounded-[var(--pomo-radius-control)]',
+    'animate-spin [border:2px_solid_rgb(255_255_255_/_28%)]',
+    'border-t-highlight rounded-control',
     'motion-reduce:animate-[none]',
   ].join(' '),
   mediaDock: [
-    'pomo-media-dock [--pomo-player-compact-width:7.75rem] absolute',
-    'right-[max(var(--pomo-padding-lg),_env(safe-area-inset-right))]',
-    'bottom-[max(_var(--pomo-padding-lg),_calc(var(--pomo-padding-lg)_+_env(safe-area-inset-bottom))_)]',
-    'left-[max(var(--pomo-padding-lg),_env(safe-area-inset-left))] flex',
-    'flex-col items-start justify-end pointer-events-none gap-[var(--pomo-padding-md)]',
+    'pomo-media-dock [--pomo-player-compact-width:7.75rem] absolute h-media-dock',
+    'right-safe-right bottom-safe-bottom left-safe-left flex',
+    'flex-col items-start justify-end pointer-events-none gap-3',
     '[&_.pomo-player-stage]:relative [&_.pomo-player-stage]:inset-[auto]',
     '[&_.pomo-player-stage]:w-[min(29rem,_100%)] [&_.pomo-player-stage]:flex-none',
     '[&_.pomo-player-stage]:pointer-events-auto',
@@ -89,19 +87,17 @@ const CLASSES = {
     '[&_.pomo-dialogue-bubble]:pointer-events-auto',
     '[&[data-dialogue-active]:not([data-player-expanded])_.pomo-player-stage]:w-[var(--pomo-player-compact-width)]',
     '[&[data-dialogue-active]:not([data-player-expanded])_[data-pomo-player-title]]:hidden',
-    'min-[40rem]:right-[max(1.5rem,_env(safe-area-inset-right))]',
-    'min-[40rem]:bottom-[max(1.5rem,_calc(1.5rem_+_env(safe-area-inset-bottom)))]',
-    'min-[40rem]:left-[max(1.5rem,_env(safe-area-inset-left))]',
-    'min-[40rem]:h-[calc(100dvh_-_3rem_-_env(safe-area-inset-top)_-_env(safe-area-inset-bottom))]',
+    'min-[40rem]:right-safe-right-wide min-[40rem]:bottom-safe-bottom-wide',
+    'min-[40rem]:left-safe-left-wide min-[40rem]:h-media-dock-wide',
     'motion-reduce:[&_.pomo-player-stage]:transition-[none]',
   ].join(' '),
   mediaMessages: [
     'pomo-media-messages flex w-[min(36rem,_100%)] min-h-0 max-h-full [flex:0_1_auto] flex-col',
-    'gap-[var(--pomo-padding-md)] overflow-hidden pointer-events-none [&_>_*]:pointer-events-auto',
+    'gap-3 overflow-hidden pointer-events-none [&_>_*]:pointer-events-auto',
   ].join(' '),
   sceneControl: [
-    'pomo-scene-control pomo-below-[40rem]:[&.pomo-icon-button]:hidden',
-    'pomo-below-[40rem]:[&.pomo-icon-select]:hidden',
+    'pomo-scene-control max-[40rem]:[&.pomo-icon-button]:hidden',
+    'max-[40rem]:[&.pomo-icon-select]:hidden',
   ].join(' '),
   ui: 'pomo-ui pointer-events-none absolute inset-0',
 } as const
@@ -111,13 +107,6 @@ const ENTRY_STYLE: JSX.CSSProperties = {
     'radial-gradient(ellipse 125% 105% at 0% 108%, ',
     'rgb(7 5 4 / 94%) 0%, rgb(7 5 4 / 82%) 28%, ',
     'rgb(7 5 4 / 58%) 54%, rgb(7 5 4 / 30%) 74%, transparent 92%)',
-  ].join(''),
-}
-
-const MEDIA_DOCK_STYLE: JSX.CSSProperties = {
-  height: [
-    'calc(100dvh - var(--pomo-padding-lg) - var(--pomo-padding-lg) - ',
-    'env(safe-area-inset-top) - env(safe-area-inset-bottom))',
   ].join(''),
 }
 
@@ -254,7 +243,11 @@ const SceneToolbar = (props: SceneToolbarProps) => {
         />
       </div>
       <Show when={props.isSceneTransitioning}>
-        <span aria-live="polite" class={cx('pomo-backdrop', CLASSES.loading)} role="status">
+        <span
+          aria-live="polite"
+          class={cx('border border-solid border-border backdrop-blur-surface', CLASSES.loading)}
+          role="status"
+        >
           <span aria-hidden="true" class={CLASSES.loadingSpinner} />
           장면 전환 중
         </span>
@@ -327,7 +320,6 @@ const PStudioEvents = (props: PStudioEventsProps) => {
             : ''
         }
         data-player-expanded={props.isPlayerExpanded ? '' : undefined}
-        style={MEDIA_DOCK_STYLE}
       >
         <PMusicPlayer
           expanded={props.isPlayerExpanded}
@@ -438,7 +430,9 @@ export const PStudio = () => {
             class="pointer-events-none absolute inset-0 grid place-items-center bg-#17130f/24"
             role="status"
           >
-            <span class={cx('pomo-backdrop', CLASSES.loading)}>
+            <span
+              class={cx('border border-solid border-border backdrop-blur-surface', CLASSES.loading)}
+            >
               <span aria-hidden="true" class={CLASSES.loadingSpinner} />
               장면을 불러오는 중
             </span>

@@ -10,10 +10,10 @@ const CLASSES = {
     '[scrollbar-color:rgb(255_250_241_/_18%)_transparent] [scrollbar-width:thin]',
   ].join(' '),
   playerTrack: [
-    'pomo-player__track text-[var(--pomo-text-muted)]',
-    "[&[aria-current='true']]:text-[var(--pomo-text)]",
-    "[&[aria-current='true']]:shadow-[inset_2px_0_0_var(--pomo-accent)]",
-    '[&:focus-visible]:[outline:2px_solid_var(--pomo-accent)]',
+    'pomo-player__track text-muted-foreground',
+    "[&[aria-current='true']]:text-foreground",
+    "[&[aria-current='true']]:shadow-track-active",
+    '[&:focus-visible]:outline-2 [&:focus-visible]:outline-solid [&:focus-visible]:outline-primary',
     '[&:focus-visible]:[outline-offset:2px]',
   ].join(' '),
 } as const
@@ -29,9 +29,9 @@ export const PTrackList = (props: PTrackListProps) => (
     <ol
       class={cx(
         CLASSES.playerPlaylist,
-        'mb-0 mt-[var(--pomo-padding-md)] grid min-w-0',
+        'mb-0 mt-3 grid min-w-0',
         'grid-cols-[minmax(0,1fr)] max-h-38 list-none overflow-auto',
-        'gap-[var(--pomo-padding-xs)] p-[var(--pomo-padding-xs)]',
+        'gap-1 p-1',
       )}
     >
       <For each={props.tracks}>
@@ -42,11 +42,11 @@ export const PTrackList = (props: PTrackListProps) => (
               class={cx(
                 CLASSES.playerTrack,
                 'box-border flex min-w-0 w-full items-center rounded-3',
-                'gap-[var(--pomo-padding-md)]',
-                'px-[var(--pomo-padding-md)] py-2.5 text-left text-xs transition',
+                'gap-3',
+                'px-3 py-2.5 text-left text-xs transition',
                 index() === props.currentIndex
-                  ? 'bg-[var(--pomo-accent-soft)] text-[var(--pomo-text)]'
-                  : 'text-[var(--pomo-text-muted)] hover:bg-[var(--pomo-secondary-soft)]',
+                  ? 'bg-primary-soft text-foreground'
+                  : 'text-muted-foreground hover:bg-secondary-soft',
               )}
               onClick={() => props.onTrackSelect(index())}
               type="button"

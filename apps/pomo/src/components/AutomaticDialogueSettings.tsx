@@ -17,22 +17,22 @@ import {
 const CLASSES = {
   dialogueSettingsAutomatic: [
     'pomo-dialogue-settings__automatic grid gap-3.5 [border:1px_solid_rgb(214_181_133_/_24%)]',
-    'rounded-[var(--pomo-radius-panel)] bg-[rgb(214_181_133_/_4%)] p-[var(--pomo-padding-lg)]',
-    '[&_h4]:m-0 [&_p]:m-0 [&_h4]:text-[var(--pomo-text)] [&_h4]:text-[0.8125rem]',
+    'rounded-panel bg-[rgb(214_181_133_/_4%)] p-4',
+    '[&_h4]:m-0 [&_p]:m-0 [&_h4]:text-foreground [&_h4]:text-[0.8125rem]',
     '[&_h4]:font-[750] [&_>_div:first-child_>_p]:mt-[0.2rem]',
-    '[&_>_div:first-child_>_p]:text-[var(--pomo-text-muted)]',
+    '[&_>_div:first-child_>_p]:text-muted-foreground',
     '[&_>_div:first-child_>_p]:text-[0.65rem] [&_>_div:first-child_>_p]:leading-[1.5]',
   ].join(' '),
   dialogueSettingsAutomaticControls: [
     'pomo-dialogue-settings__automatic-controls grid grid-cols-[repeat(2,_minmax(0,_1fr))] gap-3',
-    'pomo-below-[32rem]:grid-cols-[1fr]',
+    'max-[32rem]:grid-cols-[1fr]',
   ].join(' '),
   dialogueSettingsAutomaticLoading: [
-    'pomo-dialogue-settings__automatic-loading text-[var(--pomo-text-muted)] text-[0.6875rem]',
+    'pomo-dialogue-settings__automatic-loading text-muted-foreground text-[0.6875rem]',
     'leading-[1.5]',
   ].join(' '),
   dialogueSettingsAutomaticMessage: [
-    'pomo-dialogue-settings__automatic-message text-[var(--pomo-text-muted)] text-[0.6875rem]',
+    'pomo-dialogue-settings__automatic-message text-muted-foreground text-[0.6875rem]',
     'leading-[1.5]',
   ].join(' '),
 } as const

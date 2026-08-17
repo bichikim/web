@@ -30,8 +30,13 @@ const meta = {
   component: PRadioSwitch,
   decorators: [
     (Story) => (
-      <main class="grid min-h-screen place-items-center bg-[var(--pomo-canvas)] p-6">
-        <div class="pomo-backdrop w-full max-w-md rounded-5 bg-[var(--pomo-surface)] p-5">
+      <main class="grid min-h-screen place-items-center bg-background p-6">
+        <div
+          class={[
+            'w-full max-w-md border border-solid border-border backdrop-blur-surface',
+            'rounded-5 bg-surface p-5',
+          ].join(' ')}
+        >
           <Story />
         </div>
       </main>

@@ -12,7 +12,7 @@ const CLASSES = {
   ].join(' '),
   screenSaverContent: [
     'pomo-screen-saver__content grid w-[min(calc(100%_-_4rem),_22rem)] justify-items-center gap-5',
-    'animate-[pomo-screen-saver-content-drift_48s_ease-in-out_infinite_alternate] text-center',
+    'animate-screen-saver-content-drift text-center',
     'motion-reduce:[animation-duration:64s]',
     'motion-reduce:[animation-timing-function:steps(4,_jump-none)]',
   ].join(' '),

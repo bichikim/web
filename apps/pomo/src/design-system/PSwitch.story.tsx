@@ -27,11 +27,11 @@ const meta = {
   component: PSwitch,
   decorators: [
     (Story) => (
-      <main class="grid min-h-screen place-items-center bg-[var(--pomo-canvas)] p-6">
+      <main class="grid min-h-screen place-items-center bg-background p-6">
         <div
           class={
-            'pomo-backdrop w-full max-w-md rounded-[var(--pomo-radius-panel)] ' +
-            'bg-[var(--pomo-surface)] p-5'
+            'border border-solid border-border backdrop-blur-surface w-full max-w-md rounded-panel ' +
+            'bg-surface p-5'
           }
         >
           <Story />

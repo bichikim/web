@@ -25,7 +25,7 @@ export const PSwitch = (props: PSwitchProps) => (
       <Switch.Label
         class={cx(
           'block w-fit cursor-pointer text-[0.9375rem] font-700 leading-[1.375rem] ' +
-            'text-[var(--pomo-text)]',
+            'text-foreground',
           props.disabled && 'cursor-not-allowed',
         )}
       >
@@ -33,7 +33,7 @@ export const PSwitch = (props: PSwitchProps) => (
       </Switch.Label>
       <Show when={props.description}>
         {(description) => (
-          <Switch.Description class="mt-1 text-xs leading-[1.125rem] text-[var(--pomo-text-muted)] empty:hidden">
+          <Switch.Description class="mt-1 text-xs leading-[1.125rem] text-muted-foreground empty:hidden">
             {description()}
           </Switch.Description>
         )}
@@ -43,17 +43,17 @@ export const PSwitch = (props: PSwitchProps) => (
     <Switch.Control
       class={cx(
         'relative box-border h-7 w-12 cursor-pointer border border-solid ' +
-          'border-[var(--pomo-border-hover)] rounded-[var(--pomo-radius-control)] ' +
+          'border-border-hover rounded-control ' +
           'bg-[rgb(255_250_241_/_12%)] outline-none ' +
           'transition-[border-color_160ms_ease,background-color_160ms_ease] ' +
-          'ui-checked:border-[var(--pomo-accent)] ui-checked:bg-[var(--pomo-accent)] ' +
-          'focus-visible:shadow-[0_0_0_2px_var(--pomo-brass)] motion-reduce:transition-none',
+          'ui-checked:border-primary ui-checked:bg-primary ' +
+          'focus-visible:shadow-focus motion-reduce:transition-none',
         props.disabled && 'cursor-not-allowed',
       )}
     >
       <Switch.Thumb
         class={
-          'absolute left-0.75 top-0.75 size-5 translate-x-0 rounded-full bg-[var(--pomo-text)] ' +
+          'absolute left-0.75 top-0.75 size-5 translate-x-0 rounded-full bg-foreground ' +
           'shadow-[0_2px_6px_rgb(8_6_4_/_35%)] ' +
           'transition-transform duration-180 ease-[cubic-bezier(0.2,0.8,0.2,1)] ' +
           'ui-checked:translate-x-5 motion-reduce:transition-none'

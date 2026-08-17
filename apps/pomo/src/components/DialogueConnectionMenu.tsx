@@ -6,23 +6,23 @@ import type {PDialogue} from '../features/focus-room-dialogue/schema'
 
 const CLASSES = {
   dialogueSettingsDialogueIcon: [
-    'pomo-dialogue-settings__dialogue-icon inline-flex flex-none text-[var(--pomo-text-muted)]',
+    'pomo-dialogue-settings__dialogue-icon inline-flex flex-none text-muted-foreground',
     'transition-[transform_140ms_ease] motion-reduce:transition-[none]',
   ].join(' '),
   dialogueSettingsDialogueIndicator: [
     'pomo-dialogue-settings__dialogue-indicator inline-flex w-4 h-4 items-center justify-center',
-    '[border:1px_solid_var(--pomo-border)] rounded text-transparent',
-    '[&[data-checked]]:border-[var(--pomo-accent)] [&[data-checked]]:bg-[var(--pomo-accent)]',
-    '[&[data-checked]]:text-[var(--pomo-text)]',
+    'border border-solid border-border rounded text-transparent',
+    '[&[data-checked]]:border-primary [&[data-checked]]:bg-primary',
+    '[&[data-checked]]:text-foreground',
   ].join(' '),
   dialogueSettingsDialogueItem: [
     'pomo-dialogue-settings__dialogue-item grid min-h-11 cursor-pointer',
     'grid-cols-[auto_minmax(0,_1fr)] items-center gap-[0.6rem] rounded-[0.625rem]',
-    'p-[var(--pomo-padding-sm)_var(--pomo-padding-md)] text-[var(--pomo-text)] text-[0.6875rem]',
-    'outline-none [&[data-highlighted]]:bg-[var(--pomo-secondary-soft)]',
+    'px-3 py-2 text-foreground text-[0.6875rem]',
+    'outline-none [&[data-highlighted]]:bg-secondary-soft',
   ].join(' '),
   dialogueSettingsDialogueItemClear: [
-    'pomo-dialogue-settings__dialogue-item--clear text-[var(--pomo-text-muted)]',
+    'pomo-dialogue-settings__dialogue-item--clear text-muted-foreground',
     '[&[data-disabled]]:[cursor:default] [&[data-disabled]]:[opacity:0.45]',
   ].join(' '),
   dialogueSettingsDialogueItemText: [
@@ -30,32 +30,32 @@ const CLASSES = {
     '[&_strong]:overflow-hidden [&_strong]:text-ellipsis [&_strong]:whitespace-nowrap',
     '[&_small]:overflow-hidden [&_small]:text-ellipsis [&_small]:whitespace-nowrap',
     '[&_strong]:block [&_strong]:max-w-[28ch] [&_strong]:text-[0.7rem] [&_strong]:font-bold',
-    '[&_small]:text-[var(--pomo-text-muted)] [&_small]:text-[0.6rem]',
+    '[&_small]:text-muted-foreground [&_small]:text-[0.6rem]',
   ].join(' '),
   dialogueSettingsDialogueMenu: [
     'pomo-dialogue-settings__dialogue-menu grid w-[min(21rem,_calc(100vw_-_2rem))]',
     'max-h-[min(18rem,_var(--kb-popper-available-height))] box-border gap-[0.15rem]',
-    'overflow-y-auto [border:1px_solid_var(--pomo-border)] rounded-[0.875rem]',
-    'bg-[var(--pomo-surface-strong)] p-[var(--pomo-padding-sm)] text-[var(--pomo-text)]',
-    'shadow-[var(--pomo-shadow)] outline-none origin-[var(--kb-menu-content-transform-origin)]',
-    'animate-[pomo-dialogue-menu-in_140ms_ease-out] motion-reduce:animate-[none]',
+    'overflow-y-auto border border-solid border-border rounded-[0.875rem]',
+    'bg-surface-strong p-2 text-foreground',
+    'shadow-panel outline-none origin-[var(--kb-menu-content-transform-origin)]',
+    'animate-dialogue-menu-in motion-reduce:animate-[none]',
   ].join(' '),
   dialogueSettingsDialogueTrigger: [
     'pomo-dialogue-settings__dialogue-trigger',
-    '[&:focus-visible]:[outline:2px_solid_var(--pomo-brass)]',
+    '[&:focus-visible]:outline-2 [&:focus-visible]:outline-solid [&:focus-visible]:outline-highlight',
     '[&:focus-visible]:[outline-offset:2px] inline-flex w-40 min-h-8 box-border cursor-pointer',
-    'items-center justify-between gap-2 [border:1px_solid_var(--pomo-border)]',
-    'rounded-[var(--pomo-radius-control)] bg-transparent',
-    '[padding-inline:var(--pomo-padding-md)_var(--pomo-padding-sm)] text-[var(--pomo-text)]',
+    'items-center justify-between gap-2 border border-solid border-border',
+    'rounded-control bg-transparent',
+    'pl-3 pr-2 text-foreground',
     '[font:inherit] text-[0.65rem] font-bold',
     'transition-[border-color_140ms_ease,_background-color_140ms_ease,_color_140ms_ease]',
     '[&:hover:not(:disabled)]:border-[rgb(214_181_133_/_38%)]',
-    '[&:hover:not(:disabled)]:bg-[var(--pomo-secondary-soft)]',
+    '[&:hover:not(:disabled)]:bg-secondary-soft',
     '[&[data-expanded]]:border-[rgb(214_181_133_/_38%)]',
-    '[&[data-expanded]]:bg-[var(--pomo-secondary-soft)] [&:disabled]:[cursor:not-allowed]',
-    '[&:disabled]:text-[var(--pomo-text-muted)] [&:disabled]:[opacity:0.55]',
+    '[&[data-expanded]]:bg-secondary-soft [&:disabled]:[cursor:not-allowed]',
+    '[&:disabled]:text-muted-foreground [&:disabled]:[opacity:0.55]',
     '[&[data-expanded]_[data-pomo-dialogue-icon]]:transform-[rotate(180deg)]',
-    'pomo-below-[42rem]:w-full motion-reduce:transition-[none]',
+    'max-[42rem]:w-full motion-reduce:transition-[none]',
   ].join(' '),
   dialogueSettingsDialogueTriggerText: [
     'pomo-dialogue-settings__dialogue-trigger-text block max-w-[20ch] min-w-0 overflow-hidden',
@@ -113,7 +113,12 @@ export const DialogueConnectionMenu = (props: DialogueConnectionMenuProps) => {
         </DropdownMenu.Icon>
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
-        <DropdownMenu.Content class={cx('pomo-backdrop', CLASSES.dialogueSettingsDialogueMenu)}>
+        <DropdownMenu.Content
+          class={cx(
+            'border border-solid border-border backdrop-blur-surface',
+            CLASSES.dialogueSettingsDialogueMenu,
+          )}
+        >
           <DropdownMenu.Item
             class={cx(
               CLASSES.dialogueSettingsDialogueItem,

@@ -38,7 +38,7 @@ const meta = {
   component: PButton,
   decorators: [
     (Story) => (
-      <main class="grid min-h-48 place-items-center bg-[var(--pomo-canvas)] p-6">
+      <main class="grid min-h-48 place-items-center bg-background p-6">
         <Story />
       </main>
     ),

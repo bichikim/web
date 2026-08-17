@@ -50,17 +50,20 @@ export const PIconButton = (props: PIconButtonProps) => {
     <button
       aria-label={props.accessibleLabel}
       class={cx(
-        'pomo-icon-button pomo-backdrop pomo-interactive-glass pomo-strong-focus-ring ' +
+        'pomo-icon-button border border-solid border-border backdrop-blur-surface ' +
+          'hover:border-border-hover hover:bg-surface-interactive ' +
+          'focus-visible:border-highlight focus-visible:bg-surface-interactive ' +
+          'ui-expanded:border-highlight ui-expanded:bg-surface-interactive ' +
+          'focus-visible:outline-3 focus-visible:outline-solid ' +
+          'focus-visible:outline-offset-2 focus-visible:outline-highlight ' +
           'inline-flex box-border items-center justify-center ' +
-          'overflow-hidden rounded-[var(--pomo-radius-control)] bg-[var(--pomo-glass)] ' +
-          'text-[var(--pomo-text)] shadow-[var(--pomo-shadow)] outline-none ' +
+          'overflow-hidden rounded-control bg-surface ' +
+          'text-foreground shadow-panel outline-none ' +
           'transition-[border-color_160ms_ease,background-color_160ms_ease,color_160ms_ease] ' +
           'motion-reduce:transition-none',
         (props.size ?? 'medium') === 'small'
-          ? 'h-[var(--pomo-control-height-small)] min-w-[var(--pomo-control-height-small)] ' +
-              'px-[var(--pomo-padding-sm)]'
-          : 'h-[var(--pomo-control-height-medium)] min-w-[var(--pomo-control-height-medium)] ' +
-              'px-[var(--pomo-padding-md)]',
+          ? 'h-control-sm min-w-control-sm px-2'
+          : 'h-control-md min-w-control-md px-3',
         props.class,
       )}
       data-feedback-visible={feedbackVisible() ? '' : undefined}
@@ -73,7 +76,7 @@ export const PIconButton = (props: PIconButtonProps) => {
         aria-hidden="true"
         class={cx(
           props.icon,
-          'pomo-icon-button__icon flex-none text-[var(--pomo-brass)]',
+          'pomo-icon-button__icon flex-none text-highlight',
           (props.size ?? 'medium') === 'small' ? 'size-4' : 'size-5',
         )}
         data-pomo-icon-button-icon=""
@@ -81,7 +84,7 @@ export const PIconButton = (props: PIconButtonProps) => {
       <span
         aria-hidden="true"
         class={cx(
-          `max-w-0 overflow-hidden whitespace-nowrap text-[var(--pomo-text)] font-650 leading-4 ` +
+          `max-w-0 overflow-hidden whitespace-nowrap text-foreground font-650 leading-4 ` +
             `opacity-0 ${FEEDBACK_TRANSITION} ` +
             `motion-reduce:transition-none`,
           (props.size ?? 'medium') === 'small' ? 'text-xs' : 'text-[0.8125rem]',

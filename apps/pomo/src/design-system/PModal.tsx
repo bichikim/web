@@ -2,21 +2,12 @@ import {Dialog} from '@kobalte/core/dialog'
 import {cva, cx} from 'class-variance-authority'
 import {type JSX, Show} from 'solid-js'
 
-// oxlint-disable-next-line eslint-js/max-len -- UnoCSS must extract the complete arbitrary-value utility.
-const MODAL_MAX_HEIGHT =
-  'max-h-[calc(100dvh-2rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))]'
-
-// oxlint-disable-next-line eslint-js/max-len -- UnoCSS must extract the complete arbitrary-value utility.
-const MOBILE_TOP_MODAL_MAX_HEIGHT =
-  'max-[36rem]:max-h-[calc(100dvh-env(safe-area-inset-top)-env(safe-area-inset-bottom)-(var(--pomo-padding-xl)*2))]'
-
 const modalContentClasses = cva(
-  `pomo-backdrop fixed left-1/2 flex ${MODAL_MAX_HEIGHT} ` +
+  `fixed left-1/2 flex max-h-modal border border-solid border-border backdrop-blur-surface ` +
     `w-[min(calc(100vw-2rem),28rem)] -translate-x-1/2 flex-col overflow-hidden ` +
-    `box-border rounded-[var(--pomo-radius-panel)] bg-[var(--pomo-surface-strong)] ` +
-    `text-[var(--pomo-text)] shadow-[var(--pomo-shadow)] outline-none ` +
-    `[animation:pomo-modal-content-in_180ms_cubic-bezier(0.2,0.8,0.2,1)] ` +
-    `focus-visible:border-[var(--pomo-brass)] motion-reduce:animate-none`,
+    `box-border rounded-panel bg-surface-strong ` +
+    `text-foreground shadow-panel outline-none ` +
+    `focus-visible:border-highlight motion-reduce:animate-none`,
   {
     defaultVariants: {
       placement: 'center',
@@ -24,14 +15,10 @@ const modalContentClasses = cva(
     },
     variants: {
       placement: {
-        center: 'top-1/2 -translate-y-1/2',
+        center: 'top-1/2 -translate-y-1/2 animate-modal-content-in',
         top:
-          `top-[calc(env(safe-area-inset-top)+var(--pomo-space-8))] ` +
-          `max-h-[calc(100dvh-env(safe-area-inset-top)-env(safe-area-inset-bottom)-(var(--pomo-space-8)*2))] ` +
-          `translate-y-0 [animation-name:pomo-modal-content-in-top] ` +
-          `max-[36rem]:top-[calc(env(safe-area-inset-top)+var(--pomo-padding-xl))] ${
-            MOBILE_TOP_MODAL_MAX_HEIGHT
-          }`,
+          `top-modal-top max-h-modal-top translate-y-0 animate-modal-content-in-top ` +
+          `max-[36rem]:top-modal-top-compact max-[36rem]:max-h-modal-top-compact`,
       },
       size: {
         regular: '',
@@ -49,16 +36,16 @@ const modalHeaderClasses = cva('flex-none', {
     layout: {
       closeOnly: 'flex items-start justify-end gap-4 border-b-0 px-3 pb-0 pt-3',
       default:
-        'flex items-start justify-between gap-4 border-b border-solid border-[var(--pomo-border)] ' +
-        'px-[var(--pomo-padding-xl)] pb-[var(--pomo-padding-lg)] pt-[var(--pomo-padding-xl)]',
+        'flex items-start justify-between gap-4 border-b border-solid border-border ' +
+        'px-5 pb-4 pt-5',
       navigation:
         'grid min-h-16 grid-cols-[auto_minmax(0,1fr)_auto] items-stretch gap-0 ' +
-        'border-b border-solid border-[var(--pomo-border)] px-[var(--pomo-padding-xl)] py-0 ' +
-        'max-[36rem]:grid-cols-[minmax(0,1fr)_auto] max-[36rem]:px-[var(--pomo-padding-lg)] ' +
-        'max-[36rem]:pb-0 max-[36rem]:pt-[var(--pomo-padding-md)]',
+        'border-b border-solid border-border px-5 py-0 ' +
+        'max-[36rem]:grid-cols-[minmax(0,1fr)_auto] max-[36rem]:px-4 ' +
+        'max-[36rem]:pb-0 max-[36rem]:pt-3',
       navigationVisuallyHidden:
         'grid min-h-14 grid-cols-[minmax(0,1fr)_auto] items-stretch gap-0 ' +
-        'border-b border-solid border-[var(--pomo-border)] p-0',
+        'border-b border-solid border-border p-0',
     },
   },
 })
@@ -101,7 +88,7 @@ export const PModal = (props: PModalProps) => (
       <Dialog.Overlay
         class={
           'fixed inset-0 bg-[rgb(8_6_4_/_68%)] backdrop-blur-[12px] ' +
-          '[animation:pomo-modal-overlay-in_140ms_ease-out] motion-reduce:animate-none'
+          'animate-modal-overlay-in motion-reduce:animate-none'
         }
       />
       <Dialog.Content
@@ -153,7 +140,7 @@ export const PModal = (props: PModalProps) => (
                 props.navigation !== undefined && 'self-center',
               )}
             >
-              <Dialog.Title class="m-0 text-lg font-750 leading-6 text-[var(--pomo-text)]">
+              <Dialog.Title class="m-0 text-lg font-750 leading-6 text-foreground">
                 {props.title}
               </Dialog.Title>
               <Show when={props.description}>
@@ -161,7 +148,7 @@ export const PModal = (props: PModalProps) => (
                   <Dialog.Description
                     class={
                       'mb-0 ml-0 mr-0 mt-1.5 text-[0.8125rem] leading-5 ' +
-                      'text-[var(--pomo-text-muted)] empty:hidden'
+                      'text-muted-foreground empty:hidden'
                     }
                   >
                     {description()}
@@ -176,7 +163,7 @@ export const PModal = (props: PModalProps) => (
                 class={cx(
                   'min-w-0 overflow-hidden',
                   props.titleVisibility === 'visually-hidden'
-                    ? 'pl-[var(--pomo-padding-xs)] max-[36rem]:col-span-1 ' +
+                    ? 'pl-1 max-[36rem]:col-span-1 ' +
                         'max-[36rem]:col-start-1 max-[36rem]:row-start-1'
                     : 'mx-6 max-[36rem]:col-span-full max-[36rem]:row-start-2 max-[36rem]:mx-0',
                 )}
@@ -191,19 +178,19 @@ export const PModal = (props: PModalProps) => (
               props.navigation !== undefined && 'self-stretch',
               props.navigation !== undefined &&
                 props.titleVisibility === 'visually-hidden' &&
-                'border-l border-solid border-[var(--pomo-border)] px-[var(--pomo-padding-md)] ' +
+                'border-l border-solid border-border px-3 ' +
                   'max-[36rem]:col-start-2 max-[36rem]:row-start-1 ' +
-                  'max-[36rem]:px-[var(--pomo-padding-sm)]',
+                  'max-[36rem]:px-2',
             )}
           >
             <Dialog.CloseButton
               aria-label="닫기"
               class={cx(
                 'grid flex-none cursor-pointer place-items-center border-0 ' +
-                  'rounded-[var(--pomo-radius-control)] bg-transparent text-[var(--pomo-text-muted)] ' +
+                  'rounded-control bg-transparent text-muted-foreground ' +
                   'outline-none transition-[background-color_140ms_ease,color_140ms_ease] ' +
-                  'hover:bg-[var(--pomo-secondary-soft)] hover:text-[var(--pomo-text)] ' +
-                  'focus-visible:shadow-[0_0_0_2px_var(--pomo-brass)] motion-reduce:transition-none',
+                  'hover:bg-secondary-soft hover:text-foreground ' +
+                  'focus-visible:shadow-focus motion-reduce:transition-none',
                 props.navigation !== undefined && props.titleVisibility === 'visually-hidden'
                   ? 'size-11'
                   : 'size-9',
@@ -215,7 +202,7 @@ export const PModal = (props: PModalProps) => (
         </header>
         <div
           class={cx(
-            'min-h-0 overscroll-contain p-[var(--pomo-padding-xl)] ' +
+            'min-h-0 overscroll-contain p-5 ' +
               '[scrollbar-color:rgb(255_250_241_/_24%)_transparent] [scrollbar-width:thin]',
             (props.contentOverflow ?? 'auto') === 'hidden' ? 'overflow-hidden' : 'overflow-y-auto',
           )}

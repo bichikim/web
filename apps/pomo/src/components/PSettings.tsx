@@ -25,13 +25,13 @@ import {
 const CLASSES = {
   settingsContent: 'pomo-settings__content grid gap-5',
   settingsScene: [
-    'pomo-settings__scene grid gap-4 pb-[var(--pomo-padding-xl)]',
-    '[border-bottom:1px_solid_var(--pomo-border)] min-[40rem]:hidden',
+    'pomo-settings__scene grid gap-4 pb-5',
+    'border-b border-solid border-border min-[40rem]:hidden',
   ].join(' '),
   settingsScreenSaver: [
-    'pomo-settings__screen-saver grid gap-2 pt-[var(--pomo-padding-lg)]',
-    '[border-top:1px_solid_var(--pomo-border)] [&_>_div]:w-full [&_p]:m-0',
-    '[&_p]:text-[var(--pomo-text-muted)] [&_p]:text-xs [&_p]:leading-4.5',
+    'pomo-settings__screen-saver grid gap-2 pt-4',
+    'border-t border-solid border-border [&_>_div]:w-full [&_p]:m-0',
+    '[&_p]:text-muted-foreground [&_p]:text-xs [&_p]:leading-4.5',
   ].join(' '),
   settingsWakeLock: 'pomo-settings__wake-lock min-h-12',
 } as const
@@ -67,22 +67,22 @@ const SETTINGS_TAB_LIST_CLASSES =
 
 const SETTINGS_TAB_SCROLL_BUTTON_CLASSES =
   'absolute inset-y-0 flex w-6 cursor-pointer items-center border-0 p-0 ' +
-  'text-[var(--pomo-text-muted)] outline-none transition-colors hover:text-[var(--pomo-text)] ' +
-  'focus-visible:text-[var(--pomo-brass)] motion-reduce:transition-none'
+  'text-muted-foreground outline-none transition-colors hover:text-foreground ' +
+  'focus-visible:text-highlight motion-reduce:transition-none'
 
 const TAB_SCROLL_RATIO = 0.7
 
 const SETTINGS_TAB_CLASSES =
   'inline-flex min-h-11 shrink-0 cursor-pointer items-center justify-center gap-2 ' +
-  'whitespace-nowrap border-0 rounded-0 bg-transparent px-[var(--pomo-padding-lg)] ' +
-  'text-[0.8125rem] font-700 text-[var(--pomo-text-muted)] ' +
+  'whitespace-nowrap border-0 rounded-0 bg-transparent px-4 ' +
+  'text-[0.8125rem] font-700 text-muted-foreground ' +
   'shadow-[inset_0_-0.1875rem_0_transparent] outline-none ' +
   'transition-[background-color_140ms_ease,box-shadow_140ms_ease,color_140ms_ease] ' +
-  'hover:bg-[var(--pomo-secondary-soft)] hover:text-[var(--pomo-text)] ' +
-  'ui-selected:bg-transparent ui-selected:text-[var(--pomo-text)] ' +
-  'ui-selected:shadow-[inset_0_-0.1875rem_0_var(--pomo-brass)] ' +
+  'hover:bg-secondary-soft hover:text-foreground ' +
+  'ui-selected:bg-transparent ui-selected:text-foreground ' +
+  'ui-selected:shadow-tab-active ' +
   'focus-visible:outline-2 focus-visible:outline-offset-[-2px] ' +
-  'focus-visible:outline-[var(--pomo-brass)] ' +
+  'focus-visible:outline-highlight ' +
   'motion-reduce:transition-none'
 
 const PSettingsTabList = () => {
@@ -157,7 +157,7 @@ const PSettingsTabList = () => {
           aria-label="이전 설정 탭 보기"
           class={
             `${SETTINGS_TAB_SCROLL_BUTTON_CLASSES} left-0 justify-start ` +
-            'bg-gradient-to-r from-[var(--pomo-surface-strong)] to-transparent'
+            'bg-gradient-to-r from-surface-strong to-transparent'
           }
           onClick={() => scrollTabs(-1)}
           type="button"
@@ -170,7 +170,7 @@ const PSettingsTabList = () => {
           aria-label="다음 설정 탭 보기"
           class={
             `${SETTINGS_TAB_SCROLL_BUTTON_CLASSES} right-0 justify-end ` +
-            'bg-gradient-to-r from-transparent to-[var(--pomo-surface-strong)]'
+            'bg-gradient-to-r from-transparent to-surface-strong'
           }
           onClick={() => scrollTabs(1)}
           type="button"
@@ -257,12 +257,7 @@ export const PSettings = (props: PSettingsProps) => {
                   value={props.gaze ?? 'focused'}
                 />
               </div>
-              <div
-                class={
-                  'grid gap-[var(--pomo-padding-lg)] border-b border-solid ' +
-                  'border-[var(--pomo-border)] pb-[var(--pomo-padding-xl)]'
-                }
-              >
+              <div class="grid gap-4 border-b border-solid border-border pb-5">
                 <PRadioSwitch
                   label="장면 움직임"
                   onChange={(motionMode) => props.onMotionModeChange?.(motionMode)}

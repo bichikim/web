@@ -133,7 +133,7 @@ it('should keep saved dialogue content full-width with bounded text and actions'
   const row = summary.closest('.pomo-dialogue-settings__selected-dialogue--library')
   const listenButton = within(library).getByRole('button', {name: '듣기'})
 
-  expect(row?.className).toContain('pomo-below-[36rem]:items-stretch')
+  expect(row?.className).toContain('max-[36rem]:items-stretch')
   expect(summary.className).toContain('[-webkit-line-clamp:3]')
   expect(listenButton.textContent).toBe('듣기')
 

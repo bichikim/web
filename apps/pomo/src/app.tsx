@@ -1,6 +1,5 @@
 import '@unocss/reset/tailwind.css'
 import 'virtual:uno.css'
-import './global.css'
 
 import {MetaProvider, Title} from '@solidjs/meta'
 import {Router} from '@solidjs/router'
@@ -17,7 +16,7 @@ export default function App() {
           <Title>Pomo</Title>
           <ErrorBoundary
             fallback={(error) => (
-              <main class="grid min-h-dvh place-items-center bg-#17131f p-6 text-#f8edf1">
+              <main class="grid min-h-dvh place-items-center bg-background p-6 text-foreground">
                 <section class="max-w-md text-center">
                   <h1 class="text-2xl font-700">Pomo를 불러오지 못했어요</h1>
                   <p class="mt-3 opacity-70">{String(error)}</p>
