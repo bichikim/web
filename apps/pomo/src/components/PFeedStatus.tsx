@@ -9,7 +9,7 @@ const CLASSES = {
     'pomo-feed-status flex w-[min(36rem,_100%)] box-border items-center gap-3',
     'border border-solid rounded-2xl p-[0.8rem_0.9rem]',
     'text-foreground shadow-[inset_0_1px_0_rgb(255_255_255_/_8%)] pointer-events-auto',
-    'backdrop-filter-[blur(0.75rem)] [-webkit-backdrop-filter:blur(0.75rem)]',
+    'backdrop-blur-[0.75rem] [-webkit-backdrop-filter:blur(0.75rem)]',
     "[&_>_[class*='i-tabler']]:flex-none [&_>_[class*='i-tabler']]:text-highlight",
     "max-[34rem]:[&[data-state='recovery']]:flex-wrap",
   ].join(' '),

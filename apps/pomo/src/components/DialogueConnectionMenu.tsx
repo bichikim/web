@@ -54,7 +54,7 @@ const CLASSES = {
     '[&[data-expanded]]:border-[rgb(214_181_133_/_38%)]',
     '[&[data-expanded]]:bg-secondary-soft [&:disabled]:[cursor:not-allowed]',
     '[&:disabled]:text-muted-foreground [&:disabled]:[opacity:0.55]',
-    '[&[data-expanded]_[data-pomo-dialogue-icon]]:transform-[rotate(180deg)]',
+    '[&[data-expanded]_[data-pomo-dialogue-icon]]:rotate-180',
     'max-[42rem]:w-full motion-reduce:transition-[none]',
   ].join(' '),
   dialogueSettingsDialogueTriggerText: [

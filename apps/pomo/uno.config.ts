@@ -12,10 +12,12 @@ export default mergeConfigs([
       const layoutSpacingWide = spacing('6')
       const modalSpacing = spacing('8')
       const modalSpacingCompact = spacing('5')
+      const panelInset = spacing('2')
+      const panelRadius = theme.borderRadius?.panel ?? '1.25rem'
 
       theme.borderRadius = {
         ...theme.borderRadius,
-        'panel-inner': 'calc(1.25rem - 0.5rem)',
+        'panel-inner': `calc(${panelRadius} - ${panelInset})`,
       }
       theme.height = {
         ...theme.height,

@@ -38,8 +38,8 @@ const CLASSES = {
   playerPlay: [
     'pomo-player__play w-11 h-11 text-white bg-primary',
     'shadow-[0_8px_20px_rgb(125_49_29_/_34%),_inset_0_1px_0_rgb(255_255_255_/_24%)]',
-    'transition-[transform_160ms_ease,_filter_160ms_ease] [&:hover]:filter-[brightness(1.08)]',
-    '[&:hover]:transform-[translateY(-1px)] motion-reduce:transition-[none]',
+    'transition-[transform_160ms_ease,_filter_160ms_ease] [&:hover]:brightness-[1.08]',
+    '[&:hover]:translate-y-[-1px] motion-reduce:transition-[none]',
   ].join(' '),
   playerPlayLarge: 'pomo-player__play--large w-13 h-13',
   playerPlaySummary: [
