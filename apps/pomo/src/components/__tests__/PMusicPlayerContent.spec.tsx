@@ -108,66 +108,106 @@ describe('PMusicPlayerContent', () => {
     expect(screen.getByRole('button', {name: '플레이어 접기'})).toBeTruthy()
   })
 
-  it('should render state-specific progress presentations', () => {
+  it('should preserve the expanded player while transitioning its presentation', () => {
     const result = render(() => <PMusicPlayerContent tracks={TRACKS} />)
     const controller = result.container.querySelector('media-controller')
     const playerBase = result.container.querySelector('.pomo-player__base')
     const visualizerFrame = result.container.querySelector('.pomo-player__visualizer-frame')
-    const progressBar = result.container.querySelector('media-time-range')
+    const collapsedProgressBar = result.container.querySelector(
+      'media-time-range.pomo-player__progress--collapsed',
+    )
+    const expandedProgressBar = result.container.querySelector(
+      'media-time-range.pomo-player__progress--expanded',
+    )
+    const expandedFrame = result.container.querySelector('.pomo-player__expanded-frame')
+    const expandedInner = result.container.querySelector('.pomo-player__expanded-inner')
 
     if (
       !(controller instanceof HTMLElement) ||
       !(playerBase instanceof HTMLElement) ||
       !(visualizerFrame instanceof HTMLElement) ||
-      !(progressBar instanceof HTMLElement)
+      !(collapsedProgressBar instanceof HTMLElement) ||
+      !(expandedProgressBar instanceof HTMLElement) ||
+      !(expandedFrame instanceof HTMLElement) ||
+      !(expandedInner instanceof HTMLElement)
     ) {
       throw new TypeError('Expected the Pomo player layers to be rendered')
     }
 
-    expect(result.container.querySelectorAll('media-time-range')).toHaveLength(1)
+    expect(result.container.querySelectorAll('media-time-range')).toHaveLength(2)
     expect(controller.classList.contains('overflow-hidden')).toBe(true)
     expect(controller.classList.contains('overflow-visible')).toBe(false)
     expect(controller.classList.contains('pb-0.5')).toBe(true)
     expect(playerBase.classList.contains('rounded-panel')).toBe(true)
     expect(visualizerFrame.classList.contains('overflow-hidden')).toBe(true)
     expect(visualizerFrame.classList.contains('rounded-panel')).toBe(true)
-    expect(progressBar.classList.contains('flex')).toBe(true)
-    expect(progressBar.classList.contains('absolute')).toBe(true)
-    expect(progressBar.classList.contains('inset-0')).toBe(true)
-    expect(progressBar.classList.contains('h-full')).toBe(true)
-    expect(progressBar.classList.contains('w-full')).toBe(true)
-    expect(progressBar.classList.contains('pointer-events-none')).toBe(true)
-    expect(Reflect.get(progressBar, 'disabled')).toBe(true)
-    expect(progressBar.getAttribute('aria-hidden')).toBe('true')
-    expect(progressBar.classList.contains('[--media-range-track-height:100%]')).toBe(true)
-    expect(progressBar.classList.contains('[--media-range-bar-color:rgb(0_0_0_/_25%)]')).toBe(true)
-    expect(progressBar.classList.contains('[--media-time-range-buffered-color:transparent]')).toBe(
-      true,
-    )
-    expect(progressBar.classList.contains('[--media-range-track-background:transparent]')).toBe(
-      true,
-    )
-    expect(progressBar.classList.contains('[--media-range-padding:0px]')).toBe(true)
-    expect(progressBar.classList.contains('[--media-range-thumb-opacity:0]')).toBe(true)
-    expect(progressBar.classList.contains('hover:[--media-range-thumb-opacity:1]')).toBe(false)
-    expect(progressBar.classList.contains('focus-within:[--media-range-thumb-opacity:1]')).toBe(
+    expect(collapsedProgressBar.classList.contains('flex')).toBe(true)
+    expect(collapsedProgressBar.classList.contains('absolute')).toBe(true)
+    expect(collapsedProgressBar.classList.contains('inset-0')).toBe(true)
+    expect(collapsedProgressBar.classList.contains('h-full')).toBe(true)
+    expect(collapsedProgressBar.classList.contains('w-full')).toBe(true)
+    expect(collapsedProgressBar.classList.contains('pointer-events-none')).toBe(true)
+    expect(collapsedProgressBar.classList.contains('is-hidden')).toBe(false)
+    expect(Reflect.get(collapsedProgressBar, 'disabled')).toBe(true)
+    expect(collapsedProgressBar.getAttribute('aria-hidden')).toBe('true')
+    expect(collapsedProgressBar.classList.contains('[--media-range-track-height:100%]')).toBe(true)
+    expect(
+      collapsedProgressBar.classList.contains('[--media-range-bar-color:rgb(0_0_0_/_25%)]'),
+    ).toBe(true)
+    expect(
+      collapsedProgressBar.classList.contains('[--media-time-range-buffered-color:transparent]'),
+    ).toBe(true)
+    expect(
+      collapsedProgressBar.classList.contains('[--media-range-track-background:transparent]'),
+    ).toBe(true)
+    expect(collapsedProgressBar.classList.contains('[--media-range-padding:0px]')).toBe(true)
+    expect(collapsedProgressBar.classList.contains('[--media-range-thumb-opacity:0]')).toBe(true)
+    expect(collapsedProgressBar.classList.contains('hover:[--media-range-thumb-opacity:1]')).toBe(
       false,
     )
+    expect(
+      collapsedProgressBar.classList.contains('focus-within:[--media-range-thumb-opacity:1]'),
+    ).toBe(false)
+    expect(collapsedProgressBar.classList.contains('[&.is-hidden]:opacity-0')).toBe(true)
+    expect(collapsedProgressBar.classList.contains('motion-reduce:transition-none')).toBe(true)
+
+    expect(expandedFrame.classList.contains('grid-rows-[0fr]')).toBe(true)
+    expect(expandedFrame.classList.contains('is-expanded')).toBe(false)
+    expect(
+      expandedFrame.classList.contains(
+        '[transition:grid-template-rows_280ms_cubic-bezier(0.22,_1,_0.36,_1)]',
+      ),
+    ).toBe(true)
+    expect(expandedFrame.classList.contains('motion-reduce:transition-none')).toBe(true)
+    expect(expandedFrame.getAttribute('aria-hidden')).toBe('true')
+    expect(Reflect.get(expandedFrame, 'inert')).toBe(true)
+    expect(expandedInner.classList.contains('opacity-0')).toBe(true)
+    expect(expandedInner.classList.contains('pointer-events-none')).toBe(true)
+    expect(expandedInner.classList.contains('overflow-clip')).toBe(true)
+    expect(expandedInner.classList.contains('[overflow-clip-margin:0.5rem]')).toBe(true)
+    expect(expandedInner.classList.contains('is-expanded')).toBe(false)
+    expect(Reflect.get(expandedProgressBar, 'disabled')).toBe(true)
 
     fireEvent.click(screen.getByRole('button', {name: '플레이어 펼치기'}))
-    const expandedProgressBar = result.container.querySelector('media-time-range')
 
-    if (!(expandedProgressBar instanceof HTMLElement)) {
-      throw new TypeError('Expected the expanded Pomo progress bar to be rendered')
-    }
-
-    expect(result.container.querySelectorAll('media-time-range')).toHaveLength(1)
-    expect(expandedProgressBar).not.toBe(progressBar)
+    expect(result.container.querySelectorAll('media-time-range')).toHaveLength(2)
+    expect(
+      result.container.querySelector('media-time-range.pomo-player__progress--collapsed'),
+    ).toBe(collapsedProgressBar)
+    expect(result.container.querySelector('media-time-range.pomo-player__progress--expanded')).toBe(
+      expandedProgressBar,
+    )
     expect(controller.classList.contains('overflow-hidden')).toBe(false)
     expect(controller.classList.contains('overflow-visible')).toBe(true)
-    expect(controller.classList.contains('p-2')).toBe(true)
+    expect(controller.classList.contains('pb-0.5')).toBe(true)
     expect(visualizerFrame.classList.contains('rounded-panel')).toBe(false)
     expect(visualizerFrame.classList.contains('rounded-t-panel')).toBe(true)
+    expect(collapsedProgressBar.classList.contains('is-hidden')).toBe(true)
+    expect(expandedFrame.classList.contains('is-expanded')).toBe(true)
+    expect(expandedFrame.getAttribute('aria-hidden')).toBeNull()
+    expect(Reflect.get(expandedFrame, 'inert')).toBe(false)
+    expect(expandedInner.classList.contains('is-expanded')).toBe(true)
+    expect(Reflect.get(expandedProgressBar, 'disabled')).toBe(false)
     expect(expandedProgressBar.classList.contains('h-0.5')).toBe(true)
     expect(expandedProgressBar.classList.contains('[--media-range-bar-color:#fffaf1]')).toBe(true)
     expect(

@@ -1,7 +1,7 @@
 import 'media-chrome'
 
 import {cx} from 'class-variance-authority'
-import {For, Show} from 'solid-js'
+import {For} from 'solid-js'
 
 import type {PTrack} from '../features/focus-room-audio/focus-room-playlist'
 import type {RepeatMode} from '../features/focus-room-audio/playback-policy'
@@ -35,6 +35,18 @@ const CLASSES = {
     'max-[28rem]:[&_>_div:nth-child(2)]:grid-cols-[auto_1fr]',
     'max-[28rem]:[&_>_div:nth-child(2)_>_div:last-child]:hidden',
   ].join(' '),
+  playerExpandedFrame: [
+    'pomo-player__expanded-frame grid min-h-0 grid-rows-[0fr]',
+    '[transition:grid-template-rows_280ms_cubic-bezier(0.22,_1,_0.36,_1)]',
+    '[&.is-expanded]:grid-rows-[1fr] motion-reduce:transition-none',
+  ].join(' '),
+  playerExpandedInner: [
+    'pomo-player__expanded-inner min-h-0 overflow-clip [overflow-clip-margin:0.5rem]',
+    'opacity-0 pointer-events-none',
+    '[transition:opacity_160ms_ease]',
+    '[&.is-expanded]:opacity-100 [&.is-expanded]:pointer-events-auto',
+    'motion-reduce:transition-none',
+  ].join(' '),
   playerPlay: [
     'pomo-player__play w-11 h-11 text-white bg-primary',
     'shadow-[0_8px_20px_rgb(125_49_29_/_34%),_inset_0_1px_0_rgb(255_255_255_/_24%)]',
@@ -58,15 +70,17 @@ const CLASSES = {
     'motion-reduce:[--media-range-thumb-transition:none]',
   ].join(' '),
   playerProgressCollapsed: [
-    'pointer-events-none absolute inset-0 h-full w-full',
+    'pomo-player__progress--collapsed pointer-events-none absolute inset-0 h-full w-full',
     '[--media-control-height:100%] [--media-range-padding:0px]',
     '[--media-range-track-height:100%] [--media-range-track-border-radius:0px]',
     '[--media-range-bar-color:rgb(0_0_0_/_25%)]',
     '[--media-time-range-buffered-color:transparent]',
     '[--media-range-track-background:transparent]',
+    '[transition:opacity_160ms_ease] [&.is-hidden]:opacity-0',
+    'motion-reduce:transition-none',
   ].join(' '),
   playerProgressExpanded: [
-    '-mx-2 h-0.5 w-[calc(100%+1rem)] flex-none',
+    'pomo-player__progress--expanded -mx-2 h-0.5 w-[calc(100%+1rem)] flex-none',
     '[--media-control-height:2px] [--media-range-padding:0px]',
     '[--media-range-bar-color:#fffaf1]',
     '[--media-time-range-buffered-color:rgb(255_250_241_/_40%)]',
@@ -207,8 +221,8 @@ export const MusicPlayerView = (props: MusicPlayerViewProps) => (
       class={cx(
         CLASSES.player,
         CLASSES.playerShell,
-        'relative w-full',
-        props.expanded ? 'overflow-visible p-2' : 'overflow-hidden px-2 pt-2 pb-0.5',
+        'relative w-full px-2 pt-2 pb-0.5',
+        props.expanded ? 'overflow-visible' : 'overflow-hidden',
         'rounded-panel',
       )}
     >
@@ -257,13 +271,15 @@ export const MusicPlayerView = (props: MusicPlayerViewProps) => (
         </div>
       </div>
 
-      <Show when={!props.expanded}>
-        <media-time-range
-          aria-hidden="true"
-          class={cx(CLASSES.playerProgress, CLASSES.playerProgressCollapsed)}
-          disabled={true}
-        />
-      </Show>
+      <media-time-range
+        aria-hidden="true"
+        class={cx(
+          CLASSES.playerProgress,
+          CLASSES.playerProgressCollapsed,
+          props.expanded && 'is-hidden',
+        )}
+        disabled={true}
+      />
 
       <div
         class={cx('pomo-player__summary relative flex min-h-16 items-center', 'gap-3 px-2 py-2')}
@@ -314,26 +330,33 @@ export const MusicPlayerView = (props: MusicPlayerViewProps) => (
         </button>
       </div>
 
-      <Show when={props.expanded}>
-        <media-time-range
-          class={cx(CLASSES.playerProgress, CLASSES.playerProgressExpanded, MEDIA_FOCUS_CLASSES)}
-        />
-      </Show>
+      <div
+        aria-hidden={props.expanded ? undefined : 'true'}
+        class={cx(CLASSES.playerExpandedFrame, props.expanded && 'is-expanded')}
+        inert={!props.expanded}
+      >
+        <div class={cx(CLASSES.playerExpandedInner, props.expanded && 'is-expanded')}>
+          <media-time-range
+            class={cx(CLASSES.playerProgress, CLASSES.playerProgressExpanded, MEDIA_FOCUS_CLASSES)}
+            disabled={!props.expanded}
+          />
 
-      <Show when={props.expanded}>
-        <ExpandedPlayerControls
-          currentIndex={props.currentIndex}
-          currentTrack={props.currentTrack}
-          onNextTrack={props.onNextTrack}
-          onPreviousTrack={props.onPreviousTrack}
-          onRepeatModeChange={props.onRepeatModeChange}
-          onShuffleChange={props.onShuffleChange}
-          onTrackSelect={props.onTrackSelect}
-          repeatMode={props.repeatMode}
-          shuffleEnabled={props.shuffleEnabled}
-          tracks={props.tracks}
-        />
-      </Show>
+          <ExpandedPlayerControls
+            currentIndex={props.currentIndex}
+            currentTrack={props.currentTrack}
+            onNextTrack={props.onNextTrack}
+            onPreviousTrack={props.onPreviousTrack}
+            onRepeatModeChange={props.onRepeatModeChange}
+            onShuffleChange={props.onShuffleChange}
+            onTrackSelect={props.onTrackSelect}
+            repeatMode={props.repeatMode}
+            shuffleEnabled={props.shuffleEnabled}
+            tracks={props.tracks}
+          />
+
+          <div aria-hidden="true" class="h-1.5" />
+        </div>
+      </div>
     </media-controller>
   </div>
 )
