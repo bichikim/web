@@ -1,7 +1,7 @@
 import 'media-chrome'
 
 import {cx} from 'class-variance-authority'
-import {For, type JSX, Show} from 'solid-js'
+import {For, Show} from 'solid-js'
 
 import type {PTrack} from '../features/focus-room-audio/focus-room-playlist'
 import type {RepeatMode} from '../features/focus-room-audio/playback-policy'
@@ -42,11 +42,13 @@ const CLASSES = {
     '[&:hover]:translate-y-[-1px] motion-reduce:transition-[none]',
   ].join(' '),
   playerPlayLarge: 'pomo-player__play--large w-13 h-13',
-  playerPlaySummary: [
-    'pomo-player__play--summary overflow-hidden',
-    '[transition:var(--pomo-player-summary-transition)]',
-    '[&.is-hidden]:w-0 [&.is-hidden]:h-0 [&.is-hidden]:[margin-right:-0.75rem]',
-    '[&.is-hidden]:[opacity:0] [&.is-hidden]:pointer-events-none motion-reduce:transition-[none]',
+  playerPlaySummary: 'pomo-player__play--summary',
+  playerPlaySummaryFrame: [
+    'pomo-player__play-summary-frame h-11 w-11 shrink-0 overflow-hidden',
+    '[transition:width_260ms_ease,_margin-right_260ms_ease,_opacity_180ms_ease]',
+    '[&.is-hidden]:w-0 [&.is-hidden]:[margin-right:-0.75rem]',
+    '[&.is-hidden]:opacity-0 [&.is-hidden]:pointer-events-none',
+    'motion-reduce:transition-none',
   ].join(' '),
   playerProgress: [
     'pomo-player__progress flex min-w-0',
@@ -91,14 +93,6 @@ const CLASSES = {
     '[filter:blur(8px)_saturate(1.25)_contrast(1.12)]',
   ].join(' '),
 } as const
-
-// AI_NOTE - Keep transition in CSS so prefers-reduced-motion can override it.
-const PLAYER_SUMMARY_STYLE: JSX.CSSProperties = {
-  '--pomo-player-summary-transition': [
-    'width 260ms ease, height 260ms ease, margin 260ms ease, ',
-    'opacity 180ms ease, transform 160ms ease, filter 160ms ease',
-  ].join(''),
-}
 
 const ACTIVE_VISUALIZER_OPACITY = 0.76
 const IDLE_VISUALIZER_OPACITY = 0.34
@@ -274,22 +268,20 @@ export const MusicPlayerView = (props: MusicPlayerViewProps) => (
       <div
         class={cx('pomo-player__summary relative flex min-h-16 items-center', 'gap-3 px-2 py-2')}
       >
-        <media-play-button
-          aria-label="재생 또는 일시 정지"
+        <div
           aria-hidden={props.expanded ? 'true' : undefined}
-          class={cx(
-            CLASSES.playerPlay,
-            CLASSES.playerPlaySummary,
-            'shrink-0',
-            props.expanded && 'is-hidden',
-          )}
-          disabled={!props.currentTrack}
-          style={PLAYER_SUMMARY_STYLE}
-          tabindex={props.expanded ? -1 : 0}
+          class={cx(CLASSES.playerPlaySummaryFrame, props.expanded && 'is-hidden')}
         >
-          <span aria-hidden="true" class="i-tabler-player-play size-5" slot="play" />
-          <span aria-hidden="true" class="i-tabler-player-pause size-5" slot="pause" />
-        </media-play-button>
+          <media-play-button
+            aria-label="재생 또는 일시 정지"
+            class={cx(CLASSES.playerPlay, CLASSES.playerPlaySummary, 'shrink-0')}
+            disabled={props.expanded || !props.currentTrack}
+            tabindex={props.expanded ? -1 : 0}
+          >
+            <span aria-hidden="true" class="i-tabler-player-play size-5" slot="play" />
+            <span aria-hidden="true" class="i-tabler-player-pause size-5" slot="pause" />
+          </media-play-button>
+        </div>
 
         <div
           class={cx(CLASSES.playerTitle, 'relative min-w-0 flex-1 px-2')}

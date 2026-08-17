@@ -188,7 +188,7 @@ describe('PMusicPlayerContent', () => {
     ).toBe(true)
   })
 
-  it('should hide the expanded play button tooltip', () => {
+  it('should hide the summary play button and its tooltip when expanded', () => {
     const result = render(() => <PMusicPlayerContent tracks={TRACKS} />)
 
     fireEvent.click(screen.getByRole('button', {name: '플레이어 펼치기'}))
@@ -196,26 +196,32 @@ describe('PMusicPlayerContent', () => {
     expect(result.container.querySelector('media-time-display')).toBeNull()
     const playButtons = result.container.querySelectorAll('media-play-button')
     expect(playButtons).toHaveLength(2)
+    expect(Reflect.get(playButtons[0] ?? {}, 'disabled')).toBe(true)
     expect(playButtons[0]?.hasAttribute('notooltip')).toBe(false)
     expect(playButtons[1]?.hasAttribute('notooltip')).toBe(true)
     expect(playButtons[1]?.getAttribute('aria-label')).toBe('재생 또는 일시 정지')
   })
 
-  it('should leave the summary transition overridable for reduced motion', () => {
+  it('should collapse the summary play button frame when expanded', () => {
     const result = render(() => <PMusicPlayerContent tracks={TRACKS} />)
-    const summaryPlayButton = result.container.querySelector(
-      'media-play-button.pomo-player__play--summary',
-    )
+    const summaryPlayFrame = result.container.querySelector('.pomo-player__play-summary-frame')
 
-    if (!(summaryPlayButton instanceof HTMLElement)) {
-      throw new TypeError('Expected the Pomo summary play button to be rendered')
+    if (!(summaryPlayFrame instanceof HTMLElement)) {
+      throw new TypeError('Expected the Pomo summary play button frame to be rendered')
     }
 
-    expect(summaryPlayButton.style.transition).toBe('')
-    expect(summaryPlayButton.style.getPropertyValue('--pomo-player-summary-transition')).toContain(
-      'width 260ms ease',
-    )
-    expect(summaryPlayButton.classList.contains('motion-reduce:transition-[none]')).toBe(true)
+    expect(summaryPlayFrame.classList.contains('is-hidden')).toBe(false)
+    expect(summaryPlayFrame.classList.contains('w-11')).toBe(true)
+    expect(summaryPlayFrame.classList.contains('[&.is-hidden]:w-0')).toBe(true)
+    expect(
+      summaryPlayFrame.classList.contains(
+        '[transition:width_260ms_ease,_margin-right_260ms_ease,_opacity_180ms_ease]',
+      ),
+    ).toBe(true)
+    expect(summaryPlayFrame.classList.contains('motion-reduce:transition-none')).toBe(true)
+    fireEvent.click(screen.getByRole('button', {name: '플레이어 펼치기'}))
+    expect(summaryPlayFrame.classList.contains('is-hidden')).toBe(true)
+    expect(summaryPlayFrame.getAttribute('aria-hidden')).toBe('true')
   })
 
   it('should report the current track when selection changes', async () => {
