@@ -16,7 +16,7 @@
     "lint:fix": "oxlint src --fix",
     "prepare-build": "pnpm run supabase:gen-types",
     "prepare:e2e-local-supabase": "jiti scripts/prepare-local-e2e.ts",
-    "preview": "vite preview --host",
+    "preview": "node -r dotenv/config ./.output/server/index.mjs",
     "preview:spa": "jiti scripts/preview-proxy.ts",
     "supabase:gen-types": "jiti scripts/gen-supabase-types.ts",
     "test:e2e": "playwright test",

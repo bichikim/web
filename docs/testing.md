@@ -47,8 +47,8 @@ Vitest Browser Mode의 [`toMatchScreenshot()`](https://vitest.dev/guide/browser/
 - 중앙 설정에서 `@winter-love/vite-plugin-monorepo-alias` 사용을 제거한다.
 - 공개 패키지는 삭제하지 않고 별도 생명주기로 관리한다.
 
-루트 테스트, Storybook과 Vite 라이브러리 빌드는 Vite 8을 사용한다. SolidStart 앱은 현재
-Vinxi 0.5.11이 의존하는 Vite 6.4를 유지하고, Vinxi의 Vite 8 지원 후 별도로 올린다.
+루트 테스트, Storybook, Vite 라이브러리 빌드와 SolidStart 2로 전환한 Coong/Pomo는 Vite 8을
+사용한다. 아직 SolidStart 1을 사용하는 Hate React의 Vite 7 전환은 별도로 관리한다.
 
 완료 조건: unit 테스트, Storybook 테스트와 빌드, workspace 빌드와 타입 검사가 기존 별칭으로
 동작한다.

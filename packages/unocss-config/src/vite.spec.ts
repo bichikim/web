@@ -9,6 +9,16 @@ describe('createUnoCssInlineResolver', () => {
 
     expect(resolveId('/__uno.css?inline')).toBe('\0/__uno.css?inline')
     expect(resolveId('/__uno_hash.css?inline&direct')).toBe('\0/__uno_hash.css?inline&direct')
+    expect(resolveId('/__uno_.css?inline')).toBeUndefined()
+    expect(resolveId('/__uno_hash.css?inline-direct')).toBeUndefined()
     expect(resolveId('/src/app.css?inline')).toBeUndefined()
+  })
+
+  it('should reject long malformed requests without regular expression backtracking', () => {
+    const plugin = createUnoCssInlineResolver()
+    const resolveId = plugin.resolveId as (source: string) => string | undefined
+    const source = `/__uno_${'a.css?wrong&'.repeat(10_000)}`
+
+    expect(resolveId(source)).toBeUndefined()
   })
 })
