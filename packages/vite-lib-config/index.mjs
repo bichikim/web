@@ -103,10 +103,8 @@ export const createConfig = ({
         ...plugins,
       ],
       resolve: {
-        alias: {
-          src: path.join(root, 'src'),
-          ...newAlias,
-        },
+        alias: newAlias,
+        tsconfigPaths: true,
       },
     }
   })

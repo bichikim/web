@@ -1,7 +1,6 @@
 import {solidStart} from '@solidjs/start/config'
 import {createUnoCssInlineResolver} from '@winter-love/unocss-config'
 import {nitro} from 'nitro/vite'
-import {fileURLToPath} from 'node:url'
 import UnoCSS from 'unocss/vite'
 import {defineConfig} from 'vite'
 
@@ -80,10 +79,7 @@ export default defineConfig({
     useStaticNitroEntry,
   ],
   resolve: {
-    alias: {
-      scripts: fileURLToPath(new URL('scripts', import.meta.url)),
-      src: fileURLToPath(new URL('src', import.meta.url)),
-    },
+    tsconfigPaths: true,
   },
   worker: {format: 'es'},
 })

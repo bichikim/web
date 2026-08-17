@@ -67,9 +67,7 @@ export default defineConfig({
     nitro(),
   ],
   resolve: {
-    alias: {
-      src: fileURLToPath(new URL('src', import.meta.url)),
-    },
+    tsconfigPaths: true,
   },
   server: {
     allowedHosts,
