@@ -1,23 +1,26 @@
 import {cva, type VariantProps} from 'class-variance-authority'
 import type {JSX} from 'solid-js'
 
-const panelStyles = cva(['text-[var(--pomo-text)]', 'pomo-backdrop shadow-[var(--pomo-shadow)]'], {
-  defaultVariants: {
-    padding: 'medium',
-    tone: 'glass',
-  },
-  variants: {
-    padding: {
-      compact: 'p-[var(--pomo-padding-sm)]',
-      medium: 'p-[var(--pomo-padding-md)]',
-      spacious: 'p-[var(--pomo-padding-xl)]',
+const panelStyles = cva(
+  ['text-foreground', 'border border-solid border-border backdrop-blur-surface shadow-panel'],
+  {
+    defaultVariants: {
+      padding: 'medium',
+      tone: 'glass',
     },
-    tone: {
-      glass: 'bg-[var(--pomo-surface)]',
-      strong: 'bg-[var(--pomo-surface-strong)]',
+    variants: {
+      padding: {
+        compact: 'p-2',
+        medium: 'p-3',
+        spacious: 'p-5',
+      },
+      tone: {
+        glass: 'bg-surface',
+        strong: 'bg-surface-strong',
+      },
     },
   },
-})
+)
 
 export interface PPanelProps extends VariantProps<typeof panelStyles> {
   readonly children: JSX.Element

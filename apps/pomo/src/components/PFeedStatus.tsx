@@ -8,26 +8,26 @@ const CLASSES = {
   feedStatus: [
     'pomo-feed-status flex w-[min(36rem,_100%)] box-border items-center gap-3',
     'border border-solid rounded-2xl p-[0.8rem_0.9rem]',
-    'text-[var(--pomo-text)] shadow-[inset_0_1px_0_rgb(255_255_255_/_8%)] pointer-events-auto',
-    'backdrop-filter-[blur(0.75rem)] [-webkit-backdrop-filter:blur(0.75rem)]',
-    "[&_>_[class*='i-tabler']]:flex-none [&_>_[class*='i-tabler']]:text-[var(--pomo-brass)]",
-    "pomo-below-[34rem]:[&[data-state='recovery']]:flex-wrap",
+    'text-foreground shadow-[inset_0_1px_0_rgb(255_255_255_/_8%)] pointer-events-auto',
+    'backdrop-blur-[0.75rem] [-webkit-backdrop-filter:blur(0.75rem)]',
+    "[&_>_[class*='i-tabler']]:flex-none [&_>_[class*='i-tabler']]:text-highlight",
+    "max-[34rem]:[&[data-state='recovery']]:flex-wrap",
   ].join(' '),
   feedStatusAction: 'pomo-feed-status__action flex-none whitespace-nowrap',
   feedStatusActions: [
     'pomo-feed-status__actions flex flex-none gap-[0.35rem]',
-    'pomo-below-[34rem]:w-full pomo-below-[34rem]:[&_button]:flex-1',
+    'max-[34rem]:w-full max-[34rem]:[&_button]:flex-1',
   ].join(' '),
   feedStatusCopy: [
     'pomo-feed-status__copy grid min-w-0 flex-1 gap-[0.15rem] [&_strong]:overflow-hidden',
     '[&_strong]:text-ellipsis [&_strong]:whitespace-nowrap [&_small]:overflow-hidden',
     '[&_small]:text-ellipsis [&_small]:whitespace-nowrap [&_strong]:text-[0.78rem]',
-    '[&_small]:text-[var(--pomo-text-muted)] [&_small]:text-[0.68rem]',
+    '[&_small]:text-muted-foreground [&_small]:text-[0.68rem]',
   ].join(' '),
   feedStatusSpinner: [
     'pomo-feed-status__spinner w-4 h-4 box-border flex-none',
-    'animate-[pomo-feed-spin_1s_linear_infinite] [border:2px_solid_rgb(255_255_255_/_24%)]',
-    'border-t-[var(--pomo-brass)] rounded-full motion-reduce:animate-[none]',
+    'animate-spin [border:2px_solid_rgb(255_255_255_/_24%)]',
+    'border-t-highlight rounded-full motion-reduce:animate-[none]',
   ].join(' '),
 } as const
 
@@ -60,7 +60,7 @@ export const PFeedStatus = () => {
               <Show when={feeds.state().status !== 'idle'}>
                 <div
                   aria-live="polite"
-                  class={cx(CLASSES.feedStatus, 'pomo-static-focus-glass')}
+                  class={cx(CLASSES.feedStatus, 'border-highlight bg-surface-interactive')}
                   data-state={feeds.state().status}
                   role="status"
                 >
@@ -95,7 +95,7 @@ export const PFeedStatus = () => {
             {(ready) => (
               <div
                 aria-live="polite"
-                class={cx(CLASSES.feedStatus, 'pomo-static-focus-glass')}
+                class={cx(CLASSES.feedStatus, 'border-highlight bg-surface-interactive')}
                 data-state="ready"
                 role="status"
               >
@@ -125,7 +125,7 @@ export const PFeedStatus = () => {
       >
         <div
           aria-live="polite"
-          class={cx(CLASSES.feedStatus, 'pomo-static-focus-glass')}
+          class={cx(CLASSES.feedStatus, 'border-highlight bg-surface-interactive')}
           data-state="recovery"
           role="status"
         >

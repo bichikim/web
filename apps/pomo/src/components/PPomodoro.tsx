@@ -26,8 +26,8 @@ const CLASSES = {
   pomodoroActionIcon: 'pomo-pomodoro__action-icon w-3 h-3',
   pomodoroActionIndicator: [
     'pomo-pomodoro__action-indicator absolute right-[-0.3125rem] bottom-[0] grid w-5 h-5',
-    '[border:1px_solid_rgb(255_250_241_/_72%)] rounded-full bg-[var(--pomo-text)]',
-    'shadow-[0_0.125rem_0.25rem_rgb(0_0_0_/_36%)] text-[var(--pomo-canvas)] place-items-center',
+    '[border:1px_solid_rgb(255_250_241_/_72%)] rounded-full bg-foreground',
+    'shadow-[0_0.125rem_0.25rem_rgb(0_0_0_/_36%)] text-background place-items-center',
     'pointer-events-none',
   ].join(' '),
   pomodoroEmotionAction: [
@@ -36,48 +36,48 @@ const CLASSES = {
     'transition-[background-color_160ms_ease] motion-reduce:transition-[none]',
   ].join(' '),
   pomodoroPanel: [
-    'pomo-pomodoro-panel [--pomo-timer-phase:var(--pomo-accent)] flex items-center flex-col',
+    'pomo-pomodoro-panel [--pomo-timer-phase:#d86845] flex items-center flex-col',
     "[&[data-phase='longBreak']]:[--pomo-timer-phase:#8d9a77]",
     "[&[data-phase='shortBreak']]:[--pomo-timer-phase:#8d9a77]",
   ].join(' '),
   pomodoroPanelActions: 'pomo-pomodoro-panel__actions flex w-full items-center gap-2.5 mt-4',
   pomodoroPanelAutoStart: [
     'pomo-pomodoro-panel__auto-start w-full box-border mt-4',
-    '[border-top:1px_solid_var(--pomo-border)] pt-4',
+    'border-t border-solid border-border pt-4',
   ].join(' '),
   pomodoroPanelCompactAction: 'pomo-pomodoro-panel__compact-action shadow-none',
   pomodoroPanelCompactActionDanger: [
     'pomo-pomodoro-panel__compact-action--danger border-[rgb(239_138_116_/_34%)]',
-    '[&_[data-pomo-icon-button-icon]]:text-[var(--pomo-danger)]',
+    '[&_[data-pomo-icon-button-icon]]:text-danger',
   ].join(' '),
   pomodoroPanelPrimaryAction: 'pomo-pomodoro-panel__primary-action min-w-0 flex-1',
   pomodoroPanelSession: [
-    'pomo-pomodoro-panel__session w-2 h-2 [border:1px_solid_var(--pomo-border-hover)]',
+    'pomo-pomodoro-panel__session w-2 h-2 border border-solid border-border-hover',
     'rounded-full bg-transparent [&[data-complete]]:border-[var(--pomo-timer-phase)]',
     '[&[data-complete]]:bg-[var(--pomo-timer-phase)]',
   ].join(' '),
   pomodoroPanelSessionReset: [
     'pomo-pomodoro-panel__session-reset inline-flex items-center gap-1 border-0 bg-transparent',
-    'p-1 text-[var(--pomo-text-muted)] cursor-pointer text-[0.625rem] leading-3.5',
-    '[&:hover]:text-[var(--pomo-danger)] [&:focus-visible]:text-[var(--pomo-danger)]',
+    'p-1 text-muted-foreground cursor-pointer text-[0.625rem] leading-3.5',
+    '[&:hover]:text-danger [&:focus-visible]:text-danger',
   ].join(' '),
   pomodoroPanelSessionRow: 'pomo-pomodoro-panel__session-row flex items-center gap-2 mt-4',
   pomodoroPanelSessions: 'pomo-pomodoro-panel__sessions flex gap-2',
   pomodoroTimeAction: [
     'pomo-pomodoro__time-action grid h-full min-w-13 border-0',
-    'rounded-[var(--pomo-radius-control)] bg-transparent p-[0_0.875rem_0_0.375rem] text-inherit',
+    'rounded-control bg-transparent p-[0_0.875rem_0_0.375rem] text-inherit',
     'cursor-pointer outline-none place-items-center transition-[background-color_160ms_ease]',
     'motion-reduce:transition-[none]',
   ].join(' '),
   pomodoroTrigger: [
-    'pomo-pomodoro__trigger inline-flex box-border h-[var(--pomo-control-height-medium)] min-w-27',
-    'items-center overflow-visible rounded-[var(--pomo-radius-control)] bg-[var(--pomo-glass)]',
-    'text-[var(--pomo-text)] shadow-[var(--pomo-shadow)]',
+    'pomo-pomodoro__trigger inline-flex box-border h-control-md min-w-27',
+    'items-center overflow-visible rounded-control bg-surface',
+    'text-foreground shadow-panel',
     'transition-[border-color_160ms_ease,_background-color_160ms_ease]',
     'motion-reduce:transition-[none]',
   ].join(' '),
   pomodoroTriggerTime: [
-    'pomo-pomodoro__trigger-time text-[var(--pomo-text)] text-sm tabular-nums font-extrabold',
+    'pomo-pomodoro__trigger-time text-foreground text-sm tabular-nums font-extrabold',
     'tracking-[0.025em] leading-4',
   ].join(' '),
 } as const
@@ -146,19 +146,41 @@ interface PomodoroQuickControlsProps {
   readonly timeLabel: string
 }
 
+const QUICK_CONTROLS_GROUP_CLASSES = [
+  'border border-solid border-border backdrop-blur-surface',
+  '[&:has([data-glass-part]:hover)]:border-border-hover',
+  '[&:has([data-glass-part]:focus-visible)]:border-highlight',
+  '[&:has([data-glass-part][data-expanded])]:border-highlight',
+  '[&:has([data-glass-trigger]:hover)]:bg-surface-interactive',
+  '[&:has([data-glass-trigger]:focus-visible)]:bg-surface-interactive',
+  '[&:has([data-glass-trigger][data-expanded])]:bg-surface-interactive',
+].join(' ')
+
+const INTERACTIVE_GLASS_PART_CLASSES = [
+  '[&:not([data-glass-trigger]):hover]:bg-surface-overlay',
+  '[&:not([data-glass-trigger]):focus-visible]:bg-surface-overlay',
+  '[&:not([data-glass-trigger])[data-expanded]]:bg-surface-overlay',
+].join(' ')
+
+const STRONG_FOCUS_RING_CLASSES =
+  'focus-visible:outline-3 focus-visible:outline-solid focus-visible:outline-offset-2 ' +
+  'focus-visible:outline-highlight'
+
 const PomodoroQuickControls = (props: PomodoroQuickControlsProps) => (
   <div
     aria-label="포모도로 간편 조작"
-    class={cx('pomo-backdrop pomo-interactive-glass-group', CLASSES.pomodoroTrigger)}
+    class={cx(QUICK_CONTROLS_GROUP_CLASSES, CLASSES.pomodoroTrigger)}
     data-phase={props.phase}
     role="group"
   >
     <button
       aria-label={props.primaryLabel}
       class={cx(
-        'pomo-interactive-glass-part pomo-strong-focus-ring',
+        INTERACTIVE_GLASS_PART_CLASSES,
+        STRONG_FOCUS_RING_CLASSES,
         CLASSES.pomodoroEmotionAction,
       )}
+      data-glass-part=""
       onClick={() => props.onPrimaryPress()}
       type="button"
     >
@@ -175,9 +197,12 @@ const PomodoroQuickControls = (props: PomodoroQuickControlsProps) => (
       aria-haspopup="dialog"
       aria-label={`포모도로 열기, ${props.statusLabel}, ${props.timeLabel}`}
       class={cx(
-        'pomo-interactive-glass-group-trigger',
-        cx('pomo-interactive-glass-part pomo-strong-focus-ring', CLASSES.pomodoroTimeAction),
+        INTERACTIVE_GLASS_PART_CLASSES,
+        STRONG_FOCUS_RING_CLASSES,
+        CLASSES.pomodoroTimeAction,
       )}
+      data-glass-part=""
+      data-glass-trigger=""
       onClick={(event) => props.onOpen(event.currentTarget)}
       type="button"
     >
@@ -237,15 +262,15 @@ const PomodoroTimerRing = (props: PomodoroTimerRingProps) => (
     <div
       class={
         'relative flex size-full flex-col items-center justify-center border border-solid ' +
-        'border-[var(--pomo-border)] rounded-full bg-[rgb(12_11_9_/_94%)]'
+        'border-border rounded-full bg-[rgb(12_11_9_/_94%)]'
       }
     >
       <div
         class={
           'absolute top-[clamp(0.625rem,2.25dvh,1.125rem)] inline-flex items-center ' +
-          'gap-1.5 rounded-[var(--pomo-radius-control)] ' +
+          'gap-1.5 rounded-control ' +
           'bg-[color-mix(in_srgb,var(--pomo-timer-phase)_18%,transparent)] ' +
-          'px-3 py-1.5 text-xs font-750 leading-4 text-[var(--pomo-text)]'
+          'px-3 py-1.5 text-xs font-750 leading-4 text-foreground'
         }
       >
         <span aria-hidden="true" class={cx(props.icon, 'size-4 text-[var(--pomo-timer-phase)]')} />
@@ -254,7 +279,7 @@ const PomodoroTimerRing = (props: PomodoroTimerRingProps) => (
       <strong
         class={
           'text-[clamp(2rem,min(11vw,8dvh),3.5rem)] font-800 leading-none ' +
-          'tracking--0.04em text-[var(--pomo-text)] [font-variant-numeric:tabular-nums]'
+          'tracking--0.04em text-foreground [font-variant-numeric:tabular-nums]'
         }
       >
         {props.timeLabel}

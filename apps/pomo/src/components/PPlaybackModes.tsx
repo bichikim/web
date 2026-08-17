@@ -5,10 +5,10 @@ import type {RepeatMode} from '../features/focus-room-audio'
 
 const CLASSES = {
   playerMode: [
-    'pomo-player__mode text-[var(--pomo-text-muted)] [&:hover]:text-[var(--pomo-text)]',
+    'pomo-player__mode text-muted-foreground [&:hover]:text-foreground',
     '[&:hover]:bg-[rgb(255_250_241_/_7%)] [&.is-active]:text-white',
-    '[&.is-active]:bg-[var(--pomo-accent)] [&.is-active]:shadow-[0_4px_12px_rgb(125_49_29_/_28%)]',
-    '[&:focus-visible]:[outline:2px_solid_var(--pomo-accent)]',
+    '[&.is-active]:bg-primary [&.is-active]:shadow-[0_4px_12px_rgb(125_49_29_/_28%)]',
+    '[&:focus-visible]:outline-2 [&:focus-visible]:outline-solid [&:focus-visible]:outline-primary',
     '[&:focus-visible]:[outline-offset:2px]',
   ].join(' '),
   playerModes: 'pomo-player__modes [border:1px_solid_rgb(255_250_241_/_8%)] bg-[rgb(4_4_3_/_22%)]',
@@ -27,12 +27,7 @@ export interface PPlaybackModesProps {
 }
 
 export const PPlaybackModes = (props: PPlaybackModesProps) => (
-  <div
-    class={cx(
-      CLASSES.playerModes,
-      'flex w-fit items-center gap-0.5 rounded-full p-[var(--pomo-padding-xs)]',
-    )}
-  >
+  <div class={cx(CLASSES.playerModes, 'flex w-fit items-center gap-0.5 rounded-full p-1')}>
     <div class="contents" role="group" aria-label="반복 방식">
       <For each={REPEAT_MODES}>
         {(mode) => (
@@ -53,7 +48,7 @@ export const PPlaybackModes = (props: PPlaybackModesProps) => (
         )}
       </For>
     </div>
-    <span aria-hidden="true" class="mx-0.5 h-5 w-px bg-[var(--pomo-border)]" />
+    <span aria-hidden="true" class="mx-0.5 h-5 w-px bg-border" />
     <button
       aria-label="랜덤 재생"
       aria-pressed={props.shuffleEnabled}

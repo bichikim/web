@@ -72,15 +72,10 @@ export const PRadioSwitch = <TValue extends string>(props: PRadioSwitchProps<TVa
       orientation="horizontal"
       value={props.value}
     >
-      <RadioGroup.Label class="mb-2 block text-xs font-700 leading-4 text-[var(--pomo-text-muted)]">
+      <RadioGroup.Label class="mb-2 block text-xs font-700 leading-4 text-muted-foreground">
         {props.label}
       </RadioGroup.Label>
-      <div
-        class={
-          'flex gap-1 rounded-3.5 border border-solid border-[var(--pomo-border)] ' +
-          'bg-[rgb(4_4_3_/_28%)] p-[var(--pomo-padding-xs)]'
-        }
-      >
+      <div class="flex gap-1 rounded-3.5 border border-solid border-border bg-[rgb(4_4_3_/_28%)] p-1">
         <For each={props.options}>
           {(option) => (
             <RadioGroup.Item class="group min-w-0 flex-1" value={option.value}>
@@ -88,11 +83,11 @@ export const PRadioSwitch = <TValue extends string>(props: PRadioSwitchProps<TVa
               <RadioGroup.ItemControl
                 class={
                   'flex min-h-10 cursor-pointer items-center justify-center gap-1.5 rounded-2.5 ' +
-                  'text-xs font-650 leading-4 text-[var(--pomo-text-muted)] outline-none ' +
+                  'text-xs font-650 leading-4 text-muted-foreground outline-none ' +
                   'transition-[background-color_140ms_ease,color_140ms_ease] ' +
-                  'hover:bg-[var(--pomo-secondary-soft)] hover:text-[var(--pomo-text)] ' +
-                  'ui-checked:bg-[var(--pomo-accent-soft)] ui-checked:text-[var(--pomo-text)] ' +
-                  'group-focus-within:shadow-[0_0_0_2px_var(--pomo-brass)] ' +
+                  'hover:bg-secondary-soft hover:text-foreground ' +
+                  'ui-checked:bg-primary-soft ui-checked:text-foreground ' +
+                  'group-focus-within:shadow-focus ' +
                   'max-[23rem]:gap-1 max-[23rem]:text-[0.6875rem] motion-reduce:transition-none'
                 }
               >
@@ -100,15 +95,12 @@ export const PRadioSwitch = <TValue extends string>(props: PRadioSwitchProps<TVa
                   {(icon) => (
                     <span
                       aria-hidden="true"
-                      class={cx(
-                        'size-4 flex-none text-[var(--pomo-brass)] max-[23rem]:hidden',
-                        icon(),
-                      )}
+                      class={cx('size-4 flex-none text-highlight max-[23rem]:hidden', icon())}
                     />
                   )}
                 </Show>
                 <span>{option.label}</span>
-                <RadioGroup.ItemIndicator class="inline-flex flex-none text-[var(--pomo-accent)]">
+                <RadioGroup.ItemIndicator class="inline-flex flex-none text-primary">
                   <span aria-hidden="true" class="i-tabler-check size-4" />
                 </RadioGroup.ItemIndicator>
               </RadioGroup.ItemControl>

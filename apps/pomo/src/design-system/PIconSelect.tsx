@@ -29,21 +29,21 @@ export const PIconSelect = <TValue extends string>(props: PIconSelectProps<TValu
         <Select.Item
           class={
             'grid min-h-10 cursor-pointer grid-cols-[auto_minmax(0,1fr)_auto] items-center ' +
-            'gap-2.5 whitespace-nowrap rounded-3 px-[var(--pomo-padding-md)] ' +
-            'py-[var(--pomo-padding-sm)] text-sm font-600 leading-5 text-[var(--pomo-text-muted)] ' +
+            'gap-2.5 whitespace-nowrap rounded-3 px-3 ' +
+            'py-2 text-sm font-600 leading-5 text-muted-foreground ' +
             'outline-none transition-[background-color_120ms_ease,color_120ms_ease] ' +
-            'ui-highlighted:bg-[var(--pomo-secondary-soft)] ui-highlighted:text-[var(--pomo-text)] ' +
-            'ui-selected:bg-[var(--pomo-accent-soft)] ui-selected:text-[var(--pomo-text)] ' +
+            'ui-highlighted:bg-secondary-soft ui-highlighted:text-foreground ' +
+            'ui-selected:bg-primary-soft ui-selected:text-foreground ' +
             'motion-reduce:transition-none'
           }
           item={itemProps.item}
         >
           <span
             aria-hidden="true"
-            class={cx('size-5 text-[var(--pomo-brass)]', itemProps.item.rawValue.icon)}
+            class={cx('size-5 text-highlight', itemProps.item.rawValue.icon)}
           />
           <Select.ItemLabel>{itemProps.item.rawValue.label}</Select.ItemLabel>
-          <Select.ItemIndicator class="inline-flex text-[var(--pomo-accent)]">
+          <Select.ItemIndicator class="inline-flex text-primary">
             <span aria-hidden="true" class="i-tabler-check size-4" />
           </Select.ItemIndicator>
         </Select.Item>
@@ -62,9 +62,12 @@ export const PIconSelect = <TValue extends string>(props: PIconSelectProps<TValu
       <Select.Trigger
         aria-label={`${props.label} ${selectedOption().label}`}
         class={
-          'pomo-backdrop pomo-interactive-glass grid size-[var(--pomo-control-height-medium)] ' +
-          'place-items-center rounded-[var(--pomo-radius-control)] bg-[var(--pomo-glass)] ' +
-          'text-[var(--pomo-brass)] shadow-[var(--pomo-shadow)] outline-none ' +
+          'grid size-control-md border border-solid border-border backdrop-blur-surface ' +
+          'hover:border-border-hover hover:bg-surface-interactive ' +
+          'focus-visible:border-highlight focus-visible:bg-surface-interactive ' +
+          'ui-expanded:border-highlight ui-expanded:bg-surface-interactive ' +
+          'place-items-center rounded-control bg-surface ' +
+          'text-highlight shadow-panel outline-none ' +
           'transition-[border-color_160ms_ease,background-color_160ms_ease] ' +
           'motion-reduce:transition-none'
         }
@@ -75,11 +78,12 @@ export const PIconSelect = <TValue extends string>(props: PIconSelectProps<TValu
       <Select.Portal>
         <Select.Content
           class={
-            'pomo-backdrop max-h-[min(18rem,var(--kb-popper-available-height))] w-max min-w-40 ' +
-            'max-w-[calc(100vw-2rem)] overflow-hidden rounded-4 bg-[var(--pomo-surface-strong)] ' +
-            'p-[var(--pomo-padding-sm)] text-[var(--pomo-text)] shadow-[var(--pomo-shadow)] ' +
+            'max-h-[min(18rem,var(--kb-popper-available-height))] w-max min-w-40 ' +
+            'border border-solid border-border backdrop-blur-surface ' +
+            'max-w-[calc(100vw-2rem)] overflow-hidden rounded-4 bg-surface-strong ' +
+            'p-2 text-foreground shadow-panel ' +
             '[transform-origin:var(--kb-select-content-transform-origin)] ' +
-            '[animation:pomo-select-in_140ms_ease-out] motion-reduce:animate-none'
+            'animate-select-in motion-reduce:animate-none'
           }
         >
           <Select.Listbox class="grid max-h-[inherit] gap-0.5 overflow-y-auto outline-none" />

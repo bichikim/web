@@ -116,7 +116,7 @@ export class PSceneRenderer {
 
     this.#application.canvas.setAttribute('aria-hidden', 'true')
     this.#application.canvas.className =
-      'pomo-scene-media absolute inset-0 h-full w-full object-cover'
+      'absolute inset-0 h-full w-full object-cover object-[60%_center]'
     this.#host.append(this.#application.canvas)
     this.#application.stage.addChild(this.#sceneLayer)
     this.#sceneLayer.addChild(this.#eyes.container)

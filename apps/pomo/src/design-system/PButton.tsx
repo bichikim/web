@@ -7,9 +7,9 @@ const BUTTON_TRANSITION =
 
 const buttonClasses = cva(
   `group inline-flex box-border cursor-pointer items-center justify-center gap-2 border border-solid ` +
-    `border-transparent rounded-[var(--pomo-radius-control)] font-[inherit] font-750 leading-4 ` +
+    `border-transparent rounded-control font-[inherit] font-750 leading-4 ` +
     `outline-none ${BUTTON_TRANSITION} ` +
-    `focus-visible:shadow-[0_0_0_2px_var(--pomo-brass)] disabled:cursor-not-allowed ` +
+    `focus-visible:shadow-focus disabled:cursor-not-allowed ` +
     `disabled:opacity-50 disabled:transform-none motion-reduce:transition-none`,
   {
     defaultVariants: {
@@ -18,23 +18,23 @@ const buttonClasses = cva(
     },
     variants: {
       size: {
-        medium: 'min-h-[var(--pomo-control-height-medium)] px-5 py-3 text-sm',
-        small: 'min-h-[var(--pomo-control-height-small)] px-3.5 py-2 text-xs',
+        medium: 'min-h-control-md px-5 py-3 text-sm',
+        small: 'min-h-control-sm px-3.5 py-2 text-xs',
       },
       tone: {
         danger:
-          'border-[rgb(239_138_116_/_34%)] bg-transparent text-[var(--pomo-danger)] hover:bg-[rgb(239_138_116_/_12%)]',
+          'border-[rgb(239_138_116_/_34%)] bg-transparent text-danger hover:bg-[rgb(239_138_116_/_12%)]',
         glass:
-          'border-[var(--pomo-border)] bg-[var(--pomo-glass)] text-[var(--pomo-text)] ' +
-          'shadow-[var(--pomo-shadow)] backdrop-blur-[var(--pomo-backdrop-blur)] ' +
-          'hover:-translate-y-px hover:border-[var(--pomo-border-hover)] hover:bg-[var(--pomo-glass-interactive)]',
+          'border-border bg-surface text-foreground ' +
+          'shadow-panel backdrop-blur-surface ' +
+          'hover:-translate-y-px hover:border-border-hover hover:bg-surface-interactive',
         primary:
-          'bg-[var(--pomo-accent-strong)] text-white ' +
+          'bg-primary-strong text-white ' +
           'shadow-[0_8px_24px_rgb(83_28_16_/_32%),inset_0_1px_0_rgb(255_255_255_/_16%)] ' +
-          'hover:-translate-y-px hover:bg-[var(--pomo-accent-strong-hover)]',
+          'hover:-translate-y-px hover:bg-primary-strong-hover',
         secondary:
-          'border-[var(--pomo-border)] bg-[var(--pomo-secondary-soft)] text-[var(--pomo-text)] ' +
-          'hover:border-[var(--pomo-border-hover)] hover:bg-[rgb(114_123_96_/_30%)]',
+          'border-border bg-secondary-soft text-foreground ' +
+          'hover:border-border-hover hover:bg-[rgb(114_123_96_/_30%)]',
       },
     },
   },

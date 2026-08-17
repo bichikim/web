@@ -10,36 +10,36 @@ import {PTrackList} from './PTrackList'
 
 const CLASSES = {
   level: [
-    'pomo-level bg-[var(--pomo-accent)] shadow-[0_0_0.7rem_rgb(216_104_69_/_42%)]',
+    'pomo-level bg-primary shadow-[0_0_0.7rem_rgb(216_104_69_/_42%)]',
     'origin-[center_bottom] motion-reduce:transition-[none]',
   ].join(' '),
   player: [
     'pomo-player [--media-background-color:transparent] [--media-control-background:transparent]',
-    '[--media-control-hover-background:var(--pomo-secondary-soft)]',
+    '[--media-control-hover-background:rgb(114_123_96_/_20%)]',
     '[--media-control-padding:0.6rem] [--media-font-family:inherit]',
-    '[--media-primary-color:var(--pomo-text)] [--media-range-bar-color:var(--pomo-secondary)]',
+    '[--media-primary-color:#fffaf1] [--media-range-bar-color:#727b60]',
     '[--media-range-track-height:0.2rem] [--media-secondary-color:transparent] block w-full',
     'bg-transparent [&_media-control-bar]:w-full [&_media-control-bar]:bg-transparent',
     '[&_media-play-button]:rounded-full [&_media-mute-button]:rounded-full',
-    '[&_media-mute-button]:text-[var(--pomo-text-muted)]',
-    '[&_media-mute-button:hover]:text-[var(--pomo-text)]',
+    '[&_media-mute-button]:text-muted-foreground',
+    '[&_media-mute-button:hover]:text-foreground',
     '[&_media-mute-button:hover]:bg-[rgb(255_250_241_/_8%)] [&_media-time-range]:w-full',
     '[&_media-time-range]:min-w-[7rem] [&_media-time-range]:h-4',
     '[&_media-volume-range]:w-[clamp(2.5rem,_8vw,_4.5rem)] [&_media-volume-range]:min-w-0',
   ].join(' '),
-  playerBase: 'pomo-player__base bg-[var(--pomo-glass)]',
+  playerBase: 'pomo-player__base bg-surface',
   playerExpanded: [
     'pomo-player__expanded isolate',
     'bg-[linear-gradient(_180deg,_rgb(0_0_0_/_2%)_0%,_rgb(0_0_0_/_10%)_34%,_rgb(0_0_0_/_18%)_100%_)]',
     'shadow-[inset_0_-1px_0_rgb(255_250_241_/_4%)]',
-    'pomo-below-[28rem]:[&_>_div:nth-child(2)]:grid-cols-[auto_1fr]',
-    'pomo-below-[28rem]:[&_>_div:nth-child(2)_>_div:last-child]:hidden',
+    'max-[28rem]:[&_>_div:nth-child(2)]:grid-cols-[auto_1fr]',
+    'max-[28rem]:[&_>_div:nth-child(2)_>_div:last-child]:hidden',
   ].join(' '),
   playerPlay: [
-    'pomo-player__play w-11 h-11 text-white bg-[var(--pomo-accent)]',
+    'pomo-player__play w-11 h-11 text-white bg-primary',
     'shadow-[0_8px_20px_rgb(125_49_29_/_34%),_inset_0_1px_0_rgb(255_255_255_/_24%)]',
-    'transition-[transform_160ms_ease,_filter_160ms_ease] [&:hover]:filter-[brightness(1.08)]',
-    '[&:hover]:transform-[translateY(-1px)] motion-reduce:transition-[none]',
+    'transition-[transform_160ms_ease,_filter_160ms_ease] [&:hover]:brightness-[1.08]',
+    '[&:hover]:translate-y-[-1px] motion-reduce:transition-[none]',
   ].join(' '),
   playerPlayLarge: 'pomo-player__play--large w-13 h-13',
   playerPlaySummary: [
@@ -52,15 +52,15 @@ const CLASSES = {
     'pomo-player-shell',
     'shadow-[0_22px_70px_rgb(5_4_3_/_46%),_inset_0_1px_0_rgb(255_255_255_/_10%)]',
   ].join(' '),
-  playerTitle: 'pomo-player__title block text-[var(--pomo-text)]',
+  playerTitle: 'pomo-player__title block text-foreground',
   playerTrackArtist: 'pomo-player__track-artist text-[#c9c0b5] text-[0.6875rem] leading-4',
   playerTrackTitle: [
     'pomo-player__track-title text-[#fffaf1] text-[0.9375rem] font-[750] leading-5',
     'tracking-[-0.01em]',
   ].join(' '),
   playerUtility: [
-    'pomo-player__utility text-[var(--pomo-text-muted)]',
-    '[&:focus-visible]:[outline:2px_solid_var(--pomo-accent)]',
+    'pomo-player__utility text-muted-foreground',
+    '[&:focus-visible]:outline-2 [&:focus-visible]:outline-solid [&:focus-visible]:outline-primary',
     '[&:focus-visible]:[outline-offset:2px]',
   ].join(' '),
   playerVisualizer: [
@@ -84,7 +84,7 @@ const SKIP_BUTTON_CLASSES = [
   'disabled:opacity-35 max-[28rem]:size-9',
 ].join(' ')
 const MEDIA_FOCUS_CLASSES =
-  'focus-visible:outline-none [--media-focus-box-shadow:inset_0_0_0_2px_var(--pomo-secondary)]'
+  'focus-visible:outline-none [--media-focus-box-shadow:inset_0_0_0_2px_#727b60]'
 
 interface MusicPlayerViewProps {
   readonly currentIndex: number
@@ -119,31 +119,15 @@ type ExpandedPlayerControlsProps = Pick<
 >
 
 const ExpandedPlayerControls = (props: ExpandedPlayerControlsProps) => (
-  <div
-    class={cx(
-      CLASSES.playerExpanded,
-      'relative px-[var(--pomo-padding-sm)] pb-[var(--pomo-padding-sm)]',
-      'pt-[var(--pomo-padding-md)] rounded-b-[calc(var(--pomo-radius-panel)-0.5rem)]',
-    )}
-  >
-    <div class="mb-[var(--pomo-padding-md)] px-[var(--pomo-padding-xs)]">
+  <div class={cx(CLASSES.playerExpanded, 'relative px-2 pb-2', 'pt-3 rounded-b-panel-inner')}>
+    <div class="mb-3 px-1">
       <media-time-range class={MEDIA_FOCUS_CLASSES} />
-      <div
-        class={cx(
-          'mt-[var(--pomo-padding-xs)] flex justify-end text-[10px]',
-          'tabular-nums text-[var(--pomo-text-muted)]',
-        )}
-      >
+      <div class={cx('mt-1 flex justify-end text-[10px]', 'tabular-nums text-muted-foreground')}>
         <media-time-display class={MEDIA_FOCUS_CLASSES} showduration="" />
       </div>
     </div>
 
-    <div
-      class={cx(
-        'grid grid-cols-[1fr_auto_1fr] items-center gap-[var(--pomo-padding-sm)]',
-        'px-[var(--pomo-padding-xs)]',
-      )}
-    >
+    <div class={cx('grid grid-cols-[1fr_auto_1fr] items-center gap-2', 'px-1')}>
       <PPlaybackModes
         onRepeatModeChange={props.onRepeatModeChange}
         onShuffleChange={props.onShuffleChange}
@@ -151,7 +135,7 @@ const ExpandedPlayerControls = (props: ExpandedPlayerControlsProps) => (
         shuffleEnabled={props.shuffleEnabled}
       />
 
-      <div class="flex items-center justify-center gap-[var(--pomo-padding-xs)]">
+      <div class="flex items-center justify-center gap-1">
         <button
           aria-label="이전 곡"
           class={SKIP_BUTTON_CLASSES}
@@ -203,8 +187,8 @@ const ExpandedPlayerControls = (props: ExpandedPlayerControlsProps) => (
 export const MusicPlayerView = (props: MusicPlayerViewProps) => (
   <div
     class={cx(
-      'pomo-player-stage absolute inset-x-[var(--pomo-padding-lg)]',
-      'bottom-[calc(var(--pomo-padding-lg)+env(safe-area-inset-bottom))]',
+      'pomo-player-stage absolute inset-x-4',
+      'bottom-player-bottom',
       'sm:inset-x-auto sm:bottom-6 sm:left-6 sm:w-[min(29rem,calc(100vw-3rem))]',
     )}
   >
@@ -213,8 +197,8 @@ export const MusicPlayerView = (props: MusicPlayerViewProps) => (
       class={cx(
         CLASSES.player,
         CLASSES.playerShell,
-        'relative w-full overflow-hidden p-[var(--pomo-padding-sm)]',
-        'rounded-[var(--pomo-radius-panel)]',
+        'relative w-full overflow-hidden p-2',
+        'rounded-panel',
       )}
     >
       <audio
@@ -227,7 +211,10 @@ export const MusicPlayerView = (props: MusicPlayerViewProps) => (
 
       <div
         aria-hidden="true"
-        class={cx(CLASSES.playerBase, 'pomo-backdrop pointer-events-none absolute inset-0')}
+        class={cx(
+          CLASSES.playerBase,
+          'border border-solid border-border backdrop-blur-surface pointer-events-none absolute inset-0',
+        )}
       />
 
       <div
@@ -260,10 +247,7 @@ export const MusicPlayerView = (props: MusicPlayerViewProps) => (
       </div>
 
       <div
-        class={cx(
-          'pomo-player__summary relative flex min-h-16 items-center',
-          'gap-[var(--pomo-padding-md)] px-[var(--pomo-padding-sm)] py-[var(--pomo-padding-sm)]',
-        )}
+        class={cx('pomo-player__summary relative flex min-h-16 items-center', 'gap-3 px-2 py-2')}
       >
         <media-play-button
           aria-label="재생 또는 일시 정지"
@@ -283,7 +267,7 @@ export const MusicPlayerView = (props: MusicPlayerViewProps) => (
         </media-play-button>
 
         <div
-          class={cx(CLASSES.playerTitle, 'relative min-w-0 flex-1 px-[var(--pomo-padding-sm)]')}
+          class={cx(CLASSES.playerTitle, 'relative min-w-0 flex-1 px-2')}
           data-pomo-player-title=""
         >
           <p class={cx(CLASSES.playerTrackTitle, 'm-0 truncate')}>
@@ -300,8 +284,8 @@ export const MusicPlayerView = (props: MusicPlayerViewProps) => (
           class={cx(
             CLASSES.playerUtility,
             'relative grid size-9 shrink-0 place-items-center rounded-full transition',
-            'text-[var(--pomo-text-muted)] hover:bg-[var(--pomo-secondary-soft)]',
-            'hover:text-[var(--pomo-text)]',
+            'text-muted-foreground hover:bg-secondary-soft',
+            'hover:text-foreground',
           )}
           onClick={() => props.onExpandedChange()}
           type="button"

@@ -8,60 +8,58 @@ import {getPrimaryMood, getPrimaryMoodIcon} from '../features/text-mood'
 const CLASSES = {
   dialogueBubble: [
     'pomo-dialogue-bubble w-full min-h-0 max-h-full box-border overflow-hidden border',
-    'border-solid rounded-2xl p-[var(--pomo-padding-lg)] text-[var(--pomo-text)]',
-    'shadow-[inset_0_1px_0_rgb(255_255_255_/_8%)] backdrop-filter-[blur(0.75rem)]',
+    'border-solid rounded-2xl p-4 text-foreground',
+    'shadow-[inset_0_1px_0_rgb(255_255_255_/_8%)] backdrop-blur-[0.75rem]',
     '[-webkit-backdrop-filter:blur(0.75rem)] [&_p]:min-h-0 [&_p]:overflow-y-auto [&_p]:m-0',
-    '[&_p]:[padding-right:var(--pomo-padding-xs)] [&_p]:text-[clamp(0.9rem,_2.5vw,_1rem)]',
+    '[&_p]:pr-1 [&_p]:text-[clamp(0.9rem,_2.5vw,_1rem)]',
     '[&_p]:leading-[1.65] [&_p]:[overscroll-behavior:contain]',
     '[&_p]:[scrollbar-color:rgb(255_250_241_/_24%)_transparent] [&_p]:[scrollbar-width:thin]',
   ].join(' '),
-  dialogueBubbleActions:
-    'pomo-dialogue-bubble__actions inline-flex items-center gap-[var(--pomo-padding-xs)]',
-  dialogueBubbleHeader:
-    'pomo-dialogue-bubble__header flex items-center justify-between gap-[var(--pomo-padding-md)]',
+  dialogueBubbleActions: 'pomo-dialogue-bubble__actions inline-flex items-center gap-1',
+  dialogueBubbleHeader: 'pomo-dialogue-bubble__header flex items-center justify-between gap-3',
   dialogueBubbleMessage: [
     'pomo-dialogue-bubble--message grid grid-rows-[auto_minmax(0,_1fr)]',
-    'gap-y-[var(--pomo-padding-sm)]',
+    'gap-y-2',
   ].join(' '),
   dialogueBubbleMood:
-    'pomo-dialogue-bubble__mood block w-9 h-9 flex-none object-contain transform-[scale(1.5556)]',
+    'pomo-dialogue-bubble__mood block w-9 h-9 flex-none scale-[1.5556] object-contain',
   dialogueBubblePlay: [
-    'pomo-dialogue-bubble--play flex cursor-pointer items-center gap-[var(--pomo-padding-md)]',
+    'pomo-dialogue-bubble--play flex cursor-pointer items-center gap-3',
     '[font:inherit] text-left [&_>_span:last-child]:grid',
-    '[&_>_span:last-child]:gap-[var(--pomo-padding-xs)] [&_strong]:text-[0.8125rem]',
-    '[&_small]:text-[var(--pomo-text-muted)] [&_small]:text-[0.6875rem] [&_small]:leading-[1.5]',
+    '[&_>_span:last-child]:gap-1 [&_strong]:text-[0.8125rem]',
+    '[&_small]:text-muted-foreground [&_small]:text-[0.6875rem] [&_small]:leading-[1.5]',
   ].join(' '),
   dialogueBubblePlayIcon: [
     'pomo-dialogue-bubble__play-icon grid w-9 h-9 flex-none place-items-center rounded-full',
-    'bg-[var(--pomo-secondary-soft)] text-[var(--pomo-brass)]',
+    'bg-secondary-soft text-highlight',
   ].join(' '),
   dialogueBubbleProgress: [
     'pomo-dialogue-bubble__progress inline-flex flex-wrap items-center',
-    'gap-[var(--pomo-padding-xs)]',
+    'gap-1',
   ].join(' '),
   dialogueBubbleProgressDot: [
     'pomo-dialogue-bubble__progress-dot w-1.5 h-1.5 box-border flex-none',
-    '[border:1px_solid_var(--pomo-border-hover)] rounded-full bg-transparent',
-    '[&[data-complete]]:border-[var(--pomo-brass)] [&[data-complete]]:bg-[var(--pomo-brass)]',
+    'border border-solid border-border-hover rounded-full bg-transparent',
+    '[&[data-complete]]:border-highlight [&[data-complete]]:bg-highlight',
   ].join(' '),
   dialogueBubbleSkip: 'pomo-dialogue-bubble__skip flex-none whitespace-nowrap',
   dialogueBubbleSpeakerGroup: [
     'pomo-dialogue-bubble__speaker-group inline-flex min-w-0 items-center',
-    'gap-[var(--pomo-padding-sm)]',
+    'gap-2',
   ].join(' '),
   dialogueBubbleStop: 'pomo-dialogue-bubble__stop flex-none whitespace-nowrap',
 } as const
 
 const SKIP_BUTTON_CLASS = cx(
   CLASSES.dialogueBubbleSkip,
-  'max-[40rem]:gap-[var(--pomo-padding-sm)] max-[40rem]:px-[var(--pomo-padding-md)]',
-  'max-[40rem]:py-[var(--pomo-padding-sm)] max-[23rem]:gap-0',
+  'max-[40rem]:gap-2 max-[40rem]:px-3',
+  'max-[40rem]:py-2 max-[23rem]:gap-0',
 )
 
 const STOP_BUTTON_CLASS = cx(
   CLASSES.dialogueBubbleStop,
-  'max-[40rem]:gap-[var(--pomo-padding-sm)] max-[40rem]:px-[var(--pomo-padding-md)]',
-  'max-[40rem]:py-[var(--pomo-padding-sm)]',
+  'max-[40rem]:gap-2 max-[40rem]:px-3',
+  'max-[40rem]:py-2',
 )
 
 export interface PDialoguePlayerProps {
@@ -135,7 +133,7 @@ export const PDialoguePlayer = (props: PDialoguePlayerProps) => {
             class={cx(
               CLASSES.dialogueBubble,
               CLASSES.dialogueBubbleMessage,
-              'pomo-static-focus-glass',
+              'border-highlight bg-surface-interactive',
             )}
           >
             <div class={CLASSES.dialogueBubbleHeader}>
@@ -209,7 +207,11 @@ export const PDialoguePlayer = (props: PDialoguePlayerProps) => {
       </Show>
       <Show when={!isExternalSpeech() && events.isDialoguePlaybackBlocked()}>
         <button
-          class={cx(CLASSES.dialogueBubble, CLASSES.dialogueBubblePlay, 'pomo-static-focus-glass')}
+          class={cx(
+            CLASSES.dialogueBubble,
+            CLASSES.dialogueBubblePlay,
+            'border-highlight bg-surface-interactive',
+          )}
           onClick={() => events.retryDialoguePlayback()}
           type="button"
         >
