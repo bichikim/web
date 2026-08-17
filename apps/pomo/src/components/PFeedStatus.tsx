@@ -12,11 +12,12 @@ const CLASSES = {
     'backdrop-filter-[blur(0.75rem)] [-webkit-backdrop-filter:blur(0.75rem)]',
     "[&_>_[class*='i-tabler']]:flex-none [&_>_[class*='i-tabler']]:text-[var(--pomo-brass)]",
     "pomo-below-[34rem]:[&[data-state='recovery']]:flex-wrap",
-    "pomo-below-[34rem]:[&[data-state='recovery']_.pomo-feed-status\\_\\_actions]:w-full",
-    "pomo-below-[34rem]:[&[data-state='recovery']_.pomo-feed-status\\_\\_action]:flex-1",
   ].join(' '),
   feedStatusAction: 'pomo-feed-status__action flex-none whitespace-nowrap',
-  feedStatusActions: 'pomo-feed-status__actions flex flex-none gap-[0.35rem]',
+  feedStatusActions: [
+    'pomo-feed-status__actions flex flex-none gap-[0.35rem]',
+    'pomo-below-[34rem]:w-full pomo-below-[34rem]:[&_button]:flex-1',
+  ].join(' '),
   feedStatusCopy: [
     'pomo-feed-status__copy grid min-w-0 flex-1 gap-[0.15rem] [&_strong]:overflow-hidden',
     '[&_strong]:text-ellipsis [&_strong]:whitespace-nowrap [&_small]:overflow-hidden',

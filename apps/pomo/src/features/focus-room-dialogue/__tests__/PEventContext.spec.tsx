@@ -234,9 +234,14 @@ it('should hold a speaking mouth between dialogues and rest 300ms after the fina
   ])
   const audioElements = dialogues.map(() => document.createElement('audio'))
   let audioIndex = 0
-  repository.getAudio.mockResolvedValue({
+  const audioBlob = {
     arrayBuffer: vi.fn(async () => new ArrayBuffer(0)),
-  } as unknown as Blob)
+  } as unknown as Blob
+  let resolveSecondAudio: ((audio: Blob) => void) | undefined
+  const secondAudio = new Promise<Blob>((resolve) => {
+    resolveSecondAudio = resolve
+  })
+  repository.getAudio.mockResolvedValueOnce(audioBlob).mockImplementationOnce(() => secondAudio)
   repositoryMocks.create.mockReturnValue(repository)
   vi.stubGlobal(
     'Audio',
@@ -258,11 +263,13 @@ it('should hold a speaking mouth between dialogues and rest 300ms after the fina
   vi.useFakeTimers()
 
   audioElements[0]?.dispatchEvent(new Event('ended'))
-  await vi.advanceTimersByTimeAsync(0)
-  expect(playAudio).toHaveBeenCalledTimes(2)
-  expect(events.activeViseme()).not.toBe('rest')
   await vi.advanceTimersByTimeAsync(300)
   expect(events.activeViseme()).not.toBe('rest')
+  expect(playAudio).toHaveBeenCalledTimes(1)
+
+  resolveSecondAudio?.(audioBlob)
+  await vi.advanceTimersByTimeAsync(0)
+  expect(playAudio).toHaveBeenCalledTimes(2)
 
   audioElements[1]?.dispatchEvent(new Event('ended'))
   await vi.advanceTimersByTimeAsync(299)

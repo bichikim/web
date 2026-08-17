@@ -33,6 +33,7 @@ export class PLayerReviewRenderer {
   #destroyed = false
   #incomingDefinitionId: string | null = null
   #incomingScene: PixiLayerScene | null = null
+  #pendingDefinition: PixiLayerSceneDefinition | null = null
   #replacementVersion = 0
   #scene: PixiLayerScene | null = null
   #state: PLayerReviewState | null = null
@@ -65,23 +66,51 @@ export class PLayerReviewRenderer {
     this.#application.canvas.setAttribute('aria-hidden', 'true')
     this.#application.canvas.className =
       'absolute inset-0 block h-full w-full object-cover object-center'
+    this.#host.append(this.#application.canvas)
+    await this.#initializeFirstScene(state)
+  }
 
-    const scene = this.#createScene(this.#initialDefinition)
+  async #initializeFirstScene(state: PLayerReviewState) {
+    const definition = this.#pendingDefinition ?? this.#initialDefinition
+    const version = this.#replacementVersion
+    const scene = this.#createScene(definition)
+    this.#pendingDefinition = null
+    this.#incomingDefinitionId = definition.id
     this.#incomingScene = scene
-    try {
-      await Promise.all([scene.initialize(this.#toSceneState(state)), this.#eyes.initialize(state)])
-    } catch (error: unknown) {
+    const [sceneInitialization, eyeInitialization] = await Promise.allSettled([
+      scene.initialize(this.#toSceneState(state)),
+      this.#eyes.initialize(state),
+    ])
+
+    if (eyeInitialization.status === 'rejected') {
+      scene.destroy()
       this.destroy()
-      throw error
+      throw eyeInitialization.reason
+    }
+
+    if (sceneInitialization.status === 'rejected') {
+      if (version !== this.#replacementVersion) {
+        scene.destroy()
+        return
+      }
+
+      this.destroy()
+      throw sceneInitialization.reason
     }
 
     if (this.#destroyed) {
       return
     }
 
+    if (version !== this.#replacementVersion) {
+      scene.destroy()
+      return
+    }
+
     this.#incomingScene = null
+    this.#incomingDefinitionId = null
     this.#scene = scene
-    this.#currentDefinitionId = this.#initialDefinition.id
+    this.#currentDefinitionId = definition.id
     this.#application.stage.addChild(scene.container)
     this.#placeEyes(scene)
     const latestState = this.#state
@@ -94,7 +123,6 @@ export class PLayerReviewRenderer {
 
     this.#eyes.setSceneReady(true)
     this.#application.render()
-    this.#host.append(this.#application.canvas)
   }
 
   update(state: PLayerReviewState) {
@@ -106,7 +134,17 @@ export class PLayerReviewRenderer {
   }
 
   async replaceDefinition(definition: PixiLayerSceneDefinition) {
-    if (this.#destroyed || definition.id === this.#incomingDefinitionId) {
+    if (this.#destroyed) {
+      return
+    }
+
+    if (!this.#applicationReady) {
+      this.#replacementVersion += 1
+      this.#pendingDefinition = definition
+      return
+    }
+
+    if (definition.id === this.#incomingDefinitionId) {
       return
     }
 
@@ -118,6 +156,10 @@ export class PLayerReviewRenderer {
       return
     }
 
+    await this.#replaceReadyDefinition(definition)
+  }
+
+  async #replaceReadyDefinition(definition: PixiLayerSceneDefinition) {
     const state = this.#state
 
     if (state === null) {
@@ -172,6 +214,7 @@ export class PLayerReviewRenderer {
     this.#destroyed = true
     this.#replacementVersion += 1
     this.#incomingDefinitionId = null
+    this.#pendingDefinition = null
     this.#incomingScene?.destroy()
     this.#incomingScene = null
     this.#eyes.container.removeFromParent()

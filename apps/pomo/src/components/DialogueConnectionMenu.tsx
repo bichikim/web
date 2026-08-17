@@ -54,7 +54,7 @@ const CLASSES = {
     '[&[data-expanded]]:border-[rgb(214_181_133_/_38%)]',
     '[&[data-expanded]]:bg-[var(--pomo-secondary-soft)] [&:disabled]:[cursor:not-allowed]',
     '[&:disabled]:text-[var(--pomo-text-muted)] [&:disabled]:[opacity:0.55]',
-    '[&[data-expanded]_.pomo-dialogue-settings\\_\\_dialogue-icon]:transform-[rotate(180deg)]',
+    '[&[data-expanded]_[data-pomo-dialogue-icon]]:transform-[rotate(180deg)]',
     'pomo-below-[42rem]:w-full motion-reduce:transition-[none]',
   ].join(' '),
   dialogueSettingsDialogueTriggerText: [
@@ -108,7 +108,7 @@ export const DialogueConnectionMenu = (props: DialogueConnectionMenuProps) => {
         >
           {triggerLabel()}
         </span>
-        <DropdownMenu.Icon class={CLASSES.dialogueSettingsDialogueIcon}>
+        <DropdownMenu.Icon class={CLASSES.dialogueSettingsDialogueIcon} data-pomo-dialogue-icon="">
           <span aria-hidden="true" class="i-tabler-chevron-down size-4" />
         </DropdownMenu.Icon>
       </DropdownMenu.Trigger>

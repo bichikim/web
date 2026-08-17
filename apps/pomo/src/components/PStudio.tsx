@@ -34,6 +34,7 @@ import {
   FOCUS_ROOM_TIME_OPTIONS,
   type PActivity,
   type PGaze,
+  resolvePSceneViseme,
 } from './pomo-scene-options'
 import {PSettings} from './PSettings'
 import {PScreenSaver} from './PScreenSaver'
@@ -50,10 +51,6 @@ const CLASSES = {
   entryAction: [
     'pomo-entry__action [button&]:min-w-[min(17rem,_100%)] [button&]:min-h-14',
     '[button&]:[padding-inline:1.5rem] [button&]:text-[0.9375rem]',
-    '[&_.pomo-button\\_\\_leading-image]:w-16 [&_.pomo-button\\_\\_leading-image]:h-16',
-    '[&_.pomo-button\\_\\_leading-image]:[margin-block:-1.25rem]',
-    '[&_.pomo-button\\_\\_leading-image]:[margin-inline-start:-0.75rem]',
-    '[&_.pomo-button\\_\\_leading-image]:filter-[drop-shadow(0_0.125rem_0.1875rem_rgb(0_0_0_/_32%))]',
   ].join(' '),
   entryContent: [
     'pomo-entry__content flex w-[min(calc(100%_-_2rem_-_env(safe-area-inset-left)),_22rem)]',
@@ -62,6 +59,10 @@ const CLASSES = {
     '[margin-inline-start:calc(1rem_+_env(safe-area-inset-left))]',
     'min-[40rem]:[margin-block-end:calc(2.5rem_+_env(safe-area-inset-bottom))]',
     'min-[40rem]:[margin-inline-start:calc(2.5rem_+_env(safe-area-inset-left))]',
+  ].join(' '),
+  entryLeadingImage: [
+    'size-16 [margin-block:-1.25rem] [margin-inline-start:-0.75rem]',
+    '[filter:drop-shadow(0_0.125rem_0.1875rem_rgb(0_0_0_/_32%))]',
   ].join(' '),
   loading: [
     'pomo-loading flex h-[var(--pomo-control-height-small)] box-border items-center gap-2',
@@ -87,7 +88,7 @@ const CLASSES = {
     '[&_.pomo-dialogue-bubble]:max-h-full [&_.pomo-dialogue-bubble]:[flex:0_1_auto]',
     '[&_.pomo-dialogue-bubble]:pointer-events-auto',
     '[&[data-dialogue-active]:not([data-player-expanded])_.pomo-player-stage]:w-[var(--pomo-player-compact-width)]',
-    '[&[data-dialogue-active]:not([data-player-expanded])_.pomo-player\\_\\_title]:hidden',
+    '[&[data-dialogue-active]:not([data-player-expanded])_[data-pomo-player-title]]:hidden',
     'min-[40rem]:right-[max(1.5rem,_env(safe-area-inset-right))]',
     'min-[40rem]:bottom-[max(1.5rem,_calc(1.5rem_+_env(safe-area-inset-bottom)))]',
     'min-[40rem]:left-[max(1.5rem,_env(safe-area-inset-left))]',
@@ -279,6 +280,7 @@ const PEntry = (props: PEntryProps) => (
         class={CLASSES.entryAction}
         disabled={props.isExiting}
         leadingImage={smilingFaceSource}
+        leadingImageClass={CLASSES.entryLeadingImage}
         onPress={() => props.onEnter()}
         tone="primary"
         trailingIcon="i-tabler-arrow-right"
@@ -369,6 +371,14 @@ export const PStudio = () => {
   const time = createMemo(() => resolveScenePeriod(timeMode(), automaticPeriod()))
   const sceneGaze = useDialogueSceneGaze(gaze, events.isDialoguePlaying, pomoSay.isPlaying)
   const selectedScene = createMemo(() => getSceneAsset(time(), activity(), sceneGaze()))
+  const activeViseme = createMemo(() => {
+    return resolvePSceneViseme(
+      events.activeViseme(),
+      events.isDialoguePlaying(),
+      pomoSay.speechText(),
+      pomoSay.activeViseme(),
+    )
+  })
   const handleLoadingChange = (isLoading: boolean) => {
     setIsSceneLoading(isLoading)
 
@@ -419,7 +429,7 @@ export const PStudio = () => {
           onMotionInputChange={setMotionInput}
           source={selectedScene().source}
           time={time()}
-          viseme={pomoSay.speechText() === null ? events.activeViseme() : pomoSay.activeViseme()}
+          viseme={activeViseme()}
         />
 
         <Show when={hasEntered() && isSceneLoading() && !hasSceneRendered()}>

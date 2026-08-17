@@ -10,6 +10,7 @@ describe('PButton', () => {
     const result = render(() => (
       <PButton
         leadingImage="pomo-smile.png"
+        leadingImageClass="size-16 entry-face"
         onPress={() => undefined}
         tone="glass"
         trailingIcon="i-tabler-arrow-right"
@@ -23,6 +24,8 @@ describe('PButton', () => {
 
     expect(button.tagName).toBe('BUTTON')
     expect(image?.getAttribute('src')).toBe('pomo-smile.png')
+    expect(image?.classList.contains('size-16')).toBe(true)
+    expect(image?.classList.contains('size-6')).toBe(false)
     expect(trailingIcon?.classList.contains('i-tabler-arrow-right')).toBe(true)
   })
 

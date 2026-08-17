@@ -15,7 +15,7 @@ import {getDialoguePositionAtTime, getDialogueVisemeAtTime} from './timeline'
 const MILLISECONDS_PER_SECOND = 1000
 const REST_RETURN_DELAY_MS = 300
 
-type VisemeResetTiming = 'delayed' | 'immediate'
+type VisemeResetTiming = 'delayed' | 'hold' | 'immediate'
 
 const readAudioEnvelope = async (audioBlob: Blob) => {
   try {
@@ -166,6 +166,10 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
   const resetViseme = (timing: VisemeResetTiming) => {
     cancelRestReturn()
 
+    if (timing === 'hold') {
+      return
+    }
+
     if (timing === 'immediate') {
       setActiveViseme('rest')
       return
@@ -233,7 +237,7 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
 
   const finishPlayback = (completion: PlaybackCompletion) => {
     settleCompletion(completion)
-    clearPlayback(completion === 'ended' ? 'delayed' : 'immediate')
+    clearPlayback(completion === 'ended' ? 'hold' : 'immediate')
   }
 
   const start = async () => {
@@ -338,7 +342,7 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
         }
 
         settleCompletion('ended')
-        clearPlayback('delayed')
+        clearPlayback('hold')
       },
       {once: true},
     )
@@ -446,6 +450,8 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
         drainQueue().catch((error: unknown) => {
           console.error('Unexpected dialogue queue failure.', error)
         })
+      } else if (!isDisposed && activeViseme() !== 'rest') {
+        resetViseme('delayed')
       }
     }
   }

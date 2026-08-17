@@ -282,7 +282,10 @@ export const MusicPlayerView = (props: MusicPlayerViewProps) => (
           <span aria-hidden="true" class="i-tabler-player-pause size-5" slot="pause" />
         </media-play-button>
 
-        <div class={cx(CLASSES.playerTitle, 'relative min-w-0 flex-1 px-[var(--pomo-padding-sm)]')}>
+        <div
+          class={cx(CLASSES.playerTitle, 'relative min-w-0 flex-1 px-[var(--pomo-padding-sm)]')}
+          data-pomo-player-title=""
+        >
           <p class={cx(CLASSES.playerTrackTitle, 'm-0 truncate')}>
             {props.currentTrack?.title ?? '집중 음악을 준비 중이에요'}
           </p>

@@ -17,10 +17,10 @@ const CLASSES = {
     '[&_button]:[font:inherit] [&_button]:text-[0.68rem] [&_button]:font-bold',
     '[&_button]:no-underline [&_a:hover]:border-[var(--pomo-brass)]',
     '[&_button:hover]:border-[var(--pomo-brass)]',
-    '[&_.pomo-feed-settings\\_\\_delete-confirm]:border-[rgb(232_174_114_/_58%)]',
-    '[&_.pomo-feed-settings\\_\\_delete-confirm]:text-[#ffd9bd]',
-    '[&_.pomo-feed-settings\\_\\_delete-confirm:hover]:border-[#ffd9bd]',
-    '[&_.pomo-feed-settings\\_\\_delete-confirm:hover]:bg-[rgb(232_174_114_/_12%)]',
+    '[&_[data-pomo-feed-delete-confirm]]:border-[rgb(232_174_114_/_58%)]',
+    '[&_[data-pomo-feed-delete-confirm]]:text-[#ffd9bd]',
+    '[&_[data-pomo-feed-delete-confirm]:hover]:border-[#ffd9bd]',
+    '[&_[data-pomo-feed-delete-confirm]:hover]:bg-[rgb(232_174_114_/_12%)]',
     'pomo-below-[28rem]:w-full pomo-below-[28rem]:flex-wrap pomo-below-[28rem]:[&_a]:w-auto',
     'pomo-below-[28rem]:[&_a]:[flex:1_1_5rem] pomo-below-[28rem]:[&_a]:justify-center',
     'pomo-below-[28rem]:[&_button]:w-auto pomo-below-[28rem]:[&_button]:[flex:1_1_5rem]',
@@ -215,6 +215,7 @@ export const PFeedDialogueList = (props: PFeedDialogueListProps) => {
                     <button
                       aria-label={`${item.metadata.itemTitle} 피드 대화 삭제 확인`}
                       class="pomo-feed-settings__delete-confirm"
+                      data-pomo-feed-delete-confirm=""
                       onClick={() => handleDelete(item.dialogue.id)}
                       type="button"
                     >
