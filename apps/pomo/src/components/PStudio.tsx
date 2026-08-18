@@ -1,6 +1,6 @@
 import {clientOnly} from '@solidjs/start'
 import {cx} from 'class-variance-authority'
-import {createMemo, createSignal, type JSX, onCleanup, onMount, Show, untrack} from 'solid-js'
+import {createMemo, createSignal, type JSX, onCleanup, onMount, Show} from 'solid-js'
 
 import smilingFaceSource from './assets/pomodoro-status-icons/break.webp'
 import {PButton} from '../design-system/PButton'
@@ -8,6 +8,7 @@ import {PIconButton} from '../design-system/PIconButton'
 import {PIconSelect} from '../design-system/PIconSelect'
 import type {PTrack} from '../features/focus-room-audio'
 import {usePEvents} from '../features/focus-room-dialogue/PEventContext'
+import {readFocusRoomEntrySession, writeFocusRoomEntrySession} from '../features/focus-room-entry'
 import {
   getPScene,
   type PSceneId,
@@ -363,9 +364,7 @@ export const PStudio = () => {
   const [hasSceneRendered, setHasSceneRendered] = createSignal(false)
   const [isPlayerExpanded, setIsPlayerExpanded] = createSignal(false)
   const hasEntered = events.hasEnteredFocusRoom
-  const [isEntryVisible, setIsEntryVisible] = createSignal(
-    untrack(() => !events.hasEnteredFocusRoom()),
-  )
+  const [isEntryVisible, setIsEntryVisible] = createSignal(false)
   const [currentTrack, setCurrentTrack] = createSignal<PTrack | null>(null)
   const [pomodoroPresentation, setPomodoroPresentation] = createSignal<PPomodoroPresentation>(
     INITIAL_POMODORO_PRESENTATION,
@@ -390,6 +389,8 @@ export const PStudio = () => {
     }
   }
   const handleEnter = () => {
+    writeFocusRoomEntrySession()
+
     if (hasEntered()) {
       return
     }
@@ -401,6 +402,12 @@ export const PStudio = () => {
     const gyroscopeAvailable = supportsPSceneGyroscope()
     const updateAutomaticPeriod = () => setAutomaticPeriod(getAutomaticScenePeriod(new Date()))
     const timer = window.setInterval(updateAutomaticPeriod, AUTOMATIC_PERIOD_REFRESH)
+
+    if (hasEntered() || readFocusRoomEntrySession()) {
+      events.enterFocusRoom()
+    } else {
+      setIsEntryVisible(true)
+    }
 
     setCanUseGyroscope(gyroscopeAvailable)
     if (gyroscopeAvailable) {

@@ -23,6 +23,7 @@ export default <StorybookConfig>{
       builder: {
         viteConfigPath: './.storybook/vite.config.mts',
       },
+      docgen: false,
     },
   },
   stories: [
@@ -33,15 +34,6 @@ export default <StorybookConfig>{
     '../packages/player/src/**/*.story.@(js|jsx|mjs|ts|tsx)',
     '../packages/utils/src/**/*.story.@(js|jsx|mjs|ts|tsx)',
   ],
-  typescript: {
-    reactDocgen: 'react-docgen-typescript',
-    reactDocgenTypescriptOptions: {
-      // 👇 Default prop filter, which excludes props from node_modules
-      propFilter: (prop: any) => (prop.parent ? !/node_modules/u.test(prop.parent.fileName) : true),
-
-      shouldExtractLiteralValuesFromEnum: true,
-    },
-  },
   async viteFinal(config) {
     return mergeConfig(config, {
       assetsInclude: ['**/*.lottie'],

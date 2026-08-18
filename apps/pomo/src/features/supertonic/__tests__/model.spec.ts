@@ -4,6 +4,7 @@ import {
   getSupertonicAssetUrl,
   getSupertonicModel,
   getSupertonicModelFileUrl,
+  SUPERTONIC_MODEL_ASSETS_URL,
   SUPERTONIC_MODELS,
   SUPERTONIC_VOICES,
 } from '../model'
@@ -38,6 +39,7 @@ describe('Supertonic model manifest', () => {
     expect(getSupertonicAssetUrl('onnx/tts.json')).toContain(
       '/Supertone/supertonic-3/resolve/3cadd1e/onnx/tts.json',
     )
+    expect(SUPERTONIC_MODEL_ASSETS_URL).toBe('/models/supertonic-3/manifest.json')
   })
 
   it('should expose all fixed voices and reject unsupported model identifiers at runtime', () => {

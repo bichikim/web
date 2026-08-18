@@ -1,17 +1,31 @@
 import type {Meta, StoryObj} from 'storybook-solidjs-vite'
-import {SHiddenPlayer} from './SHiddenPlayer'
+import {splitProps} from 'solid-js'
+import {MidiPlayerProvider, type MidiPlayerProviderProps} from './context'
+import {SHiddenPlayer, type SHiddenPlayerProps} from './SHiddenPlayer'
 import midiData from './hidden-teenieping.json'
+
+type SHiddenPlayerStoryProps = SHiddenPlayerProps & Pick<MidiPlayerProviderProps, 'initMusics'>
+
+const SHiddenPlayerStory = (props: SHiddenPlayerStoryProps) => {
+  const [providerProps, playerProps] = splitProps(props, ['initMusics'])
+
+  return (
+    <MidiPlayerProvider initMusics={providerProps.initMusics}>
+      <SHiddenPlayer {...playerProps} />
+    </MidiPlayerProvider>
+  )
+}
 
 const meta = {
   args: {
     class: 'absolute bottom-1 right-1 max-w-100vw',
   },
-  component: SHiddenPlayer,
+  component: SHiddenPlayerStory,
   parameters: {
     layout: 'centered',
   },
   title: 'Coong/Components/MidiPlayer/SHiddenPlayer',
-} satisfies Meta<typeof SHiddenPlayer>
+} satisfies Meta<typeof SHiddenPlayerStory>
 
 export default meta
 type Story = StoryObj<typeof meta>
@@ -38,12 +52,12 @@ export const WithInitialMusics: Story = {
       {
         id: '1',
         name: 'Sample MIDI 1',
-        url: '/sample1.mid',
+        totalDuration: 120,
       },
       {
         id: '2',
         name: 'Sample MIDI 2',
-        url: '/sample2.mid',
+        totalDuration: 120,
       },
     ],
     playState: {
@@ -64,7 +78,7 @@ export const Playing: Story = {
       {
         id: '1',
         name: 'Now Playing',
-        url: '/sample.mid',
+        totalDuration: 150,
       },
     ],
     playState: {
