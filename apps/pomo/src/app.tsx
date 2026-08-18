@@ -7,8 +7,11 @@ import {FileRoutes} from '@solidjs/start/router'
 import {ErrorBoundary, Suspense} from 'solid-js'
 
 import {PFocusRoomLayout} from './components/PFocusRoomLayout'
+import {useAppsInTossSafeArea} from './features/apps-in-toss-safe-area'
 
 export default function App() {
+  useAppsInTossSafeArea()
+
   return (
     <Router
       root={(props) => (

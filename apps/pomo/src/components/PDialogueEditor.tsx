@@ -18,10 +18,10 @@ const CLASSES = {
   dialogueEditor: [
     'pomo-dialogue-editor min-h-dvh box-border',
     'bg-[radial-gradient(circle_at_15%_0%,_rgb(122_83_53_/_20%),_transparent_32rem),_#17130f]',
-    'pt-[max(1.25rem,_env(safe-area-inset-top))]',
-    'pr-[max(1.25rem,_env(safe-area-inset-right))]',
-    'pb-[max(6rem,_calc(1.25rem_+_env(safe-area-inset-bottom)))]',
-    'pl-[max(1.25rem,_env(safe-area-inset-left))]',
+    'pt-[max(1.25rem,_var(--pomo-safe-area-inset-top))]',
+    'pr-[max(1.25rem,_var(--pomo-safe-area-inset-right))]',
+    'pb-[max(6rem,_calc(1.25rem_+_var(--pomo-safe-area-inset-bottom)))]',
+    'pl-[max(1.25rem,_var(--pomo-safe-area-inset-left))]',
     'text-[#fffaf1]',
   ].join(' '),
   dialogueEditorBack: [
@@ -67,8 +67,8 @@ const CLASSES = {
   dialogueEditorFieldLabel: 'pomo-dialogue-editor__field-label flex justify-between gap-4',
   dialogueEditorFooter: [
     'pomo-dialogue-editor__footer w-[min(100%,_68rem)] [margin-inline:auto] flex justify-end',
-    'gap-3 fixed right-[max(1rem,_env(safe-area-inset-right))]',
-    'bottom-[max(1rem,_env(safe-area-inset-bottom))] left-[max(1rem,_env(safe-area-inset-left))]',
+    'gap-3 fixed right-[max(1rem,_var(--pomo-safe-area-inset-right))]',
+    'bottom-[max(1rem,_var(--pomo-safe-area-inset-bottom))] left-[max(1rem,_var(--pomo-safe-area-inset-left))]',
     'w-auto items-center [border:1px_solid_rgb(255_255_255_/_12%)] rounded-2xl',
     'bg-[rgb(29_23_18_/_94%)] p-3 shadow-[0_1rem_4rem_rgb(0_0_0_/_35%)] [&_p]:m-[0_auto_0_0]',
     '[&_p]:text-[#a99d90] [&_p]:text-xs max-[48rem]:[&_p]:hidden',

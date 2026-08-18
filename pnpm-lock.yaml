@@ -587,12 +587,9 @@ importers:
 
   apps/pomo:
     dependencies:
-      '@apps-in-toss/bridge-core':
+      '@apps-in-toss/web-framework':
         specifier: 2.4.1
-        version: 2.4.1
-      '@apps-in-toss/web-bridge':
-        specifier: 2.4.1
-        version: 2.4.1
+        version: 2.4.1(50ae8fe900f4bc6ba3dbafaebbc97870)
       '@babylonjs/core':
         specifier: 9.18.0
         version: 9.18.0
@@ -666,9 +663,6 @@ importers:
         specifier: 'catalog:'
         version: 4.4.2
     devDependencies:
-      '@apps-in-toss/web-framework':
-        specifier: 2.4.1
-        version: 2.4.1(50ae8fe900f4bc6ba3dbafaebbc97870)
       '@iconify-json/tabler':
         specifier: ^1.2.33
         version: 1.2.33

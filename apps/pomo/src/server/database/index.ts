@@ -21,7 +21,6 @@ export type Database = ReturnType<typeof createDatabase>
 export type TransactionalDatabase = ReturnType<typeof createTransactionalDatabase>
 
 let database: Database | undefined
-let transactionalDatabase: TransactionalDatabase | undefined
 
 /** Returns the lazily initialized Neon HTTP database client. */
 export const getDatabase = (): Database => {
@@ -30,10 +29,16 @@ export const getDatabase = (): Database => {
   return database
 }
 
-/** Returns the pooled Neon client reserved for atomic write workflows. */
-export const getTransactionalDatabase = (): TransactionalDatabase => {
+/** Runs an atomic write workflow with a request-scoped Neon WebSocket pool. */
+export const withTransactionalDatabase = async <Result>(
+  operation: (database: TransactionalDatabase) => Promise<Result>,
+): Promise<Result> => {
   // AI_NOTE - Keep ordinary feed reads on Neon HTTP; the pooled driver is only needed because neon-http cannot run interactive transactions.
-  transactionalDatabase ??= createTransactionalDatabase(getDatabaseUrl())
+  const transactionalDatabase = createTransactionalDatabase(getDatabaseUrl())
 
-  return transactionalDatabase
+  try {
+    return await operation(transactionalDatabase)
+  } finally {
+    await transactionalDatabase.$client.end()
+  }
 }

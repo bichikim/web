@@ -14,6 +14,10 @@ export default mergeConfigs([
       const modalSpacingCompact = spacing('5')
       const panelInset = spacing('2')
       const panelRadius = theme.borderRadius?.panel ?? '1.25rem'
+      const safeAreaBottom = 'var(--pomo-safe-area-inset-bottom)'
+      const safeAreaLeft = 'var(--pomo-safe-area-inset-left)'
+      const safeAreaRight = 'var(--pomo-safe-area-inset-right)'
+      const safeAreaTop = 'var(--pomo-safe-area-inset-top)'
 
       theme.borderRadius = {
         ...theme.borderRadius,
@@ -25,20 +29,17 @@ export default mergeConfigs([
         'control-sm': controlSmall,
         'media-dock':
           `calc(100dvh - ${layoutSpacing} - ${layoutSpacing} - ` +
-          'env(safe-area-inset-top) - env(safe-area-inset-bottom))',
+          `${safeAreaTop} - ${safeAreaBottom})`,
         'media-dock-wide':
           `calc(100dvh - ${layoutSpacingWide} - ${layoutSpacingWide} - ` +
-          'env(safe-area-inset-top) - env(safe-area-inset-bottom))',
+          `${safeAreaTop} - ${safeAreaBottom})`,
       }
       theme.maxHeight = {
         ...theme.maxHeight,
-        modal:
-          `calc(100dvh - (${layoutSpacing} * 2) - ` +
-          'env(safe-area-inset-top) - env(safe-area-inset-bottom))',
-        'modal-top': `calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - (${modalSpacing} * 2))`,
+        modal: `calc(100dvh - (${layoutSpacing} * 2) - ` + `${safeAreaTop} - ${safeAreaBottom})`,
+        'modal-top': `calc(100dvh - ${safeAreaTop} - ${safeAreaBottom} - (${modalSpacing} * 2))`,
         'modal-top-compact':
-          'calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - ' +
-          `(${modalSpacingCompact} * 2))`,
+          `calc(100dvh - ${safeAreaTop} - ${safeAreaBottom} - ` + `(${modalSpacingCompact} * 2))`,
       }
       theme.minHeight = {
         ...theme.minHeight,
@@ -52,15 +53,15 @@ export default mergeConfigs([
       }
       theme.spacing = {
         ...theme.spacing,
-        'modal-top': `calc(env(safe-area-inset-top) + ${modalSpacing})`,
-        'modal-top-compact': `calc(env(safe-area-inset-top) + ${modalSpacingCompact})`,
-        'player-bottom': `calc(${layoutSpacing} + env(safe-area-inset-bottom))`,
-        'safe-bottom': `max(${layoutSpacing}, calc(${layoutSpacing} + env(safe-area-inset-bottom)))`,
-        'safe-bottom-wide': `max(${layoutSpacingWide}, calc(${layoutSpacingWide} + env(safe-area-inset-bottom)))`,
-        'safe-left': `max(${layoutSpacing}, env(safe-area-inset-left))`,
-        'safe-left-wide': `max(${layoutSpacingWide}, env(safe-area-inset-left))`,
-        'safe-right': `max(${layoutSpacing}, env(safe-area-inset-right))`,
-        'safe-right-wide': `max(${layoutSpacingWide}, env(safe-area-inset-right))`,
+        'modal-top': `calc(${safeAreaTop} + ${modalSpacing})`,
+        'modal-top-compact': `calc(${safeAreaTop} + ${modalSpacingCompact})`,
+        'player-bottom': `calc(${layoutSpacing} + ${safeAreaBottom})`,
+        'safe-bottom': `max(${layoutSpacing}, calc(${layoutSpacing} + ${safeAreaBottom}))`,
+        'safe-bottom-wide': `max(${layoutSpacingWide}, calc(${layoutSpacingWide} + ${safeAreaBottom}))`,
+        'safe-left': `max(${layoutSpacing}, ${safeAreaLeft})`,
+        'safe-left-wide': `max(${layoutSpacingWide}, ${safeAreaLeft})`,
+        'safe-right': `max(${layoutSpacing}, ${safeAreaRight})`,
+        'safe-right-wide': `max(${layoutSpacingWide}, ${safeAreaRight})`,
       }
       theme.width = {
         ...theme.width,
@@ -72,6 +73,10 @@ export default mergeConfigs([
       {
         getCSS: ({theme}) => `
 :root {
+  --pomo-safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+  --pomo-safe-area-inset-left: env(safe-area-inset-left, 0px);
+  --pomo-safe-area-inset-right: env(safe-area-inset-right, 0px);
+  --pomo-safe-area-inset-top: env(safe-area-inset-top, 0px);
   color-scheme: dark;
   font-family: ${theme.fontFamily?.sans};
   background: ${theme.colors?.background};

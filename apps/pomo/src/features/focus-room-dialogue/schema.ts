@@ -53,14 +53,14 @@ const dialogueSegmentSchema = z.object({
 
 export const focusRoomDialogueSchema = z.object({
   audioKey: z.string().min(1),
-  createdAt: z.string().datetime(),
+  createdAt: z.iso.datetime(),
   durationMs: z.number().nonnegative(),
   id: z.string().min(1),
   language: z.enum(SUPERTONIC_LANGUAGES).default(DEFAULT_FOCUS_ROOM_DIALOGUE_LANGUAGE),
   modelId: z.enum(['full', 'int8']),
   segments: z.array(dialogueSegmentSchema).min(1).readonly(),
   text: z.string().min(1),
-  updatedAt: z.string().datetime(),
+  updatedAt: z.iso.datetime(),
   version: z.literal(1),
   voiceId: z.enum(['Yuna', 'F1', 'F2', 'F3', 'F4', 'F5', 'M1', 'M2', 'M3', 'M4', 'M5']),
 })

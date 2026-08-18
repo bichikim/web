@@ -3,10 +3,10 @@ import {createEffect, onMount, Show} from 'solid-js'
 const CLASSES = {
   screenSaver: [
     'pomo-screen-saver w-screen max-w-[none] h-dvh max-h-[none] box-border m-0 border-0 bg-[#000]',
-    'pt-[max(1.5rem,_env(safe-area-inset-top))]',
-    'pr-[max(1.5rem,_env(safe-area-inset-right))]',
-    'pb-[max(1.5rem,_env(safe-area-inset-bottom))]',
-    'pl-[max(1.5rem,_env(safe-area-inset-left))]',
+    'pt-[max(1.5rem,_var(--pomo-safe-area-inset-top))]',
+    'pr-[max(1.5rem,_var(--pomo-safe-area-inset-right))]',
+    'pb-[max(1.5rem,_var(--pomo-safe-area-inset-bottom))]',
+    'pl-[max(1.5rem,_var(--pomo-safe-area-inset-left))]',
     'text-[rgb(255_255_255_/_48%)] cursor-pointer outline-none overscroll-none',
     '[&::backdrop]:bg-[#000]',
   ].join(' '),
@@ -22,10 +22,10 @@ const CLASSES = {
   ].join(' '),
   screenSaverSafeArea: [
     'pomo-screen-saver__safe-area absolute',
-    'top-[max(1.5rem,_env(safe-area-inset-top))]',
-    'right-[max(1.5rem,_env(safe-area-inset-right))]',
-    'bottom-[max(1.5rem,_env(safe-area-inset-bottom))]',
-    'left-[max(1.5rem,_env(safe-area-inset-left))]',
+    'top-[max(1.5rem,_var(--pomo-safe-area-inset-top))]',
+    'right-[max(1.5rem,_var(--pomo-safe-area-inset-right))]',
+    'bottom-[max(1.5rem,_var(--pomo-safe-area-inset-bottom))]',
+    'left-[max(1.5rem,_var(--pomo-safe-area-inset-left))]',
     'grid place-items-center pointer-events-none',
   ].join(' '),
   screenSaverTimer: [

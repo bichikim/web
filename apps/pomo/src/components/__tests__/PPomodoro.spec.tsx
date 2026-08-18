@@ -12,7 +12,7 @@ const bridgeStorageMocks = vi.hoisted(() => ({
   setItem: vi.fn<(key: string, value: string) => Promise<void>>(),
 }))
 
-vi.mock('@apps-in-toss/web-bridge', () => ({
+vi.mock('@apps-in-toss/web-framework', () => ({
   Storage: bridgeStorageMocks,
 }))
 vi.mock('src/design-system/PModal', () => ({

@@ -1,6 +1,4 @@
-// web-bridge 2.4.1's app client entry imports bridge-core without a runtime dependency,
-// so package.json must keep both packages pinned to the same version.
-import {Storage} from '@apps-in-toss/web-bridge'
+import {Storage} from '@apps-in-toss/web-framework'
 import {z} from 'zod'
 
 const PLAYBACK_STORAGE_KEY = 'pomo:focus-room-playback:v1'

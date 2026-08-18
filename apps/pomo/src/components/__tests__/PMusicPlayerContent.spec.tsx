@@ -13,7 +13,7 @@ const storageMocks = vi.hoisted(() => ({
   setItem: vi.fn<(key: string, value: string) => Promise<void>>(),
 }))
 
-vi.mock('@apps-in-toss/web-bridge', () => ({Storage: storageMocks}))
+vi.mock('@apps-in-toss/web-framework', () => ({Storage: storageMocks}))
 
 const TRACKS = [
   {artist: 'Artist', durationSeconds: 1, id: 'one', source: '/one.mp3', title: 'One'},

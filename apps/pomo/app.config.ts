@@ -43,6 +43,9 @@ const app = defineConfig({
     : {},
   ssr: true,
   vite: {
+    define: {
+      'import.meta.env.POMO_IS_APPS_IN_TOSS': JSON.stringify(isAppsInToss),
+    },
     optimizeDeps: {
       include: ['onnxruntime-web/all', 'zod'],
     },
