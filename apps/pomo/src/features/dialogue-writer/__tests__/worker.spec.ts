@@ -24,12 +24,12 @@ type WorkerMessageListener = (event: MessageEvent<DialogueWorkerRequest>) => voi
 const transformers = vi.hoisted(() => ({
   gemmaModelFromPretrained: vi.fn(),
   generate: vi.fn(),
+  processorFromPretrained: vi.fn(),
   qwenModelFromPretrained: vi.fn(),
-  tokenizerFromPretrained: vi.fn(),
 }))
 
 vi.mock('@huggingface/transformers', () => ({
-  AutoTokenizer: {from_pretrained: transformers.tokenizerFromPretrained},
+  AutoProcessor: {from_pretrained: transformers.processorFromPretrained},
   env: {},
   Gemma4ForCausalLM: {from_pretrained: transformers.gemmaModelFromPretrained},
   Qwen3_5ForCausalLM: {from_pretrained: transformers.qwenModelFromPretrained},
@@ -42,14 +42,18 @@ vi.mock('@huggingface/transformers', () => ({
   },
 }))
 
-const createTokenizer = () => {
+const createProcessor = () => {
+  const tokenizer = {
+    all_special_ids: [0],
+    decode: () => '한글',
+    get_vocab: () => new Map([['한글', 1]]),
+  }
+
   return Object.assign(
     vi.fn(async () => ({input_ids: [1]})),
     {
-      all_special_ids: [0],
       apply_chat_template: vi.fn(() => '완성된 프롬프트'),
-      decode: () => '한글',
-      get_vocab: () => new Map([['한글', 1]]),
+      tokenizer,
     },
   )
 }
@@ -85,11 +89,7 @@ beforeEach(() => {
   vi.clearAllMocks()
   vi.unstubAllGlobals()
 
-  vi.stubGlobal(
-    'fetch',
-    vi.fn(async () => new Response('공식 Gemma 채팅 템플릿')),
-  )
-  transformers.tokenizerFromPretrained.mockResolvedValue(createTokenizer())
+  transformers.processorFromPretrained.mockResolvedValue(createProcessor())
   const loadModel = async (_repositoryId: string, options: MockModelOptions) => {
     options.progress_callback({
       files: {'model.onnx': {loaded: 50, total: 100}},

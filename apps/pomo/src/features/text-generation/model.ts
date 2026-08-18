@@ -17,7 +17,6 @@ export interface TextModelDefinition {
 
 export interface TextModelImplementation extends TextModelDefinition {
   readonly architecture: 'gemma-4' | 'qwen-3.5'
-  readonly chatTemplateFile?: string
   readonly quantization: 'q2f16' | 'q4'
   readonly repositoryId: string
 }
@@ -25,7 +24,6 @@ export interface TextModelImplementation extends TextModelDefinition {
 const TEXT_MODEL_IMPLEMENTATIONS: Record<TextModelId, TextModelImplementation> = {
   'gemma-4-e2b': {
     architecture: 'gemma-4',
-    chatTemplateFile: 'chat_template.jinja',
     description: '다른 모델 계열의 한국어 표현 비교용',
     downloadSize: '약 3.7GB',
     id: 'gemma-4-e2b',
@@ -35,7 +33,6 @@ const TEXT_MODEL_IMPLEMENTATIONS: Record<TextModelId, TextModelImplementation> =
   },
   'gemma-4-e2b-mobile': {
     architecture: 'gemma-4',
-    chatTemplateFile: 'chat_template.jinja',
     description: 'q2f16 모바일 양자화 품질 비교용',
     downloadSize: '약 2.3GB',
     id: 'gemma-4-e2b-mobile',

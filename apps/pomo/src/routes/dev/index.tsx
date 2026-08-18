@@ -116,11 +116,11 @@ export default function HomePage() {
             <div class="flex items-start justify-between gap-5">
               <div>
                 <p class="m-0 text-xs font-700 tracking-[0.2em] text-#9ed6bb uppercase">
-                  Qwen3.5 0.8B–4B · WebGPU
+                  Qwen3.5 + Gemma 4 · WebGPU
                 </p>
                 <h2 class="mb-0 mt-3 text-2xl font-750">답변 생성 실험실</h2>
                 <p class="mb-0 mt-3 max-w-sm text-sm leading-6 text-#aaa0b1">
-                  한 번의 요청에 사려 깊은 한 사람이 자연스러운 존댓말로 충분히 답해요.
+                  같은 요청으로 Qwen 3종과 Gemma q4·모바일 q2f16 답변을 나란히 비교해요.
                 </p>
               </div>
               <span
