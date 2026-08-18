@@ -1,10 +1,11 @@
 import 'media-chrome'
 
 import {cx} from 'class-variance-authority'
-import {For, type JSX, Show} from 'solid-js'
+import {For} from 'solid-js'
 
 import type {PTrack} from '../features/focus-room-audio/focus-room-playlist'
 import type {RepeatMode} from '../features/focus-room-audio/playback-policy'
+import {POverflowMarquee} from './POverflowMarquee'
 import {PPlaybackModes} from './PPlaybackModes'
 import {PTrackList} from './PTrackList'
 
@@ -17,15 +18,14 @@ const CLASSES = {
     'pomo-player [--media-background-color:transparent] [--media-control-background:transparent]',
     '[--media-control-hover-background:rgb(114_123_96_/_20%)]',
     '[--media-control-padding:0.6rem] [--media-font-family:inherit]',
-    '[--media-primary-color:#fffaf1] [--media-range-bar-color:#727b60]',
-    '[--media-range-track-height:0.2rem] [--media-secondary-color:transparent] block w-full',
+    '[--media-primary-color:#fffaf1] [--media-range-bar-color:#fffaf1]',
+    '[--media-range-track-background:rgb(255_250_241_/_22%)]',
+    '[--media-range-track-height:2px] [--media-secondary-color:transparent] block w-full',
     'bg-transparent [&_media-control-bar]:w-full [&_media-control-bar]:bg-transparent',
     '[&_media-play-button]:rounded-full [&_media-mute-button]:rounded-full',
     '[&_media-mute-button]:text-muted-foreground',
     '[&_media-mute-button:hover]:text-foreground',
-    '[&_media-mute-button:hover]:bg-[rgb(255_250_241_/_8%)] [&_media-time-range]:w-full',
-    '[&_media-time-range]:min-w-[7rem] [&_media-time-range]:h-4',
-    '[&_media-volume-range]:w-[clamp(2.5rem,_8vw,_4.5rem)] [&_media-volume-range]:min-w-0',
+    '[&_media-mute-button:hover]:bg-[rgb(255_250_241_/_8%)]',
   ].join(' '),
   playerBase: 'pomo-player__base bg-surface',
   playerExpanded: [
@@ -35,18 +35,62 @@ const CLASSES = {
     'max-[28rem]:[&_>_div:nth-child(2)]:grid-cols-[auto_1fr]',
     'max-[28rem]:[&_>_div:nth-child(2)_>_div:last-child]:hidden',
   ].join(' '),
+  playerExpandedFrame: [
+    'pomo-player__expanded-frame grid min-h-0 grid-rows-[0fr]',
+    '[transition:grid-template-rows_280ms_cubic-bezier(0.22,_1,_0.36,_1)]',
+    '[&.is-expanded]:grid-rows-[1fr] motion-reduce:transition-none',
+  ].join(' '),
+  playerExpandedInner: [
+    'pomo-player__expanded-inner min-h-0 overflow-clip [overflow-clip-margin:0.5rem]',
+    'opacity-0 pointer-events-none',
+    '[transition:opacity_160ms_ease]',
+    '[&.is-expanded]:opacity-100 [&.is-expanded]:pointer-events-auto',
+    'motion-reduce:transition-none',
+  ].join(' '),
+  playerMute: 'pomo-player__mute size-10 shrink-0 [--media-control-padding:0.625rem]',
   playerPlay: [
     'pomo-player__play w-11 h-11 text-white bg-primary',
     'shadow-[0_8px_20px_rgb(125_49_29_/_34%),_inset_0_1px_0_rgb(255_255_255_/_24%)]',
-    'transition-[transform_160ms_ease,_filter_160ms_ease] [&:hover]:brightness-[1.08]',
-    '[&:hover]:translate-y-[-1px] motion-reduce:transition-[none]',
+    '[transition:filter_160ms_ease] [&:hover]:brightness-[1.08]',
+    'motion-reduce:transition-none',
   ].join(' '),
-  playerPlayLarge: 'pomo-player__play--large w-13 h-13',
-  playerPlaySummary: [
-    'pomo-player__play--summary overflow-hidden',
-    '[transition:var(--pomo-player-summary-transition)]',
-    '[&.is-hidden]:w-0 [&.is-hidden]:h-0 [&.is-hidden]:[margin-right:-0.75rem]',
-    '[&.is-hidden]:[opacity:0] [&.is-hidden]:pointer-events-none motion-reduce:transition-[none]',
+  playerPlayLarge: [
+    'pomo-player__play--large w-13 h-13',
+    '[transition:transform_160ms_ease,_filter_160ms_ease] [&:hover]:translate-y-[-1px]',
+    'motion-reduce:transition-none',
+  ].join(' '),
+  playerPlaySummary: 'pomo-player__play--summary',
+  playerPlaySummaryFrame: [
+    'pomo-player__play-summary-frame h-11 w-11 shrink-0 overflow-hidden',
+    '[transition:width_260ms_ease,_margin-right_260ms_ease,_opacity_180ms_ease]',
+    '[&.is-hidden]:w-0 [&.is-hidden]:[margin-right:-0.75rem]',
+    '[&.is-hidden]:opacity-0 [&.is-hidden]:pointer-events-none',
+    'motion-reduce:transition-none',
+  ].join(' '),
+  playerProgress: [
+    'pomo-player__progress flex min-w-0',
+    '[--media-control-background:transparent] [--media-control-hover-background:transparent]',
+    '[--media-range-thumb-opacity:0]',
+    '[--media-range-thumb-transition:opacity_140ms_ease]',
+    'motion-reduce:[--media-range-thumb-transition:none]',
+  ].join(' '),
+  playerProgressCollapsed: [
+    'pomo-player__progress--collapsed pointer-events-none absolute inset-0 h-full w-full',
+    '[--media-control-height:100%] [--media-range-padding:0px]',
+    '[--media-range-track-height:100%] [--media-range-track-border-radius:0px]',
+    '[--media-range-bar-color:rgb(0_0_0_/_25%)]',
+    '[--media-time-range-buffered-color:transparent]',
+    '[--media-range-track-background:transparent]',
+    '[transition:opacity_160ms_ease] [&.is-hidden]:opacity-0',
+    'motion-reduce:transition-none',
+  ].join(' '),
+  playerProgressExpanded: [
+    'pomo-player__progress--expanded -mx-2 h-0.5 w-[calc(100%+1rem)] flex-none',
+    '[--media-control-height:2px] [--media-range-padding:0px]',
+    '[--media-range-bar-color:#fffaf1]',
+    '[--media-time-range-buffered-color:rgb(255_250_241_/_40%)]',
+    '[--media-range-track-background:rgb(255_250_241_/_22%)]',
+    'hover:[--media-range-thumb-opacity:1] focus-within:[--media-range-thumb-opacity:1]',
   ].join(' '),
   playerShell: [
     'pomo-player-shell',
@@ -67,17 +111,19 @@ const CLASSES = {
     'pomo-player__visualizer top-[-8px] bottom-[-8px] left-[-8px] right-[-8px]',
     '[filter:blur(8px)_saturate(1.25)_contrast(1.12)]',
   ].join(' '),
+  playerVolume: [
+    'pomo-player__volume min-w-0 w-[clamp(3.5rem,_9vw,_4.75rem)]',
+    '[--media-range-padding-left:0.25rem] [--media-range-padding-right:0.25rem]',
+    '[--media-range-thumb-opacity:0]',
+    '[--media-range-thumb-transition:opacity_140ms_ease]',
+    'hover:[--media-range-thumb-opacity:1] focus-within:[--media-range-thumb-opacity:1]',
+    'motion-reduce:[--media-range-thumb-transition:none]',
+  ].join(' '),
 } as const
 
-// AI_NOTE - Keep transition in CSS so prefers-reduced-motion can override it.
-const PLAYER_SUMMARY_STYLE: JSX.CSSProperties = {
-  '--pomo-player-summary-transition': [
-    'width 260ms ease, height 260ms ease, margin 260ms ease, ',
-    'opacity 180ms ease, transform 160ms ease, filter 160ms ease',
-  ].join(''),
-}
-
 const ACTIVE_VISUALIZER_OPACITY = 0.76
+const FALLBACK_TRACK_ARTIST = 'MP3를 연결하면 이곳에서 재생돼요'
+const FALLBACK_TRACK_TITLE = '집중 음악을 준비 중이에요'
 const IDLE_VISUALIZER_OPACITY = 0.34
 const SKIP_BUTTON_CLASSES = [
   'pomo-player__skip grid size-10 shrink-0 place-items-center rounded-full transition',
@@ -120,13 +166,6 @@ type ExpandedPlayerControlsProps = Pick<
 
 const ExpandedPlayerControls = (props: ExpandedPlayerControlsProps) => (
   <div class={cx(CLASSES.playerExpanded, 'relative px-2 pb-2', 'pt-3 rounded-b-panel-inner')}>
-    <div class="mb-3 px-1">
-      <media-time-range class={MEDIA_FOCUS_CLASSES} />
-      <div class={cx('mt-1 flex justify-end text-[10px]', 'tabular-nums text-muted-foreground')}>
-        <media-time-display class={MEDIA_FOCUS_CLASSES} showduration="" />
-      </div>
-    </div>
-
     <div class={cx('grid grid-cols-[1fr_auto_1fr] items-center gap-2', 'px-1')}>
       <PPlaybackModes
         onRepeatModeChange={props.onRepeatModeChange}
@@ -141,6 +180,7 @@ const ExpandedPlayerControls = (props: ExpandedPlayerControlsProps) => (
           class={SKIP_BUTTON_CLASSES}
           disabled={props.tracks.length < 2}
           onClick={() => props.onPreviousTrack()}
+          title="이전 곡"
           type="button"
         >
           <span aria-hidden="true" class="i-tabler-player-track-prev size-4" />
@@ -150,6 +190,7 @@ const ExpandedPlayerControls = (props: ExpandedPlayerControlsProps) => (
           class={cx(CLASSES.playerPlay, CLASSES.playerPlayLarge, 'max-[28rem]:size-12')}
           disabled={!props.currentTrack}
           notooltip
+          title="재생 또는 일시 정지"
         >
           <span aria-hidden="true" class="i-tabler-player-play size-5" slot="play" />
           <span aria-hidden="true" class="i-tabler-player-pause size-5" slot="pause" />
@@ -159,20 +200,26 @@ const ExpandedPlayerControls = (props: ExpandedPlayerControlsProps) => (
           class={SKIP_BUTTON_CLASSES}
           disabled={props.tracks.length < 2}
           onClick={() => props.onNextTrack()}
+          title="다음 곡"
           type="button"
         >
           <span aria-hidden="true" class="i-tabler-player-track-next size-4" />
         </button>
       </div>
 
-      <div class="flex min-w-0 items-center justify-end gap-1">
-        <media-mute-button aria-label="음소거">
+      <div class="pomo-player__volume-group flex min-w-0 items-center justify-end gap-0">
+        <media-mute-button
+          aria-label="음소거"
+          class={CLASSES.playerMute}
+          notooltip
+          title="음소거 켜기/끄기"
+        >
           <span aria-hidden="true" class="i-tabler-volume-off size-5" slot="off" />
           <span aria-hidden="true" class="i-tabler-volume-4 size-5" slot="low" />
           <span aria-hidden="true" class="i-tabler-volume-2 size-5" slot="medium" />
           <span aria-hidden="true" class="i-tabler-volume size-5" slot="high" />
         </media-mute-button>
-        <media-volume-range aria-label="음량" />
+        <media-volume-range aria-label="음량 조절" class={CLASSES.playerVolume} title="음량 조절" />
       </div>
     </div>
 
@@ -197,7 +244,8 @@ export const MusicPlayerView = (props: MusicPlayerViewProps) => (
       class={cx(
         CLASSES.player,
         CLASSES.playerShell,
-        'relative w-full overflow-hidden p-2',
+        'relative w-full px-2 pt-2 pb-0.5',
+        props.expanded ? 'overflow-visible' : 'overflow-hidden',
         'rounded-panel',
       )}
     >
@@ -213,7 +261,7 @@ export const MusicPlayerView = (props: MusicPlayerViewProps) => (
         aria-hidden="true"
         class={cx(
           CLASSES.playerBase,
-          'border border-solid border-border backdrop-blur-surface pointer-events-none absolute inset-0',
+          'border border-solid border-border backdrop-blur-surface pointer-events-none absolute inset-0 rounded-panel',
         )}
       />
 
@@ -221,7 +269,7 @@ export const MusicPlayerView = (props: MusicPlayerViewProps) => (
         class={cx(
           'pomo-player__visualizer-frame pointer-events-none absolute inset-x-0 top-0',
           'overflow-hidden',
-          props.expanded ? 'h-18' : 'bottom-0',
+          props.expanded ? 'h-18 rounded-t-panel' : 'bottom-0 rounded-panel',
         )}
       >
         <div
@@ -246,35 +294,45 @@ export const MusicPlayerView = (props: MusicPlayerViewProps) => (
         </div>
       </div>
 
+      <media-time-range
+        aria-hidden="true"
+        class={cx(
+          CLASSES.playerProgress,
+          CLASSES.playerProgressCollapsed,
+          props.expanded && 'is-hidden',
+        )}
+        disabled={true}
+      />
+
       <div
         class={cx('pomo-player__summary relative flex min-h-16 items-center', 'gap-3 px-2 py-2')}
       >
-        <media-play-button
-          aria-label="재생 또는 일시 정지"
+        <div
           aria-hidden={props.expanded ? 'true' : undefined}
-          class={cx(
-            CLASSES.playerPlay,
-            CLASSES.playerPlaySummary,
-            'shrink-0',
-            props.expanded && 'is-hidden',
-          )}
-          disabled={!props.currentTrack}
-          style={PLAYER_SUMMARY_STYLE}
-          tabindex={props.expanded ? -1 : 0}
+          class={cx(CLASSES.playerPlaySummaryFrame, props.expanded && 'is-hidden')}
         >
-          <span aria-hidden="true" class="i-tabler-player-play size-5" slot="play" />
-          <span aria-hidden="true" class="i-tabler-player-pause size-5" slot="pause" />
-        </media-play-button>
+          <media-play-button
+            aria-label="재생 또는 일시 정지"
+            class={cx(CLASSES.playerPlay, CLASSES.playerPlaySummary, 'shrink-0')}
+            disabled={props.expanded || !props.currentTrack}
+            notooltip
+            tabindex={props.expanded ? -1 : 0}
+            title="재생 또는 일시 정지"
+          >
+            <span aria-hidden="true" class="i-tabler-player-play size-5" slot="play" />
+            <span aria-hidden="true" class="i-tabler-player-pause size-5" slot="pause" />
+          </media-play-button>
+        </div>
 
         <div
           class={cx(CLASSES.playerTitle, 'relative min-w-0 flex-1 px-2')}
           data-pomo-player-title=""
         >
-          <p class={cx(CLASSES.playerTrackTitle, 'm-0 truncate')}>
-            {props.currentTrack?.title ?? '집중 음악을 준비 중이에요'}
+          <p class={cx(CLASSES.playerTrackTitle, 'm-0 min-w-0')}>
+            <POverflowMarquee text={props.currentTrack?.title ?? FALLBACK_TRACK_TITLE} />
           </p>
-          <p class={cx(CLASSES.playerTrackArtist, 'mb-0 mt-0.5 truncate')}>
-            {props.currentTrack?.artist ?? 'MP3를 연결하면 이곳에서 재생돼요'}
+          <p class={cx(CLASSES.playerTrackArtist, 'mb-0 mt-0.5 min-w-0')}>
+            <POverflowMarquee text={props.currentTrack?.artist ?? FALLBACK_TRACK_ARTIST} />
           </p>
         </div>
 
@@ -288,6 +346,7 @@ export const MusicPlayerView = (props: MusicPlayerViewProps) => (
             'hover:text-foreground',
           )}
           onClick={() => props.onExpandedChange()}
+          title={props.expanded ? '플레이어 접기' : '플레이어 펼치기'}
           type="button"
         >
           <span
@@ -297,20 +356,35 @@ export const MusicPlayerView = (props: MusicPlayerViewProps) => (
         </button>
       </div>
 
-      <Show when={props.expanded}>
-        <ExpandedPlayerControls
-          currentIndex={props.currentIndex}
-          currentTrack={props.currentTrack}
-          onNextTrack={props.onNextTrack}
-          onPreviousTrack={props.onPreviousTrack}
-          onRepeatModeChange={props.onRepeatModeChange}
-          onShuffleChange={props.onShuffleChange}
-          onTrackSelect={props.onTrackSelect}
-          repeatMode={props.repeatMode}
-          shuffleEnabled={props.shuffleEnabled}
-          tracks={props.tracks}
-        />
-      </Show>
+      <div
+        aria-hidden={props.expanded ? undefined : 'true'}
+        class={cx(CLASSES.playerExpandedFrame, props.expanded && 'is-expanded')}
+        inert={!props.expanded}
+      >
+        <div class={cx(CLASSES.playerExpandedInner, props.expanded && 'is-expanded')}>
+          <media-time-range
+            aria-label="재생 위치 조절"
+            class={cx(CLASSES.playerProgress, CLASSES.playerProgressExpanded, MEDIA_FOCUS_CLASSES)}
+            disabled={!props.expanded}
+            title="재생 위치 조절"
+          />
+
+          <ExpandedPlayerControls
+            currentIndex={props.currentIndex}
+            currentTrack={props.currentTrack}
+            onNextTrack={props.onNextTrack}
+            onPreviousTrack={props.onPreviousTrack}
+            onRepeatModeChange={props.onRepeatModeChange}
+            onShuffleChange={props.onShuffleChange}
+            onTrackSelect={props.onTrackSelect}
+            repeatMode={props.repeatMode}
+            shuffleEnabled={props.shuffleEnabled}
+            tracks={props.tracks}
+          />
+
+          <div aria-hidden="true" class="h-1.5" />
+        </div>
+      </div>
     </media-controller>
   </div>
 )

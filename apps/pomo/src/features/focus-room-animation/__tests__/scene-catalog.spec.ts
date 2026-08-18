@@ -2,6 +2,7 @@ import {describe, expect, it} from 'vitest'
 
 import {FOCUS_ROOM_JAW_CHANNEL} from '../scene-catalog-channels'
 import {FOCUS_ROOM_PREVIEW_CHANNELS, FOCUS_ROOM_SCENES, getPScene} from '../scene-catalog'
+import {getPSceneLayer} from '../scene-layer-catalog'
 
 describe('focus room scene catalog', () => {
   it('should provide all twelve unique scene combinations', () => {
@@ -13,20 +14,19 @@ describe('focus room scene catalog', () => {
 
   it('should keep every scene definition independently addressable', () => {
     for (const scene of FOCUS_ROOM_SCENES) {
-      expect(scene.layerScene.id).toContain(scene.id)
+      expect(getPSceneLayer(scene.id).id).toContain(scene.id)
       expect(getPScene(scene.time, scene.activity, scene.gaze)).toBe(scene)
     }
 
-    const definitions = FOCUS_ROOM_SCENES.map((scene) => scene.layerScene)
+    const definitions = FOCUS_ROOM_SCENES.map((scene) => getPSceneLayer(scene.id))
 
     expect(new Set(definitions).size).toBe(definitions.length)
   })
 
   it('should use true separated structural layers in every preview', () => {
     for (const scene of FOCUS_ROOM_SCENES) {
-      const structuralLayers = scene.layerScene.layers.filter(
-        (layer) => !layer.id.startsWith('mouth-'),
-      )
+      const layerScene = getPSceneLayer(scene.id)
+      const structuralLayers = layerScene.layers.filter((layer) => !layer.id.startsWith('mouth-'))
       const expectedStructuralLayerCount =
         scene.id === 'night-reading-focused'
           ? 36
@@ -37,14 +37,12 @@ describe('focus room scene catalog', () => {
               : 6
 
       expect(structuralLayers).toHaveLength(expectedStructuralLayerCount)
-      expect(scene.layerScene.layers.map((layer) => layer.id)).toContain('head')
+      expect(layerScene.layers.map((layer) => layer.id)).toContain('head')
       expect(
-        scene.layerScene.layers.filter(
-          (layer) => layer.channel === FOCUS_ROOM_PREVIEW_CHANNELS.hands,
-        ),
+        layerScene.layers.filter((layer) => layer.channel === FOCUS_ROOM_PREVIEW_CHANNELS.hands),
       ).toHaveLength(2)
       expect(
-        scene.layerScene.layers.every(
+        layerScene.layers.every(
           (layer) => layer.motion?.kind !== 'pixel-oscillation' && layer.motions === undefined,
         ),
       ).toBe(true)
@@ -52,7 +50,7 @@ describe('focus room scene catalog', () => {
   })
 
   it('should animate day-writing clouds behind a fixed sky mask', () => {
-    const cloudLayer = getPScene('day', 'writing', 'focused').layerScene.layers.find(
+    const cloudLayer = getPSceneLayer(getPScene('day', 'writing', 'focused').id).layers.find(
       (layer) => layer.id === 'day-clouds',
     )
 
@@ -80,7 +78,7 @@ describe('focus room scene catalog', () => {
 
     expect(nightScenes).toHaveLength(6)
     for (const scene of nightScenes) {
-      const buildingLayers = scene.layerScene.layers.filter((layer) =>
+      const buildingLayers = getPSceneLayer(scene.id).layers.filter((layer) =>
         layer.id.startsWith('building-lights-'),
       )
 
@@ -99,7 +97,7 @@ describe('focus room scene catalog', () => {
       }
     }
     expect(
-      FOCUS_ROOM_SCENES.flatMap((scene) => scene.layerScene.layers).some((layer) =>
+      FOCUS_ROOM_SCENES.flatMap((scene) => getPSceneLayer(scene.id).layers).some((layer) =>
         layer.id.startsWith('building-state-'),
       ),
     ).toBe(false)
@@ -107,7 +105,7 @@ describe('focus room scene catalog', () => {
 
   it('should twinkle seventeen separate stars only in the night reading focused trial', () => {
     const trialScene = getPScene('night', 'reading', 'focused')
-    const starLayers = trialScene.layerScene.layers.filter((layer) =>
+    const starLayers = getPSceneLayer(trialScene.id).layers.filter((layer) =>
       layer.id.startsWith('sky-star-'),
     )
 
@@ -133,22 +131,23 @@ describe('focus room scene catalog', () => {
     }
     expect(
       FOCUS_ROOM_SCENES.filter((scene) => scene.id !== trialScene.id).every((scene) =>
-        scene.layerScene.layers.every((layer) => !layer.id.startsWith('sky-star-')),
+        getPSceneLayer(scene.id).layers.every((layer) => !layer.id.startsWith('sky-star-')),
       ),
     ).toBe(true)
   })
 
   it('should softly fade six faint background stars only in the night reading focused trial', () => {
     const trialScene = getPScene('night', 'reading', 'focused')
-    const backgroundLayer = trialScene.layerScene.layers.find((layer) => layer.id === 'background')
-    const faintLayers = trialScene.layerScene.layers.filter((layer) =>
+    const trialLayerScene = getPSceneLayer(trialScene.id)
+    const backgroundLayer = trialLayerScene.layers.find((layer) => layer.id === 'background')
+    const faintLayers = trialLayerScene.layers.filter((layer) =>
       layer.id.startsWith('sky-faint-star-'),
     )
 
     expect(backgroundLayer?.source).toContain('background')
-    expect(
-      trialScene.layerScene.layers.every((layer) => layer.id !== 'sky-faint-stars-cleanup'),
-    ).toBe(true)
+    expect(trialLayerScene.layers.every((layer) => layer.id !== 'sky-faint-stars-cleanup')).toBe(
+      true,
+    )
     expect(faintLayers).toHaveLength(6)
     for (const [index, faintLayer] of faintLayers.entries()) {
       expect(faintLayer.source).toContain(`faint-stars/0${index + 1}`)
@@ -162,7 +161,7 @@ describe('focus room scene catalog', () => {
     }
     expect(
       FOCUS_ROOM_SCENES.filter((scene) => scene.id !== trialScene.id).every((scene) =>
-        scene.layerScene.layers.every((layer) => !layer.id.startsWith('sky-faint-star')),
+        getPSceneLayer(scene.id).layers.every((layer) => !layer.id.startsWith('sky-faint-star')),
       ),
     ).toBe(true)
   })
@@ -176,7 +175,7 @@ describe('focus room scene catalog', () => {
     expect(eyeMotionScenes).toHaveLength(12)
 
     for (const scene of eyeMotionScenes) {
-      const eyeLayer = scene.layerScene.layers.find((layer) => layer.id === 'eye-irises')
+      const eyeLayer = getPSceneLayer(scene.id).layers.find((layer) => layer.id === 'eye-irises')
 
       expect(eyeLayer).toMatchObject({
         channel: FOCUS_ROOM_PREVIEW_CHANNELS.eyes,
@@ -211,7 +210,7 @@ describe('focus room scene catalog', () => {
     }
 
     const eyeMotions = eyeMotionScenes.map(
-      (scene) => scene.layerScene.layers.find((layer) => layer.id === 'eye-irises')?.motion,
+      (scene) => getPSceneLayer(scene.id).layers.find((layer) => layer.id === 'eye-irises')?.motion,
     )
 
     expect(new Set(eyeMotions).size).toBe(eyeMotions.length)
@@ -229,13 +228,16 @@ describe('focus room scene catalog', () => {
     expect(
       dayUserScenes.every(
         (scene) =>
-          scene.layerScene.layers.filter((layer) => layer.id.startsWith('mouth-')).length === 6,
+          getPSceneLayer(scene.id).layers.filter((layer) => layer.id.startsWith('mouth-'))
+            .length === 6,
       ),
     ).toBe(true)
     expect(nightUserScenes).toHaveLength(3)
     expect(
       nightUserScenes.every((scene) => {
-        const mouthLayers = scene.layerScene.layers.filter((layer) => layer.id.startsWith('mouth-'))
+        const mouthLayers = getPSceneLayer(scene.id).layers.filter((layer) =>
+          layer.id.startsWith('mouth-'),
+        )
 
         return mouthLayers.length === 5 && mouthLayers.every((layer) => layer.id !== 'mouth-rest')
       }),
@@ -244,8 +246,9 @@ describe('focus room scene catalog', () => {
 
   it('should move only the regular night reading head while keeping every mouth layer untouched', () => {
     for (const scene of FOCUS_ROOM_SCENES) {
-      const head = scene.layerScene.layers.find((layer) => layer.id === 'head')
-      const mouthLayers = scene.layerScene.layers.filter((layer) => layer.id.startsWith('mouth-'))
+      const layerScene = getPSceneLayer(scene.id)
+      const head = layerScene.layers.find((layer) => layer.id === 'head')
+      const mouthLayers = layerScene.layers.filter((layer) => layer.id.startsWith('mouth-'))
 
       expect(mouthLayers.every((layer) => layer.statePixelPush === undefined)).toBe(true)
 
@@ -267,8 +270,8 @@ describe('focus room scene catalog', () => {
     const getMouthSources = (
       sceneId: 'night-reading-user' | 'night-typing-user' | 'night-writing-user',
     ) =>
-      FOCUS_ROOM_SCENES.find((scene) => scene.id === sceneId)
-        ?.layerScene.layers.filter((layer) => layer.id.startsWith('mouth-'))
+      getPSceneLayer(sceneId)
+        .layers.filter((layer) => layer.id.startsWith('mouth-'))
         .map((layer) => layer.source)
     const readingSources = getMouthSources('night-reading-user')
 
@@ -280,7 +283,7 @@ describe('focus room scene catalog', () => {
   it('should share the original reading head across every night user-facing scene', () => {
     const nightUserHeadSources = FOCUS_ROOM_SCENES.filter(
       (scene) => scene.gaze === 'user' && scene.time === 'night',
-    ).map((scene) => scene.layerScene.layers.find((layer) => layer.id === 'head')?.source)
+    ).map((scene) => getPSceneLayer(scene.id).layers.find((layer) => layer.id === 'head')?.source)
 
     expect(nightUserHeadSources).toHaveLength(3)
     expect(new Set(nightUserHeadSources).size).toBe(1)
@@ -289,7 +292,7 @@ describe('focus room scene catalog', () => {
   it('should share the reading head across every night focused scene', () => {
     const nightFocusedHeadSources = FOCUS_ROOM_SCENES.filter(
       (scene) => scene.gaze === 'focused' && scene.time === 'night',
-    ).map((scene) => scene.layerScene.layers.find((layer) => layer.id === 'head')?.source)
+    ).map((scene) => getPSceneLayer(scene.id).layers.find((layer) => layer.id === 'head')?.source)
 
     expect(nightFocusedHeadSources).toHaveLength(3)
     expect(new Set(nightFocusedHeadSources).size).toBe(1)
@@ -297,7 +300,7 @@ describe('focus room scene catalog', () => {
 
   it('should expose the complete review panel channels for every preview', () => {
     for (const scene of FOCUS_ROOM_SCENES) {
-      const channels = scene.layerScene.layers.flatMap((layer) => [
+      const channels = getPSceneLayer(scene.id).layers.flatMap((layer) => [
         ...(layer.channel === undefined ? [] : [layer.channel]),
         ...(layer.motion?.channel === undefined ? [] : [layer.motion.channel]),
         ...(layer.motions?.flatMap((motion) =>

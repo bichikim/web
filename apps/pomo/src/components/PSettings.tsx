@@ -12,6 +12,7 @@ import type {ScreenSaverDelay} from '../features/screen-saver'
 import {useScreenWakeLock} from '../features/screen-wake-lock'
 import {PDialogueSettings} from './PDialogueSettings'
 import {PFeedSettings} from './PFeedSettings'
+import {PGuideSettings} from './PGuideSettings'
 import {
   FOCUS_ROOM_ACTIVITY_OPTIONS,
   FOCUS_ROOM_GAZE_OPTIONS,
@@ -151,6 +152,10 @@ const PSettingsTabList = () => {
           <span aria-hidden="true" class="i-tabler-message-circle size-4" />
           <span>대화</span>
         </Tabs.Trigger>
+        <Tabs.Trigger class={SETTINGS_TAB_CLASSES} value="guide">
+          <span aria-hidden="true" class="i-tabler-help-circle size-4" />
+          <span>설명서</span>
+        </Tabs.Trigger>
       </Tabs.List>
       <Show when={canScrollTabsLeft()}>
         <button
@@ -232,7 +237,7 @@ export const PSettings = (props: PSettingsProps) => {
           onOpenChange={setIsOpen}
           placement="top"
           size="wide"
-          title="집중룸 설정"
+          title="Pomo 설정"
           titleVisibility="visually-hidden"
         >
           <Tabs.Content value="general">
@@ -295,6 +300,7 @@ export const PSettings = (props: PSettingsProps) => {
               </div>
             </div>
           </Tabs.Content>
+          <PGuideSettings />
           <PFeedSettings />
           <PDialogueSettings onRequestClose={() => setIsOpen(false)} />
         </PModal>
@@ -302,3 +308,5 @@ export const PSettings = (props: PSettingsProps) => {
     </>
   )
 }
+
+export default PSettings

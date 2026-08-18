@@ -62,8 +62,8 @@ export const PIconButton = (props: PIconButtonProps) => {
           'transition-[border-color_160ms_ease,background-color_160ms_ease,color_160ms_ease] ' +
           'motion-reduce:transition-none',
         (props.size ?? 'medium') === 'small'
-          ? 'h-control-sm min-w-control-sm px-2'
-          : 'h-control-md min-w-control-md px-3',
+          ? 'h-control-sm min-w-control-sm [padding-inline:0.4375rem]'
+          : 'h-control-md min-w-control-md [padding-inline:0.6875rem]',
         props.class,
       )}
       data-feedback-visible={feedbackVisible() ? '' : undefined}
@@ -84,11 +84,11 @@ export const PIconButton = (props: PIconButtonProps) => {
       <span
         aria-hidden="true"
         class={cx(
-          `max-w-0 overflow-hidden whitespace-nowrap text-foreground font-650 leading-4 ` +
-            `opacity-0 ${FEEDBACK_TRANSITION} ` +
+          `overflow-hidden whitespace-nowrap text-foreground font-650 leading-4 ` +
+            `${FEEDBACK_TRANSITION} ` +
             `motion-reduce:transition-none`,
           (props.size ?? 'medium') === 'small' ? 'text-xs' : 'text-[0.8125rem]',
-          feedbackVisible() && 'ml-2 max-w-32 opacity-100',
+          feedbackVisible() ? 'ml-2 max-w-32 opacity-100' : 'max-w-0 opacity-0',
         )}
       >
         {props.feedback}

@@ -22,6 +22,7 @@ const transformers = vi.hoisted(() => ({
 vi.mock('@huggingface/transformers', () => ({
   AutoProcessor: {from_pretrained: transformers.processorFromPretrained},
   env: {},
+  Gemma4ForCausalLM: {from_pretrained: transformers.modelFromPretrained},
   Qwen3_5ForCausalLM: {from_pretrained: transformers.modelFromPretrained},
   TextStreamer: class {
     readonly emit: (text: string) => void

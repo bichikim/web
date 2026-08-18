@@ -30,7 +30,7 @@
     "@apps-in-toss/web-framework": "2.4.1",
     "@babylonjs/core": "9.18.0",
     "@babylonjs/loaders": "9.18.0",
-    "@huggingface/transformers": "4.0.0-next.11",
+    "@huggingface/transformers": "4.2.0",
     "@kobalte/core": "^0.13.11",
     "@neondatabase/serverless": "^1.1.0",
     "@solidjs/meta": "catalog:",

@@ -1,17 +1,16 @@
+import {joinAudioChunks} from '../supertonic/audio'
+import {getSupertonicSpeechSpeed, type SupertonicClient} from '../supertonic/client'
+import {getSupertonicErrorMessage} from '../supertonic/error-message'
+import type {SupertonicLanguage} from '../supertonic/language'
+import type {SupertonicAudioChunk} from '../supertonic/messages'
 import {
-  createOpusBlob,
-  createWaveBlob,
-  getSupertonicErrorMessage,
   getSupertonicModel,
-  getSupertonicSpeechSpeed,
-  joinAudioChunks,
-  splitSpeechText,
-  type SupertonicAudioChunk,
-  type SupertonicClient,
-  type SupertonicLanguage,
   type SupertonicModelId,
   type SupertonicVoiceId,
-} from '../supertonic'
+} from '../supertonic/model'
+import {createOpusBlob} from '../supertonic/opus-client'
+import {splitSpeechText} from '../supertonic/text-chunking'
+import {createWaveBlob} from '../supertonic/wav'
 import type {DialogueSegment} from './schema'
 import {createDialogueTimeline} from './timeline'
 

@@ -1,15 +1,14 @@
 // oxlint-disable no-await-in-loop -- Feed orchestration owns one model Worker and its persisted lifecycle.
 import {createMemo, createSignal, onCleanup, onMount} from 'solid-js'
 
+import type {GenerateCompressedDialogueAudioResult} from '../focus-room-dialogue/generate-dialogue-audio'
 import {
-  AUTOMATIC_DIALOGUE_SETTINGS_CHANGED_EVENT,
-  createAutomaticDialogueSettingsRepository as createAutomaticSettingsRepository,
   createPDialogueRepository,
-  generateCompressedDialogueAudio,
-  type PDialogue,
   type PDialogueRepository,
-} from '../focus-room-dialogue'
-import {createSupertonicClient, type SupertonicClient, type SupertonicModelId} from '../supertonic'
+} from '../focus-room-dialogue/repository'
+import type {PDialogue} from '../focus-room-dialogue/schema'
+import type {SupertonicClient} from '../supertonic/client'
+import type {SupertonicModelId} from '../supertonic/model'
 import {
   FEED_DIALOGUE_EXPIRATION_MS,
   type FeedDialogueJob,
@@ -19,6 +18,7 @@ import {
 } from './feed-dialogue-schema'
 import {createFeedDialogueRepository, type FeedDialogueRepository} from './feed-dialogue-repository'
 import {repairStoredDevFeedDialogues} from './feed-dialogue-repair'
+import {feedGenerationRuntime} from './generation-runtime'
 import {createFeedConnectionRepository} from './repository'
 import {synchronizeFeeds} from './feed-sync'
 import {
@@ -41,7 +41,6 @@ import {
 } from './feed-runtime'
 import {FEED_CONNECTIONS_CHANGED_EVENT} from './use-feed-connections'
 
-/** Owns live feed polling, durable recovery, speech generation, and expiry cleanup. */
 // oxlint-disable-next-line eslint/max-lines-per-function -- One hook owns a single disposable feed synchronization and model lifecycle.
 export const usePFeeds = (props: UsePFeedsProps): PFeedController => {
   const [dialogues, setDialogues] = createSignal<ReadonlyArray<FeedDialogueListItem>>([])
@@ -191,7 +190,7 @@ export const usePFeeds = (props: UsePFeedsProps): PFeedController => {
     }
 
     client?.dispose()
-    const nextClient = createSupertonicClient()
+    const nextClient = await feedGenerationRuntime.createVoiceClient()
     client = nextClient
     preparedModelId = null
     setFeedState({message: '피드 음성 모델을 확인하고 있어요.', progress: 0, status: 'preparing'})
@@ -249,7 +248,7 @@ export const usePFeeds = (props: UsePFeedsProps): PFeedController => {
   }
   const completeJob = async (
     job: FeedDialogueJob,
-    generated: Awaited<ReturnType<typeof generateCompressedDialogueAudio>> & {readonly ok: true},
+    generated: Extract<GenerateCompressedDialogueAudioResult, {readonly ok: true}>,
   ) => {
     const repositories = getRepositories()
     const storedItem = await findItem(job)
@@ -330,7 +329,7 @@ export const usePFeeds = (props: UsePFeedsProps): PFeedController => {
       progress: null,
       status: 'generating',
     })
-    const generated = await generateCompressedDialogueAudio({
+    const generated = await feedGenerationRuntime.generateDialogueAudio({
       client: currentClient,
       language: 'ko',
       modelId: job.modelId,
@@ -439,7 +438,9 @@ export const usePFeeds = (props: UsePFeedsProps): PFeedController => {
         return
       }
 
-      const automaticSettings = createAutomaticSettingsRepository(window.localStorage).load()
+      const automaticSettings = await feedGenerationRuntime.loadAutomaticDialogueSettings(
+        window.localStorage,
+      )
       setFeedState({message: '새 피드를 확인하고 있어요…', progress: null, status: 'syncing'})
       const summary = await synchronizeFeeds({
         connections,
@@ -501,7 +502,7 @@ export const usePFeeds = (props: UsePFeedsProps): PFeedController => {
 
     document.addEventListener('visibilitychange', handleVisibilityChange)
     window.addEventListener(FEED_CONNECTIONS_CHANGED_EVENT, handleConnectionChange)
-    window.addEventListener(AUTOMATIC_DIALOGUE_SETTINGS_CHANGED_EVENT, handleConnectionChange)
+    window.addEventListener(feedGenerationRuntime.settingsChangedEvent, handleConnectionChange)
     initialize().catch((error: unknown) => {
       console.error('Failed to initialize focus room feeds.', error)
       setFeedState({message: '피드 기능을 시작하지 못했어요.', status: 'error'})
@@ -510,7 +511,7 @@ export const usePFeeds = (props: UsePFeedsProps): PFeedController => {
       window.clearInterval(interval)
       document.removeEventListener('visibilitychange', handleVisibilityChange)
       window.removeEventListener(FEED_CONNECTIONS_CHANGED_EVENT, handleConnectionChange)
-      window.removeEventListener(AUTOMATIC_DIALOGUE_SETTINGS_CHANGED_EVENT, handleConnectionChange)
+      window.removeEventListener(feedGenerationRuntime.settingsChangedEvent, handleConnectionChange)
     })
   })
 

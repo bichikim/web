@@ -129,7 +129,7 @@ export const PEventProvider = (props: PEventProviderProps) => {
 
   const getRepository = () => {
     if (repository === null) {
-      throw new Error('집중룸 이벤트 저장소가 아직 준비되지 않았어요.')
+      throw new Error('Pomo 이벤트 저장소가 아직 준비되지 않았어요.')
     }
 
     return repository

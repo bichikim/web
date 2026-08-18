@@ -5,12 +5,13 @@
 import {
   AutoProcessor,
   env,
+  Gemma4ForCausalLM,
   type ProgressInfo,
   Qwen3_5ForCausalLM,
   TextStreamer,
 } from '@huggingface/transformers'
 
-import {getTextModelImplementation, type TextModelId} from './model'
+import {getTextModelImplementation, type TextModelId, type TextModelImplementation} from './model'
 import {createTextGenerationProgress} from './progress'
 import type {
   CreateTextGenerationRuntimeOptions,
@@ -29,9 +30,37 @@ import {
 const CHAT_TEMPLATE_OPTIONS = {
   add_generation_prompt: true,
   enable_thinking: false,
+  tokenize: false,
 }
 
-export const createQwenTransformersRuntime = (
+type TextGenerationModel =
+  | Awaited<ReturnType<typeof Gemma4ForCausalLM.from_pretrained>>
+  | Awaited<ReturnType<typeof Qwen3_5ForCausalLM.from_pretrained>>
+
+const loadModel = (
+  modelDefinition: TextModelImplementation,
+  reportProgress: (progress: ProgressInfo) => void,
+): Promise<TextGenerationModel> => {
+  const loadOptions = {
+    device: 'webgpu',
+    dtype: {
+      decoder_model_merged: modelDefinition.quantization,
+      embed_tokens: modelDefinition.quantization,
+    },
+    progress_callback: reportProgress,
+  } as const
+
+  switch (modelDefinition.architecture) {
+    case 'gemma-4':
+      return Gemma4ForCausalLM.from_pretrained(modelDefinition.repositoryId, loadOptions)
+    case 'qwen-3.5':
+      return Qwen3_5ForCausalLM.from_pretrained(modelDefinition.repositoryId, loadOptions)
+  }
+
+  modelDefinition.architecture satisfies never
+}
+
+export const createTransformersRuntime = (
   options: CreateTextGenerationRuntimeOptions,
 ): TextGenerationRuntime => {
   const resumableModelFetch = createResumableModelFetch()
@@ -45,7 +74,7 @@ export const createQwenTransformersRuntime = (
   })
 
   let processor: Awaited<ReturnType<typeof AutoProcessor.from_pretrained>> | null = null
-  let model: Awaited<ReturnType<typeof Qwen3_5ForCausalLM.from_pretrained>> | null = null
+  let model: TextGenerationModel | null = null
   let preparePromise: Promise<void> | null = null
   let activeModelId: TextModelId | null = null
 
@@ -78,14 +107,7 @@ export const createQwenTransformersRuntime = (
       preparePromise = (async () => {
         const [nextProcessor, nextModel] = await Promise.all([
           AutoProcessor.from_pretrained(modelDefinition.repositoryId),
-          Qwen3_5ForCausalLM.from_pretrained(modelDefinition.repositoryId, {
-            device: 'webgpu',
-            dtype: {
-              decoder_model_merged: 'q4',
-              embed_tokens: 'q4',
-            },
-            progress_callback: reportProgress,
-          }),
+          loadModel(modelDefinition, reportProgress),
         ])
 
         processor = nextProcessor
@@ -121,7 +143,13 @@ export const createQwenTransformersRuntime = (
       throw new Error('텍스트 모델 프로세서가 준비되지 않았어요.')
     }
 
-    return processor.apply_chat_template(messages, CHAT_TEMPLATE_OPTIONS)
+    const prompt = processor.apply_chat_template(messages, CHAT_TEMPLATE_OPTIONS)
+
+    if (typeof prompt !== 'string') {
+      throw new Error('텍스트 모델 프롬프트를 문자열로 만들지 못했어요.')
+    }
+
+    return prompt
   }
 
   const countTokens = async (messages: Array<TextGenerationMessage>) => {

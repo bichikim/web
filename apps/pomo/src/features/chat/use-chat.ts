@@ -63,7 +63,9 @@ export interface ChatController {
   readonly isBusy: Accessor<boolean>
   readonly isModelReady: Accessor<boolean>
   readonly messages: Accessor<ReadonlyArray<ChatMessage>>
+  readonly modelId: Accessor<TextModelId>
   readonly prepare: () => void
+  readonly selectModel: (modelId: TextModelId) => void
   readonly send: (options?: SendChatOptions) => void
   readonly setDraft: (draft: string) => void
   readonly state: Accessor<ChatState>
@@ -143,9 +145,11 @@ const isChatModelReady = (state: ChatState) => {
   state satisfies never
 }
 
+// oxlint-disable-next-line eslint/max-lines-per-function -- One hook owns one disposable chat Worker and its conversation state.
 export const useChat = (props: UseChatProps): ChatController => {
-  const modelId = untrack(() => props.modelId)
+  const initialModelId = untrack(() => props.modelId)
   const runtime = untrack(() => props.runtime ?? DEFAULT_RUNTIME)
+  const [modelId, setModelId] = createSignal(initialModelId)
   const [context, setContext] = createSignal<ChatContext>(EMPTY_CONTEXT)
   const [answerDraft, setAnswerDraft] = createSignal<ChatAnswerDraft | null>(null)
   const [messages, setMessages] = createSignal<ReadonlyArray<ChatMessage>>([])
@@ -169,7 +173,7 @@ export const useChat = (props: UseChatProps): ChatController => {
   })
   const canSend = createMemo(() => isModelReady() && !isBusy() && draft().trim().length > 0)
   const canClear = createMemo(() => !isBusy() && messages().length > 0)
-  const statusMessage = createMemo(() => getStatusMessage(state(), modelId))
+  const statusMessage = createMemo(() => getStatusMessage(state(), modelId()))
 
   const handleResponse = (response: ChatWorkerResponse) => {
     switch (response.type) {
@@ -232,8 +236,22 @@ export const useChat = (props: UseChatProps): ChatController => {
   }
 
   const clientOwner = createLazyClient(() =>
-    runtime.createClient({modelId, onResponse: handleResponse}),
+    runtime.createClient({modelId: modelId(), onResponse: handleResponse}),
   )
+
+  const selectModel = (nextModelId: TextModelId) => {
+    if (nextModelId === modelId() || isBusy()) {
+      return
+    }
+
+    clientOwner.dispose()
+    pendingUser = null
+    setModelId(nextModelId)
+    setAnswerDraft(null)
+    setStreamingText('')
+    setContextTokens(0)
+    setState(runtime.supportsWebGpu() ? {status: 'idle'} : {status: 'unsupported'})
+  }
 
   const prepare = () => {
     if (!canPrepare() || !runtime.supportsWebGpu()) {
@@ -293,7 +311,9 @@ export const useChat = (props: UseChatProps): ChatController => {
     isBusy,
     isModelReady,
     messages,
+    modelId,
     prepare,
+    selectModel,
     send,
     setDraft,
     state,
