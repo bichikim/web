@@ -1,3 +1,4 @@
+/* istanbul ignore next -- Wallaby inconsistently counts module initialization across workers. */
 const SENTENCE_END = /(?:[.!?…。！？]["'”’)}\]]*|\n)\s*$/u
 
 export interface CreateStreamingSpeechBufferOptions {

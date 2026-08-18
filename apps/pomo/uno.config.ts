@@ -36,10 +36,9 @@ export default mergeConfigs([
       }
       theme.maxHeight = {
         ...theme.maxHeight,
-        modal: `calc(100dvh - (${layoutSpacing} * 2) - ` + `${safeAreaTop} - ${safeAreaBottom})`,
+        modal: `calc(100dvh - (${layoutSpacing} * 2) - ${safeAreaTop} - ${safeAreaBottom})`,
         'modal-top': `calc(100dvh - ${safeAreaTop} - ${safeAreaBottom} - (${modalSpacing} * 2))`,
-        'modal-top-compact':
-          `calc(100dvh - ${safeAreaTop} - ${safeAreaBottom} - ` + `(${modalSpacingCompact} * 2))`,
+        'modal-top-compact': `calc(100dvh - ${safeAreaTop} - ${safeAreaBottom} - (${modalSpacingCompact} * 2))`,
       }
       theme.minHeight = {
         ...theme.minHeight,

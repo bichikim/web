@@ -10,7 +10,7 @@
     "blender:open": "blender blender/character-studio.blend",
     "build": "pnpm run build:web",
     "build:apps-in-toss-ssg": "cross-env POMO_BUILD_TARGET=apps-in-toss vite build",
-    "build:apps-in-toss-package": "ait build",
+    "build:apps-in-toss-package": "pnpm run prepare:apps-in-toss-package && ait build",
     "build:web": "vite build",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
@@ -27,7 +27,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@apps-in-toss/web-framework": "2.4.1",
+    "@apps-in-toss/web-framework": "3.0.3",
     "@babylonjs/core": "9.18.0",
     "@babylonjs/loaders": "9.18.0",
     "@huggingface/transformers": "4.2.0",

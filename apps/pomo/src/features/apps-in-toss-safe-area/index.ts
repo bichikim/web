@@ -43,7 +43,9 @@ export const useAppsInTossSafeArea = (): void => {
         applySafeAreaInsets(SafeAreaInsets.get())
         disposeSubscription = SafeAreaInsets.subscribe({onEvent: applySafeAreaInsets})
       })
-      .catch(globalThis.reportError)
+      .catch((error: unknown) => {
+        console.error('Failed to synchronize Apps in Toss safe-area values.', error)
+      })
   })
 
   onCleanup(() => {

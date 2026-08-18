@@ -68,6 +68,34 @@ describe('useAppsInTossSafeArea', () => {
     expect(disposeSubscription).toHaveBeenCalledOnce()
   })
 
+  it('should ignore a native module that resolves after the app root unmounts', async () => {
+    const view = render(SafeAreaHarness)
+
+    view.unmount()
+    await Promise.resolve()
+
+    expect(safeAreaMocks.get).not.toHaveBeenCalled()
+    expect(safeAreaMocks.subscribe).not.toHaveBeenCalled()
+  })
+
+  it('should report a native safe-area initialization failure without rejecting globally', async () => {
+    const error = new Error('bridge unavailable')
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    safeAreaMocks.get.mockImplementation(() => {
+      throw error
+    })
+
+    render(SafeAreaHarness)
+
+    await vi.waitFor(() =>
+      expect(consoleError).toHaveBeenCalledWith(
+        'Failed to synchronize Apps in Toss safe-area values.',
+        error,
+      ),
+    )
+    expect(safeAreaMocks.subscribe).not.toHaveBeenCalled()
+  })
+
   it('should not load native safe-area values in a regular web build', async () => {
     vi.stubEnv('POMO_IS_APPS_IN_TOSS', '')
 

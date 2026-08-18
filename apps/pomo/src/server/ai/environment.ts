@@ -1,3 +1,4 @@
+/* istanbul ignore next -- Wallaby inconsistently counts module initialization across workers. */
 export const OPENAI_REASONING_EFFORTS = [
   'none',
   'minimal',

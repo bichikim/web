@@ -14,16 +14,7 @@ export interface ScreenWakeLockController {
   readonly onEnabledChange: (isEnabled: boolean) => void
 }
 
-interface AppsInTossWakeLockModule {
-  readonly setScreenAwakeMode: (options: {
-    readonly enabled: boolean
-  }) => Promise<{readonly enabled: boolean}>
-}
-
-const loadAppsInTossWakeLockModule = async (): Promise<AppsInTossWakeLockModule> => {
-  // AI_NOTE - SDK 2.4.1 exposes this documented runtime export but omits it from the web barrel declaration.
-  return import('@apps-in-toss/web-framework') as unknown as Promise<AppsInTossWakeLockModule>
-}
+const loadAppsInTossWakeLockModule = () => import('@apps-in-toss/web-framework')
 
 interface BrowserWakeLockLifecycleOptions {
   readonly isEnabled: Accessor<boolean>
@@ -77,8 +68,8 @@ export const useScreenWakeLock = (): ScreenWakeLockController => {
     }
 
     const request = appsInTossRequestQueue.then(async () => {
-      const {setScreenAwakeMode} = await loadAppsInTossWakeLockModule()
-      const result = await setScreenAwakeMode({enabled: nextEnabled})
+      const {Screen} = await loadAppsInTossWakeLockModule()
+      const result = await Screen.setAwakeMode({enabled: nextEnabled})
 
       if (result.enabled !== nextEnabled) {
         throw new Error('Apps in Toss returned an unexpected screen awake state')
@@ -164,11 +155,7 @@ export const useScreenWakeLock = (): ScreenWakeLockController => {
   }
 
   const requestWakeLock = () => {
-    acquireWakeLock().catch(() => {
-      setIsEnabled(false)
-      setIsRequestPending(false)
-      setErrorMessage('화면 유지 요청 중 예상하지 못한 문제가 발생했어요.')
-    })
+    acquireWakeLock()
   }
 
   const onEnabledChange = (nextEnabled: boolean) => {

@@ -21,4 +21,19 @@ describe('createStreamingSpeechBuffer', () => {
     buffer.reset()
     expect(buffer.update('새 답변입니다.')).toEqual(['새 답변입니다.'])
   })
+
+  it('should recover from shorter replacement text and reject a stale flush', () => {
+    const buffer = createStreamingSpeechBuffer({locale: 'ko'})
+
+    expect(buffer.update('기존 답변입니다.')).toEqual(['기존 답변입니다.'])
+    expect(buffer.update('새 답변입니다.')).toEqual(['새 답변입니다.'])
+    expect(buffer.flush('짧음')).toBeNull()
+  })
+
+  it('should omit an empty completed segment and an empty remaining tail', () => {
+    const buffer = createStreamingSpeechBuffer({locale: 'ko'})
+
+    expect(buffer.update('\n')).toEqual([])
+    expect(buffer.flush('\n')).toBeNull()
+  })
 })
