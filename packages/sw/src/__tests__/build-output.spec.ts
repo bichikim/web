@@ -1,6 +1,7 @@
 /** @vitest-environment node */
 
 import fs from 'node:fs'
+import {createRequire} from 'node:module'
 import os from 'node:os'
 import path from 'node:path'
 import vm from 'node:vm'
@@ -27,6 +28,7 @@ describe('service worker build output', () => {
     const packageRoot = path.join(import.meta.dirname, '..', '..')
     const outputDirectory = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'sw-bundle-'))
     const outputPath = path.join(outputDirectory, 'sw.mjs')
+    const require = createRequire(import.meta.url)
 
     temporaryDirectories.push(outputDirectory)
 
@@ -64,5 +66,6 @@ describe('service worker build output', () => {
       }),
     ).not.toThrow()
     expect(Array.from(listeners.keys()).sort()).toEqual(['activate', 'fetch', 'install', 'message'])
+    expect(() => require(path.join(outputDirectory, 'index.js'))).not.toThrow()
   })
 })

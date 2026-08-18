@@ -1,5 +1,3 @@
-import {monorepoAlias} from '@winter-love/vite-plugin-monorepo-alias'
-import {fileURLToPath, URL} from 'node:url'
 import type {Plugin} from 'vite'
 import {defineConfig} from 'vitest/config'
 import solid from 'vite-plugin-solid'
@@ -27,40 +25,15 @@ export default defineConfig({
     virtualUnoCssPlugin,
     // HMR is inactive in tests; disabling its transform prevents synthetic refresh branches from lowering source coverage.
     solid({hot: false}) as any,
-    monorepoAlias({
-      // 패키지별 import 경로 별칭 (`@` → `src` 등)
-      alias: {
-        'apps/pomo': {
-          '@': 'src',
-          assets: 'assets',
-          scripts: 'scripts',
-          src: 'src',
-        },
-        DEFAULT: {
-          '@': 'src',
-          src: 'src',
-        },
-        'packages/vite-plugin-monorepo-alias': {
-          '#test': 'src/test',
-        },
-      },
-
-      // 모노레포 루트 절대 경로
-      root: fileURLToPath(new URL('./', import.meta.url)),
-      // OS별 경로 구분자
-      separator: process.platform === 'win32' ? '\\' : '/',
-      // workspace 패키지로 인식할 경로 패턴
-      workspacePaths: [/\/apps\//u, /\/packages\//u],
-    }),
   ],
   // 모듈 resolve 옵션
   resolve: {
     // Solid.js 테스트용 export condition (development + browser)
     conditions: ['development', 'browser'],
+    tsconfigPaths: true,
   },
   // Vitest 테스트 실행 옵션
   test: {
-    // 패키지별 root는 중첩 worktree에서 monorepoAlias의 workspace 판별을 깨뜨리므로 모든 project가 저장소 root를 유지한다.
     projects: [
       {
         extends: true,

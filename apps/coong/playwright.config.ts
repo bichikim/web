@@ -20,13 +20,13 @@ export default defineConfig({
   },
   webServer: USE_E2E_SERVER
     ? {
-        command: 'vinxi dev --port 22222 --mode e2e',
+        command: 'vite dev --port 22222 --mode e2e',
         reuseExistingServer: !process.env.CI,
         stdout: 'pipe',
         timeout: TEN_SECONDS,
         url: `http://localhost:${PORT}`,
         wait: {
-          stdout: /vinxi starting dev server/u,
+          stdout: /Local:/u,
         },
       }
     : undefined,

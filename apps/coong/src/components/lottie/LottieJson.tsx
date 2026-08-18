@@ -3,7 +3,7 @@ import type {AnimationItem} from 'lottie-web'
 import type {LottieSharedProps} from './types'
 
 const getLottie = async () => {
-  const module = await import('lottie-web')
+  const module = await import('lottie-web/build/player/esm/lottie_light.min.js')
 
   return module?.default ?? module
 }

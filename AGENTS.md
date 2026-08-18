@@ -5,7 +5,7 @@
 - **Examples**: If the user asks to see an example, provide it in the chat response only — do not create or edit files to demonstrate it.
 - **Intent analysis (mandatory)**: Before interpreting, use grammatical cues—particles, adverbs, comparisons—presuppositions, and dialogue context to reconstruct all contrasted or additive sides and the user's baseline: actual state, experience or memory, or prior dialogue. Preserve named entities and categories. If a reading leaves a cue unexplained, substitutes a related concept, or makes the user seem irrational, seek the coherent ordinary pragmatic reading before correcting them.
   - “Starting with N, does X also move to Y?” presupposes that X was previously outside Y or handled differently in the user's experience; verify the actual state without replacing X. In the SolidStart example, retain server routes and their prior separate location—not API routes already in `src/routes`.
-- **Intent gate**: Before any answer or tool call, state the resulting concrete interpretation. Ask only if materially different interpretations remain. Proceed with questions and read-only verification after that statement; start state-changing work only after the user confirms the stated actions.
+- **Intent gate**: Before any answer or tool call, state the resulting concrete interpretation.
 - **Documentation**: When asked to add or write docs, keep it brief and concise—avoid verbosity and repeating the same points—without omitting essential meaning.
 
 ## Code quality
@@ -37,10 +37,13 @@
 - Treat current official documentation as binding for folder structure and code design. If existing or proposed code differs, disclose the difference and reason before implementation; do not deviate unless the user explicitly directs it.
 - If official documentation does not map directly to the code, analyze multiple analogous implementations from authoritative maintainers or projects, show the decisive evidence, and choose the best-supported pattern instead of inventing a familiar local design.
 
-## Z-index
+## Layering without z-index
 
-- Do not use `z-index`, including utility classes and rendering-library equivalents. If it appears unavoidable, explain why and obtain explicit user approval.
-- Preserve overlay semantics, positioning, and focus; do not turn overlays into inline content. Diagnose painting or clipping first, then use the smallest suitable fix through the platform top layer, an existing portal or headless primitive, DOM order, overflow/layout, or stacking contexts.
+- Preserve the requested visual composition and interaction behavior. The `z-index` restriction does not permit removing, flattening, inlining, relocating, or simplifying overlapping, floating, sticky, fixed, or overlay elements.
+- Do not use `z-index`, including utility classes and rendering-library equivalents.
+- When layering is required, reproduce the intended result by diagnosing painting and clipping first, then use the appropriate platform mechanism: the top layer, an existing portal or headless primitive, DOM order, overflow or containing-block correction, layout structure, or non-numeric stacking-context structure.
+- Treat the solution as complete only when the intended visual hierarchy, overlap and placement, clipping, pointer interaction, keyboard focus, and accessibility semantics are preserved in every relevant state.
+- If exact equivalence is impossible without `z-index`, do not silently weaken or abandon the design. Show the concrete blocker and obtain explicit user approval before using the smallest necessary `z-index`.
 
 ## Proportionate future-proofing
 
@@ -88,7 +91,7 @@ When dependency installation is required:
 
 ## Cursor Cloud
 
-pnpm + Turborepo (`@winter-love/web`) · Node ≥22 · pnpm 11.x (`package.json`). `pnpm install` runs root `postinstall` → `turbo prepare-build` (package builds; Coong Supabase type gen; Turbo-cached). `optimisticRepeatInstall: false` in `pnpm-workspace.yaml` so postinstall still runs when Already up to date. `globalPassThroughEnv` includes `pnpm_config_verify_deps_before_run` so Turbo strict mode does not strip pnpm 11’s lifecycle marker (which would re-enter `pnpm install` → postinstall).
+pnpm + Turborepo (`@winter-love/web`) · Node ≥24 · pnpm 11.x (`package.json`). `pnpm install` runs root `postinstall` → `turbo prepare-build` (package builds; Coong Supabase type gen; Turbo-cached). `optimisticRepeatInstall: false` in `pnpm-workspace.yaml` so postinstall still runs when Already up to date. `globalPassThroughEnv` includes `pnpm_config_verify_deps_before_run` so Turbo strict mode does not strip pnpm 11’s lifecycle marker (which would re-enter `pnpm install` → postinstall).
 
 - **Coong** — `apps/coong` (SolidStart SSR). `pnpm dev` (:3000). Copy `apps/coong/.env.e2e` → `.env` for dev without Supabase (see `.env.example`).
 - **Storybook** — root. `pnpm storybook:dev` (:6006).

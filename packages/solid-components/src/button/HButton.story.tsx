@@ -3,6 +3,8 @@ import {HButton} from './'
 import {Meta, StoryObj} from 'storybook-solidjs-vite'
 import {expect, fireEvent, fn, within} from 'storybook/test'
 
+type ButtonHandler = (event: MouseEvent | TouchEvent) => Promise<void> | void
+
 const defaultButtonClass = `:uno:
 inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 font-semibold text-white
 bg-blue-600 shadow-lg hover:bg-blue-500 active:bg-blue-700
@@ -20,8 +22,8 @@ const meta = {
   args: {
     children: 'Click me',
     class: defaultButtonClass,
-    onClick: fn(() => console.log('clicked')),
-    onDoubleClick: fn(() => console.log('double clicked')),
+    onClick: fn<ButtonHandler>(() => console.log('clicked')),
+    onDoubleClick: fn<ButtonHandler>(() => console.log('double clicked')),
     onTouchEnd: fn(),
     onTouchStart: fn(),
   },
@@ -132,7 +134,7 @@ export const Default: Story = {}
 
 export const Click: Story = {
   play: async ({canvasElement, args}) => {
-    args.onClick.mockClear()
+    args.onClick?.mockClear()
     const canvas = within(canvasElement)
     const button = canvas.getByRole('button', {name: 'Click me'})
 
@@ -143,7 +145,7 @@ export const Click: Story = {
 
 export const TouchStart: Story = {
   play: async ({canvasElement, args}) => {
-    args.onTouchStart.mockClear()
+    args.onTouchStart?.mockClear()
     const canvas = within(canvasElement)
     const button = canvas.getByRole('button', {name: 'Click me'})
 
@@ -154,7 +156,7 @@ export const TouchStart: Story = {
 
 export const TouchEnd: Story = {
   play: async ({canvasElement, args}) => {
-    args.onTouchEnd.mockClear()
+    args.onTouchEnd?.mockClear()
     const canvas = within(canvasElement)
     const button = canvas.getByRole('button', {name: 'Click me'})
 
@@ -165,7 +167,7 @@ export const TouchEnd: Story = {
 
 export const DoubleClick: Story = {
   play: async ({canvasElement, args}) => {
-    args.onDoubleClick.mockClear()
+    args.onDoubleClick?.mockClear()
     const canvas = within(canvasElement)
     const button = canvas.getByRole('button', {name: 'Click me'})
 
@@ -180,7 +182,7 @@ export const DoubleClick: Story = {
 
 export const DoubleClickWithTouch: Story = {
   play: async ({canvasElement, args}) => {
-    args.onDoubleClick.mockClear()
+    args.onDoubleClick?.mockClear()
     const canvas = within(canvasElement)
     const button = canvas.getByRole('button', {name: 'Click me'})
 
@@ -218,11 +220,11 @@ export const AutoLoading: Story = {
   args: {
     autoLoading: true,
     children: 'Click me to trigger loading automatically',
-    onClick: async () => {
+    onClick: fn<ButtonHandler>(async () => {
       await new Promise((resolve) => {
         setTimeout(resolve, 2000)
       })
-    },
+    }),
   },
 }
 

@@ -24,7 +24,7 @@
     "src/**/*.ts",
     "src/**/*.tsx",
     ".supabase/**/*.ts",
-    "app.config.ts",
+    "vite.config.ts",
     "drizzle.config.ts",
     "pwa-assets.config.ts",
     "playwright.config.ts",

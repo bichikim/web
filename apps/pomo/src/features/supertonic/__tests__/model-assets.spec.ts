@@ -1,5 +1,6 @@
 import {describe, expect, it} from 'vitest'
 
+import modelAssetsManifest from '../../../../public/models/supertonic-3/manifest.json'
 import {getVoiceStyleUrl, parseInitializationAssets, parseModelAssets} from '../model-assets'
 
 const VOICE_IDS = ['F1', 'F2', 'F3', 'F4', 'F5', 'M1', 'M2', 'M3', 'M4', 'M5', 'Yuna'] as const
@@ -26,6 +27,10 @@ const createInitializationValues = () => ({
 })
 
 describe('model assets', () => {
+  it('should parse the public Supertonic manifest', () => {
+    expect(parseModelAssets(modelAssetsManifest)).toMatchObject({ok: true})
+  })
+
   it('should parse a versioned manifest and resolve a voice style URL', () => {
     const result = parseModelAssets(createModelAssets())
 
