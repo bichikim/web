@@ -1,6 +1,6 @@
 import {type Accessor, createMemo, createSignal, onCleanup, untrack} from 'solid-js'
 
-import type {TextMoodAnalysis} from './classifier'
+import type {TextMoodAnalysis} from './analysis'
 import {
   createTextMoodAnalyzer,
   type CreateTextMoodAnalyzerOptions,

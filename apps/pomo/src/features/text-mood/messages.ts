@@ -1,4 +1,4 @@
-import type {TextMoodAnalysis, TextSufficiencyAnalysis} from './classifier'
+import type {TextMoodAnalysis, TextSufficiencyAnalysis} from './analysis'
 import type {TextMoodError} from './errors'
 
 export interface PrepareTextMoodRequest {

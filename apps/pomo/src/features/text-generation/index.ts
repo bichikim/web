@@ -13,7 +13,6 @@ export type {
 } from './messages'
 export {createTextGenerationProgress} from './progress'
 export type {TextGenerationProgress} from './progress'
-export {createQwenTransformersRuntime as createTextGenerationRuntime} from './qwen-transformers-runtime'
 export type {
   GenerateTextOptions,
   TextGenerationMessage,

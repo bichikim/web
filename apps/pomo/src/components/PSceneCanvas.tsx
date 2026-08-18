@@ -5,10 +5,13 @@ import {
   PSceneRenderer,
   type PSceneState,
 } from '../features/focus-room-animation/scene-renderer'
+import {getPSceneLayer} from '../features/focus-room-animation/scene-layer-catalog'
+import type {PSceneId} from '../features/focus-room-animation/scene-catalog'
 
-export interface PSceneCanvasProps extends PSceneState {
+export interface PSceneCanvasProps extends Omit<PSceneState, 'layerScene'> {
   readonly onLoadingChange?: (isLoading: boolean) => void
   readonly onMotionInputChange?: (motionInput: PSceneMotionInput) => void
+  readonly sceneId: PSceneId
 }
 
 export default function PSceneCanvas(props: PSceneCanvasProps) {
@@ -19,7 +22,7 @@ export default function PSceneCanvas(props: PSceneCanvasProps) {
     activity: props.activity,
     depthSource: props.depthSource,
     gaze: props.gaze,
-    layerScene: props.layerScene,
+    layerScene: getPSceneLayer(props.sceneId),
     motionInput: props.motionInput,
     motionMode: props.motionMode,
     source: props.source,
@@ -55,7 +58,7 @@ export default function PSceneCanvas(props: PSceneCanvasProps) {
           props.activity,
           props.depthSource,
           props.gaze,
-          props.layerScene,
+          props.sceneId,
           props.motionInput,
           props.motionMode,
           props.source,

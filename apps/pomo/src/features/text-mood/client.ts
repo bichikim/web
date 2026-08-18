@@ -1,4 +1,4 @@
-import type {TextMoodAnalysis, TextSufficiencyAnalysis} from './classifier'
+import type {TextMoodAnalysis, TextSufficiencyAnalysis} from './analysis'
 import type {TextMoodError, TextMoodPhase} from './errors'
 import type {TextMoodWorkerRequest, TextMoodWorkerResponse} from './messages'
 import {TEXT_MOOD_MODEL} from './model'
