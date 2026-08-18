@@ -5,6 +5,7 @@ import {For} from 'solid-js'
 
 import type {PTrack} from '../features/focus-room-audio/focus-room-playlist'
 import type {RepeatMode} from '../features/focus-room-audio/playback-policy'
+import {POverflowMarquee} from './POverflowMarquee'
 import {PPlaybackModes} from './PPlaybackModes'
 import {PTrackList} from './PTrackList'
 
@@ -25,7 +26,6 @@ const CLASSES = {
     '[&_media-mute-button]:text-muted-foreground',
     '[&_media-mute-button:hover]:text-foreground',
     '[&_media-mute-button:hover]:bg-[rgb(255_250_241_/_8%)]',
-    '[&_media-volume-range]:w-[clamp(2.5rem,_8vw,_4.5rem)] [&_media-volume-range]:min-w-0',
   ].join(' '),
   playerBase: 'pomo-player__base bg-surface',
   playerExpanded: [
@@ -47,13 +47,18 @@ const CLASSES = {
     '[&.is-expanded]:opacity-100 [&.is-expanded]:pointer-events-auto',
     'motion-reduce:transition-none',
   ].join(' '),
+  playerMute: 'pomo-player__mute size-10 shrink-0 [--media-control-padding:0.625rem]',
   playerPlay: [
     'pomo-player__play w-11 h-11 text-white bg-primary',
     'shadow-[0_8px_20px_rgb(125_49_29_/_34%),_inset_0_1px_0_rgb(255_255_255_/_24%)]',
-    'transition-[transform_160ms_ease,_filter_160ms_ease] [&:hover]:brightness-[1.08]',
-    '[&:hover]:translate-y-[-1px] motion-reduce:transition-[none]',
+    '[transition:filter_160ms_ease] [&:hover]:brightness-[1.08]',
+    'motion-reduce:transition-none',
   ].join(' '),
-  playerPlayLarge: 'pomo-player__play--large w-13 h-13',
+  playerPlayLarge: [
+    'pomo-player__play--large w-13 h-13',
+    '[transition:transform_160ms_ease,_filter_160ms_ease] [&:hover]:translate-y-[-1px]',
+    'motion-reduce:transition-none',
+  ].join(' '),
   playerPlaySummary: 'pomo-player__play--summary',
   playerPlaySummaryFrame: [
     'pomo-player__play-summary-frame h-11 w-11 shrink-0 overflow-hidden',
@@ -106,9 +111,19 @@ const CLASSES = {
     'pomo-player__visualizer top-[-8px] bottom-[-8px] left-[-8px] right-[-8px]',
     '[filter:blur(8px)_saturate(1.25)_contrast(1.12)]',
   ].join(' '),
+  playerVolume: [
+    'pomo-player__volume min-w-0 w-[clamp(3.5rem,_9vw,_4.75rem)]',
+    '[--media-range-padding-left:0.25rem] [--media-range-padding-right:0.25rem]',
+    '[--media-range-thumb-opacity:0]',
+    '[--media-range-thumb-transition:opacity_140ms_ease]',
+    'hover:[--media-range-thumb-opacity:1] focus-within:[--media-range-thumb-opacity:1]',
+    'motion-reduce:[--media-range-thumb-transition:none]',
+  ].join(' '),
 } as const
 
 const ACTIVE_VISUALIZER_OPACITY = 0.76
+const FALLBACK_TRACK_ARTIST = 'MP3를 연결하면 이곳에서 재생돼요'
+const FALLBACK_TRACK_TITLE = '집중 음악을 준비 중이에요'
 const IDLE_VISUALIZER_OPACITY = 0.34
 const SKIP_BUTTON_CLASSES = [
   'pomo-player__skip grid size-10 shrink-0 place-items-center rounded-full transition',
@@ -165,6 +180,7 @@ const ExpandedPlayerControls = (props: ExpandedPlayerControlsProps) => (
           class={SKIP_BUTTON_CLASSES}
           disabled={props.tracks.length < 2}
           onClick={() => props.onPreviousTrack()}
+          title="이전 곡"
           type="button"
         >
           <span aria-hidden="true" class="i-tabler-player-track-prev size-4" />
@@ -174,6 +190,7 @@ const ExpandedPlayerControls = (props: ExpandedPlayerControlsProps) => (
           class={cx(CLASSES.playerPlay, CLASSES.playerPlayLarge, 'max-[28rem]:size-12')}
           disabled={!props.currentTrack}
           notooltip
+          title="재생 또는 일시 정지"
         >
           <span aria-hidden="true" class="i-tabler-player-play size-5" slot="play" />
           <span aria-hidden="true" class="i-tabler-player-pause size-5" slot="pause" />
@@ -183,20 +200,26 @@ const ExpandedPlayerControls = (props: ExpandedPlayerControlsProps) => (
           class={SKIP_BUTTON_CLASSES}
           disabled={props.tracks.length < 2}
           onClick={() => props.onNextTrack()}
+          title="다음 곡"
           type="button"
         >
           <span aria-hidden="true" class="i-tabler-player-track-next size-4" />
         </button>
       </div>
 
-      <div class="flex min-w-0 items-center justify-end gap-1">
-        <media-mute-button aria-label="음소거">
+      <div class="pomo-player__volume-group flex min-w-0 items-center justify-end gap-0">
+        <media-mute-button
+          aria-label="음소거"
+          class={CLASSES.playerMute}
+          notooltip
+          title="음소거 켜기/끄기"
+        >
           <span aria-hidden="true" class="i-tabler-volume-off size-5" slot="off" />
           <span aria-hidden="true" class="i-tabler-volume-4 size-5" slot="low" />
           <span aria-hidden="true" class="i-tabler-volume-2 size-5" slot="medium" />
           <span aria-hidden="true" class="i-tabler-volume size-5" slot="high" />
         </media-mute-button>
-        <media-volume-range aria-label="음량" />
+        <media-volume-range aria-label="음량 조절" class={CLASSES.playerVolume} title="음량 조절" />
       </div>
     </div>
 
@@ -292,7 +315,9 @@ export const MusicPlayerView = (props: MusicPlayerViewProps) => (
             aria-label="재생 또는 일시 정지"
             class={cx(CLASSES.playerPlay, CLASSES.playerPlaySummary, 'shrink-0')}
             disabled={props.expanded || !props.currentTrack}
+            notooltip
             tabindex={props.expanded ? -1 : 0}
+            title="재생 또는 일시 정지"
           >
             <span aria-hidden="true" class="i-tabler-player-play size-5" slot="play" />
             <span aria-hidden="true" class="i-tabler-player-pause size-5" slot="pause" />
@@ -303,11 +328,11 @@ export const MusicPlayerView = (props: MusicPlayerViewProps) => (
           class={cx(CLASSES.playerTitle, 'relative min-w-0 flex-1 px-2')}
           data-pomo-player-title=""
         >
-          <p class={cx(CLASSES.playerTrackTitle, 'm-0 truncate')}>
-            {props.currentTrack?.title ?? '집중 음악을 준비 중이에요'}
+          <p class={cx(CLASSES.playerTrackTitle, 'm-0 min-w-0')}>
+            <POverflowMarquee text={props.currentTrack?.title ?? FALLBACK_TRACK_TITLE} />
           </p>
-          <p class={cx(CLASSES.playerTrackArtist, 'mb-0 mt-0.5 truncate')}>
-            {props.currentTrack?.artist ?? 'MP3를 연결하면 이곳에서 재생돼요'}
+          <p class={cx(CLASSES.playerTrackArtist, 'mb-0 mt-0.5 min-w-0')}>
+            <POverflowMarquee text={props.currentTrack?.artist ?? FALLBACK_TRACK_ARTIST} />
           </p>
         </div>
 
@@ -321,6 +346,7 @@ export const MusicPlayerView = (props: MusicPlayerViewProps) => (
             'hover:text-foreground',
           )}
           onClick={() => props.onExpandedChange()}
+          title={props.expanded ? '플레이어 접기' : '플레이어 펼치기'}
           type="button"
         >
           <span
@@ -337,8 +363,10 @@ export const MusicPlayerView = (props: MusicPlayerViewProps) => (
       >
         <div class={cx(CLASSES.playerExpandedInner, props.expanded && 'is-expanded')}>
           <media-time-range
+            aria-label="재생 위치 조절"
             class={cx(CLASSES.playerProgress, CLASSES.playerProgressExpanded, MEDIA_FOCUS_CLASSES)}
             disabled={!props.expanded}
+            title="재생 위치 조절"
           />
 
           <ExpandedPlayerControls

@@ -84,11 +84,11 @@ export const PIconButton = (props: PIconButtonProps) => {
       <span
         aria-hidden="true"
         class={cx(
-          `max-w-0 overflow-hidden whitespace-nowrap text-foreground font-650 leading-4 ` +
-            `opacity-0 ${FEEDBACK_TRANSITION} ` +
+          `overflow-hidden whitespace-nowrap text-foreground font-650 leading-4 ` +
+            `${FEEDBACK_TRANSITION} ` +
             `motion-reduce:transition-none`,
           (props.size ?? 'medium') === 'small' ? 'text-xs' : 'text-[0.8125rem]',
-          feedbackVisible() && 'ml-2 max-w-32 opacity-100',
+          feedbackVisible() ? 'ml-2 max-w-32 opacity-100' : 'max-w-0 opacity-0',
         )}
       >
         {props.feedback}

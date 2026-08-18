@@ -100,6 +100,7 @@ body {
         counts: {
           'dialogue-settings-spin': 'infinite',
           'focus-glow': 'infinite',
+          'overflow-marquee': 'infinite',
           'rest-sway': 'infinite',
           'screen-saver-content-drift': 'infinite',
         },
@@ -111,6 +112,7 @@ body {
           'modal-content-in': '180ms',
           'modal-content-in-top': '180ms',
           'modal-overlay-in': '140ms',
+          'overflow-marquee': '6s',
           'rest-sway': '2.4s',
           'screen-saver-content-drift': '48s',
           'select-in': '140ms',
@@ -155,6 +157,10 @@ body {
             from { opacity: 0; transform: translate(-50%, 0.5rem) scale(0.98); }
           }`,
           'modal-overlay-in': '{ from { opacity: 0; } }',
+          'overflow-marquee': `{
+            from { transform: translateX(0); }
+            to { transform: translateX(calc(-1 * var(--pomo-marquee-distance))); }
+          }`,
           'rest-sway': `{
             0%, 100% { transform: translate3d(0, 0, 0) rotate(-8deg); }
             50% { transform: translate3d(0.0625rem, -0.125rem, 0) rotate(9deg); }
@@ -182,6 +188,7 @@ body {
           'modal-content-in': 'cubic-bezier(0.2, 0.8, 0.2, 1)',
           'modal-content-in-top': 'cubic-bezier(0.2, 0.8, 0.2, 1)',
           'modal-overlay-in': 'ease-out',
+          'overflow-marquee': 'linear',
           'rest-sway': 'ease-in-out',
           'screen-saver-content-drift': 'ease-in-out',
           'select-in': 'ease-out',

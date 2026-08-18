@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 
-import {render} from '@solidjs/testing-library'
+import {fireEvent, render} from '@solidjs/testing-library'
+import {createSignal} from 'solid-js'
 import {expect, it} from 'vitest'
 
 import {PIconButton} from '../PIconButton'
@@ -40,4 +41,34 @@ it('should expose the small icon button class contract', () => {
   expect(button.classList.contains('h-control-sm')).toBe(true)
   expect(button.classList.contains('min-w-control-sm')).toBe(true)
   expect(button.classList.contains('[padding-inline:0.4375rem]')).toBe(true)
+})
+
+it('should reveal the updated feedback without retaining hidden-state classes', () => {
+  const [feedback, setFeedback] = createSignal('낮')
+  const result = render(() => (
+    <PIconButton
+      accessibleLabel={`시간대 ${feedback()}`}
+      feedback={feedback()}
+      icon="i-tabler-sun"
+      onPress={() => setFeedback('밤')}
+    />
+  ))
+
+  const button = result.getByRole('button', {name: '시간대 낮'})
+  const feedbackLabel = button.lastElementChild
+
+  expect(feedbackLabel).toBeInstanceOf(HTMLSpanElement)
+  expect(feedbackLabel?.classList.contains('max-w-0')).toBe(true)
+  expect(feedbackLabel?.classList.contains('opacity-0')).toBe(true)
+
+  fireEvent.click(button)
+
+  expect(result.getByRole('button', {name: '시간대 밤'})).toBe(button)
+  expect(button.getAttribute('data-feedback-visible')).toBe('')
+  expect(feedbackLabel?.textContent).toBe('밤')
+  expect(feedbackLabel?.classList.contains('ml-2')).toBe(true)
+  expect(feedbackLabel?.classList.contains('max-w-32')).toBe(true)
+  expect(feedbackLabel?.classList.contains('opacity-100')).toBe(true)
+  expect(feedbackLabel?.classList.contains('max-w-0')).toBe(false)
+  expect(feedbackLabel?.classList.contains('opacity-0')).toBe(false)
 })

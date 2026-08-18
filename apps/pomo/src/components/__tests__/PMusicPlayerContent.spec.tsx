@@ -187,6 +187,9 @@ describe('PMusicPlayerContent', () => {
     expect(expandedInner.classList.contains('[overflow-clip-margin:0.5rem]')).toBe(true)
     expect(expandedInner.classList.contains('is-expanded')).toBe(false)
     expect(Reflect.get(expandedProgressBar, 'disabled')).toBe(true)
+    expect(expandedProgressBar.getAttribute('aria-label')).toBe('재생 위치 조절')
+    expect(expandedProgressBar.getAttribute('title')).toBe('재생 위치 조절')
+    expect(collapsedProgressBar.hasAttribute('title')).toBe(false)
 
     fireEvent.click(screen.getByRole('button', {name: '플레이어 펼치기'}))
 
@@ -237,7 +240,7 @@ describe('PMusicPlayerContent', () => {
     const playButtons = result.container.querySelectorAll('media-play-button')
     expect(playButtons).toHaveLength(2)
     expect(Reflect.get(playButtons[0] ?? {}, 'disabled')).toBe(true)
-    expect(playButtons[0]?.hasAttribute('notooltip')).toBe(false)
+    expect(playButtons[0]?.hasAttribute('notooltip')).toBe(true)
     expect(playButtons[1]?.hasAttribute('notooltip')).toBe(true)
     expect(playButtons[1]?.getAttribute('aria-label')).toBe('재생 또는 일시 정지')
   })
