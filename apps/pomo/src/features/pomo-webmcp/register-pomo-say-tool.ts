@@ -1,4 +1,4 @@
-import {SUPERTONIC_VOICES, type SupertonicVoiceId} from '../supertonic'
+import {SUPERTONIC_VOICES, type SupertonicVoiceId} from '../supertonic/model'
 
 const MAXIMUM_TEXT_LENGTH = 3000
 

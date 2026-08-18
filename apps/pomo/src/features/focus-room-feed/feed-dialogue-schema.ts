@@ -1,6 +1,10 @@
 import {z} from 'zod'
 
-import {SUPERTONIC_VOICES, type SupertonicModelId, type SupertonicVoiceId} from '../supertonic'
+import {
+  SUPERTONIC_VOICES,
+  type SupertonicModelId,
+  type SupertonicVoiceId,
+} from '../supertonic/model'
 
 const supertonicVoiceIdSchema = z.custom<SupertonicVoiceId>((value) =>
   SUPERTONIC_VOICES.some((voice) => voice.id === value),

@@ -11,8 +11,8 @@ import {
   replaceUnrefinedSentences,
 } from '../korean-text-postprocessor'
 import {
-  createTextGenerationRuntime,
   type TextGenerationMessage,
+  type TextGenerationRuntime,
   type TextModelId,
   trimRepetitiveTail,
 } from '../text-generation'
@@ -32,9 +32,16 @@ const MAXIMUM_SUMMARY_TOKENS = 384
 const workerScope = self as DedicatedWorkerGlobalScope
 
 const sendResponse = (response: ChatWorkerResponse) => workerScope.postMessage(response)
-const textRuntime = createTextGenerationRuntime({
-  onProgress: (progress) => sendResponse({...progress, type: 'loading'}),
-})
+let textRuntimePromise: Promise<TextGenerationRuntime> | null = null
+const getTextRuntime = () => {
+  textRuntimePromise ??= import('../text-generation/transformers-runtime').then(
+    ({createTransformersRuntime}) =>
+      createTransformersRuntime({
+        onProgress: (progress) => sendResponse({...progress, type: 'loading'}),
+      }),
+  )
+  return textRuntimePromise
+}
 let suppressedCjkTokenIds: Array<number> | null = null
 
 const getErrorMessage = (error: unknown) => {
@@ -46,12 +53,15 @@ const getErrorMessage = (error: unknown) => {
 }
 
 const prepareModel = async (modelId: TextModelId) => {
+  const textRuntime = await getTextRuntime()
   await textRuntime.prepare(modelId)
   sendResponse({type: 'ready'})
 }
 
-const countPromptTokens = (context: ChatContext) =>
-  textRuntime.countTokens(createChatMessages(context))
+const countPromptTokens = async (context: ChatContext) => {
+  const textRuntime = await getTextRuntime()
+  return textRuntime.countTokens(createChatMessages(context))
+}
 
 interface GenerateChatTextOptions {
   readonly maximumTokens: number
@@ -61,6 +71,7 @@ interface GenerateChatTextOptions {
 }
 
 const generateText = async (options: GenerateChatTextOptions) => {
+  const textRuntime = await getTextRuntime()
   const output = await textRuntime.generate({
     maximumTokens: options.maximumTokens,
     messages: options.messages,
@@ -107,6 +118,7 @@ const refineKoreanAnswer = async (text: string) => {
   }
 
   sendResponse({type: 'refining'})
+  const textRuntime = await getTextRuntime()
   suppressedCjkTokenIds ??= createForeignCjkTokenIds(textRuntime.getTokenizer())
   const refinedSegments: Array<string> = []
 
@@ -162,6 +174,7 @@ interface GenerateAnswerOptions {
 }
 
 const generateAnswer = async (options: GenerateAnswerOptions) => {
+  const textRuntime = await getTextRuntime()
   await textRuntime.prepare(options.modelId)
 
   const compacted = await compactContext(options.context)

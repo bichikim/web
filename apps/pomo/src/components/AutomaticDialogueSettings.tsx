@@ -1,10 +1,9 @@
-import {createSignal, onMount, Show} from 'solid-js'
+import {createSignal, onCleanup, onMount, Show} from 'solid-js'
 
 import {PSelect, type PSelectOption} from '../design-system/PSelect'
 import {
   AUTOMATIC_DIALOGUE_SETTINGS_CHANGED_EVENT,
   type AutomaticDialogueSettingsRepository,
-  createAutomaticDialogueSettingsRepository,
   DEFAULT_AUTOMATIC_DIALOGUE_SETTINGS,
 } from '../features/focus-room-dialogue'
 import {
@@ -12,7 +11,7 @@ import {
   SUPERTONIC_VOICES,
   type SupertonicModelId,
   type SupertonicVoiceId,
-} from '../features/supertonic'
+} from '../features/supertonic/model'
 
 const CLASSES = {
   dialogueSettingsAutomatic: [
@@ -54,16 +53,31 @@ export const AutomaticDialogueSettings = () => {
   let repository: AutomaticDialogueSettingsRepository | null = null
 
   onMount(() => {
-    try {
-      const nextRepository = createAutomaticDialogueSettingsRepository(window.localStorage)
-      repository = nextRepository
-      setSettings(nextRepository.load())
-    } catch (error: unknown) {
-      console.error('Failed to load automatic dialogue settings.', error)
-      setMessage('자동 음성 생성 설정을 불러오지 못했어요.')
-    } finally {
-      setIsLoading(false)
-    }
+    let disposed = false
+    import('../features/focus-room-dialogue/automatic-dialogue-settings')
+      .then(({createAutomaticDialogueSettingsRepository}) => {
+        const nextRepository = createAutomaticDialogueSettingsRepository(window.localStorage)
+
+        if (!disposed) {
+          repository = nextRepository
+          setSettings(nextRepository.load())
+        }
+      })
+      .catch((error: unknown) => {
+        console.error('Failed to load automatic dialogue settings.', error)
+        if (!disposed) {
+          setMessage('자동 음성 생성 설정을 불러오지 못했어요.')
+        }
+      })
+      .finally(() => {
+        if (!disposed) {
+          setIsLoading(false)
+        }
+      })
+
+    onCleanup(() => {
+      disposed = true
+    })
   })
 
   const saveSettings = (nextSettings: typeof DEFAULT_AUTOMATIC_DIALOGUE_SETTINGS) => {
