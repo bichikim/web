@@ -90,6 +90,7 @@ export default defineConfig({
             '/dev/text-mood',
             '/dev/terms',
             '/dev/voice',
+            '/dialogue',
             '/focus-room',
             '/focus-room-dialogue',
           ],

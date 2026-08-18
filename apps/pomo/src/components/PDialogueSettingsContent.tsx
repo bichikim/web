@@ -159,7 +159,7 @@ interface DialogueEventDefinition {
 
 const DIALOGUE_EVENTS: ReadonlyArray<DialogueEventDefinition> = [
   {
-    description: '집중룸을 열 때 한 번 재생',
+    description: 'Pomo를 시작할 때 한 번 재생',
     icon: 'i-tabler-door-enter',
     id: 'room-enter',
     label: '입장',
@@ -452,7 +452,7 @@ export default function PDialogueSettingsContent(props: PDialogueSettingsContent
               <h3 id="pomo-dialogue-library-title">내 대화</h3>
               <p>저장된 대화를 듣거나 관리할 수 있어요.</p>
             </div>
-            <A class={CLASSES.dialogueSettingsCreate} href="/focus-room-dialogue">
+            <A class={CLASSES.dialogueSettingsCreate} href="/dialogue">
               <span aria-hidden="true" class="i-tabler-plus size-4" />
               새 대화
             </A>
@@ -514,9 +514,7 @@ export default function PDialogueSettingsContent(props: PDialogueSettingsContent
                             <span aria-hidden="true" class="i-tabler-message-circle size-4" />
                             캐릭터로 듣기
                           </button>
-                          <A
-                            href={`/focus-room-dialogue?dialogueId=${encodeURIComponent(dialogue.id)}`}
-                          >
+                          <A href={`/dialogue?dialogueId=${encodeURIComponent(dialogue.id)}`}>
                             <span aria-hidden="true" class="i-tabler-pencil size-4" />
                             편집
                           </A>

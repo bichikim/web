@@ -204,14 +204,14 @@ export default function PDialogueEditor(props: PDialogueEditorProps) {
       <header class={CLASSES.dialogueEditorHeader}>
         <div>
           <p class={CLASSES.dialogueEditorEyebrow} data-pomo-dialogue-editor-eyebrow="">
-            포커스 룸 대화
+            Pomo 대화
           </p>
           <h1>{props.dialogueId === null ? '새 대화 만들기' : '대화 편집하기'}</h1>
           <p>긴 대사는 음성에 맞게 나뉘며, 각 구간의 텍스트와 감정이 말풍선에 순서대로 표시돼요.</p>
         </div>
         <A class={CLASSES.dialogueEditorBack} href="/">
           <span aria-hidden="true" class="i-tabler-arrow-left size-5" />
-          집중룸으로
+          Pomo로
         </A>
       </header>
 
@@ -221,7 +221,7 @@ export default function PDialogueEditor(props: PDialogueEditorProps) {
             <span>1</span>
             <div>
               <h2 id="dialogue-content-title">대화 내용</h2>
-              <p>집중룸에서 캐릭터가 말할 문장을 입력하세요.</p>
+              <p>Pomo에서 캐릭터가 말할 문장을 입력하세요.</p>
             </div>
           </div>
 
@@ -236,7 +236,7 @@ export default function PDialogueEditor(props: PDialogueEditorProps) {
               disabled={isBusy()}
               maxlength={MAXIMUM_TEXT_LENGTH}
               onInput={(event) => editor.setText(event.currentTarget.value)}
-              placeholder="집중룸에 들어왔을 때 캐릭터가 말할 내용을 입력하세요."
+              placeholder="Pomo를 시작할 때 캐릭터가 말할 내용을 입력하세요."
               value={editor.text()}
             />
           </label>

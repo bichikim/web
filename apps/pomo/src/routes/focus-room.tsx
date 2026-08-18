@@ -1,5 +1,5 @@
 import {Navigate} from '@solidjs/router'
 
-export default function PPage() {
+export default function LegacyPomoPage() {
   return <Navigate href="/" />
 }
