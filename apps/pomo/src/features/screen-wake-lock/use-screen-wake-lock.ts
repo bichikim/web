@@ -2,6 +2,10 @@ import {type Accessor, createSignal, onCleanup, onMount} from 'solid-js'
 
 export type ScreenWakeLockAvailability = 'checking' | 'supported' | 'unsupported'
 
+const APPS_IN_TOSS_ENABLE_ERROR = '화면 유지 요청을 허용하지 못했어요. 앱 설정을 확인해 주세요.'
+const SCREEN_WAKE_LOCK_DISABLE_ERROR =
+  '화면 유지 기능을 해제하지 못했어요. 잠시 후 다시 시도해 주세요.'
+
 export interface ScreenWakeLockController {
   readonly availability: Accessor<ScreenWakeLockAvailability>
   readonly errorMessage: Accessor<string | null>
@@ -10,12 +14,96 @@ export interface ScreenWakeLockController {
   readonly onEnabledChange: (isEnabled: boolean) => void
 }
 
+interface AppsInTossWakeLockModule {
+  readonly setScreenAwakeMode: (options: {
+    readonly enabled: boolean
+  }) => Promise<{readonly enabled: boolean}>
+}
+
+const loadAppsInTossWakeLockModule = async (): Promise<AppsInTossWakeLockModule> => {
+  // AI_NOTE - SDK 2.4.1 exposes this documented runtime export but omits it from the web barrel declaration.
+  return import('@apps-in-toss/web-framework') as unknown as Promise<AppsInTossWakeLockModule>
+}
+
+interface BrowserWakeLockLifecycleOptions {
+  readonly isEnabled: Accessor<boolean>
+  readonly onAvailabilityChange: (availability: ScreenWakeLockAvailability) => void
+  readonly onDispose: () => void
+  readonly onVisible: () => void
+}
+
+const startBrowserWakeLockLifecycle = (
+  options: BrowserWakeLockLifecycleOptions,
+): (() => void) | undefined => {
+  const supportsWakeLock =
+    'wakeLock' in navigator && typeof navigator.wakeLock.request === 'function'
+
+  if (!supportsWakeLock) {
+    options.onAvailabilityChange('unsupported')
+    return undefined
+  }
+
+  options.onAvailabilityChange('supported')
+  const handleVisibilityChange = () => {
+    if (document.visibilityState === 'visible' && options.isEnabled()) {
+      options.onVisible()
+    }
+  }
+
+  document.addEventListener('visibilitychange', handleVisibilityChange)
+
+  return () => {
+    document.removeEventListener('visibilitychange', handleVisibilityChange)
+    options.onDispose()
+  }
+}
+
 export const useScreenWakeLock = (): ScreenWakeLockController => {
   const [availability, setAvailability] = createSignal<ScreenWakeLockAvailability>('checking')
   const [errorMessage, setErrorMessage] = createSignal<string | null>(null)
   const [isEnabled, setIsEnabled] = createSignal(false)
   const [isRequestPending, setIsRequestPending] = createSignal(false)
+  let appsInTossRequestQueue = Promise.resolve()
+  let appsInTossWakeLockRequested = false
+  let disposed = false
   let sentinel: WakeLockSentinel | null = null
+
+  const setAppsInTossWakeLock = (nextEnabled: boolean, reportResult = true): void => {
+    appsInTossWakeLockRequested ||= nextEnabled
+
+    if (reportResult) {
+      setIsRequestPending(true)
+      setErrorMessage(null)
+    }
+
+    const request = appsInTossRequestQueue.then(async () => {
+      const {setScreenAwakeMode} = await loadAppsInTossWakeLockModule()
+      const result = await setScreenAwakeMode({enabled: nextEnabled})
+
+      if (result.enabled !== nextEnabled) {
+        throw new Error('Apps in Toss returned an unexpected screen awake state')
+      }
+    })
+    appsInTossRequestQueue = request.catch(() => undefined)
+
+    request
+      .then(() => {
+        if (!reportResult || disposed || isEnabled() !== nextEnabled) {
+          return
+        }
+
+        setIsRequestPending(false)
+      })
+      .catch(() => {
+        if (!reportResult || disposed || isEnabled() !== nextEnabled) {
+          return
+        }
+
+        setIsEnabled(false)
+        setIsRequestPending(false)
+        setErrorMessage(nextEnabled ? APPS_IN_TOSS_ENABLE_ERROR : SCREEN_WAKE_LOCK_DISABLE_ERROR)
+      })
+  }
 
   const releaseWakeLock = () => {
     const currentSentinel = sentinel
@@ -26,7 +114,7 @@ export const useScreenWakeLock = (): ScreenWakeLockController => {
     }
 
     currentSentinel.release().catch(() => {
-      setErrorMessage('화면 유지 기능을 해제하지 못했어요. 잠시 후 다시 시도해 주세요.')
+      setErrorMessage(SCREEN_WAKE_LOCK_DISABLE_ERROR)
     })
   }
 
@@ -87,6 +175,11 @@ export const useScreenWakeLock = (): ScreenWakeLockController => {
     setErrorMessage(null)
     setIsEnabled(nextEnabled)
 
+    if (import.meta.env.POMO_IS_APPS_IN_TOSS) {
+      setAppsInTossWakeLock(nextEnabled)
+      return
+    }
+
     if (nextEnabled) {
       requestWakeLock()
       return
@@ -96,27 +189,40 @@ export const useScreenWakeLock = (): ScreenWakeLockController => {
   }
 
   onMount(() => {
-    const supportsWakeLock =
-      'wakeLock' in navigator && typeof navigator.wakeLock.request === 'function'
+    if (import.meta.env.POMO_IS_APPS_IN_TOSS) {
+      setAvailability('supported')
+      const handleVisibilityChange = () => {
+        if (document.visibilityState === 'visible' && isEnabled()) {
+          setAppsInTossWakeLock(true)
+        }
+      }
 
-    if (!supportsWakeLock) {
-      setAvailability('unsupported')
+      document.addEventListener('visibilitychange', handleVisibilityChange)
+      onCleanup(() => {
+        disposed = true
+        setIsEnabled(false)
+        document.removeEventListener('visibilitychange', handleVisibilityChange)
+
+        if (appsInTossWakeLockRequested) {
+          setAppsInTossWakeLock(false, false)
+        }
+      })
       return
     }
 
-    setAvailability('supported')
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible' && isEnabled()) {
-        requestWakeLock()
-      }
-    }
-
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-    onCleanup(() => {
-      setIsEnabled(false)
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
-      releaseWakeLock()
+    const disposeBrowserWakeLock = startBrowserWakeLockLifecycle({
+      isEnabled,
+      onAvailabilityChange: setAvailability,
+      onDispose: () => {
+        setIsEnabled(false)
+        releaseWakeLock()
+      },
+      onVisible: requestWakeLock,
     })
+
+    if (disposeBrowserWakeLock !== undefined) {
+      onCleanup(disposeBrowserWakeLock)
+    }
   })
 
   return {

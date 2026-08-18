@@ -35,10 +35,24 @@ export const withTransactionalDatabase = async <Result>(
 ): Promise<Result> => {
   // AI_NOTE - Keep ordinary feed reads on Neon HTTP; the pooled driver is only needed because neon-http cannot run interactive transactions.
   const transactionalDatabase = createTransactionalDatabase(getDatabaseUrl())
+  let result: Result
 
   try {
-    return await operation(transactionalDatabase)
-  } finally {
-    await transactionalDatabase.$client.end()
+    result = await operation(transactionalDatabase)
+  } catch (operationError) {
+    try {
+      await transactionalDatabase.$client.end()
+    } catch (closeError) {
+      console.error(
+        'Failed to close the transactional database after an operation error.',
+        closeError,
+      )
+    }
+
+    throw operationError
   }
+
+  await transactionalDatabase.$client.end()
+
+  return result
 }

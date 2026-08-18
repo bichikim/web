@@ -22,6 +22,7 @@ describe('withTransactionalDatabase', () => {
 
   afterEach(() => {
     vi.clearAllMocks()
+    vi.restoreAllMocks()
   })
 
   it('should close its WebSocket pool after the operation succeeds', async () => {
@@ -37,5 +38,20 @@ describe('withTransactionalDatabase', () => {
 
     await expect(withTransactionalDatabase(vi.fn().mockRejectedValue(error))).rejects.toBe(error)
     expect(end).toHaveBeenCalledOnce()
+  })
+
+  it('should preserve the operation error when closing its WebSocket pool also fails', async () => {
+    const closeError = new Error('close failed')
+    const operationError = new Error('transaction failed')
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    end.mockRejectedValue(closeError)
+
+    await expect(withTransactionalDatabase(vi.fn().mockRejectedValue(operationError))).rejects.toBe(
+      operationError,
+    )
+    expect(consoleError).toHaveBeenCalledWith(
+      'Failed to close the transactional database after an operation error.',
+      closeError,
+    )
   })
 })
