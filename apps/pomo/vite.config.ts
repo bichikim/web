@@ -91,6 +91,8 @@ export default defineConfig({
             '/dev/terms',
             '/dev/voice',
             '/dialogue',
+            '/focus-room',
+            '/focus-room-dialogue',
           ],
         },
         preset: 'static',

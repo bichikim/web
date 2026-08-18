@@ -1,20 +1,21 @@
 /** @vitest-environment jsdom */
 
-import {render, screen} from '@solidjs/testing-library'
-import type {JSX} from 'solid-js'
+import {render} from '@solidjs/testing-library'
 import {expect, it, vi} from 'vitest'
 
 import LegacyDialoguePage from '../focus-room-dialogue'
 
+const routerMocks = vi.hoisted(() => ({navigate: vi.fn()}))
+
 vi.mock('@solidjs/router', () => ({
-  Navigate: (props: {href: string}): JSX.Element => (
-    <span data-testid="destination">{props.href}</span>
-  ),
   useLocation: () => ({search: '?dialogueId=saved-dialogue'}),
+  useNavigate: () => routerMocks.navigate,
 }))
 
 it('should preserve the dialogue id while redirecting the legacy editor route', () => {
   render(() => <LegacyDialoguePage />)
 
-  expect(screen.getByTestId('destination').textContent).toBe('/dialogue?dialogueId=saved-dialogue')
+  expect(routerMocks.navigate).toHaveBeenCalledWith('/dialogue?dialogueId=saved-dialogue', {
+    replace: true,
+  })
 })
