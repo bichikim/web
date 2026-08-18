@@ -105,7 +105,7 @@ export default defineConfig({
     createUnoCssInlineResolver(),
     resolveBuildUnoCss,
     ...scopeUnoCssToClient(UnoCSS({mode: 'dist-chunk'})),
-    solidStart({devOverlay: false}),
+    solidStart({devOverlay: false, middleware: './src/middleware/index.ts'}),
     createDevFeedPlugin(),
     excludeArchivedAssets,
     nitro(),
