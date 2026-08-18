@@ -8,7 +8,38 @@ import {createDevFeedPlugin} from './src/features/dev-feed/index.ts'
 
 const isAppsInToss = process.env.POMO_BUILD_TARGET === 'apps-in-toss'
 const assetLibraryPattern = /[/\\]asset-library[/\\]/u
+const buildUnoCssEntryId = '\0pomo-build-uno.css'
 const staticNitroEntryId = '\0pomo-static-nitro-entry'
+
+type UnoCssPlugins = ReturnType<typeof UnoCSS>
+
+const scopeUnoCssToClient = (plugins: UnoCssPlugins): UnoCssPlugins =>
+  plugins.map((plugin) => ({
+    ...plugin,
+    applyToEnvironment(environment) {
+      if (environment.config.command === 'build' && environment.config.consumer !== 'client') {
+        return false
+      }
+
+      return plugin.applyToEnvironment?.call(this, environment) ?? true
+    },
+  }))
+
+const resolveBuildUnoCss = {
+  apply: 'build' as const,
+  enforce: 'pre' as const,
+  load(id: string) {
+    if (id === buildUnoCssEntryId) {
+      return ''
+    }
+  },
+  name: 'resolve-build-uno-css',
+  resolveId(id: string) {
+    if (id === 'virtual:uno.css') {
+      return buildUnoCssEntryId
+    }
+  },
+}
 
 const excludeArchivedAssets = {
   enforce: 'pre' as const,
@@ -71,7 +102,8 @@ export default defineConfig({
   },
   plugins: [
     createUnoCssInlineResolver(),
-    UnoCSS(),
+    resolveBuildUnoCss,
+    ...scopeUnoCssToClient(UnoCSS({mode: 'dist-chunk'})),
     solidStart({devOverlay: false}),
     createDevFeedPlugin(),
     excludeArchivedAssets,

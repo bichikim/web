@@ -49,10 +49,10 @@ describe('PScreenSaver', () => {
     expect(showModal).toHaveBeenCalledOnce()
     expect((dialog as HTMLDialogElement).open).toBe(true)
     expect(screen.getByRole('region', {name: '포모도로 상태'}).textContent).toContain('24:59')
-    expect(screen.getByRole('region', {name: '현재 음악'}).textContent).toContain(
-      'Sunday Morning Coffee',
-    )
-    expect(screen.getByRole('region', {name: '현재 음악'}).textContent).toContain('rainymonday')
+    const trackRegion = screen.getByRole('region', {name: '현재 음악'})
+    expect(trackRegion.textContent).toContain('Sunday Morning Coffee')
+    expect(trackRegion.textContent).toContain('rainymonday')
+    expect(trackRegion.querySelectorAll('.pomo-overflow-marquee')).toHaveLength(2)
 
     fireEvent.pointerDown(dialog)
     expect(onDismiss).toHaveBeenCalledOnce()

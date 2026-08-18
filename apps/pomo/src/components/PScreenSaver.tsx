@@ -1,5 +1,7 @@
 import {createEffect, onMount, Show} from 'solid-js'
 
+import {POverflowMarquee} from './POverflowMarquee'
+
 const CLASSES = {
   screenSaver: [
     'pomo-screen-saver w-screen max-w-[none] h-dvh max-h-[none] box-border m-0 border-0 bg-[#000]',
@@ -36,9 +38,9 @@ const CLASSES = {
     '[&_>_strong]:font-[650] [&_>_strong]:tracking-[-0.04em] [&_>_strong]:leading-[1]',
   ].join(' '),
   screenSaverTrack: [
-    'pomo-screen-saver__track grid max-w-full gap-1 [&_>_p]:overflow-hidden [&_>_p]:m-0',
+    'pomo-screen-saver__track grid w-full max-w-full gap-1 [&_>_p]:min-w-0 [&_>_p]:m-0',
     '[&_>_p]:text-[rgb(255_255_255_/_48%)] [&_>_p]:text-sm [&_>_p]:font-[650] [&_>_p]:leading-5',
-    '[&_>_p]:text-ellipsis [&_>_p]:whitespace-nowrap [&_>_span]:text-[rgb(255_255_255_/_46%)]',
+    '[&_>_span]:min-w-0 [&_>_span]:text-[rgb(255_255_255_/_46%)]',
     '[&_>_span]:text-xs [&_>_span]:leading-4.5',
   ].join(' '),
 } as const
@@ -112,8 +114,12 @@ export const PScreenSaver = (props: PScreenSaverProps) => {
           <Show when={props.track}>
             {(track) => (
               <section aria-label="현재 음악" class={CLASSES.screenSaverTrack}>
-                <p>{track().title}</p>
-                <span>{track().artist}</span>
+                <p>
+                  <POverflowMarquee focusable={false} text={track().title} />
+                </p>
+                <span>
+                  <POverflowMarquee focusable={false} text={track().artist} />
+                </span>
               </section>
             )}
           </Show>
