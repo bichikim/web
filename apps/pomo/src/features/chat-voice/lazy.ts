@@ -18,21 +18,26 @@ export const useLazyChatVoice = (props: UseChatVoiceProps = {}): ChatVoiceContro
   }
   const load = () => {
     if (loading === null) {
-      loading = import('./index').then(({useChatVoice}) => {
-        if (disposed) {
-          throw new DOMException('Voice runtime was disposed.', 'AbortError')
-        }
+      loading = import('./index')
+        .then(({useChatVoice}) => {
+          if (disposed) {
+            throw new DOMException('Voice runtime was disposed.', 'AbortError')
+          }
 
-        const nextController = runWithOwner(owner, () => useChatVoice(props))
+          const nextController = runWithOwner(owner, () => useChatVoice(props))
 
-        if (nextController === undefined) {
-          throw new Error('Voice runtime could not attach to the current reactive owner.')
-        }
+          if (nextController === undefined) {
+            throw new Error('Voice runtime could not attach to the current reactive owner.')
+          }
 
-        controller = nextController
-        setVersion((currentVersion) => currentVersion + 1)
-        return nextController
-      })
+          controller = nextController
+          setVersion((currentVersion) => currentVersion + 1)
+          return nextController
+        })
+        .catch((error: unknown) => {
+          loading = null
+          throw error
+        })
     }
 
     return loading
