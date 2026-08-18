@@ -11,9 +11,9 @@ const MAIN_CLASSES = cx(
 export default function HomePage() {
   return (
     <main class={MAIN_CLASSES}>
-      <Title>Pomo — 2D Focus Room</Title>
+      <Title>Pomo</Title>
       <Meta
-        content="핀과 함께 장면, 타이머, 음악을 한곳에서 사용하는 2D 집중룸입니다."
+        content="핀과 함께 장면, 포모도로, 음악, 대화와 피드를 한곳에서 사용하는 집중 앱입니다."
         name="description"
       />
       <div class="relative h-full w-full">

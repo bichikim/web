@@ -339,7 +339,7 @@ export const PLayerReview = () => {
             {selectedScene().label}
           </h1>
           <A class="text-xs font-700 text-#d7c7b3 no-underline hover:text-white" href="/">
-            포커스 룸으로 →
+            Pomo로 →
           </A>
         </div>
         <p class="mb-0 mt-1 text-xs text-#bdb2c4">1672 × 941 · 분리 레이어</p>

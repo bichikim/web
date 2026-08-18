@@ -136,6 +136,10 @@ it('should keep saved dialogue content full-width with bounded text and actions'
   expect(row?.className).toContain('max-[36rem]:items-stretch')
   expect(summary.className).toContain('[-webkit-line-clamp:3]')
   expect(listenButton.textContent).toBe('듣기')
+  expect(screen.getByRole('link', {name: '새 대화'}).getAttribute('href')).toBe('/dialogue')
+  expect(within(library).getByRole('link', {name: '편집'}).getAttribute('href')).toBe(
+    '/dialogue?dialogueId=saved-dialogue',
+  )
 
   fireEvent.click(within(library).getByRole('button', {name: '삭제'}))
   expect(

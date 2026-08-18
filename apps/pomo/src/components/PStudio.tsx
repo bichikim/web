@@ -270,7 +270,7 @@ const SceneToolbar = (props: SceneToolbarProps) => {
 
 const PEntry = (props: PEntryProps) => (
   <section
-    aria-label="Pomo 집중룸 입장"
+    aria-label="Pomo 시작"
     class={CLASSES.entry}
     data-exiting={props.isExiting ? '' : undefined}
     style={ENTRY_STYLE}
@@ -419,7 +419,7 @@ export const PStudio = () => {
   })
 
   return (
-    <section aria-label="포커스 룸" class="relative h-dvh w-full overflow-hidden">
+    <section aria-label="Pomo" class="relative h-dvh w-full overflow-hidden">
       <figure
         aria-label={selectedScene().label}
         class="relative m-0 h-full w-full overflow-hidden bg-#17130f"
