@@ -2,6 +2,7 @@ import {cx} from 'class-variance-authority'
 import {createEffect, createSignal, For, Show} from 'solid-js'
 
 import {type ChatController, type ChatMessage, useChat} from '../features/chat'
+import {PSelect, type PSelectOption} from '../design-system/PSelect'
 import {
   type ChatVoiceController,
   createStreamingSpeechBuffer,
@@ -13,7 +14,7 @@ import {
   type SpeechToTextController,
   useSpeechToText,
 } from '../features/speech-to-text'
-import {getTextModel} from '../features/text-generation'
+import {getTextModel, TEXT_MODELS, type TextModelId} from '../features/text-generation'
 import {KoreanTextRenderer} from './KoreanTextRenderer'
 
 const MAXIMUM_DRAFT_LENGTH = 1200
@@ -26,6 +27,10 @@ const BUTTON_CLASSES = cx(
   'h-11 rounded-full px-5 text-sm font-700 transition',
   'disabled:cursor-not-allowed disabled:opacity-35',
 )
+const MODEL_OPTIONS: ReadonlyArray<PSelectOption<TextModelId>> = TEXT_MODELS.map((model) => ({
+  label: `${model.label} · ${model.downloadSize}`,
+  value: model.id,
+}))
 
 interface ChatBubbleProps {
   readonly isVoiceGenerating: boolean
@@ -68,7 +73,13 @@ const ChatBubble = (props: ChatBubbleProps) => (
   </article>
 )
 
-const ChatHeader = (props: {readonly modelLabel: string}) => (
+interface ChatHeaderProps {
+  readonly disabled: boolean
+  readonly modelId: TextModelId
+  readonly onModelChange: (modelId: TextModelId) => void
+}
+
+const ChatHeader = (props: ChatHeaderProps) => (
   <header
     class={cx(
       'flex flex-col gap-5 border-b border-white/8 px-5 py-5',
@@ -86,14 +97,15 @@ const ChatHeader = (props: {readonly modelLabel: string}) => (
         오래된 대화는 중요한 기억만 남기고 자동으로 압축해요.
       </p>
     </div>
-    <div
-      class={cx(
-        'flex shrink-0 items-center gap-2 rounded-full border border-white/10',
-        'bg-white/5 px-3 py-2 text-xs font-650 text-#d9cfdd',
-      )}
-    >
-      <span class="h-2 w-2 rounded-full bg-#9ed6bb" />
-      {props.modelLabel} · WebGPU
+    <div class="w-full shrink-0 sm:w-64">
+      <PSelect
+        disabled={props.disabled}
+        hideLabel
+        label="채팅 모델"
+        onChange={props.onModelChange}
+        options={MODEL_OPTIONS}
+        value={props.modelId}
+      />
     </div>
   </header>
 )
@@ -431,8 +443,8 @@ const ContextSidebar = (props: ContextSidebarProps) => (
 )
 
 const ChatRoom = () => {
-  const model = getTextModel('qwen-4b')
-  const chat = useChat({modelId: model.id})
+  const chat = useChat({modelId: 'qwen-4b'})
+  const model = () => getTextModel(chat.modelId())
   const voice = useChatVoice()
   const speechBuffer = createStreamingSpeechBuffer({locale: 'ko'})
   const [messageList, setMessageList] = createSignal<HTMLDivElement>()
@@ -480,6 +492,11 @@ const ChatRoom = () => {
   const handlePrepare = () => {
     chat.prepare()
     voice.prepare().catch(console.error)
+  }
+  const handleModelChange = (modelId: TextModelId) => {
+    voice.stop()
+    speechBuffer.reset()
+    chat.selectModel(modelId)
   }
   const handleClear = () => {
     voice.stop()
@@ -538,7 +555,11 @@ const ChatRoom = () => {
 
   return (
     <section class={PANEL_CLASSES}>
-      <ChatHeader modelLabel={model.label} />
+      <ChatHeader
+        disabled={chat.isBusy() || speech.activity() !== 'idle'}
+        modelId={model().id}
+        onModelChange={handleModelChange}
+      />
 
       <div class="grid min-h-[68dvh] lg:grid-cols-[minmax(0,1fr)_17rem]">
         <div class="grid min-h-0 grid-rows-[1fr_auto]">
@@ -555,7 +576,7 @@ const ChatRoom = () => {
         <ContextSidebar
           chat={chat}
           disableRefining={disableRefining()}
-          modelLabel={model.label}
+          modelLabel={model().label}
           onClear={handleClear}
           onDisableRefiningChange={setDisableRefining}
           onPrepare={handlePrepare}

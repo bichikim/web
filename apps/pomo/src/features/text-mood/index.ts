@@ -1,11 +1,10 @@
 export {TEXT_MOOD_CLASSIFIER_INFO} from './classifier-info'
-export {classifyTextMood, classifyTextSufficiency} from './classifier'
 export type {
   MoodModifierScore,
   MoodScore,
   TextMoodAnalysis,
   TextSufficiencyAnalysis,
-} from './classifier'
+} from './analysis'
 export {createTextMoodAnalyzer} from './client'
 export type {
   AnalyzeTextMoodOptions,

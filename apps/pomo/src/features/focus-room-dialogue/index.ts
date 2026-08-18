@@ -42,14 +42,13 @@ export type {
 } from './use-focus-room-dialogue-editor'
 export {
   AUTOMATIC_DIALOGUE_SETTINGS_CHANGED_EVENT,
-  createAutomaticDialogueSettingsRepository,
   DEFAULT_AUTOMATIC_DIALOGUE_SETTINGS,
-} from './automatic-dialogue-settings'
+} from './automatic-dialogue-settings-contract'
 export type {
   AutomaticDialogueSettings,
   AutomaticDialogueSettingsRepository,
   AutomaticDialogueSettingsStorage,
-} from './automatic-dialogue-settings'
+} from './automatic-dialogue-settings-contract'
 export {
   createDialogueAudioSamples,
   generateCompressedDialogueAudio,

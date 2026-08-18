@@ -308,7 +308,6 @@ export const PLayerReview = () => {
         <PLayerReviewCanvas
           activity={selectedScene().activity}
           animationEnabled={animationEnabled()}
-          definition={selectedScene().layerScene}
           eyesVisible={eyesVisible()}
           fallback={
             <div class="grid h-full place-items-center text-sm text-#a99fac">PixiJS 준비 중</div>
@@ -318,6 +317,7 @@ export const PLayerReview = () => {
           gaze={selectedScene().gaze}
           mouthVisible={mouthVisible()}
           referenceOpacity={referenceOpacity()}
+          sceneId={selectedScene().id}
           time={selectedScene().time}
           viseme={viseme()}
         />

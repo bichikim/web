@@ -3,14 +3,15 @@
 // oxlint-disable eslint-js/camelcase -- Transformers.js model names and options are fixed external contracts.
 
 import {
-  AutoProcessor,
+  AutoTokenizer,
   env,
+  Gemma4ForCausalLM,
   type ProgressInfo,
   Qwen3_5ForCausalLM,
   TextStreamer,
 } from '@huggingface/transformers'
 
-import {getTextModelImplementation, type TextModelId} from './model'
+import {getTextModelImplementation, type TextModelId, type TextModelImplementation} from './model'
 import {createTextGenerationProgress} from './progress'
 import type {
   CreateTextGenerationRuntimeOptions,
@@ -29,9 +30,54 @@ import {
 const CHAT_TEMPLATE_OPTIONS = {
   add_generation_prompt: true,
   enable_thinking: false,
+  tokenize: false,
 }
 
-export const createQwenTransformersRuntime = (
+type TextGenerationModel =
+  | Awaited<ReturnType<typeof Gemma4ForCausalLM.from_pretrained>>
+  | Awaited<ReturnType<typeof Qwen3_5ForCausalLM.from_pretrained>>
+
+const loadModel = (
+  modelDefinition: TextModelImplementation,
+  reportProgress: (progress: ProgressInfo) => void,
+): Promise<TextGenerationModel> => {
+  const loadOptions = {
+    device: 'webgpu',
+    dtype: {
+      decoder_model_merged: modelDefinition.quantization,
+      embed_tokens: modelDefinition.quantization,
+    },
+    progress_callback: reportProgress,
+  } as const
+
+  switch (modelDefinition.architecture) {
+    case 'gemma-4':
+      return Gemma4ForCausalLM.from_pretrained(modelDefinition.repositoryId, loadOptions)
+    case 'qwen-3.5':
+      return Qwen3_5ForCausalLM.from_pretrained(modelDefinition.repositoryId, loadOptions)
+  }
+
+  modelDefinition.architecture satisfies never
+}
+
+const loadTokenizer = async (modelDefinition: TextModelImplementation) => {
+  const tokenizer = await AutoTokenizer.from_pretrained(modelDefinition.repositoryId)
+
+  if (modelDefinition.chatTemplateFile !== undefined) {
+    const templateUrl = `https://huggingface.co/${modelDefinition.repositoryId}/resolve/main/${modelDefinition.chatTemplateFile}`
+    const response = await fetch(templateUrl)
+
+    if (!response.ok) {
+      throw new Error(`텍스트 모델 채팅 템플릿을 불러오지 못했어요. (${response.status})`)
+    }
+
+    tokenizer.chat_template = await response.text()
+  }
+
+  return tokenizer
+}
+
+export const createTransformersRuntime = (
   options: CreateTextGenerationRuntimeOptions,
 ): TextGenerationRuntime => {
   const resumableModelFetch = createResumableModelFetch()
@@ -44,8 +90,8 @@ export const createQwenTransformersRuntime = (
     storage: createModelStorage(),
   })
 
-  let processor: Awaited<ReturnType<typeof AutoProcessor.from_pretrained>> | null = null
-  let model: Awaited<ReturnType<typeof Qwen3_5ForCausalLM.from_pretrained>> | null = null
+  let tokenizer: Awaited<ReturnType<typeof AutoTokenizer.from_pretrained>> | null = null
+  let model: TextGenerationModel | null = null
   let preparePromise: Promise<void> | null = null
   let activeModelId: TextModelId | null = null
 
@@ -68,7 +114,7 @@ export const createQwenTransformersRuntime = (
       throw new Error('다른 텍스트 모델을 사용하려면 실행 세션을 다시 시작해야 해요.')
     }
 
-    if (processor !== null && model !== null) {
+    if (tokenizer !== null && model !== null) {
       return
     }
 
@@ -76,19 +122,12 @@ export const createQwenTransformersRuntime = (
       activeModelId = modelId
       const modelDefinition = getTextModelImplementation(modelId)
       preparePromise = (async () => {
-        const [nextProcessor, nextModel] = await Promise.all([
-          AutoProcessor.from_pretrained(modelDefinition.repositoryId),
-          Qwen3_5ForCausalLM.from_pretrained(modelDefinition.repositoryId, {
-            device: 'webgpu',
-            dtype: {
-              decoder_model_merged: 'q4',
-              embed_tokens: 'q4',
-            },
-            progress_callback: reportProgress,
-          }),
+        const [nextTokenizer, nextModel] = await Promise.all([
+          loadTokenizer(modelDefinition),
+          loadModel(modelDefinition, reportProgress),
         ])
 
-        processor = nextProcessor
+        tokenizer = nextTokenizer
         model = nextModel
       })()
     }
@@ -96,7 +135,7 @@ export const createQwenTransformersRuntime = (
     try {
       await preparePromise
     } catch (error) {
-      processor = null
+      tokenizer = null
       model = null
       preparePromise = null
       activeModelId = null
@@ -104,42 +143,43 @@ export const createQwenTransformersRuntime = (
     }
   }
 
-  const getProcessorTokenizer = () => {
-    const tokenizer = processor?.tokenizer
-
-    if (tokenizer === undefined) {
+  const getTokenizer = (): TextTokenVocabulary => {
+    if (tokenizer === null) {
       throw new Error('텍스트 모델 토크나이저가 준비되지 않았어요.')
     }
 
     return tokenizer
   }
 
-  const getTokenizer = (): TextTokenVocabulary => getProcessorTokenizer()
-
   const createPrompt = (messages: Array<TextGenerationMessage>) => {
-    if (processor === null) {
-      throw new Error('텍스트 모델 프로세서가 준비되지 않았어요.')
+    if (tokenizer === null) {
+      throw new Error('텍스트 모델 토크나이저가 준비되지 않았어요.')
     }
 
-    return processor.apply_chat_template(messages, CHAT_TEMPLATE_OPTIONS)
+    const prompt = tokenizer.apply_chat_template(messages, CHAT_TEMPLATE_OPTIONS)
+
+    if (typeof prompt !== 'string') {
+      throw new Error('텍스트 모델 프롬프트를 문자열로 만들지 못했어요.')
+    }
+
+    return prompt
   }
 
   const countTokens = async (messages: Array<TextGenerationMessage>) => {
-    if (processor === null) {
-      throw new Error('텍스트 모델 프로세서가 준비되지 않았어요.')
+    if (tokenizer === null) {
+      throw new Error('텍스트 모델 토크나이저가 준비되지 않았어요.')
     }
 
-    const inputs = await processor(createPrompt(messages))
+    const inputs = await tokenizer(createPrompt(messages))
     return inputs.input_ids.dims.at(-1) ?? 0
   }
 
   const generate = async (generationOptions: GenerateTextOptions) => {
-    if (processor === null || model === null) {
+    if (tokenizer === null || model === null) {
       throw new Error('텍스트 모델이 준비되지 않았어요.')
     }
 
-    const tokenizer = getProcessorTokenizer()
-    const inputs = await processor(createPrompt(generationOptions.messages))
+    const inputs = await tokenizer(createPrompt(generationOptions.messages))
     let output = ''
 
     await model.generate({

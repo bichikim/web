@@ -22,10 +22,6 @@ import nightTypingDepth from './assets/depth/night-typing.webp'
 import nightTypingGazeDepth from './assets/depth/night-typing-user-gaze.webp'
 import nightWritingDepth from './assets/depth/night-writing.webp'
 import nightWritingGazeDepth from './assets/depth/night-writing-user-gaze.webp'
-import {DAY_READING_FOCUSED_LAYER_SCENE} from './day-reading-focused-layer-scene'
-import {DAY_WRITING_LAYER_SCENE} from './day-writing-layer-scene'
-import {GENERATED_LAYER_SCENES} from './generated-layer-scenes'
-import type {PixiLayerSceneDefinition} from './layer-scene'
 import {FOCUS_ROOM_PREVIEW_CHANNELS} from './scene-catalog-channels'
 export {FOCUS_ROOM_PREVIEW_CHANNELS} from './scene-catalog-channels'
 
@@ -40,7 +36,6 @@ export interface PSceneCatalogEntry {
   readonly gaze: PGaze
   readonly id: PSceneId
   readonly label: string
-  readonly layerScene: PixiLayerSceneDefinition
   readonly source: string
   readonly time: PTime
 }
@@ -103,12 +98,6 @@ export const FOCUS_ROOM_SCENES: readonly PSceneCatalogEntry[] = TIMES.flatMap((t
         gaze,
         id,
         label: `${LABELS.time[time]} · ${LABELS.activity[activity]} · ${LABELS.gaze[gaze]}`,
-        layerScene:
-          id === 'day-writing-focused'
-            ? DAY_WRITING_LAYER_SCENE
-            : id === 'day-reading-focused'
-              ? DAY_READING_FOCUSED_LAYER_SCENE
-              : GENERATED_LAYER_SCENES[id],
         source: asset.source,
         time,
       }

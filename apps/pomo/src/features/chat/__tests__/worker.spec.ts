@@ -16,12 +16,13 @@ type WorkerMessageListener = (event: MessageEvent<ChatWorkerRequest>) => void
 const transformers = vi.hoisted(() => ({
   generate: vi.fn(),
   modelFromPretrained: vi.fn(),
-  processorFromPretrained: vi.fn(),
+  tokenizerFromPretrained: vi.fn(),
 }))
 
 vi.mock('@huggingface/transformers', () => ({
-  AutoProcessor: {from_pretrained: transformers.processorFromPretrained},
+  AutoTokenizer: {from_pretrained: transformers.tokenizerFromPretrained},
   env: {},
+  Gemma4ForCausalLM: {from_pretrained: transformers.modelFromPretrained},
   Qwen3_5ForCausalLM: {from_pretrained: transformers.modelFromPretrained},
   TextStreamer: class {
     readonly emit: (text: string) => void
@@ -32,23 +33,19 @@ vi.mock('@huggingface/transformers', () => ({
   },
 }))
 
-const createProcessor = () => {
+const createTokenizer = () => {
   const tokenTexts = new Map([
     [0, '<special>'],
     [1, '한글'],
     [2, '人生'],
   ])
-  const tokenizer = {
-    all_special_ids: [0],
-    decode: (tokenIds: Array<number>) => tokenTexts.get(tokenIds[0] ?? 0) ?? '',
-    get_vocab: () => new Map([...tokenTexts.keys()].map((tokenId) => [String(tokenId), tokenId])),
-  }
-
   return Object.assign(
     vi.fn(async () => ({input_ids: {dims: [1, 24]}})),
     {
+      all_special_ids: [0],
       apply_chat_template: vi.fn(() => '완성된 프롬프트'),
-      tokenizer,
+      decode: (tokenIds: Array<number>) => tokenTexts.get(tokenIds[0] ?? 0) ?? '',
+      get_vocab: () => new Map([...tokenTexts.keys()].map((tokenId) => [String(tokenId), tokenId])),
     },
   )
 }
@@ -84,7 +81,7 @@ beforeEach(() => {
   vi.clearAllMocks()
   vi.unstubAllGlobals()
 
-  transformers.processorFromPretrained.mockResolvedValue(createProcessor())
+  transformers.tokenizerFromPretrained.mockResolvedValue(createTokenizer())
   transformers.modelFromPretrained.mockResolvedValue({generate: transformers.generate})
   transformers.generate.mockImplementation(async (options: MockGenerateOptions) => {
     options.streamer.emit('작은 성공을 하나씩 쌓아 보세요.')

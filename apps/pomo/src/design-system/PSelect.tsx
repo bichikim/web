@@ -7,6 +7,7 @@ export interface PSelectOption<TValue extends string> {
 
 export interface PSelectProps<TValue extends string> {
   readonly accessibleLabel?: string
+  readonly disabled?: boolean
   readonly hideLabel?: boolean
   readonly label: string
   readonly onChange: (value: TValue) => void
@@ -23,6 +24,7 @@ export const PSelect = <TValue extends string>(props: PSelectProps<TValue>) => {
     <Select<PSelectOption<TValue>>
       class="grid w-full min-w-0 gap-1.5"
       disallowEmptySelection
+      disabled={props.disabled}
       gutter={6}
       itemComponent={(itemProps) => (
         <Select.Item
@@ -72,7 +74,7 @@ export const PSelect = <TValue extends string>(props: PSelectProps<TValue>) => {
           'px-4 text-sm font-650 leading-5 text-foreground ' +
           'outline-none transition-[border-color_160ms_ease,background-color_160ms_ease] ' +
           'hover:border-border-hover focus-visible:border-highlight ' +
-          'ui-expanded:border-highlight motion-reduce:transition-none'
+          'ui-expanded:border-highlight disabled:cursor-not-allowed disabled:opacity-45 motion-reduce:transition-none'
         }
       >
         <Select.Value<

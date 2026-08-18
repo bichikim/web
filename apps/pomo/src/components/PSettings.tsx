@@ -302,3 +302,5 @@ export const PSettings = (props: PSettingsProps) => {
     </>
   )
 }
+
+export default PSettings

@@ -4,10 +4,11 @@ import {
   PLayerReviewRenderer,
   type PLayerReviewState,
 } from '../features/focus-room-layer-review/scene-renderer'
-import type {PixiLayerSceneDefinition} from '../features/focus-room-animation'
+import {getPSceneLayer} from '../features/focus-room-animation/scene-layer-catalog'
+import type {PSceneId} from '../features/focus-room-animation/scene-catalog'
 
 export interface PLayerReviewCanvasProps extends PLayerReviewState {
-  readonly definition: PixiLayerSceneDefinition
+  readonly sceneId: PSceneId
 }
 
 export default function PLayerReviewCanvas(props: PLayerReviewCanvasProps) {
@@ -34,7 +35,7 @@ export default function PLayerReviewCanvas(props: PLayerReviewCanvasProps) {
       return
     }
 
-    renderer = new PLayerReviewRenderer(host, {definition: props.definition})
+    renderer = new PLayerReviewRenderer(host, {definition: getPSceneLayer(props.sceneId)})
     renderer.initialize(untrack(getReviewState)).catch(globalThis.reportError)
 
     onCleanup(() => {
@@ -45,9 +46,9 @@ export default function PLayerReviewCanvas(props: PLayerReviewCanvasProps) {
 
   createEffect(
     on(
-      () => props.definition,
-      (definition) => {
-        renderer?.replaceDefinition(definition).catch(globalThis.reportError)
+      () => props.sceneId,
+      (sceneId) => {
+        renderer?.replaceDefinition(getPSceneLayer(sceneId)).catch(globalThis.reportError)
       },
       {defer: true},
     ),

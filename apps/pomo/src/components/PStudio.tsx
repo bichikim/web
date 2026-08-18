@@ -10,7 +10,7 @@ import type {PTrack} from '../features/focus-room-audio'
 import {usePEvents} from '../features/focus-room-dialogue/PEventContext'
 import {
   getPScene,
-  type PixiLayerSceneDefinition,
+  type PSceneId,
   type PSceneMotionInput,
   type PSceneMotionMode,
   supportsPSceneGyroscope,
@@ -36,7 +36,6 @@ import {
   type PGaze,
   resolvePSceneViseme,
 } from './pomo-scene-options'
-import {PSettings} from './PSettings'
 import {PScreenSaver} from './PScreenSaver'
 import {useDialogueSceneGaze} from './use-dialogue-scene-gaze'
 
@@ -113,6 +112,7 @@ const ENTRY_STYLE: JSX.CSSProperties = {
 const PSceneCanvas = clientOnly(() => import('./PSceneCanvas'), {
   lazy: true,
 })
+const PSettings = clientOnly(() => import('./PSettings'), {lazy: true})
 const AUTOMATIC_PERIOD_REFRESH = 60_000
 const INITIAL_POMODORO_PRESENTATION = {
   phaseLabel: '집중',
@@ -124,8 +124,8 @@ type SceneTime = ScenePeriod
 
 interface SceneAsset {
   readonly depthSource: string
+  readonly id: PSceneId
   readonly label: string
-  readonly layerScene: PixiLayerSceneDefinition | null
   readonly source: string
 }
 
@@ -178,8 +178,8 @@ const getSceneAsset = (time: SceneTime, activity: PActivity, gaze: PGaze): Scene
 
   return {
     depthSource: scene.depthSource,
+    id: scene.id,
     label: `${timeLabel} · ${activityLabel} · ${gazeLabel}`,
-    layerScene: scene.layerScene,
     source: scene.source,
   }
 }
@@ -240,6 +240,17 @@ const SceneToolbar = (props: SceneToolbarProps) => {
           motionInput={props.motionInput}
           motionMode={props.motionMode}
           timeMode={props.timeMode}
+          fallback={
+            <span
+              aria-hidden="true"
+              class={cx(
+                'inline-flex h-control-md min-w-control-md items-center justify-center rounded-control',
+                'border border-solid border-border bg-surface text-foreground shadow-panel',
+              )}
+            >
+              <span class="i-tabler-settings size-5 text-highlight" />
+            </span>
+          }
         />
       </div>
       <Show when={props.isSceneTransitioning}>
@@ -414,12 +425,12 @@ export const PStudio = () => {
           activity={activity()}
           depthSource={selectedScene().depthSource}
           gaze={sceneGaze()}
-          layerScene={selectedScene().layerScene}
           motionInput={motionInput()}
           motionMode={motionMode()}
           onLoadingChange={handleLoadingChange}
           onMotionInputChange={setMotionInput}
           source={selectedScene().source}
+          sceneId={selectedScene().id}
           time={time()}
           viseme={activeViseme()}
         />

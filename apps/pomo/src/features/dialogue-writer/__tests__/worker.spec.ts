@@ -22,15 +22,17 @@ interface MockStreamerOptions {
 type WorkerMessageListener = (event: MessageEvent<DialogueWorkerRequest>) => void
 
 const transformers = vi.hoisted(() => ({
+  gemmaModelFromPretrained: vi.fn(),
   generate: vi.fn(),
-  modelFromPretrained: vi.fn(),
-  processorFromPretrained: vi.fn(),
+  qwenModelFromPretrained: vi.fn(),
+  tokenizerFromPretrained: vi.fn(),
 }))
 
 vi.mock('@huggingface/transformers', () => ({
-  AutoProcessor: {from_pretrained: transformers.processorFromPretrained},
+  AutoTokenizer: {from_pretrained: transformers.tokenizerFromPretrained},
   env: {},
-  Qwen3_5ForCausalLM: {from_pretrained: transformers.modelFromPretrained},
+  Gemma4ForCausalLM: {from_pretrained: transformers.gemmaModelFromPretrained},
+  Qwen3_5ForCausalLM: {from_pretrained: transformers.qwenModelFromPretrained},
   TextStreamer: class {
     readonly emit: (text: string) => void
 
@@ -40,18 +42,14 @@ vi.mock('@huggingface/transformers', () => ({
   },
 }))
 
-const createProcessor = () => {
-  const tokenizer = {
-    all_special_ids: [0],
-    decode: () => '한글',
-    get_vocab: () => new Map([['한글', 1]]),
-  }
-
+const createTokenizer = () => {
   return Object.assign(
     vi.fn(async () => ({input_ids: [1]})),
     {
+      all_special_ids: [0],
       apply_chat_template: vi.fn(() => '완성된 프롬프트'),
-      tokenizer,
+      decode: () => '한글',
+      get_vocab: () => new Map([['한글', 1]]),
     },
   )
 }
@@ -87,18 +85,22 @@ beforeEach(() => {
   vi.clearAllMocks()
   vi.unstubAllGlobals()
 
-  transformers.processorFromPretrained.mockResolvedValue(createProcessor())
-  transformers.modelFromPretrained.mockImplementation(
-    async (_repositoryId: string, options: MockModelOptions) => {
-      options.progress_callback({
-        files: {'model.onnx': {loaded: 50, total: 100}},
-        loaded: 50,
-        status: 'progress_total',
-        total: 100,
-      })
-      return {generate: transformers.generate}
-    },
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async () => new Response('공식 Gemma 채팅 템플릿')),
   )
+  transformers.tokenizerFromPretrained.mockResolvedValue(createTokenizer())
+  const loadModel = async (_repositoryId: string, options: MockModelOptions) => {
+    options.progress_callback({
+      files: {'model.onnx': {loaded: 50, total: 100}},
+      loaded: 50,
+      status: 'progress_total',
+      total: 100,
+    })
+    return {generate: transformers.generate}
+  }
+  transformers.gemmaModelFromPretrained.mockImplementation(loadModel)
+  transformers.qwenModelFromPretrained.mockImplementation(loadModel)
   transformers.generate.mockImplementation(async (options: MockGenerateOptions) => {
     options.streamer.emit('행복은 가까이에 있어요.')
   })
@@ -141,5 +143,36 @@ describe('dialogue writer worker', () => {
       'token',
       'complete',
     ])
+  })
+
+  it('should load Gemma with its text-only causal model runtime', async () => {
+    const worker = await loadWorker()
+
+    worker.dispatch({modelId: 'gemma-4-e2b', type: 'prepare'})
+
+    await vi.waitFor(() => expect(worker.postMessage).toHaveBeenLastCalledWith({type: 'ready'}))
+    expect(transformers.gemmaModelFromPretrained).toHaveBeenCalledWith(
+      'onnx-community/gemma-4-E2B-it-ONNX',
+      expect.objectContaining({
+        device: 'webgpu',
+        dtype: {decoder_model_merged: 'q4', embed_tokens: 'q4'},
+      }),
+    )
+    expect(transformers.qwenModelFromPretrained).not.toHaveBeenCalled()
+  })
+
+  it('should load mobile Gemma with q2f16 text sessions', async () => {
+    const worker = await loadWorker()
+
+    worker.dispatch({modelId: 'gemma-4-e2b-mobile', type: 'prepare'})
+
+    await vi.waitFor(() => expect(worker.postMessage).toHaveBeenLastCalledWith({type: 'ready'}))
+    expect(transformers.gemmaModelFromPretrained).toHaveBeenCalledWith(
+      'onnx-community/gemma-4-E2B-it-qat-mobile-ONNX',
+      expect.objectContaining({
+        device: 'webgpu',
+        dtype: {decoder_model_merged: 'q2f16', embed_tokens: 'q2f16'},
+      }),
+    )
   })
 })
