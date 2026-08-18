@@ -1,4 +1,4 @@
-import quoteData from './quotes.json'
+import quoteData from './quotes.json' with {type: 'json'}
 
 interface DevFeedQuote {
   readonly source: string

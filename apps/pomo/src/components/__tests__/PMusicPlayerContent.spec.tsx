@@ -458,6 +458,9 @@ describe('PMusicPlayerContent', () => {
     await Promise.resolve()
     await Promise.resolve()
 
+    expect(fetch).toHaveBeenCalledWith('/audio/playlist.json', {
+      signal: expect.any(AbortSignal),
+    })
     expect(audio.getAttribute('src')).toBe('/two.mp3')
   })
 

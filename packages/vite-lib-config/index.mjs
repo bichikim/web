@@ -53,7 +53,6 @@ export const createConfig = ({
             index: path.join(root, 'src/index.ts'),
             ...newEntry,
           },
-          formats: ['es', 'cjs'],
           name: camelCase(name ?? ''),
         },
         rollupOptions: {
@@ -104,10 +103,8 @@ export const createConfig = ({
         ...plugins,
       ],
       resolve: {
-        alias: {
-          src: path.join(root, 'src'),
-          ...newAlias,
-        },
+        alias: newAlias,
+        tsconfigPaths: true,
       },
     }
   })

@@ -14,8 +14,8 @@ export interface ButtonRootProps extends ParentProps {
   doubleClickGap?: number
   href?: string
   loading?: boolean | number
-  onClick?: (event: MouseEvent | TouchEvent) => void
-  onDoubleClick?: (event: MouseEvent | TouchEvent) => void
+  onClick?: (event: MouseEvent | TouchEvent) => Promise<void> | void
+  onDoubleClick?: (event: MouseEvent | TouchEvent) => Promise<void> | void
   onTouchEnd?: (event: TouchEvent) => void
   onTouchStart?: (event: TouchEvent) => void
   preventLoadingDisabled?: boolean

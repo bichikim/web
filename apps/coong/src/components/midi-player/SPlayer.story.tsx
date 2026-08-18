@@ -1,14 +1,15 @@
 import type {Meta, StoryObj} from 'storybook-solidjs-vite'
+import {MidiPlayerProvider, type MidiPlayerProviderProps} from './context'
 import {SPlayer} from './SPlayer'
 
+const SPlayerStory = (props: MidiPlayerProviderProps) => (
+  <MidiPlayerProvider {...props}>
+    <SPlayer />
+  </MidiPlayerProvider>
+)
+
 const meta = {
-  argTypes: {
-    onPause: {action: 'pause clicked'},
-    onPlay: {action: 'play clicked'},
-    onSeek: {action: 'seek changed'},
-    onStop: {action: 'stop clicked'},
-  },
-  component: SPlayer,
+  component: SPlayerStory,
   parameters: {
     backgrounds: {
       default: 'chessboard',
@@ -16,28 +17,44 @@ const meta = {
     layout: 'centered',
   },
   title: 'Coong/Components/MidiPlayer/SPlayer',
-} satisfies Meta<typeof SPlayer>
+} satisfies Meta<typeof SPlayerStory>
 
 export default meta
 type Story = StoryObj<typeof meta>
 
-export const Default: Story = {
+export const Default: Story = {}
+
+export const WithPlaylist: Story = {
   args: {
-    midiUrl: '/midi/test.mid',
+    initMusics: [
+      {
+        ext: 'midi',
+        id: 'storybook-track',
+        name: 'Storybook Track',
+        totalDuration: 100,
+      },
+    ],
   },
 }
 
 export const Playing: Story = {
   args: {
-    isPlaying: true,
-    midiUrl: '/midi/test.mid',
-  },
-}
-
-export const WithProgress: Story = {
-  args: {
-    currentTime: 30,
-    duration: 100,
-    midiUrl: '/midi/test.mid',
+    initMusics: [
+      {
+        ext: 'midi',
+        id: 'storybook-track',
+        name: 'Storybook Track',
+        totalDuration: 100,
+      },
+    ],
+    playState: {
+      leftTime: 70,
+      loaded: true,
+      playedTime: 30,
+      playingId: 'storybook-track',
+      startedAt: 0,
+      suspended: false,
+      totalDuration: 100,
+    },
   },
 }

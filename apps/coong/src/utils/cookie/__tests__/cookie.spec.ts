@@ -3,11 +3,14 @@
  */
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import jsCookie from 'js-cookie'
-import * as vinxiHttp from 'vinxi/http'
+import * as startHttp from '@solidjs/start/http'
 import {getClientCookie, getServerCookie, setClientCookie, setServerCookie} from '../'
 
 vi.mock('js-cookie')
-vi.mock('vinxi/http')
+vi.mock('@solidjs/start/http', () => ({
+  getCookie: vi.fn(),
+  setCookie: vi.fn(),
+}))
 
 describe('cookie utils', () => {
   beforeEach(() => {
@@ -141,12 +144,12 @@ describe('cookie utils', () => {
   })
 
   describe('setServerCookie', () => {
-    it('should call vinxi/http setCookie', () => {
+    it('should call SolidStart setCookie', () => {
       setServerCookie('test-cookie', 'test-value', {path: '/'})
-      expect(vinxiHttp.setCookie).toHaveBeenCalledWith('test-cookie', 'test-value', {path: '/'})
+      expect(startHttp.setCookie).toHaveBeenCalledWith('test-cookie', 'test-value', {path: '/'})
     })
 
-    it('should call vinxi/http setCookie with options', () => {
+    it('should call SolidStart setCookie with options', () => {
       const options: any = {
         domain: '.example.com',
         expires: new Date('2024-12-31'),
@@ -158,31 +161,31 @@ describe('cookie utils', () => {
       }
 
       setServerCookie('test-cookie', 'test-value', options)
-      expect(vinxiHttp.setCookie).toHaveBeenCalledWith('test-cookie', 'test-value', options)
+      expect(startHttp.setCookie).toHaveBeenCalledWith('test-cookie', 'test-value', options)
     })
 
-    it('should call vinxi/http setCookie without options', () => {
+    it('should call SolidStart setCookie without options', () => {
       setServerCookie('test-cookie', 'test-value')
-      expect(vinxiHttp.setCookie).toHaveBeenCalledWith('test-cookie', 'test-value', undefined)
+      expect(startHttp.setCookie).toHaveBeenCalledWith('test-cookie', 'test-value', undefined)
     })
   })
 
   describe('getServerCookie', () => {
-    it('should call vinxi/http getCookie', () => {
-      vi.mocked(vinxiHttp.getCookie).mockReturnValue('cookie-value')
+    it('should call SolidStart getCookie', () => {
+      vi.mocked(startHttp.getCookie).mockReturnValue('cookie-value')
 
       const result = getServerCookie('test-cookie')
 
-      expect(vinxiHttp.getCookie).toHaveBeenCalledWith('test-cookie')
+      expect(startHttp.getCookie).toHaveBeenCalledWith('test-cookie')
       expect(result).toBe('cookie-value')
     })
 
     it('should return undefined when cookie does not exist', () => {
-      vi.mocked(vinxiHttp.getCookie).mockReturnValue(undefined)
+      vi.mocked(startHttp.getCookie).mockReturnValue(undefined)
 
       const result = getServerCookie('non-existent')
 
-      expect(vinxiHttp.getCookie).toHaveBeenCalledWith('non-existent')
+      expect(startHttp.getCookie).toHaveBeenCalledWith('non-existent')
       expect(result).toBeUndefined()
     })
   })

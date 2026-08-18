@@ -1,6 +1,6 @@
 import jsCookie from 'js-cookie'
 import {CookieSerializeOptions} from 'cookie-es'
-import {getCookie as _getServerCookie, setCookie as _setServerCookie} from 'vinxi/http'
+import {getCookie as _getServerCookie, setCookie as _setServerCookie} from '@solidjs/start/http'
 
 const normalizeSameSite = (
   sameSite: CookieSerializeOptions['sameSite'],
