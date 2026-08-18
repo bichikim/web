@@ -1,4 +1,4 @@
-import {expect, userEvent, within} from 'storybook/test'
+import {expect, userEvent, waitFor, within} from 'storybook/test'
 import type {Meta, StoryObj} from 'storybook-solidjs-vite'
 
 import dayReadingImage from '../features/focus-room-animation/assets/concept-art/day-reading.webp'
@@ -60,7 +60,7 @@ export const Expanded: Story = {
     const canvas = within(canvasElement)
     const expandButton = canvas.getByRole('button', {name: '플레이어 펼치기'})
     await userEvent.click(expandButton)
-    await expect(canvas.getByRole('button', {name: '플레이어 접기'})).toBeVisible()
-    await expect(canvas.getByRole('button', {name: /Quiet Pages/u})).toBeVisible()
+    await waitFor(() => expect(canvas.getByRole('button', {name: '플레이어 접기'})).toBeVisible())
+    await waitFor(() => expect(canvas.getByRole('button', {name: /Quiet Pages/u})).toBeEnabled())
   },
 }

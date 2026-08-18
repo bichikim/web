@@ -76,6 +76,9 @@ const useStaticNitroEntry = {
 }
 
 export default defineConfig({
+  define: {
+    'import.meta.env.POMO_IS_APPS_IN_TOSS': JSON.stringify(isAppsInToss),
+  },
   nitro: isAppsInToss
     ? {
         prerender: {

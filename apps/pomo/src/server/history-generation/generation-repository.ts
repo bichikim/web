@@ -10,12 +10,12 @@ import {
   type Database,
   feedChannels,
   getDatabase,
-  getTransactionalDatabase,
   historicalGenerationRuns,
   historicalMoments,
   historicalMomentSources,
   processedOpenAiWebhookEvents,
   type TransactionalDatabase,
+  withTransactionalDatabase,
 } from '../database'
 
 const CHANNEL_SLUG = 'today-in-history'
@@ -265,10 +265,9 @@ const claimWebhookEvent = async (
   return inserted !== undefined
 }
 
-/** Publishes a completed response atomically and ignores duplicate webhook events. */
-export const publishHistoryResponse = async (
+const publishHistoryResponseWithDatabase = async (
   options: PublishResponseOptions,
-  database: TransactionalDatabase = getTransactionalDatabase(),
+  database: TransactionalDatabase,
 ): Promise<boolean> =>
   database.transaction(async (transaction) => {
     if (!(await claimWebhookEvent(options.eventId, transaction))) {
@@ -376,10 +375,20 @@ export const publishHistoryResponse = async (
     return true
   })
 
-/** Records a terminal OpenAI event atomically and ignores duplicate delivery. */
-const finishHistoryResponse = async (
+/** Publishes a completed response atomically and ignores duplicate webhook events. */
+export const publishHistoryResponse = (
+  options: PublishResponseOptions,
+  database?: TransactionalDatabase,
+): Promise<boolean> =>
+  database === undefined
+    ? withTransactionalDatabase((scopedDatabase) =>
+        publishHistoryResponseWithDatabase(options, scopedDatabase),
+      )
+    : publishHistoryResponseWithDatabase(options, database)
+
+const finishHistoryResponseWithDatabase = async (
   options: FinishResponseOptions,
-  database: TransactionalDatabase = getTransactionalDatabase(),
+  database: TransactionalDatabase,
 ): Promise<boolean> =>
   database.transaction(async (transaction) => {
     if (!(await claimWebhookEvent(options.eventId, transaction))) {
@@ -394,12 +403,23 @@ const finishHistoryResponse = async (
     return true
   })
 
+/** Records a terminal OpenAI event atomically and ignores duplicate delivery. */
+const finishHistoryResponse = (
+  options: FinishResponseOptions,
+  database?: TransactionalDatabase,
+): Promise<boolean> =>
+  database === undefined
+    ? withTransactionalDatabase((scopedDatabase) =>
+        finishHistoryResponseWithDatabase(options, scopedDatabase),
+      )
+    : finishHistoryResponseWithDatabase(options, database)
+
 /** Records an OpenAI processing failure that may be retried once. */
 export const failHistoryResponse = (
   eventId: string,
   responseId: string,
   message: string,
-  database: TransactionalDatabase = getTransactionalDatabase(),
+  database?: TransactionalDatabase,
 ): Promise<boolean> =>
   finishHistoryResponse({eventId, message, responseId, status: 'failed'}, database)
 
@@ -408,7 +428,7 @@ export const rejectHistoryResponse = (
   eventId: string,
   responseId: string,
   message: string,
-  database: TransactionalDatabase = getTransactionalDatabase(),
+  database?: TransactionalDatabase,
 ): Promise<boolean> =>
   finishHistoryResponse({eventId, message, responseId, status: 'rejected'}, database)
 

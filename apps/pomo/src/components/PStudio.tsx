@@ -53,12 +53,12 @@ const CLASSES = {
     '[button&]:[padding-inline:1.5rem] [button&]:text-[0.9375rem]',
   ].join(' '),
   entryContent: [
-    'pomo-entry__content flex w-[min(calc(100%_-_2rem_-_env(safe-area-inset-left)),_22rem)]',
+    'pomo-entry__content flex w-[min(calc(100%_-_2rem_-_var(--pomo-safe-area-inset-left)),_22rem)]',
     'box-border flex-col items-start gap-4',
-    '[margin-block-end:calc(1.5rem_+_env(safe-area-inset-bottom))]',
-    '[margin-inline-start:calc(1rem_+_env(safe-area-inset-left))]',
-    'min-[40rem]:[margin-block-end:calc(2.5rem_+_env(safe-area-inset-bottom))]',
-    'min-[40rem]:[margin-inline-start:calc(2.5rem_+_env(safe-area-inset-left))]',
+    '[margin-block-end:calc(1.5rem_+_var(--pomo-safe-area-inset-bottom))]',
+    '[margin-inline-start:calc(1rem_+_var(--pomo-safe-area-inset-left))]',
+    'min-[40rem]:[margin-block-end:calc(2.5rem_+_var(--pomo-safe-area-inset-bottom))]',
+    'min-[40rem]:[margin-inline-start:calc(2.5rem_+_var(--pomo-safe-area-inset-left))]',
   ].join(' '),
   entryLeadingImage: [
     'size-16 [margin-block:-1.25rem] [margin-inline-start:-0.75rem]',
@@ -200,7 +200,7 @@ const SceneToolbar = (props: SceneToolbarProps) => {
   return (
     <div
       class={cx(
-        'pointer-events-auto absolute right-4 top-[calc(1rem+env(safe-area-inset-top))]',
+        'pointer-events-auto absolute right-4 top-[calc(1rem+var(--pomo-safe-area-inset-top))]',
         'flex flex-col items-end gap-2',
         'sm:right-7 sm:top-6',
       )}

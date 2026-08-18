@@ -5,21 +5,18 @@ import type {FeedEntry} from './contract'
 const EMPTY_FEED_UPDATED_AT = '1970-01-01T00:00:00.000Z'
 const MAX_ENTRY_COUNT = 50
 
-const absoluteHttpUrlSchema = z
-  .string()
-  .url()
-  .refine((value) => {
-    const {protocol} = new URL(value)
-    return protocol === 'http:' || protocol === 'https:'
-  }, 'URL must use the http or https protocol')
+const absoluteHttpUrlSchema = z.url().refine((value) => {
+  const {protocol} = new URL(value)
+  return protocol === 'http:' || protocol === 'https:'
+}, 'URL must use the http or https protocol')
 
 const feedEntrySchema = z.object({
   contentHtml: z.string().optional(),
   id: z.string().trim().min(1),
-  publishedAt: z.string().datetime(),
+  publishedAt: z.iso.datetime(),
   summary: z.string().trim().min(1),
   title: z.string().trim().min(1),
-  updatedAt: z.string().datetime().optional(),
+  updatedAt: z.iso.datetime().optional(),
   url: absoluteHttpUrlSchema,
 })
 

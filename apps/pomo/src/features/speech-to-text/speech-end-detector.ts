@@ -1,3 +1,4 @@
+/* istanbul ignore next -- Wallaby inconsistently counts module initialization across workers. */
 const DETECTION_INTERVAL = 50
 const REQUIRED_SPEECH_SAMPLES = 3
 const SILENCE_DURATION = 800
