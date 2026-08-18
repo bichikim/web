@@ -8,7 +8,7 @@ it.each([
   ['/dialogue/', true],
   ['/dev', false],
   ['/dev/dialogue', false],
-])('should classify %s as a Pomo provider route when expected', (pathname, expected) => {
+])('should classify %s as a Pomo layout route when expected', (pathname, expected) => {
   expect(usesPomoLayout(pathname)).toBe(expected)
 })
 
