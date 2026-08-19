@@ -6,7 +6,7 @@ import {VoiceGenerator} from 'src/components/VoiceGenerator'
 
 const MAIN_CLASSES = cx(
   'relative grid min-h-dvh place-items-center overflow-x-hidden',
-  'bg-#17131f px-5 py-10 text-#f8edf1 sm:px-8',
+  'bg-#17131f px-5 py-10 text-#f8edf1 xs:px-8',
 )
 const BACKGROUND_CLASSES = cx(
   'pointer-events-none absolute inset-0',

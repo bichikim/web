@@ -5,7 +5,7 @@ import {cx} from 'class-variance-authority'
 
 const ChatRoom = clientOnly(() => import('src/components/ChatRoom'), {lazy: true})
 const MAIN_CLASSES = cx(
-  'relative min-h-dvh overflow-x-hidden bg-#17131f px-4 py-7 text-#f8edf1 sm:px-7 sm:py-10',
+  'relative min-h-dvh overflow-x-hidden bg-#17131f px-4 py-7 text-#f8edf1 xs:px-7 xs:py-10',
 )
 const BACKGROUND_CLASSES = cx(
   'pointer-events-none absolute inset-0',

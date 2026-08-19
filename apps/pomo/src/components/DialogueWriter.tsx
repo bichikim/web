@@ -8,7 +8,7 @@ const MAXIMUM_REQUEST_LENGTH = 800
 const INITIAL_REQUEST = '삶의 행복에 대해 이야기해줘'
 const SECTION_CLASSES = cx(
   'relative w-full overflow-hidden rounded-8 border border-white/10',
-  'bg-#211a2b/88 p-5 shadow-[0_28px_100px_rgba(5,2,10,0.45)] backdrop-blur-xl sm:p-8',
+  'bg-#211a2b/88 p-5 shadow-[0_28px_100px_rgba(5,2,10,0.45)] backdrop-blur-xl xs:p-8',
 )
 const TEXTAREA_CLASSES = cx(
   'min-h-44 w-full resize-y box-border rounded-5 border border-white/10 bg-#17131f p-4',
@@ -31,10 +31,10 @@ const DirectAnswerHeader = () => (
       <p class="m-0 text-xs font-700 tracking-[0.24em] text-#9ed6bb uppercase">
         Local direct answer lab
       </p>
-      <h1 class="mb-0 mt-3 text-2xl font-750 tracking--0.02em sm:text-3xl">
+      <h1 class="mb-0 mt-3 text-2xl font-750 tracking--0.02em xs:text-3xl">
         같은 요청으로 다섯 모델을 비교해 보세요
       </h1>
-      <p class="mb-0 mt-3 max-w-2xl text-sm leading-6 text-#bdb2c4 sm:text-base">
+      <p class="mb-0 mt-3 max-w-2xl text-sm leading-6 text-#bdb2c4 xs:text-base">
         Qwen 3종과 Gemma 4 E2B의 q4·모바일 q2f16 결과를 나란히 확인할 수 있어요.
       </p>
     </div>
@@ -202,7 +202,7 @@ const ModelPanel = (props: ModelPanelProps) => {
   }
 
   return (
-    <article class="grid content-start gap-5 rounded-6 border border-white/8 bg-white/3 p-4 sm:p-5">
+    <article class="grid content-start gap-5 rounded-6 border border-white/8 bg-white/3 p-4 xs:p-5">
       <div>
         <ModelStatus
           model={props.model}

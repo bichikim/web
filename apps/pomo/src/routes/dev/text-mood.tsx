@@ -6,7 +6,7 @@ import {cx} from 'class-variance-authority'
 const TextMoodLab = clientOnly(() => import('src/components/TextMoodLab'), {lazy: true})
 const MAIN_CLASSES = cx(
   'relative min-h-dvh overflow-x-hidden bg-#17131f px-4 py-8 text-#f8edf1',
-  'sm:px-8 sm:py-12',
+  'xs:px-8 xs:py-12',
 )
 const BACKGROUND_CLASSES = cx(
   'pointer-events-none absolute inset-0',

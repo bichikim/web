@@ -1,5 +1,20 @@
 import baseConfig from '@winter-love/unocss-config'
-import {defineConfig, mergeConfigs, type PresetWind3Theme} from 'unocss'
+import {defineConfig, mergeConfigs, type PresetWind3Theme, type Variant} from 'unocss'
+
+const createParentVariant = (name: string, parent: string): Variant => {
+  return (matcher) => {
+    const prefix = `${name}:`
+
+    if (!matcher.startsWith(prefix)) {
+      return
+    }
+
+    return {
+      matcher: matcher.slice(prefix.length),
+      parent,
+    }
+  }
+}
 
 export default mergeConfigs([
   baseConfig,
@@ -8,8 +23,8 @@ export default mergeConfigs([
       const spacing = (units: string) => `calc(${theme.spacing?.DEFAULT ?? '1rem'} / 4 * ${units})`
       const controlMedium = spacing('11')
       const controlSmall = spacing('8')
-      const layoutSpacing = spacing('4')
-      const layoutSpacingWide = spacing('6')
+      const layoutSpacing = spacing('6')
+      const mobileLayoutSpacing = spacing('4')
       const modalSpacing = spacing('8')
       const modalSpacingCompact = spacing('5')
       const panelInset = spacing('2')
@@ -27,12 +42,6 @@ export default mergeConfigs([
         ...theme.height,
         'control-md': controlMedium,
         'control-sm': controlSmall,
-        'media-dock':
-          `calc(100dvh - ${layoutSpacing} - ${layoutSpacing} - ` +
-          `${safeAreaTop} - ${safeAreaBottom})`,
-        'media-dock-wide':
-          `calc(100dvh - ${layoutSpacingWide} - ${layoutSpacingWide} - ` +
-          `${safeAreaTop} - ${safeAreaBottom})`,
       }
       theme.maxHeight = {
         ...theme.maxHeight,
@@ -52,15 +61,18 @@ export default mergeConfigs([
       }
       theme.spacing = {
         ...theme.spacing,
+        layout: layoutSpacing,
+        'layout-mobile': mobileLayoutSpacing,
         'modal-top': `calc(${safeAreaTop} + ${modalSpacing})`,
         'modal-top-compact': `calc(${safeAreaTop} + ${modalSpacingCompact})`,
         'player-bottom': `calc(${layoutSpacing} + ${safeAreaBottom})`,
+        'player-bottom-mobile': `calc(${mobileLayoutSpacing} + ${safeAreaBottom})`,
         'safe-bottom': `max(${layoutSpacing}, calc(${layoutSpacing} + ${safeAreaBottom}))`,
-        'safe-bottom-wide': `max(${layoutSpacingWide}, calc(${layoutSpacingWide} + ${safeAreaBottom}))`,
+        'safe-bottom-mobile': `max(${mobileLayoutSpacing}, calc(${mobileLayoutSpacing} + ${safeAreaBottom}))`,
         'safe-left': `max(${layoutSpacing}, ${safeAreaLeft})`,
-        'safe-left-wide': `max(${layoutSpacingWide}, ${safeAreaLeft})`,
+        'safe-left-mobile': `max(${mobileLayoutSpacing}, ${safeAreaLeft})`,
         'safe-right': `max(${layoutSpacing}, ${safeAreaRight})`,
-        'safe-right-wide': `max(${layoutSpacingWide}, ${safeAreaRight})`,
+        'safe-right-mobile': `max(${mobileLayoutSpacing}, ${safeAreaRight})`,
       }
       theme.width = {
         ...theme.width,
@@ -211,6 +223,14 @@ body {
         'tab-active': 'inset 0 -0.1875rem 0 #d9b98a',
         'track-active': 'inset 2px 0 0 #d86845',
       },
+      breakpoints: {
+        '2xl': '64rem',
+        lg: '40rem',
+        md: '36rem',
+        sm: '28rem',
+        xl: '48rem',
+        xs: '24rem',
+      },
       colors: {
         background: '#17130f',
         border: 'rgb(255 250 241 / 14%)',
@@ -236,18 +256,16 @@ body {
       },
     },
     variants: [
-      (matcher) => {
-        const prefix = 'dialogue-library-compact:'
-
-        if (!matcher.startsWith(prefix)) {
-          return
-        }
-
-        return {
-          matcher: matcher.slice(prefix.length),
-          parent: '@container pomo-dialogue-library-item (width < 19rem)',
-        }
-      },
+      createParentVariant('player-compact', '@container pomo-player (width < 24rem)'),
+      createParentVariant(
+        'dialogue-library-compact',
+        '@container pomo-dialogue-library-item (width < 19rem)',
+      ),
+      createParentVariant('settings-compact', '@media (width < 42rem)'),
+      createParentVariant('feed-status-compact', '@media (width < 34rem)'),
+      createParentVariant('automatic-dialogue-compact', '@media (width < 32rem)'),
+      createParentVariant('dialogue-controls-readable', '@media (width >= 23.0625rem)'),
+      createParentVariant('dialogue-controls-wide', '@media (width >= 34.0625rem)'),
     ],
   }),
 ])

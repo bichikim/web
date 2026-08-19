@@ -36,7 +36,7 @@ export const PPlaybackModes = (props: PPlaybackModesProps) => (
             aria-pressed={props.repeatMode === mode.value}
             class={cx(
               CLASSES.playerMode,
-              'grid size-8 place-items-center rounded-full transition',
+              'grid size-8 place-items-center rounded-full transition player-compact:size-7',
               props.repeatMode === mode.value && 'is-active',
             )}
             onClick={() => props.onRepeatModeChange(mode.value)}
@@ -54,7 +54,7 @@ export const PPlaybackModes = (props: PPlaybackModesProps) => (
       aria-pressed={props.shuffleEnabled}
       class={cx(
         CLASSES.playerMode,
-        'grid size-8 place-items-center rounded-full transition',
+        'grid size-8 place-items-center rounded-full transition player-compact:size-7',
         props.shuffleEnabled && 'is-active',
       )}
       onClick={() => props.onShuffleChange()}

@@ -110,3 +110,12 @@ it('should render saved feed dialogues in bounded pages', () => {
   fireEvent.click(screen.getByRole('button', {name: '이전 피드 대화 1개 더 보기'}))
   expect(screen.getAllByRole('button', {name: '듣기'})).toHaveLength(21)
 })
+
+it('should apply compact spacing to feed dialogue rows', () => {
+  const {controller} = createController()
+  const result = render(() => <PFeedDialogueList controller={controller} />)
+  const list = result.container.querySelector('.pomo-feed-settings__dialogue-list') as HTMLElement
+
+  expect(list.classList.contains('settings-compact:gap-2')).toBe(true)
+  expect(list.classList.contains('settings-compact:[&_>_li]:gap-2')).toBe(true)
+})

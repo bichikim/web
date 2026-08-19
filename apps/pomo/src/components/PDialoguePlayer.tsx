@@ -52,15 +52,11 @@ const CLASSES = {
 
 const SKIP_BUTTON_CLASS = cx(
   CLASSES.dialogueBubbleSkip,
-  'max-[40rem]:gap-2 max-[40rem]:px-3',
-  'max-[40rem]:py-2 max-[23rem]:gap-0',
+  'max-lg:gap-2 max-lg:px-3',
+  'max-lg:py-2 max-xs:gap-0',
 )
 
-const STOP_BUTTON_CLASS = cx(
-  CLASSES.dialogueBubbleStop,
-  'max-[40rem]:gap-2 max-[40rem]:px-3',
-  'max-[40rem]:py-2',
-)
+const STOP_BUTTON_CLASS = cx(CLASSES.dialogueBubbleStop, 'max-lg:gap-2 max-lg:px-3', 'max-lg:py-2')
 
 export interface PDialoguePlayerProps {
   readonly externalText?: string | null
@@ -177,8 +173,8 @@ export const PDialoguePlayer = (props: PDialoguePlayerProps) => {
                     size="small"
                     tone="secondary"
                   >
-                    <span class="hidden min-[34.0625rem]:inline">대화 건너뛰기</span>
-                    <span class="hidden min-[23.0625rem]:inline min-[34.0625rem]:hidden">
+                    <span class="hidden dialogue-controls-wide:inline">대화 건너뛰기</span>
+                    <span class="hidden dialogue-controls-readable:inline dialogue-controls-wide:hidden">
                       건너뛰기
                     </span>
                   </PButton>
@@ -191,11 +187,13 @@ export const PDialoguePlayer = (props: PDialoguePlayerProps) => {
                   size="small"
                   tone="secondary"
                 >
-                  <span class="hidden min-[34.0625rem]:inline">{stopLabel()}</span>
-                  <span class="hidden min-[23.0625rem]:inline min-[34.0625rem]:hidden">
+                  <span class="hidden dialogue-controls-wide:inline">{stopLabel()}</span>
+                  <span class="hidden dialogue-controls-readable:inline dialogue-controls-wide:hidden">
                     {connectedSpeechCount()}개 중지
                   </span>
-                  <span class="inline min-[23.0625rem]:hidden">{connectedSpeechCount()}개</span>
+                  <span class="inline dialogue-controls-readable:hidden">
+                    {connectedSpeechCount()}개
+                  </span>
                 </PButton>
               </div>
             </div>

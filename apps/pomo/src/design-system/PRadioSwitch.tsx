@@ -88,14 +88,14 @@ export const PRadioSwitch = <TValue extends string>(props: PRadioSwitchProps<TVa
                   'hover:bg-secondary-soft hover:text-foreground ' +
                   'ui-checked:bg-primary-soft ui-checked:text-foreground ' +
                   'group-focus-within:shadow-focus ' +
-                  'max-[23rem]:gap-1 max-[23rem]:text-[0.6875rem] motion-reduce:transition-none'
+                  'max-xs:gap-1 max-xs:text-[0.6875rem] motion-reduce:transition-none'
                 }
               >
                 <Show when={option.icon}>
                   {(icon) => (
                     <span
                       aria-hidden="true"
-                      class={cx('size-4 flex-none text-highlight max-[23rem]:hidden', icon())}
+                      class={cx('size-4 flex-none text-highlight max-xs:hidden', icon())}
                     />
                   )}
                 </Show>

@@ -15,12 +15,15 @@ const CLASSES = {
     'origin-[center_bottom] motion-reduce:transition-[none]',
   ].join(' '),
   player: [
-    'pomo-player [--media-background-color:transparent] [--media-control-background:transparent]',
+    'pomo-player [--pomo-player-summary-space:4.75rem]',
+    '[container-name:pomo-player] [container-type:inline-size]',
+    '[--media-background-color:transparent] [--media-control-background:transparent]',
     '[--media-control-hover-background:rgb(114_123_96_/_20%)]',
     '[--media-control-padding:0.6rem] [--media-font-family:inherit]',
     '[--media-primary-color:#fffaf1] [--media-range-bar-color:#fffaf1]',
     '[--media-range-track-background:rgb(255_250_241_/_22%)]',
-    '[--media-range-track-height:2px] [--media-secondary-color:transparent] block w-full',
+    '[--media-range-track-height:2px] [--media-secondary-color:transparent]',
+    'flex min-h-0 max-h-full w-full flex-col',
     'bg-transparent [&_media-control-bar]:w-full [&_media-control-bar]:bg-transparent',
     '[&_media-play-button]:rounded-full [&_media-mute-button]:rounded-full',
     '[&_media-mute-button]:text-muted-foreground',
@@ -29,25 +32,31 @@ const CLASSES = {
   ].join(' '),
   playerBase: 'pomo-player__base bg-surface',
   playerExpanded: [
-    'pomo-player__expanded isolate',
+    'pomo-player__expanded isolate flex min-h-0 min-w-0 w-full flex-1 flex-col box-border',
     'bg-[linear-gradient(_180deg,_rgb(0_0_0_/_2%)_0%,_rgb(0_0_0_/_10%)_34%,_rgb(0_0_0_/_18%)_100%_)]',
     'shadow-[inset_0_-1px_0_rgb(255_250_241_/_4%)]',
-    'max-[28rem]:[&_>_div:nth-child(2)]:grid-cols-[auto_1fr]',
-    'max-[28rem]:[&_>_div:nth-child(2)_>_div:last-child]:hidden',
   ].join(' '),
   playerExpandedFrame: [
-    'pomo-player__expanded-frame grid min-h-0 grid-rows-[0fr]',
+    'pomo-player__expanded-frame grid min-h-0 min-w-0 flex-1 grid-rows-[0fr]',
+    'overflow-hidden',
     '[transition:grid-template-rows_280ms_cubic-bezier(0.22,_1,_0.36,_1)]',
-    '[&.is-expanded]:grid-rows-[1fr] motion-reduce:transition-none',
+    '[&.is-expanded]:h-[calc(100cqh_-_var(--pomo-player-summary-space))]',
+    '[&.is-expanded]:flex-none [&.is-expanded]:grid-rows-[1fr]',
+    'motion-reduce:transition-none',
   ].join(' '),
   playerExpandedInner: [
-    'pomo-player__expanded-inner min-h-0 overflow-clip [overflow-clip-margin:0.5rem]',
+    'pomo-player__expanded-inner flex min-h-0 min-w-0 w-full flex-col',
+    'overflow-x-clip overflow-y-auto overscroll-contain',
+    '[scrollbar-color:rgb(255_250_241_/_18%)_transparent] [scrollbar-width:thin]',
     'opacity-0 pointer-events-none',
     '[transition:opacity_160ms_ease]',
     '[&.is-expanded]:opacity-100 [&.is-expanded]:pointer-events-auto',
     'motion-reduce:transition-none',
   ].join(' '),
-  playerMute: 'pomo-player__mute size-10 shrink-0 [--media-control-padding:0.625rem]',
+  playerMute: [
+    'pomo-player__mute size-10 shrink-0 [--media-control-padding:0.625rem]',
+    'player-compact:size-9 player-compact:[--media-control-padding:0.5rem]',
+  ].join(' '),
   playerPlay: [
     'pomo-player__play w-11 h-11 text-white bg-primary',
     'shadow-[0_8px_20px_rgb(125_49_29_/_34%),_inset_0_1px_0_rgb(255_255_255_/_24%)]',
@@ -85,7 +94,10 @@ const CLASSES = {
     'motion-reduce:transition-none',
   ].join(' '),
   playerProgressExpanded: [
-    'pomo-player__progress--expanded -mx-2 h-0.5 w-[calc(100%+1rem)] flex-none',
+    'pomo-player__progress--expanded -mx-2 h-0 w-[calc(100%+1rem)] flex-none',
+    'overflow-visible opacity-0 transition-[height,opacity]',
+    '[&.is-expanded]:h-0.5 [&.is-expanded]:opacity-100',
+    'motion-reduce:transition-none',
     '[--media-control-height:2px] [--media-range-padding:0px]',
     '[--media-range-bar-color:#fffaf1]',
     '[--media-time-range-buffered-color:rgb(255_250_241_/_40%)]',
@@ -96,6 +108,8 @@ const CLASSES = {
     'pomo-player-shell',
     'shadow-[0_22px_70px_rgb(5_4_3_/_46%),_inset_0_1px_0_rgb(255_255_255_/_10%)]',
   ].join(' '),
+  playerSummary:
+    'pomo-player__summary relative flex min-h-16 flex-none items-center gap-3 px-2 py-2',
   playerTitle: 'pomo-player__title block text-foreground',
   playerTrackArtist: 'pomo-player__track-artist text-[#c9c0b5] text-[0.6875rem] leading-4',
   playerTrackTitle: [
@@ -112,7 +126,7 @@ const CLASSES = {
     '[filter:blur(8px)_saturate(1.25)_contrast(1.12)]',
   ].join(' '),
   playerVolume: [
-    'pomo-player__volume min-w-0 w-[clamp(3.5rem,_9vw,_4.75rem)]',
+    'pomo-player__volume min-w-0 w-[clamp(3rem,_18cqi,_4.75rem)]',
     '[--media-range-padding-left:0.25rem] [--media-range-padding-right:0.25rem]',
     '[--media-range-thumb-opacity:0]',
     '[--media-range-thumb-transition:opacity_140ms_ease]',
@@ -127,7 +141,7 @@ const FALLBACK_TRACK_TITLE = '집중 음악을 준비 중이에요'
 const IDLE_VISUALIZER_OPACITY = 0.34
 const SKIP_BUTTON_CLASSES = [
   'pomo-player__skip grid size-10 shrink-0 place-items-center rounded-full transition',
-  'disabled:opacity-35 max-[28rem]:size-9',
+  'disabled:opacity-35 player-compact:size-9',
 ].join(' ')
 const MEDIA_FOCUS_CLASSES =
   'focus-visible:outline-none [--media-focus-box-shadow:inset_0_0_0_2px_#727b60]'
@@ -165,16 +179,36 @@ type ExpandedPlayerControlsProps = Pick<
 >
 
 const ExpandedPlayerControls = (props: ExpandedPlayerControlsProps) => (
-  <div class={cx(CLASSES.playerExpanded, 'relative px-2 pb-2', 'pt-3 rounded-b-panel-inner')}>
-    <div class={cx('grid grid-cols-[1fr_auto_1fr] items-center gap-2', 'px-1')}>
-      <PPlaybackModes
-        onRepeatModeChange={props.onRepeatModeChange}
-        onShuffleChange={props.onShuffleChange}
-        repeatMode={props.repeatMode}
-        shuffleEnabled={props.shuffleEnabled}
-      />
+  <div
+    class={cx(
+      CLASSES.playerExpanded,
+      'relative px-2 pb-2',
+      'pt-3 rounded-b-panel-inner player-compact:pt-2',
+    )}
+  >
+    <div
+      class={cx(
+        'pomo-player__expanded-controls grid min-w-0 flex-none grid-cols-[1fr_auto_1fr]',
+        'items-center gap-2 px-1',
+        'player-compact:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]',
+        'player-compact:gap-y-2 player-compact:px-0',
+      )}
+    >
+      <div class="min-w-0 player-compact:col-start-1 player-compact:row-start-2">
+        <PPlaybackModes
+          onRepeatModeChange={props.onRepeatModeChange}
+          onShuffleChange={props.onShuffleChange}
+          repeatMode={props.repeatMode}
+          shuffleEnabled={props.shuffleEnabled}
+        />
+      </div>
 
-      <div class="flex items-center justify-center gap-1">
+      <div
+        class={cx(
+          'pomo-player__transport flex items-center justify-center gap-1',
+          'player-compact:col-span-2 player-compact:col-start-1 player-compact:row-start-1',
+        )}
+      >
         <button
           aria-label="이전 곡"
           class={SKIP_BUTTON_CLASSES}
@@ -187,7 +221,7 @@ const ExpandedPlayerControls = (props: ExpandedPlayerControlsProps) => (
         </button>
         <media-play-button
           aria-label="재생 또는 일시 정지"
-          class={cx(CLASSES.playerPlay, CLASSES.playerPlayLarge, 'max-[28rem]:size-12')}
+          class={cx(CLASSES.playerPlay, CLASSES.playerPlayLarge, 'player-compact:size-12')}
           disabled={!props.currentTrack}
           notooltip
           title="재생 또는 일시 정지"
@@ -207,7 +241,12 @@ const ExpandedPlayerControls = (props: ExpandedPlayerControlsProps) => (
         </button>
       </div>
 
-      <div class="pomo-player__volume-group flex min-w-0 items-center justify-end gap-0">
+      <div
+        class={cx(
+          'pomo-player__volume-group flex min-w-0 items-center justify-end gap-0',
+          'player-compact:col-start-2 player-compact:row-start-2',
+        )}
+      >
         <media-mute-button
           aria-label="음소거"
           class={CLASSES.playerMute}
@@ -231,12 +270,27 @@ const ExpandedPlayerControls = (props: ExpandedPlayerControlsProps) => (
   </div>
 )
 
+const ExpandedPlayerProgress = (props: Pick<MusicPlayerViewProps, 'expanded'>) => (
+  <media-time-range
+    aria-hidden={props.expanded ? undefined : 'true'}
+    aria-label="재생 위치 조절"
+    class={cx(
+      CLASSES.playerProgress,
+      CLASSES.playerProgressExpanded,
+      MEDIA_FOCUS_CLASSES,
+      props.expanded && 'is-expanded',
+    )}
+    disabled={!props.expanded}
+    title="재생 위치 조절"
+  />
+)
+
 export const MusicPlayerView = (props: MusicPlayerViewProps) => (
   <div
     class={cx(
       'pomo-player-stage absolute inset-x-4',
-      'bottom-player-bottom',
-      'sm:inset-x-auto sm:bottom-6 sm:left-6 sm:w-[min(29rem,calc(100vw-3rem))]',
+      'bottom-player-bottom-mobile',
+      'xs:inset-x-auto xs:bottom-6 xs:left-6 xs:w-[min(29rem,calc(100vw-3rem))]',
     )}
   >
     <media-controller
@@ -245,7 +299,7 @@ export const MusicPlayerView = (props: MusicPlayerViewProps) => (
         CLASSES.player,
         CLASSES.playerShell,
         'relative w-full px-2 pt-2 pb-0.5',
-        props.expanded ? 'overflow-visible' : 'overflow-hidden',
+        props.expanded ? 'h-full overflow-visible' : 'overflow-hidden',
         'rounded-panel',
       )}
     >
@@ -304,9 +358,7 @@ export const MusicPlayerView = (props: MusicPlayerViewProps) => (
         disabled={true}
       />
 
-      <div
-        class={cx('pomo-player__summary relative flex min-h-16 items-center', 'gap-3 px-2 py-2')}
-      >
+      <div class={CLASSES.playerSummary}>
         <div
           aria-hidden={props.expanded ? 'true' : undefined}
           class={cx(CLASSES.playerPlaySummaryFrame, props.expanded && 'is-hidden')}
@@ -356,19 +408,14 @@ export const MusicPlayerView = (props: MusicPlayerViewProps) => (
         </button>
       </div>
 
+      <ExpandedPlayerProgress expanded={props.expanded} />
+
       <div
         aria-hidden={props.expanded ? undefined : 'true'}
         class={cx(CLASSES.playerExpandedFrame, props.expanded && 'is-expanded')}
         inert={!props.expanded}
       >
         <div class={cx(CLASSES.playerExpandedInner, props.expanded && 'is-expanded')}>
-          <media-time-range
-            aria-label="재생 위치 조절"
-            class={cx(CLASSES.playerProgress, CLASSES.playerProgressExpanded, MEDIA_FOCUS_CLASSES)}
-            disabled={!props.expanded}
-            title="재생 위치 조절"
-          />
-
           <ExpandedPlayerControls
             currentIndex={props.currentIndex}
             currentTrack={props.currentTrack}
@@ -382,7 +429,7 @@ export const MusicPlayerView = (props: MusicPlayerViewProps) => (
             tracks={props.tracks}
           />
 
-          <div aria-hidden="true" class="h-1.5" />
+          <div aria-hidden="true" class="h-1.5 flex-none" />
         </div>
       </div>
     </media-controller>
