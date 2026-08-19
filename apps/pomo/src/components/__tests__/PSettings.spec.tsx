@@ -62,4 +62,6 @@ it('should expose the guide as the last tab inside settings', () => {
     '대화',
     '설명서',
   ])
+  expect(screen.getByText('현재 오리진')).toBeDefined()
+  expect(screen.getByText(window.location.origin)).toBeDefined()
 })

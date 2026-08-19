@@ -32,9 +32,10 @@ export interface SupertonicVoice {
 }
 
 const FULL_MODEL_REVISION = '3cadd1e'
-const FULL_MODEL_BASE_URL = `https://huggingface.co/Supertone/supertonic-3/resolve/${FULL_MODEL_REVISION}`
+const MODEL_STORAGE_URL = 'https://storage.pomofi.io/models'
+const FULL_MODEL_BASE_URL = `${MODEL_STORAGE_URL}/supertonic-3/${FULL_MODEL_REVISION}`
 const INT8_MODEL_REVISION = 'cca5a0e6c96e1d2c720986bf7e75fcc81dee3ae4'
-const INT8_MODEL_BASE_URL = `https://huggingface.co/csukuangfj2/sherpa-onnx-supertonic-3-tts-int8-2026-05-11/resolve/${INT8_MODEL_REVISION}`
+const INT8_MODEL_BASE_URL = `${MODEL_STORAGE_URL}/supertonic-3-int8/${INT8_MODEL_REVISION}`
 
 export const getSupertonicAssetUrl = (path: string) => `${FULL_MODEL_BASE_URL}/${path}`
 
