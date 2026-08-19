@@ -209,7 +209,7 @@ const SceneToolbar = (props: SceneToolbarProps) => {
       class={cx(
         'pointer-events-auto absolute right-4 top-[calc(1rem+var(--pomo-safe-area-inset-top))]',
         'flex flex-col items-end gap-2',
-        'xs:right-7 xs:top-6',
+        'xs:right-7 lg:top-6',
       )}
     >
       <div class="flex flex-wrap justify-end gap-2" role="group" aria-label="장면 설정">
