@@ -25,10 +25,6 @@ import {
 
 const CLASSES = {
   settingsContent: 'pomo-settings__content grid gap-5',
-  settingsOrigin: [
-    'pomo-settings__origin grid gap-1 border-t border-solid border-border pt-4',
-    '[&_p]:m-0 [&_p]:text-muted-foreground [&_p]:text-xs [&_p]:leading-4.5',
-  ].join(' '),
   settingsScene: [
     'pomo-settings__scene grid gap-4 pb-5',
     'border-b border-solid border-border lg:hidden',
@@ -301,13 +297,6 @@ export const PSettings = (props: PSettingsProps) => {
                   조작이 없으면 화면을 검게 가려 밝은 고정 화면이 오래 노출되지 않게 해요. 화면을
                   터치하거나 마우스를 움직이거나 클릭하면 바로 돌아옵니다.
                 </p>
-              </div>
-              <div class={CLASSES.settingsOrigin}>
-                <span class="text-sm font-700 text-foreground">현재 오리진</span>
-                <code class="select-all break-all text-xs leading-5 text-foreground">
-                  {window.location.origin}
-                </code>
-                <p>R2 CORS 설정에서 허용할 주소예요.</p>
               </div>
             </div>
           </Tabs.Content>
