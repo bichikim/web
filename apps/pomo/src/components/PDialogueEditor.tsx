@@ -28,7 +28,7 @@ const CLASSES = {
     'pomo-dialogue-editor__back flex min-h-11 box-border flex-none items-center gap-2',
     '[border:1px_solid_rgb(255_255_255_/_12%)] rounded-full py-0 px-4 text-[#fffaf1] no-underline',
     '[&:focus-visible]:[outline:2px_solid_#d6b585] [&:focus-visible]:[outline-offset:2px]',
-    'max-[48rem]:[justify-self:start]',
+    'max-xl:[justify-self:start]',
   ].join(' '),
   dialogueEditorButton: [
     'pomo-dialogue-editor__button [&:focus-visible]:[outline:2px_solid_#d6b585]',
@@ -71,7 +71,7 @@ const CLASSES = {
     'bottom-[max(1rem,_var(--pomo-safe-area-inset-bottom))] left-[max(1rem,_var(--pomo-safe-area-inset-left))]',
     'w-auto items-center [border:1px_solid_rgb(255_255_255_/_12%)] rounded-2xl',
     'bg-[rgb(29_23_18_/_94%)] p-3 shadow-[0_1rem_4rem_rgb(0_0_0_/_35%)] [&_p]:m-[0_auto_0_0]',
-    '[&_p]:text-[#a99d90] [&_p]:text-xs max-[48rem]:[&_p]:hidden',
+    '[&_p]:text-[#a99d90] [&_p]:text-xs max-xl:[&_p]:hidden',
   ].join(' '),
   dialogueEditorHeader: [
     'pomo-dialogue-editor__header w-[min(100%,_68rem)] [margin-inline:auto] flex items-start',
@@ -80,17 +80,17 @@ const CLASSES = {
     '[&_p:not([data-pomo-dialogue-editor-eyebrow])]:max-w-[42rem]',
     '[&_p:not([data-pomo-dialogue-editor-eyebrow])]:m-[0.75rem_0_0]',
     '[&_p:not([data-pomo-dialogue-editor-eyebrow])]:text-[#c8baaa]',
-    '[&_p:not([data-pomo-dialogue-editor-eyebrow])]:leading-[1.6] max-[48rem]:grid',
-    'max-[48rem]:gap-4',
+    '[&_p:not([data-pomo-dialogue-editor-eyebrow])]:leading-[1.6] max-xl:grid',
+    'max-xl:gap-4',
   ].join(' '),
   dialogueEditorLayout: [
     'pomo-dialogue-editor__layout w-[min(100%,_68rem)] [margin-inline:auto] grid',
-    'grid-cols-[repeat(2,_minmax(0,_1fr))] gap-4 max-[48rem]:grid-cols-[1fr]',
+    'grid-cols-[repeat(2,_minmax(0,_1fr))] gap-4 max-xl:grid-cols-[1fr]',
   ].join(' '),
   dialogueEditorMood: [
     'pomo-dialogue-editor__mood grid grid-cols-[2.75rem_minmax(0,_1fr)] items-center',
     'gap-[0.55rem] text-[#ddd2c6] [&_img]:w-11 [&_img]:h-11 [&_img]:object-contain',
-    '[&_span]:text-[#d8caba] [&_span]:leading-[1.35] max-[48rem]:[grid-column:2]',
+    '[&_span]:text-[#d8caba] [&_span]:leading-[1.35] max-xl:[grid-column:2]',
   ].join(' '),
   dialogueEditorPanel: [
     'pomo-dialogue-editor__panel grid content-start gap-5',
@@ -110,18 +110,18 @@ const CLASSES = {
   ].join(' '),
   dialogueEditorSegmentButton: [
     'pomo-dialogue-editor__segment-button min-h-9 px-[0.9rem] text-xs whitespace-nowrap',
-    'max-[48rem]:[grid-column:2] max-[48rem]:justify-self-end',
+    'max-xl:[grid-column:2] max-xl:justify-self-end',
   ].join(' '),
   dialogueEditorSegments: [
     'pomo-dialogue-editor__segments grid gap-[0.6rem] m-0 p-0 list-none [&_li]:grid',
     '[&_li]:grid-cols-[3.5rem_minmax(0,_1fr)_10rem_auto] [&_li]:items-center [&_li]:gap-3',
     '[&_li]:rounded-xl [&_li]:bg-[rgb(255_255_255_/_4%)] [&_li]:p-3 [&_span]:text-[#d6b585]',
     '[&_span]:text-xs [&_span]:font-[750] [&_p]:m-0 [&_p]:text-[#ddd2c6] [&_p]:text-[0.85rem]',
-    '[&_p]:leading-[1.6] max-[48rem]:[&_li]:grid-cols-[3.5rem_minmax(0,_1fr)]',
+    '[&_p]:leading-[1.6] max-xl:[&_li]:grid-cols-[3.5rem_minmax(0,_1fr)]',
   ].join(' '),
   dialogueEditorSelects: [
     'pomo-dialogue-editor__selects grid grid-cols-[repeat(3,_minmax(0,_1fr))] gap-3',
-    'max-[28rem]:grid-cols-[1fr]',
+    'max-sm:grid-cols-[1fr]',
   ].join(' '),
   dialogueEditorStatus: [
     'pomo-dialogue-editor__status flex min-h-12 box-border items-center gap-[0.65rem] rounded-xl',
@@ -129,7 +129,7 @@ const CLASSES = {
     '[&_strong]:text-[#e6c998]',
   ].join(' '),
   dialogueEditorTimelinePanel:
-    'pomo-dialogue-editor__timeline-panel col-span-full max-[48rem]:[grid-column:auto]',
+    'pomo-dialogue-editor__timeline-panel col-span-full max-xl:[grid-column:auto]',
   dialogueEditorVoiceActions: 'pomo-dialogue-editor__voice-actions flex justify-end gap-3',
 } as const
 

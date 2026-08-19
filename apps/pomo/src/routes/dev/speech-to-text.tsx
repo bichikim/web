@@ -6,7 +6,7 @@ import {cx} from 'class-variance-authority'
 const SpeechToTextLab = clientOnly(() => import('src/components/SpeechToTextLab'), {lazy: true})
 const MAIN_CLASSES = cx(
   'relative grid min-h-dvh place-items-center overflow-x-hidden',
-  'bg-#17131f px-4 py-8 text-#f8edf1 sm:px-8 sm:py-12',
+  'bg-#17131f px-4 py-8 text-#f8edf1 xs:px-8 xs:py-12',
 )
 const BACKGROUND_CLASSES = cx(
   'pointer-events-none absolute inset-0',

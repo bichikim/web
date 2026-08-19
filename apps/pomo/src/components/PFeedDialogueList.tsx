@@ -21,10 +21,10 @@ const CLASSES = {
     '[&_[data-pomo-feed-delete-confirm]]:text-[#ffd9bd]',
     '[&_[data-pomo-feed-delete-confirm]:hover]:border-[#ffd9bd]',
     '[&_[data-pomo-feed-delete-confirm]:hover]:bg-[rgb(232_174_114_/_12%)]',
-    'max-[28rem]:w-full max-[28rem]:flex-wrap max-[28rem]:[&_a]:w-auto',
-    'max-[28rem]:[&_a]:[flex:1_1_5rem] max-[28rem]:[&_a]:justify-center',
-    'max-[28rem]:[&_button]:w-auto max-[28rem]:[&_button]:[flex:1_1_5rem]',
-    'max-[28rem]:[&_button]:justify-center',
+    'max-sm:w-full max-sm:flex-wrap max-sm:[&_a]:w-auto',
+    'max-sm:[&_a]:[flex:1_1_5rem] max-sm:[&_a]:justify-center',
+    'max-sm:[&_button]:w-auto max-sm:[&_button]:[flex:1_1_5rem]',
+    'max-sm:[&_button]:justify-center',
   ].join(' '),
   feedSettingsDialogueCopy: [
     'pomo-feed-settings__dialogue-copy grid min-w-0 flex-1 gap-[0.2rem]',
@@ -34,14 +34,15 @@ const CLASSES = {
   ].join(' '),
   feedSettingsDialogueList: [
     'pomo-feed-settings__dialogue-list grid gap-[0.65rem] m-0 p-0 list-none [&_>_li]:flex',
+    'settings-compact:gap-2 settings-compact:[&_>_li]:gap-2',
     '[&_>_li]:items-center [&_>_li]:gap-3 [&_>_li]:[border:1px_solid_rgb(255_255_255_/_6%)]',
     '[&_>_li]:rounded-panel [&_>_li]:bg-[rgb(255_255_255_/_3%)]',
     '[&_>_li]:px-4 [&_>_li]:py-3',
-    'max-[28rem]:[&_>_li]:items-stretch max-[28rem]:[&_>_li]:flex-col',
+    'max-sm:[&_>_li]:items-stretch max-sm:[&_>_li]:flex-col',
   ].join(' '),
   feedSettingsEmpty: [
     'pomo-feed-settings__empty m-0 rounded-panel bg-[rgb(255_255_255_/_3%)]',
-    'p-5 text-muted-foreground text-xs leading-[1.5] text-center',
+    'p-5 text-muted-foreground text-xs leading-[1.5] text-center settings-compact:p-4',
     'border border-dashed border-border',
   ].join(' '),
   feedSettingsIssueHeading: [
@@ -51,6 +52,7 @@ const CLASSES = {
   ].join(' '),
   feedSettingsIssueList: [
     'pomo-feed-settings__issue-list grid gap-[0.65rem] m-0 p-0 list-none [&_>_li]:flex',
+    'settings-compact:gap-2 settings-compact:[&_>_li]:gap-2',
     '[&_>_li]:items-center [&_>_li]:gap-3 [&_>_li]:[border:1px_solid_rgb(255_255_255_/_6%)]',
     '[&_>_li]:rounded-panel [&_>_li]:bg-[rgb(255_255_255_/_3%)]',
     '[&_>_li]:px-4 [&_>_li]:py-3 [&_>_li_>_span]:grid',
@@ -63,9 +65,9 @@ const CLASSES = {
     '[&_a]:bg-transparent [&_a]:py-0 [&_a]:px-3',
     '[&_a]:text-foreground [&_a]:[font:inherit] [&_a]:text-[0.68rem] [&_a]:font-bold',
     '[&_a]:no-underline [&_a:hover]:border-highlight',
-    '[&_>_li]:border-[rgb(232_174_114_/_22%)] max-[28rem]:[&_>_li]:items-stretch',
-    'max-[28rem]:[&_>_li]:flex-col max-[28rem]:[&_a]:w-full',
-    'max-[28rem]:[&_a]:justify-center',
+    '[&_>_li]:border-[rgb(232_174_114_/_22%)] max-sm:[&_>_li]:items-stretch',
+    'max-sm:[&_>_li]:flex-col max-sm:[&_a]:w-full',
+    'max-sm:[&_a]:justify-center',
   ].join(' '),
   feedSettingsListenedState: [
     'pomo-feed-settings__listened-state text-highlight font-bold',
@@ -88,7 +90,7 @@ const CLASSES = {
   ].join(' '),
   feedSettingsMessage: [
     'pomo-feed-settings__message m-0 rounded-panel',
-    'bg-[rgb(255_255_255_/_3%)] p-5 text-muted-foreground text-xs',
+    'bg-[rgb(255_255_255_/_3%)] p-5 text-muted-foreground text-xs settings-compact:p-4',
     'leading-[1.5] text-center',
   ].join(' '),
   feedSettingsRefresh: [

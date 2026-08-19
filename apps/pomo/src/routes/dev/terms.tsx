@@ -3,7 +3,7 @@ import {A} from '@solidjs/router'
 import {cx} from 'class-variance-authority'
 
 const MAIN_CLASSES = cx(
-  'relative min-h-dvh overflow-x-hidden bg-#17131f px-5 py-10 text-#f8edf1 sm:px-8 sm:py-16',
+  'relative min-h-dvh overflow-x-hidden bg-#17131f px-5 py-10 text-#f8edf1 xs:px-8 xs:py-16',
 )
 const BACKGROUND_CLASSES = cx(
   'pointer-events-none absolute inset-0',
@@ -11,18 +11,18 @@ const BACKGROUND_CLASSES = cx(
 )
 const ARTICLE_CLASSES = cx(
   'rounded-8 border border-white/10 bg-#211a2b/88 p-5',
-  'shadow-[0_28px_100px_rgba(5,2,10,0.38)] backdrop-blur-xl sm:p-8',
+  'shadow-[0_28px_100px_rgba(5,2,10,0.38)] backdrop-blur-xl xs:p-8',
 )
 const SECTION_CLASSES = 'border-t border-white/8 pt-8 first:border-0 first:pt-0'
 const HEADING_CLASSES = 'mb-0 text-xl font-750 tracking--0.02em text-#f8edf1'
-const PARAGRAPH_CLASSES = 'mb-0 mt-3 text-sm leading-7 text-#c7bccb sm:text-base'
-const LIST_CLASSES = 'mb-0 mt-4 grid gap-2 pl-5 text-sm leading-7 text-#c7bccb sm:text-base'
+const PARAGRAPH_CLASSES = 'mb-0 mt-3 text-sm leading-7 text-#c7bccb xs:text-base'
+const LIST_CLASSES = 'mb-0 mt-4 grid gap-2 pl-5 text-sm leading-7 text-#c7bccb xs:text-base'
 
 const TermsIntro = () => (
   <>
     <header>
       <p class="m-0 text-xs font-750 tracking-[0.24em] text-#f2a7b8 uppercase">Terms of service</p>
-      <h1 class="mb-0 mt-4 text-3xl font-800 tracking--0.04em sm:text-5xl">
+      <h1 class="mb-0 mt-4 text-3xl font-800 tracking--0.04em xs:text-5xl">
         Pomo 서비스 이용약관 <span class="text-#f2a7b8">초안</span>
       </h1>
       <p class="mb-0 mt-4 max-w-2xl text-base leading-7 text-#bdb2c4">

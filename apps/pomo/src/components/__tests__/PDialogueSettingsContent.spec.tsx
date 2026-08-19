@@ -133,7 +133,7 @@ it('should keep saved dialogue content full-width with bounded text and actions'
   const row = summary.closest('.pomo-dialogue-settings__selected-dialogue--library')
   const listenButton = within(library).getByRole('button', {name: '듣기'})
 
-  expect(row?.className).toContain('max-[36rem]:items-stretch')
+  expect(row?.className).toContain('max-md:items-stretch')
   expect(summary.className).toContain('[-webkit-line-clamp:3]')
   expect(listenButton.textContent).toBe('듣기')
   expect(screen.getByRole('link', {name: '새 대화'}).getAttribute('href')).toBe('/dialogue')
@@ -147,6 +147,22 @@ it('should keep saved dialogue content full-width with bounded text and actions'
       .getByRole('button', {name: '삭제 확인'})
       .hasAttribute('data-pomo-dialogue-delete-confirm'),
   ).toBe(true)
+})
+
+it('should apply compact spacing to dialogue settings groups', () => {
+  vi.mocked(usePEvents).mockReturnValue(createEvents())
+
+  const result = render(() => <PDialogueSettingsContent />)
+  const section = result.container.querySelector('.pomo-dialogue-settings') as HTMLElement
+  const list = result.container.querySelector('.pomo-dialogue-settings__list') as HTMLElement
+  const automatic = result.container.querySelector(
+    '.pomo-dialogue-settings__automatic',
+  ) as HTMLElement
+
+  expect(section.classList.contains('settings-compact:gap-4')).toBe(true)
+  expect(list.classList.contains('settings-compact:gap-2')).toBe(true)
+  expect(list.classList.contains('settings-compact:[&_>_li]:gap-2')).toBe(true)
+  expect(automatic.classList.contains('settings-compact:gap-3')).toBe(true)
 })
 
 it('should play a saved dialogue once through the character without changing event bindings', () => {

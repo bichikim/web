@@ -19,17 +19,17 @@ export const TextMoodAnalysisResult = (props: TextMoodAnalysisResultProps) => {
   }
 
   return (
-    <div class="mt-10 grid gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(22rem,1.1fr)]">
+    <div class="mt-10 grid gap-6 2xl:grid-cols-[minmax(0,0.9fr)_minmax(22rem,1.1fr)]">
       <div class="grid content-start gap-4">
         <article
           class={cx(
-            'grid gap-4 rounded-6 border p-5 sm:grid-cols-[auto_1fr] sm:items-center sm:p-6',
+            'grid gap-4 rounded-6 border p-5 xs:grid-cols-[auto_1fr] xs:items-center xs:p-6',
             props.analysis.uncertain
               ? 'border-#f0c99a/35 bg-#f0c99a/7'
               : 'border-#9ed6bb/30 bg-#9ed6bb/7',
           )}
         >
-          <span aria-hidden="true" class="text-5xl sm:text-6xl">
+          <span aria-hidden="true" class="text-5xl xs:text-6xl">
             {primary().icon}
           </span>
           <div>
@@ -61,7 +61,7 @@ export const TextMoodAnalysisResult = (props: TextMoodAnalysisResultProps) => {
           )}
         </Show>
 
-        <div class="grid gap-2 sm:grid-cols-2">
+        <div class="grid gap-2 xs:grid-cols-2">
           <For each={props.analysis.modifiers}>
             {(modifierScore) => {
               const definition = MOOD_MODIFIERS.find(

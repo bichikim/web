@@ -55,7 +55,7 @@ const CLASSES = {
     '[&[data-expanded]]:bg-secondary-soft [&:disabled]:[cursor:not-allowed]',
     '[&:disabled]:text-muted-foreground [&:disabled]:[opacity:0.55]',
     '[&[data-expanded]_[data-pomo-dialogue-icon]]:rotate-180',
-    'max-[42rem]:w-full motion-reduce:transition-[none]',
+    'settings-compact:w-full motion-reduce:transition-[none]',
   ].join(' '),
   dialogueSettingsDialogueTriggerText: [
     'pomo-dialogue-settings__dialogue-trigger-text block max-w-[20ch] min-w-0 overflow-hidden',

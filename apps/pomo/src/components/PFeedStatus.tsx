@@ -11,12 +11,12 @@ const CLASSES = {
     'text-foreground shadow-[inset_0_1px_0_rgb(255_255_255_/_8%)] pointer-events-auto',
     'backdrop-blur-[0.75rem] [-webkit-backdrop-filter:blur(0.75rem)]',
     "[&_>_[class*='i-tabler']]:flex-none [&_>_[class*='i-tabler']]:text-highlight",
-    "max-[34rem]:[&[data-state='recovery']]:flex-wrap",
+    "feed-status-compact:[&[data-state='recovery']]:flex-wrap",
   ].join(' '),
   feedStatusAction: 'pomo-feed-status__action flex-none whitespace-nowrap',
   feedStatusActions: [
     'pomo-feed-status__actions flex flex-none gap-[0.35rem]',
-    'max-[34rem]:w-full max-[34rem]:[&_button]:flex-1',
+    'feed-status-compact:w-full feed-status-compact:[&_button]:flex-1',
   ].join(' '),
   feedStatusCopy: [
     'pomo-feed-status__copy grid min-w-0 flex-1 gap-[0.15rem] [&_strong]:overflow-hidden',

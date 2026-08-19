@@ -10,7 +10,7 @@ import {AutomaticDialogueSettings} from './AutomaticDialogueSettings'
 import {DialogueConnectionMenu} from './DialogueConnectionMenu'
 
 const CLASSES = {
-  dialogueSettings: 'pomo-dialogue-settings grid gap-4.5',
+  dialogueSettings: 'pomo-dialogue-settings grid gap-4.5 settings-compact:gap-4',
   dialogueSettingsActions: [
     'pomo-dialogue-settings__actions [&_button]:inline-flex [&_button]:min-h-9',
     '[&_button]:box-border [&_button]:cursor-pointer [&_button]:items-center',
@@ -44,7 +44,7 @@ const CLASSES = {
   dialogueSettingsConnection: [
     'pomo-dialogue-settings__connection grid grid-cols-[auto_minmax(0,_1fr)] items-center gap-2',
     '[&_>_span]:text-muted-foreground [&_>_span]:text-[0.6875rem] [&_>_span]:font-bold',
-    'max-[42rem]:col-span-full max-[42rem]:grid-cols-[auto_minmax(0,_1fr)]',
+    'settings-compact:col-span-full settings-compact:grid-cols-[auto_minmax(0,_1fr)]',
   ].join(' '),
   dialogueSettingsCreate: [
     'pomo-dialogue-settings__create inline-flex min-h-9 box-border cursor-pointer items-center',
@@ -59,12 +59,12 @@ const CLASSES = {
   ].join(' '),
   dialogueSettingsEmpty: [
     'pomo-dialogue-settings__empty m-0 rounded-panel',
-    'bg-[rgb(255_255_255_/_3%)] p-5 text-muted-foreground text-xs',
+    'bg-[rgb(255_255_255_/_3%)] p-5 text-muted-foreground text-xs settings-compact:p-4',
     'leading-[1.5] text-center border border-dashed border-border',
   ].join(' '),
   dialogueSettingsEventHeading: [
     'pomo-dialogue-settings__event-heading grid min-w-0 grid-cols-[auto_minmax(0,_1fr)_auto]',
-    'items-center gap-[0.7rem] [&_>_div:nth-child(2)]:min-w-0',
+    'items-center gap-[0.7rem] settings-compact:gap-2 [&_>_div:nth-child(2)]:min-w-0',
     '[&_>_div:nth-child(2)_>_div]:min-w-0 [&_>_div:nth-child(2)_>_div]:flex',
     '[&_>_div:nth-child(2)_>_div]:items-center [&_>_div:nth-child(2)_>_div]:gap-[0.45rem]',
     '[&_h5]:m-0 [&_h5]:text-foreground [&_h5]:text-[0.8125rem] [&_h5]:font-[750]',
@@ -75,7 +75,7 @@ const CLASSES = {
     '[&_>_div:nth-child(2)_>_div_>_span]:text-[0.5625rem]',
     '[&_>_div:nth-child(2)_>_div_>_span]:font-bold [&_p]:m-[0.2rem_0_0]',
     '[&_p]:text-muted-foreground [&_p]:text-[0.65rem] [&_p]:leading-[1.4]',
-    'max-[42rem]:grid-cols-[auto_minmax(0,_1fr)]',
+    'settings-compact:grid-cols-[auto_minmax(0,_1fr)]',
   ].join(' '),
   dialogueSettingsEventSymbol: [
     'pomo-dialogue-settings__event-symbol grid w-9 h-9 place-items-center rounded-full',
@@ -83,6 +83,7 @@ const CLASSES = {
   ].join(' '),
   dialogueSettingsHeading: [
     'pomo-dialogue-settings__heading flex items-center justify-between gap-4 [&_>_div]:min-w-0',
+    'settings-compact:gap-3',
     '[&_h3]:m-0 [&_h3]:text-foreground [&_h3]:text-[0.9375rem] [&_h3]:font-[750]',
     '[&_p]:m-[0.25rem_0_0] [&_p]:text-muted-foreground [&_p]:text-[0.6875rem]',
     '[&_p]:leading-[1.5]',
@@ -95,6 +96,7 @@ const CLASSES = {
   ].join(' '),
   dialogueSettingsList: [
     'pomo-dialogue-settings__list grid gap-3 m-0 p-0 list-none [&_>_li]:grid [&_>_li]:gap-3',
+    'settings-compact:gap-2 settings-compact:[&_>_li]:gap-2',
     '[&_>_li]:[border:1px_solid_rgb(255_255_255_/_6%)]',
     '[&_>_li]:rounded-panel [&_>_li]:bg-[rgb(255_255_255_/_3%)]',
     '[&_>_li]:p-4 [&_>_li[data-connected]]:border-[rgb(214_181_133_/_32%)]',
@@ -104,20 +106,20 @@ const CLASSES = {
   dialogueSettingsListLibrary: 'pomo-dialogue-settings__list--library [&_>_li]:py-3',
   dialogueSettingsLoading: [
     'pomo-dialogue-settings__loading m-0 rounded-panel',
-    'bg-[rgb(255_255_255_/_3%)] p-5 text-muted-foreground text-xs',
+    'bg-[rgb(255_255_255_/_3%)] p-5 text-muted-foreground text-xs settings-compact:p-4',
     'leading-[1.5] text-center flex items-center justify-center gap-2',
     '[&_>_span]:animate-dialogue-settings-spin',
     'motion-reduce:[&_>_span]:animate-[none]',
   ].join(' '),
   dialogueSettingsMessage: [
     'pomo-dialogue-settings__message m-0 rounded-panel',
-    'bg-[rgb(255_255_255_/_3%)] p-5 text-muted-foreground text-xs',
+    'bg-[rgb(255_255_255_/_3%)] p-5 text-muted-foreground text-xs settings-compact:p-4',
     'leading-[1.5] text-center',
   ].join(' '),
   dialogueSettingsSelectedDialogue: [
     'pomo-dialogue-settings__selected-dialogue flex items-end justify-between gap-3',
     'border-t border-solid border-border pt-3',
-    'max-[36rem]:items-stretch max-[36rem]:flex-col',
+    'settings-compact:gap-2 max-md:items-stretch max-md:flex-col',
   ].join(' '),
   dialogueSettingsSelectedDialogueLibrary: [
     'pomo-dialogue-settings__selected-dialogue--library',
@@ -125,7 +127,7 @@ const CLASSES = {
   ].join(' '),
   dialogueSettingsSequence: [
     'pomo-dialogue-settings__sequence grid gap-[0.4rem] m-0',
-    'border-t border-solid border-border px-0 pb-0 pt-3 list-none',
+    'border-t border-solid border-border px-0 pb-0 pt-3 list-none settings-compact:pt-2',
     '[&_>_li]:grid [&_>_li]:min-w-0 [&_>_li]:grid-cols-[1.25rem_minmax(0,_1fr)]',
     '[&_>_li]:items-center [&_>_li]:gap-2 [&_>_li_>_span]:grid [&_>_li_>_span]:w-5',
     '[&_>_li_>_span]:h-5 [&_>_li_>_span]:place-items-center [&_>_li_>_span]:rounded-full',

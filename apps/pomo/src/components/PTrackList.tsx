@@ -30,7 +30,7 @@ export const PTrackList = (props: PTrackListProps) => (
     <ol
       class={cx(
         CLASSES.playerPlaylist,
-        'mb-0 mt-3 grid min-w-0',
+        'mb-0 mt-3 grid min-h-0 min-w-0 flex-1 player-compact:mt-2',
         'grid-cols-[minmax(0,1fr)] max-h-38 list-none overflow-auto',
         'gap-1 p-1',
       )}
@@ -43,8 +43,9 @@ export const PTrackList = (props: PTrackListProps) => (
               class={cx(
                 CLASSES.playerTrack,
                 'group box-border flex min-w-0 w-full items-center rounded-3',
-                'gap-3',
+                'gap-3 player-compact:gap-2',
                 'px-3 py-2.5 text-left text-xs transition',
+                'player-compact:px-2 player-compact:py-2',
                 index() === props.currentIndex
                   ? 'bg-primary-soft text-foreground'
                   : 'text-muted-foreground hover:bg-secondary-soft',

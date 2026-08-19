@@ -14,6 +14,7 @@ import {
   type PSceneId,
   type PSceneMotionInput,
   type PSceneMotionMode,
+  SCENE_CROP_POSITION,
   supportsPSceneGyroscope,
 } from '../features/focus-room-animation'
 import {
@@ -57,8 +58,8 @@ const CLASSES = {
     'box-border flex-col items-start gap-4',
     '[margin-block-end:calc(1.5rem_+_var(--pomo-safe-area-inset-bottom))]',
     '[margin-inline-start:calc(1rem_+_var(--pomo-safe-area-inset-left))]',
-    'min-[40rem]:[margin-block-end:calc(2.5rem_+_var(--pomo-safe-area-inset-bottom))]',
-    'min-[40rem]:[margin-inline-start:calc(2.5rem_+_var(--pomo-safe-area-inset-left))]',
+    'lg:[margin-block-end:calc(2.5rem_+_var(--pomo-safe-area-inset-bottom))]',
+    'lg:[margin-inline-start:calc(2.5rem_+_var(--pomo-safe-area-inset-left))]',
   ].join(' '),
   entryLeadingImage: [
     'size-16 [margin-block:-1.25rem] [margin-inline-start:-0.75rem]',
@@ -76,19 +77,25 @@ const CLASSES = {
     'motion-reduce:animate-[none]',
   ].join(' '),
   mediaDock: [
-    'pomo-media-dock [--pomo-player-compact-width:7.75rem] absolute h-media-dock',
-    'right-safe-right bottom-safe-bottom left-safe-left flex',
+    'pomo-media-dock [--pomo-player-compact-width:7.75rem] absolute min-h-0',
+    'top-[calc(5.25rem_+_var(--pomo-safe-area-inset-top))]',
+    'right-safe-right-mobile bottom-safe-bottom-mobile left-safe-left-mobile flex',
     'flex-col items-start justify-end pointer-events-none gap-3',
     '[&_.pomo-player-stage]:relative [&_.pomo-player-stage]:inset-[auto]',
-    '[&_.pomo-player-stage]:w-[min(29rem,_100%)] [&_.pomo-player-stage]:flex-none',
+    '[&_.pomo-player-stage]:w-[min(29rem,_100%)] [&_.pomo-player-stage]:min-h-0',
+    '[&_.pomo-player-stage]:max-h-full [&_.pomo-player-stage]:[flex:0_1_auto]',
     '[&_.pomo-player-stage]:pointer-events-auto',
     '[&_.pomo-player-stage]:transition-[width_180ms_ease] [&_.pomo-dialogue-bubble]:w-full',
     '[&_.pomo-dialogue-bubble]:max-h-full [&_.pomo-dialogue-bubble]:[flex:0_1_auto]',
     '[&_.pomo-dialogue-bubble]:pointer-events-auto',
     '[&[data-dialogue-active]:not([data-player-expanded])_.pomo-player-stage]:w-[var(--pomo-player-compact-width)]',
     '[&[data-dialogue-active]:not([data-player-expanded])_[data-pomo-player-title]]:hidden',
-    'min-[40rem]:right-safe-right-wide min-[40rem]:bottom-safe-bottom-wide',
-    'min-[40rem]:left-safe-left-wide min-[40rem]:h-media-dock-wide',
+    '[&[data-player-expanded]_.pomo-player-stage]:[flex:1_1_0%]',
+    '[&[data-player-expanded]_.pomo-player-stage]:[container-type:size]',
+    '[&[data-player-expanded]_.pomo-player-stage]:max-h-[19.875rem]',
+    'max-xs:[&[data-player-expanded]_.pomo-player-stage]:max-h-[22.75rem]',
+    'lg:top-[calc(5.75rem_+_var(--pomo-safe-area-inset-top))]',
+    'lg:right-safe-right lg:bottom-safe-bottom lg:left-safe-left',
     'motion-reduce:[&_.pomo-player-stage]:transition-[none]',
   ].join(' '),
   mediaMessages: [
@@ -96,8 +103,8 @@ const CLASSES = {
     'gap-3 overflow-hidden pointer-events-none [&_>_*]:pointer-events-auto',
   ].join(' '),
   sceneControl: [
-    'pomo-scene-control max-[40rem]:[&.pomo-icon-button]:hidden',
-    'max-[40rem]:[&.pomo-icon-select]:hidden',
+    'pomo-scene-control max-lg:[&.pomo-icon-button]:hidden',
+    'max-lg:[&.pomo-icon-select]:hidden',
   ].join(' '),
   ui: 'pomo-ui pointer-events-none absolute inset-0',
 } as const
@@ -202,7 +209,7 @@ const SceneToolbar = (props: SceneToolbarProps) => {
       class={cx(
         'pointer-events-auto absolute right-4 top-[calc(1rem+var(--pomo-safe-area-inset-top))]',
         'flex flex-col items-end gap-2',
-        'sm:right-7 sm:top-6',
+        'xs:right-7 xs:top-6',
       )}
     >
       <div class="flex flex-wrap justify-end gap-2" role="group" aria-label="장면 설정">
@@ -300,10 +307,11 @@ const PSceneFallback = (props: PSceneFallbackProps) => (
   <img
     alt=""
     aria-hidden="true"
-    class="absolute inset-0 h-full w-full object-cover"
+    class="pomo-scene-fallback absolute inset-0 h-full w-full object-cover"
     decoding="async"
     fetchpriority="high"
     src={props.source}
+    style={{'object-position': SCENE_CROP_POSITION}}
   />
 )
 
@@ -419,10 +427,10 @@ export const PStudio = () => {
   })
 
   return (
-    <section aria-label="Pomo" class="relative h-dvh w-full overflow-hidden">
+    <section aria-label="Pomo" class="pomo-studio relative h-dvh w-full overflow-hidden">
       <figure
         aria-label={selectedScene().label}
-        class="relative m-0 h-full w-full overflow-hidden bg-#17130f"
+        class="pomo-scene relative m-0 h-full w-full overflow-hidden bg-#17130f"
         role="img"
       >
         <Show when={!hasSceneRendered()}>

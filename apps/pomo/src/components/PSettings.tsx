@@ -27,7 +27,7 @@ const CLASSES = {
   settingsContent: 'pomo-settings__content grid gap-5',
   settingsScene: [
     'pomo-settings__scene grid gap-4 pb-5',
-    'border-b border-solid border-border min-[40rem]:hidden',
+    'border-b border-solid border-border lg:hidden',
   ].join(' '),
   settingsScreenSaver: [
     'pomo-settings__screen-saver grid gap-2 pt-4',

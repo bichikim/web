@@ -1,10 +1,60 @@
 // @refresh reload
 import {createHandler, StartServer} from '@solidjs/start/server'
 
+import {SCENE_CROP_POSITION} from './features/focus-room-animation/scene-layout'
+
 const viewport =
   process.env.POMO_BUILD_TARGET === 'apps-in-toss'
     ? 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover'
     : 'width=device-width, initial-scale=1, viewport-fit=cover'
+
+const CRITICAL_LAYOUT_CSS = `
+html,
+body,
+#root {
+  min-height: 100%;
+  width: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+}
+
+.pomo-home,
+.pomo-studio {
+  position: relative;
+  height: 100dvh;
+  width: 100%;
+  overflow: hidden;
+}
+
+.pomo-home-stage,
+.pomo-scene {
+  position: relative;
+  height: 100%;
+  width: 100%;
+}
+
+.pomo-home {
+  background: #120f0d;
+}
+
+.pomo-scene {
+  margin: 0;
+  overflow: hidden;
+  background: #17130f;
+}
+
+.pomo-scene-fallback {
+  position: absolute;
+  inset: 0;
+  height: 100%;
+  width: 100%;
+  object-fit: cover;
+  object-position: ${SCENE_CROP_POSITION};
+}
+`
 
 export default createHandler(() => (
   <StartServer
@@ -19,6 +69,7 @@ export default createHandler(() => (
           />
           <meta name="theme-color" content="#17131f" />
           <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+          <style>{CRITICAL_LAYOUT_CSS}</style>
           {props.assets}
         </head>
         <body>

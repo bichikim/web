@@ -61,6 +61,12 @@ describe('PPomodoro', () => {
     vi.useRealTimers()
   })
 
+  it('should leave the modal body vertically scrollable', () => {
+    render(() => <PPomodoro />)
+
+    expect(vi.mocked(PModal).mock.lastCall?.[0].contentOverflow).toBeUndefined()
+  })
+
   it('should expose the timer state and primary controls through an accessible dialog', async () => {
     const onPresentationChange = vi.fn()
     render(() => <PPomodoro onPresentationChange={onPresentationChange} />)

@@ -104,3 +104,15 @@ it('should replace an added recommendation with a stored feed item', () => {
     '"voiceId":"default"',
   )
 })
+
+it('should apply compact spacing to feed settings groups', () => {
+  const result = renderSettings()
+  const section = result.container.querySelector('.pomo-feed-settings') as HTMLElement
+  const form = result.container.querySelector('.pomo-feed-settings__form') as HTMLElement
+  const list = result.container.querySelector('.pomo-feed-settings__list') as HTMLElement
+
+  expect(section.classList.contains('settings-compact:gap-4')).toBe(true)
+  expect(form.classList.contains('settings-compact:gap-2')).toBe(true)
+  expect(list.classList.contains('settings-compact:gap-2')).toBe(true)
+  expect(list.classList.contains('settings-compact:[&_>_li]:gap-2')).toBe(true)
+})

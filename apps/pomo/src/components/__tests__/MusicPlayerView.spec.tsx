@@ -119,11 +119,13 @@ describe('MusicPlayerView', () => {
 
     expect(volumeGroup.classList.contains('gap-0')).toBe(true)
     expect(muteButton.classList.contains('size-10')).toBe(true)
+    expect(muteButton.classList.contains('player-compact:size-9')).toBe(true)
     expect(muteButton.classList.contains('[--media-control-padding:0.625rem]')).toBe(true)
     expect(volumeRange.classList.contains('pomo-player__volume')).toBe(true)
+    expect(volumeRange.classList.contains('max-sm:hidden')).toBe(false)
     expect(volumeRange.getAttribute('aria-label')).toBe('음량 조절')
     expect(volumeRange.getAttribute('title')).toBe('음량 조절')
-    expect(volumeRange.classList.contains('w-[clamp(3.5rem,_9vw,_4.75rem)]')).toBe(true)
+    expect(volumeRange.classList.contains('w-[clamp(3rem,_18cqi,_4.75rem)]')).toBe(true)
     expect(volumeRange.classList.contains('[--media-range-padding-left:0.25rem]')).toBe(true)
     expect(volumeRange.classList.contains('[--media-range-padding-right:0.25rem]')).toBe(true)
     expect(volumeRange.classList.contains('[--media-range-thumb-opacity:0]')).toBe(true)
@@ -134,5 +136,69 @@ describe('MusicPlayerView', () => {
     expect(
       volumeRange.classList.contains('motion-reduce:[--media-range-thumb-transition:none]'),
     ).toBe(true)
+  })
+
+  it('should constrain and wrap expanded controls on narrow screens', () => {
+    const result = renderMusicPlayerView()
+    const controller = result.container.querySelector('media-controller') as HTMLElement
+    const expandedFrame = result.container.querySelector(
+      '.pomo-player__expanded-frame',
+    ) as HTMLElement
+    const expandedInner = result.container.querySelector(
+      '.pomo-player__expanded-inner',
+    ) as HTMLElement
+    const expandedPanel = result.container.querySelector('.pomo-player__expanded') as HTMLElement
+    const controls = result.container.querySelector(
+      '.pomo-player__expanded-controls',
+    ) as HTMLElement
+    const playlist = result.container.querySelector('.pomo-player__playlist') as HTMLElement
+    const track = result.container.querySelector('.pomo-player__track') as HTMLElement
+    const transport = result.container.querySelector('.pomo-player__transport') as HTMLElement
+    const volumeGroup = result.container.querySelector('.pomo-player__volume-group') as HTMLElement
+
+    for (const element of [
+      controller,
+      expandedFrame,
+      expandedInner,
+      expandedPanel,
+      controls,
+      playlist,
+      track,
+      transport,
+      volumeGroup,
+    ]) {
+      expect(element).toBeInstanceOf(HTMLElement)
+    }
+
+    expect(controller.classList.contains('flex')).toBe(true)
+    expect(controller.classList.contains('h-full')).toBe(true)
+    expect(controller.classList.contains('max-h-full')).toBe(true)
+    expect(expandedFrame.classList.contains('min-w-0')).toBe(true)
+    expect(expandedFrame.classList.contains('flex-1')).toBe(true)
+    expect(expandedFrame.classList.contains('overflow-hidden')).toBe(true)
+    expect(
+      expandedFrame.classList.contains(
+        '[&.is-expanded]:h-[calc(100cqh_-_var(--pomo-player-summary-space))]',
+      ),
+    ).toBe(true)
+    expect(expandedInner.classList.contains('min-w-0')).toBe(true)
+    expect(expandedInner.classList.contains('w-full')).toBe(true)
+    expect(expandedInner.classList.contains('flex-col')).toBe(true)
+    expect(expandedPanel.classList.contains('box-border')).toBe(true)
+    expect(expandedPanel.classList.contains('w-full')).toBe(true)
+    expect(expandedPanel.classList.contains('flex-1')).toBe(true)
+    expect(
+      controls.classList.contains('player-compact:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]'),
+    ).toBe(true)
+    expect(controls.classList.contains('player-compact:px-0')).toBe(true)
+    expect(expandedPanel.classList.contains('player-compact:pt-2')).toBe(true)
+    expect(playlist.classList.contains('min-h-0')).toBe(true)
+    expect(playlist.classList.contains('flex-1')).toBe(true)
+    expect(playlist.classList.contains('player-compact:mt-2')).toBe(true)
+    expect(track.classList.contains('player-compact:gap-2')).toBe(true)
+    expect(track.classList.contains('player-compact:px-2')).toBe(true)
+    expect(track.classList.contains('player-compact:py-2')).toBe(true)
+    expect(transport.classList.contains('player-compact:col-span-2')).toBe(true)
+    expect(volumeGroup.classList.contains('player-compact:row-start-2')).toBe(true)
   })
 })

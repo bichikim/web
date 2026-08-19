@@ -24,7 +24,7 @@ const INITIAL_TEXT = '오늘도 서두르지 말고, 한 번에 하나씩 집중
 const formatModelSize = (size: number) => `${Math.round(size / BYTES_PER_MEGABYTE)}MB`
 const SECTION_CLASSES = cx(
   'relative w-full max-w-3xl overflow-hidden rounded-8 border border-white/10',
-  'bg-#211a2b/88 p-5 shadow-[0_28px_100px_rgba(5,2,10,0.45)] backdrop-blur-xl sm:p-8',
+  'bg-#211a2b/88 p-5 shadow-[0_28px_100px_rgba(5,2,10,0.45)] backdrop-blur-xl xs:p-8',
 )
 const VOICE_SELECT_CLASSES = cx(
   'h-13 w-full appearance-none rounded-4 border border-white/10 bg-#17131f',
@@ -86,10 +86,10 @@ const VoiceHeader = () => (
       <p class="m-0 text-xs font-700 tracking-[0.24em] text-#f2a7b8 uppercase">
         Supertonic voice lab
       </p>
-      <h1 class="mb-0 mt-3 text-2xl font-750 tracking--0.02em sm:text-3xl">
+      <h1 class="mb-0 mt-3 text-2xl font-750 tracking--0.02em xs:text-3xl">
         캐릭터의 목소리를 만들어 보세요
       </h1>
-      <p class="mb-0 mt-3 max-w-xl text-sm leading-6 text-#bdb2c4 sm:text-base">
+      <p class="mb-0 mt-3 max-w-xl text-sm leading-6 text-#bdb2c4 xs:text-base">
         기본 목소리를 고르거나 목소리 스타일 JSON을 불러와 기기 안에서 한국어 음성을 만들어요.
       </p>
     </div>
@@ -162,7 +162,7 @@ const VoiceActions = (props: VoiceActionsProps) => (
 
 const AudioResults = (props: AudioResultsProps) => (
   <Show when={props.results.length > 0}>
-    <div class="grid gap-3 sm:grid-cols-2">
+    <div class="grid gap-3 xs:grid-cols-2">
       <For each={props.results}>
         {(result) => {
           const model = getSupertonicModel(result.modelId)
@@ -198,7 +198,7 @@ const AudioChunks = (props: AudioChunksProps) => (
         <span class="text-sm font-650 text-#eee5ef">실시간 생성 청크</span>
         <span class="text-xs text-#9f93a7">완성되는 순서대로 자동 재생</span>
       </div>
-      <div class="grid gap-3 sm:grid-cols-2">
+      <div class="grid gap-3 xs:grid-cols-2">
         <For each={props.chunks}>
           {(chunk) => (
             <div class="grid gap-2 rounded-4 border border-white/8 bg-white/3 p-3">
