@@ -96,6 +96,7 @@ export default defineConfig({
             '/dialogue',
             '/focus-room',
             '/focus-room-dialogue',
+            '/refund-policy',
           ],
         },
         preset: 'static',
