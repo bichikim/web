@@ -146,12 +146,13 @@ export const PEventProvider = (props: PEventProviderProps) => {
       return
     }
 
-    hasStartedEntryPlayback = true
     const entryDialogueIds = eventDialogueIds()[FOCUS_ROOM_ENTRY_EVENT] ?? []
 
     if (entryDialogueIds.length === 0) {
       return
     }
+
+    hasStartedEntryPlayback = true
 
     playback
       .playSequence(repository, {
@@ -227,6 +228,10 @@ export const PEventProvider = (props: PEventProviderProps) => {
 
       if (!isDisposed) {
         playback.stop()
+
+        if (eventId === FOCUS_ROOM_ENTRY_EVENT) {
+          playEntryDialogue()
+        }
       }
     } catch (error: unknown) {
       if (!isDisposed && currentRevision === bindingRevision) {
