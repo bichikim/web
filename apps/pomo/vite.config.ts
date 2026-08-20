@@ -118,5 +118,10 @@ export default defineConfig({
   resolve: {
     tsconfigPaths: true,
   },
+  server: {
+    watch: {
+      ignored: [assetLibraryPattern],
+    },
+  },
   worker: {format: 'es'},
 })
