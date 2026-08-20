@@ -23,7 +23,7 @@ const GUIDE_SECTIONS = [
   {
     details: [
       '낮·밤을 직접 고르거나 현재 시각에 맞추는 자동 모드를 사용할 수 있어요.',
-      '책 읽기·글쓰기·노트북 타이핑과 핀의 시선을 바꿀 수 있어요.',
+      '책 읽기·글쓰기·노트북 타이핑과 Pomo의 시선을 바꿀 수 있어요.',
       '3D 깊이 또는 좌우 보기로 움직임을 고르고, 드래그나 지원 기기의 자이로스코프로 조작해요.',
     ],
     title: '장면',
@@ -31,7 +31,7 @@ const GUIDE_SECTIONS = [
   {
     details: [
       POMODORO_CYCLE_GUIDE,
-      '핀 얼굴을 누르면 바로 시작하거나 일시정지하고, 시간 표시를 누르면 전체 조작을 열어요.',
+      'Pomo 얼굴을 누르면 바로 시작하거나 일시정지하고, 시간 표시를 누르면 전체 조작을 열어요.',
       '다음 단계 이동, 현재 세션 종료, 집중 횟수 초기화, 자동 재생과 시간 변경을 사용할 수 있어요.',
     ],
     title: '포모도로',
@@ -46,7 +46,7 @@ const GUIDE_SECTIONS = [
   {
     details: [
       '대화 탭에서 대화를 만들고 듣고 편집하거나 삭제하고, 음성 모델과 목소리를 고를 수 있어요.',
-      '이벤트 탭에서는 Pomo 시작, 집중 시작·종료, 휴식 시작·종료에 재생할 대화를 연결해요.',
+      '이벤트 탭에서는 Pomofi 입장, 집중 시작·종료, 휴식 시작·종료에 재생할 대화를 연결해요.',
     ],
     title: '대화와 이벤트',
   },
@@ -71,12 +71,12 @@ export const PGuideSettings = () => (
   <Tabs.Content value="guide">
     <section aria-labelledby="pomo-guide-title" class="grid gap-6">
       <header>
-        <p class="m-0 text-xs font-750 tracking-[0.18em] text-highlight uppercase">Pomo guide</p>
+        <p class="m-0 text-xs font-750 tracking-[0.18em] text-highlight uppercase">Pomofi guide</p>
         <h2 class="mb-0 mt-2 text-2xl font-800 tracking--0.03em" id="pomo-guide-title">
-          Pomo 설명서
+          Pomofi 설명서
         </h2>
         <p class="mb-0 mt-2 text-sm leading-6 text-muted-foreground">
-          장면 속 핀과 함께 집중하고 쉬는 방법을 알아보세요.
+          장면 속 Pomo와 함께 집중하고 쉬는 방법을 알아보세요.
         </p>
       </header>
 

@@ -211,7 +211,7 @@ export default function PDialogueEditor(props: PDialogueEditorProps) {
         </div>
         <A class={CLASSES.dialogueEditorBack} href="/">
           <span aria-hidden="true" class="i-tabler-arrow-left size-5" />
-          Pomo로
+          Pomofi로
         </A>
       </header>
 
@@ -221,7 +221,7 @@ export default function PDialogueEditor(props: PDialogueEditorProps) {
             <span>1</span>
             <div>
               <h2 id="dialogue-content-title">대화 내용</h2>
-              <p>Pomo에서 캐릭터가 말할 문장을 입력하세요.</p>
+              <p>Pomofi에서 Pomo가 말할 문장을 입력하세요.</p>
             </div>
           </div>
 
@@ -236,7 +236,7 @@ export default function PDialogueEditor(props: PDialogueEditorProps) {
               disabled={isBusy()}
               maxlength={MAXIMUM_TEXT_LENGTH}
               onInput={(event) => editor.setText(event.currentTarget.value)}
-              placeholder="Pomo를 시작할 때 캐릭터가 말할 내용을 입력하세요."
+              placeholder="Pomofi에 들어올 때 Pomo가 말할 내용을 입력하세요."
               value={editor.text()}
             />
           </label>

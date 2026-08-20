@@ -12,7 +12,7 @@ const MAIN_CLASSES = cx(
 export default function CharacterPage() {
   return (
     <main class={MAIN_CLASSES}>
-      <Title>Pomo — 3D Character Lab</Title>
+      <Title>Pomofi — 3D Character Lab</Title>
       <div class="relative mx-auto grid w-full max-w-7xl gap-4">
         <nav class="flex items-center justify-between gap-4">
           <A class="text-sm font-650 text-#aab5bd no-underline hover:text-white" href="/dev">

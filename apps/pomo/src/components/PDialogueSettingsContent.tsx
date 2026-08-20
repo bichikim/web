@@ -161,7 +161,7 @@ interface DialogueEventDefinition {
 
 const DIALOGUE_EVENTS: ReadonlyArray<DialogueEventDefinition> = [
   {
-    description: 'Pomo를 시작할 때 한 번 재생',
+    description: 'Pomofi에 들어올 때 한 번 재생',
     icon: 'i-tabler-door-enter',
     id: 'room-enter',
     label: '입장',

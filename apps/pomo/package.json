@@ -21,7 +21,7 @@
     "lint:fix": "oxlint src --fix",
     "prebuild:apps-in-toss-package": "node scripts/reset-apps-in-toss-output.mjs",
     "prepare:apps-in-toss-package": "pnpm run build:apps-in-toss-ssg && node scripts/prepare-apps-in-toss-output.mjs",
-    "preview:apps-in-toss-ssg": "vite preview --host --outDir .output/public",
+    "preview:apps-in-toss-ssg": "vite preview --config preview.config.ts --host --outDir .output/public",
     "preview:web": "node .output/server/index.mjs",
     "text-mood:train": "node scripts/text-mood/train.mjs",
     "typecheck": "tsc --noEmit"

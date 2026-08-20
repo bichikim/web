@@ -129,7 +129,7 @@ export const PScreenSaver = (props: PScreenSaverProps) => {
         </div>
       </div>
       <span class="sr-only">
-        화면을 터치하거나 마우스를 움직이거나 클릭하거나 아무 키나 누르면 Pomo로 돌아갑니다.
+        화면을 터치하거나 마우스를 움직이거나 클릭하거나 아무 키나 누르면 Pomofi로 돌아갑니다.
       </span>
     </dialog>
   )

@@ -1,4 +1,4 @@
-import {Meta, Title} from '@solidjs/meta'
+import {Title} from '@solidjs/meta'
 import {A} from '@solidjs/router'
 import {cx} from 'class-variance-authority'
 
@@ -23,11 +23,11 @@ const TermsIntro = () => (
     <header>
       <p class="m-0 text-xs font-750 tracking-[0.24em] text-#f2a7b8 uppercase">Terms of service</p>
       <h1 class="mb-0 mt-4 text-3xl font-800 tracking--0.04em xs:text-5xl">
-        Pomo 서비스 이용약관 <span class="text-#f2a7b8">초안</span>
+        Pomofi 서비스 이용약관 <span class="text-#f2a7b8">초안</span>
       </h1>
       <p class="mb-0 mt-4 max-w-2xl text-base leading-7 text-#bdb2c4">
-        현재 Pomo는 프로토타입 단계입니다. 아래 내용은 정식 서비스 출시 전에 적용할 이용 조건과 운영
-        계획을 정리한 초안입니다.
+        현재 Pomofi는 프로토타입 단계입니다. 아래 내용은 정식 서비스 출시 전에 적용할 이용 조건과
+        운영 계획을 정리한 초안입니다.
       </p>
       <p class="mb-0 mt-3 text-xs text-#8f8297">초안 검토일: 2026년 8월 11일</p>
     </header>
@@ -35,7 +35,7 @@ const TermsIntro = () => (
     <aside class="rounded-5 border border-#f2a7b8/20 bg-#f2a7b8/7 p-5" role="note">
       <h2 class="m-0 text-base font-750 text-#ffd4de">먼저 확인해 주세요</h2>
       <p class="mb-0 mt-2 text-sm leading-6 text-#d8cbd9">
-        Pomo가 생성한 음성은 AI 생성물입니다. 타인을 사칭하거나 해치는 용도로 사용할 수 없으며,
+        Pomofi가 생성한 음성은 AI 생성물입니다. 타인을 사칭하거나 해치는 용도로 사용할 수 없으며,
         공개할 때는 AI 생성 음성임을 명확히 밝혀야 합니다.
       </p>
     </aside>
@@ -45,11 +45,7 @@ const TermsIntro = () => (
 export default function TermsPage() {
   return (
     <main class={MAIN_CLASSES}>
-      <Title>Pomo — 서비스 이용약관 초안</Title>
-      <Meta
-        content="Pomo AI 음성 생성 기능과 Supertonic 3 모델의 이용 조건을 안내합니다."
-        name="description"
-      />
+      <Title>Pomofi — 서비스 이용약관 초안</Title>
       <div class={BACKGROUND_CLASSES} />
 
       <div class="relative mx-auto grid w-full max-w-3xl gap-6">
@@ -64,7 +60,7 @@ export default function TermsPage() {
             <section class={SECTION_CLASSES} id="purpose">
               <h2 class={HEADING_CLASSES}>제1조 목적</h2>
               <p class={PARAGRAPH_CLASSES}>
-                본 약관은 Pomo가 제공하는 온디바이스 AI 음성 생성 기능과 그 결과물의 이용 조건을
+                본 약관은 Pomofi가 제공하는 온디바이스 AI 음성 생성 기능과 그 결과물의 이용 조건을
                 정합니다. 이용자는 기능을 사용하기 전에 본 약관을 확인하고 준수해야 합니다.
               </p>
             </section>
@@ -72,7 +68,7 @@ export default function TermsPage() {
             <section class={SECTION_CLASSES} id="service">
               <h2 class={HEADING_CLASSES}>제2조 서비스와 AI 모델</h2>
               <p class={PARAGRAPH_CLASSES}>
-                Pomo의 음성 합성은 Supertonic 3 모델을 이용해 사용자의 기기 안에서 처리됩니다.
+                Pomofi의 음성 합성은 Supertonic 3 모델을 이용해 사용자의 기기 안에서 처리됩니다.
                 실행에 필요한 모델 파일은 외부 저장소에서 내려받을 수 있으며, 기기·브라우저 환경에
                 따라 품질과 처리 시간이 달라질 수 있습니다.
               </p>
@@ -94,7 +90,7 @@ export default function TermsPage() {
             <section class={SECTION_CLASSES} id="restricted-uses">
               <h2 class={HEADING_CLASSES}>제4조 금지 용도</h2>
               <p class={PARAGRAPH_CLASSES}>
-                이용자는 Pomo의 AI 모델, 그 파생 모델 또는 생성 음성을 다음 목적으로 사용할 수
+                이용자는 Pomofi의 AI 모델, 그 파생 모델 또는 생성 음성을 다음 목적으로 사용할 수
                 없습니다.
               </p>
               <ol class={LIST_CLASSES}>
@@ -141,7 +137,7 @@ export default function TermsPage() {
             <section class={SECTION_CLASSES} id="availability">
               <h2 class={HEADING_CLASSES}>제7조 서비스 제공과 제한</h2>
               <p class={PARAGRAPH_CLASSES}>
-                Pomo는 실험적 기능을 포함할 수 있으며 특정 품질, 정확성, 연속성 또는 목적 적합성을
+                Pomofi는 실험적 기능을 포함할 수 있으며 특정 품질, 정확성, 연속성 또는 목적 적합성을
                 보장하지 않습니다. 약관 위반, 보안 위험 또는 운영상 필요가 있는 경우 기능 사용을
                 제한하거나 제공 내용을 변경할 수 있습니다.
               </p>
@@ -175,7 +171,7 @@ export default function TermsPage() {
         </article>
 
         <footer class="flex flex-wrap items-center justify-between gap-3 text-xs text-#8f8297">
-          <span>© Pomo</span>
+          <span>© Pomofi</span>
           <A class="font-650 text-#bdb2c4 no-underline hover:text-white" href="/dev/voice">
             음성 생성 스튜디오로 돌아가기 →
           </A>

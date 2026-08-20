@@ -1,0 +1,462 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pomofi showcase</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+        font-family: Pretendard, 'Apple SD Gothic Neo', Arial, sans-serif;
+        color: #fffaf1;
+      }
+
+      .artboard {
+        position: relative;
+        display: none;
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      body[data-art='portrait-1'] .portrait-1,
+      body[data-art='portrait-2'] .portrait-2,
+      body[data-art='portrait-3'] .portrait-3,
+      body[data-art='landscape'] .landscape {
+        display: block;
+      }
+
+      .wordmark {
+        position: absolute;
+        top: 42px;
+        left: 48px;
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        font-size: 24px;
+        font-weight: 850;
+        letter-spacing: -0.8px;
+      }
+
+      .wordmark img {
+        width: 32px;
+        height: 32px;
+        object-fit: contain;
+        filter: drop-shadow(0 3px 5px rgb(0 0 0 / 18%));
+      }
+
+      .eyebrow {
+        margin: 0 0 14px;
+        color: #d86845;
+        font-size: 17px;
+        font-weight: 850;
+        letter-spacing: 2.8px;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 54px;
+        font-weight: 900;
+        line-height: 1.14;
+        letter-spacing: -3.5px;
+      }
+
+      .description {
+        margin: 18px 0 0;
+        color: rgb(255 250 241 / 72%);
+        font-size: 20px;
+        font-weight: 550;
+        line-height: 1.5;
+        letter-spacing: -0.7px;
+      }
+
+      .phone-shot {
+        position: absolute;
+        overflow: hidden;
+        border: 1px solid rgb(255 250 241 / 16%);
+        border-radius: 34px;
+        background: #120f0d;
+        box-shadow: 0 26px 56px rgb(0 0 0 / 34%);
+      }
+
+      .phone-shot img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .portrait-1 {
+        background:
+          radial-gradient(circle at 90% 2%, #e8b28d 0%, transparent 42%),
+          linear-gradient(145deg, #c86341, #8f3f2a 54%, #40231a);
+      }
+
+      .portrait-1 .decor-circle {
+        position: absolute;
+        top: 150px;
+        right: -115px;
+        width: 300px;
+        height: 300px;
+        border: 1px solid rgb(255 250 241 / 18%);
+        border-radius: 50%;
+      }
+
+      .portrait-1 .copy {
+        position: absolute;
+        top: 110px;
+        left: 48px;
+      }
+
+      .portrait-1 h1 {
+        font-size: 50px;
+      }
+
+      .portrait-1 .phone-shot {
+        top: 316px;
+        left: 72px;
+        width: 492px;
+        height: 806px;
+        border-color: rgb(255 250 241 / 24%);
+      }
+
+      .portrait-1 .phone-shot img {
+        object-position: center top;
+      }
+
+      .companion-badge {
+        position: absolute;
+        top: 286px;
+        right: 52px;
+        display: flex;
+        min-width: 190px;
+        height: 58px;
+        align-items: center;
+        justify-content: center;
+        gap: 9px;
+        padding: 0 22px;
+        border: 1px solid rgb(255 250 241 / 20%);
+        border-radius: 29px;
+        background: rgb(18 15 13 / 88%);
+        box-shadow: 0 14px 30px rgb(0 0 0 / 28%);
+        font-size: 17px;
+        font-weight: 800;
+      }
+
+      .companion-badge::before {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #ef9b72;
+        box-shadow: 0 0 0 5px rgb(239 155 114 / 14%);
+        content: '';
+      }
+
+      .portrait-2 {
+        background: radial-gradient(circle at 16% 0%, #514238 0%, transparent 40%), #120f0d;
+      }
+
+      .portrait-2 .accent-line {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 8px;
+        background: linear-gradient(90deg, #d86845, #f1a179, #84916f);
+      }
+
+      .portrait-2 .copy,
+      .portrait-3 .copy {
+        position: absolute;
+        top: 120px;
+        left: 48px;
+      }
+
+      .portrait-2 .phone-shot {
+        top: 388px;
+        left: 48px;
+        width: 540px;
+        height: 590px;
+      }
+
+      .portrait-2 .phone-shot img {
+        object-position: center center;
+      }
+
+      .timer-badge {
+        position: absolute;
+        top: 356px;
+        right: 66px;
+        display: grid;
+        width: 124px;
+        height: 62px;
+        border-radius: 31px;
+        background: #d86845;
+        box-shadow: 0 14px 30px rgb(0 0 0 / 32%);
+        color: #fffaf1;
+        font-size: 18px;
+        font-weight: 850;
+        place-items: center;
+      }
+
+      .footer-label {
+        position: absolute;
+        bottom: 30px;
+        left: 48px;
+        margin: 0;
+        color: rgb(255 250 241 / 48%);
+        font-size: 14px;
+        font-weight: 750;
+        letter-spacing: 1.2px;
+      }
+
+      .portrait-3 {
+        background: linear-gradient(155deg, #e8ded0 0%, #cbbba8 52%, #9c7966 100%);
+        color: #241812;
+      }
+
+      .portrait-3 .wordmark {
+        color: #241812;
+      }
+
+      .portrait-3 .eyebrow {
+        color: #a5472d;
+      }
+
+      .portrait-3 .description {
+        color: rgb(36 24 18 / 68%);
+      }
+
+      .portrait-3 .vinyl {
+        position: absolute;
+        top: -108px;
+        right: -102px;
+        width: 280px;
+        height: 280px;
+        border: 46px solid rgb(36 24 18 / 7%);
+        border-radius: 50%;
+        box-shadow: inset 0 0 0 2px rgb(36 24 18 / 7%);
+      }
+
+      .portrait-3 .phone-shot {
+        top: 368px;
+        left: 48px;
+        width: 540px;
+        height: 628px;
+        border-color: rgb(36 24 18 / 12%);
+        box-shadow: 0 26px 56px rgb(55 32 22 / 28%);
+      }
+
+      .portrait-3 .phone-shot img {
+        object-position: center bottom;
+      }
+
+      .music-badge {
+        position: absolute;
+        top: 338px;
+        right: 68px;
+        display: flex;
+        height: 60px;
+        align-items: center;
+        gap: 10px;
+        padding: 0 22px;
+        border-radius: 30px;
+        background: #241812;
+        box-shadow: 0 14px 30px rgb(55 32 22 / 28%);
+        color: #fffaf1;
+        font-size: 17px;
+        font-weight: 800;
+      }
+
+      .music-badge span {
+        color: #e77b56;
+        font-size: 23px;
+      }
+
+      .portrait-3 .footer-label {
+        color: rgb(36 24 18 / 50%);
+      }
+
+      .landscape {
+        background: #120f0d;
+      }
+
+      .landscape .warm-glow {
+        position: absolute;
+        top: -220px;
+        left: -130px;
+        width: 720px;
+        height: 720px;
+        border-radius: 50%;
+        background: radial-gradient(circle, #59372b 0%, transparent 68%);
+      }
+
+      .landscape .wordmark {
+        top: 56px;
+        left: 72px;
+        font-size: 26px;
+      }
+
+      .landscape .copy {
+        position: absolute;
+        top: 178px;
+        left: 72px;
+      }
+
+      .landscape h1 {
+        font-size: 70px;
+        line-height: 1.08;
+        letter-spacing: -4.8px;
+      }
+
+      .landscape .description {
+        margin-top: 28px;
+        font-size: 22px;
+      }
+
+      .feature-row {
+        position: absolute;
+        bottom: 72px;
+        left: 72px;
+        display: flex;
+        gap: 12px;
+      }
+
+      .feature-pill {
+        display: flex;
+        height: 44px;
+        align-items: center;
+        gap: 8px;
+        padding: 0 16px;
+        border: 1px solid rgb(255 250 241 / 14%);
+        border-radius: 22px;
+        background: rgb(255 250 241 / 7%);
+        color: rgb(255 250 241 / 82%);
+        font-size: 15px;
+        font-weight: 750;
+      }
+
+      .feature-pill::before {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #d86845;
+        content: '';
+      }
+
+      .landscape .day-shot {
+        top: 58px;
+        left: 828px;
+        width: 410px;
+        height: 674px;
+        transform: rotate(-5deg);
+      }
+
+      .landscape .night-shot {
+        top: 88px;
+        right: -24px;
+        width: 380px;
+        height: 624px;
+        transform: rotate(5deg);
+      }
+
+      .landscape .phone-shot {
+        border-radius: 30px;
+        box-shadow: 0 30px 64px rgb(0 0 0 / 42%);
+      }
+
+      .landscape .phone-shot img {
+        object-position: center;
+      }
+
+      .day-night-badge {
+        position: absolute;
+        top: 74px;
+        right: 72px;
+        display: flex;
+        height: 46px;
+        align-items: center;
+        gap: 9px;
+        padding: 0 18px;
+        border: 1px solid rgb(255 250 241 / 18%);
+        border-radius: 23px;
+        background: rgb(18 15 13 / 86%);
+        box-shadow: 0 12px 26px rgb(0 0 0 / 28%);
+        font-size: 15px;
+        font-weight: 800;
+      }
+    </style>
+  </head>
+  <body>
+    <section class="artboard portrait-1">
+      <span class="decor-circle"></span>
+      <div class="wordmark"><img src="source/brand-mark.png" alt="" />Pomofi</div>
+      <div class="copy">
+        <p class="eyebrow">YOUR FOCUS COMPANION</p>
+        <h1>집중도,<br />함께라면 다정하게.</h1>
+      </div>
+      <div class="phone-shot"><img src="source/entry.png" alt="" /></div>
+      <div class="companion-badge">Pomo와 함께 시작</div>
+    </section>
+
+    <section class="artboard portrait-2">
+      <span class="accent-line"></span>
+      <div class="wordmark"><img src="source/brand-mark.png" alt="" />Pomofi</div>
+      <div class="copy">
+        <p class="eyebrow">FOCUS · BREAK · REPEAT</p>
+        <h1>25분,<br />몰입의 시작.</h1>
+        <p class="description">집중과 휴식을 자연스럽게 이어주는<br />나만의 포모도로 루틴.</p>
+      </div>
+      <div class="phone-shot"><img src="source/timer.png" alt="" /></div>
+      <div class="timer-badge">25:00</div>
+      <p class="footer-label">POMOFI · POMODORO FOCUS</p>
+    </section>
+
+    <section class="artboard portrait-3">
+      <span class="vinyl"></span>
+      <div class="wordmark"><img src="source/brand-mark.png" alt="" />Pomofi</div>
+      <div class="copy">
+        <p class="eyebrow">FOCUS IN YOUR RHYTHM</p>
+        <h1>집중할 때도,<br />내 리듬대로.</h1>
+        <p class="description">포근한 음악과 함께<br />집중의 흐름을 오래 이어가세요.</p>
+      </div>
+      <div class="phone-shot"><img src="source/music.png" alt="" /></div>
+      <div class="music-badge"><span>♪</span>Focus playlist</div>
+      <p class="footer-label">POMOFI · MUSIC FOR FOCUS</p>
+    </section>
+
+    <section class="artboard landscape">
+      <span class="warm-glow"></span>
+      <div class="wordmark"><img src="source/brand-mark.png" alt="" />Pomofi</div>
+      <div class="copy">
+        <p class="eyebrow">A GENTLER WAY TO FOCUS</p>
+        <h1>혼자보다 오래,<br />Pomo와 함께 집중.</h1>
+        <p class="description">
+          포모도로와 음악, 낮과 밤의 장면까지.<br />
+          집중에 필요한 모든 것을 한 공간에서.
+        </p>
+      </div>
+      <div class="feature-row">
+        <span class="feature-pill">포모도로</span>
+        <span class="feature-pill">집중 음악</span>
+        <span class="feature-pill">낮·밤 장면</span>
+      </div>
+      <div class="phone-shot day-shot"><img src="source/studio.png" alt="" /></div>
+      <div class="phone-shot night-shot"><img src="source/night.png" alt="" /></div>
+      <div class="day-night-badge">☀ 낮에도 · ☾ 밤에도</div>
+    </section>
+
+    <script>
+      const art = new URLSearchParams(location.search).get('art') ?? 'portrait-1'
+      document.body.dataset.art = art
+    </script>
+  </body>
+</html>
