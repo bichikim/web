@@ -189,10 +189,7 @@ export const PModal = (props: PModalProps) => (
                   'rounded-control bg-transparent text-muted-foreground ' +
                   'outline-none transition-[background-color_140ms_ease,color_140ms_ease] ' +
                   'hover:bg-secondary-soft hover:text-foreground ' +
-                  'focus-visible:shadow-focus motion-reduce:transition-none',
-                props.navigation !== undefined && props.titleVisibility === 'visually-hidden'
-                  ? 'size-11'
-                  : 'size-9',
+                  'focus-visible:shadow-focus motion-reduce:transition-none size-11',
               )}
             >
               <span aria-hidden="true" class="i-tabler-x size-5" />
