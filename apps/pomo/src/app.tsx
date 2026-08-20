@@ -14,12 +14,25 @@ const DEFAULT_DESCRIPTION =
   'Pomo와 함께 포모도로 타이머와 집중 음악을 사용하는 집중 앱 Pomofi입니다.'
 const HOME_DESCRIPTION =
   'Pomo와 함께 장면, 포모도로, 음악, 대화와 피드를 한곳에서 사용하는 집중 앱 Pomofi입니다.'
+const REFUND_POLICY_DESCRIPTION =
+  'Pomofi 실물 응원 굿즈와 주간·월간 서비스 접근권의 환불 및 청약철회 기준을 안내합니다.'
 const TERMS_DESCRIPTION = 'Pomofi AI 음성 생성 기능과 Supertonic 3 모델의 이용 조건을 안내합니다.'
+
+const getTitle = (pathname: string) => {
+  switch (normalizePathname(pathname)) {
+    case '/refund-policy':
+      return 'Pomofi — 환불 및 청약철회 정책'
+    default:
+      return 'Pomofi'
+  }
+}
 
 const getDescription = (pathname: string) => {
   switch (normalizePathname(pathname)) {
     case '/':
       return HOME_DESCRIPTION
+    case '/refund-policy':
+      return REFUND_POLICY_DESCRIPTION
     case '/dev/terms':
       return TERMS_DESCRIPTION
     default:
@@ -32,7 +45,7 @@ const PDocumentMetadata = () => {
 
   return (
     <>
-      <Title>Pomofi</Title>
+      <Title>{getTitle(location.pathname)}</Title>
       <Meta content={getDescription(location.pathname)} name="description" />
     </>
   )
