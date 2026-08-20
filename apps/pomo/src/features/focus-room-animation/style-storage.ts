@@ -1,20 +1,19 @@
-import type {PSceneStyle} from './scene-style'
+import {getDefaultPSceneStyle, type PSceneStyle} from './scene-style'
 
 const SCENE_STYLE_STORAGE_KEY = 'pomo:focus-room-scene-style:v1'
-const DEFAULT_SCENE_STYLE: PSceneStyle = 'original'
 
 const parseSceneStyle = (storedValue: string | null): PSceneStyle => {
   if (storedValue === null) {
-    return DEFAULT_SCENE_STYLE
+    return getDefaultPSceneStyle()
   }
 
   try {
     const parsedValue: unknown = JSON.parse(storedValue)
     return parsedValue === 'original' || parsedValue === 'scribble'
       ? parsedValue
-      : DEFAULT_SCENE_STYLE
+      : getDefaultPSceneStyle()
   } catch {
-    return DEFAULT_SCENE_STYLE
+    return getDefaultPSceneStyle()
   }
 }
 
@@ -22,7 +21,7 @@ export const readPSceneStyle = (): PSceneStyle => {
   try {
     return parseSceneStyle(localStorage.getItem(SCENE_STYLE_STORAGE_KEY))
   } catch {
-    return DEFAULT_SCENE_STYLE
+    return getDefaultPSceneStyle()
   }
 }
 
