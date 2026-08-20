@@ -8,6 +8,7 @@ import {PSelect, type PSelectOption} from '../design-system/PSelect'
 import {PSwitch} from '../design-system/PSwitch'
 import type {SceneTimeMode} from '../features/focus-room-time'
 import type {PSceneMotionInput, PSceneMotionMode} from '../features/focus-room-animation'
+import type {PSceneStyle} from '../features/focus-room-animation/scene-style'
 import type {ScreenSaverDelay} from '../features/screen-saver'
 import {useScreenWakeLock} from '../features/screen-wake-lock'
 import {PDialogueSettings} from './PDialogueSettings'
@@ -46,8 +47,10 @@ export interface PSettingsProps {
   readonly onMotionInputChange?: (motionInput: PSceneMotionInput) => void
   readonly onMotionModeChange?: (motionMode: PSceneMotionMode) => void
   readonly onScreenSaverDelayChange?: (delay: ScreenSaverDelay) => void
+  readonly onSceneStyleChange?: (sceneStyle: PSceneStyle) => void
   readonly onTimeModeChange?: (timeMode: SceneTimeMode) => void
   readonly screenSaverDelay?: ScreenSaverDelay
+  readonly sceneStyle?: PSceneStyle
   readonly motionInput?: PSceneMotionInput
   readonly motionMode?: PSceneMotionMode
   readonly timeMode?: SceneTimeMode
@@ -263,6 +266,14 @@ export const PSettings = (props: PSettingsProps) => {
                 />
               </div>
               <div class="grid gap-4 border-b border-solid border-border pb-5">
+                <PSwitch
+                  checked={(props.sceneStyle ?? 'original') === 'scribble'}
+                  description="준비된 장면을 일부러 서툴게 그린 하찮은 그림으로 바꿔요."
+                  label="하찮은 스타일"
+                  onChange={(isChecked) =>
+                    props.onSceneStyleChange?.(isChecked ? 'scribble' : 'original')
+                  }
+                />
                 <PRadioSwitch
                   label="장면 움직임"
                   onChange={(motionMode) => props.onMotionModeChange?.(motionMode)}

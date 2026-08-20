@@ -23,6 +23,34 @@ describe('focus room scene catalog', () => {
     expect(new Set(definitions).size).toBe(definitions.length)
   })
 
+  it('should replace only prepared scenes in the scribble dataset', () => {
+    const preparedScenes = [
+      {scene: getPScene('day', 'reading', 'focused'), source: 'day-reading-focused-scribble'},
+      {scene: getPScene('day', 'typing', 'focused'), source: 'day-typing-focused-scribble'},
+      {scene: getPScene('day', 'writing', 'focused'), source: 'day-writing-focused-scribble'},
+    ]
+
+    for (const {scene, source} of preparedScenes) {
+      expect(getPSceneLayer(scene.id, 'scribble')).toMatchObject({
+        id: `scribble-${scene.id}-layers`,
+        layers: [
+          {id: 'background', source: expect.stringContaining(`${source}-background`)},
+          {
+            id: 'head',
+            position: {x: 809, y: 127},
+            source: expect.stringContaining('day-focused-scribble-head'),
+          },
+        ],
+      })
+    }
+
+    const preparedSceneIds = new Set(preparedScenes.map(({scene}) => scene.id))
+
+    for (const scene of FOCUS_ROOM_SCENES.filter((scene) => !preparedSceneIds.has(scene.id))) {
+      expect(getPSceneLayer(scene.id, 'scribble')).toBe(getPSceneLayer(scene.id, 'original'))
+    }
+  })
+
   it('should use true separated structural layers in every preview', () => {
     for (const scene of FOCUS_ROOM_SCENES) {
       const layerScene = getPSceneLayer(scene.id)

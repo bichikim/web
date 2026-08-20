@@ -2,6 +2,8 @@ import {Container, Sprite, type Texture} from 'pixi.js'
 
 import dayFocusedClosedImage from './assets/animation/eyes/day-focused/closed.webp'
 import dayFocusedHalfImage from './assets/animation/eyes/day-focused/half.webp'
+import dayFocusedScribbleClosedImage from './assets/animation/eyes/day-focused-scribble/closed.png'
+import dayFocusedScribbleHalfImage from './assets/animation/eyes/day-focused-scribble/half.png'
 import dayUserClosedImage from './assets/animation/eyes/day-user/closed.webp'
 import dayUserHalfImage from './assets/animation/eyes/day-user/half.webp'
 import nightFocusedClosedImage from './assets/animation/eyes/night-focused/closed.webp'
@@ -10,6 +12,7 @@ import nightUserClosedImage from './assets/animation/eyes/night-user/closed.webp
 import nightUserHalfImage from './assets/animation/eyes/night-user/half.webp'
 import {type BlinkScheduler, createBlinkScheduler} from './blink-scheduler'
 import type {PActivity, PGaze, PTime} from './scene-catalog'
+import type {PSceneStyle} from './scene-style'
 import {acquireTextureGroup, releaseTextureGroup, type TextureLease} from './texture-leases'
 
 export type {PActivity, PGaze, PTime} from './scene-catalog'
@@ -17,6 +20,7 @@ export type {PActivity, PGaze, PTime} from './scene-catalog'
 export interface PEyeState {
   readonly activity: PActivity
   readonly gaze: PGaze
+  readonly sceneStyle?: PSceneStyle
   readonly time: PTime
 }
 
@@ -28,7 +32,6 @@ interface EyeAsset {
 }
 
 type EyeFrame = 'closed' | 'half' | 'open'
-type EyeTextures = Record<PTime, Record<PGaze, Record<'closed' | 'half', Texture>>>
 
 const EYE_ASSETS = {
   day: {
@@ -40,6 +43,13 @@ const EYE_ASSETS = {
     user: {closed: nightUserClosedImage, half: nightUserHalfImage, left: 842, top: 206},
   },
 } satisfies Record<PTime, Record<PGaze, EyeAsset>>
+
+const SCRIBBLE_DAY_FOCUSED_EYE_ASSET = {
+  closed: dayFocusedScribbleClosedImage,
+  half: dayFocusedScribbleHalfImage,
+  left: 809,
+  top: 127,
+} satisfies EyeAsset
 
 const EYE_OFFSETS = {
   day: {
@@ -64,6 +74,8 @@ const EYE_SOURCES = [
   nightFocusedClosedImage,
   nightUserHalfImage,
   nightUserClosedImage,
+  dayFocusedScribbleHalfImage,
+  dayFocusedScribbleClosedImage,
 ] as const
 const HALF_FRAME_DURATION = 48
 const CLOSED_FRAME_DURATION = 72
@@ -72,6 +84,14 @@ const wait = (duration: number) =>
   new Promise<void>((resolve) => {
     window.setTimeout(resolve, duration)
   })
+
+const getEyeAsset = (state: PEyeState): EyeAsset => {
+  if (state.sceneStyle === 'scribble' && state.time === 'day' && state.gaze === 'focused') {
+    return SCRIBBLE_DAY_FOCUSED_EYE_ASSET
+  }
+
+  return EYE_ASSETS[state.time][state.gaze]
+}
 
 /** Owns blink scheduling, eye textures, and the eye overlay container. */
 export class PEyeController {
@@ -84,7 +104,7 @@ export class PEyeController {
   #sprite: Sprite | null = null
   #state: PEyeState | null = null
   #textureLeases: readonly TextureLease[] = []
-  #textures: EyeTextures | null = null
+  #textures: ReadonlyMap<string, Texture> | null = null
 
   constructor(onRender: () => void) {
     this.#onRender = onRender
@@ -99,28 +119,11 @@ export class PEyeController {
       return
     }
 
-    const [
-      dayFocusedHalf,
-      dayFocusedClosed,
-      dayUserHalf,
-      dayUserClosed,
-      nightFocusedHalf,
-      nightFocusedClosed,
-      nightUserHalf,
-      nightUserClosed,
-    ] = leases
     this.#textureLeases = leases
-    this.#textures = {
-      day: {
-        focused: {closed: dayFocusedClosed.texture, half: dayFocusedHalf.texture},
-        user: {closed: dayUserClosed.texture, half: dayUserHalf.texture},
-      },
-      night: {
-        focused: {closed: nightFocusedClosed.texture, half: nightFocusedHalf.texture},
-        user: {closed: nightUserClosed.texture, half: nightUserHalf.texture},
-      },
-    }
-    this.#sprite = new Sprite(dayFocusedHalf.texture)
+    this.#textures = new Map(
+      EYE_SOURCES.map((source, index) => [source, leases[index].texture] as const),
+    )
+    this.#sprite = new Sprite(leases[0].texture)
     this.#sprite.visible = false
     this.container.addChild(this.#sprite)
     this.#scheduler = createBlinkScheduler({
@@ -210,9 +213,15 @@ export class PEyeController {
     if (frame === 'open') {
       sprite.visible = false
     } else {
-      const asset = EYE_ASSETS[state.time][state.gaze]
+      const asset = getEyeAsset(state)
       const offset = EYE_OFFSETS[state.time][state.gaze][state.activity]
-      sprite.texture = textures[state.time][state.gaze][frame]
+      const texture = textures.get(asset[frame])
+
+      if (texture === undefined) {
+        return
+      }
+
+      sprite.texture = texture
       sprite.position.set(asset.left + offset.x, asset.top + offset.y)
       sprite.visible = true
     }

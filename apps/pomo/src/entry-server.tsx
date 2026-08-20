@@ -1,8 +1,6 @@
 // @refresh reload
 import {createHandler, StartServer} from '@solidjs/start/server'
 
-import {SCENE_CROP_POSITION} from './features/focus-room-animation/scene-layout'
-
 const viewport =
   process.env.POMO_BUILD_TARGET === 'apps-in-toss'
     ? 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover'
@@ -49,10 +47,11 @@ body {
 .pomo-scene-fallback {
   position: absolute;
   inset: 0;
+  display: grid;
+  place-items: center;
   height: 100%;
   width: 100%;
-  object-fit: cover;
-  object-position: ${SCENE_CROP_POSITION};
+  color: #fff9f1;
 }
 `
 
