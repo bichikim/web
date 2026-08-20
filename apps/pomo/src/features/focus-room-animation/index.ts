@@ -1,4 +1,6 @@
 export * from './scene-catalog'
 export * from './scene-layout'
 export * from './scene-motion'
+export * from './scene-style'
+export * from './use-scene-style'
 export type {PixiLayerSceneDefinition} from './layer-scene-definition'

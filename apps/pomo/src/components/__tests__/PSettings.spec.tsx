@@ -6,6 +6,7 @@ import type {JSX} from 'solid-js'
 import {beforeEach, expect, it, vi} from 'vitest'
 
 import {PModal, type PModalProps} from 'src/design-system/PModal'
+import {PSwitch, type PSwitchProps} from 'src/design-system/PSwitch'
 import {PSettings} from '../PSettings'
 
 vi.mock('@kobalte/core/tabs', () => ({Tabs: vi.fn()}))
@@ -62,4 +63,27 @@ it('should expose the guide as the last tab inside settings', () => {
     '대화',
     '설명서',
   ])
+})
+
+it('should map the scribble style switch to the scene style value', () => {
+  const onSceneStyleChange = vi.fn()
+
+  render(() => <PSettings onSceneStyleChange={onSceneStyleChange} sceneStyle="scribble" />)
+
+  const styleSwitch = vi
+    .mocked(PSwitch)
+    .mock.calls.map(([props]) => props as PSwitchProps)
+    .find((props) => props.label === '하찮은 스타일')
+
+  expect(styleSwitch).toMatchObject({
+    checked: true,
+    description: expect.any(String),
+    label: '하찮은 스타일',
+  })
+
+  styleSwitch?.onChange(false)
+  expect(onSceneStyleChange).toHaveBeenLastCalledWith('original')
+
+  styleSwitch?.onChange(true)
+  expect(onSceneStyleChange).toHaveBeenLastCalledWith('scribble')
 })

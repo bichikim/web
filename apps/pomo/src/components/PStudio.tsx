@@ -14,8 +14,9 @@ import {
   type PSceneId,
   type PSceneMotionInput,
   type PSceneMotionMode,
-  SCENE_CROP_POSITION,
+  type PSceneStyle,
   supportsPSceneGyroscope,
+  usePSceneStyle,
 } from '../features/focus-room-animation'
 import {
   getAutomaticScenePeriod,
@@ -147,8 +148,10 @@ interface SceneToolbarProps {
   readonly onMotionInputChange?: (motionInput: PSceneMotionInput) => void
   readonly onMotionModeChange: (motionMode: PSceneMotionMode) => void
   readonly onScreenSaverDelayChange: (delay: ScreenSaverDelay) => void
+  readonly onSceneStyleChange: (sceneStyle: PSceneStyle) => void
   readonly onTimeModeChange: (mode: SceneTimeMode) => void
   readonly screenSaverDelay: ScreenSaverDelay
+  readonly sceneStyle: PSceneStyle
   readonly motionInput?: PSceneMotionInput
   readonly motionMode: PSceneMotionMode
   readonly time: SceneTime
@@ -159,10 +162,6 @@ interface PEntryProps {
   readonly isExiting: boolean
   readonly onEnter: () => void
   readonly onExitComplete: () => void
-}
-
-interface PSceneFallbackProps {
-  readonly source: string
 }
 
 interface PStudioEventsProps {
@@ -209,7 +208,7 @@ const SceneToolbar = (props: SceneToolbarProps) => {
       class={cx(
         'pointer-events-auto absolute right-4 top-[calc(1rem+var(--pomo-safe-area-inset-top))]',
         'flex flex-col items-end gap-2',
-        'xs:right-7 xs:top-6',
+        'xs:right-7 lg:top-6',
       )}
     >
       <div class="flex flex-wrap justify-end gap-2" role="group" aria-label="장면 설정">
@@ -243,8 +242,10 @@ const SceneToolbar = (props: SceneToolbarProps) => {
           onMotionInputChange={props.onMotionInputChange}
           onMotionModeChange={props.onMotionModeChange}
           onScreenSaverDelayChange={props.onScreenSaverDelayChange}
+          onSceneStyleChange={props.onSceneStyleChange}
           onTimeModeChange={props.onTimeModeChange}
           screenSaverDelay={props.screenSaverDelay}
+          sceneStyle={props.sceneStyle}
           motionInput={props.motionInput}
           motionMode={props.motionMode}
           timeMode={props.timeMode}
@@ -303,16 +304,17 @@ const PEntry = (props: PEntryProps) => (
   </section>
 )
 
-const PSceneFallback = (props: PSceneFallbackProps) => (
-  <img
-    alt=""
-    aria-hidden="true"
-    class="pomo-scene-fallback absolute inset-0 h-full w-full object-cover"
-    decoding="async"
-    fetchpriority="high"
-    src={props.source}
-    style={{'object-position': SCENE_CROP_POSITION}}
-  />
+const PSceneFallback = () => (
+  <div
+    aria-live="polite"
+    class="pomo-scene-fallback pointer-events-none absolute inset-0 grid place-items-center text-[#fff9f1]"
+    role="status"
+  >
+    <span class={cx('border border-solid border-border backdrop-blur-surface', CLASSES.loading)}>
+      <span aria-hidden="true" class={CLASSES.loadingSpinner} />
+      장면 준비 중…
+    </span>
+  </div>
 )
 
 const PStudioEvents = (props: PStudioEventsProps) => {
@@ -378,6 +380,7 @@ export const PStudio = () => {
     INITIAL_POMODORO_PRESENTATION,
   )
   const screenSaver = useScreenSaver()
+  const sceneStyleController = usePSceneStyle()
   const time = createMemo(() => resolveScenePeriod(timeMode(), automaticPeriod()))
   const sceneGaze = useDialogueSceneGaze(gaze, events.isDialoguePlaying, pomoSay.isPlaying)
   const selectedScene = createMemo(() => getSceneAsset(time(), activity(), sceneGaze()))
@@ -434,7 +437,7 @@ export const PStudio = () => {
         role="img"
       >
         <Show when={!hasSceneRendered()}>
-          <PSceneFallback source={selectedScene().source} />
+          <PSceneFallback />
         </Show>
         <PSceneCanvas
           activity={activity()}
@@ -446,24 +449,10 @@ export const PStudio = () => {
           onMotionInputChange={setMotionInput}
           source={selectedScene().source}
           sceneId={selectedScene().id}
+          sceneStyle={sceneStyleController.sceneStyle()}
           time={time()}
           viseme={activeViseme()}
         />
-
-        <Show when={hasEntered() && isSceneLoading() && !hasSceneRendered()}>
-          <div
-            aria-live="polite"
-            class="pointer-events-none absolute inset-0 grid place-items-center bg-#17130f/24"
-            role="status"
-          >
-            <span
-              class={cx('border border-solid border-border backdrop-blur-surface', CLASSES.loading)}
-            >
-              <span aria-hidden="true" class={CLASSES.loadingSpinner} />
-              장면을 불러오는 중
-            </span>
-          </div>
-        </Show>
       </figure>
 
       <div class={CLASSES.ui} hidden={!hasEntered()}>
@@ -485,8 +474,10 @@ export const PStudio = () => {
             onMotionInputChange={setMotionInput}
             onMotionModeChange={setMotionMode}
             onScreenSaverDelayChange={screenSaver.onDelayChange}
+            onSceneStyleChange={sceneStyleController.onSceneStyleChange}
             onTimeModeChange={setTimeMode}
             screenSaverDelay={screenSaver.delay()}
+            sceneStyle={sceneStyleController.sceneStyle()}
             motionInput={motionInput()}
             motionMode={motionMode()}
             time={time()}
