@@ -51,10 +51,10 @@ beforeEach(() => {
 it('should expose the guide as the last tab inside settings', () => {
   render(() => <PSettings />)
 
-  expect(screen.queryByRole('button', {name: 'Pomo 설명서'})).toBeNull()
+  expect(screen.queryByRole('button', {name: 'Pomofi 설명서'})).toBeNull()
   fireEvent.click(screen.getByRole('button', {name: '설정 열기'}))
 
-  expect(screen.getByRole('dialog', {name: 'Pomo 설정'}).hasAttribute('hidden')).toBe(false)
+  expect(screen.getByRole('dialog', {name: 'Pomofi 설정'}).hasAttribute('hidden')).toBe(false)
   expect(tabsRootProps?.value).toBe('general')
   expect(screen.getAllByRole('tab').map((tab) => tab.textContent)).toEqual([
     '일반',

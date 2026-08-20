@@ -15,7 +15,7 @@ export default function PDialoguePage() {
 
   return (
     <>
-      <Title>{dialogueId() === null ? 'Pomo — 대화 만들기' : 'Pomo — 대화 편집하기'}</Title>
+      <Title>{dialogueId() === null ? 'Pomofi — 대화 만들기' : 'Pomofi — 대화 편집하기'}</Title>
       <PDialogueEditor dialogueId={dialogueId()} />
     </>
   )
