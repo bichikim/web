@@ -20,7 +20,7 @@ const FALLBACK_CLASSES = cx(
 export default function SpeechToTextPage() {
   return (
     <main class={MAIN_CLASSES}>
-      <Title>Pomo — 한국어 받아쓰기 실험실</Title>
+      <Title>Pomofi — 한국어 받아쓰기 실험실</Title>
       <div class={BACKGROUND_CLASSES} />
       <div class="relative grid w-full max-w-4xl gap-4">
         <A class="w-fit text-sm font-650 text-#bdb2c4 no-underline hover:text-white" href="/dev">

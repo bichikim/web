@@ -10,6 +10,7 @@ import {
   type RepeatMode,
   resolvePlaybackRestore,
   resolveTrackEnd,
+  resolveTrackRemoval,
   usePAudioVisualizer,
   usePPlaybackPersistence,
 } from '../features/focus-room-audio'
@@ -36,6 +37,20 @@ interface SelectRandomTrackOptions {
 const isAbortError = (error: unknown) =>
   error instanceof DOMException && error.name === 'AbortError'
 
+const appendUniqueTracks = (tracks: readonly PTrack[], tracksToAdd: readonly PTrack[]) => {
+  const trackIds = new Set(tracks.map((track) => track.id))
+  const uniqueTracksToAdd = tracksToAdd.filter((track) => {
+    if (trackIds.has(track.id)) {
+      return false
+    }
+
+    trackIds.add(track.id)
+    return true
+  })
+
+  return uniqueTracksToAdd.length === 0 ? tracks : [...tracks, ...uniqueTracksToAdd]
+}
+
 // oxlint-disable-next-line eslint/max-lines-per-function, eslint/max-statements -- Media Chrome's control tree is one semantic unit.
 export default function PMusicPlayerContent(props: PMusicPlayerContentProps) {
   const initialTracks = untrack(() => props.tracks ?? [])
@@ -55,6 +70,9 @@ export default function PMusicPlayerContent(props: PMusicPlayerContentProps) {
   let destroyed = false
   let playbackRequestRevision = 0
   let playbackRevision = 0
+  let queueRevision = 0
+  let initialPlaylistResolved = untrack(() => props.tracks !== undefined)
+  const removedTrackIdsBeforeInitialLoad = new Set<string>()
   let shuffleQueue = initialState.queue
   let shuffleHistory: number[] = []
   const playbackPersistence = usePPlaybackPersistence({
@@ -251,6 +269,87 @@ export default function PMusicPlayerContent(props: PMusicPlayerContentProps) {
     selectTrack({index})
   }
 
+  const addTracksToQueue = (tracksToAdd: readonly PTrack[]) => {
+    if (props.tracks !== undefined || tracksToAdd.length === 0) {
+      return
+    }
+
+    const currentTracks = tracks()
+    const nextTracks = appendUniqueTracks(currentTracks, tracksToAdd)
+
+    if (nextTracks === currentTracks) {
+      return
+    }
+
+    queueRevision += 1
+    setLoadedTracks(nextTracks)
+    shuffleQueue = createShuffleQueue({
+      currentIndex: currentIndex(),
+      trackCount: nextTracks.length,
+    })
+    shuffleHistory = []
+  }
+
+  const removeTrackFromQueue = (removeIndex: number) => {
+    const currentTracks = tracks()
+
+    if (
+      props.tracks !== undefined ||
+      !Number.isInteger(removeIndex) ||
+      removeIndex < 0 ||
+      removeIndex >= currentTracks.length
+    ) {
+      return
+    }
+
+    const resolution = resolveTrackRemoval({
+      currentIndex: currentIndex(),
+      removeIndex,
+      trackCount: currentTracks.length,
+    })
+    const nextTracks = currentTracks.filter((_track, index) => index !== removeIndex)
+    const removedTrack = currentTracks[removeIndex]
+    const nextTrack = nextTracks[resolution.nextCurrentIndex]
+    const shouldResume = isPlaying()
+
+    if (!initialPlaylistResolved && removedTrack !== undefined) {
+      removedTrackIdsBeforeInitialLoad.add(removedTrack.id)
+    }
+
+    playbackRequestRevision += 1
+    playbackRevision += 1
+    queueRevision += 1
+
+    if (resolution.currentTrackChanged && nextTrack !== undefined) {
+      const nextPlayback = {isPlaying: shouldResume, positionSeconds: 0, trackId: nextTrack.id}
+      playbackPersistence.setPendingPosition(nextPlayback)
+      playbackPersistence.writePlayback(nextPlayback)
+    } else if (nextTrack === undefined) {
+      playbackPersistence.setPendingPosition(null)
+    }
+
+    batch(() => {
+      setLoadedTracks(nextTracks)
+      setCurrentIndex(resolution.nextCurrentIndex)
+    })
+    shuffleQueue = createShuffleQueue({
+      currentIndex: resolution.nextCurrentIndex,
+      trackCount: nextTracks.length,
+    })
+    shuffleHistory = []
+
+    if (nextTrack === undefined) {
+      setIsPlaying(false)
+      visualizer.stop()
+      audioElement?.pause()
+      return
+    }
+
+    if (resolution.currentTrackChanged) {
+      queueMicrotask(restorePendingPlayback)
+    }
+  }
+
   const restartCurrentTrack = () => {
     if (!audioElement) {
       return
@@ -325,6 +424,7 @@ export default function PMusicPlayerContent(props: PMusicPlayerContentProps) {
 
   onMount(() => {
     const restoreRevision = playbackRevision
+    const restoreQueueRevision = queueRevision
     const storedPlaybackRequest = readPPlayback()
 
     if (props.tracks === undefined) {
@@ -335,11 +435,37 @@ export default function PMusicPlayerContent(props: PMusicPlayerContentProps) {
             return
           }
 
-          initializePlayback(nextTracks, null)
+          initialPlaylistResolved = true
+          const availableTracks = nextTracks.filter(
+            (track) => !removedTrackIdsBeforeInitialLoad.has(track.id),
+          )
+
+          if (queueRevision === restoreQueueRevision) {
+            initializePlayback(availableTracks, null)
+          } else {
+            const activeTrackId = currentTrack()?.id
+            const mergedTracks = appendUniqueTracks(availableTracks, tracks())
+            const activeIndex = mergedTracks.findIndex((track) => track.id === activeTrackId)
+
+            batch(() => {
+              setLoadedTracks(mergedTracks)
+              setCurrentIndex(activeIndex < 0 ? 0 : activeIndex)
+            })
+            shuffleQueue = createShuffleQueue({
+              currentIndex: activeIndex < 0 ? 0 : activeIndex,
+              trackCount: mergedTracks.length,
+            })
+            shuffleHistory = []
+          }
           // oxlint-disable-next-line solid/reactivity -- Late storage must respect the latest playback revision.
           storedPlaybackRequest.then((storedPlayback) => {
-            if (!destroyed && playbackRevision === restoreRevision && storedPlayback !== null) {
-              initializePlayback(nextTracks, storedPlayback)
+            if (
+              !destroyed &&
+              playbackRevision === restoreRevision &&
+              queueRevision === restoreQueueRevision &&
+              storedPlayback !== null
+            ) {
+              initializePlayback(availableTracks, storedPlayback)
             }
           })
         })
@@ -392,11 +518,13 @@ export default function PMusicPlayerContent(props: PMusicPlayerContentProps) {
       onAudioElement={(element) => {
         audioElement = element
       }}
+      onAlbumAdd={addTracksToQueue}
       onExpandedChange={toggleExpanded}
       onNextTrack={selectNextTrack}
       onPreviousTrack={selectPreviousTrack}
       onRepeatModeChange={toggleRepeatMode}
       onShuffleChange={toggleShuffle}
+      onTrackRemove={props.tracks === undefined ? removeTrackFromQueue : undefined}
       onTrackSelect={selectChosenTrack}
       repeatMode={repeatMode()}
       sceneStyle={props.sceneStyle}

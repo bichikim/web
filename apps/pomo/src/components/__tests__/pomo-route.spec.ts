@@ -1,6 +1,15 @@
 import {expect, it} from 'vitest'
 
-import {isPomoHomePath, usesPomoLayout} from '../pomo-route'
+import {isPomoHomePath, normalizePathname, usesPomoLayout} from '../pomo-route'
+
+it.each([
+  ['/', '/'],
+  ['///', '/'],
+  ['/dev/terms', '/dev/terms'],
+  ['/dev/terms/', '/dev/terms'],
+])('should normalize %s to %s', (pathname, expected) => {
+  expect(normalizePathname(pathname)).toBe(expected)
+})
 
 it.each([
   ['/', true],

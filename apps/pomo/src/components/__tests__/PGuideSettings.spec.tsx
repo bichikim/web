@@ -16,10 +16,10 @@ afterEach(() => {
   vi.clearAllMocks()
 })
 
-it('should explain the complete Pomo experience inside the settings tab', () => {
+it('should explain the complete Pomofi experience inside the settings tab', () => {
   render(() => <PGuideSettings />)
 
-  expect(screen.getByRole('heading', {level: 2, name: 'Pomo 설명서'})).toBeDefined()
+  expect(screen.getByRole('heading', {level: 2, name: 'Pomofi 설명서'})).toBeDefined()
   expect(screen.getByText(/집중 25분과 짧은 휴식 5분/)).toBeDefined()
   expect(screen.getByText(/집중 4회를 마치면 긴 휴식 15분/)).toBeDefined()
   expect(screen.getByRole('heading', {name: '장면'})).toBeDefined()

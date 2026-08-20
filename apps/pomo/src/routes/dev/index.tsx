@@ -44,16 +44,16 @@ const TextMoodCard = () => (
 export default function HomePage() {
   return (
     <main class={MAIN_CLASSES}>
-      <Title>Pomo — Creative Labs</Title>
+      <Title>Pomofi — Creative Labs</Title>
       <div class={BACKGROUND_CLASSES} />
       <section class="relative w-full max-w-5xl">
         <A class={POMO_LINK_CLASSES} href="/">
           <span aria-hidden="true" class="i-tabler-arrow-left size-4" />
-          Pomo로 돌아가기
+          Pomofi로 돌아가기
         </A>
         <header class="max-w-2xl">
           <p class="m-0 text-xs font-750 tracking-[0.28em] text-#f2a7b8 uppercase">
-            Pomo creative labs
+            Pomofi creative labs
           </p>
           <h1 class="mb-0 mt-4 text-4xl font-800 tracking--0.045em sm:text-6xl">
             캐릭터를 만들고,

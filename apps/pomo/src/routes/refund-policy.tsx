@@ -1,4 +1,3 @@
-import {Meta, Title} from '@solidjs/meta'
 import {A} from '@solidjs/router'
 import {cx} from 'class-variance-authority'
 
@@ -39,7 +38,7 @@ const PolicyIntro = () => (
       Consumer refund policy
     </p>
     <h1 class="mb-0 mt-4 max-w-3xl text-3xl font-800 tracking--0.04em xs:text-5xl xs:leading-tight">
-      Pomo 환불 및 청약철회 정책
+      Pomofi 환불 및 청약철회 정책
     </h1>
     <p class="mb-0 mt-5 max-w-3xl text-sm leading-7 text-#d8cbd9 xs:text-base xs:leading-8">
       실물 응원 굿즈와 주간·월간 서비스 접근권의 청약철회, 계약 해지 및 환불 기준을 안내합니다.
@@ -102,8 +101,8 @@ const PurchasePolicySections = () => (
         신청할 수 있습니다.
       </p>
       <p class={PARAGRAPH_CLASSES}>
-        계약내용에 관한 서면을 받지 못했거나 Pomo의 주소 등이 적히지 않은 서면을 받은 경우에는
-        Pomo의 주소를 안 날 또는 알 수 있었던 날부터 7일 이내에 신청할 수 있습니다. 청약철회 방해
+        계약내용에 관한 서면을 받지 못했거나 Pomofi의 주소 등이 적히지 않은 서면을 받은 경우에는
+        Pomofi의 주소를 안 날 또는 알 수 있었던 날부터 7일 이내에 신청할 수 있습니다. 청약철회 방해
         행위가 있었던 경우에는 그 행위가 끝난 날부터 7일 이내에 신청할 수 있습니다.
       </p>
       <p class={PARAGRAPH_CLASSES}>
@@ -131,13 +130,13 @@ const PurchasePolicySections = () => (
         <li>시간이 지나 재판매가 곤란할 정도로 상품 가치가 현저히 감소한 경우</li>
         <li>복제 가능한 상품의 포장을 훼손한 경우</li>
         <li>
-          소비자의 주문에 따라 개별 제작되는 상품으로서 청약철회를 인정하면 Pomo에 회복하기 어려운
-          중대한 피해가 예상되고, Pomo가 주문 전에 그 사실을 별도로 고지하여 소비자의 전자적 동의를
-          받은 경우
+          소비자의 주문에 따라 개별 제작되는 상품으로서 청약철회를 인정하면 Pomofi에 회복하기 어려운
+          중대한 피해가 예상되고, Pomofi가 주문 전에 그 사실을 별도로 고지하여 소비자의 전자적
+          동의를 받은 경우
         </li>
       </ul>
       <p class={PARAGRAPH_CLASSES}>
-        Pomo는 청약철회 제한 사유를 상품 상세 화면 또는 소비자가 쉽게 볼 수 있는 곳에 명확히
+        Pomofi는 청약철회 제한 사유를 상품 상세 화면 또는 소비자가 쉽게 볼 수 있는 곳에 명확히
         표시합니다. 필요한 표시나 별도 동의를 갖추지 않은 경우에는 관계 법령이 허용하는 범위에서
         청약철회를 제한하지 않습니다.
       </p>
@@ -154,7 +153,7 @@ const PurchasePolicySections = () => (
           청약철회하면 결제금액 전액을 환불합니다.
         </li>
         <li>
-          <strong class={EMPHASIS_CLASSES}>이용 권한 활성화 후</strong> — Pomo는 소비자에게 유리한
+          <strong class={EMPHASIS_CLASSES}>이용 권한 활성화 후</strong> — Pomofi는 소비자에게 유리한
           자율 기준으로 언제든 해지를 허용하고, 환불 신청 접수 시점부터 남은 이용시간에 해당하는
           금액을 환불합니다.
         </li>
@@ -171,8 +170,8 @@ const PurchasePolicySections = () => (
       </p>
       <p class={PARAGRAPH_CLASSES}>
         상품과 접근권을 함께 판매한 경우에는 각 항목의 실제 결제금액을 구분하여 이 정책에 따라 각각
-        환불합니다. Pomo가 자동 갱신을 제공하는 경우 소비자는 다음 결제 전에 언제든 갱신을 해지할 수
-        있으며, 이미 갱신된 이용권은 위 기준에 따라 환불합니다.
+        환불합니다. Pomofi가 자동 갱신을 제공하는 경우 소비자는 다음 결제 전에 언제든 갱신을 해지할
+        수 있으며, 이미 갱신된 이용권은 위 기준에 따라 환불합니다.
       </p>
     </section>
   </>
@@ -185,10 +184,10 @@ const RefundProcessSections = () => (
       <p class={PARAGRAPH_CLASSES}>
         상품 또는 서비스가 표시·광고 내용과 다르거나 계약과 다르게 제공된 경우 소비자는 제1항의 특별
         청약철회 기간 안에 환불, 교환 또는 계약 이행을 요구할 수 있습니다. 이 경우 반품에 필요한
-        비용은 Pomo가 부담합니다.
+        비용은 Pomofi가 부담합니다.
       </p>
       <p class={PARAGRAPH_CLASSES}>
-        Pomo의 책임으로 서비스를 전혀 이용할 수 없었고 합리적인 기간 안에 복구되지 않은 경우에는
+        Pomofi의 책임으로 서비스를 전혀 이용할 수 없었고 합리적인 기간 안에 복구되지 않은 경우에는
         이용하지 못한 기간에 해당하는 금액을 환불하거나 소비자와 합의하여 이용기간을 연장합니다.
         관계 법령 또는 소비자분쟁해결기준이 더 유리한 권리를 정한 경우에는 그 기준을 적용합니다.
       </p>
@@ -197,7 +196,7 @@ const RefundProcessSections = () => (
     <section class={SECTION_CLASSES} id="request">
       <h2 class={HEADING_CLASSES}>5. 신청 및 반환 방법</h2>
       <p class={PARAGRAPH_CLASSES}>
-        소비자는 <strong class={EMPHASIS_CLASSES}>Pomo 앱 내 고객지원</strong> 또는{' '}
+        소비자는 <strong class={EMPHASIS_CLASSES}>Pomofi 앱 내 고객지원</strong> 또는{' '}
         <strong class={EMPHASIS_CLASSES}>구매·결제 화면의 환불 요청 기능</strong>으로 다음 정보를
         보내 신청할 수 있습니다.
       </p>
@@ -209,7 +208,7 @@ const RefundProcessSections = () => (
       </ul>
       <p class={PARAGRAPH_CLASSES}>
         서면으로 청약철회를 신청한 경우에는 서면을 발송한 날에 효력이 발생합니다. 실물 상품은 신청
-        안내에 표시된 반품 주소와 방법에 따라 반환합니다. Pomo는 신청 접수 사실과 처리 결과를
+        안내에 표시된 반품 주소와 방법에 따라 반환합니다. Pomofi는 신청 접수 사실과 처리 결과를
         전자문서로 안내합니다.
       </p>
     </section>
@@ -217,12 +216,12 @@ const RefundProcessSections = () => (
     <section class={SECTION_CLASSES} id="refund">
       <h2 class={HEADING_CLASSES}>6. 반품 비용과 환불 시점</h2>
       <p class={PARAGRAPH_CLASSES}>
-        단순 변심에 따른 실물 상품의 반환 비용은 소비자가 부담합니다. Pomo는 단순 변심을 이유로
+        단순 변심에 따른 실물 상품의 반환 비용은 소비자가 부담합니다. Pomofi는 단순 변심을 이유로
         위약금이나 손해배상을 청구하지 않습니다. 상품이 표시·광고 또는 계약과 다르게 제공된 경우의
-        반환 비용은 Pomo가 부담합니다.
+        반환 비용은 Pomofi가 부담합니다.
       </p>
       <p class={PARAGRAPH_CLASSES}>
-        Pomo는 다음 기준일부터 <strong class={EMPHASIS_CLASSES}>3영업일 이내</strong>에 결제금액을
+        Pomofi는 다음 기준일부터 <strong class={EMPHASIS_CLASSES}>3영업일 이내</strong>에 결제금액을
         환불하거나 환불에 필요한 조치를 합니다.
       </p>
       <ul class={LIST_CLASSES}>
@@ -231,8 +230,8 @@ const RefundProcessSections = () => (
         <li>아직 공급하지 않은 상품 또는 서비스 — 청약철회 신청을 받은 날</li>
       </ul>
       <p class={PARAGRAPH_CLASSES}>
-        카드 등 결제수단을 사용한 경우 Pomo는 지체 없이 결제 취소 또는 환급을 요청합니다.
-        결제사업자의 처리 일정에 따라 실제 입금 시점은 달라질 수 있습니다. Pomo가 법정 환급기한을
+        카드 등 결제수단을 사용한 경우 Pomofi는 지체 없이 결제 취소 또는 환급을 요청합니다.
+        결제사업자의 처리 일정에 따라 실제 입금 시점은 달라질 수 있습니다. Pomofi가 법정 환급기한을
         넘긴 경우에는 관계 법령에 따른 지연배상금을 지급합니다.
       </p>
     </section>
@@ -244,7 +243,7 @@ const LegalPolicySection = () => (
     <h2 class={HEADING_CLASSES}>7. 증명, 분쟁 및 법령의 우선 적용</h2>
     <p class={PARAGRAPH_CLASSES}>
       계약 체결·공급 시기, 이용 개시 여부, 상품 훼손의 책임 등 청약철회 제한과 관련하여 다툼이 있는
-      경우 관계 법령에 따라 Pomo가 필요한 사실을 증명합니다.
+      경우 관계 법령에 따라 Pomofi가 필요한 사실을 증명합니다.
     </p>
     <p class={PARAGRAPH_CLASSES}>
       이 정책은{' '}
@@ -276,16 +275,11 @@ const PolicyArticle = () => (
 export default function RefundPolicyPage() {
   return (
     <main class={MAIN_CLASSES}>
-      <Title>Pomo — 환불 및 청약철회 정책</Title>
-      <Meta
-        content="Pomo 실물 응원 굿즈와 주간·월간 서비스 접근권의 환불 및 청약철회 기준을 안내합니다."
-        name="description"
-      />
       <div class={BACKGROUND_CLASSES} />
 
       <div class="relative mx-auto grid w-full max-w-6xl gap-8">
         <A class="w-fit text-sm font-700 text-#d8cbd9 no-underline hover:text-white" href="/">
-          ← Pomo로 돌아가기
+          ← Pomofi로 돌아가기
         </A>
 
         <PolicyIntro />
@@ -297,9 +291,9 @@ export default function RefundPolicyPage() {
         <footer class={FOOTER_CLASSES}>
           <div>
             <p class="m-0 font-700 text-#a99cab">환불 접수 및 문의</p>
-            <p class="mb-0 mt-1">Pomo 앱 내 고객지원 또는 구매·결제 화면의 환불 요청 기능</p>
+            <p class="mb-0 mt-1">Pomofi 앱 내 고객지원 또는 구매·결제 화면의 환불 요청 기능</p>
           </div>
-          <span>© Pomo</span>
+          <span>© Pomofi</span>
         </footer>
       </div>
     </main>

@@ -87,18 +87,18 @@ it('should replace an added recommendation with a stored feed item', () => {
 
   expect(screen.queryByText('아직 저장된 피드가 없어요. 피드 주소를 추가해 주세요.')).toBeNull()
   expect(screen.getByText('오늘의 역사')).toBeDefined()
-  expect(screen.getByText('Pomo 5분 RSS')).toBeDefined()
-  expect(screen.getByText('Pomo 5분 Atom')).toBeDefined()
+  expect(screen.getByText('Pomofi 5분 RSS')).toBeDefined()
+  expect(screen.getByText('Pomofi 5분 Atom')).toBeDefined()
 
   fireEvent.click(screen.getByRole('button', {name: '오늘의 역사 추천 피드 추가'}))
 
   expect(screen.queryByText('오늘의 역사')).toBeNull()
   expect(screen.getByText(historyAddress)).toBeDefined()
 
-  fireEvent.click(screen.getByRole('button', {name: 'Pomo 5분 RSS 추천 피드 추가'}))
+  fireEvent.click(screen.getByRole('button', {name: 'Pomofi 5분 RSS 추천 피드 추가'}))
 
-  expect(screen.queryByText('Pomo 5분 RSS')).toBeNull()
-  expect(screen.getByText('Pomo 5분 Atom')).toBeDefined()
+  expect(screen.queryByText('Pomofi 5분 RSS')).toBeNull()
+  expect(screen.getByText('Pomofi 5분 Atom')).toBeDefined()
   expect(screen.getByText(recommendedAddress)).toBeDefined()
   expect(localStorage.getItem('pomo:focus-room-feed-connections:v1')).toContain(
     '"voiceId":"default"',

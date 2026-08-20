@@ -23,8 +23,8 @@ beforeEach(() => {
 })
 
 it.each([
-  [undefined, 'Pomo — 대화 만들기', 'new'],
-  ['saved-dialogue', 'Pomo — 대화 편집하기', 'saved-dialogue'],
+  [undefined, 'Pomofi — 대화 만들기', 'new'],
+  ['saved-dialogue', 'Pomofi — 대화 편집하기', 'saved-dialogue'],
 ])('should use the matching page title for dialogue id %s', (dialogueId, title, editorId) => {
   routerMocks.useSearchParams.mockReturnValue([{dialogueId}])
 

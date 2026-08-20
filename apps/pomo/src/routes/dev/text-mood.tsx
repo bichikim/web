@@ -20,7 +20,7 @@ const FALLBACK_CLASSES = cx(
 export default function TextMoodPage() {
   return (
     <main class={MAIN_CLASSES}>
-      <Title>Pomo — 글 분위기 분석 실험실</Title>
+      <Title>Pomofi — 글 분위기 분석 실험실</Title>
       <div class={BACKGROUND_CLASSES} />
       <div class="relative mx-auto grid w-full max-w-6xl gap-4">
         <A class="w-fit text-sm font-650 text-#bdb2c4 no-underline hover:text-white" href="/dev">

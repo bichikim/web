@@ -244,7 +244,7 @@ export const PSettings = (props: PSettingsProps) => {
           onOpenChange={setIsOpen}
           placement="top"
           size="wide"
-          title="Pomo 설정"
+          title="Pomofi 설정"
           titleVisibility="visually-hidden"
         >
           <Tabs.Content value="general">

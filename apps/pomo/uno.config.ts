@@ -2,6 +2,7 @@ import baseConfig from '@winter-love/unocss-config'
 import {defineConfig, mergeConfigs, presetIcons, type PresetWind3Theme, type Variant} from 'unocss'
 
 import scribbleIcons from './icon-sets/scribble.json'
+import albumData from './public/audio/albums.json'
 
 const createParentVariant = (name: string, parent: string): Variant => {
   return (matcher) => {
@@ -116,6 +117,7 @@ body {
 `,
       },
     ],
+    safelist: albumData.albums.map((album) => album.icon),
     theme: {
       animation: {
         counts: {

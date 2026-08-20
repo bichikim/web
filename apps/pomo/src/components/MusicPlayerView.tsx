@@ -8,6 +8,8 @@ import type {PTrack} from '../features/focus-room-audio/focus-room-playlist'
 import type {RepeatMode} from '../features/focus-room-audio/playback-policy'
 import type {PSceneStyle} from '../features/focus-room-animation'
 import {POverflowMarquee} from './POverflowMarquee'
+import {PAlbumLibrary} from './PAlbumLibrary'
+import {PPlayerUtilityButton} from './PPlayerUtilityButton'
 import {PPlaybackModes} from './PPlaybackModes'
 import {PScribbleCircleControl} from './PScribbleCircleControl'
 import {PScribbleFrame, SCRIBBLE_MASK_IMAGE} from './PScribbleFrame'
@@ -120,11 +122,6 @@ const CLASSES = {
     'pomo-player__track-title text-[#fffaf1] text-[0.9375rem] font-[750] leading-5',
     'tracking-[-0.01em]',
   ].join(' '),
-  playerUtility: [
-    'pomo-player__utility text-muted-foreground',
-    '[&:focus-visible]:outline-2 [&:focus-visible]:outline-solid [&:focus-visible]:outline-primary',
-    '[&:focus-visible]:[outline-offset:2px]',
-  ].join(' '),
   playerVisualizer: [
     'pomo-player__visualizer top-[-8px] bottom-[-8px] left-[-8px] right-[-8px]',
     '[filter:blur(8px)_saturate(1.25)_contrast(1.12)]',
@@ -184,11 +181,13 @@ interface MusicPlayerViewProps {
   readonly isPlaying: boolean
   readonly levels: readonly number[]
   readonly onAudioElement: (element: HTMLAudioElement) => void
+  readonly onAlbumAdd?: (tracks: readonly PTrack[]) => void
   readonly onExpandedChange: () => void
   readonly onNextTrack: () => void
   readonly onPreviousTrack: () => void
   readonly onRepeatModeChange: (mode: Exclude<RepeatMode, 'none'>) => void
   readonly onShuffleChange: () => void
+  readonly onTrackRemove?: (index: number) => void
   readonly onTrackSelect: (index: number) => void
   readonly repeatMode: RepeatMode
   readonly sceneStyle?: PSceneStyle
@@ -204,6 +203,7 @@ type ExpandedPlayerControlsProps = Pick<
   | 'onPreviousTrack'
   | 'onRepeatModeChange'
   | 'onShuffleChange'
+  | 'onTrackRemove'
   | 'onTrackSelect'
   | 'repeatMode'
   | 'sceneStyle'
@@ -341,6 +341,7 @@ const ExpandedPlayerControls = (props: ExpandedPlayerControlsProps) => (
 
     <PTrackList
       currentIndex={props.currentIndex}
+      onTrackRemove={props.onTrackRemove}
       onTrackSelect={props.onTrackSelect}
       tracks={props.tracks}
     />
@@ -398,159 +399,153 @@ const SummaryPlayButton = (
   </div>
 )
 
-export const MusicPlayerView = (props: MusicPlayerViewProps) => (
-  <div
-    class={cx(
-      'pomo-player-stage absolute inset-x-4 bottom-player-bottom-mobile',
-      'xs:inset-x-auto xs:bottom-6 xs:left-6 xs:w-[min(29rem,calc(100vw-3rem))]',
-    )}
-  >
+export const MusicPlayerView = (props: MusicPlayerViewProps) => {
+  const handleAlbumAdd = (tracks: readonly PTrack[]) => props.onAlbumAdd?.(tracks)
+
+  return (
     <div
-      class="pomo-player-frame relative w-full overflow-visible [&[data-expanded=true]]:h-full"
-      data-expanded={props.expanded}
+      class={cx(
+        'pomo-player-stage absolute inset-x-4',
+        'bottom-player-bottom-mobile',
+        'xs:inset-x-auto xs:bottom-6 xs:left-6 xs:w-[min(29rem,calc(100vw-3rem))]',
+      )}
     >
-      <media-controller
-        audio=""
-        class={cx(
-          CLASSES.player,
-          CLASSES.playerShell,
-          'relative w-full px-2 pt-2 pb-0.5',
-          props.expanded ? 'h-full overflow-visible' : 'overflow-hidden',
-          getShellClasses(props.sceneStyle),
-        )}
-        style={{'--pomo-player-scribble-mask': SCRIBBLE_MASK_IMAGE}}
+      <div
+        class="pomo-player-frame relative w-full overflow-visible [&[data-expanded=true]]:h-full"
+        data-expanded={props.expanded}
       >
-        <audio
-          crossorigin="anonymous"
-          preload="metadata"
-          ref={props.onAudioElement}
-          slot="media"
-          src={props.currentTrack?.source}
-        />
-
-        <div
-          aria-hidden="true"
+        <media-controller
+          audio=""
           class={cx(
-            CLASSES.playerBase,
-            'border border-solid backdrop-blur-surface pointer-events-none absolute inset-0',
-            getBaseClasses(props.sceneStyle),
+            CLASSES.player,
+            CLASSES.playerShell,
+            'relative w-full px-2 pt-2 pb-0.5',
+            props.expanded ? 'h-full overflow-visible' : 'overflow-hidden',
+            getShellClasses(props.sceneStyle),
           )}
-        />
-
-        <div
-          class={cx(
-            'pomo-player__visualizer-frame pointer-events-none absolute inset-x-0 top-0',
-            'overflow-hidden',
-            props.expanded ? 'h-18 rounded-t-panel' : 'bottom-0 rounded-panel',
-          )}
+          style={{'--pomo-player-scribble-mask': SCRIBBLE_MASK_IMAGE}}
         >
-          <div
-            aria-label="오디오 주파수 레벨"
-            class={cx(CLASSES.playerVisualizer, 'absolute flex items-end gap-0.5')}
-          >
-            <For each={props.levels}>
-              {(level) => (
-                <span
-                  aria-hidden="true"
-                  class={cx(
-                    CLASSES.level,
-                    'min-w-0 flex-1 rounded-t-full transition-[height,opacity] duration-75',
-                  )}
-                  style={{
-                    height: `${level}%`,
-                    opacity: props.isPlaying ? ACTIVE_VISUALIZER_OPACITY : IDLE_VISUALIZER_OPACITY,
-                  }}
-                />
-              )}
-            </For>
-          </div>
-        </div>
-
-        <media-time-range
-          aria-hidden="true"
-          class={cx(
-            CLASSES.playerProgress,
-            CLASSES.playerProgressCollapsed,
-            props.expanded && 'is-hidden',
-          )}
-          disabled={true}
-        />
-
-        <div class={CLASSES.playerSummary}>
-          <SummaryPlayButton
-            currentTrack={props.currentTrack}
-            expanded={props.expanded}
-            sceneStyle={props.sceneStyle}
+          <audio
+            crossorigin="anonymous"
+            preload="metadata"
+            ref={props.onAudioElement}
+            slot="media"
+            src={props.currentTrack?.source}
           />
 
           <div
-            class={cx(CLASSES.playerTitle, 'relative min-w-0 flex-1 px-2')}
-            data-pomo-player-title=""
-          >
-            <p class={cx(CLASSES.playerTrackTitle, 'm-0 min-w-0')}>
-              <POverflowMarquee text={props.currentTrack?.title ?? FALLBACK_TRACK_TITLE} />
-            </p>
-            <p class={cx(CLASSES.playerTrackArtist, 'mb-0 mt-0.5 min-w-0')}>
-              <POverflowMarquee text={props.currentTrack?.artist ?? FALLBACK_TRACK_ARTIST} />
-            </p>
-          </div>
-
-          <button
-            aria-expanded={props.expanded}
-            aria-label={props.expanded ? '플레이어 접기' : '플레이어 펼치기'}
+            aria-hidden="true"
             class={cx(
-              CLASSES.playerUtility,
-              'relative grid size-9 shrink-0 place-items-center rounded-full transition',
-              'text-muted-foreground hover:bg-secondary-soft',
-              'hover:text-foreground',
+              CLASSES.playerBase,
+              'border border-solid backdrop-blur-surface pointer-events-none absolute inset-0',
+              getBaseClasses(props.sceneStyle),
             )}
-            onClick={() => props.onExpandedChange()}
-            title={props.expanded ? '플레이어 접기' : '플레이어 펼치기'}
-            type="button"
+          />
+
+          <div
+            class={cx(
+              'pomo-player__visualizer-frame pointer-events-none absolute inset-x-0 top-0',
+              'overflow-hidden',
+              props.expanded ? 'h-18 rounded-t-panel' : 'bottom-0 rounded-panel',
+            )}
           >
-            <span
-              aria-hidden="true"
-              class={cx(
-                'size-4',
-                getPomoIconClass(
-                  props.expanded ? 'i-tabler-chevron-down' : 'i-tabler-chevron-up',
-                  props.sceneStyle,
-                ),
-              )}
-            />
-          </button>
-        </div>
-
-        <ExpandedPlayerProgress expanded={props.expanded} />
-
-        <div
-          aria-hidden={props.expanded ? undefined : 'true'}
-          class={cx(CLASSES.playerExpandedFrame, props.expanded && 'is-expanded')}
-          inert={!props.expanded}
-        >
-          <div class={cx(CLASSES.playerExpandedInner, props.expanded && 'is-expanded')}>
-            <ExpandedPlayerControls
-              currentIndex={props.currentIndex}
-              currentTrack={props.currentTrack}
-              onNextTrack={props.onNextTrack}
-              onPreviousTrack={props.onPreviousTrack}
-              onRepeatModeChange={props.onRepeatModeChange}
-              onShuffleChange={props.onShuffleChange}
-              onTrackSelect={props.onTrackSelect}
-              repeatMode={props.repeatMode}
-              sceneStyle={props.sceneStyle}
-              shuffleEnabled={props.shuffleEnabled}
-              tracks={props.tracks}
-            />
-
-            <div aria-hidden="true" class="h-1.5 flex-none" />
+            <div
+              aria-label="오디오 주파수 레벨"
+              class={cx(CLASSES.playerVisualizer, 'absolute flex items-end gap-0.5')}
+            >
+              <For each={props.levels}>
+                {(level) => (
+                  <span
+                    aria-hidden="true"
+                    class={cx(
+                      CLASSES.level,
+                      'min-w-0 flex-1 rounded-t-full transition-[height,opacity] duration-75',
+                    )}
+                    style={{
+                      height: `${level}%`,
+                      opacity: props.isPlaying
+                        ? ACTIVE_VISUALIZER_OPACITY
+                        : IDLE_VISUALIZER_OPACITY,
+                    }}
+                  />
+                )}
+              </For>
+            </div>
           </div>
-        </div>
-      </media-controller>
 
-      <Show when={props.sceneStyle === 'scribble'}>
-        <PScribbleFrame class="pomo-player__scribble-border" />
-      </Show>
+          <media-time-range
+            aria-hidden="true"
+            class={cx(
+              CLASSES.playerProgress,
+              CLASSES.playerProgressCollapsed,
+              props.expanded && 'is-hidden',
+            )}
+            disabled={true}
+          />
+
+          <div class={CLASSES.playerSummary}>
+            <SummaryPlayButton
+              currentTrack={props.currentTrack}
+              expanded={props.expanded}
+              sceneStyle={props.sceneStyle}
+            />
+
+            <div
+              class={cx(CLASSES.playerTitle, 'relative min-w-0 flex-1 px-2')}
+              data-pomo-player-title=""
+            >
+              <p class={cx(CLASSES.playerTrackTitle, 'm-0 min-w-0')}>
+                <POverflowMarquee text={props.currentTrack?.title ?? FALLBACK_TRACK_TITLE} />
+              </p>
+              <p class={cx(CLASSES.playerTrackArtist, 'mb-0 mt-0.5 min-w-0')}>
+                <POverflowMarquee text={props.currentTrack?.artist ?? FALLBACK_TRACK_ARTIST} />
+              </p>
+            </div>
+
+            <PAlbumLibrary onAddTracks={handleAlbumAdd} tracks={props.tracks} />
+
+            <PPlayerUtilityButton
+              accessibleLabel={props.expanded ? '플레이어 접기' : '플레이어 펼치기'}
+              expanded={props.expanded}
+              icon={getPomoIconClass(
+                props.expanded ? 'i-tabler-chevron-down' : 'i-tabler-chevron-up',
+                props.sceneStyle,
+              )}
+              onPress={() => props.onExpandedChange()}
+            />
+          </div>
+
+          <ExpandedPlayerProgress expanded={props.expanded} />
+
+          <div
+            aria-hidden={props.expanded ? undefined : 'true'}
+            class={cx(CLASSES.playerExpandedFrame, props.expanded && 'is-expanded')}
+            inert={!props.expanded}
+          >
+            <div class={cx(CLASSES.playerExpandedInner, props.expanded && 'is-expanded')}>
+              <ExpandedPlayerControls
+                currentIndex={props.currentIndex}
+                currentTrack={props.currentTrack}
+                onNextTrack={props.onNextTrack}
+                onPreviousTrack={props.onPreviousTrack}
+                onRepeatModeChange={props.onRepeatModeChange}
+                onShuffleChange={props.onShuffleChange}
+                onTrackRemove={props.onTrackRemove}
+                onTrackSelect={props.onTrackSelect}
+                repeatMode={props.repeatMode}
+                sceneStyle={props.sceneStyle}
+                shuffleEnabled={props.shuffleEnabled}
+                tracks={props.tracks}
+              />
+
+              <div aria-hidden="true" class="h-1.5 flex-none" />
+            </div>
+          </div>
+        </media-controller>
+        <Show when={props.sceneStyle === 'scribble'}>
+          <PScribbleFrame class="pomo-player__scribble-border" />
+        </Show>
+      </div>
     </div>
-  </div>
-)
+  )
+}

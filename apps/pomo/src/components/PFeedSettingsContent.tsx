@@ -135,13 +135,13 @@ const RECOMMENDED_DEV_FEEDS = [
   {
     description: '5분마다 현재 시각으로 새 RSS 항목을 만들어요.',
     id: 'pomo-dev-rss',
-    label: 'Pomo 5분 RSS',
+    label: 'Pomofi 5분 RSS',
     path: '/__dev/feeds/rss.xml',
   },
   {
     description: '5분마다 현재 시각으로 새 Atom 항목을 만들어요.',
     id: 'pomo-dev-atom',
-    label: 'Pomo 5분 Atom',
+    label: 'Pomofi 5분 Atom',
     path: '/__dev/feeds/atom.xml',
   },
 ] as const
