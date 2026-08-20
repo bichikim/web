@@ -1,6 +1,10 @@
 import {Application} from 'pixi.js'
 
-import {PEyeController, type PEyeState} from '../focus-room-animation/eye-animation-controller'
+import {
+  PEyeController,
+  type PEyeMode,
+  type PEyeState,
+} from '../focus-room-animation/eye-animation-controller'
 import {PixiLayerScene, type PixiLayerSceneDefinition} from '../focus-room-animation/layer-scene'
 import {createFocusRoomLayerState} from '../focus-room-animation/scene-layer-state'
 import {FOCUS_ROOM_MOUTH_CHANNELS} from '../focus-room-animation/scene-catalog-channels'
@@ -9,6 +13,7 @@ import type {PViseme} from '../lip-sync'
 
 export interface PLayerReviewState extends PEyeState {
   readonly animationEnabled: boolean
+  readonly eyeMode: PEyeMode
   readonly eyesVisible: boolean
   readonly handsVisible: boolean
   readonly headVisible: boolean
@@ -116,6 +121,7 @@ export class PLayerReviewRenderer {
     const latestState = this.#state
 
     if (latestState !== null) {
+      this.#eyes.setMode(latestState.eyeMode)
       this.#eyes.update(latestState)
       this.#syncEyes(latestState)
       scene.update(this.#toSceneState(latestState))
@@ -127,6 +133,7 @@ export class PLayerReviewRenderer {
 
   update(state: PLayerReviewState) {
     this.#state = state
+    this.#eyes.setMode(state.eyeMode)
     this.#eyes.update(state)
     this.#syncEyes(state)
     this.#scene?.update(this.#toSceneState(state))

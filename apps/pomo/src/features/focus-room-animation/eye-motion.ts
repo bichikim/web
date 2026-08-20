@@ -1,6 +1,6 @@
 import type {PixiScenePoint, PixiSceneTargetTranslation} from './layer-scene-definition'
 
-const EYE_TARGET_OFFSETS = [
+export const EYE_TARGET_OFFSETS = [
   {x: 0, y: 0},
   {x: -0.45, y: 0},
   {x: 0.45, y: 0},

@@ -16,6 +16,7 @@ import {
 } from './opacity-twinkle'
 import {createPushFilter, createPushFilters, type PushFilter} from './push-filter-factory'
 import {acquireTextureGroup, releaseTextureGroup, type TextureLease} from './texture-leases'
+import {applyVisibilityCycle} from './visibility-cycle'
 import type {
   CreateStaticLayerSceneOptions,
   PixiLayerSceneDefinition,
@@ -300,15 +301,13 @@ export class PixiLayerScene {
 
     state.elapsedSeconds += deltaSeconds
 
+    if (motion.definition.kind === 'visibility-cycle') {
+      this.#advanceVisibilityCycle(layer, motion)
+      return
+    }
+
     if (motion.definition.kind === 'looping-translation') {
-      const progress = Math.min(1, state.elapsedSeconds / state.travelSeconds)
-      applyLoopingTranslation(layer.container, layer.sprite, motion.definition, progress)
-
-      if (progress === 1) {
-        state.elapsedSeconds = 0
-        state.travelSeconds = this.#randomDuration(motion.definition.travel)
-      }
-
+      this.#advanceLoopingTranslation(layer, motion)
       return
     }
 
@@ -365,6 +364,41 @@ export class PixiLayerScene {
     }
   }
 
+  #advanceLoopingTranslation(layer: LayerInstance, motion: MotionInstance) {
+    const {state} = motion
+
+    if (motion.definition.kind !== 'looping-translation') {
+      return
+    }
+
+    const progress = Math.min(1, state.elapsedSeconds / state.travelSeconds)
+    applyLoopingTranslation(layer.container, layer.sprite, motion.definition, progress)
+
+    if (progress === 1) {
+      state.elapsedSeconds = 0
+      state.travelSeconds = this.#randomDuration(motion.definition.travel)
+    }
+  }
+
+  #advanceVisibilityCycle(layer: LayerInstance, motion: MotionInstance) {
+    const {state} = motion
+
+    if (motion.definition.kind !== 'visibility-cycle') {
+      return
+    }
+
+    if (state.elapsedSeconds >= state.travelSeconds) {
+      state.elapsedSeconds %= state.travelSeconds
+      state.travelSeconds = this.#randomDuration(motion.definition.travel)
+    }
+
+    applyVisibilityCycle(
+      layer.sprite,
+      motion.definition,
+      state.elapsedSeconds / state.travelSeconds,
+    )
+  }
+
   #createMotionState(motion: PixiSceneMotion): MotionState {
     const currentTarget = getMotionTarget(motion, -1)
     const travelSeconds = this.#randomDuration(motion.travel)
@@ -373,7 +407,9 @@ export class PixiLayerScene {
       currentTarget,
       direction: 1,
       elapsedSeconds:
-        motion.kind === 'looping-translation' || motion.kind === 'opacity-pulse'
+        motion.kind === 'looping-translation' ||
+        motion.kind === 'opacity-pulse' ||
+        motion.kind === 'visibility-cycle'
           ? (motion.phase ?? 0) * travelSeconds
           : 0,
       nextTarget: getNextMotionTarget(motion, currentTarget, 1, this.#random),
@@ -526,7 +562,9 @@ export class PixiLayerScene {
     motion.state.nextTarget = getNextMotionTarget(motion.definition, currentTarget, 1, this.#random)
     motion.state.travelSeconds = this.#randomDuration(motion.definition.travel)
     motion.state.elapsedSeconds =
-      motion.definition.kind === 'looping-translation' || motion.definition.kind === 'opacity-pulse'
+      motion.definition.kind === 'looping-translation' ||
+      motion.definition.kind === 'opacity-pulse' ||
+      motion.definition.kind === 'visibility-cycle'
         ? (motion.definition.phase ?? 0) * motion.state.travelSeconds
         : 0
 

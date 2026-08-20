@@ -2,6 +2,7 @@ import {A, useNavigate} from '@solidjs/router'
 import {cx} from 'class-variance-authority'
 import {For, Show} from 'solid-js'
 
+import {usePSceneStyle} from '../features/focus-room-animation'
 import {
   usePDialogueEditor,
   type UsePDialogueEditorProps,
@@ -12,7 +13,8 @@ import {
   SUPERTONIC_MODELS,
   SUPERTONIC_VOICES,
 } from '../features/supertonic'
-import {getPrimaryMood, getPrimaryMoodIcon} from '../features/text-mood'
+import {getPrimaryMood} from '../features/text-mood'
+import {PFaceIcon} from './PFaceIcon'
 
 const CLASSES = {
   dialogueEditor: [
@@ -152,6 +154,7 @@ const formatDuration = (durationMs: number) => {
 export default function PDialogueEditor(props: PDialogueEditorProps) {
   const navigate = useNavigate()
   const events = usePEvents()
+  const sceneStyleController = usePSceneStyle()
   const editorProps: UsePDialogueEditorProps = {dialogueId: () => props.dialogueId}
   const editor = usePDialogueEditor(editorProps)
   const isBusy = () => {
@@ -363,10 +366,10 @@ export default function PDialogueEditor(props: PDialogueEditorProps) {
 
                         return (
                           <div class={CLASSES.dialogueEditorMood}>
-                            <img
+                            <PFaceIcon
                               alt=""
-                              aria-hidden="true"
-                              src={getPrimaryMoodIcon(definition.id)}
+                              mood={definition.id}
+                              sceneStyle={sceneStyleController.sceneStyle()}
                             />
                             <span>{definition.label}</span>
                           </div>

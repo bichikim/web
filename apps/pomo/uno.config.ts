@@ -1,5 +1,7 @@
 import baseConfig from '@winter-love/unocss-config'
-import {defineConfig, mergeConfigs, type PresetWind3Theme, type Variant} from 'unocss'
+import {defineConfig, mergeConfigs, presetIcons, type PresetWind3Theme, type Variant} from 'unocss'
+
+import scribbleIcons from './icon-sets/scribble.json'
 
 const createParentVariant = (name: string, parent: string): Variant => {
   return (matcher) => {
@@ -16,7 +18,10 @@ const createParentVariant = (name: string, parent: string): Variant => {
   }
 }
 
-export default mergeConfigs([
+const isPresetNamed = (preset: unknown, name: string) =>
+  typeof preset === 'object' && preset !== null && 'name' in preset && preset.name === name
+
+const config = mergeConfigs([
   baseConfig,
   defineConfig<PresetWind3Theme>({
     extendTheme: (theme) => {
@@ -269,3 +274,14 @@ body {
     ],
   }),
 ])
+
+config.presets = [
+  ...(config.presets ?? []).filter((preset) => !isPresetNamed(preset, '@unocss/preset-icons')),
+  presetIcons({
+    collections: {
+      'pomo-scribble': () => scribbleIcons,
+    },
+  }),
+]
+
+export default config
