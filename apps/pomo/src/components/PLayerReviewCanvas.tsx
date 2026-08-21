@@ -4,7 +4,7 @@ import {
   PLayerReviewRenderer,
   type PLayerReviewState,
 } from '../features/focus-room-layer-review/scene-renderer'
-import {getPSceneLayer} from '../features/focus-room-animation/scene-layer-catalog'
+import {getPSceneReviewLayer} from '../features/focus-room-animation/scene-layer-catalog'
 import type {PSceneId} from '../features/focus-room-animation/scene-catalog'
 
 export interface PLayerReviewCanvasProps extends PLayerReviewState {
@@ -38,7 +38,7 @@ export default function PLayerReviewCanvas(props: PLayerReviewCanvasProps) {
     }
 
     renderer = new PLayerReviewRenderer(host, {
-      definition: getPSceneLayer(props.sceneId, props.sceneStyle),
+      definition: getPSceneReviewLayer(props.sceneId, props.sceneStyle),
     })
     renderer.initialize(untrack(getReviewState)).catch(globalThis.reportError)
 
@@ -53,7 +53,7 @@ export default function PLayerReviewCanvas(props: PLayerReviewCanvasProps) {
       () => [props.sceneId, props.sceneStyle] as const,
       ([sceneId, sceneStyle]) => {
         renderer
-          ?.replaceDefinition(getPSceneLayer(sceneId, sceneStyle))
+          ?.replaceDefinition(getPSceneReviewLayer(sceneId, sceneStyle))
           .catch(globalThis.reportError)
       },
       {defer: true},

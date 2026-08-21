@@ -6,10 +6,12 @@ import {readPSceneStyle, writePSceneStyle} from './style-storage'
 /** Owns the browser-only lifecycle for the persisted focus-room scene style. */
 export const usePSceneStyle = (): PSceneStyleController => {
   const [sceneStyle, setSceneStyle] = createSignal<PSceneStyle>(getDefaultPSceneStyle())
+  const [isReady, setIsReady] = createSignal(false)
   let changeRevision = 0
   const onSceneStyleChange = (nextSceneStyle: PSceneStyle) => {
     changeRevision += 1
     setSceneStyle(nextSceneStyle)
+    setIsReady(true)
     writePSceneStyle(nextSceneStyle).catch(globalThis.reportError)
   }
 
@@ -24,11 +26,16 @@ export const usePSceneStyle = (): PSceneStyleController => {
         }
       })
       .catch(globalThis.reportError)
+      .finally(() => {
+        if (active) {
+          setIsReady(true)
+        }
+      })
 
     onCleanup(() => {
       active = false
     })
   })
 
-  return {onSceneStyleChange, sceneStyle}
+  return {isReady, onSceneStyleChange, sceneStyle}
 }
