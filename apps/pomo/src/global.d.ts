@@ -5,6 +5,7 @@ import type {JSX} from 'solid-js'
 
 interface ImportMetaEnv {
   readonly POMO_IS_APPS_IN_TOSS: boolean
+  readonly POMO_PUBLIC_ORIGIN: string
 }
 
 type MediaChromeAttributes = JSX.HTMLAttributes<HTMLElement> & {

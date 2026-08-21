@@ -6,7 +6,7 @@ import {renderRss} from '../render-rss'
 const createInput = (): FeedRenderInput => ({
   definition: {
     description: '날짜별 사건 & 인물 <요약>',
-    homeUrl: 'https://pomo.example/feeds/history?view=all&lang=ko',
+    homeUrl: 'https://pomo.example/api/feeds/history?view=all&lang=ko',
     language: 'ko-KR',
     slug: 'today-in-history',
     title: '오늘의 역사 & 기록',
@@ -29,7 +29,7 @@ const createInput = (): FeedRenderInput => ({
       url: 'https://pomo.example/history/newer?source=one&lang=ko',
     },
   ],
-  selfUrl: 'https://pomo.example/feeds/today-in-history/rss.xml?label="오늘"&owner=민수\'s',
+  selfUrl: 'https://pomo.example/api/feeds/today-in-history/rss.xml?label="오늘"&owner=민수\'s',
   updatedAt: '2026-08-15T12:00:00.000Z',
 })
 
@@ -42,7 +42,7 @@ describe('renderRss', () => {
     expect(document).toContain('<title>오늘의 역사 &amp; 기록</title>')
     expect(document).toContain('<description>날짜별 사건 &amp; 인물 &lt;요약&gt;</description>')
     expect(document).toContain(
-      'href="https://pomo.example/feeds/today-in-history/rss.xml?label=&quot;오늘&quot;&amp;owner=민수&apos;s"',
+      'href="https://pomo.example/api/feeds/today-in-history/rss.xml?label=&quot;오늘&quot;&amp;owner=민수&apos;s"',
     )
     expect(document).toContain('<guid isPermaLink="false">urn:pomo:history:newer&amp;stable</guid>')
     expect(document).toContain(

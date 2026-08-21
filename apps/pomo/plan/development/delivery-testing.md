@@ -21,14 +21,21 @@ build:web                    → 브라우저용 SSR 빌드
 
 앱인토스 SSG에는 서버 런타임과 비밀 값을 포함하지 않는다. 실행 중 필요한 서버 함수는 브라우저용 SSR 서버에 연결한다. 두 빌드는 같은 소스 리비전의 서버 함수 계약을 사용한다.
 
-앱인토스 SSG가 연결할 SSR 서버 주소는 빌드 환경 변수로 주입하며 개발, 미리보기와 운영 환경별로 구분한다.
+앱인토스 SSG가 연결할 SSR 서버 Origin은 `POMO_PUBLIC_ORIGIN`으로 주입하며, 생략하면
+`https://www.pomofi.io`를 사용한다. 일반 웹 빌드는 현재 페이지의 self Origin을 사용한다.
 
-Vercel 서버 함수를 포함한 향후 HTTP API는 환경별 CORS 허용 출처 목록만 허용한다. 앱인토스 출처는 아래 두 개를 사용하며, Origin은 경로와 끝 `/`없이 정확히 비교한다.
+Vercel 서버 함수를 포함한 `/api/*` HTTP API는 환경별 CORS 허용 출처 목록만 허용한다. 앱인토스 출처는 아래 네 개를 사용하며, Origin은 경로와 끝 `/`없이 정확히 비교한다.
 
 - 운영: `https://pomo-app.apps.tossmini.com`
 - 콘솔 QR 테스트: `https://pomo-app.private-apps.tossmini.com`
+- R2 CORS 호환 운영: `https://pomo-app.web.tossmini.com`
+- R2 CORS 호환 테스트: `https://pomo-app.private-web.tossmini.com`
 
-Cloudflare R2 `pomofi-audio` 버킷은 `storage.pomofi.io` 사용자 지정 도메인으로 제공한다. 기존 웹과 로컬 개발 출처와 함께 위 두 출처의 `GET`, `HEAD`를 허용한다. 오디오 범위 요청을 위해 `Range` 요청 헤더와 `Accept-Ranges`, `Content-Length`, `Content-Range`, `Content-Type`, `ETag` 응답 헤더 노출을 유지한다.
+Vercel에서는 System Environment Variables 자동 노출을 활성화하고 `VERCEL_URL`,
+`VERCEL_BRANCH_URL`, `VERCEL_PROJECT_PRODUCTION_URL`이 나타내는 HTTPS Origin도 허용한다. Vite
+개발 서버에서는 현재 요청의 self Origin을 추가로 허용한다.
+
+Cloudflare R2 `pomofi-audio` 버킷은 `storage.pomofi.io` 사용자 지정 도메인으로 제공한다. 기존 웹과 로컬 개발 출처와 함께 위 네 출처의 `GET`, `HEAD`를 허용한다. 오디오 범위 요청을 위해 `Range` 요청 헤더와 `Accept-Ranges`, `Content-Length`, `Content-Range`, `Content-Type`, `ETag` 응답 헤더 노출을 유지한다.
 
 앱인토스 `.ait` 번들은 압축 해제 기준 100MB 이하로 유지한다. Supertonic 3 INT8 모델은 번들 용량 계산에서 제외되도록 원격 자산으로 분리한다.
 

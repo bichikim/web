@@ -29,7 +29,7 @@ const createInput = (): FeedRenderInput => ({
       url: 'https://pomo.example/history/present?source="archive"&owner=민수\'s',
     },
   ],
-  selfUrl: "https://pomo.example/feeds/today-in-history/atom.xml?mode=full&owner=민수's",
+  selfUrl: "https://pomo.example/api/feeds/today-in-history/atom.xml?mode=full&owner=민수's",
   updatedAt: '2026-08-15T13:00:00.000Z',
 })
 

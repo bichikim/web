@@ -9,6 +9,9 @@ import {defineConfig, type Plugin} from 'vite'
 import {createDevFeedPlugin} from './src/features/dev-feed/index.ts'
 
 const isAppsInToss = process.env.POMO_BUILD_TARGET === 'apps-in-toss'
+const appsInTossApiOrigin = new URL(
+  process.env.POMO_PUBLIC_ORIGIN?.trim() || 'https://www.pomofi.io',
+).origin
 const assetLibraryPattern = /[/\\]asset-library[/\\]/u
 const buildUnoCssEntryId = '\0pomo-build-uno.css'
 const scribbleIconSetPath = fileURLToPath(new URL('./icon-sets/scribble.json', import.meta.url))
@@ -103,6 +106,7 @@ const useStaticNitroEntry = {
 export default defineConfig({
   define: {
     'import.meta.env.POMO_IS_APPS_IN_TOSS': JSON.stringify(isAppsInToss),
+    'import.meta.env.POMO_PUBLIC_ORIGIN': JSON.stringify(appsInTossApiOrigin),
   },
   nitro: isAppsInToss
     ? {
@@ -134,7 +138,7 @@ export default defineConfig({
     createUnoCssInlineResolver(),
     resolveBuildUnoCss,
     ...scopeUnoCssToClient(UnoCSS({mode: 'dist-chunk'})),
-    solidStart({devOverlay: false}),
+    solidStart({devOverlay: false, middleware: './src/middleware/index.ts'}),
     createDevFeedPlugin(),
     excludeArchivedAssets,
     restartOnScribbleIconChange,
