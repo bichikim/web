@@ -42,7 +42,9 @@ it('should restore the stored scene style after mounting', async () => {
     />
   ))
 
+  expect(controller?.isReady()).toBe(false)
   await vi.waitFor(() => expect(controller?.sceneStyle()).toBe('scribble'))
+  expect(controller?.isReady()).toBe(true)
 })
 
 it('should update and persist both scene style choices', () => {
@@ -57,6 +59,7 @@ it('should update and persist both scene style choices', () => {
   ))
 
   controller?.onSceneStyleChange('original')
+  expect(controller?.isReady()).toBe(true)
   expect(controller?.sceneStyle()).toBe('original')
   expect(storageMocks.write).toHaveBeenLastCalledWith('original')
 

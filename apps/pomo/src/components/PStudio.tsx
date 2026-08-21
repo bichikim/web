@@ -467,20 +467,22 @@ export const PStudio = () => {
         <Show when={!hasSceneRendered()}>
           <PSceneFallback />
         </Show>
-        <PSceneCanvas
-          activity={activity()}
-          depthSource={selectedScene().depthSource}
-          gaze={sceneGaze()}
-          motionInput={motionInput()}
-          motionMode={motionMode()}
-          onLoadingChange={handleLoadingChange}
-          onMotionInputChange={setMotionInput}
-          source={selectedScene().source}
-          sceneId={selectedScene().id}
-          sceneStyle={sceneStyleController.sceneStyle()}
-          time={time()}
-          viseme={activeViseme()}
-        />
+        <Show when={sceneStyleController.isReady()}>
+          <PSceneCanvas
+            activity={activity()}
+            depthSource={selectedScene().depthSource}
+            gaze={sceneGaze()}
+            motionInput={motionInput()}
+            motionMode={motionMode()}
+            onLoadingChange={handleLoadingChange}
+            onMotionInputChange={setMotionInput}
+            source={selectedScene().source}
+            sceneId={selectedScene().id}
+            sceneStyle={sceneStyleController.sceneStyle()}
+            time={time()}
+            viseme={activeViseme()}
+          />
+        </Show>
       </figure>
 
       <div class={CLASSES.ui} hidden={!hasEntered()}>

@@ -212,8 +212,37 @@ const SCENE_LAYER_DATASETS = {
   scribble: SCRIBBLE_LAYER_SCENES,
 } satisfies Readonly<Record<PSceneStyle, Readonly<Record<PSceneId, PixiLayerSceneDefinition>>>>
 
-/** Resolves the render-only layer definition behind the canvas chunk boundary. */
-export const getPSceneLayer = (
+const runtimeScenes = new Map<string, PixiLayerSceneDefinition>()
+
+const getSceneLayer = (
   sceneId: PSceneId,
   sceneStyle: PSceneStyle = 'original',
 ): PixiLayerSceneDefinition => SCENE_LAYER_DATASETS[sceneStyle][sceneId]
+
+/** Resolves a runtime definition without review-only reference imagery. */
+export const getPSceneLayer = (
+  sceneId: PSceneId,
+  sceneStyle: PSceneStyle = 'original',
+): PixiLayerSceneDefinition => {
+  const cacheKey = `${sceneStyle}:${sceneId}`
+  const cachedScene = runtimeScenes.get(cacheKey)
+
+  if (cachedScene !== undefined) {
+    return cachedScene
+  }
+
+  const reviewScene = getSceneLayer(sceneId, sceneStyle)
+  const runtimeScene = {
+    ...reviewScene,
+    layers: reviewScene.layers.filter((layer) => layer.id !== 'reference'),
+  }
+  runtimeScenes.set(cacheKey, runtimeScene)
+
+  return runtimeScene
+}
+
+/** Resolves the complete layer definition for the development review canvas. */
+export const getPSceneReviewLayer = (
+  sceneId: PSceneId,
+  sceneStyle: PSceneStyle = 'original',
+): PixiLayerSceneDefinition => getSceneLayer(sceneId, sceneStyle)
