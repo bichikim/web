@@ -1,30 +1,41 @@
-const APPS_IN_TOSS_ORIGINS = new Set([
+import type {Middleware} from 'h3'
+
+const STATIC_ALLOWED_ORIGINS = new Set([
+  'https://pomofi.io',
+  'https://www.pomofi.io',
   'https://pomo-app.apps.tossmini.com',
   'https://pomo-app.private-apps.tossmini.com',
   'https://pomo-app.private-web.tossmini.com',
   'https://pomo-app.web.tossmini.com',
+])
+const DEVELOPMENT_ORIGINS = new Set([
+  'http://localhost:3000',
+  'http://localhost:3100',
+  'http://localhost:3200',
+  'http://localhost:3300',
+  'http://localhost:3400',
 ])
 const VERCEL_HOST_VARIABLES = [
   'VERCEL_URL',
   'VERCEL_BRANCH_URL',
   'VERCEL_PROJECT_PRODUCTION_URL',
 ] as const
-const ALLOWED_METHODS = ['GET', 'HEAD', 'OPTIONS', 'POST']
-const ALLOWED_HEADERS = ['Authorization', 'Content-Type']
+const ALLOWED_METHODS = ['GET', 'HEAD', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'DELETE']
+const ALLOWED_HEADERS = ['Authorization', 'Content-Type', 'Range', 'X-CSRF-Token']
+const EXPOSED_HEADERS = [
+  'Accept-Ranges',
+  'Content-Length',
+  'Content-Range',
+  'Content-Type',
+  'ETag',
+  'Last-Modified',
+]
 const PREFLIGHT_VARY_HEADERS = [
   'Origin',
   'Access-Control-Request-Method',
   'Access-Control-Request-Headers',
 ]
-
-interface CorsMiddlewareEvent {
-  readonly req: Request
-  readonly res: {
-    readonly headers: Headers
-  }
-}
-
-type NextMiddleware = () => unknown | Promise<unknown>
+const PREFLIGHT_MAX_AGE = '86400'
 
 const getVercelOrigin = (host: string | undefined): string | undefined => {
   const value = host?.trim()
@@ -47,11 +58,11 @@ const getVercelOrigin = (host: string | undefined): string | undefined => {
 }
 
 const isAllowedOrigin = (origin: string, requestOrigin: string): boolean => {
-  if (APPS_IN_TOSS_ORIGINS.has(origin)) {
+  if (origin === requestOrigin || STATIC_ALLOWED_ORIGINS.has(origin)) {
     return true
   }
 
-  if (process.env.NODE_ENV === 'development' && origin === requestOrigin) {
+  if (import.meta.env.DEV && DEVELOPMENT_ORIGINS.has(origin)) {
     return true
   }
 
@@ -73,7 +84,7 @@ const getAllowedOrigin = (request: Request): string | undefined => {
   return isAllowedOrigin(origin, new URL(request.url).origin) ? origin : undefined
 }
 
-const appendVaryHeaders = (headers: Headers, values: ReadonlyArray<string>) => {
+const appendVaryHeaders = (headers: Headers, values: ReadonlyArray<string>): void => {
   const existingValues =
     headers
       .get('Vary')
@@ -81,6 +92,12 @@ const appendVaryHeaders = (headers: Headers, values: ReadonlyArray<string>) => {
       .map((value) => value.trim())
       .filter(Boolean) ?? []
   headers.set('Vary', [...new Set([...existingValues, ...values])].join(', '))
+}
+
+const applyAllowedOrigin = (headers: Headers, origin: string): void => {
+  headers.set('Access-Control-Allow-Credentials', 'true')
+  headers.set('Access-Control-Allow-Origin', origin)
+  headers.set('Access-Control-Expose-Headers', EXPOSED_HEADERS.join(', '))
 }
 
 const createPreflightResponse = (request: Request): Response | undefined => {
@@ -103,26 +120,24 @@ const createPreflightResponse = (request: Request): Response | undefined => {
   const headers = new Headers({
     'Access-Control-Allow-Headers': ALLOWED_HEADERS.join(', '),
     'Access-Control-Allow-Methods': ALLOWED_METHODS.join(', '),
-    'Access-Control-Allow-Origin': origin,
+    'Access-Control-Max-Age': PREFLIGHT_MAX_AGE,
   })
+  applyAllowedOrigin(headers, origin)
   appendVaryHeaders(headers, PREFLIGHT_VARY_HEADERS)
 
   return new Response(null, {headers, status: 204})
 }
 
-const applyResponseCors = (request: Request, headers: Headers) => {
+const applyResponseCors = (request: Request, headers: Headers): void => {
   appendVaryHeaders(headers, ['Origin'])
   const origin = getAllowedOrigin(request)
 
   if (origin !== undefined) {
-    headers.set('Access-Control-Allow-Origin', origin)
+    applyAllowedOrigin(headers, origin)
   }
 }
 
-export const corsMiddleware = async (
-  event: CorsMiddlewareEvent,
-  next: NextMiddleware,
-): Promise<unknown> => {
+export const corsMiddleware: Middleware = async (event, next) => {
   const requestUrl = new URL(event.req.url)
 
   if (!isApiPath(requestUrl.pathname)) {
@@ -135,10 +150,11 @@ export const corsMiddleware = async (
     return preflightResponse
   }
 
+  applyResponseCors(event.req, event.res.headers)
+  applyResponseCors(event.req, event.res.errHeaders)
   const response = await next()
 
   if (!(response instanceof Response)) {
-    applyResponseCors(event.req, event.res.headers)
     return response
   }
 

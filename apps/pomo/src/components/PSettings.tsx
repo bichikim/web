@@ -12,6 +12,7 @@ import type {PSceneMotionInput, PSceneMotionMode} from '../features/focus-room-a
 import type {PSceneStyle} from '../features/focus-room-animation/scene-style'
 import type {ScreenSaverDelay} from '../features/screen-saver'
 import {useScreenWakeLock} from '../features/screen-wake-lock'
+import {UserSettings} from '../features/user-auth/UserSettings'
 import {PDialogueSettings} from './PDialogueSettings'
 import {PFeedSettings} from './PFeedSettings'
 import {PGuideSettings} from './PGuideSettings'
@@ -156,6 +157,10 @@ const PSettingsTabList = () => {
         <Tabs.Trigger class={SETTINGS_TAB_CLASSES} value="dialogue-library">
           <span aria-hidden="true" class="i-tabler-message-circle size-4" />
           <span>대화</span>
+        </Tabs.Trigger>
+        <Tabs.Trigger class={SETTINGS_TAB_CLASSES} value="user">
+          <span aria-hidden="true" class="i-tabler-user-circle size-4" />
+          <span>사용자</span>
         </Tabs.Trigger>
         <Tabs.Trigger class={SETTINGS_TAB_CLASSES} value="guide">
           <span aria-hidden="true" class="i-tabler-help-circle size-4" />
@@ -321,6 +326,7 @@ export const PSettings = (props: PSettingsProps) => {
           <PGuideSettings />
           <PFeedSettings />
           <PDialogueSettings onRequestClose={() => setIsOpen(false)} />
+          <UserSettings />
         </PModal>
       </Tabs>
     </>

@@ -4,8 +4,14 @@ import {z} from 'zod'
 import type {HistoryTargetDate} from 'src/features/history-generation'
 import {isAuthorizedCronRequest} from 'src/server/cron/environment'
 import {startHistoryRegeneration} from 'src/server/history-generation/start-regeneration'
+import {readJsonBody} from 'src/server/http/body'
+import {noStoreJson, noStoreText} from 'src/server/http/response'
 
 const ACCEPTED_STATUS = 202
+const HTTP_BAD_REQUEST = 400
+const HTTP_UNAUTHORIZED = 401
+const HTTP_INTERNAL_SERVER_ERROR = 500
+const MAXIMUM_BODY_SIZE = 16_384
 const MIN_MOMENT_COUNT = 3
 const MAX_MOMENT_COUNT = 5
 const MAX_TITLE_LENGTH = 50
@@ -39,23 +45,29 @@ const parseTargetDate = (isoDate: string): HistoryTargetDate => {
 
 export const POST = async (event: APIEvent): Promise<Response> => {
   if (!isAuthorizedCronRequest(event.request)) {
-    return new Response('Unauthorized', {status: 401})
+    return noStoreText('Unauthorized', {status: HTTP_UNAUTHORIZED})
   }
 
   try {
-    const request = requestSchema.parse(await event.request.json())
+    const bodyResult = await readJsonBody(event, MAXIMUM_BODY_SIZE)
+
+    if (!bodyResult.success) {
+      return noStoreText('Invalid regeneration request', {status: bodyResult.status})
+    }
+
+    const request = requestSchema.parse(bodyResult.body)
     const result = await startHistoryRegeneration({
       requiredTitles: request.titles,
       targetDate: parseTargetDate(request.targetDate),
     })
 
-    return Response.json(result, {status: ACCEPTED_STATUS})
+    return noStoreJson(result, {status: ACCEPTED_STATUS})
   } catch (error) {
-    if (error instanceof z.ZodError || error instanceof SyntaxError) {
-      return new Response('Invalid regeneration request', {status: 400})
+    if (error instanceof z.ZodError) {
+      return noStoreText('Invalid regeneration request', {status: HTTP_BAD_REQUEST})
     }
 
     console.error('Failed to regenerate today-in-history moments', error)
-    return new Response('Regeneration submission failed', {status: 500})
+    return noStoreText('Regeneration submission failed', {status: HTTP_INTERNAL_SERVER_ERROR})
   }
 }
