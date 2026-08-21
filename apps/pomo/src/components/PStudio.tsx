@@ -6,7 +6,7 @@ import smilingFaceSource from './assets/pomodoro-status-icons/break.webp'
 import {getPomoIconClass} from '../design-system/icon-style'
 import {PButton} from '../design-system/PButton'
 import {PIconButton} from '../design-system/PIconButton'
-import {PIconSelect} from '../design-system/PIconSelect'
+import {PSelect} from '../design-system/PSelect'
 import type {PTrack} from '../features/focus-room-audio'
 import {usePEvents} from '../features/focus-room-dialogue/PEventContext'
 import {readFocusRoomEntrySession, writeFocusRoomEntrySession} from '../features/focus-room-entry'
@@ -225,22 +225,26 @@ const SceneToolbar = (props: SceneToolbarProps) => {
           />
         </PScribbleCircleControl>
         <PScribbleCircleControl class="max-lg:hidden" enabled={props.sceneStyle === 'scribble'}>
-          <PIconSelect
+          <PSelect
+            appearance="icon"
             class={CLASSES.sceneControl}
+            getIconClass={(icon) => getPomoIconClass(icon, props.sceneStyle)}
+            hideLabel
             label="행동"
             onChange={props.onActivityChange}
             options={FOCUS_ROOM_ACTIVITY_OPTIONS}
-            sceneStyle={props.sceneStyle}
             value={props.activity}
           />
         </PScribbleCircleControl>
         <PScribbleCircleControl class="max-lg:hidden" enabled={props.sceneStyle === 'scribble'}>
-          <PIconSelect
+          <PSelect
+            appearance="icon"
             class={CLASSES.sceneControl}
+            getIconClass={(icon) => getPomoIconClass(icon, props.sceneStyle)}
+            hideLabel
             label="보기"
             onChange={props.onGazeChange}
             options={FOCUS_ROOM_GAZE_OPTIONS}
-            sceneStyle={props.sceneStyle}
             value={props.gaze}
           />
         </PScribbleCircleControl>

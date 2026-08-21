@@ -16,20 +16,26 @@ const renderSettings = () => render(() => <PFeedSettingsContent />)
 beforeEach(() => {
   localStorage.clear()
   vi.mocked(Tabs.Content).mockImplementation((props) => <>{props.children}</>)
-  vi.mocked(PSelect).mockImplementation((props) => (
-    <label>
-      {props.label}
-      <select
-        aria-label={`${props.label} ${props.accessibleLabel ?? ''}`.trim()}
-        onChange={(event) => props.onChange(event.currentTarget.value)}
-        value={props.value}
-      >
-        <For each={props.options}>
-          {(option) => <option value={option.value}>{option.label}</option>}
-        </For>
-      </select>
-    </label>
-  ))
+  vi.mocked(PSelect).mockImplementation((props) => {
+    if (props.multiple === true) {
+      return null
+    }
+
+    return (
+      <label>
+        {props.label}
+        <select
+          aria-label={`${props.label} ${props.accessibleLabel ?? ''}`.trim()}
+          onChange={(event) => props.onChange(event.currentTarget.value)}
+          value={props.value}
+        >
+          <For each={props.options}>
+            {(option) => <option value={option.value}>{option.label}</option>}
+          </For>
+        </select>
+      </label>
+    )
+  })
 })
 
 afterEach(() => {

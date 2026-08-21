@@ -2,7 +2,7 @@
 
 import {Tabs} from '@kobalte/core/tabs'
 import {fireEvent, render, screen, within} from '@solidjs/testing-library'
-import type {JSX} from 'solid-js'
+import {For, type JSX} from 'solid-js'
 import {beforeEach, expect, it, vi} from 'vitest'
 
 import {PSelect} from 'src/design-system/PSelect'
@@ -74,6 +74,7 @@ const createEvents = (overrides: Partial<PEventContextValue> = {}): PEventContex
   entryDialogueIds: () => [],
   errorMessage: () => null,
   eventDialogueIds: () => ({}),
+  eventPlaybackModes: () => ({}),
   getAudio: vi.fn(async () => null),
   hasEnteredFocusRoom: () => true,
   isDialoguePlaybackBlocked: () => false,
@@ -94,6 +95,7 @@ const createEvents = (overrides: Partial<PEventContextValue> = {}): PEventContex
   setEntryDialogues: vi.fn(async () => undefined),
   setEventDialogue: vi.fn(async () => undefined),
   setEventDialogues: vi.fn(async () => undefined),
+  setEventPlaybackMode: vi.fn(async () => undefined),
   skipDialoguePlayback: vi.fn(),
   ...overrides,
 })
@@ -163,6 +165,76 @@ it('should apply compact spacing to dialogue settings groups', () => {
   expect(list.classList.contains('settings-compact:gap-2')).toBe(true)
   expect(list.classList.contains('settings-compact:[&_>_li]:gap-2')).toBe(true)
   expect(automatic.classList.contains('settings-compact:gap-3')).toBe(true)
+})
+
+it('should offer and save a playback mode when an event has multiple dialogues', () => {
+  const secondDialogue = {
+    ...DIALOGUE,
+    audioKey: 'audio-second',
+    id: 'second-dialogue',
+    text: '두 번째 대화',
+  } satisfies PDialogue
+  const events = createEvents({
+    dialogues: () => [DIALOGUE, secondDialogue],
+    eventDialogueIds: () => ({'focus-start': [DIALOGUE.id, secondDialogue.id]}),
+    eventPlaybackModes: () => ({'focus-start': 'random-all'}),
+  })
+  vi.mocked(PSelect).mockImplementation((selectProps) => {
+    if (selectProps.multiple === true) {
+      const selectedOptions = selectProps.options.filter((option) =>
+        selectProps.value.includes(option.value),
+      )
+
+      return (
+        <button aria-label={selectProps.accessibleLabel} type="button">
+          {selectedOptions.length === 0
+            ? selectProps.placeholder
+            : selectProps.selectionLabel?.(selectedOptions)}
+        </button>
+      )
+    }
+
+    return (
+      <label>
+        {selectProps.label}
+        <select
+          aria-label={selectProps.accessibleLabel}
+          onChange={(event) => selectProps.onChange(event.currentTarget.value)}
+          value={selectProps.value}
+        >
+          <For each={selectProps.options}>
+            {(option) => <option value={option.value}>{option.label}</option>}
+          </For>
+        </select>
+      </label>
+    )
+  })
+  vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => undefined)
+  vi.spyOn(HTMLMediaElement.prototype, 'load').mockImplementation(() => undefined)
+  vi.mocked(usePEvents).mockReturnValue(events)
+
+  const result = render(() => <PDialogueSettingsContent />)
+
+  const modeSelect = screen.getByRole('combobox', {name: '포모도르 집중 시작 재생 방식'})
+  const settingRows = result.container.querySelectorAll(
+    '.pomo-dialogue-settings__event-setting-row',
+  )
+  const modeLayout = modeSelect.closest('.pomo-dialogue-settings__event-setting-row')
+  const modeControlLayout = modeLayout?.lastElementChild
+  expect((modeSelect as HTMLSelectElement).value).toBe('random-all')
+  expect(settingRows).toHaveLength(6)
+  expect(modeLayout?.classList).toContain('grid-cols-[minmax(12rem,_2fr)_minmax(16rem,_5fr)]')
+  expect(modeLayout?.classList).toContain('settings-compact:grid-cols-[1fr]')
+  expect(modeControlLayout?.classList).toContain('w-full')
+  expect(screen.getByText('2개 대화 연결됨')).toBeDefined()
+  expect(screen.getAllByText('대화 선택')).toHaveLength(4)
+  expect(screen.getByRole('button', {name: '포모도르 집중 시작 대화 연결'})).toBeDefined()
+  expect(screen.getByRole('button', {name: '입장 대화 연결'})).toBeDefined()
+  expect(screen.getByText('이벤트가 발생할 때마다 모든 대화의 순서를 섞어요.')).toBeDefined()
+  expect(screen.queryByRole('list', {name: '포모도르 집중 시작 대화 재생 대상'})).toBeNull()
+
+  fireEvent.change(modeSelect, {target: {value: 'random-one'}})
+  expect(events.setEventPlaybackMode).toHaveBeenCalledWith('focus-start', 'random-one')
 })
 
 it('should play a saved dialogue once through the character without changing event bindings', () => {
