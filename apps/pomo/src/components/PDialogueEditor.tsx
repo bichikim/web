@@ -2,6 +2,7 @@ import {A, useNavigate} from '@solidjs/router'
 import {cx} from 'class-variance-authority'
 import {For, Show} from 'solid-js'
 
+import {usePSceneStyle} from '../features/focus-room-animation'
 import {
   usePDialogueEditor,
   type UsePDialogueEditorProps,
@@ -12,7 +13,8 @@ import {
   SUPERTONIC_MODELS,
   SUPERTONIC_VOICES,
 } from '../features/supertonic'
-import {getPrimaryMood, getPrimaryMoodIcon} from '../features/text-mood'
+import {getPrimaryMood} from '../features/text-mood'
+import {PFaceIcon} from './PFaceIcon'
 
 const CLASSES = {
   dialogueEditor: [
@@ -142,6 +144,7 @@ const formatDuration = (durationMs: number) => {
 export default function PDialogueEditor(props: PDialogueEditorProps) {
   const navigate = useNavigate()
   const events = usePEvents()
+  const sceneStyleController = usePSceneStyle()
   const editorProps: UsePDialogueEditorProps = {dialogueId: () => props.dialogueId}
   const editor = usePDialogueEditor(editorProps)
   const isBusy = () => {
@@ -195,7 +198,7 @@ export default function PDialogueEditor(props: PDialogueEditorProps) {
         <h1>{props.dialogueId === null ? '새 대화 만들기' : '대화 편집하기'}</h1>
         <A class={CLASSES.dialogueEditorBack} href="/">
           <span aria-hidden="true" class="i-tabler-arrow-left size-5" />
-          Pomo로
+          Pomofi로
         </A>
       </header>
 
@@ -219,7 +222,7 @@ export default function PDialogueEditor(props: PDialogueEditorProps) {
               disabled={isBusy()}
               maxlength={MAXIMUM_TEXT_LENGTH}
               onInput={(event) => editor.setText(event.currentTarget.value)}
-              placeholder="Pomo를 시작할 때 캐릭터가 말할 내용을 입력하세요."
+              placeholder="Pomofi에 들어올 때 Pomo가 말할 내용을 입력하세요."
               value={editor.text()}
             />
           </label>
@@ -344,10 +347,10 @@ export default function PDialogueEditor(props: PDialogueEditorProps) {
 
                         return (
                           <div class={CLASSES.dialogueEditorMood}>
-                            <img
+                            <PFaceIcon
                               alt=""
-                              aria-hidden="true"
-                              src={getPrimaryMoodIcon(definition.id)}
+                              mood={definition.id}
+                              sceneStyle={sceneStyleController.sceneStyle()}
                             />
                             <span>{definition.label}</span>
                           </div>

@@ -20,7 +20,7 @@ const GLOW_CLASSES = cx(
 export default function VoicePage() {
   return (
     <main class={MAIN_CLASSES}>
-      <Title>Pomo — Voice Lab</Title>
+      <Title>Pomofi — Voice Lab</Title>
       <div class={BACKGROUND_CLASSES} />
       <div class={GLOW_CLASSES} />
       <div class="relative grid w-full max-w-3xl gap-4">

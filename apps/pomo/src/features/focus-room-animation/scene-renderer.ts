@@ -161,6 +161,7 @@ export class PSceneRenderer {
     const previousMotionMode = this.#state?.motionMode ?? 'depth'
     const previousViseme = this.#state?.viseme ?? state.viseme
     this.#state = state
+    this.#steam?.setVisible(state.sceneStyle !== 'scribble')
     this.#eyes.update(state)
 
     this.#mouth.update(previousViseme, state.viseme, this.#parallax.prefersReducedMotion)
@@ -322,6 +323,7 @@ export class PSceneRenderer {
       prefersReducedMotion: this.#parallax.prefersReducedMotion,
       textures: textures.map((lease) => lease.texture),
     })
+    this.#steam.setVisible(this.#state?.sceneStyle !== 'scribble')
     this.#application.stage.addChild(this.#steam.container)
   }
 

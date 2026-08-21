@@ -1,6 +1,9 @@
 import {Select} from '@kobalte/core/select'
 import {cx} from 'class-variance-authority'
 
+import type {PSceneStyle} from '../features/focus-room-animation'
+import {getPomoIconClass} from './icon-style'
+
 export interface PIconSelectOption<TValue extends string> {
   readonly icon: string
   readonly label: string
@@ -12,6 +15,7 @@ export interface PIconSelectProps<TValue extends string> {
   readonly label: string
   readonly onChange: (value: TValue) => void
   readonly options: readonly PIconSelectOption<TValue>[]
+  readonly sceneStyle?: PSceneStyle
   readonly value: TValue
 }
 
@@ -40,11 +44,17 @@ export const PIconSelect = <TValue extends string>(props: PIconSelectProps<TValu
         >
           <span
             aria-hidden="true"
-            class={cx('size-5 text-highlight', itemProps.item.rawValue.icon)}
+            class={cx(
+              'size-5 text-highlight',
+              getPomoIconClass(itemProps.item.rawValue.icon, props.sceneStyle),
+            )}
           />
           <Select.ItemLabel>{itemProps.item.rawValue.label}</Select.ItemLabel>
           <Select.ItemIndicator class="inline-flex text-primary">
-            <span aria-hidden="true" class="i-tabler-check size-4" />
+            <span
+              aria-hidden="true"
+              class={cx(getPomoIconClass('i-tabler-check', props.sceneStyle), 'size-4')}
+            />
           </Select.ItemIndicator>
         </Select.Item>
       )}
@@ -72,7 +82,10 @@ export const PIconSelect = <TValue extends string>(props: PIconSelectProps<TValu
           'motion-reduce:transition-none'
         }
       >
-        <span aria-hidden="true" class={cx('size-5', selectedOption().icon)} />
+        <span
+          aria-hidden="true"
+          class={cx('size-5', getPomoIconClass(selectedOption().icon, props.sceneStyle))}
+        />
         <span class="sr-only">{selectedOption().label}</span>
       </Select.Trigger>
       <Select.Portal>

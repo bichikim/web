@@ -3,6 +3,7 @@ import {cx} from 'class-variance-authority'
 import {createMemo, createSignal, type JSX, onCleanup, onMount, Show} from 'solid-js'
 
 import smilingFaceSource from './assets/pomodoro-status-icons/break.webp'
+import {getPomoIconClass} from '../design-system/icon-style'
 import {PButton} from '../design-system/PButton'
 import {PIconButton} from '../design-system/PIconButton'
 import {PIconSelect} from '../design-system/PIconSelect'
@@ -14,8 +15,9 @@ import {
   type PSceneId,
   type PSceneMotionInput,
   type PSceneMotionMode,
-  SCENE_CROP_POSITION,
+  type PSceneStyle,
   supportsPSceneGyroscope,
+  usePSceneStyle,
 } from '../features/focus-room-animation'
 import {
   getAutomaticScenePeriod,
@@ -39,6 +41,7 @@ import {
   resolvePSceneViseme,
 } from './pomo-scene-options'
 import {PScreenSaver} from './PScreenSaver'
+import {PScribbleCircleControl} from './PScribbleCircleControl'
 import {useDialogueSceneGaze} from './use-dialogue-scene-gaze'
 
 const CLASSES = {
@@ -147,8 +150,10 @@ interface SceneToolbarProps {
   readonly onMotionInputChange?: (motionInput: PSceneMotionInput) => void
   readonly onMotionModeChange: (motionMode: PSceneMotionMode) => void
   readonly onScreenSaverDelayChange: (delay: ScreenSaverDelay) => void
+  readonly onSceneStyleChange: (sceneStyle: PSceneStyle) => void
   readonly onTimeModeChange: (mode: SceneTimeMode) => void
   readonly screenSaverDelay: ScreenSaverDelay
+  readonly sceneStyle: PSceneStyle
   readonly motionInput?: PSceneMotionInput
   readonly motionMode: PSceneMotionMode
   readonly time: SceneTime
@@ -161,16 +166,13 @@ interface PEntryProps {
   readonly onExitComplete: () => void
 }
 
-interface PSceneFallbackProps {
-  readonly source: string
-}
-
 interface PStudioEventsProps {
   readonly isPlayerExpanded: boolean
   readonly onPlayerExpandedChange: (isExpanded: boolean) => void
   readonly onPomodoroPresentationChange: (presentation: PPomodoroPresentation) => void
   readonly onTrackChange: (track: PTrack | null) => void
   readonly pomoSay: PSayController
+  readonly sceneStyle: PSceneStyle
 }
 
 const findLabel = <TValue extends string>(
@@ -213,27 +215,35 @@ const SceneToolbar = (props: SceneToolbarProps) => {
       )}
     >
       <div class="flex flex-wrap justify-end gap-2" role="group" aria-label="장면 설정">
-        <PIconButton
-          accessibleLabel={timeAccessibleLabel()}
-          class={CLASSES.sceneControl}
-          feedback={timeModeOption().label}
-          icon={timeModeOption().icon}
-          onPress={() => props.onTimeModeChange(getNextTimeMode(props.timeMode))}
-        />
-        <PIconSelect
-          class={CLASSES.sceneControl}
-          label="행동"
-          onChange={props.onActivityChange}
-          options={FOCUS_ROOM_ACTIVITY_OPTIONS}
-          value={props.activity}
-        />
-        <PIconSelect
-          class={CLASSES.sceneControl}
-          label="보기"
-          onChange={props.onGazeChange}
-          options={FOCUS_ROOM_GAZE_OPTIONS}
-          value={props.gaze}
-        />
+        <PScribbleCircleControl class="max-lg:hidden" enabled={props.sceneStyle === 'scribble'}>
+          <PIconButton
+            accessibleLabel={timeAccessibleLabel()}
+            class={CLASSES.sceneControl}
+            feedback={timeModeOption().label}
+            icon={getPomoIconClass(timeModeOption().icon, props.sceneStyle)}
+            onPress={() => props.onTimeModeChange(getNextTimeMode(props.timeMode))}
+          />
+        </PScribbleCircleControl>
+        <PScribbleCircleControl class="max-lg:hidden" enabled={props.sceneStyle === 'scribble'}>
+          <PIconSelect
+            class={CLASSES.sceneControl}
+            label="행동"
+            onChange={props.onActivityChange}
+            options={FOCUS_ROOM_ACTIVITY_OPTIONS}
+            sceneStyle={props.sceneStyle}
+            value={props.activity}
+          />
+        </PScribbleCircleControl>
+        <PScribbleCircleControl class="max-lg:hidden" enabled={props.sceneStyle === 'scribble'}>
+          <PIconSelect
+            class={CLASSES.sceneControl}
+            label="보기"
+            onChange={props.onGazeChange}
+            options={FOCUS_ROOM_GAZE_OPTIONS}
+            sceneStyle={props.sceneStyle}
+            value={props.gaze}
+          />
+        </PScribbleCircleControl>
         <PSettings
           activity={props.activity}
           canUseGyroscope={props.canUseGyroscope}
@@ -243,21 +253,30 @@ const SceneToolbar = (props: SceneToolbarProps) => {
           onMotionInputChange={props.onMotionInputChange}
           onMotionModeChange={props.onMotionModeChange}
           onScreenSaverDelayChange={props.onScreenSaverDelayChange}
+          onSceneStyleChange={props.onSceneStyleChange}
           onTimeModeChange={props.onTimeModeChange}
           screenSaverDelay={props.screenSaverDelay}
+          sceneStyle={props.sceneStyle}
           motionInput={props.motionInput}
           motionMode={props.motionMode}
           timeMode={props.timeMode}
           fallback={
-            <span
-              aria-hidden="true"
-              class={cx(
-                'inline-flex h-control-md min-w-control-md items-center justify-center rounded-control',
-                'border border-solid border-border bg-surface text-foreground shadow-panel',
-              )}
-            >
-              <span class="i-tabler-settings size-5 text-highlight" />
-            </span>
+            <PScribbleCircleControl enabled={props.sceneStyle === 'scribble'}>
+              <span
+                aria-hidden="true"
+                class={cx(
+                  'inline-flex h-control-md min-w-control-md items-center justify-center rounded-control',
+                  'border border-solid border-border bg-surface text-foreground shadow-panel',
+                )}
+              >
+                <span
+                  class={cx(
+                    getPomoIconClass('i-tabler-settings', props.sceneStyle),
+                    'size-5 text-highlight',
+                  )}
+                />
+              </span>
+            </PScribbleCircleControl>
           }
         />
       </div>
@@ -303,16 +322,17 @@ const PEntry = (props: PEntryProps) => (
   </section>
 )
 
-const PSceneFallback = (props: PSceneFallbackProps) => (
-  <img
-    alt=""
-    aria-hidden="true"
-    class="pomo-scene-fallback absolute inset-0 h-full w-full object-cover"
-    decoding="async"
-    fetchpriority="high"
-    src={props.source}
-    style={{'object-position': SCENE_CROP_POSITION}}
-  />
+const PSceneFallback = () => (
+  <div
+    aria-live="polite"
+    class="pomo-scene-fallback pointer-events-none absolute inset-0 grid place-items-center text-[#fff9f1]"
+    role="status"
+  >
+    <span class={cx('border border-solid border-border backdrop-blur-surface', CLASSES.loading)}>
+      <span aria-hidden="true" class={CLASSES.loadingSpinner} />
+      장면 준비 중…
+    </span>
+  </div>
 )
 
 const PStudioEvents = (props: PStudioEventsProps) => {
@@ -328,6 +348,7 @@ const PStudioEvents = (props: PStudioEventsProps) => {
       <PPomodoro
         onEvents={handlePomodoroEvents}
         onPresentationChange={props.onPomodoroPresentationChange}
+        sceneStyle={props.sceneStyle}
       />
       <div
         class={CLASSES.mediaDock}
@@ -345,12 +366,14 @@ const PStudioEvents = (props: PStudioEventsProps) => {
           expanded={props.isPlayerExpanded}
           onExpandedChange={props.onPlayerExpandedChange}
           onTrackChange={props.onTrackChange}
+          sceneStyle={props.sceneStyle}
         />
         <div class={CLASSES.mediaMessages}>
-          <PFeedStatus />
+          <PFeedStatus sceneStyle={props.sceneStyle} />
           <PDialoguePlayer
             externalText={props.pomoSay.speechText()}
             onStopExternalSpeech={props.pomoSay.stop}
+            sceneStyle={props.sceneStyle}
           />
         </div>
       </div>
@@ -378,6 +401,7 @@ export const PStudio = () => {
     INITIAL_POMODORO_PRESENTATION,
   )
   const screenSaver = useScreenSaver()
+  const sceneStyleController = usePSceneStyle()
   const time = createMemo(() => resolveScenePeriod(timeMode(), automaticPeriod()))
   const sceneGaze = useDialogueSceneGaze(gaze, events.isDialoguePlaying, pomoSay.isPlaying)
   const selectedScene = createMemo(() => getSceneAsset(time(), activity(), sceneGaze()))
@@ -434,7 +458,7 @@ export const PStudio = () => {
         role="img"
       >
         <Show when={!hasSceneRendered()}>
-          <PSceneFallback source={selectedScene().source} />
+          <PSceneFallback />
         </Show>
         <PSceneCanvas
           activity={activity()}
@@ -446,24 +470,10 @@ export const PStudio = () => {
           onMotionInputChange={setMotionInput}
           source={selectedScene().source}
           sceneId={selectedScene().id}
+          sceneStyle={sceneStyleController.sceneStyle()}
           time={time()}
           viseme={activeViseme()}
         />
-
-        <Show when={hasEntered() && isSceneLoading() && !hasSceneRendered()}>
-          <div
-            aria-live="polite"
-            class="pointer-events-none absolute inset-0 grid place-items-center bg-#17130f/24"
-            role="status"
-          >
-            <span
-              class={cx('border border-solid border-border backdrop-blur-surface', CLASSES.loading)}
-            >
-              <span aria-hidden="true" class={CLASSES.loadingSpinner} />
-              장면을 불러오는 중
-            </span>
-          </div>
-        </Show>
       </figure>
 
       <div class={CLASSES.ui} hidden={!hasEntered()}>
@@ -474,6 +484,7 @@ export const PStudio = () => {
             onPomodoroPresentationChange={setPomodoroPresentation}
             onTrackChange={setCurrentTrack}
             pomoSay={pomoSay}
+            sceneStyle={sceneStyleController.sceneStyle()}
           />
           <SceneToolbar
             activity={activity()}
@@ -485,8 +496,10 @@ export const PStudio = () => {
             onMotionInputChange={setMotionInput}
             onMotionModeChange={setMotionMode}
             onScreenSaverDelayChange={screenSaver.onDelayChange}
+            onSceneStyleChange={sceneStyleController.onSceneStyleChange}
             onTimeModeChange={setTimeMode}
             screenSaverDelay={screenSaver.delay()}
+            sceneStyle={sceneStyleController.sceneStyle()}
             motionInput={motionInput()}
             motionMode={motionMode()}
             time={time()}

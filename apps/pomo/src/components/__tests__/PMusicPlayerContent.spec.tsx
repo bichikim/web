@@ -1,12 +1,22 @@
 /** @vitest-environment jsdom */
 
-import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
+import {cleanup, fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import PMusicPlayerContent from '../PMusicPlayerContent'
 
 vi.mock('media-chrome', () => ({}))
+
+vi.mock('../PAlbumLibrary', () => ({
+  PAlbumLibrary: (props: {
+    readonly onAddTracks: (tracks: readonly (typeof ADDED_TRACK)[]) => void
+  }) => (
+    <button onClick={() => props.onAddTracks([ADDED_TRACK])} type="button">
+      앨범 추가
+    </button>
+  ),
+}))
 
 const storageMocks = vi.hoisted(() => ({
   getItem: vi.fn<(key: string) => Promise<string | null>>(),
@@ -20,6 +30,14 @@ const TRACKS = [
   {artist: 'Artist', durationSeconds: 1, id: 'two', source: '/two.mp3', title: 'Two'},
   {artist: 'Artist', durationSeconds: 1, id: 'three', source: '/three.mp3', title: 'Three'},
 ] as const
+
+const ADDED_TRACK = {
+  artist: 'Artist',
+  durationSeconds: 1,
+  id: 'added',
+  source: '/added.mp3',
+  title: 'Added',
+} as const
 
 describe('PMusicPlayerContent', () => {
   beforeEach(() => {
@@ -452,10 +470,16 @@ describe('PMusicPlayerContent', () => {
     )
     vi.stubGlobal(
       'fetch',
-      vi.fn().mockResolvedValue({
-        json: () => Promise.resolve({tracks: TRACKS, version: 1}),
-        ok: true,
-      }),
+      vi
+        .fn()
+        .mockResolvedValueOnce({
+          json: () => Promise.resolve({tracks: TRACKS, version: 1}),
+          ok: true,
+        })
+        .mockResolvedValueOnce({
+          json: () => Promise.resolve({trackIds: TRACKS.map((track) => track.id), version: 1}),
+          ok: true,
+        }),
     )
     const result = render(() => <PMusicPlayerContent />)
     const audio = result.container.querySelector('audio')
@@ -464,14 +488,118 @@ describe('PMusicPlayerContent', () => {
       throw new TypeError('Expected the Pomo audio element to be rendered')
     }
 
-    await Promise.resolve()
+    await waitFor(() => expect(audio.getAttribute('src')).toBe('/two.mp3'))
+
+    expect(fetch).toHaveBeenNthCalledWith(1, '/audio/tracks.json', {
+      cache: 'no-store',
+      signal: expect.any(AbortSignal),
+    })
+    expect(fetch).toHaveBeenNthCalledWith(2, '/audio/playlist.json', {
+      cache: 'no-store',
+      signal: expect.any(AbortSignal),
+    })
+  })
+
+  it('should preserve album additions when native playback restoration finishes later', async () => {
+    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+    let completeRead: ((value: string | null) => void) | undefined
+    storageMocks.getItem.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          completeRead = resolve
+        }),
+    )
+    localStorage.setItem(
+      'pomo:focus-room-playback:v1',
+      JSON.stringify({isPlaying: false, positionSeconds: 22, savedAt: 1, trackId: 'three'}),
+    )
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValueOnce({
+          json: () => Promise.resolve({tracks: TRACKS, version: 1}),
+          ok: true,
+        })
+        .mockResolvedValueOnce({
+          json: () => Promise.resolve({trackIds: TRACKS.map((track) => track.id), version: 1}),
+          ok: true,
+        }),
+    )
+    render(() => <PMusicPlayerContent />)
+
+    await waitFor(() => expect(screen.getByTitle('Two · Artist · 밀어서 삭제')).toBeTruthy())
+    fireEvent.click(screen.getByRole('button', {name: '앨범 추가'}))
+    expect(screen.getByTitle('Added · Artist · 밀어서 삭제')).toBeTruthy()
+
+    completeRead?.(null)
     await Promise.resolve()
     await Promise.resolve()
 
-    expect(fetch).toHaveBeenCalledWith('/audio/playlist.json', {
-      signal: expect.any(AbortSignal),
+    expect(screen.getByTitle('Added · Artist · 밀어서 삭제')).toBeTruthy()
+  })
+
+  it('should preserve a removal made before the initial playlist finishes loading', async () => {
+    let completeTrackCatalog: ((value: unknown) => void) | undefined
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockImplementationOnce(
+          () =>
+            new Promise((resolve) => {
+              completeTrackCatalog = resolve
+            }),
+        )
+        .mockResolvedValueOnce({
+          json: () =>
+            Promise.resolve({
+              trackIds: [...TRACKS.map((track) => track.id), ADDED_TRACK.id],
+              version: 1,
+            }),
+          ok: true,
+        }),
+    )
+    render(() => <PMusicPlayerContent />)
+
+    fireEvent.click(screen.getByRole('button', {name: '앨범 추가'}))
+    fireEvent.keyDown(screen.getByTitle('Added · Artist · 밀어서 삭제'), {key: 'Delete'})
+    completeTrackCatalog?.({
+      json: () => Promise.resolve({tracks: [...TRACKS, ADDED_TRACK], version: 1}),
+      ok: true,
     })
-    expect(audio.getAttribute('src')).toBe('/two.mp3')
+
+    await waitFor(() => expect(screen.getByTitle('Two · Artist · 밀어서 삭제')).toBeTruthy())
+    expect(screen.queryByTitle('Added · Artist · 밀어서 삭제')).toBeNull()
+  })
+
+  it('should continue with the following track after removing the current loaded track', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValueOnce({
+          json: () => Promise.resolve({tracks: TRACKS, version: 1}),
+          ok: true,
+        })
+        .mockResolvedValueOnce({
+          json: () => Promise.resolve({trackIds: TRACKS.map((track) => track.id), version: 1}),
+          ok: true,
+        }),
+    )
+    const result = render(() => <PMusicPlayerContent />)
+    const audio = result.container.querySelector('audio')
+
+    if (!(audio instanceof HTMLAudioElement)) {
+      throw new TypeError('Expected the Pomo audio element to be rendered')
+    }
+
+    await waitFor(() => expect(audio.getAttribute('src')).toBe('/two.mp3'))
+    fireEvent.click(screen.getByRole('button', {name: '플레이어 펼치기'}))
+    fireEvent.keyDown(screen.getByTitle('Two · Artist · 밀어서 삭제'), {key: 'Delete'})
+
+    await waitFor(() => expect(audio.getAttribute('src')).toBe('/three.mp3'))
+    expect(screen.queryByTitle('Two · Artist · 밀어서 삭제')).toBeNull()
   })
 
   it('should ignore an obsolete blocked-autoplay result after playback starts', async () => {

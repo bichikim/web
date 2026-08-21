@@ -2,6 +2,9 @@ import {RadioGroup} from '@kobalte/core/radio-group'
 import {cx} from 'class-variance-authority'
 import {For, type JSX, Show} from 'solid-js'
 
+import type {PSceneStyle} from '../features/focus-room-animation'
+import {getPomoIconClass} from './icon-style'
+
 export interface PRadioSwitchOption<TValue extends string> {
   readonly icon?: string
   readonly label: string
@@ -13,6 +16,7 @@ export interface PRadioSwitchProps<TValue extends string> {
   readonly label: string
   readonly onChange: (value: TValue) => void
   readonly options: readonly PRadioSwitchOption<TValue>[]
+  readonly sceneStyle?: PSceneStyle
   readonly value: TValue
 }
 
@@ -95,13 +99,19 @@ export const PRadioSwitch = <TValue extends string>(props: PRadioSwitchProps<TVa
                   {(icon) => (
                     <span
                       aria-hidden="true"
-                      class={cx('size-4 flex-none text-highlight max-xs:hidden', icon())}
+                      class={cx(
+                        'size-4 flex-none text-highlight max-xs:hidden',
+                        getPomoIconClass(icon(), props.sceneStyle),
+                      )}
                     />
                   )}
                 </Show>
                 <span>{option.label}</span>
                 <RadioGroup.ItemIndicator class="inline-flex flex-none text-primary">
-                  <span aria-hidden="true" class="i-tabler-check size-4" />
+                  <span
+                    aria-hidden="true"
+                    class={cx(getPomoIconClass('i-tabler-check', props.sceneStyle), 'size-4')}
+                  />
                 </RadioGroup.ItemIndicator>
               </RadioGroup.ItemControl>
             </RadioGroup.Item>
