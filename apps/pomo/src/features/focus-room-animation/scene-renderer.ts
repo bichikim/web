@@ -1,15 +1,17 @@
 import {Application, Container, Sprite, type Texture} from 'pixi.js'
 
-import steamImage1 from 'assets/focus-room-animation/steam-ai-1.webp'
-import steamImage2 from 'assets/focus-room-animation/steam-ai-2.webp'
-import steamImage3 from 'assets/focus-room-animation/steam-ai-3.webp'
-import steamImage4 from 'assets/focus-room-animation/steam-ai-4.webp'
+import steamImage1 from './assets/animation/steam/01.webp'
+import steamImage2 from './assets/animation/steam/02.webp'
+import steamImage3 from './assets/animation/steam/03.webp'
+import steamImage4 from './assets/animation/steam/04.webp'
 import {DepthParallaxFilter} from './depth-parallax-filter'
 import {PEyeController} from './eye-animation-controller'
 import {ParallaxController} from './parallax-controller'
 import {createSceneTransitions, SCENE_HEIGHT, SCENE_WIDTH} from './scene-composite-transition'
 import {getPScenePanPosition} from './scene-motion'
+import {SceneLoadingState} from './scene-loading-state'
 import type {PSceneRendererOptions, PSceneState} from './scene-state'
+import {createPSceneMouthController} from './scene-mouth-controller'
 import {SteamParticleSystem} from './steam-particle-system'
 import {PixiLayerScene, type PixiLayerSceneDefinition} from './layer-scene'
 import {acquireTextureGroup, releaseTextureGroup, type TextureLease} from './texture-leases'
@@ -34,13 +36,12 @@ const reportError = (error: unknown) => {
   globalThis.reportError(error)
 }
 
-const ignoreLoadingChange = () => undefined
-
 export class PSceneRenderer {
   readonly #application = new Application()
   readonly #eyes: PEyeController
   readonly #host: HTMLDivElement
-  readonly #onLoadingChange: (isLoading: boolean) => void
+  readonly #loading: SceneLoadingState
+  readonly #mouth
   readonly #parallax: ParallaxController
   readonly #sceneLayer = new Container()
   readonly #sceneTransitions = createSceneTransitions(this.#application, this.#sceneLayer)
@@ -63,7 +64,6 @@ export class PSceneRenderer {
   #requestedDepthSource: string | null = null
   #requestedLayerSceneId: string | null = null
   #requestedSource: string | null = null
-  #settledFrame: number | null = null
   #state: PSceneState | null = null
   #steam: SteamParticleSystem | null = null
   #steamTextureLeases: readonly TextureLease[] = []
@@ -72,7 +72,11 @@ export class PSceneRenderer {
 
   constructor(host: HTMLDivElement, options: PSceneRendererOptions = {}) {
     this.#host = host
-    this.#onLoadingChange = options.onLoadingChange ?? ignoreLoadingChange
+    this.#loading = new SceneLoadingState(options.onLoadingChange)
+    this.#mouth = createPSceneMouthController(() => [
+      this.#currentLayerScene,
+      this.#incomingLayerScene,
+    ])
     this.#eyes = new PEyeController(() => this.#application.render())
     this.#parallax = new ParallaxController(
       host,
@@ -91,7 +95,7 @@ export class PSceneRenderer {
   }
 
   async initialize(state: PSceneState) {
-    this.#startLoading()
+    this.#loading.start()
     this.#state = state
     await this.#application.init({
       antialias: false,
@@ -112,7 +116,7 @@ export class PSceneRenderer {
 
     this.#application.canvas.setAttribute('aria-hidden', 'true')
     this.#application.canvas.className =
-      'pomo-scene-media absolute inset-0 h-full w-full object-cover'
+      'absolute inset-0 h-full w-full object-cover object-[60%_center]'
     this.#host.append(this.#application.canvas)
     this.#application.stage.addChild(this.#sceneLayer)
     this.#sceneLayer.addChild(this.#eyes.container)
@@ -140,7 +144,7 @@ export class PSceneRenderer {
     this.#steam?.start()
     this.#eyes.setSceneReady(true)
     this.#application.render()
-    this.#finishLoadingAfterPaint()
+    this.#loading.finishAfterPaint()
 
     if (
       latestState !== null &&
@@ -155,8 +159,12 @@ export class PSceneRenderer {
   update(state: PSceneState) {
     const previousMotionInput = this.#state?.motionInput ?? 'drag'
     const previousMotionMode = this.#state?.motionMode ?? 'depth'
+    const previousViseme = this.#state?.viseme ?? state.viseme
     this.#state = state
+    this.#steam?.setVisible(state.sceneStyle !== 'scribble')
     this.#eyes.update(state)
+
+    this.#mouth.update(previousViseme, state.viseme, this.#parallax.prefersReducedMotion)
 
     if (this.#initialized) {
       if (previousMotionInput !== (state.motionInput ?? 'drag')) {
@@ -206,7 +214,7 @@ export class PSceneRenderer {
       this.#cancelTransition()
       this.#eyes.setSceneReady(true)
       this.#application.render()
-      this.#finishLoadingAfterPaint()
+      this.#loading.finishAfterPaint()
     }
   }
 
@@ -214,6 +222,8 @@ export class PSceneRenderer {
     this.#currentLayerScene?.setAnimationEnabled(!prefersReducedMotion)
     this.#incomingLayerScene?.setAnimationEnabled(!prefersReducedMotion)
     this.#steam?.setReducedMotion(prefersReducedMotion)
+
+    this.#mouth.setReducedMotion(this.#state?.viseme ?? 'rest', prefersReducedMotion)
 
     const incomingScene = this.#incomingScene
     const requestedSource = this.#requestedSource
@@ -246,7 +256,8 @@ export class PSceneRenderer {
     this.#destroyed = true
     this.#transitionVersion += 1
     this.#cancelTransition()
-    this.#cancelSettledFrame()
+    this.#mouth.destroy()
+    this.#loading.destroy()
     this.#parallax.destroy()
     this.#sceneLayer.addChild(this.#eyes.container)
     this.#eyes.destroy()
@@ -312,6 +323,7 @@ export class PSceneRenderer {
       prefersReducedMotion: this.#parallax.prefersReducedMotion,
       textures: textures.map((lease) => lease.texture),
     })
+    this.#steam.setVisible(this.#state?.sceneStyle !== 'scribble')
     this.#application.stage.addChild(this.#steam.container)
   }
 
@@ -325,7 +337,7 @@ export class PSceneRenderer {
     }
 
     const version = this.#transitionVersion + 1
-    this.#startLoading()
+    this.#loading.start()
     this.#transitionVersion = version
     this.#requestedSource = source
     this.#requestedDepthSource = depthSource
@@ -366,7 +378,7 @@ export class PSceneRenderer {
         this.#requestedDepthSource = null
         this.#requestedLayerSceneId = null
         this.#eyes.setSceneReady(this.#currentScene !== null)
-        this.#onLoadingChange(false)
+        this.#loading.finish()
       }
 
       throw error
@@ -426,7 +438,7 @@ export class PSceneRenderer {
     this.#depthFilter?.finishDepthTransition()
     releaseTextureGroup(previousTextures)
     this.#application.render()
-    this.#finishLoadingAfterPaint()
+    this.#loading.finishAfterPaint()
   }
 
   #cancelTransition() {
@@ -442,35 +454,6 @@ export class PSceneRenderer {
     this.#depthFilter?.cancelDepthTransition()
     releaseTextureGroup(this.#incomingTextures)
     this.#incomingTextures = []
-
-    if (this.#currentScene !== null) {
-      this.#currentScene.alpha = 1
-    }
-  }
-
-  #startLoading() {
-    this.#cancelSettledFrame()
-    this.#onLoadingChange(true)
-  }
-
-  #finishLoadingAfterPaint() {
-    this.#cancelSettledFrame()
-    this.#settledFrame = window.requestAnimationFrame(() => {
-      this.#settledFrame = window.requestAnimationFrame(() => {
-        this.#settledFrame = null
-
-        if (!this.#destroyed) {
-          this.#onLoadingChange(false)
-        }
-      })
-    })
-  }
-
-  #cancelSettledFrame() {
-    if (this.#settledFrame !== null) {
-      window.cancelAnimationFrame(this.#settledFrame)
-      this.#settledFrame = null
-    }
   }
 
   async #createLayerScene(definition: PixiLayerSceneDefinition | null) {
@@ -487,7 +470,12 @@ export class PSceneRenderer {
     })
 
     try {
-      await layerScene.initialize({animationEnabled: !this.#parallax.prefersReducedMotion})
+      await layerScene.initialize(
+        this.#mouth.getLayerState(
+          this.#state?.viseme ?? 'rest',
+          this.#parallax.prefersReducedMotion,
+        ),
+      )
     } catch (error: unknown) {
       layerScene.destroy()
       throw error
@@ -542,7 +530,7 @@ export class PSceneRenderer {
   }
 
   #placeEyes(layerScene: PixiLayerScene | null) {
-    // AI_NOTE - A scene attachment lets blink pixels inherit head motion without sharing coordinates.
+    // A scene attachment lets blink pixels inherit head motion without sharing coordinates.
     const parent = layerScene?.getAttachment('eyes') ?? this.#sceneLayer
     parent.addChild(this.#eyes.container)
   }

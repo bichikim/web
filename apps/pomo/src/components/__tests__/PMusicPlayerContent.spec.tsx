@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
+import {cleanup, fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
@@ -8,18 +8,36 @@ import PMusicPlayerContent from '../PMusicPlayerContent'
 
 vi.mock('media-chrome', () => ({}))
 
+vi.mock('../PAlbumLibrary', () => ({
+  PAlbumLibrary: (props: {
+    readonly onAddTracks: (tracks: readonly (typeof ADDED_TRACK)[]) => void
+  }) => (
+    <button onClick={() => props.onAddTracks([ADDED_TRACK])} type="button">
+      앨범 추가
+    </button>
+  ),
+}))
+
 const storageMocks = vi.hoisted(() => ({
   getItem: vi.fn<(key: string) => Promise<string | null>>(),
   setItem: vi.fn<(key: string, value: string) => Promise<void>>(),
 }))
 
-vi.mock('@apps-in-toss/web-bridge', () => ({Storage: storageMocks}))
+vi.mock('@apps-in-toss/web-framework', () => ({Storage: storageMocks}))
 
 const TRACKS = [
   {artist: 'Artist', durationSeconds: 1, id: 'one', source: '/one.mp3', title: 'One'},
   {artist: 'Artist', durationSeconds: 1, id: 'two', source: '/two.mp3', title: 'Two'},
   {artist: 'Artist', durationSeconds: 1, id: 'three', source: '/three.mp3', title: 'Three'},
 ] as const
+
+const ADDED_TRACK = {
+  artist: 'Artist',
+  durationSeconds: 1,
+  id: 'added',
+  source: '/added.mp3',
+  title: 'Added',
+} as const
 
 describe('PMusicPlayerContent', () => {
   beforeEach(() => {
@@ -108,16 +126,173 @@ describe('PMusicPlayerContent', () => {
     expect(screen.getByRole('button', {name: '플레이어 접기'})).toBeTruthy()
   })
 
-  it('should hide the expanded play button tooltip', () => {
+  it('should preserve the expanded player while transitioning its presentation', () => {
+    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />)
+    const controller = result.container.querySelector('media-controller')
+    const playerBase = result.container.querySelector('.pomo-player__base')
+    const visualizerFrame = result.container.querySelector('.pomo-player__visualizer-frame')
+    const collapsedProgressBar = result.container.querySelector(
+      'media-time-range.pomo-player__progress--collapsed',
+    )
+    const expandedProgressBar = result.container.querySelector(
+      'media-time-range.pomo-player__progress--expanded',
+    )
+    const expandedFrame = result.container.querySelector('.pomo-player__expanded-frame')
+    const expandedInner = result.container.querySelector('.pomo-player__expanded-inner')
+
+    if (
+      !(controller instanceof HTMLElement) ||
+      !(playerBase instanceof HTMLElement) ||
+      !(visualizerFrame instanceof HTMLElement) ||
+      !(collapsedProgressBar instanceof HTMLElement) ||
+      !(expandedProgressBar instanceof HTMLElement) ||
+      !(expandedFrame instanceof HTMLElement) ||
+      !(expandedInner instanceof HTMLElement)
+    ) {
+      throw new TypeError('Expected the Pomo player layers to be rendered')
+    }
+
+    expect(result.container.querySelectorAll('media-time-range')).toHaveLength(2)
+    expect(controller.classList.contains('overflow-hidden')).toBe(true)
+    expect(controller.classList.contains('overflow-visible')).toBe(false)
+    expect(controller.classList.contains('pb-0.5')).toBe(true)
+    expect(playerBase.classList.contains('rounded-panel')).toBe(true)
+    expect(visualizerFrame.classList.contains('overflow-hidden')).toBe(true)
+    expect(visualizerFrame.classList.contains('rounded-panel')).toBe(true)
+    expect(collapsedProgressBar.classList.contains('flex')).toBe(true)
+    expect(collapsedProgressBar.classList.contains('absolute')).toBe(true)
+    expect(collapsedProgressBar.classList.contains('inset-0')).toBe(true)
+    expect(collapsedProgressBar.classList.contains('h-full')).toBe(true)
+    expect(collapsedProgressBar.classList.contains('w-full')).toBe(true)
+    expect(collapsedProgressBar.classList.contains('pointer-events-none')).toBe(true)
+    expect(collapsedProgressBar.classList.contains('is-hidden')).toBe(false)
+    expect(Reflect.get(collapsedProgressBar, 'disabled')).toBe(true)
+    expect(collapsedProgressBar.getAttribute('aria-hidden')).toBe('true')
+    expect(collapsedProgressBar.classList.contains('[--media-range-track-height:100%]')).toBe(true)
+    expect(
+      collapsedProgressBar.classList.contains('[--media-range-bar-color:rgb(0_0_0_/_25%)]'),
+    ).toBe(true)
+    expect(
+      collapsedProgressBar.classList.contains('[--media-time-range-buffered-color:transparent]'),
+    ).toBe(true)
+    expect(
+      collapsedProgressBar.classList.contains('[--media-range-track-background:transparent]'),
+    ).toBe(true)
+    expect(collapsedProgressBar.classList.contains('[--media-range-padding:0px]')).toBe(true)
+    expect(collapsedProgressBar.classList.contains('[--media-range-thumb-opacity:0]')).toBe(true)
+    expect(collapsedProgressBar.classList.contains('hover:[--media-range-thumb-opacity:1]')).toBe(
+      false,
+    )
+    expect(
+      collapsedProgressBar.classList.contains('focus-within:[--media-range-thumb-opacity:1]'),
+    ).toBe(false)
+    expect(collapsedProgressBar.classList.contains('[&.is-hidden]:opacity-0')).toBe(true)
+    expect(collapsedProgressBar.classList.contains('motion-reduce:transition-none')).toBe(true)
+
+    expect(expandedFrame.classList.contains('grid-rows-[0fr]')).toBe(true)
+    expect(expandedFrame.classList.contains('is-expanded')).toBe(false)
+    expect(
+      expandedFrame.classList.contains(
+        '[transition:grid-template-rows_280ms_cubic-bezier(0.22,_1,_0.36,_1)]',
+      ),
+    ).toBe(true)
+    expect(expandedFrame.classList.contains('motion-reduce:transition-none')).toBe(true)
+    expect(expandedFrame.getAttribute('aria-hidden')).toBe('true')
+    expect(Reflect.get(expandedFrame, 'inert')).toBe(true)
+    expect(expandedInner.classList.contains('opacity-0')).toBe(true)
+    expect(expandedInner.classList.contains('pointer-events-none')).toBe(true)
+    expect(expandedInner.classList.contains('overflow-x-clip')).toBe(true)
+    expect(expandedInner.classList.contains('overflow-y-auto')).toBe(true)
+    expect(expandedInner.classList.contains('overscroll-contain')).toBe(true)
+    expect(expandedInner.classList.contains('is-expanded')).toBe(false)
+    expect(Reflect.get(expandedProgressBar, 'disabled')).toBe(true)
+    expect(expandedProgressBar.classList.contains('is-expanded')).toBe(false)
+    expect(expandedProgressBar.getAttribute('aria-hidden')).toBe('true')
+    expect(expandedProgressBar.getAttribute('aria-label')).toBe('재생 위치 조절')
+    expect(expandedProgressBar.getAttribute('title')).toBe('재생 위치 조절')
+    expect(collapsedProgressBar.hasAttribute('title')).toBe(false)
+
+    fireEvent.click(screen.getByRole('button', {name: '플레이어 펼치기'}))
+
+    expect(result.container.querySelectorAll('media-time-range')).toHaveLength(2)
+    expect(
+      result.container.querySelector('media-time-range.pomo-player__progress--collapsed'),
+    ).toBe(collapsedProgressBar)
+    expect(result.container.querySelector('media-time-range.pomo-player__progress--expanded')).toBe(
+      expandedProgressBar,
+    )
+    expect(controller.classList.contains('overflow-hidden')).toBe(false)
+    expect(controller.classList.contains('overflow-visible')).toBe(true)
+    expect(controller.classList.contains('pb-0.5')).toBe(true)
+    expect(visualizerFrame.classList.contains('rounded-panel')).toBe(false)
+    expect(visualizerFrame.classList.contains('rounded-t-panel')).toBe(true)
+    expect(collapsedProgressBar.classList.contains('is-hidden')).toBe(true)
+    expect(expandedFrame.classList.contains('is-expanded')).toBe(true)
+    expect(expandedFrame.getAttribute('aria-hidden')).toBeNull()
+    expect(Reflect.get(expandedFrame, 'inert')).toBe(false)
+    expect(expandedInner.classList.contains('is-expanded')).toBe(true)
+    expect(Reflect.get(expandedProgressBar, 'disabled')).toBe(false)
+    expect(expandedProgressBar.classList.contains('is-expanded')).toBe(true)
+    expect(expandedProgressBar.getAttribute('aria-hidden')).toBeNull()
+    expect(expandedProgressBar.classList.contains('[&.is-expanded]:h-0.5')).toBe(true)
+    expect(expandedProgressBar.classList.contains('overflow-visible')).toBe(true)
+    expect(expandedProgressBar.classList.contains('-mx-2')).toBe(true)
+    expect(expandedProgressBar.classList.contains('w-[calc(100%+1rem)]')).toBe(true)
+    expect(expandedProgressBar.parentElement).toBe(controller)
+    expect(expandedFrame.contains(expandedProgressBar)).toBe(false)
+    expect(expandedProgressBar.classList.contains('[--media-range-bar-color:#fffaf1]')).toBe(true)
+    expect(
+      expandedProgressBar.classList.contains(
+        '[--media-time-range-buffered-color:rgb(255_250_241_/_40%)]',
+      ),
+    ).toBe(true)
+    expect(
+      expandedProgressBar.classList.contains(
+        '[--media-range-track-background:rgb(255_250_241_/_22%)]',
+      ),
+    ).toBe(true)
+    expect(expandedProgressBar.classList.contains('hover:[--media-range-thumb-opacity:1]')).toBe(
+      true,
+    )
+    expect(
+      expandedProgressBar.classList.contains('focus-within:[--media-range-thumb-opacity:1]'),
+    ).toBe(true)
+  })
+
+  it('should hide the summary play button and its tooltip when expanded', () => {
     const result = render(() => <PMusicPlayerContent tracks={TRACKS} />)
 
     fireEvent.click(screen.getByRole('button', {name: '플레이어 펼치기'}))
 
+    expect(result.container.querySelector('media-time-display')).toBeNull()
     const playButtons = result.container.querySelectorAll('media-play-button')
     expect(playButtons).toHaveLength(2)
-    expect(playButtons[0]?.hasAttribute('notooltip')).toBe(false)
+    expect(Reflect.get(playButtons[0] ?? {}, 'disabled')).toBe(true)
+    expect(playButtons[0]?.hasAttribute('notooltip')).toBe(true)
     expect(playButtons[1]?.hasAttribute('notooltip')).toBe(true)
     expect(playButtons[1]?.getAttribute('aria-label')).toBe('재생 또는 일시 정지')
+  })
+
+  it('should collapse the summary play button frame when expanded', () => {
+    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />)
+    const summaryPlayFrame = result.container.querySelector('.pomo-player__play-summary-frame')
+
+    if (!(summaryPlayFrame instanceof HTMLElement)) {
+      throw new TypeError('Expected the Pomo summary play button frame to be rendered')
+    }
+
+    expect(summaryPlayFrame.classList.contains('is-hidden')).toBe(false)
+    expect(summaryPlayFrame.classList.contains('w-11')).toBe(true)
+    expect(summaryPlayFrame.classList.contains('[&.is-hidden]:w-0')).toBe(true)
+    expect(
+      summaryPlayFrame.classList.contains(
+        '[transition:width_260ms_ease,_margin-right_260ms_ease,_opacity_180ms_ease]',
+      ),
+    ).toBe(true)
+    expect(summaryPlayFrame.classList.contains('motion-reduce:transition-none')).toBe(true)
+    fireEvent.click(screen.getByRole('button', {name: '플레이어 펼치기'}))
+    expect(summaryPlayFrame.classList.contains('is-hidden')).toBe(true)
+    expect(summaryPlayFrame.getAttribute('aria-hidden')).toBe('true')
   })
 
   it('should report the current track when selection changes', async () => {
@@ -295,10 +470,16 @@ describe('PMusicPlayerContent', () => {
     )
     vi.stubGlobal(
       'fetch',
-      vi.fn().mockResolvedValue({
-        json: () => Promise.resolve({tracks: TRACKS, version: 1}),
-        ok: true,
-      }),
+      vi
+        .fn()
+        .mockResolvedValueOnce({
+          json: () => Promise.resolve({tracks: TRACKS, version: 1}),
+          ok: true,
+        })
+        .mockResolvedValueOnce({
+          json: () => Promise.resolve({trackIds: TRACKS.map((track) => track.id), version: 1}),
+          ok: true,
+        }),
     )
     const result = render(() => <PMusicPlayerContent />)
     const audio = result.container.querySelector('audio')
@@ -307,11 +488,118 @@ describe('PMusicPlayerContent', () => {
       throw new TypeError('Expected the Pomo audio element to be rendered')
     }
 
-    await Promise.resolve()
+    await waitFor(() => expect(audio.getAttribute('src')).toBe('/two.mp3'))
+
+    expect(fetch).toHaveBeenNthCalledWith(1, '/audio/tracks.json', {
+      cache: 'no-store',
+      signal: expect.any(AbortSignal),
+    })
+    expect(fetch).toHaveBeenNthCalledWith(2, '/audio/playlist.json', {
+      cache: 'no-store',
+      signal: expect.any(AbortSignal),
+    })
+  })
+
+  it('should preserve album additions when native playback restoration finishes later', async () => {
+    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+    let completeRead: ((value: string | null) => void) | undefined
+    storageMocks.getItem.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          completeRead = resolve
+        }),
+    )
+    localStorage.setItem(
+      'pomo:focus-room-playback:v1',
+      JSON.stringify({isPlaying: false, positionSeconds: 22, savedAt: 1, trackId: 'three'}),
+    )
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValueOnce({
+          json: () => Promise.resolve({tracks: TRACKS, version: 1}),
+          ok: true,
+        })
+        .mockResolvedValueOnce({
+          json: () => Promise.resolve({trackIds: TRACKS.map((track) => track.id), version: 1}),
+          ok: true,
+        }),
+    )
+    render(() => <PMusicPlayerContent />)
+
+    await waitFor(() => expect(screen.getByTitle('Two · Artist · 밀어서 삭제')).toBeTruthy())
+    fireEvent.click(screen.getByRole('button', {name: '앨범 추가'}))
+    expect(screen.getByTitle('Added · Artist · 밀어서 삭제')).toBeTruthy()
+
+    completeRead?.(null)
     await Promise.resolve()
     await Promise.resolve()
 
-    expect(audio.getAttribute('src')).toBe('/two.mp3')
+    expect(screen.getByTitle('Added · Artist · 밀어서 삭제')).toBeTruthy()
+  })
+
+  it('should preserve a removal made before the initial playlist finishes loading', async () => {
+    let completeTrackCatalog: ((value: unknown) => void) | undefined
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockImplementationOnce(
+          () =>
+            new Promise((resolve) => {
+              completeTrackCatalog = resolve
+            }),
+        )
+        .mockResolvedValueOnce({
+          json: () =>
+            Promise.resolve({
+              trackIds: [...TRACKS.map((track) => track.id), ADDED_TRACK.id],
+              version: 1,
+            }),
+          ok: true,
+        }),
+    )
+    render(() => <PMusicPlayerContent />)
+
+    fireEvent.click(screen.getByRole('button', {name: '앨범 추가'}))
+    fireEvent.keyDown(screen.getByTitle('Added · Artist · 밀어서 삭제'), {key: 'Delete'})
+    completeTrackCatalog?.({
+      json: () => Promise.resolve({tracks: [...TRACKS, ADDED_TRACK], version: 1}),
+      ok: true,
+    })
+
+    await waitFor(() => expect(screen.getByTitle('Two · Artist · 밀어서 삭제')).toBeTruthy())
+    expect(screen.queryByTitle('Added · Artist · 밀어서 삭제')).toBeNull()
+  })
+
+  it('should continue with the following track after removing the current loaded track', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValueOnce({
+          json: () => Promise.resolve({tracks: TRACKS, version: 1}),
+          ok: true,
+        })
+        .mockResolvedValueOnce({
+          json: () => Promise.resolve({trackIds: TRACKS.map((track) => track.id), version: 1}),
+          ok: true,
+        }),
+    )
+    const result = render(() => <PMusicPlayerContent />)
+    const audio = result.container.querySelector('audio')
+
+    if (!(audio instanceof HTMLAudioElement)) {
+      throw new TypeError('Expected the Pomo audio element to be rendered')
+    }
+
+    await waitFor(() => expect(audio.getAttribute('src')).toBe('/two.mp3'))
+    fireEvent.click(screen.getByRole('button', {name: '플레이어 펼치기'}))
+    fireEvent.keyDown(screen.getByTitle('Two · Artist · 밀어서 삭제'), {key: 'Delete'})
+
+    await waitFor(() => expect(audio.getAttribute('src')).toBe('/three.mp3'))
+    expect(screen.queryByTitle('Two · Artist · 밀어서 삭제')).toBeNull()
   })
 
   it('should ignore an obsolete blocked-autoplay result after playback starts', async () => {

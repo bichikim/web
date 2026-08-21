@@ -3,6 +3,9 @@ import {SScroll} from './'
 import zombieGif from './zombie.gif'
 
 const meta = {
+  args: {
+    component: 'div',
+  },
   component: SScroll.Root,
   title: 'solid/components/SScroll',
 } satisfies Meta

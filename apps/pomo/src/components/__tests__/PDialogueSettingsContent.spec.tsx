@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
 import {Tabs} from '@kobalte/core/tabs'
-import {fireEvent, render, screen} from '@solidjs/testing-library'
+import {fireEvent, render, screen, within} from '@solidjs/testing-library'
 import type {JSX} from 'solid-js'
 import {beforeEach, expect, it, vi} from 'vitest'
 
@@ -66,6 +66,7 @@ const createEvents = (overrides: Partial<PEventContextValue> = {}): PEventContex
   activeSegmentMood: () => null,
   activeSegmentPosition: () => null,
   activeText: () => null,
+  activeViseme: () => 'rest',
   deleteDialogue: vi.fn(async () => undefined),
   dialogues: () => [DIALOGUE],
   enterFocusRoom: vi.fn(),
@@ -76,6 +77,7 @@ const createEvents = (overrides: Partial<PEventContextValue> = {}): PEventContex
   getAudio: vi.fn(async () => null),
   hasEnteredFocusRoom: () => true,
   isDialoguePlaybackBlocked: () => false,
+  isDialoguePlaying: () => false,
   isDialogueScheduled: () => false,
   isEntryPlaybackBlocked: () => false,
   isLoading: () => false,
@@ -121,14 +123,62 @@ beforeEach(() => {
   vi.mocked(usePFeedContext).mockReturnValue(createFeeds())
 })
 
+it('should keep saved dialogue content full-width with bounded text and actions', () => {
+  vi.mocked(usePEvents).mockReturnValue(createEvents())
+
+  render(() => <PDialogueSettingsContent />)
+
+  const library = screen.getByRole('list', {name: '저장된 대화'})
+  const summary = within(library).getByText(DIALOGUE.text)
+  const row = summary.closest('.pomo-dialogue-settings__selected-dialogue--library')
+  const listenButton = within(library).getByRole('button', {name: '듣기'})
+
+  expect(row?.className).toContain('max-md:items-stretch')
+  expect(summary.className).toContain('[-webkit-line-clamp:3]')
+  expect(listenButton.textContent).toBe('듣기')
+  expect(screen.getByRole('link', {name: '새 대화'}).getAttribute('href')).toBe('/dialogue')
+  expect(within(library).getByRole('link', {name: '편집'}).getAttribute('href')).toBe(
+    '/dialogue?dialogueId=saved-dialogue',
+  )
+
+  fireEvent.click(within(library).getByRole('button', {name: '삭제'}))
+  expect(
+    within(library)
+      .getByRole('button', {name: '삭제 확인'})
+      .hasAttribute('data-pomo-dialogue-delete-confirm'),
+  ).toBe(true)
+})
+
+it('should apply compact spacing to dialogue settings groups', () => {
+  vi.mocked(usePEvents).mockReturnValue(createEvents())
+
+  const result = render(() => <PDialogueSettingsContent />)
+  const section = result.container.querySelector('.pomo-dialogue-settings') as HTMLElement
+  const list = result.container.querySelector('.pomo-dialogue-settings__list') as HTMLElement
+  const automatic = result.container.querySelector(
+    '.pomo-dialogue-settings__automatic',
+  ) as HTMLElement
+
+  expect(section.classList.contains('settings-compact:gap-4')).toBe(true)
+  expect(list.classList.contains('settings-compact:gap-2')).toBe(true)
+  expect(list.classList.contains('settings-compact:[&_>_li]:gap-2')).toBe(true)
+  expect(automatic.classList.contains('settings-compact:gap-3')).toBe(true)
+})
+
 it('should play a saved dialogue once through the character without changing event bindings', () => {
   const onRequestClose = vi.fn()
   const events = createEvents()
+  const pauseAudio = vi
+    .spyOn(HTMLMediaElement.prototype, 'pause')
+    .mockImplementation(() => undefined)
+  const loadAudio = vi.spyOn(HTMLMediaElement.prototype, 'load').mockImplementation(() => undefined)
   vi.mocked(usePEvents).mockReturnValue(events)
 
   render(() => <PDialogueSettingsContent onRequestClose={onRequestClose} />)
   fireEvent.click(screen.getByRole('button', {name: '캐릭터로 듣기'}))
 
+  expect(pauseAudio).toHaveBeenCalledOnce()
+  expect(loadAudio).toHaveBeenCalledOnce()
   expect(events.onStopDialoguePlayback).toHaveBeenCalledOnce()
   expect(events.playDialogue).toHaveBeenCalledWith(DIALOGUE.id)
   expect(events.setEventDialogues).not.toHaveBeenCalled()

@@ -20,7 +20,7 @@ export default mergeConfig(
         provider: playwright({}),
       },
       name: 'storybook',
-      // AI_NOTE - Vitest 기준 이미지는 OS별 렌더링 차이를 포함하므로 커밋된 Darwin 기준 이미지와 같은 환경에서만 비교한다.
+      // Vitest 기준 이미지는 OS별 렌더링 차이를 포함하므로 커밋된 Darwin 기준 이미지와 같은 환경에서만 비교한다.
       setupFiles: visualRegressionSetupFiles,
     },
   }),

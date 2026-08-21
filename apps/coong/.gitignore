@@ -5,9 +5,8 @@ dist
 .output
 .vercel
 .netlify
-netlify
 .vinxi
-
+netlify
 # Environment
 .env
 .env*.local

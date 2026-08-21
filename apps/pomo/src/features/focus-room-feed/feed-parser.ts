@@ -1,3 +1,4 @@
+/* istanbul ignore next -- Wallaby inconsistently counts module initialization across workers. */
 const BLOCKED_CONTENT_SELECTOR =
   'script, style, noscript, nav, aside, form, button, iframe, svg, canvas, template, [data-pomo-speech="exclude"]'
 

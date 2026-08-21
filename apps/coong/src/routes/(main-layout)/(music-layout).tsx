@@ -91,14 +91,14 @@ export default function MusicLayout(props: RouteSectionProps) {
     },
   )
 
-  // AI_NOTE - useStorage onMount hydrates localStorage after createEffect; wait before enforcing
+  // useStorage onMount hydrates localStorage after createEffect; wait before enforcing
   const [storageReady, setStorageReady] = createSignal(false)
 
   onMount(() => {
     setStorageReady(true)
   })
 
-  // AI_NOTE - preset loads async; only known presets may override the saved playlist
+  // Presets load asynchronously; only known presets may override the saved playlist.
   createEffect(() => {
     if (!storageReady()) {
       return

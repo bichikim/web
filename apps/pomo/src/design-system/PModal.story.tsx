@@ -43,9 +43,9 @@ const meta = {
     }
 
     return (
-      <main class="grid min-h-screen place-items-center bg-[var(--pomo-canvas)] p-6">
+      <main class="grid min-h-screen place-items-center bg-background p-6">
         <button
-          class="rounded-full bg-[var(--pomo-accent)] px-5 py-3 text-sm font-700 text-white"
+          class="rounded-full bg-primary px-5 py-3 text-sm font-700 text-white"
           onClick={(event) => {
             setTriggerElement(event.currentTarget)
             setIsOpen(true)

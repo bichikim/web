@@ -8,7 +8,7 @@ const MAXIMUM_REQUEST_LENGTH = 800
 const INITIAL_REQUEST = '삶의 행복에 대해 이야기해줘'
 const SECTION_CLASSES = cx(
   'relative w-full overflow-hidden rounded-8 border border-white/10',
-  'bg-#211a2b/88 p-5 shadow-[0_28px_100px_rgba(5,2,10,0.45)] backdrop-blur-xl sm:p-8',
+  'bg-#211a2b/88 p-5 shadow-[0_28px_100px_rgba(5,2,10,0.45)] backdrop-blur-xl xs:p-8',
 )
 const TEXTAREA_CLASSES = cx(
   'min-h-44 w-full resize-y box-border rounded-5 border border-white/10 bg-#17131f p-4',
@@ -31,11 +31,11 @@ const DirectAnswerHeader = () => (
       <p class="m-0 text-xs font-700 tracking-[0.24em] text-#9ed6bb uppercase">
         Local direct answer lab
       </p>
-      <h1 class="mb-0 mt-3 text-2xl font-750 tracking--0.02em sm:text-3xl">
-        같은 요청으로 세 모델을 비교해 보세요
+      <h1 class="mb-0 mt-3 text-2xl font-750 tracking--0.02em xs:text-3xl">
+        같은 요청으로 다섯 모델을 비교해 보세요
       </h1>
-      <p class="mb-0 mt-3 max-w-2xl text-sm leading-6 text-#bdb2c4 sm:text-base">
-        0.8B, 2B, 4B가 만든 한국어 원고를 나란히 확인할 수 있어요.
+      <p class="mb-0 mt-3 max-w-2xl text-sm leading-6 text-#bdb2c4 xs:text-base">
+        Qwen 3종과 Gemma 4 E2B의 q4·모바일 q2f16 결과를 나란히 확인할 수 있어요.
       </p>
     </div>
     <div class="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-#9ed6bb text-lg font-800 text-#14251d">
@@ -202,7 +202,7 @@ const ModelPanel = (props: ModelPanelProps) => {
   }
 
   return (
-    <article class="grid content-start gap-5 rounded-6 border border-white/8 bg-white/3 p-4 sm:p-5">
+    <article class="grid content-start gap-5 rounded-6 border border-white/8 bg-white/3 p-4 xs:p-5">
       <div>
         <ModelStatus
           model={props.model}
@@ -238,6 +238,8 @@ const DialogueWriter = () => {
   const compactModel = getTextModel('qwen-0.8b')
   const qualityModel = getTextModel('qwen-2b')
   const largerModel = getTextModel('qwen-4b')
+  const gemmaModel = getTextModel('gemma-4-e2b')
+  const mobileGemmaModel = getTextModel('gemma-4-e2b-mobile')
   const compactWriter = useDialogueWriter({
     initialRequest: INITIAL_REQUEST,
     modelId: compactModel.id,
@@ -250,13 +252,23 @@ const DialogueWriter = () => {
     initialRequest: INITIAL_REQUEST,
     modelId: largerModel.id,
   })
-  const writers = [compactWriter, qualityWriter, largerWriter]
+  const gemmaWriter = useDialogueWriter({
+    initialRequest: INITIAL_REQUEST,
+    modelId: gemmaModel.id,
+  })
+  const mobileGemmaWriter = useDialogueWriter({
+    initialRequest: INITIAL_REQUEST,
+    modelId: mobileGemmaModel.id,
+  })
+  const writers = [compactWriter, qualityWriter, largerWriter, gemmaWriter, mobileGemmaWriter]
   const isBusy = () => writers.some((writer) => writer.isBusy())
 
   const handleRequestInput = (event: InputEvent & {currentTarget: HTMLTextAreaElement}) => {
     compactWriter.setRequest(event.currentTarget.value)
     qualityWriter.setRequest(event.currentTarget.value)
     largerWriter.setRequest(event.currentTarget.value)
+    gemmaWriter.setRequest(event.currentTarget.value)
+    mobileGemmaWriter.setRequest(event.currentTarget.value)
   }
 
   return (
@@ -282,24 +294,71 @@ const DialogueWriter = () => {
           />
         </label>
 
-        <div class="grid gap-4 lg:grid-cols-3">
+        <div class="grid grid-cols-[repeat(auto-fit,_minmax(min(100%,_17rem),_1fr))] gap-4">
           <ModelPanel
             disabled={isBusy() && compactWriter.state().status !== 'loading'}
             model={compactModel}
-            onActivate={() => activateModel(compactWriter, [qualityWriter, largerWriter])}
+            onActivate={() =>
+              activateModel(compactWriter, [
+                qualityWriter,
+                largerWriter,
+                gemmaWriter,
+                mobileGemmaWriter,
+              ])
+            }
             writer={compactWriter}
           />
           <ModelPanel
             disabled={isBusy() && qualityWriter.state().status !== 'loading'}
             model={qualityModel}
-            onActivate={() => activateModel(qualityWriter, [compactWriter, largerWriter])}
+            onActivate={() =>
+              activateModel(qualityWriter, [
+                compactWriter,
+                largerWriter,
+                gemmaWriter,
+                mobileGemmaWriter,
+              ])
+            }
             writer={qualityWriter}
           />
           <ModelPanel
             disabled={isBusy() && largerWriter.state().status !== 'loading'}
             model={largerModel}
-            onActivate={() => activateModel(largerWriter, [compactWriter, qualityWriter])}
+            onActivate={() =>
+              activateModel(largerWriter, [
+                compactWriter,
+                qualityWriter,
+                gemmaWriter,
+                mobileGemmaWriter,
+              ])
+            }
             writer={largerWriter}
+          />
+          <ModelPanel
+            disabled={isBusy() && gemmaWriter.state().status !== 'loading'}
+            model={gemmaModel}
+            onActivate={() =>
+              activateModel(gemmaWriter, [
+                compactWriter,
+                qualityWriter,
+                largerWriter,
+                mobileGemmaWriter,
+              ])
+            }
+            writer={gemmaWriter}
+          />
+          <ModelPanel
+            disabled={isBusy() && mobileGemmaWriter.state().status !== 'loading'}
+            model={mobileGemmaModel}
+            onActivate={() =>
+              activateModel(mobileGemmaWriter, [
+                compactWriter,
+                qualityWriter,
+                largerWriter,
+                gemmaWriter,
+              ])
+            }
+            writer={mobileGemmaWriter}
           />
         </div>
 

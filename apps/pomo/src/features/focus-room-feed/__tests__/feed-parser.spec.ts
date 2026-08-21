@@ -1,8 +1,8 @@
 /** @vitest-environment jsdom */
 
-import {expect, it} from 'vitest'
+import {expect, it, vi} from 'vitest'
 
-import {createFeedScript, extractArticleText, parseFeedXml} from '../feed-parser'
+import {cleanFeedText, createFeedScript, extractArticleText, parseFeedXml} from '../feed-parser'
 
 it('should parse RSS content and preserve all readable text', () => {
   const feed = parseFeedXml(
@@ -97,4 +97,76 @@ it('should exclude marked source links from the speech script', () => {
   const content = `<p>역사 본문</p><footer data-pomo-speech="exclude"><p>출처</p><ol><li><a href="https://example.com/source">Example — 원문</a></li></ol></footer>`
 
   expect(createFeedScript('오늘의 역사', content)).toBe('오늘의 역사\n\n역사 본문')
+})
+
+it('should reject malformed feed XML', () => {
+  expect(() => parseFeedXml('<rss><channel>', 'https://example.com/feed.xml')).toThrow(
+    'RSS/Atom XML 형식을 읽을 수 없어요.',
+  )
+})
+
+it('should use safe fallbacks for incomplete feed metadata', () => {
+  const feed = parseFeedXml(
+    `<rss><item><pubDate>not-a-date</pubDate><link rel="self">ignored</link></item></rss>`,
+    'https://example.com/feed.xml',
+  )
+
+  expect(feed).toEqual({
+    items: [
+      {
+        content: '',
+        contentKind: 'none',
+        id: '제목 없는 피드\u0000',
+        link: '',
+        publishedAt: null,
+        title: '제목 없는 피드',
+      },
+    ],
+    title: 'example.com',
+  })
+})
+
+it('should discard links that cannot be resolved against the feed URL', () => {
+  const feed = parseFeedXml(
+    `<rss><channel><title>잘못된 링크</title><item><link>relative-link</link></item></channel></rss>`,
+    'not-a-url',
+  )
+
+  expect(feed.items[0]?.link).toBe('')
+})
+
+it('should prefer an alternate Atom link', () => {
+  const feed = parseFeedXml(
+    `<feed><title>Atom</title><entry><link rel="self" href="https://example.com/self" />
+      <link rel="alternate" href="https://example.com/article" /></entry></feed>`,
+    'https://example.com/feed.xml',
+  )
+
+  expect(feed.items[0]?.link).toBe('https://example.com/article')
+})
+
+it('should use the title for empty or duplicate feed content', () => {
+  expect(createFeedScript('제목', '')).toBe('제목')
+  expect(createFeedScript('같은 내용', '<p>같은 내용</p>')).toBe('같은 내용')
+})
+
+it('should fall back from main content to the document body', () => {
+  expect(extractArticleText('<main><p>메인 본문</p></main>')).toBe('메인 본문')
+  expect(extractArticleText('<section><p>일반 본문</p></section>')).toBe('일반 본문')
+})
+
+it('should tolerate a parser document without body text', () => {
+  const documentWithoutText = {
+    body: {textContent: null},
+    querySelector: vi.fn(() => null),
+    querySelectorAll: vi.fn(() => []),
+  } as unknown as Document
+  const parse = vi
+    .spyOn(DOMParser.prototype, 'parseFromString')
+    .mockReturnValue(documentWithoutText)
+
+  expect(cleanFeedText('')).toBe('')
+  expect(extractArticleText('')).toBe('')
+
+  parse.mockRestore()
 })

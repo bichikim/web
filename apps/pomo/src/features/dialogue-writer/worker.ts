@@ -1,6 +1,6 @@
 /// <reference lib="webworker" />
 
-import {createTextGenerationRuntime, type TextModelId, trimRepetitiveTail} from '../text-generation'
+import {type TextGenerationRuntime, type TextModelId, trimRepetitiveTail} from '../text-generation'
 import {normalizeKoreanSpeechStyle} from './answer'
 import {createForeignTokenIds} from './foreign-tokens'
 import type {DialogueWorkerRequest, DialogueWorkerResponse} from './messages'
@@ -10,9 +10,16 @@ const MAXIMUM_NEW_TOKENS = 1024
 const workerScope = self as DedicatedWorkerGlobalScope
 
 const sendResponse = (response: DialogueWorkerResponse) => workerScope.postMessage(response)
-const textRuntime = createTextGenerationRuntime({
-  onProgress: (progress) => sendResponse({...progress, type: 'loading'}),
-})
+let textRuntimePromise: Promise<TextGenerationRuntime> | null = null
+const getTextRuntime = () => {
+  textRuntimePromise ??= import('../text-generation/transformers-runtime').then(
+    ({createTransformersRuntime}) =>
+      createTransformersRuntime({
+        onProgress: (progress) => sendResponse({...progress, type: 'loading'}),
+      }),
+  )
+  return textRuntimePromise
+}
 let suppressedTokenIds: Array<number> | null = null
 
 const getErrorMessage = (error: unknown) => {
@@ -24,11 +31,13 @@ const getErrorMessage = (error: unknown) => {
 }
 
 const prepareModel = async (modelId: TextModelId) => {
+  const textRuntime = await getTextRuntime()
   await textRuntime.prepare(modelId)
   sendResponse({type: 'ready'})
 }
 
 const generateDirectAnswer = async (modelId: TextModelId, request: string) => {
+  const textRuntime = await getTextRuntime()
   await textRuntime.prepare(modelId)
   sendResponse({type: 'started'})
   suppressedTokenIds ??= createForeignTokenIds(textRuntime.getTokenizer())

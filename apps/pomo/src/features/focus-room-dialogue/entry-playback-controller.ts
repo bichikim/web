@@ -1,11 +1,45 @@
 // oxlint-disable eslint/no-await-in-loop -- Dialogue audio must finish before the next queued item starts.
 import {type Accessor, createSignal} from 'solid-js'
 
+import {
+  createPVisemeDriver,
+  createPWaveEnvelope,
+  getPAudioEnvelopeLevel,
+  type PAudioEnvelope,
+  type PViseme,
+} from '../lip-sync'
 import type {PDialogueRepository} from './repository'
 import type {DialogueSegmentMood, PDialogue} from './schema'
-import {getDialoguePositionAtTime} from './timeline'
+import {getDialoguePositionAtTime, getDialogueVisemeAtTime} from './timeline'
 
 const MILLISECONDS_PER_SECOND = 1000
+const REST_RETURN_DELAY_MS = 300
+
+type VisemeResetTiming = 'delayed' | 'hold' | 'immediate'
+
+const readAudioEnvelope = async (audioBlob: Blob) => {
+  try {
+    if (typeof audioBlob.arrayBuffer === 'function') {
+      return createPWaveEnvelope(await audioBlob.arrayBuffer())
+    }
+
+    const buffer = await new Promise<ArrayBuffer>((resolve, reject) => {
+      const reader = new FileReader()
+      reader.addEventListener('load', () => {
+        if (reader.result instanceof ArrayBuffer) {
+          resolve(reader.result)
+        } else {
+          reject(new Error('Dialogue audio could not be read as an ArrayBuffer.'))
+        }
+      })
+      reader.addEventListener('error', () => reject(reader.error))
+      reader.readAsArrayBuffer(audioBlob)
+    })
+    return createPWaveEnvelope(buffer)
+  } catch {
+    return null
+  }
+}
 
 export interface PlayPDialogueSequenceOptions {
   readonly dialogueIds: ReadonlyArray<string>
@@ -19,10 +53,12 @@ export interface EntryPlaybackController {
   readonly activeSegmentMood: Accessor<DialogueSegmentMood | null>
   readonly activeSegmentPosition: Accessor<number | null>
   readonly activeText: Accessor<string | null>
+  readonly activeViseme: Accessor<PViseme>
   readonly cancel: () => void
   readonly dispose: () => void
   readonly isBlocked: Accessor<boolean>
   readonly isDialogueScheduled: (dialogueId: string) => boolean
+  readonly isPlaying: Accessor<boolean>
   readonly prepare: (repository: PDialogueRepository, dialogueId: string) => Promise<void>
   readonly playSequence: (
     repository: PDialogueRepository,
@@ -75,16 +111,20 @@ const failQueueRequest = (request: PlaybackQueueRequest, error: unknown) => {
 }
 
 /** Owns one audio element and serializes event and feed dialogue requests. */
-// oxlint-disable-next-line eslint/max-lines-per-function -- One controller owns the audio element, queue, retry, and disposal lifecycle.
+// oxlint-disable-next-line eslint/max-lines-per-function, eslint/max-statements -- One controller owns the audio element, queue, retry, and disposal lifecycle.
 export const createEntryPlaybackController = (): EntryPlaybackController => {
   const [activeSegmentCount, setActiveSegmentCount] = createSignal(0)
   const [activeSegmentMood, setActiveSegmentMood] = createSignal<DialogueSegmentMood | null>(null)
   const [activeSegmentPosition, setActiveSegmentPosition] = createSignal<number | null>(null)
   const [activeText, setActiveText] = createSignal<string | null>(null)
+  const [activeViseme, setActiveViseme] = createSignal<PViseme>('rest')
   const [isBlocked, setIsBlocked] = createSignal(false)
+  const [isPlaying, setIsPlaying] = createSignal(false)
   const [scheduledDialogueCount, setScheduledDialogueCount] = createSignal(0)
+  const visemeDriver = createPVisemeDriver()
   let animationFrame: number | null = null
   let audio: HTMLAudioElement | null = null
+  let audioEnvelope: PAudioEnvelope | null = null
   let audioUrl: string | null = null
   let dialogue: PDialogue | null = null
   let activeRequest: PlaybackQueueRequest | null = null
@@ -92,6 +132,7 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
   let isAwaitingSceneInteraction = false
   let isDisposed = false
   let playbackGeneration = 0
+  let restReturnTimer: number | null = null
   let resolveCompletion: ((completion: PlaybackCompletion) => void) | null = null
   const requestQueue: Array<PlaybackQueueRequest> = []
 
@@ -115,21 +156,54 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
     }
   }
 
+  const cancelRestReturn = () => {
+    if (restReturnTimer !== null) {
+      window.clearTimeout(restReturnTimer)
+      restReturnTimer = null
+    }
+  }
+
+  const resetViseme = (timing: VisemeResetTiming) => {
+    cancelRestReturn()
+
+    if (timing === 'hold') {
+      return
+    }
+
+    if (timing === 'immediate') {
+      setActiveViseme('rest')
+      return
+    }
+
+    restReturnTimer = window.setTimeout(() => {
+      restReturnTimer = null
+      setActiveViseme('rest')
+    }, REST_RETURN_DELAY_MS)
+  }
+
   const updateSubtitle = () => {
     if (audio === null || dialogue === null || audio.ended) {
       cancelFrame()
       return
     }
 
-    const activePosition = getDialoguePositionAtTime(
-      dialogue.segments,
-      audio.currentTime * MILLISECONDS_PER_SECOND,
-    )
+    const currentTimeMs = audio.currentTime * MILLISECONDS_PER_SECOND
+    const activePosition = getDialoguePositionAtTime(dialogue.segments, currentTimeMs)
     const activeSegment =
       activePosition === null ? undefined : dialogue.segments[activePosition.position]
     setActiveSegmentMood(activeSegment?.mood ?? null)
     setActiveSegmentPosition(activePosition?.position ?? null)
     setActiveText(activePosition?.text ?? null)
+    const targetViseme = getDialogueVisemeAtTime(dialogue.segments, currentTimeMs)
+    const nextViseme = visemeDriver.update({
+      currentTimeMs,
+      intensity: audioEnvelope === null ? 1 : getPAudioEnvelopeLevel(audioEnvelope, currentTimeMs),
+      viseme: targetViseme,
+    })
+
+    if (nextViseme !== 'rest') {
+      setActiveViseme(nextViseme)
+    }
     animationFrame = window.requestAnimationFrame(updateSubtitle)
   }
 
@@ -139,17 +213,21 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
     resolve?.(completion)
   }
 
-  const clearPlayback = () => {
+  const clearPlayback = (visemeResetTiming: VisemeResetTiming = 'immediate') => {
     cancelFrame()
     audio?.pause()
     audio = null
+    audioEnvelope = null
+    visemeDriver.reset()
     dialogue = null
     isAwaitingSceneInteraction = false
     setIsBlocked(false)
+    setIsPlaying(false)
     setActiveSegmentCount(0)
     setActiveSegmentMood(null)
     setActiveSegmentPosition(null)
     setActiveText(null)
+    resetViseme(visemeResetTiming)
 
     if (audioUrl !== null) {
       URL.revokeObjectURL(audioUrl)
@@ -159,7 +237,7 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
 
   const finishPlayback = (completion: PlaybackCompletion) => {
     settleCompletion(completion)
-    clearPlayback()
+    clearPlayback(completion === 'ended' ? 'hold' : 'immediate')
   }
 
   const start = async () => {
@@ -178,6 +256,8 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
 
       isAwaitingSceneInteraction = false
       setIsBlocked(false)
+      setIsPlaying(true)
+      cancelRestReturn()
       cancelFrame()
       updateSubtitle()
     } catch (error: unknown) {
@@ -213,7 +293,14 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
       return null
     }
 
+    const storedAudioEnvelope = await readAudioEnvelope(storedAudio)
+
+    if (isDisposed || generation !== playbackGeneration) {
+      return null
+    }
+
     dialogue = storedDialogue
+    audioEnvelope = storedAudioEnvelope
     setActiveSegmentCount(storedDialogue.segments.length)
     audioUrl = URL.createObjectURL(storedAudio)
     audio = new Audio(audioUrl)
@@ -255,7 +342,7 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
         }
 
         settleCompletion('ended')
-        clearPlayback()
+        clearPlayback('hold')
       },
       {once: true},
     )
@@ -363,6 +450,8 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
         drainQueue().catch((error: unknown) => {
           console.error('Unexpected dialogue queue failure.', error)
         })
+      } else if (!isDisposed && activeViseme() !== 'rest') {
+        resetViseme('delayed')
       }
     }
   }
@@ -416,6 +505,7 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
     activeSegmentMood,
     activeSegmentPosition,
     activeText,
+    activeViseme,
     cancel,
     dispose() {
       isDisposed = true
@@ -427,6 +517,7 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
       activeRequest?.dialogueIds.slice(activeRequest.nextDialoguePosition).includes(dialogueId) ===
         true ||
       requestQueue.some((request) => request.dialogueIds.includes(dialogueId)),
+    isPlaying,
     playSequence: enqueue,
     prepare: (repository, dialogueId) =>
       enqueue(repository, {

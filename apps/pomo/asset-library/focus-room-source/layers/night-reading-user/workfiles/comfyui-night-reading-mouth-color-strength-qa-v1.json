@@ -1,0 +1,331 @@
+{
+  "1": {
+    "class_type": "LoadImage",
+    "inputs": {"image": "layer-head-eye-base.png"}
+  },
+  "2": {
+    "class_type": "ImageCrop",
+    "inputs": {"height": 180, "image": ["1", 0], "width": 260, "x": 930, "y": 270}
+  },
+  "3": {
+    "class_type": "SolidMask",
+    "inputs": {"height": 180, "value": 0, "width": 260}
+  },
+  "4": {
+    "class_type": "SolidMask",
+    "inputs": {"height": 48, "value": 1, "width": 95}
+  },
+  "5": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["3", 0],
+      "operation": "add",
+      "source": ["4", 0],
+      "x": 50,
+      "y": 75
+    }
+  },
+  "6": {
+    "class_type": "FeatherMask",
+    "inputs": {"bottom": 8, "left": 8, "mask": ["5", 0], "right": 8, "top": 8}
+  },
+  "7": {
+    "class_type": "LoadImage",
+    "inputs": {"image": "layer-mouth-open.png"}
+  },
+  "8": {
+    "class_type": "INPAINT_ColorMatch",
+    "inputs": {
+      "exclude_mask": ["7", 1],
+      "reference": ["2", 0],
+      "strength": 0.45,
+      "target": ["7", 0]
+    }
+  },
+  "9": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["8", 0],
+      "mask": ["6", 0],
+      "resize_source": false,
+      "source": ["7", 0],
+      "x": 0,
+      "y": 0
+    }
+  },
+  "10": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {"alpha": ["7", 1], "image": ["9", 0]}
+  },
+  "11": {
+    "class_type": "SaveImage",
+    "inputs": {"filename_prefix": "pomo/night-reading-mouth-open-color-045-v1", "images": ["10", 0]}
+  },
+  "12": {
+    "class_type": "INPAINT_ColorMatch",
+    "inputs": {
+      "exclude_mask": ["7", 1],
+      "reference": ["2", 0],
+      "strength": 0.7,
+      "target": ["7", 0]
+    }
+  },
+  "13": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["12", 0],
+      "mask": ["6", 0],
+      "resize_source": false,
+      "source": ["7", 0],
+      "x": 0,
+      "y": 0
+    }
+  },
+  "14": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {"alpha": ["7", 1], "image": ["13", 0]}
+  },
+  "15": {
+    "class_type": "SaveImage",
+    "inputs": {"filename_prefix": "pomo/night-reading-mouth-open-color-070-v1", "images": ["14", 0]}
+  },
+  "16": {
+    "class_type": "INPAINT_ColorMatch",
+    "inputs": {
+      "exclude_mask": ["7", 1],
+      "reference": ["2", 0],
+      "strength": 1,
+      "target": ["7", 0]
+    }
+  },
+  "17": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["16", 0],
+      "mask": ["6", 0],
+      "resize_source": false,
+      "source": ["7", 0],
+      "x": 0,
+      "y": 0
+    }
+  },
+  "18": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {"alpha": ["7", 1], "image": ["17", 0]}
+  },
+  "19": {
+    "class_type": "SaveImage",
+    "inputs": {"filename_prefix": "pomo/night-reading-mouth-open-color-100-v1", "images": ["18", 0]}
+  },
+  "20": {
+    "class_type": "InvertMask",
+    "inputs": {"mask": ["7", 1]}
+  },
+  "21": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["1", 0],
+      "mask": ["20", 0],
+      "resize_source": false,
+      "source": ["7", 0],
+      "x": 930,
+      "y": 270
+    }
+  },
+  "22": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "pomo/night-reading-mouth-open-preview-original-v1",
+      "images": ["21", 0]
+    }
+  },
+  "23": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["1", 0],
+      "mask": ["20", 0],
+      "resize_source": false,
+      "source": ["10", 0],
+      "x": 930,
+      "y": 270
+    }
+  },
+  "24": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "pomo/night-reading-mouth-open-preview-045-v1",
+      "images": ["23", 0]
+    }
+  },
+  "25": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["1", 0],
+      "mask": ["20", 0],
+      "resize_source": false,
+      "source": ["14", 0],
+      "x": 930,
+      "y": 270
+    }
+  },
+  "26": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "pomo/night-reading-mouth-open-preview-070-v1",
+      "images": ["25", 0]
+    }
+  },
+  "27": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["1", 0],
+      "mask": ["20", 0],
+      "resize_source": false,
+      "source": ["18", 0],
+      "x": 930,
+      "y": 270
+    }
+  },
+  "28": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "pomo/night-reading-mouth-open-preview-100-v1",
+      "images": ["27", 0]
+    }
+  },
+  "29": {
+    "class_type": "ImageCrop",
+    "inputs": {"height": 400, "image": ["21", 0], "width": 500, "x": 800, "y": 100}
+  },
+  "30": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "pomo/night-reading-mouth-open-detail-original-v1",
+      "images": ["29", 0]
+    }
+  },
+  "31": {
+    "class_type": "ImageCrop",
+    "inputs": {"height": 400, "image": ["23", 0], "width": 500, "x": 800, "y": 100}
+  },
+  "32": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "pomo/night-reading-mouth-open-detail-045-v1",
+      "images": ["31", 0]
+    }
+  },
+  "33": {
+    "class_type": "ImageCrop",
+    "inputs": {"height": 400, "image": ["25", 0], "width": 500, "x": 800, "y": 100}
+  },
+  "34": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "pomo/night-reading-mouth-open-detail-070-v1",
+      "images": ["33", 0]
+    }
+  },
+  "35": {
+    "class_type": "ImageCrop",
+    "inputs": {"height": 400, "image": ["27", 0], "width": 500, "x": 800, "y": 100}
+  },
+  "36": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "pomo/night-reading-mouth-open-detail-100-v1",
+      "images": ["35", 0]
+    }
+  },
+  "37": {
+    "class_type": "SolidMask",
+    "inputs": {"height": 72, "value": 1, "width": 120}
+  },
+  "38": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["3", 0],
+      "operation": "add",
+      "source": ["37", 0],
+      "x": 40,
+      "y": 68
+    }
+  },
+  "39": {
+    "class_type": "FeatherMask",
+    "inputs": {"bottom": 12, "left": 12, "mask": ["38", 0], "right": 12, "top": 12}
+  },
+  "40": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["2", 0],
+      "mask": ["39", 0],
+      "resize_source": false,
+      "source": ["18", 0],
+      "x": 0,
+      "y": 0
+    }
+  },
+  "41": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {"alpha": ["7", 1], "image": ["40", 0]}
+  },
+  "42": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "pomo/night-reading-mouth-open-color-local-v1",
+      "images": ["41", 0]
+    }
+  },
+  "43": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["1", 0],
+      "mask": ["20", 0],
+      "resize_source": false,
+      "source": ["41", 0],
+      "x": 930,
+      "y": 270
+    }
+  },
+  "44": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "pomo/night-reading-mouth-open-preview-local-v1",
+      "images": ["43", 0]
+    }
+  },
+  "45": {
+    "class_type": "ImageCrop",
+    "inputs": {"height": 400, "image": ["43", 0], "width": 500, "x": 800, "y": 100}
+  },
+  "46": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "pomo/night-reading-mouth-open-detail-local-v1",
+      "images": ["45", 0]
+    }
+  },
+  "47": {
+    "class_type": "MaskToImage",
+    "inputs": {"mask": ["7", 1]}
+  },
+  "48": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "pomo/night-reading-mouth-open-transparency-mask-v1",
+      "images": ["47", 0]
+    }
+  },
+  "49": {
+    "class_type": "MaskToImage",
+    "inputs": {"mask": ["20", 0]}
+  },
+  "50": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "pomo/night-reading-mouth-open-alpha-mask-v1",
+      "images": ["49", 0]
+    }
+  }
+}

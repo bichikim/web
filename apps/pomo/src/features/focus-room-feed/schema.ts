@@ -30,9 +30,9 @@ export interface FeedConnection {
 }
 
 export const feedConnectionSchema: z.ZodType<FeedConnection> = z.object({
-  createdAt: z.string().datetime(),
+  createdAt: z.iso.datetime(),
   id: z.string().min(1),
-  updatedAt: z.string().datetime(),
+  updatedAt: z.iso.datetime(),
   url: z.string().min(1).max(MAXIMUM_FEED_URL_LENGTH).refine(isSupportedFeedUrl),
   version: z.literal(1),
   voiceId: feedVoiceIdSchema,

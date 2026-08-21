@@ -9,6 +9,7 @@ import {
   useContext,
 } from 'solid-js'
 
+import type {PViseme} from '../lip-sync'
 import {
   createEntryPlaybackController,
   type PlayPDialogueSequenceOptions,
@@ -33,6 +34,7 @@ export interface PEventContextValue {
   readonly activeSegmentMood: Accessor<DialogueSegmentMood | null>
   readonly activeSegmentPosition: Accessor<number | null>
   readonly activeText: Accessor<string | null>
+  readonly activeViseme: Accessor<PViseme>
   readonly deleteDialogue: (dialogueId: string) => Promise<void>
   readonly dialogues: Accessor<ReadonlyArray<PDialogue>>
   readonly entryDialogueId: Accessor<string | null>
@@ -42,6 +44,7 @@ export interface PEventContextValue {
   readonly getAudio: (audioKey: string) => Promise<Blob | null>
   readonly hasEnteredFocusRoom: Accessor<boolean>
   readonly isDialoguePlaybackBlocked: Accessor<boolean>
+  readonly isDialoguePlaying: Accessor<boolean>
   readonly isDialogueScheduled: (dialogueId: string) => boolean
   readonly isEntryPlaybackBlocked: Accessor<boolean>
   readonly isLoading: Accessor<boolean>
@@ -126,7 +129,7 @@ export const PEventProvider = (props: PEventProviderProps) => {
 
   const getRepository = () => {
     if (repository === null) {
-      throw new Error('집중룸 이벤트 저장소가 아직 준비되지 않았어요.')
+      throw new Error('Pomo 이벤트 저장소가 아직 준비되지 않았어요.')
     }
 
     return repository
@@ -143,12 +146,13 @@ export const PEventProvider = (props: PEventProviderProps) => {
       return
     }
 
-    hasStartedEntryPlayback = true
     const entryDialogueIds = eventDialogueIds()[FOCUS_ROOM_ENTRY_EVENT] ?? []
 
     if (entryDialogueIds.length === 0) {
       return
     }
+
+    hasStartedEntryPlayback = true
 
     playback
       .playSequence(repository, {
@@ -224,6 +228,10 @@ export const PEventProvider = (props: PEventProviderProps) => {
 
       if (!isDisposed) {
         playback.stop()
+
+        if (eventId === FOCUS_ROOM_ENTRY_EVENT) {
+          playEntryDialogue()
+        }
       }
     } catch (error: unknown) {
       if (!isDisposed && currentRevision === bindingRevision) {
@@ -240,6 +248,7 @@ export const PEventProvider = (props: PEventProviderProps) => {
     activeSegmentMood: playback.activeSegmentMood,
     activeSegmentPosition: playback.activeSegmentPosition,
     activeText: playback.activeText,
+    activeViseme: playback.activeViseme,
     async deleteDialogue(dialogueId) {
       await bindingUpdate.catch(() => undefined)
       await getRepository().deleteDialogue(dialogueId)
@@ -276,6 +285,7 @@ export const PEventProvider = (props: PEventProviderProps) => {
     getAudio: (audioKey) => getRepository().getAudio(audioKey),
     hasEnteredFocusRoom,
     isDialoguePlaybackBlocked: playback.isBlocked,
+    isDialoguePlaying: playback.isPlaying,
     isDialogueScheduled: playback.isDialogueScheduled,
     isEntryPlaybackBlocked: playback.isBlocked,
     isLoading,

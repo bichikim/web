@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="260" height="180" viewBox="0 0 260 180">
+  <defs>
+    <radialGradient id="nose-feather">
+      <stop offset="0%" stop-color="#808080" />
+      <stop offset="100%" stop-color="black" />
+    </radialGradient>
+  </defs>
+  <rect width="260" height="180" fill="black" />
+  <ellipse
+    cx="75"
+    cy="70"
+    rx="17"
+    ry="13"
+    fill="url(#nose-feather)"
+  />
+</svg>

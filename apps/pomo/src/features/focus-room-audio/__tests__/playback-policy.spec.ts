@@ -1,6 +1,43 @@
 import {describe, expect, it} from 'vitest'
 
-import {resolveTrackEnd} from '../playback-policy'
+import {resolveTrackEnd, resolveTrackRemoval} from '../playback-policy'
+
+describe('resolveTrackRemoval', () => {
+  it('should preserve the current track when removing a later track', () => {
+    expect(resolveTrackRemoval({currentIndex: 1, removeIndex: 3, trackCount: 5})).toEqual({
+      currentTrackChanged: false,
+      nextCurrentIndex: 1,
+    })
+  })
+
+  it('should shift the current index when removing an earlier track', () => {
+    expect(resolveTrackRemoval({currentIndex: 3, removeIndex: 1, trackCount: 5})).toEqual({
+      currentTrackChanged: false,
+      nextCurrentIndex: 2,
+    })
+  })
+
+  it('should select the following track when removing the current track', () => {
+    expect(resolveTrackRemoval({currentIndex: 1, removeIndex: 1, trackCount: 3})).toEqual({
+      currentTrackChanged: true,
+      nextCurrentIndex: 1,
+    })
+  })
+
+  it('should select the previous track when removing the final current track', () => {
+    expect(resolveTrackRemoval({currentIndex: 2, removeIndex: 2, trackCount: 3})).toEqual({
+      currentTrackChanged: true,
+      nextCurrentIndex: 1,
+    })
+  })
+
+  it('should clear the current track when removing the only track', () => {
+    expect(resolveTrackRemoval({currentIndex: 0, removeIndex: 0, trackCount: 1})).toEqual({
+      currentTrackChanged: true,
+      nextCurrentIndex: 0,
+    })
+  })
+})
 
 describe('resolveTrackEnd', () => {
   it('should restart the current track only in one-track repeat mode', () => {

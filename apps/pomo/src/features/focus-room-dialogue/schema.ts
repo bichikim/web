@@ -1,5 +1,6 @@
 import {z} from 'zod'
 
+import {P_VISEMES} from '../lip-sync'
 import {SUPERTONIC_LANGUAGES, type SupertonicLanguage} from '../supertonic/language'
 import {MOOD_MODIFIER_IDS, PRIMARY_MOOD_IDS} from '../text-mood/labels'
 
@@ -35,24 +36,31 @@ export const dialogueSegmentMoodSchema = z.object({
   uncertain: z.boolean(),
 })
 
+const visemeCueSchema = z.object({
+  endMs: z.number().nonnegative(),
+  startMs: z.number().nonnegative(),
+  viseme: z.enum(P_VISEMES),
+})
+
 const dialogueSegmentSchema = z.object({
   durationMs: z.number().nonnegative(),
   index: z.number().int().nonnegative(),
   mood: dialogueSegmentMoodSchema.optional(),
   startMs: z.number().nonnegative(),
   text: z.string().min(1),
+  visemes: z.array(visemeCueSchema).readonly().optional(),
 })
 
 export const focusRoomDialogueSchema = z.object({
   audioKey: z.string().min(1),
-  createdAt: z.string().datetime(),
+  createdAt: z.iso.datetime(),
   durationMs: z.number().nonnegative(),
   id: z.string().min(1),
   language: z.enum(SUPERTONIC_LANGUAGES).default(DEFAULT_FOCUS_ROOM_DIALOGUE_LANGUAGE),
   modelId: z.enum(['full', 'int8']),
   segments: z.array(dialogueSegmentSchema).min(1).readonly(),
   text: z.string().min(1),
-  updatedAt: z.string().datetime(),
+  updatedAt: z.iso.datetime(),
   version: z.literal(1),
   voiceId: z.enum(['Yuna', 'F1', 'F2', 'F3', 'F4', 'F5', 'M1', 'M2', 'M3', 'M4', 'M5']),
 })

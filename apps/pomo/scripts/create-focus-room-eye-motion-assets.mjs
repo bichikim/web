@@ -19,7 +19,7 @@ const INPAINT_BLUR = 1.1
 const RED_BRIGHTNESS_WEIGHT = 0.2126
 const GREEN_BRIGHTNESS_WEIGHT = 0.7152
 const BLUE_BRIGHTNESS_WEIGHT = 0.0722
-const ASSET_DIRECTORY = path.resolve(process.cwd(), 'assets')
+const ASSET_LIBRARY_DIRECTORY = path.resolve(process.cwd(), 'asset-library')
 const DAY_READING_EYE_FILL =
   'focus-room-source/layers/day-reading-focused/workfiles/eye-base-candidate-a.png'
 const DAY_READING_EYE_BASE = 'focus-room-source/layers/day-reading-focused/layer-head-eye-base.png'
@@ -108,40 +108,12 @@ const isolatedIrisScenes = [
     writeEyeLayer: true,
   },
   {
-    eye: 'focus-room-source/layers/night-reading-focused/workfiles/layer-eye-irises-source.png',
-    eyeBounds: {height: 90, left: 890, top: 280, width: 150},
-    head: 'focus-room-source/layers/night-typing-focused/layer-head.png',
-    id: 'night-typing-focused',
-    offsetX: -5,
-  },
-  {
-    eye: 'focus-room-source/layers/night-reading-focused/workfiles/layer-eye-irises-source.png',
-    eyeBounds: {height: 90, left: 890, top: 280, width: 150},
-    head: 'focus-room-source/layers/night-writing-focused/layer-head.png',
-    id: 'night-writing-focused',
-    offsetX: -4,
-  },
-  {
     eye: 'focus-room-source/layers/night-reading-user/workfiles/layer-eye-irises-source.png',
     eyeBounds: {height: 130, left: 890, top: 230, width: 200},
     head: 'focus-room-source/layers/night-reading-user/layer-head.png',
     id: 'night-reading-user',
     offsetX: 0,
     writeEyeLayer: true,
-  },
-  {
-    eye: 'focus-room-source/layers/night-reading-user/workfiles/layer-eye-irises-source.png',
-    eyeBounds: {height: 130, left: 890, top: 230, width: 200},
-    head: 'focus-room-source/layers/night-typing-user/layer-head.png',
-    id: 'night-typing-user',
-    offsetX: 0,
-  },
-  {
-    eye: 'focus-room-source/layers/night-reading-user/workfiles/layer-eye-irises-source.png',
-    eyeBounds: {height: 130, left: 890, top: 230, width: 200},
-    head: 'focus-room-source/layers/night-writing-user/layer-head.png',
-    id: 'night-writing-user',
-    offsetX: 0,
   },
 ]
 
@@ -341,9 +313,9 @@ async function createHorizontalEyeFill(headSource, removalMask) {
 }
 
 async function createSceneAssets(scene) {
-  const fillSource = path.join(ASSET_DIRECTORY, scene.fill)
-  const headSource = path.join(ASSET_DIRECTORY, scene.head)
-  const sourceDirectory = path.join(ASSET_DIRECTORY, 'focus-room-source/layers', scene.id)
+  const fillSource = path.join(ASSET_LIBRARY_DIRECTORY, scene.fill)
+  const headSource = path.join(ASSET_LIBRARY_DIRECTORY, scene.head)
+  const sourceDirectory = path.join(ASSET_LIBRARY_DIRECTORY, 'focus-room-source/layers', scene.id)
   await Promise.all([
     validateCanvasDimensions(headSource, `${scene.id} head`),
     mkdir(sourceDirectory, {recursive: true}),
@@ -376,7 +348,7 @@ async function createSceneAssets(scene) {
             sharp(
               await removeTransparentPixelColor(
                 path.join(
-                  ASSET_DIRECTORY,
+                  ASSET_LIBRARY_DIRECTORY,
                   'focus-room-source/layers/day-reading-focused/workfiles/layer-eye-irises-source.png',
                 ),
               ),
@@ -390,10 +362,10 @@ async function createSceneAssets(scene) {
 }
 
 async function createUserSceneAssets(scene) {
-  const fillSource = path.join(ASSET_DIRECTORY, DAY_USER_EYE_FILL)
-  const eyeSource = path.join(ASSET_DIRECTORY, DAY_USER_EYE_LAYER)
-  const headSource = path.join(ASSET_DIRECTORY, scene.head)
-  const sourceDirectory = path.join(ASSET_DIRECTORY, 'focus-room-source/layers', scene.id)
+  const fillSource = path.join(ASSET_LIBRARY_DIRECTORY, DAY_USER_EYE_FILL)
+  const eyeSource = path.join(ASSET_LIBRARY_DIRECTORY, DAY_USER_EYE_LAYER)
+  const headSource = path.join(ASSET_LIBRARY_DIRECTORY, scene.head)
+  const sourceDirectory = path.join(ASSET_LIBRARY_DIRECTORY, 'focus-room-source/layers', scene.id)
   await Promise.all([
     validateCanvasDimensions(eyeSource, 'day user eye layer'),
     validateCanvasDimensions(headSource, `${scene.id} head`),
@@ -441,9 +413,9 @@ async function createUserSceneAssets(scene) {
 }
 
 async function createIsolatedIrisSceneAssets(scene) {
-  const eyeSource = path.join(ASSET_DIRECTORY, scene.eye)
-  const headSource = path.join(ASSET_DIRECTORY, scene.head)
-  const sourceDirectory = path.join(ASSET_DIRECTORY, 'focus-room-source/layers', scene.id)
+  const eyeSource = path.join(ASSET_LIBRARY_DIRECTORY, scene.eye)
+  const headSource = path.join(ASSET_LIBRARY_DIRECTORY, scene.head)
+  const sourceDirectory = path.join(ASSET_LIBRARY_DIRECTORY, 'focus-room-source/layers', scene.id)
   await Promise.all([
     validateCanvasDimensions(eyeSource, `${scene.id} eye layer`),
     validateCanvasDimensions(headSource, `${scene.id} head`),

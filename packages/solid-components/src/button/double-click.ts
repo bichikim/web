@@ -4,8 +4,8 @@ const DEFAULT_DOUBLE_CLICK_GAP = 250
 export interface DoubleClickPayload {
   active: boolean
   doubleClickGap?: number
-  onClick?: (event: MouseEvent | TouchEvent) => void
-  onDoubleClick?: (event: MouseEvent | TouchEvent) => void
+  onClick?: (event: MouseEvent | TouchEvent) => Promise<void> | void
+  onDoubleClick?: (event: MouseEvent | TouchEvent) => Promise<void> | void
   onLoading: (value: boolean) => void
   onTouchEnd?: (event: TouchEvent) => void
   onTouchStart?: (event: TouchEvent) => void
@@ -17,7 +17,7 @@ export const useDoubleClick = (payload: Accessor<DoubleClickPayload>) => {
   let touchdown = false
 
   const runHandler = async (
-    handler: (event: MouseEvent | TouchEvent) => void,
+    handler: (event: MouseEvent | TouchEvent) => Promise<void> | void,
     event: MouseEvent | TouchEvent,
     onLoading: (value: boolean) => void,
   ) => {

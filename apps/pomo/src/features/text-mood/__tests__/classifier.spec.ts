@@ -1,12 +1,8 @@
 import {describe, expect, it} from 'vitest'
 
 import classifierArtifact from '../classifier-artifact.json'
-import {
-  classifyTextMood,
-  classifyTextSufficiency,
-  PRIMARY_MOOD_IDS,
-  TEXT_MOOD_CLASSIFIER_INFO,
-} from '../index'
+import {classifyTextMood, classifyTextSufficiency} from '../classifier'
+import {PRIMARY_MOOD_IDS, TEXT_MOOD_CLASSIFIER_INFO} from '../index'
 import {TEXT_MOOD_MODEL} from '../model'
 
 describe('classifyTextMood', () => {

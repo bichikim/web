@@ -16,13 +16,13 @@ Pomo가 배포하거나 실행 중 내려받는 외부 소프트웨어, 모델, 
 
 ## 배포·실행 항목
 
-| 항목                                                                                                | Pomo에서의 사용                                            | 라이선스                         | 필요한 조치                                                                  |
-| --------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- | -------------------------------- | ---------------------------------------------------------------------------- |
-| [RobotExpressive](https://github.com/mrdoob/three.js/tree/dev/examples/models/gltf/RobotExpressive) | `public/models/RobotExpressive.glb`, Blender 장면의 캐릭터 | CC0 1.0                          | 의무 없음. Tomás Laulhé 제작, Don McCurdy 수정 사실을 보존한다.              |
-| [Ninomaru Teien](https://polyhaven.com/a/ninomaru_teien)                                            | `public/models/blender/forest.exr`, Blender 장면 환경광    | CC0 1.0                          | 의무 없음. Poly Haven 및 Greg Zaal 출처를 보존한다.                          |
-| [Babylon.js](https://github.com/BabylonJS/Babylon.js/blob/master/license.md)                        | 3D 장면 실행 및 표준 GLB 로딩                              | Apache-2.0                       | 저작권·라이선스 고지를 배포물에 보존한다.                                    |
-| [Qwen3.5 ONNX](https://huggingface.co/onnx-community/Qwen3.5-0.8B-ONNX) 0.8B, 2B, 4B                | 브라우저 내 텍스트 생성                                    | Apache-2.0                       | 모델 저장소의 LICENSE·NOTICE와 저작권 고지를 배포물에 보존한다.              |
-| [Supertonic 3](https://huggingface.co/Supertone/supertonic-3) Full 및 INT8                          | 브라우저 내 음성 합성                                      | 모델: OpenRAIL-M, 예제 코드: MIT | 모델 사용 제한과 고지 의무를 따른다. INT8은 sherpa-onnx용 양자화 배포본이다. |
+| 항목                                                                                                | Pomo에서의 사용                                                    | 라이선스                         | 필요한 조치                                                                  |
+| --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ | -------------------------------- | ---------------------------------------------------------------------------- |
+| [RobotExpressive](https://github.com/mrdoob/three.js/tree/dev/examples/models/gltf/RobotExpressive) | `asset-library/blender/RobotExpressive.glb`, Blender 장면의 캐릭터 | CC0 1.0                          | 의무 없음. Tomás Laulhé 제작, Don McCurdy 수정 사실을 보존한다.              |
+| [Ninomaru Teien](https://polyhaven.com/a/ninomaru_teien)                                            | `asset-library/blender/forest.exr`, Blender 장면 환경광            | CC0 1.0                          | 의무 없음. Poly Haven 및 Greg Zaal 출처를 보존한다.                          |
+| [Babylon.js](https://github.com/BabylonJS/Babylon.js/blob/master/license.md)                        | 3D 장면 실행 및 표준 GLB 로딩                                      | Apache-2.0                       | 저작권·라이선스 고지를 배포물에 보존한다.                                    |
+| [Qwen3.5 ONNX](https://huggingface.co/onnx-community/Qwen3.5-0.8B-ONNX) 0.8B, 2B, 4B                | 브라우저 내 텍스트 생성                                            | Apache-2.0                       | 모델 저장소의 LICENSE·NOTICE와 저작권 고지를 배포물에 보존한다.              |
+| [Supertonic 3](https://huggingface.co/Supertone/supertonic-3) Full 및 INT8                          | 브라우저 내 음성 합성                                              | 모델: OpenRAIL-M, 예제 코드: MIT | 모델 사용 제한과 고지 의무를 따른다. INT8은 sherpa-onnx용 양자화 배포본이다. |
 
 `scene.glb`는 Pomo의 Blender 프로젝트에서 생성하지만 RobotExpressive 모델과 Ninomaru
 Teien HDRI를 포함하거나 참조하므로 두 원본의 조건도 함께 적용된다.

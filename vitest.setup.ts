@@ -5,7 +5,25 @@
  */
 import '@testing-library/jest-dom/vitest'
 import {cleanup} from '@solidjs/testing-library'
-import {afterEach} from 'vitest'
+import {afterEach, vi} from 'vitest'
+
+const RGBA_CHANNEL_COUNT = 4
+const canvasContext = {
+  drawImage: vi.fn(),
+  fillRect: vi.fn(),
+  getImageData: vi.fn(() => ({data: new Uint8ClampedArray(RGBA_CHANNEL_COUNT)})),
+}
+
+if (typeof HTMLCanvasElement !== 'undefined') {
+  vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation((contextId) =>
+    contextId === '2d' ? (canvasContext as unknown as CanvasRenderingContext2D) : null,
+  )
+}
+
+if (typeof HTMLMediaElement !== 'undefined') {
+  vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => undefined)
+  vi.spyOn(HTMLMediaElement.prototype, 'load').mockImplementation(() => undefined)
+}
 
 // render()로 남은 컴포넌트·DOM이 다음 테스트로 새지 않게 한다.
 afterEach(() => {

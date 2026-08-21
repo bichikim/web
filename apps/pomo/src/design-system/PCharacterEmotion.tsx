@@ -51,13 +51,10 @@ export const PCharacterEmotion = (props: PCharacterEmotionProps) => (
           `motion-reduce:animate-none motion-reduce:transform-none`,
         props.active &&
           props.emotion === 'focus' &&
-          'right-0.5 -top-0.5 origin-[50%_calc(100%-0.125rem)] opacity-100 ' +
-            '[animation:pomo-focus-glow_19s_ease-in-out_infinite]',
+          'right-0.5 -top-0.5 origin-[50%_calc(100%-0.125rem)] opacity-100 animate-focus-glow',
         props.active &&
           props.emotion === 'rest' &&
-          `text-[#f3c994] opacity-100 [animation:pomo-rest-sway_2.4s_ease-in-out_infinite] ${
-            REST_FILTER
-          }`,
+          `text-[#f3c994] opacity-100 animate-rest-sway ${REST_FILTER}`,
       )}
     />
   </span>

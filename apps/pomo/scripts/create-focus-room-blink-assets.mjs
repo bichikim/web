@@ -1,5 +1,4 @@
-/* eslint-disable no-magic-numbers -- Bézier paths use measured scene coordinates. */
-// AI_NOTE - Bézier paths and pixel coordinates are measured from fixed 1672x941 scene masters.
+/* eslint-disable no-magic-numbers -- Bézier paths and pixel coordinates are measured from fixed 1672x941 scene masters. */
 import {createRequire} from 'node:module'
 import {mkdir, mkdtemp, rename, rm} from 'node:fs/promises'
 import path from 'node:path'
@@ -9,7 +8,10 @@ const sharp = require('sharp')
 
 const IMAGE_WIDTH = 1672
 const IMAGE_HEIGHT = 941
-const ASSET_DIRECTORY = path.resolve(process.cwd(), 'assets/focus-room-source/animation')
+const ASSET_LIBRARY_DIRECTORY = path.resolve(
+  process.cwd(),
+  'asset-library/focus-room-source/animation',
+)
 const USER_ONLY = process.argv.includes('--user-only')
 const FOCUSED_ONLY = process.argv.includes('--focused-only')
 const DAY_FOCUSED_FEATURE_PATHS = [
@@ -154,8 +156,8 @@ const activeSources = USER_ONLY
     ? sources.filter(({name}) => name.endsWith('-focused'))
     : sources
 
-await mkdir(ASSET_DIRECTORY, {recursive: true})
-const stagingDirectory = await mkdtemp(path.join(ASSET_DIRECTORY, '.staging-'))
+await mkdir(ASSET_LIBRARY_DIRECTORY, {recursive: true})
+const stagingDirectory = await mkdtemp(path.join(ASSET_LIBRARY_DIRECTORY, '.staging-'))
 
 try {
   const outputs = activeSources.flatMap(({closed, featurePaths, half, name, patch, suffix}) => [
@@ -174,7 +176,10 @@ try {
   await Promise.all(
     outputs.map(({name, state, suffix}) => {
       const fileName = `eyes-${name}-${state}${suffix ?? ''}.png`
-      return rename(path.join(stagingDirectory, fileName), path.join(ASSET_DIRECTORY, fileName))
+      return rename(
+        path.join(stagingDirectory, fileName),
+        path.join(ASSET_LIBRARY_DIRECTORY, fileName),
+      )
     }),
   )
 } finally {

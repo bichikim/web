@@ -2,7 +2,6 @@ import {mergeConfig} from 'vite'
 import type {StorybookConfig} from 'storybook-solidjs-vite'
 
 export default <StorybookConfig>{
-  // AI_NOTE - Story별 네트워크 상태를 재현할 수 있도록 MSW 도입을 검토 중이다.
   addons: [
     '@storybook/addon-onboarding',
     '@storybook/addon-docs',
@@ -24,6 +23,7 @@ export default <StorybookConfig>{
       builder: {
         viteConfigPath: './.storybook/vite.config.mts',
       },
+      docgen: false,
     },
   },
   stories: [
@@ -34,15 +34,6 @@ export default <StorybookConfig>{
     '../packages/player/src/**/*.story.@(js|jsx|mjs|ts|tsx)',
     '../packages/utils/src/**/*.story.@(js|jsx|mjs|ts|tsx)',
   ],
-  typescript: {
-    reactDocgen: 'react-docgen-typescript',
-    reactDocgenTypescriptOptions: {
-      // 👇 Default prop filter, which excludes props from node_modules
-      propFilter: (prop: any) => (prop.parent ? !/node_modules/u.test(prop.parent.fileName) : true),
-
-      shouldExtractLiteralValuesFromEnum: true,
-    },
-  },
   async viteFinal(config) {
     return mergeConfig(config, {
       assetsInclude: ['**/*.lottie'],

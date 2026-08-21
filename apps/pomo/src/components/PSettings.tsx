@@ -1,6 +1,7 @@
 import {Tabs} from '@kobalte/core/tabs'
 import {createEffect, createMemo, createSignal, type JSX, onCleanup, Show} from 'solid-js'
 
+import {getPomoIconClass} from '../design-system/icon-style'
 import {PIconButton} from '../design-system/PIconButton'
 import {PModal} from '../design-system/PModal'
 import {PRadioSwitch} from '../design-system/PRadioSwitch'
@@ -8,10 +9,13 @@ import {PSelect, type PSelectOption} from '../design-system/PSelect'
 import {PSwitch} from '../design-system/PSwitch'
 import type {SceneTimeMode} from '../features/focus-room-time'
 import type {PSceneMotionInput, PSceneMotionMode} from '../features/focus-room-animation'
+import type {PSceneStyle} from '../features/focus-room-animation/scene-style'
 import type {ScreenSaverDelay} from '../features/screen-saver'
 import {useScreenWakeLock} from '../features/screen-wake-lock'
 import {PDialogueSettings} from './PDialogueSettings'
 import {PFeedSettings} from './PFeedSettings'
+import {PGuideSettings} from './PGuideSettings'
+import {PScribbleCircleControl} from './PScribbleCircleControl'
 import {
   FOCUS_ROOM_ACTIVITY_OPTIONS,
   FOCUS_ROOM_GAZE_OPTIONS,
@@ -22,6 +26,20 @@ import {
   type PGaze,
 } from './pomo-scene-options'
 
+const CLASSES = {
+  settingsContent: 'pomo-settings__content grid gap-5',
+  settingsScene: [
+    'pomo-settings__scene grid gap-4 pb-5',
+    'border-b border-solid border-border lg:hidden',
+  ].join(' '),
+  settingsScreenSaver: [
+    'pomo-settings__screen-saver grid gap-2 pt-4',
+    'border-t border-solid border-border [&_>_div]:w-full [&_p]:m-0',
+    '[&_p]:text-muted-foreground [&_p]:text-xs [&_p]:leading-4.5',
+  ].join(' '),
+  settingsWakeLock: 'pomo-settings__wake-lock min-h-12',
+} as const
+
 export interface PSettingsProps {
   readonly activity?: PActivity
   readonly canUseGyroscope?: boolean
@@ -31,8 +49,10 @@ export interface PSettingsProps {
   readonly onMotionInputChange?: (motionInput: PSceneMotionInput) => void
   readonly onMotionModeChange?: (motionMode: PSceneMotionMode) => void
   readonly onScreenSaverDelayChange?: (delay: ScreenSaverDelay) => void
+  readonly onSceneStyleChange?: (sceneStyle: PSceneStyle) => void
   readonly onTimeModeChange?: (timeMode: SceneTimeMode) => void
   readonly screenSaverDelay?: ScreenSaverDelay
+  readonly sceneStyle?: PSceneStyle
   readonly motionInput?: PSceneMotionInput
   readonly motionMode?: PSceneMotionMode
   readonly timeMode?: SceneTimeMode
@@ -53,22 +73,22 @@ const SETTINGS_TAB_LIST_CLASSES =
 
 const SETTINGS_TAB_SCROLL_BUTTON_CLASSES =
   'absolute inset-y-0 flex w-6 cursor-pointer items-center border-0 p-0 ' +
-  'text-[var(--pomo-text-muted)] outline-none transition-colors hover:text-[var(--pomo-text)] ' +
-  'focus-visible:text-[var(--pomo-brass)] motion-reduce:transition-none'
+  'text-muted-foreground outline-none transition-colors hover:text-foreground ' +
+  'focus-visible:text-highlight motion-reduce:transition-none'
 
 const TAB_SCROLL_RATIO = 0.7
 
 const SETTINGS_TAB_CLASSES =
   'inline-flex min-h-11 shrink-0 cursor-pointer items-center justify-center gap-2 ' +
-  'whitespace-nowrap border-0 rounded-0 bg-transparent px-[var(--pomo-padding-lg)] ' +
-  'text-[0.8125rem] font-700 text-[var(--pomo-text-muted)] ' +
+  'whitespace-nowrap border-0 rounded-0 bg-transparent px-4 ' +
+  'text-[0.8125rem] font-700 text-muted-foreground ' +
   'shadow-[inset_0_-0.1875rem_0_transparent] outline-none ' +
   'transition-[background-color_140ms_ease,box-shadow_140ms_ease,color_140ms_ease] ' +
-  'hover:bg-[var(--pomo-secondary-soft)] hover:text-[var(--pomo-text)] ' +
-  'ui-selected:bg-transparent ui-selected:text-[var(--pomo-text)] ' +
-  'ui-selected:shadow-[inset_0_-0.1875rem_0_var(--pomo-brass)] ' +
+  'hover:bg-secondary-soft hover:text-foreground ' +
+  'ui-selected:bg-transparent ui-selected:text-foreground ' +
+  'ui-selected:shadow-tab-active ' +
   'focus-visible:outline-2 focus-visible:outline-offset-[-2px] ' +
-  'focus-visible:outline-[var(--pomo-brass)] ' +
+  'focus-visible:outline-highlight ' +
   'motion-reduce:transition-none'
 
 const PSettingsTabList = () => {
@@ -137,13 +157,17 @@ const PSettingsTabList = () => {
           <span aria-hidden="true" class="i-tabler-message-circle size-4" />
           <span>대화</span>
         </Tabs.Trigger>
+        <Tabs.Trigger class={SETTINGS_TAB_CLASSES} value="guide">
+          <span aria-hidden="true" class="i-tabler-help-circle size-4" />
+          <span>설명서</span>
+        </Tabs.Trigger>
       </Tabs.List>
       <Show when={canScrollTabsLeft()}>
         <button
           aria-label="이전 설정 탭 보기"
           class={
             `${SETTINGS_TAB_SCROLL_BUTTON_CLASSES} left-0 justify-start ` +
-            'bg-gradient-to-r from-[var(--pomo-surface-strong)] to-transparent'
+            'bg-gradient-to-r from-surface-strong to-transparent'
           }
           onClick={() => scrollTabs(-1)}
           type="button"
@@ -156,7 +180,7 @@ const PSettingsTabList = () => {
           aria-label="다음 설정 탭 보기"
           class={
             `${SETTINGS_TAB_SCROLL_BUTTON_CLASSES} right-0 justify-end ` +
-            'bg-gradient-to-r from-transparent to-[var(--pomo-surface-strong)]'
+            'bg-gradient-to-r from-transparent to-surface-strong'
           }
           onClick={() => scrollTabs(1)}
           type="button"
@@ -204,12 +228,14 @@ export const PSettings = (props: PSettingsProps) => {
 
   return (
     <>
-      <PIconButton
-        accessibleLabel="설정 열기"
-        feedback="설정"
-        icon="i-tabler-settings"
-        onPress={handleOpen}
-      />
+      <PScribbleCircleControl enabled={props.sceneStyle === 'scribble'}>
+        <PIconButton
+          accessibleLabel="설정 열기"
+          feedback="설정"
+          icon={getPomoIconClass('i-tabler-settings', props.sceneStyle)}
+          onPress={handleOpen}
+        />
+      </PScribbleCircleControl>
       <Tabs value={activeTab()} onChange={setActiveTab}>
         <PModal
           isOpen={isOpen()}
@@ -218,37 +244,43 @@ export const PSettings = (props: PSettingsProps) => {
           onOpenChange={setIsOpen}
           placement="top"
           size="wide"
-          title="집중룸 설정"
+          title="Pomofi 설정"
           titleVisibility="visually-hidden"
         >
           <Tabs.Content value="general">
-            <div class="pomo-settings__content">
-              <div class="pomo-settings__scene">
+            <div class={CLASSES.settingsContent}>
+              <div class={CLASSES.settingsScene}>
                 <PRadioSwitch
                   label="시간"
                   onChange={(timeMode) => props.onTimeModeChange?.(timeMode)}
                   options={FOCUS_ROOM_TIME_OPTIONS}
+                  sceneStyle={props.sceneStyle}
                   value={props.timeMode ?? 'day'}
                 />
                 <PRadioSwitch
                   label="행동"
                   onChange={(activity) => props.onActivityChange?.(activity)}
                   options={FOCUS_ROOM_ACTIVITY_OPTIONS}
+                  sceneStyle={props.sceneStyle}
                   value={props.activity ?? 'reading'}
                 />
                 <PRadioSwitch
                   label="보기"
                   onChange={(gaze) => props.onGazeChange?.(gaze)}
                   options={FOCUS_ROOM_GAZE_OPTIONS}
+                  sceneStyle={props.sceneStyle}
                   value={props.gaze ?? 'focused'}
                 />
               </div>
-              <div
-                class={
-                  'grid gap-[var(--pomo-padding-lg)] border-b border-solid ' +
-                  'border-[var(--pomo-border)] pb-[var(--pomo-padding-xl)]'
-                }
-              >
+              <div class="grid gap-4 border-b border-solid border-border pb-5">
+                <PSwitch
+                  checked={(props.sceneStyle ?? 'original') === 'scribble'}
+                  description="준비된 장면을 일부러 서툴게 그린 하찮은 그림으로 바꿔요."
+                  label="하찮은 스타일"
+                  onChange={(isChecked) =>
+                    props.onSceneStyleChange?.(isChecked ? 'scribble' : 'original')
+                  }
+                />
                 <PRadioSwitch
                   label="장면 움직임"
                   onChange={(motionMode) => props.onMotionModeChange?.(motionMode)}
@@ -266,13 +298,13 @@ export const PSettings = (props: PSettingsProps) => {
               </div>
               <PSwitch
                 checked={wakeLock.isEnabled()}
-                class="pomo-settings__wake-lock"
+                class={CLASSES.settingsWakeLock}
                 description={wakeLockDescription()}
                 disabled={isWakeLockDisabled()}
                 label="화면 자동 꺼짐 방지"
                 onChange={wakeLock.onEnabledChange}
               />
-              <div class="pomo-settings__screen-saver">
+              <div class={CLASSES.settingsScreenSaver}>
                 <PSelect
                   label="스크린 세이버"
                   onChange={(delay) => props.onScreenSaverDelayChange?.(delay)}
@@ -286,6 +318,7 @@ export const PSettings = (props: PSettingsProps) => {
               </div>
             </div>
           </Tabs.Content>
+          <PGuideSettings />
           <PFeedSettings />
           <PDialogueSettings onRequestClose={() => setIsOpen(false)} />
         </PModal>
@@ -293,3 +326,5 @@ export const PSettings = (props: PSettingsProps) => {
     </>
   )
 }
+
+export default PSettings

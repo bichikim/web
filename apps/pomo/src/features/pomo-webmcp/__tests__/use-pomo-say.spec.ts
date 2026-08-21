@@ -3,7 +3,8 @@
 import {renderHook} from '@solidjs/testing-library'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
-import {type ChatVoiceController, type ChatVoiceRuntime, useChatVoice} from '../../chat-voice'
+import type {ChatVoiceController, ChatVoiceRuntime} from '../../chat-voice'
+import {useLazyChatVoice} from '../../chat-voice/lazy'
 import {
   type CreateSupertonicAudioPlayerOptions,
   successResult,
@@ -12,8 +13,8 @@ import {
 } from '../../supertonic'
 import {usePSay} from '../use-pomo-say'
 
-vi.mock('../../chat-voice', () => ({
-  useChatVoice: vi.fn(),
+vi.mock('../../chat-voice/lazy', () => ({
+  useLazyChatVoice: vi.fn(),
 }))
 
 interface RegisteredTool {
@@ -40,6 +41,7 @@ const createModelContext = () => {
 }
 
 const createVoice = (): ChatVoiceController => ({
+  activeViseme: () => 'rest',
   arm: vi.fn(),
   canPrepare: () => true,
   finish: vi.fn(async () => undefined),
@@ -124,7 +126,9 @@ describe('usePSay', () => {
     const {players, runtime} = createRuntime(client)
     const actualChatVoice =
       await vi.importActual<typeof import('../../chat-voice')>('../../chat-voice')
-    vi.mocked(useChatVoice).mockImplementationOnce(() => actualChatVoice.useChatVoice({runtime}))
+    vi.mocked(useLazyChatVoice).mockImplementationOnce(() =>
+      actualChatVoice.useChatVoice({runtime}),
+    )
     const modelContext = createModelContext()
     const {cleanup, result} = renderHook(() => usePSay({onBeforeSpeech: vi.fn()}))
     await vi.waitFor(() => expect(modelContext.registerTool).toHaveBeenCalledOnce())
@@ -165,7 +169,7 @@ describe('usePSay', () => {
     vi.mocked(voice.speak).mockImplementation((text) =>
       text === '첫 번째 소식' ? firstSpeech : secondSpeech,
     )
-    vi.mocked(useChatVoice).mockReturnValue(voice)
+    vi.mocked(useLazyChatVoice).mockReturnValue(voice)
     const onBeforeSpeech = vi.fn()
     const {cleanup, result} = renderHook(() => usePSay({onBeforeSpeech}))
     await vi.waitFor(() => expect(modelContext.registerTool).toHaveBeenCalledOnce())
@@ -194,7 +198,7 @@ describe('usePSay', () => {
     const modelContext = createModelContext()
     const voice = createVoice()
     vi.mocked(voice.speak).mockReturnValueOnce(speech)
-    vi.mocked(useChatVoice).mockReturnValue(voice)
+    vi.mocked(useLazyChatVoice).mockReturnValue(voice)
     const {cleanup, result} = renderHook(() => usePSay({onBeforeSpeech: vi.fn()}))
     await vi.waitFor(() => expect(modelContext.registerTool).toHaveBeenCalledOnce())
 
@@ -219,7 +223,7 @@ describe('usePSay', () => {
         modelReady: true,
         status: 'error',
       })
-    vi.mocked(useChatVoice).mockReturnValue(voice)
+    vi.mocked(useLazyChatVoice).mockReturnValue(voice)
     const {cleanup, result} = renderHook(() => usePSay({onBeforeSpeech: vi.fn()}))
     await vi.waitFor(() => expect(modelContext.registerTool).toHaveBeenCalledOnce())
 
@@ -238,7 +242,7 @@ describe('usePSay', () => {
     const modelContext = createModelContext()
     const voice = createVoice()
     vi.mocked(voice.finish).mockReturnValueOnce(playback)
-    vi.mocked(useChatVoice).mockReturnValue(voice)
+    vi.mocked(useLazyChatVoice).mockReturnValue(voice)
     const {cleanup} = renderHook(() => usePSay({onBeforeSpeech: vi.fn()}))
     await vi.waitFor(() => expect(modelContext.registerTool).toHaveBeenCalledOnce())
 

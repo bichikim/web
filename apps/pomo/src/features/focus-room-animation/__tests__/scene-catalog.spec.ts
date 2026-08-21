@@ -1,6 +1,8 @@
 import {describe, expect, it} from 'vitest'
 
+import {FOCUS_ROOM_JAW_CHANNEL} from '../scene-catalog-channels'
 import {FOCUS_ROOM_PREVIEW_CHANNELS, FOCUS_ROOM_SCENES, getPScene} from '../scene-catalog'
+import {getPSceneLayer} from '../scene-layer-catalog'
 
 describe('focus room scene catalog', () => {
   it('should provide all twelve unique scene combinations', () => {
@@ -12,46 +14,318 @@ describe('focus room scene catalog', () => {
 
   it('should keep every scene definition independently addressable', () => {
     for (const scene of FOCUS_ROOM_SCENES) {
-      expect(scene.layerScene.id).toContain(scene.id)
+      expect(getPSceneLayer(scene.id).id).toContain(scene.id)
       expect(getPScene(scene.time, scene.activity, scene.gaze)).toBe(scene)
     }
 
-    const definitions = FOCUS_ROOM_SCENES.map((scene) => scene.layerScene)
+    const definitions = FOCUS_ROOM_SCENES.map((scene) => getPSceneLayer(scene.id))
 
     expect(new Set(definitions).size).toBe(definitions.length)
   })
 
-  it('should use true separated layers instead of pixel distortion in every preview', () => {
-    for (const scene of FOCUS_ROOM_SCENES) {
-      const expectedLayerCount = 6
+  it('should replace every scene in the scribble dataset', () => {
+    const preparedScenes = [
+      {
+        background: 'day-reading-focused-scribble-background',
+        head: 'day-focused-scribble-head',
+        scene: getPScene('day', 'reading', 'focused'),
+      },
+      {
+        background: 'day-reading-focused-scribble-background',
+        head: 'day-user-scribble-head',
+        scene: getPScene('day', 'reading', 'user'),
+      },
+      {
+        background: 'day-typing-focused-scribble-background',
+        head: 'day-focused-scribble-head',
+        scene: getPScene('day', 'typing', 'focused'),
+      },
+      {
+        background: 'day-typing-focused-scribble-background',
+        head: 'day-user-scribble-head',
+        scene: getPScene('day', 'typing', 'user'),
+      },
+      {
+        background: 'day-writing-focused-scribble-background',
+        head: 'day-focused-scribble-head',
+        scene: getPScene('day', 'writing', 'focused'),
+      },
+      {
+        background: 'day-writing-focused-scribble-background',
+        head: 'day-user-scribble-head',
+        scene: getPScene('day', 'writing', 'user'),
+      },
+      {
+        background: 'night-reading-focused-scribble-background',
+        head: 'day-focused-scribble-head',
+        scene: getPScene('night', 'reading', 'focused'),
+      },
+      {
+        background: 'night-reading-focused-scribble-background',
+        head: 'day-user-scribble-head',
+        scene: getPScene('night', 'reading', 'user'),
+      },
+      {
+        background: 'night-typing-focused-scribble-background',
+        head: 'day-focused-scribble-head',
+        scene: getPScene('night', 'typing', 'focused'),
+      },
+      {
+        background: 'night-typing-focused-scribble-background',
+        head: 'day-user-scribble-head',
+        scene: getPScene('night', 'typing', 'user'),
+      },
+      {
+        background: 'night-writing-focused-scribble-background',
+        head: 'day-focused-scribble-head',
+        scene: getPScene('night', 'writing', 'focused'),
+      },
+      {
+        background: 'night-writing-focused-scribble-background',
+        head: 'day-user-scribble-head',
+        scene: getPScene('night', 'writing', 'user'),
+      },
+    ]
 
-      expect(scene.layerScene.layers).toHaveLength(expectedLayerCount)
-      expect(scene.layerScene.layers.map((layer) => layer.id)).toContain('head')
+    expect(preparedScenes).toHaveLength(FOCUS_ROOM_SCENES.length)
+
+    for (const {background, head, scene} of preparedScenes) {
+      const layerScene = getPSceneLayer(scene.id, 'scribble')
+      const backgroundLayer = layerScene.layers.find((layer) => layer.id === 'background')
+      const headLayer = layerScene.layers.find((layer) => layer.id === 'head')
+
+      expect(layerScene.id).toBe(`scribble-${scene.id}-layers`)
+      expect(backgroundLayer).toMatchObject({
+        id: 'background',
+        source: expect.stringContaining(background),
+      })
+      expect(headLayer).toMatchObject({
+        attachmentId: 'eyes',
+        channel: FOCUS_ROOM_PREVIEW_CHANNELS.head,
+        id: 'head',
+        motion: {
+          center: {x: 1060, y: 425},
+          degrees: 0.5,
+          kind: 'pivot-rotation',
+          travel: {maximumSeconds: 2.4, minimumSeconds: 1.5},
+        },
+        position: {x: 809, y: 127},
+        source: expect.stringContaining(head),
+      })
+    }
+  })
+
+  it('should share six full-head mouth stages across every scribble user-facing scene', () => {
+    const expectedMouthIds = [
+      'mouth-rest',
+      'mouth-closed',
+      'mouth-open',
+      'mouth-wide',
+      'mouth-round',
+      'mouth-narrow',
+    ]
+
+    for (const scene of FOCUS_ROOM_SCENES) {
+      const mouthLayers = getPSceneLayer(scene.id, 'scribble').layers.filter((layer) =>
+        layer.id.startsWith('mouth-'),
+      )
+
+      if (scene.gaze === 'focused') {
+        expect(mouthLayers).toEqual([])
+      } else {
+        expect(mouthLayers.map((layer) => layer.id).sort()).toEqual(expectedMouthIds.toSorted())
+        expect(
+          mouthLayers.every(
+            (layer) =>
+              layer.parentAttachmentId === 'eyes' &&
+              layer.position?.x === 0 &&
+              layer.position?.y === 0 &&
+              layer.source.includes('mouths/day-user-scribble/') &&
+              layer.visible === false,
+          ),
+        ).toBe(true)
+      }
+    }
+  })
+
+  it('should animate three shape-changing steam lines only in scribble scenes', () => {
+    for (const scene of FOCUS_ROOM_SCENES) {
+      const originalSteamLayers = getPSceneLayer(scene.id).layers.filter((layer) =>
+        layer.id.startsWith('scribble-steam-'),
+      )
+      const scribbleSteamLayers = getPSceneLayer(scene.id, 'scribble').layers.filter((layer) =>
+        layer.id.startsWith('scribble-steam-'),
+      )
+
+      expect(originalSteamLayers).toEqual([])
+      expect(scribbleSteamLayers).toHaveLength(12)
+      expect(new Set(scribbleSteamLayers.map((layer) => layer.id.split('-')[2])).size).toBe(3)
+      expect(new Set(scribbleSteamLayers.map((layer) => layer.source)).size).toBe(4)
       expect(
-        scene.layerScene.layers.filter(
-          (layer) => layer.channel === FOCUS_ROOM_PREVIEW_CHANNELS.hands,
+        scribbleSteamLayers.every(
+          (layer) =>
+            layer.source.includes('steam/scribble/') &&
+            layer.source.endsWith('.webp') &&
+            layer.motions?.some((motion) => motion.kind === 'looping-translation') === true &&
+            layer.motions.some((motion) => motion.kind === 'visibility-cycle'),
         ),
+      ).toBe(true)
+    }
+  })
+
+  it('should use true separated structural layers in every preview', () => {
+    for (const scene of FOCUS_ROOM_SCENES) {
+      const layerScene = getPSceneLayer(scene.id)
+      const structuralLayers = layerScene.layers.filter((layer) => !layer.id.startsWith('mouth-'))
+      const expectedStructuralLayerCount =
+        scene.id === 'night-reading-focused'
+          ? 36
+          : scene.time === 'night'
+            ? 13
+            : scene.id === 'day-writing-focused'
+              ? 7
+              : 6
+
+      expect(structuralLayers).toHaveLength(expectedStructuralLayerCount)
+      expect(layerScene.layers.map((layer) => layer.id)).toContain('head')
+      expect(
+        layerScene.layers.filter((layer) => layer.channel === FOCUS_ROOM_PREVIEW_CHANNELS.hands),
       ).toHaveLength(2)
       expect(
-        scene.layerScene.layers.every(
+        layerScene.layers.every(
           (layer) => layer.motion?.kind !== 'pixel-oscillation' && layer.motions === undefined,
         ),
       ).toBe(true)
     }
   })
 
+  it('should animate day-writing clouds behind a fixed sky mask', () => {
+    const cloudLayer = getPSceneLayer(getPScene('day', 'writing', 'focused').id).layers.find(
+      (layer) => layer.id === 'day-clouds',
+    )
+
+    expect(cloudLayer).toMatchObject({
+      maskSource: expect.stringContaining('sky-mask'),
+      motion: {
+        kind: 'looping-translation',
+        travel: {maximumSeconds: 32, minimumSeconds: 32},
+      },
+      opacity: 0.38,
+    })
+  })
+
+  it('should pulse all user-provided building layers at independent random intervals', () => {
+    const nightScenes = FOCUS_ROOM_SCENES.filter((scene) => scene.time === 'night')
+    const expectedSources = [
+      'building-lights/01',
+      'building-lights/02',
+      'building-lights/03',
+      'building-lights/04',
+      'building-lights/05',
+      'building-lights/06',
+      'building-lights/07',
+    ]
+
+    expect(nightScenes).toHaveLength(6)
+    for (const scene of nightScenes) {
+      const buildingLayers = getPSceneLayer(scene.id).layers.filter((layer) =>
+        layer.id.startsWith('building-lights-'),
+      )
+
+      expect(buildingLayers).toHaveLength(7)
+      expect(buildingLayers.map((layer) => layer.source)).toEqual(
+        expectedSources.map((source) => expect.stringContaining(source)),
+      )
+      for (const buildingLayer of buildingLayers) {
+        expect(buildingLayer.motion).toMatchObject({
+          kind: 'opacity-pulse',
+          maximumOpacity: 1,
+          minimumOpacity: 0,
+          transitionSeconds: 1,
+          travel: {maximumSeconds: 12, minimumSeconds: 2},
+        })
+      }
+    }
+    expect(
+      FOCUS_ROOM_SCENES.flatMap((scene) => getPSceneLayer(scene.id).layers).some((layer) =>
+        layer.id.startsWith('building-state-'),
+      ),
+    ).toBe(false)
+  })
+
+  it('should twinkle seventeen separate stars only in the night reading focused trial', () => {
+    const trialScene = getPScene('night', 'reading', 'focused')
+    const starLayers = getPSceneLayer(trialScene.id).layers.filter((layer) =>
+      layer.id.startsWith('sky-star-'),
+    )
+
+    expect(starLayers).toHaveLength(17)
+    expect(starLayers.map((layer) => layer.source)).toEqual(
+      Array.from({length: 17}, (_, index) =>
+        expect.stringContaining(`stars/${String(index + 1).padStart(2, '0')}`),
+      ),
+    )
+    for (const starLayer of starLayers) {
+      expect(starLayer.motion).toMatchObject({
+        fall: {maximumSeconds: 0.6, minimumSeconds: 0.25},
+        flashChance: 0.06,
+        flashFall: {maximumSeconds: 0.32, minimumSeconds: 0.12},
+        flashHold: {maximumSeconds: 0.12, minimumSeconds: 0.04},
+        flashRise: {maximumSeconds: 0.14, minimumSeconds: 0.05},
+        kind: 'opacity-twinkle',
+        maximumOpacity: 1,
+        minimumOpacity: 0,
+        rise: {maximumSeconds: 0.25, minimumSeconds: 0.1},
+        travel: {maximumSeconds: 6, minimumSeconds: 1.5},
+      })
+    }
+    expect(
+      FOCUS_ROOM_SCENES.filter((scene) => scene.id !== trialScene.id).every((scene) =>
+        getPSceneLayer(scene.id).layers.every((layer) => !layer.id.startsWith('sky-star-')),
+      ),
+    ).toBe(true)
+  })
+
+  it('should softly fade six faint background stars only in the night reading focused trial', () => {
+    const trialScene = getPScene('night', 'reading', 'focused')
+    const trialLayerScene = getPSceneLayer(trialScene.id)
+    const backgroundLayer = trialLayerScene.layers.find((layer) => layer.id === 'background')
+    const faintLayers = trialLayerScene.layers.filter((layer) =>
+      layer.id.startsWith('sky-faint-star-'),
+    )
+
+    expect(backgroundLayer?.source).toContain('background')
+    expect(trialLayerScene.layers.every((layer) => layer.id !== 'sky-faint-stars-cleanup')).toBe(
+      true,
+    )
+    expect(faintLayers).toHaveLength(6)
+    for (const [index, faintLayer] of faintLayers.entries()) {
+      expect(faintLayer.source).toContain(`faint-stars/0${index + 1}`)
+      expect(faintLayer.motion).toMatchObject({
+        kind: 'opacity-pulse',
+        maximumOpacity: 1,
+        minimumOpacity: 0,
+        transitionSeconds: 1.6,
+        travel: {maximumSeconds: 12, minimumSeconds: 3},
+      })
+    }
+    expect(
+      FOCUS_ROOM_SCENES.filter((scene) => scene.id !== trialScene.id).every((scene) =>
+        getPSceneLayer(scene.id).layers.every((layer) => !layer.id.startsWith('sky-faint-star')),
+      ),
+    ).toBe(true)
+  })
+
   it('should attach separated irises to supported heads', () => {
     const eyeMotionScenes = FOCUS_ROOM_SCENES
     const expectedOriginX: Partial<Record<(typeof FOCUS_ROOM_SCENES)[number]['id'], number>> = {
       'day-typing-focused': -1,
-      'night-typing-focused': -5,
-      'night-writing-focused': -4,
     }
 
     expect(eyeMotionScenes).toHaveLength(12)
 
     for (const scene of eyeMotionScenes) {
-      const eyeLayer = scene.layerScene.layers.find((layer) => layer.id === 'eye-irises')
+      const eyeLayer = getPSceneLayer(scene.id).layers.find((layer) => layer.id === 'eye-irises')
 
       expect(eyeLayer).toMatchObject({
         channel: FOCUS_ROOM_PREVIEW_CHANNELS.eyes,
@@ -86,15 +360,97 @@ describe('focus room scene catalog', () => {
     }
 
     const eyeMotions = eyeMotionScenes.map(
-      (scene) => scene.layerScene.layers.find((layer) => layer.id === 'eye-irises')?.motion,
+      (scene) => getPSceneLayer(scene.id).layers.find((layer) => layer.id === 'eye-irises')?.motion,
     )
 
     expect(new Set(eyeMotions).size).toBe(eyeMotions.length)
   })
 
+  it('should use the original night head smile for the rest viseme', () => {
+    const dayUserScenes = FOCUS_ROOM_SCENES.filter(
+      (scene) => scene.gaze === 'user' && scene.time === 'day',
+    )
+    const nightUserScenes = FOCUS_ROOM_SCENES.filter(
+      (scene) => scene.gaze === 'user' && scene.time === 'night',
+    )
+
+    expect(dayUserScenes).toHaveLength(3)
+    expect(
+      dayUserScenes.every(
+        (scene) =>
+          getPSceneLayer(scene.id).layers.filter((layer) => layer.id.startsWith('mouth-'))
+            .length === 6,
+      ),
+    ).toBe(true)
+    expect(nightUserScenes).toHaveLength(3)
+    expect(
+      nightUserScenes.every((scene) => {
+        const mouthLayers = getPSceneLayer(scene.id).layers.filter((layer) =>
+          layer.id.startsWith('mouth-'),
+        )
+
+        return mouthLayers.length === 5 && mouthLayers.every((layer) => layer.id !== 'mouth-rest')
+      }),
+    ).toBe(true)
+  })
+
+  it('should move only the regular night reading head while keeping every mouth layer untouched', () => {
+    for (const scene of FOCUS_ROOM_SCENES) {
+      const layerScene = getPSceneLayer(scene.id)
+      const head = layerScene.layers.find((layer) => layer.id === 'head')
+      const mouthLayers = layerScene.layers.filter((layer) => layer.id.startsWith('mouth-'))
+
+      expect(mouthLayers.every((layer) => layer.statePixelPush === undefined)).toBe(true)
+
+      if (scene.id === 'night-reading-user') {
+        expect(head?.statePixelPush).toMatchObject({
+          channel: FOCUS_ROOM_JAW_CHANNEL,
+          effect: {
+            distance: {x: 0, y: 3},
+            kind: 'masked-pixel-push',
+          },
+        })
+      } else {
+        expect(head?.statePixelPush).toBeUndefined()
+      }
+    }
+  })
+
+  it('should share one mouth set across every night user-facing scene', () => {
+    const getMouthSources = (
+      sceneId: 'night-reading-user' | 'night-typing-user' | 'night-writing-user',
+    ) =>
+      getPSceneLayer(sceneId)
+        .layers.filter((layer) => layer.id.startsWith('mouth-'))
+        .map((layer) => layer.source)
+    const readingSources = getMouthSources('night-reading-user')
+
+    expect(readingSources).toBeDefined()
+    expect(getMouthSources('night-typing-user')).toEqual(readingSources)
+    expect(getMouthSources('night-writing-user')).toEqual(readingSources)
+  })
+
+  it('should share the original reading head across every night user-facing scene', () => {
+    const nightUserHeadSources = FOCUS_ROOM_SCENES.filter(
+      (scene) => scene.gaze === 'user' && scene.time === 'night',
+    ).map((scene) => getPSceneLayer(scene.id).layers.find((layer) => layer.id === 'head')?.source)
+
+    expect(nightUserHeadSources).toHaveLength(3)
+    expect(new Set(nightUserHeadSources).size).toBe(1)
+  })
+
+  it('should share the reading head across every night focused scene', () => {
+    const nightFocusedHeadSources = FOCUS_ROOM_SCENES.filter(
+      (scene) => scene.gaze === 'focused' && scene.time === 'night',
+    ).map((scene) => getPSceneLayer(scene.id).layers.find((layer) => layer.id === 'head')?.source)
+
+    expect(nightFocusedHeadSources).toHaveLength(3)
+    expect(new Set(nightFocusedHeadSources).size).toBe(1)
+  })
+
   it('should expose the complete review panel channels for every preview', () => {
     for (const scene of FOCUS_ROOM_SCENES) {
-      const channels = scene.layerScene.layers.flatMap((layer) => [
+      const channels = getPSceneLayer(scene.id).layers.flatMap((layer) => [
         ...(layer.channel === undefined ? [] : [layer.channel]),
         ...(layer.motion?.channel === undefined ? [] : [layer.motion.channel]),
         ...(layer.motions?.flatMap((motion) =>

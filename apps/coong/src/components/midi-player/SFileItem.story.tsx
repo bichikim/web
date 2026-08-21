@@ -71,6 +71,7 @@ export const Default: Story = {
   args: {
     class: 'w-300px',
     ext: 'midi',
+    id: 'stopped-item',
     index: 0,
     name: '정지 아이템',
     playedTime: 0,
@@ -83,6 +84,7 @@ export const LongName: Story = {
   args: {
     class: 'w-300px',
     ext: 'midi',
+    id: 'long-name-item',
     index: 0,
     name: '매우 긴 이름의 아이템 입니다 길기 때문에 넘치는 경우 선택되는 경우 흐릅니다',
     playedTime: 0,
@@ -97,6 +99,7 @@ export const DragExecute: Story = {
     dragEndSize: 90,
     dragExecuteSize: 90,
     ext: 'midi',
+    id: 'draggable-item',
     index: 0,
     name: '밀기 가능 아이템',
     playedTime: 0,
@@ -109,6 +112,7 @@ export const Playing: Story = {
   args: {
     class: 'w-300px',
     ext: 'midi',
+    id: 'playing-item',
     index: 1,
     name: '재생 중 아이템',
     playedTime: 50,
@@ -121,6 +125,7 @@ export const ShouldConvert: Story = {
   args: {
     class: 'w-300px',
     ext: 'mp3',
+    id: 'convertible-item',
     index: 1,
     name: '재생 중 아이템',
     playedTime: 0,

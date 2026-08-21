@@ -4,6 +4,7 @@ import {
   getSupertonicAssetUrl,
   getSupertonicModel,
   getSupertonicModelFileUrl,
+  SUPERTONIC_MODEL_ASSETS_URL,
   SUPERTONIC_MODELS,
   SUPERTONIC_VOICES,
 } from '../model'
@@ -32,12 +33,16 @@ describe('Supertonic model manifest', () => {
     const vectorEstimator = int8Model.files.find((file) => file.key === 'vectorEstimator')
 
     expect(vectorEstimator).toBeDefined()
-    expect(getSupertonicModelFileUrl(int8Model, vectorEstimator!)).toContain(
-      '/resolve/cca5a0e6c96e1d2c720986bf7e75fcc81dee3ae4/vector_estimator.int8.onnx',
+    expect(getSupertonicModelFileUrl(int8Model, vectorEstimator!)).toBe(
+      'https://storage.pomofi.io/models/supertonic-3-int8/cca5a0e6c96e1d2c720986bf7e75fcc81dee3ae4/vector_estimator.int8.onnx',
     )
-    expect(getSupertonicAssetUrl('onnx/tts.json')).toContain(
-      '/Supertone/supertonic-3/resolve/3cadd1e/onnx/tts.json',
+    expect(getSupertonicAssetUrl('onnx/tts.json')).toBe(
+      'https://storage.pomofi.io/models/supertonic-3/3cadd1e/onnx/tts.json',
     )
+    expect(
+      SUPERTONIC_MODELS.every(({baseUrl}) => baseUrl.startsWith('https://storage.pomofi.io/')),
+    ).toBe(true)
+    expect(SUPERTONIC_MODEL_ASSETS_URL).toBe('/models/supertonic-3/manifest.json')
   })
 
   it('should expose all fixed voices and reject unsupported model identifiers at runtime', () => {

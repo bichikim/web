@@ -1,5 +1,5 @@
 import {createRequire} from 'node:module'
-import {mkdir, mkdtemp, readdir, rename, rm, stat} from 'node:fs/promises'
+import {mkdir, mkdtemp, readdir, rename, rm, stat, writeFile} from 'node:fs/promises'
 import path from 'node:path'
 
 const require = createRequire(path.resolve(process.cwd(), '../image-server/package.json'))
@@ -15,29 +15,122 @@ const MAXIMUM_CHANNEL_VALUE = 255
 const MINIMUM_ALPHA_ASSET_PSNR = 34
 const MAXIMUM_ALPHA_ASSET_MAE = 2.5
 const DECIBEL_MULTIPLIER = 10
-const assetsDirectory = path.resolve(process.cwd(), 'assets')
+const assetLibraryDirectory = path.resolve(process.cwd(), 'asset-library')
+const runtimeDirectory = path.resolve(process.cwd(), 'src/features/focus-room-animation/assets')
 const temporaryDirectoryRoot = path.resolve(process.cwd(), '.temp')
 await mkdir(temporaryDirectoryRoot, {recursive: true})
 const temporaryDirectory = await mkdtemp(path.join(temporaryDirectoryRoot, 'pomo-webp-'))
 let temporaryFileSequence = 0
-const sourceDirectory = path.join(assetsDirectory, 'focus-room-source')
+const sourceDirectory = path.join(assetLibraryDirectory, 'focus-room-source')
 const sourceConceptArtDirectory = path.join(sourceDirectory, 'concept-art')
 const sourceLayerDirectory = path.join(sourceDirectory, 'layers')
 const sourceAnimationDirectory = path.join(sourceDirectory, 'animation')
 const sourceDepthDirectory = path.join(sourceDirectory, 'depth')
 const sourceStatusIconDirectory = path.join(sourceDirectory, 'status-icons')
-const runtimeConceptArtDirectory = path.join(assetsDirectory, 'concept-art')
-const runtimeLayerDirectory = path.join(assetsDirectory, 'focus-room-layers')
-const runtimeAnimationDirectory = path.join(assetsDirectory, 'focus-room-animation')
-const runtimeDepthDirectory = path.join(assetsDirectory, 'focus-room-depth')
-const runtimeStatusIconDirectory = path.join(assetsDirectory, 'pomodoro-status-icons')
+const runtimeConceptArtDirectory = path.join(runtimeDirectory, 'concept-art')
+const runtimeLayerDirectory = path.join(runtimeDirectory, 'layers')
+const runtimeAnimationDirectory = path.join(runtimeDirectory, 'animation')
+const runtimeDepthDirectory = path.join(runtimeDirectory, 'depth')
+const runtimeStatusIconDirectory = path.resolve(
+  process.cwd(),
+  'src/components/assets/pomodoro-status-icons',
+)
 const scenePattern = /^focus-room-.+-concept\.png$/u
 const runtimeLayerPattern = /^layer-(?!head\.png$).+\.png$/u
 const runtimeAnimationPattern = /^(?:eyes-.+|steam-ai-.+)\.png$/u
 const runtimeStatusIconPattern = /^(?:break|focus)-face\.png$/u
+const sparseLayerPattern = /^layer-(?:building-lights-|faint-star-|star-)/u
 const pngPattern = /\.png$/u
+const layerLayoutName = 'layout.json'
+const legacyLayerLayoutName = 'layer-layout.json'
+
+const runtimeLayerNames = new Map([
+  ['layer-background-faint-stars-removed-v2.png', 'background.webp'],
+  ['layer-clouds-day-v1.png', 'clouds.webp'],
+  ['layer-eye-irises.png', 'eyes.webp'],
+  ['layer-hand-left.png', 'left-hand.webp'],
+  ['layer-hand-right.png', 'right-hand.webp'],
+  ['layer-head-eye-base.png', 'head.webp'],
+  ['layer-head-hair-tips-mask-v4.png', 'hair-tips-mask.webp'],
+  ['layer-resting-hand.png', 'resting-hand.webp'],
+  ['layer-sky-mask-writing-focused-v1.png', 'sky-mask.webp'],
+  ['layer-writing-hand.png', 'writing-hand.webp'],
+])
 
 const replacePngExtension = (name) => name.replace(pngPattern, '.webp')
+
+const getIndexedRuntimePath = (name, pattern, directory) => {
+  const match = pattern.exec(name)
+  const index = match?.groups?.index
+
+  return index === undefined ? null : path.join(directory, `${index.padStart(2, '0')}.webp`)
+}
+
+const getRuntimeLayerPath = (name) => {
+  const indexedPath =
+    getIndexedRuntimePath(
+      name,
+      /^layer-building-lights-window-minus-sky-(?<index>\d+)\.png$/u,
+      'building-lights',
+    ) ??
+    getIndexedRuntimePath(name, /^layer-faint-star-(?<index>\d+)-v\d+\.png$/u, 'faint-stars') ??
+    getIndexedRuntimePath(name, /^layer-star-(?<index>\d+)\.png$/u, 'stars')
+
+  if (indexedPath !== null) {
+    return indexedPath
+  }
+
+  const runtimeName = runtimeLayerNames.get(name)
+
+  if (runtimeName === undefined) {
+    throw new Error(`Runtime layer name requires an explicit mapping: ${name}`)
+  }
+
+  return runtimeName
+}
+
+const getRuntimeLayerId = (name) =>
+  getRuntimeLayerPath(name)
+    .replace(pngPattern, '')
+    .replace(/\.webp$/u, '')
+    .split(path.sep)
+    .join('-')
+
+const getRuntimeConceptArtName = (name) =>
+  name
+    .replace(/^focus-room-/u, '')
+    .replace(/-concept\.png$/u, '.webp')
+    .replace(/^night-desk\.webp$/u, 'night-writing.webp')
+
+const getRuntimeDepthName = (name) =>
+  replacePngExtension(name)
+    .replace(/^depth-/u, '')
+    .replace(/^night-desk\.webp$/u, 'night-writing.webp')
+
+const getRuntimeAnimationPath = (name) => {
+  const eyeMatch =
+    /^eyes-(?<time>day|night)-(?<gaze>focused|user)-(?<state>closed|half)(?:-v\d+)?\.png$/u.exec(
+      name,
+    )
+  const time = eyeMatch?.groups?.time
+  const gaze = eyeMatch?.groups?.gaze
+  const state = eyeMatch?.groups?.state
+
+  if (time !== undefined && gaze !== undefined && state !== undefined) {
+    return path.join('eyes', `${time}-${gaze}`, `${state}.webp`)
+  }
+
+  const steamMatch = /^steam-ai-(?<index>\d+)\.png$/u.exec(name)
+  const steamIndex = steamMatch?.groups?.index
+
+  if (steamIndex !== undefined) {
+    return path.join('steam', `${steamIndex.padStart(2, '0')}.webp`)
+  }
+
+  throw new Error(`Runtime animation name requires an explicit mapping: ${name}`)
+}
+
+const getRuntimeStatusIconName = (name) => name.replace(/-face\.png$/u, '.webp')
 
 const createTemporaryPath = (outputPath, variant = '') => {
   temporaryFileSequence += 1
@@ -60,6 +153,10 @@ const assertMatchingDimensions = (source, output, outputPath) => {
 const assertExactRenderedPixels = async (sourcePath, outputPath) => {
   const [source, output] = await Promise.all([readRgba(sourcePath), readRgba(outputPath)])
 
+  assertExactRenderedRgba(source, output, outputPath)
+}
+
+const assertExactRenderedRgba = (source, output, outputPath) => {
   assertMatchingDimensions(source, output, outputPath)
 
   for (let index = 0; index < source.data.length; index += RGBA_CHANNEL_COUNT) {
@@ -76,6 +173,41 @@ const assertExactRenderedPixels = async (sourcePath, outputPath) => {
         }
       }
     }
+  }
+}
+
+const writeTrimmedLosslessWebp = async ({outputPath, sourcePath}) => {
+  await mkdir(path.dirname(outputPath), {recursive: true})
+  const temporaryPath = createTemporaryPath(outputPath)
+
+  try {
+    const source = await sharp(sourcePath).trim().ensureAlpha().raw().toBuffer({
+      resolveWithObject: true,
+    })
+    await sharp(source.data, {
+      raw: {channels: source.info.channels, height: source.info.height, width: source.info.width},
+    })
+      .webp({effort: 6, lossless: true})
+      .toFile(temporaryPath)
+    const output = await readRgba(temporaryPath)
+    assertExactRenderedRgba(source, output, outputPath)
+    await rename(temporaryPath, outputPath)
+
+    return {x: -source.info.trimOffsetLeft, y: -source.info.trimOffsetTop}
+  } finally {
+    await rm(temporaryPath, {force: true})
+  }
+}
+
+const writeAtomicJson = async (outputPath, value) => {
+  await mkdir(path.dirname(outputPath), {recursive: true})
+  const temporaryPath = createTemporaryPath(outputPath)
+
+  try {
+    await writeFile(temporaryPath, `${JSON.stringify(value, null, 2)}\n`)
+    await rename(temporaryPath, outputPath)
+  } finally {
+    await rm(temporaryPath, {force: true})
   }
 }
 
@@ -194,24 +326,33 @@ const runCompressionJobs = async (jobs) => {
   }
 }
 
+const readWebpPaths = async (directory) => {
+  const entries = await readdir(directory, {withFileTypes: true})
+  const nestedPaths = await Promise.all(
+    entries.map((entry) => {
+      const entryPath = path.join(directory, entry.name)
+
+      if (entry.isDirectory()) {
+        return readWebpPaths(entryPath)
+      }
+
+      return path.extname(entry.name) === '.webp' ? [entryPath] : []
+    }),
+  )
+
+  return nestedPaths.flat()
+}
+
 const removeStaleWebps = async ({directories, expectedPaths}) => {
   const stalePaths = (
-    await Promise.all(
-      directories.map(async (directory) => {
-        const entries = await readdir(directory, {withFileTypes: true})
-
-        return entries
-          .filter((entry) => entry.isFile() && path.extname(entry.name) === '.webp')
-          .map((entry) => path.join(directory, entry.name))
-          .filter((filePath) => !expectedPaths.has(filePath))
-      }),
-    )
+    await Promise.all(directories.map((directory) => readWebpPaths(directory)))
   ).flat()
+  const unexpectedPaths = stalePaths.filter((filePath) => !expectedPaths.has(filePath))
 
-  // AI_NOTE - Runtime WebPs are generated mirrors; pruning makes removed PNG sources fail at build instead of using stale output.
-  await Promise.all(stalePaths.map((filePath) => rm(filePath)))
+  // Runtime WebPs are generated mirrors; pruning makes removed PNG sources fail at build instead of using stale output.
+  await Promise.all(unexpectedPaths.map((filePath) => rm(filePath)))
 
-  return stalePaths.length
+  return unexpectedPaths.length
 }
 
 const removeStaleLayerDirectories = async (expectedDirectories) => {
@@ -226,6 +367,24 @@ const removeStaleLayerDirectories = async (expectedDirectories) => {
 
   return staleDirectories.length
 }
+
+const writeLayerLayouts = (scenes) =>
+  Promise.all(
+    scenes.map(async (scene) => {
+      const layoutPath = path.join(scene.runtimeSceneDirectory, layerLayoutName)
+      await rm(path.join(scene.runtimeSceneDirectory, legacyLayerLayoutName), {force: true})
+      const entries = Object.entries(scene.layerLayout).sort(([left], [right]) =>
+        left.localeCompare(right),
+      )
+
+      if (entries.length === 0) {
+        await rm(layoutPath, {force: true})
+        return
+      }
+
+      await writeAtomicJson(layoutPath, Object.fromEntries(entries))
+    }),
+  )
 
 const compressAssets = async () => {
   const sceneNames = await readMatchingNames(sourceConceptArtDirectory, scenePattern)
@@ -243,7 +402,7 @@ const compressAssets = async () => {
     (sceneName) => () =>
       writeAtomicWebp({
         options: {quality: SCENE_QUALITY, smartSubsample: true},
-        outputPath: path.join(runtimeConceptArtDirectory, replacePngExtension(sceneName)),
+        outputPath: path.join(runtimeConceptArtDirectory, getRuntimeConceptArtName(sceneName)),
         sourcePath: path.join(sourceConceptArtDirectory, sceneName),
       }),
   )
@@ -251,7 +410,10 @@ const compressAssets = async () => {
     layerSceneNames.map(async (sceneName) => {
       const sourceSceneDirectory = path.join(sourceLayerDirectory, sceneName)
       const runtimeSceneDirectory = path.join(runtimeLayerDirectory, sceneName)
-      const layerNames = await readMatchingNames(sourceSceneDirectory, runtimeLayerPattern)
+      const sourceNames = await readdir(sourceSceneDirectory)
+      const hasBase = sourceNames.includes('base.png')
+      const layerNames = sourceNames.filter((name) => runtimeLayerPattern.test(name))
+      const layerLayout = {}
       const baseJob = () =>
         writeAtomicWebp({
           options: {quality: SCENE_QUALITY, smartSubsample: true},
@@ -260,7 +422,16 @@ const compressAssets = async () => {
         })
       const layerJobs = layerNames.map((layerName) => {
         const sourcePath = path.join(sourceSceneDirectory, layerName)
-        const outputPath = path.join(runtimeSceneDirectory, replacePngExtension(layerName))
+        const outputPath = path.join(runtimeSceneDirectory, getRuntimeLayerPath(layerName))
+
+        if (sparseLayerPattern.test(layerName)) {
+          return async () => {
+            layerLayout[getRuntimeLayerId(layerName)] = await writeTrimmedLosslessWebp({
+              outputPath,
+              sourcePath,
+            })
+          }
+        }
 
         return layerName.includes('mask')
           ? () =>
@@ -274,12 +445,14 @@ const compressAssets = async () => {
       })
 
       return {
-        jobs: [baseJob, ...layerJobs],
+        hasBase,
+        jobs: [...(hasBase ? [baseJob] : []), ...layerJobs],
         layerCount: layerJobs.length,
+        layerLayout,
         outputPaths: [
-          path.join(runtimeSceneDirectory, 'base.webp'),
+          ...(hasBase ? [path.join(runtimeSceneDirectory, 'base.webp')] : []),
           ...layerNames.map((layerName) =>
-            path.join(runtimeSceneDirectory, replacePngExtension(layerName)),
+            path.join(runtimeSceneDirectory, getRuntimeLayerPath(layerName)),
           ),
         ],
         runtimeSceneDirectory,
@@ -289,7 +462,7 @@ const compressAssets = async () => {
   const animationJobs = animationNames.map(
     (animationName) => () =>
       writeSmallestAlphaWebp({
-        outputPath: path.join(runtimeAnimationDirectory, replacePngExtension(animationName)),
+        outputPath: path.join(runtimeAnimationDirectory, getRuntimeAnimationPath(animationName)),
         sourcePath: path.join(sourceAnimationDirectory, animationName),
       }),
   )
@@ -297,7 +470,7 @@ const compressAssets = async () => {
     (depthName) => () =>
       writeAtomicWebp({
         options: {lossless: true},
-        outputPath: path.join(runtimeDepthDirectory, replacePngExtension(depthName)),
+        outputPath: path.join(runtimeDepthDirectory, getRuntimeDepthName(depthName)),
         sourcePath: path.join(sourceDepthDirectory, depthName),
         validate: assertExactRenderedPixels,
       }),
@@ -305,11 +478,12 @@ const compressAssets = async () => {
   const statusIconJobs = statusIconNames.map(
     (statusIconName) => () =>
       writeSmallestAlphaWebp({
-        outputPath: path.join(runtimeStatusIconDirectory, replacePngExtension(statusIconName)),
+        outputPath: path.join(runtimeStatusIconDirectory, getRuntimeStatusIconName(statusIconName)),
         sourcePath: path.join(sourceStatusIconDirectory, statusIconName),
       }),
   )
   const layerAssetCount = layerJobsByScene.reduce((total, scene) => total + scene.layerCount, 0)
+  const layerBaseCount = layerJobsByScene.filter((scene) => scene.hasBase).length
 
   await runCompressionJobs([
     ...sceneJobs,
@@ -319,19 +493,21 @@ const compressAssets = async () => {
     ...statusIconJobs,
   ])
 
+  await writeLayerLayouts(layerJobsByScene)
+
   const expectedRuntimePaths = new Set([
     ...sceneNames.map((sceneName) =>
-      path.join(runtimeConceptArtDirectory, replacePngExtension(sceneName)),
+      path.join(runtimeConceptArtDirectory, getRuntimeConceptArtName(sceneName)),
     ),
     ...layerJobsByScene.flatMap((scene) => scene.outputPaths),
     ...animationNames.map((animationName) =>
-      path.join(runtimeAnimationDirectory, replacePngExtension(animationName)),
+      path.join(runtimeAnimationDirectory, getRuntimeAnimationPath(animationName)),
     ),
     ...depthNames.map((depthName) =>
-      path.join(runtimeDepthDirectory, replacePngExtension(depthName)),
+      path.join(runtimeDepthDirectory, getRuntimeDepthName(depthName)),
     ),
     ...statusIconNames.map((statusIconName) =>
-      path.join(runtimeStatusIconDirectory, replacePngExtension(statusIconName)),
+      path.join(runtimeStatusIconDirectory, getRuntimeStatusIconName(statusIconName)),
     ),
   ])
   const prunedAssetCount = await removeStaleWebps({
@@ -350,7 +526,7 @@ const compressAssets = async () => {
 
   console.log(
     [
-      `Compressed ${sceneNames.length} scenes and ${layerSceneNames.length} layer bases`,
+      `Compressed ${sceneNames.length} scenes and ${layerBaseCount} layer bases`,
       `at WebP quality ${SCENE_QUALITY}. Compressed ${layerAssetCount} layers,`,
       `${animationNames.length} animations, ${depthNames.length} depth maps,`,
       `${statusIconNames.length} status icons, and pruned ${prunedAssetCount} stale assets`,

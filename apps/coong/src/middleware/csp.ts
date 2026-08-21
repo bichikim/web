@@ -27,13 +27,10 @@ export const cspMiddleware = createMiddlewareFragment({
 
     // unsafe-inline is used for development HMR purposes
     // strict-dynamic is used for trust Propagation
-    // NOTE:
-    // SolidStart server actions (/_server) currently deserialize streamed payloads via `eval(...)`
-    // in the client runtime, so production must allow 'unsafe-eval' to avoid runtime crashes.
     const csp = `
       default-src 'self';
       img-src 'self' data:;
-      script-src 'nonce-${nonce}' 'strict-dynamic' 'unsafe-eval' ${import.meta.env.PROD ? '' : `'unsafe-inline'`};
+      script-src 'nonce-${nonce}' 'strict-dynamic' ${import.meta.env.PROD ? '' : `'unsafe-inline' 'unsafe-eval'`};
       style-src ${import.meta.env.PROD ? `'self' 'nonce-${nonce}' 'unsafe-inline'` : `'unsafe-inline'`};
       style-src-elem ${import.meta.env.PROD ? `'self' 'nonce-${nonce}' 'unsafe-inline'` : `'unsafe-inline'`};
       style-src-attr 'unsafe-inline';

@@ -54,7 +54,7 @@ const createEntry = (origin: string, record: HistoricalMomentRecord): FeedEntry 
     summary: record.summary,
     title: record.title,
     updatedAt: record.updatedAt,
-    url: `${origin}/feeds/${FEED_SLUG}#${encodedKey}`,
+    url: `${origin}/api/feeds/${FEED_SLUG}#${encodedKey}`,
   }
 }
 
@@ -68,7 +68,7 @@ export const createHistoricalMomentsProvider = (
   return {
     definition: {
       description: '오늘과 같은 날짜에 있었던 역사적 순간을 출처와 함께 소개합니다.',
-      homeUrl: `${origin}/feeds`,
+      homeUrl: `${origin}/api/feeds`,
       language: 'ko-KR',
       slug: FEED_SLUG,
       title: '오늘 있었던 역사적 순간',

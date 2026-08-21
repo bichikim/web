@@ -1,5 +1,5 @@
 import {createHash} from 'node:crypto'
-import {and, eq, inArray, lt} from 'drizzle-orm'
+import {and, eq, inArray, isNull, lt} from 'drizzle-orm'
 
 import {
   type HistoryGenerationOutput,
@@ -10,17 +10,22 @@ import {
   type Database,
   feedChannels,
   getDatabase,
-  getTransactionalDatabase,
   historicalGenerationRuns,
   historicalMoments,
   historicalMomentSources,
   processedOpenAiWebhookEvents,
   type TransactionalDatabase,
+  withTransactionalDatabase,
 } from '../database'
 
 const CHANNEL_SLUG = 'today-in-history'
 const MAX_RECOVERY_RUNS = 10
 const MAX_GENERATION_ATTEMPTS = 2
+const MINUTES_PER_STALE_PREPARING_DELAY = 30
+const SECONDS_PER_MINUTE = 60
+const MILLISECONDS_PER_SECOND = 1000
+const STALE_PREPARING_DELAY_MS =
+  MINUTES_PER_STALE_PREPARING_DELAY * SECONDS_PER_MINUTE * MILLISECONDS_PER_SECOND
 
 export interface GenerationRun {
   readonly id: string
@@ -154,6 +159,34 @@ export const prepareGenerationRun = async (
     }
   }
 
+  const stalePreparingBefore = new Date(Date.now() - STALE_PREPARING_DELAY_MS)
+
+  if (
+    existing.status === 'preparing' &&
+    existing.openAiResponseId === null &&
+    existing.updatedAt < stalePreparingBefore
+  ) {
+    const [reclaimed] = await database
+      .update(historicalGenerationRuns)
+      .set({
+        errorMessage: null,
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(historicalGenerationRuns.id, existing.id),
+          eq(historicalGenerationRuns.status, 'preparing'),
+          isNull(historicalGenerationRuns.openAiResponseId),
+          lt(historicalGenerationRuns.updatedAt, stalePreparingBefore),
+        ),
+      )
+      .returning()
+
+    if (reclaimed !== undefined) {
+      return {created: true, run: mapRun(reclaimed)}
+    }
+  }
+
   return {created: false, run: mapRun(existing)}
 }
 
@@ -265,10 +298,9 @@ const claimWebhookEvent = async (
   return inserted !== undefined
 }
 
-/** Publishes a completed response atomically and ignores duplicate webhook events. */
-export const publishHistoryResponse = async (
+const publishHistoryResponseWithDatabase = async (
   options: PublishResponseOptions,
-  database: TransactionalDatabase = getTransactionalDatabase(),
+  database: TransactionalDatabase,
 ): Promise<boolean> =>
   database.transaction(async (transaction) => {
     if (!(await claimWebhookEvent(options.eventId, transaction))) {
@@ -279,10 +311,15 @@ export const publishHistoryResponse = async (
       .select()
       .from(historicalGenerationRuns)
       .where(eq(historicalGenerationRuns.openAiResponseId, options.responseId))
+      .for('update')
       .limit(1)
 
     if (run === undefined) {
       throw new Error(`Generation run not found for response: ${options.responseId}`)
+    }
+
+    if (run.status !== 'submitted') {
+      return false
     }
 
     const publishedAt = new Date()
@@ -376,30 +413,66 @@ export const publishHistoryResponse = async (
     return true
   })
 
-/** Records a terminal OpenAI event atomically and ignores duplicate delivery. */
-const finishHistoryResponse = async (
+/** Publishes a completed response atomically and ignores duplicate webhook events. */
+export const publishHistoryResponse = (
+  options: PublishResponseOptions,
+  database?: TransactionalDatabase,
+): Promise<boolean> =>
+  database === undefined
+    ? withTransactionalDatabase((scopedDatabase) =>
+        publishHistoryResponseWithDatabase(options, scopedDatabase),
+      )
+    : publishHistoryResponseWithDatabase(options, database)
+
+const finishHistoryResponseWithDatabase = async (
   options: FinishResponseOptions,
-  database: TransactionalDatabase = getTransactionalDatabase(),
+  database: TransactionalDatabase,
 ): Promise<boolean> =>
   database.transaction(async (transaction) => {
     if (!(await claimWebhookEvent(options.eventId, transaction))) {
       return false
     }
 
+    const [run] = await transaction
+      .select()
+      .from(historicalGenerationRuns)
+      .where(eq(historicalGenerationRuns.openAiResponseId, options.responseId))
+      .for('update')
+      .limit(1)
+
+    if (run === undefined) {
+      throw new Error(`Generation run not found for response: ${options.responseId}`)
+    }
+
+    if (run.status !== 'submitted') {
+      return false
+    }
+
     await transaction
       .update(historicalGenerationRuns)
       .set({errorMessage: options.message, status: options.status, updatedAt: new Date()})
-      .where(eq(historicalGenerationRuns.openAiResponseId, options.responseId))
+      .where(eq(historicalGenerationRuns.id, run.id))
 
     return true
   })
+
+/** Records a terminal OpenAI event atomically and ignores duplicate delivery. */
+const finishHistoryResponse = (
+  options: FinishResponseOptions,
+  database?: TransactionalDatabase,
+): Promise<boolean> =>
+  database === undefined
+    ? withTransactionalDatabase((scopedDatabase) =>
+        finishHistoryResponseWithDatabase(options, scopedDatabase),
+      )
+    : finishHistoryResponseWithDatabase(options, database)
 
 /** Records an OpenAI processing failure that may be retried once. */
 export const failHistoryResponse = (
   eventId: string,
   responseId: string,
   message: string,
-  database: TransactionalDatabase = getTransactionalDatabase(),
+  database?: TransactionalDatabase,
 ): Promise<boolean> =>
   finishHistoryResponse({eventId, message, responseId, status: 'failed'}, database)
 
@@ -408,7 +481,7 @@ export const rejectHistoryResponse = (
   eventId: string,
   responseId: string,
   message: string,
-  database: TransactionalDatabase = getTransactionalDatabase(),
+  database?: TransactionalDatabase,
 ): Promise<boolean> =>
   finishHistoryResponse({eventId, message, responseId, status: 'rejected'}, database)
 

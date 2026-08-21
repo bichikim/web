@@ -5,10 +5,15 @@ import {
   PSceneRenderer,
   type PSceneState,
 } from '../features/focus-room-animation/scene-renderer'
+import {getPSceneLayer} from '../features/focus-room-animation/scene-layer-catalog'
+import type {PSceneId} from '../features/focus-room-animation/scene-catalog'
+import type {PSceneStyle} from '../features/focus-room-animation/scene-style'
 
-export interface PSceneCanvasProps extends PSceneState {
+export interface PSceneCanvasProps extends Omit<PSceneState, 'layerScene'> {
   readonly onLoadingChange?: (isLoading: boolean) => void
   readonly onMotionInputChange?: (motionInput: PSceneMotionInput) => void
+  readonly sceneId: PSceneId
+  readonly sceneStyle?: PSceneStyle
 }
 
 export default function PSceneCanvas(props: PSceneCanvasProps) {
@@ -19,11 +24,13 @@ export default function PSceneCanvas(props: PSceneCanvasProps) {
     activity: props.activity,
     depthSource: props.depthSource,
     gaze: props.gaze,
-    layerScene: props.layerScene,
+    layerScene: getPSceneLayer(props.sceneId, props.sceneStyle),
     motionInput: props.motionInput,
     motionMode: props.motionMode,
+    sceneStyle: props.sceneStyle,
     source: props.source,
     time: props.time,
+    viseme: props.viseme,
   })
 
   onMount(() => {
@@ -54,11 +61,13 @@ export default function PSceneCanvas(props: PSceneCanvasProps) {
           props.activity,
           props.depthSource,
           props.gaze,
-          props.layerScene,
+          props.sceneId,
+          props.sceneStyle,
           props.motionInput,
           props.motionMode,
           props.source,
           props.time,
+          props.viseme,
         ] as const,
       () => {
         renderer?.update(getSceneState())

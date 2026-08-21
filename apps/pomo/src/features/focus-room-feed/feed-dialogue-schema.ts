@@ -1,6 +1,10 @@
 import {z} from 'zod'
 
-import {SUPERTONIC_VOICES, type SupertonicModelId, type SupertonicVoiceId} from '../supertonic'
+import {
+  SUPERTONIC_VOICES,
+  type SupertonicModelId,
+  type SupertonicVoiceId,
+} from '../supertonic/model'
 
 const supertonicVoiceIdSchema = z.custom<SupertonicVoiceId>((value) =>
   SUPERTONIC_VOICES.some((voice) => voice.id === value),
@@ -31,16 +35,16 @@ export interface FeedDialogueMetadata {
 }
 
 export const feedDialogueMetadataSchema: z.ZodType<FeedDialogueMetadata> = z.object({
-  createdAt: z.string().datetime(),
+  createdAt: z.iso.datetime(),
   dialogueId: z.string().min(1),
-  expiresAt: z.string().datetime(),
+  expiresAt: z.iso.datetime(),
   feedConnectionId: z.string().min(1),
   feedItemId: z.string().min(1),
   itemTitle: z.string().min(1),
-  listenedAt: z.string().datetime().nullable(),
-  publishedAt: z.string().datetime(),
+  listenedAt: z.iso.datetime().nullable(),
+  publishedAt: z.iso.datetime(),
   sourceTitle: z.string().min(1),
-  sourceUrl: z.string().url(),
+  sourceUrl: z.url(),
   version: z.literal(1),
 })
 
@@ -65,19 +69,19 @@ export interface FeedDialogueJob {
 }
 
 export const feedDialogueJobSchema: z.ZodType<FeedDialogueJob> = z.object({
-  createdAt: z.string().datetime(),
+  createdAt: z.iso.datetime(),
   errorMessage: z.string().nullable(),
   feedConnectionId: z.string().min(1),
   feedItemId: z.string().min(1),
   id: z.string().min(1),
   itemTitle: z.string().min(1),
   modelId: modelIdSchema,
-  publishedAt: z.string().datetime(),
+  publishedAt: z.iso.datetime(),
   script: z.string().min(1).max(MAXIMUM_FEED_SCRIPT_LENGTH),
   sourceTitle: z.string().min(1),
-  sourceUrl: z.string().url(),
+  sourceUrl: z.url(),
   status: z.enum(['failed', 'generating', 'interrupted', 'queued']),
-  updatedAt: z.string().datetime(),
+  updatedAt: z.iso.datetime(),
   version: z.literal(1),
   voiceId: supertonicVoiceIdSchema,
 })
@@ -102,17 +106,17 @@ export interface FeedItemRecord {
 
 export const feedItemRecordSchema: z.ZodType<FeedItemRecord> = z.object({
   contentLength: z.number().int().nonnegative(),
-  discoveredAt: z.string().datetime(),
+  discoveredAt: z.iso.datetime(),
   feedConnectionId: z.string().min(1),
   feedItemId: z.string().min(1),
   id: z.string().min(1),
   itemTitle: z.string().min(1),
   message: z.string().nullable(),
-  publishedAt: z.string().datetime(),
+  publishedAt: z.iso.datetime(),
   sourceTitle: z.string().min(1),
-  sourceUrl: z.string().url(),
+  sourceUrl: z.url(),
   status: z.enum(['dismissed', 'failed', 'ignored', 'queued', 'ready', 'too-long']),
-  updatedAt: z.string().datetime(),
+  updatedAt: z.iso.datetime(),
   version: z.literal(1),
 })
 

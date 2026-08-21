@@ -10,6 +10,7 @@ describe('PButton', () => {
     const result = render(() => (
       <PButton
         leadingImage="pomo-smile.png"
+        leadingImageClass="size-16 entry-face"
         onPress={() => undefined}
         tone="glass"
         trailingIcon="i-tabler-arrow-right"
@@ -23,7 +24,32 @@ describe('PButton', () => {
 
     expect(button.tagName).toBe('BUTTON')
     expect(image?.getAttribute('src')).toBe('pomo-smile.png')
+    expect(image?.classList.contains('size-16')).toBe(true)
+    expect(image?.classList.contains('size-6')).toBe(false)
     expect(trailingIcon?.classList.contains('i-tabler-arrow-right')).toBe(true)
+  })
+
+  it('should use the default leading image size', () => {
+    const result = render(() => (
+      <PButton leadingImage="pomo-smile.png" onPress={() => undefined}>
+        입장하기
+      </PButton>
+    ))
+    const image = result.container.querySelector('[data-pomo-button-leading-image]')
+
+    expect(image?.classList.contains('size-6')).toBe(true)
+  })
+
+  it('should render explicit size and tone variants', () => {
+    const result = render(() => (
+      <PButton onPress={() => undefined} size="small" tone="danger">
+        삭제
+      </PButton>
+    ))
+    const button = result.getByRole('button', {name: '삭제'})
+
+    expect(button.classList.contains('min-h-control-sm')).toBe(true)
+    expect(button.classList.contains('text-danger')).toBe(true)
   })
 
   it('should emit the source button when pressed', () => {

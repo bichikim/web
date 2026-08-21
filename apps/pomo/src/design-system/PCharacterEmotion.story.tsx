@@ -1,7 +1,7 @@
 import type {Meta, StoryObj} from 'storybook-solidjs-vite'
 
-import breakStatusIcon from 'assets/pomodoro-status-icons/break-face.webp'
-import focusStatusIcon from 'assets/pomodoro-status-icons/focus-face.webp'
+import breakStatusIcon from '../components/assets/pomodoro-status-icons/break.webp'
+import focusStatusIcon from '../components/assets/pomodoro-status-icons/focus.webp'
 import {PCharacterEmotion} from './PCharacterEmotion'
 
 const meta = {

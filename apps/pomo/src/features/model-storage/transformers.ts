@@ -44,7 +44,7 @@ export const createTransformersModelCache = (
       return
     }
 
-    // AI_NOTE - 완성본이 Cache API에 기록된 뒤에만 이어받기 조각을 지워 종료 시 저장 공백이 생기지 않게 한다.
+    // 완성본이 Cache API에 기록된 뒤에만 이어받기 조각을 지워 종료 시 저장 공백이 생기지 않게 한다.
     await options.onStored?.(request)
   },
 })

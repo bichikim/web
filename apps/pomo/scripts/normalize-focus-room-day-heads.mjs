@@ -1,4 +1,4 @@
-/* eslint-disable no-magic-numbers -- AI_NOTE - Follow plan/development/2d-scene-variant-workflow.md. Pixel coordinates and color thresholds are measured from the fixed 1672x941 daytime master. */
+/* eslint-disable no-magic-numbers -- Pixel coordinates and color thresholds are measured from the fixed 1672x941 daytime master. */
 import {createRequire} from 'node:module'
 import {mkdir, rename} from 'node:fs/promises'
 import path from 'node:path'
@@ -6,7 +6,10 @@ import path from 'node:path'
 const require = createRequire(path.resolve(process.cwd(), '../image-server/package.json'))
 const sharp = require('sharp')
 
-const conceptArtDirectory = path.resolve(process.cwd(), 'assets/concept-art')
+const conceptArtDirectory = path.resolve(
+  process.cwd(),
+  'asset-library/focus-room-source/concept-art',
+)
 const outputDirectory = path.resolve(
   process.cwd(),
   '../../.temp/pomo-focus-room/mechanical-day-head-lock-v6',
@@ -86,7 +89,7 @@ async function createHeadMask(donorName, targetName) {
   )
   const alpha = Buffer.alloc(imageWidth * imageHeight)
 
-  // AI_NOTE - Use the union of both silhouettes so the old head cannot remain
+  // Use the union of both silhouettes so the old head cannot remain
   // visible around the shared donor head. The fixed background fills that union.
   for (let y = 48; y <= 445; y += 1) {
     const donorBounds = findHairBounds(donor.data, y)

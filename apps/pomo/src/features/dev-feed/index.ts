@@ -1,6 +1,6 @@
 import type {IncomingMessage, ServerResponse} from 'node:http'
 
-import {DEV_FEED_QUOTES} from './quotes'
+import {DEV_FEED_QUOTES} from './quotes.ts'
 
 const FEED_INTERVAL_MINUTES = 5
 const FEED_HISTORY_SIZE = 12
@@ -8,7 +8,7 @@ const MILLISECONDS_PER_MINUTE = 60_000
 const FEED_INTERVAL_MILLISECONDS = FEED_INTERVAL_MINUTES * MILLISECONDS_PER_MINUTE
 const RSS_PATH = '/__dev/feeds/rss.xml'
 const ATOM_PATH = '/__dev/feeds/atom.xml'
-const FEED_TITLE = 'Pomo 개발 테스트 피드'
+const FEED_TITLE = 'Pomofi 개발 테스트 피드'
 const KOREA_TIME_ZONE = 'Asia/Seoul'
 
 interface DevFeedItem {
@@ -109,7 +109,7 @@ const createRssDocument = (origin: string, items: ReadonlyArray<DevFeedItem>) =>
   <channel>
     <title>${FEED_TITLE}</title>
     <link>${escapeXml(origin)}</link>
-    <description>5분마다 현재 시각으로 새 항목을 만드는 Pomo 개발 테스트 피드</description>
+    <description>5분마다 현재 시각으로 새 항목을 만드는 Pomofi 개발 테스트 피드</description>
     <language>ko-KR</language>
     <ttl>${FEED_INTERVAL_MINUTES}</ttl>
     <atom:link href="${escapeXml(feedUrl)}" rel="self" type="application/rss+xml" />

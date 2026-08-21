@@ -181,7 +181,7 @@ export const createPDialogueRepository = (): PDialogueRepository => {
       })
 
       if (parsedDialogue !== null) {
-        // AI_NOTE - IndexedDB 삭제가 이미 확정된 뒤이므로 캐시 정리 실패가 UI 삭제를 되돌린 것처럼 보이면 안 된다.
+        // IndexedDB 삭제가 이미 확정된 뒤이므로 캐시 정리 실패가 UI 삭제를 되돌린 것처럼 보이면 안 된다.
         await deleteAudio(parsedDialogue.audioKey)
       }
     },

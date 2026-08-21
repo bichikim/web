@@ -15,7 +15,7 @@ void main(void) {
   position.y = position.y * (2.0 * uOutputTexture.z / uOutputTexture.y) - uOutputTexture.z;
   gl_Position = vec4(position, 0.0, 1.0);
   vTextureCoord = aPosition * (uOutputFrame.zw * uInputSize.zw);
-  // AI_NOTE - Filter textures may use padded render-target UVs; DA3 maps always use scene UVs.
+  // Filter textures may use padded render-target UVs; DA3 maps always use scene UVs.
   vDepthCoord = aPosition;
 }
 `

@@ -21,6 +21,7 @@ const createEvents = (overrides: Partial<PEventContextValue> = {}): PEventContex
   activeSegmentMood: () => null,
   activeSegmentPosition: () => null,
   activeText: () => null,
+  activeViseme: () => 'rest',
   deleteDialogue: vi.fn(async () => undefined),
   dialogues: () => [],
   enterFocusRoom: vi.fn(),
@@ -31,6 +32,7 @@ const createEvents = (overrides: Partial<PEventContextValue> = {}): PEventContex
   getAudio: vi.fn(async () => null),
   hasEnteredFocusRoom: () => true,
   isDialoguePlaybackBlocked: () => false,
+  isDialoguePlaying: () => false,
   isDialogueScheduled: () => false,
   isEntryPlaybackBlocked: () => false,
   isLoading: () => false,
@@ -81,13 +83,12 @@ it('should show segment progress and stop the current dialogue playback', () => 
 
   const result = render(() => <PDialoguePlayer />)
 
-  expect(
-    result.container
-      .querySelector('.pomo-dialogue-bubble')
-      ?.classList.contains('pomo-static-focus-glass'),
-  ).toBe(true)
+  const activeBubble = result.container.querySelector('.pomo-dialogue-bubble')
+
+  expect(activeBubble?.classList.contains('border-highlight')).toBe(true)
+  expect(activeBubble?.classList.contains('bg-surface-interactive')).toBe(true)
   expect(screen.getByRole('img', {name: '총 3개 중 2번째 대사 읽는 중'})).toBeDefined()
-  expect(screen.getByRole('img', {name: '밝음·즐거움 감정'})).toBeDefined()
+  expect(screen.getByRole('img', {name: '밝음·즐거움 감정'}).classList).toContain('scale-[1.5556]')
   expect(screen.queryByText('Pomo')).toBeNull()
   expect(
     result.container.querySelectorAll('.pomo-dialogue-bubble__progress-dot[data-complete]'),
@@ -106,6 +107,39 @@ it('should show the neutral face when an active segment has no mood analysis', (
   render(() => <PDialoguePlayer />)
 
   expect(screen.getByRole('img', {name: '중립 감정'})).toBeDefined()
+})
+
+it('should replace the dialogue border only in scribble style', () => {
+  vi.mocked(usePEvents).mockReturnValue(createEvents({activeText: () => '하찮은 대화'}))
+
+  const originalResult = render(() => <PDialoguePlayer />)
+  const originalBubble = originalResult.container.querySelector('.pomo-dialogue-bubble')
+
+  expect(
+    originalResult.container.querySelector('.pomo-dialogue-bubble__scribble-border'),
+  ).toBeNull()
+  expect(originalBubble?.classList).toContain('rounded-2xl')
+  expect(originalBubble?.classList).toContain('border')
+
+  originalResult.unmount()
+  const scribbleResult = render(() => <PDialoguePlayer sceneStyle="scribble" />)
+  const scribbleBubble = scribbleResult.container.querySelector('.pomo-dialogue-bubble')
+  const scribbleBorder = scribbleResult.container.querySelector(
+    '.pomo-dialogue-bubble__scribble-border',
+  )
+  const scribbleSurface = scribbleResult.container.querySelector(
+    '.pomo-dialogue-bubble-frame .pomo-scribble-panel__surface',
+  ) as HTMLElement
+
+  expect(scribbleBorder).toBeInstanceOf(SVGElement)
+  expect(scribbleBorder?.parentElement?.classList).toContain('pomo-dialogue-bubble-frame')
+  expect(scribbleSurface.classList).toContain('[mask-image:var(--pomo-scribble-panel-mask)]')
+  expect(scribbleSurface.style.getPropertyValue('--pomo-scribble-panel-mask')).toContain(
+    'data:image/svg+xml',
+  )
+  expect(scribbleSurface.contains(scribbleBorder)).toBe(false)
+  expect(scribbleBubble?.classList).toContain('rounded-none')
+  expect(scribbleBubble?.classList).toContain('border-0')
 })
 
 it('should route the stop action to an external speech owner', () => {
@@ -165,7 +199,8 @@ it('should retry blocked playback from the static focus surface', () => {
   render(() => <PDialoguePlayer />)
   const playbackButton = screen.getByRole('button', {name: /이벤트 음성 재생/})
 
-  expect(playbackButton.classList.contains('pomo-static-focus-glass')).toBe(true)
+  expect(playbackButton.classList.contains('border-highlight')).toBe(true)
+  expect(playbackButton.classList.contains('bg-surface-interactive')).toBe(true)
   fireEvent.click(playbackButton)
   expect(retryDialoguePlayback).toHaveBeenCalledOnce()
 })

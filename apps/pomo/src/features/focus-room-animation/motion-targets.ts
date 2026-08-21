@@ -3,6 +3,10 @@ import type {PixiSceneMotion, PixiScenePoint} from './layer-scene-definition'
 const ORIGIN = {x: 0, y: 0}
 
 export const getMotionTarget = (motion: PixiSceneMotion, direction: 1 | -1) => {
+  if (motion.kind === 'looping-translation') {
+    return direction === 1 ? motion.to : motion.from
+  }
+
   if (motion.kind !== 'translation') {
     return ORIGIN
   }
@@ -20,6 +24,10 @@ export const getNextMotionTarget = (
   direction: 1 | -1,
   random: () => number,
 ) => {
+  if (motion.kind === 'looping-translation') {
+    return motion.to
+  }
+
   if (motion.kind !== 'translation' || !('targets' in motion)) {
     return getMotionTarget(motion, direction)
   }

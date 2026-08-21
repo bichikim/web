@@ -147,7 +147,7 @@ const SpeechModelWorkspace = (props: SpeechModelWorkspaceProps) => {
       <footer
         class={cx(
           'mt-2 grid gap-1 text-xs leading-5 text-#8f8297',
-          'sm:flex sm:items-center sm:justify-between sm:gap-4',
+          'xs:flex xs:items-center xs:justify-between xs:gap-4',
         )}
       >
         <span>모델별 첫 사용 시 파일을 내려받아 브라우저 캐시에 저장해요.</span>
@@ -167,10 +167,10 @@ export const SpeechToTextLab = () => {
         <p class="m-0 text-xs font-750 tracking-[0.24em] text-#9ed6bb uppercase">
           Korean ASR · On-device
         </p>
-        <h1 class="mb-0 mt-3 text-2xl font-800 tracking--0.03em sm:text-4xl">
+        <h1 class="mb-0 mt-3 text-2xl font-800 tracking--0.03em xs:text-4xl">
           한국어 받아쓰기 모델 비교
         </h1>
-        <p class="mb-0 mt-3 max-w-2xl text-sm leading-6 text-#bdb2c4 sm:text-base">
+        <p class="mb-0 mt-3 max-w-2xl text-sm leading-6 text-#bdb2c4 xs:text-base">
           가벼운 한국어 특화 모델부터 정확도 중심 모델까지 같은 마이크로 직접 비교하세요. 음성은
           서버로 보내지 않고 이 브라우저 안에서 처리해요.
         </p>
@@ -178,7 +178,7 @@ export const SpeechToTextLab = () => {
 
       <fieldset class="m-0 mt-7 grid gap-3 border-0 p-0">
         <legend class="mb-2 text-sm font-700 text-#e9dfe9">시험할 모델</legend>
-        <div class="grid gap-2 sm:grid-cols-3">
+        <div class="grid gap-2 xs:grid-cols-3">
           <For each={SPEECH_MODELS}>
             {(model) => (
               <label

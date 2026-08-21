@@ -1,6 +1,7 @@
 import {type Accessor, createSignal, onCleanup, onMount} from 'solid-js'
 
-import {useChatVoice} from '../chat-voice'
+import {useLazyChatVoice} from '../chat-voice/lazy'
+import type {PViseme} from '../lip-sync'
 import {type PSayRequest, registerPSayTool} from './register-pomo-say-tool'
 
 export interface UsePSayProps {
@@ -10,6 +11,8 @@ export interface UsePSayProps {
 export type UsePSayOptions = UsePSayProps
 
 export interface PSayController {
+  readonly activeViseme: Accessor<PViseme>
+  readonly isPlaying: Accessor<boolean>
   readonly speechText: Accessor<string | null>
   readonly stop: () => void
 }
@@ -19,7 +22,7 @@ const createCancelledError = () => new DOMException('Pomo speech was cancelled.'
 /** Registers and owns the cancellable WebMCP speech lifecycle for Pomo. */
 export const usePSay = (props: UsePSayProps): PSayController => {
   const [speechText, setSpeechText] = createSignal<string | null>(null)
-  const voice = useChatVoice()
+  const voice = useLazyChatVoice()
   let speechSession = 0
 
   const assertActive = (activeSession: number) => {
@@ -81,5 +84,5 @@ export const usePSay = (props: UsePSayProps): PSayController => {
     })
   })
 
-  return {speechText, stop}
+  return {activeViseme: voice.activeViseme, isPlaying: voice.isPlaying, speechText, stop}
 }

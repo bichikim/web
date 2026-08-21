@@ -25,7 +25,7 @@ export const readServerConfig = (environment: NodeJS.ProcessEnv = process.env): 
     emptyStringAsUndefined: true,
     isServer: true,
     onValidationError: throwServerConfigError,
-    // AI_NOTE - T3 Env removes empty-string entries, so never pass process.env by reference.
+    // T3 Env removes empty-string entries, so never pass process.env by reference.
     runtimeEnv: {...environment},
     server: serverEnvironmentSchema,
   })

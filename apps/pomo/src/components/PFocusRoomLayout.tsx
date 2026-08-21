@@ -3,12 +3,7 @@ import {type JSX, Show} from 'solid-js'
 
 import {PEventProvider} from '../features/focus-room-dialogue/PEventContext'
 import {PFeedProvider} from '../features/focus-room-feed'
-
-const FOCUS_ROOM_LAYOUT_PATHS: ReadonlySet<string> = new Set([
-  '/',
-  '/focus-room',
-  '/focus-room-dialogue',
-])
+import {isPomoHomePath, usesPomoLayout} from './pomo-route'
 
 export interface PFocusRoomLayoutProps {
   readonly children: JSX.Element
@@ -16,12 +11,12 @@ export interface PFocusRoomLayoutProps {
 
 export const PFocusRoomLayout = (props: PFocusRoomLayoutProps) => {
   const location = useLocation()
-  const usesFocusRoomLayout = () => FOCUS_ROOM_LAYOUT_PATHS.has(location.pathname)
-  const isPlaybackEnabled = () => location.pathname === '/'
+  const isLayoutEnabled = () => usesPomoLayout(location.pathname)
+  const isPlaybackEnabled = () => isPomoHomePath(location.pathname)
 
   return (
-    <Show when={usesFocusRoomLayout()} fallback={props.children}>
-      {/* AI_NOTE - This provider must outlive home/editor route swaps so one room session owns one entry greeting. */}
+    <Show when={isLayoutEnabled()} fallback={props.children}>
+      {/* AI_NOTE - This provider must outlive home/editor route swaps so one Pomo session owns one entry greeting. */}
       <PEventProvider isPlaybackEnabled={isPlaybackEnabled()}>
         <PFeedProvider>{props.children}</PFeedProvider>
       </PEventProvider>

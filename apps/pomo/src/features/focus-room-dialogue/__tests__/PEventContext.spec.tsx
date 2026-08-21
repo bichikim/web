@@ -97,6 +97,7 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  vi.useRealTimers()
   vi.restoreAllMocks()
   vi.unstubAllGlobals()
 })
@@ -189,6 +190,7 @@ it('should release entry audio after an unexpected playback failure', async () =
   expect(events.activeSegmentCount()).toBe(0)
   expect(events.activeSegmentPosition()).toBeNull()
   expect(events.isDialoguePlaybackBlocked()).toBe(false)
+  expect(events.isDialoguePlaying()).toBe(false)
   result.unmount()
   expect(repository.dispose).toHaveBeenCalledOnce()
 })
@@ -211,14 +213,69 @@ it('should play every entry event dialogue continuously', async () => {
   )
   const playAudio = vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue()
 
-  const {result} = await renderContext()
+  const {events, result} = await renderContext()
   await waitFor(() => expect(playAudio).toHaveBeenCalledTimes(1))
+  expect(events.isDialoguePlaying()).toBe(true)
   audioElements[0]?.dispatchEvent(new Event('ended'))
   await waitFor(() => expect(playAudio).toHaveBeenCalledTimes(2))
+  expect(events.isDialoguePlaying()).toBe(true)
   audioElements[1]?.dispatchEvent(new Event('ended'))
   await waitFor(() => expect(URL.revokeObjectURL).toHaveBeenCalledTimes(2))
+  expect(events.isDialoguePlaying()).toBe(false)
 
   expect(repository.getDialogue.mock.calls).toEqual([['first'], ['second']])
+  result.unmount()
+})
+
+it('should hold a speaking mouth between dialogues and rest 300ms after the final audio', async () => {
+  const dialogues = [createDialogue('first'), createDialogue('second')]
+  const repository = createRepository(dialogues, [
+    {dialogueIds: ['first', 'second'], event: 'room-enter', version: 2},
+  ])
+  const audioElements = dialogues.map(() => document.createElement('audio'))
+  let audioIndex = 0
+  const audioBlob = {
+    arrayBuffer: vi.fn(async () => new ArrayBuffer(0)),
+  } as unknown as Blob
+  let resolveSecondAudio: ((audio: Blob) => void) | undefined
+  const secondAudio = new Promise<Blob>((resolve) => {
+    resolveSecondAudio = resolve
+  })
+  repository.getAudio.mockResolvedValueOnce(audioBlob).mockImplementationOnce(() => secondAudio)
+  repositoryMocks.create.mockReturnValue(repository)
+  vi.stubGlobal(
+    'Audio',
+    vi.fn(function AudioMock() {
+      const audio = audioElements[audioIndex]
+      audioIndex += 1
+      return audio
+    }),
+  )
+  vi.stubGlobal(
+    'requestAnimationFrame',
+    vi.fn(() => 1),
+  )
+  vi.stubGlobal('cancelAnimationFrame', vi.fn())
+  const playAudio = vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue()
+
+  const {events, result} = await renderContext()
+  await waitFor(() => expect(events.activeViseme()).not.toBe('rest'))
+  vi.useFakeTimers()
+
+  audioElements[0]?.dispatchEvent(new Event('ended'))
+  await vi.advanceTimersByTimeAsync(300)
+  expect(events.activeViseme()).not.toBe('rest')
+  expect(playAudio).toHaveBeenCalledTimes(1)
+
+  resolveSecondAudio?.(audioBlob)
+  await vi.advanceTimersByTimeAsync(0)
+  expect(playAudio).toHaveBeenCalledTimes(2)
+
+  audioElements[1]?.dispatchEvent(new Event('ended'))
+  await vi.advanceTimersByTimeAsync(299)
+  expect(events.activeViseme()).not.toBe('rest')
+  await vi.advanceTimersByTimeAsync(1)
+  expect(events.activeViseme()).toBe('rest')
   result.unmount()
 })
 
@@ -476,6 +533,9 @@ it('should refresh event bindings changed by another repository owner', async ()
     new DOMException('Autoplay blocked', 'NotAllowedError'),
   )
   const {events, result} = await renderContext()
+  await waitFor(() => expect(events.isDialoguePlaybackBlocked()).toBe(true))
+
+  expect(events.isDialoguePlaying()).toBe(false)
 
   expect(events.entryDialogueIds()).toEqual(['first', 'second'])
   storedDialogues = [dialogues[1]].filter((dialogue) => dialogue !== undefined)
@@ -484,6 +544,23 @@ it('should refresh event bindings changed by another repository owner', async ()
 
   expect(events.dialogues().map((dialogue) => dialogue.id)).toEqual(['second'])
   expect(events.entryDialogueIds()).toEqual(['second'])
+  result.unmount()
+})
+
+it('should play entry dialogue after the binding is configured after entering', async () => {
+  const dialogue = createDialogue('entry')
+  const repository = createRepository([dialogue])
+  repositoryMocks.create.mockReturnValue(repository)
+  vi.spyOn(HTMLMediaElement.prototype, 'play').mockRejectedValue(
+    new DOMException('Autoplay blocked', 'NotAllowedError'),
+  )
+
+  const {events, result} = await renderContext({enter: false})
+  events.enterFocusRoom()
+  expect(repository.getDialogue).not.toHaveBeenCalled()
+
+  await events.setEventDialogues('room-enter', [dialogue.id])
+  await waitFor(() => expect(repository.getDialogue).toHaveBeenCalledWith(dialogue.id))
   result.unmount()
 })
 

@@ -37,6 +37,7 @@ import {
   getSupertonicAssetUrl,
   getSupertonicModel,
   getSupertonicModelFileUrl,
+  SUPERTONIC_MODEL_ASSETS_URL,
   SUPERTONIC_ORT_WASM_URL,
   type SupertonicModel,
   type SupertonicVoiceId,
@@ -47,7 +48,6 @@ import {splitSpeechText} from './text-chunking'
 const workerScope = self as DedicatedWorkerGlobalScope
 const modelStorage = createModelStorage()
 const voiceCache = new Map<SupertonicVoiceId, SupertonicVoice>()
-const MODEL_ASSETS_PATH = '/model-assets.json'
 const REQUEST_TIMEOUT_STATUS = 408
 const TOO_MANY_REQUESTS_STATUS = 429
 const SERVER_ERROR_STATUS = 500
@@ -282,7 +282,7 @@ const fetchModelAssets = async (
   const options: FetchJsonOptions = {
     fileName: '모델 자산 설정',
     signal,
-    url: new URL(MODEL_ASSETS_PATH, workerScope.location.origin).href,
+    url: new URL(SUPERTONIC_MODEL_ASSETS_URL, workerScope.location.origin).href,
   }
 
   try {

@@ -7,7 +7,7 @@ script = "cd "
 
 [setup.darwin]
 script = '''
-# AI_NOTE - Retry source fetch briefly, then skip optional warming so GitHub failures cannot block setup.
+# Retry source fetch briefly, then skip optional warming so GitHub failures cannot block setup.
 SOURCE_TREE_PATH="${CODEX_SOURCE_TREE_PATH:-}"
 if [ -n "$SOURCE_TREE_PATH" ]; then
   FETCH_SUCCEEDED=false
@@ -39,6 +39,9 @@ fi
 
 if [ -f "$REPOSITORY_PATH/apps/coong/.env" ]; then
   cp "$REPOSITORY_PATH/apps/coong/.env" apps/coong/.env
+fi
+if [ -f "$REPOSITORY_PATH/apps/pomo/.env" ]; then
+  cp "$REPOSITORY_PATH/apps/pomo/.env" apps/pomo/.env
 fi
 # Mirror .cursor/worktrees.json: reuse main worktree Turbo cache before install/prepare-build.
 if [ -d "$REPOSITORY_PATH/.turbo" ]; then

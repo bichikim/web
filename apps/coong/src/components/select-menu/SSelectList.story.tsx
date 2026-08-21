@@ -15,6 +15,7 @@ const menuItemClass = cx(
 )
 
 const meta = {
+  args: {children: null},
   component: SSelectList,
   tags: ['autodocs'],
   title: 'Coong/Components/SelectMenu/SSelectList',
@@ -28,6 +29,7 @@ interface SelectListPlayContext {
 }
 
 export const Open: Story = {
+  args: {children: null},
   play: async ({canvasElement}: SelectListPlayContext) => {
     const menu = await within(canvasElement).findByRole('menu')
 
@@ -66,6 +68,7 @@ export const Open: Story = {
 }
 
 export const WithCustomWidth: Story = {
+  args: {children: null},
   play: async ({canvasElement}: SelectListPlayContext) => {
     const menu = await within(canvasElement).findByRole('menu')
 
@@ -101,6 +104,7 @@ export const WithCustomWidth: Story = {
 }
 
 export const PairedWithTrigger: Story = {
+  args: {children: null},
   render: () => (
     <HSelectRoot>
       <div class=":uno: min-h-80 p-8">
@@ -115,6 +119,7 @@ export const PairedWithTrigger: Story = {
 }
 
 export const PairedWithCustomWidth: Story = {
+  args: {children: null},
   render: () => (
     <HSelectRoot>
       <div class=":uno: min-h-80 p-8">
@@ -128,6 +133,7 @@ export const PairedWithCustomWidth: Story = {
 }
 
 export const LegacyController: Story = {
+  args: {children: null},
   play: async ({canvasElement}: SelectListPlayContext) => {
     const canvas = within(canvasElement)
 

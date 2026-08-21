@@ -79,7 +79,6 @@ export const Default: Story = {
 export const LeftDragWithMouse: Story = {
   args: {
     children: '왼쪽으로 드래그',
-    dragLeftChildren: '실행하기',
     onLeftExecute: fn(),
     onRightExecute: undefined,
   },
@@ -97,7 +96,6 @@ export const LeftDragWithMouse: Story = {
 export const LeftDragWithTouch: Story = {
   args: {
     children: '왼쪽으로 드래그',
-    dragLeftChildren: '실행하기',
     onLeftExecute: fn(),
     onRightExecute: undefined,
   },
@@ -131,7 +129,6 @@ export const LeftDragWithTouch: Story = {
 export const RightDragWithMouse: Story = {
   args: {
     children: '오른쪽으로 드래그',
-    dragLeftChildren: '실행하기',
     onLeftExecute: undefined,
     onRightExecute: fn(),
   },
@@ -150,7 +147,6 @@ export const RightDragWithMouse: Story = {
 export const RightDragWithTouch: Story = {
   args: {
     children: '오른쪽 드래그',
-    dragLeftChildren: '왼쪽 실행',
     onLeftExecute: undefined,
     onRightExecute: fn(),
   },

@@ -3,12 +3,13 @@ import {cx} from 'class-variance-authority'
 import {createSignal, Show} from 'solid-js'
 
 import {type CharacterRendererStatus, useCharacterRenderer} from '../features/character-renderer'
+import characterSceneSource from './assets/character-studio/scene.glb?url'
 
-const DEFAULT_MODEL_URL = '/models/blender/scene.glb?renderer=babylon-1'
+const DEFAULT_MODEL_URL = `${characterSceneSource}?renderer=babylon-1`
 const DEFAULT_MODEL_NAME = 'Blender · character-studio.blend'
 const VIEWER_CLASSES = cx(
   'relative min-h-105 overflow-hidden rounded-7 border border-white/10 bg-#111820',
-  'shadow-[0_30px_100px_rgba(0,0,0,0.35)] lg:min-h-155',
+  'shadow-[0_30px_100px_rgba(0,0,0,0.35)] 2xl:min-h-155',
 )
 const INPUT_CLASSES = cx(
   'h-12 min-w-0 rounded-3 border border-white/10 bg-#0d1218 px-4 text-sm text-white outline-none',
@@ -28,7 +29,7 @@ const HELP_CLASSES = cx(
 )
 const ASIDE_CLASSES = cx(
   'grid content-start gap-5 rounded-7 border border-white/10 bg-#171f28/88 p-5',
-  'shadow-[0_24px_80px_rgba(0,0,0,0.24)] backdrop-blur-xl sm:p-6',
+  'shadow-[0_24px_80px_rgba(0,0,0,0.24)] backdrop-blur-xl xs:p-6',
 )
 const FILE_PICKER_CLASSES = cx(
   'grid h-12 cursor-pointer place-items-center rounded-3 border border-dashed',
@@ -85,7 +86,7 @@ const CharacterViewport = (props: CharacterViewportProps) => (
       <div
         class={cx(
           'pointer-events-none absolute inset-0 grid min-h-105 place-items-center',
-          'bg-#111820/72 p-8 text-center backdrop-blur-sm lg:min-h-155',
+          'bg-#111820/72 p-8 text-center backdrop-blur-sm 2xl:min-h-155',
         )}
       >
         <div>
@@ -212,7 +213,7 @@ export const CharacterStudio = () => {
   }
 
   return (
-    <section class="grid gap-5 lg:grid-cols-[minmax(0,1fr)_22rem]">
+    <section class="grid gap-5 2xl:grid-cols-[minmax(0,1fr)_22rem]">
       <CharacterViewport
         modelUrl={renderer.modelUrl()}
         onLoadError={renderer.handleLoadError}

@@ -1,7 +1,7 @@
 import {expect, fn, userEvent, within} from 'storybook/test'
 import type {Meta, StoryObj} from 'storybook-solidjs-vite'
 
-import smilingFaceSource from 'assets/pomodoro-status-icons/break-face.webp'
+import smilingFaceSource from '../components/assets/pomodoro-status-icons/break.webp'
 import {PButton} from './PButton'
 
 interface ButtonPlayContext {
@@ -38,7 +38,7 @@ const meta = {
   component: PButton,
   decorators: [
     (Story) => (
-      <main class="grid min-h-48 place-items-center bg-[var(--pomo-canvas)] p-6">
+      <main class="grid min-h-48 place-items-center bg-background p-6">
         <Story />
       </main>
     ),

@@ -32,9 +32,10 @@ export interface SupertonicVoice {
 }
 
 const FULL_MODEL_REVISION = '3cadd1e'
-const FULL_MODEL_BASE_URL = `https://huggingface.co/Supertone/supertonic-3/resolve/${FULL_MODEL_REVISION}`
+const MODEL_STORAGE_URL = 'https://storage.pomofi.io/models'
+const FULL_MODEL_BASE_URL = `${MODEL_STORAGE_URL}/supertonic-3/${FULL_MODEL_REVISION}`
 const INT8_MODEL_REVISION = 'cca5a0e6c96e1d2c720986bf7e75fcc81dee3ae4'
-const INT8_MODEL_BASE_URL = `https://huggingface.co/csukuangfj2/sherpa-onnx-supertonic-3-tts-int8-2026-05-11/resolve/${INT8_MODEL_REVISION}`
+const INT8_MODEL_BASE_URL = `${MODEL_STORAGE_URL}/supertonic-3-int8/${INT8_MODEL_REVISION}`
 
 export const getSupertonicAssetUrl = (path: string) => `${FULL_MODEL_BASE_URL}/${path}`
 
@@ -110,7 +111,7 @@ export const SUPERTONIC_VOICES = [
 export type SupertonicVoiceId = (typeof SUPERTONIC_VOICES)[number]['id']
 export type SupertonicModelId = (typeof SUPERTONIC_MODELS)[number]['id']
 
-// AI_NOTE - 120 is Supertonic's Korean auto-chunk value; 150/200 reflect observed browser quality degradation before outright failure.
+// 120 is Supertonic's Korean auto-chunk value; 150/200 reflect observed browser quality degradation before outright failure.
 const KOREAN_SPEECH_POLICY: SupertonicSpeechPolicy = {
   considerSplitLength: 120,
   locale: 'ko',
@@ -176,7 +177,7 @@ const INT8_MODEL_FILES: ReadonlyArray<SupertonicModelFile> = [
 const getModelSize = (files: ReadonlyArray<SupertonicModelFile>) =>
   files.reduce((total, file) => total + file.size, 0)
 
-// AI_NOTE - Keep both profiles: product decisions need side-by-side quality and latency evidence, not a forced quantized migration.
+// Keep both profiles: product decisions need side-by-side quality and latency evidence, not a forced quantized migration.
 export const SUPERTONIC_MODELS = [
   {
     baseUrl: FULL_MODEL_BASE_URL,
@@ -213,4 +214,5 @@ export const getSupertonicModel = (modelId: SupertonicModelId): SupertonicModel 
 export const getSupertonicModelFileUrl = (model: SupertonicModel, file: SupertonicModelFile) =>
   `${model.baseUrl}/${file.path}`
 
+export const SUPERTONIC_MODEL_ASSETS_URL = '/models/supertonic-3/manifest.json'
 export const SUPERTONIC_ORT_WASM_URL = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.23.2/dist/'
