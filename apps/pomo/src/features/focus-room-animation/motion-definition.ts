@@ -18,6 +18,7 @@ export const getMotionEffects = (motion: PixiSceneMotion) => {
     case 'opacity-pulse':
     case 'opacity-twinkle':
     case 'translation':
+    case 'visibility-cycle':
       return []
     default: {
       const exhaustiveMotion: never = motion

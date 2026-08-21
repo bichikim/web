@@ -70,6 +70,14 @@ it('should map the scribble style switch to the scene style value', () => {
 
   render(() => <PSettings onSceneStyleChange={onSceneStyleChange} sceneStyle="scribble" />)
 
+  const settingsTrigger = screen.getByRole('button', {name: '설정 열기'})
+
+  expect(settingsTrigger.parentElement?.classList).toContain('pomo-scribble-circle-control')
+  expect(
+    settingsTrigger.parentElement?.querySelector('.pomo-scribble-circle-border'),
+  ).not.toBeNull()
+  expect(settingsTrigger.querySelector('.i-pomo-scribble\\:settings')).not.toBeNull()
+
   const styleSwitch = vi
     .mocked(PSwitch)
     .mock.calls.map(([props]) => props as PSwitchProps)

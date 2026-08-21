@@ -51,4 +51,37 @@ describe('scene motion validation', () => {
 
     expect(() => validateSceneMotions('light', motions, SCENE_SIZE)).not.toThrow()
   })
+
+  it('should allow a visibility cycle alongside a looping translation', () => {
+    const motions = [
+      {
+        from: {x: 0, y: 10},
+        kind: 'looping-translation',
+        to: {x: 0, y: 0},
+        travel: {maximumSeconds: 2, minimumSeconds: 2},
+      },
+      {
+        kind: 'visibility-cycle',
+        phase: 0.25,
+        travel: {maximumSeconds: 1, minimumSeconds: 1},
+        visibleFraction: 0.25,
+      },
+    ] satisfies readonly PixiSceneMotion[]
+
+    expect(() => validateSceneMotions('steam', motions, SCENE_SIZE)).not.toThrow()
+  })
+
+  it('should reject an invalid visibility cycle fraction', () => {
+    const motions = [
+      {
+        kind: 'visibility-cycle',
+        travel: {maximumSeconds: 1, minimumSeconds: 1},
+        visibleFraction: 0,
+      },
+    ] satisfies readonly PixiSceneMotion[]
+
+    expect(() => validateSceneMotions('steam', motions, SCENE_SIZE)).toThrow(
+      'Visibility cycle fraction must be in (0, 1]: steam',
+    )
+  })
 })

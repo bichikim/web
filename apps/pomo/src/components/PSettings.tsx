@@ -1,6 +1,7 @@
 import {Tabs} from '@kobalte/core/tabs'
 import {createEffect, createMemo, createSignal, type JSX, onCleanup, Show} from 'solid-js'
 
+import {getPomoIconClass} from '../design-system/icon-style'
 import {PIconButton} from '../design-system/PIconButton'
 import {PModal} from '../design-system/PModal'
 import {PRadioSwitch} from '../design-system/PRadioSwitch'
@@ -14,6 +15,7 @@ import {useScreenWakeLock} from '../features/screen-wake-lock'
 import {PDialogueSettings} from './PDialogueSettings'
 import {PFeedSettings} from './PFeedSettings'
 import {PGuideSettings} from './PGuideSettings'
+import {PScribbleCircleControl} from './PScribbleCircleControl'
 import {
   FOCUS_ROOM_ACTIVITY_OPTIONS,
   FOCUS_ROOM_GAZE_OPTIONS,
@@ -226,12 +228,14 @@ export const PSettings = (props: PSettingsProps) => {
 
   return (
     <>
-      <PIconButton
-        accessibleLabel="설정 열기"
-        feedback="설정"
-        icon="i-tabler-settings"
-        onPress={handleOpen}
-      />
+      <PScribbleCircleControl enabled={props.sceneStyle === 'scribble'}>
+        <PIconButton
+          accessibleLabel="설정 열기"
+          feedback="설정"
+          icon={getPomoIconClass('i-tabler-settings', props.sceneStyle)}
+          onPress={handleOpen}
+        />
+      </PScribbleCircleControl>
       <Tabs value={activeTab()} onChange={setActiveTab}>
         <PModal
           isOpen={isOpen()}
@@ -250,18 +254,21 @@ export const PSettings = (props: PSettingsProps) => {
                   label="시간"
                   onChange={(timeMode) => props.onTimeModeChange?.(timeMode)}
                   options={FOCUS_ROOM_TIME_OPTIONS}
+                  sceneStyle={props.sceneStyle}
                   value={props.timeMode ?? 'day'}
                 />
                 <PRadioSwitch
                   label="행동"
                   onChange={(activity) => props.onActivityChange?.(activity)}
                   options={FOCUS_ROOM_ACTIVITY_OPTIONS}
+                  sceneStyle={props.sceneStyle}
                   value={props.activity ?? 'reading'}
                 />
                 <PRadioSwitch
                   label="보기"
                   onChange={(gaze) => props.onGazeChange?.(gaze)}
                   options={FOCUS_ROOM_GAZE_OPTIONS}
+                  sceneStyle={props.sceneStyle}
                   value={props.gaze ?? 'focused'}
                 />
               </div>

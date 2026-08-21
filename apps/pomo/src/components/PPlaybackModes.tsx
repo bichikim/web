@@ -1,7 +1,9 @@
 import {cx} from 'class-variance-authority'
 import {For} from 'solid-js'
 
+import {getPomoIconClass} from '../design-system/icon-style'
 import type {RepeatMode} from '../features/focus-room-audio'
+import type {PSceneStyle} from '../features/focus-room-animation'
 
 const CLASSES = {
   playerMode: [
@@ -23,6 +25,7 @@ export interface PPlaybackModesProps {
   readonly onRepeatModeChange: (mode: Exclude<RepeatMode, 'none'>) => void
   readonly onShuffleChange: () => void
   readonly repeatMode: RepeatMode
+  readonly sceneStyle?: PSceneStyle
   readonly shuffleEnabled: boolean
 }
 
@@ -43,7 +46,10 @@ export const PPlaybackModes = (props: PPlaybackModesProps) => (
             title={mode.label}
             type="button"
           >
-            <span aria-hidden="true" class={cx(mode.icon, 'size-4')} />
+            <span
+              aria-hidden="true"
+              class={cx(getPomoIconClass(mode.icon, props.sceneStyle), 'size-4')}
+            />
           </button>
         )}
       </For>
@@ -61,7 +67,10 @@ export const PPlaybackModes = (props: PPlaybackModesProps) => (
       title="랜덤 재생"
       type="button"
     >
-      <span aria-hidden="true" class="i-tabler-arrows-shuffle size-4" />
+      <span
+        aria-hidden="true"
+        class={cx(getPomoIconClass('i-tabler-arrows-shuffle', props.sceneStyle), 'size-4')}
+      />
     </button>
   </div>
 )

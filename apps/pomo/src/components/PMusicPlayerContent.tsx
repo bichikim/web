@@ -14,12 +14,14 @@ import {
   usePAudioVisualizer,
   usePPlaybackPersistence,
 } from '../features/focus-room-audio'
+import type {PSceneStyle} from '../features/focus-room-animation'
 import {MusicPlayerView} from './MusicPlayerView'
 
 interface PMusicPlayerContentProps {
   readonly expanded?: boolean
   readonly onExpandedChange?: (expanded: boolean) => void
   readonly onTrackChange?: (track: PTrack | null) => void
+  readonly sceneStyle?: PSceneStyle
   readonly tracks?: readonly PTrack[]
 }
 
@@ -525,6 +527,7 @@ export default function PMusicPlayerContent(props: PMusicPlayerContentProps) {
       onTrackRemove={props.tracks === undefined ? removeTrackFromQueue : undefined}
       onTrackSelect={selectChosenTrack}
       repeatMode={repeatMode()}
+      sceneStyle={props.sceneStyle}
       shuffleEnabled={shuffleEnabled()}
       tracks={tracks()}
     />

@@ -5,6 +5,10 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {PModal, type PModalProps} from 'src/design-system/PModal'
 import type {PSwitchProps} from 'src/design-system/PSwitch'
+import breakStatusIcon from '../assets/pomodoro-status-icons/break.webp'
+import focusStatusIcon from '../assets/pomodoro-status-icons/focus.webp'
+import scribbleBreakStatusIcon from '../assets/pomodoro-status-icons/scribble/break.webp'
+import scribbleFocusStatusIcon from '../assets/pomodoro-status-icons/scribble/focus.webp'
 import {PPomodoro} from '../PPomodoro'
 
 const bridgeStorageMocks = vi.hoisted(() => ({
@@ -65,6 +69,75 @@ describe('PPomodoro', () => {
     render(() => <PPomodoro />)
 
     expect(vi.mocked(PModal).mock.lastCall?.[0].contentOverflow).toBeUndefined()
+  })
+
+  it('should frame the quick controls only in scribble style', () => {
+    const originalResult = render(() => <PPomodoro />)
+    const originalControls = screen.getByRole('group', {name: '포모도로 간편 조작'})
+
+    expect(originalResult.container.querySelector('.pomo-pomodoro__scribble-border')).toBeNull()
+    expect(
+      originalResult.container.querySelector('.pomo-pomodoro__action-scribble-border'),
+    ).toBeNull()
+    expect(originalControls.classList.contains('rounded-control')).toBe(true)
+    expect(originalControls.classList.contains('border-border')).toBe(true)
+
+    originalResult.unmount()
+    const scribbleResult = render(() => <PPomodoro sceneStyle="scribble" />)
+    const scribbleControls = screen.getByRole('group', {name: '포모도로 간편 조작'})
+    const scribbleBorder = scribbleResult.container.querySelector('.pomo-pomodoro__scribble-border')
+    const scribbleFrame = scribbleResult.container.querySelector('.pomo-pomodoro-frame')
+    const scribbleSurface = scribbleResult.container.querySelector(
+      '.pomo-pomodoro__scribble-surface',
+    )
+    const actionBorder = scribbleResult.container.querySelector(
+      '.pomo-pomodoro__action-scribble-border',
+    )
+
+    expect(scribbleBorder).toBeInstanceOf(SVGElement)
+    expect(scribbleFrame?.classList.contains('inline-flex')).toBe(true)
+    expect(scribbleBorder?.querySelectorAll('path')).toHaveLength(2)
+    expect(scribbleBorder?.querySelectorAll('path')[0]?.getAttribute('stroke-width')).toBe('6')
+    expect(scribbleBorder?.querySelectorAll('path')[1]?.getAttribute('stroke-width')).toBe('3')
+    expect(actionBorder).toBeInstanceOf(SVGElement)
+    expect(actionBorder?.parentElement?.classList).toContain('pomo-pomodoro__action-indicator')
+    expect(scribbleControls.contains(scribbleBorder)).toBe(false)
+    expect(scribbleBorder?.compareDocumentPosition(scribbleControls)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    )
+    expect(scribbleControls.classList.contains('relative')).toBe(true)
+    expect(scribbleControls.classList.contains('rounded-none')).toBe(true)
+    expect(scribbleControls.classList.contains('border-0')).toBe(true)
+    expect(scribbleControls.classList.contains('bg-transparent')).toBe(true)
+    expect(
+      scribbleSurface?.classList.contains('[mask-image:var(--pomo-pomodoro-scribble-mask)]'),
+    ).toBe(true)
+    expect(scribbleControls.contains(scribbleSurface)).toBe(false)
+    expect(
+      (scribbleSurface as HTMLElement).style.getPropertyValue('--pomo-pomodoro-scribble-mask'),
+    ).toContain('data:image/svg+xml')
+  })
+
+  it('should use the status icon set matching the scene style', () => {
+    const getCharacterImage = () =>
+      screen
+        .getByRole('group', {name: '포모도로 간편 조작'})
+        .querySelector<HTMLImageElement>('[data-pomo-character-emotion] img')
+
+    const originalResult = render(() => <PPomodoro />)
+
+    expect(getCharacterImage()?.getAttribute('src')).toBe(focusStatusIcon)
+    fireEvent.click(screen.getByRole('button', {name: /포모도로 열기/}))
+    fireEvent.click(screen.getByRole('button', {name: '다음 단계로 이동'}))
+    expect(getCharacterImage()?.getAttribute('src')).toBe(breakStatusIcon)
+
+    originalResult.unmount()
+    render(() => <PPomodoro sceneStyle="scribble" />)
+
+    expect(getCharacterImage()?.getAttribute('src')).toBe(scribbleFocusStatusIcon)
+    fireEvent.click(screen.getByRole('button', {name: /포모도로 열기/}))
+    fireEvent.click(screen.getByRole('button', {name: '다음 단계로 이동'}))
+    expect(getCharacterImage()?.getAttribute('src')).toBe(scribbleBreakStatusIcon)
   })
 
   it('should expose the timer state and primary controls through an accessible dialog', async () => {

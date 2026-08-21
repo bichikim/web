@@ -3,6 +3,7 @@
 import {cleanup, render} from '@solidjs/testing-library'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
+import type {PSceneStyle} from '../../features/focus-room-animation'
 import {MusicPlayerView} from '../MusicPlayerView'
 
 vi.mock('media-chrome', () => ({}))
@@ -12,7 +13,7 @@ const TRACKS = [
   {artist: 'Artist', durationSeconds: 1, id: 'two', source: '/two.mp3', title: 'Two'},
 ] as const
 
-const renderMusicPlayerView = () =>
+const renderMusicPlayerView = (sceneStyle: PSceneStyle = 'original') =>
   render(() => (
     <MusicPlayerView
       currentIndex={0}
@@ -28,6 +29,7 @@ const renderMusicPlayerView = () =>
       onShuffleChange={vi.fn()}
       onTrackSelect={vi.fn()}
       repeatMode="repeat-all"
+      sceneStyle={sceneStyle}
       shuffleEnabled={true}
       tracks={TRACKS}
     />
@@ -35,6 +37,81 @@ const renderMusicPlayerView = () =>
 
 describe('MusicPlayerView', () => {
   afterEach(() => cleanup())
+
+  it('should replace the regular frame only in scribble style', () => {
+    const originalResult = renderMusicPlayerView()
+    const originalBase = originalResult.container.querySelector('.pomo-player__base')
+    const originalController = originalResult.container.querySelector('media-controller')
+
+    expect(originalResult.container.querySelector('.pomo-player__scribble-border')).toBeNull()
+    expect(
+      originalController?.classList.contains('[mask-image:var(--pomo-player-scribble-mask)]'),
+    ).toBe(false)
+    expect(originalController?.classList.contains('rounded-panel')).toBe(true)
+    expect(originalController?.classList.contains('rounded-none')).toBe(false)
+    expect(originalBase?.classList.contains('border-border')).toBe(true)
+    expect(originalBase?.classList.contains('border-transparent')).toBe(false)
+
+    cleanup()
+    const scribbleResult = renderMusicPlayerView('scribble')
+    const scribbleBase = scribbleResult.container.querySelector('.pomo-player__base')
+    const scribbleBorder = scribbleResult.container.querySelector('.pomo-player__scribble-border')
+    const scribbleFrame = scribbleResult.container.querySelector('.pomo-player-frame')
+    const scribbleController = scribbleResult.container.querySelector('media-controller')
+
+    expect(scribbleBorder).toBeInstanceOf(SVGElement)
+    expect(scribbleBorder?.getAttribute('aria-hidden')).toBe('true')
+    expect(scribbleBorder?.querySelectorAll('path')).toHaveLength(2)
+    expect(scribbleBorder?.querySelectorAll('path')[0]?.getAttribute('stroke-width')).toBe('6')
+    expect(scribbleBorder?.querySelectorAll('path')[1]?.getAttribute('stroke-width')).toBe('3')
+    expect(scribbleBorder?.parentElement).toBe(scribbleFrame)
+    expect(scribbleController?.contains(scribbleBorder)).toBe(false)
+    expect(
+      scribbleController?.classList.contains('[mask-image:var(--pomo-player-scribble-mask)]'),
+    ).toBe(true)
+    expect(
+      (scribbleController as HTMLElement).style.getPropertyValue('--pomo-player-scribble-mask'),
+    ).toContain('data:image/svg+xml')
+    expect(scribbleController?.classList.contains('rounded-none')).toBe(true)
+    expect(scribbleController?.classList.contains('rounded-panel')).toBe(false)
+    expect(scribbleBase?.classList.contains('border-transparent')).toBe(true)
+    expect(scribbleBase?.classList.contains('border-border')).toBe(false)
+  })
+
+  it('should replace player controls only in scribble style', () => {
+    const originalResult = renderMusicPlayerView()
+
+    expect(originalResult.container.querySelector('.i-tabler-player-play')).toBeInstanceOf(
+      HTMLElement,
+    )
+    expect(originalResult.container.querySelector('.i-pomo-scribble\\:play')).toBeNull()
+    expect(originalResult.container.querySelector('.i-tabler-album')).toBeInstanceOf(HTMLElement)
+    expect(originalResult.container.querySelector('.i-pomo-scribble\\:album')).toBeNull()
+    expect(
+      originalResult.container.querySelectorAll('.pomo-player__play-scribble-frame svg'),
+    ).toHaveLength(0)
+
+    cleanup()
+    const scribbleResult = renderMusicPlayerView('scribble')
+
+    expect(scribbleResult.container.querySelector('.i-pomo-scribble\\:play')).toBeInstanceOf(
+      HTMLElement,
+    )
+    expect(scribbleResult.container.querySelector('.i-pomo-scribble\\:repeat')).toBeInstanceOf(
+      HTMLElement,
+    )
+    expect(scribbleResult.container.querySelector('.i-pomo-scribble\\:shuffle')).toBeInstanceOf(
+      HTMLElement,
+    )
+    expect(scribbleResult.container.querySelector('.i-pomo-scribble\\:album')).toBeInstanceOf(
+      HTMLElement,
+    )
+    expect(scribbleResult.container.querySelector('.i-tabler-player-play')).toBeNull()
+    expect(scribbleResult.container.querySelector('.i-tabler-album')).toBeNull()
+    expect(
+      scribbleResult.container.querySelectorAll('.pomo-player__play-scribble-frame svg'),
+    ).toHaveLength(2)
+  })
 
   it('should use native titles for every player button', () => {
     const result = renderMusicPlayerView()

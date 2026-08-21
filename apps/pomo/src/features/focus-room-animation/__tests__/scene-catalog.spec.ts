@@ -23,31 +23,153 @@ describe('focus room scene catalog', () => {
     expect(new Set(definitions).size).toBe(definitions.length)
   })
 
-  it('should replace only prepared scenes in the scribble dataset', () => {
+  it('should replace every scene in the scribble dataset', () => {
     const preparedScenes = [
-      {scene: getPScene('day', 'reading', 'focused'), source: 'day-reading-focused-scribble'},
-      {scene: getPScene('day', 'typing', 'focused'), source: 'day-typing-focused-scribble'},
-      {scene: getPScene('day', 'writing', 'focused'), source: 'day-writing-focused-scribble'},
+      {
+        background: 'day-reading-focused-scribble-background',
+        head: 'day-focused-scribble-head',
+        scene: getPScene('day', 'reading', 'focused'),
+      },
+      {
+        background: 'day-reading-focused-scribble-background',
+        head: 'day-user-scribble-head',
+        scene: getPScene('day', 'reading', 'user'),
+      },
+      {
+        background: 'day-typing-focused-scribble-background',
+        head: 'day-focused-scribble-head',
+        scene: getPScene('day', 'typing', 'focused'),
+      },
+      {
+        background: 'day-typing-focused-scribble-background',
+        head: 'day-user-scribble-head',
+        scene: getPScene('day', 'typing', 'user'),
+      },
+      {
+        background: 'day-writing-focused-scribble-background',
+        head: 'day-focused-scribble-head',
+        scene: getPScene('day', 'writing', 'focused'),
+      },
+      {
+        background: 'day-writing-focused-scribble-background',
+        head: 'day-user-scribble-head',
+        scene: getPScene('day', 'writing', 'user'),
+      },
+      {
+        background: 'night-reading-focused-scribble-background',
+        head: 'day-focused-scribble-head',
+        scene: getPScene('night', 'reading', 'focused'),
+      },
+      {
+        background: 'night-reading-focused-scribble-background',
+        head: 'day-user-scribble-head',
+        scene: getPScene('night', 'reading', 'user'),
+      },
+      {
+        background: 'night-typing-focused-scribble-background',
+        head: 'day-focused-scribble-head',
+        scene: getPScene('night', 'typing', 'focused'),
+      },
+      {
+        background: 'night-typing-focused-scribble-background',
+        head: 'day-user-scribble-head',
+        scene: getPScene('night', 'typing', 'user'),
+      },
+      {
+        background: 'night-writing-focused-scribble-background',
+        head: 'day-focused-scribble-head',
+        scene: getPScene('night', 'writing', 'focused'),
+      },
+      {
+        background: 'night-writing-focused-scribble-background',
+        head: 'day-user-scribble-head',
+        scene: getPScene('night', 'writing', 'user'),
+      },
     ]
 
-    for (const {scene, source} of preparedScenes) {
-      expect(getPSceneLayer(scene.id, 'scribble')).toMatchObject({
-        id: `scribble-${scene.id}-layers`,
-        layers: [
-          {id: 'background', source: expect.stringContaining(`${source}-background`)},
-          {
-            id: 'head',
-            position: {x: 809, y: 127},
-            source: expect.stringContaining('day-focused-scribble-head'),
-          },
-        ],
+    expect(preparedScenes).toHaveLength(FOCUS_ROOM_SCENES.length)
+
+    for (const {background, head, scene} of preparedScenes) {
+      const layerScene = getPSceneLayer(scene.id, 'scribble')
+      const backgroundLayer = layerScene.layers.find((layer) => layer.id === 'background')
+      const headLayer = layerScene.layers.find((layer) => layer.id === 'head')
+
+      expect(layerScene.id).toBe(`scribble-${scene.id}-layers`)
+      expect(backgroundLayer).toMatchObject({
+        id: 'background',
+        source: expect.stringContaining(background),
+      })
+      expect(headLayer).toMatchObject({
+        attachmentId: 'eyes',
+        channel: FOCUS_ROOM_PREVIEW_CHANNELS.head,
+        id: 'head',
+        motion: {
+          center: {x: 1060, y: 425},
+          degrees: 0.5,
+          kind: 'pivot-rotation',
+          travel: {maximumSeconds: 2.4, minimumSeconds: 1.5},
+        },
+        position: {x: 809, y: 127},
+        source: expect.stringContaining(head),
       })
     }
+  })
 
-    const preparedSceneIds = new Set(preparedScenes.map(({scene}) => scene.id))
+  it('should share six full-head mouth stages across every scribble user-facing scene', () => {
+    const expectedMouthIds = [
+      'mouth-rest',
+      'mouth-closed',
+      'mouth-open',
+      'mouth-wide',
+      'mouth-round',
+      'mouth-narrow',
+    ]
 
-    for (const scene of FOCUS_ROOM_SCENES.filter((scene) => !preparedSceneIds.has(scene.id))) {
-      expect(getPSceneLayer(scene.id, 'scribble')).toBe(getPSceneLayer(scene.id, 'original'))
+    for (const scene of FOCUS_ROOM_SCENES) {
+      const mouthLayers = getPSceneLayer(scene.id, 'scribble').layers.filter((layer) =>
+        layer.id.startsWith('mouth-'),
+      )
+
+      if (scene.gaze === 'focused') {
+        expect(mouthLayers).toEqual([])
+      } else {
+        expect(mouthLayers.map((layer) => layer.id).sort()).toEqual(expectedMouthIds.toSorted())
+        expect(
+          mouthLayers.every(
+            (layer) =>
+              layer.parentAttachmentId === 'eyes' &&
+              layer.position?.x === 0 &&
+              layer.position?.y === 0 &&
+              layer.source.includes('mouths/day-user-scribble/') &&
+              layer.visible === false,
+          ),
+        ).toBe(true)
+      }
+    }
+  })
+
+  it('should animate three shape-changing steam lines only in scribble scenes', () => {
+    for (const scene of FOCUS_ROOM_SCENES) {
+      const originalSteamLayers = getPSceneLayer(scene.id).layers.filter((layer) =>
+        layer.id.startsWith('scribble-steam-'),
+      )
+      const scribbleSteamLayers = getPSceneLayer(scene.id, 'scribble').layers.filter((layer) =>
+        layer.id.startsWith('scribble-steam-'),
+      )
+
+      expect(originalSteamLayers).toEqual([])
+      expect(scribbleSteamLayers).toHaveLength(12)
+      expect(new Set(scribbleSteamLayers.map((layer) => layer.id.split('-')[2])).size).toBe(3)
+      expect(new Set(scribbleSteamLayers.map((layer) => layer.source)).size).toBe(4)
+      expect(
+        scribbleSteamLayers.every(
+          (layer) =>
+            layer.source.includes('steam/scribble/') &&
+            layer.source.endsWith('.webp') &&
+            layer.motions?.some((motion) => motion.kind === 'looping-translation') === true &&
+            layer.motions.some((motion) => motion.kind === 'visibility-cycle'),
+        ),
+      ).toBe(true)
     }
   })
 
