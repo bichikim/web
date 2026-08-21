@@ -113,6 +113,7 @@ export default defineConfig({
         prerender: {
           routes: [
             '/',
+            '/account',
             '/dev',
             '/dev/character',
             '/dev/chat',

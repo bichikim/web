@@ -516,6 +516,7 @@ export const MusicPlayerView = (props: MusicPlayerViewProps) => {
                 props.sceneStyle,
               )}
               onPress={() => props.onExpandedChange()}
+              purpose="expand"
             />
           </div>
 

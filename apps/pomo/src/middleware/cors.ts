@@ -1,3 +1,5 @@
+import type {Middleware} from 'h3'
+
 const STATIC_ALLOWED_ORIGINS = new Set([
   'https://pomofi.io',
   'https://www.pomofi.io',
@@ -34,15 +36,6 @@ const PREFLIGHT_VARY_HEADERS = [
   'Access-Control-Request-Headers',
 ]
 const PREFLIGHT_MAX_AGE = '86400'
-
-interface CorsMiddlewareEvent {
-  readonly req: Request
-  readonly res: {
-    readonly headers: Headers
-  }
-}
-
-type NextMiddleware = () => unknown | Promise<unknown>
 
 const getVercelOrigin = (host: string | undefined): string | undefined => {
   const value = host?.trim()
@@ -144,10 +137,7 @@ const applyResponseCors = (request: Request, headers: Headers): void => {
   }
 }
 
-export const corsMiddleware = async (
-  event: CorsMiddlewareEvent,
-  next: NextMiddleware,
-): Promise<unknown> => {
+export const corsMiddleware: Middleware = async (event, next) => {
   const requestUrl = new URL(event.req.url)
 
   if (!isApiPath(requestUrl.pathname)) {
@@ -160,10 +150,11 @@ export const corsMiddleware = async (
     return preflightResponse
   }
 
+  applyResponseCors(event.req, event.res.headers)
+  applyResponseCors(event.req, event.res.errHeaders)
   const response = await next()
 
   if (!(response instanceof Response)) {
-    applyResponseCors(event.req, event.res.headers)
     return response
   }
 

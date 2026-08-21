@@ -16,6 +16,7 @@ vi.mock('src/design-system/PSelect', () => ({PSelect: vi.fn()}))
 vi.mock('src/design-system/PSwitch', () => ({PSwitch: vi.fn()}))
 vi.mock('../PDialogueSettings', () => ({PDialogueSettings: vi.fn()}))
 vi.mock('../PFeedSettings', () => ({PFeedSettings: vi.fn()}))
+vi.mock('../../features/user-auth/UserSettings', () => ({UserSettings: vi.fn()}))
 
 interface TabsRootProps {
   readonly children?: JSX.Element
@@ -61,6 +62,7 @@ it('should expose the guide as the last tab inside settings', () => {
     '이벤트',
     '피드',
     '대화',
+    '사용자',
     '설명서',
   ])
 })

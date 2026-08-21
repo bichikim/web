@@ -1,3 +1,4 @@
+import {H3, HTTPError, mockEvent} from 'h3'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
 import {corsMiddleware} from '../cors.ts'
@@ -8,10 +9,7 @@ const VERCEL_HOST_VARIABLES = [
   'VERCEL_PROJECT_PRODUCTION_URL',
 ] as const
 
-const createMiddlewareEvent = (request: Request) => ({
-  req: request,
-  res: {headers: new Headers()},
-})
+const createMiddlewareEvent = (request: Request) => mockEvent(request)
 
 const applyResponseMiddleware = async (
   request: Request,
@@ -154,5 +152,40 @@ describe('corsMiddleware', () => {
     await expect(corsMiddleware(event, async () => body)).resolves.toBe(body)
     expect(event.res.headers.get('Access-Control-Allow-Origin')).toBe(origin)
     expect(event.res.headers.get('Vary')).toBe('Origin')
+  })
+
+  it('should add CORS headers to an H3 error response', async () => {
+    useProductionEnvironment()
+    const origin = 'https://pomo-app.apps.tossmini.com'
+    const app = new H3().use(corsMiddleware).get('/api/test', () => {
+      throw HTTPError.status(413)
+    })
+
+    const response = await app.request(
+      new Request('https://api.pomofi.example/api/test', {headers: {Origin: origin}}),
+    )
+
+    expect(response.status).toBe(413)
+    expect(response.headers.get('Access-Control-Allow-Origin')).toBe(origin)
+    expect(response.headers.get('Access-Control-Allow-Credentials')).toBe('true')
+    expect(response.headers.get('Vary')).toBe('Origin')
+  })
+
+  it('should preserve multiple cookies while adding CORS to a Response', async () => {
+    useProductionEnvironment()
+    const headers = new Headers()
+    headers.append('Set-Cookie', 'first=1; Path=/; HttpOnly')
+    headers.append('Set-Cookie', 'second=2; Path=/; HttpOnly')
+    const response = await applyResponseMiddleware(
+      new Request('https://api.pomofi.example/api/auth/get-session', {
+        headers: {Origin: 'https://pomofi.io'},
+      }),
+      new Response(null, {headers}),
+    )
+
+    expect(response.headers.getSetCookie()).toEqual([
+      'first=1; Path=/; HttpOnly',
+      'second=2; Path=/; HttpOnly',
+    ])
   })
 })

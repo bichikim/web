@@ -134,6 +134,12 @@ describe('MusicPlayerView', () => {
     expect(controller.querySelector('media-mute-button')?.getAttribute('title')).toBe(
       '음소거 켜기/끄기',
     )
+    expect(
+      controller.querySelector('[aria-label="앨범 추가"]')?.getAttribute('data-player-utility'),
+    ).toBe('album')
+    expect(
+      controller.querySelector('[aria-label="플레이어 접기"]')?.getAttribute('data-player-utility'),
+    ).toBe('expand')
   })
 
   it('should keep the summary play button stationary on hover', () => {

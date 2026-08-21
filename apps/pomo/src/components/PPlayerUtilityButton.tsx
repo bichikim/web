@@ -5,6 +5,7 @@ export interface PPlayerUtilityButtonProps {
   readonly expanded?: boolean
   readonly icon: string
   readonly onPress: (source: HTMLButtonElement) => void
+  readonly purpose?: 'album' | 'expand'
 }
 
 export const PPlayerUtilityButton = (props: PPlayerUtilityButtonProps) => (
@@ -17,6 +18,7 @@ export const PPlayerUtilityButton = (props: PPlayerUtilityButtonProps) => (
       'focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-primary',
       'focus-visible:[outline-offset:2px]',
     )}
+    data-player-utility={props.purpose}
     onClick={(event) => props.onPress(event.currentTarget)}
     title={props.accessibleLabel}
     type="button"

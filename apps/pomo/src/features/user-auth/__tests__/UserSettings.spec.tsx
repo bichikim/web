@@ -1,0 +1,68 @@
+/** @vitest-environment jsdom */
+
+import {Tabs} from '@kobalte/core/tabs'
+import {render, screen, waitFor} from '@solidjs/testing-library'
+import {afterEach, beforeEach, expect, it, vi} from 'vitest'
+
+import {readStoredAppSession, validateAppSession} from '../app-session'
+import {readAccountSession} from '../web-session'
+import {UserSettings} from '../UserSettings'
+
+vi.mock('@kobalte/core/tabs', () => ({Tabs: {Content: vi.fn()}}))
+vi.mock('../app-session', () => ({
+  clearStoredAppSession: vi.fn(),
+  readStoredAppSession: vi.fn(),
+  validateAppSession: vi.fn(),
+}))
+vi.mock('../web-session', () => ({readAccountSession: vi.fn()}))
+
+beforeEach(() => {
+  vi.clearAllMocks()
+  vi.stubEnv('POMO_IS_APPS_IN_TOSS', '')
+  vi.mocked(Tabs.Content).mockImplementation((props) => <>{props.children}</>)
+})
+
+afterEach(() => {
+  vi.unstubAllEnvs()
+})
+
+it('should show the signed-in email and account management entry', async () => {
+  vi.mocked(readAccountSession).mockResolvedValue({email: 'pomo@example.com'})
+
+  render(() => <UserSettings />)
+
+  expect(screen.getByRole('status').textContent).toContain('계정 확인 중…')
+  await waitFor(() => expect(screen.queryByText('pomo@example.com')).not.toBeNull())
+  expect(screen.queryByText('이메일 링크')).not.toBeNull()
+  expect(screen.getByRole('link', {name: '계정 관리'}).getAttribute('href')).toBe('/account')
+})
+
+it('should provide the login entry for an anonymous user', async () => {
+  vi.mocked(readAccountSession).mockResolvedValue(null)
+
+  render(() => <UserSettings />)
+
+  await waitFor(() => expect(screen.queryByText('로그인하지 않았어요.')).not.toBeNull())
+  expect(screen.getByRole('link', {name: '로그인 / 가입'}).getAttribute('href')).toBe('/account')
+})
+
+it('should show the Toss login method for an app session', async () => {
+  vi.stubEnv('POMO_IS_APPS_IN_TOSS', '1')
+  vi.mocked(readStoredAppSession).mockResolvedValue('app-session')
+  vi.mocked(validateAppSession).mockResolvedValue(true)
+
+  render(() => <UserSettings />)
+
+  await waitFor(() => expect(screen.queryByText('토스')).not.toBeNull())
+  expect(screen.queryByText('로그인됨')).not.toBeNull()
+  expect(readAccountSession).not.toHaveBeenCalled()
+})
+
+it('should distinguish an account service failure from an anonymous session', async () => {
+  vi.mocked(readAccountSession).mockRejectedValue(new Error('unavailable'))
+
+  render(() => <UserSettings />)
+
+  await waitFor(() => expect(screen.queryByRole('alert')).not.toBeNull())
+  expect(screen.getByRole('alert').textContent).toContain('로그인 상태를 확인하지 못했습니다.')
+})
