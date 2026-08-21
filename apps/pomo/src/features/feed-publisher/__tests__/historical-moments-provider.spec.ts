@@ -31,13 +31,13 @@ describe('createHistoricalMomentsProvider', () => {
         summary: '1945년 8월 15일의 역사적 순간입니다.',
         title: '광복을 맞다',
         updatedAt: '2026-08-15T01:00:00.000Z',
-        url: 'https://preview.pomo.example/feeds/today-in-history#1945%20liberation%2Fday',
+        url: 'https://preview.pomo.example/api/feeds/today-in-history#1945%20liberation%2Fday',
       },
     ])
     expect(listPublished).toHaveBeenCalledOnce()
     expect(listPublished).toHaveBeenCalledWith({day: 15, limit: 50, month: 8})
     expect(provider.definition).toMatchObject({
-      homeUrl: 'https://preview.pomo.example/feeds',
+      homeUrl: 'https://preview.pomo.example/api/feeds',
       language: 'ko-KR',
       slug: 'today-in-history',
     })

@@ -3,7 +3,7 @@
 import {Tabs} from '@kobalte/core/tabs'
 import {fireEvent, render, screen} from '@solidjs/testing-library'
 import {For} from 'solid-js'
-import {beforeEach, expect, it, vi} from 'vitest'
+import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 import {PSelect} from 'src/design-system/PSelect'
 import PFeedSettingsContent from '../PFeedSettingsContent'
@@ -30,6 +30,10 @@ beforeEach(() => {
       </select>
     </label>
   ))
+})
+
+afterEach(() => {
+  vi.unstubAllEnvs()
 })
 
 it('should add, update, restore, and delete a feed connection with its voice', () => {
@@ -83,7 +87,7 @@ it('should reject invalid and duplicate feed addresses', () => {
 it('should replace an added recommendation with a stored feed item', () => {
   renderSettings()
   const recommendedAddress = new URL('/__dev/feeds/rss.xml', window.location.origin).href
-  const historyAddress = new URL('/feeds/today-in-history/rss.xml', window.location.origin).href
+  const historyAddress = new URL('/api/feeds/today-in-history/rss.xml', window.location.origin).href
 
   expect(screen.queryByText('아직 저장된 피드가 없어요. 피드 주소를 추가해 주세요.')).toBeNull()
   expect(screen.getByText('오늘의 역사')).toBeDefined()
@@ -103,6 +107,16 @@ it('should replace an added recommendation with a stored feed item', () => {
   expect(localStorage.getItem('pomo:focus-room-feed-connections:v1')).toContain(
     '"voiceId":"default"',
   )
+})
+
+it('should use the public server origin for Apps in Toss recommendations', () => {
+  vi.stubEnv('POMO_IS_APPS_IN_TOSS', '1')
+  vi.stubEnv('POMO_PUBLIC_ORIGIN', 'https://www.pomofi.io')
+  renderSettings()
+
+  fireEvent.click(screen.getByRole('button', {name: '오늘의 역사 추천 피드 추가'}))
+
+  expect(screen.getByText('https://www.pomofi.io/api/feeds/today-in-history/rss.xml')).toBeDefined()
 })
 
 it('should apply compact spacing to feed settings groups', () => {

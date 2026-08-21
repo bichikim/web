@@ -128,7 +128,7 @@ const RECOMMENDED_PUBLIC_FEEDS = [
     description: '매일 오늘 있었던 역사적인 순간을 읽어 줘요.',
     id: 'pomo-today-in-history',
     label: '오늘의 역사',
-    path: '/feeds/today-in-history/rss.xml',
+    path: '/api/feeds/today-in-history/rss.xml',
   },
 ] as const
 const RECOMMENDED_DEV_FEEDS = [
@@ -184,12 +184,15 @@ const RecommendedFeedItem = (props: RecommendedFeedItemProps) => {
 export default function PFeedSettingsContent() {
   const feeds = useFeedConnections()
   const runtime = useOptionalPFeeds()
+  const publicOrigin = import.meta.env.POMO_IS_APPS_IN_TOSS
+    ? import.meta.env.POMO_PUBLIC_ORIGIN
+    : window.location.origin
   const recommendations = import.meta.env.DEV
     ? [...RECOMMENDED_PUBLIC_FEEDS, ...RECOMMENDED_DEV_FEEDS]
     : RECOMMENDED_PUBLIC_FEEDS
   const recommendedFeeds: ReadonlyArray<RecommendedFeed> = recommendations.map((feed) => ({
     ...feed,
-    url: new URL(feed.path, window.location.origin).href,
+    url: new URL(feed.path, publicOrigin).href,
   }))
   const availableRecommendations = createMemo(() => {
     const storedUrls = new Set(feeds.connections().map((connection) => connection.url))
